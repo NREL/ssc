@@ -1,3 +1,52 @@
+
+/*******************************************************************************************************
+*  Copyright 2017 Alliance for Sustainable Energy, LLC
+*
+*  NOTICE: This software was developed at least in part by Alliance for Sustainable Energy, LLC
+*  (“Alliance”) under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
+*  The Government retains for itself and others acting on its behalf a nonexclusive, paid-up,
+*  irrevocable worldwide license in the software to reproduce, prepare derivative works, distribute
+*  copies to the public, perform publicly and display publicly, and to permit others to do so.
+*
+*  Redistribution and use in source and binary forms, with or without modification, are permitted
+*  provided that the following conditions are met:
+*
+*  1. Redistributions of source code must retain the above copyright notice, the above government
+*  rights notice, this list of conditions and the following disclaimer.
+*
+*  2. Redistributions in binary form must reproduce the above copyright notice, the above government
+*  rights notice, this list of conditions and the following disclaimer in the documentation and/or
+*  other materials provided with the distribution.
+*
+*  3. The entire corresponding source code of any redistribution, with or without modification, by a
+*  research entity, including but not limited to any contracting manager/operator of a United States
+*  National Laboratory, any institution of higher learning, and any non-profit organization, must be
+*  made publicly available under this license for as long as the redistribution is made available by
+*  the research entity.
+*
+*  4. Redistribution of this software, without modification, must refer to the software by the same
+*  designation. Redistribution of a modified version of this software (i) may not refer to the modified
+*  version by the same designation, or by any confusingly similar designation, and (ii) must refer to
+*  the underlying software originally provided by Alliance as “System Advisor Model” or “SAM”. Except
+*  to comply with the foregoing, the terms “System Advisor Model”, “SAM”, or any confusingly similar
+*  designation may not be used to refer to any modified version of this software or any modified
+*  version of the underlying software originally provided by Alliance without the prior written consent
+*  of Alliance.
+*
+*  5. The name of the copyright holder, contributors, the United States Government, the United States
+*  Department of Energy, or any of their employees may not be used to endorse or promote products
+*  derived from this software without specific prior written permission.
+*
+*  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
+*  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
+*  FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER,
+*  CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES DEPARTMENT OF ENERGY, NOR ANY OF THEIR
+*  EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+*  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+*  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+*  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
+*  THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*******************************************************************************************************/
 #include "Land.h"
 #include "math.h"
 #include "Toolbox.h"
@@ -31,10 +80,10 @@ double Land::getLandBoundArea()
     return _bound_area;
 }
 
-bool Land::InBounds(var_land &V, Point &P, double tht)
+bool Land::InBounds(var_land &V, sp_point &P, double tht)
 {
     //offset the point by tower x,y offset
-    Point Po(P);
+    sp_point Po(P);
     
 	//figure out whether the given point is inside the land area described by _boundary
 	bool test = true;
@@ -132,13 +181,22 @@ void Land::getExtents(var_map &V, double rval[])
 				if(fabs(rad) > trmax) trmax = rad;
 			}
 		}
-		if(trmax < 0.) trmax = tht*7.5;	//use the default if nothing is set
-		if(trmax < radmax || radmax == NULL) radmax = trmax;
+        if( V.land.inclusions.val.size() > 0 )
+        {
+		    if(trmax < 0. ) trmax = tht*7.5;	//use the default if nothing is set
+		    if(trmax < radmax || radmax == NULL) radmax = trmax;
+        }
+        else
+        {
+            if( ! (is_bounds_scaled || is_bounds_fixed ) )
+                //insufficient info provided
+                throw spexception("Insufficient information provided to specify land bounds. At least 1 'inclusion' region must be provided if not specifying fixed or scaled bounds.");
+        }
 
 		//Find the minimum radius depending on the exclusions vector
 		//values for finding the minimum radius
 		double trmin = 9.e9; 
-		Point T, pt1, N;
+		sp_point T, pt1, N;
 		T.Set(V.land.tower_offset_x.val, V.land.tower_offset_y.val, 0.);	//Tower location
 		for(unsigned int i=0; i<V.land.inclusions.val.size(); i++){	//For each polygon in the inclusions
 			//first check whether the tower lies within the polygon, in which case the minimum radius is zero
@@ -166,7 +224,7 @@ void Land::getExtents(var_map &V, double rval[])
 		}
 		
 		//Adjust the minimum radius depending on the exclusions 
-		Point ex1;
+		sp_point ex1;
 		double excheck = 9.e9;
 		for(unsigned int i=0; i<V.land.exclusions.val.size(); i++){	//For each polygon in the exclusions
 			
@@ -238,7 +296,7 @@ void Land::getExtents(var_map &V, double rval[])
 //
 //		//values for finding the minimum radius
 //		double trmin = 9.e9; 
-//		Point T, pt1, N;
+//		sp_point T, pt1, N;
 //		T.Set(0.,0.,0.);	//Tower location
 //		for(unsigned int i=0; i<V.land.inclusions.val.size(); i++){	//For each polygon in the inclusions
 //			//first check whether the tower lies within the polygon, in which case the minimum radius is zero
@@ -266,7 +324,7 @@ void Land::getExtents(var_map &V, double rval[])
 //		}
 //		
 //		//Adjust the minimum radius depending on the exclusions 
-//		Point ex1;
+//		sp_point ex1;
 //		double excheck = 9.e9;
 //		for(unsigned int i=0; i<V.land.exclusions.val.size(); i++){	//For each polygon in the exclusions
 //			
@@ -334,7 +392,7 @@ double Land::calcPolyLandArea(var_land &V){
 		int np = (int)V.inclusions.val.at(i).size();
 		int j=np-1;
 		for(int k=0; k<np; k++){
-			Point 
+			sp_point 
 				*pj = &V.inclusions.val.at(i).at(j), 
 				*pk = &V.inclusions.val.at(i).at(k);
 			area += (pj->x + pk->x)*(pj->y - pk->y)/2.;
@@ -349,7 +407,7 @@ double Land::calcPolyLandArea(var_land &V){
 		int np = (int)V.exclusions.val.at(i).size();
 		int j=np-1;
 		for(int k=0; k<np; k++){
-			Point 
+			sp_point 
 				*pj = &V.exclusions.val.at(i).at(j), 
 				*pk = &V.exclusions.val.at(i).at(k);
 			excs += (pj->x + pk->x)*(pj->y - pk->y)/2.;
@@ -363,7 +421,7 @@ double Land::calcPolyLandArea(var_land &V){
 }
 
 
-void Land::calcLandArea(var_land &V, vector<Point> &layout)
+void Land::calcLandArea(var_land &V, vector<sp_point> &layout)
 {
 	/* 
 	
@@ -375,7 +433,7 @@ void Land::calcLandArea(var_land &V, vector<Point> &layout)
 	}
 	else{
 		//Calculate the convex hull surrounding the heliostat positions
-		std::vector<Point> hull;
+		std::vector<sp_point> hull;
 		Toolbox::convex_hull(layout, hull);
 
 		//Calculate the area of the convex hull

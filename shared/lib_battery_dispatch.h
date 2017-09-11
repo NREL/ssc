@@ -1,3 +1,52 @@
+/*******************************************************************************************************
+*  Copyright 2017 Alliance for Sustainable Energy, LLC
+*
+*  NOTICE: This software was developed at least in part by Alliance for Sustainable Energy, LLC
+*  (“Alliance”) under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
+*  The Government retains for itself and others acting on its behalf a nonexclusive, paid-up,
+*  irrevocable worldwide license in the software to reproduce, prepare derivative works, distribute
+*  copies to the public, perform publicly and display publicly, and to permit others to do so.
+*
+*  Redistribution and use in source and binary forms, with or without modification, are permitted
+*  provided that the following conditions are met:
+*
+*  1. Redistributions of source code must retain the above copyright notice, the above government
+*  rights notice, this list of conditions and the following disclaimer.
+*
+*  2. Redistributions in binary form must reproduce the above copyright notice, the above government
+*  rights notice, this list of conditions and the following disclaimer in the documentation and/or
+*  other materials provided with the distribution.
+*
+*  3. The entire corresponding source code of any redistribution, with or without modification, by a
+*  research entity, including but not limited to any contracting manager/operator of a United States
+*  National Laboratory, any institution of higher learning, and any non-profit organization, must be
+*  made publicly available under this license for as long as the redistribution is made available by
+*  the research entity.
+*
+*  4. Redistribution of this software, without modification, must refer to the software by the same
+*  designation. Redistribution of a modified version of this software (i) may not refer to the modified
+*  version by the same designation, or by any confusingly similar designation, and (ii) must refer to
+*  the underlying software originally provided by Alliance as “System Advisor Model” or “SAM”. Except
+*  to comply with the foregoing, the terms “System Advisor Model”, “SAM”, or any confusingly similar
+*  designation may not be used to refer to any modified version of this software or any modified
+*  version of the underlying software originally provided by Alliance without the prior written consent
+*  of Alliance.
+*
+*  5. The name of the copyright holder, contributors, the United States Government, the United States
+*  Department of Energy, or any of their employees may not be used to endorse or promote products
+*  derived from this software without specific prior written permission.
+*
+*  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
+*  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
+*  FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER,
+*  CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES DEPARTMENT OF ENERGY, NOR ANY OF THEIR
+*  EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+*  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+*  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+*  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
+*  THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*******************************************************************************************************/
+
 #include "lib_battery.h"
 
 #ifndef __LIB_BATTERY_DISPATCH_H__
@@ -13,17 +62,21 @@ public:
 		double dt,
 		double SOC_min,
 		double SOC_max,
+		int current_choice,
 		double Ic_max,
 		double Id_max,
+		double Pc_max,
+		double Pd_max,
 		double t_min,
-		int mode,
+		int dispatch_mode,
 		int pv_dispatch);
 
 	// deep copy constructor (new memory), from dispatch to this
 	dispatch_t(const dispatch_t& dispatch);
 
 	// copy members from dispatch to this
-	virtual void copy(const dispatch_t & dispatch);
+	virtual void copy(const dispatch_t * dispatch);
+
 	void delete_clone();
 
 	virtual ~dispatch_t();
@@ -44,6 +97,7 @@ public:
 	enum MODES{ LOOK_AHEAD, LOOK_BEHIND, MAINTAIN_TARGET, MANUAL };
 	enum METERING{ BEHIND, FRONT };
 	enum PV_PRIORITY{ MEET_LOAD, CHARGE_BATTERY };
+	enum CURRENT_CHOICE{ RESTRICT_POWER, RESTRICT_CURRENT, RESTRICT_BOTH};
 
 	// Outputs
 	double cycle_efficiency();
@@ -76,8 +130,11 @@ protected:
 		double dt_hour,
 		double SOC_min,
 		double SOC_max,
+		int current_choice,
 		double Ic_max,
 		double Id_max,
+		double Pc_max,
+		double Pd_max,
 		double t_min,
 		int mode,
 		int pv_dispatch);
@@ -87,7 +144,8 @@ protected:
 	void energy_controller();
 	void switch_controller();
 	double current_controller(double battery_voltage);
-	void restrict_current(double &I);
+	bool restrict_current(double &I);
+	bool restrict_power(double &I);
 
 	// compute totals
 	void compute_battery_state();
@@ -130,6 +188,9 @@ protected:
 	// Charge & current limits controllers
 	double _SOC_min;
 	double _SOC_max;
+	int _current_choice;
+	double _Pc_max;
+	double _Pd_max;
 	double _Ic_max;
 	double _Id_max;
 	double _t_min;
@@ -158,11 +219,14 @@ public:
 		double dt_hour,
 		double SOC_min,
 		double SOC_max,
+		int current_choice,
 		double Ic_max,
 		double Id_max,
+		double Pc_max,
+		double Pd_max,
 		double t_min,
 		int mode,
-		bool pv_dispatch,
+		int pv_dispatch,
 		util::matrix_t<float> dm_dynamic_sched,
 		util::matrix_t<float> dm_dynamic_sched_weekend,
 		bool * dm_charge,
@@ -175,7 +239,7 @@ public:
 	dispatch_manual_t(const dispatch_t& dispatch);
 
 	// copy members from dispatch to this
-	virtual void copy(const dispatch_t & dispatch);
+	virtual void copy(const dispatch_t * dispatch);
 
 	virtual ~dispatch_manual_t(){};
 	virtual void dispatch(size_t year,
@@ -233,11 +297,14 @@ public:
 		double dt_hour,
 		double SOC_min,
 		double SOC_max,
+		int current_choice,
 		double Ic_max,
 		double Id_max,
+		double Pc_max,
+		double Pd_max,
 		double t_min,
 		int mode,
-		bool pv_dispatch,
+		int pv_dispatch,
 		util::matrix_t<float> dm_dynamic_sched,
 		util::matrix_t<float> dm_dynamic_sched_weekend,
 		bool * dm_charge,
@@ -301,11 +368,14 @@ public:
 		double dt_hour,
 		double SOC_min,
 		double SOC_max,
+		int current_choice,
 		double Ic_max,
 		double Id_max,
+		double Pc_max,
+		double Pd_max,
 		double t_min,
 		int mode,   // 0/1/2
-		bool pv_dispatch,
+		int pv_dispatch,
 		util::matrix_t<float> dm_dynamic_sched,
 		util::matrix_t<float> dm_dynamic_sched_weekend,
 		bool * dm_charge,
@@ -369,12 +439,13 @@ public:
 	battery_metrics_t(battery_t * Battery, double dt_hour);
 	~battery_metrics_t(){};
 
-	void compute_metrics_ac(double P_tofrom_batt, double P_pv_to_batt, double P_grid_to_batt, double P_tofrom_grid);
+	void compute_metrics_ac(double P_tofrom_batt, double P_system_loss, double P_pv_to_batt, double P_grid_to_batt, double P_tofrom_grid);
 	void compute_metrics_dc(dispatch_t * dispatch);
 	void compute_annual_loss();
 
 	void accumulate_energy_charge(double P_tofrom_batt);
 	void accumulate_energy_discharge(double P_tofrom_batt);
+	void accumulate_energy_system_loss(double P_system_loss);
 	void accumulate_battery_charge_components(double P_tofrom_batt, double P_pv_to_batt, double P_grid_to_batt);
 	void accumulate_grid_annual(double P_tofrom_grid);
 	void new_year();
@@ -387,8 +458,10 @@ public:
 	double energy_discharge_annual();
 	double energy_grid_import_annual();
 	double energy_grid_export_annual();
+	double energy_system_loss_annual();
 	double energy_loss_annual();
-	double average_efficiency();
+	double average_battery_conversion_efficiency();
+	double average_battery_roundtrip_efficiency();
 	double pv_charge_percent();
 
 protected:
@@ -398,12 +471,21 @@ protected:
 	double _e_discharge_accumulated; // [Kwh]
 	double _e_charge_from_pv;		 // [Kwh]
 	double _e_charge_from_grid;		 // [Kwh]
+	double _e_loss_system;			 // [Kwh]
+
+	// This efficiency includes the battery internal efficiency and conversion efficiencies
 	double _average_efficiency;		 // [%]
+
+	// This efficiency includes auxilliary system losses
+	double _average_roundtrip_efficiency; // [%]
+
+	// This is the percentage of energy charge from the PV system
 	double _pv_charge_percent;		 // [%]
 
 	// annual metrics
 	double _e_charge_from_pv_annual;   // [Kwh]
 	double _e_charge_from_grid_annual; // [Kwh]
+	double _e_loss_system_annual;	   // [Kwh]
 	double _e_charge_annual;		   // [Kwh]
 	double _e_discharge_annual;		   // [Kwh]
 	double _e_grid_import_annual;	   // [Kwh]

@@ -1,3 +1,52 @@
+/*******************************************************************************************************
+*  Copyright 2017 Alliance for Sustainable Energy, LLC
+*
+*  NOTICE: This software was developed at least in part by Alliance for Sustainable Energy, LLC
+*  (“Alliance”) under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
+*  The Government retains for itself and others acting on its behalf a nonexclusive, paid-up,
+*  irrevocable worldwide license in the software to reproduce, prepare derivative works, distribute
+*  copies to the public, perform publicly and display publicly, and to permit others to do so.
+*
+*  Redistribution and use in source and binary forms, with or without modification, are permitted
+*  provided that the following conditions are met:
+*
+*  1. Redistributions of source code must retain the above copyright notice, the above government
+*  rights notice, this list of conditions and the following disclaimer.
+*
+*  2. Redistributions in binary form must reproduce the above copyright notice, the above government
+*  rights notice, this list of conditions and the following disclaimer in the documentation and/or
+*  other materials provided with the distribution.
+*
+*  3. The entire corresponding source code of any redistribution, with or without modification, by a
+*  research entity, including but not limited to any contracting manager/operator of a United States
+*  National Laboratory, any institution of higher learning, and any non-profit organization, must be
+*  made publicly available under this license for as long as the redistribution is made available by
+*  the research entity.
+*
+*  4. Redistribution of this software, without modification, must refer to the software by the same
+*  designation. Redistribution of a modified version of this software (i) may not refer to the modified
+*  version by the same designation, or by any confusingly similar designation, and (ii) must refer to
+*  the underlying software originally provided by Alliance as “System Advisor Model” or “SAM”. Except
+*  to comply with the foregoing, the terms “System Advisor Model”, “SAM”, or any confusingly similar
+*  designation may not be used to refer to any modified version of this software or any modified
+*  version of the underlying software originally provided by Alliance without the prior written consent
+*  of Alliance.
+*
+*  5. The name of the copyright holder, contributors, the United States Government, the United States
+*  Department of Energy, or any of their employees may not be used to endorse or promote products
+*  derived from this software without specific prior written permission.
+*
+*  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
+*  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
+*  FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER,
+*  CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES DEPARTMENT OF ENERGY, NOR ANY OF THEIR
+*  EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+*  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+*  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+*  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
+*  THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*******************************************************************************************************/
+
 #include "heat_exchangers.h"
 #include "csp_solver_util.h"
 #include "sam_csp_util.h"
@@ -668,7 +717,7 @@ void NS_HX_counterflow_eqs::solve_q_dot_for_fixed_UA_enth(int hot_fl_code /*-*/,
 				h_h_out, T_h_out, h_c_out, T_c_out,
 				UA_calc, min_DT, eff_calc, NTU, q_dot_calc);
 		}
-		catch (C_csp_exception &csp_except)
+		catch (C_csp_exception &)
 		{
 			throw(C_csp_exception("C_HX_counterflow::hx_solution(...) failed with UA_target < 1.E-10"));
 		}
@@ -855,8 +904,8 @@ void C_HX_counterflow::initialize(const S_init_par & init_par_in)
 		}
 		else if( ms_init_par.m_hot_fl == HTFProperties::User_defined )
 		{
-			int n_rows = ms_init_par.mc_hot_fl_props.nrows();
-			int n_cols = ms_init_par.mc_hot_fl_props.ncols();
+			int n_rows = (int)ms_init_par.mc_hot_fl_props.nrows();
+			int n_cols = (int)ms_init_par.mc_hot_fl_props.ncols();
 			if( n_rows > 2 && n_cols == 7 )
 			{
 				if( !mc_hot_fl.SetUserDefinedFluid(ms_init_par.mc_hot_fl_props, true) )
@@ -889,8 +938,8 @@ void C_HX_counterflow::initialize(const S_init_par & init_par_in)
 		}
 		else if( ms_init_par.m_cold_fl == HTFProperties::User_defined )
 		{
-			int n_rows = ms_init_par.mc_cold_fl_props.nrows();
-			int n_cols = ms_init_par.mc_hot_fl_props.ncols();
+			int n_rows = (int)ms_init_par.mc_cold_fl_props.nrows();
+			int n_cols = (int)ms_init_par.mc_hot_fl_props.ncols();
 			if( n_rows > 2 && n_cols == 7 )
 			{
 				if( !mc_cold_fl.SetUserDefinedFluid(ms_init_par.mc_cold_fl_props, true) )
@@ -1173,8 +1222,8 @@ void C_HX_co2_to_htf::initialize(int hot_fl, util::matrix_t<double> hot_fl_props
 	}
 	else if( ms_init_par.m_hot_fl == HTFProperties::User_defined )
 	{
-		int n_rows = ms_init_par.mc_hot_fl_props.nrows();
-		int n_cols = ms_init_par.mc_hot_fl_props.ncols();
+		int n_rows = (int)ms_init_par.mc_hot_fl_props.nrows();
+		int n_cols = (int)ms_init_par.mc_hot_fl_props.ncols();
 		if( n_rows > 2 && n_cols == 7 )
 		{
 			if( !mc_hot_fl.SetUserDefinedFluid(ms_init_par.mc_hot_fl_props, true) )
@@ -1585,8 +1634,8 @@ int C_CO2_to_air_cooler::C_MEQ_target_CO2_dP__L_tube_pass::operator()(double L_t
 		double inlet = mult_inlet*const_inlet + 1;
 
 		// Set loop inlet conditions
-		mpc_ac->mm_T_co2(inlet, j) = mpc_ac->mm_T_co2(inlet, j - 1);		//[K]
-		mpc_ac->mm_P_co2(inlet, j) = mpc_ac->mm_P_co2(inlet, j - 1);		//[kPa]
+		mpc_ac->mm_T_co2((int)inlet, j) = mpc_ac->mm_T_co2((int)inlet, j - 1);		//[K]
+		mpc_ac->mm_P_co2((int)inlet, j) = mpc_ac->mm_P_co2((int)inlet, j - 1);		//[kPa]
 
 		//double deltaT_prev = numeric_limits<double>::quiet_NaN();
 
@@ -1597,8 +1646,8 @@ int C_CO2_to_air_cooler::C_MEQ_target_CO2_dP__L_tube_pass::operator()(double L_t
 			double air_in = fmin(in, out);
 
 			// Get CO2 and Air inlet temperatures to node
-			double T_co2_cold_local = mpc_ac->mm_T_co2(in, j);			//[K]
-			double T_air_cold_in_local = mpc_ac->mm_T_air(air_in, j - 1);	//[K]
+			double T_co2_cold_local = mpc_ac->mm_T_co2((size_t)in, j);			//[K]
+			double T_air_cold_in_local = mpc_ac->mm_T_air((size_t)air_in, j - 1);	//[K]
 
 			// Set max allowable CO2 temp here, for now
 			double T_co2_hot_max = 700.0 + 273.15;		//[K]
@@ -1664,8 +1713,8 @@ int C_CO2_to_air_cooler::C_MEQ_target_CO2_dP__L_tube_pass::operator()(double L_t
 			}
 
 			double Q_dot_node = c_node_bal_eq.m_Q_dot_node;		//[W]
-			mpc_ac->mm_T_co2(out, j) = T_co2_hot_solved;		//[K]
-			mpc_ac->mm_T_air(air_in, j) = mpc_ac->mm_T_air(air_in, j - 1) + Q_dot_node / C_dot_air;	//[K]
+			mpc_ac->mm_T_co2((size_t)out, j) = T_co2_hot_solved;		//[K]
+			mpc_ac->mm_T_air((size_t)air_in, j) = mpc_ac->mm_T_air((size_t)air_in, j - 1) + Q_dot_node / C_dot_air;	//[K]
 
 			// Add pressure drop calcs (co2_props is up-to-date)
 			// ** Could also move this to a function if also called to guess length
@@ -1687,11 +1736,11 @@ int C_CO2_to_air_cooler::C_MEQ_target_CO2_dP__L_tube_pass::operator()(double L_t
 			CSP::PipeFlow(Re_co2, Pr_co2, L_node / mpc_ac->ms_hx_des_sol.m_d_in, mpc_ac->m_relRough, Nusselt_co2, f_co2);
 
 			double u_m = m_m_dot_tube / (rho_co2*mpc_ac->m_A_cs);		//[m/s]
-			mpc_ac->mm_P_co2(out, j) = mpc_ac->mm_P_co2(in, j) + f_co2*L_node*rho_co2*pow(u_m, 2) / (2.0*mpc_ac->ms_hx_des_sol.m_d_in) / 1000.0;	//[kPa]
+			mpc_ac->mm_P_co2((size_t)out, j) = mpc_ac->mm_P_co2((size_t)in, j) + f_co2*L_node*rho_co2*pow(u_m, 2) / (2.0*mpc_ac->ms_hx_des_sol.m_d_in) / 1000.0;	//[kPa]
 
-			double deltaP_node = mpc_ac->mm_P_co2(out, j) - mpc_ac->mm_P_co2(in, j);	//[kPa]
+			double deltaP_node = mpc_ac->mm_P_co2((size_t)out, j) - mpc_ac->mm_P_co2((size_t)in, j);	//[kPa]
 
-			mpc_ac->mm_P_co2(out, j) = fmin(25000.0, fmax(1000.0, mpc_ac->mm_P_co2(out, j)));
+			mpc_ac->mm_P_co2((size_t)out, j) = fmin(25000.0, fmax(1000.0, mpc_ac->mm_P_co2((size_t)out, j)));
 
 		}	// End iteration through nodes in flow path		
 
@@ -1941,8 +1990,8 @@ void C_CO2_to_air_cooler::off_design_hx(double T_amb_K, double P_amb_Pa, double 
 			double inlet = mult_inlet*const_inlet + 1;
 
 			// Set loop inlet conditions
-			T_co2(inlet, j) = T_co2(inlet, j - 1);
-			P_co2(inlet, j) = P_co2(inlet, j - 1);
+			T_co2((size_t)inlet, j) = T_co2((size_t)inlet, j - 1);
+			P_co2((size_t)inlet, j) = P_co2((size_t)inlet, j - 1);
 
 			double deltaT_prev = numeric_limits<double>::quiet_NaN();
 
@@ -1953,7 +2002,7 @@ void C_CO2_to_air_cooler::off_design_hx(double T_amb_K, double P_amb_Pa, double 
 				double air_in = fmin(in, out);
 
 				// Guess outlet temperature
-				double T_out_guess = T_co2(in, j) + 1.0;
+				double T_out_guess = T_co2((size_t)in, j) + 1.0;
 
 				double tol_T_in = T_hot_tol / 50.0;		//[-] Relative tolerance for convergence
 				double diff_T_in = 2.0*tol_T_in;		//[-] Set diff > tol
@@ -1987,7 +2036,7 @@ void C_CO2_to_air_cooler::off_design_hx(double T_amb_K, double P_amb_Pa, double 
 							}
 							else
 							{
-								T_out_guess = 0.5*(T_out_guess + T_co2(in, j));
+								T_out_guess = 0.5*(T_out_guess + T_co2((size_t)in, j));
 							}
 						}
 						else						// Calculated fan power too low - increase m_dot
@@ -2001,7 +2050,7 @@ void C_CO2_to_air_cooler::off_design_hx(double T_amb_K, double P_amb_Pa, double 
 							}
 							else
 							{
-								T_out_guess = T_out_guess + (T_out_guess - T_co2(in, j));
+								T_out_guess = T_out_guess + (T_out_guess - T_co2((size_t)in, j));
 							}
 						}
 
@@ -2013,7 +2062,7 @@ void C_CO2_to_air_cooler::off_design_hx(double T_amb_K, double P_amb_Pa, double 
 						break;
 					}
 
-					double T_out_ave = 0.5*(T_out_guess + T_co2(in, j));
+					double T_out_ave = 0.5*(T_out_guess + T_co2((size_t)in, j));
 
 					// Check this error?
 					int co2_prop_error = CO2_TP(T_out_ave, P_hot_in, &co2_props);
@@ -2023,7 +2072,7 @@ void C_CO2_to_air_cooler::off_design_hx(double T_amb_K, double P_amb_Pa, double 
 					double C_dot_co2 = cp_co2_ave*m_dot_tube;
 					double C_dot_min = fmin(C_dot_air, C_dot_co2);
 					double C_dot_max = fmax(C_dot_air, C_dot_co2);
-					double Q_dot_max = C_dot_min*(T_out_guess - T_air(air_in, j - 1));
+					double Q_dot_max = C_dot_min*(T_out_guess - T_air((size_t)air_in, j - 1));
 					double NTU = UA_node / C_dot_min;
 					double CR = C_dot_min / C_dot_max;
 					// Unmixed cross-flow
@@ -2032,16 +2081,16 @@ void C_CO2_to_air_cooler::off_design_hx(double T_amb_K, double P_amb_Pa, double 
 
 					double T_in_check = T_out_guess - Q_dot_node / C_dot_co2;
 
-					deltaT_prev = T_co2(out, j) - T_co2(in, j);
+					deltaT_prev = T_co2((size_t)out, j) - T_co2((size_t)in, j);
 
-					double T_last = T_co2(in, j);
+					double T_last = T_co2((size_t)in, j);
 
-					diff_T_in = (T_in_check - T_co2(in, j)) / T_co2(in, j);
+					diff_T_in = (T_in_check - T_co2((size_t)in, j)) / T_co2((size_t)in, j);
 
 				}	// **** End T_out (node) iteration ***********************
 
-				T_co2(out, j) = fmin(700.0 + 273.15, T_out_guess);
-				T_air(air_in, j) = T_air(air_in, j - 1) + Q_dot_node / C_dot_air;
+				T_co2((size_t)out, j) = fmin(700.0 + 273.15, T_out_guess);
+				T_air((size_t)air_in, j) = T_air((size_t)air_in, j - 1) + Q_dot_node / C_dot_air;
 
 			}	// **** End one row of nodes iteration		
 		}	// **** End number of passes iteration

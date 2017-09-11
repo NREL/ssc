@@ -1,3 +1,52 @@
+/*******************************************************************************************************
+*  Copyright 2017 Alliance for Sustainable Energy, LLC
+*
+*  NOTICE: This software was developed at least in part by Alliance for Sustainable Energy, LLC
+*  (“Alliance”) under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
+*  The Government retains for itself and others acting on its behalf a nonexclusive, paid-up,
+*  irrevocable worldwide license in the software to reproduce, prepare derivative works, distribute
+*  copies to the public, perform publicly and display publicly, and to permit others to do so.
+*
+*  Redistribution and use in source and binary forms, with or without modification, are permitted
+*  provided that the following conditions are met:
+*
+*  1. Redistributions of source code must retain the above copyright notice, the above government
+*  rights notice, this list of conditions and the following disclaimer.
+*
+*  2. Redistributions in binary form must reproduce the above copyright notice, the above government
+*  rights notice, this list of conditions and the following disclaimer in the documentation and/or
+*  other materials provided with the distribution.
+*
+*  3. The entire corresponding source code of any redistribution, with or without modification, by a
+*  research entity, including but not limited to any contracting manager/operator of a United States
+*  National Laboratory, any institution of higher learning, and any non-profit organization, must be
+*  made publicly available under this license for as long as the redistribution is made available by
+*  the research entity.
+*
+*  4. Redistribution of this software, without modification, must refer to the software by the same
+*  designation. Redistribution of a modified version of this software (i) may not refer to the modified
+*  version by the same designation, or by any confusingly similar designation, and (ii) must refer to
+*  the underlying software originally provided by Alliance as “System Advisor Model” or “SAM”. Except
+*  to comply with the foregoing, the terms “System Advisor Model”, “SAM”, or any confusingly similar
+*  designation may not be used to refer to any modified version of this software or any modified
+*  version of the underlying software originally provided by Alliance without the prior written consent
+*  of Alliance.
+*
+*  5. The name of the copyright holder, contributors, the United States Government, the United States
+*  Department of Energy, or any of their employees may not be used to endorse or promote products
+*  derived from this software without specific prior written permission.
+*
+*  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
+*  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
+*  FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER,
+*  CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES DEPARTMENT OF ENERGY, NOR ANY OF THEIR
+*  EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+*  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+*  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+*  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
+*  THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*******************************************************************************************************/
+
 #include "core.h"
 #include "lib_wind_obos.h"
 
@@ -662,63 +711,63 @@ public:
 		double nSupportVessels = 27;
 		double nTugs = 4;
 
-		obos.arrayVolt.resize(nArrVolts);
-		obos.arrCables.resize(nArrVolts);
+		obos.arrayVolt.resize((int)nArrVolts);
+		obos.arrCables.resize((int)nArrVolts);
 
-		for (int i = 0; i < obos.arrayVolt.size(); i++)
+		for (int i = 0; i < (int)obos.arrayVolt.size(); i++)
 		{
-			obos.arrayVolt[i].resize(nArrVolts);
+			obos.arrayVolt[i].resize((int)nArrVolts);
 		}
-		for (int i = 0; i < obos.arrCables.size(); i++)
+		for (int i = 0; i < (int)obos.arrCables.size(); i++)
 		{
-			obos.arrCables[i].resize(nArrCables);
+			obos.arrCables[i].resize((int)nArrCables);
 
-			for (int j = 0; j < obos.arrCables[i].size(); j++)
+			for (int j = 0; j < (int)obos.arrCables[i].size(); j++)
 			{
-				obos.arrCables[i][j].resize(nCableAttributes);
+				obos.arrCables[i][j].resize((int)nCableAttributes);
 			}
 		}
 
-		obos.expCabVolt.resize(nExpVolts);
-		obos.expCables.resize(nExpVolts);
+		obos.expCabVolt.resize((int)nExpVolts);
+		obos.expCables.resize((int)nExpVolts);
 
-		for (int i = 0; i < obos.expCabVolt.size(); i++)
+		for (int i = 0; i < (int)obos.expCabVolt.size(); i++)
 		{
-			obos.expCabVolt[i].resize(nExpVolts);
+			obos.expCabVolt[i].resize((int)nExpVolts);
 		}
-		for (int i = 0; i < obos.expCables.size(); i++)
+		for (int i = 0; i < (int)obos.expCables.size(); i++)
 		{
-			obos.expCables[i].resize(nExpCables);
+			obos.expCables[i].resize((int)nExpCables);
 
-			for (int j = 0; j < obos.expCables[i].size(); j++)
+			for (int j = 0; j < (int)obos.expCables[i].size(); j++)
 			{
-				obos.expCables[i][j].resize(nCableAttributes);
+				obos.expCables[i][j].resize((int)nCableAttributes);
 			}
 		}
 
 		//vessel vectors
-		obos.turbInstVessel.resize(nVesselAttributes);
-		obos.turbFeederBarge.resize(nVesselAttributes);
-		obos.turbSupportVessels.resize(nSupportVessels);
-		obos.subInstVessel.resize(nVesselAttributes);
-		obos.scourProtVessel.resize(nVesselAttributes);
-		obos.subFeederBarge.resize(nVesselAttributes);
-		obos.subSupportVessels.resize(nSupportVessels);
-		obos.arrCabInstVessel.resize(nVesselAttributes);
-		obos.expCabInstVessel.resize(nVesselAttributes);
-		obos.substaInstVessel.resize(nVesselAttributes);
-		obos.elecSupportVessels.resize(nSupportVessels);
-		obos.elecTugs.resize(nTugs);
+		obos.turbInstVessel.resize((int)nVesselAttributes);
+		obos.turbFeederBarge.resize((int)nVesselAttributes);
+		obos.turbSupportVessels.resize((int)nSupportVessels);
+		obos.subInstVessel.resize((int)nVesselAttributes);
+		obos.scourProtVessel.resize((int)nVesselAttributes);
+		obos.subFeederBarge.resize((int)nVesselAttributes);
+		obos.subSupportVessels.resize((int)nSupportVessels);
+		obos.arrCabInstVessel.resize((int)nVesselAttributes);
+		obos.expCabInstVessel.resize((int)nVesselAttributes);
+		obos.substaInstVessel.resize((int)nVesselAttributes);
+		obos.elecSupportVessels.resize((int)nSupportVessels);
+		obos.elecTugs.resize((int)nTugs);
 
 		for(int i = 0; i < nTugs; i++)
 		{
-		    obos.elecTugs[i].resize(nVesselAttributes);
+		    obos.elecTugs[i].resize((int)nVesselAttributes);
 		}
 		for (int i = 0; i < nSupportVessels; i++)
 		{
-			obos.turbSupportVessels[i].resize(nVesselAttributes);
-			obos.subSupportVessels[i].resize(nVesselAttributes);
-			obos.elecSupportVessels[i].resize(nVesselAttributes);
+			obos.turbSupportVessels[i].resize((int)nVesselAttributes);
+			obos.subSupportVessels[i].resize((int)nVesselAttributes);
+			obos.elecSupportVessels[i].resize((int)nVesselAttributes);
 		}
 
 		/*
@@ -1918,170 +1967,170 @@ public:
 		
 		//Assign outputs***************************************************************************************************************************************
 		/*
-		assign("subTotCost", var_data(obos.subTotCost));
-		assign("totElecCost", var_data(obos.totElecCost));
-		assign("totAnICost", var_data(obos.totAnICost));
-		assign("totPnSCost", var_data(obos.totPnSCost));
-		assign("totEnMCost", var_data(obos.totEnMCost));
-		assign("totDevCost", var_data(obos.totDevCost));
-        assign("totInstTime", var_data(obos.totInstTime));
-        assign("entrExitCost", var_data(obos.entrExitCost));
-        assign("wharfCost", var_data(obos.wharfCost));
-        assign("dockCost", var_data(obos.dockCost));
-        assign("subLayCost", var_data(obos.subLayCost));
-        assign("turbLayCost", var_data(obos.turbLayCost));
-        assign("craneCost", var_data(obos.craneCost));
-		assign("turbInstTime", var_data(obos.turbInstTime));
-		assign("subInstTime", var_data(obos.subInstTime));
-		assign("arrInstTime", var_data(obos.arrInstTime));
-		assign("expInstTime", var_data(obos.expInstTime));
-		assign("subsInstTime", var_data(obos.subsInstTime));
-		assign("commissioning", var_data(obos.commissioning));
+		assign("subTotCost", var_data((ssc_number_t)obos.subTotCost));
+		assign("totElecCost", var_data((ssc_number_t)obos.totElecCost));
+		assign("totAnICost", var_data((ssc_number_t)obos.totAnICost));
+		assign("totPnSCost", var_data((ssc_number_t)obos.totPnSCost));
+		assign("totEnMCost", var_data((ssc_number_t)obos.totEnMCost));
+		assign("totDevCost", var_data((ssc_number_t)obos.totDevCost));
+        assign("totInstTime", var_data((ssc_number_t)obos.totInstTime));
+        assign("entrExitCost", var_data((ssc_number_t)obos.entrExitCost));
+        assign("wharfCost", var_data((ssc_number_t)obos.wharfCost));
+        assign("dockCost", var_data((ssc_number_t)obos.dockCost));
+        assign("subLayCost", var_data((ssc_number_t)obos.subLayCost));
+        assign("turbLayCost", var_data((ssc_number_t)obos.turbLayCost));
+        assign("craneCost", var_data((ssc_number_t)obos.craneCost));
+		assign("turbInstTime", var_data((ssc_number_t)obos.turbInstTime));
+		assign("subInstTime", var_data((ssc_number_t)obos.subInstTime));
+		assign("arrInstTime", var_data((ssc_number_t)obos.arrInstTime));
+		assign("expInstTime", var_data((ssc_number_t)obos.expInstTime));
+		assign("subsInstTime", var_data((ssc_number_t)obos.subsInstTime));
+		assign("commissioning", var_data((ssc_number_t)obos.commissioning));
 
-		assign("decomCost", var_data(obos.decomCost));
-		assign("construction_insurance_cost", var_data(obos.construction_insurance_cost));
-		assign("total_contingency_cost", var_data(obos.total_contingency_cost));
-		assign("construction_finance_cost", var_data(obos.construction_finance_cost));
-		assign("soft_costs", var_data(obos.soft_costs));*/
+		assign("decomCost", var_data((ssc_number_t)obos.decomCost));
+		assign("construction_insurance_cost", var_data((ssc_number_t)obos.construction_insurance_cost));
+		assign("total_contingency_cost", var_data((ssc_number_t)obos.total_contingency_cost));
+		assign("construction_finance_cost", var_data((ssc_number_t)obos.construction_finance_cost));
+		assign("soft_costs", var_data((ssc_number_t)obos.soft_costs));*/
 
 		//Total OBOS output
-		assign("totalBOScost", var_data(obos.total_bos_cost));
+		assign("totalBOScost", var_data((ssc_number_t)(ssc_number_t)obos.total_bos_cost));
 
 		//General outputs
-		assign("hubD", var_data(obos.hubD));
-		assign("bladeL", var_data(obos.bladeL));
-		assign("chord", var_data(obos.chord));
-		assign("nacelleW", var_data(obos.nacelleW));
-		assign("nacelleL", var_data(obos.nacelleL));
-		assign("rnaM", var_data(obos.rnaM));
-		assign("towerD", var_data(obos.towerD));
-		assign("towerM", var_data(obos.towerM));
-		assign("construction_finance_factor", var_data(obos.construction_finance_factor));
+		assign("hubD", var_data((ssc_number_t)(ssc_number_t)obos.hubD));
+		assign("bladeL", var_data((ssc_number_t)(ssc_number_t)obos.bladeL));
+		assign("chord", var_data((ssc_number_t)(ssc_number_t)obos.chord));
+		assign("nacelleW", var_data((ssc_number_t)(ssc_number_t)obos.nacelleW));
+		assign("nacelleL", var_data((ssc_number_t)(ssc_number_t)obos.nacelleL));
+		assign("rnaM", var_data((ssc_number_t)(ssc_number_t)obos.rnaM));
+		assign("towerD", var_data((ssc_number_t)(ssc_number_t)obos.towerD));
+		assign("towerM", var_data((ssc_number_t)(ssc_number_t)obos.towerM));
+		assign("construction_finance_factor", var_data((ssc_number_t)(ssc_number_t)obos.construction_finance_factor));
 
 		//Substructure & foundation outputs
-		assign("mpileM", var_data(obos.mpileM));
-		assign("mtransM", var_data(obos.mtransM));
-		assign("mPileCost", var_data(obos.mPileCost));
-		assign("mTransCost", var_data(obos.mTransCost));
-		assign("jlatticeM", var_data(obos.jlatticeM));
-		assign("jtransM", var_data(obos.jtransM));
-		assign("jpileM", var_data(obos.jpileM));
-		assign("jLatticeCost", var_data(obos.jLatticeCost));
-		assign("jTransCost", var_data(obos.jTransCost));
-		assign("jPileCost", var_data(obos.jPileCost));
-		assign("spStifColM", var_data(obos.spStifColM));
-		assign("spTapColM", var_data(obos.spTapColM));
-		assign("spStifColCost", var_data(obos.spStifColCost));
-		assign("spTapColCost", var_data(obos.spTapColCost));
-		assign("ballM", var_data(obos.ballM));
-		assign("ballCost", var_data(obos.ballCost));
-		assign("ssStifColM", var_data(obos.ssStifColM));
-		assign("ssTrussM", var_data(obos.ssTrussM));
-		assign("ssHeaveM", var_data(obos.ssHeaveM));
-		assign("ssStifColCost", var_data(obos.ssStifColCost));
-		assign("ssTrussCost", var_data(obos.ssTrussCost));
-		assign("ssHeaveCost", var_data(obos.ssHeaveCost));
-		assign("moorSysCost", var_data(obos.moorSysCost));
-		assign("sSteelM", var_data(obos.sSteelM));
-		assign("sSteelCost", var_data(obos.sSteelCost));
-		assign("subTotM", var_data(obos.subTotM));
-		assign("subTotCost", var_data(obos.subTotCost));
+		assign("mpileM", var_data((ssc_number_t)(ssc_number_t)obos.mpileM));
+		assign("mtransM", var_data((ssc_number_t)(ssc_number_t)obos.mtransM));
+		assign("mPileCost", var_data((ssc_number_t)(ssc_number_t)obos.mPileCost));
+		assign("mTransCost", var_data((ssc_number_t)(ssc_number_t)obos.mTransCost));
+		assign("jlatticeM", var_data((ssc_number_t)(ssc_number_t)obos.jlatticeM));
+		assign("jtransM", var_data((ssc_number_t)(ssc_number_t)obos.jtransM));
+		assign("jpileM", var_data((ssc_number_t)(ssc_number_t)obos.jpileM));
+		assign("jLatticeCost", var_data((ssc_number_t)(ssc_number_t)obos.jLatticeCost));
+		assign("jTransCost", var_data((ssc_number_t)(ssc_number_t)obos.jTransCost));
+		assign("jPileCost", var_data((ssc_number_t)(ssc_number_t)obos.jPileCost));
+		assign("spStifColM", var_data((ssc_number_t)(ssc_number_t)obos.spStifColM));
+		assign("spTapColM", var_data((ssc_number_t)(ssc_number_t)obos.spTapColM));
+		assign("spStifColCost", var_data((ssc_number_t)(ssc_number_t)obos.spStifColCost));
+		assign("spTapColCost", var_data((ssc_number_t)(ssc_number_t)obos.spTapColCost));
+		assign("ballM", var_data((ssc_number_t)(ssc_number_t)obos.ballM));
+		assign("ballCost", var_data((ssc_number_t)(ssc_number_t)obos.ballCost));
+		assign("ssStifColM", var_data((ssc_number_t)(ssc_number_t)obos.ssStifColM));
+		assign("ssTrussM", var_data((ssc_number_t)(ssc_number_t)obos.ssTrussM));
+		assign("ssHeaveM", var_data((ssc_number_t)(ssc_number_t)obos.ssHeaveM));
+		assign("ssStifColCost", var_data((ssc_number_t)(ssc_number_t)obos.ssStifColCost));
+		assign("ssTrussCost", var_data((ssc_number_t)(ssc_number_t)obos.ssTrussCost));
+		assign("ssHeaveCost", var_data((ssc_number_t)(ssc_number_t)obos.ssHeaveCost));
+		assign("moorSysCost", var_data((ssc_number_t)(ssc_number_t)obos.moorSysCost));
+		assign("sSteelM", var_data((ssc_number_t)(ssc_number_t)obos.sSteelM));
+		assign("sSteelCost", var_data((ssc_number_t)(ssc_number_t)obos.sSteelCost));
+		assign("subTotM", var_data((ssc_number_t)(ssc_number_t)obos.subTotM));
+		assign("subTotCost", var_data((ssc_number_t)(ssc_number_t)obos.subTotCost));
 
 		//Electrical infrastructure outputs
-		assign("systAngle", var_data(obos.systAngle));
-		assign("freeCabLeng", var_data(obos.freeCabLeng));
-		assign("fixCabLeng", var_data(obos.fixCabLeng));
-		assign("nExpCab", var_data(obos.nExpCab));
-		assign("nSubstation", var_data(obos.nSubstation));
-		assign("fullStrings", var_data(obos.fullStrings));
-		assign("nTurbPS", var_data(obos.nTurbPS));
-		assign("nTurbCab1", var_data(obos.nTurbCab1));
-		assign("nTurbCab2", var_data(obos.nTurbCab2));
-		assign("nTurbInter1", var_data(obos.nTurbInter1));
-		assign("nTurbInter2", var_data(obos.nTurbInter2));
-		assign("nSubsInter", var_data(obos.nSubsInter));
-		assign("cab1Leng", var_data(obos.cab1Leng));
-		assign("cab2Leng", var_data(obos.cab2Leng));
-		assign("expCabLeng", var_data(obos.expCabLeng));
-		assign("nMPT", var_data(obos.nMPT));
-		assign("mptRating", var_data(obos.mptRating));
-		assign("mptCost", var_data(obos.mptCost));
-		assign("subsTopM", var_data(obos.subsTopM));
-		assign("subsTopCost", var_data(obos.subsTopCost));
-		assign("arrCab1Cost", var_data(obos.arrCab1Cost));
-		assign("arrCab2Cost", var_data(obos.arrCab2Cost));
-		assign("expCabCost", var_data(obos.expCabCost));
-		assign("shuntReactors", var_data(obos.shuntReactors));
-		assign("switchGear", var_data(obos.switchGear));
-		assign("ancillarySys", var_data(obos.ancillarySys));
-		assign("subsSubM", var_data(obos.subsSubM));
-		assign("subsPileM", var_data(obos.subsPileM));
-		assign("subsLandAssembly", var_data(obos.subsLandAssembly));
-		assign("subsSubCost", var_data(obos.subsSubCost));
-		assign("switchYard", var_data(obos.switchYard));
-		assign("onShoreSubs", var_data(obos.onShoreSubs));
-		assign("onshoreMisc", var_data(obos.onshoreMisc));
-		assign("transLine", var_data(obos.transLine));
-		assign("subCabCost", var_data(obos.subCabCost));
-		assign("offSubsCost", var_data(obos.offSubsCost));
-		assign("onshoreTransCost", var_data(obos.onshoreTransCost));
-		assign("totElecCost", var_data(obos.totElecCost));
+		assign("systAngle", var_data((ssc_number_t)obos.systAngle));
+		assign("freeCabLeng", var_data((ssc_number_t)obos.freeCabLeng));
+		assign("fixCabLeng", var_data((ssc_number_t)obos.fixCabLeng));
+		assign("nExpCab", var_data((ssc_number_t)obos.nExpCab));
+		assign("nSubstation", var_data((ssc_number_t)obos.nSubstation));
+		assign("fullStrings", var_data((ssc_number_t)obos.fullStrings));
+		assign("nTurbPS", var_data((ssc_number_t)obos.nTurbPS));
+		assign("nTurbCab1", var_data((ssc_number_t)obos.nTurbCab1));
+		assign("nTurbCab2", var_data((ssc_number_t)obos.nTurbCab2));
+		assign("nTurbInter1", var_data((ssc_number_t)obos.nTurbInter1));
+		assign("nTurbInter2", var_data((ssc_number_t)obos.nTurbInter2));
+		assign("nSubsInter", var_data((ssc_number_t)obos.nSubsInter));
+		assign("cab1Leng", var_data((ssc_number_t)obos.cab1Leng));
+		assign("cab2Leng", var_data((ssc_number_t)obos.cab2Leng));
+		assign("expCabLeng", var_data((ssc_number_t)obos.expCabLeng));
+		assign("nMPT", var_data((ssc_number_t)obos.nMPT));
+		assign("mptRating", var_data((ssc_number_t)obos.mptRating));
+		assign("mptCost", var_data((ssc_number_t)obos.mptCost));
+		assign("subsTopM", var_data((ssc_number_t)obos.subsTopM));
+		assign("subsTopCost", var_data((ssc_number_t)obos.subsTopCost));
+		assign("arrCab1Cost", var_data((ssc_number_t)obos.arrCab1Cost));
+		assign("arrCab2Cost", var_data((ssc_number_t)obos.arrCab2Cost));
+		assign("expCabCost", var_data((ssc_number_t)obos.expCabCost));
+		assign("shuntReactors", var_data((ssc_number_t)obos.shuntReactors));
+		assign("switchGear", var_data((ssc_number_t)obos.switchGear));
+		assign("ancillarySys", var_data((ssc_number_t)obos.ancillarySys));
+		assign("subsSubM", var_data((ssc_number_t)obos.subsSubM));
+		assign("subsPileM", var_data((ssc_number_t)obos.subsPileM));
+		assign("subsLandAssembly", var_data((ssc_number_t)obos.subsLandAssembly));
+		assign("subsSubCost", var_data((ssc_number_t)obos.subsSubCost));
+		assign("switchYard", var_data((ssc_number_t)obos.switchYard));
+		assign("onShoreSubs", var_data((ssc_number_t)obos.onShoreSubs));
+		assign("onshoreMisc", var_data((ssc_number_t)obos.onshoreMisc));
+		assign("transLine", var_data((ssc_number_t)obos.transLine));
+		assign("subCabCost", var_data((ssc_number_t)obos.subCabCost));
+		assign("offSubsCost", var_data((ssc_number_t)obos.offSubsCost));
+		assign("onshoreTransCost", var_data((ssc_number_t)obos.onshoreTransCost));
+		assign("totElecCost", var_data((ssc_number_t)obos.totElecCost));
 
 		//Assembly & infrastructure outputs
-		assign("moorTime", var_data(obos.moorTime));
-		assign("turbDeckArea", var_data(obos.turbDeckArea));
-		assign("nTurbPerTrip", var_data(obos.nTurbPerTrip));
-		assign("turbInstTime", var_data(obos.turbInstTime));
-		assign("subDeckArea", var_data(obos.subDeckArea));
-		assign("nSubPerTrip", var_data(obos.nSubPerTrip));
-		assign("subInstTime", var_data(obos.subInstTime));
-		assign("cab1SecM", var_data(obos.cab1SecM));
-		assign("cab2SecM", var_data(obos.cab2SecM));
-		assign("cab1SecPerTrip", var_data(obos.cab1SecPerTrip));
-		assign("cab2SecPerTrip", var_data(obos.cab2SecPerTrip));
-		assign("arrInstTime", var_data(obos.arrInstTime));
-		assign("expCabSecM", var_data(obos.expCabSecM));
-		assign("expCabSecPerTrip", var_data(obos.expCabSecPerTrip));
-		assign("expInstTime", var_data(obos.expInstTime));
-		assign("subsInstTime", var_data(obos.subsInstTime));
-		assign("totInstTime", var_data(obos.totInstTime));
-		assign("totAnICost", var_data(obos.totAnICost));
-		//assign("turbCostsByVessel", var_data(obos.turbCostsByVessel));
-		//assign("subCostsByVessel", var_data(obos.subCostsByVessel));
-		//assign("elecCostsByVessel", var_data(obos.elecCostsByVessel));
-		//assign("mobDemobCostByVessel", var_data(obos.mobDemobCostByVessel));
-		assign("cabSurvey", var_data(obos.cabSurvey));
-        assign("turbine_install_cost", var_data(obos.turbine_install_cost));
-        assign("substructure_install_cost", var_data(obos.substructure_install_cost));
-        assign("electrical_install_cost", var_data(obos.electrical_install_cost));
-        assign("mob_demob_cost", var_data(obos.mob_demob_cost));
-		assign("array_cable_install_cost", var_data(obos.array_cable_install_cost));
-		assign("export_cable_install_cost", var_data(obos.export_cable_install_cost));
-		assign("substation_install_cost", var_data(obos.substation_install_cost));
+		assign("moorTime", var_data((ssc_number_t)obos.moorTime));
+		assign("turbDeckArea", var_data((ssc_number_t)obos.turbDeckArea));
+		assign("nTurbPerTrip", var_data((ssc_number_t)obos.nTurbPerTrip));
+		assign("turbInstTime", var_data((ssc_number_t)obos.turbInstTime));
+		assign("subDeckArea", var_data((ssc_number_t)obos.subDeckArea));
+		assign("nSubPerTrip", var_data((ssc_number_t)obos.nSubPerTrip));
+		assign("subInstTime", var_data((ssc_number_t)obos.subInstTime));
+		assign("cab1SecM", var_data((ssc_number_t)obos.cab1SecM));
+		assign("cab2SecM", var_data((ssc_number_t)obos.cab2SecM));
+		assign("cab1SecPerTrip", var_data((ssc_number_t)obos.cab1SecPerTrip));
+		assign("cab2SecPerTrip", var_data((ssc_number_t)obos.cab2SecPerTrip));
+		assign("arrInstTime", var_data((ssc_number_t)obos.arrInstTime));
+		assign("expCabSecM", var_data((ssc_number_t)obos.expCabSecM));
+		assign("expCabSecPerTrip", var_data((ssc_number_t)obos.expCabSecPerTrip));
+		assign("expInstTime", var_data((ssc_number_t)obos.expInstTime));
+		assign("subsInstTime", var_data((ssc_number_t)obos.subsInstTime));
+		assign("totInstTime", var_data((ssc_number_t)obos.totInstTime));
+		assign("totAnICost", var_data((ssc_number_t)obos.totAnICost));
+		//assign("turbCostsByVessel", var_data((ssc_number_t)obos.turbCostsByVessel));
+		//assign("subCostsByVessel", var_data((ssc_number_t)obos.subCostsByVessel));
+		//assign("elecCostsByVessel", var_data((ssc_number_t)obos.elecCostsByVessel));
+		//assign("mobDemobCostByVessel", var_data((ssc_number_t)obos.mobDemobCostByVessel));
+		assign("cabSurvey", var_data((ssc_number_t)obos.cabSurvey));
+        assign("turbine_install_cost", var_data((ssc_number_t)obos.turbine_install_cost));
+        assign("substructure_install_cost", var_data((ssc_number_t)obos.substructure_install_cost));
+        assign("electrical_install_cost", var_data((ssc_number_t)obos.electrical_install_cost));
+        assign("mob_demob_cost", var_data((ssc_number_t)obos.mob_demob_cost));
+		assign("array_cable_install_cost", var_data((ssc_number_t)obos.array_cable_install_cost));
+		assign("export_cable_install_cost", var_data((ssc_number_t)obos.export_cable_install_cost));
+		assign("substation_install_cost", var_data((ssc_number_t)obos.substation_install_cost));
 
 		//Port & staging outputs
-		assign("entrExitCost", var_data(obos.entrExitCost));
-		assign("wharfCost", var_data(obos.wharfCost));
-		assign("dockCost", var_data(obos.dockCost));
-		assign("subLaydownA", var_data(obos.subLaydownA));
-		assign("subLayCost", var_data(obos.subLayCost));
-		assign("turbLaydownA", var_data(obos.turbLaydownA));
-		assign("turbLayCost", var_data(obos.turbLayCost));
-		assign("craneCost", var_data(obos.craneCost));
-		assign("totPortCost", var_data(obos.totPortCost));
-		assign("totStageCost", var_data(obos.totStageCost));
-		assign("totPnSCost", var_data(obos.totPnSCost));
+		assign("entrExitCost", var_data((ssc_number_t)obos.entrExitCost));
+		assign("wharfCost", var_data((ssc_number_t)obos.wharfCost));
+		assign("dockCost", var_data((ssc_number_t)obos.dockCost));
+		assign("subLaydownA", var_data((ssc_number_t)obos.subLaydownA));
+		assign("subLayCost", var_data((ssc_number_t)obos.subLayCost));
+		assign("turbLaydownA", var_data((ssc_number_t)obos.turbLaydownA));
+		assign("turbLayCost", var_data((ssc_number_t)obos.turbLayCost));
+		assign("craneCost", var_data((ssc_number_t)obos.craneCost));
+		assign("totPortCost", var_data((ssc_number_t)obos.totPortCost));
+		assign("totStageCost", var_data((ssc_number_t)obos.totStageCost));
+		assign("totPnSCost", var_data((ssc_number_t)obos.totPnSCost));
 
 		//Engineering & management outputs
-		assign("totEnMCost", var_data(obos.totEnMCost));
+		assign("totEnMCost", var_data((ssc_number_t)obos.totEnMCost));
 
 		//Development outputs
-		assign("feedCost", var_data(obos.feedCost));
-		assign("permStudyComp", var_data(obos.permStudyComp));
-		assign("metFabCost", var_data(obos.metFabCost));
-		assign("decomCost", var_data(obos.decomCost));
-		assign("totDevCost", var_data(obos.totDevCost));
-		assign("commissioning", var_data(obos.commissioning));
+		assign("feedCost", var_data((ssc_number_t)obos.feedCost));
+		assign("permStudyComp", var_data((ssc_number_t)obos.permStudyComp));
+		assign("metFabCost", var_data((ssc_number_t)obos.metFabCost));
+		assign("decomCost", var_data((ssc_number_t)obos.decomCost));
+		assign("totDevCost", var_data((ssc_number_t)obos.totDevCost));
+		assign("commissioning", var_data((ssc_number_t)obos.commissioning));
 
 
 

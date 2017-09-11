@@ -1,8 +1,63 @@
+/*******************************************************************************************************
+*  Copyright 2017 Alliance for Sustainable Energy, LLC
+*
+*  NOTICE: This software was developed at least in part by Alliance for Sustainable Energy, LLC
+*  (“Alliance”) under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
+*  The Government retains for itself and others acting on its behalf a nonexclusive, paid-up,
+*  irrevocable worldwide license in the software to reproduce, prepare derivative works, distribute
+*  copies to the public, perform publicly and display publicly, and to permit others to do so.
+*
+*  Redistribution and use in source and binary forms, with or without modification, are permitted
+*  provided that the following conditions are met:
+*
+*  1. Redistributions of source code must retain the above copyright notice, the above government
+*  rights notice, this list of conditions and the following disclaimer.
+*
+*  2. Redistributions in binary form must reproduce the above copyright notice, the above government
+*  rights notice, this list of conditions and the following disclaimer in the documentation and/or
+*  other materials provided with the distribution.
+*
+*  3. The entire corresponding source code of any redistribution, with or without modification, by a
+*  research entity, including but not limited to any contracting manager/operator of a United States
+*  National Laboratory, any institution of higher learning, and any non-profit organization, must be
+*  made publicly available under this license for as long as the redistribution is made available by
+*  the research entity.
+*
+*  4. Redistribution of this software, without modification, must refer to the software by the same
+*  designation. Redistribution of a modified version of this software (i) may not refer to the modified
+*  version by the same designation, or by any confusingly similar designation, and (ii) must refer to
+*  the underlying software originally provided by Alliance as “System Advisor Model” or “SAM”. Except
+*  to comply with the foregoing, the terms “System Advisor Model”, “SAM”, or any confusingly similar
+*  designation may not be used to refer to any modified version of this software or any modified
+*  version of the underlying software originally provided by Alliance without the prior written consent
+*  of Alliance.
+*
+*  5. The name of the copyright holder, contributors, the United States Government, the United States
+*  Department of Energy, or any of their employees may not be used to endorse or promote products
+*  derived from this software without specific prior written permission.
+*
+*  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
+*  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
+*  FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER,
+*  CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES DEPARTMENT OF ENERGY, NOR ANY OF THEIR
+*  EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+*  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+*  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+*  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
+*  THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*******************************************************************************************************/
+
 #include "lib_windwatts.h"
 #include "lib_physics.h"
 
 #include <math.h>
 #include "lib_util.h"
+
+
+#ifdef _MSC_VER
+#pragma warning(disable: 4127)  // ignore warning: 'warning C4127: conditional expression is constant'
+#endif
+
 
 static inline double max_of(double a, double b)
 {
@@ -125,7 +180,7 @@ int wind_power_calculator::wind_power(/*INPUTS */ double dWindSpeed, double dWin
 	if (fTurbine_output <= 0.0)
 	{
 		*FarmP = 0.0;
-		return m_iNumberOfTurbinesInFarm;
+		return (int)m_iNumberOfTurbinesInFarm;
 	}
 
 	// ok, let's calculate the farm output
@@ -261,11 +316,11 @@ int wind_power_calculator::wind_power(/*INPUTS */ double dWindSpeed, double dWin
 		wt_id[i] = wid;
 	}
 	
-	return m_iNumberOfTurbinesInFarm;
+	return (int)m_iNumberOfTurbinesInFarm;
 }
 
 
-double wind_power_calculator::turbine_output_using_weibull(double weibull_k, double max_cp, double avg_speed, double ref_height, double energy_turbine[])
+double wind_power_calculator::turbine_output_using_weibull(double weibull_k, double , double avg_speed, double ref_height, double energy_turbine[])
 {	// returns same units as 'power_curve'
 
 	double hub_ht_windspeed = pow((m_dHubHeight / ref_height), m_dShearExponent) * avg_speed;
@@ -393,7 +448,7 @@ bool wind_power_calculator::wake_calculations_EddyViscosity_Simple(/*INPUTS */ d
 	for (size_t i=0; i<m_iNumberOfTurbinesInFarm; i++) // downwind turbines, but starting with most upwind and working downwind
 	{
 		double dDeficit = 0, Iadd = 0, dTotalTI = aTurbulence_intensity[i];
-		double dTOut=0, dThrustCoeff=0;
+//		double dTOut=0, dThrustCoeff=0;
 		for (size_t j=0; j<i; j++) // upwind turbines - turbines upwind of turbine[i]
 		{
 			// distance downwind = distance from turbine i to turbine j along axis of wind direction
@@ -404,19 +459,19 @@ bool wind_power_calculator::wake_calculations_EddyViscosity_Simple(/*INPUTS */ d
 			// separation crosswind between turbine i and turbine j
 			double dDistRadialInDiameters = fabs(aDistanceCrosswind[i] - aDistanceCrosswind[j])/2.0;
 			
-			double dWakeRadiusMeters = get_EV_wake_width(j, dDistAxialInDiameters);  // the radius of the wake
+			double dWakeRadiusMeters = get_EV_wake_width((int)j, dDistAxialInDiameters);  // the radius of the wake
 			if (dWakeRadiusMeters<=0.0)
 				continue;
 
 			// calculate the wake deficit
-			double dDef = wake_deficit_EV(j, dDistRadialInDiameters, dDistAxialInDiameters);
+			double dDef = wake_deficit_EV((int)j, dDistRadialInDiameters, dDistAxialInDiameters);
 			double dWindSpeedWaked = adWindSpeed[0] * (1 - dDef); // wind speed = free stream * (1-deficit)
 
 			// keep it if it's bigger
 			dDeficit = max_of(dDeficit, dDef);
 
-			double temp1 = Iamb[j];
-			double temp2 = aTurbulence_intensity[j];
+//			double temp1 = Iamb[j];
+//			double temp2 = aTurbulence_intensity[j];
 			Iadd = calc_EV_added_turbulence_intensity(Iamb[j], Thrust[j], dDistAxialInDiameters*m_dRotorDiameter, vmln[j]);
 			
 			double dFractionOfOverlap = simple_intersect(dDistRadialInDiameters*m_dRotorDiameter, dTurbineRadius, dWakeRadiusMeters);
@@ -433,7 +488,7 @@ bool wind_power_calculator::wake_calculations_EddyViscosity_Simple(/*INPUTS */ d
 			Eff[i] = 100.0*(Power[i]+0.0001)/(Power[0]+0.0001);
 
 		// now that turbine[i] wind speed, output, thrust, etc. have been calculated, calculate wake characteristics for it, because downwind turbines will need the info
-		if (!fill_turbine_wake_arrays_for_EV(i, adWindSpeed[0], adWindSpeed[i], Power[i], Thrust[i], aTurbulence_intensity[i], fabs(aDistanceDownwind[m_iNumberOfTurbinesInFarm-1] - aDistanceDownwind[i])*dTurbineRadius ) )
+		if (!fill_turbine_wake_arrays_for_EV((int)i, adWindSpeed[0], adWindSpeed[i], Power[i], Thrust[i], aTurbulence_intensity[i], fabs(aDistanceDownwind[m_iNumberOfTurbinesInFarm-1] - aDistanceDownwind[i])*dTurbineRadius ) )
 		{
 			if(m_sErrDetails.length() == 0) m_sErrDetails = "Could not calculate the turbine wake arrays in the Eddy-Viscosity model.";
 			return false;
@@ -659,7 +714,7 @@ bool wind_power_calculator::fill_turbine_wake_arrays_for_EV(int iTurbineNumber, 
 	matEVWakeWidths.at(iTurbineNumber,0) = Bw;
 
 	// j = 0 is initial conditions, j = 1 is the first step into the unknown
-	int iterations = 5;
+//	int iterations = 5;
 	for(size_t j=0; j<matEVWakeDeficits.ncols()-1; j++)
 	{
 		x = MIN_DIAM_EV + (double)(j) * m_dAxialResolution;	
@@ -698,7 +753,7 @@ bool wind_power_calculator::fill_turbine_wake_arrays_for_EV(int iTurbineNumber, 
 	return true;
 }
 
-void wind_power_calculator::calc_EV_vm_for_turbine(double U, double Ii, double Ct, double airDensity, VMLN& vmln)
+void wind_power_calculator::calc_EV_vm_for_turbine(double U, double Ii, double Ct, double , VMLN& vmln)
 {
 	// Ii is incident TI in percent at upstream turbine
 	Ct = max_of(min_of(0.999,Ct), m_dMinThrustCoeff);
@@ -783,7 +838,7 @@ void wind_power_calculator::turbine_power( double fWindVelocityAtDataHeight, dou
 	//first, correct wind speeds in power curve for site air density. Using method 2 described in https://www.scribd.com/document/38818683/PO310-EWEC2010-Presentation
 	//then, make sure to use corrected wind speeds when calculating power
 	std::vector <double> temp_ws;
-	for (int i = 0; i < m_adDensityCorrectedWS.size(); i++)
+	for (size_t i = 0; i < m_adDensityCorrectedWS.size(); i++)
 		m_adDensityCorrectedWS[i] = m_adPowerCurveWS[i] * pow((physics::AIR_DENSITY_SEA_LEVEL / fAirDensity), (1.0 / 3.0));
 
 	//bug fix jmf 1/11/17- cut in and cut out wind speeds need to be inferred from the power curve, cut in was previously an input but shouldn't be because a) some users are using library turbines, which only have power curves, 
@@ -860,7 +915,7 @@ void wind_power_calculator::turbine_power( double fWindVelocityAtDataHeight, dou
 
 		// this is a curve specific to a particular turbine, ONLY USEFUL FOR COMPARING SAM TO openWind
 		double dThrustCurve[26] = {0.0, 0.0, 0.0, 0.8, 0.8, 0.82, 0.84, 0.79, 0.72, 0.66, 0.59, 0.53, 0.46,0.40,0.33,0.28,0.23,0.20,0.16,0.13,0.12,0.12,0.11,0.11,0.10,0.10};
-		bool found=false;
+//		bool found=false;
 
 		int i = (int) fabs(fWindSpeedAtHubHeight);
 		if ( fabs(fWindSpeedAtHubHeight)>25 )

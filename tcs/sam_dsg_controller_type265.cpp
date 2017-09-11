@@ -1,3 +1,52 @@
+/*******************************************************************************************************
+*  Copyright 2017 Alliance for Sustainable Energy, LLC
+*
+*  NOTICE: This software was developed at least in part by Alliance for Sustainable Energy, LLC
+*  (“Alliance”) under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
+*  The Government retains for itself and others acting on its behalf a nonexclusive, paid-up,
+*  irrevocable worldwide license in the software to reproduce, prepare derivative works, distribute
+*  copies to the public, perform publicly and display publicly, and to permit others to do so.
+*
+*  Redistribution and use in source and binary forms, with or without modification, are permitted
+*  provided that the following conditions are met:
+*
+*  1. Redistributions of source code must retain the above copyright notice, the above government
+*  rights notice, this list of conditions and the following disclaimer.
+*
+*  2. Redistributions in binary form must reproduce the above copyright notice, the above government
+*  rights notice, this list of conditions and the following disclaimer in the documentation and/or
+*  other materials provided with the distribution.
+*
+*  3. The entire corresponding source code of any redistribution, with or without modification, by a
+*  research entity, including but not limited to any contracting manager/operator of a United States
+*  National Laboratory, any institution of higher learning, and any non-profit organization, must be
+*  made publicly available under this license for as long as the redistribution is made available by
+*  the research entity.
+*
+*  4. Redistribution of this software, without modification, must refer to the software by the same
+*  designation. Redistribution of a modified version of this software (i) may not refer to the modified
+*  version by the same designation, or by any confusingly similar designation, and (ii) must refer to
+*  the underlying software originally provided by Alliance as “System Advisor Model” or “SAM”. Except
+*  to comply with the foregoing, the terms “System Advisor Model”, “SAM”, or any confusingly similar
+*  designation may not be used to refer to any modified version of this software or any modified
+*  version of the underlying software originally provided by Alliance without the prior written consent
+*  of Alliance.
+*
+*  5. The name of the copyright holder, contributors, the United States Government, the United States
+*  Department of Energy, or any of their employees may not be used to endorse or promote products
+*  derived from this software without specific prior written permission.
+*
+*  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
+*  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
+*  FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER,
+*  CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES DEPARTMENT OF ENERGY, NOR ANY OF THEIR
+*  EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+*  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+*  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+*  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
+*  THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*******************************************************************************************************/
+
 #define _TCSTYPEINTERFACE_
 #include "tcstype.h"
 
@@ -595,14 +644,14 @@ public:
 		*/
 
     // use_refprop = .false.				// Can't call refprop with current setup
-		m_fossil_mode = value( P_fossil_mode );			//[-] The fossil fill operation strategy mode
+		m_fossil_mode = (int)value( P_fossil_mode );			//[-] The fossil fill operation strategy mode
 		m_q_pb_design = value( P_q_pb_design )*1.0E6;	//[W] Heat rate into powerblock at design
 		m_q_aux_max = value( P_q_aux_max )*1.0E6;		//[W] Maximum heat rate of aux heater    
 		m_lhv_eff = value( P_lhv_eff );					//[-] Aux Heater lower heating value efficiency
 		
 		m_h_tower = value( P_h_tower );					//[m] Tower height   
-		int n_panels = value( P_n_panels );				//[-] Number of vertical panels on receiver
-		int flowtype = value( P_flowtype );				//[-] Flow pattern
+		int n_panels = (int)value(P_n_panels);				//[-] Number of vertical panels on receiver
+		int flowtype = (int)value(P_flowtype);				//[-] Flow pattern
 
 		m_n_flux_x = (int)value(P_n_flux_x);
 		m_n_flux_y = (int)value(P_n_flux_y);
@@ -686,7 +735,7 @@ public:
 		double d_t_boiler = value( P_d_t_boiler );		//[m] Diameter of boiler tubes
 		double th_t_boiler = value( P_th_t_boiler );	//[m] Thickness of boiler tubes
 		double emis_boiler = value( P_emis_boiler );	//[-] Emissivity of boiler tubes
-		double abs_boiler = value( P_abs_boiler );		//[-] Absorptivity of boiler tubes
+		//double abs_boiler = value( P_abs_boiler );		//[-] Absorptivity of boiler tubes
 		double mat_boiler = value( P_mat_boiler );		//[-] Material of boiler tubes
 		
 		// 8.6.15, twn: Fin calculations are not enabled in the boiler performance model
@@ -695,11 +744,11 @@ public:
 		double th_fin = 0.0;			//value( P_th_fin );				//[m] Thickness of fin 
 		double l_fin = 0.0;				//value( P_l_fin );				//[m] Length of fin (distance between boiler tubes)
 		double emis_fin = 0.0;			//value( P_emis_fin );			//[-] Emissivity of fin
-		double abs_fin = 0.0;			//value( P_abs_fin );			//[-] Absorptivity of fin
+		//double abs_fin = 0.0;			//value( P_abs_fin );			//[-] Absorptivity of fin
 		double mat_fin = 0.0;			//value( P_mat_fin );			//[-] Numerical code for fin material (2:Stainless_AISI316, 28: T-91 Steel)
 		// ***********************************************************
 		
-		double A_cs_b = CSP::pi*0.25*pow(d_t_boiler,2);	//[m^2] Cross-sectional area of boiler tube
+		//double A_cs_b = CSP::pi*0.25*pow(d_t_boiler,2);	//[m^2] Cross-sectional area of boiler tube
 
 		if( !dsg_rec.Initialize_Receiver( n_panels, d_rec, per_rec, hl_ffact, flowtype, false, 0, 0.0 ))
 		{
@@ -722,7 +771,7 @@ public:
 		m_emis_sh = value( P_emis_sh );				//[-] Emissivity of superheater tube
 		m_abs_sh = value( P_abs_sh );				//[-] Absorptivity of superheater tube
 		m_mat_sh = value( P_mat_sh );				//[-] Material of superheater tube
-		double A_cs_sh = CSP::pi*0.25*pow(m_th_sh, 2);	//[m^2] Cross-sectional area of superheating tube
+		//double A_cs_sh = CSP::pi*0.25*pow(m_th_sh, 2);	//[m^2] Cross-sectional area of superheating tube
 		double h_sh_max = 4658519.0;		//[J/kg] Corresponds to maximum possible temperature of lookup tables so steam code doesn't bug out
    
 		if( !superheater.Initialize_Boiler( dsg_rec, m_h_sh, m_d_sh, m_th_sh, m_emis_sh, m_mat_sh, h_sh_max, 0.0, 0.0, 0.0, 0.0, false ) )
@@ -739,7 +788,7 @@ public:
 		m_emis_rh = value( P_emis_rh );				//[-] Emissivity of reheater tube
 		m_abs_rh = value( P_abs_rh );				//[-] Absorptivity of reheater tube
 		m_mat_rh = value( P_mat_rh );				//[-] Material of reheater tube
-		double A_cs_rh = CSP::pi*0.25*pow(m_th_rh, 2);	//[m^2] Cross-sectional area of reheater tube
+		//double A_cs_rh = CSP::pi*0.25*pow(m_th_rh, 2);	//[m^2] Cross-sectional area of reheater tube
 		double h_rh_max = 4658519.0;				//[J/kg]
 
 		if( !reheater.Initialize_Boiler( dsg_rec, m_h_rh, m_d_rh, m_th_rh, m_emis_rh, m_mat_rh, h_rh_max, 0.0, 0.0, 0.0, 0.0, false ) )
@@ -750,7 +799,7 @@ public:
 
 
 		m_h_total = m_h_boiler + m_h_sh + m_h_rh;		//[m] Combined height of receiver panels
-		double area_rec = m_h_total * per_rec;			//[m^2] Total surface area of receiver
+		//double area_rec = m_h_total * per_rec;			//[m^2] Total surface area of receiver
 		m_A_panel = m_h_total * per_rec / (double) n_panels;	//[m^2] Surface area of one panel - combined receiver height
      
 		m_cycle_max_frac = value( P_cycle_max_frac );	//[-] Maximum cycle overdesign fraction
@@ -771,7 +820,7 @@ public:
 		double h_hp_out_des = h_hp_in_des - (h_hp_in_des - h_hp_out_isen)*0.88;	//[kJ/kg] Design reheat inlet enthlapy (isentropic efficiency = 88%)
 
 		water_PH( m_P_hp_out_des, h_hp_out_des, &wp );
-		double T_rh_in_des = wp.temp;		//[K] Design reheat inlet temperature
+		//double T_rh_in_des = wp.temp;		//[K] Design reheat inlet temperature
 
 		water_TP( m_T_rh_out_des, m_P_hp_out_des, &wp );
 		double h_rh_out_des = wp.enth; double s_rh_out_des = wp.entr; double rho_lp_in_des = wp.dens;	//Reheater outlet enthalpy(kJ/kg), entropy(kJ/kg-K), and density [kg/m^3]
@@ -809,14 +858,14 @@ public:
 		water_PH( m_P_hp_in_des, h_fw_out_des, &wp );
 		double T_fw_out_des = wp.temp; double rho_fw_out_des = wp.dens;	//[K] Design feedwater outlet temp, [kg/m^3] Design feedwater outlet density
 
-		double m_dot_tube_b = (m_m_dot_des/m_x_b_target)/boiler.Get_n_flowpaths()/(per_rec/(double)dsg_rec.Get_n_panels_rec()/d_t_boiler);	//[kg/s]
-		double m_dot_tube_sh = (m_m_dot_des/superheater.Get_n_flowpaths())/(per_rec/(double)dsg_rec.Get_n_panels_rec()/m_d_sh);				//[kg/s]
-		double m_dot_tube_rh = (m_m_dot_des/reheater.Get_n_flowpaths())/(per_rec/(double)dsg_rec.Get_n_panels_rec()/m_d_rh);					//[kg/s]
+		//double m_dot_tube_b = (m_m_dot_des/m_x_b_target)/boiler.Get_n_flowpaths()/(per_rec/(double)dsg_rec.Get_n_panels_rec()/d_t_boiler);	//[kg/s]
+		//double m_dot_tube_sh = (m_m_dot_des/superheater.Get_n_flowpaths())/(per_rec/(double)dsg_rec.Get_n_panels_rec()/m_d_sh);				//[kg/s]
+		//double m_dot_tube_rh = (m_m_dot_des/reheater.Get_n_flowpaths())/(per_rec/(double)dsg_rec.Get_n_panels_rec()/m_d_rh);					//[kg/s]
 
 		//Helpful metrics - not used elsewhere in code
-		double v_boiler_in = (m_dot_tube_b/m_x_b_target)/(rho_fw_out_des*A_cs_b);	//[m/s] Design fluid entrance velocity in boiler tube
-		double v_sh_out = m_dot_tube_sh / (rho_hp_in_des*A_cs_sh);					//[m/s] Design fluid exit velocity in superheater tube
-		double v_rh_out = m_dot_tube_rh / (rho_lp_in_des*A_cs_rh);					//[m/s] Design fluid exit velocity in reheater tube
+		//double v_boiler_in = (m_dot_tube_b/m_x_b_target)/(rho_fw_out_des*A_cs_b);	//[m/s] Design fluid entrance velocity in boiler tube
+		//double v_sh_out = m_dot_tube_sh / (rho_hp_in_des*A_cs_sh);					//[m/s] Design fluid exit velocity in superheater tube
+		//double v_rh_out = m_dot_tube_rh / (rho_lp_in_des*A_cs_rh);					//[m/s] Design fluid exit velocity in reheater tube
 
 		//Specific heat rate of receivers
 		m_q_sh_des_sp = h_hp_in_des - h_sh_in_des;		//[kJ/kg]
@@ -1094,7 +1143,7 @@ public:
 				{
 					double back_mult = 1.0; double front_mult = 0.0;
 					int index_start = -1; int index_stop = -1;
-					double q_flux_sum = 0.0;
+					//double q_flux_sum = 0.0;
 					bool is_div = false;
 					if (m_n_flux_x%(int)n_panels == 0)
 						is_div = true;
@@ -1105,7 +1154,7 @@ public:
 						index_start = index_stop;
 
 						if (is_div)
-							index_stop = m_n_flux_x / n_panels*(i + 1) - 1;
+							index_stop = (int)(m_n_flux_x / n_panels*(i + 1) - 1);
 						else
 							index_stop = (int)ceil(((double)(m_n_flux_x / n_panels)*(i + 1))) - 1;
 
@@ -1229,7 +1278,7 @@ public:
 				water_TP( T_fw, P_b_in, &wp );				
 				m_h_fw = wp.enth;											//[kJ/kg] Feedwater enthalpy
 
-				bool m_df_pred_ct = true;			//[-] Reset defocus prediction iteration counter
+				//bool m_df_pred_ct = true;			//[-] Reset defocus prediction iteration counter
 
 				double q_b_pred, q_sh_pred, q_rh_pred, q_rec_pred_tot; 		
 				q_b_pred, q_sh_pred, q_rh_pred, q_rec_pred_tot = std::numeric_limits<double>::quiet_NaN();
@@ -1309,10 +1358,10 @@ public:
 
 			eta_b = m_eta_b_ref;	eta_sh = m_eta_sh_ref; eta_rh = m_eta_rh_ref;	 // new for tcs -> initialize here - should overwrite before use
 			int iter_T_rh = -1;				//[-] Number of iterations on reheater fraction
-			double diff_T_rh = std::numeric_limits<double>::quiet_NaN();				//[-] Difference between target and calculated reheat temperature		
+			//double diff_T_rh = std::numeric_limits<double>::quiet_NaN();				//[-] Difference between target and calculated reheat temperature		
 			double df_upper, y_df_upper, df_lower, y_df_lower;
 			df_upper, y_df_upper, df_lower, y_df_lower = std::numeric_limits<double>::quiet_NaN();
-			bool break_rec_calcs = false;
+			//bool break_rec_calcs = false;
 			bool break_def_calcs = false;
 
 			do
@@ -2125,9 +2174,9 @@ public:
 			W_dot_boost = W_dot_boost + W_dot_aux;											//[W] Final pumping power must include aus pump power			
 		}
 		
-		double q_aux_rec = m_q_aux + q_therm_in_rec;		//[W] Total (auxiliary + incident absorbed) energy to power block
+		//double q_aux_rec = m_q_aux + q_therm_in_rec;		//[W] Total (auxiliary + incident absorbed) energy to power block
 		double m_dot_toPB = m_m_dot_aux + m_dot_sh;			//[kg/s] Total mass flow through HP turbine is sum of aux and sh mass flow because they operate in parallel
-		double E_aux = m_q_aux * step / 3600.;				//[W-hr] Energy added by aux heater in current timestep
+		//double E_aux = m_q_aux * step / 3600.;				//[W-hr] Energy added by aux heater in current timestep
 
 		//double t_standby;
 		// Mass flow rate based controls
@@ -2357,7 +2406,7 @@ public:
 		return 0;
 	}
 
-	virtual int converged( double time )
+	virtual int converged( double /*time*/ )
 	{
 		m_E_su_rec_prev = m_E_su_rec;	//[W-hr] Startup energy remaining
 		m_t_su_rec_prev = m_t_su_rec;	//[hr] Startup time remaining

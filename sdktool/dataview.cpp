@@ -1,3 +1,52 @@
+/*******************************************************************************************************
+*  Copyright 2017 Alliance for Sustainable Energy, LLC
+*
+*  NOTICE: This software was developed at least in part by Alliance for Sustainable Energy, LLC
+*  (“Alliance”) under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
+*  The Government retains for itself and others acting on its behalf a nonexclusive, paid-up,
+*  irrevocable worldwide license in the software to reproduce, prepare derivative works, distribute
+*  copies to the public, perform publicly and display publicly, and to permit others to do so.
+*
+*  Redistribution and use in source and binary forms, with or without modification, are permitted
+*  provided that the following conditions are met:
+*
+*  1. Redistributions of source code must retain the above copyright notice, the above government
+*  rights notice, this list of conditions and the following disclaimer.
+*
+*  2. Redistributions in binary form must reproduce the above copyright notice, the above government
+*  rights notice, this list of conditions and the following disclaimer in the documentation and/or
+*  other materials provided with the distribution.
+*
+*  3. The entire corresponding source code of any redistribution, with or without modification, by a
+*  research entity, including but not limited to any contracting manager/operator of a United States
+*  National Laboratory, any institution of higher learning, and any non-profit organization, must be
+*  made publicly available under this license for as long as the redistribution is made available by
+*  the research entity.
+*
+*  4. Redistribution of this software, without modification, must refer to the software by the same
+*  designation. Redistribution of a modified version of this software (i) may not refer to the modified
+*  version by the same designation, or by any confusingly similar designation, and (ii) must refer to
+*  the underlying software originally provided by Alliance as “System Advisor Model” or “SAM”. Except
+*  to comply with the foregoing, the terms “System Advisor Model”, “SAM”, or any confusingly similar
+*  designation may not be used to refer to any modified version of this software or any modified
+*  version of the underlying software originally provided by Alliance without the prior written consent
+*  of Alliance.
+*
+*  5. The name of the copyright holder, contributors, the United States Government, the United States
+*  Department of Energy, or any of their employees may not be used to endorse or promote products
+*  derived from this software without specific prior written permission.
+*
+*  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
+*  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
+*  FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER,
+*  CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES DEPARTMENT OF ENERGY, NOR ANY OF THEIR
+*  EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+*  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+*  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+*  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
+*  THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*******************************************************************************************************/
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -47,7 +96,7 @@ public:
 		m_attr = new wxGridCellAttr;
 		m_attr->SetBackgroundColour( wxColour( 240,240,240 ) );
 		m_attr->SetTextColour( "navy" );
-		m_attr->SetFont( wxFont(FONTSIZE, wxMODERN, wxNORMAL, wxNORMAL) );
+		m_attr->SetFont( wxFont(FONTSIZE, wxFONTFAMILY_MODERN, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL) );
 	}
 
 	virtual ~Table()
@@ -59,10 +108,10 @@ public:
 	
 
 	
-    virtual wxGridCellAttr *GetAttr(int row, int col,
-                                    wxGridCellAttr::wxAttrKind  kind)
+    virtual wxGridCellAttr *GetAttr(int , int col,
+                                    wxGridCellAttr::wxAttrKind  )
 	{
-		if (col >= 0 && col < m_items.Count())
+		if (col >= 0 && col < (int)m_items.Count())
 		{
 			if (!m_vt_ref) return NULL;
 			var_data *v = m_vt_ref->lookup( (const char*)m_items[col].c_str() );
@@ -85,7 +134,7 @@ public:
 	virtual int GetNumberRows()
 	{
 		int max0 = 0;
-		for (int i=0;i<m_items.Count();i++)
+		for (int i=0;i<(int)m_items.Count();i++)
 		{
 			if (!m_vt_ref) continue;
 			var_data *v = m_vt_ref->lookup( (const char*)m_items[i].c_str() );
@@ -108,7 +157,7 @@ public:
 
 	virtual bool IsEmptyCell(int row, int col)
 	{
-		if ( col < 0 || col >= m_items.Count() || row < 0 ) return true;
+		if ( col < 0 || col >= (int)m_items.Count() || row < 0 ) return true;
 		
 		if (!m_vt_ref) return true;
 		var_data *v = m_vt_ref->lookup( (const char*)m_items[col].c_str() );
@@ -116,36 +165,36 @@ public:
 
 		if ( v->type == SSC_STRING && row >= 1 ) return true;
 
-		if ( v->type == SSC_ARRAY && row >= v->num.length() ) return true;
+		if ( v->type == SSC_ARRAY && row >= (int)v->num.length() ) return true;
 		
-		if ( v->type == SSC_MATRIX && row >= v->num.nrows() ) return true;
+		if ( v->type == SSC_MATRIX && row >= (int)v->num.nrows() ) return true;
 
-		if ( v->type == SSC_TABLE && row >= v->table.size() ) return true;
+		if ( v->type == SSC_TABLE && row >= (int)v->table.size() ) return true;
 
 		return false;
 	}
 
 	virtual wxString GetValue( int row, int col )
 	{
-		if (m_vt_ref && col >= 0 && col < m_items.Count())
+		if (m_vt_ref && col >= 0 && col < (int)m_items.Count())
 		{
 			var_data *v = m_vt_ref->lookup( (const char*)m_items[col].c_str() );
 			if (!v) return "<lookup error>";
 
 			if (v->type == SSC_STRING && row == 0) return wxString(v->str.c_str());
 			else if (v->type == SSC_NUMBER && row == 0) return wxString::Format("%lf", (double) v->num);
-			else if (v->type == SSC_ARRAY && row < v->num.length()) return wxString::Format("%lf", (double)v->num[row]);
-			else if (v->type == SSC_MATRIX && row < v->num.nrows())
+			else if (v->type == SSC_ARRAY && row < (int)v->num.length()) return wxString::Format("%lf", (double)v->num[row]);
+			else if (v->type == SSC_MATRIX && row < (int)v->num.nrows())
 			{
 				wxString ret;
-				for (int j=0;j<v->num.ncols();j++)
+				for (int j=0;j<(int)v->num.ncols();j++)
 				{
 					ret += wxString::Format("%*lf", 13, (double)v->num.at(row, j));
 				}
 
 				return ret;
 			}
-			else if (v->type == SSC_TABLE && row < v->table.size())
+			else if (v->type == SSC_TABLE && (unsigned int)row < v->table.size())
 			{
 				int k = 0;
 				const char *key = v->table.first();
@@ -163,7 +212,7 @@ public:
 
 	virtual wxString GetColLabelValue(int col)
 	{
-		if (col >= 0 && col < m_items.Count())
+		if (col >= 0 && col < (int)m_items.Count())
 		{
 
 			if (!m_vt_ref) return m_items[col];
@@ -173,7 +222,7 @@ public:
 			return "<unknown>";
 	}
 	
-	void SetData( const wxArrayString &items, var_table *vt, bool ro)
+	void SetData( const wxArrayString &items, var_table *vt, bool )
 	{
 		m_items = items;
 		m_vt_ref = vt;
@@ -264,10 +313,10 @@ DataView::DataView( wxWindow *parent )
 	splitwin->SetMinimumPaneSize(210);
 
 	m_varlist = new wxCheckListBox( splitwin, ID_LIST );
-	m_varlist->SetFont( wxFont(FONTSIZE, wxMODERN, wxNORMAL, wxNORMAL) );
+	m_varlist->SetFont( wxFont(FONTSIZE, wxFONTFAMILY_MODERN, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL) );
 	
 	m_grid = new wxExtGridCtrl(splitwin, ID_GRID);
-	m_grid->SetFont( wxFont(FONTSIZE, wxMODERN, wxNORMAL, wxNORMAL) );
+	m_grid->SetFont( wxFont(FONTSIZE, wxFONTFAMILY_MODERN, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL) );
 	m_grid->EnableEditing(false);
 	m_grid->EnableCopyPaste(false);
 	m_grid->DisableDragCell();
@@ -293,14 +342,14 @@ DataView::DataView( wxWindow *parent )
 std::vector<int> DataView::GetColumnWidths()
 {
 	std::vector<int> list;
-	for (size_t i=0;i<m_grid->GetNumberCols();i++)
+	for (int i=0;i<m_grid->GetNumberCols();i++)
 		list.push_back( m_grid->GetColSize( i ) );
 	return list;
 }
 
 void DataView::SetColumnWidths( const std::vector<int> &cwl )
 {
-	for (size_t i=0;i<cwl.size() && i<m_grid->GetNumberCols();i++)
+	for (int i=0;i<(int)cwl.size() && i<m_grid->GetNumberCols();i++)
 		m_grid->SetColSize( i, cwl[i] );
 }
 
@@ -312,7 +361,7 @@ wxArrayString DataView::GetSelections()
 void DataView::SetSelections(const wxArrayString &sel)
 {
 	m_selections = sel;
-	int i=0;
+	size_t i=0;
 	while (i < m_selections.Count())
 	{
 		if ( m_names.Index( m_selections[i] ) == wxNOT_FOUND )
@@ -396,7 +445,7 @@ void DataView::UpdateView()
 
 			if (var_data *v = m_vt->lookup(name))
 			{
-				for (int j=0;j< padto-strlen(name);j++)
+				for (int j=0;j< padto-(int)strlen(name);j++)
 					label += ' ';
 
 				label += wxString(v->type_name());
@@ -419,7 +468,7 @@ void DataView::UpdateView()
 
 		m_varlist->Freeze();
 		SortByLabels(m_names, labels );
-		for (int i=0;i<m_names.Count();i++)
+		for (int i=0;i<(int)m_names.Count();i++)
 		{
 			int idx = m_varlist->Append( labels[i]);
 			m_varlist->Check( idx, false );
@@ -515,7 +564,7 @@ void DataView::OnCommand(wxCommandEvent &evt)
 	case ID_DELETE_CHECKED:
 		{
 			wxArrayString list = m_selections;
-			for (int i=0;i<list.Count();i++)
+			for (int i=0;i<(int)list.Count();i++)
 				DeleteVariable(list[i]);
 		}
 		break;
@@ -530,10 +579,10 @@ void DataView::OnCommand(wxCommandEvent &evt)
 				name = m_vt->next();
 			}
 
-			for (int i=0;i<m_selections.Count();i++)
+			for (int i=0;i<(int)m_selections.Count();i++)
 				list.Remove( m_selections[i] );
 			
-			for (int i=0;i<list.Count();i++)
+			for (int i=0;i<(int)list.Count();i++)
 				DeleteVariable(list[i]);
 		}
 		break;	
@@ -564,7 +613,7 @@ void DataView::OnCommand(wxCommandEvent &evt)
 void DataView::OnVarListCheck(wxCommandEvent &evt)
 {
 	int idx = evt.GetSelection();
-	if (idx >= 0  && idx < m_names.Count())
+	if (idx >= 0  && idx < (int)m_names.Count())
 	{
 		wxString var = m_names[idx];
 		
@@ -598,7 +647,7 @@ void DataView::AddVariable()
 	}
 }
 
-void DataView::OnVarListDClick(wxCommandEvent &evt)
+void DataView::OnVarListDClick(wxCommandEvent &)
 {
 	EditVariable();
 }
@@ -606,7 +655,7 @@ void DataView::OnVarListDClick(wxCommandEvent &evt)
 wxString DataView::GetSelection()
 {
 	int n = m_varlist->GetSelection();
-	if (n >= 0 && n < m_names.Count())
+	if (n >= 0 && n < (int)m_names.Count())
 		return m_names[n];
 	else
 		return wxEmptyString;
@@ -685,7 +734,7 @@ void DataView::ShowStats( wxString name )
 void DataView::OnGridLabelRightClick(wxGridEvent &evt)
 {
 	int col = evt.GetCol();
-	if (col < 0 || col >= m_selections.Count()) return;
+	if (col < 0 || col >= (int)m_selections.Count()) return;
 	
 	m_popup_var_name = m_selections[col];
 
@@ -704,7 +753,7 @@ void DataView::OnGridLabelRightClick(wxGridEvent &evt)
 void DataView::OnGridLabelDoubleClick(wxGridEvent &evt)
 {
 	int col = evt.GetCol();
-	if (col < 0 || col >= m_selections.Count()) return;
+	if (col < 0 || col >= (int)m_selections.Count()) return;
 	EditVariable( m_selections[col] );
 }
 
@@ -751,7 +800,7 @@ void DataView::OnPopup(wxCommandEvent &evt)
 				double minval = 1e99;
 				double maxval = 1e-99;
 				std::vector<wxRealPoint> pdat;
-				for (int i=0;i<v->num.length();i++)
+				for (int i=0;i<(int)v->num.length();i++)
 				{
 					pdat.push_back( wxRealPoint( i+1, v->num[i] ) );
 					if ( v->num[i] < minval ) minval = v->num[i];

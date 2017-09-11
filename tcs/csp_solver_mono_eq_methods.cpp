@@ -1,3 +1,52 @@
+/*******************************************************************************************************
+*  Copyright 2017 Alliance for Sustainable Energy, LLC
+*
+*  NOTICE: This software was developed at least in part by Alliance for Sustainable Energy, LLC
+*  (“Alliance”) under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
+*  The Government retains for itself and others acting on its behalf a nonexclusive, paid-up,
+*  irrevocable worldwide license in the software to reproduce, prepare derivative works, distribute
+*  copies to the public, perform publicly and display publicly, and to permit others to do so.
+*
+*  Redistribution and use in source and binary forms, with or without modification, are permitted
+*  provided that the following conditions are met:
+*
+*  1. Redistributions of source code must retain the above copyright notice, the above government
+*  rights notice, this list of conditions and the following disclaimer.
+*
+*  2. Redistributions in binary form must reproduce the above copyright notice, the above government
+*  rights notice, this list of conditions and the following disclaimer in the documentation and/or
+*  other materials provided with the distribution.
+*
+*  3. The entire corresponding source code of any redistribution, with or without modification, by a
+*  research entity, including but not limited to any contracting manager/operator of a United States
+*  National Laboratory, any institution of higher learning, and any non-profit organization, must be
+*  made publicly available under this license for as long as the redistribution is made available by
+*  the research entity.
+*
+*  4. Redistribution of this software, without modification, must refer to the software by the same
+*  designation. Redistribution of a modified version of this software (i) may not refer to the modified
+*  version by the same designation, or by any confusingly similar designation, and (ii) must refer to
+*  the underlying software originally provided by Alliance as “System Advisor Model” or “SAM”. Except
+*  to comply with the foregoing, the terms “System Advisor Model”, “SAM”, or any confusingly similar
+*  designation may not be used to refer to any modified version of this software or any modified
+*  version of the underlying software originally provided by Alliance without the prior written consent
+*  of Alliance.
+*
+*  5. The name of the copyright holder, contributors, the United States Government, the United States
+*  Department of Energy, or any of their employees may not be used to endorse or promote products
+*  derived from this software without specific prior written permission.
+*
+*  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
+*  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
+*  FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER,
+*  CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES DEPARTMENT OF ENERGY, NOR ANY OF THEIR
+*  EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+*  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+*  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+*  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
+*  THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*******************************************************************************************************/
+
 #include "csp_solver_core.h"
 #include "numeric_solvers.h"
 #include <math.h>
@@ -12,8 +61,8 @@ int C_csp_solver::C_MEQ_cr_on__pc_q_dot_max__tes_off__defocus::operator()(double
 
 	c_solver.settings(1.E-3, 50, std::numeric_limits<double>::quiet_NaN(), std::numeric_limits<double>::quiet_NaN(), false);
 
-	double T_htf_cold_guess_colder = mpc_csp_solver->m_T_htf_pc_cold_est - 273.15;		//[C], convert from [K]
-	double T_htf_cold_guess_warmer = T_htf_cold_guess_colder + 10.0;	//[C]
+	double T_htf_cold_guess_colder = mpc_csp_solver->m_T_htf_pc_cold_est;	//[C], convert from [K]
+	double T_htf_cold_guess_warmer = T_htf_cold_guess_colder + 10.0;		//[C]
 
 	double T_htf_cold_solved, tol_solved;
 	T_htf_cold_solved = tol_solved = std::numeric_limits<double>::quiet_NaN();
@@ -36,11 +85,12 @@ int C_csp_solver::C_MEQ_cr_on__pc_q_dot_max__tes_off__defocus::operator()(double
 			mpc_csp_solver->error_msg = util::format("At time = %lg the C_MEQ_cr_on__pc_max__tes_off__defocus->C_mono_eq_cr_to_pc_to_cr iteration to find the cold HTF temperature connecting the power cycle and receiver only reached a convergence "
 				"= %lg. Check that results at this timestep are not unreasonably biasing total simulation results",
 				mpc_csp_solver->mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, tol_solved);
-			mpc_csp_solver->mc_csp_messages.add_message(C_csp_messages::WARNING, mpc_csp_solver->error_msg);
+			mpc_csp_solver->mc_csp_messages.add_message(C_csp_messages::NOTICE, mpc_csp_solver->error_msg);
 		}
 		else
 		{
-			throw(C_csp_exception("C_MEQ_cr_on__pc_max__tes_off__defocus->C_mono_eq_cr_to_pc_to_cr received exception from mono equation solver"));
+			*q_dot_pc = std::numeric_limits<double>::quiet_NaN();
+			return -1;
 		}
 	}
 
@@ -324,7 +374,7 @@ int C_csp_solver::C_mono_eq_pc_target_tes_dc__T_cold::operator()(double T_htf_co
 				"iteration to find a mass flow rate resulting in the target power cycle heat input only reached a convergence "
 				"= %lg. Check that results at this timestep are not unreasonably biasing total simulation results",
 				mpc_csp_solver->mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, tol_solved);
-			mpc_csp_solver->mc_csp_messages.add_message(C_csp_messages::WARNING, msg);
+			mpc_csp_solver->mc_csp_messages.add_message(C_csp_messages::NOTICE, msg);
 		}
 		else
 		{
@@ -575,7 +625,7 @@ int C_csp_solver::C_mono_eq_cr_on_pc_target_tes_ch__T_cold::operator()(double T_
 				mpc_csp_solver->error_msg = util::format("At time = %lg the iteration to find the power cycle HTF mass flow rate resulting in the target thermal power only reached a convergence "
 					"= %lg. Check that results at this timestep are not unreasonably biasing total simulation results",
 					mpc_csp_solver->mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, tol_solved);
-				mpc_csp_solver->mc_csp_messages.add_message(C_csp_messages::WARNING, mpc_csp_solver->error_msg);
+				mpc_csp_solver->mc_csp_messages.add_message(C_csp_messages::NOTICE, mpc_csp_solver->error_msg);
 			}
 			else
 			{
@@ -891,7 +941,7 @@ int C_csp_solver::C_mono_eq_pc_target_tes_empty__T_cold::operator()(double T_htf
 			mpc_csp_solver->error_msg = util::format("At time = %lg the iteration to find the time step resulting in emptying TES at the target thermal power only reached a convergence "
 				"= %lg. Check that results at this timestep are not unreasonably biasing total simulation results",
 				mpc_csp_solver->mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, tol_solved);
-			mpc_csp_solver->mc_csp_messages.add_message(C_csp_messages::WARNING, mpc_csp_solver->error_msg);
+			mpc_csp_solver->mc_csp_messages.add_message(C_csp_messages::NOTICE, mpc_csp_solver->error_msg);
 		}
 		else
 		{
@@ -1037,7 +1087,7 @@ int C_csp_solver::C_mono_eq_cr_on_pc_target_tes_dc::operator()(double T_htf_cold
 					mpc_csp_solver->error_msg = util::format("At time = %lg the iteration to find the TES discharge mass flow rate resulting in the target thermal power only reached a convergence "
 						"= %lg. Check that results at this timestep are not unreasonably biasing total simulation results",
 						mpc_csp_solver->mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, tol_solved);
-					mpc_csp_solver->mc_csp_messages.add_message(C_csp_messages::WARNING, mpc_csp_solver->error_msg);
+					mpc_csp_solver->mc_csp_messages.add_message(C_csp_messages::NOTICE, mpc_csp_solver->error_msg);
 				}
 				else
 				{
@@ -1293,7 +1343,7 @@ int C_csp_solver::C_mono_eq_cr_on__pc_m_dot_max__tes_full_defocus::operator()(do
 				"iteration to find the cold HTF temperature to balance energy between the TES and PC only reached a convergence "
 				"= %lg. Check that results at this timestep are not unreasonably biasing total simulation results",
 				mpc_csp_solver->mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, tol_solved);
-			mpc_csp_solver->mc_csp_messages.add_message(C_csp_messages::WARNING, msg);
+			mpc_csp_solver->mc_csp_messages.add_message(C_csp_messages::NOTICE, msg);
 		}
 		else
 		{
@@ -1425,7 +1475,7 @@ int C_csp_solver::C_MEQ_cr_on__pc_m_dot_max__tes_off__defocus::operator()(double
 				"iteration to find the cold HTF temperature to balance energy between the CR and PC only reached a convergence "
 				"= %lg. Check that results at this timestep are not unreasonably biasing total simulation results",
 				mpc_csp_solver->mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, tol_solved);
-			mpc_csp_solver->mc_csp_messages.add_message(C_csp_messages::WARNING, msg);
+			mpc_csp_solver->mc_csp_messages.add_message(C_csp_messages::NOTICE, msg);
 		}
 		else
 		{
@@ -1678,7 +1728,7 @@ int C_csp_solver::C_MEQ_cr_on__pc_target__tes_empty__T_htf_cold::operator()(doub
 			mpc_csp_solver->error_msg = util::format("At time = %lg the iteration to find the time step resulting in emptying TES at the target thermal power only reached a convergence "
 				"= %lg. Check that results at this timestep are not unreasonably biasing total simulation results",
 				mpc_csp_solver->mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, tol_solved);
-			mpc_csp_solver->mc_csp_messages.add_message(C_csp_messages::WARNING, mpc_csp_solver->error_msg);
+			mpc_csp_solver->mc_csp_messages.add_message(C_csp_messages::NOTICE, mpc_csp_solver->error_msg);
 		}
 		else
 		{
@@ -1864,7 +1914,7 @@ int C_csp_solver::C_MEQ_cr_df__pc_off__tes_full__defocus::operator()(double defo
 				"iteration to find the cold HTF temperature to balance energy between the CR and PC only reached a convergence "
 				"= %lg. Check that results at this timestep are not unreasonably biasing total simulation results",
 				mpc_csp_solver->mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, tol_solved);
-			mpc_csp_solver->mc_csp_messages.add_message(C_csp_messages::WARNING, msg);
+			mpc_csp_solver->mc_csp_messages.add_message(C_csp_messages::NOTICE, msg);
 		}
 		else
 		{

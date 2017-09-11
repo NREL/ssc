@@ -1,3 +1,52 @@
+/*******************************************************************************************************
+*  Copyright 2017 Alliance for Sustainable Energy, LLC
+*
+*  NOTICE: This software was developed at least in part by Alliance for Sustainable Energy, LLC
+*  (“Alliance”) under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
+*  The Government retains for itself and others acting on its behalf a nonexclusive, paid-up,
+*  irrevocable worldwide license in the software to reproduce, prepare derivative works, distribute
+*  copies to the public, perform publicly and display publicly, and to permit others to do so.
+*
+*  Redistribution and use in source and binary forms, with or without modification, are permitted
+*  provided that the following conditions are met:
+*
+*  1. Redistributions of source code must retain the above copyright notice, the above government
+*  rights notice, this list of conditions and the following disclaimer.
+*
+*  2. Redistributions in binary form must reproduce the above copyright notice, the above government
+*  rights notice, this list of conditions and the following disclaimer in the documentation and/or
+*  other materials provided with the distribution.
+*
+*  3. The entire corresponding source code of any redistribution, with or without modification, by a
+*  research entity, including but not limited to any contracting manager/operator of a United States
+*  National Laboratory, any institution of higher learning, and any non-profit organization, must be
+*  made publicly available under this license for as long as the redistribution is made available by
+*  the research entity.
+*
+*  4. Redistribution of this software, without modification, must refer to the software by the same
+*  designation. Redistribution of a modified version of this software (i) may not refer to the modified
+*  version by the same designation, or by any confusingly similar designation, and (ii) must refer to
+*  the underlying software originally provided by Alliance as “System Advisor Model” or “SAM”. Except
+*  to comply with the foregoing, the terms “System Advisor Model”, “SAM”, or any confusingly similar
+*  designation may not be used to refer to any modified version of this software or any modified
+*  version of the underlying software originally provided by Alliance without the prior written consent
+*  of Alliance.
+*
+*  5. The name of the copyright holder, contributors, the United States Government, the United States
+*  Department of Energy, or any of their employees may not be used to endorse or promote products
+*  derived from this software without specific prior written permission.
+*
+*  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
+*  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
+*  FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER,
+*  CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES DEPARTMENT OF ENERGY, NOR ANY OF THEIR
+*  EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+*  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+*  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+*  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
+*  THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*******************************************************************************************************/
+
 #ifndef __SCO2_PC_CORE_
 #define __SCO2_PC_CORE_
 
@@ -155,53 +204,58 @@ public:
 	void od_turbine_at_N_des(double T_in, double P_in, double P_out, int & error_code, double & m_dot, double & T_out);
 };
 
-class C_compressor
+class C_comp_single_stage
 {
 public:
-	struct S_design_parameters
+
+	struct S_des_solved
 	{
-			// Compressor inlet conditions
+		// Compressor inlet conditions
 		double m_T_in;			//[K]
 		double m_P_in;			//[kPa]
 		double m_D_in;			//[kg/m^3]
 		double m_h_in;			//[kJ/kg]
 		double m_s_in;			//[kJ/kg-K]
-			// Compressor outlet conditions
+		// Compressor outlet conditions
 		double m_T_out;			//[K]
 		double m_P_out;			//[kPa]
 		double m_h_out;			//[kJ/kg]
 		double m_D_out;			//[kg/m^3]
-			// Mass flow
+		// Mass flow
 		double m_m_dot;			//[kg/s]
 
-		S_design_parameters()
-		{
-			m_T_in = m_P_in = m_D_in = m_h_in = m_s_in =
-			m_T_out = m_P_out = m_h_out = m_D_out = std::numeric_limits<double>::quiet_NaN();
-		}
-	};
-	struct S_design_solved
-	{
+		// Geometry
 		double m_D_rotor;		//[m]
 		double m_N_design;		//[rpm]
-		double m_w_tip_ratio;	//[-]
+		double m_tip_ratio;		//[-]
 		double m_eta_design;	//[-]
 
 		double m_phi_des;		//[-]
 		double m_phi_surge;		//[-]
 		double m_phi_max;		//[-]
-		int m_n_stages;			//[-]
 
-		S_design_solved()
+		S_des_solved()
 		{
-			m_D_rotor = m_N_design = m_w_tip_ratio = m_eta_design = 
+			m_T_in = m_P_in = m_D_in = m_h_in = m_s_in = 
+				m_T_out = m_P_out = m_h_out = m_D_out =
+				m_m_dot = m_D_rotor = m_N_design = m_tip_ratio = m_eta_design =
 				m_phi_surge = m_phi_des = m_phi_max = std::numeric_limits<double>::quiet_NaN();
-
-			m_n_stages = -1;
 		}
 	};
+
 	struct S_od_solved
 	{
+		double m_P_in;			//[kPa] Inlet pressure
+		double m_h_in;			//[kJ/kg] Inlet enthalpy
+		double m_T_in;			//[K] Inlet temperature
+		double m_s_in;			//[kJ/kg-K] Inlet entropy
+
+		double m_P_out;			//[kPa] Outlet pressure
+		double m_h_out;			//[kPa] Outlet enthalpy
+		double m_T_out;			//[K] Outlet temperature
+		double m_s_out;			//[kJ/kg-K] Outlet entropy
+
+		
 		bool m_surge;			//[-]
 		double m_eta;			//[-]
 		double m_phi;			//[-]
@@ -210,168 +264,124 @@ public:
 		double m_N;			//[rpm]
 
 		double m_W_dot_in;		//[KWe] Power required by compressor, positive value expected
-		double m_P_in;			//[kPa] Inlet pressure
-		double m_P_out;			//[kPa] Outlet pressure
 		double m_surge_safety;	//[-] Flow coefficient / min flow coefficient
 
 		S_od_solved()
 		{
+			m_P_in = m_h_in = m_T_in = m_s_in =
+				m_P_out = m_h_out = m_T_out = m_s_out = std::numeric_limits<double>::quiet_NaN();
 			m_surge = false;
 			m_eta = m_phi = m_w_tip_ratio = m_N =
-				m_W_dot_in = m_P_in = m_P_out = m_surge_safety = std::numeric_limits<double>::quiet_NaN();
+				m_W_dot_in = m_surge_safety = std::numeric_limits<double>::quiet_NaN();
 		}
 	};
 
-private:
-	S_design_parameters ms_des_par;
-	S_design_solved ms_des_solved;
+	S_des_solved ms_des_solved; 
 	S_od_solved ms_od_solved;
 
-public:
-	~C_compressor(){};
+	~C_comp_single_stage(){};
 
-	C_compressor(){};
+	C_comp_single_stage(){};
 
 	static const double m_snl_phi_design;		//[-] Design-point flow coef. for Sandia compressor (corresponds to max eta)
 	static const double m_snl_phi_min;				//[-] Approximate surge limit for SNL compressor
 	static const double m_snl_phi_max;				//[-] Approximate x-intercept for SNL compressor
 
-	const S_design_solved * get_design_solved()
+	const S_des_solved * get_design_solved()
 	{
 		return &ms_des_solved;
 	}
 
-	const S_od_solved * get_od_solved()
-	{
-		return &ms_od_solved;
-	}
+	int design_given_shaft_speed(double T_in /*K*/, double P_in /*kPa*/, double m_dot /*kg/s*/, 
+		double N_rpm /*rpm*/, double eta_isen /*-*/, double & P_out /*kPa*/, double & T_out /*K*/, double & tip_ratio /*-*/);
 
-	void compressor_sizing(const S_design_parameters & des_par_in, int & error_code);
-	
-	void off_design_compressor(double T_in, double P_in, double m_dot, double N, int & error_code, double & T_out, double & P_out);
-	
-	void od_comp_at_N_des(double T_in, double P_in, double m_dot, int & error_code, double & T_out, double & P_out);
+	int design_single_stage_comp(double T_in /*K*/, double P_in /*kPa*/, double m_dot /*kg/s*/,
+		double T_out /*K*/, double P_out /*K*/);
 
-	void od_comp_phi_opt(double T_in /*K*/, double P_in /*kPa*/, double m_dot /*kg/s*/, 
-							int &error_code, double &T_out /*K*/, double &P_out /*kPa*/);
+	int off_design_given_N(double T_in /*K*/, double P_in /*kPa*/, double m_dot /*kg/s*/, double N_rpm /*rpm*/,
+		double & T_out /*K*/, double & P_out /*kPa*/);
 
-	void od_comp_phi(double phi_in /*-*/, double T_in /*K*/, double P_in /*kPa*/, double m_dot /*kg/s*/,
-		int &error_code, double &T_out /*K*/, double &P_out /*kPa*/);
+	int calc_N_from_phi(double T_in /*K*/, double P_in /*kPa*/, double m_dot /*kg/s*/, double phi_in /*-*/, double & N_rpm /*rpm*/);
 };
 
-class C_recompressor
+class C_comp_multi_stage
 {
 public:
-	struct S_design_parameters
-	{
-			// Compressor inlet conditions
-		double m_P_in;
-		double m_D_in;
-		double m_h_in;
-		double m_s_in;
-			// Compressor outlet conditions
-		double m_T_out;
-		double m_P_out;
-		double m_h_out;
-		double m_D_out;
-			// Flow conditions
-		double m_m_dot;
 
-		S_design_parameters()
-		{
-			m_P_in = m_D_in = m_h_in = m_s_in = 
-			m_T_out = m_P_out = m_h_out = m_D_out =
-			m_m_dot = std::numeric_limits<double>::quiet_NaN();
-		}
-	};
-	struct S_design_solved
-	{
-		double m_D_rotor;
-		double m_D_rotor_2;
-		double m_N_design;
-		double m_eta_design;
-		
-		double m_w_tip_ratio_1;	//[-] Max tip ratio at design, first stage
-		double m_w_tip_ratio_2;	//[-] Max tip ratio at design, 2nd stage
+	std::vector<C_comp_single_stage> mv_stages;
 
+	struct S_des_solved
+	{
+		// Compressor inlet conditions
+		double m_T_in;			//[K]
+		double m_P_in;			//[kPa]
+		double m_D_in;			//[kg/m^3]
+		double m_h_in;			//[kJ/kg]
+		double m_s_in;			//[kJ/kg-K]
+		// Compressor outlet conditions
+		double m_T_out;			//[K]
+		double m_P_out;			//[kPa]
+		double m_h_out;			//[kJ/kg]
+		double m_D_out;			//[kg/m^3]
+		// Mass flow
+		double m_m_dot;			//[kg/s]
+
+		// Geometry
+		double m_N_design;		//[rpm]
 		double m_phi_des;		//[-]
-		double m_phi_surge;		//[-]
-		double m_phi_max;		//[-]
-		int m_n_stages;			//[-]
+		double m_w_tip_ratio;	//[-] Max tip ratio over all stages
+		int m_n_stages;			//[-] Number of stages
+		double m_D_rotor;		//[m] First stage rotor diameter
+		double m_phi_surge;		//[-] Flow coefficient at surge
 
-		S_design_solved()
+		S_des_solved()
 		{
-			m_D_rotor = m_D_rotor_2 = m_N_design = m_eta_design =
-				m_w_tip_ratio_1 = m_w_tip_ratio_2 = m_phi_surge = m_phi_des = m_phi_max = std::numeric_limits<double>::quiet_NaN();
-
 			m_n_stages = -1;
-		}
-	};
-
-	struct S_od_inputs
-	{
-		double m_m_dot;		//[kg/s]
-		double m_rho_in;		//[kg/m^3]
-		double m_h_in;		//[kJ/kg]
-		double m_s_in;		//[kJ/kg-K]
-
-		S_od_inputs()
-		{
-			m_m_dot = m_rho_in = m_h_in = m_s_in = std::numeric_limits<double>::quiet_NaN();
+			
+			m_T_in = m_P_in = m_D_in = m_h_in = m_s_in = 
+				m_T_out = m_P_out = m_h_out = m_D_out = 
+				m_m_dot = 
+				m_N_design = m_phi_des = m_w_tip_ratio = std::numeric_limits<double>::quiet_NaN();
 		}
 	};
 
 	struct S_od_solved
 	{
-		double m_N;
-		double m_eta;
-		double m_phi;
-		double m_phi_2;
-		double m_w_tip_ratio;	//[-] Maximum of multiple stages
-		bool m_surge;
+		double m_P_in;			//[kPa] Inlet pressure
+		double m_T_in;			//[K] Inlet temperature
 
-		double m_T_out;			//[K] Compressor outlet temperature
-		double m_W_dot_in;		//[kWe] Power required to operate compressor. Expect positive value.
-		double m_surge_safety;	//[-] min of stages: Flow coefficient / min flow coefficient
+		double m_P_out;			//[kPa] Outlet pressure
+		double m_T_out;			//[K] Outlet temperature
+		
+		bool m_surge;			//[-]
+		double m_eta;			//[-]
+		double m_phi;			//[-] Min phi over all stages
+		double m_w_tip_ratio;	//[-] Max tip ratio over all stages
+
+		double m_N;			//[rpm]
+
+		double m_W_dot_in;		//[KWe] Power required by compressor, positive value expected
+		double m_surge_safety;	//[-] Flow coefficient / min flow coefficient
 
 		S_od_solved()
 		{
-			m_N = m_eta = m_phi = m_phi_2 = m_w_tip_ratio = 
-				m_T_out = m_W_dot_in = m_surge_safety = std::numeric_limits<double>::quiet_NaN();
+			m_P_in = m_T_in =
+				m_P_out = m_T_out = std::numeric_limits<double>::quiet_NaN();
+
 			m_surge = false;
+			m_eta = m_phi = m_w_tip_ratio = m_N =
+				m_W_dot_in = m_surge_safety = std::numeric_limits<double>::quiet_NaN();
 		}
 	};
 
-private:
-	S_design_parameters ms_des_par;
-	S_design_solved ms_des_solved;
+	S_des_solved ms_des_solved;
 	S_od_solved ms_od_solved;
-	S_od_inputs ms_od_inputs;
 
-public:
-	~C_recompressor(){};
+	~C_comp_multi_stage(){};
 
-	C_recompressor(){};
+	C_comp_multi_stage(){};
 
-	static const double m_snl_phi_design;		//[-] Design-point flow coef. for Sandia compressor (corresponds to max eta)
-	static const double m_snl_phi_min;				//[-] Approximate surge limit for SNL compressor
-	static const double m_snl_phi_max;				//[-] Approximate x-intercept for SNL compressor
-
-	class C_mono_eq_phi_off_design : public C_monotonic_equation
-	{
-	private:
-		C_recompressor *mpc_recompressor;
-
-	public:
-		C_mono_eq_phi_off_design(C_recompressor *pc_recompressor)
-		{
-			mpc_recompressor = pc_recompressor;
-		}
-
-		virtual int operator()(double phi /*-*/, double *P_high /*kPa*/);
-	};
-
-	const S_design_solved * get_design_solved()
+	const S_des_solved * get_design_solved()
 	{
 		return &ms_des_solved;
 	}
@@ -381,11 +391,318 @@ public:
 		return &ms_od_solved;
 	}
 
-	void recompressor_sizing(const S_design_parameters & des_par_in, int & error_code);	
+	class C_MEQ_eta_isen__h_out : public C_monotonic_equation
+	{
+	private:
+		C_comp_multi_stage *mpc_multi_stage;
+		double m_T_in;	//[K]
+		double m_P_in;	//[kPa]
+		double m_P_out;	//[kPa]
+		double m_m_dot;	//[kg/s]
 
-	void off_design_recompressor(double T_in, double P_in, double m_dot, double P_out, int & error_code, double & T_out);
+	public:
+		C_MEQ_eta_isen__h_out(C_comp_multi_stage *pc_multi_stage,
+			double T_in /*K*/, double P_in /*kPa*/, double P_out /*kPa*/, double m_dot /*kg/s*/)
+		{
+			mpc_multi_stage = pc_multi_stage;
+			m_T_in = T_in;
+			m_P_in = P_in;
+			m_P_out = P_out;
+			m_m_dot = m_dot;
+		}
+
+		virtual int operator()(double eta_isen /*-*/, double *h_comp_out /*kJ/kg*/);
+	};
+
+	class C_MEQ_N_rpm__P_out : public C_monotonic_equation
+	{
+	private:
+		C_comp_multi_stage *mpc_multi_stage;
+		double m_T_in;	//[K]
+		double m_P_in;	//[kPa]
+		double m_m_dot;	//[kg/s]
+		double m_eta_isen;	//[-]
+
+	public:
+		C_MEQ_N_rpm__P_out(C_comp_multi_stage *pc_multi_stage,
+			double T_in /*K*/, double P_in /*kPa*/, double m_dot /*kg/s*/, double eta_isen /*-*/)
+		{
+			mpc_multi_stage = pc_multi_stage;
+			m_T_in = T_in;	//[K]
+			m_P_in = P_in;	//[kPa]
+			m_m_dot = m_dot;	//[kg/s]
+			m_eta_isen = eta_isen;	//[-]
+		}
+
+		virtual int operator()(double N_rpm /*rpm*/, double *P_comp_out /*kPa*/);
+	};
+
+	class C_MEQ_phi_od__P_out : public C_monotonic_equation
+	{
+	private:
+		C_comp_multi_stage *mpc_multi_stage;
+		double m_T_in;	//[K]
+		double m_P_in;	//[kPa]
+		double m_m_dot;	//[kg/s]
+
+	public:
+		C_MEQ_phi_od__P_out(C_comp_multi_stage *pc_multi_stage,
+			double T_in /*K*/, double P_in /*kPa*/, double m_dot /*kg/s*/)
+		{
+			mpc_multi_stage = pc_multi_stage;
+			m_T_in = T_in;		//[K]
+			m_P_in = P_in;		//[kPa]
+			m_m_dot = m_dot;	//[kg/s]
+		}
+
+		virtual int operator()(double phi_od /*-*/, double *P_comp_out /*kPa*/);
+	};
+
+	int design_given_outlet_state(double T_in /*K*/, double P_in /*kPa*/, double m_dot /*kg/s*/,
+		double T_out /*K*/, double P_out /*K*/);
 	
+	void off_design_given_N(double T_in /*K*/, double P_in /*kPa*/, double m_dot /*kg/s*/, double N_rpm /*rpm*/,
+		int & error_code, double & T_out /*K*/, double & P_out /*kPa*/);
+
+	void off_design_at_N_des(double T_in /*K*/, double P_in /*kPa*/, double m_dot /*kg/s*/,
+		int & error_code, double & T_out /*K*/, double & P_out /*kPa*/);
+
+	void off_design_given_P_out(double T_in /*K*/, double P_in /*kPa*/, double m_dot /*kg/s*/,
+							double P_out /*kPa*/, int & error_code, double & T_out /*K*/);
+
 };
+
+//class C_compressor
+//{
+//public:
+//	struct S_design_parameters
+//	{
+//			// Compressor inlet conditions
+//		double m_T_in;			//[K]
+//		double m_P_in;			//[kPa]
+//		double m_D_in;			//[kg/m^3]
+//		double m_h_in;			//[kJ/kg]
+//		double m_s_in;			//[kJ/kg-K]
+//			// Compressor outlet conditions
+//		double m_T_out;			//[K]
+//		double m_P_out;			//[kPa]
+//		double m_h_out;			//[kJ/kg]
+//		double m_D_out;			//[kg/m^3]
+//			// Mass flow
+//		double m_m_dot;			//[kg/s]
+//
+//		S_design_parameters()
+//		{
+//			m_T_in = m_P_in = m_D_in = m_h_in = m_s_in =
+//			m_T_out = m_P_out = m_h_out = m_D_out = std::numeric_limits<double>::quiet_NaN();
+//		}
+//	};
+//	struct S_design_solved
+//	{
+//		double m_D_rotor;		//[m]
+//		double m_N_design;		//[rpm]
+//		double m_w_tip_ratio;	//[-]
+//		double m_eta_design;	//[-]
+//
+//		double m_phi_des;		//[-]
+//		double m_phi_surge;		//[-]
+//		double m_phi_max;		//[-]
+//		int m_n_stages;			//[-]
+//
+//		S_design_solved()
+//		{
+//			m_D_rotor = m_N_design = m_w_tip_ratio = m_eta_design = 
+//				m_phi_surge = m_phi_des = m_phi_max = std::numeric_limits<double>::quiet_NaN();
+//
+//			m_n_stages = -1;
+//		}
+//	};
+//	struct S_od_solved
+//	{
+//		bool m_surge;			//[-]
+//		double m_eta;			//[-]
+//		double m_phi;			//[-]
+//		double m_w_tip_ratio;	//[-]
+//
+//		double m_N;			//[rpm]
+//
+//		double m_W_dot_in;		//[KWe] Power required by compressor, positive value expected
+//		double m_P_in;			//[kPa] Inlet pressure
+//		double m_P_out;			//[kPa] Outlet pressure
+//		double m_surge_safety;	//[-] Flow coefficient / min flow coefficient
+//
+//		S_od_solved()
+//		{
+//			m_surge = false;
+//			m_eta = m_phi = m_w_tip_ratio = m_N =
+//				m_W_dot_in = m_P_in = m_P_out = m_surge_safety = std::numeric_limits<double>::quiet_NaN();
+//		}
+//	};
+//
+//private:
+//	S_design_parameters ms_des_par;
+//	S_design_solved ms_des_solved;
+//	S_od_solved ms_od_solved;
+//
+//public:
+//	~C_compressor(){};
+//
+//	C_compressor(){};
+//
+//	static const double m_snl_phi_design;		//[-] Design-point flow coef. for Sandia compressor (corresponds to max eta)
+//	static const double m_snl_phi_min;				//[-] Approximate surge limit for SNL compressor
+//	static const double m_snl_phi_max;				//[-] Approximate x-intercept for SNL compressor
+//
+//	const S_design_solved * get_design_solved()
+//	{
+//		return &ms_des_solved;
+//	}
+//
+//	const S_od_solved * get_od_solved()
+//	{
+//		return &ms_od_solved;
+//	}
+//
+//	void compressor_sizing(const S_design_parameters & des_par_in, int & error_code);
+//	
+//	void off_design_compressor(double T_in, double P_in, double m_dot, double N, int & error_code, double & T_out, double & P_out);
+//	
+//	void od_comp_at_N_des(double T_in, double P_in, double m_dot, int & error_code, double & T_out, double & P_out);
+//
+//	void od_comp_phi_opt(double T_in /*K*/, double P_in /*kPa*/, double m_dot /*kg/s*/, 
+//							int &error_code, double &T_out /*K*/, double &P_out /*kPa*/);
+//
+//	void od_comp_phi(double phi_in /*-*/, double T_in /*K*/, double P_in /*kPa*/, double m_dot /*kg/s*/,
+//		int &error_code, double &T_out /*K*/, double &P_out /*kPa*/);
+//};
+
+//class C_recompressor
+//{
+//public:
+//	struct S_design_parameters
+//	{
+//			// Compressor inlet conditions
+//		double m_P_in;
+//		double m_D_in;
+//		double m_h_in;
+//		double m_s_in;
+//			// Compressor outlet conditions
+//		double m_T_out;
+//		double m_P_out;
+//		double m_h_out;
+//		double m_D_out;
+//			// Flow conditions
+//		double m_m_dot;
+//
+//		S_design_parameters()
+//		{
+//			m_P_in = m_D_in = m_h_in = m_s_in = 
+//			m_T_out = m_P_out = m_h_out = m_D_out =
+//			m_m_dot = std::numeric_limits<double>::quiet_NaN();
+//		}
+//	};
+//	struct S_design_solved
+//	{
+//		double m_D_rotor;
+//		double m_D_rotor_2;
+//		double m_N_design;
+//		double m_eta_design;
+//		
+//		double m_w_tip_ratio_1;	//[-] Max tip ratio at design, first stage
+//		double m_w_tip_ratio_2;	//[-] Max tip ratio at design, 2nd stage
+//
+//		double m_phi_des;		//[-]
+//		double m_phi_surge;		//[-]
+//		double m_phi_max;		//[-]
+//		int m_n_stages;			//[-]
+//
+//		S_design_solved()
+//		{
+//			m_D_rotor = m_D_rotor_2 = m_N_design = m_eta_design =
+//				m_w_tip_ratio_1 = m_w_tip_ratio_2 = m_phi_surge = m_phi_des = m_phi_max = std::numeric_limits<double>::quiet_NaN();
+//
+//			m_n_stages = -1;
+//		}
+//	};
+//
+//	struct S_od_inputs
+//	{
+//		double m_m_dot;		//[kg/s]
+//		double m_rho_in;		//[kg/m^3]
+//		double m_h_in;		//[kJ/kg]
+//		double m_s_in;		//[kJ/kg-K]
+//
+//		S_od_inputs()
+//		{
+//			m_m_dot = m_rho_in = m_h_in = m_s_in = std::numeric_limits<double>::quiet_NaN();
+//		}
+//	};
+//
+//	struct S_od_solved
+//	{
+//		double m_N;
+//		double m_eta;
+//		double m_phi;
+//		double m_phi_2;
+//		double m_w_tip_ratio;	//[-] Maximum of multiple stages
+//		bool m_surge;
+//
+//		double m_T_out;			//[K] Compressor outlet temperature
+//		double m_W_dot_in;		//[kWe] Power required to operate compressor. Expect positive value.
+//		double m_surge_safety;	//[-] min of stages: Flow coefficient / min flow coefficient
+//
+//		S_od_solved()
+//		{
+//			m_N = m_eta = m_phi = m_phi_2 = m_w_tip_ratio = 
+//				m_T_out = m_W_dot_in = m_surge_safety = std::numeric_limits<double>::quiet_NaN();
+//			m_surge = false;
+//		}
+//	};
+//
+//private:
+//	S_design_parameters ms_des_par;
+//	S_design_solved ms_des_solved;
+//	S_od_solved ms_od_solved;
+//	S_od_inputs ms_od_inputs;
+//
+//public:
+//	~C_recompressor(){};
+//
+//	C_recompressor(){};
+//
+//	static const double m_snl_phi_design;		//[-] Design-point flow coef. for Sandia compressor (corresponds to max eta)
+//	static const double m_snl_phi_min;				//[-] Approximate surge limit for SNL compressor
+//	static const double m_snl_phi_max;				//[-] Approximate x-intercept for SNL compressor
+//
+//	class C_mono_eq_phi_off_design : public C_monotonic_equation
+//	{
+//	private:
+//		C_recompressor *mpc_recompressor;
+//
+//	public:
+//		C_mono_eq_phi_off_design(C_recompressor *pc_recompressor)
+//		{
+//			mpc_recompressor = pc_recompressor;
+//		}
+//
+//		virtual int operator()(double phi /*-*/, double *P_high /*kPa*/);
+//	};
+//
+//	const S_design_solved * get_design_solved()
+//	{
+//		return &ms_des_solved;
+//	}
+//
+//	const S_od_solved * get_od_solved()
+//	{
+//		return &ms_od_solved;
+//	}
+//
+//	void recompressor_sizing(const S_design_parameters & des_par_in, int & error_code);	
+//
+//	void off_design_recompressor(double T_in, double P_in, double m_dot, double P_out, int & error_code, double & T_out);
+//	
+//};
 
 class C_RecompCycle
 {
@@ -538,7 +855,7 @@ public:
 		bool m_fixed_PR_mc;					//[-] if true, ratio of P_mc_out to P_mc_in is fixed at PR_mc_guess
 
 		// Callback function only log
-		bool(*mf_callback_log)(std::string &log_msg, std::string &progress_msg, void *data, double progress);
+		bool(*mf_callback_log)(std::string &log_msg, std::string &progress_msg, void *data, double progress, int out_type);
 		void *mp_mf_active;
 
 		S_auto_opt_design_hit_eta_parameters()
@@ -594,7 +911,7 @@ public:
 		bool m_fixed_PR_mc;					//[-] if true, ratio of P_mc_out to P_mc_in is fixed at PR_mc_guess
 
 		// Callback function only log
-		bool(*mf_callback_log)(std::string &log_msg, std::string &progress_msg, void *data, double progress);
+		bool(*mf_callback_log)(std::string &log_msg, std::string &progress_msg, void *data, double progress, int out_type);
 		void *mp_mf_active;
 
 		S_auto_opt_design_parameters()
@@ -638,8 +955,10 @@ public:
 
 		bool m_is_rc;
 
-		C_compressor::S_design_solved ms_mc_des_solved;
-		C_recompressor::S_design_solved ms_rc_des_solved;
+		//C_compressor::S_design_solved ms_mc_des_solved;
+		C_comp_multi_stage::S_des_solved ms_mc_ms_des_solved;
+		//C_recompressor::S_design_solved ms_rc_des_solved;
+		C_comp_multi_stage::S_des_solved ms_rc_ms_des_solved;
 		C_turbine::S_design_solved ms_t_des_solved;
 		C_HX_counterflow::S_des_solved ms_LT_recup_des_solved;
 		C_HX_counterflow::S_des_solved ms_HT_recup_des_solved;
@@ -716,8 +1035,10 @@ public:
 		double m_m_dot_t;		//[kg/s]
 		double m_recomp_frac;	//[-]
 
-		C_compressor::S_od_solved ms_mc_od_solved;
-		C_recompressor::S_od_solved ms_rc_od_solved;
+		//C_compressor::S_od_solved ms_mc_od_solved;
+		C_comp_multi_stage::S_od_solved ms_mc_ms_od_solved;
+		//C_recompressor::S_od_solved ms_rc_od_solved;
+		C_comp_multi_stage::S_od_solved ms_rc_ms_od_solved;
 		C_turbine::S_od_solved ms_t_od_solved;
 		C_HX_counterflow::S_od_solved ms_LT_recup_od_solved;
 		C_HX_counterflow::S_od_solved ms_HT_recup_od_solved;
@@ -892,8 +1213,10 @@ public:
 private:
 		// Component classes
 	C_turbine m_t;
-	C_compressor m_mc;
-	C_recompressor m_rc;
+	//C_compressor m_mc;
+	C_comp_multi_stage m_mc_ms;
+	//C_recompressor m_rc;
+	C_comp_multi_stage m_rc_ms;
 	C_HeatExchanger /*m_LT, m_HT,*/ m_PHX, m_PC;
 	
 	C_HX_co2_to_co2 mc_LT_recup, mc_HT_recup;
@@ -968,15 +1291,15 @@ private:
 
 	void finalize_design(int & error_code);	
 
-	void off_design_core(int & error_code);
+	//void off_design_core(int & error_code);
 
-	void off_design_phi_core(int & error_code);
+	//void off_design_phi_core(int & error_code);
 
 	void off_design_fix_shaft_speeds_core(int & error_code);
 	
-	void optimal_off_design_core(int & error_code);
+	//void optimal_off_design_core(int & error_code);
 
-	void target_off_design_core(int & error_code);	
+	//void target_off_design_core(int & error_code);	
 
 	void clear_ms_od_solved();
 
@@ -1038,35 +1361,35 @@ public:
 
 	void opt_design(S_opt_design_parameters & opt_des_par_in, int & error_code);
 
-	void od_turbo_bal_csp(const S_od_turbo_bal_csp_par & par_in);
+	//void od_turbo_bal_csp(const S_od_turbo_bal_csp_par & par_in);
 
-	double od_turbo_bal_csp_Wnet(const std::vector<double> &x);
+	//double od_turbo_bal_csp_Wnet(const std::vector<double> &x);
 	
 	void reset_ms_od_turbo_bal_csp_solved();
 
-	void optimize_od_turbo_balance_csp(S_od_turbo_bal_csp_par in_params, std::vector<double> &opt_params);
+	//void optimize_od_turbo_balance_csp(S_od_turbo_bal_csp_par in_params, std::vector<double> &opt_params);
 
 	void auto_opt_design(S_auto_opt_design_parameters & auto_opt_des_par_in, int & error_code);
 
 	void auto_opt_design_hit_eta(S_auto_opt_design_hit_eta_parameters & auto_opt_des_hit_eta_in, int & error_code, string & error_msg);
 
-	void off_design(S_od_parameters & od_par_in, int & error_code);
+	//void off_design(S_od_parameters & od_par_in, int & error_code);
 
-	void off_design_phi(S_od_phi_par & od_phi_par_in, int & error_code);
+	//void off_design_phi(S_od_phi_par & od_phi_par_in, int & error_code);
 
 	void off_design_fix_shaft_speeds(S_od_phi_par & od_phi_par_in, int & error_code);
 
-	void optimal_off_design(S_opt_od_parameters & opt_od_par_in, int & error_code);
+	//void optimal_off_design(S_opt_od_parameters & opt_od_par_in, int & error_code);
 	
-	void get_max_output_od(S_opt_target_od_parameters & opt_tar_od_par_in, int & error_code);
+	//void get_max_output_od(S_opt_target_od_parameters & opt_tar_od_par_in, int & error_code);
 
-	void target_off_design(S_target_od_parameters & tar_od_par_in, int & error_code);
+	//void target_off_design(S_target_od_parameters & tar_od_par_in, int & error_code);
 
-	void optimal_target_off_design(S_opt_target_od_parameters & opt_tar_od_par_in, int & error_code);
+	//void optimal_target_off_design(S_opt_target_od_parameters & opt_tar_od_par_in, int & error_code);
 
-	void optimal_target_off_design_no_check(S_opt_target_od_parameters & opt_tar_od_par_in, int & error_code);
+	//void optimal_target_off_design_no_check(S_opt_target_od_parameters & opt_tar_od_par_in, int & error_code);
 
-	void opt_od_eta_for_hx(S_od_parameters & od_par_in, S_PHX_od_parameters phx_od_par_in, int & error_code);
+	//void opt_od_eta_for_hx(S_od_parameters & od_par_in, S_PHX_od_parameters phx_od_par_in, int & error_code);
 
 	double get_od_temp(int n_state_point);
 
@@ -1083,9 +1406,9 @@ public:
 							int & rc_error_code, double & rc_w_tip_ratio /*-*/, double & rc_phi /*-*/,
 							bool is_update_ms_od_solved = false);
 
-	const C_recompressor::S_od_solved * get_rc_od_solved()
+	const C_comp_multi_stage::S_od_solved * get_rc_od_solved()
 	{
-		return m_rc.get_od_solved();
+		return m_rc_ms.get_od_solved();
 	}
 
 	const S_design_solved * get_design_solved()
@@ -1174,39 +1497,39 @@ public:
 		CO2_state mc_co2_props;	
 	};
 
-	class C_mono_eq_turbo_m_dot : public C_monotonic_equation
-	{
-	private:
-		C_RecompCycle *mpc_rc_cycle;
-
-		double m_T_mc_in;		//[K] Compressor inlet temperature
-		double m_P_mc_in;		//[kPa] Compressor inlet pressure
-		double m_f_recomp;		//[-] Recompression fraction
-		double m_T_t_in;		//[K] Turbine inlet temperature
-		double m_phi_mc;		//[-] Compressor flow coefficient
-
-		bool m_is_update_ms_od_solved;	//[-] Bool to update member structure ms_od_solved
-										// that is typically updated after entire cycle off-design solution 
-
-	public:
-		C_mono_eq_turbo_m_dot(C_RecompCycle *pc_rc_cycle, double T_mc_in /*K*/, double P_mc_in /*kPa*/,
-									double f_recomp /*-*/, double T_t_in /*K*/, double phi_mc /*-*/,
-									bool is_update_ms_od_solved = false)
-		{
-			mpc_rc_cycle = pc_rc_cycle;
-			m_T_mc_in = T_mc_in;		//[K]
-			m_P_mc_in = P_mc_in;		//[kPa]
-			m_f_recomp = f_recomp;		//[-]
-			m_T_t_in = T_t_in;			//[K]
-			m_phi_mc = phi_mc;			//[-]
-
-			m_is_update_ms_od_solved = is_update_ms_od_solved;
-		}
-	
-		virtual int operator()(double m_dot_t /*kg/s*/, double *diff_m_dot_t /*-*/);
-
-		CO2_state mc_co2_props;
-	};
+	//class C_mono_eq_turbo_m_dot : public C_monotonic_equation
+	//{
+	//private:
+	//	C_RecompCycle *mpc_rc_cycle;
+	//
+	//	double m_T_mc_in;		//[K] Compressor inlet temperature
+	//	double m_P_mc_in;		//[kPa] Compressor inlet pressure
+	//	double m_f_recomp;		//[-] Recompression fraction
+	//	double m_T_t_in;		//[K] Turbine inlet temperature
+	//	double m_phi_mc;		//[-] Compressor flow coefficient
+	//
+	//	bool m_is_update_ms_od_solved;	//[-] Bool to update member structure ms_od_solved
+	//									// that is typically updated after entire cycle off-design solution 
+	//
+	//public:
+	//	C_mono_eq_turbo_m_dot(C_RecompCycle *pc_rc_cycle, double T_mc_in /*K*/, double P_mc_in /*kPa*/,
+	//								double f_recomp /*-*/, double T_t_in /*K*/, double phi_mc /*-*/,
+	//								bool is_update_ms_od_solved = false)
+	//	{
+	//		mpc_rc_cycle = pc_rc_cycle;
+	//		m_T_mc_in = T_mc_in;		//[K]
+	//		m_P_mc_in = P_mc_in;		//[kPa]
+	//		m_f_recomp = f_recomp;		//[-]
+	//		m_T_t_in = T_t_in;			//[K]
+	//		m_phi_mc = phi_mc;			//[-]
+	//
+	//		m_is_update_ms_od_solved = is_update_ms_od_solved;
+	//	}
+	//
+	//	virtual int operator()(double m_dot_t /*kg/s*/, double *diff_m_dot_t /*-*/);
+	//
+	//	CO2_state mc_co2_props;
+	//};
 
 	class C_mono_eq_LTR_od : public C_monotonic_equation
 	{
@@ -1328,29 +1651,29 @@ public:
 	double opt_eta(double P_high_opt);
 
 	// Called by 'nlopt_cb_opt_od', so needs to be public
-	double off_design_point_value(const std::vector<double> &x);
+	//double off_design_point_value(const std::vector<double> &x);
 
 	// Called by 'nlopt...', so needs to be public
-	double eta_at_target(const std::vector<double> &x);
+	//double eta_at_target(const std::vector<double> &x);
 	
 	// Called by 'nlopt...', so needs to be public
-	double opt_od_eta(const std::vector<double> &x);
+	//double opt_od_eta(const std::vector<double> &x);
 };
 
 double nlopt_callback_opt_des_1(const std::vector<double> &x, std::vector<double> &grad, void *data);
 
 double fmin_callback_opt_eta_1(double x, void *data);
 
-double nlopt_cb_opt_od(const std::vector<double> &x, std::vector<double> &grad, void *data);
+//double nlopt_cb_opt_od(const std::vector<double> &x, std::vector<double> &grad, void *data);
 
-double nlopt_cb_eta_at_target(const std::vector<double> &x, std::vector<double> &grad, void *data);
+//double nlopt_cb_eta_at_target(const std::vector<double> &x, std::vector<double> &grad, void *data);
 
-double nlopt_cb_opt_od_eta(const std::vector<double> &x, std::vector<double> &grad, void *data);
+//double nlopt_cb_opt_od_eta(const std::vector<double> &x, std::vector<double> &grad, void *data);
 
 double P_pseudocritical_1(double T_K);
 
 
-double nlopt_callback_tub_bal_opt(const std::vector<double> &x, std::vector<double> &grad, void *data);
+//double nlopt_callback_tub_bal_opt(const std::vector<double> &x, std::vector<double> &grad, void *data);
 
 
 bool find_polynomial_coefs(const std::vector<double> x_data, const std::vector<double> y_data, int n_coefs, std::vector<double> & coefs_out, double & r_squared);

@@ -1,3 +1,52 @@
+/*******************************************************************************************************
+*  Copyright 2017 Alliance for Sustainable Energy, LLC
+*
+*  NOTICE: This software was developed at least in part by Alliance for Sustainable Energy, LLC
+*  (“Alliance”) under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
+*  The Government retains for itself and others acting on its behalf a nonexclusive, paid-up,
+*  irrevocable worldwide license in the software to reproduce, prepare derivative works, distribute
+*  copies to the public, perform publicly and display publicly, and to permit others to do so.
+*
+*  Redistribution and use in source and binary forms, with or without modification, are permitted
+*  provided that the following conditions are met:
+*
+*  1. Redistributions of source code must retain the above copyright notice, the above government
+*  rights notice, this list of conditions and the following disclaimer.
+*
+*  2. Redistributions in binary form must reproduce the above copyright notice, the above government
+*  rights notice, this list of conditions and the following disclaimer in the documentation and/or
+*  other materials provided with the distribution.
+*
+*  3. The entire corresponding source code of any redistribution, with or without modification, by a
+*  research entity, including but not limited to any contracting manager/operator of a United States
+*  National Laboratory, any institution of higher learning, and any non-profit organization, must be
+*  made publicly available under this license for as long as the redistribution is made available by
+*  the research entity.
+*
+*  4. Redistribution of this software, without modification, must refer to the software by the same
+*  designation. Redistribution of a modified version of this software (i) may not refer to the modified
+*  version by the same designation, or by any confusingly similar designation, and (ii) must refer to
+*  the underlying software originally provided by Alliance as “System Advisor Model” or “SAM”. Except
+*  to comply with the foregoing, the terms “System Advisor Model”, “SAM”, or any confusingly similar
+*  designation may not be used to refer to any modified version of this software or any modified
+*  version of the underlying software originally provided by Alliance without the prior written consent
+*  of Alliance.
+*
+*  5. The name of the copyright holder, contributors, the United States Government, the United States
+*  Department of Energy, or any of their employees may not be used to endorse or promote products
+*  derived from this software without specific prior written permission.
+*
+*  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
+*  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
+*  FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER,
+*  CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES DEPARTMENT OF ENERGY, NOR ANY OF THEIR
+*  EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+*  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+*  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+*  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
+*  THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*******************************************************************************************************/
+
 #include "csp_solver_mspt_receiver_222.h"
 #include "csp_solver_core.h"
 
@@ -18,7 +67,7 @@ C_mspt_receiver_222::C_mspt_receiver_222()
 	m_q_rec_des = std::numeric_limits<double>::quiet_NaN();
 	m_rec_su_delay = std::numeric_limits<double>::quiet_NaN();
 	m_rec_qf_delay = std::numeric_limits<double>::quiet_NaN();
-	m_m_dot_htf_max = std::numeric_limits<double>::quiet_NaN();
+	m_m_dot_htf_max_frac = std::numeric_limits<double>::quiet_NaN();
 	m_A_sf = std::numeric_limits<double>::quiet_NaN();
 
 	m_pipe_loss_per_m = std::numeric_limits<double>::quiet_NaN();
@@ -47,6 +96,7 @@ C_mspt_receiver_222::C_mspt_receiver_222()
 	m_A_node = std::numeric_limits<double>::quiet_NaN();
 
 	m_Q_dot_piping_loss = std::numeric_limits<double>::quiet_NaN();
+	m_m_dot_htf_max = std::numeric_limits<double>::quiet_NaN();
 
 	m_itermode = -1;
 	m_od_control = std::numeric_limits<double>::quiet_NaN();
@@ -62,7 +112,7 @@ C_mspt_receiver_222::C_mspt_receiver_222()
 	m_t_su = std::numeric_limits<double>::quiet_NaN();
 	m_t_su_prev = std::numeric_limits<double>::quiet_NaN();
 
-	m_flow_pattern = 0.0;
+	m_flow_pattern = 0;
 	m_n_lines = -1;
 
 	m_m_mixed = std::numeric_limits<double>::quiet_NaN();
@@ -97,8 +147,8 @@ void C_mspt_receiver_222::init()
 	else if( m_field_fl == HTFProperties::User_defined )
 	{
 		// Check that 'm_field_fl_props' is allocated and correct dimensions
-		int n_rows = m_field_fl_props.nrows();
-		int n_cols = m_field_fl_props.ncols();
+		int n_rows = (int)m_field_fl_props.nrows();
+		int n_cols = (int)m_field_fl_props.ncols();
 		if( n_rows > 2 && n_cols == 7 )
 		{
 			if( !field_htfProps.SetUserDefinedFluid(m_field_fl_props) )
@@ -143,7 +193,6 @@ void C_mspt_receiver_222::init()
 	m_T_htf_hot_des += 273.15;	//[K] Convert from input in [C]
 	m_T_htf_cold_des += 273.15;	//[K] Convert from input in [C]
 	m_q_rec_des *= 1.E6;		//[W] Convert from input in [MW]
-	m_m_dot_htf_max /= 3600.0;	//[kg/s] Convert from input in [kg/hr]
 
 	m_id_tube = m_od_tube - 2 * m_th_tube;			//[m] Inner diameter of receiver tube
 	m_A_tube = CSP::pi*m_od_tube / 2.0*m_h_rec;	//[m^2] Outer surface area of each tube
@@ -162,6 +211,17 @@ void C_mspt_receiver_222::init()
 	m_m_dot_htf_des = m_q_rec_des / (c_htf_des*(m_T_htf_hot_des - m_T_htf_cold_des));					//[kg/s]
 	double eta_therm_des = 0.9;
 	m_q_dot_inc_min = m_q_rec_des * m_f_rec_min / eta_therm_des;	//[W] Minimum receiver thermal power
+
+	if (m_m_dot_htf_max_frac != m_m_dot_htf_max_frac)
+	{
+		// if max frac not set, then max mass flow (absolute) needs to be defined
+		if (m_m_dot_htf_max != m_m_dot_htf_max)
+		{
+			throw(C_csp_exception("maximum rec htf mass flow rate not defined", "MSPT receiver"));
+		}
+		m_m_dot_htf_max /= 3600.0;	//[kg/s] Convert from input in [kg/hr]
+	}
+	m_m_dot_htf_max = m_m_dot_htf_max_frac * m_m_dot_htf_des;	//[kg/s]
 
 	m_mode_prev = m_mode;
 	m_E_su_prev = m_q_rec_des * m_rec_qf_delay;	//[W-hr] Startup energy
@@ -290,14 +350,14 @@ void C_mspt_receiver_222::call(const C_csp_weatherreader::S_outputs &weather,
 	double I_bn = weather.m_beam;
 
 
-	int n_flux_y = flux_map_input->nrows();
+	int n_flux_y = (int)flux_map_input->nrows();
 	if(n_flux_y > 1)
 	{
 		error_msg = util::format("The Molten Salt External Receiver (Type222) model does not currently support 2-dimensional "
 			"flux maps. The flux profile in the vertical dimension will be averaged. NY=%d", n_flux_y);
 		csp_messages.add_message(C_csp_messages::WARNING, error_msg);
 	}
-	int n_flux_x = flux_map_input->ncols();
+	int n_flux_x = (int)flux_map_input->ncols();
 	m_flux_in.resize(n_flux_x);
 
 	double T_sky = CSP::skytemp(T_amb, T_dp, hour);

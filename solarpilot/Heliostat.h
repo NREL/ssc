@@ -1,3 +1,52 @@
+/*******************************************************************************************************
+*  Copyright 2017 Alliance for Sustainable Energy, LLC
+*
+*  NOTICE: This software was developed at least in part by Alliance for Sustainable Energy, LLC
+*  (“Alliance”) under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
+*  The Government retains for itself and others acting on its behalf a nonexclusive, paid-up,
+*  irrevocable worldwide license in the software to reproduce, prepare derivative works, distribute
+*  copies to the public, perform publicly and display publicly, and to permit others to do so.
+*
+*  Redistribution and use in source and binary forms, with or without modification, are permitted
+*  provided that the following conditions are met:
+*
+*  1. Redistributions of source code must retain the above copyright notice, the above government
+*  rights notice, this list of conditions and the following disclaimer.
+*
+*  2. Redistributions in binary form must reproduce the above copyright notice, the above government
+*  rights notice, this list of conditions and the following disclaimer in the documentation and/or
+*  other materials provided with the distribution.
+*
+*  3. The entire corresponding source code of any redistribution, with or without modification, by a
+*  research entity, including but not limited to any contracting manager/operator of a United States
+*  National Laboratory, any institution of higher learning, and any non-profit organization, must be
+*  made publicly available under this license for as long as the redistribution is made available by
+*  the research entity.
+*
+*  4. Redistribution of this software, without modification, must refer to the software by the same
+*  designation. Redistribution of a modified version of this software (i) may not refer to the modified
+*  version by the same designation, or by any confusingly similar designation, and (ii) must refer to
+*  the underlying software originally provided by Alliance as “System Advisor Model” or “SAM”. Except
+*  to comply with the foregoing, the terms “System Advisor Model”, “SAM”, or any confusingly similar
+*  designation may not be used to refer to any modified version of this software or any modified
+*  version of the underlying software originally provided by Alliance without the prior written consent
+*  of Alliance.
+*
+*  5. The name of the copyright holder, contributors, the United States Government, the United States
+*  Department of Energy, or any of their employees may not be used to endorse or promote products
+*  derived from this software without specific prior written permission.
+*
+*  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
+*  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
+*  FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER,
+*  CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES DEPARTMENT OF ENERGY, NOR ANY OF THEIR
+*  EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+*  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+*  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+*  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
+*  THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*******************************************************************************************************/
+
 #ifndef _HELIOSTAT_H_
 #define _HELIOSTAT_H_ 1
 #include <vector>
@@ -20,7 +69,7 @@ class Ambient;
 class Heliostat : public mod_base
  {
 
-	Point
+	sp_point
 		_location, //Location of heliostat in the field (0,0,Zt) is the location of the tower base
 		_aim_point,	//constant aim point for the heliostat
 		_aim_fluxplane;	//Aim point with respect to the flux plane
@@ -32,7 +81,7 @@ class Heliostat : public mod_base
 		*_neighbors; //pointer to a vector of neighboring heliostats
 	matrix_t<Reflector>
 		_panels; //Array of cant panels
-	vector<Point>
+	vector<sp_point>
 		_corners,	//Position in global coordinates of the heliostat corners (used for blocking and shadowing)
 		_shadow;	//Position in global coordinates of the heliostat shadow
 	Heliostat* _master_template;	//Pointer to the template used to create this heliostat
@@ -88,7 +137,7 @@ public:
 	void installPanels();	//Define the cant panel locations, pointing vectors, and shape
 	void updateTrackVector(Vect &sunvect);	//Update the tracking vector for the heliostat
 	double calcTotalEfficiency();
-    static void calcAndSetAimPointFluxPlane(Point &aimpos_abs, Receiver &Rec, Heliostat &H);
+    static void calcAndSetAimPointFluxPlane(sp_point &aimpos_abs, Receiver &Rec, Heliostat &H);
 	void resetMetrics();
 	void CopyImageData(const Heliostat *Hsrc);
 
@@ -108,9 +157,9 @@ public:
 	Vect *getTrackVector();	//return the tracking vector
 	Vect *getTowerVector(); // return the helio-tower unit vector
 	Vect *getCantVector();	//Return the canting vector (not normalized)
-	Point *getLocation(); //Get location vector
-	Point *getAimPoint();	//Get the heliostat aim point on the receiver
-	Point *getAimPointFluxPlane();	//aim point in the flux plane coordinates 
+	sp_point *getLocation(); //Get location vector
+	sp_point *getAimPoint();	//Get the heliostat aim point on the receiver
+	sp_point *getAimPointFluxPlane();	//aim point in the flux plane coordinates 
 	helio_perf_data *getEfficiencyObject();
 	double getTotalReflectivity();
 	double getEfficiencyTotal();
@@ -128,8 +177,8 @@ public:
     double getArea();
     double getCollisionRadius();
 	vector<Heliostat*> *getNeighborList();
-	vector<Point> *getCornerCoords();
-	vector<Point> *getShadowCoords();
+	vector<sp_point> *getCornerCoords();
+	vector<sp_point> *getShadowCoords();
 	matrix_t<double> *getMirrorShapeNormCoefObject();
 	matrix_t<double> *getMirrorShapeCoefObject();
 	matrix_t<double> *getSunShapeCoefObject();
@@ -163,8 +212,8 @@ public:
 	void setRankingMetricValue(double rval);
 	void setLocation(double x, double y, double z);
 	void setAimPoint(double x, double y, double z);
-	void setAimPoint(Point &Aim);
-	void setAimPointFluxPlane(Point &Aim);
+	void setAimPoint(sp_point &Aim);
+	void setAimPointFluxPlane(sp_point &Aim);
 	void setAimPointFluxPlane(double x, double y, double z);
 	void setTrackVector(Vect &tr);	//Set the tracking vector
 	void setTowerVector(Vect &tow); //Set the helio-tower vector

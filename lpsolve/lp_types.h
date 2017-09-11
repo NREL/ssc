@@ -1,6 +1,12 @@
 #ifndef HEADER_lp_types
 #define HEADER_lp_types
 
+// redefinition of macros
+#ifdef _MSC_VER  /* Microsoft Visual C++ -- warning level 4 */
+#pragma warning( disable : 4005)  /* redefinition of macros */
+#endif
+
+
 #ifdef WIN32
   #include <windows.h>
 #endif

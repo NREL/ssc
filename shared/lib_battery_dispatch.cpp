@@ -1,24 +1,76 @@
+/*******************************************************************************************************
+*  Copyright 2017 Alliance for Sustainable Energy, LLC
+*
+*  NOTICE: This software was developed at least in part by Alliance for Sustainable Energy, LLC
+*  (“Alliance”) under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
+*  The Government retains for itself and others acting on its behalf a nonexclusive, paid-up,
+*  irrevocable worldwide license in the software to reproduce, prepare derivative works, distribute
+*  copies to the public, perform publicly and display publicly, and to permit others to do so.
+*
+*  Redistribution and use in source and binary forms, with or without modification, are permitted
+*  provided that the following conditions are met:
+*
+*  1. Redistributions of source code must retain the above copyright notice, the above government
+*  rights notice, this list of conditions and the following disclaimer.
+*
+*  2. Redistributions in binary form must reproduce the above copyright notice, the above government
+*  rights notice, this list of conditions and the following disclaimer in the documentation and/or
+*  other materials provided with the distribution.
+*
+*  3. The entire corresponding source code of any redistribution, with or without modification, by a
+*  research entity, including but not limited to any contracting manager/operator of a United States
+*  National Laboratory, any institution of higher learning, and any non-profit organization, must be
+*  made publicly available under this license for as long as the redistribution is made available by
+*  the research entity.
+*
+*  4. Redistribution of this software, without modification, must refer to the software by the same
+*  designation. Redistribution of a modified version of this software (i) may not refer to the modified
+*  version by the same designation, or by any confusingly similar designation, and (ii) must refer to
+*  the underlying software originally provided by Alliance as “System Advisor Model” or “SAM”. Except
+*  to comply with the foregoing, the terms “System Advisor Model”, “SAM”, or any confusingly similar
+*  designation may not be used to refer to any modified version of this software or any modified
+*  version of the underlying software originally provided by Alliance without the prior written consent
+*  of Alliance.
+*
+*  5. The name of the copyright holder, contributors, the United States Government, the United States
+*  Department of Energy, or any of their employees may not be used to endorse or promote products
+*  derived from this software without specific prior written permission.
+*
+*  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
+*  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
+*  FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER,
+*  CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES DEPARTMENT OF ENERGY, NOR ANY OF THEIR
+*  EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+*  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+*  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+*  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
+*  THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*******************************************************************************************************/
+
 #include "lib_battery_dispatch.h"
 #include <math.h>
 
 /*
 Dispatch base class
 */
-dispatch_t::dispatch_t(battery_t * Battery, double dt_hour, double SOC_min, double SOC_max, double Ic_max, double Id_max,
+dispatch_t::dispatch_t(battery_t * Battery, double dt_hour, double SOC_min, double SOC_max, int current_choice, double Ic_max, double Id_max, double Pc_max, double Pd_max,
 	double t_min, int mode, int pv_dispatch)
 {
 	_Battery = Battery;
 	_Battery_initial = new battery_t(*_Battery);
-	init(_Battery, dt_hour, SOC_min, SOC_max, Ic_max, Id_max, t_min, mode, pv_dispatch);
+	init(_Battery, dt_hour, SOC_min, SOC_max, current_choice, Ic_max, Id_max, Pc_max, Pd_max, t_min, mode, pv_dispatch);
 }
 
-void dispatch_t::init(battery_t * Battery, double dt_hour, double SOC_min, double SOC_max, double Ic_max, double Id_max, double t_min, int mode, int pv_dispatch)
+void dispatch_t::init(battery_t * Battery, double dt_hour, double SOC_min, double SOC_max, int current_choice, double Ic_max, double Id_max, double Pc_max, double Pd_max, double t_min, int mode, int pv_dispatch)
 {
-	_dt_hour = dt_hour;
+	_dt_hour = dt_hour; 
 	_SOC_min = SOC_min;
 	_SOC_max = SOC_max;
+	_current_choice = current_choice;
 	_Ic_max = Ic_max;
 	_Id_max = Id_max;
+	_Pc_max = Pc_max;
+	_Pd_max = Pd_max;
 	_t_min = t_min;
 	_mode = mode;
 	_pv_dispatch_to_battery_first = pv_dispatch;
@@ -55,15 +107,15 @@ dispatch_t::dispatch_t(const dispatch_t& dispatch)
 {
 	_Battery = new battery_t(*dispatch._Battery);
 	_Battery_initial = new battery_t(*dispatch._Battery_initial);
-	init(_Battery, dispatch._dt_hour, dispatch._SOC_min, dispatch._SOC_max, dispatch._Ic_max, dispatch._Id_max, dispatch._t_min, dispatch._mode, dispatch._pv_dispatch_to_battery_first);
+	init(_Battery, dispatch._dt_hour, dispatch._SOC_min, dispatch._SOC_max, dispatch._current_choice, dispatch._Ic_max, dispatch._Id_max, dispatch._Pc_max, dispatch._Pd_max, dispatch._t_min, dispatch._mode, dispatch._pv_dispatch_to_battery_first);
 }
 
 // shallow copy from dispatch to this
-void dispatch_t::copy(const dispatch_t & dispatch)
+void dispatch_t::copy(const dispatch_t * dispatch)
 {
-	_Battery->copy(*dispatch._Battery);
-	_Battery_initial->copy(*dispatch._Battery_initial);
-	init(_Battery, dispatch._dt_hour, dispatch._SOC_min, dispatch._SOC_max, dispatch._Ic_max, dispatch._Id_max, dispatch._t_min, dispatch._mode, dispatch._pv_dispatch_to_battery_first);
+	_Battery->copy(dispatch->_Battery);
+	_Battery_initial->copy(dispatch->_Battery_initial);
+	init(_Battery, dispatch->_dt_hour, dispatch->_SOC_min, dispatch->_SOC_max, dispatch->_current_choice, dispatch->_Ic_max, dispatch->_Id_max, dispatch->_Pc_max, dispatch->_Pc_max, dispatch->_t_min, dispatch->_mode, dispatch->_pv_dispatch_to_battery_first);
 }
 void dispatch_t::delete_clone()
 {
@@ -132,12 +184,12 @@ void dispatch_t::switch_controller()
 		{
 			_P_tofrom_batt = 0.;
 			_charging = _prev_charging;
-			_t_at_mode += round(_dt_hour * util::hour_to_min);
+			_t_at_mode += (int)(round(_dt_hour * util::hour_to_min));
 		}
 		else
-			_t_at_mode = 0.;
+			_t_at_mode = 0;
 	}
-	_t_at_mode += round(_dt_hour * util::hour_to_min);
+	_t_at_mode += (int)(round(_dt_hour * util::hour_to_min));
 
 }
 double dispatch_t::current_controller(double battery_voltage)
@@ -148,18 +200,63 @@ double dispatch_t::current_controller(double battery_voltage)
 	restrict_current(I);
 	return I;
 }
-void dispatch_t::restrict_current(double &I)
+bool dispatch_t::restrict_current(double &I)
 {
-	if (I < 0)
+	bool iterate = false;
+	if (_current_choice == RESTRICT_CURRENT || _current_choice == RESTRICT_BOTH)
 	{
-		if (fabs(I) > _Ic_max)
-			I = -_Ic_max;
+		if (I < 0)
+		{
+			if (fabs(I) > _Ic_max)
+			{
+				I = -_Ic_max;
+				iterate = true;
+			}
+		}
+		else
+		{
+			if (I > _Id_max)
+			{
+				I = _Id_max;
+				iterate = true;
+			}
+		}
 	}
-	else
+	return iterate;
+}
+bool dispatch_t::restrict_power(double &I)
+{
+	bool iterate = false;
+	if (_current_choice == RESTRICT_POWER || _current_choice == RESTRICT_BOTH)
 	{
-		if (I > _Id_max)
-			I = _Id_max;
+
+		double dP = 0;
+
+		// charging
+		if (_P_tofrom_batt < 0)
+		{
+			if (fabs(_P_tofrom_batt) > _Pc_max * (1 + low_tolerance))
+			{
+				dP = fabs(_Pc_max - fabs(_P_tofrom_batt));
+
+				// increase (reduce) charging magnitude by percentage
+				I -= (dP / fabs(_P_tofrom_batt)) * I;
+				iterate = true;
+			}
+		}
+		else
+		{
+			if (fabs(_P_tofrom_batt) > _Pd_max * (1 + low_tolerance))
+			{
+				dP = fabs(_Pd_max - _P_tofrom_batt);
+
+				// decrease discharging magnitude
+				I -= (dP / fabs(_P_tofrom_batt)) * I;
+				iterate = true;
+			}
+		}
 	}
+	return iterate;
 }
 void dispatch_t::compute_to_batt()
 {
@@ -234,6 +331,10 @@ void dispatch_t::compute_to_load()
 void dispatch_t::compute_to_grid()
 {
 	_P_pv_to_grid = _P_pv - _P_pv_to_load - _P_pv_to_batt;
+
+	// shouldn't have battery to grid, but calculate to check
+	if (_P_grid > 0 && _P_tofrom_batt > 0)
+		_P_battery_to_grid = _P_grid - _P_pv_to_grid;
 }
 void dispatch_t::compute_generation()
 {
@@ -263,11 +364,11 @@ void dispatch_t::compute_battery_state()
 /*
 Manual Dispatch
 */
-dispatch_manual_t::dispatch_manual_t(battery_t * Battery, double dt, double SOC_min, double SOC_max, double Ic_max, double Id_max,
-	double t_min, int mode, bool pv_dispatch,
+dispatch_manual_t::dispatch_manual_t(battery_t * Battery, double dt, double SOC_min, double SOC_max, int current_choice, double Ic_max, double Id_max, double Pc_max, double Pd_max,
+	double t_min, int mode, int pv_dispatch,
 	util::matrix_t<float> dm_dynamic_sched, util::matrix_t<float> dm_dynamic_sched_weekend,
 	bool * dm_charge, bool *dm_discharge, bool * dm_gridcharge, std::map<int, double>  dm_percent_discharge, std::map<int, double>  dm_percent_gridcharge)
-	: dispatch_t(Battery, dt, SOC_min, SOC_max, Ic_max, Id_max,
+	: dispatch_t(Battery, dt, SOC_min, SOC_max, current_choice, Ic_max, Id_max,Pc_max, Pd_max,
 	t_min, mode, pv_dispatch)
 {
 	init(dm_dynamic_sched, dm_dynamic_sched_weekend, dm_charge, dm_discharge, dm_gridcharge, dm_percent_discharge, dm_percent_gridcharge);
@@ -321,25 +422,25 @@ dispatch_t(dispatch)
 }
 
 // shallow copy from dispatch to this
-void dispatch_manual_t::copy(const dispatch_t & dispatch)
+void dispatch_manual_t::copy(const dispatch_t * dispatch)
 {
 	dispatch_t::copy(dispatch);
-	const dispatch_manual_t * tmp = dynamic_cast<const dispatch_manual_t *>(&dispatch);
+	const dispatch_manual_t * tmp = dynamic_cast<const dispatch_manual_t *>(dispatch);
 	init_with_vects(tmp->_sched, tmp->_sched_weekend, tmp->_charge_array, tmp->_discharge_array, tmp->_gridcharge_array, tmp->_percent_discharge_array, tmp->_percent_charge_array);
 }
 
 void dispatch_manual_t::initialize_dispatch(size_t hour_of_year, size_t step, double P_pv_dc_charging, double P_pv_dc_discharging, double P_load_dc_charging, double P_load_dc_discharging)
-{
+{ 
 	int m, h, column;
 	int iprofile = -1;
-	util::month_hour(hour_of_year, m, h);
-	bool is_weekday = util::weekday(hour_of_year);
-	_mode == MANUAL ? column = h - 1 : column = (h - 1) / _dt_hour + step;
+	util::month_hour((int)hour_of_year, m, h);
+	bool is_weekday = util::weekday((int)hour_of_year);
+	_mode == MANUAL ? column = h - 1 : column = (int)((h - 1) / _dt_hour + step);
 
 	if (!is_weekday && _mode == MANUAL)
-		iprofile = _sched_weekend(m - 1, column);
+		iprofile = (int)_sched_weekend(m - 1, column);
 	else
-		iprofile = _sched(m - 1, column);  // 1-based
+		iprofile = (int)_sched(m - 1, column);  // 1-based
 
 	_can_charge = _charge_array[iprofile - 1];
 	_can_discharge = _discharge_array[iprofile - 1];
@@ -379,11 +480,8 @@ void dispatch_manual_t::dispatch(size_t year,
 
 	// current charge state of battery from last time step.  
 	double battery_voltage_nominal = _Battery->battery_voltage_nominal();						 // [V] 
-	double battery_voltage = _Battery->battery_voltage();										 // [V] 
 	double charge_needed_to_fill = _Battery->battery_charge_needed();						     // [Ah] - qmax - q0
 	double energy_needed_to_fill = (charge_needed_to_fill * battery_voltage_nominal)*util::watt_to_kilowatt;   // [kWh]
-	double charge_total = _Battery->battery_charge_total();								         // [Ah]
-	double charge_max = _Battery->battery_charge_maximum();								         // [Ah]
 	double I = 0.;															                     // [A] - The  current input/draw from battery after losses
 
 	// Options for how to use PV
@@ -398,12 +496,13 @@ void dispatch_manual_t::dispatch(size_t year,
 	I = current_controller(battery_voltage_nominal);
 
 	// Iteration variables
-	_Battery_initial->copy(*_Battery);
+	_Battery_initial->copy(_Battery);
 	bool iterate = true;
 	int count = 0;
+	size_t idx = util::index_year_hour_step((int)year, (int)hour_of_year, (int)step, (int)(1 / _dt_hour));
 
 	do {
-
+		 
 		// Recompute
 		if (!_pv_dispatch_to_battery_first)
 			compute_energy_load_priority(energy_needed_to_fill);
@@ -411,12 +510,12 @@ void dispatch_manual_t::dispatch(size_t year,
 			compute_energy_battery_priority(energy_needed_to_fill);
 
 		// Run Battery Model to update charge based on charge/discharge
-		_Battery->run(I);
+		_Battery->run(idx, I);
 
 		// Update how much power was actually used to/from battery
 		I = _Battery->capacity_model()->I();
 		double battery_voltage_new = _Battery->battery_voltage();
-		_P_tofrom_batt = I * 0.5*(battery_voltage + battery_voltage_new) * util::watt_to_kilowatt;// [kW]
+		_P_tofrom_batt = I * battery_voltage_new * util::watt_to_kilowatt;// [kW]
 
 		compute_battery_state();
 		compute_generation();
@@ -435,14 +534,14 @@ void dispatch_manual_t::dispatch(size_t year,
 bool dispatch_manual_t::check_constraints(double &I, int count)
 {
 	bool iterate = true;
-
 	double I_initial = I;
 
-	// stop iterating after 5 tries
-	if (count > 5)
-		iterate = false;
+	bool front_of_meter = false;
+	if (dispatch_manual_front_of_meter_t * dispatch = dynamic_cast<dispatch_manual_front_of_meter_t*>(this))
+		front_of_meter = true;
+
 	// decrease the current draw if took too much
-	else if (_Battery->battery_soc() < _SOC_min - tolerance)
+	if (_Battery->battery_soc() < _SOC_min - tolerance)
 	{
 		double dQ = 0.01 * (_SOC_min - _Battery->battery_soc()) * _Battery->battery_charge_maximum();
 		I -= dQ / _dt_hour;
@@ -469,18 +568,37 @@ bool dispatch_manual_t::check_constraints(double &I, int count)
 		else
 			I -= (_P_pv_to_grid / fabs(_P_tofrom_batt)) *fabs(I);
 	}
+	// Don't let battery export to the grid if behind the meter
+	else if (!front_of_meter && _P_battery_to_grid > tolerance)
+	{
+		if (fabs(_P_tofrom_batt) < tolerance)
+			I -= (_P_battery_to_grid * util::kilowatt_to_watt / _Battery->battery_voltage());
+		else
+			I -= (_P_battery_to_grid / fabs(_P_tofrom_batt)) * fabs(I);
+	}
 	else
 		iterate = false;
 
-	// don't allow changes to violate current limits
-	restrict_current(I);
+	// don't allow any changes to violate current limits
+	bool current_iterate = restrict_current(I);
+
+	// don't allow any changes to violate power limites
+	bool power_iterate = restrict_power(I);
+
+	// iterate if any of the conditions are met
+	if (iterate || current_iterate || power_iterate)
+		iterate = true;
+
+	// stop iterating after 5 tries
+	if (count > 5)
+		iterate = false;
 
 	// don't allow battery to flip from charging to discharging or vice versa
 	if ((I_initial / I) < 0)
 		I = 0;
 	
 	if (iterate)
-		_Battery->copy(*_Battery_initial);
+		_Battery->copy(_Battery_initial);
 
 
 	return iterate;
@@ -537,8 +655,8 @@ void dispatch_manual_t::compute_energy_load_priority(double energy_needed)
 
 void dispatch_manual_t::compute_energy_battery_priority(double energy_needed)
 {
-	double SOC = _Battery->capacity_model()->SOC();
-	bool charged = (round(SOC) == _SOC_max);
+//	double SOC = _Battery->capacity_model()->SOC();
+//	bool charged = (round(SOC) == _SOC_max);
 
 	bool charging = compute_energy_battery_priority_charging(energy_needed);
 
@@ -551,7 +669,7 @@ bool dispatch_manual_t::compute_energy_battery_priority_charging(double energy_n
 	bool charged = (round(SOC) == _SOC_max);
 	bool charging = false;
 
-	if (_can_charge && !charged > 0 && _P_pv_charging > 0)
+	if (_can_charge && !charged != 0 && _P_pv_charging > 0)
 	{
 		if (_P_pv_charging > energy_needed / _dt_hour)
 			_P_pv_to_batt = energy_needed / _dt_hour;
@@ -564,7 +682,7 @@ bool dispatch_manual_t::compute_energy_battery_priority_charging(double energy_n
 			_P_tofrom_batt = -energy_needed / _dt_hour;
 		charging = true;
 	}
-	else if (_can_grid_charge && !charged > 0)
+	else if (_can_grid_charge && !charged != 0)
 	{
 		_P_tofrom_batt = -energy_needed / _dt_hour;
 		charging = true;
@@ -572,11 +690,11 @@ bool dispatch_manual_t::compute_energy_battery_priority_charging(double energy_n
 	return charging;
 }
 
-dispatch_manual_front_of_meter_t::dispatch_manual_front_of_meter_t(battery_t * Battery, double dt, double SOC_min, double SOC_max, double Ic_max, double Id_max,
-	double t_min, int mode, bool pv_dispatch,
+dispatch_manual_front_of_meter_t::dispatch_manual_front_of_meter_t(battery_t * Battery, double dt, double SOC_min, double SOC_max, int current_choice, double Ic_max, double Id_max, double Pc_max, double Pd_max,
+	double t_min, int mode, int pv_dispatch,
 	util::matrix_t<float> dm_dynamic_sched, util::matrix_t<float> dm_dynamic_sched_weekend,
 	bool * dm_charge, bool *dm_discharge, bool * dm_gridcharge, std::map<int, double>  dm_percent_discharge, std::map<int, double>  dm_percent_gridcharge)
-	: dispatch_manual_t(Battery, dt, SOC_min, SOC_max, Ic_max, Id_max,
+	: dispatch_manual_t(Battery, dt, SOC_min, SOC_max, current_choice, Ic_max, Id_max,Pc_max, Pd_max,
 	t_min, mode, pv_dispatch,
 	dm_dynamic_sched, dm_dynamic_sched_weekend,
 	dm_charge, dm_discharge, dm_gridcharge, dm_percent_discharge, dm_percent_gridcharge){};
@@ -593,11 +711,8 @@ void dispatch_manual_front_of_meter_t::dispatch(size_t year,
 
 	// current charge state of battery from last time step.  
 	double battery_voltage_nominal = _Battery->battery_voltage_nominal();						  // [V] 
-	double battery_voltage = _Battery->battery_voltage();
 	double charge_needed_to_fill = _Battery->battery_charge_needed();						     // [Ah] - qmax - q0
 	double energy_needed_to_fill = (charge_needed_to_fill * battery_voltage_nominal)*util::watt_to_kilowatt;   // [kWh]
-	double charge_total = _Battery->battery_charge_total();								         // [Ah]
-	double charge_max = _Battery->battery_charge_maximum();								         // [Ah]
 	double I = 0.;															                     // [A] - The  current input/draw from battery after losses
 
 	// Options for how to use PV
@@ -609,9 +724,10 @@ void dispatch_manual_front_of_meter_t::dispatch(size_t year,
 	I = current_controller(battery_voltage_nominal);
 
 	// Iteration variables
-	_Battery_initial->copy(*_Battery);
+	_Battery_initial->copy(_Battery);
 	bool iterate = true;
 	int count = 0;
+	size_t idx = util::index_year_hour_step((int)year, (int)hour_of_year, (int)step, (int)(1 / _dt_hour));
 
 	do {
 
@@ -619,12 +735,12 @@ void dispatch_manual_front_of_meter_t::dispatch(size_t year,
 		compute_energy_no_load(energy_needed_to_fill);
 
 		// Run Battery Model to update charge based on charge/discharge
-		_Battery->run(I);
+		_Battery->run(idx, I);
 
 		// Update how much power was actually used to/from battery
 		I = _Battery->capacity_model()->I();
 		double battery_voltage_new = _Battery->battery_voltage();
-		_P_tofrom_batt = I * 0.5*(battery_voltage + battery_voltage_new) * util::watt_to_kilowatt;// [kW]
+		_P_tofrom_batt = I * battery_voltage_new * util::watt_to_kilowatt;// [kW]
 
 		compute_battery_state();
 		compute_generation();
@@ -641,8 +757,8 @@ void dispatch_manual_front_of_meter_t::dispatch(size_t year,
 
 void dispatch_manual_front_of_meter_t::compute_energy_no_load(double energy_needed)
 {
-	double SOC = _Battery->capacity_model()->SOC();
-	bool charged = (round(SOC) == _SOC_max);
+//	double SOC = _Battery->capacity_model()->SOC();
+//	bool charged = (round(SOC) == _SOC_max);
 
 	bool charging = compute_energy_battery_priority_charging(energy_needed);
 
@@ -670,11 +786,14 @@ automate_dispatch_t::automate_dispatch_t(
 	double dt_hour,
 	double SOC_min,
 	double SOC_max,
+	int current_choice,
 	double Ic_max,
 	double Id_max,
+	double Pc_max,
+	double Pd_max,
 	double t_min,
 	int mode,
-	bool pv_dispatch,
+	int pv_dispatch,
 	util::matrix_t<float> dm_dynamic_sched,
 	util::matrix_t<float> dm_dynamic_sched_weekend,
 	bool * dm_charge,
@@ -683,13 +802,13 @@ automate_dispatch_t::automate_dispatch_t(
 	std::map<int, double> dm_percent_discharge,
 	std::map<int, double> dm_percent_gridcharge,
 	int nyears
-	) : dispatch_manual_t(Battery, dt_hour, SOC_min, SOC_max, Ic_max, Id_max, t_min, mode, pv_dispatch,
+	) : dispatch_manual_t(Battery, dt_hour, SOC_min, SOC_max, current_choice, Ic_max, Id_max, Pc_max, Pd_max, t_min, mode, pv_dispatch,
 	dm_dynamic_sched, dm_dynamic_sched_weekend, dm_charge, dm_discharge, dm_gridcharge, dm_percent_discharge, dm_percent_gridcharge)
 {
 	_day_index = 0;
 	_hour_last_updated = -999;
 	_dt_hour = dt_hour;
-	_steps_per_hour = 1. / dt_hour;
+	_steps_per_hour = int(1. / dt_hour);
 	_nyears = nyears;
 	_mode = mode;
 	_num_steps = 24 * _steps_per_hour; // change if do look ahead of more than 24 hours
@@ -710,13 +829,13 @@ void automate_dispatch_t::dispatch(size_t year,
 	double P_load_dc_charging,
 	double P_load_dc_discharging)
 {
-	int step_per_hour = 1 / _dt_hour;
+	int step_per_hour = (int)(1 / _dt_hour);
 	int idx = 0;
 
-	if (_mode == LOOK_AHEAD ||_mode == LOOK_BEHIND || _mode == MAINTAIN_TARGET)
-		idx = (year * 8760 + hour_of_year)*step_per_hour + step;
+	if (_mode == LOOK_AHEAD || _mode == LOOK_BEHIND || _mode == MAINTAIN_TARGET)
+		idx = (int)util::index_year_hour_step((int)year, (int)hour_of_year, (int)step, (int)step_per_hour);
 
-	update_dispatch(hour_of_year, step, idx);
+	update_dispatch((int)hour_of_year, (int)step, idx);
 	dispatch_manual_t::dispatch(year, hour_of_year, step, P_pv_dc_charging, P_pv_dc_discharging, P_load_dc_charging, P_load_dc_discharging);
 }
 void automate_dispatch_t::update_pv_load_data(std::vector<double> P_pv_dc, std::vector<double> P_load_dc)
@@ -736,8 +855,9 @@ void automate_dispatch_t::update_dispatch(int hour_of_year, int step, int idx)
 
 	if (hour_of_day == 0 && hour_of_year != _hour_last_updated)
 	{
-		double E_useful;  // [kWh] - the cyclable energy available in the battery
-		double E_max;     // [kWh] - the maximum energy that can be cycled
+
+		// [kWh] - the maximum energy that can be cycled
+		double E_max = 0;     
 
 		check_new_month(hour_of_year, step);
 
@@ -795,7 +915,7 @@ void automate_dispatch_t::check_new_month(int hour_of_year, int step)
 		_month < 12 ? _month++ : _month = 1;
 	}
 }
-void automate_dispatch_t::check_debug(FILE *&p, bool & debug, int hour_of_year, int idx)
+void automate_dispatch_t::check_debug(FILE *&p, bool & debug, int hour_of_year, int )
 {
 	// for now, don't enable
 	// debug = true;
@@ -840,6 +960,7 @@ void automate_dispatch_t::sort_grid(FILE *p, bool debug, int idx)
 
 void automate_dispatch_t::compute_energy(FILE *p, bool debug, double & E_max)
 {
+	/*
 	if (capacity_kibam_t * capacity = dynamic_cast<capacity_kibam_t *>(_Battery->capacity_model()))
 	{
 		E_max = _Battery->battery_voltage() *_Battery->capacity_model()->q1()*util::watt_to_kilowatt;
@@ -847,7 +968,8 @@ void automate_dispatch_t::compute_energy(FILE *p, bool debug, double & E_max)
 			E_max = 0;
 	}
 	else
-		E_max = _Battery->battery_voltage() *_Battery->battery_charge_maximum()*(_SOC_max - _SOC_min) *0.01 *util::watt_to_kilowatt;
+	*/
+	E_max = _Battery->battery_voltage() *_Battery->battery_charge_maximum()*(_SOC_max - _SOC_min) *0.01 *util::watt_to_kilowatt;
 
 	if (debug)
 	{
@@ -859,7 +981,7 @@ void automate_dispatch_t::compute_energy(FILE *p, bool debug, double & E_max)
 void automate_dispatch_t::target_power(FILE*p, bool debug, double E_useful, int idx)
 {
 	// if target power set, use that
-	if (_P_target_input.size() > idx && _P_target_input[idx] >= 0)
+	if ((int)_P_target_input.size() > idx && _P_target_input[idx] >= 0)
 	{
 		double_vec::const_iterator first = _P_target_input.begin() + idx;
 		double_vec::const_iterator last = _P_target_input.begin() + idx + _num_steps;
@@ -990,7 +1112,7 @@ void automate_dispatch_t::set_charge(int profile)
 	_charge_array.push_back(true);
 	_discharge_array.push_back(false);
 	_gridcharge_array.push_back(false);
-	_sched.fill(profile);
+	_sched.fill((float)profile);
 }
 int automate_dispatch_t::set_discharge(FILE *p, bool debug, int hour_of_year, double E_max)
 {
@@ -1025,7 +1147,7 @@ int automate_dispatch_t::set_discharge(FILE *p, bool debug, int hour_of_year, do
 			int column = (h - 1)*_steps_per_hour + min;
 
 			// have set profile 0 as charge from solar only as default, start from 1
-			_sched.set_value(profile, m - 1, column); // in hourly case, column is hour-1, sched is 1-based
+			_sched.set_value((float)profile, (size_t)m - 1, (size_t)column); // in hourly case, column is hour-1, sched is 1-based
 			_charge_array.push_back(false);
 			_discharge_array.push_back(true);
 			_gridcharge_array.push_back(false);
@@ -1041,9 +1163,9 @@ void automate_dispatch_t::set_gridcharge(FILE *p, bool debug, int hour_of_year, 
 	profile++;
 	int m, h;
 	std::vector<int> grid_profiles;
-	int peak_hour = grid[0].Hour();
+//	int peak_hour = grid[0].Hour();
 	double charge_energy = 0;
-	int steps_grid_charged = 0;
+//	int steps_grid_charged = 0;
 	double charge_percent = 0;
 
 	// Count charge all day
@@ -1081,7 +1203,7 @@ void automate_dispatch_t::set_gridcharge(FILE *p, bool debug, int hour_of_year, 
 
 			util::month_hour(hour_of_year + hour, m, h);
 			int column = (h - 1)*_steps_per_hour + step;
-			_sched.set_value(profile, m - 1, column); // hourly, column is h-1
+			_sched.set_value((float)profile, m - 1, column); // hourly, column is h-1
 			_charge_array.push_back(true);
 			_discharge_array.push_back(false);
 			_gridcharge_array.push_back(true);
@@ -1103,7 +1225,9 @@ battery_metrics_t::battery_metrics_t(battery_t * Battery, double dt_hour)
 	_e_charge_from_pv = 0.;
 	_e_charge_from_grid = _e_charge_accumulated; // assumes initial charge from grid
 	_e_discharge_accumulated = 0.;
+	_e_loss_system = 0.;
 	_average_efficiency = 100.;
+	_average_roundtrip_efficiency = 100.;
 	_pv_charge_percent = 0.;
 
 	// annual metrics
@@ -1111,11 +1235,13 @@ battery_metrics_t::battery_metrics_t(battery_t * Battery, double dt_hour)
 	_e_charge_from_grid_annual = _e_charge_from_grid;
 	_e_charge_annual = _e_charge_accumulated;
 	_e_discharge_annual = 0.;
+	_e_loss_system_annual = _e_loss_system;
 	_e_grid_import_annual = 0.;
 	_e_grid_export_annual = 0.;
 	_e_loss_annual = 0.;
 }
-double battery_metrics_t::average_efficiency(){ return _average_efficiency; }
+double battery_metrics_t::average_battery_conversion_efficiency(){ return _average_efficiency; }
+double battery_metrics_t::average_battery_roundtrip_efficiency(){ return _average_roundtrip_efficiency; }
 double battery_metrics_t::pv_charge_percent(){ return _pv_charge_percent; }
 double battery_metrics_t::energy_pv_charge_annual(){ return _e_charge_from_pv_annual; }
 double battery_metrics_t::energy_grid_charge_annual(){ return _e_charge_from_grid_annual; }
@@ -1124,13 +1250,15 @@ double battery_metrics_t::energy_discharge_annual(){ return _e_discharge_annual;
 double battery_metrics_t::energy_grid_import_annual(){ return _e_grid_import_annual; }
 double battery_metrics_t::energy_grid_export_annual(){ return _e_grid_export_annual; }
 double battery_metrics_t::energy_loss_annual(){ return _e_loss_annual; }
+double battery_metrics_t::energy_system_loss_annual(){ return _e_loss_system_annual; };
 
-void battery_metrics_t::compute_metrics_ac(double P_tofrom_batt, double P_pv_to_batt, double P_grid_to_batt, double P_tofrom_grid)
+void battery_metrics_t::compute_metrics_ac(double P_tofrom_batt, double P_system_loss, double P_pv_to_batt, double P_grid_to_batt, double P_tofrom_grid)
 {
 	accumulate_grid_annual(P_tofrom_grid);
 	accumulate_battery_charge_components(P_tofrom_batt, P_pv_to_batt, P_grid_to_batt);
 	accumulate_energy_charge(P_tofrom_batt);
 	accumulate_energy_discharge(P_tofrom_batt);
+	accumulate_energy_system_loss(P_system_loss);
 	compute_annual_loss();
 }
 
@@ -1150,7 +1278,10 @@ void battery_metrics_t::compute_metrics_dc(dispatch_t * dispatch)
 }
 void battery_metrics_t::compute_annual_loss()
 {
-	_e_loss_annual = _e_charge_annual - _e_discharge_annual;
+	double e_conversion_loss = 0.;
+	if (_e_charge_annual > _e_discharge_annual)
+		e_conversion_loss = _e_charge_annual - _e_discharge_annual;
+	_e_loss_annual = e_conversion_loss + _e_loss_system_annual;
 }
 void battery_metrics_t::accumulate_energy_charge(double P_tofrom_batt)
 {
@@ -1168,6 +1299,11 @@ void battery_metrics_t::accumulate_energy_discharge(double P_tofrom_batt)
 		_e_discharge_annual += P_tofrom_batt*_dt_hour;
 	}
 }
+void battery_metrics_t::accumulate_energy_system_loss(double P_system_loss)
+{
+	_e_loss_system += P_system_loss * _dt_hour;
+	_e_loss_system_annual += P_system_loss * _dt_hour;
+}
 void battery_metrics_t::accumulate_battery_charge_components(double P_tofrom_batt, double P_pv_to_batt, double P_grid_to_batt)
 {
 	if (P_tofrom_batt < 0.)
@@ -1178,6 +1314,7 @@ void battery_metrics_t::accumulate_battery_charge_components(double P_tofrom_bat
 		_e_charge_from_grid_annual += P_grid_to_batt * _dt_hour;
 	}
 	_average_efficiency = 100.*(_e_discharge_accumulated / _e_charge_accumulated);
+	_average_roundtrip_efficiency = 100.*(_e_discharge_accumulated / (_e_charge_accumulated + _e_loss_system));
 	_pv_charge_percent = 100.*(_e_charge_from_pv / _e_charge_accumulated);
 }
 void battery_metrics_t::accumulate_grid_annual(double P_tofrom_grid)
@@ -1199,4 +1336,5 @@ void battery_metrics_t::new_year()
 	_e_discharge_annual = 0.;
 	_e_grid_import_annual = 0.;
 	_e_grid_export_annual = 0.;
+	_e_loss_system_annual = 0.;
 }

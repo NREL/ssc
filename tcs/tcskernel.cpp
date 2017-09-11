@@ -1,3 +1,52 @@
+/*******************************************************************************************************
+*  Copyright 2017 Alliance for Sustainable Energy, LLC
+*
+*  NOTICE: This software was developed at least in part by Alliance for Sustainable Energy, LLC
+*  (“Alliance”) under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
+*  The Government retains for itself and others acting on its behalf a nonexclusive, paid-up,
+*  irrevocable worldwide license in the software to reproduce, prepare derivative works, distribute
+*  copies to the public, perform publicly and display publicly, and to permit others to do so.
+*
+*  Redistribution and use in source and binary forms, with or without modification, are permitted
+*  provided that the following conditions are met:
+*
+*  1. Redistributions of source code must retain the above copyright notice, the above government
+*  rights notice, this list of conditions and the following disclaimer.
+*
+*  2. Redistributions in binary form must reproduce the above copyright notice, the above government
+*  rights notice, this list of conditions and the following disclaimer in the documentation and/or
+*  other materials provided with the distribution.
+*
+*  3. The entire corresponding source code of any redistribution, with or without modification, by a
+*  research entity, including but not limited to any contracting manager/operator of a United States
+*  National Laboratory, any institution of higher learning, and any non-profit organization, must be
+*  made publicly available under this license for as long as the redistribution is made available by
+*  the research entity.
+*
+*  4. Redistribution of this software, without modification, must refer to the software by the same
+*  designation. Redistribution of a modified version of this software (i) may not refer to the modified
+*  version by the same designation, or by any confusingly similar designation, and (ii) must refer to
+*  the underlying software originally provided by Alliance as “System Advisor Model” or “SAM”. Except
+*  to comply with the foregoing, the terms “System Advisor Model”, “SAM”, or any confusingly similar
+*  designation may not be used to refer to any modified version of this software or any modified
+*  version of the underlying software originally provided by Alliance without the prior written consent
+*  of Alliance.
+*
+*  5. The name of the copyright holder, contributors, the United States Government, the United States
+*  Department of Energy, or any of their employees may not be used to endorse or promote products
+*  derived from this software without specific prior written permission.
+*
+*  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
+*  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
+*  FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER,
+*  CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES DEPARTMENT OF ENERGY, NOR ANY OF THEIR
+*  EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+*  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+*  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+*  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
+*  THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*******************************************************************************************************/
+
 #define _CRT_SECURE_NO_WARNINGS 1
 
 #include <string>
@@ -28,6 +77,8 @@ void *dll_sym( void *handle, const char *name ) { return dlsym( handle, name ); 
 #endif
 
 extern "C" tcstypeinfo **tcsdynamictypes();
+
+tcstypeprovider sg_tcsTypeProvider;
 
 tcstypeprovider::tcstypeprovider()
 {
@@ -122,7 +173,7 @@ int tcstypeprovider::load_library( const std::string &name )
 			std::ostringstream ss;
 			ss << "loaded " << idx << " dynamic type(s) from " << path;
 			m_messages.push_back( ss.str() );
-			return idx;
+			return (int)idx;
 		}
 
 		if (pdl) dll_close( pdl );
@@ -232,7 +283,7 @@ static bool tcsvalue_parse_array( tcsvalue *v, const char *s )
 	tcsvalue_free( v );		
 	v->type = TCS_ARRAY;
 	v->data.array.values = new double[ vals.size() ];
-	v->data.array.length = vals.size();
+	v->data.array.length = (unsigned int)vals.size();
 	for (int i=0;i<(int)vals.size();i++)
 		v->data.array.values[i] = vals[i];	
 
@@ -268,13 +319,13 @@ static bool tcsvalue_parse_matrix( tcsvalue *v, const char *s )
 	
 	if ( mat.size() == 0 || maxcol == 0 ) return false;
 	
-	int len = mat.size() * maxcol;
+	int len = (int)(mat.size() * maxcol);
 
 	tcsvalue_free( v );
 	v->type = TCS_MATRIX;
 	v->data.matrix.values = new double[ len ];
-	v->data.matrix.nrows = mat.size();
-	v->data.matrix.ncols = maxcol;
+	v->data.matrix.nrows = (int)mat.size();
+	v->data.matrix.ncols = (int)maxcol;
 	
 	for (int i=0;i<len;i++) v->data.matrix.values[i] = 0;
 	
@@ -684,7 +735,7 @@ int tcskernel::copy( tcskernel &tk )
 			std::vector<connection> &cc = u.conn[j];
 			for ( size_t k=0;k<cc.size();k++)
 			{
-				connect( id, j, cc[k].target_unit, cc[k].target_index, 
+				connect( (int)id, (int)j, cc[k].target_unit, cc[k].target_index, 
 					cc[k].ftol, cc[k].arridx );
 			}
 		}
@@ -707,7 +758,7 @@ int tcskernel::add_unit( const std::string &type, const std::string &name )
 	
 	// push an empty unit, obtain a reference to it
 	m_units.push_back( unit() );
-	int id = m_units.size() - 1;
+	int id = (int)m_units.size() - 1;
 	unit &u = m_units[ id ];
 	u.id = id;
 	u.name = name;
@@ -915,7 +966,7 @@ int tcskernel::solve( double time, double step )
 			}*/
 
 			if ( m_units[i].type->invoke( &m_units[i].context, m_units[i].instance, TCS_INVOKE,
-					&m_units[i].values[0], m_units[i].values.size(),
+					&m_units[i].values[0], (unsigned int)m_units[i].values.size(),
 					time, step, m_units[i].ncall ) < 0 )
 			{
 				message( TCS_ERROR,"unit %d (%s) type '%s' failed at time %.2lf", i, m_units[i].name.c_str(),
@@ -1059,7 +1110,7 @@ int tcskernel::simulate( double start, double end, double step )
 	for (size_t i=0;i<m_units.size();i++)
 	{
 		if( m_units[i].type->invoke( &m_units[i].context, m_units[i].instance, TCS_INIT,
-				&m_units[i].values[0], m_units[i].values.size(),
+				&m_units[i].values[0], (unsigned int)m_units[i].values.size(),
 				-1, step, -1 )  < 0 )
 		{
 			message( TCS_ERROR, "unit %d (%s) type '%s' failed at initialization", i, 
@@ -1091,7 +1142,7 @@ int tcskernel::simulate( double start, double end, double step )
 			if ( m_units[i].type->call_after_convergence > 0 )
 			{
 				if ( m_units[i].type->invoke( &m_units[i].context, m_units[i].instance, TCS_CONVERGED,
-					&m_units[i].values[0], m_units[i].values.size(),
+					&m_units[i].values[0], (unsigned int)m_units[i].values.size(),
 					m_currentTime, m_timeStep, -2 ) < 0 )
 				{
 					free_instances();

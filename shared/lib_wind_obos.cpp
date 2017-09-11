@@ -1,3 +1,52 @@
+/*******************************************************************************************************
+*  Copyright 2017 Alliance for Sustainable Energy, LLC
+*
+*  NOTICE: This software was developed at least in part by Alliance for Sustainable Energy, LLC
+*  (“Alliance”) under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
+*  The Government retains for itself and others acting on its behalf a nonexclusive, paid-up,
+*  irrevocable worldwide license in the software to reproduce, prepare derivative works, distribute
+*  copies to the public, perform publicly and display publicly, and to permit others to do so.
+*
+*  Redistribution and use in source and binary forms, with or without modification, are permitted
+*  provided that the following conditions are met:
+*
+*  1. Redistributions of source code must retain the above copyright notice, the above government
+*  rights notice, this list of conditions and the following disclaimer.
+*
+*  2. Redistributions in binary form must reproduce the above copyright notice, the above government
+*  rights notice, this list of conditions and the following disclaimer in the documentation and/or
+*  other materials provided with the distribution.
+*
+*  3. The entire corresponding source code of any redistribution, with or without modification, by a
+*  research entity, including but not limited to any contracting manager/operator of a United States
+*  National Laboratory, any institution of higher learning, and any non-profit organization, must be
+*  made publicly available under this license for as long as the redistribution is made available by
+*  the research entity.
+*
+*  4. Redistribution of this software, without modification, must refer to the software by the same
+*  designation. Redistribution of a modified version of this software (i) may not refer to the modified
+*  version by the same designation, or by any confusingly similar designation, and (ii) must refer to
+*  the underlying software originally provided by Alliance as “System Advisor Model” or “SAM”. Except
+*  to comply with the foregoing, the terms “System Advisor Model”, “SAM”, or any confusingly similar
+*  designation may not be used to refer to any modified version of this software or any modified
+*  version of the underlying software originally provided by Alliance without the prior written consent
+*  of Alliance.
+*
+*  5. The name of the copyright holder, contributors, the United States Government, the United States
+*  Department of Energy, or any of their employees may not be used to endorse or promote products
+*  derived from this software without specific prior written permission.
+*
+*  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
+*  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
+*  FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER,
+*  CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES DEPARTMENT OF ENERGY, NOR ANY OF THEIR
+*  EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+*  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+*  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+*  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
+*  THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*******************************************************************************************************/
+
 #include "lib_wind_obos.h"
 
 #include <iostream>
@@ -1234,7 +1283,7 @@ void wobos::TurbInstCost()
 		turbCostsByVessel[0][1] = turbInstVessel[16] * turbInstVessel[14] * turbInstTime;
 		turbCostsByVessel[1][1] = turbFeederBarge[16] * turbFeederBarge[14] * turbInstTime;
 
-		for (int i = 2; i < turbSupportVessels.size(); i++)
+		for (size_t i = 2; i < turbSupportVessels.size(); i++)
 		{
 			turbCostsByVessel[i][0] = turbSupportVessels[i - 2][0];
 			turbCostsByVessel[i][1] = turbSupportVessels[i - 2][16] * turbSupportVessels[i - 2][14]
@@ -1253,7 +1302,7 @@ void wobos::TurbInstCost()
 		turbCostsByVessel[0][0] = turbInstVessel[0];
 		turbCostsByVessel[0][1] = turbInstVessel[16] * turbInstVessel[14] * turbInstTime;
 
-		for (int i = 1; i < turbCostsByVessel.size(); i++)
+		for (size_t i = 1; i < turbCostsByVessel.size(); i++)
 		{
 			turbCostsByVessel[i][0] = turbSupportVessels[i - 1][0];
 			turbCostsByVessel[i][1] = turbSupportVessels[i - 1][16] * turbSupportVessels[i - 1][14]
@@ -1261,7 +1310,7 @@ void wobos::TurbInstCost()
 		}
 	}
 	turbine_install_cost = 0;
-    for(int i = 0; i<turbCostsByVessel.size(); i++)
+    for(size_t i = 0; i<turbCostsByVessel.size(); i++)
     {
         turbine_install_cost += turbCostsByVessel[i][1];
     }
@@ -1300,7 +1349,7 @@ void wobos::SubInstCost()
             subCostsByVessel[2][0] = scourProtVessel[0];
             subCostsByVessel[2][1] = (instScour/24)*nTurb*scourProtVessel[16]*scourProtVessel[14];
         }
-		for (int i = 3; i < subCostsByVessel.size(); i++)
+		for (size_t i = 3; i < subCostsByVessel.size(); i++)
 		{
 			subCostsByVessel[i][0] = subSupportVessels[i - 3][0];
             if(substructure == SPAR)
@@ -1328,13 +1377,13 @@ void wobos::SubInstCost()
             subCostsByVessel[1][0] = scourProtVessel[0];
             subCostsByVessel[1][1] = (instScour/24)*nTurb*scourProtVessel[16]*scourProtVessel[14];
         }
-		for (int i = 2; i < subCostsByVessel.size(); i++)
+		for (size_t i = 2; i < subCostsByVessel.size(); i++)
 		{
 			subCostsByVessel[i][0] = subSupportVessels[i - 2][0];
 			subCostsByVessel[i][1] = subSupportVessels[i - 2][16] * subSupportVessels[i - 2][14] * subInstTime;
 		}
 	}
-        for(int i = 0; i<subCostsByVessel.size(); i++)
+        for(size_t i = 0; i<subCostsByVessel.size(); i++)
         {
             substructure_install_cost += subCostsByVessel[i][1];
         }
@@ -1368,7 +1417,7 @@ void wobos::ElectricalInstCost()
     }
     elecCostsByVessel[3][1] = elecTugs[0][14] * elecTugs[0][16] * subsInstTime;
     elecCostsByVessel[4][1] = elecTugs[1][14] * elecTugs[1][16] * subsInstTime;
-	for (int i = 5; i < elecCostsByVessel.size(); i++)
+	for (size_t i = 5; i < elecCostsByVessel.size(); i++)
 	{
 		elecCostsByVessel[i][0] = elecSupportVessels[i - 5][0];
 		elecCostsByVessel[i][1] = elecSupportVessels[i - 5][14] * elecSupportVessels[i - 5][16]
@@ -1376,7 +1425,7 @@ void wobos::ElectricalInstCost()
 	}
 	electrical_install_cost = 0;
 	substation_install_cost = elecCostsByVessel[2][1]+elecCostsByVessel[3][1]+elecCostsByVessel[4][1];
-    for(int i = 0; i<elecCostsByVessel.size(); i++)
+    for(size_t i = 0; i<elecCostsByVessel.size(); i++)
     {
         electrical_install_cost += elecCostsByVessel[i][1];
     }
@@ -1416,20 +1465,20 @@ void wobos::VesselMobDemobCost()
         mobDemobCostByVessel[9][1] = subFeederBarge[14] * subFeederBarge[15] * subFeederBarge[16];
     }
 	//populate cost vector with support vessel identifier values and costs
-	for (int i = 10; i < turbSupportVessels.size(); i++)
+	for (size_t i = 10; i < turbSupportVessels.size(); i++)
 	{
 		mobDemobCostByVessel[i][0] = turbSupportVessels[i-10][0];
 		mobDemobCostByVessel[i][1] = turbSupportVessels[i-10][14] * turbSupportVessels[i-10][15] * turbSupportVessels[i-10][16];
 	}
 	//populate cost vector with support vessel identifier values and costs
-	for (int i = 10 + turbSupportVessels.size(); i < turbSupportVessels.size() + subSupportVessels.size(); i++)
+	for (size_t i = 10 + turbSupportVessels.size(); i < turbSupportVessels.size() + subSupportVessels.size(); i++)
 	{
 		mobDemobCostByVessel[i][0] = subSupportVessels[i - turbSupportVessels.size()-10][0];
 		mobDemobCostByVessel[i][1] = subSupportVessels[i - turbSupportVessels.size()-10][14] * subSupportVessels[i - turbSupportVessels.size()-10][15]
 			* subSupportVessels[i - turbSupportVessels.size()-10][16];
 	}
 	//populate cost vector with support vessel identifier values and costs
-	for (int i = 10 + turbSupportVessels.size() + subSupportVessels.size(); i < turbSupportVessels.size() + subSupportVessels.size()
+	for (size_t i = 10 + turbSupportVessels.size() + subSupportVessels.size(); i < turbSupportVessels.size() + subSupportVessels.size()
 		+ elecSupportVessels.size(); i++)
 	{
 		mobDemobCostByVessel[i][0] = elecSupportVessels[i - (turbSupportVessels.size() + subSupportVessels.size())-10][0];
@@ -1445,20 +1494,20 @@ void wobos::VesselMobDemobCost()
 	it = unique(mobDemobCostByVessel.begin(), mobDemobCostByVessel.end());
 
 	//resize the cost vector to get rid of the duplicate support vessels stored at the end of the vector
-	int resizer = distance(mobDemobCostByVessel.begin(), it);
+	int resizer = (int)distance(mobDemobCostByVessel.begin(), it);
 	mobDemobCostByVessel.resize(resizer);
-	for (size_t i = 0; i < resizer; i++)
+	for (int i = 0; i < resizer; i++)
 	{
 		mobDemobCostByVessel[i].resize(2);
 	}
 
     //apply number of install seasons multiplier to mobilization costs
-    for (int i = 0; i < mobDemobCostByVessel.size(); i++)
+    for (size_t i = 0; i < mobDemobCostByVessel.size(); i++)
     {
         mobDemobCostByVessel[i][1] = mobDemobCostByVessel[i][1]*number_install_seasons;
     }
 	mob_demob_cost = 0;
-    for(int i = 0; i<mobDemobCostByVessel.size(); i++)
+    for(size_t i = 0; i<mobDemobCostByVessel.size(); i++)
     {
         mob_demob_cost += mobDemobCostByVessel[i][1];
     }
@@ -1478,19 +1527,19 @@ double wobos::TotInstCost()
 	double sum = 0;
 
 	//following for loops iterate through cost loops adding each cost to sum
-	for (int i = 0; i < turbCostsByVessel.size(); i++)
+	for (size_t i = 0; i < turbCostsByVessel.size(); i++)
 	{
 		sum += turbCostsByVessel[i][1];
 	}
-	for (int i = 0; i < subCostsByVessel.size(); i++)
+	for (size_t i = 0; i < subCostsByVessel.size(); i++)
 	{
 		sum += subCostsByVessel[i][1];
 	}
-	for (int i = 0; i < elecCostsByVessel.size(); i++)
+	for (size_t i = 0; i < elecCostsByVessel.size(); i++)
 	{
 		sum += elecCostsByVessel[i][1];
 	}
-	for (int i = 0; i < mobDemobCostByVessel.size(); i++)
+	for (size_t i = 0; i < mobDemobCostByVessel.size(); i++)
 	{
 		sum += mobDemobCostByVessel[i][1];
 	}
@@ -1764,8 +1813,8 @@ double wobos::PlantCommissioning()
 void wobos::ArrayCabCostOptimizer()
 
 {
-	int nArrVolts = arrayVolt.size();
-	int nArrCables = arrCables[0].size();
+	size_t nArrVolts = arrayVolt.size();
+	size_t nArrCables = arrCables[0].size();
 
 	vector<vector<double> > strings(nArrVolts, vector<double>(nArrCables));
 	vector<vector<double> > nTurbPS(nArrVolts, vector<double>(nArrCables));
@@ -1828,9 +1877,9 @@ void wobos::ArrayCabCostOptimizer()
 	715,   //630 mm2
 	775,   //800 mm2
 	825};  //1000 mm2*/
-	for (int k = 0; k < nArrVolts; k++)
+	for (size_t k = 0; k < nArrVolts; k++)
 	{
-		for (int i = 0; i < nArrCables; i++) //this for loop calculates values and stores them in the previously
+		for (size_t i = 0; i < nArrCables; i++) //this for loop calculates values and stores them in the previously
 			//created vectors
 		{
 			strings[k][i] = Strings(arrCables[k][i][3], arrayVolt[k][0]);
@@ -1852,17 +1901,17 @@ void wobos::ArrayCabCostOptimizer()
 	}
 
 	int counter1 = 0;
-	int cabIndex1;
-	int cabIndex2;
-	int arrVoltIndex;
-	double oldCost;
-	double newCost;
+	int cabIndex1 = 0;
+	int cabIndex2 = 0;
+	int arrVoltIndex = 0;
+	double oldCost= 0;
+	double newCost = 0;
 
-	for (int k = 0; k < nArrVolts; k++)
+	for (size_t k = 0; k < nArrVolts; k++)
 	{
-		for (int i = 0; i < nArrCables; i++)
+		for (size_t i = 0; i < nArrCables; i++)
 		{
-			for (int j = i + 1; j < nArrCables; j++)
+			for (size_t j = i + 1; j < nArrCables; j++)
 			{
 
 				nTurbInter1[k][i] = InterfacesCable1(strings[k][j],
@@ -1894,16 +1943,16 @@ void wobos::ArrayCabCostOptimizer()
 				if ((k == 0) && (i == 0) && (j == 1))
 				{
 					oldCost = newCost;
-					cabIndex1 = i;
-					cabIndex2 = j;
-					arrVoltIndex = k;
+					cabIndex1 = (int)i;
+					cabIndex2 = (int)j;
+					arrVoltIndex = (int)k;
 				}
 				else if (newCost < oldCost)
 				{
 					oldCost = newCost;
-					cabIndex1 = i;
-					cabIndex2 = j;
-					arrVoltIndex = k;
+					cabIndex1 = (int)i;
+					cabIndex2 = (int)j;
+					arrVoltIndex = (int)k;
 				}
 
 				counter1 += 1;
@@ -1926,8 +1975,8 @@ void wobos::ArrayCabCostOptimizer()
 
 void wobos::ExportCabCostOptimizer()
 {
-	int nExpVolts = expCabVolt.size();
-	int nExpCables = expCables[0].size();
+	int nExpVolts = (int)expCabVolt.size();
+	int nExpCables = (int)expCables[0].size();
 
 	vector<vector<double> >nExpCab(nExpVolts, vector<double>(nExpCables));
 	vector<vector<double> >expCabLeng(nExpVolts, vector<double>(nExpCables));
@@ -1936,10 +1985,10 @@ void wobos::ExportCabCostOptimizer()
 	vector<vector<double> >expCabSecPerTrip(nExpVolts, vector<double>(nExpCables));
 	vector<vector<double> >expCabInstTime(nExpVolts, vector<double>(nExpCables));
 
-	double newCost;
-	double oldCost;
-	int expCabIndex;
-	int expVoltIndex;
+	double newCost = 0;
+	double oldCost = 0;
+	int expCabIndex = 0;
+	int expVoltIndex = 0;
 
 	//($/m) ,(kg/m)  ,(ancillary cost $/interface)
 	/*double export132kvData[10][3] =  {

@@ -1,3 +1,52 @@
+/*******************************************************************************************************
+*  Copyright 2017 Alliance for Sustainable Energy, LLC
+*
+*  NOTICE: This software was developed at least in part by Alliance for Sustainable Energy, LLC
+*  (“Alliance”) under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
+*  The Government retains for itself and others acting on its behalf a nonexclusive, paid-up,
+*  irrevocable worldwide license in the software to reproduce, prepare derivative works, distribute
+*  copies to the public, perform publicly and display publicly, and to permit others to do so.
+*
+*  Redistribution and use in source and binary forms, with or without modification, are permitted
+*  provided that the following conditions are met:
+*
+*  1. Redistributions of source code must retain the above copyright notice, the above government
+*  rights notice, this list of conditions and the following disclaimer.
+*
+*  2. Redistributions in binary form must reproduce the above copyright notice, the above government
+*  rights notice, this list of conditions and the following disclaimer in the documentation and/or
+*  other materials provided with the distribution.
+*
+*  3. The entire corresponding source code of any redistribution, with or without modification, by a
+*  research entity, including but not limited to any contracting manager/operator of a United States
+*  National Laboratory, any institution of higher learning, and any non-profit organization, must be
+*  made publicly available under this license for as long as the redistribution is made available by
+*  the research entity.
+*
+*  4. Redistribution of this software, without modification, must refer to the software by the same
+*  designation. Redistribution of a modified version of this software (i) may not refer to the modified
+*  version by the same designation, or by any confusingly similar designation, and (ii) must refer to
+*  the underlying software originally provided by Alliance as “System Advisor Model” or “SAM”. Except
+*  to comply with the foregoing, the terms “System Advisor Model”, “SAM”, or any confusingly similar
+*  designation may not be used to refer to any modified version of this software or any modified
+*  version of the underlying software originally provided by Alliance without the prior written consent
+*  of Alliance.
+*
+*  5. The name of the copyright holder, contributors, the United States Government, the United States
+*  Department of Energy, or any of their employees may not be used to endorse or promote products
+*  derived from this software without specific prior written permission.
+*
+*  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
+*  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
+*  FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER,
+*  CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES DEPARTMENT OF ENERGY, NOR ANY OF THEIR
+*  EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+*  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+*  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+*  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
+*  THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*******************************************************************************************************/
+
 #include "core.h"
 #include "lib_weatherfile.h"
 // for adjustment factors
@@ -292,7 +341,7 @@ public:
 		int transport_fuel = as_integer("biopwr.emissions.transport_fuel"); /*0 if diesel, 1 if biodiesel*/
 		int transport_legs = as_integer("biopwr.emissions.transport_legs"); /*0 if 1-stage, 1 if 2-stage*/
 		double transport_predist = as_double("biopwr.emissions.transport_predist"); /*distance to preprocessing*/
-		int transport_long = as_integer("biopwr.emissions.transport_long"); /*0 if no long distance option, 1 if yes*/
+//		int transport_long = as_integer("biopwr.emissions.transport_long"); /*0 if no long distance option, 1 if yes*/
 		double transport_longmiles = as_double("biopwr.emissions.transport_longmiles"); /*max distance for truck transport*/
 		int transport_longopt = as_integer("biopwr.emissions.transport_longopt"); /*0 if rail, 1 if barge*/
 		int pre_chipopt = as_integer("biopwr.emissions.pre_chipopt"); /*0 if no, 1 if yes*/
@@ -356,7 +405,7 @@ public:
 		if (tou_opt == 1)
 		{
 			disp = as_array("biopwr.plant.disp.power", &disp_count);
-			for (int i = 0; i<disp_count; i++)
+			for (size_t i = 0; i<disp_count; i++)
 			{
 				if (disp[i]>max_turb)
 				{
@@ -604,8 +653,8 @@ public:
 				return;
 			}
 			int iMonth = util::month_of((double)istep) - 1;
-			temp_c[iMonth] += wf.tdry / (nday[iMonth] * 24.0);		/*calculating avg monthly temp & rh*/
-			rh[iMonth] += wf.rhum / (nday[iMonth] * 24.0) / 100.0;
+			temp_c[iMonth] += (ssc_number_t)(wf.tdry / (nday[iMonth] * 24.0));		/*calculating avg monthly temp & rh*/
+			rh[iMonth] += (ssc_number_t)(wf.rhum / (nday[iMonth] * 24.0) / 100.0);
 
 			_twet[istep] = wf.twet;
 			_tdry[istep] = wf.tdry;
@@ -729,7 +778,7 @@ public:
 			{
 				for (int j = 0; j<15; j++) /*fed as received monthly moisture content*/
 				{
-					moist[i] += (frac[j] * harv_moist[j][i]);
+					moist[i] += (ssc_number_t)(frac[j] * harv_moist[j][i]);
 				}
 			}
 			else if (dry_opt == 1) /*dry to EMC on a monthly basis */
@@ -744,8 +793,8 @@ public:
 						double const_k2 = 194.01 + (0.62 * (temp_k[i])) + (51.48 * sqrt(temp_k[i]));
 						double bag = (((1800.0 / const_w) * (((const_k * rh[i] * 100.0) / (1 - (const_k * rh[i] * 100.0))) + (((const_k1 * const_k * rh[i] * 100.0) + (2 * const_k1 * const_k2 * const_k * const_k * rh[i] * 100.0 * rh[i] * 100.0)) / (1 + (const_k1 * const_k * rh[i] * 100.0) + (const_k1 * const_k2 * const_k * const_k * rh[i] * 100.0 * rh[i] * 100.0))))) / 100.0);
 						emc[i] += (frac[j] * bag);
-						bagasse_emc[i] = bag;
-						moist[i] += frac[j] * harv_moist[j][i];
+						bagasse_emc[i] = (ssc_number_t)bag;
+						moist[i] += (ssc_number_t)(frac[j] * harv_moist[j][i]);
 					}
 					else if (j == 1 && frac[j] != 0)
 					{
@@ -754,8 +803,8 @@ public:
 						double chu_c = 71.996;
 						double bar = (1.0 / chu_b) * std::log(((temp_c[i] + chu_c) / chu_a) * std::log(rh[i])) / 100.0;
 						emc[i] += frac[j] * bar;
-						barley_emc[i] = bar;
-						moist[i] += frac[j] * harv_moist[j][i];
+						barley_emc[i] = (ssc_number_t)bar;
+						moist[i] += (ssc_number_t)(frac[j] * harv_moist[j][i]);
 					}
 					else if (j == 2 && frac[j] != 0)
 					{
@@ -764,8 +813,8 @@ public:
 						double const_c = 1.0 / 2.4116;
 						double stov = (((const_a + (const_b * temp_c[i])) * pow((rh[i] / (1.0 - rh[i])), const_c)) / 100.0);
 						emc[i] += (frac[j] * stov);
-						stover_emc[i] = stov;
-						moist[i] += (frac[j] * harv_moist[j][i]);
+						stover_emc[i] = (ssc_number_t)stov;
+						moist[i] += (ssc_number_t)(frac[j] * harv_moist[j][i]);
 					}
 					else if (j == 3 && frac[j] != 0)
 					{
@@ -775,8 +824,8 @@ public:
 						double const_k2r = 1.09 + (0.0284 * temp_f[i]) - (0.0000904 * temp_f[i] * temp_f[i]);
 						double ric = ((1800 / const_wr) * (((const_kr * rh[i]) / (1 - (const_kr * rh[i]))) + (((const_k1r * const_kr * rh[i]) + (2 * const_k1r * const_k2r * const_kr * const_kr * rh[i] * rh[i])) / (1 + (const_k1r * const_kr * rh[i]) + (const_k1r * const_k2r * const_kr * const_kr * rh[i] * rh[i])))) / 100.0);
 						emc[i] += (frac[j] * ric * 1.1);
-						rice_emc[i] = ric * 1.1;
-						moist[i] += (frac[j] * harv_moist[j][i]);
+						rice_emc[i] = (ssc_number_t)(ric * 1.1);
+						moist[i] += (ssc_number_t)(frac[j] * harv_moist[j][i]);
 					}
 					else if ((j == 4 || j == 5 || j == 6 || j == 7 || j == 8 || j == 9) && (frac[j] != 0))
 					{
@@ -784,7 +833,7 @@ public:
 						double const_k = 0.791 + (0.000463 * temp_f[i]) - (0.000000844 * temp_f[i] * temp_f[i]);
 						double const_k1 = 6.34 + (0.000775 * temp_f[i]) - (0.0000935 * temp_f[i] * temp_f[i]);
 						double const_k2 = 1.09 + (0.0284 * temp_f[i]) - (0.0000904 * temp_f[i] * temp_f[i]);
-						double these = ((1800 / const_w) * (((const_k * rh[i]) / (1 - (const_k * rh[i]))) + (((const_k1 * const_k * rh[i]) + (2 * const_k1 * const_k2 * const_k * const_k * rh[i] * rh[i])) / (1 + (const_k1 * const_k * rh[i]) + (const_k1 * const_k2 * const_k * const_k * rh[i] * rh[i])))) / 100.0);
+						ssc_number_t these = (ssc_number_t)((1800 / const_w) * (((const_k * rh[i]) / (1 - (const_k * rh[i]))) + (((const_k1 * const_k * rh[i]) + (2 * const_k1 * const_k2 * const_k * const_k * rh[i] * rh[i])) / (1 + (const_k1 * const_k * rh[i]) + (const_k1 * const_k2 * const_k * const_k * rh[i] * rh[i])))) / 100.0);
 						emc[i] += (frac[j] * these);
 						if (j == 4) { wheat_emc[i] = these; }
 						if (j == 5) { forest_emc[i] = these; }
@@ -792,11 +841,11 @@ public:
 						if (j == 7) { urban_emc[i] = these; }
 						if (j == 8) { woody_emc[i] = these; }
 						if (j == 9) { herb_emc[i] = these; }
-						moist[i] += ((frac[j] * harv_moist[j][i]));
+						moist[i] += (ssc_number_t)((frac[j] * harv_moist[j][i]));
 					}
 					else if ((j == 10 || j == 11 || j == 12 || j == 13 || j == 14) && (frac[j] != 0))
 					{
-						moist[i] += ((frac[j] * harv_moist[j][i]));
+						moist[i] += (ssc_number_t)((frac[j] * harv_moist[j][i]));
 					}
 				}
 			}
@@ -807,10 +856,10 @@ public:
 					moist_b[i] += ((frac[j] * harv_moist[j][i]));
 
 				}
-				moist[i] = dry_spec;
+				moist[i] = (ssc_number_t)dry_spec;
 				if (moist_b[i]<moist[i])
 				{
-					moist[i] = moist_b[i];
+					moist[i] = (ssc_number_t)moist_b[i];
 					//AddWarning("specified dried moisture content was higher than actual biomass moisture content");
 				}
 				_moist_b += moist_b[i] / 12.0;
@@ -818,7 +867,7 @@ public:
 			}
 			if (emc[i] != 0 && emc[i]<moist[i])
 			{
-				moist[i] = emc[i];
+				moist[i] = (ssc_number_t)emc[i];
 			}
 			//if (moist[i] < 0.1) {moist[i] = 0.1;} /*in case 10 is unrealistically low moisture content*/
 			w_per_hv[i] = (moist[i] / hhv * 10000.0) + (hydrogen / 2.0 * 8.94 / hhv * 10000.0); /*calculates amt of water per 10,000 btu/fuel (hhv basis), per B&W 21-5*/
@@ -930,14 +979,14 @@ public:
 		for (int i = 0; i<8760; i++)
 		{
 			int iMonth = util::month_of(i) - 1;
-			_boiler_eff[i] = (1 - fuel_eff_loss[iMonth] - _dry_eff_loss[i] - _wet_air_eff_loss[i] - unburn_eff_loss - manu_eff_loss - rad_eff_loss) *100.0;
+			_boiler_eff[i] = (ssc_number_t)((1 - fuel_eff_loss[iMonth] - _dry_eff_loss[i] - _wet_air_eff_loss[i] - unburn_eff_loss - manu_eff_loss - rad_eff_loss) *100.0);
 
 			total_dry_eff_loss += _dry_eff_loss[i] / 8760.0; //for loss diagram
 			total_wair_eff_loss += _wet_air_eff_loss[i] / 8760.0; //for loss diagram
 			total_fuel_eff_loss += fuel_eff_loss[iMonth] / 8760.0; //for loss diagram
 			total_boiler_eff += _boiler_eff[i] / 8760.0; //for loss diagram
 
-			boiler_eff[iMonth] += _boiler_eff[i] / (nday[iMonth] * 24.0);
+			boiler_eff[iMonth] += (ssc_number_t)(_boiler_eff[i] / (nday[iMonth] * 24.0));
 			double Qmonth = total * nday[iMonth] / 365.0 * 2000.0 * hhv;
 			double Qtoboil = Qmonth / (nday[iMonth] * 24.0);
 			Qtoboil_tot += (Qtoboil * (1 / 3412.14163));
@@ -998,16 +1047,16 @@ public:
 			double capfact = Wnet / Wdesign;
 
 			_gross[i] = Wgr;
-			_pbeta[i] = eta_adj*100.0;
-			_etaa[iMonth] += eta_adj*100.0 / (nday[iMonth] * 24.0);
+			_pbeta[i] = (ssc_number_t)(eta_adj*100.0);
+			_etaa[iMonth] += (ssc_number_t)(eta_adj*100.0 / (nday[iMonth] * 24.0));
 			total_etaa += eta_adj / 8760.0; //for loss diagram
-			_qtpb[i] = Qtopb;
-			_enet[i] = Wnet*haf(i);
+			_qtpb[i] = (ssc_number_t)Qtopb;
+			_enet[i] = (ssc_number_t)(Wnet*haf(i));
 //			_gen[i] = _enet[i];
 			_tnorm[i] = Tnorm;
 			capfactor[iMonth] += capfact / (nday[iMonth] * 24.0);
-			heatrate_hhv[iMonth] += heatrat_hhv / (nday[iMonth] * 24.0);
-			heatrate_lhv[iMonth] += heatrat_lhv / (nday[iMonth] * 24.0);
+			heatrate_hhv[iMonth] += (ssc_number_t)(heatrat_hhv / (nday[iMonth] * 24.0));
+			heatrate_lhv[iMonth] += (ssc_number_t)(heatrat_lhv / (nday[iMonth] * 24.0));
 
 			annual_output += Wnet;
 			annual_heatrate_hhv += heatrat_hhv / 8760.0;
@@ -1050,9 +1099,9 @@ public:
 			ash += frac[i] * _ash[i];
 		}
 		double tpy_ash = total_feedstock * ash;
-		double tpy_nitrogen = (((frac[5] + frac[6] + frac[7] + frac[8] + frac[9])*2.6290) + ((frac[0] + frac[1] + frac[2] + frac[3] + frac[4])*2.501) + (((frac[10] + frac[11])*4.7587) + (frac[12] * 3.8076))) / 2000.0 * annual_output / 1000.0; /*from eGrid*/
-		double tpy_sulfur = (((frac[5] + frac[6] + frac[7] + frac[8] + frac[9])*0.1) + ((frac[0] + frac[1] + frac[2] + frac[3] + frac[4])*0.3) + (((frac[10] + frac[11])*5.8540) + (frac[12] * 10.3309))) / 2000.0 * annual_output / 1000.0; /*from eGrid*/
-		double tpy_gwp = 0 + (total_coal*((frac[10] * 0.767*(1 - 0.062)*3.7) + (frac[11] * 0.608*(1 - 0.091)*3.7) + (frac[12] * 0.498*(1 - 0.177)*3.7))); /*accounts for carbon released from any coal feedstocks*/
+//		double tpy_nitrogen = (((frac[5] + frac[6] + frac[7] + frac[8] + frac[9])*2.6290) + ((frac[0] + frac[1] + frac[2] + frac[3] + frac[4])*2.501) + (((frac[10] + frac[11])*4.7587) + (frac[12] * 3.8076))) / 2000.0 * annual_output / 1000.0; /*from eGrid*/
+//		double tpy_sulfur = (((frac[5] + frac[6] + frac[7] + frac[8] + frac[9])*0.1) + ((frac[0] + frac[1] + frac[2] + frac[3] + frac[4])*0.3) + (((frac[10] + frac[11])*5.8540) + (frac[12] * 10.3309))) / 2000.0 * annual_output / 1000.0; /*from eGrid*/
+//		double tpy_gwp = 0 + (total_coal*((frac[10] * 0.767*(1 - 0.062)*3.7) + (frac[11] * 0.608*(1 - 0.091)*3.7) + (frac[12] * 0.498*(1 - 0.177)*3.7))); /*accounts for carbon released from any coal feedstocks*/
 
 		//Emissions calculations - block 1 (Biomass growth/avoided residue and harvest/collection), for details see Excel file SAM Equations_12_19_11
 		double npci = 1628.491234; /*g CO2/lb nitrogen used*/
@@ -1147,7 +1196,7 @@ public:
 		double preprocessing_diesel = pre_chipopt * (0.02387 + 0.01982) * dry_total * 1000000.0 / annual_output;
 		double preprocessing_kwh = ((pre_grindopt * (dry_total * 0.2137 * 1000000.0 / 3412.14)) + (pre_pelletopt * (dry_total * 0.2835 * 1000000.0 / 3412.14))); /*kWh / year*/
 		double preprocessing_ems = (preprocessing_kwh * grid_intensity / annual_output) + (preprocessing_diesel * 0.09474); /*g CO2/kWh*/
-		double preprocessing_ele = preprocessing_kwh / annual_output; /*kWh used/kWh out*/
+//		double preprocessing_ele = preprocessing_kwh / annual_output; /*kWh used/kWh out*/
 
 		//Emissions calculations block 4: Drying and storage
 		double drying_kwh = 0; /*kwh used/kwh produced*/
@@ -1162,7 +1211,7 @@ public:
 
 		//Emissions calculations block 5: combustion
 		double comb_ems = frac_c * total * (44.0 / 12.0) * 907184.74 / annual_output; /*g CO2/kwh */
-		double comb_ash = ash * total; /*tons/year*/
+//		double comb_ash = ash * total; /*tons/year*/
 		double comb_ems_neg = -(biomass_frac_c * dry_total * (44.0 / 12.0) * 907184.74 / annual_output); /*negative g CO2/kwh */
 
 		double final_emissions[7];

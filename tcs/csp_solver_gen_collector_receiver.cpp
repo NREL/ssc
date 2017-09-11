@@ -1,3 +1,52 @@
+/*******************************************************************************************************
+*  Copyright 2017 Alliance for Sustainable Energy, LLC
+*
+*  NOTICE: This software was developed at least in part by Alliance for Sustainable Energy, LLC
+*  (“Alliance”) under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
+*  The Government retains for itself and others acting on its behalf a nonexclusive, paid-up,
+*  irrevocable worldwide license in the software to reproduce, prepare derivative works, distribute
+*  copies to the public, perform publicly and display publicly, and to permit others to do so.
+*
+*  Redistribution and use in source and binary forms, with or without modification, are permitted
+*  provided that the following conditions are met:
+*
+*  1. Redistributions of source code must retain the above copyright notice, the above government
+*  rights notice, this list of conditions and the following disclaimer.
+*
+*  2. Redistributions in binary form must reproduce the above copyright notice, the above government
+*  rights notice, this list of conditions and the following disclaimer in the documentation and/or
+*  other materials provided with the distribution.
+*
+*  3. The entire corresponding source code of any redistribution, with or without modification, by a
+*  research entity, including but not limited to any contracting manager/operator of a United States
+*  National Laboratory, any institution of higher learning, and any non-profit organization, must be
+*  made publicly available under this license for as long as the redistribution is made available by
+*  the research entity.
+*
+*  4. Redistribution of this software, without modification, must refer to the software by the same
+*  designation. Redistribution of a modified version of this software (i) may not refer to the modified
+*  version by the same designation, or by any confusingly similar designation, and (ii) must refer to
+*  the underlying software originally provided by Alliance as “System Advisor Model” or “SAM”. Except
+*  to comply with the foregoing, the terms “System Advisor Model”, “SAM”, or any confusingly similar
+*  designation may not be used to refer to any modified version of this software or any modified
+*  version of the underlying software originally provided by Alliance without the prior written consent
+*  of Alliance.
+*
+*  5. The name of the copyright holder, contributors, the United States Government, the United States
+*  Department of Energy, or any of their employees may not be used to endorse or promote products
+*  derived from this software without specific prior written permission.
+*
+*  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
+*  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
+*  FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER,
+*  CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES DEPARTMENT OF ENERGY, NOR ANY OF THEIR
+*  EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+*  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+*  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+*  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
+*  THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*******************************************************************************************************/
+
 #include "csp_solver_gen_collector_receiver.h"
 #include "csp_solver_core.h"
 #include "csp_solver_util.h"
@@ -171,22 +220,22 @@ void C_csp_gen_collector_receiver::init(const C_csp_collector_receiver::S_csp_cr
 		double *data = new double[(ms_params.m_optical_table.ncols() - 1) * (ms_params.m_optical_table.nrows() - 1)];
 
 		//get the xaxis data values
-		for( int i = 1; i<ms_params.m_optical_table.ncols(); i++ ){
+		for( size_t i = 1; i<ms_params.m_optical_table.ncols(); i++ ){
 			xax[i - 1] = ms_params.m_optical_table(0,i)*CSP::pi/180.0;
 		}
 		//get the yaxis data values
-		for( int j = 1; j<ms_params.m_optical_table.nrows(); j++ ){
+		for( size_t j = 1; j<ms_params.m_optical_table.nrows(); j++ ){
 			yax[j - 1] = ms_params.m_optical_table(j,0)*CSP::pi / 180.0;
 		}
 		//Get the data values
-		for( int j = 1; j<ms_params.m_optical_table.nrows(); j++ ){
-			for( int i = 1; i<ms_params.m_optical_table.ncols(); i++ ){
+		for( size_t j = 1; j<ms_params.m_optical_table.nrows(); j++ ){
+			for( size_t i = 1; i<ms_params.m_optical_table.ncols(); i++ ){
 				data[i - 1 + (ms_params.m_optical_table.ncols() - 1)*(j - 1)] = ms_params.m_optical_table(j, i);
 			}
 		}
 
-		mc_optical_table.AddXAxis(xax, ms_params.m_optical_table.ncols() - 1);
-		mc_optical_table.AddYAxis(yax, ms_params.m_optical_table.nrows() - 1);
+		mc_optical_table.AddXAxis(xax, (int)ms_params.m_optical_table.ncols() - 1);
+		mc_optical_table.AddYAxis(yax, (int)ms_params.m_optical_table.nrows() - 1);
 		mc_optical_table.AddData(data);
 		delete[] xax, yax, data;	
 	}
@@ -212,7 +261,7 @@ void C_csp_gen_collector_receiver::init(const C_csp_collector_receiver::S_csp_cr
 		MatDoub sunpos;
 		vector<double> effs;
 
-		int nrows = ms_params.m_optical_table.nrows();
+		int nrows = (int)ms_params.m_optical_table.nrows();
 
 		//read the data from the array into the local storage arrays
 		sunpos.resize(nrows, VectDoub(2));
@@ -477,11 +526,11 @@ void C_csp_gen_collector_receiver::call(const C_csp_weatherreader::S_outputs &we
 	double f_sfhl_qdni = 0.0;
 	double f_sfhl_tamb = 0.0;
 	double f_sfhl_vwind = 0.0;
-	for( int i = 0; i<ms_params.mv_sfhlQ_coefs.size(); i++ )
+	for( size_t i = 0; i<ms_params.mv_sfhlQ_coefs.size(); i++ )
 		f_sfhl_qdni += ms_params.mv_sfhlQ_coefs[i] * pow(irr_used / ms_params.m_irr_des, i);
-	for( int i = 0; i<ms_params.mv_sfhlT_coefs.size(); i++ )
+	for( size_t i = 0; i<ms_params.mv_sfhlT_coefs.size(); i++ )
 		f_sfhl_tamb += ms_params.mv_sfhlT_coefs[i] * pow(tdb - ms_params.m_T_sfdes, i);
-	for( int i = 0; i<ms_params.mv_sfhlV_coefs.size(); i++ )
+	for( size_t i = 0; i<ms_params.mv_sfhlV_coefs.size(); i++ )
 		f_sfhl_vwind += ms_params.mv_sfhlV_coefs[i] * pow(vwind, i);
 
 	double f_sfhl = 1.0 - ms_params.m_f_sfhl_ref * (f_sfhl_qdni + f_sfhl_tamb + f_sfhl_vwind);  //sf thermal efficiency

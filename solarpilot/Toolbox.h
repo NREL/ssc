@@ -1,3 +1,52 @@
+/*******************************************************************************************************
+*  Copyright 2017 Alliance for Sustainable Energy, LLC
+*
+*  NOTICE: This software was developed at least in part by Alliance for Sustainable Energy, LLC
+*  (“Alliance”) under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
+*  The Government retains for itself and others acting on its behalf a nonexclusive, paid-up,
+*  irrevocable worldwide license in the software to reproduce, prepare derivative works, distribute
+*  copies to the public, perform publicly and display publicly, and to permit others to do so.
+*
+*  Redistribution and use in source and binary forms, with or without modification, are permitted
+*  provided that the following conditions are met:
+*
+*  1. Redistributions of source code must retain the above copyright notice, the above government
+*  rights notice, this list of conditions and the following disclaimer.
+*
+*  2. Redistributions in binary form must reproduce the above copyright notice, the above government
+*  rights notice, this list of conditions and the following disclaimer in the documentation and/or
+*  other materials provided with the distribution.
+*
+*  3. The entire corresponding source code of any redistribution, with or without modification, by a
+*  research entity, including but not limited to any contracting manager/operator of a United States
+*  National Laboratory, any institution of higher learning, and any non-profit organization, must be
+*  made publicly available under this license for as long as the redistribution is made available by
+*  the research entity.
+*
+*  4. Redistribution of this software, without modification, must refer to the software by the same
+*  designation. Redistribution of a modified version of this software (i) may not refer to the modified
+*  version by the same designation, or by any confusingly similar designation, and (ii) must refer to
+*  the underlying software originally provided by Alliance as “System Advisor Model” or “SAM”. Except
+*  to comply with the foregoing, the terms “System Advisor Model”, “SAM”, or any confusingly similar
+*  designation may not be used to refer to any modified version of this software or any modified
+*  version of the underlying software originally provided by Alliance without the prior written consent
+*  of Alliance.
+*
+*  5. The name of the copyright holder, contributors, the United States Government, the United States
+*  Department of Energy, or any of their employees may not be used to endorse or promote products
+*  derived from this software without specific prior written permission.
+*
+*  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
+*  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
+*  FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER,
+*  CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES DEPARTMENT OF ENERGY, NOR ANY OF THEIR
+*  EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+*  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+*  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+*  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
+*  THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*******************************************************************************************************/
+
 #ifndef _TOOLBOX_H_
 #define _TOOLBOX_H_ 1
 
@@ -541,32 +590,32 @@ public:
 	}
 };
 
-struct Point {
+struct sp_point {
 	double x, y, z;
 
-    Point();
+    sp_point();
 
-    Point( const Point &P );
+    sp_point( const sp_point &P );
 
-    Point(double X, double Y, double Z);
+    sp_point(double X, double Y, double Z);
 
     void Set(double X, double Y, double Z);
 
-    void Set( Point &P );
+    void Set( sp_point &P );
 
-    void Add( Point &P );
+    void Add( sp_point &P );
 
     void Add(double X, double Y, double Z);
 
-    void Subtract( Point &P );
+    void Subtract( sp_point &P );
 
     double& operator [](const int &index);
 
-    bool operator <(const Point &p) const;
+    bool operator <(const sp_point &p) const;
 
 
 };
-inline bool operator==(const Point& lhs, const Point& rhs)
+inline bool operator==(const sp_point& lhs, const sp_point& rhs)
 {
     return lhs.x == rhs.x && lhs.y == rhs.y && lhs.z == rhs.z;   
 };
@@ -590,7 +639,7 @@ struct Vect {
 struct PointVect {
 
 private:
-	Point p;
+	sp_point p;
 	Vect v;
 
 public:
@@ -601,7 +650,7 @@ public:
 	PointVect& operator= (const PointVect &v);
 	PointVect(double px=0.0, double py=0.0, double pz=0.0, double vi=0.0, double vj=0.0, double vk=1.0);
 
-	Point *point();
+	sp_point *point();
 	Vect *vect();
 
 };
@@ -719,44 +768,44 @@ namespace Toolbox
 
 	//Vector geometry
     double dotprod(const Vect &A, const Vect &B);
-	double dotprod(const Vect &A, const Point &B);
+	double dotprod(const Vect &A, const sp_point &B);
 	Vect crossprod(const Vect &A, const Vect &B); 
-	double crossprod(const Point &O, const Point &A, const Point &B);
+	double crossprod(const sp_point &O, const sp_point &A, const sp_point &B);
 	void unitvect(Vect &A); 
 	double vectmag(double i, double j, double k);
 	double vectmag(const Vect &A);
-	double vectmag(const Point &P);
+	double vectmag(const sp_point &P);
 	double vectangle(const Vect &A, const Vect&B);      //Determine the angle between two vectors
-	void rotation(double theta, int axis, Point &P);    //Rotation of a point about the origin
+	void rotation(double theta, int axis, sp_point &P);    //Rotation of a point about the origin
 	void rotation(double theta, int axis, Vect &V);     //Rotation of a point about the origin
 	
     //computational geometry 
 	//Intersection of a vector on a plane
-	bool plane_intersect(Point &pt_on_plane, Vect &vect_plane, Point &pt_line_start, Vect &vect_line, Point &int_on_plane);
+	bool plane_intersect(sp_point &pt_on_plane, Vect &vect_plane, sp_point &pt_line_start, Vect &vect_line, sp_point &int_on_plane);
 	//Point on a line closest to external point
-	bool line_norm_intersect(Point &line_p0, Point &line_p1, Point &P, Point &N, double &rad);
+	bool line_norm_intersect(sp_point &line_p0, sp_point &line_p1, sp_point &P, sp_point &N, double &rad);
 	//Intersection area of a rectangle and an ellipse
 	double intersect_fuv(double U, double V);
 	double intersect_ellipse_rect(double rect[4], double ellipse[2]);
 	//Axis-aligned bounding box of a rotated ellipse
 	void ellipse_bounding_box(double &A, double &B, double &phi, double sides[4], double cx = 0., double cy = 0.);
 	//Calculate the convex hull surrounding a set of points
-	void convex_hull(std::vector<Point> &points, std::vector<Point> &hull);
+	void convex_hull(std::vector<sp_point> &points, std::vector<sp_point> &hull);
 	//Calculate the area of an irregular polygon
-	double area_polygon(std::vector<Point> &points);
+	double area_polygon(std::vector<sp_point> &points);
 	//Rotation of a point about an arbitrary axis centered at point 'axloc'
-	Point rotation_arbitrary(double theta, Vect &axis, Point &axloc, Point &pt);
+	sp_point rotation_arbitrary(double theta, Vect &axis, sp_point &axloc, sp_point &pt);
 	//Calculate the z-rotation angle of a heliostat that's undergone a normal-vector transform
 	double ZRotationTransform(double Az, double Zen);
 	double ZRotationTransform(Vect &norm_vect);
     //Polygon-point hit test
-	bool pointInPolygon( const std::vector<Point> &poly, const Point &pt);
-	int polywind(const std::vector< Point> &vt, const Point &pt);
-	std::vector<Point> projectPolygon(std::vector<Point> &poly, PointVect &plane) ; 
-    std::vector<Point> clipPolygon(std::vector<Point> &A, std::vector<Point> &B); //construct a polygon that is the intersection of two polygons A and B
-    void poly_from_svg(std::string &svg, std::vector< Point > &polygon, bool clear_poly=true);     //construct a polygon from an SVG path
-    void BezierQ(Point &start, Point &control, Point &end, double t, Point &result);
-    void BezierC(Point &start, Point &control1, Point &control2, Point &end, double t, Point &result);
+	bool pointInPolygon( const std::vector<sp_point> &poly, const sp_point &pt);
+	int polywind(const std::vector< sp_point> &vt, const sp_point &pt);
+	std::vector<sp_point> projectPolygon(std::vector<sp_point> &poly, PointVect &plane) ; 
+    std::vector<sp_point> clipPolygon(std::vector<sp_point> &A, std::vector<sp_point> &B); //construct a polygon that is the intersection of two polygons A and B
+    void poly_from_svg(std::string &svg, std::vector< sp_point > &polygon, bool clear_poly=true);     //construct a polygon from an SVG path
+    void BezierQ(sp_point &start, sp_point &control, sp_point &end, double t, sp_point &result);
+    void BezierC(sp_point &start, sp_point &control1, sp_point &control2, sp_point &end, double t, sp_point &result);
 
 	//File handling functions
 	std::vector< std::string > split( const std::string &str, const std::string &delim, bool ret_empty=false, bool ret_delim=false );

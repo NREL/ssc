@@ -1,3 +1,52 @@
+/*******************************************************************************************************
+*  Copyright 2017 Alliance for Sustainable Energy, LLC
+*
+*  NOTICE: This software was developed at least in part by Alliance for Sustainable Energy, LLC
+*  (“Alliance”) under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
+*  The Government retains for itself and others acting on its behalf a nonexclusive, paid-up,
+*  irrevocable worldwide license in the software to reproduce, prepare derivative works, distribute
+*  copies to the public, perform publicly and display publicly, and to permit others to do so.
+*
+*  Redistribution and use in source and binary forms, with or without modification, are permitted
+*  provided that the following conditions are met:
+*
+*  1. Redistributions of source code must retain the above copyright notice, the above government
+*  rights notice, this list of conditions and the following disclaimer.
+*
+*  2. Redistributions in binary form must reproduce the above copyright notice, the above government
+*  rights notice, this list of conditions and the following disclaimer in the documentation and/or
+*  other materials provided with the distribution.
+*
+*  3. The entire corresponding source code of any redistribution, with or without modification, by a
+*  research entity, including but not limited to any contracting manager/operator of a United States
+*  National Laboratory, any institution of higher learning, and any non-profit organization, must be
+*  made publicly available under this license for as long as the redistribution is made available by
+*  the research entity.
+*
+*  4. Redistribution of this software, without modification, must refer to the software by the same
+*  designation. Redistribution of a modified version of this software (i) may not refer to the modified
+*  version by the same designation, or by any confusingly similar designation, and (ii) must refer to
+*  the underlying software originally provided by Alliance as “System Advisor Model” or “SAM”. Except
+*  to comply with the foregoing, the terms “System Advisor Model”, “SAM”, or any confusingly similar
+*  designation may not be used to refer to any modified version of this software or any modified
+*  version of the underlying software originally provided by Alliance without the prior written consent
+*  of Alliance.
+*
+*  5. The name of the copyright holder, contributors, the United States Government, the United States
+*  Department of Energy, or any of their employees may not be used to endorse or promote products
+*  derived from this software without specific prior written permission.
+*
+*  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
+*  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
+*  FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER,
+*  CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES DEPARTMENT OF ENERGY, NOR ANY OF THEIR
+*  EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+*  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+*  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+*  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
+*  THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*******************************************************************************************************/
+
 #include "lib_power_electronics.h"
 #include "lib_sandia.h"
 #include <cmath>
@@ -26,7 +75,7 @@ double rectifier::convert_to_dc(double P_ac, double * P_dc)
 	return P_loss;
 }
 
-charge_controller::charge_controller(dispatch_t * dispatch, battery_metrics_t * battery_metrics, double efficiency_1, double efficiency_2)
+charge_controller::charge_controller(dispatch_t * dispatch, battery_metrics_t * battery_metrics, double , double )
 {	
 	_dispatch = dispatch;
 
@@ -59,7 +108,8 @@ void charge_controller::initialize(double P_pv, double P_load_ac, size_t index)
 	_P_battery_to_grid = 0;
 	_P_battery = 0;
 	_P_inverter_draw = 0;
-	_P_system_loss = _dispatch->battery_model()->losses_model()->battery_system_loss(index);
+	_P_system_loss = 0;
+	_index = index;
 
 	if (P_pv < 0)
 	{
@@ -72,13 +122,13 @@ void charge_controller::initialize(double P_pv, double P_load_ac, size_t index)
 
 	// if this is an iteration loop, reset the dispatch
 	if (_iterate)
-		_dispatch->copy(*_dispatch_initial);
+		_dispatch->copy(_dispatch_initial);
 }
 bool charge_controller::check_iterate(){ return _iterate; }
 void charge_controller::finalize()
 {
-	_battery_metrics->compute_metrics_ac(_P_battery, _P_pv_to_battery, _P_grid_to_batt, _P_grid);
-	_dispatch_initial->copy(*_dispatch);
+	_battery_metrics->compute_metrics_ac(_P_battery, _P_system_loss, _P_pv_to_battery, _P_grid_to_batt, _P_grid);
+	_dispatch_initial->copy(_dispatch);
 }
 
 dc_connected_battery_controller::dc_connected_battery_controller(dispatch_t * dispatch, 
@@ -159,7 +209,7 @@ void dc_connected_battery_controller::process_dispatch()
 {
 	double P_battery_dc = _dispatch->power_tofrom_battery();
 	double P_battery_dc_post_bms = 0;
-	double P_battery_ac = 0;
+//	double P_battery_ac = 0;
 
 	// post DC/DC w/BMS
 	if (P_battery_dc > 0)
@@ -167,6 +217,9 @@ void dc_connected_battery_controller::process_dispatch()
 	else if (P_battery_dc < 0)
 		P_battery_dc_post_bms = P_battery_dc / _dc_dc_charge_controller->batt_dc_dc_bms_efficiency();
 	
+	// extract input system losses and apply
+	_P_system_loss = _dispatch->battery_model()->losses_model()->battery_system_loss((int)_index);
+
 	// compute generation
 	double P_gen_dc = _P_pv + P_battery_dc_post_bms - _P_system_loss;
 
@@ -202,7 +255,7 @@ double dc_connected_battery_controller::update_gen_ac(double P_gen_ac)
 	compute_to_batt_load_grid(P_battery_dc, _P_pv, _P_load, inverter_efficiency);
 	
 	// add battery power inversion loss to total loss
-	double P_battery_ac = _P_battery;
+	double P_battery_ac = _P_battery; 
 	_P_loss += fabs(P_battery_ac - P_battery_dc);
 
 	// check assumption on inverter efficiency
@@ -292,7 +345,7 @@ void dc_connected_battery_controller::compute_to_batt_load_grid(double P_battery
 	{
 		P_pv_ac = P_pv_dc * inverter_efficiency;
 		P_pv_to_load_ac = P_pv_ac;
-		if (P_pv_ac > P_load_ac)
+		if (P_pv_ac >= P_load_ac)
 		{
 			P_pv_to_load_ac = P_load_ac;
 			P_batt_to_load_ac = 0;
@@ -345,7 +398,7 @@ void ac_connected_battery_controller::preprocess_pv_load()
 	int pv_batt_choice = _dispatch->pv_dispatch_priority();
 	double P_load_system = _P_load + _P_system_loss;
 	double P_grid_ac = _P_pv - P_load_system;
-	double P_grid_dc = 0.;
+//	double P_grid_dc = 0.;
 
 	// compute effective PV and Load if battery is discharging
 	_P_pv_dc_discharge_input = _P_pv / _bidirectional_inverter->dc_ac_efficiency();
@@ -369,7 +422,7 @@ void ac_connected_battery_controller::preprocess_pv_load()
 	{
 		double P_to_fill_dc = _dispatch->battery_power_to_fill();
 		double P_to_fill_ac = P_to_fill_dc / _bidirectional_inverter->ac_dc_efficiency();
-		double P_loss_inverter = P_to_fill_ac - P_to_fill_dc;
+//		double P_loss_inverter = P_to_fill_ac - P_to_fill_dc;
 
 		if (_P_pv > P_to_fill_ac)
 			_P_pv_dc_charge_input = _P_pv - P_to_fill_ac;
@@ -395,7 +448,7 @@ void ac_connected_battery_controller::run( size_t year, size_t hour_of_year, siz
 	process_dispatch();
 
 	// AC charging metrics
-	_battery_metrics->compute_metrics_ac(_P_battery, _P_pv_to_battery, _P_grid_to_batt, _P_grid);
+	_battery_metrics->compute_metrics_ac(_P_battery, _P_system_loss, _P_pv_to_battery, _P_grid_to_batt, _P_grid);
 }
 void ac_connected_battery_controller::process_dispatch()
 {
@@ -410,10 +463,13 @@ void ac_connected_battery_controller::process_dispatch()
 	else if (P_battery_dc < 0)
 		P_battery_ac = P_battery_dc / _bidirectional_inverter->ac_dc_efficiency();
 
+	// extract user input system loss to apply
+	_P_system_loss = _dispatch->battery_model()->losses_model()->battery_system_loss((int)_index);
+
 	compute_to_batt_load_grid(P_battery_ac, P_pv_ac, P_load_ac);
 }
 
-void ac_connected_battery_controller::compute_to_batt_load_grid(double P_battery_ac, double P_pv_ac, double P_load_ac, double inverter_efficiency)
+void ac_connected_battery_controller::compute_to_batt_load_grid(double P_battery_ac, double P_pv_ac, double P_load_ac, double )
 {
 	double P_battery_dc = _dispatch->power_tofrom_battery();
 
@@ -486,7 +542,7 @@ void ac_connected_battery_controller::compute_to_batt_load_grid(double P_battery
 	else
 	{
 		P_pv_to_load_ac = P_pv_ac;
-		if (P_pv_ac > P_load_ac)
+		if (P_pv_ac >= P_load_ac)
 		{
 			P_pv_to_load_ac = P_load_ac;
 			P_batt_to_load_ac = 0;
@@ -536,8 +592,8 @@ void ac_connected_battery_controller::compute_to_batt_load_grid(double P_battery
 	_P_grid_to_load = P_grid_to_load_ac;
 	_P_grid_to_batt = P_grid_to_batt_ac;
 
-	// report only the loss due to pv charging and batt discharging
-	_P_loss = P_pv_to_batt_loss + P_batt_to_load_loss;
+	// report losses due to charging and discharging
+	_P_loss = P_grid_to_batt_loss + P_pv_to_batt_loss + P_batt_to_load_loss;
 
 }
 
@@ -585,10 +641,10 @@ double ac_connected_battery_controller::gen_ac()
 	double P_loss_gen = P_gen_dc - _P_gen;
 
 	// extra metrics if desired
-	double P_loss_battery_to_load = P_battery_to_load_dc - _P_battery_to_load;
-	double P_loss_pv_to_load = P_pv_to_load_dc - _P_pv_to_load;
-	double P_loss_pv_to_battery = P_pv_to_battery_dc - _P_pv_to_battery;
-	double P_loss_battery = P_battery_dc - _P_battery;
+//	double P_loss_battery_to_load = P_battery_to_load_dc - _P_battery_to_load;
+//	double P_loss_pv_to_load = P_pv_to_load_dc - _P_pv_to_load;
+//	double P_loss_pv_to_battery = P_pv_to_battery_dc - _P_pv_to_battery;
+//	double P_loss_battery = P_battery_dc - _P_battery;
 
 
 	return P_loss_gen;

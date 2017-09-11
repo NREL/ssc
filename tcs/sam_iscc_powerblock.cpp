@@ -1,3 +1,52 @@
+/*******************************************************************************************************
+*  Copyright 2017 Alliance for Sustainable Energy, LLC
+*
+*  NOTICE: This software was developed at least in part by Alliance for Sustainable Energy, LLC
+*  (“Alliance”) under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
+*  The Government retains for itself and others acting on its behalf a nonexclusive, paid-up,
+*  irrevocable worldwide license in the software to reproduce, prepare derivative works, distribute
+*  copies to the public, perform publicly and display publicly, and to permit others to do so.
+*
+*  Redistribution and use in source and binary forms, with or without modification, are permitted
+*  provided that the following conditions are met:
+*
+*  1. Redistributions of source code must retain the above copyright notice, the above government
+*  rights notice, this list of conditions and the following disclaimer.
+*
+*  2. Redistributions in binary form must reproduce the above copyright notice, the above government
+*  rights notice, this list of conditions and the following disclaimer in the documentation and/or
+*  other materials provided with the distribution.
+*
+*  3. The entire corresponding source code of any redistribution, with or without modification, by a
+*  research entity, including but not limited to any contracting manager/operator of a United States
+*  National Laboratory, any institution of higher learning, and any non-profit organization, must be
+*  made publicly available under this license for as long as the redistribution is made available by
+*  the research entity.
+*
+*  4. Redistribution of this software, without modification, must refer to the software by the same
+*  designation. Redistribution of a modified version of this software (i) may not refer to the modified
+*  version by the same designation, or by any confusingly similar designation, and (ii) must refer to
+*  the underlying software originally provided by Alliance as “System Advisor Model” or “SAM”. Except
+*  to comply with the foregoing, the terms “System Advisor Model”, “SAM”, or any confusingly similar
+*  designation may not be used to refer to any modified version of this software or any modified
+*  version of the underlying software originally provided by Alliance without the prior written consent
+*  of Alliance.
+*
+*  5. The name of the copyright holder, contributors, the United States Government, the United States
+*  Department of Energy, or any of their employees may not be used to endorse or promote products
+*  derived from this software without specific prior written permission.
+*
+*  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
+*  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
+*  FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER,
+*  CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES DEPARTMENT OF ENERGY, NOR ANY OF THEIR
+*  EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+*  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+*  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+*  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
+*  THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*******************************************************************************************************/
+
 #define _TCSTYPEINTERFACE_
 #include "ngcc_powerblock.h"
 #include "tcstype.h"
@@ -206,7 +255,7 @@ public:
 		}
 
 		// Set cycle configuration in class
-		int cycle_config = value(P_CYCLE_CONFIG);
+		int cycle_config = (int)value(P_CYCLE_CONFIG);
 		cycle_calcs.set_cycle_config(cycle_config);
 
 		// Get table limits
@@ -343,13 +392,13 @@ public:
 		return 0;
 	}
 
-	virtual int call( double time, double step, int ncall )
+	virtual int call( double /*time*/, double step, int ncall )
 	{	
 		// 1) Get inputs from receiver and weather reader
 		double T_amb = value( I_T_AMB );					//[C] Ambient temperature
 		double P_amb = value( I_P_AMB )/1000.0;				//[bar] Ambient pressure, convert from [mbar]
 			// This input (m_dot_ms_rec, isn't used anywhere: is it necessary??)
-		double m_dot_ms_rec = value( I_M_DOT_MS )/3600.0;	//[kg/s] Molten salt mass flow rate from receiver, convert from [kg/hr]
+		//double m_dot_ms_rec = value( I_M_DOT_MS )/3600.0;	//[kg/s] Molten salt mass flow rate from receiver, convert from [kg/hr]
 		double q_dot_rec = value( I_Q_DOT_REC_SS )*1000.0;		//[kWt] Receiver thermal output, convert from [MWt]
 		double T_rec_in_prev = value( I_T_REC_IN );			//[C] Receiver inlet molten salt temperature - used to solve previous call to tower model
 		double T_rec_out = value( I_T_REC_OUT );		    //[C] Receiver outlet molten salt temperature - used to solve previous call to tower model
@@ -450,7 +499,7 @@ public:
 		// **************************************
 		double T_ms_out_guess = T_st_sh_in;
 
-		bool T_lowflag = true;
+		//bool T_lowflag = true;
 		double T_lower = T_st_extract;				//[C]
 		bool T_upflag = true;
 		double T_upper = T_st_inject;				//[C]
@@ -564,7 +613,7 @@ public:
 			double NTU_evap = -log(1 - epsilon_evap);									//[-] NTU of evaporator
 			double UA_evap_guess = NTU_evap * C_dot_ms;									//[kW/K] Conductance of evaporator
 				// Economizer performance
-			double T_ms_econo_out = T_ms_evap_out - q_dot_econo/(m_dot_ms*m_cp_ms);		//[C]
+			//double T_ms_econo_out = T_ms_evap_out - q_dot_econo/(m_dot_ms*m_cp_ms);		//[C]
 			double q_dot_max_econo = C_dot_min_econo*(T_ms_evap_out - T_st_extract);	//[kW]
 			double epsilon_econo = q_dot_econo/q_dot_max_econo;							//[-]
 			double NTU_econo = log( (epsilon_econo - 1.0)/(epsilon_econo*CR_econo - 1.0) )/(CR_econo - 1.0);		//[-] NTU
@@ -610,7 +659,7 @@ public:
 
 	}
 
-	virtual int converged( double time )
+	virtual int converged( double /*time*/ )
 	{
 		m_T_lowflag_ncall = false;
 		m_T_upflag_ncall = false;

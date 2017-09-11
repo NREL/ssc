@@ -1,3 +1,52 @@
+/*******************************************************************************************************
+*  Copyright 2017 Alliance for Sustainable Energy, LLC
+*
+*  NOTICE: This software was developed at least in part by Alliance for Sustainable Energy, LLC
+*  (“Alliance”) under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
+*  The Government retains for itself and others acting on its behalf a nonexclusive, paid-up,
+*  irrevocable worldwide license in the software to reproduce, prepare derivative works, distribute
+*  copies to the public, perform publicly and display publicly, and to permit others to do so.
+*
+*  Redistribution and use in source and binary forms, with or without modification, are permitted
+*  provided that the following conditions are met:
+*
+*  1. Redistributions of source code must retain the above copyright notice, the above government
+*  rights notice, this list of conditions and the following disclaimer.
+*
+*  2. Redistributions in binary form must reproduce the above copyright notice, the above government
+*  rights notice, this list of conditions and the following disclaimer in the documentation and/or
+*  other materials provided with the distribution.
+*
+*  3. The entire corresponding source code of any redistribution, with or without modification, by a
+*  research entity, including but not limited to any contracting manager/operator of a United States
+*  National Laboratory, any institution of higher learning, and any non-profit organization, must be
+*  made publicly available under this license for as long as the redistribution is made available by
+*  the research entity.
+*
+*  4. Redistribution of this software, without modification, must refer to the software by the same
+*  designation. Redistribution of a modified version of this software (i) may not refer to the modified
+*  version by the same designation, or by any confusingly similar designation, and (ii) must refer to
+*  the underlying software originally provided by Alliance as “System Advisor Model” or “SAM”. Except
+*  to comply with the foregoing, the terms “System Advisor Model”, “SAM”, or any confusingly similar
+*  designation may not be used to refer to any modified version of this software or any modified
+*  version of the underlying software originally provided by Alliance without the prior written consent
+*  of Alliance.
+*
+*  5. The name of the copyright holder, contributors, the United States Government, the United States
+*  Department of Energy, or any of their employees may not be used to endorse or promote products
+*  derived from this software without specific prior written permission.
+*
+*  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
+*  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
+*  FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER,
+*  CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES DEPARTMENT OF ENERGY, NOR ANY OF THEIR
+*  EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+*  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+*  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+*  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
+*  THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*******************************************************************************************************/
+
 #include <sstream>
 #include <string>
 #include <algorithm>
@@ -73,7 +122,7 @@ public:
 		return yret;
 	};
 	
-	void AddGenerator(vector<vector<int> > &design, int a, int b = 0, int c = 0, int d = 0, int e = 0)
+	void AddGenerator(vector<vector<int> > &/*design*/, int a, int b = 0, int c = 0, int d = 0, int e = 0)
 	{
 		vector<int> newgen;
 		if(a>0) newgen.push_back(a);
@@ -286,7 +335,7 @@ struct AutoOptHelper
         m_opt_names.clear();
     };
 
-    double Simulate(const double *x, int n, std::string *note=0)
+    double Simulate(const double *x, int /*n*/, std::string *note=0)
     {
         /* 
         Run a simulation and update points as needed. Report outcome from each step.
@@ -330,7 +379,7 @@ struct AutoOptHelper
     };
 };
 
-double optimize_leastsq_eval(unsigned n, const double *x, double *grad, void *data)
+double optimize_leastsq_eval(unsigned n, const double *x, double * /*grad*/, void *data)
 {
 	/* 
 	Evaluate the residual sum of squares
@@ -358,7 +407,7 @@ double optimize_leastsq_eval(unsigned n, const double *x, double *grad, void *da
 
 };
 
-double optimize_stdesc_eval(unsigned n, const double *x, double *grad, void *data)
+double optimize_stdesc_eval(unsigned n, const double *x, double * /*grad*/, void *data)
 {
 	/* 
 	Minimize the response surface value subject to a maximum step size.
@@ -382,7 +431,7 @@ double optimize_stdesc_eval(unsigned n, const double *x, double *grad, void *dat
 
 };
 
-double optimize_maxstep_eval(unsigned n, const double *x, double *grad, void *data)
+double optimize_maxstep_eval(unsigned n, const double *x, double * /*grad*/, void *data)
 {
 	
 	response_surface_data *D = static_cast<response_surface_data*>(data);
@@ -401,7 +450,7 @@ double optimize_maxstep_eval(unsigned n, const double *x, double *grad, void *da
 
 }
 
-double optimize_auto_eval(unsigned n, const double *x, double *grad, void *data)
+double optimize_auto_eval(unsigned n, const double *x, double * /*grad*/, void *data)
 {
     AutoOptHelper *D = static_cast<AutoOptHelper*>( data );
     //Only calls to methods available in AutoPilot base class are allowed!
@@ -410,7 +459,7 @@ double optimize_auto_eval(unsigned n, const double *x, double *grad, void *data)
 };
 
 
-double constraint_auto_eval(unsigned n, const double *x, double *grad, void *data)
+double constraint_auto_eval(unsigned n, const double *x, double * /*grad*/, void *data)
 {
     AutoOptHelper *D = static_cast<AutoOptHelper*>( data );
     
@@ -446,6 +495,7 @@ AutoPilot::AutoPilot()
 	_detail_callback_data = 0;
 	_summary_siminfo = 0;
 	_detail_siminfo = 0;
+    _opt = new sp_optimize();
 }
 
 AutoPilot::~AutoPilot()
@@ -466,10 +516,14 @@ AutoPilot::~AutoPilot()
 		}
 		catch(...){}
 	}
+
+    if( _opt != 0 )
+        delete _opt;
+
 	return;
 }
 
-bool AutoPilot::CreateLayout(sp_layout &layout, bool do_post_process)
+bool AutoPilot::CreateLayout(sp_layout &/*layout*/, bool /*do_post_process*/)
 {
 	
 	//override in inherited class
@@ -477,14 +531,14 @@ bool AutoPilot::CreateLayout(sp_layout &layout, bool do_post_process)
 	return false;
 };
 
-bool AutoPilot::CalculateOpticalEfficiencyTable(sp_optical_table &opttab)
+bool AutoPilot::CalculateOpticalEfficiencyTable(sp_optical_table &/*opttab*/)
 {
 	//override in inherited class
 	throw spexception("Virtual method cannot be called directly! Use derived class AutoPilot_S or AutoPilot_MT instead.");
 	return false;
 };
 
-bool AutoPilot::CalculateFluxMaps(sp_flux_table &fluxtab, int flux_res_x, int flux_res_y, bool is_normalized)
+bool AutoPilot::CalculateFluxMaps(sp_flux_table &/*fluxtab*/, int /*flux_res_x*/, int /*flux_res_y*/, bool /*is_normalized*/)
 {
 	//override in inherited class
 	throw spexception("Virtual method cannot be called directly! Use derived class AutoPilot_S or AutoPilot_MT instead.");
@@ -523,7 +577,7 @@ void AutoPilot::SetExternalSFObject( SolarField *SF )
 	_is_solarfield_external = true;
 }
 
-bool AutoPilot::Setup(var_map &V, bool for_optimize)
+bool AutoPilot::Setup(var_map &V, bool /*for_optimize*/)
 {
 
 	/* 
@@ -583,8 +637,7 @@ bool AutoPilot::Setup(var_map &V, bool for_optimize)
 	//if a layout is provided in the sp_layout structure, go ahead and create the geometry here.
     if( ! V.sf.layout_data.val.empty() )
     {
-		WeatherData empty;
-		_SF->PrepareFieldLayout(*_SF, empty, true);	//Run the layout method in refresh_only mode
+		_SF->PrepareFieldLayout(*_SF, 0, true);	//Run the layout method in refresh_only mode
         Vect sun = Ambient::calcSunVectorFromAzZen( _SF->getVarMap()->sf.sun_az_des.Val()*D2R, (90. - _SF->getVarMap()->sf.sun_el_des.Val())*D2R );   
 		_SF->calcHeliostatShadows(sun);
         double area = V.land.land_area.Val();  //acre
@@ -725,7 +778,7 @@ void AutoPilot::PostProcessLayout(sp_layout &layout)
     
 }
 
-void AutoPilot::PrepareFluxSimulation(sp_flux_table &fluxtab, int flux_res_x, int flux_res_y, bool is_normalized)
+void AutoPilot::PrepareFluxSimulation(sp_flux_table &fluxtab, int flux_res_x, int flux_res_y, bool /*is_normalized*/)
 {
 	var_map *V = _SF->getVarMap();
     V->amb.sim_time_step.Setval(0.);    //sest the simulation time step for flux
@@ -734,6 +787,7 @@ void AutoPilot::PrepareFluxSimulation(sp_flux_table &fluxtab, int flux_res_x, in
 	vector<Receiver*> rec_to_sim = *_SF->getReceivers();
 	//Get flags and settings
 	int fluxmap_format = V->par.fluxmap_format.mapval();
+	(void*)&fluxmap_format; // cast to reference variable
 	
 	if(flux_res_y > 1)
         V->flux.aim_method.combo_select_by_mapval( var_fluxsim::AIM_METHOD::IMAGE_SIZE_PRIORITY );
@@ -921,6 +975,8 @@ bool AutoPilot::EvaluateDesign(double &obj_metric, double &flux_max, double &tot
 
 	//Set the optimization objective value
 	double flux_overage_ratio = max(flux_max/V->recs.front().peak_flux.val, 1.);
+	(void*)&flux_overage_ratio;
+
 	obj_metric = tot_cost/power 
 		//* (1. + (flux_overage_ratio - 1.) * V->opt.flux_penalty.val) 
 		* (1. + (1. - power_shortage_ratio) * V->opt.power_penalty.val);
@@ -928,7 +984,7 @@ bool AutoPilot::EvaluateDesign(double &obj_metric, double &flux_max, double &tot
 	return true;
 }
 
-bool AutoPilot::Optimize(int method, vector<double*> &optvars, vector<double> &upper_range, vector<double> &lower_range, vector<double> &stepsize, vector<string> *names)
+bool AutoPilot::Optimize(int /*method*/, vector<double*> &optvars, vector<double> &upper_range, vector<double> &lower_range, vector<double> &stepsize, vector<string> *names)
 {
 	/* 
 	
@@ -950,7 +1006,7 @@ bool AutoPilot::Optimize(int method, vector<double*> &optvars, vector<double> &u
 
 }
 
-bool AutoPilot::OptimizeRSGS(vector<double*> &optvars, vector<double> &upper_range, vector<double> &lower_range, vector<bool> &is_range_constr, vector<string> *names)
+bool AutoPilot::OptimizeRSGS(vector<double*> &optvars, vector<double> &upper_range, vector<double> &lower_range, vector<bool> &/*is_range_constr*/, vector<string> *names)
 {
 	//Number of variables to be optimized
 	int nvars = (int)optvars.size();
@@ -1112,7 +1168,7 @@ bool AutoPilot::OptimizeRSGS(vector<double*> &optvars, vector<double> &upper_ran
 		double min_ss;
 		try{
 			nlopt::result sres = surf.optimize(Reg.Beta, min_ss);
-			
+			(void*)&sres;
 		}
 		catch( std::exception &e ){
 			_summary_siminfo->addSimulationNotice( e.what() );
@@ -1267,7 +1323,7 @@ bool AutoPilot::OptimizeRSGS(vector<double*> &optvars, vector<double> &upper_ran
 						if( all_steep_objs.at(i) < best_steep_obj ) best_steep_obj = all_steep_objs.at(i);
 					if(best_fact_obj < best_steep_obj){
 						double zero=0.;
-						
+						(void*)&zero;
 						//Calculate a new step vector
 						vector<double> new_step_vector( step_vector );
 
@@ -1344,7 +1400,7 @@ bool AutoPilot::OptimizeRSGS(vector<double*> &optvars, vector<double> &upper_ran
 		this region to find the true minimum.
 		*/
 		double golden_ratio = 1./1.61803398875;
-		double alpha = 0.;
+		//double alpha = 0.;
 		int nsimpts = (int)all_sim_points.size();
 		vector<double>
 				lower_gs = all_sim_points.at( nsimpts - 1 - min( 2, minmax_iter ) ),
@@ -1478,7 +1534,7 @@ bool AutoPilot::OptimizeRSGS(vector<double*> &optvars, vector<double> &upper_ran
         }
         dimsimpt.push_back(tmp);
     }
-	_opt.setOptimizationSimulationHistory(dimsimpt, objective, max_flux);
+	_opt->setOptimizationSimulationHistory(dimsimpt, objective, max_flux);
 
 	return true;
 
@@ -1534,8 +1590,8 @@ bool AutoPilot::OptimizeAuto(vector<double*> &optvars, vector<double> &upper_ran
         start.at(i) = *optvars.at(i);
 
     //Check feasibility
-    int iht = std::find(names->begin(), names->end(), "receiver.0.rec_height") - names->begin();
-    if( iht < (int)names->size() )
+    unsigned int iht = (unsigned int)(std::find(names->begin(), names->end(), "receiver.0.rec_height") - names->begin());
+    if( iht < names->size() )
     {
         double *xtemp = new double[ optvars.size() ]; 
         for(int i=0; i<(int)optvars.size(); i++)
@@ -1571,7 +1627,7 @@ bool AutoPilot::OptimizeAuto(vector<double*> &optvars, vector<double> &upper_ran
     double fmin;
     try{
         nlopt::result resopt = nlobj.optimize( start, fmin );
-        
+		(void*)&resopt;
         _summary_siminfo->addSimulationNotice( ol.c_str() );
         
         //int iopt = 0;
@@ -1611,14 +1667,14 @@ bool AutoPilot::OptimizeAuto(vector<double*> &optvars, vector<double> &upper_ran
         }
         dimsimpt.push_back(tmp);
     }
-    _opt.setOptimizationSimulationHistory( dimsimpt, AO.m_objective, AO.m_flux );
+    _opt->setOptimizationSimulationHistory( dimsimpt, AO.m_objective, AO.m_flux );
 
     V->opt.flux_penalty.val = flux_penalty_save; //reset
     return true;
 }
 
 
-bool AutoPilot::OptimizeSemiAuto(vector<double*> &optvars, vector<double> &upper_range, vector<double> &lower_range, vector<bool> &is_range_constr, vector<string> *names)
+bool AutoPilot::OptimizeSemiAuto(vector<double*> &optvars, vector<double> &/*upper_range*/, vector<double> & /*lower_range*/, vector<bool> & /*is_range_constr*/, vector<string> *names)
 {
     /* 
     Use canned algorithm to optimize
@@ -1705,7 +1761,7 @@ bool AutoPilot::OptimizeSemiAuto(vector<double*> &optvars, vector<double> &upper
         double fmin;
         try{
             nlopt::result resopt = nlobj.optimize( start, fmin );
-        
+			(void*)&resopt;
             _summary_siminfo->addSimulationNotice( ol.c_str() );
         
             int iopt = 0;
@@ -1783,7 +1839,7 @@ bool AutoPilot::OptimizeSemiAuto(vector<double*> &optvars, vector<double> &upper
         double fmin;
         try{
             nlopt::result resopt = nlobj.optimize( start, fmin );
-        
+			(void*)&resopt;
             _summary_siminfo->addSimulationNotice( ol.c_str() );
         
             int iopt = 0;
@@ -1854,7 +1910,7 @@ bool AutoPilot::OptimizeSemiAuto(vector<double*> &optvars, vector<double> &upper
         double fmin;
         try{
             nlopt::result resopt = nlobj.optimize( start, fmin );
-        
+			(void*)&resopt;
             _summary_siminfo->addSimulationNotice( ol.c_str() );
         
             int iopt = 0;
@@ -1894,7 +1950,7 @@ bool AutoPilot::OptimizeSemiAuto(vector<double*> &optvars, vector<double> &upper
             }
             dimsimpt.push_back(tmp);
         }
-        _opt.setOptimizationSimulationHistory( dimsimpt, AO.m_objective, AO.m_flux );
+        _opt->setOptimizationSimulationHistory( dimsimpt, AO.m_objective, AO.m_flux );
     }
     //reset
     V->opt.max_iter.val = tot_max_iter;   
@@ -1911,7 +1967,7 @@ bool AutoPilot::IsSimulationCancelled()
 
 sp_optimize *AutoPilot::GetOptimizationObject()
 {
-    return &_opt;
+    return _opt;
 }
 
 void AutoPilot::PostEvaluationUpdate(int iter, vector<double> &pos, /*vector<double> &normalizers, */double &obj, double &flux, double &cost, std::string *note)
@@ -1966,7 +2022,7 @@ bool AutoPilot::CalculateFluxMapsOV1(vector<vector<double> > &sunpos, vector<vec
 	return true;
 }
 
-bool AutoPilot::CalculateFluxMaps(vector<vector<double> > &sunpos, vector<vector<double> > &fluxtab, vector<double> &efficiency, int flux_res_x, int flux_res_y, bool is_normalized)
+bool AutoPilot::CalculateFluxMaps(vector<vector<double> > & /*sunpos*/, vector<vector<double> > & /*fluxtab*/, vector<double> & /*efficiency*/, int /*flux_res_x*/, int /*flux_res_y*/, bool /*is_normalized*/)
 {
 	//override in inherited class
 	throw spexception("Virtual method cannot be called directly! Use derived class AutoPilot_S or AutoPilot_MT instead.");
@@ -1983,7 +2039,7 @@ bool AutoPilot_S::CreateLayout(sp_layout &layout, bool do_post_process)
 	PreSimCallbackUpdate();
 
 	int nsim_req = _SF->calcNumRequiredSimulations();
-
+	(void*)&nsim_req;
 	//if(! _SF->isSolarFieldCreated()){
 		//throw spexception("The solar field Create() method must be called before generating the field layout.");
 	//}
@@ -2249,7 +2305,7 @@ bool AutoPilot_MT::CreateLayout(sp_layout &layout, bool do_post_process)
 
 			//Prepare the master solar field object for layout simulation
 			WeatherData wdata;
-			bool full_sim = _SF->PrepareFieldLayout(*_SF, wdata);
+			bool full_sim = _SF->PrepareFieldLayout(*_SF, &wdata);
 		
 			//If full simulation is required...
 			if(full_sim){

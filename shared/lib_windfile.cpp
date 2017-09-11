@@ -1,3 +1,52 @@
+/*******************************************************************************************************
+*  Copyright 2017 Alliance for Sustainable Energy, LLC
+*
+*  NOTICE: This software was developed at least in part by Alliance for Sustainable Energy, LLC
+*  (“Alliance”) under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
+*  The Government retains for itself and others acting on its behalf a nonexclusive, paid-up,
+*  irrevocable worldwide license in the software to reproduce, prepare derivative works, distribute
+*  copies to the public, perform publicly and display publicly, and to permit others to do so.
+*
+*  Redistribution and use in source and binary forms, with or without modification, are permitted
+*  provided that the following conditions are met:
+*
+*  1. Redistributions of source code must retain the above copyright notice, the above government
+*  rights notice, this list of conditions and the following disclaimer.
+*
+*  2. Redistributions in binary form must reproduce the above copyright notice, the above government
+*  rights notice, this list of conditions and the following disclaimer in the documentation and/or
+*  other materials provided with the distribution.
+*
+*  3. The entire corresponding source code of any redistribution, with or without modification, by a
+*  research entity, including but not limited to any contracting manager/operator of a United States
+*  National Laboratory, any institution of higher learning, and any non-profit organization, must be
+*  made publicly available under this license for as long as the redistribution is made available by
+*  the research entity.
+*
+*  4. Redistribution of this software, without modification, must refer to the software by the same
+*  designation. Redistribution of a modified version of this software (i) may not refer to the modified
+*  version by the same designation, or by any confusingly similar designation, and (ii) must refer to
+*  the underlying software originally provided by Alliance as “System Advisor Model” or “SAM”. Except
+*  to comply with the foregoing, the terms “System Advisor Model”, “SAM”, or any confusingly similar
+*  designation may not be used to refer to any modified version of this software or any modified
+*  version of the underlying software originally provided by Alliance without the prior written consent
+*  of Alliance.
+*
+*  5. The name of the copyright holder, contributors, the United States Government, the United States
+*  Department of Energy, or any of their employees may not be used to endorse or promote products
+*  derived from this software without specific prior written permission.
+*
+*  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
+*  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
+*  FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER,
+*  CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES DEPARTMENT OF ENERGY, NOR ANY OF THEIR
+*  EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+*  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+*  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+*  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
+*  THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*******************************************************************************************************/
+
 #include <stdio.h>
 #include <cmath>
 #include <stdlib.h>
@@ -62,54 +111,54 @@ static int locate2(char *buf, char **colidx, int colmax, char delim)
 	return ncols;
 }
 
-/* 
-   version of strtok_r from (2010/9/24)
-   http://www.koders.com/c/fid9E7961E1E818E911DA7C34DD56DD8782726B3FCD.aspx
-   */
-static char *gettoken2 (char *s, const char *delim, char **save_ptr)
-{
-	char *token;
-
-	if (s == NULL)
-		s = *save_ptr;
-
-	/* Scan leading delimiters.  */
-	s += strspn (s, delim);
-	if (*s == '\0')
-	{
-		*save_ptr = s;
-		return NULL;
-	}
-
-	/* Find the end of the token.  */
-	token = s;
-	s = strpbrk (token, delim);
-	
-	if (s == NULL)
-		/* This token finishes the string.  */
-		*save_ptr = strchr (token, '\0');
-	else
-	{
-		/* Terminate the token and make *SAVE_PTR point past it.  */
-		*s = '\0';
-		*save_ptr = s + 1;
-	}
-	return token;
-}
-
-static int cmp_ext(const char *file, const char *ext)
-{
-	size_t len_ext, len_file;
-	const char *extp;
-	
-	if (!file || !ext) return 0;
-	len_ext = strlen(ext);
-	len_file = strlen(file);
-	extp = file+len_file-len_ext;
-	
-	if (extp < file) return 0;
-	return CASENCMP(extp, ext, len_ext)==0 ? 1 : 0;
-}
+///* 
+//   version of strtok_r from (2010/9/24)
+//   http://www.koders.com/c/fid9E7961E1E818E911DA7C34DD56DD8782726B3FCD.aspx
+//   */
+//static char *gettoken2 (char *s, const char *delim, char **save_ptr)
+//{
+//	char *token;
+//
+//	if (s == NULL)
+//		s = *save_ptr;
+//
+//	/* Scan leading delimiters.  */
+//	s += strspn (s, delim);
+//	if (*s == '\0')
+//	{
+//		*save_ptr = s;
+//		return NULL;
+//	}
+//
+//	/* Find the end of the token.  */
+//	token = s;
+//	s = strpbrk (token, delim);
+//	
+//	if (s == NULL)
+//		/* This token finishes the string.  */
+//		*save_ptr = strchr (token, '\0');
+//	else
+//	{
+//		/* Terminate the token and make *SAVE_PTR point past it.  */
+//		*s = '\0';
+//		*save_ptr = s + 1;
+//	}
+//	return token;
+//}
+//
+//static int cmp_ext(const char *file, const char *ext)
+//{
+//	size_t len_ext, len_file;
+//	const char *extp;
+//	
+//	if (!file || !ext) return 0;
+//	len_ext = strlen(ext);
+//	len_file = strlen(file);
+//	extp = file+len_file-len_ext;
+//	
+//	if (extp < file) return 0;
+//	return CASENCMP(extp, ext, len_ext)==0 ? 1 : 0;
+//}
 
 #define MBUFLEN 4096
 
@@ -130,7 +179,7 @@ bool winddata_provider::find_closest( int& closest_index, int id, int ncols, dou
 	double height_diff = 1e99;
 	for ( size_t i=0;i<m_dataid.size();i++ )
 	{
-		if ( (m_dataid[i] == id) && (i != index_to_exclude) )
+		if ( (m_dataid[i] == id) && ((int)i != index_to_exclude) )
 		{
 			if ( fabs(m_heights[i] - requested_height) < height_diff )
 			{
@@ -139,7 +188,7 @@ bool winddata_provider::find_closest( int& closest_index, int id, int ncols, dou
 					if ( (m_heights[i] > requested_height) && (m_heights[index_to_exclude] > requested_height) ) continue;
 					if ( (m_heights[i] < requested_height) && (m_heights[index_to_exclude] < requested_height) ) continue;
 				}
-				closest_index = i;
+				closest_index = (int)i;
 				height_diff = fabs(m_heights[i] - requested_height);
 			}
 		}
@@ -174,7 +223,7 @@ bool winddata_provider::read( double requested_height,
 	if (values.size() < m_heights.size() || values.size() < m_dataid.size())
 		return false;
 
-	size_t ncols = values.size();
+	int ncols = (int)values.size();
 
 	*speed = *direction = *temperature = *pressure = *closest_speed_meas_height_in_file = *closest_dir_meas_height_in_file = std::numeric_limits<double>::quiet_NaN();
 
@@ -196,8 +245,8 @@ bool winddata_provider::read( double requested_height,
 	if (find_closest(index, DIR, ncols, requested_height) )
 	{
 		// interpolating direction is a little more complicated
-		double dir1, dir2, angle;
-		double ht1, ht2;
+		double dir1=0, dir2=0, angle;
+		double ht1=0, ht2=0;
 		bool interp_direction = ( (bInterpolate) && (m_heights[index] != requested_height) && find_closest(index2, DIR, ncols, requested_height, index) && can_interpolate(index, index2, ncols, requested_height)  );
 		if ( interp_direction )
 		{
@@ -473,8 +522,8 @@ bool windfile::read_line( std::vector<double> &values )
 	char *cols[128];
 	fgets( m_buf, MBUFLEN-1, m_fp );
 	int ncols = locate2( m_buf, cols, 128, ',' );	
-	if (ncols >= m_heights.size() 
-		&& ncols >= m_dataid.size())
+	if (ncols >= (int)m_heights.size() 
+		&& ncols >= (int)m_dataid.size())
 	{
 		values.resize( m_heights.size(), 0.0 );
 		for (size_t i=0;i<m_heights.size();i++)

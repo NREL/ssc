@@ -1,3 +1,52 @@
+/*******************************************************************************************************
+*  Copyright 2017 Alliance for Sustainable Energy, LLC
+*
+*  NOTICE: This software was developed at least in part by Alliance for Sustainable Energy, LLC
+*  (“Alliance”) under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
+*  The Government retains for itself and others acting on its behalf a nonexclusive, paid-up,
+*  irrevocable worldwide license in the software to reproduce, prepare derivative works, distribute
+*  copies to the public, perform publicly and display publicly, and to permit others to do so.
+*
+*  Redistribution and use in source and binary forms, with or without modification, are permitted
+*  provided that the following conditions are met:
+*
+*  1. Redistributions of source code must retain the above copyright notice, the above government
+*  rights notice, this list of conditions and the following disclaimer.
+*
+*  2. Redistributions in binary form must reproduce the above copyright notice, the above government
+*  rights notice, this list of conditions and the following disclaimer in the documentation and/or
+*  other materials provided with the distribution.
+*
+*  3. The entire corresponding source code of any redistribution, with or without modification, by a
+*  research entity, including but not limited to any contracting manager/operator of a United States
+*  National Laboratory, any institution of higher learning, and any non-profit organization, must be
+*  made publicly available under this license for as long as the redistribution is made available by
+*  the research entity.
+*
+*  4. Redistribution of this software, without modification, must refer to the software by the same
+*  designation. Redistribution of a modified version of this software (i) may not refer to the modified
+*  version by the same designation, or by any confusingly similar designation, and (ii) must refer to
+*  the underlying software originally provided by Alliance as “System Advisor Model” or “SAM”. Except
+*  to comply with the foregoing, the terms “System Advisor Model”, “SAM”, or any confusingly similar
+*  designation may not be used to refer to any modified version of this software or any modified
+*  version of the underlying software originally provided by Alliance without the prior written consent
+*  of Alliance.
+*
+*  5. The name of the copyright holder, contributors, the United States Government, the United States
+*  Department of Energy, or any of their employees may not be used to endorse or promote products
+*  derived from this software without specific prior written permission.
+*
+*  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
+*  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
+*  FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER,
+*  CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES DEPARTMENT OF ENERGY, NOR ANY OF THEIR
+*  EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+*  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+*  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+*  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
+*  THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*******************************************************************************************************/
+
 #include "core.h"
 
 #include "csp_system_costs.h"
@@ -63,27 +112,27 @@ public:
 	void exec() throw(general_error)
 	{
 		
-		double total_installed_cost     = as_double("total_installed_cost");    
-		double const_per_interest_rate1 = as_double("const_per_interest_rate1");
-		double const_per_interest_rate2 = as_double("const_per_interest_rate2");
-		double const_per_interest_rate3 = as_double("const_per_interest_rate3");
-		double const_per_interest_rate4 = as_double("const_per_interest_rate4");
-		double const_per_interest_rate5 = as_double("const_per_interest_rate5");
-		double const_per_months1        = as_double("const_per_months1");
-		double const_per_months2        = as_double("const_per_months2");       
-		double const_per_months3        = as_double("const_per_months3");       
-		double const_per_months4        = as_double("const_per_months4");       
-		double const_per_months5        = as_double("const_per_months5");       
-		double const_per_percent1       = as_double("const_per_percent1");      
-		double const_per_percent2       = as_double("const_per_percent2");      
-		double const_per_percent3       = as_double("const_per_percent3");      
-		double const_per_percent4       = as_double("const_per_percent4");      
-		double const_per_percent5       = as_double("const_per_percent5");      
-		double const_per_upfront_rate1  = as_double("const_per_upfront_rate1"); 
-		double const_per_upfront_rate2  = as_double("const_per_upfront_rate2"); 
-		double const_per_upfront_rate3  = as_double("const_per_upfront_rate3"); 
-		double const_per_upfront_rate4  = as_double("const_per_upfront_rate4"); 
-		double const_per_upfront_rate5  = as_double("const_per_upfront_rate5"); 
+		ssc_number_t total_installed_cost     = as_number("total_installed_cost");    
+		ssc_number_t const_per_interest_rate1 = as_number("const_per_interest_rate1");
+		ssc_number_t const_per_interest_rate2 = as_number("const_per_interest_rate2");
+		ssc_number_t const_per_interest_rate3 = as_number("const_per_interest_rate3");
+		ssc_number_t const_per_interest_rate4 = as_number("const_per_interest_rate4");
+		ssc_number_t const_per_interest_rate5 = as_number("const_per_interest_rate5");
+		ssc_number_t const_per_months1        = as_number("const_per_months1");
+		ssc_number_t const_per_months2        = as_number("const_per_months2");       
+		ssc_number_t const_per_months3        = as_number("const_per_months3");       
+		ssc_number_t const_per_months4        = as_number("const_per_months4");       
+		ssc_number_t const_per_months5        = as_number("const_per_months5");       
+		ssc_number_t const_per_percent1       = as_number("const_per_percent1");      
+		ssc_number_t const_per_percent2       = as_number("const_per_percent2");      
+		ssc_number_t const_per_percent3       = as_number("const_per_percent3");      
+		ssc_number_t const_per_percent4       = as_number("const_per_percent4");      
+		ssc_number_t const_per_percent5       = as_number("const_per_percent5");      
+		ssc_number_t const_per_upfront_rate1  = as_number("const_per_upfront_rate1"); 
+		ssc_number_t const_per_upfront_rate2  = as_number("const_per_upfront_rate2"); 
+		ssc_number_t const_per_upfront_rate3  = as_number("const_per_upfront_rate3"); 
+		ssc_number_t const_per_upfront_rate4  = as_number("const_per_upfront_rate4"); 
+		ssc_number_t const_per_upfront_rate5  = as_number("const_per_upfront_rate5"); 
 
 		double const_per_principal1, const_per_principal2, const_per_principal3, const_per_principal4, const_per_principal5;
 		double const_per_interest1, const_per_interest2, const_per_interest3, const_per_interest4, const_per_interest5;
@@ -106,25 +155,25 @@ public:
 			const_per_total1, const_per_total2, const_per_total3, const_per_total4, const_per_total5,
 			const_per_percent_total, const_per_principal_total, const_per_interest_total, construction_financing_cost);
 
-		assign("const_per_principal1",        const_per_principal1);         
-		assign("const_per_principal2",        const_per_principal2);      
-		assign("const_per_principal3",        const_per_principal3);      
-		assign("const_per_principal4",        const_per_principal4);      
-		assign("const_per_principal5",        const_per_principal5);      
-		assign("const_per_interest1",         const_per_interest1);       
-		assign("const_per_interest2",         const_per_interest2);       
-		assign("const_per_interest3",         const_per_interest3);       
-		assign("const_per_interest4",         const_per_interest4);       
-		assign("const_per_interest5",         const_per_interest5);       
-		assign("const_per_total1",            const_per_total1);          
-		assign("const_per_total2",            const_per_total2);          
-		assign("const_per_total3",            const_per_total3);          
-		assign("const_per_total4",            const_per_total4);          
-		assign("const_per_total5",            const_per_total5);          
-		assign("const_per_percent_total",	  const_per_percent_total);	 
-		assign("const_per_principal_total",   const_per_principal_total); 
-		assign("const_per_interest_total",	  const_per_interest_total);	 
-		assign("construction_financing_cost", construction_financing_cost);
+		assign("const_per_principal1",        (ssc_number_t)const_per_principal1);         
+		assign("const_per_principal2",        (ssc_number_t)const_per_principal2);      
+		assign("const_per_principal3",        (ssc_number_t)const_per_principal3);      
+		assign("const_per_principal4",        (ssc_number_t)const_per_principal4);      
+		assign("const_per_principal5",        (ssc_number_t)const_per_principal5);      
+		assign("const_per_interest1",         (ssc_number_t)const_per_interest1);       
+		assign("const_per_interest2",         (ssc_number_t)const_per_interest2);       
+		assign("const_per_interest3",         (ssc_number_t)const_per_interest3);       
+		assign("const_per_interest4",         (ssc_number_t)const_per_interest4);       
+		assign("const_per_interest5",         (ssc_number_t)const_per_interest5);       
+		assign("const_per_total1",            (ssc_number_t)const_per_total1);          
+		assign("const_per_total2",            (ssc_number_t)const_per_total2);          
+		assign("const_per_total3",            (ssc_number_t)const_per_total3);          
+		assign("const_per_total4",            (ssc_number_t)const_per_total4);          
+		assign("const_per_total5",            (ssc_number_t)const_per_total5);          
+		assign("const_per_percent_total",	  (ssc_number_t)const_per_percent_total);	 
+		assign("const_per_principal_total",   (ssc_number_t)const_per_principal_total); 
+		assign("const_per_interest_total",	  (ssc_number_t)const_per_interest_total);	 
+		assign("construction_financing_cost", (ssc_number_t)construction_financing_cost);
 
 
 		/* Useful for lk script:

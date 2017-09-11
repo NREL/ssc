@@ -1,3 +1,52 @@
+/*******************************************************************************************************
+*  Copyright 2017 Alliance for Sustainable Energy, LLC
+*
+*  NOTICE: This software was developed at least in part by Alliance for Sustainable Energy, LLC
+*  (“Alliance”) under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
+*  The Government retains for itself and others acting on its behalf a nonexclusive, paid-up,
+*  irrevocable worldwide license in the software to reproduce, prepare derivative works, distribute
+*  copies to the public, perform publicly and display publicly, and to permit others to do so.
+*
+*  Redistribution and use in source and binary forms, with or without modification, are permitted
+*  provided that the following conditions are met:
+*
+*  1. Redistributions of source code must retain the above copyright notice, the above government
+*  rights notice, this list of conditions and the following disclaimer.
+*
+*  2. Redistributions in binary form must reproduce the above copyright notice, the above government
+*  rights notice, this list of conditions and the following disclaimer in the documentation and/or
+*  other materials provided with the distribution.
+*
+*  3. The entire corresponding source code of any redistribution, with or without modification, by a
+*  research entity, including but not limited to any contracting manager/operator of a United States
+*  National Laboratory, any institution of higher learning, and any non-profit organization, must be
+*  made publicly available under this license for as long as the redistribution is made available by
+*  the research entity.
+*
+*  4. Redistribution of this software, without modification, must refer to the software by the same
+*  designation. Redistribution of a modified version of this software (i) may not refer to the modified
+*  version by the same designation, or by any confusingly similar designation, and (ii) must refer to
+*  the underlying software originally provided by Alliance as “System Advisor Model” or “SAM”. Except
+*  to comply with the foregoing, the terms “System Advisor Model”, “SAM”, or any confusingly similar
+*  designation may not be used to refer to any modified version of this software or any modified
+*  version of the underlying software originally provided by Alliance without the prior written consent
+*  of Alliance.
+*
+*  5. The name of the copyright holder, contributors, the United States Government, the United States
+*  Department of Energy, or any of their employees may not be used to endorse or promote products
+*  derived from this software without specific prior written permission.
+*
+*  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
+*  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
+*  FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER,
+*  CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES DEPARTMENT OF ENERGY, NOR ANY OF THEIR
+*  EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+*  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+*  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+*  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
+*  THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*******************************************************************************************************/
+
 #include <math.h>
 
 #include "common.h"
@@ -36,8 +85,6 @@ public:
 		add_var_info(vtab_technology_outputs);
 	}
 
-
-	
 	batt_variables * setup_variables()
 	{
 		batt_variables * batt_vars = new batt_variables();
@@ -46,12 +93,14 @@ public:
 		batt_vars->batt_chem = as_integer("batt_simple_chemistry");
 		batt_vars->batt_voltage_choice = voltage_t::VOLTAGE_MODEL;
 		batt_vars->batt_voltage_matrix = util::matrix_t<double>();
+		batt_vars->batt_calendar_choice = lifetime_calendar_t::NONE;
+		batt_vars->batt_calendar_lifetime_matrix = util::matrix_t<double>();
 
 		int dispatch = as_integer("batt_simple_dispatch");
 		batt_vars->batt_dispatch = (dispatch == 0 ? dispatch_t::LOOK_AHEAD : dispatch_t::LOOK_BEHIND);
 		batt_vars->batt_meter_position = as_integer("batt_simple_meter_position");
 
-		// compute cells, strings, voltage based on desired capacity/power, assume max current is 10 A for a battery
+		// compute cells, strings, voltage based on desired capacity/power, assume max current is 15 A for a battery
 		double batt_kwh = as_double("batt_simple_kwh");
 		double batt_kw = as_double("batt_simple_kw");
 		double batt_time_hour = batt_kwh / batt_kw;
@@ -77,11 +126,17 @@ public:
 			util::matrix_t<double> batt_lifetime_matrix(6, 3, lifetime_matrix);
 			batt_vars->batt_lifetime_matrix = batt_lifetime_matrix;
 
+			batt_vars->batt_calendar_q0 = 1.02;
+			batt_vars->batt_calendar_a = 2.66e-3;
+			batt_vars->batt_calendar_b = -7280;
+			batt_vars->batt_calendar_c = 930;
+
 			batt_vars->batt_Vnom_default = 3.6;
 			batt_vars->batt_Vfull = 4.1;
 			batt_vars->batt_Vexp = 4.05;
 			batt_vars->batt_Vnom = 3.4;
 			batt_vars->batt_Qfull = 2.25;
+			batt_vars->batt_Qfull_flow = 0;
 			batt_vars->batt_Qexp = 1.78;
 			batt_vars->batt_Qnom = 88.9;
 			batt_vars->batt_C_rate = 0.2;
@@ -146,8 +201,8 @@ public:
 		batt_vars->pv_dc_dc_mppt_efficiency = 99;
 
 		double batt_bank_voltage = batt_kw * 1000. / current_max;
-		batt_vars->batt_computed_series = std::ceil(batt_bank_voltage / batt_vars->batt_Vnom_default);
-		batt_vars->batt_computed_strings = std::ceil((batt_kwh * 1000.) / (batt_vars->batt_Qfull * batt_vars->batt_computed_series * batt_vars->batt_Vnom_default)) - 1;
+		batt_vars->batt_computed_series = (int)std::ceil(batt_bank_voltage / batt_vars->batt_Vnom_default);
+		batt_vars->batt_computed_strings = (int)std::ceil((batt_kwh * 1000.) / (batt_vars->batt_Qfull * batt_vars->batt_computed_series * batt_vars->batt_Vnom_default)) - 1;
 
 		if (batt_vars->batt_chem == battery_t::LEAD_ACID)
 		{
@@ -173,10 +228,13 @@ public:
 		
 		// control constraints
 		batt_vars->batt_pv_choice = dispatch_t::MEET_LOAD;
-		batt_vars->batt_maximum_SOC = 100.;
-		batt_vars->batt_minimum_SOC = 20.;
+		batt_vars->batt_maximum_SOC = 95.;
+		batt_vars->batt_minimum_SOC = 15.;
+		batt_vars->batt_current_choice = dispatch_t::RESTRICT_CURRENT;
 		batt_vars->batt_current_charge_max = 1000 * batt_C_rate_discharge * batt_kwh / batt_bank_voltage;
 		batt_vars->batt_current_discharge_max = 1000 * batt_C_rate_discharge * batt_kwh / batt_bank_voltage;
+		batt_vars->batt_power_charge_max = batt_kw;
+		batt_vars->batt_power_discharge_max = batt_kw;
 		batt_vars->batt_minimum_modetime = 10;
 
 		batt_vars->batt_topology = charge_controller::AC_CONNECTED;
@@ -189,15 +247,19 @@ public:
 		double_vec batt_losses_monthly = { 0 };
 
 		size_t n_recs = 0;
-		ssc_number_t * p_ac = as_array("ac", &n_recs);
-		for (int i = 0; i != n_recs; i++)
+		as_array("ac", &n_recs);
+//		ssc_number_t * p_ac = as_array("ac", &n_recs);
+		for (int i = 0; i != (int)n_recs; i++)
 			batt_losses.push_back(0.);
 		for (int m = 0; m != 12; m++)
 			batt_losses_monthly.push_back(0.);
 
 		batt_vars->batt_loss_choice = losses_t::MONTHLY;
 		batt_vars->batt_losses = batt_losses;
-		batt_vars->batt_losses_monthly = batt_losses_monthly;
+		batt_vars->batt_losses_charging = batt_losses_monthly;
+		batt_vars->batt_losses_discharging = batt_losses_monthly;
+		batt_vars->batt_losses_idle = batt_losses_monthly;
+
 
 		// replacement
 		batt_vars->batt_replacement_capacity = 0.;
@@ -230,11 +292,11 @@ public:
 			double ts_hour;
 
 			p_ac = as_array("ac", &n_ac);
-			for (int i = 0; i != n_ac; i++)
-				p_ac[i] = p_ac[i] * 0.001;
+			for (int i = 0; i != (int)n_ac; i++)
+				p_ac[i] = (ssc_number_t)(p_ac[i] * 0.001);
 
 			p_load = as_array("load", &n_load);
-			step_per_hour = n_ac / 8760;
+			step_per_hour = (int)n_ac / 8760;
 			ts_hour = 1. / step_per_hour;
 
 			batt_variables * batt_vars = setup_variables();
@@ -251,7 +313,7 @@ public:
 
 			for (hour = 0; hour < 8760; hour++)
 			{
-				for (size_t jj = 0; jj < step_per_hour; jj++)
+				for (int jj = 0; jj < step_per_hour; jj++)
 				{
 					batt.advance(*this, 0, hour, jj, p_ac[count], p_load[count]);
 					p_gen[count] = batt.outGenPower[count];
@@ -263,7 +325,7 @@ public:
 			clean_up(batt_vars);
 		}
 		else
-			assign("average_cycle_efficiency", var_data((ssc_number_t)0.));
+			assign("average_battery_roundtrip_efficiency", var_data((ssc_number_t)0.));
 	}
 };
 

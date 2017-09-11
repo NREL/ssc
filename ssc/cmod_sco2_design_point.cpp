@@ -1,3 +1,52 @@
+/*******************************************************************************************************
+*  Copyright 2017 Alliance for Sustainable Energy, LLC
+*
+*  NOTICE: This software was developed at least in part by Alliance for Sustainable Energy, LLC
+*  (“Alliance”) under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
+*  The Government retains for itself and others acting on its behalf a nonexclusive, paid-up,
+*  irrevocable worldwide license in the software to reproduce, prepare derivative works, distribute
+*  copies to the public, perform publicly and display publicly, and to permit others to do so.
+*
+*  Redistribution and use in source and binary forms, with or without modification, are permitted
+*  provided that the following conditions are met:
+*
+*  1. Redistributions of source code must retain the above copyright notice, the above government
+*  rights notice, this list of conditions and the following disclaimer.
+*
+*  2. Redistributions in binary form must reproduce the above copyright notice, the above government
+*  rights notice, this list of conditions and the following disclaimer in the documentation and/or
+*  other materials provided with the distribution.
+*
+*  3. The entire corresponding source code of any redistribution, with or without modification, by a
+*  research entity, including but not limited to any contracting manager/operator of a United States
+*  National Laboratory, any institution of higher learning, and any non-profit organization, must be
+*  made publicly available under this license for as long as the redistribution is made available by
+*  the research entity.
+*
+*  4. Redistribution of this software, without modification, must refer to the software by the same
+*  designation. Redistribution of a modified version of this software (i) may not refer to the modified
+*  version by the same designation, or by any confusingly similar designation, and (ii) must refer to
+*  the underlying software originally provided by Alliance as “System Advisor Model” or “SAM”. Except
+*  to comply with the foregoing, the terms “System Advisor Model”, “SAM”, or any confusingly similar
+*  designation may not be used to refer to any modified version of this software or any modified
+*  version of the underlying software originally provided by Alliance without the prior written consent
+*  of Alliance.
+*
+*  5. The name of the copyright holder, contributors, the United States Government, the United States
+*  Department of Energy, or any of their employees may not be used to endorse or promote products
+*  derived from this software without specific prior written permission.
+*
+*  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
+*  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
+*  FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER,
+*  CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES DEPARTMENT OF ENERGY, NOR ANY OF THEIR
+*  EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+*  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+*  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+*  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
+*  THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*******************************************************************************************************/
+
 #include "core.h"
 #include "sco2_pc_core.h"
 #include "sco2_pc_csp_int.h"
@@ -58,6 +107,145 @@ public:
 
 	void exec() throw(general_error)
 	{
+		// Test out multi-stage compressor model
+		CO2_state co2_props;
+		double P_in = 8000.0;		//[kPa]
+		double T_in = 35 + 273.15;	//[K]
+		int prop_err_code = CO2_TP(T_in, P_in, &co2_props);
+		if (prop_err_code != 0)
+		{
+			return;
+		}
+		double h_in = co2_props.enth;
+		double s_in = co2_props.entr;
+		double D_in = co2_props.dens;
+
+		double P_out = 25000.0;		//[kPa]
+		double s_out_isen = s_in;	//[kJ/kg-K]
+		prop_err_code = CO2_PS(P_out, s_out_isen, &co2_props);
+		if (prop_err_code != 0)
+		{
+			return;
+		}
+		double h_out_isen = co2_props.enth;
+
+		double eta_isen = 0.9;
+		double h_out = h_in + (h_out_isen - h_in) / eta_isen;
+		prop_err_code = CO2_PH(P_out, h_out, &co2_props);
+		if (prop_err_code != 0)
+		{
+			return;
+		}
+		double T_out = co2_props.temp;	//[K]
+		double s_out = co2_props.entr;	//[kJ/kg-K]
+		double D_out = co2_props.dens;	//[kg/m^3]
+
+		/*C_compressor c_comp_old;
+		C_compressor::S_design_parameters s_des_comp_old;
+		s_des_comp_old.m_T_in = T_in;
+		s_des_comp_old.m_P_in = P_in;
+		s_des_comp_old.m_D_in = D_in;
+		s_des_comp_old.m_h_in = h_in;
+		s_des_comp_old.m_s_in = s_in;
+
+		s_des_comp_old.m_T_out = T_out;
+		s_des_comp_old.m_P_out = P_out;
+		s_des_comp_old.m_h_out = h_out;
+		s_des_comp_old.m_D_out = D_out;*/
+
+		double m_dot_mc = 3000.0 / (h_out - h_in);	//[kg/s] mass flow for 3 MWe compressor
+		//s_des_comp_old.m_m_dot = m_dot_mc;
+
+		int comp_old_err_code = 0;
+		//c_comp_old.compressor_sizing(s_des_comp_old, comp_old_err_code);
+
+		//double diameter_old = c_comp_old.get_design_solved()->m_D_rotor;	//[m]
+		//double N_old = c_comp_old.get_design_solved()->m_N_design;			//[rpm]
+		//double tip_ratio_old = c_comp_old.get_design_solved()->m_w_tip_ratio;	//[-]
+
+
+		//C_recompressor::S_design_parameters s_rc_des_old;
+
+		double T_rc_in = 100.0 + 273.15;	//[K]
+		double P_rc_in = P_in;				//[kPa]
+		
+		CO2_TP(T_rc_in, P_rc_in, &co2_props);
+		double s_rc_in = co2_props.entr;
+		double h_rc_in = co2_props.enth;
+		//s_rc_des_old.m_P_in = P_rc_in;
+		//s_rc_des_old.m_D_in = co2_props.dens;
+		//s_rc_des_old.m_h_in = co2_props.enth;
+		//s_rc_des_old.m_s_in = co2_props.entr;
+
+		double P_rc_out = P_out;			//[kPa]
+		CO2_PS(P_rc_out, s_rc_in, &co2_props);
+		double h_rc_out_isen = co2_props.enth;	//[kJ/kg]
+
+		double eta_rc_isen = 0.9;
+		double h_rc_out = h_rc_in + (h_rc_out_isen - h_rc_in) / eta_isen;
+		CO2_PH(P_rc_out, h_rc_out, &co2_props);
+		//s_rc_des_old.m_T_out = co2_props.temp;
+		//s_rc_des_old.m_P_out = co2_props.pres;
+		//s_rc_des_old.m_h_out = co2_props.enth;
+		//s_rc_des_old.m_D_out = co2_props.dens;
+		double T_rc_out = co2_props.temp;		//[K]
+
+		double m_dot_rc = m_dot_mc / (0.8) * 0.2;
+		//s_rc_des_old.m_m_dot = m_dot_rc;
+
+		//C_recompressor c_rc_old;
+		//int rc_err_code = 0;
+		//c_rc_old.recompressor_sizing(s_rc_des_old, rc_err_code);
+
+
+
+
+		C_comp_multi_stage c_rc_ms;
+		c_rc_ms.design_given_outlet_state(T_rc_in, P_rc_in, m_dot_rc, T_rc_out, P_rc_out);
+
+
+
+		double P_rc_in_od = 1.15*P_rc_in;
+		double T_rc_in_od = T_rc_in + 10.0;
+		double m_dot_rc_od = 0.90*m_dot_rc;
+
+		int rc_od_err_code = 0;
+		double T_rc_out_od = std::numeric_limits<double>::quiet_NaN();
+		//c_rc_old.off_design_recompressor(T_rc_in_od, P_rc_in_od, m_dot_rc_od, P_rc_out, rc_od_err_code, T_rc_out_od);
+
+
+		double T_rc_out_od_ms = std::numeric_limits<double>::quiet_NaN();
+		c_rc_ms.off_design_given_P_out(T_rc_in_od, P_rc_in_od, m_dot_rc_od, P_rc_out, rc_od_err_code, T_rc_out_od_ms);
+
+
+
+
+		C_comp_multi_stage c_comp_ms;
+		c_comp_ms.design_given_outlet_state(T_in, P_in, m_dot_mc, T_out, P_out);
+
+		double diameter_new = c_comp_ms.mv_stages[0].ms_des_solved.m_D_rotor;
+		double N_new = c_comp_ms.ms_des_solved.m_N_design;
+		double tip_ratio_new = c_comp_ms.mv_stages[0].ms_des_solved.m_tip_ratio;
+
+		double P_in_od = 1.15*P_in;
+		double T_in_od = T_in + 5.0;
+		double m_dot_od = 0.90*m_dot_mc;
+
+		double P_out_od_old = std::numeric_limits<double>::quiet_NaN();
+		double T_out_od_old = std::numeric_limits<double>::quiet_NaN();
+		//c_comp_old.od_comp_at_N_des(T_in_od, P_in_od, m_dot_od, comp_old_err_code, T_out_od_old, P_out_od_old);
+
+		double P_out_od_new = std::numeric_limits<double>::quiet_NaN();
+		double T_out_od_new = std::numeric_limits<double>::quiet_NaN();
+
+		int comp_new_err_code = 0;
+		c_comp_ms.off_design_at_N_des(T_in_od, P_in_od, m_dot_od, comp_new_err_code, T_out_od_new, P_out_od_new);
+
+
+
+		double new_cmop = 1.23;
+
+
 		// Hot sCO2 to water heat exchanger
 
 		double W_dot_net = 10.0*1.E3;	//[KWe]
@@ -74,8 +262,8 @@ public:
 		double T_water_hot = 39.0;		//[C] Groundwater outlet
 		double x_water = -1;			//[-]
 
-		CO2_state co2_props;
-		int prop_err_code = CO2_TP(T_co2_hot+273.15, P_co2, &co2_props);
+		//CO2_state co2_props;
+		prop_err_code = CO2_TP(T_co2_hot+273.15, P_co2, &co2_props);
 		if (prop_err_code != 0)
 		{
 			log("CO2 hot props failed", SSC_ERROR, -1.0);
@@ -430,7 +618,7 @@ public:
 
 		double x_low = std::numeric_limits<double>::quiet_NaN();
 		double x_high = std::numeric_limits<double>::quiet_NaN();
-		int iter_limit = 50.0;
+		int iter_limit = 50;
 		eq_solv.settings(0.001, iter_limit, x_low, x_high, true);
 
 		double x_solved, tol_solved;
@@ -552,7 +740,7 @@ public:
 		sco2_rc_od_par.m_m_dot_htf = m_dot_htf;
 		sco2_rc_od_par.m_T_amb = T_amb_cycle_des;
 		int od_strategy = C_sco2_recomp_csp::E_MAX_ETA;
-		sco2_recomp_csp.off_design_opt(sco2_rc_od_par, od_strategy);
+		//sco2_recomp_csp.off_design_opt(sco2_rc_od_par, od_strategy);
 
 
 
@@ -571,12 +759,12 @@ public:
 		double T_htf_cold = rc_cycle.get_design_solved()->m_temp[5 - 1] + delta_T_t - 273.15;	//[C]
 
 		// Assign SSC outputs
-		assign("eta_thermal_calc", eta_thermal_calc);
-		assign("UA_total", UA_total);
-		assign("recomp_frac", recomp_frac);
-		assign("P_comp_in", P_comp_in);
-		assign("P_comp_out", P_comp_out);
-		assign("T_htf_cold", T_htf_cold); 
+		assign("eta_thermal_calc", (ssc_number_t)eta_thermal_calc);
+		assign("UA_total", (ssc_number_t)UA_total);
+		assign("recomp_frac", (ssc_number_t)recomp_frac);
+		assign("P_comp_in", (ssc_number_t)P_comp_in);
+		assign("P_comp_out", (ssc_number_t)P_comp_out);
+		assign("T_htf_cold", (ssc_number_t)T_htf_cold);
 
 		if( error_msg[0] == NULL )
 			log("Design point optimization was successful!");
@@ -587,165 +775,165 @@ public:
 
 		//int run_off_des_study = as_integer("run_off_des_study");
 
-		if( run_off_des_study != 1)
-		{
-			return;
-		}
-		else	// Run off-design parametrics
-		{
-			C_RecompCycle::S_opt_target_od_parameters opt_target_od_params;
-			
-			// opt_target_od_params.m_T_mc_in      ** Set compressor inlet temperature below **
-			opt_target_od_params.m_T_t_in = rc_params.m_T_t_in;			//[K]
-			
-			// opt_target_od_params.m_target       ** Set target q_dot below **
-			opt_target_od_params.m_is_target_Q = true;
+		//if( run_off_des_study != 1)
+		//{
+		//	return;
+		//}
+		//else	// Run off-design parametrics
+		//{
+		//	C_RecompCycle::S_opt_target_od_parameters opt_target_od_params;
+		//	
+		//	// opt_target_od_params.m_T_mc_in      ** Set compressor inlet temperature below **
+		//	opt_target_od_params.m_T_t_in = rc_params.m_T_t_in;			//[K]
+		//	
+		//	// opt_target_od_params.m_target       ** Set target q_dot below **
+		//	opt_target_od_params.m_is_target_Q = true;
 
-			opt_target_od_params.m_N_sub_hxrs = rc_params.m_N_sub_hxrs;
-			opt_target_od_params.m_lowest_pressure = 1000.0;
-			opt_target_od_params.m_highest_pressure = 17000.0;
+		//	opt_target_od_params.m_N_sub_hxrs = rc_params.m_N_sub_hxrs;
+		//	opt_target_od_params.m_lowest_pressure = 1000.0;
+		//	opt_target_od_params.m_highest_pressure = 17000.0;
 
-			opt_target_od_params.m_recomp_frac_guess = rc_cycle.get_design_solved()->m_recomp_frac;
-			opt_target_od_params.m_fixed_recomp_frac = false;
+		//	opt_target_od_params.m_recomp_frac_guess = rc_cycle.get_design_solved()->m_recomp_frac;
+		//	opt_target_od_params.m_fixed_recomp_frac = false;
 
-			opt_target_od_params.m_N_mc_guess = rc_cycle.get_design_solved()->ms_mc_des_solved.m_N_design;
-			opt_target_od_params.m_fixed_N_mc = false;
+		//	opt_target_od_params.m_N_mc_guess = rc_cycle.get_design_solved()->ms_mc_ms_des_solved.m_N_design;
+		//	opt_target_od_params.m_fixed_N_mc = false;
 
-			opt_target_od_params.m_N_t_guess = rc_cycle.get_design_solved()->ms_t_des_solved.m_N_design;
-			opt_target_od_params.m_fixed_N_t = true;
+		//	opt_target_od_params.m_N_t_guess = rc_cycle.get_design_solved()->ms_t_des_solved.m_N_design;
+		//	opt_target_od_params.m_fixed_N_t = true;
 
-			opt_target_od_params.m_tol = rc_params.m_tol;
-			opt_target_od_params.m_opt_tol = rc_params.m_opt_tol;
+		//	opt_target_od_params.m_tol = rc_params.m_tol;
+		//	opt_target_od_params.m_opt_tol = rc_params.m_opt_tol;
 
-			opt_target_od_params.m_use_default_res = false;
+		//	opt_target_od_params.m_use_default_res = false;
 
-			double q_dot_in_des = rc_cycle.get_design_solved()->m_W_dot_net / rc_cycle.get_design_solved()->m_eta_thermal;	//[kWt]
+		//	double q_dot_in_des = rc_cycle.get_design_solved()->m_W_dot_net / rc_cycle.get_design_solved()->m_eta_thermal;	//[kWt]
 
-			size_t n_f_pl = -1;
-			ssc_number_t * f_pl = as_array("part_load_fracs", &n_f_pl);
+		//	size_t n_f_pl = 0;
+		//	ssc_number_t * f_pl = as_array("part_load_fracs", &n_f_pl);
 
-			int n_solved = 0;
+		//	int n_solved = 0;
 
-			std::vector<double> part_load_fracs_out(0);
-			std::vector<double> part_load_eta(0);
+		//	std::vector<double> part_load_fracs_out(0);
+		//	std::vector<double> part_load_eta(0);
 
-			if(n_f_pl > 0)	// At least one part-load simulation is required
-			{
-				opt_target_od_params.m_T_mc_in = rc_params.m_T_mc_in;		//[K]
+		//	if(n_f_pl > 0)	// At least one part-load simulation is required
+		//	{
+		//		opt_target_od_params.m_T_mc_in = rc_params.m_T_mc_in;		//[K]
 
-				for( int i = 0; i < n_f_pl; i++ )
-				{
-					opt_target_od_params.m_target = (double)f_pl[i] * q_dot_in_des;				//[kWt]
-					log(util::format("Off design simulation at part load = %lg", f_pl[i]));
-					int od_error_code = 0;
-					rc_cycle.optimal_target_off_design(opt_target_od_params, od_error_code);
-					if(od_error_code == 0)
-					{
-						part_load_fracs_out.push_back((double)f_pl[i]);
-						part_load_eta.push_back(rc_cycle.get_od_solved()->m_eta_thermal/eta_thermal_calc);
-					}
-				}
+		//		for( size_t i = 0; i < n_f_pl; i++ )
+		//		{
+		//			opt_target_od_params.m_target = (double)f_pl[i] * q_dot_in_des;				//[kWt]
+		//			log(util::format("Off design simulation at part load = %lg", f_pl[i]));
+		//			int od_error_code = 0;
+		//			rc_cycle.optimal_target_off_design(opt_target_od_params, od_error_code);
+		//			if(od_error_code == 0)
+		//			{
+		//				part_load_fracs_out.push_back((double)f_pl[i]);
+		//				part_load_eta.push_back(rc_cycle.get_od_solved()->m_eta_thermal/eta_thermal_calc);
+		//			}
+		//		}
 
-				n_solved = part_load_fracs_out.size();
-			}
-						
-			ssc_number_t * f_pl_out = allocate("part_load_fracs_out", n_solved);
-			ssc_number_t * eta_f_pl = allocate("part_load_eta", n_solved);
+		//		n_solved = (int)part_load_fracs_out.size();
+		//	}
+		//				
+		//	ssc_number_t * f_pl_out = allocate("part_load_fracs_out", n_solved);
+		//	ssc_number_t * eta_f_pl = allocate("part_load_eta", n_solved);
 
-			for( int i = 0; i < n_solved; i++ )
-			{
-				f_pl_out[i] = part_load_fracs_out[i];
-				eta_f_pl[i] = part_load_eta[i];
-			}
+		//	for( int i = 0; i < n_solved; i++ )
+		//	{
+		//		f_pl_out[i] = (ssc_number_t)part_load_fracs_out[i];
+		//		eta_f_pl[i] = (ssc_number_t)part_load_eta[i];
+		//	}
 
-			// Find and write polynomial coefficients for part load
-			std::vector<double> pl_coefs;
-			double pl_r_squared = std::numeric_limits<double>::quiet_NaN();
-			bool pl_success = find_polynomial_coefs(part_load_fracs_out, part_load_eta, 5, pl_coefs, pl_r_squared);
-			assign("Part_load_r_squared", pl_r_squared);
+		//	// Find and write polynomial coefficients for part load
+		//	std::vector<double> pl_coefs;
+		//	double pl_r_squared = std::numeric_limits<double>::quiet_NaN();
+		//	bool pl_success = find_polynomial_coefs(part_load_fracs_out, part_load_eta, 5, pl_coefs, pl_r_squared);
+		//	assign("Part_load_r_squared", (ssc_number_t)pl_r_squared);
 
-			ssc_number_t * p_pl_coefs = allocate("part_load_coefs", 5);
-			if(pl_success)
-			{
-				for( int i = 0; i < 5; i++ )
-					p_pl_coefs[i] = pl_coefs[i];
-			}
-			else
-			{
-				log("Part load coefficient calcuations failed");
-				for( int i = 0; i < 5; i++ )
-					p_pl_coefs[i] = 0.0;
-			}
-			// ********************************************
+		//	ssc_number_t * p_pl_coefs = allocate("part_load_coefs", 5);
+		//	if(pl_success)
+		//	{
+		//		for( int i = 0; i < 5; i++ )
+		//			p_pl_coefs[i] = (ssc_number_t)pl_coefs[i];
+		//	}
+		//	else
+		//	{
+		//		log("Part load coefficient calcuations failed");
+		//		for( int i = 0; i < 5; i++ )
+		//			p_pl_coefs[i] = 0.0;
+		//	}
+		//	// ********************************************
 
-						
-			size_t n_T_amb_od = -1;
-			ssc_number_t * T_amb_od = as_array("T_amb_array", &n_T_amb_od);
+		//				
+		//	size_t n_T_amb_od = 0;
+		//	ssc_number_t * T_amb_od = as_array("T_amb_array", &n_T_amb_od);
 
-			n_solved = 0;
+		//	n_solved = 0;
 
-			std::vector<double> T_amb_out(0);
-			std::vector<double> T_amb_eta(0);
+		//	std::vector<double> T_amb_out(0);
+		//	std::vector<double> T_amb_eta(0);
 
-			if(n_T_amb_od > 0)	// At least one off-design ambient temperature simulation is required
-			{
-				opt_target_od_params.m_target = q_dot_in_des;
+		//	if(n_T_amb_od > 0)	// At least one off-design ambient temperature simulation is required
+		//	{
+		//		opt_target_od_params.m_target = q_dot_in_des;
 
-				for( int i = 0; i < n_T_amb_od; i++ )
-				{
-					opt_target_od_params.m_T_mc_in = max(rc_cycle.get_design_limits().m_T_mc_in_min, (double)T_amb_od[i] + delta_T_acc + 273.15);	//[K] convert from C and add air cooler deltaT
-					log(util::format("Off design simulation at ambient temperature = %lg", T_amb_od[i]));
-					log(util::format("Corresponding compressor inlet temperature = %lg", opt_target_od_params.m_T_mc_in - 273.15));
-					int od_error_code = 0;
-					rc_cycle.optimal_target_off_design(opt_target_od_params, od_error_code);
-					if(od_error_code == 0)
-					{
-						T_amb_out.push_back((double)T_amb_od[i]);
-						T_amb_eta.push_back(rc_cycle.get_od_solved()->m_eta_thermal / eta_thermal_calc);
-					}
-				}
+		//		for( size_t i = 0; i < n_T_amb_od; i++ )
+		//		{
+		//			opt_target_od_params.m_T_mc_in = max(rc_cycle.get_design_limits().m_T_mc_in_min, (double)T_amb_od[i] + delta_T_acc + 273.15);	//[K] convert from C and add air cooler deltaT
+		//			log(util::format("Off design simulation at ambient temperature = %lg", T_amb_od[i]));
+		//			log(util::format("Corresponding compressor inlet temperature = %lg", opt_target_od_params.m_T_mc_in - 273.15));
+		//			int od_error_code = 0;
+		//			rc_cycle.optimal_target_off_design(opt_target_od_params, od_error_code);
+		//			if(od_error_code == 0)
+		//			{
+		//				T_amb_out.push_back((double)T_amb_od[i]);
+		//				T_amb_eta.push_back(rc_cycle.get_od_solved()->m_eta_thermal / eta_thermal_calc);
+		//			}
+		//		}
 
-				n_solved = T_amb_out.size();
-			}						
+		//		n_solved = (int)T_amb_out.size();
+		//	}						
 
-			ssc_number_t * T_amb_od_out = allocate("T_amb_array_out", n_solved);
-			ssc_number_t * eta_T_amb = allocate("T_amb_eta", n_solved);
+		//	ssc_number_t * T_amb_od_out = allocate("T_amb_array_out", n_solved);
+		//	ssc_number_t * eta_T_amb = allocate("T_amb_eta", n_solved);
 
-			for( int i = 0; i < n_solved; i++ )
-			{
-				T_amb_od_out[i] = T_amb_out[i];
-				eta_T_amb[i] = T_amb_eta[i];
-			}
+		//	for( int i = 0; i < n_solved; i++ )
+		//	{
+		//		T_amb_od_out[i] = (ssc_number_t)T_amb_out[i];
+		//		eta_T_amb[i] = (ssc_number_t)T_amb_eta[i];
+		//	}
 
 
-			// Find polynomial coefficients for part load
-			std::vector<double> T_amb_coefs;
-			std::vector<double> T_amb_od_less_des;
-			double T_amb_r_squared = std::numeric_limits<double>::quiet_NaN();
+		//	// Find polynomial coefficients for part load
+		//	std::vector<double> T_amb_coefs;
+		//	std::vector<double> T_amb_od_less_des;
+		//	double T_amb_r_squared = std::numeric_limits<double>::quiet_NaN();
 
-			T_amb_od_less_des.resize(n_solved);
-			for( int i = 0; i < n_solved; i++ )
-			{
-				T_amb_od_less_des[i] = T_amb_od[i] - (T_amb_cycle_des - 273.15);
-			}
-			bool T_amb_success = find_polynomial_coefs(T_amb_od_less_des, T_amb_eta, 5, T_amb_coefs, T_amb_r_squared);
-			assign("T_amb_r_squared", T_amb_r_squared);
+		//	T_amb_od_less_des.resize(n_solved);
+		//	for( int i = 0; i < n_solved; i++ )
+		//	{
+		//		T_amb_od_less_des[i] = T_amb_od[i] - (T_amb_cycle_des - 273.15);
+		//	}
+		//	bool T_amb_success = find_polynomial_coefs(T_amb_od_less_des, T_amb_eta, 5, T_amb_coefs, T_amb_r_squared);
+		//	assign("T_amb_r_squared", (ssc_number_t)T_amb_r_squared);
 
-			ssc_number_t * p_T_amb_coefs = allocate("T_amb_coefs", 5);
-			if( T_amb_success )
-			{
-				for( int i = 0; i < 5; i++ )
-					p_T_amb_coefs[i] = T_amb_coefs[i];
-			}
-			else
-			{
-				log("Ambient temperature coefficient calcuations failed");
-				for( int i = 0; i < 5; i++ )
-					p_T_amb_coefs[i] = 0.0;
-			}
+		//	ssc_number_t * p_T_amb_coefs = allocate("T_amb_coefs", 5);
+		//	if( T_amb_success )
+		//	{
+		//		for( int i = 0; i < 5; i++ )
+		//			p_T_amb_coefs[i] = (ssc_number_t)T_amb_coefs[i];
+		//	}
+		//	else
+		//	{
+		//		log("Ambient temperature coefficient calcuations failed");
+		//		for( int i = 0; i < 5; i++ )
+		//			p_T_amb_coefs[i] = 0.0;
+		//	}
 
-			// ******************************************************
-		}
+		//	// ******************************************************
+		//}
 
 	}
 

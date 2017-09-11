@@ -56,6 +56,12 @@
 /* Define user program feature option switches                               */
 /* ------------------------------------------------------------------------- */
 
+// redefinition of macros
+#ifdef _MSC_VER  /* Microsoft Visual C++ -- warning level 4 */
+#pragma warning( disable : 4005)  /* redefinition of macros isnan */
+#endif
+
+
 # if defined _WIN32 && !defined __GNUC__
 #  define isnan _isnan
 # endif
@@ -907,7 +913,7 @@ typedef int (__WINAPI get_solutioncount_func)(lprec *lp);
 typedef int (__WINAPI get_solutionlimit_func)(lprec *lp);
 typedef int (__WINAPI get_status_func)(lprec *lp);
 typedef char * (__WINAPI get_statustext_func)(lprec *lp, int statuscode);
-typedef long (__WINAPI get_timeout_func)(lprec *lp);
+typedef double (__WINAPI get_timeout_func)(lprec *lp);      //mjw/nrel - changed long->double
 typedef COUNTER (__WINAPI get_total_iter_func)(lprec *lp);
 typedef COUNTER (__WINAPI get_total_nodes_func)(lprec *lp);
 typedef REAL (__WINAPI get_upbo_func)(lprec *lp, int colnr);

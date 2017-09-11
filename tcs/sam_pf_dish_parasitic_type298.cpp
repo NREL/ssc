@@ -1,3 +1,52 @@
+/*******************************************************************************************************
+*  Copyright 2017 Alliance for Sustainable Energy, LLC
+*
+*  NOTICE: This software was developed at least in part by Alliance for Sustainable Energy, LLC
+*  (“Alliance”) under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
+*  The Government retains for itself and others acting on its behalf a nonexclusive, paid-up,
+*  irrevocable worldwide license in the software to reproduce, prepare derivative works, distribute
+*  copies to the public, perform publicly and display publicly, and to permit others to do so.
+*
+*  Redistribution and use in source and binary forms, with or without modification, are permitted
+*  provided that the following conditions are met:
+*
+*  1. Redistributions of source code must retain the above copyright notice, the above government
+*  rights notice, this list of conditions and the following disclaimer.
+*
+*  2. Redistributions in binary form must reproduce the above copyright notice, the above government
+*  rights notice, this list of conditions and the following disclaimer in the documentation and/or
+*  other materials provided with the distribution.
+*
+*  3. The entire corresponding source code of any redistribution, with or without modification, by a
+*  research entity, including but not limited to any contracting manager/operator of a United States
+*  National Laboratory, any institution of higher learning, and any non-profit organization, must be
+*  made publicly available under this license for as long as the redistribution is made available by
+*  the research entity.
+*
+*  4. Redistribution of this software, without modification, must refer to the software by the same
+*  designation. Redistribution of a modified version of this software (i) may not refer to the modified
+*  version by the same designation, or by any confusingly similar designation, and (ii) must refer to
+*  the underlying software originally provided by Alliance as “System Advisor Model” or “SAM”. Except
+*  to comply with the foregoing, the terms “System Advisor Model”, “SAM”, or any confusingly similar
+*  designation may not be used to refer to any modified version of this software or any modified
+*  version of the underlying software originally provided by Alliance without the prior written consent
+*  of Alliance.
+*
+*  5. The name of the copyright holder, contributors, the United States Government, the United States
+*  Department of Energy, or any of their employees may not be used to endorse or promote products
+*  derived from this software without specific prior written permission.
+*
+*  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
+*  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
+*  FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER,
+*  CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES DEPARTMENT OF ENERGY, NOR ANY OF THEIR
+*  EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+*  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+*  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+*  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
+*  THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*******************************************************************************************************/
+
 #define _TCSTYPEINTERFACE_
 #include "tcstype.h"
 #include "sam_csp_util.h"
@@ -327,7 +376,7 @@ public:
 			m_P_controls = value( P_P_CONTROLS );
 			m_test_P_pump = value( P_TEST_P_PUMP );
 			m_test_pump_speed = value( P_TEST_PUMP_SPEED ); 	
-			m_test_cooling_fluid = value( P_TEST_COOLING_FLUID );
+			m_test_cooling_fluid = (int)value( P_TEST_COOLING_FLUID );
 			m_test_T_fluid = value( P_TEST_T_FLUID ); 			
 			m_test_V_dot_fluid = value( P_TEST_V_DOT_FLUID )*0.003785/60.0; 	
 			m_test_P_fan = value( P_TEST_P_FAN );			
@@ -350,7 +399,7 @@ public:
 		return 0;
 	}
 
-	virtual int call( double time, double step, int ncall )
+	virtual int call( double /*time*/, double /*step*/, int /*ncall*/ )
 	{		
 		double gross_power = value( I_GROSS_POWER );                
 		double T_amb = value( I_T_AMB ) + 273.15;     
@@ -365,13 +414,13 @@ public:
 		double Tower_water_outlet_temp  = value( I_TOWER_WATER_OUTLET_TEMP );        
 		double P_amb_Pa  = value( I_P_AMB_PA )*100.0; 
 		double NS_dish_separation  = value( I_NS_DISH_SEPARATION );             
-		double EW_dish_separation  = value( I_EW_DISH_SEPARATION );
+		//double EW_dish_separation  = value( I_EW_DISH_SEPARATION );
 		double P_tower_fan  = value( I_P_TOWER_FAN );
 		double P_in_collector  = value( I_POWER_IN_COLLECTOR );                  
 
-		double k_air = 0.00169319 + 0.0000794814*T_amb;
-		double beta_air = 0.00949962 - 0.0000297215*T_amb + 3.06353*10E-08*pow(T_amb,2);
-		double mu_air = 0.00000499562 + 4.50917E-08*T_amb;
+		//double k_air = 0.00169319 + 0.0000794814*T_amb;
+		//double beta_air = 0.00949962 - 0.0000297215*T_amb + 3.06353*10E-08*pow(T_amb,2);
+		//double mu_air = 0.00000499562 + 4.50917E-08*T_amb;
 		double M_air = 28.97;		// [kg/kmol]  molar mass of air
 		double R_bar = 8314;		// [J/kmol-K]  gas constant
 		double R_air = R_bar / M_air;
@@ -382,8 +431,8 @@ public:
 		double Q_losses = 1000*P_SE_losses;				// [W] Heat rejected to the cooling system
 		double Q_reject_total = Number_of_Collectors*Q_reject*1000.0;	// W/kW		
 		
-		double T_amb_C = T_amb;		
-		double P_amb_atm = P_amb_Pa * 0.000009869;
+		//double T_amb_C = T_amb;		
+		//double P_amb_atm = P_amb_Pa * 0.000009869;
 
 		// Determine properties of the cooling fluid during test conditions
 		
@@ -663,11 +712,11 @@ public:
 				double UA_tower = UA_tower_test*pow( (V_dot_min_tower/(V_dot_min_test_tower+1E-8)), b_tower );
 					
 				// determine new NTU value based on new C_dot of the engine
-				double NTU_tower = UA_tower / (C_dot_min_tower+1E-8);
+				//double NTU_tower = UA_tower / (C_dot_min_tower+1E-8);
 					
 				// solve for new cooler effectiveness (counter-flow correlation)
-				double Cr_tower = C_dot_min_tower / C_dot_max_tower;
-				double epsilon_tower = (1-exp(-NTU_tower*(1-Cr_tower))) / (1-Cr_tower*exp(-NTU_tower*(1-Cr_tower)));
+				//double Cr_tower = C_dot_min_tower / C_dot_max_tower;
+				//double epsilon_tower = (1-exp(-NTU_tower*(1-Cr_tower))) / (1-Cr_tower*exp(-NTU_tower*(1-Cr_tower)));
 
 				// ==========================================================================
 				// Heater effectiveness-NTU for determining cooler effectiveness with changing mass in engine
@@ -708,7 +757,7 @@ public:
 					T_cool_in= -Q_losses/(C_dot_cool_fluid+1E-8)+T_cool_out;			// energy balance
 				}
 					
-				double T_cool_water_ave =  (T_cool_out + T_cool_in) / 2.0;
+				//double T_cool_water_ave =  (T_cool_out + T_cool_in) / 2.0;
 				C_dot_min_cooler = min(C_dot_H2, C_dot_cool_fluid);
 					
 				// solve for temp of hydrogen into the cooler
@@ -850,7 +899,7 @@ public:
 		return 0;
 	}
 
-	virtual int converged( double time )
+	virtual int converged( double /*time*/ )
 	{
 		
 		return 0;

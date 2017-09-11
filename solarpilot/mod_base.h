@@ -1,3 +1,52 @@
+/*******************************************************************************************************
+*  Copyright 2017 Alliance for Sustainable Energy, LLC
+*
+*  NOTICE: This software was developed at least in part by Alliance for Sustainable Energy, LLC
+*  (“Alliance”) under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
+*  The Government retains for itself and others acting on its behalf a nonexclusive, paid-up,
+*  irrevocable worldwide license in the software to reproduce, prepare derivative works, distribute
+*  copies to the public, perform publicly and display publicly, and to permit others to do so.
+*
+*  Redistribution and use in source and binary forms, with or without modification, are permitted
+*  provided that the following conditions are met:
+*
+*  1. Redistributions of source code must retain the above copyright notice, the above government
+*  rights notice, this list of conditions and the following disclaimer.
+*
+*  2. Redistributions in binary form must reproduce the above copyright notice, the above government
+*  rights notice, this list of conditions and the following disclaimer in the documentation and/or
+*  other materials provided with the distribution.
+*
+*  3. The entire corresponding source code of any redistribution, with or without modification, by a
+*  research entity, including but not limited to any contracting manager/operator of a United States
+*  National Laboratory, any institution of higher learning, and any non-profit organization, must be
+*  made publicly available under this license for as long as the redistribution is made available by
+*  the research entity.
+*
+*  4. Redistribution of this software, without modification, must refer to the software by the same
+*  designation. Redistribution of a modified version of this software (i) may not refer to the modified
+*  version by the same designation, or by any confusingly similar designation, and (ii) must refer to
+*  the underlying software originally provided by Alliance as “System Advisor Model” or “SAM”. Except
+*  to comply with the foregoing, the terms “System Advisor Model”, “SAM”, or any confusingly similar
+*  designation may not be used to refer to any modified version of this software or any modified
+*  version of the underlying software originally provided by Alliance without the prior written consent
+*  of Alliance.
+*
+*  5. The name of the copyright holder, contributors, the United States Government, the United States
+*  Department of Energy, or any of their employees may not be used to endorse or promote products
+*  derived from this software without specific prior written permission.
+*
+*  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
+*  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
+*  FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER,
+*  CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES DEPARTMENT OF ENERGY, NOR ANY OF THEIR
+*  EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+*  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+*  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+*  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
+*  THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*******************************************************************************************************/
+
 #ifndef _MOD_BASE_
 #define _MOD_BASE_ 1
 
@@ -24,17 +73,13 @@ using std::unordered_map;
 
 #ifdef _MSC_VER
 #pragma warning(disable: 4290)  // ignore warning: 'C++ exception specification ignored except to indicate a function is not __declspec(nothrow)'
-struct Point;
-struct var_map;
-
-
 #pragma warning(disable:4503)	//warning for name length - VS2010 compiler
 #pragma warning(disable:4505)	//warning for removing unused method
 #endif
  
 
 //The land boundary arrays should be described with sets of polygons for inclusions and exclusions
-//typedef std::vector<std::vector<Point> > bounds_array;
+//typedef std::vector<std::vector<sp_point> > bounds_array;
 
 template<typename T> static std::string my_to_string(const T &value) {
 	ostringstream x;
@@ -190,9 +235,9 @@ public:
         return true;
     };
 
-    static bool _setv(std::string &SV, std::vector< Point > &Vp)
+    static bool _setv(std::string &SV, std::vector< sp_point > &Vp)
     {
-        //splits a set of 3d points into a vector<Point>
+        //splits a set of 3d points into a vector<sp_point>
 	    //should be [P]x1,y1,z1[P]x2,y2,z2...
         try
         {
@@ -282,7 +327,7 @@ public:
         return true;
     };
 
-    static bool _setv(std::string &SV, std::vector< std::vector< Point > > &Vp )
+    static bool _setv(std::string &SV, std::vector< std::vector< sp_point > > &Vp )
     {
         
         /* 
@@ -303,7 +348,7 @@ public:
         {
             std::vector< std::string > pts = split(polys.at(i), "[P]");
 
-            Vp.at(i).resize( pts.size(), Point() );
+            Vp.at(i).resize( pts.size(), sp_point() );
 
             for( size_t j=0; j<pts.size(); j++ )
             {
@@ -365,7 +410,7 @@ protected:
         }
     };
 
-    void _as_str(std::string &vout, std::vector< Point > &v)
+    void _as_str(std::string &vout, std::vector< sp_point > &v)
     {
         vout.clear();
 
@@ -420,7 +465,7 @@ protected:
         vout = S.str();
     };
 
-    void _as_str(std::string &vout, vector< vector< Point > > &v)
+    void _as_str(std::string &vout, vector< vector< sp_point > > &v)
     {
         /* 
         [POLY] separates entries

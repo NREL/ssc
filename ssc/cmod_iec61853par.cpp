@@ -1,3 +1,52 @@
+/*******************************************************************************************************
+*  Copyright 2017 Alliance for Sustainable Energy, LLC
+*
+*  NOTICE: This software was developed at least in part by Alliance for Sustainable Energy, LLC
+*  (“Alliance”) under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
+*  The Government retains for itself and others acting on its behalf a nonexclusive, paid-up,
+*  irrevocable worldwide license in the software to reproduce, prepare derivative works, distribute
+*  copies to the public, perform publicly and display publicly, and to permit others to do so.
+*
+*  Redistribution and use in source and binary forms, with or without modification, are permitted
+*  provided that the following conditions are met:
+*
+*  1. Redistributions of source code must retain the above copyright notice, the above government
+*  rights notice, this list of conditions and the following disclaimer.
+*
+*  2. Redistributions in binary form must reproduce the above copyright notice, the above government
+*  rights notice, this list of conditions and the following disclaimer in the documentation and/or
+*  other materials provided with the distribution.
+*
+*  3. The entire corresponding source code of any redistribution, with or without modification, by a
+*  research entity, including but not limited to any contracting manager/operator of a United States
+*  National Laboratory, any institution of higher learning, and any non-profit organization, must be
+*  made publicly available under this license for as long as the redistribution is made available by
+*  the research entity.
+*
+*  4. Redistribution of this software, without modification, must refer to the software by the same
+*  designation. Redistribution of a modified version of this software (i) may not refer to the modified
+*  version by the same designation, or by any confusingly similar designation, and (ii) must refer to
+*  the underlying software originally provided by Alliance as “System Advisor Model” or “SAM”. Except
+*  to comply with the foregoing, the terms “System Advisor Model”, “SAM”, or any confusingly similar
+*  designation may not be used to refer to any modified version of this software or any modified
+*  version of the underlying software originally provided by Alliance without the prior written consent
+*  of Alliance.
+*
+*  5. The name of the copyright holder, contributors, the United States Government, the United States
+*  Department of Energy, or any of their employees may not be used to endorse or promote products
+*  derived from this software without specific prior written permission.
+*
+*  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
+*  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
+*  FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER,
+*  CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES DEPARTMENT OF ENERGY, NOR ANY OF THEIR
+*  EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+*  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+*  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+*  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
+*  THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*******************************************************************************************************/
+
 #include "core.h"
 #include "lib_iec61853.h"
 
@@ -67,28 +116,28 @@ public:
 		if ( input.ncols() != iec61853_module_t::COL_MAX )
 			throw exec_error( "iec61853", "six data columns required for input matrix: IRR,TC,PMP,VMP,VOC,ISC");
 
-		if (!solver.calculate( input, as_number("nser"), as_number("type"), par, as_boolean("verbose") ))
+		if (!solver.calculate( input, as_integer("nser"), as_integer("type"), par, as_boolean("verbose") ))
 			throw exec_error( "iec61853", "failed to solve for parameters");
 
-		assign( "n", var_data(solver.n) );
-		assign( "alphaIsc", var_data(solver.alphaIsc) );
-		assign( "betaVoc", var_data(solver.betaVoc) );
-		assign( "gammaPmp", var_data(solver.gammaPmp) );
-		assign( "Il", var_data(solver.Il) );
-		assign( "Io", var_data(solver.Io) );
-		assign( "C1", var_data(solver.C1) );
-		assign( "C2", var_data(solver.C2) );
-		assign( "C3", var_data(solver.C3) );
-		assign( "D1", var_data(solver.D1) );
-		assign( "D2", var_data(solver.D2) );
-		assign( "D3", var_data(solver.D3) );
-		assign( "Egref", var_data(solver.Egref) );
+		assign("n", var_data((ssc_number_t)solver.n));
+		assign("alphaIsc", var_data((ssc_number_t)solver.alphaIsc));
+		assign("betaVoc", var_data((ssc_number_t)solver.betaVoc));
+		assign( "gammaPmp", var_data((ssc_number_t)solver.gammaPmp) );
+		assign( "Il", var_data((ssc_number_t)solver.Il) );
+		assign( "Io", var_data((ssc_number_t)solver.Io) );
+		assign( "C1", var_data((ssc_number_t)solver.C1) );
+		assign( "C2", var_data((ssc_number_t)solver.C2) );
+		assign( "C3", var_data((ssc_number_t)solver.C3) );
+		assign( "D1", var_data((ssc_number_t)solver.D1) );
+		assign( "D2", var_data((ssc_number_t)solver.D2) );
+		assign( "D3", var_data((ssc_number_t)solver.D3) );
+		assign( "Egref", var_data((ssc_number_t)solver.Egref) );
 
 		ssc_number_t *output = allocate( "output", par.nrows(), par.ncols() );
 		size_t c = 0;
 		for( size_t i=0;i<par.nrows();i++ )
 			for( size_t j=0;j<par.ncols();j++ )
-				output[c++] = par(i,j);
+				output[c++] = (ssc_number_t)par(i, j);
 	}
 };
 
@@ -134,7 +183,7 @@ public:
 	{
 		MatDoub tempirr;
 		std::vector<double> parvals;
-		std::vector<Point> pts, hull;
+		std::vector<sp_point> pts, hull;
 
 		double maxz = -1e99;
 		double tmin = 1e99;
@@ -161,7 +210,7 @@ public:
 			if ( d < dist )
 			{
 				dist = d;
-				idist = i;
+				idist = (int)i;
 			}
 			
 			std::vector<double> it(2,0.0);
@@ -172,11 +221,11 @@ public:
 
 			if ( z > maxz ) maxz = z;
 
-			pts.push_back( Point( temp, irr, z ) );
+			pts.push_back( sp_point( temp, irr, z ) );
 		}
 
 		Toolbox::convex_hull( pts, hull );
-		if ( Toolbox::pointInPolygon( hull, Point(T, I, 0.0) ) )
+		if ( Toolbox::pointInPolygon( hull, sp_point(T, I, 0.0) ) )
 		{
 			// scale values based on max - helps GM interp routine
 			for( size_t i=0;i<parvals.size();i++)
@@ -308,11 +357,11 @@ public:
 		if ( is_assigned( "quiet" ) )
 			quiet = true;
 
-		assign( "a", var_data( interpolate( data, par, I, T, A, quiet ) ) );
-		assign( "Il", var_data( interpolate( data, par, I, T, IL, quiet ) ) );
-		assign( "Io", var_data( interpolate( data, par, I, T, IO, quiet ) ) );
-		assign( "Rs", var_data( interpolate( data, par, I, T, RS, quiet ) ) );
-		assign( "Rsh", var_data( interpolate( data, par, I, T, RSH, quiet ) ) );
+		assign( "a", var_data((ssc_number_t) interpolate( data, par, I, T, A, quiet ) ) );
+		assign("Il", var_data((ssc_number_t)interpolate(data, par, I, T, IL, quiet)));
+		assign("Io", var_data((ssc_number_t)interpolate(data, par, I, T, IO, quiet)));
+		assign("Rs", var_data((ssc_number_t)interpolate(data, par, I, T, RS, quiet)));
+		assign("Rsh", var_data((ssc_number_t)interpolate(data, par, I, T, RSH, quiet)));
 
 	}
 };
