@@ -293,6 +293,12 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
 	{ SSC_INPUT,		SSC_NUMBER,		 "q_rec_heattrace",		 "Receiver heat trace energy consumption during startup",			  "kWe-hr",		  "",			 "sys_ctrl_disp_opt", "?=0.0",					 "",					  "" },
 	{ SSC_INPUT,		SSC_NUMBER,		 "is_wlim_series",       "Use time-series net electricity generation limits",				  "",			  "",			 "sys_ctrl_disp_opt", "?=0",					 "",					  "" },
 	{ SSC_INPUT,		SSC_ARRAY,		 "wlim_series",			 "Time series net electicity generation limits",					  "kWe",		  "",			 "sys_ctrl_disp_opt", "is_wlim_series=1",		 "",					  "" },
+	
+    { SSC_INPUT,		SSC_NUMBER,		 "is_stochastic_dispatch","Use stochastic dispatch optimization (1/true)",					  "-",		      "",			 "sys_ctrl_disp_opt", "?=0",		             "",					  "" },
+    { SSC_INPUT,		SSC_MATRIX,		 "fc_dni_scenarios",	 "Forecast DNI scenarios",					                          "W/m2",		  "",			 "sys_ctrl_disp_opt", "",						 "",					  "" },
+    { SSC_INPUT,		SSC_MATRIX,		 "fc_price_scenarios",	 "Forecast price scenarios",					                      "-",		      "",			 "sys_ctrl_disp_opt", "",						 "",					  "" },
+    { SSC_INPUT,		SSC_MATRIX,		 "fc_tdry_scenarios",	 "Forecast dry bulb temperature scenarios",                           "C",		      "",			 "sys_ctrl_disp_opt", "",						 "",					  "" },
+    //{ SSC_INPUT,		SSC_NUMBER,		 "fc_steps",	         "Number of time steps per forecast block",                           "-",		      "",			 "sys_ctrl_disp_opt", "",						 "",					  "" },
 
 
 	// Financial inputs
@@ -1413,6 +1419,7 @@ public:
             tou.mc_dispatch_params.m_pen_delta_w = as_double("disp_pen_delta_w");
             tou.mc_dispatch_params.m_q_rec_standby = as_double("q_rec_standby");
 			tou.mc_dispatch_params.m_w_rec_ht = as_double("q_rec_heattrace");
+            tou.mc_dispatch_params.m_is_stochastic_dispatch = as_boolean("is_stochastic_dispatch");
 
 			if (as_boolean("is_wlim_series"))
 			{
@@ -1423,6 +1430,53 @@ public:
 				for (int i = 0; i < n_steps_full; i++)
 					tou.mc_dispatch_params.m_w_lim_full.at(i) = (double)wlim_series[i];
 			}
+
+            if( tou.mc_dispatch_params.m_is_stochastic_dispatch )
+            {
+                if(! tou.mc_dispatch_params.m_is_ampl_engine )
+                    throw exec_error("tcsmolten_salt", "Stochastic dispatch is only available using the AMPL engine linkage. Ensure AMPL settings are correct.");
+
+                //construct the stochastic forecast data tables
+                if(! ( is_assigned( "fc_dni_scenarios" ) || is_assigned( "fc_price_scenarios" ) || is_assigned( "fc_tdry_scenarios" ) ) )
+                    throw exec_error("tcsmolten_salt", "If stochastic dispatch is enabled, at least one scenario matrix must be provided among 'fc_dni_scenarios', 'fc_price_scenarios', 'fc_tdry_scenarios'.");
+
+                if( tou.mc_dispatch_params.m_is_dni_scenarios = is_assigned( "fc_dni_scenarios" ) )
+                    tou.mc_dispatch_params.m_fc_dni_scenarios = as_matrix("fc_dni_scenarios");
+
+                if( tou.mc_dispatch_params.m_is_price_scenarios = is_assigned( "fc_price_scenarios" ) )
+                    tou.mc_dispatch_params.m_fc_price_scenarios = as_matrix("fc_price_scenarios");
+
+                if( tou.mc_dispatch_params.m_is_tdry_scenarios = is_assigned( "fc_tdry_scenarios" ) )
+                    tou.mc_dispatch_params.m_fc_tdry_scenarios = as_matrix("fc_tdry_scenarios");
+
+                //tou.mc_dispatch_params.m_fc_steps = as_integer("fc_steps");
+
+				// check for unequal number of specified scenarios
+				int ns = std::max(tou.mc_dispatch_params.m_fc_dni_scenarios.ncols(), std::max(tou.mc_dispatch_params.m_fc_tdry_scenarios.ncols(),tou.mc_dispatch_params.m_fc_price_scenarios.ncols()));
+				bool scenarios_ok = true;
+				if (tou.mc_dispatch_params.m_is_dni_scenarios && tou.mc_dispatch_params.m_fc_dni_scenarios.ncols() != ns)
+					scenarios_ok = false;
+				if (tou.mc_dispatch_params.m_is_tdry_scenarios && tou.mc_dispatch_params.m_fc_tdry_scenarios.ncols() != ns)
+					scenarios_ok = false;
+				if (tou.mc_dispatch_params.m_is_price_scenarios && tou.mc_dispatch_params.m_fc_price_scenarios.ncols() != ns)
+					scenarios_ok = false;
+				if (!scenarios_ok)
+					throw exec_error("tcsmolten_salt", "Unequal number of scenarios provided for stochastic dispatch");
+
+				// check for mismatch between dispatch time step and scenario time steps
+				scenarios_ok = true;
+				int nstep = tou.mc_dispatch_params.m_optimize_horizon * tou.mc_dispatch_params.m_disp_steps_per_hour*365;
+				int nstep_min = nstep - (tou.mc_dispatch_params.m_optimize_horizon - tou.mc_dispatch_params.m_optimize_frequency) *  tou.mc_dispatch_params.m_disp_steps_per_hour; // nstep without look-ahead for last day
+				if (tou.mc_dispatch_params.m_is_dni_scenarios && tou.mc_dispatch_params.m_fc_dni_scenarios.nrows() != nstep && tou.mc_dispatch_params.m_fc_dni_scenarios.nrows() != nstep_min)
+					scenarios_ok = false;
+				if (tou.mc_dispatch_params.m_is_tdry_scenarios && tou.mc_dispatch_params.m_fc_tdry_scenarios.nrows() != nstep && tou.mc_dispatch_params.m_fc_tdry_scenarios.nrows() != nstep_min)
+					scenarios_ok = false;
+				if (tou.mc_dispatch_params.m_is_price_scenarios && tou.mc_dispatch_params.m_fc_price_scenarios.nrows() != nstep && tou.mc_dispatch_params.m_fc_price_scenarios.nrows() != nstep_min)
+					scenarios_ok = false;
+				if (!scenarios_ok)
+					throw exec_error("tcsmolten_salt", "The number of time points in at least one of the provided scenarios does not match the number specified by 'disp_steps_per_hour' and 'disp_opt_horizon'");
+				
+            }
 
 	
 		}

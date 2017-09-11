@@ -522,7 +522,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 	// Check the collector-receiver model for a maximum step
 	if(mc_collector_receiver.m_max_step > 0.0)
 	{
-		baseline_step = max(step_tolerance, min(baseline_step, mc_collector_receiver.m_max_step));
+		baseline_step = std::max(step_tolerance, std::min(baseline_step, mc_collector_receiver.m_max_step));
 	}
 	
 	mc_kernel.init(sim_setup, wf_step, baseline_step, mc_csp_messages);
@@ -624,7 +624,10 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
     dispatch.solver_params.is_ampl_engine = mc_tou.mc_dispatch_params.m_is_ampl_engine;
     dispatch.solver_params.ampl_data_dir = mc_tou.mc_dispatch_params.m_ampl_data_dir;
     dispatch.solver_params.ampl_exec_call = mc_tou.mc_dispatch_params.m_ampl_exec_call;
+    
+    dispatch.forecast_params.is_stochastic = false;
     //-------------------------------
+
 
         
 	int cr_operating_state = C_csp_collector_receiver::OFF;
@@ -856,10 +859,10 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
                 //if this is the last day of the year, update the optimization horizon to be no more than the last 24 hours. 
 				
                 if( hour_now >= (8760 - opt_horizon) )
-                    opt_horizon = (int)min((double)opt_horizon, (double)(8761-hour_now));
+                    opt_horizon = (int)std::min((double)opt_horizon, (double)(8761-hour_now));
 
                 //message
-                stringstream ss;
+                std::stringstream ss;
                 ss << "Optimizing thermal energy dispatch profile for time window " 
 					<< (int)(mc_kernel.mc_sim_info.ms_ts.m_time / 3600.) << " - "
 					<< (int)(mc_kernel.mc_sim_info.ms_ts.m_time / 3600.) + mc_tou.mc_dispatch_params.m_optimize_frequency;
@@ -870,14 +873,22 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 
                 ss.flush();
 
+                //how many scenarios?
+                dispatch.forecast_params.n_scenarios = std::max( mc_tou.mc_dispatch_params.m_fc_dni_scenarios.ncols(),
+                                                            std::max(
+                                                            mc_tou.mc_dispatch_params.m_fc_tdry_scenarios.ncols(),
+                                                            mc_tou.mc_dispatch_params.m_fc_price_scenarios.ncols() )
+                                                            );
+
+
                 //get the new price signal
-                dispatch.price_signal.clear();
-                dispatch.price_signal.resize(opt_horizon*mc_tou.mc_dispatch_params.m_disp_steps_per_hour, 1.);
+                dispatch.forecast_outputs.price_scenarios.clear();
+                dispatch.forecast_outputs.price_scenarios.resize(opt_horizon*mc_tou.mc_dispatch_params.m_disp_steps_per_hour, dispatch.forecast_params.n_scenarios);
 
                 for(int t=0; t<opt_horizon*mc_tou.mc_dispatch_params.m_disp_steps_per_hour; t++)
                 {
 					mc_tou.call(mc_kernel.mc_sim_info.ms_ts.m_time + t * 3600./(double)mc_tou.mc_dispatch_params.m_disp_steps_per_hour, mc_tou_outputs);
-		            dispatch.price_signal.at(t) = mc_tou_outputs.m_price_mult;
+		            dispatch.forecast_outputs.price_scenarios.at(t,0) = mc_tou_outputs.m_price_mult;
                 }
 
 				// get the new electricity generation limits
@@ -916,26 +927,60 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
                 if(dispatch.params.e_tes_init > dispatch.params.e_tes_max )
                     dispatch.params.e_tes_init = dispatch.params.e_tes_max;
 
-                //predict performance for the time horizon
-                if( 
-                    dispatch.predict_performance((int)
-                            (mc_kernel.mc_sim_info.ms_ts.m_time/ baseline_step - 1), 
-                            (int)(opt_horizon * mc_tou.mc_dispatch_params.m_disp_steps_per_hour), 
-                            (int)((3600./baseline_step)/mc_tou.mc_dispatch_params.m_disp_steps_per_hour)
-                            ) 
-                    )
-                {
-                    
-                    //call the optimize method
-                    opt_complete = dispatch.m_last_opt_successful = 
-                        dispatch.optimize();
-                    
-                    if(dispatch.solver_params.disp_reporting && (! dispatch.solver_params.log_message.empty()) )
-                        mc_csp_messages.add_message(C_csp_messages::NOTICE, dispatch.solver_params.log_message.c_str() );
-                    
-					//mc_csp_messages.add_message(C_csp_messages::NOTICE, dispatch.solver_params.log_message.c_str());
+                //update the forecast scenarios, if needed
+                { 
+                    int nstepopt = opt_horizon * mc_tou.mc_dispatch_params.m_disp_steps_per_hour;
+                    int stepstart = mc_kernel.mc_sim_info.ms_ts.m_time/ baseline_step - 1;
 
-                    dispatch.m_current_read_step = 0;   //reset
+					if (mc_tou.mc_dispatch_params.m_is_stochastic_dispatch)
+                    {
+						dispatch.forecast_params.is_stochastic = mc_tou.mc_dispatch_params.m_is_stochastic_dispatch;
+
+                        //check which scenario tables are provided
+                        dispatch.forecast_params.is_dni_scenarios = mc_tou.mc_dispatch_params.m_is_dni_scenarios;
+                        dispatch.forecast_params.is_price_scenarios = mc_tou.mc_dispatch_params.m_is_price_scenarios;
+                        dispatch.forecast_params.is_tdry_scenarios = mc_tou.mc_dispatch_params.m_is_tdry_scenarios;
+
+                        //resize arrays. note price_scenarios is sized above.
+                        dispatch.forecast_outputs.dni_scenarios.resize( nstepopt, dispatch.forecast_params.n_scenarios );
+                        dispatch.forecast_outputs.tdry_scenarios.resize( nstepopt, dispatch.forecast_params.n_scenarios );
+
+
+                        //assign the data
+                        for( int tt=0; tt<nstepopt; tt++)
+                        {
+                            for( int ss=0; ss<dispatch.forecast_params.n_scenarios; ss++)
+                            {
+                                if( dispatch.forecast_params.is_dni_scenarios )
+                                    dispatch.forecast_outputs.dni_scenarios.at(tt, ss) = mc_tou.mc_dispatch_params.m_fc_dni_scenarios.at( 2*stepstart + tt, ss );
+                                
+                                if( dispatch.forecast_params.is_tdry_scenarios )
+                                    dispatch.forecast_outputs.tdry_scenarios.at(tt, ss) = mc_tou.mc_dispatch_params.m_fc_tdry_scenarios.at( 2*stepstart + tt, ss );
+                                
+                                if( dispatch.forecast_params.is_price_scenarios )
+                                    dispatch.forecast_outputs.price_scenarios.at(tt, ss) = mc_tou.mc_dispatch_params.m_fc_price_scenarios.at( 2*stepstart + tt, ss );
+                                else
+                                    dispatch.forecast_outputs.price_scenarios.at(tt, ss) = dispatch.forecast_outputs.price_scenarios.at(tt, 0); //if not provided, use the array assigned above
+                            }
+                        }
+
+                    }
+
+                    //predict performance for the time horizon
+                    if( dispatch.predict_performance( stepstart,  nstepopt, (int)(3600./baseline_step)/mc_tou.mc_dispatch_params.m_disp_steps_per_hour) )
+                    {
+                        //call the optimize method
+                        opt_complete = dispatch.m_last_opt_successful = 
+                            dispatch.optimize();
+                    
+                        if(dispatch.solver_params.disp_reporting && (! dispatch.solver_params.log_message.empty()) )
+                            mc_csp_messages.add_message(C_csp_messages::NOTICE, dispatch.solver_params.log_message.c_str() );
+                    
+					    //mc_csp_messages.add_message(C_csp_messages::NOTICE, dispatch.solver_params.log_message.c_str());
+
+                        dispatch.m_current_read_step = 0;   //reset
+                    }
+
                 }
 
                 //call again to go back to original state
@@ -962,7 +1007,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 
                     //double wfact = disp_effadj_weight / (double)disp_effadj_count;
                     
-                    disp_qsf_effadj =+ (1. - etanew)/(min(disp_effadj_weight/disp_qsf_last, 5.));
+                    disp_qsf_effadj =+ (1. - etanew)/(std::min(disp_effadj_weight/disp_qsf_last, 5.));
                 }
 
                 //read in other values
@@ -989,9 +1034,9 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 					else
 						avail_storage = dispatch.params.e_tes_init / dispatch.params.dt;
 
-					fstart = dispatch.outputs.q_pb_startup.at(t) / min(dispatch.params.q_pb_max, avail_storage + dispatch.outputs.q_sf_expected.at(t));
+					fstart = dispatch.outputs.q_pb_startup.at(t) / fmin(dispatch.params.q_pb_max, avail_storage + dispatch.outputs.q_sf_expected.at(t));
 					//fstart = dispatch.outputs.q_pb_startup.at(t) / dispatch.params.q_pb_max;
-					fstart = min(fstart, 0.999);
+					fstart = fmin(fstart, 0.999);
 				}
 				q_pc_target = (dispatch.outputs.q_pb_target.at(t)) / (1. - fstart) / 1000.;
 
@@ -1037,16 +1082,16 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 
                 //disp_etapb_expect = dispatch.outputs.eta_pb_expected.at( dispatch.m_current_read_step ) 
                 //                    /** m_cycle_eta_des*/ * ( dispatch.outputs.pb_operation.at( dispatch.m_current_read_step ) ? 1. : 0. );
-                disp_etasf_expect = dispatch.outputs.eta_sf_expected.at( dispatch.m_current_read_step );
-                disp_qsf_expect = dispatch.outputs.q_sfavail_expected.at( dispatch.m_current_read_step )*1.e-3;
+                disp_etasf_expect = dispatch.outputs.eta_sf_expected.at( dispatch.m_current_read_step, 0 );
+                disp_qsf_expect = dispatch.outputs.q_sfavail_expected.at( dispatch.m_current_read_step, 0 )*1.e-3;
                 disp_qsfprod_expect = dispatch.outputs.q_sf_expected.at( dispatch.m_current_read_step )*1.e-3;
                 disp_qsfsu_expect = dispatch.outputs.q_rec_startup.at( dispatch.m_current_read_step )*1.e-3;
                 disp_tes_expect = dispatch.outputs.tes_charge_expected.at( dispatch.m_current_read_step )*1.e-3;
                 disp_qpbsu_expect = dispatch.outputs.q_pb_startup.at( dispatch.m_current_read_step )*1.e-3;
                 //disp_wpb_expect = dispatch.outputs.q_pb_target.at(dispatch.m_current_read_step ) * disp_etapb_expect *1.e-3;  
                 disp_wpb_expect = dispatch.outputs.w_pb_target.at( dispatch.m_current_read_step )*1.e-3;
-                disp_rev_expect = disp_wpb_expect * dispatch.price_signal.at( dispatch.m_current_read_step );
-                disp_etapb_expect = disp_wpb_expect / max(1.e-6, dispatch.outputs.q_pb_target.at( dispatch.m_current_read_step ))* 1.e3 
+                disp_rev_expect = disp_wpb_expect * dispatch.forecast_outputs.price_scenarios.at( dispatch.m_current_read_step, 0 );
+                disp_etapb_expect = disp_wpb_expect / std::max(1.e-6, dispatch.outputs.q_pb_target.at( dispatch.m_current_read_step ))* 1.e3 
                                         * ( dispatch.outputs.pb_operation.at( dispatch.m_current_read_step ) ? 1. : 0. );
 
                 //if( is_sim_timestep_complete ) // disp_time_last != mc_kernel.mc_sim_info.ms_ts.ms_ts.m_time)

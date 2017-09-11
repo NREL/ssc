@@ -49,17 +49,16 @@
 
 #include <vector>
 #include <string>
-#include "csp_solver_core.h"
-
-#include <unordered_map>
-using std::unordered_map;
+#include "lib_util.h"
 
 #pragma warning(disable: 4290)  // ignore warning: 'C++ exception specification ignored except to indicate a function is not __declspec(nothrow)'
 
-#include "lp_lib.h" 
-//#include "glpk\src\glpk.h"
+class C_csp_weatherreader;
+class C_csp_solver_sim_info;     //Pointer to existing simulation info object
+class C_csp_collector_receiver;   //Pointer to collector/receiver object
+class C_csp_messages;   //Pointer to message structure
 
-using namespace std;
+//using namespace std;
 
 #ifndef _CSP_DISPATCH
 #define _CSP_DISPATCH
@@ -74,15 +73,15 @@ class csp_dispatch_opt
 public:
     bool m_last_opt_successful;   //last optimization run was successful?
     int m_current_read_step;        //current step to read from optimization results
-    vector<double> price_signal;    //IN [- or $/MWh] Price factor indicating market value of generated energy
-	vector<double> w_lim;			//[kWe] Limit on net electricity production
-    C_csp_weatherreader m_weather;       //Local copy of weather reader object
+	std::vector<double> w_lim;			//[kWe] Limit on net electricity production
+    C_csp_weatherreader *m_weather;       //Local copy of weather reader object
+
 
     struct s_solver_params
     {
         bool is_abort_flag;         //optimization flagged for abort
         int iter_count;             //branch and bound iteration count
-        string log_message;
+        std::string log_message;
         double obj_relaxed;
 
         //user settings
@@ -175,7 +174,7 @@ public:
                     eta = _eta;
                 };
             };
-            vector<s_effmember> table;
+            std::vector<s_effmember> table;
 
         public:
 
@@ -255,23 +254,25 @@ public:
     {
         double objective;
         double objective_relaxed;
-        vector<bool> rec_operation;   //receiver startup ok?
-        vector<bool> pb_operation;    //power block startup ok?
-        vector<bool> pb_standby;    //power block standby ok?
-        vector<double> q_pb_target;       //optimized energy generation (less startup loss)
-        vector<double> q_pb_standby;      //standby energy allowed
-        vector<double> q_sfavail_expected;       //Expected available solar field energy
-        vector<double> q_sf_expected;           //Expected solar field energy generation
-        vector<double> eta_pb_expected;     //Expected power cycle conversion efficiency (normalized)
-        vector<double> eta_sf_expected;     //Expected solar field thermal efficiency (normalized)
-        vector<double> tes_charge_expected;     //Expected thermal energy storage charge state
-        vector<double> q_pb_startup;    //thermal power going to startup
-        vector<double> q_rec_startup;   //thermal power going to startup
-        vector<double> w_pb_target;  //optimized electricity generation
-        vector<double> w_condf_expected;  //Expected condenser loss coefficient
-        vector<double> wnet_lim_min; //minimum expected net power at time t before cycle gross falls before limit
-        vector<double> delta_rs;    //expected proportion of time step used for receiver start up
-
+        std::vector<bool> rec_operation;   //receiver startup ok?
+        std::vector<bool> pb_operation;    //power block startup ok?
+        std::vector<bool> pb_standby;    //power block standby ok?
+        std::vector<double> q_pb_target;       //optimized energy generation (less startup loss)
+        std::vector<double> q_pb_standby;      //standby energy allowed
+        std::vector<double> q_sf_expected;           //Expected solar field energy generation
+        std::vector<double> tes_charge_expected;     //Expected thermal energy storage charge state
+        std::vector<double> q_pb_startup;    //thermal power going to startup
+        std::vector<double> q_rec_startup;   //thermal power going to startup
+        std::vector<double> w_pb_target;  //optimized electricity generation
+        
+        util::matrix_t<double> wnet_lim_min; //minimum expected net power at time t before cycle gross falls before limit
+        util::matrix_t<double> delta_rs;    //expected proportion of time step used for receiver start up
+        
+        util::matrix_t<double> q_sfavail_expected;       //Expected available solar field energy
+        util::matrix_t<double> eta_sf_expected;     //Expected solar field thermal efficiency (normalized)
+        util::matrix_t<double> eta_pb_expected;     //Expected power cycle conversion efficiency (normalized)
+        util::matrix_t<double> w_condf_expected;  //Expected condenser loss coefficient
+        
         int solve_iter;             //Number of iterations required to solve
         int solve_state;
         double solve_time;
@@ -281,19 +282,40 @@ public:
     
     struct s_forecast_params
     {
-        double coef;
+        int n_scenarios;            //number of forecast scenarios
+        int n_steps;                //number of time steps in the forecast
+        double step;                //[sec] step duration
+        bool is_stochastic;         //apply stochastic dispatch
+        bool is_dni_scenarios;
+        bool is_price_scenarios;
+        bool is_tdry_scenarios; 
 
+        s_forecast_params()
+        {
+            n_scenarios = -1;   
+            n_steps = -1;
+            step = std::numeric_limits<double>::quiet_NaN();
+            is_stochastic = false;
+            is_dni_scenarios = false;
+            is_price_scenarios = false;
+            is_tdry_scenarios = false;
 
+        };
+    
     } forecast_params;
 
     struct s_forecast_outputs
-    {
+    {    
+        util::matrix_t<double> dni_scenarios;
+        util::matrix_t<double> price_scenarios;
+        util::matrix_t<double> tdry_scenarios;
 
     } forecast_outputs;
 
     //----- public member functions ----
 
     csp_dispatch_opt();
+    ~csp_dispatch_opt();
 
     //check parameters and inputs to make sure everything has been set up correctly
     bool check_setup(int nstep);
@@ -324,64 +346,6 @@ public:
 };
 
 // ----------------------------------------
-
-
-
-class optimization_vars
-{
-    int current_mem_pos;
-    int alloc_mem_size; 
-
-    REAL *data;
-public:
-    struct opt_var
-    {
-        string name;
-        int var_type;
-        int var_dim;
-        int var_dim_size;
-        int var_dim_size2;
-        int ind_start;
-        int ind_end;
-        REAL upper_bound;
-        REAL lower_bound;
-    };
-private: 
-    vector<opt_var> var_objects;
-
-    unordered_map<string, opt_var*> var_by_name;
-
-public:
-    struct VAR_TYPE { enum A {REAL_T, INT_T, BINARY_T}; };
-    struct VAR_DIM { enum A {DIM_T, DIM_NT, DIM_T2, DIM_2T_TRI}; };
-
-    optimization_vars();
-    //~optimization_vars();
-
-    void add_var(char *vname, int var_type /* VAR_TYPE enum */, int var_dim /* VAR_DIM enum */, int var_dim_size, REAL lowbo=-DEF_INFINITE, REAL upbo=DEF_INFINITE);
-    void add_var(char *vname, int var_type /* VAR_TYPE enum */, int var_dim /* VAR_DIM enum */, int var_dim_size, int var_dim_size2, REAL lowbo=-DEF_INFINITE, REAL upbo=DEF_INFINITE);
-
-    bool construct();
-
-    int get_num_varobjs();
-    int get_total_var_count();
-
-    REAL &operator()(char *varname, int ind);    //Access for 1D var
-    REAL &operator()(char *varname, int ind1, int ind2);     //Access for 2D var
-    REAL &operator()(int varindex, int ind);    
-    REAL &operator()(int varindex, int ind1, int ind2);
-
-    int column(char *varname, int ind);
-    int column(char *varname, int ind1, int ind2);
-    int column(int varindex, int ind);
-    int column(int varindex, int ind1, int ind2);
-
-    REAL *get_variable_array(); 
-
-    opt_var *get_var(char *varname);
-    opt_var *get_var(int varindex);
-};
-
 
 
 
