@@ -94,7 +94,7 @@
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(SolutionDir)\$(Platform)\$(Configuration)\;$(GTEST)\msvc\2010\gtest-md\$(Platform)-$(Configuration)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>gtestd.lib;%(AdditionalDependencies); ssc.lib; shared.lib; tcs.lib; tcsconsole.lib; solarpilot.lib; lpsolve.lib; nlopt.lib</AdditionalDependencies>
+      <AdditionalDependencies>gtestd.lib; shared.lib; tcs.lib; tcsconsole.lib; solarpilot.lib; lpsolve.lib; nlopt.lib; $(SSCDIR)\build_vc2013\$(Platform)\$(Configuration)\ssc\*.obj;$(SSCDIR)\build_vc2013\$(Platform)\$(Configuration)\tcs\*.obj;</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -107,7 +107,7 @@
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(SolutionDir)\$(Platform)\$(Configuration)\;$(GTEST)\msvc\2010\gtest-md\$(Platform)-$(Configuration)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>gtestd.lib;%(AdditionalDependencies); ssc.lib; shared.lib; tcs.lib; tcsconsole.lib; solarpilot.lib; lpsolve.lib; nlopt.lib</AdditionalDependencies>
+      <AdditionalDependencies>gtestd.lib; shared.lib; tcs.lib; tcsconsole.lib; solarpilot.lib; lpsolve.lib; nlopt.lib; $(SSCDIR)\build_vc2013\$(Platform)\$(Configuration)\ssc\*.obj;$(SSCDIR)\build_vc2013\$(Platform)\$(Configuration)\tcs\*.obj;</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -141,7 +141,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalLibraryDirectories>$(SolutionDir)\$(Platform)\$(Configuration)\;$(GTEST)\msvc\2010\gtest-md\$(Platform)-$(Configuration)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>gtest.lib;%(AdditionalDependencies); ssc.lib; shared.lib; tcs.lib; tcsconsole.lib; solarpilot.lib; lpsolve.lib; nlopt.lib</AdditionalDependencies>
+      <AdditionalDependencies>gtest.lib; shared.lib; tcs.lib; tcsconsole.lib; solarpilot.lib; lpsolve.lib; nlopt.lib; $(SSCDIR)\build_vc2013\$(Platform)\$(Configuration)\ssc\*.obj;$(SSCDIR)\build_vc2013\$(Platform)\$(Configuration)\tcs\*.obj;</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
