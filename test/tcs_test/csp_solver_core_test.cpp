@@ -2,8 +2,8 @@
 #include <vector>
 #include <memory>
 
-#include "gtest\gtest.h"
-#include "input_cases\weather_inputs.h"
+#include <gtest/gtest.h>
+#include "../input_cases/weather_inputs.h"
 
 #include "common.h"
 #include "csp_solver_core.h"
@@ -39,7 +39,11 @@ class UsingFileCaseWeatherReader : public CspWeatherReaderTest{
 	string file;
 protected:
 	void SetUp(){
+#ifdef __wxMSW__		
 		file = "../../../test/input_docs/weather.csv";
+#else	
+		file = "../test/input_docs/weather.csv";
+#endif	
 		wr.m_filename = file;
 		CspWeatherReaderTest::SetUp();
 		sim_info.ms_ts.m_step = 3600;

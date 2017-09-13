@@ -1,7 +1,7 @@
 #include <string>
 #include <vector>
 
-#include "gtest\gtest.h"
+#include <gtest/gtest.h>
 #include "lib_weatherfile.h"
 #include "common.h"
 #include "vartab.h"
@@ -28,13 +28,18 @@ class CSVCase_WeatherfileTest : public weatherfileTest{
 protected:
 	void SetUp(){
 		e = 0.001;
+#ifdef __wxMSW__		
 		file = "../../../test/input_docs/weather-noRHum.csv";
+#else	
+		file = "../test/input_docs/weather-noRHum.csv";
+#endif	
 		ASSERT_TRUE(wf.open(file));
 	}
 };
 
 /// Test some init actions
 TEST_F(CSVCase_WeatherfileTest, initTest){
+
 	EXPECT_EQ(wf.header().location, "875760") << "CSV Case: Init test\n";
 	EXPECT_EQ(wf.header().city, "Buenos_Aires") << "CSV Case: Init test\n";
 	EXPECT_EQ("", wf.message()) << "CSV Case: Init test\n";
