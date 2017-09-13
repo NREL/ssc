@@ -28,7 +28,7 @@ class CSVCase_WeatherfileTest : public weatherfileTest{
 protected:
 	void SetUp(){
 		e = 0.001;
-#ifdef __wxMSW__		
+#ifdef _MSC_VER	
 		file = "../../../test/input_docs/weather-noRHum.csv";
 #else	
 		file = "../test/input_docs/weather-noRHum.csv";

@@ -39,7 +39,7 @@ class UsingFileCaseWeatherReader : public CspWeatherReaderTest{
 	string file;
 protected:
 	void SetUp(){
-#ifdef __wxMSW__		
+#ifdef _MSC_VER		
 		file = "../../../test/input_docs/weather.csv";
 #else	
 		file = "../test/input_docs/weather.csv";
