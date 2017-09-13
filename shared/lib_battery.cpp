@@ -444,7 +444,6 @@ void capacity_lithium_ion_t::updateCapacity(double I, double dt)
 	_DOD_prev = _DOD;
 	_I_loss = 0.;
 	_dt_hour = dt;
-	double q0_old = _q0;
 	_I = I;
 	 
 	// compute charge change ( I > 0 discharging, I < 0 charging)

@@ -315,7 +315,8 @@ public:
 			{
 				for (int jj = 0; jj < step_per_hour; jj++)
 				{
-					batt.advance(*this, 0, hour, jj, p_ac[count], p_load[count]);
+					batt.initialize_time(0, hour, jj);
+					batt.advance(*this, p_ac[count], p_load[count]);
 					p_gen[count] = batt.outGenPower[count];
 					count++;
 				}
