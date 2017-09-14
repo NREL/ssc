@@ -1,5 +1,5 @@
 #include <stdlib.h>
-#include "gtest/gtest.h"
+#include <gtest/gtest.h>
 
 #include "lib_irradproc.h"
 
