@@ -83,7 +83,7 @@ class Ambient : public mod_base
 	
 	//Calculation methods
     static void setDateTime(DateTime &DT, double day_hour, double year_day, double year = 2011.);
-	static void calcSunPosition(var_map &V, DTobj &DT, double *az, double *zen); //use some local info, some other info
+	static void calcSunPosition(var_map &V, DTobj &DT, double *az, double *zen, bool wf_time_correction=false); //use some local info, some other info
 	static void calcSunPosition(double lat, double lon, double timezone, double tstep, const DTobj &dt, double *az, double *zen);	//Calculate with these arguments
     static Vect calcSunVectorFromAzZen(double azimuth, double zenith);	//Calculate sun position given specified az/zen values
 	
