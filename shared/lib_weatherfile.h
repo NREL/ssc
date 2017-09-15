@@ -118,7 +118,6 @@ struct weather_header {
 	std::string source;
 	std::string description;
 	std::string url;
-	bool interpmet;
 	bool hasunits;
 	double tz;
 	double lat;
@@ -246,8 +245,8 @@ public:
 	weatherfile();
 	/* Detects file format, read header information, detects which data columns are available and at what index
 	and read weather record information.
-	Calculates twet if missing, and interpolates meteorological data if requested.*/
-	weatherfile( const std::string &file, bool header_only = false, bool interp = false );
+	Calculates twet if missing*/
+	weatherfile( const std::string &file, bool header_only = false );
 	virtual ~weatherfile();
 
 	void reset();
@@ -255,7 +254,7 @@ public:
 	int type();
 	std::string filename();
 
-	bool open( const std::string &file, bool header_only = false, bool interp = false );
+	bool open( const std::string &file, bool header_only = false );
 
 	bool read( weather_record *r ); 
 	bool has_data_column( size_t id );
