@@ -143,7 +143,7 @@ bool C_DSG_Boiler::Initialize_Boiler( C_DSG_macro_receiver dsg_rec, double h_rec
 			{
 				for( int j = 0; j < m_nodes; j++ )
 				{
-					flow_pattern[i, j] = flow_pattern_temp[i, (m_dsg_rec.Get_n_panels_rec() - m_n_panels)/2 + j];
+				  	flow_pattern.at(i, j) = flow_pattern_temp.at(i, (m_dsg_rec.Get_n_panels_rec() - m_n_panels)/2 + j);
 				}
 			}
 			m_h_rec.resize_fill(m_n_panels, h_rec_full*m_dsg_rec.Get_sh_h_frac());
