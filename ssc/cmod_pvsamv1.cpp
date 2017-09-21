@@ -1027,11 +1027,11 @@ public:
 	
 	void exec( ) throw( general_error )
 	{		
-		std::auto_ptr<weather_data_provider> wdprov;
+		std::unique_ptr<weather_data_provider> wdprov;
 		if ( is_assigned( "solar_resource_file" ) )
 		{
 			const char *file = as_string("solar_resource_file");
-			wdprov = std::auto_ptr<weather_data_provider>( new weatherfile( file ) );
+			wdprov = std::unique_ptr<weather_data_provider>( new weatherfile( file ) );
 
 			weatherfile *wfile = dynamic_cast<weatherfile*>(wdprov.get());
 			if (!wfile->ok()) throw exec_error("pvsamv1", wfile->message());
@@ -1039,7 +1039,7 @@ public:
 		}
 		else if ( is_assigned( "solar_resource_data" ) )
 		{
-			wdprov = std::auto_ptr<weather_data_provider>( new weatherdata( lookup("solar_resource_data") ) );
+			wdprov = std::unique_ptr<weather_data_provider>( new weatherdata( lookup("solar_resource_data") ) );
 			if (wdprov->has_message()) log(wdprov->message(), SSC_WARNING);
 		}
 		else
@@ -1086,7 +1086,7 @@ public:
 		
 		double ts_hour = 1.0/step_per_hour;
 		// shading database if necessary
-		std::auto_ptr<ShadeDB8_mpp>  p_shade_db; // (new ShadeDB8_mpp());
+		std::unique_ptr<ShadeDB8_mpp>  p_shade_db; // (new ShadeDB8_mpp());
 
 		bool en_snow_model = (as_integer("en_snow_model") > 0); // snow model activation
 		double annual_snow_loss = 0;
@@ -1205,7 +1205,7 @@ public:
 		// create single instance of shading database if necessary
 		if (create_shade_db)
 		{
-			p_shade_db = std::auto_ptr<ShadeDB8_mpp>(new ShadeDB8_mpp());
+			p_shade_db = std::unique_ptr<ShadeDB8_mpp>(new ShadeDB8_mpp());
 			p_shade_db->init();
 		}
 

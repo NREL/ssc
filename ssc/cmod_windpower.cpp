@@ -258,7 +258,7 @@ public:
 
 
 		size_t nstep = 8760;		
-		std::auto_ptr<winddata_provider> wdprov;
+		std::unique_ptr<winddata_provider> wdprov;
 		if ( iModelType == 0 )
 		{
 			// initialize the weather file reader here to find out the number of steps
@@ -274,7 +274,7 @@ public:
 				nstep = wp->nrecords();
 
 				// assign the pointer
-				wdprov = std::auto_ptr<winddata_provider>( wp );
+				wdprov = std::unique_ptr<winddata_provider>( wp );
 
 				// make sure it's OK
 				if (!wp->ok()) 
@@ -282,7 +282,7 @@ public:
 			}
 			else if ( is_assigned( "wind_resource_data" ) )
 			{
-				wdprov = std::auto_ptr<winddata_provider>( new winddata( lookup("wind_resource_data") ) );
+				wdprov = std::unique_ptr<winddata_provider>( new winddata( lookup("wind_resource_data") ) );
 			}
 			else
 				throw exec_error("windpower", "no wind resource data supplied");

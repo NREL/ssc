@@ -17,8 +17,8 @@ int main()
 		double mppt_lo = 250;
 		double mppt_hi = 480;
 
-		std::auto_ptr<ShadeDB8_mpp>  p_shade_db;
-		p_shade_db = std::auto_ptr<ShadeDB8_mpp>(new ShadeDB8_mpp());
+		std::unique_ptr<ShadeDB8_mpp>  p_shade_db;
+		p_shade_db = std::unique_ptr<ShadeDB8_mpp>(new ShadeDB8_mpp());
 
 		p_shade_db->init();
 
