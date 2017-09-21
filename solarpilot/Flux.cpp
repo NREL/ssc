@@ -1270,7 +1270,6 @@ double Flux::imagePlaneIntercept(var_map &V, Heliostat &H, Receiver *Rec, Vect *
     int ncanty = Hv->n_cant_y.val;
 	int ncantx = Hv->n_cant_x.val;
 	int N_cant = ncanty*ncantx;
-	(void*)&N_cant;
 
 	double gcanta, gcanty, gcantx, gcantb, tempmult;
 	
@@ -2252,7 +2251,6 @@ void Flux::fluxDensity(simulation_info *siminfo, FluxSurface &flux_surface, Hvec
 
 		//Get the heliostat normal vector
 		Vect* hv = helios.at(i)->getTowerVector();
-		(void*)&hv;
 		//Get the image error std dev's
 		double sigx, sigy;	
 		helios.at(i)->getImageSize(sigx, sigy);	//Image size is normalized by the tower height
@@ -2274,7 +2272,6 @@ void Flux::fluxDensity(simulation_info *siminfo, FluxSurface &flux_surface, Hvec
 				//Get the flux point
 				FluxPoint *pt = &grid->at(j).at(k);
 				double pty = pt->location.y;
-				(void*)&pty;
 				//Calculate the dot product between the flux point normal and the helio->tower vector
 				Vect *tv = helios.at(i)->getTowerVector();
 				Vect tvr;
@@ -2416,7 +2413,6 @@ void Flux::simpleAimPoint(sp_point *Aim, sp_point *AimF, Heliostat &H, SolarFiel
 	vector<Receiver*> *Recs = SF.getReceivers();
 
 	sp_point *hpos = H.getLocation();
-	(void*)&hpos;
 
 	double tht = SF.getVarMap()->sf.tht.val;
 	
@@ -2511,7 +2507,6 @@ void Flux::sigmaAimPoint(Heliostat &H, SolarField &SF, double args[]){
 
 	sp_point *hpos = H.getLocation();
 	sp_point *Aim = H.getAimPoint();
-	(void*)&hpos;
 
 	double tht = SF.getVarMap()->sf.tht.val;
 
@@ -2633,7 +2628,6 @@ void Flux::probabilityShiftAimPoint(Heliostat &H, SolarField &SF, double args[])
 
 	sp_point *hpos = H.getLocation();
 	sp_point *Aim = H.getAimPoint();
-	(void*)&hpos;
 
 	double tht = SF.getVarMap()->sf.tht.val;
 	
@@ -2734,7 +2728,6 @@ void Flux::imageSizeAimPoint(Heliostat &H, SolarField &SF, double args[], bool i
 
 	*/
 	int hid = H.getId();
-	(void*)&hid;
 
 	vector<Receiver*> *Recs = SF.getReceivers();
 
@@ -2760,8 +2753,6 @@ void Flux::imageSizeAimPoint(Heliostat &H, SolarField &SF, double args[], bool i
 		opt_height = Rv->optical_height.Val(), // + rec->getOffsetZ(),       << optical height already includes Z offset
 		y_offset = Rv->rec_offset_y.val,
 		x_offset = Rv->rec_offset_x.val;
-	(void*)&x_offset;
-	(void*)&y_offset;
 	int recgeom = rec->getGeometryType(); 
 	
     double w2, h2;
@@ -2796,7 +2787,6 @@ void Flux::imageSizeAimPoint(Heliostat &H, SolarField &SF, double args[], bool i
 		//for the first row, which column is best?
 		isave = 0;
 		dpsave=-99.;
-		f_to_h;
 		for(int i=0; i<FS->getFluxNX(); i++){
 			fpos = &FG->at(i).at(0).location;
 			fnorm = &FG->at(i).at(0).normal;
@@ -3031,7 +3021,6 @@ void Flux::frozenAimPoint(Heliostat &H, double tht, double args[] )
     Receiver *Rec = H.getWhichReceiver(); 
 
     sp_point *hpos = H.getLocation();
-	(void*)&hpos;
     //the current tracking vector
     Vect *track = H.getTrackVector();
     Vect sun;
@@ -3127,7 +3116,6 @@ void Flux::keepExistingAimPoint(Heliostat &H, SolarField &SF, double[] /*args*/)
         sp_point *hloc = H.getLocation();
 
         int hid = H.getId();
-		(void*)&hid;
 
         Vect h_to_r;
         h_to_r.Set(aim->x - hloc->x, aim->y - hloc->y, aim->z - hloc->z);   //vector from heliostat to receiver -- aimpoint line

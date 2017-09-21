@@ -276,14 +276,11 @@ void interop::GenerateSimulationWeatherData(var_map &V, int design_method, Array
 
 			//Add up the total and average DNI's
 			double dni, dni_tot = 0., dni_peak = 0.;
-			(void*)&dni_peak;
-			(void*)&dni_tot;
 			double tdry, pres, wind;
 			
 			double hrmid = (hrs[0] + hrs[1])/2. + hoy;
 			int nhrs = (int)(floor((hrs[1] - hrs[0])/(double)nskip))*nskip;
 			int nsteps = nhrs/nskip + 1; //total number of simulation points in the day
-			(void*)&nsteps;
 
 			//make sure the start and end hours are symmetric about solar noon
 			double nmidspan = (double)nhrs/2.;
@@ -988,7 +985,6 @@ void sim_result::process_field_stats(){
 void sim_result::process_flux_stats(SolarField &SF){
 	//Determine the flux info
 	double atot = SF.calcReceiverTotalArea();
-	(void*)&atot;
 	double fave=0., fave2=0., fmax = -9.e9, fmin = 9.e9;
 	int nf = 0;
 	vector<Receiver*> *recs = SF.getReceivers();

@@ -3016,7 +3016,6 @@ bool SolarField::SimulateTime(int /*hour*/, int day_of_month, int month, sim_par
 	//Convert the day of the month to a day of year
     DateTime DT;
 	int doy = DT.GetDayOfYear(2011, month, day_of_month); 
-	(void*)&doy;
 
 	//Calculate the sun position
 	double az, zen;
@@ -3185,7 +3184,6 @@ void SolarField::SimulateHeliostatEfficiency(SolarField *SF, Vect &Sun, Heliosta
     }
 
 	int hid = helios->getId();
-	(void*)&hid;
 
 	//Cosine loss
 	helios->setEfficiencyCosine( Toolbox::dotprod(Sun, *helios->getTrackVector()) );
@@ -3284,13 +3282,11 @@ double SolarField::calcShadowBlock(Heliostat *H, Heliostat *HI, int mode, Vect &
 		}
 
 		double zen = acos(H_inter->k);	//The zenith angle for interference
-		(void*)&zen;
 
 		//Get the interfering heliostat tracking angles
 		Vect 
 			*HIt = HI->getTrackVector(),	//Interfering heliostat track vector
 			*Ht = H->getTrackVector();	//Base heliostat track vector
-		(void*)&HIt;
 
 		//Is the heliostat in a position to shadow/block?
 		double Hd = HI->getVarMap()->width.val;	//Diameter
