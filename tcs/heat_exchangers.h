@@ -551,6 +551,38 @@ public:
 		return &ms_des_par_cycle_dep;
 	}
 
+	class C_MEQ_od_air_mdot__T_co2_out : public C_monotonic_equation
+	{
+	private:
+		CO2_state *mpc_co2_props;
+		double m_T_amb;		//[K]
+		double m_P_amb;		//[Pa]
+		double m_T_hot_in;	//[K]
+		double m_P_hot_in;	//[kPa]
+		double m_m_dot_hot;	//[kg/s]
+		double m_T_hot_out;	//[K]
+
+	public:
+		C_MEQ_od_air_mdot__T_co2_out(CO2_state *mc_co2_props,
+			double T_amb /*K*/, double P_amb /*Pa*/,
+			double T_hot_in /*K*/, double P_hot_in /*kPa*/,
+			double m_dot_hot /*kg/s*/, double T_hot_out /*K*/, double & W_dot_fan /*MWe*/)
+		{
+			m_T_amb = T_amb;
+			m_P_amb = P_amb;
+			m_T_hot_in = T_hot_in;
+			m_P_hot_in = P_hot_in;
+			m_m_dot_hot = m_dot_hot;
+			m_T_hot_out = T_hot_out;
+
+			W_dot_fan = std::numeric_limits<double>::quiet_NaN();
+		}
+
+		double W_dot_fan;		//[MWe]
+
+		virtual int operator()(double m_dot_air /*kg/s*/, double *T_hot_out_calc /*K*/);
+	};
+
 	class C_MEQ_node_energy_balance__T_co2_out : public C_monotonic_equation
 	{
 	private:

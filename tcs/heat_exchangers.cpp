@@ -2091,12 +2091,29 @@ int outlet_given_geom_and_air_m_dot(double T_co2_out /*K*/, double m_dot_co2_tub
 	return 0;
 }
 
-int C_CO2_to_air_cooler::off_design_given_T_out(double T_amb /*K*/, double P_amb /*Pa*/, double T_hot_in /*K*/, double P_hot_in /*kPa*/,
+int C_CO2_to_air_cooler::off_design_given_T_out(double T_amb /*K*/, double P_amb /*Pa*/, double 
+	T_hot_in /*K*/, double P_hot_in /*kPa*/,
 	double m_dot_hot /*kg/s*/, double T_hot_out /*K*/, double & W_dot_fan /*MWe*/)
 {
-	
+	// Want to iterate over *air* mass flow rate until T_co2_out is = T_hot_out
+	if (T_hot_out <= T_amb)
+	{
+		return -1;
+	}
+
+
+
 	return 0;
 }
+
+int C_CO2_to_air_cooler::C_MEQ_od_air_mdot__T_co2_out::operator()(double m_dot_air /*kg/s*/, double *T_hot_out_calc /*K*/)
+{
+	// Solve air pressure drop and fan power assuming constant props
+
+
+	return 0;
+}
+
 
 void C_CO2_to_air_cooler::off_design_hx(double T_amb_K, double P_amb_Pa, double T_hot_in_K, double P_hot_in_kPa,
 	double m_dot_hot_kg_s, double T_hot_out_K, double & W_dot_fan_MW, int & error_code)
