@@ -745,14 +745,15 @@ Reflector *Heliostat::getPanelById(int id){
 
 	for (int j=0; j<(int)ncantx; j++) {
 		for (int i=0; i<(int)ncanty; i++) {
-		  	if (_panels.at(j,i).getId() == id) {
-			  	return &_panels.at(j,i);
+			if (_panels[j,i].getId() == id){
+				return &_panels[j,i];
 			}
 		}
 	}
 
 	//#####call an error here
-	return &_panels.at(0, 0);
+
+	return &_panels[0,0];
 }
 
 Reflector *Heliostat::getPanel(int row, int col){
@@ -760,7 +761,7 @@ Reflector *Heliostat::getPanel(int row, int col){
 	nr = _panels.nrows();
 	nc = _panels.ncols();
 	if(row < nr && col < nc) {
-	  	return &_panels.at(row, col);
+		return &_panels[row,col];
 	}
 	else{
 		//FLAG -- this should be an error
