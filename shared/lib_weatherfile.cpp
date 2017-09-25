@@ -1041,14 +1041,14 @@ bool weatherfile::open(const std::string &file, bool header_only)
 					&d12, f12, &u12, /* relative humidity 0-100 */
 					&d13, f13, &u13, /* pressure millibars */
 					&d14, f14, &u14, /* wind direction */
-					&d15, &f15, &u15, // wind speed 0 to 400 = 0.0 to 40.0 m/s
-					&d16, &f16, &u16, // visibility
-					&d17, &f17, &u17, // ceiling height
+					&d15, f15, &u15, // wind speed 0 to 400 = 0.0 to 40.0 m/s
+					&d16, f16, &u16, // visibility
+					&d17, f17, &u17, // ceiling height
 					&w1, &w2, &w3, &w4, &w5, &w6, &w7, &w8, &w9, &w10, // present weather
-					&d18, &f18, &u18, // precipitable water
-					&d19, &f19, &u19, // aerosol optical depth
-					&d20, &f20, &u20, // snow depth 0-150 cm
-					&d21, &f21, &u21); // days since last snowfall 0-88
+					&d18, f18, &u18, // precipitable water
+					&d19, f19, &u19, // aerosol optical depth
+					&d20, f20, &u20, // snow depth 0-150 cm
+					&d21, f21, &u21); // days since last snowfall 0-88
 
 				if ( mn == 2 && dy == 29 )
 				{
