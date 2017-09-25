@@ -1496,7 +1496,7 @@ bool weatherfile::convert_to_wfcsv( const std::string &input, const std::string 
 	else if ( wf.type() == weatherfile::SMW )
 	{
 		fprintf(fp, "Source,Location ID,City,State,Latitude,Longitude,Time Zone,Elevation\n");
-		fprintf(fp, "SMW,%s,%s,%s,%.6lf,%.6lf,%lg,%lg,%d\n", hdr.location.c_str(),
+		fprintf(fp, "SMW,%s,%s,%s.%s,%.6lf,%.6lf,%lg,%lg\n", hdr.location.c_str(),
 			normalize_city(hdr.city).c_str(), hdr.state.c_str(), hdr.country.c_str(), hdr.lat, hdr.lon, hdr.tz, hdr.elev );
 		fprintf(fp, "Month,Day,Hour,GHI,DNI,DHI,Tdry,Twet,Tdew,RH,Pres,Wspd,Wdir,Snow,Albedo\n" );
 		for( size_t i=0;i<8760;i++ )
