@@ -102,7 +102,7 @@ static char *trimboth(char *buf)
 	}
 
 	p = buf;
-	while (p && *p && *p == ' ' || *p == '\t')
+	while (p && *p && (*p == ' ' || *p == '\t'))
 		p++;
 
 	return p;
