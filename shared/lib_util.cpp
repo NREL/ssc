@@ -1065,11 +1065,11 @@ double util::bilinear( double rowval, double colval, const matrix_t<double> &mat
 		return std::numeric_limits<double>::quiet_NaN();
 	
 	int ridx=2; // find row position
-	while( ridx < (int)mat.nrows() && rowval > (int)mat.at(ridx, 0) )
+	while( ridx < (int)mat.nrows() && rowval > mat.at(ridx, 0) )
 		ridx++;
 	
 	int cidx=2; // find col position
-	while( cidx < (int)mat.ncols() && colval > (int)mat.at(0, cidx) )
+	while( cidx < (int)mat.ncols() && colval > mat.at(0, cidx) )
 		cidx++;
 
 	if ( ridx == (int)mat.nrows() ) ridx--;
