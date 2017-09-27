@@ -160,6 +160,7 @@ static var_info _cm_vtab_sco2_csp_system[] = {
 	{ SSC_OUTPUT, SSC_ARRAY,   "sim_time_od",          "Simulation time for off design optimization",            "s",          "",    "",      "",     "",       "" },
 		// System solution
 	{ SSC_OUTPUT, SSC_ARRAY,   "eta_thermal_od",       "Off-design cycle thermal efficiency",                    "",           "",    "",      "",     "",       "" },
+	{ SSC_OUTPUT, SSC_ARRAY,   "T_mc_out_od",          "Off-design compressor inlet temperature",                "C",          "",    "",      "",     "",       "" },
 	{ SSC_OUTPUT, SSC_ARRAY,   "P_mc_out",             "Off-design high side pressure",                          "MPa",        "",    "",      "",     "",       "" },
 	{ SSC_OUTPUT, SSC_ARRAY,   "T_htf_cold_od",        "Off-design cold return temperature",                     "C",          "",    "",      "",     "",       "" },
 	{ SSC_OUTPUT, SSC_ARRAY,   "m_dot_co2_full_od",    "Off-design mass flow rate through turbine",              "kg/s",       "",    "",      "",     "",       "" },
@@ -183,6 +184,8 @@ static var_info _cm_vtab_sco2_csp_system[] = {
 	{ SSC_OUTPUT, SSC_ARRAY,   "T_co2_PHX_in_od",      "Off-design PHX co2 inlet temperature",                   "C",          "",    "",      "",     "",       "" },
 	{ SSC_OUTPUT, SSC_ARRAY,   "T_co2_PHX_out_od",     "Off-design PHX co2 outlet temperature",                  "C",          "",    "",      "",     "",       "" },
 	{ SSC_OUTPUT, SSC_ARRAY,   "phx_eff_od",           "Off-design PHX effectiveness",                           "-",          "",    "",      "",     "",       "" },
+		// Cooler
+	{ SSC_OUTPUT, SSC_ARRAY,   "T_cooler_in_od",       "Off-design cooler inlet temperature",                    "C",          "",    "",      "",     "",       "" },
 		// Solver Metrics
 	{ SSC_OUTPUT, SSC_ARRAY,   "od_code",              "Diagnostic info",                                        "-",          ""     "",      "",     "",       "" },
 
@@ -219,6 +222,7 @@ public:
 	ssc_number_t *p_sim_time_od;
 	// Systems
 	ssc_number_t *p_eta_thermal_od;
+	ssc_number_t *p_T_mc_out_od;
 	ssc_number_t *p_P_mc_out;
 	ssc_number_t *p_T_htf_cold_od;
 	ssc_number_t *p_m_dot_co2_full_od;
@@ -242,6 +246,8 @@ public:
 	ssc_number_t *p_T_co2_PHX_in_od;
 	ssc_number_t *p_T_co2_PHX_out_od;
 	ssc_number_t *p_phx_eff_od;
+	// Cooler
+	ssc_number_t *p_T_cooler_in_od;
 	// Solver Metrics
 	ssc_number_t *p_od_code;
 
@@ -879,6 +885,7 @@ public:
 				p_sim_time_od[n_run] = (ssc_number_t)od_opt_duration;		//[s]
 					// System
 				p_eta_thermal_od[n_run] = (ssc_number_t)p_sco2_recomp_csp->get_od_solved()->ms_rc_cycle_od_solved.m_eta_thermal;		//[-]
+				p_T_mc_out_od[n_run] = (ssc_number_t)p_sco2_recomp_csp->get_od_solved()->ms_rc_cycle_od_solved.m_temp[C_RecompCycle::MC_IN] - 273.15;	//[C]
 				p_P_mc_out[n_run] = (ssc_number_t)(p_sco2_recomp_csp->get_od_solved()->ms_rc_cycle_od_solved.m_pres[C_RecompCycle::MC_OUT] / 1.E3);	//[MPa]
 				p_T_htf_cold_od[n_run] = (ssc_number_t)(p_sco2_recomp_csp->get_od_solved()->ms_phx_od_solved.m_T_h_out - 273.15);		//[C]
 				p_m_dot_co2_full_od[n_run] = (ssc_number_t)p_sco2_recomp_csp->get_od_solved()->ms_rc_cycle_od_solved.m_m_dot_t;		//[kg/s]
@@ -902,6 +909,8 @@ public:
 				p_T_co2_PHX_in_od[n_run] = (ssc_number_t)(p_sco2_recomp_csp->get_od_solved()->ms_rc_cycle_od_solved.m_temp[C_RecompCycle::HTR_HP_OUT] - 273.15);	//[C]
 				p_T_co2_PHX_out_od[n_run] = (ssc_number_t)(p_sco2_recomp_csp->get_od_solved()->ms_rc_cycle_od_solved.m_temp[C_RecompCycle::TURB_IN] - 273.15);		//[C]
 				p_phx_eff_od[n_run] = (ssc_number_t)p_sco2_recomp_csp->get_od_solved()->ms_phx_od_solved.m_eff;		//[-]
+					// Cooler
+				p_T_cooler_in_od[n_run] = (ssc_number_t)(p_sco2_recomp_csp->get_od_solved()->ms_rc_cycle_od_solved.m_temp[C_RecompCycle::LTR_LP_OUT] - 273.15);		//[C]
 			}
 			else
 			{	// Off-design call failed, write NaN outptus
@@ -911,6 +920,7 @@ public:
 				p_recomp_frac_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
 					// System
 				p_eta_thermal_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
+				p_T_mc_out_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
 				p_P_mc_out[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
 				p_T_htf_cold_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
 				p_m_dot_co2_full_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
@@ -934,6 +944,8 @@ public:
 				p_T_co2_PHX_in_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
 				p_T_co2_PHX_out_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
 				p_phx_eff_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
+					// Cooler
+				p_T_cooler_in_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
 			}
 
 
@@ -964,6 +976,7 @@ public:
 		p_sim_time_od = allocate("sim_time_od", n_od_runs);
 		// Systems
 		p_eta_thermal_od = allocate("eta_thermal_od", n_od_runs);
+		p_T_mc_out_od = allocate("T_mc_out_od", n_od_runs);
 		p_P_mc_out = allocate("P_mc_out", n_od_runs);
 		p_T_htf_cold_od = allocate("T_htf_cold_od", n_od_runs);
 		p_m_dot_co2_full_od = allocate("m_dot_co2_full_od", n_od_runs);
@@ -987,6 +1000,8 @@ public:
 		p_T_co2_PHX_in_od = allocate("T_co2_PHX_in_od", n_od_runs);
 		p_T_co2_PHX_out_od = allocate("T_co2_PHX_out_od", n_od_runs);
 		p_phx_eff_od = allocate("phx_eff_od", n_od_runs);
+		// Cooler
+		p_T_cooler_in_od = allocate("T_cooler_in_od", n_od_runs);
 		// Solver Metrics
 		p_od_code = allocate("od_code", n_od_runs);
 
