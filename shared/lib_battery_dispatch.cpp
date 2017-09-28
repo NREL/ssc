@@ -597,9 +597,15 @@ bool dispatch_manual_t::check_constraints(double &I, int count)
 	if ((I_initial / I) < 0)
 		I = 0;
 	
+	// reset
 	if (iterate)
+	{
 		_Battery->copy(_Battery_initial);
-
+		_P_tofrom_batt = 0;
+		_P_grid_to_batt = 0;
+		_P_battery_to_grid = 0;
+		_P_pv_to_grid = 0;
+	}
 
 	return iterate;
 }

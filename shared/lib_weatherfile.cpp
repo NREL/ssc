@@ -420,7 +420,7 @@ double calc_twet(double T, double RH, double P)
 void weather_header::reset()
 {
 	location = city = state = country = source = description = url = "";
-	interpmet = hasunits = false;
+	hasunits = false;
 	tz = lat = lon = elev = std::numeric_limits<double>::quiet_NaN();
 }
 
@@ -443,10 +443,10 @@ weatherfile::weatherfile()
 	reset();
 }
 
-weatherfile::weatherfile(const std::string &file, bool header_only, bool interp)
+weatherfile::weatherfile(const std::string &file, bool header_only)
 {
 	reset();
-	m_ok = open(file, header_only, interp);
+	m_ok = open(file, header_only);
 }
 
 weatherfile::~weatherfile()
@@ -484,7 +484,7 @@ std::string weatherfile::filename()
 	return m_file;
 }
 
-bool weatherfile::open(const std::string &file, bool header_only, bool interp)
+bool weatherfile::open(const std::string &file, bool header_only)
 {
 	if (file.empty())
 	{
@@ -766,10 +766,6 @@ bool weatherfile::open(const std::string &file, bool header_only, bool interp)
 			else if (name == "hasunits" || name == "units")
 			{
 				m_hdr.hasunits = (util::lower_case(value) == "yes" || atoi(value) != 0);
-			}
-			else if (name == "interpmet")
-			{
-				m_hdr.interpmet = (util::lower_case(value) == "yes" || atoi(value) != 0);
 			}
 			else if (name == "step")
 			{
@@ -1400,38 +1396,6 @@ bool weatherfile::open(const std::string &file, bool header_only, bool interp)
         }
 	}
 
-
-
-
-	// do the interpolation of meteorological data if requested in the header
-	if (interp || m_hdr.interpmet)
-	{
-		int met_indexes[] = { WSPD, WDIR, TDRY, TWET, TDEW, RH, PRES, SNOW, ALB, -1 };
-
-		// apply to all met data relevant ids
-		size_t j = 0;
-		while (met_indexes[j] >= 0)
-		{
-			int idx = met_indexes[j]; // find column if it has been read in from the data file
-			for (size_t i = 0; i<m_nRecords; i++)
-			{
-				if (i == 0 && m_nRecords > 1)
-				{
-					// first time step: set to the backwards interpolation values of the first two time steps
-					m_columns[idx].data[0] = m_columns[idx].data[1]
-						+ 1.5f*(m_columns[idx].data[0] - m_columns[idx].data[1]);
-				}
-				else
-				{
-					// set to the average of the current and previous
-					m_columns[idx].data[i] = 0.5f*(m_columns[idx].data[i]
-						+ m_columns[idx].data[i - 1]);
-				}
-			}
-			j++;
-		}
-	}
-
 	return true;
 }
 
@@ -1472,7 +1436,7 @@ bool weatherfile::has_data_column( size_t id )
 }
 
 bool weatherfile::has_calculated_data(size_t id){
-	return !isnan(m_columns[id].data[0]);
+	return !std::isnan(m_columns[id].data[0]);
 }
 
 bool weatherfile::convert_to_wfcsv( const std::string &input, const std::string &output )

@@ -331,3 +331,7 @@ android_make_output\.txt
 ios_make_output\.txt
 
 build_osx/Test
+
+build_linux/Test
+
+linux_test\.txt

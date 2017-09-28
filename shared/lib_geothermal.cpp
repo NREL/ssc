@@ -455,10 +455,10 @@ public:
 
 private:
 	// objects
+	SGeothermal_Outputs* mp_geo_out;
+	SGeothermal_Inputs mo_geo_in;
 	SPowerBlockParameters mo_pb_p;
 	SPowerBlockInputs mo_pb_in;
-	SGeothermal_Inputs mo_geo_in;
-	SGeothermal_Outputs* mp_geo_out;
 	CPowerBlock_Type224 mo_PowerBlock;
 
 	// variables

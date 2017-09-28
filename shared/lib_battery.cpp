@@ -106,6 +106,7 @@ capacity_t::capacity_t(double q, double SOC_max, double SOC_min)
 {
 	_q0 = 0.01*SOC_max*q;
 	_qmax = q;
+	_qmax_thermal = q;
 	_qmax0 = q;
 	_I = 0.;
 	_I_loss = 0.;
@@ -435,13 +436,14 @@ void capacity_lithium_ion_t::replace_battery()
 {
 	_q0 = _qmax0;
 	_qmax = _qmax0;
+	_qmax_thermal = _qmax0;
+	_SOC = _SOC_max;
 }
 void capacity_lithium_ion_t::updateCapacity(double I, double dt)
 {
 	_DOD_prev = _DOD;
 	_I_loss = 0.;
 	_dt_hour = dt;
-	double q0_old = _q0;
 	_I = I;
 	 
 	// compute charge change ( I > 0 discharging, I < 0 charging)

@@ -661,7 +661,6 @@ public:
 		// Initialize cycle here, so can use 'get_design_limits()'
 			// Also define error and warning message strings
 		std::string error_msg;
-		error_msg[0] = NULL;
 		int error_code = 0;
 		C_RecompCycle rc_cycle;
 
@@ -795,7 +794,7 @@ public:
 		assign("P_comp_out", (ssc_number_t)P_comp_out);
 		assign("T_htf_cold", (ssc_number_t)T_htf_cold);
 
-		if( error_msg[0] == NULL )
+		if (error_msg == "")
 			log("Design point optimization was successful!");
 		else
 		{
