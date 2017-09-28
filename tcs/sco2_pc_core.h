@@ -1329,7 +1329,7 @@ public:
 
 		m_W_dot_net_last = std::numeric_limits<double>::quiet_NaN();
 
-		m_eta_thermal_opt = m_eta_thermal_opt = std::numeric_limits<double>::quiet_NaN();
+		m_eta_thermal_opt = std::numeric_limits<double>::quiet_NaN();
 
 		m_temp_od = m_pres_od = m_enth_od = m_entr_od = m_dens_od = m_temp_last;
 
