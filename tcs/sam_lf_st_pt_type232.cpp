@@ -2710,7 +2710,6 @@ void PipeFlowCavity( double Re, double Pr, double LoverD, double relRough, doubl
 void FractionFunction( int n_nodes, int n_panels, int n_band, util::matrix_t<double> & T_s_guess_1D, util::matrix_t<double> & lambda_step_band, 
 							util::matrix_t<double> & f_temp_band, util::matrix_t<double> & f_solar_band)
 {
-	/* **********************************************************************************
     // This subroutine calculates the total convective heat losses from the receiver
     // with the correlation presented in Petukhov and Popov (1963)  !ST ( Heat Exchanger Design Handbook 2008 G.F. Hewitt Section 2.5 II b) )
     // The inputs are:
@@ -2719,7 +2718,6 @@ void FractionFunction( int n_nodes, int n_panels, int n_band, util::matrix_t<dou
     //  The outputs are:
     //   - F_Thermal - fraction of blackbody radiaiton at 800K in the wavelength band from 0-lambda_step
     //   - f_solar_band - fraction of blackbody radiaiton at 5800K in the wavelength band from 0-lambda_step
-    //********************************************************************************** */
     
 	/* !integer,parameter,intent(IN)::N_nodes,N_panels
     integer::N_nodes,N_panels,N_band
