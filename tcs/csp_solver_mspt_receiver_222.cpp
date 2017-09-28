@@ -338,7 +338,6 @@ void C_mspt_receiver_222::call(const C_csp_weatherreader::S_outputs &weather,
 	T_salt_cold_in += 273.15;				//[K] Cold salt inlet temp, convert from C
 	double P_amb = weather.m_pres*100.0;	//[Pa] Ambient pressure, convert from mbar
 	double hour = time / 3600.0;			//[hr] Hour of the year
-	double hour_day = (int) hour%24;		//[hr] Hour of the day
 	double T_dp = weather.m_tdew + 273.15;	//[K] Dewpoint temperature, convert from C
 	double T_amb = weather.m_tdry + 273.15;	//[K] Dry bulb temperature, convert from C
 	// **************************************************************************************
@@ -625,7 +624,6 @@ void C_mspt_receiver_222::call(const C_csp_weatherreader::S_outputs &weather,
 			double T_s_sum = 0.0;
 			for( int i = 0; i < m_n_panels; i++ )
 				T_s_sum += m_T_s.at(i);
-			double T_s_ave = T_s_sum / m_n_panels;
 			double T_film_ave = (T_amb + m_T_salt_hot_target) / 2.0;
 
 			// Convective coefficient for external forced convection using Siebers & Kraabel
@@ -739,7 +737,6 @@ void C_mspt_receiver_222::call(const C_csp_weatherreader::S_outputs &weather,
 			for( int i = 0; i < m_n_panels; i++ )
 			{
 				q_conv_sum += m_q_dot_conv.at(i);
-				double blah = m_q_dot_conv.at(i);
 				q_rad_sum += m_q_dot_rad.at(i);
 				//q_inc_sum += m_q_dot_inc.at(i,0);
 				q_abs_sum += m_q_dot_abs.at(i);
