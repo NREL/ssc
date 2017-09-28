@@ -327,8 +327,6 @@ bool C_DSG_Boiler::Solve_Boiler( double I_T_amb_K, double I_T_sky_K, double I_v_
 
 	// Create new flux arrays that allow for multiple panels in parallel flow
 	// Q_adj sorts flux into flow path order and is indexed with Flow_Pat_Adj
-	double q_sum = 0.0;
-	int k = 0;
 	for( int j = 0; j < m_n_fr; j++ )
 	{
 		for( int i = 0; i < m_nodes; i++ )

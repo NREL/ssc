@@ -1511,7 +1511,6 @@ double C_sco2_recomp_csp::adjust_P_mc_in_away_2phase(double T_co2 /*K*/, double 
 	else
 	{
 		double P_lower = 0.99*P_mc_in_restricted;
-		double P_mid = 0.995*P_mc_in_restricted;
 		if (P_mc_in > P_lower)
 		{
 			return P_lower + (P_mc_in - P_lower)/(P_mc_in_restricted - P_lower)*(P_mc_in-P_lower);
