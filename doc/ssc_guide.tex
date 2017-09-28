@@ -1,56 +1,45 @@
+%\documentclass{article}
 \documentclass{scrartcl} %instead of article to allow for use of subtitle
 \setkomafont{disposition}{\normalfont\bfseries} %need this for scrartcl for title font to look normal
-\usepackage{geometry} 
+\usepackage{geometry}
 \geometry{letterpaper} 
+\usepackage{graphicx}
 %%%% Uncomment below to begin paragraphs with an empty line %%%%
 \usepackage[parfill]{parskip} 
-\usepackage{graphicx}
 \usepackage{amssymb}
 \usepackage{moreverb}
 %\usepackage[section]{placeins}
 %\usepackage[below]{placeins}
 \usepackage{epstopdf}
+%\usepackage{hyperref}
 
-% Begin from doxygen
-
-
-%\usepackage{makeidx}
-%\usepackage{natbib}
-\usepackage{graphicx}
+% === From refman.tex =================================
+\usepackage{fixltx2e}
+\usepackage{calc}
+\usepackage{latex/doxygen} % change path to latex/ to load doxygen-generated .sty file
+\usepackage[export]{adjustbox} 
+\usepackage[utf8]{inputenc}
+\usepackage{makeidx}
 \usepackage{multicol}
-\usepackage{float}
-\usepackage{listings}
-\usepackage{color}
-%\usepackage{ifthen}
-\usepackage[table]{xcolor}
+\usepackage{multirow}
+\PassOptionsToPackage{warn}{textcomp}
 \usepackage{textcomp}
-\usepackage{alltt}
-\usepackage[pdftex,
-            pagebackref=true,
-            colorlinks=true,
-            linkcolor=blue,
-            urlcolor=blue,
-            unicode
-           ]{hyperref}
-%\usepackage[utf8]{inputenc}
-%\usepackage{mathptmx}
-%\usepackage[scaled=.90]{helvet}
-%\usepackage{courier}
-%\usepackage{sectsty}
-\usepackage[titles]{tocloft}
-\usepackage{doxygen}
-\lstset{language=C++,inputencoding=utf8,basicstyle=\footnotesize,breaklines=true,breakatwhitespace=true,tabsize=8,numbers=left }
-%\makeindex
-\setcounter{tocdepth}{3}
-%\renewcommand{\footrulewidth}{0.4pt}
-%\renewcommand{\familydefault}{\sfdefault}
-%\hfuzz=15pt
-%\setlength{\emergencystretch}{15pt}
-%\hbadness=750
-%\tolerance=750
+\usepackage[nointegrals]{wasysym}
+\usepackage[table]{xcolor}
+\usepackage{ifpdf}
+\ifpdf
+  \usepackage[pdftex,pagebackref=true]{hyperref}
+\else
+  \usepackage[ps2pdf,pagebackref=true]{hyperref}
+\fi
+\hypersetup{
+	hidelinks=true
+}
+\newcommand{\+}{\discretionary{\mbox{\scriptsize$\hookleftarrow$}}{}{}}
+% ===============================================
 
-% End from doxygen
 
+\DeclareOldFontCommand{\bf}{\normalfont\bfseries}{\mathbf} %workaround to fix issue with \bf in \maketitle
 %\DeclareGraphicsRule{.tif}{png}{.png}{`convert #1 `dirname #1`/`basename #1 .tif`.png}
 \newcommand\bslash{\char`\\}
 \newcommand\lt{\char`\<}
@@ -1599,7 +1588,7 @@ The SDK package includes source code for a basic PVWatts Version 5 calculator we
 \end{enumerate}
 
 
-\begin{figure}[h]
+\begin{figure}
 \begin{center}
 \scalebox{0.65}{\includegraphics{pvwattsweb}}
 \end{center}
@@ -1649,9 +1638,7 @@ The only differences are that \texttt{sscphp\_module\_var\_info(...)} and \textt
 	sscphp_data_free( $dat );
 \end{verbatimtab}
 
-
-\section{C API Reference}\label{sec_api_ref}\input{sscapi_8h}
-
+\input{latex/sscapi_8h}\label{sec_api_ref}
 
 \section{Legal}
 
@@ -1663,3 +1650,4 @@ YOU AGREE TO INDEMNIFY DOE/NREL/ALLIANCE, AND ITS AFFILIATES, OFFICERS, AGENTS, 
 
 
 \end{document}
+
