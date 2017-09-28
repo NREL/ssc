@@ -106,7 +106,6 @@ void C_sco2_recomp_csp::design_core()
 {
 	// using -> C_RecompCycle::S_auto_opt_design_hit_eta_parameters
 	std::string error_msg;
-	error_msg[0] = NULL;
 	int auto_err_code = 0;
 
 	if(ms_des_par.m_design_method == 1)
@@ -192,7 +191,7 @@ void C_sco2_recomp_csp::design_core()
 		throw(C_csp_exception(error_msg.c_str()));
 	}
 
-	if( error_msg[0] == NULL )
+	if( error_msg.empty() )
 	{
 		mc_messages.add_notice("The recompression cycle design optimization was successful");
 	}
