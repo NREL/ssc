@@ -102,6 +102,7 @@ struct batt_variables
 
 	std::vector<double> target_power_monthly;
 	std::vector<double> target_power;
+	std::vector<double> pv_dc_forecast;
 
 	std::vector<double> batt_losses_charging;
 	std::vector<double> batt_losses_discharging;
