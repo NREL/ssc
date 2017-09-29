@@ -135,6 +135,8 @@ public:
 
 		c_ac.off_design_hx(T_amb_od, P_amb_od, T_hot_in, P_hot_in, m_dot_hot, T_hot_out, W_dot_fan, ac_od_code);
 
+		double W_dot_fan_new = std::numeric_limits<double>::quiet_NaN();
+		int ac_od_new_code = c_ac.off_design_given_T_out(T_amb_od, P_amb_od, T_hot_in, P_hot_in, m_dot_hot, T_hot_out, W_dot_fan_new);
 
 		// Test out multi-stage compressor model
 		CO2_state co2_props;

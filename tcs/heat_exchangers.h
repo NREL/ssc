@@ -447,14 +447,19 @@ public:
 		double m_L_tube;	//[m] Tube length
 		double m_UA_total;	//[W/K] Total air-side conductance at design
 		double m_V_material_total;	//[m^3] Total Material volume - no headers
+		double m_V_total;	//[m^3] Total HX footprint volume
 
+		double m_L_node;	//[m] Tube length of one node
+		double m_V_node;	//[m3] Volume of one node
 
 		S_hx_design_solved()
 		{
 			m_N_passes = -1;
 
 			m_P_amb_des = m_d_out = m_d_in = m_Depth = m_W_par = m_N_par =
-				m_N_tubes = m_L_tube = m_UA_total = m_V_material_total = std::numeric_limits<double>::quiet_NaN();
+				m_N_tubes = m_L_tube = m_UA_total = 
+				m_V_material_total = m_V_total =
+				m_L_node = m_V_node = std::numeric_limits<double>::quiet_NaN();
 		}
 	};
 
@@ -554,31 +559,53 @@ public:
 	class C_MEQ_od_air_mdot__T_co2_out : public C_monotonic_equation
 	{
 	private:
-		CO2_state *mpc_co2_props;
-		double m_T_amb;		//[K]
-		double m_P_amb;		//[Pa]
-		double m_T_hot_in;	//[K]
-		double m_P_hot_in;	//[kPa]
-		double m_m_dot_hot;	//[kg/s]
-		double m_T_hot_out;	//[K]
+		C_CO2_to_air_cooler *mpc_ac;
+		double m_m_dot_hot_tube;		//[kg/s] Hot fluid mass flow rate
+		double m_T_hot_out;		//[K] Hot fluid outlet temperature
+		double m_deltaP_co2;	//[kPa] Hot fluid pressure drop
+		double m_P_eval;		//[kPa] Fluid property evaluation pressure
+		double m_P_hot_in;		//[kPa] Hot fluid inlet pressure
+		
+		double m_T_amb;			//[K] Ambient temperature
+
+		double m_tol_op;	//[-] convergence tolerance applied to this class
+
+		double m_mu_air;    //[kg/m-s] dynamic viscosity
+		double m_v_air;	    //[1/m3] specific volume
+		double m_cp_air;	//[J/kg-K] specific heat convert from kJ/kg-K
+		double m_k_air;	    //[W/m-K] conductivity
+		double m_Pr_air;	//[-] Prandtl number
 
 	public:
-		C_MEQ_od_air_mdot__T_co2_out(CO2_state *mc_co2_props,
-			double T_amb /*K*/, double P_amb /*Pa*/,
-			double T_hot_in /*K*/, double P_hot_in /*kPa*/,
-			double m_dot_hot /*kg/s*/, double T_hot_out /*K*/, double & W_dot_fan /*MWe*/)
+		C_MEQ_od_air_mdot__T_co2_out(C_CO2_to_air_cooler *pc_ac,
+			double m_dot_hot_tube /*kg/s*/, double T_hot_out /*K*/, double deltaP_co2 /*kPa*/, double P_eval /*kPa*/, double P_hot_in /*kPa*/,
+			double T_amb /*K*/,
+			double tol_op /*-*/,
+			double mu_air /*kg/m-s*/, double v_air /*1/m3*/, double cp_air /*J/kg-K*/,
+			double k_air /*W/m-K*/, double Pr_air /*-*/)
 		{
-			m_T_amb = T_amb;
-			m_P_amb = P_amb;
-			m_T_hot_in = T_hot_in;
-			m_P_hot_in = P_hot_in;
-			m_m_dot_hot = m_dot_hot;
-			m_T_hot_out = T_hot_out;
+			mpc_ac = pc_ac;
 
-			W_dot_fan = std::numeric_limits<double>::quiet_NaN();
+			m_m_dot_hot_tube = m_dot_hot_tube;	//[kg/s]
+			m_T_hot_out = T_hot_out;	//[K]
+			m_deltaP_co2 = deltaP_co2;	//[kPa]
+			m_P_eval = P_eval;			//[kPa]
+			m_P_hot_in = P_hot_in;		//[kPa]
+
+			m_T_amb = T_amb;			//[K]
+
+			m_tol_op = tol_op;		//[-]
+
+			m_mu_air = mu_air;
+			m_v_air = v_air;
+			m_cp_air = cp_air;
+			m_k_air = k_air;
+			m_Pr_air = Pr_air;
+
+			m_W_dot_fan = std::numeric_limits<double>::quiet_NaN();
 		}
 
-		double W_dot_fan;		//[MWe]
+		double m_W_dot_fan;		//[MWe]
 
 		virtual int operator()(double m_dot_air /*kg/s*/, double *T_hot_out_calc /*K*/);
 	};
@@ -733,7 +760,13 @@ public:
 
 		virtual int operator()(double W_par /*m*/, double *T_co2_hot /*K*/);
 	};
+
+	void calc_air_props(double T_amb /*K*/, double P_amb /*Pa*/,
+		double & mu_air /*kg/m-s*/, double & v_air /*1/m3*/, double & cp_air /*J/kg-K*/,
+		double & k_air /*W/m-K*/, double & Pr_air);
 };
+
+
 
 int outlet_given_geom_and_air_m_dot(double T_co2_out /*K*/, double m_dot_co2_tube /*kg/s*/,
 	double delta_P_co2 /*kPa*/, double P_co2_ave /*kPa*/, double P_hot_in /*kPa*/,
