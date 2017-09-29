@@ -1062,7 +1062,7 @@ public:
 					log(util::format("The user input cutoff fraction, %lg, was reset to the minimum allowable cutoff fraction"
 						" for this sCO2 cycle off-design model, %lg\n", cycle_cutoff_frac_sys, cycle_cutoff_frac_sco2), SSC_WARNING);
 					cycle_cutoff_frac_sys = cycle_cutoff_frac_sco2;
-					assign("cycle_cutoff", cycle_cutoff_frac_sys);
+					assign("cycle_cutoff_frac", cycle_cutoff_frac_sys);
 				}
 				pc->m_cycle_cutoff_frac = cycle_cutoff_frac_sys;		//[-]
 				
@@ -1253,7 +1253,7 @@ public:
 							" for this sCO2 %s cycle off-design model, %lg\n", cycle_f_min, cycle_type.c_str(), sco2_f_min), SSC_WARNING);
 						update("Preprocessing cycle off-design...", 0.0);
 						cycle_f_min = sco2_f_min;
-						assign("cycle_cutoff", cycle_f_min);
+						assign("cycle_cutoff_frac", cycle_f_min);
 					}
 					double m_dot_htf_ND_low = min(0.95, cycle_f_min);	//[-]
 					// Design is always = 1.0, so high needs to be a value > 1.0
