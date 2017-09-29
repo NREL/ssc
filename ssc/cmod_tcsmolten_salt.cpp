@@ -263,6 +263,17 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
 	{ SSC_INPUT,        SSC_MATRIX,      "sco2ud_T_amb_ind_od",      "Off design table of user-defined power cycle performance formed from parametric on T_amb [C]",	 "", "", "sco2_pc_pre",     "is_sco2_preprocess=1",       "",      "" }, 
 	{ SSC_INPUT,        SSC_MATRIX,      "sco2ud_m_dot_htf_ind_od",  "Off design table of user-defined power cycle performance formed from parametric on m_dot_htf [ND]","", "", "sco2_pc_pre",     "is_sco2_preprocess=1",       "",      "" }, 
 
+	{ SSC_INPUT,        SSC_NUMBER,      "_sco2_P_high_limit",       "Preprocess input: upper pressure limit",				         "MPa",	"", "sco2_pc_pre",   "is_sco2_preprocess=1",  "",   "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "_sco2_P_ref",              "Preprocess input: gross power output",				         "MWe"	"", "sco2_pc_pre",   "is_sco2_preprocess=1",  "",   "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "_sco2_T_amb_des",          "Preprocess input: design ambient temperature",		         "C",	"", "sco2_pc_pre",   "is_sco2_preprocess=1",  "",   "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "_sco2_T_approach",         "Preprocess input: compressor approach temperature",	         "C",	"", "sco2_pc_pre",   "is_sco2_preprocess=1",  "",   "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "_sco2_T_htf_hot_des",      "Preprocess input: HTF hot temperature",				         "C",	"", "sco2_pc_pre",   "is_sco2_preprocess=1",  "",   "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "_sco2_deltaT_PHX",		 "Preprocess input: PHX approach temperature",			         "C",	"", "sco2_pc_pre",   "is_sco2_preprocess=1",  "",   "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "_sco2_design_eff",		 "Preprocess input: cycle thermal efficiency",			         "",	"", "sco2_pc_pre",   "is_sco2_preprocess=1",  "",   "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "_sco2_eta_c",				 "Preprocess input: compressor isentropic efficiency",	         "",	"", "sco2_pc_pre",   "is_sco2_preprocess=1",  "",   "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "_sco2_eta_t",				 "Preprocess input: turbine isentropic efficiency",		         "",	"", "sco2_pc_pre",   "is_sco2_preprocess=1",  "",   "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "_sco2_recup_eff_max",		 "Preprocess input: max recuperator effectiveness",              "",    "", "sco2_pc_pre",   "is_sco2_preprocess=1",  "",   "" },
+
 	// System Control	
     { SSC_INPUT,        SSC_NUMBER,      "time_start",           "Simulation start time",                                             "s",            "",            "sys_ctrl",          "?=0",                     "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "time_stop",            "Simulation stop time",                                              "s",            "",            "sys_ctrl",          "?=31536000",              "",                      "" },
@@ -934,6 +945,96 @@ public:
 
 			if (is_sco2_preprocess == 1)
 			{
+				double _sco2_P_high_limit = as_double("_sco2_P_high_limit");   //[MPa]
+				double P_high_limit = as_double("P_high_limit");			   //[MPa]
+				if (!std::isfinite(_sco2_P_high_limit) || _sco2_P_high_limit != P_high_limit)
+				{
+					throw exec_error("tcsmolten_salt", util::format("The upper pressure limit used to generate"
+						" the preprocessed sCO2 cycle data, %lg [MPa], is not equal to the input upper pressure limit %lg [MPa]",
+						_sco2_P_high_limit, P_high_limit));
+				}
+
+				double _sco2_P_ref = as_double("_sco2_P_ref");
+				double P_ref_input = as_double("P_ref");
+				if (!std::isfinite(_sco2_P_ref) || _sco2_P_ref != P_ref_input)
+				{
+					throw exec_error("tcsmolten_salt", util::format("The cycle gross power used to generate"
+						" the preprocessed sCO2 cycle data, %lg [MWe], is not equal to the input cycle gross power %lg [MWe]",
+						_sco2_P_ref, P_ref_input));
+				}
+
+				double _sco2_T_amb_des = as_double("_sco2_T_amb_des");
+				double T_amb_des_input = as_double("sco2_T_amb_des");
+				if (!std::isfinite(_sco2_T_amb_des) || _sco2_T_amb_des != T_amb_des_input)
+				{
+					throw exec_error("tcsmolten_salt", util::format("The design ambient temperature used to generate"
+						" the preprocessed sCO2 cycle data, %lg [C], is not equal to the input design ambient temperature %lg [C]",
+						_sco2_T_amb_des, T_amb_des_input));
+				}
+
+				double _sco2_T_approach = as_double("_sco2_T_approach");
+				double T_approach_input = as_double("sco2_T_approach");
+				if (!std::isfinite(_sco2_T_approach) || _sco2_T_approach != T_approach_input)
+				{
+					throw exec_error("tcsmolten_salt", util::format("The compressor approach temperature used to generate"
+						" the preprocessed sCO2 cycle data, %lg [C], is not equal to the input compressor approach temperature %lg [C]",
+						_sco2_T_approach, T_approach_input));
+				}
+
+				double _sco2_T_htf_hot_des = as_double("_sco2_T_htf_hot_des");
+				double T_htf_hot_des_input = as_double("T_htf_hot_des");
+				if (!std::isfinite(_sco2_T_htf_hot_des) || _sco2_T_htf_hot_des != T_htf_hot_des_input)
+				{
+					throw exec_error("tcsmolten_salt", util::format("The HTF hot temperature uesd to generate"
+						" the preprocessed sCO2 cycle data, %lg [C], is not equal to the input HTF hot temperature",
+						_sco2_T_htf_hot_des, T_htf_hot_des_input));
+				}
+
+				double _sco2_deltaT_PHX = as_double("_sco2_deltaT_PHX");
+				double deltaT_PHX_input = as_double("deltaT_PHX");
+				if (!std::isfinite(_sco2_deltaT_PHX) || _sco2_deltaT_PHX != deltaT_PHX_input)
+				{
+					throw exec_error("tcsmolten_salt", util::format("The PHX approach temperature used to generate"
+						" the preprocessed sCO2 cycle data, %lg [C], is not equal to the input PHX approach temperature",
+						_sco2_deltaT_PHX, deltaT_PHX_input));
+				}
+
+				double _sco2_design_eff = as_double("_sco2_design_eff");
+				double design_eff_input = as_double("design_eff");
+				if (!std::isfinite(_sco2_design_eff) || _sco2_design_eff != design_eff_input)
+				{
+					throw exec_error("tcsmolten_salt", util::format("The thermal efficiency used to generate"
+						" the preprocessed sCO2 cycle data, %lg, is not equal to the input thermal efficiency",
+						_sco2_design_eff, design_eff_input));
+				}
+
+				double _sco2_eta_c = as_double("_sco2_eta_c");
+				double eta_c_input = as_double("eta_c");
+				if (!std::isfinite(_sco2_eta_c) || _sco2_eta_c != eta_c_input)
+				{
+					throw exec_error("tcsmolten_salt", util::format("The compressor isentropic efficiency used to generate"
+						" the preprocessed sCO2 cycle data, %lg, is not equal to the input compressor isentropic efficiency",
+						_sco2_eta_c, eta_c_input));
+				}
+
+				double _sco2_eta_t = as_double("_sco2_eta_t");
+				double eta_t_input = as_double("eta_t");
+				if (!std::isfinite(_sco2_eta_t) || _sco2_eta_t != eta_t_input)
+				{
+					throw exec_error("tcsmolten_salt", util::format("The turbine isentropic efficiency used to generate"
+						" the preprocessed sCO2 cycle data, %lg, is not equal to the input turbine isentropic efficiency",
+						_sco2_eta_t, eta_t_input));
+				}
+
+				double _sco2_recup_eff_max = as_double("_sco2_recup_eff_max");
+				double recup_eff_max = as_double("recup_eff_max");
+				if (!std::isfinite(_sco2_recup_eff_max) || _sco2_recup_eff_max != recup_eff_max)
+				{
+					throw exec_error("tcsmolten_salt", util::format("The max recuperator effectiveness used to generate"
+						" the preprocessed sCO2 cycle data, %lg, is not equal to the input max recuperator effectiveness",
+						_sco2_recup_eff_max, recup_eff_max));
+				}
+
 				// ****************************************************
 				// Setup UDPC model
 				// ****************************************************
