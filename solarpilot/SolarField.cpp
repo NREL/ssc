@@ -1365,7 +1365,7 @@ bool SolarField::PrepareFieldLayout(SolarField &SF, WeatherData *wdata, bool ref
 					//Calculate the sun position
                     Ambient::setDateTime(dt, hour, doy);
 					//latitude, longitude, and elevation should be set in the input file
-					Ambient::calcSunPosition(*V, dt, &az, &zen); 
+					Ambient::calcSunPosition(*V, dt, &az, &zen, true); 
 					
 					//calculate DNI
 					double dniclr = Ambient::calcInsolation(*V, az*D2R, zen*D2R, doy);
@@ -1466,7 +1466,7 @@ bool SolarField::DoLayout( SolarField *SF, sim_results *results, WeatherData *wd
         //latitude, longitude, and elevation should be set in the input file
 	    double az;
         double zen;
-		Ambient::calcSunPosition(*SF->getVarMap(), DT, &az, &zen); 
+		Ambient::calcSunPosition(*SF->getVarMap(), DT, &az, &zen, true); 
 		//If the sun is not above the horizon, don't continue
 		if( zen > 90. )
 				continue;
@@ -1857,7 +1857,7 @@ void SolarField::AnnualEfficiencySimulation( string weather_file, SolarField *SF
 		Ambient::setDateTime(DT, hour, (double)doy);
 		//latitude, longitude, and elevation should be set in the input file
 		double az, zen;
-		Ambient::calcSunPosition(*V, DT, &az, &zen);
+		Ambient::calcSunPosition(*V, DT, &az, &zen); //no time correction because 'hour' is adjusted above
 
 		double dni = wdannual->DNI.at(i);
 				
