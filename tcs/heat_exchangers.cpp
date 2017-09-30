@@ -652,9 +652,9 @@ void NS_HX_counterflow_eqs::calc_req_UA_enth(int hot_fl_code /*-*/, HTFPropertie
 	}
 
 	if (C_R != 1.0)
-		NTU = log((1.0 - eff*C_R) / (1.0 - eff)) / (1.0 - C_R);		// [-] NTU if C_R does not equal 1
+		NTU = log((1.0 - eff*C_R) / std::max(1.E-6, (1.0 - eff))) / (1.0 - C_R);		// [-] NTU if C_R does not equal 1
 	else
-		NTU = eff / (1.0 - eff);
+		NTU = eff / std::max(1.E-6, (1.0 - eff));
 
 	return;
 }
@@ -781,9 +781,10 @@ void NS_HX_counterflow_eqs::solve_q_dot_for_fixed_UA_enth(int hot_fl_code /*-*/,
 			throw(C_csp_exception("Off-design heat exchanger method failed"));
 		}
 	}
-	else
+	else if (test_code == 0 && UA_max_eff <= UA_target)
 	{
-		double hit_max_eff = 1.23;
+		// At maximum allowable heat transfer, the calculated UA is less than target
+		q_dot_solved = q_dot_upper;
 	}
 
 	T_c_out = od_hx_eq.m_T_c_out;	//[K]
