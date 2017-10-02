@@ -3923,7 +3923,17 @@ void C_RecompCycle::design_core_standard(int & error_code)
 	m_W_dot_net_last = w_mc*m_dot_mc + w_rc*m_dot_rc + w_t*m_dot_t;
 	m_eta_thermal_calc_last = m_W_dot_net_last / PHX_des_par.m_Q_dot_design;
 
-	m_objective_metric_last = m_eta_thermal_calc_last;
+	if (ms_des_par.m_des_objective_type == 2)
+	{
+		double phx_deltaT = m_temp_last[TURB_IN] - m_temp_last[HTR_HP_OUT];
+		double under_min_deltaT = std::max(0.0, ms_des_par.m_min_phx_deltaT - phx_deltaT);
+		double eta_deltaT_scale = std::exp(-under_min_deltaT);
+		m_objective_metric_last = m_eta_thermal_calc_last*eta_deltaT_scale;
+	}
+	else
+	{
+		m_objective_metric_last = m_eta_thermal_calc_last;
+	}
 
 	m_m_dot_mc = m_dot_mc;
 	m_m_dot_rc = m_dot_rc;
@@ -4205,6 +4215,9 @@ void C_RecompCycle::opt_design_core(int & error_code)
 	ms_des_par.m_tol = ms_opt_des_par.m_tol;
 	ms_des_par.m_N_turbine = ms_opt_des_par.m_N_turbine;
 
+	ms_des_par.m_des_objective_type = ms_opt_des_par.m_des_objective_type;
+	ms_des_par.m_min_phx_deltaT = ms_opt_des_par.m_min_phx_deltaT;
+
 	// ms_des_par members to be defined by optimizer and set in 'design_point_eta':
 		// m_P_mc_in
 		// m_P_mc_out
@@ -4443,6 +4456,9 @@ void C_RecompCycle::auto_opt_design_core(int & error_code)
 	ms_opt_des_par.m_tol = ms_auto_opt_des_par.m_tol;
 	ms_opt_des_par.m_opt_tol = ms_auto_opt_des_par.m_opt_tol;
 	ms_opt_des_par.m_N_turbine = ms_auto_opt_des_par.m_N_turbine;
+
+	ms_opt_des_par.m_des_objective_type = ms_auto_opt_des_par.m_des_objective_type;
+	ms_opt_des_par.m_min_phx_deltaT = ms_auto_opt_des_par.m_min_phx_deltaT;
 
 	// Outer optimization loop
 	m_objective_metric_auto_opt = 0.0;
