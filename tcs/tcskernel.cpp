@@ -311,7 +311,7 @@ static bool tcsvalue_parse_matrix( tcsvalue *v, const char *s )
 		if ( *p != ']' )
 			return false;
 		
-		*p++;
+		p++;
 		
 		while (*p && (*p == ' ' || *p == '\t'))
 			p++;

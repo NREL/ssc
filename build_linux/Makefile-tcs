@@ -1,7 +1,8 @@
 VPATH = ../tcs
 CC = gcc
 CXX = g++
-CFLAGS = -fPIC -Wall -g -O3 -I../ -D__64BIT__ -I../nlopt -I../shared -I../lpsolve -I../solarpilot
+WARNINGS = -Wall -Wno-unknown-pragmas
+CFLAGS = -fPIC $(WARNINGS) -g -O3 -I../ -D__64BIT__ -I../nlopt -I../shared -I../lpsolve -I../solarpilot
 CXXFLAGS=-std=c++0x $(CFLAGS)
 
 OBJECTS = tcskernel.o \
