@@ -666,6 +666,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
     double disp_qsf_last = 0.;
     double disp_qsf_effadj = 1.;
     double disp_effadj_weight = 0.;
+    //int disp_effadj_count = 0;
 
 	// Block dispatch saved variables
 	bool is_q_dot_pc_target_overwrite = false;
