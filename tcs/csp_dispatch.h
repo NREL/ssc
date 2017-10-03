@@ -262,7 +262,8 @@ public:
         vector<double> q_sfavail_expected;       //Expected available solar field energy
         vector<double> q_sf_expected;           //Expected solar field energy generation
         vector<double> eta_pb_expected;     //Expected power cycle conversion efficiency (normalized)
-        vector<double> eta_sf_expected;     //Expected solar field thermal efficiency (normalized)
+		vector<double> w_dot_pb_max;		//[-] Maximum normalized cycle output
+		vector<double> eta_sf_expected;     //Expected solar field thermal efficiency (normalized)
         vector<double> tes_charge_expected;     //Expected thermal energy storage charge state
         vector<double> q_pb_startup;    //thermal power going to startup
         vector<double> q_rec_startup;   //thermal power going to startup

@@ -173,6 +173,7 @@ void csp_dispatch_opt::clear_output_arrays()
     outputs.q_pb_target.clear();
     outputs.rec_operation.clear();
     outputs.eta_pb_expected.clear();
+	outputs.w_dot_pb_max.clear();
     outputs.eta_sf_expected.clear();
     outputs.q_sfavail_expected.clear();
     outputs.q_sf_expected.clear();
@@ -279,6 +280,8 @@ bool csp_dispatch_opt::predict_performance(int step_start, int ntimeints, int di
         outputs.q_sfavail_expected.push_back( q_inc_ave );
         //power cycle efficiency
         outputs.eta_pb_expected.push_back( cycle_eff_ave );
+		// Maximum power cycle output (normalized)
+		outputs.w_dot_pb_max.push_back(1.0);
         //condenser power
         outputs.w_condf_expected.push_back( wcond_ave );
     }
