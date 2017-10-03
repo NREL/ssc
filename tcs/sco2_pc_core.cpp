@@ -383,7 +383,6 @@ void C_HeatExchanger::hxr_pressure_drops(const std::vector<double> & m_dots, std
 
 void C_HeatExchanger::hxr_conductance(const std::vector<double> & m_dots, double & hxr_UA)
 {
-	int N = (int)m_dots.size();
 	double m_dot_ratio = 0.5*(m_dots[0] / ms_des_par.m_m_dot_design[0] + m_dots[1] / ms_des_par.m_m_dot_design[1]);
 	hxr_UA = ms_des_par.m_UA_design*pow(m_dot_ratio, 0.8);
 }
@@ -1134,8 +1133,6 @@ int C_comp_single_stage::calc_N_from_phi(double T_in /*K*/, double P_in /*kPa*/,
 		return prop_error_code;
 	}
 	double rho_in = co2_props.dens;	//[kg/m^3]
-	double h_in = co2_props.enth;	//[kJ/kg]
-
 	double U_tip = m_dot / (phi_in*rho_in*std::pow(ms_des_solved.m_D_rotor,2));		//[m/s]
 	N_rpm = (U_tip*2.0 / ms_des_solved.m_D_rotor)*9.549296590;		//[rpm]
 
@@ -3694,9 +3691,6 @@ void C_RecompCycle::design_core_standard(int & error_code)
 		// HTR
 	mc_HT_recup.initialize(ms_des_par.m_N_sub_hxrs);
 
-	int max_iter = 500;
-	double temperature_tolerance = 1.E-6;		// Temp differences below this are considered zero
-
 	// Initialize a few variables
 	double m_dot_t, m_dot_mc, m_dot_rc, Q_dot_LT, Q_dot_HT, UA_LT_calc, UA_HT_calc;
 	m_dot_t = m_dot_mc = m_dot_rc = Q_dot_LT = Q_dot_HT = UA_LT_calc = UA_HT_calc = 0.0;
@@ -3921,7 +3915,9 @@ void C_RecompCycle::design_core_standard(int & error_code)
 
 	// Calculate/set cycle performance metrics
 	m_W_dot_net_last = w_mc*m_dot_mc + w_rc*m_dot_rc + w_t*m_dot_t;
-	m_eta_thermal_last = m_W_dot_net_last / PHX_des_par.m_Q_dot_design;
+	m_eta_thermal_calc_last = m_W_dot_net_last / PHX_des_par.m_Q_dot_design;
+
+	m_objective_metric_last = m_eta_thermal_calc_last;
 
 	m_m_dot_mc = m_dot_mc;
 	m_m_dot_rc = m_dot_rc;
@@ -4262,7 +4258,7 @@ void C_RecompCycle::opt_design_core(int & error_code)
 	if( index > 0 )
 	{
 		// Ensure thermal efficiency is initialized to 0
-		m_eta_thermal_opt = 0.0;
+		m_objective_metric_opt = 0.0;
 
 		// Set up instance of nlopt class and set optimization parameters
 		nlopt::opt		opt_des_cycle(nlopt::LN_SBPLX, index);
@@ -4272,7 +4268,7 @@ void C_RecompCycle::opt_design_core(int & error_code)
 		opt_des_cycle.set_xtol_rel(ms_opt_des_par.m_opt_tol);
 
 		// Set max objective function
-		opt_des_cycle.set_max_objective(nlopt_callback_opt_des_1, this);		// Calls wrapper/callback that calls 'design_point_eta', which optimizes design point eta through repeated calls to 'design'
+		opt_des_cycle.set_max_objective(nlopt_cb_opt_des, this);		// Calls wrapper/callback that calls 'design_point_eta', which optimizes design point eta through repeated calls to 'design'
 		double max_f = std::numeric_limits<double>::quiet_NaN();
 		nlopt::result   result_des_cycle = opt_des_cycle.optimize(x, max_f);
 		
@@ -4306,7 +4302,7 @@ void C_RecompCycle::opt_design_core(int & error_code)
 
 }
 
-double C_RecompCycle::design_point_eta(const std::vector<double> &x)
+double C_RecompCycle::design_cycle_return_objective_metric(const std::vector<double> &x)
 {
 	// 'x' is array of inputs either being adjusted by optimizer or set constant
 	// Finish defining ms_des_par based on current 'x' values
@@ -4385,19 +4381,19 @@ double C_RecompCycle::design_point_eta(const std::vector<double> &x)
 
 	design_core(error_code);
 
-	double eta_thermal = 0.0;
+	double objective_metric = 0.0;
 	if( error_code == 0 )
 	{
-		eta_thermal = m_eta_thermal_last;
+		objective_metric = m_objective_metric_last;
 
-		if( m_eta_thermal_last > m_eta_thermal_opt )
+		if (m_objective_metric_last > m_objective_metric_opt)
 		{
 			ms_des_par_optimal = ms_des_par;
-			m_eta_thermal_opt = m_eta_thermal_last;
+			m_objective_metric_opt = m_objective_metric_last;
 		}
 	}
 
-	return eta_thermal;
+	return objective_metric;
 }
 
 void C_RecompCycle::auto_opt_design(S_auto_opt_design_parameters & auto_opt_des_par_in, int & error_code)
@@ -4443,10 +4439,15 @@ void C_RecompCycle::auto_opt_design_core(int & error_code)
 	ms_opt_des_par.m_N_turbine = ms_auto_opt_des_par.m_N_turbine;
 
 	// Outer optimization loop
-	m_eta_thermal_auto_opt = 0.0;
+	m_objective_metric_auto_opt = 0.0;
 
+	double P_low_limit = std::min(ms_auto_opt_des_par.m_P_high_limit, std::max(10.E3, ms_auto_opt_des_par.m_P_high_limit*0.2));		//[kPa]
 	double best_P_high = fminbr(
-		ms_auto_opt_des_par.m_P_high_limit*0.2, ms_auto_opt_des_par.m_P_high_limit, &fmin_callback_opt_eta_1, this, 1.0);
+		P_low_limit, ms_auto_opt_des_par.m_P_high_limit, &fmin_cb_opt_des_fixed_P_high, this, 1.0);
+
+	// These should be set:
+	// ms_des_par_optimal;
+	// m_eta_thermal_opt;
 
 	// Check model with P_mc_out set at P_high_limit for a recompression and simple cycle and use the better configuration
 	double PR_mc_guess = ms_des_par_auto_opt.m_P_mc_out / ms_des_par_auto_opt.m_P_mc_in;
@@ -4478,10 +4479,10 @@ void C_RecompCycle::auto_opt_design_core(int & error_code)
 
 		opt_design_core(rc_error_code);
 
-		if( rc_error_code == 0 && m_eta_thermal_opt > m_eta_thermal_auto_opt )
+		if( rc_error_code == 0 && m_objective_metric_opt > m_objective_metric_auto_opt )
 		{
 			ms_des_par_auto_opt = ms_des_par_optimal;
-			m_eta_thermal_auto_opt = m_eta_thermal_opt;
+			m_objective_metric_auto_opt = m_objective_metric_opt;
 		}
 	}
 
@@ -4510,10 +4511,10 @@ void C_RecompCycle::auto_opt_design_core(int & error_code)
 
 	opt_design_core(s_error_code);
 
-	if( s_error_code == 0 && m_eta_thermal_opt > m_eta_thermal_auto_opt )
+	if( s_error_code == 0 && m_objective_metric_opt > m_objective_metric_auto_opt )
 	{
 		ms_des_par_auto_opt = ms_des_par_optimal;
-		m_eta_thermal_auto_opt = m_eta_thermal_opt;
+		m_objective_metric_auto_opt = m_objective_metric_opt;
 	}
 
 	ms_des_par = ms_des_par_auto_opt;
@@ -4841,7 +4842,7 @@ int C_RecompCycle::C_MEQ_sco2_design_hit_eta__UA_total::operator()(double UA_rec
 }
 
 
-double C_RecompCycle::opt_eta(double P_high_opt)
+double C_RecompCycle::opt_eta_fixed_P_high(double P_high_opt)
 {
 	double PR_mc_guess = 1.1;
 	if(P_high_opt > P_pseudocritical_1(ms_opt_des_par.m_T_mc_in))
@@ -4875,12 +4876,12 @@ double C_RecompCycle::opt_eta(double P_high_opt)
 		opt_design_core(rc_error_code);
 	
 		if( rc_error_code == 0 )
-			local_eta_rc = m_eta_thermal_opt;
+			local_eta_rc = m_objective_metric_opt;
 	
-		if(rc_error_code == 0 && m_eta_thermal_opt > m_eta_thermal_auto_opt)
+		if(rc_error_code == 0 && m_objective_metric_opt > m_objective_metric_auto_opt)
 		{
 			ms_des_par_auto_opt = ms_des_par_optimal;
-			m_eta_thermal_auto_opt = m_eta_thermal_opt;
+			m_objective_metric_auto_opt = m_objective_metric_opt;
 		}
 	}
 
@@ -4910,12 +4911,12 @@ double C_RecompCycle::opt_eta(double P_high_opt)
 
 	double local_eta_s = 0.0;
 	if( s_error_code == 0 )
-		local_eta_s = m_eta_thermal_opt;
+		local_eta_s = m_objective_metric_opt;
 
-	if(s_error_code == 0 && m_eta_thermal_opt > m_eta_thermal_auto_opt)
+	if(s_error_code == 0 && m_objective_metric_opt > m_objective_metric_auto_opt)
 	{
 		ms_des_par_auto_opt = ms_des_par_optimal;
-		m_eta_thermal_auto_opt = m_eta_thermal_opt;
+		m_objective_metric_auto_opt = m_objective_metric_opt;
 	}
 
 	return -max(local_eta_rc, local_eta_s);
@@ -5021,7 +5022,7 @@ void C_RecompCycle::finalize_design(int & error_code)
 	ms_des_solved.m_entr = m_entr_last;
 	ms_des_solved.m_dens = m_dens_last;
 
-	ms_des_solved.m_eta_thermal = m_eta_thermal_last;
+	ms_des_solved.m_eta_thermal = m_eta_thermal_calc_last;
 	ms_des_solved.m_W_dot_net = m_W_dot_net_last;
 	ms_des_solved.m_m_dot_mc = m_m_dot_mc;
 	ms_des_solved.m_m_dot_rc = m_m_dot_rc;
@@ -8061,18 +8062,18 @@ void C_RecompCycle::off_design_fix_shaft_speeds_core(int & error_code)
 //	return eta_return;
 //}
 
-double fmin_callback_opt_eta_1(double x, void *data)
+double fmin_cb_opt_des_fixed_P_high(double P_high /*kPa*/, void *data)
 {
 	C_RecompCycle *frame = static_cast<C_RecompCycle*>(data);
 
-	return frame->opt_eta(x);
+	return frame->opt_eta_fixed_P_high(P_high);
 }
 
-double nlopt_callback_opt_des_1(const std::vector<double> &x, std::vector<double> &grad, void *data)
+double nlopt_cb_opt_des(const std::vector<double> &x, std::vector<double> &grad, void *data)
 {
 	C_RecompCycle *frame = static_cast<C_RecompCycle*>(data);
 	if( frame != NULL ) 
-		return frame->design_point_eta(x);
+		return frame->design_cycle_return_objective_metric(x);
 	else 
 		return 0.0;
 }
@@ -8193,8 +8194,6 @@ bool find_polynomial_coefs(const std::vector<double> x_data, const std::vector<d
 	}
 
 	std::vector<double> x(n_coefs);
-
-	bool solution_found = false;
 	
 	// Set up instance of nlopt class and set optimization parameters
 		// nlopt::opt surf(nlopt::LN_NELDERMEAD, nbeta); from Autopilot_api.cpp

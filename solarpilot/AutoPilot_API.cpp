@@ -597,10 +597,10 @@ bool AutoPilot::Setup(var_map &V, bool /*for_optimize*/)
 	//-----------------------------------------------------------------
 
     //need to set up the template combo
-    V.sf.temp_which.combo_clear();
-    std::string name = "Template 1", val = "0";
-    V.sf.temp_which.combo_add_choice(name, val);
-    V.sf.temp_which.combo_select_by_choice_index( 0 ); //use the first heliostat template
+    //V.sf.temp_which.combo_clear();
+    //std::string name = "Template 1", val = "0";
+    //V.sf.temp_which.combo_add_choice(name, val);
+    //V.sf.temp_which.combo_select_by_choice_index( 0 ); //use the first heliostat template
 
 	//Dynamically allocate the solar field object, if needed
 	if(! _is_solarfield_external ){

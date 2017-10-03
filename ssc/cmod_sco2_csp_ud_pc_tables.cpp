@@ -187,7 +187,7 @@ public:
 		}
 		else if( sco2_rc_des_par.m_design_method == 2 )
 		{
-			sco2_rc_des_par.m_UA_recup_tot_des = as_double("UA_recup_tot");		//[kW/K] Total recuperator conductance
+			sco2_rc_des_par.m_UA_recup_tot_des = as_double("UA_recup_tot_des");		//[kW/K] Total recuperator conductance
 			if( sco2_rc_des_par.m_UA_recup_tot_des < 0.0 )
 			{
 				log("For cycle design method = 2, the input total recuperator conductance must be greater than 0", SSC_ERROR, -1.0);
