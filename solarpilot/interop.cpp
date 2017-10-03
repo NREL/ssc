@@ -131,9 +131,9 @@ void interop::GenerateSimulationWeatherData(var_map &V, int design_method, Array
 
 	{		//Subset of days/hours
 		//Need to add this still
-		throw spexception("Simulation with a user-specified list of days/hours is not currently supported. Please use another option.");
 		V.amb.sim_time_step.Setval(0.);
-		break;
+		throw spexception("Simulation with a user-specified list of days/hours is not currently supported. Please use another option.");
+		//break;
 	}
 	//case LAYOUT_DETAIL::SINGLE_POINT:
     case var_solarfield::DES_SIM_DETAIL::SINGLE_SIMULATION_POINT:
@@ -275,12 +275,10 @@ void interop::GenerateSimulationWeatherData(var_map &V, int design_method, Array
 					
 
 			//Add up the total and average DNI's
-			double dni, dni_tot = 0., dni_peak = 0.;
-			double tdry, pres, wind;
+			double dni, tdry, pres, wind;
 			
 			double hrmid = (hrs[0] + hrs[1])/2. + hoy;
 			int nhrs = (int)(floor((hrs[1] - hrs[0])/(double)nskip))*nskip;
-			int nsteps = nhrs/nskip + 1; //total number of simulation points in the day
 
 			//make sure the start and end hours are symmetric about solar noon
 			double nmidspan = (double)nhrs/2.;
@@ -984,7 +982,6 @@ void sim_result::process_field_stats(){
 
 void sim_result::process_flux_stats(SolarField &SF){
 	//Determine the flux info
-	double atot = SF.calcReceiverTotalArea();
 	double fave=0., fave2=0., fmax = -9.e9, fmin = 9.e9;
 	int nf = 0;
 	vector<Receiver*> *recs = SF.getReceivers();

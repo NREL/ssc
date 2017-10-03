@@ -312,7 +312,6 @@ void FluxSurface::DefineFluxPoints(var_receiver &V, int rec_geom, int nx, int ny
 		double daz = span/double(_nflux_x);	//span will always be 2 PI for this
 
 		int npanels = V.n_panels.val; 
-		double panel_az = V.panel_rotation.val * D2R; 
 		//calculate the angular span each panel occupies
 		double panel_az_span = span / (double)npanels;
 		
@@ -414,7 +413,9 @@ void FluxSurface::Normalize(){
 
 }
 
-void FluxSurface::Reshape(int nx, int ny){
+#if 0
+void FluxSurface::Reshape(int nx, int ny)
+{
 	/* 
 	Take the current flux map and shape it into the specified dimension while maintaining total power
 	*/
@@ -430,9 +431,9 @@ void FluxSurface::Reshape(int nx, int ny){
 	//FluxGrid grid_temp(nx,ny);
 
 	//Code Here -- TO DO
-
-
+    return;
 }
+#endif
 
 
 //-----------------Receiver----------------
