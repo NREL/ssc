@@ -787,7 +787,6 @@ void AutoPilot::PrepareFluxSimulation(sp_flux_table &fluxtab, int flux_res_x, in
 	vector<Receiver*> rec_to_sim = *_SF->getReceivers();
 	//Get flags and settings
 	int fluxmap_format = V->par.fluxmap_format.mapval();
-	(void*)&fluxmap_format; // cast to reference variable
 	
 	if(flux_res_y > 1)
         V->flux.aim_method.combo_select_by_mapval( var_fluxsim::AIM_METHOD::IMAGE_SIZE_PRIORITY );
@@ -975,7 +974,6 @@ bool AutoPilot::EvaluateDesign(double &obj_metric, double &flux_max, double &tot
 
 	//Set the optimization objective value
 	double flux_overage_ratio = max(flux_max/V->recs.front().peak_flux.val, 1.);
-	(void*)&flux_overage_ratio;
 
 	obj_metric = tot_cost/power 
 		//* (1. + (flux_overage_ratio - 1.) * V->opt.flux_penalty.val) 
@@ -1168,7 +1166,6 @@ bool AutoPilot::OptimizeRSGS(vector<double*> &optvars, vector<double> &upper_ran
 		double min_ss;
 		try{
 			nlopt::result sres = surf.optimize(Reg.Beta, min_ss);
-			(void*)&sres;
 		}
 		catch( std::exception &e ){
 			_summary_siminfo->addSimulationNotice( e.what() );
@@ -1323,7 +1320,6 @@ bool AutoPilot::OptimizeRSGS(vector<double*> &optvars, vector<double> &upper_ran
 						if( all_steep_objs.at(i) < best_steep_obj ) best_steep_obj = all_steep_objs.at(i);
 					if(best_fact_obj < best_steep_obj){
 						double zero=0.;
-						(void*)&zero;
 						//Calculate a new step vector
 						vector<double> new_step_vector( step_vector );
 
@@ -1627,7 +1623,6 @@ bool AutoPilot::OptimizeAuto(vector<double*> &optvars, vector<double> &upper_ran
     double fmin;
     try{
         nlopt::result resopt = nlobj.optimize( start, fmin );
-		(void*)&resopt;
         _summary_siminfo->addSimulationNotice( ol.c_str() );
         
         //int iopt = 0;
@@ -1761,7 +1756,6 @@ bool AutoPilot::OptimizeSemiAuto(vector<double*> &optvars, vector<double> &/*upp
         double fmin;
         try{
             nlopt::result resopt = nlobj.optimize( start, fmin );
-			(void*)&resopt;
             _summary_siminfo->addSimulationNotice( ol.c_str() );
         
             int iopt = 0;
@@ -1839,7 +1833,6 @@ bool AutoPilot::OptimizeSemiAuto(vector<double*> &optvars, vector<double> &/*upp
         double fmin;
         try{
             nlopt::result resopt = nlobj.optimize( start, fmin );
-			(void*)&resopt;
             _summary_siminfo->addSimulationNotice( ol.c_str() );
         
             int iopt = 0;
@@ -1910,7 +1903,6 @@ bool AutoPilot::OptimizeSemiAuto(vector<double*> &optvars, vector<double> &/*upp
         double fmin;
         try{
             nlopt::result resopt = nlobj.optimize( start, fmin );
-			(void*)&resopt;
             _summary_siminfo->addSimulationNotice( ol.c_str() );
         
             int iopt = 0;
@@ -2039,7 +2031,6 @@ bool AutoPilot_S::CreateLayout(sp_layout &layout, bool do_post_process)
 	PreSimCallbackUpdate();
 
 	int nsim_req = _SF->calcNumRequiredSimulations();
-	(void*)&nsim_req;
 	//if(! _SF->isSolarFieldCreated()){
 		//throw spexception("The solar field Create() method must be called before generating the field layout.");
 	//}

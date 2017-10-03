@@ -479,7 +479,6 @@ void optical_hash_tree::create_node(opt_element &node, bool rad_direction, int r
 void optical_hash_tree::update_divisions(double res){
 	double *az = Data->extents_az;
     double *r = Data->extents_r; 
-	(void*)&az;
         
     //calculate the number of divisions required to achieve the required resolution
  	nr_req = int(ceil( log((r[1]-r[0])/res)/log(2.)));
