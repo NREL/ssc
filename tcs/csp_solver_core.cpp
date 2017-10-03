@@ -673,7 +673,13 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 
 	//mf_callback(m_cdata, 0.0, 0, 0.0);
 
-    mc_csp_messages.add_message(C_csp_messages::WARNING, util::format("End time: %f", mc_kernel.get_sim_setup()->m_sim_time_end) );
+    double start_time = mc_kernel.get_sim_setup()->m_sim_time_start;
+    if( start_time != 0. )
+        mc_csp_messages.add_message(C_csp_messages::WARNING, util::format("Start time: %f", start_time) );
+
+    double end_time = mc_kernel.get_sim_setup()->m_sim_time_end;
+    if(end_time != 8760*3600.)
+        mc_csp_messages.add_message(C_csp_messages::WARNING, util::format("End time: %f", end_time) );
 
 	while( mc_kernel.mc_sim_info.ms_ts.m_time <= mc_kernel.get_sim_setup()->m_sim_time_end )
 	{

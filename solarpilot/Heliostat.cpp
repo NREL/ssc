@@ -657,8 +657,6 @@ void Heliostat::calcAndSetAimPointFluxPlane(sp_point &aimpos_abs, Receiver &Rec,
     double az = atan2(NV.i, NV.j);
     double el = atan2(NV.k*NV.k, NV.i*NV.i + NV.j*NV.j); 
 
-    var_receiver* R = Rec.getVarMap();
-
     //rotate into flux plane coordinates
     Toolbox::rotation(PI - az,2,aimpos);
 	Toolbox::rotation(PI/2. - el,0,aimpos);

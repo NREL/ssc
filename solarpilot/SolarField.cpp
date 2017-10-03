@@ -1414,7 +1414,7 @@ bool SolarField::DoLayout( SolarField *SF, sim_results *results, WeatherData *wd
     }
 		
 	double dni, dom, doy, hour, month, tdb, pres, wind, step_weight;
-    int hoy;
+    int hoy=0;
 	bool is_pmt_factors = SF->getVarMap()->fin.is_pmt_factors.val;
 
     vector<double> *tous = &SF->getVarMap()->fin.pricing_array.Val();
@@ -2975,30 +2975,6 @@ void SolarField::RefactorHeliostatImages(Vect &Sun){
 
 }
 
-//bool SolarField::SimulateTime(const string &data){
-//	/* 
-//	Simulate a particular date/time for the current solar field geometry.
-//
-//	The argument "data" is a comma-separated string containing the following items:
-//	<day of the month>, <hour of the day>, <month (1-12)>, <dni [W/m2]>,<amb. temperature [C]>, <atm. pressure [atm]>, <wind velocity [m/s]>, <weighting factor>
-//
-//	for example:
-//	data = "20,12,3,950,25,1,0,1."
-//	*/
-//	
-//	vector<string> vdata = split(data, ",");
-//	int hour, dom, month;
-//	double args[5];
-//	to_integer(vdata.at(0), &dom);
-//	to_integer(vdata.at(1), &hour);
-//	to_integer(vdata.at(2), &month);
-//
-//	for(int i=3; i<8; i++){
-//		to_double(vdata.at(i), &args[i-3]);
-//	}
-//	return SimulateTime(hour, dom, month, args, 5);
-//}
-
 bool SolarField::SimulateTime(int /*hour*/, int day_of_month, int month, sim_params &P){
 	/* 
 	Simulate a particular date/time for the current solar field geometry.
@@ -3013,9 +2989,9 @@ bool SolarField::SimulateTime(int /*hour*/, int day_of_month, int month, sim_par
 
 	*/
 
-	//Convert the day of the month to a day of year
+    //update DateTime structure with necessary info
     DateTime DT;
-	int doy = DT.GetDayOfYear(2011, month, day_of_month); 
+    DT.SetDate(2011, month, day_of_month);  //also updates day of year
 
 	//Calculate the sun position
 	double az, zen;
@@ -3031,28 +3007,6 @@ bool SolarField::SimulateTime(int /*hour*/, int day_of_month, int month, sim_par
 	return true;
 }
 
-//bool SolarField::SimulateTime(double sun_elevation, double sun_azimuth, double *args, int nargs){
-//	/* 
-//	Simulate a particular sun position for the current solar field geometry.
-//
-//	Updates the local values of the sun position.
-//
-//	sun_elevation	|	solar elevation angle [0,90] degrees
-//	sun_azimuth		|	solar azimuth angle [-180,180] degrees, N => 0
-//	args[0]			|	DNI [W/m2]
-//	args[1]			|	Ambient temperature [C]
-//	args[2]			|	Atmospheric pressure [atm]
-//	args[3]			|	Wind velocity [m/s]
-//	*/
-//
-//	//If the sun is not in a valid position, don't simulate
-//	if( sun_elevation <= 0. || sun_elevation > 90. ) return false;
-//
-//    getAmbientObject()->setSolarPosition(sun_azimuth * D2R, PI/2.-sun_elevation*D2R);
-//	Simulate(args, nargs);
-//	return true;
-//	
-//}
 
 void SolarField::Simulate(double azimuth, double zenith, sim_params &P)
 {
@@ -3079,19 +3033,6 @@ void SolarField::Simulate(double azimuth, double zenith, sim_params &P)
 
     //calculate sun vector
     Vect Sun = Ambient::calcSunVectorFromAzZen(azimuth, zenith);
-
-	//if(_var_map->fin.is_pmt_factors.val)
- //   {
- //       
- //       int f = _financial.getScheduleArray()->at(_ambient.getDateTimeObj()->GetHourOfYear())-1;
-	//	payfactor = _var_map->fin.pmt_factors.val.at(f); 
-	//}
-	//else{
-	//	payfactor = 1.;
-	//}
-	//if( nargs == 5 )
-	//	payfactor *= args[4];	//simulation weighting factor
-
 
 	for(int i=0; i<(int)_receivers.size(); i++)
     {
@@ -3183,8 +3124,6 @@ void SolarField::SimulateHeliostatEfficiency(SolarField *SF, Vect &Sun, Heliosta
         return;
     }
 
-	int hid = helios->getId();
-
 	//Cosine loss
 	helios->setEfficiencyCosine( Toolbox::dotprod(Sun, *helios->getTrackVector()) );
 	
@@ -3255,8 +3194,8 @@ double SolarField::calcShadowBlock(Heliostat *H, Heliostat *HI, int mode, Vect &
 
 	The method returns a double value equal to the fraction lost to interference.
 	*/
-
-	if(false){ //HI->IsRound()){	//Remove this for now
+#if 0
+	if(HI->IsRound()){	//Remove this for now
 		//			Round heliostats
 
 		/* 
@@ -3319,7 +3258,9 @@ double SolarField::calcShadowBlock(Heliostat *H, Heliostat *HI, int mode, Vect &
 
 		
 	}
-	else{
+	else
+#endif
+    {
 		//			rectangular heliostats
 		
 		sp_point *HIloc, *Hloc;
@@ -3448,9 +3389,6 @@ double SolarField::calcShadowBlock(Heliostat *H, Heliostat *HI, int mode, Vect &
 		}
 	}
 
-	//default return
-	return 0.;
-
 }
 
 double *SolarField::getPlotBounds(bool /*use_land*/){
@@ -3493,12 +3431,11 @@ void SolarField::calcHeliostatShadows(Vect &Sun){
 	Nv.Set(0., 0., 1.);
 	int npos = _heliostats.size();
 	//Calculate differently if the heliostats are round
-	if(_helio_templates.at(0)->getVarMap()->is_round.mapval() == var_heliostat::IS_ROUND::ROUND){
-
-		return;
+#if 0
+	if(_helio_templates.at(0)->getVarMap()->is_round.mapval() == var_heliostat::IS_ROUND::ROUND)
+    {
 
 		//This is all wrong
-
 
 
 		Vect hvect_xy, hvect_z, svect_xy, svect_z;
@@ -3537,7 +3474,9 @@ void SolarField::calcHeliostatShadows(Vect &Sun){
 			
 		}
 	}
-	else{
+	else
+#endif
+    {   //rectangular heliostats
 		for(int i=0; i<npos; i++){
 			P.Set(0., 0., -_heliostats.at(i)->getVarMap()->height.val/2.*1.1);
 			_heliostats.at(i)->getShadowCoords()->resize(4);
