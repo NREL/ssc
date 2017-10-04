@@ -188,8 +188,6 @@ void csp_dispatch_opt::clear_output_arrays()
 bool csp_dispatch_opt::check_setup(int nstep)
 {
     //check parameters and inputs to make sure everything has been set up correctly
-    bool ok = true;
-
     if( (int)price_signal.size() < nstep )   return false;
 
     if( !m_is_weather_setup ) return false;
@@ -373,7 +371,6 @@ static void calculate_parameters(csp_dispatch_opt *optinst, unordered_map<std::s
             pars["Z_2"] = 1./(double)m * ( fi - pars["Z_1"] * fhfi );
         }
 
-        double rate1 = 0;
         pars["etap"] = pars["Z_1"]*optinst->params.eta_cycle_ref; //rate2
 
         double limit1 = (-pars["Z_2"]*pars["W_dot_cycle"])/(pars["Z_1"]*optinst->params.eta_cycle_ref);  //q at point where power curve crosses x-axis
