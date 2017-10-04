@@ -143,6 +143,7 @@ csp_dispatch_opt::csp_dispatch_opt()
     params.q_pb_des = numeric_limits<double>::quiet_NaN();
     params.siminfo = 0;   
     params.col_rec = 0;
+	params.mpc_pc = 0;
     params.sf_effadj = 1.;
     params.info_time = 0.;
     params.eta_cycle_ref = numeric_limits<double>::quiet_NaN();

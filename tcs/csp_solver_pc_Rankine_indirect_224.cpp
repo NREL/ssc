@@ -454,6 +454,11 @@ double C_pc_Rankine_indirect_224::get_max_q_pc_startup()
 	}
 }
 
+double C_pc_Rankine_indirect_224::get_max_power_output_operation_constraints(double T_amb /*C*/)
+{
+	return 1.0;
+}
+
 double C_pc_Rankine_indirect_224::get_efficiency_at_TPH(double T_degC, double P_atm, double relhum_pct, double *w_dot_condenser)
 {
     /* 

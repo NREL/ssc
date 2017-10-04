@@ -651,6 +651,7 @@ public:
     virtual double get_hot_startup_energy() = 0;    //[MWh]
     virtual double get_max_thermal_power() = 0;     //MW
     virtual double get_min_thermal_power() = 0;     //MW
+	virtual double get_max_power_output_operation_constraints(double T_amb /*C*/) = 0;	//[-] Normalized over design power
     virtual double get_efficiency_at_TPH(double T_degC, double P_atm, double relhum_pct, double *w_dot_condenser=0) = 0; //-
     virtual double get_efficiency_at_load(double load_frac, double *w_dot_condenser=0) = 0;
 	virtual double get_htf_pumping_parasitic_coef() = 0;	//[kWe/kWt]
