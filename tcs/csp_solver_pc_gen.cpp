@@ -225,11 +225,11 @@ double C_pc_gen::get_min_thermal_power()
 
 	return std::numeric_limits<double>::quiet_NaN();	//[MW]
 }
-double C_pc_gen::get_max_power_output_operation_constraints(double T_amb /*C*/)
+void C_pc_gen::get_max_power_output_operation_constraints(double T_amb /*C*/, double & m_dot_HTF_ND_max, double & W_dot_ND_max)
 {
 	throw(C_csp_exception("C_csp_gen_pc::get_max_power_output_operation_constraints() is not complete"));
 
-	return std::numeric_limits<double>::quiet_NaN();	//[-]
+	return;	//[-]
 }
 double C_pc_gen::get_efficiency_at_TPH(double T_degC, double P_atm, double relhum_pct, double *w_dot_condenser)
 {

@@ -735,13 +735,20 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 
 		q_pc_target = f_turbine_tou * m_cycle_q_dot_des;	//[MW]
 
+
+		double m_dot_htf_ND_max = std::numeric_limits<double>::quiet_NaN();
+		double W_dot_ND_max = std::numeric_limits<double>::quiet_NaN();
+		mc_power_cycle.get_max_power_output_operation_constraints(mc_weather.ms_outputs.m_tdry, m_dot_htf_ND_max, W_dot_ND_max);
+		m_m_dot_pc_max = m_dot_htf_ND_max * m_m_dot_pc_des;
+
+
 		// Need to call power cycle at ambient temperature to get a guess of HTF return temperature
 		// If the return temperature is hotter than design, then the mass flow from the receiver will be
 		// bigger than expected
 		mc_pc_htf_state_in.m_temp = m_cycle_T_htf_hot_des - 273.15; //[C]
 		mc_pc_htf_state_in.m_pres = m_cycle_P_hot_des;	//[kPa]
 		mc_pc_htf_state_in.m_qual = m_cycle_x_hot_des;	//[-]
-		mc_pc_inputs.m_m_dot = m_m_dot_pc_des;						//[kg/hr] no mass flow rate to power cycle
+		mc_pc_inputs.m_m_dot = (std::min)(m_m_dot_pc_max, m_m_dot_pc_des);				//[kg/hr] no mass flow rate to power cycle
 		// Inputs
 		mc_pc_inputs.m_standby_control = C_csp_power_cycle::ON;
 		//mc_pc_inputs.m_tou = tou_timestep;

@@ -454,9 +454,41 @@ double C_pc_Rankine_indirect_224::get_max_q_pc_startup()
 	}
 }
 
-double C_pc_Rankine_indirect_224::get_max_power_output_operation_constraints(double T_amb /*C*/)
+void C_pc_Rankine_indirect_224::get_max_power_output_operation_constraints(double T_amb /*C*/, double & m_dot_HTF_ND_max, double & W_dot_ND_max)
 {
-	return 1.0;
+	if (!ms_params.m_is_user_defined_pc)
+	{
+		m_dot_HTF_ND_max = ms_params.m_cycle_max_frac;	//[-]
+		W_dot_ND_max = m_dot_HTF_ND_max;
+		return;
+	}
+	else
+	{
+		// Calculate non-dimensional mass flow rate relative to design point
+		m_dot_HTF_ND_max = ms_params.m_cycle_max_frac;		//[-] Use max mass flow rate
+
+		// Get ND performance at off-design ambient temperature
+		W_dot_ND_max = mc_user_defined_pc.get_W_dot_gross_ND
+			(ms_params.m_T_htf_hot_ref,
+			T_amb,
+			m_dot_HTF_ND_max);	//[-]
+
+		if (W_dot_ND_max >= m_dot_HTF_ND_max)
+		{
+			return;
+		}
+
+		// set m_dot_ND to P_cycle_ND
+		m_dot_HTF_ND_max = W_dot_ND_max;
+
+		// Get ND performance at off-design ambient temperature
+		W_dot_ND_max = mc_user_defined_pc.get_W_dot_gross_ND
+			(ms_params.m_T_htf_hot_ref,
+			T_amb,
+			m_dot_HTF_ND_max);	//[-]
+
+		return;
+	}
 }
 
 double C_pc_Rankine_indirect_224::get_efficiency_at_TPH(double T_degC, double P_atm, double relhum_pct, double *w_dot_condenser)

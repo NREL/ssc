@@ -203,11 +203,11 @@ double C_pc_heat_sink::get_min_thermal_power()
 	return 0.0;		//[MWt]
 }
 
-double C_pc_heat_sink::get_max_power_output_operation_constraints(double T_amb /*C*/)
+void C_pc_heat_sink::get_max_power_output_operation_constraints(double T_amb /*C*/, double & m_dot_HTF_ND_max, double & W_dot_ND_max)
 {
 	throw(C_csp_exception("C_pc_heat_sink::get_max_power_output_operation_constraints() is not complete"));
 
-	return std::numeric_limits<double>::quiet_NaN();	//[-]
+	return ;	//[-]
 }
 
 double C_pc_heat_sink::get_efficiency_at_TPH(double T_degC, double P_atm, double relhum_pct, double *w_dot_condenser)
