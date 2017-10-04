@@ -235,6 +235,7 @@ bool csp_dispatch_opt::predict_performance(int step_start, int ntimeints, int di
         double cycle_eff_ave = 0.;
         double q_inc_ave = 0.;
         double wcond_ave = 0.;
+		double w_dot_pb_max_ave = 0.0;
 
         for(int j=0; j<divs_per_int; j++)     //take averages over hour if needed
         {
@@ -266,6 +267,11 @@ bool csp_dispatch_opt::predict_performance(int step_start, int ntimeints, int di
             cycle_eff *= params.eta_cycle_ref;  
             cycle_eff_ave += cycle_eff * ave_weight;
 
+			double w_dot_pb_max_local = std::numeric_limits<double>::quiet_NaN();
+			double m_dot_htf_max_local = std::numeric_limits<double>::quiet_NaN();
+			params.mpc_pc->get_max_power_output_operation_constraints(m_weather.ms_outputs.m_tdry, m_dot_htf_max_local, w_dot_pb_max_local);
+			w_dot_pb_max_ave += w_dot_pb_max_local * ave_weight;	//[-]
+
             //store the condenser parasitic power fraction
             double wcond_f = params.wcondcoef_table_Tdb.interpolate( m_weather.ms_outputs.m_tdry );
             wcond_ave += wcond_f * ave_weight;
@@ -282,7 +288,7 @@ bool csp_dispatch_opt::predict_performance(int step_start, int ntimeints, int di
         //power cycle efficiency
         outputs.eta_pb_expected.push_back( cycle_eff_ave );
 		// Maximum power cycle output (normalized)
-		outputs.w_dot_pb_max.push_back(1.0);
+		outputs.w_dot_pb_max.push_back(w_dot_pb_max_ave);		//[-]
         //condenser power
         outputs.w_condf_expected.push_back( wcond_ave );
     }
