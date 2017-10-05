@@ -3125,16 +3125,19 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 
 				double q_dot_pc_fixed = q_pc_min;			//[MWt]
 
-				double time_tes_dc, T_tes_in_exit_tolerance, q_pc_exit_tolerance;
-				time_tes_dc = T_tes_in_exit_tolerance = q_pc_exit_tolerance = std::numeric_limits<double>::quiet_NaN();
+				double time_tes_dc;
+				time_tes_dc = std::numeric_limits<double>::quiet_NaN();
 
-				int T_tes_in_exit_mode, q_pc_exit_mode;
-
-				solver_pc_fixed__tes_empty(q_dot_pc_fixed,
+				int solution_code = solver_pc_fixed__tes_empty(q_dot_pc_fixed,
 					tol,
-					time_tes_dc,
-					T_tes_in_exit_mode, T_tes_in_exit_tolerance,
-					q_pc_exit_mode, q_pc_exit_tolerance);
+					time_tes_dc);
+
+				if (solution_code != 0)
+				{
+					m_is_CR_OFF__PC_MIN__TES_EMPTY__AUX_OFF_avail = false;
+					are_models_converged = false;
+					break;
+				}
 
 				if (time_tes_dc > mc_kernel.mc_sim_info.ms_ts.m_step)
 				{
@@ -5224,11 +5227,9 @@ int C_csp_solver::solver_cr_on__pc_match__tes_full(int pc_mode, double defocus_i
 	return 0;
 }
 
-void C_csp_solver::solver_pc_fixed__tes_empty(double q_dot_pc_fixed /*MWt*/,
+int C_csp_solver::solver_pc_fixed__tes_empty(double q_dot_pc_fixed /*MWt*/,
 	double tol,
-	double & time_tes_dc,
-	int &T_tes_in_exit_mode, double &T_tes_in_exit_tolerance,
-	int &q_pc_exit_mode, double &q_pc_exit_tolerance)
+	double & time_tes_dc)
 {
 
 	// CR is either off or in startup. It's flow (if applicable) is not connected to TES or PC
@@ -5275,13 +5276,15 @@ void C_csp_solver::solver_pc_fixed__tes_empty(double q_dot_pc_fixed /*MWt*/,
 			std::string msg = util::format("At time = %lg C_csp_solver::solver_cr_on__pc_fixed__tes_empty iteration "
 				"to find the cold HTF temperature to balance energy between the CR, TES, and PC failed",
 				mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0);
-			throw(C_csp_exception(msg, ""));
+			//throw(C_csp_exception(msg, ""));
+			mc_csp_messages.add_message(C_csp_messages::NOTICE, msg);
+			return -1;
 		}
 	}
 
 	time_tes_dc = c_eq.m_step;	//[s]
 
-	return;
+	return 0;
 }
 
 void C_csp_solver::solver_cr_to_pc_to_cr(int pc_mode, double field_control_in, double tol, int &exit_mode, double &exit_tolerance)

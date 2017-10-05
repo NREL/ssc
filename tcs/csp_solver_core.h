@@ -1012,11 +1012,9 @@ private:
 		double &time_pc_su /*s*/, 
 		int & exit_mode, double &T_pc_in_exit_tolerance);
 
-	void solver_pc_fixed__tes_empty(double q_dot_pc_fixed /*MWt*/,
+	int solver_pc_fixed__tes_empty(double q_dot_pc_fixed /*MWt*/,
 		double tol,
-		double & time_tes_dc,
-		int &T_tes_in_exit_mode, double &T_tes_in_exit_tolerance,
-		int &q_pc_exit_mode, double &q_pc_exit_tolerance);
+		double & time_tes_dc);
 
 	int solver_cr_on__pc_match__tes_full(int pc_mode, double defocus_in);
 
