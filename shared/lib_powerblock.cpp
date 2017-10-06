@@ -1360,6 +1360,7 @@ void CPowerBlock_Type224::evap_tower(double P_cond_min, int n_pl_inc, double Del
 
 	// Circulating water pump power
 	h_pcw_in = f_hw_psat(P_amb);											// [J/kg] cw pump inlet enthalpy
+	// s_pcw_in = f_s_hw_psat(P_amb);										// [J/kg-K] cw pump inlet entropy
 	rho_cw = f_rho_P(P_amb);												// [kg/m3] cooling water density in the pump
 	h_pcw_out_s = (dp_evap/rho_cw) + h_pcw_in;								// [J/kg] isentropic outlet enthalpy.. incompressible fluid
 	h_pcw_out = h_pcw_in + ((h_pcw_out_s - h_pcw_in)/eta_pcw_s);			// [J/kg] Outlet enthalpy accounting for irreversibility
@@ -1503,6 +1504,7 @@ void CPowerBlock_Type224::ACC(double P_cond_min, int n_pl_inc, double T_ITD_des,
 	T_fan_in_K = T_db + 273.15;									// [K] Fan inlet temperature
 	T_fan_out_K = T_fan_in_K * pow(P_cond_ratio,(R/c_air));
 	T_fan_out = T_fan_out_K - 273.15;							// [C] Fan outlet temperature
+	// dT_fan = T_fan_out - T_db;									// [C] Difference in temperature including irreversibilities in fan
 
 	h_fan_out_s = f_h_air_T(T_fan_out);							// [J/kg] Isentropic fan outlet temperature
 	h_fan_out = h_fan_in + (h_fan_out_s - h_fan_in)/eta_fan_s;	// [J/kg] Actual fan outlet temperature
@@ -1733,6 +1735,7 @@ void CPowerBlock_Type224::HybridHR(/*double fcall,*/ double P_cond_min, int n_pl
 	T_acfan_in_K = T_db + 273.15;  //[K] Fan inlet temperature
 	T_acfan_out_K = T_acfan_in_K * pow(P_cond_ratio,(R/C_air));
 	T_acfan_out = T_acfan_out_K - 273.15;    //[C] Fan outlet temperature
+	// dT_acfan = T_acfan_out - T_db;   //[C] Difference in temperature including irreversibilities in fan
 
 	h_acfan_out_s = f_h_air_T(T_acfan_out);	//[J/kg] Isentropic fan outlet temperature
 	h_acfan_out = h_acfan_in + (h_acfan_out_s - h_acfan_in)/eta_acfan_s;   //[J/kg] Actual fan outlet temperature
@@ -1745,6 +1748,7 @@ void CPowerBlock_Type224::HybridHR(/*double fcall,*/ double P_cond_min, int n_pl
 	{
 		//Circulating water pump power
 		h_pcw_in = f_hw_psat(P_amb);     //[J/kg] cw pump inlet enthalpy
+		// s_pcw_in = f_s_hw_psat(P_amb);     //[J/kg-K] cw pump inlet entropy
 		rho_cw = f_rho_P(P_amb);         //[kg/m3] cooling water density in the pump
 		h_pcw_out_s = dP_evap/rho_cw + h_pcw_in;                         //[J/kg] isentropic outlet enthalpy.. incompressible fluid
 		h_pcw_out = h_pcw_in + (h_pcw_out_s - h_pcw_in)/eta_pcw_s;       //[J/kg] Outlet enthalpy accounting for irreversibility
