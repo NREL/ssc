@@ -1,6 +1,9 @@
 Release Notes
 -------------
 
+THIS LIST HAS NOT BEEN MAINTAINED SINCE JANUARY 2014
+
+
 __Note.__ This list shows changes that affect the SDK. For descriptions of changes to individual SSC modules, see the SAM release notes, which you can find on SAM's Help menu or on the [Download page](https://sam.nrel.gov/content/downloads).
 
 __January 21, 2014: SDK 2014-1-21, SSC 36__
@@ -26,7 +29,7 @@ __February 8, 2013: First Release__
 
 * The first version of the SDK was called Version 0.9.
 
-<!-- DO NOT COPY AND PASTE FROM HERE DOWN INTO WEBSITE
+DO NOT COPY AND PASTE FROM HERE DOWN INTO WEBSITE
 Old
 
 Release Notes
@@ -61,4 +64,3 @@ Java
 MATLAB
 Python
 Code examples.
--->
