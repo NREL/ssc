@@ -48,6 +48,9 @@
 *******************************************************************************************************/
 
 #include "sco2_pc_core.h"
+
+#include "sco2_cycle_components.h"
+
 #include "CO2_properties.h"
 #include <limits>
 #include <algorithm>
@@ -75,70 +78,6 @@ const double C_comp_single_stage::m_snl_phi_design = 0.02971;		//[-] Design-poin
 const double C_comp_single_stage::m_snl_phi_min = 0.02;				//[-] Approximate surge limit for SNL compressor
 const double C_comp_single_stage::m_snl_phi_max = 0.05;				//[-] Approximate x-intercept for SNL compressor
 
-
-void calculate_turbomachinery_outlet_1(double T_in /*K*/, double P_in /*kPa*/, double P_out /*kPa*/, double eta /*-*/, bool is_comp, int & error_code, double & spec_work /*kJ/kg*/)
-{
-	double enth_in, entr_in, dens_in, temp_out, enth_out, entr_out, dens_out;
-
-	calculate_turbomachinery_outlet_1(T_in, P_in, P_out, eta, is_comp, error_code, enth_in, entr_in, dens_in, temp_out, enth_out, entr_out, dens_out, spec_work);
-}
-
-void calculate_turbomachinery_outlet_1(double T_in /*K*/, double P_in /*kPa*/, double P_out /*kPa*/, double eta /*-*/, bool is_comp, int & error_code, double & enth_in /*kJ/kg*/, double & entr_in /*kJ/kg-K*/,
-	double & dens_in /*kg/m3*/, double & temp_out /*K*/, double & enth_out /*kJ/kg*/, double & entr_out /*kJ/kg-K*/, double & dens_out /*kg/m3*/, double & spec_work /*kJ/kg*/)
-{
-	/*Calculates the outlet state of a compressor or turbine using its isentropic efficiency.
-	is_comp = .true.means the turbomachine is a compressor(w = w_s / eta)
-	is_comp = .false.means the turbomachine is a turbine(w = w_s * eta) */
-
-	CO2_state co2_props;
-
-	error_code = 0;
-
-	int prop_error_code = CO2_TP(T_in, P_in, &co2_props);		// properties at the inlet conditions
-	if( prop_error_code != 0 )
-	{
-		error_code = prop_error_code;
-		return;
-	}
-	double h_in = co2_props.enth;
-	double s_in = co2_props.entr;
-	dens_in = co2_props.dens;
-
-	prop_error_code = CO2_PS(P_out, s_in, &co2_props);			// outlet enthalpy if compression/expansion is isentropic
-	if( prop_error_code != 0 )
-	{
-		error_code = prop_error_code;
-		return;
-	}
-	double h_s_out = co2_props.enth;
-
-	double w_s = h_in - h_s_out;			// specific work if process is isentropic (negative for compression, positive for expansion)
-
-	double w = 0.0;
-	if( is_comp )
-		w = w_s / eta;						// actual specific work of compressor (negative)
-	else
-		w = w_s * eta;						// actual specific work of turbine (positive)
-
-	double h_out = h_in - w;
-
-	prop_error_code = CO2_PH(P_out, h_out, &co2_props);
-	if( prop_error_code != 0 )
-	{
-		error_code = prop_error_code;
-		return;
-	}
-
-	enth_in = h_in;
-	entr_in = s_in;
-	temp_out = co2_props.temp;
-	enth_out = h_out;
-	entr_out = co2_props.entr;
-	dens_out = co2_props.dens;
-	spec_work = w;
-
-	return;
-};
 
 //void calculate_hxr_UA_1(int N_hxrs, double Q_dot /*units?*/, double m_dot_c, double m_dot_h, double T_c_in, double T_h_in, double P_c_in, double P_c_out, double P_h_in, double P_h_out,
 //	int & error_code, double & UA, double & min_DT)
@@ -3917,17 +3856,7 @@ void C_RecompCycle::design_core_standard(int & error_code)
 	m_W_dot_net_last = w_mc*m_dot_mc + w_rc*m_dot_rc + w_t*m_dot_t;
 	m_eta_thermal_calc_last = m_W_dot_net_last / PHX_des_par.m_Q_dot_design;
 
-	if (ms_des_par.m_des_objective_type == 2)
-	{
-		double phx_deltaT = m_temp_last[TURB_IN] - m_temp_last[HTR_HP_OUT];
-		double under_min_deltaT = std::max(0.0, ms_des_par.m_min_phx_deltaT - phx_deltaT);
-		double eta_deltaT_scale = std::exp(-under_min_deltaT);
-		m_objective_metric_last = m_eta_thermal_calc_last*eta_deltaT_scale;
-	}
-	else
-	{
-		m_objective_metric_last = m_eta_thermal_calc_last;
-	}
+	m_objective_metric_last = m_eta_thermal_calc_last;
 
 	m_m_dot_mc = m_dot_mc;
 	m_m_dot_rc = m_dot_rc;
@@ -4209,9 +4138,6 @@ void C_RecompCycle::opt_design_core(int & error_code)
 	ms_des_par.m_tol = ms_opt_des_par.m_tol;
 	ms_des_par.m_N_turbine = ms_opt_des_par.m_N_turbine;
 
-	ms_des_par.m_des_objective_type = ms_opt_des_par.m_des_objective_type;
-	ms_des_par.m_min_phx_deltaT = ms_opt_des_par.m_min_phx_deltaT;
-
 	// ms_des_par members to be defined by optimizer and set in 'design_point_eta':
 		// m_P_mc_in
 		// m_P_mc_out
@@ -4450,9 +4376,6 @@ void C_RecompCycle::auto_opt_design_core(int & error_code)
 	ms_opt_des_par.m_tol = ms_auto_opt_des_par.m_tol;
 	ms_opt_des_par.m_opt_tol = ms_auto_opt_des_par.m_opt_tol;
 	ms_opt_des_par.m_N_turbine = ms_auto_opt_des_par.m_N_turbine;
-
-	ms_opt_des_par.m_des_objective_type = ms_auto_opt_des_par.m_des_objective_type;
-	ms_opt_des_par.m_min_phx_deltaT = ms_auto_opt_des_par.m_min_phx_deltaT;
 
 	// Outer optimization loop
 	m_objective_metric_auto_opt = 0.0;
