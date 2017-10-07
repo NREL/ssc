@@ -55,7 +55,9 @@
 #include "thermocline_tes.h"
 
 #include "CO2_properties.h"
-#include "sco2_pc_core.h"
+
+//#include "sco2_pc_core.h"
+#include "sco2_recompression_cycle.h"
 
 using namespace std;
 

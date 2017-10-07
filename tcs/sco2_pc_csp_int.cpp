@@ -48,7 +48,10 @@
 *******************************************************************************************************/
 
 #include "sco2_pc_csp_int.h"
-#include "sco2_pc_core.h"
+
+//#include "sco2_pc_core.h"
+#include "sco2_recompression_cycle.h"
+
 #include "csp_solver_util.h"
 #include "CO2_properties.h"
 #include <cmath>

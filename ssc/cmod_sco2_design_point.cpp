@@ -48,7 +48,10 @@
 *******************************************************************************************************/
 
 #include "core.h"
-#include "sco2_pc_core.h"
+
+//#include "sco2_pc_core.h"
+#include "sco2_recompression_cycle.h"
+
 #include "sco2_pc_csp_int.h"
 
 #include "heat_exchangers.h"

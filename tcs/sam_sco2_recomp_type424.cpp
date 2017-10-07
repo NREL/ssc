@@ -55,7 +55,8 @@
 
 #include "heat_exchangers.h"
 
-#include "sco2_pc_core.h"
+//#include "sco2_pc_core.h"
+#include "sco2_recompression_cycle.h"
 
 #include "nlopt.hpp"
 #include "nlopt_callbacks.h"
