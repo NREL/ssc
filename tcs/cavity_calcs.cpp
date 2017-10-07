@@ -2,7 +2,7 @@
 *  Copyright 2017 Alliance for Sustainable Energy, LLC
 *
 *  NOTICE: This software was developed at least in part by Alliance for Sustainable Energy, LLC
-*  (ìAllianceî) under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
+*  (‚ÄúAlliance‚Äù) under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
 *  The Government retains for itself and others acting on its behalf a nonexclusive, paid-up,
 *  irrevocable worldwide license in the software to reproduce, prepare derivative works, distribute
 *  copies to the public, perform publicly and display publicly, and to permit others to do so.
@@ -26,8 +26,8 @@
 *  4. Redistribution of this software, without modification, must refer to the software by the same
 *  designation. Redistribution of a modified version of this software (i) may not refer to the modified
 *  version by the same designation, or by any confusingly similar designation, and (ii) must refer to
-*  the underlying software originally provided by Alliance as ìSystem Advisor Modelî or ìSAMî. Except
-*  to comply with the foregoing, the terms ìSystem Advisor Modelî, ìSAMî, or any confusingly similar
+*  the underlying software originally provided by Alliance as ‚ÄúSystem Advisor Model‚Äù or ‚ÄúSAM‚Äù. Except
+*  to comply with the foregoing, the terms ‚ÄúSystem Advisor Model‚Äù, ‚ÄúSAM‚Äù, or any confusingly similar
 *  designation may not be used to refer to any modified version of this software or any modified
 *  version of the underlying software originally provided by Alliance without the prior written consent
 *  of Alliance.
@@ -141,12 +141,12 @@ void Cavity_Calcs::OuterPanel_Floor( double * F_AF )
 	double Ptheta, Pphi, theta, phi, r1, r2, x, y, y_i, z_i;
 	point p;
 	int hit;
-	int ray_counts = 1;
+	int ray_counts;
 
 	// Only set the seed once!
 	srand( (unsigned int)time( (time_t*)NULL) ); //Seed with time on init
 
-	for( ray_counts; ray_counts <= m_n_rays; ray_counts++ )
+	for( ray_counts = 1; ray_counts <= m_n_rays; ray_counts++ )
 	{
 		
 		for( int i = 0; i < m_n_nodes; i++ )
@@ -234,12 +234,12 @@ void Cavity_Calcs::InnerPanel_Floor( double * F_BF  )
 	double Ptheta, Pphi, theta, phi, r1, r2, x, y, y_i, z_i;
 	point p;
 	int hit;
-	int ray_counts = 1;
+	int ray_counts;
 
 	// Only set the seed once!
 	srand( (unsigned int)time( (time_t*)NULL) ); //Seed with time on init
 
-	for( ray_counts; ray_counts <= m_n_rays; ray_counts++ )
+	for( ray_counts = 1; ray_counts <= m_n_rays; ray_counts++ )
 	{
 		
 		for( int i = 0; i < m_n_nodes; i++ )
@@ -325,12 +325,12 @@ void Cavity_Calcs::Lip_Ceiling( double & F_LCE )
 	double Ptheta, Pphi, theta, phi, r1, r2, x, y, y_i, z_i;
 	point p;
 	int hit;
-	int ray_counts = 1;
+	int ray_counts;
 
 	// Only set the seed once!
 	srand( (unsigned int)time( (time_t*)NULL) ); //Seed with time on init
 
-	for( ray_counts; ray_counts <= m_n_rays; ray_counts++ )
+	for( ray_counts = 1; ray_counts <= m_n_rays; ray_counts++ )
 	{		
 		Ptheta	= rand() / (double) (RAND_MAX);
 		Pphi	= rand() / (double) (RAND_MAX);
@@ -412,12 +412,12 @@ void Cavity_Calcs::Lip_Floor( double & F_LF )
 	double Ptheta, Pphi, theta, phi, r1, r2, x, y, y_i, z_i;
 	point p;
 	int hit;
-	int ray_counts = 1;
+	int ray_counts;
 
 	// Only set the seed once!
 	srand( (unsigned int)time( (time_t*)NULL) ); //Seed with time on init
 
-	for( ray_counts; ray_counts <= m_n_rays; ray_counts++ )
+	for( ray_counts = 1; ray_counts <= m_n_rays; ray_counts++ )
 	{		
 		Ptheta	= rand() / (double) (RAND_MAX);
 		Pphi	= rand() / (double) (RAND_MAX);
@@ -499,12 +499,12 @@ void Cavity_Calcs::Opening_Ceiling( double & F_OCE )
 	double Ptheta, Pphi, theta, phi, r1, r2, x, y, y_i, z_i;
 	point p;
 	int hit;
-	int ray_counts = 1;
+	int ray_counts;
 
 	// Only set the seed once!
 	srand( (unsigned int)time( (time_t*)NULL) ); //Seed with time on init
 
-	for( ray_counts; ray_counts <= m_n_rays; ray_counts++ )
+	for( ray_counts = 1; ray_counts <= m_n_rays; ray_counts++ )
 	{		
 		Ptheta	= rand() / (double) (RAND_MAX);
 		Pphi	= rand() / (double) (RAND_MAX);
@@ -586,12 +586,12 @@ void Cavity_Calcs::Opening_Floor( double & F_OF )
 	double Ptheta, Pphi, theta, phi, r1, r2, x, y, y_i, z_i;
 	point p;
 	int hit;
-	int ray_counts = 1;
+	int ray_counts;
 
 	// Only set the seed once!
 	srand( (unsigned int)time( (time_t*)NULL) ); //Seed with time on init
 
-	for( ray_counts; ray_counts <= m_n_rays; ray_counts++ )
+	for( ray_counts = 1; ray_counts <= m_n_rays; ray_counts++ )
 	{		
 		Ptheta	= rand() / (double) (RAND_MAX);
 		Pphi	= rand() / (double) (RAND_MAX);

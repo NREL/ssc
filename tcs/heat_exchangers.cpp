@@ -675,8 +675,6 @@ int NS_HX_counterflow_eqs::C_mono_eq_UA_v_q_enth::operator()(double q_dot /*kWt*
 	}
 	catch (C_csp_exception &csp_except)
 	{
-		int hx_error_code = csp_except.m_error_code;
-
 		// Reset solved OD parameters to NaN
 		m_T_c_out = m_T_h_out = std::numeric_limits<double>::quiet_NaN();
 
@@ -1407,7 +1405,7 @@ bool C_CO2_to_air_cooler::design_hx(S_des_par_ind des_par_ind, S_des_par_cycle_d
 		throw(C_csp_exception("Air cooler design parameters need to specify either m_Q_dot_des or m_m_dot_total as positive numbers"));
 	}
 	
-	double deltaT_hot = ms_des_par_cycle_dep.m_T_hot_in_des - ms_des_par_cycle_dep.m_T_hot_out_des;	//[K,C] Hot side temperature difference
+	// double deltaT_hot = ms_des_par_cycle_dep.m_T_hot_in_des - ms_des_par_cycle_dep.m_T_hot_out_des;	//[K,C] Hot side temperature difference
 
 	ms_hx_des_sol.m_Depth = m_s_h * ms_hx_des_sol.m_N_passes;	//[m] Dimension parallel to air flow
 
@@ -1476,7 +1474,7 @@ bool C_CO2_to_air_cooler::design_hx(S_des_par_ind des_par_ind, S_des_par_cycle_d
 
 	// Probably have a non-integer number of parallel paths, so round up and recalculate geometry
 	// C++ (int) rounds down
-	int N_par = (int)c_eq.m_N_par + 1;
+	// int N_par = (int)c_eq.m_N_par + 1;
 
 	// Final reporting metrics
 	ms_hx_des_sol.m_W_par = W_par_solved;			//[m] Dimension perpendicular to loop/air flow direction
@@ -1510,7 +1508,8 @@ int C_MEQ_target_W_dot_fan__m_dot_air::operator()(double m_dot_air /*kg/s*/, dou
 	double Re_air = G_air*m_D_h / m_mu_air;
 	
 	double f_air, j_H_air;
-	f_air, j_H_air = numeric_limits<double>::quiet_NaN();
+	f_air = numeric_limits<double>::quiet_NaN();
+	j_H_air = numeric_limits<double>::quiet_NaN();
 
 	if (!N_compact_hx::get_compact_hx_f_j(m_comp_hx_config, Re_air, f_air, j_H_air))
 		return -1;
@@ -2241,7 +2240,7 @@ void C_CO2_to_air_cooler::off_design_hx(double T_amb_K, double P_amb_Pa, double 
 	CO2_TP(T_hot_out, P_hot_in, &co2_props);
 	double h_out = co2_props.enth*1000.0;					//[J/kg]
 	double Q_dot = m_dot_hot*(h_in - h_out);				//[W]
-	double deltaT_hot = T_hot_in - T_hot_out;				//[K,C] Hot side temperature difference
+	//double deltaT_hot = T_hot_in - T_hot_out;				//[K,C] Hot side temperature difference
 
 	// Set up matrices for HX
 	util::matrix_t<double>    T_co2(m_N_nodes + 2, ms_hx_des_sol.m_N_passes + 1);
@@ -2326,7 +2325,8 @@ void C_CO2_to_air_cooler::off_design_hx(double T_amb_K, double P_amb_Pa, double 
 		double G_air = m_dot_air / (m_sigma*ms_hx_des_sol.m_L_tube*ms_hx_des_sol.m_W_par);
 		double Re_air = G_air*m_D_h / mu_air;
 		double f_air, j_H_air;
-		f_air, j_H_air = numeric_limits<double>::quiet_NaN();
+		f_air = numeric_limits<double>::quiet_NaN();
+		j_H_air = numeric_limits<double>::quiet_NaN();
 
 		if( !N_compact_hx::get_compact_hx_f_j(m_enum_compact_hx_config, Re_air, f_air, j_H_air) )
 		{
