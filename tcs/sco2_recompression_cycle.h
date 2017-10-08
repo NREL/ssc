@@ -692,19 +692,7 @@ public:
 	{
 		m_temp_last.resize(10);
 		std::fill(m_temp_last.begin(), m_temp_last.end(), std::numeric_limits<double>::quiet_NaN());
-		
 		m_pres_last = m_enth_last = m_entr_last = m_dens_last = m_temp_last;
-
-		/*
-		m_pres_last.resize(10);
-		std::fill(m_pres_last.begin(), m_pres_last.end(), std::numeric_limits<double>::quiet_NaN());
-		m_enth_last.resize(10);
-		std::fill(m_enth_last.begin(), m_enth_last.end(), std::numeric_limits<double>::quiet_NaN());
-		m_entr_last.resize(10);
-		std::fill(m_entr_last.begin(), m_entr_last.end(), std::numeric_limits<double>::quiet_NaN());
-		m_dens_last.resize(10);
-		std::fill(m_dens_last.begin(), m_dens_last.end(), std::numeric_limits<double>::quiet_NaN());
-		*/		
 
 		m_eta_thermal_calc_last = m_m_dot_mc = m_m_dot_rc = m_m_dot_t = std::numeric_limits<double>::quiet_NaN();
 		m_Q_dot_PHX = m_Q_dot_bypass = m_eta_bypass = std::numeric_limits<double>::quiet_NaN();

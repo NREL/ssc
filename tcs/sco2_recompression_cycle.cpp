@@ -2194,7 +2194,7 @@ int C_RecompCycle::C_mono_eq_HTR_des::operator()(double T_HTR_LP_out /*K*/, doub
 
 	mpc_rc_cycle->m_temp_last[HTR_LP_OUT] = T_HTR_LP_out;		//[K]	
 
-	int prop_error_code = CO2_TP(mpc_rc_cycle->m_temp_last[HTR_LP_OUT], mpc_rc_cycle->m_temp_last[HTR_LP_OUT], &mpc_rc_cycle->mc_co2_props);
+	int prop_error_code = CO2_TP(mpc_rc_cycle->m_temp_last[HTR_LP_OUT], mpc_rc_cycle->m_pres_last[HTR_LP_OUT], &mpc_rc_cycle->mc_co2_props);
 	if( prop_error_code != 0 )
 	{
 		*diff_T_HTR_LP_out = std::numeric_limits<double>::quiet_NaN();
