@@ -609,9 +609,7 @@ double GTI_DIRINT( const double poa[3], const double inc[3], double zen, double 
 		diff = ( poa_tmp[0] + poa_tmp[1] + poa_tmp[2]) - poa[1];   
 
 		//Check for best Difference. If found, save results
-		bool bestFlag = false;
 		if ( fabs(diff) < fabs(bestDiff)){
-			bestFlag = true;
 			bestDiff = diff;
 			Ktp = Ktp_tmp;
 			dnOut = dn_tmp;
@@ -2042,8 +2040,7 @@ void ModifiedDISC(const double kt[3], const double kt1[3], const double g[3], co
 	// Notes: This is a modification to the orininally provided Modified-DISC model which takes
 	// as input the four bin variables and GHI and returns the resulting DNI
 
-	double cz[3], zenith[3], am[3], ktpam[3];
-
+    double cz[3], zenith[3], am[3];
     double ktbin[5] = { 0.24, 0.4, 0.56, 0.7, 0.8 };
     double zbin[5] = { 25.0, 40.0, 55.0, 70.0, 80.0 };
     double dktbin[5] = { 0.015, 0.035, 0.07, 0.15, 0.3 };
@@ -2065,7 +2062,6 @@ void ModifiedDISC(const double kt[3], const double kt1[3], const double g[3], co
             cz[i] = cos(z[i]); // Cosine of zenith angle
             zenith[i] = z[i] * rtod;
             am[i] = Min(15.25, 1.0 / (cz[i] + 0.15 * (pow(93.9 - zenith[i], -1.253))));
-            ktpam[i] = am[i] * exp(-0.0001184 * alt);
         }
         if (kt[1] <= 0.6)
         {
