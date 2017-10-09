@@ -1224,31 +1224,20 @@ bool csp_dispatch_opt::optimize()
 
 			for (int t = 0; t<nt; t++)
 			{
-				//// Adjust wlim if specified value is too low to permit cycle operation
-				//double wmin = (P["Ql"] * P["etap"]*outputs.eta_pb_expected.at(t) / params.eta_cycle_ref) + (P["Wdotu"] - P["etap"]*P["Qu"])*outputs.eta_pb_expected.at(t) / params.eta_cycle_ref; // Electricity generation at minimum pb thermal input
-				//double max_parasitic = 
-    //                  P["Lr"] * outputs.q_sfavail_expected.at(t) 
-    //                + (params.w_rec_ht / params.dt) 
-    //                + (params.w_stow / params.dt) 
-    //                + params.w_track 
-    //                + params.w_cycle_standby 
-    //                + params.w_cycle_pump*P["Qu"]
-    //                + outputs.w_condf_expected.at(t)*P["W_dot_cycle"];  // Largest possible parasitic load at time t
-
-    //            //save for writing to ampl
-    //            outputs.wnet_lim_min.push_back( wmin - max_parasitic );
                 
+                //set power limit, including any cycle operational limit
+                double w_lim_all = fmin( w_lim.at(t), outputs.w_dot_pb_max.at(t) );
+
                 //check if cycle should be able to operate
-				//if (wmin - max_parasitic > w_lim.at(t))		// power cycle operation is impossible at t
-                if( outputs.wnet_lim_min.at(t) > w_lim.at(t) )
+                if( outputs.wnet_lim_min.at(t) > w_lim.at(t) )      // power cycle operation is impossible at t
                 {
-                    if(w_lim.at(t) > 0)
+                    if(w_lim_all > 0)
                         params.messages->add_message(C_csp_messages::NOTICE, "Power cycle operation not possible at time "+ util::to_string(t+1) + ": power limit below minimum operation");                    
-                    w_lim.at(t) = 0.;
+                    w_lim_all = 0.;
                     
                 }
 
-				if (w_lim.at(t) > 0.)	// Power cycle operation is possible
+				if (w_lim_all > 0.)	// Power cycle operation is possible
 				{
 					int i = 0;
 
@@ -1278,7 +1267,7 @@ bool csp_dispatch_opt::optimize()
 					//row[i] - params.w_stow / params.dt;	//kWe
 					//col[i++] = O.column("yrsd", t);
 
-					add_constraintex(lp, 7, row, col, LE, w_lim.at(t));
+					add_constraintex(lp, 7, row, col, LE, w_lim_all);
 				}
 				else // Power cycle operation is impossible at current constrained wlim
 				{
