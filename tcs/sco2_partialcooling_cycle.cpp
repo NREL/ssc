@@ -295,6 +295,10 @@ int C_PartialCooling_Cycle::design_core()
 	mc_PC_partial.initialize(PC_partial_des_par);
 
 	// Calculate and set cycle performance metrics
+	m_W_dot_t = m_m_dot_t*w_t;		//[kWe]
+	m_W_dot_pc = m_m_dot_pc*w_pc;	//[kWe]
+	m_W_dot_rc = m_m_dot_rc*w_rc;	//[kWe]
+	m_W_dot_mc = m_m_dot_mc*w_mc;	//[kWe]
 	m_W_dot_net_last = m_m_dot_t*w_t + m_m_dot_pc*w_pc + m_m_dot_rc*w_rc + m_m_dot_mc*w_mc;		//[kWe]
 	m_eta_thermal_calc_last = m_W_dot_net_last / PHX_des_par.m_Q_dot_design;	//[-]
 	m_energy_bal_last = (PHX_des_par.m_Q_dot_design - m_W_dot_net_last - PC_partial_des_par.m_Q_dot_design - PC_full_des_par.m_Q_dot_design) / PHX_des_par.m_Q_dot_design;	//[-]

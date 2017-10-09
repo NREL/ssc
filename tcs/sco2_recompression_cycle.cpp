@@ -2088,6 +2088,9 @@ void C_RecompCycle::design_core_standard(int & error_code)
 	m_PC.initialize(PC_des_par);
 
 	// Calculate/set cycle performance metrics
+	m_W_dot_mc = w_mc*m_dot_mc;		//[kWe]
+	m_W_dot_rc = w_rc*m_dot_rc;		//[kWe]
+	m_W_dot_t = w_t*m_dot_t;		//[kWe]
 	m_W_dot_net_last = w_mc*m_dot_mc + w_rc*m_dot_rc + w_t*m_dot_t;
 	m_eta_thermal_calc_last = m_W_dot_net_last / PHX_des_par.m_Q_dot_design;
 

@@ -626,7 +626,7 @@ private:
 	double m_W_dot_net_last;
 	double m_m_dot_mc, m_m_dot_rc, m_m_dot_t;
 	double m_Q_dot_PHX, m_Q_dot_bypass, m_eta_bypass;
-	double m_W_dot_mc, m_W_dot_rc, m_W_dot_mc_bypass;
+	double m_W_dot_mc, m_W_dot_rc, m_W_dot_t, m_W_dot_mc_bypass;
 	double m_objective_metric_last;
 	
 		// Structures and data for optimization
@@ -696,7 +696,7 @@ public:
 
 		m_eta_thermal_calc_last = m_m_dot_mc = m_m_dot_rc = m_m_dot_t = std::numeric_limits<double>::quiet_NaN();
 		m_Q_dot_PHX = m_Q_dot_bypass = m_eta_bypass = std::numeric_limits<double>::quiet_NaN();
-		m_W_dot_mc = m_W_dot_rc = m_W_dot_mc_bypass = std::numeric_limits<double>::quiet_NaN();
+		m_W_dot_mc = m_W_dot_rc = m_W_dot_t = m_W_dot_mc_bypass = std::numeric_limits<double>::quiet_NaN();
 		m_objective_metric_last = std::numeric_limits<double>::quiet_NaN();
 
 		m_W_dot_net_last = std::numeric_limits<double>::quiet_NaN();

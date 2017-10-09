@@ -247,6 +247,7 @@ private:
 	// Results from last 'design' solution
 	std::vector<double> m_temp_last, m_pres_last, m_enth_last, m_entr_last, m_dens_last;		// thermodynamic states (K, kPa, kJ/kg, kJ/kg-K, kg/m3)
 	double m_m_dot_mc, m_m_dot_pc, m_m_dot_rc, m_m_dot_t;	//[kg/s]
+	double m_W_dot_mc, m_W_dot_pc, m_W_dot_rc, m_W_dot_t;	//[kWe]
 	double m_eta_thermal_calc_last;	//[-]
 	double m_W_dot_net_last;	//[kWe]
 	double m_energy_bal_last;	//[-]
@@ -272,6 +273,7 @@ public:
 		m_pres_last = m_enth_last = m_entr_last = m_dens_last = m_temp_last;
 
 		m_m_dot_mc = m_m_dot_pc = m_m_dot_rc = m_m_dot_t = std::numeric_limits<double>::quiet_NaN();
+		m_W_dot_mc = m_W_dot_pc = m_W_dot_rc = m_W_dot_t = std::numeric_limits<double>::quiet_NaN();
 		m_eta_thermal_calc_last = m_W_dot_net_last = m_energy_bal_last =
 		m_objective_metric_last = m_objective_metric_opt = std::numeric_limits<double>::quiet_NaN();
 	}
