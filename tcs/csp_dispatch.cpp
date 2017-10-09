@@ -174,7 +174,7 @@ void csp_dispatch_opt::clear_output_arrays()
     outputs.q_pb_target.clear();
     outputs.rec_operation.clear();
     outputs.eta_pb_expected.clear();
-	outputs.w_dot_pb_max.clear();
+	outputs.f_pb_op_limit.clear();
     outputs.eta_sf_expected.clear();
     outputs.q_sfavail_expected.clear();
     outputs.q_sf_expected.clear();
@@ -235,7 +235,7 @@ bool csp_dispatch_opt::predict_performance(int step_start, int ntimeints, int di
         double cycle_eff_ave = 0.;
         double q_inc_ave = 0.;
         double wcond_ave = 0.;
-		double w_dot_pb_max_ave = 0.0;
+		double f_pb_op_lim_ave = 0.0;
 
         for(int j=0; j<divs_per_int; j++)     //take averages over hour if needed
         {
@@ -267,10 +267,10 @@ bool csp_dispatch_opt::predict_performance(int step_start, int ntimeints, int di
             cycle_eff *= params.eta_cycle_ref;  
             cycle_eff_ave += cycle_eff * ave_weight;
 
-			double w_dot_pb_max_local = std::numeric_limits<double>::quiet_NaN();
+			double f_pb_op_lim_local = std::numeric_limits<double>::quiet_NaN();
 			double m_dot_htf_max_local = std::numeric_limits<double>::quiet_NaN();
-			params.mpc_pc->get_max_power_output_operation_constraints(m_weather.ms_outputs.m_tdry, m_dot_htf_max_local, w_dot_pb_max_local);
-			w_dot_pb_max_ave += w_dot_pb_max_local * ave_weight;	//[-]
+			params.mpc_pc->get_max_power_output_operation_constraints(m_weather.ms_outputs.m_tdry, m_dot_htf_max_local, f_pb_op_lim_local);
+			f_pb_op_lim_ave += f_pb_op_lim_local * ave_weight;	//[-]
 
             //store the condenser parasitic power fraction
             double wcond_f = params.wcondcoef_table_Tdb.interpolate( m_weather.ms_outputs.m_tdry );
@@ -288,7 +288,7 @@ bool csp_dispatch_opt::predict_performance(int step_start, int ntimeints, int di
         //power cycle efficiency
         outputs.eta_pb_expected.push_back( cycle_eff_ave );
 		// Maximum power cycle output (normalized)
-		outputs.w_dot_pb_max.push_back(w_dot_pb_max_ave);		//[-]
+		outputs.f_pb_op_limit.push_back(f_pb_op_lim_ave);		//[-]
         //condenser power
         outputs.w_condf_expected.push_back( wcond_ave );
     }
@@ -1226,7 +1226,7 @@ bool csp_dispatch_opt::optimize()
 			{
                 
                 //set power limit, including any cycle operational limit
-                double w_lim_all = fmin( w_lim.at(t), outputs.w_dot_pb_max.at(t) );
+                double w_lim_all = fmin( w_lim.at(t), outputs.f_pb_op_limit.at(t) * P["W_dot_cycle"] );
 
                 //check if cycle should be able to operate
                 if( outputs.wnet_lim_min.at(t) > w_lim.at(t) )      // power cycle operation is impossible at t
