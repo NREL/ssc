@@ -131,6 +131,105 @@ public:
 		}
 	};
 
+	struct S_opt_des_params
+	{
+		double m_W_dot_net;					//[kWe] Target net cycle power
+		double m_T_mc_in;					//[K] Main compressor inlet temperature
+		double m_T_pc_in;					//[K] Pre-compressor inlet temperature
+		double m_T_t_in;					//[K] Turbine inlet temperature
+		std::vector<double> m_DP_LTR;		//(cold, hot) positive values are absolute [kPa], negative values are relative (-)
+		std::vector<double> m_DP_HTR;		//(cold, hot) positive values are absolute [kPa], negative values are relative (-)
+		std::vector<double> m_DP_PC_full;   //(cold, hot) positive values are absolute [kPa], negative values are relative (-)
+		std::vector<double> m_DP_PC_partial; //(cold, hot) positive values are absolute [kPa], negative values are relative (-)
+		std::vector<double> m_DP_PHX;		//(cold, hot) positive values are absolute [kPa], negative values are relative (-)
+		double m_UA_rec_total;				//[kW/K] Total design-point recuperator UA
+		double m_LTR_eff_max;				//[-] Maximum allowable effectiveness in LT recuperator
+		double m_HTR_eff_max;				//[-] Maximum allowable effectiveness in HT recuperator
+		double m_eta_mc;					//[-] design-point efficiency of the main compressor; isentropic if positive, polytropic if negative
+		double m_eta_rc;					//[-] design-point efficiency of the recompressor; isentropic if positive, polytropic if negative
+		double m_eta_pc;					//[-] design-point efficiency of the pre-compressor; 
+		double m_eta_t;						//[-] design-point efficiency of the turbine; isentropic if positive, polytropic if negative
+		int m_N_sub_hxrs;					//[-] Number of sub-heat exchangers to use when calculating UA value for a heat exchanger
+		double m_P_high_limit;				//[kPa] maximum allowable pressure in cycle
+		double m_tol;						//[-] Convergence tolerance
+		double m_opt_tol;					//[-] Optimization tolerance
+		double m_N_turbine;					//[rpm] Turbine shaft speed (negative values link turbine to compressor)
+
+		int m_des_objective_type;		//[2] = min phx deltat then max eta, [else] max eta
+		double m_min_phx_deltaT;		//[C]
+
+		double m_P_mc_out_guess;		//[kPa] Initial guess for main compressor outlet pressure
+		bool m_fixed_P_mc_out;			//[-] If true, P_mc_out is fixed at P_mc_out_guess
+
+		double m_PR_total_guess;		//[-] Initial guess for ratio of P_mc_out / P_pc_in
+		bool m_fixed_PR_total;			//[-] if true, ratio of P_mc_out to P_pc_in is fixed at PR_guess
+
+		double m_f_PR_mc_guess;			//[-] Initial guess: fraction of total PR that is P_mc_out / P_mc_in
+		bool m_fixed_f_PR_mc;			//[-] if true, fixed at f_PR_mc_guess
+
+		double m_recomp_frac_guess;		//[-] Initial guess: recompression fraction
+		bool m_fixed_recomp_frac;		//[-] if true, fixed at m_recomp_frac_guess
+
+		double m_LTR_frac_guess;		//[-] Initial guess for fraction of UA_rec_total that is allocated to LTR
+		bool m_fixed_LTR_frac;			//[-] if true, fixed at m_LTR_frac_guess
+
+		S_opt_des_params()
+		{
+			m_W_dot_net = m_T_mc_in = m_T_pc_in = m_T_t_in =
+				m_UA_rec_total = m_LTR_eff_max = m_HTR_eff_max = 
+				m_eta_mc = m_eta_rc = m_eta_pc = m_eta_t = m_P_high_limit = m_tol = m_N_turbine = 
+				m_P_mc_out_guess = m_PR_total_guess = m_f_PR_mc_guess = 
+				m_recomp_frac_guess = m_LTR_frac_guess = std::numeric_limits<double>::quiet_NaN();
+			m_N_sub_hxrs = -1;
+
+			// Default to standard optimization to maximize cycle efficiency
+			m_des_objective_type = 1;
+			m_min_phx_deltaT = 0.0;		//[C]
+
+			m_DP_LTR.resize(2);
+			std::fill(m_DP_LTR.begin(), m_DP_LTR.end(), std::numeric_limits<double>::quiet_NaN());
+			m_DP_HTR.resize(2);
+			std::fill(m_DP_HTR.begin(), m_DP_HTR.end(), std::numeric_limits<double>::quiet_NaN());
+			m_DP_PC_full.resize(2);
+			std::fill(m_DP_PC_full.begin(), m_DP_PC_full.end(), std::numeric_limits<double>::quiet_NaN());
+			m_DP_PC_partial.resize(2);
+			std::fill(m_DP_PC_partial.begin(), m_DP_PC_partial.end(), std::numeric_limits<double>::quiet_NaN());
+			m_DP_PHX.resize(2);
+			std::fill(m_DP_PHX.begin(), m_DP_PHX.end(), std::numeric_limits<double>::quiet_NaN());
+		}
+	};
+
+	struct S_des_solved
+	{
+		std::vector<double> m_temp, m_pres, m_enth, m_entr, m_dens;		// thermodynamic states (K, kPa, kJ/kg, kJ/kg-K, kg/m3)
+		double m_eta_thermal;	//[-]
+		double m_W_dot_net;		//[kWe]
+		double m_m_dot_mc;		//[kg/s]
+		double m_m_dot_rc;		//[kg/s]
+		double m_m_dot_pc;		//[kg/s]
+		double m_m_dot_t;		//[kg/s]
+		double m_recomp_frac;	//[-]
+		double m_UA_LTR;		//[kW/K]
+		double m_UA_HTR;		//[kW/K]
+
+		bool m_is_rc;
+
+		C_comp_multi_stage::S_des_solved ms_mc_ms_des_solved;
+		C_comp_multi_stage::S_des_solved ms_rc_ms_des_solved;
+		C_comp_multi_stage::S_des_solved ms_pc_ms_des_solved;
+		C_turbine::S_design_solved ms_t_des_solved;
+		C_HX_counterflow::S_des_solved ms_LTR_des_solved;
+		C_HX_counterflow::S_des_solved ms_HTR_des_solved;
+
+		S_des_solved()
+		{
+			m_eta_thermal = m_W_dot_net = m_m_dot_mc = m_m_dot_rc = m_m_dot_pc = m_m_dot_t = 
+				m_recomp_frac = m_UA_LTR = m_UA_HTR = std::numeric_limits<double>::quiet_NaN();
+
+			m_is_rc = true;
+		}
+	};
+
 private:
 
 	// Cycle component classes
@@ -140,6 +239,8 @@ private:
 	C_HeatExchanger mc_PHX, mc_PC_full, mc_PC_partial;	
 
 	S_des_params ms_des_par;
+	S_des_solved ms_des_solved;
+	S_opt_des_params ms_opt_des_par;
 
 	CO2_state mc_co2_props;
 
@@ -149,8 +250,17 @@ private:
 	double m_eta_thermal_calc_last;	//[-]
 	double m_W_dot_net_last;	//[kWe]
 	double m_energy_bal_last;	//[-]
+	double m_objective_metric_last;	//[??]
+
+	// Structures and data for optimization
+	S_des_params ms_des_par_optimal;
+	double m_objective_metric_opt;
 
 	int design_core();
+
+	int finalize_design();
+
+	int opt_design_core();
 
 public:
 
@@ -162,7 +272,8 @@ public:
 		m_pres_last = m_enth_last = m_entr_last = m_dens_last = m_temp_last;
 
 		m_m_dot_mc = m_m_dot_pc = m_m_dot_rc = m_m_dot_t = std::numeric_limits<double>::quiet_NaN();
-		m_eta_thermal_calc_last = m_W_dot_net_last = m_energy_bal_last = std::numeric_limits<double>::quiet_NaN();
+		m_eta_thermal_calc_last = m_W_dot_net_last = m_energy_bal_last =
+		m_objective_metric_last = m_objective_metric_opt = std::numeric_limits<double>::quiet_NaN();
 	}
 
 	class C_MEQ_HTR_des : public C_monotonic_equation
@@ -204,7 +315,14 @@ public:
 
 	int design(S_des_params & des_par_in);
 
+	int opt_design(S_opt_des_params & opt_des_par_in);
+	
+	// Called by 'nlopt_callback_opt_des_1', so needs to be public
+	double design_cycle_return_objective_metric(const std::vector<double> &x);
+
 };
+
+double nlopt_cb_opt_partialcooling_des(const std::vector<double> &x, std::vector<double> &grad, void *data);
 
 
 #endif

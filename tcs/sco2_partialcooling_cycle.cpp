@@ -51,6 +51,8 @@
 
 #include <algorithm>
 
+#include "nlopt.hpp"
+
 int C_PartialCooling_Cycle::design(S_des_params & des_par_in)
 {
 	ms_des_par = des_par_in;
@@ -201,13 +203,16 @@ int C_PartialCooling_Cycle::design_core()
 	if (comp_error_code != 0)
 		return comp_error_code;
 
-	double w_rc = std::numeric_limits<double>::quiet_NaN();
-	calculate_turbomachinery_outlet_1(m_temp_last[PC_OUT], m_pres_last[PC_OUT], m_pres_last[RC_OUT], eta_rc_isen, true,
-		comp_error_code, m_enth_last[PC_OUT], m_entr_last[PC_OUT], m_dens_last[PC_OUT], m_temp_last[RC_OUT],
-		m_enth_last[RC_OUT], m_entr_last[RC_OUT], m_dens_last[RC_OUT], w_rc);
+	double w_rc = 0.0;
+	if (ms_des_par.m_recomp_frac >= 1.E-12)
+	{
+		calculate_turbomachinery_outlet_1(m_temp_last[PC_OUT], m_pres_last[PC_OUT], m_pres_last[RC_OUT], eta_rc_isen, true,
+			comp_error_code, m_enth_last[PC_OUT], m_entr_last[PC_OUT], m_dens_last[PC_OUT], m_temp_last[RC_OUT],
+			m_enth_last[RC_OUT], m_entr_last[RC_OUT], m_dens_last[RC_OUT], w_rc);
 
-	if (comp_error_code != 0)
-		return comp_error_code;
+		if (comp_error_code != 0)
+			return comp_error_code;
+	}
 
 	double w_t = std::numeric_limits<double>::quiet_NaN();
 	calculate_turbomachinery_outlet_1(m_temp_last[TURB_IN], m_pres_last[TURB_IN], m_pres_last[TURB_OUT], eta_t_isen, false,
@@ -293,6 +298,8 @@ int C_PartialCooling_Cycle::design_core()
 	m_W_dot_net_last = m_m_dot_t*w_t + m_m_dot_pc*w_pc + m_m_dot_rc*w_rc + m_m_dot_mc*w_mc;		//[kWe]
 	m_eta_thermal_calc_last = m_W_dot_net_last / PHX_des_par.m_Q_dot_design;	//[-]
 	m_energy_bal_last = (PHX_des_par.m_Q_dot_design - m_W_dot_net_last - PC_partial_des_par.m_Q_dot_design - PC_full_des_par.m_Q_dot_design) / PHX_des_par.m_Q_dot_design;	//[-]
+
+	m_objective_metric_last = m_eta_thermal_calc_last;
 
 	return 0;
 }
@@ -431,4 +438,341 @@ int C_PartialCooling_Cycle::C_MEQ_LTR_des::operator()(double T_LTR_LP_out /*K*/,
 	*diff_T_LTR_LP_out = T_LTR_LP_out_calc - mpc_pc_cycle->m_temp_last[LTR_LP_OUT];
 
 	return 0;
+}
+
+int C_PartialCooling_Cycle::finalize_design()
+{
+	int mc_des_err = mc_mc.design_given_outlet_state(m_temp_last[MC_IN],
+										m_pres_last[MC_IN],
+										m_m_dot_mc,
+										m_temp_last[MC_OUT],
+										m_pres_last[MC_OUT]);
+
+	if (mc_des_err != 0)
+	{
+		return 71;
+	}
+
+	int pc_des_err = mc_pc.design_given_outlet_state(m_temp_last[PC_IN],
+										m_pres_last[PC_IN],
+										m_m_dot_pc,
+										m_temp_last[PC_OUT],
+										m_pres_last[PC_OUT]);
+
+	if (pc_des_err != 0)
+	{
+		return 72;
+	}
+
+	if (ms_des_par.m_recomp_frac > 0.01)
+	{
+		int rc_des_err = mc_rc.design_given_outlet_state(m_temp_last[PC_OUT],
+										m_pres_last[PC_OUT],
+										m_m_dot_rc,
+										m_temp_last[RC_OUT],
+										m_pres_last[RC_OUT]);
+
+		if (rc_des_err != 0)
+		{
+			return 73;
+		}
+
+		ms_des_solved.m_is_rc = true;
+	}
+	else
+		ms_des_solved.m_is_rc = false;
+
+	C_turbine::S_design_parameters t_des_par;
+		// Set turbine shaft speed
+	t_des_par.m_N_design = ms_des_par.m_N_turbine;		//[rpm]
+	t_des_par.m_N_comp_design_if_linked = mc_mc.get_design_solved()->m_N_design;	//[rpm]
+		// Turbine inlet state
+	t_des_par.m_P_in = m_pres_last[TURB_IN];	//[kPa]
+	t_des_par.m_T_in = m_temp_last[TURB_IN];	//[K]
+	t_des_par.m_D_in = m_dens_last[TURB_IN];	//[kg/m^3]
+	t_des_par.m_h_in = m_enth_last[TURB_IN];	//[kJ/kg]
+	t_des_par.m_s_in = m_entr_last[TURB_IN];	//[kJ/kg-K]
+		// Turbine outlet state
+	t_des_par.m_P_out = m_pres_last[TURB_OUT];	//[kPa]
+	t_des_par.m_h_out = m_enth_last[TURB_OUT];	//[kJ/kg]
+		// Mass flow
+	t_des_par.m_m_dot = m_m_dot_t;		//[kg/s]
+
+	int turb_size_err = 0;
+	mc_t.turbine_sizing(t_des_par, turb_size_err);
+	if (turb_size_err != 0)
+	{
+		return 74;
+	}
+
+	// Get 'design_solved' structures from component classes
+	ms_des_solved.ms_mc_ms_des_solved = *mc_mc.get_design_solved();
+	ms_des_solved.ms_rc_ms_des_solved = *mc_rc.get_design_solved();
+	ms_des_solved.ms_pc_ms_des_solved = *mc_pc.get_design_solved();
+	ms_des_solved.ms_t_des_solved = *mc_t.get_design_solved();
+	ms_des_solved.ms_LTR_des_solved = mc_LTR.ms_des_solved;
+	ms_des_solved.ms_HTR_des_solved = mc_HTR.ms_des_solved;
+
+	// Set solved design point metrics
+	ms_des_solved.m_temp = m_temp_last;
+	ms_des_solved.m_pres = m_pres_last;
+	ms_des_solved.m_enth = m_enth_last;
+	ms_des_solved.m_entr = m_entr_last;
+	ms_des_solved.m_dens = m_dens_last;
+
+	ms_des_solved.m_eta_thermal = m_eta_thermal_calc_last;
+	ms_des_solved.m_W_dot_net = m_W_dot_net_last;
+	ms_des_solved.m_m_dot_mc = m_m_dot_mc;
+	ms_des_solved.m_m_dot_rc = m_m_dot_rc;
+	ms_des_solved.m_m_dot_pc = m_m_dot_pc;
+	ms_des_solved.m_m_dot_t = m_m_dot_t;
+	ms_des_solved.m_recomp_frac = m_m_dot_rc / m_m_dot_t;
+
+	ms_des_solved.m_UA_LTR = ms_des_par.m_UA_LTR;
+	ms_des_solved.m_UA_HTR = ms_des_par.m_UA_HTR;
+
+	return 0;
+}
+
+double C_PartialCooling_Cycle::design_cycle_return_objective_metric(const std::vector<double> &x)
+{
+	int index = 0;
+
+	// Main compressor outlet pressure
+	if (!ms_opt_des_par.m_fixed_P_mc_out)
+	{
+		ms_des_par.m_P_mc_out = x[index];
+		if (ms_des_par.m_P_mc_out > ms_opt_des_par.m_P_high_limit)
+			return 0.0;
+		index++;
+	}
+	else
+		ms_des_par.m_P_mc_out = ms_opt_des_par.m_P_mc_out_guess;	//[kPa]
+
+	// Total pressure ratio
+	double PR_total_local = -999.9;
+	double P_pc_in = -999.9;
+	if (!ms_opt_des_par.m_fixed_PR_total)
+	{
+		PR_total_local = x[index];
+		if (PR_total_local > 50.0)
+			return 0.0;
+		index++;
+		P_pc_in = ms_des_par.m_P_mc_out / PR_total_local;		//[kPa]
+	}
+	else
+	{
+		if (ms_opt_des_par.m_PR_total_guess >= 0.0)
+		{
+			PR_total_local = ms_opt_des_par.m_PR_total_guess;
+			P_pc_in = ms_des_par.m_P_mc_in / PR_total_local;	//[kPa]
+		}
+		else
+		{
+			P_pc_in = fabs(ms_opt_des_par.m_PR_total_guess);	//[kPa]
+		}
+	}
+
+	if (P_pc_in >= ms_des_par.m_P_mc_out)
+		return 0.0;
+	if (P_pc_in <= 100.0)
+		return 0.0;
+	ms_des_par.m_P_pc_in = P_pc_in;		//[kPa]
+
+	// Main compressor inlet pressure
+	double P_mc_in = -999.9;
+	if (!ms_opt_des_par.m_fixed_f_PR_mc)
+	{
+		P_mc_in = ms_des_par.m_P_mc_out - x[index] * (ms_des_par.m_P_mc_out - ms_des_par.m_P_pc_in);	//[kPa]
+		index++;
+	}
+	else
+	{
+		P_mc_in = ms_des_par.m_P_mc_out - ms_opt_des_par.m_fixed_f_PR_mc*(ms_des_par.m_P_mc_out - ms_des_par.m_P_pc_in);	//[kPa]
+	}
+	ms_des_par.m_P_mc_in = P_mc_in;		//[kPa]
+
+	// Recompression fraction
+	if (!ms_opt_des_par.m_fixed_recomp_frac)
+	{
+		ms_des_par.m_recomp_frac = x[index];		//[-]
+		if (ms_des_par.m_recomp_frac < 0.0)
+			return 0.0;
+		index++;
+	}
+	else
+		ms_des_par.m_recomp_frac = ms_opt_des_par.m_recomp_frac_guess;	//[-]
+
+	// Recuperator split fraction
+	double LTR_frac_local = -999.9;
+	if (!ms_opt_des_par.m_fixed_LTR_frac)
+	{
+		LTR_frac_local = x[index];								//[-]
+		if (LTR_frac_local > 1.0 || LTR_frac_local < 0.0)
+			return 0.0;
+		index++;
+	}
+	else
+		LTR_frac_local = ms_opt_des_par.m_LTR_frac_guess;		//[-]
+
+	ms_des_par.m_UA_LTR = ms_opt_des_par.m_UA_rec_total*LTR_frac_local;			//[kW/K]
+	ms_des_par.m_UA_HTR = ms_opt_des_par.m_UA_rec_total*(1.0 - LTR_frac_local);	//[kW/K]
+
+	int des_err_code = design_core();
+
+	double objective_metric = 0.0;
+	if (des_err_code == 0)
+	{
+		objective_metric = m_objective_metric_last;
+
+		if (m_objective_metric_last > m_objective_metric_opt)
+		{
+			ms_des_par_optimal = ms_des_par;
+			m_objective_metric_opt = m_objective_metric_last;
+		}
+	}
+
+	return objective_metric;
+}
+
+int C_PartialCooling_Cycle::opt_design_core()
+{
+	// Map ms_opt_des_par to ms_des_par
+	ms_des_par.m_W_dot_net = ms_opt_des_par.m_W_dot_net;	//[kWe]
+	ms_des_par.m_T_mc_in = ms_opt_des_par.m_T_mc_in;		//[K]
+	ms_des_par.m_T_pc_in = ms_opt_des_par.m_T_pc_in;		//[K]
+	ms_des_par.m_T_t_in = ms_opt_des_par.m_T_t_in;			//[K]
+	ms_des_par.m_DP_LTR = ms_opt_des_par.m_DP_LTR;			//
+	ms_des_par.m_DP_HTR = ms_opt_des_par.m_DP_HTR;			//
+	ms_des_par.m_DP_PC_full = ms_opt_des_par.m_DP_PC_full;	//
+	ms_des_par.m_DP_PC_partial = ms_opt_des_par.m_DP_PC_partial;	//
+	ms_des_par.m_DP_PHX = ms_opt_des_par.m_DP_PHX;			//
+	ms_des_par.m_LTR_eff_max = ms_opt_des_par.m_LTR_eff_max;	//[-]
+	ms_des_par.m_HTR_eff_max = ms_opt_des_par.m_HTR_eff_max;	//[-]
+	ms_des_par.m_eta_mc = ms_opt_des_par.m_eta_mc;			//[-]
+	ms_des_par.m_eta_rc = ms_opt_des_par.m_eta_rc;			//[-]
+	ms_des_par.m_eta_pc = ms_opt_des_par.m_eta_pc;			//[-]
+	ms_des_par.m_eta_t = ms_opt_des_par.m_eta_t;			//[-]
+	ms_des_par.m_N_sub_hxrs = ms_opt_des_par.m_N_sub_hxrs;	//[-]
+	ms_des_par.m_P_high_limit = ms_opt_des_par.m_P_high_limit;	//[kPa]
+	ms_des_par.m_tol = ms_opt_des_par.m_tol;				//[-]
+	ms_des_par.m_N_turbine = ms_opt_des_par.m_N_turbine;	//[rpm]
+	ms_des_par.m_des_objective_type = ms_opt_des_par.m_des_objective_type;	//[-]
+	ms_des_par.m_min_phx_deltaT = ms_opt_des_par.m_min_phx_deltaT;			//[K]
+
+	int index = 0;
+
+	std::vector<double> x(0);
+	std::vector<double> lb(0);
+	std::vector<double> ub(0);
+	std::vector<double> scale(0);
+
+	if (!ms_opt_des_par.m_fixed_P_mc_out)
+	{
+		x.push_back(ms_opt_des_par.m_P_mc_out_guess);	//[kPa]
+		lb.push_back(1.E3);								//[kPa]
+		ub.push_back(ms_opt_des_par.m_P_high_limit);	//[kPa]
+		scale.push_back(500.0);							//[kPa]
+
+		index++;
+	}
+
+	if (!ms_opt_des_par.m_fixed_PR_total)
+	{
+		x.push_back(ms_opt_des_par.m_PR_total_guess);	//[-]
+		lb.push_back(1.E-3);			//[-]
+		ub.push_back(50);				//[-]
+		scale.push_back(0.45);			//[-]
+
+		index++;
+	}
+
+	if (!ms_opt_des_par.m_fixed_f_PR_mc)
+	{
+		x.push_back(ms_opt_des_par.m_f_PR_mc_guess);	//[-]
+		lb.push_back(1.E-3);			//[-]
+		ub.push_back(0.999);			//[-]
+		scale.push_back(0.2);			//[-]
+
+		index++;
+	}
+
+	if (!ms_opt_des_par.m_fixed_recomp_frac)
+	{
+		x.push_back(ms_opt_des_par.m_recomp_frac_guess);	//[-]
+		lb.push_back(0.0);			//[-]
+		ub.push_back(1.0);			//[-]
+		scale.push_back(0.05);		//[-]
+
+		index++;
+	}
+
+	if (!ms_opt_des_par.m_fixed_LTR_frac)
+	{
+		x.push_back(ms_opt_des_par.m_LTR_frac_guess);		//[-]
+		lb.push_back(0.0);			//[-]
+		ub.push_back(1.0);			//[-]
+		scale.push_back(0.1);		//[-]
+
+		index++;
+	}
+
+	int no_opt_err_code = 0;
+	if (index > 0)
+	{
+		m_objective_metric_opt = 0.0;
+
+		// Set up instance of nlopt class and set optimization parameters
+		nlopt::opt     opt_des_cycle(nlopt::LN_SBPLX, index);
+		opt_des_cycle.set_lower_bounds(lb);
+		opt_des_cycle.set_upper_bounds(ub);
+		opt_des_cycle.set_initial_step(scale);
+		opt_des_cycle.set_xtol_rel(ms_opt_des_par.m_opt_tol);
+
+		// set max objective function
+		opt_des_cycle.set_max_objective(nlopt_cb_opt_partialcooling_des, this);
+		double max_f = std::numeric_limits<double>::quiet_NaN();
+		nlopt::result  result_des_cycle = opt_des_cycle.optimize(x, max_f);
+
+		ms_des_par = ms_des_par_optimal;
+
+		no_opt_err_code = design_core();
+
+	}
+	else
+	{
+		ms_des_par.m_P_mc_out = ms_opt_des_par.m_P_mc_out_guess;							//[kPa]
+		ms_des_par.m_P_pc_in = ms_des_par.m_P_mc_out / ms_opt_des_par.m_PR_total_guess;		//[kPa]
+		ms_des_par.m_P_mc_in = ms_des_par.m_P_mc_out - ms_opt_des_par.m_f_PR_mc_guess*(ms_des_par.m_P_mc_out - ms_des_par.m_P_pc_in);	//[kPa]
+		ms_des_par.m_recomp_frac = ms_opt_des_par.m_recomp_frac_guess;	//[-]
+		ms_des_par.m_UA_LTR = ms_opt_des_par.m_UA_rec_total*ms_opt_des_par.m_LTR_frac_guess;	//[kW/K]
+		ms_des_par.m_UA_HTR = ms_opt_des_par.m_UA_rec_total*ms_opt_des_par.m_LTR_frac_guess;	//[kW/K]
+
+		no_opt_err_code = design_core();
+
+		ms_des_par_optimal = ms_des_par;
+	}
+
+	return no_opt_err_code;
+}
+
+int C_PartialCooling_Cycle::opt_design(S_opt_des_params & opt_des_par_in)
+{
+	ms_opt_des_par = opt_des_par_in;
+
+	int opt_des_err_code = opt_design_core();
+
+	if (opt_des_err_code != 0)
+		return opt_des_err_code;
+
+	return finalize_design();
+}
+
+double nlopt_cb_opt_partialcooling_des(const std::vector<double> &x, std::vector<double> &grad, void *data)
+{
+	C_PartialCooling_Cycle *frame = static_cast<C_PartialCooling_Cycle*>(data);
+	if (frame != NULL)
+		return frame->design_cycle_return_objective_metric(x);
+	else
+		return 0.0;
 }
