@@ -1436,7 +1436,7 @@ bool weatherfile::has_data_column( size_t id )
 }
 
 bool weatherfile::has_calculated_data(size_t id){
-	return !std::isnan(m_columns[id].data[0]);
+	return !my_isnan(m_columns[id].data[0]);
 }
 
 bool weatherfile::convert_to_wfcsv( const std::string &input, const std::string &output )
