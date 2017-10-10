@@ -212,9 +212,6 @@ public:
 	/// check if the data is available from weather file
 	virtual bool has_data_column(size_t id) = 0;
 
-	/// check if twet or tdew data was calculated from weather data
-	virtual bool has_calculated_data(size_t id) = 0;
-
 	/// reads one more record
 	virtual bool read( weather_record *r ) = 0; 
 
@@ -258,7 +255,6 @@ public:
 
 	bool read( weather_record *r ); 
 	bool has_data_column( size_t id );
-	bool has_calculated_data(size_t id);
 	
 	static std::string normalize_city( const std::string &in );
 	static bool convert_to_wfcsv( const std::string &input, const std::string &output );
