@@ -1504,7 +1504,8 @@ int C_MEQ_target_W_dot_fan__m_dot_air::operator()(double m_dot_air /*kg/s*/, dou
 	double Re_air = G_air*m_D_h / m_mu_air;
 	
 	double f_air, j_H_air;
-	f_air, j_H_air = numeric_limits<double>::quiet_NaN();
+	f_air = numeric_limits<double>::quiet_NaN();
+	j_H_air = numeric_limits<double>::quiet_NaN();
 
 	if (!N_compact_hx::get_compact_hx_f_j(m_comp_hx_config, Re_air, f_air, j_H_air))
 		return -1;
@@ -2319,7 +2320,8 @@ void C_CO2_to_air_cooler::off_design_hx(double T_amb_K, double P_amb_Pa, double 
 		double G_air = m_dot_air / (m_sigma*ms_hx_des_sol.m_L_tube*ms_hx_des_sol.m_W_par);
 		double Re_air = G_air*m_D_h / mu_air;
 		double f_air, j_H_air;
-		f_air, j_H_air = numeric_limits<double>::quiet_NaN();
+		f_air = numeric_limits<double>::quiet_NaN();
+		j_H_air = numeric_limits<double>::quiet_NaN();
 
 		if( !N_compact_hx::get_compact_hx_f_j(m_enum_compact_hx_config, Re_air, f_air, j_H_air) )
 		{
