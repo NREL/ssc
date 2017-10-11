@@ -106,7 +106,6 @@ class shading_factor_calculator
 	// shading database mods
 	int m_string_option;// 0=shading db, 1=average, 2=max, 3=min
 	//ShadeDB8_mpp *m_db8;
-	//std::unique_ptr<ShadeDB8_mpp> m_db8;
 	double m_beam_shade_factor;
 	double m_dc_shade_factor;
 
