@@ -1257,7 +1257,7 @@ public:
 					}
 					double m_dot_htf_ND_low = min(0.95, cycle_f_min);	//[-]
 					// Design is always = 1.0, so high needs to be a value > 1.0
-					double m_dot_htf_ND_high = max(1.05, as_double("cycle_max_frac"));		// + 0.01;		//[-]
+					double m_dot_htf_ND_high = 1.05;			// max(1.05, as_double("cycle_max_frac"));		// + 0.01;		//[-]
 					int n_m_dot_htf_ND_in = 10;
 
 					util::matrix_t<double> T_htf_parametrics, T_amb_parametrics, m_dot_htf_ND_parametrics;

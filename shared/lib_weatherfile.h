@@ -89,7 +89,7 @@ float calc_dewpt(float db,float rh);
 // see http://www.ejournal.unam.mx/atm/Vol07-3/ATM07304.pdf for eqns.
 double calc_twet( double T, double RH, double P );
 
-static double wiki_dew_calc(double T, double RH)
+static inline double wiki_dew_calc(double T, double RH)
 {
 	// ref: http://en.wikipedia.org/wiki/Dew_point
 

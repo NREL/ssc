@@ -1133,7 +1133,6 @@ int C_comp_single_stage::calc_N_from_phi(double T_in /*K*/, double P_in /*kPa*/,
 		return prop_error_code;
 	}
 	double rho_in = co2_props.dens;	//[kg/m^3]
-
 	double U_tip = m_dot / (phi_in*rho_in*std::pow(ms_des_solved.m_D_rotor,2));		//[m/s]
 	N_rpm = (U_tip*2.0 / ms_des_solved.m_D_rotor)*9.549296590;		//[rpm]
 
@@ -3692,8 +3691,11 @@ void C_RecompCycle::design_core_standard(int & error_code)
 		// HTR
 	mc_HT_recup.initialize(ms_des_par.m_N_sub_hxrs);
 
+<<<<<<< HEAD
 	double temperature_tolerance = 1.E-6;		// Temp differences below this are considered zero
 
+=======
+>>>>>>> develop
 	// Initialize a few variables
 	double m_dot_t, m_dot_mc, m_dot_rc, Q_dot_LT, Q_dot_HT, UA_LT_calc, UA_HT_calc;
 	m_dot_t = m_dot_mc = m_dot_rc = Q_dot_LT = Q_dot_HT = UA_LT_calc = UA_HT_calc = 0.0;
@@ -8197,7 +8199,11 @@ bool find_polynomial_coefs(const std::vector<double> x_data, const std::vector<d
 	}
 
 	std::vector<double> x(n_coefs);
+<<<<<<< HEAD
 
+=======
+	
+>>>>>>> develop
 	// Set up instance of nlopt class and set optimization parameters
 		// nlopt::opt surf(nlopt::LN_NELDERMEAD, nbeta); from Autopilot_api.cpp
 	nlopt::opt		opt_tar_od_cycle(nlopt::LN_NELDERMEAD, n_coefs);
