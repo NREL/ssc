@@ -463,7 +463,6 @@ bool csp_dispatch_opt::optimize()
 
         //Calculate the number of variables
         int nt = (int)m_nstep_opt;
-        int nz = (int)params.eff_table_load.get_size();
 
         //set up the variable structure
         optimization_vars O;
