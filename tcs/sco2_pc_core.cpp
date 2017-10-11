@@ -3691,11 +3691,6 @@ void C_RecompCycle::design_core_standard(int & error_code)
 		// HTR
 	mc_HT_recup.initialize(ms_des_par.m_N_sub_hxrs);
 
-<<<<<<< HEAD
-	double temperature_tolerance = 1.E-6;		// Temp differences below this are considered zero
-
-=======
->>>>>>> develop
 	// Initialize a few variables
 	double m_dot_t, m_dot_mc, m_dot_rc, Q_dot_LT, Q_dot_HT, UA_LT_calc, UA_HT_calc;
 	m_dot_t = m_dot_mc = m_dot_rc = Q_dot_LT = Q_dot_HT = UA_LT_calc = UA_HT_calc = 0.0;
@@ -8199,11 +8194,7 @@ bool find_polynomial_coefs(const std::vector<double> x_data, const std::vector<d
 	}
 
 	std::vector<double> x(n_coefs);
-<<<<<<< HEAD
 
-=======
-	
->>>>>>> develop
 	// Set up instance of nlopt class and set optimization parameters
 		// nlopt::opt surf(nlopt::LN_NELDERMEAD, nbeta); from Autopilot_api.cpp
 	nlopt::opt		opt_tar_od_cycle(nlopt::LN_NELDERMEAD, n_coefs);
