@@ -5491,7 +5491,7 @@ int C_RecompCycle::C_mono_eq_LTR_od::operator()(double T_LTR_LP_out_guess /*K*/,
 
 int C_RecompCycle::C_mono_eq_HTR_od::operator()(double T_HTR_LP_out_guess /*K*/, double *diff_T_HTR_LP_out /*K*/)
 {
-	m_Q_dot_LTR = m_Q_dot_LTR = std::numeric_limits<double>::quiet_NaN();
+	m_Q_dot_LTR = std::numeric_limits<double>::quiet_NaN();
 
 	mpc_rc_cycle->m_temp_od[HTR_LP_OUT] = T_HTR_LP_out_guess;	//[K]
 
