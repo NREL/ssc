@@ -1217,7 +1217,21 @@ bool csp_dispatch_opt::optimize()
             }
         }
 
-		// Maximum electricity production constraint
+        // Maximum gross electricity production constraint
+        {
+            REAL row[1];
+            int col[1];
+
+            for( int t = 0; t<nt; t++ )
+            {
+                row[0] = 1.;
+                col[0] = O.column("wdot", t);
+
+				add_constraintex(lp, 1, row, col, LE, outputs.f_pb_op_limit.at(t) * P["W_dot_cycle"]);
+            }
+        }
+
+		// Maximum net electricity production constraint
 		{
 			REAL row[9];
 			int col[9];
@@ -1225,19 +1239,16 @@ bool csp_dispatch_opt::optimize()
 			for (int t = 0; t<nt; t++)
 			{
                 
-                //set power limit, including any cycle operational limit
-                double w_lim_all = fmin( w_lim.at(t), outputs.f_pb_op_limit.at(t) * P["W_dot_cycle"] );
-
                 //check if cycle should be able to operate
                 if( outputs.wnet_lim_min.at(t) > w_lim.at(t) )      // power cycle operation is impossible at t
                 {
-                    if(w_lim_all > 0)
+                    if(w_lim.at(t) > 0)
                         params.messages->add_message(C_csp_messages::NOTICE, "Power cycle operation not possible at time "+ util::to_string(t+1) + ": power limit below minimum operation");                    
-                    w_lim_all = 0.;
+                    w_lim.at(t) = 0.;
                     
                 }
 
-				if (w_lim_all > 0.)	// Power cycle operation is possible
+				if (w_lim.at(t) > 0.)	// Power cycle operation is possible
 				{
 					int i = 0;
 
@@ -1267,7 +1278,7 @@ bool csp_dispatch_opt::optimize()
 					//row[i] - params.w_stow / params.dt;	//kWe
 					//col[i++] = O.column("yrsd", t);
 
-					add_constraintex(lp, 7, row, col, LE, w_lim_all);
+					add_constraintex(lp, 7, row, col, LE, w_lim.at(t));
 				}
 				else // Power cycle operation is impossible at current constrained wlim
 				{
