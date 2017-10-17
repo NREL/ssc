@@ -155,24 +155,21 @@ SolarField::SolarField( const SolarField &sf )
 	: 
 	_q_to_rec( sf._q_to_rec ),		//[MW] Power to the receiver during performance runs
 	_sim_p_to_rec( sf._sim_p_to_rec ),
+	_estimated_annual_power( sf._estimated_annual_power ),
+	_q_des_withloss( sf._q_des_withloss ),
 	_is_aimpoints_updated( sf._is_aimpoints_updated ),
 	_cancel_flag( sf._cancel_flag ),
 	_is_created( sf._is_created ),
 	_layout( sf._layout ),
 	_helio_objects( sf._helio_objects ),	//This contains the heliostat objects. The heliostat constructor will handle all internal pointer copy operations
 	_helio_template_objects( sf._helio_template_objects ),	//This contains the heliostat template objects.
-	_sim_info( sf._sim_info ),
-	_sim_error( sf._sim_error ),
-	_estimated_annual_power( sf._estimated_annual_power ),
-	_q_des_withloss( sf._q_des_withloss ),
-    _var_map( sf._var_map ),    //point to original variable map
-
-	//classes
-	//_ambient( sf._ambient ),
 	_land( sf._land ),
 	_financial( sf._financial ),
-    _fluxsim( sf._fluxsim ),
-	_plant( sf._plant )
+	_fluxsim( sf._fluxsim ),
+	_plant( sf._plant ),
+	_sim_info( sf._sim_info ),
+	_sim_error( sf._sim_error ),
+	_var_map( sf._var_map )    // point to original variable map
 {
 	//------- Reconstruct pointer maps, etc ----------
 	for(int i=0; i<4; i++){
