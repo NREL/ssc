@@ -1206,9 +1206,8 @@ bool AutoPilot::OptimizeRSGS(vector<double*> &optvars, vector<double> &upper_ran
 		Reg.cur_pos = current;
 		vector<double> stepto(current);
 		double min_val;
-		nlopt::result dres;
 		try{
-			dres = steep.optimize(stepto, min_val);
+			steep.optimize(stepto, min_val);
 		}
 		catch( std::exception &e )
 		{
