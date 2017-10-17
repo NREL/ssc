@@ -1760,13 +1760,11 @@ bool AutoPilot::OptimizeSemiAuto(vector<double*> &optvars, vector<double> &/*upp
            nlobj.optimize( start, fmin );
             _summary_siminfo->addSimulationNotice( ol.c_str() );
         
-            int iopt = 0;
             double objbest = 9.e9;
             for(int i=0; i<(int)AO.m_all_points.size(); i++){
                 double obj = AO.m_objective.at(i);
                 if( obj < objbest ){
                     objbest = obj;
-                    iopt = i;
                 }
             }
             iter_counter += AO.m_all_points.size();
@@ -1837,13 +1835,11 @@ bool AutoPilot::OptimizeSemiAuto(vector<double*> &optvars, vector<double> &/*upp
             nlobj.optimize( start, fmin );
             _summary_siminfo->addSimulationNotice( ol.c_str() );
         
-            int iopt = 0;
             double objbest = 9.e9;
             for(int i=0; i<(int)AO.m_all_points.size(); i++){
                 double obj = AO.m_objective.at(i);
                 if( obj < objbest ){
                     objbest = obj;
-                    iopt = i;
                 }
             }
             iter_counter += AO.m_all_points.size();

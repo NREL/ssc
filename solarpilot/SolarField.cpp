@@ -1107,7 +1107,7 @@ bool SolarField::PrepareFieldLayout(SolarField &SF, WeatherData *wdata, bool ref
 	vector<Heliostat> *helio_objects = SF.getHeliostatObjects();
 	helio_objects->resize(Npos);
 	Heliostat *hptr; //A temporary pointer to avoid retrieving with "at()" over and over
-	int cant_method, focus_method;
+	int focus_method;
 	//A temporary point to pass to the template function
 	sp_point P; P.x = 0; P.z = 0;
 	sp_point Aim;		//The aim point [m]
@@ -1148,20 +1148,17 @@ bool SolarField::PrepareFieldLayout(SolarField &SF, WeatherData *wdata, bool ref
 		int layout_method = V->sf.layout_method.mapval();
 		if(layout_method != var_solarfield::LAYOUT_METHOD::USERDEFINED){	
 			//algorithmic layouts (not user defined)
-			cant_method = Hv->cant_method.mapval();
 			focus_method = Hv->focus_method.mapval();
 		}
 		else{
 			//User defined layouts - need to check for user defined canting and focusing
 			if(layout->at(i).is_user_cant) {
-				cant_method = var_heliostat::CANT_METHOD::USERDEFINED_VECTOR; // Heliostat::CANT_TYPE::USER_VECTOR;
 				hptr->IsUserCant( true );
                 Vect cant;
                 cant.Set( layout->at(i).cant.i, layout->at(i).cant.j, layout->at(i).cant.k );
                 hptr->setCantVector( cant );
 			}
 			else{
-			    cant_method = hptr->getVarMap()->cant_method.mapval();
 				hptr->IsUserCant( false );
 			}
 
@@ -2262,16 +2259,6 @@ void SolarField::radialStaggerPositions(vector<sp_point> &HelPos)
 
             bool is_round = Htv->is_round.mapval() == var_heliostat::IS_ROUND::ROUND;
 
-            double H2; //heliostat half-height
-		    if(is_round) {
-			    //round
-			    H2 = Htv->width.val/2.;	//equals diameter/2
-		    }
-		    else{
-			    //Rectangular
-			    H2 = Htv->height.val/2.;			
-		    }
-
 		    //Get the minimum separation between heliostats that ensures no collision
 		    double r_coll = Htemp->getCollisionRadius();    //Collision radius for current template
 		    double hw = Htv->width.val;
@@ -2370,12 +2357,8 @@ void SolarField::radialStaggerPositions(vector<sp_point> &HelPos)
 		//For round heliostats, all heliostats must be round (no multiple templates. Macro-level geometry
 		//will use the first heliostat (excludes specific canting, aiming, focusing etc.).
 
-        double phi_0 = atan(_var_map->sf.tht.val/r_c);	//elevation angle of the heliostats in the first row
+		double phi_0 = atan(_var_map->sf.tht.val/r_c);	//elevation angle of the heliostats in the first row
 
-		double r_reset = r_c;	//Hold on to the radius where the spacing has been reset
-		
-
-		
 		//Calculate azimuthal spacing variables
 		double daz_init;	//The initial physical spacing between heliostats azimuthally
 		double az_ang, azmin, azmid, haz, dr_c;
@@ -2457,7 +2440,6 @@ void SolarField::radialStaggerPositions(vector<sp_point> &HelPos)
 					if( (r_c - rowpos.at(nr-3)) < drlim || dr_c < Hd/2.){
 						is_slip = true;
 						r_c += -dr_c + max(drlim, Hd);
-						r_reset = r_c;
 					}
 				}
 			}
@@ -3281,10 +3263,9 @@ double SolarField::calcShadowBlock(Heliostat *H, Heliostat *HI, int mode, Vect &
 		Vect 
 			*HIt = HI->getTrackVector(),	//Interfering heliostat track vector
 			*Ht = H->getTrackVector();	//Base heliostat track vector
-		double HIh, HIw, HIr;
+		double HIh, HIw;
 		HIh = HI->getVarMap()->height.val;
 		HIw = HI->getVarMap()->width.val;
-		HIr = sqrt(pow(HIh/2.,2) + pow(HIw/2.,2));	//distance from centroid to outermost point
 		//Interfering heliostat tracking zenith 
 		double HIzen = acos(HIt->k);	//zenith angle 
 		//double HIaz = atan2(HIt->i,HIt->j);	//azimuth angle
