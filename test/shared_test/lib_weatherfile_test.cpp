@@ -52,7 +52,6 @@ TEST_F(CSVCase_WeatherfileTest, initTest){
 	EXPECT_EQ(wf.nrecords(), 8760) << "CSV Case: Init test\n";
 	EXPECT_TRUE(wf.has_data_column(0));
 	EXPECT_FALSE(wf.has_data_column(4));
-	EXPECT_FALSE(wf.has_calculated_data(10)) << "Twet not able to be calculated\n";
 }
 
 TEST_F(CSVCase_WeatherfileTest, normalizeCityTest_lib_weatherfile){
@@ -201,7 +200,6 @@ TEST_F(Data8760CaseWeatherData, initTest_lib_weatherfile){
 	EXPECT_TRUE(wd.has_data_column(4)) << "Should have Minute column";
 	EXPECT_TRUE(wd.has_data_column(6)) << "Should have DN column";
 	EXPECT_FALSE(wd.has_data_column(8)) << "Should not have POA column";
-	EXPECT_FALSE(wd.has_calculated_data(10)) << "Twet not able to be calculated\n";
 }
 
 TEST_F(Data8760CaseWeatherData, readTest_lib_weatherfile){
