@@ -706,7 +706,7 @@ battstor::battstor(compute_module &cm, bool setup_model, int replacement_option,
 	battery_model->initialize(capacity_model, voltage_model, lifetime_model, thermal_model, losses_model);
 	battery_metrics = new battery_metrics_t(battery_model, dt_hr);
 
-	if (batt_vars->batt_dispatch == dispatch_t::MANUAL && batt_vars->batt_meter_position == dispatch_t::BEHIND)
+	if (batt_vars->batt_meter_position == dispatch_t::BEHIND && batt_vars->batt_dispatch == dispatch_t::MANUAL)
 	{
 		dispatch_model = new dispatch_manual_t(battery_model, dt_hr, batt_vars->batt_minimum_SOC, batt_vars->batt_maximum_SOC,
 			batt_vars->batt_current_choice,
@@ -717,6 +717,18 @@ battstor::battstor(compute_module &cm, bool setup_model, int replacement_option,
 			dm_dynamic_sched, dm_dynamic_sched_weekend,
 			dm_charge, dm_discharge, dm_gridcharge, dm_percent_discharge, dm_percent_gridcharge);
 	}
+	else if (batt_vars->batt_meter_position == dispatch_t::FRONT && batt_vars->batt_dispatch == dispatch_t::FOM_MANUAL)
+	{
+		dispatch_model = new dispatch_manual_front_of_meter_t(battery_model, dt_hr, batt_vars->batt_minimum_SOC, batt_vars->batt_maximum_SOC,
+			batt_vars->batt_current_choice,
+			batt_vars->batt_current_charge_max, batt_vars->batt_current_discharge_max,
+			batt_vars->batt_power_charge_max, batt_vars->batt_power_discharge_max, batt_vars->batt_minimum_modetime,
+			batt_vars->batt_dispatch, batt_vars->batt_pv_choice,
+			dm_dynamic_sched, dm_dynamic_sched_weekend,
+			dm_charge, dm_discharge, dm_gridcharge, dm_percent_discharge, dm_percent_gridcharge);
+
+	}
+	// Catch all for FOM economic dispatch, currently calls manual dispatch
 	else if (batt_vars->batt_meter_position == dispatch_t::FRONT)
 	{
 		dispatch_model = new dispatch_manual_front_of_meter_t(battery_model, dt_hr, batt_vars->batt_minimum_SOC, batt_vars->batt_maximum_SOC,
