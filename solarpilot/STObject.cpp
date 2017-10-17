@@ -171,7 +171,7 @@ void ST_Element::Write(FILE *fdat){
 
 void ST_Element::UpdateRotationMatrix(){
 	
-	/*double CosRefZ[3],Euler[3],CosLoc[3],CosRefX[3],CosRefY[3],/*RRefToLoc[3][3],RLocToRef[3][3];*/
+	// double CosRefZ[3],Euler[3],CosLoc[3],CosRefX[3],CosRefY[3],/*RRefToLoc[3][3],RLocToRef[3][3];*/
 		
 	double Alpha,Beta,Gamma,
 		CosAlpha,CosBeta,CosGamma,
