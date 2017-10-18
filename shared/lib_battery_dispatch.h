@@ -330,13 +330,13 @@ protected:
 };
 
 
-/*
-Automated dispatch classes
-*/
+/*! Class containing calculated grid power at a single time step */
 class grid_point
 {
-	// Class to encapsulate the required grid power, hour, and step, i.e
-	// grid_point = [grid_power, hour, step]
+	/**
+	Class for behind-the-meter dispatch which encapsulates the required grid power, hour, and step:
+	grid_point = [grid_power, hour, step]
+	*/
 public:
 	grid_point(double grid = 0., int hour = 0, int step = 0) :
 		_grid(grid), _hour(hour), _step(step){}
@@ -359,14 +359,19 @@ struct byGrid
 };
 typedef std::vector<grid_point> grid_vec;
 
-/* Automated dispatch*/
-
-class automate_dispatch_t : public dispatch_manual_t
+/*! Automated dispatch base class */
+class dispatch_automatic_t : public dispatch_t
 {
+	/**
+	Class contains methods and data common to all automated dispatch strategies in SAM.
+	This includes:
+		1. Dispatch method which discharges battery based on a power setpoint for each time step rather than energy amount used in manual mode
+		2. Initialization of PV power forecast used for automation
+	*/
 public:
-	automate_dispatch_t(
+	dispatch_automatic_t(
 		battery_t * Battery,
-		double dt_hour,
+		double dt,
 		double SOC_min,
 		double SOC_max,
 		int current_choice,
@@ -375,15 +380,71 @@ public:
 		double Pc_max,
 		double Pd_max,
 		double t_min,
-		int mode,   // 0/1/2
+		int dispatch_mode,
 		int pv_dispatch,
-		util::matrix_t<float> dm_dynamic_sched,
-		util::matrix_t<float> dm_dynamic_sched_weekend,
-		bool * dm_charge,
-		bool *dm_discharge,
-		bool * dm_gridcharge,
-		std::map<int, double> dm_percent_discharge,
-		std::map<int, double> dm_percent_gridcharge,
+		int nyears
+		);
+
+	virtual void dispatch(size_t year,
+		size_t hour_of_year,
+		size_t step,
+		double P_pv_dc_charging,
+		double P_pv_dc_discharging,
+		double P_load_dc_charging,
+		double P_load_dc_discharging);
+
+	virtual void update_pv_data(std::vector<double> P_pv_dc);
+	
+protected:
+	
+	/*! Return the dispatch mode */
+	int get_mode();
+
+	/*! Full time-series of PV production [kW] */
+	double_vec _P_pv_dc;		
+	
+	/*! The index of the current day (hour * steps_per_hour + step) */
+	int _day_index;				
+
+	/*! The index of the current month (0-11) */
+	int _month;	
+
+	/*! The number of steps in the look ahead, assumed to be 24 hours * steps_per_hour */
+	int _num_steps;
+
+	int _hour_last_updated;
+	double _dt_hour;
+	int _steps_per_hour;
+	int _nyears;
+	int _mode;
+	double _safety_factor;
+	
+};
+
+/*! Automated dispatch class for behind-the-meter connections */
+class dispatch_automatic_behind_the_meter_t : public dispatch_automatic_t
+{
+	/**
+	Class contains methods and data required to automate dispatch for a behind-the-meter battery targeting peak-shaving applications.
+	This includes:
+		1. Methods to set or compute the grid power target (desired grid power at every step over the next 24 hours)
+		2. Methods to program the dispatch to acheive the target
+		3. Method to update the electric load forecast
+	*/
+public:
+	dispatch_automatic_behind_the_meter_t(
+		battery_t * Battery,
+		double dt,
+		double SOC_min,
+		double SOC_max,
+		int current_choice,
+		double Ic_max,
+		double Id_max,
+		double Pc_max,
+		double Pd_max,
+		double t_min,
+		int dispatch_mode,
+		int pv_dispatch,
 		int nyears
 		);
 
@@ -395,13 +456,14 @@ public:
 		double P_load_dc_charging,
 		double P_load_dc_discharging);
 
-	void update_pv_load_data(std::vector<double> P_pv_dc, std::vector<double> P_load_dc);
+	void update_load_data(std::vector<double> P_load_dc);
+
 	void set_target_power(std::vector<double> P_target);
 	double power_grid_target(){ return _P_target_current; };
 
 protected:
+	
 	void update_dispatch(int hour_of_year, int step, int idx);
-	int get_mode();
 	void initialize(int hour_of_year);
 	void check_debug(FILE *&p, bool & debug, int hour_of_year, int idx);
 	void sort_grid(FILE *p, bool debug, int idx);
@@ -412,29 +474,27 @@ protected:
 	void set_gridcharge(FILE *p, bool debug, int hour_of_year, int profile, double E_max);
 	void check_new_month(int hour_of_year, int step);
 
-	double_vec _P_pv_dc;		// Full time-series of pv [kW]
-	double_vec _P_load_dc;      // Full time-series of loads [kW]
-	double_vec _P_target_input; // Full time-series of target power [kW]
+	/*! Full time-series of loads [kW] */
+	double_vec _P_load_dc;
 
-	double_vec _P_target_use;   // 24 hours * steps_per_hour of target powers [kW]
-	double _P_target_month;	    // The target grid power for the month [kW]
-	double _P_target_current;	// The current grid power target [kW]
+	/*! Full time-series of target power [kW] */
+	double_vec _P_target_input; 
 
-	int _day_index;				// The index of the current day (hour * steps_per_hour + step)
-	int _month;					// [0-11]
-	int _hour_last_updated;
-	double _dt_hour;
-	int _steps_per_hour;
-	int _num_steps;
-	int _nyears;
-	int _mode;
-	double _safety_factor;
-	
-	grid_vec grid; // [P_grid, hour, step]
+	/*! Time series of length (24 hours * steps_per_hour) of target powers [kW] */
+	double_vec _P_target_use;
+
+	/*! The target grid power for the month [kW] */
+	double _P_target_month; 
+
+	/*! The grid power target at the current time [kW] */
+	double _P_target_current;
+
+	/* Vector of length (24 hours * steps_per_hour) containing grid calculation [P_grid, hour, step] */
+	grid_vec grid; 
 };
 
 /*! Automated Front of Meter DC-connected battery dispatch */
-class automate_fom_dc_dispatch_t : public dispatch_manual_t
+class dispatch_automatic_front_of_meter_t : public dispatch_automatic_t
 {
 public:
 	/**
@@ -445,9 +505,9 @@ public:
 	 3. Charging from the PV array during times of low PPA sell rates
 	 4. Charging from the PV array during times where the PV power would be clipped due to inverter limits
 	*/
-	automate_fom_dc_dispatch_t(
+	dispatch_automatic_front_of_meter_t(
 		battery_t * Battery,
-		double dt_hour,
+		double dt,
 		double SOC_min,
 		double SOC_max,
 		int current_choice,
@@ -456,15 +516,8 @@ public:
 		double Pc_max,
 		double Pd_max,
 		double t_min,
-		int dispatch_mode,   
+		int dispatch_mode,
 		int pv_dispatch,
-		util::matrix_t<float> dm_dynamic_sched,
-		util::matrix_t<float> dm_dynamic_sched_weekend,
-		bool * dm_charge,
-		bool *dm_discharge,
-		bool * dm_gridcharge,
-		std::map<int, double> dm_percent_discharge,
-		std::map<int, double> dm_percent_gridcharge,
 		int nyears
 		);
 
@@ -476,43 +529,21 @@ public:
 		double P_load_dc_charging,
 		double P_load_dc_discharging);
 
-	void update_pv_load_data(std::vector<double> P_pv_dc, std::vector<double> P_load_dc);
-	
-
 protected:
-	void update_dispatch(int hour_of_year, int step, int idx);
-	int get_mode();
-	void initialize(int hour_of_year);
-	void check_debug(FILE *&p, bool & debug, int hour_of_year, int idx);
-	void sort_grid(FILE *p, bool debug, int idx);
-	void compute_energy(FILE *p, bool debug, double & E_max);
-	void target_power(FILE*p, bool debug, double E_max, int idx);
-	void set_charge(int profile);
-	int set_discharge(FILE *p, bool debug, int hour_of_year, double E_max);
-	void set_gridcharge(FILE *p, bool debug, int hour_of_year, int profile, double E_max);
-	void check_new_month(int hour_of_year, int step);
-
-	double_vec _P_pv_dc;		// Full time-series of pv [kW]
-	double_vec _P_load_dc;      // Full time-series of loads [kW]
-	double_vec _P_target_use;   // 24 hours * steps_per_hour of target powers [kW]
-	double _P_target_current;	// The current grid power target [kW]
-
-	int _day_index;				// The index of the current day (hour * steps_per_hour + step)
-	int _month;					// [0-11]
-	int _hour_last_updated;
-	double _dt_hour;
-	int _steps_per_hour;
-	int _num_steps;
-	int _nyears;
-	int _mode;
-	double _safety_factor;
-
-	grid_vec grid; // [P_grid, hour, step]
+	
 };
 
-// battery_metrics (report as AC or DC energy quanitities)
+/*! Battery metrics class */
 class battery_metrics_t
 {
+	/**
+	Class which computes ac or dc energy metrics such as:
+	1. Annual energy sent to charge battery or discharged from battery
+	2. Annual energy charged from the grid or PV
+	3. Annual energy imported or exported to the grid annually
+	4. Average roundtrip and conversion efficiency
+	5. Percentage of energy charged from PV
+	*/
 public:
 	battery_metrics_t(battery_t * Battery, double dt_hour);
 	~battery_metrics_t(){};
@@ -551,14 +582,14 @@ protected:
 	double _e_charge_from_grid;		 // [Kwh]
 	double _e_loss_system;			 // [Kwh]
 
-	// This efficiency includes the battery internal efficiency and conversion efficiencies
-	double _average_efficiency;		 // [%]
+	/*! Efficiency includes the battery internal efficiency and conversion efficiencies [%] */
+	double _average_efficiency;
 
-	// This efficiency includes auxilliary system losses
-	double _average_roundtrip_efficiency; // [%]
+	/*! Efficiency includes auxilliary system losses [%] */
+	double _average_roundtrip_efficiency;
 
-	// This is the percentage of energy charge from the PV system
-	double _pv_charge_percent;		 // [%]
+	/*! This is the percentage of energy charge from the PV system [%] */
+	double _pv_charge_percent;
 
 	// annual metrics
 	double _e_charge_from_pv_annual;   // [Kwh]

@@ -213,7 +213,7 @@ struct battstor
 	capacity_t *capacity_model;
 	battery_t *battery_model;
 	battery_metrics_t *battery_metrics;
-	dispatch_manual_t *dispatch_model;
+	dispatch_t *dispatch_model;
 	losses_t *losses_model;
 	charge_controller *charge_control;
 

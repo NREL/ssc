@@ -731,24 +731,18 @@ battstor::battstor(compute_module &cm, bool setup_model, int replacement_option,
 	// Catch all for FOM economic dispatch, currently calls manual dispatch
 	else if (batt_vars->batt_meter_position == dispatch_t::FRONT)
 	{
-		dispatch_model = new automate_fom_dc_dispatch_t(battery_model, dt_hr, batt_vars->batt_minimum_SOC, batt_vars->batt_maximum_SOC,
-			batt_vars->batt_current_choice,
-			batt_vars->batt_current_charge_max, batt_vars->batt_current_discharge_max,
-			batt_vars->batt_power_charge_max, batt_vars->batt_power_discharge_max, 1, // minimum mode time allowed as 1 minute for auto dispatch
+		dispatch_model = new dispatch_automatic_front_of_meter_t(battery_model, dt_hr, batt_vars->batt_minimum_SOC, batt_vars->batt_maximum_SOC,
+			batt_vars->batt_current_choice, batt_vars->batt_current_charge_max, batt_vars->batt_current_discharge_max,
+			batt_vars->batt_power_charge_max, batt_vars->batt_power_discharge_max, batt_vars->batt_minimum_modetime,
 			batt_vars->batt_dispatch, batt_vars->batt_pv_choice,
-			dm_dynamic_sched, dm_dynamic_sched_weekend,
-			dm_charge, dm_discharge, dm_gridcharge, dm_percent_discharge, dm_percent_gridcharge,
 			(int)nyears);
 	}
 	else
 	{
-		dispatch_model = new automate_dispatch_t(battery_model, dt_hr, batt_vars->batt_minimum_SOC, batt_vars->batt_maximum_SOC,
-			batt_vars->batt_current_choice,
-			batt_vars->batt_current_charge_max, batt_vars->batt_current_discharge_max,
-			batt_vars->batt_power_charge_max, batt_vars->batt_power_discharge_max, 1, // minimum mode time allowed as 1 minute for auto dispatch
+		dispatch_model = new dispatch_automatic_behind_the_meter_t(battery_model, dt_hr, batt_vars->batt_minimum_SOC, batt_vars->batt_maximum_SOC,
+			batt_vars->batt_current_choice, batt_vars->batt_current_charge_max, batt_vars->batt_current_discharge_max,
+			batt_vars->batt_power_charge_max, batt_vars->batt_power_discharge_max, batt_vars->batt_minimum_modetime,
 			batt_vars->batt_dispatch, batt_vars->batt_pv_choice,
-			dm_dynamic_sched, dm_dynamic_sched_weekend,
-			dm_charge, dm_discharge, dm_gridcharge, dm_percent_discharge, dm_percent_gridcharge,
 			(int)nyears);
 	}
 
@@ -786,7 +780,7 @@ void battstor::initialize_automated_dispatch(ssc_number_t *pv, ssc_number_t *loa
 		prediction_index = 0;
 		bool look_ahead = ((mode == dispatch_t::LOOK_AHEAD || mode == dispatch_t::MAINTAIN_TARGET));
 		bool look_behind = ((mode == dispatch_t::LOOK_BEHIND));
-		automate_dispatch_t * automated_dispatch = dynamic_cast<automate_dispatch_t*>(dispatch_model);
+		dispatch_automatic_behind_the_meter_t * automated_dispatch = dynamic_cast<dispatch_automatic_behind_the_meter_t*>(dispatch_model);
 
 		// automatic look ahead or behind
 		size_t nrec = nyears * 8760 * step_per_hour;
@@ -825,7 +819,8 @@ void battstor::initialize_automated_dispatch(ssc_number_t *pv, ssc_number_t *loa
 				load_prediction.push_back(0.);
 			}
 		}		
-		automated_dispatch->update_pv_load_data(pv_prediction, load_prediction);
+		automated_dispatch->update_pv_data(pv_prediction);
+		automated_dispatch->update_load_data(load_prediction);
 
 		if (mode == dispatch_t::MAINTAIN_TARGET)
 			automated_dispatch->set_target_power(target_power);
