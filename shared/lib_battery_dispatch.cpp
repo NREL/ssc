@@ -514,7 +514,8 @@ void dispatch_manual_t::dispatch(size_t year,
 	double P_pv_dc_charging,
 	double P_pv_dc_discharging,
 	double P_load_dc_charging,
-	double P_load_dc_discharging)
+	double P_load_dc_discharging,
+	double )
 {
 	prepare_dispatch(hour_of_year, step, P_pv_dc_charging, P_pv_dc_discharging, P_load_dc_charging, P_load_dc_discharging);
 
@@ -762,13 +763,24 @@ dispatch_manual_front_of_meter_t::dispatch_manual_front_of_meter_t(battery_t * B
 	dm_dynamic_sched, dm_dynamic_sched_weekend,
 	dm_charge, dm_discharge, dm_gridcharge, dm_percent_discharge, dm_percent_gridcharge){};
 
+// deep copy from dispatch to this
+dispatch_manual_front_of_meter_t::dispatch_manual_front_of_meter_t(const dispatch_t & dispatch) :
+dispatch_manual_t(dispatch){}
+
+// shallow copy from dispatch to this
+void dispatch_manual_front_of_meter_t::copy(const dispatch_t * dispatch)
+{
+	dispatch_manual_t::copy(dispatch);
+}
+
 void dispatch_manual_front_of_meter_t::dispatch(size_t year,
 	size_t hour_of_year,
 	size_t step,
 	double P_pv_dc_charging,
 	double P_pv_dc_discharging,
 	double P_load_dc_charging,
-	double P_load_dc_discharging)
+	double P_load_dc_discharging,
+	double )
 {
 	prepare_dispatch(hour_of_year, step, P_pv_dc_charging, P_pv_dc_discharging, P_load_dc_charging, P_load_dc_discharging);
 
@@ -870,6 +882,37 @@ dispatch_automatic_t::dispatch_automatic_t(
 	_month = 1;
 	_safety_factor = 0.03;
 }
+
+void dispatch_automatic_t::init_with_pointer(const dispatch_automatic_t * tmp)
+{
+	_P_pv_dc = tmp->_P_pv_dc;
+	_day_index = tmp->_day_index;
+	_month = tmp->_month;
+	_num_steps = tmp->_num_steps;
+	_hour_last_updated = tmp->_hour_last_updated;
+	_dt_hour = tmp->_dt_hour;
+	_steps_per_hour = tmp->_steps_per_hour;
+	_nyears = tmp->_nyears;
+	_mode = tmp->_mode;
+	_safety_factor = tmp->_safety_factor;
+}
+
+// deep copy from dispatch to this
+dispatch_automatic_t::dispatch_automatic_t(const dispatch_t & dispatch) :
+dispatch_t(dispatch)
+{
+	const dispatch_automatic_t * tmp = dynamic_cast<const dispatch_automatic_t *>(&dispatch);
+	init_with_pointer(tmp);
+}
+
+// shallow copy from dispatch to this
+void dispatch_automatic_t::copy(const dispatch_t * dispatch)
+{
+	dispatch_t::copy(dispatch);
+	const dispatch_automatic_t * tmp = dynamic_cast<const dispatch_automatic_t *>(dispatch);
+	init_with_pointer(tmp);
+}
+
 void dispatch_automatic_t::update_pv_data(std::vector<double> P_pv_dc){ _P_pv_dc = P_pv_dc;}
 int dispatch_automatic_t::get_mode(){ return _mode; }
 void dispatch_automatic_t::dispatch(size_t year,
@@ -878,7 +921,8 @@ void dispatch_automatic_t::dispatch(size_t year,
 	double P_pv_dc_charging,
 	double P_pv_dc_discharging,
 	double P_load_dc_charging,
-	double P_load_dc_discharging)
+	double P_load_dc_discharging,
+	double P_battery)
 {
 	prepare_dispatch(hour_of_year, step, P_pv_dc_charging, P_pv_dc_discharging, P_load_dc_charging, P_load_dc_discharging);
 
@@ -886,7 +930,7 @@ void dispatch_automatic_t::dispatch(size_t year,
 	double battery_voltage_nominal = _Battery->battery_voltage_nominal();
 
 	/*! Battery current [A] */
-	double I = (_P_tofrom_batt * util::kilowatt_to_watt) / battery_voltage_nominal;
+	double I = (P_battery * util::kilowatt_to_watt) / battery_voltage_nominal;
 
 	// Controllers
 	switch_controller();
@@ -947,13 +991,44 @@ dispatch_automatic_behind_the_meter_t::dispatch_automatic_behind_the_meter_t(
 		grid.push_back(grid_point(0., 0, 0));
 }
 
+void dispatch_automatic_behind_the_meter_t::init_with_pointer(const dispatch_automatic_behind_the_meter_t* tmp)
+{
+	_P_load_dc = tmp->_P_load_dc;
+	_P_target_input = tmp->_P_target_input;
+	_P_target_use = tmp->_P_target_use;
+	_P_battery_use = tmp->_P_battery_use;
+	_P_battery_current = tmp->_P_battery_current;
+	_P_target_month = tmp->_P_target_month;
+	_P_target_current = tmp->_P_target_current;
+	grid = tmp->grid;
+	sorted_grid = tmp->sorted_grid;
+}
+
+// deep copy from dispatch to this
+dispatch_automatic_behind_the_meter_t::dispatch_automatic_behind_the_meter_t(const dispatch_t & dispatch) :
+dispatch_automatic_t(dispatch)
+{
+	const dispatch_automatic_behind_the_meter_t * tmp = dynamic_cast<const dispatch_automatic_behind_the_meter_t *>(&dispatch);
+	init_with_pointer(tmp);
+}
+
+// shallow copy from dispatch to this
+void dispatch_automatic_behind_the_meter_t::copy(const dispatch_t * dispatch)
+{
+	dispatch_automatic_t::copy(dispatch);
+	const dispatch_automatic_behind_the_meter_t * tmp = dynamic_cast<const dispatch_automatic_behind_the_meter_t *>(dispatch);
+	init_with_pointer(tmp);
+}
+
+
 void dispatch_automatic_behind_the_meter_t::dispatch(size_t year,
 	size_t hour_of_year,
 	size_t step,
 	double P_pv_dc_charging,
 	double P_pv_dc_discharging,
 	double P_load_dc_charging,
-	double P_load_dc_discharging)
+	double P_load_dc_discharging,
+	double )
 {
 	int step_per_hour = (int)(1 / _dt_hour);
 	int idx = 0;
@@ -962,7 +1037,7 @@ void dispatch_automatic_behind_the_meter_t::dispatch(size_t year,
 		idx = (int)util::index_year_hour_step((int)year, (int)hour_of_year, (int)step, (int)step_per_hour);
 
 	update_dispatch((int)hour_of_year, (int)step, idx);
-	dispatch_automatic_t::dispatch(year, hour_of_year, step, P_pv_dc_charging, P_pv_dc_discharging, P_load_dc_charging, P_load_dc_discharging);
+	dispatch_automatic_t::dispatch(year, hour_of_year, step, P_pv_dc_charging, P_pv_dc_discharging, P_load_dc_charging, P_load_dc_discharging, _P_battery_current);
 }
 
 void dispatch_automatic_behind_the_meter_t::update_load_data(std::vector<double> P_load_dc){ _P_load_dc = P_load_dc; }
@@ -998,6 +1073,7 @@ void dispatch_automatic_behind_the_meter_t::update_dispatch(int hour_of_year, in
 	}
 	// save for extraction
 	_P_target_current = _P_target_use[_day_index];
+	_P_battery_current = _P_battery_use[_day_index];
 
 	if (debug)
 		fclose(p);
@@ -1063,7 +1139,7 @@ void dispatch_automatic_behind_the_meter_t::sort_grid(FILE *p, bool debug, int i
 		for (int step = 0; step != _steps_per_hour; step++)
 		{
 			grid[count] = grid_point(_P_load_dc[idx] - _P_pv_dc[idx], hour, step);
-			sorted_grid[count] = grid[count];
+			sorted_grid.push_back(grid[count]);
 
 			if (debug)
 				fprintf(p, "%d\t %.1f\t %.1f\t %.1f\n", count, _P_load_dc[idx], _P_pv_dc[idx], _P_load_dc[idx] - _P_pv_dc[idx]);
@@ -1219,7 +1295,7 @@ void dispatch_automatic_behind_the_meter_t::target_power(FILE*p, bool debug, dou
 void dispatch_automatic_behind_the_meter_t::set_battery_power(FILE *p, bool debug)
 {
 	for (size_t i = 0; i != _P_target_use.size(); i++)
-		_P_battery_use[i] = _P_target_use[i] - grid[i].Grid();
+		_P_battery_use[i] = grid[i].Grid() - _P_target_use[i];
 
 	if (debug)
 	{

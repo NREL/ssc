@@ -88,7 +88,8 @@ public:
 		double P_pv_dc_charging,
 		double P_pv_dc_discharging,
 		double P_load_dc_charging,
-		double P_load_dc_discharging) = 0;
+		double P_load_dc_discharging,
+		double P_battery = 0) = 0;
 
 	virtual void prepare_dispatch(size_t hour_of_year, size_t step, double P_pv_dc_charging, double P_pv_dc_discharging, double P_load_dc_charging, double P_load_dc_discharging);
 
@@ -118,9 +119,9 @@ public:
 	double power_grid_to_batt();
 	double power_pv_to_grid();
 	double power_battery_to_grid();
-	virtual double power_grid_target(){
-		return 0;
-	};
+
+	virtual double power_grid_target(){	return 0;}
+	virtual double power_batt_target(){ return 0.;}
 
 	// control settings
 	int pv_dispatch_priority(){ return _pv_dispatch_to_battery_first; }
@@ -264,7 +265,8 @@ public:
 		double P_pv_dc_charging,
 		double P_pv_dc_discharging,
 		double P_load_dc_charging,
-		double P_load_dc_discharging);
+		double P_load_dc_discharging,
+		double P_battery = 0);
 
 protected:
 
@@ -333,13 +335,21 @@ public:
 
 	~dispatch_manual_front_of_meter_t(){};
 
+	// deep copy constructor (new memory), from dispatch to this
+	dispatch_manual_front_of_meter_t(const dispatch_t & dispatch);
+
+	// copy members from dispatch to this
+	virtual void copy(const dispatch_t * dispatch);
+
+
 	virtual void dispatch(size_t year,
 		size_t hour_of_year,
 		size_t step,
 		double P_pv_dc_charging,
 		double P_pv_dc_discharging,
 		double P_load_dc_charging = 0,
-		double P_load_dc_discharging = 0);
+		double P_load_dc_discharging = 0,
+		double P_battery = 0);
 	void compute_grid_net();
 
 protected:
@@ -404,18 +414,30 @@ public:
 		bool can_grid_charge
 		);
 
+	virtual ~dispatch_automatic_t(){};
+
+	// deep copy constructor (new memory), from dispatch to this
+	dispatch_automatic_t(const dispatch_t& dispatch);
+
+	// copy members from dispatch to this
+	virtual void copy(const dispatch_t * dispatch);
+
 	virtual void dispatch(size_t year,
 		size_t hour_of_year,
 		size_t step,
 		double P_pv_dc_charging,
 		double P_pv_dc_discharging,
 		double P_load_dc_charging,
-		double P_load_dc_discharging);
+		double P_load_dc_discharging,
+		double P_battery);
 
 	virtual void update_pv_data(std::vector<double> P_pv_dc);
-	
+
 protected:
-	
+
+	/*! Initialize with a pointer*/
+	void init_with_pointer(const dispatch_automatic_t * tmp);
+
 	/*! Return the dispatch mode */
 	int get_mode();
 
@@ -468,21 +490,35 @@ public:
 		bool can_grid_charge
 		);
 
+	virtual ~dispatch_automatic_behind_the_meter_t(){};
+
+	// deep copy constructor (new memory), from dispatch to this
+	dispatch_automatic_behind_the_meter_t(const dispatch_t& dispatch);
+
+	// copy members from dispatch to this
+	virtual void copy(const dispatch_t * dispatch);
+
 	void dispatch(size_t year,
 		size_t hour_of_year,
 		size_t step,
 		double P_pv_dc_charging,
 		double P_pv_dc_discharging,
 		double P_load_dc_charging,
-		double P_load_dc_discharging);
+		double P_load_dc_discharging,
+		double P_battery);
 
 	void update_load_data(std::vector<double> P_load_dc);
 
 	void set_target_power(std::vector<double> P_target);
 	double power_grid_target(){ return _P_target_current; };
+	double power_batt_target(){ return _P_battery_current; };
+
 
 protected:
 	
+	/*! Initialize with a pointer*/
+	void init_with_pointer(const dispatch_automatic_behind_the_meter_t * tmp);
+
 	void update_dispatch(int hour_of_year, int step, int idx);
 	void initialize(int hour_of_year);
 	void check_debug(FILE *&p, bool & debug, int hour_of_year, int idx);
@@ -503,6 +539,9 @@ protected:
 
 	/*! Time series of length (24 hours * steps_per_hour) of batter powers [kW] */
 	double_vec _P_battery_use;
+
+	/*! The battery power target at the current time [kW] */
+	double _P_battery_current;
 
 	/*! The target grid power for the month [kW] */
 	double _P_target_month; 
@@ -546,13 +585,22 @@ public:
 		bool can_grid_charge
 		);
 
+	virtual ~dispatch_automatic_front_of_meter_t(){};
+
+	// deep copy constructor (new memory), from dispatch to this
+	dispatch_automatic_front_of_meter_t(const dispatch_automatic_front_of_meter_t& dispatch);
+
+	// copy members from dispatch to this
+	virtual void copy(const dispatch_automatic_front_of_meter_t * dispatch);
+
 	void dispatch(size_t year,
 		size_t hour_of_year,
 		size_t step,
 		double P_pv_dc_charging,
 		double P_pv_dc_discharging,
 		double P_load_dc_charging,
-		double P_load_dc_discharging);
+		double P_load_dc_discharging,
+		double P_battery);
 
 protected:
 	

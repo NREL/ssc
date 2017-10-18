@@ -83,9 +83,9 @@ charge_controller::charge_controller(dispatch_t * dispatch, battery_metrics_t * 
 			_dispatch_initial = new dispatch_manual_front_of_meter_t(*dispatch_man_fom);
 	else if (dispatch_manual_t * dispatch_man = dynamic_cast<dispatch_manual_t*>(_dispatch))
 		_dispatch_initial = new dispatch_manual_t(*dispatch_man);
-
-
-
+	else if (dispatch_automatic_behind_the_meter_t * dispatch_auto_btm = dynamic_cast<dispatch_automatic_behind_the_meter_t*>(_dispatch))
+		_dispatch_initial = new dispatch_automatic_behind_the_meter_t(*dispatch_auto_btm);
+	
 	_battery_metrics = battery_metrics;
 	_iterate = false;
 	initialize(0,0,0);

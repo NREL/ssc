@@ -268,6 +268,7 @@ struct battstor
 		*outBatteryToLoad,
 		*outGridToLoad,
 		*outGridPowerTarget,
+		*outBattPowerTarget,
 		*outPVToBatt,
 		*outGridToBatt,
 		*outPVToGrid,

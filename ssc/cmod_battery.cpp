@@ -190,7 +190,8 @@ var_info vtab_battery_outputs[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "batt_to_grid",                               "Electricity to grid from battery",                      "kW",      "",                       "Battery",       "",                           "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "batt_conversion_loss",                       "Electricity loss in battery power electronics",         "kW",      "",                       "Battery",       "",                           "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "batt_system_loss",                           "Electricity loss from battery ancillary equipment",     "kW",      "",                       "Battery",       "",                           "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "grid_power_target",                          "Electricity grid power target for automated battery dispatch","kW","",                       "Battery",       "",                           "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "grid_power_target",                          "Electricity grid power target for automated dispatch","kW","",                               "Battery",       "",                           "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "batt_power_target",                          "Electricity battery power target for automated dispatch","kW","",                            "Battery",       "",                           "",                              "" },
 
 
 	// monthly outputs
@@ -565,7 +566,10 @@ battstor::battstor(compute_module &cm, bool setup_model, int replacement_option,
 		outGridToLoad = cm.allocate("grid_to_load", nrec*nyears);
 
 		if (batt_vars->batt_dispatch != dispatch_t::MANUAL)
+		{
 			outGridPowerTarget = cm.allocate("grid_power_target", nrec*nyears);
+			outBattPowerTarget = cm.allocate("batt_power_target", nrec*nyears);
+		}
 	}
 	else if (batt_vars->batt_meter_position == dispatch_t::FRONT)
 	{
@@ -944,7 +948,10 @@ void battstor::outputs_topology_dependent(compute_module &)
 		outGridToLoad[index] = (ssc_number_t)(charge_control->power_grid_to_load());
 
 		if (batt_vars->batt_dispatch != dispatch_t::MANUAL)
+		{
 			outGridPowerTarget[index] = (ssc_number_t)(dispatch_model->power_grid_target());
+			outBattPowerTarget[index] = (ssc_number_t)(dispatch_model->power_batt_target());
+		}
 
 	}
 	else if (batt_vars->batt_meter_position == dispatch_t::FRONT)
