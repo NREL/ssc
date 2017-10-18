@@ -359,8 +359,8 @@ public:
     optimization_vars();
     //~optimization_vars();
 
-    void add_var(char *vname, int var_type /* VAR_TYPE enum */, int var_dim /* VAR_DIM enum */, int var_dim_size, REAL lowbo=-DEF_INFINITE, REAL upbo=DEF_INFINITE);
-    void add_var(char *vname, int var_type /* VAR_TYPE enum */, int var_dim /* VAR_DIM enum */, int var_dim_size, int var_dim_size2, REAL lowbo=-DEF_INFINITE, REAL upbo=DEF_INFINITE);
+    void add_var(const string &vname, int var_type /* VAR_TYPE enum */, int var_dim /* VAR_DIM enum */, int var_dim_size, REAL lowbo=-DEF_INFINITE, REAL upbo=DEF_INFINITE);
+    void add_var(const string &vname, int var_type /* VAR_TYPE enum */, int var_dim /* VAR_DIM enum */, int var_dim_size, int var_dim_size2, REAL lowbo=-DEF_INFINITE, REAL upbo=DEF_INFINITE);
 
     bool construct();
 
@@ -372,14 +372,14 @@ public:
     REAL &operator()(int varindex, int ind);    
     REAL &operator()(int varindex, int ind1, int ind2);
 
-    int column(char *varname, int ind);
-    int column(char *varname, int ind1, int ind2);
+    int column(const string &varname, int ind);
+    int column(const string &varname, int ind1, int ind2);
     int column(int varindex, int ind);
     int column(int varindex, int ind1, int ind2);
 
     REAL *get_variable_array(); 
 
-    opt_var *get_var(char *varname);
+    opt_var *get_var(const string &varname);
     opt_var *get_var(int varindex);
 };
 

@@ -537,7 +537,7 @@ bool dispatch_manual_t::check_constraints(double &I, int count)
 	double I_initial = I;
 
 	bool front_of_meter = false;
-	if (dispatch_manual_front_of_meter_t * dispatch = dynamic_cast<dispatch_manual_front_of_meter_t*>(this))
+	if (dynamic_cast<dispatch_manual_front_of_meter_t*>(this))
 		front_of_meter = true;
 
 	// decrease the current draw if took too much

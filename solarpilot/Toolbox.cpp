@@ -1840,7 +1840,8 @@ double Toolbox::intersect_ellipse_rect(double rect[4], double ellipse[2]){
 }
 
 string Toolbox::getDelimiter(std::string &text){
-	if( strcmp(text.c_str(), "")==0 ) return ",";
+	if (text.empty())
+	  return ",";
 	//Find the type of delimiter
 	vector<string> delims;
 	delims.push_back(",");

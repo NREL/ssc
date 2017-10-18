@@ -1849,7 +1849,7 @@ void wobos::ArrayCabCostOptimizer()
 	{478.805 , 48.706   , 12800       , 24000},  //630 mm2
 	{585.832 , 57.428   , 14195       , 25395},  //800 mm2
 	{698.492 , 66.738   , 15836       , 27036}}; //1000 mm2
-
+	*/
 	/*                  (turbine      (substation
 	($/m)    ,(kg/m)  , $/interface), $/interface)*/
 	/*  double array66kvData[11][4] = {
