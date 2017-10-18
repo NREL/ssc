@@ -581,6 +581,338 @@ struct wobos //WIND OFFSHORE BOS STRUCTURE TO HOLD ALL INPUTS AND OUTPUTS AND AL
 	//EXECUTE FUNCTION************************************************************************************************************
 	void run();
 
+	// add default constructor/initializer
+	wobos(): 
+		 turbCapEx(0), //turbine capital cost ($/kW)
+		 nTurb(0),//number of turbines
+		 rotorD(0),//rotor diameter (m)
+		 turbR(0),//turbine rating (MW)
+		 hubH(0),//hub height (m)
+		 waterD(0),// water depth (m)
+		 distShore(0),//distance to shore from install site (km)
+		 distPort(0),//distance to install site from install port (km)
+		 distPtoA(0),//distance from install port to inshore assembly area (km) (spar only)
+		 distAtoS(0),//distance from inshore assembly area to install site (km) (spar Only)
+		 substructure(0), //type of substructure
+		 anchor(0), //anchor type
+		 turbInstallMethod(0), //turbine installation method
+		 towerInstallMethod(0), //tower installation method
+		 installStrategy(0), //installation vessel strategy
+		 cableOptimizer(0), //switch to run the cable optimizer or not
+		 moorLines(0),//number of mooring lines for floating substructures
+		 buryDepth(0),//array and export cable burial depth (m)
+		 arrayY(0),//turbine array spacing between turbines on same row (rotor diameters)
+		 arrayX(0),// turbine array spacing between turbine rows (rotor diameters)
+		 substructCont(0),//substructure install weather contingency
+		 turbCont(0),//turbine install weather contingency
+		 elecCont(0),//turbine install weather contingency
+		 interConVolt(0),//grid interconnect voltage (kV)
+		 distInterCon(0),//distance from onshore substation to grid interconnect (miles)
+		 scrapVal(0),//scrap value of decommissioned components ($)
+		 number_install_seasons(0), //number of vessel mobilization/install seasons
+		 projLife(0),//economic lifetime of the project (years)
+		 inspectClear(0),//inspection clearance for substructure and turbine components (m)
+		 plantComm(0), //plant commissioning cost factor
+		 procurement_contingency(0), //contingency factor for procurement costs
+		 install_contingency(0), //contingency factor for installation costs
+		 construction_insurance(0), //insurance during construction factor
+		 capital_cost_year_0(0), //capital cost spent in year 0
+		 capital_cost_year_1(0), //capital cost spent in year 1
+		 capital_cost_year_2(0), //capital cost spent in year 2
+		 capital_cost_year_3(0), //capital cost spent in year 3
+		 capital_cost_year_4(0), //capital cost spent in year 4
+		 capital_cost_year_5(0), //capital cost spent in year 5
+		 tax_rate(0), //effective tax_rate (federal & state)
+		 interest_during_construction(0), //interest rate during construction
+		 mpileCR(0),//monopile pile cost rate ($/tonne)
+		 mtransCR(0),//monopile transition piece cost rate ($/tonne)
+		 mpileD(0),//monopile pile diameter (m)
+		 mpileL(0),//monopile length (m)
+		 jlatticeCR(0),//jacket lattice cost rate ($/tonne)
+		 jtransCR(0),//jacket transition piece cost rate ($/tonne)
+		 jpileCR(0),//jacket pile cost rate ($/tonne)
+		 jlatticeA(0),//jacket lattice footprint area
+		 jpileL(0),//jacket pile length
+		 jpileD(0),//jacket pile diameter
+		 spStifColCR(0),//spar stiffened column cost rate ($/tonne)
+		 spTapColCR(0),//spar tapered column cost rate ($/tonne)
+		 ballCR(0),//ballast cost rate ($/tonne)
+		 deaFixLeng(0),//drag embedment anchor fixed mooring line length
+		 ssStifColCR(0),//semisubmersible stiffened column cost rate ($/tonne)
+		 ssTrussCR(0),// semisubmersible truss cost rate ($/tonne)
+		 ssHeaveCR(0),//semisubmersible heave plate cost rate ($/tonne)
+		 sSteelCR(0),//secondary steel cost rate ($/tonne)
+		 moorDia(0),//mooring line diameter
+		 moorCR(0),//mooring line cost rate ($/m)
+		 mpEmbedL(0),//monopile embedment length (m)
+		 scourMat(0),
+		 pwrFac(0),//power factor to estimate losses
+		 buryFac(0),//cable burial factor
+		 arrVoltage(0),//array cable voltage (kV)
+		 arrCab1Size(0),//diameter in square millimeters of array cable 1
+		 arrCab1Mass(0),//mass of array cable 1 (kg/m)
+		 cab1CurrRating(0),//current rating of array cable 1 (amps)
+		 cab1CR(0),//cost rate of array cable 1 ($/m)
+		 cab1TurbInterCR(0),//array cable size 1 turbine interface cost rate ($/interface)
+		 arrCab2Size(0),//diameter in square millimeters of array cable 2
+		 arrCab2Mass(0),//mass of array cable 2 (kg/m)
+		 cab2CurrRating(0),//current rating of array cable 2 (amps)
+		 cab2CR(0),//cost rate of array cable 2 ($/m)
+		 cab2TurbInterCR(0),//array cable size 2 turbine interface cost rate ($/interface)
+		 cab2SubsInterCR(0),//array cable size 2 substation interface cost rate ($/interface)
+		 catLengFac(0),//free hanging or catenary cable length factor
+		 exCabFac(0),// excess cable factor
+		 subsTopFab(0),//substation topside fabrication cost ($/tonne)
+		 subsTopDes(0),//substation topside design cost ($)
+		 topAssemblyFac(0),//land based substation topside assembly factor
+		 subsJackCR(0),//substation jacket substructure cost rate ($/tonne)
+		 subsPileCR(0),//substation jacket pile cost rate ($/tonne)
+		 dynCabFac(0),//dynamic/free hanging cable cost premium
+		 shuntCR(0),//shunt reactor cost rate ($/MVA)
+		 highVoltSG(0),//high voltage switchgear cost ($)
+		 medVoltSG(0),//medium voltage switchgear cost ($)
+		 backUpGen(0),//back up generator cost ($)
+		 workSpace(0),//substation workshop and accommodations cost ($)
+		 otherAncillary(0),//substation other ancillary costs ($)
+		 mptCR(0),//main power transformer cost rate ($/MVA)
+		 expVoltage(0),//export cable voltage (kV)
+		 expCabSize(0),//diameter in square millimeters of the export cable
+		 expCabMass(0),//mass of the export cable (kg/m)
+		 expCabCR(0),//cost rate of the export cable ($/m)
+		 expCurrRating(0),//export cable rating (amps)
+		 expSubsInterCR(0),//cost rate of export cable substation interfaces ($/interface)
+		 moorTimeFac(0),//mooring installation timing factor (hrs/m)
+		 moorLoadout(0),//mooring system loadout timing (hrs)
+		 moorSurvey(0),//mooring system anchor position survey timing (hrs)
+		 prepAA(0),//prep inshore assembly area timing (hrs)
+		 prepSpar(0),//prep spare for tow out to assembly area timing (hrs)
+		 upendSpar(0),//upend and ballast the spar timing (hrs)
+		 prepSemi(0),//prep semisubmersible for turbine install timing (hrs)
+		 turbFasten(0),//fasten turbine for transport timing (hrs)
+		 boltTower(0),// bolt tower to substructure timing (hrs)
+		 boltNacelle1(0),//bolt nacelle to tower timing individual components method (hrs)
+		 boltNacelle2(0),//bolt nacelle to tower timing bunny ears method (hrs)
+		 boltNacelle3(0),//bolt nacelle to tower timing assembled rotor method (hrs)
+		 boltBlade1(0),//bolt blade to rotor timing individual components method (hrs)
+		 boltBlade2(0),//bolt blade to rotor timing bunny ears method (hrs)
+		 boltRotor(0),//bolt rotor to nacelle timing assembled rotor method (hrs)
+		 vesselPosTurb(0),//vessel positioning timing turbine install (hrs)
+		 vesselPosJack(0),//vessel positioning timing jacket install (hrs)
+		 vesselPosMono(0),//vessel positioning timing monopile install (hrs)
+		 subsVessPos(0),//vessel positioning timing offshore substation install (hrs)
+		 monoFasten(0),//fasten monopile for transport timing (hrs)
+		 jackFasten(0),//fasten jacket for transport timing (hrs)
+		 prepGripperMono(0),//prepare pile gripper and upender timing monopile install (hrs)
+		 prepGripperJack(0),//prepare pile gripper and upender timing iacket install (hrs)
+		 placePiles(0),//lift and place jacket piles timing (hrs)
+		 prepHamMono(0),//prepare pile hammer timing monopile install (hrs)
+		 removeHamMono(0),//remove hammer timing monopile install (hrs)
+		 prepHamJack(0),//prepare pile hammer timing iacket install (hrs)
+		 removeHamJack(0),//remove hammer timing iacket install (hrs)
+		 placeJack(0),//place  jacket timing (hrs)
+		 levJack(0),//level jacket timing (hrs)
+		 placeTemplate(0),//place jacket template timing (hrs)
+		 hamRate(0),//pile hammer rate (m/hr)
+		 placeMP(0),//place monopile pile timing (hrs)
+		 instScour(0),//install scour protection (hrs)
+		 placeTP(0),//place transition piece on monopile timing (hrs)
+		 groutTP(0),//grout transition piece (hrs)
+		 tpCover(0),//install transition piece cover timing (hrs)
+		 prepTow(0),//prep floating substructure for towing timing (hrs)
+		 spMoorCon(0),//connect spar to mooring system timing (hrs)
+		 ssMoorCon(0),//connect semisubmersible to mooring system (hrs)
+		 spMoorCheck(0),//check mooring connections to spar timing (hrs)
+		 ssMoorCheck(0),//check mooring connections to semisubmersible timing (hrs)
+		 ssBall(0),//ballast semisubmersible timing (hrs)
+		 surfLayRate(0),//electrical cable surface lay rate (m/hr)
+		 cabPullIn(0),//array cable pull in to interfaces timing (hrs)
+		 cabTerm(0),//cable termination and testing timing (hrs)
+		 cabLoadout(0),//array cable loadout timing (hrs)
+		 buryRate(0),//cable bury rate (m/hr)
+		 subsPullIn(0),//cable pull in to substation timing (hrs)
+		 shorePullIn(0),//cable pull in to shore timing (hrs)
+		 landConstruct(0),//land construction of required onshore electrical systems timing (days)
+		 expCabLoad(0),//export cable loadout timing (hrs)
+		 subsLoad(0),//substation loadout timing (hrs)
+		 placeTop(0),//lift and place substation topside timing (hrs)
+		 pileSpreadDR(0),//piling equipment spread day rate ($/day)
+		 pileSpreadMob(0),//piling equipment spread mobilization/demobilization cost ($)
+		 groutSpreadDR(0),//grouting equipment spread day rate ($/day)
+		 groutSpreadMob(0),//grouting equipment spread mobilization/demobilization cost ($)
+		 seaSpreadDR(0),//suction pile anchor vessel and equipment spread day rate ($/day)
+		 seaSpreadMob(0),//suction pile anchor vessel and equipment spread mobilization/demobilization cost ($)
+		 compRacks(0),//component racks cost ($)
+		 cabSurveyCR(0),//cost rate of surveying and verifying electrical cable installation ($/)
+		 cabDrillDist(0),//horizontal drilling distance for cable landfall (m)
+		 cabDrillCR(0),//horizontal drilling cost rate ($/m)
+		 mpvRentalDR(0),//MPV rental day rate ($/day)
+		 diveTeamDR(0),//cable landfall dive team day rate ($/day)
+		 winchDR(0),//Cable winch day rate
+		 civilWork(0),//civil construction work cost ($)
+		 elecWork(0),//electrical work cost ($)
+		 nCrane600(0),
+		 nCrane1000(0),
+		 crane600DR(0),//600 tonne capacity crawler crane day rate ($/day)
+		 crane1000DR(0),//1000 tonne capacity crawler crane day rate ($/day)
+		 craneMobDemob(0),//crane mobilization and demobilization cost ($)
+		 entranceExitRate(0),//port entrance and exit cost ($/m^2/occurrence)
+		 dockRate(0),//port docking cost ($/day)
+		 wharfRate(0),//port wharf loading and unloading cost ($/tonne)
+		 laydownCR(0),//port laydown and storage cost ($/m/day)
+		 estEnMFac(0),//estimated engineering and management cost factor
+		 preFEEDStudy(0),//pre-fornt end engineering design (FEED) study cost ($)
+		 feedStudy(0),// FEED study cost ($)
+		 stateLease(0),//state leasing cost ($)
+		 outConShelfLease(0),//outer continental shelf lease cost ($)
+		 saPlan(0),//site assessment plan cost ($)
+		 conOpPlan(0),//construction operations plan cost ($)
+		 nepaEisMet(0),//national environmental protection agency (NEPA) environmental impact (EIS) meteorological (met) tower study cost ($)
+		 physResStudyMet(0),//physical resource met tower study cost ($)
+		 bioResStudyMet(0),//biological resource met tower study ($)
+		 socEconStudyMet(0),//socioeconomic met tower study cost ($)
+		 navStudyMet(0),//navigation met tower study ($)
+		 nepaEisProj(0),// NEPA EIS project site study cost ($)
+		 physResStudyProj(0),//physical resource project site study cost ($)
+		 bioResStudyProj(0),//biological resource project site study cost ($)
+		 socEconStudyProj(0),//socioeconomic project site study cost ($)
+		 navStudyProj(0),//navigation project site study cost ($)
+		 coastZoneManAct(0),//coastal zone management act compliance cost ($)
+		 rivsnHarbsAct(0),//rivers & harbors act section 10 compliance cost ($)
+		 cleanWatAct402(0),//clean water act section 402 compliance cost ($)
+		 cleanWatAct404(0),//clean water act section 404 compliance cost ($)
+		 faaPlan(0),//federal aviation administration (FAA) plans and mitigation cost ($)
+		 endSpecAct(0),//endangered species act compliance cost ($)
+		 marMamProtAct(0),//marine mammal protection act compliance cost ($)
+		 migBirdAct(0),//migratory bird act compliance ($)
+		 natHisPresAct(0),//national historic preservation act compliance cost ($)
+		 addLocPerm(0),//additional local and state permissions and compliance cost ($)
+		 metTowCR(0),//meteorological tower fabrication, design, and install cost rate ($/MW)
+		 decomDiscRate(0),//decommissioning expense discount rate
+		 hubD(0),
+		 bladeL(0),
+		 chord(0),
+		 nacelleW(0),
+		 nacelleL(0),
+		 rnaM(0),
+		 towerD(0),
+		 towerM(0),
+		 construction_insurance_cost(0),
+		 total_contingency_cost(0),
+		 construction_finance_cost(0),
+		 construction_finance_factor(0),
+		 soft_costs(0),
+		 mpileM(0),
+		 mtransM(0),
+		 mPileCost(0),
+		 mTransCost(0),
+		 jlatticeM(0),
+		 jtransM(0),
+		 jpileM(0),
+		 jLatticeCost(0),
+		 jTransCost(0),
+		 jPileCost(0),
+		 spStifColM(0),
+		 spTapColM(0),
+		 spStifColCost(0),
+		 spTapColCost(0),
+		 ballM(0),
+		 ballCost(0),
+		 ssStifColM(0),
+		 ssTrussM(0),
+		 ssHeaveM(0),
+		 ssStifColCost(0),
+		 ssTrussCost(0),
+		 ssHeaveCost(0),
+		 moorSysCost(0),
+		 sSteelM(0),
+		 sSteelCost(0),
+		 subTotM(0),
+		 systAngle(0),
+		 freeCabLeng(0),
+		 fixCabLeng(0),
+		 nExpCab(0),
+		 nSubstation(0),
+		 fullStrings(0),
+		 nTurbPS(0),
+		 nTurbCab1(0),
+		 nTurbCab2(0),
+		 nTurbInter1(0),
+		 nTurbInter2(0),
+		 nSubsInter(0),
+		 cab1Leng(0),
+		 cab2Leng(0),
+		 expCabLeng(0),
+		 nMPT(0),
+		 mptRating(0),
+		 mptCost(0),
+		 subsTopM(0),
+		 subsTopCost(0),
+		 arrCab1Cost(0),
+		 arrCab2Cost(0),
+		 expCabCost(0),
+		 shuntReactors(0),
+		 switchGear(0),
+		 ancillarySys(0),
+		 subsSubM(0),
+		 subsPileM(0),
+		 subsLandAssembly(0),
+		 subsSubCost(0),
+		 switchYard(0),
+		 onShoreSubs(0),
+		 onshoreMisc(0),
+		 transLine(0),
+		 subCabCost(0),
+		 offSubsCost(0),
+		 onshoreTransCost(0),
+		 moorTime(0),
+		 floatPrepTime(0),
+		 turbDeckArea(0),
+		 nTurbPerTrip(0),
+		 turbInstTime(0),
+		 subDeckArea(0),
+		 nSubPerTrip(0),
+		 subInstTime(0),
+		 cab1SecM(0),
+		 cab2SecM(0),
+		 cab1SecPerTrip(0),
+		 cab2SecPerTrip(0),
+		 arrInstTime(0),
+		 expCabSecM(0),
+		 expCabSecPerTrip(0),
+		 expInstTime(0),
+		 subsInstTime(0),
+		 totInstTime(0),
+		 cabSurvey(0),
+		 array_cable_install_cost(0),
+		 export_cable_install_cost(0),
+		 substation_install_cost(0),
+		 turbine_install_cost(0),
+		 substructure_install_cost(0),
+		 electrical_install_cost(0),
+		 mob_demob_cost(0),
+		 entrExitCost(0),
+		 wharfCost(0),
+		 dockCost(0),
+		 subLaydownA(0),
+		 subLayCost(0),
+		 turbLaydownA(0),
+		 turbLayCost(0),
+		 craneCost(0),
+		 totPortCost(0),
+		 totStageCost(0),
+		 feedCost(0),
+		 permStudyComp(0),
+		 metFabCost(0),
+		 decomCost(0),
+		 subTotCost(0),
+		 totElecCost(0),
+		 totAnICost(0),
+		 totPnSCost(0),
+		 totEnMCost(0),
+		 totDevCost(0),
+		 commissioning(0),
+		 total_bos_cost(0)
+	{}
 };
 extern wobos wobos_obj;
 extern wobos *wobos_cm;
