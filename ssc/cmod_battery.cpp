@@ -731,13 +731,14 @@ battstor::battstor(compute_module &cm, bool setup_model, int replacement_option,
 	// Catch all for FOM economic dispatch, currently calls manual dispatch
 	else if (batt_vars->batt_meter_position == dispatch_t::FRONT)
 	{
-		dispatch_model = new dispatch_manual_front_of_meter_t(battery_model, dt_hr, batt_vars->batt_minimum_SOC, batt_vars->batt_maximum_SOC,
+		dispatch_model = new automate_fom_dc_dispatch_t(battery_model, dt_hr, batt_vars->batt_minimum_SOC, batt_vars->batt_maximum_SOC,
 			batt_vars->batt_current_choice,
 			batt_vars->batt_current_charge_max, batt_vars->batt_current_discharge_max,
-			batt_vars->batt_power_charge_max, batt_vars->batt_power_discharge_max, batt_vars->batt_minimum_modetime,
+			batt_vars->batt_power_charge_max, batt_vars->batt_power_discharge_max, 1, // minimum mode time allowed as 1 minute for auto dispatch
 			batt_vars->batt_dispatch, batt_vars->batt_pv_choice,
 			dm_dynamic_sched, dm_dynamic_sched_weekend,
-			dm_charge, dm_discharge, dm_gridcharge, dm_percent_discharge, dm_percent_gridcharge);
+			dm_charge, dm_discharge, dm_gridcharge, dm_percent_discharge, dm_percent_gridcharge,
+			(int)nyears);
 	}
 	else
 	{
@@ -1113,7 +1114,6 @@ public:
 
 			if (batt_meter_position == dispatch_t::BEHIND)
 			{
-//				int batt_dispatch = as_integer("batt_dispatch_choice");
 				batt.initialize_automated_dispatch(power_input, power_load);
 			}
 			/* *********************************************************************************************

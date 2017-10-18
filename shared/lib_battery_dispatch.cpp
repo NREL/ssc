@@ -1221,6 +1221,89 @@ void automate_dispatch_t::set_gridcharge(FILE *p, bool debug, int hour_of_year, 
 		_message.add("Power target too low, unable to charge battery.  Increase target power.");
 }
 
+automate_fom_dc_dispatch_t::automate_fom_dc_dispatch_t(
+	battery_t * Battery,
+	double dt_hour,
+	double SOC_min,
+	double SOC_max,
+	int current_choice,
+	double Ic_max,
+	double Id_max,
+	double Pc_max,
+	double Pd_max,
+	double t_min,
+	int mode,
+	int pv_dispatch,
+	util::matrix_t<float> dm_dynamic_sched,
+	util::matrix_t<float> dm_dynamic_sched_weekend,
+	bool * dm_charge,
+	bool *dm_discharge,
+	bool * dm_gridcharge,
+	std::map<int, double> dm_percent_discharge,
+	std::map<int, double> dm_percent_gridcharge,
+	int nyears
+	) : dispatch_manual_t(Battery, dt_hour, SOC_min, SOC_max, current_choice, Ic_max, Id_max, Pc_max, Pd_max, t_min, mode, pv_dispatch,
+	dm_dynamic_sched, dm_dynamic_sched_weekend, dm_charge, dm_discharge, dm_gridcharge, dm_percent_discharge, dm_percent_gridcharge)
+{
+	_day_index = 0;
+	_hour_last_updated = -999;
+	_dt_hour = dt_hour;
+	_steps_per_hour = int(1. / dt_hour);
+	_nyears = nyears;
+	_mode = mode;
+	_num_steps = 24 * _steps_per_hour; // change if do look ahead of more than 24 hours
+	_P_target_current = -1e16;
+	_P_target_use.reserve(_num_steps);
+	_month = 1;
+	_safety_factor = 0.03;
+	grid.reserve(_num_steps);
+	for (int ii = 0; ii != _num_steps; ii++)
+		grid.push_back(grid_point(0., 0, 0));
+}
+
+void automate_fom_dc_dispatch_t::dispatch(size_t year,
+	size_t hour_of_year,
+	size_t step,
+	double P_pv_dc_charging,
+	double P_pv_dc_discharging,
+	double P_load_dc_charging,
+	double P_load_dc_discharging)
+{
+	int step_per_hour = (int)(1 / _dt_hour);
+	int idx = 0;
+
+	if (_mode == FOM_LOOK_AHEAD || _mode == FOM_LOOK_BEHIND || _mode == FOM_FORECAST)
+		idx = (int)util::index_year_hour_step((int)year, (int)hour_of_year, (int)step, (int)step_per_hour);
+
+	update_dispatch((int)hour_of_year, (int)step, idx);
+	dispatch_manual_t::dispatch(year, hour_of_year, step, P_pv_dc_charging, P_pv_dc_discharging, P_load_dc_charging, P_load_dc_discharging);
+}
+void automate_fom_dc_dispatch_t::update_pv_load_data(std::vector<double> P_pv_dc, std::vector<double> P_load_dc)
+{
+	_P_pv_dc = P_pv_dc;
+	_P_load_dc = P_load_dc;
+}
+void automate_fom_dc_dispatch_t::update_dispatch(int hour_of_year, int step, int idx)
+{
+	bool debug = false;
+	FILE *p;
+	check_debug(p, debug, hour_of_year, idx);
+	int hour_of_day = util::hour_of_day(hour_of_year);
+	_day_index = (hour_of_day * _steps_per_hour + step);
+
+	if (hour_of_day == 0 && hour_of_year != _hour_last_updated)
+	{
+
+
+	}
+	// save for extraction
+	_P_target_current = _P_target_use[_day_index];
+
+	if (debug)
+		fclose(p);
+}
+
+
 battery_metrics_t::battery_metrics_t(battery_t * Battery, double dt_hour)
 {
 	_Battery = Battery;

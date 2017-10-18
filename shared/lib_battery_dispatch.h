@@ -433,6 +433,83 @@ protected:
 	grid_vec grid; // [P_grid, hour, step]
 };
 
+/*! Automated Front of Meter DC-connected battery dispatch */
+class automate_fom_dc_dispatch_t : public dispatch_manual_t
+{
+public:
+	/**
+	 Class takes forecast information about the PV production and Load Profile, plus PPA sell rate and electricity buy-rate signals
+	 and programs battery to strategically dispatch to maximize economic benefit by:
+	 1. Discharging during times of high PPA sell rates
+	 2. Charging from the grid during times of low electricity buy-rates (if grid charging allowed)
+	 3. Charging from the PV array during times of low PPA sell rates
+	 4. Charging from the PV array during times where the PV power would be clipped due to inverter limits
+	*/
+	automate_fom_dc_dispatch_t(
+		battery_t * Battery,
+		double dt_hour,
+		double SOC_min,
+		double SOC_max,
+		int current_choice,
+		double Ic_max,
+		double Id_max,
+		double Pc_max,
+		double Pd_max,
+		double t_min,
+		int dispatch_mode,   
+		int pv_dispatch,
+		util::matrix_t<float> dm_dynamic_sched,
+		util::matrix_t<float> dm_dynamic_sched_weekend,
+		bool * dm_charge,
+		bool *dm_discharge,
+		bool * dm_gridcharge,
+		std::map<int, double> dm_percent_discharge,
+		std::map<int, double> dm_percent_gridcharge,
+		int nyears
+		);
+
+	void dispatch(size_t year,
+		size_t hour_of_year,
+		size_t step,
+		double P_pv_dc_charging,
+		double P_pv_dc_discharging,
+		double P_load_dc_charging,
+		double P_load_dc_discharging);
+
+	void update_pv_load_data(std::vector<double> P_pv_dc, std::vector<double> P_load_dc);
+	
+
+protected:
+	void update_dispatch(int hour_of_year, int step, int idx);
+	int get_mode();
+	void initialize(int hour_of_year);
+	void check_debug(FILE *&p, bool & debug, int hour_of_year, int idx);
+	void sort_grid(FILE *p, bool debug, int idx);
+	void compute_energy(FILE *p, bool debug, double & E_max);
+	void target_power(FILE*p, bool debug, double E_max, int idx);
+	void set_charge(int profile);
+	int set_discharge(FILE *p, bool debug, int hour_of_year, double E_max);
+	void set_gridcharge(FILE *p, bool debug, int hour_of_year, int profile, double E_max);
+	void check_new_month(int hour_of_year, int step);
+
+	double_vec _P_pv_dc;		// Full time-series of pv [kW]
+	double_vec _P_load_dc;      // Full time-series of loads [kW]
+	double_vec _P_target_use;   // 24 hours * steps_per_hour of target powers [kW]
+	double _P_target_current;	// The current grid power target [kW]
+
+	int _day_index;				// The index of the current day (hour * steps_per_hour + step)
+	int _month;					// [0-11]
+	int _hour_last_updated;
+	double _dt_hour;
+	int _steps_per_hour;
+	int _num_steps;
+	int _nyears;
+	int _mode;
+	double _safety_factor;
+
+	grid_vec grid; // [P_grid, hour, step]
+};
+
 // battery_metrics (report as AC or DC energy quanitities)
 class battery_metrics_t
 {
