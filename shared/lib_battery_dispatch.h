@@ -90,6 +90,10 @@ public:
 		double P_load_dc_charging,
 		double P_load_dc_discharging) = 0;
 
+	virtual void prepare_dispatch(size_t hour_of_year, size_t step, double P_pv_dc_charging, double P_pv_dc_discharging, double P_load_dc_charging, double P_load_dc_discharging);
+
+	virtual bool check_constraints(double &I, int count);
+
 	battery_t * battery_model(){ return _Battery; }
 
 	virtual void compute_grid_net();
@@ -141,8 +145,6 @@ protected:
 		int pv_dispatch);
 
 	// Controllers
-	void SOC_controller();
-	void energy_controller();
 	void switch_controller();
 	double current_controller(double battery_voltage);
 	bool restrict_current(double &I);
@@ -160,9 +162,18 @@ protected:
 
 	double _dt_hour;
 
-	// configuration
-	int _mode; // 0 = look ahead, 1 = look behind, 2 = maintain target power, 3 = manual dispatch
-	int _pv_dispatch_to_battery_first; // 0 = meet load first, 1 = meet battery first
+	/** 
+	The dispatch mode. 
+	For behind-the-meter dispatch: 0 = LOOK_AHEAD, 1 = LOOK_BEHIND, 2 = MAINTAIN_TARGET, 3 = MANUAL
+	For front-of-meter dispatch: 0 = LOOK_AHEAD, 1 = LOOK_BEHIND, 2 = INPUT FORECAST, 3 = MANUAL
+	*/
+	int _mode; 
+
+	/**
+	The priority for how PV power should be directed.
+	0 = meet load first, 1 = charge battery first
+	*/
+	int _pv_dispatch_to_battery_first; 
 
 	// dc power quantities
 	double _P_gen;				 // DC
@@ -196,8 +207,6 @@ protected:
 	double _Id_max;
 	double _t_min;
 	double _e_max;
-	double _percent_discharge;
-	double _percent_charge;
 	double _P_target;
 
 	// rapid charge change controller
@@ -205,6 +214,11 @@ protected:
 	bool _charging;
 	bool _prev_charging;
 	bool _grid_recharge;
+
+	// Charging rules
+	bool  _can_charge;
+	bool  _can_discharge;
+	bool  _can_grid_charge;
 
 	// messages
 	message _message;
@@ -243,6 +257,7 @@ public:
 	virtual void copy(const dispatch_t * dispatch);
 
 	virtual ~dispatch_manual_t(){};
+
 	virtual void dispatch(size_t year,
 		size_t hour_of_year,
 		size_t step,
@@ -271,24 +286,26 @@ protected:
 		std::map<int, double> dm_percent_discharge,
 		std::map<int, double> dm_percent_gridcharge);
 
-	void initialize_dispatch(size_t hour_of_year, size_t step, double P_pv_dc_charging, double P_pv_dc_discharging, double P_load_dc_charging, double P_load_dc_discharging);
+	void prepare_dispatch(size_t hour_of_year, size_t step, double P_pv_dc_charging, double P_pv_dc_discharging, double P_load_dc_charging, double P_load_dc_discharging);
 	void reset();
+	void SOC_controller();
 	void compute_energy_load_priority(double energy_needed);
 	void compute_energy_battery_priority(double energy_needed);
 	bool compute_energy_battery_priority_charging(double energy_needed);
 	bool check_constraints(double &I, int count);
 
-
 	util::matrix_t < float > _sched;
 	util::matrix_t < float > _sched_weekend;
+
 	std::vector<bool> _charge_array;
 	std::vector<bool> _discharge_array;
 	std::vector<bool> _gridcharge_array;
+
+	double _percent_discharge;
+	double _percent_charge;
+
 	std::map<int, double>  _percent_discharge_array;
 	std::map<int, double> _percent_charge_array;
-	bool  _can_charge;
-	bool  _can_discharge;
-	bool  _can_grid_charge;
 };
 /* Manual dispatch for utility scale (front of meter)*/
 class dispatch_manual_front_of_meter_t : public dispatch_manual_t
@@ -313,6 +330,7 @@ public:
 		bool * dm_gridcharge,
 		std::map<int, double> dm_percent_discharge,
 		std::map<int, double> dm_percent_gridcharge);
+
 	~dispatch_manual_front_of_meter_t(){};
 
 	virtual void dispatch(size_t year,
@@ -382,7 +400,8 @@ public:
 		double t_min,
 		int dispatch_mode,
 		int pv_dispatch,
-		int nyears
+		int nyears,
+		bool can_grid_charge
 		);
 
 	virtual void dispatch(size_t year,
@@ -445,7 +464,8 @@ public:
 		double t_min,
 		int dispatch_mode,
 		int pv_dispatch,
-		int nyears
+		int nyears,
+		bool can_grid_charge
 		);
 
 	void dispatch(size_t year,
@@ -469,9 +489,7 @@ protected:
 	void sort_grid(FILE *p, bool debug, int idx);
 	void compute_energy(FILE *p, bool debug, double & E_max);
 	void target_power(FILE*p, bool debug, double E_max, int idx);
-	void set_charge(int profile);
-	int set_discharge(FILE *p, bool debug, int hour_of_year, double E_max);
-	void set_gridcharge(FILE *p, bool debug, int hour_of_year, int profile, double E_max);
+	void set_battery_power(FILE *p, bool debug);
 	void check_new_month(int hour_of_year, int step);
 
 	/*! Full time-series of loads [kW] */
@@ -483,6 +501,9 @@ protected:
 	/*! Time series of length (24 hours * steps_per_hour) of target powers [kW] */
 	double_vec _P_target_use;
 
+	/*! Time series of length (24 hours * steps_per_hour) of batter powers [kW] */
+	double_vec _P_battery_use;
+
 	/*! The target grid power for the month [kW] */
 	double _P_target_month; 
 
@@ -491,6 +512,9 @@ protected:
 
 	/* Vector of length (24 hours * steps_per_hour) containing grid calculation [P_grid, hour, step] */
 	grid_vec grid; 
+
+	/* Vector of length (24 hours * steps_per_hour) containing sorted grid calculation [P_grid, hour, step] */
+	grid_vec sorted_grid;
 };
 
 /*! Automated Front of Meter DC-connected battery dispatch */
@@ -518,7 +542,8 @@ public:
 		double t_min,
 		int dispatch_mode,
 		int pv_dispatch,
-		int nyears
+		int nyears,
+		bool can_grid_charge
 		);
 
 	void dispatch(size_t year,

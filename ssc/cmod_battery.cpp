@@ -151,7 +151,7 @@ var_info vtab_battery_inputs[] = {
 	{ SSC_INPUT,        SSC_NUMBER,     "batt_dispatch_choice",                        "Battery dispatch algorithm",                             "0/1/2",    "",                     "Battery",       "?=0",                        "",                             "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "batt_pv_choice",                              "Prioritize PV usage for load or battery",                "0/1",      "",                     "Battery",       "?=0",                        "",                             "" },
 	{ SSC_INPUT,        SSC_ARRAY,      "dc_net_forecast",                             "PV forecast",                                            "kW",       "",                     "Battery",       "batt_meter_position=1&batt_dispatch_choice=2",  "",          "" },
-
+	{ SSC_INPUT,        SSC_NUMBER,     "dispatch_auto_can_gridcharge",                "Grid charging allowed for automated dispatch?",          "kW",       "",                     "Battery",       "",                           "",                             "" },
 
 	var_info_invalid
 };
@@ -271,6 +271,8 @@ battstor::battstor(compute_module &cm, bool setup_model, int replacement_option,
 				batt_vars->target_power_monthly = cm.as_doublevec("batt_target_power_monthly");
 				batt_vars->target_power = cm.as_doublevec("batt_target_power");
 			}
+			batt_vars->batt_can_gridcharge = cm.as_boolean("dispatch_auto_can_gridcharge");
+
 			batt_vars->batt_lifetime_matrix = cm.as_matrix("batt_lifetime_matrix");
 			batt_vars->batt_calendar_lifetime_matrix = cm.as_matrix("batt_calendar_lifetime_matrix");
 			batt_vars->batt_voltage_matrix = cm.as_matrix("batt_voltage_matrix");
@@ -731,11 +733,13 @@ battstor::battstor(compute_module &cm, bool setup_model, int replacement_option,
 	// Catch all for FOM economic dispatch, currently calls manual dispatch
 	else if (batt_vars->batt_meter_position == dispatch_t::FRONT)
 	{
+		/*
 		dispatch_model = new dispatch_automatic_front_of_meter_t(battery_model, dt_hr, batt_vars->batt_minimum_SOC, batt_vars->batt_maximum_SOC,
 			batt_vars->batt_current_choice, batt_vars->batt_current_charge_max, batt_vars->batt_current_discharge_max,
 			batt_vars->batt_power_charge_max, batt_vars->batt_power_discharge_max, batt_vars->batt_minimum_modetime,
 			batt_vars->batt_dispatch, batt_vars->batt_pv_choice,
-			(int)nyears);
+			(int)nyears, batt_vars->batt_can_gridcharge);
+		*/
 	}
 	else
 	{
@@ -743,7 +747,7 @@ battstor::battstor(compute_module &cm, bool setup_model, int replacement_option,
 			batt_vars->batt_current_choice, batt_vars->batt_current_charge_max, batt_vars->batt_current_discharge_max,
 			batt_vars->batt_power_charge_max, batt_vars->batt_power_discharge_max, batt_vars->batt_minimum_modetime,
 			batt_vars->batt_dispatch, batt_vars->batt_pv_choice,
-			(int)nyears);
+			(int)nyears, batt_vars->batt_can_gridcharge);
 	}
 
 	ac_dc = dc_ac = 100.;

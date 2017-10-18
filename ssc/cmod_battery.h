@@ -79,6 +79,8 @@ struct batt_variables
 	int batt_loss_choice;
 	int batt_calendar_choice;
 
+	bool batt_can_gridcharge;
+
 	size_t ncharge;
 	size_t ndischarge;
 	size_t ndischarge_percent;
@@ -190,7 +192,6 @@ struct battstor
 	void force_replacement();
 	void check_replacement_schedule(int batt_replacement_option, size_t count_batt_replacement, ssc_number_t *batt_replacement);
 	void calculate_monthly_and_annual_outputs( compute_module &cm );
-
 
 	// time quantities
 	size_t step_per_hour;
