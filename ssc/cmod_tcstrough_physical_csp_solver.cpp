@@ -421,8 +421,6 @@ public:
 		weather_header hdr;
 		wfile->header(&hdr);
 
-		double lat = hdr.lat;	//[deg]
-		double lon = hdr.lon;	//[deg]
 		//double shift = (lon - hdr.tz*15.0);		//[deg]
 		// ******************************************************************************
 
