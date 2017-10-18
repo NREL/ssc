@@ -218,7 +218,7 @@ bool solarpilot_invoke::run(std::shared_ptr<weather_data_provider> wdata)
     
 	
 	//set up the weather data for simulation
-	if (wdata == nullptr){
+	if (wdata == NULL){
 		const char *wffile = m_cmod->as_string("solar_resource_file" );
 		wdata = make_shared<weatherfile>( wffile );
 		if ( !wdata ) throw compute_module::exec_error( "solarpilot", "no weather file specified" );

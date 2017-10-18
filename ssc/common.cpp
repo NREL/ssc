@@ -754,7 +754,7 @@ weatherdata::weatherdata( var_data *data_table )
 	}
 	if (nrec == 0 || n_irr < 1)
 	{
-		if (data_table->table.lookup("poa") == nullptr){
+		if (data_table->table.lookup("poa") == NULL){
 			m_message = "missing irradiance: could not find gh, dn, df, or poa";
 			m_ok = false;
 			return;
