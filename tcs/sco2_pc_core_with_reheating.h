@@ -47,8 +47,8 @@
 *  THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *******************************************************************************************************/
 
-#ifndef __SCO2_PC_CORE_
-#define __SCO2_PC_CORE_
+#ifndef __SCO2_PC_CORE_WITH_REHEATING
+#define __SCO2_PC_CORE_WITH_REHEATING
 
 #include <limits>
 #include <vector>
@@ -1566,13 +1566,15 @@ public:
 
 	class C_mono_eq_x_f_recomp_y_N_rc : public C_monotonic_equation
 	{
-	private:
+	public:
 		C_RecompCycle_with_ReHeating *mpc_rc_cycle;
 
 		double m_T_mc_in;		//[K] Compressor inlet temperature
 		double m_P_mc_in;		//[kPa] Compressor inlet pressure
 		double m_T_mt_in;		//[K] Turbine inlet temperature
 		double m_T_rt_in;		//[K] Turbine inlet temperature
+		double m_P_rt_in;
+		bool m_is_update_ms_od_solved;	//[-] Bool to update member structure ms_od_solved
 
 	public:
 		
@@ -1580,7 +1582,8 @@ public:
 		double m_m_dot_rc;		//[kg/s]
 		double m_m_dot_mc;		//[kg/s]
 
-		C_mono_eq_x_f_recomp_y_N_rc(C_RecompCycle_with_ReHeating *pc_rc_cycle, double T_mc_in /*K*/, double P_mc_in /*kPa*/, double T_mt_in /*K*/, double T_rt_in /*K*/)
+		C_mono_eq_x_f_recomp_y_N_rc(C_RecompCycle_with_ReHeating *pc_rc_cycle, double T_mc_in /*K*/,
+			double P_mc_in /*kPa*/, double T_mt_in /*K*/, double T_rt_in /*K*/)
 		{
 			mpc_rc_cycle = pc_rc_cycle;
 			m_T_mc_in = T_mc_in;		//[K]
@@ -1598,7 +1601,7 @@ public:
 
 	class C_mono_eq_turbo_N_fixed_m_dot : public C_monotonic_equation
 	{
-	private:
+	public:
 		C_RecompCycle_with_ReHeating *mpc_rc_cycle;
 
 		double m_T_mc_in;		//[K] Compressor inlet temperature
