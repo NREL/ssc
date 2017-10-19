@@ -14,12 +14,10 @@ before_script:
 
 script:
   - export PATH=$PATH:$HOME/wx-3.1.0/bin
-  - export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/lib/x86_64-linux-gnu
-  - sudo ldconfig
-  - make -j2 -C /home/travis/build/$user/googletest/googletest/make
-  - make -j2 -C /home/travis/build/$user/lk/build_linux
-  - make -j2 -C /home/travis/build/$user/wex/build_linux
-  - make -j2 -C /home/travis/build/$user/ssc/build_linux
+  - make -C /home/travis/build/$user/googletest/googletest/make
+  - make -C /home/travis/build/$user/lk/build_linux
+  - make -C /home/travis/build/$user/wex/build_linux
+  - make -C /home/travis/build/$user/ssc/build_linux
   - .home/travis/build/$user/ssc/build_linux/Test
 
 install:
