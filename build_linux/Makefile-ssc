@@ -4,7 +4,7 @@ CC = gcc
 CXX = g++
 WARNINGS = -Wall -Wno-unknown-pragmas
 CFLAGS = -I../shared -I../nlopt -I../solarpilot -I../tcs -I../ssc -I../lpsolve -g -D__UNIX__ -fPIC $(WARNINGS) -O3
-LDFLAGS = -std=c++0x solarpilot.a tcs.a nlopt.a shared.a lpsolve.a -lm -lstdc++ 
+LDFLAGS = -std=c++0x solarpilot.a tcs.a nlopt.a shared.a lpsolve.a -lm -lstdc++  -ldl
 CXXFLAGS=-std=c++0x $(CFLAGS)
 
 CFLAGS += -D__64BIT__
