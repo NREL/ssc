@@ -1797,7 +1797,9 @@ bool csp_dispatch_opt::optimize_ampl()
 
     //int sysret = system(tstring.str().c_str());
     int sysret = system( solver_params.ampl_exec_call.c_str() );
-    
+
+    if (sysret < 0)
+      exit(EXIT_FAILURE);
 
 
     //read back ampl solution

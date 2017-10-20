@@ -599,11 +599,7 @@ bool C_DSG_Boiler::Solve_Boiler( double I_T_amb_K, double I_T_sky_K, double I_v_
 					bool P_lowguess = false;				//[-] Has lower guess on pressure been set?
 					double P_upper = P_n_in;				//[Pa] Initial upper pressure is equal to inlet pressure
 					double P_lower = 500000.0;				//[Pa] Some minimum outlet pressure
-					double diff_P_bracket = 999.0;			//[Pa] Difference between upper and lower guesses
-					bool lowpres_flag = false;				//[-] Did model trip due to low pressure
-					int P_br_low = 0;						//[-] Flag to show how energy balanced solved
-					int Pave_flag = 0;						//[-]
-					int mdot_flag = 0;						//[-]
+
 					double P_b_min = 1.E6;					//[Pa] Minimum boiler outlet pressure
 					double rho_n_out,T_in1;
 					rho_n_out = T_in1 = std::numeric_limits<double>::quiet_NaN();
@@ -621,7 +617,6 @@ bool C_DSG_Boiler::Solve_Boiler( double I_T_amb_K, double I_T_sky_K, double I_v_
 							{
 								if(diff_P_ave < 0.0)	
 								{
-									P_br_low = 1;
 									P_upper = P_ave;
 								}
 								else
@@ -632,7 +627,6 @@ bool C_DSG_Boiler::Solve_Boiler( double I_T_amb_K, double I_T_sky_K, double I_v_
 							{
 								if(diff_P_ave < 0.0)
 								{
-									P_br_low = 1;
 									P_lower = P_ave;
 									P_lowguess = true;
 								}
@@ -645,18 +639,14 @@ bool C_DSG_Boiler::Solve_Boiler( double I_T_amb_K, double I_T_sky_K, double I_v_
 							}							
 							P_ave = max(1.E6, P_ave);
 							P_out = 2.0*(P_ave - 0.5*P_n_in);
-							diff_P_bracket = (P_upper - P_lower)/P_lower;
 						}
 						// If a pressure near the minimum pressure has caused the code to guess a lower pressure, then flag and guess lower mass flow
 						if( P_upper < 1.01*P_b_min )
 						{
-							Pave_flag = 1;
 							break_to_massflow_calc = true;
 							break;
 							// GOTO 297
 						}
-						lowpres_flag = false;		//[-] Reset flag marking an outlet pressure below allowed minimum
-
 						double diff_T_1 = 999.0;	//[K] Set diff > tolerance
 						int iter_T_1 = 0;			//[-] Initialize iteration counter
 						double T_1_max = 800.0;		//[K] Set some maximum allowable surface temperature to control iteration
@@ -795,7 +785,6 @@ bool C_DSG_Boiler::Solve_Boiler( double I_T_amb_K, double I_T_sky_K, double I_v_
 								// Need to increase mass flow rate in hopes of eliminating enth_flag  
 								if( T1_br_lower==1 && T1_br_upper==2 )
 								{
-									mdot_flag = 1;
 									break_to_massflow_calc = true;
 									break;
 									// GOTO 297
@@ -804,7 +793,6 @@ bool C_DSG_Boiler::Solve_Boiler( double I_T_amb_K, double I_T_sky_K, double I_v_
 								// Need to increase mass flow rate in hopes of eliminating enth_flag
 								if( T1_br_lower==1 && T1_br_upper==3 )
 								{
-									mdot_flag = 1;
 									break_to_massflow_calc = true;
 									break;
 									// GOTO 297
@@ -813,7 +801,6 @@ bool C_DSG_Boiler::Solve_Boiler( double I_T_amb_K, double I_T_sky_K, double I_v_
 								// Increase mass flow rate to bring down average fluid temp
 								else if( T1_br_lower==2 && T1_br_upper==1 )
 								{
-									mdot_flag = 1;
 									break_to_massflow_calc = true;
 									break;
 									// GOTO 297
@@ -825,7 +812,6 @@ bool C_DSG_Boiler::Solve_Boiler( double I_T_amb_K, double I_T_sky_K, double I_v_
 								// Increase mass flow rate
 								else if( T1_br_lower==2 && T1_br_upper==3 )
 								{
-									mdot_flag = 1;
 									break_to_massflow_calc = true;
 									break;
 									// GOTO 297
@@ -834,7 +820,6 @@ bool C_DSG_Boiler::Solve_Boiler( double I_T_amb_K, double I_T_sky_K, double I_v_
 								// Increase mass flow rate
 								else if( T1_br_lower==3 && T1_br_upper==1 )
 								{
-									mdot_flag = 1;
 									break_to_massflow_calc = true;
 									break;
 									// GOTO 297
@@ -843,7 +828,6 @@ bool C_DSG_Boiler::Solve_Boiler( double I_T_amb_K, double I_T_sky_K, double I_v_
 								// Increase mass flow rate
 								else if( T1_br_lower==3 && T1_br_upper==2 )
 								{
-									mdot_flag = 1;
 									break_to_massflow_calc = true;
 									break;
 									// GOTO 297
@@ -1021,7 +1005,6 @@ bool C_DSG_Boiler::Solve_Boiler( double I_T_amb_K, double I_T_sky_K, double I_v_
 					// Don't let boiler approach superheater: it affects the temperature limits on the energy balance
 					if( x_n_out > 0.85 && i < m_nodes - 1 )
 					{
-						mdot_flag = 1;
 						break_to_massflow_calc = true;
 						break;
 						// GOTO 297 -->> where does this go?

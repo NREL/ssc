@@ -260,7 +260,9 @@ public:
 		m_pb_bd_frac = std::numeric_limits<double>::quiet_NaN();	
 		m_P_cond_min = std::numeric_limits<double>::quiet_NaN();	
 		m_n_pl_inc = -1;	
-		m_F_wc[9] = std::numeric_limits<double>::quiet_NaN();
+
+		for (unsigned i = 0; i < sizeof(m_F_wc) / sizeof(double); i++)
+		  m_F_wc[i] = std::numeric_limits<double>::quiet_NaN();
 		
 		m_F_wcmin = std::numeric_limits<double>::quiet_NaN();
 		m_F_wcmax = std::numeric_limits<double>::quiet_NaN();

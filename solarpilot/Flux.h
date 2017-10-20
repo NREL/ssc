@@ -102,7 +102,7 @@ class Flux
 		_mu_GN;		//Normalized moments of the error distribution
 		
 	int _n_order;	//Order of the Hermite expansion
-	int _n_terms;	//Number of terms (n_order + 1), to include constant term
+	size_t _n_terms;	//Number of terms (n_order + 1), to include constant term
 	
 	int *_jmin;
 	int *_jmax;

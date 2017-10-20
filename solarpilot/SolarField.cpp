@@ -2149,7 +2149,6 @@ void SolarField::radialStaggerPositions(vector<sp_point> &HelPos)
 	*/
 
 	//any declarations
-	int Nht; //heliostat templates in the radial directions
 	int i,j;
 	int N_max;   //Upper estimate for the number of heliostats in the field, sizes the arrays
 
@@ -2161,9 +2160,6 @@ void SolarField::radialStaggerPositions(vector<sp_point> &HelPos)
 		radmint = rad[0],
 		radmaxt = rad[1];
 	
-	//First determine how to split up the templates
-	Nht = _helio_templates.size();	//Number in the radial direction
-
 	//Calculate an upper estimate of the size of the heliostat positions array to avoid resizing all the time
     {   //ensure local scope for these temporary variables
 	    double r_coll_temp;
@@ -2784,7 +2780,6 @@ void SolarField::cornfieldPositions(vector<sp_point> &HelPos){
 		radmint = rad[0],
 		radmaxt = rad[1];
 	//First determine how to split up the templates
-	//int Nht = _helio_templates.size();	//Number in the radial direction
 
 	//Calculate an upper estimate of the size of the heliostat positions array to avoid resizing all the time
 	double 
@@ -3344,10 +3339,7 @@ double SolarField::calcShadowBlock(Heliostat *H, Heliostat *HI, int mode, Vect &
 		Vect 
 			*HIt = HI->getTrackVector(),	//Interfering heliostat track vector
 			*Ht = H->getTrackVector();	//Base heliostat track vector
-		double HIh, HIw, HIr;
-		HIh = HI->getVarMap()->height.val;
-		HIw = HI->getVarMap()->width.val;
-		HIr = sqrt(pow(HIh/2.,2) + pow(HIw/2.,2));	//distance from centroid to outermost point
+		double HIh = HI->getVarMap()->height.val;
 		//Interfering heliostat tracking zenith 
 		double HIzen = acos(HIt->k);	//zenith angle 
 		//double HIaz = atan2(HIt->i,HIt->j);	//azimuth angle

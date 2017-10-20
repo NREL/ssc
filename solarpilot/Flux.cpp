@@ -165,7 +165,7 @@ Flux::Flux(Flux &f) :
 
 		_jmax = new int[_n_terms];
 		_jmin = new int[_n_terms];
-		for(int i=0; i<_n_terms; i++){
+		for(size_t i=0; i<_n_terms; i++){
 			_jmax[i] = f._jmax[i];
 			_jmin[i] = f._jmin[i];
 		}
@@ -182,7 +182,7 @@ void Flux::Setup()
 	//Calculate the array of factorial terms in the Hermite expansion
 	factOdds();
 	_fact_d.resize(_n_terms*2);
-	for(int i=0;i<_n_terms*2; i++){_fact_d.at(i) = factorial_d(i);}
+	for(size_t i=0;i<_n_terms*2; i++){_fact_d.at(i) = factorial_d(i);}
 	Binomials();
 	Binomials_hxn();
 
@@ -207,7 +207,7 @@ void Flux::Setup()
 	_jmin = new int[_n_terms];
 	_jmax = new int[_n_terms];
 
-	for(int i=0; i<_n_terms; i++){
+	for(size_t i=0; i<_n_terms; i++){
 		_jmin[i] = i%2+1;
 		_jmax[i] = _n_terms - i;
 	}
@@ -216,7 +216,7 @@ void Flux::Setup()
 
 void Flux::factOdds(){
 	//Calculate the factorial values for the odd terms in the hermite expansion
-	int i;
+  	size_t i;
 
 	//factorial of odds.. 1*3*5... etc
 	_fact_odds.resize_fill(_n_terms*2, 0.0);
@@ -254,8 +254,8 @@ int Flux::IMN(int i){
 void Flux::Binomials(){
 	_binomials.resize_fill(_n_terms,_n_terms,0.0);
 	//Calculate the binomial coefficients
-	for(int i=1; i<_n_terms+1; i++){
-		for(int j=1; j<i+1; j++){
+	for(size_t i=1; i<_n_terms+1; i++){
+		for(size_t j=1; j<i+1; j++){
 			_binomials.at(i-1,j-1) = _fact_d.at(i-1)/_fact_d.at(j-1)/_fact_d.at(i-j);
 		}
 	}
@@ -273,7 +273,7 @@ void Flux::Binomials_hxn(){
 	_binomials_hxn.at(0,0) = 1.;
 	_binomials_hxn.at(1,1) = 1.;
 
-	int i,j;
+	size_t i, j;
 	double fi;
 	for(i=3;i<_n_terms+1;i++){
 		fi = float(i-2);
@@ -301,7 +301,7 @@ matrix_t<double> Flux::hermitePoly( double x) {
 	//for (int i=0; i<N_order+1; i+=1) {_hermitePoly.push_back(0.); }
 	hermitePoly[0] = 1.;
 	hermitePoly[1] = x;		//Need to set H0 and H1
-    for(int n=1; n<_n_terms+1; n++) {
+    for(size_t n=1; n<_n_terms+1; n++) {
 		hermitePoly[n+1] = x*hermitePoly[n] - double(n)*hermitePoly[n-1];
 	}
     
@@ -394,7 +394,7 @@ void Flux::hermiteSunCoefs(var_map &V, matrix_t<double> &mSun) {
     case var_ambient::SUN_TYPE::POINT_SUN:
 		//---Point of sun unit intensity---
         
-        for (int i=1; i<_n_terms+1; i+=2) {    //iterate 'i' from 1 to N_order by 2
+        for (size_t i=1; i<_n_terms+1; i+=2) {    //iterate 'i' from 1 to N_order by 2
             int jmax = _n_terms-i+1;              //Set the upper bound on the iteration limit for j
             for (int j=1; j<jmax+1; j+=2) {
 				mSun.at(i-1,j-1) = 0.;
@@ -406,7 +406,7 @@ void Flux::hermiteSunCoefs(var_map &V, matrix_t<double> &mSun) {
 	//case 1:
     case var_ambient::SUN_TYPE::LIMBDARKENED_SUN:
         //---Limb-darkened sunshape--- see DELSOL3 lines 6399-6414
-		for (int i=1; i<_n_terms+1; i+=2){		//iterate 'i' from 1 to N_order by 2
+		for (size_t i=1; i<_n_terms+1; i+=2){		//iterate 'i' from 1 to N_order by 2
             int jmax = _n_terms-i+1;			//Set the upper bound on the iteration limit for j
             factdum1 = 1.; 
 			if (i>1) { factdum1 = _fact_odds[i-2]; }   //Hold on to the factorial i-1 value to avoid constant recalculation. If i==1, set to 1.
@@ -426,10 +426,10 @@ void Flux::hermiteSunCoefs(var_map &V, matrix_t<double> &mSun) {
 	//case 2:
     case var_ambient::SUN_TYPE::PILLBOX_SUN:
 		//---Square-wave sunshape--- see DELSOL3 lines 6416-6425
-		for (int i=1; i<_n_terms+1; i+=2) {	//Iterate 'i' from 1 to N_order by 2
+		for (size_t i=1; i<_n_terms+1; i+=2) {	//Iterate 'i' from 1 to N_order by 2
             factdum1 = 1.; 
 			if (i>1) { factdum1 = _fact_odds[i-2]; }		//Hold on to the factorial i-1 value to avoid constant recalculation. If i==1, set to 1.
-            for (int j=1; j<_n_terms+1; j+=2) {
+            for (size_t j=1; j<_n_terms+1; j+=2) {
                 factdum2 = 1.;
 				if (j>1) {factdum2 = _fact_odds[j-2]; }		//Hold on to the factorial j-1 value to avoid recalc. if j==1, set to 1.
                 int ij = i+j;									//Hold on to the i+j value to avoid multiple recalculations
@@ -528,7 +528,7 @@ void Flux::hermiteSunCoefs(var_map &V, matrix_t<double> &mSun) {
                              {.75,0.,.125,0.,0.,0.,0.},
                              {0.,0.,0.,0.,0.,0.,0.},
 							 {.625,0.,0.,0.,0.,0.,0.}};
-        for(int i=1; i<_n_terms+1; i+=2){
+        for(size_t i=1; i<_n_terms+1; i+=2){
 		    int jmax = _n_terms - i+1; 
             for (int j=1; j<jmax+1; j+=2) {
                 int ij = i+j;
@@ -575,8 +575,9 @@ void Flux::hermiteErrDistCoefs(block_t<double> &errDM)
 	DELSOL3 lines 6461-6483
 	*/
 
-	int i, ii, j, k, jmax, jmin;
-	double temp1, temp2;
+  	size_t i;
+	int ii, j, k, jmax, jmin;
+	double temp1;
 
 	//resize
 	errDM.resize(_n_terms, _n_terms, 4);
@@ -587,10 +588,6 @@ void Flux::hermiteErrDistCoefs(block_t<double> &errDM)
 	temp1 = 1.;
 	for (i=1; i<_n_terms+1; i+=2) {
 		if(i>1) { temp1 = _fact_odds[i]; }
-		temp2 = 1.;
-		for(j=1; j<_n_terms+1; j+=2) {
-			if(j>1) { temp2=_fact_odds[j]; }
-		}
 	}
 	for (i=1; i<_n_terms+1; i++) {
 		jmax = JMX(i-1); 
@@ -645,8 +642,8 @@ void Flux::hermiteMirrorCoefs(Heliostat &H, double tht) {
 
 	*/
 
-	double wm2s, hm2s, wm, hgap, hm, wgap; 
-	int kl, k, l, ncantx, ncanty;
+  	double wm2s, hm2s, wm, hm;
+	int kl, ncantx, ncanty;
 	
     var_heliostat *V = H.getVarMap();
 
@@ -687,8 +684,8 @@ void Flux::hermiteMirrorCoefs(Heliostat &H, double tht) {
 	if (V->is_round.mapval() == var_heliostat::IS_ROUND::ROUND) {
 		//----Round heliostats----
 		double temp1=1.;
-		for (k=1; k<_n_terms+1; k+=2) {
-			for (l=1; l<_n_terms+1; l+=2) {
+		for (size_t k=1; k<_n_terms+1; k+=2) {
+			for (size_t l=1; l<_n_terms+1; l+=2) {
 				if(k > 1) {temp1 = _fact_odds[k-2];}
 				if(l > 1) {temp1 = temp1 * _fact_odds[l-2];}
 				kl = k+l;
@@ -702,13 +699,13 @@ void Flux::hermiteMirrorCoefs(Heliostat &H, double tht) {
 		
         double wm2sk = wm2s;        //is pow(wm2s,k)
         double wm2s2 = wm2s*wm2s;
-		for(k=1; k<_n_terms+1; k+=2)
+		for(size_t k=1; k<_n_terms+1; k+=2)
         {
             wm2sk *= wm2s2;
 
             double hm2sl = hm2s;    //is pos(hm2s,l)
             double hm2s2 = hm2s*hm2s;
-            for(l=1; l<_n_terms+1; l+=2){
+            for(size_t l=1; l<_n_terms+1; l+=2){
 				kl = k*l;
 				//Calculate the moments
                 hm2sl *= hm2s2;
@@ -778,7 +775,8 @@ double Flux::imagePlaneIntercept(var_map &V, Heliostat &H, Receiver *Rec, Vect *
 
 
 	//Variable declarations
-	int i, j, jmax, jmin;
+	size_t i;
+	int j, jmax, jmin;
 	double slant, tht;
 
 	//--------Calculate the moments of the sun-----------
@@ -1140,7 +1138,7 @@ double Flux::imagePlaneIntercept(var_map &V, Heliostat &H, Receiver *Rec, Vect *
 		for(i=1; i<_n_terms+1; i+=2) {
 			if(i>1) {fact1 = _fact_odds[i-2]; }
 			fact2 = 1.;
-			for(j=1; j<_n_terms+1; j+=2) {
+			for(size_t j=1; j<_n_terms+1; j+=2) {
 				if(j>1) {fact2 = _fact_odds[j-2]; }
 				factarr.at(i-1,j-1) = fact1 * fact2;
 			}
@@ -1231,7 +1229,7 @@ double Flux::imagePlaneIntercept(var_map &V, Heliostat &H, Receiver *Rec, Vect *
 	double temp_res, e_ratio, start[2], binoms;	//temporary result, updated in iteration
 	double S11, S22;	//s terms, not sure what these represent but seem to be cross terms- check Dellin
 	
-	int k, l, l_min, ij, ijk, mstep;
+	int l, l_min, ij, ijk, mstep;
 	//Loop over each term in the polynomial
 	for(i=1; i<_n_terms+1; i++){
 		int jmax = JMX(i - 1) + 1;
@@ -1248,7 +1246,7 @@ double Flux::imagePlaneIntercept(var_map &V, Heliostat &H, Receiver *Rec, Vect *
 
 			l_min = IMN(i - 1);
 
-			for(k=1; k<i+1; k+=mstep){
+			for(size_t k=1; k<i+1; k+=mstep){
 				ijk = ij - k;
 				binoms = _binomials.at(i-1,k-1)*S11; //e_ratio;  moved the s11 calculation after this to reduce number of operations
 				S11 *= e_ratio;
@@ -1332,7 +1330,7 @@ double Flux::imagePlaneIntercept(var_map &V, Heliostat &H, Receiver *Rec, Vect *
 		double
 			ploc_x, ploc_y, xcentij, ycentij;
 		double thtinv = 1./tht;
-		for(i=0; i<ncanty; i++){	//over the rows of panels
+		for(size_t i=0; i<ncanty; i++){	//over the rows of panels
 			for(j=0; j<ncantx; j++){	//over the columns of panels
 				//panel = &panels->at(i,j);
 				ploc = panels->at(i, j).getOrientation();
@@ -1346,7 +1344,7 @@ double Flux::imagePlaneIntercept(var_map &V, Heliostat &H, Receiver *Rec, Vect *
 				//loop over each term in the Hermite expansion
 				xcentij = xcent.at(i, j);
 				ycentij = ycent.at(i, j);
-				for(k=1; k<_n_terms; k++){
+				for(size_t k=1; k<_n_terms; k++){
 					xc.at(i,j,k) = xc.at(i,j,k-1)*xcentij;
 					yc.at(i,j,k) = yc.at(i,j,k-1)*ycentij;
 				}
@@ -1407,7 +1405,7 @@ double Flux::imagePlaneIntercept(var_map &V, Heliostat &H, Receiver *Rec, Vect *
 	double muS, muM, bin, 
 		comb_ord_inv = 1./comb_ord;
 	//
-	for(int m=1; m<_n_terms+1; m++){
+	for(size_t m=1; m<_n_terms+1; m++){
 		nmin = JMN(m-1);
 		nmax = JMX(m-1);
 
@@ -1422,7 +1420,7 @@ double Flux::imagePlaneIntercept(var_map &V, Heliostat &H, Receiver *Rec, Vect *
 
 			if(n>1){mstep=1;} else {mstep=2;}
 
-			for(int k=1; k<m+1; k+=mstep){
+			for(size_t k=1; k<m+1; k+=mstep){
 				lmin = JMN(k-1);
 				binom_temp0 = _binomials.at(m-1,k-1);
 				mk = m-k+1;
@@ -1431,7 +1429,7 @@ double Flux::imagePlaneIntercept(var_map &V, Heliostat &H, Receiver *Rec, Vect *
 				for(int l=lmin; l<n+1; l+=2){
 					ugs = mu_G->at(mk-1,n-l)*binom_temp0*_binomials.at(n-1,l-1);
 
-					for(i=1; i<kp1; i+=2){
+					for(size_t i=1; i<kp1; i+=2){
 						ki = kp1-i;
 						binom_temp1 = _binomials.at(km1,i-1);
 
@@ -1497,7 +1495,7 @@ double Flux::hermiteIntEval(Heliostat &H, Receiver *Rec)
 	//matrix_t<double> *hc_tht = H.getHermiteNormCoefObject();  //this structure isn't actually used here
 
     int nrf=0;
-	for(int i=1;i<_n_terms+1;i++)
+	for(size_t i=1;i<_n_terms+1;i++)
     { 
         for(int j=JMN(i-1); j<JMX(i-1)+1; j+=2)
         {
@@ -1536,29 +1534,29 @@ double Flux::hermiteIntEval(Heliostat &H, Receiver *Rec)
 	
 	axi.at(0) = 1.;
 	ayi.at(0) = 1.;
-	for(int i=1; i<_n_terms; i++){
+	for(size_t i=1; i<_n_terms; i++){
 		axi.at(i) = axi.at(i-1)/sig_x2;
 		ayi.at(i) = ayi.at(i-1)/sig_y2;
 	}
 	//Evaluate the hermite coefs
-	int jmin, jmax, kmin, lmin, i, j, k, l;
+	size_t jmin, jmax, kmin, lmin;
 	double temp_res;
 	int ipak = 0;
     double save1 = axi.at(1)*ayi.at(1)/6.2832;
-	for(i=1; i<_n_terms+1; i++){
+	for(size_t i=1; i<_n_terms+1; i++){
 		jmin = JMN(i-1);
 		jmax = JMX(i-1);
 		kmin = jmin;	//small difference in calculation method, but the hard-coded values appear to always give the same results. DELSOL 1393
 
         double save2 = save1 / _fact_d.at(i-1);
 
-		for(j=jmin; j<jmax+1; j+=2){
+		for(size_t j=jmin; j<jmax+1; j+=2){
 			lmin = JMN(j-1);
 			ipak ++;
 			temp_res = 0.;
 
-			for(k=kmin; k<i+1; k+=2){
-				for(l=lmin; l<j+1; l+=2){
+			for(size_t k=kmin; k<i+1; k+=2){
+				for(size_t l=lmin; l<j+1; l+=2){
 					temp_res += _binomials_hxn.at(i-1,k-1) * mu_F->at(k-1,l-1)*axi.at(k-1) * ayi.at(l-1) * _binomials_hxn.at(j-1,l-1);
 				}
 			}
@@ -2078,7 +2076,7 @@ void Flux::hermiteIntegral(double G[5], double F[5], double X[2], double A[2], d
 
 	//declare other temp variables
 	double xx, x12, x[3], xsq[3], fk, s2, s3, sign2, sign3;
-	int ipak, i, j, k, n, jmin, jmax;
+	int ipak, j, n, jmin, jmax;
 #ifdef _WRITE_FILE
     string name = "C:/Users/mwagner/Documents/NREL/Field optimization/Misc sim files/int/hdat.csv";
     ofstream fout(name.c_str());
@@ -2114,7 +2112,7 @@ void Flux::hermiteIntegral(double G[5], double F[5], double X[2], double A[2], d
 		h.at(0,0) = 0.;
 		h.at(1,0) = 0.;
 		h.at(2,0) = 0.;
-		for(i=0; i<3; i++){xsq[i] = x[i]*x[i];}
+		for(size_t i=0; i<3; i++){xsq[i] = x[i]*x[i];}
         //Calculate the quadrature weights. If the xsq value is large, don't bother since it will be zero.
 		if(xsq[0] < 100.) {h.at(0,0) = exp( -xsq[0]/2. )*WT/A[1]*xdiff;}
 		if(xsq[1] < 100.) {h.at(1,0) = exp( -xsq[1]/2. );}
@@ -2132,7 +2130,7 @@ void Flux::hermiteIntegral(double G[5], double F[5], double X[2], double A[2], d
         The recurrence relationship is used: 
         H_n = x * H_n-1 - (n-1)*H_n-2
         */
-		for(k=3; k<_n_terms+3; k++){
+		for(size_t k=3; k<_n_terms+3; k++){
 			fk += 1.;
 			h.at(0,k-1) = x[0]*h.at(0,k-2) - fk*h.at(0,k-3);
 			h.at(1,k-1) = x[1]*h.at(1,k-2) - fk*h.at(1,k-3);
@@ -2163,7 +2161,7 @@ void Flux::hermiteIntegral(double G[5], double F[5], double X[2], double A[2], d
         fout << "\n";
 #endif
 		ipak = 0;
-		for(i=1; i<_n_terms+1; i++){
+		for(size_t i=1; i<_n_terms+1; i++){
 			int im1 = i-1;
 			jmin = im1%2+1; //jmin = JMN(i-1);
 			jmax = _n_terms - im1; //jmax = JMX(i-1);
@@ -2363,14 +2361,14 @@ double Flux::hermiteFluxEval(Heliostat *H, double xs, double ys){
 
 	double FX = -2.;
 
-	for(int i=1; i<_n_terms+1; i++){
+	for(size_t i=1; i<_n_terms+1; i++){
 		FX ++;
 		HX[i+1] = xs*HX[i] - FX*HX[i-1];
 		HY[i+1] = ys*HY[i] - FX*HY[i-1];
 	}
 	int ipak = 0;
 	double flux = 0.;
-	for(int i=1; i<_n_terms+1; i++){
+	for(size_t i=1; i<_n_terms+1; i++){
 		int
 			jmin = JMN(i-1),
 			jmax = JMX(i-1);

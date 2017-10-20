@@ -1,7 +1,8 @@
 VPATH = ../solarpilot
 CC = gcc
 CXX = g++
-CFLAGS = -fPIC -Wall -g -O3 -I../ -D__64BIT__ -I../nlopt 
+WARNINGS = -Wall -Wno-maybe-uninitialized -Wno-unused
+CFLAGS = -fPIC $(WARNINGS) -g -O3 -I../ -D__64BIT__ -I /home/bje/build/nlopt/include
 CXXFLAGS=-std=c++0x $(CFLAGS)
 
 OBJECTS = \

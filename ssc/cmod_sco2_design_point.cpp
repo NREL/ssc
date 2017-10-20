@@ -118,7 +118,7 @@ public:
 		}
 		double h_in = co2_props.enth;
 		double s_in = co2_props.entr;
-		double D_in = co2_props.dens;
+		// double D_in = co2_props.dens;
 
 		double P_out = 25000.0;		//[kPa]
 		double s_out_isen = s_in;	//[kJ/kg-K]
@@ -137,8 +137,8 @@ public:
 			return;
 		}
 		double T_out = co2_props.temp;	//[K]
-		double s_out = co2_props.entr;	//[kJ/kg-K]
-		double D_out = co2_props.dens;	//[kg/m^3]
+		// double s_out = co2_props.entr;	//[kJ/kg-K]
+		// double D_out = co2_props.dens;	//[kg/m^3]
 
 		/*C_compressor c_comp_old;
 		C_compressor::S_design_parameters s_des_comp_old;
@@ -156,7 +156,6 @@ public:
 		double m_dot_mc = 3000.0 / (h_out - h_in);	//[kg/s] mass flow for 3 MWe compressor
 		//s_des_comp_old.m_m_dot = m_dot_mc;
 
-		int comp_old_err_code = 0;
 		//c_comp_old.compressor_sizing(s_des_comp_old, comp_old_err_code);
 
 		//double diameter_old = c_comp_old.get_design_solved()->m_D_rotor;	//[m]
@@ -181,7 +180,7 @@ public:
 		CO2_PS(P_rc_out, s_rc_in, &co2_props);
 		double h_rc_out_isen = co2_props.enth;	//[kJ/kg]
 
-		double eta_rc_isen = 0.9;
+		// double eta_rc_isen = 0.9;
 		double h_rc_out = h_rc_in + (h_rc_out_isen - h_rc_in) / eta_isen;
 		CO2_PH(P_rc_out, h_rc_out, &co2_props);
 		//s_rc_des_old.m_T_out = co2_props.temp;
@@ -210,10 +209,6 @@ public:
 		double m_dot_rc_od = 0.90*m_dot_rc;
 
 		int rc_od_err_code = 0;
-		double T_rc_out_od = std::numeric_limits<double>::quiet_NaN();
-		//c_rc_old.off_design_recompressor(T_rc_in_od, P_rc_in_od, m_dot_rc_od, P_rc_out, rc_od_err_code, T_rc_out_od);
-
-
 		double T_rc_out_od_ms = std::numeric_limits<double>::quiet_NaN();
 		c_rc_ms.off_design_given_P_out(T_rc_in_od, P_rc_in_od, m_dot_rc_od, P_rc_out, rc_od_err_code, T_rc_out_od_ms);
 
@@ -222,10 +217,6 @@ public:
 
 		C_comp_multi_stage c_comp_ms;
 		c_comp_ms.design_given_outlet_state(T_in, P_in, m_dot_mc, T_out, P_out);
-
-		double diameter_new = c_comp_ms.mv_stages[0].ms_des_solved.m_D_rotor;
-		double N_new = c_comp_ms.ms_des_solved.m_N_design;
-		double tip_ratio_new = c_comp_ms.mv_stages[0].ms_des_solved.m_tip_ratio;
 
 		double P_in_od = 1.15*P_in;
 		double T_in_od = T_in + 5.0;
@@ -614,7 +605,7 @@ public:
 		C_monotonic_eq_solver eq_solv(ty_mono_eq);
 
 		double result;
-		int int_success = eq_solv.test_member_function(2.0, &result);
+		eq_solv.test_member_function(2.0, &result);
 
 		double x_low = std::numeric_limits<double>::quiet_NaN();
 		double x_high = std::numeric_limits<double>::quiet_NaN();
@@ -694,8 +685,6 @@ public:
 		rc_params.m_opt_tol = opt_tol;
 		rc_params.m_N_turbine = N_t_des;
 		
-		int hot_fl_code = HTFProperties::Salt_60_NaNO3_40_KNO3;
-		
 		C_sco2_recomp_csp::S_des_par sco2_rc_des_par;
 		double elevation = 300.0;		//[m] Elevation
 			// System design parameters
@@ -738,8 +727,6 @@ public:
 		sco2_rc_od_par.m_T_htf_hot = sco2_rc_des_par.m_T_htf_hot_in;
 		sco2_rc_od_par.m_m_dot_htf = m_dot_htf;
 		sco2_rc_od_par.m_T_amb = T_amb_cycle_des;
-		int od_strategy = C_sco2_recomp_csp::E_MAX_ETA;
-		//sco2_recomp_csp.off_design_opt(sco2_rc_od_par, od_strategy);
 
 
 
