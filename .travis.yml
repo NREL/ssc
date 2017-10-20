@@ -2,24 +2,26 @@ language: c++
 before_script:
   - wget -q https://github.com/wxWidgets/wxWidgets/releases/download/v3.1.0/wxWidgets-3.1.0.tar.bz2
   - tar jxf wxWidgets-3.1.0.tar.bz2
-  - (cd wxWidgets-3.1.0 && ./configure --prefix=$HOME/wx-3.1.0 && make -j2 all install)
+  - cd wxWidgets-3.1.0
+  - ./configure --prefix=$HOME/wx-3.1.0 --enable-shared=no --enable-stl=yes --enable-debug=no --with-gtk=2 --with-libjpeg=builtin --with-libpng=builtin --with-regex=builtin --with-libtiff=builtin --with-zlib=builtin --with-expat=builtin --without-libjbig --without-liblzma --without-gtkprint --with-libnotify=no --with-libmspack=no --with-gnomevfs=no --with-opengl=yes --with-sdl=no --with-cxx=11
+  - make -j2 all install
   - ln -s $HOME/wx-3.1.0/bin/wx-config $HOME/wx-3.1.0/bin/wx-config-3
   - user=$(echo $TRAVIS_REPO_SLUG | sed 's,/.*$,,')
-  - cd ../ 
+  - (cd ../ && pwd)
   - git clone https://github.com/google/googletest /home/travis/build/$user/googletest
   - git clone https://github.com/$user/lk /home/travis/build/$user/lk
   - git clone https://github.com/$user/wex /home/travis/build/$user/wex
 
 script:
   - export PATH=$PATH:$HOME/wx-3.1.0/bin
-  - make -j2 -C googletest/googletest/make
-  - make -j2 -C lk/build_linux
-  - make -j2 -C wex/build_linux
-  - make -j2 -C ssc/build_linux
-  - ./ssc/build_linux/Test
+  - make -C /home/travis/build/$user/googletest/googletest/make
+  - make -C /home/travis/build/$user/lk/build_linux
+  - make -C /home/travis/build/$user/wex/build_linux
+  - make -C /home/travis/build/$user/ssc/build_linux
+  - .home/travis/build/$user/ssc/build_linux/Test
 
 install:
-  - sudo apt-get install -y libgtk-3-dev
+  - sudo apt-get install -y libgtk2.0-dev libgl1-mesa-dev mesa-common-dev freeglut3-dev libcurl4-openssl-dev libc6
 
 branches:
   only:
