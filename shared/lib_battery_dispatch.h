@@ -52,6 +52,8 @@
 #ifndef __LIB_BATTERY_DISPATCH_H__
 #define __LIB_BATTERY_DISPATCH_H__
 
+
+
 /*
 Dispatch Base Class - can envision many potential modifications. Goal is to define standard API
 */
@@ -453,6 +455,12 @@ protected:
 	/*! The number of steps in the look ahead, assumed to be 24 hours * steps_per_hour */
 	int _num_steps;
 
+	/*! Time series of length (24 hours * steps_per_hour) of batter powers [kW] */
+	double_vec _P_battery_use;
+
+	/*! The battery power target at the current time [kW] */
+	double _P_battery_current;
+
 	int _hour_last_updated;
 	double _dt_hour;
 	int _steps_per_hour;
@@ -537,12 +545,6 @@ protected:
 	/*! Time series of length (24 hours * steps_per_hour) of target powers [kW] */
 	double_vec _P_target_use;
 
-	/*! Time series of length (24 hours * steps_per_hour) of batter powers [kW] */
-	double_vec _P_battery_use;
-
-	/*! The battery power target at the current time [kW] */
-	double _P_battery_current;
-
 	/*! The target grid power for the month [kW] */
 	double _P_target_month; 
 
@@ -588,10 +590,10 @@ public:
 	virtual ~dispatch_automatic_front_of_meter_t(){};
 
 	// deep copy constructor (new memory), from dispatch to this
-	dispatch_automatic_front_of_meter_t(const dispatch_automatic_front_of_meter_t& dispatch);
+	dispatch_automatic_front_of_meter_t(const dispatch_t& dispatch);
 
 	// copy members from dispatch to this
-	virtual void copy(const dispatch_automatic_front_of_meter_t * dispatch);
+	virtual void copy(const dispatch_t* dispatch);
 
 	void dispatch(size_t year,
 		size_t hour_of_year,
@@ -604,6 +606,7 @@ public:
 
 protected:
 	
+	void init_with_pointer(const dispatch_automatic_front_of_meter_t* tmp);
 };
 
 /*! Battery metrics class */

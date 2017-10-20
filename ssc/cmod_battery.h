@@ -175,6 +175,7 @@ struct battstor
 {
 
 	battstor( compute_module &cm, bool setup_model, int replacement_option, size_t nrec, double dt_hr, batt_variables *batt_vars=0);
+	void parse_configuration();
 	void initialize_automated_dispatch(ssc_number_t *pv=0, ssc_number_t *load=0);
 	~battstor();
 
@@ -187,6 +188,19 @@ struct battstor
 	void update_grid_power(compute_module &cm, double P_gen_ac, double P_load_ac, size_t index);
 	bool check_iterate(size_t count);
 	void process_messages(compute_module &cm);
+
+	/*! Automated dispatch look ahead*/
+	bool look_ahead = false;
+
+	/*! Automated dispatch look behind*/
+	bool look_behind = false;
+
+	/*! Automated dispatch use custom input forecast (look ahead)*/
+	bool input_forecast = false;
+
+	/*! Automated dispatch override algorithm grid target calculation*/
+	bool input_target = false;
+
 
 	// for user schedule
 	void force_replacement();

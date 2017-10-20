@@ -737,13 +737,13 @@ battstor::battstor(compute_module &cm, bool setup_model, int replacement_option,
 	// Catch all for FOM economic dispatch, currently calls manual dispatch
 	else if (batt_vars->batt_meter_position == dispatch_t::FRONT)
 	{
-		/*
+		
 		dispatch_model = new dispatch_automatic_front_of_meter_t(battery_model, dt_hr, batt_vars->batt_minimum_SOC, batt_vars->batt_maximum_SOC,
 			batt_vars->batt_current_choice, batt_vars->batt_current_charge_max, batt_vars->batt_current_discharge_max,
 			batt_vars->batt_power_charge_max, batt_vars->batt_power_discharge_max, batt_vars->batt_minimum_modetime,
 			batt_vars->batt_dispatch, batt_vars->batt_pv_choice,
 			(int)nyears, batt_vars->batt_can_gridcharge);
-		*/
+		
 	}
 	else
 	{
@@ -778,22 +778,52 @@ battstor::battstor(compute_module &cm, bool setup_model, int replacement_option,
 
 		charge_control = new dc_connected_battery_controller(dispatch_model, battery_metrics, batt_vars->batt_dc_dc_bms_efficiency, batt_vars->pv_dc_dc_mppt_efficiency, inverter_efficiency);
 	}
+
+	parse_configuration();
+}
+
+void battstor::parse_configuration()
+{
+	int batt_dispatch = batt_vars->batt_dispatch;
+	int batt_meter_position = batt_vars->batt_meter_position;
+
+	// parse configuration
+	if (dynamic_cast<dispatch_automatic_t*>(dispatch_model))
+	{
+		prediction_index = 0;
+
+
+		if (batt_meter_position == dispatch_t::BEHIND)
+		{
+			if (batt_dispatch == dispatch_t::LOOK_AHEAD || batt_dispatch == dispatch_t::MAINTAIN_TARGET)
+			{
+				look_ahead = true;
+				if (batt_dispatch == dispatch_t::MAINTAIN_TARGET)
+					input_target = true;
+			}
+			else
+				look_behind = true;
+		}
+		else if (batt_meter_position == dispatch_t::FRONT)
+		{
+			if (batt_dispatch == dispatch_t::FOM_LOOK_AHEAD)
+				look_ahead = true;
+			else if (batt_dispatch == dispatch_t::FOM_LOOK_BEHIND)
+				look_behind = true;
+			else
+				input_forecast = true;
+		}
+	}
 }
 
 void battstor::initialize_automated_dispatch(ssc_number_t *pv, ssc_number_t *load)
 {
-	int mode = batt_vars->batt_dispatch;
-	if (mode != dispatch_t::MANUAL)
+	if (dynamic_cast<dispatch_automatic_t*>(dispatch_model))
 	{
-		prediction_index = 0;
-		bool look_ahead = ((mode == dispatch_t::LOOK_AHEAD || mode == dispatch_t::MAINTAIN_TARGET));
-		bool look_behind = ((mode == dispatch_t::LOOK_BEHIND));
-		dispatch_automatic_behind_the_meter_t * automated_dispatch = dynamic_cast<dispatch_automatic_behind_the_meter_t*>(dispatch_model);
-
 		// automatic look ahead or behind
 		size_t nrec = nyears * 8760 * step_per_hour;
-		
-		if (pv != 0) 
+
+		if (pv != 0)
 		{
 			// look ahead
 			if (look_ahead)
@@ -812,9 +842,17 @@ void battstor::initialize_automated_dispatch(ssc_number_t *pv, ssc_number_t *loa
 					pv_prediction.push_back(0);
 					load_prediction.push_back(0);
 				}
-				for (size_t idx = 0;  idx != nrec - 24 * step_per_hour; idx++)
+				for (size_t idx = 0; idx != nrec - 24 * step_per_hour; idx++)
 				{
 					pv_prediction.push_back(pv[idx]);
+					load_prediction.push_back(load[idx]);
+				}
+			}
+			else if (input_forecast)
+			{
+				for (size_t idx = 0; idx != 24 * step_per_hour; idx++)
+				{
+					pv_prediction.push_back(batt_vars->pv_dc_forecast[idx]);
 					load_prediction.push_back(load[idx]);
 				}
 			}
@@ -826,13 +864,20 @@ void battstor::initialize_automated_dispatch(ssc_number_t *pv, ssc_number_t *loa
 				pv_prediction.push_back(0.);
 				load_prediction.push_back(0.);
 			}
-		}		
-		automated_dispatch->update_pv_data(pv_prediction);
-		automated_dispatch->update_load_data(load_prediction);
+		}
+		if (dispatch_automatic_behind_the_meter_t * automatic_dispatch = dynamic_cast<dispatch_automatic_behind_the_meter_t*>(dispatch_model))
+		{
+			automatic_dispatch->update_pv_data(pv_prediction);
+			automatic_dispatch->update_load_data(load_prediction);
 
-		if (mode == dispatch_t::MAINTAIN_TARGET)
-			automated_dispatch->set_target_power(target_power);
+			if (input_target)
+				automatic_dispatch->set_target_power(target_power);
+		}
+		else if (dispatch_automatic_front_of_meter_t * automatic_dispatch = dynamic_cast<dispatch_automatic_front_of_meter_t*>(dispatch_model))
+			automatic_dispatch->update_pv_data(pv_prediction);
+			
 	}
+	
 }
 battstor::~battstor()
 {

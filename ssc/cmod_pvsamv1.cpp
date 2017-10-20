@@ -1967,26 +1967,15 @@ public:
 		bool en_batt = as_boolean("en_batt");
 		int batt_replacement_option = as_integer("batt_replacement_option");
 		battstor batt(*this, en_batt, batt_replacement_option, nrec, ts_hour);
-		
-		int batt_dispatch = 0;
-		int ac_or_dc = 0;
-		bool look_ahead = false;
-		bool look_behind = false;
+		int batt_topology = (en_batt == true ? batt.batt_vars->batt_topology : 0);
 
-		if (en_batt)
-		{
-			ac_or_dc = batt.batt_vars->batt_topology;
-			batt_dispatch = batt.batt_vars->batt_dispatch;
-			look_ahead = (batt_dispatch == dispatch_t::LOOK_AHEAD || batt_dispatch == dispatch_t::MAINTAIN_TARGET);
-			look_behind = batt_dispatch == dispatch_t::LOOK_BEHIND;
-		}
-		
-		// user replacement schedule
+		// user battery replacement schedule
 		size_t count_batt_replacement = 0;
 		ssc_number_t *batt_replacement = 0;
 		if (batt_replacement_option==2)
 			batt_replacement = as_array("batt_replacement_schedule", &count_batt_replacement);
 		
+		// electric load 
 		double cur_load = 0.0;
 		size_t nload = 0;
 		ssc_number_t *p_load_in = 0;
@@ -2905,7 +2894,7 @@ public:
 		}
 
 		// Initialize DC battery predictive controller
-		if (en_batt && (ac_or_dc == charge_controller::DC_CONNECTED) && (look_ahead || look_behind))
+		if (en_batt && (batt_topology == charge_controller::DC_CONNECTED))
 			batt.initialize_automated_dispatch(p_dcpwr, p_load_full);
 
 		/* *********************************************************************************************
@@ -2931,7 +2920,7 @@ public:
 				{
 
 					// Battery replacement
-					if (en_batt && (ac_or_dc == charge_controller::DC_CONNECTED))
+					if (en_batt && (batt_topology == charge_controller::DC_CONNECTED))
 					{
 						batt.initialize_time(iyear, hour, jj);
 						batt.check_replacement_schedule(batt_replacement_option, count_batt_replacement, batt_replacement);
@@ -2948,7 +2937,7 @@ public:
 
 						// DC Connected Battery
 						bool battery_charging = false;
-						if (en_batt && (ac_or_dc == charge_controller::DC_CONNECTED))
+						if (en_batt && (batt_topology == charge_controller::DC_CONNECTED))
 						{
 							if (iyear == 0 && dc_count == 0)
 								annual_dc_power_before_battery += p_dcpwr[idx] * ts_hour;
@@ -2995,7 +2984,7 @@ public:
 						}
 
 						// if dc connected battery, update post-inverted quantities
-						if (en_batt && (ac_or_dc == charge_controller::DC_CONNECTED))
+						if (en_batt && (batt_topology == charge_controller::DC_CONNECTED))
 						{
 							if (battery_charging)
 							{
@@ -3015,7 +3004,7 @@ public:
 					// accumulate first year annual energy
 					if (iyear == 0)
 					{
-						if (en_batt && (ac_or_dc == charge_controller::DC_CONNECTED))
+						if (en_batt && (batt_topology == charge_controller::DC_CONNECTED))
 								annual_dc_power_after_battery += batt.outGenPower[idx] * ts_hour;
 
 						annual_ac_gross += acpwr_gross * util::watt_to_kilowatt * ts_hour;
@@ -3062,7 +3051,7 @@ public:
 		}
 
 		// Initialize AC connected battery predictive control
-		if (en_batt && ac_or_dc == charge_controller::AC_CONNECTED && (look_ahead || look_behind))
+		if (en_batt && batt_topology == charge_controller::AC_CONNECTED)
 			batt.initialize_automated_dispatch(p_gen, p_load_full);
 
 		/* *********************************************************************************************
@@ -3089,7 +3078,7 @@ public:
 					if (iyear == 0)
 						annual_energy_pre_battery += p_gen[idx] * ts_hour;
 
-					if (en_batt && ac_or_dc == charge_controller::AC_CONNECTED)
+					if (en_batt && batt_topology == charge_controller::AC_CONNECTED)
 					{
 						batt.initialize_time(iyear, hour, jj);
 						batt.check_replacement_schedule(batt_replacement_option, count_batt_replacement, batt_replacement);
