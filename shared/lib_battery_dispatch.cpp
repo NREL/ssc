@@ -987,8 +987,13 @@ dispatch_automatic_behind_the_meter_t::dispatch_automatic_behind_the_meter_t(
 	_P_battery_use.reserve(_num_steps);
 
 	grid.reserve(_num_steps);
+	sorted_grid.reserve(_num_steps);
+
 	for (int ii = 0; ii != _num_steps; ii++)
+	{
 		grid.push_back(grid_point(0., 0, 0));
+		sorted_grid.push_back(grid[ii]);
+	}
 }
 
 void dispatch_automatic_behind_the_meter_t::init_with_pointer(const dispatch_automatic_behind_the_meter_t* tmp)
@@ -1088,6 +1093,7 @@ void dispatch_automatic_behind_the_meter_t::initialize(int hour_of_year)
 	for (int ii = 0; ii != _num_steps; ii++)
 	{
 		grid[ii] = grid_point(0., 0, 0);
+		sorted_grid[ii] = grid[ii];
 		_P_target_use.push_back(0.);
 		_P_battery_use.push_back(0.);
 	}
@@ -1139,7 +1145,7 @@ void dispatch_automatic_behind_the_meter_t::sort_grid(FILE *p, bool debug, int i
 		for (int step = 0; step != _steps_per_hour; step++)
 		{
 			grid[count] = grid_point(_P_load_dc[idx] - _P_pv_dc[idx], hour, step);
-			sorted_grid.push_back(grid[count]);
+			sorted_grid[count] = grid[count];
 
 			if (debug)
 				fprintf(p, "%d\t %.1f\t %.1f\t %.1f\n", count, _P_load_dc[idx], _P_pv_dc[idx], _P_load_dc[idx] - _P_pv_dc[idx]);
