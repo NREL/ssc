@@ -50,7 +50,7 @@
 #ifndef __SCO2_PC_CSP_INT_WITH_REHEATING
 #define __SCO2_PC_CSP_INT_WITH_REHEATING
 
-#include "stdafx.h"//IMPORTANT TO INCLUDE IN ALL *.CPP FILES.
+//#include "stdafx.h"//IMPORTANT TO INCLUDE IN ALL *.CPP FILES.
 #include "sco2_pc_core_with_reheating.h"
 #include "heat_exchangers.h"
 #include "csp_solver_util.h"
@@ -419,7 +419,7 @@ public:
 
 //double nlopt_max_opt_P_mc_in_nest_f_recomp(const std::vector<double> &x, std::vector<double> &grad, void *data);
 
-double fmin_opt_P_mc_in_nest_f_recomp_max_eta(double x, void *data);
+double fmin_opt_P_mc_in_nest_f_recomp_max_eta_RH(double x, void *data);
 
 // Optimization method callbacks
 //double nlopt_cb_opt_od_eta__float_phx_dt(const std::vector<double> &x, std::vector<double> &grad, void *data);

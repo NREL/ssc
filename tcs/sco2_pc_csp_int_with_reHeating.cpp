@@ -47,7 +47,7 @@
 *  THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *******************************************************************************************************/
 
-#include "stdafx.h"//IMPORTANT TO INCLUDE IN ALL *.CPP FILES.
+//#include "stdafx.h"//IMPORTANT TO INCLUDE IN ALL *.CPP FILES.
 #include "sco2_pc_csp_int_with_ReHeating.h"
 #include "sco2_pc_core_with_ReHeating.h"
 #include "csp_solver_util.h"
@@ -448,7 +448,7 @@ int C_sco2_recomp_csp_10MWe_scale_with_ReHeating::generate_ud_pc_tables(double T
 		T_htf_ind, T_amb_ind, m_dot_htf_ND_ind);
 }
 
-// Off-Design performance solver. VERY IMPORTANT FUNCTION!!!
+// Call function: opt_P_mc_in_nest_f_recomp_max_eta_core. VERY IMPORTANT FUNCTION!!!
 int C_sco2_recomp_csp_with_ReHeating::off_design_nested_opt(C_sco2_recomp_csp_with_ReHeating::S_od_par od_par, int off_design_strategy, double od_opt_tol)
 {
 	ms_od_par = od_par;
@@ -710,7 +710,7 @@ bool C_sco2_recomp_csp_with_ReHeating::opt_P_mc_in_nest_f_recomp_max_eta_core()
 		// Optimize compressor inlet pressure using fmin
 		double P_mc_in_opt = fminbr(
 			P_mc_in_lower, P_mc_in_upper,
-			&fmin_opt_P_mc_in_nest_f_recomp_max_eta, this, m_od_opt_ftol);
+			&fmin_opt_P_mc_in_nest_f_recomp_max_eta_RH, this, m_od_opt_ftol);
 
 		// Now, call off-design with the optimized compressor inlet pressure		
 		ms_rc_cycle_od_phi_par.m_P_mc_in = P_mc_in_opt;	//[kPa]
@@ -1672,7 +1672,7 @@ int C_sco2_recomp_csp_with_ReHeating::off_design_core(double & eta_solved)
 	// 4) Check for compressor(s) surge?
 	// Main compressor
 	double mc_phi = mc_rc_cycle.get_od_solved()->ms_mc_ms_od_solved.m_phi;
-	double over_surge_mc = max(0.0, C_comp_single_stage::m_snl_phi_min - mc_phi);
+	double over_surge_mc = max(0.0, C_comp_single_stage_RH::m_snl_phi_min_RH - mc_phi);
 	// Recompressor
 	double rc_phi_s1, rc_phi_s2;
 	rc_phi_s1 = rc_phi_s2 = 0.0;
@@ -1683,7 +1683,7 @@ int C_sco2_recomp_csp_with_ReHeating::off_design_core(double & eta_solved)
 		//rc_phi_s2 = mc_rc_cycle.get_od_solved()->ms_rc_od_solved.m_phi_2;
 		//double rc_phi_min = min(rc_phi_s1, rc_phi_s2);
 		double rc_phi_min = mc_rc_cycle.get_od_solved()->ms_rc_ms_od_solved.m_phi;
-		over_surge_rc = max(0.0, (C_comp_single_stage::m_snl_phi_min - rc_phi_min) / C_comp_single_stage::m_snl_phi_min*100.0);
+		over_surge_rc = max(0.0, (C_comp_single_stage_RH::m_snl_phi_min_RH - rc_phi_min) / C_comp_single_stage_RH::m_snl_phi_min_RH*100.0);
 	}
 
 
@@ -2813,7 +2813,7 @@ double C_sco2_recomp_csp_with_ReHeating::opt_P_mc_in_nest_f_recomp_max_eta(doubl
 //}
 
 //Call the function opt_P_mc_in_nest_f_recomp_max_eta
-double fmin_opt_P_mc_in_nest_f_recomp_max_eta(double x, void *data)
+double fmin_opt_P_mc_in_nest_f_recomp_max_eta_RH(double x, void *data)
 {
 	C_sco2_recomp_csp_with_ReHeating *frame = static_cast<C_sco2_recomp_csp_with_ReHeating*>(data);
 	if (frame != NULL)

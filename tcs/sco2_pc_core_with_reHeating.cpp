@@ -46,7 +46,7 @@
 *  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
 *  THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *******************************************************************************************************/
-#include "stdafx.h"//IMPORTANT TO INCLUDE IN ALL *.CPP FILES.
+//#include "stdafx.h"//IMPORTANT TO INCLUDE IN ALL *.CPP FILES.
 #include "sco2_pc_core_with_reheating.h"
 #include "CO2_properties.h"
 #include <limits>
@@ -63,19 +63,19 @@
 
 using namespace std;
 
-const double C_turbine::m_nu_design = 0.7476;
+const double C_turbine_RH::m_nu_design_RH = 0.7476;
 //const double C_compressor::m_snl_phi_design = 0.02971;		//[-] Design-point flow coef. for Sandia compressor (corresponds to max eta)
 //const double C_compressor::m_snl_phi_min = 0.02;				//[-] Approximate surge limit for SNL compressor
 //const double C_compressor::m_snl_phi_max = 0.05;				//[-] Approximate x-intercept for SNL compressor
 //const double C_recompressor::m_snl_phi_design = 0.02971;		//[-] Design-point flow coef. for Sandia compressor (corresponds to max eta)
 //const double C_recompressor::m_snl_phi_min = 0.02;				//[-] Approximate surge limit for SNL compressor
 //const double C_recompressor::m_snl_phi_max = 0.05;				//[-] Approximate x-intercept for SNL compressor
-const double C_comp_single_stage::m_snl_phi_design = 0.02971;		//[-] Design-point flow coef. for Sandia compressor (corresponds to max eta)
-const double C_comp_single_stage::m_snl_phi_min = 0.02;				//[-] Approximate surge limit for SNL compressor
-const double C_comp_single_stage::m_snl_phi_max = 0.05;				//[-] Approximate x-intercept for SNL compressor
+const double C_comp_single_stage_RH::m_snl_phi_design_RH = 0.02971;		//[-] Design-point flow coef. for Sandia compressor (corresponds to max eta)
+const double C_comp_single_stage_RH::m_snl_phi_min_RH = 0.02;				//[-] Approximate surge limit for SNL compressor
+const double C_comp_single_stage_RH::m_snl_phi_max_RH = 0.05;				//[-] Approximate x-intercept for SNL compressor
 
 //Call function: calculate_turbomachinery_outlet_1()
-void calculate_turbomachinery_outlet_1(double T_in /*K*/, double P_in /*kPa*/, double P_out /*kPa*/, double eta /*-*/, bool is_comp, int & error_code, double & spec_work /*kJ/kg*/)
+void calculate_turbomachinery_outlet_1_RH(double T_in /*K*/, double P_in /*kPa*/, double P_out /*kPa*/, double eta /*-*/, bool is_comp, int & error_code, double & spec_work /*kJ/kg*/)
 {
 	double enth_in, entr_in, dens_in, temp_out, enth_out, entr_out, dens_out;
 
@@ -83,7 +83,7 @@ void calculate_turbomachinery_outlet_1(double T_in /*K*/, double P_in /*kPa*/, d
 }
 
 //Original Code from John Dyreby,Calculate Turbine or Compressor Outlet given inlet conditions.
-void calculate_turbomachinery_outlet_1(double T_in /*K*/, double P_in /*kPa*/, double P_out /*kPa*/, double eta /*-*/, bool is_comp, int & error_code, double & enth_in /*kJ/kg*/, double & entr_in /*kJ/kg-K*/,
+void calculate_turbomachinery_outlet_1_RH(double T_in /*K*/, double P_in /*kPa*/, double P_out /*kPa*/, double eta /*-*/, bool is_comp, int & error_code, double & enth_in /*kJ/kg*/, double & entr_in /*kJ/kg-K*/,
 	double & dens_in /*kg/m3*/, double & temp_out /*K*/, double & enth_out /*kJ/kg*/, double & entr_out /*kJ/kg-K*/, double & dens_out /*kg/m3*/, double & spec_work /*kJ/kg*/)
 {
 	/*Calculates the outlet state of a compressor or turbine using its isentropic efficiency.
@@ -275,7 +275,7 @@ void calculate_turbomachinery_outlet_1(double T_in /*K*/, double P_in /*kPa*/, d
 //};
 
 //Original Code from John Dyreby,Calculate Isentropic efficiency from the polytropic efficiency.
-void isen_eta_from_poly_eta(double T_in /*K*/, double P_in /*kPa*/, double P_out /*kPa*/, double poly_eta /*-*/, bool is_comp, int & error_code, double & isen_eta)
+void isen_eta_from_poly_eta_RH(double T_in /*K*/, double P_in /*kPa*/, double P_out /*kPa*/, double poly_eta /*-*/, bool is_comp, int & error_code, double & isen_eta)
 {
 	/* 9.3.14: code written by John Dyreby, translated to C++ by Ty Neises
 	! Calculate the isentropic efficiency that corresponds to a given polytropic efficiency
@@ -370,14 +370,14 @@ void isen_eta_from_poly_eta(double T_in /*K*/, double P_in /*kPa*/, double P_out
 }
 
 //Initialize a Heat Exchanger.
-void C_HeatExchanger::initialize(const S_design_parameters & des_par_in)
+void C_HeatExchanger_RH::initialize(const S_design_parameters & des_par_in)
 {
 	ms_des_par = des_par_in;
 	return;
 }
 
 //Original Code from John Dyreby,Calculate Heat Exchanger Pressure Drop.
-void C_HeatExchanger::hxr_pressure_drops(const std::vector<double> & m_dots, std::vector<double> & hxr_deltaP)
+void C_HeatExchanger_RH::hxr_pressure_drops(const std::vector<double> & m_dots, std::vector<double> & hxr_deltaP)
 {
 	int N = (int)m_dots.size();
 	hxr_deltaP.resize(N);
@@ -386,7 +386,7 @@ void C_HeatExchanger::hxr_pressure_drops(const std::vector<double> & m_dots, std
 }
 
 //Original Code from John Dyreby,Calculate part-load Heat Exchanger Conductance (UA)
-void C_HeatExchanger::hxr_conductance(const std::vector<double> & m_dots, double & hxr_UA)
+void C_HeatExchanger_RH::hxr_conductance(const std::vector<double> & m_dots, double & hxr_UA)
 {
 	int N = (int)m_dots.size();
 	double m_dot_ratio = 0.5*(m_dots[0] / ms_des_par.m_m_dot_design[0] + m_dots[1] / ms_des_par.m_m_dot_design[1]);
@@ -394,7 +394,7 @@ void C_HeatExchanger::hxr_conductance(const std::vector<double> & m_dots, double
 }
 
 //Original Code from John Dyreby,Turbine design at Design-Point. 
-void C_turbine::turbine_sizing(const S_design_parameters & des_par_in, int & error_code)
+void C_turbine_RH::turbine_sizing_RH(const S_design_parameters & des_par_in, int & error_code)
 {
 	/* 9.4.14: code from John Dyreby, converted to C++ by Ty Neises
 	! Determine the turbine rotor diameter, effective nozzle area, and design-point shaft
@@ -446,10 +446,10 @@ void C_turbine::turbine_sizing(const S_design_parameters & des_par_in, int & err
 	double h_s_out = co2_props.enth;
 
 	// Determine necessary turbine parameters
-	ms_des_solved.m_nu_design = m_nu_design;
+	ms_des_solved.m_nu_design_RH = m_nu_design_RH;
 	double w_i = ms_des_par.m_h_in - h_s_out;			//[kJ/kg] Isentropic specific work of turbine
 	double C_s = sqrt(2.0*w_i*1000.0);					//[m/s] Spouting velocity
-	double U_tip = ms_des_solved.m_nu_design*C_s;		//[m/s] Tip speed
+	double U_tip = ms_des_solved.m_nu_design_RH*C_s;		//[m/s] Tip speed
 	ms_des_solved.m_D_rotor = U_tip / (0.5*ms_des_solved.m_N_design*0.104719755);	//[m]
 	ms_des_solved.m_A_nozzle = ms_des_par.m_m_dot / (C_s*ms_des_par.m_D_in);		//[m^2]
 
@@ -459,7 +459,7 @@ void C_turbine::turbine_sizing(const S_design_parameters & des_par_in, int & err
 }
 
 //Original Code from John Dyreby,Turbine Off-Design performance.
-void C_turbine::off_design_turbine(double T_in, double P_in, double P_out, double N, int & error_code, double & m_dot, double & T_out)
+void C_turbine_RH::off_design_turbine_RH(double T_in, double P_in, double P_out, double N, int & error_code, double & m_dot, double & T_out)
 {
 	/* 9.4.14: code from John Dyreby, converted to C++ by Ty Neises
 	! Solve for the outlet state of 'turb' given its inlet conditions, outlet pressure, and shaft speed.
@@ -528,17 +528,17 @@ void C_turbine::off_design_turbine(double T_in, double P_in, double P_out, doubl
 }
 
 //Call function: off_design_turbine().
-void C_turbine::od_turbine_at_N_des(double T_in, double P_in, double P_out, int & error_code, double & m_dot, double & T_out)
+void C_turbine_RH::od_turbine_at_N_des_RH(double T_in, double P_in, double P_out, int & error_code, double & m_dot, double & T_out)
 {
 	double N = ms_des_solved.m_N_design;		//[rpm]
 
-	off_design_turbine(T_in, P_in, P_out, N, error_code, m_dot, T_out);
+	off_design_turbine_RH(T_in, P_in, P_out, N, error_code, m_dot, T_out);
 
 	return;
 }
 
 //Original Code from John Dyreby, Design a Single stage Compressor given the shaft speed
-int C_comp_single_stage::design_given_shaft_speed(double T_in /*K*/, double P_in /*kPa*/, double m_dot /*kg/s*/, 
+int C_comp_single_stage_RH::design_given_shaft_speed(double T_in /*K*/, double P_in /*kPa*/, double m_dot /*kg/s*/, 
 				double N_rpm /*rpm*/, double eta_isen /*-*/, double & P_out /*kPa*/, double & T_out /*K*/, double & tip_ratio /*-*/)
 {
 	CO2_state co2_props;
@@ -557,11 +557,11 @@ int C_comp_single_stage::design_given_shaft_speed(double T_in /*K*/, double P_in
 	double N_rad_s = N_rpm / 9.549296590;		//[rad/s]
 
 	// Solve for the diameter that gives the design flow coefficient
-	double D_rotor = std::pow(m_dot / (m_snl_phi_design * rho_in * 0.5 * N_rad_s), 1.0/3.0);		//[m]
+	double D_rotor = std::pow(m_dot / (m_snl_phi_design_RH * rho_in * 0.5 * N_rad_s), 1.0/3.0);		//[m]
 
 	// Calculate psi at the design-point phi using Horner's method
-	double psi_design = ((((-498626.0*m_snl_phi_design) + 53224.0) * m_snl_phi_design - 2505.0) * m_snl_phi_design + 54.6) *
-		m_snl_phi_design + 0.04049;		// from dimensionless modified head curve(at design - point, psi and modified psi are equal)
+	double psi_design = ((((-498626.0*m_snl_phi_design_RH) + 53224.0) * m_snl_phi_design_RH - 2505.0) * m_snl_phi_design_RH + 54.6) *
+		m_snl_phi_design_RH + 0.04049;		// from dimensionless modified head curve(at design - point, psi and modified psi are equal)
 
 	// Solve for idea head
 	double U_tip = 0.5 * D_rotor * N_rad_s;		//[m/s]
@@ -609,15 +609,15 @@ int C_comp_single_stage::design_given_shaft_speed(double T_in /*K*/, double P_in
 	ms_des_solved.m_tip_ratio = tip_ratio;	//[-]
 	ms_des_solved.m_eta_design = eta_isen;		//[-]
 
-	ms_des_solved.m_phi_des = m_snl_phi_design;
-	ms_des_solved.m_phi_surge = m_snl_phi_min;
-	ms_des_solved.m_phi_max = m_snl_phi_max;
+	ms_des_solved.m_phi_des = m_snl_phi_design_RH;
+	ms_des_solved.m_phi_surge = m_snl_phi_min_RH;
+	ms_des_solved.m_phi_max = m_snl_phi_max_RH;
 
 	return 0;
 }
 
 //
-int C_comp_multi_stage::C_MEQ_eta_isen__h_out::operator()(double eta_isen /*-*/, double *h_comp_out /*kJ/kg*/)
+int C_comp_multi_stage_RH::C_MEQ_eta_isen__h_out::operator()(double eta_isen /*-*/, double *h_comp_out /*kJ/kg*/)
 {
 	C_MEQ_N_rpm__P_out c_stages(mpc_multi_stage, m_T_in, m_P_in, m_m_dot, eta_isen);
 	C_monotonic_eq_solver c_solver(c_stages);
@@ -663,7 +663,7 @@ int C_comp_multi_stage::C_MEQ_eta_isen__h_out::operator()(double eta_isen /*-*/,
 }
 
 //
-int C_comp_multi_stage::C_MEQ_N_rpm__P_out::operator()(double N_rpm /*rpm*/, double *P_comp_out /*kPa*/)
+int C_comp_multi_stage_RH::C_MEQ_N_rpm__P_out::operator()(double N_rpm /*rpm*/, double *P_comp_out /*kPa*/)
 {
 	int n_stages = mpc_multi_stage->mv_stages.size();
 
@@ -691,7 +691,7 @@ int C_comp_multi_stage::C_MEQ_N_rpm__P_out::operator()(double N_rpm /*rpm*/, dou
 }
 
 //
-int C_comp_multi_stage::design_given_outlet_state(double T_in /*K*/, double P_in /*kPa*/, double m_dot /*kg/s*/,
+int C_comp_multi_stage_RH::design_given_outlet_state(double T_in /*K*/, double P_in /*kPa*/, double m_dot /*kg/s*/,
 	double T_out /*K*/, double P_out /*K*/)
 {
 	mv_stages.resize(1);
@@ -801,13 +801,13 @@ int C_comp_multi_stage::design_given_outlet_state(double T_in /*K*/, double P_in
 	ms_des_solved.m_w_tip_ratio = max_calc_tip_speed;					//[-]
 	ms_des_solved.m_n_stages = n_stages;								//[-]
 	ms_des_solved.m_D_rotor = mv_stages[0].ms_des_solved.m_D_rotor;		//[m]
-	ms_des_solved.m_phi_surge = mv_stages[0].m_snl_phi_min;				//[-]
+	ms_des_solved.m_phi_surge = mv_stages[0].m_snl_phi_min_RH;				//[-]
 
 	return 0;
 }
 
 //
-int C_comp_single_stage::design_single_stage_comp(double T_in /*K*/, double P_in /*kPa*/, double m_dot /*kg/s*/,
+int C_comp_single_stage_RH::design_single_stage_comp(double T_in /*K*/, double P_in /*kPa*/, double m_dot /*kg/s*/,
 	double T_out /*K*/, double P_out /*K*/)
 {
 	CO2_state in_props;
@@ -837,13 +837,13 @@ int C_comp_single_stage::design_single_stage_comp(double T_in /*K*/, double P_in
 	double h_out = out_props.enth;
 
 	// Calculate psi at the design-point phi using Horner's method
-	double psi_design = ((((-498626.0*m_snl_phi_design) + 53224.0) * m_snl_phi_design - 2505.0) * m_snl_phi_design + 54.6) *
-		m_snl_phi_design + 0.04049;		// from dimensionless modified head curve(at design - point, psi and modified psi are equal)
+	double psi_design = ((((-498626.0*m_snl_phi_design_RH) + 53224.0) * m_snl_phi_design_RH - 2505.0) * m_snl_phi_design_RH + 54.6) *
+		m_snl_phi_design_RH + 0.04049;		// from dimensionless modified head curve(at design - point, psi and modified psi are equal)
 
 	// Determine required size and speed of compressor
 	double w_i = h_isen_out - h_in;						//[kJ/kg] positive isentropic specific work of compressor
 	double U_tip = sqrt(1000.0*w_i / psi_design);		//[m/s]
-	double D_rotor = sqrt(m_dot / (m_snl_phi_design*rho_in*U_tip));
+	double D_rotor = sqrt(m_dot / (m_snl_phi_design_RH*rho_in*U_tip));
 	double N_rad_s = U_tip*2.0 / D_rotor;				//[rad/s] shaft speed
 
 	double ssnd_out = out_props.ssnd;	//[m/s]
@@ -869,9 +869,9 @@ int C_comp_single_stage::design_single_stage_comp(double T_in /*K*/, double P_in
 	ms_des_solved.m_tip_ratio = tip_ratio;	//[-]
 	ms_des_solved.m_eta_design = (h_isen_out - h_in) / (h_out - h_in);		//[-]
 
-	ms_des_solved.m_phi_des = m_snl_phi_design;
-	ms_des_solved.m_phi_surge = m_snl_phi_min;
-	ms_des_solved.m_phi_max = m_snl_phi_max;
+	ms_des_solved.m_phi_des = m_snl_phi_design_RH;
+	ms_des_solved.m_phi_surge = m_snl_phi_min_RH;
+	ms_des_solved.m_phi_max = m_snl_phi_max_RH;
 
 	return 0;
 }
@@ -967,7 +967,7 @@ int C_comp_single_stage::design_single_stage_comp(double T_in /*K*/, double P_in
 //}
 
 //Call function: off_design_given_N
-void C_comp_multi_stage::off_design_at_N_des(double T_in /*K*/, double P_in /*kPa*/, double m_dot /*kg/s*/,
+void C_comp_multi_stage_RH::off_design_at_N_des(double T_in /*K*/, double P_in /*kPa*/, double m_dot /*kg/s*/,
 	int & error_code, double & T_out /*K*/, double & P_out /*kPa*/)
 {
 	double N = ms_des_solved.m_N_design;	//[rpm]
@@ -976,7 +976,7 @@ void C_comp_multi_stage::off_design_at_N_des(double T_in /*K*/, double P_in /*kP
 }
 
 //Call function: C_comp_single_stage::off_design_given_N
-void C_comp_multi_stage::off_design_given_N(double T_in /*K*/, double P_in /*kPa*/, double m_dot /*kg/s*/, double N_rpm /*rpm*/,
+void C_comp_multi_stage_RH::off_design_given_N(double T_in /*K*/, double P_in /*kPa*/, double m_dot /*kg/s*/, double N_rpm /*rpm*/,
 	int & error_code, double & T_out /*K*/, double & P_out /*kPa*/)
 {
 	int n_stages = mv_stages.size();
@@ -1060,7 +1060,7 @@ void C_comp_multi_stage::off_design_given_N(double T_in /*K*/, double P_in /*kPa
 }
 
 //Original Code from John Dyreby, Main Compressor Off-Design performance: subroutine off_design_compressor(comp, T_in, P_in, m_dot, N, error_trace, T_out, P_out)
-int C_comp_single_stage::off_design_given_N(double T_in /*K*/, double P_in /*kPa*/, double m_dot /*kg/s*/, double N_rpm /*rpm*/,
+int C_comp_single_stage_RH::off_design_given_N(double T_in /*K*/, double P_in /*kPa*/, double m_dot /*kg/s*/, double N_rpm /*rpm*/,
 	double & T_out /*K*/, double & P_out /*kPa*/)
 {
 	CO2_state co2_props;
@@ -1080,10 +1080,10 @@ int C_comp_single_stage::off_design_given_N(double T_in /*K*/, double P_in /*kPa
 	// Calculate the modified flow and head coefficients and efficiency
 	double U_tip = ms_des_solved.m_D_rotor*0.5*ms_od_solved.m_N*0.104719755;				//[m/s]
 	double phi = m_dot / (rho_in*U_tip*pow(ms_des_solved.m_D_rotor, 2));	//[-]
-	if (phi < m_snl_phi_min)
+	if (phi < m_snl_phi_min_RH)
 	{
 		ms_od_solved.m_surge = true;
-		phi = m_snl_phi_min;
+		phi = m_snl_phi_min_RH;
 	}
 	else
 		ms_od_solved.m_surge = false;
@@ -1136,7 +1136,7 @@ int C_comp_single_stage::off_design_given_N(double T_in /*K*/, double P_in /*kPa
 	ms_od_solved.m_s_out = co2_props.entr;	//[kJ/kg-K]
 
 	ms_od_solved.m_phi = phi;
-	ms_od_solved.m_surge_safety = phi / m_snl_phi_min;	//[-] If > 1, then not in surge
+	ms_od_solved.m_surge_safety = phi / m_snl_phi_min_RH;	//[-] If > 1, then not in surge
 	ms_od_solved.m_w_tip_ratio = U_tip / ssnd_out;
 	ms_od_solved.m_W_dot_in = m_dot*(h_out - h_in);	//[kWe]
 
@@ -1144,7 +1144,7 @@ int C_comp_single_stage::off_design_given_N(double T_in /*K*/, double P_in /*kPa
 }
 
 //
-int C_comp_single_stage::calc_N_from_phi(double T_in /*K*/, double P_in /*kPa*/, double m_dot /*kg/s*/, double phi_in /*-*/, double & N_rpm /*rpm*/)
+int C_comp_single_stage_RH::calc_N_from_phi(double T_in /*K*/, double P_in /*kPa*/, double m_dot /*kg/s*/, double phi_in /*-*/, double & N_rpm /*rpm*/)
 {
 	CO2_state co2_props;
 
@@ -1480,7 +1480,7 @@ int C_comp_single_stage::calc_N_from_phi(double T_in /*K*/, double P_in /*kPa*/,
 //}
 
 //
-int C_comp_multi_stage::C_MEQ_phi_od__P_out::operator()(double phi_od /*-*/, double *P_comp_out /*kPa*/)
+int C_comp_multi_stage_RH::C_MEQ_phi_od__P_out::operator()(double phi_od /*-*/, double *P_comp_out /*kPa*/)
 {
 	int error_code = 0;
 	double N_rpm = std::numeric_limits<double>::quiet_NaN();
@@ -1505,7 +1505,7 @@ int C_comp_multi_stage::C_MEQ_phi_od__P_out::operator()(double phi_od /*-*/, dou
 }
 
 //
-void C_comp_multi_stage::off_design_given_P_out(double T_in /*K*/, double P_in /*kPa*/, double m_dot /*kg/s*/,
+void C_comp_multi_stage_RH::off_design_given_P_out(double T_in /*K*/, double P_in /*kPa*/, double m_dot /*kg/s*/,
 	double P_out /*kPa*/, int & error_code, double & T_out /*K*/)
 {
 	// Apply 1 var solver to find the phi that results in a converged recompressor
@@ -3831,7 +3831,7 @@ void C_RecompCycle_with_ReHeating::design_core_standard(int & error_code)
 	{
 		int mc_poly_error_code = 0;
 
-		isen_eta_from_poly_eta(m_temp_last[MC_IN], m_pres_last[MC_IN], m_pres_last[MC_OUT], fabs(ms_des_par.m_eta_mc),
+		isen_eta_from_poly_eta_RH(m_temp_last[MC_IN], m_pres_last[MC_IN], m_pres_last[MC_OUT], fabs(ms_des_par.m_eta_mc),
 			true, mc_poly_error_code, eta_mc_isen);
 
 		if( mc_poly_error_code != 0 )
@@ -3849,7 +3849,7 @@ void C_RecompCycle_with_ReHeating::design_core_standard(int & error_code)
 	{
 		int mt_poly_error_code = 0;
 
-		isen_eta_from_poly_eta(m_temp_last[MT_IN], m_pres_last[MT_IN], m_pres_last[MT_OUT], fabs(ms_des_par.m_eta_mt),
+		isen_eta_from_poly_eta_RH(m_temp_last[MT_IN], m_pres_last[MT_IN], m_pres_last[MT_OUT], fabs(ms_des_par.m_eta_mt),
 			false, mt_poly_error_code, eta_mt_isen);
 
 		if( mt_poly_error_code != 0 )
@@ -3867,7 +3867,7 @@ void C_RecompCycle_with_ReHeating::design_core_standard(int & error_code)
 	{
 		int rt_poly_error_code = 0;
 
-		isen_eta_from_poly_eta(m_temp_last[RT_IN], m_pres_last[RT_IN], m_pres_last[RT_OUT], fabs(ms_des_par.m_eta_rt),
+		isen_eta_from_poly_eta_RH(m_temp_last[RT_IN], m_pres_last[RT_IN], m_pres_last[RT_OUT], fabs(ms_des_par.m_eta_rt),
 			false, rt_poly_error_code, eta_rt_isen);
 
 		if( rt_poly_error_code != 0 )
@@ -3940,7 +3940,7 @@ void C_RecompCycle_with_ReHeating::design_core_standard(int & error_code)
 			int rc_error_code = 0;
 
 			//Calculating Recompressor
-			isen_eta_from_poly_eta(m_temp_last[MC_OUT], m_pres_last[LTR_LP_OUT], m_pres_last[RC_OUT], fabs(ms_des_par.m_eta_rc),
+			isen_eta_from_poly_eta_RH(m_temp_last[MC_OUT], m_pres_last[LTR_LP_OUT], m_pres_last[RC_OUT], fabs(ms_des_par.m_eta_rc),
 				true, rc_error_code, eta_rc_isen);
 
 			if( rc_error_code != 0 )
@@ -3957,7 +3957,7 @@ void C_RecompCycle_with_ReHeating::design_core_standard(int & error_code)
 		int rc_error_code = 0;
 		
 		//Calculating Recompressor
-		calculate_turbomachinery_outlet_1(m_temp_last[MC_OUT], m_pres_last[LTR_LP_OUT], m_pres_last[RC_OUT], eta_rc_isen,
+		calculate_turbomachinery_outlet_1_RH(m_temp_last[MC_OUT], m_pres_last[LTR_LP_OUT], m_pres_last[RC_OUT], eta_rc_isen,
 			true, rc_error_code, w_rc);
 
 		//Error calculating Recompressor
@@ -4033,7 +4033,7 @@ void C_RecompCycle_with_ReHeating::design_core_standard(int & error_code)
 	m_dens_last[HTR_HP_OUT] = co2_props.dens;
 
 	// Set relevant values for Primary Heat Exchanger(PHX)
-	C_HeatExchanger::S_design_parameters PHX_des_par;
+	C_HeatExchanger_RH::S_design_parameters PHX_des_par;
 	PHX_des_par.m_DP_design[0] = m_pres_last[HTR_HP_OUT] - m_pres_last[MT_IN];
 	PHX_des_par.m_DP_design[1] = 0.0;
 	PHX_des_par.m_m_dot_design[0] = m_dot_t;
@@ -4042,7 +4042,7 @@ void C_RecompCycle_with_ReHeating::design_core_standard(int & error_code)
 	m_PHX.initialize(PHX_des_par);
 	
 	// Set relevant values for ReHeating Heat Exchanger(RHX)
-	C_HeatExchanger::S_design_parameters RHX_des_par;
+	C_HeatExchanger_RH::S_design_parameters RHX_des_par;
 	RHX_des_par.m_DP_design[0] = m_pres_last[MT_OUT] - m_pres_last[RT_IN];
 	RHX_des_par.m_DP_design[1] = 0.0;
 	RHX_des_par.m_m_dot_design[0] = m_dot_t;
@@ -4051,7 +4051,7 @@ void C_RecompCycle_with_ReHeating::design_core_standard(int & error_code)
 	m_RHX.initialize(RHX_des_par);
 
 	//// Set relevant values for Precooler Heat Exchanger(PC)
-	C_HeatExchanger::S_design_parameters PC_des_par;
+	C_HeatExchanger_RH::S_design_parameters PC_des_par;
 	PC_des_par.m_DP_design[0] = 0.0;
 	PC_des_par.m_DP_design[1] = m_pres_last[LTR_LP_OUT] - m_pres_last[MC_IN];
 	PC_des_par.m_m_dot_design[0] = 0.0;
@@ -4094,7 +4094,7 @@ int C_RecompCycle_with_ReHeating::C_mono_eq_LTR_des::operator()(double T_LTR_LP_
 		if( mpc_rc_cycle->ms_des_par.m_eta_rc < 0.0 )		// recalculate isen. efficiency of recompressor because inlet temp changes
 		{
 			int rc_error_code = 0;
-			isen_eta_from_poly_eta(mpc_rc_cycle->m_temp_last[LTR_LP_OUT], mpc_rc_cycle->m_pres_last[LTR_LP_OUT],
+			isen_eta_from_poly_eta_RH(mpc_rc_cycle->m_temp_last[LTR_LP_OUT], mpc_rc_cycle->m_pres_last[LTR_LP_OUT],
 								mpc_rc_cycle->m_pres_last[RC_OUT], fabs(mpc_rc_cycle->ms_des_par.m_eta_rc), true,
 								rc_error_code, eta_rc_isen);
 
@@ -4441,7 +4441,7 @@ void C_RecompCycle_with_ReHeating::opt_design_core(int & error_code)
 		opt_des_cycle.set_xtol_rel(ms_opt_des_par.m_opt_tol);
 
 		// Set max objective function
-		opt_des_cycle.set_max_objective(nlopt_callback_opt_des_1, this);		// Calls wrapper/callback that calls 'design_point_eta', which optimizes design point eta through repeated calls to 'design'
+		opt_des_cycle.set_max_objective(nlopt_callback_opt_des_1_RH, this);		// Calls wrapper/callback that calls 'design_point_eta', which optimizes design point eta through repeated calls to 'design'
 		double max_f = std::numeric_limits<double>::quiet_NaN();
 		nlopt::result   result_des_cycle = opt_des_cycle.optimize(x, max_f);
 		
@@ -4632,7 +4632,7 @@ void C_RecompCycle_with_ReHeating::auto_opt_design_core(int & error_code)
 	m_eta_thermal_auto_opt = 0.0;
 
 	double best_P_high = fminbr(
-		ms_auto_opt_des_par.m_P_high_limit*0.9999, ms_auto_opt_des_par.m_P_high_limit, &fmin_callback_opt_eta_1, this, 1.0);
+		ms_auto_opt_des_par.m_P_high_limit*0.9999, ms_auto_opt_des_par.m_P_high_limit, &fmin_callback_opt_eta_1_RH, this, 1.0);
 
 	//double best_P_high = ms_auto_opt_des_par.m_P_high_limit;
 
@@ -5087,8 +5087,8 @@ int C_RecompCycle_with_ReHeating::C_MEQ_sco2_design_hit_eta__UA_total::operator(
 double C_RecompCycle_with_ReHeating::opt_eta(double P_high_opt)
 {
 	double PR_mc_guess = 1.1;
-	if(P_high_opt > P_pseudocritical_1(ms_opt_des_par.m_T_mc_in))
-		PR_mc_guess = P_high_opt / P_pseudocritical_1(ms_opt_des_par.m_T_mc_in);
+	if(P_high_opt > P_pseudocritical_1_RH(ms_opt_des_par.m_T_mc_in))
+		PR_mc_guess = P_high_opt / P_pseudocritical_1_RH(ms_opt_des_par.m_T_mc_in);
 		
 	double local_eta_rc = 0.0;
 	if( ms_auto_opt_des_par.m_is_recomp_ok )
@@ -5232,7 +5232,7 @@ void C_RecompCycle_with_ReHeating::finalize_design(int & error_code)
 		ms_des_solved.m_is_rc = false;
 	
 	//Main Turbine (mt) design.
-	C_turbine::S_design_parameters  mt_des_par;
+	C_turbine_RH::S_design_parameters  mt_des_par;
 		// Set Maint turbine shaft speed
 	mt_des_par.m_N_design = ms_des_par.m_N_turbine;
 	mt_des_par.m_N_comp_design_if_linked = m_mc_ms.get_design_solved()->m_N_design;	//[rpm] m_mc.get_design_solved()->m_N_design;
@@ -5249,7 +5249,7 @@ void C_RecompCycle_with_ReHeating::finalize_design(int & error_code)
 	mt_des_par.m_m_dot = m_m_dot_t;
 
 	int mturb_size_error_code = 0;
-	m_mt.turbine_sizing(mt_des_par, mturb_size_error_code);
+	m_mt.turbine_sizing_RH(mt_des_par, mturb_size_error_code);
 	if(mturb_size_error_code != 0)
 	{
 		error_code = mturb_size_error_code;
@@ -5257,7 +5257,7 @@ void C_RecompCycle_with_ReHeating::finalize_design(int & error_code)
 	}
 	
 	// Size ReHeating Turbine
-	C_turbine::S_design_parameters  rt_des_par;
+	C_turbine_RH::S_design_parameters  rt_des_par;
 		// Set ReHeating turbine shaft speed
 	rt_des_par.m_N_design = ms_des_par.m_N_turbine;
 	rt_des_par.m_N_comp_design_if_linked = m_mc_ms.get_design_solved()->m_N_design;	//[rpm] m_mc.get_design_solved()->m_N_design;
@@ -5274,7 +5274,7 @@ void C_RecompCycle_with_ReHeating::finalize_design(int & error_code)
 	rt_des_par.m_m_dot = m_m_dot_t;
 
 	int rturb_size_error_code = 0;
-	m_rt.turbine_sizing(rt_des_par, rturb_size_error_code);
+	m_rt.turbine_sizing_RH(rt_des_par, rturb_size_error_code);
 	if(rturb_size_error_code != 0)
 	{
 		error_code = rturb_size_error_code;
@@ -6050,7 +6050,7 @@ int C_RecompCycle_with_ReHeating::C_mono_eq_turbo_N_fixed_m_dot::operator()(doub
 	int t_err_code = 0;
 	double m_dot_t_calc, T_t_out;
 	m_dot_t_calc = T_t_out = std::numeric_limits<double>::quiet_NaN();
-	mpc_rc_cycle->m_mt.od_turbine_at_N_des(m_T_mt_in, P_mt_in, P_t_out, t_err_code, m_dot_t_calc, T_t_out);
+	mpc_rc_cycle->m_mt.od_turbine_at_N_des_RH(m_T_mt_in, P_mt_in, P_t_out, t_err_code, m_dot_t_calc, T_t_out);
 
 	// Check that turbine performance solved
 	if(t_err_code != 0)
@@ -8381,7 +8381,7 @@ void C_RecompCycle_with_ReHeating::off_design_fix_shaft_speeds_core(int & error_
 //}
 
 //
-double fmin_callback_opt_eta_1(double x, void *data)
+double fmin_callback_opt_eta_1_RH(double x, void *data)
 {
 	C_RecompCycle_with_ReHeating *frame = static_cast<C_RecompCycle_with_ReHeating*>(data);
 
@@ -8389,7 +8389,7 @@ double fmin_callback_opt_eta_1(double x, void *data)
 }
 
 //
-double nlopt_callback_opt_des_1(const std::vector<double> &x, std::vector<double> &grad, void *data)
+double nlopt_callback_opt_des_1_RH(const std::vector<double> &x, std::vector<double> &grad, void *data)
 {
 	C_RecompCycle_with_ReHeating *frame = static_cast<C_RecompCycle_with_ReHeating*>(data);
 	if( frame != NULL ) 
@@ -8429,13 +8429,13 @@ double nlopt_callback_opt_des_1(const std::vector<double> &x, std::vector<double
 //}
 
 //Calculate the Critical Pressure given the Critical Temperature.
-double P_pseudocritical_1(double T_K)
+double P_pseudocritical_1_RH(double T_K)
 {
 	return (0.191448*T_K + 45.6661)*T_K - 24213.3;
 }
 
 //
-bool C_poly_curve_r_squared::init(const std::vector<double> x_data, const std::vector<double> y_data)
+bool C_poly_curve_r_squared_RH::init(const std::vector<double> x_data, const std::vector<double> y_data)
 {
 	m_x = x_data;
 	m_y = y_data;
@@ -8466,7 +8466,7 @@ bool C_poly_curve_r_squared::init(const std::vector<double> x_data, const std::v
 }
 
 //
-double C_poly_curve_r_squared::calc_r_squared(const std::vector<double> coefs)
+double C_poly_curve_r_squared_RH::calc_r_squared(const std::vector<double> coefs)
 {
 	double SS_res = 0.0;
 	int n_coefs = (int)coefs.size();
@@ -8485,9 +8485,9 @@ double C_poly_curve_r_squared::calc_r_squared(const std::vector<double> coefs)
 }
 
 //
-double nlopt_callback_poly_coefs(const std::vector<double> &x, std::vector<double> &grad, void *data)
+double nlopt_callback_poly_coefs_RH(const std::vector<double> &x, std::vector<double> &grad, void *data)
 {
-	C_poly_curve_r_squared *frame = static_cast<C_poly_curve_r_squared*>(data);
+	C_poly_curve_r_squared_RH *frame = static_cast<C_poly_curve_r_squared_RH*>(data);
 	if( frame != NULL ) 
 		return frame->calc_r_squared(x);
 	else 
@@ -8495,9 +8495,9 @@ double nlopt_callback_poly_coefs(const std::vector<double> &x, std::vector<doubl
 }
 
 //
-bool find_polynomial_coefs(const std::vector<double> x_data, const std::vector<double> y_data, int n_coefs, std::vector<double> & coefs_out, double & r_squared)
+bool find_polynomial_coefs_RH(const std::vector<double> x_data, const std::vector<double> y_data, int n_coefs, std::vector<double> & coefs_out, double & r_squared)
 {
-	C_poly_curve_r_squared mc_data;
+	C_poly_curve_r_squared_RH mc_data;
 
 	if( n_coefs < 1 || n_coefs > 5)
 	{
@@ -8527,7 +8527,7 @@ bool find_polynomial_coefs(const std::vector<double> x_data, const std::vector<d
 	opt_tar_od_cycle.set_xtol_rel(0.00001);
 
 	// Set max objective function
-	opt_tar_od_cycle.set_max_objective(nlopt_callback_poly_coefs, &mc_data);
+	opt_tar_od_cycle.set_max_objective(nlopt_callback_poly_coefs_RH, &mc_data);
 	double max_f = std::numeric_limits<double>::quiet_NaN();
 	nlopt::result     result_tar_od_cycle = opt_tar_od_cycle.optimize(x, max_f);
 

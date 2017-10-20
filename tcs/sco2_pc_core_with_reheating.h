@@ -70,10 +70,10 @@ void calculate_turbomachinery_outlet_1(double T_in /*K*/, double P_in /*kPa*/, d
 //void calculate_hxr_UA_1(int N_hxrs, double Q_dot /*units?*/, double m_dot_c, double m_dot_h, double T_c_in, double T_h_in, double P_c_in, double P_c_out, double P_h_in, double P_h_out,
 //	int & error_code, double & UA, double & min_DT);
 
-void isen_eta_from_poly_eta(double T_in /*K*/, double P_in /*kPa*/, double P_out /*kPa*/, double poly_eta /*-*/, bool is_comp, int & error_code, double & isen_eta);
+//void isen_eta_from_poly_eta(double T_in /*K*/, double P_in /*kPa*/, double P_out /*kPa*/, double poly_eta /*-*/, bool is_comp, int & error_code, double & isen_eta);
 
 // Heat Exchanger Class
-class C_HeatExchanger
+class C_HeatExchanger_RH
 {
 public:
 	struct S_design_parameters
@@ -103,9 +103,9 @@ public:
 	S_design_parameters ms_des_par;
 
 public:
-	~C_HeatExchanger(){};
+	~C_HeatExchanger_RH(){};
 
-	C_HeatExchanger(){};
+	C_HeatExchanger_RH(){};
 
 	void initialize(const S_design_parameters & des_par_in);
 
@@ -117,7 +117,7 @@ public:
 
 };
 
-class C_turbine
+class C_turbine_RH
 {
 public:
 	struct S_design_parameters
@@ -146,7 +146,7 @@ public:
 
 	struct S_design_solved
 	{
-		double m_nu_design;					//[-] ratio of tip speed to spouting velocity
+		double m_nu_design_RH;					//[-] ratio of tip speed to spouting velocity
 		double m_D_rotor;					//[m] Turbine diameter
 		double m_A_nozzle;					//[m^2] Effective nozzle area
 		double m_w_tip_ratio;				//[-] ratio of tip speed to local speed of sound
@@ -155,7 +155,7 @@ public:
 
 		S_design_solved()
 		{
-			m_nu_design = m_D_rotor = m_A_nozzle = m_w_tip_ratio = m_eta = m_N_design = std::numeric_limits<double>::quiet_NaN();
+			m_nu_design_RH = m_D_rotor = m_A_nozzle = m_w_tip_ratio = m_eta = m_N_design = std::numeric_limits<double>::quiet_NaN();
 		}
 	};
 
@@ -181,11 +181,11 @@ private:
 	S_od_solved ms_od_solved;
 
 public:
-	~C_turbine(){};
+	~C_turbine_RH(){};
 
-	C_turbine(){};
+	C_turbine_RH(){};
 
-	static const double m_nu_design;
+	static const double m_nu_design_RH;
 	
 	const S_design_solved * get_design_solved()
 	{
@@ -197,14 +197,14 @@ public:
 		return &ms_od_solved;
 	}
 
-	void turbine_sizing(const S_design_parameters & des_par_in, int & error_code);	
+	void turbine_sizing_RH(const S_design_parameters & des_par_in, int & error_code);	
 
-	void off_design_turbine(double T_in, double P_in, double P_out, double N, int & error_code, double & m_dot, double & T_out);
+	void off_design_turbine_RH(double T_in, double P_in, double P_out, double N, int & error_code, double & m_dot, double & T_out);
 
-	void od_turbine_at_N_des(double T_in, double P_in, double P_out, int & error_code, double & m_dot, double & T_out);
+	void od_turbine_at_N_des_RH(double T_in, double P_in, double P_out, int & error_code, double & m_dot, double & T_out);
 };
 
-class C_comp_single_stage
+class C_comp_single_stage_RH
 {
 public:
 
@@ -279,13 +279,13 @@ public:
 	S_des_solved ms_des_solved; 
 	S_od_solved ms_od_solved;
 
-	~C_comp_single_stage(){};
+	~C_comp_single_stage_RH(){};
 
-	C_comp_single_stage(){};
+	C_comp_single_stage_RH(){};
 
-	static const double m_snl_phi_design;		//[-] Design-point flow coef. for Sandia compressor (corresponds to max eta)
-	static const double m_snl_phi_min;				//[-] Approximate surge limit for SNL compressor
-	static const double m_snl_phi_max;				//[-] Approximate x-intercept for SNL compressor
+	static const double m_snl_phi_design_RH;		//[-] Design-point flow coef. for Sandia compressor (corresponds to max eta)
+	static const double m_snl_phi_min_RH;				//[-] Approximate surge limit for SNL compressor
+	static const double m_snl_phi_max_RH;				//[-] Approximate x-intercept for SNL compressor
 
 	const S_des_solved * get_design_solved()
 	{
@@ -304,11 +304,11 @@ public:
 	int calc_N_from_phi(double T_in /*K*/, double P_in /*kPa*/, double m_dot /*kg/s*/, double phi_in /*-*/, double & N_rpm /*rpm*/);
 };
 
-class C_comp_multi_stage
+class C_comp_multi_stage_RH
 {
 public:
 
-	std::vector<C_comp_single_stage> mv_stages;
+	std::vector<C_comp_single_stage_RH> mv_stages;
 
 	struct S_des_solved
 	{
@@ -377,9 +377,9 @@ public:
 	S_des_solved ms_des_solved;
 	S_od_solved ms_od_solved;
 
-	~C_comp_multi_stage(){};
+	~C_comp_multi_stage_RH(){};
 
-	C_comp_multi_stage(){};
+	C_comp_multi_stage_RH(){};
 
 	const S_des_solved * get_design_solved()
 	{
@@ -394,14 +394,14 @@ public:
 	class C_MEQ_eta_isen__h_out : public C_monotonic_equation
 	{
 	private:
-		C_comp_multi_stage *mpc_multi_stage;
+		C_comp_multi_stage_RH *mpc_multi_stage;
 		double m_T_in;	//[K]
 		double m_P_in;	//[kPa]
 		double m_P_out;	//[kPa]
 		double m_m_dot;	//[kg/s]
 
 	public:
-		C_MEQ_eta_isen__h_out(C_comp_multi_stage *pc_multi_stage,
+		C_MEQ_eta_isen__h_out(C_comp_multi_stage_RH *pc_multi_stage,
 			double T_in /*K*/, double P_in /*kPa*/, double P_out /*kPa*/, double m_dot /*kg/s*/)
 		{
 			mpc_multi_stage = pc_multi_stage;
@@ -417,14 +417,14 @@ public:
 	class C_MEQ_N_rpm__P_out : public C_monotonic_equation
 	{
 	private:
-		C_comp_multi_stage *mpc_multi_stage;
+		C_comp_multi_stage_RH *mpc_multi_stage;
 		double m_T_in;	//[K]
 		double m_P_in;	//[kPa]
 		double m_m_dot;	//[kg/s]
 		double m_eta_isen;	//[-]
 
 	public:
-		C_MEQ_N_rpm__P_out(C_comp_multi_stage *pc_multi_stage,
+		C_MEQ_N_rpm__P_out(C_comp_multi_stage_RH *pc_multi_stage,
 			double T_in /*K*/, double P_in /*kPa*/, double m_dot /*kg/s*/, double eta_isen /*-*/)
 		{
 			mpc_multi_stage = pc_multi_stage;
@@ -440,13 +440,13 @@ public:
 	class C_MEQ_phi_od__P_out : public C_monotonic_equation
 	{
 	private:
-		C_comp_multi_stage *mpc_multi_stage;
+		C_comp_multi_stage_RH *mpc_multi_stage;
 		double m_T_in;	//[K]
 		double m_P_in;	//[kPa]
 		double m_m_dot;	//[kg/s]
 
 	public:
-		C_MEQ_phi_od__P_out(C_comp_multi_stage *pc_multi_stage,
+		C_MEQ_phi_od__P_out(C_comp_multi_stage_RH *pc_multi_stage,
 			double T_in /*K*/, double P_in /*kPa*/, double m_dot /*kg/s*/)
 		{
 			mpc_multi_stage = pc_multi_stage;
@@ -977,11 +977,11 @@ public:
 		bool m_is_rc;
 
 		//C_compressor::S_design_solved ms_mc_des_solved;
-		C_comp_multi_stage::S_des_solved ms_mc_ms_des_solved;
+		C_comp_multi_stage_RH::S_des_solved ms_mc_ms_des_solved;
 		//C_recompressor::S_design_solved ms_rc_des_solved;
-		C_comp_multi_stage::S_des_solved ms_rc_ms_des_solved;
-		C_turbine::S_design_solved ms_mt_des_solved;
-		C_turbine::S_design_solved ms_rt_des_solved;
+		C_comp_multi_stage_RH::S_des_solved ms_rc_ms_des_solved;
+		C_turbine_RH::S_design_solved ms_mt_des_solved;
+		C_turbine_RH::S_design_solved ms_rt_des_solved;
 		C_HX_counterflow::S_des_solved ms_LT_recup_des_solved;
 		C_HX_counterflow::S_des_solved ms_HT_recup_des_solved;
 
@@ -1075,11 +1075,11 @@ public:
 		double m_recomp_frac;	//[-]
 
 		//C_compressor::S_od_solved ms_mc_od_solved;
-		C_comp_multi_stage::S_od_solved ms_mc_ms_od_solved;
+		C_comp_multi_stage_RH::S_od_solved ms_mc_ms_od_solved;
 		//C_recompressor::S_od_solved ms_rc_od_solved;
-		C_comp_multi_stage::S_od_solved ms_rc_ms_od_solved;
-		C_turbine::S_od_solved ms_mt_od_solved;
-		C_turbine::S_od_solved ms_rt_od_solved;
+		C_comp_multi_stage_RH::S_od_solved ms_rc_ms_od_solved;
+		C_turbine_RH::S_od_solved ms_mt_od_solved;
+		C_turbine_RH::S_od_solved ms_rt_od_solved;
 		C_HX_counterflow::S_od_solved ms_LT_recup_od_solved;
 		C_HX_counterflow::S_od_solved ms_HT_recup_od_solved;
 
@@ -1342,14 +1342,14 @@ public:
 public:
 		// Component classes
 	//Main Turbine
-	C_turbine m_mt;
+	C_turbine_RH m_mt;
 	//ReHeating Turbine
-	C_turbine m_rt;
+	C_turbine_RH m_rt;
 	//C_compressor m_mc;
-	C_comp_multi_stage m_mc_ms;
+	C_comp_multi_stage_RH m_mc_ms;
 	//C_recompressor m_rc;
-	C_comp_multi_stage m_rc_ms;
-	C_HeatExchanger /*m_LT, m_HT,*/ m_PHX, m_RHX, m_PC;
+	C_comp_multi_stage_RH m_rc_ms;
+	C_HeatExchanger_RH /*m_LT, m_HT,*/ m_PHX, m_RHX, m_PC;
 	C_HX_co2_to_co2 mc_LT_recup, mc_HT_recup;
 		// Input/Ouput structures for class methods
 	S_design_limits ms_des_limits;
@@ -1534,7 +1534,7 @@ public:
 							int & rc_error_code, double & rc_w_tip_ratio /*-*/, double & rc_phi /*-*/,
 							bool is_update_ms_od_solved = false);
 
-	const C_comp_multi_stage::S_od_solved * get_rc_od_solved()
+	const C_comp_multi_stage_RH::S_od_solved * get_rc_od_solved()
 	{
 		return m_rc_ms.get_od_solved();
 	}
@@ -1799,9 +1799,9 @@ public:
 	//double opt_od_eta(const std::vector<double> &x);
 };
 
-double nlopt_callback_opt_des_1(const std::vector<double> &x, std::vector<double> &grad, void *data);
+double nlopt_callback_opt_des_1_RH(const std::vector<double> &x, std::vector<double> &grad, void *data);
 
-double fmin_callback_opt_eta_1(double x, void *data);
+double fmin_callback_opt_eta_1_RH(double x, void *data);
 
 //double nlopt_cb_opt_od(const std::vector<double> &x, std::vector<double> &grad, void *data);
 
@@ -1809,16 +1809,16 @@ double fmin_callback_opt_eta_1(double x, void *data);
 
 //double nlopt_cb_opt_od_eta(const std::vector<double> &x, std::vector<double> &grad, void *data);
 
-double P_pseudocritical_1(double T_K);
+double P_pseudocritical_1_RH(double T_K);
 
 
 //double nlopt_callback_tub_bal_opt(const std::vector<double> &x, std::vector<double> &grad, void *data);
 
 
-bool find_polynomial_coefs(const std::vector<double> x_data, const std::vector<double> y_data, int n_coefs, std::vector<double> & coefs_out, double & r_squared);
+bool find_polynomial_coefs_RH(const std::vector<double> x_data, const std::vector<double> y_data, int n_coefs, std::vector<double> & coefs_out, double & r_squared);
 
 
-class C_poly_curve_r_squared
+class C_poly_curve_r_squared_RH
 {
 private:
 	std::vector<double> m_x;
@@ -1828,7 +1828,7 @@ private:
 	double m_SS_tot;
 
 public:
-	C_poly_curve_r_squared()
+	C_poly_curve_r_squared_RH()
 	{
 		m_x.resize(0);
 		m_y.resize(0);
@@ -1845,6 +1845,6 @@ public:
 
 };
 
-double nlopt_callback_poly_coefs(const std::vector<double> &x, std::vector<double> &grad, void *data);
+double nlopt_callback_poly_coefs_RH(const std::vector<double> &x, std::vector<double> &grad, void *data);
 
 #endif
