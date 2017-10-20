@@ -18,7 +18,7 @@ script:
   - make -C /home/travis/build/$user/lk/build_linux
   - make -C /home/travis/build/$user/wex/build_linux
   - make -C /home/travis/build/$user/ssc/build_linux
-  - .home/travis/build/$user/ssc/build_linux/Test
+  - (cd /home/travis/build/$user/ssc/build_linux/ && ./Test)
 
 install:
   - sudo apt-get install -y libgtk2.0-dev libgl1-mesa-dev mesa-common-dev freeglut3-dev libcurl4-openssl-dev libc6
