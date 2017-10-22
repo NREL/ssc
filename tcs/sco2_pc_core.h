@@ -1019,7 +1019,7 @@ public:
 			
 			m_W_dot_net = m_W_dot_net_adj = m_P_high = m_m_dot_total =
 				m_N_mc = m_w_tip_ratio_mc = m_eta_mc = 
-				m_N_rc = m_phi_rc_1, m_phi_rc_2 = m_w_tip_ratio_rc = m_eta_rc =
+				m_N_rc = m_phi_rc_1 = m_phi_rc_2 = m_w_tip_ratio_rc = m_eta_rc =
 				m_eta_t = std::numeric_limits<double>::quiet_NaN();
 		}
 	};
