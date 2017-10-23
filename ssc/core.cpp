@@ -357,8 +357,11 @@ ssc_number_t *compute_module::as_array( const std::string &name, size_t *count )
 	if (count) *count = x.num.length();
 	return x.num.data();
 }
-
-std::vector<double> compute_module::as_doublevec( const std::string &name ) throw( general_error )
+/** 
+The obvious improvement would be to made this a template, but ran into trouble with 
+"error: Access violation - no RTTI data!" 
+*/
+std::vector<double> compute_module::as_vector_double(const std::string &name) throw(general_error)
 {
 	var_data &x = value(name);
 	if (x.type != SSC_ARRAY) throw cast_error("array", x, name);
@@ -367,6 +370,39 @@ std::vector<double> compute_module::as_doublevec( const std::string &name ) thro
 	ssc_number_t *p = x.num.data();
 	for (size_t k=0;k<len;k++)
 		v[k] = (double) p[k];
+	return v;
+}
+std::vector<float> compute_module::as_vector_float(const std::string &name) throw(general_error)
+{
+	var_data &x = value(name);
+	if (x.type != SSC_ARRAY) throw cast_error("array", x, name);
+	size_t len = x.num.length();
+	std::vector<float> v(len);
+	ssc_number_t *p = x.num.data();
+	for (size_t k = 0; k<len; k++)
+		v[k] = (float)p[k];
+	return v;
+}
+std::vector<size_t> compute_module::as_vector_unsigned_long(const std::string &name) throw(general_error)
+{
+	var_data &x = value(name);
+	if (x.type != SSC_ARRAY) throw cast_error("array", x, name);
+	size_t len = x.num.length();
+	std::vector<size_t> v(len);
+	ssc_number_t *p = x.num.data();
+	for (size_t k = 0; k<len; k++)
+		v[k] = (size_t)p[k];
+	return v;
+}
+std::vector<bool> compute_module::as_vector_bool(const std::string &name) throw(general_error)
+{
+	var_data &x = value(name);
+	if (x.type != SSC_ARRAY) throw cast_error("array", x, name);
+	size_t len = x.num.length();
+	std::vector<bool> v(len);
+	ssc_number_t *p = x.num.data();
+	for (size_t k = 0; k<len; k++)
+		v[k] = p[k] != 0;
 	return v;
 }
 
@@ -391,6 +427,20 @@ util::matrix_t<double> compute_module::as_matrix(const std::string &name) throw(
 
 	return mat;
 }
+
+util::matrix_t<size_t> compute_module::as_matrix_unsigned_long(const std::string &name) throw(general_error)
+{
+	var_data &x = value(name);
+	if (x.type != SSC_MATRIX) throw cast_error("matrix", x, name);
+
+	util::matrix_t<size_t> mat(x.num.nrows(), x.num.ncols(), (size_t)0.0);
+	for (size_t r = 0; r<x.num.nrows(); r++)
+		for (size_t c = 0; c<x.num.ncols(); c++)
+			mat.at(r, c) = (size_t)x.num(r, c);
+
+	return mat;
+}
+
 
 util::matrix_t<double> compute_module::as_matrix_transpose(const std::string &name) throw(general_error)
 {

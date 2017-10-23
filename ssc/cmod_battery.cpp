@@ -256,12 +256,12 @@ battstor::battstor(compute_module &cm, bool setup_model, int replacement_option,
 
 			if (batt_vars->batt_meter_position == dispatch_t::FRONT)
 			{
-				batt_vars->pv_dc_forecast = cm.as_vector<double>("dc_net_forecast");
+				batt_vars->pv_dc_forecast = cm.as_vector_double("dc_net_forecast");
 				if (batt_vars->batt_dispatch == dispatch_t::FOM_FORECAST)
 				{
-					batt_vars->ppa_factors = cm.as_vector<double>("dispatch_tod_factors");
-					batt_vars->ppa_weekday_schedule = cm.as_matrix<size_t>("dispatch_sched_weekday");
-					batt_vars->ppa_weekend_schedule = cm.as_matrix<size_t>("dispatch_sched_weekend");
+					batt_vars->ppa_factors = cm.as_vector_double("dispatch_tod_factors");
+					batt_vars->ppa_weekday_schedule = cm.as_matrix_unsigned_long("dispatch_sched_weekday");
+					batt_vars->ppa_weekend_schedule = cm.as_matrix_unsigned_long("dispatch_sched_weekend");
 				}
 			}
 
@@ -270,22 +270,22 @@ battstor::battstor(compute_module &cm, bool setup_model, int replacement_option,
 				batt_vars->batt_can_charge = cm.as_vector_bool("dispatch_manual_charge");
 				batt_vars->batt_can_discharge = cm.as_vector_bool("dispatch_manual_discharge");
 				batt_vars->batt_can_gridcharge = cm.as_vector_bool("dispatch_manual_gridcharge");
-				batt_vars->batt_discharge_percent = cm.as_vector<float>("dispatch_manual_percent_discharge");
-				batt_vars->batt_gridcharge_percent = cm.as_vector<float>("dispatch_manual_percent_gridcharge");
-				batt_vars->batt_discharge_schedule_weekday = cm.as_matrix<size_t>("dispatch_manual_sched");
-				batt_vars->batt_discharge_schedule_weekend = cm.as_matrix<size_t>("dispatch_manual_sched_weekend");
+				batt_vars->batt_discharge_percent = cm.as_vector_float("dispatch_manual_percent_discharge");
+				batt_vars->batt_gridcharge_percent = cm.as_vector_float("dispatch_manual_percent_gridcharge");
+				batt_vars->batt_discharge_schedule_weekday = cm.as_matrix_unsigned_long("dispatch_manual_sched");
+				batt_vars->batt_discharge_schedule_weekend = cm.as_matrix_unsigned_long("dispatch_manual_sched_weekend");
 			}
 			else if (batt_vars->batt_dispatch == dispatch_t::MAINTAIN_TARGET)
 			{
 				batt_vars->batt_target_choice = cm.as_integer("batt_target_choice");
-				batt_vars->target_power_monthly = cm.as_vector<double>("batt_target_power_monthly");
-				batt_vars->target_power = cm.as_vector<double>("batt_target_power");
+				batt_vars->target_power_monthly = cm.as_vector_double("batt_target_power_monthly");
+				batt_vars->target_power = cm.as_vector_double("batt_target_power");
 			}
 			batt_vars->batt_auto_dispatch_can_gridcharge = cm.as_boolean("dispatch_auto_can_gridcharge");
 
-			batt_vars->batt_lifetime_matrix = cm.as_matrix<double>("batt_lifetime_matrix");
-			batt_vars->batt_calendar_lifetime_matrix = cm.as_matrix<double>("batt_calendar_lifetime_matrix");
-			batt_vars->batt_voltage_matrix = cm.as_matrix<double>("batt_voltage_matrix");
+			batt_vars->batt_lifetime_matrix = cm.as_matrix("batt_lifetime_matrix");
+			batt_vars->batt_calendar_lifetime_matrix = cm.as_matrix("batt_calendar_lifetime_matrix");
+			batt_vars->batt_voltage_matrix = cm.as_matrix("batt_voltage_matrix");
 
 			batt_vars->batt_calendar_q0 = cm.as_double("batt_calendar_q0");
 			batt_vars->batt_calendar_a = cm.as_double("batt_calendar_a");
@@ -308,7 +308,7 @@ battstor::battstor(compute_module &cm, bool setup_model, int replacement_option,
 			batt_vars->batt_resistance = cm.as_double("batt_resistance");
 
 			batt_vars->batt_replacement_capacity = cm.as_double("batt_replacement_capacity");
-			batt_vars->cap_vs_temp = cm.as_matrix<double>("cap_vs_temp");
+			batt_vars->cap_vs_temp = cm.as_matrix("cap_vs_temp");
 			batt_vars->batt_mass = cm.as_double("batt_mass");
 			batt_vars->batt_length = cm.as_double("batt_length");
 			batt_vars->batt_width = cm.as_double("batt_width");
@@ -339,10 +339,10 @@ battstor::battstor(compute_module &cm, bool setup_model, int replacement_option,
 			batt_vars->batt_dc_dc_bms_efficiency = cm.as_double("batt_dc_dc_efficiency");
 			batt_vars->pv_dc_dc_mppt_efficiency = 100. - cm.as_double("dcoptimizer_loss");
 
-			batt_vars->batt_losses_charging = cm.as_vector<double>("batt_losses_charging");
-			batt_vars->batt_losses_discharging = cm.as_vector<double>("batt_losses_discharging");
-			batt_vars->batt_losses_idle = cm.as_vector<double>("batt_losses_idle");
-			batt_vars->batt_losses = cm.as_vector<double>("batt_losses");
+			batt_vars->batt_losses_charging = cm.as_vector_double("batt_losses_charging");
+			batt_vars->batt_losses_discharging = cm.as_vector_double("batt_losses_discharging");
+			batt_vars->batt_losses_idle = cm.as_vector_double("batt_losses_idle");
+			batt_vars->batt_losses = cm.as_vector_double("batt_losses");
 
 			batt_vars->inverter_model = cm.as_integer("inverter_model");
 			batt_vars->inv_snl_eff_cec = cm.as_double("inv_snl_eff_cec");

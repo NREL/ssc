@@ -253,9 +253,13 @@ public:
 	double as_double( const std::string &name ) throw( general_error );
 	const char *as_string( const std::string &name ) throw( general_error );
 	ssc_number_t *as_array( const std::string &name, size_t *count ) throw( general_error );
-	std::vector<double> as_doublevec( const std::string &name ) throw( general_error );
+	std::vector<double> as_vector_double( const std::string &name ) throw( general_error );
+	std::vector<float> as_vector_float(const std::string &name) throw(general_error);
+	std::vector<bool> as_vector_bool(const std::string &name) throw(general_error);
+	std::vector<size_t> as_vector_unsigned_long(const std::string &name) throw(general_error);
 	ssc_number_t *as_matrix( const std::string &name, size_t *rows, size_t *cols ) throw( general_error );
 	util::matrix_t<double> as_matrix(const std::string & name) throw(general_error);
+	util::matrix_t<size_t> as_matrix_unsigned_long(const std::string & name) throw(general_error);
 	util::matrix_t<double> as_matrix_transpose(const std::string & name) throw(general_error);
 	bool get_matrix(const std::string &name, util::matrix_t<ssc_number_t> &mat) throw(general_error);
 
