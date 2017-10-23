@@ -356,8 +356,6 @@ battstor::battstor(compute_module &cm, bool setup_model, int replacement_option,
 	else
 		batt_vars = batt_vars_in;
 
-	parse_configuration();
-
 	// component models
 	voltage_model = 0;
 	lifetime_model = 0;
@@ -719,7 +717,6 @@ battstor::battstor(compute_module &cm, bool setup_model, int replacement_option,
 			(int)nyears, batt_vars->batt_auto_dispatch_can_gridcharge);
 	}
 
-	ac_dc = dc_ac = 100.;
 	topology = batt_vars->batt_topology;
 	ac_dc = batt_vars->batt_ac_dc_efficiency;
 	dc_ac = batt_vars->batt_dc_ac_efficiency;
@@ -743,6 +740,8 @@ battstor::battstor(compute_module &cm, bool setup_model, int replacement_option,
 
 		charge_control = new dc_connected_battery_controller(dispatch_model, battery_metrics, batt_vars->batt_dc_dc_bms_efficiency, batt_vars->pv_dc_dc_mppt_efficiency, inverter_efficiency);
 	}
+
+	parse_configuration();
 }
 
 void battstor::parse_configuration()
