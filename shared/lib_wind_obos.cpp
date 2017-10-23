@@ -107,7 +107,8 @@ void wobos::Construction_finance_factor()
 //calculate construction financing cost
 void wobos::Construction_finance()
 {
-    construction_finance_cost = (construction_finance_factor-1)*(turbCapEx+total_bos_cost+soft_costs);
+//    construction_finance_cost = (construction_finance_factor-1)*(turbCapEx+total_bos_cost+soft_costs);
+    construction_finance_cost = (construction_finance_factor-1)*(turbCapEx+total_bos_cost);
 }
 
 //calculate total contingency cost
@@ -139,7 +140,8 @@ double wobos::DecomissExpense()
 //calculate total BOS costs
 void wobos::Total_bos_cost()
 {
-    total_bos_cost = totAnICost+totDevCost+totElecCost+totEnMCost+totPnSCost+subTotCost+soft_costs;
+//    total_bos_cost = totAnICost+totDevCost+totElecCost+totEnMCost+totPnSCost+subTotCost+soft_costs;
+    total_bos_cost = totAnICost+totDevCost+totElecCost+totEnMCost+totPnSCost+subTotCost;
 }
 
 //*******************************************************************************************
