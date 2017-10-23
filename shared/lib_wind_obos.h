@@ -583,335 +583,335 @@ struct wobos //WIND OFFSHORE BOS STRUCTURE TO HOLD ALL INPUTS AND OUTPUTS AND AL
 
 	// add default constructor/initializer
 	wobos(): 
-		 turbCapEx(0), //turbine capital cost ($/kW)
-		 nTurb(0),//number of turbines
-		 rotorD(0),//rotor diameter (m)
-		 turbR(0),//turbine rating (MW)
-		 hubH(0),//hub height (m)
-		 waterD(0),// water depth (m)
-		 distShore(0),//distance to shore from install site (km)
-		 distPort(0),//distance to install site from install port (km)
-		 distPtoA(0),//distance from install port to inshore assembly area (km) (spar only)
-		 distAtoS(0),//distance from inshore assembly area to install site (km) (spar Only)
-		 substructure(0), //type of substructure
-		 anchor(0), //anchor type
-		 turbInstallMethod(0), //turbine installation method
-		 towerInstallMethod(0), //tower installation method
-		 installStrategy(0), //installation vessel strategy
-		 cableOptimizer(0), //switch to run the cable optimizer or not
-		 moorLines(0),//number of mooring lines for floating substructures
-		 buryDepth(0),//array and export cable burial depth (m)
-		 arrayY(0),//turbine array spacing between turbines on same row (rotor diameters)
-		 arrayX(0),// turbine array spacing between turbine rows (rotor diameters)
-		 substructCont(0),//substructure install weather contingency
-		 turbCont(0),//turbine install weather contingency
-		 elecCont(0),//turbine install weather contingency
-		 interConVolt(0),//grid interconnect voltage (kV)
-		 distInterCon(0),//distance from onshore substation to grid interconnect (miles)
-		 scrapVal(0),//scrap value of decommissioned components ($)
-		 number_install_seasons(0), //number of vessel mobilization/install seasons
-		 projLife(0),//economic lifetime of the project (years)
-		 inspectClear(0),//inspection clearance for substructure and turbine components (m)
-		 plantComm(0), //plant commissioning cost factor
-		 procurement_contingency(0), //contingency factor for procurement costs
-		 install_contingency(0), //contingency factor for installation costs
-		 construction_insurance(0), //insurance during construction factor
-		 capital_cost_year_0(0), //capital cost spent in year 0
-		 capital_cost_year_1(0), //capital cost spent in year 1
-		 capital_cost_year_2(0), //capital cost spent in year 2
-		 capital_cost_year_3(0), //capital cost spent in year 3
-		 capital_cost_year_4(0), //capital cost spent in year 4
-		 capital_cost_year_5(0), //capital cost spent in year 5
-		 tax_rate(0), //effective tax_rate (federal & state)
-		 interest_during_construction(0), //interest rate during construction
-		 mpileCR(0),//monopile pile cost rate ($/tonne)
-		 mtransCR(0),//monopile transition piece cost rate ($/tonne)
-		 mpileD(0),//monopile pile diameter (m)
-		 mpileL(0),//monopile length (m)
-		 jlatticeCR(0),//jacket lattice cost rate ($/tonne)
-		 jtransCR(0),//jacket transition piece cost rate ($/tonne)
-		 jpileCR(0),//jacket pile cost rate ($/tonne)
-		 jlatticeA(0),//jacket lattice footprint area
-		 jpileL(0),//jacket pile length
-		 jpileD(0),//jacket pile diameter
-		 spStifColCR(0),//spar stiffened column cost rate ($/tonne)
-		 spTapColCR(0),//spar tapered column cost rate ($/tonne)
-		 ballCR(0),//ballast cost rate ($/tonne)
-		 deaFixLeng(0),//drag embedment anchor fixed mooring line length
-		 ssStifColCR(0),//semisubmersible stiffened column cost rate ($/tonne)
-		 ssTrussCR(0),// semisubmersible truss cost rate ($/tonne)
-		 ssHeaveCR(0),//semisubmersible heave plate cost rate ($/tonne)
-		 sSteelCR(0),//secondary steel cost rate ($/tonne)
-		 moorDia(0),//mooring line diameter
-		 moorCR(0),//mooring line cost rate ($/m)
-		 mpEmbedL(0),//monopile embedment length (m)
-		 scourMat(0),
-		 pwrFac(0),//power factor to estimate losses
-		 buryFac(0),//cable burial factor
-		 arrVoltage(0),//array cable voltage (kV)
-		 arrCab1Size(0),//diameter in square millimeters of array cable 1
-		 arrCab1Mass(0),//mass of array cable 1 (kg/m)
-		 cab1CurrRating(0),//current rating of array cable 1 (amps)
-		 cab1CR(0),//cost rate of array cable 1 ($/m)
-		 cab1TurbInterCR(0),//array cable size 1 turbine interface cost rate ($/interface)
-		 arrCab2Size(0),//diameter in square millimeters of array cable 2
-		 arrCab2Mass(0),//mass of array cable 2 (kg/m)
-		 cab2CurrRating(0),//current rating of array cable 2 (amps)
-		 cab2CR(0),//cost rate of array cable 2 ($/m)
-		 cab2TurbInterCR(0),//array cable size 2 turbine interface cost rate ($/interface)
-		 cab2SubsInterCR(0),//array cable size 2 substation interface cost rate ($/interface)
-		 catLengFac(0),//free hanging or catenary cable length factor
-		 exCabFac(0),// excess cable factor
-		 subsTopFab(0),//substation topside fabrication cost ($/tonne)
-		 subsTopDes(0),//substation topside design cost ($)
-		 topAssemblyFac(0),//land based substation topside assembly factor
-		 subsJackCR(0),//substation jacket substructure cost rate ($/tonne)
-		 subsPileCR(0),//substation jacket pile cost rate ($/tonne)
-		 dynCabFac(0),//dynamic/free hanging cable cost premium
-		 shuntCR(0),//shunt reactor cost rate ($/MVA)
-		 highVoltSG(0),//high voltage switchgear cost ($)
-		 medVoltSG(0),//medium voltage switchgear cost ($)
-		 backUpGen(0),//back up generator cost ($)
-		 workSpace(0),//substation workshop and accommodations cost ($)
-		 otherAncillary(0),//substation other ancillary costs ($)
-		 mptCR(0),//main power transformer cost rate ($/MVA)
-		 expVoltage(0),//export cable voltage (kV)
-		 expCabSize(0),//diameter in square millimeters of the export cable
-		 expCabMass(0),//mass of the export cable (kg/m)
-		 expCabCR(0),//cost rate of the export cable ($/m)
-		 expCurrRating(0),//export cable rating (amps)
-		 expSubsInterCR(0),//cost rate of export cable substation interfaces ($/interface)
-		 moorTimeFac(0),//mooring installation timing factor (hrs/m)
-		 moorLoadout(0),//mooring system loadout timing (hrs)
-		 moorSurvey(0),//mooring system anchor position survey timing (hrs)
-		 prepAA(0),//prep inshore assembly area timing (hrs)
-		 prepSpar(0),//prep spare for tow out to assembly area timing (hrs)
-		 upendSpar(0),//upend and ballast the spar timing (hrs)
-		 prepSemi(0),//prep semisubmersible for turbine install timing (hrs)
-		 turbFasten(0),//fasten turbine for transport timing (hrs)
-		 boltTower(0),// bolt tower to substructure timing (hrs)
-		 boltNacelle1(0),//bolt nacelle to tower timing individual components method (hrs)
-		 boltNacelle2(0),//bolt nacelle to tower timing bunny ears method (hrs)
-		 boltNacelle3(0),//bolt nacelle to tower timing assembled rotor method (hrs)
-		 boltBlade1(0),//bolt blade to rotor timing individual components method (hrs)
-		 boltBlade2(0),//bolt blade to rotor timing bunny ears method (hrs)
-		 boltRotor(0),//bolt rotor to nacelle timing assembled rotor method (hrs)
-		 vesselPosTurb(0),//vessel positioning timing turbine install (hrs)
-		 vesselPosJack(0),//vessel positioning timing jacket install (hrs)
-		 vesselPosMono(0),//vessel positioning timing monopile install (hrs)
-		 subsVessPos(0),//vessel positioning timing offshore substation install (hrs)
-		 monoFasten(0),//fasten monopile for transport timing (hrs)
-		 jackFasten(0),//fasten jacket for transport timing (hrs)
-		 prepGripperMono(0),//prepare pile gripper and upender timing monopile install (hrs)
-		 prepGripperJack(0),//prepare pile gripper and upender timing iacket install (hrs)
-		 placePiles(0),//lift and place jacket piles timing (hrs)
-		 prepHamMono(0),//prepare pile hammer timing monopile install (hrs)
-		 removeHamMono(0),//remove hammer timing monopile install (hrs)
-		 prepHamJack(0),//prepare pile hammer timing iacket install (hrs)
-		 removeHamJack(0),//remove hammer timing iacket install (hrs)
-		 placeJack(0),//place  jacket timing (hrs)
-		 levJack(0),//level jacket timing (hrs)
-		 placeTemplate(0),//place jacket template timing (hrs)
-		 hamRate(0),//pile hammer rate (m/hr)
-		 placeMP(0),//place monopile pile timing (hrs)
-		 instScour(0),//install scour protection (hrs)
-		 placeTP(0),//place transition piece on monopile timing (hrs)
-		 groutTP(0),//grout transition piece (hrs)
-		 tpCover(0),//install transition piece cover timing (hrs)
-		 prepTow(0),//prep floating substructure for towing timing (hrs)
-		 spMoorCon(0),//connect spar to mooring system timing (hrs)
-		 ssMoorCon(0),//connect semisubmersible to mooring system (hrs)
-		 spMoorCheck(0),//check mooring connections to spar timing (hrs)
-		 ssMoorCheck(0),//check mooring connections to semisubmersible timing (hrs)
-		 ssBall(0),//ballast semisubmersible timing (hrs)
-		 surfLayRate(0),//electrical cable surface lay rate (m/hr)
-		 cabPullIn(0),//array cable pull in to interfaces timing (hrs)
-		 cabTerm(0),//cable termination and testing timing (hrs)
-		 cabLoadout(0),//array cable loadout timing (hrs)
-		 buryRate(0),//cable bury rate (m/hr)
-		 subsPullIn(0),//cable pull in to substation timing (hrs)
-		 shorePullIn(0),//cable pull in to shore timing (hrs)
-		 landConstruct(0),//land construction of required onshore electrical systems timing (days)
-		 expCabLoad(0),//export cable loadout timing (hrs)
-		 subsLoad(0),//substation loadout timing (hrs)
-		 placeTop(0),//lift and place substation topside timing (hrs)
-		 pileSpreadDR(0),//piling equipment spread day rate ($/day)
-		 pileSpreadMob(0),//piling equipment spread mobilization/demobilization cost ($)
-		 groutSpreadDR(0),//grouting equipment spread day rate ($/day)
-		 groutSpreadMob(0),//grouting equipment spread mobilization/demobilization cost ($)
-		 seaSpreadDR(0),//suction pile anchor vessel and equipment spread day rate ($/day)
-		 seaSpreadMob(0),//suction pile anchor vessel and equipment spread mobilization/demobilization cost ($)
-		 compRacks(0),//component racks cost ($)
-		 cabSurveyCR(0),//cost rate of surveying and verifying electrical cable installation ($/)
-		 cabDrillDist(0),//horizontal drilling distance for cable landfall (m)
-		 cabDrillCR(0),//horizontal drilling cost rate ($/m)
-		 mpvRentalDR(0),//MPV rental day rate ($/day)
-		 diveTeamDR(0),//cable landfall dive team day rate ($/day)
-		 winchDR(0),//Cable winch day rate
-		 civilWork(0),//civil construction work cost ($)
-		 elecWork(0),//electrical work cost ($)
-		 nCrane600(0),
-		 nCrane1000(0),
-		 crane600DR(0),//600 tonne capacity crawler crane day rate ($/day)
-		 crane1000DR(0),//1000 tonne capacity crawler crane day rate ($/day)
-		 craneMobDemob(0),//crane mobilization and demobilization cost ($)
-		 entranceExitRate(0),//port entrance and exit cost ($/m^2/occurrence)
-		 dockRate(0),//port docking cost ($/day)
-		 wharfRate(0),//port wharf loading and unloading cost ($/tonne)
-		 laydownCR(0),//port laydown and storage cost ($/m/day)
-		 estEnMFac(0),//estimated engineering and management cost factor
-		 preFEEDStudy(0),//pre-fornt end engineering design (FEED) study cost ($)
-		 feedStudy(0),// FEED study cost ($)
-		 stateLease(0),//state leasing cost ($)
-		 outConShelfLease(0),//outer continental shelf lease cost ($)
-		 saPlan(0),//site assessment plan cost ($)
-		 conOpPlan(0),//construction operations plan cost ($)
-		 nepaEisMet(0),//national environmental protection agency (NEPA) environmental impact (EIS) meteorological (met) tower study cost ($)
-		 physResStudyMet(0),//physical resource met tower study cost ($)
-		 bioResStudyMet(0),//biological resource met tower study ($)
-		 socEconStudyMet(0),//socioeconomic met tower study cost ($)
-		 navStudyMet(0),//navigation met tower study ($)
-		 nepaEisProj(0),// NEPA EIS project site study cost ($)
-		 physResStudyProj(0),//physical resource project site study cost ($)
-		 bioResStudyProj(0),//biological resource project site study cost ($)
-		 socEconStudyProj(0),//socioeconomic project site study cost ($)
-		 navStudyProj(0),//navigation project site study cost ($)
-		 coastZoneManAct(0),//coastal zone management act compliance cost ($)
-		 rivsnHarbsAct(0),//rivers & harbors act section 10 compliance cost ($)
-		 cleanWatAct402(0),//clean water act section 402 compliance cost ($)
-		 cleanWatAct404(0),//clean water act section 404 compliance cost ($)
-		 faaPlan(0),//federal aviation administration (FAA) plans and mitigation cost ($)
-		 endSpecAct(0),//endangered species act compliance cost ($)
-		 marMamProtAct(0),//marine mammal protection act compliance cost ($)
-		 migBirdAct(0),//migratory bird act compliance ($)
-		 natHisPresAct(0),//national historic preservation act compliance cost ($)
-		 addLocPerm(0),//additional local and state permissions and compliance cost ($)
-		 metTowCR(0),//meteorological tower fabrication, design, and install cost rate ($/MW)
-		 decomDiscRate(0),//decommissioning expense discount rate
-		 hubD(0),
-		 bladeL(0),
-		 chord(0),
-		 nacelleW(0),
-		 nacelleL(0),
-		 rnaM(0),
-		 towerD(0),
-		 towerM(0),
-		 construction_insurance_cost(0),
-		 total_contingency_cost(0),
-		 construction_finance_cost(0),
-		 construction_finance_factor(0),
-		 soft_costs(0),
-		 mpileM(0),
-		 mtransM(0),
-		 mPileCost(0),
-		 mTransCost(0),
-		 jlatticeM(0),
-		 jtransM(0),
-		 jpileM(0),
-		 jLatticeCost(0),
-		 jTransCost(0),
-		 jPileCost(0),
-		 spStifColM(0),
-		 spTapColM(0),
-		 spStifColCost(0),
-		 spTapColCost(0),
-		 ballM(0),
-		 ballCost(0),
-		 ssStifColM(0),
-		 ssTrussM(0),
-		 ssHeaveM(0),
-		 ssStifColCost(0),
-		 ssTrussCost(0),
-		 ssHeaveCost(0),
-		 moorSysCost(0),
-		 sSteelM(0),
-		 sSteelCost(0),
-		 subTotM(0),
-		 systAngle(0),
-		 freeCabLeng(0),
-		 fixCabLeng(0),
-		 nExpCab(0),
-		 nSubstation(0),
-		 fullStrings(0),
-		 nTurbPS(0),
-		 nTurbCab1(0),
-		 nTurbCab2(0),
-		 nTurbInter1(0),
-		 nTurbInter2(0),
-		 nSubsInter(0),
-		 cab1Leng(0),
-		 cab2Leng(0),
-		 expCabLeng(0),
-		 nMPT(0),
-		 mptRating(0),
-		 mptCost(0),
-		 subsTopM(0),
-		 subsTopCost(0),
-		 arrCab1Cost(0),
-		 arrCab2Cost(0),
-		 expCabCost(0),
-		 shuntReactors(0),
-		 switchGear(0),
-		 ancillarySys(0),
-		 subsSubM(0),
-		 subsPileM(0),
-		 subsLandAssembly(0),
-		 subsSubCost(0),
-		 switchYard(0),
-		 onShoreSubs(0),
-		 onshoreMisc(0),
-		 transLine(0),
-		 subCabCost(0),
-		 offSubsCost(0),
-		 onshoreTransCost(0),
-		 moorTime(0),
-		 floatPrepTime(0),
-		 turbDeckArea(0),
-		 nTurbPerTrip(0),
-		 turbInstTime(0),
-		 subDeckArea(0),
-		 nSubPerTrip(0),
-		 subInstTime(0),
-		 cab1SecM(0),
-		 cab2SecM(0),
-		 cab1SecPerTrip(0),
-		 cab2SecPerTrip(0),
-		 arrInstTime(0),
-		 expCabSecM(0),
-		 expCabSecPerTrip(0),
-		 expInstTime(0),
-		 subsInstTime(0),
-		 totInstTime(0),
-		 cabSurvey(0),
-		 array_cable_install_cost(0),
-		 export_cable_install_cost(0),
-		 substation_install_cost(0),
-		 turbine_install_cost(0),
-		 substructure_install_cost(0),
-		 electrical_install_cost(0),
-		 mob_demob_cost(0),
-		 entrExitCost(0),
-		 wharfCost(0),
-		 dockCost(0),
-		 subLaydownA(0),
-		 subLayCost(0),
-		 turbLaydownA(0),
-		 turbLayCost(0),
-		 craneCost(0),
-		 totPortCost(0),
-		 totStageCost(0),
-		 feedCost(0),
-		 permStudyComp(0),
-		 metFabCost(0),
-		 decomCost(0),
-		 subTotCost(0),
-		 totElecCost(0),
-		 totAnICost(0),
-		 totPnSCost(0),
-		 totEnMCost(0),
-		 totDevCost(0),
-		 commissioning(0),
-		 total_bos_cost(0)
+		 turbCapEx(std::numeric_limits<double>::quiet_NaN()), //turbine capital cost ($/kW)
+		 nTurb(std::numeric_limits<double>::quiet_NaN()),//number of turbines
+		 rotorD(std::numeric_limits<double>::quiet_NaN()),//rotor diameter (m)
+		 turbR(std::numeric_limits<double>::quiet_NaN()),//turbine rating (MW)
+		 hubH(std::numeric_limits<double>::quiet_NaN()),//hub height (m)
+		 waterD(std::numeric_limits<double>::quiet_NaN()),// water depth (m)
+		 distShore(std::numeric_limits<double>::quiet_NaN()),//distance to shore from install site (km)
+		 distPort(std::numeric_limits<double>::quiet_NaN()),//distance to install site from install port (km)
+		 distPtoA(std::numeric_limits<double>::quiet_NaN()),//distance from install port to inshore assembly area (km) (spar only)
+		 distAtoS(std::numeric_limits<double>::quiet_NaN()),//distance from inshore assembly area to install site (km) (spar Only)
+		 substructure(std::numeric_limits<int>::quiet_NaN()), //type of substructure
+		 anchor(std::numeric_limits<int>::quiet_NaN()), //anchor type
+		 turbInstallMethod(std::numeric_limits<int>::quiet_NaN()), //turbine installation method
+		 towerInstallMethod(std::numeric_limits<int>::quiet_NaN()), //tower installation method
+		 installStrategy(std::numeric_limits<int>::quiet_NaN()), //installation vessel strategy
+		 cableOptimizer(std::numeric_limits<int>::quiet_NaN()), //switch to run the cable optimizer or not
+		 moorLines(std::numeric_limits<double>::quiet_NaN()),//number of mooring lines for floating substructures
+		 buryDepth(std::numeric_limits<double>::quiet_NaN()),//array and export cable burial depth (m)
+		 arrayY(std::numeric_limits<double>::quiet_NaN()),//turbine array spacing between turbines on same row (rotor diameters)
+		 arrayX(std::numeric_limits<double>::quiet_NaN()),// turbine array spacing between turbine rows (rotor diameters)
+		 substructCont(std::numeric_limits<double>::quiet_NaN()),//substructure install weather contingency
+		 turbCont(std::numeric_limits<double>::quiet_NaN()),//turbine install weather contingency
+		 elecCont(std::numeric_limits<double>::quiet_NaN()),//turbine install weather contingency
+		 interConVolt(std::numeric_limits<double>::quiet_NaN()),//grid interconnect voltage (kV)
+		 distInterCon(std::numeric_limits<double>::quiet_NaN()),//distance from onshore substation to grid interconnect (miles)
+		 scrapVal(std::numeric_limits<double>::quiet_NaN()),//scrap value of decommissioned components ($)
+		 number_install_seasons(std::numeric_limits<double>::quiet_NaN()), //number of vessel mobilization/install seasons
+		 projLife(std::numeric_limits<double>::quiet_NaN()),//economic lifetime of the project (years)
+		 inspectClear(std::numeric_limits<double>::quiet_NaN()),//inspection clearance for substructure and turbine components (m)
+		 plantComm(std::numeric_limits<double>::quiet_NaN()), //plant commissioning cost factor
+		 procurement_contingency(std::numeric_limits<double>::quiet_NaN()), //contingency factor for procurement costs
+		 install_contingency(std::numeric_limits<double>::quiet_NaN()), //contingency factor for installation costs
+		 construction_insurance(std::numeric_limits<double>::quiet_NaN()), //insurance during construction factor
+		 capital_cost_year_0(std::numeric_limits<double>::quiet_NaN()), //capital cost spent in year 0
+		 capital_cost_year_1(std::numeric_limits<double>::quiet_NaN()), //capital cost spent in year 1
+		 capital_cost_year_2(std::numeric_limits<double>::quiet_NaN()), //capital cost spent in year 2
+		 capital_cost_year_3(std::numeric_limits<double>::quiet_NaN()), //capital cost spent in year 3
+		 capital_cost_year_4(std::numeric_limits<double>::quiet_NaN()), //capital cost spent in year 4
+		 capital_cost_year_5(std::numeric_limits<double>::quiet_NaN()), //capital cost spent in year 5
+		 tax_rate(std::numeric_limits<double>::quiet_NaN()), //effective tax_rate (federal & state)
+		 interest_during_construction(std::numeric_limits<double>::quiet_NaN()), //interest rate during construction
+		 mpileCR(std::numeric_limits<double>::quiet_NaN()),//monopile pile cost rate ($/tonne)
+		 mtransCR(std::numeric_limits<double>::quiet_NaN()),//monopile transition piece cost rate ($/tonne)
+		 mpileD(std::numeric_limits<double>::quiet_NaN()),//monopile pile diameter (m)
+		 mpileL(std::numeric_limits<double>::quiet_NaN()),//monopile length (m)
+		 jlatticeCR(std::numeric_limits<double>::quiet_NaN()),//jacket lattice cost rate ($/tonne)
+		 jtransCR(std::numeric_limits<double>::quiet_NaN()),//jacket transition piece cost rate ($/tonne)
+		 jpileCR(std::numeric_limits<double>::quiet_NaN()),//jacket pile cost rate ($/tonne)
+		 jlatticeA(std::numeric_limits<double>::quiet_NaN()),//jacket lattice footprint area
+		 jpileL(std::numeric_limits<double>::quiet_NaN()),//jacket pile length
+		 jpileD(std::numeric_limits<double>::quiet_NaN()),//jacket pile diameter
+		 spStifColCR(std::numeric_limits<double>::quiet_NaN()),//spar stiffened column cost rate ($/tonne)
+		 spTapColCR(std::numeric_limits<double>::quiet_NaN()),//spar tapered column cost rate ($/tonne)
+		 ballCR(std::numeric_limits<double>::quiet_NaN()),//ballast cost rate ($/tonne)
+		 deaFixLeng(std::numeric_limits<double>::quiet_NaN()),//drag embedment anchor fixed mooring line length
+		 ssStifColCR(std::numeric_limits<double>::quiet_NaN()),//semisubmersible stiffened column cost rate ($/tonne)
+		 ssTrussCR(std::numeric_limits<double>::quiet_NaN()),// semisubmersible truss cost rate ($/tonne)
+		 ssHeaveCR(std::numeric_limits<double>::quiet_NaN()),//semisubmersible heave plate cost rate ($/tonne)
+		 sSteelCR(std::numeric_limits<double>::quiet_NaN()),//secondary steel cost rate ($/tonne)
+		 moorDia(std::numeric_limits<double>::quiet_NaN()),//mooring line diameter
+		 moorCR(std::numeric_limits<double>::quiet_NaN()),//mooring line cost rate ($/m)
+		 mpEmbedL(std::numeric_limits<double>::quiet_NaN()),//monopile embedment length (m)
+		 scourMat(std::numeric_limits<double>::quiet_NaN()),
+		 pwrFac(std::numeric_limits<double>::quiet_NaN()),//power factor to estimate losses
+		 buryFac(std::numeric_limits<double>::quiet_NaN()),//cable burial factor
+		 arrVoltage(std::numeric_limits<double>::quiet_NaN()),//array cable voltage (kV)
+		 arrCab1Size(std::numeric_limits<double>::quiet_NaN()),//diameter in square millimeters of array cable 1
+		 arrCab1Mass(std::numeric_limits<double>::quiet_NaN()),//mass of array cable 1 (kg/m)
+		 cab1CurrRating(std::numeric_limits<double>::quiet_NaN()),//current rating of array cable 1 (amps)
+		 cab1CR(std::numeric_limits<double>::quiet_NaN()),//cost rate of array cable 1 ($/m)
+		 cab1TurbInterCR(std::numeric_limits<double>::quiet_NaN()),//array cable size 1 turbine interface cost rate ($/interface)
+		 arrCab2Size(std::numeric_limits<double>::quiet_NaN()),//diameter in square millimeters of array cable 2
+		 arrCab2Mass(std::numeric_limits<double>::quiet_NaN()),//mass of array cable 2 (kg/m)
+		 cab2CurrRating(std::numeric_limits<double>::quiet_NaN()),//current rating of array cable 2 (amps)
+		 cab2CR(std::numeric_limits<double>::quiet_NaN()),//cost rate of array cable 2 ($/m)
+		 cab2TurbInterCR(std::numeric_limits<double>::quiet_NaN()),//array cable size 2 turbine interface cost rate ($/interface)
+		 cab2SubsInterCR(std::numeric_limits<double>::quiet_NaN()),//array cable size 2 substation interface cost rate ($/interface)
+		 catLengFac(std::numeric_limits<double>::quiet_NaN()),//free hanging or catenary cable length factor
+		 exCabFac(std::numeric_limits<double>::quiet_NaN()),// excess cable factor
+		 subsTopFab(std::numeric_limits<double>::quiet_NaN()),//substation topside fabrication cost ($/tonne)
+		 subsTopDes(std::numeric_limits<double>::quiet_NaN()),//substation topside design cost ($)
+		 topAssemblyFac(std::numeric_limits<double>::quiet_NaN()),//land based substation topside assembly factor
+		 subsJackCR(std::numeric_limits<double>::quiet_NaN()),//substation jacket substructure cost rate ($/tonne)
+		 subsPileCR(std::numeric_limits<double>::quiet_NaN()),//substation jacket pile cost rate ($/tonne)
+		 dynCabFac(std::numeric_limits<double>::quiet_NaN()),//dynamic/free hanging cable cost premium
+		 shuntCR(std::numeric_limits<double>::quiet_NaN()),//shunt reactor cost rate ($/MVA)
+		 highVoltSG(std::numeric_limits<double>::quiet_NaN()),//high voltage switchgear cost ($)
+		 medVoltSG(std::numeric_limits<double>::quiet_NaN()),//medium voltage switchgear cost ($)
+		 backUpGen(std::numeric_limits<double>::quiet_NaN()),//back up generator cost ($)
+		 workSpace(std::numeric_limits<double>::quiet_NaN()),//substation workshop and accommodations cost ($)
+		 otherAncillary(std::numeric_limits<double>::quiet_NaN()),//substation other ancillary costs ($)
+		 mptCR(std::numeric_limits<double>::quiet_NaN()),//main power transformer cost rate ($/MVA)
+		 expVoltage(std::numeric_limits<double>::quiet_NaN()),//export cable voltage (kV)
+		 expCabSize(std::numeric_limits<double>::quiet_NaN()),//diameter in square millimeters of the export cable
+		 expCabMass(std::numeric_limits<double>::quiet_NaN()),//mass of the export cable (kg/m)
+		 expCabCR(std::numeric_limits<double>::quiet_NaN()),//cost rate of the export cable ($/m)
+		 expCurrRating(std::numeric_limits<double>::quiet_NaN()),//export cable rating (amps)
+		 expSubsInterCR(std::numeric_limits<double>::quiet_NaN()),//cost rate of export cable substation interfaces ($/interface)
+		 moorTimeFac(std::numeric_limits<double>::quiet_NaN()),//mooring installation timing factor (hrs/m)
+		 moorLoadout(std::numeric_limits<double>::quiet_NaN()),//mooring system loadout timing (hrs)
+		 moorSurvey(std::numeric_limits<double>::quiet_NaN()),//mooring system anchor position survey timing (hrs)
+		 prepAA(std::numeric_limits<double>::quiet_NaN()),//prep inshore assembly area timing (hrs)
+		 prepSpar(std::numeric_limits<double>::quiet_NaN()),//prep spare for tow out to assembly area timing (hrs)
+		 upendSpar(std::numeric_limits<double>::quiet_NaN()),//upend and ballast the spar timing (hrs)
+		 prepSemi(std::numeric_limits<double>::quiet_NaN()),//prep semisubmersible for turbine install timing (hrs)
+		 turbFasten(std::numeric_limits<double>::quiet_NaN()),//fasten turbine for transport timing (hrs)
+		 boltTower(std::numeric_limits<double>::quiet_NaN()),// bolt tower to substructure timing (hrs)
+		 boltNacelle1(std::numeric_limits<double>::quiet_NaN()),//bolt nacelle to tower timing individual components method (hrs)
+		 boltNacelle2(std::numeric_limits<double>::quiet_NaN()),//bolt nacelle to tower timing bunny ears method (hrs)
+		 boltNacelle3(std::numeric_limits<double>::quiet_NaN()),//bolt nacelle to tower timing assembled rotor method (hrs)
+		 boltBlade1(std::numeric_limits<double>::quiet_NaN()),//bolt blade to rotor timing individual components method (hrs)
+		 boltBlade2(std::numeric_limits<double>::quiet_NaN()),//bolt blade to rotor timing bunny ears method (hrs)
+		 boltRotor(std::numeric_limits<double>::quiet_NaN()),//bolt rotor to nacelle timing assembled rotor method (hrs)
+		 vesselPosTurb(std::numeric_limits<double>::quiet_NaN()),//vessel positioning timing turbine install (hrs)
+		 vesselPosJack(std::numeric_limits<double>::quiet_NaN()),//vessel positioning timing jacket install (hrs)
+		 vesselPosMono(std::numeric_limits<double>::quiet_NaN()),//vessel positioning timing monopile install (hrs)
+		 subsVessPos(std::numeric_limits<double>::quiet_NaN()),//vessel positioning timing offshore substation install (hrs)
+		 monoFasten(std::numeric_limits<double>::quiet_NaN()),//fasten monopile for transport timing (hrs)
+		 jackFasten(std::numeric_limits<double>::quiet_NaN()),//fasten jacket for transport timing (hrs)
+		 prepGripperMono(std::numeric_limits<double>::quiet_NaN()),//prepare pile gripper and upender timing monopile install (hrs)
+		 prepGripperJack(std::numeric_limits<double>::quiet_NaN()),//prepare pile gripper and upender timing iacket install (hrs)
+		 placePiles(std::numeric_limits<double>::quiet_NaN()),//lift and place jacket piles timing (hrs)
+		 prepHamMono(std::numeric_limits<double>::quiet_NaN()),//prepare pile hammer timing monopile install (hrs)
+		 removeHamMono(std::numeric_limits<double>::quiet_NaN()),//remove hammer timing monopile install (hrs)
+		 prepHamJack(std::numeric_limits<double>::quiet_NaN()),//prepare pile hammer timing iacket install (hrs)
+		 removeHamJack(std::numeric_limits<double>::quiet_NaN()),//remove hammer timing iacket install (hrs)
+		 placeJack(std::numeric_limits<double>::quiet_NaN()),//place  jacket timing (hrs)
+		 levJack(std::numeric_limits<double>::quiet_NaN()),//level jacket timing (hrs)
+		 placeTemplate(std::numeric_limits<double>::quiet_NaN()),//place jacket template timing (hrs)
+		 hamRate(std::numeric_limits<double>::quiet_NaN()),//pile hammer rate (m/hr)
+		 placeMP(std::numeric_limits<double>::quiet_NaN()),//place monopile pile timing (hrs)
+		 instScour(std::numeric_limits<double>::quiet_NaN()),//install scour protection (hrs)
+		 placeTP(std::numeric_limits<double>::quiet_NaN()),//place transition piece on monopile timing (hrs)
+		 groutTP(std::numeric_limits<double>::quiet_NaN()),//grout transition piece (hrs)
+		 tpCover(std::numeric_limits<double>::quiet_NaN()),//install transition piece cover timing (hrs)
+		 prepTow(std::numeric_limits<double>::quiet_NaN()),//prep floating substructure for towing timing (hrs)
+		 spMoorCon(std::numeric_limits<double>::quiet_NaN()),//connect spar to mooring system timing (hrs)
+		 ssMoorCon(std::numeric_limits<double>::quiet_NaN()),//connect semisubmersible to mooring system (hrs)
+		 spMoorCheck(std::numeric_limits<double>::quiet_NaN()),//check mooring connections to spar timing (hrs)
+		 ssMoorCheck(std::numeric_limits<double>::quiet_NaN()),//check mooring connections to semisubmersible timing (hrs)
+		 ssBall(std::numeric_limits<double>::quiet_NaN()),//ballast semisubmersible timing (hrs)
+		 surfLayRate(std::numeric_limits<double>::quiet_NaN()),//electrical cable surface lay rate (m/hr)
+		 cabPullIn(std::numeric_limits<double>::quiet_NaN()),//array cable pull in to interfaces timing (hrs)
+		 cabTerm(std::numeric_limits<double>::quiet_NaN()),//cable termination and testing timing (hrs)
+		 cabLoadout(std::numeric_limits<double>::quiet_NaN()),//array cable loadout timing (hrs)
+		 buryRate(std::numeric_limits<double>::quiet_NaN()),//cable bury rate (m/hr)
+		 subsPullIn(std::numeric_limits<double>::quiet_NaN()),//cable pull in to substation timing (hrs)
+		 shorePullIn(std::numeric_limits<double>::quiet_NaN()),//cable pull in to shore timing (hrs)
+		 landConstruct(std::numeric_limits<double>::quiet_NaN()),//land construction of required onshore electrical systems timing (days)
+		 expCabLoad(std::numeric_limits<double>::quiet_NaN()),//export cable loadout timing (hrs)
+		 subsLoad(std::numeric_limits<double>::quiet_NaN()),//substation loadout timing (hrs)
+		 placeTop(std::numeric_limits<double>::quiet_NaN()),//lift and place substation topside timing (hrs)
+		 pileSpreadDR(std::numeric_limits<double>::quiet_NaN()),//piling equipment spread day rate ($/day)
+		 pileSpreadMob(std::numeric_limits<double>::quiet_NaN()),//piling equipment spread mobilization/demobilization cost ($)
+		 groutSpreadDR(std::numeric_limits<double>::quiet_NaN()),//grouting equipment spread day rate ($/day)
+		 groutSpreadMob(std::numeric_limits<double>::quiet_NaN()),//grouting equipment spread mobilization/demobilization cost ($)
+		 seaSpreadDR(std::numeric_limits<double>::quiet_NaN()),//suction pile anchor vessel and equipment spread day rate ($/day)
+		 seaSpreadMob(std::numeric_limits<double>::quiet_NaN()),//suction pile anchor vessel and equipment spread mobilization/demobilization cost ($)
+		 compRacks(std::numeric_limits<double>::quiet_NaN()),//component racks cost ($)
+		 cabSurveyCR(std::numeric_limits<double>::quiet_NaN()),//cost rate of surveying and verifying electrical cable installation ($/)
+		 cabDrillDist(std::numeric_limits<double>::quiet_NaN()),//horizontal drilling distance for cable landfall (m)
+		 cabDrillCR(std::numeric_limits<double>::quiet_NaN()),//horizontal drilling cost rate ($/m)
+		 mpvRentalDR(std::numeric_limits<double>::quiet_NaN()),//MPV rental day rate ($/day)
+		 diveTeamDR(std::numeric_limits<double>::quiet_NaN()),//cable landfall dive team day rate ($/day)
+		 winchDR(std::numeric_limits<double>::quiet_NaN()),//Cable winch day rate
+		 civilWork(std::numeric_limits<double>::quiet_NaN()),//civil construction work cost ($)
+		 elecWork(std::numeric_limits<double>::quiet_NaN()),//electrical work cost ($)
+		 nCrane600(std::numeric_limits<double>::quiet_NaN()),
+		 nCrane1000(std::numeric_limits<double>::quiet_NaN()),
+		 crane600DR(std::numeric_limits<double>::quiet_NaN()),//600 tonne capacity crawler crane day rate ($/day)
+		 crane1000DR(std::numeric_limits<double>::quiet_NaN()),//1000 tonne capacity crawler crane day rate ($/day)
+		 craneMobDemob(std::numeric_limits<double>::quiet_NaN()),//crane mobilization and demobilization cost ($)
+		 entranceExitRate(std::numeric_limits<double>::quiet_NaN()),//port entrance and exit cost ($/m^2/occurrence)
+		 dockRate(std::numeric_limits<double>::quiet_NaN()),//port docking cost ($/day)
+		 wharfRate(std::numeric_limits<double>::quiet_NaN()),//port wharf loading and unloading cost ($/tonne)
+		 laydownCR(std::numeric_limits<double>::quiet_NaN()),//port laydown and storage cost ($/m/day)
+		 estEnMFac(std::numeric_limits<double>::quiet_NaN()),//estimated engineering and management cost factor
+		 preFEEDStudy(std::numeric_limits<double>::quiet_NaN()),//pre-fornt end engineering design (FEED) study cost ($)
+		 feedStudy(std::numeric_limits<double>::quiet_NaN()),// FEED study cost ($)
+		 stateLease(std::numeric_limits<double>::quiet_NaN()),//state leasing cost ($)
+		 outConShelfLease(std::numeric_limits<double>::quiet_NaN()),//outer continental shelf lease cost ($)
+		 saPlan(std::numeric_limits<double>::quiet_NaN()),//site assessment plan cost ($)
+		 conOpPlan(std::numeric_limits<double>::quiet_NaN()),//construction operations plan cost ($)
+		 nepaEisMet(std::numeric_limits<double>::quiet_NaN()),//national environmental protection agency (NEPA) environmental impact (EIS) meteorological (met) tower study cost ($)
+		 physResStudyMet(std::numeric_limits<double>::quiet_NaN()),//physical resource met tower study cost ($)
+		 bioResStudyMet(std::numeric_limits<double>::quiet_NaN()),//biological resource met tower study ($)
+		 socEconStudyMet(std::numeric_limits<double>::quiet_NaN()),//socioeconomic met tower study cost ($)
+		 navStudyMet(std::numeric_limits<double>::quiet_NaN()),//navigation met tower study ($)
+		 nepaEisProj(std::numeric_limits<double>::quiet_NaN()),// NEPA EIS project site study cost ($)
+		 physResStudyProj(std::numeric_limits<double>::quiet_NaN()),//physical resource project site study cost ($)
+		 bioResStudyProj(std::numeric_limits<double>::quiet_NaN()),//biological resource project site study cost ($)
+		 socEconStudyProj(std::numeric_limits<double>::quiet_NaN()),//socioeconomic project site study cost ($)
+		 navStudyProj(std::numeric_limits<double>::quiet_NaN()),//navigation project site study cost ($)
+		 coastZoneManAct(std::numeric_limits<double>::quiet_NaN()),//coastal zone management act compliance cost ($)
+		 rivsnHarbsAct(std::numeric_limits<double>::quiet_NaN()),//rivers & harbors act section 10 compliance cost ($)
+		 cleanWatAct402(std::numeric_limits<double>::quiet_NaN()),//clean water act section 402 compliance cost ($)
+		 cleanWatAct404(std::numeric_limits<double>::quiet_NaN()),//clean water act section 404 compliance cost ($)
+		 faaPlan(std::numeric_limits<double>::quiet_NaN()),//federal aviation administration (FAA) plans and mitigation cost ($)
+		 endSpecAct(std::numeric_limits<double>::quiet_NaN()),//endangered species act compliance cost ($)
+		 marMamProtAct(std::numeric_limits<double>::quiet_NaN()),//marine mammal protection act compliance cost ($)
+		 migBirdAct(std::numeric_limits<double>::quiet_NaN()),//migratory bird act compliance ($)
+		 natHisPresAct(std::numeric_limits<double>::quiet_NaN()),//national historic preservation act compliance cost ($)
+		 addLocPerm(std::numeric_limits<double>::quiet_NaN()),//additional local and state permissions and compliance cost ($)
+		 metTowCR(std::numeric_limits<double>::quiet_NaN()),//meteorological tower fabrication, design, and install cost rate ($/MW)
+		 decomDiscRate(std::numeric_limits<double>::quiet_NaN()),//decommissioning expense discount rate
+		 hubD(std::numeric_limits<double>::quiet_NaN()),
+		 bladeL(std::numeric_limits<double>::quiet_NaN()),
+		 chord(std::numeric_limits<double>::quiet_NaN()),
+		 nacelleW(std::numeric_limits<double>::quiet_NaN()),
+		 nacelleL(std::numeric_limits<double>::quiet_NaN()),
+		 rnaM(std::numeric_limits<double>::quiet_NaN()),
+		 towerD(std::numeric_limits<double>::quiet_NaN()),
+		 towerM(std::numeric_limits<double>::quiet_NaN()),
+		 construction_insurance_cost(std::numeric_limits<double>::quiet_NaN()),
+		 total_contingency_cost(std::numeric_limits<double>::quiet_NaN()),
+		 construction_finance_cost(std::numeric_limits<double>::quiet_NaN()),
+		 construction_finance_factor(std::numeric_limits<double>::quiet_NaN()),
+		 soft_costs(std::numeric_limits<double>::quiet_NaN()),
+		 mpileM(std::numeric_limits<double>::quiet_NaN()),
+		 mtransM(std::numeric_limits<double>::quiet_NaN()),
+		 mPileCost(std::numeric_limits<double>::quiet_NaN()),
+		 mTransCost(std::numeric_limits<double>::quiet_NaN()),
+		 jlatticeM(std::numeric_limits<double>::quiet_NaN()),
+		 jtransM(std::numeric_limits<double>::quiet_NaN()),
+		 jpileM(std::numeric_limits<double>::quiet_NaN()),
+		 jLatticeCost(std::numeric_limits<double>::quiet_NaN()),
+		 jTransCost(std::numeric_limits<double>::quiet_NaN()),
+		 jPileCost(std::numeric_limits<double>::quiet_NaN()),
+		 spStifColM(std::numeric_limits<double>::quiet_NaN()),
+		 spTapColM(std::numeric_limits<double>::quiet_NaN()),
+		 spStifColCost(std::numeric_limits<double>::quiet_NaN()),
+		 spTapColCost(std::numeric_limits<double>::quiet_NaN()),
+		 ballM(std::numeric_limits<double>::quiet_NaN()),
+		 ballCost(std::numeric_limits<double>::quiet_NaN()),
+		 ssStifColM(std::numeric_limits<double>::quiet_NaN()),
+		 ssTrussM(std::numeric_limits<double>::quiet_NaN()),
+		 ssHeaveM(std::numeric_limits<double>::quiet_NaN()),
+		 ssStifColCost(std::numeric_limits<double>::quiet_NaN()),
+		 ssTrussCost(std::numeric_limits<double>::quiet_NaN()),
+		 ssHeaveCost(std::numeric_limits<double>::quiet_NaN()),
+		 moorSysCost(std::numeric_limits<double>::quiet_NaN()),
+		 sSteelM(std::numeric_limits<double>::quiet_NaN()),
+		 sSteelCost(std::numeric_limits<double>::quiet_NaN()),
+		 subTotM(std::numeric_limits<double>::quiet_NaN()),
+		 systAngle(std::numeric_limits<double>::quiet_NaN()),
+		 freeCabLeng(std::numeric_limits<double>::quiet_NaN()),
+		 fixCabLeng(std::numeric_limits<double>::quiet_NaN()),
+		 nExpCab(std::numeric_limits<double>::quiet_NaN()),
+		 nSubstation(std::numeric_limits<double>::quiet_NaN()),
+		 fullStrings(std::numeric_limits<double>::quiet_NaN()),
+		 nTurbPS(std::numeric_limits<double>::quiet_NaN()),
+		 nTurbCab1(std::numeric_limits<double>::quiet_NaN()),
+		 nTurbCab2(std::numeric_limits<double>::quiet_NaN()),
+		 nTurbInter1(std::numeric_limits<double>::quiet_NaN()),
+		 nTurbInter2(std::numeric_limits<double>::quiet_NaN()),
+		 nSubsInter(std::numeric_limits<double>::quiet_NaN()),
+		 cab1Leng(std::numeric_limits<double>::quiet_NaN()),
+		 cab2Leng(std::numeric_limits<double>::quiet_NaN()),
+		 expCabLeng(std::numeric_limits<double>::quiet_NaN()),
+		 nMPT(std::numeric_limits<double>::quiet_NaN()),
+		 mptRating(std::numeric_limits<double>::quiet_NaN()),
+		 mptCost(std::numeric_limits<double>::quiet_NaN()),
+		 subsTopM(std::numeric_limits<double>::quiet_NaN()),
+		 subsTopCost(std::numeric_limits<double>::quiet_NaN()),
+		 arrCab1Cost(std::numeric_limits<double>::quiet_NaN()),
+		 arrCab2Cost(std::numeric_limits<double>::quiet_NaN()),
+		 expCabCost(std::numeric_limits<double>::quiet_NaN()),
+		 shuntReactors(std::numeric_limits<double>::quiet_NaN()),
+		 switchGear(std::numeric_limits<double>::quiet_NaN()),
+		 ancillarySys(std::numeric_limits<double>::quiet_NaN()),
+		 subsSubM(std::numeric_limits<double>::quiet_NaN()),
+		 subsPileM(std::numeric_limits<double>::quiet_NaN()),
+		 subsLandAssembly(std::numeric_limits<double>::quiet_NaN()),
+		 subsSubCost(std::numeric_limits<double>::quiet_NaN()),
+		 switchYard(std::numeric_limits<double>::quiet_NaN()),
+		 onShoreSubs(std::numeric_limits<double>::quiet_NaN()),
+		 onshoreMisc(std::numeric_limits<double>::quiet_NaN()),
+		 transLine(std::numeric_limits<double>::quiet_NaN()),
+		 subCabCost(std::numeric_limits<double>::quiet_NaN()),
+		 offSubsCost(std::numeric_limits<double>::quiet_NaN()),
+		 onshoreTransCost(std::numeric_limits<double>::quiet_NaN()),
+		 moorTime(std::numeric_limits<double>::quiet_NaN()),
+		 floatPrepTime(std::numeric_limits<double>::quiet_NaN()),
+		 turbDeckArea(std::numeric_limits<double>::quiet_NaN()),
+		 nTurbPerTrip(std::numeric_limits<double>::quiet_NaN()),
+		 turbInstTime(std::numeric_limits<double>::quiet_NaN()),
+		 subDeckArea(std::numeric_limits<double>::quiet_NaN()),
+		 nSubPerTrip(std::numeric_limits<double>::quiet_NaN()),
+		 subInstTime(std::numeric_limits<double>::quiet_NaN()),
+		 cab1SecM(std::numeric_limits<double>::quiet_NaN()),
+		 cab2SecM(std::numeric_limits<double>::quiet_NaN()),
+		 cab1SecPerTrip(std::numeric_limits<double>::quiet_NaN()),
+		 cab2SecPerTrip(std::numeric_limits<double>::quiet_NaN()),
+		 arrInstTime(std::numeric_limits<double>::quiet_NaN()),
+		 expCabSecM(std::numeric_limits<double>::quiet_NaN()),
+		 expCabSecPerTrip(std::numeric_limits<double>::quiet_NaN()),
+		 expInstTime(std::numeric_limits<double>::quiet_NaN()),
+		 subsInstTime(std::numeric_limits<double>::quiet_NaN()),
+		 totInstTime(std::numeric_limits<double>::quiet_NaN()),
+		 cabSurvey(std::numeric_limits<double>::quiet_NaN()),
+		 array_cable_install_cost(std::numeric_limits<double>::quiet_NaN()),
+		 export_cable_install_cost(std::numeric_limits<double>::quiet_NaN()),
+		 substation_install_cost(std::numeric_limits<double>::quiet_NaN()),
+		 turbine_install_cost(std::numeric_limits<double>::quiet_NaN()),
+		 substructure_install_cost(std::numeric_limits<double>::quiet_NaN()),
+		 electrical_install_cost(std::numeric_limits<double>::quiet_NaN()),
+		 mob_demob_cost(std::numeric_limits<double>::quiet_NaN()),
+		 entrExitCost(std::numeric_limits<double>::quiet_NaN()),
+		 wharfCost(std::numeric_limits<double>::quiet_NaN()),
+		 dockCost(std::numeric_limits<double>::quiet_NaN()),
+		 subLaydownA(std::numeric_limits<double>::quiet_NaN()),
+		 subLayCost(std::numeric_limits<double>::quiet_NaN()),
+		 turbLaydownA(std::numeric_limits<double>::quiet_NaN()),
+		 turbLayCost(std::numeric_limits<double>::quiet_NaN()),
+		 craneCost(std::numeric_limits<double>::quiet_NaN()),
+		 totPortCost(std::numeric_limits<double>::quiet_NaN()),
+		 totStageCost(std::numeric_limits<double>::quiet_NaN()),
+		 feedCost(std::numeric_limits<double>::quiet_NaN()),
+		 permStudyComp(std::numeric_limits<double>::quiet_NaN()),
+		 metFabCost(std::numeric_limits<double>::quiet_NaN()),
+		 decomCost(std::numeric_limits<double>::quiet_NaN()),
+		 subTotCost(std::numeric_limits<double>::quiet_NaN()),
+		 totElecCost(std::numeric_limits<double>::quiet_NaN()),
+		 totAnICost(std::numeric_limits<double>::quiet_NaN()),
+		 totPnSCost(std::numeric_limits<double>::quiet_NaN()),
+		 totEnMCost(std::numeric_limits<double>::quiet_NaN()),
+		 totDevCost(std::numeric_limits<double>::quiet_NaN()),
+		 commissioning(std::numeric_limits<double>::quiet_NaN()),
+		 total_bos_cost(std::numeric_limits<double>::quiet_NaN())
 	{}
 };
 extern wobos wobos_obj;
