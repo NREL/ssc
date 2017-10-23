@@ -65,6 +65,11 @@ static var_info _cm_vtab_singleowner[] = {
 	{ SSC_INPUT, SSC_ARRAY, "degradation", "Annual energy degradation", "", "", "System Output", "*", "", "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "system_capacity",			              "System nameplate capacity",		                               "kW",                "",                        "System Output",             "*",					   "MIN=1e-3",                      "" },
     
+	/* PPA Buy Rate values */
+	{ SSC_INPUT, SSC_ARRAY, "utility_bill_w_sys", "Electricity bill with system", "$", "", "", "", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "cf_utility_bill", "Electricity purchase", "$", "", "", "", "LENGTH_EQUAL=cf_length", "" },
+
+
 	/* return on equity from SAM for India */
 	{ SSC_INPUT, SSC_ARRAY, "roe_input", "Return on equity", "", "", "Return on Equity", "?=20", "", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "cf_return_on_equity", "Return on equity", "$/kWh", "", "Return on Equity", "*", "LENGTH_EQUAL=cf_length", "" },
@@ -1021,6 +1026,8 @@ enum {
 	CF_battery_replacement_cost_schedule,
 	CF_battery_replacement_cost,
 
+	CF_utility_bill,
+
 	CF_max };
 
 
@@ -1160,6 +1167,24 @@ public:
 					cf.at(CF_battery_replacement_cost_schedule, i + 1);
 		}
 		
+
+
+
+
+		if (is_assigned("utility_bill_w_sys"))
+		{ 
+			size_t ub_count;
+			ssc_number_t* ub_arr;
+			ub_arr = as_array("utility_bill_w_sys", &ub_count);
+			for (int i = 0; i < nyears && i<(int)ub_count; i++)
+				cf.at(CF_utility_bill, i + 1) = ub_arr[i];
+			save_cf(CF_utility_bill, nyears, "cf_utility_bill");
+		}
+
+
+
+
+
 		// initialize energy and revenue
 		// initialize energy
 		// differs from samsim - accumulate hourly energy
@@ -1405,6 +1430,7 @@ public:
 				+ cf.at(CF_property_tax_expense,i)
 				+ cf.at(CF_insurance_expense,i)
 				+ cf.at(CF_battery_replacement_cost,i)
+				+ cf.at(CF_utility_bill,i)
 				+ cf.at(CF_Recapitalization,i);
 		}
 
