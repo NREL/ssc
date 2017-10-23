@@ -102,7 +102,7 @@ public:
 		HTFProperties htfProps1;			// Instance of HTFProperties class for receiver/HX htf
 
 		size_t nrows = 0, ncols = 0;
-		ssc_number_t *fl_props1 = as_matrix<ssc_number_t>("fl_props1", &nrows, &ncols);
+		ssc_number_t *fl_props1 = as_matrix("fl_props1", &nrows, &ncols);
 		if( fl_props1 != 0 && nrows > 2 && ncols == 7 )
 		{
 			util::matrix_t<ssc_number_t> mat;
@@ -134,7 +134,7 @@ public:
 
 		nrows = 0; 
 		ncols = 0;
-		ssc_number_t *fl_props2 = as_matrix<ssc_number_t>("fl_props2", &nrows, &ncols);
+		ssc_number_t *fl_props2 = as_matrix("fl_props2", &nrows, &ncols);
 		if( fl_props2 != 0 && nrows > 2 && ncols == 7 )
 		{
 			util::matrix_t<ssc_number_t> mat;

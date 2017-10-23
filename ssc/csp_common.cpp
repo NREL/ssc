@@ -313,7 +313,7 @@ bool solarpilot_invoke::run(std::shared_ptr<weather_data_provider> wdata)
 		string format = "0,%f,%f,%f,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL;";
         sf.layout_data.val.clear();
 
-        util::matrix_t<double> hpos = m_cmod->as_matrix<double>("helio_positions_in");
+        util::matrix_t<double> hpos = m_cmod->as_matrix("helio_positions_in");
 
         char row[200];
 		for( size_t i=0; i<hpos.nrows(); i++)

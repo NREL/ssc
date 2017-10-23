@@ -1371,14 +1371,14 @@ public:
 		if (ec_enabled)
 		{
 
-			ssc_number_t *ec_weekday = as_matrix<ssc_number_t>("ur_ec_sched_weekday", &nrows, &ncols);
+			ssc_number_t *ec_weekday = as_matrix("ur_ec_sched_weekday", &nrows, &ncols);
 			if (nrows != 12 || ncols != 24)
 			{
 				std::ostringstream ss;
 				ss << "The weekday TOU matrix for energy rates should have 12 rows and 24 columns. Instead it has " << nrows << " rows and " << ncols << " columns.";
 				throw exec_error("utilityrate5", ss.str());
 			}
-			ssc_number_t *ec_weekend = as_matrix<ssc_number_t>("ur_ec_sched_weekend", &nrows, &ncols);
+			ssc_number_t *ec_weekend = as_matrix("ur_ec_sched_weekend", &nrows, &ncols);
 			if (nrows != 12 || ncols != 24)
 			{
 				std::ostringstream ss;
@@ -1410,7 +1410,7 @@ public:
 			}
 
 			// 6 columns period, tier, max usage, max usage units, buy, sell
-			ssc_number_t *ec_tou_in = as_matrix<ssc_number_t>("ur_ec_tou_mat", &nrows, &ncols);
+			ssc_number_t *ec_tou_in = as_matrix("ur_ec_tou_mat", &nrows, &ncols);
 			if (ncols != 6)
 			{
 				std::ostringstream ss;
@@ -1572,14 +1572,14 @@ public:
 		if (dc_enabled)
 		{
 
-			ssc_number_t *dc_weekday = as_matrix<ssc_number_t>("ur_dc_sched_weekday", &nrows, &ncols);
+			ssc_number_t *dc_weekday = as_matrix("ur_dc_sched_weekday", &nrows, &ncols);
 			if (nrows != 12 || ncols != 24)
 			{
 				std::ostringstream ss;
 				ss << "The weekday TOU matrix for demand rates should have 12 rows and 24 columns. Instead it has " << nrows << " rows and " << ncols << " columns.";
 				throw exec_error("utilityrate5", ss.str());
 			}
-			ssc_number_t *dc_weekend = as_matrix<ssc_number_t>("ur_dc_sched_weekend", &nrows, &ncols);
+			ssc_number_t *dc_weekend = as_matrix("ur_dc_sched_weekend", &nrows, &ncols);
 			if (nrows != 12 || ncols != 24)
 			{
 				std::ostringstream ss;
@@ -1613,7 +1613,7 @@ public:
 			}
 
 			// 4 columns period, tier, max usage, charge
-			ssc_number_t *dc_tou_in = as_matrix<ssc_number_t>("ur_dc_tou_mat", &nrows, &ncols);
+			ssc_number_t *dc_tou_in = as_matrix("ur_dc_tou_mat", &nrows, &ncols);
 			if (ncols != 4)
 			{
 				std::ostringstream ss;
@@ -1726,7 +1726,7 @@ public:
 			}
 			// flat demand charge
 			// 4 columns month, tier, max usage, charge
-			ssc_number_t *dc_flat_in = as_matrix<ssc_number_t>("ur_dc_flat_mat", &nrows, &ncols);
+			ssc_number_t *dc_flat_in = as_matrix("ur_dc_flat_mat", &nrows, &ncols);
 			if (ncols != 4)
 			{
 				std::ostringstream ss;

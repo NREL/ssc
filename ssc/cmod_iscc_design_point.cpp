@@ -96,7 +96,7 @@ public:
 		else
 		{
 			size_t nrows = 0, ncols = 0;
-			ssc_number_t *htf_mat = as_matrix<ssc_number_t>("field_fl_props", &nrows, &ncols);
+			ssc_number_t *htf_mat = as_matrix("field_fl_props", &nrows, &ncols);
 			if( htf_mat != 0 && nrows > 2 && ncols == 7 )
 			{
 				util::matrix_t<ssc_number_t> mat;

@@ -1703,8 +1703,8 @@ public:
 			plinv.Pdco = as_double("inv_pd_pdco");
 			plinv.Pntare = as_double("inv_pd_pnt");
 
-			std::vector<double> pl_pd = as_vector<double>("inv_pd_partload");
-			std::vector<double> eff_pd = as_vector<double>("inv_pd_efficiency");
+			std::vector<double> pl_pd = as_doublevec("inv_pd_partload");
+			std::vector<double> eff_pd = as_doublevec("inv_pd_efficiency");
 
 			plinv.Partload = pl_pd;
 			plinv.Efficiency = eff_pd;

@@ -116,7 +116,7 @@ public:
 		if (count != nrec)
 			throw exec_error("pv_get_shade_loss_mpp", util::format("invalid number of diffuse records (%d): must be equal to other input array sizes (%d)", (int)count, (int)nrec));
 
-		util::matrix_t<double> str_shade_fracs = as_matrix<double>("str_shade_fracs");
+		util::matrix_t<double> str_shade_fracs = as_matrix("str_shade_fracs");
 		count = str_shade_fracs.nrows();
 		size_t num_strings = str_shade_fracs.ncols();
 		if (count != nrec)

@@ -1190,13 +1190,13 @@ bool dispatch_calculations::setup()
 		m_cf.resize_fill(CF_max_dispatch, 12, 0.0);
 
 	size_t nrows, ncols;
-	ssc_number_t *disp_weekday = m_cm->as_matrix<ssc_number_t>("dispatch_sched_weekday", &nrows, &ncols);
+	ssc_number_t *disp_weekday = m_cm->as_matrix("dispatch_sched_weekday", &nrows, &ncols);
 	if (nrows != 12 || ncols != 24)
 	{
 		m_error = util::format("dispatch values weekday schedule must be 12x24, input is %dx%d", (int)nrows, (int)ncols);
 		throw compute_module::exec_error("dispatch_values", m_error);
 	}
-	ssc_number_t *disp_weekend = m_cm->as_matrix<ssc_number_t>("dispatch_sched_weekend", &nrows, &ncols);
+	ssc_number_t *disp_weekend = m_cm->as_matrix("dispatch_sched_weekend", &nrows, &ncols);
 	if (nrows != 12 || ncols != 24)
 	{
 		m_error = util::format("dispatch values weekend schedule must be 12x24, input is %dx%d", (int)nrows, (int)ncols);

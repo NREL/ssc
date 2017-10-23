@@ -192,7 +192,7 @@ public:
 		double first_year_energy = 0.0;
 		int i=0;
 		size_t nrows, ncols;
-		ssc_number_t *diurnal_curtailment = as_matrix<ssc_number_t>( "energy_curtailment", &nrows, &ncols );
+		ssc_number_t *diurnal_curtailment = as_matrix( "energy_curtailment", &nrows, &ncols );
 		if ( nrows != 12 || ncols != 24 )
 		{
 			std::ostringstream stream_error;
@@ -240,7 +240,7 @@ public:
 		}
 
 		size_t nrows, ncols;
-		ssc_number_t *diurnal_curtailment = as_matrix<ssc_number_t>( "energy_curtailment", &nrows, &ncols );
+		ssc_number_t *diurnal_curtailment = as_matrix( "energy_curtailment", &nrows, &ncols );
 		if ( nrows != 12 || ncols != 24 )
 			throw exec_error("annualoutput", "month x hour curtailment factors must have 12 rows and 24 columns");
 

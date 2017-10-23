@@ -112,7 +112,7 @@ public:
 		msg_handler msgs( *this );
 		solver._imsg = &msgs;
 
-		util::matrix_t<double> input = as_matrix<double>("input"), par;
+		util::matrix_t<double> input = as_matrix("input"), par;
 		if ( input.ncols() != iec61853_module_t::COL_MAX )
 			throw exec_error( "iec61853", "six data columns required for input matrix: IRR,TC,PMP,VMP,VOC,ISC");
 
@@ -339,8 +339,8 @@ public:
 	{
 		double I = as_double("I");
 		double T = as_double("T");
-		util::matrix_t<double> data = as_matrix<double>("input");
-		util::matrix_t<double> par = as_matrix<double>("param");
+		util::matrix_t<double> data = as_matrix("input");
+		util::matrix_t<double> par = as_matrix("param");
 
 		if ( data.ncols() != DATACOLS )
 			throw general_error( util::format("input matrix must have 6 columns (Irr, Tc, Pmp, Vmp, Voc, Isc), but is %d x %d", 
