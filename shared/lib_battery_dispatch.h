@@ -430,6 +430,10 @@ public:
 		double P_load_dc_discharging,
 		double P_battery);
 
+	/*! Compute the updated power to send to the battery over the next N hours */
+	virtual void update_dispatch(size_t hour_of_year, size_t step, size_t idx);
+
+	/*! Pass in the PV power forecast */
 	virtual void update_pv_data(std::vector<double> P_pv_dc);
 
 protected:
@@ -512,6 +516,10 @@ public:
 		double P_load_dc_discharging,
 		double P_battery);
 
+	/*! Compute the updated power to send to the battery over the next N hours */
+	void update_dispatch(size_t hour_of_year, size_t step, size_t idx);
+
+	/*! Pass in the load forecast */
 	void update_load_data(std::vector<double> P_load_dc);
 
 	void set_target_power(std::vector<double> P_target);
@@ -524,7 +532,6 @@ protected:
 	/*! Initialize with a pointer*/
 	void init_with_pointer(const dispatch_automatic_behind_the_meter_t * tmp);
 
-	void update_dispatch(int hour_of_year, int step, int idx);
 	void initialize(int hour_of_year);
 	void check_debug(FILE *&p, bool & debug, int hour_of_year, int idx);
 	void sort_grid(FILE *p, bool debug, int idx);
@@ -582,6 +589,7 @@ public:
 		int pv_dispatch,
 		int nyears,
 		bool can_grid_charge,
+		size_t look_ahead_hours,
 		std::vector<double> ppa_factors,
 		util::matrix_t<size_t> ppa_weekday_schedule,
 		util::matrix_t<size_t> ppa_weekend_schedule
@@ -589,12 +597,13 @@ public:
 
 	virtual ~dispatch_automatic_front_of_meter_t(){};
 
-	// deep copy constructor (new memory), from dispatch to this
+	/*! deep copy constructor (new memory), from dispatch to this */
 	dispatch_automatic_front_of_meter_t(const dispatch_t& dispatch);
 
-	// copy members from dispatch to this
+	/*! shallow copy from dispatch to this */
 	virtual void copy(const dispatch_t* dispatch);
 
+	/*! Dispatch the battery */
 	void dispatch(size_t year,
 		size_t hour_of_year,
 		size_t step,
@@ -604,10 +613,14 @@ public:
 		double P_load_dc_discharging,
 		double P_battery);
 
+	/*! Compute the updated power to send to the battery over the next N hours */
+	void update_dispatch(size_t hour_of_year, size_t step, size_t idx);
+
 protected:
 	
 	void init_with_pointer(const dispatch_automatic_front_of_meter_t* tmp);
 
+	size_t _look_ahead_hours;
 	std::vector<double> _ppa_factors;
 	util::matrix_t<size_t> _ppa_weekday_schedule;
 	util::matrix_t<size_t> _ppa_weekend_schedule;

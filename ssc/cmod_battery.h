@@ -76,6 +76,8 @@ struct batt_variables
 	int batt_target_choice;
 	int batt_loss_choice;
 	int batt_calendar_choice;
+
+	/*! Determines if the battery is allowed to charge from the grid*/
 	bool batt_auto_dispatch_can_gridcharge;
 
 	/*! Vector of periods and if battery can charge from PV*/
@@ -99,11 +101,11 @@ struct batt_variables
 	/*! Schedule of manual discharge for weekend*/
 	util::matrix_t<size_t> batt_discharge_schedule_weekend;
 
-	/*! Size of battery discharge schedule */
-	size_t batt_msched;
-	size_t batt_nsched;
+	/*! The number of hours to look-ahead in automated dispatch */
+	size_t batt_look_ahead_hours;
 
-
+	/*! The frequency to update the look-ahead automated dispatch */
+	size_t batt_dispatch_update_frequency_hours;
 
 	util::matrix_t<double>  batt_lifetime_matrix;
 	util::matrix_t<double> batt_calendar_lifetime_matrix;

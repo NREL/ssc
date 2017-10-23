@@ -314,6 +314,12 @@ int compute_module::as_integer( const std::string &name ) throw( general_error )
 	if (x.type != SSC_NUMBER) throw cast_error("integer", x, name);
 	return (int) x.num;
 }
+size_t compute_module::as_unsigned_long(const std::string &name) throw(general_error)
+{
+	var_data &x = value(name);
+	if (x.type != SSC_NUMBER) throw cast_error("unsigned long", x, name);
+	return (size_t)x.num;
+}
 
 bool compute_module::as_boolean( const std::string &name ) throw( general_error )
 {

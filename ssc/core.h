@@ -246,6 +246,7 @@ public:
 	util::matrix_t<ssc_number_t>& allocate_matrix( const std::string &name, size_t nrows, size_t ncols ) throw( general_error );
 	var_data &value( const std::string &name ) throw( general_error );
 	bool is_assigned( const std::string &name ) throw( general_error );
+	size_t as_unsigned_long(const std::string &name) throw(general_error);
 	int as_integer( const std::string &name ) throw( general_error );
 	bool as_boolean( const std::string &name ) throw( general_error );
 	float as_float( const std::string &name ) throw( general_error );

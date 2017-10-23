@@ -465,12 +465,12 @@ void dispatch_manual_t::prepare_dispatch(size_t hour_of_year, size_t step, doubl
 { 
 	dispatch_t::prepare_dispatch(hour_of_year, step, P_pv_dc_charging, P_pv_dc_discharging, P_load_dc_charging, P_load_dc_discharging);
 
-	int m, h, column;
-	int iprofile = -1;
+	int m, h;
 	util::month_hour((int)hour_of_year, m, h);
-	bool is_weekday = util::weekday((int)hour_of_year);
-	_mode == MANUAL ? column = h - 1 : column = (int)((h - 1) / _dt_hour + step);
+	int column = h - 1;
+	int iprofile = -1;
 
+	bool is_weekday = util::weekday((int)hour_of_year);
 	if (!is_weekday && _mode == MANUAL)
 		iprofile = (int)_sched_weekend(m - 1, column);
 	else
@@ -1012,19 +1012,19 @@ void dispatch_automatic_behind_the_meter_t::dispatch(size_t year,
 	double P_load_dc_discharging,
 	double )
 {
-	int step_per_hour = (int)(1 / _dt_hour);
-	int idx = 0;
+	size_t step_per_hour = (1 / _dt_hour);
+	size_t idx = 0;
 
 	if (_mode == LOOK_AHEAD || _mode == LOOK_BEHIND || _mode == MAINTAIN_TARGET)
-		idx = (int)util::index_year_hour_step((int)year, (int)hour_of_year, (int)step, (int)step_per_hour);
+		idx = util::index_year_hour_step(year, hour_of_year, step, step_per_hour);
 
-	update_dispatch((int)hour_of_year, (int)step, idx);
+	update_dispatch(hour_of_year, step, idx);
 	dispatch_automatic_t::dispatch(year, hour_of_year, step, P_pv_dc_charging, P_pv_dc_discharging, P_load_dc_charging, P_load_dc_discharging, _P_battery_current);
 }
 
 void dispatch_automatic_behind_the_meter_t::update_load_data(std::vector<double> P_load_dc){ _P_load_dc = P_load_dc; }
 void dispatch_automatic_behind_the_meter_t::set_target_power(std::vector<double> P_target){ _P_target_input = P_target; }
-void dispatch_automatic_behind_the_meter_t::update_dispatch(int hour_of_year, int step, int idx)
+void dispatch_automatic_behind_the_meter_t::update_dispatch(size_t hour_of_year, size_t step, size_t idx)
 {
 	bool debug = false;
 	FILE *p;
@@ -1302,10 +1302,12 @@ dispatch_automatic_front_of_meter_t::dispatch_automatic_front_of_meter_t(
 	int pv_dispatch,
 	int nyears,
 	bool can_grid_charge,
+	size_t look_ahead_hours,
 	std::vector<double> ppa_factors,
 	util::matrix_t<size_t> ppa_weekday_schedule,
 	util::matrix_t<size_t> ppa_weekend_schedule) : dispatch_automatic_t(Battery, dt_hour, SOC_min, SOC_max, current_choice, Ic_max, Id_max, Pc_max, Pd_max, t_min, dispatch_mode, pv_dispatch, nyears, can_grid_charge)
 {
+	_look_ahead_hours = look_ahead_hours;
 	_ppa_factors = ppa_factors;
 	_ppa_weekday_schedule = ppa_weekday_schedule;
 	_ppa_weekend_schedule = ppa_weekend_schedule;
@@ -1313,6 +1315,7 @@ dispatch_automatic_front_of_meter_t::dispatch_automatic_front_of_meter_t(
 
 void dispatch_automatic_front_of_meter_t::init_with_pointer(const dispatch_automatic_front_of_meter_t* tmp)
 {
+	_look_ahead_hours = tmp->_look_ahead_hours;
 	_ppa_factors = tmp->_ppa_factors;
 	_ppa_weekday_schedule = tmp->_ppa_weekday_schedule;
 	_ppa_weekend_schedule = tmp->_ppa_weekend_schedule;
@@ -1344,16 +1347,32 @@ void dispatch_automatic_front_of_meter_t::dispatch(size_t year,
 	double P_load_dc_discharging,
 	double)
 {
-	int step_per_hour = (int)(1 / _dt_hour);
-	int idx = 0;
+	size_t step_per_hour = (1 / _dt_hour);
+	size_t idx = 0;
 
 	if (_mode == LOOK_AHEAD || _mode == LOOK_BEHIND || _mode == MAINTAIN_TARGET)
-		idx = (int)util::index_year_hour_step((int)year, (int)hour_of_year, (int)step, (int)step_per_hour);
+		idx = util::index_year_hour_step(year, hour_of_year, step, step_per_hour);
 
-	//update_dispatch((int)hour_of_year, (int)step, idx);
+	update_dispatch(hour_of_year, step, idx);
 	dispatch_automatic_t::dispatch(year, hour_of_year, step, P_pv_dc_charging, P_pv_dc_discharging, P_load_dc_charging, P_load_dc_discharging, _P_battery_current);
 }
 
+void dispatch_automatic_front_of_meter_t::update_dispatch(size_t hour_of_year, size_t step, size_t idx)
+{
+	bool debug = false;
+	FILE *p;
+	size_t hour_of_day = util::hour_of_day(hour_of_year);
+	_day_index = (hour_of_day * _steps_per_hour + step);
+
+	if (hour_of_day == 0 && hour_of_year != _hour_last_updated)
+	{
+
+		
+	}
+	
+	// save for extraction
+	_P_battery_current = _P_battery_use[_day_index];
+}
 
 battery_metrics_t::battery_metrics_t(battery_t * Battery, double dt_hour)
 {

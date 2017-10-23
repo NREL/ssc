@@ -152,6 +152,9 @@ var_info vtab_battery_inputs[] = {
 	{ SSC_INPUT,        SSC_NUMBER,     "batt_pv_choice",                              "Prioritize PV usage for load or battery",                "0/1",      "",                     "Battery",       "?=0",                        "",                             "" },
 	{ SSC_INPUT,        SSC_ARRAY,      "dc_net_forecast",                             "PV forecast",                                            "kW",       "",                     "Battery",       "batt_meter_position=1&batt_dispatch_choice=2",  "",          "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "dispatch_auto_can_gridcharge",                "Grid charging allowed for automated dispatch?",          "kW",       "",                     "Battery",       "",                           "",                             "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "batt_look_ahead_hours",                       "Hours to look ahead in automated dispatch",              "hours",    "",                     "Battery",       "",                           "",                             "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "batt_dispatch_update_frequency_hours",        "Frequency to update the look-ahead dispatch",            "hours",    "",                     "Battery",       "",                           "",                             "" },
+
 
 	// PPA financial inputs
 	
@@ -257,11 +260,18 @@ battstor::battstor(compute_module &cm, bool setup_model, int replacement_option,
 			if (batt_vars->batt_meter_position == dispatch_t::FRONT)
 			{
 				batt_vars->pv_dc_forecast = cm.as_vector_double("dc_net_forecast");
+
 				if (batt_vars->batt_dispatch == dispatch_t::FOM_FORECAST)
 				{
 					batt_vars->ppa_factors = cm.as_vector_double("dispatch_tod_factors");
 					batt_vars->ppa_weekday_schedule = cm.as_matrix_unsigned_long("dispatch_sched_weekday");
 					batt_vars->ppa_weekend_schedule = cm.as_matrix_unsigned_long("dispatch_sched_weekend");
+				}
+
+				if (batt_vars->batt_dispatch == dispatch_t::FOM_LOOK_AHEAD || batt_vars->batt_dispatch == dispatch_t::FOM_FORECAST)
+				{
+					batt_vars->batt_look_ahead_hours = cm.as_unsigned_long("batt_look_ahead_hours");
+					batt_vars->batt_dispatch_update_frequency_hours = cm.as_unsigned_long("batt_dispatch_update_frequency_hours");
 				}
 			}
 

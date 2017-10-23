@@ -896,7 +896,7 @@ void util::month_hour(int hour_of_year, int & out_month, int & out_hour)
 	out_hour = hour;
 }
 
-int util::hour_of_day(int hour_of_year)
+size_t util::hour_of_day(size_t hour_of_year)
 {
 	return (hour_of_year) % 24;
 }
