@@ -245,13 +245,13 @@ public:
 		double t_min,
 		int mode,
 		int pv_dispatch,
-		util::matrix_t<float> dm_dynamic_sched,
-		util::matrix_t<float> dm_dynamic_sched_weekend,
-		bool * dm_charge,
-		bool *dm_discharge,
-		bool * dm_gridcharge,
-		std::map<int, double> dm_percent_discharge,
-		std::map<int, double> dm_percent_gridcharge);
+		util::matrix_t<size_t> dm_dynamic_sched,
+		util::matrix_t<size_t> dm_dynamic_sched_weekend,
+		std::vector<bool> can_charge,
+		std::vector<bool> can_discharge,
+		std::vector<bool> can_gridcharge,
+		std::map<size_t, double> dm_percent_discharge,
+		std::map<size_t, double> dm_percent_gridcharge);
 
 	// deep copy constructor (new memory), from dispatch to this
 	dispatch_manual_t(const dispatch_t& dispatch);
@@ -275,20 +275,17 @@ protected:
 	// Initialization help
 	void init(util::matrix_t<float> dm_dynamic_sched,
 		util::matrix_t<float> dm_dynamic_sched_weekend,
-		bool * dm_charge,
-		bool *dm_discharge,
-		bool * dm_gridcharge,
-		std::map<int, double> dm_percent_discharge,
-		std::map<int, double> dm_percent_gridcharge);
+		std::map<size_t, double> dm_percent_discharge,
+		std::map<size_t, double> dm_percent_gridcharge);
 
 	void init_with_vects(
-		util::matrix_t<float> dm_dynamic_sched,
-		util::matrix_t<float> dm_dynamic_sched_weekend,
+		util::matrix_t<size_t> dm_dynamic_sched,
+		util::matrix_t<size_t> dm_dynamic_sched_weekend,
 		std::vector<bool>,
 		std::vector<bool>,
 		std::vector<bool>,
-		std::map<int, double> dm_percent_discharge,
-		std::map<int, double> dm_percent_gridcharge);
+		std::map<size_t, double> dm_percent_discharge,
+		std::map<size_t, double> dm_percent_gridcharge);
 
 	void prepare_dispatch(size_t hour_of_year, size_t step, double P_pv_dc_charging, double P_pv_dc_discharging, double P_load_dc_charging, double P_load_dc_discharging);
 	void reset();
@@ -298,8 +295,8 @@ protected:
 	bool compute_energy_battery_priority_charging(double energy_needed);
 	bool check_constraints(double &I, int count);
 
-	util::matrix_t < float > _sched;
-	util::matrix_t < float > _sched_weekend;
+	util::matrix_t < size_t > _sched;
+	util::matrix_t < size_t > _sched_weekend;
 
 	std::vector<bool> _charge_array;
 	std::vector<bool> _discharge_array;
@@ -308,8 +305,8 @@ protected:
 	double _percent_discharge;
 	double _percent_charge;
 
-	std::map<int, double>  _percent_discharge_array;
-	std::map<int, double> _percent_charge_array;
+	std::map<size_t, double>  _percent_discharge_array;
+	std::map<size_t, double> _percent_charge_array;
 };
 /* Manual dispatch for utility scale (front of meter)*/
 class dispatch_manual_front_of_meter_t : public dispatch_manual_t
@@ -327,13 +324,13 @@ public:
 		double t_min,
 		int mode,
 		int pv_dispatch,
-		util::matrix_t<float> dm_dynamic_sched,
-		util::matrix_t<float> dm_dynamic_sched_weekend,
-		bool * dm_charge,
-		bool *dm_discharge,
-		bool * dm_gridcharge,
-		std::map<int, double> dm_percent_discharge,
-		std::map<int, double> dm_percent_gridcharge);
+		util::matrix_t<size_t> dm_dynamic_sched,
+		util::matrix_t<size_t> dm_dynamic_sched_weekend,
+		std::vector<bool> can_charge,
+		std::vector<bool> can_discharge,
+		std::vector<bool> can_gridcharge,
+		std::map<size_t, double> dm_percent_discharge,
+		std::map<size_t, double> dm_percent_gridcharge);
 
 	~dispatch_manual_front_of_meter_t(){};
 
@@ -584,7 +581,10 @@ public:
 		int dispatch_mode,
 		int pv_dispatch,
 		int nyears,
-		bool can_grid_charge
+		bool can_grid_charge,
+		std::vector<double> ppa_factors,
+		util::matrix_t<size_t> ppa_weekday_schedule,
+		util::matrix_t<size_t> ppa_weekend_schedule
 		);
 
 	virtual ~dispatch_automatic_front_of_meter_t(){};
@@ -607,6 +607,11 @@ public:
 protected:
 	
 	void init_with_pointer(const dispatch_automatic_front_of_meter_t* tmp);
+
+	std::vector<double> _ppa_factors;
+	util::matrix_t<size_t> _ppa_weekday_schedule;
+	util::matrix_t<size_t> _ppa_weekend_schedule;
+	
 };
 
 /*! Battery metrics class */

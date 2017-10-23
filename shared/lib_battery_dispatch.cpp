@@ -419,43 +419,22 @@ Manual Dispatch
 */
 dispatch_manual_t::dispatch_manual_t(battery_t * Battery, double dt, double SOC_min, double SOC_max, int current_choice, double Ic_max, double Id_max, double Pc_max, double Pd_max,
 	double t_min, int mode, int pv_dispatch,
-	util::matrix_t<float> dm_dynamic_sched, util::matrix_t<float> dm_dynamic_sched_weekend,
-	bool * dm_charge, bool *dm_discharge, bool * dm_gridcharge, std::map<int, double>  dm_percent_discharge, std::map<int, double>  dm_percent_gridcharge)
+	util::matrix_t<size_t> dm_dynamic_sched, util::matrix_t<size_t> dm_dynamic_sched_weekend,
+	std::vector<bool> dm_charge, std::vector<bool> dm_discharge, std::vector<bool> dm_gridcharge, std::map<size_t, double>  dm_percent_discharge, std::map<size_t, double>  dm_percent_gridcharge)
 	: dispatch_t(Battery, dt, SOC_min, SOC_max, current_choice, Ic_max, Id_max,Pc_max, Pd_max,
 	t_min, mode, pv_dispatch)
 {
-	init(dm_dynamic_sched, dm_dynamic_sched_weekend, dm_charge, dm_discharge, dm_gridcharge, dm_percent_discharge, dm_percent_gridcharge);
-}
-
-void dispatch_manual_t::init(
-	util::matrix_t<float> dm_dynamic_sched,
-	util::matrix_t<float> dm_dynamic_sched_weekend,
-	bool * dm_charge,
-	bool *dm_discharge,
-	bool * dm_gridcharge,
-	std::map<int, double> dm_percent_discharge,
-	std::map<int, double> dm_percent_gridcharge)
-{
-	_sched = dm_dynamic_sched;
-	_sched_weekend = dm_dynamic_sched_weekend;
-	for (int i = 0; i != 6; i++)
-	{
-		_charge_array.push_back(dm_charge[i]);
-		_discharge_array.push_back(dm_discharge[i]);
-		_gridcharge_array.push_back(dm_gridcharge[i]);
-	}
-	_percent_discharge_array = dm_percent_discharge;
-	_percent_charge_array = dm_percent_gridcharge;
+	init_with_vects(dm_dynamic_sched, dm_dynamic_sched_weekend, dm_charge, dm_discharge, dm_gridcharge, dm_percent_discharge, dm_percent_gridcharge);
 }
 
 void dispatch_manual_t::init_with_vects(
-	util::matrix_t<float> dm_dynamic_sched,
-	util::matrix_t<float> dm_dynamic_sched_weekend,
+	util::matrix_t<size_t> dm_dynamic_sched,
+	util::matrix_t<size_t> dm_dynamic_sched_weekend,
 	std::vector<bool> dm_charge,
 	std::vector<bool> dm_discharge,
 	std::vector<bool> dm_gridcharge,
-	std::map<int, double> dm_percent_discharge,
-	std::map<int, double> dm_percent_gridcharge)
+	std::map<size_t, double> dm_percent_discharge,
+	std::map<size_t, double> dm_percent_gridcharge)
 {
 	_sched = dm_dynamic_sched;
 	_sched_weekend = dm_dynamic_sched_weekend;
@@ -755,8 +734,8 @@ bool dispatch_manual_t::compute_energy_battery_priority_charging(double energy_n
 
 dispatch_manual_front_of_meter_t::dispatch_manual_front_of_meter_t(battery_t * Battery, double dt, double SOC_min, double SOC_max, int current_choice, double Ic_max, double Id_max, double Pc_max, double Pd_max,
 	double t_min, int mode, int pv_dispatch,
-	util::matrix_t<float> dm_dynamic_sched, util::matrix_t<float> dm_dynamic_sched_weekend,
-	bool * dm_charge, bool *dm_discharge, bool * dm_gridcharge, std::map<int, double>  dm_percent_discharge, std::map<int, double>  dm_percent_gridcharge)
+	util::matrix_t<size_t> dm_dynamic_sched, util::matrix_t<size_t> dm_dynamic_sched_weekend,
+	std::vector<bool> dm_charge, std::vector<bool> dm_discharge, std::vector<bool> dm_gridcharge, std::map<size_t, double>  dm_percent_discharge, std::map<size_t, double>  dm_percent_gridcharge)
 	: dispatch_manual_t(Battery, dt, SOC_min, SOC_max, current_choice, Ic_max, Id_max,Pc_max, Pd_max,
 	t_min, mode, pv_dispatch,
 	dm_dynamic_sched, dm_dynamic_sched_weekend,
@@ -1322,12 +1301,21 @@ dispatch_automatic_front_of_meter_t::dispatch_automatic_front_of_meter_t(
 	int dispatch_mode,
 	int pv_dispatch,
 	int nyears,
-	bool can_grid_charge) : dispatch_automatic_t(Battery, dt_hour, SOC_min, SOC_max, current_choice, Ic_max, Id_max, Pc_max, Pd_max, t_min, dispatch_mode, pv_dispatch, nyears, can_grid_charge)
+	bool can_grid_charge,
+	std::vector<double> ppa_factors,
+	util::matrix_t<size_t> ppa_weekday_schedule,
+	util::matrix_t<size_t> ppa_weekend_schedule) : dispatch_automatic_t(Battery, dt_hour, SOC_min, SOC_max, current_choice, Ic_max, Id_max, Pc_max, Pd_max, t_min, dispatch_mode, pv_dispatch, nyears, can_grid_charge)
 {
+	_ppa_factors = ppa_factors;
+	_ppa_weekday_schedule = ppa_weekday_schedule;
+	_ppa_weekend_schedule = ppa_weekend_schedule;
 }
 
 void dispatch_automatic_front_of_meter_t::init_with_pointer(const dispatch_automatic_front_of_meter_t* tmp)
 {
+	_ppa_factors = tmp->_ppa_factors;
+	_ppa_weekday_schedule = tmp->_ppa_weekday_schedule;
+	_ppa_weekend_schedule = tmp->_ppa_weekend_schedule;
 }
 
 // deep copy from dispatch to this

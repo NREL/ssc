@@ -61,10 +61,8 @@ extern var_info vtab_battery_outputs[];
 
 struct batt_variables
 {
-	batt_variables()
-	{
-		pcharge = pdischarge = pdischarge = pgridcharge = pdischarge_percent = pgridcharge_percent = psched = psched_weekend = 0;
-	};
+	/*! Default constructor for battery variables*/
+	batt_variables(){};
 
 	bool system_use_lifetime_output;
 	bool en_batt;
@@ -78,26 +76,35 @@ struct batt_variables
 	int batt_target_choice;
 	int batt_loss_choice;
 	int batt_calendar_choice;
+	bool batt_auto_dispatch_can_gridcharge;
 
-	bool batt_can_gridcharge;
+	/*! Vector of periods and if battery can charge from PV*/
+	std::vector<bool> batt_can_charge;
 
-	size_t ncharge;
-	size_t ndischarge;
-	size_t ndischarge_percent;
-	size_t ngridcharge_percent;
-	size_t ngridcharge;
-	size_t nsched;
-	size_t msched;
+	/*! Vector of periods and if battery can discharge*/
+	std::vector<bool> batt_can_discharge;
 
-	ssc_number_t *pcharge;
-	ssc_number_t *pdischarge;
-	ssc_number_t *pdischarge_percent;
-	ssc_number_t *pgridcharge_percent;
-	ssc_number_t *pgridcharge;
-	ssc_number_t *psched;
-	ssc_number_t *psched_weekend;
+	/*! Vector of periods and if battery can charge from the grid*/
+	std::vector<bool> batt_can_gridcharge;
 
-	util::matrix_t<float> schedule;
+	/*! Vector of percentages that battery is allowed to charge for periods*/
+	std::vector<float> batt_discharge_percent;
+
+	/*! Vector of percentages that battery is allowed to gridcharge for periods*/
+	std::vector<float> batt_gridcharge_percent;
+
+	/*! Schedule of manual discharge for weekday*/
+	util::matrix_t<size_t> batt_discharge_schedule_weekday;
+
+	/*! Schedule of manual discharge for weekend*/
+	util::matrix_t<size_t> batt_discharge_schedule_weekend;
+
+	/*! Size of battery discharge schedule */
+	size_t batt_msched;
+	size_t batt_nsched;
+
+
+
 	util::matrix_t<double>  batt_lifetime_matrix;
 	util::matrix_t<double> batt_calendar_lifetime_matrix;
 	util::matrix_t<double> batt_voltage_matrix;
@@ -168,6 +175,11 @@ struct batt_variables
 	double batt_calendar_a;
 	double batt_calendar_b;
 	double batt_calendar_c;
+
+	/*! PPA Time-of-Delivery factors for periods 1-9 */
+	std::vector<double> ppa_factors;
+	util::matrix_t<size_t> ppa_weekday_schedule;
+	util::matrix_t<size_t> ppa_weekend_schedule;
 };
 
 
@@ -188,6 +200,9 @@ struct battstor
 	void update_grid_power(compute_module &cm, double P_gen_ac, double P_load_ac, size_t index);
 	bool check_iterate(size_t count);
 	void process_messages(compute_module &cm);
+
+	/*! Manual dispatch*/
+	bool manual_dispatch = false;
 
 	/*! Automated dispatch look ahead*/
 	bool look_ahead = false;
@@ -238,11 +253,12 @@ struct battstor
 	batt_variables * batt_vars;
 	bool make_vars;
 	
-	bool dm_charge[6], dm_discharge[6], dm_gridcharge[6]; // manual dispatch
-	std::map<int, double> dm_percent_discharge; // <profile, discharge_percent>
-	std::map<int, double> dm_percent_gridcharge; // <profile, gridcharge_percent>
-	util::matrix_t<float> dm_dynamic_sched;
-	util::matrix_t<float> dm_dynamic_sched_weekend;
+	/*! Map of profile to discharge percent */
+	std::map<size_t, double> dm_percent_discharge; 
+
+	/*! Map of profile to gridcharge percent*/
+	std::map<size_t, double> dm_percent_gridcharge; 
+
 	std::vector<double> target_power;
 	std::vector<double> target_power_monthly;
 	

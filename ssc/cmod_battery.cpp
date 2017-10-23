@@ -153,6 +153,12 @@ var_info vtab_battery_inputs[] = {
 	{ SSC_INPUT,        SSC_ARRAY,      "dc_net_forecast",                             "PV forecast",                                            "kW",       "",                     "Battery",       "batt_meter_position=1&batt_dispatch_choice=2",  "",          "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "dispatch_auto_can_gridcharge",                "Grid charging allowed for automated dispatch?",          "kW",       "",                     "Battery",       "",                           "",                             "" },
 
+	// PPA financial inputs
+	
+	{ SSC_INPUT,        SSC_ARRAY,      "dispatch_tod_factors",		                    "TOD factors for periods 1-9",	                            "",      "",                  "Time of Delivery", "batt_meter_position=1&batt_dispatch_choice=2"   "",          "" },
+	{ SSC_INPUT,        SSC_MATRIX,     "dispatch_sched_weekday",                       "Diurnal weekday TOD periods",                              "1..9",  "12 x 24 matrix",    "Time of Delivery", "batt_meter_position=1&batt_dispatch_choice=2",  "",          "" },
+	{ SSC_INPUT,        SSC_MATRIX,     "dispatch_sched_weekend",                       "Diurnal weekend TOD periods",                              "1..9",  "12 x 24 matrix",    "Time of Delivery", "batt_meter_position=1&batt_dispatch_choice=2",  "",          "" },
+
 	var_info_invalid
 };
 
@@ -248,35 +254,38 @@ battstor::battstor(compute_module &cm, bool setup_model, int replacement_option,
 			batt_vars->batt_loss_choice = cm.as_integer("batt_loss_choice");
 			batt_vars->batt_calendar_choice = cm.as_integer("batt_calendar_choice");
 
-			// Only one dispatch option for front-of-meter (currenlty)
 			if (batt_vars->batt_meter_position == dispatch_t::FRONT)
 			{
-				batt_vars->batt_dispatch = dispatch_t::MANUAL;
-				batt_vars->pv_dc_forecast = cm.as_doublevec("dc_net_forecast");
+				batt_vars->pv_dc_forecast = cm.as_vector<double>("dc_net_forecast");
+				if (batt_vars->batt_dispatch == dispatch_t::FOM_FORECAST)
+				{
+					batt_vars->ppa_factors = cm.as_vector<double>("dispatch_tod_factors");
+					batt_vars->ppa_weekday_schedule = cm.as_matrix<size_t>("dispatch_sched_weekday");
+					batt_vars->ppa_weekend_schedule = cm.as_matrix<size_t>("dispatch_sched_weekend");
+				}
 			}
 
 			if (batt_vars->batt_dispatch == dispatch_t::MANUAL)
 			{
-				batt_vars->pcharge = cm.as_array("dispatch_manual_charge", &batt_vars->ncharge);
-				batt_vars->pdischarge = cm.as_array("dispatch_manual_discharge", &batt_vars->ndischarge);
-				batt_vars->pdischarge_percent = cm.as_array("dispatch_manual_percent_discharge", &batt_vars->ndischarge_percent);
-				batt_vars->pgridcharge_percent = cm.as_array("dispatch_manual_percent_gridcharge", &batt_vars->ngridcharge_percent);
-				batt_vars->pgridcharge = cm.as_array("dispatch_manual_gridcharge", &batt_vars->ngridcharge);
-				batt_vars->schedule = cm.allocate_matrix("batt_dispatch_sched", 12, 24);
-				batt_vars->psched = cm.as_matrix("dispatch_manual_sched", &batt_vars->msched, &batt_vars->nsched);
-				batt_vars->psched_weekend = cm.as_matrix("dispatch_manual_sched_weekend", &batt_vars->msched, &batt_vars->nsched);
+				batt_vars->batt_can_charge = cm.as_vector_bool("dispatch_manual_charge");
+				batt_vars->batt_can_discharge = cm.as_vector_bool("dispatch_manual_discharge");
+				batt_vars->batt_can_gridcharge = cm.as_vector_bool("dispatch_manual_gridcharge");
+				batt_vars->batt_discharge_percent = cm.as_vector<float>("dispatch_manual_percent_discharge");
+				batt_vars->batt_gridcharge_percent = cm.as_vector<float>("dispatch_manual_percent_gridcharge");
+				batt_vars->batt_discharge_schedule_weekday = cm.as_matrix<size_t>("dispatch_manual_sched");
+				batt_vars->batt_discharge_schedule_weekend = cm.as_matrix<size_t>("dispatch_manual_sched_weekend");
 			}
 			else if (batt_vars->batt_dispatch == dispatch_t::MAINTAIN_TARGET)
 			{
 				batt_vars->batt_target_choice = cm.as_integer("batt_target_choice");
-				batt_vars->target_power_monthly = cm.as_doublevec("batt_target_power_monthly");
-				batt_vars->target_power = cm.as_doublevec("batt_target_power");
+				batt_vars->target_power_monthly = cm.as_vector<double>("batt_target_power_monthly");
+				batt_vars->target_power = cm.as_vector<double>("batt_target_power");
 			}
-			batt_vars->batt_can_gridcharge = cm.as_boolean("dispatch_auto_can_gridcharge");
+			batt_vars->batt_auto_dispatch_can_gridcharge = cm.as_boolean("dispatch_auto_can_gridcharge");
 
-			batt_vars->batt_lifetime_matrix = cm.as_matrix("batt_lifetime_matrix");
-			batt_vars->batt_calendar_lifetime_matrix = cm.as_matrix("batt_calendar_lifetime_matrix");
-			batt_vars->batt_voltage_matrix = cm.as_matrix("batt_voltage_matrix");
+			batt_vars->batt_lifetime_matrix = cm.as_matrix<double>("batt_lifetime_matrix");
+			batt_vars->batt_calendar_lifetime_matrix = cm.as_matrix<double>("batt_calendar_lifetime_matrix");
+			batt_vars->batt_voltage_matrix = cm.as_matrix<double>("batt_voltage_matrix");
 
 			batt_vars->batt_calendar_q0 = cm.as_double("batt_calendar_q0");
 			batt_vars->batt_calendar_a = cm.as_double("batt_calendar_a");
@@ -299,7 +308,7 @@ battstor::battstor(compute_module &cm, bool setup_model, int replacement_option,
 			batt_vars->batt_resistance = cm.as_double("batt_resistance");
 
 			batt_vars->batt_replacement_capacity = cm.as_double("batt_replacement_capacity");
-			batt_vars->cap_vs_temp = cm.as_matrix("cap_vs_temp");
+			batt_vars->cap_vs_temp = cm.as_matrix<double>("cap_vs_temp");
 			batt_vars->batt_mass = cm.as_double("batt_mass");
 			batt_vars->batt_length = cm.as_double("batt_length");
 			batt_vars->batt_width = cm.as_double("batt_width");
@@ -330,10 +339,10 @@ battstor::battstor(compute_module &cm, bool setup_model, int replacement_option,
 			batt_vars->batt_dc_dc_bms_efficiency = cm.as_double("batt_dc_dc_efficiency");
 			batt_vars->pv_dc_dc_mppt_efficiency = 100. - cm.as_double("dcoptimizer_loss");
 
-			batt_vars->batt_losses_charging = cm.as_doublevec("batt_losses_charging");
-			batt_vars->batt_losses_discharging = cm.as_doublevec("batt_losses_discharging");
-			batt_vars->batt_losses_idle = cm.as_doublevec("batt_losses_idle");
-			batt_vars->batt_losses = cm.as_doublevec("batt_losses");
+			batt_vars->batt_losses_charging = cm.as_vector<double>("batt_losses_charging");
+			batt_vars->batt_losses_discharging = cm.as_vector<double>("batt_losses_discharging");
+			batt_vars->batt_losses_idle = cm.as_vector<double>("batt_losses_idle");
+			batt_vars->batt_losses = cm.as_vector<double>("batt_losses");
 
 			batt_vars->inverter_model = cm.as_integer("inverter_model");
 			batt_vars->inv_snl_eff_cec = cm.as_double("inv_snl_eff_cec");
@@ -346,6 +355,8 @@ battstor::battstor(compute_module &cm, bool setup_model, int replacement_option,
 	}
 	else
 		batt_vars = batt_vars_in;
+
+	parse_configuration();
 
 	// component models
 	voltage_model = 0;
@@ -415,103 +426,56 @@ battstor::battstor(compute_module &cm, bool setup_model, int replacement_option,
 	total_steps = nyears * 8760 * step_per_hour;
 	chem = batt_vars->batt_chem;
 
-	if (batt_vars->batt_dispatch == dispatch_t::MANUAL)
+	if (manual_dispatch)
 	{
-		ssc_number_t *pcharge = batt_vars->pcharge;
-		ssc_number_t *pdischarge = batt_vars->pdischarge;
-		ssc_number_t *pdischarge_percent = batt_vars->pdischarge_percent;
-		ssc_number_t *pgridcharge_percent = batt_vars->pgridcharge_percent;
-		ssc_number_t *pgridcharge = batt_vars->pgridcharge;
-
-		if (batt_vars->ncharge != 6 || batt_vars->ndischarge != 6 || batt_vars->ngridcharge != 6)
+		if (batt_vars->batt_can_charge.size() != 6 || batt_vars->batt_can_discharge.size() != 6 || batt_vars->batt_can_gridcharge.size() != 6)
 			throw compute_module::exec_error("battery", "invalid manual dispatch control vector lengths");
 
-		int discharge_index = 0;
-		int gridcharge_index = 0;
-		;
-		for (int i = 0; i < 6; i++)
-		{
-			dm_charge[i] = pcharge[i] != 0.0f ? 1 : 0;
-			dm_discharge[i] = pdischarge[i] != 0.0f ? 1 : 0;
-			dm_gridcharge[i] = pgridcharge[i] != 0.0f ? 1 : 0;
-			if (dm_discharge[i])
-			{
-				if (discharge_index < (int)batt_vars->ndischarge_percent)
-				{
-					dm_percent_discharge[i + 1] = pdischarge_percent[discharge_index];
-					discharge_index++;
-				}
-				else
-					throw compute_module::exec_error("battery", "invalid manual dispatch control vector lengths");
-			}
-			if (dm_gridcharge[i])
-			{
-				if (gridcharge_index < (int)batt_vars->ngridcharge_percent)
-				{
-					dm_percent_gridcharge[i + 1] = pgridcharge_percent[gridcharge_index];
-					gridcharge_index++;
-				}
-				else
-					throw compute_module::exec_error("battery", "invalid manual dispatch control vector lengths");
-			}
-		}
-	}
-	size_t m, n;
-	util::matrix_t<float> &schedule = batt_vars->schedule;
-	if (batt_vars->batt_dispatch != dispatch_t::MANUAL)
-	{
-		m = 12;
-		n = 24 * step_per_hour;
-		dm_dynamic_sched.resize_fill(m, n, 1);
-		dm_dynamic_sched_weekend.resize_fill(m, n, 1);
-		if (batt_vars->batt_dispatch == dispatch_t::MAINTAIN_TARGET)
-		{
-			int target_dispatch = batt_vars->batt_target_choice;
-			if (target_dispatch == 0)
-			{
-				target_power_monthly = batt_vars->target_power_monthly;
-				target_power.clear();
-				target_power.reserve(8760 * step_per_hour);
-				for (int month = 0; month != 12; month++)
-				{
-					double target = target_power_monthly[month];
-					for (int hour = 0; hour != util::hours_in_month(month + 1); hour++)
-					{
-						for (size_t step = 0; step != step_per_hour; step++)
-							target_power.push_back(target);
-					}
-				}
-			}
-			else
-				target_power = batt_vars->target_power;
-
-			if (target_power.size() != nrec)
-				throw compute_module::exec_error("battery", "invalid number of target powers, must be equal to number of records in weather file");
-
-			// update for entire analysis period per user support issue 4/25/17
-			for (size_t iy = 1; iy < nyears; iy++)
-				for (size_t ir = 0; ir < nrec; ir++)
-					target_power.push_back(target_power[ir]);
-		}
-	}
-	else if (batt_vars->batt_dispatch == dispatch_t::MANUAL)
-	{
-		ssc_number_t *psched = batt_vars->psched;
-		if (batt_vars->msched != 12 || batt_vars->nsched != 24)
+		if (batt_vars->batt_msched != 12 || batt_vars->batt_nsched != 24)
 			throw compute_module::exec_error("battery", "invalid manual dispatch schedule matrix dimensions, must be 12 x 24");
-		dm_dynamic_sched.resize(batt_vars->msched, batt_vars->nsched);
+		
+		for (size_t i = 0; i < batt_vars->batt_can_discharge.size(); i++)
+		{
+			if (batt_vars->batt_can_discharge[i])			
+				dm_percent_discharge[i + 1] = batt_vars->batt_discharge_percent[i];
+	
+			if (batt_vars->batt_can_gridcharge[i])				
+				dm_percent_gridcharge[i + 1] = batt_vars->batt_gridcharge_percent[i];
+		}
 
-		ssc_number_t *psched_weekend = batt_vars->psched_weekend;
-		dm_dynamic_sched_weekend.resize(batt_vars->msched, batt_vars->nsched);
-
-		for (size_t i = 0; i < 12; i++)
-			for (size_t j = 0; j < 24; j++){
-				dm_dynamic_sched(i, j) = psched[i * 24 + j];
-				dm_dynamic_sched_weekend(i, j) = psched_weekend[i * 24 + j];
-				schedule(i, j) = psched[i * 24 + j];
-			}
+		
 	}
 
+	if (input_target)
+	{
+		int target_dispatch = batt_vars->batt_target_choice;
+		if (target_dispatch == 0)
+		{
+			target_power_monthly = batt_vars->target_power_monthly;
+			target_power.clear();
+			target_power.reserve(8760 * step_per_hour);
+			for (int month = 0; month != 12; month++)
+			{
+				double target = target_power_monthly[month];
+				for (int hour = 0; hour != util::hours_in_month(month + 1); hour++)
+				{
+					for (size_t step = 0; step != step_per_hour; step++)
+						target_power.push_back(target);
+				}
+			}
+		}
+		else
+			target_power = batt_vars->target_power;
+
+		if (target_power.size() != nrec)
+			throw compute_module::exec_error("battery", "invalid number of target powers, must be equal to number of records in weather file");
+
+		// update for entire analysis period per user support issue 4/25/17
+		for (size_t iy = 1; iy < nyears; iy++)
+			for (size_t ir = 0; ir < nrec; ir++)
+				target_power.push_back(target_power[ir]);
+	}
+	
 	util::matrix_t<double>  batt_voltage_matrix = batt_vars->batt_voltage_matrix;
 	if (batt_vars->batt_voltage_choice == voltage_t::VOLTAGE_TABLE)
 	{
@@ -720,8 +684,8 @@ battstor::battstor(compute_module &cm, bool setup_model, int replacement_option,
 			batt_vars->batt_power_charge_max, batt_vars->batt_power_discharge_max,
 			batt_vars->batt_minimum_modetime,
 			batt_vars->batt_dispatch, batt_vars->batt_pv_choice,
-			dm_dynamic_sched, dm_dynamic_sched_weekend,
-			dm_charge, dm_discharge, dm_gridcharge, dm_percent_discharge, dm_percent_gridcharge);
+			batt_vars->batt_discharge_schedule_weekday, batt_vars->batt_discharge_schedule_weekend,
+			batt_vars->batt_can_charge, batt_vars->batt_can_discharge, batt_vars->batt_can_gridcharge, dm_percent_discharge, dm_percent_gridcharge);
 	}
 	else if (batt_vars->batt_meter_position == dispatch_t::FRONT && batt_vars->batt_dispatch == dispatch_t::FOM_MANUAL)
 	{
@@ -730,19 +694,20 @@ battstor::battstor(compute_module &cm, bool setup_model, int replacement_option,
 			batt_vars->batt_current_charge_max, batt_vars->batt_current_discharge_max,
 			batt_vars->batt_power_charge_max, batt_vars->batt_power_discharge_max, batt_vars->batt_minimum_modetime,
 			batt_vars->batt_dispatch, batt_vars->batt_pv_choice,
-			dm_dynamic_sched, dm_dynamic_sched_weekend,
-			dm_charge, dm_discharge, dm_gridcharge, dm_percent_discharge, dm_percent_gridcharge);
+			batt_vars->batt_discharge_schedule_weekday, batt_vars->batt_discharge_schedule_weekend,
+			batt_vars->batt_can_charge, batt_vars->batt_can_discharge, batt_vars->batt_can_gridcharge, dm_percent_discharge, dm_percent_gridcharge);
 
 	}
 	// Catch all for FOM economic dispatch, currently calls manual dispatch
-	else if (batt_vars->batt_meter_position == dispatch_t::FRONT)
+	else if (batt_vars->batt_meter_position == dispatch_t::FRONT) 
 	{
 		
 		dispatch_model = new dispatch_automatic_front_of_meter_t(battery_model, dt_hr, batt_vars->batt_minimum_SOC, batt_vars->batt_maximum_SOC,
 			batt_vars->batt_current_choice, batt_vars->batt_current_charge_max, batt_vars->batt_current_discharge_max,
 			batt_vars->batt_power_charge_max, batt_vars->batt_power_discharge_max, batt_vars->batt_minimum_modetime,
 			batt_vars->batt_dispatch, batt_vars->batt_pv_choice,
-			(int)nyears, batt_vars->batt_can_gridcharge);
+			(int)nyears, batt_vars->batt_auto_dispatch_can_gridcharge,
+			batt_vars->ppa_factors, batt_vars->ppa_weekday_schedule, batt_vars->ppa_weekend_schedule);
 		
 	}
 	else
@@ -751,7 +716,7 @@ battstor::battstor(compute_module &cm, bool setup_model, int replacement_option,
 			batt_vars->batt_current_choice, batt_vars->batt_current_charge_max, batt_vars->batt_current_discharge_max,
 			batt_vars->batt_power_charge_max, batt_vars->batt_power_discharge_max, batt_vars->batt_minimum_modetime,
 			batt_vars->batt_dispatch, batt_vars->batt_pv_choice,
-			(int)nyears, batt_vars->batt_can_gridcharge);
+			(int)nyears, batt_vars->batt_auto_dispatch_can_gridcharge);
 	}
 
 	ac_dc = dc_ac = 100.;
@@ -778,8 +743,6 @@ battstor::battstor(compute_module &cm, bool setup_model, int replacement_option,
 
 		charge_control = new dc_connected_battery_controller(dispatch_model, battery_metrics, batt_vars->batt_dc_dc_bms_efficiency, batt_vars->pv_dc_dc_mppt_efficiency, inverter_efficiency);
 	}
-
-	parse_configuration();
 }
 
 void battstor::parse_configuration()
@@ -814,6 +777,8 @@ void battstor::parse_configuration()
 				input_forecast = true;
 		}
 	}
+	else
+		manual_dispatch = true;
 }
 
 void battstor::initialize_automated_dispatch(ssc_number_t *pv, ssc_number_t *load)
