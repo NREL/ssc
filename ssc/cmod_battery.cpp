@@ -270,8 +270,8 @@ battstor::battstor(compute_module &cm, bool setup_model, int replacement_option,
 				batt_vars->batt_can_charge = cm.as_vector_bool("dispatch_manual_charge");
 				batt_vars->batt_can_discharge = cm.as_vector_bool("dispatch_manual_discharge");
 				batt_vars->batt_can_gridcharge = cm.as_vector_bool("dispatch_manual_gridcharge");
-				batt_vars->batt_discharge_percent = cm.as_vector_float("dispatch_manual_percent_discharge");
-				batt_vars->batt_gridcharge_percent = cm.as_vector_float("dispatch_manual_percent_gridcharge");
+				batt_vars->batt_discharge_percent = cm.as_vector_double("dispatch_manual_percent_discharge");
+				batt_vars->batt_gridcharge_percent = cm.as_vector_double("dispatch_manual_percent_gridcharge");
 				batt_vars->batt_discharge_schedule_weekday = cm.as_matrix_unsigned_long("dispatch_manual_sched");
 				batt_vars->batt_discharge_schedule_weekend = cm.as_matrix_unsigned_long("dispatch_manual_sched_weekend");
 			}
@@ -423,26 +423,6 @@ battstor::battstor(compute_module &cm, bool setup_model, int replacement_option,
 	}
 	total_steps = nyears * 8760 * step_per_hour;
 	chem = batt_vars->batt_chem;
-
-	if (manual_dispatch)
-	{
-		if (batt_vars->batt_can_charge.size() != 6 || batt_vars->batt_can_discharge.size() != 6 || batt_vars->batt_can_gridcharge.size() != 6)
-			throw compute_module::exec_error("battery", "invalid manual dispatch control vector lengths");
-
-		if (batt_vars->batt_msched != 12 || batt_vars->batt_nsched != 24)
-			throw compute_module::exec_error("battery", "invalid manual dispatch schedule matrix dimensions, must be 12 x 24");
-		
-		for (size_t i = 0; i < batt_vars->batt_can_discharge.size(); i++)
-		{
-			if (batt_vars->batt_can_discharge[i])			
-				dm_percent_discharge[i + 1] = batt_vars->batt_discharge_percent[i];
-	
-			if (batt_vars->batt_can_gridcharge[i])				
-				dm_percent_gridcharge[i + 1] = batt_vars->batt_gridcharge_percent[i];
-		}
-
-		
-	}
 
 	if (input_target)
 	{
@@ -674,29 +654,56 @@ battstor::battstor(compute_module &cm, bool setup_model, int replacement_option,
 	battery_model->initialize(capacity_model, voltage_model, lifetime_model, thermal_model, losses_model);
 	battery_metrics = new battery_metrics_t(battery_model, dt_hr);
 
-	if (batt_vars->batt_meter_position == dispatch_t::BEHIND && batt_vars->batt_dispatch == dispatch_t::MANUAL)
+	/*! Process the dispatch options and create the appropriate model */
+	if ((batt_vars->batt_topology == dispatch_t::BEHIND && batt_vars->batt_dispatch == dispatch_t::MANUAL) ||
+		(batt_vars->batt_topology == dispatch_t::FRONT && batt_vars->batt_dispatch == dispatch_t::FOM_MANUAL))
 	{
-		dispatch_model = new dispatch_manual_t(battery_model, dt_hr, batt_vars->batt_minimum_SOC, batt_vars->batt_maximum_SOC,
-			batt_vars->batt_current_choice,
-			batt_vars->batt_current_charge_max, batt_vars->batt_current_discharge_max,
-			batt_vars->batt_power_charge_max, batt_vars->batt_power_discharge_max,
-			batt_vars->batt_minimum_modetime,
-			batt_vars->batt_dispatch, batt_vars->batt_pv_choice,
-			batt_vars->batt_discharge_schedule_weekday, batt_vars->batt_discharge_schedule_weekend,
-			batt_vars->batt_can_charge, batt_vars->batt_can_discharge, batt_vars->batt_can_gridcharge, dm_percent_discharge, dm_percent_gridcharge);
-	}
-	else if (batt_vars->batt_meter_position == dispatch_t::FRONT && batt_vars->batt_dispatch == dispatch_t::FOM_MANUAL)
-	{
-		dispatch_model = new dispatch_manual_front_of_meter_t(battery_model, dt_hr, batt_vars->batt_minimum_SOC, batt_vars->batt_maximum_SOC,
-			batt_vars->batt_current_choice,
-			batt_vars->batt_current_charge_max, batt_vars->batt_current_discharge_max,
-			batt_vars->batt_power_charge_max, batt_vars->batt_power_discharge_max, batt_vars->batt_minimum_modetime,
-			batt_vars->batt_dispatch, batt_vars->batt_pv_choice,
-			batt_vars->batt_discharge_schedule_weekday, batt_vars->batt_discharge_schedule_weekend,
-			batt_vars->batt_can_charge, batt_vars->batt_can_discharge, batt_vars->batt_can_gridcharge, dm_percent_discharge, dm_percent_gridcharge);
+		/*! Generic manual dispatch model inputs */
+		if (batt_vars->batt_can_charge.size() != 6 || batt_vars->batt_can_discharge.size() != 6 || batt_vars->batt_can_gridcharge.size() != 6)
+			throw compute_module::exec_error("battery", "invalid manual dispatch control vector lengths");
 
+		if (batt_vars->batt_discharge_schedule_weekday.nrows() != 12 || batt_vars->batt_discharge_schedule_weekday.ncols() != 24)
+			throw compute_module::exec_error("battery", "invalid manual dispatch schedule matrix dimensions, must be 12 x 24");
+
+		if (batt_vars->batt_discharge_schedule_weekend.nrows() != 12 || batt_vars->batt_discharge_schedule_weekend.ncols() != 24)
+			throw compute_module::exec_error("battery", "invalid weekend manual dispatch schedule matrix dimensions, must be 12 x 24");
+
+		size_t discharge_index = 0;
+		size_t gridcharge_index = 0;
+		for (size_t i = 0; i < batt_vars->batt_can_discharge.size(); i++)
+		{
+			if (batt_vars->batt_can_discharge[i])
+				dm_percent_discharge[i + 1] = batt_vars->batt_discharge_percent[discharge_index++];
+			
+			if (batt_vars->batt_can_gridcharge[i])
+				dm_percent_gridcharge[i + 1] = batt_vars->batt_gridcharge_percent[gridcharge_index++];
+		}
+		/*! Behind the meter dispatch model */
+		if (batt_vars->batt_meter_position == dispatch_t::BEHIND && batt_vars->batt_dispatch == dispatch_t::MANUAL)
+		{
+			dispatch_model = new dispatch_manual_t(battery_model, dt_hr, batt_vars->batt_minimum_SOC, batt_vars->batt_maximum_SOC,
+				batt_vars->batt_current_choice,
+				batt_vars->batt_current_charge_max, batt_vars->batt_current_discharge_max,
+				batt_vars->batt_power_charge_max, batt_vars->batt_power_discharge_max,
+				batt_vars->batt_minimum_modetime,
+				batt_vars->batt_dispatch, batt_vars->batt_pv_choice,
+				batt_vars->batt_discharge_schedule_weekday, batt_vars->batt_discharge_schedule_weekend,
+				batt_vars->batt_can_charge, batt_vars->batt_can_discharge, batt_vars->batt_can_gridcharge, dm_percent_discharge, dm_percent_gridcharge);
+		}
+		/*! Front of meter dispatch model */
+		else if (batt_vars->batt_meter_position == dispatch_t::FRONT && batt_vars->batt_dispatch == dispatch_t::FOM_MANUAL)
+		{
+			dispatch_model = new dispatch_manual_front_of_meter_t(battery_model, dt_hr, batt_vars->batt_minimum_SOC, batt_vars->batt_maximum_SOC,
+				batt_vars->batt_current_choice,
+				batt_vars->batt_current_charge_max, batt_vars->batt_current_discharge_max,
+				batt_vars->batt_power_charge_max, batt_vars->batt_power_discharge_max, batt_vars->batt_minimum_modetime,
+				batt_vars->batt_dispatch, batt_vars->batt_pv_choice,
+				batt_vars->batt_discharge_schedule_weekday, batt_vars->batt_discharge_schedule_weekend,
+				batt_vars->batt_can_charge, batt_vars->batt_can_discharge, batt_vars->batt_can_gridcharge, dm_percent_discharge, dm_percent_gridcharge);
+
+		}
 	}
-	// Catch all for FOM economic dispatch, currently calls manual dispatch
+	/*! Front of meter automated DC-connected dispatch */
 	else if (batt_vars->batt_meter_position == dispatch_t::FRONT) 
 	{
 		
@@ -708,6 +715,7 @@ battstor::battstor(compute_module &cm, bool setup_model, int replacement_option,
 			batt_vars->ppa_factors, batt_vars->ppa_weekday_schedule, batt_vars->ppa_weekend_schedule);
 		
 	}
+	/*! Behind-the-meter automated dispatch for peak shaving */
 	else
 	{
 		dispatch_model = new dispatch_automatic_behind_the_meter_t(battery_model, dt_hr, batt_vars->batt_minimum_SOC, batt_vars->batt_maximum_SOC,

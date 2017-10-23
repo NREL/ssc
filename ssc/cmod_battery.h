@@ -88,10 +88,10 @@ struct batt_variables
 	std::vector<bool> batt_can_gridcharge;
 
 	/*! Vector of percentages that battery is allowed to charge for periods*/
-	std::vector<float> batt_discharge_percent;
+	std::vector<double> batt_discharge_percent;
 
 	/*! Vector of percentages that battery is allowed to gridcharge for periods*/
-	std::vector<float> batt_gridcharge_percent;
+	std::vector<double> batt_gridcharge_percent;
 
 	/*! Schedule of manual discharge for weekday*/
 	util::matrix_t<size_t> batt_discharge_schedule_weekday;
