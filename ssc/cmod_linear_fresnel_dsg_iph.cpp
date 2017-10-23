@@ -317,45 +317,45 @@ public:
 		for (int i = 0; i < 5; i++)
 			c_lf_dsg.m_ffrac[i] = 0.0;
 
-		c_lf_dsg.m_A_aperture = as_matrix("A_aperture");	//[m2]
-		c_lf_dsg.m_L_col = as_matrix("L_col");				//[m]
-		c_lf_dsg.m_OptCharType = as_matrix("OptCharType");	//[-]
-		c_lf_dsg.m_IAM_T = as_matrix("IAM_T");		//[-]
-		c_lf_dsg.m_IAM_L = as_matrix("IAM_L");		//[-]
-		c_lf_dsg.m_TrackingError = as_matrix("TrackingError");	//[-]
-		c_lf_dsg.m_GeomEffects = as_matrix("GeomEffects");		//[-]              "W/m-K^order", 
-		c_lf_dsg.m_rho_mirror_clean = as_matrix("rho_mirror_clean");	//[-]	   "1/(m/s)^order"
-		c_lf_dsg.m_dirt_mirror = as_matrix("dirt_mirror");				//[-]
-		c_lf_dsg.m_error = as_matrix("error");				//[-]
-		c_lf_dsg.m_HLCharType = as_matrix("HLCharType");	//[-]
-		c_lf_dsg.m_HL_dT = as_matrix("HL_dT");				//[W/m-K^order]
-		c_lf_dsg.m_HL_W = as_matrix("HL_W");				//[1/(m/s)^order]
-		c_lf_dsg.m_D_2 = as_matrix("D_2");			//[m]
-		c_lf_dsg.m_D_3 = as_matrix("D_3");			//[m]
-		c_lf_dsg.m_D_4 = as_matrix("D_4");			//[m]
-		c_lf_dsg.m_D_5 = as_matrix("D_5");			//[m]
-		c_lf_dsg.m_D_p = as_matrix("D_p");			//[m]
-		c_lf_dsg.m_Rough = as_matrix("Rough");		//[m]
-		c_lf_dsg.m_Flow_type = as_matrix("Flow_type");	//[-]
-		c_lf_dsg.m_AbsorberMaterial_in = as_matrix("AbsorberMaterial");	//[-]
-		c_lf_dsg.m_HCE_FieldFrac = as_matrix("HCE_FieldFrac");	//[-]
-		c_lf_dsg.m_alpha_abs = as_matrix("alpha_abs");	//[-]
-		c_lf_dsg.m_b_eps_HCE1 = as_matrix("b_eps_HCE1");	//[-]
-		c_lf_dsg.m_b_eps_HCE2 = as_matrix("b_eps_HCE2");	//[-]
-		c_lf_dsg.m_b_eps_HCE3 = as_matrix("b_eps_HCE3");	//[-]
-		c_lf_dsg.m_b_eps_HCE4 = as_matrix("b_eps_HCE4");	//[-]
+		c_lf_dsg.m_A_aperture = as_matrix<double>("A_aperture");	//[m2]
+		c_lf_dsg.m_L_col = as_matrix<double>("L_col");				//[m]
+		c_lf_dsg.m_OptCharType = as_matrix<double>("OptCharType");	//[-]
+		c_lf_dsg.m_IAM_T = as_matrix<double>("IAM_T");		//[-]
+		c_lf_dsg.m_IAM_L = as_matrix<double>("IAM_L");		//[-]
+		c_lf_dsg.m_TrackingError = as_matrix<double>("TrackingError");	//[-]
+		c_lf_dsg.m_GeomEffects = as_matrix<double>("GeomEffects");		//[-]              "W/m-K^order", 
+		c_lf_dsg.m_rho_mirror_clean = as_matrix<double>("rho_mirror_clean");	//[-]	   "1/(m/s)^order"
+		c_lf_dsg.m_dirt_mirror = as_matrix<double>("dirt_mirror");				//[-]
+		c_lf_dsg.m_error = as_matrix<double>("error");				//[-]
+		c_lf_dsg.m_HLCharType = as_matrix<double>("HLCharType");	//[-]
+		c_lf_dsg.m_HL_dT = as_matrix<double>("HL_dT");				//[W/m-K^order]
+		c_lf_dsg.m_HL_W = as_matrix<double>("HL_W");				//[1/(m/s)^order]
+		c_lf_dsg.m_D_2 = as_matrix<double>("D_2");			//[m]
+		c_lf_dsg.m_D_3 = as_matrix<double>("D_3");			//[m]
+		c_lf_dsg.m_D_4 = as_matrix<double>("D_4");			//[m]
+		c_lf_dsg.m_D_5 = as_matrix<double>("D_5");			//[m]
+		c_lf_dsg.m_D_p = as_matrix<double>("D_p");			//[m]
+		c_lf_dsg.m_Rough = as_matrix<double>("Rough");		//[m]
+		c_lf_dsg.m_Flow_type = as_matrix<double>("Flow_type");	//[-]
+		c_lf_dsg.m_AbsorberMaterial_in = as_matrix<double>("AbsorberMaterial");	//[-]
+		c_lf_dsg.m_HCE_FieldFrac = as_matrix<double>("HCE_FieldFrac");	//[-]
+		c_lf_dsg.m_alpha_abs = as_matrix<double>("alpha_abs");	//[-]
+		c_lf_dsg.m_b_eps_HCE1 = as_matrix<double>("b_eps_HCE1");	//[-]
+		c_lf_dsg.m_b_eps_HCE2 = as_matrix<double>("b_eps_HCE2");	//[-]
+		c_lf_dsg.m_b_eps_HCE3 = as_matrix<double>("b_eps_HCE3");	//[-]
+		c_lf_dsg.m_b_eps_HCE4 = as_matrix<double>("b_eps_HCE4");	//[-]
 		if(c_lf_dsg.m_is_multgeom)
 		{
-			c_lf_dsg.m_sh_eps_HCE1 = as_matrix("sh_eps_HCE1");	//[-]
-			c_lf_dsg.m_sh_eps_HCE2 = as_matrix("sh_eps_HCE2");	//[-]
-			c_lf_dsg.m_sh_eps_HCE3 = as_matrix("sh_eps_HCE3");	//[-]
-			c_lf_dsg.m_sh_eps_HCE4 = as_matrix("sh_eps_HCE4");	//[-]
+			c_lf_dsg.m_sh_eps_HCE1 = as_matrix<double>("sh_eps_HCE1");	//[-]
+			c_lf_dsg.m_sh_eps_HCE2 = as_matrix<double>("sh_eps_HCE2");	//[-]
+			c_lf_dsg.m_sh_eps_HCE3 = as_matrix<double>("sh_eps_HCE3");	//[-]
+			c_lf_dsg.m_sh_eps_HCE4 = as_matrix<double>("sh_eps_HCE4");	//[-]
 		}
-		c_lf_dsg.m_alpha_env = as_matrix("alpha_env"); //[-] Envelope absorptance
-		c_lf_dsg.m_EPSILON_4 = as_matrix("EPSILON_4"); //[-] Inner glass envelope emissivities
-		c_lf_dsg.m_Tau_envelope = as_matrix("Tau_envelope"); //[-] Envelope transmittance
+		c_lf_dsg.m_alpha_env = as_matrix<double>("alpha_env"); //[-] Envelope absorptance
+		c_lf_dsg.m_EPSILON_4 = as_matrix<double>("EPSILON_4"); //[-] Inner glass envelope emissivities
+		c_lf_dsg.m_Tau_envelope = as_matrix<double>("Tau_envelope"); //[-] Envelope transmittance
 		
-		util::matrix_t<double> glazing_intact_double = as_matrix("GlazingIntactIn"); //[-] Is the glazing intact?
+		util::matrix_t<double> glazing_intact_double = as_matrix<double>("GlazingIntactIn"); //[-] Is the glazing intact?
 		int n_gl_row = (int)glazing_intact_double.nrows();
 		int n_gl_col = (int)glazing_intact_double.ncols();
 		c_lf_dsg.m_GlazingIntactIn.resize(n_gl_row, n_gl_col);
@@ -367,13 +367,13 @@ public:
 			}
 		}
 		
-		c_lf_dsg.m_AnnulusGas_in = as_matrix("AnnulusGas"); //[-]
-		c_lf_dsg.m_P_a = as_matrix("P_a");					//[torr] Annulus gas pressure 
-		c_lf_dsg.m_Design_loss = as_matrix("Design_loss");	//[W/m] Receiver heat loss at design
-		c_lf_dsg.m_Shadowing = as_matrix("Shadowing");		//[-] Receiver bellows shadowing loss factor
-		c_lf_dsg.m_Dirt_HCE = as_matrix("Dirt_HCE");		//[-] Loss due to dirt on the receiver envelope
-		c_lf_dsg.m_b_OpticalTable = as_matrix("b_OpticalTable");	//[-] Boiler Optical Table
-		c_lf_dsg.m_sh_OpticalTable = as_matrix("sh_OpticalTable");	//[-] Superheater Optical Table
+		c_lf_dsg.m_AnnulusGas_in = as_matrix<double>("AnnulusGas"); //[-]
+		c_lf_dsg.m_P_a = as_matrix<double>("P_a");					//[torr] Annulus gas pressure 
+		c_lf_dsg.m_Design_loss = as_matrix<double>("Design_loss");	//[W/m] Receiver heat loss at design
+		c_lf_dsg.m_Shadowing = as_matrix<double>("Shadowing");		//[-] Receiver bellows shadowing loss factor
+		c_lf_dsg.m_Dirt_HCE = as_matrix<double>("Dirt_HCE");		//[-] Loss due to dirt on the receiver envelope
+		c_lf_dsg.m_b_OpticalTable = as_matrix<double>("b_OpticalTable");	//[-] Boiler Optical Table
+		c_lf_dsg.m_sh_OpticalTable = as_matrix<double>("sh_OpticalTable");	//[-] Superheater Optical Table
 
 
 		// Solar Field Outputs

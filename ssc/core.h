@@ -253,10 +253,11 @@ public:
 	double as_double( const std::string &name ) throw( general_error );
 	const char *as_string( const std::string &name ) throw( general_error );
 	ssc_number_t *as_array( const std::string &name, size_t *count ) throw( general_error );
-	std::vector<double> as_doublevec( const std::string &name ) throw( general_error );
-	ssc_number_t *as_matrix( const std::string &name, size_t *rows, size_t *cols ) throw( general_error );
-	util::matrix_t<double> as_matrix(const std::string & name) throw(general_error);
-	util::matrix_t<double> as_matrix_transpose(const std::string & name) throw(general_error);
+	template<class T> std::vector<T> as_vector( const std::string &name ) throw( general_error );
+	std::vector<bool> as_vector_bool(const std::string &name) throw(general_error);
+	template<class T> T* as_matrix( const std::string &name, size_t *rows, size_t *cols ) throw( general_error );
+	template<class T> util::matrix_t<T> as_matrix(const std::string & name) throw(general_error);
+	template<class T> util::matrix_t<T> as_matrix_transpose(const std::string & name) throw(general_error);
 	bool get_matrix(const std::string &name, util::matrix_t<ssc_number_t> &mat) throw(general_error);
 
 	size_t check_timestep_seconds( double t_start, double t_end, double t_step ) throw( timestep_error );
@@ -289,6 +290,59 @@ private:
 	handler_interface   *m_handler;
 	var_table           *m_vartab;
 };
+
+/*! Returns a vector of type T */
+template <class T>
+std::vector<T> compute_module::as_vector(const std::string &name) throw(general_error)
+{
+	var_data &x = value(name);
+	if (x.type != SSC_ARRAY) throw cast_error("array", x, name);
+	size_t len = x.num.length();
+	std::vector<T> v(len);
+	ssc_number_t *p = x.num.data();
+
+
+	for (size_t k = 0; k < len; k++)
+		v[k] = (T)p[k];
+
+	return v;
+}
+
+template <class T>
+T *compute_module::as_matrix(const std::string &name, size_t *rows, size_t *cols) throw(general_error)
+{
+	var_data &x = value(name);
+	if (x.type != SSC_MATRIX) throw cast_error("matrix", x, name);
+	if (rows) *rows = x.num.nrows();
+	if (cols) *cols = x.num.ncols();
+	return x.num.data();
+}
+template <class T>
+util::matrix_t<T> compute_module::as_matrix(const std::string &name) throw(general_error)
+{
+	var_data &x = value(name);
+	if (x.type != SSC_MATRIX) throw cast_error("matrix", x, name);
+
+	util::matrix_t<T> mat(x.num.nrows(), x.num.ncols(), (T)0.0);
+	for (size_t r = 0; r<x.num.nrows(); r++)
+		for (size_t c = 0; c<x.num.ncols(); c++)
+			mat.at(r, c) = (T)x.num(r, c);
+
+	return mat;
+}
+template <class T>
+util::matrix_t<T> compute_module::as_matrix_transpose(const std::string &name) throw(general_error)
+{
+	var_data &x = value(name);
+	if (x.type != SSC_MATRIX) throw cast_error("matrix", x, name);
+
+	util::matrix_t<T> mat(x.num.ncols(), x.num.nrows(), 0.0);
+	for (size_t r = 0; r<x.num.nrows(); r++)
+		for (size_t c = 0; c<x.num.ncols(); c++)
+			mat.at(c, r) = (T)x.num(r, c);
+
+	return mat;
+}
 
 
 class handler_interface

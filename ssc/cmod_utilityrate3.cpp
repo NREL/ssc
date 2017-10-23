@@ -2903,14 +2903,14 @@ public:
 		if (ec_enabled)
 		{
 
-			ssc_number_t *ec_weekday = as_matrix("ur_ec_sched_weekday", &nrows, &ncols);
+			ssc_number_t *ec_weekday = as_matrix<ssc_number_t>("ur_ec_sched_weekday", &nrows, &ncols);
 			if (nrows != 12 || ncols != 24)
 			{
 				std::ostringstream ss;
 				ss << "energy charge weekday schedule must be 12x24, input is " << nrows << "x" << ncols;
 				throw exec_error("utilityrate3", ss.str());
 			}
-			ssc_number_t *ec_weekend = as_matrix("ur_ec_sched_weekend", &nrows, &ncols);
+			ssc_number_t *ec_weekend = as_matrix<ssc_number_t>("ur_ec_sched_weekend", &nrows, &ncols);
 			if (nrows != 12 || ncols != 24)
 			{
 				std::ostringstream ss;
@@ -3051,7 +3051,7 @@ public:
 		{
 			if (is_assigned("ur_dc_sched_weekday"))
 			{
-				dc_weekday = as_matrix("ur_dc_sched_weekday", &nrows, &ncols);
+				dc_weekday = as_matrix<ssc_number_t>("ur_dc_sched_weekday", &nrows, &ncols);
 				if (nrows != 12 || ncols != 24)
 				{
 					std::ostringstream ss;
@@ -3062,7 +3062,7 @@ public:
 			}
 			if (is_assigned("ur_dc_sched_weekend"))
 			{
-				dc_weekend = as_matrix("ur_dc_sched_weekend", &nrows, &ncols);
+				dc_weekend = as_matrix<ssc_number_t>("ur_dc_sched_weekend", &nrows, &ncols);
 				if (nrows != 12 || ncols != 24)
 				{
 					std::ostringstream ss;

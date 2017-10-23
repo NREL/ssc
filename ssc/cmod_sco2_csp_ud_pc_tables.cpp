@@ -165,7 +165,7 @@ public:
 		C_sco2_rc_csp_template::S_des_par sco2_rc_des_par;
 			// System design parameters
 		sco2_rc_des_par.m_hot_fl_code = as_integer("htf");							//[-] Integer code for HTF
-		sco2_rc_des_par.mc_hot_fl_props = as_matrix("htf_props");					//[-] Custom HTF properties
+		sco2_rc_des_par.mc_hot_fl_props = as_matrix<double>("htf_props");					//[-] Custom HTF properties
 		sco2_rc_des_par.m_T_htf_hot_in = as_double("T_htf_hot_des")+273.15;			//[K] Convert from C
 		sco2_rc_des_par.m_phx_dt_hot_approach = as_double("dT_PHX_hot_approach");	//[K/C] Temperature difference between hot HTF and turbine CO2 inlet
 		sco2_rc_des_par.m_T_amb_des = as_double("T_amb_des")+273.15;				//[K] Convert from C

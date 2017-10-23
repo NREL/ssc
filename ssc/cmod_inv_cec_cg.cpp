@@ -148,7 +148,7 @@ public:
 		bool kW_units = (as_integer("inv_cec_cg_sample_power_units") == 1);
 
 		// 6 columns period, tier, max usage, max usage units, buy, sell
-		ssc_number_t *inv_cec_cg_test_samples_in = as_matrix("inv_cec_cg_test_samples", &nrows, &ncols);
+		ssc_number_t *inv_cec_cg_test_samples_in = as_matrix<ssc_number_t>("inv_cec_cg_test_samples", &nrows, &ncols);
 		if (nrows != 18)
 		{
 			std::ostringstream ss;

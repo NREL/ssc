@@ -98,7 +98,7 @@ public:
 		// Initialize HTF class
 		HTFProperties tes_htf_props;			// Instance of HTFProperties class for TES HTF
 		int tes_fl = (int) as_double("TES_HTF_code");
-		util::matrix_t<double> tes_fl_props = as_matrix("TES_HTF_props");
+		util::matrix_t<double> tes_fl_props = as_matrix<double>("TES_HTF_props");
 
 		double T_HTF_hot = as_double("T_HTF_hot");			//[C] Hot HTF temp
 		double T_HTF_cold = as_double("T_HTF_cold");		//[C] Cold HTF temp

@@ -731,7 +731,7 @@ public:
 		else if (field_model_type == 2)
 		{
 			// only calculates a flux map, so need to "assign" 'helio_positions_in'
-			util::matrix_t<double> helio_pos_temp = as_matrix("helio_positions");
+			util::matrix_t<double> helio_pos_temp = as_matrix<double>("helio_positions");
 			int n_h_rows = helio_pos_temp.nrows();
 			ssc_number_t *p_helio_positions_in = allocate("helio_positions_in", n_h_rows, 2);
 			for (int i = 0; i < n_h_rows; i++)
@@ -870,7 +870,7 @@ public:
 			pc->m_startup_frac = as_double("startup_frac");
 			pc->m_htf_pump_coef = as_double("pb_pump_coef");
 			pc->m_pc_fl = as_integer("rec_htf");							// power cycle HTF is same as receiver HTF
-			pc->m_pc_fl_props = as_matrix("field_fl_props");
+			pc->m_pc_fl_props = as_matrix<double>("field_fl_props");
 
 			if (pb_tech_type == 0)
 			{
@@ -920,9 +920,9 @@ public:
 				pc->m_m_dot_htf_high = as_double("ud_m_dot_htf_high");	//[-]
 
 				// User-Defined Cycle Off-Design Tables 
-				pc->mc_T_htf_ind = as_matrix("ud_T_htf_ind_od");
-				pc->mc_T_amb_ind = as_matrix("ud_T_amb_ind_od");
-				pc->mc_m_dot_htf_ind = as_matrix("ud_m_dot_htf_ind_od");
+				pc->mc_T_htf_ind = as_matrix<double>("ud_T_htf_ind_od");
+				pc->mc_T_amb_ind = as_matrix<double>("ud_T_amb_ind_od");
+				pc->mc_m_dot_htf_ind = as_matrix<double>("ud_m_dot_htf_ind_od");
 			}
 
 			// Set pointer to parent class
@@ -970,7 +970,7 @@ public:
 				pc->m_startup_frac = as_double("startup_frac");			//[-]
 				pc->m_htf_pump_coef = as_double("pb_pump_coef");		//[kWe/kg/s]
 				pc->m_pc_fl = as_integer("rec_htf");					//[-] power cycle HTF is same as receiver HTF
-				pc->m_pc_fl_props = as_matrix("field_fl_props");		//[-]
+				pc->m_pc_fl_props = as_matrix<double>("field_fl_props");		//[-]
 
 				// User-Defined Cycle Parameters
 				pc->m_is_user_defined_pc = true;
@@ -989,9 +989,9 @@ public:
 				pc->m_m_dot_htf_high = as_double("sco2ud_m_dot_htf_high");	//[-]
 
 				// User-Defined Cycle Off-Design Tables 
-				pc->mc_T_htf_ind = as_matrix("sco2ud_T_htf_ind_od");
-				pc->mc_T_amb_ind = as_matrix("sco2ud_T_amb_ind_od");
-				pc->mc_m_dot_htf_ind = as_matrix("sco2ud_m_dot_htf_ind_od");
+				pc->mc_T_htf_ind = as_matrix<double>("sco2ud_T_htf_ind_od");
+				pc->mc_T_amb_ind = as_matrix<double>("sco2ud_T_amb_ind_od");
+				pc->mc_m_dot_htf_ind = as_matrix<double>("sco2ud_m_dot_htf_ind_od");
 
 				p_csp_power_cycle = &rankine_pc;
 			}
@@ -1003,7 +1003,7 @@ public:
 				C_sco2_rc_csp_template::S_des_par sco2_rc_csp_par;
 				// System Design Parameters
 				sco2_rc_csp_par.m_hot_fl_code = as_integer("rec_htf");					//[-]
-				sco2_rc_csp_par.mc_hot_fl_props = as_matrix("field_fl_props");			//[-]
+				sco2_rc_csp_par.mc_hot_fl_props = as_matrix<double>("field_fl_props");			//[-]
 				sco2_rc_csp_par.m_T_htf_hot_in = as_double("T_htf_hot_des") + 273.15;		//[K] Design HTF hot temp to power cycle
 				sco2_rc_csp_par.m_phx_dt_hot_approach = as_double("deltaT_PHX");			//[K/C]
 				sco2_rc_csp_par.m_T_amb_des = as_double("sco2_T_amb_des") + 273.15;		//[K] Design ambient temp, convert from C
@@ -1227,7 +1227,7 @@ public:
 					pc->m_startup_frac = as_double("startup_frac");
 					pc->m_htf_pump_coef = as_double("pb_pump_coef");
 					pc->m_pc_fl = as_integer("rec_htf");							// power cycle HTF is same as receiver HTF
-					pc->m_pc_fl_props = as_matrix("field_fl_props");
+					pc->m_pc_fl_props = as_matrix<double>("field_fl_props");
 
 					// User-Defined Cycle Parameters
 					pc->m_is_user_defined_pc = true;
@@ -1308,9 +1308,9 @@ public:
 		}
 		else
 		{
-			heliostatfield.ms_params.m_eta_map = as_matrix("eta_map");
+			heliostatfield.ms_params.m_eta_map = as_matrix<double>("eta_map");
             heliostatfield.ms_params.m_eta_map_aod_format = as_boolean("eta_map_aod_format");
-			heliostatfield.ms_params.m_flux_maps = as_matrix("flux_maps");
+			heliostatfield.ms_params.m_flux_maps = as_matrix<double>("flux_maps");
 			heliostatfield.ms_params.m_N_hel = as_integer("N_hel");
 			heliostatfield.ms_params.m_A_sf = as_double("A_sf");		//[m2]
 		}
@@ -1371,7 +1371,7 @@ public:
 		receiver.m_th_tube = as_double("th_tube");
 		receiver.m_mat_tube = as_integer("mat_tube");
 		receiver.m_field_fl = as_integer("rec_htf");
-		receiver.m_field_fl_props = as_matrix("field_fl_props");
+		receiver.m_field_fl_props = as_matrix<double>("field_fl_props");
 		receiver.m_flow_type = as_integer("Flow_type");
         receiver.m_crossover_shift = as_integer("crossover_shift");
 		receiver.m_epsilon = as_double("epsilon");
@@ -1434,9 +1434,9 @@ public:
 		C_csp_two_tank_tes storage;
 		C_csp_two_tank_tes::S_params *tes = &storage.ms_params;
 		tes->m_field_fl = as_integer("rec_htf");
-		tes->m_field_fl_props = as_matrix("field_fl_props");
+		tes->m_field_fl_props = as_matrix<double>("field_fl_props");
 		tes->m_tes_fl = as_integer("rec_htf");
-		tes->m_tes_fl_props = as_matrix("field_fl_props");
+		tes->m_tes_fl_props = as_matrix<double>("field_fl_props");
 		tes->m_is_hx = false;									// MSPT assumes direct storage, so no user input required here: hardcode = false
 		tes->m_W_dot_pc_design = as_double("P_ref");		//[MWe]
 		tes->m_eta_pc = as_double("design_eff");				//[-]
@@ -1461,10 +1461,10 @@ public:
 		// TOU parameters
 		C_csp_tou_block_schedules tou;
 		C_csp_tou_block_schedules::S_params *tou_params = &tou.ms_params;
-		tou_params->mc_csp_ops.mc_weekdays = as_matrix("weekday_schedule");
-		tou_params->mc_csp_ops.mc_weekends = as_matrix("weekend_schedule");
-		tou_params->mc_pricing.mc_weekdays = as_matrix("dispatch_sched_weekday");
-		tou_params->mc_pricing.mc_weekends = as_matrix("dispatch_sched_weekend");
+		tou_params->mc_csp_ops.mc_weekdays = as_matrix<double>("weekday_schedule");
+		tou_params->mc_csp_ops.mc_weekends = as_matrix<double>("weekend_schedule");
+		tou_params->mc_pricing.mc_weekdays = as_matrix<double>("dispatch_sched_weekday");
+		tou_params->mc_pricing.mc_weekends = as_matrix<double>("dispatch_sched_weekend");
         tou.mc_dispatch_params.m_dispatch_optimize = as_boolean("is_dispatch");
         tou.mc_dispatch_params.m_is_write_ampl_dat = as_boolean("is_write_ampl_dat");
         tou.mc_dispatch_params.m_is_ampl_engine = as_boolean("is_ampl_engine");

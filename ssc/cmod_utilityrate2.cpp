@@ -1370,14 +1370,14 @@ public:
 //		const char *schedwkend = as_string("ur_ec_sched_weekend");
 
 		size_t nrows, ncols;
-		ssc_number_t *dc_weekday = as_matrix("ur_dc_sched_weekday", &nrows, &ncols);
+		ssc_number_t *dc_weekday = as_matrix<ssc_number_t>("ur_dc_sched_weekday", &nrows, &ncols);
 		if (nrows != 12 || ncols != 24)
 		{
 			std::ostringstream ss;
 			ss << "demand charge weekday schedule must be 12x24, input is " << nrows << "x" << ncols;
 			throw exec_error("utilityrate2", ss.str());
 		}
-		ssc_number_t *dc_weekend = as_matrix("ur_dc_sched_weekend", &nrows, &ncols);
+		ssc_number_t *dc_weekend = as_matrix<ssc_number_t>("ur_dc_sched_weekend", &nrows, &ncols);
 		if (nrows != 12 || ncols != 24)
 		{
 			std::ostringstream ss;
@@ -1723,14 +1723,14 @@ public:
 		//const char *schedwkend = as_string("ur_dc_sched_weekend");
 
 		size_t nrows, ncols;
-		ssc_number_t *dc_weekday = as_matrix("ur_dc_sched_weekday", &nrows, &ncols);
+		ssc_number_t *dc_weekday = as_matrix<ssc_number_t>("ur_dc_sched_weekday", &nrows, &ncols);
 		if (nrows != 12 || ncols != 24)
 		{
 			std::ostringstream ss;
 			ss << "demand charge weekday schedule must be 12x24, input is " << nrows << "x" << ncols;
 			throw exec_error("utilityrate2", ss.str());
 		}
-		ssc_number_t *dc_weekend = as_matrix("ur_dc_sched_weekend", &nrows, &ncols);
+		ssc_number_t *dc_weekend = as_matrix<ssc_number_t>("ur_dc_sched_weekend", &nrows, &ncols);
 		if (nrows != 12 || ncols != 24)
 		{
 			std::ostringstream ss;

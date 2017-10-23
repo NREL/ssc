@@ -195,7 +195,7 @@ public:
 
         if( is_assigned("helio_positions_in") )
         {
-            util::matrix_t<double> hposin = as_matrix("helio_positions_in");
+			util::matrix_t<double> hposin = as_matrix<double>("helio_positions_in");
 			ssc_number_t *hpos = allocate( "heliostat_positions",  hposin.nrows(), 2 );
 			for(size_t i=0; i< hposin.nrows(); i++){
 				hpos[i * 2] = (ssc_number_t)hposin.at(i, 0);

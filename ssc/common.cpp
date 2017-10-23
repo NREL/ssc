@@ -347,7 +347,7 @@ bool adjustment_factors::setup(int nsteps)
 	if ( m_cm->is_assigned(m_prefix + ":periods") )
 	{
 		size_t nr, nc;
-		ssc_number_t *mat = m_cm->as_matrix(m_prefix + ":periods", &nr, &nc);
+		ssc_number_t *mat = m_cm->as_matrix<ssc_number_t>(m_prefix + ":periods", &nr, &nc);
 		if ( mat != 0 && nc == 3 )
 		{
 			for( size_t r=0;r<nr;r++ )
@@ -406,7 +406,7 @@ bool sf_adjustment_factors::setup(int nsteps)
 	if (m_cm->is_assigned("sf_adjust:periods"))
 	{
 		size_t nr, nc;
-		ssc_number_t *mat = m_cm->as_matrix("sf_adjust:periods", &nr, &nc);
+		ssc_number_t *mat = m_cm->as_matrix<ssc_number_t>("sf_adjust:periods", &nr, &nc);
 		if (mat != 0 && nc == 3)
 		{
 			for (size_t r = 0; r<nr; r++)
@@ -478,7 +478,7 @@ bool shading_factor_calculator::setup( compute_module *cm, const std::string &pr
 	if (cm->is_assigned(prefix + "shading:timestep"))
 	{
 		size_t nrows, ncols;
-		ssc_number_t *mat = cm->as_matrix(prefix + "shading:timestep", &nrows, &ncols);
+		ssc_number_t *mat = cm->as_matrix<ssc_number_t>(prefix + "shading:timestep", &nrows, &ncols);
 		if (nrows % 8760 == 0)
 		{
 			nrecs = nrows;
@@ -560,7 +560,7 @@ bool shading_factor_calculator::setup( compute_module *cm, const std::string &pr
 	{
 		m_mxhFactors.resize_fill(nrecs, 1, 1.0);
 		size_t nrows, ncols;
-		ssc_number_t *mat = cm->as_matrix(prefix + "shading:mxh", &nrows, &ncols);
+		ssc_number_t *mat = cm->as_matrix<ssc_number_t>(prefix + "shading:mxh", &nrows, &ncols);
 		if (nrows != 12 || ncols != 24)
 		{
 			ok = false;
@@ -582,7 +582,7 @@ bool shading_factor_calculator::setup( compute_module *cm, const std::string &pr
 	if (cm->is_assigned(prefix + "shading:azal"))
 	{
 		size_t nrows, ncols;
-		ssc_number_t *mat = cm->as_matrix(prefix + "shading:azal", &nrows, &ncols);
+		ssc_number_t *mat = cm->as_matrix<ssc_number_t>(prefix + "shading:azal", &nrows, &ncols);
 		if (nrows < 3 || ncols < 3)
 		{
 			ok = false;

@@ -454,7 +454,7 @@ public:
 		c_trough.m_m_dot_htfmax = as_double("m_dot_htfmax");		//[kg/s] Maximum loop HTF flow rate
 		c_trough.m_T_loop_in_des = as_double("T_loop_in_des");		//[C] Design loop inlet temperature, converted to K in init
 		c_trough.m_T_loop_out_des = as_double("T_loop_out");		//[C] Target loop outlet temperature, converted to K in init
-		c_trough.m_field_fl_props = as_matrix("field_fl_props");	//[-] User-defined field HTF properties
+		c_trough.m_field_fl_props = as_matrix<double>("field_fl_props");	//[-] User-defined field HTF properties
 		c_trough.m_T_fp = as_double("T_fp");						//[C] Freeze protection temperature (heat trace activation temperature), convert to K in init
 		c_trough.m_I_bn_des = as_double("I_bn_des");				//[W/m^2] Solar irradiation at design
 		c_trough.m_V_hdr_max = as_double("V_hdr_max");				//[m/s] Maximum HTF velocity in the header at design
@@ -554,51 +554,51 @@ public:
 		for (size_t i = 0; i < nval_Distance_SCA; i++)
 			c_trough.m_Distance_SCA[i] = (double)Distance_SCA[i];
 
-		c_trough.m_IAM_matrix = as_matrix("IAM_matrix");		//[-] IAM coefficients, matrix for 4 collectors
+		c_trough.m_IAM_matrix = as_matrix<double>("IAM_matrix");		//[-] IAM coefficients, matrix for 4 collectors
 		
 		// Why are these matrices - can't they be arrays?
-		c_trough.m_HCE_FieldFrac = as_matrix("HCE_FieldFrac");	//[-] Fraction of the field occupied by this HCE type
-		c_trough.m_D_2 = as_matrix("D_2");                      //[m] Inner absorber tube diameter
-		c_trough.m_D_3 = as_matrix("D_3");                      //[m] Outer absorber tube diameter
-		c_trough.m_D_4 = as_matrix("D_4");                      //[m] Inner glass envelope diameter
-		c_trough.m_D_5 = as_matrix("D_5");                      //[m] Outer glass envelope diameter
-		c_trough.m_D_p = as_matrix("D_p");                      //[m] Diameter of the absorber flow plug (optional)
-		c_trough.m_Flow_type = as_matrix("Flow_type");			//[-] Flow type through the absorber
-		c_trough.m_Rough = as_matrix("Rough");					//[m] Roughness of the internal surface
-		c_trough.m_alpha_env = as_matrix("alpha_env");			//[-] Envelope absorptance
+		c_trough.m_HCE_FieldFrac = as_matrix<double>("HCE_FieldFrac");	//[-] Fraction of the field occupied by this HCE type
+		c_trough.m_D_2 = as_matrix<double>("D_2");                      //[m] Inner absorber tube diameter
+		c_trough.m_D_3 = as_matrix<double>("D_3");                      //[m] Outer absorber tube diameter
+		c_trough.m_D_4 = as_matrix<double>("D_4");                      //[m] Inner glass envelope diameter
+		c_trough.m_D_5 = as_matrix<double>("D_5");                      //[m] Outer glass envelope diameter
+		c_trough.m_D_p = as_matrix<double>("D_p");                      //[m] Diameter of the absorber flow plug (optional)
+		c_trough.m_Flow_type = as_matrix<double>("Flow_type");			//[-] Flow type through the absorber
+		c_trough.m_Rough = as_matrix<double>("Rough");					//[m] Roughness of the internal surface
+		c_trough.m_alpha_env = as_matrix<double>("alpha_env");			//[-] Envelope absorptance
 		// **********************************************************
 		
 		// Emittance vs. temperature profile for each receiver type and variation
-		c_trough.m_epsilon_3_11 = as_matrix_transpose("epsilon_3_11");   //[-] Absorber emittance for receiver type 1 variation 1
-		c_trough.m_epsilon_3_12 = as_matrix_transpose("epsilon_3_12"); 	 //[-] Absorber emittance for receiver type 1 variation 2
-		c_trough.m_epsilon_3_13 = as_matrix_transpose("epsilon_3_13"); 	 //[-] Absorber emittance for receiver type 1 variation 3
-		c_trough.m_epsilon_3_14 = as_matrix_transpose("epsilon_3_14"); 	 //[-] Absorber emittance for receiver type 1 variation 4
-		c_trough.m_epsilon_3_21 = as_matrix_transpose("epsilon_3_21"); 	 //[-] Absorber emittance for receiver type 2 variation 1
-		c_trough.m_epsilon_3_22 = as_matrix_transpose("epsilon_3_22"); 	 //[-] Absorber emittance for receiver type 2 variation 2
-		c_trough.m_epsilon_3_23 = as_matrix_transpose("epsilon_3_23"); 	 //[-] Absorber emittance for receiver type 2 variation 3
-		c_trough.m_epsilon_3_24 = as_matrix_transpose("epsilon_3_24"); 	 //[-] Absorber emittance for receiver type 2 variation 4
-		c_trough.m_epsilon_3_31 = as_matrix_transpose("epsilon_3_31"); 	 //[-] Absorber emittance for receiver type 3 variation 1
-		c_trough.m_epsilon_3_32 = as_matrix_transpose("epsilon_3_32"); 	 //[-] Absorber emittance for receiver type 3 variation 2
-		c_trough.m_epsilon_3_33 = as_matrix_transpose("epsilon_3_33"); 	 //[-] Absorber emittance for receiver type 3 variation 3
-		c_trough.m_epsilon_3_34 = as_matrix_transpose("epsilon_3_34"); 	 //[-] Absorber emittance for receiver type 3 variation 4
-		c_trough.m_epsilon_3_41 = as_matrix_transpose("epsilon_3_41"); 	 //[-] Absorber emittance for receiver type 4 variation 1
-		c_trough.m_epsilon_3_42 = as_matrix_transpose("epsilon_3_42"); 	 //[-] Absorber emittance for receiver type 4 variation 2
-		c_trough.m_epsilon_3_43 = as_matrix_transpose("epsilon_3_43"); 	 //[-] Absorber emittance for receiver type 4 variation 3
-		c_trough.m_epsilon_3_44 = as_matrix_transpose("epsilon_3_44"); 	 //[-] Absorber emittance for receiver type 4 variation 4
+		c_trough.m_epsilon_3_11 = as_matrix_transpose<double>("epsilon_3_11");   //[-] Absorber emittance for receiver type 1 variation 1
+		c_trough.m_epsilon_3_12 = as_matrix_transpose<double>("epsilon_3_12"); 	 //[-] Absorber emittance for receiver type 1 variation 2
+		c_trough.m_epsilon_3_13 = as_matrix_transpose<double>("epsilon_3_13"); 	 //[-] Absorber emittance for receiver type 1 variation 3
+		c_trough.m_epsilon_3_14 = as_matrix_transpose<double>("epsilon_3_14"); 	 //[-] Absorber emittance for receiver type 1 variation 4
+		c_trough.m_epsilon_3_21 = as_matrix_transpose<double>("epsilon_3_21"); 	 //[-] Absorber emittance for receiver type 2 variation 1
+		c_trough.m_epsilon_3_22 = as_matrix_transpose<double>("epsilon_3_22"); 	 //[-] Absorber emittance for receiver type 2 variation 2
+		c_trough.m_epsilon_3_23 = as_matrix_transpose<double>("epsilon_3_23"); 	 //[-] Absorber emittance for receiver type 2 variation 3
+		c_trough.m_epsilon_3_24 = as_matrix_transpose<double>("epsilon_3_24"); 	 //[-] Absorber emittance for receiver type 2 variation 4
+		c_trough.m_epsilon_3_31 = as_matrix_transpose<double>("epsilon_3_31"); 	 //[-] Absorber emittance for receiver type 3 variation 1
+		c_trough.m_epsilon_3_32 = as_matrix_transpose<double>("epsilon_3_32"); 	 //[-] Absorber emittance for receiver type 3 variation 2
+		c_trough.m_epsilon_3_33 = as_matrix_transpose<double>("epsilon_3_33"); 	 //[-] Absorber emittance for receiver type 3 variation 3
+		c_trough.m_epsilon_3_34 = as_matrix_transpose<double>("epsilon_3_34"); 	 //[-] Absorber emittance for receiver type 3 variation 4
+		c_trough.m_epsilon_3_41 = as_matrix_transpose<double>("epsilon_3_41"); 	 //[-] Absorber emittance for receiver type 4 variation 1
+		c_trough.m_epsilon_3_42 = as_matrix_transpose<double>("epsilon_3_42"); 	 //[-] Absorber emittance for receiver type 4 variation 2
+		c_trough.m_epsilon_3_43 = as_matrix_transpose<double>("epsilon_3_43"); 	 //[-] Absorber emittance for receiver type 4 variation 3
+		c_trough.m_epsilon_3_44 = as_matrix_transpose<double>("epsilon_3_44"); 	 //[-] Absorber emittance for receiver type 4 variation 4
 
-		c_trough.m_alpha_abs = as_matrix("alpha_abs");                   //[-] Absorber absorptance
-		c_trough.m_Tau_envelope = as_matrix("Tau_envelope");             //[-] Envelope transmittance
-		c_trough.m_EPSILON_4 = as_matrix("EPSILON_4");                   //[-] Inner glass envelope emissivities
-		c_trough.m_EPSILON_5 = as_matrix("EPSILON_5");                   //[-] Outer glass envelope emissivities
-		c_trough.m_GlazingIntact = (as_matrix("GlazingIntactIn")> 0);         //[-] Glazing intact (broken glass) flag {1=true, else=false}
-		c_trough.m_P_a = as_matrix("P_a");		                         //[torr] Annulus gas pressure				 
-		c_trough.m_AnnulusGas = as_matrix("AnnulusGas");		         //[-] Annulus gas type (1=air, 26=Ar, 27=H2)
-		c_trough.m_AbsorberMaterial = as_matrix("AbsorberMaterial");	 //[-] Absorber material type
-		c_trough.m_Shadowing = as_matrix("Shadowing");                   //[-] Receiver bellows shadowing loss factor
-		c_trough.m_Dirt_HCE = as_matrix("Dirt_HCE");                     //[-] Loss due to dirt on the receiver envelope
-		c_trough.m_Design_loss = as_matrix("Design_loss");               //[-] Receiver heat loss at design
+		c_trough.m_alpha_abs = as_matrix<double>("alpha_abs");                   //[-] Absorber absorptance
+		c_trough.m_Tau_envelope = as_matrix<double>("Tau_envelope");             //[-] Envelope transmittance
+		c_trough.m_EPSILON_4 = as_matrix<double>("EPSILON_4");                   //[-] Inner glass envelope emissivities
+		c_trough.m_EPSILON_5 = as_matrix<double>("EPSILON_5");                   //[-] Outer glass envelope emissivities
+		c_trough.m_GlazingIntact = (as_matrix<double>("GlazingIntactIn")> 0);         //[-] Glazing intact (broken glass) flag {1=true, else=false}
+		c_trough.m_P_a = as_matrix<double>("P_a");		                         //[torr] Annulus gas pressure				 
+		c_trough.m_AnnulusGas = as_matrix<double>("AnnulusGas");		         //[-] Annulus gas type (1=air, 26=Ar, 27=H2)
+		c_trough.m_AbsorberMaterial = as_matrix<double>("AbsorberMaterial");	 //[-] Absorber material type
+		c_trough.m_Shadowing = as_matrix<double>("Shadowing");                   //[-] Receiver bellows shadowing loss factor
+		c_trough.m_Dirt_HCE = as_matrix<double>("Dirt_HCE");                     //[-] Loss due to dirt on the receiver envelope
+		c_trough.m_Design_loss = as_matrix<double>("Design_loss");               //[-] Receiver heat loss at design
 				
-		c_trough.m_SCAInfoArray = as_matrix("SCAInfoArray");			 //[-] Receiver (,1) and collector (,2) type for each assembly in loop 
+		c_trough.m_SCAInfoArray = as_matrix<double>("SCAInfoArray");			 //[-] Receiver (,1) and collector (,2) type for each assembly in loop 
 		
 		//[-] Collector defocus order
 		size_t nval_SCADefocusArray = 0;
@@ -714,7 +714,7 @@ public:
 		pc->m_startup_frac = as_double("startup_frac");				    //[-]
 		pc->m_htf_pump_coef = as_double("pb_pump_coef");			    //[kW/kg/s]
 		pc->m_pc_fl = as_integer("Fluid");							    //[-]
-		pc->m_pc_fl_props = as_matrix("field_fl_props");                //[-]
+		pc->m_pc_fl_props = as_matrix<double>("field_fl_props");                //[-]
 
 		if( pb_tech_type == 0 )
 		{
@@ -758,9 +758,9 @@ public:
 			pc->m_m_dot_htf_high = as_double("ud_m_dot_htf_high");	//[-]
 
 			// User-Defined Cycle Off-Design Tables 
-			pc->mc_T_htf_ind = as_matrix("ud_T_htf_ind_od");
-			pc->mc_T_amb_ind = as_matrix("ud_T_amb_ind_od");
-			pc->mc_m_dot_htf_ind = as_matrix("ud_m_dot_htf_ind_od");
+			pc->mc_T_htf_ind = as_matrix<double>("ud_T_htf_ind_od");
+			pc->mc_T_amb_ind = as_matrix<double>("ud_T_amb_ind_od");
+			pc->mc_m_dot_htf_ind = as_matrix<double>("ud_m_dot_htf_ind_od");
 		}
 
 		// ********************************
@@ -771,9 +771,9 @@ public:
 		C_csp_two_tank_tes storage;
 		C_csp_two_tank_tes::S_params *tes = &storage.ms_params;
 		tes->m_field_fl = as_integer("Fluid");
-		tes->m_field_fl_props = as_matrix("field_fl_props");
+		tes->m_field_fl_props = as_matrix<double>("field_fl_props");
 		tes->m_tes_fl = as_integer("Fluid");
-		tes->m_tes_fl_props = as_matrix("field_fl_props");
+		tes->m_tes_fl_props = as_matrix<double>("field_fl_props");
 		tes->m_is_hx = false;									//[-] Assuming direct storage here
 		tes->m_W_dot_pc_design = as_double("W_pb_design");		//[MWe]
 		tes->m_eta_pc = as_double("eta_ref");					//[-]
@@ -806,10 +806,10 @@ public:
 		// ********************************
 		C_csp_tou_block_schedules tou;
 		C_csp_tou_block_schedules::S_params *tou_params = &tou.ms_params;
-		tou_params->mc_csp_ops.mc_weekdays = as_matrix("weekday_schedule");
-		tou_params->mc_csp_ops.mc_weekends = as_matrix("weekend_schedule");
-		tou_params->mc_pricing.mc_weekdays = as_matrix("dispatch_sched_weekday");
-		tou_params->mc_pricing.mc_weekends = as_matrix("dispatch_sched_weekend");
+		tou_params->mc_csp_ops.mc_weekdays = as_matrix<double>("weekday_schedule");
+		tou_params->mc_csp_ops.mc_weekends = as_matrix<double>("weekend_schedule");
+		tou_params->mc_pricing.mc_weekdays = as_matrix<double>("dispatch_sched_weekday");
+		tou_params->mc_pricing.mc_weekends = as_matrix<double>("dispatch_sched_weekend");
 		tou.mc_dispatch_params.m_dispatch_optimize = false;
 		tou.mc_dispatch_params.m_is_write_ampl_dat = false;
 		tou.mc_dispatch_params.m_is_ampl_engine = false;

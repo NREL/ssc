@@ -358,51 +358,23 @@ ssc_number_t *compute_module::as_array( const std::string &name, size_t *count )
 	return x.num.data();
 }
 
-std::vector<double> compute_module::as_doublevec( const std::string &name ) throw( general_error )
+/**
+Specialization returns a vector of type bool
+This results from poor design of vardata holding all data as ssc_number_t
+Fixes warning C4800
+*/
+std::vector<bool> compute_module::as_vector_bool(const std::string &name) throw(general_error)
 {
 	var_data &x = value(name);
 	if (x.type != SSC_ARRAY) throw cast_error("array", x, name);
 	size_t len = x.num.length();
-	std::vector<double> v(len);
+	std::vector<bool> v(len);
 	ssc_number_t *p = x.num.data();
-	for (size_t k=0;k<len;k++)
-		v[k] = (double) p[k];
+
+	for (size_t k = 0; k < len; k++)
+		v[k] = p[k] != 0;
+
 	return v;
-}
-
-ssc_number_t *compute_module::as_matrix( const std::string &name, size_t *rows, size_t *cols ) throw( general_error )
-{
-	var_data &x = value(name);
-	if (x.type != SSC_MATRIX) throw cast_error("matrix", x, name);
-	if (rows) *rows = x.num.nrows();
-	if (cols) *cols = x.num.ncols();
-	return x.num.data();
-}
-
-util::matrix_t<double> compute_module::as_matrix(const std::string &name) throw(general_error)
-{
-	var_data &x = value(name);
-	if (x.type != SSC_MATRIX) throw cast_error("matrix", x, name);
-
-	util::matrix_t<double> mat(x.num.nrows(), x.num.ncols(), 0.0);
-	for (size_t r = 0; r<x.num.nrows(); r++)
-		for (size_t c = 0; c<x.num.ncols(); c++)
-			mat.at(r, c) = (double)x.num(r, c);
-
-	return mat;
-}
-
-util::matrix_t<double> compute_module::as_matrix_transpose(const std::string &name) throw(general_error)
-{
-	var_data &x = value(name);
-	if (x.type != SSC_MATRIX) throw cast_error("matrix", x, name);
-
-	util::matrix_t<double> mat(x.num.ncols(), x.num.nrows(), 0.0);
-	for (size_t r = 0; r<x.num.nrows(); r++)
-		for (size_t c = 0; c<x.num.ncols(); c++)
-			mat.at(c, r) = (double)x.num(r, c);
-
-	return mat;
 }
 
 bool compute_module::get_matrix(const std::string &name, util::matrix_t<ssc_number_t> &mat) throw(general_error)
@@ -411,7 +383,7 @@ bool compute_module::get_matrix(const std::string &name, util::matrix_t<ssc_numb
 	if (x.type != SSC_MATRIX) throw cast_error("matrix", x, name);
 
 	size_t nrows, ncols;
-	ssc_number_t *arr = as_matrix(name, &nrows, &ncols);
+	ssc_number_t *arr = as_matrix<ssc_number_t>(name, &nrows, &ncols);
 
 	if (nrows < 1 || ncols < 1)
 		return false;
@@ -423,7 +395,6 @@ bool compute_module::get_matrix(const std::string &name, util::matrix_t<ssc_numb
 
 	return true;
 }
-
 
 
 ssc_number_t compute_module::get_operand_value( const std::string &input, const std::string &cur_var_name) throw( general_error )
