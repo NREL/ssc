@@ -5,20 +5,31 @@ Pressure Range: 1.0 Pa to 50.0 MPa
 FIT Version: 4cd1a62f8548
 
 ----------------------------------------------------------------------------------------------------
-Copyright (c) 2014, Northland Numerics LLC
+Copyright (c) 2016, Northland Numerics LLC
 All rights reserved.
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+Use of this software in source and binary forms, with or without modification, is permitted for
+Alliance for Sustainable Energy, LLC (the “Licensee”) and for third parties that receive this
+software, with or without modification, directly from Licensee.  Licensee is permitted to
+redistribute this software in source and binary forms, with or without modification, provided
+that redistributions of source code must retain the above copyright notice and reservation of
+rights, this paragraph, and the following disclaimer of warranties and liability.  Absent
+separate written agreement with Northland Numerics LLC, redistribution of this software is not
+permitted for third parties receiving this software, with or without modification, from Licensee
+or from any other entity or individual.
+
+THIS SOFTWARE IS PROVIDED BY NORTHLAND NUMERICS LLC "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
 INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY, NONINFRINGEMENT AND
 FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL ANY WARRANTY BE CREATED IN
-CONNECTION WITH THE SALE OF SOFTWARE, UNLESS THE WARRANTY WAS CREATED SOLELY DUE TO A WRITTEN
-AGREEMENT SIGNED BY SELLER.  IN NO EVENT SHALL ANY WARRANTY BE IMPUTED OR PRESUMED.  IN NO EVENT
-SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, BUSINESS INTERRUPTION;
-PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; OR LOSS OF USE, DATA, OR PROFITS) HOWEVER CAUSED AND
-ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
-OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-POSSIBILITY OF SUCH DAMAGE.
+CONNECTION WITH THE SALE OF THIS SOFTWARE, UNLESS THE WARRANTY WAS CREATED SOLELY AND EXPRESSLY
+IN A SEPARATE WRITTEN AGREEMENT SIGNED BY NORTHLAND NUMERICS LLC.  IN NO EVENT SHALL ANY WARRANTY
+BE IMPUTED OR PRESUMED.  IN NO EVENT SHALL NORTHLAND NUMERICS LLC OR CONTRIBUTORS TO THIS SOFTWARE
+BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, BUSINESS INTERRUPTION; PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+OR LOSS OF USE, DATA, OR PROFITS), HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE), ARISING IN ANY WAY
+OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
 ----------------------------------------------------------------------------------------------------
 
 The file water_properties.c contains a number of functions that return water properties

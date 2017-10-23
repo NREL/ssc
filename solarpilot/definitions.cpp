@@ -66,6 +66,23 @@ var_map::var_map( var_map &vc )
 
 void var_map::copy( var_map &vc )
 {
+    //to copy, we need to make sure the template structures for heliostats and receivers are 
+    //parallel between both varmaps first. Then copy by iterating over the list of strings in 
+    //the varmap and set the corresponding object values in each map.
+
+    //receiver templates
+    for( size_t i=0; i<recs.size(); i++ )
+        drop_receiver(i);
+    for( size_t i=0; i<vc.recs.size(); i++ )
+        add_receiver( vc.recs.at(i).id.val );
+
+    //heliostat templates
+    for( size_t i=0; i<hels.size(); i++ )
+        drop_heliostat(i);
+    for( size_t i=0; i<vc.hels.size(); i++ )
+        add_heliostat( vc.hels.at(i).id.val );
+
+    //now add by string->obj
     for( unordered_map< std::string, spbase* >::iterator var=_varptrs.begin(); var!=_varptrs.end(); var++ )
         var->second->set_from_string( vc._varptrs.at( var->first )->as_string().c_str() );
     

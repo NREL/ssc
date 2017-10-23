@@ -86,7 +86,7 @@ bool ShadeDB8_mpp::get_index(const size_t &N, const size_t &d, const  size_t &t,
 {
 	bool ret_val = false;
 	//size_t ret_ndx=-1;
-	size_t length=0, offset=0;
+	size_t length=0;
 //	size_t length_t =10, length_d=10;
 	size_t iN = 0, id = 0, it = 0;
 
@@ -109,11 +109,9 @@ bool ShadeDB8_mpp::get_index(const size_t &N, const size_t &d, const  size_t &t,
 	{
 		case VMPP:
 			length = 8;
-			offset = 0;
 			break;
 		case IMPP:
 			length = 8;
-			offset = p_vmpp_uint8_size / 2; // short offset
 			break;
 	}
 	if (length == 0) return ret_val;

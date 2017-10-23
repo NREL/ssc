@@ -188,8 +188,6 @@ void csp_dispatch_opt::clear_output_arrays()
 bool csp_dispatch_opt::check_setup(int nstep)
 {
     //check parameters and inputs to make sure everything has been set up correctly
-    bool ok = true;
-
     if( (int)price_signal.size() < nstep )   return false;
 
     if( !m_is_weather_setup ) return false;
@@ -373,7 +371,6 @@ static void calculate_parameters(csp_dispatch_opt *optinst, unordered_map<std::s
             pars["Z_2"] = 1./(double)m * ( fi - pars["Z_1"] * fhfi );
         }
 
-        double rate1 = 0;
         pars["etap"] = pars["Z_1"]*optinst->params.eta_cycle_ref; //rate2
 
         double limit1 = (-pars["Z_2"]*pars["W_dot_cycle"])/(pars["Z_1"]*optinst->params.eta_cycle_ref);  //q at point where power curve crosses x-axis
@@ -466,7 +463,6 @@ bool csp_dispatch_opt::optimize()
 
         //Calculate the number of variables
         int nt = (int)m_nstep_opt;
-        int nz = (int)params.eff_table_load.get_size();
 
         //set up the variable structure
         optimization_vars O;
@@ -1913,7 +1909,7 @@ optimization_vars::optimization_vars()
     current_mem_pos = 0;
     alloc_mem_size = 0;
 }
-void optimization_vars::add_var(char *vname, int var_type /* VAR_TYPE enum */, int var_dim /* VAR_DIM enum */, int var_dim_size, REAL lobo, REAL upbo)
+void optimization_vars::add_var(const string &vname, int var_type /* VAR_TYPE enum */, int var_dim /* VAR_DIM enum */, int var_dim_size, REAL lobo, REAL upbo)
 {
     if(var_dim == VAR_DIM::DIM_T2)
         add_var(vname, var_type, VAR_DIM::DIM_NT, var_dim_size, var_dim_size, lobo, upbo);
@@ -1922,11 +1918,11 @@ void optimization_vars::add_var(char *vname, int var_type /* VAR_TYPE enum */, i
 
 }
 
-void optimization_vars::add_var(char *vname, int var_type /* VAR_TYPE enum */, int var_dim /* VAR_DIM enum */, int var_dim_size, int var_dim_size2, REAL lobo, REAL upbo)
+void optimization_vars::add_var(const string &vname, int var_type /* VAR_TYPE enum */, int var_dim /* VAR_DIM enum */, int var_dim_size, int var_dim_size2, REAL lobo, REAL upbo)
 {
     var_objects.push_back( optimization_vars::opt_var() );
     optimization_vars::opt_var *v = &var_objects.back();
-    v->name = (string)vname;
+    v->name = vname;
     v->ind_start = current_mem_pos;
     v->var_type = var_type;
     v->var_dim = var_dim;
@@ -2007,12 +2003,12 @@ REAL &optimization_vars::operator()(int varind, int ind1, int ind2)     //Access
 }
 
 
-int optimization_vars::column(char *varname, int ind)
+int optimization_vars::column(const string &varname, int ind)
 {
     return var_by_name[varname]->ind_start + ind +1;
 }
 
-int optimization_vars::column(char *varname, int ind1, int ind2)
+int optimization_vars::column(const string &varname, int ind1, int ind2)
 {
     opt_var *v = var_by_name[ string(varname) ];
     switch (v->var_dim)
@@ -2067,7 +2063,7 @@ REAL *optimization_vars::get_variable_array()
     return data;
 }
 
-optimization_vars::opt_var *optimization_vars::get_var(char *varname)
+optimization_vars::opt_var *optimization_vars::get_var(const string &varname)
 {
     return var_by_name[ varname ];
 }

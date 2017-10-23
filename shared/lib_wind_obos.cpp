@@ -107,7 +107,8 @@ void wobos::Construction_finance_factor()
 //calculate construction financing cost
 void wobos::Construction_finance()
 {
-    construction_finance_cost = (construction_finance_factor-1)*(turbCapEx+total_bos_cost+soft_costs);
+//    construction_finance_cost = (construction_finance_factor-1)*(turbCapEx+total_bos_cost+soft_costs);
+    construction_finance_cost = (construction_finance_factor-1)*(turbCapEx+total_bos_cost);
 }
 
 //calculate total contingency cost
@@ -139,7 +140,8 @@ double wobos::DecomissExpense()
 //calculate total BOS costs
 void wobos::Total_bos_cost()
 {
-    total_bos_cost = totAnICost+totDevCost+totElecCost+totEnMCost+totPnSCost+subTotCost+soft_costs;
+//    total_bos_cost = totAnICost+totDevCost+totElecCost+totEnMCost+totPnSCost+subTotCost+soft_costs;
+    total_bos_cost = totAnICost+totDevCost+totElecCost+totEnMCost+totPnSCost+subTotCost;
 }
 
 //*******************************************************************************************
@@ -1849,7 +1851,7 @@ void wobos::ArrayCabCostOptimizer()
 	{478.805 , 48.706   , 12800       , 24000},  //630 mm2
 	{585.832 , 57.428   , 14195       , 25395},  //800 mm2
 	{698.492 , 66.738   , 15836       , 27036}}; //1000 mm2
-
+	*/
 	/*                  (turbine      (substation
 	($/m)    ,(kg/m)  , $/interface), $/interface)*/
 	/*  double array66kvData[11][4] = {

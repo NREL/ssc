@@ -311,7 +311,7 @@ static bool tcsvalue_parse_matrix( tcsvalue *v, const char *s )
 		if ( *p != ']' )
 			return false;
 		
-		*p++;
+		p++;
 		
 		while (*p && (*p == ' ' || *p == '\t'))
 			p++;
@@ -444,7 +444,6 @@ static void _message( struct _tcscontext *t, int msgtype, const char *message )
 static bool _progress( struct _tcscontext *t, float percent, const char *message )
 {
 	tcskernel *k = (tcskernel*)t->kernel_internal;
-	int uid = t->unit_internal;
 	return k->progress( percent, message ? std::string(message) : std::string("") );
 }
 
