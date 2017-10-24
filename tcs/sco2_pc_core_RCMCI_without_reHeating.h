@@ -47,8 +47,8 @@
 *  THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *******************************************************************************************************/
 
-#ifndef __SCO2_PC_CORE_WITH_REHEATING
-#define __SCO2_PC_CORE_WITH_REHEATING
+#ifndef __SCO2_PC_CORE_
+#define __SCO2_PC_CORE_
 
 #include <limits>
 #include <vector>
@@ -70,10 +70,10 @@ void calculate_turbomachinery_outlet_1(double T_in /*K*/, double P_in /*kPa*/, d
 //void calculate_hxr_UA_1(int N_hxrs, double Q_dot /*units?*/, double m_dot_c, double m_dot_h, double T_c_in, double T_h_in, double P_c_in, double P_c_out, double P_h_in, double P_h_out,
 //	int & error_code, double & UA, double & min_DT);
 
-//void isen_eta_from_poly_eta(double T_in /*K*/, double P_in /*kPa*/, double P_out /*kPa*/, double poly_eta /*-*/, bool is_comp, int & error_code, double & isen_eta);
+void isen_eta_from_poly_eta(double T_in /*K*/, double P_in /*kPa*/, double P_out /*kPa*/, double poly_eta /*-*/, bool is_comp, int & error_code, double & isen_eta);
 
 // Heat Exchanger Class
-class C_HeatExchanger_RH
+class C_HeatExchanger_RCMCI_without_ReHeating
 {
 public:
 	struct S_design_parameters
@@ -99,13 +99,13 @@ public:
 		}
 	};
 
-public:
+private:
 	S_design_parameters ms_des_par;
 
 public:
-	~C_HeatExchanger_RH(){};
+	~C_HeatExchanger(){};
 
-	C_HeatExchanger_RH(){};
+	C_HeatExchanger(){};
 
 	void initialize(const S_design_parameters & des_par_in);
 
@@ -117,7 +117,7 @@ public:
 
 };
 
-class C_turbine_RH
+class C_turbine_RCMCI_without_ReHeating
 {
 public:
 	struct S_design_parameters
@@ -146,7 +146,7 @@ public:
 
 	struct S_design_solved
 	{
-		double m_nu_design_RH;					//[-] ratio of tip speed to spouting velocity
+		double m_nu_design;					//[-] ratio of tip speed to spouting velocity
 		double m_D_rotor;					//[m] Turbine diameter
 		double m_A_nozzle;					//[m^2] Effective nozzle area
 		double m_w_tip_ratio;				//[-] ratio of tip speed to local speed of sound
@@ -155,7 +155,7 @@ public:
 
 		S_design_solved()
 		{
-			m_nu_design_RH = m_D_rotor = m_A_nozzle = m_w_tip_ratio = m_eta = m_N_design = std::numeric_limits<double>::quiet_NaN();
+			m_nu_design = m_D_rotor = m_A_nozzle = m_w_tip_ratio = m_eta = m_N_design = std::numeric_limits<double>::quiet_NaN();
 		}
 	};
 
@@ -181,11 +181,11 @@ private:
 	S_od_solved ms_od_solved;
 
 public:
-	~C_turbine_RH(){};
+	~C_turbine(){};
 
-	C_turbine_RH(){};
+	C_turbine(){};
 
-	static const double m_nu_design_RH;
+	static const double m_nu_design;
 	
 	const S_design_solved * get_design_solved()
 	{
@@ -197,14 +197,14 @@ public:
 		return &ms_od_solved;
 	}
 
-	void turbine_sizing_RH(const S_design_parameters & des_par_in, int & error_code);	
+	void turbine_sizing(const S_design_parameters & des_par_in, int & error_code);	
 
-	void off_design_turbine_RH(double T_in, double P_in, double P_out, double N, int & error_code, double & m_dot, double & T_out);
+	void off_design_turbine(double T_in, double P_in, double P_out, double N, int & error_code, double & m_dot, double & T_out);
 
-	void od_turbine_at_N_des_RH(double T_in, double P_in, double P_out, int & error_code, double & m_dot, double & T_out);
+	void od_turbine_at_N_des(double T_in, double P_in, double P_out, int & error_code, double & m_dot, double & T_out);
 };
 
-class C_comp_single_stage_RH
+class C_comp_single_stage_RCMCI_without_ReHeating
 {
 public:
 
@@ -279,13 +279,13 @@ public:
 	S_des_solved ms_des_solved; 
 	S_od_solved ms_od_solved;
 
-	~C_comp_single_stage_RH(){};
+	~C_comp_single_stage(){};
 
-	C_comp_single_stage_RH(){};
+	C_comp_single_stage(){};
 
-	static const double m_snl_phi_design_RH;		//[-] Design-point flow coef. for Sandia compressor (corresponds to max eta)
-	static const double m_snl_phi_min_RH;				//[-] Approximate surge limit for SNL compressor
-	static const double m_snl_phi_max_RH;				//[-] Approximate x-intercept for SNL compressor
+	static const double m_snl_phi_design;		//[-] Design-point flow coef. for Sandia compressor (corresponds to max eta)
+	static const double m_snl_phi_min;				//[-] Approximate surge limit for SNL compressor
+	static const double m_snl_phi_max;				//[-] Approximate x-intercept for SNL compressor
 
 	const S_des_solved * get_design_solved()
 	{
@@ -304,11 +304,11 @@ public:
 	int calc_N_from_phi(double T_in /*K*/, double P_in /*kPa*/, double m_dot /*kg/s*/, double phi_in /*-*/, double & N_rpm /*rpm*/);
 };
 
-class C_comp_multi_stage_RH
+class C_comp_multi_stage_RCMCI_without_ReHeating
 {
 public:
 
-	std::vector<C_comp_single_stage_RH> mv_stages;
+	std::vector<C_comp_single_stage> mv_stages;
 
 	struct S_des_solved
 	{
@@ -377,9 +377,9 @@ public:
 	S_des_solved ms_des_solved;
 	S_od_solved ms_od_solved;
 
-	~C_comp_multi_stage_RH(){};
+	~C_comp_multi_stage(){};
 
-	C_comp_multi_stage_RH(){};
+	C_comp_multi_stage(){};
 
 	const S_des_solved * get_design_solved()
 	{
@@ -394,14 +394,14 @@ public:
 	class C_MEQ_eta_isen__h_out : public C_monotonic_equation
 	{
 	private:
-		C_comp_multi_stage_RH *mpc_multi_stage;
+		C_comp_multi_stage *mpc_multi_stage;
 		double m_T_in;	//[K]
 		double m_P_in;	//[kPa]
 		double m_P_out;	//[kPa]
 		double m_m_dot;	//[kg/s]
 
 	public:
-		C_MEQ_eta_isen__h_out(C_comp_multi_stage_RH *pc_multi_stage,
+		C_MEQ_eta_isen__h_out(C_comp_multi_stage *pc_multi_stage,
 			double T_in /*K*/, double P_in /*kPa*/, double P_out /*kPa*/, double m_dot /*kg/s*/)
 		{
 			mpc_multi_stage = pc_multi_stage;
@@ -417,14 +417,14 @@ public:
 	class C_MEQ_N_rpm__P_out : public C_monotonic_equation
 	{
 	private:
-		C_comp_multi_stage_RH *mpc_multi_stage;
+		C_comp_multi_stage *mpc_multi_stage;
 		double m_T_in;	//[K]
 		double m_P_in;	//[kPa]
 		double m_m_dot;	//[kg/s]
 		double m_eta_isen;	//[-]
 
 	public:
-		C_MEQ_N_rpm__P_out(C_comp_multi_stage_RH *pc_multi_stage,
+		C_MEQ_N_rpm__P_out(C_comp_multi_stage *pc_multi_stage,
 			double T_in /*K*/, double P_in /*kPa*/, double m_dot /*kg/s*/, double eta_isen /*-*/)
 		{
 			mpc_multi_stage = pc_multi_stage;
@@ -440,13 +440,13 @@ public:
 	class C_MEQ_phi_od__P_out : public C_monotonic_equation
 	{
 	private:
-		C_comp_multi_stage_RH *mpc_multi_stage;
+		C_comp_multi_stage *mpc_multi_stage;
 		double m_T_in;	//[K]
 		double m_P_in;	//[kPa]
 		double m_m_dot;	//[kg/s]
 
 	public:
-		C_MEQ_phi_od__P_out(C_comp_multi_stage_RH *pc_multi_stage,
+		C_MEQ_phi_od__P_out(C_comp_multi_stage *pc_multi_stage,
 			double T_in /*K*/, double P_in /*kPa*/, double m_dot /*kg/s*/)
 		{
 			mpc_multi_stage = pc_multi_stage;
@@ -472,7 +472,7 @@ public:
 
 };
 
-//class C_compressor_RH
+//class C_compressor_RCMCI_without_ReHeating
 //{
 //public:
 //	struct S_design_parameters
@@ -576,7 +576,7 @@ public:
 //		int &error_code, double &T_out /*K*/, double &P_out /*kPa*/);
 //};
 
-//class C_recompressor_RH
+//class C_recompressor_RCMCI_without_ReHeating
 //{
 //public:
 //	struct S_design_parameters
@@ -704,25 +704,25 @@ public:
 //	
 //};
 
-class C_RecompCycle_with_ReHeating
+class C_RecompCycle_RCMCI_without_ReHeating
 {
 public:
 	
 	enum E_cycle_state_points
 	{
 		// index values for c++ 0-based vectors for temperature, pressure, etc.
-		MC_IN = 0, //Stream 1
-		MC_OUT,    //Stream 2
+		MC2_IN = 0, //Stream 1
+		MC2_OUT,    //Stream 2
 		LTR_HP_OUT, //Stream 3
 		MIXER_OUT, //Stream 4
 		HTR_HP_OUT, //Stream 5
 		MT_IN,  //Main Turbine In, Stream 6
-		RT_OUT, //ReHeating Turbine Out, Stream 7
+		MT_OUT, //Main Turbine Out, Stream 7
 		HTR_LP_OUT, //Stream 8
 		LTR_LP_OUT,  //Stream 9
 		RC_OUT,	//Stream 10
-		MT_OUT, //Main Turbine Out, Stream 11
-		RT_IN  //ReHeating Turbine In, Stream 12
+		MC1_IN, //Stream 11
+		MC1_OUT//Stream 12
 	};
 
 	struct S_design_limits
@@ -741,26 +741,27 @@ public:
 	struct S_design_parameters
 	{
 		double m_W_dot_net;					//[kW] Target net cycle power
-		double m_T_mc_in;					//[K] Compressor inlet temperature
-		double m_T_mt_in;					//[K] Main Turbine inlet temperature
-        double m_T_rt_in;                  //[K] ReHeating Turbine inelt temperature
-		double m_P_mc_in;					//[kPa] Compressor inlet pressure
-		double m_P_mc_out;					//[kPa] Compressor outlet pressure
-		double m_P_rt_in;                  //[kPa] ReHeating Turbine inlet pressure
+		double m_T_mc1_in;					//[K] Compressor1 inlet temperature
+		double m_T_mc2_in;					//[K] Compressor2 inlet temperature
+		double m_T_t_in;					//[K] Turbine inlet temperature
+		double m_P_mc1_in;					//[kPa] Compressor1 inlet pressure
+		double m_P_mc1_out;					//[kPa] Compressor1 outlet pressure
+		double m_P_mc2_in;					//[kPa] Compressor2 inlet pressure
+		double m_P_mc2_out;					//[kPa] Compressor2 outlet pressure
 		std::vector<double> m_DP_LT;		//(cold, hot) positive values are absolute [kPa], negative values are relative (-)
 		std::vector<double> m_DP_HT;		//(cold, hot) positive values are absolute [kPa], negative values are relative (-)
-		std::vector<double> m_DP_PC;		//(cold, hot) positive values are absolute [kPa], negative values are relative (-)
+		std::vector<double> m_DP_PC1;		//(cold, hot) positive values are absolute [kPa], negative values are relative (-)
+		std::vector<double> m_DP_PC2;		//(cold, hot) positive values are absolute [kPa], negative values are relative (-)
 		std::vector<double> m_DP_PHX;		//(cold, hot) positive values are absolute [kPa], negative values are relative (-)
-		std::vector<double> m_DP_RHX;		//(cold, hot) positive values are absolute [kPa], negative values are relative (-)
 		double m_UA_LT;						//[kW/K] UA in LTR
 		double m_UA_HT;						//[kW/K] UA in HTR
 		double m_LT_eff_max;				//[-] Maximum allowable effectiveness in LT recuperator
 		double m_HT_eff_max;				//[-] Maximum allowable effectiveness in HT recuperator
 		double m_recomp_frac;				//[-] Fraction of flow that bypasses the precooler and the main compressor at the design point
-		double m_eta_mc;					//[-] design-point efficiency of the main compressor; isentropic if positive, polytropic if negative
+		double m_eta_mc1;					//[-] design-point efficiency of the main compressor1; isentropic if positive, polytropic if negative
+		double m_eta_mc2;					//[-] design-point efficiency of the main compressor2; isentropic if positive, polytropic if negative
 		double m_eta_rc;					//[-] design-point efficiency of the recompressor; isentropic if positive, polytropic if negative
-		double m_eta_mt;					//[-] design-point efficiency of the main turbine; isentropic if positive, polytropic if negative
-		double m_eta_rt;                    //[-] design-point efficiency of the reheating turbine; isentropic if positive, polytropic if negative
+		double m_eta_t;						//[-] design-point efficiency of the turbine; isentropic if positive, polytropic if negative
 		int m_N_sub_hxrs;					//[-] Number of sub-heat exchangers to use when calculating UA value for a heat exchanger
 		double m_P_high_limit;				//[kPa] maximum allowable pressure in cycle
 		double m_tol;						//[-] Convergence tolerance
@@ -768,62 +769,68 @@ public:
 
 		S_design_parameters()
 		{
-			m_W_dot_net = m_T_mc_in = m_T_mt_in = m_T_rt_in = m_P_mc_in = m_P_mc_out = m_P_rt_in = m_UA_LT = m_UA_HT = m_LT_eff_max = m_HT_eff_max = m_recomp_frac = 
-				m_eta_mc = m_eta_rc = m_eta_mt= m_eta_rt = m_P_high_limit = m_tol = m_N_turbine = std::numeric_limits<double>::quiet_NaN();
+			m_W_dot_net = m_T_mc1_in = m_T_mc2_in = m_T_t_in = m_P_mc1_in = m_P_mc1_out = m_P_mc2_in = m_P_mc2_out = m_UA_LT = m_UA_HT = 
+			m_LT_eff_max = m_HT_eff_max = m_recomp_frac = m_eta_mc1 =  m_eta_mc2 = m_eta_rc = m_eta_t = m_P_high_limit = m_tol = m_N_turbine = 
+			std::numeric_limits<double>::quiet_NaN();
 			m_N_sub_hxrs = -1;
 
 			m_DP_LT.resize(2);
 			std::fill(m_DP_LT.begin(), m_DP_LT.end(), std::numeric_limits<double>::quiet_NaN());
 			m_DP_HT.resize(2);
 			std::fill(m_DP_HT.begin(), m_DP_HT.end(), std::numeric_limits<double>::quiet_NaN());
-			m_DP_PC.resize(2);
-			std::fill(m_DP_PC.begin(), m_DP_PC.end(), std::numeric_limits<double>::quiet_NaN());
+			m_DP_PC1.resize(2);
+			std::fill(m_DP_PC1.begin(), m_DP_PC1.end(), std::numeric_limits<double>::quiet_NaN());
+			m_DP_PC2.resize(2);
+			std::fill(m_DP_PC2.begin(), m_DP_PC2.end(), std::numeric_limits<double>::quiet_NaN());
 			m_DP_PHX.resize(2);
 			std::fill(m_DP_PHX.begin(), m_DP_PHX.end(), std::numeric_limits<double>::quiet_NaN());
-			m_DP_RHX.resize(2);
-			std::fill(m_DP_RHX.begin(), m_DP_RHX.end(), std::numeric_limits<double>::quiet_NaN());
 		}
 	};
 
 	struct S_opt_design_parameters
 	{
 		double m_W_dot_net;					//[kW] Target net cycle power
-		double m_T_mc_in;					//[K] Compressor inlet temperature
-		double m_T_mt_in;					//[K] Main Turbine inlet temperature
-		double m_T_rt_in;                   //[K] ReHeating Turbine inlet temperature
-		double m_P_rt_in_guess;             //[kPa] ReHeating Turbine inlet Pressure
-		bool m_fixed_P_rt_in_guess;         //[-] if true, m_P_rt_in is fixed at m_P_rt_in_guess
+		double m_T_mc1_in;					//[K] Compressor1 inlet temperature
+		double m_T_mc2_in;					//[K] Compressor2 inlet temperature
+		double m_T_t_in;					//[K] Turbine inlet temperature
 		std::vector<double> m_DP_LT;		//(cold, hot) positive values are absolute [kPa], negative values are relative (-)
 		std::vector<double> m_DP_HT;		//(cold, hot) positive values are absolute [kPa], negative values are relative (-)
-		std::vector<double> m_DP_PC;		//(cold, hot) positive values are absolute [kPa], negative values are relative (-)
+		std::vector<double> m_DP_PC1		//(cold, hot) positive values are absolute [kPa], negative values are relative (-)
+		std::vector<double> m_DP_PC2		//(cold, hot) positive values are absolute [kPa], negative values are relative (-)
 		std::vector<double> m_DP_PHX;		//(cold, hot) positive values are absolute [kPa], negative values are relative (-)
-		std::vector<double> m_DP_RHX;       //(cold, hot) positive values are absolute [kPa], negative values are relative (-)
 		double m_UA_rec_total;				//[kW/K] Total design-point recuperator UA
 		double m_LT_eff_max;				//[-] Maximum allowable effectiveness in LT recuperator
 		double m_HT_eff_max;				//[-] Maximum allowable effectiveness in HT recuperator
-		double m_eta_mc;					//[-] design-point efficiency of the main compressor; isentropic if positive, polytropic if negative
+		double m_eta_mc1;					//[-] design-point efficiency of the main compressor1; isentropic if positive, polytropic if negative
+		double m_eta_mc2;					//[-] design-point efficiency of the main compressor2; isentropic if positive, polytropic if negative
 		double m_eta_rc;					//[-] design-point efficiency of the recompressor; isentropic if positive, polytropic if negative
-		double m_eta_mt;					//[-] design-point efficiency of the main turbine; isentropic if positive, polytropic if negative
-		double m_eta_rt;                    //[-] design-point efficiency of the reheating turbine; isentropic if positive, polytropic if negative
+		double m_eta_t;						//[-] design-point efficiency of the turbine; isentropic if positive, polytropic if negative
 		int m_N_sub_hxrs;					//[-] Number of sub-heat exchangers to use when calculating UA value for a heat exchanger
 		double m_P_high_limit;				//[kPa] maximum allowable pressure in cycle
 		double m_tol;						//[-] Convergence tolerance
 		double m_opt_tol;					//[-] Optimization tolerance
 		double m_N_turbine;					//[rpm] Turbine shaft speed (negative values link turbine to compressor)
-		double m_P_mc_out_guess;			//[kPa] Initial guess for main compressor outlet pressure
-		bool m_fixed_P_mc_out;				//[-] if true, P_mc_out is fixed at P_mc_out_guess
+
+		double m_P_mc1_in_guess;			//[kPa] Initial guess for main compressor outlet pressure
+		bool m_fixed_P_mc1_in;				//[-] if true, P_mc_out is fixed at P_mc_out_guess
+		
+		double m_P_mc2_out_guess;			//[kPa] Initial guess for main compressor outlet pressure
+		bool m_fixed_P_mc2_out;				//[-] if true, P_mc_out is fixed at P_mc_out_guess
+		
 		double m_PR_mc_guess;				//[-] Initial guess for ratio of P_mc_out to P_mc_in
 		bool m_fixed_PR_mc;					//[-] if true, ratio of P_mc_out to P_mc_in is fixed at PR_mc_guess
+
 		double m_recomp_frac_guess;			//[-] Initial guess for design-point recompression fraction
 		bool m_fixed_recomp_frac;			//[-] if true, recomp_frac is fixed at recomp_frac_guess
+
 		double m_LT_frac_guess;				//[-] Initial guess for fraction of UA_rec_total that is in the low-temperature recuperator
 		bool m_fixed_LT_frac;				//[-] if true, LT_frac is fixed at LT_frac_guess
 
 		S_opt_design_parameters()
 		{
-			m_W_dot_net = m_T_mc_in = m_T_mt_in = m_T_rt_in = m_UA_rec_total = m_LT_eff_max = m_HT_eff_max = 
-				m_eta_mc = m_eta_rc = m_eta_mt = m_eta_rt = m_P_high_limit = m_tol = m_opt_tol = m_N_turbine =
-				m_P_rt_in_guess = m_P_mc_out_guess = m_PR_mc_guess = m_recomp_frac_guess = m_LT_frac_guess = std::numeric_limits<double>::quiet_NaN();
+			m_W_dot_net = m_T_mc1_in = m_T_mc2_in = m_T_t_in = m_UA_rec_total = m_LT_eff_max = m_HT_eff_max = 
+				m_eta_mc1 = m_eta_mc2 = m_eta_rc = m_eta_t = m_P_high_limit = m_tol = m_opt_tol = m_N_turbine =
+				m_P_mc1_in_guess = m_P_mc2_out_guess = m_PR_mc_guess = m_recomp_frac_guess = m_LT_frac_guess = std::numeric_limits<double>::quiet_NaN();
 
 			m_N_sub_hxrs = -1;
 
@@ -831,12 +838,12 @@ public:
 			std::fill(m_DP_LT.begin(), m_DP_LT.end(), std::numeric_limits<double>::quiet_NaN());
 			m_DP_HT.resize(2);
 			std::fill(m_DP_HT.begin(), m_DP_HT.end(), std::numeric_limits<double>::quiet_NaN());
-			m_DP_PC.resize(2);
-			std::fill(m_DP_PC.begin(), m_DP_PC.end(), std::numeric_limits<double>::quiet_NaN());
+			m_DP_PC1.resize(2);
+			std::fill(m_DP_PC1.begin(), m_DP_PC1.end(), std::numeric_limits<double>::quiet_NaN());
+			m_DP_PC2.resize(2);
+			std::fill(m_DP_PC2.begin(), m_DP_PC2.end(), std::numeric_limits<double>::quiet_NaN());
 			m_DP_PHX.resize(2);
 			std::fill(m_DP_PHX.begin(), m_DP_PHX.end(), std::numeric_limits<double>::quiet_NaN());
-			m_DP_RHX.resize(2);
-			std::fill(m_DP_RHX.begin(), m_DP_RHX.end(), std::numeric_limits<double>::quiet_NaN());
 		}
 	};
 
@@ -844,22 +851,20 @@ public:
 	{
 		double m_W_dot_net;					//[kW] Target net cycle power
 		double m_eta_thermal;				//[-] Cycle thermal efficiency
-		double m_T_mc_in;					//[K] Compressor inlet temperature
-		double m_T_mt_in;					//[K] Main Turbine inlet temperature
-		double m_T_rt_in;					//[K] Reheating Turbine inlet temperature
-		double m_P_rt_in_guess;             //[kPa] ReHeating Turbine inlet Pressure
-		bool m_fixed_P_rt_in_guess;         //[-] if true, m_P_rt_in is fixed at m_P_rt_in_guess		
+		double m_T_mc1_in;					//[K] Compressor1 inlet temperature
+		double m_T_mc2_in;					//[K] Compressor2 inlet temperature
+		double m_T_t_in;					//[K] Turbine inlet temperature
 		std::vector<double> m_DP_LT;		//(cold, hot) positive values are absolute [kPa], negative values are relative (-)
 		std::vector<double> m_DP_HT;		//(cold, hot) positive values are absolute [kPa], negative values are relative (-)
-		std::vector<double> m_DP_PC;		//(cold, hot) positive values are absolute [kPa], negative values are relative (-)
+		std::vector<double> m_DP_PC1;		//(cold, hot) positive values are absolute [kPa], negative values are relative (-)
+		std::vector<double> m_DP_PC2;		//(cold, hot) positive values are absolute [kPa], negative values are relative (-)
 		std::vector<double> m_DP_PHX;		//(cold, hot) positive values are absolute [kPa], negative values are relative (-)
-		std::vector<double> m_DP_RHX;		//(cold, hot) positive values are absolute [kPa], negative values are relative (-)
 		double m_LT_eff_max;				//[-] Maximum allowable effectiveness in LT recuperator
 		double m_HT_eff_max;				//[-] Maximum allowable effectiveness in HT recuperator
-		double m_eta_mc;					//[-] design-point efficiency of the main compressor; isentropic if positive, polytropic if negative
+		double m_eta_mc1;					//[-] design-point efficiency of the main compressor1; isentropic if positive, polytropic if negative
+		double m_eta_mc2;					//[-] design-point efficiency of the main compressor1; isentropic if positive, polytropic if negative
 		double m_eta_rc;					//[-] design-point efficiency of the recompressor; isentropic if positive, polytropic if negative
-		double m_eta_mt;				    //[-] design-point efficiency of the main turbine; isentropic if positive, polytropic if negative
-		double m_eta_rt;				    //[-] design-point efficiency of the reheating turbine; isentropic if positive, polytropic if negative
+		double m_eta_t;						//[-] design-point efficiency of the turbine; isentropic if positive, polytropic if negative
 		int m_N_sub_hxrs;					//[-] Number of sub-heat exchangers to use when calculating UA value for a heat exchanger
 		double m_P_high_limit;				//[kPa] maximum allowable pressure in cycle
 		double m_tol;						//[-] Convergence tolerance
@@ -876,18 +881,17 @@ public:
 
 		S_auto_opt_design_hit_eta_parameters()
 		{
-			m_W_dot_net = m_T_mc_in = m_T_mt_in = m_T_rt_in = m_LT_eff_max = m_HT_eff_max = 
-				m_eta_mc = m_eta_rc = m_eta_mt = m_eta_rt =m_P_high_limit = 
-				m_tol = m_opt_tol = m_N_turbine = m_P_rt_in_guess =
+			m_W_dot_net = m_T_mc1_in = m_T_mc2_in = m_T_t_in = m_LT_eff_max = m_HT_eff_max = 
+				m_eta_mc1 = m_eta_mc2 = m_eta_rc = m_eta_t = m_P_high_limit = 
+				m_tol = m_opt_tol = m_N_turbine = 
 				m_PR_mc_guess = std::numeric_limits<double>::quiet_NaN();
 
 			m_N_sub_hxrs = -1;
 
 			m_is_recomp_ok = -1;
 
-			m_fixed_P_rt_in_guess=false; //[-] If false, then should default to optimizing this parameter
 			m_fixed_PR_mc = false;		//[-] If false, then should default to optimizing this parameter
-			
+
 			mf_callback_log = 0;
 			mp_mf_active = 0;
 
@@ -895,39 +899,40 @@ public:
 			std::fill(m_DP_LT.begin(), m_DP_LT.end(), std::numeric_limits<double>::quiet_NaN());
 			m_DP_HT.resize(2);
 			std::fill(m_DP_HT.begin(), m_DP_HT.end(), std::numeric_limits<double>::quiet_NaN());
-			m_DP_PC.resize(2);
-			std::fill(m_DP_PC.begin(), m_DP_PC.end(), std::numeric_limits<double>::quiet_NaN());
+			m_DP_PC1.resize(2);
+			std::fill(m_DP_PC1.begin(), m_DP_PC1.end(), std::numeric_limits<double>::quiet_NaN());
+			m_DP_PC2.resize(2);
+			std::fill(m_DP_PC2.begin(), m_DP_PC2.end(), std::numeric_limits<double>::quiet_NaN());
 			m_DP_PHX.resize(2);
 			std::fill(m_DP_PHX.begin(), m_DP_PHX.end(), std::numeric_limits<double>::quiet_NaN());
-			m_DP_RHX.resize(2);
-			std::fill(m_DP_RHX.begin(), m_DP_RHX.end(), std::numeric_limits<double>::quiet_NaN());
 		}
 	};
 	
 	struct S_auto_opt_design_parameters
 	{
 		double m_W_dot_net;					//[kW] Target net cycle power
-		double m_T_mc_in;					//[K] Compressor inlet temperature
-		double m_T_mt_in;					//[K] Main Turbine inlet temperature
-		double m_T_rt_in;					//[K] ReHeating Turbine inlet temperature
+		double m_T_mc1_in;					//[K] Compressor1 inlet temperature
+		double m_T_mc2_in;					//[K] Compressor1 inlet temperature
+		double m_T_t_in;					//[K] Turbine inlet temperature
 		std::vector<double> m_DP_LT;		//(cold, hot) positive values are absolute [kPa], negative values are relative (-)
 		std::vector<double> m_DP_HT;		//(cold, hot) positive values are absolute [kPa], negative values are relative (-)
-		std::vector<double> m_DP_PC;		//(cold, hot) positive values are absolute [kPa], negative values are relative (-)
+		std::vector<double> m_DP_PC1;		//(cold, hot) positive values are absolute [kPa], negative values are relative (-)
+		std::vector<double> m_DP_PC2;		//(cold, hot) positive values are absolute [kPa], negative values are relative (-)
 		std::vector<double> m_DP_PHX;		//(cold, hot) positive values are absolute [kPa], negative values are relative (-)
-		std::vector<double> m_DP_RHX;		//(cold, hot) positive values are absolute [kPa], negative values are relative (-)
 		double m_UA_rec_total;				//[kW/K] Total design-point recuperator UA
 		double m_LT_eff_max;				//[-] Maximum allowable effectiveness in LT recuperator
 		double m_HT_eff_max;				//[-] Maximum allowable effectiveness in HT recuperator
-		double m_eta_mc;					//[-] design-point efficiency of the main compressor; isentropic if positive, polytropic if negative
+		double m_eta_mc1;					//[-] design-point efficiency of the main compressor1; isentropic if positive, polytropic if negative
+		double m_eta_mc2;					//[-] design-point efficiency of the main compressor2; isentropic if positive, polytropic if negative
 		double m_eta_rc;					//[-] design-point efficiency of the recompressor; isentropic if positive, polytropic if negative
-		double m_eta_mt;					//[-] design-point efficiency of the Main turbine; isentropic if positive, polytropic if negative
-		double m_eta_rt;					//[-] design-point efficiency of the ReHeating turbine; isentropic if positive, polytropic if negative
+		double m_eta_t;						//[-] design-point efficiency of the turbine; isentropic if positive, polytropic if negative
 		int m_N_sub_hxrs;					//[-] Number of sub-heat exchangers to use when calculating UA value for a heat exchanger
 		double m_P_high_limit;				//[kPa] maximum allowable pressure in cycle
 		double m_tol;						//[-] Convergence tolerance
 		double m_opt_tol;					//[-] Optimization tolerance
 		double m_N_turbine;					//[rpm] Turbine shaft speed (negative values link turbine to compressor)
 		int m_is_recomp_ok;					//[-] 1 = yes, 0 = no, other = invalid
+
 		double m_PR_mc_guess;				//[-] Initial guess for ratio of P_mc_out to P_mc_in
 		bool m_fixed_PR_mc;					//[-] if true, ratio of P_mc_out to P_mc_in is fixed at PR_mc_guess
 
@@ -937,13 +942,15 @@ public:
 
 		S_auto_opt_design_parameters()
 		{
-			m_W_dot_net = m_T_mc_in = m_T_mt_in = m_T_rt_in = m_UA_rec_total = m_LT_eff_max = m_HT_eff_max =
-				m_eta_mc = m_eta_rc = m_eta_mt = m_P_high_limit = 
-				m_tol = m_opt_tol = m_N_turbine = 
+			m_W_dot_net = m_T_mc1_in = m_T_mc2_in =m_T_t_in = m_UA_rec_total = m_LT_eff_max = m_HT_eff_max =
+				m_eta_mc1 = m_eta_mc2 =m_eta_rc = m_eta_t = m_P_high_limit = 
+				m_tol = m_opt_tol = m_N_turbine =
 				m_PR_mc_guess = std::numeric_limits<double>::quiet_NaN();
 
 			m_N_sub_hxrs = -1;
+
 			m_is_recomp_ok = -1;
+
 			m_fixed_PR_mc = false;		//[-] If false, then should default to optimizing this parameter
 
 			mf_callback_log = 0;
@@ -953,12 +960,12 @@ public:
 			std::fill(m_DP_LT.begin(), m_DP_LT.end(), std::numeric_limits<double>::quiet_NaN());
 			m_DP_HT.resize(2);
 			std::fill(m_DP_HT.begin(), m_DP_HT.end(), std::numeric_limits<double>::quiet_NaN());
-			m_DP_PC.resize(2);
-			std::fill(m_DP_PC.begin(), m_DP_PC.end(), std::numeric_limits<double>::quiet_NaN());
+			m_DP_PC1.resize(2);
+			std::fill(m_DP_PC1.begin(), m_DP_PC1.end(), std::numeric_limits<double>::quiet_NaN());
+			m_DP_PC2.resize(2);
+			std::fill(m_DP_PC2.begin(), m_DP_PC2.end(), std::numeric_limits<double>::quiet_NaN());
 			m_DP_PHX.resize(2);
 			std::fill(m_DP_PHX.begin(), m_DP_PHX.end(), std::numeric_limits<double>::quiet_NaN());
-			m_DP_RHX.resize(2);
-			std::fill(m_DP_RHX.begin(), m_DP_RHX.end(), std::numeric_limits<double>::quiet_NaN());
 		}
 	};
 
@@ -976,12 +983,13 @@ public:
 
 		bool m_is_rc;
 
-		//C_compressor::S_design_solved ms_mc_des_solved;
-		C_comp_multi_stage_RH::S_des_solved ms_mc_ms_des_solved;
+		//C_compressor::S_design_solved ms_mc1_des_solved;
+		C_comp_multi_stage::S_des_solved ms_mc1_ms_des_solved;
+		//C_compressor::S_design_solved ms_mc2_des_solved;
+		C_comp_multi_stage::S_des_solved ms_mc2_ms_des_solved;
 		//C_recompressor::S_design_solved ms_rc_des_solved;
-		C_comp_multi_stage_RH::S_des_solved ms_rc_ms_des_solved;
-		C_turbine_RH::S_design_solved ms_mt_des_solved;
-		C_turbine_RH::S_design_solved ms_rt_des_solved;
+		C_comp_multi_stage::S_des_solved ms_rc_ms_des_solved;
+		C_turbine::S_design_solved ms_t_des_solved;
 		C_HX_counterflow::S_des_solved ms_LT_recup_des_solved;
 		C_HX_counterflow::S_des_solved ms_HT_recup_des_solved;
 
@@ -1009,20 +1017,21 @@ public:
 	//Off-Design turbo_bal_csp parameters
 	struct S_od_turbo_bal_csp_par
 	{
-		double m_P_mc_in;	//[kPa] Main compressor inlet pressure
+		double m_P_mc1_in;	//[kPa] Main compressor1 inlet pressure
+		double m_P_mc2_in;	//[kPa] Main compressor2 inlet pressure
 		double m_f_recomp;	//[-] Recompression fraction
-		double m_T_mc_in;	//[K] Main compressor inlet temperature
-		double m_T_mt_in;	//[K] Main Turbine inlet temperature
-		double m_T_rt_in;	//[K] ReHeating Turbine inlet temperature
-		double m_P_rt_in;	//[K] ReHeating Turbine inlet pressure
-		double m_phi_mc;	//[-] Main compressor flow coefficient
+		double m_T_mc1_in;	//[K] Main compressor inlet temperature
+		double m_T_mc2_in;	//[K] Main compressor inlet temperature
+		double m_T_t_in;	//[K] Turbine inlet temperature
+		double m_phi_mc1;	//[-] Main compressor1 flow coefficient (phi)
+		double m_phi_mc2;	//[-] Main compressor2 flow coefficient (phi)
 
 		double m_co2_to_htf_m_dot_ratio_des;	//[-] m_dot_co2 / m_dot_htf at design
 		double m_m_dot_htf;						//[kg/s] (off design) HTF mass flow rate 
 
 		S_od_turbo_bal_csp_par()
 		{
-			m_P_mc_in = m_f_recomp = m_T_mc_in = m_T_mt_in = m_T_rt_in = m_P_rt_in = m_phi_mc =
+			m_P_mc1_in = m_P_mc2_in = m_f_recomp = m_T_mc1_in = m_T_mc2_in =m_T_t_in = m_phi_mc1 = m_phi_mc2 =
 				m_co2_to_htf_m_dot_ratio_des = m_m_dot_htf = std::numeric_limits<double>::quiet_NaN();
 		}
 	};
@@ -1034,14 +1043,18 @@ public:
 
 		bool m_is_feasible;			//[-] Did a set of parameters result in a solution that satisfied constraints
 
-		double m_W_dot_net;			//[kWe] W_mt + W_rt - W_mc - W_rc
+		double m_W_dot_net;			//[kWe] W_t - W_mc1 -W_mc2 - W_rc
 		double m_W_dot_net_adj;		//[kWe] Adjusted with derates for constraints
 		double m_P_high;			//[kPa] Upper pressure in cycle (not considering pressure drops)
-		double m_m_dot_total;		//[kg/s] CO2 mass flow rate through Main turbine, ReHeating turbine, PHX & RHX
+		double m_m_dot_total;		//[kg/s] CO2 mass flow rate through turbine & PHX
 
-		double m_N_mc;				//[rpm] Main compressor speed required to hit phi_des
-		double m_w_tip_ratio_mc;	//[-] Main compressor tip speed over speed of sound
-		double m_eta_mc;			//[-] Main compressor isentropic efficiency
+		double m_N_mc1;				//[rpm] Main compressor1 speed required to hit phi_des
+		double m_w_tip_ratio_mc1;	//[-] Main compressor1 tip speed over speed of sound
+		double m_eta_mc1;			//[-] Main compressor1 isentropic efficiency
+		
+		double m_N_mc2;				//[rpm] Main compressor2 speed required to hit phi_des
+		double m_w_tip_ratio_mc2;	//[-] Main compressor2 tip speed over speed of sound
+		double m_eta_mc2;			//[-] Main compressor2 isentropic efficiency
 	
 		double m_N_rc;				//[rpm] Recompressor speed required to supply m_dot_rc
 		double m_phi_rc_1;			//[-] Recompressor flow coefficient, stage 1
@@ -1049,20 +1062,34 @@ public:
 		double m_w_tip_ratio_rc;	//[-] Recompressor tip seed over speed of sound (max of 2 stages)
 		double m_eta_rc;			//[-] Recompressor isentropic efficiency
 
-		double m_eta_mt;				//[-] Main Turbine isentropic efficiency
-        double m_eta_rt;				//[-] ReHeating Turbine isentropic efficiency
-		
+		double m_eta_t;				//[-] Turbine isentropic efficiency
+
 		S_od_turbo_bal_csp_solved()
 		{
 			m_is_feasible = false;
 			
 			m_W_dot_net = m_W_dot_net_adj = m_P_high = m_m_dot_total =
-				m_N_mc = m_w_tip_ratio_mc = m_eta_mc = 
+				m_N_mc1 = m_w_tip_ratio_mc1 = m_eta_mc1 =
+				m_N_mc2 = m_w_tip_ratio_mc2 = m_eta_mc2 =
 				m_N_rc = m_phi_rc_1, m_phi_rc_2 = m_w_tip_ratio_rc = m_eta_rc =
-				m_eta_mt = m_eta_rt = std::numeric_limits<double>::quiet_NaN();
+				m_eta_t = std::numeric_limits<double>::quiet_NaN();
 		}
 	};
 
+	
+	
+	
+	
+	
+	
+	
+	
+	
+//---------------------------------------Continue from this point LUIS -----------------------------------------------------------------------	
+	
+	
+	
+	
 	//Off-Design solved
 	struct S_od_solved
 	{
@@ -1076,17 +1103,15 @@ public:
 		double m_recomp_frac;	//[-]
 
 		//C_compressor::S_od_solved ms_mc_od_solved;
-		C_comp_multi_stage_RH::S_od_solved ms_mc_ms_od_solved;
+		C_comp_multi_stage::S_od_solved ms_mc_ms_od_solved;
 		//C_recompressor::S_od_solved ms_rc_od_solved;
-		C_comp_multi_stage_RH::S_od_solved ms_rc_ms_od_solved;
-		C_turbine_RH::S_od_solved ms_mt_od_solved;
-		C_turbine_RH::S_od_solved ms_rt_od_solved;
+		C_comp_multi_stage::S_od_solved ms_rc_ms_od_solved;
+		C_turbine::S_od_solved ms_t_od_solved;
 		C_HX_counterflow::S_od_solved ms_LT_recup_od_solved;
 		C_HX_counterflow::S_od_solved ms_HT_recup_od_solved;
 
 		S_od_solved()
 		{
-			//------------------Begining of New Code by Luis Coco Enríquez 03/10/2017----------------------------------
 			m_temp.resize(12);
 			std::fill(m_temp.begin(), m_temp.end(), std::numeric_limits<double>::quiet_NaN());
 			m_pres.resize(12);
@@ -1098,7 +1123,6 @@ public:
 		    m_dens.resize(12);
 		    std::fill(m_dens.begin(), m_dens.end(), std::numeric_limits<double>::quiet_NaN());	
 			m_pres = m_enth = m_entr = m_dens = m_temp;
-			//--------------------End of New Code by Luis Coco Enríquez 03/10/2017---------------------------------------
 			
 			m_eta_thermal = m_W_dot_net = m_Q_dot = m_m_dot_mc = m_m_dot_rc = 
 				m_m_dot_t = m_recomp_frac = std::numeric_limits<double>::quiet_NaN();
@@ -1109,54 +1133,44 @@ public:
 	struct S_od_parameters
 	{
 		double m_T_mc_in;		//[K] Compressor inlet temperature
-		double m_T_mt_in;		//[K] Main Turbine inlet temperature
-		double m_T_rt_in;		//[K] ReHeating Turbine inlet temperature
-		double m_P_rt_in;		//[kPa] ReHeating Pressure inlet temperature
+		double m_T_t_in;		//[K] Turbine inlet temperature
 		double m_P_mc_in;		//[kPa] Compressor inlet pressure
 		double m_recomp_frac;	//[-] Fraction of flow that bypasses the precooler and main compressor
 		double m_N_mc;			//[rpm] Main compressor shaft speed
-		double m_N_t;			//[rpm] Turbines shaft speed
+		double m_N_t;			//[rpm] Turbine shaft speed
 		int m_N_sub_hxrs;		//[-] Number of sub heat exchangers
 		double m_tol;			//[-] Convergence tolerance
 
 		S_od_parameters()
 		{
-			m_T_mc_in = m_T_mt_in = m_T_rt_in = m_P_rt_in = m_P_mc_in = m_recomp_frac = m_N_mc = m_N_t = m_tol = std::numeric_limits<double>::quiet_NaN();
+			m_T_mc_in = m_T_t_in = m_P_mc_in = m_recomp_frac = m_N_mc = m_N_t = m_tol = std::numeric_limits<double>::quiet_NaN();
 			m_N_sub_hxrs = -1;
 		}
 	};
 
-	//Off-Design Phi(Flow coefficient) parameters
 	struct S_od_phi_par
 	{
 		double m_T_mc_in;		//[K] Compressor inlet temperature
-		double m_T_mt_in;		//[K] Main Turbine inlet temperature
-		double m_T_rt_in;		//[K] ReHeating Turbine inlet temperature
-		double m_P_rt_in;		//[kPa] ReHeating Turbine inlet pressure
+		double m_T_t_in;		//[K] Turbine inlet temperature
 		double m_P_mc_in;		//[kPa] Compressor inlet pressure
 		double m_recomp_frac;	//[-] Fraction of flow that bypasses the precooler and main compressor
 		double m_phi_mc;		//[-] Main compressor flow coefficient
-		double m_N_t;			//[rpm] Turbines shaft speed
+		double m_N_t;			//[rpm] Turbine shaft speed
 		int m_N_sub_hxrs;		//[-] Number of sub heat exchangers
 		double m_tol;			//[-] Convergence tolerance
 
 		S_od_phi_par()
 		{
-			m_T_mc_in = m_T_mt_in = m_T_rt_in = m_P_rt_in = m_P_mc_in = m_recomp_frac = m_phi_mc = m_N_t = m_tol = std::numeric_limits<double>::quiet_NaN();
+			m_T_mc_in = m_T_t_in = m_P_mc_in = m_recomp_frac = m_phi_mc = m_N_t = m_tol = std::numeric_limits<double>::quiet_NaN();
 			m_N_sub_hxrs = -1;
 		}
 	};
 
-	//Off-Design Optimization parameters
 	struct S_opt_od_parameters
 	{
 		double m_T_mc_in;		//[K] Compressor inlet temperature
-		double m_T_mt_in;		//[K] Main Turbine inlet temperature
-		double m_T_rt_in;		//[K] ReHeating Turbine inlet temperature
-		
-		double m_P_rt_in_guess; //[kPa] ReHeating Turbine inlet Pressure
-		bool m_fixed_P_rt_in_guess; //[-] if true, m_P_rt_in is fixed at m_P_rt_in_guess
-	
+		double m_T_t_in;		//[K] Turbine inlet temperature
+
 		bool m_is_max_W_dot;	//[-] Value to maximize: true = W_dot, false = eta
 
 		int m_N_sub_hxrs;		//[-] Number of sub heat exchangers
@@ -1170,7 +1184,7 @@ public:
 		double m_N_mc_guess;			//[rpm] Initial guess for main compressor shaft speed
 		bool m_fixed_N_mc;				//[-]   If true, N_mc is fixed at N_mc_guess
 
-		double m_N_t_guess;				//[rpm] Initial guess for turbines shaft speed (negative value links it to N_mc)
+		double m_N_t_guess;				//[rpm] Initial guess for turbine shaft speed (negative value links it to N_mc)
 		bool m_fixed_N_t;				//[-]   If true, N_t is fixed at N_t_guess
 
 		double m_tol;					//[-] Convergence tolerance
@@ -1178,25 +1192,22 @@ public:
 
 		S_opt_od_parameters()
 		{
-			m_T_mc_in = m_T_mt_in = m_T_rt_in = m_P_rt_in_guess = m_P_mc_in_guess = m_recomp_frac_guess = m_N_mc_guess =
+			m_T_mc_in = m_T_t_in = m_P_mc_in_guess = m_recomp_frac_guess = m_N_mc_guess =
 				m_N_t_guess = m_tol = m_opt_tol = std::numeric_limits<double>::quiet_NaN();
 
 			m_N_sub_hxrs = -1;
 
-			m_fixed_P_rt_in_guess = m_fixed_P_mc_in = m_fixed_recomp_frac = m_fixed_N_mc = m_fixed_N_t = false;
+			m_fixed_P_mc_in = m_fixed_recomp_frac = m_fixed_N_mc = m_fixed_N_t = false;
 		}
 	};
 
-	//Target (Q_dot_PHX or W_dot) Off-Design parameters
 	struct S_target_od_parameters
 	{
 		double m_T_mc_in;		//[K] Compressor inlet temperature
-		double m_T_mt_in;		//[K] Main Turbine inlet temperature
-		double m_T_rt_in;		//[K] ReHeating Turbine inlet temperature
-		double m_P_rt_in;		//[kPa] ReHeating Turbine inlet pressure
+		double m_T_t_in;		//[K] Turbine inlet temperature
 		double m_recomp_frac;	//[-] Fraction of flow that bypasses the precooler and main compressor
 		double m_N_mc;			//[rpm] Main compressor shaft speed
-		double m_N_t;			//[rpm] Turbines shaft speed
+		double m_N_t;			//[rpm] Turbine shaft speed
 		int m_N_sub_hxrs;		//[-] Number of sub heat exchangers
 		double m_tol;			//[-] Convergence tolerance
 		
@@ -1210,7 +1221,7 @@ public:
 
 		S_target_od_parameters()
 		{
-			m_T_mc_in = m_T_mt_in = m_T_rt_in = m_P_rt_in =m_recomp_frac = m_N_mc = m_N_t = m_tol =
+			m_T_mc_in = m_T_t_in = m_recomp_frac = m_N_mc = m_N_t = m_tol =
 				m_target = m_lowest_pressure = m_highest_pressure = std::numeric_limits<double>::quiet_NaN();
 
 			m_is_target_Q = true;
@@ -1220,16 +1231,11 @@ public:
 			m_use_default_res = true;
 		}
 	};
- 
-	//Target (Q_dot_PHX or W_dot) Optimization Off-Design parameters
+
 	struct S_opt_target_od_parameters
 	{
 		double m_T_mc_in;		//[K] Compressor inlet temperature
-		double m_T_mt_in;		//[K] Main Turbine inlet temperature
-		double m_T_rt_in;		//[K] ReHeating Turbine inlet temperature
-		
-		double m_P_rt_in_guess;             //[kPa] ReHeating Turbine inlet Pressure
-		bool m_fixed_P_rt_in_guess;         //[-] if true, m_P_rt_in is fixed at m_P_rt_in_guess
+		double m_T_t_in;		//[K] Turbine inlet temperature
 
 		double m_target;		//[kW] target value
 		bool m_is_target_Q;		//[-] true = solve for Q_dot_PHX, false = solve for W_dot
@@ -1244,7 +1250,7 @@ public:
 		double m_N_mc_guess;			//[rpm] Initial guess for main compressor shaft speed
 		bool m_fixed_N_mc;				//[-]   If true, N_mc is fixed at N_mc_guess
 
-		double m_N_t_guess;				//[rpm] Initial guess for turbines shaft speed (negative value links it to N_mc)
+		double m_N_t_guess;				//[rpm] Initial guess for turbine shaft speed (negative value links it to N_mc)
 		bool m_fixed_N_t;				//[-]   If true, N_t is fixed at N_t_guess
 
 		double m_tol;					//[-] Convergence tolerance
@@ -1253,75 +1259,49 @@ public:
 		bool m_use_default_res;		//[-] If true, use 20 intervals in pressure range
 									// If q_target is close to q_max, use false apply 100 intervals
 
-		
 		S_opt_target_od_parameters()
 		{
-			m_T_mc_in = m_T_mt_in = m_T_rt_in = m_target = m_lowest_pressure = m_highest_pressure = m_recomp_frac_guess =
-		    m_P_rt_in_guess= m_N_mc_guess = m_N_t_guess = m_tol = m_opt_tol = std::numeric_limits<double>::quiet_NaN();
+			m_T_mc_in = m_T_t_in = m_target = m_lowest_pressure = m_highest_pressure = m_recomp_frac_guess =
+				m_N_mc_guess = m_N_t_guess = m_tol = m_opt_tol = std::numeric_limits<double>::quiet_NaN();
 
 			m_N_sub_hxrs = -1;
 			
-			m_is_target_Q = m_fixed_recomp_frac = m_fixed_P_rt_in_guess =m_fixed_N_mc = m_fixed_N_t = true;
+			m_is_target_Q = m_fixed_recomp_frac = m_fixed_N_mc = m_fixed_N_t = true;
 
 			m_use_default_res = true;
 		}
 	};
 
-	//PHX Off-Design parameters
 	struct S_PHX_od_parameters
 	{
-		double m_m_dot_htf_des_Main_Solar_Field;		//[kg/s] Design point htf mass flow rate _Main_Solar_Field
+		double m_m_dot_htf_des;		//[kg/s] Design point htf mass flow rate
 		
-		double m_T_htf_hot_Main_Solar_Field;			//[K] Current htf inlet temperature _Main_Solar_Field
-		double m_m_dot_htf_Main_Solar_Field;			//[kg/s] Current htf mass flow rate _Main_Solar_Field
-		double m_T_htf_cold_Main_Solar_Field;		//[K] Target htf cold return temp _Main_Solar_Field
+		double m_T_htf_hot;			//[K] Current htf inlet temperature
+		double m_m_dot_htf;			//[kg/s] Current htf mass flow rate
+		double m_T_htf_cold;		//[K] Target htf cold return temp
 
 		double m_UA_PHX_des;		//[kW/K] Design point PHX conductance
 
-		double m_cp_htf_Main_Solar_Field;			//[kW/K] Constant HTF specific heat _Main_Solar_Field
+		double m_cp_htf;			//[kW/K] Constant HTF specific heat
 
 		S_PHX_od_parameters()
 		{
-			m_m_dot_htf_des_Main_Solar_Field = m_T_htf_hot_Main_Solar_Field = m_m_dot_htf_Main_Solar_Field = m_T_htf_cold_Main_Solar_Field
-			= m_UA_PHX_des = m_cp_htf_Main_Solar_Field = std::numeric_limits<double>::quiet_NaN();
-		}
-	};
-	
-	//RHX Off-Design parameters
-	struct S_RHX_od_parameters
-	{
-		double m_m_dot_htf_des_ReHeating_Solar_Field;		//[kg/s] Design point htf mass flow rate _ReHeating_Solar_Field
-		
-		double m_T_htf_hot_ReHeating_Solar_Field;			//[K] Current htf inlet temperature _ReHeating_Solar_Field
-		double m_m_dot_htf_ReHeating_Solar_Field;			//[kg/s] Current htf mass flow rate _ReHeating_Solar_Field
-		double m_T_htf_cold_ReHeating_Solar_Field;		//[K] Target htf cold return temp _ReHeating_Solar_Field
-
-		double m_UA_RHX_des;		//[kW/K] Design point PHX conductance
-
-		double m_cp_htf_ReHeating_Solar_Field;			//[kW/K] Constant HTF specific heat _ReHeating_Solar_Field
-
-		S_RHX_od_parameters()
-		{
-			m_m_dot_htf_des_ReHeating_Solar_Field = m_T_htf_hot_ReHeating_Solar_Field = m_m_dot_htf_ReHeating_Solar_Field = m_T_htf_cold_ReHeating_Solar_Field
-			= m_UA_RHX_des = m_cp_htf_ReHeating_Solar_Field = std::numeric_limits<double>::quiet_NaN();
+			m_m_dot_htf_des = m_T_htf_hot = m_m_dot_htf = m_T_htf_cold = m_UA_PHX_des = m_cp_htf = std::numeric_limits<double>::quiet_NaN();
 		}
 	};
 
-public:
-
-	// Component classes
-	
-	//Main Turbine
-	C_turbine_RH m_mt;
-	//ReHeating Turbine
-	C_turbine_RH m_rt;
+private:
+		// Component classes
+	C_turbine m_t;
 	//C_compressor m_mc;
-	C_comp_multi_stage_RH m_mc_ms;
+	C_comp_multi_stage m_mc_ms;
 	//C_recompressor m_rc;
-	C_comp_multi_stage_RH m_rc_ms;
-	C_HeatExchanger_RH /*m_LT, m_HT,*/ m_PHX, m_RHX, m_PC;
+	C_comp_multi_stage m_rc_ms;
+	C_HeatExchanger /*m_LT, m_HT,*/ m_PHX, m_PC;
+	
 	C_HX_co2_to_co2 mc_LT_recup, mc_HT_recup;
-	// Input/Ouput structures for class methods
+	
+		// Input/Ouput structures for class methods
 	S_design_limits ms_des_limits;
 	S_design_parameters ms_des_par;
 	S_opt_design_parameters ms_opt_des_par;
@@ -1337,44 +1317,41 @@ public:
 	S_opt_target_od_parameters ms_opt_tar_od_par;
 	S_od_solved ms_od_solved;
 	S_PHX_od_parameters ms_phx_od_par;
-	S_RHX_od_parameters ms_rhx_od_par;
 
-	// Results from last 'design' solution
+		// Results from last 'design' solution
 	std::vector<double> m_temp_last, m_pres_last, m_enth_last, m_entr_last, m_dens_last;		// thermodynamic states (K, kPa, kJ/kg, kJ/kg-K, kg/m3)
 	double m_eta_thermal_last;
 	double m_W_dot_net_last;
 	double m_m_dot_mc, m_m_dot_rc, m_m_dot_t;
-	double m_Q_dot_PHX, m_Q_dot_RHX, m_Q_dot_bypass, m_eta_bypass;
+	double m_Q_dot_PHX, m_Q_dot_bypass, m_eta_bypass;
 	double m_W_dot_mc, m_W_dot_rc, m_W_dot_mc_bypass;
 	
-	// Structures and data for optimization
+		// Structures and data for optimization
 	S_design_parameters ms_des_par_optimal;
 	double m_eta_thermal_opt;
 
-	// Structures and data for auto-optimization
+		// Structures and data for auto-optimization
 	double m_eta_thermal_auto_opt;	
 	S_design_parameters ms_des_par_auto_opt;
 
-	// Results from last off-design solution
+		// Results from last off-design solution
 	std::vector<double> m_temp_od, m_pres_od, m_enth_od, m_entr_od, m_dens_od;					// thermodynamic states (K, kPa, kJ/kg, kJ/kg-K, kg/m3)
 	double m_eta_thermal_od;
 	double m_W_dot_net_od;
 	double m_Q_dot_PHX_od;
-	double m_Q_dot_RHX_od;
 
-	// Structures and data for off-design optimization
+		// Structures and data for off-design optimization
 	S_od_parameters ms_od_par_optimal;
 	double m_W_dot_net_max;
 
-	// Structures and data for optimal target off-design
+		// Structures and data for optimal target off-design
 	S_od_parameters ms_od_par_tar_optimal;
 	double m_eta_best;
 	double m_biggest_target;
 
-	// New opt
+		// New opt
 	bool m_found_opt;
 	double m_eta_phx_max;
-	double m_eta_rhx_max;
 	double m_UA_diff_eta_max;
 	double m_over_deltaP_eta_max;
 
@@ -1408,37 +1385,41 @@ public:
 
 public:
 
-	C_RecompCycle_with_ReHeating()
+	C_RecompCycle()
 	{
-		m_temp_last.resize(12);
+		m_temp_last.resize(10);
 		std::fill(m_temp_last.begin(), m_temp_last.end(), std::numeric_limits<double>::quiet_NaN());
-		m_pres_last.resize(12);
-		std::fill(m_pres_last.begin(), m_pres_last.end(), std::numeric_limits<double>::quiet_NaN());
-		m_enth_last.resize(12);
-		std::fill(m_enth_last.begin(), m_enth_last.end(), std::numeric_limits<double>::quiet_NaN());
-		m_entr_last.resize(12);
-		std::fill(m_entr_last.begin(), m_entr_last.end(), std::numeric_limits<double>::quiet_NaN());
-		m_dens_last.resize(12);
-		std::fill(m_dens_last.begin(), m_dens_last.end(), std::numeric_limits<double>::quiet_NaN());		
-
+		
 		m_pres_last = m_enth_last = m_entr_last = m_dens_last = m_temp_last;
+
+		/*
+		m_pres_last.resize(10);
+		std::fill(m_pres_last.begin(), m_pres_last.end(), std::numeric_limits<double>::quiet_NaN());
+		m_enth_last.resize(10);
+		std::fill(m_enth_last.begin(), m_enth_last.end(), std::numeric_limits<double>::quiet_NaN());
+		m_entr_last.resize(10);
+		std::fill(m_entr_last.begin(), m_entr_last.end(), std::numeric_limits<double>::quiet_NaN());
+		m_dens_last.resize(10);
+		std::fill(m_dens_last.begin(), m_dens_last.end(), std::numeric_limits<double>::quiet_NaN());
+		*/		
+
 		m_eta_thermal_last = m_m_dot_mc = m_m_dot_rc = m_m_dot_t = std::numeric_limits<double>::quiet_NaN();
-		m_Q_dot_PHX = m_Q_dot_RHX =m_Q_dot_bypass = m_eta_bypass = std::numeric_limits<double>::quiet_NaN();
+		m_Q_dot_PHX = m_Q_dot_bypass = m_eta_bypass = std::numeric_limits<double>::quiet_NaN();
 		m_W_dot_mc = m_W_dot_rc = m_W_dot_mc_bypass = std::numeric_limits<double>::quiet_NaN();
 
 		m_W_dot_net_last = std::numeric_limits<double>::quiet_NaN();
 
-		m_eta_thermal_opt = std::numeric_limits<double>::quiet_NaN();
+		m_eta_thermal_opt = m_eta_thermal_opt = std::numeric_limits<double>::quiet_NaN();
 
 		m_temp_od = m_pres_od = m_enth_od = m_entr_od = m_dens_od = m_temp_last;
 
-		m_eta_thermal_od = m_W_dot_net_od = m_Q_dot_PHX_od = m_Q_dot_RHX_od =std::numeric_limits<double>::quiet_NaN();
+		m_eta_thermal_od = m_W_dot_net_od = m_Q_dot_PHX_od = std::numeric_limits<double>::quiet_NaN();
 
 		m_W_dot_net_max = m_eta_best = m_biggest_target = std::numeric_limits<double>::quiet_NaN();
 
 		m_found_opt = false;
 
-		m_eta_phx_max = m_eta_rhx_max = m_over_deltaP_eta_max = m_UA_diff_eta_max = std::numeric_limits<double>::quiet_NaN();
+		m_eta_phx_max = m_over_deltaP_eta_max = m_UA_diff_eta_max = std::numeric_limits<double>::quiet_NaN();
 
 		// Set design limits!!!!
 		ms_des_limits.m_UA_net_power_ratio_max = 2.0;		//[-/K]
@@ -1454,37 +1435,8 @@ public:
 
 	CO2_state mc_co2_props;
 
-	~C_RecompCycle_with_ReHeating(){}
+	~C_RecompCycle(){}
 
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-		
-//---------------------------------------------------- LUIS CONTINUE FROM THIS POINT ---------------------------------------------------------------------
-
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
 	void design(S_design_parameters & des_par_in, int & error_code);
 
 	void opt_design(S_opt_design_parameters & opt_des_par_in, int & error_code);
@@ -1534,7 +1486,7 @@ public:
 							int & rc_error_code, double & rc_w_tip_ratio /*-*/, double & rc_phi /*-*/,
 							bool is_update_ms_od_solved = false);
 
-	const C_comp_multi_stage_RH::S_od_solved * get_rc_od_solved()
+	const C_comp_multi_stage::S_od_solved * get_rc_od_solved()
 	{
 		return m_rc_ms.get_od_solved();
 	}
@@ -1566,15 +1518,12 @@ public:
 
 	class C_mono_eq_x_f_recomp_y_N_rc : public C_monotonic_equation
 	{
-	public:
-		C_RecompCycle_with_ReHeating *mpc_rc_cycle;
+	private:
+		C_RecompCycle *mpc_rc_cycle;
 
 		double m_T_mc_in;		//[K] Compressor inlet temperature
 		double m_P_mc_in;		//[kPa] Compressor inlet pressure
-		double m_T_mt_in;		//[K] Turbine inlet temperature
-		double m_T_rt_in;		//[K] Turbine inlet temperature
-		double m_P_rt_in;
-		bool m_is_update_ms_od_solved;	//[-] Bool to update member structure ms_od_solved
+		double m_T_t_in;		//[K] Turbine inlet temperature
 
 	public:
 		
@@ -1582,14 +1531,12 @@ public:
 		double m_m_dot_rc;		//[kg/s]
 		double m_m_dot_mc;		//[kg/s]
 
-		C_mono_eq_x_f_recomp_y_N_rc(C_RecompCycle_with_ReHeating *pc_rc_cycle, double T_mc_in /*K*/,
-			double P_mc_in /*kPa*/, double T_mt_in /*K*/, double T_rt_in /*K*/)
+		C_mono_eq_x_f_recomp_y_N_rc(C_RecompCycle *pc_rc_cycle, double T_mc_in /*K*/, double P_mc_in /*kPa*/, double T_t_in /*K*/)
 		{
 			mpc_rc_cycle = pc_rc_cycle;
 			m_T_mc_in = T_mc_in;		//[K]
 			m_P_mc_in = P_mc_in;		//[kPa]
-			m_T_mt_in = T_mt_in;			//[K]
-			m_T_rt_in = T_rt_in;			//[K]
+			m_T_t_in = T_t_in;			//[K]
 
 			m_m_dot_t = m_m_dot_rc = m_m_dot_mc = std::numeric_limits<double>::quiet_NaN();
 		}
@@ -1601,30 +1548,26 @@ public:
 
 	class C_mono_eq_turbo_N_fixed_m_dot : public C_monotonic_equation
 	{
-	public:
-		C_RecompCycle_with_ReHeating *mpc_rc_cycle;
+	private:
+		C_RecompCycle *mpc_rc_cycle;
 
 		double m_T_mc_in;		//[K] Compressor inlet temperature
 		double m_P_mc_in;		//[kPa] Compressor inlet pressure
 		double m_f_recomp;		//[-] Recompression fraction
-		double m_T_mt_in;		//[K] Main Turbine inlet temperature
-		double m_T_rt_in;		//[K] ReHeating Turbine inlet temperature
-        double m_P_rt_in;		//[kPa] ReHeating Turbine inlet pressure
-		
+		double m_T_t_in;		//[K] Turbine inlet temperature
+
 		bool m_is_update_ms_od_solved;	//[-] Bool to update member structure ms_od_solved
 		// that is typically updated after entire cycle off-design solution 
 
 	public:
-		C_mono_eq_turbo_N_fixed_m_dot(C_RecompCycle_with_ReHeating *pc_rc_cycle, double T_mc_in /*K*/, double P_mc_in /*kPa*/,
-			double f_recomp /*-*/, double T_mt_in /*K*/, double T_rt_in /*K*/, double P_rt_in /*kPa*/,bool is_update_ms_od_solved = false)
+		C_mono_eq_turbo_N_fixed_m_dot(C_RecompCycle *pc_rc_cycle, double T_mc_in /*K*/, double P_mc_in /*kPa*/,
+			double f_recomp /*-*/, double T_t_in /*K*/, bool is_update_ms_od_solved = false)
 		{
 			mpc_rc_cycle = pc_rc_cycle;
 			m_T_mc_in = T_mc_in;			//[K]
 			m_P_mc_in = P_mc_in;			//[kPa]
 			m_f_recomp = f_recomp;			//[-]
-			m_T_mt_in = T_mt_in;		    //[K]
-			m_T_rt_in = T_rt_in;		    //[K]
-			m_P_rt_in = P_rt_in;		    //[kPa]
+			m_T_t_in = T_t_in;				//[K]
 
 			m_is_update_ms_od_solved = is_update_ms_od_solved;
 		}
@@ -1671,10 +1614,10 @@ public:
 	class C_mono_eq_LTR_od : public C_monotonic_equation
 	{
 	private:
-		C_RecompCycle_with_ReHeating *mpc_rc_cycle;
+		C_RecompCycle *mpc_rc_cycle;
 
 	public:
-		C_mono_eq_LTR_od(C_RecompCycle_with_ReHeating *pc_rc_cycle, double m_dot_rc, double m_dot_mc, double m_dot_t)
+		C_mono_eq_LTR_od(C_RecompCycle *pc_rc_cycle, double m_dot_rc, double m_dot_mc, double m_dot_t)
 		{
 			mpc_rc_cycle = pc_rc_cycle;
 			m_m_dot_rc = m_dot_rc;
@@ -1695,15 +1638,14 @@ public:
 	class C_mono_eq_LTR_des : public C_monotonic_equation
 	{
 	private:
-		C_RecompCycle_with_ReHeating *mpc_rc_cycle;
+		C_RecompCycle *mpc_rc_cycle;
 
 	public:
-		C_mono_eq_LTR_des(C_RecompCycle_with_ReHeating *pc_rc_cycle, double w_mc, double w_mt, double w_rt)
+		C_mono_eq_LTR_des(C_RecompCycle *pc_rc_cycle, double w_mc, double w_t)
 		{
 			mpc_rc_cycle = pc_rc_cycle;
 			m_w_mc = w_mc;
-			m_w_mt = w_mt;
-			m_w_rt = w_rt;
+			m_w_t = w_t;
 		}
 	
 		// These values are calculated in the operator() method and need to be extracted from this class
@@ -1711,7 +1653,7 @@ public:
 		double m_w_rc, m_m_dot_t, m_m_dot_rc, m_m_dot_mc, m_Q_dot_LT;
 
 		// These values are passed in as arguments to Constructor call and should not be reset
-		double m_w_mc, m_w_mt, m_w_rt;
+		double m_w_mc, m_w_t;
 
 		virtual int operator()(double T_LTR_LP_out /*K*/, double *diff_T_LTR_LP_out /*K*/);
 	};
@@ -1719,10 +1661,10 @@ public:
 	class C_mono_eq_HTR_od : public C_monotonic_equation
 	{
 	private:
-		C_RecompCycle_with_ReHeating *mpc_rc_cycle;
+		C_RecompCycle *mpc_rc_cycle;
 
 	public:
-		C_mono_eq_HTR_od(C_RecompCycle_with_ReHeating *pc_rc_cycle, double m_dot_rc, double m_dot_mc, double m_dot_t)
+		C_mono_eq_HTR_od(C_RecompCycle *pc_rc_cycle, double m_dot_rc, double m_dot_mc, double m_dot_t)
 		{
 			mpc_rc_cycle = pc_rc_cycle;
 			m_m_dot_rc = m_dot_rc;
@@ -1743,15 +1685,14 @@ public:
 	class C_mono_eq_HTR_des : public C_monotonic_equation
 	{
 	private:
-		C_RecompCycle_with_ReHeating *mpc_rc_cycle;
+		C_RecompCycle *mpc_rc_cycle;
 
 	public:
-		C_mono_eq_HTR_des(C_RecompCycle_with_ReHeating *pc_rc_cycle, double w_mc, double w_mt, double w_rt)
+		C_mono_eq_HTR_des(C_RecompCycle *pc_rc_cycle, double w_mc, double w_t)
 		{
 			mpc_rc_cycle = pc_rc_cycle;
 			m_w_mc = w_mc;
-			m_w_mt = w_mt;
-			m_w_rt = w_rt;
+			m_w_t = w_t;
 		}
 
 		// These values are calculated in the operator() method and need to be extracted from this class
@@ -1759,7 +1700,7 @@ public:
 		double m_w_rc, m_m_dot_t, m_m_dot_rc, m_m_dot_mc, m_Q_dot_LT, m_Q_dot_HT;
 
 		// These values are passed in as arguments to Constructor call and should not be reset
-		double m_w_mc, m_w_mt, m_w_rt;
+		double m_w_mc, m_w_t;
 
 		virtual int operator()(double T_HTR_LP_out /*K*/, double *diff_T_HTR_LP_out /*K*/);	
 	};
@@ -1767,12 +1708,12 @@ public:
 	class C_MEQ_sco2_design_hit_eta__UA_total : public C_monotonic_equation
 	{
 	private:
-		C_RecompCycle_with_ReHeating *mpc_rc_cycle;
+		C_RecompCycle *mpc_rc_cycle;
 		std::string msg_log;
 		std::string msg_progress;
 
 	public:
-		C_MEQ_sco2_design_hit_eta__UA_total(C_RecompCycle_with_ReHeating *pc_rc_cycle)
+		C_MEQ_sco2_design_hit_eta__UA_total(C_RecompCycle *pc_rc_cycle)
 		{
 			mpc_rc_cycle = pc_rc_cycle;
 
@@ -1799,9 +1740,9 @@ public:
 	//double opt_od_eta(const std::vector<double> &x);
 };
 
-double nlopt_callback_opt_des_1_RH(const std::vector<double> &x, std::vector<double> &grad, void *data);
+double nlopt_callback_opt_des_1(const std::vector<double> &x, std::vector<double> &grad, void *data);
 
-double fmin_callback_opt_eta_1_RH(double x, void *data);
+double fmin_callback_opt_eta_1(double x, void *data);
 
 //double nlopt_cb_opt_od(const std::vector<double> &x, std::vector<double> &grad, void *data);
 
@@ -1809,16 +1750,16 @@ double fmin_callback_opt_eta_1_RH(double x, void *data);
 
 //double nlopt_cb_opt_od_eta(const std::vector<double> &x, std::vector<double> &grad, void *data);
 
-double P_pseudocritical_1_RH(double T_K);
+double P_pseudocritical_1(double T_K);
 
 
 //double nlopt_callback_tub_bal_opt(const std::vector<double> &x, std::vector<double> &grad, void *data);
 
 
-bool find_polynomial_coefs_RH(const std::vector<double> x_data, const std::vector<double> y_data, int n_coefs, std::vector<double> & coefs_out, double & r_squared);
+bool find_polynomial_coefs(const std::vector<double> x_data, const std::vector<double> y_data, int n_coefs, std::vector<double> & coefs_out, double & r_squared);
 
 
-class C_poly_curve_r_squared_RH
+class C_poly_curve_r_squared
 {
 private:
 	std::vector<double> m_x;
@@ -1828,7 +1769,7 @@ private:
 	double m_SS_tot;
 
 public:
-	C_poly_curve_r_squared_RH()
+	C_poly_curve_r_squared()
 	{
 		m_x.resize(0);
 		m_y.resize(0);
@@ -1845,6 +1786,6 @@ public:
 
 };
 
-double nlopt_callback_poly_coefs_RH(const std::vector<double> &x, std::vector<double> &grad, void *data);
+double nlopt_callback_poly_coefs(const std::vector<double> &x, std::vector<double> &grad, void *data);
 
 #endif
