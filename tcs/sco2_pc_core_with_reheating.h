@@ -718,8 +718,8 @@ public:
 		HTR_HP_OUT, //Stream 5
 		MT_IN,  //Main Turbine In, Stream 6
 		RT_OUT, //ReHeating Turbine Out, Stream 7
-		LTR_LP_OUT, //Stream 8
-		HTR_LP_OUT,  //Stream 9
+		HTR_LP_OUT, //Stream 8
+		LTR_LP_OUT,  //Stream 9
 		RC_OUT,	//Stream 10
 		MT_OUT, //Main Turbine Out, Stream 11
 		RT_IN  //ReHeating Turbine In, Stream 12
