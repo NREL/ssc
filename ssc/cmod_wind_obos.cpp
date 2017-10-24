@@ -2131,6 +2131,8 @@ public:
 		assign("decomCost", var_data((ssc_number_t)obos.decomCost));
 		assign("totDevCost", var_data((ssc_number_t)obos.totDevCost));
 		assign("commissioning", var_data((ssc_number_t)obos.commissioning));
+		assign("commissioning", var_data((ssc_number_t)obos.commissioning));
+		assign("soft_costs", var_data((ssc_number_t)obos.soft_costs));
 
 
 
