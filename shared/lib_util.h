@@ -117,7 +117,7 @@ namespace util
 	int days_in_month(int month); /*month: 0-11, return 0-30, depending on the month*/
 	void month_hour(int hour_of_year, int & out_month, int & out_hour); /*given the hour of year, return the month, and hour of day*/
 	bool weekday(int hour_of_year); /* return true if is a weekday, assuming first hour of year is Monday at 12 am*/
-	size_t index_year_hour_step(int year, int hour_of_year, int step_of_hour, int steps_per_hour);
+	size_t index_year_hour_step(size_t year, size_t hour_of_year, size_t step_of_hour, size_t steps_per_hour);
 
 	int schedule_char_to_int( char c );
 	std::string schedule_int_to_month( int m );

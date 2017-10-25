@@ -721,7 +721,7 @@ battstor::battstor(compute_module &cm, bool setup_model, int replacement_option,
 			batt_vars->batt_current_choice, batt_vars->batt_current_charge_max, batt_vars->batt_current_discharge_max,
 			batt_vars->batt_power_charge_max, batt_vars->batt_power_discharge_max, batt_vars->batt_minimum_modetime,
 			batt_vars->batt_dispatch, batt_vars->batt_pv_choice,
-			(int)nyears, batt_vars->batt_auto_dispatch_can_gridcharge,
+			(int)nyears, batt_vars->batt_auto_dispatch_can_gridcharge,batt_vars->batt_look_ahead_hours,
 			batt_vars->ppa_factors, batt_vars->ppa_weekday_schedule, batt_vars->ppa_weekend_schedule);
 		
 	}

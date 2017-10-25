@@ -851,9 +851,9 @@ dispatch_automatic_t::dispatch_automatic_t(
 {
 	_can_grid_charge = can_grid_charge;
 	_day_index = 0;
-	_hour_last_updated = -999;
+	_hour_last_updated = (size_t)1e10;
 	_dt_hour = dt_hour;
-	_steps_per_hour = int(1. / dt_hour);
+	_steps_per_hour = (size_t)(1. / dt_hour);
 	_nyears = nyears;
 	_mode = dispatch_mode;
 	_num_steps = 24 * _steps_per_hour; 
@@ -1012,7 +1012,7 @@ void dispatch_automatic_behind_the_meter_t::dispatch(size_t year,
 	double P_load_dc_discharging,
 	double )
 {
-	size_t step_per_hour = (1 / _dt_hour);
+	size_t step_per_hour = (size_t)(1 / _dt_hour);
 	size_t idx = 0;
 
 	if (_mode == LOOK_AHEAD || _mode == LOOK_BEHIND || _mode == MAINTAIN_TARGET)
@@ -1029,7 +1029,7 @@ void dispatch_automatic_behind_the_meter_t::update_dispatch(size_t hour_of_year,
 	bool debug = false;
 	FILE *p;
 	check_debug(p, debug, hour_of_year, idx);
-	int hour_of_day = util::hour_of_day(hour_of_year);
+	size_t hour_of_day = util::hour_of_day(hour_of_year);
 	_day_index = (hour_of_day * _steps_per_hour + step);
 
 	if (hour_of_day == 0 && hour_of_year != _hour_last_updated)
@@ -1060,7 +1060,7 @@ void dispatch_automatic_behind_the_meter_t::update_dispatch(size_t hour_of_year,
 	if (debug)
 		fclose(p);
 }
-void dispatch_automatic_behind_the_meter_t::initialize(int hour_of_year)
+void dispatch_automatic_behind_the_meter_t::initialize(size_t hour_of_year)
 {
 	_hour_last_updated = hour_of_year;
 	_P_target_use.clear();
@@ -1075,7 +1075,7 @@ void dispatch_automatic_behind_the_meter_t::initialize(int hour_of_year)
 		_P_battery_use.push_back(0.);
 	}
 }
-void dispatch_automatic_behind_the_meter_t::check_new_month(int hour_of_year, int step)
+void dispatch_automatic_behind_the_meter_t::check_new_month(size_t hour_of_year, size_t step)
 {
 	int hours = 0;
 	for (int month = 1; month <= _month; month++)
@@ -1090,7 +1090,7 @@ void dispatch_automatic_behind_the_meter_t::check_new_month(int hour_of_year, in
 		_month < 12 ? _month++ : _month = 1;
 	}
 }
-void dispatch_automatic_behind_the_meter_t::check_debug(FILE *&p, bool & debug, int hour_of_year, int)
+void dispatch_automatic_behind_the_meter_t::check_debug(FILE *&p, bool & debug, size_t hour_of_year, size_t)
 {
 	// for now, don't enable
 	// debug = true;
@@ -1109,7 +1109,7 @@ void dispatch_automatic_behind_the_meter_t::check_debug(FILE *&p, bool & debug, 
 	}
 }
 
-void dispatch_automatic_behind_the_meter_t::sort_grid(FILE *p, bool debug, int idx)
+void dispatch_automatic_behind_the_meter_t::sort_grid(FILE *p, bool debug, size_t idx)
 {
 
 	if (debug)
@@ -1146,7 +1146,7 @@ void dispatch_automatic_behind_the_meter_t::compute_energy(FILE *p, bool debug, 
 	}
 }
 
-void dispatch_automatic_behind_the_meter_t::target_power(FILE*p, bool debug, double E_useful, int idx)
+void dispatch_automatic_behind_the_meter_t::target_power(FILE*p, bool debug, double E_useful, size_t idx)
 {
 	// if target power set, use that
 	if ((int)_P_target_input.size() > idx && _P_target_input[idx] >= 0)
@@ -1174,13 +1174,13 @@ void dispatch_automatic_behind_the_meter_t::target_power(FILE*p, bool debug, dou
 		double P_target = sorted_grid[0].Grid();
 		double P_target_min = 1e16;
 		double E_charge = 0.;
-		int index = _num_steps - 1;
+		size_t index = _num_steps - 1;
 		std::vector<double> E_charge_vec;
-		for (int jj = _num_steps - 1; jj >= 0; jj--)
+		for (size_t jj = _num_steps - 1; jj >= 0; jj--)
 		{
 			E_charge = 0.;
 			P_target_min = sorted_grid[index].Grid();
-			for (int ii = _num_steps - 1; ii >= 0; ii--)
+			for (size_t ii = _num_steps - 1; ii >= 0; ii--)
 			{
 				if (sorted_grid[ii].Grid() > P_target_min)
 					break;
@@ -1347,7 +1347,7 @@ void dispatch_automatic_front_of_meter_t::dispatch(size_t year,
 	double P_load_dc_discharging,
 	double)
 {
-	size_t step_per_hour = (1 / _dt_hour);
+	size_t step_per_hour = (size_t)(1 / _dt_hour);
 	size_t idx = 0;
 
 	if (_mode == LOOK_AHEAD || _mode == LOOK_BEHIND || _mode == MAINTAIN_TARGET)
@@ -1359,8 +1359,6 @@ void dispatch_automatic_front_of_meter_t::dispatch(size_t year,
 
 void dispatch_automatic_front_of_meter_t::update_dispatch(size_t hour_of_year, size_t step, size_t idx)
 {
-	bool debug = false;
-	FILE *p;
 	size_t hour_of_day = util::hour_of_day(hour_of_year);
 	_day_index = (hour_of_day * _steps_per_hour + step);
 

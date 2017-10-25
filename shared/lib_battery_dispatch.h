@@ -431,7 +431,7 @@ public:
 		double P_battery);
 
 	/*! Compute the updated power to send to the battery over the next N hours */
-	virtual void update_dispatch(size_t hour_of_year, size_t step, size_t idx);
+	virtual void update_dispatch(size_t hour_of_year, size_t step, size_t idx)=0;
 
 	/*! Pass in the PV power forecast */
 	virtual void update_pv_data(std::vector<double> P_pv_dc);
@@ -448,13 +448,13 @@ protected:
 	double_vec _P_pv_dc;		
 	
 	/*! The index of the current day (hour * steps_per_hour + step) */
-	int _day_index;				
+	size_t _day_index;				
 
 	/*! The index of the current month (0-11) */
-	int _month;	
+	size_t _month;
 
 	/*! The number of steps in the look ahead, assumed to be 24 hours * steps_per_hour */
-	int _num_steps;
+	size_t _num_steps;
 
 	/*! Time series of length (24 hours * steps_per_hour) of batter powers [kW] */
 	double_vec _P_battery_use;
@@ -462,10 +462,10 @@ protected:
 	/*! The battery power target at the current time [kW] */
 	double _P_battery_current;
 
-	int _hour_last_updated;
+	size_t _hour_last_updated;
 	double _dt_hour;
-	int _steps_per_hour;
-	int _nyears;
+	size_t _steps_per_hour;
+	size_t _nyears;
 	int _mode;
 	double _safety_factor;
 	
@@ -532,13 +532,13 @@ protected:
 	/*! Initialize with a pointer*/
 	void init_with_pointer(const dispatch_automatic_behind_the_meter_t * tmp);
 
-	void initialize(int hour_of_year);
-	void check_debug(FILE *&p, bool & debug, int hour_of_year, int idx);
-	void sort_grid(FILE *p, bool debug, int idx);
+	void initialize(size_t hour_of_year);
+	void check_debug(FILE *&p, bool & debug, size_t hour_of_year, size_t idx);
+	void sort_grid(FILE *p, bool debug, size_t idx);
 	void compute_energy(FILE *p, bool debug, double & E_max);
-	void target_power(FILE*p, bool debug, double E_max, int idx);
+	void target_power(FILE*p, bool debug, double E_max, size_t idx);
 	void set_battery_power(FILE *p, bool debug);
-	void check_new_month(int hour_of_year, int step);
+	void check_new_month(size_t hour_of_year, size_t step);
 
 	/*! Full time-series of loads [kW] */
 	double_vec _P_load_dc;
