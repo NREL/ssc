@@ -82,7 +82,7 @@ static void trim(std::string &buf)
 	  	buf.pop_back();
 }
 
-static int locate2(std::string buf, std::vector<std::string> vstring, char delim)
+static int locate2(std::string buf, std::vector<std::string> &vstring, char delim)
 {
 	trim(buf);
 	std::stringstream ss(buf);
