@@ -107,6 +107,7 @@ static var_info _cm_vtab_wind_obos[] = {
    { SSC_INPUT,        SSC_NUMBER,      "interConVolt",                   "Grid Interconnect Voltage",                                "kV",                 "",                       "wobos",            "?=345",                   "",                              ""},
    { SSC_INPUT,        SSC_NUMBER,      "distInterCon",                   "Distance Over Land to Grid Interconnect",                  "miles",              "",                       "wobos",            "?=3",                     "",                              ""},
    { SSC_INPUT,        SSC_NUMBER,      "scrapVal",                       "Total Scrap Value of Decommissioned Components",           "$",                  "",                       "wobos",            "?=0",                     "",                              ""},
+   { SSC_INPUT,        SSC_NUMBER,      "number_install_seasons",         "Number of Installation Seasons",                           "",                   "",                       "wobos",            "?=1",                     "",                              ""},
 
 //General
    { SSC_INPUT,        SSC_NUMBER,      "projLife",                       "Project Economic Life",                                    "years",              "",                       "wobos",            "?=20",                    "",                              ""},
@@ -147,8 +148,6 @@ static var_info _cm_vtab_wind_obos[] = {
    { SSC_INPUT,        SSC_NUMBER,      "moorDia",                        "Mooring Line Diameter",                                    "m",                  "",                       "wobos",            "",                        "MIN=0.09",                      ""},
    { SSC_INPUT,        SSC_NUMBER,      "moorCR",                         "Mooring Line Cost Rate",                                   "$/m",                "",                       "wobos",            "",                        "MIN=399",                       ""},
    { SSC_INPUT,        SSC_NUMBER,      "scourMat",                       "Scour Protection Material Cost",                           "$/location",         "",                       "wobos",            "?=250000",                "",                              ""},
-   { SSC_INPUT,        SSC_NUMBER,      "number_install_seasons",         "Number of Installation Seasons",                           "",                   "",                       "wobos",            "?=1",                     "",                              ""},
-
 
 //Electrical Infrastructure
    { SSC_INPUT,        SSC_NUMBER,      "pwrFac",                         "Power Transfer Efficiency Factor",                         "%",                  "",                       "wobos",            "?=0.95",                  "",                              ""},
