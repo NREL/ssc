@@ -47,8 +47,8 @@
 *  THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *******************************************************************************************************/
 
-#ifndef __SCO2_PC_CORE_
-#define __SCO2_PC_CORE_
+#ifndef __SCO2_PC_CORE_RCMCI_WITHOUT_REHEATING_
+#define __SCO2_PC_CORE_RCMCI_WITHOUT_REHEATING_
 
 #include <limits>
 #include <vector>
@@ -64,13 +64,13 @@
 using namespace std;
 
 // 'General' Core Routines: Not class methods and don't require pointers to or instances of classes
-void calculate_turbomachinery_outlet_1(double T_in /*K*/, double P_in /*kPa*/, double P_out /*kPa*/, double eta /*-*/, bool is_comp, int & error_code, double & enth_in /*kJ/kg*/, double & entr_in /*kJ/kg-K*/,
+void calculate_turbomachinery_outlet_1_RCMCI_without_ReHeating(double T_in /*K*/, double P_in /*kPa*/, double P_out /*kPa*/, double eta /*-*/, bool is_comp, int & error_code, double & enth_in /*kJ/kg*/, double & entr_in /*kJ/kg-K*/,
 	double & dens_in /*kg/m3*/, double & temp_out /*K*/, double & enth_out /*kJ/kg*/, double & entr_out /*kJ/kg-K*/, double & dens_out /*kg/m3*/, double & spec_work /*kJ/kg*/);
 
 //void calculate_hxr_UA_1(int N_hxrs, double Q_dot /*units?*/, double m_dot_c, double m_dot_h, double T_c_in, double T_h_in, double P_c_in, double P_c_out, double P_h_in, double P_h_out,
 //	int & error_code, double & UA, double & min_DT);
 
-void isen_eta_from_poly_eta(double T_in /*K*/, double P_in /*kPa*/, double P_out /*kPa*/, double poly_eta /*-*/, bool is_comp, int & error_code, double & isen_eta);
+void isen_eta_from_poly_eta_RCMCI_without_ReHeating(double T_in /*K*/, double P_in /*kPa*/, double P_out /*kPa*/, double poly_eta /*-*/, bool is_comp, int & error_code, double & isen_eta);
 
 // Heat Exchanger Class
 class C_HeatExchanger_RCMCI_without_ReHeating
@@ -103,9 +103,9 @@ private:
 	S_design_parameters ms_des_par;
 
 public:
-	~C_HeatExchanger(){};
+	~C_HeatExchanger_RCMCI_without_ReHeating(){};
 
-	C_HeatExchanger(){};
+	C_HeatExchanger_RCMCI_without_ReHeating(){};
 
 	void initialize(const S_design_parameters & des_par_in);
 
@@ -181,9 +181,9 @@ private:
 	S_od_solved ms_od_solved;
 
 public:
-	~C_turbine(){};
+	~C_turbine_RCMCI_without_ReHeating(){};
 
-	C_turbine(){};
+	C_turbine_RCMCI_without_ReHeating(){};
 
 	static const double m_nu_design;
 	
@@ -279,9 +279,9 @@ public:
 	S_des_solved ms_des_solved; 
 	S_od_solved ms_od_solved;
 
-	~C_comp_single_stage(){};
+	~C_comp_single_stage_RCMCI_without_ReHeating(){};
 
-	C_comp_single_stage(){};
+	C_comp_single_stage_RCMCI_without_ReHeating(){};
 
 	static const double m_snl_phi_design;		//[-] Design-point flow coef. for Sandia compressor (corresponds to max eta)
 	static const double m_snl_phi_min;				//[-] Approximate surge limit for SNL compressor
@@ -308,7 +308,7 @@ class C_comp_multi_stage_RCMCI_without_ReHeating
 {
 public:
 
-	std::vector<C_comp_single_stage> mv_stages;
+	std::vector<C_comp_single_stage_RCMCI_without_ReHeating> mv_stages;
 
 	struct S_des_solved
 	{
@@ -377,9 +377,9 @@ public:
 	S_des_solved ms_des_solved;
 	S_od_solved ms_od_solved;
 
-	~C_comp_multi_stage(){};
+	~C_comp_multi_stage_RCMCI_without_ReHeating(){};
 
-	C_comp_multi_stage(){};
+	C_comp_multi_stage_RCMCI_without_ReHeating(){};
 
 	const S_des_solved * get_design_solved()
 	{
@@ -394,14 +394,14 @@ public:
 	class C_MEQ_eta_isen__h_out : public C_monotonic_equation
 	{
 	private:
-		C_comp_multi_stage *mpc_multi_stage;
+		C_comp_multi_stage_RCMCI_without_ReHeating *mpc_multi_stage;
 		double m_T_in;	//[K]
 		double m_P_in;	//[kPa]
 		double m_P_out;	//[kPa]
 		double m_m_dot;	//[kg/s]
 
 	public:
-		C_MEQ_eta_isen__h_out(C_comp_multi_stage *pc_multi_stage,
+		C_MEQ_eta_isen__h_out(C_comp_multi_stage_RCMCI_without_ReHeating *pc_multi_stage,
 			double T_in /*K*/, double P_in /*kPa*/, double P_out /*kPa*/, double m_dot /*kg/s*/)
 		{
 			mpc_multi_stage = pc_multi_stage;
@@ -417,14 +417,14 @@ public:
 	class C_MEQ_N_rpm__P_out : public C_monotonic_equation
 	{
 	private:
-		C_comp_multi_stage *mpc_multi_stage;
+		C_comp_multi_stage_RCMCI_without_ReHeating *mpc_multi_stage;
 		double m_T_in;	//[K]
 		double m_P_in;	//[kPa]
 		double m_m_dot;	//[kg/s]
 		double m_eta_isen;	//[-]
 
 	public:
-		C_MEQ_N_rpm__P_out(C_comp_multi_stage *pc_multi_stage,
+		C_MEQ_N_rpm__P_out(C_comp_multi_stage_RCMCI_without_ReHeating *pc_multi_stage,
 			double T_in /*K*/, double P_in /*kPa*/, double m_dot /*kg/s*/, double eta_isen /*-*/)
 		{
 			mpc_multi_stage = pc_multi_stage;
@@ -440,13 +440,13 @@ public:
 	class C_MEQ_phi_od__P_out : public C_monotonic_equation
 	{
 	private:
-		C_comp_multi_stage *mpc_multi_stage;
+		C_comp_multi_stage_RCMCI_without_ReHeating *mpc_multi_stage;
 		double m_T_in;	//[K]
 		double m_P_in;	//[kPa]
 		double m_m_dot;	//[kg/s]
 
 	public:
-		C_MEQ_phi_od__P_out(C_comp_multi_stage *pc_multi_stage,
+		C_MEQ_phi_od__P_out(C_comp_multi_stage_RCMCI_without_ReHeating *pc_multi_stage,
 			double T_in /*K*/, double P_in /*kPa*/, double m_dot /*kg/s*/)
 		{
 			mpc_multi_stage = pc_multi_stage;
@@ -795,8 +795,8 @@ public:
 		double m_T_t_in;					//[K] Turbine inlet temperature
 		std::vector<double> m_DP_LT;		//(cold, hot) positive values are absolute [kPa], negative values are relative (-)
 		std::vector<double> m_DP_HT;		//(cold, hot) positive values are absolute [kPa], negative values are relative (-)
-		std::vector<double> m_DP_PC1		//(cold, hot) positive values are absolute [kPa], negative values are relative (-)
-		std::vector<double> m_DP_PC2		//(cold, hot) positive values are absolute [kPa], negative values are relative (-)
+		std::vector<double> m_DP_PC1;		//(cold, hot) positive values are absolute [kPa], negative values are relative (-)
+		std::vector<double> m_DP_PC2;		//(cold, hot) positive values are absolute [kPa], negative values are relative (-)
 		std::vector<double> m_DP_PHX;		//(cold, hot) positive values are absolute [kPa], negative values are relative (-)
 		double m_UA_rec_total;				//[kW/K] Total design-point recuperator UA
 		double m_LT_eff_max;				//[-] Maximum allowable effectiveness in LT recuperator
@@ -984,12 +984,12 @@ public:
 		bool m_is_rc;
 
 		//C_compressor::S_design_solved ms_mc1_des_solved;
-		C_comp_multi_stage::S_des_solved ms_mc1_ms_des_solved;
+		C_comp_multi_stage_RCMCI_without_ReHeating::S_des_solved ms_mc1_ms_des_solved;
 		//C_compressor::S_design_solved ms_mc2_des_solved;
-		C_comp_multi_stage::S_des_solved ms_mc2_ms_des_solved;
+		C_comp_multi_stage_RCMCI_without_ReHeating::S_des_solved ms_mc2_ms_des_solved;
 		//C_recompressor::S_design_solved ms_rc_des_solved;
-		C_comp_multi_stage::S_des_solved ms_rc_ms_des_solved;
-		C_turbine::S_design_solved ms_t_des_solved;
+		C_comp_multi_stage_RCMCI_without_ReHeating::S_des_solved ms_rc_ms_des_solved;
+		C_turbine_RCMCI_without_ReHeating::S_design_solved ms_t_des_solved;
 		C_HX_counterflow::S_des_solved ms_LT_recup_des_solved;
 		C_HX_counterflow::S_des_solved ms_HT_recup_des_solved;
 
@@ -1085,7 +1085,54 @@ public:
 	
 	
 	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
 //---------------------------------------Continue from this point LUIS -----------------------------------------------------------------------	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
 	
 	
 	
@@ -1103,10 +1150,10 @@ public:
 		double m_recomp_frac;	//[-]
 
 		//C_compressor::S_od_solved ms_mc_od_solved;
-		C_comp_multi_stage::S_od_solved ms_mc_ms_od_solved;
+		C_comp_multi_stage_RCMCI_without_ReHeating::S_od_solved ms_mc_ms_od_solved;
 		//C_recompressor::S_od_solved ms_rc_od_solved;
-		C_comp_multi_stage::S_od_solved ms_rc_ms_od_solved;
-		C_turbine::S_od_solved ms_t_od_solved;
+		C_comp_multi_stage_RCMCI_without_ReHeating::S_od_solved ms_rc_ms_od_solved;
+		C_turbine_RCMCI_without_ReHeating::S_od_solved ms_t_od_solved;
 		C_HX_counterflow::S_od_solved ms_LT_recup_od_solved;
 		C_HX_counterflow::S_od_solved ms_HT_recup_od_solved;
 
@@ -1290,14 +1337,16 @@ public:
 		}
 	};
 
-private:
+public:
 		// Component classes
-	C_turbine m_t;
-	//C_compressor m_mc;
-	C_comp_multi_stage m_mc_ms;
+	C_turbine_RCMCI_without_ReHeating m_t;
+	//C_compressor m_mc1;
+	C_comp_multi_stage_RCMCI_without_ReHeating m_mc1_ms;
+	//C_compressor m_mc2;
+	C_comp_multi_stage_RCMCI_without_ReHeating m_mc2_ms;
 	//C_recompressor m_rc;
-	C_comp_multi_stage m_rc_ms;
-	C_HeatExchanger /*m_LT, m_HT,*/ m_PHX, m_PC;
+	C_comp_multi_stage_RCMCI_without_ReHeating m_rc_ms;
+	C_HeatExchanger_RCMCI_without_ReHeating /*m_LT, m_HT,*/ m_PHX, m_PC1, m_PC2;
 	
 	C_HX_co2_to_co2 mc_LT_recup, mc_HT_recup;
 	
@@ -1385,9 +1434,9 @@ private:
 
 public:
 
-	C_RecompCycle()
+	C_RecompCycle_RCMCI_without_ReHeating()
 	{
-		m_temp_last.resize(10);
+		m_temp_last.resize(12);
 		std::fill(m_temp_last.begin(), m_temp_last.end(), std::numeric_limits<double>::quiet_NaN());
 		
 		m_pres_last = m_enth_last = m_entr_last = m_dens_last = m_temp_last;
@@ -1435,7 +1484,7 @@ public:
 
 	CO2_state mc_co2_props;
 
-	~C_RecompCycle(){}
+	~C_RecompCycle_RCMCI_without_ReHeating(){}
 
 	void design(S_design_parameters & des_par_in, int & error_code);
 
@@ -1486,7 +1535,7 @@ public:
 							int & rc_error_code, double & rc_w_tip_ratio /*-*/, double & rc_phi /*-*/,
 							bool is_update_ms_od_solved = false);
 
-	const C_comp_multi_stage::S_od_solved * get_rc_od_solved()
+	const C_comp_multi_stage_RCMCI_without_ReHeating::S_od_solved * get_rc_od_solved()
 	{
 		return m_rc_ms.get_od_solved();
 	}
@@ -1519,7 +1568,7 @@ public:
 	class C_mono_eq_x_f_recomp_y_N_rc : public C_monotonic_equation
 	{
 	private:
-		C_RecompCycle *mpc_rc_cycle;
+		C_RecompCycle_RCMCI_without_ReHeating *mpc_rc_cycle;
 
 		double m_T_mc_in;		//[K] Compressor inlet temperature
 		double m_P_mc_in;		//[kPa] Compressor inlet pressure
@@ -1531,7 +1580,7 @@ public:
 		double m_m_dot_rc;		//[kg/s]
 		double m_m_dot_mc;		//[kg/s]
 
-		C_mono_eq_x_f_recomp_y_N_rc(C_RecompCycle *pc_rc_cycle, double T_mc_in /*K*/, double P_mc_in /*kPa*/, double T_t_in /*K*/)
+		C_mono_eq_x_f_recomp_y_N_rc(C_RecompCycle_RCMCI_without_ReHeating *pc_rc_cycle, double T_mc_in /*K*/, double P_mc_in /*kPa*/, double T_t_in /*K*/)
 		{
 			mpc_rc_cycle = pc_rc_cycle;
 			m_T_mc_in = T_mc_in;		//[K]
@@ -1549,7 +1598,7 @@ public:
 	class C_mono_eq_turbo_N_fixed_m_dot : public C_monotonic_equation
 	{
 	private:
-		C_RecompCycle *mpc_rc_cycle;
+		C_RecompCycle_RCMCI_without_ReHeating *mpc_rc_cycle;
 
 		double m_T_mc_in;		//[K] Compressor inlet temperature
 		double m_P_mc_in;		//[kPa] Compressor inlet pressure
@@ -1560,7 +1609,7 @@ public:
 		// that is typically updated after entire cycle off-design solution 
 
 	public:
-		C_mono_eq_turbo_N_fixed_m_dot(C_RecompCycle *pc_rc_cycle, double T_mc_in /*K*/, double P_mc_in /*kPa*/,
+		C_mono_eq_turbo_N_fixed_m_dot(C_RecompCycle_RCMCI_without_ReHeating *pc_rc_cycle, double T_mc_in /*K*/, double P_mc_in /*kPa*/,
 			double f_recomp /*-*/, double T_t_in /*K*/, bool is_update_ms_od_solved = false)
 		{
 			mpc_rc_cycle = pc_rc_cycle;
@@ -1614,10 +1663,10 @@ public:
 	class C_mono_eq_LTR_od : public C_monotonic_equation
 	{
 	private:
-		C_RecompCycle *mpc_rc_cycle;
+		C_RecompCycle_RCMCI_without_ReHeating *mpc_rc_cycle;
 
 	public:
-		C_mono_eq_LTR_od(C_RecompCycle *pc_rc_cycle, double m_dot_rc, double m_dot_mc, double m_dot_t)
+		C_mono_eq_LTR_od(C_RecompCycle_RCMCI_without_ReHeating *pc_rc_cycle, double m_dot_rc, double m_dot_mc, double m_dot_t)
 		{
 			mpc_rc_cycle = pc_rc_cycle;
 			m_m_dot_rc = m_dot_rc;
@@ -1638,13 +1687,14 @@ public:
 	class C_mono_eq_LTR_des : public C_monotonic_equation
 	{
 	private:
-		C_RecompCycle *mpc_rc_cycle;
+		C_RecompCycle_RCMCI_without_ReHeating *mpc_rc_cycle;
 
 	public:
-		C_mono_eq_LTR_des(C_RecompCycle *pc_rc_cycle, double w_mc, double w_t)
+		C_mono_eq_LTR_des(C_RecompCycle_RCMCI_without_ReHeating *pc_rc_cycle, double w_mc1, double w_mc2, double w_t)
 		{
 			mpc_rc_cycle = pc_rc_cycle;
-			m_w_mc = w_mc;
+			m_w_mc1 = w_mc1;
+			m_w_mc2 = w_mc2;
 			m_w_t = w_t;
 		}
 	
@@ -1653,7 +1703,7 @@ public:
 		double m_w_rc, m_m_dot_t, m_m_dot_rc, m_m_dot_mc, m_Q_dot_LT;
 
 		// These values are passed in as arguments to Constructor call and should not be reset
-		double m_w_mc, m_w_t;
+		double m_w_mc1, m_w_mc2, m_w_t;
 
 		virtual int operator()(double T_LTR_LP_out /*K*/, double *diff_T_LTR_LP_out /*K*/);
 	};
@@ -1661,10 +1711,10 @@ public:
 	class C_mono_eq_HTR_od : public C_monotonic_equation
 	{
 	private:
-		C_RecompCycle *mpc_rc_cycle;
+		C_RecompCycle_RCMCI_without_ReHeating *mpc_rc_cycle;
 
 	public:
-		C_mono_eq_HTR_od(C_RecompCycle *pc_rc_cycle, double m_dot_rc, double m_dot_mc, double m_dot_t)
+		C_mono_eq_HTR_od(C_RecompCycle_RCMCI_without_ReHeating *pc_rc_cycle, double m_dot_rc, double m_dot_mc, double m_dot_t)
 		{
 			mpc_rc_cycle = pc_rc_cycle;
 			m_m_dot_rc = m_dot_rc;
@@ -1685,13 +1735,14 @@ public:
 	class C_mono_eq_HTR_des : public C_monotonic_equation
 	{
 	private:
-		C_RecompCycle *mpc_rc_cycle;
+		C_RecompCycle_RCMCI_without_ReHeating *mpc_rc_cycle;
 
 	public:
-		C_mono_eq_HTR_des(C_RecompCycle *pc_rc_cycle, double w_mc, double w_t)
+		C_mono_eq_HTR_des(C_RecompCycle_RCMCI_without_ReHeating *pc_rc_cycle, double w_mc1, double w_mc2, double w_t)
 		{
 			mpc_rc_cycle = pc_rc_cycle;
-			m_w_mc = w_mc;
+			m_w_mc1 = w_mc1;
+			m_w_mc2 = w_mc2;
 			m_w_t = w_t;
 		}
 
@@ -1700,7 +1751,7 @@ public:
 		double m_w_rc, m_m_dot_t, m_m_dot_rc, m_m_dot_mc, m_Q_dot_LT, m_Q_dot_HT;
 
 		// These values are passed in as arguments to Constructor call and should not be reset
-		double m_w_mc, m_w_t;
+		double m_w_mc1, m_w_mc2, m_w_t;
 
 		virtual int operator()(double T_HTR_LP_out /*K*/, double *diff_T_HTR_LP_out /*K*/);	
 	};
@@ -1708,12 +1759,12 @@ public:
 	class C_MEQ_sco2_design_hit_eta__UA_total : public C_monotonic_equation
 	{
 	private:
-		C_RecompCycle *mpc_rc_cycle;
+		C_RecompCycle_RCMCI_without_ReHeating *mpc_rc_cycle;
 		std::string msg_log;
 		std::string msg_progress;
 
 	public:
-		C_MEQ_sco2_design_hit_eta__UA_total(C_RecompCycle *pc_rc_cycle)
+		C_MEQ_sco2_design_hit_eta__UA_total(C_RecompCycle_RCMCI_without_ReHeating *pc_rc_cycle)
 		{
 			mpc_rc_cycle = pc_rc_cycle;
 
