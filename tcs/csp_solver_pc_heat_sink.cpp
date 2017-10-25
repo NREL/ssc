@@ -205,8 +205,9 @@ double C_pc_heat_sink::get_min_thermal_power()
 
 void C_pc_heat_sink::get_max_power_output_operation_constraints(double T_amb /*C*/, double & m_dot_HTF_ND_max, double & W_dot_ND_max)
 {
-	throw(C_csp_exception("C_pc_heat_sink::get_max_power_output_operation_constraints() is not complete"));
-
+	m_dot_HTF_ND_max = m_max_frac;		//[-]
+	W_dot_ND_max = m_dot_HTF_ND_max;	//[-]
+	
 	return ;	//[-]
 }
 
