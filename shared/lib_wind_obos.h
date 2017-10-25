@@ -51,6 +51,8 @@
 #define __wind_obos_h
 
 #include <vector>
+#include <limits>
+
 using namespace std;
 
 struct wobos //WIND OFFSHORE BOS STRUCTURE TO HOLD ALL INPUTS AND OUTPUTS AND ALLOW MEMBER FUNCTIONS TO OPERATE ON THOSE VALUES
