@@ -409,8 +409,10 @@ public:
 		double t_min,
 		int dispatch_mode,
 		int pv_dispatch,
-		int nyears,
-		bool can_grid_charge
+		size_t nyears,
+		bool can_grid_charge,
+		size_t look_ahead_hours,
+		size_t dispatch_update_frequency_hours
 		);
 
 	virtual ~dispatch_automatic_t(){};
@@ -468,7 +470,12 @@ protected:
 	size_t _nyears;
 	int _mode;
 	double _safety_factor;
-	
+
+	/*! The hours to look ahead in the simulation [hour] */
+	size_t _look_ahead_hours;
+
+	/*! The frequency to update the dispatch [hour] */
+	size_t _dispatch_update_hours;
 };
 
 /*! Automated dispatch class for behind-the-meter connections */
@@ -495,8 +502,10 @@ public:
 		double t_min,
 		int dispatch_mode,
 		int pv_dispatch,
-		int nyears,
-		bool can_grid_charge
+		size_t nyears,
+		bool can_grid_charge,
+		size_t look_ahead_hours,
+		size_t dispatch_update_frequency_hours
 		);
 
 	virtual ~dispatch_automatic_behind_the_meter_t(){};
@@ -587,9 +596,10 @@ public:
 		double t_min,
 		int dispatch_mode,
 		int pv_dispatch,
-		int nyears,
+		size_t nyears,
 		bool can_grid_charge,
 		size_t look_ahead_hours,
+		size_t dispatch_update_frequency_hours,
 		std::vector<double> ppa_factors,
 		util::matrix_t<size_t> ppa_weekday_schedule,
 		util::matrix_t<size_t> ppa_weekend_schedule
@@ -620,7 +630,6 @@ protected:
 	
 	void init_with_pointer(const dispatch_automatic_front_of_meter_t* tmp);
 
-	size_t _look_ahead_hours;
 	std::vector<double> _ppa_factors;
 	util::matrix_t<size_t> _ppa_weekday_schedule;
 	util::matrix_t<size_t> _ppa_weekend_schedule;

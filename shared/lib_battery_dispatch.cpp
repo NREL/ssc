@@ -844,8 +844,10 @@ dispatch_automatic_t::dispatch_automatic_t(
 	double t_min,
 	int dispatch_mode,
 	int pv_dispatch,
-	int nyears,
-	bool can_grid_charge
+	size_t nyears,
+	bool can_grid_charge,
+	size_t look_ahead_hours,
+	size_t dispatch_update_frequency_hours
 	) : dispatch_t(Battery, dt_hour, SOC_min, SOC_max, current_choice, Ic_max, Id_max, Pc_max, Pd_max,
 	t_min, dispatch_mode, pv_dispatch)
 {
@@ -859,6 +861,8 @@ dispatch_automatic_t::dispatch_automatic_t(
 	_num_steps = 24 * _steps_per_hour; 
 	_month = 1;
 	_safety_factor = 0.03;
+	_look_ahead_hours = look_ahead_hours;
+	_dispatch_update_hours = dispatch_update_frequency_hours;
 }
 
 void dispatch_automatic_t::init_with_pointer(const dispatch_automatic_t * tmp)
@@ -875,6 +879,8 @@ void dispatch_automatic_t::init_with_pointer(const dispatch_automatic_t * tmp)
 	_nyears = tmp->_nyears;
 	_mode = tmp->_mode;
 	_safety_factor = tmp->_safety_factor;
+	_look_ahead_hours = tmp->_look_ahead_hours;
+	_dispatch_update_hours = tmp->_dispatch_update_hours;
 }
 
 // deep copy from dispatch to this
@@ -919,7 +925,7 @@ void dispatch_automatic_t::dispatch(size_t year,
 	_Battery_initial->copy(_Battery);
 	bool iterate = true;
 	int count = 0;
-	size_t idx = util::index_year_hour_step((int)year, (int)hour_of_year, (int)step, (int)(1 / _dt_hour));
+	size_t idx = util::index_year_hour_step(year, hour_of_year, step, (size_t)(1 / _dt_hour));
 
 	do {
 
@@ -958,8 +964,10 @@ dispatch_automatic_behind_the_meter_t::dispatch_automatic_behind_the_meter_t(
 	double t_min,
 	int dispatch_mode,
 	int pv_dispatch,
-	int nyears,
-	bool can_grid_charge) : dispatch_automatic_t(Battery, dt_hour, SOC_min, SOC_max, current_choice, Ic_max, Id_max, Pc_max, Pd_max, t_min, dispatch_mode, pv_dispatch, nyears, can_grid_charge)
+	size_t nyears,
+	bool can_grid_charge,
+	size_t look_ahead_hours,
+	size_t dispatch_update_frequency_hours) : dispatch_automatic_t(Battery, dt_hour, SOC_min, SOC_max, current_choice, Ic_max, Id_max, Pc_max, Pd_max, t_min, dispatch_mode, pv_dispatch, nyears, can_grid_charge, look_ahead_hours, dispatch_update_frequency_hours)
 {
 	_P_target_month = -1e16;
 	_P_target_current = -1e16;
@@ -1032,6 +1040,7 @@ void dispatch_automatic_behind_the_meter_t::update_dispatch(size_t hour_of_year,
 	size_t hour_of_day = util::hour_of_day(hour_of_year);
 	_day_index = (hour_of_day * _steps_per_hour + step);
 
+	// Currently hardcoded to have 24 hour look ahead and 24 dispatch_update
 	if (hour_of_day == 0 && hour_of_year != _hour_last_updated)
 	{
 
@@ -1300,12 +1309,13 @@ dispatch_automatic_front_of_meter_t::dispatch_automatic_front_of_meter_t(
 	double t_min,
 	int dispatch_mode,
 	int pv_dispatch,
-	int nyears,
+	size_t nyears,
 	bool can_grid_charge,
 	size_t look_ahead_hours,
+	size_t dispatch_update_frequency_hours,
 	std::vector<double> ppa_factors,
 	util::matrix_t<size_t> ppa_weekday_schedule,
-	util::matrix_t<size_t> ppa_weekend_schedule) : dispatch_automatic_t(Battery, dt_hour, SOC_min, SOC_max, current_choice, Ic_max, Id_max, Pc_max, Pd_max, t_min, dispatch_mode, pv_dispatch, nyears, can_grid_charge)
+	util::matrix_t<size_t> ppa_weekend_schedule) : dispatch_automatic_t(Battery, dt_hour, SOC_min, SOC_max, current_choice, Ic_max, Id_max, Pc_max, Pd_max, t_min, dispatch_mode, pv_dispatch, nyears, can_grid_charge, look_ahead_hours, dispatch_update_frequency_hours)
 {
 	_look_ahead_hours = look_ahead_hours;
 	_ppa_factors = ppa_factors;
