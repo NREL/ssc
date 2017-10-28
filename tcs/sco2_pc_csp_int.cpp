@@ -106,7 +106,6 @@ void C_sco2_recomp_csp::design_core()
 {
 	// using -> C_RecompCycle::S_auto_opt_design_hit_eta_parameters
 	std::string error_msg;
-	error_msg[0] = NULL;
 	int auto_err_code = 0;
 
 	if(ms_des_par.m_design_method == 1)
@@ -192,7 +191,7 @@ void C_sco2_recomp_csp::design_core()
 		throw(C_csp_exception(error_msg.c_str()));
 	}
 
-	if( error_msg[0] == NULL )
+	if( error_msg.empty() )
 	{
 		mc_messages.add_notice("The recompression cycle design optimization was successful");
 	}
@@ -248,7 +247,7 @@ void C_sco2_recomp_csp::design_core()
 	
 	
 	// 4.12.2017 twn: comment this out for now
-	//mc_air_cooler.design_hx(ms_air_cooler_des_par_ind, ms_air_cooler_des_par_dep);
+	mc_air_cooler.design_hx(ms_air_cooler_des_par_ind, ms_air_cooler_des_par_dep);
 
 
 
@@ -1512,7 +1511,6 @@ double C_sco2_recomp_csp::adjust_P_mc_in_away_2phase(double T_co2 /*K*/, double 
 	else
 	{
 		double P_lower = 0.99*P_mc_in_restricted;
-		double P_mid = 0.995*P_mc_in_restricted;
 		if (P_mc_in > P_lower)
 		{
 			return P_lower + (P_mc_in - P_lower)/(P_mc_in_restricted - P_lower)*(P_mc_in-P_lower);

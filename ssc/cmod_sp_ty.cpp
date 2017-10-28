@@ -796,7 +796,9 @@ class cm_sp_ty : public compute_module
 								optical_table.AddYAxis(yax, n_zenith + 1);
 								optical_table.AddData(data);
 
-								delete[] xax, yax, data;
+								delete [] xax;
+								delete [] yax;
+								delete [] data;
 
 								opt_eta_point = optical_table.interpolate(az_sp, solzen);
 							}
@@ -1061,7 +1063,9 @@ class cm_sp_ty : public compute_module
 			optical_table.AddYAxis(yax, n_zenith+1);
 			optical_table.AddData(data);
 
-			delete[] xax, yax, data;
+			delete [] xax;
+			delete [] yax;
+			delete [] data;
 
 			// Simulate each hour
 			weatherfile wf(as_string("solar_resource_file"));

@@ -579,7 +579,7 @@ double GTI_DIRINT( const double poa[3], const double inc[3], double zen, double 
 					 0.125, 0.125, 0.125, 0.125, 0.125, 
 					 0.125, 0.125, 0.125, 0.125, 0.125};
 
-	double poa_tmp[3], diffc_tmp[3], poaBest[3];
+	double poa_tmp[3], diffc_tmp[3], poaBest[3] = {0, 0, 0};
 	
 	// Begin iterative solution for Kt
 //	double Io = 1367.0 * (1.0 + 0.033 * cos(0.0172142 * doy));    // Extraterrestrial dn (Taken from DIRINT Model)
@@ -609,9 +609,7 @@ double GTI_DIRINT( const double poa[3], const double inc[3], double zen, double 
 		diff = ( poa_tmp[0] + poa_tmp[1] + poa_tmp[2]) - poa[1];   
 
 		//Check for best Difference. If found, save results
-		bool bestFlag = false;
 		if ( fabs(diff) < fabs(bestDiff)){
-			bestFlag = true;
 			bestDiff = diff;
 			Ktp = Ktp_tmp;
 			dnOut = dn_tmp;
@@ -628,7 +626,6 @@ double GTI_DIRINT( const double poa[3], const double inc[3], double zen, double 
 		GTI[2] = Max( 1.0, GTI[2] - Ci[i] * diff);
 
 	}
-
 
 	poaCompOut[0] = poaBest[0];
 	poaCompOut[1] = poaBest[1];
@@ -2042,8 +2039,7 @@ void ModifiedDISC(const double kt[3], const double kt1[3], const double g[3], co
 	// Notes: This is a modification to the orininally provided Modified-DISC model which takes
 	// as input the four bin variables and GHI and returns the resulting DNI
 
-	double cz[3], zenith[3], am[3], ktpam[3];
-
+    double cz[3], zenith[3], am[3];
     double ktbin[5] = { 0.24, 0.4, 0.56, 0.7, 0.8 };
     double zbin[5] = { 25.0, 40.0, 55.0, 70.0, 80.0 };
     double dktbin[5] = { 0.015, 0.035, 0.07, 0.15, 0.3 };
@@ -2065,7 +2061,6 @@ void ModifiedDISC(const double kt[3], const double kt1[3], const double g[3], co
             cz[i] = cos(z[i]); // Cosine of zenith angle
             zenith[i] = z[i] * rtod;
             am[i] = Min(15.25, 1.0 / (cz[i] + 0.15 * (pow(93.9 - zenith[i], -1.253))));
-            ktpam[i] = am[i] * exp(-0.0001184 * alt);
         }
         if (kt[1] <= 0.6)
         {
