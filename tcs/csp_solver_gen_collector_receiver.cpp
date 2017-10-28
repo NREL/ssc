@@ -237,7 +237,9 @@ void C_csp_gen_collector_receiver::init(const C_csp_collector_receiver::S_csp_cr
 		mc_optical_table.AddXAxis(xax, (int)ms_params.m_optical_table.ncols() - 1);
 		mc_optical_table.AddYAxis(yax, (int)ms_params.m_optical_table.nrows() - 1);
 		mc_optical_table.AddData(data);
-		delete[] xax, yax, data;	
+		delete [] xax;
+		delete [] yax;
+		delete [] data;
 	}
 	else
 	{

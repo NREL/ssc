@@ -912,7 +912,9 @@ public:
 		optical_table.AddXAxis(xax, ncol_OpticalTable-1);
 		optical_table.AddYAxis(yax, nrow_OpticalTable-1);
 		optical_table.AddData(data);
-		delete [] xax, yax, data;
+		delete [] xax;
+		delete [] yax;
+		delete [] data;
 
 		//The glazingintact array should be converted to bools
 		GlazingIntact.resize(nval_GlazingIntactIn);

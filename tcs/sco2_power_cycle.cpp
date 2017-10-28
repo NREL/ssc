@@ -2057,11 +2057,17 @@ double fmin_callback_opt_eta(double x, void *data)
 double nlopt_callback_opt_des(const std::vector<double> &x, std::vector<double> &grad, void *data)
 {
 	RecompCycle *frame = static_cast<RecompCycle*>(data);
-	if( frame != NULL ) return frame->design_point_eta(x);
+	if (frame != NULL)
+	  return frame->design_point_eta(x);
+	else
+	  return std::numeric_limits<double>::quiet_NaN();
 }
 
 double nlopt_callback_opt_off_des(const std::vector<double> &x, std::vector<double> &grad, void *data)
 {
 	RecompCycle *frame = static_cast<RecompCycle*>(data);
-	if( frame != NULL ) return frame->off_design_target_power_function(x);
+	if (frame != NULL)
+	  return frame->off_design_target_power_function(x);
+	else
+	  return std::numeric_limits<double>::quiet_NaN();
 }
