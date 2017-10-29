@@ -2451,7 +2451,7 @@ void SolarField::radialStaggerPositions(vector<sp_point> &HelPos)
                  _var_map->sf.rad_spacing_method.mapval() == var_solarfield::RAD_SPACING_METHOD::ELIMINATE_BLOCKING 
               || _var_map->sf.rad_spacing_method.mapval() == var_solarfield::RAD_SPACING_METHOD::NO_BLOCKINGDENSE
               )
-            && !Htv->is_round.mapval() == var_heliostat::IS_ROUND::ROUND){	//Space to eliminate blocking - rectangular heliostats
+            && Htv->is_round.mapval() != var_heliostat::IS_ROUND::ROUND){	//Space to eliminate blocking - rectangular heliostats
 		//***calculate the row positions***
 		
 		int nr=1;	//row counter
