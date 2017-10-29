@@ -381,7 +381,8 @@ void Flux::hermiteSunCoefs(var_map &V, matrix_t<double> &mSun) {
 	double factdum1, factdum2, dfact;
 
 	//--Arrays and values used later
-	if(mSun.ncols() != _n_terms || mSun.nrows() != _n_terms){
+	if(mSun.ncols() != static_cast<size_t>(_n_terms) ||
+	   mSun.nrows() != static_cast<size_t>(_n_terms)) {
 		mSun.resize_fill(_n_terms, _n_terms, 0.0);
 	}
 	
