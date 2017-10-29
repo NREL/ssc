@@ -3254,9 +3254,7 @@ double SolarField::calcShadowBlock(Heliostat *H, Heliostat *HI, int mode, Vect &
 		Vect 
 			*HIt = HI->getTrackVector(),	//Interfering heliostat track vector
 			*Ht = H->getTrackVector();	//Base heliostat track vector
-		double HIh, HIw;
-		HIh = HI->getVarMap()->height.val;
-		HIw = HI->getVarMap()->width.val;
+		double HIh = HI->getVarMap()->height.val;
 		//Interfering heliostat tracking zenith 
 		double HIzen = acos(HIt->k);	//zenith angle 
 		//double HIaz = atan2(HIt->i,HIt->j);	//azimuth angle
