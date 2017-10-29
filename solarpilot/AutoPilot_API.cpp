@@ -522,28 +522,28 @@ AutoPilot::~AutoPilot()
 
 	return;
 }
-
-bool AutoPilot::CreateLayout(sp_layout &/*layout*/, bool /*do_post_process*/)
-{
-	
-	//override in inherited class
-	throw spexception("Virtual method cannot be called directly! Use derived class AutoPilot_S or AutoPilot_MT instead.");
-	return false;
-};
-
-bool AutoPilot::CalculateOpticalEfficiencyTable(sp_optical_table &/*opttab*/)
-{
-	//override in inherited class
-	throw spexception("Virtual method cannot be called directly! Use derived class AutoPilot_S or AutoPilot_MT instead.");
-	return false;
-};
-
-bool AutoPilot::CalculateFluxMaps(sp_flux_table &/*fluxtab*/, int /*flux_res_x*/, int /*flux_res_y*/, bool /*is_normalized*/)
-{
-	//override in inherited class
-	throw spexception("Virtual method cannot be called directly! Use derived class AutoPilot_S or AutoPilot_MT instead.");
-	return false;
-};
+//
+//bool AutoPilot::CreateLayout(sp_layout &/*layout*/, bool /*do_post_process*/)
+//{
+//	
+//	//override in inherited class
+//	throw spexception("Virtual method cannot be called directly! Use derived class AutoPilot_S or AutoPilot_MT instead.");
+//	return false;
+//};
+//
+//bool AutoPilot::CalculateOpticalEfficiencyTable(sp_optical_table &/*opttab*/)
+//{
+//	//override in inherited class
+//	throw spexception("Virtual method cannot be called directly! Use derived class AutoPilot_S or AutoPilot_MT instead.");
+//	return false;
+//};
+//
+//bool AutoPilot::CalculateFluxMaps(sp_flux_table &/*fluxtab*/, int /*flux_res_x*/, int /*flux_res_y*/, bool /*is_normalized*/)
+//{
+//	//override in inherited class
+//	throw spexception("Virtual method cannot be called directly! Use derived class AutoPilot_S or AutoPilot_MT instead.");
+//	return false;
+//};
 
 void AutoPilot::SetSummaryCallback( bool (*callback)(simulation_info* siminfo, void *data), void *cdata)
 {
@@ -597,10 +597,10 @@ bool AutoPilot::Setup(var_map &V, bool /*for_optimize*/)
 	//-----------------------------------------------------------------
 
     //need to set up the template combo
-    V.sf.temp_which.combo_clear();
-    std::string name = "Template 1", val = "0";
-    V.sf.temp_which.combo_add_choice(name, val);
-    V.sf.temp_which.combo_select_by_choice_index( 0 ); //use the first heliostat template
+    //V.sf.temp_which.combo_clear();
+    //std::string name = "Template 1", val = "0";
+    //V.sf.temp_which.combo_add_choice(name, val);
+    //V.sf.temp_which.combo_select_by_choice_index( 0 ); //use the first heliostat template
 
 	//Dynamically allocate the solar field object, if needed
 	if(! _is_solarfield_external ){
@@ -786,8 +786,6 @@ void AutoPilot::PrepareFluxSimulation(sp_flux_table &fluxtab, int flux_res_x, in
     //simulate flux maps for all of the receivers
 	vector<Receiver*> rec_to_sim = *_SF->getReceivers();
 	//Get flags and settings
-	int fluxmap_format = V->par.fluxmap_format.mapval();
-	(void*)&fluxmap_format; // cast to reference variable
 	
 	if(flux_res_y > 1)
         V->flux.aim_method.combo_select_by_mapval( var_fluxsim::AIM_METHOD::IMAGE_SIZE_PRIORITY );
@@ -974,8 +972,7 @@ bool AutoPilot::EvaluateDesign(double &obj_metric, double &flux_max, double &tot
 	double power_shortage_ratio = min(qactual/qminimum, 1.);
 
 	//Set the optimization objective value
-	double flux_overage_ratio = max(flux_max/V->recs.front().peak_flux.val, 1.);
-	(void*)&flux_overage_ratio;
+	//double flux_overage_ratio = max(flux_max/V->recs.front().peak_flux.val, 1.);
 
 	obj_metric = tot_cost/power 
 		//* (1. + (flux_overage_ratio - 1.) * V->opt.flux_penalty.val) 
@@ -1167,8 +1164,7 @@ bool AutoPilot::OptimizeRSGS(vector<double*> &optvars, vector<double> &upper_ran
 		
 		double min_ss;
 		try{
-			nlopt::result sres = surf.optimize(Reg.Beta, min_ss);
-			(void*)&sres;
+			surf.optimize(Reg.Beta, min_ss);
 		}
 		catch( std::exception &e ){
 			_summary_siminfo->addSimulationNotice( e.what() );
@@ -1285,7 +1281,8 @@ bool AutoPilot::OptimizeRSGS(vector<double*> &optvars, vector<double> &upper_ran
 		vector<double> start_point = current;
 		vector<double> all_steep_objs;
 		bool tried_steep_mod = false;
-		while( true ){
+		for(;;)
+        {
             if(! _summary_siminfo->setCurrentSimulation(minmax_iter) ){
                 CancelSimulation();
                 return false;
@@ -1321,9 +1318,8 @@ bool AutoPilot::OptimizeRSGS(vector<double*> &optvars, vector<double> &upper_ran
 					double best_steep_obj = 9.e9;
 					for(int i=0; i<(int)all_steep_objs.size(); i++)
 						if( all_steep_objs.at(i) < best_steep_obj ) best_steep_obj = all_steep_objs.at(i);
-					if(best_fact_obj < best_steep_obj){
-						double zero=0.;
-						(void*)&zero;
+					if(best_fact_obj < best_steep_obj)
+                    {
 						//Calculate a new step vector
 						vector<double> new_step_vector( step_vector );
 
@@ -1412,7 +1408,7 @@ bool AutoPilot::OptimizeRSGS(vector<double*> &optvars, vector<double> &upper_ran
 
 		bool site_a_sim_ok = false;
 		bool site_b_sim_ok = false;
-		double za, zb;
+		double za = 0., zb = 0.;
 
 		for(int gsiter=0; gsiter<_SF->getVarMap()->opt.max_gs_iter.val; gsiter++)
 		{
@@ -1626,8 +1622,7 @@ bool AutoPilot::OptimizeAuto(vector<double*> &optvars, vector<double> &upper_ran
 
     double fmin;
     try{
-        nlopt::result resopt = nlobj.optimize( start, fmin );
-		(void*)&resopt;
+       nlobj.optimize( start, fmin );
         _summary_siminfo->addSimulationNotice( ol.c_str() );
         
         //int iopt = 0;
@@ -1709,6 +1704,8 @@ bool AutoPilot::OptimizeSemiAuto(vector<double*> &optvars, vector<double> &/*upp
     case var_optimize::ALGORITHM::SUBPLEX:
         nlm = nlopt::LN_SBPLX;
         break;
+    default:
+        nlm = (nlopt::algorithm)-1;
     }
 
     int tot_max_iter = V->opt.max_iter.val;
@@ -1760,8 +1757,7 @@ bool AutoPilot::OptimizeSemiAuto(vector<double*> &optvars, vector<double> &/*upp
 
         double fmin;
         try{
-            nlopt::result resopt = nlobj.optimize( start, fmin );
-			(void*)&resopt;
+           nlobj.optimize( start, fmin );
             _summary_siminfo->addSimulationNotice( ol.c_str() );
         
             int iopt = 0;
@@ -1838,8 +1834,7 @@ bool AutoPilot::OptimizeSemiAuto(vector<double*> &optvars, vector<double> &/*upp
 
         double fmin;
         try{
-            nlopt::result resopt = nlobj.optimize( start, fmin );
-			(void*)&resopt;
+            nlobj.optimize( start, fmin );
             _summary_siminfo->addSimulationNotice( ol.c_str() );
         
             int iopt = 0;
@@ -1909,8 +1904,7 @@ bool AutoPilot::OptimizeSemiAuto(vector<double*> &optvars, vector<double> &/*upp
 
         double fmin;
         try{
-            nlopt::result resopt = nlobj.optimize( start, fmin );
-			(void*)&resopt;
+            nlobj.optimize( start, fmin );
             _summary_siminfo->addSimulationNotice( ol.c_str() );
         
             int iopt = 0;
@@ -2022,12 +2016,12 @@ bool AutoPilot::CalculateFluxMapsOV1(vector<vector<double> > &sunpos, vector<vec
 	return true;
 }
 
-bool AutoPilot::CalculateFluxMaps(vector<vector<double> > & /*sunpos*/, vector<vector<double> > & /*fluxtab*/, vector<double> & /*efficiency*/, int /*flux_res_x*/, int /*flux_res_y*/, bool /*is_normalized*/)
-{
-	//override in inherited class
-	throw spexception("Virtual method cannot be called directly! Use derived class AutoPilot_S or AutoPilot_MT instead.");
-	return false;
-}
+//bool AutoPilot::CalculateFluxMaps(vector<vector<double> > & /*sunpos*/, vector<vector<double> > & /*fluxtab*/, vector<double> & /*efficiency*/, int /*flux_res_x*/, int /*flux_res_y*/, bool /*is_normalized*/)
+//{
+//	//override in inherited class
+//	throw spexception("Virtual method cannot be called directly! Use derived class AutoPilot_S or AutoPilot_MT instead.");
+//	return false;
+//}
 
 //---------------- API_S --------------------------
 bool AutoPilot_S::CreateLayout(sp_layout &layout, bool do_post_process)
@@ -2038,8 +2032,7 @@ bool AutoPilot_S::CreateLayout(sp_layout &layout, bool do_post_process)
 	_cancel_simulation = false;
 	PreSimCallbackUpdate();
 
-	int nsim_req = _SF->calcNumRequiredSimulations();
-	(void*)&nsim_req;
+	//int nsim_req = _SF->calcNumRequiredSimulations();
 	//if(! _SF->isSolarFieldCreated()){
 		//throw spexception("The solar field Create() method must be called before generating the field layout.");
 	//}
