@@ -577,7 +577,7 @@ void Flux::hermiteErrDistCoefs(block_t<double> &errDM)
 	*/
 
 	int i, ii, j, k, jmax, jmin;
-	double temp1, temp2;
+	double temp1;
 
 	//resize
 	errDM.resize(_n_terms, _n_terms, 4);
@@ -588,10 +588,6 @@ void Flux::hermiteErrDistCoefs(block_t<double> &errDM)
 	temp1 = 1.;
 	for (i=1; i<_n_terms+1; i+=2) {
 		if(i>1) { temp1 = _fact_odds[i]; }
-		temp2 = 1.;
-		for(j=1; j<_n_terms+1; j+=2) {
-			if(j>1) { temp2=_fact_odds[j]; }
-		}
 	}
 	for (i=1; i<_n_terms+1; i++) {
 		jmax = JMX(i-1); 
