@@ -1369,13 +1369,13 @@ void dispatch_automatic_front_of_meter_t::dispatch(size_t year,
 
 void dispatch_automatic_front_of_meter_t::update_dispatch(size_t hour_of_year, size_t step, size_t idx)
 {
-	size_t hour_of_day = util::hour_of_day(hour_of_year);
-	_day_index = (hour_of_day * _steps_per_hour + step);
 
-	if (hour_of_day == 0 && hour_of_year != _hour_last_updated)
+	if (hour_of_year == _hour_last_updated + _dispatch_update_hours)
 	{
-
+		_hour_last_updated = hour_of_year;
 		
+
+
 	}
 	
 	// save for extraction

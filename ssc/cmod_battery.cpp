@@ -151,7 +151,10 @@ var_info vtab_battery_inputs[] = {
 	{ SSC_INPUT,        SSC_NUMBER,     "batt_dispatch_choice",                        "Battery dispatch algorithm",                             "0/1/2",    "",                     "Battery",       "?=0",                        "",                             "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "batt_pv_choice",                              "Prioritize PV usage for load or battery",                "0/1",      "",                     "Battery",       "?=0",                        "",                             "" },
 	{ SSC_INPUT,        SSC_ARRAY,      "dc_net_forecast",                             "PV forecast",                                            "kW",       "",                     "Battery",       "batt_meter_position=1&batt_dispatch_choice=2",  "",          "" },
-	{ SSC_INPUT,        SSC_NUMBER,     "dispatch_auto_can_gridcharge",                "Grid charging allowed for automated dispatch?",          "kW",       "",                     "Battery",       "",                           "",                             "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "batt_dispatch_auto_can_gridcharge",           "Grid charging allowed for automated dispatch?",          "kW",       "",                     "Battery",       "",                           "",                             "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "batt_dispatch_auto_can_charge",               "PV charging allowed for automated dispatch?",            "kW",       "",                     "Battery",       "",                           "",                             "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "batt_dispatch_auto_can_clipcharge",           "Battery can charge from clipped PV for automated dispatch?", "kW",   "",                     "Battery",       "",                           "",                             "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "batt_auto_gridcharge_max_daily",              "Allowed grid charging percent per day for automated dispatch","kW",  "",                     "Battery",       "",                           "",                             "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "batt_look_ahead_hours",                       "Hours to look ahead in automated dispatch",              "hours",    "",                     "Battery",       "",                           "",                             "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "batt_dispatch_update_frequency_hours",        "Frequency to update the look-ahead dispatch",            "hours",    "",                     "Battery",       "",                           "",                             "" },
 
@@ -291,7 +294,7 @@ battstor::battstor(compute_module &cm, bool setup_model, int replacement_option,
 				batt_vars->target_power_monthly = cm.as_vector_double("batt_target_power_monthly");
 				batt_vars->target_power = cm.as_vector_double("batt_target_power");
 			}
-			batt_vars->batt_auto_dispatch_can_gridcharge = cm.as_boolean("dispatch_auto_can_gridcharge");
+			batt_vars->batt_auto_dispatch_can_gridcharge = cm.as_boolean("batt_dispatch_auto_can_gridcharge");
 
 			batt_vars->batt_lifetime_matrix = cm.as_matrix("batt_lifetime_matrix");
 			batt_vars->batt_calendar_lifetime_matrix = cm.as_matrix("batt_calendar_lifetime_matrix");
