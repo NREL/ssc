@@ -490,28 +490,6 @@ static void dctoac(double pcrate,double efffp,double dc[24],double ac[24])
 		}
 }
 
-static int houradj(char *wban,char *state,int i,int m)   /* Function to adjust to daylight savings time if needed */
-{
-	int j,k;
-	char sts[5][3]={"AZ","HI","IN","PR","PI"};
-	char wban2[6]="93817";        /* Evansville Indiana observes daylight time */
-
-	if( m > 93 && m < 302 )       /* Daylight savings time from April 4 thru October 28 */
-		{
-		k = i + 2;                 /* time in hours for stations that observe daylight savings time */
-		for( j=0;j<=4;j++ )
-			{
-			if(strncmp(state,sts[j],2) == 0 && strncmp(wban,wban2,5) != 0 )
-				k = i + 1;           /* Arizona, Hawaii, Indiana, Puerto Rico, and Guam don't observe daylight savings time */
-			}
-		if( k == 25 )
-			k = 1;
-		}
-	else
-		k = i + 1;
-	return(k);
-}
-
 static int julian(int yr,int month,int day)    /* Calculates julian day of year */
 {
 	int i=1,jday=0,k,nday[12] = {31,28,31,30,31,30,31,31,30,31,30,31};
