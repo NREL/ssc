@@ -46,6 +46,7 @@
 *  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
 *  THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *******************************************************************************************************/
+#include "stdafx.h"//IMPORTANT TO INCLUDE IN ALL *.CPP FILES.
 #include "sco2_pc_core_RCMCI_without_reheating.h"
 #include "CO2_properties.h"
 #include <limits>
@@ -4204,4 +4205,500 @@ int C_RecompCycle_RCMCI_without_ReHeating::C_mono_eq_HTR_des::operator()(double 
 
 	return 0;
 }
+
+//Calling function design_core_standard()
+void C_RecompCycle_RCMCI_without_ReHeating::design_core(int & error_code)
+{
+	// 2.16.15 twn: choose which design point model to use
+
+	//design_core_bypass150C(error_code);
+
+	design_core_standard(error_code);
+
+	//design_core_bypass(error_code);
+
+	//design_core_HTR_hs(error_code);
+}
+
+//Calling function design_core() and function finalize_design()
+void C_RecompCycle_RCMCI_without_ReHeating::design(S_design_parameters & des_par_in, int & error_code)
+{
+	ms_des_par = des_par_in;
+
+	int design_error_code = 0;
+	
+	design_core(design_error_code);
+
+	if(design_error_code != 0)
+	{
+		error_code = design_error_code;
+		return;
+	}
+
+	finalize_design(design_error_code);
+
+	error_code = design_error_code;
+}
+
+//Function to be updated 
+void C_RecompCycle_RCMCI_without_ReHeating::finalize_design(int & error_code)
+{
+	int cpp_offset = 1;
+
+	//Size Main Compressor1
+	int mc1_design_err = m_mc1_ms.design_given_outlet_state(m_temp_last[C_RecompCycle_RCMCI_without_ReHeating::MC1_IN],
+									m_pres_last[C_RecompCycle_RCMCI_without_ReHeating::MC1_IN],
+									m_m_dot_mc,
+									m_temp_last[C_RecompCycle_RCMCI_without_ReHeating::MC1_OUT],
+									m_pres_last[C_RecompCycle_RCMCI_without_ReHeating::MC1_OUT]);
+
+	if (mc1_design_err != 0)
+	{
+		error_code = mc1_design_err;
+		return;
+	}
+
+	//// Size main compressor
+	//C_compressor::S_design_parameters  mc_des_par;
+	//	// Compressor inlet conditions
+	//mc_des_par.m_P_in = m_pres_last[C_RecompCycle::MC_IN];
+	//mc_des_par.m_T_in = m_temp_last[C_RecompCycle::MC_IN];
+	//mc_des_par.m_D_in = m_dens_last[C_RecompCycle::MC_IN];
+	//mc_des_par.m_h_in = m_enth_last[C_RecompCycle::MC_IN];
+	//mc_des_par.m_s_in = m_entr_last[C_RecompCycle::MC_IN];
+	//	// Compressor outlet conditions
+	//mc_des_par.m_T_out = m_temp_last[C_RecompCycle::MC_OUT];
+	//mc_des_par.m_P_out = m_pres_last[C_RecompCycle::MC_OUT];
+	//mc_des_par.m_h_out = m_enth_last[C_RecompCycle::MC_OUT];
+	//mc_des_par.m_D_out = m_dens_last[C_RecompCycle::MC_OUT];
+	//	// Mass flow
+	//mc_des_par.m_m_dot = m_m_dot_mc;
+
+	//int comp_size_error_code = 0;
+	//m_mc.compressor_sizing(mc_des_par, comp_size_error_code);
+	//if(comp_size_error_code != 0)
+	//{
+	//	error_code = comp_size_error_code;
+	//	return;
+	//}
+
+	//Size Recompressor
+	if( ms_des_par.m_recomp_frac > 0.01 )
+	{
+		int rc_des_err = m_rc_ms.design_given_outlet_state(m_temp_last[C_RecompCycle_RCMCI_without_ReHeating::LTR_LP_OUT],
+										m_pres_last[C_RecompCycle_RCMCI_without_ReHeating::LTR_LP_OUT],
+										m_m_dot_rc,
+										m_temp_last[C_RecompCycle_RCMCI_without_ReHeating::RC_OUT],
+										m_pres_last[C_RecompCycle_RCMCI_without_ReHeating::RC_OUT]);
+		
+		if (rc_des_err != 0)
+		{
+			error_code = rc_des_err;
+			return;
+		}
+
+		ms_des_solved.m_is_rc = true;
+	}
+	else
+		ms_des_solved.m_is_rc = false;
+	
+	// Size turbine
+	C_turbine_RCMCI_without_ReHeating::S_design_parameters  t_des_par;
+		// Set turbine shaft speed
+	t_des_par.m_N_design = ms_des_par.m_N_turbine;
+	t_des_par.m_N_comp_design_if_linked = m_mc1_ms.get_design_solved()->m_N_design;	//[rpm] m_mc.get_design_solved()->m_N_design;
+		// Turbine inlet state
+	t_des_par.m_P_in = m_pres_last[6-cpp_offset];
+	t_des_par.m_T_in = m_temp_last[6-cpp_offset];
+	t_des_par.m_D_in = m_dens_last[6-cpp_offset];
+	t_des_par.m_h_in = m_enth_last[6-cpp_offset];
+	t_des_par.m_s_in = m_entr_last[6-cpp_offset];
+		// Turbine outlet state
+	t_des_par.m_P_out = m_pres_last[7-cpp_offset];
+	t_des_par.m_h_out = m_enth_last[7-cpp_offset];
+		// Mass flow
+	t_des_par.m_m_dot = m_m_dot_t;
+
+	int turb_size_error_code = 0;
+	m_t.turbine_sizing(t_des_par, turb_size_error_code);
+	if(turb_size_error_code != 0)
+	{
+		error_code = turb_size_error_code;
+		return;
+	}
+
+	// Get 'design_solved' structures from component classes
+	//ms_des_solved.ms_mc_des_solved = *m_mc.get_design_solved();
+	ms_des_solved.ms_mc1_ms_des_solved = *m_mc1_ms.get_design_solved();
+	ms_des_solved.ms_mc2_ms_des_solved = *m_mc2_ms.get_design_solved();
+	ms_des_solved.ms_rc_ms_des_solved = *m_rc_ms.get_design_solved();
+	ms_des_solved.ms_t_des_solved = *m_t.get_design_solved();
+	ms_des_solved.ms_LT_recup_des_solved = mc_LT_recup.ms_des_solved;
+	ms_des_solved.ms_HT_recup_des_solved = mc_HT_recup.ms_des_solved;
+
+	// Set solved design point metrics
+	ms_des_solved.m_temp = m_temp_last;
+	ms_des_solved.m_pres = m_pres_last;
+	ms_des_solved.m_enth = m_enth_last;
+	ms_des_solved.m_entr = m_entr_last;
+	ms_des_solved.m_dens = m_dens_last;
+
+	ms_des_solved.m_eta_thermal = m_eta_thermal_last;
+	ms_des_solved.m_W_dot_net = m_W_dot_net_last;
+	ms_des_solved.m_m_dot_mc = m_m_dot_mc;
+	ms_des_solved.m_m_dot_rc = m_m_dot_rc;
+	ms_des_solved.m_m_dot_t = m_m_dot_t;
+	ms_des_solved.m_recomp_frac = m_m_dot_rc / m_m_dot_t;
+
+	ms_des_solved.m_UA_LT = ms_des_par.m_UA_LT;
+	ms_des_solved.m_UA_HT = ms_des_par.m_UA_HT;
+}
+
+void C_RecompCycle_RCMCI_without_ReHeating::opt_design(S_opt_design_parameters & opt_des_par_in, int & error_code)
+{
+	ms_opt_des_par = opt_des_par_in;
+
+	int opt_design_error_code = 0;
+
+	opt_design_core(error_code);
+
+	if (opt_design_error_code != 0)
+	{
+		error_code = opt_design_error_code;
+		return;
+	}
+
+	finalize_design(opt_design_error_code);
+
+	error_code = opt_design_error_code;
+}
+
+void C_RecompCycle_RCMCI_without_ReHeating::opt_design_core(int & error_code)
+{
+	// Map ms_opt_des_par to ms_des_par
+	ms_des_par.m_W_dot_net = ms_opt_des_par.m_W_dot_net;
+	ms_des_par.m_T_mc1_in = ms_opt_des_par.m_T_mc1_in;
+	ms_des_par.m_T_mc2_in = ms_opt_des_par.m_T_mc2_in;
+	ms_des_par.m_T_t_in = ms_opt_des_par.m_T_t_in;
+	ms_des_par.m_DP_LT = ms_opt_des_par.m_DP_LT;
+	ms_des_par.m_DP_HT = ms_opt_des_par.m_DP_HT;
+	ms_des_par.m_DP_PC1 = ms_opt_des_par.m_DP_PC1;
+	ms_des_par.m_DP_PC2 = ms_opt_des_par.m_DP_PC2;
+	ms_des_par.m_DP_PHX = ms_opt_des_par.m_DP_PHX;
+	ms_des_par.m_LT_eff_max = ms_opt_des_par.m_LT_eff_max;
+	ms_des_par.m_HT_eff_max = ms_opt_des_par.m_HT_eff_max;
+	ms_des_par.m_eta_mc1 = ms_opt_des_par.m_eta_mc1;
+	ms_des_par.m_eta_mc2 = ms_opt_des_par.m_eta_mc2;
+	ms_des_par.m_eta_rc = ms_opt_des_par.m_eta_rc;
+	ms_des_par.m_eta_t = ms_opt_des_par.m_eta_t;
+	ms_des_par.m_N_sub_hxrs = ms_opt_des_par.m_N_sub_hxrs;
+	ms_des_par.m_P_high_limit = ms_opt_des_par.m_P_high_limit;
+	ms_des_par.m_tol = ms_opt_des_par.m_tol;
+	ms_des_par.m_N_turbine = ms_opt_des_par.m_N_turbine;
+
+	// ms_des_par members to be defined by optimizer and set in 'design_point_eta':
+	// m_P_mc_in
+	// m_P_mc_out
+	// m_recomp_frac
+	// m_UA_LT
+	// m_UA_HT
+
+	int index = 0;
+
+	std::vector<double> x(0);
+	std::vector<double> lb(0);
+	std::vector<double> ub(0);
+	std::vector<double> scale(0);
+
+	if (!ms_opt_des_par.m_fixed_P_mc1_in)
+	{
+		x.push_back(ms_opt_des_par.m_P_mc1_in_guess);
+		//lb.push_back(7400);
+		//ub.push_back(ms_opt_des_par.m_P_high_limit);
+		scale.push_back(500.0);
+
+		index++;
+	}
+
+	if (!ms_opt_des_par.m_fixed_P_mc2_out)
+	{
+		x.push_back(ms_opt_des_par.m_P_mc2_out_guess);
+		//lb.push_back(100.0);
+		//ub.push_back(ms_opt_des_par.m_P_high_limit);
+		scale.push_back(500.0);
+
+		index++;
+	}
+
+	if (!ms_opt_des_par.m_fixed_PR_mc2)
+	{
+		x.push_back(ms_opt_des_par.m_PR_mc2_guess);
+		//lb.push_back(0.0001);
+		double PR_max = ms_opt_des_par.m_P_high_limit / 100.0;
+		//ub.push_back(PR_max);
+		scale.push_back(0.2);
+
+		index++;
+	}
+
+	if (!ms_opt_des_par.m_fixed_recomp_frac)
+	{
+		x.push_back(ms_opt_des_par.m_recomp_frac_guess);
+		//lb.push_back(0.0);
+		//ub.push_back(1.0);
+		scale.push_back(0.05);
+
+		index++;
+	}
+
+	if (!ms_opt_des_par.m_fixed_LT_frac)
+	{
+		x.push_back(ms_opt_des_par.m_LT_frac_guess);
+		//lb.push_back(0.0);
+		//ub.push_back(1.0);
+		scale.push_back(0.05);
+
+		index++;
+	}
+
+	int no_opt_error_code = 0;
+	if (index > 0)
+	{
+		// Ensure thermal efficiency is initialized to 0
+		m_eta_thermal_opt = 0.0;
+
+		// Set up instance of nlopt class and set optimization parameters
+		nlopt::opt		opt_des_cycle(nlopt::LN_SBPLX, index);
+		//opt_des_cycle.set_lower_bounds(lb);
+		//opt_des_cycle.set_upper_bounds(ub);
+		opt_des_cycle.set_initial_step(scale);
+		opt_des_cycle.set_xtol_rel(ms_opt_des_par.m_opt_tol);
+
+		// Set max objective function
+		opt_des_cycle.set_max_objective(nlopt_callback_opt_des_1_RCMCI_without_ReHeating, this);		// Calls wrapper/callback that calls 'design_point_eta', which optimizes design point eta through repeated calls to 'design'
+		double max_f = std::numeric_limits<double>::quiet_NaN();
+		nlopt::result   result_des_cycle = opt_des_cycle.optimize(x, max_f);
+
+		ms_des_par = ms_des_par_optimal;
+
+		design_core(no_opt_error_code);
+
+		/*
+		m_W_dot_net_last = m_W_dot_net_opt;
+		m_eta_thermal_last = m_eta_thermal_opt;
+		m_temp_last = m_temp_opt;
+		m_pres_last = m_pres_opt;
+		m_enth_last = m_enth_opt;
+		m_entr_last = m_entr_opt;
+		m_dens_last = m_dens_opt;
+		*/
+	}
+	else
+	{
+		// Finish defining ms_des_par based on current 'x' values
+		ms_des_par.m_P_mc2_out = ms_opt_des_par.m_P_mc2_out_guess;
+		ms_des_par.m_P_mc1_in = ms_des_par.m_P_mc1_out / ms_opt_des_par.m_PR_mc2_guess;
+		ms_des_par.m_recomp_frac = ms_opt_des_par.m_recomp_frac_guess;
+		ms_des_par.m_UA_LT = ms_opt_des_par.m_UA_rec_total*ms_opt_des_par.m_LT_frac_guess;
+		ms_des_par.m_UA_HT = ms_opt_des_par.m_UA_rec_total*(1.0 - ms_opt_des_par.m_LT_frac_guess);
+
+		design_core(no_opt_error_code);
+
+		ms_des_par_optimal = ms_des_par;
+	}
+
+}
+
+double nlopt_callback_poly_coefs_RCMCI_without_ReHeating(const std::vector<double> &x, std::vector<double> &grad, void *data)
+{
+	C_poly_curve_r_squared_RCMCI_without_ReHeating *frame = static_cast<C_poly_curve_r_squared_RCMCI_without_ReHeating*>(data);
+	if (frame != NULL)
+		return frame->calc_r_squared(x);
+	else
+		return 0.0;
+}
+
+double nlopt_callback_opt_des_1_RCMCI_without_ReHeating(const std::vector<double> &x, std::vector<double> &grad, void *data)
+{
+	C_RecompCycle_RCMCI_without_ReHeating *frame = static_cast<C_RecompCycle_RCMCI_without_ReHeating*>(data);
+	if (frame != NULL)
+		return frame->design_point_eta_RCMCI_without_ReHeating(x);
+	else
+		return 0.0;
+}
+
+double C_RecompCycle_RCMCI_without_ReHeating::design_point_eta_RCMCI_without_ReHeating(const std::vector<double> &x)
+{
+	// 'x' is array of inputs either being adjusted by optimizer or set constant
+	// Finish defining ms_des_par based on current 'x' values
+
+	int index = 0;
+
+	// Main compressor1 inlet pressure
+	if (!ms_opt_des_par.m_fixed_P_mc1_in)
+	{
+		ms_des_par.m_P_mc1_in = x[index];
+		if (ms_des_par.m_P_mc1_in > ms_opt_des_par.m_P_high_limit)
+			return 0.0;
+		index++;
+	}
+	else
+		ms_des_par.m_P_mc1_in = ms_opt_des_par.m_P_mc1_in_guess;
+
+
+	// Main compressor2 outlet pressure
+	if (!ms_opt_des_par.m_fixed_P_mc2_out)
+	{
+		ms_des_par.m_P_mc2_out = x[index];
+		if (ms_des_par.m_P_mc2_out > ms_opt_des_par.m_P_high_limit)
+			return 0.0;
+		index++;
+	}
+	else
+		ms_des_par.m_P_mc2_out = ms_opt_des_par.m_P_mc2_out_guess;
+
+	// Main compressor2 pressure ratio
+	double PR_mc2_local = -999.9;
+	double P_mc2_in = -999.9;
+	if (!ms_opt_des_par.m_fixed_PR_mc2)
+	{
+		PR_mc2_local = x[index];
+		if (PR_mc2_local > 50.0)
+			return 0.0;
+		index++;
+		P_mc2_in = ms_des_par.m_P_mc2_out / PR_mc2_local;
+	}
+	else
+	{
+		if (ms_opt_des_par.m_PR_mc2_guess >= 0.0)
+		{
+			PR_mc2_local = ms_opt_des_par.m_PR_mc2_guess;
+			P_mc2_in = ms_des_par.m_P_mc2_out / PR_mc2_local;		//[kPa]
+		}
+		else
+		{
+			P_mc2_in = fabs(ms_opt_des_par.m_PR_mc2_guess);		//[kPa]
+		}
+	}
+
+	
+
+	if (P_mc2_in >= ms_des_par.m_P_mc2_out)
+		return 0.0;
+	if (P_mc2_in <= 100.0)
+		return 0.0;
+	ms_des_par.m_P_mc2_in = P_mc2_in;
+	ms_des_par.m_P_mc1_out = P_mc2_in;
+
+	// Recompression fraction
+	if (!ms_opt_des_par.m_fixed_recomp_frac)
+	{
+		ms_des_par.m_recomp_frac = x[index];
+		if (ms_des_par.m_recomp_frac < 0.0)
+			return 0.0;
+		index++;
+	}
+	else
+		ms_des_par.m_recomp_frac = ms_opt_des_par.m_recomp_frac_guess;
+
+	// Recuperator split fraction
+	double LT_frac_local = -999.9;
+	if (!ms_opt_des_par.m_fixed_LT_frac)
+	{
+		LT_frac_local = x[index];
+		if (LT_frac_local > 1.0 || LT_frac_local < 0.0)
+			return 0.0;
+		index++;
+	}
+	else
+		LT_frac_local = ms_opt_des_par.m_LT_frac_guess;
+
+	ms_des_par.m_UA_LT = ms_opt_des_par.m_UA_rec_total*LT_frac_local;
+	ms_des_par.m_UA_HT = ms_opt_des_par.m_UA_rec_total*(1.0 - LT_frac_local);
+
+	int error_code = 0;
+
+	design_core(error_code);
+
+	double eta_thermal = 0.0;
+	if (error_code == 0)
+	{
+		eta_thermal = m_eta_thermal_last;
+
+		if (m_eta_thermal_last > m_eta_thermal_opt)
+		{
+			ms_des_par_optimal = ms_des_par;
+			m_eta_thermal_opt = m_eta_thermal_last;
+		}
+	}
+
+	return eta_thermal;
+}
+
+bool C_poly_curve_r_squared_RCMCI_without_ReHeating::init(const std::vector<double> x_data, const std::vector<double> y_data)
+{
+	m_x = x_data;
+	m_y = y_data;
+
+	m_n_points = (int)x_data.size();
+	if (m_n_points != y_data.size() || m_n_points < 5)
+	{
+		return false;
+	}
+
+	m_y_bar = 0.0;
+
+	for (int i = 0; i < m_n_points; i++)
+	{
+		m_y_bar += m_y[i];
+	}
+
+	m_y_bar /= (double)m_n_points;
+
+	m_SS_tot = 0.0;
+
+	for (int i = 0; i < m_n_points; i++)
+	{
+		m_SS_tot += pow(m_y[i] - m_y_bar, 2);
+	}
+
+	return true;
+}
+
+double C_poly_curve_r_squared_RCMCI_without_ReHeating::calc_r_squared(const std::vector<double> coefs)
+{
+	double SS_res = 0.0;
+	int n_coefs = (int)coefs.size();
+	double y_pred = 0.0;
+	for (int i = 0; i < m_n_points; i++)
+	{
+		y_pred = 0.0;
+		for (int j = 0; j < n_coefs; j++)
+		{
+			y_pred += coefs[j] * pow(m_x[i], j);
+		}
+		SS_res += pow(m_y[i] - y_pred, 2);
+	}
+
+	return 1.0 - SS_res / m_SS_tot;
+}
+
+//double fmin_callback_opt_eta_1_RCMCI_without_ReHeating(double x, void *data)
+//{
+//	C_RecompCycle_RCMCI_without_ReHeating *frame = static_cast<C_RecompCycle_RCMCI_without_ReHeating*>(data);
+
+//	return frame->opt_eta_RCMCI_without_ReHeating(x);
+//}
+
+
+
+
+
+
+
+
+
+
+
+
 

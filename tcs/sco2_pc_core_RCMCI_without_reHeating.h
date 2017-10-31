@@ -817,8 +817,8 @@ public:
 		double m_P_mc2_out_guess;			//[kPa] Initial guess for main compressor outlet pressure
 		bool m_fixed_P_mc2_out;				//[-] if true, P_mc_out is fixed at P_mc_out_guess
 		
-		double m_PR_mc_guess;				//[-] Initial guess for ratio of P_mc_out to P_mc_in
-		bool m_fixed_PR_mc;					//[-] if true, ratio of P_mc_out to P_mc_in is fixed at PR_mc_guess
+		double m_PR_mc2_guess;				//[-] Initial guess for ratio of P_mc_out to P_mc_in
+		bool m_fixed_PR_mc2;					//[-] if true, ratio of P_mc_out to P_mc_in is fixed at PR_mc_guess
 
 		double m_recomp_frac_guess;			//[-] Initial guess for design-point recompression fraction
 		bool m_fixed_recomp_frac;			//[-] if true, recomp_frac is fixed at recomp_frac_guess
@@ -830,7 +830,7 @@ public:
 		{
 			m_W_dot_net = m_T_mc1_in = m_T_mc2_in = m_T_t_in = m_UA_rec_total = m_LT_eff_max = m_HT_eff_max = 
 				m_eta_mc1 = m_eta_mc2 = m_eta_rc = m_eta_t = m_P_high_limit = m_tol = m_opt_tol = m_N_turbine =
-				m_P_mc1_in_guess = m_P_mc2_out_guess = m_PR_mc_guess = m_recomp_frac_guess = m_LT_frac_guess = std::numeric_limits<double>::quiet_NaN();
+				m_P_mc1_in_guess = m_P_mc2_out_guess = m_PR_mc2_guess = m_recomp_frac_guess = m_LT_frac_guess = std::numeric_limits<double>::quiet_NaN();
 
 			m_N_sub_hxrs = -1;
 
@@ -872,8 +872,8 @@ public:
 		double m_N_turbine;					//[rpm] Turbine shaft speed (negative values link turbine to compressor)
 		int m_is_recomp_ok;					//[-] 1 = yes, 0 = no, other = invalid
 
-		double m_PR_mc_guess;				//[-] Initial guess for ratio of P_mc_out to P_mc_in
-		bool m_fixed_PR_mc;					//[-] if true, ratio of P_mc_out to P_mc_in is fixed at PR_mc_guess
+		double m_PR_mc2_guess;				//[-] Initial guess for ratio of P_mc_out to P_mc_in
+		bool m_fixed_PR_mc2;					//[-] if true, ratio of P_mc_out to P_mc_in is fixed at PR_mc_guess
 
 		// Callback function only log
 		bool(*mf_callback_log)(std::string &log_msg, std::string &progress_msg, void *data, double progress, int out_type);
@@ -884,13 +884,13 @@ public:
 			m_W_dot_net = m_T_mc1_in = m_T_mc2_in = m_T_t_in = m_LT_eff_max = m_HT_eff_max = 
 				m_eta_mc1 = m_eta_mc2 = m_eta_rc = m_eta_t = m_P_high_limit = 
 				m_tol = m_opt_tol = m_N_turbine = 
-				m_PR_mc_guess = std::numeric_limits<double>::quiet_NaN();
+				m_PR_mc2_guess = std::numeric_limits<double>::quiet_NaN();
 
 			m_N_sub_hxrs = -1;
 
 			m_is_recomp_ok = -1;
 
-			m_fixed_PR_mc = false;		//[-] If false, then should default to optimizing this parameter
+			m_fixed_PR_mc2 = false;		//[-] If false, then should default to optimizing this parameter
 
 			mf_callback_log = 0;
 			mp_mf_active = 0;
@@ -933,8 +933,8 @@ public:
 		double m_N_turbine;					//[rpm] Turbine shaft speed (negative values link turbine to compressor)
 		int m_is_recomp_ok;					//[-] 1 = yes, 0 = no, other = invalid
 
-		double m_PR_mc_guess;				//[-] Initial guess for ratio of P_mc_out to P_mc_in
-		bool m_fixed_PR_mc;					//[-] if true, ratio of P_mc_out to P_mc_in is fixed at PR_mc_guess
+		double m_PR_mc2_guess;				//[-] Initial guess for ratio of P_mc_out to P_mc_in
+		bool m_fixed_PR_mc2;					//[-] if true, ratio of P_mc_out to P_mc_in is fixed at PR_mc_guess
 
 		// Callback function only log
 		bool(*mf_callback_log)(std::string &log_msg, std::string &progress_msg, void *data, double progress, int out_type);
@@ -945,13 +945,13 @@ public:
 			m_W_dot_net = m_T_mc1_in = m_T_mc2_in =m_T_t_in = m_UA_rec_total = m_LT_eff_max = m_HT_eff_max =
 				m_eta_mc1 = m_eta_mc2 =m_eta_rc = m_eta_t = m_P_high_limit = 
 				m_tol = m_opt_tol = m_N_turbine =
-				m_PR_mc_guess = std::numeric_limits<double>::quiet_NaN();
+				m_PR_mc2_guess = std::numeric_limits<double>::quiet_NaN();
 
 			m_N_sub_hxrs = -1;
 
 			m_is_recomp_ok = -1;
 
-			m_fixed_PR_mc = false;		//[-] If false, then should default to optimizing this parameter
+			m_fixed_PR_mc2 = false;		//[-] If false, then should default to optimizing this parameter
 
 			mf_callback_log = 0;
 			mp_mf_active = 0;
@@ -1776,10 +1776,10 @@ public:
 	};
 
 	// Called by 'nlopt_callback_opt_des_1', so needs to be public
-	double design_point_eta(const std::vector<double> &x);
+	double design_point_eta_RCMCI_without_ReHeating(const std::vector<double> &x);
 
 	// Called by 'fmin_callback_opt_eta', so needs to be public
-	double opt_eta(double P_high_opt);
+	//double opt_eta_RCMCI_without_ReHeating(double P_high_opt);
 
 	// Called by 'nlopt_cb_opt_od', so needs to be public
 	//double off_design_point_value(const std::vector<double> &x);
@@ -1791,9 +1791,9 @@ public:
 	//double opt_od_eta(const std::vector<double> &x);
 };
 
-double nlopt_callback_opt_des_1(const std::vector<double> &x, std::vector<double> &grad, void *data);
+double nlopt_callback_opt_des_1_RCMCI_without_ReHeating(const std::vector<double> &x, std::vector<double> &grad, void *data);
 
-double fmin_callback_opt_eta_1(double x, void *data);
+double fmin_callback_opt_eta_1_RCMCI_without_ReHeating(double x, void *data);
 
 //double nlopt_cb_opt_od(const std::vector<double> &x, std::vector<double> &grad, void *data);
 
@@ -1801,16 +1801,16 @@ double fmin_callback_opt_eta_1(double x, void *data);
 
 //double nlopt_cb_opt_od_eta(const std::vector<double> &x, std::vector<double> &grad, void *data);
 
-double P_pseudocritical_1(double T_K);
+double P_pseudocritical_1_RCMCI_without_ReHeating(double T_K);
 
 
 //double nlopt_callback_tub_bal_opt(const std::vector<double> &x, std::vector<double> &grad, void *data);
 
 
-bool find_polynomial_coefs(const std::vector<double> x_data, const std::vector<double> y_data, int n_coefs, std::vector<double> & coefs_out, double & r_squared);
+bool find_polynomial_coefs_RCMCI_without_ReHeating(const std::vector<double> x_data, const std::vector<double> y_data, int n_coefs, std::vector<double> & coefs_out, double & r_squared);
 
 
-class C_poly_curve_r_squared
+class C_poly_curve_r_squared_RCMCI_without_ReHeating
 {
 private:
 	std::vector<double> m_x;
@@ -1820,7 +1820,7 @@ private:
 	double m_SS_tot;
 
 public:
-	C_poly_curve_r_squared()
+	C_poly_curve_r_squared_RCMCI_without_ReHeating()
 	{
 		m_x.resize(0);
 		m_y.resize(0);
@@ -1837,6 +1837,6 @@ public:
 
 };
 
-double nlopt_callback_poly_coefs(const std::vector<double> &x, std::vector<double> &grad, void *data);
+double nlopt_callback_poly_coefs_RCMCI_without_ReHeating(const std::vector<double> &x, std::vector<double> &grad, void *data);
 
 #endif
