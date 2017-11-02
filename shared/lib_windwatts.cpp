@@ -122,8 +122,8 @@ int wind_power_calculator::wind_power(/*INPUTS */ double dWindSpeed, double dWin
 	double fAirDensity = (dAirPressureAtm * physics::Pa_PER_Atm)/(physics::R_Gas * physics::CelciusToKelvin(TdryC));   //!Air Density, kg/m^3
 	double fTurbine_output, fThrust_coeff;
 	turbine_power(dWindSpeed, fAirDensity, &fTurbine_output, &fThrust_coeff );
-
-	// initialize values before possible exit from the function
+	
+		// initialize values before possible exit from the function
 	for (i=0;i<m_iNumberOfTurbinesInFarm;i++)
 	{
 		aPower[i] = 0.0;
@@ -457,6 +457,7 @@ bool wind_power_calculator::wake_calculations_EddyViscosity_Simple(/*INPUTS */ d
 			if(m_sErrDetails.length() == 0) m_sErrDetails = "Could not calculate the turbine wake arrays in the Eddy-Viscosity model.";
 			return false;
 		}
+		calc_EV_vm_for_turbine(adWindSpeed[i], Iamb[i], Thrust[i], air_density, vmln[i]);
 	}
 	return true;
 }
