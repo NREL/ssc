@@ -80,42 +80,6 @@ bool wind_power_calculator::InitializeModel()
 		m_dTurbulenceIntensity *= 100;
 	}
 
-	if(IMITATE_OPENWIND) // should only be true if in debug mode
-	{
-		if(m_iLengthOfTurbinePowerCurveArray < 26)
-		{
-			m_sErrDetails = "supposed to be imitating openWind, but wrong turbine curve";
-			return false;
-		}
-		// fill m_adPowerCurveRPM with values for a specific turbine from openWind, just so we can compare to openWind
-		m_adPowerCurveRPM[0] = 0;
-		m_adPowerCurveRPM[1] = 0;
-		m_adPowerCurveRPM[2] = 0;
-		m_adPowerCurveRPM[3] = 11;
-		m_adPowerCurveRPM[4] = 12;
-		m_adPowerCurveRPM[5] = 13;
-		m_adPowerCurveRPM[6] = 14;
-		m_adPowerCurveRPM[7] = 15;
-		m_adPowerCurveRPM[8] = 16;
-		m_adPowerCurveRPM[9] = 17;
-		m_adPowerCurveRPM[10] = 18;
-		m_adPowerCurveRPM[11] = 19;
-		m_adPowerCurveRPM[12] = 20;
-		m_adPowerCurveRPM[13] = 20.16;
-		m_adPowerCurveRPM[14] = 20.32;
-		m_adPowerCurveRPM[15] = 20.48;
-		m_adPowerCurveRPM[16] = 20.64;
-		m_adPowerCurveRPM[17] = 20.8;
-		m_adPowerCurveRPM[18] = 20.96;
-		m_adPowerCurveRPM[19] = 21.12;
-		m_adPowerCurveRPM[20] = 21.28;
-		m_adPowerCurveRPM[21] = 21.44;
-		m_adPowerCurveRPM[22] = 21.6;
-		m_adPowerCurveRPM[23] = 21.76;
-		m_adPowerCurveRPM[24] = 21.92;
-		m_adPowerCurveRPM[25] = 22;		
-	}
-
 	return true;
 }
 
@@ -493,11 +457,6 @@ bool wind_power_calculator::wake_calculations_EddyViscosity_Simple(/*INPUTS */ d
 			if(m_sErrDetails.length() == 0) m_sErrDetails = "Could not calculate the turbine wake arrays in the Eddy-Viscosity model.";
 			return false;
 		}
-
-		if (IMITATE_OPENWIND)
-			calc_EV_vm_for_turbine(adWindSpeed[i], Iamb[i], Thrust[i], air_density, vmln[i]);
-			// TFF, Feb 2013 - if we're imitating openWind, then we fill a turbine RPM curve so this will work
-			// TFF, Mar 8, 2013 - Iamb[i] never changes, it's always = m_dTurbulenceIntensity.  Really?
 	}
 	return true;
 }
@@ -627,14 +586,6 @@ double wind_power_calculator::get_EV_velocity_deficit(int iUpwindTurbine, double
 
 double wind_power_calculator::calc_EV_added_turbulence_intensity(double dTIAtUpstreamTurbine, double Ct, double deltaX, VMLN& vmln)
 {
-	if(!IMITATE_OPENWIND)
-	{
-		// TFF, Feb 2013 - if we're not imitating openWind then we use the Pat Quinlan method to get added TI
-		// So this function will return in one of the next two lines
-		if (deltaX==0) return 0.0; // if the distance downwind = 0, then no added turbulence
-		return max_of(0.0, (Ct/7.0)*(1.0-(2.0/5.0)*log(deltaX/m_dRotorDiameter)) ); // this equation taken from Pat Quinlan's turbulence intensity calculations
-	}
-
 	// Original openWind code (calculation of vmln.Xn required knowing the RPM of the turbine at this wind speed)
 	// Xn is in meters
 	double Xn = max_of(0.0000000001, vmln.Xn);
@@ -909,22 +860,6 @@ void wind_power_calculator::turbine_power( double fWindVelocityAtDataHeight, dou
 			*fThrustCoefficient = max_of( 0.0, -1.453989e-2 + 1.473506*fPowerCoefficient - 2.330823*pow(fPowerCoefficient,2) + 3.885123*pow(fPowerCoefficient,3) );		
 	} // out_pwr > (rated power * 0.001)
 
-	if (IMITATE_OPENWIND) // even if there's no power output, calculate the thrust coefficient
-	{
-		*fThrustCoefficient =  m_dMinThrustCoeff; // default value for low wind speeds
-
-		// this is a curve specific to a particular turbine, ONLY USEFUL FOR COMPARING SAM TO openWind
-		double dThrustCurve[26] = {0.0, 0.0, 0.0, 0.8, 0.8, 0.82, 0.84, 0.79, 0.72, 0.66, 0.59, 0.53, 0.46,0.40,0.33,0.28,0.23,0.20,0.16,0.13,0.12,0.12,0.11,0.11,0.10,0.10};
-//		bool found=false;
-
-		int i = (int) fabs(fWindSpeedAtHubHeight);
-		if ( fabs(fWindSpeedAtHubHeight)>25 )
-			*fThrustCoefficient = 0;
-		else if (i==25)
-			*fThrustCoefficient = dThrustCurve[i];
-		else if (i>=2)
-			*fThrustCoefficient = util::interpolate(i,dThrustCurve[i],i+1,dThrustCurve[i+1],fWindSpeedAtHubHeight);
-	}
 	return;
 }
 
@@ -956,10 +891,7 @@ double wind_power_calculator::delta_V_Park( double Uo, double Ui, double dDistCr
 	double Ct = max_of(min_of(0.999,dThrustCoeff),m_dMinThrustCoeff);
 
 	double k=0;
-	if (IMITATE_OPENWIND)
-		k = 0.5/log(m_dHubHeight/0.03);
-	else
-		k = m_dWakeDecayCoefficient;
+	k = m_dWakeDecayCoefficient;
 
 
 	double dRadiusOfWake = dRadiusUpstream + (k * dDistDownWind); // radius of circle formed by wake from upwind rotor
@@ -970,10 +902,7 @@ double wind_power_calculator::delta_V_Park( double Uo, double Ui, double dDistCr
 
 	double dDef = (1 - sqrt(1-Ct)) * pow(dRadiusUpstream/dRadiusOfWake,2) * (dAreaOverlap/(physics::PI*dRadiusDownstream*dRadiusDownstream));
 
-	if (IMITATE_OPENWIND)
-		return Uo * (1.0 - (Uo/Ui)*dDef);
-	else
-		return Ui * (1.0 - dDef);
+	return Ui * (1.0 - dDef);
 
 //	double Uw = Ui*(1.0-        ((1.0-sqrt(1.0-Ct))*sqr(diamUp/(diamUp+2.0*k*(ptDown.x-ptUp.x)))) *f);  // classic park
 //	double Uw = Uo*(1.0-((Uo/Ui)*(1.0-sqrt(1.0-Ct))*sqr(diamUp/(diamUp+2.0*k*(ptDown.x-ptUp.x)))) *f); // my park - same near wake but tends back to free stream
