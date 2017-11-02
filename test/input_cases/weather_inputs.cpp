@@ -4,6 +4,64 @@
 #include "common.h"
 #include "weather_inputs.h"
 
+/// delete via: for(int i = 0; i < sizeY; ++i) { delete[] ary[i];} delete[] ary;
+var_data* create_winddata_array(){
+	float* year_data = new float[35040];
+	for (int i = 0; i < 8760; i++){
+		year_data[i * 4] = 15;			// temp
+		year_data[i * 4 + 1] = 0.95;	// pres
+		year_data[i * 4 + 2] = 5;		// spd
+		year_data[i * 4 + 3] = 180;		// dir
+	}
+
+	float* height = new float[4];
+	float* fields = new float[4];
+	for (int i = 0; i < 4; i++){
+		height[i] = (float)80.;
+		fields[i] = i+1;
+	}
+	var_data data_vd = var_data(year_data, 8760, 4);
+	var_data height_vd = var_data(height, 4);
+	var_data fields_vd = var_data(fields, 4);
+
+	var_table* vt = new var_table;
+	vt->assign("heights", height_vd);
+	vt->assign("data", data_vd);
+	vt->assign("fields", fields_vd);
+
+	var_data* input = new var_data;
+	input->type = SSC_TABLE;
+	input->table = *vt;
+	return input;
+}
+
+void free_winddata_array(var_data* data){
+	data->table.unassign("heights");
+	data->table.unassign("data");
+	data->table.unassign("fields");
+}
+
+void free_weatherdata_array(var_data* data){
+	data->table.unassign("lat");
+	data->table.unassign("lon");
+	data->table.unassign("tz");
+	data->table.unassign("elev");
+	data->table.unassign("year");
+	data->table.unassign("month");
+	data->table.unassign("day");
+	data->table.unassign("hour");
+	data->table.unassign("dn");
+	data->table.unassign("df");
+	data->table.unassign("tdry");
+	data->table.unassign("tdew");
+	data->table.unassign("rhum");
+	data->table.unassign("pres");
+	data->table.unassign("wdir");
+	data->table.unassign("wspd");
+	data->table.unassign("aod");
+	data->table.unassign("pwp");
+	data->table.unassign("alb");
+}
 
 var_data* create_weatherdata_array(){
 	float* year = new float[8760];

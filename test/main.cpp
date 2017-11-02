@@ -11,6 +11,6 @@ GTEST_API_ int main(int argc, char **argv) {
 
 	if (!status)
 		printf("Tests Pass!\n");
-
+	std::cin.get();
 	return status;
 }
