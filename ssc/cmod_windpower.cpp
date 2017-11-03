@@ -192,7 +192,7 @@ cm_windpower::cm_windpower(){
 	add_var_info(vtab_technology_outputs);
 }
 
-void cm_windpower::exec()
+void cm_windpower::exec() throw(general_error)
 {
 	wind_power_calculator wpc;
 
