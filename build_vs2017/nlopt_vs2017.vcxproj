@@ -210,10 +210,10 @@
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>WIN32;_WINDOWS;_DEBUG;CMAKE_INTDIR=\"Debug\";%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\nlopt;..\build_vc2013;..\nlopt\stogo;..\nlopt\util;..\nlopt\direct;..\nlopt\cdirect;..\nlopt\praxis;..\nlopt\luksan;..\nlopt\crs;..\nlopt\mlsl;..\nlopt\mma;..\nlopt\cobyla;..\nlopt\newuoa;..\nlopt\neldermead;..\nlopt\auglag;..\nlopt\bobyqa;..\nlopt\isres;..\nlopt\slsqp;..\nlopt\esch;..\nlopt\api;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\nlopt;..\build_vs2017;..\nlopt\stogo;..\nlopt\util;..\nlopt\direct;..\nlopt\cdirect;..\nlopt\praxis;..\nlopt\luksan;..\nlopt\crs;..\nlopt\mlsl;..\nlopt\mma;..\nlopt\cobyla;..\nlopt\newuoa;..\nlopt\neldermead;..\nlopt\auglag;..\nlopt\bobyqa;..\nlopt\isres;..\nlopt\slsqp;..\nlopt\esch;..\nlopt\api;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Midl>
-      <AdditionalIncludeDirectories>..\nlopt;..\build_vc2013;..\nlopt\stogo;..\nlopt\util;..\nlopt\direct;..\nlopt\cdirect;..\nlopt\praxis;..\nlopt\luksan;..\nlopt\crs;..\nlopt\mlsl;..\nlopt\mma;..\nlopt\cobyla;..\nlopt\newuoa;..\nlopt\neldermead;..\nlopt\auglag;..\nlopt\bobyqa;..\nlopt\isres;..\nlopt\slsqp;..\nlopt\esch;..\nlopt\api;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\nlopt;..\build_vs2017;..\nlopt\stogo;..\nlopt\util;..\nlopt\direct;..\nlopt\cdirect;..\nlopt\praxis;..\nlopt\luksan;..\nlopt\crs;..\nlopt\mlsl;..\nlopt\mma;..\nlopt\cobyla;..\nlopt\newuoa;..\nlopt\neldermead;..\nlopt\auglag;..\nlopt\bobyqa;..\nlopt\isres;..\nlopt\slsqp;..\nlopt\esch;..\nlopt\api;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <OutputDirectory>$(IntDir)</OutputDirectory>
       <HeaderFileName>%(Filename).h</HeaderFileName>
       <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
@@ -244,10 +244,10 @@
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>WIN32;_WINDOWS;_DEBUG;CMAKE_INTDIR=\"Debug\";%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\nlopt;..\build_vc2013;..\nlopt\stogo;..\nlopt\util;..\nlopt\direct;..\nlopt\cdirect;..\nlopt\praxis;..\nlopt\luksan;..\nlopt\crs;..\nlopt\mlsl;..\nlopt\mma;..\nlopt\cobyla;..\nlopt\newuoa;..\nlopt\neldermead;..\nlopt\auglag;..\nlopt\bobyqa;..\nlopt\isres;..\nlopt\slsqp;..\nlopt\esch;..\nlopt\api;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\nlopt;..\build_vs2017;..\nlopt\stogo;..\nlopt\util;..\nlopt\direct;..\nlopt\cdirect;..\nlopt\praxis;..\nlopt\luksan;..\nlopt\crs;..\nlopt\mlsl;..\nlopt\mma;..\nlopt\cobyla;..\nlopt\newuoa;..\nlopt\neldermead;..\nlopt\auglag;..\nlopt\bobyqa;..\nlopt\isres;..\nlopt\slsqp;..\nlopt\esch;..\nlopt\api;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Midl>
-      <AdditionalIncludeDirectories>..\nlopt;..\build_vc2013;..\nlopt\stogo;..\nlopt\util;..\nlopt\direct;..\nlopt\cdirect;..\nlopt\praxis;..\nlopt\luksan;..\nlopt\crs;..\nlopt\mlsl;..\nlopt\mma;..\nlopt\cobyla;..\nlopt\newuoa;..\nlopt\neldermead;..\nlopt\auglag;..\nlopt\bobyqa;..\nlopt\isres;..\nlopt\slsqp;..\nlopt\esch;..\nlopt\api;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\nlopt;..\build_vs2017;..\nlopt\stogo;..\nlopt\util;..\nlopt\direct;..\nlopt\cdirect;..\nlopt\praxis;..\nlopt\luksan;..\nlopt\crs;..\nlopt\mlsl;..\nlopt\mma;..\nlopt\cobyla;..\nlopt\newuoa;..\nlopt\neldermead;..\nlopt\auglag;..\nlopt\bobyqa;..\nlopt\isres;..\nlopt\slsqp;..\nlopt\esch;..\nlopt\api;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <OutputDirectory>$(IntDir)</OutputDirectory>
       <HeaderFileName>%(Filename).h</HeaderFileName>
       <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
@@ -274,10 +274,10 @@
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>WIN32;_WINDOWS;NDEBUG;CMAKE_INTDIR=\"Release\";%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\nlopt;..\build_vc2013;..\nlopt\stogo;..\nlopt\util;..\nlopt\direct;..\nlopt\cdirect;..\nlopt\praxis;..\nlopt\luksan;..\nlopt\crs;..\nlopt\mlsl;..\nlopt\mma;..\nlopt\cobyla;..\nlopt\newuoa;..\nlopt\neldermead;..\nlopt\auglag;..\nlopt\bobyqa;..\nlopt\isres;..\nlopt\slsqp;..\nlopt\esch;..\nlopt\api;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\nlopt;..\build_vs2017;..\nlopt\stogo;..\nlopt\util;..\nlopt\direct;..\nlopt\cdirect;..\nlopt\praxis;..\nlopt\luksan;..\nlopt\crs;..\nlopt\mlsl;..\nlopt\mma;..\nlopt\cobyla;..\nlopt\newuoa;..\nlopt\neldermead;..\nlopt\auglag;..\nlopt\bobyqa;..\nlopt\isres;..\nlopt\slsqp;..\nlopt\esch;..\nlopt\api;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Midl>
-      <AdditionalIncludeDirectories>..\nlopt;..\build_vc2013;..\nlopt\stogo;..\nlopt\util;..\nlopt\direct;..\nlopt\cdirect;..\nlopt\praxis;..\nlopt\luksan;..\nlopt\crs;..\nlopt\mlsl;..\nlopt\mma;..\nlopt\cobyla;..\nlopt\newuoa;..\nlopt\neldermead;..\nlopt\auglag;..\nlopt\bobyqa;..\nlopt\isres;..\nlopt\slsqp;..\nlopt\esch;..\nlopt\api;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\nlopt;..\build_vs2017;..\nlopt\stogo;..\nlopt\util;..\nlopt\direct;..\nlopt\cdirect;..\nlopt\praxis;..\nlopt\luksan;..\nlopt\crs;..\nlopt\mlsl;..\nlopt\mma;..\nlopt\cobyla;..\nlopt\newuoa;..\nlopt\neldermead;..\nlopt\auglag;..\nlopt\bobyqa;..\nlopt\isres;..\nlopt\slsqp;..\nlopt\esch;..\nlopt\api;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <OutputDirectory>$(IntDir)</OutputDirectory>
       <HeaderFileName>%(Filename).h</HeaderFileName>
       <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
@@ -304,10 +304,10 @@
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>WIN32;_WINDOWS;NDEBUG;CMAKE_INTDIR=\"Release\";%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\nlopt;..\build_vc2013;..\nlopt\stogo;..\nlopt\util;..\nlopt\direct;..\nlopt\cdirect;..\nlopt\praxis;..\nlopt\luksan;..\nlopt\crs;..\nlopt\mlsl;..\nlopt\mma;..\nlopt\cobyla;..\nlopt\newuoa;..\nlopt\neldermead;..\nlopt\auglag;..\nlopt\bobyqa;..\nlopt\isres;..\nlopt\slsqp;..\nlopt\esch;..\nlopt\api;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\nlopt;..\build_vs2017;..\nlopt\stogo;..\nlopt\util;..\nlopt\direct;..\nlopt\cdirect;..\nlopt\praxis;..\nlopt\luksan;..\nlopt\crs;..\nlopt\mlsl;..\nlopt\mma;..\nlopt\cobyla;..\nlopt\newuoa;..\nlopt\neldermead;..\nlopt\auglag;..\nlopt\bobyqa;..\nlopt\isres;..\nlopt\slsqp;..\nlopt\esch;..\nlopt\api;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Midl>
-      <AdditionalIncludeDirectories>..\nlopt;..\build_vc2013;..\nlopt\stogo;..\nlopt\util;..\nlopt\direct;..\nlopt\cdirect;..\nlopt\praxis;..\nlopt\luksan;..\nlopt\crs;..\nlopt\mlsl;..\nlopt\mma;..\nlopt\cobyla;..\nlopt\newuoa;..\nlopt\neldermead;..\nlopt\auglag;..\nlopt\bobyqa;..\nlopt\isres;..\nlopt\slsqp;..\nlopt\esch;..\nlopt\api;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\nlopt;..\build_vs2017;..\nlopt\stogo;..\nlopt\util;..\nlopt\direct;..\nlopt\cdirect;..\nlopt\praxis;..\nlopt\luksan;..\nlopt\crs;..\nlopt\mlsl;..\nlopt\mma;..\nlopt\cobyla;..\nlopt\newuoa;..\nlopt\neldermead;..\nlopt\auglag;..\nlopt\bobyqa;..\nlopt\isres;..\nlopt\slsqp;..\nlopt\esch;..\nlopt\api;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <OutputDirectory>$(IntDir)</OutputDirectory>
       <HeaderFileName>%(Filename).h</HeaderFileName>
       <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
@@ -334,10 +334,10 @@
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>WIN32;_WINDOWS;NDEBUG;CMAKE_INTDIR=\"MinSizeRel\";%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\nlopt;..\build_vc2013;..\nlopt\stogo;..\nlopt\util;..\nlopt\direct;..\nlopt\cdirect;..\nlopt\praxis;..\nlopt\luksan;..\nlopt\crs;..\nlopt\mlsl;..\nlopt\mma;..\nlopt\cobyla;..\nlopt\newuoa;..\nlopt\neldermead;..\nlopt\auglag;..\nlopt\bobyqa;..\nlopt\isres;..\nlopt\slsqp;..\nlopt\esch;..\nlopt\api;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\nlopt;..\build_vs2017;..\nlopt\stogo;..\nlopt\util;..\nlopt\direct;..\nlopt\cdirect;..\nlopt\praxis;..\nlopt\luksan;..\nlopt\crs;..\nlopt\mlsl;..\nlopt\mma;..\nlopt\cobyla;..\nlopt\newuoa;..\nlopt\neldermead;..\nlopt\auglag;..\nlopt\bobyqa;..\nlopt\isres;..\nlopt\slsqp;..\nlopt\esch;..\nlopt\api;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Midl>
-      <AdditionalIncludeDirectories>..\nlopt;..\build_vc2013;..\nlopt\stogo;..\nlopt\util;..\nlopt\direct;..\nlopt\cdirect;..\nlopt\praxis;..\nlopt\luksan;..\nlopt\crs;..\nlopt\mlsl;..\nlopt\mma;..\nlopt\cobyla;..\nlopt\newuoa;..\nlopt\neldermead;..\nlopt\auglag;..\nlopt\bobyqa;..\nlopt\isres;..\nlopt\slsqp;..\nlopt\esch;..\nlopt\api;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\nlopt;..\build_vs2017;..\nlopt\stogo;..\nlopt\util;..\nlopt\direct;..\nlopt\cdirect;..\nlopt\praxis;..\nlopt\luksan;..\nlopt\crs;..\nlopt\mlsl;..\nlopt\mma;..\nlopt\cobyla;..\nlopt\newuoa;..\nlopt\neldermead;..\nlopt\auglag;..\nlopt\bobyqa;..\nlopt\isres;..\nlopt\slsqp;..\nlopt\esch;..\nlopt\api;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <OutputDirectory>$(IntDir)</OutputDirectory>
       <HeaderFileName>%(Filename).h</HeaderFileName>
       <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
@@ -364,10 +364,10 @@
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>WIN32;_WINDOWS;NDEBUG;CMAKE_INTDIR=\"MinSizeRel\";%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\nlopt;..\build_vc2013;..\nlopt\stogo;..\nlopt\util;..\nlopt\direct;..\nlopt\cdirect;..\nlopt\praxis;..\nlopt\luksan;..\nlopt\crs;..\nlopt\mlsl;..\nlopt\mma;..\nlopt\cobyla;..\nlopt\newuoa;..\nlopt\neldermead;..\nlopt\auglag;..\nlopt\bobyqa;..\nlopt\isres;..\nlopt\slsqp;..\nlopt\esch;..\nlopt\api;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\nlopt;..\build_vs2017;..\nlopt\stogo;..\nlopt\util;..\nlopt\direct;..\nlopt\cdirect;..\nlopt\praxis;..\nlopt\luksan;..\nlopt\crs;..\nlopt\mlsl;..\nlopt\mma;..\nlopt\cobyla;..\nlopt\newuoa;..\nlopt\neldermead;..\nlopt\auglag;..\nlopt\bobyqa;..\nlopt\isres;..\nlopt\slsqp;..\nlopt\esch;..\nlopt\api;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Midl>
-      <AdditionalIncludeDirectories>..\nlopt;..\build_vc2013;..\nlopt\stogo;..\nlopt\util;..\nlopt\direct;..\nlopt\cdirect;..\nlopt\praxis;..\nlopt\luksan;..\nlopt\crs;..\nlopt\mlsl;..\nlopt\mma;..\nlopt\cobyla;..\nlopt\newuoa;..\nlopt\neldermead;..\nlopt\auglag;..\nlopt\bobyqa;..\nlopt\isres;..\nlopt\slsqp;..\nlopt\esch;..\nlopt\api;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\nlopt;..\build_vs2017;..\nlopt\stogo;..\nlopt\util;..\nlopt\direct;..\nlopt\cdirect;..\nlopt\praxis;..\nlopt\luksan;..\nlopt\crs;..\nlopt\mlsl;..\nlopt\mma;..\nlopt\cobyla;..\nlopt\newuoa;..\nlopt\neldermead;..\nlopt\auglag;..\nlopt\bobyqa;..\nlopt\isres;..\nlopt\slsqp;..\nlopt\esch;..\nlopt\api;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <OutputDirectory>$(IntDir)</OutputDirectory>
       <HeaderFileName>%(Filename).h</HeaderFileName>
       <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
@@ -393,10 +393,10 @@
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>WIN32;_WINDOWS;NDEBUG;CMAKE_INTDIR=\"RelWithDebInfo\";%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\nlopt;..\build_vc2013;..\nlopt\stogo;..\nlopt\util;..\nlopt\direct;..\nlopt\cdirect;..\nlopt\praxis;..\nlopt\luksan;..\nlopt\crs;..\nlopt\mlsl;..\nlopt\mma;..\nlopt\cobyla;..\nlopt\newuoa;..\nlopt\neldermead;..\nlopt\auglag;..\nlopt\bobyqa;..\nlopt\isres;..\nlopt\slsqp;..\nlopt\esch;..\nlopt\api;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\nlopt;..\build_vs2017;..\nlopt\stogo;..\nlopt\util;..\nlopt\direct;..\nlopt\cdirect;..\nlopt\praxis;..\nlopt\luksan;..\nlopt\crs;..\nlopt\mlsl;..\nlopt\mma;..\nlopt\cobyla;..\nlopt\newuoa;..\nlopt\neldermead;..\nlopt\auglag;..\nlopt\bobyqa;..\nlopt\isres;..\nlopt\slsqp;..\nlopt\esch;..\nlopt\api;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Midl>
-      <AdditionalIncludeDirectories>..\nlopt;..\build_vc2013;..\nlopt\stogo;..\nlopt\util;..\nlopt\direct;..\nlopt\cdirect;..\nlopt\praxis;..\nlopt\luksan;..\nlopt\crs;..\nlopt\mlsl;..\nlopt\mma;..\nlopt\cobyla;..\nlopt\newuoa;..\nlopt\neldermead;..\nlopt\auglag;..\nlopt\bobyqa;..\nlopt\isres;..\nlopt\slsqp;..\nlopt\esch;..\nlopt\api;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\nlopt;..\build_vs2017;..\nlopt\stogo;..\nlopt\util;..\nlopt\direct;..\nlopt\cdirect;..\nlopt\praxis;..\nlopt\luksan;..\nlopt\crs;..\nlopt\mlsl;..\nlopt\mma;..\nlopt\cobyla;..\nlopt\newuoa;..\nlopt\neldermead;..\nlopt\auglag;..\nlopt\bobyqa;..\nlopt\isres;..\nlopt\slsqp;..\nlopt\esch;..\nlopt\api;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <OutputDirectory>$(IntDir)</OutputDirectory>
       <HeaderFileName>%(Filename).h</HeaderFileName>
       <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
@@ -422,10 +422,10 @@
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>WIN32;_WINDOWS;NDEBUG;CMAKE_INTDIR=\"RelWithDebInfo\";%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\nlopt;..\build_vc2013;..\nlopt\stogo;..\nlopt\util;..\nlopt\direct;..\nlopt\cdirect;..\nlopt\praxis;..\nlopt\luksan;..\nlopt\crs;..\nlopt\mlsl;..\nlopt\mma;..\nlopt\cobyla;..\nlopt\newuoa;..\nlopt\neldermead;..\nlopt\auglag;..\nlopt\bobyqa;..\nlopt\isres;..\nlopt\slsqp;..\nlopt\esch;..\nlopt\api;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\nlopt;..\build_vs2017;..\nlopt\stogo;..\nlopt\util;..\nlopt\direct;..\nlopt\cdirect;..\nlopt\praxis;..\nlopt\luksan;..\nlopt\crs;..\nlopt\mlsl;..\nlopt\mma;..\nlopt\cobyla;..\nlopt\newuoa;..\nlopt\neldermead;..\nlopt\auglag;..\nlopt\bobyqa;..\nlopt\isres;..\nlopt\slsqp;..\nlopt\esch;..\nlopt\api;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Midl>
-      <AdditionalIncludeDirectories>..\nlopt;..\build_vc2013;..\nlopt\stogo;..\nlopt\util;..\nlopt\direct;..\nlopt\cdirect;..\nlopt\praxis;..\nlopt\luksan;..\nlopt\crs;..\nlopt\mlsl;..\nlopt\mma;..\nlopt\cobyla;..\nlopt\newuoa;..\nlopt\neldermead;..\nlopt\auglag;..\nlopt\bobyqa;..\nlopt\isres;..\nlopt\slsqp;..\nlopt\esch;..\nlopt\api;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\nlopt;..\build_vs2017;..\nlopt\stogo;..\nlopt\util;..\nlopt\direct;..\nlopt\cdirect;..\nlopt\praxis;..\nlopt\luksan;..\nlopt\crs;..\nlopt\mlsl;..\nlopt\mma;..\nlopt\cobyla;..\nlopt\newuoa;..\nlopt\neldermead;..\nlopt\auglag;..\nlopt\bobyqa;..\nlopt\isres;..\nlopt\slsqp;..\nlopt\esch;..\nlopt\api;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <OutputDirectory>$(IntDir)</OutputDirectory>
       <HeaderFileName>%(Filename).h</HeaderFileName>
       <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
