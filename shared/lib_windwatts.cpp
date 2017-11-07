@@ -587,14 +587,8 @@ double wind_power_calculator::get_EV_velocity_deficit(int iUpwindTurbine, double
 
 double wind_power_calculator::calc_EV_added_turbulence_intensity(double dTIAtUpstreamTurbine, double Ct, double deltaX, VMLN& vmln)
 {
-	// Original openWind code (calculation of vmln.Xn required knowing the RPM of the turbine at this wind speed)
-	// Xn is in meters
-	double Xn = max_of(0.0000000001, vmln.Xn);
-	
-	// this formula can be found in Wind Energy Handbook by Bossanyi, page 36
-//	double Iadd = 5.7*pow(Ct,0.7)*pow(dTIAtUpstreamTurbine, 0.68)*pow(deltaX/Xn,-0.96);
-	double Iadd = 5.7*pow(Ct,0.7)*pow(dTIAtUpstreamTurbine, 0.68)*pow(max_of(1.5, deltaX/Xn),-0.96);// limits X>=Xn
-	return max_of(0.0, Iadd);
+	if (deltaX == 0) return 0.0; // if the distance downwind = 0, then no added turbulence
+	return max_of(0.0, (Ct / 7.0)*(1.0 - (2.0 / 5.0)*log(deltaX / m_dRotorDiameter)));
 }
 
 double wind_power_calculator::calc_EV_total_turbulence_intensity(double ambientTI, double additionalTI, double Uo, double Uw, double partial)
