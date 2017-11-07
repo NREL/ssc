@@ -1,10 +1,10 @@
-#include <gtest\gtest.h>
+#include <gtest/gtest.h>
 
 #include "core.h"
 #include "vartab.h"
 #include "common.h"
-#include "..\input_cases\input_toolbox.h"
-#include "..\input_cases\weather_inputs.h"
+#include "../input_cases/input_toolbox.h"
+#include "../input_cases/weather_inputs.h"
 #include "cmod_windpower.h"
 
 
