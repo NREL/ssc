@@ -20,6 +20,9 @@
     <ClCompile Include="..\test\input_cases\weather_inputs.cpp">
       <Filter>input_cases</Filter>
     </ClCompile>
+    <ClCompile Include="..\test\ssc_test\cmod_windpower_test.cpp">
+      <Filter>ssc_test</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="shared_test">
@@ -31,6 +34,9 @@
     <Filter Include="input_cases">
       <UniqueIdentifier>{dae382de-6248-4707-8ee6-16c962050fe1}</UniqueIdentifier>
     </Filter>
+    <Filter Include="ssc_test">
+      <UniqueIdentifier>{a72ae90f-81f5-484b-95a8-e25e2bff9289}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\test\input_cases\tcs_trough_physical_input.h">
@@ -38,6 +44,9 @@
     </ClInclude>
     <ClInclude Include="..\test\input_cases\weather_inputs.h">
       <Filter>input_cases</Filter>
+    </ClInclude>
+    <ClInclude Include="..\test\ssc_test\cmod_windpower_test.h">
+      <Filter>ssc_test</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

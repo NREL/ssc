@@ -9,7 +9,7 @@ var_data* create_winddata_array(){
 	float* year_data = new float[35040];
 	for (int i = 0; i < 8760; i++){
 		year_data[i * 4] = 15;			// temp
-		year_data[i * 4 + 1] = 0.95;	// pres
+		year_data[i * 4 + 1] = (float)0.95;	// pres
 		year_data[i * 4 + 2] = 5;		// spd
 		year_data[i * 4 + 3] = 180;		// dir
 	}
@@ -18,7 +18,7 @@ var_data* create_winddata_array(){
 	float* fields = new float[4];
 	for (int i = 0; i < 4; i++){
 		height[i] = (float)80.;
-		fields[i] = i+1;
+		fields[i] = (float)i+1;
 	}
 	var_data data_vd = var_data(year_data, 8760, 4);
 	var_data height_vd = var_data(height, 4);
