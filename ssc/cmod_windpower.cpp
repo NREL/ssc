@@ -379,7 +379,12 @@ void cm_windpower::exec() throw(general_error)
 	bool bCreateFarmOutput = (cwd == "C:\\svn_NREL\\main\\samwx\\deploy"); // limit debug file creation to tom's computers
 
 	// if the model needs arrays allocated, this command does it once - has to be done after all properties are set above
-	if (!wpc.InitializeModel())
+	std::shared_ptr<wake_model> wakeModelCalc(nullptr);
+	if (wpc.m_iWakeModelChoice == 0) wakeModelCalc = std::make_shared<simpleWakeModel>(simpleWakeModel(wpc.m_iNumberOfTurbinesInFarm));
+	else if (wpc.m_iWakeModelChoice == 1) wakeModelCalc = std::make_shared<parkWakeModel>(parkWakeModel(wpc.m_iNumberOfTurbinesInFarm));
+	else wakeModelCalc = std::make_shared<eddyViscosityWakeModel>(eddyViscosityWakeModel(wpc.m_iNumberOfTurbinesInFarm));
+
+	if (!wpc.InitializeModel(wakeModelCalc))
 		throw exec_error("windpower", util::format("error allocating memory: %s", wpc.GetErrorDetails().c_str()));
 
 	double annual = 0.0;

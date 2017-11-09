@@ -50,10 +50,18 @@
 #ifndef __lib_windwatts_h
 #define __lib_windwatts_h
 
+#include <memory>
 #include <vector>
 #include "lib_util.h"
+#include "lib_windwakemodel.h"
 
 enum {PAT_QUINLAN_WAKE_MODEL, PARK_WAKE_MODEL, SIMPLE_EDDY_VISCOSITY_WAKE_MODEL, OLD_PQ};
+
+static inline double max_of(double a, double b)
+{	return (a > b) ? a : b;	}
+
+static inline double min_of(double a, double b)
+{	return (a < b) ? a : b; }
 
 class wind_power_calculator
 {
@@ -78,7 +86,6 @@ public:
 	static const int MIN_DIAM_EV = 2; // Minimum number of rotor diameters between turbines for EV wake modeling to work
 	static const int EV_SCALE = 1; // Uo or 1.0 depending on how you read Ainslie 1988
 
-
 	double m_dShearExponent;		// also referred to as Alpha
 	double m_dTurbulenceIntensity;	// also referred to as Sigma
 	size_t m_iNumberOfTurbinesInFarm;
@@ -98,7 +105,7 @@ public:
 	std::vector<double> m_adPowerCurveWS, m_adPowerCurveKW, m_adPowerCurveRPM, m_adXCoords, m_adYCoords, m_adDensityCorrectedWS;
 
 	size_t GetMaxTurbines() {return MAX_WIND_TURBINES;}
-	bool InitializeModel(); // if necessary, allocate memory in util::matrix arrays
+	bool InitializeModel(std::shared_ptr<wake_model>selectedWakeModel); // if necessary, allocate memory in util::matrix arrays
 	std::string GetWakeModelShortName();
 	std::string GetWakeModelName();
 	std::string GetErrorDetails() { return m_sErrDetails; }
@@ -129,7 +136,11 @@ public:
 		double energy_turbine[]
 	);
 
+	double tip_speed_ratio(double dWindSpeed);
+	void turbine_power(double fWindVelocityAtDataHeight, double fAirDensity, double *fTurbineOutput, double *fThrustCoefficient);
+
 private:
+	std::shared_ptr<wake_model> wakeModel;
 	std::string m_sErrDetails;
 	util::matrix_t<double> matEVWakeDeficits; // wind velocity deficit behind each turbine, indexed by axial distance downwind
 	util::matrix_t<double> matEVWakeWidths; // width of wake (in diameters) for each turbine, indexed by axial distance downwind
@@ -150,8 +161,8 @@ private:
 	
 		double m;
 		double Ro;
-		double Xh;
-		double Xn;
+		double Xh;				
+		double Xn;			// length of the near wake region, in terms of rotor radius and Ct
 		double Rh;
 		double Rn;
 		double Xf;
@@ -224,10 +235,10 @@ private:
 	double calc_EV_added_turbulence_intensity(double IatUpstreamTurbine, double Ct,double deltaX, VMLN& vmln);
 	double calc_EV_total_turbulence_intensity(double ambientTI, double additionalTI, double Uo, double Uw, double partial);
 	bool fill_turbine_wake_arrays_for_EV(int iTurbineNumber, double dAmbientVelocity, double dVelocityAtTurbine, double dPower, double dThrustCoeff, double dTurbulenceIntensity, double maxX);
+	/// Using Ii, ambient turbulence intensity, and thrust coeff, calculates the length of the near wake region
 	void calc_EV_vm_for_turbine(double U, double Ii, double Ct, double airDensity, VMLN& vmln);
-	double tip_speed_ratio(double dWindSpeed);
-
-	void turbine_power( double fWindVelocityAtDataHeight, double fAirDensity, double *fTurbineOutput, double *fThrustCoefficient);
+	
+	
 	double vel_delta_PQ( double fRadiiCrosswind, double fRadiiDownwind, double fThrustCoeff, double *fNewTurbulenceIntensity);
 	double delta_V_Park( double dVelFreeStream, double dVelUpwind, double dDistCrossWind, double dDistDownWind, double dRadiusUpstream, double dRadiusDownstream, double dThrustCoeff);
 	void coordtrans( double fMetersNorth, double fMetersEast, double fWind_dir_degrees, double *fMetersDownWind, double *fMetersCrosswind);

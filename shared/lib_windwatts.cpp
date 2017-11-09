@@ -50,27 +50,22 @@
 #include "lib_windwatts.h"
 #include "lib_physics.h"
 
+#include <iostream>
 #include <math.h>
 #include "lib_util.h"
+#include "lib_windwakemodel.h"
 
 
 #ifdef _MSC_VER
 #pragma warning(disable: 4127)  // ignore warning: 'warning C4127: conditional expression is constant'
 #endif
 
-
-static inline double max_of(double a, double b)
+bool wind_power_calculator::InitializeModel(std::shared_ptr<wake_model>selectedWakeModel)
 {
-	return (a > b) ? a : b;
-}
-
-static inline double min_of(double a, double b)
-{
-	return (a < b) ? a : b;
-}
-
-bool wind_power_calculator::InitializeModel()
-{
+	if (selectedWakeModel){
+		wakeModel = selectedWakeModel;
+		wakeModel->test(0);
+	}
 	if (m_iWakeModelChoice == SIMPLE_EDDY_VISCOSITY_WAKE_MODEL)
 	{
 		matEVWakeDeficits.resize_fill(m_iNumberOfTurbinesInFarm, (int)(m_dMaxRotorDiameters/m_dAxialResolution)+1, 0.0); // each turbine is row, each col is wake deficit for that turbine at dist
@@ -79,7 +74,6 @@ bool wind_power_calculator::InitializeModel()
 		// EV model expects the TI to be in units of % (0 to 100), not 0 to 1
 		m_dTurbulenceIntensity *= 100;
 	}
-
 	return true;
 }
 
@@ -119,11 +113,11 @@ int wind_power_calculator::wind_power(/*INPUTS */ double dWindSpeed, double dWin
 		wt_id[i] = i;
 
 	// convert barometric pressure in ATM to air density
-	double fAirDensity = (dAirPressureAtm * physics::Pa_PER_Atm)/(physics::R_Gas * physics::CelciusToKelvin(TdryC));   //!Air Density, kg/m^3
+	double fAirDensity = (dAirPressureAtm * physics::Pa_PER_Atm) / (physics::R_GAS_DRY_AIR * physics::CelciusToKelvin(TdryC));   //!Air Density, kg/m^3
 	double fTurbine_output, fThrust_coeff;
 	turbine_power(dWindSpeed, fAirDensity, &fTurbine_output, &fThrust_coeff );
-	
-		// initialize values before possible exit from the function
+
+	// initialize values before possible exit from the function
 	for (i=0;i<m_iNumberOfTurbinesInFarm;i++)
 	{
 		aPower[i] = 0.0;
@@ -209,6 +203,7 @@ int wind_power_calculator::wind_power(/*INPUTS */ double dWindSpeed, double dWin
 	}
 
 	// run the wake model
+	//wakeModel->wakeCalculations(fAirDensity, &aDistanceDownwind[0], &aDistanceCrosswind[0], aPower, aThrust, adWindSpeed, aTI);
 	switch (m_iWakeModelChoice)
 	{
 		case PAT_QUINLAN_WAKE_MODEL:
@@ -417,7 +412,7 @@ bool wind_power_calculator::wake_calculations_EddyViscosity_Simple(/*INPUTS */ d
 		{
 			// distance downwind = distance from turbine i to turbine j along axis of wind direction
 			double dDistAxialInDiameters = fabs(aDistanceDownwind[i] - aDistanceDownwind[j])/2.0;
-			if (dDistAxialInDiameters<=0.0)
+			if (abs(dDistAxialInDiameters)<= 0.0001)
 				continue; // if this turbine isn't really upwind, move on to the next
 
 			// separation crosswind between turbine i and turbine j
@@ -452,9 +447,9 @@ bool wind_power_calculator::wake_calculations_EddyViscosity_Simple(/*INPUTS */ d
 			Eff[i] = 100.0*(Power[i]+0.0001)/(Power[0]+0.0001);
 
 		// now that turbine[i] wind speed, output, thrust, etc. have been calculated, calculate wake characteristics for it, because downwind turbines will need the info
-		if (!fill_turbine_wake_arrays_for_EV((int)i, adWindSpeed[0], adWindSpeed[i], Power[i], Thrust[i], aTurbulence_intensity[i], fabs(aDistanceDownwind[m_iNumberOfTurbinesInFarm-1] - aDistanceDownwind[i])*dTurbineRadius ) )
+		if (!fill_turbine_wake_arrays_for_EV((int)i, adWindSpeed[0], adWindSpeed[i], Power[i], Thrust[i], aTurbulence_intensity[i], fabs(aDistanceDownwind[m_iNumberOfTurbinesInFarm - 1] - aDistanceDownwind[i])*dTurbineRadius))
 		{
-			if(m_sErrDetails.length() == 0) m_sErrDetails = "Could not calculate the turbine wake arrays in the Eddy-Viscosity model.";
+			if (m_sErrDetails.length() == 0) m_sErrDetails = "Could not calculate the turbine wake arrays in the Eddy-Viscosity model.";
 			return false;
 		}
 		calc_EV_vm_for_turbine(adWindSpeed[i], Iamb[i], Thrust[i], air_density, vmln[i]);
@@ -585,10 +580,10 @@ double wind_power_calculator::get_EV_velocity_deficit(int iUpwindTurbine, double
 	return (matEVWakeDeficits.at(iUpwindTurbine, iLowerIndex) * (1.0-dDistInResolutionUnits) ) + (matEVWakeDeficits.at(iUpwindTurbine, iUpperIndex) * dDistInResolutionUnits);	// in meters
 }
 
-double wind_power_calculator::calc_EV_added_turbulence_intensity(double dTIAtUpstreamTurbine, double Ct, double deltaX, VMLN& vmln)
+double wind_power_calculator::calc_EV_added_turbulence_intensity(double , double Ct, double deltaX, VMLN&)
 {
 	if (deltaX == 0) return 0.0; // if the distance downwind = 0, then no added turbulence
-	return max_of(0.0, (Ct / 7.0)*(1.0 - (2.0 / 5.0)*log(deltaX / m_dRotorDiameter)));
+	return max_of(0.0, (Ct / 7.0)*(1.0 - (2.0 / 5.0)*log(deltaX / m_dRotorDiameter))); 
 }
 
 double wind_power_calculator::calc_EV_total_turbulence_intensity(double ambientTI, double additionalTI, double Uo, double Uw, double partial)
@@ -724,7 +719,7 @@ void wind_power_calculator::calc_EV_vm_for_turbine(double U, double Ii, double C
 
 	double dr_dx_L = 0.012*(double)m_iNumberOfBlades * tip_speed_ratio(U);
 		
-	dr_dx = sqrt(dr_dx_A*dr_dx_A + dr_dx_M*dr_dx_M + dr_dx_L*dr_dx_L);
+	dr_dx = sqrt(dr_dx_A*dr_dx_A + dr_dx_M*dr_dx_M + dr_dx_L*dr_dx_L);		// wake growth rate
 	
 	/////////////////////////////////////////////////////////
 	
@@ -860,12 +855,6 @@ void wind_power_calculator::turbine_power( double fWindVelocityAtDataHeight, dou
 
 double wind_power_calculator::vel_delta_PQ( double fRadiiCrosswind, double fAxialDistInRadii, double fThrustCoeff, double *fNewTurbulenceIntensity)
 {
-	// Velocity deficit calculation for Pat Quinlan wake model.
-	// This function calculates the velcity deficit (% reduction in wind speed) and the turbulence intensity (TI) due to an upwind turbine.
-
-	// Note that the calculation of fNewTurbulenceIntensity does NOT include fRadiiCrosswind - so it's only influenced by how far upwind the other turbine is,
-	// EVEN IF IT'S 19 ROTOR RADII TO THE SIDE!!!
-
 	if (fRadiiCrosswind > 20.0 || *fNewTurbulenceIntensity <= 0.0 || fAxialDistInRadii <= 0.0 || fThrustCoeff <= 0.0)
 		return 0.0;
 
