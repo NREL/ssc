@@ -53,18 +53,25 @@
 #include <vector>
 #include "lib_util.h"
 
+/**
+ * windTurbine class stores characteristics of turbine used in simulation and the power curve arrays,
+ * which map from wind speed to turbine's output. The following public variables must be set before use:
+ * shearExponent, measurementHeight, hubHeight, rotorDiameter, lossesAbsolute, lossesPercent; and the
+ * powerCurve must be filled using setPowerCurve();
+ */
+
 class windTurbine
 {
 private:
-	double rotorDiameter, hubHeight, measurementHeight, shearExponent;
 	std::vector<double> powerCurveWS,			// windspeed: x-axis on turbine power curve
 						powerCurveKW,			// power output: y-axis
 						densityCorrectedWS,
 						powerCurveRPM;
 	unsigned int powerCurveArrayLength;
 	double cutInSpeed;
-	double lossesAbsolute, lossesPercent;
 public:
+	double rotorDiameter, hubHeight, measurementHeight, shearExponent;
+	double lossesAbsolute, lossesPercent;
 	std::string errDetails;
 
 	windTurbine(){ 
@@ -75,10 +82,6 @@ public:
 		lossesAbsolute = -1;
 		lossesPercent = -1;
 	}
-	void setCharacteristics(double h, double d){ hubHeight = h; rotorDiameter = d; }
-	void setShearExponent(double s) { shearExponent = s; }
-	void setWeatherInfo(double mh){ measurementHeight = mh; }
-	void setLosses(double a, double p){ lossesAbsolute = a; lossesPercent = p; }
 	bool setPowerCurve(std::vector<double> windSpeeds, std::vector<double> powerOutput);
 	
 	double tipSpeedRatio(double windSpeed);
@@ -90,11 +93,20 @@ public:
 		return false;
 	}
 	void turbinePower(double windVelocityAtDataHeight, double airDensity, double *turbineOutput, double *thrustCoefficient);
+	double calculateEff(double reducedPower, double originalPower) {
+		double Eff = 0.0;
+		if (originalPower < 0.0)
+			Eff = 0.0;
+		else
+			Eff = 100.0*(reducedPower + 0.0001) / (originalPower + 0.0001);
+		return Eff;
+	}
 };
 
 class wake_model
 {
 protected:
+	windTurbine* wTurbine;
 	unsigned int nTurbines;
 public:
 	wake_model(){}
@@ -102,7 +114,7 @@ public:
 	virtual int test(int a){ return a + 10; }
 	virtual void wakeCalculations(
 		const double airDensity, const double distanceDownwind[], const double distanceCrosswind[],
-		double power[], double thrust[], double windSpeed[], double turbulenceIntensity[]) = 0;
+		double power[], double eff[], double thrust[], double windSpeed[], double turbulenceIntensity[]) = 0;
 };
 
 /**
@@ -126,6 +138,7 @@ public:
 
 		/*OUTPUTS*/
 		double power[],
+		double eff[],
 		double thrust[],					// thrust coefficient at each WT
 		double windSpeed[],					// wind speed at each WT
 		double turbulenceIntensity[]		// turbulence intensity at each WT
@@ -159,6 +172,7 @@ public:
 
 		/*OUTPUTS*/
 		double power[],
+		double eff[],
 		double thrust[],					// thrust coefficient at each WT
 		double windSpeed[],					// wind speed at each WT
 		double turbulenceIntensity[]		// turbulence intensity at each WT
@@ -168,10 +182,11 @@ public:
 
 class eddyViscosityWakeModel : public wake_model{
 private:
-	windTurbine* wTurbine;
 	double rotorDiameter, turbulenceCoeff;
 	double axialResolution, minThrustCoeff, nBlades;
-	int MIN_DIAM_EV;
+	double minDeficit;
+	int MIN_DIAM_EV, EV_SCALE, MAX_WIND_TURBINES;
+	bool useFilterFx;
 	util::matrix_t<double> matEVWakeDeficits;	// wind velocity deficit behind each turbine, indexed by axial distance downwind
 	util::matrix_t<double> matEVWakeWidths;		// width of wake (in diameters) for each turbine, indexed by axial distance downwind
 
@@ -206,6 +221,8 @@ private:
 	
 	double totalTurbulenceIntensity(double ambientTI, double additionalTI, double Uo, double Uw, double partial);
 
+	bool fillWakeArrays(int turbineIndex, double ambientVelocity, double velocityAtTurbine, double power, double thrustCoeff, double turbulenceIntensity, double maxX);
+
 	/// Using Ii, ambient turbulence intensity, and thrust coeff, calculates the length of the near wake region
 	void nearWakeRegionLength(double U, double Ii, double Ct, double airDensity, VMLN& vmln);
 
@@ -219,7 +236,11 @@ public:
 		axialResolution = 0.5;
 		minThrustCoeff = 0.02;
 		nBlades = 3;
+		minDeficit = 0.0002;
 		MIN_DIAM_EV = 2;
+		EV_SCALE = 1;
+		MAX_WIND_TURBINES = 300;
+		useFilterFx = true;
 	}
 
 	void setRotorDiameter(double d){ rotorDiameter = d; }
@@ -234,6 +255,7 @@ public:
 
 		/*OUTPUTS*/
 		double power[],
+		double eff[],
 		double thrust[],					// thrust coefficient at each WT
 		double windSpeed[],					// wind speed at each WT
 		double turbulenceIntensity[]		// turbulence intensity at each WT

@@ -16,8 +16,8 @@ class mockWakeModel : public wake_model
 public:
 	mockWakeModel(){}
 	MOCK_METHOD1(test, int(int n));
-	MOCK_METHOD7(wakeCalculations, void(const double airDensity, const double distanceDownwind[], const double distanceCrosswind[], 
-		double power[], double thrust[], double windSpeed[], double turbulenceIntensity[]));
+	MOCK_METHOD8(wakeCalculations, void(const double airDensity, const double distanceDownwind[], const double distanceCrosswind[], 
+		double power[], double eff[], double thrust[], double windSpeed[], double turbulenceIntensity[]));
 };
 
 
@@ -98,7 +98,7 @@ TEST_F(windPowerCalculatorTest, wind_powerTest_lib_windwatts){
 
 	// set expectations before running method
 	EXPECT_CALL(*mock, test(0));
-	//EXPECT_CALL(*mock, wakeCalculations(::testing::_ /*wildcard matcher*/, &distDownwind[0], &distCrosswind[0], ::testing::_, &thrustCoeff[0], &windSpeed[0], &turbulenceCoeff[0]))
+	//EXPECT_CALL(*mock, wakeCalculations(::testing::_ /*wildcard matcher*/, &distDownwind[0], &distCrosswind[0], ::testing::_, ::testing::_, &thrustCoeff[0], &windSpeed[0], &turbulenceCoeff[0]))
 		//.WillOnce(::testing::DoAll(::testing::SaveArg<0>(&airDensitySaved), ::testing::Assign(&turbulenceCoeff[0], .5))); // actions taken when mock is called by wpc
 	
 	wpc.InitializeModel(mock); // sets up wpc's wake model as mock

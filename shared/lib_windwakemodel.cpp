@@ -167,8 +167,8 @@ double simpleWakeModel::velDeltaPQ(double radiiCrosswind, double axialDistInRadi
 	return max_of(min_of(dVelocityDeficit, 1.0), 0.0); // limit result from zero to one
 }
 
-void simpleWakeModel::wakeCalculations(const double , const double distanceDownwind[], const double distanceCrosswind[],
-	double[], double thrust[], double windSpeed[], double turbulenceIntensity[])
+void simpleWakeModel::wakeCalculations(const double airDensity, const double distanceDownwind[], const double distanceCrosswind[],
+	double power[], double eff[], double thrust[], double windSpeed[], double turbulenceIntensity[])
 {
 	for (size_t i = 1; i < nTurbines; i++) // loop through all turbines, starting with most upwind turbine. i=0 has already been done
 	{
@@ -189,6 +189,8 @@ void simpleWakeModel::wakeCalculations(const double , const double distanceDownw
 			dDeficit *= (1.0 - vdef);
 		}
 		windSpeed[i] = windSpeed[i] * dDeficit;
+		wTurbine->turbinePower(windSpeed[i], airDensity, &power[i], &thrust[i]);
+		eff[i] = wTurbine->calculateEff(power[i], power[0]);
 	}
 }
 
@@ -235,24 +237,26 @@ double parkWakeModel::delta_V_Park(double Uo, double Ui, double distCrosswind, d
 }
 
 /// Deficit at a downwind turbine is the minimum speed found from all the upwind turbine impacts
-void parkWakeModel::wakeCalculations(/*INPUTS */ const double , const double aDistanceDownwind[], const double aDistanceCrosswind[],
-	/*OUTPUTS*/ double [], double Thrust[], double adWindSpeed[], double[])
+void parkWakeModel::wakeCalculations(const double airDensity, const double distanceDownwind[], const double distanceCrosswind[],
+	double power[], double eff[], double thrust[], double windSpeed[], double turbulenceIntensity[])
 {
-	double dTurbineRadius = rotorDiameter / 2;
+	double turbineRadius = rotorDiameter / 2;
 
 	for (size_t i = 1; i < nTurbines; i++) // downwind turbines, i=0 has already been done
 	{
-		double dNewSpeed = adWindSpeed[0];
+		double newSpeed = windSpeed[0];
 		for (size_t j = 0; j < i; j++) // upwind turbines
 		{
-			double fDistanceDownwindMeters = dTurbineRadius*fabs(aDistanceDownwind[i] - aDistanceDownwind[j]);
-			double fDistanceCrosswindMeters = dTurbineRadius*fabs(aDistanceCrosswind[i] - aDistanceCrosswind[j]);
+			double distanceDownwindMeters = turbineRadius*fabs(distanceDownwind[i] - distanceDownwind[j]);
+			double distanceCrosswindMeters = turbineRadius*fabs(distanceCrosswind[i] - distanceCrosswind[j]);
 
 			// Calculate the wind speed reduction at turbine i, due turbine [j]
 			// keep this new speed if it's less than any other calculated speed
-			dNewSpeed = min_of(dNewSpeed, delta_V_Park(adWindSpeed[0], adWindSpeed[j], fDistanceCrosswindMeters, fDistanceDownwindMeters, dTurbineRadius, dTurbineRadius, Thrust[j]));
+			newSpeed = min_of(newSpeed, delta_V_Park(windSpeed[0], windSpeed[j], distanceCrosswindMeters, distanceDownwindMeters, turbineRadius, turbineRadius, thrust[j]));
 		}
-		adWindSpeed[i] = dNewSpeed;
+		windSpeed[i] = newSpeed;
+		wTurbine->turbinePower(windSpeed[i], airDensity, &power[i], &thrust[i]);
+		eff[i] = wTurbine->calculateEff(power[i], power[0]);
 	}
 }
 
@@ -398,9 +402,105 @@ double eddyViscosityWakeModel::totalTurbulenceIntensity(double ambientTI, double
 	//	return f;
 }
 
+bool eddyViscosityWakeModel::fillWakeArrays(int turbineIndex, double ambientVelocity, double velocityAtTurbine, double power, double thrustCoeff, double turbulenceIntensity, double metersToFurthestDownwindTurbine) {
+	if (power <= 0.0)
+		return true; // no wake effect - wind speed is below cut-in, or above cut-out
+
+	if (thrustCoeff <= 0.0)
+		return true; // i.e. there is no wake (both arrays were initialized with zeros, so they just stay that way)
+
+	thrustCoeff = max_of(min_of(0.999, thrustCoeff), minThrustCoeff);
+
+	turbulenceIntensity = min_of(turbulenceIntensity, 50.0); // to avoid turbines with high TIs having no wake
+
+	double Dm, Dmi;
+
+	// Von Karman constant
+	const double K = 0.4; 										// Ainslee 1988 (notation)
+
+																// dimensionless constant K1
+	const double K1 = 0.015;									// Ainslee 1988 (page 217: input parameters)
+
+	double F, x = MIN_DIAM_EV; // actual distance in rotor diameters
+
+							   // Filter function F
+	if (x >= 5.5 || !useFilterFx)
+		F = 1.0;
+	else
+		x < 4.5 ? F = 0.65 - pow(-(x - 4.5) / 23.32, 1.0 / 3.0) : F = 0.65 + pow((x - 4.5) / 23.32, 1.0 / 3.0);
+
+	// calculate the ambient eddy viscocity term
+	double Km = F*K*K*turbulenceIntensity / 100.0;  // also known as the ambient eddy viscosity???
+
+													 // calculate the initial centreline velocity deficit at 2 rotor diameters downstream
+	Dm = Dmi = max_of(0.0, thrustCoeff - 0.05 - ((16.0*thrustCoeff - 0.5)*turbulenceIntensity / 1000.0));		// Ainslee 1988 (5)
+
+	if (Dmi <= 0.0)
+		return true;
+
+	double Uc = velocityAtTurbine - Dmi*velocityAtTurbine; // assuming Uc is the initial centreline velocity at 2 diameters downstream
+
+															 // now make Dmi relative to the freestream
+	Dm = Dmi = (ambientVelocity - Uc) / ambientVelocity;
+
+	// calculate the initial (2D) wake width (1.89 x the half-width of the guassian profile
+	double Bw = sqrt(3.56*thrustCoeff / (8.0*Dmi*(1.0 - 0.5*Dmi)));			// Ainslee 1988 (6)
+																				// Dmi must be as a fraction of dAmbientVelocity or the above line would cause an error sqrt(-ve)
+																				// Bw must be in rotor diameters.
+
+																				// the eddy viscosity is then
+	double E = F*K1*Bw*Dm*EV_SCALE + Km;
+
+	// Start major departure from Eddy-Viscosity solution using Crank-Nicolson
+	std::vector<double> m_d2U(matEVWakeDeficits.ncols());
+	m_d2U[0] = EV_SCALE*(1.0 - Dmi);
+
+	matEVWakeDeficits.at(turbineIndex, 0) = Dmi;
+	matEVWakeWidths.at(turbineIndex, 0) = Bw;
+
+	// j = 0 is initial conditions, j = 1 is the first step into the unknown
+	//	int iterations = 5;
+	for (size_t j = 0; j<matEVWakeDeficits.ncols() - 1; j++)
+	{
+		x = MIN_DIAM_EV + (double)(j)* axialResolution;
+
+		// deficit = Dm at the beginning of each timestep
+
+		if (x >= 5.5 || !useFilterFx)
+			F = 1.0;
+		else
+			x < 4.5 ? F = 0.65 - pow(-(x - 4.5) / 23.32, 1.0 / 3.0) : F = 0.65 + pow((x - 4.5) / 23.32, 1.0 / 3.0); // for some reason pow() does not deal with -ve numbers even though excel does
+
+		Km = F*K*K*turbulenceIntensity / 100.0;
+
+		// first calculate the eddy viscosity
+		E = F*K1*Bw*(Dm*EV_SCALE) + Km;
+
+		// calculate the change in velocity at distance x downstream
+		double dUdX = 16.0*(pow(m_d2U[j], 3.0) - pow(m_d2U[j], 2.0) - m_d2U[j] + 1.0)*E / (m_d2U[j] * thrustCoeff);
+		m_d2U[j + 1] = m_d2U[j] + dUdX*axialResolution;
+
+		// calculate Dm at distance X downstream....
+		Dm = (EV_SCALE - m_d2U[j + 1]) / EV_SCALE;
+
+		// now calculate wake width using Dm
+		Bw = sqrt(3.56*thrustCoeff / (8.0*Dm*(1.0 - 0.5*Dm)));
+
+		// ok now store the answers for later use	
+		matEVWakeDeficits.at(turbineIndex, j + 1) = Dm; // fractional deficit
+		matEVWakeWidths.at(turbineIndex, j + 1) = Bw; // diameters
+
+														// if the deficit is below min (a setting), or distance x is past the furthest downstream turbine, or we're out of room to store answers, we're done
+		if (Dm <= minDeficit || x > metersToFurthestDownwindTurbine + axialResolution || j >= matEVWakeDeficits.ncols() - 2)
+			break;
+	}
+	return true;
+}
+
+
 /// Simplified Eddy-Viscosity model as per "Simplified Solution To The Eddy Viscosity Wake Model" - 2009 by Dr Mike Anderson of RES
 void eddyViscosityWakeModel::wakeCalculations(/*INPUTS */ const double air_density, const double aDistanceDownwind[], const double aDistanceCrosswind[],
-	/*OUTPUTS*/ double power[], double Thrust[], double adWindSpeed[], double aTurbulence_intensity[])
+	/*OUTPUTS*/ double power[], double eff[], double Thrust[], double adWindSpeed[], double aTurbulence_intensity[])
 {
 	double dTurbineRadius = rotorDiameter / 2;
 	matEVWakeDeficits.fill(0.0);
@@ -444,16 +544,13 @@ void eddyViscosityWakeModel::wakeCalculations(/*INPUTS */ const double air_densi
 		aTurbulence_intensity[i] = dTotalTI;
 		wTurbine->turbinePower(adWindSpeed[i], air_density, &power[i], &Thrust[i]);
 
-		//if (Power[0] < 0.0)
-		//	Eff[i] = 0.0;
-		//else
-		//	Eff[i] = 100.0*(Power[i] + 0.0001) / (Power[0] + 0.0001);
+		eff[i] = wTurbine->calculateEff(power[i], power[0]);
 
-		//// now that turbine[i] wind speed, output, thrust, etc. have been calculated, calculate wake characteristics for it, because downwind turbines will need the info
-		//if (!fill_turbine_wake_arrays_for_EV((int)i, adWindSpeed[0], adWindSpeed[i], Power[i], Thrust[i], aTurbulence_intensity[i], fabs(aDistanceDownwind[m_iNumberOfTurbinesInFarm - 1] - aDistanceDownwind[i])*dTurbineRadius))
-		//{
-		//	if (m_sErrDetails.length() == 0) m_sErrDetails = "Could not calculate the turbine wake arrays in the Eddy-Viscosity model.";
-		//}
+		// now that turbine[i] wind speed, output, thrust, etc. have been calculated, calculate wake characteristics for it, because downwind turbines will need the info
+		if (!fillWakeArrays((int)i, adWindSpeed[0], adWindSpeed[i], power[i], Thrust[i], aTurbulence_intensity[i], fabs(aDistanceDownwind[nTurbines - 1] - aDistanceDownwind[i])*dTurbineRadius))
+		{
+			if (errDetails.length() == 0) errDetails = "Could not calculate the turbine wake arrays in the Eddy-Viscosity model.";
+		}
 		nearWakeRegionLength(adWindSpeed[i], Iamb[i], Thrust[i], air_density, vmln[i]);
 	}
 }

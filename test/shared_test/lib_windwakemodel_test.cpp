@@ -51,7 +51,7 @@ TEST_F(simpleWakeModelTest, wakeCalcNoInterference_lib_windwakemodel){
 		distDownwind[i] = 0;
 		distCrosswind[i] = 5 * i;
 	}
-	swm.wakeCalculations(0.0, &distDownwind[0], &distCrosswind[0], nullptr, &thrust[0], &windSpeed[0], &turbIntensity[0]);
+	swm.wakeCalculations(0.0, &distDownwind[0], &distCrosswind[0], &power[0], &eff[0], &thrust[0], &windSpeed[0], &turbIntensity[0]);
 	for (int i = 0; i < numberTurbines; i++){
 		EXPECT_NEAR(thrust[i], .7, e) << "No change expected.";
 		EXPECT_NEAR(power[i], 10, e) << "No change expected.";
@@ -68,7 +68,7 @@ TEST_F(simpleWakeModelTest, wakeCalcAllInterference_lib_windwakemodel){
 		distDownwind[i] = 5 * i;
 		distCrosswind[i] = 0;
 	}
-	swm.wakeCalculations(0.0, &distDownwind[0], &distCrosswind[0], nullptr, &thrust[0], &windSpeed[0], &turbIntensity[0]);
+	swm.wakeCalculations(0.0, &distDownwind[0], &distCrosswind[0], &power[0], &eff[0], &thrust[0], &windSpeed[0], &turbIntensity[0]);
 	std::vector<double>newWindSpeed = {10, 3.04338, 2.7485};
 	for (int i = 0; i < numberTurbines; i++){
 		EXPECT_NEAR(thrust[i], .7, e) << "No change expected.";
@@ -85,7 +85,7 @@ TEST_F(simpleWakeModelTest, wakeCalcTriangleInterference_lib_windwakemodel){
 	distDownwind = { 0, 5, 5 };
 	distCrosswind = { 0, -5, 5 };
 
-	swm.wakeCalculations(0.0, &distDownwind[0], &distCrosswind[0], nullptr, &thrust[0], &windSpeed[0], &turbIntensity[0]);
+	swm.wakeCalculations(0.0, &distDownwind[0], &distCrosswind[0], &power[0], &eff[0], &thrust[0], &windSpeed[0], &turbIntensity[0]);
 	std::vector<double>newWindSpeed = { 10, 9.9999, 9.9999 };
 	for (int i = 0; i < numberTurbines; i++){
 		EXPECT_NEAR(thrust[i], .7, e) << "No change expected.";
