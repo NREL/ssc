@@ -263,13 +263,9 @@ battstor::battstor(compute_module &cm, bool setup_model, int replacement_option,
 			if (batt_vars->batt_meter_position == dispatch_t::FRONT)
 			{
 				batt_vars->pv_dc_forecast = cm.as_vector_double("dc_net_forecast");
-
-				if (batt_vars->batt_dispatch == dispatch_t::FOM_FORECAST)
-				{
-					batt_vars->ppa_factors = cm.as_vector_double("dispatch_tod_factors");
-					batt_vars->ppa_weekday_schedule = cm.as_matrix_unsigned_long("dispatch_sched_weekday");
-					batt_vars->ppa_weekend_schedule = cm.as_matrix_unsigned_long("dispatch_sched_weekend");
-				}
+				batt_vars->ppa_factors = cm.as_vector_double("dispatch_tod_factors");
+				batt_vars->ppa_weekday_schedule = cm.as_matrix_unsigned_long("dispatch_sched_weekday");
+				batt_vars->ppa_weekend_schedule = cm.as_matrix_unsigned_long("dispatch_sched_weekend");
 
 				if (batt_vars->batt_dispatch == dispatch_t::FOM_LOOK_AHEAD || batt_vars->batt_dispatch == dispatch_t::FOM_FORECAST)
 				{

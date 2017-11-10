@@ -636,10 +636,10 @@ public:
 protected:
 	
 	void init_with_pointer(const dispatch_automatic_front_of_meter_t* tmp);
+	void setup_cost_vector(util::matrix_t<size_t> ppa_weekday_schedule, util::matrix_t<size_t> ppa_weekend_schedule);
 
 	std::vector<double> _ppa_factors;
-	util::matrix_t<size_t> _ppa_weekday_schedule;
-	util::matrix_t<size_t> _ppa_weekend_schedule;
+	std::vector<double> _ppa_cost_vector;
 	
 };
 

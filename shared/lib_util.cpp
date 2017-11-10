@@ -808,7 +808,7 @@ size_t util::format_vn(char *buffer, int maxlen, const char *fmt, va_list arglis
 	else return (bp-buffer);
 }
 
-int util::hours_in_month(int month)
+size_t util::hours_in_month(size_t month)
 {	// month=1 for January, 12 for December
 	return ( (month<1) || (month>12) ) ? 0 : nday[month-1]*24;
 }
@@ -820,12 +820,12 @@ double util::percent_of_year(int month, int hours)
 
 	int hours_from_months = 0;
 	for (int i=0; i<month-1; i++)
-		hours_from_months += (nday[i] * 24);
+		hours_from_months += static_cast<int>(nday[i] * 24);
 	return (hours_from_months + hours)/8760.0;
 }
 
 int util::month_of(double time)
-{
+{ 
 	/* returns month number 1..12 given 
 	   time: hour index in year 0..8759 */
 	if (time < 0) return 0;
@@ -872,22 +872,22 @@ int util::day_of_month(int month, double time)
 	return daynum;
 }
 
-void util::month_hour(int hour_of_year, int & out_month, int & out_hour)
+void util::month_hour(size_t hour_of_year, size_t & out_month, size_t & out_hour)
 {
-	int tmpSum = 0;
-	int hour = 0;
-	int month;
+	size_t tmpSum = 0;
+	size_t hour = 0;
+	size_t month;
 
 	for (month = 1; month <= 12; month++)
 	{
-		int hours_in_month = util::hours_in_month(month);
+		size_t hours_in_month = util::hours_in_month(month);
 		tmpSum += hours_in_month;
 
 		// found the month
 		if (hour_of_year + 1 <= tmpSum)
 		{
 			// get the day of the month
-			int tmp = (int)(floor((float)(hour_of_year) / 24));
+			size_t tmp = static_cast<size_t>(floor(static_cast<float>(hour_of_year) / 24));
 			hour = (hour_of_year + 1) - (tmp * 24);
 			break;
 		}
@@ -901,7 +901,7 @@ size_t util::hour_of_day(size_t hour_of_year)
 	return (hour_of_year) % 24;
 }
 
-bool util::weekday(int hour_of_year)
+bool util::weekday(size_t hour_of_year)
 {
 	int day_of_year = (int)(floor((float)(hour_of_year) / 24));
 	int day_of_week = day_of_year;

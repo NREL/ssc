@@ -49,6 +49,7 @@
 
 #include "lib_battery_dispatch.h"
 #include <math.h>
+#include <algorithm>
 
 /*
 Dispatch base class
@@ -466,16 +467,16 @@ void dispatch_manual_t::prepare_dispatch(size_t hour_of_year, size_t step, doubl
 { 
 	dispatch_t::prepare_dispatch(hour_of_year, step, P_pv_dc_charging, P_pv_dc_discharging, P_load_dc_charging, P_load_dc_discharging);
 
-	int m, h;
-	util::month_hour((int)hour_of_year, m, h);
-	int column = h - 1;
-	int iprofile = -1;
+	size_t m, h;
+	util::month_hour(hour_of_year, m, h);
+	size_t column = h - 1;
+	size_t iprofile = 0;
 
-	bool is_weekday = util::weekday((int)hour_of_year);
+	bool is_weekday = util::weekday(hour_of_year);
 	if (!is_weekday && _mode == MANUAL)
-		iprofile = (int)_sched_weekend(m - 1, column);
+		iprofile = _sched_weekend(m - 1, column);
 	else
-		iprofile = (int)_sched(m - 1, column);  // 1-based
+		iprofile = _sched(m - 1, column);  // 1-based
 
 	_can_charge = _charge_array[iprofile - 1];
 	_can_discharge = _discharge_array[iprofile - 1];
@@ -1329,16 +1330,36 @@ dispatch_automatic_front_of_meter_t::dispatch_automatic_front_of_meter_t(
 {
 	_look_ahead_hours = look_ahead_hours;
 	_ppa_factors = ppa_factors;
-	_ppa_weekday_schedule = ppa_weekday_schedule;
-	_ppa_weekend_schedule = ppa_weekend_schedule;
+	setup_cost_vector(ppa_weekday_schedule , ppa_weekend_schedule);
 }
 
 void dispatch_automatic_front_of_meter_t::init_with_pointer(const dispatch_automatic_front_of_meter_t* tmp)
 {
 	_look_ahead_hours = tmp->_look_ahead_hours;
 	_ppa_factors = tmp->_ppa_factors;
-	_ppa_weekday_schedule = tmp->_ppa_weekday_schedule;
-	_ppa_weekend_schedule = tmp->_ppa_weekend_schedule;
+	_ppa_cost_vector = tmp->_ppa_cost_vector;
+}
+
+void dispatch_automatic_front_of_meter_t::setup_cost_vector(util::matrix_t<size_t> ppa_weekday_schedule, util::matrix_t<size_t> ppa_weekend_schedule)
+{
+	_ppa_cost_vector.clear();
+	_ppa_cost_vector.reserve(8760 * _steps_per_hour);
+	size_t month, hour, iprofile;
+	double cost;
+	for (size_t hour_of_year = 0; hour_of_year != 8760 + _look_ahead_hours; hour_of_year++)
+	{
+		size_t mod_hour_of_year = hour_of_year % 8760;
+		util::month_hour(mod_hour_of_year, month, hour);
+		if (util::weekday(mod_hour_of_year))
+			iprofile = ppa_weekday_schedule(month - 1, hour - 1);
+		else
+			iprofile = ppa_weekend_schedule(month - 1, hour - 1);
+
+		cost = _ppa_factors[iprofile - 1];
+
+		for (size_t s = 0; s != _steps_per_hour; s++)
+			_ppa_cost_vector.push_back(cost);
+	}
 }
 
 // deep copy from dispatch to this
@@ -1380,9 +1401,18 @@ void dispatch_automatic_front_of_meter_t::dispatch(size_t year,
 void dispatch_automatic_front_of_meter_t::update_dispatch(size_t hour_of_year, size_t step, size_t idx)
 {
 
-	if (hour_of_year == _hour_last_updated + _dispatch_update_hours)
+	if (hour_of_year == _hour_last_updated + _dispatch_update_hours || hour_of_year == 0)
 	{
 		_hour_last_updated = hour_of_year;
+
+		// Economic value of charging from the grid in current time step to discharge sometime in next X hours
+		double Bgrid = 0.;
+		auto max_ppa = std::max_element(_ppa_cost_vector.begin() + hour_of_year, _ppa_cost_vector.begin() + hour_of_year + _look_ahead_hours);
+
+		for (size_t h = 0; h != _look_ahead_hours; h++)
+		{
+
+		}
 		
 
 
