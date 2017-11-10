@@ -1400,21 +1400,68 @@ void dispatch_automatic_front_of_meter_t::dispatch(size_t year,
 
 void dispatch_automatic_front_of_meter_t::update_dispatch(size_t hour_of_year, size_t step, size_t idx)
 {
+	
+	// assume eta = .99, bring in at some point from battery model
+	double eta = 0.99;
+
+	// also need to bring in usage rates and potentially normalize
+	double usage_cost = 1;
+
+	/*! Economic cost of charging (need to calculate)*/
+	double CostToCharge = 0;
+
+	// do we need to scale TOD factors to be non-normalized with actual PPA rate?
 
 	if (hour_of_year == _hour_last_updated + _dispatch_update_hours || hour_of_year == 0)
 	{
 		_hour_last_updated = hour_of_year;
 
-		// Economic value of charging from the grid in current time step to discharge sometime in next X hours
-		double Bgrid = 0.;
-		auto max_ppa = std::max_element(_ppa_cost_vector.begin() + hour_of_year, _ppa_cost_vector.begin() + hour_of_year + _look_ahead_hours);
+		// Compute forecast variables
+		auto max_ppa_cost = std::max_element(_ppa_cost_vector.begin() + hour_of_year, _ppa_cost_vector.begin() + hour_of_year + _look_ahead_hours);
+		double ppa_cost = _ppa_cost_vector[hour_of_year];
 
-		for (size_t h = 0; h != _look_ahead_hours; h++)
+		/*! Economic benefit of charging from the grid in current time step to discharge sometime in next X hours */
+		double BenefitToGridCharge = *max_ppa_cost - usage_cost;
+		
+		/*! Economic benefit of charging from regular PV in current time step to discharge sometime in next X hours */
+		double BenefitToPVCharge = *max_ppa_cost - ppa_cost;
+
+		/*! Economic benefit of charging from clipped PV in current time step to discharge sometime in the next X hours (clipped PV is free) */
+		double BenefitToClipCharge = *max_ppa_cost;
+		
+		/*! Amount of energy needed to store regular PV (calculate)*/
+		double EnergyToStorePV = 0;
+
+		/*! Amount of energy needed to store clipped PV (calculate)*/
+		double EnergyToStoreClipped = 0;
+
+		// Assuming BenefitToClipCharge > BenefitToPVCharge > BenefitToGridCharge
+
+		// Don't charge at all
+		if (BenefitToGridCharge < CostToCharge && BenefitToGridCharge > BenefitToPVCharge && BenefitToClipCharge < CostToCharge)
 		{
 
 		}
-		
+		// Charge from grid but leave EnergyToStorePV + EnergyToStoreClipped capacity in battery
+		else if (BenefitToGridCharge > CostToCharge && BenefitToGridCharge < BenefitToPVCharge)
+		{
+			
+		}
+		// Charge from PV, leave EnergyToStoreClipped capacity in battery
+		else if (BenefitToGridCharge < CostToCharge && BenefitToPVCharge > CostToCharge)
+		{
 
+		}
+		// Charge from clipped PV
+		else if (BenefitToGridCharge < CostToCharge && BenefitToPVCharge < CostToCharge && BenefitToClipCharge > CostToCharge)
+		{
+
+		}
+		// Discharge at max available rate such that PV + ES discharge <= AC nameplate
+		else if (ppa_cost == *max_ppa_cost)
+		{
+
+		}
 
 	}
 	
