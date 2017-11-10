@@ -77,8 +77,14 @@ struct batt_variables
 	int batt_loss_choice;
 	int batt_calendar_choice;
 
-	/*! Determines if the battery is allowed to charge from the grid*/
-	bool batt_auto_dispatch_can_gridcharge;
+	/*! Determines if the battery is allowed to charge from the grid using automated control*/
+	bool batt_dispatch_auto_can_gridcharge;
+
+	/*! Determines if the battery is allowed to charge from the RE using automated control*/
+	bool batt_dispatch_auto_can_charge;
+
+	/*! Determines if the battery is allowed to charge from PV clipping using automated control*/
+	bool batt_dispatch_auto_can_clipcharge;
 
 	/*! Vector of periods and if battery can charge from PV*/
 	std::vector<bool> batt_can_charge;

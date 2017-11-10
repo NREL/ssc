@@ -220,6 +220,7 @@ protected:
 
 	// Charging rules
 	bool  _can_charge;
+	bool  _can_clip_charge;
 	bool  _can_discharge;
 	bool  _can_grid_charge;
 
@@ -410,9 +411,11 @@ public:
 		int dispatch_mode,
 		int pv_dispatch,
 		size_t nyears,
-		bool can_grid_charge,
 		size_t look_ahead_hours,
-		size_t dispatch_update_frequency_hours
+		size_t dispatch_update_frequency_hours,
+		bool can_charge,
+		bool can_clipcharge,
+		bool can_grid_charge
 		);
 
 	virtual ~dispatch_automatic_t(){};
@@ -503,9 +506,11 @@ public:
 		int dispatch_mode,
 		int pv_dispatch,
 		size_t nyears,
-		bool can_grid_charge,
 		size_t look_ahead_hours,
-		size_t dispatch_update_frequency_hours
+		size_t dispatch_update_frequency_hours,
+		bool can_charge,
+		bool can_clipcharge,
+		bool can_grid_charge
 		);
 
 	virtual ~dispatch_automatic_behind_the_meter_t(){};
@@ -597,9 +602,11 @@ public:
 		int dispatch_mode,
 		int pv_dispatch,
 		size_t nyears,
-		bool can_grid_charge,
 		size_t look_ahead_hours,
 		size_t dispatch_update_frequency_hours,
+		bool can_charge,
+		bool can_clipcharge,
+		bool can_grid_charge,
 		std::vector<double> ppa_factors,
 		util::matrix_t<size_t> ppa_weekday_schedule,
 		util::matrix_t<size_t> ppa_weekend_schedule

@@ -294,7 +294,10 @@ battstor::battstor(compute_module &cm, bool setup_model, int replacement_option,
 				batt_vars->target_power_monthly = cm.as_vector_double("batt_target_power_monthly");
 				batt_vars->target_power = cm.as_vector_double("batt_target_power");
 			}
-			batt_vars->batt_auto_dispatch_can_gridcharge = cm.as_boolean("batt_dispatch_auto_can_gridcharge");
+			batt_vars->batt_dispatch_auto_can_gridcharge = cm.as_boolean("batt_dispatch_auto_can_gridcharge");
+			batt_vars->batt_dispatch_auto_can_charge = cm.as_boolean("batt_dispatch_auto_can_charge");
+			batt_vars->batt_dispatch_auto_can_clipcharge = cm.as_boolean("batt_dispatch_auto_can_clipcharge");
+
 
 			batt_vars->batt_lifetime_matrix = cm.as_matrix("batt_lifetime_matrix");
 			batt_vars->batt_calendar_lifetime_matrix = cm.as_matrix("batt_calendar_lifetime_matrix");
@@ -426,7 +429,7 @@ battstor::battstor(compute_module &cm, bool setup_model, int replacement_option,
 	// time quantities
 	nyears = 1;
 	_dt_hour = dt_hr;
-	step_per_hour = nrec / 8760;
+	step_per_hour = static_cast<size_t>(1. / _dt_hour);
 	if (batt_vars->system_use_lifetime_output)
 		nyears = batt_vars->analysis_period;
 	else
@@ -448,9 +451,9 @@ battstor::battstor(compute_module &cm, bool setup_model, int replacement_option,
 			for (int month = 0; month != 12; month++)
 			{
 				double target = target_power_monthly[month];
-				for (int hour = 0; hour != util::hours_in_month(month + 1); hour++)
+				for (int h = 0; h != util::hours_in_month(month + 1); h++)
 				{
-					for (size_t step = 0; step != step_per_hour; step++)
+					for (size_t s = 0; s != step_per_hour; s++)
 						target_power.push_back(target);
 				}
 			}
@@ -724,7 +727,8 @@ battstor::battstor(compute_module &cm, bool setup_model, int replacement_option,
 			batt_vars->batt_current_choice, batt_vars->batt_current_charge_max, batt_vars->batt_current_discharge_max,
 			batt_vars->batt_power_charge_max, batt_vars->batt_power_discharge_max, batt_vars->batt_minimum_modetime,
 			batt_vars->batt_dispatch, batt_vars->batt_pv_choice,
-			nyears, batt_vars->batt_auto_dispatch_can_gridcharge, batt_vars->batt_look_ahead_hours, batt_vars->batt_dispatch_update_frequency_hours,
+			nyears, batt_vars->batt_look_ahead_hours, batt_vars->batt_dispatch_update_frequency_hours,
+			batt_vars->batt_dispatch_auto_can_charge, batt_vars->batt_dispatch_auto_can_clipcharge, batt_vars->batt_dispatch_auto_can_gridcharge,
 			batt_vars->ppa_factors, batt_vars->ppa_weekday_schedule, batt_vars->ppa_weekend_schedule);
 		
 	}
@@ -734,8 +738,10 @@ battstor::battstor(compute_module &cm, bool setup_model, int replacement_option,
 		dispatch_model = new dispatch_automatic_behind_the_meter_t(battery_model, dt_hr, batt_vars->batt_minimum_SOC, batt_vars->batt_maximum_SOC,
 			batt_vars->batt_current_choice, batt_vars->batt_current_charge_max, batt_vars->batt_current_discharge_max,
 			batt_vars->batt_power_charge_max, batt_vars->batt_power_discharge_max, batt_vars->batt_minimum_modetime,
-			batt_vars->batt_dispatch, batt_vars->batt_pv_choice,
-			nyears, batt_vars->batt_auto_dispatch_can_gridcharge, batt_vars->batt_look_ahead_hours, batt_vars->batt_dispatch_update_frequency_hours);
+			batt_vars->batt_dispatch, batt_vars->batt_pv_choice, nyears,
+			batt_vars->batt_look_ahead_hours, batt_vars->batt_dispatch_update_frequency_hours,
+			batt_vars->batt_dispatch_auto_can_charge, batt_vars->batt_dispatch_auto_can_clipcharge, batt_vars->batt_dispatch_auto_can_gridcharge
+			);
 	}
 
 	topology = batt_vars->batt_topology;
@@ -850,16 +856,16 @@ void battstor::initialize_automated_dispatch(ssc_number_t *pv, ssc_number_t *loa
 				load_prediction.push_back(0.);
 			}
 		}
-		if (dispatch_automatic_behind_the_meter_t * automatic_dispatch = dynamic_cast<dispatch_automatic_behind_the_meter_t*>(dispatch_model))
+		if (dispatch_automatic_behind_the_meter_t * automatic_dispatch_btm = dynamic_cast<dispatch_automatic_behind_the_meter_t*>(dispatch_model))
 		{
-			automatic_dispatch->update_pv_data(pv_prediction);
-			automatic_dispatch->update_load_data(load_prediction);
+			automatic_dispatch_btm->update_pv_data(pv_prediction);
+			automatic_dispatch_btm->update_load_data(load_prediction);
 
 			if (input_target)
-				automatic_dispatch->set_target_power(target_power);
+				automatic_dispatch_btm->set_target_power(target_power);
 		}
-		else if (dispatch_automatic_front_of_meter_t * automatic_dispatch = dynamic_cast<dispatch_automatic_front_of_meter_t*>(dispatch_model))
-			automatic_dispatch->update_pv_data(pv_prediction);
+		else if (dispatch_automatic_front_of_meter_t * automatic_dispatch_fom = dynamic_cast<dispatch_automatic_front_of_meter_t*>(dispatch_model))
+			automatic_dispatch_fom->update_pv_data(pv_prediction);
 			
 	}
 	
@@ -1058,8 +1064,6 @@ bool battstor::check_iterate(size_t count)
 
 void battstor::calculate_monthly_and_annual_outputs( compute_module &cm )
 {
-	int step_per_hour = (int)( 1.0 / _dt_hour );
-
 	// single value metrics
 	cm.assign("average_battery_conversion_efficiency", var_data( (ssc_number_t) outAverageCycleEfficiency ));
 	cm.assign("average_battery_roundtrip_efficiency", var_data((ssc_number_t)outAverageRoundtripEfficiency));

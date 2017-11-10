@@ -103,6 +103,7 @@ void dispatch_t::init(battery_t * Battery, double dt_hour, double SOC_min, doubl
 
 	// initialize battery operation 
 	_can_charge = false;
+	_can_clip_charge = false;
 	_can_discharge = false;
 	_can_grid_charge = false;
 }
@@ -845,13 +846,14 @@ dispatch_automatic_t::dispatch_automatic_t(
 	int dispatch_mode,
 	int pv_dispatch,
 	size_t nyears,
-	bool can_grid_charge,
 	size_t look_ahead_hours,
-	size_t dispatch_update_frequency_hours
+	size_t dispatch_update_frequency_hours,
+	bool can_charge,
+	bool can_clip_charge,
+	bool can_grid_charge
 	) : dispatch_t(Battery, dt_hour, SOC_min, SOC_max, current_choice, Ic_max, Id_max, Pc_max, Pd_max,
 	t_min, dispatch_mode, pv_dispatch)
 {
-	_can_grid_charge = can_grid_charge;
 	_day_index = 0;
 	_hour_last_updated = (size_t)1e10;
 	_dt_hour = dt_hour;
@@ -863,6 +865,9 @@ dispatch_automatic_t::dispatch_automatic_t(
 	_safety_factor = 0.03;
 	_look_ahead_hours = look_ahead_hours;
 	_dispatch_update_hours = dispatch_update_frequency_hours;
+	_can_charge = can_charge;
+	_can_clip_charge = can_clip_charge;
+	_can_grid_charge = can_grid_charge;
 }
 
 void dispatch_automatic_t::init_with_pointer(const dispatch_automatic_t * tmp)
@@ -965,9 +970,12 @@ dispatch_automatic_behind_the_meter_t::dispatch_automatic_behind_the_meter_t(
 	int dispatch_mode,
 	int pv_dispatch,
 	size_t nyears,
-	bool can_grid_charge,
 	size_t look_ahead_hours,
-	size_t dispatch_update_frequency_hours) : dispatch_automatic_t(Battery, dt_hour, SOC_min, SOC_max, current_choice, Ic_max, Id_max, Pc_max, Pd_max, t_min, dispatch_mode, pv_dispatch, nyears, can_grid_charge, look_ahead_hours, dispatch_update_frequency_hours)
+	size_t dispatch_update_frequency_hours,
+	bool can_charge,
+	bool can_clip_charge,
+	bool can_grid_charge
+	) : dispatch_automatic_t(Battery, dt_hour, SOC_min, SOC_max, current_choice, Ic_max, Id_max, Pc_max, Pd_max, t_min, dispatch_mode, pv_dispatch, nyears, look_ahead_hours, dispatch_update_frequency_hours, can_charge, can_clip_charge, can_grid_charge)
 {
 	_P_target_month = -1e16;
 	_P_target_current = -1e16;
@@ -1310,12 +1318,14 @@ dispatch_automatic_front_of_meter_t::dispatch_automatic_front_of_meter_t(
 	int dispatch_mode,
 	int pv_dispatch,
 	size_t nyears,
-	bool can_grid_charge,
 	size_t look_ahead_hours,
 	size_t dispatch_update_frequency_hours,
+	bool can_charge,
+	bool can_clip_charge,
+	bool can_grid_charge,
 	std::vector<double> ppa_factors,
 	util::matrix_t<size_t> ppa_weekday_schedule,
-	util::matrix_t<size_t> ppa_weekend_schedule) : dispatch_automatic_t(Battery, dt_hour, SOC_min, SOC_max, current_choice, Ic_max, Id_max, Pc_max, Pd_max, t_min, dispatch_mode, pv_dispatch, nyears, can_grid_charge, look_ahead_hours, dispatch_update_frequency_hours)
+	util::matrix_t<size_t> ppa_weekend_schedule) : dispatch_automatic_t(Battery, dt_hour, SOC_min, SOC_max, current_choice, Ic_max, Id_max, Pc_max, Pd_max, t_min, dispatch_mode, pv_dispatch, nyears, look_ahead_hours, dispatch_update_frequency_hours, can_charge, can_clip_charge, can_grid_charge)
 {
 	_look_ahead_hours = look_ahead_hours;
 	_ppa_factors = ppa_factors;
