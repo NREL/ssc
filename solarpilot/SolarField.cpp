@@ -1815,10 +1815,6 @@ void SolarField::AnnualEfficiencySimulation( string weather_file, SolarField *SF
 		helios->at(i)->setRankingMetricValue(0.);
 	}
 
-	//If the ranking requires TOD factors, get the array now
-	vector<int> *TOD;
-	if(rindex == helio_perf_data::PERF_VALUES::POWER_VALUE)
-		TOD = SF->getFinancialObject()->getScheduleArray(); 
 	vector<double> pfs = V->fin.pmt_factors.val; 
 	bool is_pmt_factors = V->fin.is_pmt_factors.val; 
 	//Get design point DNI for some simulations
@@ -1932,7 +1928,10 @@ void SolarField::AnnualEfficiencySimulation( string weather_file, SolarField *SF
 			{
 			case helio_perf_data::PERF_VALUES::POWER_VALUE:
 				if(is_pmt_factors)
-					payfactor = pfs[TOD->at(i)-1];
+				  {
+				    vector<int> *TOD = SF->getFinancialObject()->getScheduleArray();
+				    payfactor = pfs[TOD->at(i)-1];
+				  }
 			case helio_perf_data::PERF_VALUES::POWER_TO_REC:
 				zval = dni/dni_des * payfactor * z_interp * nsimd;
 				break;
@@ -2697,7 +2696,7 @@ void SolarField::radialStaggerPositions(vector<sp_point> &HelPos)
 
 		double daz_init;	//The initial physical spacing between heliostats azimuthally
 		double az_ang, azmin, azmid, haz;
-		int Nhelio = 0, hpr;
+		int Nhelio = 0, hpr = -1;
         //initialize the heliostat template again
         {
             sp_point hpos;
@@ -2788,7 +2787,7 @@ void SolarField::cornfieldPositions(vector<sp_point> &HelPos){
 
 	//Calculate an upper estimate of the size of the heliostat positions array to avoid resizing all the time
 	double 
-		r_coll_temp,
+		r_coll_temp = 0,
 		r_coll_min = 9.e9; 
 	for(htemp_map::iterator it=_helio_templates.begin(); it != _helio_templates.end(); it++){
 		r_coll_temp = it->second->getCollisionRadius();
