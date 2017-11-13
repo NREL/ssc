@@ -2756,8 +2756,6 @@ void Flux::imageSizeAimPoint(Heliostat &H, SolarField &SF, double args[], bool i
 	double dpsave, dprod, sigx, sigy, dx, dy, fsave, imsizex, imsizey, theta_img, rnaz, rnel, stretch_factor, ftmp;
 	double e_bound_box[4];
 	int nfx, nfy, ny_in, ny_del, istart, jstart, iend, jend, jsave,kk,jspan;
-	//double *fvals;
-	//-------
 
 
 	switch (recgeom)
