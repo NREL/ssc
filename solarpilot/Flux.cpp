@@ -2862,7 +2862,9 @@ void Flux::imageSizeAimPoint(Heliostat &H, SolarField &SF, double args[], bool i
 	case Receiver::REC_GEOM_TYPE::PLANE_RECT:
 	{
 		//3	|	Planar rectangle
-		
+
+		jsave = 0;
+
 		//Get the receiver that this heliostat is aiming at
 		FS = &rec->getFluxSurfaces()->at(0);	//Should be only one flux surface for this type of receiver
 		FG = FS->getFluxMap();
