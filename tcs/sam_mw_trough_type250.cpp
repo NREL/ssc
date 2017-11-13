@@ -4563,7 +4563,7 @@ lab_keep_guess:
 	   * summary - Address of string variable on which summary contents will be written.
 	---------------------------------------------------------------------------------			*/
 
-	void header_design(int nhsec, int nfsec, int nrunsec, double rho, double V_max, double V_min, double m_dot, 
+	void header_design(unsigned nhsec, int nfsec, unsigned nrunsec, double rho, double V_max, double V_min, double m_dot,
 		util::matrix_t<double> &D_hdr, util::matrix_t<double> &D_runner, std::string *summary = NULL){
 	
 		//resize the header matrices if they are incorrect
@@ -4572,10 +4572,11 @@ lab_keep_guess:
 		if(D_runner.ncells() != nrunsec) D_runner.resize(nrunsec);
 
 		//----
-		int nst,nend, nd;
+		int nend, nd;
+		unsigned nst;
 		double m_dot_max, m_dot_min, m_dot_ts, m_dot_hdr, m_dot_2loops, m_dot_temp;
 		
-		for(int i=0; i<nhsec; i++){ D_hdr[i] = 0.; }
+		for (unsigned i=0; i<nhsec; i++){ D_hdr[i] = 0.; }
 
 		//mass flow to section is always half of total
 		m_dot_ts = m_dot/2.;
@@ -4590,7 +4591,7 @@ lab_keep_guess:
 		//other runner diameters
 		m_dot_temp = m_dot_ts*(1.-float(nfsec%4)/float(nfsec));  //mjw 5.4.11 Fix mass flow rate for nfsec/2==odd 
 		if(nrunsec>1) {
-			for(int i=1; i<nrunsec; i++){
+			for (unsigned i=1; i<nrunsec; i++){
 				D_runner[i] = pipe_sched(sqrt(4.*m_dot_temp/(rho*V_max*pi)));
 				m_dot_temp = max(m_dot_temp - m_dot_hdr*2, 0.0);
 			}
@@ -4599,7 +4600,7 @@ lab_keep_guess:
 		//Calculate each section in the header
 		nst=0; nend = 0; nd = 0;
 		m_dot_max = m_dot_hdr;
-		for(int i=0; i<nhsec; i++){
+		for (unsigned i=0; i<nhsec; i++){
 			if((i==nst)&&(nd <= 10)) {
 				//If we've reached the point where a diameter adjustment must be made...
 				//Also, limit the number of diameter reductions to 10
@@ -4634,7 +4635,7 @@ lab_keep_guess:
 				V_max, V_min );
 			summary->append(tstr);
 
-			for(int i=0; i<nrunsec; i++){
+			for (unsigned i=0; i<nrunsec; i++){
 				MySnprintf(tstr, TSTRLEN, "To section %d header pipe diameter: %.4lf m (%.2lf in)\n",i+1, D_runner[i], D_runner[i]*mtoinch);
 				summary->append(tstr);
 			}
@@ -4642,7 +4643,7 @@ lab_keep_guess:
 			summary->append( "Loop No. | Diameter [m] | Diameter [in] | Diam. ID\n--------------------------------------------------\n" );
 
 			nd=1;
-			for(int i=0; i<nhsec; i++){
+			for (unsigned i=0; i<nhsec; i++){
 				if(i>1) {
 					if(D_hdr[i] != D_hdr.at(i-1)) nd=nd+1;
 				}
