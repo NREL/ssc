@@ -4,7 +4,7 @@ The SSC Open Source Project repository contains the source code for the technolo
 
 You could think of SSC as the home for the algorithms behind the SAM desktop program. Most people run the code through the desktop user interface, but SSC can also be run directly using the [SAM Sofware Develoment Kit](https://sam.nrel.gov/sdk). 
 
-SSC requires builds upon three other open-source projects, [LK](https://github.com/nrel/lk), [wxWidgets](https://www.wxwidgets.org/), and [WEX](https://github.com/nrel/wex). However, if you remove SDKtool and TCSconsole from your SSC project, you can build SSC without any other software dependencies. Please see the main [SAM project wiki](https://github.com/NREL/SAM/wiki) for complete build instructions and software dependencies.
+SSC requires builds upon four other open-source projects, [Google Test](https://github.com/google/googletest), [LK](https://github.com/nrel/lk), [wxWidgets](https://www.wxwidgets.org/), and [WEX](https://github.com/nrel/wex). However, if you remove SDKtool and TCSconsole from your SSC project, you can build SSC without any other software dependencies. Please see the main [SAM project wiki](https://github.com/NREL/SAM/wiki) for complete build instructions and software dependencies.
 
 However, to simply explore the code and understand the algorithms used in SSC, start by looking in the "SSC" project at the compute modules (files starting with cmod_) to find the compute module for the technology or financial model of interest.
 
