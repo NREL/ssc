@@ -107,6 +107,37 @@ public:
 
 	void exec() throw(general_error)
 	{
+		// Test CO2 air cooler class
+		C_CO2_to_air_cooler c_ac;
+		C_CO2_to_air_cooler::S_des_par_ind s_des_weather;
+		s_des_weather.m_T_amb_des = 30.0 + 273.15;		//[K]
+		s_des_weather.m_elev = 300.0;					//[m]
+
+		C_CO2_to_air_cooler::S_des_par_cycle_dep s_des_cycle;
+		s_des_cycle.m_m_dot_total = 0.0;		//[kg/s] Use q_dot to design
+		s_des_cycle.m_Q_dot_des = 10.0;			//[MWt]
+		s_des_cycle.m_T_hot_in_des = 100.0 + 273.15;	//[K]
+		s_des_cycle.m_P_hot_in_des = 8. * 1.E3;	//[kPa]
+		s_des_cycle.m_delta_P_des = s_des_cycle.m_P_hot_in_des*0.005;	//[kPa]
+		s_des_cycle.m_T_hot_out_des = 40.0 + 273.15;	//[K]
+		s_des_cycle.m_W_dot_fan_des = 10 * 0.02;	//[MWe]
+
+		c_ac.design_hx(s_des_weather, s_des_cycle);
+
+		double T_amb_od = c_ac.get_des_par_ind()->m_T_amb_des;		//[K]
+		double P_amb_od = c_ac.get_design_solved()->m_P_amb_des;	//[Pa]
+		double T_hot_in = c_ac.get_des_par_cycle_dep()->m_T_hot_in_des;		//[K]
+		double P_hot_in = c_ac.get_des_par_cycle_dep()->m_P_hot_in_des;		//[kPa]
+		double m_dot_hot = c_ac.get_des_par_cycle_dep()->m_m_dot_total;		//[kg/s]
+		double T_hot_out = c_ac.get_des_par_cycle_dep()->m_T_hot_out_des;
+		double W_dot_fan = std::numeric_limits<double>::quiet_NaN();	//[MWe]
+		int ac_od_code = -1;
+
+		c_ac.off_design_hx(T_amb_od, P_amb_od, T_hot_in, P_hot_in, m_dot_hot, T_hot_out, W_dot_fan, ac_od_code);
+
+		double W_dot_fan_new = std::numeric_limits<double>::quiet_NaN();
+		int ac_od_new_code = c_ac.off_design_given_T_out(T_amb_od, P_amb_od, T_hot_in, P_hot_in, m_dot_hot, T_hot_out, W_dot_fan_new);
+
 		// Test out multi-stage compressor model
 		CO2_state co2_props;
 		double P_in = 8000.0;		//[kPa]
@@ -231,9 +262,9 @@ public:
 		double T_in_od = T_in + 5.0;
 		double m_dot_od = 0.90*m_dot_mc;
 
-		double P_out_od_old = std::numeric_limits<double>::quiet_NaN();
-		double T_out_od_old = std::numeric_limits<double>::quiet_NaN();
 		//c_comp_old.od_comp_at_N_des(T_in_od, P_in_od, m_dot_od, comp_old_err_code, T_out_od_old, P_out_od_old);
+		//double P_out_od_old = std::numeric_limits<double>::quiet_NaN();
+		//double T_out_od_old = std::numeric_limits<double>::quiet_NaN();
 
 		double P_out_od_new = std::numeric_limits<double>::quiet_NaN();
 		double T_out_od_new = std::numeric_limits<double>::quiet_NaN();
@@ -241,9 +272,6 @@ public:
 		int comp_new_err_code = 0;
 		c_comp_ms.off_design_at_N_des(T_in_od, P_in_od, m_dot_od, comp_new_err_code, T_out_od_new, P_out_od_new);
 
-
-
-		double new_cmop = 1.23;
 
 
 		// Hot sCO2 to water heat exchanger
@@ -346,7 +374,6 @@ public:
 		}
 		catch (C_csp_exception csp_except)
 		{
-			double blah_for_now = 1.23;
 			//throw exec_error("sco2-water hx", "failed");
 		}
 
@@ -485,7 +512,6 @@ public:
 			iter_P_water_in++;
 
 		}
-		double blajalahfla = 1.23;
 
 //		// Test C_HX_counterflow model as a sCO2 recuperator
 //		C_HX_counterflow mc_sco2_recup;
@@ -632,7 +658,6 @@ public:
 		// Initialize cycle here, so can use 'get_design_limits()'
 			// Also define error and warning message strings
 		std::string error_msg;
-		error_msg[0] = NULL;
 		int error_code = 0;
 		C_RecompCycle rc_cycle;
 
@@ -766,7 +791,7 @@ public:
 		assign("P_comp_out", (ssc_number_t)P_comp_out);
 		assign("T_htf_cold", (ssc_number_t)T_htf_cold);
 
-		if( error_msg[0] == NULL )
+		if (error_msg == "")
 			log("Design point optimization was successful!");
 		else
 		{

@@ -243,7 +243,7 @@ void LayoutSimThread::StartThread() //Entry()
                     P.TOUweight = tous->at(DT.GetHourOfYear());
 
 			    //latitude, longitude, and elevation should be set in the input file
-			    Ambient::calcSunPosition(*_SF->getVarMap(), DT, &az, &zen );
+			    Ambient::calcSunPosition(*_SF->getVarMap(), DT, &az, &zen, true );
 		        //If the sun is not above the horizon, don't continue
 		        if( zen > 90. )
 				        continue;

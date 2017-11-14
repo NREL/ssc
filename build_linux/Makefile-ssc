@@ -2,8 +2,9 @@ VPATH=../ssc
 
 CC = gcc
 CXX = g++
-CFLAGS = -I../shared -I../nlopt -I../solarpilot -I../tcs -I../ssc -I../lpsolve -g -D__UNIX__ -fPIC -Wall -O3
-LDFLAGS = -std=c++0x solarpilot.a tcs.a nlopt.a shared.a lpsolve.a -lm -lstdc++ 
+WARNINGS = -Wall -Wno-unknown-pragmas
+CFLAGS = -I../shared -I../nlopt -I../solarpilot -I../tcs -I../ssc -I../lpsolve -g -D__UNIX__ -fPIC $(WARNINGS) -O3
+LDFLAGS = -std=c++0x solarpilot.a tcs.a nlopt.a shared.a lpsolve.a -lm -lstdc++
 CXXFLAGS=-std=c++0x $(CFLAGS)
 
 CFLAGS += -D__64BIT__
@@ -98,7 +99,7 @@ $(TARGET) : $(OBJECTS)
 # Following give undefined symbols tcskernel and ssc.co fails to load
 #	$(CXX) $(LDFLAGS) -shared -o $@ $^ 
 	$(CXX) -shared -o $@ $^ $(LDFLAGS)
-	gcc $(CFLAGS) dltest.c -o dltest -ldl
+	gcc $(CFLAGS) dltest.c -o dltest -Wl,--no-as-needed -ldl
 	./dltest ./$(TARGET)
 
 clean:

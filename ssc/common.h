@@ -162,7 +162,6 @@ public:
 	void set_counter_to(size_t cur_index);
 	bool read(weather_record *r); // reads one more record	
 	bool has_data_column(size_t id);
-	bool has_calculated_data(size_t id);
 };
 
 bool ssc_cmod_update(std::string &log_msg, std::string &progress_msg, void *data, double progress, int out_type);

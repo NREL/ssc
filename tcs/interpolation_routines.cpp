@@ -339,8 +339,8 @@ bool Bilinear_Interp::Set_2D_Lookup_Table( const util::matrix_t<double> &table )
 	
 	// Find number of x values in table
 	double first_val = table.at(0,0);
-	int i = 1;
-	for( i; i < (int)table.nrows(); i++ )
+	int i;
+	for( i = 1; i < (int)table.nrows(); i++ )
 		if( table.at(i,0) == first_val )	break;
 	m_nx = i;
 	if( m_nx < 3 )
@@ -391,8 +391,8 @@ bool Trilinear_Interp::Set_3D_Lookup_Table( const util::block_t<double> &table )
 	
 	// Find number of x values in table
 	double first_val = table.at(0,0,0);
-	int i = 1;
-	for( i; i < (int)table.nrows(); i++ )
+	int i;
+	for( i = 1; i < (int)table.nrows(); i++ )
 		if( table.at(i,0,0) == first_val )	break;
 	m_nx = i;
 	if( m_nx < 3 )
@@ -548,7 +548,8 @@ void LUdcmp::solve(VectDoub &b, VectDoub &x)
 {
     int i,ii=0,ip,j;
     double sum;
-    if (b.size() != n || x.size() != n)
+    if (b.size() != static_cast<size_t>(n) ||
+	x.size() != static_cast<size_t>(n))
         throw("LUdcmp::solve bad sizes");
     for (i=0;i<n;i++) x[i] = b[i];
     for (i=0;i<n;i++) {
@@ -571,7 +572,9 @@ void LUdcmp::solve(VectDoub &b, VectDoub &x)
 void LUdcmp::solve(MatDoub &b, MatDoub &x)
 {
     int i,j,m=(int)b.front().size();
-    if (b.size() != n || x.size() != n || b.front().size() != x.front().size())
+    if (b.size() != static_cast<size_t>(n) ||
+	x.size() != static_cast<size_t>(n) ||
+	b.front().size() != x.front().size())
         throw("LUdcmp::solve bad sizes");
     VectDoub xx(n);
     for (j=0;j<m;j++) {

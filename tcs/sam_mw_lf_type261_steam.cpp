@@ -1363,7 +1363,9 @@ public:
 		b_optical_table.AddXAxis(xax, n_cols-1);
 		b_optical_table.AddYAxis(yax, n_rows-1);
 		b_optical_table.AddData(data);
-		delete [] xax, yax, data;
+		delete [] xax;
+		delete [] yax;
+		delete [] data;
 		optical_tables.Set_Table( &b_optical_table, 0 );
 
 		// *************************
@@ -1405,7 +1407,9 @@ public:
 			sh_optical_table.AddXAxis(xax1, n_cols-1);
 			sh_optical_table.AddYAxis(yax1, n_rows-1);
 			sh_optical_table.AddData(data1);
-			delete [] xax1, yax1, data1;
+			delete [] xax1;
+			delete [] yax1;
+			delete [] data1;
 			optical_tables.Set_Table( &sh_optical_table, 1 );
 		}
 		// ****************************************************************************

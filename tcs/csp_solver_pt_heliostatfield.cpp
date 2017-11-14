@@ -515,6 +515,9 @@ void C_pt_heliostatfield::init()
 
 				}
 
+                //set the template name 
+                V.sf.temp_which.set_from_string( "Template 1" ); 
+
                 sapi.Setup(V);
 								
 			}

@@ -633,7 +633,7 @@ public:
 		double Nexp, double Ncon, double Nels, double Nelm, double Nell, double Ngav, double Nglv,
 		double Nchv, double Nlw, double Nlcv, double Nbja);
 	double FricFactor(double m_Rough, double Reynold);
-	void header_design(int nhsec, int m_nfsec, int m_nrunsec, bool include_fixed_heat_sink_runner,
+	void header_design(unsigned nhsec, int m_nfsec, unsigned m_nrunsec, bool include_fixed_heat_sink_runner,
 						 double rho, double V_max, double V_min, double m_dot,
 		std::vector<double> &m_D_hdr, std::vector<double> &m_D_runner, std::string *summary = NULL);
 	double pipe_sched(double De);
