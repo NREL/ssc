@@ -4966,3 +4966,350 @@ double P_pseudocritical_1_PCRC_without_ReHeating(double T_K)
 	return (0.191448*T_K + 45.6661)*T_K - 24213.3;
 }
 
+void C_RecompCycle_PCRC_without_ReHeating::auto_opt_design_hit_eta(S_auto_opt_design_hit_eta_parameters & auto_opt_des_hit_eta_in, int & error_code, string & error_msg)
+{
+	ms_auto_opt_des_par.m_W_dot_net = auto_opt_des_hit_eta_in.m_W_dot_net;				//[kW] Target net cycle power
+	ms_auto_opt_des_par.m_T_mc1_in = auto_opt_des_hit_eta_in.m_T_mc1_in;					//[K] Compressor1 inlet temperature
+	ms_auto_opt_des_par.m_T_mc2_in = auto_opt_des_hit_eta_in.m_T_mc2_in;					//[K] Compressor2 inlet temperature
+	ms_auto_opt_des_par.m_T_t_in = auto_opt_des_hit_eta_in.m_T_t_in;					//[K] Turbine inlet temperature
+	ms_auto_opt_des_par.m_DP_LT = auto_opt_des_hit_eta_in.m_DP_LT;						//(cold, hot) positive values are absolute [kPa], negative values are relative (-)
+	ms_auto_opt_des_par.m_DP_HT = auto_opt_des_hit_eta_in.m_DP_HT;						//(cold, hot) positive values are absolute [kPa], negative values are relative (-)
+	ms_auto_opt_des_par.m_DP_PC1 = auto_opt_des_hit_eta_in.m_DP_PC1;						//(cold, hot) positive values are absolute [kPa], negative values are relative (-)
+	ms_auto_opt_des_par.m_DP_PC2 = auto_opt_des_hit_eta_in.m_DP_PC2;						//(cold, hot) positive values are absolute [kPa], negative values are relative (-)
+	ms_auto_opt_des_par.m_DP_PHX = auto_opt_des_hit_eta_in.m_DP_PHX;					//(cold, hot) positive values are absolute [kPa], negative values are relative (-)
+	ms_auto_opt_des_par.m_UA_rec_total = std::numeric_limits<double>::quiet_NaN();		// ***** This method finds the UA required to hit the input efficiency! *****
+	ms_auto_opt_des_par.m_LT_eff_max = auto_opt_des_hit_eta_in.m_LT_eff_max;
+	ms_auto_opt_des_par.m_HT_eff_max = auto_opt_des_hit_eta_in.m_HT_eff_max;
+	ms_auto_opt_des_par.m_eta_mc1 = auto_opt_des_hit_eta_in.m_eta_mc1;					//[-] design-point efficiency of the main compressor; isentropic if positive, polytropic if negative
+	ms_auto_opt_des_par.m_eta_mc2 = auto_opt_des_hit_eta_in.m_eta_mc2;					//[-] design-point efficiency of the main compressor; isentropic if positive, polytropic if negative
+	ms_auto_opt_des_par.m_eta_rc = auto_opt_des_hit_eta_in.m_eta_rc;					//[-] design-point efficiency of the recompressor; isentropic if positive, polytropic if negative
+	ms_auto_opt_des_par.m_eta_t = auto_opt_des_hit_eta_in.m_eta_t;						//[-] design-point efficiency of the turbine; isentropic if positive, polytropic if negative
+	ms_auto_opt_des_par.m_N_sub_hxrs = auto_opt_des_hit_eta_in.m_N_sub_hxrs;			//[-] Number of sub-heat exchangers to use when calculating UA value for a heat exchanger
+	ms_auto_opt_des_par.m_P_high_limit = auto_opt_des_hit_eta_in.m_P_high_limit;		//[kPa] maximum allowable pressure in cycle
+	ms_auto_opt_des_par.m_tol = auto_opt_des_hit_eta_in.m_tol;							//[-] Convergence tolerance
+	ms_auto_opt_des_par.m_opt_tol = auto_opt_des_hit_eta_in.m_opt_tol;					//[-] Optimization tolerance
+	ms_auto_opt_des_par.m_N_turbine = auto_opt_des_hit_eta_in.m_N_turbine;				//[rpm] Turbine shaft speed (negative values link turbine to compressor)
+	ms_auto_opt_des_par.m_is_recomp_ok = auto_opt_des_hit_eta_in.m_is_recomp_ok;		//[-] 1 = yes, 0 = no, other = invalid
+
+	ms_auto_opt_des_par.mf_callback_log = auto_opt_des_hit_eta_in.mf_callback_log;
+	ms_auto_opt_des_par.mp_mf_active = auto_opt_des_hit_eta_in.mp_mf_active;
+
+	ms_auto_opt_des_par.m_PR_mc2_guess = auto_opt_des_hit_eta_in.m_PR_mc2_guess;			//[-] Initial guess for ratio of P_mc2_out to P_mc2_in
+	ms_auto_opt_des_par.m_fixed_PR_mc2 = auto_opt_des_hit_eta_in.m_fixed_PR_mc2;			//[-] if true, ratio of P_mc2_out to P_mc2_in is fixed at PR_mc2_guess		
+
+																						// At this point, 'auto_opt_des_hit_eta_in' should only be used to access the targer thermal efficiency: 'm_eta_thermal'
+
+	double Q_dot_rec_des = ms_auto_opt_des_par.m_W_dot_net / auto_opt_des_hit_eta_in.m_eta_thermal;		//[kWt] Receiver thermal input at design
+
+	error_msg = "";
+	error_code = 0;
+
+	// Check cycle parameter values are reasonable
+	if (ms_auto_opt_des_par.m_is_recomp_ok != 0 && ms_auto_opt_des_par.m_is_recomp_ok != 1)
+	{
+		throw(C_csp_exception("C_RecompCycle::auto_opt_design_core(...) requires that ms_auto_opt_des_par.m_is_recomp_ok"
+			"is either 0 (simple cycle only) or 1 (recomp allowed)\n"));
+	}
+	// Can't operate Compressor2 in 2-phase region
+	if (ms_auto_opt_des_par.m_T_mc2_in <= N_co2_props::T_crit)
+	{
+		error_msg.append(util::format("Only single phase cycle operation is allowed in this model."
+			"The compressor inlet temperature (%lg [C]) must be great than the critical temperature: %lg [C]",
+			ms_auto_opt_des_par.m_T_mc2_in - 273.15, ((N_co2_props::T_crit) - 273.15)));
+
+		error_code = -1;
+		return;
+	}
+
+	// "Reasonable" ceiling on Compressor2 inlet temp
+	double T_mc2_in_max = 70.0 + 273.15;		//[K] Arbitrary value for max compressor inlet temperature
+	if (ms_auto_opt_des_par.m_T_mc2_in > T_mc2_in_max)
+	{
+		error_msg.append(util::format("The compressor inlet temperature input was %lg [C]. This value was reset internally to the max allowable inlet temperature: %lg [C]\n",
+			ms_auto_opt_des_par.m_T_mc2_in - 273.15, T_mc2_in_max - 273.15));
+
+		ms_auto_opt_des_par.m_T_mc2_in = T_mc2_in_max;
+	}
+
+	// Can't operate Compressor1 in 2-phase region
+	if (ms_auto_opt_des_par.m_T_mc1_in <= N_co2_props::T_crit)
+	{
+		error_msg.append(util::format("Only single phase cycle operation is allowed in this model."
+			"The compressor inlet temperature (%lg [C]) must be great than the critical temperature: %lg [C]",
+			ms_auto_opt_des_par.m_T_mc1_in - 273.15, ((N_co2_props::T_crit) - 273.15)));
+
+		error_code = -1;
+		return;
+	}
+
+	// "Reasonable" ceiling on Compressor1 inlet temp
+	double T_mc1_in_max = 70.0 + 273.15;		//[K] Arbitrary value for max compressor inlet temperature
+	if (ms_auto_opt_des_par.m_T_mc1_in > T_mc1_in_max)
+	{
+		error_msg.append(util::format("The compressor inlet temperature input was %lg [C]. This value was reset internally to the max allowable inlet temperature: %lg [C]\n",
+			ms_auto_opt_des_par.m_T_mc1_in - 273.15, T_mc1_in_max - 273.15));
+
+		ms_auto_opt_des_par.m_T_mc1_in = T_mc1_in_max;
+	}
+
+	// "Reasonable" floor on turbine inlet temp
+	double T_t_in_min = 300.0 + 273.15;		//[K] Arbitrary value for min turbine inlet temperature
+	if (ms_auto_opt_des_par.m_T_t_in < T_t_in_min)
+	{
+		error_msg.append(util::format("The turbine inlet temperature input was %lg [C]. This value was reset internally to the min allowable inlet temperature: %lg [C]\n",
+			ms_auto_opt_des_par.m_T_t_in - 273.15, T_t_in_min - 273.15));
+
+		ms_auto_opt_des_par.m_T_t_in = T_t_in_min;
+	}
+
+	// Turbine inlet temperature must be hotter than Compressor2 outlet temperature
+	if (ms_auto_opt_des_par.m_T_t_in <= ms_auto_opt_des_par.m_T_mc2_in)
+	{
+		error_msg.append(util::format("The turbine inlet temperature, %lg [C], is colder than the specified compressor inlet temperature %lg [C]",
+			ms_auto_opt_des_par.m_T_t_in - 273.15, ms_auto_opt_des_par.m_T_mc2_in - 273.15));
+
+		error_code = -1;
+		return;
+	}
+
+	// Turbine inlet temperature must be colder than property limits
+	if (ms_auto_opt_des_par.m_T_t_in >= N_co2_props::T_upper_limit)
+	{
+		error_msg.append(util::format("The turbine inlet temperature, %lg [C], is hotter than the maximum allow temperature in the CO2 property code %lg [C]",
+			ms_auto_opt_des_par.m_T_t_in - 273.15, N_co2_props::T_upper_limit - 273.15));
+
+		error_code = -1;
+		return;
+	}
+
+	// Check for realistic isentropic efficiencies Compressor2
+	if (ms_auto_opt_des_par.m_eta_mc2 > 1.0)
+	{
+		error_msg.append(util::format("The main compressor2 isentropic efficiency, %lg, was reset to theoretical maximum 1.0\n",
+			ms_auto_opt_des_par.m_eta_mc2));
+
+		ms_auto_opt_des_par.m_eta_mc2 = 1.0;
+	}
+	// Check for realistic isentropic efficiencies Compressor1
+	if (ms_auto_opt_des_par.m_eta_mc1 > 1.0)
+	{
+		error_msg.append(util::format("The main compressor1 isentropic efficiency, %lg, was reset to theoretical maximum 1.0\n",
+			ms_auto_opt_des_par.m_eta_mc1));
+
+		ms_auto_opt_des_par.m_eta_mc1 = 1.0;
+	}
+	if (ms_auto_opt_des_par.m_eta_rc > 1.0)
+	{
+		error_msg.append(util::format("The re-compressor isentropic efficiency, %lg, was reset to theoretical maximum 1.0\n",
+			ms_auto_opt_des_par.m_eta_rc));
+
+		ms_auto_opt_des_par.m_eta_rc = 1.0;
+	}
+	if (ms_auto_opt_des_par.m_eta_t > 1.0)
+	{
+		error_msg.append(util::format("The turbine isentropic efficiency, %lg, was reset to theoretical maximum 1.0\n",
+			ms_auto_opt_des_par.m_eta_t));
+
+		ms_auto_opt_des_par.m_eta_t = 1.0;
+	}
+	if (ms_auto_opt_des_par.m_eta_mc2 < 0.1)
+	{
+		error_msg.append(util::format("The main compressor2 isentropic efficiency, %lg, was increased to the internal limit of 0.1 to improve solution stability\n",
+			ms_auto_opt_des_par.m_eta_mc2));
+
+		ms_auto_opt_des_par.m_eta_mc2 = 0.1;
+	}
+	if (ms_auto_opt_des_par.m_eta_mc1 < 0.1)
+	{
+		error_msg.append(util::format("The main compressor1 isentropic efficiency, %lg, was increased to the internal limit of 0.1 to improve solution stability\n",
+			ms_auto_opt_des_par.m_eta_mc1));
+
+		ms_auto_opt_des_par.m_eta_mc1 = 0.1;
+	}
+	if (ms_auto_opt_des_par.m_eta_rc < 0.1)
+	{
+		error_msg.append(util::format("The re-compressor isentropic efficiency, %lg, was increased to the internal limit of 0.1 to improve solution stability\n",
+			ms_auto_opt_des_par.m_eta_rc));
+
+		ms_auto_opt_des_par.m_eta_rc = 0.1;
+	}
+	if (ms_auto_opt_des_par.m_eta_t < 0.1)
+	{
+		error_msg.append(util::format("The turbine isentropic efficiency, %lg, was increased to the internal limit of 0.1 to improve solution stability\n",
+			ms_auto_opt_des_par.m_eta_t));
+
+		ms_auto_opt_des_par.m_eta_t = 0.1;
+	}
+
+	if (ms_auto_opt_des_par.m_LT_eff_max > 1.0)
+	{
+		error_msg.append(util::format("The LT recuperator max effectiveness, %lg, was decreased to the limit of 1.0\n", ms_auto_opt_des_par.m_LT_eff_max));
+
+		ms_auto_opt_des_par.m_LT_eff_max = 1.0;
+	}
+
+	if (ms_auto_opt_des_par.m_LT_eff_max < 0.70)
+	{
+		error_msg.append(util::format("The LT recuperator max effectiveness, %lg, was increased to the internal limit of 0.70 improve convergence\n", ms_auto_opt_des_par.m_LT_eff_max));
+
+		ms_auto_opt_des_par.m_LT_eff_max = 0.7;
+	}
+
+	if (ms_auto_opt_des_par.m_HT_eff_max > 1.0)
+	{
+		error_msg.append(util::format("The HT recuperator max effectiveness, %lg, was decreased to the limit of 1.0\n", ms_auto_opt_des_par.m_HT_eff_max));
+
+		ms_auto_opt_des_par.m_HT_eff_max = 1.0;
+	}
+
+	if (ms_auto_opt_des_par.m_HT_eff_max < 0.70)
+	{
+		error_msg.append(util::format("The LT recuperator max effectiveness, %lg, was increased to the internal limit of 0.70 improve convergence\n", ms_auto_opt_des_par.m_HT_eff_max));
+
+		ms_auto_opt_des_par.m_HT_eff_max = 0.7;
+	}
+
+	// Limits on high pressure limit
+	if (ms_auto_opt_des_par.m_P_high_limit >= N_co2_props::P_upper_limit)
+	{
+		error_msg.append(util::format("The upper pressure limit, %lg [MPa], was set to the internal limit in the CO2 properties code %lg [MPa]\n",
+			ms_auto_opt_des_par.m_P_high_limit, N_co2_props::P_upper_limit));
+
+		ms_auto_opt_des_par.m_P_high_limit = N_co2_props::P_upper_limit;
+	}
+	double P_high_limit_min = 10.0*1.E3;	//[kPa]
+	if (ms_auto_opt_des_par.m_P_high_limit <= P_high_limit_min)
+	{
+		error_msg.append(util::format("The upper pressure limit, %lg [MPa], must be greater than %lg [MPa] to ensure solution stability",
+			ms_auto_opt_des_par.m_P_high_limit, P_high_limit_min));
+
+		error_code = -1;
+		return;
+	}
+
+	// Finally, check thermal efficiency
+	if (auto_opt_des_hit_eta_in.m_eta_thermal <= 0.0)
+	{
+		error_msg.append(util::format("The design cycle thermal efficiency, %lg, must be at least greater than 0 ",
+			auto_opt_des_hit_eta_in.m_eta_thermal));
+
+		error_code = -1;
+		return;
+	}
+	double eta_carnot = 1.0 - ms_auto_opt_des_par.m_T_mc1_in / ms_auto_opt_des_par.m_T_t_in;
+	if (auto_opt_des_hit_eta_in.m_eta_thermal >= eta_carnot)
+	{
+		error_msg.append(util::format("To solve the cycle within the allowable recuperator conductance, the design cycle thermal efficiency, %lg, must be at least less than the Carnot efficiency: %lg ",
+			auto_opt_des_hit_eta_in.m_eta_thermal, eta_carnot));
+
+		error_code = -1;
+		return;
+	}
+
+	// Send log update upstream
+	if (ms_auto_opt_des_par.mf_callback_log && ms_auto_opt_des_par.mp_mf_active)
+	{
+		std::string msg_log = "Iterate on total recuperator conductance to hit target cycle efficiency";
+		std::string msg_progress = "Designing cycle...";
+		if (!ms_auto_opt_des_par.mf_callback_log(msg_log, msg_progress, ms_auto_opt_des_par.mp_mf_active, 0.0, 2))
+		{
+			std::string error_msg = "User terminated simulation...";
+			std::string loc_msg = "C_MEQ_sco2_design_hit_eta__UA_total";
+			throw(C_csp_exception(error_msg, loc_msg, 1));
+		}
+	}
+
+	// Set up monotonic equation solver to find the total recuperator UA that results in the target efficiency
+	C_MEQ_sco2_design_hit_eta__UA_total c_eq(this);
+	C_monotonic_eq_solver c_solver(c_eq);
+
+	// Generate min and max values
+	double UA_recup_total_max = ms_des_limits.m_UA_net_power_ratio_max*ms_auto_opt_des_par.m_W_dot_net;		//[kW/K]
+	double UA_recup_total_min = ms_des_limits.m_UA_net_power_ratio_min*ms_auto_opt_des_par.m_W_dot_net;		//[kW/K]
+																											// Set solver settings
+	c_solver.settings(ms_auto_opt_des_par.m_tol, 50, UA_recup_total_min, UA_recup_total_max, true);
+
+	// Generate guess values
+	double UA_recups_guess = 0.1*ms_auto_opt_des_par.m_W_dot_net;
+
+	double UA_recup_total_solved, tol_solved;
+	UA_recup_total_solved = tol_solved = std::numeric_limits<double>::quiet_NaN();
+	int iter_solved = -1;
+
+	int solver_code = 0;
+	try
+	{
+		solver_code = c_solver.solve(UA_recups_guess, 1.1*UA_recups_guess, auto_opt_des_hit_eta_in.m_eta_thermal,
+			UA_recup_total_solved, tol_solved, iter_solved);
+	}
+	catch (C_csp_exception &csp_except)
+	{
+		if (csp_except.m_error_code == 1)
+		{
+			throw(C_csp_exception(csp_except));
+		}
+		else
+		{
+			throw(C_csp_exception("C_MEQ_sco2_design_hit_eta__UA_total received an exception from the solver"));
+		}
+	}
+
+	if (solver_code != C_monotonic_eq_solver::CONVERGED)
+	{
+		if (solver_code < C_monotonic_eq_solver::CONVERGED)
+		{
+			error_msg.append("Can't find a value of total recuperator conductance that achieves"
+				" the target cycle efficiency. Check design parameters.");
+		}
+		else if (!c_solver.did_solver_find_negative_error(solver_code))
+		{
+			error_msg.append("Can't find a value of total recuperator conductance that results"
+				" in an efficiency smaller than the target efficiency.");
+		}
+		else if (!c_solver.did_solver_find_positive_error(solver_code))
+		{
+			error_msg.append("Can't find a value of total recuperator conductance that results"
+				" in an efficiency larger than the target efficiency.");
+		}
+		else
+		{
+			error_msg.append("Can't find a value of total recuperator conductance that achieves"
+				" the target cycle efficiency. Check design parameters.");
+		}
+
+		error_code = -1;
+
+		return;
+	}
+
+}
+
+int C_RecompCycle_PCRC_without_ReHeating::C_MEQ_sco2_design_hit_eta__UA_total::operator()(double UA_recup_total /*kW/K*/, double *eta /*-*/)
+{
+
+	mpc_rc_cycle->ms_auto_opt_des_par.m_UA_rec_total = UA_recup_total;	//[kW/K]
+
+	int error_code = 0;
+	mpc_rc_cycle->auto_opt_design_core(error_code);
+	if (error_code != 0)
+	{
+		*eta = std::numeric_limits<double>::quiet_NaN();
+		return -1;
+	}
+
+	*eta = mpc_rc_cycle->get_design_solved()->m_eta_thermal;	//[-]
+
+	if (mpc_rc_cycle->ms_auto_opt_des_par.mf_callback_log && mpc_rc_cycle->ms_auto_opt_des_par.mp_mf_active)
+	{
+		msg_log = util::format(" Total recuperator conductance = %lg [kW/K]. Optimized cycle efficiency = %lg [-].  ",
+			UA_recup_total, *eta);
+		if (!mpc_rc_cycle->ms_auto_opt_des_par.mf_callback_log(msg_log, msg_progress, mpc_rc_cycle->ms_auto_opt_des_par.mp_mf_active, 0.0, 2))
+		{
+			std::string error_msg = "User terminated simulation...";
+			std::string loc_msg = "C_MEQ_sco2_design_hit_eta__UA_total";
+			throw(C_csp_exception(error_msg, loc_msg, 1));
+		}
+	}
+
+	return 0;
+}
