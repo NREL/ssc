@@ -614,6 +614,7 @@ public:
 		bool can_charge,
 		bool can_clipcharge,
 		bool can_grid_charge,
+		double inverter_paco,
 		std::vector<double> ppa_factors,
 		util::matrix_t<size_t> ppa_weekday_schedule,
 		util::matrix_t<size_t> ppa_weekend_schedule
@@ -646,6 +647,7 @@ protected:
 	void init_with_pointer(const dispatch_automatic_front_of_meter_t* tmp);
 	void setup_cost_vector(util::matrix_t<size_t> ppa_weekday_schedule, util::matrix_t<size_t> ppa_weekend_schedule);
 
+	double _inverter_paco;
 	std::vector<double> _ppa_factors;
 	std::vector<double> _ppa_cost_vector;
 	

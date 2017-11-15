@@ -64,10 +64,15 @@ var_info vtab_battery_inputs[] = {
 	// configuration inputs
 	{ SSC_INPUT,        SSC_NUMBER,      "batt_chem",                                  "Battery chemistry",                                       "",        "0=LeadAcid,1=LiIon",   "Battery",       "",                           "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "inverter_model",                             "Inverter model specifier",                                "",        "0=cec,1=datasheet,2=partload,3=coefficientgenerator,4=generic","","", "INTEGER,MIN=0,MAX=4",           "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "inverter_count",                             "Number of inverters",                                     "",        "",                     "pvsamv1"       "",                            "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "inv_snl_eff_cec",                            "Inverter Sandia CEC Efficiency",                          "%",       "",                     "pvsamv1",      "inverter_model=0",            "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "inv_snl_paco",                               "Inverter Sandia Maximum AC Power",                        "Wac",     "",                     "pvsamv1",      "inverter_model=0",            "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "inv_ds_eff",                                 "Inverter Datasheet Efficiency",                           "%",       "",                     "pvsamv1",      "inverter_model=1",            "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "inv_ds_paco",                                "Inverter Datasheet Maximum AC Power",                     "Wac",     "",                     "pvsamv1",      "inverter_model=1",            "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "inv_pd_eff",                                 "Inverter Partload Efficiency",                            "%",       "",                     "pvsamv1",      "inverter_model=2",            "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "inv_pd_paco",                                "Inverter Partload Maximum AC Power",                      "Wac",     "",                     "pvsamv1",      "inverter_model=2",            "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "inv_cec_cg_eff_cec",                         "Inverter Coefficient Generator CEC Efficiency",           "%",       "",                     "pvsamv1",      "inverter_model=3",            "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "inv_cec_cg_paco",                            "Inverter Coefficient Generator Max AC Power",             "Wac",       "",                   "pvsamv1",      "inverter_model=3",            "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "inverter_efficiency",                        "Inverter Efficiency",                                     "%",       "",                     "",              "",                           "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "batt_ac_or_dc",                              "Battery interconnection (AC or DC)",                      "dc=0,ac=1",  "",                  "Battery",       "",                           "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "batt_dc_dc_efficiency",                      "PV DC to battery DC efficiency",                          "",        "",                     "Battery",       "",                           "",                              "" },
@@ -357,12 +362,29 @@ battstor::battstor(compute_module &cm, bool setup_model, int replacement_option,
 			batt_vars->batt_losses = cm.as_vector_double("batt_losses");
 
 			batt_vars->inverter_model = cm.as_integer("inverter_model");
-			batt_vars->inv_snl_eff_cec = cm.as_double("inv_snl_eff_cec");
-			batt_vars->inv_cec_cg_eff_cec = cm.as_double("inv_cec_cg_eff_cec");
-			batt_vars->inv_ds_eff = cm.as_double("inv_ds_eff");
-			batt_vars->inv_pd_eff = cm.as_double("inv_pd_eff");
-			if (batt_vars->inverter_model > 3)
-				batt_vars->inverter_efficiency = cm.as_double("inverter_efficiency");
+			batt_vars->inverter_count = cm.as_integer("inverter_count");
+
+			if (batt_vars->inverter_model == inverter::SANDIA_INVERTER)
+			{
+				batt_vars->inverter_efficiency = cm.as_double("inv_snl_eff_cec");
+				batt_vars->inverter_paco = batt_vars->inverter_count * cm.as_double("inv_snl_paco") * util::watt_to_kilowatt;
+			}
+			else if (batt_vars->inverter_model == inverter::DATASHEET_INVERTER)
+			{
+				batt_vars->inverter_efficiency = cm.as_double("inv_ds_eff");
+				batt_vars->inverter_paco = batt_vars->inverter_count * cm.as_double("inv_ds_paco") * util::watt_to_kilowatt;
+
+			}
+			else if (batt_vars->inverter_model == inverter::PARTLOAD_INVERTER)
+			{
+				batt_vars->inverter_efficiency = cm.as_double("inv_pd_eff");
+				batt_vars->inverter_paco = batt_vars->inverter_count * cm.as_double("inv_pd_paco") * util::watt_to_kilowatt;
+			}
+			else if (batt_vars->inverter_model == inverter::COEFFICIENT_GENERATOR)
+			{
+				batt_vars->inverter_efficiency = cm.as_double("inv_cec_cg_eff_cec");
+				batt_vars->inverter_paco = batt_vars->inverter_count * cm.as_double("inv_cec_cg_paco") * util::watt_to_kilowatt;
+			}
 		}
 	}
 	else
@@ -725,6 +747,7 @@ battstor::battstor(compute_module &cm, bool setup_model, int replacement_option,
 			batt_vars->batt_dispatch, batt_vars->batt_pv_choice,
 			nyears, batt_vars->batt_look_ahead_hours, batt_vars->batt_dispatch_update_frequency_hours,
 			batt_vars->batt_dispatch_auto_can_charge, batt_vars->batt_dispatch_auto_can_clipcharge, batt_vars->batt_dispatch_auto_can_gridcharge,
+			batt_vars->inverter_paco,
 			batt_vars->ppa_factors, batt_vars->ppa_weekday_schedule, batt_vars->ppa_weekend_schedule);
 		
 	}
@@ -746,23 +769,9 @@ battstor::battstor(compute_module &cm, bool setup_model, int replacement_option,
 
 	if (topology == charge_controller::AC_CONNECTED)
 		charge_control = new ac_connected_battery_controller(dispatch_model, battery_metrics, ac_dc, dc_ac);
-	else if (topology == charge_controller::DC_CONNECTED)
-	{
-		int inverter_model = batt_vars->inverter_model;
-		double inverter_efficiency = 0.0;
-		if (inverter_model == inverter::SANDIA_INVERTER)
-			inverter_efficiency = batt_vars->inv_snl_eff_cec;
-		else if (inverter_model == inverter::DATASHEET_INVERTER)
-			inverter_efficiency = batt_vars->inv_ds_eff;
-		else if (inverter_model == inverter::PARTLOAD_INVERTER)
-			inverter_efficiency = batt_vars->inv_pd_eff;
-		else if (inverter_model == inverter::COEFFICIENT_GENERATOR)
-			inverter_efficiency = batt_vars->inv_cec_cg_eff_cec;
-		else
-			inverter_efficiency = batt_vars->inverter_efficiency;
-
-		charge_control = new dc_connected_battery_controller(dispatch_model, battery_metrics, batt_vars->batt_dc_dc_bms_efficiency, batt_vars->pv_dc_dc_mppt_efficiency, inverter_efficiency);
-	}
+	else if (topology == charge_controller::DC_CONNECTED)		
+		charge_control = new dc_connected_battery_controller(dispatch_model, battery_metrics, batt_vars->batt_dc_dc_bms_efficiency, batt_vars->pv_dc_dc_mppt_efficiency, batt_vars->inverter_efficiency);
+	
 
 	parse_configuration();
 }

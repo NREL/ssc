@@ -1329,11 +1329,13 @@ dispatch_automatic_front_of_meter_t::dispatch_automatic_front_of_meter_t(
 	bool can_charge,
 	bool can_clip_charge,
 	bool can_grid_charge,
+	double inverter_paco,
 	std::vector<double> ppa_factors,
 	util::matrix_t<size_t> ppa_weekday_schedule,
 	util::matrix_t<size_t> ppa_weekend_schedule) : dispatch_automatic_t(Battery, dt_hour, SOC_min, SOC_max, current_choice, Ic_max, Id_max, Pc_max, Pd_max, t_min, dispatch_mode, pv_dispatch, nyears, look_ahead_hours, dispatch_update_frequency_hours, can_charge, can_clip_charge, can_grid_charge)
 {
 	_look_ahead_hours = look_ahead_hours;
+	_inverter_paco = inverter_paco;
 	_ppa_factors = ppa_factors;
 	setup_cost_vector(ppa_weekday_schedule , ppa_weekend_schedule);
 }
@@ -1341,6 +1343,7 @@ dispatch_automatic_front_of_meter_t::dispatch_automatic_front_of_meter_t(
 void dispatch_automatic_front_of_meter_t::init_with_pointer(const dispatch_automatic_front_of_meter_t* tmp)
 {
 	_look_ahead_hours = tmp->_look_ahead_hours;
+	_inverter_paco = tmp->_inverter_paco;
 	_ppa_factors = tmp->_ppa_factors;
 	_ppa_cost_vector = tmp->_ppa_cost_vector;
 }
@@ -1419,8 +1422,9 @@ void dispatch_automatic_front_of_meter_t::update_dispatch(size_t hour_of_year, s
 
 	// do we need to scale TOD factors to be non-normalized with actual PPA rate?
 
+	// Power to charge (<0) or discharge (>0)
+	double PowerBattery = 0;
 
-	double P_battery = 0;
 	if (hour_of_year == _hour_last_updated + _dispatch_update_hours || hour_of_year == 0)
 	{
 		_hour_last_updated = hour_of_year;
@@ -1444,6 +1448,9 @@ void dispatch_automatic_front_of_meter_t::update_dispatch(size_t hour_of_year, s
 		/*! Amount of energy needed to store clipped PV (kWh)*/
 		double EnergyToStoreClipped = _P_pv_clipping * _dt_hour;
 
+		/*! Energy need to charge the battery (kWh) */
+		double EnergyNeededToFillBattery = _Battery->battery_energy_to_fill();
+
 		// Assuming BenefitToClipCharge > BenefitToPVCharge > BenefitToGridCharge
 		// Don't charge at all
 		if (BenefitToGridCharge < CostToCharge && BenefitToGridCharge > BenefitToPVCharge && BenefitToClipCharge < CostToCharge){}
@@ -1451,28 +1458,38 @@ void dispatch_automatic_front_of_meter_t::update_dispatch(size_t hour_of_year, s
 		// Charge from grid but leave EnergyToStorePV + EnergyToStoreClipped capacity in battery
 		else if (BenefitToGridCharge > CostToCharge && BenefitToGridCharge < BenefitToPVCharge)
 		{
-			
+			double EnergyToReserve = EnergyToStorePV + EnergyToStoreClipped;
+			if (EnergyToReserve <= EnergyNeededToFillBattery)
+				PowerBattery = -(EnergyNeededToFillBattery - EnergyToReserve) / _dt_hour;
 		}
 		// Charge from PV, leave EnergyToStoreClipped capacity in battery
-		else if (BenefitToGridCharge < CostToCharge && BenefitToPVCharge > CostToCharge)
+		else if (BenefitToPVCharge > CostToCharge)
 		{
-
+			if (EnergyToStoreClipped <= EnergyNeededToFillBattery)
+			{
+				double EnergyCanCharge = (EnergyNeededToFillBattery - EnergyToStoreClipped);
+				if (EnergyCanCharge <= _P_pv_charging * _dt_hour)
+					PowerBattery = -EnergyCanCharge / _dt_hour;
+				else
+					PowerBattery = -_P_pv_charging;
+			}
 		}
 		// Charge from clipped PV
-		else if (BenefitToGridCharge < CostToCharge && BenefitToPVCharge < CostToCharge && BenefitToClipCharge > CostToCharge)
+		else if (BenefitToClipCharge > CostToCharge)
 		{
-
+			PowerBattery = -_P_pv_clipping;
 		}
 		// Discharge at max available rate such that PV + ES discharge <= AC nameplate
 		else if (ppa_cost == *max_ppa_cost)
 		{
-
+			if (_inverter_paco > _P_pv_discharging)
+				PowerBattery = _inverter_paco - _P_pv_discharging;
 		}
 
 	}
 	
 	// save for extraction
-	_P_battery_current = 0;
+	_P_battery_current = PowerBattery;
 }
 
 battery_metrics_t::battery_metrics_t(battery_t * Battery, double dt_hour)

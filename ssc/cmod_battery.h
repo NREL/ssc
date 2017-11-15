@@ -173,11 +173,9 @@ struct batt_variables
 	double pv_dc_dc_mppt_efficiency;
 
 	int inverter_model;
-	double inv_snl_eff_cec;
-	double inv_cec_cg_eff_cec;
-	double inv_ds_eff;
-	double inv_pd_eff;
 	double inverter_efficiency;
+	int inverter_paco;
+	double inverter_count;
 
 	double batt_calendar_q0;
 	double batt_calendar_a;
