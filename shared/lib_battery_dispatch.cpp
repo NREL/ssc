@@ -1400,6 +1400,7 @@ void dispatch_automatic_front_of_meter_t::dispatch(size_t year,
 	if (_mode == LOOK_AHEAD || _mode == LOOK_BEHIND || _mode == MAINTAIN_TARGET)
 		idx = util::index_year_hour_step(year, hour_of_year, step, step_per_hour);
 
+	prepare_dispatch(hour_of_year, step, P_pv_dc_charging, P_pv_dc_discharging, P_load_dc_charging, P_load_dc_discharging, P_pv_dc_clipping);
 	update_dispatch(hour_of_year, step, idx);
 	dispatch_automatic_t::dispatch(year, hour_of_year, step, P_pv_dc_charging, P_pv_dc_discharging, P_load_dc_charging, P_load_dc_discharging, P_pv_dc_clipping, _P_battery_current);
 }
@@ -1418,6 +1419,8 @@ void dispatch_automatic_front_of_meter_t::update_dispatch(size_t hour_of_year, s
 
 	// do we need to scale TOD factors to be non-normalized with actual PPA rate?
 
+
+	double P_battery = 0;
 	if (hour_of_year == _hour_last_updated + _dispatch_update_hours || hour_of_year == 0)
 	{
 		_hour_last_updated = hour_of_year;
@@ -1438,16 +1441,13 @@ void dispatch_automatic_front_of_meter_t::update_dispatch(size_t hour_of_year, s
 		/*! Amount of energy needed to store regular PV (kWh) */
 		double EnergyToStorePV = _P_pv_charging * _dt_hour;
 
-		/*! Amount of energy needed to store clipped PV (calculate)*/
-		double EnergyToStoreClipped = 0;
+		/*! Amount of energy needed to store clipped PV (kWh)*/
+		double EnergyToStoreClipped = _P_pv_clipping * _dt_hour;
 
 		// Assuming BenefitToClipCharge > BenefitToPVCharge > BenefitToGridCharge
-
 		// Don't charge at all
-		if (BenefitToGridCharge < CostToCharge && BenefitToGridCharge > BenefitToPVCharge && BenefitToClipCharge < CostToCharge)
-		{
-
-		}
+		if (BenefitToGridCharge < CostToCharge && BenefitToGridCharge > BenefitToPVCharge && BenefitToClipCharge < CostToCharge){}
+		
 		// Charge from grid but leave EnergyToStorePV + EnergyToStoreClipped capacity in battery
 		else if (BenefitToGridCharge > CostToCharge && BenefitToGridCharge < BenefitToPVCharge)
 		{
