@@ -4396,7 +4396,573 @@ void C_RecompCycle_PCRC_without_ReHeating::finalize_design(int & error_code)
 	ms_des_solved.m_UA_LT = ms_des_par.m_UA_LT;
 	ms_des_solved.m_UA_HT = ms_des_par.m_UA_HT;
 }
+//
+void C_RecompCycle_PCRC_without_ReHeating::opt_design(S_opt_design_parameters & opt_des_par_in, int & error_code)
+{
+	ms_opt_des_par = opt_des_par_in;
+
+	int opt_design_error_code = 0;
+
+	opt_design_core(error_code);
+
+	if (opt_design_error_code != 0)
+	{
+		error_code = opt_design_error_code;
+		return;
+	}
+
+	finalize_design(opt_design_error_code);
+
+	error_code = opt_design_error_code;
+}
+//
+void C_RecompCycle_PCRC_without_ReHeating::opt_design_core(int & error_code)
+{
+	// Map ms_opt_des_par to ms_des_par
+	ms_des_par.m_W_dot_net = ms_opt_des_par.m_W_dot_net;
+	ms_des_par.m_T_mc1_in = ms_opt_des_par.m_T_mc1_in;
+	ms_des_par.m_T_mc2_in = ms_opt_des_par.m_T_mc2_in;
+	ms_des_par.m_T_t_in = ms_opt_des_par.m_T_t_in;
+	ms_des_par.m_DP_LT = ms_opt_des_par.m_DP_LT;
+	ms_des_par.m_DP_HT = ms_opt_des_par.m_DP_HT;
+	ms_des_par.m_DP_PC1 = ms_opt_des_par.m_DP_PC1;
+	ms_des_par.m_DP_PC2 = ms_opt_des_par.m_DP_PC2;
+	ms_des_par.m_DP_PHX = ms_opt_des_par.m_DP_PHX;
+	ms_des_par.m_LT_eff_max = ms_opt_des_par.m_LT_eff_max;
+	ms_des_par.m_HT_eff_max = ms_opt_des_par.m_HT_eff_max;
+	ms_des_par.m_eta_mc1 = ms_opt_des_par.m_eta_mc1;
+	ms_des_par.m_eta_mc2 = ms_opt_des_par.m_eta_mc2;
+	ms_des_par.m_eta_rc = ms_opt_des_par.m_eta_rc;
+	ms_des_par.m_eta_t = ms_opt_des_par.m_eta_t;
+	ms_des_par.m_N_sub_hxrs = ms_opt_des_par.m_N_sub_hxrs;
+	ms_des_par.m_P_high_limit = ms_opt_des_par.m_P_high_limit;
+	ms_des_par.m_tol = ms_opt_des_par.m_tol;
+	ms_des_par.m_N_turbine = ms_opt_des_par.m_N_turbine;
+
+	// ms_des_par members to be defined by optimizer and set in 'design_point_eta':
+	// m_P_mc_in
+	// m_P_mc_out
+	// m_recomp_frac
+	// m_UA_LT
+	// m_UA_HT
+
+	int index = 0;
+
+	std::vector<double> x(0);
+	std::vector<double> lb(0);
+	std::vector<double> ub(0);
+	std::vector<double> scale(0);
+	
+	if (!ms_opt_des_par.m_fixed_P_mc1_in)
+	{
+		x.push_back(ms_opt_des_par.m_P_mc1_in_guess);
+		lb.push_back(7377.0);
+		ub.push_back(ms_opt_des_par.m_P_high_limit);
+		scale.push_back(500.0);
+
+		index++;
+	}
+
+	if (!ms_opt_des_par.m_fixed_P_mc2_out)
+	{
+		x.push_back(ms_opt_des_par.m_P_mc2_out_guess);
+		lb.push_back(100.0);
+		ub.push_back(ms_opt_des_par.m_P_high_limit);
+		scale.push_back(500.0);
+
+		index++;
+	}
+
+	if (!ms_opt_des_par.m_fixed_PR_mc2)
+	{
+		x.push_back(ms_opt_des_par.m_PR_mc2_guess);
+		lb.push_back(0.0001);
+		double PR_max = ms_opt_des_par.m_P_high_limit / 100.0;
+		ub.push_back(PR_max);
+		scale.push_back(0.2);
+
+		index++;
+	}
+
+	if (!ms_opt_des_par.m_fixed_recomp_frac)
+	{
+		x.push_back(ms_opt_des_par.m_recomp_frac_guess);
+		lb.push_back(0.0);
+		ub.push_back(1.0);
+		scale.push_back(0.05);
+
+		index++;
+	}
+
+	if (!ms_opt_des_par.m_fixed_LT_frac)
+	{
+		x.push_back(ms_opt_des_par.m_LT_frac_guess);
+		lb.push_back(0.0);
+		ub.push_back(1.0);
+		scale.push_back(0.05);
+
+		index++;
+	}
+
+	int no_opt_error_code = 0;
+	if (index > 0)
+	{
+		// Ensure thermal efficiency is initialized to 0
+		m_eta_thermal_opt = 0.0;
+
+		// Set up instance of nlopt class and set optimization parameters
+		nlopt::opt		opt_des_cycle(nlopt::LN_SBPLX, index);
+		opt_des_cycle.set_lower_bounds(lb);
+		opt_des_cycle.set_upper_bounds(ub);
+		opt_des_cycle.set_initial_step(scale);
+		opt_des_cycle.set_xtol_rel(ms_opt_des_par.m_opt_tol);
+
+		// Set max objective function
+		opt_des_cycle.set_max_objective(nlopt_callback_opt_des_1_PCRC_without_ReHeating, this);		// Calls wrapper/callback that calls 'design_point_eta', which optimizes design point eta through repeated calls to 'design'
+		double max_f = std::numeric_limits<double>::quiet_NaN();
+		nlopt::result   result_des_cycle = opt_des_cycle.optimize(x, max_f);
+
+		ms_des_par = ms_des_par_optimal;
+
+		design_core(no_opt_error_code);
+
+		/*
+		m_W_dot_net_last = m_W_dot_net_opt;
+		m_eta_thermal_last = m_eta_thermal_opt;
+		m_temp_last = m_temp_opt;
+		m_pres_last = m_pres_opt;
+		m_enth_last = m_enth_opt;
+		m_entr_last = m_entr_opt;
+		m_dens_last = m_dens_opt;
+		*/
+	}
+	else
+	{
+		// Finish defining ms_des_par based on current 'x' values
+		ms_des_par.m_P_mc1_in = ms_opt_des_par.m_P_mc1_in_guess;
+		ms_des_par.m_P_mc2_out = ms_opt_des_par.m_P_mc2_out_guess;
+		ms_des_par.m_P_mc2_in = ms_des_par.m_P_mc2_out / ms_opt_des_par.m_PR_mc2_guess;
+		ms_des_par.m_recomp_frac = ms_opt_des_par.m_recomp_frac_guess;
+		ms_des_par.m_UA_LT = ms_opt_des_par.m_UA_rec_total*ms_opt_des_par.m_LT_frac_guess;
+		ms_des_par.m_UA_HT = ms_opt_des_par.m_UA_rec_total*(1.0 - ms_opt_des_par.m_LT_frac_guess);
+
+		design_core(no_opt_error_code);
+
+		ms_des_par_optimal = ms_des_par;
+	}
+
+}
+
+double nlopt_callback_opt_des_1_PCRC_without_ReHeating(const std::vector<double> &x, std::vector<double> &grad, void *data)
+{
+	C_RecompCycle_PCRC_without_ReHeating *frame = static_cast<C_RecompCycle_PCRC_without_ReHeating*>(data);
+	if (frame != NULL)
+		return frame->design_point_eta(x);
+	else
+		return 0.0;
+}
+//
+double C_RecompCycle_PCRC_without_ReHeating::design_point_eta(const std::vector<double> &x)
+{
+	// 'x' is array of inputs either being adjusted by optimizer or set constant
+	// Finish defining ms_des_par based on current 'x' values
+
+	int index = 0;
+
+	// Main Compressor1 outlet pressure
+	if (!ms_opt_des_par.m_fixed_P_mc1_in)
+	{
+		ms_des_par.m_P_mc1_in = x[index];
+		if (ms_des_par.m_P_mc1_out > ms_opt_des_par.m_P_high_limit)
+			return 0.0;
+		index++;
+	}
+	else
+		ms_des_par.m_P_mc1_in = ms_opt_des_par.m_P_mc1_in_guess;
+
+	// Main Compressor2 outlet pressure
+	if (!ms_opt_des_par.m_fixed_P_mc2_out)
+	{
+		ms_des_par.m_P_mc2_out = x[index];
+		if (ms_des_par.m_P_mc2_out > ms_opt_des_par.m_P_high_limit)
+			return 0.0;
+		index++;
+	}
+	else
+		ms_des_par.m_P_mc2_out = ms_opt_des_par.m_P_mc2_out_guess;
+
+	// Main Compressor2 pressure ratio
+	double PR_mc_local = -999.9;
+	double P_mc_in = -999.9;
+	if (!ms_opt_des_par.m_fixed_PR_mc2)
+	{
+		PR_mc_local = x[index];
+		if (PR_mc_local > 50.0)
+			return 0.0;
+		index++;
+		P_mc_in = ms_des_par.m_P_mc2_out / PR_mc_local;
+	}
+	else
+	{
+		if (ms_opt_des_par.m_PR_mc2_guess >= 0.0)
+		{
+			PR_mc_local = ms_opt_des_par.m_PR_mc2_guess;
+			P_mc_in = ms_des_par.m_P_mc2_out / PR_mc_local;		//[kPa]
+		}
+		else
+		{
+			P_mc_in = fabs(ms_opt_des_par.m_PR_mc2_guess);		//[kPa]
+		}
+	}
 
 
+	if (P_mc_in >= ms_des_par.m_P_mc2_out)
+		return 0.0;
+	if (P_mc_in <= 100.0)
+		return 0.0;
+	ms_des_par.m_P_mc2_in = P_mc_in;
 
+	// Recompression fraction
+	if (!ms_opt_des_par.m_fixed_recomp_frac)
+	{
+		ms_des_par.m_recomp_frac = x[index];
+		if (ms_des_par.m_recomp_frac < 0.0)
+			return 0.0;
+		index++;
+	}
+	else
+		ms_des_par.m_recomp_frac = ms_opt_des_par.m_recomp_frac_guess;
+
+	// Recuperator split fraction
+	double LT_frac_local = -999.9;
+	if (!ms_opt_des_par.m_fixed_LT_frac)
+	{
+		LT_frac_local = x[index];
+		if (LT_frac_local > 1.0 || LT_frac_local < 0.0)
+			return 0.0;
+		index++;
+	}
+	else
+		LT_frac_local = ms_opt_des_par.m_LT_frac_guess;
+
+	ms_des_par.m_UA_LT = ms_opt_des_par.m_UA_rec_total*LT_frac_local;
+	ms_des_par.m_UA_HT = ms_opt_des_par.m_UA_rec_total*(1.0 - LT_frac_local);
+
+	int error_code = 0;
+
+	design_core(error_code);
+
+	double eta_thermal = 0.0;
+	if (error_code == 0)
+	{
+		eta_thermal = m_eta_thermal_last;
+
+		if (m_eta_thermal_last > m_eta_thermal_opt)
+		{
+			ms_des_par_optimal = ms_des_par;
+			m_eta_thermal_opt = m_eta_thermal_last;
+		}
+	}
+
+	return eta_thermal;
+}
+//Calling auto_opt_design_core
+void C_RecompCycle_PCRC_without_ReHeating::auto_opt_design(S_auto_opt_design_parameters & auto_opt_des_par_in, int & error_code)
+{
+	ms_auto_opt_des_par = auto_opt_des_par_in;
+
+	int auto_opt_des_error_code = 0;
+
+	auto_opt_design_core(auto_opt_des_error_code);
+
+	error_code = auto_opt_des_error_code;
+
+	return;
+}
+//
+void C_RecompCycle_PCRC_without_ReHeating::auto_opt_design_core(int & error_code)
+{
+	// Check that simple/recomp flag is set
+	if (ms_auto_opt_des_par.m_is_recomp_ok != 0 && ms_auto_opt_des_par.m_is_recomp_ok != 1)
+	{
+		throw(C_csp_exception("C_RecompCycle::auto_opt_design_core(...) requires that ms_auto_opt_des_par.m_is_recomp_ok"
+			"is either 0 (simple cycle only) or 1 (recomp allowed)\n"));
+	}
+
+	// map 'auto_opt_des_par_in' to 'ms_auto_opt_des_par'
+	ms_opt_des_par.m_W_dot_net = ms_auto_opt_des_par.m_W_dot_net;
+	ms_opt_des_par.m_T_mc1_in = ms_auto_opt_des_par.m_T_mc1_in;
+	ms_opt_des_par.m_T_mc2_in = ms_auto_opt_des_par.m_T_mc2_in;
+	ms_opt_des_par.m_T_t_in = ms_auto_opt_des_par.m_T_t_in;
+	ms_opt_des_par.m_DP_LT = ms_auto_opt_des_par.m_DP_LT;
+	ms_opt_des_par.m_DP_HT = ms_auto_opt_des_par.m_DP_HT;
+	ms_opt_des_par.m_DP_PC1 = ms_auto_opt_des_par.m_DP_PC1;
+	ms_opt_des_par.m_DP_PC2 = ms_auto_opt_des_par.m_DP_PC2;
+	ms_opt_des_par.m_DP_PHX = ms_auto_opt_des_par.m_DP_PHX;
+	ms_opt_des_par.m_LT_eff_max = ms_auto_opt_des_par.m_LT_eff_max;
+	ms_opt_des_par.m_HT_eff_max = ms_auto_opt_des_par.m_HT_eff_max;
+	ms_opt_des_par.m_UA_rec_total = ms_auto_opt_des_par.m_UA_rec_total;
+	ms_opt_des_par.m_eta_mc1 = ms_auto_opt_des_par.m_eta_mc1;
+	ms_opt_des_par.m_eta_mc2 = ms_auto_opt_des_par.m_eta_mc2;
+	ms_opt_des_par.m_eta_rc = ms_auto_opt_des_par.m_eta_rc;
+	ms_opt_des_par.m_eta_t = ms_auto_opt_des_par.m_eta_t;
+	ms_opt_des_par.m_N_sub_hxrs = ms_auto_opt_des_par.m_N_sub_hxrs;
+	ms_opt_des_par.m_P_high_limit = ms_auto_opt_des_par.m_P_high_limit;
+	ms_opt_des_par.m_tol = ms_auto_opt_des_par.m_tol;
+	ms_opt_des_par.m_opt_tol = ms_auto_opt_des_par.m_opt_tol;
+	ms_opt_des_par.m_N_turbine = ms_auto_opt_des_par.m_N_turbine;
+
+	// Outer optimization loop
+	m_eta_thermal_auto_opt = 0.0;
+
+	double best_P_high = fminbr(
+		ms_auto_opt_des_par.m_P_high_limit*0.9999, ms_auto_opt_des_par.m_P_high_limit, &fmin_callback_opt_eta_1_PCRC_without_ReHeating, this, 1.0);
+
+	//double best_P_high = ms_auto_opt_des_par.m_P_high_limit;
+
+	// Check model with P_mc_out set at P_high_limit for a recompression and simple cycle and use the better configuration
+	double PR_mc2_guess = ms_des_par_auto_opt.m_P_mc2_out / ms_des_par_auto_opt.m_P_mc2_in;
+
+	if (ms_auto_opt_des_par.m_is_recomp_ok)
+	{
+		// Complete 'ms_opt_des_par' for recompression cycle
+		ms_opt_des_par.m_P_mc2_out_guess = ms_auto_opt_des_par.m_P_high_limit;
+		ms_opt_des_par.m_fixed_P_mc2_out = true;
+
+		//ms_opt_des_par.m_PR_mc_guess = PR_mc_guess;
+		//ms_opt_des_par.m_fixed_PR_mc = false;
+		ms_opt_des_par.m_fixed_PR_mc2 = ms_auto_opt_des_par.m_fixed_PR_mc2;	//[-]
+		if (ms_opt_des_par.m_fixed_PR_mc2)
+		{
+			ms_opt_des_par.m_PR_mc2_guess = ms_auto_opt_des_par.m_PR_mc2_guess;	//[-]
+		}
+		else
+		{
+			ms_opt_des_par.m_PR_mc2_guess = PR_mc2_guess;		//[-]
+		}
+
+		ms_opt_des_par.m_P_mc1_in_guess = 7400.0;
+		ms_opt_des_par.m_fixed_P_mc1_in = false;
+		ms_opt_des_par.m_recomp_frac_guess = 0.3;
+		ms_opt_des_par.m_fixed_recomp_frac = false;
+		ms_opt_des_par.m_LT_frac_guess = 0.5;
+		ms_opt_des_par.m_fixed_LT_frac = false;
+
+		int rc_error_code = 0;
+
+		opt_design_core(rc_error_code);
+
+		if (rc_error_code == 0 && m_eta_thermal_opt > m_eta_thermal_auto_opt)
+		{
+			ms_des_par_auto_opt = ms_des_par_optimal;
+			m_eta_thermal_auto_opt = m_eta_thermal_opt;
+		}
+
+		return;
+	}
+
+	else {
+
+		// Complete 'ms_opt_des_par' for SIMPLE Brayton Cycle
+		ms_opt_des_par.m_P_mc2_out_guess = ms_auto_opt_des_par.m_P_high_limit;
+		ms_opt_des_par.m_fixed_P_mc2_out = true;
+
+		//ms_opt_des_par.m_PR_mc_guess = PR_mc_guess;
+		//ms_opt_des_par.m_fixed_PR_mc = false;
+		ms_opt_des_par.m_fixed_PR_mc2 = ms_auto_opt_des_par.m_fixed_PR_mc2;	//[-]
+		if (ms_opt_des_par.m_fixed_PR_mc2)
+		{
+			ms_opt_des_par.m_PR_mc2_guess = ms_auto_opt_des_par.m_PR_mc2_guess;	//[-]
+		}
+		else
+		{
+			ms_opt_des_par.m_PR_mc2_guess = PR_mc2_guess;		//[-]
+		}
+
+		ms_opt_des_par.m_P_mc1_in_guess = 7400;
+		ms_opt_des_par.m_fixed_P_mc1_in = false;
+		ms_opt_des_par.m_recomp_frac_guess = 0.0;
+		ms_opt_des_par.m_fixed_recomp_frac = true;
+		ms_opt_des_par.m_LT_frac_guess = 1.0;
+		ms_opt_des_par.m_fixed_LT_frac = true;
+
+		int s_error_code = 0;
+
+		opt_design_core(s_error_code);
+
+		if (s_error_code == 0 && m_eta_thermal_opt > m_eta_thermal_auto_opt)
+		{
+			ms_des_par_auto_opt = ms_des_par_optimal;
+			m_eta_thermal_auto_opt = m_eta_thermal_opt;
+		}
+
+		ms_des_par = ms_des_par_auto_opt;
+
+		int optimal_design_error_code = 0;
+		design_core(optimal_design_error_code);
+
+		if (optimal_design_error_code != 0)
+		{
+			error_code = optimal_design_error_code;
+			return;
+		}
+
+		finalize_design(optimal_design_error_code);
+
+		error_code = optimal_design_error_code;
+	}
+}
+
+bool find_polynomial_coefs_PCRC_without_ReHeating(const std::vector<double> x_data, const std::vector<double> y_data, int n_coefs, std::vector<double> & coefs_out, double & r_squared)
+{
+	C_poly_curve_r_squared mc_data;
+
+	if (n_coefs < 1 || n_coefs > 5)
+	{
+		return false;
+	}
+	else
+	{
+		coefs_out.resize(n_coefs);
+		for (int i = 0; i < n_coefs; i++)
+		{
+			coefs_out[i] = std::numeric_limits<double>::quiet_NaN();
+		}
+	}
+
+	if (!mc_data.init(x_data, y_data))
+	{
+		return false;
+	}
+
+	std::vector<double> x(n_coefs);
+
+	bool solution_found = false;
+
+	// Set up instance of nlopt class and set optimization parameters
+	// nlopt::opt surf(nlopt::LN_NELDERMEAD, nbeta); from Autopilot_api.cpp
+	nlopt::opt		opt_tar_od_cycle(nlopt::LN_NELDERMEAD, n_coefs);
+	opt_tar_od_cycle.set_xtol_rel(0.00001);
+
+	// Set max objective function
+	opt_tar_od_cycle.set_max_objective(nlopt_callback_opt_des_1_PCRC_without_ReHeating, &mc_data);
+	double max_f = std::numeric_limits<double>::quiet_NaN();
+	nlopt::result     result_tar_od_cycle = opt_tar_od_cycle.optimize(x, max_f);
+
+
+	if (max_f > 0.01 && max_f <= 1.00)
+	{
+		for (int i = 0; i < n_coefs; i++)
+		{
+			coefs_out[i] = x[i];
+		}
+
+		r_squared = max_f;
+
+		return true;
+	}
+	else
+	{
+		r_squared = -999.9;
+
+		return false;
+	}
+
+}
+
+double fmin_callback_opt_eta_1_PCRC_without_ReHeating(double x, void *data)
+{
+	C_RecompCycle_PCRC_without_ReHeating *frame = static_cast<C_RecompCycle_PCRC_without_ReHeating*>(data);
+
+	return frame->opt_eta(x);
+}
+//
+double C_RecompCycle_PCRC_without_ReHeating::opt_eta(double P_high_opt)
+{
+	double PR_mc_guess = 1.1;
+	if (P_high_opt > P_pseudocritical_1_PCRC_without_ReHeating(ms_opt_des_par.m_T_mc2_in))
+		PR_mc_guess = P_high_opt / P_pseudocritical_1_PCRC_without_ReHeating(ms_opt_des_par.m_T_mc2_in);
+
+	double local_eta_rc = 0.0;
+	if (ms_auto_opt_des_par.m_is_recomp_ok)
+	{
+		// Complete 'ms_opt_des_par' for recompression cycle
+		ms_opt_des_par.m_P_mc2_out_guess = P_high_opt;
+		ms_opt_des_par.m_fixed_P_mc2_out = true;
+
+		//ms_opt_des_par.m_PR_mc_guess = PR_mc_guess;
+		//ms_opt_des_par.m_fixed_PR_mc = false;
+		ms_opt_des_par.m_fixed_PR_mc2 = ms_auto_opt_des_par.m_fixed_PR_mc2;	//[-]
+		if (ms_opt_des_par.m_fixed_PR_mc2)
+		{
+			ms_opt_des_par.m_PR_mc2_guess = ms_auto_opt_des_par.m_PR_mc2_guess;	//[-]
+		}
+		else
+		{
+			ms_opt_des_par.m_PR_mc2_guess = PR_mc_guess;		//[-]
+		}
+
+		ms_opt_des_par.m_P_mc1_in_guess = 7400;
+		ms_opt_des_par.m_fixed_P_mc1_in = false;
+		ms_opt_des_par.m_recomp_frac_guess = 0.3;
+		ms_opt_des_par.m_fixed_recomp_frac = false;
+		ms_opt_des_par.m_LT_frac_guess = 0.5;
+		ms_opt_des_par.m_fixed_LT_frac = false;
+
+		int rc_error_code = 0;
+		opt_design_core(rc_error_code);
+
+		if (rc_error_code == 0)
+			local_eta_rc = m_eta_thermal_opt;
+
+		if (rc_error_code == 0 && m_eta_thermal_opt > m_eta_thermal_auto_opt)
+		{
+			ms_des_par_auto_opt = ms_des_par_optimal;
+			m_eta_thermal_auto_opt = m_eta_thermal_opt;
+		}
+	}
+
+	// Complete 'ms_opt_des_par' for simple cycle
+	ms_opt_des_par.m_P_mc2_out_guess = P_high_opt;
+	ms_opt_des_par.m_fixed_P_mc2_out = true;
+
+	//ms_opt_des_par.m_PR_mc_guess = PR_mc_guess;
+	//ms_opt_des_par.m_fixed_PR_mc = false;
+	ms_opt_des_par.m_fixed_PR_mc2 = ms_auto_opt_des_par.m_fixed_PR_mc2;	//[-]
+	if (ms_opt_des_par.m_fixed_PR_mc2)
+	{
+		ms_opt_des_par.m_PR_mc2_guess = ms_auto_opt_des_par.m_PR_mc2_guess;	//[-]
+	}
+	else
+	{
+		ms_opt_des_par.m_PR_mc2_guess = PR_mc_guess;		//[-]
+	}
+
+	ms_opt_des_par.m_P_mc1_in_guess = 7400;
+	ms_opt_des_par.m_fixed_P_mc1_in = false;
+	ms_opt_des_par.m_recomp_frac_guess = 0.0;
+	ms_opt_des_par.m_fixed_recomp_frac = true;
+	ms_opt_des_par.m_LT_frac_guess = 1.0;
+	ms_opt_des_par.m_fixed_LT_frac = true;
+
+	int s_error_code = 0;
+	opt_design_core(s_error_code);
+
+	double local_eta_s = 0.0;
+	if (s_error_code == 0)
+		local_eta_s = m_eta_thermal_opt;
+
+	if (s_error_code == 0 && m_eta_thermal_opt > m_eta_thermal_auto_opt)
+	{
+		ms_des_par_auto_opt = ms_des_par_optimal;
+		m_eta_thermal_auto_opt = m_eta_thermal_opt;
+	}
+
+	return -max(local_eta_rc, local_eta_s);
+}
+//Calculate the Critical Pressure given the Critical Temperature.
+double P_pseudocritical_1_PCRC_without_ReHeating(double T_K)
+{
+	return (0.191448*T_K + 45.6661)*T_K - 24213.3;
+}
 
