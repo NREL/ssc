@@ -85,16 +85,18 @@ charge_controller::charge_controller(dispatch_t * dispatch, battery_metrics_t * 
 		_dispatch_initial = new dispatch_manual_t(*dispatch_man);
 	else if (dispatch_automatic_behind_the_meter_t * dispatch_auto_btm = dynamic_cast<dispatch_automatic_behind_the_meter_t*>(_dispatch))
 		_dispatch_initial = new dispatch_automatic_behind_the_meter_t(*dispatch_auto_btm);
+	else if (dispatch_automatic_front_of_meter_t * dispatch_auto_fom = dynamic_cast<dispatch_automatic_front_of_meter_t*>(_dispatch))
+		_dispatch_initial = new dispatch_automatic_front_of_meter_t(*dispatch_auto_fom);
 	
 	_battery_metrics = battery_metrics;
 	_iterate = false;
-	initialize(0,0,0);
+	initialize(0,0,0,0);
 }
 charge_controller::~charge_controller()
 {
 	_dispatch_initial->delete_clone();
 }
-void charge_controller::initialize(double P_pv, double P_load_ac, size_t index)
+void charge_controller::initialize(double P_pv, double P_load_ac, double P_pv_clipped, size_t index)
 {
 	_P_load = P_load_ac;
 	_P_grid = 0;
@@ -119,6 +121,9 @@ void charge_controller::initialize(double P_pv, double P_load_ac, size_t index)
 	
 	// ac for ac-connected, dc for dc-connected
 	_P_pv = P_pv;
+
+	// dc clipping
+	_P_pv_dc_clipped = P_pv_clipped;
 
 	// if this is an iteration loop, reset the dispatch
 	if (_iterate)
@@ -192,15 +197,15 @@ void dc_connected_battery_controller::preprocess_pv_load()
 
 }
 
-void dc_connected_battery_controller::run(size_t year, size_t hour_of_year, size_t step_of_hour, size_t index, double P_pv_dc, double P_load_ac)
+void dc_connected_battery_controller::run(size_t year, size_t hour_of_year, size_t step_of_hour, size_t index, double P_pv_dc, double P_load_ac, double P_pv_clipped)
 {
 	
-	initialize(P_pv_dc, P_load_ac, index);
+	initialize(P_pv_dc, P_load_ac, P_pv_clipped, index);
 
 	preprocess_pv_load();
 
 	// dispatch battery, load must be in dc.  This computes dc battery power to load, dc pv power to load, dc grid power to dc load, dc grid power to battery
-	_dispatch->dispatch(year, hour_of_year, step_of_hour, _P_pv_dc_charge_input, _P_pv_dc_discharge_input, _P_load_dc_charge_input, _P_load_dc_discharge_input);
+	_dispatch->dispatch(year, hour_of_year, step_of_hour, _P_pv_dc_charge_input, _P_pv_dc_discharge_input, _P_load_dc_charge_input, _P_load_dc_discharge_input, _P_pv_dc_clipped);
 
 	// loss is due to conversion in dc-dc bms
 	process_dispatch();
@@ -435,10 +440,10 @@ void ac_connected_battery_controller::preprocess_pv_load()
 		} 
 	}
 }
-void ac_connected_battery_controller::run( size_t year, size_t hour_of_year, size_t step_of_hour, size_t index, double P_pv_ac, double P_load_ac)
+void ac_connected_battery_controller::run( size_t year, size_t hour_of_year, size_t step_of_hour, size_t index, double P_pv_ac, double P_load_ac, double P_pv_clipped)
 {
 	
-	initialize(P_pv_ac, P_load_ac, index);
+	initialize(P_pv_ac, P_load_ac, P_pv_clipped, index);
 
 	preprocess_pv_load();
 

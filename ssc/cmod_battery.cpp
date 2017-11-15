@@ -920,9 +920,9 @@ void battstor::initialize_time(size_t year_in, size_t hour_of_year, size_t step_
 	index = (year * 8760 + hour) * step_per_hour + step;
 	year_index = (hour * step_per_hour) + step;
 }
-void battstor::advance(compute_module &cm, double P_pv_dc , double P_load_dc )
+void battstor::advance(compute_module &cm, double P_pv_dc, double P_load_dc, double P_pv_clipped )
 {
-	charge_control->run(year, hour, step, year_index, P_pv_dc, P_load_dc);
+	charge_control->run(year, hour, step, year_index, P_pv_dc, P_load_dc, P_pv_clipped);
 	outputs_fixed(cm);
 	outputs_topology_dependent(cm);
 

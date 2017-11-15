@@ -2942,7 +2942,13 @@ public:
 							if (iyear == 0 && dc_count == 0)
 								annual_dc_power_before_battery += p_dcpwr[idx] * ts_hour;
 
-							batt.advance(*this, dcpwr_net*util::watt_to_kilowatt, cur_load);
+							// Compute PV clipping before adding battery
+							run_inverter(&snlinv, &plinv,
+								inv_type, dcpwr_net, num_inverters, dc_string_voltage,
+								acpwr_gross, aceff, cliploss, psoloss, pntloss);
+
+							// Run battery
+							batt.advance(*this, dcpwr_net*util::watt_to_kilowatt, cur_load, cliploss*util::watt_to_kilowatt);
 							dcpwr_net = util::kilowatt_to_watt * batt.outGenPower[idx];
 
 							// inverter can't handle negative dcpwr
@@ -2960,28 +2966,9 @@ public:
 						// inverter: runs at all hours of the day, even if no DC power.  important
 						// for capturing tare losses			
 						acpwr_gross = 0, aceff = 0, pntloss = 0, psoloss = 0, cliploss = 0, ac_wiringloss = 0;
-						if ((inv_type == 0) || (inv_type == 1) || (inv_type == 3))
-						{
-							double _par, _plr;
-							snlinv.acpower(dcpwr_net / num_inverters, dc_string_voltage,
-								&acpwr_gross, &_par, &_plr, &aceff, &cliploss, &psoloss, &pntloss);
-
-							acpwr_gross *= num_inverters;
-							cliploss *= num_inverters;
-							psoloss *= num_inverters;
-							pntloss *= num_inverters;
-							aceff *= 100;
-						}
-						else if (inv_type == 2) // partload
-						{
-							double _par, _plr;
-							plinv.acpower(dcpwr_net / num_inverters, &acpwr_gross, &_par, &_plr, &aceff, &cliploss, &pntloss);
-							acpwr_gross *= num_inverters;
-							cliploss *= num_inverters;
-							psoloss *= num_inverters;
-							pntloss *= num_inverters;
-							aceff *= 100;
-						}
+						run_inverter(&snlinv, &plinv,
+							inv_type, dcpwr_net, num_inverters, dc_string_voltage,
+							acpwr_gross, aceff, cliploss, psoloss, pntloss);
 
 						// if dc connected battery, update post-inverted quantities
 						if (en_batt && (batt_topology == charge_controller::DC_CONNECTED))
@@ -3474,7 +3461,6 @@ public:
 		return true;
 	}
 
-
 	double module_eff(int mod_type)
 	{
 		double eff = -1;
@@ -3532,6 +3518,36 @@ public:
 
 		if (eff == 0.0) eff = -1;
 		return eff;
+	}
+
+	void run_inverter(sandia_inverter_t * snlinv, partload_inverter_t * plinv, 
+		const int inv_type, const double dcpwr_net, const int num_inverters, const double dc_string_voltage,
+		double & acpwr_gross, double & aceff, double & cliploss, double & psoloss, double & pntloss)
+	{
+		// inverter: runs at all hours of the day, even if no DC power.  important
+		// for capturing tare losses			
+		if ((inv_type == 0) || (inv_type == 1) || (inv_type == 3))
+		{
+			double _par, _plr;
+			snlinv->acpower(dcpwr_net / num_inverters, dc_string_voltage,
+				&acpwr_gross, &_par, &_plr, &aceff, &cliploss, &psoloss, &pntloss);
+
+			acpwr_gross *= num_inverters;
+			cliploss *= num_inverters;
+			psoloss *= num_inverters;
+			pntloss *= num_inverters;
+			aceff *= 100;
+		}
+		else if (inv_type == 2) // partload
+		{
+			double _par, _plr;
+			plinv->acpower(dcpwr_net / num_inverters, &acpwr_gross, &_par, &_plr, &aceff, &cliploss, &pntloss);
+			acpwr_gross *= num_inverters;
+			cliploss *= num_inverters;
+			psoloss *= num_inverters;
+			pntloss *= num_inverters;
+			aceff *= 100;
+		}
 	}
 
 	void inverter_vdcmax_check()

@@ -109,7 +109,7 @@ void dispatch_t::init(battery_t * Battery, double dt_hour, double SOC_min, doubl
 	_can_grid_charge = false;
 }
 
-void dispatch_t::prepare_dispatch(size_t, size_t, double P_pv_dc_charging, double P_pv_dc_discharging, double P_load_dc_charging, double P_load_dc_discharging)
+void dispatch_t::prepare_dispatch(size_t, size_t, double P_pv_dc_charging, double P_pv_dc_discharging, double P_load_dc_charging, double P_load_dc_discharging, double P_pv_dc_clipping)
 {
 	/*!  Net grid power.  Positive indicates sending to grid.  Negative pulling from grid. [kW] */
 	_P_grid = 0.;
@@ -130,6 +130,7 @@ void dispatch_t::prepare_dispatch(size_t, size_t, double P_pv_dc_charging, doubl
 	_P_pv_discharging = P_pv_dc_discharging;
 	_P_load_charging = P_load_dc_charging;
 	_P_load_discharging = P_load_dc_discharging;
+	_P_pv_clipping = P_pv_dc_clipping;
 }
 
 // deep copy
@@ -465,7 +466,7 @@ void dispatch_manual_t::copy(const dispatch_t * dispatch)
 
 void dispatch_manual_t::prepare_dispatch(size_t hour_of_year, size_t step, double P_pv_dc_charging, double P_pv_dc_discharging, double P_load_dc_charging, double P_load_dc_discharging)
 { 
-	dispatch_t::prepare_dispatch(hour_of_year, step, P_pv_dc_charging, P_pv_dc_discharging, P_load_dc_charging, P_load_dc_discharging);
+	dispatch_t::prepare_dispatch(hour_of_year, step, P_pv_dc_charging, P_pv_dc_discharging, P_load_dc_charging, P_load_dc_discharging, 0);
 
 	size_t m, h;
 	util::month_hour(hour_of_year, m, h);
@@ -495,6 +496,7 @@ void dispatch_manual_t::dispatch(size_t year,
 	double P_pv_dc_discharging,
 	double P_load_dc_charging,
 	double P_load_dc_discharging,
+	double,
 	double )
 {
 	prepare_dispatch(hour_of_year, step, P_pv_dc_charging, P_pv_dc_discharging, P_load_dc_charging, P_load_dc_discharging);
@@ -760,6 +762,7 @@ void dispatch_manual_front_of_meter_t::dispatch(size_t year,
 	double P_pv_dc_discharging,
 	double P_load_dc_charging,
 	double P_load_dc_discharging,
+	double,
 	double )
 {
 	prepare_dispatch(hour_of_year, step, P_pv_dc_charging, P_pv_dc_discharging, P_load_dc_charging, P_load_dc_discharging);
@@ -914,9 +917,10 @@ void dispatch_automatic_t::dispatch(size_t year,
 	double P_pv_dc_discharging,
 	double P_load_dc_charging,
 	double P_load_dc_discharging,
+	double P_pv_dc_clipping,
 	double P_battery)
 {
-	prepare_dispatch(hour_of_year, step, P_pv_dc_charging, P_pv_dc_discharging, P_load_dc_charging, P_load_dc_discharging);
+	prepare_dispatch(hour_of_year, step, P_pv_dc_charging, P_pv_dc_discharging, P_load_dc_charging, P_load_dc_discharging, P_pv_dc_clipping);
 
 	/*! Battery voltage at last time step [V]  */
 	double battery_voltage_nominal = _Battery->battery_voltage_nominal();
@@ -1027,6 +1031,7 @@ void dispatch_automatic_behind_the_meter_t::dispatch(size_t year,
 	double P_pv_dc_discharging,
 	double P_load_dc_charging,
 	double P_load_dc_discharging,
+	double P_pv_dc_clipping,
 	double )
 {
 	size_t step_per_hour = (size_t)(1 / _dt_hour);
@@ -1036,7 +1041,7 @@ void dispatch_automatic_behind_the_meter_t::dispatch(size_t year,
 		idx = util::index_year_hour_step(year, hour_of_year, step, step_per_hour);
 
 	update_dispatch(hour_of_year, step, idx);
-	dispatch_automatic_t::dispatch(year, hour_of_year, step, P_pv_dc_charging, P_pv_dc_discharging, P_load_dc_charging, P_load_dc_discharging, _P_battery_current);
+	dispatch_automatic_t::dispatch(year, hour_of_year, step, P_pv_dc_charging, P_pv_dc_discharging, P_load_dc_charging, P_load_dc_discharging, P_pv_dc_clipping, _P_battery_current);
 }
 
 void dispatch_automatic_behind_the_meter_t::update_load_data(std::vector<double> P_load_dc){ _P_load_dc = P_load_dc; }
@@ -1386,6 +1391,7 @@ void dispatch_automatic_front_of_meter_t::dispatch(size_t year,
 	double P_pv_dc_discharging,
 	double P_load_dc_charging,
 	double P_load_dc_discharging,
+	double P_pv_dc_clipping,
 	double)
 {
 	size_t step_per_hour = (size_t)(1 / _dt_hour);
@@ -1395,7 +1401,7 @@ void dispatch_automatic_front_of_meter_t::dispatch(size_t year,
 		idx = util::index_year_hour_step(year, hour_of_year, step, step_per_hour);
 
 	update_dispatch(hour_of_year, step, idx);
-	dispatch_automatic_t::dispatch(year, hour_of_year, step, P_pv_dc_charging, P_pv_dc_discharging, P_load_dc_charging, P_load_dc_discharging, _P_battery_current);
+	dispatch_automatic_t::dispatch(year, hour_of_year, step, P_pv_dc_charging, P_pv_dc_discharging, P_load_dc_charging, P_load_dc_discharging, P_pv_dc_clipping, _P_battery_current);
 }
 
 void dispatch_automatic_front_of_meter_t::update_dispatch(size_t hour_of_year, size_t step, size_t idx)
@@ -1420,17 +1426,17 @@ void dispatch_automatic_front_of_meter_t::update_dispatch(size_t hour_of_year, s
 		auto max_ppa_cost = std::max_element(_ppa_cost_vector.begin() + hour_of_year, _ppa_cost_vector.begin() + hour_of_year + _look_ahead_hours);
 		double ppa_cost = _ppa_cost_vector[hour_of_year];
 
-		/*! Economic benefit of charging from the grid in current time step to discharge sometime in next X hours */
+		/*! Economic benefit of charging from the grid in current time step to discharge sometime in next X hours ($)*/
 		double BenefitToGridCharge = *max_ppa_cost - usage_cost;
 		
-		/*! Economic benefit of charging from regular PV in current time step to discharge sometime in next X hours */
+		/*! Economic benefit of charging from regular PV in current time step to discharge sometime in next X hours ($)*/
 		double BenefitToPVCharge = *max_ppa_cost - ppa_cost;
 
-		/*! Economic benefit of charging from clipped PV in current time step to discharge sometime in the next X hours (clipped PV is free) */
+		/*! Economic benefit of charging from clipped PV in current time step to discharge sometime in the next X hours (clipped PV is free) ($) */
 		double BenefitToClipCharge = *max_ppa_cost;
 		
-		/*! Amount of energy needed to store regular PV (calculate)*/
-		double EnergyToStorePV = 0;
+		/*! Amount of energy needed to store regular PV (kWh) */
+		double EnergyToStorePV = _P_pv_charging * _dt_hour;
 
 		/*! Amount of energy needed to store clipped PV (calculate)*/
 		double EnergyToStoreClipped = 0;
@@ -1466,7 +1472,7 @@ void dispatch_automatic_front_of_meter_t::update_dispatch(size_t hour_of_year, s
 	}
 	
 	// save for extraction
-	_P_battery_current = _P_battery_use[_day_index];
+	_P_battery_current = 0;
 }
 
 battery_metrics_t::battery_metrics_t(battery_t * Battery, double dt_hour)

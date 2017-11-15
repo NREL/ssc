@@ -91,9 +91,10 @@ public:
 		double P_pv_dc_discharging,
 		double P_load_dc_charging,
 		double P_load_dc_discharging,
-		double P_battery = 0) = 0;
+		double P_pv_dc_clipped=0,
+		double P_battery=0) = 0;
 
-	virtual void prepare_dispatch(size_t hour_of_year, size_t step, double P_pv_dc_charging, double P_pv_dc_discharging, double P_load_dc_charging, double P_load_dc_discharging);
+	virtual void prepare_dispatch(size_t hour_of_year, size_t step, double P_pv_dc_charging, double P_pv_dc_discharging, double P_load_dc_charging, double P_load_dc_discharging, double P_pv_dc_clipped);
 
 	virtual bool check_constraints(double &I, int count);
 
@@ -194,11 +195,12 @@ protected:
 	double _P_pv;
 	double _P_load;
 
-	// the options of what the PV and load power is that the battery sees depending on scenario
+	// the input options of what the PV and load power is that the battery sees depending on scenario
 	double _P_pv_charging;
 	double _P_pv_discharging;
 	double _P_load_charging;
 	double _P_load_discharging;
+	double _P_pv_clipping;
 
 	// Charge & current limits controllers
 	double _SOC_min;
@@ -269,6 +271,7 @@ public:
 		double P_pv_dc_discharging,
 		double P_load_dc_charging,
 		double P_load_dc_discharging,
+		double P_pv_dc_clipped = 0,
 		double P_battery = 0);
 
 protected:
@@ -347,9 +350,11 @@ public:
 		size_t step,
 		double P_pv_dc_charging,
 		double P_pv_dc_discharging,
-		double P_load_dc_charging = 0,
-		double P_load_dc_discharging = 0,
+		double P_load_dc_charging,
+		double P_load_dc_discharging,
+		double P_pv_dc_clipped = 0,
 		double P_battery = 0);
+
 	void compute_grid_net();
 
 protected:
@@ -433,6 +438,7 @@ public:
 		double P_pv_dc_discharging,
 		double P_load_dc_charging,
 		double P_load_dc_discharging,
+		double P_pv_dc_clipped,
 		double P_battery);
 
 	/*! Compute the updated power to send to the battery over the next N hours */
@@ -521,13 +527,14 @@ public:
 	// copy members from dispatch to this
 	virtual void copy(const dispatch_t * dispatch);
 
-	void dispatch(size_t year,
+	virtual void dispatch(size_t year,
 		size_t hour_of_year,
 		size_t step,
 		double P_pv_dc_charging,
 		double P_pv_dc_discharging,
 		double P_load_dc_charging,
 		double P_load_dc_discharging,
+		double P_pv_dc_clipped,
 		double P_battery);
 
 	/*! Compute the updated power to send to the battery over the next N hours */
@@ -628,6 +635,7 @@ public:
 		double P_pv_dc_discharging,
 		double P_load_dc_charging,
 		double P_load_dc_discharging,
+		double P_pv_dc_clipped,
 		double P_battery);
 
 	/*! Compute the updated power to send to the battery over the next N hours */

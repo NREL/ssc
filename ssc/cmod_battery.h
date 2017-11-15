@@ -200,7 +200,15 @@ struct battstor
 	~battstor();
 
 	void initialize_time(size_t year, size_t hour_of_year, size_t step);
-	void advance(compute_module &cm, double P_pv, double P_load);
+
+	//! Run the battery model for the current time
+	/*!	
+	  \param cm a reference to the compute module
+	  \param P_pv the current PV power (kW)
+	  \param P_load the current electric load (kW)
+	  \param P_pv_clipped the amount of PV which will be clipped with no battery usage (kW)
+	*/
+	void advance(compute_module &cm, double P_pv, double P_load, double P_pv_clipped=0);
 	void outputs_fixed(compute_module &cm);
 	void outputs_topology_dependent(compute_module &cm);
 	void metrics(compute_module &cm);
