@@ -327,8 +327,6 @@ bool C_DSG_Boiler::Solve_Boiler( double I_T_amb_K, double I_T_sky_K, double I_v_
 
 	// Create new flux arrays that allow for multiple panels in parallel flow
 	// Q_adj sorts flux into flow path order and is indexed with Flow_Pat_Adj
-	double q_sum = 0.0;
-	int k = 0;
 	for( int j = 0; j < m_n_fr; j++ )
 	{
 		for( int i = 0; i < m_nodes; i++ )
@@ -360,8 +358,6 @@ bool C_DSG_Boiler::Solve_Boiler( double I_T_amb_K, double I_T_sky_K, double I_v_
 	}
 
 	if( checkflux )		return true;
-
-	double eff_set = 0.0; double u_n_max = 0.0;
 
 	// Set bounds on possible mass flow rate guesses
 	double m_dot_min = m_dot_lower;
@@ -424,9 +420,6 @@ bool C_DSG_Boiler::Solve_Boiler( double I_T_amb_K, double I_T_sky_K, double I_v_
 		T_in = wp.temp;		//[K] Temperature at first panel inlet
 		h_in = h_in*1000.0;					//[J/kg] convert from kJ/kg
 
-		double diff_P_path = 999999.0;		//[Pa] Set difference > tolerance
-		int iter_diff_P_path = 0;			//[-] Initialize iteration counter
-
 		int iter_x = 0;
 		diff_x_out = 999.0;
 		int Pave_flag = 0;
@@ -446,7 +439,6 @@ bool C_DSG_Boiler::Solve_Boiler( double I_T_amb_K, double I_T_sky_K, double I_v_
 			break_to_massflow_calc = false;
 			iter_x++;					//[-] Increase iteration counter
 			T1_max = 0.0;		//[K]
-			double Tfin_max_out = 0.0;	//[K]
 
 			double diff_m_dot = (m_dot_upper - m_dot_lower)/m_dot_upper;
 
@@ -989,9 +981,9 @@ bool C_DSG_Boiler::Solve_Boiler( double I_T_amb_K, double I_T_sky_K, double I_v_
 						{
 
 							// Frictional pressure drop equations taken from Chexal et al. pages 7-6, 7-7, 7-9
-							double mu_f = (1.0 - x_n_ave)*mu_l + x_n_ave*mu_v;	//[kg/m-s] Mixture viscosity
+							//double mu_f = (1.0 - x_n_ave)*mu_l + x_n_ave*mu_v;	//[kg/m-s] Mixture viscosity
 							double Re_LO = G*m_d_in / mu_l;						//[-] Liquid only Reynolds number
-							double Re_TP = G*m_d_in / mu_f;						//[-] Mixture Reynolds number
+							//double Re_TP = G*m_d_in / mu_f;						//[-] Mixture Reynolds number
 
 							double f_wLO = 0.0791/pow(Re_LO,0.25);				//[-] Liquid only friction factor: Blasius single-phase Fanning friction factor
 							double f_wTP = f_wLO;								//[-] 2-phase friction factor defined as liquid
@@ -1098,8 +1090,8 @@ bool C_DSG_Boiler::Solve_Boiler( double I_T_amb_K, double I_T_sky_K, double I_v_
 	
 	double energy_out = m_dot_in*(h_n_out_total - h_in);	//[W] Energy transferred to steam
 	double m_dot_v_total = x_n_out*m_dot_in;				//[kg/s] Total mass flow rate of vapor
-	double m_dot_l_total = m_dot_in - m_dot_v_total;		//[kg/s] Total mass flow rate of liquid
-	
+	//double m_dot_l_total = m_dot_in - m_dot_v_total;		//[kg/s] Total mass flow rate of liquid
+
 	//m_q_conv.resize( m_n_fr*m_comb_nodes, 1 );
 	double q_conv_sum = 0.0, q_rad_sum = 0.0, q_abs_sum = 0.0;
 	for( int i = 0; i < m_n_fr*m_nodes; i++ )
@@ -1224,7 +1216,6 @@ bool C_DSG_Boiler::Solve_Superheater( double I_T_amb_K, double I_T_sky_K, double
 	//P_in = P_in*1.E3;			//[Pa]
 	
 	water_TQ( T_in, 1.0, &wp );
-	double rho_x1 = wp.dens;	//[kg/m^3]
 
 	double u_n_exit = 0.0;		//[m/s]
 
@@ -1237,8 +1228,6 @@ bool C_DSG_Boiler::Solve_Superheater( double I_T_amb_K, double I_T_sky_K, double
 
 	// Create new flux arrays that allow for multiple panels in parallel flow
 	// Q_adj sorts flux into flow path order and is indexed with Flow_Pat_Adj
-	double q_sum = 0.0;
-	int k = 0;
 	for( int j = 0; j < m_n_fr; j++ )
 	{
 		for( int i = 0; i < m_nodes; i++ )
@@ -1248,11 +1237,8 @@ bool C_DSG_Boiler::Solve_Superheater( double I_T_amb_K, double I_T_sky_K, double
 	}
 
 	double beta = 1.0 / T_amb;		//[1/K] Volumetric expansion coefficient
-	double h_n_in = h_in;			//[J/kg-K] Inlet enthalpy
 	double T_1 = T_in + 30.0;		//[K] Guess T_1 of first panel
 	m_m_dot_path.fill( m_dot_total/(double)m_n_fr );	//[kg/s] Mass flow rate through each flow route (divide evenly for now)
-	double diff_P_path = 999999.9;	//[-] Set difference > tolerance
-	double iter_path_iter = 0;		//[-] Set iteration counter
 
 		// [W/m^2-K] Calculates combined free and forced convection coefficient, same as used in fin HT model
 	double h_c = h_mixed(ambient_air, T_in, T_amb, v_wind, m_ksD, m_dsg_rec.Get_hl_ffact(), P_atm, CSP::grav, beta, m_h_rec.at(0), m_dsg_rec.Get_d_rec(), m_m_mixed);
@@ -1323,7 +1309,6 @@ bool C_DSG_Boiler::Solve_Superheater( double I_T_amb_K, double I_T_sky_K, double
 			double diff_P_bracket = 999.9;
 			bool lowpres_flag = false;
 			int P_br_low = 0;
-			int Pave_flag = 0;
 			
 			double f_fd, rho_n_ave; 
 			f_fd = rho_n_ave = std::numeric_limits<double>::quiet_NaN();
@@ -1678,7 +1663,7 @@ bool C_DSG_Boiler::Solve_Superheater( double I_T_amb_K, double I_T_sky_K, double
 	double P_out_avg = min( P_path_out_sum/(double)m_n_fr/1.E3, 19.0E3 );	//[kPa] Average (flow paths) outlet pressure
 
 	water_PH( P_out_avg, h_out_comb/1000.0, &wp );
-	double T_out = wp.temp;	double rho_out = wp.dens;
+	double rho_out = wp.dens;
 
 	double energy_out = m_dot_in * (h_out_comb - h_in);	//[W]
 	double eta_rec = energy_out / energy_in;			//[-]
@@ -1821,7 +1806,7 @@ double Flow_Boiling( double T_sat, double T_surf, double G, double d, double x_i
 		double h_l = ((f_l/8.0)*(Re_l-1000.0)*Pr_l)/(1.0+12.7*(pow(Pr_l,2.0/3.0)-1.0)*pow(f_l/8.0,0.5))*(k_l/d);	//[W/m^2-K] Eq. 7-9: Heat transfer correlation for saturated liquid flow
 		double Co = pow( (1.0/x - 1.0), 0.8 )*pow( (rho_v/rho_l), 0.5);		//[-] Eq. 7-13: Dimensionless parameter
 		double Bo = q_t_flux/(G*h_diff);				//[-] Eq. 7-14: Dimensionless parameter: Boiling number
-		double Fr = pow(G,2)/(grav*d*pow(rho_l,2));		//[-] Eq. 7-15: Dimensionless parameter: Froude number
+		//double Fr = pow(G, 2) / (grav*d*pow(rho_l, 2));		//[-] Eq. 7-15: Dimensionless parameter: Froude number
 		double N = Co;									//[-] Eq. 7-16: For vertical tubes
 
 		double h_cb = 1.8*pow(N,-0.8);			//[-] Eq. 7-17
@@ -1872,7 +1857,6 @@ double h_mixed( HTFProperties &air, double T_node_K, double T_amb_K, double v_wi
 	double k_film	= air.cond( T_film );					//[W/m-K] Conductivity
 	double mu_film	= air.visc( T_film );					//[kg/m-s] Dynamic viscosity
 	double rho_film = air.dens( T_film, P_atm_Pa );			//[kg/m^3] Density
-	double c_p_film = air.Cp( T_film );						//[J/kg] Specific heat
 
 	// Forced convection
 	double Re_for	= rho_film*v_wind*d_rec/mu_film;		//[-] Reynolds number
@@ -2039,7 +2023,7 @@ void flow_patterns_DSR( int n_panels, int flow_type, util::matrix_t<int> & flow_
 
 	return;
 }
-
+*/
 /*
 
 integer,intent(in)::N_panels

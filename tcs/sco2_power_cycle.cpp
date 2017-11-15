@@ -297,10 +297,8 @@ void compressor::solve_compressor(double T_in, double P_in, double m_dot, double
 		return;
 	}
 	T_out = co2_props.temp;
-	double ssnd_out = co2_props.ssnd;
 
 	m_w = -dh;	// compressor power (negative value)
-	double w_tip_ratio = ssnd_out / U_tip;		// ratio of the local (comp outlet) speed of sound to the tip speed
 
 	m_m_dot = m_dot;
 
@@ -321,10 +319,8 @@ void turbine::solve_turbine(double T_in, double P_in, double P_out, double N_in,
 		error_code = 19;
 		return;
 	}
-	double rho_in = co2_props.dens;
 	double h_in = co2_props.enth;
 	double s_in = co2_props.entr;
-	double ssnd_in = co2_props.ssnd;
 
 	// Calculate the enthalpy at the turbine outlet if the expansion is isentropic
 	prop_error_code = CO2_PS(P_out, s_in, &co2_props);
@@ -362,8 +358,6 @@ void turbine::solve_turbine(double T_in, double P_in, double P_out, double N_in,
 	m_dot_out = C_s * m_A_nozzle * rho_out;	// mass flow through turbine(kg / s)
 	m_m_dot = m_dot_out;
 	m_w = h_in - h_out;
-	double w_tip_ratio = ssnd_in / U_tip;			// ratio of the local(turbine inlet) speed of sound to the tip speed
-
 }
 
 bool RecompCycle::design()
@@ -1350,7 +1344,6 @@ bool RecompCycle::off_design_target_power()
 {
 	// Initialize variables
 	double lower_limit = 20.0;		// lowest pressure to try
-	double W_dot_lower = 0.0;
 
 	// First check the net power output using the design-point compressor inlet pressure
 	int cpp_offset = 1;
@@ -1381,7 +1374,6 @@ bool RecompCycle::off_design_target_power()
 		else
 		{
 			lower_limit = upper_limit;
-			W_dot_lower = W_dot_upper;
 			upper_limit *= 1.1;
 			cycle_off_des_in.m_P_mc_in = upper_limit;
 			if( !off_design(cycle_off_des_in) )

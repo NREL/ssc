@@ -1240,18 +1240,19 @@ private:
 
 		// Results from last 'design' solution
 	std::vector<double> m_temp_last, m_pres_last, m_enth_last, m_entr_last, m_dens_last;		// thermodynamic states (K, kPa, kJ/kg, kJ/kg-K, kg/m3)
-	double m_eta_thermal_last;
+	double m_eta_thermal_calc_last;
 	double m_W_dot_net_last;
 	double m_m_dot_mc, m_m_dot_rc, m_m_dot_t;
 	double m_Q_dot_PHX, m_Q_dot_bypass, m_eta_bypass;
 	double m_W_dot_mc, m_W_dot_rc, m_W_dot_mc_bypass;
+	double m_objective_metric_last;
 	
 		// Structures and data for optimization
 	S_design_parameters ms_des_par_optimal;
-	double m_eta_thermal_opt;
+	double m_objective_metric_opt;
 
 		// Structures and data for auto-optimization
-	double m_eta_thermal_auto_opt;	
+	double m_objective_metric_auto_opt;	
 	S_design_parameters ms_des_par_auto_opt;
 
 		// Results from last off-design solution
@@ -1323,13 +1324,15 @@ public:
 		std::fill(m_dens_last.begin(), m_dens_last.end(), std::numeric_limits<double>::quiet_NaN());
 		*/		
 
-		m_eta_thermal_last = m_m_dot_mc = m_m_dot_rc = m_m_dot_t = std::numeric_limits<double>::quiet_NaN();
+		m_eta_thermal_calc_last = m_m_dot_mc = m_m_dot_rc = m_m_dot_t = std::numeric_limits<double>::quiet_NaN();
 		m_Q_dot_PHX = m_Q_dot_bypass = m_eta_bypass = std::numeric_limits<double>::quiet_NaN();
 		m_W_dot_mc = m_W_dot_rc = m_W_dot_mc_bypass = std::numeric_limits<double>::quiet_NaN();
+		m_objective_metric_last = std::numeric_limits<double>::quiet_NaN();
 
 		m_W_dot_net_last = std::numeric_limits<double>::quiet_NaN();
 
-		m_eta_thermal_opt = m_eta_thermal_opt = std::numeric_limits<double>::quiet_NaN();
+		m_objective_metric_opt = std::numeric_limits<double>::quiet_NaN();
+		m_objective_metric_auto_opt = std::numeric_limits<double>::quiet_NaN();
 
 		m_temp_od = m_pres_od = m_enth_od = m_entr_od = m_dens_od = m_temp_last;
 
@@ -1645,10 +1648,10 @@ public:
 	};
 
 	// Called by 'nlopt_callback_opt_des_1', so needs to be public
-	double design_point_eta(const std::vector<double> &x);
+	double design_cycle_return_objective_metric(const std::vector<double> &x);
 
 	// Called by 'fmin_callback_opt_eta', so needs to be public
-	double opt_eta(double P_high_opt);
+	double opt_eta_fixed_P_high(double P_high_opt);
 
 	// Called by 'nlopt_cb_opt_od', so needs to be public
 	//double off_design_point_value(const std::vector<double> &x);
@@ -1660,9 +1663,9 @@ public:
 	//double opt_od_eta(const std::vector<double> &x);
 };
 
-double nlopt_callback_opt_des_1(const std::vector<double> &x, std::vector<double> &grad, void *data);
+double nlopt_cb_opt_des(const std::vector<double> &x, std::vector<double> &grad, void *data);
 
-double fmin_callback_opt_eta_1(double x, void *data);
+double fmin_cb_opt_des_fixed_P_high(double P_high /*kPa*/, void *data);
 
 //double nlopt_cb_opt_od(const std::vector<double> &x, std::vector<double> &grad, void *data);
 

@@ -117,6 +117,7 @@ static var_info _cm_vtab_sco2_csp_system[] = {
 	{ SSC_OUTPUT, SSC_NUMBER,  "rc_D",                "Recompressor first stage diameter",                      "m",          "",    "",      "*",     "",       "" },
 	{ SSC_OUTPUT, SSC_NUMBER,  "rc_phi_surge",         "Compressor flow coefficient where surge occurs",         "",           "",    "",      "*",     "",       "" },
 		// Turbine
+	{ SSC_OUTPUT, SSC_NUMBER,  "T_turb_in",            "Turbine inlet temperature",                              "C",          "",    "",      "*",     "",       "" },
 	{ SSC_OUTPUT, SSC_NUMBER,  "t_nu_des",             "Turbine design velocity ratio",                          "",           "",    "",      "*",     "",       "" },
 	{ SSC_OUTPUT, SSC_NUMBER,  "t_tip_ratio_des",	   "Turbine design tip speed ratio",                         "",           "",    "",      "*",     "",       "" },
 	{ SSC_OUTPUT, SSC_NUMBER,  "t_N_des",			   "Turbine design shaft speed",	                         "rpm",        "",    "",      "*",     "",       "" },
@@ -282,7 +283,7 @@ public:
 		}
 		else if( sco2_rc_des_par.m_design_method == 2 )
 		{
-			sco2_rc_des_par.m_UA_recup_tot_des = as_double("UA_recup_tot");		//[kW/K] Total recuperator conductance
+			sco2_rc_des_par.m_UA_recup_tot_des = as_double("UA_recup_tot_des");		//[kW/K] Total recuperator conductance
 			if( sco2_rc_des_par.m_UA_recup_tot_des < 0.0 )
 			{
 				log("For cycle design method = 2, the input total recuperator conductance must be greater than 0", SSC_ERROR, -1.0);
@@ -435,6 +436,7 @@ public:
 		assign("rc_D", (ssc_number_t)p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.ms_rc_ms_des_solved.m_D_rotor);		//[m] 
 		assign("rc_phi_surge", (ssc_number_t)p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.ms_rc_ms_des_solved.m_phi_surge);//[-]
 		// Turbine
+		assign("T_turb_in", (ssc_number_t)(p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.m_temp[C_RecompCycle::TURB_IN] - 273.15));	//[C] Turbine inlet temp, convert from K
 		assign("t_nu_des", (ssc_number_t)p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.ms_t_des_solved.m_nu_design);           //[-]
 		assign("t_tip_ratio_des", (ssc_number_t)p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.ms_t_des_solved.m_w_tip_ratio);  //[-]
 		assign("t_N_des", (ssc_number_t)p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.ms_t_des_solved.m_N_design);			   //[rpm]
@@ -808,6 +810,13 @@ public:
 		//		p_T_amb_coefs[i] = T_amb_coefs[i];
 		//}
 
+		// Check if 'od_cases' is assigned
+		bool is_od_cases_assigned = is_assigned("od_cases");
+		if (!is_od_cases_assigned)
+		{
+			log("No off-design cases specified");
+			return;
+		}
 		
 		// Set up off-design analysis
 		util::matrix_t<double> od_cases = as_matrix("od_cases");
