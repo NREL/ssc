@@ -58,6 +58,7 @@
 #include <sstream>
 #include <typeinfo>
 #include <stdio.h>
+#include <stdexcept>
 
 #if defined(__WINDOWS__)||defined(WIN32)||defined(_WIN32)
 #define CASECMP(a,b) _stricmp(a,b)
@@ -76,6 +77,7 @@
 #define my_isnan(x) std::isnan( x )
 #endif
 
+/*
 static void trim(std::string &buf)
 {
 	if (buf.back() == '\n') // strip newline
@@ -83,6 +85,20 @@ static void trim(std::string &buf)
 	if (buf.back() == '\r') // strip carriage return
 	  	buf.pop_back();
 }
+*/
+static void trim(std::string &buf)
+{
+	size_t len = buf.length();
+	if (len >  0)
+	{
+	if (buf.at(len -1) == '\n') // strip newline
+	  	buf.erase(len -1);
+	if (buf.at(len -1) == '\r') // strip carriage return
+	  	buf.erase(len -1);
+	}
+}
+
+
 
 static int locate2(std::string buf, std::vector<std::string> &vstring, char delim)
 {

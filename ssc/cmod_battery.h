@@ -82,13 +82,13 @@ struct batt_variables
 	size_t nsched;
 	size_t msched;
 
-	ssc_number_t *pcharge = 0;
-	ssc_number_t *pdischarge = 0;
-	ssc_number_t *pdischarge_percent = 0;
-	ssc_number_t *pgridcharge_percent = 0;
-	ssc_number_t *pgridcharge = 0;
-	ssc_number_t *psched = 0;
-	ssc_number_t *psched_weekend = 0;
+	ssc_number_t *pcharge;
+	ssc_number_t *pdischarge;
+	ssc_number_t *pdischarge_percent;
+	ssc_number_t *pgridcharge_percent;
+	ssc_number_t *pgridcharge;
+	ssc_number_t *psched;
+	ssc_number_t *psched_weekend;
 
 	util::matrix_t<float> schedule;
 	util::matrix_t<double>  batt_lifetime_matrix;

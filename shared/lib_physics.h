@@ -87,8 +87,8 @@ namespace physics
 	inline  double KelvinToCelcius(const double &dTempInKelvin) { return (dTempInKelvin-273.15); }
 	inline  double CelciusToKelvin(const double &dTempInCelcius) { return (dTempInCelcius+273.15); }
 #else
-	inline constexpr double KelvinToCelcius(const double dTempInKelvin) { return (dTempInKelvin-273.15); }
-	inline constexpr double CelciusToKelvin(const double dTempInCelcius) { return (dTempInCelcius+273.15); }
+	inline double KelvinToCelcius(const double dTempInKelvin) { return (dTempInKelvin-273.15); }
+	inline double CelciusToKelvin(const double dTempInCelcius) { return (dTempInCelcius+273.15); }
 #endif
 	inline double FarenheitToKelvin(const double &dTempInFarenheit) {return (CelciusToKelvin(FarenheitToCelcius(dTempInFarenheit))); };
 	inline double KelvinToFarenheit(const double &dTempInKelvin) {return (CelciusToFarenheit(KelvinToCelcius(dTempInKelvin))); };
