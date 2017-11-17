@@ -93,7 +93,7 @@ bool partload_inverter_t::acpower(
 	while ( (nu-nl) > 1 )
 	{
 		ndx = (nu + nl) >> 1; // divide by 2
-		if ( x >= Partload[ndx] == ascnd )
+		if ( (x >= Partload[ndx]) == ascnd )
 			nl = ndx;
 		else 
 			nu = ndx;

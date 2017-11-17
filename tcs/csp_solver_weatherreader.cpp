@@ -136,7 +136,7 @@ void C_csp_weatherreader::timestep_call(const C_csp_solver_sim_info &p_sim_info)
 		for( int i = 0; i<nread; i++ )		//for all calls except the first, nread=1
 		{
 			// account for ms_time being the time at end of timestep
-			m_weather_data_provider->set_counter_to((size_t)(time / 3600 - 1));
+			m_weather_data_provider->set_counter_to((size_t)(time / step - 1));
 			if( !m_weather_data_provider->read( &m_rec ) )
 			{
 				m_error_msg = m_weather_data_provider->message();

@@ -971,12 +971,6 @@ bool weatherdata::has_data_column( size_t id )
 	return std::find( m_columns.begin(), m_columns.end(), id ) != m_columns.end();
 }
 
-bool weatherdata::has_calculated_data(size_t id){
-	if (id == 10) return !std::isnan(m_data[m_nRecords - 1]->twet);
-	else if (id == 11) return !std::isnan(m_data[m_nRecords - 1]->tdew);
-	else return false;
-}
-
 bool ssc_cmod_update(std::string &log_msg, std::string &progress_msg, void *data, double progress, int log_type)
 {
 	compute_module *cm = static_cast<compute_module*> (data);

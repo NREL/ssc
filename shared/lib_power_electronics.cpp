@@ -141,6 +141,7 @@ charge_controller(dispatch, battery_metrics, 100, batt_dc_dc_bms_efficiency)
 	_dc_dc_charge_controller = new dc_dc_charge_controller(batt_dc_dc_bms_efficiency, pv_dc_dc_mppt_efficiency);
 	_inverter_efficiency = inverter_efficiency * 0.01;
 }
+
 dc_connected_battery_controller::~dc_connected_battery_controller()
 {
 	if (_dc_dc_charge_controller)

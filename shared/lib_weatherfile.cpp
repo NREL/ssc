@@ -102,7 +102,7 @@ static char *trimboth(char *buf)
 	}
 
 	p = buf;
-	while (p && *p && *p == ' ' || *p == '\t')
+	while (p && *p && (*p == ' ' || *p == '\t'))
 		p++;
 
 	return p;
@@ -420,7 +420,7 @@ double calc_twet(double T, double RH, double P)
 void weather_header::reset()
 {
 	location = city = state = country = source = description = url = "";
-	interpmet = hasunits = false;
+	hasunits = false;
 	tz = lat = lon = elev = std::numeric_limits<double>::quiet_NaN();
 }
 
@@ -443,10 +443,10 @@ weatherfile::weatherfile()
 	reset();
 }
 
-weatherfile::weatherfile(const std::string &file, bool header_only, bool interp)
+weatherfile::weatherfile(const std::string &file, bool header_only)
 {
 	reset();
-	m_ok = open(file, header_only, interp);
+	m_ok = open(file, header_only);
 }
 
 weatherfile::~weatherfile()
@@ -484,7 +484,7 @@ std::string weatherfile::filename()
 	return m_file;
 }
 
-bool weatherfile::open(const std::string &file, bool header_only, bool interp)
+bool weatherfile::open(const std::string &file, bool header_only)
 {
 	if (file.empty())
 	{
@@ -767,10 +767,6 @@ bool weatherfile::open(const std::string &file, bool header_only, bool interp)
 			{
 				m_hdr.hasunits = (util::lower_case(value) == "yes" || atoi(value) != 0);
 			}
-			else if (name == "interpmet")
-			{
-				m_hdr.interpmet = (util::lower_case(value) == "yes" || atoi(value) != 0);
-			}
 			else if (name == "step")
 			{
 				hdr_step_sec = atoi(value);
@@ -1045,14 +1041,14 @@ bool weatherfile::open(const std::string &file, bool header_only, bool interp)
 					&d12, f12, &u12, /* relative humidity 0-100 */
 					&d13, f13, &u13, /* pressure millibars */
 					&d14, f14, &u14, /* wind direction */
-					&d15, &f15, &u15, // wind speed 0 to 400 = 0.0 to 40.0 m/s
-					&d16, &f16, &u16, // visibility
-					&d17, &f17, &u17, // ceiling height
+					&d15, f15, &u15, // wind speed 0 to 400 = 0.0 to 40.0 m/s
+					&d16, f16, &u16, // visibility
+					&d17, f17, &u17, // ceiling height
 					&w1, &w2, &w3, &w4, &w5, &w6, &w7, &w8, &w9, &w10, // present weather
-					&d18, &f18, &u18, // precipitable water
-					&d19, &f19, &u19, // aerosol optical depth
-					&d20, &f20, &u20, // snow depth 0-150 cm
-					&d21, &f21, &u21); // days since last snowfall 0-88
+					&d18, f18, &u18, // precipitable water
+					&d19, f19, &u19, // aerosol optical depth
+					&d20, f20, &u20, // snow depth 0-150 cm
+					&d21, f21, &u21); // days since last snowfall 0-88
 
 				if ( mn == 2 && dy == 29 )
 				{
@@ -1400,38 +1396,6 @@ bool weatherfile::open(const std::string &file, bool header_only, bool interp)
         }
 	}
 
-
-
-
-	// do the interpolation of meteorological data if requested in the header
-	if (interp || m_hdr.interpmet)
-	{
-		int met_indexes[] = { WSPD, WDIR, TDRY, TWET, TDEW, RH, PRES, SNOW, ALB, -1 };
-
-		// apply to all met data relevant ids
-		size_t j = 0;
-		while (met_indexes[j] >= 0)
-		{
-			int idx = met_indexes[j]; // find column if it has been read in from the data file
-			for (size_t i = 0; i<m_nRecords; i++)
-			{
-				if (i == 0 && m_nRecords > 1)
-				{
-					// first time step: set to the backwards interpolation values of the first two time steps
-					m_columns[idx].data[0] = m_columns[idx].data[1]
-						+ 1.5f*(m_columns[idx].data[0] - m_columns[idx].data[1]);
-				}
-				else
-				{
-					// set to the average of the current and previous
-					m_columns[idx].data[i] = 0.5f*(m_columns[idx].data[i]
-						+ m_columns[idx].data[i - 1]);
-				}
-			}
-			j++;
-		}
-	}
-
 	return true;
 }
 
@@ -1469,10 +1433,6 @@ bool weatherfile::read( weather_record *r )
 bool weatherfile::has_data_column( size_t id )
 {
 	return m_columns[id].index >= 0;
-}
-
-bool weatherfile::has_calculated_data(size_t id){
-	return !isnan(m_columns[id].data[0]);
 }
 
 bool weatherfile::convert_to_wfcsv( const std::string &input, const std::string &output )
@@ -1532,7 +1492,7 @@ bool weatherfile::convert_to_wfcsv( const std::string &input, const std::string 
 	else if ( wf.type() == weatherfile::SMW )
 	{
 		fprintf(fp, "Source,Location ID,City,State,Latitude,Longitude,Time Zone,Elevation\n");
-		fprintf(fp, "SMW,%s,%s,%s,%.6lf,%.6lf,%lg,%lg,%d\n", hdr.location.c_str(),
+		fprintf(fp, "SMW,%s,%s,%s,%s,%.6lf,%.6lf,%lg,%lg\n", hdr.location.c_str(),
 			normalize_city(hdr.city).c_str(), hdr.state.c_str(), hdr.country.c_str(), hdr.lat, hdr.lon, hdr.tz, hdr.elev );
 		fprintf(fp, "Month,Day,Hour,GHI,DNI,DHI,Tdry,Twet,Tdew,RH,Pres,Wspd,Wdir,Snow,Albedo\n" );
 		for( size_t i=0;i<8760;i++ )

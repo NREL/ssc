@@ -409,7 +409,7 @@ void ioutil::parseXMLInputFile(const string &fname,var_map &V, parametric &par_d
             {
                 std::string selection = var_node->first_node("value")->value();
                 std::vector< std::string > cbchoices = v->second->combo_get_choices();
-                if( find( cbchoices.begin(), cbchoices.end(), selection ) != cbchoices.end() )
+                if(varname == "temp_which" || find( cbchoices.begin(), cbchoices.end(), selection ) != cbchoices.end() )
                     v->second->set_from_string( selection.c_str() );
             }
             else

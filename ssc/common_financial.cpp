@@ -3206,7 +3206,6 @@ bool hourly_energy_calculation::calculate(compute_module *cm)
 
 	ssc_number_t *pgen;
 	size_t nrec_gen = 0, step_per_hour_gen = 1;
-	bool bload = false;
 	pgen = m_cm->as_array("gen", &nrec_gen);
 	// for lifetime analysis
 	size_t nrec_gen_per_year = nrec_gen;
