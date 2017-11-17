@@ -1332,14 +1332,20 @@ dispatch_automatic_front_of_meter_t::dispatch_automatic_front_of_meter_t(
 	double inverter_paco,
 	std::vector<double> ppa_factors,
 	util::matrix_t<size_t> ppa_weekday_schedule,
-	util::matrix_t<size_t> ppa_weekend_schedule) : dispatch_automatic_t(Battery, dt_hour, SOC_min, SOC_max, current_choice, Ic_max, Id_max, Pc_max, Pd_max, t_min, dispatch_mode, pv_dispatch, nyears, look_ahead_hours, dispatch_update_frequency_hours, can_charge, can_clip_charge, can_grid_charge)
+	util::matrix_t<size_t> ppa_weekend_schedule,
+	UtilityRate * utilityRate) : dispatch_automatic_t(Battery, dt_hour, SOC_min, SOC_max, current_choice, Ic_max, Id_max, Pc_max, Pd_max, t_min, dispatch_mode, pv_dispatch, nyears, look_ahead_hours, dispatch_update_frequency_hours, can_charge, can_clip_charge, can_grid_charge)
 {
 	_look_ahead_hours = look_ahead_hours;
 	_inverter_paco = inverter_paco;
 	_ppa_factors = ppa_factors;
 	setup_cost_vector(ppa_weekday_schedule , ppa_weekend_schedule);
-}
 
+	_utilityRateCalculator = new UtilityRateCalculator(utilityRate, _steps_per_hour);
+}
+dispatch_automatic_front_of_meter_t::~dispatch_automatic_front_of_meter_t()
+{
+	delete _utilityRateCalculator;
+}
 void dispatch_automatic_front_of_meter_t::init_with_pointer(const dispatch_automatic_front_of_meter_t* tmp)
 {
 	_look_ahead_hours = tmp->_look_ahead_hours;
@@ -1406,6 +1412,7 @@ void dispatch_automatic_front_of_meter_t::dispatch(size_t year,
 	prepare_dispatch(hour_of_year, step, P_pv_dc_charging, P_pv_dc_discharging, P_load_dc_charging, P_load_dc_discharging, P_pv_dc_clipping);
 	update_dispatch(hour_of_year, step, idx);
 	dispatch_automatic_t::dispatch(year, hour_of_year, step, P_pv_dc_charging, P_pv_dc_discharging, P_load_dc_charging, P_load_dc_discharging, P_pv_dc_clipping, _P_battery_current);
+
 }
 
 void dispatch_automatic_front_of_meter_t::update_dispatch(size_t hour_of_year, size_t step, size_t idx)
@@ -1413,9 +1420,6 @@ void dispatch_automatic_front_of_meter_t::update_dispatch(size_t hour_of_year, s
 	
 	// assume eta = .99, bring in at some point from battery model
 	double eta = 0.99;
-
-	// also need to bring in usage rates and potentially normalize
-	double usage_cost = 1;
 
 	/*! Economic cost of charging (need to calculate)*/
 	double CostToCharge = 0;
@@ -1428,6 +1432,9 @@ void dispatch_automatic_front_of_meter_t::update_dispatch(size_t hour_of_year, s
 	if (hour_of_year == _hour_last_updated + _dispatch_update_hours || hour_of_year == 0)
 	{
 		_hour_last_updated = hour_of_year;
+
+		/*! Cost to purchase electricity from the utility */
+		double usage_cost = _utilityRateCalculator->getEnergyRate(hour_of_year);
 
 		// Compute forecast variables
 		auto max_ppa_cost = std::max_element(_ppa_cost_vector.begin() + hour_of_year, _ppa_cost_vector.begin() + hour_of_year + _look_ahead_hours);

@@ -48,6 +48,7 @@
 *******************************************************************************************************/
 
 #include "lib_battery.h"
+#include "lib_utility_rate.h"
 
 #ifndef __LIB_BATTERY_DISPATCH_H__
 #define __LIB_BATTERY_DISPATCH_H__
@@ -617,10 +618,11 @@ public:
 		double inverter_paco,
 		std::vector<double> ppa_factors,
 		util::matrix_t<size_t> ppa_weekday_schedule,
-		util::matrix_t<size_t> ppa_weekend_schedule
+		util::matrix_t<size_t> ppa_weekend_schedule,
+		UtilityRate * utilityRate
 		);
 
-	virtual ~dispatch_automatic_front_of_meter_t(){};
+	virtual ~dispatch_automatic_front_of_meter_t();
 
 	/*! deep copy constructor (new memory), from dispatch to this */
 	dispatch_automatic_front_of_meter_t(const dispatch_t& dispatch);
@@ -650,7 +652,7 @@ protected:
 	double _inverter_paco;
 	std::vector<double> _ppa_factors;
 	std::vector<double> _ppa_cost_vector;
-	
+	UtilityRateCalculator * _utilityRateCalculator;
 };
 
 /*! Battery metrics class */

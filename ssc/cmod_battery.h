@@ -54,7 +54,7 @@
 #include "lib_power_electronics.h"
 #include "lib_sandia.h"
 #include "lib_pvinv.h"
-
+#include "lib_utility_rate.h"
 
 extern var_info vtab_battery_inputs[];
 extern var_info vtab_battery_outputs[];
@@ -186,6 +186,11 @@ struct batt_variables
 	std::vector<double> ppa_factors;
 	util::matrix_t<size_t> ppa_weekday_schedule;
 	util::matrix_t<size_t> ppa_weekend_schedule;
+
+	/*! Energy rates */
+	util::matrix_t<size_t> ec_weekday_schedule;
+	util::matrix_t<size_t> ec_weekend_schedule;
+	util::matrix_t<float> ec_tou_matrix;
 };
 
 
@@ -260,7 +265,8 @@ struct battstor
 	dispatch_t *dispatch_model;
 	losses_t *losses_model;
 	charge_controller *charge_control;
-
+	UtilityRate * utilityRate;
+	
 	bool en;
 	int chem;
 
