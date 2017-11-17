@@ -2985,7 +2985,7 @@ public:
 						}
 						dc_count++;
 					} while (iterate_dc);
-
+					 
 					ac_wiringloss = fabs(acpwr_gross) * ac_loss_percent * 0.01;
 
 					// accumulate first year annual energy

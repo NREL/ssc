@@ -1433,15 +1433,18 @@ void dispatch_automatic_front_of_meter_t::update_dispatch(size_t hour_of_year, s
 		auto max_ppa_cost = std::max_element(_ppa_cost_vector.begin() + hour_of_year, _ppa_cost_vector.begin() + hour_of_year + _look_ahead_hours);
 		double ppa_cost = _ppa_cost_vector[hour_of_year];
 
-		/*! Economic benefit of charging from the grid in current time step to discharge sometime in next X hours ($)*/
+		/*! Economic benefit of charging from the grid in current time step to discharge sometime in next X hours ($/kWh)*/
 		double BenefitToGridCharge = *max_ppa_cost - usage_cost;
 		
-		/*! Economic benefit of charging from regular PV in current time step to discharge sometime in next X hours ($)*/
+		/*! Economic benefit of charging from regular PV in current time step to discharge sometime in next X hours ($/kWh)*/
 		double BenefitToPVCharge = *max_ppa_cost - ppa_cost;
 
-		/*! Economic benefit of charging from clipped PV in current time step to discharge sometime in the next X hours (clipped PV is free) ($) */
+		/*! Economic benefit of charging from clipped PV in current time step to discharge sometime in the next X hours (clipped PV is free) ($/kWh) */
 		double BenefitToClipCharge = *max_ppa_cost;
-		
+
+		/*! Economic benefit of discharging right now ($/kWh) */
+		double BenefitToDischarge = ppa_cost;
+
 		/*! Amount of energy needed to store regular PV (kWh) */
 		double EnergyToStorePV = _P_pv_charging * _dt_hour;
 
@@ -1479,10 +1482,10 @@ void dispatch_automatic_front_of_meter_t::update_dispatch(size_t hour_of_year, s
 		{
 			PowerBattery = -_P_pv_clipping;
 		}
+		
 		// Discharge at max available rate such that PV + ES discharge <= AC nameplate
-		else if (ppa_cost == *max_ppa_cost)
+		if (ppa_cost == *max_ppa_cost && _inverter_paco > _P_pv_discharging && _Battery->battery_soc() >= _SOC_min)
 		{
-			if (_inverter_paco > _P_pv_discharging)
 				PowerBattery = _inverter_paco - _P_pv_discharging;
 		}
 
