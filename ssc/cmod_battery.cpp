@@ -165,7 +165,7 @@ var_info vtab_battery_inputs[] = {
 
 
 	// PPA financial inputs
-	
+	{ SSC_INPUT,        SSC_NUMBER,     "ppa_price_input",		                        "PPA Price Input",	                                        "",      "",                  "Time of Delivery", "batt_meter_position=1&batt_dispatch_choice=2"   "",          "" },
 	{ SSC_INPUT,        SSC_ARRAY,      "dispatch_tod_factors",		                    "TOD factors for periods 1-9",	                            "",      "",                  "Time of Delivery", "batt_meter_position=1&batt_dispatch_choice=2"   "",          "" },
 	{ SSC_INPUT,        SSC_MATRIX,     "dispatch_sched_weekday",                       "Diurnal weekday TOD periods",                              "1..9",  "12 x 24 matrix",    "Time of Delivery", "batt_meter_position=1&batt_dispatch_choice=2",  "",          "" },
 	{ SSC_INPUT,        SSC_MATRIX,     "dispatch_sched_weekend",                       "Diurnal weekend TOD periods",                              "1..9",  "12 x 24 matrix",    "Time of Delivery", "batt_meter_position=1&batt_dispatch_choice=2",  "",          "" },
@@ -268,7 +268,10 @@ battstor::battstor(compute_module &cm, bool setup_model, int replacement_option,
 			if (batt_vars->batt_meter_position == dispatch_t::FRONT)
 			{
 				batt_vars->pv_dc_forecast = cm.as_vector_double("dc_net_forecast");
+				double ppa_price = cm.as_double("ppa_price_input");
 				batt_vars->ppa_factors = cm.as_vector_double("dispatch_tod_factors");
+				for (size_t i = 0; i != batt_vars->ppa_factors.size(); i++)
+					batt_vars->ppa_factors[i] *= ppa_price;
 				batt_vars->ppa_weekday_schedule = cm.as_matrix_unsigned_long("dispatch_sched_weekday");
 				batt_vars->ppa_weekend_schedule = cm.as_matrix_unsigned_long("dispatch_sched_weekend");
 
