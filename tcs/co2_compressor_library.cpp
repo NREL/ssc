@@ -46,7 +46,7 @@
 *  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
 *  THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *******************************************************************************************************/
-
+#include "stdafx.h"
 #include "co2_compressor_library.h"
 
 double compressor_psi_polynomial_fit(int comp_type, double phi)
@@ -70,7 +70,7 @@ double compressor_eta_polynomial_fit(int comp_type, double phi)
 		return (((-1.638E6*phi + 182725.0)*phi - 8089.0)*phi + 168.6)*phi - 0.7069;		// from performance map curve fit
 
 	default:
-		return (((-1.638E6*phi + 182725.0)*phi - 8089.0)*phi + 168.6)*phi + 0.7069;		// from performance map curve fit
+		return (((-1.638E6*phi + 182725.0)*phi - 8089.0)*phi + 168.6)*phi - 0.7069;		// from performance map curve fit
 	}
 }
 
