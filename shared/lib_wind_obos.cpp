@@ -84,13 +84,23 @@ enum  { ON, OFF } ;
 //calculate total soft costs
 void wobos::Soft_costs()
 {
-    soft_costs = construction_insurance_cost + commissioning + decomCost + total_contingency_cost+construction_finance_cost;
-}
+  // calculate the capital expeditures to get the plant running
+  bos_capex = totAnICost + totDevCost + totElecCost + totEnMCost + totPnSCost + subTotCost;
 
-//calculate insurance cost during construction
-void wobos::Insurance_during_construction()
-{
-    construction_insurance_cost = construction_insurance*(turbCapEx+total_bos_cost);
+  //calculate insurance cost during construction
+  construction_insurance_cost = construction_insurance * (nTurb*turbCapEx + bos_capex);
+
+  // Caclulate contingencies 
+  total_contingency_cost = procurement_contingency*(nTurb*turbCapEx+bos_capex-totAnICost) + install_contingency*(totAnICost);
+
+  // Compute coft cost total up until now
+  soft_costs = construction_insurance_cost + commissioning + decomCost + total_contingency_cost;
+  
+  // calculate construction financing cost
+  construction_finance_cost = (construction_finance_factor-1)*(nTurb*turbCapEx + bos_capex + soft_costs);
+
+  // Add in financing cost
+  soft_costs += construction_finance_cost;
 }
 
 //calculate construction finance factor
@@ -102,18 +112,6 @@ void wobos::Construction_finance_factor()
             +capital_cost_year_3*(1+(1-tax_rate)*(pow((1+interest_during_construction),(capital_cost_year_3+0.5))-1))
             +capital_cost_year_4*(1+(1-tax_rate)*(pow((1+interest_during_construction),(capital_cost_year_4+0.5))-1))
             +capital_cost_year_5*(1+(1-tax_rate)*(pow((1+interest_during_construction),(capital_cost_year_5+0.5))-1));
-}
-
-//calculate construction financing cost
-void wobos::Construction_finance()
-{
-    construction_finance_cost = (construction_finance_factor-1)*(turbCapEx+total_bos_cost+soft_costs);
-}
-
-//calculate total contingency cost
-void wobos::Total_contingency()
-{
-    total_contingency_cost = procurement_contingency*(turbCapEx+totElecCost+subTotCost+totDevCost+totEnMCost+totPnSCost)+install_contingency*(totAnICost);
 }
 
 //calculate the present value in dollars of the cost of decommissioning the wind plant
@@ -139,7 +137,7 @@ double wobos::DecomissExpense()
 //calculate total BOS costs
 void wobos::Total_bos_cost()
 {
-    total_bos_cost = totAnICost+totDevCost+totElecCost+totEnMCost+totPnSCost+subTotCost+soft_costs;
+    total_bos_cost = totAnICost + totDevCost + totElecCost + totEnMCost + totPnSCost + subTotCost + soft_costs;
 }
 
 //*******************************************************************************************
@@ -2071,144 +2069,141 @@ void wobos::ExportCabCostOptimizer()
 
 void wobos::run()
 {
-	//Initialize new variables with required function return values
-	hubD = HubDiameter();
-	bladeL = BladeLength();
-	chord = HubDiameter();
-	nacelleW = NacelleWidth();
-	nacelleL = NacelleLength();
-	rnaM = RNAMass();
-	towerD = TowerDiameter();
-	towerM = TowerMass();
-	if (mpileL <= 0) //assign monopile length if it is not assigned
-	{
-		mpileL = MonopileLength();
-	}
-	if (mpileD <= 0) //assign monopile depth if it is not assigned
-	{
-		mpileD = turbR;
-	}
-	mpileM = MonoPileMass();
-	mtransM = MonoTransMass();
-	mPileCost = MonoPileCost();
-	mTransCost = MonoTransCost();
-	jlatticeM = JackLatticeMass();
-	jtransM = JackTransMass();
-	jpileM = JackPileMass();
-	jLatticeCost = JackLatticeCost();
-	jTransCost = JackTransCost();
-	jPileCost = JackPileCost();
-	spStifColM = SparStifColMass();
-	spTapColM = SparTapColMass();
-	spStifColCost = SparStifColCost();
-	spTapColCost = SparTapColCost();
-	ballM = BallMass();
-	ballCost = BallCost();
-	ssStifColM = SemiStifColMass();
-	ssTrussM = SemiTrussMass();
-	ssHeaveM = SemiHeaveMass();
-	ssStifColCost = SemiStifColCost();
-	ssTrussCost = SemiTrussCost();
-	ssHeaveCost = SemiHeaveCost();
-	moorSysCost = MooringSys();
-	sSteelM = SecondarySteelMass();
-	sSteelCost = SecondarySteelCost();
-	subTotM = SubstructTotalMass();
-	subTotCost = SubstructTotCost();
-	systAngle = SystemAngle();
-	freeCabLeng = FreeCable();
-	fixCabLeng = FixedCable();
-	if (cableOptimizer == ON)
-	{
-		ExportCabCostOptimizer();
-	}
-	nExpCab = NumberExportCable(expCurrRating, expVoltage);
-	nSubstation = NumberSubstation(nExpCab);
-	if (cableOptimizer == ON)
-	{
-		ArrayCabCostOptimizer();
-	}
-	fullStrings = Strings(cab2CurrRating, arrVoltage);
-	nTurbPS = NumTurbParStr(cab2CurrRating, arrVoltage);
-	nTurbCab1 = NumTurbCable1(cab1CurrRating, arrVoltage);
-	nTurbCab2 = NumTurbCable2(cab2CurrRating, arrVoltage);
-	nTurbInter1 = InterfacesCable1(fullStrings, nTurbPS, nTurbCab1);
-	nTurbInter2 = InterfacesCable2(fullStrings, nTurbPS, nTurbCab1, nTurbCab2);
-	nSubsInter = SubstationInterfaces(fullStrings, nTurbPS);
-	cab1Leng = Cable1Length(nTurbInter1);
-	cab2Leng = Cable2Length(nTurbCab1, nTurbCab2, fullStrings, nTurbPS);
-	expCabLeng = ExportCableLength(nExpCab);
-	nMPT = NumberMPT();
-	mptRating = SingleMPTRating();
-	mptCost = MPTCost();
-	subsTopM = SubstationTopsideMass();
-	subsTopCost = SubstationTopsideCost();
-	arrCab1Cost = ArrayCable1Cost(cab1Leng, cab1CR, cab1TurbInterCR, nTurbInter1);
-	arrCab2Cost = ArrayCable2Cost(cab2Leng, cab2CR, cab2TurbInterCR, nTurbInter2, nSubsInter, cab2SubsInterCR);
-	expCabCost = ExportCableCost(expSubsInterCR, expCabCR, expCabLeng, nExpCab);
-	shuntReactors = ShuntReactors();
-	switchGear = Switchgear();
-	ancillarySys = AncillarySystems();
-	subsSubM = SubstationSubMass();
-	subsPileM = SubstationSubPileMass();
-	subsLandAssembly = LandTopsideAssembly();
-	subsSubCost = SubstationSubCost();
-	switchYard = SwitchYardCost();
-	onShoreSubs = OnshoreSubsCost();
-	onshoreMisc = OnshoreSubsMiscCost();
-	transLine = TransLineCost();
-	subCabCost = SubseaCableCost();
-	offSubsCost = OffshoreSubstationCost();
-	onshoreTransCost = OnshoreTransCost();
-	totElecCost = TotElectricalCost();
-	moorTime = MooringSysInstall();
-	floatPrepTime = PrepFloatSubstructure();
-	turbDeckArea = MinTurbDeckArea();
-	nTurbPerTrip = TurbsPerTrip();
-	turbInstTime = TurbineInstall();
-	subDeckArea = MinSubDeckArea();
-	nSubPerTrip = SubPerTrip();
-	subInstTime = SubstructureInstTime();
-	cab1SecM = Cab1SecMass(arrCab1Mass);
-	cab2SecM = Cab2SecMass(arrCab2Mass);
-	cab1SecPerTrip = Cab1SecPerTrip(cab1SecM);
-	cab2SecPerTrip = Cab2SecPerTrip(cab2SecM);
-	arrInstTime = ArrayCabInstTime(cab1Leng, cab2Leng, nTurbInter1, nTurbInter2, nSubsInter,
-		cab1SecPerTrip, cab2SecPerTrip, fullStrings, nTurbPS, nTurbCab1, nTurbCab2);
-	expCabSecM = ExportCableSecMass(expCabMass, expCabLeng, nExpCab);
-	expCabSecPerTrip = ExportCabSecPerTrip(expCabSecM);
-	expInstTime = ExportCabInstallTime(expCabSecPerTrip, nExpCab);
-	subsInstTime = SubsInstallTime();
-	totInstTime = TotalInstallTime();
-	cabSurvey = CableRouteSurveyCost();
-	TurbInstCost();
-	SubInstCost();
-	ElectricalInstCost();
-	VesselMobDemobCost();
-	totAnICost = TotInstCost();
-	entrExitCost = EntranceExitCost();
-	wharfCost = WharfCost();
-	dockCost = DockingCost();
-	subLaydownA = SubstructureLaydownArea();
-	subLayCost = SubstructureLaydownCost();
-	turbLaydownA = TurbLaydownArea();
-	turbLayCost = TurbLaydownCost();
-	NumCranes();
-	craneCost = CraneCost();
-	totPortCost = TotalPortCost();
-	totStageCost = TotalStagingCost();
-	totPnSCost = TotalPnSCost();
-	totEnMCost = TotalEnMCost();
-	feedCost = FEEDCost();
-	permStudyComp = PermitsStudiesCompliance();
-	metFabCost = MetTowerFabnInst();
-	decomCost = DecomissExpense();
-	totDevCost = TotalDevCost();
-	commissioning = PlantCommissioning();
-    Construction_finance_factor();
-    Insurance_during_construction();
-    Total_contingency();
-    Construction_finance();
-    Soft_costs();
-    Total_bos_cost();
+  //Initialize new variables with required function return values
+  hubD = HubDiameter();
+  bladeL = BladeLength();
+  chord = HubDiameter();
+  nacelleW = NacelleWidth();
+  nacelleL = NacelleLength();
+  rnaM = RNAMass();
+  towerD = TowerDiameter();
+  towerM = TowerMass();
+  if (mpileL <= 0) //assign monopile length if it is not assigned
+    {
+      mpileL = MonopileLength();
+    }
+  if (mpileD <= 0) //assign monopile depth if it is not assigned
+    {
+      mpileD = turbR;
+    }
+  mpileM = MonoPileMass();
+  mtransM = MonoTransMass();
+  mPileCost = MonoPileCost();
+  mTransCost = MonoTransCost();
+  jlatticeM = JackLatticeMass();
+  jtransM = JackTransMass();
+  jpileM = JackPileMass();
+  jLatticeCost = JackLatticeCost();
+  jTransCost = JackTransCost();
+  jPileCost = JackPileCost();
+  spStifColM = SparStifColMass();
+  spTapColM = SparTapColMass();
+  spStifColCost = SparStifColCost();
+  spTapColCost = SparTapColCost();
+  ballM = BallMass();
+  ballCost = BallCost();
+  ssStifColM = SemiStifColMass();
+  ssTrussM = SemiTrussMass();
+  ssHeaveM = SemiHeaveMass();
+  ssStifColCost = SemiStifColCost();
+  ssTrussCost = SemiTrussCost();
+  ssHeaveCost = SemiHeaveCost();
+  moorSysCost = MooringSys();
+  sSteelM = SecondarySteelMass();
+  sSteelCost = SecondarySteelCost();
+  subTotM = SubstructTotalMass();
+  subTotCost = SubstructTotCost();
+  systAngle = SystemAngle();
+  freeCabLeng = FreeCable();
+  fixCabLeng = FixedCable();
+  if (cableOptimizer == ON)
+    {
+      ExportCabCostOptimizer();
+    }
+  nExpCab = NumberExportCable(expCurrRating, expVoltage);
+  nSubstation = NumberSubstation(nExpCab);
+  if (cableOptimizer == ON)
+    {
+      ArrayCabCostOptimizer();
+    }
+  fullStrings = Strings(cab2CurrRating, arrVoltage);
+  nTurbPS = NumTurbParStr(cab2CurrRating, arrVoltage);
+  nTurbCab1 = NumTurbCable1(cab1CurrRating, arrVoltage);
+  nTurbCab2 = NumTurbCable2(cab2CurrRating, arrVoltage);
+  nTurbInter1 = InterfacesCable1(fullStrings, nTurbPS, nTurbCab1);
+  nTurbInter2 = InterfacesCable2(fullStrings, nTurbPS, nTurbCab1, nTurbCab2);
+  nSubsInter = SubstationInterfaces(fullStrings, nTurbPS);
+  cab1Leng = Cable1Length(nTurbInter1);
+  cab2Leng = Cable2Length(nTurbCab1, nTurbCab2, fullStrings, nTurbPS);
+  expCabLeng = ExportCableLength(nExpCab);
+  nMPT = NumberMPT();
+  mptRating = SingleMPTRating();
+  mptCost = MPTCost();
+  subsTopM = SubstationTopsideMass();
+  subsTopCost = SubstationTopsideCost();
+  arrCab1Cost = ArrayCable1Cost(cab1Leng, cab1CR, cab1TurbInterCR, nTurbInter1);
+  arrCab2Cost = ArrayCable2Cost(cab2Leng, cab2CR, cab2TurbInterCR, nTurbInter2, nSubsInter, cab2SubsInterCR);
+  expCabCost = ExportCableCost(expSubsInterCR, expCabCR, expCabLeng, nExpCab);
+  shuntReactors = ShuntReactors();
+  switchGear = Switchgear();
+  ancillarySys = AncillarySystems();
+  subsSubM = SubstationSubMass();
+  subsPileM = SubstationSubPileMass();
+  subsLandAssembly = LandTopsideAssembly();
+  subsSubCost = SubstationSubCost();
+  switchYard = SwitchYardCost();
+  onShoreSubs = OnshoreSubsCost();
+  onshoreMisc = OnshoreSubsMiscCost();
+  transLine = TransLineCost();
+  subCabCost = SubseaCableCost();
+  offSubsCost = OffshoreSubstationCost();
+  onshoreTransCost = OnshoreTransCost();
+  totElecCost = TotElectricalCost();
+  moorTime = MooringSysInstall();
+  floatPrepTime = PrepFloatSubstructure();
+  turbDeckArea = MinTurbDeckArea();
+  nTurbPerTrip = TurbsPerTrip();
+  turbInstTime = TurbineInstall();
+  subDeckArea = MinSubDeckArea();
+  nSubPerTrip = SubPerTrip();
+  subInstTime = SubstructureInstTime();
+  cab1SecM = Cab1SecMass(arrCab1Mass);
+  cab2SecM = Cab2SecMass(arrCab2Mass);
+  cab1SecPerTrip = Cab1SecPerTrip(cab1SecM);
+  cab2SecPerTrip = Cab2SecPerTrip(cab2SecM);
+  arrInstTime = ArrayCabInstTime(cab1Leng, cab2Leng, nTurbInter1, nTurbInter2, nSubsInter,
+				 cab1SecPerTrip, cab2SecPerTrip, fullStrings, nTurbPS, nTurbCab1, nTurbCab2);
+  expCabSecM = ExportCableSecMass(expCabMass, expCabLeng, nExpCab);
+  expCabSecPerTrip = ExportCabSecPerTrip(expCabSecM);
+  expInstTime = ExportCabInstallTime(expCabSecPerTrip, nExpCab);
+  subsInstTime = SubsInstallTime();
+  totInstTime = TotalInstallTime();
+  cabSurvey = CableRouteSurveyCost();
+  TurbInstCost();
+  SubInstCost();
+  ElectricalInstCost();
+  VesselMobDemobCost();
+  totAnICost = TotInstCost();
+  entrExitCost = EntranceExitCost();
+  wharfCost = WharfCost();
+  dockCost = DockingCost();
+  subLaydownA = SubstructureLaydownArea();
+  subLayCost = SubstructureLaydownCost();
+  turbLaydownA = TurbLaydownArea();
+  turbLayCost = TurbLaydownCost();
+  NumCranes();
+  craneCost = CraneCost();
+  totPortCost = TotalPortCost();
+  totStageCost = TotalStagingCost();
+  totPnSCost = TotalPnSCost();
+  totEnMCost = TotalEnMCost();
+  feedCost = FEEDCost();
+  permStudyComp = PermitsStudiesCompliance();
+  metFabCost = MetTowerFabnInst();
+  decomCost = DecomissExpense();
+  totDevCost = TotalDevCost();
+  commissioning = PlantCommissioning();
+  Construction_finance_factor();
+  Soft_costs();
+  Total_bos_cost();
 }

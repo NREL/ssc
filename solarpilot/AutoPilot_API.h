@@ -112,7 +112,7 @@ protected:
 
 public:
 	AutoPilot();
-	~AutoPilot();
+	virtual ~AutoPilot();
 	//Callbacks for progress updates
 	void SetSummaryCallback( bool (*callback)(simulation_info* siminfo, void *data), void *cdata);
 	void SetDetailCallback( bool (*callback)(simulation_info* siminfo, void *data), void *cdata);

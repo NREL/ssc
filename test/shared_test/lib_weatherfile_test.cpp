@@ -1,6 +1,7 @@
 #include <string>
 #include <vector>
-
+#include <cmath>
+ 
 #include <gtest/gtest.h>
 #include "lib_weatherfile.h"
 #include "common.h"
@@ -52,7 +53,6 @@ TEST_F(CSVCase_WeatherfileTest, initTest){
 	EXPECT_EQ(wf.nrecords(), 8760) << "CSV Case: Init test\n";
 	EXPECT_TRUE(wf.has_data_column(0));
 	EXPECT_FALSE(wf.has_data_column(4));
-	EXPECT_FALSE(wf.has_calculated_data(10)) << "Twet not able to be calculated\n";
 }
 
 TEST_F(CSVCase_WeatherfileTest, normalizeCityTest_lib_weatherfile){
@@ -69,18 +69,18 @@ TEST_F(CSVCase_WeatherfileTest, readTest){
 	EXPECT_EQ(r.day, 1) << "CSV Case: 1st row\n";
 	EXPECT_EQ(r.hour, 0) << "CSV Case: 1st row\n";
 	EXPECT_NEAR(r.minute, 30, e) << "CSV Case: 1st row\n";
-	EXPECT_TRUE(::isnan(r.gh)) << "CSV Case: 1st row\n";
+	EXPECT_TRUE(std::isnan(r.gh)) << "CSV Case: 1st row\n";
 	EXPECT_NEAR(r.dn, 0, e) << "CSV Case: 1st row\n";
 	EXPECT_NEAR(r.df, 0, e) << "CSV Case: 1st row\n";
-	EXPECT_TRUE(::isnan(r.poa)) << "CSV Case: 1st row\n";
+	EXPECT_TRUE(std::isnan(r.poa)) << "CSV Case: 1st row\n";
 	EXPECT_NEAR(r.wspd, 2.1, e) << "CSV Case: 1st row\n";
 	EXPECT_NEAR(r.wdir, 20, e) << "CSV Case: 1st row\n";
 	EXPECT_NEAR(r.tdry, 20.9, e) << "CSV Case: 1st row\n";
-	EXPECT_TRUE(::isnan(r.twet)) << "CSV Case: 1st row\n";
+	EXPECT_TRUE(std::isnan(r.twet)) << "CSV Case: 1st row\n";
 	EXPECT_NEAR(r.tdew, 19.3, e) << "CSV Case: 1st row\n";
-	EXPECT_TRUE(::isnan(r.rhum)) << "CSV Case: 1st row\n";
+	EXPECT_TRUE(std::isnan(r.rhum)) << "CSV Case: 1st row\n";
 	EXPECT_NEAR(r.pres, 1010, e) << "CSV Case: 1st row\n";
-	EXPECT_TRUE(::isnan(r.snow)) << "CSV Case: 1st row\n";
+	EXPECT_TRUE(std::isnan(r.snow)) << "CSV Case: 1st row\n";
 	EXPECT_NEAR(r.alb, 0.17, e) << "CSV Case: 1st row\n";
 	EXPECT_NEAR(r.aod, 0.291, e) << "CSV Case: 1st row\n";
 	EXPECT_EQ(wf.get_counter_value(), 1);
@@ -92,18 +92,18 @@ TEST_F(CSVCase_WeatherfileTest, readTest){
 	EXPECT_EQ(r.day, 1) << "CSV Case: 2nd row\n";
 	EXPECT_EQ(r.hour, 1) << "CSV Case: 2nd row\n";
 	EXPECT_NEAR(r.minute, 30, e) << "CSV Case: 2nd row\n";
-	EXPECT_TRUE(::isnan(r.gh)) << "CSV Case: 2nd row\n";
+	EXPECT_TRUE(std::isnan(r.gh)) << "CSV Case: 2nd row\n";
 	EXPECT_NEAR(r.dn, 0, e) << "CSV Case: 2nd row\n";
 	EXPECT_NEAR(r.df, 0, e) << "CSV Case: 2nd row\n";
-	EXPECT_TRUE(::isnan(r.poa)) << "CSV Case: 2nd row\n";
+	EXPECT_TRUE(std::isnan(r.poa)) << "CSV Case: 2nd row\n";
 	EXPECT_NEAR(r.wspd, 1.5, e) << "CSV Case: 2nd row\n";
 	EXPECT_NEAR(r.wdir, 360, e) << "CSV Case: 2nd row\n";
 	EXPECT_NEAR(r.tdry, 20.9, e) << "CSV Case: 2nd row\n";
-	EXPECT_TRUE(::isnan(r.twet)) << "CSV Case: 2nd row\n";
+	EXPECT_TRUE(std::isnan(r.twet)) << "CSV Case: 2nd row\n";
 	EXPECT_NEAR(r.tdew, 19.4, e) << "CSV Case: 2nd row\n";
-	EXPECT_TRUE(::isnan(r.rhum)) << "CSV Case: 2nd row\n";
+	EXPECT_TRUE(std::isnan(r.rhum)) << "CSV Case: 2nd row\n";
 	EXPECT_NEAR(r.pres, 1007, e) << "CSV Case: 2nd row\n";
-	EXPECT_TRUE(::isnan(r.snow)) << "CSV Case: 2nd row\n";
+	EXPECT_TRUE(std::isnan(r.snow)) << "CSV Case: 2nd row\n";
 	EXPECT_NEAR(r.alb, 0.17, e) << "CSV Case: 2nd row\n";
 	EXPECT_NEAR(r.aod, 0.291, e) << "CSV Case: 2nd row\n";
 	EXPECT_EQ(wf.get_counter_value(), 2);
@@ -116,18 +116,18 @@ TEST_F(CSVCase_WeatherfileTest, readTest){
 	EXPECT_EQ(r.day, 1) << "CSV Case: Reset to 1st row\n";
 	EXPECT_EQ(r.hour, 0) << "CSV Case: Reset to 1st row\n";
 	EXPECT_NEAR(r.minute, 30, e) << "CSV Case: Reset to 1st row\n";
-	EXPECT_TRUE(::isnan(r.gh)) << "CSV Case: Reset to 1st row\n";
+	EXPECT_TRUE(std::isnan(r.gh)) << "CSV Case: Reset to 1st row\n";
 	EXPECT_NEAR(r.dn, 0, e) << "CSV Case: Reset to 1st row\n";
 	EXPECT_NEAR(r.df, 0, e) << "CSV Case: Reset to 1st row\n";
-	EXPECT_TRUE(::isnan(r.poa)) << "CSV Case: Reset to 1st row\n";
+	EXPECT_TRUE(std::isnan(r.poa)) << "CSV Case: Reset to 1st row\n";
 	EXPECT_NEAR(r.wspd, 2.1, e) << "CSV Case: Reset to 1st row\n";
 	EXPECT_NEAR(r.wdir, 20, e) << "CSV Case: Reset to 1st row\n";
 	EXPECT_NEAR(r.tdry, 20.9, e) << "CSV Case: Reset to 1st row\n";
-	EXPECT_TRUE(::isnan(r.twet)) << "CSV Case: Reset to 1st row\n";
+	EXPECT_TRUE(std::isnan(r.twet)) << "CSV Case: Reset to 1st row\n";
 	EXPECT_NEAR(r.tdew, 19.3, e) << "CSV Case: Reset to 1st row\n";
-	EXPECT_TRUE(::isnan(r.rhum)) << "CSV Case: Reset to 1st row\n";
+	EXPECT_TRUE(std::isnan(r.rhum)) << "CSV Case: Reset to 1st row\n";
 	EXPECT_NEAR(r.pres, 1010, e) << "CSV Case: Reset to 1st row\n";
-	EXPECT_TRUE(::isnan(r.snow)) << "CSV Case: Reset to 1st row\n";
+	EXPECT_TRUE(std::isnan(r.snow)) << "CSV Case: Reset to 1st row\n";
 	EXPECT_NEAR(r.alb, 0.17, e) << "CSV Case: Reset to 1st row\n";
 	EXPECT_NEAR(r.aod, 0.291, e) << "CSV Case: Reset to 1st row\n";
 	EXPECT_EQ(wf.get_counter_value(), 1);
@@ -201,7 +201,6 @@ TEST_F(Data8760CaseWeatherData, initTest_lib_weatherfile){
 	EXPECT_TRUE(wd.has_data_column(4)) << "Should have Minute column";
 	EXPECT_TRUE(wd.has_data_column(6)) << "Should have DN column";
 	EXPECT_FALSE(wd.has_data_column(8)) << "Should not have POA column";
-	EXPECT_FALSE(wd.has_calculated_data(10)) << "Twet not able to be calculated\n";
 }
 
 TEST_F(Data8760CaseWeatherData, readTest_lib_weatherfile){
@@ -213,18 +212,18 @@ TEST_F(Data8760CaseWeatherData, readTest_lib_weatherfile){
 	EXPECT_EQ(r.day, 1) << "Data8760 Case: 1st row\n";
 	EXPECT_EQ(r.hour, 1) << "Data8760 Case: 1st row\n";
 	EXPECT_NEAR(r.minute, 0, e) << "Data8760 Case: 1st row\n";
-	EXPECT_TRUE(::isnan(r.gh)) << "Data8760 Case: 1st row\n";
+	EXPECT_TRUE(std::isnan(r.gh)) << "Data8760 Case: 1st row\n";
 	EXPECT_NEAR(r.dn, 0, e) << "Data8760 Case: 1st row\n";
 	EXPECT_NEAR(r.df, 0, e) << "Data8760 Case: 1st row\n";
-	EXPECT_TRUE(::isnan(r.poa)) << "Data8760 Case: 1st row\n";
+	EXPECT_TRUE(std::isnan(r.poa)) << "Data8760 Case: 1st row\n";
 	EXPECT_NEAR(r.wspd, 0, e) << "Data8760 Case: 1st row\n";
 	EXPECT_NEAR(r.wdir, 0, e) << "Data8760 Case: 1st row\n";
 	EXPECT_NEAR(r.tdry, 0, e) << "Data8760 Case: 1st row\n";
-	EXPECT_TRUE(::isnan(r.twet)) << "Data8760 Case: 1st row\n";
+	EXPECT_TRUE(std::isnan(r.twet)) << "Data8760 Case: 1st row\n";
 	EXPECT_NEAR(r.tdew, 0, e) << "Data8760 Case: 1st row\n";
-	EXPECT_TRUE(::isnan(r.rhum)) << "Data8760 Case: 1st row\n";
-	EXPECT_TRUE(::isnan(r.pres)) << "Data8760 Case: 1st row\n";
-	EXPECT_TRUE(::isnan(r.snow)) << "Data8760 Case: 1st row\n";
+	EXPECT_TRUE(std::isnan(r.rhum)) << "Data8760 Case: 1st row\n";
+	EXPECT_TRUE(std::isnan(r.pres)) << "Data8760 Case: 1st row\n";
+	EXPECT_TRUE(std::isnan(r.snow)) << "Data8760 Case: 1st row\n";
 	EXPECT_NEAR(r.alb, 0, e) << "Data8760 Case: 1st row\n";
 	EXPECT_NEAR(r.aod, 0, e) << "Data8760 Case: 1st row\n";
 	EXPECT_EQ(wd.get_counter_value(), 1);
@@ -236,18 +235,18 @@ TEST_F(Data8760CaseWeatherData, readTest_lib_weatherfile){
 	EXPECT_EQ(r.day, 3) << "Data8760 Case: 3rd row\n";
 	EXPECT_EQ(r.hour, 3) << "Data8760 Case: 3rd row\n";
 	EXPECT_NEAR(r.minute, 0, e) << "Data8760 Case: 3rd row\n";
-	EXPECT_TRUE(::isnan(r.gh)) << "Data8760 Case: 3rd row\n";
+	EXPECT_TRUE(std::isnan(r.gh)) << "Data8760 Case: 3rd row\n";
 	EXPECT_NEAR(r.dn, 0, e) << "Data8760 Case: 3rd row\n";
 	EXPECT_NEAR(r.df, 0, e) << "Data8760 Case: 3rd row\n";
-	EXPECT_TRUE(::isnan(r.poa)) << "Data8760 Case: 3rd row\n";
+	EXPECT_TRUE(std::isnan(r.poa)) << "Data8760 Case: 3rd row\n";
 	EXPECT_NEAR(r.wspd, 0, e) << "Data8760 Case: 3rd row\n";
 	EXPECT_NEAR(r.wdir, 0, e) << "Data8760 Case: 3rd row\n";
 	EXPECT_NEAR(r.tdry, 0, e) << "Data8760 Case: 3rd row\n";
-	EXPECT_TRUE(::isnan(r.twet)) << "Data8760 Case: 3rd row\n";
+	EXPECT_TRUE(std::isnan(r.twet)) << "Data8760 Case: 3rd row\n";
 	EXPECT_NEAR(r.tdew, 0, e) << "Data8760 Case: 3rd row\n";
-	EXPECT_TRUE(::isnan(r.rhum)) << "Data8760 Case: 3rd row\n";
-	EXPECT_TRUE(::isnan(r.pres)) << "Data8760 Case: 3rd row\n";
-	EXPECT_TRUE(::isnan(r.snow)) << "Data8760 Case: 3rd row\n";
+	EXPECT_TRUE(std::isnan(r.rhum)) << "Data8760 Case: 3rd row\n";
+	EXPECT_TRUE(std::isnan(r.pres)) << "Data8760 Case: 3rd row\n";
+	EXPECT_TRUE(std::isnan(r.snow)) << "Data8760 Case: 3rd row\n";
 	EXPECT_NEAR(r.alb, 0, e) << "Data8760 Case: 3rd row\n";
 	EXPECT_NEAR(r.aod, 0, e) << "Data8760 Case: 3rd row\n";
 	EXPECT_EQ(wd.get_counter_value(), 3);

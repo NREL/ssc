@@ -579,7 +579,7 @@ double GTI_DIRINT( const double poa[3], const double inc[3], double zen, double 
 					 0.125, 0.125, 0.125, 0.125, 0.125, 
 					 0.125, 0.125, 0.125, 0.125, 0.125};
 
-	double poa_tmp[3], diffc_tmp[3], poaBest[3];
+	double poa_tmp[3], diffc_tmp[3], poaBest[3] = {0, 0, 0};
 	
 	// Begin iterative solution for Kt
 //	double Io = 1367.0 * (1.0 + 0.033 * cos(0.0172142 * doy));    // Extraterrestrial dn (Taken from DIRINT Model)
@@ -626,7 +626,6 @@ double GTI_DIRINT( const double poa[3], const double inc[3], double zen, double 
 		GTI[2] = Max( 1.0, GTI[2] - Ci[i] * diff);
 
 	}
-
 
 	poaCompOut[0] = poaBest[0];
 	poaCompOut[1] = poaBest[1];
