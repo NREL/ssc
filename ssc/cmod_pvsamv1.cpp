@@ -795,7 +795,7 @@ void cm_pvsamv1::setup_noct_model( const std::string &prefix, noct_celltemp_t &n
 	}
 }
 	
-void cm_pvsamv1::exec( )
+void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 {		
 	std::auto_ptr<weather_data_provider> wdprov;
 	if ( is_assigned( "solar_resource_file" ) )
