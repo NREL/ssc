@@ -194,7 +194,7 @@ public:
 	void setup_noct_model(const std::string &prefix, noct_celltemp_t &noct_tc);
 	
 	//! Run the PV model
-	void exec();
+	void exec() throw (compute_module::general_error);
 	
 	//! Return the module efficiency
 	double module_eff(int mod_type);
