@@ -4,11 +4,7 @@
 #include <stdio.h>
 #include "code_generator_utilities.h"
 
-#ifdef _WIN32
-	const char * SSCDIR = std::getenv("SSCDIR");
-#else
-	const char * SSCDIR = ".."
-#endif
+const char * SSCDIR = std::getenv("SSCDIR");
 
 char solar_resource_path[100];
 char load_profile_path[100];

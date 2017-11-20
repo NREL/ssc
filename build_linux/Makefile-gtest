@@ -1,7 +1,7 @@
 VPATH = ../test
 
 SSCLIB = ./ssc.so
-GTDIR = ../../googletest/googletest
+GTDIR = $(GTEST)
 GTLIB = $(GTDIR)/make/gtest_main.a
 
 CC = gcc
