@@ -47,6 +47,8 @@
 *  THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *******************************************************************************************************/
 
+#ifndef _CMOD_PVAMV1_H_
+#define _CMOD_PVAMV1_H_
 
 #include <string>
 #include <cmath>
@@ -203,3 +205,5 @@ public:
 	//! Check the inverter size and the associated clipping
 	void inverter_size_check();
 };
+
+#endif // !_CMOD_PVAMV1_H_
