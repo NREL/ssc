@@ -22,7 +22,7 @@ TEST_F(windTurbineTest, turbinePowerTest_lib_windwakemodel){
 }
 
 
-/// All turbines are in a row at same downwind distance
+/// All turbines are in a row at same downwind distance: no effect
 TEST_F(simpleWakeModelTest, wakeCalcNoInterference_lib_windwakemodel){
 	
 	for (int i = 0; i < numberTurbines; i++){
@@ -39,7 +39,7 @@ TEST_F(simpleWakeModelTest, wakeCalcNoInterference_lib_windwakemodel){
 	}
 }
 
-/// All turbines are in a line at same crosswind distance
+/// All turbines are in a line at same crosswind distance: lot of power reduction
 TEST_F(simpleWakeModelTest, wakeCalcAllInterference_lib_windwakemodel){
 	for (int i = 0; i < numberTurbines; i++){
 		distDownwind[i] = 5 * i;
@@ -59,7 +59,7 @@ TEST_F(simpleWakeModelTest, wakeCalcAllInterference_lib_windwakemodel){
 	}
 }
 
-/// Turbines form a triangle with two downwind turbines
+/// Turbines form a triangle with two downwind turbines: little change due to crosswind distance
 TEST_F(simpleWakeModelTest, wakeCalcTriangleInterference_lib_windwakemodel){
 	distDownwind = { 0, 5, 5 };
 	distCrosswind = { 0, -5, 5 };

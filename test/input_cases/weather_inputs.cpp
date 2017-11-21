@@ -5,9 +5,9 @@
 #include "weather_inputs.h"
 
 /// delete via: for(int i = 0; i < sizeY; ++i) { delete[] ary[i];} delete[] ary;
-var_data* create_winddata_array(){
-	float* year_data = new float[35040];
-	for (int i = 0; i < 8760; i++){
+var_data* create_winddata_array(int intervalsPerHour){
+	float* year_data = new float[35040 * intervalsPerHour];
+	for (int i = 0; i < 8760 * intervalsPerHour; i++){
 		year_data[i * 4] = 15;			// temp
 		year_data[i * 4 + 1] = (float)0.95;	// pres
 		year_data[i * 4 + 2] = 5;		// spd
@@ -20,7 +20,7 @@ var_data* create_winddata_array(){
 		height[i] = (float)80.;
 		fields[i] = (float)i+1;
 	}
-	var_data data_vd = var_data(year_data, 8760, 4);
+	var_data data_vd = var_data(year_data, 8760 * intervalsPerHour, 4);
 	var_data height_vd = var_data(height, 4);
 	var_data fields_vd = var_data(fields, 4);
 
@@ -63,7 +63,7 @@ void free_weatherdata_array(var_data* data){
 	data->table.unassign("alb");
 }
 
-var_data* create_weatherdata_array(){
+var_data* create_weatherdata_array(int /*not implemented yet: intervalsPerHour*/){
 	float* year = new float[8760];
 	float* month = new float[8760];
 	float* day = new float[8760];

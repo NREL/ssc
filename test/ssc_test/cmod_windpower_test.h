@@ -39,7 +39,7 @@ public:
 #endif	
 		cm = new cm_windpower();
 		vartab = new var_table;
-		windResourceData = create_winddata_array();
+		windResourceData = create_winddata_array(1);
 		assign_default_variables(vartab);
 	}
 	void TearDown(){

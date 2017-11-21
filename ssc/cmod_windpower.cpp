@@ -268,6 +268,7 @@ void cm_windpower::exec() throw(general_error)
 		else if (is_assigned("wind_resource_data"))
 		{
 			wdprov = std::auto_ptr<winddata_provider>(new winddata(lookup("wind_resource_data")));
+			nstep = wdprov->nrecords();
 		}
 		else
 			throw exec_error("windpower", "no wind resource data supplied");
