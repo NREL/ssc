@@ -58,7 +58,7 @@ protected:
 	std::vector<double> turbIntensity;
 public:
 	double seaLevelAirDensity = physics::AIR_DENSITY_SEA_LEVEL;
-	double e = 0.01;
+	double e = 0.1;
 	void SetUp(){
 		numberTurbines = 3;
 		distDownwind.resize(numberTurbines);
@@ -78,12 +78,14 @@ public:
 
 
 /**
-* Park/WaSp wake Model test
+* Park/WaSp wake Model test requires an initialized windTurbine and test data: thrust, power, eff, windspeed,
+* turbulence intensity. These are done in SetUp(). The coordinates of the turbines on the farm are also 
+* required, these are assigned in individual tests.
 */
 
 class parkWakeModelTest : public ::testing::Test{
 protected:
-	simpleWakeModel swm;
+	parkWakeModel pm;
 	windTurbine wt;
 	int numberTurbines;
 	std::vector<double> distDownwind;
@@ -94,24 +96,61 @@ protected:
 	std::vector<double> windSpeed;
 	std::vector<double> turbIntensity;
 public:
-	double e = 0.0001;
+	double seaLevelAirDensity = physics::AIR_DENSITY_SEA_LEVEL;
+	double e = 0.1;
 	void SetUp(){
 		numberTurbines = 3;
 		distDownwind.resize(numberTurbines);
 		distCrosswind.resize(numberTurbines);
-		thrust.resize(numberTurbines);
-		power.resize(numberTurbines);
-		eff.resize(numberTurbines);
+		thrust.resize(numberTurbines, 0.47669);
+		power.resize(numberTurbines, 1190);
+		eff.resize(numberTurbines, 0);
 		windSpeed.resize(numberTurbines);
-		turbIntensity.resize(numberTurbines);
+		turbIntensity.resize(numberTurbines, 0.1);
 		createDefaultTurbine(&wt);
-		swm = simpleWakeModel(numberTurbines, &wt);
+		pm = parkWakeModel(numberTurbines, &wt);
 		for (int i = 0; i < numberTurbines; i++){
-			thrust[i] = .7;
-			power[i] = 10.;
-			eff[i] = 1.;
 			windSpeed[i] = 10.;
-			turbIntensity[i] = 0.1;
+		}
+	}
+};
+
+/**
+* Eddy viscosity wake Model test requires a turbulence coefficient, an initialized windTurbine and test data: 
+* thrust, power, eff, windspeed, turbulence intensity. These are done in SetUp(). The coordinates of the turbines 
+* on the farm are also required, these are assigned in individual tests.
+*/
+
+class eddyViscosityWakeModelTest : public ::testing::Test{
+protected:
+	eddyViscosityWakeModel evm;
+	windTurbine wt;
+	int numberTurbines;
+	double turbCoeff;
+	std::vector<double> distDownwind;
+	std::vector<double> distCrosswind;
+	std::vector<double> thrust;
+	std::vector<double> power;
+	std::vector<double> eff;
+	std::vector<double> windSpeed;
+	std::vector<double> turbIntensity;
+public:
+	double seaLevelAirDensity = physics::AIR_DENSITY_SEA_LEVEL;
+	double e = 0.1;
+	void SetUp(){
+		numberTurbines = 3;
+		distDownwind.resize(numberTurbines);
+		distCrosswind.resize(numberTurbines);
+		thrust.resize(numberTurbines, 0.47669);
+		power.resize(numberTurbines, 1190);
+		eff.resize(numberTurbines, 0);
+		windSpeed.resize(numberTurbines);
+		turbIntensity.resize(numberTurbines, 0.1);
+		createDefaultTurbine(&wt);
+		evm = eddyViscosityWakeModel(numberTurbines, &wt);
+		evm.setTurbulenceCoeff(0.1);
+		for (int i = 0; i < numberTurbines; i++){
+			windSpeed[i] = 10.;
 		}
 	}
 };

@@ -192,6 +192,7 @@ private:
 	double minDeficit;
 	int MIN_DIAM_EV, EV_SCALE, MAX_WIND_TURBINES;
 	bool useFilterFx;
+	// EV wake matrices: each turbine is row, each col is wake data for that turbine at dist
 	util::matrix_t<double> matEVWakeDeficits;	// wind velocity deficit behind each turbine, indexed by axial distance downwind
 	util::matrix_t<double> matEVWakeWidths;		// width of wake (in diameters) for each turbine, indexed by axial distance downwind
 
@@ -236,7 +237,7 @@ private:
 
 public:
 	eddyViscosityWakeModel(){ nTurbines = 0; }
-	eddyViscosityWakeModel(int numberOfTurbinesInFarm){ 
+	eddyViscosityWakeModel(int numberOfTurbinesInFarm, windTurbine* wt){ 
 		nTurbines = numberOfTurbinesInFarm; 
 		axialResolution = 0.5;
 		minThrustCoeff = 0.02;
@@ -245,12 +246,17 @@ public:
 		MIN_DIAM_EV = 2;
 		EV_SCALE = 1;
 		MAX_WIND_TURBINES = 300;
+		axialResolution = 0.5; // in rotor diameters, default in openWind=0.5
+		double radialResolution = 0.2; // in rotor diameters, default in openWind=0.2
+		double maxRotorDiameters = 50; // in rotor diameters, default in openWind=50
 		useFilterFx = true;
+		wTurbine = wt;
+		rotorDiameter = wt->rotorDiameter;
+		matEVWakeDeficits.resize_fill(nTurbines, (int)(maxRotorDiameters / axialResolution) + 1, 0.0); // each turbine is row, each col is wake deficit for that turbine at dist
+		matEVWakeWidths.resize_fill(nTurbines, (int)(maxRotorDiameters / axialResolution) + 1, 0.0); // each turbine is row, each col is wake deficit for that turbine at dist
 	}
 
-	void setRotorDiameter(double d){ rotorDiameter = d; }
-	void setTurbulenceCoeff(double t){ turbulenceCoeff = t; }
-	void setTurbine(windTurbine* wt){ wTurbine = wt; }	// required
+	void setTurbulenceCoeff(double t){ if (t >= 0 && t <= 1) turbulenceCoeff = t*100; }
 
 	void wakeCalculations(
 		/*INPUTS*/

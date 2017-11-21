@@ -384,7 +384,7 @@ void cm_windpower::exec() throw(general_error)
 	std::shared_ptr<wakeModelBase> wakeModelCalc(nullptr);
 	if (wpc.m_iWakeModelChoice == 0) wakeModelCalc = std::make_shared<simpleWakeModel>(simpleWakeModel(wpc.m_iNumberOfTurbinesInFarm, &wt));
 	else if (wpc.m_iWakeModelChoice == 1) wakeModelCalc = std::make_shared<parkWakeModel>(parkWakeModel(wpc.m_iNumberOfTurbinesInFarm, &wt));
-	else wakeModelCalc = std::make_shared<eddyViscosityWakeModel>(eddyViscosityWakeModel(wpc.m_iNumberOfTurbinesInFarm));
+	else wakeModelCalc = std::make_shared<eddyViscosityWakeModel>(eddyViscosityWakeModel(wpc.m_iNumberOfTurbinesInFarm, &wt));
 
 	if (!wpc.InitializeModel(wakeModelCalc))
 		throw exec_error("windpower", util::format("error allocating memory: %s", wpc.GetErrorDetails().c_str()));

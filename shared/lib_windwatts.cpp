@@ -66,6 +66,7 @@ bool wind_power_calculator::InitializeModel(std::shared_ptr<wakeModelBase>select
 		wakeModel = selectedWakeModel;
 		wakeModel->test(0);
 	}
+	// remove
 	if (m_iWakeModelChoice == SIMPLE_EDDY_VISCOSITY_WAKE_MODEL)
 	{
 		matEVWakeDeficits.resize_fill(m_iNumberOfTurbinesInFarm, (int)(m_dMaxRotorDiameters/m_dAxialResolution)+1, 0.0); // each turbine is row, each col is wake deficit for that turbine at dist

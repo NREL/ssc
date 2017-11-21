@@ -245,7 +245,7 @@ double parkWakeModel::delta_V_Park(double Uo, double Ui, double distCrosswind, d
 void parkWakeModel::wakeCalculations(const double airDensity, const double distanceDownwind[], const double distanceCrosswind[],
 	double power[], double eff[], double thrust[], double windSpeed[], double turbulenceIntensity[])
 {
-	double turbineRadius = rotorDiameter / 2;
+	double turbineRadius = wTurbine->rotorDiameter / 2;
 
 	for (size_t i = 1; i < nTurbines; i++) // downwind turbines, i=0 has already been done
 	{
@@ -267,6 +267,7 @@ void parkWakeModel::wakeCalculations(const double airDensity, const double dista
 		}
 		eff[i] = wTurbine->calculateEff(power[i], power[0]);
 	}
+	eff[0] = 100;
 }
 
 
