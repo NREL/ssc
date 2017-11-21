@@ -105,7 +105,7 @@ public:
 	std::vector<double> m_adPowerCurveWS, m_adPowerCurveKW, m_adPowerCurveRPM, m_adXCoords, m_adYCoords, m_adDensityCorrectedWS;
 
 	size_t GetMaxTurbines() {return MAX_WIND_TURBINES;}
-	bool InitializeModel(std::shared_ptr<wake_model>selectedWakeModel); // if necessary, allocate memory in util::matrix arrays
+	bool InitializeModel(std::shared_ptr<wakeModelBase>selectedWakeModel); // if necessary, allocate memory in util::matrix arrays
 	std::string GetWakeModelShortName();
 	std::string GetWakeModelName();
 	std::string GetErrorDetails() { return m_sErrDetails; }
@@ -140,7 +140,7 @@ public:
 	void turbine_power(double fWindVelocityAtDataHeight, double fAirDensity, double *fTurbineOutput, double *fThrustCoefficient);
 
 private:
-	std::shared_ptr<wake_model> wakeModel;
+	std::shared_ptr<wakeModelBase> wakeModel;
 	std::string m_sErrDetails;
 	util::matrix_t<double> matEVWakeDeficits; // wind velocity deficit behind each turbine, indexed by axial distance downwind
 	util::matrix_t<double> matEVWakeWidths; // width of wake (in diameters) for each turbine, indexed by axial distance downwind

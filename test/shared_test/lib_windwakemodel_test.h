@@ -39,12 +39,15 @@ void createDefaultTurbine(windTurbine* wt){
 
 
 /**
-* Simple wake Model test
+* Simple wake model test requires an initialized windTurbine and test data: thrust, power, eff, windspeed,
+* turbulence intensity. These are done in SetUp(). The coordinates of the turbines on the farm are also 
+* required, these are assigned in individual tests.
 */
 
 class simpleWakeModelTest : public ::testing::Test{
 protected:
 	simpleWakeModel swm;
+	windTurbine wt;
 	int numberTurbines;
 	std::vector<double> distDownwind;
 	std::vector<double> distCrosswind;
@@ -54,28 +57,22 @@ protected:
 	std::vector<double> windSpeed;
 	std::vector<double> turbIntensity;
 public:
-	double e = 0.0001;
-	void setTestTurbineCurve(){
-		for (int i = 0; i < numberTurbines; i++){
-			thrust[i] = .7;
-			power[i] = 10.;
-			eff[i] = 1.;
-			windSpeed[i] = 10.;
-			turbIntensity[i] = 0.1;
-		}
-	}
+	double seaLevelAirDensity = physics::AIR_DENSITY_SEA_LEVEL;
+	double e = 0.01;
 	void SetUp(){
 		numberTurbines = 3;
 		distDownwind.resize(numberTurbines);
 		distCrosswind.resize(numberTurbines);
-		thrust.resize(numberTurbines);
-		power.resize(numberTurbines);
-		eff.resize(numberTurbines);
+		thrust.resize(numberTurbines, 0.47669);
+		power.resize(numberTurbines, 1190);
+		eff.resize(numberTurbines, 0);
 		windSpeed.resize(numberTurbines);
-		turbIntensity.resize(numberTurbines);
-		windTurbine wt;
+		turbIntensity.resize(numberTurbines, 0.1);
 		createDefaultTurbine(&wt);
-		swm = simpleWakeModel(numberTurbines, wt);
+		swm = simpleWakeModel(numberTurbines, &wt);
+		for (int i = 0; i < numberTurbines; i++){
+			windSpeed[i] = 10.;
+		}
 	}
 };
 
@@ -87,6 +84,7 @@ public:
 class parkWakeModelTest : public ::testing::Test{
 protected:
 	simpleWakeModel swm;
+	windTurbine wt;
 	int numberTurbines;
 	std::vector<double> distDownwind;
 	std::vector<double> distCrosswind;
@@ -106,11 +104,8 @@ public:
 		eff.resize(numberTurbines);
 		windSpeed.resize(numberTurbines);
 		turbIntensity.resize(numberTurbines);
-		windTurbine wt;
 		createDefaultTurbine(&wt);
-		swm = simpleWakeModel(numberTurbines, wt);
-	}
-	void setTestTurbineCurve(){
+		swm = simpleWakeModel(numberTurbines, &wt);
 		for (int i = 0; i < numberTurbines; i++){
 			thrust[i] = .7;
 			power[i] = 10.;

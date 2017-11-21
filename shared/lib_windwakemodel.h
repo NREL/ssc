@@ -103,13 +103,18 @@ public:
 	}
 };
 
-class wake_model
+/**
+ * Wake models are used to calculate the wind velocity deficit at a turbine and the following changes to power, efficient, thrust and
+ * turbulence intensity. The class requires an turbine with initialized values to run. Error messages can be propagated via errDetails.
+ */
+
+class wakeModelBase
 {
 protected:
 	unsigned int nTurbines;
 	windTurbine* wTurbine;
 public:
-	wake_model(){}
+	wakeModelBase(){}
 	std::string errDetails;
 	virtual int test(int a){ return a + 10; }
 	virtual void wakeCalculations(
@@ -122,13 +127,13 @@ public:
 * at a downwind turbine due to the wake of an upwind turbine. The model returns the modified wind speed for each turbine.
 */
 
-class simpleWakeModel : public wake_model{
+class simpleWakeModel : public wakeModelBase{
 private:	
 	double velDeltaPQ(double radiiCrosswind, double axialDistInRadii, double thrustCoeff, double *newTurbulenceIntensity);
 
 public:
 	simpleWakeModel(){ nTurbines = 0; }
-	simpleWakeModel(int numberOfTurbinesInFarm, windTurbine wt){ nTurbines = numberOfTurbinesInFarm; *wTurbine = wt; }
+	simpleWakeModel(int numberOfTurbinesInFarm, windTurbine* wt){ nTurbines = numberOfTurbinesInFarm; wTurbine = wt; }
 
 	void wakeCalculations(
 		/*INPUTS*/
@@ -151,7 +156,7 @@ public:
 * much its swept area overlaps with the upstream wake. 
 */
 
-class parkWakeModel : public wake_model{
+class parkWakeModel : public wakeModelBase{
 private:
 	double rotorDiameter;
 	double wakeDecayCoefficient = 0.07, 
@@ -161,7 +166,7 @@ private:
 
 public:
 	parkWakeModel(){ nTurbines = 0; }
-	parkWakeModel(int numberOfTurbinesInFarm, windTurbine wt){ nTurbines = numberOfTurbinesInFarm; *wTurbine = wt; }
+	parkWakeModel(int numberOfTurbinesInFarm, windTurbine* wt){ nTurbines = numberOfTurbinesInFarm; wTurbine = wt; }
 
 	void setRotorDiameter(double d){ rotorDiameter = d; }
 	void wakeCalculations(
@@ -180,7 +185,7 @@ public:
 };
 
 
-class eddyViscosityWakeModel : public wake_model{
+class eddyViscosityWakeModel : public wakeModelBase{
 private:
 	double rotorDiameter, turbulenceCoeff;
 	double axialResolution, minThrustCoeff, nBlades;

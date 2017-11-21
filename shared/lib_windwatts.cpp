@@ -60,7 +60,7 @@
 #pragma warning(disable: 4127)  // ignore warning: 'warning C4127: conditional expression is constant'
 #endif
 
-bool wind_power_calculator::InitializeModel(std::shared_ptr<wake_model>selectedWakeModel)
+bool wind_power_calculator::InitializeModel(std::shared_ptr<wakeModelBase>selectedWakeModel)
 {
 	if (selectedWakeModel){
 		wakeModel = selectedWakeModel;

@@ -11,7 +11,7 @@
 * mockWakeModel is assigned in WPC's InitializeModel and called in windpower function.
 */
 
-class mockWakeModel : public wake_model
+class mockWakeModel : public wakeModelBase
 {
 public:
 	mockWakeModel(){}

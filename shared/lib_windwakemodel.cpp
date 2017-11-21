@@ -158,7 +158,7 @@ double simpleWakeModel::velDeltaPQ(double radiiCrosswind, double axialDistInRadi
 	if (radiiCrosswind > 20.0 || *newTurbulenceIntensity <= 0.0 || axialDistInRadii <= 0.0 || thrustCoeff <= 0.0)
 		return 0.0;
 
-	double fAddedTurbulence = (thrustCoeff / 7.0)*(1.0 - (2.0 / 5.0)*log(2.0*axialDistInRadii)); // NOTE that this equation does not account for how far over the turbine is!!
+	double fAddedTurbulence = (thrustCoeff / 7.0)*(1.0 - (2.0 / 5.0)*log(2.0*axialDistInRadii));
 	*newTurbulenceIntensity = sqrt(pow(fAddedTurbulence, 2.0) + pow(*newTurbulenceIntensity, 2.0));
 
 	double AA = pow(*newTurbulenceIntensity, 2.0) * pow(axialDistInRadii, 2.0);
@@ -190,8 +190,13 @@ void simpleWakeModel::wakeCalculations(const double airDensity, const double dis
 		}
 		windSpeed[i] = windSpeed[i] * dDeficit;
 		wTurbine->turbinePower(windSpeed[i], airDensity, &power[i], &thrust[i]);
+		if (wTurbine->errDetails.length() > 0){
+			errDetails = wTurbine->errDetails;
+			return;
+		}
 		eff[i] = wTurbine->calculateEff(power[i], power[0]);
 	}
+	eff[0] = 100.;
 }
 
 
@@ -256,6 +261,10 @@ void parkWakeModel::wakeCalculations(const double airDensity, const double dista
 		}
 		windSpeed[i] = newSpeed;
 		wTurbine->turbinePower(windSpeed[i], airDensity, &power[i], &thrust[i]);
+		if (wTurbine->errDetails.length() > 0){
+			errDetails = wTurbine->errDetails;
+			return;
+		}
 		eff[i] = wTurbine->calculateEff(power[i], power[0]);
 	}
 }
@@ -543,7 +552,10 @@ void eddyViscosityWakeModel::wakeCalculations(/*INPUTS */ const double air_densi
 		adWindSpeed[i] = adWindSpeed[0] * (1 - dDeficit);
 		aTurbulence_intensity[i] = dTotalTI;
 		wTurbine->turbinePower(adWindSpeed[i], air_density, &power[i], &Thrust[i]);
-
+		if (wTurbine->errDetails.length() > 0){
+			errDetails = wTurbine->errDetails;
+			return;
+		}
 		eff[i] = wTurbine->calculateEff(power[i], power[0]);
 
 		// now that turbine[i] wind speed, output, thrust, etc. have been calculated, calculate wake characteristics for it, because downwind turbines will need the info

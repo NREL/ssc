@@ -19,25 +19,31 @@
  * before compute() is called.
  */
 class CMWindPowerIntegration : public ::testing::Test{
-private:
+protected:
 	cm_windpower* cm;
-	var_data* windresourcedata;
 	void assign_default_variables(var_table* vt);
 
 public:
+	var_data* windResourceData;
 	/// contains all input and output variables for testing
+	std::string windResourceFile;
 	var_table* vartab;
 	bool compute();
 	double e = 1000;
 	/// creates all variables on the heap, which must be deleted in TearDown()
 	void SetUp(){
+#ifdef _MSC_VER	
+		windResourceFile = "../../../test/input_docs/wind.srw";
+#else	
+		windResourceFile = "../test/input_docs/wind.srw";
+#endif	
 		cm = new cm_windpower();
 		vartab = new var_table;
-		windresourcedata = create_winddata_array();
+		windResourceData = create_winddata_array();
 		assign_default_variables(vartab);
 	}
 	void TearDown(){
-		free_winddata_array(windresourcedata);
+		free_winddata_array(windResourceData);
 		delete vartab;
 		delete cm;
 	}
@@ -60,13 +66,9 @@ void CMWindPowerIntegration::assign_default_variables(var_table* vt){
 			ycoord[i] = ycoord_val[i];
 		}
 	}
-#ifdef _MSC_VER	
-	std::string file = "../../../test/input_docs/wind.srw";
-#else	
-	std::string file = "../test/input_docs/wind.srw";
-#endif	
-	//var(vt, "wind_resource_filename", file);
-	var(vt, "wind_resource_data", *windresourcedata);
+
+	var(vt, "wind_resource_filename", windResourceFile);
+	//var(vt, "wind_resource_data", *windResourceData);
 	var(vt, "wind_resource_shear", 0.140);
 	var(vt, "wind_resource_turbulence_coeff", 0.100);
 	var(vt, "system_capacity", 48000);
