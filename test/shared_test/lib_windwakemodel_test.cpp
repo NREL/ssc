@@ -8,7 +8,7 @@
 #include "lib_windwakemodel_test.h"
 
 
-/// turbinePower function test
+/// turbinePower function test: error case and varying air density case
 TEST_F(windTurbineTest, turbinePowerTest_lib_windwakemodel){
 	double output(0), thrustCoeff(0);
 	wt.turbinePower(20., airDensity, &output, &thrustCoeff);
@@ -20,7 +20,12 @@ TEST_F(windTurbineTest, turbinePowerTest_lib_windwakemodel){
 	EXPECT_NEAR(output, 1390, e) << "At 11.25m/s, the output should be 1390.";
 	EXPECT_NEAR(thrustCoeff, 0.3725, e) << "At 11.25m/s, the thrust coeff should be 0.3725";
 
-	// different air density
+	// low air density
+	output = 0;
+	thrustCoeff = 0;
+	wt.turbinePower(11.25, 0.5, &output, &thrustCoeff);
+	EXPECT_NEAR(output, 752.85, e) << "Low air density";
+	EXPECT_NEAR(thrustCoeff, 0.538, e) << "Low air density";
 }
 
 
