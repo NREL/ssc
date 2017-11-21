@@ -243,7 +243,7 @@ double parkWakeModel::delta_V_Park(double Uo, double Ui, double distCrosswind, d
 
 /// Deficit at a downwind turbine is the minimum speed found from all the upwind turbine impacts
 void parkWakeModel::wakeCalculations(const double airDensity, const double distanceDownwind[], const double distanceCrosswind[],
-	double power[], double eff[], double thrust[], double windSpeed[], double turbulenceIntensity[])
+	double power[], double eff[], double thrust[], double windSpeed[], double [])
 {
 	double turbineRadius = wTurbine->rotorDiameter / 2;
 

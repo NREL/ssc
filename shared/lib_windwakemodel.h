@@ -67,9 +67,13 @@ private:
 						powerCurveKW,			// power output: y-axis
 						densityCorrectedWS,
 						powerCurveRPM;
-	unsigned int powerCurveArrayLength;
 	double cutInSpeed;
 public:
+
+	std::vector<double> getPowerCurveWS(){ return powerCurveWS; }
+	std::vector<double> getPowerCurveKW(){ return powerCurveKW; }
+
+	size_t powerCurveArrayLength;
 	double rotorDiameter, hubHeight, measurementHeight, shearExponent;
 	double lossesAbsolute, lossesPercent;
 	std::string errDetails;
@@ -115,6 +119,7 @@ protected:
 	windTurbine* wTurbine;
 public:
 	wakeModelBase(){}
+	virtual std::string getModelName(){ return ""; };
 	std::string errDetails;
 	virtual int test(int a){ return a + 10; }
 	virtual void wakeCalculations(
@@ -134,6 +139,8 @@ private:
 public:
 	simpleWakeModel(){ nTurbines = 0; }
 	simpleWakeModel(int numberOfTurbinesInFarm, windTurbine* wt){ nTurbines = numberOfTurbinesInFarm; wTurbine = wt; }
+
+	std::string getModelName(){ return "PQ"; }
 
 	void wakeCalculations(
 		/*INPUTS*/
@@ -167,7 +174,8 @@ private:
 public:
 	parkWakeModel(){ nTurbines = 0; }
 	parkWakeModel(int numberOfTurbinesInFarm, windTurbine* wt){ nTurbines = numberOfTurbinesInFarm; wTurbine = wt; }
-
+	
+	std::string getModelName(){ return "Park"; }
 	void setRotorDiameter(double d){ rotorDiameter = d; }
 	void wakeCalculations(
 		/*INPUTS*/
@@ -247,7 +255,7 @@ public:
 		EV_SCALE = 1;
 		MAX_WIND_TURBINES = 300;
 		axialResolution = 0.5; // in rotor diameters, default in openWind=0.5
-		double radialResolution = 0.2; // in rotor diameters, default in openWind=0.2
+		//double radialResolution = 0.2; // in rotor diameters, default in openWind=0.2
 		double maxRotorDiameters = 50; // in rotor diameters, default in openWind=50
 		useFilterFx = true;
 		wTurbine = wt;
@@ -255,6 +263,8 @@ public:
 		matEVWakeDeficits.resize_fill(nTurbines, (int)(maxRotorDiameters / axialResolution) + 1, 0.0); // each turbine is row, each col is wake deficit for that turbine at dist
 		matEVWakeWidths.resize_fill(nTurbines, (int)(maxRotorDiameters / axialResolution) + 1, 0.0); // each turbine is row, each col is wake deficit for that turbine at dist
 	}
+
+	std::string getModelName(){ return "FastEV"; }
 
 	void setTurbulenceCoeff(double t){ if (t >= 0 && t <= 1) turbulenceCoeff = t*100; }
 
