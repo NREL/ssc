@@ -4,49 +4,26 @@
 #include <iostream>
 
 #include <lib_windwakemodel.h>
+#include "lib_windwakemodel_test.h"
 
-/**
- * Simple wake Model test
- */
 
-class simpleWakeModelTest : public ::testing::Test{
-protected:
-	simpleWakeModel swm;
-	int numberTurbines;
-	std::vector<double> distDownwind;
-	std::vector<double> distCrosswind;
-	std::vector<double> thrust;
-	std::vector<double> power;
-	std::vector<double> eff;
-	std::vector<double> windSpeed;
-	std::vector<double> turbIntensity;
-public:
-	double e = 0.0001;
-	void SetUp(){
-		numberTurbines = 3;
-		distDownwind.resize(numberTurbines);
-		distCrosswind.resize(numberTurbines);
-		thrust.resize(numberTurbines);
-		power.resize(numberTurbines);
-		eff.resize(numberTurbines);
-		windSpeed.resize(numberTurbines);
-		turbIntensity.resize(numberTurbines);
-		swm = simpleWakeModel(numberTurbines);
-	}
-	void setTestTurbineCurve(){
-		for (int i = 0; i < numberTurbines; i++){
-			thrust[i] = .7;
-			power[i] = 10.;
-			eff[i] = 1.;
-			windSpeed[i] = 10.;
-			turbIntensity[i] = 0.1;
-		}
-	}
-};
+/// turbinePower function test
+TEST_F(windTurbineTest, turbinePowerTest_lib_windwakemodel){
+	double output(0), thrustCoeff(0);
+	wt.turbinePower(20., airDensity, &output, &thrustCoeff);
+	EXPECT_NEAR(output, 0.0, e) << "Turbine not initialized.";
+	EXPECT_NEAR(thrustCoeff, 0.0, e) << "Turbine not initialized.";
+
+	createDefaultTurbine(&wt);
+	wt.turbinePower(11.25, airDensity, &output, &thrustCoeff);
+	EXPECT_NEAR(output, 1390, e) << "At 11.25m/s, the output should be 1390.";
+	EXPECT_NEAR(thrustCoeff, 0.3725, e) << "At 11.25m/s, the thrust coeff should be 0.3725";
+}
+
 
 /// All turbines are in a row at same downwind distance
 TEST_F(simpleWakeModelTest, wakeCalcNoInterference_lib_windwakemodel){
-	setTestTurbineCurve();
+	
 	for (int i = 0; i < numberTurbines; i++){
 		distDownwind[i] = 0;
 		distCrosswind[i] = 5 * i;
@@ -97,41 +74,3 @@ TEST_F(simpleWakeModelTest, wakeCalcTriangleInterference_lib_windwakemodel){
 	EXPECT_EQ(turbIntensity[1], turbIntensity[2]);
 }
 
-/**
-* Park/WaSp wake Model test
-*/
-
-class parkWakeModelTest : public ::testing::Test{
-protected:
-	simpleWakeModel swm;
-	int numberTurbines;
-	std::vector<double> distDownwind;
-	std::vector<double> distCrosswind;
-	std::vector<double> thrust;
-	std::vector<double> power;
-	std::vector<double> eff;
-	std::vector<double> windSpeed;
-	std::vector<double> turbIntensity;
-public:
-	double e = 0.0001;
-	void SetUp(){
-		numberTurbines = 3;
-		distDownwind.resize(numberTurbines);
-		distCrosswind.resize(numberTurbines);
-		thrust.resize(numberTurbines);
-		power.resize(numberTurbines);
-		eff.resize(numberTurbines);
-		windSpeed.resize(numberTurbines);
-		turbIntensity.resize(numberTurbines);
-		swm = simpleWakeModel(numberTurbines);
-	}
-	void setTestTurbineCurve(){
-		for (int i = 0; i < numberTurbines; i++){
-			thrust[i] = .7;
-			power[i] = 10.;
-			eff[i] = 1.;
-			windSpeed[i] = 10.;
-			turbIntensity[i] = 0.1;
-		}
-	}
-};

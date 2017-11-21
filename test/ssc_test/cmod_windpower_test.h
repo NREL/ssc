@@ -1,3 +1,6 @@
+#ifndef __WINDPOWER_TEST__
+#define __WINDPOWER_TEST__
+
 #include <gtest/gtest.h>
 
 #include "core.h"
@@ -89,3 +92,5 @@ bool CMWindPowerIntegration::compute(){
 	bool result = cm->compute(&h, vartab);
 	return result;
 }
+
+#endif

@@ -106,8 +106,8 @@ public:
 class wake_model
 {
 protected:
-	windTurbine* wTurbine;
 	unsigned int nTurbines;
+	windTurbine* wTurbine;
 public:
 	wake_model(){}
 	std::string errDetails;
@@ -128,7 +128,7 @@ private:
 
 public:
 	simpleWakeModel(){ nTurbines = 0; }
-	simpleWakeModel(int numberOfTurbinesInFarm){ nTurbines = numberOfTurbinesInFarm; }
+	simpleWakeModel(int numberOfTurbinesInFarm, windTurbine wt){ nTurbines = numberOfTurbinesInFarm; *wTurbine = wt; }
 
 	void wakeCalculations(
 		/*INPUTS*/
@@ -161,7 +161,7 @@ private:
 
 public:
 	parkWakeModel(){ nTurbines = 0; }
-	parkWakeModel(int numberOfTurbinesInFarm){ nTurbines = numberOfTurbinesInFarm; }
+	parkWakeModel(int numberOfTurbinesInFarm, windTurbine wt){ nTurbines = numberOfTurbinesInFarm; *wTurbine = wt; }
 
 	void setRotorDiameter(double d){ rotorDiameter = d; }
 	void wakeCalculations(

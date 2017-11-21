@@ -60,13 +60,14 @@ bool windTurbine::setPowerCurve(std::vector<double> windSpeeds, std::vector<doub
 	}
 	powerCurveWS = windSpeeds;
 	powerCurveKW = powerOutput;
-	densityCorrectedWS.resize(powerCurveArrayLength);
-	powerCurveRPM.resize(powerCurveArrayLength);
+	densityCorrectedWS.resize(powerCurveArrayLength, 0);
+	powerCurveRPM.resize(powerCurveArrayLength, -1);
 	return 1;
 }
 
 double windTurbine::tipSpeedRatio(double windSpeed)
-{	// find the rpm for this turbine at this wind speed
+{
+	if (powerCurveRPM[0] == -1) return 7.0;
 	double rpm = 0.0;
 	if ((windSpeed > powerCurveWS[0]) && (windSpeed < powerCurveWS[powerCurveArrayLength - 1]))
 	{
@@ -96,7 +97,6 @@ void windTurbine::turbinePower(double windVelocityAtDataHeight, double airDensit
 	std::vector <double> temp_ws;
 	for (size_t i = 0; i < densityCorrectedWS.size(); i++)
 		densityCorrectedWS[i] = powerCurveWS[i] * pow((physics::AIR_DENSITY_SEA_LEVEL / airDensity), (1.0 / 3.0));
-
 	int i = 0;
 	while (powerCurveKW[i] == 0)
 		i++; //find the index of the first non-zero power output in the power curve
