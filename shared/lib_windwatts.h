@@ -66,21 +66,21 @@ static inline double min_of(double a, double b)
  * nTurbines, turbulenceIntensity, YCoords, XCoords. The windPowerUsingResource and windPowerUsingWeibull require allocated vectors for inputs and outputs.
  */
 
-class wind_power_calculator
+class windPowerCalculator
 {
 private:
 	std::shared_ptr<wakeModelBase> wakeModel;
 	std::string errDetails;
 
 	/// Transforms the east, north coordinate system to a downwind, crosswind orientation orthogonal to current wind direction
-	void wind_power_calculator::coordtrans(double metersNorth, double metersEast, double fWind_dir_degrees, double *fMetersDownWind, double *metersCrosswind);
-	double wind_power_calculator::gammaln(double x);
+	void windPowerCalculator::coordtrans(double metersNorth, double metersEast, double fWind_dir_degrees, double *fMetersDownWind, double *metersCrosswind);
+	double windPowerCalculator::gammaln(double x);
 
 public:
 	windTurbine windTurbine;
-	int nTurbines;
+	size_t nTurbines;
 	double turbulenceIntensity;
-	wind_power_calculator() {
+	windPowerCalculator() {
 		//m_dShearExponent = 1.0/7.0;
 		// check classes are initialized
 		nTurbines = 0;

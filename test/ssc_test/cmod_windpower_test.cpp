@@ -40,7 +40,7 @@ TEST_F(CMWindPowerIntegration, DISABLED_ResourceEddy_cmod_windpower){
 }
 
 /// Using Weibull Distribution
-TEST_F(CMWindPowerIntegration, DISABLED_Weibull_cmod_windpower){
+TEST_F(CMWindPowerIntegration, Weibull_cmod_windpower){
 	modify_var(vartab, "wind_resource_model_choice", 1);
 	compute();
 	float ann_energy = vartab->lookup("annual_energy")->num.at(0);

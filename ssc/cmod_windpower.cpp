@@ -194,52 +194,91 @@ cm_windpower::cm_windpower(){
 
 void cm_windpower::exec() throw(general_error)
 {
-	wind_power_calculator wpc;
+	// set up windTurbine's powerCurve and some characteristics
+	windTurbine wt;
+	wt.shearExponent = as_double("wind_resource_shear");
+	wt.hubHeight = as_double("wind_turbine_hub_ht");
+	wt.lossesAbsolute = 0;
+	wt.lossesPercent = as_double("wind_farm_losses_percent") / 100.0;
+	wt.rotorDiameter = as_double("wind_turbine_rotor_diameter");
+	ssc_number_t *pc_w = as_array("wind_turbine_powercurve_windspeeds", &wt.powerCurveArrayLength);
+	ssc_number_t *pc_p = as_array("wind_turbine_powercurve_powerout", NULL);
+	std::vector<double> windSpeeds(wt.powerCurveArrayLength), powerOutput(wt.powerCurveArrayLength);
+	for (size_t i = 0; i < wt.powerCurveArrayLength; i++){
+		windSpeeds[i] = pc_w[i];
+		powerOutput[i] = pc_p[i];
+	}
+	wt.setPowerCurve(windSpeeds, powerOutput);
 
-	//wpc.m_dShearExponent = as_double("wind_resource_shear");
+	adjustment_factors haf(this, "adjust");
+	if (!haf.setup())
+		throw exec_error("windpower", "failed to setup adjustment factors: " + haf.error());
 
-	//ssc_number_t *pc_w = as_array("wind_turbine_powercurve_windspeeds", &wpc.m_iLengthOfTurbinePowerCurveArray);
-	//ssc_number_t *pc_p = as_array("wind_turbine_powercurve_powerout", NULL);
-	//wpc.m_dHubHeight = as_double("wind_turbine_hub_ht");
-	//wpc.m_dRotorDiameter = as_double("wind_turbine_rotor_diameter");
+	// set up windPowerCalculator
+	windPowerCalculator wpc;
+	wpc.windTurbine = wt;
+	wpc.turbulenceIntensity = as_double("wind_resource_turbulence_coeff");
+	ssc_number_t *wind_farm_xCoordinates = as_array("wind_farm_xCoordinates", &wpc.nTurbines);
+	ssc_number_t *wind_farm_yCoordinates = as_array("wind_farm_yCoordinates", NULL);
+	if (wpc.nTurbines < 1)
+		throw exec_error("windpower", util::format("the number of wind turbines was zero."));
+	if (wpc.nTurbines > wpc.GetMaxTurbines())
+		throw exec_error("windpower", util::format("the wind model is only configured to handle up to %d turbines.", wpc.GetMaxTurbines()));
+
+	
+	// Run Weibull Statistical model (single outputs) if selected
+	if (as_integer("wind_resource_model_choice") == 1){	
+		ssc_number_t *turbine_output = allocate("turbine_output_by_windspeed_bin", wt.powerCurveArrayLength);
+		std::vector<double> turbine_outkW(wt.powerCurveArrayLength);
+		double weibull_k = as_double("weibull_k_factor");
+		double avg_speed = as_double("weibull_wind_speed");
+		double ref_height = as_double("weibull_reference_height");
+		//double max_cp = as_double("wind_turbine_max_cp");
+		//double elevation = as_double("elevation");
+		//ssc_number_t *hub_efficiency = as_array( "hub_efficiency", NULL );
+		//std::vector<double> dp_hub_eff(wt.powerCurveArrayLength);
+		//for (i=0;i<wt.powerCurveArrayLength;i++)
+		//	dp_hub_eff[i] = (double)hub_efficiency[i];
+
+
+		double turbine_kw = wpc.windPowerUsingWeibull(weibull_k, avg_speed, ref_height, &turbine_outkW[0]);
+		turbine_kw = turbine_kw * (1 - wt.lossesPercent) - wt.lossesAbsolute;
+
+			ssc_number_t farm_kw = (ssc_number_t)turbine_kw * wpc.nTurbines;
+			int nstep = 8760;
+			ssc_number_t *farmpwr = allocate("gen", nstep);
+			for (int i = 0; i < nstep; i++) //nstep is always 8760 for Weibull
+			{
+				farmpwr[i] = farm_kw / (ssc_number_t)nstep; // fill "gen"
+				farmpwr[i] *= haf(i); //apply adjustment factor/availability and curtailment losses
+			}
+
+			for (size_t i = 0; i < wpc.nTurbines; i++)
+				turbine_output[i] = (ssc_number_t)turbine_outkW[i];
+
+			accumulate_monthly("gen", "monthly_energy");
+			accumulate_annual("gen", "annual_energy");
+
+			// metric outputs moved to technology
+			double kWhperkW = 0.0;
+			double nameplate = as_double("system_capacity");
+			double annual_energy = as_double("annual_energy");
+			if (nameplate > 0) kWhperkW = annual_energy / nameplate;
+			assign("capacity_factor", var_data((ssc_number_t)(kWhperkW / 87.6)));
+			assign("kwh_per_kw", var_data((ssc_number_t)kWhperkW));
+
+			return;
+	}
+	
+	// Run time step farm model (hourly or subhourly array outputs)
+
 	////double meas_ht = as_double("meas_ht");
 	////wpc.m_dCutInSpeed = as_double("wind_turbine_cutin");
-	//wpc.m_dLossesAbsolute = 0; // as_double("lossc");
-	//wpc.m_dLossesPercent = as_double("wind_farm_losses_percent") / 100.0;
-	//wpc.m_dWakeDecayCoefficient = 0.07;	// necessary for Park model
-	//wpc.m_iWakeModelChoice = as_integer("wind_farm_wake_model");
-	//wpc.m_dTurbulenceIntensity = as_double("wind_resource_turbulence_coeff");
 	////ssc_number_t *pc_rpm = as_array( "pc_rpm", NULL );
 
-	//ssc_number_t *wind_farm_xCoordinates = as_array("wind_farm_xCoordinates", &wpc.m_iNumberOfTurbinesInFarm);
-	//ssc_number_t *wind_farm_yCoordinates = as_array("wind_farm_yCoordinates", NULL);
-	//if (wpc.m_iNumberOfTurbinesInFarm < 1)
-	//	throw exec_error("windpower", util::format("the number of wind turbines was zero."));
-	//if (wpc.m_iNumberOfTurbinesInFarm > wpc.GetMaxTurbines())
-	//	throw exec_error("windpower", util::format("the wind model is only configured to handle up to %d turbines.", wpc.GetMaxTurbines()));
-
-	//adjustment_factors haf(this, "adjust");
-	//if (!haf.setup())
-	//	throw exec_error("windpower", "failed to setup adjustment factors: " + haf.error());
-
-	//// setup the power curve data
-	//wpc.m_adPowerCurveWS.resize(wpc.m_iLengthOfTurbinePowerCurveArray);
-	//wpc.m_adDensityCorrectedWS.resize(wpc.m_iLengthOfTurbinePowerCurveArray);
-	//wpc.m_adPowerCurveKW.resize(wpc.m_iLengthOfTurbinePowerCurveArray);
-	//wpc.m_adPowerCurveRPM.resize(wpc.m_iLengthOfTurbinePowerCurveArray);
-	//size_t i;
-	//for (i = 0; i < wpc.m_iLengthOfTurbinePowerCurveArray; i++)
-	//{
-	//	wpc.m_adPowerCurveWS[i] = (double)pc_w[i];
-	//	wpc.m_adDensityCorrectedWS[i] = (double)pc_w[i]; //for starters, corrected by air density at each time step
-	//	wpc.m_adPowerCurveKW[i] = (double)pc_p[i];
-	//	wpc.m_adPowerCurveRPM[i] = 0.0;//(double)pc_rpm[i];
-	//}
+		
 
 
-	//// now choose which model to run
-	//// 0=time step farm model (hourly or subhourly array outputs), 1=weibull statistical model (single outputs)
-	//int iModelType = as_integer("wind_resource_model_choice");
 
 
 	//size_t nstep = 8760;
@@ -300,50 +339,7 @@ void cm_windpower::exec() throw(general_error)
 	//ssc_number_t *air_pres = allocate("pressure", nstep);
 
 
-	//if (iModelType == 1) // doing a Weibull estimate, not an hourly or subhourly simulation
-	//{
-	//	// allocate this output for the Weibull estimate only
-	//	ssc_number_t *turbine_output = allocate("turbine_output_by_windspeed_bin", wpc.m_iLengthOfTurbinePowerCurveArray);
-	//	std::vector<double> turbine_outkW(wpc.m_iLengthOfTurbinePowerCurveArray);
-
-	//	double weibull_k = as_double("weibull_k_factor");
-	//	double max_cp = as_double("wind_turbine_max_cp");
-	//	double avg_speed = as_double("weibull_wind_speed");
-	//	double ref_height = as_double("weibull_reference_height");
-	//	//double elevation = as_double("elevation");
-
-	//	//ssc_number_t *hub_efficiency = as_array( "hub_efficiency", NULL );
-	//	//std::vector<double> dp_hub_eff(wpc.m_iLengthOfTurbinePowerCurveArray);
-	//	//for (i=0;i<wpc.m_iLengthOfTurbinePowerCurveArray;i++)
-	//	//	dp_hub_eff[i] = (double)hub_efficiency[i];
-
-	//	double turbine_kw = wpc.turbine_output_using_weibull(weibull_k, max_cp, avg_speed, ref_height, &turbine_outkW[0]);
-	//	turbine_kw = turbine_kw * (1 - wpc.m_dLossesPercent) - wpc.m_dLossesAbsolute;
-
-	//	ssc_number_t farm_kw = (ssc_number_t)turbine_kw * wpc.m_iNumberOfTurbinesInFarm;
-
-	//	for (i = 0; i < nstep; i++) //nstep is always 8760 for Weibull
-	//	{
-	//		farmpwr[i] = farm_kw / (ssc_number_t)nstep; // fill "gen"
-	//		farmpwr[i] *= haf(i); //apply adjustment factor/availability and curtailment losses
-	//	}
-
-	//	for (i = 0; i < wpc.m_iLengthOfTurbinePowerCurveArray; i++)
-	//		turbine_output[i] = (ssc_number_t)turbine_outkW[i];
-
-	//	accumulate_monthly("gen", "monthly_energy");
-	//	accumulate_annual("gen", "annual_energy");
-
-	//	// metric outputs moved to technology
-	//	double kWhperkW = 0.0;
-	//	double nameplate = as_double("system_capacity");
-	//	double annual_energy = as_double("annual_energy");
-	//	if (nameplate > 0) kWhperkW = annual_energy / nameplate;
-	//	assign("capacity_factor", var_data((ssc_number_t)(kWhperkW / 87.6)));
-	//	assign("kwh_per_kw", var_data((ssc_number_t)kWhperkW));
-
-	//	return;
-	//}
+	
 
 
 	///* wind_turbine_ctl_mode hardwired to '2'.  apparently not implemented

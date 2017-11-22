@@ -16,7 +16,7 @@
 
 class windPowerCalculatorTest : public ::testing::Test{
 protected:
-	wind_power_calculator wpc;
+	windPowerCalculator wpc;
 	windTurbine wt;
 	int nTurbines;
 	// weather data
@@ -58,7 +58,7 @@ public:
 	}
 };
 
-TEST_F(windPowerCalculatorTest, wind_powerTest_lib_windwatts){
+TEST_F(windPowerCalculatorTest, windPowerUsingResource_lib_windwatts){
 	// weather inputs
 	windSpeedData = 10.;
 	windDirData = 180;
@@ -76,4 +76,18 @@ TEST_F(windPowerCalculatorTest, wind_powerTest_lib_windwatts){
 	int run = wpc.windPowerUsingResource(windSpeedData, windDirData, pressureData, tempData, &farmPower, &power[0], &thrust[0],
 		&eff[0], &windSpeed[0], &turbulenceCoeff[0], &distDownwind[0], &distCrosswind[0]); // runs method we want to test
 	EXPECT_EQ(run, 3);
+}
+
+TEST_F(windPowerCalculatorTest, windPowerUsingWeibull_lib_windwatts){
+	// weather inputs
+	windSpeedData = 10.;
+	windDirData = 180;
+	tempData = 25;
+	pressureData = 1.0;
+	// weibull data
+
+
+	//int run = wpc.windPowerUsingWeibull(windSpeedData, windDirData, pressureData, tempData, &farmPower, &power[0], &thrust[0],
+		//&eff[0], &windSpeed[0], &turbulenceCoeff[0], &distDownwind[0], &distCrosswind[0]); // runs method we want to test
+	//EXPECT_EQ(run, 3);
 }

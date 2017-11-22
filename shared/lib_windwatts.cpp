@@ -60,7 +60,7 @@
 #pragma warning(disable: 4127)  // ignore warning: 'warning C4127: conditional expression is constant'
 #endif
 
-bool wind_power_calculator::InitializeModel(std::shared_ptr<wakeModelBase>selectedWakeModel)
+bool windPowerCalculator::InitializeModel(std::shared_ptr<wakeModelBase>selectedWakeModel)
 {
 	if (selectedWakeModel){
 		wakeModel = selectedWakeModel;
@@ -68,13 +68,13 @@ bool wind_power_calculator::InitializeModel(std::shared_ptr<wakeModelBase>select
 	return true;
 }
 
-std::string wind_power_calculator::GetWakeModelName()
+std::string windPowerCalculator::GetWakeModelName()
 {
 	if (wakeModel) return wakeModel->getModelName();
 	return "NA";
 }
 
-double wind_power_calculator::gammaln(double x)
+double windPowerCalculator::gammaln(double x)
 {
 	// Based on VBA code in Xnumbers.xla v 5.6
 	// by Foxes Team, 2007
@@ -126,7 +126,7 @@ double wind_power_calculator::gammaln(double x)
 	return log(mantissa) + expo * log(10.0);
 }
 
-void wind_power_calculator::coordtrans(double metersNorth, double metersEast, double windDirDegrees, double *metersDownwind, double *metersCrosswind)
+void windPowerCalculator::coordtrans(double metersNorth, double metersEast, double windDirDegrees, double *metersDownwind, double *metersCrosswind)
 {
 	// rotate wind direction to match unit circle (where zero is East, not North)
 	windDirDegrees += 90;
@@ -139,7 +139,7 @@ void wind_power_calculator::coordtrans(double metersNorth, double metersEast, do
 	*metersCrosswind = metersEast*sin(fWind_dir_radians) + (metersNorth * cos(fWind_dir_radians));
 }
 
-int wind_power_calculator::windPowerUsingResource(/*INPUTS */ double windSpeed, double windDirDeg, double airPressureAtm, double TdryC,
+int windPowerCalculator::windPowerUsingResource(/*INPUTS */ double windSpeed, double windDirDeg, double airPressureAtm, double TdryC,
 	/*OUTPUTS*/ double *farmPower, double power[], double thrust[], double eff[], double adWindSpeed[], double TI[],
 	double distanceDownwind[], double distanceCrosswind[])
 {
@@ -308,7 +308,7 @@ int wind_power_calculator::windPowerUsingResource(/*INPUTS */ double windSpeed, 
 }
 
 
-double wind_power_calculator::windPowerUsingWeibull(double weibull_k, double avg_speed, double ref_height, double energy_turbine[])
+double windPowerCalculator::windPowerUsingWeibull(double weibull_k, double avg_speed, double ref_height, double energy_turbine[])
 {	// returns same units as 'power_curve'
 
 	double hub_ht_windspeed = pow((windTurbine.hubHeight / ref_height), windTurbine.shearExponent) * avg_speed;
