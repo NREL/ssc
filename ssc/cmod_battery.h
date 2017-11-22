@@ -182,6 +182,9 @@ struct batt_variables
 	double batt_calendar_b;
 	double batt_calendar_c;
 
+	/*! Battery costs */
+	double batt_cost_per_kwh;
+
 	/*! PPA Time-of-Delivery factors for periods 1-9 */
 	std::vector<double> ppa_factors;
 	util::matrix_t<size_t> ppa_weekday_schedule;

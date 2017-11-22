@@ -855,6 +855,10 @@ double lifetime_cycle_t::totalCapacityDegraded()
 {
 	return 100. - _q;
 }
+double lifetime_cycle_t::computeCycleDamageAverageDOD()
+{
+	return(_q - bilinear(50, _nCycles));
+}
 double lifetime_cycle_t::runCycleLifetime(double DOD)
 {
 	rainflow(DOD);
@@ -1523,6 +1527,10 @@ double battery_t::battery_energy_to_fill()
 	double charge_needed_to_fill = this->battery_charge_needed(); // [Ah] - qmax - q0
 	double energy_needed_to_fill = (charge_needed_to_fill * battery_voltage)*util::watt_to_kilowatt;  // [kWh]
 	return energy_needed_to_fill;
+}
+double battery_t::battery_energy_nominal()
+{
+	return battery_voltage_nominal() * _capacity->qmax() * util::watt_to_kilowatt;
 }
 double battery_t::battery_power_to_fill()
 {

@@ -219,6 +219,13 @@ bool dispatch_t::check_constraints(double &I, int count)
 	return iterate;
 }
 
+double dispatch_t::costToCycle(double battCostPerKWH)
+{
+	double capacityPercentDamage = _Battery->lifetime_model()->cycleModel()->computeCycleDamageAverageDOD();
+	double costPer1kWhCycle = 0.01 * capacityPercentDamage * battCostPerKWH;
+	return costPer1kWhCycle;
+}
+
 double dispatch_t::power_tofrom_battery(){ return _P_tofrom_batt; };
 double dispatch_t::power_tofrom_grid(){ return _P_grid; };
 double dispatch_t::power_pv_to_load(){ return _P_pv_to_load; };
@@ -1330,6 +1337,7 @@ dispatch_automatic_front_of_meter_t::dispatch_automatic_front_of_meter_t(
 	bool can_clip_charge,
 	bool can_grid_charge,
 	double inverter_paco,
+	double batt_cost_per_kwh,
 	std::vector<double> ppa_factors,
 	util::matrix_t<size_t> ppa_weekday_schedule,
 	util::matrix_t<size_t> ppa_weekend_schedule,
@@ -1339,7 +1347,8 @@ dispatch_automatic_front_of_meter_t::dispatch_automatic_front_of_meter_t(
 	_inverter_paco = inverter_paco;
 	_ppa_factors = ppa_factors;
 	setup_cost_vector(ppa_weekday_schedule , ppa_weekend_schedule);
-
+	m_cycleCost = costToCycle(batt_cost_per_kwh);
+	m_battCostPerKWH = batt_cost_per_kwh;
 	_utilityRateCalculator = new UtilityRateCalculator(utilityRate, _steps_per_hour);
 }
 dispatch_automatic_front_of_meter_t::~dispatch_automatic_front_of_meter_t()
@@ -1418,13 +1427,8 @@ void dispatch_automatic_front_of_meter_t::dispatch(size_t year,
 void dispatch_automatic_front_of_meter_t::update_dispatch(size_t hour_of_year, size_t , size_t)
 {
 	
-	// assume eta = .99, bring in at some point from battery model
+	// bring in at some point from battery model
 	double eta = 0.99;
-
-	/*! Economic cost of charging (need to calculate)*/
-	double CostToCharge = 0;
-
-	// do we need to scale TOD factors to be non-normalized with actual PPA rate?
 
 	// Power to charge (<0) or discharge (>0)
 	double PowerBattery = 0;
@@ -1432,6 +1436,9 @@ void dispatch_automatic_front_of_meter_t::update_dispatch(size_t hour_of_year, s
 	if (hour_of_year == _hour_last_updated + _dispatch_update_hours || hour_of_year == 0)
 	{
 		_hour_last_updated = hour_of_year;
+
+		/*! Cost to cycle the battery at all, using average DOD so far */
+		m_cycleCost = costToCycle(m_battCostPerKWH);
 
 		/*! Cost to purchase electricity from the utility */
 		double usage_cost = _utilityRateCalculator->getEnergyRate(hour_of_year);
@@ -1463,17 +1470,17 @@ void dispatch_automatic_front_of_meter_t::update_dispatch(size_t hour_of_year, s
 
 		// Assuming BenefitToClipCharge > BenefitToPVCharge > BenefitToGridCharge
 		// Don't charge at all
-		if (BenefitToGridCharge < CostToCharge && BenefitToGridCharge > BenefitToPVCharge && BenefitToClipCharge < CostToCharge){}
+		if (BenefitToGridCharge < m_cycleCost && BenefitToGridCharge > BenefitToPVCharge && BenefitToClipCharge < m_cycleCost){}
 		
 		// Charge from grid but leave EnergyToStorePV + EnergyToStoreClipped capacity in battery
-		else if (BenefitToGridCharge > CostToCharge && BenefitToGridCharge < BenefitToPVCharge)
+		else if (BenefitToGridCharge > m_cycleCost && BenefitToGridCharge < BenefitToPVCharge)
 		{
 			double EnergyToReserve = EnergyToStorePV + EnergyToStoreClipped;
 			if (EnergyToReserve <= EnergyNeededToFillBattery)
 				PowerBattery = -(EnergyNeededToFillBattery - EnergyToReserve) / _dt_hour;
 		}
 		// Charge from PV, leave EnergyToStoreClipped capacity in battery
-		else if (BenefitToPVCharge > CostToCharge)
+		else if (BenefitToPVCharge > m_cycleCost)
 		{
 			if (EnergyToStoreClipped <= EnergyNeededToFillBattery)
 			{
@@ -1485,13 +1492,13 @@ void dispatch_automatic_front_of_meter_t::update_dispatch(size_t hour_of_year, s
 			}
 		}
 		// Charge from clipped PV
-		else if (BenefitToClipCharge > CostToCharge)
+		else if (BenefitToClipCharge > m_cycleCost)
 		{
 			PowerBattery = -_P_pv_clipping;
 		}
 		
 		// Discharge at max available rate such that PV + ES discharge <= AC nameplate
-		if (ppa_cost == *max_ppa_cost && _inverter_paco > _P_pv_discharging && _Battery->battery_soc() >= _SOC_min)
+		if (ppa_cost == *max_ppa_cost && _inverter_paco > _P_pv_discharging && _Battery->battery_soc() >= _SOC_min + 1.0)
 		{
 				PowerBattery = _inverter_paco - _P_pv_discharging;
 		}

@@ -61,6 +61,13 @@ Dispatch Base Class - can envision many potential modifications. Goal is to defi
 class dispatch_t
 {
 public:
+
+	enum FOM_MODES { FOM_LOOK_AHEAD, FOM_LOOK_BEHIND, FOM_FORECAST, FOM_MANUAL };
+	enum BTM_MODES { LOOK_AHEAD, LOOK_BEHIND, MAINTAIN_TARGET, MANUAL };
+	enum METERING { BEHIND, FRONT };
+	enum PV_PRIORITY { MEET_LOAD, CHARGE_BATTERY };
+	enum CURRENT_CHOICE { RESTRICT_POWER, RESTRICT_CURRENT, RESTRICT_BOTH };
+
 	dispatch_t(battery_t * Battery,
 		double dt,
 		double SOC_min,
@@ -103,14 +110,7 @@ public:
 
 	virtual void compute_grid_net();
 
-	enum FOM_MODES{ FOM_LOOK_AHEAD, FOM_LOOK_BEHIND, FOM_FORECAST, FOM_MANUAL };
-	enum BTM_MODES{ LOOK_AHEAD, LOOK_BEHIND, MAINTAIN_TARGET, MANUAL };
-	enum METERING{ BEHIND, FRONT };
-	enum PV_PRIORITY{ MEET_LOAD, CHARGE_BATTERY };
-	enum CURRENT_CHOICE{ RESTRICT_POWER, RESTRICT_CURRENT, RESTRICT_BOTH};
-
-	// Outputs
-	double cycle_efficiency();
+	virtual double costToCycle(double battCostPerKWH);
 
 	// dc powers
 	double power_tofrom_battery();
@@ -616,6 +616,7 @@ public:
 		bool can_clipcharge,
 		bool can_grid_charge,
 		double inverter_paco,
+		double battCostPerkWh,
 		std::vector<double> ppa_factors,
 		util::matrix_t<size_t> ppa_weekday_schedule,
 		util::matrix_t<size_t> ppa_weekend_schedule,
@@ -653,6 +654,8 @@ protected:
 	std::vector<double> _ppa_factors;
 	std::vector<double> _ppa_cost_vector;
 	UtilityRateCalculator * _utilityRateCalculator;
+	double m_battCostPerKWH;
+	double m_cycleCost;
 };
 
 /*! Battery metrics class */

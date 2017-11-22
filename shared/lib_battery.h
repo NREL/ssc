@@ -399,19 +399,20 @@ public:
 	// return dq, the accumulated percent damage
 	double totalCapacityDegraded();
 
+	// return hypothetical dq for the average cycle DOD at the current cycle count
+	double computeCycleDamageAverageDOD();
+
 	void rainflow(double DOD);
 	void replaceBattery();
 	int cycles_elapsed();
-	int forty_percent_cycles();
-	int hundred_percent_cycles();
 	double cycle_range();
 
 protected:
+	
 	void rainflow_ranges();
 	void rainflow_ranges_circular(int index);
 	int rainflow_compareRanges();
 	double bilinear(double DOD, int cycle_number);
-
 
 	util::matrix_t<double> _cycles_vs_DOD;
 	util::matrix_t<double> _batt_lifetime_matrix;
@@ -460,7 +461,6 @@ public:
 	enum CALENDAR_LOSS_OPTIONS {NONE, LITHIUM_ION_CALENDAR_MODEL, CALENDAR_LOSS_TABLE};
 
 protected:
-	void computeAverages(double T, double SOC);
 	void runLithiumIonModel(double T, double SOC);
 	void runTableModel();
 
@@ -511,6 +511,10 @@ public:
 	void runLifetimeModels(size_t idx, capacity_t *, double T_battery);
 
 	double capacity_percent();
+
+	// data access
+	lifetime_cycle_t * cycleModel() { return _lifetime_cycle; }
+	lifetime_calendar_t * calendarModel() { return _lifetime_calendar; }
 
 	// replacement methods
 	bool check_replaced();
@@ -660,6 +664,7 @@ public:
 	double battery_charge_needed();
 	double battery_charge_total();
 	double battery_charge_maximum();
+	double battery_energy_nominal();
 	double battery_energy_to_fill();
 	double battery_power_to_fill();
 	double battery_soc();

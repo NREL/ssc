@@ -163,6 +163,9 @@ var_info vtab_battery_inputs[] = {
 	{ SSC_INPUT,        SSC_NUMBER,     "batt_look_ahead_hours",                       "Hours to look ahead in automated dispatch",              "hours",    "",                     "Battery",       "",                           "",                             "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "batt_dispatch_update_frequency_hours",        "Frequency to update the look-ahead dispatch",            "hours",    "",                     "Battery",       "",                           "",                             "" },
 
+	// Cost inputs
+	{ SSC_INPUT,        SSC_NUMBER,     "battery_per_kWh",                              "Battery cost per kWh",                                  "$",        "",                     "Battery",       "?=0",                        "",                             "" },
+
 	// Utility rate inputs
 	{ SSC_INPUT,        SSC_MATRIX,     "ur_ec_sched_weekday",                         "Energy charge weekday schedule",                          "",        "12 x 24 matrix",         "",              "batt_meter_position=1&batt_dispatch_choice=2",  "",          "" },
 	{ SSC_INPUT,        SSC_MATRIX,     "ur_ec_sched_weekend",                         "Energy charge weekend schedule",                          "",        "12 x 24 matrix",         "",              "batt_meter_position=1&batt_dispatch_choice=2",  "",          "" },
@@ -198,7 +201,7 @@ var_info vtab_battery_outputs[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "batt_capacity_thermal_percent",              "Battery capacity percent for temperature",               "%",        "",                     "Battery",       "",                           "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "batt_bank_replacement",                      "Battery bank replacements per year",                     "number/year", "",                  "Battery",       "",                           "",                              "" },
 																			          
-	// POwer outputs at native timestep												        
+	// Power outputs at native timestep												        
 	{ SSC_OUTPUT,        SSC_ARRAY,      "batt_power",                                 "Electricity to/from battery",                           "kW",      "",                       "Battery",       "",                           "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "grid_power",                                 "Electricity to/from grid",                              "kW",      "",                       "Battery",       "",                           "",                              "" },
 	//{ SSC_OUTPUT,        SSC_ARRAY,      "pv_batt_gen",                                "Power of PV+battery"                              "kW",      "",                       "Battery",       "",                           "",                              "" },
@@ -268,6 +271,7 @@ battstor::battstor(compute_module &cm, bool setup_model, int replacement_option,
 			batt_vars->batt_pv_choice = cm.as_integer("batt_pv_choice");
 			batt_vars->batt_loss_choice = cm.as_integer("batt_loss_choice");
 			batt_vars->batt_calendar_choice = cm.as_integer("batt_calendar_choice");
+			batt_vars->batt_cost_per_kwh = cm.as_double("battery_per_kWh");
 
 			if (batt_vars->batt_meter_position == dispatch_t::FRONT)
 			{
@@ -758,7 +762,7 @@ battstor::battstor(compute_module &cm, bool setup_model, int replacement_option,
 			batt_vars->batt_dispatch, batt_vars->batt_pv_choice,
 			nyears, batt_vars->batt_look_ahead_hours, batt_vars->batt_dispatch_update_frequency_hours,
 			batt_vars->batt_dispatch_auto_can_charge, batt_vars->batt_dispatch_auto_can_clipcharge, batt_vars->batt_dispatch_auto_can_gridcharge,
-			batt_vars->inverter_paco,
+			batt_vars->inverter_paco, batt_vars->batt_cost_per_kwh,
 			batt_vars->ppa_factors, batt_vars->ppa_weekday_schedule, batt_vars->ppa_weekend_schedule, utilityRate);
 		
 	}
