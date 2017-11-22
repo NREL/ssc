@@ -47,7 +47,7 @@
 *  THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *******************************************************************************************************/
 
-#ifndef __SCO2_PC_CORE_RCMCI_WITHOUT_REHEATING_
+#ifndef __SCO2_PC_CORE_RCMCI_WITH_REHEATING_
 #define __SCO2_PC_CORE_RCMCI_WITH_REHEATING_
 
 #include <limits>
@@ -1010,12 +1010,13 @@ public:
 		bool m_is_rc;
 
 		//C_compressor::S_design_solved ms_mc1_des_solved;
-		C_comp_multi_stage_RCMCI_without_ReHeating::S_des_solved ms_mc1_ms_des_solved;
+		C_comp_multi_stage_RCMCI_with_ReHeating::S_des_solved ms_mc1_ms_des_solved;
 		//C_compressor::S_design_solved ms_mc2_des_solved;
-		C_comp_multi_stage_RCMCI_without_ReHeating::S_des_solved ms_mc2_ms_des_solved;
+		C_comp_multi_stage_RCMCI_with_ReHeating::S_des_solved ms_mc2_ms_des_solved;
 		//C_recompressor::S_design_solved ms_rc_des_solved;
-		C_comp_multi_stage_RCMCI_without_ReHeating::S_des_solved ms_rc_ms_des_solved;
-		C_turbine_RCMCI_without_ReHeating::S_design_solved ms_t_des_solved;
+		C_comp_multi_stage_RCMCI_with_ReHeating::S_des_solved ms_rc_ms_des_solved;
+		C_turbine_RCMCI_with_ReHeating::S_design_solved ms_mt_des_solved;
+		C_turbine_RCMCI_with_ReHeating::S_design_solved ms_rt_des_solved;
 		C_HX_counterflow::S_des_solved ms_LT_recup_des_solved;
 		C_HX_counterflow::S_des_solved ms_HT_recup_des_solved;
 
@@ -1152,6 +1153,7 @@ public:
 	struct S_od_parameters
 	{
 		double m_T_mc1_in;		//[K] Compressor1 inlet temperature
+		double m_T_mc2_in;		//[K] Compressor1 inlet temperature
 		double m_T_mt_in;		//[K] Main Turbine inlet temperature
 		double m_T_rt_in;		//[K] ReHeating Turbine inlet temperature
 		double m_P_mc1_in;		//[kPa] Compressor1 inlet pressure
@@ -1239,13 +1241,13 @@ public:
 
 		S_opt_od_parameters()
 		{
-			m_T_mc1_in = m_T_mc2_in = m_T_mt_in = m_T_rt_in = m_P_mc_in_guess = m_recomp_frac_guess = m_N_mc1_guess =
+			m_T_mc1_in = m_T_mc2_in = m_T_mt_in = m_T_rt_in = m_recomp_frac_guess = m_N_mc1_guess =
 			m_N_mt_guess = m_N_rt_guess = m_tol = m_opt_tol = m_P_mc1_in_guess = m_N_mc2_guess = m_P_mc2_out_guess = m_PR_mc2_guess =
 			std::numeric_limits<double>::quiet_NaN();
 
 			m_N_sub_hxrs = -1;
 
-			m_fixed_P_mc_in = m_fixed_PR_mc2 = m_fixed_recomp_frac = m_fixed_N_mc1 = m_fixed_N_mt = m_fixed_N_mc2 = m_fixed_N_rt = false;
+			m_fixed_P_mc1_in = m_fixed_PR_mc2 = m_fixed_recomp_frac = m_fixed_N_mc1 = m_fixed_N_mt = m_fixed_N_mc2 = m_fixed_N_rt = false;
 		}
 	};
 
@@ -1616,7 +1618,7 @@ public:
 		double m_m_dot_rc;		//[kg/s]
 		double m_m_dot_mc;		//[kg/s]
 
-		C_mono_eq_x_f_recomp_y_N_rc(C_RecompCycle_RCMCI_without_ReHeating *pc_rc_cycle, double T_mc1_in /*K*/, double P_mc1_in /*kPa*/,
+		C_mono_eq_x_f_recomp_y_N_rc(C_RecompCycle_RCMCI_with_ReHeating *pc_rc_cycle, double T_mc1_in /*K*/, double P_mc1_in /*kPa*/,
                                     double T_mc2_in /*K*/, double P_mc2_in /*kPa*/, double T_mt_in /*K*/, double T_rt_in /*K*/)
 		{
 			mpc_rc_cycle = pc_rc_cycle;
