@@ -172,10 +172,10 @@ struct batt_variables
 	double batt_dc_dc_bms_efficiency;
 	double pv_dc_dc_mppt_efficiency;
 
-	int inverter_model;
+	size_t inverter_model;
 	double inverter_efficiency;
-	int inverter_paco;
-	double inverter_count;
+	double inverter_paco;
+	size_t inverter_count;
 
 	double batt_calendar_q0;
 	double batt_calendar_a;
@@ -190,7 +190,7 @@ struct batt_variables
 	/*! Energy rates */
 	util::matrix_t<size_t> ec_weekday_schedule;
 	util::matrix_t<size_t> ec_weekend_schedule;
-	util::matrix_t<float> ec_tou_matrix;
+	util::matrix_t<double> ec_tou_matrix;
 };
 
 

@@ -1100,8 +1100,8 @@ void dispatch_automatic_behind_the_meter_t::initialize(size_t hour_of_year)
 }
 void dispatch_automatic_behind_the_meter_t::check_new_month(size_t hour_of_year, size_t step)
 {
-	int hours = 0;
-	for (int month = 1; month <= _month; month++)
+	size_t hours = 0;
+	for (size_t month = 1; month <= _month; month++)
 		hours += util::hours_in_month(month);
 
 	if (hours == 8760)
@@ -1124,7 +1124,7 @@ void dispatch_automatic_behind_the_meter_t::check_debug(FILE *&p, bool & debug, 
 		if (debug)
 		{
 			p = fopen("dispatch.txt", "w");
-			fprintf(p, "Hour of Year: %d\t Hour Last Updated: %d \t Steps per Hour: %d\n", hour_of_year, _hour_last_updated, _steps_per_hour);
+			fprintf(p, "Hour of Year: %zu\t Hour Last Updated: %zu \t Steps per Hour: %zu\n", hour_of_year, _hour_last_updated, _steps_per_hour);
 		}
 		// failed for some reason
 		if (p == NULL)
@@ -1212,7 +1212,7 @@ void dispatch_automatic_behind_the_meter_t::target_power(FILE*p, bool debug, dou
 			}
 			E_charge_vec.push_back(E_charge);
 			if (debug)
-				fprintf(p, "%d: index\t%.3f\t %.3f\n", index, P_target_min, E_charge);
+				fprintf(p, "%zu: index\t%.3f\t %.3f\n", index, P_target_min, E_charge);
 			index--;
 
 			if (index < 0)
@@ -1306,7 +1306,7 @@ void dispatch_automatic_behind_the_meter_t::set_battery_power(FILE *p, bool debu
 	if (debug)
 	{
 		for (size_t i = 0; i != _P_target_use.size(); i++)
-			fprintf(p, "i=%d  P_battery: %.2f\n", i, _P_battery_use[i]);
+			fprintf(p, "i=%zu  P_battery: %.2f\n", i, _P_battery_use[i]);
 	}
 }
 
@@ -1415,7 +1415,7 @@ void dispatch_automatic_front_of_meter_t::dispatch(size_t year,
 
 }
 
-void dispatch_automatic_front_of_meter_t::update_dispatch(size_t hour_of_year, size_t step, size_t idx)
+void dispatch_automatic_front_of_meter_t::update_dispatch(size_t hour_of_year, size_t , size_t)
 {
 	
 	// assume eta = .99, bring in at some point from battery model

@@ -281,7 +281,7 @@ battstor::battstor(compute_module &cm, bool setup_model, int replacement_option,
 
 				batt_vars->ec_weekday_schedule = cm.as_matrix_unsigned_long("ur_ec_sched_weekday");
 				batt_vars->ec_weekend_schedule = cm.as_matrix_unsigned_long("ur_ec_sched_weekend");
-				batt_vars->ec_tou_matrix = cm.as_matrix_unsigned_long("ur_ec_tou_mat");
+				batt_vars->ec_tou_matrix = cm.as_matrix("ur_ec_tou_mat");
 
 				if (batt_vars->batt_dispatch == dispatch_t::FOM_LOOK_AHEAD || batt_vars->batt_dispatch == dispatch_t::FOM_FORECAST)
 				{

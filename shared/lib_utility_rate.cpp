@@ -1,31 +1,34 @@
 #include "lib_utility_rate.h"
 
-UtilityRate::UtilityRate(util::matrix_t<size_t> ecWeekday, util::matrix_t<size_t> ecWeekend, util::matrix_t<float> ecRatesMatrix)
+UtilityRate::UtilityRate(util::matrix_t<size_t> ecWeekday, util::matrix_t<size_t> ecWeekend, util::matrix_t<double> ecRatesMatrix)
 {
 	m_ecWeekday = ecWeekday;
 	m_ecWeekend = ecWeekend;
 	m_ecRatesMatrix = ecRatesMatrix;
 }
 
-UtilityRateCalculator::UtilityRateCalculator(UtilityRate * rate, size_t stepsPerHour)
+UtilityRateCalculator::UtilityRateCalculator(UtilityRate * rate, size_t stepsPerHour) :
+	UtilityRate(*rate)
 {
-	m_utilityRate = rate;
 	m_stepsPerHour = stepsPerHour;
+	initializeRate();
 }
 
-UtilityRateCalculator::UtilityRateCalculator(UtilityRate * rate, size_t stepsPerHour, std::vector<double> loadProfile)
+UtilityRateCalculator::UtilityRateCalculator(UtilityRate * rate, size_t stepsPerHour, std::vector<double> loadProfile) :
+	UtilityRate(*rate)
 {
-	m_utilityRate = rate;
 	m_stepsPerHour = stepsPerHour;
 	m_loadProfile = loadProfile;
+	initializeRate();
 }
 
 void UtilityRateCalculator::initializeRate()
 {
+	
 	for (size_t r = 0; r != m_ecRatesMatrix.nrows(); r++)
 	{
-		size_t period = m_ecRatesMatrix(r, 0);
-		size_t tier = m_ecRatesMatrix(r, 1);
+		size_t period = static_cast<size_t>(m_ecRatesMatrix(r, 0));
+		size_t tier = static_cast<size_t>(m_ecRatesMatrix(r, 1));
 
 		// assumers table is in monotonically increasing order
 		m_energyTiersPerPeriod[period] = tier;
@@ -43,8 +46,8 @@ void UtilityRateCalculator::calculateEnergyUsagePerPeriod()
 {
 	for (size_t idx = 0; idx != m_loadProfile.size(); idx++)
 	{
-		size_t hourOfYear = std::floor(idx / m_stepsPerHour);
-		size_t period = getEnergyPeriod(hourOfYear);
+		size_t hourOfYear = static_cast<size_t>(std::floor(idx / m_stepsPerHour));
+		size_t period = static_cast<size_t>(getEnergyPeriod(hourOfYear));
 		m_energyUsagePerPeriod[period] += m_loadProfile[idx];
 	}
 }
@@ -57,10 +60,10 @@ double UtilityRateCalculator::getEnergyRate(size_t hourOfYear)
 	//double energy = m_energyTiersPerPeriod[period];
 	// add ability to check for tiered usage, for now assume one tier
 
-	return m_ecRatesMatrix.at(period, 4);
+	return m_ecRatesMatrix(period - 1, 4);
 
 }
-double UtilityRateCalculator::getEnergyPeriod(size_t hourOfYear)
+size_t UtilityRateCalculator::getEnergyPeriod(size_t hourOfYear)
 {
 	size_t period, month, hour;
 	util::month_hour(hourOfYear, month, hour);

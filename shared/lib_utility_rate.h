@@ -10,7 +10,7 @@ public:
 	
 	UtilityRate(){};
 
-	UtilityRate(util::matrix_t<size_t> ecWeekday, util::matrix_t<size_t> ecWeekend, util::matrix_t<float> ecRatesMatrix);
+	UtilityRate(util::matrix_t<size_t> ecWeekday, util::matrix_t<size_t> ecWeekend, util::matrix_t<double> ecRatesMatrix);
 
 	virtual ~UtilityRate() {/* nothing to do */ };
 
@@ -22,7 +22,7 @@ protected:
 	util::matrix_t<size_t> m_ecWeekend;
 
 	/// Energy charge periods, tiers, maxes, units, buy rate, (sell rate optional)
-	util::matrix_t<float> m_ecRatesMatrix;
+	util::matrix_t<double> m_ecRatesMatrix;
 
 	/// Energy Tiers per period
 	std::map<size_t, size_t> m_energyTiersPerPeriod;
@@ -50,14 +50,11 @@ public:
 	double getEnergyRate(size_t );
 
 	/// Get the period for a given hour of year
-	double getEnergyPeriod(size_t hourOfYear);
+	size_t getEnergyPeriod(size_t hourOfYear);
 
 	virtual ~UtilityRateCalculator() {/* nothing to do*/ };
 
 protected:
-
-	/// The utility rate to use to compute the bill 
-	UtilityRate * m_utilityRate;
 
 	/// The load profile to evaluate (kW)
 	std::vector<double> m_loadProfile;
@@ -66,7 +63,7 @@ protected:
 	double m_electricBill;
 
 	/// The number of time steps per hour
-	double m_stepsPerHour;
+	size_t m_stepsPerHour;
 
 	/// The energy usage per period
 	std::vector<double> m_energyUsagePerPeriod;
