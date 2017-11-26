@@ -394,7 +394,7 @@ public:
 	class C_MEQ_eta_isen__h_out : public C_monotonic_equation
 	{
 	private:
-		C_comp_multi_stage_PCRC_without_ReHeating *mpc_multi_stage;
+		C_comp_multi_stage_PCRC_with_ReHeating *mpc_multi_stage;
 		double m_T_in;	//[K]
 		double m_P_in;	//[kPa]
 		double m_P_out;	//[kPa]
@@ -1014,13 +1014,13 @@ public:
 		bool m_is_rc;
 
 		//C_compressor::S_design_solved ms_mc1_des_solved;
-		C_comp_multi_stage_PCRC_without_ReHeating::S_des_solved ms_mc1_ms_des_solved;
+		C_comp_multi_stage_PCRC_with_ReHeating::S_des_solved ms_mc1_ms_des_solved;
 		//C_compressor::S_design_solved ms_mc2_des_solved;
-		C_comp_multi_stage_PCRC_without_ReHeating::S_des_solved ms_mc2_ms_des_solved;
+		C_comp_multi_stage_PCRC_with_ReHeating::S_des_solved ms_mc2_ms_des_solved;
 		//C_recompressor::S_design_solved ms_rc_des_solved;
-		C_comp_multi_stage_PCRC_without_ReHeating::S_des_solved ms_rc_ms_des_solved;
-		C_turbine_PCRC_without_ReHeating::S_design_solved ms_mt_des_solved;
-		C_turbine_PCRC_without_ReHeating::S_design_solved ms_rt_des_solved;
+		C_comp_multi_stage_PCRC_with_ReHeating::S_des_solved ms_rc_ms_des_solved;
+		C_turbine_PCRC_with_ReHeating::S_design_solved ms_mt_des_solved;
+		C_turbine_PCRC_with_ReHeating::S_design_solved ms_rt_des_solved;
 		C_HX_counterflow::S_des_solved ms_LT_recup_des_solved;
 		C_HX_counterflow::S_des_solved ms_HT_recup_des_solved;
 
@@ -1121,14 +1121,14 @@ public:
 		double m_m_dot_t;		//[kg/s]
 		double m_recomp_frac;	//[-]
 
-		//C_compressor::S_od_solved ms_mc1_od_solved;
-		C_comp_multi_stage_PCRC_without_ReHeating::S_od_solved ms_mc1_ms_od_solved;
-		//C_compressor::S_od_solved ms_mc2_od_solved;
-		C_comp_multi_stage_PCRC_without_ReHeating::S_od_solved ms_mc2_ms_od_solved;
-		//C_recompressor::S_od_solved ms_rc_od_solved;
-		C_comp_multi_stage_PCRC_without_ReHeating::S_od_solved ms_rc_ms_od_solved;
-		C_turbine_PCRC_without_ReHeating::S_od_solved ms_mt_od_solved;
-		C_turbine_PCRC_without_ReHeating::S_od_solved ms_rt_od_solved;
+		//C_compressor_PCRC_with_ReHeating::S_od_solved ms_mc1_od_solved;
+		C_comp_multi_stage_PCRC_with_ReHeating::S_od_solved ms_mc1_ms_od_solved;
+		//C_compressor_PCRC_with_ReHeating::S_od_solved ms_mc2_od_solved;
+		C_comp_multi_stage_PCRC_with_ReHeating::S_od_solved ms_mc2_ms_od_solved;
+		//C_recompressor_PCRC_with_ReHeating::S_od_solved ms_rc_od_solved;
+		C_comp_multi_stage_PCRC_with_ReHeating::S_od_solved ms_rc_ms_od_solved;
+		C_turbine_PCRC_with_ReHeating::S_od_solved ms_mt_od_solved;
+		C_turbine_PCRC_with_ReHeating::S_od_solved ms_rt_od_solved;
 		C_HX_counterflow::S_od_solved ms_LT_recup_od_solved;
 		C_HX_counterflow::S_od_solved ms_HT_recup_od_solved;
 
@@ -1332,28 +1332,47 @@ public:
 		double m_T_htf_cold;		//[K] Target htf cold return temp
 
 		double m_UA_PHX_des;		//[kW/K] Design point PHX conductance
-		double m_UA_RHX_des;		//[kW/K] Design point RHX conductance
 
 		double m_cp_htf;			//[kW/K] Constant HTF specific heat
 
 		S_PHX_od_parameters()
 		{
-			m_m_dot_htf_des = m_T_htf_hot = m_m_dot_htf = m_T_htf_cold = m_UA_PHX_des = m_UA_RHX_des =
+			m_m_dot_htf_des = m_T_htf_hot = m_m_dot_htf = m_T_htf_cold = m_UA_PHX_des =
 			m_cp_htf = std::numeric_limits<double>::quiet_NaN();
+		}
+	};
+
+	//RHX Off-Design parameters
+	struct S_RHX_od_parameters
+	{
+		double m_m_dot_htf_des;		//[kg/s] Design point htf mass flow rate
+
+		double m_T_htf_hot;			//[K] Current htf inlet temperature
+		double m_m_dot_htf;			//[kg/s] Current htf mass flow rate
+		double m_T_htf_cold;		//[K] Target htf cold return temp
+
+		double m_UA_RHX_des;		//[kW/K] Design point PHX conductance
+
+		double m_cp_htf;			//[kW/K] Constant HTF specific heat
+
+		S_RHX_od_parameters()
+		{
+			m_m_dot_htf_des = m_T_htf_hot = m_m_dot_htf = m_T_htf_cold = m_UA_RHX_des =
+				m_cp_htf = std::numeric_limits<double>::quiet_NaN();
 		}
 	};
 
 public:
 	// Component classes
-	C_turbine_PCRC_without_ReHeating m_mt;
-	C_turbine_PCRC_without_ReHeating m_rt;
+	C_turbine_PCRC_with_ReHeating m_mt;
+	C_turbine_PCRC_with_ReHeating m_rt;
 	//C_compressor m_mc1;
-	C_comp_multi_stage_PCRC_without_ReHeating m_mc1_ms;
+	C_comp_multi_stage_PCRC_with_ReHeating m_mc1_ms;
 	//C_compressor m_mc2;
-	C_comp_multi_stage_PCRC_without_ReHeating m_mc2_ms;
+	C_comp_multi_stage_PCRC_with_ReHeating m_mc2_ms;
 	//C_recompressor m_rc;
-	C_comp_multi_stage_PCRC_without_ReHeating m_rc_ms;
-	C_HeatExchanger_PCRC_without_ReHeating /*m_LT, m_HT,*/ m_PHX, m_RHX, m_PC1, m_PC2;
+	C_comp_multi_stage_PCRC_with_ReHeating m_rc_ms;
+	C_HeatExchanger_PCRC_with_ReHeating /*m_LT, m_HT,*/ m_PHX, m_RHX, m_PC1, m_PC2;
 	
 	C_HX_co2_to_co2 mc_LT_recup, mc_HT_recup;
 	
@@ -1621,7 +1640,8 @@ public:
 		double m_T_mc2_in;		//[K] Compressor2 inlet temperature
 		double m_P_mc2_in;		//[kPa] Compressor2 inlet pressure
 		double m_f_recomp;		//[-] Recompression fraction
-		double m_T_t_in;		//[K] Turbine inlet temperature
+		double m_T_mt_in;		//[K] Turbine inlet temperature
+		double m_T_rt_in;		//[K] Turbine inlet temperature
 
 		bool m_is_update_ms_od_solved;	//[-] Bool to update member structure ms_od_solved
 		// that is typically updated after entire cycle off-design solution 
@@ -1709,7 +1729,7 @@ public:
 	class C_mono_eq_LTR_des : public C_monotonic_equation
 	{
 	private:
-		C_RecompCycle_PCRC_without_ReHeating *mpc_rc_cycle;
+		C_RecompCycle_PCRC_with_ReHeating *mpc_rc_cycle;
 
 	public:
 		C_mono_eq_LTR_des(C_RecompCycle_PCRC_with_ReHeating *pc_rc_cycle, double w_mc1, double w_mc2, double w_mt, double w_rt)
@@ -1844,7 +1864,7 @@ private:
 	double m_SS_tot;
 
 public:
-	C_poly_curve_r_squared()
+	C_poly_curve_r_squared_PCRC_with_ReHeating()
 	{
 		m_x.resize(0);
 		m_y.resize(0);
