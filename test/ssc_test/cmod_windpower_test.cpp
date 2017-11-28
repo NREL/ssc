@@ -9,7 +9,7 @@
 // weatherfile interpolation tests?
 
 /// Testing various Wake Models
-TEST_F(CMWindPowerIntegration, DISABLED_ResourceSimpleWake_cmod_windpower){
+TEST_F(CMWindPowerIntegration, ResourceSimpleWake_cmod_windpower){
 	compute();
 	float ann_energy = vartab->lookup("annual_energy")->num.at(0);
 	EXPECT_NEAR(ann_energy, 33224154, e) << "Annual energy.";
@@ -17,7 +17,7 @@ TEST_F(CMWindPowerIntegration, DISABLED_ResourceSimpleWake_cmod_windpower){
 	EXPECT_NEAR(vartab->lookup("monthly_energy")->num.at(11), 2.8218e6, e) << "Month energy of December";
 }
 
-TEST_F(CMWindPowerIntegration, DISABLED_ResourceWAsp_cmod_windpower){
+TEST_F(CMWindPowerIntegration, ResourceWAsp_cmod_windpower){
 	modify_var(vartab, "wind_farm_wake_model", 1);
 
 	compute();
@@ -39,7 +39,7 @@ TEST_F(CMWindPowerIntegration, ResourceEddy_cmod_windpower){
 }
 
 /// Using Weibull Distribution
-TEST_F(CMWindPowerIntegration, DISABLED_Weibull_cmod_windpower){
+TEST_F(CMWindPowerIntegration, Weibull_cmod_windpower){
 	modify_var(vartab, "wind_resource_model_choice", 1);
 	compute();
 	float ann_energy = vartab->lookup("annual_energy")->num.at(0);
@@ -50,7 +50,7 @@ TEST_F(CMWindPowerIntegration, DISABLED_Weibull_cmod_windpower){
 }
 
 /// Using wind_resource_data instead
-TEST_F(CMWindPowerIntegration, DISABLED_DataSimpleWake_cmod_windpower){
+TEST_F(CMWindPowerIntegration, DataSimpleWake_cmod_windpower){
 	vartab->unassign("wind_resource_filename");
 	vartab->assign("wind_resource_data", *windResourceData);
 	compute();
@@ -61,7 +61,7 @@ TEST_F(CMWindPowerIntegration, DISABLED_DataSimpleWake_cmod_windpower){
 }
 
 /// Using 30m Wind Resource File
-TEST_F(CMWindPowerIntegration, DISABLED_Resource30mSimpleWake_cmod_windpower){
+TEST_F(CMWindPowerIntegration, Resource30mSimpleWake_cmod_windpower){
 #ifdef _MSC_VER	
 	std::string file = "../../../test/input_docs/wind_30m.srw";
 #else	
@@ -80,7 +80,7 @@ TEST_F(CMWindPowerIntegration, DISABLED_Resource30mSimpleWake_cmod_windpower){
 }
 
 /// Using 30m Wind Data
-TEST_F(CMWindPowerIntegration, DISABLED_Data30mSimpleWake_cmod_windpower){
+TEST_F(CMWindPowerIntegration, Data30mSimpleWake_cmod_windpower){
 	windResourceData = create_winddata_array(2);
 	vartab->unassign("wind_resource_filename");
 	vartab->assign("wind_resource_data", *windResourceData);

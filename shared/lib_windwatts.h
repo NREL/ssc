@@ -79,7 +79,7 @@ private:
 public:
 	windTurbine* windTurbine;
 	size_t nTurbines;
-	double turbulenceIntensity;
+	double turbulenceIntensity;	
 	windPowerCalculator() {
 		//m_dShearExponent = 1.0/7.0;
 		// check classes are initialized
@@ -88,9 +88,9 @@ public:
 		errDetails="";
 	}
 	
-	static const int MAX_WIND_TURBINES = 300; // Max turbines in the farm
-	static const int MIN_DIAM_EV = 2; // Minimum number of rotor diameters between turbines for EV wake modeling to work
-	static const int EV_SCALE = 1; // Uo or 1.0 depending on how you read Ainslie 1988
+	static const int MAX_WIND_TURBINES = 300;	// Max turbines in the farm
+	static const int MIN_DIAM_EV = 2;			// Minimum number of rotor diameters between turbines for EV wake modeling to work
+	static const int EV_SCALE = 1;				// Uo or 1.0 depending on how you read Ainslie 1988
 
 	//int m_iWakeModelChoice;			// 0=Original Model (based on Pat Quinlan's thesis), 1=Park Model, 2=Eddy viscosity model
 	//double m_dCutInSpeed;			// wind speed Cut in (m/s)

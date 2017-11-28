@@ -28,7 +28,7 @@ protected:
 	std::vector<double> turbulenceCoeff, distX, distY, distDownwind, distCrosswind;
 
 public:
-	double e = 0.01;
+	double e = 1000;
 	void SetUp(){
 		// allocate arrays
 		nTurbines = 3;
@@ -90,6 +90,6 @@ TEST_F(windPowerCalculatorTest, windPowerUsingWeibull_lib_windwatts){
 	double refHeight = 50.;
 	std::vector<double> energy(wpc.windTurbine->powerCurveArrayLength);
 
-	int energyTotal = wpc.windPowerUsingWeibull(weibullK, avgSpeed, refHeight, &energy[0]); // runs method we want to test
-	EXPECT_EQ(energyTotal, 5639180);
+	double energyTotal = wpc.windPowerUsingWeibull(weibullK, avgSpeed, refHeight, &energy[0]); // runs method we want to test
+	EXPECT_NEAR(energyTotal, 5639180, e);
 }

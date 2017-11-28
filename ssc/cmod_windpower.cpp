@@ -331,7 +331,9 @@ void cm_windpower::exec() throw(general_error)
 		wakeModel = std::make_shared<simpleWakeModel>(simpleWakeModel(wpc.nTurbines, &wt));
 	else if (wakeModelChoice == 1)
 		wakeModel = std::make_shared<parkWakeModel>(parkWakeModel(wpc.nTurbines, &wt));
-	else if (wakeModelChoice == 2){
+	else if (wakeModelChoice == 2)
+	{
+		wpc.turbulenceIntensity *= 100;	
 		wakeModel = std::make_shared<eddyViscosityWakeModel>(eddyViscosityWakeModel(wpc.nTurbines, &wt, as_double("wind_resource_turbulence_coeff")));
 	}
 	if (!wpc.InitializeModel(wakeModel))

@@ -138,7 +138,7 @@ private:
 
 public:
 	simpleWakeModel(){ nTurbines = 0; }
-	simpleWakeModel(int numberOfTurbinesInFarm, windTurbine* wt){ nTurbines = numberOfTurbinesInFarm; wTurbine = wt; }
+	simpleWakeModel(size_t numberOfTurbinesInFarm, windTurbine* wt){ nTurbines = numberOfTurbinesInFarm; wTurbine = wt; }
 
 	std::string getModelName(){ return "PQ"; }
 
@@ -194,7 +194,7 @@ public:
 
 /**
 * Eddy viscosity wake Model requires a turbulence coefficient and an initialized windTurbine to operate on variables:
-* thrust, power, eff, windspeed, turbulence intensity.
+* thrust, power, eff, windspeed, turbulence intensity. Note: turbulence intensity as percent is used, whereas default is as ratio.
 */
 
 class eddyViscosityWakeModel : public wakeModelBase{
@@ -252,8 +252,8 @@ public:
 	eddyViscosityWakeModel(int numberOfTurbinesInFarm, windTurbine* wt, double turbCoeff){ 
 		wTurbine = wt;
 		rotorDiameter = wt->rotorDiameter;
-		if (turbCoeff >= 0 && turbCoeff <= 1) turbulenceCoeff = turbCoeff * 100;
-		else turbulenceCoeff = 10.;
+		if (turbCoeff >= 0 && turbCoeff <= 1) turbulenceCoeff = turbCoeff ;
+		else turbulenceCoeff = .10;
 
 		nTurbines = numberOfTurbinesInFarm; 
 		axialResolution = 0.5;
