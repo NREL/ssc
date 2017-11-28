@@ -217,6 +217,15 @@ void cm_windpower::exec() throw(general_error)
 	wpc.turbulenceIntensity = as_double("wind_resource_turbulence_coeff");
 	ssc_number_t *wind_farm_xCoordinates = as_array("wind_farm_xCoordinates", &wpc.nTurbines);
 	ssc_number_t *wind_farm_yCoordinates = as_array("wind_farm_yCoordinates", NULL);
+	wpc.XCoords.resize(wpc.nTurbines);
+	wpc.YCoords.resize(wpc.nTurbines);
+	for (size_t i = 0; i < wpc.nTurbines; i++)
+	{
+		wpc.XCoords[i] = (double)wind_farm_xCoordinates[i];
+		wpc.YCoords[i] = (double)wind_farm_yCoordinates[i];
+	}
+	if (!wt.isInitialized())
+		throw exec_error("windpower", util::format("wind turbine class not properly intialized"));
 	if (wpc.nTurbines < 1)
 		throw exec_error("windpower", util::format("the number of wind turbines was zero."));
 	if (wpc.nTurbines > wpc.GetMaxTurbines())
@@ -314,17 +323,6 @@ void cm_windpower::exec() throw(general_error)
 	size_t steps_per_hour = nstep / 8760;
 	if (steps_per_hour * 8760 != nstep  && !contains_leap_day)
 		throw exec_error("windpower", util::format("invalid number of data records (%d): must be an integer multiple of 8760", (int)nstep));
-
-	// finish setting up windTurbine
-	wpc.XCoords.resize(wpc.nTurbines);
-	wpc.YCoords.resize(wpc.nTurbines);
-	for (size_t i = 0; i < wpc.nTurbines; i++)
-	{
-		wpc.XCoords[i] = (double)wind_farm_xCoordinates[i];
-		wpc.YCoords[i] = (double)wind_farm_yCoordinates[i];
-	}
-	if (!wt.isInitialized())
-		throw exec_error("windpower", util::format("wind turbine class not properly intialized"));
 
 	// create wakeModel
 	std::shared_ptr<wakeModelBase> wakeModel(nullptr);
