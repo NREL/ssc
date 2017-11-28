@@ -100,7 +100,7 @@
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(SolutionDir)\$(Platform)\$(Configuration)\;$(GTEST)\msvc\2013\gtest-md\$(Platform)-$(Configuration);$(GMOCK)\msvc\2010\$(Platform)-$(Configuration)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)\$(Platform)\$(Configuration)\;$(GTEST)\msvc\2010\gtest-md\$(Platform)-$(Configuration);$(GMOCK)\msvc\2010\$(Platform)-$(Configuration)</AdditionalLibraryDirectories>
       <AdditionalDependencies>gmock.lib;gtestd.lib; shared.lib; tcs.lib; solarpilot.lib; lpsolve.lib; nlopt.lib; $(SSCDIR)\build_vs2013\$(Platform)\$(Configuration)\ssc\*.obj;$(SSCDIR)\build_vs2013\$(Platform)\$(Configuration)\tcs\*.obj;</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
@@ -114,7 +114,7 @@
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(SolutionDir)\$(Platform)\$(Configuration)\;$(GTEST)\msvc\2013\gtest-md\$(Platform)-$(Configuration);$(GMOCK)\msvc\2010\$(Platform)-$(Configuration)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)\$(Platform)\$(Configuration)\;$(GTEST)\msvc\2010\gtest-md\$(Platform)-$(Configuration);$(GMOCK)\msvc\2010\$(Platform)-$(Configuration)</AdditionalLibraryDirectories>
       <AdditionalDependencies>gmock.lib;gtestd.lib; shared.lib; tcs.lib; solarpilot.lib; lpsolve.lib; nlopt.lib; $(SSCDIR)\build_vs2013\$(Platform)\$(Configuration)\ssc\*.obj;$(SSCDIR)\build_vs2013\$(Platform)\$(Configuration)\tcs\*.obj;</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
@@ -132,7 +132,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalLibraryDirectories>$(SolutionDir)\$(Platform)\$(Configuration)\;$(GTEST)\msvc\2013\gtest-md\$(Platform)-$(Configuration);$(GMOCK)\msvc\2010\$(Platform)-$(Configuration)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)\$(Platform)\$(Configuration)\;$(GTEST)\msvc\2010\gtest-md\$(Platform)-$(Configuration);$(GMOCK)\msvc\2010\$(Platform)-$(Configuration)</AdditionalLibraryDirectories>
       <AdditionalDependencies>gmock.lib;gtest.lib; shared.lib; tcs.lib; solarpilot.lib; lpsolve.lib; nlopt.lib; $(SSCDIR)\build_vs2013\$(Platform)\$(Configuration)\ssc\*.obj;$(SSCDIR)\build_vs2013\$(Platform)\$(Configuration)\tcs\*.obj;</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
@@ -150,7 +150,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalLibraryDirectories>$(SolutionDir)\$(Platform)\$(Configuration)\;$(GTEST)\msvc\2013\gtest-md\$(Platform)-$(Configuration);$(GMOCK)\msvc\2010\$(Platform)-$(Configuration)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)\$(Platform)\$(Configuration)\;$(GTEST)\msvc\2010\gtest-md\$(Platform)-$(Configuration);$(GMOCK)\msvc\2010\$(Platform)-$(Configuration)</AdditionalLibraryDirectories>
       <AdditionalDependencies>gmock.lib;gtest.lib; shared.lib; tcs.lib; solarpilot.lib; lpsolve.lib; nlopt.lib; $(SSCDIR)\build_vs2013\$(Platform)\$(Configuration)\ssc\*.obj;$(SSCDIR)\build_vs2013\$(Platform)\$(Configuration)\tcs\*.obj;</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>

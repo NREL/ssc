@@ -64,8 +64,9 @@ bool windPowerCalculator::InitializeModel(std::shared_ptr<wakeModelBase>selected
 {
 	if (selectedWakeModel){
 		wakeModel = selectedWakeModel;
+		return true;
 	}
-	return true;
+	return false;
 }
 
 std::string windPowerCalculator::GetWakeModelName()

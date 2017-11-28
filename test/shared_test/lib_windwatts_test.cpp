@@ -85,9 +85,11 @@ TEST_F(windPowerCalculatorTest, windPowerUsingWeibull_lib_windwatts){
 	tempData = 25;
 	pressureData = 1.0;
 	// weibull data
+	double weibullK = 2.;
+	double avgSpeed = 7.25;
+	double refHeight = 50.;
+	std::vector<double> energy(wpc.windTurbine.powerCurveArrayLength);
 
-
-	//int run = wpc.windPowerUsingWeibull(windSpeedData, windDirData, pressureData, tempData, &farmPower, &power[0], &thrust[0],
-		//&eff[0], &windSpeed[0], &turbulenceCoeff[0], &distDownwind[0], &distCrosswind[0]); // runs method we want to test
-	//EXPECT_EQ(run, 3);
+	int energyTotal = wpc.windPowerUsingWeibull(weibullK, avgSpeed, refHeight, &energy[0]); // runs method we want to test
+	EXPECT_EQ(energyTotal, 5639180);
 }

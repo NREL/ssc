@@ -100,7 +100,7 @@ public:
 	std::vector<double> XCoords, YCoords;
 
 	size_t GetMaxTurbines() {return MAX_WIND_TURBINES;}
-	bool InitializeModel(std::shared_ptr<wakeModelBase>selectedWakeModel); // if necessary, allocate memory in util::matrix arrays
+	bool InitializeModel(std::shared_ptr<wakeModelBase>selectedWakeModel);
 	std::string GetWakeModelName();
 	std::string GetErrorDetails() { return errDetails; }
 

@@ -167,6 +167,7 @@ winddata_provider::winddata_provider()
 {
 	year = 1900;
 	lat = lon = elev = 0;
+	measurementHeight = 0;
 }
 winddata_provider::~winddata_provider()
 {
@@ -205,6 +206,10 @@ bool winddata_provider::can_interpolate( int index1, int index2, int ncols, doub
 	if ( m_heights[index1]>requested_height && requested_height>m_heights[index2] ) return true; // height 1 > height 2
 
 	return false;
+}
+
+bool determineMeasurementHeight(double hubHeight, bool interpolateIfNecessary){
+
 }
 
 bool winddata_provider::read( double requested_height,

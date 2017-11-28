@@ -75,9 +75,13 @@ public:
 	double lat;
 	double lon;
 	double elev;
+	double measurementHeight;
 
 	std::vector<int> types() { return m_dataid; }
 	std::vector<double> heights() { return m_heights; }
+
+	/// finds the measurement height closest to hub height, or interpolates
+	bool determineMeasurementHeight(double hubHeight, bool interpolateIfNecessary);
 
 	bool read( double requested_height,
 		double *speed,
