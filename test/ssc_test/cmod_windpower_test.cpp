@@ -27,9 +27,8 @@ TEST_F(CMWindPowerIntegration, DISABLED_ResourceWAsp_cmod_windpower){
 	EXPECT_NEAR(vartab->lookup("monthly_energy")->num.at(11), 2.7472e6, e);
 }
 
-TEST_F(CMWindPowerIntegration, DISABLED_ResourceEddy_cmod_windpower){
+TEST_F(CMWindPowerIntegration, ResourceEddy_cmod_windpower){
 	modify_var(vartab, "wind_farm_wake_model", 2);
-
 	compute();
 	float ann_energy = vartab->lookup("annual_energy")->num.at(0);
 
@@ -40,7 +39,7 @@ TEST_F(CMWindPowerIntegration, DISABLED_ResourceEddy_cmod_windpower){
 }
 
 /// Using Weibull Distribution
-TEST_F(CMWindPowerIntegration, Weibull_cmod_windpower){
+TEST_F(CMWindPowerIntegration, DISABLED_Weibull_cmod_windpower){
 	modify_var(vartab, "wind_resource_model_choice", 1);
 	compute();
 	float ann_energy = vartab->lookup("annual_energy")->num.at(0);

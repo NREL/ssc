@@ -198,6 +198,7 @@ void cm_windpower::exec() throw(general_error)
 	windTurbine wt;
 	wt.shearExponent = as_double("wind_resource_shear");
 	wt.hubHeight = as_double("wind_turbine_hub_ht");
+	wt.measurementHeight = wt.hubHeight;
 	wt.lossesAbsolute = 0;
 	wt.lossesPercent = as_double("wind_farm_losses_percent") / 100.0;
 	wt.rotorDiameter = as_double("wind_turbine_rotor_diameter");
@@ -210,10 +211,12 @@ void cm_windpower::exec() throw(general_error)
 	}
 	wt.setPowerCurve(windSpeeds, powerOutput);
 
-	// create windPowerCalculator with windTurbine
+	// create windPowerCalculator using windTurbine
 	windPowerCalculator wpc;
-	wpc.windTurbine = wt;
+	wpc.windTurbine = &wt;
 	wpc.turbulenceIntensity = as_double("wind_resource_turbulence_coeff");
+	ssc_number_t *wind_farm_xCoordinates = as_array("wind_farm_xCoordinates", &wpc.nTurbines);
+	ssc_number_t *wind_farm_yCoordinates = as_array("wind_farm_yCoordinates", NULL);
 	if (wpc.nTurbines < 1)
 		throw exec_error("windpower", util::format("the number of wind turbines was zero."));
 	if (wpc.nTurbines > wpc.GetMaxTurbines())
@@ -274,30 +277,6 @@ void cm_windpower::exec() throw(general_error)
 	////wpc.m_dCutInSpeed = as_double("wind_turbine_cutin");
 	////ssc_number_t *pc_rpm = as_array( "pc_rpm", NULL );
 
-
-	// create wakeModel
-	std::shared_ptr<wakeModelBase> wakeModel(nullptr);
-	int wakeModelChoice = as_integer("wind_farm_wake_model");
-	if (wakeModelChoice == 0)
-		wakeModel = std::make_shared<simpleWakeModel>(simpleWakeModel(wpc.nTurbines, &wt));
-	else if (wakeModelChoice == 1)
-		wakeModel = std::make_shared<parkWakeModel>(parkWakeModel(wpc.nTurbines, &wt));
-	else if (wakeModelChoice == 2)
-		wakeModel = std::make_shared<eddyViscosityWakeModel>(eddyViscosityWakeModel(wpc.nTurbines, &wt));
-	if (!wpc.InitializeModel(wakeModel))
-			throw exec_error("windpower", util::format("Wake model choice must be 0, 1 or 2"));
-
-	// WPC requires X-Y coordinates of turbines in farm
-	ssc_number_t *wind_farm_xCoordinates = as_array("wind_farm_xCoordinates", &wpc.nTurbines);
-	ssc_number_t *wind_farm_yCoordinates = as_array("wind_farm_yCoordinates", NULL);
-	wpc.XCoords.resize(wpc.nTurbines);
-	wpc.YCoords.resize(wpc.nTurbines);
-	for (size_t i = 0; i < wpc.nTurbines; i++)
-	{
-		wpc.XCoords[i] = (double)wind_farm_xCoordinates[i];
-		wpc.YCoords[i] = (double)wind_farm_yCoordinates[i];
-	}
-
 	// create winddata_provider
 	size_t nstep = 8760;
 	std::auto_ptr<winddata_provider> wdprov;
@@ -319,8 +298,6 @@ void cm_windpower::exec() throw(general_error)
 	else
 		throw exec_error("windpower", "no wind resource data supplied");
 
-	// get measurement height for windTurbine
-
 
 	// check for leap day
 	bool contains_leap_day = false;
@@ -337,6 +314,30 @@ void cm_windpower::exec() throw(general_error)
 	size_t steps_per_hour = nstep / 8760;
 	if (steps_per_hour * 8760 != nstep  && !contains_leap_day)
 		throw exec_error("windpower", util::format("invalid number of data records (%d): must be an integer multiple of 8760", (int)nstep));
+
+	// finish setting up windTurbine
+	wpc.XCoords.resize(wpc.nTurbines);
+	wpc.YCoords.resize(wpc.nTurbines);
+	for (size_t i = 0; i < wpc.nTurbines; i++)
+	{
+		wpc.XCoords[i] = (double)wind_farm_xCoordinates[i];
+		wpc.YCoords[i] = (double)wind_farm_yCoordinates[i];
+	}
+	if (!wt.isInitialized())
+		throw exec_error("windpower", util::format("wind turbine class not properly intialized"));
+
+	// create wakeModel
+	std::shared_ptr<wakeModelBase> wakeModel(nullptr);
+	int wakeModelChoice = as_integer("wind_farm_wake_model");
+	if (wakeModelChoice == 0)
+		wakeModel = std::make_shared<simpleWakeModel>(simpleWakeModel(wpc.nTurbines, &wt));
+	else if (wakeModelChoice == 1)
+		wakeModel = std::make_shared<parkWakeModel>(parkWakeModel(wpc.nTurbines, &wt));
+	else if (wakeModelChoice == 2){
+		wakeModel = std::make_shared<eddyViscosityWakeModel>(eddyViscosityWakeModel(wpc.nTurbines, &wt, as_double("wind_resource_turbulence_coeff")));
+	}
+	if (!wpc.InitializeModel(wakeModel))
+		throw exec_error("windpower", util::format("Wake model choice must be 0, 1 or 2"));
 
 
 	//// these are only useful for debugging until matrix variables can be passed back as outputs
@@ -371,7 +372,8 @@ void cm_windpower::exec() throw(general_error)
 
 
 
-
+	// compute power output at i-th timestep
+	int i = 0;
 	for (size_t hr = 0; hr < 8760; hr++)
 	{
 		int imonth = util::month_of((double)hr) - 1;
@@ -389,38 +391,38 @@ void cm_windpower::exec() throw(general_error)
 				if (hr == 1416) //(31 days in Jan  + 28 days in Feb) * 24 hours a day, +1 to be the start of Feb 29, -1 because of 0 indexing
 					for (size_t j = 0; j < 24 * steps_per_hour; j++) //trash 24 hours' worth of lines in the weather file to skip the entire day of Feb 29
 					{
-						if (!wdprov->read(wpc.m_dHubHeight, &wind, &dir, &temp, &pres, &wpc.m_dMeasurementHeight, &closest_dir_meas_ht, true))
+						if (!wdprov->read(wt.hubHeight, &wind, &dir, &temp, &pres, &wt.measurementHeight, &closest_dir_meas_ht, true))
 							throw exec_error("windpower", util::format("error reading wind resource file at %d: ", i) + wdprov->error());
 					}
 			} //now continue with the normal process, none of the counters have been incremented so everything else should be ok
 
-			// if wf.read is set to interpolate (last input), and it's able to do so, then it will set wpc.m_dMeasurementHeight equal to hub_ht
+			// if wf.read is set to interpolate (last input), and it's able to do so, then it will set wpc.measurementHeight equal to hub_ht
 			// direction will not be interpolated, pressure and temperature will be if possible
-			if (!wdprov->read(wpc.m_dHubHeight, &wind, &dir, &temp, &pres, &wpc.m_dMeasurementHeight, &closest_dir_meas_ht, true))
+			if (!wdprov->read(wt.hubHeight, &wind, &dir, &temp, &pres, &wt.measurementHeight, &closest_dir_meas_ht, true))
 				throw exec_error("windpower", util::format("error reading wind resource file at %d: ", i) + wdprov->error());
 
-			if (fabs(wpc.m_dMeasurementHeight - wpc.m_dHubHeight) > 35.0)
-				throw exec_error("windpower", util::format("the closest wind speed measurement height (%lg m) found is more than 35 m from the hub height specified (%lg m)", wpc.m_dMeasurementHeight, wpc.m_dHubHeight));
+			if (fabs(wt.measurementHeight - wt.hubHeight) > 35.0)
+				throw exec_error("windpower", util::format("the closest wind speed measurement height (%lg m) found is more than 35 m from the hub height specified (%lg m)", wt.measurementHeight, wt.hubHeight));
 
-			if (fabs(closest_dir_meas_ht - wpc.m_dMeasurementHeight) > 10.0)
+			if (fabs(closest_dir_meas_ht - wt.measurementHeight) > 10.0)
 			{
 				if (i > 0) // if this isn't the first hour, then it's probably because of interpolation
 				{
 					// probably interpolated wind speed, but could not interpolate wind direction because the directions were too far apart.
 					// first, verify:
-					if ((wpc.m_dMeasurementHeight == wpc.m_dHubHeight) && (closest_dir_meas_ht != wpc.m_dHubHeight))
+					if ((wt.measurementHeight == wt.hubHeight) && (closest_dir_meas_ht != wt.hubHeight))
 						// now, alert the user of this discrepancy
-						throw exec_error("windpower", util::format("on hour %d, SAM interpolated the wind speed to an %lgm measurement height, but could not interpolate the wind direction from the two closest measurements because the directions encountered were too disparate", i + 1, wpc.m_dMeasurementHeight));
+						throw exec_error("windpower", util::format("on hour %d, SAM interpolated the wind speed to an %lgm measurement height, but could not interpolate the wind direction from the two closest measurements because the directions encountered were too disparate", i + 1, wt.measurementHeight));
 					else
-						throw exec_error("windpower", util::format("SAM encountered an error at hour %d: hub height = %lg, closest wind speed meas height = %lg, closest wind direction meas height = %lg ", i + 1, wpc.m_dHubHeight, wpc.m_dMeasurementHeight, closest_dir_meas_ht));
+						throw exec_error("windpower", util::format("SAM encountered an error at hour %d: hub height = %lg, closest wind speed meas height = %lg, closest wind direction meas height = %lg ", i + 1, wt.hubHeight, wt.measurementHeight, closest_dir_meas_ht));
 				}
 				else
-					throw exec_error("windpower", util::format("the closest wind speed measurement height (%lg m) and direction measurement height (%lg m) were more than 10m apart", wpc.m_dMeasurementHeight, closest_dir_meas_ht));
+					throw exec_error("windpower", util::format("the closest wind speed measurement height (%lg m) and direction measurement height (%lg m) were more than 10m apart", wt.measurementHeight, closest_dir_meas_ht));
 			}
 
 			double farmp = 0;
 
-			if ((int)wpc.m_iNumberOfTurbinesInFarm != wpc.wind_power(
+			if ((int)wpc.nTurbines != wpc.windPowerUsingResource(
 				/* inputs */
 				wind,	/* m/s */
 				dir,	/* degrees */
@@ -445,6 +447,10 @@ void cm_windpower::exec() throw(general_error)
 			air_temp[i] = (ssc_number_t)temp;
 			air_pres[i] = (ssc_number_t)pres;
 
+			// accumulate monthly and annual energy
+			monthly[imonth] += farmpwr[i] / steps_per_hour;
+			annual += farmpwr[i] / steps_per_hour;
+
 	//		if (bCreateFarmOutput)
 	//		{
 	//			for (size_t j = 0; j < wpc.m_iNumberOfTurbinesInFarm; j++)
@@ -460,22 +466,18 @@ void cm_windpower::exec() throw(general_error)
 	//			}
 	//		}
 
-	//		// accumulate monthly and annual energy
-	//		monthly[imonth] += farmpwr[i] / steps_per_hour;
-	//		annual += farmpwr[i] / steps_per_hour;
+			i++;
+		} // end steps_per_hour loop
+	} // end 1->8760 loop
 
-	//		i++;
-	//	} // end steps_per_hour loop
-	//} // end 1->8760 loop
+	assign("annual_energy", var_data((ssc_number_t)annual));
 
-	//assign("annual_energy", var_data((ssc_number_t)annual));
-
-	//// metric outputs moved to technology
-	//double kWhperkW = 0.0;
-	//double nameplate = as_double("system_capacity");
-	//if (nameplate > 0) kWhperkW = annual / nameplate;
-	//assign("capacity_factor", var_data((ssc_number_t)(kWhperkW / 87.6)));
-	//assign("kwh_per_kw", var_data((ssc_number_t)kWhperkW));
+	// metric outputs moved to technology
+	double kWhperkW = 0.0;
+	double nameplate = as_double("system_capacity");
+	if (nameplate > 0) kWhperkW = annual / nameplate;
+	assign("capacity_factor", var_data((ssc_number_t)(kWhperkW / 87.6)));
+	assign("kwh_per_kw", var_data((ssc_number_t)kWhperkW));
 
 
 	//if (bCreateFarmOutput)
@@ -519,6 +521,7 @@ void cm_windpower::exec() throw(general_error)
 	//		f1.close();
 	//	}
 	//} // create wind farm debug output files
+
 } // exec
 
 DEFINE_MODULE_ENTRY(windpower, "Utility scale wind farm model (adapted from TRNSYS code by P.Quinlan and openWind software by AWS Truepower)", 2);

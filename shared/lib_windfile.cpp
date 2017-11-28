@@ -208,10 +208,6 @@ bool winddata_provider::can_interpolate( int index1, int index2, int ncols, doub
 	return false;
 }
 
-bool determineMeasurementHeight(double hubHeight, bool interpolateIfNecessary){
-
-}
-
 bool winddata_provider::read( double requested_height,
 	double *speed,
 	double *direction,

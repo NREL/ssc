@@ -52,7 +52,7 @@ public:
 
 		wpc.nTurbines = nTurbines;
 		wpc.turbulenceIntensity = 1.0 / 7.0;
-		wpc.windTurbine = wt;
+		wpc.windTurbine = &wt;
 		wpc.XCoords = distX;
 		wpc.YCoords = distY;
 	}
@@ -88,7 +88,7 @@ TEST_F(windPowerCalculatorTest, windPowerUsingWeibull_lib_windwatts){
 	double weibullK = 2.;
 	double avgSpeed = 7.25;
 	double refHeight = 50.;
-	std::vector<double> energy(wpc.windTurbine.powerCurveArrayLength);
+	std::vector<double> energy(wpc.windTurbine->powerCurveArrayLength);
 
 	int energyTotal = wpc.windPowerUsingWeibull(weibullK, avgSpeed, refHeight, &energy[0]); // runs method we want to test
 	EXPECT_EQ(energyTotal, 5639180);

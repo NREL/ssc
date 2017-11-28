@@ -162,8 +162,7 @@ public:
 		windSpeed.resize(numberTurbines);
 		turbIntensity.resize(numberTurbines, 0.1);
 		createDefaultTurbine(&wt);
-		evm = eddyViscosityWakeModel(numberTurbines, &wt);
-		evm.setTurbulenceCoeff(0.1);
+		evm = eddyViscosityWakeModel(numberTurbines, &wt, 0.1);
 		for (int i = 0; i < numberTurbines; i++){
 			windSpeed[i] = 10.;
 		}

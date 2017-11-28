@@ -192,6 +192,10 @@ public:
 	);
 };
 
+/**
+* Eddy viscosity wake Model requires a turbulence coefficient and an initialized windTurbine to operate on variables:
+* thrust, power, eff, windspeed, turbulence intensity.
+*/
 
 class eddyViscosityWakeModel : public wakeModelBase{
 private:
@@ -245,7 +249,12 @@ private:
 
 public:
 	eddyViscosityWakeModel(){ nTurbines = 0; }
-	eddyViscosityWakeModel(int numberOfTurbinesInFarm, windTurbine* wt){ 
+	eddyViscosityWakeModel(int numberOfTurbinesInFarm, windTurbine* wt, double turbCoeff){ 
+		wTurbine = wt;
+		rotorDiameter = wt->rotorDiameter;
+		if (turbCoeff >= 0 && turbCoeff <= 1) turbulenceCoeff = turbCoeff * 100;
+		else turbulenceCoeff = 10.;
+
 		nTurbines = numberOfTurbinesInFarm; 
 		axialResolution = 0.5;
 		minThrustCoeff = 0.02;
@@ -258,15 +267,11 @@ public:
 		//double radialResolution = 0.2; // in rotor diameters, default in openWind=0.2
 		double maxRotorDiameters = 50; // in rotor diameters, default in openWind=50
 		useFilterFx = true;
-		wTurbine = wt;
-		rotorDiameter = wt->rotorDiameter;
 		matEVWakeDeficits.resize_fill(nTurbines, (int)(maxRotorDiameters / axialResolution) + 1, 0.0); // each turbine is row, each col is wake deficit for that turbine at dist
 		matEVWakeWidths.resize_fill(nTurbines, (int)(maxRotorDiameters / axialResolution) + 1, 0.0); // each turbine is row, each col is wake deficit for that turbine at dist
 	}
 
 	std::string getModelName(){ return "FastEV"; }
-
-	void setTurbulenceCoeff(double t){ if (t >= 0 && t <= 1) turbulenceCoeff = t*100; }
 
 	void wakeCalculations(
 		/*INPUTS*/

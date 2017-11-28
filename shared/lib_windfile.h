@@ -80,9 +80,6 @@ public:
 	std::vector<int> types() { return m_dataid; }
 	std::vector<double> heights() { return m_heights; }
 
-	/// finds the measurement height closest to hub height, or interpolates
-	bool determineMeasurementHeight(double hubHeight, bool interpolateIfNecessary);
-
 	bool read( double requested_height,
 		double *speed,
 		double *direction,
@@ -99,7 +96,7 @@ public:
 	std::string error() { return m_errorMsg; }
 
 protected:
-	std::vector<int> m_dataid;
+	std::vector<int> m_dataid;	// stores column headers(temp, pres, dir, speed) for each measurement height
 	std::vector<double> m_heights;
 	std::string m_errorMsg;
 	
