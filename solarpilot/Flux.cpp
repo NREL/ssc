@@ -381,7 +381,8 @@ void Flux::hermiteSunCoefs(var_map &V, matrix_t<double> &mSun) {
 	double factdum1, factdum2, dfact;
 
 	//--Arrays and values used later
-	if(mSun.ncols() != _n_terms || mSun.nrows() != _n_terms){
+	if(mSun.ncols() != static_cast<size_t>(_n_terms) ||
+	   mSun.nrows() != static_cast<size_t>(_n_terms)) {
 		mSun.resize_fill(_n_terms, _n_terms, 0.0);
 	}
 	
@@ -576,7 +577,7 @@ void Flux::hermiteErrDistCoefs(block_t<double> &errDM)
 	*/
 
 	int i, ii, j, k, jmax, jmin;
-	double temp1, temp2;
+	double temp1;
 
 	//resize
 	errDM.resize(_n_terms, _n_terms, 4);
@@ -587,10 +588,6 @@ void Flux::hermiteErrDistCoefs(block_t<double> &errDM)
 	temp1 = 1.;
 	for (i=1; i<_n_terms+1; i+=2) {
 		if(i>1) { temp1 = _fact_odds[i]; }
-		temp2 = 1.;
-		for(j=1; j<_n_terms+1; j+=2) {
-			if(j>1) { temp2=_fact_odds[j]; }
-		}
 	}
 	for (i=1; i<_n_terms+1; i++) {
 		jmax = JMX(i-1); 
@@ -645,7 +642,7 @@ void Flux::hermiteMirrorCoefs(Heliostat &H, double tht) {
 
 	*/
 
-	double wm2s, hm2s, wm, hgap, hm, wgap; 
+  	double wm2s, hm2s, wm, hm;
 	int kl, k, l, ncantx, ncanty;
 	
     var_heliostat *V = H.getVarMap();
@@ -655,8 +652,6 @@ void Flux::hermiteMirrorCoefs(Heliostat &H, double tht) {
 	hm = V->height.val;
 	ncantx = V->n_cant_x.val;
 	ncanty = V->n_cant_y.val; 
-	wgap = V->x_gap.val; 
-	hgap = V->y_gap.val; 
 	
 	//Calculate the effective mirror width to use for 
 	if(V->is_faceted.val){
@@ -1353,11 +1348,10 @@ double Flux::imagePlaneIntercept(var_map &V, Heliostat &H, Receiver *Rec, Vect *
 		
 		//Adjust the image for multiple facets
 		//DELSOL 8393-8407
-		int m, n, ii, jj, jp1, jmp1, ip1, im1, iim1, jm1, jjm1;		//reused indices
+		int m, n, ii, jj, jp1, ip1, im1, iim1, jm1, jjm1;		//reused indices
 		for(i=1; i<_n_terms+1; i++){
 			jmin = JMN(i-1);
 			jmax = JMX(i-1);
-			jmp1 = jmax+1;
 			im1 = i-1;
 			ip1 = i+1;
 			for(j=jmin; j<jmax+1; j+=2){
@@ -1402,7 +1396,7 @@ double Flux::imagePlaneIntercept(var_map &V, Heliostat &H, Receiver *Rec, Vect *
 	int ipak=0, nmin, nmax, lmin, mk, ki, kp1, km1;
 	double comb_ord = mu_S->at(0,0) * mu_G->at(0,0) * mu_M->at(0,0);	//combined moments at the ordinate
 	//
-	double muS, muM, bin, 
+	double muS, muM,
 		comb_ord_inv = 1./comb_ord;
 	//
 	for(int m=1; m<_n_terms+1; m++){
@@ -1434,7 +1428,6 @@ double Flux::imagePlaneIntercept(var_map &V, Heliostat &H, Receiver *Rec, Vect *
 						binom_temp1 = _binomials.at(km1,i-1);
 
 						for(j=1; j<l+1; j+=2){
-							bin = _binomials.at(l-1,j-1);
 							muS = mu_S->at(i-1,j-1);
 							muM = mu_M->at(ki-1,l-j);
 							term1 = _binomials.at(l-1,j-1)*binom_temp1*muS*muM*ugs;
@@ -2740,7 +2733,7 @@ void Flux::imageSizeAimPoint(Heliostat &H, SolarField &SF, double args[], bool i
 	double opt_height = Rv->optical_height.Val(); // + rec->getOffsetZ(),       << optical height already includes Z offset
 	int recgeom = rec->getGeometryType(); 
 	
-    double w2, h2;
+    double h2;
 
 	//Get the simple aim point
 	sp_point saim, saimf;
@@ -2784,7 +2777,7 @@ void Flux::imageSizeAimPoint(Heliostat &H, SolarField &SF, double args[], bool i
 		}
 
 		//Receiver dimensions
-		w2 = rec->CalculateApparentDiameter(*H.getLocation())/2.;		//half of the receiver diameter
+		// w2 = rec->CalculateApparentDiameter(*H.getLocation()) / 2.;		//half of the receiver diameter
 		h2 = Rv->rec_height.val/2.;		//Half of the receiver height
 		
 		//Image size (radial) in Y

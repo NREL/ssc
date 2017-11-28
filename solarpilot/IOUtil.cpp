@@ -188,11 +188,12 @@ std::string ioutil::get_cwd()
 {
 	char buf[2048];
 #ifdef _WIN32
-	::GetCurrentDirectoryA( 2047, buf );
+	if (::GetCurrentDirectoryA(sizeof(buf), buf) == 0)
+	  return std::string();
 #else
-	::getcwd(buf, 2047);
+	if (::getcwd(buf, sizeof(buf)) == NULL)
+	  return std::string();
 #endif
-	buf[2047] = 0;
 	return std::string(buf);
 }
 
