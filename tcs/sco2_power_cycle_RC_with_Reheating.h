@@ -10,15 +10,15 @@
 #include "CO2_properties.h"
 #include <math.h>
 
-class TrackErrors   
+class TrackErrors_RC_with_Reheating   
 {
 private:
 	std::vector<int> stored_codes;
 
 public:
-	~TrackErrors(){};
+	~TrackErrors_RC_with_Reheating(){};
 
-	TrackErrors(){};
+	TrackErrors_RC_with_Reheating(){};
 
 	void SetError(int error_code)
 	{
@@ -50,7 +50,7 @@ public:
 
 };
 
-struct cycle_design_parameters
+struct cycle_design_parameters_RC_with_Reheating
 {
 	int m_mc_type; 
 	int m_rc_type;
@@ -96,7 +96,7 @@ struct cycle_design_parameters
 	double m_recomp_frac;				//[-] Recompression fraction - only used if fixed_recomp_frac = true
 	double m_recomp_frac_guess;		//[-] Initial value for Recompression fraction - only used if fixed_recomp_frac = false
 
-	cycle_design_parameters()
+	cycle_design_parameters_RC_with_Reheating()
 	{
 		m_mc_type = m_rc_type = m_N_sub_hxrs - 1;
 		
@@ -120,7 +120,7 @@ struct cycle_design_parameters
 	}
 };
 
-struct S_cycle_design_metrics
+struct S_cycle_design_metrics_RC_with_Reheating
 {
 	double m_eta_thermal;		//[-] Cycle thermal efficiency
 	double m_W_dot_net;			//[-] Power output
@@ -134,7 +134,7 @@ struct S_cycle_design_metrics
 	std::vector<double> m_T;	//[K] Temperature at cycle state points
 	std::vector<double> m_P;	//[kPa] Pressure at cycle state points
 
-	S_cycle_design_metrics()
+	S_cycle_design_metrics_RC_with_Reheating()
 	{
 		m_eta_thermal = m_W_dot_net = m_min_DT_LT = m_min_DT_HT = m_m_dot_PHX = m_m_dot_RHX =
 		m_m_dot_PC = std::numeric_limits<double>::quiet_NaN();
@@ -142,7 +142,7 @@ struct S_cycle_design_metrics
 	}
 };
 
-struct cycle_opt_off_des_inputs
+struct cycle_opt_off_des_inputs_RC_with_Reheating
 {
 	double m_T_mc_in;		//[K] Main compressor inlet temperature
 	double m_T_mt_in;		//[K] Main Turbine inlet temperature
@@ -172,27 +172,27 @@ struct cycle_opt_off_des_inputs
 	double m_tol;			//[-] Cycle Convergence Tolerance
 	double m_opt_tol;		//[-] Optimization convergence
 
-	cycle_opt_off_des_inputs()
+	cycle_opt_off_des_inputs_RC_with_Reheating()
 	{
 		m_T_mc_in = m_T_mt_in = m_T_rt_in = m_P_rt_in = m_W_dot_net_target = m_recomp_frac = m_recomp_frac_guess = 
-		m_N_mc = m_N_mc_guess = m_N_mt = m_N_mt_guess = = m_N_rt = m_N_rt_guess = m_tol = m_opt_tol = std::numeric_limits<double>::quiet_NaN();
+		m_N_mc = m_N_mc_guess = m_N_mt = m_N_mt_guess = m_N_rt = m_N_rt_guess = m_tol = m_opt_tol = std::numeric_limits<double>::quiet_NaN();
 		m_fixed_recomp_frac = m_fixed_N_mc = m_fixed_N_mt = m_fixed_N_rt = false;
 	}
 };
 
-struct cycle_off_des_inputs
+struct cycle_off_des_inputs_RC_with_Reheating
 {
-	cycle_opt_off_des_inputs m_S;	// Structure for inputs to Cycle Optimum Off-Design
+	cycle_opt_off_des_inputs_RC_with_Reheating m_S;	// Structure for inputs to Cycle Optimum Off-Design
 
 	double m_P_mc_in;
 
-	cycle_off_des_inputs()
+	cycle_off_des_inputs_RC_with_Reheating()
 	{
 		m_P_mc_in = std::numeric_limits<double>::quiet_NaN();
 	}	
 };
 
-struct S_off_design_performance
+struct S_off_design_performance_RC_with_Reheating
 {
 	double m_eta_thermal;		//[-] Cycle thermal efficiency
 	double m_W_dot_net;			//[kW] Power output
@@ -207,7 +207,7 @@ struct S_off_design_performance
 	std::vector<double> m_T;	//[K] Temperature at cycle state points
 	std::vector<double> m_P;	//[kPa] Pressure at cycle state points
 
-	S_off_design_performance()
+	S_off_design_performance_RC_with_Reheating()
 	{
 		m_eta_thermal = m_W_dot_net = m_q_dot_in = m_min_DT_LT = m_min_DT_HT = m_N_rc = m_m_dot_PHX = m_m_dot_RHX = 
 		m_m_dot_PC = std::numeric_limits<double>::quiet_NaN();
@@ -216,7 +216,7 @@ struct S_off_design_performance
 
 };
 
-struct compressor_design_parameters
+struct compressor_design_parameters_RC_with_Reheating
 {
 	int m_type;
 	double m_w_design;				//[kJ/kg] Specific work required by compressor [negative value]
@@ -225,19 +225,19 @@ struct compressor_design_parameters
 	double m_rho_in_design;			//[kg/m^3] Inlet fluid density
 	double m_recomp_frac_design;		//[-] Recompression fraction
 
-	compressor_design_parameters()
+	compressor_design_parameters_RC_with_Reheating()
 	{
 		m_type = -1;
 		m_w_design = m_eta_design = m_m_dot_design = m_rho_in_design = m_recomp_frac_design = std::numeric_limits<double>::quiet_NaN();
 	}
 };
 
-class compressor
+class compressor_RC_with_Reheating
 {
 private:
 
 	// Parameter Structure
-	compressor_design_parameters m_comp_des_par;
+	compressor_design_parameters_RC_with_Reheating m_comp_des_par;
 
 	// Calculated performance values at design
 	double m_N_design;			  // design-point shaft speed (rpm)
@@ -256,15 +256,15 @@ private:
 	//double phi_star;			  // dimensionless modified flow coefficient (-)
 
 public:
-	~compressor(){};
+	~compressor_RC_with_Reheating(){};
 
-	compressor()
+	compressor_RC_with_Reheating()
 	{
 		m_N_design = m_D_rotor = m_phi_design = m_phi_min = m_phi_max = std::numeric_limits<double>::quiet_NaN();
 		// Set structure members to NaN?
 	}
 
-	bool initialize(const compressor_design_parameters & comp_des_par_in )
+	bool initialize(const compressor_design_parameters_RC_with_Reheating & comp_des_par_in )
 	{
 		m_comp_des_par = comp_des_par_in;
 
@@ -320,7 +320,7 @@ public:
 
 };
 
-struct turbine_design_parameters
+struct turbine_design_parameters_RC_with_Reheating
 {
 	double m_w_design;			//[kJ/kg] Specific work generated by the turbine [positive value]
 	double m_eta_design;			//[-] Isentropic efficiency of turbine
@@ -328,17 +328,17 @@ struct turbine_design_parameters
 	double m_N_design;			//[rpm] Turbine shaft speed
 	double m_rho_out_design;		//[kg/m^3] Fluid outlet density
 
-	turbine_design_parameters()
+	turbine_design_parameters_RC_with_Reheating()
 	{
 		m_w_design = m_eta_design = m_m_dot_design = m_N_design = m_rho_out_design = std::numeric_limits<double>::quiet_NaN();
 	}
 };
 
-class turbine
+class turbine_RC_with_Reheating
 {
 private:
 	// Parameter Structure
-	turbine_design_parameters m_turb_des_par;
+	turbine_design_parameters_RC_with_Reheating m_turb_des_par;
 
 	// Calculated performance values at design
 
@@ -355,14 +355,14 @@ private:
 	//double w_tip_ratio;              // ratio of the local (turbine inlet) speed of sound to the tip speed
 
 public:
-	~turbine(){};
+	~turbine_RC_with_Reheating(){};
 
-	turbine()
+	turbine_RC_with_Reheating()
 	{
 		m_D_rotor = m_A_nozzle = std::numeric_limits<double>::quiet_NaN();
 	}
 
-	bool initialize(const turbine_design_parameters & turb_des_par_in )
+	bool initialize(const turbine_design_parameters_RC_with_Reheating & turb_des_par_in )
 	{
 		m_turb_des_par = turb_des_par_in;
 
@@ -388,7 +388,7 @@ public:
 
 };
 
-struct HX_design_parameters
+struct HX_design_parameters_RC_with_Reheating
 {
 	int m_N_sub;							//[-] Number of sub-heat exchangers used in the model
 	std::vector<double> m_m_dot_design;	//[kg/s] Design-point mass flow rates of the two streams
@@ -397,7 +397,7 @@ struct HX_design_parameters
 	double m_Q_dot_design;				//[kW] Design-point heat transfer
 	double m_min_DT;					//[K] Minimum temperature difference in heat exchanger
 
-	HX_design_parameters()
+	HX_design_parameters_RC_with_Reheating()
 	{
 		m_N_sub = -1;
 		
@@ -410,7 +410,7 @@ struct HX_design_parameters
 	}
 };
 
-struct HX_off_design_outputs
+struct HX_off_design_outputs_RC_with_Reheating
 {
 	double m_UA_calc;
 	std::vector<double> m_DP_calc;
@@ -419,7 +419,7 @@ struct HX_off_design_outputs
 	double m_eff;
 	double m_min_DT;
 
-	HX_off_design_outputs()
+	HX_off_design_outputs_RC_with_Reheating()
 	{
 		m_m_dot_calc.resize(2);
 		std::fill(m_m_dot_calc.begin(), m_m_dot_calc.end(), std::numeric_limits<double>::quiet_NaN());
@@ -433,12 +433,12 @@ struct HX_off_design_outputs
 	}
 };
 
-class HeatExchanger
+class HeatExchanger_RC_with_Reheating
 {
 private:
 	// Parameter Structure
-	HX_design_parameters m_HX_des_par;
-	HX_off_design_outputs m_HX_od_out;
+	HX_design_parameters_RC_with_Reheating m_HX_des_par;
+	HX_off_design_outputs_RC_with_Reheating m_HX_od_out;
 
 	// Useful design data?
 	//double min_DT_design;			// minimum temperature difference in hxr (K)
@@ -447,28 +447,28 @@ private:
 	//double C_dot_hot_design;		// hot stream capacitance rate (kW/K), defined as m_dot_hot * (delta_h_hot / delta_T_hot)
 
 public:
-	~HeatExchanger(){};
+	~HeatExchanger_RC_with_Reheating(){};
 
-	HeatExchanger(){};
+	HeatExchanger_RC_with_Reheating(){};
 
-	void initialize(const HX_design_parameters & HX_des_par_in)
+	void initialize(const HX_design_parameters_RC_with_Reheating & HX_des_par_in)
 	{
 		m_HX_des_par = HX_des_par_in;
 		return;
 	}
 
-	const HX_off_design_outputs * get_od_outputs()
+	const HX_off_design_outputs_RC_with_Reheating * get_od_outputs()
 	{
 		return &m_HX_od_out;
 	}
 
-	void set_od_outputs(const HX_off_design_outputs & HX_outputs_in)
+	void set_od_outputs(const HX_off_design_outputs_RC_with_Reheating & HX_outputs_in)
 	{
 		m_HX_od_out = HX_outputs_in;
 		return;
 	}
 
-	const HX_design_parameters * get_design_parameters()
+	const HX_design_parameters_RC_with_Reheating * get_design_parameters()
 	{
 		return &m_HX_des_par;
 	}
@@ -484,17 +484,17 @@ class RecompCycle_with_Reheating
 {
 public:
 	// member classes
-	compressor m_mc, m_rc;                                                // compressor and recompressor
-	turbine m_mt, m_rt;													      // turbine
-	HeatExchanger m_LT, m_HT, m_PHX, m_RHX, m_PC;								      // heat exchangers
-	TrackErrors m_errors;
+	compressor_RC_with_Reheating m_mc, m_rc;                                                // compressor and recompressor
+	turbine_RC_with_Reheating m_mt, m_rt;													      // turbine
+	HeatExchanger_RC_with_Reheating m_LT, m_HT, m_PHX, m_RHX, m_PC;								      // heat exchangers
+	TrackErrors_RC_with_Reheating  m_errors;
 
 	// member structure
-	cycle_design_parameters m_cycle_des_par;
-	cycle_opt_off_des_inputs m_cycle_opt_off_des_in;
-	cycle_off_des_inputs m_cycle_off_des_in;
-	S_cycle_design_metrics m_cycle_des_metrics;
-	S_off_design_performance m_cycle_od_performance;
+	cycle_design_parameters_RC_with_Reheating m_cycle_des_par;
+	cycle_opt_off_des_inputs_RC_with_Reheating m_cycle_opt_off_des_in;
+	cycle_off_des_inputs_RC_with_Reheating m_cycle_off_des_in;
+	S_cycle_design_metrics_RC_with_Reheating m_cycle_des_metrics;
+	S_off_design_performance_RC_with_Reheating m_cycle_od_performance;
 
 	// member data: useful results from latest solution of 'design' method
 	std::vector<double> m_temp_last, m_pres_last, m_enth_last, m_entr_last, m_dens_last;		// thermodynamic states (K, kPa, kJ/kg, kJ/kg-K, kg/m3)
@@ -633,34 +633,34 @@ public:
 public:
 	~RecompCycle_with_Reheating(){};
 
-	RecompCycle_with_Reheating(const cycle_design_parameters & cycle_des_par_in)
+	RecompCycle_with_Reheating(const cycle_design_parameters_RC_with_Reheating & cycle_des_par_in)
 	{
 		m_cycle_des_par = cycle_des_par_in;
 		clear_member_data();
 	}
 
-	void set_design_parameters(const cycle_design_parameters & cycle_des_par_in)
+	void set_design_parameters(const cycle_design_parameters_RC_with_Reheating & cycle_des_par_in)
 	{
 		m_cycle_des_par = cycle_des_par_in;
 		clear_member_data();
 	}
 
-	const cycle_design_parameters * get_cycle_design_parameters()
+	const cycle_design_parameters_RC_with_Reheating * get_cycle_design_parameters()
 	{
 		return &m_cycle_des_par;
 	}
 
-	const S_cycle_design_metrics * get_cycle_design_metrics()
+	const S_cycle_design_metrics_RC_with_Reheating * get_cycle_design_metrics()
 	{
 		return &m_cycle_des_metrics;
 	}
 
-	const S_off_design_performance * get_off_design_outputs()
+	const S_off_design_performance_RC_with_Reheating * get_off_design_outputs()
 	{
 		return &m_cycle_od_performance;
 	}
 
-	const cycle_off_des_inputs * get_off_design_inputs()
+	const cycle_off_des_inputs_RC_with_Reheating * get_off_design_inputs()
 	{
 		return &m_cycle_off_des_in;
 	}
@@ -675,27 +675,27 @@ public:
 
 	double opt_eta(double P_high_opt);
 
-	bool optimal_off_design(const cycle_opt_off_des_inputs & cycle_opt_off_des_in_in);
+	bool optimal_off_design(const cycle_opt_off_des_inputs_RC_with_Reheating & cycle_opt_off_des_in_in);
 
 	double off_design_target_power_function(const std::vector<double> &x);
 
-	bool off_design(const cycle_off_des_inputs & cycle_off_des_in_in);
+	bool off_design(const cycle_off_des_inputs_RC_with_Reheating & cycle_off_des_in_in);
 
 };
 
-void calculate_turbomachinery_outlet(double T_in /*K*/, double P_in /*kPa*/, double P_out /*kPa*/, double eta /*-*/, bool is_comp, int & error_code, double & enth_in /*kJ/kg*/, double & entr_in /*kJ/kg-K*/, 
+void calculate_turbomachinery_outlet_RC_with_Reheating(double T_in /*K*/, double P_in /*kPa*/, double P_out /*kPa*/, double eta /*-*/, bool is_comp, int & error_code, double & enth_in /*kJ/kg*/, double & entr_in /*kJ/kg-K*/, 
 	                                 double & dens_in /*kg/m3*/, double & temp_out /*K*/, double & enth_out /*kJ/kg*/, double & entr_out /*kJ/kg-K*/, double & dens_out /*kg/m3*/, double & spec_work /*kJ/kg*/ );
 
-void calculate_hxr_UA(int N_hxrs, double Q_dot /*units?*/, double m_dot_c, double m_dot_h, double T_c_in, double T_h_in, double P_c_in, double P_c_out, double P_h_in, double P_h_out,
+void calculate_hxr_UA_RC_with_Reheating(int N_hxrs, double Q_dot /*units?*/, double m_dot_c, double m_dot_h, double T_c_in, double T_h_in, double P_c_in, double P_c_out, double P_h_in, double P_h_out,
 	                  int & error_code, double & UA, double & min_DT);
 
-double P_pseudocritical(double T_K);
+double P_pseudocritical_RC_with_Reheating(double T_K);
 
-double fmin_callback_opt_eta(double x, void *data);
+double fmin_callback_opt_eta_RC_with_Reheating(double x, void *data);
 
-double nlopt_callback_opt_des(const std::vector<double> &x, std::vector<double> &grad, void *data);
+double nlopt_callback_opt_des_RC_with_Reheating(const std::vector<double> &x, std::vector<double> &grad, void *data);
 
-double nlopt_callback_opt_off_des(const std::vector<double> &x, std::vector<double> &grad, void *data);
+double nlopt_callback_opt_off_des_RC_with_Reheating(const std::vector<double> &x, std::vector<double> &grad, void *data);
 
 #endif
 
