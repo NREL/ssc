@@ -430,7 +430,7 @@ bool RecompCycle_with_Reheating::design()
 		m_pres_last[6 - cpp_offset] = m_pres_last[5 - cpp_offset] - m_cycle_des_par.m_DP_PHX[1 - cpp_offset];								// absolute pressure drop specified for PHX
 
 	if( m_cycle_des_par.m_DP_RHX[1 - cpp_offset] < 0.0 )
-		m_pres_last[11 - cpp_offset] = m_pres_last[12 - cpp_offset] + m_pres_last[11 - cpp_offset] * abs(m_cycle_des_par.m_DP_RHX[1 - cpp_offset]);	// relative pressure drop specified for PHX
+		m_pres_last[11 - cpp_offset] = m_pres_last[12 - cpp_offset] + m_pres_last[12 - cpp_offset] * abs(m_cycle_des_par.m_DP_RHX[1 - cpp_offset]);	// relative pressure drop specified for PHX
 	else
 		m_pres_last[11 - cpp_offset] = m_pres_last[12 - cpp_offset] + m_cycle_des_par.m_DP_RHX[1 - cpp_offset];								// absolute pressure drop specified for PHX
 	
