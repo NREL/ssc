@@ -392,12 +392,12 @@ public:
 		if (!as_boolean("batt_simple_enable"))
 			add_var_info(vtab_technology_outputs);
 
-		std::unique_ptr<weather_data_provider> wdprov;
+		smart_ptr<weather_data_provider>::ptr wdprov;
 
 		if ( is_assigned( "solar_resource_file" ) )
 		{
 			const char *file = as_string("solar_resource_file");
-			wdprov = std::unique_ptr<weather_data_provider>( new weatherfile( file ) );
+			wdprov = smart_ptr<weather_data_provider>::ptr( new weatherfile( file ) );
 
 			weatherfile *wfile = dynamic_cast<weatherfile*>(wdprov.get());
 			if (!wfile->ok()) throw exec_error("pvwattsv5", wfile->message());
@@ -405,7 +405,7 @@ public:
 		}
 		else if ( is_assigned( "solar_resource_data" ) )
 		{
-			wdprov = std::unique_ptr<weather_data_provider>( new weatherdata( lookup("solar_resource_data") ) );
+			wdprov = smart_ptr<weather_data_provider>::ptr( new weatherdata( lookup("solar_resource_data") ) );
 		}
 		else
 			throw exec_error("pvwattsv5", "no weather data supplied");

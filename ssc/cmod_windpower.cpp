@@ -243,7 +243,7 @@ void cm_windpower::exec() throw(general_error)
 
 
 	size_t nstep = 8760;
-	std::unique_ptr<winddata_provider> wdprov;
+	smart_ptr<winddata_provider>::ptr wdprov;
 	if (iModelType == 0)
 	{
 		// initialize the weather file reader here to find out the number of steps
@@ -259,7 +259,7 @@ void cm_windpower::exec() throw(general_error)
 			nstep = wp->nrecords();
 
 			// assign the pointer
-			wdprov = std::unique_ptr<winddata_provider>(wp);
+			wdprov = smart_ptr<winddata_provider>::ptr(wp);
 
 			// make sure it's OK
 			if (!wp->ok())
@@ -267,7 +267,7 @@ void cm_windpower::exec() throw(general_error)
 		}
 		else if (is_assigned("wind_resource_data"))
 		{
-			wdprov = std::auto_ptr<winddata_provider>(new winddata(lookup("wind_resource_data")));
+			wdprov = smart_ptr<winddata_provider>::ptr(new winddata(lookup("wind_resource_data")));
 			nstep = wdprov->nrecords(); // missing - causing issue from Galen 11/15/17
 		}
 		else
