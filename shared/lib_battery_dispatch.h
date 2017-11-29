@@ -112,6 +112,13 @@ public:
 
 	virtual double costToCycle(double battCostPerKWH);
 
+	// compute totals
+	virtual void compute_battery_state();
+	virtual void compute_to_batt()=0;
+	virtual void compute_to_load();
+	virtual void compute_to_grid();
+	virtual void compute_generation();
+
 	// dc powers
 	double power_tofrom_battery();
 	double power_tofrom_grid();
@@ -129,7 +136,7 @@ public:
 
 	// control settings
 	int pv_dispatch_priority(){ return _pv_dispatch_to_battery_first; }
-	double battery_power_to_fill(){ return _Battery->battery_power_to_fill(); }
+	double battery_power_to_fill(){ return _Battery->battery_power_to_fill(_SOC_max); }
 
 	message get_messages();
 
@@ -154,13 +161,6 @@ protected:
 	double current_controller(double battery_voltage);
 	bool restrict_current(double &I);
 	bool restrict_power(double &I);
-
-	// compute totals
-	void compute_battery_state();
-	void compute_to_batt();
-	void compute_to_load();
-	void compute_to_grid();
-	void compute_generation();
 
 	battery_t * _Battery;
 	battery_t * _Battery_initial;
@@ -188,6 +188,7 @@ protected:
 	double _P_battery_to_load;   // DC
 	double _P_grid_to_load;      // DC
 	double _P_pv_to_batt;	     // DC
+	double _P_clipped_to_batt;   // DC
 	double _P_grid_to_batt;      // DC
 	double _P_pv_to_grid;		 // DC
 	double _P_battery_to_grid;   // DC
@@ -274,6 +275,8 @@ public:
 		double P_load_dc_discharging,
 		double P_pv_dc_clipped = 0,
 		double P_battery = 0);
+
+	void compute_to_batt();
 
 protected:
 
@@ -447,6 +450,9 @@ public:
 
 	/*! Pass in the PV power forecast */
 	virtual void update_pv_data(std::vector<double> P_pv_dc);
+
+	/* Compute the components going to the battery */
+	virtual void compute_to_batt();
 
 protected:
 

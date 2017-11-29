@@ -661,12 +661,12 @@ public:
 	losses_t * losses_model() const;
 
 	// Get capacity quantities
-	double battery_charge_needed();
+	double battery_charge_needed(double SOC_max);
 	double battery_charge_total();
 	double battery_charge_maximum();
 	double battery_energy_nominal();
-	double battery_energy_to_fill();
-	double battery_power_to_fill();
+	double battery_energy_to_fill(double SOC_max);
+	double battery_power_to_fill(double SOC_max);
 	double battery_soc();
 
 	// Get Voltage

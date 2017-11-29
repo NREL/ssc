@@ -1513,29 +1513,28 @@ lifetime_t * battery_t::lifetime_model() const { return _lifetime; }
 thermal_t * battery_t::thermal_model() const { return _thermal; }
 losses_t * battery_t::losses_model() const { return _losses; }
 
-double battery_t::battery_charge_needed()
+double battery_t::battery_charge_needed(double SOC_max)
 {
-	double charge_needed = _capacity->qmax() - _capacity->q0();
+	double charge_needed = _capacity->qmax() * SOC_max * 0.01 - _capacity->q0();
 	if (charge_needed > 0)
 		return charge_needed;
 	else
 		return 0.;
 }
-double battery_t::battery_energy_to_fill()
+double battery_t::battery_energy_to_fill(double SOC_max)
 {
 	double battery_voltage = this->battery_voltage(); // [V] 
-	double charge_needed_to_fill = this->battery_charge_needed(); // [Ah] - qmax - q0
-	double energy_needed_to_fill = (charge_needed_to_fill * battery_voltage)*util::watt_to_kilowatt;  // [kWh]
-	return energy_needed_to_fill;
+	double charge_needed_to_fill = this->battery_charge_needed(SOC_max); // [Ah] - qmax - q0
+	return (charge_needed_to_fill * battery_voltage)*util::watt_to_kilowatt;  // [kWh]
 }
 double battery_t::battery_energy_nominal()
 {
 	return battery_voltage_nominal() * _capacity->qmax() * util::watt_to_kilowatt;
 }
-double battery_t::battery_power_to_fill()
+double battery_t::battery_power_to_fill(double SOC_max)
 {
 	// in one time step
-	return (this->battery_energy_to_fill() / _dt_hour);
+	return (this->battery_energy_to_fill(SOC_max) / _dt_hour);
 }
 
 double battery_t::battery_charge_total(){return _capacity->q0();}
