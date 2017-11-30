@@ -7,7 +7,7 @@
 TEST_F(CMPvsamv1PowerIntegration, DefaultNoFinancialModel){
 	
 	ssc_data_t data = ssc_data_create();
-	bool pvsam_errors = pvsam_nofinancial_pheonix(data);
+	int pvsam_errors = pvsam_nofinancial_pheonix(data);
 	EXPECT_FALSE(pvsam_errors);
 
 	if (!pvsam_errors)
@@ -37,7 +37,7 @@ TEST_F(CMPvsamv1PowerIntegration, DefaultResidentialModel)
 {
 
 	ssc_data_t data = ssc_data_create();
-	bool pvsam_errors = pvsam_residential_pheonix(data);
+	int pvsam_errors = pvsam_residential_pheonix(data);
 	EXPECT_FALSE(pvsam_errors);
 
 	if (!pvsam_errors)
