@@ -48,9 +48,6 @@
     <ClInclude Include="..\test\input_cases\weather_inputs.h">
       <Filter>input_cases</Filter>
     </ClInclude>
-    <ClInclude Include="..\test\input_cases\input_toolbox.h">
-      <Filter>input_cases</Filter>
-    </ClInclude>
     <ClInclude Include="..\test\ssc_test\cmod_windpower_test.h">
       <Filter>ssc_test</Filter>
     </ClInclude>
@@ -61,6 +58,9 @@
       <Filter>input_cases</Filter>
     </ClInclude>
     <ClInclude Include="..\test\input_cases\pvsamv1_cases.h">
+      <Filter>input_cases</Filter>
+    </ClInclude>
+    <ClInclude Include="..\test\input_cases\windpower_cases.h">
       <Filter>input_cases</Filter>
     </ClInclude>
   </ItemGroup>

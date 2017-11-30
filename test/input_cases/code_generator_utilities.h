@@ -6,7 +6,7 @@
 #include <stdlib.h>
 #include "sscapi.h"
 
-ssc_bool_t my_handler(ssc_module_t p_mod, ssc_handler_t p_handler, int action,
+static ssc_bool_t my_handler(ssc_module_t p_mod, ssc_handler_t p_handler, int action,
 	float f0, float f1, const char *s0, const char *s1, void *user_data)
 {
 	if (action == SSC_LOG)
@@ -30,7 +30,7 @@ ssc_bool_t my_handler(ssc_module_t p_mod, ssc_handler_t p_handler, int action,
 		return 0;
 }
 
-int set_array(ssc_data_t p_data, const char *name, const char* fn, int len)
+static int set_array(ssc_data_t p_data, const char *name, const char* fn, int len)
 {
 	char buffer[1024];
 	char *record, *line;
@@ -59,7 +59,7 @@ int set_array(ssc_data_t p_data, const char *name, const char* fn, int len)
 	return 1;
 }
 
-int set_matrix(ssc_data_t p_data, const char *name, const char* fn, int nr, int nc)
+static int set_matrix(ssc_data_t p_data, const char *name, const char* fn, int nr, int nc)
 {
 	char buffer[1024];
 	char *record, *line;
