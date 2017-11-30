@@ -69,10 +69,10 @@ TEST_F(CMWindPowerIntegration, Weibull_cmod_windpower){
 	EXPECT_NEAR(monthly_energy, 15326247, e);
 }
 
-/// Using 30m Wind Resource Data
-TEST_F(CMWindPowerIntegration, Resource30mSimpleWake_cmod_windpower){
+/// Using Wind Resource Data
+TEST_F(CMWindPowerIntegration, DataSimpleWake_cmod_windpower){
 	ssc_data_unassign(data, "wind_resource_filename");
-	var_data* windresourcedata = create_winddata_array();
+	var_data* windresourcedata = create_winddata_array(1);
 	var_table *vt = static_cast<var_table*>(data);
 	vt->assign("wind_resource_data", *windresourcedata);
 
@@ -87,6 +87,57 @@ TEST_F(CMWindPowerIntegration, Resource30mSimpleWake_cmod_windpower){
 
 	monthly_energy = ssc_data_get_array(data, "monthly_energy", nullptr)[11];
 	EXPECT_NEAR(monthly_energy, 2.8218e6, e);
+
+	free_winddata_array(windresourcedata);
+}
+
+/// Using 30m Wind Resource File
+TEST_F(CMWindPowerIntegration, Resource30mSimpleWake_cmod_windpower){
+#ifdef _MSC_VER	
+	std::string file = "../../../test/input_docs/wind_30m.srw";
+#else	
+	std::string file = "../test/input_docs/wind_30m.srw";
+#endif
+	ssc_data_set_string(data, "wind_resource_filename", file.c_str());
+
+	compute();
+	
+	ssc_number_t annual_energy;
+	ssc_data_get_number(data, "annual_energy", &annual_energy);
+	EXPECT_NEAR(annual_energy, 33224154, e);
+
+	ssc_number_t monthly_energy = ssc_data_get_array(data, "monthly_energy", nullptr)[0];
+	EXPECT_NEAR(monthly_energy, 2.8218e6, e);
+
+	monthly_energy = ssc_data_get_array(data, "monthly_energy", nullptr)[11];
+	EXPECT_NEAR(monthly_energy, 2.8218e6, e);
+
+	ssc_number_t nEntries = static_cast<var_table*>(data)->lookup("gen")->num.ncols();
+	EXPECT_EQ(nEntries, 8760 * 2);
+}
+
+/// Using 30m Wind Data
+TEST_F(CMWindPowerIntegration, Data30mSimpleWake_cmod_windpower){
+
+	ssc_data_unassign(data, "wind_resource_filename");
+	var_data* windresourcedata = create_winddata_array(2);
+	var_table *vt = static_cast<var_table*>(data);
+	vt->assign("wind_resource_data", *windresourcedata);
+
+	compute();
+
+	ssc_number_t annual_energy;
+	ssc_data_get_number(data, "annual_energy", &annual_energy);
+	EXPECT_NEAR(annual_energy, 33224154, e);
+
+	ssc_number_t monthly_energy = ssc_data_get_array(data, "monthly_energy", nullptr)[0];
+	EXPECT_NEAR(monthly_energy, 2.8218e6, e);
+
+	monthly_energy = ssc_data_get_array(data, "monthly_energy", nullptr)[11];
+	EXPECT_NEAR(monthly_energy, 2.8218e6, e);
+
+	ssc_number_t nEntries = static_cast<var_table*>(data)->lookup("gen")->num.ncols();
+	EXPECT_EQ(nEntries, 8760 * 2);
 
 	free_winddata_array(windresourcedata);
 }
