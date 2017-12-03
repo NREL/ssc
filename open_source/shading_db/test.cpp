@@ -2,6 +2,7 @@
 #include <vector>
 #include <memory>
 #include "lib_pv_shade_loss_mpp.h"
+#include "core.h"
 
 int main()
 {
@@ -17,8 +18,7 @@ int main()
 		double mppt_lo = 250;
 		double mppt_hi = 480;
 
-		std::auto_ptr<ShadeDB8_mpp>  p_shade_db;
-		p_shade_db = std::auto_ptr<ShadeDB8_mpp>(new ShadeDB8_mpp());
+		smart_ptr<ShadeDB8_mpp>::ptr p_shade_db = smart_ptr<ShadeDB8_mpp>::ptr(new ShadeDB8_mpp());
 
 		p_shade_db->init();
 
