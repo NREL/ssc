@@ -59,7 +59,7 @@ struct cycle_design_parameters_RC_with_Reheating
 	double m_T_mc_in;			//[K]
 	double m_T_mt_in;			//[K]
 	double m_T_rt_in;			//[K]
-	double m_P_rt_in;
+	
 	std::vector<double> m_DP_LT;		//(cold, hot) positive values are absolute [kPa], negative values are relative (-)
 	std::vector<double> m_DP_HT;		//(cold, hot) positive values are absolute [kPa], negative values are relative (-)
 	std::vector<double> m_DP_PC;		//(cold, hot) positive values are absolute [kPa], negative values are relative (-)
@@ -76,6 +76,7 @@ struct cycle_design_parameters_RC_with_Reheating
 	double m_opt_tol;					//[-] Tolerance for optimization convergence
 
 	bool m_fixed_P_rt_in;			    // Reheating turbine inlet pressure
+	double m_P_rt_in;
 	double m_P_rt_in_guess;	            // Reheating turbine inlet pressure
 	
 	bool m_fixed_LT_frac;				// Is UA distribution fixed or available for optimization?
@@ -147,9 +148,14 @@ struct cycle_opt_off_des_inputs_RC_with_Reheating
 	double m_T_mc_in;		//[K] Main compressor inlet temperature
 	double m_T_mt_in;		//[K] Main Turbine inlet temperature
 	double m_T_rt_in;		//[K] Reheating Turbine inlet temperature
-	double m_P_rt_in;		//[K] Reheating Turbine inlet temperature
 	double m_W_dot_net_target;	//[kW] Target net power output or rate of heat addition to the cycle
 	int m_N_sub_hxrs;		//[-] Number of sub heat exchangers
+
+	double m_P_high_limit;  
+
+	bool m_fixed_P_rt_in;       // Is Reheating pressure fixed or available for optimization
+	double m_P_rt_in;		      //[K] Reheating Turbine inlet temperature
+	double m_P_rt_in_guess;       //[-] Guess for Reheating pressure: only used if fraction is available for optimization
 
 	bool m_fixed_recomp_frac;		// Is recomp fraction fixed or available for optimization
 	double m_recomp_frac;			//[-] Recompression fraction: only used if fraction is fixed
@@ -167,16 +173,17 @@ struct cycle_opt_off_des_inputs_RC_with_Reheating
 	double m_N_rt;				//[rpm] Reheating Turbine speed [use negative value to couple to main compressor]
 	double m_N_rt_guess;			//[rpm] Guess for reheating turbine speed: only used if it is available for optimization
 
-	//double m_P_mc_in;		//[kPa] Main compressor inlet pressure
+	double m_P_mc_in_opt;		//[kPa] Main compressor inlet pressure
 			
 	double m_tol;			//[-] Cycle Convergence Tolerance
 	double m_opt_tol;		//[-] Optimization convergence
 
 	cycle_opt_off_des_inputs_RC_with_Reheating()
 	{
-		m_T_mc_in = m_T_mt_in = m_T_rt_in = m_P_rt_in = m_W_dot_net_target = m_recomp_frac = m_recomp_frac_guess = 
-		m_N_mc = m_N_mc_guess = m_N_mt = m_N_mt_guess = m_N_rt = m_N_rt_guess = m_tol = m_opt_tol = std::numeric_limits<double>::quiet_NaN();
-		m_fixed_recomp_frac = m_fixed_N_mc = m_fixed_N_mt = m_fixed_N_rt = false;
+		m_T_mc_in = m_T_mt_in = m_T_rt_in = m_P_rt_in = m_W_dot_net_target = m_recomp_frac = m_P_rt_in_guess = m_recomp_frac_guess =
+		m_N_mc = m_N_mc_guess = m_N_mt = m_N_mt_guess = m_N_rt = m_N_rt_guess = m_tol = m_P_high_limit = m_P_mc_in_opt =
+	    m_opt_tol = std::numeric_limits<double>::quiet_NaN();
+		m_fixed_P_rt_in = m_fixed_recomp_frac = m_fixed_N_mc = m_fixed_N_mt = m_fixed_N_rt = false;
 	}
 };
 
@@ -185,10 +192,11 @@ struct cycle_off_des_inputs_RC_with_Reheating
 	cycle_opt_off_des_inputs_RC_with_Reheating m_S;	// Structure for inputs to Cycle Optimum Off-Design
 
 	double m_P_mc_in;
-
+	
 	cycle_off_des_inputs_RC_with_Reheating()
 	{
 		m_P_mc_in = std::numeric_limits<double>::quiet_NaN();
+		m_P_mc_in = m_S.m_P_mc_in_opt;
 	}	
 };
 

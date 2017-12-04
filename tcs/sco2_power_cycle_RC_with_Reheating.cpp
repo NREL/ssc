@@ -1997,3 +1997,267 @@ bool RecompCycle_with_Reheating::off_design(const cycle_off_des_inputs_RC_with_R
 
 	return true;
 }
+
+bool RecompCycle_with_Reheating::off_design_target_power()
+{
+	// Initialize variables
+	double lower_limit = 7377;		// lowest pressure to try
+	double W_dot_lower = 0.0;
+
+	// First check the net power output using the design-point compressor inlet pressure
+	int cpp_offset = 1;
+	double upper_limit = m_pres_des[1 - cpp_offset];
+
+	// Set parameters for off design performance model
+	cycle_off_des_inputs_RC_with_Reheating cycle_off_des_in;
+	cycle_off_des_in.m_P_mc_in = m_pres_des[1 - cpp_offset];
+	cycle_off_des_in.m_S = m_cycle_opt_off_des_in;
+
+	if (!off_design(cycle_off_des_in))
+	{
+		m_errors.SetError(63);		// This is going to display orders in opposite order than John's code: shouldn't be a problem?
+		return false;
+	}
+
+	double W_dot_upper = m_W_dot_net_od_last;
+
+	double P_low = lower_limit;
+
+	do
+	{
+		if (W_dot_upper >= cycle_off_des_in.m_S.m_W_dot_net_target)
+		{
+			P_low = upper_limit*0.99;
+			break;
+		}
+		else
+		{
+			lower_limit = upper_limit;
+			W_dot_lower = W_dot_upper;
+			upper_limit *= 1.001;
+			cycle_off_des_in.m_P_mc_in = upper_limit;
+			if (!off_design(cycle_off_des_in))
+			{
+				m_errors.SetError(64);
+				return false;
+			}
+			//New lines programmed by: L.Coco
+			if (W_dot_upper > m_W_dot_net_od_last)
+			{
+				break;
+			}
+			W_dot_upper = m_W_dot_net_od_last;
+			P_low = (lower_limit + upper_limit)*0.5;
+		}
+	} while (true);
+
+	int max_iter = 100;
+
+	// 4/10/14, John says these should be set in above loop
+	double last_P_low = std::numeric_limits<double>::quiet_NaN();
+	double last_residual = std::numeric_limits<double>::quiet_NaN();
+
+	// Secant loop
+	int iter = -1;
+	for (iter = 0; iter < max_iter; iter++)
+	{
+		cycle_off_des_in.m_P_mc_in = P_low;
+		if (!off_design(cycle_off_des_in))
+		{
+			m_errors.SetError(65);
+			return false;
+		}
+		double residual = cycle_off_des_in.m_S.m_W_dot_net_target - m_W_dot_net_od_last;
+		double secant_guess = P_low - residual*(last_P_low - P_low) / (last_residual - residual);
+		if (residual < 0.0)		// low-side pressure is too high
+			upper_limit = P_low;
+		else
+			lower_limit = P_low;
+
+		if (abs(residual) / cycle_off_des_in.m_S.m_W_dot_net_target <= (1 + iter / 10)*cycle_off_des_in.m_S.m_tol)
+			break;
+		last_P_low = P_low;
+		last_residual = residual;
+		if (secant_guess >= lower_limit && secant_guess <= upper_limit)
+			P_low = secant_guess;
+		else
+			P_low = (lower_limit + upper_limit)*0.5;
+	}
+	if (iter >= max_iter)
+	{
+		m_errors.SetError(66);
+		return false;
+	}
+	return true;
+}
+
+double nlopt_callback_opt_off_des_RC_with_Reheating(const std::vector<double> &x, std::vector<double> &grad, void *data)
+{
+	RecompCycle_with_Reheating *frame = static_cast<RecompCycle_with_Reheating*>(data);
+	if (frame != NULL) return frame->off_design_target_power_function(x);
+}
+
+double RecompCycle_with_Reheating::off_design_target_power_function(const std::vector<double> &x)
+{
+	int index = 0;
+
+	if (!m_cycle_opt_off_des_in.m_fixed_P_rt_in)
+	{
+		m_cycle_opt_off_des_in.m_P_rt_in = x[index];
+		index++;
+	}
+
+	if (!m_cycle_opt_off_des_in.m_fixed_recomp_frac)
+	{
+		m_cycle_opt_off_des_in.m_recomp_frac = x[index];
+		if (m_cycle_opt_off_des_in.m_recomp_frac < 0.0)
+			return 0.0;
+		index++;
+	}
+
+	if (!m_cycle_opt_off_des_in.m_fixed_N_mc)
+	{
+		m_cycle_opt_off_des_in.m_N_mc = x[index];
+		index++;
+	}
+
+	if (!m_cycle_opt_off_des_in.m_fixed_N_mt)
+	{
+		m_cycle_opt_off_des_in.m_N_mt = x[index];
+		index++;
+	}
+
+	if (!m_cycle_opt_off_des_in.m_fixed_N_rt)
+	{
+		m_cycle_opt_off_des_in.m_N_rt = x[index];
+		index++;
+	}
+
+	bool od_target_power_success = off_design_target_power();
+	//bool od_target_power_success = off_design();
+
+	if (od_target_power_success)
+		return m_eta_thermal_od_last;
+	else
+		return 0.0;
+
+}
+
+bool RecompCycle_with_Reheating::optimal_off_design(const cycle_opt_off_des_inputs_RC_with_Reheating & cycle_opt_off_des_in_in)
+{
+	m_cycle_opt_off_des_in = cycle_opt_off_des_in_in;
+
+	int index = 0;
+
+	std::vector<double> x(0);
+	std::vector<double> lb(0);
+	std::vector<double> ub(0);
+	std::vector<double> scale(0);
+
+	if (!m_cycle_opt_off_des_in.m_fixed_P_rt_in)
+	{
+		x.push_back(m_cycle_opt_off_des_in.m_P_rt_in_guess);
+		lb.push_back(m_cycle_opt_off_des_in.m_P_mc_in_opt);
+		ub.push_back(m_cycle_opt_off_des_in.m_P_high_limit);
+		scale.push_back(500.0);
+
+		index++;
+	}
+
+	if (!m_cycle_opt_off_des_in.m_fixed_recomp_frac)
+	{
+		x.push_back(m_cycle_opt_off_des_in.m_recomp_frac_guess);
+		lb.push_back(0.0);
+		ub.push_back(1.0);
+		scale.push_back(0.05);
+
+		index++;
+	}
+
+	if (!m_cycle_opt_off_des_in.m_fixed_N_mc)
+	{
+		x.push_back(m_cycle_opt_off_des_in.m_N_mc_guess);
+		lb.push_back(0.0);
+		ub.push_back(HUGE_VAL);
+		scale.push_back(50.0);
+
+		index++;
+	}
+
+	if (!m_cycle_opt_off_des_in.m_fixed_N_mt)
+	{
+		x.push_back(m_cycle_opt_off_des_in.m_N_mt_guess);
+		lb.push_back(0.0);
+		ub.push_back(HUGE_VAL);
+		scale.push_back(50.0);
+
+		index++;
+	}
+
+	if (!m_cycle_opt_off_des_in.m_fixed_N_rt)
+	{
+		x.push_back(m_cycle_opt_off_des_in.m_N_rt_guess);
+		lb.push_back(0.0);
+		ub.push_back(HUGE_VAL);
+		scale.push_back(50.0);
+
+		index++;
+	}
+
+	if (index > 0)
+	{
+		nlopt::opt	opt_des_cycle(nlopt::LN_SBPLX, index);
+		opt_des_cycle.set_lower_bounds(lb);
+		opt_des_cycle.set_upper_bounds(ub);
+		opt_des_cycle.set_initial_step(scale);
+		opt_des_cycle.set_xtol_rel(m_cycle_opt_off_des_in.m_opt_tol);
+		opt_des_cycle.set_max_objective(nlopt_callback_opt_off_des_RC_with_Reheating, this);
+		double max_f = std::numeric_limits<double>::quiet_NaN();
+		nlopt::result result_des_cycle = opt_des_cycle.optimize(x, max_f);
+
+		index = 0;
+
+		if (!m_cycle_opt_off_des_in.m_fixed_P_rt_in)
+		{
+			m_cycle_opt_off_des_in.m_P_rt_in = x[index];
+			index++;
+		}
+
+		if (!m_cycle_opt_off_des_in.m_fixed_recomp_frac)
+		{
+			m_cycle_opt_off_des_in.m_recomp_frac = x[index];
+			if (m_cycle_opt_off_des_in.m_recomp_frac <= 1.E-4)
+				m_cycle_opt_off_des_in.m_recomp_frac = 0.0;
+			index++;
+		}
+
+		if (!m_cycle_opt_off_des_in.m_fixed_N_mc)
+		{
+			m_cycle_opt_off_des_in.m_N_mc = x[index];
+			index++;
+		}
+
+		if (!m_cycle_opt_off_des_in.m_fixed_N_mt)
+		{
+			m_cycle_opt_off_des_in.m_N_mt = x[index];
+			index++;
+		}
+
+		if (!m_cycle_opt_off_des_in.m_fixed_N_rt)
+		{
+			m_cycle_opt_off_des_in.m_N_rt = x[index];
+			index++;
+		}
+	}
+	// Call off_design target model with optimal inputs
+	if (!off_design_target_power())
+	{
+		m_eta_thermal_od = 0.0;
+		m_W_dot_net_od = 0.0;
+		m_q_dot_in_od = 0.0;
+		m_errors.SetError(9999);		// Need to add this error message "Error at optimal off-design solution - perhaps target is not possible"
+		return false;
+	}
+	set_od_data();
+	return true;
+}
