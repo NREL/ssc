@@ -1,5 +1,4 @@
 #include <gtest/gtest.h>
-#include <gmock/gmock.h>
 
 #include <iostream>
 #include <vector>
@@ -65,14 +64,10 @@ TEST_F(windPowerCalculatorTest, windPowerUsingResource_lib_windwatts){
 	tempData = 25;
 	pressureData = 1.0;
 
-	std::shared_ptr<mockWakeModel> mock(new mockWakeModel());
+	std::shared_ptr<fakeWakeModel> fakeWM(new fakeWakeModel());
 	double airDensitySaved = 0.0;
 
-	// set expectations before running method
-	EXPECT_CALL(*mock, wakeCalculations(::testing::_ /*wildcard matcher*/, &distDownwind[0], &distCrosswind[0], &power[0], &eff[0], &thrust[0], &windSpeed[0], &turbulenceCoeff[0]))
-		.WillOnce(::testing::DoAll(::testing::Assign(&power[0], 1190), ::testing::Assign(&power[1], 1190), ::testing::Assign(&power[1], 1190))); // actions taken when mock is called by wpc
-
-	wpc.InitializeModel(mock); // sets up wpc's wake model as mock
+	wpc.InitializeModel(fakeWM); // sets up wpc's wake model as mock
 	int run = wpc.windPowerUsingResource(windSpeedData, windDirData, pressureData, tempData, &farmPower, &power[0], &thrust[0],
 		&eff[0], &windSpeed[0], &turbulenceCoeff[0], &distDownwind[0], &distCrosswind[0]); // runs method we want to test
 	EXPECT_EQ(run, 3);

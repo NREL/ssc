@@ -2,7 +2,6 @@
 #define __WINDWAKE_TEST__
 
 #include <gtest/gtest.h>
-#include <gmock/gmock.h>
 
 #include <vector>
 #include <iostream>
@@ -40,16 +39,17 @@ public:
 };
 
 /**
-* mockWakeModel is assigned in WPC's InitializeModel and called in windpower function.
+* fakeWakeModel is assigned during tests to provide a simple wakeModel whose wakeCalculations 
+* function does not modify the input parameters.
 */
 
-class mockWakeModel : public wakeModelBase
+class fakeWakeModel : public wakeModelBase
 {
 public:
-	mockWakeModel(){}
-	MOCK_METHOD1(test, int(int n));
-	MOCK_METHOD8(wakeCalculations, void(const double airDensity, const double distanceDownwind[], const double distanceCrosswind[],
-		double power[], double eff[], double thrust[], double windSpeed[], double turbulenceIntensity[]));
+	fakeWakeModel(){}
+	void wakeCalculations(
+		const double airDensity, const double distanceDownwind[], const double distanceCrosswind[],
+		double power[], double eff[], double thrust[], double windSpeed[], double turbulenceIntensity[]) {};
 };
 
 
