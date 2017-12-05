@@ -67,7 +67,7 @@ TEST_F(windPowerCalculatorTest, windPowerUsingResource_lib_windwatts){
 	std::shared_ptr<fakeWakeModel> fakeWM(new fakeWakeModel());
 	double airDensitySaved = 0.0;
 
-	wpc.InitializeModel(fakeWM); // sets up wpc's wake model as mock
+	wpc.InitializeModel(fakeWM); 
 	int run = wpc.windPowerUsingResource(windSpeedData, windDirData, pressureData, tempData, &farmPower, &power[0], &thrust[0],
 		&eff[0], &windSpeed[0], &turbulenceCoeff[0], &distDownwind[0], &distCrosswind[0]); // runs method we want to test
 	EXPECT_EQ(run, 3);

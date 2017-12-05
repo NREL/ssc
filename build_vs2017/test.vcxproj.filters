@@ -54,5 +54,8 @@
     <ClInclude Include="..\test\ssc_test\cmod_windpower_test.h">
       <Filter>ssc_test</Filter>
     </ClInclude>
+    <ClInclude Include="..\test\shared_test\lib_windwakemodel_test.h">
+      <Filter>shared_test</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
