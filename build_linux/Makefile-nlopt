@@ -47,8 +47,10 @@ OBJECTS = \
 
 TARGET=nlopt.a
 
-$(TARGET): $(CONFIG_H) $(OBJECTS)
+$(TARGET): $(OBJECTS)
 	ar rs $(TARGET) $(OBJECTS)
+
+$(OBJECTS): $(CONFIG_H)
 
 $(CONFIG_H):
 	../nlopt/configure -q
