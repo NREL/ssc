@@ -47,3 +47,5 @@ bool CMWindPowerIntegration::compute(){
 	ssc_module_free(module);
 	return 0;
 }
+
+#endif
