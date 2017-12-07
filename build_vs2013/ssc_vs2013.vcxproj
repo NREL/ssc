@@ -179,7 +179,7 @@
     <LinkIncremental>false</LinkIncremental>
     <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
     <IntDir>$(Platform)\$(Configuration)\$(ProjectName)\</IntDir>
-    <TargetName>ssc</TargetName>
+    <TargetName>sscx32</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
@@ -200,10 +200,10 @@
     <IntDir>$(Platform)\$(Configuration)\$(ProjectName)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <TargetName>ssc</TargetName>
+    <TargetName>sscdx32</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <TargetName>ssc</TargetName>
+    <TargetName>sscd</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug32|Win32'">
     <OutDir>target\</OutDir>
@@ -290,10 +290,13 @@
       <ProgramDatabaseFile>$(OutDir)\$(TargetName).pdb</ProgramDatabaseFile>
     </Link>
     <PostBuildEvent>
-      <Command>copy $(SSCDIR)\build_vs2013\$(Platform)\$(Configuration)\ssc.dll $(SAMNTDIR)\deploy\$(Platform)
-copy $(SSCDIR)\build_vs2013\$(Platform)\$(Configuration)\ssc.pdb $(SAMNTDIR)\deploy\$(Platform)\
+      <Command>robocopy $(WEXDIR)\build_vs2013\libcurl_ssl_$(Platform)\bin $(SSCDIR)\build_vs2013\$(Platform)\$(Configuration)\ /E /XC /XN /XO /XX /NP /NS /NJS /NJH /NC  
 
-robocopy $(WEXDIR)\build_vs2013\libcurl_ssl_$(Platform)\bin $(SSCDIR)\build_vs2013\$(Platform)\$(Configuration)\ /E /XC /XN /XO /XX /NP /NS /NJS /NJH /NC  
+
+if NOT "$(SAMNTDIR)" == "" (
+copy $(SSCDIR)\build_vs2013\$(Platform)\$(Configuration)\sscx32.dll $(SAMNTDIR)\deploy\$(Platform)
+copy $(SSCDIR)\build_vs2013\$(Platform)\$(Configuration)\sscx32.pdb $(SAMNTDIR)\deploy\$(Platform)\
+)
 
 if %ERRORLEVEL% GEQ 8 (
 exit) else (
@@ -324,10 +327,12 @@ exit 0
       </StackReserveSize>
     </Link>
     <PostBuildEvent>
-      <Command>copy $(SSCDIR)\build_vs2013\$(Platform)\$(Configuration)\ssc.dll $(SAMNTDIR)\deploy\$(Platform)
-copy $(SSCDIR)\build_vs2013\$(Platform)\$(Configuration)\ssc.pdb $(SAMNTDIR)\deploy\$(Platform)\
+      <Command>robocopy $(WEXDIR)\build_vs2013\libcurl_ssl_$(Platform)\bin $(SSCDIR)\build_vs2013\$(Platform)\$(Configuration)\ /E /XC /XN /XO /XX /NP /NS /NJS /NJH /NC  
 
-robocopy $(WEXDIR)\build_vs2013\libcurl_ssl_$(Platform)\bin $(SSCDIR)\build_vs2013\$(Platform)\$(Configuration)\ /E /XC /XN /XO /XX /NP /NS /NJS /NJH /NC  
+if NOT "$(SAMNTDIR)" == "" (
+copy $(SSCDIR)\build_vs2013\$(Platform)\$(Configuration)\ssc.dll $(SAMNTDIR)\deploy\$(Platform)
+copy $(SSCDIR)\build_vs2013\$(Platform)\$(Configuration)\ssc.pdb $(SAMNTDIR)\deploy\$(Platform)\
+)
 
 if %ERRORLEVEL% GEQ 8 (
 exit) else (
@@ -350,6 +355,11 @@ exit 0
     <PostBuildEvent>
       <Command>robocopy $(WEXDIR)\build_vs2013\libcurl_ssl_$(Platform)\bin $(SSCDIR)\build_vs2013\$(Platform)\$(Configuration)\ /E /XC /XN /XO /XX /NP /NS /NJS /NJH /NC  
 
+if NOT "$(SAMNTDIR)" == "" (
+copy $(SSCDIR)\build_vs2013\$(Platform)\$(Configuration)\sscdx32.dll $(SAMNTDIR)\deploy\$(Platform)
+copy $(SSCDIR)\build_vs2013\$(Platform)\$(Configuration)\sscdx32.pdb $(SAMNTDIR)\deploy\$(Platform)\
+)
+
 if %ERRORLEVEL% GEQ 8 (
 exit) else (
 exit 0    
@@ -371,6 +381,11 @@ exit 0
     </Link>
     <PostBuildEvent>
       <Command>robocopy $(WEXDIR)\build_vs2013\libcurl_ssl_$(Platform)\bin $(SSCDIR)\build_vs2013\$(Platform)\$(Configuration)\ /E /XC /XN /XO /XX /NP /NS /NJS /NJH /NC  
+
+if NOT "$(SAMNTDIR)" == "" (
+copy $(SSCDIR)\build_vs2013\$(Platform)\$(Configuration)\sscd.dll $(SAMNTDIR)\deploy\$(Platform)
+copy $(SSCDIR)\build_vs2013\$(Platform)\$(Configuration)\sscd.pdb $(SAMNTDIR)\deploy\$(Platform)\
+)
 
 if %ERRORLEVEL% GEQ 8 (
 exit) else (

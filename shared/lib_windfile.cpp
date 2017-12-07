@@ -55,6 +55,9 @@
 #include <ctype.h>
 #include <limits>
 #include <numeric>
+#include <sstream>
+#include <typeinfo>
+#include <stdio.h>
 
 #if defined(__WINDOWS__)||defined(WIN32)||defined(_WIN32)
 #define CASECMP(a,b) _stricmp(a,b)
@@ -73,92 +76,26 @@
 #define my_isnan(x) std::isnan( x )
 #endif
 
-static void trim( char *buf )
+static void trim(std::string &buf)
 {
-	if (!buf) return;
-
-	size_t len = strlen(buf);
-	if (len > 0 && buf[len-1] == '\n') // strip newline
-		buf[len-1] = 0;
-
-	if (len > 1 && buf[len-2] == '\r') // strip carriage return
-		buf[len-2] = 0;
+	if (buf.back() == '\n') // strip newline
+	  	buf.pop_back();
+	if (buf.back() == '\r') // strip carriage return
+	  	buf.pop_back();
 }
 
-static int locate2(char *buf, char **colidx, int colmax, char delim)
+static int locate2(std::string buf, std::vector<std::string> &vstring, char delim)
 {
 	trim(buf);
+	std::stringstream ss(buf);
+	std::string token;
 
-	char *p = buf;
-	int i = 1;
-	int ncols = 0;
-	
-	colidx[0] = p;
-	while (p && *p && i < colmax)
-	{
-		p = strchr(p, delim);
-		if (p)
-		{
-			*p = 0;
-			colidx[i++] = ++p;
-		}
+	vstring.clear();
+	while (getline(ss, token, delim)) {
+	  vstring.push_back(token);
 	}
-
-	ncols = i;
-
-	while (i<colmax) colidx[i++] = 0;
-
-	return ncols;
+	return vstring.size();
 }
-
-///* 
-//   version of strtok_r from (2010/9/24)
-//   http://www.koders.com/c/fid9E7961E1E818E911DA7C34DD56DD8782726B3FCD.aspx
-//   */
-//static char *gettoken2 (char *s, const char *delim, char **save_ptr)
-//{
-//	char *token;
-//
-//	if (s == NULL)
-//		s = *save_ptr;
-//
-//	/* Scan leading delimiters.  */
-//	s += strspn (s, delim);
-//	if (*s == '\0')
-//	{
-//		*save_ptr = s;
-//		return NULL;
-//	}
-//
-//	/* Find the end of the token.  */
-//	token = s;
-//	s = strpbrk (token, delim);
-//	
-//	if (s == NULL)
-//		/* This token finishes the string.  */
-//		*save_ptr = strchr (token, '\0');
-//	else
-//	{
-//		/* Terminate the token and make *SAVE_PTR point past it.  */
-//		*s = '\0';
-//		*save_ptr = s + 1;
-//	}
-//	return token;
-//}
-//
-//static int cmp_ext(const char *file, const char *ext)
-//{
-//	size_t len_ext, len_file;
-//	const char *extp;
-//	
-//	if (!file || !ext) return 0;
-//	len_ext = strlen(ext);
-//	len_file = strlen(file);
-//	extp = file+len_file-len_ext;
-//	
-//	if (extp < file) return 0;
-//	return CASENCMP(extp, ext, len_ext)==0 ? 1 : 0;
-//}
 
 #define MBUFLEN 4096
 
@@ -399,8 +336,8 @@ bool windfile::open( const std::string &file )
 	
 	// read line 1 (header info
 	fgets( m_buf, MBUFLEN-1, m_fp );
-	char *cols[128];
-	int ncols = locate2(m_buf, cols, 128, ',');
+	std::vector<std::string> cols;
+	int ncols = locate2(m_buf, cols, ',');
 
 	if (ncols < 8)
 	{
@@ -410,25 +347,28 @@ bool windfile::open( const std::string &file )
 		return false;
 	}
 
-	locid = std::string( cols[0] );
-	city = std::string( cols[1] );
-	state = std::string( cols[2] );
-	country = std::string( cols[3] );
+	locid = cols[0];
+	city = cols[1];
+	state = cols[2];
+	country = cols[3];
 
-	year = atoi( cols[4] );
-	lat = atof( cols[5] );
-	lon = atof( cols[6] );
-	elev = atof( cols[7] );
+	try { year = std::stoi(cols[4]); } 
+	catch (const std::invalid_argument &) {/* nothing to do */};
+	try { lat = std::stoi(cols[5]); }
+	catch (const std::invalid_argument &) {/* nothing to do */ };
+	try { lon = std::stoi(cols[6]); }
+	catch (const std::invalid_argument &) {/* nothing to do */ };
+	try { elev = std::stoi(cols[7]); }
+	catch (const std::invalid_argument &) {/* nothing to do */ };
 
-	
 	// read line 2, description
 	fgets( m_buf, MBUFLEN-1, m_fp );
-	trim( m_buf );
 	desc = std::string(m_buf);
+	trim(desc);
 	
 	// read line 3, column names (must be pressure, temperature, speed, direction)
 	fgets( m_buf, MBUFLEN-1, m_fp );
-	ncols = locate2( m_buf, cols, 128, ',' );
+	ncols = locate2(m_buf, cols, ',');
 	if (ncols < 3)
 	{
 		m_errorMsg = util::format("too few data column types found: %d.  at least 3 required.", ncols);
@@ -465,7 +405,7 @@ bool windfile::open( const std::string &file )
 
 	// read line 5, height in meters for each data column
 	fgets( m_buf, MBUFLEN-1, m_fp );
-	ncols = locate2( m_buf, cols, 128, ',' );
+	ncols = locate2(m_buf, cols, ',');
 	if ( ncols < (int)m_heights.size() )
 	{
 		m_errorMsg = util::format("too few columns in the height row.  %d required but only %d found", (int)m_heights.size(), ncols);
@@ -475,7 +415,7 @@ bool windfile::open( const std::string &file )
 	}
 
 	for (size_t i=0;i<m_heights.size();i++)
-		m_heights[i] = atof( cols[i] );
+		m_heights[i] = stof( cols[i] );
 	
 
 	// read all the lines to determine the nubmer of records in the file
@@ -520,15 +460,15 @@ bool windfile::read_line( std::vector<double> &values )
 {
 	if ( !ok() ) return false;
 
-	char *cols[128];
+	std::vector<std::string> cols;
 	fgets( m_buf, MBUFLEN-1, m_fp );
-	int ncols = locate2( m_buf, cols, 128, ',' );	
+	int ncols = locate2(m_buf, cols, ',');
 	if (ncols >= (int)m_heights.size() 
 		&& ncols >= (int)m_dataid.size())
 	{
 		values.resize( m_heights.size(), 0.0 );
 		for (size_t i=0;i<m_heights.size();i++)
-			values[i] = atof( cols[i] );
+			values[i] = stof( cols[i] );
 
 		return true;
 	}

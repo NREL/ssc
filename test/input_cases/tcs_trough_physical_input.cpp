@@ -10,9 +10,6 @@ using namespace std;
 /**
  * Custom Testing Handler that does nothing
  */
-ssc_bool_t my_handler(ssc_module_t, ssc_handler_t, int , float, float, const char *, const char *, void *){
-	return true;
-}
 
 void var(var_table* vt, string name, string value){
 	var_data* vd = new var_data(value);

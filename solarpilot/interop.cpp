@@ -1060,7 +1060,7 @@ void sim_result::process_analytical_simulation(SolarField &SF, int nsim_type, do
 			add_heliostat(*helios.at(i));
 		process_field_stats();
 		total_receiver_area = SF.calcReceiverTotalArea();
-		dni =  SF.getVarMap()->sf.dni_des.val/1000.;
+		dni =  SF.getVarMap()->flux.flux_dni.val/1000.;
 		power_on_field = total_heliostat_area * dni;	//[kW]
 		power_absorbed = power_on_field * eff_total_sf.ave;
         power_thermal_loss = SF.getReceiverTotalHeatLoss();
@@ -1105,7 +1105,7 @@ void sim_result::process_raytrace_simulation(SolarField &SF, int nsim_type, doub
 
 
 		//Process the ray data
-		int st, st0=0, ray, ray0=0, el, el0=0;
+		int st, st0=0, ray, ray0=0, el;
 		int nhin=0, nhout=0, nhblock=0, nhabs=0, nrin=0, nrspill=0, nrabs=0;
 
 		for(int i=0; i<ntot; i++){ //for each ray hit
@@ -1126,7 +1126,6 @@ void sim_result::process_raytrace_simulation(SolarField &SF, int nsim_type, doub
 				}
 				ray0 = 0;
 				st0 = 0;
-				el0 = 0;
 			}
 
 			if(el < 0){
@@ -1142,21 +1141,18 @@ void sim_result::process_raytrace_simulation(SolarField &SF, int nsim_type, doub
 					nrin++;
 					nrabs++;
 				}
-				el0 = 0;
 				ray0 = 0;
 				st0 = 0;
 			}
 			else if( el == 0 ){ //Element map is 0 - a ray missed the receiver
 				nrspill++;
 
-				el0 = 0;
 				ray0 = 0;
 				st0 = 0;
 			}
 			else{
 				st0 = st;
 				ray0 = ray;
-				el0 = el;
 			}
 		}
 

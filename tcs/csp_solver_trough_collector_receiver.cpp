@@ -5352,7 +5352,7 @@ double C_csp_trough_collector_receiver::FricFactor(double m_Rough, double Reynol
 * summary - Address of string variable on which summary contents will be written.
 ---------------------------------------------------------------------------------			*/
 
-void C_csp_trough_collector_receiver::header_design(int nhsec, int m_nfsec, int m_nrunsec, bool include_fixed_heat_sink_runner, 
+void C_csp_trough_collector_receiver::header_design(unsigned nhsec, int m_nfsec, unsigned m_nrunsec, bool include_fixed_heat_sink_runner,
 	double rho, double V_max, double V_min, double m_dot,
 	std::vector<double> &m_D_hdr, std::vector<double> &m_D_runner, std::string *summary)
 {
@@ -5362,10 +5362,11 @@ void C_csp_trough_collector_receiver::header_design(int nhsec, int m_nfsec, int 
 	if (m_D_runner.size() != m_nrunsec) m_D_runner.resize(m_nrunsec);
 
 	//----
-	int nst, nend, nd;
+	int nend, nd;
+	unsigned nst;
 	double m_dot_max, m_dot_min;
 
-	for(int i = 0; i < nhsec; i++)
+	for (unsigned i = 0; i < nhsec; i++)
 	{
 		m_D_hdr[i] = 0.0;
 	}
@@ -5397,7 +5398,7 @@ void C_csp_trough_collector_receiver::header_design(int nhsec, int m_nfsec, int 
 			m_dot_runner_split_start = (m_dot - 2.0*m_dot_subsection)/2.0;
 		}
 		
-		for( int i = n_runner; i < m_nrunsec; i++)
+		for (unsigned i = n_runner; i < m_nrunsec; i++)
 		{
 			m_D_runner[i] = pipe_sched(sqrt(4.*m_dot_runner_split_start / (rho*V_max*CSP::pi)));
 			m_dot_runner_split_start = max(m_dot_runner_split_start - m_dot_subsection*2.0, 0.0);
@@ -5407,7 +5408,7 @@ void C_csp_trough_collector_receiver::header_design(int nhsec, int m_nfsec, int 
 	//Calculate each section in the header
 	nst = 0; nend = 0; nd = 0;
 	m_dot_max = m_dot_subsection;
-	for (int i = 0; i<nhsec; i++){
+	for (unsigned i = 0; i<nhsec; i++){
 		if ((i == nst) && (nd <= 10)) {
 			//If we've reached the point where a diameter adjustment must be made...
 			//Also, limit the number of diameter reductions to 10
@@ -5445,7 +5446,7 @@ void C_csp_trough_collector_receiver::header_design(int nhsec, int m_nfsec, int 
 
 		if( m_nrunsec > 0 )
 		{
-			for (int i = 0; i < m_nrunsec; i++)
+			for (unsigned i = 0; i < m_nrunsec; i++)
 			{
 				MySnprintf(tstr, TSTRLEN, "Runner %d diameter: %.4lf m (%.2lf in)\n", i + 1, m_D_runner[i], m_D_runner[i] * m_mtoinch);
 				summary->append(tstr);
@@ -5460,7 +5461,7 @@ void C_csp_trough_collector_receiver::header_design(int nhsec, int m_nfsec, int 
 		summary->append("Loop No. | Diameter [m] | Diameter [in] | Diam. ID\n--------------------------------------------------\n");
 
 		nd = 1;
-		for (int i = 0; i<nhsec; i++){
+		for (unsigned i = 0; i<nhsec; i++){
 			if (i>1) {
 				if (m_D_hdr[i] != m_D_hdr.at(i - 1)) nd = nd + 1;
 			}

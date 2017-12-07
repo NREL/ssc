@@ -171,7 +171,7 @@ void ST_Element::Write(FILE *fdat){
 
 void ST_Element::UpdateRotationMatrix(){
 	
-	/*double CosRefZ[3],Euler[3],CosLoc[3],CosRefX[3],CosRefY[3],/*RRefToLoc[3][3],RLocToRef[3][3];*/
+	// double CosRefZ[3],Euler[3],CosLoc[3],CosRefX[3],CosRefY[3],/*RRefToLoc[3][3],RLocToRef[3][3];*/
 		
 	double Alpha,Beta,Gamma,
 		CosAlpha,CosBeta,CosGamma,
@@ -424,7 +424,7 @@ ST_RayData::ray_t *ST_RayData::Index(st_uint_t i, bool write_access)
 void ST_RayData::Print()
 {
 	printf("[ blocks: %d count: %u capacity: %u ]\n",
-		m_blockList.size(),
+		(int)m_blockList.size(),
 		(unsigned int)m_dataCount,
 		(unsigned int)m_dataCapacity );
 
@@ -436,7 +436,7 @@ void ST_RayData::Print()
 		unsigned int ray;
 		if (Query(i, pos, cos, &elm, &stage, &ray))
 		{
-			printf("   [%u] = { [%lg,%lg,%lg][%lg,%lg,%lg] %d %d %u }\n", i,
+			printf("   [%u] = { [%lg,%lg,%lg][%lg,%lg,%lg] %d %d %u }\n", (unsigned int)i,
 				pos[0], pos[1], pos[2],
 				cos[0], cos[1], cos[2],
 				elm, stage, ray);
