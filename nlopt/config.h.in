@@ -27,6 +27,9 @@
 /* Define if the isinf() function/macro is available. */
 #undef HAVE_ISINF
 
+/* Define if the isnan() function/macro is available. */
+#undef HAVE_ISNAN
+
 /* Define to 1 if you have the `m' library (-lm). */
 #undef HAVE_LIBM
 

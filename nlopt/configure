@@ -3683,6 +3683,34 @@ fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: ${ok}" >&5
 $as_echo "${ok}" >&6; }
 
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for isnan" >&5
+$as_echo_n "checking for isnan... " >&6; }
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#include <math.h>
+
+int
+main ()
+{
+if (!isnan(3.14159)) isnan(2.7183);
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ok=yes
+else
+  ok=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+if test "$ok" = "yes"; then
+
+$as_echo "#define HAVE_ISNAN 1" >>confdefs.h
+
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: ${ok}" >&5
+$as_echo "${ok}" >&6; }
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for isinf" >&5
 $as_echo_n "checking for isinf... " >&6; }
@@ -3745,19 +3773,19 @@ fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: ${ok}" >&5
 $as_echo "${ok}" >&6; }
 
-vers=`echo ${VERSION}.0.0 | cut -d. -f1`
+vers=`echo ${PACKAGE_VERSION} | cut -d. -f1`
 
 cat >>confdefs.h <<_ACEOF
 #define MAJOR_VERSION $vers
 _ACEOF
 
-vers=`echo ${VERSION}.0.0 | cut -d. -f2`
+vers=`echo ${PACKAGE_VERSION} | cut -d. -f2`
 
 cat >>confdefs.h <<_ACEOF
 #define MINOR_VERSION $vers
 _ACEOF
 
-vers=`echo ${VERSION}.0.0 | cut -d. -f3`
+vers=`echo ${PACKAGE_VERSION} | cut -d. -f3`
 
 cat >>confdefs.h <<_ACEOF
 #define BUGFIX_VERSION $vers

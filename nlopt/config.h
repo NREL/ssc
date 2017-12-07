@@ -2,7 +2,7 @@
 /* config.h.in.  Generated from configure.ac by autoheader.  */
 
 /* Bugfix version number. */
-#define BUGFIX_VERSION 0
+#define BUGFIX_VERSION 2
 
 /* Define to 1 if you have the `BSDgettimeofday' function. */
 /* #undef HAVE_BSDGETTIMEOFDAY */
@@ -27,6 +27,9 @@
 
 /* Define if the isinf() function/macro is available. */
 #define HAVE_ISINF 1
+
+/* Define if the isnan() function/macro is available. */
+#define HAVE_ISNAN 1
 
 /* Define to 1 if you have the `m' library (-lm). */
 #define HAVE_LIBM 1
@@ -65,10 +68,10 @@
 #define HAVE_UNISTD_H 1
 
 /* Major version number. */
-#define MAJOR_VERSION 
+#define MAJOR_VERSION 2
 
 /* Minor version number. */
-#define MINOR_VERSION 0
+#define MINOR_VERSION 4
 
 /* Define to the address where bug reports for this package should be sent. */
 #define PACKAGE_BUGREPORT "sam@nrel.gov"
