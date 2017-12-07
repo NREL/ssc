@@ -112,7 +112,7 @@ TEST_F(CMWindPowerIntegration, Resource30mSimpleWake_cmod_windpower){
 	monthly_energy = ssc_data_get_array(data, "monthly_energy", nullptr)[11];
 	EXPECT_NEAR(monthly_energy, 2.8218e6, e);
 
-	ssc_number_t nEntries = static_cast<var_table*>(data)->lookup("gen")->num.ncols();
+	size_t nEntries = static_cast<var_table*>(data)->lookup("gen")->num.ncols();
 	EXPECT_EQ(nEntries, 8760 * 2);
 }
 
@@ -136,7 +136,7 @@ TEST_F(CMWindPowerIntegration, Data30mSimpleWake_cmod_windpower){
 	monthly_energy = ssc_data_get_array(data, "monthly_energy", nullptr)[11];
 	EXPECT_NEAR(monthly_energy, 2.8218e6, e);
 
-	ssc_number_t nEntries = static_cast<var_table*>(data)->lookup("gen")->num.ncols();
+	size_t nEntries = static_cast<var_table*>(data)->lookup("gen")->num.ncols();
 	EXPECT_EQ(nEntries, 8760 * 2);
 
 	free_winddata_array(windresourcedata);
