@@ -334,4 +334,6 @@ build_osx/Test
 
 build_linux/Test
 
+build_linux/config.status
+
 linux_test\.txt
