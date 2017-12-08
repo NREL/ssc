@@ -47,6 +47,7 @@
 *  THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *******************************************************************************************************/
 
+#include <assert.h>
 #include <algorithm>
 #include <math.h>
 
@@ -2873,7 +2874,7 @@ void SolarField::cornfieldPositions(vector<sp_point> &HelPos){
 
 	var_solarfield::XY_FIELD_SHAPE::EN shape =
 	  static_cast<var_solarfield::XY_FIELD_SHAPE::EN>(_var_map->sf.xy_field_shape.mapval());
-	//assert (shape >= 0 && shape <= var_solarfield::XY_FIELD_SHAPE::UNDEFINED);
+	assert (shape >= 0 && shape <= var_solarfield::XY_FIELD_SHAPE::UNDEFINED);
 	switch (shape)
 	{
     case var_solarfield::XY_FIELD_SHAPE::HEXAGON:
@@ -2905,7 +2906,7 @@ void SolarField::cornfieldPositions(vector<sp_point> &HelPos){
 		//Calculate the maximum x position
 		var_solarfield::XY_FIELD_SHAPE::EN shape =
 		  static_cast<var_solarfield::XY_FIELD_SHAPE::EN>(_var_map->sf.xy_field_shape.mapval());
-		//assert (shape >= 0 && shape <= var_solarfield::XY_FIELD_SHAPE::UNDEFINED);
+		assert (shape >= 0 && shape <= var_solarfield::XY_FIELD_SHAPE::UNDEFINED);
 		switch (shape)
 		{
         case var_solarfield::XY_FIELD_SHAPE::HEXAGON:
