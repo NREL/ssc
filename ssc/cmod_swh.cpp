@@ -519,13 +519,9 @@ public:
 				// (Julian day is used in the Julian date (JD) system of time measurement for scientific use by 
 				// the astronomy community, presenting the interval of time in days and fractions of a day since 
 				// January 1, 4713 BC Greenwich noon - WIKIPEDIA)
-				int hour = 0;
 				int julian_day = (int)(((double)(i + 1)) / 24);
-				if ((double)julian_day == (((double)(i + 1)) / 24.0))
-					hour = 24;
-				else
+				if ((double)julian_day != (((double)(i + 1)) / 24.0))
 				{
-					hour = ((int)i + 1) - (julian_day * 24);
 					julian_day++;
 				}
 				if (wfile.lat() > 0.)
