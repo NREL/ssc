@@ -112,7 +112,7 @@ double fminbr(double a, double b, double(*f)(double x, void *data), void *data_i
 			p = (x - v) * q - (x - w) * t;
 			q = 2 * (q - t);
 
-			if( q > (double)0 )    /* q was calculated with the op- */
+			if (q > 0)    		/* q was calculated with the op- */
 				p = -p;             /* posite sign; make q positive */
 			else                   /* and assign possible minus to     */
 				q = -q;             /* p                            */
@@ -128,7 +128,7 @@ double fminbr(double a, double b, double(*f)(double x, void *data), void *data_i
 		}
 
 		if( fabs(new_step) < tol_act ) {   /* Adjust the step to be not less */
-			if( new_step > (double)0 ) {   /* than tolerance               */
+			if (new_step > 0) {        /* than tolerance                 */
 				new_step = tol_act;
 			}
 			else {
