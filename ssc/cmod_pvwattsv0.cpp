@@ -578,18 +578,18 @@ static void solarpos_v0(int year,int month,int day,int hour,double minute,double
 	time = jd - 51545.0;     /* Time in days referenced from noon 1 Jan 2000 */
 
 	mnlong = 280.46 + 0.9856474*time;
-	mnlong = fmod((double)mnlong,(double)360.0);         /* Finds floating point remainder */
+	mnlong = fmod(mnlong, 360.0);         /* Finds floating point remainder */
 	if( mnlong < 0.0 )
 		mnlong = mnlong + 360.0;          /* Mean longitude between 0-360 deg */
 
 	mnanom = 357.528 + 0.9856003*time;
-	mnanom = fmod((double)mnanom,(double)360.0);
+	mnanom = fmod(mnanom, 360.0);
 	if( mnanom < 0.0 )
 		mnanom = mnanom + 360.0;
 	mnanom = mnanom*DTOR;             /* Mean anomaly between 0-2pi radians */
 
 	eclong = mnlong + 1.915*sin(mnanom) + 0.020*sin(2.0*mnanom);
-	eclong = fmod((double)eclong,(double)360.0);
+	eclong = fmod(eclong, 360.0);
 	if( eclong < 0.0 )
 		eclong = eclong + 360.0;
 	eclong = eclong*DTOR;       /* Ecliptic longitude between 0-2pi radians */
@@ -606,12 +606,12 @@ static void solarpos_v0(int year,int month,int day,int hour,double minute,double
 	dec = asin( sin(oblqec)*sin(eclong) );       /* Declination in radians */
 
 	gmst = 6.697375 + 0.0657098242*time + zulu;
-	gmst = fmod(gmst,(double)24.0);
+	gmst = fmod(gmst, 24.0);
 	if( gmst < 0.0 )
 		gmst = gmst + 24.0;         /* Greenwich mean sidereal time in hours */
 
 	lmst = gmst + lng/15.0;
-	lmst = fmod(lmst,(double)24.0);
+	lmst = fmod(lmst, 24.0);
 	if( lmst < 0.0 )
 		lmst = lmst + 24.0;
 	lmst = lmst*15.0*DTOR;         /* Local mean sidereal time in radians */
@@ -656,7 +656,7 @@ static void solarpos_v0(int year,int month,int day,int hour,double minute,double
 	if( elv > -0.56 )
 		refrac = 3.51561*( 0.1594 + 0.0196*elv + 0.00002*elv*elv )/( 1.0 + 0.505*elv + 0.0845*elv*elv );
 	else
-		refrac = (double)0.56;
+		refrac = 0.56;
 	if( elv + refrac > 90.0 )
 		elv = 90.0*DTOR;
 	else
