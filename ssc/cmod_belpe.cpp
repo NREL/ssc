@@ -687,16 +687,14 @@ public:
 			
 		//THIS IS TO FIGURE OUT THE HVAC FAN USAGE WITH GAS HEATER
 		//Capacity of gas heater....really should be more climate - dependent
-		double n_heat, GasHeat_capacity;
+		double GasHeat_capacity;
 		if (YrBuilt > 1980 || EnergyRetrofits == 1)
 		{
-		      n_heat = 0.78; //HVAC sys efficiency for gas forced air
-			  GasHeat_capacity = 35 * A_Floor / 1000; //kBTU / h
+		  GasHeat_capacity = 35 * A_Floor / 1000; //kBTU / h
 		}
 		else
 		{
-			n_heat = 0.65;
-			GasHeat_capacity = 40 * A_Floor / 1000;
+		  GasHeat_capacity = 40 * A_Floor / 1000;
 		};
 			
 		//Aux elec for gas heater(fans, etc)

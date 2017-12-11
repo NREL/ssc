@@ -1924,8 +1924,6 @@ public:
 
 				if (!gen_only) // added for two meter no load scenarios to use load tier sizing
 				{
-					// check for kWh/kW
-					bool kWhperkW = false;
 					//start_tier = 0;
 					end_tier = (int)m_month[m].ec_tou_ub_init.ncols() - 1;
 					//int num_periods = (int)m_month[m].ec_tou_ub_init.nrows();
@@ -1941,7 +1939,6 @@ public:
 					if ((m_month[m].ec_tou_units.ncols()>0 && m_month[m].ec_tou_units.nrows() > 0)
 						&& ((m_month[m].ec_tou_units.at(0, 0) == 1) || (m_month[m].ec_tou_units.at(0, 0) == 3)))
 					{
-						kWhperkW = true;
 						// monthly total energy / monthly peak to determine which kWh/kW tier
 						double mon_kWhperkW = -m_month[m].energy_net; // load negative
 						if (m_month[m].dc_flat_peak != 0)
@@ -2667,8 +2664,6 @@ public:
 
 				if (!gen_only) // added for two meter no load scenarios to use load tier sizing
 				{
-					// check for kWh/kW
-					bool kWhperkW = false;
 					//start_tier = 0;
 					end_tier = (int)m_month[m].ec_tou_ub_init.ncols() - 1;
 					//int num_periods = (int)m_month[m].ec_tou_ub_init.nrows();
@@ -2685,7 +2680,6 @@ public:
 					if ((m_month[m].ec_tou_units.ncols() > 0 && m_month[m].ec_tou_units.nrows() > 0)
 						&& ((m_month[m].ec_tou_units.at(0, 0) == 1) || (m_month[m].ec_tou_units.at(0, 0) == 3)))
 					{
-						kWhperkW = true;
 						// monthly total energy / monthly peak to determine which kWh/kW tier
 						double mon_kWhperkW = -m_month[m].energy_net; // load negative
 						if (m_month[m].dc_flat_peak != 0)

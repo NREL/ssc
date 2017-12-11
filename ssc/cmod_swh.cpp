@@ -575,9 +575,7 @@ public:
 		double V_cold_prev = V_tank-V_hot_prev;
 		double T_tank_prev = (V_hot_prev/V_tank)*T_hot_prev + (V_cold_prev/V_tank)*T_cold_prev; // weighted average tank temperature (initial)
 		double T_deliv_prev = 0.0;
-		double T_amb_prev = T_amb[0];
 		double T_bot_prev = T_mains[0];
-		double T_top_prev = T_hot_prev;
 
 		/* *********************************************************************************************
 		Calculate SHW performance: Q_useful, Q_deliv, T_deliv, T_tank, Q_pump, Q_aux, Q_auxonly, energy_net (Q_saved)
@@ -773,9 +771,7 @@ public:
 				T_deliv_prev = T_deliv;
 				T_hot_prev = T_hot;
 				T_cold_prev = T_cold;
-				T_amb_prev = T_amb_use;
 				T_bot_prev = T_bot;
-				T_top_prev = T_top;
 
 				// Zero out Q_useful if <0
 				if (Q_useful < 0) Q_useful = 0.0;

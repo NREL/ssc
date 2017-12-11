@@ -178,9 +178,8 @@ public:
 	void exec( ) throw( general_error )
 	{
 		shared_ptr<weather_data_provider> wdata = make_shared<weatherfile>(as_string("solar_resource_file"));
-        solarpilot_invoke spi( this );
-        spi.run(wdata);
-        AutoPilot_S *sapi = spi.GetSAPI();
+		solarpilot_invoke spi( this );
+		spi.run(wdata);
 
 		assign("h_tower_opt", (ssc_number_t)spi.sf.tht.val);
 		assign("rec_height_opt", (ssc_number_t)spi.recs.front().rec_height.val);
@@ -271,12 +270,6 @@ public:
 				throw exec_error("solarpilot", "failed to calculate a correct flux map table");
 
 		}
-		else{
-			//fluxmaps not required, so declare required variables and fill with zeros
-			ssc_number_t *opteff = allocate( "opteff_table", 1, 3 );
-			ssc_number_t *fluxdata = allocate( "flux_table", 1, 1 );
-		}
-
 	}
 };
 

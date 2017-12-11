@@ -2764,9 +2764,6 @@ public:
 		int m,d,h;
 		ssc_number_t energy_use[12]; // 12 months
 		int c=0;
-//		bool sell_eq_buy = as_boolean("ur_sell_eq_buy");
-		bool enable_nm = as_boolean("ur_enable_net_metering");
-
 
 		for (m=0;m<12;m++)
 		{

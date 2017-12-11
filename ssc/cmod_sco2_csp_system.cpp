@@ -473,7 +473,6 @@ public:
 		C_sco2_rc_csp_template::S_od_par sco2_rc_od_par;
 		double T_htf_hot_in_des = p_sco2_recomp_csp->get_design_par()->m_T_htf_hot_in;		//[K]
 		double m_dot_htf_des = p_sco2_recomp_csp->get_phx_des_par()->m_m_dot_hot_des;		//[kg/s]
-		double T_amb_des = p_sco2_recomp_csp->get_design_par()->m_T_amb_des;				//[K]
 		
 		double m_dot_htf_ND = 1.0;
 		double T_htf_hot_in_offset = 0;
@@ -546,28 +545,6 @@ public:
 				
 				sco2_rc_od_op_par.m_recomp_frac = f_recomp_od;	//[-]
 
-				//int sco2_od_code = 0;
-				std::clock_t clock_start = std::clock();
-
-				//try
-				//{
-				//	sco2_od_code = sco2_recomp_csp.off_design(sco2_rc_od_par, sco2_rc_od_op_par);
-				//}
-				//catch( C_csp_exception &csp_exception )
-				//{
-				//	// Report warning before exiting with error
-				//	while( sco2_recomp_csp.mc_messages.get_message(&out_type, &out_msg) )
-				//	{
-				//		log(out_msg);
-				//	}
-				//
-				//	log(csp_exception.m_error_message, SSC_ERROR, -1.0);
-				//
-				//	return;				
-				//}
-				std::clock_t clock_end = std::clock();
-
-				//double od_opt_duration = (clock_end - clock_start) / (double)CLOCKS_PER_SEC;		//[s]
 
 				//p_od_code[n_run] = sco2_od_code;
 				//// Can we just... see what happens getting metrics from sco2_recomp_csp when off-design fails
@@ -653,8 +630,6 @@ public:
 		}
 
 		// ********************************************************************
-		//  Generate off-design polynomials, if necessary
-		bool is_gen_od_poly = as_boolean("is_gen_od_polynomials");
 		//if( is_gen_od_poly )
 		//{
 		//	// We are never changing the HTF hot temperature and Optimization strategy & tolerance

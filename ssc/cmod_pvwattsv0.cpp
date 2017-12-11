@@ -1020,21 +1020,20 @@ public:
 
 		double tmp,tmp2,inoct,height;
 
-		int yr,mn,dy,hr;
+		int yr,mn,dy;
 		int i,m,n,sunup[24],beghr,endhr,jday;
 		int cur_hour;
 
-		double lat,lng,tz,elv,minute,sunn[8],angle[3],sunrise,sunset;
+		double lat,lng,tz,minute,sunn[8],angle[3],sunrise,sunset;
 		double dn[24],df[24],alb,DTOR=0.01745329;
-		double poa[24],ambt[24],wind[24],pvt[24],dc[24],ac[24],dummy[24],tpoa[24];
+		double poa[24],ambt[24],wind[24],pvt[24],dc[24],ac[24],tpoa[24];
 		double reftem,refpwr,pwrdgr,tmloss,pcrate,efffp;
-		double rlim=45.0,acrate;     // mod. 2007-04-20 (see Mods list)
+		double rlim = 45.0;     // mod. 2007-04-20 (see Mods list)
 
 
 		ssc_number_t *p_dn = allocate("dn", 8760);
 		ssc_number_t *p_df = allocate("df", 8760);
 		ssc_number_t *p_tamb = allocate("tamb", 8760);
-		ssc_number_t *p_tdew = allocate("tdew", 8760);
 		ssc_number_t *p_wspd = allocate("wspd", 8760);
 
 		ssc_number_t *p_dc = allocate("dc", 8760);
@@ -1058,7 +1057,6 @@ public:
 		lat = (double)hdr.lat;         /* In degrees */
 		lng = (double)hdr.lon;
 		tz = (double)hdr.tz;
-		elv = (double)hdr.elev;
 
 		if ( dcrate < 0.49999 || dcrate > 99999.9 )  // Use defaults if dcrate out of range
 			dcrate = 4.0;
@@ -1067,7 +1065,6 @@ public:
 		if ( derate < 0.0 || derate > 1.0 ) // Use if default ac to dc derate factor out of range
 			derate = 0.77;
         
-		acrate = dcrate * derate;      // acrate now calculated, 6/29/2005
 		pcrate = dcrate * 1000.0;      // rated output of inverter in a.c. watts; 6/29/2005
 		refpwr = dcrate * 1000.0;      // nameplate in watts; 6/29/2005
 		tmloss = 1.0 - derate/efffp;   // All losses except inverter, decimal; 6/29/2005
@@ -1100,7 +1097,6 @@ public:
 					yr = wf.year;
 					mn = wf.month;
 					dy = wf.day;
-					hr = wf.hour;
 					dn[i] = wf.dn;
 					df[i] = wf.df;
 					ambt[i] = wf.tdry;
@@ -1110,7 +1106,6 @@ public:
 					tpoa[i]=0.0;            /* Transmitted radiation */
 					dc[i]=0.0;              /* DC power */
 					ac[i]=0.0;              /* AC power */
-					dummy[i]=0.0;           
 					sunup[i] = 0;
 				}
 			
@@ -1192,7 +1187,6 @@ public:
                     
 						incident2(mode,tilt,sazm,rlim,sunn[1],sunn[0],angle); /* Calculate incident angle */
 						poa[i] = perez( dn[i],df[i],alb,angle[0],angle[1],sunn[1] ); /* Incident solar radiation */
-						dummy[i] = poa[i];
 						tpoa[i] = transpoa( poa[i],dn[i],angle[0]);  /* Radiation transmitted thru module cover */
 
 					}                    /* End of sunup[i] if loop */
