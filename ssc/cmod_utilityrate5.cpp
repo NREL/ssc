@@ -491,7 +491,7 @@ public:
 		4. use (kW)  p_load[i] = max(load) over the hour for each hour i
 		5. After above assignment, proceed as before with same outputs
 		*/
-		ssc_number_t *pload, *pgen;
+		ssc_number_t *pload = NULL, *pgen;
 		size_t nrec_load = 0, nrec_gen = 0, step_per_hour_gen=1, step_per_hour_load=1;
 		bool bload=false;
 		pgen = as_array("gen", &nrec_gen);
