@@ -73,8 +73,8 @@ private:
 	std::string errDetails;
 
 	/// Transforms the east, north coordinate system to a downwind, crosswind orientation orthogonal to current wind direction
-	void windPowerCalculator::coordtrans(double metersNorth, double metersEast, double fWind_dir_degrees, double *fMetersDownWind, double *metersCrosswind);
-	double windPowerCalculator::gammaln(double x);
+	void coordtrans(double metersNorth, double metersEast, double fWind_dir_degrees, double *fMetersDownWind, double *metersCrosswind);
+	double gammaln(double x);
 
 public:
 	windTurbine* windTurbine;
