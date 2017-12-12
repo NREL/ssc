@@ -2914,7 +2914,7 @@ void C_RecompCycle::auto_opt_design_hit_eta(S_auto_opt_design_hit_eta_parameters
 	// Send log update upstream
 	if (ms_auto_opt_des_par.mf_callback_log && ms_auto_opt_des_par.mp_mf_active)
 	{
-		std::string msg_log = "Iterate on total recuperator conductance to hit target cycle efficiency";
+		std::string msg_log = util::format("Iterate on total recuperator conductance to hit target cycle efficiency: %lg [-]", auto_opt_des_hit_eta_in.m_eta_thermal);
 		std::string msg_progress = "Designing cycle...";
 		if (!ms_auto_opt_des_par.mf_callback_log(msg_log, msg_progress, ms_auto_opt_des_par.mp_mf_active, 0.0, 2))
 		{
@@ -3005,8 +3005,8 @@ int C_RecompCycle::C_MEQ_sco2_design_hit_eta__UA_total::operator()(double UA_rec
 
 	if (mpc_rc_cycle->ms_auto_opt_des_par.mf_callback_log && mpc_rc_cycle->ms_auto_opt_des_par.mp_mf_active)
 	{
-		msg_log = util::format(" Total recuperator conductance = %lg [kW/K]. Optimized cycle efficiency = %lg [-].  ",
-			UA_recup_total, *eta);
+		msg_log = util::format(" Total recuperator conductance = %lg [kW/K per MWe]. Optimized cycle efficiency = %lg [-].  ",
+			UA_recup_total / (mpc_rc_cycle->ms_auto_opt_des_par.m_W_dot_net * 1.E-3), *eta);
 		if (!mpc_rc_cycle->ms_auto_opt_des_par.mf_callback_log(msg_log, msg_progress, mpc_rc_cycle->ms_auto_opt_des_par.mp_mf_active, 0.0, 2))
 		{
 			std::string error_msg = "User terminated simulation...";
