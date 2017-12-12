@@ -55,6 +55,8 @@
 #include "CO2_properties.h"
 
 #include <vector>
+#include <math.h>
+#include <limits>
 
 class C_PartialCooling_Cycle
 {

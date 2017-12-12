@@ -225,7 +225,7 @@ int C_PartialCooling_Cycle::design_core()
 	// know all turbomachinery specific work, so can calculate mass flow rate required to hit target power
 	m_m_dot_t = ms_des_par.m_W_dot_net / (w_t + w_pc + ms_des_par.m_recomp_frac*w_rc + (1.0 - ms_des_par.m_recomp_frac)*w_mc);	//[kg/s]
 	
-	if (m_m_dot_t <= 0.0 || !isfinite(m_m_dot_t))	// positive net power is impossible; return an error
+	if (m_m_dot_t <= 0.0 || !std::isfinite(m_m_dot_t))	// positive net power is impossible; return an error
 		return 25;
 
 	m_m_dot_pc = m_m_dot_t;	//[kg/s]
