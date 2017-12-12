@@ -235,7 +235,7 @@ public:
 		}
 		
 		if (snow_max < 0)
-			snow_max = snow_max = std::numeric_limits<double>::quiet_NaN();
+			snow_max = std::numeric_limits<double>::quiet_NaN();
 
 
 		assign("annual_global", var_data((ssc_number_t)(0.001 * gh_sum / 365)));

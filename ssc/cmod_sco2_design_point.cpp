@@ -265,9 +265,9 @@ public:
 		double T_in_od = T_in + 5.0;
 		double m_dot_od = 0.90*m_dot_mc;
 
-		double P_out_od_old = std::numeric_limits<double>::quiet_NaN();
-		double T_out_od_old = std::numeric_limits<double>::quiet_NaN();
 		//c_comp_old.od_comp_at_N_des(T_in_od, P_in_od, m_dot_od, comp_old_err_code, T_out_od_old, P_out_od_old);
+		//double P_out_od_old = std::numeric_limits<double>::quiet_NaN();
+		//double T_out_od_old = std::numeric_limits<double>::quiet_NaN();
 
 		double P_out_od_new = std::numeric_limits<double>::quiet_NaN();
 		double T_out_od_new = std::numeric_limits<double>::quiet_NaN();
@@ -275,9 +275,6 @@ public:
 		int comp_new_err_code = 0;
 		c_comp_ms.off_design_at_N_des(T_in_od, P_in_od, m_dot_od, comp_new_err_code, T_out_od_new, P_out_od_new);
 
-
-
-		double new_cmop = 1.23;
 
 
 		// Hot sCO2 to water heat exchanger
@@ -380,7 +377,6 @@ public:
 		}
 		catch (C_csp_exception csp_except)
 		{
-			double blah_for_now = 1.23;
 			//throw exec_error("sco2-water hx", "failed");
 		}
 
@@ -519,7 +515,6 @@ public:
 			iter_P_water_in++;
 
 		}
-		double blajalahfla = 1.23;
 
 //		// Test C_HX_counterflow model as a sCO2 recuperator
 //		C_HX_counterflow mc_sco2_recup;

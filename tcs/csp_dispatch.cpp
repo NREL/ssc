@@ -143,6 +143,7 @@ csp_dispatch_opt::csp_dispatch_opt()
     params.q_pb_des = numeric_limits<double>::quiet_NaN();
     params.siminfo = 0;   
     params.col_rec = 0;
+	params.mpc_pc = 0;
     params.sf_effadj = 1.;
     params.info_time = 0.;
     params.eta_cycle_ref = numeric_limits<double>::quiet_NaN();
@@ -173,6 +174,7 @@ void csp_dispatch_opt::clear_output_arrays()
     outputs.q_pb_target.clear();
     outputs.rec_operation.clear();
     outputs.eta_pb_expected.clear();
+	outputs.f_pb_op_limit.clear();
     outputs.eta_sf_expected.clear();
     outputs.q_sfavail_expected.clear();
     outputs.q_sf_expected.clear();
@@ -233,6 +235,7 @@ bool csp_dispatch_opt::predict_performance(int step_start, int ntimeints, int di
         double cycle_eff_ave = 0.;
         double q_inc_ave = 0.;
         double wcond_ave = 0.;
+		double f_pb_op_lim_ave = 0.0;
 
         for(int j=0; j<divs_per_int; j++)     //take averages over hour if needed
         {
@@ -264,6 +267,11 @@ bool csp_dispatch_opt::predict_performance(int step_start, int ntimeints, int di
             cycle_eff *= params.eta_cycle_ref;  
             cycle_eff_ave += cycle_eff * ave_weight;
 
+			double f_pb_op_lim_local = std::numeric_limits<double>::quiet_NaN();
+			double m_dot_htf_max_local = std::numeric_limits<double>::quiet_NaN();
+			params.mpc_pc->get_max_power_output_operation_constraints(m_weather.ms_outputs.m_tdry, m_dot_htf_max_local, f_pb_op_lim_local);
+			f_pb_op_lim_ave += f_pb_op_lim_local * ave_weight;	//[-]
+
             //store the condenser parasitic power fraction
             double wcond_f = params.wcondcoef_table_Tdb.interpolate( m_weather.ms_outputs.m_tdry );
             wcond_ave += wcond_f * ave_weight;
@@ -279,6 +287,8 @@ bool csp_dispatch_opt::predict_performance(int step_start, int ntimeints, int di
         outputs.q_sfavail_expected.push_back( q_inc_ave );
         //power cycle efficiency
         outputs.eta_pb_expected.push_back( cycle_eff_ave );
+		// Maximum power cycle output (normalized)
+		outputs.f_pb_op_limit.push_back(f_pb_op_lim_ave);		//[-]
         //condenser power
         outputs.w_condf_expected.push_back( wcond_ave );
     }
@@ -463,7 +473,6 @@ bool csp_dispatch_opt::optimize()
 
         //Calculate the number of variables
         int nt = (int)m_nstep_opt;
-        int nz = (int)params.eff_table_load.get_size();
 
         //set up the variable structure
         optimization_vars O;
@@ -1207,30 +1216,30 @@ bool csp_dispatch_opt::optimize()
             }
         }
 
-		// Maximum electricity production constraint
+        // Maximum gross electricity production constraint
+        {
+            REAL row[1];
+            int col[1];
+
+            for( int t = 0; t<nt; t++ )
+            {
+                row[0] = 1.;
+                col[0] = O.column("wdot", t);
+
+				add_constraintex(lp, 1, row, col, LE, outputs.f_pb_op_limit.at(t) * P["W_dot_cycle"]);
+            }
+        }
+
+		// Maximum net electricity production constraint
 		{
 			REAL row[9];
 			int col[9];
 
 			for (int t = 0; t<nt; t++)
 			{
-				//// Adjust wlim if specified value is too low to permit cycle operation
-				//double wmin = (P["Ql"] * P["etap"]*outputs.eta_pb_expected.at(t) / params.eta_cycle_ref) + (P["Wdotu"] - P["etap"]*P["Qu"])*outputs.eta_pb_expected.at(t) / params.eta_cycle_ref; // Electricity generation at minimum pb thermal input
-				//double max_parasitic = 
-    //                  P["Lr"] * outputs.q_sfavail_expected.at(t) 
-    //                + (params.w_rec_ht / params.dt) 
-    //                + (params.w_stow / params.dt) 
-    //                + params.w_track 
-    //                + params.w_cycle_standby 
-    //                + params.w_cycle_pump*P["Qu"]
-    //                + outputs.w_condf_expected.at(t)*P["W_dot_cycle"];  // Largest possible parasitic load at time t
-
-    //            //save for writing to ampl
-    //            outputs.wnet_lim_min.push_back( wmin - max_parasitic );
                 
                 //check if cycle should be able to operate
-				//if (wmin - max_parasitic > w_lim.at(t))		// power cycle operation is impossible at t
-                if( outputs.wnet_lim_min.at(t) > w_lim.at(t) )
+                if( outputs.wnet_lim_min.at(t) > w_lim.at(t) )      // power cycle operation is impossible at t
                 {
                     if(w_lim.at(t) > 0)
                         params.messages->add_message(C_csp_messages::NOTICE, "Power cycle operation not possible at time "+ util::to_string(t+1) + ": power limit below minimum operation");                    
@@ -1910,7 +1919,7 @@ optimization_vars::optimization_vars()
     current_mem_pos = 0;
     alloc_mem_size = 0;
 }
-void optimization_vars::add_var(char *vname, int var_type /* VAR_TYPE enum */, int var_dim /* VAR_DIM enum */, int var_dim_size, REAL lobo, REAL upbo)
+void optimization_vars::add_var(const string &vname, int var_type /* VAR_TYPE enum */, int var_dim /* VAR_DIM enum */, int var_dim_size, REAL lobo, REAL upbo)
 {
     if(var_dim == VAR_DIM::DIM_T2)
         add_var(vname, var_type, VAR_DIM::DIM_NT, var_dim_size, var_dim_size, lobo, upbo);
@@ -1919,11 +1928,11 @@ void optimization_vars::add_var(char *vname, int var_type /* VAR_TYPE enum */, i
 
 }
 
-void optimization_vars::add_var(char *vname, int var_type /* VAR_TYPE enum */, int var_dim /* VAR_DIM enum */, int var_dim_size, int var_dim_size2, REAL lobo, REAL upbo)
+void optimization_vars::add_var(const string &vname, int var_type /* VAR_TYPE enum */, int var_dim /* VAR_DIM enum */, int var_dim_size, int var_dim_size2, REAL lobo, REAL upbo)
 {
     var_objects.push_back( optimization_vars::opt_var() );
     optimization_vars::opt_var *v = &var_objects.back();
-    v->name = (string)vname;
+    v->name = vname;
     v->ind_start = current_mem_pos;
     v->var_type = var_type;
     v->var_dim = var_dim;
@@ -2004,12 +2013,12 @@ REAL &optimization_vars::operator()(int varind, int ind1, int ind2)     //Access
 }
 
 
-int optimization_vars::column(char *varname, int ind)
+int optimization_vars::column(const string &varname, int ind)
 {
     return var_by_name[varname]->ind_start + ind +1;
 }
 
-int optimization_vars::column(char *varname, int ind1, int ind2)
+int optimization_vars::column(const string &varname, int ind1, int ind2)
 {
     opt_var *v = var_by_name[ string(varname) ];
     switch (v->var_dim)
@@ -2064,7 +2073,7 @@ REAL *optimization_vars::get_variable_array()
     return data;
 }
 
-optimization_vars::opt_var *optimization_vars::get_var(char *varname)
+optimization_vars::opt_var *optimization_vars::get_var(const string &varname)
 {
     return var_by_name[ varname ];
 }

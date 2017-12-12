@@ -539,15 +539,15 @@ class spvar : public spbase
         std::vector<int> _intvals;
 
         std::string &at_index(int ind){return _choices.at(ind); };
-        int at(std::string name){ 
-            int ind = index(name);
+        int at(std::string choicename){ 
+            int ind = index(choicename);
             if(ind < _intvals.size() )
-                return _intvals.at( index(name) ); 
+                return _intvals.at( index(choicename) );
             else 
-                throw spexception("Could not locate combo value " + name);
+                throw spexception("Could not locate combo value " + choicename);
         };
-        int index( std::string name) { 
-            return (int)(find(_choices.begin(), _choices.end(), name) - _choices.begin()); 
+        int index( std::string choicename) {
+            return (int)(find(_choices.begin(), _choices.end(), choicename) - _choices.begin());
         };
         void clear()
         {
@@ -583,11 +583,11 @@ public:
         return rv;
     };
     
-    void combo_add_choice(std::string &name, string &mval)
+    void combo_add_choice(std::string &choicename, string &mval)
     {
         int mapint;
         to_integer(mval, &mapint);
-        choices._choices.push_back(name);
+        choices._choices.push_back(choicename);
         choices._intvals.push_back(mapint);
     };
 

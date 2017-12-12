@@ -220,6 +220,13 @@ double C_pc_steam_heat_sink::get_htf_pumping_parasitic_coef()
 	return 0.0;	// kWe/kWt
 }
 
+void C_pc_steam_heat_sink::get_max_power_output_operation_constraints(double T_amb /*C*/, double & m_dot_HTF_ND_max, double & W_dot_ND_max)
+{
+	m_dot_HTF_ND_max = m_max_frac;		//[-]
+	W_dot_ND_max = m_dot_HTF_ND_max;	//[-]
+	
+	return;	//[-]
+}
 
 double C_pc_steam_heat_sink::get_efficiency_at_TPH(double T_degC, double P_atm, double relhum_pct, double *w_dot_condenser)
 {

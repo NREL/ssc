@@ -779,7 +779,7 @@ public:
 		pb_on_prev		= 0;								//[-] power block initially off
 		defocus_prev_ncall	= 1.;								//[-] initial defocus
 		t_standby_prev	= t_standby_reset;					//[s] 
-		//*********************************************************
+		// *********************************************************
 
 		V_tank_active	= vol_tank*(1.-2.*h_tank_min/h_tank);	//[m3] Active tank volume.. that is, volume above the minimum fluid level and below the maximum level
 

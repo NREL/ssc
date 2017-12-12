@@ -11,6 +11,5 @@ GTEST_API_ int main(int argc, char **argv) {
 
 	if (!status)
 		printf("Tests Pass!\n");
-
 	return status;
 }

@@ -658,7 +658,7 @@ bool shading_factor_calculator::fbeam(size_t hour, double solalt, double solazi,
 }
 
 
-bool shading_factor_calculator::fbeam_shade_db(std::auto_ptr<ShadeDB8_mpp> & p_shadedb, size_t hour, double solalt, double solazi, size_t hour_step, size_t steps_per_hour, double gpoa, double dpoa, double pv_cell_temp, int mods_per_str, double str_vmp_stc, double mppt_lo, double mppt_hi)
+bool shading_factor_calculator::fbeam_shade_db(smart_ptr<ShadeDB8_mpp>::ptr & p_shadedb, size_t hour, double solalt, double solazi, size_t hour_step, size_t steps_per_hour, double gpoa, double dpoa, double pv_cell_temp, int mods_per_str, double str_vmp_stc, double mppt_lo, double mppt_hi)
 {
 	bool ok = false;
 	double dc_factor = 1.0;
@@ -969,12 +969,6 @@ bool weatherdata::read( weather_record *r )
 bool weatherdata::has_data_column( size_t id )
 {
 	return std::find( m_columns.begin(), m_columns.end(), id ) != m_columns.end();
-}
-
-bool weatherdata::has_calculated_data(size_t id){
-	if (id == 10) return !std::isnan(m_data[m_nRecords - 1]->twet);
-	else if (id == 11) return !std::isnan(m_data[m_nRecords - 1]->tdew);
-	else return false;
 }
 
 bool ssc_cmod_update(std::string &log_msg, std::string &progress_msg, void *data, double progress, int log_type)
