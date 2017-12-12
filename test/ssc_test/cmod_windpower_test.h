@@ -1,3 +1,6 @@
+#ifndef __WINDPOWER_TEST__
+#define __WINDPOWER_TEST__
+
 #include <gtest/gtest.h>
 
 #include "core.h"
@@ -44,3 +47,5 @@ bool CMWindPowerIntegration::compute(){
 	ssc_module_free(module);
 	return 0;
 }
+
+#endif

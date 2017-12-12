@@ -25,6 +25,8 @@
     <ClCompile Include="..\test\shared_test\lib_battery_test.cpp" />
     <ClCompile Include="..\test\shared_test\lib_irradproc_test.cpp" />
     <ClCompile Include="..\test\shared_test\lib_weatherfile_test.cpp" />
+    <ClCompile Include="..\test\shared_test\lib_windwakemodel_test.cpp" />
+    <ClCompile Include="..\test\shared_test\lib_windwatts_test.cpp" />
     <ClCompile Include="..\test\ssc_test\cmod_pvsamv1_test.cpp" />
     <ClCompile Include="..\test\ssc_test\cmod_windpower_test.cpp" />
     <ClCompile Include="..\test\tcs_test\csp_solver_core_test.cpp" />
@@ -36,6 +38,7 @@
     <ClInclude Include="..\test\input_cases\weather_inputs.h" />
     <ClInclude Include="..\test\input_cases\windpower_cases.h" />
     <ClInclude Include="..\test\ssc_test\cmod_pvsamv1_test.h" />
+    <ClInclude Include="..\test\shared_test\lib_windwakemodel_test.h" />
     <ClInclude Include="..\test\ssc_test\cmod_windpower_test.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
@@ -97,10 +100,11 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
       <AdditionalIncludeDirectories>$(SSCDIR)\test;$(GTEST)\include;$(SSCDIR);$(SSCDIR)\lpsolve;$(SSCDIR)\shared;$(SSCDIR)\tcs;$(SSCDIR)\solarpilot;$(SSCDIR)\ssc</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(SolutionDir)\$(Platform)\$(Configuration)\;$(GTEST)\msvc\2010\gtest-md\$(Platform)-$(Configuration)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)\$(Platform)\$(Configuration)\;$(GTEST)\msvc\2010\gtest-md\$(Platform)-$(Configuration);</AdditionalLibraryDirectories>
       <AdditionalDependencies>gtestd.lib; shared.lib; tcs.lib; solarpilot.lib; lpsolve.lib; nlopt.lib; $(SSCDIR)\build_vs2013\$(Platform)\$(Configuration)\ssc\*.obj;$(SSCDIR)\build_vs2013\$(Platform)\$(Configuration)\tcs\*.obj;</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
@@ -110,10 +114,11 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
       <AdditionalIncludeDirectories>$(SSCDIR)\test;$(GTEST)\include;$(SSCDIR);$(SSCDIR)\lpsolve;$(SSCDIR)\shared;$(SSCDIR)\tcs;$(SSCDIR)\solarpilot;$(SSCDIR)\ssc</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(SolutionDir)\$(Platform)\$(Configuration)\;$(GTEST)\msvc\2010\gtest-md\$(Platform)-$(Configuration)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)\$(Platform)\$(Configuration)\;$(GTEST)\msvc\2010\gtest-md\$(Platform)-$(Configuration);</AdditionalLibraryDirectories>
       <AdditionalDependencies>gtestd.lib; shared.lib; tcs.lib; solarpilot.lib; lpsolve.lib; nlopt.lib; $(SSCDIR)\build_vs2013\$(Platform)\$(Configuration)\ssc\*.obj;$(SSCDIR)\build_vs2013\$(Platform)\$(Configuration)\tcs\*.obj;</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
@@ -125,12 +130,13 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
       <AdditionalIncludeDirectories>$(SSCDIR)\test;$(GTEST)\include;$(SSCDIR);$(SSCDIR)\lpsolve;$(SSCDIR)\shared;$(SSCDIR)\tcs;$(SSCDIR)\solarpilot;$(SSCDIR)\ssc</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalLibraryDirectories>$(SolutionDir)\$(Platform)\$(Configuration)\;$(GTEST)\msvc\2010\gtest-md\$(Platform)-$(Configuration)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)\$(Platform)\$(Configuration)\;$(GTEST)\msvc\2010\gtest-md\$(Platform)-$(Configuration);</AdditionalLibraryDirectories>
       <AdditionalDependencies>gtest.lib; shared.lib; tcs.lib; solarpilot.lib; lpsolve.lib; nlopt.lib; $(SSCDIR)\build_vs2013\$(Platform)\$(Configuration)\ssc\*.obj;$(SSCDIR)\build_vs2013\$(Platform)\$(Configuration)\tcs\*.obj;</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
@@ -142,12 +148,13 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
       <AdditionalIncludeDirectories>$(SSCDIR)\test;$(GTEST)\include;$(SSCDIR);$(SSCDIR)\lpsolve;$(SSCDIR)\shared;$(SSCDIR)\tcs;$(SSCDIR)\solarpilot;$(SSCDIR)\ssc</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalLibraryDirectories>$(SolutionDir)\$(Platform)\$(Configuration)\;$(GTEST)\msvc\2010\gtest-md\$(Platform)-$(Configuration)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)\$(Platform)\$(Configuration)\;$(GTEST)\msvc\2010\gtest-md\$(Platform)-$(Configuration);</AdditionalLibraryDirectories>
       <AdditionalDependencies>gtest.lib; shared.lib; tcs.lib; solarpilot.lib; lpsolve.lib; nlopt.lib; $(SSCDIR)\build_vs2013\$(Platform)\$(Configuration)\ssc\*.obj;$(SSCDIR)\build_vs2013\$(Platform)\$(Configuration)\tcs\*.obj;</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
