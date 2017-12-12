@@ -779,6 +779,12 @@ bool weatherfile::open(const std::string &file, bool header_only)
 			return false;
 		}
 
+		if (!std::isfinite(m_hdr.tz))
+		{
+			m_message = "time zone required but not specified";
+			return false;
+		}
+
 
 		// only scan to determine # of records
 		// if we actually plan to read in the whole file
