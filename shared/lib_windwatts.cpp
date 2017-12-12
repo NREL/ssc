@@ -160,9 +160,9 @@ int windPowerCalculator::windPowerUsingResource(/*INPUTS */ double windSpeed, do
 	// convert barometric pressure in ATM to air density
 	double fAirDensity = (airPressureAtm * physics::Pa_PER_Atm) / (physics::R_GAS_DRY_AIR * physics::CelciusToKelvin(TdryC));   //!Air Density, kg/m^3
 	double fTurbine_output(0.0), fThrust_coeff(0.0);
-	windTurbine->turbinePower(windSpeed, fAirDensity, &fTurbine_output, &fThrust_coeff);
-	if (windTurbine->errDetails.length() > 0){
-		errDetails = windTurbine->errDetails;
+	windTurb->turbinePower(windSpeed, fAirDensity, &fTurbine_output, &fThrust_coeff);
+	if (windTurb->errDetails.length() > 0){
+		errDetails = windTurb->errDetails;
 		return 0;
 	}
 
@@ -220,8 +220,8 @@ int windPowerCalculator::windPowerUsingResource(/*INPUTS */ double windSpeed, do
 	// Convert downwind, crosswind measurements from meters into wind turbine radii
 	for (i = 0; i<nTurbines; i++)
 	{
-		distanceDownwind[i] = 2.0*distanceDownwind[i] / windTurbine->rotorDiameter;
-		distanceCrosswind[i] = 2.0*distanceCrosswind[i] / windTurbine->rotorDiameter;
+		distanceDownwind[i] = 2.0*distanceDownwind[i] / windTurb->rotorDiameter;
+		distanceCrosswind[i] = 2.0*distanceCrosswind[i] / windTurb->rotorDiameter;
 	}
 
 	// Record the output for the most upwind turbine (already calculated above)
@@ -264,8 +264,8 @@ int windPowerCalculator::windPowerUsingResource(/*INPUTS */ double windSpeed, do
 		*farmPower += power[i];
 
 	// Update down/cross wind distance units for turbine zero (convert from radii to meters)
-	distanceDownwind[0] *= windTurbine->rotorDiameter / 2;
-	distanceCrosswind[0] *= windTurbine->rotorDiameter / 2;
+	distanceDownwind[0] *= windTurb->rotorDiameter / 2;
+	distanceCrosswind[0] *= windTurb->rotorDiameter / 2;
 
 	// Resort output arrays by wind turbine ID (0..nwt-1)
 	// for consistent reporting
@@ -277,8 +277,8 @@ int windPowerCalculator::windPowerUsingResource(/*INPUTS */ double windSpeed, do
 		e = eff[j];
 		w = adWindSpeed[j];
 		b = TI[j];
-		dd = distanceDownwind[j] * windTurbine->rotorDiameter / 2; // convert back to meters from radii
-		dc = distanceCrosswind[j] * windTurbine->rotorDiameter / 2;
+		dd = distanceDownwind[j] * windTurb->rotorDiameter / 2; // convert back to meters from radii
+		dc = distanceCrosswind[j] * windTurb->rotorDiameter / 2;
 		wid = wt_id[j];
 
 		i = j;
@@ -312,7 +312,7 @@ int windPowerCalculator::windPowerUsingResource(/*INPUTS */ double windSpeed, do
 double windPowerCalculator::windPowerUsingWeibull(double weibull_k, double avg_speed, double ref_height, double energy_turbine[])
 {	// returns same units as 'power_curve'
 
-	double hub_ht_windspeed = pow((windTurbine->hubHeight / ref_height), windTurbine->shearExponent) * avg_speed;
+	double hub_ht_windspeed = pow((windTurb->hubHeight / ref_height), windTurb->shearExponent) * avg_speed;
 	double denom = exp(gammaln(1 + (1 / weibull_k))); //fixed jmf 2/18/15- weibull_k was accidentally replaced with hub_ht_windspeed previously
 
 	double lambda = hub_ht_windspeed / denom;
@@ -320,8 +320,8 @@ double windPowerCalculator::windPowerUsingWeibull(double weibull_k, double avg_s
 
 	// 'RUN' MODEL ****************************************************************************************
 	double total_energy_turbine = 0;//, total_energy_generic=0;
-	std::vector<double> weibull_cummulative(windTurbine->powerCurveArrayLength, 0);
-	std::vector<double> weibull_bin(windTurbine->powerCurveArrayLength, 0);
+	std::vector<double> weibull_cummulative(windTurb->powerCurveArrayLength, 0);
+	std::vector<double> weibull_bin(windTurb->powerCurveArrayLength, 0);
 	//std::vector<double> weibull_probability(m_iLengthOfTurbinePowerCurveArray, 0);
 	//std::vector<double> energy_turbine(m_iLengthOfTurbinePowerCurveArray, 0);	// energy from turbine chosen from library
 
@@ -336,14 +336,14 @@ double windPowerCalculator::windPowerUsingWeibull(double weibull_k, double avg_s
 	weibull_cummulative[0] = 1.0 - exp(-pow((0.125) / lambda, weibull_k)); //first bin is probability from 0 to 0.125 m/s
 	weibull_bin[0] = weibull_cummulative[0]; //first bin is equal to first cumulative calculation
 	energy_turbine[0] = 0.0;
-	for (size_t i = 1; i<windTurbine->powerCurveArrayLength; i++)
+	for (size_t i = 1; i<windTurb->powerCurveArrayLength; i++)
 	{
 		// calculate Weibull likelihood of the wind blowing in the range from windspeed[i - 0.5*bin_width] to windspeed[i + 0.5*bin_width]
-		weibull_cummulative[i] = 1.0 - exp(-pow((windTurbine->getPowerCurveWS()[i] + 0.125) / lambda, weibull_k)); //the 0.125 shifts the probability bin so that the WS lies at the midpoint of the bin
+		weibull_cummulative[i] = 1.0 - exp(-pow((windTurb->getPowerCurveWS()[i] + 0.125) / lambda, weibull_k)); //the 0.125 shifts the probability bin so that the WS lies at the midpoint of the bin
 		weibull_bin[i] = weibull_cummulative[i] - weibull_cummulative[i - 1];
 
 		// calculate annual energy from turbine at this wind speed = (hours per year at this wind speed) X (turbine output at wind speed)
-		energy_turbine[i] = (8760.0 * weibull_bin[i]) * windTurbine->getPowerCurveKW()[i];
+		energy_turbine[i] = (8760.0 * weibull_bin[i]) * windTurb->getPowerCurveKW()[i];
 
 		// keep track of cummulative output
 		total_energy_turbine += energy_turbine[i];

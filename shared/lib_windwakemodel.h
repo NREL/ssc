@@ -115,7 +115,7 @@ public:
 class wakeModelBase
 {
 protected:
-	unsigned int nTurbines;
+	size_t nTurbines;
 	windTurbine* wTurbine;
 public:
 	wakeModelBase(){}
@@ -173,7 +173,7 @@ private:
 
 public:
 	parkWakeModel(){ nTurbines = 0; }
-	parkWakeModel(int numberOfTurbinesInFarm, windTurbine* wt){ nTurbines = numberOfTurbinesInFarm; wTurbine = wt; }
+	parkWakeModel(size_t numberOfTurbinesInFarm, windTurbine* wt){ nTurbines = numberOfTurbinesInFarm; wTurbine = wt; }
 	
 	std::string getModelName(){ return "Park"; }
 	void setRotorDiameter(double d){ rotorDiameter = d; }
@@ -249,7 +249,7 @@ private:
 
 public:
 	eddyViscosityWakeModel(){ nTurbines = 0; }
-	eddyViscosityWakeModel(int numberOfTurbinesInFarm, windTurbine* wt, double turbCoeff){ 
+	eddyViscosityWakeModel(size_t numberOfTurbinesInFarm, windTurbine* wt, double turbCoeff){ 
 		wTurbine = wt;
 		rotorDiameter = wt->rotorDiameter;
 		if (turbCoeff >= 0 && turbCoeff <= 1) turbulenceCoeff = turbCoeff ;

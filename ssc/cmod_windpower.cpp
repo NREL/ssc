@@ -213,7 +213,7 @@ void cm_windpower::exec() throw(general_error)
 
 	// create windPowerCalculator using windTurbine
 	windPowerCalculator wpc;
-	wpc.windTurbine = &wt;
+	wpc.windTurb = &wt;
 	wpc.turbulenceIntensity = as_double("wind_resource_turbulence_coeff");
 	ssc_number_t *wind_farm_xCoordinates = as_array("wind_farm_xCoordinates", &wpc.nTurbines);
 	ssc_number_t *wind_farm_yCoordinates = as_array("wind_farm_yCoordinates", NULL);

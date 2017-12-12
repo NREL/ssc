@@ -77,7 +77,7 @@ private:
 	double gammaln(double x);
 
 public:
-	windTurbine* windTurbine;
+	windTurbine* windTurb;
 	size_t nTurbines;
 	double turbulenceIntensity;	
 	windPowerCalculator() {
