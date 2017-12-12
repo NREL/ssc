@@ -50,7 +50,9 @@
 #ifndef __SCO2_PC_CSP_INT_
 #define __SCO2_PC_CSP_INT_
 
-#include "sco2_pc_core.h"
+//#include "sco2_pc_core.h"
+#include "sco2_recompression_cycle.h"
+
 #include "heat_exchangers.h"
 #include "csp_solver_util.h"
 
