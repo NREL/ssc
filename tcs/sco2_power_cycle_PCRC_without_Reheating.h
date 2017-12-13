@@ -56,8 +56,9 @@ struct cycle_design_parameters_PCRC_without_Reheating
 	int m_mc2_type;
 	int m_rc_type;
 
-	double m_W_dot_net;		//[kW]
+	double m_W_dot_net;		    //[kW]
 	double m_T_mc1_in;			//[K]
+	double m_P_mc1_out;			//[kPa] 
 	double m_T_mc2_in;			//[K]
 	double m_T_t_in;			//[K]
 	std::vector<double> m_DP_LT;		//(cold, hot) positive values are absolute [kPa], negative values are relative (-)
@@ -553,7 +554,7 @@ public:
 		m_PR_mc2_autodes = m_cycle_des_par.m_PR_mc2;
 		m_recomp_frac_autodes = m_cycle_des_par.m_recomp_frac;
 		m_LT_frac_autodes = m_cycle_des_par.m_LT_frac;
-		m_P_high_autodes = m_cycle_des_par.m_P_mc_out;
+		m_P_high_autodes = m_cycle_des_par.m_P_mc2_out;
 	};
 
 	void set_od_data()
@@ -625,7 +626,7 @@ public:
 			m_W_dot_net_od = m_q_dot_in_od = m_eta_thermal_od = std::numeric_limits<double>::quiet_NaN();
 
 		m_eta_thermal_autodes = -HUGE_VAL;
-		m_PR_mc_autodes = m_recomp_frac_autodes = m_LT_frac_autodes = m_P_high_autodes = std::numeric_limits<double>::quiet_NaN();
+		m_PR_mc2_autodes = m_recomp_frac_autodes = m_LT_frac_autodes = m_P_high_autodes = std::numeric_limits<double>::quiet_NaN();
 	}
 
 public:
