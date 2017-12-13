@@ -2306,7 +2306,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 						//execute self-shading calculations
 						ssc_number_t beam_to_use; //some self-shading calculations require DNI, NOT ibeam (beam in POA). Need to know whether to use DNI from wf or calculated, depending on radmode
 						if (radmode == DN_DF || radmode == DN_GH) beam_to_use = (ssc_number_t)wf.dn;
-						else beam_to_use = p_irrad_calc[2][idx];
+						else beam_to_use = p_irrad_calc[2][hour * step_per_hour]; // top of hour in first year
 
 						if (linear && trackbool) //one-axis linear
 						{
