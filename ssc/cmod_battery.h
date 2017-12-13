@@ -202,7 +202,7 @@ struct battstor
 
 	battstor( compute_module &cm, bool setup_model, int replacement_option, size_t nrec, double dt_hr, batt_variables *batt_vars=0);
 	void parse_configuration();
-	void initialize_automated_dispatch(ssc_number_t *pv=0, ssc_number_t *load=0);
+	void initialize_automated_dispatch(ssc_number_t *pv=0, ssc_number_t *load=0, double_vec *cliploss=0);
 	~battstor();
 
 	void initialize_time(size_t year, size_t hour_of_year, size_t step);
@@ -246,6 +246,7 @@ struct battstor
 
 	// time quantities
 	size_t step_per_hour;
+	size_t step_per_year;
 	size_t nyears;
 	size_t total_steps;
 	double _dt_hour;
@@ -291,8 +292,10 @@ struct battstor
 	double e_charge;
 	double e_discharge;
 
+	/*! Variables to store forecast data */
 	std::vector<double> pv_prediction;
 	std::vector<double> load_prediction;
+	std::vector<double> cliploss_prediction;
 	int prediction_index;
 
 	// outputs

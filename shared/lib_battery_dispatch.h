@@ -651,10 +651,16 @@ public:
 	/*! Compute the updated power to send to the battery over the next N hours */
 	void update_dispatch(size_t hour_of_year, size_t step, size_t idx);
 
+	/*! Pass in the clipping loss forecast */
+	void update_cliploss_data(std::vector<double> P_cliploss_dc);
+
 protected:
 	
 	void init_with_pointer(const dispatch_automatic_front_of_meter_t* tmp);
 	void setup_cost_vector(util::matrix_t<size_t> ppa_weekday_schedule, util::matrix_t<size_t> ppa_weekend_schedule);
+
+	/*! Full clipping loss due to AC power limits vector */
+	double_vec _P_cliploss_dc;
 
 	double _inverter_paco;
 	std::vector<double> _ppa_factors;

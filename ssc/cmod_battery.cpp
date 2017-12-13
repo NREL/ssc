@@ -827,13 +827,12 @@ void battstor::parse_configuration()
 		manual_dispatch = true;
 }
 
-void battstor::initialize_automated_dispatch(ssc_number_t *pv, ssc_number_t *load)
+void battstor::initialize_automated_dispatch(ssc_number_t *pv, ssc_number_t *load, double_vec *cliploss)
 {
 	if (dynamic_cast<dispatch_automatic_t*>(dispatch_model))
 	{
 		// automatic look ahead or behind
 		size_t nrec = nyears * 8760 * step_per_hour;
-
 		if (pv != 0)
 		{
 			// look ahead
@@ -843,6 +842,7 @@ void battstor::initialize_automated_dispatch(ssc_number_t *pv, ssc_number_t *loa
 				{
 					pv_prediction.push_back(pv[idx]);
 					load_prediction.push_back(load[idx]);
+					cliploss_prediction.push_back( (*cliploss)[idx]);
 				}
 			}
 			else if (look_behind)
@@ -852,11 +852,13 @@ void battstor::initialize_automated_dispatch(ssc_number_t *pv, ssc_number_t *loa
 				{
 					pv_prediction.push_back(0);
 					load_prediction.push_back(0);
+					cliploss_prediction.push_back(0);
 				}
 				for (size_t idx = 0; idx != nrec - 24 * step_per_hour; idx++)
 				{
 					pv_prediction.push_back(pv[idx]);
 					load_prediction.push_back(load[idx]);
+					cliploss_prediction.push_back( (*cliploss)[idx]);
 				}
 			}
 			else if (input_forecast)
@@ -865,6 +867,7 @@ void battstor::initialize_automated_dispatch(ssc_number_t *pv, ssc_number_t *loa
 				{
 					pv_prediction.push_back(batt_vars->pv_dc_forecast[idx]);
 					load_prediction.push_back(load[idx]);
+					cliploss_prediction.push_back((*cliploss)[idx]);
 				}
 			}
 		}
@@ -874,6 +877,7 @@ void battstor::initialize_automated_dispatch(ssc_number_t *pv, ssc_number_t *loa
 			{
 				pv_prediction.push_back(0.);
 				load_prediction.push_back(0.);
+				cliploss_prediction.push_back(0.);
 			}
 		}
 		if (dispatch_automatic_behind_the_meter_t * automatic_dispatch_btm = dynamic_cast<dispatch_automatic_behind_the_meter_t*>(dispatch_model))
@@ -885,7 +889,10 @@ void battstor::initialize_automated_dispatch(ssc_number_t *pv, ssc_number_t *loa
 				automatic_dispatch_btm->set_target_power(target_power);
 		}
 		else if (dispatch_automatic_front_of_meter_t * automatic_dispatch_fom = dynamic_cast<dispatch_automatic_front_of_meter_t*>(dispatch_model))
+		{
 			automatic_dispatch_fom->update_pv_data(pv_prediction);
+			automatic_dispatch_fom->update_cliploss_data(cliploss_prediction);
+		}
 			
 	}
 	
@@ -943,6 +950,7 @@ void battstor::initialize_time(size_t year_in, size_t hour_of_year, size_t step_
 	year = year_in;
 	index = (year * 8760 + hour) * step_per_hour + step;
 	year_index = (hour * step_per_hour) + step;
+	step_per_year = 8760 * step_per_hour;
 }
 void battstor::advance(compute_module &cm, double P_pv_dc, double P_load_dc, double P_pv_clipped )
 {

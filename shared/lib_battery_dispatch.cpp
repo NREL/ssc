@@ -48,8 +48,10 @@
 *******************************************************************************************************/
 
 #include "lib_battery_dispatch.h"
+
 #include <math.h>
 #include <algorithm>
+#include <numeric>
 
 /*
 Dispatch base class
@@ -1448,7 +1450,7 @@ void dispatch_automatic_front_of_meter_t::dispatch(size_t year,
 
 }
 
-void dispatch_automatic_front_of_meter_t::update_dispatch(size_t hour_of_year, size_t , size_t)
+void dispatch_automatic_front_of_meter_t::update_dispatch(size_t hour_of_year, size_t , size_t idx)
 {
 	
 	// bring in at some point from battery model
@@ -1468,9 +1470,12 @@ void dispatch_automatic_front_of_meter_t::update_dispatch(size_t hour_of_year, s
 		/*! Cost to purchase electricity from the utility */
 		double usage_cost = _utilityRateCalculator->getEnergyRate(hour_of_year);
 
-		// Compute forecast variables
+		// Compute forecast variables which don't change from year to year
 		auto max_ppa_cost = std::max_element(_ppa_cost_vector.begin() + hour_of_year, _ppa_cost_vector.begin() + hour_of_year + _look_ahead_hours);
 		double ppa_cost = _ppa_cost_vector[hour_of_year];
+
+		// Compute forecast variables which potentially do change from year to year
+		double energyToStoreClipped = std::accumulate(_P_cliploss_dc.begin() + idx, _P_cliploss_dc.begin() + idx + _look_ahead_hours, 0.0f) * _dt_hour;
 
 		/*! Economic benefit of charging from the grid in current time step to discharge sometime in next X hours ($/kWh)*/
 		double benefitToGridCharge = *max_ppa_cost - usage_cost;
@@ -1487,9 +1492,6 @@ void dispatch_automatic_front_of_meter_t::update_dispatch(size_t hour_of_year, s
 		/*! Amount of energy needed to store regular PV (kWh) */
 		double energyToStorePV = _P_pv_charging * _dt_hour;
 
-		/*! Amount of energy needed to store clipped PV (kWh)*/
-		double energyToStoreClipped = _P_pv_clipping * _dt_hour;
-
 		/*! Energy need to charge the battery (kWh) */
 		double energyNeededToFillBattery = _Battery->battery_energy_to_fill(_SOC_max);
 
@@ -1505,7 +1507,7 @@ void dispatch_automatic_front_of_meter_t::update_dispatch(size_t hour_of_year, s
 		}
 
 		// Increase charge from PV if it is more valuable later than selling now, leave EnergyToStoreClipped capacity in battery
-		if (benefitToPVCharge > m_cycleCost && benefitToPVCharge > benefitToDischarge)
+		if (benefitToPVCharge > m_cycleCost && benefitToPVCharge > 0)
 		{
 			if (energyToStoreClipped <= energyNeededToFillBattery)
 			{
@@ -1558,13 +1560,19 @@ void dispatch_automatic_front_of_meter_t::update_dispatch(size_t hour_of_year, s
 		}
 		
 		*/
-
-
-
 	}
 	
 	// save for extraction
 	_P_battery_current = powerBattery;
+}
+
+void dispatch_automatic_front_of_meter_t::update_cliploss_data(double_vec P_cliploss)
+{
+	_P_cliploss_dc = P_cliploss;
+
+	// append to end to allow for look-ahead
+	for (size_t i = 0; i != _look_ahead_hours; i++)
+		_P_cliploss_dc.push_back(P_cliploss[i]);
 }
 
 battery_metrics_t::battery_metrics_t(battery_t * Battery, double dt_hour)

@@ -1968,6 +1968,9 @@ public:
 		int batt_replacement_option = as_integer("batt_replacement_option");
 		battstor batt(*this, en_batt, batt_replacement_option, nrec, ts_hour);
 		int batt_topology = (en_batt == true ? batt.batt_vars->batt_topology : 0);
+		std::vector<double> p_invcliploss_full;
+		p_invcliploss_full.reserve(nrec * nyears);
+
 
 		// user battery replacement schedule
 		size_t count_batt_replacement = 0;
@@ -2878,14 +2881,18 @@ public:
 						p_poashaded_ts_total[idx] = (ssc_number_t)(ts_accum_poa_shaded * util::watt_to_kilowatt); // kW
 						p_poaeff_ts_total[idx] = (ssc_number_t)(ts_accum_poa_eff * util::watt_to_kilowatt); // kW
 						p_poabeameff_ts_total[idx] = (ssc_number_t)(ts_accum_poa_beam_eff * util::watt_to_kilowatt); // kW
-
-
 						p_invmpptloss[idx] = (ssc_number_t)(mppt_clip_window * util::watt_to_kilowatt);
 
+						// Predict clipping for DC battery controller
+						double acpwr_gross = 0, aceff = 0, pntloss = 0, psoloss = 0, cliploss = 0;
+						run_inverter(&snlinv, &plinv,
+							inv_type, dcpwr_net, num_inverters, dc_string_voltage,
+							acpwr_gross, aceff, cliploss, psoloss, pntloss);
+
+						p_invcliploss_full.push_back(cliploss * util::watt_to_kilowatt);
 					}
 					p_inv_dc_voltage[idx] = (ssc_number_t)dc_string_voltage;
 					p_dcpwr[idx] = (ssc_number_t)(dcpwr_net * util::watt_to_kilowatt);
-
 					idx++;
 				}
 			}
@@ -2895,7 +2902,7 @@ public:
 
 		// Initialize DC battery predictive controller
 		if (en_batt && (batt_topology == charge_controller::DC_CONNECTED))
-			batt.initialize_automated_dispatch(p_dcpwr, p_load_full);
+			batt.initialize_automated_dispatch(p_dcpwr, p_load_full, &p_invcliploss_full);
 
 		/* *********************************************************************************************
 		PV AC calculation
