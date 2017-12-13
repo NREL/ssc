@@ -1501,65 +1501,55 @@ void dispatch_automatic_front_of_meter_t::update_dispatch(size_t hour_of_year, s
 		bool batteryHasCapacity = _Battery->battery_soc() >= _SOC_min + 1.0;
 
 		// Always Charge if PV is clipping 
-		if (_P_pv_clipping > 0 && benefitToClipCharge > m_cycleCost)
+		if (_can_clip_charge && _P_pv_clipping > 0 && benefitToClipCharge > m_cycleCost && _P_pv_clipping > 0)
 		{
 			powerBattery = -_P_pv_clipping;
 		}
 
-		// Increase charge from PV if it is more valuable later than selling now, leave EnergyToStoreClipped capacity in battery
-		if (benefitToPVCharge > m_cycleCost && benefitToPVCharge > 0)
+		// Increase charge from PV if it is more valuable later than selling now
+		if (_can_charge && benefitToPVCharge > m_cycleCost && benefitToPVCharge > 0 && _P_pv_charging > 0)
 		{
-			if (energyToStoreClipped <= energyNeededToFillBattery)
+			// leave EnergyToStoreClipped capacity in battery
+			if (_can_clip_charge) 
 			{
-				double energyCanCharge = (energyNeededToFillBattery - energyToStoreClipped);
-				if (energyCanCharge <= _P_pv_charging * _dt_hour)
-					powerBattery = -std::fmax(energyCanCharge / _dt_hour, _P_pv_clipping);
-				else
-					powerBattery = -std::fmax(_P_pv_charging, _P_pv_clipping);
+				if (energyToStoreClipped < energyNeededToFillBattery)
+				{
+					double energyCanCharge = (energyNeededToFillBattery - energyToStoreClipped);
+					if (energyCanCharge <= _P_pv_charging * _dt_hour)
+						powerBattery = -std::fmax(energyCanCharge / _dt_hour, _P_pv_clipping);
+					else
+						powerBattery = -std::fmax(_P_pv_charging, _P_pv_clipping);
+
+					energyNeededToFillBattery = std::fmax(0, energyNeededToFillBattery + (powerBattery * _dt_hour));
+				}
+				
 			}
+			// otherwise, don't reserve capacity for clipping
+			else
+				powerBattery = -_P_pv_charging;
 		}
 		
-		// Discharge if we are in a high-price period and have battery and inverter capacity
-		if (highValuePeriod && excessAcCapacity && batteryHasCapacity)
+		// Also charge from grid if it is valuable to do so, still leaving EnergyToStoreClipped capacity in battery
+		if (_can_grid_charge && benefitToGridCharge > m_cycleCost && benefitToGridCharge > 0 && energyNeededToFillBattery > 0)
 		{
+			// leave EnergyToStoreClipped capacity in battery
+			if (_can_clip_charge)
+			{
+				if (energyToStoreClipped < energyNeededToFillBattery)
+				{
+					double energyCanCharge = (energyNeededToFillBattery - energyToStoreClipped);
+					powerBattery -= energyCanCharge / _dt_hour;
+				}
+			}
+			else
+				powerBattery = -energyNeededToFillBattery / _dt_hour;
+		}
+
+		// Discharge if we are in a high-price period and have battery and inverter capacity
+		if (highValuePeriod && excessAcCapacity && batteryHasCapacity) {
 			powerBattery = _inverter_paco - _P_pv_discharging;
 		}
-
-
-		/*		
-
-
-
-		// Assuming BenefitToClipCharge > BenefitToPVCharge > BenefitToGridCharge
-		// Don't charge at all
-		if (benefitToGridCharge < m_cycleCost && benefitToGridCharge > benefitToPVCharge && benefitToClipCharge < m_cycleCost){}
-		
-		// Charge from grid but leave EnergyToStorePV + EnergyToStoreClipped capacity in battery
-		else if (benefitToGridCharge > m_cycleCost && benefitToGridCharge < benefitToPVCharge)
-		{
-			double energyToReserve = energyToStorePV + energyToStoreClipped;
-			if (energyToReserve <= energyNeededToFillBattery)
-				powerBattery = -(energyNeededToFillBattery - energyToReserve) / _dt_hour;
-		}
-		// Charge from PV, leave EnergyToStoreClipped capacity in battery
-		else if (benefitToPVCharge > m_cycleCost)
-		{
-			if (energyToStoreClipped <= energyNeededToFillBattery)
-			{
-				double energyCanCharge = (energyNeededToFillBattery - energyToStoreClipped);
-				if (energyCanCharge <= _P_pv_charging * _dt_hour)
-					powerBattery = -energyCanCharge / _dt_hour;
-				else
-					powerBattery = -_P_pv_charging;
-			}
-		}
-		// Charge from clipped PV
-		else if (benefitToClipCharge > m_cycleCost)
-		{
-			powerBattery = -_P_pv_clipping;
-		}
-		
-		*/
+	
 	}
 	
 	// save for extraction
