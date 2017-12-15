@@ -64,9 +64,9 @@ Define functions and methods that are useful in CSP modules
 
 namespace CSP
 {
-	static double sigma = 5.67E-8;		//[W/m2K4] stefan boltzmann constant
-	static double grav = 9.81;			//[m/s2] gravitational constant
-	static double pi = 3.1415926;		//[-]
+	const double sigma = 5.67E-8;		//[W/m2K4] stefan boltzmann constant
+	const double grav = 9.81;			//[m/s2] gravitational constant
+	const double pi = 3.1415926;		//[-]
 
 	//--- generalized interpolation functions ---
 
