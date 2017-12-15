@@ -837,12 +837,12 @@ void battstor::check_replacement_schedule(int batt_replacement_option, size_t co
 			return;
 
 		bool replace = false;
-		if (year < (int)count_batt_replacement)
+		if (year < count_batt_replacement)
 		{
 			ssc_number_t num_repl = batt_replacement[year];
 			for (int j_repl = 0; j_repl < num_repl; j_repl++)
 			{
-				if ((hour == (int)(j_repl*8760.0 / num_repl)) && step == 0)
+				if ((hour == (j_repl * 8760 / num_repl)) && step == 0)
 				{
 					replace = true;
 					break;

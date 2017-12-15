@@ -519,13 +519,9 @@ public:
 				// (Julian day is used in the Julian date (JD) system of time measurement for scientific use by 
 				// the astronomy community, presenting the interval of time in days and fractions of a day since 
 				// January 1, 4713 BC Greenwich noon - WIKIPEDIA)
-				int hour = 0;
 				int julian_day = (int)(((double)(i + 1)) / 24);
-				if ((double)julian_day == (((double)(i + 1)) / 24.0))
-					hour = 24;
-				else
+				if ((double)julian_day != (((double)(i + 1)) / 24.0))
 				{
-					hour = ((int)i + 1) - (julian_day * 24);
 					julian_day++;
 				}
 				if (wfile.lat() > 0.)
@@ -575,9 +571,7 @@ public:
 		double V_cold_prev = V_tank-V_hot_prev;
 		double T_tank_prev = (V_hot_prev/V_tank)*T_hot_prev + (V_cold_prev/V_tank)*T_cold_prev; // weighted average tank temperature (initial)
 		double T_deliv_prev = 0.0;
-		double T_amb_prev = T_amb[0];
 		double T_bot_prev = T_mains[0];
-		double T_top_prev = T_hot_prev;
 
 		/* *********************************************************************************************
 		Calculate SHW performance: Q_useful, Q_deliv, T_deliv, T_tank, Q_pump, Q_aux, Q_auxonly, energy_net (Q_saved)
@@ -773,9 +767,7 @@ public:
 				T_deliv_prev = T_deliv;
 				T_hot_prev = T_hot;
 				T_cold_prev = T_cold;
-				T_amb_prev = T_amb_use;
 				T_bot_prev = T_bot;
-				T_top_prev = T_top;
 
 				// Zero out Q_useful if <0
 				if (Q_useful < 0) Q_useful = 0.0;

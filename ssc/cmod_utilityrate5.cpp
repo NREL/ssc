@@ -491,7 +491,7 @@ public:
 		4. use (kW)  p_load[i] = max(load) over the hour for each hour i
 		5. After above assignment, proceed as before with same outputs
 		*/
-		ssc_number_t *pload, *pgen;
+		ssc_number_t *pload = NULL, *pgen;
 		size_t nrec_load = 0, nrec_gen = 0, step_per_hour_gen=1, step_per_hour_load=1;
 		bool bload=false;
 		pgen = as_array("gen", &nrec_gen);
@@ -1924,8 +1924,6 @@ public:
 
 				if (!gen_only) // added for two meter no load scenarios to use load tier sizing
 				{
-					// check for kWh/kW
-					bool kWhperkW = false;
 					//start_tier = 0;
 					end_tier = (int)m_month[m].ec_tou_ub_init.ncols() - 1;
 					//int num_periods = (int)m_month[m].ec_tou_ub_init.nrows();
@@ -1941,7 +1939,6 @@ public:
 					if ((m_month[m].ec_tou_units.ncols()>0 && m_month[m].ec_tou_units.nrows() > 0)
 						&& ((m_month[m].ec_tou_units.at(0, 0) == 1) || (m_month[m].ec_tou_units.at(0, 0) == 3)))
 					{
-						kWhperkW = true;
 						// monthly total energy / monthly peak to determine which kWh/kW tier
 						double mon_kWhperkW = -m_month[m].energy_net; // load negative
 						if (m_month[m].dc_flat_peak != 0)
@@ -2667,8 +2664,6 @@ public:
 
 				if (!gen_only) // added for two meter no load scenarios to use load tier sizing
 				{
-					// check for kWh/kW
-					bool kWhperkW = false;
 					//start_tier = 0;
 					end_tier = (int)m_month[m].ec_tou_ub_init.ncols() - 1;
 					//int num_periods = (int)m_month[m].ec_tou_ub_init.nrows();
@@ -2685,7 +2680,6 @@ public:
 					if ((m_month[m].ec_tou_units.ncols() > 0 && m_month[m].ec_tou_units.nrows() > 0)
 						&& ((m_month[m].ec_tou_units.at(0, 0) == 1) || (m_month[m].ec_tou_units.at(0, 0) == 3)))
 					{
-						kWhperkW = true;
 						// monthly total energy / monthly peak to determine which kWh/kW tier
 						double mon_kWhperkW = -m_month[m].energy_net; // load negative
 						if (m_month[m].dc_flat_peak != 0)

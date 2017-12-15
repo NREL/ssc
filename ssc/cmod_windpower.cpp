@@ -489,9 +489,9 @@ void cm_windpower::exec() throw(general_error)
 	//	if (f1.open(s.c_str(), "w"))
 	//	{
 	//		// first, create a table of all the inputs to the farm
-	//		fprintf(f1, "Turbine#\tX\tY\n", s.c_str());
+	//		fprintf(f1, "Turbine#\tX\tY\n");
 	//		for (i = 0; i < wpc.m_iNumberOfTurbinesInFarm; i++)
-	//			fprintf(f1, "%d\t%lg\t%lg\n", i, wpc.m_adXCoords[i], wpc.m_adYCoords[i]);
+	//			fprintf(f1, "%ld\t%lg\t%lg\n", i, wpc.m_adXCoords[i], wpc.m_adYCoords[i]);
 	//		f1.close();
 	//	}
 
@@ -516,7 +516,7 @@ void cm_windpower::exec() throw(general_error)
 	//		{
 	//			if (i % (nstep / 20) == 0) update("writing turbine specific outputs", 100.0f * ((float)i) / ((float)nstep), (float)i);
 	//			for (size_t j = 0; j < wpc.m_iNumberOfTurbinesInFarm; j++)
-	//				fprintf(f1, "%d\t%lg\t%lg\t%d\t%lg\t%lg\t%lg\t%lg\t%lg\t%lg\n", i, wspd[i], wdir[i], j, mat_wtvel.at(i, j), mat_wtpwr.at(i, j), mat_thrust.at(i, j), mat_turb.at(i, j), mat_distdown.at(i, j), mat_distcross.at(i, j));
+	//				fprintf(f1, "%ld\t%lg\t%lg\t%ld\t%lg\t%lg\t%lg\t%lg\t%lg\t%lg\n", i, wspd[i], wdir[i], j, mat_wtvel.at(i, j), mat_wtpwr.at(i, j), mat_thrust.at(i, j), mat_turb.at(i, j), mat_distdown.at(i, j), mat_distcross.at(i, j));
 	//		}
 	//		f1.close();
 	//	}
