@@ -396,8 +396,6 @@ public:
 						double deltaTc = n*k*(Tc + 273.15) / q; //Thermal voltage
 						double VMaxSTCStrUnshaded = str_vmp_stc[irec];
 						double scale_g = global_poa_irrad[irec] / 1000.0;
-						double TcVmpMax = vmpp[p_max_ind] * VMaxSTCStrUnshaded + C2*Ns*deltaTc*::log(scale_g) + C3*Ns*pow((deltaTc*::log(scale_g)), 2) + BetaVmp*(Tc - 25);
-						//double TcVmpScale = TcVmpMax / vmpp[p_max_ind] / VMaxSTCStrUnshaded;
 
 						std::vector<double> TcVmps;
 

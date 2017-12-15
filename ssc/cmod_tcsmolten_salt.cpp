@@ -719,8 +719,6 @@ public:
 				int nflux_x = (int)flux_data->ncols();
 
 				mt_flux_maps.resize(nflux_y * flux_data->nlayers(), nflux_x);
-				ssc_number_t *fluxdata = allocate("flux_table", nflux_y * flux_data->nlayers(), nflux_x);
-
 				int cur_row = 0;
 
 				for (size_t i = 0; i<flux_data->nlayers(); i++)
@@ -782,7 +780,6 @@ public:
 				int nflux_x = (int)flux_data->ncols();
 
 				mt_flux_maps.resize(nflux_y * flux_data->nlayers(), nflux_x);
-				ssc_number_t *fluxdata = allocate("flux_table", nflux_y * flux_data->nlayers(), nflux_x);
 
 				int cur_row = 0;
 
@@ -1214,11 +1211,7 @@ public:
 					}
 
 					// Get sCO2 design outputs
-					double m_dot_htf_design = p_sco2_recomp_csp->get_phx_des_par()->m_m_dot_hot_des;			//[kg/s]
 					double T_htf_cold_calc = p_sco2_recomp_csp->get_design_solved()->ms_phx_des_solved.m_T_h_out;		//[K]
-					double UA_LTR = p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.m_UA_LT;		//[kW/K]
-					double UA_HTR = p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.m_UA_HT;		//[kW/K]
-
 					log("sCO2 design point calculations complete.", SSC_WARNING);
 					double T_rec_htf_cold = as_double("T_htf_cold_des");			//[C]
 					assign("T_htf_cold_des", T_htf_cold_calc - 273.15);				//[C]

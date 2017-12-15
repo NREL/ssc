@@ -1573,7 +1573,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 
 	//set up the calculated components of irradiance such that they aren't reported if they aren't assigned
 	//three possible calculated irradiance: gh, df, dn
-	ssc_number_t *p_irrad_calc[3]; 
+	ssc_number_t *p_irrad_calc[3] = {0, 0, 0};
 	if (radmode == DN_DF) p_irrad_calc[0] = allocate("gh_calc", nrec); //don't calculate global for POA models
 	if (radmode == DN_GH || radmode == POA_R || radmode == POA_P) p_irrad_calc[1] = allocate("df_calc", nrec);
 	if (radmode == GH_DF || radmode == POA_R || radmode == POA_P) p_irrad_calc[2] = allocate("dn_calc", nrec);
@@ -2306,7 +2306,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 						//execute self-shading calculations
 						ssc_number_t beam_to_use; //some self-shading calculations require DNI, NOT ibeam (beam in POA). Need to know whether to use DNI from wf or calculated, depending on radmode
 						if (radmode == DN_DF || radmode == DN_GH) beam_to_use = (ssc_number_t)wf.dn;
-						else beam_to_use = p_irrad_calc[2][idx];
+						else beam_to_use = p_irrad_calc[2][hour * step_per_hour]; // top of hour in first year
 
 						if (linear && trackbool) //one-axis linear
 						{

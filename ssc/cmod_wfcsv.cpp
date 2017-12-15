@@ -152,14 +152,3 @@ public:
 };
 
 DEFINE_MODULE_ENTRY( wfcsvconv, "Converter for TMY2, TMY3, INTL, EPW, SMW weather files to standard CSV format", 1 )
-
-
-	
-static var_info _cm_vtab_wfcsvread[] = 
-{	
-/*   VARTYPE           DATATYPE         NAME                         LABEL                              UNITS     META                      GROUP                     REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
-	{ SSC_INPUT,        SSC_STRING,      "file_name",               "Input weather file name",         "",       "wfcsv format",      "Weather File Reader", "*",                       "",                     "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "scan_header_only",        "Scan all data or just header",    "",       "",                  "Weather File Reader", "?=0",                     "",                     "" },
-	
-var_info_invalid };
-

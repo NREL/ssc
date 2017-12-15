@@ -1238,11 +1238,6 @@ public:
 		}
 
 
-		double testing[10];
-		for (int i = 0; i<10; i++)
-		{
-			testing[i] = bgarhc[i][9];
-		}
 		//Natural gas consumption
 		double naturalgas = final[5] + drying_natgas;
 

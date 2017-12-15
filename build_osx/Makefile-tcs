@@ -16,11 +16,13 @@ OBJECTS = tcskernel.o \
 	sco2_pc_csp_int.o \
 	sco2_rec_util.o \
 	sco2_power_cycle.o \
+	sco2_cycle_components.o \
 	water_properties.o \
 	tc_test_type402.o \
 	sam_sco2_recomp_type424.o \
 	sco2_test_type401.o \
-	sco2_pc_core.o \
+	sco2_recompression_cycle.o \
+	sco2_partialcooling_cycle.o \
     cavity_calcs.o \
 	atmospheric_aod.o \
 	Heliostat_AzElAod.o \

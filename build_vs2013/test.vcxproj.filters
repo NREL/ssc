@@ -23,6 +23,12 @@
     <ClCompile Include="..\test\ssc_test\cmod_windpower_test.cpp">
       <Filter>ssc_test</Filter>
     </ClCompile>
+    <ClCompile Include="..\test\shared_test\lib_windwakemodel_test.cpp">
+      <Filter>shared_test</Filter>
+    </ClCompile>
+    <ClCompile Include="..\test\shared_test\lib_windwatts_test.cpp">
+      <Filter>shared_test</Filter>
+    </ClCompile>
     <ClCompile Include="..\test\ssc_test\cmod_pvsamv1_test.cpp">
       <Filter>ssc_test</Filter>
     </ClCompile>
@@ -48,11 +54,11 @@
     <ClInclude Include="..\test\input_cases\weather_inputs.h">
       <Filter>input_cases</Filter>
     </ClInclude>
-    <ClInclude Include="..\test\input_cases\input_toolbox.h">
-      <Filter>input_cases</Filter>
-    </ClInclude>
     <ClInclude Include="..\test\ssc_test\cmod_windpower_test.h">
       <Filter>ssc_test</Filter>
+    </ClInclude>
+    <ClInclude Include="..\test\shared_test\lib_windwakemodel_test.h">
+      <Filter>shared_test</Filter>
     </ClInclude>
     <ClInclude Include="..\test\ssc_test\cmod_pvsamv1_test.h">
       <Filter>ssc_test</Filter>
@@ -61,6 +67,9 @@
       <Filter>input_cases</Filter>
     </ClInclude>
     <ClInclude Include="..\test\input_cases\pvsamv1_cases.h">
+      <Filter>input_cases</Filter>
+    </ClInclude>
+    <ClInclude Include="..\test\input_cases\windpower_cases.h">
       <Filter>input_cases</Filter>
     </ClInclude>
   </ItemGroup>

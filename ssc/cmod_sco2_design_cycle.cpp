@@ -49,7 +49,9 @@
 
 #include "core.h"
 
-#include "sco2_pc_core.h"
+//#include "sco2_pc_core.h"
+#include "sco2_recompression_cycle.h"
+
 #include <vector>
 
 // This compute module finds the optimal cycle efficiency given design point conditions

@@ -75,6 +75,7 @@ public:
 	double lat;
 	double lon;
 	double elev;
+	double measurementHeight;
 
 	std::vector<int> types() { return m_dataid; }
 	std::vector<double> heights() { return m_heights; }
@@ -95,7 +96,7 @@ public:
 	std::string error() { return m_errorMsg; }
 
 protected:
-	std::vector<int> m_dataid;
+	std::vector<int> m_dataid;	// stores column headers(temp, pres, dir, speed) for each measurement height
 	std::vector<double> m_heights;
 	std::string m_errorMsg;
 	

@@ -655,7 +655,6 @@ public:
 		assign("capacity_factor", var_data((ssc_number_t)(kWhperkW / 87.6)));
 		assign("kwh_per_kw", var_data((ssc_number_t)kWhperkW));
 
-		double fuel_usage_mmbtu = 0;
 		//ssc_number_t *hourly_fuel = as_array("q_aux_fuel", &count);//MWh
 		//if( count != 8760 )
 		//	throw exec_error("tcsmolten_salt", "q_aux_fuel count incorrect (should be 8760): " + count);
