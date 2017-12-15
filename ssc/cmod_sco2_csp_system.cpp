@@ -546,6 +546,23 @@ public:
 				sco2_rc_od_op_par.m_recomp_frac = f_recomp_od;	//[-]
 
 
+				//try
+ 				//{
+ 				//	sco2_od_code = sco2_recomp_csp.off_design(sco2_rc_od_par, sco2_rc_od_op_par);
+ 				//}
+ 				//catch( C_csp_exception &csp_exception )
+ 				//{
+ 				//	// Report warning before exiting with error
+ 				//	while( sco2_recomp_csp.mc_messages.get_message(&out_type, &out_msg) )
+ 				//	{
+ 				//		log(out_msg);
+ 				//	}
+ 				//
+ 				//	log(csp_exception.m_error_message, SSC_ERROR, -1.0);
+ 				//
+ 				//	return;				
+ 				//}
+
 				//p_od_code[n_run] = sco2_od_code;
 				//// Can we just... see what happens getting metrics from sco2_recomp_csp when off-design fails
 				//	// Control parameters
