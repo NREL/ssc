@@ -357,7 +357,7 @@ class ThreadedKernel : public wxThread, public tcskernel
 {
 	int m_threadId;
 	double m_start, m_end, m_step;
-	bool m_storeArr, m_proceedAnyways;
+	bool m_proceedAnyways;
 	int m_maxIter, m_simResult;
 	bool m_ok;
 
