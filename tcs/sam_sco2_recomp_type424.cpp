@@ -687,19 +687,11 @@ public:
 		ms_phx_od_par.m_UA_PHX_des = m_UA_PHX_des;
 		ms_phx_od_par.m_cp_htf = m_cp_rec;		
 
-		double C_dot_htf_sby = ms_phx_od_par.m_m_dot_htf * ms_phx_od_par.m_cp_htf;
-
-		//ms_rc_cycle.opt_od_eta_for_hx(ms_rc_od_par, ms_phx_od_par, q_sby_error_code);
-
 		if( q_sby_error_code != 0 )
 		{
 			message(TCS_ERROR, "The power cycle model crashes at the specified cutoff fraction, %lg. Try increasing this value", cutoff_frac);
 			return -1;
 		}
-
-		double Q_dot_PHX_sby = ms_rc_cycle.get_od_solved()->m_Q_dot;
-
-		//double T_htf_cold_calc = m_T_htf_hot - Q_dot_PHX_sby / C_dot_htf_sby;
 
 		double m_T_PHX_in_sby = ms_rc_cycle.get_od_solved()->m_temp[5 - 1];
 
