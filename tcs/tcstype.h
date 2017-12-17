@@ -330,7 +330,6 @@ protected:
 
 private:
 	tcscontext *m_context;
-	tcstypeinfo *m_typeInfo;
 	double m_currentTime;
 	double m_timeStep;
 
