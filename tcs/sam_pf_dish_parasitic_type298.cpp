@@ -809,7 +809,7 @@ public:
 		double mu_tower = 0.299062 - 0.00283786*T1 + 0.0000090396*pow(T1,2) - 9.64494E-09*pow(T1,3);
 		double Re_tower = rho_tower * vel_tower * m_d_pipe_tower / (mu_tower+1E-8);
 		
-		double epsilon_wall;
+		double epsilon_wall = std::numeric_limits<double>::quiet_NaN();
 		if( m_tower_pipe_material == 1 )		// Plastic
 			epsilon_wall = 0.0000015;
 		else if( m_tower_pipe_material == 2)	// cast iron
