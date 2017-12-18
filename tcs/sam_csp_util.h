@@ -492,7 +492,7 @@ private:
 	util::matrix_t<double> m_D_h;
 	util::matrix_t<double> m_flowtype;
 
-	double reguess_args[3];
+	std::vector<double> mv_reguess_args;
 
 	// Updated once per timestep
 	util::matrix_t<double> m_ColOptEff;
@@ -502,7 +502,11 @@ private:
 	
 
 public:
-	Evacuated_Receiver(){};
+	Evacuated_Receiver()
+	{
+		mv_reguess_args.resize(3);
+		std::fill(mv_reguess_args.begin(), mv_reguess_args.end(), std::numeric_limits<double>::quiet_NaN());
+	};
 
 	~Evacuated_Receiver(){};
 
