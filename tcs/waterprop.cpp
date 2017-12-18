@@ -239,11 +239,6 @@ static inline int Index2D(int i, int j, int R)
 {
 	return( i + R*j);
 }
-/// 3D indexing
-static inline int Index3D(int i, int j, int k, int R, int C)
-{
-	return (R*C*k + (i+R*j));
-}
 /// 4D indexing
 static inline int Index4D(int i, int j, int k, int l, int R, int C, int D)
 {
