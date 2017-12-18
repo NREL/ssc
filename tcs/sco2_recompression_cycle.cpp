@@ -2093,8 +2093,21 @@ void C_RecompCycle::design_core_standard(int & error_code)
 	m_W_dot_t = w_t*m_dot_t;		//[kWe]
 	m_W_dot_net_last = w_mc*m_dot_mc + w_rc*m_dot_rc + w_t*m_dot_t;
 	m_eta_thermal_calc_last = m_W_dot_net_last / PHX_des_par.m_Q_dot_design;
+	
+	ms_des_par.m_des_objective_type = 2;
+	ms_des_par.m_min_phx_deltaT = 200.0;
 
-	m_objective_metric_last = m_eta_thermal_calc_last;
+	if (ms_des_par.m_des_objective_type == 2)
+	{
+		double phx_deltaT = m_temp_last[TURB_IN] - m_temp_last[HTR_HP_OUT];
+		double under_min_deltaT = std::max(0.0, ms_des_par.m_min_phx_deltaT - phx_deltaT);
+		double eta_deltaT_scale = std::exp(-under_min_deltaT);
+		m_objective_metric_last = m_eta_thermal_calc_last * eta_deltaT_scale;
+	}
+	else
+	{
+		m_objective_metric_last = m_eta_thermal_calc_last;
+	}
 
 	m_m_dot_mc = m_dot_mc;
 	m_m_dot_rc = m_dot_rc;
