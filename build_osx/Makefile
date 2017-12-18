@@ -1,12 +1,12 @@
 all:
-	make -f Makefile-shared -j8
-	make -f Makefile-nlopt -j8
-	make -f Makefile-lpsolve -j8
-	make -f Makefile-solarpilot -j8
-	make -f Makefile-tcs -j8
-	make -f Makefile-ssc -j8
-	make -f Makefile-sdktool -j8
-	make -f Makefile-tcsconsole -j8
+	make -f Makefile-shared -j4
+	make -f Makefile-nlopt -j4
+	make -f Makefile-lpsolve -j4
+	make -f Makefile-solarpilot -j4
+	make -f Makefile-tcs -j4
+	make -f Makefile-ssc -j4
+	make -f Makefile-sdktool -j4
+	make -f Makefile-tcsconsole -j4
 #	make -f Makefile-gtest -j 
 
 clean:
