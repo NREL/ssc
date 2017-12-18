@@ -97,7 +97,7 @@ bool Storage_HX::define_storage( HTFProperties &fluid_field, HTFProperties &flui
 	m_dt_cold_des = dt_cold_des;
 	m_dt_hot_des = dt_hot_des;
 	m_max_q_htr_cold = max_q_htr_cold;
-	m_max_q_htr_hot = m_max_q_htr_hot;
+	m_max_q_htr_hot = max_q_htr_hot;
 
 	// Geometric Calculations
 	m_a_cs	= m_vol_des/(m_h_des*m_tank_pairs_des);		//[m2] Cross-sectional area of a single tank
