@@ -127,7 +127,6 @@ class P_max_check
 {
 	double P_max;
 	double P_save;
-	double P_return;
 	bool is_error;
 
 public:
