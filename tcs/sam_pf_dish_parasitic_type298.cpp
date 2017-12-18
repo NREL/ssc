@@ -508,9 +508,7 @@ public:
 					fan_speed =  m_fan_speed1;
 					
 				// Set fan speed to zero if DNI < I_cut_in
-				if(DNI >= I_cut_in)   
-					fan_speed =  fan_speed;
-				else 
+				if(DNI < I_cut_in)
 					fan_speed =  0.0;
 
 				/*System does not converge with a fan speed below 50RPM so modify code
@@ -795,17 +793,13 @@ public:
 		
 		// =================================================================
 		// Set individual system fan power to zero when cooling tower on
-		if(m_cooling_tower_on == 0.0) 
-			P_fan = P_fan;
-		else
+		if(m_cooling_tower_on != 0.0)
 			P_fan = 0.0;
 		
 		// =================================================================
 		// Set cooling tower fan power to zero when DNI is low
 		if(DNI < 300.0) 
 			P_tower_fan = 0.0;
-		else
-			P_tower_fan = P_tower_fan;		
 		
 		// =========================================================================
 		// Determine pump power for the cooling tower to distribute water to all dishes
