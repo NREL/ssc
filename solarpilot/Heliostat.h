@@ -283,8 +283,6 @@ public:
 
 
 class HelioTemplate : public Heliostat {
-	int 
-		_n_focal_types;	//How many different focal lengths can there be? (-1=Inf, 1,2,..)
 public:
 	HelioTemplate(){};
 	~HelioTemplate(){};
