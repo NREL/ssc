@@ -13,7 +13,6 @@ int windpower_nofinancial_testfile(ssc_data_t &data)
 		printf("error: out of memory.");
 		return -1;
 	}
-	ssc_module_t module;
 
 #ifdef _MSC_VER	
 	std::string file = "../../../test/input_docs/wind.srw";
@@ -59,22 +58,7 @@ int windpower_nofinancial_testfile(ssc_data_t &data)
 	ssc_data_set_number(data, "wind_farm_losses_percent", 0);
 	ssc_data_set_number(data, "wind_farm_wake_model", 0);
 	ssc_data_set_number(data, "adjust:constant", 0);
-
-	module = ssc_module_create("windpower");
-	if (NULL == module)
-	{
-		printf("error: could not create 'windpower' module.");
-		ssc_data_free(data);
-		return -1;
-	}
-	if (ssc_module_exec(module, data) == 0)
-	{
-		printf("error during simulation.");
-		ssc_module_free(module);
-		ssc_data_free(data);
-		return -1;
-	}
-	ssc_module_free(module);
+	
 	return 0;
 }
 

@@ -79,6 +79,7 @@ public:
 
 	std::vector<int> types() { return m_dataid; }
 	std::vector<double> heights() { return m_heights; }
+	std::vector<float> relativeHumidity() { return m_relativeHumidity; }
 
 	bool read( double requested_height,
 		double *speed,
@@ -98,6 +99,7 @@ public:
 protected:
 	std::vector<int> m_dataid;	// stores column headers(temp, pres, dir, speed) for each measurement height
 	std::vector<double> m_heights;
+	std::vector<float> m_relativeHumidity;
 	std::string m_errorMsg;
 	
 	bool find_closest( int& closest_index, int id, int ncols, double requested_height, int index_to_exclude = -1 );
