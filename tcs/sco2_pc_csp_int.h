@@ -99,6 +99,9 @@ public:
 		double m_N_turbine;					//[rpm] Turbine shaft speed (negative values link turbine to compressor)
 		int m_is_recomp_ok;					//[-] 1 = yes, 0 = no, other = invalid
 
+		int m_des_objective_type;			//[2] = min phx deltat then max eta, [else] max eta
+		double m_min_phx_deltaT;			//[C]
+
 		double m_PR_mc_guess;				//[-] Initial guess for ratio of P_mc_out to P_mc_in
 		bool m_fixed_PR_mc;					//[-] if true, ratio of P_mc_out to P_mc_in is fixed at PR_mc_guess
 
@@ -113,6 +116,10 @@ public:
 		S_des_par()
 		{
 			m_hot_fl_code = m_design_method = m_N_sub_hxrs = -1;
+
+			// Default to standard optimization to maximize cycle efficiency
+			m_des_objective_type = 1;
+			m_min_phx_deltaT = 0.0;		//[C]
 
 			m_is_recomp_ok = -1;
 

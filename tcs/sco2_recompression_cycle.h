@@ -165,6 +165,9 @@ public:
 		double m_tol;						//[-] Convergence tolerance
 		double m_opt_tol;					//[-] Optimization tolerance
 		double m_N_turbine;					//[rpm] Turbine shaft speed (negative values link turbine to compressor)
+		
+		int m_des_objective_type;			//[2] = min phx deltat then max eta, [else] max eta
+		double m_min_phx_deltaT;			//[C]
 
 		double m_P_mc_out_guess;			//[kPa] Initial guess for main compressor outlet pressure
 		bool m_fixed_P_mc_out;				//[-] if true, P_mc_out is fixed at P_mc_out_guess
@@ -178,8 +181,7 @@ public:
 		double m_LT_frac_guess;				//[-] Initial guess for fraction of UA_rec_total that is in the low-temperature recuperator
 		bool m_fixed_LT_frac;				//[-] if true, LT_frac is fixed at LT_frac_guess
 
-		int m_des_objective_type;		//[2] = min phx deltat then max eta, [else] max eta
-		double m_min_phx_deltaT;		//[C]
+		
 
 		S_opt_design_parameters()
 		{
@@ -226,6 +228,9 @@ public:
 		double m_N_turbine;					//[rpm] Turbine shaft speed (negative values link turbine to compressor)
 		int m_is_recomp_ok;					//[-] 1 = yes, 0 = no, other = invalid
 
+		int m_des_objective_type;			//[2] = min phx deltat then max eta, [else] max eta
+		double m_min_phx_deltaT;			//[C]
+
 		double m_PR_mc_guess;				//[-] Initial guess for ratio of P_mc_out to P_mc_in
 		bool m_fixed_PR_mc;					//[-] if true, ratio of P_mc_out to P_mc_in is fixed at PR_mc_guess
 
@@ -243,6 +248,10 @@ public:
 			m_N_sub_hxrs = -1;
 
 			m_is_recomp_ok = -1;
+
+			// Default to standard optimization to maximize cycle efficiency
+			m_des_objective_type = 1;
+			m_min_phx_deltaT = 0.0;		//[C]
 
 			m_fixed_PR_mc = false;		//[-] If false, then should default to optimizing this parameter
 

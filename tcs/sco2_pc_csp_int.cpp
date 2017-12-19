@@ -99,7 +99,7 @@ C_sco2_recomp_csp::C_sco2_recomp_csp()
 	//sco2_od_opt_file << "P_mc_in_MPa,f_recomp,phi_mc,eta_ND,W_dot_MW\n";
 }
 
-void C_sco2_recomp_csp::design(C_sco2_recomp_csp::S_des_par des_par)
+void C_sco2_recomp_csp::design(C_sco2_rc_csp_template::S_des_par des_par)
 {
 	ms_des_par = des_par;
 
@@ -212,6 +212,9 @@ void C_sco2_recomp_csp::design_core()
 		ms_rc_cycle_des_par.m_N_turbine = ms_des_par.m_N_turbine;
 		ms_rc_cycle_des_par.m_is_recomp_ok = ms_des_par.m_is_recomp_ok;	
 
+		ms_rc_cycle_des_par.m_des_objective_type = ms_des_par.m_des_objective_type;		//[-]
+		ms_rc_cycle_des_par.m_min_phx_deltaT = ms_des_par.m_min_phx_deltaT;				//[C]
+
 		ms_rc_cycle_des_par.mf_callback_log = mf_callback_update;
 		ms_rc_cycle_des_par.mp_mf_active = mp_mf_update;
 
@@ -244,6 +247,9 @@ void C_sco2_recomp_csp::design_core()
 		s_rc_auto_opt_des_par.m_tol = ms_des_par.m_tol;
 		s_rc_auto_opt_des_par.m_opt_tol = ms_des_par.m_opt_tol;
 		s_rc_auto_opt_des_par.m_N_turbine = ms_des_par.m_N_turbine;
+
+		s_rc_auto_opt_des_par.m_des_objective_type = ms_des_par.m_des_objective_type;		//[-]
+		s_rc_auto_opt_des_par.m_min_phx_deltaT = ms_des_par.m_min_phx_deltaT;				//[C]
 
 		s_rc_auto_opt_des_par.m_PR_mc_guess = ms_des_par.m_PR_mc_guess;		//[-]
 		s_rc_auto_opt_des_par.m_fixed_PR_mc = ms_des_par.m_fixed_PR_mc;		//[-]
