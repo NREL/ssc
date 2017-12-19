@@ -1455,17 +1455,12 @@ public:
 
 		// go through each period and tier and calculate per SAM_V2_RATES.docx - Nathan Clark 3/6/13
 		// reconcile on monthly basis
-		ssc_number_t charge[12][12];
-		ssc_number_t credit[12][12];
 		c=0;
 		for (m=0;m<12;m++)
 		{
 			ssc_number_t monthly_energy = 0;
 			for (period=0;period<12;period++)
 			{
-				charge[m][period]=0;
-				credit[m][period]=0;
-
 				if (energy_net[m][period] >= 0.0)
 				{ // calculate income or credit
 					ssc_number_t credit_amt = 0;
@@ -1486,7 +1481,6 @@ public:
 							break;
 						tier++;
 					}
-					credit[m][period] = credit_amt;
 					ec_charge[m] -= credit_amt;
 				}
 				else
@@ -1509,7 +1503,6 @@ public:
 							break;
 						tier++;
 					}
-					charge[m][period] = charge_amt;
 					ec_charge[m] += charge_amt;
 				}
 				monthly_energy += energy_net[m][period];

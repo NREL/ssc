@@ -32,6 +32,9 @@
     <ClCompile Include="..\test\ssc_test\cmod_pvsamv1_test.cpp">
       <Filter>ssc_test</Filter>
     </ClCompile>
+    <ClCompile Include="..\test\shared_test\lib_util_test.cpp">
+      <Filter>shared_test</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="shared_test">

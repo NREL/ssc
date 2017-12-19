@@ -555,7 +555,7 @@ static var_info _cm_vtab_pvsamv1[] = {
     { SSC_OUTPUT,        SSC_ARRAY,      "inv_cliploss",                         "Inverter clipping loss AC power limit",                "kW",   "",  "Time Series (Inverter)",       "*",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "inv_psoloss",                          "Inverter power consumption loss",                      "kW",   "",  "Time Series (Inverter)",       "*",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "inv_pntloss",                          "Inverter night time loss",                             "kW",   "",  "Time Series (Inverter)",       "*",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "ac_wiring_loss",                        "AC wiring loss",                                       "kW",   "",   "Time Series (Inverter)",              "*",                        "",                   "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "ac_wiring_loss",                       "AC wiring loss",                                       "kW",   "",   "Time Series (Inverter)",              "*",                        "",                   "" },
 
 	// transformer model outputs
 	{ SSC_OUTPUT,        SSC_ARRAY,      "xfmr_nll_ts",                          "Transformer no load loss",                              "kW", "",    "Time Series (Transformer)", "", "", "" },
@@ -1573,7 +1573,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 
 	//set up the calculated components of irradiance such that they aren't reported if they aren't assigned
 	//three possible calculated irradiance: gh, df, dn
-	ssc_number_t *p_irrad_calc[3]; 
+	ssc_number_t *p_irrad_calc[3] = {0, 0, 0};
 	if (radmode == DN_DF) p_irrad_calc[0] = allocate("gh_calc", nrec); //don't calculate global for POA models
 	if (radmode == DN_GH || radmode == POA_R || radmode == POA_P) p_irrad_calc[1] = allocate("df_calc", nrec);
 	if (radmode == GH_DF || radmode == POA_R || radmode == POA_P) p_irrad_calc[2] = allocate("dn_calc", nrec);

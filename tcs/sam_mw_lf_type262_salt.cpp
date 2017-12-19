@@ -543,7 +543,7 @@ private:
 		T_loop_outX, Runner_hl_hot, Header_hl_hot, Pipe_hl_hot, c_hdr_hot, time_hr, dt_hr, 
 		eta_opt_fixed, A_loop;
 	int day_of_year, SolveMode, dfcount;
-	double HCEguessargs[3];
+	std::vector<double> mv_HCEguessargs;
 
 	double m_htf_prop_min;
 
@@ -711,6 +711,10 @@ public:
 		piping_summary	= "";
 
 		m_htf_prop_min = std::numeric_limits<double>::quiet_NaN();
+
+		mv_HCEguessargs.resize(3);
+		std::fill(mv_HCEguessargs.begin(), mv_HCEguessargs.end(), std::numeric_limits<double>::quiet_NaN());
+
 	}
 
 	virtual ~sam_mw_lf_type262(){
@@ -1592,7 +1596,7 @@ overtemp_iter_flag: //10 continue     //Return loop for over-temp conditions
 						double c_htf_j, rho_htf_j;
 						EvacReceiver(T_htf_in[i], m_dot_htf, T_db, T_sky, V_wind, P_amb, q_SCA, j, i, false,  ncall, time_hr,
 									 //outputs
-									 q_loss[j], q_abs[j], q_1abs[j], c_htf_j, rho_htf_j, HCEguessargs);
+									 q_loss[j], q_abs[j], q_1abs[j], c_htf_j, rho_htf_j, mv_HCEguessargs);
 					
 						if(q_abs[j] != q_abs[j]) 
 						{	//cc--> Check for NaN
@@ -2334,7 +2338,7 @@ set_outputs_and_return:
 	void EvacReceiver(double T_1_in, double m_dot, double T_amb, double T_sky, double v_6, double P_6, double q_i, 
 		int hv /* HCE variant [0..3] */, int sca_num, bool single_point,  int ncall, double time,
 		//outputs
-		double &q_heatloss, double &q_12conv, double &q_34tot, double &c_1ave, double &rho_1ave, double reguess_args[3] = NULL)
+		double &q_heatloss, double &q_12conv, double &q_34tot, double &c_1ave, double &rho_1ave, std::vector<double> & v_reguess_args)
 	{
 
 		//cc -- note that collector/hce geometry is part of the parent class. Only the indices specifying the
@@ -2355,15 +2359,13 @@ set_outputs_and_return:
 		//cc--> note that xx and yy have size 'nea'
 		
 		//---Re-guess criteria:---
-		if(reguess_args == NULL) goto lab_reguess;
-
 		if(time<=2) goto lab_reguess;
 		
-		if(((int)reguess_args[0] == 1) != GlazingIntact.at(hv)) goto lab_reguess;	//glazingintact state has changed
+		if(((int)v_reguess_args[0] == 1) != GlazingIntact.at(hv)) goto lab_reguess;	//glazingintact state has changed
 		
-		if(P_a[hv] != reguess_args[1]) goto lab_reguess;                   //Reguess for different annulus pressure
+		if(P_a[hv] != v_reguess_args[1]) goto lab_reguess;                   //Reguess for different annulus pressure
 		
-		if(fabs(reguess_args[2]-T_1_in) > 50.) goto lab_reguess;
+		if(fabs(v_reguess_args[2]-T_1_in) > 50.) goto lab_reguess;
 		
 		for(int i=0; i<5; i++){ if(T_save[i] < T_sky - 1.) goto lab_reguess; } 
 		
@@ -2394,11 +2396,11 @@ lab_keep_guess:
 					T_upper_max = T_save[2] - 0.5*(T_save[2]-T_amb);     //Also, low upper limit for T4
 				}                      
 				T_save[4] = T_save[3] - 2.;
-				if(reguess_args != NULL){
-					reguess_args[1]  = P_a[hv];               //Reset previous pressure
-					reguess_args[0] = GlazingIntact.at(hv) ? 1. : 0.;   //Reset previous glazing logic
-					reguess_args[2] = T_1_in;            //Reset previous T_1_in
-				}
+
+				v_reguess_args[1]  = P_a[hv];               //Reset previous pressure
+				v_reguess_args[0] = GlazingIntact.at(hv) ? 1. : 0.;   //Reset previous glazing logic
+				v_reguess_args[2] = T_1_in;            //Reset previous T_1_in
+
 			}
 			else{
 				T_save[0] = T_1_in;
@@ -2406,10 +2408,10 @@ lab_keep_guess:
 				T_save[2] = T_save[1] + 5.;
 				T_save[3] = T_amb;
 				T_save[4] = T_amb;
-				if(reguess_args != NULL){
-					reguess_args[0] = GlazingIntact.at(hv) ? 1. : 0.;   //Reset previous glazing logic
-					reguess_args[1] = T_1_in;            //Reset previous T_1_in
-				}
+
+				v_reguess_args[0] = GlazingIntact.at(hv) ? 1. : 0.;   //Reset previous glazing logic
+				v_reguess_args[1] = T_1_in;            //Reset previous T_1_in
+
 			}
 		}
 
