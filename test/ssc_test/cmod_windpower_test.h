@@ -8,7 +8,6 @@
 #include "common.h"
 #include "../input_cases/weather_inputs.h"
 #include "../input_cases/windpower_cases.h"
-#include "cmod_windpower.h"
 
 
 /**
