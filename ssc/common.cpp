@@ -960,7 +960,7 @@ void weatherdata::set_counter_to(size_t cur_index){
 
 bool weatherdata::read( weather_record *r )
 {
-	if ( m_index < m_data.size() 
+	if (m_index < m_data.size())
 	{
 		*r = *m_data[m_index++];
 		return true;
