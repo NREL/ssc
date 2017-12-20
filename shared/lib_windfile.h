@@ -97,11 +97,12 @@ public:
 	std::string error() { return m_errorMsg; }
 
 protected:
-	std::vector<int> m_dataid;	// stores column headers(temp, pres, dir, speed) for each measurement height
+	std::vector<int> m_dataid;	// stores column headers (temp=1,pres=2,speed=3,dir=4) for each measurement height
 	std::vector<double> m_heights;
 	std::vector<float> m_relativeHumidity;
 	std::string m_errorMsg;
 	
+public:		// temporary!
 	bool find_closest( int& closest_index, int id, int ncols, double requested_height, int index_to_exclude = -1 );
 	bool can_interpolate( int index1, int index2, int ncols, double requested_height );
 

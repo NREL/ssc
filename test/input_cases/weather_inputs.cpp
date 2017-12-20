@@ -15,9 +15,9 @@ var_data* create_winddata_array(int intervalsPerHour){
 	}
 
 	float* height = new float[4];
-	float* fields = new float[4];
+	float* fields = new float[4];		// (temp=1,pres=2,speed=3,dir=4)
 	for (int i = 0; i < 4; i++){
-		height[i] = (float)80.;
+		height[i] = (float)(80 + i*10);
 		fields[i] = (float)i+1;
 	}
 	var_data data_vd = var_data(year_data, 8760 * intervalsPerHour, 4);

@@ -35,6 +35,9 @@
     <ClCompile Include="..\test\shared_test\lib_util_test.cpp">
       <Filter>shared_test</Filter>
     </ClCompile>
+    <ClCompile Include="..\test\shared_test\lib_windfile_test.cpp">
+      <Filter>shared_test</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="shared_test">

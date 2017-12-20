@@ -25,7 +25,9 @@ protected:
 		int errors = windpower_nofinancial_testfile(data);
 		EXPECT_FALSE(errors);
 	}
-	void TearDown(){}
+	void TearDown(){
+		ssc_data_free(data);
+	}
 };
 
 bool CMWindPowerIntegration::compute(){
@@ -33,14 +35,12 @@ bool CMWindPowerIntegration::compute(){
 	if (NULL == module)
 	{
 		printf("error: could not create 'windpower' module.");
-		ssc_data_free(data);
 		return false;
 	}
 	if (ssc_module_exec(module, data) == 0)
 	{
 		printf("error during simulation.");
 		ssc_module_free(module);
-		ssc_data_free(data);
 		return false;
 	}
 	ssc_module_free(module);
