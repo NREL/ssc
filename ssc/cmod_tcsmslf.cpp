@@ -812,10 +812,6 @@ public:
 		// ssc_number_t *p_hourly_energy = as_array("hourly_energy", &count);
 		// set hourly energy = tcs output Enet
 		
-		//ssc_number_t *hourly_energy = as_array("W_net", &count);//MWh
-		//if (count != 8760)
-		//	throw exec_error("tcsmslf", "hourly_energy count incorrect (should be 8760): " + count);
-
 		// apply performance adjustments and convert from MWh to kWh 
 		for (size_t i = 0; i < count; i++)
 		{
