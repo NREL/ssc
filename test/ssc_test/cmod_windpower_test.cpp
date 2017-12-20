@@ -146,12 +146,12 @@ TEST_F(CMWindPowerIntegration, Weibull_cmod_windpower){
 }
 
 /// Icing and Low Temp Cutoff, with Wind Resource Data
-TEST_F(CMWindPowerIntegration, IcingAndLowTempCutoff_cmod_windpower){
+TEST_F(CMWindPowerIntegration, IcingAndLowTempCutoff_cmod_windpower) {
 	//modify test inputs
 	ssc_data_unassign(data, "wind_resource_filename");
 	var_data* windresourcedata = create_winddata_array(1);
 	float rh[8760];
-	for (unsigned int i = 0; i < 8760; i++){
+	for (unsigned int i = 0; i < 8760; i++) {
 		if (i % 2 == 0) rh[i] = 0.75f;
 		else rh[i] = 0.0f;
 	}
@@ -169,13 +169,17 @@ TEST_F(CMWindPowerIntegration, IcingAndLowTempCutoff_cmod_windpower){
 
 	ssc_number_t annual_energy;
 	ssc_data_get_number(data, "annual_energy", &annual_energy);
-	EXPECT_NEAR(annual_energy, 33224154 / 2, e);
+	EXPECT_NEAR(annual_energy, 33224154 / 2, e) << "Reduced annual energy";
 
 	ssc_number_t monthly_energy = ssc_data_get_array(data, "monthly_energy", nullptr)[0];
 	EXPECT_NEAR(monthly_energy, 2.8218e6 / 2, e);
 
 	monthly_energy = ssc_data_get_array(data, "monthly_energy", nullptr)[11];
 	EXPECT_NEAR(monthly_energy, 2.8218e6 / 2, e);
+
+	ssc_number_t losses_percent;
+	ssc_data_get_number(data, "cutoff_losses", &losses_percent);
+	EXPECT_NEAR(losses_percent, 0.5, 0.01);
 
 	free_winddata_array(windresourcedata);
 }
