@@ -137,6 +137,7 @@ static var_info _cm_vtab_sco2_csp_system[] = {
 	{ SSC_OUTPUT, SSC_NUMBER,  "eff_PHX",              "PHX effectiveness",                                      "",           "",    "",      "*",     "",       "" },
 	{ SSC_OUTPUT, SSC_NUMBER,  "NTU_PHX",              "PHX NTU",                                                "",           "",    "",      "*",     "",       "" },
 	{ SSC_OUTPUT, SSC_NUMBER,  "T_co2_PHX_in",         "CO2 temperature at PHX inlet",                           "C",          "",    "",      "*",     "",       "" },	
+	{ SSC_OUTPUT, SSC_NUMBER,  "deltaT_HTF_PHX",       "HTF temp difference across PHX",                         "C",          "",    "",      "*",     "",       "" },	
 		// Cooler
 	{ SSC_OUTPUT, SSC_NUMBER,  "T_cooler_in",          "Cooler inlet temperature",                               "C",          "",    "",      "*",     "",       "" },
 	{ SSC_OUTPUT, SSC_NUMBER,  "P_cooler_in",          "Compressor inlet pressure",                              "MPa",        "",    "",      "*",     "",       "" },
@@ -460,6 +461,7 @@ public:
 		assign("eff_PHX", (ssc_number_t)p_sco2_recomp_csp->get_design_solved()->ms_phx_des_solved.m_eff_design);				//[-]
 		assign("NTU_PHX", (ssc_number_t)p_sco2_recomp_csp->get_design_solved()->ms_phx_des_solved.m_NTU_design);				//[-]
 		assign("T_co2_PHX_in", (ssc_number_t)(p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.m_temp[C_RecompCycle::HTR_HP_OUT] - 273.15));	//[C]
+		assign("deltaT_HTF_PHX", (ssc_number_t)sco2_rc_des_par.m_T_htf_hot_in - T_htf_cold_calc);		//[K]
 			// Cooler
 		assign("T_cooler_in", (ssc_number_t)(p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.m_temp[C_RecompCycle::LTR_LP_OUT] - 273.15));	//[C]
 		assign("P_cooler_in", (ssc_number_t)(p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.m_pres[C_RecompCycle::LTR_LP_OUT] / 1.E3));	//[MPa]
