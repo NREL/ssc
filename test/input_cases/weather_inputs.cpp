@@ -4,25 +4,29 @@
 #include "common.h"
 #include "weather_inputs.h"
 
-/// delete via: for(int i = 0; i < sizeY; ++i) { delete[] ary[i];} delete[] ary;
-var_data* create_winddata_array(int intervalsPerHour){
-	float* year_data = new float[35040 * intervalsPerHour];
+var_data* create_winddata_array(int intervalsPerHour, int nMeasurementHeights){
+	float* year_data = new float[35040 * intervalsPerHour * nMeasurementHeights];
 	for (int i = 0; i < 8760 * intervalsPerHour; i++){
-		year_data[i * 4] = 15;			// temp
-		year_data[i * 4 + 1] = (float)0.95;	// pres
-		year_data[i * 4 + 2] = 5;		// spd
-		year_data[i * 4 + 3] = 180;		// dir
+		for (int j = 0; j < nMeasurementHeights; j++){
+			int index = i * 4 * nMeasurementHeights + j * 4;
+			year_data[index] = (float)(15 + 5 * j);					// temp
+			year_data[index + 1] = (float)(0.95 + 0.05 * j);	// pres
+			year_data[index + 2] = (float)(5 + 5 * j);					// spd
+			year_data[index + 3] = (float)(180 + 20 * j);				// dir
+		}
 	}
 
-	float* height = new float[4];
-	float* fields = new float[4];		// (temp=1,pres=2,speed=3,dir=4)
-	for (int i = 0; i < 4; i++){
-		height[i] = (float)(80 + i*10);
-		fields[i] = (float)i+1;
+	float* height = new float[4 * nMeasurementHeights];
+	float* fields = new float[4 * nMeasurementHeights];				// (temp=1,pres=2,speed=3,dir=4)
+	for (int i = 0; i < nMeasurementHeights; i++){
+		for (int j = 0; j < 4; j++){
+			height[i * 4 + j] = (float)(80 + i*10);
+			fields[i * 4 + j] = (float)j+1;
+		}
 	}
-	var_data data_vd = var_data(year_data, 8760 * intervalsPerHour, 4);
-	var_data height_vd = var_data(height, 4);
-	var_data fields_vd = var_data(fields, 4);
+	var_data data_vd = var_data(year_data, 8760 * intervalsPerHour, 4 * nMeasurementHeights);
+	var_data height_vd = var_data(height, 4 * nMeasurementHeights);
+	var_data fields_vd = var_data(fields, 4 * nMeasurementHeights);
 
 	var_table* vt = new var_table;
 	vt->assign("heights", height_vd);

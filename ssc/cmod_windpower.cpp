@@ -405,13 +405,6 @@ void cm_windpower::exec() throw(general_error)
 			if (fabs(wt.measurementHeight - wt.hubHeight) > 35.0)
 				throw exec_error("windpower", util::format("the closest wind speed measurement height (%lg m) found is more than 35 m from the hub height specified (%lg m)", wt.measurementHeight, wt.hubHeight));
 
-			if (fabs(wt.measurementHeight - wt.hubHeight) > 1) {
-				// If the wind speed measurement height differs from the turbine hub height, use the shear to correct it. 
-				if (wt.shearExponent > 1.0) wt.shearExponent = 1.0 / 7.0;
-				wind = wind * pow(wt.hubHeight / wt.measurementHeight, wt.shearExponent);
-				wt.measurementHeight = wt.hubHeight;
-			}
-
 			if (fabs(closest_dir_meas_ht - wt.measurementHeight) > 10.0)
 			{
 				if (i > 0) // if this isn't the first hour, then it's probably because of interpolation
@@ -426,6 +419,13 @@ void cm_windpower::exec() throw(general_error)
 				}
 				else
 					throw exec_error("windpower", util::format("the closest wind speed measurement height (%lg m) and direction measurement height (%lg m) were more than 10m apart", wt.measurementHeight, closest_dir_meas_ht));
+			}
+
+			// If the wind speed measurement height differs from the turbine hub height, use the shear to correct it. 
+			if (fabs(wt.measurementHeight - wt.hubHeight) > 1) {
+				if (wt.shearExponent > 1.0) wt.shearExponent = 1.0 / 7.0;
+				wind = wind * pow(wt.hubHeight / wt.measurementHeight, wt.shearExponent);
+				wt.measurementHeight = wt.hubHeight;
 			}
 
 			double farmp = 0;

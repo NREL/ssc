@@ -8,16 +8,24 @@
 
 /// Measurement heights are different from the turbine's hub height
 TEST_F(CMWindPowerIntegration, HubHeightInterpolation_cmod_windpower) {
-	
-	// hubheight: 200
+	// Case 1: hubheight is 200, error
 	ssc_data_unassign(data, "wind_resource_filename");
-	var_data* windresourcedata = create_winddata_array(1);
+	var_data* windresourcedata = create_winddata_array(1,1);
 	var_table *vt = static_cast<var_table*>(data);
 	vt->assign("wind_resource_data", *windresourcedata);
 	vt->assign("wind_turbine_hub_ht", 200);
 
-	bool error = compute();
-	EXPECT_TRUE(error) << "Heights difference > 35m";
+	bool completed = compute(false);
+	EXPECT_FALSE(completed) << "Heights difference > 35m";
+
+	// Case 2: hubweight is 90, use shear exponent interpolation
+	vt->unassign("wind_turbine_hub_ht");
+	vt->assign("wind_turbine_hub_ht", 90);
+
+	compute();
+	ssc_number_t annual_energy;
+	ssc_data_get_number(data, "annual_energy", &annual_energy);
+	EXPECT_GT(annual_energy, 33224154) << "Annual energy should be higher than height at 90";
 
 	free_winddata_array(windresourcedata);
 }
@@ -95,7 +103,7 @@ TEST_F(CMWindPowerIntegration, WakeModelsUsingFile_cmod_windpower){
 TEST_F(CMWindPowerIntegration, UsingDataArray_cmod_windpower){
 	// using hourly data
 	ssc_data_unassign(data, "wind_resource_filename");
-	var_data* windresourcedata = create_winddata_array(1);
+	var_data* windresourcedata = create_winddata_array(1,1);
 	var_table *vt = static_cast<var_table*>(data);
 	vt->assign("wind_resource_data", *windresourcedata);
 
@@ -115,7 +123,7 @@ TEST_F(CMWindPowerIntegration, UsingDataArray_cmod_windpower){
 
 	// 30 min data
 	ssc_data_unassign(data, "wind_resource_data");
-	windresourcedata = create_winddata_array(2);
+	windresourcedata = create_winddata_array(2,1);
 	vt->assign("wind_resource_data", *windresourcedata);
 
 	compute();
@@ -158,7 +166,7 @@ TEST_F(CMWindPowerIntegration, Weibull_cmod_windpower) {
 TEST_F(CMWindPowerIntegration, IcingAndLowTempCutoff_cmod_windpower) {
 	//modify test inputs
 	ssc_data_unassign(data, "wind_resource_filename");
-	var_data* windresourcedata = create_winddata_array(1);
+	var_data* windresourcedata = create_winddata_array(1,1);
 	float rh[8760];
 	for (unsigned int i = 0; i < 8760; i++) {
 		if (i % 2 == 0) rh[i] = 0.75f;

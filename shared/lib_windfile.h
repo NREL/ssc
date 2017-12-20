@@ -102,7 +102,6 @@ protected:
 	std::vector<float> m_relativeHumidity;
 	std::string m_errorMsg;
 	
-public:		// temporary!
 	bool find_closest( int& closest_index, int id, int ncols, double requested_height, int index_to_exclude = -1 );
 	bool can_interpolate( int index1, int index2, int ncols, double requested_height );
 
