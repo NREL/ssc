@@ -52,14 +52,13 @@
 #include <algorithm>
 
 #include "nlopt.hpp"
+#include "fmin.h"
 
 int C_PartialCooling_Cycle::design(S_des_params & des_par_in)
 {
 	ms_des_par = des_par_in;
 
-	int des_err_code = design_core();
-
-	return des_err_code;
+	return design_core();
 }
 
 int C_PartialCooling_Cycle::design_core()
@@ -444,6 +443,39 @@ int C_PartialCooling_Cycle::C_MEQ_LTR_des::operator()(double T_LTR_LP_out /*K*/,
 	return 0;
 }
 
+double C_PartialCooling_Cycle::opt_eta_fixed_P_high(double P_high_opt /*kPa*/)
+{
+	// Complete 'ms_opt_des_par'
+	ms_opt_des_par.m_P_mc_out_guess = P_high_opt;	//[kPa]
+	ms_opt_des_par.m_fixed_P_mc_out = true;
+
+	ms_opt_des_par.m_fixed_PR_total = false;
+	ms_opt_des_par.m_PR_total_guess = 25. / 6.5;	//[-] Guess could be improved...
+
+	ms_opt_des_par.m_fixed_f_PR_mc = false;
+	ms_opt_des_par.m_f_PR_mc_guess = (25. - 8.5) / (25. - 6.5);		//[-] Guess could be improved...
+
+	ms_opt_des_par.m_recomp_frac_guess = 0.25;	//[-]
+	ms_opt_des_par.m_fixed_recomp_frac = false;
+
+	ms_opt_des_par.m_LTR_frac_guess = 0.5;		//[-]
+	ms_opt_des_par.m_fixed_LTR_frac = false;
+
+	int pc_error_code = opt_design_core();
+
+	double local_objective_metric = 0.0;
+	if (pc_error_code == 0)
+		local_objective_metric = m_objective_metric_opt;
+
+	if (pc_error_code == 0 && m_objective_metric_opt > m_objective_metric_auto_opt)
+	{
+		ms_des_par_auto_opt = ms_des_par_optimal;
+		m_objective_metric_auto_opt = m_objective_metric_opt;
+	}
+
+	return -local_objective_metric;
+}
+
 int C_PartialCooling_Cycle::finalize_design()
 {
 	int mc_des_err = mc_mc.design_given_outlet_state(m_temp_last[MC_IN],
@@ -772,6 +804,90 @@ int C_PartialCooling_Cycle::opt_design(S_opt_des_params & opt_des_par_in)
 	return finalize_design();
 }
 
+int C_PartialCooling_Cycle::auto_opt_design(S_auto_opt_design_parameters & auto_opt_des_par_in)
+{
+	ms_auto_opt_des_par = auto_opt_des_par_in;
+
+	return auto_opt_design_core();
+}
+
+int C_PartialCooling_Cycle::auto_opt_design_core()
+{
+	// map 'auto_opt_des_par_in' to 'ms_auto_opt_des_par'
+	ms_opt_des_par.m_W_dot_net = ms_auto_opt_des_par.m_W_dot_net;	//[kWe]
+	ms_opt_des_par.m_T_mc_in = ms_auto_opt_des_par.m_T_mc_in;		//[K]
+	ms_opt_des_par.m_T_pc_in = ms_auto_opt_des_par.m_T_pc_in;		//[K]
+	ms_opt_des_par.m_T_t_in = ms_auto_opt_des_par.m_T_t_in;			//[K]
+	ms_opt_des_par.m_DP_LTR = ms_auto_opt_des_par.m_DP_LTR;			        //(cold, hot) positive values are absolute [kPa], negative values are relative (-)
+	ms_opt_des_par.m_DP_HTR = ms_auto_opt_des_par.m_DP_HTR;				    //(cold, hot) positive values are absolute [kPa], negative values are relative (-)
+	ms_opt_des_par.m_DP_PC_full = ms_auto_opt_des_par.m_DP_PC_full;		    //(cold, hot) positive values are absolute [kPa], negative values are relative (-)
+	ms_opt_des_par.m_DP_PC_partial = ms_auto_opt_des_par.m_DP_PC_partial;   //(cold, hot) positive values are absolute [kPa], negative values are relative (-)
+	ms_opt_des_par.m_DP_PHX = ms_auto_opt_des_par.m_DP_PHX;				    //(cold, hot) positive values are absolute [kPa], negative values are relative (-)
+	ms_opt_des_par.m_UA_rec_total = ms_auto_opt_des_par.m_UA_rec_total;		//[kW/K]
+	ms_opt_des_par.m_LTR_eff_max = ms_auto_opt_des_par.m_LTR_eff_max;		//[-]
+	ms_opt_des_par.m_HTR_eff_max = ms_auto_opt_des_par.m_HTR_eff_max;		//[-]
+	ms_opt_des_par.m_eta_mc = ms_auto_opt_des_par.m_eta_mc;					//[-]
+	ms_opt_des_par.m_eta_rc = ms_auto_opt_des_par.m_eta_rc;					//[-]
+	ms_opt_des_par.m_eta_pc = ms_auto_opt_des_par.m_eta_pc;					//[-]
+	ms_opt_des_par.m_eta_t = ms_auto_opt_des_par.m_eta_t;					//[-]
+	ms_opt_des_par.m_N_sub_hxrs = ms_auto_opt_des_par.m_N_sub_hxrs;			//[-]
+	ms_opt_des_par.m_P_high_limit = ms_auto_opt_des_par.m_P_high_limit;		//[kPa]
+	ms_opt_des_par.m_tol = ms_auto_opt_des_par.m_tol;						//[-]
+	ms_opt_des_par.m_opt_tol = ms_auto_opt_des_par.m_opt_tol;				//[-]
+	ms_opt_des_par.m_N_turbine = ms_auto_opt_des_par.m_N_turbine;			//[rpm] Turbine shaft speed (negative values link turbine to compressor)
+
+	ms_opt_des_par.m_des_objective_type = ms_auto_opt_des_par.m_des_objective_type;	//[-]
+	ms_opt_des_par.m_min_phx_deltaT = ms_auto_opt_des_par.m_min_phx_deltaT;			//[C]
+
+	// Outer optimization loop
+	m_objective_metric_auto_opt = 0.0;
+
+	double P_low_limit = std::min(ms_auto_opt_des_par.m_P_high_limit, std::max(10.E3, ms_auto_opt_des_par.m_P_high_limit*0.2));		//[kPa]
+	double best_P_high = fminbr(
+		P_low_limit, ms_auto_opt_des_par.m_P_high_limit, &fmin_cb_opt_partialcooling_des_fixed_P_high, this, 1.0);
+
+	// fminb_cb_opt_partialcooling_des_fixed_P_high should calculate:
+		// ms_des_par_optimal;
+		// m_eta_thermal_opt;
+
+		// Complete 'ms_opt_des_par'
+	ms_opt_des_par.m_P_mc_out_guess = ms_auto_opt_des_par.m_P_high_limit;	//[kPa]
+	ms_opt_des_par.m_fixed_P_mc_out = true;
+
+	ms_opt_des_par.m_fixed_PR_total = false;
+	ms_opt_des_par.m_PR_total_guess = 25. / 6.5;	//[-] Guess could be improved...
+
+	ms_opt_des_par.m_fixed_f_PR_mc = false;
+	ms_opt_des_par.m_f_PR_mc_guess = (25. - 8.5) / (25. - 6.5);		//[-] Guess could be improved...
+
+	ms_opt_des_par.m_recomp_frac_guess = 0.25;	//[-]
+	ms_opt_des_par.m_fixed_recomp_frac = false;
+
+	ms_opt_des_par.m_LTR_frac_guess = 0.5;		//[-]
+	ms_opt_des_par.m_fixed_LTR_frac = false;
+
+	int pc_error_code = opt_design_core();
+
+	if (pc_error_code == 0 && m_objective_metric_opt > m_objective_metric_auto_opt)
+	{
+		ms_des_par_auto_opt = ms_des_par_optimal;
+		m_objective_metric_auto_opt = m_objective_metric_opt;
+	}
+
+	ms_des_par = ms_des_par_auto_opt;
+
+	int pc_opt_des_error_code = design_core();
+
+	if (pc_opt_des_error_code != 0)
+	{
+		return pc_opt_des_error_code;
+	}
+
+	pc_opt_des_error_code = finalize_design();
+
+	return pc_opt_des_error_code;
+}
+
 double nlopt_cb_opt_partialcooling_des(const std::vector<double> &x, std::vector<double> &grad, void *data)
 {
 	C_PartialCooling_Cycle *frame = static_cast<C_PartialCooling_Cycle*>(data);
@@ -779,4 +895,11 @@ double nlopt_cb_opt_partialcooling_des(const std::vector<double> &x, std::vector
 		return frame->design_cycle_return_objective_metric(x);
 	else
 		return 0.0;
+}
+
+double fmin_cb_opt_partialcooling_des_fixed_P_high(double P_high /*kPa*/, void *data)
+{
+	C_PartialCooling_Cycle *frame = static_cast<C_PartialCooling_Cycle*>(data);
+
+	return frame->opt_eta_fixed_P_high(P_high);
 }

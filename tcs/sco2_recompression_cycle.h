@@ -1030,7 +1030,7 @@ public:
 	double design_cycle_return_objective_metric(const std::vector<double> &x);
 
 	// Called by 'fmin_callback_opt_eta', so needs to be public
-	double opt_eta_fixed_P_high(double P_high_opt);
+	double opt_eta_fixed_P_high(double P_high_opt /*kPa*/);
 
 	// Called by 'nlopt_cb_opt_od', so needs to be public
 	//double off_design_point_value(const std::vector<double> &x);

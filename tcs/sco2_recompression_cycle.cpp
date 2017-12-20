@@ -3038,7 +3038,7 @@ int C_RecompCycle::C_MEQ_sco2_design_hit_eta__UA_total::operator()(double UA_rec
 }
 
 
-double C_RecompCycle::opt_eta_fixed_P_high(double P_high_opt)
+double C_RecompCycle::opt_eta_fixed_P_high(double P_high_opt /*kPa*/)
 {
 	double PR_mc_guess = 1.1;
 	if(P_high_opt > P_pseudocritical_1(ms_opt_des_par.m_T_mc_in))
