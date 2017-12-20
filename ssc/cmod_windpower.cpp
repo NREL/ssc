@@ -421,6 +421,13 @@ void cm_windpower::exec() throw(general_error)
 					throw exec_error("windpower", util::format("the closest wind speed measurement height (%lg m) and direction measurement height (%lg m) were more than 10m apart", wt.measurementHeight, closest_dir_meas_ht));
 			}
 
+			// If the wind speed measurement height differs from the turbine hub height, use the shear to correct it. 
+			if (fabs(wt.measurementHeight - wt.hubHeight) > 1) {
+				if (wt.shearExponent > 1.0) wt.shearExponent = 1.0 / 7.0;
+				wind = wind * pow(wt.hubHeight / wt.measurementHeight, wt.shearExponent);
+				wt.measurementHeight = wt.hubHeight;
+			}
+
 			double farmp = 0;
 
 			if ((int)wpc.nTurbines != wpc.windPowerUsingResource(

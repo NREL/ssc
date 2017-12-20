@@ -80,10 +80,6 @@ public:
 
 	cm_windpower();
 
-	void initialize_var();
-
-	void print_farmoutput();
-
 	void exec() throw(general_error);
 };
 

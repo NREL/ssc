@@ -94,7 +94,7 @@ static int locate2(std::string buf, std::vector<std::string> &vstring, char deli
 	while (getline(ss, token, delim)) {
 	  vstring.push_back(token);
 	}
-	return vstring.size();
+	return (int)vstring.size();
 }
 
 #define MBUFLEN 4096

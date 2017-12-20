@@ -96,7 +96,7 @@ public:
 		}
 		return false;
 	}
-	void turbinePower(double windVelocityAtDataHeight, double airDensity, double *turbineOutput, double *thrustCoefficient);
+	void turbinePower(double windVelocity, double airDensity, double *turbineOutput, double *thrustCoefficient);
 	double calculateEff(double reducedPower, double originalPower) {
 		double Eff = 0.0;
 		if (originalPower < 0.0)
