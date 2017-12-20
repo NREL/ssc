@@ -288,20 +288,20 @@ void cm_windpower::exec() throw(general_error)
 
 	// create winddata_provider
 	size_t nstep = 8760;
-	std::auto_ptr<winddata_provider> wdprov;
+	smart_ptr<winddata_provider>::ptr wdprov;
 	if (is_assigned("wind_resource_filename"))
 	{
 		// read the wind data file
 		const char *file = as_string("wind_resource_filename");
 		windfile *wp = new windfile(file);
 		nstep = wp->nrecords();
-		wdprov = std::auto_ptr<winddata_provider>(wp);
+		wdprov = smart_ptr<winddata_provider>::ptr(wp);
 		if (!wp->ok())
 			throw exec_error("windpower", "failed to read local weather file: " + std::string(file) + " " + wp->error());
 	}
 	else if (is_assigned("wind_resource_data"))
 	{
-		wdprov = std::auto_ptr<winddata_provider>(new winddata(lookup("wind_resource_data")));
+	  	wdprov = smart_ptr<winddata_provider>::ptr(new winddata(lookup("wind_resource_data")));
 		nstep = wdprov->nrecords();
 	}
 	else
