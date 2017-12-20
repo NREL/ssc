@@ -105,6 +105,7 @@ winddata_provider::winddata_provider()
 	year = 1900;
 	lat = lon = elev = 0;
 	measurementHeight = 0;
+	m_errorMsg.clear();
 }
 winddata_provider::~winddata_provider()
 {

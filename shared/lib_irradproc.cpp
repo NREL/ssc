@@ -2025,7 +2025,7 @@ double ModifiedDISC(const double g[3], const double z[3], double td, double alt,
 
 
 
-void ModifiedDISC(const double kt[3], const double kt1[3], const double g[3], const double z[3], double td, double alt, int doy, double &dn) // aka DIRINT model
+void ModifiedDISC(const double kt[3], const double kt1[3], const double g[3], const double z[3], double td, double /*alt*/ , int doy, double &dn) // aka DIRINT model
 {
     // Calculates direct normal (beam) radiation from global horizontal radiation.
     // Arguments passed to function:

@@ -139,11 +139,19 @@ winddata::winddata(var_data *data_table)
 	for (size_t i = 0; i < len; i++)
 		m_dataid.push_back((int)p[i]);
 
-	if (m_dataid.size() != m_heights.size() || m_heights.size() == 0) return;
+	if (m_dataid.size() != m_heights.size() || m_heights.size() == 0){
+		m_errorMsg = util::format("'fields' and 'heights' must have same length");
+		return;
+	}
 
 	if (var_data *D = data_table->table.lookup("data"))
 		if (D->type == SSC_MATRIX)
 			data = D->num;
+
+	if (data.ncols() != m_heights.size()){
+		m_errorMsg = util::format("number of columns in 'data' must be same as length of 'fields' and 'heights'");
+		return;
+	}
 
 	float* rh = get_vector(data_table, "rh", &len);
 	if (rh != 0 && len == data.nrows() )
@@ -316,6 +324,9 @@ void cm_windpower::exec() throw(general_error)
 	else if (is_assigned("wind_resource_data"))
 	{
 		wdprov = std::auto_ptr<winddata_provider>(new winddata(lookup("wind_resource_data")));
+		if (wdprov->error().size() > 0){
+			log(wdprov->error(), SSC_ERROR);
+		}
 		nstep = wdprov->nrecords();
 		if (icingCutoff)
 			if (wdprov->relativeHumidity().size() != nstep)

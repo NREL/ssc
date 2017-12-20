@@ -57,6 +57,11 @@
 #include "common.h"
 #include "lib_util.h"
 
+/**
+ * Winddata uses var_data instead of a file. Format: For each measurement height, four fields should be provided
+ * (pres, temp, spd, dir). Data matrix has a time-step per row, and one field per column, four field columns per height.
+ */
+
 class winddata : public winddata_provider
 {
 	size_t irecord;

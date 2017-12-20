@@ -97,7 +97,9 @@ public:
 	std::string error() { return m_errorMsg; }
 
 protected:
-	std::vector<int> m_dataid;	// stores column headers (temp=1,pres=2,speed=3,dir=4) for each measurement height
+	/// index of resource type (temp=1,pres=2,speed=3,dir=4) for each measurement height
+	std::vector<int> m_dataid;	
+	/// measurement height corresponding to each column header; same size as m_dataid
 	std::vector<double> m_heights;
 	std::vector<float> m_relativeHumidity;
 	std::string m_errorMsg;
