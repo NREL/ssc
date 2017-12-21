@@ -2539,7 +2539,6 @@ double C_sco2_recomp_csp::opt_P_mc_in_nest_f_recomp_max_eta(double P_mc_in /*kPa
 		throw(C_csp_exception("Off design turbomachinery operation strategy not recognized"));
 	}
 
-	double f_recomp_opt = mc_rc_cycle.get_od_solved()->m_recomp_frac;	//[-]
 	double eta_solved = mc_rc_cycle.get_od_solved()->m_eta_thermal;		//[-]
 
 	if( eta_max_f_recomp_opt != eta_max_f_recomp_opt )
