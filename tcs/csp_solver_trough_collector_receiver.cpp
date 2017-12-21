@@ -3571,7 +3571,6 @@ set_outputs_and_return:
 		CosTh_ave_out = m_CosTh_ave;
 
 	double dni_costh = I_b*m_CosTh_ave;
-	double qinc_costh = dni_costh * m_Ap_tot / 1.e6;
 	double T_loop_outlet = m_TCS_T_htf_out[m_nSCA - 1] - 273.15;
 
 	double E_loop_accum_out = E_loop_accum * 3.6e-9;
