@@ -2617,7 +2617,6 @@ void C_csp_trough_collector_receiver::call(const C_csp_weatherreader::S_outputs 
 	//******************************************************************************************************************************
 	double I_b = weather.m_beam;			//[W/m^2] DNI 	
 	double T_db = weather.m_tdry;			//[C] Dry bulb air temperature 
-	double V_wind = weather.m_wspd;			//[m/s] Ambient windspeed 
 	double P_amb = weather.m_pres;			//[mbar] Ambient pressure 
 	double T_dp = weather.m_tdew;			//[C] The dewpoint temperature 
 	double T_cold_in = htf_state_in.m_temp;	//[C] HTF return temperature 
