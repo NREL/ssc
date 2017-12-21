@@ -3544,7 +3544,6 @@ set_outputs_and_return:
 	double W_dot_pump_out = W_dot_pump / 1000.;			//[MW] from kW
 	double E_fp_tot_out = E_fp_tot*1.e-6;				//[MW] from W
 	double T_sys_c_out = m_TCS_T_sys_c - 273.15;			//[C] from K
-	double EqOpteff_out = m_EqOpteff*m_CosTh_ave;
 	double m_dot_htf_tot_out = m_m_dot_htf_tot *3600.;	//[kg/hr] from kg/s
 	double E_bal_startup_out = E_bal_startup / (dt*1.e6);	//[MW] from J
 	double q_abs_tot = 0.;
