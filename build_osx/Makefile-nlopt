@@ -1,8 +1,10 @@
 VPATH = ../nlopt ../nlopt/direct ../nlopt/cdirect ../nlopt/praxis ../nlopt/luksan ../nlopt/crs
 CC = gcc -mmacosx-version-min=10.9
 CXX = g++ -mmacosx-version-min=10.9
+WARNINGS = -Wno-deprecated-declarations
 CFLAGS = -Wall -g -O3 -I../  -I../nlopt/api -I../nlopt/util -I../nlopt  -DWX_PRECOMP -O2 -arch x86_64  -fno-common
 CXXFLAGS = $(CFLAGS) -std=gnu++11
+CONFIG_H=../nlopt/config.h
 
 OBJECTS = \
 	auglag.o \
@@ -45,8 +47,14 @@ OBJECTS = \
 
 TARGET=nlopt.a
 
-$(TARGET):$(OBJECTS)
+$(TARGET): $(OBJECTS)
 	ar rs $(TARGET) $(OBJECTS)
 
+$(OBJECTS): $(CONFIG_H)
+
+$(CONFIG_H):
+	../nlopt/configure -q
+	mv config.h ../nlopt
+
 clean:
-	rm -rf $(TARGET) $(OBJECTS)
+	rm -rf $(TARGET) $(OBJECTS) $(CONFIG_H)

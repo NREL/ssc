@@ -235,8 +235,9 @@ C_csp_trough_collector_receiver::C_csp_trough_collector_receiver()
 	for (int i = 0; i < 5; i++)
 		m_T_save[i] = std::numeric_limits<double>::quiet_NaN();
 
-	for (int i = 0; i < 3; i++)
-		m_reguess_args[i] = std::numeric_limits<double>::quiet_NaN();
+	mv_reguess_args.resize(3);
+	std::fill(mv_reguess_args.begin(), mv_reguess_args.end(), std::numeric_limits<double>::quiet_NaN());
+
 
 	m_AnnulusGasMat.fill(NULL);
 	m_AbsorberPropMat.fill(NULL);
@@ -3835,15 +3836,13 @@ void C_csp_trough_collector_receiver::EvacReceiver(double T_1_in, double m_dot, 
 	bool glazingIntact = m_GlazingIntact(hn, hv); //.at(hn, hv);
 
 	//---Re-guess criteria:---
-	if (m_reguess_args == NULL) goto lab_reguess;
-
 	if (time <= 2) goto lab_reguess;
 	
-	if (((int)m_reguess_args[0] == 1) != m_GlazingIntact(hn, hv)) goto lab_reguess;	//glazingintact state has changed
+	if (((int)mv_reguess_args[0] == 1) != m_GlazingIntact(hn, hv)) goto lab_reguess;	//glazingintact state has changed
 
-	if (m_P_a(hn, hv) != m_reguess_args[1]) goto lab_reguess;                   //Reguess for different annulus pressure
+	if (m_P_a(hn, hv) != mv_reguess_args[1]) goto lab_reguess;                   //Reguess for different annulus pressure
 
-	if (fabs(m_reguess_args[2] - T_1_in) > 50.) goto lab_reguess;
+	if (fabs(mv_reguess_args[2] - T_1_in) > 50.) goto lab_reguess;
 
 	for (int i = 0; i<5; i++){ if (m_T_save[i] < m_T_sky - 1.) goto lab_reguess; }
 
@@ -3874,11 +3873,11 @@ lab_keep_guess:
 				T_upper_max = m_T_save[2] - 0.5*(m_T_save[2] - T_amb);     //Also, low upper limit for T4
 			}
 			m_T_save[4] = m_T_save[3] - 2.;
-			if (m_reguess_args != NULL){
-				m_reguess_args[1] = m_P_a(hn, hv);               //Reset previous pressure
-				m_reguess_args[0] = m_GlazingIntact(hn, hv) ? 1. : 0.;   //Reset previous glazing logic
-				m_reguess_args[2] = T_1_in;            //Reset previous T_1_in
-			}
+
+			mv_reguess_args[1] = m_P_a(hn, hv);               //Reset previous pressure
+			mv_reguess_args[0] = m_GlazingIntact(hn, hv) ? 1. : 0.;   //Reset previous glazing logic
+			mv_reguess_args[2] = T_1_in;            //Reset previous T_1_in
+
 		}
 		else{
 			m_T_save[0] = T_1_in;
@@ -3886,10 +3885,10 @@ lab_keep_guess:
 			m_T_save[2] = m_T_save[1] + 5.;
 			m_T_save[3] = T_amb;
 			m_T_save[4] = T_amb;
-			if (m_reguess_args != NULL){
-				m_reguess_args[0] = m_GlazingIntact(hn, hv) ? 1. : 0.;   //Reset previous glazing logic
-				m_reguess_args[1] = T_1_in;            //Reset previous T_1_in
-			}
+
+			mv_reguess_args[0] = m_GlazingIntact(hn, hv) ? 1. : 0.;   //Reset previous glazing logic
+			mv_reguess_args[1] = T_1_in;            //Reset previous T_1_in
+
 		}
 	}
 

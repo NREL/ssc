@@ -639,7 +639,7 @@ private:
 	double ncall_track;
 
 	double T_save[5];
-	double reguess_args[3];
+	std::vector<double> reguess_args;
 	
 	double hour, T_sky;
 
@@ -871,8 +871,8 @@ public:
 		for( int i = 0; i < 5; i++ )
 			T_save[i] = std::numeric_limits<double>::quiet_NaN();
 
-		for( int i = 0; i < 3; i++ )
-			reguess_args[i] = std::numeric_limits<double>::quiet_NaN();
+		reguess_args.resize(3);
+		std::fill(reguess_args.begin(), reguess_args.end(), std::numeric_limits<double>::quiet_NaN());
 
 		m_htf_prop_min = std::numeric_limits<double>::quiet_NaN();
 
@@ -3048,8 +3048,6 @@ set_outputs_and_return:
 		bool glazingIntact = GlazingIntact(hn,hv); //.at(hn, hv);
 
 		//---Re-guess criteria:---
-		if(reguess_args == NULL) goto lab_reguess;
-
 		if(time<=2) goto lab_reguess;
 		
 		if(((int)reguess_args[0] == 1) != GlazingIntact(hn,hv)) goto lab_reguess;	//glazingintact state has changed
@@ -3087,11 +3085,11 @@ lab_keep_guess:
 					T_upper_max = T_save[2] - 0.5*(T_save[2]-T_amb);     //Also, low upper limit for T4
 				}                      
 				T_save[4] = T_save[3] - 2.;
-				if(reguess_args != NULL){
-					reguess_args[1]  = P_a(hn,hv);               //Reset previous pressure
-					reguess_args[0] = GlazingIntact(hn,hv) ? 1. : 0.;   //Reset previous glazing logic
-					reguess_args[2] = T_1_in;            //Reset previous T_1_in
-				}
+
+				reguess_args[1]  = P_a(hn,hv);               //Reset previous pressure
+				reguess_args[0] = GlazingIntact(hn,hv) ? 1. : 0.;   //Reset previous glazing logic
+				reguess_args[2] = T_1_in;            //Reset previous T_1_in
+
 			}
 			else{
 				T_save[0] = T_1_in;
@@ -3099,10 +3097,10 @@ lab_keep_guess:
 				T_save[2] = T_save[1] + 5.;
 				T_save[3] = T_amb;
 				T_save[4] = T_amb;
-				if(reguess_args != NULL){
-					reguess_args[0] = GlazingIntact(hn,hv) ? 1. : 0.;   //Reset previous glazing logic
-					reguess_args[1] = T_1_in;            //Reset previous T_1_in
-				}
+
+				reguess_args[0] = GlazingIntact(hn,hv) ? 1. : 0.;   //Reset previous glazing logic
+				reguess_args[1] = T_1_in;            //Reset previous T_1_in
+
 			}
 		}
 

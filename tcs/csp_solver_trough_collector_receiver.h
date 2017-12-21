@@ -307,7 +307,7 @@ private:
 
 	// Member variables that are used to store information for the EvacReceiver method
 	double m_T_save[5];			//[K] Saved temperatures from previous call to EvacReceiver single SCA energy balance model
-	double m_reguess_args[3];	//[-] Logic to determine whether to use previous guess values or start iteration fresh
+	std::vector<double> mv_reguess_args;	//[-] Logic to determine whether to use previous guess values or start iteration fresh
 	
 	// member string for exception messages
 	std::string m_error_msg;
