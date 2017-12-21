@@ -175,8 +175,6 @@ void C_sco2_recomp_csp::design_core()
 
 		//C_PartialCooling_Cycle pc;
 		//int pc_des_code = pc.design(pc_des_params);
-
-		double blah = 1.23;
 	}
 
 
