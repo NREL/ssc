@@ -516,7 +516,7 @@ bool C_csp_trough_collector_receiver::init_fieldgeom()
 
 		//Need to loop through to calculate the weighted average optical efficiency at design
 		//Start by initializing sensitive variables
-		double x1 = 0.0, x2 = 0.0, loss_tot = 0.0;
+		double loss_tot = 0.0;
 		m_opteff_des = 0.0;
 		m_m_dot_design = 0.0;
 
