@@ -1293,7 +1293,6 @@ int C_csp_trough_collector_receiver::loop_energy_balance_T_t_int(const C_csp_wea
 			E_xover_abs[i] = -q_dot_loss_xover[i]*sim_info.ms_ts.m_step/1.E6;		//[MJ]
 			E_xover_htf[i] = m_dot_htf_loop*c_htf_i*(m_T_htf_in_t_int[i+1] - m_T_htf_out_t_int[i])*sim_info.ms_ts.m_step/1.E6;	//[MJ]
 			E_xover_bal[i] = E_xover_abs[i] - E_xover_htf[i] - E_xover[i];			//[MJ]
-			double blahadfa = 1.23;
 		}
 	}
 
