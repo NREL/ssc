@@ -600,7 +600,7 @@ public:
 	 1. Discharging during times of high PPA sell rates
 	 2. Charging from the grid during times of low electricity buy-rates (if grid charging allowed)
 	 3. Charging from the PV array during times of low PPA sell rates
-	 4. Charging from the PV array during times where the PV power would be clipped due to inverter limits
+	 4. Charging from the PV array during times where the PV power would be clipped due to inverter limits (if DC-connected)
 	*/
 	dispatch_automatic_front_of_meter_t(
 		battery_t * Battery,
@@ -626,7 +626,10 @@ public:
 		std::vector<double> ppa_factors,
 		util::matrix_t<size_t> ppa_weekday_schedule,
 		util::matrix_t<size_t> ppa_weekend_schedule,
-		UtilityRate * utilityRate
+		UtilityRate * utilityRate,
+		double etaPVCharge,
+		double etaGridCharge,
+		double etaDischarge
 		);
 
 	virtual ~dispatch_automatic_front_of_meter_t();
@@ -666,8 +669,15 @@ protected:
 	std::vector<double> _ppa_factors;
 	std::vector<double> _ppa_cost_vector;
 	UtilityRateCalculator * _utilityRateCalculator;
+
+
 	double m_battCostPerKWH;
 	double m_cycleCost;
+
+	/*! Efficiencies of the charge and discharge of the battery*/
+	double m_etaPVCharge;
+	double m_etaGridCharge;
+	double m_etaDischarge;
 };
 
 /*! Battery metrics class */

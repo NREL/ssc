@@ -1367,15 +1367,23 @@ dispatch_automatic_front_of_meter_t::dispatch_automatic_front_of_meter_t(
 	std::vector<double> ppa_factors,
 	util::matrix_t<size_t> ppa_weekday_schedule,
 	util::matrix_t<size_t> ppa_weekend_schedule,
-	UtilityRate * utilityRate) : dispatch_automatic_t(Battery, dt_hour, SOC_min, SOC_max, current_choice, Ic_max, Id_max, Pc_max, Pd_max, t_min, dispatch_mode, pv_dispatch, nyears, look_ahead_hours, dispatch_update_frequency_hours, can_charge, can_clip_charge, can_grid_charge)
+	UtilityRate * utilityRate,
+	double etaPVCharge,
+	double etaGridCharge,
+	double etaDischarge) : dispatch_automatic_t(Battery, dt_hour, SOC_min, SOC_max, current_choice, Ic_max, Id_max, Pc_max, Pd_max, t_min, dispatch_mode, pv_dispatch, nyears, look_ahead_hours, dispatch_update_frequency_hours, can_charge, can_clip_charge, can_grid_charge)
 {
 	_look_ahead_hours = look_ahead_hours;
 	_inverter_paco = inverter_paco;
 	_ppa_factors = ppa_factors;
-	setup_cost_vector(ppa_weekday_schedule , ppa_weekend_schedule);
+	_utilityRateCalculator = new UtilityRateCalculator(utilityRate, _steps_per_hour);
+
 	m_cycleCost = costToCycle(batt_cost_per_kwh);
 	m_battCostPerKWH = batt_cost_per_kwh;
-	_utilityRateCalculator = new UtilityRateCalculator(utilityRate, _steps_per_hour);
+	m_etaPVCharge = etaPVCharge * 0.01;
+	m_etaGridCharge = etaGridCharge * 0.01;
+	m_etaDischarge = etaDischarge * 0.01;
+
+	setup_cost_vector(ppa_weekday_schedule, ppa_weekend_schedule);
 }
 dispatch_automatic_front_of_meter_t::~dispatch_automatic_front_of_meter_t()
 {
@@ -1387,6 +1395,12 @@ void dispatch_automatic_front_of_meter_t::init_with_pointer(const dispatch_autom
 	_inverter_paco = tmp->_inverter_paco;
 	_ppa_factors = tmp->_ppa_factors;
 	_ppa_cost_vector = tmp->_ppa_cost_vector;
+
+	m_cycleCost = tmp->m_cycleCost;
+	m_battCostPerKWH = tmp->m_battCostPerKWH;
+	m_etaPVCharge = tmp->m_etaPVCharge;
+	m_etaGridCharge = tmp->m_etaGridCharge;
+	m_etaDischarge = tmp->m_etaDischarge;
 }
 
 void dispatch_automatic_front_of_meter_t::setup_cost_vector(util::matrix_t<size_t> ppa_weekday_schedule, util::matrix_t<size_t> ppa_weekend_schedule)
@@ -1453,10 +1467,6 @@ void dispatch_automatic_front_of_meter_t::dispatch(size_t year,
 void dispatch_automatic_front_of_meter_t::update_dispatch(size_t hour_of_year, size_t , size_t idx)
 {
 	
-	// bring in at some point from battery model
-	double etaBattery = 0.90;
-	double etaInverter = 0.96;
-
 	// Power to charge (<0) or discharge (>0)
 	double powerBattery = 0;
 
@@ -1478,19 +1488,13 @@ void dispatch_automatic_front_of_meter_t::update_dispatch(size_t hour_of_year, s
 		double energyToStoreClipped = std::accumulate(_P_cliploss_dc.begin() + idx, _P_cliploss_dc.begin() + idx + _look_ahead_hours, 0.0f) * _dt_hour;
 
 		/*! Economic benefit of charging from the grid in current time step to discharge sometime in next X hours ($/kWh)*/
-		double benefitToGridCharge = *max_ppa_cost - usage_cost;
+		double benefitToGridCharge = *max_ppa_cost * m_etaDischarge - usage_cost / m_etaGridCharge;
 		
 		/*! Economic benefit of charging from regular PV in current time step to discharge sometime in next X hours ($/kWh)*/
-		double benefitToPVCharge = *max_ppa_cost - ppa_cost;
+		double benefitToPVCharge = *max_ppa_cost * m_etaDischarge - ppa_cost / m_etaPVCharge;
 
 		/*! Economic benefit of charging from clipped PV in current time step to discharge sometime in the next X hours (clipped PV is free) ($/kWh) */
-		double benefitToClipCharge = *max_ppa_cost;
-
-		/*! Economic benefit of discharging right now ($/kWh) */
-		double benefitToDischarge = ppa_cost;
-
-		/*! Amount of energy needed to store regular PV (kWh) */
-		double energyToStorePV = _P_pv_charging * _dt_hour;
+		double benefitToClipCharge = *max_ppa_cost * m_etaDischarge;
 
 		/*! Energy need to charge the battery (kWh) */
 		double energyNeededToFillBattery = _Battery->battery_energy_to_fill(_SOC_max);

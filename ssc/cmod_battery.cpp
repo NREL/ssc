@@ -755,6 +755,7 @@ battstor::battstor(compute_module &cm, bool setup_model, int replacement_option,
 	/*! Front of meter automated DC-connected dispatch */
 	else if (batt_vars->batt_meter_position == dispatch_t::FRONT) 
 	{
+		double efficiencyCombined = batt_vars->batt_dc_dc_bms_efficiency * 0.01 * batt_vars->inverter_efficiency;
 		utilityRate = new UtilityRate(batt_vars->ec_weekday_schedule, batt_vars->ec_weekend_schedule, batt_vars->ec_tou_matrix);
 		dispatch_model = new dispatch_automatic_front_of_meter_t(battery_model, dt_hr, batt_vars->batt_minimum_SOC, batt_vars->batt_maximum_SOC,
 			batt_vars->batt_current_choice, batt_vars->batt_current_charge_max, batt_vars->batt_current_discharge_max,
@@ -763,7 +764,8 @@ battstor::battstor(compute_module &cm, bool setup_model, int replacement_option,
 			nyears, batt_vars->batt_look_ahead_hours, batt_vars->batt_dispatch_update_frequency_hours,
 			batt_vars->batt_dispatch_auto_can_charge, batt_vars->batt_dispatch_auto_can_clipcharge, batt_vars->batt_dispatch_auto_can_gridcharge,
 			batt_vars->inverter_paco, batt_vars->batt_cost_per_kwh,
-			batt_vars->ppa_factors, batt_vars->ppa_weekday_schedule, batt_vars->ppa_weekend_schedule, utilityRate);
+			batt_vars->ppa_factors, batt_vars->ppa_weekday_schedule, batt_vars->ppa_weekend_schedule, utilityRate,
+			batt_vars->batt_dc_dc_bms_efficiency, efficiencyCombined , efficiencyCombined);
 		
 	}
 	/*! Behind-the-meter automated dispatch for peak shaving */
