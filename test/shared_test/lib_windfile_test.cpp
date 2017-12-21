@@ -6,7 +6,7 @@
 #include "core.h"
 #include <lib_windfile.h>
 #include "cmod_windpower.h"
-#include "input_cases/weather_inputs.h"
+#include "../input_cases/weather_inputs.h"
 
 /**
  * Tests windfile's interpolation of measurement height's pres, tmp, speed, & dir data points to required hub height.
