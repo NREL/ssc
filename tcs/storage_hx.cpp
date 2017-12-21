@@ -399,7 +399,6 @@ bool Storage_HX::mixed_tank( bool is_hot_tank, double dt, double m_prev, double 
 	double m_ave	= (m_prev + m_fin)/2.0;	//[kg] Average mass 
 	vol_fin	= m_fin/rho;					//[m3] Available volume at the end of the timestep
 	vol_ave	= m_ave/rho;					//[m3] Average volume
-	double h_ave	= vol_ave/m_a_cs;		//[m] Average HTF height
 
 	// Check for no flow
 	double B = m_dot_in + m_ua/cp;					//[kg/s] + [W/K]*[kg-K/J]
