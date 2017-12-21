@@ -1343,8 +1343,6 @@ int C_csp_trough_collector_receiver::loop_energy_balance_T_t_int(const C_csp_wea
 		E_HR_hot = (m_v_hot*rho_hdr_hot*m_c_hdr_hot + m_mc_bal_hot)*(m_T_sys_h_t_end - m_T_sys_h_t_end_last)*1.E-6;		//[MJ]
 
 		E_HR_hot_bal = -E_HR_hot_losses - E_HR_hot_htf - E_HR_hot;		//[MJ]
-
-		double fadfafa = 1.23;
 	}
 	else
 	{
