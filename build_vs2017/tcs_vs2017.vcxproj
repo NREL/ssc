@@ -126,6 +126,7 @@
     <ClInclude Include="..\tcs\heat_exchangers.h" />
     <ClInclude Include="..\tcs\numeric_solvers.h" />
     <ClInclude Include="..\tcs\sco2_cycle_components.h" />
+    <ClInclude Include="..\tcs\sco2_cycle_templates.h" />
     <ClInclude Include="..\tcs\sco2_partialcooling_cycle.h" />
     <ClInclude Include="..\tcs\sco2_pc_csp_int.h" />
     <ClInclude Include="..\tcs\sco2_recompression_cycle.h" />

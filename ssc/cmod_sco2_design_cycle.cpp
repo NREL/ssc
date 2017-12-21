@@ -162,7 +162,7 @@ public:
 			throw exec_error("sco2 design cycle", error_msg);
 		}
 		
-		double LT_frac = ms_rc_cycle.get_design_solved()->m_UA_LT / (ms_rc_cycle.get_design_solved()->m_UA_LT + ms_rc_cycle.get_design_solved()->m_UA_HT);
+		double LT_frac = ms_rc_cycle.get_design_solved()->m_UA_LTR / (ms_rc_cycle.get_design_solved()->m_UA_LTR + ms_rc_cycle.get_design_solved()->m_UA_HTR);
 
 		assign("O_LT_frac_des", var_data((ssc_number_t) LT_frac));		//[-]
 		assign("O_P_mc_out_des", var_data((ssc_number_t) (ms_rc_cycle.get_design_solved()->m_pres[2-1]/1000.0)));	//[MPa] convert from kPa

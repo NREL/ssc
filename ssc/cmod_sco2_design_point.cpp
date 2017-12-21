@@ -760,7 +760,7 @@ public:
 		}
 
 		double eta_thermal_calc = rc_cycle.get_design_solved()->m_eta_thermal;
-		double UA_total = rc_cycle.get_design_solved()->m_UA_HT + rc_cycle.get_design_solved()->m_UA_LT;
+		double UA_total = rc_cycle.get_design_solved()->m_UA_HTR + rc_cycle.get_design_solved()->m_UA_LTR;
 		double recomp_frac = rc_cycle.get_design_solved()->m_recomp_frac;
 		double P_comp_in = rc_cycle.get_design_solved()->m_pres[0] / 1.E3;
 		double P_comp_out = rc_cycle.get_design_solved()->m_pres[1] / 1.E3;

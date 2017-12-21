@@ -113,197 +113,213 @@ void C_sco2_recomp_csp::design_core()
 	int auto_err_code = 0;
 
 
-	if (false)
+	if (ms_des_par.m_cycle_config == 2)			// Partial Cooling Cycle
 	{
-		C_PartialCooling_Cycle::S_auto_opt_design_parameters pc_des_params;
-		pc_des_params.m_W_dot_net = ms_des_par.m_W_dot_net;		//[kWe]
-		pc_des_params.m_T_mc_in = ms_des_par.m_T_amb_des + ms_des_par.m_dt_mc_approach;	//[K]
-		if (ms_rc_cycle_des_par.m_T_mc_in < m_T_mc_in_min)
+		if (ms_des_par.m_design_method == 1)
 		{
-			std::string msg = util::format("The input design main compressor inlet temperature is %lg [C]."
-				" The sCO2 cycle design code reset it to the minimum allowable design main compressor inlet temperature: %lg [C].",
-				ms_rc_cycle_des_par.m_T_mc_in - 273.15,
-				m_T_mc_in_min - 273.15);
+			throw(C_csp_exception("sCO2 partial cooling cycle and CSP integration design, design method can only be 1 (specify UA) for now"));
 		}
-		pc_des_params.m_T_pc_in = pc_des_params.m_T_mc_in;		//[K]
-		pc_des_params.m_T_t_in = ms_des_par.m_T_htf_hot_in - ms_des_par.m_phx_dt_hot_approach;	//[K]
-		pc_des_params.m_DP_LTR = ms_des_par.m_DP_LT;	
-		pc_des_params.m_DP_HTR = ms_des_par.m_DP_HT;
-		pc_des_params.m_DP_PC_full = ms_des_par.m_DP_PC;
-		pc_des_params.m_DP_PC_partial = ms_des_par.m_DP_PC;
-		pc_des_params.m_DP_PHX = ms_des_par.m_DP_PHX;
-		pc_des_params.m_UA_rec_total = ms_des_par.m_UA_recup_tot_des;	//[kW/K]
-		pc_des_params.m_LTR_eff_max = ms_des_par.m_LT_eff_max;			//[-]
-		pc_des_params.m_HTR_eff_max = ms_des_par.m_HT_eff_max;			//[-]
-		pc_des_params.m_eta_mc = ms_des_par.m_eta_mc;
-		pc_des_params.m_eta_rc = ms_des_par.m_eta_rc;
-		pc_des_params.m_eta_pc = ms_des_par.m_eta_rc;
-		pc_des_params.m_eta_t = ms_des_par.m_eta_t;
-		pc_des_params.m_N_sub_hxrs = ms_des_par.m_N_sub_hxrs;
-		pc_des_params.m_P_high_limit = ms_des_par.m_P_high_limit;
-		pc_des_params.m_tol = ms_des_par.m_tol;
-		pc_des_params.m_N_turbine = ms_des_par.m_N_turbine;
+		else if (ms_des_par.m_design_method == 2)
+		{
+			C_PartialCooling_Cycle::S_auto_opt_design_parameters pc_des_params;
+			pc_des_params.m_W_dot_net = ms_des_par.m_W_dot_net;		//[kWe]
+			pc_des_params.m_T_mc_in = ms_des_par.m_T_amb_des + ms_des_par.m_dt_mc_approach;	//[K]
+			if (ms_rc_cycle_des_par.m_T_mc_in < m_T_mc_in_min)
+			{
+				std::string msg = util::format("The input design main compressor inlet temperature is %lg [C]."
+					" The sCO2 cycle design code reset it to the minimum allowable design main compressor inlet temperature: %lg [C].",
+					ms_rc_cycle_des_par.m_T_mc_in - 273.15,
+					m_T_mc_in_min - 273.15);
+			}
+			pc_des_params.m_T_pc_in = pc_des_params.m_T_mc_in;		//[K]
+			pc_des_params.m_T_t_in = ms_des_par.m_T_htf_hot_in - ms_des_par.m_phx_dt_hot_approach;	//[K]
+			pc_des_params.m_DP_LTR = ms_des_par.m_DP_LT;
+			pc_des_params.m_DP_HTR = ms_des_par.m_DP_HT;
+			pc_des_params.m_DP_PC_full = ms_des_par.m_DP_PC;
+			pc_des_params.m_DP_PC_partial = ms_des_par.m_DP_PC;
+			pc_des_params.m_DP_PHX = ms_des_par.m_DP_PHX;
+			pc_des_params.m_UA_rec_total = ms_des_par.m_UA_recup_tot_des;	//[kW/K]
+			pc_des_params.m_LTR_eff_max = ms_des_par.m_LT_eff_max;			//[-]
+			pc_des_params.m_HTR_eff_max = ms_des_par.m_HT_eff_max;			//[-]
+			pc_des_params.m_eta_mc = ms_des_par.m_eta_mc;
+			pc_des_params.m_eta_rc = ms_des_par.m_eta_rc;
+			pc_des_params.m_eta_pc = ms_des_par.m_eta_rc;
+			pc_des_params.m_eta_t = ms_des_par.m_eta_t;
+			pc_des_params.m_N_sub_hxrs = ms_des_par.m_N_sub_hxrs;
+			pc_des_params.m_P_high_limit = ms_des_par.m_P_high_limit;
+			pc_des_params.m_tol = ms_des_par.m_tol;
+			pc_des_params.m_N_turbine = ms_des_par.m_N_turbine;
 
-		ms_rc_cycle_des_par.m_des_objective_type = ms_des_par.m_des_objective_type;		//[-]
-		ms_rc_cycle_des_par.m_min_phx_deltaT = ms_des_par.m_min_phx_deltaT;				//[C]
+			ms_rc_cycle_des_par.m_des_objective_type = ms_des_par.m_des_objective_type;		//[-]
+			ms_rc_cycle_des_par.m_min_phx_deltaT = ms_des_par.m_min_phx_deltaT;				//[C]
 
-		C_PartialCooling_Cycle pc;
-		pc.auto_opt_design(pc_des_params);
+			auto_err_code = mc_partialcooling_cycle.auto_opt_design(pc_des_params);
+		}
+		else
+		{
+			throw(C_csp_exception("sCO2 partial cooling cycle and CSP integration design, design method can only be 1 (specify UA) for now"));
+		}
+
+		ms_des_solved.ms_rc_cycle_solved = *mc_partialcooling_cycle.get_design_solved();
+
+		if (auto_err_code != 0)
+		{
+			throw(C_csp_exception(error_msg.c_str()));
+		}
+
+		if (error_msg.empty())
+		{
+			mc_messages.add_notice("The partial cooling cycle design optimization was successful");
+		}
+		else
+		{
+			string out_msg = "The sCO2 partial cooling cycle design optimization solved with the following warning(s):\n" + error_msg;
+			mc_messages.add_notice(out_msg);
+		}
 	}
-
-
-
-	if(ms_des_par.m_design_method == 1)
+	else		// Recompression Cycle
 	{
-		// Design the recompression cycle to hit a specified efficiency
+		if (ms_des_par.m_design_method == 1)
+		{
+			// Design the recompression cycle to hit a specified efficiency
 			// Define sCO2 cycle design parameter structure
-		ms_rc_cycle_des_par.m_W_dot_net = ms_des_par.m_W_dot_net;		//[kWe]
-		ms_rc_cycle_des_par.m_eta_thermal = ms_des_par.m_eta_thermal;	//[-]
-		ms_rc_cycle_des_par.m_T_mc_in = ms_des_par.m_T_amb_des+ms_des_par.m_dt_mc_approach;	//[K]
-		if(ms_rc_cycle_des_par.m_T_mc_in < m_T_mc_in_min)
-		{
-			std::string msg = util::format("The input design main compressor inlet temperature is %lg [C]." 
-			" The sCO2 cycle design code reset it to the minimum allowable design main compressor inlet temperature: %lg [C].",
-			ms_rc_cycle_des_par.m_T_mc_in-273.15,
-			m_T_mc_in_min-273.15);
+			ms_rc_cycle_des_par.m_W_dot_net = ms_des_par.m_W_dot_net;		//[kWe]
+			ms_rc_cycle_des_par.m_eta_thermal = ms_des_par.m_eta_thermal;	//[-]
+			ms_rc_cycle_des_par.m_T_mc_in = ms_des_par.m_T_amb_des + ms_des_par.m_dt_mc_approach;	//[K]
+			if (ms_rc_cycle_des_par.m_T_mc_in < m_T_mc_in_min)
+			{
+				std::string msg = util::format("The input design main compressor inlet temperature is %lg [C]."
+					" The sCO2 cycle design code reset it to the minimum allowable design main compressor inlet temperature: %lg [C].",
+					ms_rc_cycle_des_par.m_T_mc_in - 273.15,
+					m_T_mc_in_min - 273.15);
+			}
+			ms_rc_cycle_des_par.m_T_t_in = ms_des_par.m_T_htf_hot_in - ms_des_par.m_phx_dt_hot_approach;	//[K]
+			ms_rc_cycle_des_par.m_DP_LT = ms_des_par.m_DP_LT;
+			ms_rc_cycle_des_par.m_DP_HT = ms_des_par.m_DP_HT;
+			ms_rc_cycle_des_par.m_DP_PC = ms_des_par.m_DP_PC;
+			ms_rc_cycle_des_par.m_DP_PHX = ms_des_par.m_DP_PHX;
+			ms_rc_cycle_des_par.m_LT_eff_max = ms_des_par.m_LT_eff_max;
+			ms_rc_cycle_des_par.m_HT_eff_max = ms_des_par.m_HT_eff_max;
+			ms_rc_cycle_des_par.m_eta_mc = ms_des_par.m_eta_mc;
+			ms_rc_cycle_des_par.m_eta_rc = ms_des_par.m_eta_rc;
+			ms_rc_cycle_des_par.m_eta_t = ms_des_par.m_eta_t;
+			ms_rc_cycle_des_par.m_N_sub_hxrs = ms_des_par.m_N_sub_hxrs;
+			ms_rc_cycle_des_par.m_P_high_limit = ms_des_par.m_P_high_limit;
+			ms_rc_cycle_des_par.m_tol = ms_des_par.m_tol;
+			ms_rc_cycle_des_par.m_opt_tol = ms_des_par.m_opt_tol;
+			ms_rc_cycle_des_par.m_N_turbine = ms_des_par.m_N_turbine;
+			ms_rc_cycle_des_par.m_is_recomp_ok = ms_des_par.m_is_recomp_ok;
+
+			ms_rc_cycle_des_par.m_des_objective_type = ms_des_par.m_des_objective_type;		//[-]
+			ms_rc_cycle_des_par.m_min_phx_deltaT = ms_des_par.m_min_phx_deltaT;				//[C]
+
+			ms_rc_cycle_des_par.mf_callback_log = mf_callback_update;
+			ms_rc_cycle_des_par.mp_mf_active = mp_mf_update;
+
+			mc_rc_cycle.auto_opt_design_hit_eta(ms_rc_cycle_des_par, auto_err_code, error_msg);
 		}
-		ms_rc_cycle_des_par.m_T_t_in = ms_des_par.m_T_htf_hot_in-ms_des_par.m_phx_dt_hot_approach;	//[K]
-		ms_rc_cycle_des_par.m_DP_LT = ms_des_par.m_DP_LT;
-		ms_rc_cycle_des_par.m_DP_HT = ms_des_par.m_DP_HT;
-		ms_rc_cycle_des_par.m_DP_PC = ms_des_par.m_DP_PC;
-		ms_rc_cycle_des_par.m_DP_PHX = ms_des_par.m_DP_PHX;
-		ms_rc_cycle_des_par.m_LT_eff_max = ms_des_par.m_LT_eff_max;
-		ms_rc_cycle_des_par.m_HT_eff_max = ms_des_par.m_HT_eff_max;
-		ms_rc_cycle_des_par.m_eta_mc = ms_des_par.m_eta_mc;
-		ms_rc_cycle_des_par.m_eta_rc = ms_des_par.m_eta_rc;
-		ms_rc_cycle_des_par.m_eta_t = ms_des_par.m_eta_t;
-		ms_rc_cycle_des_par.m_N_sub_hxrs = ms_des_par.m_N_sub_hxrs;
-		ms_rc_cycle_des_par.m_P_high_limit = ms_des_par.m_P_high_limit;
-		ms_rc_cycle_des_par.m_tol = ms_des_par.m_tol;
-		ms_rc_cycle_des_par.m_opt_tol = ms_des_par.m_opt_tol;
-		ms_rc_cycle_des_par.m_N_turbine = ms_des_par.m_N_turbine;
-		ms_rc_cycle_des_par.m_is_recomp_ok = ms_des_par.m_is_recomp_ok;	
-
-		ms_rc_cycle_des_par.m_des_objective_type = ms_des_par.m_des_objective_type;		//[-]
-		ms_rc_cycle_des_par.m_min_phx_deltaT = ms_des_par.m_min_phx_deltaT;				//[C]
-
-		ms_rc_cycle_des_par.mf_callback_log = mf_callback_update;
-		ms_rc_cycle_des_par.mp_mf_active = mp_mf_update;
-
-		mc_rc_cycle.auto_opt_design_hit_eta(ms_rc_cycle_des_par, auto_err_code, error_msg);
-	}
-	else if(ms_des_par.m_design_method == 2)
-	{
-		if(ms_des_par.m_UA_recup_tot_des < 0.0)
+		else if (ms_des_par.m_design_method == 2)
 		{
-			throw(C_csp_exception("sCO2 recompression cycle and CSP integration design, design method 2, conductance must be > 0"));
+			if (ms_des_par.m_UA_recup_tot_des < 0.0)
+			{
+				throw(C_csp_exception("sCO2 recompression cycle and CSP integration design, design method 2, conductance must be > 0"));
+			}
+
+			// Design the recompression cycle using a specified total recuperator conductance
+			C_RecompCycle::S_auto_opt_design_parameters s_rc_auto_opt_des_par;
+			s_rc_auto_opt_des_par.m_W_dot_net = ms_des_par.m_W_dot_net;		//[kWe]
+			s_rc_auto_opt_des_par.m_T_mc_in = ms_des_par.m_T_amb_des + ms_des_par.m_dt_mc_approach;		//[K]
+			s_rc_auto_opt_des_par.m_T_t_in = ms_des_par.m_T_htf_hot_in - ms_des_par.m_phx_dt_hot_approach;	//[K]
+			s_rc_auto_opt_des_par.m_DP_LT = ms_des_par.m_DP_LT;
+			s_rc_auto_opt_des_par.m_DP_HT = ms_des_par.m_DP_HT;
+			s_rc_auto_opt_des_par.m_DP_PC = ms_des_par.m_DP_PC;
+			s_rc_auto_opt_des_par.m_DP_PHX = ms_des_par.m_DP_PHX;
+			s_rc_auto_opt_des_par.m_UA_rec_total = ms_des_par.m_UA_recup_tot_des;	//[kW/K]
+			s_rc_auto_opt_des_par.m_LT_eff_max = ms_des_par.m_LT_eff_max;
+			s_rc_auto_opt_des_par.m_HT_eff_max = ms_des_par.m_HT_eff_max;
+			s_rc_auto_opt_des_par.m_eta_mc = ms_des_par.m_eta_mc;
+			s_rc_auto_opt_des_par.m_eta_rc = ms_des_par.m_eta_rc;
+			s_rc_auto_opt_des_par.m_eta_t = ms_des_par.m_eta_t;
+			s_rc_auto_opt_des_par.m_N_sub_hxrs = ms_des_par.m_N_sub_hxrs;
+			s_rc_auto_opt_des_par.m_P_high_limit = ms_des_par.m_P_high_limit;
+			s_rc_auto_opt_des_par.m_tol = ms_des_par.m_tol;
+			s_rc_auto_opt_des_par.m_opt_tol = ms_des_par.m_opt_tol;
+			s_rc_auto_opt_des_par.m_N_turbine = ms_des_par.m_N_turbine;
+
+			s_rc_auto_opt_des_par.m_des_objective_type = ms_des_par.m_des_objective_type;		//[-]
+			s_rc_auto_opt_des_par.m_min_phx_deltaT = ms_des_par.m_min_phx_deltaT;				//[C]
+
+			s_rc_auto_opt_des_par.m_PR_mc_guess = ms_des_par.m_PR_mc_guess;		//[-]
+			s_rc_auto_opt_des_par.m_fixed_PR_mc = ms_des_par.m_fixed_PR_mc;		//[-]
+
+			s_rc_auto_opt_des_par.m_is_recomp_ok = ms_des_par.m_is_recomp_ok;
+
+			mc_rc_cycle.auto_opt_design(s_rc_auto_opt_des_par, auto_err_code);
+		}
+		else
+		{
+			throw(C_csp_exception("sCO2 recompression cycle and CSP integration design, design method must be either 1 or 2\n"));
 		}
 
-		// Design the recompression cycle using a specified total recuperator conductance
-		C_RecompCycle::S_auto_opt_design_parameters s_rc_auto_opt_des_par;
-		s_rc_auto_opt_des_par.m_W_dot_net = ms_des_par.m_W_dot_net;		//[kWe]
-		s_rc_auto_opt_des_par.m_T_mc_in = ms_des_par.m_T_amb_des + ms_des_par.m_dt_mc_approach;		//[K]
-		s_rc_auto_opt_des_par.m_T_t_in = ms_des_par.m_T_htf_hot_in - ms_des_par.m_phx_dt_hot_approach;	//[K]
-		s_rc_auto_opt_des_par.m_DP_LT = ms_des_par.m_DP_LT;
-		s_rc_auto_opt_des_par.m_DP_HT = ms_des_par.m_DP_HT;
-		s_rc_auto_opt_des_par.m_DP_PC = ms_des_par.m_DP_PC;
-		s_rc_auto_opt_des_par.m_DP_PHX = ms_des_par.m_DP_PHX;
-		s_rc_auto_opt_des_par.m_UA_rec_total = ms_des_par.m_UA_recup_tot_des;	//[kW/K]
-		s_rc_auto_opt_des_par.m_LT_eff_max = ms_des_par.m_LT_eff_max;
-		s_rc_auto_opt_des_par.m_HT_eff_max = ms_des_par.m_HT_eff_max;
-		s_rc_auto_opt_des_par.m_eta_mc = ms_des_par.m_eta_mc;
-		s_rc_auto_opt_des_par.m_eta_rc = ms_des_par.m_eta_rc;
-		s_rc_auto_opt_des_par.m_eta_t = ms_des_par.m_eta_t;
-		s_rc_auto_opt_des_par.m_N_sub_hxrs = ms_des_par.m_N_sub_hxrs;
-		s_rc_auto_opt_des_par.m_P_high_limit = ms_des_par.m_P_high_limit;
-		s_rc_auto_opt_des_par.m_tol = ms_des_par.m_tol;
-		s_rc_auto_opt_des_par.m_opt_tol = ms_des_par.m_opt_tol;
-		s_rc_auto_opt_des_par.m_N_turbine = ms_des_par.m_N_turbine;
+		ms_des_solved.ms_rc_cycle_solved = *mc_rc_cycle.get_design_solved();
 
-		s_rc_auto_opt_des_par.m_des_objective_type = ms_des_par.m_des_objective_type;		//[-]
-		s_rc_auto_opt_des_par.m_min_phx_deltaT = ms_des_par.m_min_phx_deltaT;				//[C]
+		if (auto_err_code != 0)
+		{
+			throw(C_csp_exception(error_msg.c_str()));
+		}
 
-		s_rc_auto_opt_des_par.m_PR_mc_guess = ms_des_par.m_PR_mc_guess;		//[-]
-		s_rc_auto_opt_des_par.m_fixed_PR_mc = ms_des_par.m_fixed_PR_mc;		//[-]
+		if (error_msg.empty())
+		{
+			mc_messages.add_notice("The recompression cycle design optimization was successful");
+		}
+		else
+		{
+			string out_msg = "The sCO2 recompression cycle design optimization solved with the following warning(s):\n" + error_msg;
+			mc_messages.add_notice(out_msg);
+		}
 
-		s_rc_auto_opt_des_par.m_is_recomp_ok = ms_des_par.m_is_recomp_ok;
+		// Set air cooler design parameters that are dependent on the cycle design solution
+		ms_air_cooler_des_par_dep.m_T_hot_in_des = ms_des_solved.ms_rc_cycle_solved.m_temp[C_RecompCycle::LTR_LP_OUT];
+		ms_air_cooler_des_par_dep.m_P_hot_in_des = ms_des_solved.ms_rc_cycle_solved.m_pres[C_RecompCycle::LTR_LP_OUT];
+		ms_air_cooler_des_par_dep.m_m_dot_total = ms_des_solved.ms_rc_cycle_solved.m_m_dot_mc;		//[kg/s]
+			// This pressure drop is currently uncoupled from the cycle design
+		ms_air_cooler_des_par_dep.m_delta_P_des = ms_des_par.m_deltaP_cooler_frac*ms_des_solved.ms_rc_cycle_solved.m_pres[C_RecompCycle::MC_OUT];
+		ms_air_cooler_des_par_dep.m_T_hot_out_des = ms_des_solved.ms_rc_cycle_solved.m_temp[C_RecompCycle::MC_IN];
+		ms_air_cooler_des_par_dep.m_W_dot_fan_des = ms_des_par.m_frac_fan_power*ms_des_par.m_W_dot_net/1000.0;		//[MWe]
+
+		// Initialize the PHX
+		mc_phx.initialize(ms_des_par.m_hot_fl_code, ms_des_par.mc_hot_fl_props);
+
+		// Design the PHX
+		double q_dot_des_phx = ms_des_solved.ms_rc_cycle_solved.m_W_dot_net / ms_des_solved.ms_rc_cycle_solved.m_eta_thermal;
+		//ms_phx_des_par.m_Q_dot_design = ms_des_solved.ms_rc_cycle_solved.m_W_dot_net / ms_des_solved.ms_rc_cycle_solved.m_eta_thermal;		//[kWt]
+		ms_phx_des_par.m_T_h_in = ms_des_par.m_T_htf_hot_in;	//[K] HTF hot inlet temperature 
+			// Okay, but CO2-HTF HX is assumed here. How does "structure inheritance" work?
+		ms_phx_des_par.m_P_h_in = 1.0;							// Assuming HTF is incompressible...
+		ms_phx_des_par.m_P_h_out = 1.0;						// Assuming HTF is incompressible...
+			// .................................................................................
+		ms_phx_des_par.m_T_c_in = ms_des_solved.ms_rc_cycle_solved.m_temp[C_RecompCycle::HTR_HP_OUT];		//[K]
+		ms_phx_des_par.m_P_c_in = ms_des_solved.ms_rc_cycle_solved.m_pres[C_RecompCycle::HTR_HP_OUT];		//[K]
+		ms_phx_des_par.m_P_c_out = ms_des_solved.ms_rc_cycle_solved.m_pres[C_RecompCycle::TURB_IN];		//[K]
+		ms_phx_des_par.m_m_dot_cold_des = ms_des_solved.ms_rc_cycle_solved.m_m_dot_t;	//[kg/s]
+			// Calculating the HTF mass flow rate in 'design_and_calc_m_dot_htf'
+		ms_phx_des_par.m_m_dot_hot_des = std::numeric_limits<double>::quiet_NaN();
+			// Set maximum effectiveness
+		ms_phx_des_par.m_eff_max = 1.0;
 	
-		mc_rc_cycle.auto_opt_design(s_rc_auto_opt_des_par, auto_err_code);
-	}
-	else
-	{
-		throw(C_csp_exception("sCO2 recompression cycle and CSP integration design, design method must be either 1 or 2\n"));
-	}
+		mc_phx.design_and_calc_m_dot_htf(ms_phx_des_par, q_dot_des_phx, ms_des_par.m_phx_dt_cold_approach, ms_des_solved.ms_phx_des_solved);
 
-	ms_des_solved.ms_rc_cycle_solved = *mc_rc_cycle.get_design_solved();
+		// Design the air cooler
+			// Define Independent Air Cooler Design Parameters
+		ms_air_cooler_des_par_ind.m_T_amb_des = ms_des_par.m_T_amb_des;		//[K]
+		ms_air_cooler_des_par_ind.m_elev = ms_des_par.m_elevation;			//[m]
+			// Add checks from Type 424 to the air cooler design code?
 
-	if(auto_err_code != 0)
-	{
-		throw(C_csp_exception(error_msg.c_str()));
+		mc_air_cooler.design_hx(ms_air_cooler_des_par_ind, ms_air_cooler_des_par_dep);
 	}
-
-	if( error_msg.empty() )
-	{
-		mc_messages.add_notice("The recompression cycle design optimization was successful");
-	}
-	else
-	{
-		string out_msg = "The sCO2 cycle design optimization solved with the following warning(s):\n" + error_msg;
-		mc_messages.add_notice(out_msg);
-	}
+	
 	//*************************************************************************************
 	//*************************************************************************************
-
-	// Set air cooler design parameters that are dependent on the cycle design solution
-	ms_air_cooler_des_par_dep.m_T_hot_in_des = ms_des_solved.ms_rc_cycle_solved.m_temp[C_RecompCycle::LTR_LP_OUT];
-	ms_air_cooler_des_par_dep.m_P_hot_in_des = ms_des_solved.ms_rc_cycle_solved.m_pres[C_RecompCycle::LTR_LP_OUT];
-	ms_air_cooler_des_par_dep.m_m_dot_total = ms_des_solved.ms_rc_cycle_solved.m_m_dot_mc;		//[kg/s]
-		// This pressure drop is currently uncoupled from the cycle design
-	ms_air_cooler_des_par_dep.m_delta_P_des = ms_des_par.m_deltaP_cooler_frac*ms_des_solved.ms_rc_cycle_solved.m_pres[C_RecompCycle::MC_OUT];
-	ms_air_cooler_des_par_dep.m_T_hot_out_des = ms_des_solved.ms_rc_cycle_solved.m_temp[C_RecompCycle::MC_IN];
-	ms_air_cooler_des_par_dep.m_W_dot_fan_des = ms_des_par.m_frac_fan_power*ms_des_par.m_W_dot_net/1000.0;		//[MWe]
-
-	// Initialize the PHX
-	mc_phx.initialize(ms_des_par.m_hot_fl_code, ms_des_par.mc_hot_fl_props);
-
-	// Design the PHX
-	double q_dot_des_phx = ms_des_solved.ms_rc_cycle_solved.m_W_dot_net / ms_des_solved.ms_rc_cycle_solved.m_eta_thermal;
-	//ms_phx_des_par.m_Q_dot_design = ms_des_solved.ms_rc_cycle_solved.m_W_dot_net / ms_des_solved.ms_rc_cycle_solved.m_eta_thermal;		//[kWt]
-	ms_phx_des_par.m_T_h_in = ms_des_par.m_T_htf_hot_in;	//[K] HTF hot inlet temperature 
-		// Okay, but CO2-HTF HX is assumed here. How does "structure inheritance" work?
-	ms_phx_des_par.m_P_h_in = 1.0;							// Assuming HTF is incompressible...
-	ms_phx_des_par.m_P_h_out = 1.0;						// Assuming HTF is incompressible...
-		// .................................................................................
-	ms_phx_des_par.m_T_c_in = ms_des_solved.ms_rc_cycle_solved.m_temp[C_RecompCycle::HTR_HP_OUT];		//[K]
-	ms_phx_des_par.m_P_c_in = ms_des_solved.ms_rc_cycle_solved.m_pres[C_RecompCycle::HTR_HP_OUT];		//[K]
-	ms_phx_des_par.m_P_c_out = ms_des_solved.ms_rc_cycle_solved.m_pres[C_RecompCycle::TURB_IN];		//[K]
-	ms_phx_des_par.m_m_dot_cold_des = ms_des_solved.ms_rc_cycle_solved.m_m_dot_t;	//[kg/s]
-		// Calculating the HTF mass flow rate in 'design_and_calc_m_dot_htf'
-	ms_phx_des_par.m_m_dot_hot_des = std::numeric_limits<double>::quiet_NaN();
-		// Set maximum effectiveness
-	ms_phx_des_par.m_eff_max = 1.0;
-	
-	mc_phx.design_and_calc_m_dot_htf(ms_phx_des_par, q_dot_des_phx, ms_des_par.m_phx_dt_cold_approach, ms_des_solved.ms_phx_des_solved);
-
-	// Design the air cooler
-		// Define Independent Air Cooler Design Parameters
-	ms_air_cooler_des_par_ind.m_T_amb_des = ms_des_par.m_T_amb_des;		//[K]
-	ms_air_cooler_des_par_ind.m_elev = ms_des_par.m_elevation;			//[m]
-		// Add checks from Type 424 to the air cooler design code?
-	
-	
-	
-	
-	
-	
-	
-	// 4.12.2017 twn: comment this out for now
-	mc_air_cooler.design_hx(ms_air_cooler_des_par_ind, ms_air_cooler_des_par_dep);
-
-
-
-
-
 
 	return;
 }
@@ -343,6 +359,11 @@ void C_sco2_recomp_csp_10MWe_scale::design(C_sco2_rc_csp_template::S_des_par des
 
 int C_sco2_recomp_csp_10MWe_scale::off_design_nested_opt(C_sco2_rc_csp_template::S_od_par od_par, int off_design_strategy, double od_opt_tol)
 {
+	if (ms_des_par.m_cycle_config == 2)
+	{
+		throw(C_csp_exception("sCO2 cycle and CSP off-design only currently developed for the recompression cycle\n"));
+	}
+
 	// Check if callback info has changed. If so, pass to member sco2 10MWe cycle
 	mc_rc_csp_10MWe.mf_callback_update = mf_callback_update;
 	mc_rc_csp_10MWe.mp_mf_update = mp_mf_update;
@@ -378,19 +399,19 @@ const C_sco2_recomp_csp_10MWe_scale::S_des_solved * C_sco2_recomp_csp_10MWe_scal
 	ms_des_solved.ms_rc_cycle_solved.m_m_dot_mc *= m_r_W_scale;
 	ms_des_solved.ms_rc_cycle_solved.m_m_dot_rc *= m_r_W_scale;
 	ms_des_solved.ms_rc_cycle_solved.m_m_dot_t *= m_r_W_scale;
-	ms_des_solved.ms_rc_cycle_solved.m_UA_LT *= m_r_W_scale;
-	ms_des_solved.ms_rc_cycle_solved.m_UA_HT *= m_r_W_scale;
+	ms_des_solved.ms_rc_cycle_solved.m_UA_LTR *= m_r_W_scale;
+	ms_des_solved.ms_rc_cycle_solved.m_UA_HTR *= m_r_W_scale;
 		// Scale Cycle Component Solution
 			// Nothing required for turbomachinery??
 	//ms_des_solved.ms_rc_cycle_solved.ms_mc_des_solved.
 	//ms_des_solved.ms_rc_cycle_solved.ms_rc_des_solved.
 	//ms_des_solved.ms_rc_cycle_solved.ms_t_des_solved.
 			// Low temperature recuperator
-	ms_des_solved.ms_rc_cycle_solved.ms_LT_recup_des_solved.m_Q_dot_design *= m_r_W_scale;
-	ms_des_solved.ms_rc_cycle_solved.ms_LT_recup_des_solved.m_UA_design_total *= m_r_W_scale;
+	ms_des_solved.ms_rc_cycle_solved.ms_LTR_des_solved.m_Q_dot_design *= m_r_W_scale;
+	ms_des_solved.ms_rc_cycle_solved.ms_LTR_des_solved.m_UA_design_total *= m_r_W_scale;
 			// High temperature recuperator
-	ms_des_solved.ms_rc_cycle_solved.ms_HT_recup_des_solved.m_Q_dot_design *= m_r_W_scale;
-	ms_des_solved.ms_rc_cycle_solved.ms_HT_recup_des_solved.m_UA_design_total *= m_r_W_scale;
+	ms_des_solved.ms_rc_cycle_solved.ms_HTR_des_solved.m_Q_dot_design *= m_r_W_scale;
+	ms_des_solved.ms_rc_cycle_solved.ms_HTR_des_solved.m_UA_design_total *= m_r_W_scale;
 
 	return &ms_des_solved;
 }

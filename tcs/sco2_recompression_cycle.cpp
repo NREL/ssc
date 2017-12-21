@@ -3208,8 +3208,8 @@ void C_RecompCycle::finalize_design(int & error_code)
 	ms_des_solved.ms_mc_ms_des_solved = *m_mc_ms.get_design_solved();
 	ms_des_solved.ms_rc_ms_des_solved = *m_rc_ms.get_design_solved();
 	ms_des_solved.ms_t_des_solved = *m_t.get_design_solved();
-	ms_des_solved.ms_LT_recup_des_solved = mc_LT_recup.ms_des_solved;
-	ms_des_solved.ms_HT_recup_des_solved = mc_HT_recup.ms_des_solved;
+	ms_des_solved.ms_LTR_des_solved = mc_LT_recup.ms_des_solved;
+	ms_des_solved.ms_HTR_des_solved = mc_HT_recup.ms_des_solved;
 
 	// Set solved design point metrics
 	ms_des_solved.m_temp = m_temp_last;
@@ -3225,8 +3225,8 @@ void C_RecompCycle::finalize_design(int & error_code)
 	ms_des_solved.m_m_dot_t = m_m_dot_t;
 	ms_des_solved.m_recomp_frac = m_m_dot_rc / m_m_dot_t;
 
-	ms_des_solved.m_UA_LT = ms_des_par.m_UA_LT;
-	ms_des_solved.m_UA_HT = ms_des_par.m_UA_HT;
+	ms_des_solved.m_UA_LTR = ms_des_par.m_UA_LT;
+	ms_des_solved.m_UA_HTR = ms_des_par.m_UA_HT;
 
 }
 
