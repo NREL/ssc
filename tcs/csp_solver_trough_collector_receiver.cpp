@@ -1138,7 +1138,6 @@ int C_csp_trough_collector_receiver::loop_energy_balance_T_t_int(const C_csp_wea
 		E_HR_cold = (m_v_cold*rho_hdr_cold*m_cp_sys_c_t_int + m_mc_bal_cold)*(m_T_sys_c_t_end - m_T_sys_c_t_end_last)*1.E-6;		//[MJ]
 		E_HR_cold_htf = m_dot_htf_loop*float(m_nLoops)*m_cp_sys_c_t_int*(m_T_htf_in_t_int[0] - T_htf_cold_in)*sim_info.ms_ts.m_step / 1.E6;	//[MJ]
 		E_HR_cold_bal = -E_HR_cold_losses - E_HR_cold_htf - E_HR_cold;		//[MJ]
-		double blah = 0.0;
 	}
 	else		// m_accept_loc == 2, only modeling loop
 	{
