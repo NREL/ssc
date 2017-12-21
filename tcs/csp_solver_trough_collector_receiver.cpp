@@ -3547,7 +3547,6 @@ set_outputs_and_return:
 	double EqOpteff_out = m_EqOpteff*m_CosTh_ave;
 	double m_dot_htf_tot_out = m_m_dot_htf_tot *3600.;	//[kg/hr] from kg/s
 	double E_bal_startup_out = E_bal_startup / (dt*1.e6);	//[MW] from J
-	double q_inc_sf_tot = m_Ap_tot*I_b / 1.e6;
 	double q_abs_tot = 0.;
 	double q_loss_tot = 0.;
 	double q_loss_spec_tot = 0.;
