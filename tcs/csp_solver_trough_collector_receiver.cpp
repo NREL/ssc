@@ -1428,9 +1428,6 @@ int C_csp_trough_collector_receiver::loop_energy_balance_T_t_int(const C_csp_wea
 
 	m_Q_field_losses_total_subts = Q_loss_xover + Q_loss_HR_cold + Q_loss_HR_hot - Q_abs_scas_summed;		//[MJ]
 
-	double E_bal = Q_abs_scas_summed - Q_loss_xover - Q_loss_HR_cold  - Q_loss_HR_hot
-					- Q_htf - E_HR_cold - E_scas_summed - E_xovers_summed - E_HR_hot;
-
 	return E_loop_energy_balance_exit::SOLVED;
 }
 
