@@ -2526,7 +2526,7 @@ double C_sco2_recomp_csp::opt_P_mc_in_nest_f_recomp_max_eta(double P_mc_in /*kPa
 
 	if( m_off_design_turbo_operation == E_FIXED_MC_FIXED_RC_FIXED_T )
 	{
-		int od_err_code = off_design_core(eta_max_f_recomp_opt);
+		off_design_core(eta_max_f_recomp_opt);
 	}
 	else if( m_off_design_turbo_operation == E_VFD_MC_VFD_RC_FIXED_T )
 	{
