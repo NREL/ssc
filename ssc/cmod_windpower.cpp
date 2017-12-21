@@ -325,7 +325,7 @@ void cm_windpower::exec() throw(general_error)
 	{
 		wdprov = std::auto_ptr<winddata_provider>(new winddata(lookup("wind_resource_data")));
 		if (wdprov->error().size() > 0){
-			log(wdprov->error(), SSC_ERROR);
+			throw exec_error("windpower", wdprov->error());
 		}
 		nstep = wdprov->nrecords();
 		if (icingCutoff)
