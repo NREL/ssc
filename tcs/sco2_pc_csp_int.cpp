@@ -766,7 +766,6 @@ bool C_sco2_recomp_csp::opt_P_mc_in_nest_f_recomp_max_eta_core()
 			"C_sco2_recomp_csp::opt_P_mc_in_nest_f_recomp_max_eta_core"));
 	}
 
-	double eta_max = mc_rc_cycle.get_od_solved()->m_eta_thermal;
 	ms_od_solved.ms_rc_cycle_od_solved = *mc_rc_cycle.get_od_solved();
 	ms_od_solved.ms_phx_od_solved = mc_phx.ms_od_solved;
 
