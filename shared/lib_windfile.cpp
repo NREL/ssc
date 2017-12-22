@@ -94,7 +94,7 @@ static int locate2(std::string buf, std::vector<std::string> &vstring, char deli
 	while (getline(ss, token, delim)) {
 	  vstring.push_back(token);
 	}
-	return vstring.size();
+	return (int)vstring.size();
 }
 
 #define MBUFLEN 4096
@@ -105,6 +105,7 @@ winddata_provider::winddata_provider()
 	year = 1900;
 	lat = lon = elev = 0;
 	measurementHeight = 0;
+	m_errorMsg.clear();
 }
 winddata_provider::~winddata_provider()
 {
