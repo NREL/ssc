@@ -215,7 +215,6 @@ void dc_connected_battery_controller::process_dispatch()
 {
 	double P_battery_dc = _dispatch->power_tofrom_battery();
 	double P_battery_dc_post_bms = 0;
-//	double P_battery_ac = 0;
 
 	// post DC/DC w/BMS
 	if (P_battery_dc > 0)

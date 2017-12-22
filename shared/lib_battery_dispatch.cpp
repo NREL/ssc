@@ -985,11 +985,9 @@ void dispatch_automatic_t::compute_to_batt()
 			if (_P_pv_to_batt > _P_pv_charging) {
 				_P_pv_to_batt = fabs(_P_pv_charging);
 			}
-			else {
-				// Next take power from grid
-				_P_grid_to_batt = fabs(_P_tofrom_batt) - _P_clipped_to_batt - _P_pv_to_batt;
-			}
 		}
+		_P_grid_to_batt = fabs(_P_tofrom_batt) - _P_clipped_to_batt - _P_pv_to_batt;
+
 	}
 }
 
