@@ -204,6 +204,11 @@ public:
 
 	//! Check the inverter size and the associated clipping
 	void inverter_size_check();
+
+	//! Run the Inverter model
+	void run_inverter(sandia_inverter_t * snlinv, partload_inverter_t * plinv,
+		const int inv_type, const double dcpwr_net, const int num_inverters, const double dc_string_voltage,
+		double & acpwr_gross, double & aceff, double & cliploss, double & psoloss, double & pntloss);
 };
 
 #endif // !_CMOD_PVAMV1_H_

@@ -190,22 +190,11 @@ ssc_number_t *winddata::get_vector(var_data *v, const char *name, size_t *len)
 	return p;
 }
 
-		
-		// now choose which model to run
-		// 0=time step farm model (hourly or subhourly array outputs), 1=weibull statistical model (single outputs)
-		int iModelType = as_integer("wind_resource_model_choice"); 
-
-
-		size_t nstep = 8760;		
-		std::unique_ptr<winddata_provider> wdprov;
-		if ( iModelType == 0 )
-		{
-			// initialize the weather file reader here to find out the number of steps
-			// before the output arrays are allocated
-			
-			if ( is_assigned( "wind_resource_filename" ) )
-			{
-				const char *file = as_string("wind_resource_filename");
+bool winddata::read_line(std::vector<double> &values)
+{
+	if (irecord >= data.nrows()
+		|| data.ncols() == 0
+		|| data.nrows() == 0) return false;
 
 	values.resize(data.ncols(), 0.0);
 	for (size_t j = 0; j < data.ncols(); j++)
@@ -215,19 +204,13 @@ ssc_number_t *winddata::get_vector(var_data *v, const char *name, size_t *len)
 	return true;
 }
 
-				// assign the pointer
-				wdprov = std::unique_ptr<winddata_provider>( wp );
 
-				// make sure it's OK
-				if (!wp->ok()) 
-					throw exec_error("windpower", "failed to read local weather file: " + std::string(file) + " " + wp->error());
-			}
-			else if ( is_assigned( "wind_resource_data" ) )
-			{
-				wdprov = std::unique_ptr<winddata_provider>( new winddata( lookup("wind_resource_data") ) );
-			}
-			else
-				throw exec_error("windpower", "no wind resource data supplied");
+cm_windpower::cm_windpower(){
+	add_var_info(_cm_vtab_windpower);
+	// performance adjustment factors
+	add_var_info(vtab_adjustment_factors);
+	add_var_info(vtab_technology_outputs);
+}
 
 void cm_windpower::exec() throw(general_error)
 {

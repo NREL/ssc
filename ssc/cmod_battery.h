@@ -74,11 +74,6 @@ struct batt_variables
 	int batt_loss_choice;
 	int batt_calendar_choice;
 
-	/*! Determines if the battery is allowed to charge from the grid using automated control*/
-	bool batt_dispatch_auto_can_gridcharge;
-
-	/*! Determines if the battery is allowed to charge from the RE using automated control*/
-	bool batt_dispatch_auto_can_charge;
 	ssc_number_t *pcharge = 0;
 	ssc_number_t *pdischarge = 0;
 	ssc_number_t *pdischarge_percent = 0;
@@ -86,6 +81,12 @@ struct batt_variables
 	ssc_number_t *pgridcharge = 0;
 	ssc_number_t *psched = 0;
 	ssc_number_t *psched_weekend = 0;
+
+	/*! Determines if the battery is allowed to charge from the grid using automated control*/
+	bool batt_dispatch_auto_can_gridcharge;
+
+	/*! Determines if the battery is allowed to charge from the RE using automated control*/
+	bool batt_dispatch_auto_can_charge;
 
 	/*! Determines if the battery is allowed to charge from PV clipping using automated control*/
 	bool batt_dispatch_auto_can_clipcharge;
