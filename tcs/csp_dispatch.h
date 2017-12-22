@@ -157,7 +157,8 @@ public:
 
         C_csp_solver_sim_info *siminfo;     //Pointer to existing simulation info object
         C_csp_collector_receiver *col_rec;   //Pointer to collector/receiver object
-        C_csp_messages *messages;   //Pointer to message structure
+		C_csp_power_cycle *mpc_pc;	// Pointer to csp power cycle class object
+		C_csp_messages *messages;   //Pointer to message structure
 
         struct s_efftable
         {
@@ -262,7 +263,8 @@ public:
         vector<double> q_sfavail_expected;       //Expected available solar field energy
         vector<double> q_sf_expected;           //Expected solar field energy generation
         vector<double> eta_pb_expected;     //Expected power cycle conversion efficiency (normalized)
-        vector<double> eta_sf_expected;     //Expected solar field thermal efficiency (normalized)
+		vector<double> f_pb_op_limit;		//[-] Maximum normalized cycle output
+		vector<double> eta_sf_expected;     //Expected solar field thermal efficiency (normalized)
         vector<double> tes_charge_expected;     //Expected thermal energy storage charge state
         vector<double> q_pb_startup;    //thermal power going to startup
         vector<double> q_rec_startup;   //thermal power going to startup

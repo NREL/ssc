@@ -289,10 +289,10 @@ END_EVENT_TABLE()
 
 DataView::DataView( wxWindow *parent ) 
 	: wxPanel( parent ),
-	m_vt(0),
-	m_root_item(0),
+  	m_frozen(false),
 	m_grid_table(0),
-	m_frozen(false)
+	m_root_item(0),
+	m_vt(0)
 {
 	wxBoxSizer *tb_sizer = new wxBoxSizer(wxHORIZONTAL);
 	tb_sizer->Add( new wxButton(this, ID_ADD_VARIABLE, "Add...", wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT), 0, wxALL|wxEXPAND, 2);

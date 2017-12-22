@@ -611,7 +611,7 @@ void C_csp_two_tank_tes::charge_avail_est(double T_hot_K, double step_s, double 
 	}
 	else
 	{
-		double cp_T_avg = mc_store_htfProps.Cp(0.5*(T_cold_ini, T_hot_K));	//[kJ/kg-K] spec heat at average temperature during charging from cold to hot
+		double cp_T_avg = mc_store_htfProps.Cp(0.5*(T_cold_ini + T_hot_K));	//[kJ/kg-K] spec heat at average temperature during charging from cold to hot
 
 		q_dot_ch_est = m_dot_tank_charge_avail * cp_T_avg * (T_hot_K - T_cold_ini) *1.E-3;	//[MW]
 

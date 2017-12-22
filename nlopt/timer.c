@@ -23,7 +23,11 @@
 #include "nlopt-util.h"
 
 #if TIME_WITH_SYS_TIME
-# include <sys/time.h>
+#ifdef __WXMSW__
+	#include "sys/time.h"
+#else
+	# include <sys/time.h>
+#endif // __WXMSW__
 # include <time.h>
 #else
 # if HAVE_SYS_TIME_H

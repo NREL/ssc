@@ -560,39 +560,42 @@ int util::sync_piped_process::spawn(const std::string &command, const std::strin
 
 #endif
 
+/**
+* Function returns a formatting string given a variable number of arguments
+* Input example: util::format("There are %d pv panels, with a power rating of %f Wdc", n_panels, n_tilt");
+* Output example: "There are 10 pv panels, with a power rating of 260.0 Wdc"
+* Overly complex for what is really just a more consise way to call sprintf
+*/
 std::string util::format(const char *fmt, ...)
 {
 	if (!fmt || *fmt == 0) return "";
 
+	// variable argument initalization
 	va_list arglist;
 	va_start( arglist, fmt );
 
+	// intialize buffer to read into
 	size_t ret = 0;
-
 	int size = 512;
 	char *buffer = new char[size];
 	if (!buffer)
 		return "";
 
-	do
-	{
-		va_list argptr_copy;
-		va_copy( argptr_copy, arglist );
-		ret = util::format_vn(buffer,size-1,fmt,argptr_copy);
-		va_end( argptr_copy );
+	// Format output string from varargs
+	va_list argptr_copy;
+	va_copy( argptr_copy, arglist );
+	ret = util::format_vn(buffer,size-1,fmt,argptr_copy);
+	va_end( argptr_copy );
 
-		if (ret == 0)
-		{
-			delete [] buffer;
-			size *= 2;
-			buffer = new char[size];
-			if (!buffer)
-				return "";
-		}
-		
+	if (ret == 0)
+	{
+		delete [] buffer;
+		size *= 2;
+		buffer = new char[size];
+		if (!buffer)
+			return "";
 	}
-	while (ret < 0);
-	
+			
 	va_end(arglist);
 
 	std::string s(buffer);

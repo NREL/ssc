@@ -235,8 +235,9 @@ C_csp_trough_collector_receiver::C_csp_trough_collector_receiver()
 	for (int i = 0; i < 5; i++)
 		m_T_save[i] = std::numeric_limits<double>::quiet_NaN();
 
-	for (int i = 0; i < 3; i++)
-		m_reguess_args[i] = std::numeric_limits<double>::quiet_NaN();
+	mv_reguess_args.resize(3);
+	std::fill(mv_reguess_args.begin(), mv_reguess_args.end(), std::numeric_limits<double>::quiet_NaN());
+
 
 	m_AnnulusGasMat.fill(NULL);
 	m_AbsorberPropMat.fill(NULL);
@@ -3835,15 +3836,13 @@ void C_csp_trough_collector_receiver::EvacReceiver(double T_1_in, double m_dot, 
 	bool glazingIntact = m_GlazingIntact(hn, hv); //.at(hn, hv);
 
 	//---Re-guess criteria:---
-	if (m_reguess_args == NULL) goto lab_reguess;
-
 	if (time <= 2) goto lab_reguess;
 	
-	if (((int)m_reguess_args[0] == 1) != m_GlazingIntact(hn, hv)) goto lab_reguess;	//glazingintact state has changed
+	if (((int)mv_reguess_args[0] == 1) != m_GlazingIntact(hn, hv)) goto lab_reguess;	//glazingintact state has changed
 
-	if (m_P_a(hn, hv) != m_reguess_args[1]) goto lab_reguess;                   //Reguess for different annulus pressure
+	if (m_P_a(hn, hv) != mv_reguess_args[1]) goto lab_reguess;                   //Reguess for different annulus pressure
 
-	if (fabs(m_reguess_args[2] - T_1_in) > 50.) goto lab_reguess;
+	if (fabs(mv_reguess_args[2] - T_1_in) > 50.) goto lab_reguess;
 
 	for (int i = 0; i<5; i++){ if (m_T_save[i] < m_T_sky - 1.) goto lab_reguess; }
 
@@ -3874,11 +3873,11 @@ lab_keep_guess:
 				T_upper_max = m_T_save[2] - 0.5*(m_T_save[2] - T_amb);     //Also, low upper limit for T4
 			}
 			m_T_save[4] = m_T_save[3] - 2.;
-			if (m_reguess_args != NULL){
-				m_reguess_args[1] = m_P_a(hn, hv);               //Reset previous pressure
-				m_reguess_args[0] = m_GlazingIntact(hn, hv) ? 1. : 0.;   //Reset previous glazing logic
-				m_reguess_args[2] = T_1_in;            //Reset previous T_1_in
-			}
+
+			mv_reguess_args[1] = m_P_a(hn, hv);               //Reset previous pressure
+			mv_reguess_args[0] = m_GlazingIntact(hn, hv) ? 1. : 0.;   //Reset previous glazing logic
+			mv_reguess_args[2] = T_1_in;            //Reset previous T_1_in
+
 		}
 		else{
 			m_T_save[0] = T_1_in;
@@ -3886,10 +3885,10 @@ lab_keep_guess:
 			m_T_save[2] = m_T_save[1] + 5.;
 			m_T_save[3] = T_amb;
 			m_T_save[4] = T_amb;
-			if (m_reguess_args != NULL){
-				m_reguess_args[0] = m_GlazingIntact(hn, hv) ? 1. : 0.;   //Reset previous glazing logic
-				m_reguess_args[1] = T_1_in;            //Reset previous T_1_in
-			}
+
+			mv_reguess_args[0] = m_GlazingIntact(hn, hv) ? 1. : 0.;   //Reset previous glazing logic
+			mv_reguess_args[1] = T_1_in;            //Reset previous T_1_in
+
 		}
 	}
 
@@ -5352,7 +5351,7 @@ double C_csp_trough_collector_receiver::FricFactor(double m_Rough, double Reynol
 * summary - Address of string variable on which summary contents will be written.
 ---------------------------------------------------------------------------------			*/
 
-void C_csp_trough_collector_receiver::header_design(int nhsec, int m_nfsec, int m_nrunsec, bool include_fixed_heat_sink_runner, 
+void C_csp_trough_collector_receiver::header_design(unsigned nhsec, int m_nfsec, unsigned m_nrunsec, bool include_fixed_heat_sink_runner,
 	double rho, double V_max, double V_min, double m_dot,
 	std::vector<double> &m_D_hdr, std::vector<double> &m_D_runner, std::string *summary)
 {
@@ -5362,10 +5361,11 @@ void C_csp_trough_collector_receiver::header_design(int nhsec, int m_nfsec, int 
 	if (m_D_runner.size() != m_nrunsec) m_D_runner.resize(m_nrunsec);
 
 	//----
-	int nst, nend, nd;
+	int nend, nd;
+	unsigned nst;
 	double m_dot_max, m_dot_min;
 
-	for(int i = 0; i < nhsec; i++)
+	for (unsigned i = 0; i < nhsec; i++)
 	{
 		m_D_hdr[i] = 0.0;
 	}
@@ -5397,7 +5397,7 @@ void C_csp_trough_collector_receiver::header_design(int nhsec, int m_nfsec, int 
 			m_dot_runner_split_start = (m_dot - 2.0*m_dot_subsection)/2.0;
 		}
 		
-		for( int i = n_runner; i < m_nrunsec; i++)
+		for (unsigned i = n_runner; i < m_nrunsec; i++)
 		{
 			m_D_runner[i] = pipe_sched(sqrt(4.*m_dot_runner_split_start / (rho*V_max*CSP::pi)));
 			m_dot_runner_split_start = max(m_dot_runner_split_start - m_dot_subsection*2.0, 0.0);
@@ -5407,7 +5407,7 @@ void C_csp_trough_collector_receiver::header_design(int nhsec, int m_nfsec, int 
 	//Calculate each section in the header
 	nst = 0; nend = 0; nd = 0;
 	m_dot_max = m_dot_subsection;
-	for (int i = 0; i<nhsec; i++){
+	for (unsigned i = 0; i<nhsec; i++){
 		if ((i == nst) && (nd <= 10)) {
 			//If we've reached the point where a diameter adjustment must be made...
 			//Also, limit the number of diameter reductions to 10
@@ -5445,7 +5445,7 @@ void C_csp_trough_collector_receiver::header_design(int nhsec, int m_nfsec, int 
 
 		if( m_nrunsec > 0 )
 		{
-			for (int i = 0; i < m_nrunsec; i++)
+			for (unsigned i = 0; i < m_nrunsec; i++)
 			{
 				MySnprintf(tstr, TSTRLEN, "Runner %d diameter: %.4lf m (%.2lf in)\n", i + 1, m_D_runner[i], m_D_runner[i] * m_mtoinch);
 				summary->append(tstr);
@@ -5460,7 +5460,7 @@ void C_csp_trough_collector_receiver::header_design(int nhsec, int m_nfsec, int 
 		summary->append("Loop No. | Diameter [m] | Diameter [in] | Diam. ID\n--------------------------------------------------\n");
 
 		nd = 1;
-		for (int i = 0; i<nhsec; i++){
+		for (unsigned i = 0; i<nhsec; i++){
 			if (i>1) {
 				if (m_D_hdr[i] != m_D_hdr.at(i - 1)) nd = nd + 1;
 			}

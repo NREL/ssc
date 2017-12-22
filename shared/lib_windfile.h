@@ -75,9 +75,11 @@ public:
 	double lat;
 	double lon;
 	double elev;
+	double measurementHeight;
 
 	std::vector<int> types() { return m_dataid; }
 	std::vector<double> heights() { return m_heights; }
+	std::vector<float> relativeHumidity() { return m_relativeHumidity; }
 
 	bool read( double requested_height,
 		double *speed,
@@ -95,8 +97,11 @@ public:
 	std::string error() { return m_errorMsg; }
 
 protected:
-	std::vector<int> m_dataid;
+	/// index of resource type (temp=1,pres=2,speed=3,dir=4) for each measurement height
+	std::vector<int> m_dataid;	
+	/// measurement height corresponding to each column header; same size as m_dataid
 	std::vector<double> m_heights;
+	std::vector<float> m_relativeHumidity;
 	std::string m_errorMsg;
 	
 	bool find_closest( int& closest_index, int id, int ncols, double requested_height, int index_to_exclude = -1 );

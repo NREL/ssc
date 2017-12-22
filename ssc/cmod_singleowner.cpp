@@ -1462,7 +1462,6 @@ public:
 		double reserves_interest = as_double("reserves_interest")*0.01;
 
 		double issuance_of_equity;
-		double equity_investment;
 
 		// ibi fixed
 		double ibi_fed_amount = as_double("ibi_fed_amount");
@@ -2465,9 +2464,6 @@ public:
 		purchase_of_property = -cost_installed + cf.at(CF_reserve_debtservice, 0) + cf.at(CF_reserve_om, 0) + cf.at(CF_reserve_receivables, 0);
 //		issuance_of_equity = cost_installed - (size_of_debt + ibi_total + cbi_total);
 		issuance_of_equity = cost_installed - size_of_debt;
-
-		equity_investment = -issuance_of_equity;
-
 
 		for (i=0; i<=nyears; i++)
 		{

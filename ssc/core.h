@@ -59,6 +59,18 @@
 #include <cstdarg>
 #include <cmath>
 #include <limits>
+#include <memory>
+
+/* Macros for C++11 support */
+template <typename T>
+struct smart_ptr 
+{
+	#if __cplusplus <= 201103L
+	typedef std::unique_ptr<T> ptr;
+	#else
+	typedef std::auto_ptr<T> ptr;
+	#endif
+};
 
 /* Macros require for building
 	__32BIT__ *or* __64BIT__

@@ -107,6 +107,7 @@ static var_info _cm_vtab_wind_obos[] = {
    { SSC_INPUT,        SSC_NUMBER,      "interConVolt",                   "Grid Interconnect Voltage",                                "kV",                 "",                       "wobos",            "?=345",                   "",                              ""},
    { SSC_INPUT,        SSC_NUMBER,      "distInterCon",                   "Distance Over Land to Grid Interconnect",                  "miles",              "",                       "wobos",            "?=3",                     "",                              ""},
    { SSC_INPUT,        SSC_NUMBER,      "scrapVal",                       "Total Scrap Value of Decommissioned Components",           "$",                  "",                       "wobos",            "?=0",                     "",                              ""},
+   { SSC_INPUT,        SSC_NUMBER,      "number_install_seasons",         "Number of Installation Seasons",                           "",                   "",                       "wobos",            "?=1",                     "",                              ""},
 
 //General
    { SSC_INPUT,        SSC_NUMBER,      "projLife",                       "Project Economic Life",                                    "years",              "",                       "wobos",            "?=20",                    "",                              ""},
@@ -147,8 +148,6 @@ static var_info _cm_vtab_wind_obos[] = {
    { SSC_INPUT,        SSC_NUMBER,      "moorDia",                        "Mooring Line Diameter",                                    "m",                  "",                       "wobos",            "",                        "MIN=0.09",                      ""},
    { SSC_INPUT,        SSC_NUMBER,      "moorCR",                         "Mooring Line Cost Rate",                                   "$/m",                "",                       "wobos",            "",                        "MIN=399",                       ""},
    { SSC_INPUT,        SSC_NUMBER,      "scourMat",                       "Scour Protection Material Cost",                           "$/location",         "",                       "wobos",            "?=250000",                "",                              ""},
-   { SSC_INPUT,        SSC_NUMBER,      "number_install_seasons",         "Number of Installation Seasons",                           "",                   "",                       "wobos",            "?=1",                     "",                              ""},
-
 
 //Electrical Infrastructure
    { SSC_INPUT,        SSC_NUMBER,      "pwrFac",                         "Power Transfer Efficiency Factor",                         "%",                  "",                       "wobos",            "?=0.95",                  "",                              ""},
@@ -451,7 +450,8 @@ static var_info _cm_vtab_wind_obos[] = {
    {SSC_OUTPUT,        SSC_NUMBER,      "decomCost",                      "Decommissioning Expense",                                  "$",                  "",                       "wobos",            "",                        "",                              ""},
    {SSC_OUTPUT,        SSC_NUMBER,      "totDevCost",                     "Total Development Cost",                                   "$",                  "",                       "wobos",            "",                        "",                              ""},
    {SSC_OUTPUT,        SSC_NUMBER,      "commissioning",                  "Plant Commissioning Cost",                                 "$",                  "",                       "wobos",            "",                        "",                              ""},
-   
+   {SSC_OUTPUT,        SSC_NUMBER,      "soft_costs",                     "Soft Costs",                                               "$",                  "",                       "wobos",            "",                        "",                              ""},
+ 
    //Total BOS Cost
    {SSC_OUTPUT,        SSC_NUMBER,      "totalBOScost",                   "Total Balance of System Cost",                             "$",                  "",                       "wobos",            "",                        "",                              ""},
 
@@ -1966,32 +1966,12 @@ public:
 		obos.run();
 		
 		//Assign outputs***************************************************************************************************************************************
-		/*
-		assign("subTotCost", var_data((ssc_number_t)obos.subTotCost));
-		assign("totElecCost", var_data((ssc_number_t)obos.totElecCost));
-		assign("totAnICost", var_data((ssc_number_t)obos.totAnICost));
-		assign("totPnSCost", var_data((ssc_number_t)obos.totPnSCost));
-		assign("totEnMCost", var_data((ssc_number_t)obos.totEnMCost));
-		assign("totDevCost", var_data((ssc_number_t)obos.totDevCost));
-        assign("totInstTime", var_data((ssc_number_t)obos.totInstTime));
-        assign("entrExitCost", var_data((ssc_number_t)obos.entrExitCost));
-        assign("wharfCost", var_data((ssc_number_t)obos.wharfCost));
-        assign("dockCost", var_data((ssc_number_t)obos.dockCost));
-        assign("subLayCost", var_data((ssc_number_t)obos.subLayCost));
-        assign("turbLayCost", var_data((ssc_number_t)obos.turbLayCost));
-        assign("craneCost", var_data((ssc_number_t)obos.craneCost));
-		assign("turbInstTime", var_data((ssc_number_t)obos.turbInstTime));
-		assign("subInstTime", var_data((ssc_number_t)obos.subInstTime));
-		assign("arrInstTime", var_data((ssc_number_t)obos.arrInstTime));
-		assign("expInstTime", var_data((ssc_number_t)obos.expInstTime));
-		assign("subsInstTime", var_data((ssc_number_t)obos.subsInstTime));
-		assign("commissioning", var_data((ssc_number_t)obos.commissioning));
 
-		assign("decomCost", var_data((ssc_number_t)obos.decomCost));
+		//misc outputs
 		assign("construction_insurance_cost", var_data((ssc_number_t)obos.construction_insurance_cost));
 		assign("total_contingency_cost", var_data((ssc_number_t)obos.total_contingency_cost));
 		assign("construction_finance_cost", var_data((ssc_number_t)obos.construction_finance_cost));
-		assign("soft_costs", var_data((ssc_number_t)obos.soft_costs));*/
+		assign("soft_costs", var_data((ssc_number_t)obos.soft_costs));
 
 		//Total OBOS output
 		assign("totalBOScost", var_data((ssc_number_t)(ssc_number_t)obos.total_bos_cost));
@@ -2131,6 +2111,8 @@ public:
 		assign("decomCost", var_data((ssc_number_t)obos.decomCost));
 		assign("totDevCost", var_data((ssc_number_t)obos.totDevCost));
 		assign("commissioning", var_data((ssc_number_t)obos.commissioning));
+		assign("commissioning", var_data((ssc_number_t)obos.commissioning));
+		assign("soft_costs", var_data((ssc_number_t)obos.soft_costs));
 
 
 

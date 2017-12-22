@@ -79,6 +79,13 @@ Define _DEBUG if compile with debugging
 
 #define RCINDEX(arr, ncols, r, c) arr[ncols*r+c]
 
+
+#ifndef M_PI
+#define M_PI 3.14159265358979323846264338327
+#endif
+#define sind(x) sin( (M_PI/180.0)*(x) )
+#define cosd(x) cos( (M_PI/180.0)*(x) )
+
 namespace util
 {
 	const double watt_to_kilowatt = 1. / 1000;

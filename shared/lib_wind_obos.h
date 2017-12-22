@@ -51,6 +51,8 @@
 #define __wind_obos_h
 
 #include <vector>
+#include <limits>
+
 using namespace std;
 
 struct wobos //WIND OFFSHORE BOS STRUCTURE TO HOLD ALL INPUTS AND OUTPUTS AND ALLOW MEMBER FUNCTIONS TO OPERATE ON THOSE VALUES
@@ -312,11 +314,12 @@ struct wobos //WIND OFFSHORE BOS STRUCTURE TO HOLD ALL INPUTS AND OUTPUTS AND AL
     double rnaM;
     double towerD;
     double towerM;
-    double construction_insurance_cost;
-    double total_contingency_cost;
-    double construction_finance_cost;
-	double construction_finance_factor; //factor for construction financing
-    double soft_costs;
+  double bos_capex;
+  double construction_insurance_cost;
+  double total_contingency_cost;
+  double construction_finance_cost;
+  double construction_finance_factor; //factor for construction financing
+  double soft_costs;
 
     //Substructure & Foundation outputs
     double mpileM;
@@ -446,10 +449,7 @@ struct wobos //WIND OFFSHORE BOS STRUCTURE TO HOLD ALL INPUTS AND OUTPUTS AND AL
 	double TowerDiameter();
 	double TowerMass();
     void Soft_costs();
-    void Insurance_during_construction();
-    void Construction_finance();
     void Construction_finance_factor();
-    void Total_contingency();
     void Total_bos_cost();
 
 	//Substructure & Foundation Module
