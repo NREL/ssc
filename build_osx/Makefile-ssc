@@ -17,6 +17,7 @@ OBJECTS = \
 	csp_common.o \
 	cmod_lcoefcr.o \
 	cmod_thirdpartyownership.o \
+	cmod_host_developer.o \
 	cmod_snowmodel.o \
 	cmod_iec61853par.o \
 	cmod_layoutarea.o \
