@@ -26,6 +26,7 @@
     <ClCompile Include="..\test\shared_test\lib_irradproc_test.cpp" />
     <ClCompile Include="..\test\shared_test\lib_util_test.cpp" />
     <ClCompile Include="..\test\shared_test\lib_weatherfile_test.cpp" />
+    <ClCompile Include="..\test\shared_test\lib_windfile_test.cpp" />
     <ClCompile Include="..\test\ssc_test\cmod_pvsamv1_test.cpp" />
     <ClCompile Include="..\test\shared_test\lib_windwakemodel_test.cpp" />
     <ClCompile Include="..\test\shared_test\lib_windwatts_test.cpp" />

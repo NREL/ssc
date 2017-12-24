@@ -84,7 +84,7 @@ double windTurbine::tipSpeedRatio(double windSpeed)
 	return (rpm>0) ? rpm * rotorDiameter * physics::PI / (windSpeed*60.0) : 7.0;
 }
 
-void windTurbine::turbinePower(double windVelocityAtDataHeight, double airDensity, double *turbineOutput, double *thrustCoefficient){
+void windTurbine::turbinePower(double windVelocity, double airDensity, double *turbineOutput, double *thrustCoefficient){
 	if (!isInitialized()){
 		errDetails = "windTurbine not initialized with necessary data";
 		return;
@@ -112,33 +112,28 @@ void windTurbine::turbinePower(double windVelocityAtDataHeight, double airDensit
 	i--; //find the index of the last non-zero power output in the power curve
 	m_dCutOutSpeed = m_adPowerCurveWS[i]; //unlike cut in speed, we want power to hard cut AFTER this wind speed value*/
 
-
-	// If the wind speed measurement height (fDataHeight) differs from the turbine hub height (Hub_Ht), use the shear to correct it. 
-	if (shearExponent > 1.0) shearExponent = 1.0 / 7.0;
-	double fWindSpeedAtHubHeight = windVelocityAtDataHeight * pow(hubHeight / measurementHeight, shearExponent);
-
 	// Find power from turbine power curve
 	double out_pwr = 0.0;
-	if ((fWindSpeedAtHubHeight > densityCorrectedWS[0]) && (fWindSpeedAtHubHeight < densityCorrectedWS[powerCurveArrayLength - 1]))
+	if ((windVelocity > densityCorrectedWS[0]) && (windVelocity < densityCorrectedWS[powerCurveArrayLength - 1]))
 	{
 		int j = 1;
-		while (densityCorrectedWS[j] <= fWindSpeedAtHubHeight)
-			j++; // find first m_adPowerCurveWS > fWindSpeedAtHubHeight
+		while (densityCorrectedWS[j] <= windVelocity)
+			j++; // find first m_adPowerCurveWS > windVelocity
 
-		out_pwr = util::interpolate(densityCorrectedWS[j - 1], powerCurveKW[j - 1], densityCorrectedWS[j], powerCurveKW[j], fWindSpeedAtHubHeight);
+		out_pwr = util::interpolate(densityCorrectedWS[j - 1], powerCurveKW[j - 1], densityCorrectedWS[j], powerCurveKW[j], windVelocity);
 	}
-	else if (fWindSpeedAtHubHeight == densityCorrectedWS[powerCurveArrayLength - 1])
+	else if (windVelocity == densityCorrectedWS[powerCurveArrayLength - 1])
 		out_pwr = powerCurveKW[powerCurveArrayLength - 1];
 
 	// Check against turbine cut-in speed
-	if (fWindSpeedAtHubHeight < cutInSpeed) out_pwr = 0.0; //this is effectively redundant, because the power at the cut-in speed is defined to be 0, above, so anything below that will also be 0, but leave in for completeness
+	if (windVelocity < cutInSpeed) out_pwr = 0.0; //this is effectively redundant, because the power at the cut-in speed is defined to be 0, above, so anything below that will also be 0, but leave in for completeness
 
 
 	//if (out_pwr > (m_dRatedPower * 0.001)) // if calculated power is > 0.1% of rating, set outputs
 	if (out_pwr > 0)
 	{
 		out_pwr = out_pwr*(1.0 - lossesPercent) - lossesAbsolute;
-		double pden = 0.5*airDensity*pow(fWindSpeedAtHubHeight, 3.0);
+		double pden = 0.5*airDensity*pow(windVelocity, 3.0);
 		double area = physics::PI / 4.0*rotorDiameter*rotorDiameter;
 		double fPowerCoefficient = max_of(0.0, 1000.0*out_pwr / (pden*area));
 
