@@ -509,6 +509,7 @@ public:
 	// member auto design data
 	double m_eta_thermal_autodes;
 	double m_PR_mc2_autodes;
+	double m_P_mc1_in_autodes;
 	double m_recomp_frac_autodes;
 	double m_LT_frac_autodes;
 	double m_P_high_autodes;
@@ -552,6 +553,7 @@ public:
 	{
 		m_eta_thermal_autodes = m_eta_thermal_des;
 		m_PR_mc2_autodes = m_cycle_des_par.m_PR_mc2;
+		m_P_mc1_in_autodes = m_cycle_des_par.m_P_mc1_in;
 		m_recomp_frac_autodes = m_cycle_des_par.m_recomp_frac;
 		m_LT_frac_autodes = m_cycle_des_par.m_LT_frac;
 		m_P_high_autodes = m_cycle_des_par.m_P_mc2_out;

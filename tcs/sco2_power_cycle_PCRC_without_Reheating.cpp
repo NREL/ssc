@@ -974,3 +974,351 @@ bool RecompCycle_PCRC_without_Reheating::design()
 	return true;
 }
 
+bool RecompCycle_PCRC_without_Reheating::design_no_opt()
+{
+	if( design() )
+	{
+		set_des_data();
+		return true;
+	}
+	else
+	{
+		m_eta_thermal_des = 0.0;
+		m_W_dot_net_des = 0.0;
+		return false;
+	}
+}
+
+bool RecompCycle_PCRC_without_Reheating::optimal_design()
+{
+	// Use booleans to determine whether to optimize the design for any combination of: compressor outlet pressure, pressure ratio, recompression fraction, and UA distribution
+	// These boolean parameters and associated fixed values (if boolean indicate no optimization of parameter) or guess values (if boolean indicates optimization) should
+	// ... be set during the constructor call for the RecompCycle class. These and the constant cycle parameters are stored in 'cycle_design_parameters' structure named 'm_cycle_des_par'
+
+	int index = 0;
+
+	std::vector<double> x(0);
+	std::vector<double> lb(0);
+	std::vector<double> ub(0);
+	std::vector<double> scale(0);
+
+	if (!m_cycle_des_par.m_fixed_P_mc1_in)
+	{
+		x.push_back(m_cycle_des_par.m_P_mc1_in_guess);
+		lb.push_back(7377.0);
+		ub.push_back(m_cycle_des_par.m_P_high_limit);
+		scale.push_back(500.0);
+
+		index++;
+	}
+	
+	if( !m_cycle_des_par.m_fixed_P_mc2_out )
+	{
+		x.push_back(m_cycle_des_par.m_P_mc2_out_guess);
+		lb.push_back(100.0);
+		ub.push_back(m_cycle_des_par.m_P_high_limit);
+		scale.push_back(500.0);
+
+		index++;
+	}
+
+	if( !m_cycle_des_par.m_fixed_PR_mc2 )
+	{
+		x.push_back(m_cycle_des_par.m_PR_mc2_guess);
+		lb.push_back(0.0001);
+		double PR_max = m_cycle_des_par.m_P_high_limit / 100.0;
+		ub.push_back(PR_max);
+		scale.push_back(0.2);
+
+		index++;
+	}
+
+	if( !m_cycle_des_par.m_fixed_recomp_frac )
+	{
+		x.push_back(m_cycle_des_par.m_recomp_frac_guess);
+		lb.push_back(0.0);
+		ub.push_back(1.0);
+		scale.push_back(0.05);
+
+		index++;
+	}
+
+	if( !m_cycle_des_par.m_fixed_LT_frac )
+	{
+		x.push_back(m_cycle_des_par.m_LT_frac_guess);
+		lb.push_back(0.0);
+		ub.push_back(1.0);
+		scale.push_back(0.1);
+
+		index++;
+	}
+
+	if( index > 0 )
+	{
+		// Set up instance of nlopt class and set optimization parameters
+		nlopt::opt		opt_des_cycle(nlopt::LN_SBPLX, index);
+		opt_des_cycle.set_lower_bounds(lb);
+		opt_des_cycle.set_upper_bounds(ub);
+		opt_des_cycle.set_initial_step(scale);
+		opt_des_cycle.set_xtol_rel(m_cycle_des_par.m_opt_tol);
+
+		// Set max objective function
+		opt_des_cycle.set_max_objective(nlopt_callback_opt_des_PCRC_without_Reheating, this);		// Calls wrapper/callback that calls 'design_point_eta', which optimizes design point eta through repeated calls to 'design'
+		double max_f = std::numeric_limits<double>::quiet_NaN();
+		nlopt::result   result_des_cycle = opt_des_cycle.optimize(x, max_f);
+	
+		// After optimization solves, get back the parameters that result in the maximum efficiency
+		index = 0;
+
+		if( !m_cycle_des_par.m_fixed_P_mc1_in )
+		{
+			m_cycle_des_par.m_P_mc1_in = x[index];
+			index++;
+		}
+		
+		if( !m_cycle_des_par.m_fixed_P_mc2_out )
+		{
+			m_cycle_des_par.m_P_mc2_out = x[index];
+			index++;
+		}
+
+		if( !m_cycle_des_par.m_fixed_PR_mc2 )
+		{
+			m_cycle_des_par.m_PR_mc2 = x[index];
+			index++;
+		}
+
+		if( !m_cycle_des_par.m_fixed_recomp_frac )
+		{
+			m_cycle_des_par.m_recomp_frac = x[index];
+			if( m_cycle_des_par.m_recomp_frac <= 1.E-4 )
+				m_cycle_des_par.m_recomp_frac = 0.0;
+
+			index++;
+		}
+
+		if( !m_cycle_des_par.m_fixed_LT_frac )
+		{
+			m_cycle_des_par.m_LT_frac = x[index];
+			index++;
+		}
+	}
+	
+	// Solve a final time with the design parameters to set all component design-point information and check that it solves
+	if( design() )
+	{
+		set_des_data();
+		return true;
+	}
+	else
+	{
+		m_eta_thermal_des = 0.0;
+		m_W_dot_net_des = 0.0;
+		return false;
+	}
+}
+
+double nlopt_callback_opt_des_PCRC_without_Reheating(const std::vector<double> &x, std::vector<double> &grad, void *data)
+{
+	RecompCycle_PCRC_without_Reheating *frame = static_cast<RecompCycle_PCRC_without_Reheating*>(data);
+	if( frame != NULL ) return frame->design_point_eta(x);
+}
+
+double RecompCycle_PCRC_without_Reheating::design_point_eta(const std::vector<double> &x)
+{
+	
+	int index = 0;
+	
+	if( !m_cycle_des_par.m_fixed_P_mc1_in )
+	{
+		m_cycle_des_par.m_P_mc1_in = x[index];
+		if( m_cycle_des_par.m_P_mc1_in > m_cycle_des_par.m_P_high_limit )
+			return 0.0;
+		index++;
+	}
+	
+	if( !m_cycle_des_par.m_fixed_P_mc2_out )
+	{
+		m_cycle_des_par.m_P_mc2_out = x[index];
+		if( m_cycle_des_par.m_P_mc2_out > m_cycle_des_par.m_P_high_limit )
+			return 0.0;
+		index++;
+	}
+
+	if( !m_cycle_des_par.m_fixed_PR_mc2 )
+	{
+		m_cycle_des_par.m_PR_mc2 = x[index];
+		if( m_cycle_des_par.m_PR_mc2 > 15.0 )
+			return 0.0;
+		double P_mc2_in = m_cycle_des_par.m_P_mc2_out/m_cycle_des_par.m_PR_mc2;
+		if( P_mc2_in >= m_cycle_des_par.m_P_mc2_out)
+			return 0.0;
+		if( P_mc2_in <= 7377 )
+			return 0.0;
+		index++;
+	}
+
+	if( !m_cycle_des_par.m_fixed_recomp_frac )
+	{
+		m_cycle_des_par.m_recomp_frac = x[index];
+		if( m_cycle_des_par.m_recomp_frac < 0.0 )
+			return 0.0;
+		index++;	
+	}
+
+	if( !m_cycle_des_par.m_fixed_LT_frac )
+	{
+		m_cycle_des_par.m_LT_frac = x[index];
+		if( m_cycle_des_par.m_LT_frac > 1.0 || m_cycle_des_par.m_LT_frac < 0.0 )
+			return 0.0;
+		index++;
+	}
+
+	if( design() )
+		return m_eta_thermal_last;
+	else
+		return 0.0;
+}
+
+bool RecompCycle_PCRC_without_Reheating::auto_optimal_design()
+{
+	// Optimizes assuming that all 4 optimization parameters should be optimized.
+	// 
+
+	// High pressure is always fixed before code calls 'optimal_design'
+	m_cycle_des_par.m_fixed_P_mc2_out = true;
+	// The Pressure Ratio is always optimized in 'optimal_design'
+	m_cycle_des_par.m_fixed_PR_mc2 = false;
+
+	// Calls opt_eta, which is the outer optimization loop that optimizes the upper pressure
+	// opt_eta then call optimal_design which optimizes the pressure ratio, recompression fraction, and UA distribution
+	double best_P_high = fminbr(
+		m_cycle_des_par.m_P_high_limit*0.2, m_cycle_des_par.m_P_high_limit, &fmin_callback_opt_eta_PCRC_without_Reheating, this, 1.0);
+		
+	double recomp_local = std::numeric_limits<double>::quiet_NaN();
+	// Compare high pressure to limit
+	if( m_cycle_des_par.m_P_high_limit - best_P_high > 1.0 )
+	{	// If the optimized high pressure is not at the limit, check results at the limit
+		m_cycle_des_par.m_PR_mc2_guess = m_PR_mc2_autodes;
+
+		// Simple Cycle
+		m_cycle_des_par.m_fixed_P_mc1_in = false;
+		m_cycle_des_par.m_P_mc1_in_guess = 7377;
+		m_cycle_des_par.m_fixed_recomp_frac = true;
+		m_cycle_des_par.m_recomp_frac = 0.0;
+		m_cycle_des_par.m_fixed_LT_frac = true;
+		m_cycle_des_par.m_LT_frac = 0.5;
+
+		double simple_local = 0.0;
+		if( optimal_design() )	// Optimal design success 
+		{
+			simple_local = m_eta_thermal_des;
+			if( simple_local > m_eta_thermal_autodes )
+				set_autodes_opts();
+		}
+
+		// Set up Recompression Cycle Configuration
+		m_cycle_des_par.m_fixed_P_mc1_in = false;
+		m_cycle_des_par.m_P_mc1_in_guess = 7377;
+		m_cycle_des_par.m_fixed_recomp_frac = false;
+		m_cycle_des_par.m_recomp_frac_guess = 0.1;
+		m_cycle_des_par.m_fixed_LT_frac = false;
+		m_cycle_des_par.m_LT_frac_guess = 0.1;
+
+		recomp_local = 0.0;
+		if( optimal_design() )
+		{
+			recomp_local = m_eta_thermal_des;
+			if( recomp_local > m_eta_thermal_autodes )
+				set_autodes_opts();
+		}
+	}
+
+	// Run design() with optimized design parameters to get final performance metrics
+	if( recomp_local != m_eta_thermal_autodes )
+	{
+		m_cycle_des_par.m_P_mc2_out = m_P_high_autodes;
+		
+		m_cycle_des_par.m_fixed_P_mc1_in = true;
+		m_cycle_des_par.m_P_mc1_in = m_P_mc1_in_autodes;
+
+		m_cycle_des_par.m_fixed_PR_mc2 = true;
+		m_cycle_des_par.m_PR_mc2 = m_PR_mc2_autodes;
+		
+		m_cycle_des_par.m_fixed_recomp_frac = true;
+		m_cycle_des_par.m_recomp_frac = m_recomp_frac_autodes;
+
+		m_cycle_des_par.m_fixed_LT_frac = true;
+		m_cycle_des_par.m_LT_frac = m_LT_frac_autodes;
+
+		if( design() )
+		{
+			set_des_data();
+			return true;
+		}
+		else
+		{
+			m_eta_thermal_des = 0.0;
+			m_W_dot_net_des = 0.0;
+			return false;
+		}
+	}
+
+	return true;
+}
+
+double RecompCycle_PCRC_without_Reheating::opt_eta(double P_high_opt)
+{
+	// fmin_callback_opt_eta uses 'fmin' routine to optimize the high side pressure. Each time f_min chooses a pressure,
+	// this routine sets up calls to 'optimal_design' to optimize the pressure ratio, recomp fraction, and UA distribution for both a simple and recompression cycle
+
+	double P_pseudo = P_pseudocritical_PCRC_without_Reheating(m_cycle_des_par.m_T_mc2_in);
+
+	// Set information for optimization variables in cycle class member structure for cycle design parameters
+	// 1) Set high side pressure to P_high_opt: optimized by fmin
+	m_cycle_des_par.m_P_mc2_out = P_high_opt;
+
+	// 2) Set pressure ratios
+	if( P_high_opt > P_pseudo )
+		m_cycle_des_par.m_PR_mc2_guess = P_high_opt / P_pseudo;
+	else
+		m_cycle_des_par.m_PR_mc2_guess = 1.1;
+
+	// 3-4) LT_frac & recomp_frac: set depending on whether evaluating simple or recomp cycle
+	// Set up Simple Cycle Configuration
+	m_cycle_des_par.m_fixed_recomp_frac = true;
+	m_cycle_des_par.m_recomp_frac = 0.0;
+	m_cycle_des_par.m_fixed_LT_frac = true;
+	m_cycle_des_par.m_LT_frac = 0.5;
+
+	double simple_local = 0.0;
+	if( optimal_design() )	// Optimal design success 
+	{
+		simple_local = m_eta_thermal_des;		
+		if( simple_local > m_eta_thermal_autodes )
+			set_autodes_opts();
+	}
+	
+	// Set up Recompression Cycle Configuration
+	m_cycle_des_par.m_fixed_recomp_frac = false;
+	m_cycle_des_par.m_recomp_frac_guess = 0.3;
+	m_cycle_des_par.m_fixed_LT_frac = false;
+	m_cycle_des_par.m_LT_frac_guess = 0.5;
+
+	double recomp_local = 0.0;
+	if( optimal_design() )
+	{
+		recomp_local = m_eta_thermal_des;
+		if( recomp_local > m_eta_thermal_autodes )
+			set_autodes_opts();
+	}
+
+	return -max(simple_local, recomp_local);	// Minimizer, so return a negative value
+}
+
+double fmin_callback_opt_eta_PCRC_without_Reheating(double x, void *data)
+{
+	RecompCycle_PCRC_without_Reheating *frame = static_cast<RecompCycle_PCRC_without_Reheating*>(data);
+
+	return frame->opt_eta(x);
+}
