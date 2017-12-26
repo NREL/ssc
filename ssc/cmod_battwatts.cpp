@@ -87,36 +87,34 @@ public:
 
 	batt_variables * setup_variables()
 	{
+		// PV power
+		size_t n_recs = 0;
+		as_array("ac", &n_recs);
+
 		batt_variables * batt_vars = new batt_variables();
-		batt_vars->system_use_lifetime_output = false;
-		batt_vars->analysis_period = 25;
-		batt_vars->batt_chem = as_integer("batt_simple_chemistry");
-		batt_vars->batt_voltage_choice = voltage_t::VOLTAGE_MODEL;
-		batt_vars->batt_voltage_matrix = util::matrix_t<double>();
-		batt_vars->batt_calendar_choice = lifetime_calendar_t::NONE;
-		batt_vars->batt_calendar_lifetime_matrix = util::matrix_t<double>();
-
-		int dispatch = as_integer("batt_simple_dispatch");
-		batt_vars->batt_dispatch = (dispatch == 0 ? dispatch_t::LOOK_AHEAD : dispatch_t::LOOK_BEHIND);
-		batt_vars->batt_meter_position = as_integer("batt_simple_meter_position");
-
-		// compute cells, strings, voltage based on desired capacity/power, assume max current is 15 A for a battery
-		double batt_kwh = as_double("batt_simple_kwh");
-		double batt_kw = as_double("batt_simple_kw");
-		double batt_time_hour = batt_kwh / batt_kw;
-		double batt_C_rate_discharge = 1. / batt_time_hour;
-
-		double current_max = 15;
-		double batt_specific_energy_per_mass = 0;
-		double batt_specific_energy_per_volume = 0;
 
 		// allocate vectors
 		std::vector<double> * lifetime_matrix = new std::vector < double >;
 		std::vector<double> * capacity_vs_temperature = new std::vector<double>;
+		double batt_specific_energy_per_mass = 0;
+		double batt_specific_energy_per_volume = 0;
 
 		// lithium ion NMC
 		if (batt_vars->batt_chem == battery_t::LITHIUM_ION)
 		{
+			// Voltage properties
+			batt_vars->batt_Vnom_default = 3.6;
+			batt_vars->batt_Vfull = 4.1;
+			batt_vars->batt_Vexp = 4.05;
+			batt_vars->batt_Vnom = 3.4;
+			batt_vars->batt_Qfull = 2.25;
+			batt_vars->batt_Qfull_flow = 0;
+			batt_vars->batt_Qexp = 1.78;
+			batt_vars->batt_Qnom = 88.9;
+			batt_vars->batt_C_rate = 0.2;
+			batt_vars->batt_resistance = 0.1;
+
+			// Battery lifetime
 			lifetime_matrix->push_back(20); lifetime_matrix->push_back(0); lifetime_matrix->push_back(100);
 			lifetime_matrix->push_back(20); lifetime_matrix->push_back(650); lifetime_matrix->push_back(96);
 			lifetime_matrix->push_back(80); lifetime_matrix->push_back(1500); lifetime_matrix->push_back(87);
@@ -131,34 +129,45 @@ public:
 			batt_vars->batt_calendar_b = -7280;
 			batt_vars->batt_calendar_c = 930;
 
-			batt_vars->batt_Vnom_default = 3.6;
-			batt_vars->batt_Vfull = 4.1;
-			batt_vars->batt_Vexp = 4.05;
-			batt_vars->batt_Vnom = 3.4;
-			batt_vars->batt_Qfull = 2.25;
-			batt_vars->batt_Qfull_flow = 0;
-			batt_vars->batt_Qexp = 1.78;
-			batt_vars->batt_Qnom = 88.9;
-			batt_vars->batt_C_rate = 0.2;
-			batt_vars->batt_resistance = 0.1;
-
+			// Thermal behavior
 			capacity_vs_temperature->push_back(-15); capacity_vs_temperature->push_back(65);
 			capacity_vs_temperature->push_back(0);  capacity_vs_temperature->push_back(85);
 			capacity_vs_temperature->push_back(25); capacity_vs_temperature->push_back(100);
 			capacity_vs_temperature->push_back(40); capacity_vs_temperature->push_back(104);
 			util::matrix_t<double> batt_capacity_vs_temperature(4, 2, capacity_vs_temperature);
 			batt_vars->cap_vs_temp = batt_capacity_vs_temperature;
-
 			batt_vars->batt_Cp = 1004;
 			batt_vars->batt_h_to_ambient = 500;
 			batt_vars->T_room = 20;
-			
 			batt_specific_energy_per_mass = 197.33;  // Wh/kg
 			batt_specific_energy_per_volume = 501.25; // Wh/L
 		}
 		// Lead acid AGM defaults
 		else if (batt_vars->batt_chem == battery_t::LEAD_ACID)
 		{
+			// Capacity properties
+			double LeadAcid_q20 = 100;
+			double LeadAcid_q10 = 93.2;
+			double LeadAcid_qn = 58.12;
+			double LeadAcid_tn = 1;
+
+			batt_vars->LeadAcid_q10_computed = batt_vars->batt_computed_strings * LeadAcid_q10 * batt_vars->batt_Qfull / 100;
+			batt_vars->LeadAcid_q20_computed = batt_vars->batt_computed_strings * LeadAcid_q20 * batt_vars->batt_Qfull / 100;
+			batt_vars->LeadAcid_qn_computed = batt_vars->batt_computed_strings * LeadAcid_qn * batt_vars->batt_Qfull / 100;
+			batt_vars->LeadAcid_tn = LeadAcid_tn;
+
+			// Voltage properties
+			batt_vars->batt_Vnom_default = 2;
+			batt_vars->batt_Vfull = 2.2;
+			batt_vars->batt_Vexp = 2.06;
+			batt_vars->batt_Vnom = 2.03;
+			batt_vars->batt_Qfull = 20;
+			batt_vars->batt_Qexp = 0.25;
+			batt_vars->batt_Qnom = 90;
+			batt_vars->batt_C_rate = 0.05;
+			batt_vars->batt_resistance = 0.1;
+
+			// Battery lifetime
 			lifetime_matrix->push_back(30); lifetime_matrix->push_back(0); lifetime_matrix->push_back(100);
 			lifetime_matrix->push_back(30); lifetime_matrix->push_back(1100); lifetime_matrix->push_back(90);
 			lifetime_matrix->push_back(30); lifetime_matrix->push_back(1200); lifetime_matrix->push_back(50);
@@ -171,16 +180,7 @@ public:
 			util::matrix_t<double> batt_lifetime_matrix(9, 3, lifetime_matrix);
 			batt_vars->batt_lifetime_matrix = batt_lifetime_matrix;
 
-			batt_vars->batt_Vnom_default = 2;
-			batt_vars->batt_Vfull = 2.2;
-			batt_vars->batt_Vexp = 2.06;
-			batt_vars->batt_Vnom = 2.03;
-			batt_vars->batt_Qfull = 20;
-			batt_vars->batt_Qexp = 0.25;
-			batt_vars->batt_Qnom = 90;
-			batt_vars->batt_C_rate = 0.05;
-			batt_vars->batt_resistance = 0.1;
-
+			// Thermal behavior
 			capacity_vs_temperature->push_back(-15); capacity_vs_temperature->push_back(65);
 			capacity_vs_temperature->push_back(0);  capacity_vs_temperature->push_back(85);
 			capacity_vs_temperature->push_back(25); capacity_vs_temperature->push_back(100);
@@ -195,60 +195,49 @@ public:
 			batt_specific_energy_per_mass = 30;  // Wh/kg
 			batt_specific_energy_per_volume = 30; // Wh/L
 		}
-		batt_vars->batt_ac_dc_efficiency = 92; 
-		batt_vars->batt_dc_ac_efficiency = 92;
-		batt_vars->batt_dc_dc_bms_efficiency = 92;
+
+
+		// Financial Parameters
+		batt_vars->analysis_period = 25;
+		batt_vars->batt_meter_position = as_integer("batt_simple_meter_position");
+
+		// Lifetime simulation
+		batt_vars->system_use_lifetime_output = false;
+
+		// Chemistry
+		batt_vars->batt_chem = as_integer("batt_simple_chemistry");
+
+		// Battery bank sizing (assuming max current = 15A)
+		batt_vars->batt_kwh = as_double("batt_simple_kwh");
+		batt_vars->batt_kw = as_double("batt_simple_kw");
+		double current_max = 15;
+		double batt_bank_voltage = batt_vars->batt_kw * 1000. / current_max;
+		batt_vars->batt_computed_series = (int)std::ceil(batt_bank_voltage / batt_vars->batt_Vnom_default);
+		batt_vars->batt_computed_strings = (int)std::ceil((batt_vars->batt_kwh * 1000.) / (batt_vars->batt_Qfull * batt_vars->batt_computed_series * batt_vars->batt_Vnom_default)) - 1;
+
+		// Common Voltage properties
+		batt_vars->batt_voltage_choice = voltage_t::VOLTAGE_MODEL;
+		batt_vars->batt_voltage_matrix = util::matrix_t<double>();
+
+		// Current and Capacity
+		double batt_time_hour = batt_vars->batt_kwh / batt_vars->batt_kw;
+		double batt_C_rate_discharge = 1. / batt_time_hour;
+		batt_vars->batt_current_choice = dispatch_t::RESTRICT_CURRENT;
+		batt_vars->batt_current_charge_max = 1000 * batt_C_rate_discharge * batt_vars->batt_kwh / batt_bank_voltage;
+		batt_vars->batt_current_discharge_max = 1000 * batt_C_rate_discharge * batt_vars->batt_kwh / batt_bank_voltage;
+		batt_vars->batt_power_charge_max = batt_vars->batt_kw;
+		batt_vars->batt_power_discharge_max = batt_vars->batt_kw;
+
+		// Power converters and topology
+		batt_vars->batt_topology = charge_controller::AC_CONNECTED;
+		batt_vars->batt_ac_dc_efficiency = 96;
+		batt_vars->batt_dc_ac_efficiency = 96;
+		batt_vars->batt_dc_dc_bms_efficiency = 99;
 		batt_vars->pv_dc_dc_mppt_efficiency = 99;
 
-		double batt_bank_voltage = batt_kw * 1000. / current_max;
-		batt_vars->batt_computed_series = (int)std::ceil(batt_bank_voltage / batt_vars->batt_Vnom_default);
-		batt_vars->batt_computed_strings = (int)std::ceil((batt_kwh * 1000.) / (batt_vars->batt_Qfull * batt_vars->batt_computed_series * batt_vars->batt_Vnom_default)) - 1;
-
-		if (batt_vars->batt_chem == battery_t::LEAD_ACID)
-		{
-			double LeadAcid_q20 = 100;
-			double LeadAcid_q10 = 93.2;
-			double LeadAcid_qn = 58.12;
-			double LeadAcid_tn = 1;
-
-			batt_vars->LeadAcid_q10_computed = batt_vars->batt_computed_strings * LeadAcid_q10 * batt_vars->batt_Qfull / 100;
-			batt_vars->LeadAcid_q20_computed = batt_vars->batt_computed_strings * LeadAcid_q20 * batt_vars->batt_Qfull / 100;
-			batt_vars->LeadAcid_qn_computed = batt_vars->batt_computed_strings * LeadAcid_qn * batt_vars->batt_Qfull / 100;
-			batt_vars->LeadAcid_tn = LeadAcid_tn;
-		}
-
-		batt_vars->batt_kwh = batt_kwh;
-		batt_vars->batt_kw = batt_kw;
-
-		batt_vars->batt_mass = batt_kwh * 1000 / batt_specific_energy_per_mass;
-		double batt_volume = batt_kwh / batt_specific_energy_per_volume;
-		batt_vars->batt_length = std::pow(batt_volume, 1. / 3.);
-		batt_vars->batt_width = std::pow(batt_volume, 1. / 3.);
-		batt_vars->batt_height = std::pow(batt_volume, 1. / 3.);
-		
-		// control constraints
-		batt_vars->batt_pv_choice = dispatch_t::MEET_LOAD;
-		batt_vars->batt_maximum_SOC = 95.;
-		batt_vars->batt_minimum_SOC = 15.;
-		batt_vars->batt_current_choice = dispatch_t::RESTRICT_CURRENT;
-		batt_vars->batt_current_charge_max = 1000 * batt_C_rate_discharge * batt_kwh / batt_bank_voltage;
-		batt_vars->batt_current_discharge_max = 1000 * batt_C_rate_discharge * batt_kwh / batt_bank_voltage;
-		batt_vars->batt_power_charge_max = batt_kw;
-		batt_vars->batt_power_discharge_max = batt_kw;
-		batt_vars->batt_minimum_modetime = 10;
-
-		batt_vars->batt_topology = charge_controller::AC_CONNECTED;
-		batt_vars->inverter_model = as_integer("inverter_model");
-		if (batt_vars->inverter_model > 3)
-			batt_vars->inverter_efficiency = as_double("inverter_efficiency");
-
-		// losses
+		// Ancillary equipment losses
 		double_vec batt_losses;
 		double_vec batt_losses_monthly = { 0 };
-
-		size_t n_recs = 0;
-		as_array("ac", &n_recs);
-//		ssc_number_t * p_ac = as_array("ac", &n_recs);
 		for (int i = 0; i != (int)n_recs; i++)
 			batt_losses.push_back(0.);
 		for (int m = 0; m != 12; m++)
@@ -260,11 +249,38 @@ public:
 		batt_vars->batt_losses_discharging = batt_losses_monthly;
 		batt_vars->batt_losses_idle = batt_losses_monthly;
 
+		// Charge limits and priority
+		batt_vars->batt_initial_SOC = 50.;
+		batt_vars->batt_maximum_SOC = 95.;
+		batt_vars->batt_minimum_SOC = 15.;
+		batt_vars->batt_minimum_modetime = 10;
 
-		// replacement
+		// Storage dispatch controllers
+		int dispatch = as_integer("batt_simple_dispatch");
+		batt_vars->batt_dispatch = (dispatch == 0 ? dispatch_t::LOOK_AHEAD : dispatch_t::LOOK_BEHIND);
+		batt_vars->batt_pv_choice = dispatch_t::MEET_LOAD;
+
+		// Battery bank replacement
 		batt_vars->batt_replacement_capacity = 0.;
 
-		// clean up
+		// Battery lifetime
+		batt_vars->batt_calendar_choice = lifetime_calendar_t::NONE;
+		batt_vars->batt_calendar_lifetime_matrix = util::matrix_t<double>();
+
+		// Common Thermal behavior
+		batt_vars->batt_mass = batt_vars->batt_kwh * 1000 / batt_specific_energy_per_mass;
+		double batt_volume = batt_vars->batt_kwh / batt_specific_energy_per_volume;
+		batt_vars->batt_length = std::pow(batt_volume, 1. / 3.);
+		batt_vars->batt_width = std::pow(batt_volume, 1. / 3.);
+		batt_vars->batt_height = std::pow(batt_volume, 1. / 3.);
+		
+	
+		// Inverter model
+		batt_vars->inverter_model = as_integer("inverter_model");
+		if (batt_vars->inverter_model > 3)
+			batt_vars->inverter_efficiency = as_double("inverter_efficiency");
+
+		// Clean up
 		delete lifetime_matrix;
 		delete capacity_vs_temperature;
 

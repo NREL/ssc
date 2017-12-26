@@ -223,7 +223,7 @@ struct battstor
 	  \param P_load the current electric load (kW)
 	  \param P_pv_clipped the amount of PV which will be clipped with no battery usage (kW)
 	*/
-	void advance(compute_module &cm, double P_pv, double P_load, double P_pv_clipped=0);
+	void advance(compute_module &cm, double P_pv, double P_load=0, double P_pv_clipped=0);
 	void outputs_fixed(compute_module &cm);
 	void outputs_topology_dependent(compute_module &cm);
 	void metrics(compute_module &cm);

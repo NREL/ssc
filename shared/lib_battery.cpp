@@ -1159,26 +1159,29 @@ void lifetime_calendar_t::copy(lifetime_calendar_t * lifetime_calendar)
 }
 double lifetime_calendar_t::runLifetimeCalendarModel(size_t idx, double T, double SOC)
 {
-	// only run once per iteration (need to make the last iteration)
-	if (idx > _last_idx)
+	double dq = 0;
+	if (_calendar_choice != lifetime_calendar_t::NONE)
 	{
+		// only run once per iteration (need to make the last iteration)
+		if (idx > _last_idx)
+		{
 
-		if (idx % util::hours_per_day / _dt_hour == 0)
-			_day_age_of_battery++;
+			if (idx % util::hours_per_day / _dt_hour == 0)
+				_day_age_of_battery++;
 
-		if (_calendar_choice == lifetime_calendar_t::LITHIUM_ION_CALENDAR_MODEL)
-			runLithiumIonModel(T, SOC);
-		else if (_calendar_choice == lifetime_calendar_t::CALENDAR_LOSS_TABLE)
-			runTableModel();
-		
-		_last_idx = idx;
+			if (_calendar_choice == lifetime_calendar_t::LITHIUM_ION_CALENDAR_MODEL)
+				runLithiumIonModel(T, SOC);
+			else if (_calendar_choice == lifetime_calendar_t::CALENDAR_LOSS_TABLE)
+				runTableModel();
+
+			_last_idx = idx;
+		}
+
+		// don't allow negative degradation
+		dq = 100 - _q;
+		if (dq < 0)
+			dq = 0;
 	}
-	
-	// initial fit is 102%
-	double dq = 100 - _q;
-	if (dq < 0)
-		dq = 0;
-
 	return dq;
 }
 void lifetime_calendar_t::runLithiumIonModel(double T, double SOC)

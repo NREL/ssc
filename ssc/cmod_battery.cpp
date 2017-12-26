@@ -263,19 +263,77 @@ battstor::battstor(compute_module &cm, bool setup_model, int replacement_option,
 		batt_vars->en_batt = cm.as_boolean("en_batt");
 		if (batt_vars->en_batt)
 		{
-			batt_vars->system_use_lifetime_output = cm.as_boolean("system_use_lifetime_output");
+			// Financial Parameters
 			batt_vars->analysis_period = cm.as_integer("analysis_period");
-			batt_vars->batt_chem = cm.as_integer("batt_chem");
-			batt_vars->batt_current_choice = cm.as_integer("batt_current_choice");
-			batt_vars->batt_voltage_choice = cm.as_integer("batt_voltage_choice");
-			batt_vars->batt_dispatch = cm.as_integer("batt_dispatch_choice");
 			batt_vars->batt_meter_position = cm.as_integer("batt_meter_position");
-			batt_vars->batt_pv_choice = cm.as_integer("batt_pv_choice");
-			batt_vars->batt_loss_choice = cm.as_integer("batt_loss_choice");
-			batt_vars->batt_calendar_choice = cm.as_integer("batt_calendar_choice");
+
+			// Lifetime simulation
+			batt_vars->system_use_lifetime_output = cm.as_boolean("system_use_lifetime_output");
+
+			// System Costs
 			batt_vars->batt_cost_per_kwh = cm.as_double("battery_per_kWh");
 
-			// Automated front-of-meter dispatch
+			// Chemistry
+			batt_vars->batt_chem = cm.as_integer("batt_chem");
+
+			// Lead acid settings
+			if (batt_vars->batt_chem == battery_t::LEAD_ACID)
+			{
+				batt_vars->LeadAcid_q10_computed = cm.as_double("LeadAcid_q10_computed");
+				batt_vars->LeadAcid_q20_computed = cm.as_double("LeadAcid_q20_computed");
+				batt_vars->LeadAcid_qn_computed = cm.as_double("LeadAcid_qn_computed");
+				batt_vars->LeadAcid_tn = cm.as_double("LeadAcid_tn");
+			}
+
+			// Battery bank sizing
+			batt_vars->batt_computed_series = cm.as_integer("batt_computed_series");
+			batt_vars->batt_computed_strings = cm.as_integer("batt_computed_strings");
+			batt_vars->batt_kwh = cm.as_double("batt_computed_bank_capacity");
+
+			// Voltage properties
+			batt_vars->batt_voltage_choice = cm.as_integer("batt_voltage_choice");
+			batt_vars->batt_Vnom_default = cm.as_double("batt_Vnom_default");
+			batt_vars->batt_Vfull = cm.as_double("batt_Vfull");
+			batt_vars->batt_Vexp = cm.as_double("batt_Vexp");
+			batt_vars->batt_Vnom = cm.as_double("batt_Vnom");
+			batt_vars->batt_Qfull_flow = cm.as_double("batt_Qfull_flow");
+			batt_vars->batt_Qfull = cm.as_double("batt_Qfull");
+			batt_vars->batt_Qexp = cm.as_double("batt_Qexp");
+			batt_vars->batt_Qnom = cm.as_double("batt_Qnom");
+			batt_vars->batt_C_rate = cm.as_double("batt_C_rate");
+			batt_vars->batt_resistance = cm.as_double("batt_resistance");
+
+			// Current and capacity
+			batt_vars->batt_current_choice = cm.as_integer("batt_current_choice");
+			batt_vars->batt_current_charge_max = cm.as_double("batt_current_charge_max");
+			batt_vars->batt_current_discharge_max = cm.as_double("batt_current_discharge_max");
+			batt_vars->batt_power_charge_max = cm.as_double("batt_power_charge_max");
+			batt_vars->batt_power_discharge_max = cm.as_double("batt_power_discharge_max");
+
+			// Power converters and topology
+			batt_vars->batt_topology = cm.as_integer("batt_ac_or_dc");
+			batt_vars->batt_ac_dc_efficiency = cm.as_double("batt_ac_dc_efficiency");
+			batt_vars->batt_dc_ac_efficiency = cm.as_double("batt_dc_ac_efficiency");
+			batt_vars->batt_dc_dc_bms_efficiency = cm.as_double("batt_dc_dc_efficiency");
+			batt_vars->pv_dc_dc_mppt_efficiency = 100. - cm.as_double("dcoptimizer_loss");
+
+			// Ancillary equipment losses
+			batt_vars->batt_loss_choice = cm.as_integer("batt_loss_choice");
+			batt_vars->batt_losses_charging = cm.as_vector_double("batt_losses_charging");
+			batt_vars->batt_losses_discharging = cm.as_vector_double("batt_losses_discharging");
+			batt_vars->batt_losses_idle = cm.as_vector_double("batt_losses_idle");
+			batt_vars->batt_losses = cm.as_vector_double("batt_losses");
+
+			// Charge limits and priority
+			batt_vars->batt_initial_SOC = cm.as_double("batt_initial_SOC");
+			batt_vars->batt_maximum_SOC = cm.as_double("batt_maximum_soc");
+			batt_vars->batt_minimum_SOC = cm.as_double("batt_minimum_soc");
+			batt_vars->batt_minimum_modetime = cm.as_double("batt_minimum_modetime");
+
+			// Storage dispatch controllers
+			batt_vars->batt_dispatch = cm.as_integer("batt_dispatch_choice");
+
+			// Automated front of meter
 			if (batt_vars->batt_meter_position == dispatch_t::FRONT)
 			{
 				batt_vars->pv_dc_forecast = cm.as_vector_double("dc_net_forecast");
@@ -301,7 +359,7 @@ battstor::battstor(compute_module &cm, bool setup_model, int replacement_option,
 					batt_vars->batt_dispatch_update_frequency_hours = cm.as_unsigned_long("batt_dispatch_update_frequency_hours");
 				}
 			}
-			// Automated behind-the-meter modes
+			// Automated behind-the-meter
 			else
 			{
 				if (batt_vars->batt_dispatch == dispatch_t::MAINTAIN_TARGET)
@@ -317,7 +375,9 @@ battstor::battstor(compute_module &cm, bool setup_model, int replacement_option,
 
 				batt_vars->batt_dispatch_auto_can_gridcharge = cm.as_boolean("batt_dispatch_auto_can_gridcharge");
 			}
-			// Manual dispatch modes
+
+			// Manual dispatch
+			batt_vars->batt_pv_choice = cm.as_integer("batt_pv_choice");
 			if ((batt_vars->batt_meter_position == dispatch_t::FRONT && batt_vars->batt_dispatch == dispatch_t::FOM_MANUAL ) ||
 				(batt_vars->batt_meter_position == dispatch_t::BEHIND && batt_vars->batt_dispatch == dispatch_t::MANUAL))
 			{
@@ -330,32 +390,20 @@ battstor::battstor(compute_module &cm, bool setup_model, int replacement_option,
 				batt_vars->batt_discharge_schedule_weekend = cm.as_matrix_unsigned_long("dispatch_manual_sched_weekend");
 			}
 
+			// Battery bank replacement
+			batt_vars->batt_replacement_capacity = cm.as_double("batt_replacement_capacity");
 
+			// Battery lifetime
+			batt_vars->batt_calendar_choice = cm.as_integer("batt_calendar_choice");
 			batt_vars->batt_lifetime_matrix = cm.as_matrix("batt_lifetime_matrix");
 			batt_vars->batt_calendar_lifetime_matrix = cm.as_matrix("batt_calendar_lifetime_matrix");
 			batt_vars->batt_voltage_matrix = cm.as_matrix("batt_voltage_matrix");
-
 			batt_vars->batt_calendar_q0 = cm.as_double("batt_calendar_q0");
 			batt_vars->batt_calendar_a = cm.as_double("batt_calendar_a");
 			batt_vars->batt_calendar_b = cm.as_double("batt_calendar_b");
 			batt_vars->batt_calendar_c = cm.as_double("batt_calendar_c");
 
-			batt_vars->batt_computed_series = cm.as_integer("batt_computed_series");
-			batt_vars->batt_computed_strings = cm.as_integer("batt_computed_strings");
-			batt_vars->batt_kwh = cm.as_double("batt_computed_bank_capacity");
-
-			batt_vars->batt_Vnom_default = cm.as_double("batt_Vnom_default");
-			batt_vars->batt_Vfull = cm.as_double("batt_Vfull");
-			batt_vars->batt_Vexp = cm.as_double("batt_Vexp");
-			batt_vars->batt_Vnom = cm.as_double("batt_Vnom");
-			batt_vars->batt_Qfull_flow = cm.as_double("batt_Qfull_flow");
-			batt_vars->batt_Qfull = cm.as_double("batt_Qfull");
-			batt_vars->batt_Qexp = cm.as_double("batt_Qexp");
-			batt_vars->batt_Qnom = cm.as_double("batt_Qnom");
-			batt_vars->batt_C_rate = cm.as_double("batt_C_rate");
-			batt_vars->batt_resistance = cm.as_double("batt_resistance");
-
-			batt_vars->batt_replacement_capacity = cm.as_double("batt_replacement_capacity");
+			// Thermal behavior
 			batt_vars->cap_vs_temp = cm.as_matrix("cap_vs_temp");
 			batt_vars->batt_mass = cm.as_double("batt_mass");
 			batt_vars->batt_length = cm.as_double("batt_length");
@@ -365,33 +413,7 @@ battstor::battstor(compute_module &cm, bool setup_model, int replacement_option,
 			batt_vars->batt_h_to_ambient = cm.as_double("batt_h_to_ambient");
 			batt_vars->T_room = cm.as_double("T_room");
 
-			if (batt_vars->batt_chem == battery_t::LEAD_ACID)
-			{
-				batt_vars->LeadAcid_q10_computed = cm.as_double("LeadAcid_q10_computed");
-				batt_vars->LeadAcid_q20_computed = cm.as_double("LeadAcid_q20_computed");
-				batt_vars->LeadAcid_qn_computed = cm.as_double("LeadAcid_qn_computed");
-				batt_vars->LeadAcid_tn = cm.as_double("LeadAcid_tn");
-			}
-			batt_vars->batt_initial_SOC = cm.as_double("batt_initial_SOC");
-			batt_vars->batt_maximum_SOC = cm.as_double("batt_maximum_soc");
-			batt_vars->batt_minimum_SOC = cm.as_double("batt_minimum_soc");
-			batt_vars->batt_current_charge_max = cm.as_double("batt_current_charge_max");
-			batt_vars->batt_current_discharge_max = cm.as_double("batt_current_discharge_max");
-			batt_vars->batt_power_charge_max = cm.as_double("batt_power_charge_max");
-			batt_vars->batt_power_discharge_max = cm.as_double("batt_power_discharge_max");
-			batt_vars->batt_minimum_modetime = cm.as_double("batt_minimum_modetime");
-
-			batt_vars->batt_topology = cm.as_integer("batt_ac_or_dc");
-			batt_vars->batt_ac_dc_efficiency = cm.as_double("batt_ac_dc_efficiency");
-			batt_vars->batt_dc_ac_efficiency = cm.as_double("batt_dc_ac_efficiency");
-			batt_vars->batt_dc_dc_bms_efficiency = cm.as_double("batt_dc_dc_efficiency");
-			batt_vars->pv_dc_dc_mppt_efficiency = 100. - cm.as_double("dcoptimizer_loss");
-
-			batt_vars->batt_losses_charging = cm.as_vector_double("batt_losses_charging");
-			batt_vars->batt_losses_discharging = cm.as_vector_double("batt_losses_discharging");
-			batt_vars->batt_losses_idle = cm.as_vector_double("batt_losses_idle");
-			batt_vars->batt_losses = cm.as_vector_double("batt_losses");
-
+			// Inverter settings
 			batt_vars->inverter_model = cm.as_integer("inverter_model");
 			batt_vars->inverter_count = cm.as_integer("inverter_count");
 
@@ -857,53 +879,101 @@ void battstor::initialize_automated_dispatch(ssc_number_t *pv, ssc_number_t *loa
 		size_t nrec = nyears * 8760 * step_per_hour;
 		if (!input_custom_dispatch)
 		{
-			if (pv != 0)
+
+			// look ahead
+			if (look_ahead)
 			{
-				// look ahead
-				if (look_ahead)
+				if (pv != 0)
 				{
-					for (size_t idx = 0; idx != nrec; idx++)
-					{
+					for (size_t idx = 0; idx != nrec; idx++) {
 						pv_prediction.push_back(pv[idx]);
+					}
+			
+				}
+				if (load != 0) 
+				{
+					for (size_t idx = 0; idx != nrec; idx++) {
 						load_prediction.push_back(load[idx]);
-						cliploss_prediction.push_back((*cliploss)[idx]);
 					}
 				}
-				else if (look_behind)
+				if (cliploss != 0) 
 				{
-					// day one is zeros
-					for (size_t idx = 0; idx != 24 * step_per_hour; idx++)
-					{
-						pv_prediction.push_back(0);
-						load_prediction.push_back(0);
-						cliploss_prediction.push_back(0);
-					}
-					for (size_t idx = 0; idx != nrec - 24 * step_per_hour; idx++)
-					{
-						pv_prediction.push_back(pv[idx]);
-						load_prediction.push_back(load[idx]);
-						cliploss_prediction.push_back((*cliploss)[idx]);
-					}
-				}
-				else if (input_forecast)
-				{
-					for (size_t idx = 0; idx != 24 * step_per_hour; idx++)
-					{
-						pv_prediction.push_back(batt_vars->pv_dc_forecast[idx]);
-						load_prediction.push_back(load[idx]);
+					for (size_t idx = 0; idx != nrec; idx++) {
 						cliploss_prediction.push_back((*cliploss)[idx]);
 					}
 				}
 			}
-			else
+			else if (look_behind)
 			{
-				for (size_t idx = 0; idx != nrec; idx++)
+				// day one is zeros
+				for (size_t idx = 0; idx != 24 * step_per_hour; idx++)
 				{
+					pv_prediction.push_back(0);
+					load_prediction.push_back(0);
+					cliploss_prediction.push_back(0);
+				}
+
+				if (pv != 0)
+				{
+					for (size_t idx = 0; idx != nrec - 24 * step_per_hour; idx++){
+						pv_prediction.push_back(pv[idx]);
+					}
+				}
+				if (load !=0 )
+				{
+					for (size_t idx = 0; idx != nrec - 24 * step_per_hour; idx++) {
+						load_prediction.push_back(load[idx]);
+					}
+				}
+				if (cliploss !=0 )
+				{
+					for (size_t idx = 0; idx != nrec - 24 * step_per_hour; idx++) {
+						cliploss_prediction.push_back((*cliploss)[idx]);
+					}
+				}
+			}
+			else if (input_forecast)
+			{
+				if (pv != 0)
+				{
+					for (size_t idx = 0; idx != 24 * step_per_hour; idx++){
+						pv_prediction.push_back(batt_vars->pv_dc_forecast[idx]);
+					}
+				}
+				if (load !=0 )
+				{
+					for (size_t idx = 0; idx != 24 * step_per_hour; idx++) {
+						load_prediction.push_back(load[idx]);
+					}
+				}
+				if (cliploss != 0)
+				{
+					for (size_t idx = 0; idx != 24 * step_per_hour; idx++) {
+						cliploss_prediction.push_back((*cliploss)[idx]);
+					}
+				}
+			}
+			// Input checking
+			if (pv == 0)
+			{
+
+				for (size_t idx = 0; idx != nrec; idx++)				{
 					pv_prediction.push_back(0.);
+				}
+			}
+			if (load == 0)
+			{
+				for (size_t idx = 0; idx != nrec; idx++) {
 					load_prediction.push_back(0.);
+				}
+			}
+			if (!cliploss != 0)
+			{
+				for (size_t idx = 0; idx != nrec; idx++) {
 					cliploss_prediction.push_back(0.);
 				}
 			}
+
 			if (dispatch_automatic_behind_the_meter_t * automatic_dispatch_btm = dynamic_cast<dispatch_automatic_behind_the_meter_t*>(dispatch_model))
 			{
 				automatic_dispatch_btm->update_pv_data(pv_prediction);

@@ -1312,13 +1312,14 @@ void dispatch_automatic_behind_the_meter_t::target_power(FILE*p, bool debug, dou
 		double P_target = sorted_grid[0].Grid();
 		double P_target_min = 1e16;
 		double E_charge = 0.;
-		size_t index = _num_steps - 1;
+		int index = (int)_num_steps - 1;
 		std::vector<double> E_charge_vec;
-		for (size_t jj = _num_steps - 1; jj >= 0; jj--)
+		for (int jj = (int)_num_steps - 1; jj >= 0; jj--)
 		{
 			E_charge = 0.;
 			P_target_min = sorted_grid[index].Grid();
-			for (size_t ii = _num_steps - 1; ii >= 0; ii--)
+
+			for (int ii = (int)_num_steps - 1; ii >= 0; ii--)
 			{
 				if (sorted_grid[ii].Grid() > P_target_min)
 					break;
@@ -1327,7 +1328,7 @@ void dispatch_automatic_behind_the_meter_t::target_power(FILE*p, bool debug, dou
 			}
 			E_charge_vec.push_back(E_charge);
 			if (debug)
-				fprintf(p, "%zu: index\t%.3f\t %.3f\n", index, P_target_min, E_charge);
+				fprintf(p, "%u: index\t%.3f\t %.3f\n", index, P_target_min, E_charge);
 			index--;
 
 			if (index < 0)
