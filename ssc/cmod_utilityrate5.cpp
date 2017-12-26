@@ -56,6 +56,14 @@
 static var_info vtab_utility_rate5[] = {
 
 /*   VARTYPE           DATATYPE         NAME                         LABEL                                           UNITS     META                      GROUP          REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
+
+// 3 additional variables for PPA Buy rate
+// optional output from battery model
+	{ SSC_INPUT,        SSC_NUMBER,      "en_batt",                                    "Enable battery storage model",                            "0/1",     "",                     "Battery",       "?=0",                                 "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "batt_meter_position",                        "Position of battery relative to electric meter",          "",        "",                     "Battery",       "",                           "",                              "" },
+	{ SSC_INPUT, SSC_ARRAY,      "grid_to_batt",                               "Electricity to battery from grid",                      "kW",      "",                       "Battery",       "",                           "",                              "" }, 
+
+
 	{ SSC_INPUT,        SSC_NUMBER,     "analysis_period",           "Number of years in analysis",                   "years",  "",                      "",             "*",                         "INTEGER,POSITIVE",              "" },
 
 	{ SSC_INPUT, SSC_NUMBER, "system_use_lifetime_output", "Lifetime hourly system outputs", "0/1", "0=hourly first year,1=hourly lifetime", "", "*", "INTEGER,MIN=0,MAX=1", "" },
@@ -516,6 +524,21 @@ public:
 				throw exec_error("utilityrate5", util::format("number of load records (%d) must be equal to number of gen records (%d) or 8760 for each year", (int)nrec_load, (int)m_num_rec_yearly));
 		}
 //		ssc_number_t ts_hour_load = 1.0f / step_per_hour_load;
+
+// update for battery in front of meter case
+		if ((is_assigned("en_batt")) && (as_number("en_batt") == 1) && (is_assigned("batt_meter_position")) && (as_number("batt_meter_position") == 1) && is_assigned("grid_to_batt"))
+		{ // pgen = 0 and pload = grid_batt
+			for (i = 0; i < nrec_gen; i++)
+				pgen[i] = 0.0;
+			bload = true;
+			pload = as_array("grid_to_batt", &nrec_load);
+			step_per_hour_load = nrec_load / 8760;
+			if (step_per_hour_load < 1 || step_per_hour_load > 60 || step_per_hour_load * 8760 != nrec_load)
+				throw exec_error("utilityrate5", util::format("invalid number of load records (%d): must be an integer multiple of 8760", (int)nrec_load));
+			if ((nrec_load != m_num_rec_yearly) && (nrec_load != 8760))
+				throw exec_error("utilityrate5", util::format("number of load records (%d) must be equal to number of gen records (%d) or 8760 for each year", (int)nrec_load, (int)m_num_rec_yearly));
+		}
+
 
 		// prepare timestep arrays for load and grid values
 		std::vector<ssc_number_t> 
