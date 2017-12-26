@@ -102,9 +102,9 @@ std::string message::construct_log_count_string(int index)
 Define Capacity Model 
 */
 
-capacity_t::capacity_t(double q, double SOC_max, double SOC_min)
+capacity_t::capacity_t(double q, double SOC_init, double SOC_max, double SOC_min)
 {
-	_q0 = 0.01*SOC_max*q;
+	_q0 = 0.01*SOC_init*q;
 	_qmax = q;
 	_qmax_thermal = q;
 	_qmax0 = q;
@@ -113,7 +113,7 @@ capacity_t::capacity_t(double q, double SOC_max, double SOC_min)
 	_dt_hour = 0.;
 
 	// Initialize SOC, DOD
-	_SOC = SOC_max;
+	_SOC = SOC_init;
 	_SOC_max = SOC_max;
 	_SOC_min = SOC_min;
 	_DOD = 0;
@@ -220,8 +220,8 @@ double capacity_t::I_loss() { return _I_loss; }
 /*
 Define KiBam Capacity Model
 */
-capacity_kibam_t::capacity_kibam_t(double q20, double t1, double q1, double q10, double SOC_max, double SOC_min) :
-capacity_t(q20, SOC_max, SOC_min)
+capacity_kibam_t::capacity_kibam_t(double q20, double t1, double q1, double q10, double SOC_init, double SOC_max, double SOC_min) :
+capacity_t(q20, SOC_init, SOC_max, SOC_min)
 {
 	_q10 = q10;
 	_q20 = q20;
@@ -428,7 +428,7 @@ double capacity_kibam_t::q20(){return _q20;}
 /*
 Define Lithium Ion capacity model
 */
-capacity_lithium_ion_t::capacity_lithium_ion_t(double q, double SOC_max, double SOC_min) :capacity_t(q, SOC_max, SOC_min){};
+capacity_lithium_ion_t::capacity_lithium_ion_t(double q, double SOC_init, double SOC_max, double SOC_min) :capacity_t(q, SOC_init, SOC_max, SOC_min){};
 capacity_lithium_ion_t * capacity_lithium_ion_t::clone(){ return new capacity_lithium_ion_t(*this); }
 void capacity_lithium_ion_t::copy(capacity_t * capacity){ capacity_t::copy(capacity);}
 
