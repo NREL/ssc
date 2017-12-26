@@ -113,8 +113,9 @@ var_info vtab_battery_inputs[] = {
 	{ SSC_INPUT,		SSC_NUMBER,		"LeadAcid_tn",	                               "Time to discharge",                                      "h",        "",                     "Battery",       "",                           "",                             "" },
 
 	// charge limits and priority inputs
-	{ SSC_INPUT,        SSC_NUMBER,      "batt_minimum_SOC",		                   "Minimum allowed state-of-charge",                         "V",       "",                     "Battery",       "",                           "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "batt_maximum_SOC",                           "Minimum allowed state-of-charge",                         "V",       "",                     "Battery",       "",                           "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "batt_initial_SOC",		                   "Initial state-of-charge",                                 "%",       "",                     "Battery",       "",                           "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "batt_minimum_SOC",		                   "Minimum allowed state-of-charge",                         "%",       "",                     "Battery",       "",                           "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "batt_maximum_SOC",                           "Minimum allowed state-of-charge",                         "%",       "",                     "Battery",       "",                           "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "batt_minimum_modetime",                      "Minimum time at charge state",                            "min",     "",                     "Battery",       "",                           "",                              "" },
 
 	// lifetime inputs
@@ -307,7 +308,7 @@ battstor::battstor(compute_module &cm, bool setup_model, int replacement_option,
 				batt_vars->LeadAcid_qn_computed = cm.as_double("LeadAcid_qn_computed");
 				batt_vars->LeadAcid_tn = cm.as_double("LeadAcid_tn");
 			}
-
+			batt_vars->batt_initial_SOC = cm.as_double("batt_initial_SOC");
 			batt_vars->batt_maximum_SOC = cm.as_double("batt_maximum_soc");
 			batt_vars->batt_minimum_SOC = cm.as_double("batt_minimum_soc");
 			batt_vars->batt_current_charge_max = cm.as_double("batt_current_charge_max");
@@ -631,19 +632,20 @@ battstor::battstor(compute_module &cm, bool setup_model, int replacement_option,
 			batt_vars->LeadAcid_tn,
 			batt_vars->LeadAcid_qn_computed,
 			batt_vars->LeadAcid_q10_computed,
+			batt_vars->batt_initial_SOC,
 			batt_vars->batt_maximum_SOC,
 			batt_vars->batt_minimum_SOC);
 	}
 	else if (chem == battery_t::LITHIUM_ION)
 	{
 		capacity_model = new capacity_lithium_ion_t(
-			batt_vars->batt_Qfull*batt_vars->batt_computed_strings, batt_vars->batt_maximum_SOC, batt_vars->batt_minimum_SOC);
+			batt_vars->batt_Qfull*batt_vars->batt_computed_strings, batt_vars->batt_initial_SOC, batt_vars->batt_maximum_SOC, batt_vars->batt_minimum_SOC);
 	}
 	// for now assume Flow Batteries responds quickly, like Lithium-ion, but with an independent capacity/power
 	else if (chem == battery_t::VANADIUM_REDOX || chem == battery_t::IRON_FLOW)
 	{
 		capacity_model = new capacity_lithium_ion_t(
-			batt_vars->batt_Qfull_flow, batt_vars->batt_maximum_SOC, batt_vars->batt_minimum_SOC);
+			batt_vars->batt_Qfull_flow, batt_vars->batt_initial_SOC, batt_vars->batt_maximum_SOC, batt_vars->batt_minimum_SOC);
 	}
 
 	// accumulate monthly losses

@@ -135,6 +135,7 @@ struct batt_variables
 	double LeadAcid_qn_computed;
 	double LeadAcid_q10_computed;
 
+	double batt_initial_SOC;
 	double batt_maximum_SOC;
 	double batt_minimum_SOC;
 	double batt_current_charge_max;
