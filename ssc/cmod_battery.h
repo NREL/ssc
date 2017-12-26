@@ -82,6 +82,9 @@ struct batt_variables
 	ssc_number_t *psched = 0;
 	ssc_number_t *psched_weekend = 0;
 
+	/*! The custom dispatch power input by user (<0 = charging, >0 = discharging) in kW */
+	std::vector<double> batt_custom_dispatch;
+
 	/*! Determines if the battery is allowed to charge from the grid using automated control*/
 	bool batt_dispatch_auto_can_gridcharge;
 
@@ -243,6 +246,8 @@ struct battstor
 	/*! Automated dispatch override algorithm grid target calculation*/
 	bool input_target = false;
 
+	/*! Use user-input battery dispatch */
+	bool input_custom_dispatch = false;
 
 	// for user schedule
 	void force_replacement();
@@ -291,7 +296,6 @@ struct battstor
 	std::vector<double> target_power;
 	std::vector<double> target_power_monthly;
 	
-	int topology;
 	double dc_dc, ac_dc, dc_ac;
 
 	double e_charge;

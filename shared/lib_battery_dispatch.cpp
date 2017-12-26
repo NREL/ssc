@@ -571,7 +571,7 @@ bool dispatch_manual_t::check_constraints(double &I, int count)
 	if (!iterate)
 	{
 		double I_initial = I;
-
+		iterate = true;
 		bool front_of_meter = false;
 		if (dispatch_manual_front_of_meter_t * dispatch = dynamic_cast<dispatch_manual_front_of_meter_t*>(this))
 			front_of_meter = true;
@@ -916,6 +916,7 @@ void dispatch_automatic_t::copy(const dispatch_t * dispatch)
 }
 
 void dispatch_automatic_t::update_pv_data(std::vector<double> P_pv_dc){ _P_pv_dc = P_pv_dc;}
+void dispatch_automatic_t::set_custom_dispatch(std::vector<double> P_batt_dc) { _P_battery_use = P_batt_dc; }
 int dispatch_automatic_t::get_mode(){ return _mode; }
 void dispatch_automatic_t::dispatch(size_t year,
 	size_t hour_of_year,
@@ -967,6 +968,84 @@ void dispatch_automatic_t::dispatch(size_t year,
 	// update for next step
 	_prev_charging = _charging;
 }
+
+
+bool dispatch_automatic_t::check_constraints(double &I, int count)
+{
+	// check common constraints before checking manual dispatch specific ones
+	bool iterate = dispatch_t::check_constraints(I, count);
+
+	if (!iterate)
+	{
+		double I_initial = I;
+		double P_battery = I * _Battery->battery_voltage() * util::watt_to_kilowatt;
+
+		bool front_of_meter = false;
+		if (dispatch_automatic_front_of_meter_t * dispatch = dynamic_cast<dispatch_automatic_front_of_meter_t*>(this))
+			front_of_meter = true;
+
+		// Behind the meter
+		if (!front_of_meter)
+		{
+			iterate = true;
+
+			// Try and force controller to meet target or custom dispatch
+			if (P_battery > _P_battery_current + tolerance || P_battery < _P_battery_current - tolerance)
+			{
+				double dP = P_battery - _P_battery_current;
+				I -= dP * util::kilowatt_to_watt / _Battery->battery_voltage();
+			}
+			// Don't let PV export to grid if can still charge battery (increase charging)
+			else if (_P_pv_to_grid > tolerance && _can_charge && _Battery->battery_soc() < _SOC_max - tolerance && fabs(I) < fabs(_Ic_max))
+			{
+				if (fabs(_P_tofrom_batt) < tolerance)
+					I -= (_P_pv_to_grid * util::kilowatt_to_watt / _Battery->battery_voltage());
+				else
+					I -= (_P_pv_to_grid / fabs(_P_tofrom_batt)) *fabs(I);
+			}
+			// Don't let battery export to the grid if behind the meter
+			else if (_P_battery_to_grid > tolerance)
+			{
+				if (fabs(_P_tofrom_batt) < tolerance)
+					I -= (_P_battery_to_grid * util::kilowatt_to_watt / _Battery->battery_voltage());
+				else
+					I -= (_P_battery_to_grid / fabs(_P_tofrom_batt)) * fabs(I);
+			}
+			else
+				iterate = false;
+		}
+
+		// don't allow any changes to violate current limits
+		bool current_iterate = restrict_current(I);
+
+		// don't allow any changes to violate power limites
+		bool power_iterate = restrict_power(I);
+
+		// iterate if any of the conditions are met
+		if (iterate || current_iterate || power_iterate)
+			iterate = true;
+
+		// stop iterating after 5 tries
+		if (count > 5)
+			iterate = false;
+
+		// don't allow battery to flip from charging to discharging or vice versa
+		if ((I_initial / I) < 0)
+			I = 0;
+
+		// reset
+		if (iterate)
+		{
+			_Battery->copy(_Battery_initial);
+			_P_tofrom_batt = 0;
+			_P_grid_to_batt = 0;
+			_P_battery_to_grid = 0;
+			_P_pv_to_grid = 0;
+		}
+	}
+	return iterate;
+}
+
 
 void dispatch_automatic_t::compute_to_batt()
 {
@@ -1066,10 +1145,7 @@ void dispatch_automatic_behind_the_meter_t::dispatch(size_t year,
 	double )
 {
 	size_t step_per_hour = (size_t)(1 / _dt_hour);
-	size_t idx = 0;
-
-	if (_mode == LOOK_AHEAD || _mode == LOOK_BEHIND || _mode == MAINTAIN_TARGET)
-		idx = util::index_year_hour_step(year, hour_of_year, step, step_per_hour);
+	size_t idx = util::index_year_hour_step(year, hour_of_year, step, step_per_hour);
 
 	update_dispatch(hour_of_year, step, idx);
 	dispatch_automatic_t::dispatch(year, hour_of_year, step, P_pv_dc_charging, P_pv_dc_discharging, P_load_dc_charging, P_load_dc_discharging, P_pv_dc_clipping, _P_battery_current);
@@ -1085,31 +1161,39 @@ void dispatch_automatic_behind_the_meter_t::update_dispatch(size_t hour_of_year,
 	size_t hour_of_day = util::hour_of_day(hour_of_year);
 	_day_index = (hour_of_day * _steps_per_hour + step);
 
-	// Currently hardcoded to have 24 hour look ahead and 24 dispatch_update
-	if (hour_of_day == 0 && hour_of_year != _hour_last_updated)
+	if (_mode != dispatch_t::CUSTOM_DISPATCH)
 	{
+		// Currently hardcoded to have 24 hour look ahead and 24 dispatch_update
+		if (hour_of_day == 0 && hour_of_year != _hour_last_updated)
+		{
 
-		// [kWh] - the maximum energy that can be cycled
-		double E_max = 0;     
+			// [kWh] - the maximum energy that can be cycled
+			double E_max = 0;
 
-		check_new_month(hour_of_year, step);
+			check_new_month(hour_of_year, step);
 
-		// setup vectors
-		initialize(hour_of_year);
+			// setup vectors
+			initialize(hour_of_year);
 
-		// compute grid power, sort highest to lowest
-		sort_grid(p, debug, idx);
+			// compute grid power, sort highest to lowest
+			sort_grid(p, debug, idx);
 
-		// Peak shaving scheme
-		compute_energy(p, debug, E_max);
-		target_power(p, debug, E_max, idx);
+			// Peak shaving scheme
+			compute_energy(p, debug, E_max);
+			target_power(p, debug, E_max, idx);
 
-		// Set battery power profile
-		set_battery_power(p, debug);
+			// Set battery power profile
+			set_battery_power(p, debug);
+		}
+		// save for extraction
+		_P_target_current = _P_target_use[_day_index];
+		_P_battery_current = _P_battery_use[_day_index];
 	}
-	// save for extraction
-	_P_target_current = _P_target_use[_day_index];
-	_P_battery_current = _P_battery_use[_day_index];
+	else
+	{
+		_P_battery_current = _P_battery_use[idx];
+	}
+	
 
 	if (debug)
 		fclose(p);
@@ -1123,7 +1207,7 @@ void dispatch_automatic_behind_the_meter_t::initialize(size_t hour_of_year)
 	// clean up vectors
 	for (int ii = 0; ii != _num_steps; ii++)
 	{
-		grid[ii] = grid_point(0., 0, 0);
+		grid[ii] = grid_point(0., 0, 0); 
 		sorted_grid[ii] = grid[ii];
 		_P_target_use.push_back(0.);
 		_P_battery_use.push_back(0.);

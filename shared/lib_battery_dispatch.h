@@ -63,7 +63,7 @@ class dispatch_t
 public:
 
 	enum FOM_MODES { FOM_LOOK_AHEAD, FOM_LOOK_BEHIND, FOM_FORECAST, FOM_MANUAL };
-	enum BTM_MODES { LOOK_AHEAD, LOOK_BEHIND, MAINTAIN_TARGET, MANUAL };
+	enum BTM_MODES { LOOK_AHEAD, LOOK_BEHIND, MAINTAIN_TARGET, CUSTOM_DISPATCH, MANUAL };
 	enum METERING { BEHIND, FRONT };
 	enum PV_PRIORITY { MEET_LOAD, CHARGE_BATTERY };
 	enum CURRENT_CHOICE { RESTRICT_POWER, RESTRICT_CURRENT, RESTRICT_BOTH };
@@ -451,8 +451,14 @@ public:
 	/*! Pass in the PV power forecast */
 	virtual void update_pv_data(std::vector<double> P_pv_dc);
 
+	/*! Pass in the user-defined dispatch power vector */
+	virtual void set_custom_dispatch(std::vector<double> P_batt_dc);
+
 	/* Compute the components going to the battery */
 	virtual void compute_to_batt();
+
+	/* Check constraints and re-dispatch if needed */
+	virtual bool check_constraints(double &I, int count);
 
 protected:
 
@@ -474,17 +480,28 @@ protected:
 	/*! The number of steps in the look ahead, assumed to be 24 hours * steps_per_hour */
 	size_t _num_steps;
 
-	/*! Time series of length (24 hours * steps_per_hour) of batter powers [kW] */
+	/*! Time series of length (24 hours * steps_per_hour) of battery powers [kW] */
 	double_vec _P_battery_use;
 
 	/*! The battery power target at the current time [kW] */
 	double _P_battery_current;
 
+	/*! The hour of year the dispatch was last updated */
 	size_t _hour_last_updated;
+
+	/*! The timestep in hours (hourly = 1, half_hourly = 0.5, etc) */
 	double _dt_hour;
+
+	/*! The number of steps per hour*/
 	size_t _steps_per_hour;
+
+	/*! The number of years in the simulation */
 	size_t _nyears;
+
+	/*! The dispatch mode, described by dispatch_t::BTM_MODES or dispatch_t::FOM_MODES*/
 	int _mode;
+
+	/*! An internal factor to describe how conservative the peak shaving algorithm should be */
 	double _safety_factor;
 
 	/*! The hours to look ahead in the simulation [hour] */
@@ -546,6 +563,8 @@ public:
 
 	/*! Compute the updated power to send to the battery over the next N hours */
 	void update_dispatch(size_t hour_of_year, size_t step, size_t idx);
+
+	
 
 	/*! Pass in the load forecast */
 	void update_load_data(std::vector<double> P_load_dc);
