@@ -64,16 +64,15 @@ var_info vtab_battery_inputs[] = {
 	// configuration inputs
 	{ SSC_INPUT,        SSC_NUMBER,      "batt_chem",                                  "Battery chemistry",                                       "",        "0=LeadAcid,1=LiIon",   "Battery",       "",                           "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "inverter_model",                             "Inverter model specifier",                                "",        "0=cec,1=datasheet,2=partload,3=coefficientgenerator,4=generic","","", "INTEGER,MIN=0,MAX=4",           "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "inverter_count",                             "Number of inverters",                                     "",        "",                     "pvsamv1"       "",                            "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "inv_snl_eff_cec",                            "Inverter Sandia CEC Efficiency",                          "%",       "",                     "pvsamv1",      "inverter_model=0",            "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "inv_snl_paco",                               "Inverter Sandia Maximum AC Power",                        "Wac",     "",                     "pvsamv1",      "inverter_model=0",            "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "inv_ds_eff",                                 "Inverter Datasheet Efficiency",                           "%",       "",                     "pvsamv1",      "inverter_model=1",            "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "inv_ds_paco",                                "Inverter Datasheet Maximum AC Power",                     "Wac",     "",                     "pvsamv1",      "inverter_model=1",            "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "inv_pd_eff",                                 "Inverter Partload Efficiency",                            "%",       "",                     "pvsamv1",      "inverter_model=2",            "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "inv_pd_paco",                                "Inverter Partload Maximum AC Power",                      "Wac",     "",                     "pvsamv1",      "inverter_model=2",            "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "inv_cec_cg_eff_cec",                         "Inverter Coefficient Generator CEC Efficiency",           "%",       "",                     "pvsamv1",      "inverter_model=3",            "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "inv_cec_cg_paco",                            "Inverter Coefficient Generator Max AC Power",             "Wac",       "",                   "pvsamv1",      "inverter_model=3",            "",                              "" },
-	//{ SSC_INPUT,        SSC_NUMBER,      "inverter_efficiency",                        "Inverter Efficiency",                                     "%",       "",                     "",              "",                           "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "inverter_count",                             "Number of inverters",                                     "",        "",                     "pvsamv1"        "",                            "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "inv_snl_eff_cec",                            "Inverter Sandia CEC Efficiency",                          "%",       "",                     "pvsamv1",       "",                           "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "inv_snl_paco",                               "Inverter Sandia Maximum AC Power",                        "Wac",     "",                     "pvsamv1",       "",                           "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "inv_ds_eff",                                 "Inverter Datasheet Efficiency",                           "%",       "",                     "pvsamv1",       "",                           "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "inv_ds_paco",                                "Inverter Datasheet Maximum AC Power",                     "Wac",     "",                     "pvsamv1",       "",                           "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "inv_pd_eff",                                 "Inverter Partload Efficiency",                            "%",       "",                     "pvsamv1",       "",                           "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "inv_pd_paco",                                "Inverter Partload Maximum AC Power",                      "Wac",     "",                     "pvsamv1",       "",                           "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "inv_cec_cg_eff_cec",                         "Inverter Coefficient Generator CEC Efficiency",           "%",       "",                     "pvsamv1",       "",                           "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "inv_cec_cg_paco",                            "Inverter Coefficient Generator Max AC Power",             "Wac",       "",                   "pvsamv1",       "",                           "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "batt_ac_or_dc",                              "Battery interconnection (AC or DC)",                      "dc=0,ac=1",  "",                  "Battery",       "",                           "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "batt_dc_dc_efficiency",                      "PV DC to battery DC efficiency",                          "",        "",                     "Battery",       "",                           "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "dcoptimizer_loss",                           "PV loss in DC/DC w/MPPT conversion",                      "",        "",                     "pvsamv1",       "",                           "",                              "" },
@@ -422,32 +421,37 @@ battstor::battstor(compute_module &cm, bool setup_model, size_t nrec, double dt_
 			batt_vars->T_room = cm.as_double("T_room");
 
 			// Inverter settings
-			batt_vars->inverter_model = cm.as_integer("inverter_model");
-			batt_vars->inverter_count = cm.as_integer("inverter_count");
+			if (cm.is_assigned("inverter_model"))
+			{
+				batt_vars->inverter_model = cm.as_integer("inverter_model");
+				batt_vars->inverter_count = cm.as_integer("inverter_count");
 
-			if (batt_vars->inverter_model == inverter::SANDIA_INVERTER)
-			{
-				batt_vars->inverter_efficiency = cm.as_double("inv_snl_eff_cec");
-				batt_vars->inverter_paco = batt_vars->inverter_count * cm.as_double("inv_snl_paco") * util::watt_to_kilowatt;
-			}
-			else if (batt_vars->inverter_model == inverter::DATASHEET_INVERTER)
-			{
-				batt_vars->inverter_efficiency = cm.as_double("inv_ds_eff");
-				batt_vars->inverter_paco = batt_vars->inverter_count * cm.as_double("inv_ds_paco") * util::watt_to_kilowatt;
+				if (batt_vars->inverter_model == inverter::SANDIA_INVERTER)
+				{
+					batt_vars->inverter_efficiency = cm.as_double("inv_snl_eff_cec");
+					batt_vars->inverter_paco = batt_vars->inverter_count * cm.as_double("inv_snl_paco") * util::watt_to_kilowatt;
+				}
+				else if (batt_vars->inverter_model == inverter::DATASHEET_INVERTER)
+				{
+					batt_vars->inverter_efficiency = cm.as_double("inv_ds_eff");
+					batt_vars->inverter_paco = batt_vars->inverter_count * cm.as_double("inv_ds_paco") * util::watt_to_kilowatt;
 
-			}
-			else if (batt_vars->inverter_model == inverter::PARTLOAD_INVERTER)
-			{
-				batt_vars->inverter_efficiency = cm.as_double("inv_pd_eff");
-				batt_vars->inverter_paco = batt_vars->inverter_count * cm.as_double("inv_pd_paco") * util::watt_to_kilowatt;
-			}
-			else if (batt_vars->inverter_model == inverter::COEFFICIENT_GENERATOR)
-			{
-				batt_vars->inverter_efficiency = cm.as_double("inv_cec_cg_eff_cec");
-				batt_vars->inverter_paco = batt_vars->inverter_count * cm.as_double("inv_cec_cg_paco") * util::watt_to_kilowatt;
+				}
+				else if (batt_vars->inverter_model == inverter::PARTLOAD_INVERTER)
+				{
+					batt_vars->inverter_efficiency = cm.as_double("inv_pd_eff");
+					batt_vars->inverter_paco = batt_vars->inverter_count * cm.as_double("inv_pd_paco") * util::watt_to_kilowatt;
+				}
+				else if (batt_vars->inverter_model == inverter::COEFFICIENT_GENERATOR)
+				{
+					batt_vars->inverter_efficiency = cm.as_double("inv_cec_cg_eff_cec");
+					batt_vars->inverter_paco = batt_vars->inverter_count * cm.as_double("inv_cec_cg_paco") * util::watt_to_kilowatt;
+				}
 			}
 			else
 			{
+				batt_vars->inverter_model = inverter::NONE;
+				batt_vars->inverter_count = 1;
 				batt_vars->inverter_efficiency = batt_vars->batt_ac_dc_efficiency;
 				batt_vars->inverter_paco = batt_vars->batt_kw;
 			}

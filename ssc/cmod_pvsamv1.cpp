@@ -2665,7 +2665,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 				run_inverter(&snlinv, &plinv,
 					inv_type, dcpwr_net, num_inverters, dc_string_voltage,
 					acpwr_gross, aceff, cliploss, psoloss, pntloss);
-				p_invcliploss_full.push_back(cliploss * util::watt_to_kilowatt);
+				p_invcliploss_full.push_back(static_cast<ssc_number_t>(cliploss * util::watt_to_kilowatt));
 
 				idx++;
 			}

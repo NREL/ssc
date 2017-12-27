@@ -372,8 +372,10 @@ std::vector<int> compute_module::as_vector_integer(const std::string &name) thro
 	var_data &x = value(name);
 	if (x.type != SSC_ARRAY) throw cast_error("array", x, name);
 	size_t len = x.num.length();
+	std::vector<int> v(len);
 	ssc_number_t *p = x.num.data();
-	std::vector<int> v(p, p + sizeof p / sizeof p[0]);
+	for (size_t k = 0; k<len; k++)
+		v[k] = (int)p[k];
 	return v;
 }
 
@@ -382,8 +384,10 @@ std::vector<ssc_number_t> compute_module::as_vector_ssc_number_t(const std::stri
 	var_data &x = value(name);
 	if (x.type != SSC_ARRAY) throw cast_error("array", x, name);
 	size_t len = x.num.length();
+	std::vector<ssc_number_t> v(len);
 	ssc_number_t *p = x.num.data();
-	std::vector<ssc_number_t> v(p, p + sizeof p / sizeof p[0]);
+	for (size_t k = 0; k<len; k++)
+		v[k] = (ssc_number_t)p[k];
 	return v;
 }
 

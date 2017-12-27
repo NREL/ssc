@@ -73,7 +73,7 @@ public:
 		else if (_inverter_type == PARTLOAD_INVERTER)
 			_partload_inverter->acpower(P_dc, &P_ac, &P_lr, &P_par, &Eff, &P_cliploss, &P_ntloss);
 	}
-	enum { SANDIA_INVERTER, DATASHEET_INVERTER, PARTLOAD_INVERTER, COEFFICIENT_GENERATOR };
+	enum { SANDIA_INVERTER, DATASHEET_INVERTER, PARTLOAD_INVERTER, COEFFICIENT_GENERATOR, NONE};
 
 protected:
 	int _inverter_type;
