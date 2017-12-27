@@ -85,12 +85,8 @@ public:
 		add_var_info(vtab_technology_outputs);
 	}
 
-	batt_variables * setup_variables()
+	batt_variables * setup_variables(size_t n_recs)
 	{
-		// PV power
-		size_t n_recs = 0;
-		as_array("ac", &n_recs);
-
 		batt_variables * batt_vars = new batt_variables();
 
 		// allocate vectors
@@ -301,35 +297,28 @@ public:
 			/* *********************************************************************************************
 			Setup problem
 			*********************************************************************************************** */
-			ssc_number_t * p_ac;
-			ssc_number_t * p_load;
-			size_t n_ac, n_load;
-			int step_per_hour;
-			double ts_hour;
+			std::vector<ssc_number_t> p_ac;
+			std::vector<ssc_number_t> p_load;
+	
+			p_ac = as_vector_ssc_number_t("ac");
+			util::vector_multiply_scalar<ssc_number_t>(p_ac, static_cast<ssc_number_t>(util::watt_to_kilowatt));
+			p_load = as_vector_ssc_number_t("load");
 
-			p_ac = as_array("ac", &n_ac);
-			for (int i = 0; i != (int)n_ac; i++)
-				p_ac[i] = (ssc_number_t)(p_ac[i] * 0.001);
-
-			p_load = as_array("load", &n_load);
-			step_per_hour = (int)n_ac / 8760;
-			ts_hour = 1. / step_per_hour;
-
-			batt_variables * batt_vars = setup_variables();
 			
-			battstor batt(*this, true, 0, n_ac, ts_hour, batt_vars);
+			batt_variables * batt_vars = setup_variables(p_ac.size());
+			battstor batt(*this, true, 0, p_ac.size(), 8760 / p_ac.size(), batt_vars);
 			batt.initialize_automated_dispatch(p_ac, p_load);
 			
 			/* *********************************************************************************************
 			Run Simulation
 			*********************************************************************************************** */
-			ssc_number_t *p_gen = allocate("gen", n_ac);
+			ssc_number_t *p_gen = allocate("gen", p_ac.size());
 			size_t hour = 0;
 			int count = 0;
 
 			for (hour = 0; hour < 8760; hour++)
 			{
-				for (int jj = 0; jj < step_per_hour; jj++)
+				for (int jj = 0; jj < batt.step_per_hour; jj++)
 				{
 					batt.initialize_time(0, hour, jj);
 					batt.advance(*this, p_ac[count], p_load[count]);

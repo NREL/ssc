@@ -211,7 +211,9 @@ struct battstor
 
 	battstor( compute_module &cm, bool setup_model, int replacement_option, size_t nrec, double dt_hr, batt_variables *batt_vars=0);
 	void parse_configuration();
-	void initialize_automated_dispatch(ssc_number_t *pv=0, ssc_number_t *load=0, double_vec *cliploss=0);
+	void initialize_automated_dispatch(std::vector<ssc_number_t> pv= std::vector<ssc_number_t>(), 
+									   std::vector<ssc_number_t> load= std::vector<ssc_number_t>(), 
+									   std::vector<ssc_number_t> cliploss= std::vector<ssc_number_t>());
 	~battstor();
 
 	void initialize_time(size_t year, size_t hour_of_year, size_t step);

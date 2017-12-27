@@ -141,6 +141,27 @@ namespace util
 	std::string get_cwd();
 	bool set_cwd( const std::string &path );
 	
+	template <class T>
+	std::vector<T> array_to_vector(T * array_in, size_t n)
+	{
+		if (array_in != 0)
+		{
+			std::vector<T> vector_out(array_in, array_in + n);
+			return vector_out;
+		}
+		else {
+			std::vector<T> vector_out;
+			return vector_out;
+		}
+	}
+
+	template <class T>
+	void vector_multiply_scalar(std::vector<T> &v, T scalar)
+	{
+		for (size_t i = 0; i != v.size(); i++)
+			v[i] *= scalar;
+	}
+
 	class sync_piped_process
 	{
 	public:

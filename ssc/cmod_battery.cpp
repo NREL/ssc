@@ -73,7 +73,7 @@ var_info vtab_battery_inputs[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "inv_pd_paco",                                "Inverter Partload Maximum AC Power",                      "Wac",     "",                     "pvsamv1",      "inverter_model=2",            "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "inv_cec_cg_eff_cec",                         "Inverter Coefficient Generator CEC Efficiency",           "%",       "",                     "pvsamv1",      "inverter_model=3",            "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "inv_cec_cg_paco",                            "Inverter Coefficient Generator Max AC Power",             "Wac",       "",                   "pvsamv1",      "inverter_model=3",            "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "inverter_efficiency",                        "Inverter Efficiency",                                     "%",       "",                     "",              "",                           "",                              "" },
+	//{ SSC_INPUT,        SSC_NUMBER,      "inverter_efficiency",                        "Inverter Efficiency",                                     "%",       "",                     "",              "",                           "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "batt_ac_or_dc",                              "Battery interconnection (AC or DC)",                      "dc=0,ac=1",  "",                  "Battery",       "",                           "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "batt_dc_dc_efficiency",                      "PV DC to battery DC efficiency",                          "",        "",                     "Battery",       "",                           "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "dcoptimizer_loss",                           "PV loss in DC/DC w/MPPT conversion",                      "",        "",                     "pvsamv1",       "",                           "",                              "" },
@@ -437,6 +437,11 @@ battstor::battstor(compute_module &cm, bool setup_model, int replacement_option,
 			{
 				batt_vars->inverter_efficiency = cm.as_double("inv_cec_cg_eff_cec");
 				batt_vars->inverter_paco = batt_vars->inverter_count * cm.as_double("inv_cec_cg_paco") * util::watt_to_kilowatt;
+			}
+			else
+			{
+				batt_vars->inverter_efficiency = batt_vars->batt_ac_dc_efficiency;
+				batt_vars->inverter_paco = batt_vars->batt_kw;
 			}
 		}
 	}
@@ -871,7 +876,7 @@ void battstor::parse_configuration()
 		manual_dispatch = true;
 }
 
-void battstor::initialize_automated_dispatch(ssc_number_t *pv, ssc_number_t *load, double_vec *cliploss)
+void battstor::initialize_automated_dispatch(std::vector<ssc_number_t> pv, std::vector<ssc_number_t> load, std::vector<ssc_number_t> cliploss)
 {
 	if (dynamic_cast<dispatch_automatic_t*>(dispatch_model))
 	{
@@ -883,23 +888,23 @@ void battstor::initialize_automated_dispatch(ssc_number_t *pv, ssc_number_t *loa
 			// look ahead
 			if (look_ahead)
 			{
-				if (pv != 0)
+				if (pv.size() != 0)
 				{
 					for (size_t idx = 0; idx != nrec; idx++) {
 						pv_prediction.push_back(pv[idx]);
 					}
 			
 				}
-				if (load != 0) 
+				if (load.size() != 0) 
 				{
 					for (size_t idx = 0; idx != nrec; idx++) {
 						load_prediction.push_back(load[idx]);
 					}
 				}
-				if (cliploss != 0) 
+				if (cliploss.size() != 0) 
 				{
 					for (size_t idx = 0; idx != nrec; idx++) {
-						cliploss_prediction.push_back((*cliploss)[idx]);
+						cliploss_prediction.push_back(cliploss[idx]);
 					}
 				}
 			}
@@ -913,61 +918,61 @@ void battstor::initialize_automated_dispatch(ssc_number_t *pv, ssc_number_t *loa
 					cliploss_prediction.push_back(0);
 				}
 
-				if (pv != 0)
+				if (pv.size() != 0)
 				{
 					for (size_t idx = 0; idx != nrec - 24 * step_per_hour; idx++){
 						pv_prediction.push_back(pv[idx]);
 					}
 				}
-				if (load !=0 )
+				if (load.size() !=0 )
 				{
 					for (size_t idx = 0; idx != nrec - 24 * step_per_hour; idx++) {
 						load_prediction.push_back(load[idx]);
 					}
 				}
-				if (cliploss !=0 )
+				if (cliploss.size() !=0 )
 				{
 					for (size_t idx = 0; idx != nrec - 24 * step_per_hour; idx++) {
-						cliploss_prediction.push_back((*cliploss)[idx]);
+						cliploss_prediction.push_back(cliploss[idx]);
 					}
 				}
 			}
 			else if (input_forecast)
 			{
-				if (pv != 0)
+				if (pv.size() != 0)
 				{
 					for (size_t idx = 0; idx != 24 * step_per_hour; idx++){
 						pv_prediction.push_back(batt_vars->pv_dc_forecast[idx]);
 					}
 				}
-				if (load !=0 )
+				if (load.size() !=0 )
 				{
 					for (size_t idx = 0; idx != 24 * step_per_hour; idx++) {
 						load_prediction.push_back(load[idx]);
 					}
 				}
-				if (cliploss != 0)
+				if (cliploss.size() != 0)
 				{
 					for (size_t idx = 0; idx != 24 * step_per_hour; idx++) {
-						cliploss_prediction.push_back((*cliploss)[idx]);
+						cliploss_prediction.push_back(cliploss[idx]);
 					}
 				}
 			}
 			// Input checking
-			if (pv == 0)
+			if (pv.size() == 0)
 			{
 
 				for (size_t idx = 0; idx != nrec; idx++)				{
 					pv_prediction.push_back(0.);
 				}
 			}
-			if (load == 0)
+			if (load.size() == 0)
 			{
 				for (size_t idx = 0; idx != nrec; idx++) {
 					load_prediction.push_back(0.);
 				}
 			}
-			if (!cliploss != 0)
+			if (cliploss.size() == 0)
 			{
 				for (size_t idx = 0; idx != nrec; idx++) {
 					cliploss_prediction.push_back(0.);
@@ -1230,8 +1235,7 @@ void battstor::process_messages(compute_module &cm)
 static var_info _cm_vtab_battery[] = {
 	/*   VARTYPE           DATATYPE         NAME                                            LABEL                                                   UNITS      META                             GROUP                  REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
 	{ SSC_INPUT,        SSC_NUMBER,      "en_batt",                                    "Enable battery storage model",                            "0/1",     "",                     "Battery",       "?=0",                                 "",                              "" },
-	{ SSC_INPUT,        SSC_ARRAY,       "dc",										   "DC array power",                                          "W",       "",                     "",             "",                           "",                               "" },
-	{ SSC_INPUT,        SSC_ARRAY,       "ac",										   "AC inverter power",                                       "W",       "",                     "",             "",                           "",                               "" },
+	{ SSC_INPUT,        SSC_ARRAY,       "gen",										   "Generic power source (AC or DC, depending on config)",    "kW",      "",                     "",             "",                           "",                               "" },
 	{ SSC_INPUT,		SSC_ARRAY,	     "load",			                           "Electricity load (year 1)",                               "kW",	     "",				     "",             "",	                       "",	                             "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "batt_replacement_option",                    "Enable battery replacement?",                             "0=none,1=capacity based,2=user schedule", "", "Battery", "?=0",                 "INTEGER,MIN=0,MAX=2",            "" },
 
@@ -1253,62 +1257,51 @@ public:
 	{
 		if (as_boolean("en_batt"))
 		{
-			int ac_or_dc = as_integer("batt_ac_or_dc");
-			int batt_meter_position = as_integer("batt_meter_position");
-			double inv_eff = as_double("inverter_efficiency");
+			std::vector<ssc_number_t> power_input = as_vector_ssc_number_t("gen");
+			battstor batt(*this, true, as_integer("batt_replacement_option"), power_input.size(), 8760 / power_input.size());
 
-			size_t nrec,len;
-			ssc_number_t *power_input;
-			if (ac_or_dc == charge_controller::DC_CONNECTED)
-				power_input = as_array("DC", &nrec);
-			else
-				power_input = as_array("AC", &nrec);
-
-			ssc_number_t *power_load;
-			len = nrec;
-			if (batt_meter_position == dispatch_t::BEHIND)
-				power_load = as_array("load", &len);
-			else 
-				power_load = NULL;
-
-			if (len != nrec)
-				throw exec_error("battery", "Load and PV power do not match weatherfile length");
-
-			size_t step_per_hour = nrec / 8760;
-			double ts_hour = 1.0 / step_per_hour;
-			if (step_per_hour < 1 || step_per_hour > 60 || step_per_hour * 8760 != nrec)
-				throw exec_error("battery", util::format("invalid number of data records (%d): must be an integer multiple of 8760", (int)nrec));
-
-			battstor batt(*this, true, as_integer("batt_replacement_option"), nrec, ts_hour);
-
-			if (batt_meter_position == dispatch_t::BEHIND)
+			// Parse "Load input"
+			std::vector<ssc_number_t> power_load;
+			if (batt.batt_vars->batt_meter_position == dispatch_t::BEHIND)
 			{
+				power_load = as_vector_ssc_number_t("load");
 				batt.initialize_automated_dispatch(power_input, power_load);
 			}
+			else
+			{
+				for (int i = 0; i != power_input.size(); i++)
+					power_load.push_back(0);
+			}
+
+			// Error checking
+			if (power_input.size() != power_load.size())
+				throw exec_error("battery", "Load and PV power do not match weatherfile length");
+
+			
+			if (batt.step_per_hour > 60 || batt.total_steps != power_input.size() * batt.nyears)
+				throw exec_error("battery", util::format("invalid number of data records (%u): must be an integer multiple of 8760", batt.total_steps));
+
 			/* *********************************************************************************************
 			Run Simulation
 			*********************************************************************************************** */
-			size_t hour = 0;
 			int count = 0;
-
-			//ssc_number_t *p_gen = allocate("gen", nrec);
-			for (hour = 0; hour < 8760; hour++)
+			for (size_t year = 0; year != batt.nyears; year++)
 			{
-				for (size_t jj = 0; jj < step_per_hour; jj++)
+				for (size_t hour = 0; hour < 8760; hour++)
 				{
-					double load = 0.0;
-					if (batt_meter_position == dispatch_t::BEHIND)
-						load = power_load[count];
-
-					batt.initialize_time(0, hour, jj);
-					batt.advance(*this, power_input[count] * 0.001, load);
-
-					if (ac_or_dc == charge_controller::DC_CONNECTED)
+					for (size_t jj = 0; jj < batt.step_per_hour; jj++)
 					{
-						double ac = batt.outGenPower[count] * inv_eff;
-						batt.update_post_inverted(*this, ac);
+	
+						batt.initialize_time(year, hour, jj);
+						batt.advance(*this, power_input[count] * util::watt_to_kilowatt, power_load[count]);
+
+						if (batt.batt_vars->batt_topology == charge_controller::DC_CONNECTED)
+						{
+							double ac = batt.outGenPower[count] * batt.batt_vars->inverter_efficiency;
+							batt.update_post_inverted(*this, ac);
+						}
+						count++;
 					}
-					count++;
 				}
 			}
 			batt.calculate_monthly_and_annual_outputs(*this);

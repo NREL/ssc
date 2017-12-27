@@ -866,6 +866,14 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 		throw exec_error( "pvsamv1", util::format("invalid number of data records (%d): must be an integer multiple of 8760", (int)nrec ) );
 		
 	double ts_hour = 1.0/step_per_hour;
+
+	// lifetime control variables - used to set array sizes
+	int system_use_lifetime_output = as_integer("system_use_lifetime_output");
+	size_t nyears = 1;
+	if (system_use_lifetime_output == 1)
+		nyears = as_integer("analysis_period");
+	size_t nlifetime = nyears * nrec;
+
 	// shading database if necessary
 	smart_ptr<ShadeDB8_mpp>::ptr  p_shade_db; // (new ShadeDB8_mpp());
 
@@ -1512,11 +1520,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 
 
 
-	// lifetime control variables - used to set array sizes
-	int system_use_lifetime_output = as_integer("system_use_lifetime_output");
-	size_t nyears = 1;
-	if (system_use_lifetime_output == 1)
-		nyears = as_integer("analysis_period");
+
 
 	// Warning workaround
 	static bool is32BitLifetime = (__ARCHBITS__ == 32 && system_use_lifetime_output);
@@ -1720,7 +1724,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 		
 	ssc_number_t *p_dcsnowloss = allocate("dc_snow_loss", nrec);
 
-	ssc_number_t *p_inv_dc_voltage = allocate( "inverter_dc_voltage", nrec * nyears );
+	ssc_number_t *p_inv_dc_voltage = allocate( "inverter_dc_voltage", nlifetime);
 	ssc_number_t *p_inveff = allocate("inv_eff", nrec);
 	ssc_number_t *p_invcliploss = allocate( "inv_cliploss", nrec );
 	ssc_number_t *p_invmpptloss = allocate("dc_invmppt_loss", nrec);
@@ -1730,9 +1734,9 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 	ssc_number_t *p_ac_wiringloss = allocate("ac_wiring_loss", nrec);
 
 	// lifetime outputs
-	ssc_number_t *p_dcpwr = allocate("dc_net", nrec * nyears);
-	ssc_number_t *p_gen = allocate("gen", nrec * nyears);
-	ssc_number_t *p_load_full = allocate("load_full", nrec* nyears);
+	ssc_number_t *p_dcpwr = allocate("dc_net", nlifetime);
+	ssc_number_t *p_gen = allocate("gen", nlifetime);
+	ssc_number_t *p_load_full = allocate("load_full", nlifetime);
 
 	//dc hourly adjustment factors
 	adjustment_factors dc_haf(this, "dc_adjust");
@@ -1749,8 +1753,8 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 	int batt_replacement_option = as_integer("batt_replacement_option");
 	battstor batt(*this, en_batt, batt_replacement_option, nrec, ts_hour);
 	int batt_topology = (en_batt == true ? batt.batt_vars->batt_topology : 0);
-	std::vector<double> p_invcliploss_full;
-	p_invcliploss_full.reserve(nrec * nyears);
+	std::vector<ssc_number_t> p_invcliploss_full;
+	p_invcliploss_full.reserve(nlifetime);
 
 
 	// user battery replacement schedule
@@ -2683,7 +2687,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 
 	// Initialize DC battery predictive controller
 	if (en_batt && (batt_topology == charge_controller::DC_CONNECTED))
-		batt.initialize_automated_dispatch(p_dcpwr, p_load_full, &p_invcliploss_full);
+		batt.initialize_automated_dispatch(util::array_to_vector<ssc_number_t>(p_dcpwr, nlifetime), util::array_to_vector<ssc_number_t>(p_load_full, nlifetime), p_invcliploss_full);
 
 	/* *********************************************************************************************
 	PV AC calculation
@@ -2827,7 +2831,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 
 	// Initialize AC connected battery predictive control
 	if (en_batt && batt_topology == charge_controller::AC_CONNECTED)
-		batt.initialize_automated_dispatch(p_gen, p_load_full);
+		batt.initialize_automated_dispatch(util::array_to_vector<ssc_number_t>(p_gen, nlifetime), util::array_to_vector<ssc_number_t>(p_load_full, nlifetime));
 
 	/* *********************************************************************************************
 	Post PV AC 
