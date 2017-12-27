@@ -59,9 +59,11 @@ static var_info vtab_utility_rate5[] = {
 
 // 3 additional variables for PPA Buy rate
 // optional output from battery model
-	{ SSC_INPUT,        SSC_NUMBER,      "en_batt",                                    "Enable battery storage model",                            "0/1",     "",                     "Battery",       "?=0",                                 "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "batt_meter_position",                        "Position of battery relative to electric meter",          "",        "",                     "Battery",       "",                           "",                              "" },
-	{ SSC_INPUT, SSC_ARRAY,      "grid_to_batt",                               "Electricity to battery from grid",                      "kW",      "",                       "Battery",       "",                           "",                              "" }, 
+	{ SSC_INPUT,        SSC_NUMBER,      "en_batt",                                    "Enable battery storage model",                            "0/1",     "",                     "Utility rate",       "?=0",                                 "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "batt_meter_position",                        "Position of battery relative to electric meter",          "",        "",                     "Utility rate",       "",                           "",                              "" },
+	{ SSC_INPUT, SSC_ARRAY,      "grid_to_batt",                               "Electricity to battery from grid",                      "kW",      "",                       "Utility rate",       "",                           "",                              "" },
+	{ SSC_OUTPUT, SSC_ARRAY,      "bill_calculator_load",                               "Electricity load used by bill calculator",                      "kW",      "",                       "Utility rate",       "",                           "",                              "" },
+	{ SSC_OUTPUT, SSC_ARRAY,      "bill_calculator_gen",                               "Electricity generation by system used by bill calculator",                      "kW",      "",                       "Utility rate",       "",                           "",                              "" },
 
 
 	{ SSC_INPUT,        SSC_NUMBER,     "analysis_period",           "Number of years in analysis",                   "years",  "",                      "",             "*",                         "INTEGER,POSITIVE",              "" },
@@ -499,10 +501,11 @@ public:
 		4. use (kW)  p_load[i] = max(load) over the hour for each hour i
 		5. After above assignment, proceed as before with same outputs
 		*/
-		ssc_number_t *pload = NULL, *pgen;
+		ssc_number_t *pload = NULL, *ploadin=NULL, *pgen, *pgenin;
 		size_t nrec_load = 0, nrec_gen = 0, step_per_hour_gen=1, step_per_hour_load=1;
 		bool bload=false;
-		pgen = as_array("gen", &nrec_gen);
+		pgenin = as_array("gen", &nrec_gen);
+		pgen = allocate("bill_calculator_gen", nrec_gen);
 		// for lifetime analysis
 		size_t nrec_gen_per_year = nrec_gen;
 		if (as_integer("system_use_lifetime_output") == 1)
@@ -516,7 +519,10 @@ public:
 		if (is_assigned("load"))
 		{ // hourly or sub hourly loads for single year
 			bload = true;
-			pload = as_array("load", &nrec_load);
+			ploadin = as_array("load", &nrec_load);
+			pload = allocate("bill_calculator_load", nrec_load);
+			for (i = 0; i < nrec_load; i++)
+				pload[i] = ploadin[i];
 			step_per_hour_load = nrec_load / 8760;
 			if (step_per_hour_load < 1 || step_per_hour_load > 60 || step_per_hour_load * 8760 != nrec_load)
 				throw exec_error("utilityrate5", util::format("invalid number of load records (%d): must be an integer multiple of 8760", (int)nrec_load));
@@ -531,12 +537,20 @@ public:
 			for (i = 0; i < nrec_gen; i++)
 				pgen[i] = 0.0;
 			bload = true;
-			pload = as_array("grid_to_batt", &nrec_load);
+			ploadin = as_array("grid_to_batt", &nrec_load);
+			pload = allocate("bill_calculator_load", nrec_load);
+			for (i = 0; i < nrec_load; i++)
+				pload[i] = ploadin[i];
 			step_per_hour_load = nrec_load / 8760;
 			if (step_per_hour_load < 1 || step_per_hour_load > 60 || step_per_hour_load * 8760 != nrec_load)
 				throw exec_error("utilityrate5", util::format("invalid number of load records (%d): must be an integer multiple of 8760", (int)nrec_load));
 			if ((nrec_load != m_num_rec_yearly) && (nrec_load != 8760))
 				throw exec_error("utilityrate5", util::format("number of load records (%d) must be equal to number of gen records (%d) or 8760 for each year", (int)nrec_load, (int)m_num_rec_yearly));
+		}
+		else // assign pgen as normal - no modifications to pgenin
+		{
+			for (i = 0; i < nrec_gen; i++)
+				pgen[i] = pgenin[i];
 		}
 
 
