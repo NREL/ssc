@@ -125,13 +125,17 @@ var_info vtab_battery_inputs[] = {
 
 	// lifetime inputs
 	{ SSC_INPUT,		SSC_MATRIX,     "batt_lifetime_matrix",                        "Cycles vs capacity at different depths-of-discharge",    "",         "",                     "Battery",       "",                           "",                             "" },
-	{ SSC_INPUT,        SSC_NUMBER,     "batt_replacement_capacity",                   "Capacity degradation at which to replace battery",       "%",        "",                     "Battery",       "",                           "",                             "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "batt_calendar_choice",                        "Calendar life degradation input option",                 "0/1/2",    "",                     "Battery",       "",                           "",                             "" },
 	{ SSC_INPUT,        SSC_MATRIX,     "batt_calendar_lifetime_matrix",               "Days vs capacity",                                       "",         "",                     "Battery",       "",                           "",                             "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "batt_calendar_q0",                            "Calendar life model initial capacity cofficient",        "",         "",                     "Battery",       "",                           "",                             "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "batt_calendar_a",                             "Calendar life model coefficient",                        "1/sqrt(day)","",                   "Battery",       "",                           "",                             "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "batt_calendar_b",                             "Calendar life model coefficient",                        "K",        "",                     "Battery",       "",                           "",                             "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "batt_calendar_c",                             "Calendar life model coefficient",                        "K",        "",                     "Battery",       "",                           "",                             "" },
+
+	// replacement inputs
+	{ SSC_INPUT,        SSC_NUMBER,     "batt_replacement_capacity",                   "Capacity degradation at which to replace battery",       "%",        "",                     "Battery",       "",                           "",                             "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "batt_replacement_option",                     "Enable battery replacement?",                             "0=none,1=capacity based,2=user schedule", "", "Battery", "?=0",                  "INTEGER,MIN=0,MAX=2",          "" },
+	{ SSC_INPUT,        SSC_ARRAY,      "batt_replacement_schedule",                   "Battery bank replacements per year (user specified)",     "number/year","",                  "Battery",      "batt_replacement_option=2",   "",                             "" },
 
 	// thermal inputs
 	{ SSC_INPUT,        SSC_NUMBER,     "batt_mass",                                   "Battery mass",                                           "kg",       "",                     "Battery",       "",                           "",                             "" },
@@ -251,7 +255,7 @@ var_info vtab_battery_outputs[] = {
 
 var_info_invalid };
 
-battstor::battstor(compute_module &cm, bool setup_model, int replacement_option, size_t nrec, double dt_hr, batt_variables *batt_vars_in)
+battstor::battstor(compute_module &cm, bool setup_model, size_t nrec, double dt_hr, batt_variables *batt_vars_in)
 {
 	make_vars = false;
 
@@ -391,7 +395,11 @@ battstor::battstor(compute_module &cm, bool setup_model, int replacement_option,
 			}
 
 			// Battery bank replacement
+			batt_vars->batt_replacement_option = cm.as_integer("batt_replacement_option");
 			batt_vars->batt_replacement_capacity = cm.as_double("batt_replacement_capacity");
+			
+			if (batt_vars->batt_replacement_option == battery_t::REPLACE_BY_SCHEDULE)
+				batt_vars->batt_replacement_schedule = cm.as_vector_integer("batt_replacement_schedule");
 
 			// Battery lifetime
 			batt_vars->batt_calendar_choice = cm.as_integer("batt_calendar_choice");
@@ -510,7 +518,7 @@ battstor::battstor(compute_module &cm, bool setup_model, int replacement_option,
 		nyears = batt_vars->analysis_period;
 	else
 	{
-		if (replacement_option > 0)
+		if (batt_vars->batt_replacement_option > 0)
 			cm.log("Replacements are enabled without running lifetime simulation, please run over lifetime to consider battery replacements", SSC_WARNING);
 	}
 	total_steps = nyears * 8760 * step_per_hour;
@@ -647,7 +655,7 @@ battstor::battstor(compute_module &cm, bool setup_model, int replacement_option,
 	lifetime_cycle_model = new  lifetime_cycle_t(batt_lifetime_matrix);
 	lifetime_calendar_model = new lifetime_calendar_t(batt_vars->batt_calendar_choice, batt_calendar_lifetime_matrix, _dt_hour, 
 		(float)batt_vars->batt_calendar_q0, (float)batt_vars->batt_calendar_a, (float)batt_vars->batt_calendar_b, (float)batt_vars->batt_calendar_c);
-	lifetime_model = new lifetime_t(lifetime_cycle_model, lifetime_calendar_model, replacement_option, batt_vars->batt_replacement_capacity);
+	lifetime_model = new lifetime_t(lifetime_cycle_model, lifetime_calendar_model, batt_vars->batt_replacement_option, batt_vars->batt_replacement_capacity);
 
 	util::matrix_t<double> cap_vs_temp = batt_vars->cap_vs_temp;
 	if (cap_vs_temp.nrows() < 2 || cap_vs_temp.ncols() != 2)
@@ -1018,18 +1026,18 @@ battstor::~battstor()
 	if (make_vars) delete batt_vars;
 }
 
-void battstor::check_replacement_schedule(int batt_replacement_option, size_t count_batt_replacement, ssc_number_t *batt_replacement )
+void battstor::check_replacement_schedule()
 {
-	if (batt_replacement_option == battery_t::REPLACE_BY_SCHEDULE)
+	if (batt_vars->batt_replacement_option == battery_t::REPLACE_BY_SCHEDULE)
 	{
 		// don't allow replacement on first hour of first year
 		if (hour == 0 && year == 0)
 			return;
 
 		bool replace = false;
-		if (year < count_batt_replacement)
+		if (year < batt_vars->batt_replacement_schedule.size())
 		{
-			ssc_number_t num_repl = batt_replacement[year];
+			int num_repl = batt_vars->batt_replacement_schedule[year];
 			for (int j_repl = 0; j_repl < num_repl; j_repl++)
 			{
 				if ((hour == (j_repl * 8760 / num_repl)) && step == 0)
@@ -1258,7 +1266,7 @@ public:
 		if (as_boolean("en_batt"))
 		{
 			std::vector<ssc_number_t> power_input = as_vector_ssc_number_t("gen");
-			battstor batt(*this, true, as_integer("batt_replacement_option"), power_input.size(), 8760 / power_input.size());
+			battstor batt(*this, true, power_input.size(), static_cast<double>(8760 / power_input.size()));
 
 			// Parse "Load input"
 			std::vector<ssc_number_t> power_load;

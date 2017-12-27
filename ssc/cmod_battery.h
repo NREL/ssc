@@ -203,13 +203,17 @@ struct batt_variables
 	util::matrix_t<size_t> ec_weekday_schedule;
 	util::matrix_t<size_t> ec_weekend_schedule;
 	util::matrix_t<double> ec_tou_matrix;
+
+	/* Battery replacement options */
+	int batt_replacement_option;
+	std::vector<int> batt_replacement_schedule;
 };
 
 
 struct battstor
 {
 
-	battstor( compute_module &cm, bool setup_model, int replacement_option, size_t nrec, double dt_hr, batt_variables *batt_vars=0);
+	battstor( compute_module &cm, bool setup_model, size_t nrec, double dt_hr, batt_variables *batt_vars=0);
 	void parse_configuration();
 	void initialize_automated_dispatch(std::vector<ssc_number_t> pv= std::vector<ssc_number_t>(), 
 									   std::vector<ssc_number_t> load= std::vector<ssc_number_t>(), 
@@ -254,7 +258,7 @@ struct battstor
 
 	// for user schedule
 	void force_replacement();
-	void check_replacement_schedule(int batt_replacement_option, size_t count_batt_replacement, ssc_number_t *batt_replacement);
+	void check_replacement_schedule();
 	void calculate_monthly_and_annual_outputs( compute_module &cm );
 
 	// time quantities

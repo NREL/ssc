@@ -542,10 +542,10 @@ public:
 			for (i = 0; i < nrec_load; i++)
 				pload[i] = ploadin[i];
 			step_per_hour_load = nrec_load / 8760;
-			if (step_per_hour_load < 1 || step_per_hour_load > 60 || step_per_hour_load * 8760 != nrec_load)
-				throw exec_error("utilityrate5", util::format("invalid number of load records (%d): must be an integer multiple of 8760", (int)nrec_load));
-			if ((nrec_load != m_num_rec_yearly) && (nrec_load != 8760))
-				throw exec_error("utilityrate5", util::format("number of load records (%d) must be equal to number of gen records (%d) or 8760 for each year", (int)nrec_load, (int)m_num_rec_yearly));
+			// if (step_per_hour_load < 1 || step_per_hour_load > 60 || step_per_hour_load * 8760 != nrec_load)
+			// 	throw exec_error("utilityrate5", util::format("invalid number of load records (%d): must be an integer multiple of 8760", (int)nrec_load));
+			// if ((nrec_load != m_num_rec_yearly) && (nrec_load != 8760))
+			//	throw exec_error("utilityrate5", util::format("number of load records (%d) must be equal to number of gen records (%d) or 8760 for each year", (int)nrec_load, (int)m_num_rec_yearly));
 		}
 		else // assign pgen as normal - no modifications to pgenin
 		{

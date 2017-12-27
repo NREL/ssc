@@ -266,6 +266,7 @@ public:
 	double as_double( const std::string &name ) throw( general_error );
 	const char *as_string( const std::string &name ) throw( general_error );
 	ssc_number_t *as_array( const std::string &name, size_t *count ) throw( general_error );
+	std::vector<int> as_vector_integer(const std::string &name) throw(general_error);
 	std::vector<ssc_number_t> as_vector_ssc_number_t(const std::string &name) throw(general_error);
 	std::vector<double> as_vector_double( const std::string &name ) throw( general_error );
 	std::vector<float> as_vector_float(const std::string &name) throw(general_error);

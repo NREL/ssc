@@ -367,6 +367,16 @@ ssc_number_t *compute_module::as_array( const std::string &name, size_t *count )
 The obvious improvement would be to made this a template, but ran into trouble with 
 "error: Access violation - no RTTI data!" 
 */
+std::vector<int> compute_module::as_vector_integer(const std::string &name) throw(general_error)
+{
+	var_data &x = value(name);
+	if (x.type != SSC_ARRAY) throw cast_error("array", x, name);
+	size_t len = x.num.length();
+	ssc_number_t *p = x.num.data();
+	std::vector<int> v(p, p + sizeof p / sizeof p[0]);
+	return v;
+}
+
 std::vector<ssc_number_t> compute_module::as_vector_ssc_number_t(const std::string &name) throw(general_error)
 {
 	var_data &x = value(name);

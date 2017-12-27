@@ -306,7 +306,7 @@ public:
 
 			
 			batt_variables * batt_vars = setup_variables(p_ac.size());
-			battstor batt(*this, true, 0, p_ac.size(), 8760 / p_ac.size(), batt_vars);
+			battstor batt(*this, true, p_ac.size(), static_cast<double>(8760 / p_ac.size()), batt_vars);
 			batt.initialize_automated_dispatch(p_ac, p_load);
 			
 			/* *********************************************************************************************
