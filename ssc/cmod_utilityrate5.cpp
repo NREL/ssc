@@ -503,6 +503,8 @@ public:
 		*/
 		ssc_number_t *pload = NULL, *ploadin=NULL, *pgen, *pgenin;
 		size_t nrec_load = 0, nrec_gen = 0, step_per_hour_gen=1, step_per_hour_load=1;
+		size_t nrec_load_per_year = nrec_load;
+
 		bool bload=false;
 		pgenin = as_array("gen", &nrec_gen);
 		pgen = allocate("bill_calculator_gen", nrec_gen);
@@ -523,11 +525,21 @@ public:
 			pload = allocate("bill_calculator_load", nrec_load);
 			for (i = 0; i < nrec_load; i++)
 				pload[i] = ploadin[i];
-			step_per_hour_load = nrec_load / 8760;
-			if (step_per_hour_load < 1 || step_per_hour_load > 60 || step_per_hour_load * 8760 != nrec_load)
-				throw exec_error("utilityrate5", util::format("invalid number of load records (%d): must be an integer multiple of 8760", (int)nrec_load));
-			if ((nrec_load != m_num_rec_yearly) && (nrec_load != 8760))
-				throw exec_error("utilityrate5", util::format("number of load records (%d) must be equal to number of gen records (%d) or 8760 for each year", (int)nrec_load, (int)m_num_rec_yearly));
+			// lifetime load addition
+			nrec_load_per_year = nrec_load;
+			// cannot have lifetime load wihtout lifetime generation.
+			// lifetime load - assumption is that nrec_load_per_year is multiple of 8760
+			if (as_integer("system_use_lifetime_output") == 1)
+			{
+				if (nrec_load == nrec_gen)
+					nrec_load_per_year = nrec_load / nyears;
+			}
+			// if not, then subhourly load 
+			step_per_hour_load = nrec_load_per_year / 8760;
+			if (step_per_hour_load < 1 || step_per_hour_load > 60 || step_per_hour_load * 8760 != nrec_load_per_year)
+				throw exec_error("utilityrate5", util::format("invalid number of load records (%d): must be an integer multiple of 8760", (int)nrec_load_per_year));
+			if ((nrec_load_per_year != m_num_rec_yearly) && (nrec_load != 8760))
+				throw exec_error("utilityrate5", util::format("number of load records (%d) must be equal to number of gen records (%d) or 8760 for each year", (int)nrec_load_per_year, (int)m_num_rec_yearly));
 		}
 //		ssc_number_t ts_hour_load = 1.0f / step_per_hour_load;
 
@@ -541,11 +553,21 @@ public:
 			pload = allocate("bill_calculator_load", nrec_load);
 			for (i = 0; i < nrec_load; i++)
 				pload[i] = ploadin[i];
-			step_per_hour_load = nrec_load / 8760;
-			// if (step_per_hour_load < 1 || step_per_hour_load > 60 || step_per_hour_load * 8760 != nrec_load)
-			// 	throw exec_error("utilityrate5", util::format("invalid number of load records (%d): must be an integer multiple of 8760", (int)nrec_load));
-			// if ((nrec_load != m_num_rec_yearly) && (nrec_load != 8760))
-			//	throw exec_error("utilityrate5", util::format("number of load records (%d) must be equal to number of gen records (%d) or 8760 for each year", (int)nrec_load, (int)m_num_rec_yearly));
+			// lifetime load addition
+			nrec_load_per_year = nrec_load;
+			// cannot have lifetime load wihtout lifetime generation.
+			// lifetime load - assumption is that nrec_load_per_year is multiple of 8760
+			if (as_integer("system_use_lifetime_output") == 1)
+			{
+				if (nrec_load == nrec_gen)
+					nrec_load_per_year = nrec_load / nyears;
+			}
+			// if not, then subhourly load 
+			step_per_hour_load = nrec_load_per_year / 8760;
+			if (step_per_hour_load < 1 || step_per_hour_load > 60 || step_per_hour_load * 8760 != nrec_load_per_year)
+				throw exec_error("utilityrate5", util::format("invalid number of load records (%d): must be an integer multiple of 8760", (int)nrec_load_per_year));
+			if ((nrec_load_per_year != m_num_rec_yearly) && (nrec_load != 8760))
+				throw exec_error("utilityrate5", util::format("number of load records (%d) must be equal to number of gen records (%d) or 8760 for each year", (int)nrec_load_per_year, (int)m_num_rec_yearly));
 		}
 		else // assign pgen as normal - no modifications to pgenin
 		{
@@ -1623,9 +1645,9 @@ public:
 				ss << "The weekend TOU matrix for demand rates should have 12 rows and 24 columns. Instead it has " << nrows << " rows and " << ncols << " columns.";
 				throw exec_error("utilityrate5", ss.str());
 			}
-			util::matrix_t<float> dc_schedwkday(nrows, ncols);
+//			util::matrix_t<float> dc_schedwkday(nrows, ncols);
 			dc_schedwkday.assign(dc_weekday, nrows, ncols);
-			util::matrix_t<float> dc_schedwkend(nrows, ncols);
+//			util::matrix_t<float> dc_schedwkend(nrows, ncols);
 			dc_schedwkend.assign(dc_weekend, nrows, ncols);
 
 			// for each row (month) determine periods in the month
@@ -2412,7 +2434,7 @@ public:
 									d_lower = 0;
 									demand = m_month[m].dc_tou_peak[period];
 									// find tier corresponding to peak demand
-									bool found = false;
+									found = false;
 									for (tier = 0; tier < (int)m_month[m].dc_tou_ub.ncols() && !found; tier++)
 									{
 										if (demand < m_month[m].dc_tou_ub.at(period, tier))
@@ -2990,7 +3012,7 @@ public:
 									d_lower = 0;
 									demand = m_month[m].dc_tou_peak[period];
 									// find tier corresponding to peak demand
-									bool found = false;
+									found = false;
 									for (tier = 0; tier < (int)m_month[m].dc_tou_ub.ncols() && !found; tier++)
 									{
 										if (demand < m_month[m].dc_tou_ub.at(period, tier))

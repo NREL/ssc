@@ -1168,10 +1168,10 @@ public:
 			double batt_repl_cost = as_double("batt_replacement_cost");
 			double batt_repl_cost_escal = as_double("batt_replacement_cost_escal")*0.01;
 
-			for (int i = 0; i<nyears; i++)
+			for ( i = 0; i<nyears; i++)
 				cf.at(CF_battery_replacement_cost_schedule, i + 1) = batt_repl_cost * batt_cap * pow(1 + batt_repl_cost_escal + inflation_rate, i);
 
-			for (int i = 0; i < nyears && i<(int)count; i++)
+			for ( i = 0; i < nyears && i<(int)count; i++)
 				cf.at(CF_battery_replacement_cost, i + 1) = batt_rep[i] * 
 					cf.at(CF_battery_replacement_cost_schedule, i + 1);
 		}
@@ -1185,8 +1185,11 @@ public:
 			size_t ub_count;
 			ssc_number_t* ub_arr;
 			ub_arr = as_array("utility_bill_w_sys", &ub_count);
-			for (int i = 0; i < nyears && i<(int)ub_count; i++)
-				cf.at(CF_utility_bill, i + 1) = ub_arr[i];
+			if (ub_count != (nyears+1))
+				throw exec_error("singleowner", util::format("utility bill years (%d) not equal to analysis period years (%d).", (int)ub_count, nyears));
+
+			for ( i = 0; i <= nyears; i++)
+				cf.at(CF_utility_bill, i) = ub_arr[i];
 			save_cf(CF_utility_bill, nyears, "cf_utility_bill");
 		}
 
@@ -1996,7 +1999,7 @@ public:
 
 			if (term_tenor == 0) loan_amount = 0;
 //			log(util::format("loan amount =%lg, debt fraction=%lg, adj installed cost=%lg", loan_amount, debt_frac, adjusted_installed_cost), SSC_WARNING);
-			for (int i = 1; i <= nyears; i++)
+			for ( i = 1; i <= nyears; i++)
 			{
 				if (i == 1)
 				{

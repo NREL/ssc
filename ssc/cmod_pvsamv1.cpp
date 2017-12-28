@@ -1752,7 +1752,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 	std::vector<ssc_number_t> p_invcliploss_full;
 	p_invcliploss_full.reserve(nlifetime);
 		
-	// electric load 
+	// electric load - lifetime load data? 
 	double cur_load = 0.0;
 	size_t nload = 0;
 	std::vector<ssc_number_t> p_load_in;
