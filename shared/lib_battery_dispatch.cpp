@@ -108,8 +108,7 @@ void dispatch_t::init(battery_t * Battery, double dt_hour, double SOC_min, doubl
 	_can_charge = false;
 	_can_clip_charge = false;
 	_can_discharge = false;
-	_can_grid_charge = false;
-}
+	_can_grid_charge = false;}
 
 void dispatch_t::prepare_dispatch(size_t, size_t, double P_pv_dc_charging, double P_pv_dc_discharging, double P_load_dc_charging, double P_load_dc_discharging, double P_pv_dc_clipping)
 {
@@ -221,12 +220,7 @@ bool dispatch_t::check_constraints(double &I, int count)
 	return iterate;
 }
 
-double dispatch_t::costToCycle(double battCostPerKWH)
-{
-	double capacityPercentDamagePerCycle = _Battery->lifetime_model()->cycleModel()->computeCycleDamageAverageDOD();
-	double costPer1kWhCycle = 0.01 * capacityPercentDamagePerCycle * battCostPerKWH;
-	return costPer1kWhCycle;
-}
+
 
 double dispatch_t::power_tofrom_battery(){ return _P_tofrom_batt; };
 double dispatch_t::power_tofrom_grid(){ return _P_grid; };
@@ -1447,6 +1441,8 @@ dispatch_automatic_front_of_meter_t::dispatch_automatic_front_of_meter_t(
 	bool can_grid_charge,
 	double inverter_paco,
 	double batt_cost_per_kwh,
+	int battCycleCostChoice,
+	double battCycleCost,
 	std::vector<double> ppa_factors,
 	util::matrix_t<size_t> ppa_weekday_schedule,
 	util::matrix_t<size_t> ppa_weekend_schedule,
@@ -1460,12 +1456,17 @@ dispatch_automatic_front_of_meter_t::dispatch_automatic_front_of_meter_t(
 	_ppa_factors = ppa_factors;
 	_utilityRateCalculator = new UtilityRateCalculator(utilityRate, _steps_per_hour);
 
-	m_cycleCost = costToCycle(batt_cost_per_kwh);
 	m_battReplacementCostPerKWH = batt_cost_per_kwh;
 	m_etaPVCharge = etaPVCharge * 0.01;
 	m_etaGridCharge = etaGridCharge * 0.01;
 	m_etaDischarge = etaDischarge * 0.01;
 
+	m_battCycleCostChoice = battCycleCostChoice;
+	m_cycleCost = 0.05;
+	if (battCycleCostChoice == dispatch_t::INPUT_CYCLE_COST) {
+		m_cycleCost = battCycleCost;
+	}
+	
 	setup_cost_vector(ppa_weekday_schedule, ppa_weekend_schedule);
 }
 dispatch_automatic_front_of_meter_t::~dispatch_automatic_front_of_meter_t()
@@ -1479,7 +1480,6 @@ void dispatch_automatic_front_of_meter_t::init_with_pointer(const dispatch_autom
 	_ppa_factors = tmp->_ppa_factors;
 	_ppa_cost_vector = tmp->_ppa_cost_vector;
 
-	m_cycleCost = tmp->m_cycleCost;
 	m_battReplacementCostPerKWH = tmp->m_battReplacementCostPerKWH;
 	m_etaPVCharge = tmp->m_etaPVCharge;
 	m_etaGridCharge = tmp->m_etaGridCharge;
@@ -1524,7 +1524,6 @@ void dispatch_automatic_front_of_meter_t::copy(const dispatch_t * dispatch)
 	init_with_pointer(tmp);
 }
 
-
 void dispatch_automatic_front_of_meter_t::dispatch(size_t year,
 	size_t hour_of_year,
 	size_t step,
@@ -1557,8 +1556,8 @@ void dispatch_automatic_front_of_meter_t::update_dispatch(size_t hour_of_year, s
 	{
 		_hour_last_updated = hour_of_year;
 
-		/*! Cost to cycle the battery at all, using average DOD so far */
-		m_cycleCost = costToCycle(m_battReplacementCostPerKWH);
+		/*! Cost to cycle the battery at all, using maximum DOD or user input */
+		costToCycle();
 
 		/*! Cost to purchase electricity from the utility */
 		double usage_cost = _utilityRateCalculator->getEnergyRate(hour_of_year);
@@ -1652,13 +1651,22 @@ void dispatch_automatic_front_of_meter_t::update_cliploss_data(double_vec P_clip
 		_P_cliploss_dc.push_back(P_cliploss[i]);
 }
 
+void dispatch_automatic_front_of_meter_t::costToCycle()
+{
+	if (m_battCycleCostChoice == dispatch_t::MODEL_CYCLE_COST)
+	{
+		double capacityPercentDamagePerCycle = _Battery->lifetime_model()->cycleModel()->computeCycleDamageAtDOD();
+		m_cycleCost = 0.01 * capacityPercentDamagePerCycle * m_battReplacementCostPerKWH;
+	}
+}
+
 battery_metrics_t::battery_metrics_t(battery_t * Battery, double dt_hour)
 {
 	_Battery = Battery;
 	_dt_hour = dt_hour;
 
 	// single value metrics
-	_e_charge_accumulated = 0; // _Battery->battery_charge_total()*_Battery->battery_voltage()*watt_to_kilowatt;
+	_e_charge_accumulated = 0; 
 	_e_charge_from_pv = 0.;
 	_e_charge_from_grid = _e_charge_accumulated; // assumes initial charge from grid
 	_e_discharge_accumulated = 0.;

@@ -207,6 +207,10 @@ struct batt_variables
 	/* Battery replacement options */
 	int batt_replacement_option;
 	std::vector<int> batt_replacement_schedule;
+
+	/* Battery cycle costs */
+	int batt_cycle_cost_choice;
+	double batt_cycle_cost;
 };
 
 
@@ -354,7 +358,8 @@ struct battstor
 		*outAnnualGridImportEnergy,
 		*outAnnualGridExportEnergy,
 		*outAnnualEnergySystemLoss,
-		*outAnnualEnergyLoss;
+		*outAnnualEnergyLoss,
+		*outCostToCycle;
 
 	double outAverageCycleEfficiency;
 	double outAverageRoundtripEfficiency;

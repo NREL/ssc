@@ -67,6 +67,7 @@ public:
 	enum METERING { BEHIND, FRONT };
 	enum PV_PRIORITY { MEET_LOAD, CHARGE_BATTERY };
 	enum CURRENT_CHOICE { RESTRICT_POWER, RESTRICT_CURRENT, RESTRICT_BOTH };
+	enum FOM_CYCLE_COST {MODEL_CYCLE_COST, INPUT_CYCLE_COST};
 
 	dispatch_t(battery_t * Battery,
 		double dt,
@@ -110,8 +111,6 @@ public:
 
 	virtual void compute_grid_net();
 
-	virtual double costToCycle(double battCostPerKWH);
-
 	// compute totals
 	virtual void compute_battery_state();
 	virtual void compute_to_batt()=0;
@@ -133,6 +132,7 @@ public:
 
 	virtual double power_grid_target(){	return 0;}
 	virtual double power_batt_target(){ return 0.;}
+	virtual double cost_to_cycle() { return 0.;}
 
 	// control settings
 	int pv_dispatch_priority(){ return _pv_dispatch_to_battery_first; }
@@ -564,12 +564,13 @@ public:
 	/*! Compute the updated power to send to the battery over the next N hours */
 	void update_dispatch(size_t hour_of_year, size_t step, size_t idx);
 
-	
-
 	/*! Pass in the load forecast */
 	void update_load_data(std::vector<double> P_load_dc);
 
+	/*! Pass in the grid power target vector */
 	void set_target_power(std::vector<double> P_target);
+
+	/*! Target power outputs */
 	double power_grid_target(){ return _P_target_current; };
 	double power_batt_target(){ return _P_battery_current; };
 
@@ -642,6 +643,8 @@ public:
 		bool can_grid_charge,
 		double inverter_paco,
 		double battReplacementCostPerkWh,
+		int battCycleCostChoice,
+		double battCycleCost,
 		std::vector<double> ppa_factors,
 		util::matrix_t<size_t> ppa_weekday_schedule,
 		util::matrix_t<size_t> ppa_weekend_schedule,
@@ -676,6 +679,12 @@ public:
 	/*! Pass in the clipping loss forecast */
 	void update_cliploss_data(std::vector<double> P_cliploss_dc);
 
+	/*! Calculate the cost to cycle */
+	void costToCycle();
+
+	/*! Return the calculated cost to cycle ($/cycle)*/
+	double cost_to_cycle() { return m_cycleCost; }
+
 protected:
 	
 	void init_with_pointer(const dispatch_automatic_front_of_meter_t* tmp);
@@ -684,13 +693,21 @@ protected:
 	/*! Full clipping loss due to AC power limits vector */
 	double_vec _P_cliploss_dc;
 
+	/*! Inverter AC power limit */
 	double _inverter_paco;
+
+	/*! PPA cost and time-of-delivery factors */
 	std::vector<double> _ppa_factors;
 	std::vector<double> _ppa_cost_vector;
+
+	/*! Utility rate information */
 	UtilityRateCalculator * _utilityRateCalculator;
 
-
+	/*! Cost to replace battery per kWh */
 	double m_battReplacementCostPerKWH;
+
+	/*! Cycling cost inputs */
+	int m_battCycleCostChoice;
 	double m_cycleCost;
 
 	/*! Efficiencies of the charge and discharge of the battery*/

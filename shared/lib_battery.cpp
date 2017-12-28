@@ -211,6 +211,7 @@ void capacity_t::update_SOC()
 bool capacity_t::chargeChanged(){return _chargeChange;}
 double capacity_t::SOC(){ return _SOC; }
 double capacity_t::DOD(){ return _DOD; }
+double capacity_t::DOD_max(){ return _SOC_max - _SOC_min; }
 double capacity_t::prev_DOD(){ return _DOD_prev; }
 double capacity_t::q0(){ return _q0;}
 double capacity_t::qmax(){ return _qmax; }
@@ -857,9 +858,11 @@ double lifetime_cycle_t::totalCapacityDegraded()
 {
 	return 100. - _q;
 }
-double lifetime_cycle_t::computeCycleDamageAverageDOD()
+double lifetime_cycle_t::computeCycleDamageAtDOD(double DOD)
 {
-	return(_q - bilinear(_average_range, _nCycles + 1));
+	if (DOD == 0)
+		DOD = _average_range;
+	return(_q - bilinear(DOD, _nCycles + 1));
 }
 double lifetime_cycle_t::runCycleLifetime(double DOD)
 {

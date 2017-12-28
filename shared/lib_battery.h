@@ -118,6 +118,7 @@ public:
 
 	// common outputs
 	double SOC();
+	double DOD_max();
 	double DOD();
 	double prev_DOD();
 	double q0();
@@ -400,8 +401,8 @@ public:
 	// return dq, the accumulated percent damage
 	double totalCapacityDegraded();
 
-	// return hypothetical dq for the average cycle DOD at the current cycle count
-	double computeCycleDamageAverageDOD();
+	// return hypothetical dq for the given DOD at the current cycle count
+	double computeCycleDamageAtDOD(double DOD=0);
 
 	void rainflow(double DOD);
 	void replaceBattery();

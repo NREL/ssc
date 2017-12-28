@@ -169,8 +169,9 @@ var_info vtab_battery_inputs[] = {
 	{ SSC_INPUT,        SSC_NUMBER,     "batt_look_ahead_hours",                       "Hours to look ahead in automated dispatch",              "hours",    "",                     "Battery",       "",                           "",                             "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "batt_dispatch_update_frequency_hours",        "Frequency to update the look-ahead dispatch",            "hours",    "",                     "Battery",       "",                           "",                             "" },
 
-	// Cost inputs
-	{ SSC_INPUT,        SSC_NUMBER,     "battery_per_kWh",                              "Battery cost per kWh",                                  "$",        "",                     "Battery",       "?=0",                        "",                             "" },
+	//  cycle cost inputs
+	{ SSC_INPUT,        SSC_NUMBER,     "batt_cycle_cost_choice",                      "Use SAM model for cycle costs or input custom",           "0/1",     "",                     "Battery",       "",                           "",                             "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "batt_cycle_cost",                             "Input battery cycle costs",                               "$/cycle-kWh","",                  "Battery",       "",                           "",                             "" },
 
 	// Utility rate inputs
 	{ SSC_INPUT,        SSC_MATRIX,     "ur_ec_sched_weekday",                         "Energy charge weekday schedule",                          "",        "12 x 24 matrix",         "",              "en_batt=1&batt_meter_position=1&batt_dispatch_choice=2",  "",          "" },
@@ -210,7 +211,6 @@ var_info vtab_battery_outputs[] = {
 	// Power outputs at native timestep												        
 	{ SSC_OUTPUT,        SSC_ARRAY,      "batt_power",                                 "Electricity to/from battery",                           "kW",      "",                       "Battery",       "",                           "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "grid_power",                                 "Electricity to/from grid",                              "kW",      "",                       "Battery",       "",                           "",                              "" },
-	//{ SSC_OUTPUT,        SSC_ARRAY,      "pv_batt_gen",                                "Power of PV+battery"                              "kW",      "",                       "Battery",       "",                           "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "pv_to_load",                                 "Electricity to load from PV",                           "kW",      "",                       "Battery",       "",                           "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "batt_to_load",                               "Electricity to load from battery",                      "kW",      "",                       "Battery",       "",                           "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "grid_to_load",                               "Electricity to load from grid",                         "kW",      "",                       "Battery",       "",                           "",                              "" },
@@ -222,6 +222,7 @@ var_info vtab_battery_outputs[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "batt_system_loss",                           "Electricity loss from battery ancillary equipment",     "kW",      "",                       "Battery",       "",                           "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "grid_power_target",                          "Electricity grid power target for automated dispatch","kW","",                               "Battery",       "",                           "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "batt_power_target",                          "Electricity battery power target for automated dispatch","kW","",                            "Battery",       "",                           "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "batt_cost_to_cycle",                         "Computed cost to cycle",                                "$/cycle", "",                       "Battery",       "",                           "",                              "" },
 
 
 	// monthly outputs
@@ -353,6 +354,8 @@ battstor::battstor(compute_module &cm, bool setup_model, size_t nrec, double dt_
 				batt_vars->batt_dispatch_auto_can_clipcharge = cm.as_boolean("batt_dispatch_auto_can_clipcharge");
 				batt_vars->batt_dispatch_auto_can_gridcharge = cm.as_boolean("batt_dispatch_auto_can_gridcharge");
 
+				batt_vars->batt_cycle_cost_choice = cm.as_integer("batt_cycle_cost_choice");
+				batt_vars->batt_cycle_cost = cm.as_double("batt_cycle_cost");
 
 				if (batt_vars->batt_dispatch == dispatch_t::FOM_LOOK_AHEAD || batt_vars->batt_dispatch == dispatch_t::FOM_FORECAST)
 				{
@@ -509,6 +512,7 @@ battstor::battstor(compute_module &cm, bool setup_model, size_t nrec, double dt_
 	outAnnualDischargeEnergy = 0;
 	outAnnualGridImportEnergy = 0;
 	outAnnualGridExportEnergy = 0;
+	outCostToCycle = 0;
 
 	en = setup_model;
 	if (!en) return;
@@ -619,6 +623,9 @@ battstor::battstor(compute_module &cm, bool setup_model, size_t nrec, double dt_
 	else if (batt_vars->batt_meter_position == dispatch_t::FRONT)
 	{
 		outBatteryToGrid = cm.allocate("batt_to_grid", nrec*nyears);
+
+		if (batt_vars->batt_dispatch != dispatch_t::FOM_MANUAL)
+			outCostToCycle = cm.allocate("batt_cost_to_cycle", nrec*nyears);
 	}
 	outPVToBatt = cm.allocate("pv_to_batt", nrec*nyears);
 	outGridToBatt = cm.allocate("grid_to_batt", nrec*nyears);
@@ -819,6 +826,7 @@ battstor::battstor(compute_module &cm, bool setup_model, size_t nrec, double dt_
 			nyears, batt_vars->batt_look_ahead_hours, batt_vars->batt_dispatch_update_frequency_hours,
 			batt_vars->batt_dispatch_auto_can_charge, batt_vars->batt_dispatch_auto_can_clipcharge, batt_vars->batt_dispatch_auto_can_gridcharge,
 			batt_vars->inverter_paco, batt_vars->batt_cost_per_kwh,
+			batt_vars->batt_cycle_cost_choice, batt_vars->batt_cycle_cost,
 			batt_vars->ppa_factors, batt_vars->ppa_weekday_schedule, batt_vars->ppa_weekend_schedule, utilityRate,
 			batt_vars->batt_dc_dc_bms_efficiency, efficiencyCombined , efficiencyCombined);
 		
@@ -1138,6 +1146,9 @@ void battstor::outputs_topology_dependent(compute_module &)
 	else if (batt_vars->batt_meter_position == dispatch_t::FRONT)
 	{
 		outBatteryToGrid[index] = (ssc_number_t)(charge_control->power_battery_to_grid());
+
+		if (batt_vars->batt_dispatch != dispatch_t::FOM_MANUAL)
+			outCostToCycle[index] = (ssc_number_t)(dispatch_model->cost_to_cycle());
 	}
 }
 
