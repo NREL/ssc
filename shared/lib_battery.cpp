@@ -859,7 +859,7 @@ double lifetime_cycle_t::totalCapacityDegraded()
 }
 double lifetime_cycle_t::computeCycleDamageAverageDOD()
 {
-	return(_q - bilinear(50, _nCycles));
+	return(_q - bilinear(_average_range, _nCycles + 1));
 }
 double lifetime_cycle_t::runCycleLifetime(double DOD)
 {

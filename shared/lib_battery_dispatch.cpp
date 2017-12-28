@@ -223,8 +223,8 @@ bool dispatch_t::check_constraints(double &I, int count)
 
 double dispatch_t::costToCycle(double battCostPerKWH)
 {
-	double capacityPercentDamage = _Battery->lifetime_model()->cycleModel()->computeCycleDamageAverageDOD();
-	double costPer1kWhCycle = 0.01 * capacityPercentDamage * battCostPerKWH;
+	double capacityPercentDamagePerCycle = _Battery->lifetime_model()->cycleModel()->computeCycleDamageAverageDOD();
+	double costPer1kWhCycle = 0.01 * capacityPercentDamagePerCycle * battCostPerKWH;
 	return costPer1kWhCycle;
 }
 
@@ -1461,7 +1461,7 @@ dispatch_automatic_front_of_meter_t::dispatch_automatic_front_of_meter_t(
 	_utilityRateCalculator = new UtilityRateCalculator(utilityRate, _steps_per_hour);
 
 	m_cycleCost = costToCycle(batt_cost_per_kwh);
-	m_battCostPerKWH = batt_cost_per_kwh;
+	m_battReplacementCostPerKWH = batt_cost_per_kwh;
 	m_etaPVCharge = etaPVCharge * 0.01;
 	m_etaGridCharge = etaGridCharge * 0.01;
 	m_etaDischarge = etaDischarge * 0.01;
@@ -1480,7 +1480,7 @@ void dispatch_automatic_front_of_meter_t::init_with_pointer(const dispatch_autom
 	_ppa_cost_vector = tmp->_ppa_cost_vector;
 
 	m_cycleCost = tmp->m_cycleCost;
-	m_battCostPerKWH = tmp->m_battCostPerKWH;
+	m_battReplacementCostPerKWH = tmp->m_battReplacementCostPerKWH;
 	m_etaPVCharge = tmp->m_etaPVCharge;
 	m_etaGridCharge = tmp->m_etaGridCharge;
 	m_etaDischarge = tmp->m_etaDischarge;
@@ -1558,7 +1558,7 @@ void dispatch_automatic_front_of_meter_t::update_dispatch(size_t hour_of_year, s
 		_hour_last_updated = hour_of_year;
 
 		/*! Cost to cycle the battery at all, using average DOD so far */
-		m_cycleCost = costToCycle(m_battCostPerKWH);
+		m_cycleCost = costToCycle(m_battReplacementCostPerKWH);
 
 		/*! Cost to purchase electricity from the utility */
 		double usage_cost = _utilityRateCalculator->getEnergyRate(hour_of_year);

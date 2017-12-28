@@ -135,6 +135,7 @@ var_info vtab_battery_inputs[] = {
 	{ SSC_INPUT,        SSC_NUMBER,     "batt_replacement_capacity",                   "Capacity degradation at which to replace battery",       "%",        "",                     "Battery",       "",                           "",                             "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "batt_replacement_option",                     "Enable battery replacement?",                             "0=none,1=capacity based,2=user schedule", "", "Battery", "?=0",                  "INTEGER,MIN=0,MAX=2",          "" },
 	{ SSC_INPUT,        SSC_ARRAY,      "batt_replacement_schedule",                   "Battery bank replacements per year (user specified)",     "number/year","",                  "Battery",      "batt_replacement_option=2",   "",                             "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "batt_replacement_cost",                       "Cost to replace battery per kWh",                        "$/kWh",    "",                     "Battery",       "",                           "",                             "" },
 
 	// thermal inputs
 	{ SSC_INPUT,        SSC_NUMBER,     "batt_mass",                                   "Battery mass",                                           "kg",       "",                     "Battery",       "",                           "",                             "" },
@@ -273,9 +274,6 @@ battstor::battstor(compute_module &cm, bool setup_model, size_t nrec, double dt_
 			// Lifetime simulation
 			batt_vars->system_use_lifetime_output = cm.as_boolean("system_use_lifetime_output");
 
-			// System Costs
-			batt_vars->batt_cost_per_kwh = cm.as_double("battery_per_kWh");
-
 			// Chemistry
 			batt_vars->batt_chem = cm.as_integer("batt_chem");
 
@@ -394,6 +392,7 @@ battstor::battstor(compute_module &cm, bool setup_model, size_t nrec, double dt_
 			}
 
 			// Battery bank replacement
+			batt_vars->batt_cost_per_kwh = cm.as_double("batt_replacement_cost");
 			batt_vars->batt_replacement_option = cm.as_integer("batt_replacement_option");
 			batt_vars->batt_replacement_capacity = cm.as_double("batt_replacement_capacity");
 			

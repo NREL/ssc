@@ -641,7 +641,7 @@ public:
 		bool can_clipcharge,
 		bool can_grid_charge,
 		double inverter_paco,
-		double battCostPerkWh,
+		double battReplacementCostPerkWh,
 		std::vector<double> ppa_factors,
 		util::matrix_t<size_t> ppa_weekday_schedule,
 		util::matrix_t<size_t> ppa_weekend_schedule,
@@ -690,7 +690,7 @@ protected:
 	UtilityRateCalculator * _utilityRateCalculator;
 
 
-	double m_battCostPerKWH;
+	double m_battReplacementCostPerKWH;
 	double m_cycleCost;
 
 	/*! Efficiencies of the charge and discharge of the battery*/
