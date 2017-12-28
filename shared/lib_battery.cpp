@@ -114,6 +114,7 @@ capacity_t::capacity_t(double q, double SOC_init, double SOC_max, double SOC_min
 
 	// Initialize SOC, DOD
 	_SOC = SOC_init;
+	_SOC_init = SOC_init;
 	_SOC_max = SOC_max;
 	_SOC_min = SOC_min;
 	_DOD = 0;
@@ -265,10 +266,11 @@ void capacity_kibam_t::copy(capacity_t * capacity)
 void capacity_kibam_t::replace_battery()
 {
 	// Assume initial charge is max capacity
-	_q0 = _qmax0*_SOC_max*0.01;
+	_q0 = _qmax0*_SOC_init*0.01;
 	_q1_0 = _q0*_c;
 	_q2_0 = _q0 - _q1_0;
 	_qmax = _qmax0;
+	_SOC = _SOC_init;
 }
 
 double capacity_kibam_t::c_compute(double F, double t1, double t2, double k_guess)
@@ -434,10 +436,10 @@ void capacity_lithium_ion_t::copy(capacity_t * capacity){ capacity_t::copy(capac
 
 void capacity_lithium_ion_t::replace_battery()
 {
-	_q0 = _qmax0;
+	_q0 = _qmax0 * _SOC_init * 0.01;
 	_qmax = _qmax0;
 	_qmax_thermal = _qmax0;
-	_SOC = _SOC_max;
+	_SOC = _SOC_init;
 }
 void capacity_lithium_ion_t::updateCapacity(double I, double dt)
 {

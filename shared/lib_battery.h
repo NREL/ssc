@@ -138,6 +138,7 @@ protected:
 	double _I;   // [A]  - Current draw during last step
 	double _I_loss; // [A] - Lifetime and thermal losses
 	double _SOC; // [%] - State of Charge
+	double _SOC_init; // [%] - Initial SOC
 	double _SOC_max; // [%] - Maximum SOC
 	double _SOC_min; // [%] - Minimum SOC
 	double _DOD; // [%] - Depth of Discharge

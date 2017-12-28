@@ -168,19 +168,19 @@ bool dispatch_t::check_constraints(double &I, int count)
 	double I_initial = I;
 
 	// decrease the current draw if took too much
-	if (_Battery->battery_soc() < _SOC_min - tolerance)
+	if (I > 0 && _Battery->battery_soc() < _SOC_min - tolerance)
 	{
 		double dQ = 0.01 * (_SOC_min - _Battery->battery_soc()) * _Battery->battery_charge_maximum();
 		I -= dQ / _dt_hour;
 	}
 	// decrease the current charging if charged too much
-	else if (_Battery->battery_soc() > _SOC_max + tolerance)
+	else if (I < 0 &&_Battery->battery_soc() > _SOC_max + tolerance)
 	{
 		double dQ = 0.01 * (_Battery->battery_soc() - _SOC_max) * _Battery->battery_charge_maximum();
 		I += dQ / _dt_hour;
 	}
 	// Don't allow grid charging unless explicitly allowed (reduce charging) 
-	else if (_P_grid_to_batt > tolerance && !_can_grid_charge)
+	else if (I < 0 && _P_grid_to_batt > tolerance && !_can_grid_charge)
 	{
 		if (fabs(_P_tofrom_batt) < tolerance)
 			I += (_P_grid_to_batt * util::kilowatt_to_watt / _Battery->battery_voltage());
@@ -585,7 +585,7 @@ bool dispatch_manual_t::check_constraints(double &I, int count)
 				I -= (_P_pv_to_grid / fabs(_P_tofrom_batt)) *fabs(I);
 		}
 		// Don't let battery export to the grid if behind the meter
-		else if (!front_of_meter && _P_battery_to_grid > tolerance)
+		else if (!front_of_meter && I > 0 && _P_battery_to_grid > tolerance)
 		{
 			if (fabs(_P_tofrom_batt) < tolerance)
 				I -= (_P_battery_to_grid * util::kilowatt_to_watt / _Battery->battery_voltage());
