@@ -169,13 +169,13 @@ bool dispatch_t::check_constraints(double &I, int count)
 	// decrease the current draw if took too much
 	if (I > 0 && _Battery->battery_soc() < _SOC_min - tolerance)
 	{
-		double dQ = 0.01 * (_SOC_min - _Battery->battery_soc()) * _Battery->battery_charge_maximum();
+		double dQ = 0.01 * (_SOC_min - _Battery->battery_soc()) * _Battery->battery_charge_maximum_thermal();
 		I -= dQ / _dt_hour;
 	}
 	// decrease the current charging if charged too much
 	else if (I < 0 &&_Battery->battery_soc() > _SOC_max + tolerance)
 	{
-		double dQ = 0.01 * (_Battery->battery_soc() - _SOC_max) * _Battery->battery_charge_maximum();
+		double dQ = 0.01 * (_Battery->battery_soc() - _SOC_max) * _Battery->battery_charge_maximum_thermal();
 		I += dQ / _dt_hour;
 	}
 	// Don't allow grid charging unless explicitly allowed (reduce charging) 
@@ -204,8 +204,10 @@ bool dispatch_t::check_constraints(double &I, int count)
 		iterate = false;
 
 	// don't allow battery to flip from charging to discharging or vice versa
-	if ((I_initial / I) < 0)
+	if ((I_initial / I) < 0) {
 		I = 0;
+		iterate = false;
+	}
 
 	// reset
 	if (iterate)

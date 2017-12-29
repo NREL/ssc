@@ -166,8 +166,8 @@ void capacity_t::check_SOC()
 	double I_orig = _I;
 
 	// set capacity to upper thermal limit
-	if (q_upper > _qmax_thermal)
-		q_upper = _qmax_thermal;
+	if (q_upper > _qmax_thermal * _SOC_max * 0.01)
+		q_upper = _qmax_thermal * _SOC_max * 0.01;
 		
 	// check if overcharged
 	if (_q0 > q_upper )
@@ -1350,14 +1350,14 @@ double thermal_t::T_battery(){ return _T_battery; }
 double thermal_t::capacity_percent()
 { 
 	double percent = util::linterp_col(_cap_vs_temp, 0, _T_battery, 1); 
-
+	
 	if (percent < 0 || percent > 100)
 	{
 		percent = 100;
 		_message.add("Unable to determine capacity adjustment for temperature, ignoring");
 	}
-
-	return percent;
+	_capacity_percent = percent;
+	return _capacity_percent;
 }
 /*
 Define Losses
@@ -1523,7 +1523,7 @@ losses_t * battery_t::losses_model() const { return _losses; }
 
 double battery_t::battery_charge_needed(double SOC_max)
 {
-	double charge_needed = _capacity->qmax() * SOC_max * 0.01 - _capacity->q0();
+	double charge_needed = _capacity->qmax_thermal() * SOC_max * 0.01 - _capacity->q0();
 	if (charge_needed > 0)
 		return charge_needed;
 	else
@@ -1547,6 +1547,7 @@ double battery_t::battery_power_to_fill(double SOC_max)
 
 double battery_t::battery_charge_total(){return _capacity->q0();}
 double battery_t::battery_charge_maximum(){ return _capacity->qmax(); }
+double battery_t::battery_charge_maximum_thermal() { return _capacity->qmax_thermal(); }
 double battery_t::cell_voltage(){ return _voltage->cell_voltage();}
 double battery_t::battery_voltage(){ return _voltage->battery_voltage();}
 double battery_t::battery_voltage_nominal(){ return _voltage->battery_voltage_nominal(); }
