@@ -1,0 +1,55 @@
+#ifndef _PVWATTSV5_CASES_
+#define _PVWATTSV5_CASES_
+
+#include <stdio.h>
+#include <string>
+#include "input_cases/code_generator_utilities.h"
+
+/**
+*   Data for high-level integration test that verifies whether results for a no-financials 
+*	PVWatts case matches expected results.  
+*	Data generated from code-generator (Shift+F5) within SAM UI.
+*   Test uses SSCAPI interfaces (similiar to SDK usage) to pass and receive data to PVWattsV5
+*/
+
+int pvwattsv5_nofinancial_testfile(ssc_data_t &data)
+{
+	//this sets whether or not the status prints
+	ssc_module_exec_set_print(0);
+
+	//check for out of memory
+	if (data == NULL)
+	{
+		printf("error: out of memory.");
+		return -1;
+	}
+
+	//set the solar resource file name, using the weather file in the input_docs folder
+	//ifdef is so that it can run on multiple operating systems
+#ifdef _MSC_VER	
+	std::string file = "../../../test/input_docs/weather.csv";
+#else	
+	std::string file = "../test/input_docs/weather.csv";
+#endif	
+
+	//set the variables for the PVWatts default case
+	ssc_data_set_string(data, "solar_resource_file", file.c_str()); //file set above
+	ssc_data_set_number(data, "system_capacity", 4);
+	ssc_data_set_number(data, "module_type", 0);
+	ssc_data_set_number(data, "dc_ac_ratio", 1.2);
+	ssc_data_set_number(data, "inv_eff", 96);
+	ssc_data_set_number(data, "losses", 14);
+	ssc_data_set_number(data, "array_type", 0);
+	ssc_data_set_number(data, "tilt", 20);
+	ssc_data_set_number(data, "azimuth", 180);
+	ssc_data_set_number(data, "gcr", 0.4);
+	ssc_data_set_number(data, "adjust:constant", 0);
+
+	return 0;
+
+}
+
+#endif
+
+
+

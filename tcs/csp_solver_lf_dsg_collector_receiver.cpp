@@ -2710,46 +2710,44 @@ void C_csp_lf_dsg_collector_receiver::transient_energy_bal_numeric_int(double h_
 	double deltaT_tol = 0.001*T_x0_at_P_in;	//[K]
 	double deltaT = T_out_t_end_prev - T_x0_at_P_in;	//[K]
 
-	if( fabs(deltaT) < deltaT_tol )
-	{
-		double f_deltaT = fabs(deltaT) / deltaT_tol;	//[-]
-
-		if(T_out_t_end_prev > T_x0_at_P_in)
-		{
-			water_prop_error = water_TQ(T_out_t_end_prev, 1.0, &wp);
-			if( water_prop_error != 0 )
-			{
-				throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::transient_energy_bal_numeric_int",
-					"water_TQ T_out_t_end_prev q = 0", water_prop_error));
-			}
-			double h_x1_at_T_prev = wp.enth;	//[kJ/kg]
-
-			h_out_t_end_prev = (1.0 - f_deltaT)*h_in + f_deltaT*h_x1_at_T_prev;	//[kJ/kg]
-		}
-		else
-		{
-			water_prop_error = water_TQ(T_out_t_end_prev, 0.0, &wp);
-			if( water_prop_error != 0 )
-			{
-				throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::transient_energy_bal_numeric_int",
-					"water_TQ T_out_t_end_prev q = 0", water_prop_error));
-			}
-			double h_x0_at_T_prev = wp.enth;	//[kJ/kg]
-
-			h_out_t_end_prev = (1.0 - f_deltaT)*h_in + f_deltaT*h_x0_at_T_prev;	//[kJ/kg]
-		}
-
-		//h_out_t_end_prev = h_in;
-	}
-	else
+	if (fabs(deltaT) >= deltaT_tol)
 	{
 		water_prop_error = water_TP(T_out_t_end_prev, P_in, &wp);
-		if(water_prop_error != 0)
+		if (water_prop_error != 0)
 		{
 			throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::transient_energy_bal_numeric_int",
 				"water_TP error at T_out_t_end_prev and P_in", water_prop_error));
 		}
 		h_out_t_end_prev = wp.enth;		//[kJ/kg]
+	}
+	else
+	{
+		double f_deltaT = fabs(deltaT) / deltaT_tol;	//[-]
+
+		if (T_out_t_end_prev > T_x0_at_P_in)
+		{
+			water_prop_error = water_TQ(T_out_t_end_prev + deltaT, 1.0, &wp);
+			if (water_prop_error != 0)
+			{
+				throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::transient_energy_bal_numeric_int",
+					"water_TQ T_out_t_end_prev q = 0", water_prop_error));
+			}
+			double h_1phase = wp.enth;	//[kJ/kg]
+
+			h_out_t_end_prev = (1.0 - f_deltaT)*h_in + f_deltaT * h_1phase;		//[kJ/kg]
+		}
+		else
+		{
+			water_prop_error = water_TQ(T_out_t_end_prev + deltaT, 0.0, &wp);
+			if (water_prop_error != 0)
+			{
+				throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::transient_energy_bal_numeric_int",
+					"water_TQ T_out_t_end_prev q = 0", water_prop_error));
+			}
+			double h_1phase = wp.enth;	//[kJ/kg]
+
+			h_out_t_end_prev = (1.0 - f_deltaT)*h_in + f_deltaT * h_1phase;	//[kJ/kg]
+		}
 	}
 
 	// Guess2: outlet enthalpy is from a steady state calculation

@@ -866,8 +866,6 @@ void C_pt_heliostatfield::off(const C_csp_solver_sim_info &sim_info)
 void C_pt_heliostatfield::converged()
 {
 	m_eta_prev = ms_outputs.m_eta_field;
-	m_v_wind_prev = m_v_wind_prev;
-
 	m_ncall = -1;
 }
 

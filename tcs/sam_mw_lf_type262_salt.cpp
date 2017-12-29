@@ -2338,7 +2338,7 @@ set_outputs_and_return:
 	void EvacReceiver(double T_1_in, double m_dot, double T_amb, double T_sky, double v_6, double P_6, double q_i, 
 		int hv /* HCE variant [0..3] */, int sca_num, bool single_point,  int ncall, double time,
 		//outputs
-		double &q_heatloss, double &q_12conv, double &q_34tot, double &c_1ave, double &rho_1ave, std::vector<double> v_reguess_args)
+		double &q_heatloss, double &q_12conv, double &q_34tot, double &c_1ave, double &rho_1ave, std::vector<double> & v_reguess_args)
 	{
 
 		//cc -- note that collector/hce geometry is part of the parent class. Only the indices specifying the

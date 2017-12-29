@@ -1,9 +1,9 @@
 #include "sys/times.h"
  
-int gettimeofday(struct timeval* t,void* timezone)
+int gettimeofday(struct timeval* t,void*)
 {       struct _timeb timebuffer;
         _ftime( &timebuffer );
-        t->tv_sec=timebuffer.time;
+        t->tv_sec=(long)timebuffer.time;
         t->tv_usec=1000*timebuffer.millitm;
 		return 0;
 }

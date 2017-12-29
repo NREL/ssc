@@ -148,7 +148,6 @@ class tcFrame : public wxFrame
 private:
 	wxDVPlotCtrl *m_plot;
 	wxExtGridCtrl *m_grid;
-	wxGauge *m_progressBar;
 	wxTextCtrl *m_textOut;
 	wxCheckListBox *m_varSelector;
 	tcVisualEditor *m_visualEditor;
