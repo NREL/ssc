@@ -47,6 +47,7 @@
 *  THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *******************************************************************************************************/
 
+#include <cmath>
 #include "lib_physics.h"
 #include "lib_util.h"
 #include "lib_windwatts.h"
@@ -522,7 +523,7 @@ void eddyViscosityWakeModel::wakeCalculations(/*INPUTS */ const double air_densi
 		{
 			// distance downwind = distance from turbine i to turbine j along axis of wind direction
 			double dDistAxialInDiameters = fabs(aDistanceDownwind[i] - aDistanceDownwind[j]) / 2.0;
-			if (abs(dDistAxialInDiameters) <= 0.0001)
+			if (std::abs(dDistAxialInDiameters) <= 0.0001)
 				continue; // if this turbine isn't really upwind, move on to the next
 
 			// separation crosswind between turbine i and turbine j

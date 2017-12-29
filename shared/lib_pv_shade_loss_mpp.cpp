@@ -67,7 +67,7 @@ typedef unsigned int uint;
 
 short ShadeDB8_mpp::get_vmpp(size_t i)
 {
-	if (i >= 0 && i<6045840) // uint16 check
+	if (i < 6045840) // uint16 check
 		return (short)((p_vmpp[2 * i + 1] << 8) | p_vmpp[2 * i]); 
 	else 
 		return -1;
@@ -75,7 +75,7 @@ short ShadeDB8_mpp::get_vmpp(size_t i)
 
 short ShadeDB8_mpp::get_impp(size_t i)
 { 
-	if (i >= 0 && i<6045840) // uint16 check
+	if (i < 6045840) // uint16 check
 		return (short)((p_impp[2 * i + 1] << 8) | p_impp[2 * i]); 
 	else 
 		return -1; 
