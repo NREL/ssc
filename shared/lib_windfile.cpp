@@ -284,8 +284,6 @@ windfile::windfile()
 	: winddata_provider()
 {
 	m_nrec = 0;
-	m_buf = new char[MBUFLEN];
-	m_fp = 0;
 	close();
 }
 
@@ -293,21 +291,18 @@ windfile::windfile( const std::string &file )
 	: winddata_provider()
 {
 	m_nrec = 0;
-	m_buf = new char[MBUFLEN];
-	m_fp = 0;
 	close();
 	open( file );
 }
 
 windfile::~windfile()
 {
-	delete [] m_buf;
-	if (m_fp != 0) fclose( m_fp );
+  	ifs.close();
 }
 
 bool windfile::ok()
 {
-	return m_fp != 0;
+  	return ifs.good();
 }
 
 
@@ -325,9 +320,9 @@ bool windfile::open( const std::string &file )
 	if ( !cmp_ext(file.c_str(), "srw") )
 		return false;
 		*/
-		
-	m_fp = fopen(file.c_str(), "r");
-	if (!m_fp)
+
+	ifs.open(file);
+	if (!ifs.good())
 	{
 		m_errorMsg = "could not open file for reading: " + file;
 		return false;
@@ -335,16 +330,15 @@ bool windfile::open( const std::string &file )
 		
 	/* read header information */
 	
-	// read line 1 (header info
-	fgets( m_buf, MBUFLEN-1, m_fp );
+	// read line 1 (header info)
+	std::getline(ifs, buf);
 	std::vector<std::string> cols;
-	int ncols = locate2(m_buf, cols, ',');
+	int ncols = locate2(buf, cols, ',');
 
 	if (ncols < 8)
 	{
 		m_errorMsg = util::format("error reading header (line 1).  At least 8 columns required, %d found.", ncols);
-		fclose( m_fp );
-		m_fp = 0;
+		ifs.close();
 		return false;
 	}
 
@@ -363,18 +357,16 @@ bool windfile::open( const std::string &file )
 	catch (const std::invalid_argument &) {/* nothing to do */ };
 
 	// read line 2, description
-	fgets( m_buf, MBUFLEN-1, m_fp );
-	desc = std::string(m_buf);
+	std::getline(ifs, desc);
 	trim(desc);
 	
 	// read line 3, column names (must be pressure, temperature, speed, direction)
-	fgets( m_buf, MBUFLEN-1, m_fp );
-	ncols = locate2(m_buf, cols, ',');
+	std::getline(ifs, buf);
+	ncols = locate2(buf, cols, ',');
 	if (ncols < 3)
 	{
 		m_errorMsg = util::format("too few data column types found: %d.  at least 3 required.", ncols);
-		fclose( m_fp );
-		m_fp = 0;
+		ifs.close();
 		return false;
 	}
 	
@@ -392,8 +384,7 @@ bool windfile::open( const std::string &file )
 		else if ( ctype.length() > 0 )
 		{
 			m_errorMsg = util::format( "error reading data column type specifier in col %d of %d: '%s' len: %d", i+1, ncols, ctype.c_str(), ctype.length() );
-			fclose( m_fp );
-			m_fp = 0;
+			ifs.close();
 			return false;
 		}
 	}
@@ -402,16 +393,15 @@ bool windfile::open( const std::string &file )
 
 
 	// read line 4, units for each column (ignore this for now)
-	fgets( m_buf, MBUFLEN-1, m_fp );
+	std::getline(ifs, buf);
 
 	// read line 5, height in meters for each data column
-	fgets( m_buf, MBUFLEN-1, m_fp );
-	ncols = locate2(m_buf, cols, ',');
+	std::getline(ifs, buf);
+	ncols = locate2(buf, cols, ',');
 	if ( ncols < (int)m_heights.size() )
 	{
 		m_errorMsg = util::format("too few columns in the height row.  %d required but only %d found", (int)m_heights.size(), ncols);
-		fclose( m_fp );
-		m_fp = 0;
+		ifs.close();
 		return false;
 	}
 
@@ -421,13 +411,13 @@ bool windfile::open( const std::string &file )
 
 	// read all the lines to determine the nubmer of records in the file
 	m_nrec = 0;
-	while( fgets( m_buf, MBUFLEN-1, m_fp ) )
+	while (std::getline(ifs, buf))
 		m_nrec++;
 
 	// rewind the file and reposition right after the header information
-	rewind( m_fp );
-	for( size_t i=0;i<5;i++ )
-		fgets( m_buf, MBUFLEN-1, m_fp );
+	ifs.seekg(0);
+	for (size_t i = 0; i < 5; i++)
+		std::getline(ifs, buf);
 
 	
 	// ready to read line-by-line.  subsequent columns of data correspond to the
@@ -438,9 +428,8 @@ bool windfile::open( const std::string &file )
 
 void windfile::close()
 {
-	if ( m_fp != 0 ) fclose( m_fp );
-	
-	m_fp = 0;
+  	ifs.close();
+
 	m_file.clear();
 	city.clear();
 	state.clear();
@@ -462,8 +451,8 @@ bool windfile::read_line( std::vector<double> &values )
 	if ( !ok() ) return false;
 
 	std::vector<std::string> cols;
-	fgets( m_buf, MBUFLEN-1, m_fp );
-	int ncols = locate2(m_buf, cols, ',');
+	std::getline(ifs, buf);
+	int ncols = locate2(buf, cols, ',');
 	if (ncols >= (int)m_heights.size() 
 		&& ncols >= (int)m_dataid.size())
 	{
