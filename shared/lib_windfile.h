@@ -114,8 +114,8 @@ protected:
 class windfile : public winddata_provider
 {
 private:
-  	std::ifstream ifs;
-	std::string buf;
+  	std::ifstream m_ifs;
+	std::string m_buf;
 	std::string m_file;
 	size_t m_nrec;
 
