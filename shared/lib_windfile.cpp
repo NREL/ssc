@@ -97,9 +97,6 @@ static int locate2(std::string buf, std::vector<std::string> &vstring, char deli
 	return (int)vstring.size();
 }
 
-#define MBUFLEN 4096
-
-
 winddata_provider::winddata_provider()
 {
 	year = 1900;
@@ -331,7 +328,7 @@ bool windfile::open( const std::string &file )
 	/* read header information */
 	
 	// read line 1 (header info)
-	std::getline(m_ifs, m_buf);
+	getline(m_ifs, m_buf);
 	std::vector<std::string> cols;
 	int ncols = locate2(m_buf, cols, ',');
 
@@ -357,12 +354,12 @@ bool windfile::open( const std::string &file )
 	catch (const std::invalid_argument &) {/* nothing to do */ };
 
 	// read line 2, description
-	std::getline(m_ifs, desc);
+	getline(m_ifs, desc);
 	trim(desc);
 	
 	// read line 3, column names (must be pressure, temperature, speed, direction)
-	std::getline(m_ifs, m_buf);
-	ncols = locate2(m_buf, cols, ',');
+	getline(m_ifs, m_buf);
+	ncols = locate2( m_buf, cols, ',' );
 	if (ncols < 3)
 	{
 		m_errorMsg = util::format("too few data column types found: %d.  at least 3 required.", ncols);
@@ -393,11 +390,11 @@ bool windfile::open( const std::string &file )
 
 
 	// read line 4, units for each column (ignore this for now)
-	std::getline(m_ifs, m_buf);
+	getline(m_ifs, m_buf);
 
 	// read line 5, height in meters for each data column
-	std::getline(m_ifs, m_buf);
-	ncols = locate2(m_buf, cols, ',');
+	getline(m_ifs, m_buf);
+	ncols = locate2( m_buf, cols, ',' );
 	if ( ncols < (int)m_heights.size() )
 	{
 		m_errorMsg = util::format("too few columns in the height row.  %d required but only %d found", (int)m_heights.size(), ncols);
@@ -411,13 +408,13 @@ bool windfile::open( const std::string &file )
 
 	// read all the lines to determine the nubmer of records in the file
 	m_nrec = 0;
-	while (std::getline(m_ifs, m_buf))
+	while (getline(m_ifs, m_buf))
 		m_nrec++;
 
 	// rewind the file and reposition right after the header information
 	m_ifs.seekg(0);
 	for (size_t i = 0; i < 5; i++)
-		std::getline(m_ifs, m_buf);
+		getline(m_ifs, m_buf);
 
 	
 	// ready to read line-by-line.  subsequent columns of data correspond to the
@@ -451,7 +448,7 @@ bool windfile::read_line( std::vector<double> &values )
 	if ( !ok() ) return false;
 
 	std::vector<std::string> cols;
-	std::getline(m_ifs, m_buf);
+	getline(m_ifs, m_buf);
 	int ncols = locate2(m_buf, cols, ',');
 	if (ncols >= (int)m_heights.size() 
 		&& ncols >= (int)m_dataid.size())
