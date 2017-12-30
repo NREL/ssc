@@ -471,7 +471,7 @@ bool weatherfile::open(const std::string &file, bool header_only)
 		return false;
 	}
 
-	char buf[NBUF + 1], *pbuf, buf1[NBUF + 1], *pbuf1;
+	char buf[NBUF + 1], buf1[NBUF + 1];
 
 	util::stdfile fp( file.c_str(), "r" );
 	if ( !fp.ok() )
@@ -655,18 +655,18 @@ bool weatherfile::open(const std::string &file, bool header_only)
 	}
 	else if (m_type == WFCSV)
 	{
-		pbuf = fgets(buf, NBUF, fp);
+		char *pbuf = fgets(buf, NBUF, fp);
 		auto cols = split(buf);
 		int ncols = cols.size();
-		pbuf1 = fgets(buf1, NBUF, fp);
+		char *pbuf1 = fgets(buf1, NBUF, fp);
 		auto cols1 = split(buf1);
 		int ncols1 = split(buf1).size();
 
 		int hdr_step_sec = -1;
 
 		if (ncols != ncols1
-			|| pbuf != buf
-			|| pbuf1 != buf1)
+		    	|| pbuf == NULL
+			|| pbuf1 == NULL)
 		{
 			m_message = "first two header lines must have same number of columns";
 			return false;
@@ -831,8 +831,7 @@ bool weatherfile::open(const std::string &file, bool header_only)
 	{
 		// if it's a WFCSV format file, we need to determine which columns of data exist
 
-		pbuf = fgets(buf, NBUF, fp); // read column names	
-		if (pbuf != buf)
+		if (fgets(buf, NBUF, fp) == NULL) // read column names
 		{
 			m_message = "could not read column names";
 			return false;
@@ -843,8 +842,7 @@ bool weatherfile::open(const std::string &file, bool header_only)
 
 		if (m_hdr.hasunits)
 		{
-			pbuf1 = fgets(buf1, NBUF, fp); // read column units;
-			if (pbuf1 != buf1)
+		  	if (fgets(buf1, NBUF, fp) == NULL) // read column units
 			{
 				m_message = "could not read column units";
 				return false;
@@ -1260,14 +1258,14 @@ bool weatherfile::open(const std::string &file, bool header_only)
 				buf[0] = 0;
 				fgets(buf, NBUF, fp);
 				std::string temp(buf);
-				std::string pbuf2 = trimboth(temp);
-				if (pbuf2.length() == 0)
+				std::string buf2 = trimboth(temp);
+				if (buf2.length() == 0)
 				{
 					m_message = "CSV: data line formatting error at record " + util::to_string(i);
 					return false;
 				}
 
-				auto cols = split(pbuf2);
+				auto cols = split(buf2);
 				int ncols = cols.size();
 				for (size_t k = 0; k < _MAXCOL_; k++)
 				{
