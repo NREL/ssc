@@ -55,6 +55,7 @@
 #include <numeric>
 #include <limits>
 #include <iostream>
+#include <fstream>
 #include <sstream>
 
 #if defined(__WINDOWS__)||defined(WIN32)||defined(_WIN32)
@@ -471,10 +472,10 @@ bool weatherfile::open(const std::string &file, bool header_only)
 		return false;
 	}
 
-	char buf[NBUF + 1], buf1[NBUF + 1];
+	std::string buf, buf1;
+	std::ifstream ifs(file);
 
-	util::stdfile fp( file.c_str(), "r" );
-	if ( !fp.ok() )
+	if ( !ifs.is_open() )
 	{
 		m_message = "could not open file for reading: " + file;
 		m_type = INVALID;
@@ -485,15 +486,15 @@ bool weatherfile::open(const std::string &file, bool header_only)
 	{
 		// if we opened a csv file, it could be SAM/WFCSV format or TMY3
 		// try to autodetect a TMY3
-		fgets(buf, NBUF, fp);
-		fgets(buf1, NBUF, fp);
+		getline(ifs, buf);
+		getline(ifs, buf1);
 		int ncols = split(buf).size();
 		int ncols1 = split(buf1).size();
 
 		if (ncols == 7 && (ncols1 == 68 || ncols1 == 71))
 			m_type = TMY3;
 
-		::rewind(fp);
+		ifs.seekg(0);
 	}
 
 
@@ -508,8 +509,9 @@ bool weatherfile::open(const std::string &file, bool header_only)
 		char pl[256], pc[256], ps[256];
 		int dlat, mlat, dlon, mlon, ielv;
 
-		fgets(buf, NBUF, fp);
-		sscanf(buf, "%s %s %s %lg %s %d %d %s %d %d %d",
+		getline(ifs, buf);
+		sscanf(buf.c_str(),
+		       "%s %s %s %lg %s %d %d %s %d %d %d",
 			pl, pc, ps,
 			&m_hdr.tz,
 			slat, &dlat, &mlat,
@@ -529,7 +531,7 @@ bool weatherfile::open(const std::string &file, bool header_only)
 	else if (m_type == TMY3)
 	{
 		/*  724699,"BROOMFIELD/JEFFCO [BOULDER - SURFRAD]",CO,-7.0,40.130,-105.240,1689 */
-		fgets(buf, NBUF, fp);
+	  	getline(ifs, buf);
 		auto cols = split(buf);
 		if (cols.size() != 7)
 		{
@@ -550,14 +552,14 @@ bool weatherfile::open(const std::string &file, bool header_only)
 		m_stepSec  = 3600;
 		m_nRecords = 8760;
 
-		fgets(buf, NBUF, fp); /* skip over labels line */
+		getline(ifs, buf); // skip over labels line
 	}
 	else if (m_type == EPW)
 	{
 		/*  LOCATION,Cairo Intl Airport,Al Qahirah,EGY,ETMY,623660,30.13,31.40,2.0,74.0 */
 		/*  LOCATION,Alice Springs Airport,NT,AUS,RMY,943260,-23.80,133.88,9.5,547.0 */
 
-		fgets(buf, NBUF, fp);
+	  	getline(ifs, buf);
 		auto cols = split(buf);
 
 		if (cols.size() != 10)
@@ -579,13 +581,13 @@ bool weatherfile::open(const std::string &file, bool header_only)
 
 		/* skip over excess header lines */
 
-		fgets(buf, NBUF, fp); /* DESIGN CONDITIONS */
-		fgets(buf, NBUF, fp); /* TYPICAL/EXTREME PERIODS */
-		fgets(buf, NBUF, fp); /* GROUND TEMPERATURES */
-		fgets(buf, NBUF, fp); /* HOLIDAY/DAYLIGHT SAVINGS */
-		fgets(buf, NBUF, fp); /* COMMENTS 1 */
-		fgets(buf, NBUF, fp); /* COMMENTS 2 */
-		fgets(buf, NBUF, fp); /* DATA PERIODS */
+		getline(ifs, buf);  // DESIGN CONDITIONS
+		getline(ifs, buf);  // TYPICAL/EXTREME PERIODS
+		getline(ifs, buf);  // GROUND TEMPERATURES
+		getline(ifs, buf);  // HOLIDAY/DAYLIGHT SAVINGS
+		getline(ifs, buf);  // COMMENTS 1
+		getline(ifs, buf);  // COMMENTS 2
+		getline(ifs, buf);  // DATA PERIODS
 		
 		m_startSec = 1800;
 		m_stepSec  = 3600;
@@ -594,7 +596,7 @@ bool weatherfile::open(const std::string &file, bool header_only)
 	}
 	else if (m_type == SMW)
 	{
-		fgets(buf, NBUF, fp);
+	  	getline(ifs, buf);
 		auto cols = split(buf);
 
 		if (cols.size() != 10)
@@ -637,11 +639,11 @@ bool weatherfile::open(const std::string &file, bool header_only)
 			m_startSec = (size_t)m_time;
 
 			m_nRecords = 0;
-			while (fgets(buf, NBUF, fp) != 0)
+			while (getline(ifs, buf))
 				m_nRecords++;
 
-			::rewind(fp);
-			fgets(buf, NBUF, fp);
+			ifs.seekg(0);
+			getline(ifs, buf);
 			
 			if ( m_nRecords%8784==0 )
 			{
@@ -655,18 +657,16 @@ bool weatherfile::open(const std::string &file, bool header_only)
 	}
 	else if (m_type == WFCSV)
 	{
-		char *pbuf = fgets(buf, NBUF, fp);
+	  	getline(ifs, buf);
 		auto cols = split(buf);
 		int ncols = cols.size();
-		char *pbuf1 = fgets(buf1, NBUF, fp);
+	  	getline(ifs, buf1);
 		auto cols1 = split(buf1);
 		int ncols1 = split(buf1).size();
 
 		int hdr_step_sec = -1;
 
-		if (ncols != ncols1
-		    	|| pbuf == NULL
-			|| pbuf1 == NULL)
+		if (ncols != ncols1)
 		{
 			m_message = "first two header lines must have same number of columns";
 			return false;
@@ -756,17 +756,18 @@ bool weatherfile::open(const std::string &file, bool header_only)
 			m_stepSec = 3600;
 			m_nRecords = 8760;
 
-			fgets(buf, NBUF, fp); // col names
-			if (m_hdr.hasunits) fgets(buf, NBUF, fp); // col units
+			getline(ifs, buf);  // col names
+			if (m_hdr.hasunits)
+			  	getline(ifs, buf);  // col units
 
 			m_nRecords = 0; // figure out how many records there are
-			while (fgets(buf, NBUF, fp) != 0 && strlen(buf) > 0)
+			while (getline(ifs, buf) && buf.length() > 0)
 				m_nRecords++;
 
 			// reposition to where we were
-			::rewind(fp);
-			fgets(buf, NBUF, fp); // header names
-			fgets(buf, NBUF, fp); // header values
+			ifs.seekg(0);
+			getline(ifs, buf);  // header names
+			getline(ifs, buf);  // header values
 
 			// now determine timestep as best as possible
 			int nmult = (int)m_nRecords / 8760;
@@ -830,8 +831,8 @@ bool weatherfile::open(const std::string &file, bool header_only)
 	if (m_type == WFCSV)
 	{
 		// if it's a WFCSV format file, we need to determine which columns of data exist
-
-		if (fgets(buf, NBUF, fp) == NULL) // read column names
+	  	getline(ifs, buf);  // read column names
+		if (ifs.eof())
 		{
 			m_message = "could not read column names";
 			return false;
@@ -842,7 +843,8 @@ bool weatherfile::open(const std::string &file, bool header_only)
 
 		if (m_hdr.hasunits)
 		{
-		  	if (fgets(buf1, NBUF, fp) == NULL) // read column units
+		  	getline(ifs, buf);  // read column units
+			if (ifs.eof())
 			{
 				m_message = "could not read column units";
 				return false;
@@ -980,13 +982,12 @@ bool weatherfile::open(const std::string &file, bool header_only)
 			int w1, w2, w3, w4, w5, w6, w7, w8, w9, w10;
 			char f1[2], f2[2], f3[2], f4[2], f5[2], f6[2], f7[2], f8[2], f9[2], f10[2], f11[2], f12[2], f13[2], f14[2], f15[2], f16[2], f17[2], f18[2], f19[2], f20[2], f21[2];
 
-			char *pret = 0;
 			int nread = 0;
 
 			for(;;)
 			{
-				pret = fgets(buf, NBUF, fp);
-				nread = sscanf(buf,
+			  	getline(ifs, buf);
+				nread = sscanf(buf.c_str(),
 					"%2d%2d%2d%2d"
 					"%4d%4d"
 					"%4d%1s%1d%4d%1s%1d%4d%1s%1d%4d%1s%1d%4d%1s%1d%4d%1s%1d%4d%1s%1d"
@@ -1053,7 +1054,7 @@ bool weatherfile::open(const std::string &file, bool header_only)
 			}
 
 
-			if ( nread != 79 || pret != buf )
+			if ( nread != 79 || ifs.eof() )
 			{
 				m_message = "TMY2: data line does not have at exactly 79 characters at record " + util::to_string(i);
 				return false;
@@ -1062,11 +1063,9 @@ bool weatherfile::open(const std::string &file, bool header_only)
 		}
 		else if (m_type == TMY3)
 		{
-			char *pret = 0;
 			for(;;)
 			{
-				pret = fgets(buf, NBUF, fp);
-
+				getline(ifs, buf);
 				auto cols = split(buf);
 				if (cols.size() < 68)
 				{
@@ -1141,7 +1140,7 @@ bool weatherfile::open(const std::string &file, bool header_only)
 				break;
 			}
 
-			if (pret != buf)
+			if (ifs.eof())
 			{
 				m_message = "TMY3: data line formatting error at record " + util::to_string(i);
 				return false;
@@ -1149,11 +1148,9 @@ bool weatherfile::open(const std::string &file, bool header_only)
 		}
 		else if (m_type == EPW)
 		{
-			char *pret = 0;
-
 			for(;;)
 			{
-				pret = fgets(buf, NBUF, fp);
+			  	getline(ifs, buf);
 				auto cols = split(buf);
 
 				if (cols.size() < 32)
@@ -1199,7 +1196,7 @@ bool weatherfile::open(const std::string &file, bool header_only)
 				break;
 			}
 
-			if ( pret!=buf )
+			if (ifs.eof())
 			{
 				m_message = "EPW: data line formatting error at record " + util::to_string(i);
 				return false;
@@ -1207,7 +1204,7 @@ bool weatherfile::open(const std::string &file, bool header_only)
 		}
 		else if (m_type == SMW)
 		{
-			char *pret = fgets(buf, NBUF, fp);
+			getline(ifs, buf);
 			auto cols = split(buf);
 
 			if (cols.size() < 12)
@@ -1244,7 +1241,7 @@ bool weatherfile::open(const std::string &file, bool header_only)
 			m_columns[ALB].data[i] = (float)stof(cols[10]);
 			m_columns[AOD].data[i] = -999; /* no AOD in SMW */
 
-			if ( pret!=buf )
+			if (ifs.eof())
 			{
 				m_message = "SMW: data line formatting error at record " + util::to_string(i);
 				return false;
@@ -1255,17 +1252,15 @@ bool weatherfile::open(const std::string &file, bool header_only)
 
 			for(;;)
 			{
-				buf[0] = 0;
-				fgets(buf, NBUF, fp);
-				std::string temp(buf);
-				std::string buf2 = trimboth(temp);
-				if (buf2.length() == 0)
+			  	getline(ifs, buf);
+				buf = trimboth(buf);
+				if (buf.length() == 0)
 				{
 					m_message = "CSV: data line formatting error at record " + util::to_string(i);
 					return false;
 				}
 
-				auto cols = split(buf2);
+				auto cols = split(buf);
 				int ncols = cols.size();
 				for (size_t k = 0; k < _MAXCOL_; k++)
 				{
