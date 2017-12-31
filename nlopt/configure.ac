@@ -6,8 +6,7 @@ AC_CONFIG_MACRO_DIR([m4])
 
 dnl Checks for typedefs, structures, and compiler characteristics.
 AC_HEADER_STDC
-AC_HEADER_TIME
-AC_CHECK_HEADERS([unistd.h getopt.h stdint.h])
+AC_CHECK_HEADERS([unistd.h getopt.h stdint.h time.h sys/time.h])
 AC_C_CONST
 AC_C_INLINE
 AX_C_THREADLOCAL

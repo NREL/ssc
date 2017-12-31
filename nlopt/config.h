@@ -55,11 +55,17 @@
 /* Define to 1 if you have the <sys/stat.h> header file. */
 #define HAVE_SYS_STAT_H 1
 
+/* Define to 1 if you have the <sys/time.h> header file. */
+#define HAVE_SYS_TIME_H 1
+
 /* Define to 1 if you have the <sys/types.h> header file. */
 #define HAVE_SYS_TYPES_H 1
 
 /* Define to 1 if you have the `time' function. */
 #define HAVE_TIME 1
+
+/* Define to 1 if you have the <time.h> header file. */
+#define HAVE_TIME_H 1
 
 /* Define to 1 if the system has the type `uint32_t'. */
 #define HAVE_UINT32_T 1
@@ -97,9 +103,6 @@
 /* Define to C thread-local keyword, or to nothing if this is not supported in
    your compiler. */
 #define THREADLOCAL __thread
-
-/* Define to 1 if you can safely include both <sys/time.h> and <time.h>. */
-#define TIME_WITH_SYS_TIME 1
 
 /* Define to empty if `const' does not conform to ANSI C. */
 /* #undef const */

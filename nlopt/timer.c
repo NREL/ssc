@@ -22,20 +22,15 @@
 
 #include "nlopt-util.h"
 
-#if TIME_WITH_SYS_TIME
-# if HAVE_SYS_TIME_H
-#  include <sys/time.h>
-# else
-   /* https://www.codefull.org/2015/12/systime-h-replacement-for-windows/ */
-#  include "sys/time.h"
-# endif
-# include <time.h>
+#if HAVE_SYS_TIME_H
+#include <sys/time.h>
 #else
-# if HAVE_SYS_TIME_H
-#  include <sys/time.h>
-# else
-#  include <time.h>
-# endif
+/* https://www.codefull.org/2015/12/systime-h-replacement-for-windows/ */
+#include "missing/time.h"
+#endif
+
+#if HAVE_TIME_H
+#include <time.h>
 #endif
 
 #if defined(_WIN32) || defined(__WIN32__)
