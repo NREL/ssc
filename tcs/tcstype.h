@@ -171,7 +171,7 @@ class tcstypeinterface
 {
 public:
 	tcstypeinterface( tcscontext *cxt, tcstypeinfo *ti )
-		: m_context(cxt), m_typeInfo(ti), m_currentTime(0.0), m_timeStep(0.0), m_values(0), m_numValues(0) {  }
+		: m_context(cxt), m_currentTime(0.0), m_timeStep(0.0), m_values(0), m_numValues(0) {  }
 	virtual ~tcstypeinterface() {  }
 
 	virtual int init() = 0;
@@ -330,7 +330,6 @@ protected:
 
 private:
 	tcscontext *m_context;
-	tcstypeinfo *m_typeInfo;
 	double m_currentTime;
 	double m_timeStep;
 

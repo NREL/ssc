@@ -273,8 +273,6 @@ void EditVariableDialog::OnRowsColsChange( wxCommandEvent & )
 	nr = (size_t) numRows->AsInteger();
 	nc = (size_t) numCols->AsInteger();
 
-	if (nr < 0 || nc < 0) return;
-
 	if (m_var.type == SSC_ARRAY)
 	{
 		util::matrix_t<ssc_number_t> old;

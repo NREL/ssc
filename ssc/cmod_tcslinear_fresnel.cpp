@@ -605,8 +605,11 @@ public:
 		size_t count;
 		ssc_number_t *hourly_energy = as_array("W_net", &count);//MWh
 		if (count != 8760)
-			throw exec_error("tcslinear_fresnel", "gen count incorrect (should be 8760): " + count);
-
+		  {
+			std::stringstream msg;
+			msg << "gen count incorrect (should be 8760): " << count;
+			throw exec_error("tcslinear_fresnel", msg.str());
+		  }
 		// apply performance adjustments and convert from MWh to kWh
 		for (size_t i = 0; i < count; i++)
 		{
@@ -629,7 +632,11 @@ public:
 		double fuel_usage_mmbtu = 0;
 		ssc_number_t *hourly_fuel = as_array("q_aux_fuel", &count);//MWh
 		if (count != 8760)
-			throw exec_error("tcslinear_fresnel", "q_aux_fuel count incorrect (should be 8760): " + count);
+		{
+			std::stringstream msg;
+			msg << "q_aux_fuel count incorrect (should be 8760): " << count;
+			throw exec_error("tcslinear_fresnel", msg.str());
+		  }
 		for (size_t i = 0; i < count; i++)
 			fuel_usage_mmbtu += hourly_fuel[i];
 		assign("system_heat_rate", (ssc_number_t)3.413); // samsim tcstrough_physical

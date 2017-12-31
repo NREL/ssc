@@ -629,9 +629,6 @@ public:
 		
 		C_monotonic_eq_solver eq_solv(ty_mono_eq);
 
-		double result;
-		int int_success = eq_solv.test_member_function(2.0, &result);
-
 		double x_low = std::numeric_limits<double>::quiet_NaN();
 		double x_high = std::numeric_limits<double>::quiet_NaN();
 		int iter_limit = 50;

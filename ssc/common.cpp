@@ -640,7 +640,7 @@ bool shading_factor_calculator::fbeam(size_t hour, double solalt, double solazi,
 	bool ok = false;
 	double factor = 1.0;
 	size_t irow = get_row_index_for_input(hour,hour_step,steps_per_hour);
-	if ((irow >= 0) && (irow < m_beamFactors.nrows()))
+	if (irow < m_beamFactors.nrows())
 	{
 		factor = m_beamFactors.at(irow, 0);
 		// apply mxh factor
@@ -664,7 +664,7 @@ bool shading_factor_calculator::fbeam_shade_db(std::unique_ptr<ShadeDB8_mpp> & p
 	double dc_factor = 1.0;
 	double beam_factor = 1.0;
 	size_t irow = get_row_index_for_input(hour, hour_step, steps_per_hour);
-	if ((irow >= 0) && (irow < m_beamFactors.nrows()))
+	if (irow < m_beamFactors.nrows())
 	{
 		std::vector<double> shad_fracs;
 		for (size_t icol = 0; icol < m_beamFactors.ncols(); icol++)
@@ -931,7 +931,10 @@ weatherdata::vec weatherdata::get_vector( var_data *v, const char *name, size_t 
 				m_ok = false;
 			}
 			size_t id = name_to_id(name);
-			if ( id >= 0 && !has_data_column( id ) ) m_columns.push_back( id );
+			if ( !has_data_column( id ) )
+			  {
+			    m_columns.push_back( id );
+			  }
 		}
 	}
 
@@ -950,14 +953,14 @@ ssc_number_t weatherdata::get_number( var_data *v, const char *name )
 }
 
 void weatherdata::set_counter_to(size_t cur_index){
-	if (cur_index >= 0 && cur_index < m_data.size()){
+	if (cur_index < m_data.size()) {
 		m_index = cur_index;
 	}
 }
 
 bool weatherdata::read( weather_record *r )
 {
-	if ( m_index >= 0 && m_index < m_data.size() )
+	if (m_index < m_data.size())
 	{
 		*r = *m_data[m_index++];
 		return true;
