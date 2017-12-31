@@ -636,7 +636,11 @@ public:
 		size_t count;
 		ssc_number_t *hourly_energy = as_array("W_dot_plant_solar", &count);//MWh
 		if( count != 8760 )
-			throw exec_error("tcsiscc", "gen count incorrect (should be 8760): " + count);
+		{
+			std::stringstream msg;
+			msg << "gen count incorrect (should be 8760): " << count;
+			throw exec_error("tcsiscc", msg.str());
+		}
 		// apply performance adjustments and convert from MWh to kWh
 		for (size_t i = 0; i < count; i++)
 		{

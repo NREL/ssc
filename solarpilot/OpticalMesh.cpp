@@ -420,7 +420,7 @@ void optical_hash_tree::create_node(opt_element &node, bool rad_direction, int r
 				
             m0->set_range(xr0, xr1, yr0, yr1);  //keep current range
     
-            node.setup(m0=m0);
+            node.setup(m0);
     
             create_node(*m0, !rad_direction, rec_level_r, rec_level_a);
             return;

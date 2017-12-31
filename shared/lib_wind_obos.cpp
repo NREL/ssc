@@ -502,7 +502,7 @@ double wobos::NumTurbCable2(double& cab2CurrRating, double& arrVoltage)
 //calculate the number of turbine interfaces on array cable 1
 double wobos::InterfacesCable1(double& fullStrings, double& nTurbPS, double& nTurbCab1)
 {
-	if ((nTurbPS == 0))//check if any partial strings exist
+	if (nTurbPS == 0) //check if any partial strings exist
 	{
 		return (nTurbCab1*fullStrings) * 2;
 	}
@@ -521,7 +521,7 @@ double wobos::InterfacesCable2(double& fullStrings, double& nTurbPS, double&nTur
 	double max2 = nTurbPS - nTurbCab1 - 1;
     if(max2 <= 0) max2 = 0;
 
-	if ((nTurbPS == 0))//check if any partial strings exist
+	if (nTurbPS == 0) //check if any partial strings exist
 	{
 		return (max1*fullStrings + max2) * 2;
 	}
