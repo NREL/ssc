@@ -1047,6 +1047,7 @@ enum {
 	CF_payback_with_expenses,
 	CF_cumulative_payback_with_expenses,
 	CF_nte,
+	CF_host_energy_value,
 
 	CF_max };
 
@@ -2751,7 +2752,7 @@ public:
 	if ((int)count != nyears + 1)
 		throw exec_error("host developer", util::format("energy value input wrong length (%d) should be (%d)", count, nyears + 1));
 	for (i = 0; i < (int)count; i++)
-		cf.at(CF_energy_value, i) = (double)arrp[i];
+		cf.at(CF_host_energy_value, i) = (double)arrp[i];
 //	double nom_discount_rate = (1 + inflation_rate)*(1 + disc_real) - 1;
 	for ( i = 1; i <= nyears; i++)
 		cf.at(CF_agreement_cost, i) = ppa * cf.at(CF_energy_net, i) * pow(1 + ppa_escalation, i - 1);
@@ -2763,7 +2764,7 @@ public:
 
 		cf.at(CF_after_tax_cash_flow, i) =
 			cf.at(CF_after_tax_net_equity_cost_flow, i)
-			+ cf.at(CF_energy_value, i);
+			+ cf.at(CF_host_energy_value, i);
 
 		cf.at(CF_payback_with_expenses, i) =
 			cf.at(CF_after_tax_cash_flow, i);
