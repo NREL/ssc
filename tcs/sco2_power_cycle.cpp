@@ -991,7 +991,7 @@ bool RecompCycle::optimal_design()
 		// Set max objective function
 		opt_des_cycle.set_max_objective(nlopt_callback_opt_des, this);		// Calls wrapper/callback that calls 'design_point_eta', which optimizes design point eta through repeated calls to 'design'
 		double max_f = std::numeric_limits<double>::quiet_NaN();
-		nlopt::result   result_des_cycle = opt_des_cycle.optimize(x, max_f);
+		opt_des_cycle.optimize(x, max_f);
 	
 		// After optimization solves, get back the parameters that result in the maximum efficiency
 		index = 0;
@@ -1267,7 +1267,7 @@ bool RecompCycle::optimal_off_design(const cycle_opt_off_des_inputs & cycle_opt_
 		opt_des_cycle.set_xtol_rel(m_cycle_opt_off_des_in.m_opt_tol);
 		opt_des_cycle.set_max_objective(nlopt_callback_opt_off_des, this);
 		double max_f = std::numeric_limits<double>::quiet_NaN();
-		nlopt::result   result_des_cycle = opt_des_cycle.optimize(x, max_f);
+		opt_des_cycle.optimize(x, max_f);
 
 		index = 0;
 		
