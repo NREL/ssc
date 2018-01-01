@@ -776,10 +776,6 @@ bool RecompCycle::design()
 		m_errors.SetError(37);
 		return false;
 	}
-	double h_hot_ideal = co2_props.enth;
-	double eff = Q_dot_LT / (m_dot_t * (m_enth_last[8 - cpp_offset] - h_hot_ideal));
-	double C_dot_cold = m_dot_mc*(m_enth_last[3-cpp_offset]-m_enth_last[2-cpp_offset])/(m_temp_last[3-cpp_offset]-m_temp_last[2-cpp_offset]);
-	double C_dot_hot = m_dot_t*(m_enth_last[8-cpp_offset]-m_enth_last[9-cpp_offset])/(m_temp_last[8-cpp_offset]-m_temp_last[9-cpp_offset]);
 
 	HX_design_parameters LT_des_par;
 	LT_des_par.m_N_sub = m_cycle_des_par.m_N_sub_hxrs;
@@ -801,10 +797,6 @@ bool RecompCycle::design()
 		m_errors.SetError(38);
 		return false;
 	}
-	h_hot_ideal = co2_props.enth;
-	eff = Q_dot_HT / (m_dot_t*(m_enth_last[7-cpp_offset] - h_hot_ideal));
-	C_dot_cold = m_dot_t * (m_enth_last[5-cpp_offset] - m_enth_last[4-cpp_offset])/(m_temp_last[5-cpp_offset]-m_temp_last[4-cpp_offset]);
-	C_dot_hot = m_dot_t * (m_enth_last[7-cpp_offset] - m_enth_last[8-cpp_offset])/(m_temp_last[7-cpp_offset]-m_temp_last[8-cpp_offset]);
 
 	HX_design_parameters HT_des_par;
 	HT_des_par.m_N_sub = m_cycle_des_par.m_N_sub_hxrs;
