@@ -61,18 +61,20 @@ static var_info _cm_vtab_host_developer[] = {
 /*   VARTYPE           DATATYPE         NAME                                      LABEL                                                            UNITS              META                      GROUP                       REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
 // -------------------
 // Host specific inputs and outputs
-	{ SSC_INPUT,        SSC_ARRAY,       "annual_energy_value",             "Energy value",                       "$",            "",                      "thirdpartyownership",      "*",                       "",                                         "" },
-	{ SSC_INPUT,        SSC_ARRAY,       "elec_cost_with_system",             "Energy value",                       "$",            "",                      "thirdpartyownership",      "*",                       "",                                         "" },
-	{ SSC_INPUT,        SSC_ARRAY,       "elec_cost_without_system",             "Energy value",                       "$",            "",                      "thirdpartyownership",      "*",                       "",                                         "" },
+	{ SSC_INPUT,        SSC_ARRAY,       "annual_energy_value",             "Host energy value",                       "$",            "",                      "Host",      "*",                       "",                                         "" },
+	{ SSC_INPUT,        SSC_ARRAY,       "elec_cost_with_system",             "Host energy value with system",                       "$",            "",                      "Host",      "*",                       "",                                         "" },
+	{ SSC_INPUT,        SSC_ARRAY,       "elec_cost_without_system",             "Host energy value without system",                       "$",            "",                      "Host",      "*",                       "",                                         "" },
+	{ SSC_INPUT,        SSC_NUMBER,       "host_real_discount_rate",             "Host real discount rate",                       "%",            "",                      "Host",      "*",                       "",                                         "" },
 
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_agreement_cost",      "Agreement cost",                  "$",            "",                      "Cash Flow",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_after_tax_net_equity_cost_flow",        "After-tax annual costs",           "$",            "",                      "Cash Flow",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_after_tax_cash_flow",                   "After-tax cash flow",                      "$",            "",                      "Cash Flow",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_payback_with_expenses",                 "Payback with expenses",                    "$",            "",                      "Cash Flow",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_cumulative_payback_with_expenses",      "Cumulative payback with expenses",         "$",            "",                      "Cash Flow",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "npv",                      "Net present value",				   "$",            "",                      "Cash Flow",      "*",                       "",                                         "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_agreement_cost",      "Host agreement cost",                  "$",            "",                      "Cash Flow",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_after_tax_net_equity_cost_flow",        "Host after-tax annual costs",           "$",            "",                      "Cash Flow",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_after_tax_cash_flow",                   "Host after-tax cash flow",                      "$",            "",                      "Cash Flow",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_payback_with_expenses",                 "Host payback with expenses",                    "$",            "",                      "Cash Flow",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_cumulative_payback_with_expenses",      "Host cumulative payback with expenses",         "$",            "",                      "Cash Flow",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "npv",                      "Host net present value",				   "$",            "",                      "Cash Flow",      "*",                       "",                                         "" },
 
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_nte",      "Not to exceed (NTE)",         "cents/kWh",            "",                      "Cash Flow",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,     "host_nominal_discount_rate",                  "host nominal discount rate",            "%",     "",					  "Intermediate Costs",			 "*",                         "",                             "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "year1_nte",                "Year 1 NTE",                          "cents/kWh",    "",                      "Cash Flow",      "*",                       "",                                         "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "lnte_real",                "Real LNTE",                          "cents/kWh",    "",                      "Cash Flow",      "*",                       "",                                         "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "lnte_nom",                 "Nominal LNTE",                       "cents/kWh",    "",                      "Cash Flow",      "*",                       "",                                         "" },
@@ -1085,8 +1087,7 @@ public:
 		double inflation_rate = as_double("inflation_rate")*0.01;
 		double ppa_escalation = as_double("ppa_escalation")*0.01;
 		double disc_real = as_double("real_discount_rate")*0.01;
-//		double federal_tax_rate = as_double("federal_tax_rate")*0.01;
-//		double state_tax_rate = as_double("state_tax_rate")*0.01;
+		double host_disc_real = as_double("host_real_discount_rate")*0.01;
 		size_t count;
 		ssc_number_t* arrp;
 		arrp = as_array("federal_tax_rate", &count);
@@ -1123,7 +1124,8 @@ public:
 
 
 
-		double nom_discount_rate = (1+inflation_rate)*(1+disc_real)-1;
+		double nom_discount_rate = (1 + inflation_rate)*(1 + disc_real) - 1;
+		double host_nom_discount_rate = (1 + inflation_rate)*(1 + host_disc_real) - 1;
 
 		// In conjunction with SAM - take installed costs and salestax costs (for deducting if necessary)
 		double cost_prefinancing = as_double("total_installed_cost");
@@ -2753,7 +2755,6 @@ public:
 		throw exec_error("host developer", util::format("energy value input wrong length (%d) should be (%d)", count, nyears + 1));
 	for (i = 0; i < (int)count; i++)
 		cf.at(CF_host_energy_value, i) = (double)arrp[i];
-//	double nom_discount_rate = (1 + inflation_rate)*(1 + disc_real) - 1;
 	for ( i = 1; i <= nyears; i++)
 		cf.at(CF_agreement_cost, i) = ppa * cf.at(CF_energy_net, i) * pow(1 + ppa_escalation, i - 1);
 
@@ -2774,19 +2775,21 @@ public:
 			+ cf.at(CF_payback_with_expenses, i);
 	}
 
-	double npv_energy_real = npv(CF_energy_net, nyears, disc_real);
-	double host_lcoe_real = -(cf.at(CF_after_tax_net_equity_cost_flow, 0) + npv(CF_after_tax_net_equity_cost_flow, nyears, nom_discount_rate)) * 100;
-	if (npv_energy_real == 0.0)
+
+
+	double host_npv_energy_real = npv(CF_energy_net, nyears, host_disc_real);
+	double host_lcoe_real = -(cf.at(CF_after_tax_net_equity_cost_flow, 0) + npv(CF_after_tax_net_equity_cost_flow, nyears, host_nom_discount_rate)) * 100;
+	if (host_npv_energy_real == 0.0)
 		host_lcoe_real = std::numeric_limits<double>::quiet_NaN();
 	else
-		host_lcoe_real /= npv_energy_real;
+		host_lcoe_real /= host_npv_energy_real;
 
-	double npv_energy_nom = npv(CF_energy_net, nyears, nom_discount_rate);
-	double host_lcoe_nom = -(cf.at(CF_after_tax_net_equity_cost_flow, 0) + npv(CF_after_tax_net_equity_cost_flow, nyears, nom_discount_rate)) * 100;
-	if (npv_energy_nom == 0.0)
+	double host_npv_energy_nom = npv(CF_energy_net, nyears, host_nom_discount_rate);
+	double host_lcoe_nom = -(cf.at(CF_after_tax_net_equity_cost_flow, 0) + npv(CF_after_tax_net_equity_cost_flow, nyears, host_nom_discount_rate)) * 100;
+	if (host_npv_energy_nom == 0.0)
 		host_lcoe_nom = std::numeric_limits<double>::quiet_NaN();
 	else
-		host_lcoe_nom /= npv_energy_nom;
+		host_lcoe_nom /= host_npv_energy_nom;
 
 
 	// NTE
@@ -2801,20 +2804,20 @@ public:
 
 	for (i = 0; i < (int)count; i++)
 		cf.at(CF_nte, i) = (double)(ub_wo_sys[i] - ub_w_sys[i]) *100.0;// $ to cents
-	double lnte_real = npv(CF_nte, nyears, nom_discount_rate);
+	double lnte_real = npv(CF_nte, nyears, host_nom_discount_rate);
 
 	for (i = 0; i < (int)count; i++)
 		if (cf.at(CF_energy_net, i) > 0) cf.at(CF_nte, i) /= cf.at(CF_energy_net, i);
 
 	double lnte_nom = lnte_real;
-	if (npv_energy_real == 0.0)
+	if (host_npv_energy_real == 0.0)
 		lnte_real = std::numeric_limits<double>::quiet_NaN();
 	else
-		lnte_real /= npv_energy_real;
-	if (npv_energy_nom == 0.0)
+		lnte_real /= host_npv_energy_real;
+	if (host_npv_energy_nom == 0.0)
 		lnte_nom = std::numeric_limits<double>::quiet_NaN();
 	else
-		lnte_nom /= npv_energy_nom;
+		lnte_nom /= host_npv_energy_nom;
 
 	assign("lnte_real", var_data((ssc_number_t)lnte_real));
 	assign("lnte_nom", var_data((ssc_number_t)lnte_nom));
@@ -2822,16 +2825,17 @@ public:
 	assign("year1_nte", var_data((ssc_number_t)cf.at(CF_nte, 1)));
 
 
-	double net_present_value = cf.at(CF_after_tax_cash_flow, 0) + npv(CF_after_tax_cash_flow, nyears, nom_discount_rate);
+	double host_net_present_value = cf.at(CF_after_tax_cash_flow, 0) + npv(CF_after_tax_cash_flow, nyears, host_nom_discount_rate);
 
 	assign("cf_length", var_data((ssc_number_t)nyears + 1));
 
 	//LCOE's commented out so as not to confuse the user. They don't compare to other LCOEs.
 	//		assign( "lcoe_real", var_data((ssc_number_t)lcoe_real) );
 	//		assign( "lcoe_nom", var_data((ssc_number_t)lcoe_nom) );
-	assign("npv", var_data((ssc_number_t)net_present_value));
+	assign("npv", var_data((ssc_number_t)host_net_present_value));
 
-	assign("discount_nominal", var_data((ssc_number_t)(nom_discount_rate*100.0)));
+	assign("host_nominal_discount_rate", var_data((ssc_number_t)(host_nom_discount_rate*100.0)));
+
 
 	save_cf(CF_agreement_cost, nyears, "cf_agreement_cost");
 	save_cf(CF_after_tax_net_equity_cost_flow, nyears, "cf_after_tax_net_equity_cost_flow");
@@ -2848,11 +2852,11 @@ public:
 	// fixed price PPA - LPPA independent of salvage value per 7/16/15 meeting
 	double npv_ppa_revenue = npv(CF_energy_value, nyears, nom_discount_rate);
 //	double npv_ppa_revenue = npv(CF_total_revenue, nyears, nom_discount_rate);
-//	double npv_energy_nom = npv(CF_energy_net,nyears,nom_discount_rate);
+	double npv_energy_nom = npv(CF_energy_net,nyears,nom_discount_rate);
 	double lppa_nom = 0;
 	if (npv_energy_nom != 0) lppa_nom = npv_ppa_revenue / npv_energy_nom * 100.0;
 	double lppa_real = 0;
-//	double npv_energy_real = npv(CF_energy_net,nyears,disc_real);
+	double npv_energy_real = npv(CF_energy_net,nyears,disc_real);
 	if (npv_energy_real != 0) lppa_real = npv_ppa_revenue / npv_energy_real * 100.0;
 
 	// update LCOE calculations 

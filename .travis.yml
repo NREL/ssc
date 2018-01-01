@@ -60,3 +60,4 @@ branches:
   - master
   - develop
   - Host_Developer
+  - weather_forecast
