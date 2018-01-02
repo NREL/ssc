@@ -2755,8 +2755,9 @@ public:
 		throw exec_error("host developer", util::format("energy value input wrong length (%d) should be (%d)", count, nyears + 1));
 	for (i = 0; i < (int)count; i++)
 		cf.at(CF_host_energy_value, i) = (double)arrp[i];
+	// calculated ppa in cents/kWh - cash flow line items in $
 	for ( i = 1; i <= nyears; i++)
-		cf.at(CF_agreement_cost, i) = ppa * cf.at(CF_energy_net, i) * pow(1 + ppa_escalation, i - 1);
+		cf.at(CF_agreement_cost, i) = (ppa/100.0) * cf.at(CF_energy_net, i) * pow(1 + ppa_escalation, i - 1);
 
 	for (i = 1; i <= nyears; i++)
 	{
