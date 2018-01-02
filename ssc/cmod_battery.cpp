@@ -833,7 +833,7 @@ battstor::battstor(compute_module &cm, bool setup_model, size_t nrec, double dt_
 	}
 	/*! Behind-the-meter automated dispatch for peak shaving */
 	else
-	{
+	{			
 		dispatch_model = new dispatch_automatic_behind_the_meter_t(battery_model, dt_hr, batt_vars->batt_minimum_SOC, batt_vars->batt_maximum_SOC,
 			batt_vars->batt_current_choice, batt_vars->batt_current_charge_max, batt_vars->batt_current_discharge_max,
 			batt_vars->batt_power_charge_max, batt_vars->batt_power_discharge_max, batt_vars->batt_minimum_modetime,
@@ -1015,7 +1015,12 @@ void battstor::initialize_automated_dispatch(std::vector<ssc_number_t> pv, std::
 		else
 		{
 			if (dispatch_automatic_t * automatic_dispatch = dynamic_cast<dispatch_automatic_t*>(dispatch_model))
+			{
+				if (batt_vars->batt_custom_dispatch.size() != 8760 * step_per_hour) {
+					throw compute_module::exec_error("battery", "invalid custom dispatch, must be 8760 * steps_per_hour");
+				}
 				automatic_dispatch->set_custom_dispatch(batt_vars->batt_custom_dispatch);
+			}
 
 		}
 			
@@ -1306,23 +1311,25 @@ public:
 			/* *********************************************************************************************
 			Run Simulation
 			*********************************************************************************************** */
-			int count = 0;
+			int lifetime_idx = 0;
 			for (size_t year = 0; year != batt.nyears; year++)
 			{
+				int year_idx = 0;
 				for (size_t hour = 0; hour < 8760; hour++)
 				{
 					for (size_t jj = 0; jj < batt.step_per_hour; jj++)
 					{
 	
 						batt.initialize_time(year, hour, jj);
-						batt.advance(*this, power_input[count] * util::watt_to_kilowatt, power_load[count]);
+						batt.advance(*this, power_input[year_idx] * util::watt_to_kilowatt, power_load[year_idx]);
 
 						if (batt.batt_vars->batt_topology == charge_controller::DC_CONNECTED)
 						{
-							double ac = batt.outGenPower[count] * batt.batt_vars->inverter_efficiency;
+							double ac = batt.outGenPower[lifetime_idx] * batt.batt_vars->inverter_efficiency;
 							batt.update_post_inverted(*this, ac);
 						}
-						count++;
+						lifetime_idx++;
+						year_idx++;
 					}
 				}
 			}

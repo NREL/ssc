@@ -1187,7 +1187,7 @@ void dispatch_automatic_behind_the_meter_t::update_dispatch(size_t hour_of_year,
 	}
 	else
 	{
-		_P_battery_current = _P_battery_use[idx];
+		_P_battery_current = _P_battery_use[idx % (8760 *_steps_per_hour)];
 	}
 	
 
