@@ -92,6 +92,8 @@ class voltage_t;
 class capacity_t
 {
 public:
+	
+	capacity_t();
 	capacity_t(double q, double SOC_init, double SOC_max, double SOC_min);
 
 	// deep copy
@@ -104,7 +106,7 @@ public:
 	virtual ~capacity_t(){};
 	
 	// pure virtual functions (abstract) which need to be defined in derived classes
-	virtual void updateCapacity(double I, double dt) = 0;
+	virtual void updateCapacity(double &I, double dt) = 0;
 	virtual void updateCapacityForThermal(double capacity_percent)=0;
 	virtual void updateCapacityForLifetime(double capacity_percent)=0;
 	virtual void replace_battery()=0;
@@ -158,6 +160,7 @@ class capacity_kibam_t : public capacity_t
 public:
 
 	// Public APIs 
+	capacity_kibam_t();
 	capacity_kibam_t(double q20, double t1, double q1, double q10, double SOC_init, double SOC_max, double SOC_min);
 	~capacity_kibam_t(){}
 
@@ -167,7 +170,7 @@ public:
 	// copy from capacity to this
 	void copy(capacity_t *);
 
-	void updateCapacity(double I, double dt);
+	void updateCapacity(double &I, double dt);
 	void updateCapacityForThermal(double capacity_percent);
 	void updateCapacityForLifetime(double capacity_percent);
 	void replace_battery();
@@ -213,6 +216,7 @@ Lithium Ion specific capacity model
 class capacity_lithium_ion_t : public capacity_t
 {
 public:
+	capacity_lithium_ion_t();
 	capacity_lithium_ion_t(double q, double SOC_init, double SOC_max, double SOC_min);
 	~capacity_lithium_ion_t(){};
 
@@ -223,7 +227,7 @@ public:
 	void copy(capacity_t *);
 
 	// override public api
-	void updateCapacity(double I, double dt);
+	void updateCapacity(double &I, double dt);
 	void updateCapacityForThermal(double capacity_percent);
 	void updateCapacityForLifetime(double capacity_percent);
 	void replace_battery();
@@ -545,6 +549,7 @@ Thermal classes
 class thermal_t
 {
 public:
+	thermal_t();
 	thermal_t(double mass, double length, double width, double height,
 		double Cp, double h, double T_room,
 		const util::matrix_t<double> &cap_vs_temp);
@@ -639,7 +644,7 @@ public:
 	void copy(const battery_t * battery);
 
 	// virtual destructor, does nothing as no memory allocated in constructor
-	virtual ~battery_t(){};
+	virtual ~battery_t();
 
 	// delete the new submodels that have been allocated
 	void delete_clone();
@@ -650,16 +655,18 @@ public:
 	void run(size_t idx, double I);
 
 	// Run a component level model
-	void runCapacityModel(double I);
+	void runCapacityModel(double &I);
 	void runVoltageModel();
 	void runThermalModel(double I);
 	void runLifetimeModel(size_t idx);
 	void runLossesModel(size_t idx);
 
 	capacity_t * capacity_model() const;
+	capacity_t * capacity_initial_model() const;
 	voltage_t * voltage_model() const;
 	lifetime_t * lifetime_model() const;
 	thermal_t * thermal_model() const;
+	thermal_t * thermal_initial_model() const;
 	losses_t * losses_model() const;
 
 	// Get capacity quantities
@@ -677,17 +684,17 @@ public:
 	double battery_voltage(); // the actual battery voltage
 	double battery_voltage_nominal(); // the nominal battery voltage
 
-	double timestep_hour();
-
 	enum CHEMS{ LEAD_ACID, LITHIUM_ION, VANADIUM_REDOX, IRON_FLOW};
 	enum REPLACE{ NO_REPLACEMENTS, REPLACE_BY_CAPACITY, REPLACE_BY_SCHEDULE};
 
 
 private:
 	capacity_t * _capacity;
+	capacity_t * _capacity_initial;
+	thermal_t * _thermal;
+	thermal_t * _thermal_initial;
 	lifetime_t * _lifetime;
 	voltage_t * _voltage;
-	thermal_t * _thermal;
 	losses_t * _losses;
 	int _battery_chemistry;
 	double _dt_hour;			// [hr] - timestep

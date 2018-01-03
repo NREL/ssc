@@ -687,7 +687,7 @@ battstor::battstor(compute_module &cm, bool setup_model, size_t nrec, double dt_
 		dt_hr,
 		chem);
 
-	if (chem == 0)
+	if (chem == battery_t::LEAD_ACID)
 	{
 		capacity_model = new capacity_kibam_t(
 			batt_vars->LeadAcid_q20_computed,
