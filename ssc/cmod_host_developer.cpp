@@ -62,8 +62,8 @@ static var_info _cm_vtab_host_developer[] = {
 // -------------------
 // Host specific inputs and outputs
 	{ SSC_INPUT,        SSC_ARRAY,       "annual_energy_value",             "Host energy value",                       "$",            "",                      "Host",      "*",                       "",                                         "" },
-	{ SSC_INPUT,        SSC_ARRAY,       "elec_cost_with_system",             "Host energy value with system",                       "$",            "",                      "Host",      "*",                       "",                                         "" },
-	{ SSC_INPUT,        SSC_ARRAY,       "elec_cost_without_system",             "Host energy value without system",                       "$",            "",                      "Host",      "*",                       "",                                         "" },
+	{ SSC_INPUT,        SSC_ARRAY,       "elec_cost_with_system",             "Host energy bill with system",                       "$",            "",                      "Host",      "*",                       "",                                         "" },
+	{ SSC_INPUT,        SSC_ARRAY,       "elec_cost_without_system",             "Host energy bill without system",                       "$",            "",                      "Host",      "*",                       "",                                         "" },
 	{ SSC_INPUT,        SSC_NUMBER,       "host_real_discount_rate",             "Host real discount rate",                       "%",            "",                      "Host",      "*",                       "",                                         "" },
 
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_agreement_cost",      "Host agreement cost",                  "$",            "",                      "Cash Flow",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
