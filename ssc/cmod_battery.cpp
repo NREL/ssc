@@ -1314,13 +1314,14 @@ public:
 			int lifetime_idx = 0;
 			for (size_t year = 0; year != batt.nyears; year++)
 			{
-				int year_idx = 0;
+				int year_idx = 0; 
 				for (size_t hour = 0; hour < 8760; hour++)
 				{
 					for (size_t jj = 0; jj < batt.step_per_hour; jj++)
 					{
 	
 						batt.initialize_time(year, hour, jj);
+						batt.check_replacement_schedule();
 						batt.advance(*this, power_input[year_idx] * util::watt_to_kilowatt, power_load[year_idx]);
 
 						if (batt.batt_vars->batt_topology == charge_controller::DC_CONNECTED)
