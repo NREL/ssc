@@ -274,7 +274,6 @@ protected:
 	double _cell_voltage_nominal; // nominal cell voltage [V]
 	double _R;                    // internal cell resistance (Ohm)
 	double _R_battery;            // internal battery resistance (Ohm)
-
 	util::matrix_t<double> _batt_voltage_matrix;  // voltage vs depth-of-discharge
 };
 
@@ -471,6 +470,7 @@ protected:
 	void runTableModel();
 
 private:
+
 	int _calendar_choice;
 	std::vector<int> _calendar_days;
 	std::vector<double> _calendar_capacity;
@@ -589,8 +589,9 @@ protected:
 	double _A;			// [m2] - exposed surface area
 	double _T_battery;   // [K]
 	double _capacity_percent; //[%]
+	double _T_max;		 // [K]
 	message _message;
-	double _T_max;    //(mw) can't initialize here - breaks on gcc 
+
 };
 /*
 Losses Base class

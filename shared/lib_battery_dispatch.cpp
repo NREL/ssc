@@ -854,27 +854,37 @@ dispatch_automatic_t::dispatch_automatic_t(
 	int pv_dispatch,
 	size_t nyears,
 	size_t look_ahead_hours,
-	size_t dispatch_update_frequency_hours,
+	double dispatch_update_frequency_hours,
 	bool can_charge,
 	bool can_clip_charge,
 	bool can_grid_charge
 	) : dispatch_t(Battery, dt_hour, SOC_min, SOC_max, current_choice, Ic_max, Id_max, Pc_max, Pd_max,
 	t_min, dispatch_mode, pv_dispatch)
 {
-	_day_index = 0;
-	_hour_last_updated = (size_t)1e10;
+
 	_dt_hour = dt_hour;
-	_steps_per_hour = (size_t)(1. / dt_hour);
-	_nyears = nyears;
-	_mode = dispatch_mode;
-	_num_steps = 24 * _steps_per_hour; 
-	_month = 1;
-	_safety_factor = 0.03;
+	_dt_hour_update = dispatch_update_frequency_hours;
+	_d_index_update = size_t(std::ceil(_dt_hour_update / _dt_hour));
+
+	_hour_last_updated = (size_t)1e10;
+	_index_last_updated = 0;
+
 	_look_ahead_hours = look_ahead_hours;
-	_dispatch_update_hours = dispatch_update_frequency_hours;
+
+	_steps_per_hour = (size_t)(1. / dt_hour);
+	_num_steps = 24 * _steps_per_hour;
+
+	_day_index = 0;
+	_month = 1;
+	_nyears = nyears;
+
+	_mode = dispatch_mode;
+	_safety_factor = 0.03;
 	_can_charge = can_charge;
 	_can_clip_charge = can_clip_charge;
 	_can_grid_charge = can_grid_charge;
+
+
 }
 
 void dispatch_automatic_t::init_with_pointer(const dispatch_automatic_t * tmp)
@@ -887,12 +897,14 @@ void dispatch_automatic_t::init_with_pointer(const dispatch_automatic_t * tmp)
 	_num_steps = tmp->_num_steps;
 	_hour_last_updated = tmp->_hour_last_updated;
 	_dt_hour = tmp->_dt_hour;
+	_dt_hour_update = tmp->_dt_hour_update;
 	_steps_per_hour = tmp->_steps_per_hour;
 	_nyears = tmp->_nyears;
 	_mode = tmp->_mode;
 	_safety_factor = tmp->_safety_factor;
 	_look_ahead_hours = tmp->_look_ahead_hours;
-	_dispatch_update_hours = tmp->_dispatch_update_hours;
+	_d_index_update = tmp->_d_index_update;
+	_index_last_updated = tmp->_index_last_updated;
 }
 
 // deep copy from dispatch to this
@@ -1082,7 +1094,7 @@ dispatch_automatic_behind_the_meter_t::dispatch_automatic_behind_the_meter_t(
 	int pv_dispatch,
 	size_t nyears,
 	size_t look_ahead_hours,
-	size_t dispatch_update_frequency_hours,
+	double dispatch_update_frequency_hours,
 	bool can_charge,
 	bool can_clip_charge,
 	bool can_grid_charge
@@ -1437,7 +1449,7 @@ dispatch_automatic_front_of_meter_t::dispatch_automatic_front_of_meter_t(
 	int pv_dispatch,
 	size_t nyears,
 	size_t look_ahead_hours,
-	size_t dispatch_update_frequency_hours,
+	double dispatch_update_frequency_hours,
 	bool can_charge,
 	bool can_clip_charge,
 	bool can_grid_charge,
@@ -1453,7 +1465,6 @@ dispatch_automatic_front_of_meter_t::dispatch_automatic_front_of_meter_t(
 	double etaGridCharge,
 	double etaDischarge) : dispatch_automatic_t(Battery, dt_hour, SOC_min, SOC_max, current_choice, Ic_max, Id_max, Pc_max, Pd_max, t_min, dispatch_mode, pv_dispatch, nyears, look_ahead_hours, dispatch_update_frequency_hours, can_charge, can_clip_charge, can_grid_charge)
 {
-	_look_ahead_hours = look_ahead_hours;
 	_inverter_paco = inverter_paco;
 	_ppa_factors = ppa_factors;
 	_utilityRateCalculator = new UtilityRateCalculator(utilityRate, _steps_per_hour);
@@ -1548,15 +1559,17 @@ void dispatch_automatic_front_of_meter_t::dispatch(size_t year,
 
 }
 
-void dispatch_automatic_front_of_meter_t::update_dispatch(size_t hour_of_year, size_t , size_t idx)
+void dispatch_automatic_front_of_meter_t::update_dispatch(size_t hour_of_year, size_t step_of_hour , size_t idx)
 {
 	
 	// Power to charge (<0) or discharge (>0)
 	double powerBattery = 0;
 
-	if (hour_of_year == _hour_last_updated + _dispatch_update_hours || hour_of_year == 0)
+	if (idx == _index_last_updated + _d_index_update || idx == 0)
 	{
-		_hour_last_updated = hour_of_year;
+		if (idx > 0) {
+			_index_last_updated += _d_index_update;
+		}
 
 		/*! Cost to cycle the battery at all, using maximum DOD or user input */
 		costToCycle();

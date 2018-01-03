@@ -360,7 +360,7 @@ battstor::battstor(compute_module &cm, bool setup_model, size_t nrec, double dt_
 				if (batt_vars->batt_dispatch == dispatch_t::FOM_LOOK_AHEAD || batt_vars->batt_dispatch == dispatch_t::FOM_FORECAST)
 				{
 					batt_vars->batt_look_ahead_hours = cm.as_unsigned_long("batt_look_ahead_hours");
-					batt_vars->batt_dispatch_update_frequency_hours = cm.as_unsigned_long("batt_dispatch_update_frequency_hours");
+					batt_vars->batt_dispatch_update_frequency_hours = cm.as_double("batt_dispatch_update_frequency_hours");
 				}
 			}
 			// Automated behind-the-meter

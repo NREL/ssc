@@ -421,7 +421,7 @@ public:
 		int pv_dispatch,
 		size_t nyears,
 		size_t look_ahead_hours,
-		size_t dispatch_update_frequency_hours,
+		double dispatch_update_frequency_hours,
 		bool can_charge,
 		bool can_clipcharge,
 		bool can_grid_charge
@@ -486,11 +486,20 @@ protected:
 	/*! The battery power target at the current time [kW] */
 	double _P_battery_current;
 
-	/*! The hour of year the dispatch was last updated */
+	/*! The index of year the dispatch was last updated */
 	size_t _hour_last_updated;
+
+	/*! The index of year the dispatch was last updated */
+	size_t _index_last_updated;
+
+	/*! The amount of indices to wait before updating */
+	size_t _d_index_update;
 
 	/*! The timestep in hours (hourly = 1, half_hourly = 0.5, etc) */
 	double _dt_hour;
+
+	/*! The frequency to update the dispatch [hour] */
+	double _dt_hour_update;
 
 	/*! The number of steps per hour*/
 	size_t _steps_per_hour;
@@ -506,9 +515,6 @@ protected:
 
 	/*! The hours to look ahead in the simulation [hour] */
 	size_t _look_ahead_hours;
-
-	/*! The frequency to update the dispatch [hour] */
-	size_t _dispatch_update_hours;
 };
 
 /*! Automated dispatch class for behind-the-meter connections */
@@ -537,7 +543,7 @@ public:
 		int pv_dispatch,
 		size_t nyears,
 		size_t look_ahead_hours,
-		size_t dispatch_update_frequency_hours,
+		double dispatch_update_frequency_hours,
 		bool can_charge,
 		bool can_clipcharge,
 		bool can_grid_charge
@@ -637,7 +643,7 @@ public:
 		int pv_dispatch,
 		size_t nyears,
 		size_t look_ahead_hours,
-		size_t dispatch_update_frequency_hours,
+		double dispatch_update_frequency_hours,
 		bool can_charge,
 		bool can_clipcharge,
 		bool can_grid_charge,

@@ -119,7 +119,7 @@ struct batt_variables
 	size_t batt_look_ahead_hours;
 
 	/*! The frequency to update the look-ahead automated dispatch */
-	size_t batt_dispatch_update_frequency_hours;
+	double batt_dispatch_update_frequency_hours;
 
 	util::matrix_t<double>  batt_lifetime_matrix;
 	util::matrix_t<double> batt_calendar_lifetime_matrix;
