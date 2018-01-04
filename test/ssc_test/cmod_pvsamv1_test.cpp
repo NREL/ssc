@@ -134,3 +134,34 @@ TEST_F(CMPvsamv1PowerIntegration, NoFinancialModelCustomWeatherFile) {
 		ssc_data_free(data);
 	}
 }
+
+/// Test PVSAMv1 with default no-financial model and combinations of Sky Diffuse Model and Weather File Irradiance
+TEST_F(CMPvsamv1PowerIntegration, NoFinancialModelSkyDiffuseAndIrradModels) 
+{
+	ssc_data_t data = ssc_data_create();
+	std::vector<double> annual_energy_expected = { 8513, 8522, 8525, 8635, 8645, 8647, 8714, 8723, 8726 };
+	size_t count = 0;
+
+	// Sky diffuse models: isotropic, hdkr, perez
+	for (int sky_diffuse_model = 0; sky_diffuse_model < 3; sky_diffuse_model++)
+	{
+		// Weather file irradiance: DNI & DHI, DNI & GHI, GHI & DHI
+		for (int irrad_mode = 0; irrad_mode < 3; irrad_mode++)
+		{
+			int pvsam_errors = pvsam_test_albedo_and_radiation(data, sky_diffuse_model, irrad_mode);
+			EXPECT_FALSE(pvsam_errors);
+
+			if (!pvsam_errors)
+			{
+				ssc_number_t annual_energy;
+				ssc_data_get_number(data, "annual_energy", &annual_energy);
+				EXPECT_NEAR(annual_energy, annual_energy_expected[count], m_error_tolerance_hi) << "Annual energy.";
+			}
+			count++;
+		}
+
+
+	}
+}
+	
+
