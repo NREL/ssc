@@ -84,5 +84,6 @@
     <ClInclude Include="..\test\input_cases\windpower_cases.h">
       <Filter>input_cases</Filter>
     </ClInclude>
+    <ClInclude Include="..\test\input_cases\pvsamv1_common_data.h" />
   </ItemGroup>
 </Project>

@@ -10,7 +10,7 @@ int windpower_nofinancial_testfile(ssc_data_t &data)
 	ssc_module_exec_set_print(0);
 	if (data == NULL)
 	{
-		printf("error: out of memory.");
+		printf("error: out of memory."); 
 		return -1;
 	}
 

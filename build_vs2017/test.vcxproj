@@ -36,6 +36,7 @@
   <ItemGroup>
     <ClInclude Include="..\test\input_cases\code_generator_utilities.h" />
     <ClInclude Include="..\test\input_cases\pvsamv1_cases.h" />
+    <ClInclude Include="..\test\input_cases\pvsamv1_common_data.h" />
     <ClInclude Include="..\test\input_cases\pvwattsv5_cases.h" />
     <ClInclude Include="..\test\input_cases\tcs_trough_physical_input.h" />
     <ClInclude Include="..\test\input_cases\weather_inputs.h" />
