@@ -11,30 +11,8 @@
 */
 int pvsam_nofinancial_pheonix(ssc_data_t &data)
 {
-	ssc_module_exec_set_print(0);
 	pvsamv_nofinancial_default(data);
-	if (data == NULL)
-	{
-		printf("error: out of memory.");
-		return -1;
-	}
-	ssc_module_t module;
-	module = ssc_module_create("pvsamv1");
-	if (NULL == module)
-	{
-		printf("error: could not create 'pvsamv1' module.");
-		ssc_data_free(data);
-		return -1;
-	}
-	if (ssc_module_exec(module, data) == 0)
-	{
-		printf("error during simulation.");
-		ssc_module_free(module);
-		ssc_data_free(data);
-		return -1;
-	}
-	ssc_module_free(module);
-	return 0;
+	return run_module(data, "pvsamv1");
 }
 
 /**
@@ -44,82 +22,19 @@ int pvsam_nofinancial_pheonix(ssc_data_t &data)
 */
 int pvsam_residential_pheonix(ssc_data_t &data)
 {
-	ssc_module_exec_set_print(0);
 	belpe_default(data);
+	int status = run_module(data, "belpe");
+
 	pvsamv1_with_residential_default(data);
+	status += run_module(data, "pvsamv1");
+
 	utility_rate5_default(data);
+	status += run_module(data, "utilityrate5");
+
 	cashloan_default(data);
-	if (data == NULL)
-	{
-		printf("error: out of memory.");
-		return -1;
-	}
-	ssc_module_t module;
-	module = ssc_module_create("belpe"); 
-	if (NULL == module)
-	{
-		printf("error: could not create 'belpe' module."); 
-		ssc_data_free(data); 
-		return -1; 
-	}
-	if (ssc_module_exec(module, data) == 0)
-	{
-		printf("error during simulation."); 
-		ssc_module_free(module); 
-		ssc_data_free(data); 
-		return -1; 
-	}
-	ssc_module_free(module);
-	
-	module = ssc_module_create("pvsamv1"); 
-	if (NULL == module)
-	{
-		printf("error: could not create 'pvsamv1' module."); 
-		ssc_data_free(data); 
-		return -1; 
-	}
-	if (ssc_module_exec(module, data) == 0)
-	{
-		printf("error during simulation."); 
-		ssc_module_free(module); 
-		ssc_data_free(data); 
-		return -1; 
-	}
-	ssc_module_free(module);
-	
-	module = ssc_module_create("utilityrate5"); 
-	if (NULL == module)
-	{
-		printf("error: could not create 'utilityrate5' module."); 
-		ssc_data_free(data); 
-		return -1; 
-	}
-	if (ssc_module_exec(module, data) == 0)
-	{
-		printf("error during simulation."); 
-		ssc_module_free(module); 
-		ssc_data_free(data); 
-		return -1; 
-	}
-	ssc_module_free(module);
-	
-	module = ssc_module_create("cashloan"); 
-	if (NULL == module)
-	{
-		printf("error: could not create 'cashloan' module."); 
-		ssc_data_free(data); 
-		return -1; 
-	}
-	if (ssc_module_exec(module, data) == 0)
-	{
-		printf("error during simulation."); 
-		ssc_module_free(module); 
-		ssc_data_free(data); 
-		return -1; 
-	}
-	ssc_module_free(module);
-	
-	return 0;
+	status += run_module(data, "cashloan");
+
+	return status;
 }
 
 /**
@@ -128,32 +43,9 @@ int pvsam_residential_pheonix(ssc_data_t &data)
 */
 int pvsam_nofinancial_custom_input_weather(ssc_data_t &data)
 {
-	ssc_module_exec_set_print(0);
 	pvsamv_nofinancial_default(data);
 	ssc_data_set_string(data, "solar_resource_file", solar_resource_path_15_min);
-
-	if (data == NULL)
-	{
-		printf("error: out of memory.");
-		return -1;
-	}
-	ssc_module_t module;
-	module = ssc_module_create("pvsamv1");
-	if (NULL == module)
-	{
-		printf("error: could not create 'pvsamv1' module.");
-		ssc_data_free(data);
-		return -1;
-	}
-	if (ssc_module_exec(module, data) == 0)
-	{
-		printf("error during simulation.");
-		ssc_module_free(module);
-		ssc_data_free(data);
-		return -1;
-	}
-	ssc_module_free(module);
-	return 0;
+	return run_module(data, "pvsamv1");
 }
 
 /**
@@ -162,34 +54,11 @@ int pvsam_nofinancial_custom_input_weather(ssc_data_t &data)
 */
 int pvsam_test_albedo_and_radiation(ssc_data_t &data, int sky_diffuse_model, int irrad_mode)
 {
-	ssc_module_exec_set_print(0);
 	pvsamv_nofinancial_default(data);
 
-	ssc_data_set_number(data, "irrad_mode", irrad_mode);
-	ssc_data_set_number(data, "sky_model", sky_diffuse_model);
-
-	if (data == NULL)
-	{
-		printf("error: out of memory.");
-		return -1;
-	}
-	ssc_module_t module;
-	module = ssc_module_create("pvsamv1");
-	if (NULL == module)
-	{
-		printf("error: could not create 'pvsamv1' module.");
-		ssc_data_free(data);
-		return -1;
-	}
-	if (ssc_module_exec(module, data) == 0)
-	{
-		printf("error during simulation.");
-		ssc_module_free(module);
-		ssc_data_free(data);
-		return -1;
-	}
-	ssc_module_free(module);
-	return 0;
+	ssc_data_set_number(data, "irrad_mode", static_cast<ssc_number_t>(irrad_mode));
+	ssc_data_set_number(data, "sky_model", static_cast<ssc_number_t>(sky_diffuse_model));
+	return run_module(data, "pvsamv1");
 }
 
 

@@ -5,6 +5,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include "sscapi.h"
+#include <string>
 
 static ssc_bool_t my_handler(ssc_module_t p_mod, ssc_handler_t p_handler, int action,
 	float f0, float f1, const char *s0, const char *s1, void *user_data)
@@ -86,6 +87,33 @@ static int set_matrix(ssc_data_t p_data, const char *name, const char* fn, int n
 	ssc_data_set_matrix(p_data, name, ary, nr, nc);
 	free(ary);
 	return 1;
+}
+
+static int run_module(ssc_data_t & data, std::string module_name)
+{
+	ssc_module_exec_set_print(0);
+	if (data == NULL)
+	{
+		printf("error: out of memory.");
+		return -1;
+	}
+	ssc_module_t module;
+	module = ssc_module_create(const_cast<char*>(module_name.c_str()));
+	if (NULL == module)
+	{
+		printf("error: could not create 'pvsamv1' module.");
+		ssc_data_free(data);
+		return -1;
+	}
+	if (ssc_module_exec(module, data) == 0)
+	{
+		printf("error during simulation.");
+		ssc_module_free(module);
+		ssc_data_free(data);
+		return -1;
+	}
+	ssc_module_free(module);
+	return 0;
 }
 
 #endif
