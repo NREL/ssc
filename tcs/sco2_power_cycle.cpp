@@ -776,10 +776,6 @@ bool RecompCycle::design()
 		m_errors.SetError(37);
 		return false;
 	}
-	double h_hot_ideal = co2_props.enth;
-	double eff = Q_dot_LT / (m_dot_t * (m_enth_last[8 - cpp_offset] - h_hot_ideal));
-	double C_dot_cold = m_dot_mc*(m_enth_last[3-cpp_offset]-m_enth_last[2-cpp_offset])/(m_temp_last[3-cpp_offset]-m_temp_last[2-cpp_offset]);
-	double C_dot_hot = m_dot_t*(m_enth_last[8-cpp_offset]-m_enth_last[9-cpp_offset])/(m_temp_last[8-cpp_offset]-m_temp_last[9-cpp_offset]);
 
 	HX_design_parameters LT_des_par;
 	LT_des_par.m_N_sub = m_cycle_des_par.m_N_sub_hxrs;
@@ -801,10 +797,6 @@ bool RecompCycle::design()
 		m_errors.SetError(38);
 		return false;
 	}
-	h_hot_ideal = co2_props.enth;
-	eff = Q_dot_HT / (m_dot_t*(m_enth_last[7-cpp_offset] - h_hot_ideal));
-	C_dot_cold = m_dot_t * (m_enth_last[5-cpp_offset] - m_enth_last[4-cpp_offset])/(m_temp_last[5-cpp_offset]-m_temp_last[4-cpp_offset]);
-	C_dot_hot = m_dot_t * (m_enth_last[7-cpp_offset] - m_enth_last[8-cpp_offset])/(m_temp_last[7-cpp_offset]-m_temp_last[8-cpp_offset]);
 
 	HX_design_parameters HT_des_par;
 	HT_des_par.m_N_sub = m_cycle_des_par.m_N_sub_hxrs;
@@ -991,7 +983,7 @@ bool RecompCycle::optimal_design()
 		// Set max objective function
 		opt_des_cycle.set_max_objective(nlopt_callback_opt_des, this);		// Calls wrapper/callback that calls 'design_point_eta', which optimizes design point eta through repeated calls to 'design'
 		double max_f = std::numeric_limits<double>::quiet_NaN();
-		nlopt::result   result_des_cycle = opt_des_cycle.optimize(x, max_f);
+		opt_des_cycle.optimize(x, max_f);
 	
 		// After optimization solves, get back the parameters that result in the maximum efficiency
 		index = 0;
@@ -1267,7 +1259,7 @@ bool RecompCycle::optimal_off_design(const cycle_opt_off_des_inputs & cycle_opt_
 		opt_des_cycle.set_xtol_rel(m_cycle_opt_off_des_in.m_opt_tol);
 		opt_des_cycle.set_max_objective(nlopt_callback_opt_off_des, this);
 		double max_f = std::numeric_limits<double>::quiet_NaN();
-		nlopt::result   result_des_cycle = opt_des_cycle.optimize(x, max_f);
+		opt_des_cycle.optimize(x, max_f);
 
 		index = 0;
 		

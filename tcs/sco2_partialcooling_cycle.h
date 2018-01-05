@@ -308,7 +308,6 @@ public:
 		C_MEQ_LTR_des(C_PartialCooling_Cycle *pc_pc_cycle)
 		{
 			mpc_pc_cycle = pc_pc_cycle;
-			double m_Q_dot_LTR = std::numeric_limits<double>::quiet_NaN();
 		}
 
 		double m_Q_dot_LTR;		//[kWt]
