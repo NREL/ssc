@@ -164,4 +164,31 @@ TEST_F(CMPvsamv1PowerIntegration, NoFinancialModelSkyDiffuseAndIrradModels)
 	}
 }
 	
+/// Test PVSAMv1 with default no-financial model and combinations of module and inverter models
+TEST_F(CMPvsamv1PowerIntegration, NoFinancialModelModuleAndInverterModels)
+{
+	ssc_data_t data = ssc_data_create();
+	std::vector<double> annual_energy_expected = { 2518, 2548, 2476, 2518, 8714, 8694, 8661, 8714, 54, 57, 60, 54, 5405, 5400, 5347, 5404, 1767, 1807, 1736, 1767};
+	size_t count = 0;
 
+	// Module models: Simple Efficiency, CEC Performance Database, CEC User Entered, Sandia, IEC61853
+	for (int module_model = 0; module_model < 5; module_model++)
+	{
+		// Inverter models: CEC, Datasheet, Partload Curve, Coefficient Generator
+		for (int inverter_model = 0; inverter_model < 4; inverter_model++)
+		{
+			int pvsam_errors = pvsam_test_module_and_inverter_model(data, module_model, inverter_model);
+			EXPECT_FALSE(pvsam_errors);
+
+			if (!pvsam_errors)
+			{
+				ssc_number_t annual_energy;
+				ssc_data_get_number(data, "annual_energy", &annual_energy);
+				EXPECT_NEAR(annual_energy, annual_energy_expected[count], m_error_tolerance_hi) << "Annual energy.";
+			}
+			count++;
+		}
+
+
+	}
+}

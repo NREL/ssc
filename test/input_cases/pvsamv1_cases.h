@@ -61,5 +61,16 @@ int pvsam_test_albedo_and_radiation(ssc_data_t &data, int sky_diffuse_model, int
 	return run_module(data, "pvsamv1");
 }
 
+/**
+*   Data for high-level integration test that verifies module and inverter model behavior
+*   for a default case
+*/
+int pvsam_test_module_and_inverter_model(ssc_data_t &data, int module_model, int inverter_model)
+{
+	pvsamv_nofinancial_default(data);
 
+	ssc_data_set_number(data, "module_model", static_cast<ssc_number_t>(module_model));
+	ssc_data_set_number(data, "inverter_model", static_cast<ssc_number_t>(inverter_model));
+	return run_module(data, "pvsamv1");
+}
 #endif
