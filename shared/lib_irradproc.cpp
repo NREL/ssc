@@ -668,12 +668,7 @@ void poaDecomp( double , double angle[], double sun[], double alb, poaDecompReq 
 				diffc[2] = horizon brightening
 */
 	double r90(M_PI/2), r80( 80.0/180*M_PI ), r65(65.0/180*M_PI);
-	/*
-	if ( (angle[0] != pA->inc[pA->i]) || (wfPOA != pA->POA[ pA->i ])) {
-		std::cout << "Error wih POA decomp" << std::endl;
-		exit(1);
-	}
-	*/
+
 	if ( angle[0] < r90 ){  // Check if incident angle if greater than 90 degrees
 		
 		double gti[] = {pA->POA[ pA->i-1 ], pA->POA[ pA->i ], pA->POA[ pA->i+1 ]};
