@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include "sscapi.h"
 #include <string>
+#include <type_traits>
 
 static ssc_bool_t my_handler(ssc_module_t p_mod, ssc_handler_t p_handler, int action,
 	float f0, float f1, const char *s0, const char *s1, void *user_data)
@@ -115,5 +116,30 @@ static int run_module(ssc_data_t & data, std::string module_name)
 	ssc_module_free(module);
 	return 0;
 }
+
+/**
+*   Data for high-level integration test that modifies data with a set of key value pairs
+*/
+static int modify_ssc_data_and_run_module(ssc_data_t &data, std::string module_name, std::map<std::string, double> pairs)
+{
+	for (std::map<std::string, double>::iterator it = pairs.begin(); it != pairs.end(); it++)
+	{
+		std::string name = std::string(it->first);
+		ssc_data_set_number(data, const_cast<char *>(name.c_str()), static_cast<ssc_number_t>(it->second));
+	}
+	return run_module(data, module_name);
+}
+
+static int modify_ssc_data_and_run_module(ssc_data_t &data, std::string module_name, std::map<std::string, std::string> pairs)
+{
+	for (std::map<std::string, std::string>::iterator it = pairs.begin(); it != pairs.end(); it++)
+	{
+		std::string name = std::string(it->first);
+		std::string value = it->second;
+		ssc_data_set_string(data, const_cast<char *>(name.c_str()), const_cast<char *>(value.c_str()));
+	}
+	return run_module(data, module_name);
+}
+
 
 #endif

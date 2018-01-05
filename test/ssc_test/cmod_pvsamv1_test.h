@@ -17,11 +17,18 @@ class CMPvsamv1PowerIntegration : public ::testing::Test{
 
 public:
 
+	ssc_data_t data;
 	double m_error_tolerance_hi = 1.0;
 	double m_error_tolerance_lo = 0.1;
 
-	void SetUp(){}
-	void TearDown() {}
+	void SetUp()
+	{
+		data = ssc_data_create();
+		pvsamv_nofinancial_default(data);
+	}
+	void TearDown() {
+		ssc_data_clear(data);
+	}
 };
 
 #endif // !_CMOD_PVSAMV1_TEST_H_
