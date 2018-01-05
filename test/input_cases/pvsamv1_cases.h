@@ -1,6 +1,7 @@
 #ifndef _PVSAMV1_DATA_H_
 #define _PVSAMV1_DATA_H_
 
+#include <map>
 #include "code_generator_utilities.h"
 #include "pvsamv1_common_data.h"
 
@@ -71,6 +72,22 @@ int pvsam_test_module_and_inverter_model(ssc_data_t &data, int module_model, int
 
 	ssc_data_set_number(data, "module_model", static_cast<ssc_number_t>(module_model));
 	ssc_data_set_number(data, "inverter_model", static_cast<ssc_number_t>(inverter_model));
+	return run_module(data, "pvsamv1");
+}
+
+/**
+*   Data for high-level integration test that modifies one parameter of pvsamv1 default case
+*/
+int pvsam_no_financial_default_with_mods(ssc_data_t &data, std::map<std::string, double> pairs)
+{
+	pvsamv_nofinancial_default(data);
+	for (std::map<std::string, double>::iterator it = pairs.begin(); it != pairs.end(); it++)
+	{
+		std::string name = std::string(it->first);
+		ssc_number_t value = static_cast<ssc_number_t>(it->second);
+		//std::cout << name << " : " << value << std::endl;
+		ssc_data_set_number(data, const_cast<char *>(name.c_str()), value);
+	}
 	return run_module(data, "pvsamv1");
 }
 #endif
