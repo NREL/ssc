@@ -12,12 +12,17 @@ char solar_resource_path_15_min[100];
 char load_profile_path[100];
 char target_power_path[100];
 char sell_rate_path[100];
+char subarray1_shading[100];
+char subarray2_shading[100];
 
 int n1 = sprintf(solar_resource_path, "%s/test/input_cases/pvsamv1_data/USA AZ Phoenix (TMY2).csv", SSCDIR);
 int n2 = sprintf(load_profile_path, "%s/test/input_cases/pvsamv1_data/pvsamv1_residential_load.csv", SSCDIR);
 int n3 = sprintf(target_power_path, "%s/test/input_cases/pvsamv1_data/pvsamv1_batt_target_power.csv", SSCDIR);
 int n4 = sprintf(sell_rate_path, "%s/test/input_cases/pvsamv1_data/pvsamv1_ur_ts_sell_rate.csv", SSCDIR);
 int n5 = sprintf(solar_resource_path_15_min, "%s/test/input_cases/pvsamv1_data/LosAngeles_WeatherFile_15min.csv", SSCDIR);
+int n6 = sprintf(subarray1_shading, "%s/test/input_cases/pvsamv1_data/subarray1_shading_timestep.csv", SSCDIR);
+int n7 = sprintf(subarray2_shading, "%s/test/input_cases/pvsamv1_data/subarray2_shading_timestep.csv", SSCDIR);
+
 
 /**
 *  Default data for no-financial pvsamv1 run that can be further modified

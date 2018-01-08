@@ -161,8 +161,6 @@ TEST_F(CMPvsamv1PowerIntegration, NoFinancialModelSkyDiffuseAndIrradModels)
 /// Test PVSAMv1 with default no-financial model and combinations of module and inverter models
 TEST_F(CMPvsamv1PowerIntegration, NoFinancialModelModuleAndInverterModels)
 {
-
-
 	std::vector<double> annual_energy_expected = { 2518, 2548, 2476, 2518, 8714, 8694, 8661, 8714, 54, 57, 60, 54, 5405, 5400, 5347, 5404, 1767, 1807, 1736, 1767};
 	std::map<std::string, double> pairs;
 	size_t count = 0;
@@ -232,18 +230,11 @@ TEST_F(CMPvsamv1PowerIntegration, NoFinancialModelSystemDesign)
 	}
 
 	// Test multiple sub-arrays with different tracking, tilt, azimuth, gcr, tracker rotation limit
-	pairs["subarray1_nmody"] = 2;
-	pairs["subarray1_nmodx"] = 7;
+	
 	pairs["subarray2_enable"] = 1;
 	pairs["subarray2_nstrings"] = 15;
-	pairs["subarray2_nmody"] = 2;
-	pairs["subarray2_nmodx"] = 9;
-	pairs["subarray3_nmody"] = 2;
-	pairs["subarray3_nmodx"] = 9;
 	pairs["subarray3_enable"] = 1;
 	pairs["subarray3_nstrings"] = 10;
-	pairs["subarray4_nmody"] = 2;
-	pairs["subarray4_nmodx"] = 9;
 	pairs["subarray4_enable"] = 1;
 	pairs["subarray4_nstrings"] = 10;
 
@@ -303,5 +294,66 @@ TEST_F(CMPvsamv1PowerIntegration, NoFinancialModelSystemDesign)
 			ssc_data_get_number(data, "annual_energy", &annual_energy);
 			EXPECT_NEAR(annual_energy, annual_energy_expected[i], m_error_tolerance_hi) << "Index: " << i;
 		}
+	}
+}
+
+/// Test PVSAMv1 with default no-financial model and different shading options
+TEST_F(CMPvsamv1PowerIntegration, NoFinancialModelShading)
+{
+	// 0: No Shading 1: 3D Shading 2: 3D shading with self shading (non-linear)
+	std::vector<double> annual_energy_expected = { 12911, 10607, 10579};
+	std::map<std::string, double> pairs;
+
+	// 2 subarrays, one pointing east, one west
+	pairs["modules_per_string"] = 6;
+	pairs["strings_in_parallel"] = 4;
+	pairs["inverter_count"] = 2;
+	pairs["subarray1_azimuth"] = 90;
+	pairs["subarray2_enable"] = 1;
+	pairs["subarray2_nstrings"] = 2;
+	pairs["subarray2_azimuth"] = 270;
+
+	// 0. No Shading
+	int pvsam_errors = modify_ssc_data_and_run_module(data, "pvsamv1", pairs);
+	EXPECT_FALSE(pvsam_errors);
+	if (!pvsam_errors)
+	{
+		ssc_number_t annual_energy;
+		ssc_data_get_number(data, "annual_energy", &annual_energy);
+		EXPECT_NEAR(annual_energy, annual_energy_expected[0], m_error_tolerance_hi);
+	}
+
+	// 1. Add 3D Shading
+	set_matrix(data, "subarray1_shading:timestep", subarray1_shading, 8760, 2);
+	set_matrix(data, "subarray2_shading:timestep", subarray2_shading, 8760, 2);
+	pairs["subarray1_shading:diff"] =  10.010875701904297;
+	pairs["subarray2_shading:diff"] = 10.278481483459473;
+
+	pvsam_errors = modify_ssc_data_and_run_module(data, "pvsamv1", pairs);
+	EXPECT_FALSE(pvsam_errors);
+	if (!pvsam_errors)
+	{
+		ssc_number_t annual_energy;
+		ssc_data_get_number(data, "annual_energy", &annual_energy);
+		EXPECT_NEAR(annual_energy, annual_energy_expected[1], m_error_tolerance_hi);
+	}
+	
+	// 2. Add Self Shading to 3D shading
+	pairs["subarray1_shade_mode"] = 1;
+	pairs["subarray1_mod_orient"] = 1;
+	pairs["subarray1_nmody"] = 1;
+	pairs["subarray1_nmodx"] = 6;
+	pairs["subarray2_shade_mode"] = 1;
+	pairs["subarray2_mod_orient"] = 1;
+	pairs["subarray2_nmody"] = 1;
+	pairs["subarray2_nmodx"] = 6;
+
+	pvsam_errors = modify_ssc_data_and_run_module(data, "pvsamv1", pairs);
+	EXPECT_FALSE(pvsam_errors);
+	if (!pvsam_errors)
+	{
+		ssc_number_t annual_energy;
+		ssc_data_get_number(data, "annual_energy", &annual_energy);
+		EXPECT_NEAR(annual_energy, annual_energy_expected[2], m_error_tolerance_hi);
 	}
 }
