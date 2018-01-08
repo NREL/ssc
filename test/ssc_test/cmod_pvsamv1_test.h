@@ -18,6 +18,7 @@ class CMPvsamv1PowerIntegration : public ::testing::Test{
 public:
 
 	ssc_data_t data;
+	ssc_number_t calculated_value;
 	double m_error_tolerance_hi = 1.0;
 	double m_error_tolerance_lo = 0.1;
 
@@ -28,6 +29,10 @@ public:
 	}
 	void TearDown() {
 		ssc_data_clear(data);
+	}
+	void GetDouble(std::string name)
+	{
+		ssc_data_get_number(data, const_cast<char *>(name.c_str()), &calculated_value);
 	}
 };
 

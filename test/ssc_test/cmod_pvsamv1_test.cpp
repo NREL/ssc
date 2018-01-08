@@ -300,8 +300,8 @@ TEST_F(CMPvsamv1PowerIntegration, NoFinancialModelSystemDesign)
 /// Test PVSAMv1 with default no-financial model and different shading options
 TEST_F(CMPvsamv1PowerIntegration, NoFinancialModelShading)
 {
-	// 0: No Shading 1: 3D Shading 2: 3D shading with self shading (non-linear)
-	std::vector<double> annual_energy_expected = { 12911, 10607, 10579};
+	// 0: No Shading, 1: 3D Shading, 2: 3D shading with self shading (non-linear), 3: Snow
+	std::vector<double> annual_energy_expected = { 12911, 10607, 10579, 10377};
 	std::map<std::string, double> pairs;
 
 	// 2 subarrays, one pointing east, one west
@@ -316,11 +316,9 @@ TEST_F(CMPvsamv1PowerIntegration, NoFinancialModelShading)
 	// 0. No Shading
 	int pvsam_errors = modify_ssc_data_and_run_module(data, "pvsamv1", pairs);
 	EXPECT_FALSE(pvsam_errors);
-	if (!pvsam_errors)
-	{
-		ssc_number_t annual_energy;
-		ssc_data_get_number(data, "annual_energy", &annual_energy);
-		EXPECT_NEAR(annual_energy, annual_energy_expected[0], m_error_tolerance_hi);
+	if (!pvsam_errors) {
+		GetDouble("annual_energy");
+		EXPECT_NEAR(calculated_value, annual_energy_expected[0], m_error_tolerance_hi);
 	}
 
 	// 1. Add 3D Shading
@@ -331,11 +329,9 @@ TEST_F(CMPvsamv1PowerIntegration, NoFinancialModelShading)
 
 	pvsam_errors = modify_ssc_data_and_run_module(data, "pvsamv1", pairs);
 	EXPECT_FALSE(pvsam_errors);
-	if (!pvsam_errors)
-	{
-		ssc_number_t annual_energy;
-		ssc_data_get_number(data, "annual_energy", &annual_energy);
-		EXPECT_NEAR(annual_energy, annual_energy_expected[1], m_error_tolerance_hi);
+	if (!pvsam_errors) {
+		GetDouble("annual_energy");
+		EXPECT_NEAR(calculated_value, annual_energy_expected[1], m_error_tolerance_hi);
 	}
 	
 	// 2. Add Self Shading to 3D shading
@@ -350,10 +346,18 @@ TEST_F(CMPvsamv1PowerIntegration, NoFinancialModelShading)
 
 	pvsam_errors = modify_ssc_data_and_run_module(data, "pvsamv1", pairs);
 	EXPECT_FALSE(pvsam_errors);
-	if (!pvsam_errors)
-	{
-		ssc_number_t annual_energy;
-		ssc_data_get_number(data, "annual_energy", &annual_energy);
-		EXPECT_NEAR(annual_energy, annual_energy_expected[2], m_error_tolerance_hi);
+	if (!pvsam_errors) {
+		GetDouble("annual_energy");
+		EXPECT_NEAR(calculated_value, annual_energy_expected[2], m_error_tolerance_hi);
 	}
+
+	// 3. Add Snow losses to all shading
+	pairs["en_snow_model"] = 1;
+	pvsam_errors = modify_ssc_data_and_run_module(data, "pvsamv1", pairs);
+	EXPECT_FALSE(pvsam_errors);
+	if (!pvsam_errors) {
+		GetDouble("annual_energy");
+		EXPECT_NEAR(calculated_value, annual_energy_expected[3], m_error_tolerance_hi);
+	}
+
 }
