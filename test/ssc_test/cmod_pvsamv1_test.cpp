@@ -317,7 +317,7 @@ TEST_F(CMPvsamv1PowerIntegration, NoFinancialModelShading)
 	int pvsam_errors = modify_ssc_data_and_run_module(data, "pvsamv1", pairs);
 	EXPECT_FALSE(pvsam_errors);
 	if (!pvsam_errors) {
-		GetDouble("annual_energy");
+		SetCalculated("annual_energy");
 		EXPECT_NEAR(calculated_value, annual_energy_expected[0], m_error_tolerance_hi);
 	}
 
@@ -330,7 +330,7 @@ TEST_F(CMPvsamv1PowerIntegration, NoFinancialModelShading)
 	pvsam_errors = modify_ssc_data_and_run_module(data, "pvsamv1", pairs);
 	EXPECT_FALSE(pvsam_errors);
 	if (!pvsam_errors) {
-		GetDouble("annual_energy");
+		SetCalculated("annual_energy");
 		EXPECT_NEAR(calculated_value, annual_energy_expected[1], m_error_tolerance_hi);
 	}
 	
@@ -347,7 +347,7 @@ TEST_F(CMPvsamv1PowerIntegration, NoFinancialModelShading)
 	pvsam_errors = modify_ssc_data_and_run_module(data, "pvsamv1", pairs);
 	EXPECT_FALSE(pvsam_errors);
 	if (!pvsam_errors) {
-		GetDouble("annual_energy");
+		SetCalculated("annual_energy");
 		EXPECT_NEAR(calculated_value, annual_energy_expected[2], m_error_tolerance_hi);
 	}
 
@@ -356,8 +356,58 @@ TEST_F(CMPvsamv1PowerIntegration, NoFinancialModelShading)
 	pvsam_errors = modify_ssc_data_and_run_module(data, "pvsamv1", pairs);
 	EXPECT_FALSE(pvsam_errors);
 	if (!pvsam_errors) {
-		GetDouble("annual_energy");
+		SetCalculated("annual_energy");
 		EXPECT_NEAR(calculated_value, annual_energy_expected[3], m_error_tolerance_hi);
 	}
 
+}
+
+/// Test PVSAMv1 with default no-financial model and different loss options
+TEST_F(CMPvsamv1PowerIntegration, NoFinancialModelLosses)
+{
+	// 0: Default Losses, 1: Modify Point Losses, 2: Modify Availability
+	std::vector<double> annual_energy_expected = { 8714, 7874, 7607 };
+	std::map<std::string, double> pairs;
+
+	// 0: Default losses
+	int pvsam_errors = modify_ssc_data_and_run_module(data, "pvsamv1", pairs);
+	EXPECT_FALSE(pvsam_errors);
+	if (!pvsam_errors) {
+		SetCalculated("annual_energy");
+		EXPECT_NEAR(calculated_value, annual_energy_expected[0], m_error_tolerance_hi);
+	}
+
+	// 1: Modify Point Losses
+	ssc_number_t p_subarray1_soiling[12] = { 5, 5, 5, 5, 6, 6, 6, 6, 5, 5, 5, 5 };
+	ssc_data_set_array(data, "subarray1_soiling", p_subarray1_soiling, 12);
+
+	pairs["subarray1_mismatch_loss"] = 3;
+	pairs["subarray1_diodeconn_loss"] = 0.6;
+	pairs["subarray1_dcwiring_loss"] = 2;
+	pairs["subarray1_tracking_loss"] = 1;
+	pairs["subarray1_nameplate_loss"] = 1;
+	pairs["dcoptimizer_loss"] = 1;
+	pairs["acwiring_loss"] = 2;
+	pairs["transformer_no_load_loss"] = 1;
+	pairs["transformer_load_loss"] = 1;
+
+	pvsam_errors = modify_ssc_data_and_run_module(data, "pvsamv1", pairs);
+	EXPECT_FALSE(pvsam_errors);
+	if (!pvsam_errors) {
+		SetCalculated("annual_energy");
+		EXPECT_NEAR(calculated_value, annual_energy_expected[1], m_error_tolerance_hi);
+	}
+
+	// 2. Modify availability losses
+	ssc_number_t p_adjust[3] = { 5268, 5436, 50 };
+	ssc_data_set_matrix(data, "adjust:periods", p_adjust, 1, 3);
+	ssc_number_t p_dc_adjust[3] = { 5088, 5256, 100 };
+	ssc_data_set_matrix(data, "dc_adjust:periods", p_dc_adjust, 1, 3);
+
+	pvsam_errors = modify_ssc_data_and_run_module(data, "pvsamv1", pairs);
+	EXPECT_FALSE(pvsam_errors);
+	if (!pvsam_errors) {
+		SetCalculated("annual_energy");
+		EXPECT_NEAR(calculated_value, annual_energy_expected[2], m_error_tolerance_hi);
+	}
 }

@@ -30,7 +30,7 @@ public:
 	void TearDown() {
 		ssc_data_clear(data);
 	}
-	void GetDouble(std::string name)
+	void SetCalculated(std::string name)
 	{
 		ssc_data_get_number(data, const_cast<char *>(name.c_str()), &calculated_value);
 	}
