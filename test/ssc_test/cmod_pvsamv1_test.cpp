@@ -133,7 +133,7 @@ TEST_F(CMPvsamv1PowerIntegration, NoFinancialModelCustomWeatherFile) {
 /// Test PVSAMv1 with default no-financial model and combinations of Sky Diffuse Model and Weather File Irradiance
 TEST_F(CMPvsamv1PowerIntegration, NoFinancialModelSkyDiffuseAndIrradModels) 
 {
-	std::vector<double> annual_energy_expected = { 8513, 8522, 8525, 8635, 8645, 8647, 8714, 8723, 8726 };
+	std::vector<double> annual_energy_expected = { 8513, 8522, 8525, 8635, 8645, 8647, 8714, 8723, 8726, 7623, 7377};
 	std::map<std::string, double> pairs;
 	size_t count = 0;
 
@@ -155,6 +155,26 @@ TEST_F(CMPvsamv1PowerIntegration, NoFinancialModelSkyDiffuseAndIrradModels)
 			}
 			count++;
 		}
+	}
+
+	// Perez with POA reference cell
+	pairs["sky_model"] = 2;
+	pairs["irrad_mode"] = 3;
+	int pvsam_errors = modify_ssc_data_and_run_module(data, "pvsamv1", pairs);
+	EXPECT_FALSE(pvsam_errors);
+	if (!pvsam_errors) {
+		SetCalculated("annual_energy");
+		EXPECT_NEAR(calculated_value, annual_energy_expected[count], m_error_tolerance_hi);
+		count++;
+	}
+
+	// Perez with POA pyranometer
+	pairs["irrad_mode"] = 4;
+	pvsam_errors = modify_ssc_data_and_run_module(data, "pvsamv1", pairs);
+	EXPECT_FALSE(pvsam_errors);
+	if (!pvsam_errors) {
+		SetCalculated("annual_energy");
+		EXPECT_NEAR(calculated_value, annual_energy_expected[count], m_error_tolerance_hi);
 	}
 }
 	
