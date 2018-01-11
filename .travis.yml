@@ -59,4 +59,4 @@ branches:
   only:
   - master
   - develop
-  - Host_Developer
+  - weather_forecast

@@ -17,11 +17,23 @@ class CMPvsamv1PowerIntegration : public ::testing::Test{
 
 public:
 
+	ssc_data_t data;
+	ssc_number_t calculated_value;
 	double m_error_tolerance_hi = 1.0;
 	double m_error_tolerance_lo = 0.1;
 
-	void SetUp(){}
-	void TearDown() {}
+	void SetUp()
+	{
+		data = ssc_data_create();
+		pvsamv_nofinancial_default(data);
+	}
+	void TearDown() {
+		ssc_data_clear(data);
+	}
+	void SetCalculated(std::string name)
+	{
+		ssc_data_get_number(data, const_cast<char *>(name.c_str()), &calculated_value);
+	}
 };
 
 #endif // !_CMOD_PVSAMV1_TEST_H_
