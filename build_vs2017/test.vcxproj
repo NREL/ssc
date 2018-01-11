@@ -30,6 +30,7 @@
     <ClCompile Include="..\test\ssc_test\cmod_pvsamv1_test.cpp" />
     <ClCompile Include="..\test\shared_test\lib_windwakemodel_test.cpp" />
     <ClCompile Include="..\test\shared_test\lib_windwatts_test.cpp" />
+    <ClCompile Include="..\test\ssc_test\cmod_pvwattsv5_test.cpp" />
     <ClCompile Include="..\test\ssc_test\cmod_windpower_test.cpp" />
     <ClCompile Include="..\test\tcs_test\csp_solver_core_test.cpp" />
   </ItemGroup>

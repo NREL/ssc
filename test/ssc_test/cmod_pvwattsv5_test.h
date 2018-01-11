@@ -13,12 +13,18 @@
 * which can be modified within each individual test before running compute() and tests.
 */
 class CMPvwattsV5Integration : public ::testing::Test {
-protected:
+protected: //doesn't really matter if this is protected or public, but you need to declare one or the other or it will default to private which doesn't work
 	ssc_data_t data;
 
+	double error_tolerance = 1.0;
+
 	bool compute();
-	void SetUp() {} //what goes in here????
-	void TearDown(){} //why would these be public or protected???? one way in wind, other for pvsam
+	void SetUp() { //if you always want to set up with the same default case, this can go in the class. otherwise it probably makes sense in the test itself.
+		data = ssc_data_create();
+		int errors = pvwattsv5_nofinancial_testfile(data);
+		EXPECT_FALSE(errors); //make sure that the test ran ok
+	}
+	void TearDown(){} 
 };
 
 //this function will be available to run the pvwattsV5 compute module from within tests

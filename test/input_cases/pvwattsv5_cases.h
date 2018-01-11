@@ -24,12 +24,12 @@ int pvwattsv5_nofinancial_testfile(ssc_data_t &data)
 		return -1;
 	}
 
-	//set the solar resource file name, using the weather file in the input_docs folder
+	//set the solar resource file name, using the weather file in the input folder
 	//ifdef is so that it can run on multiple operating systems
 #ifdef _MSC_VER	
-	std::string file = "../../../test/input_docs/weather.csv";
+	std::string file = "../../../test/input_cases/pvsamv1_data/USA AZ Phoenix (TMY2).csv";
 #else	
-	std::string file = "../test/input_docs/weather.csv";
+	std::string file = "../test/input_cases/pvsamv1_data/USA AZ Phoenix (TMY2).csv";
 #endif	
 
 	//set the variables for the PVWatts default case
