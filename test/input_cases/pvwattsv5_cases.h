@@ -36,13 +36,13 @@ int pvwattsv5_nofinancial_testfile(ssc_data_t &data)
 	ssc_data_set_string(data, "solar_resource_file", file.c_str()); //file set above
 	ssc_data_set_number(data, "system_capacity", 4);
 	ssc_data_set_number(data, "module_type", 0);
-	ssc_data_set_number(data, "dc_ac_ratio", 1.2);
+	ssc_data_set_number(data, "dc_ac_ratio", 1.2000000476837158);
 	ssc_data_set_number(data, "inv_eff", 96);
-	ssc_data_set_number(data, "losses", 14);
+	ssc_data_set_number(data, "losses", 14.075660705566406);
 	ssc_data_set_number(data, "array_type", 0);
 	ssc_data_set_number(data, "tilt", 20);
 	ssc_data_set_number(data, "azimuth", 180);
-	ssc_data_set_number(data, "gcr", 0.4);
+	ssc_data_set_number(data, "gcr", 0.40000000596046448);
 	ssc_data_set_number(data, "adjust:constant", 0);
 
 	return 0;
