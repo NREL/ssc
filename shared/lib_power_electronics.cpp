@@ -79,14 +79,14 @@ charge_controller::charge_controller(dispatch_t * dispatch, battery_metrics_t * 
 {	
 	_dispatch = dispatch;
 
-	if (dispatch_manual_front_of_meter_t * dispatch_man_fom = dynamic_cast<dispatch_manual_front_of_meter_t*>(_dispatch))
-			_dispatch_initial = new dispatch_manual_front_of_meter_t(*dispatch_man_fom);
-	else if (dispatch_manual_t * dispatch_man = dynamic_cast<dispatch_manual_t*>(_dispatch))
-		_dispatch_initial = new dispatch_manual_t(*dispatch_man);
-	else if (dispatch_automatic_behind_the_meter_t * dispatch_auto_btm = dynamic_cast<dispatch_automatic_behind_the_meter_t*>(_dispatch))
-		_dispatch_initial = new dispatch_automatic_behind_the_meter_t(*dispatch_auto_btm);
-	else if (dispatch_automatic_front_of_meter_t * dispatch_auto_fom = dynamic_cast<dispatch_automatic_front_of_meter_t*>(_dispatch))
-		_dispatch_initial = new dispatch_automatic_front_of_meter_t(*dispatch_auto_fom);
+	if (dynamic_cast<dispatch_manual_front_of_meter_t*>(_dispatch))
+			_dispatch_initial = new dispatch_manual_front_of_meter_t(*_dispatch);
+	else if (dynamic_cast<dispatch_manual_t*>(_dispatch))
+		_dispatch_initial = new dispatch_manual_t(*_dispatch);
+	else if (dynamic_cast<dispatch_automatic_behind_the_meter_t*>(_dispatch))
+		_dispatch_initial = new dispatch_automatic_behind_the_meter_t(*_dispatch);
+	else if (dynamic_cast<dispatch_automatic_front_of_meter_t*>(_dispatch))
+		_dispatch_initial = new dispatch_automatic_front_of_meter_t(*_dispatch);
 	
 	_battery_metrics = battery_metrics;
 	_iterate = false;

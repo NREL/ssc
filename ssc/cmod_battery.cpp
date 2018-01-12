@@ -841,6 +841,16 @@ battstor::battstor(compute_module &cm, bool setup_model, size_t nrec, double dt_
 			batt_vars->batt_look_ahead_hours, batt_vars->batt_dispatch_update_frequency_hours,
 			batt_vars->batt_dispatch_auto_can_charge, batt_vars->batt_dispatch_auto_can_clipcharge, batt_vars->batt_dispatch_auto_can_gridcharge
 			);
+		if (batt_vars->batt_dispatch == dispatch_t::CUSTOM_DISPATCH)
+		{
+			if (dispatch_automatic_behind_the_meter_t * dispatch_btm = dynamic_cast<dispatch_automatic_behind_the_meter_t*>(dispatch_model))
+			{
+				if (batt_vars->batt_custom_dispatch.size() != 8760 * step_per_hour) {
+					throw compute_module::exec_error("battery", "invalid custom dispatch, must be 8760 * steps_per_hour");
+				}
+				dispatch_btm->set_custom_dispatch(batt_vars->batt_custom_dispatch);
+			}
+		}
 	}
 
 	ac_dc = batt_vars->batt_ac_dc_efficiency;
@@ -1012,18 +1022,6 @@ void battstor::initialize_automated_dispatch(std::vector<ssc_number_t> pv, std::
 				automatic_dispatch_fom->update_cliploss_data(cliploss_prediction);
 			}
 		}
-		else
-		{
-			if (dispatch_automatic_t * automatic_dispatch = dynamic_cast<dispatch_automatic_t*>(dispatch_model))
-			{
-				if (batt_vars->batt_custom_dispatch.size() != 8760 * step_per_hour) {
-					throw compute_module::exec_error("battery", "invalid custom dispatch, must be 8760 * steps_per_hour");
-				}
-				automatic_dispatch->set_custom_dispatch(batt_vars->batt_custom_dispatch);
-			}
-
-		}
-			
 	}
 	
 }

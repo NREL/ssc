@@ -1117,12 +1117,14 @@ dispatch_automatic_behind_the_meter_t::dispatch_automatic_behind_the_meter_t(
 
 void dispatch_automatic_behind_the_meter_t::init_with_pointer(const dispatch_automatic_behind_the_meter_t* tmp)
 {
-	_P_load_dc = tmp->_P_load_dc;
 	_P_target_input = tmp->_P_target_input;
-	_P_target_use = tmp->_P_target_use;
 	_P_target_month = tmp->_P_target_month;
 	_P_target_current = tmp->_P_target_current;
 	grid = tmp->grid;
+
+	// time series data which could be slow to copy. Since this doesn't change, should probably make const and have copy point to common memory
+	_P_load_dc = tmp->_P_load_dc;
+	_P_target_use = tmp->_P_target_use;
 	sorted_grid = tmp->sorted_grid;
 }
 
