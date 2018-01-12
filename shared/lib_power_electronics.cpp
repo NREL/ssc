@@ -319,13 +319,18 @@ void dc_connected_battery_controller::compute_to_batt_load_grid(double P_battery
 				P_pv_to_grid_ac = (P_pv_dc - P_pv_to_batt_dc) * inverter_efficiency - P_pv_to_load_ac;
 			}
 		}
-		// pv priority to meeting load
+		// pv priority to meeting load, 
 		else
 		{
 			P_pv_to_load_dc = P_load_dc;
 
 			if (P_pv_to_load_dc > P_pv_dc)
 				P_pv_to_load_dc = P_pv_dc;
+
+			// with exception that shouldn't simultaneously meet load with PV and charge battery from grid. Right?
+			P_pv_to_load_dc += P_battery_dc;
+			if (P_pv_to_load_dc < 0)
+				P_pv_to_load_dc = 0;
 
 			P_pv_to_batt_dc = P_pv_dc - P_pv_to_load_dc;
 
