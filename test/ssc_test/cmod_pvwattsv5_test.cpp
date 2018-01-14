@@ -31,8 +31,6 @@ TEST_F(CMPvwattsV5Integration, DefaultNoFinancialModel){
 	EXPECT_NEAR((double)monthly_energy[8], 594.505, error_tolerance/100) << "Monthly energy of September";
 	EXPECT_NEAR((double)monthly_energy[9], 568.489, error_tolerance/100) << "Monthly energy of October";
 	EXPECT_NEAR((double)monthly_energy[10], 453.529, error_tolerance/100) << "Monthly energy of November";
-
-//	monthly_energy = ssc_data_get_array(data, "monthly_energy", nullptr)[11];
 	EXPECT_NEAR((double)monthly_energy[11], 413.149, error_tolerance/100) << "Month energy of December";
 
 	ssc_number_t capacity_factor;
