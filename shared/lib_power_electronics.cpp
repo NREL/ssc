@@ -327,7 +327,7 @@ void dc_connected_battery_controller::compute_to_batt_load_grid(double P_battery
 			if (P_pv_to_load_dc > P_pv_dc)
 				P_pv_to_load_dc = P_pv_dc;
 
-			// with exception that shouldn't simultaneously meet load with PV and charge battery from grid. Right?
+			// with exception that shouldn't simultaneously meet load with PV and charge battery from grid.
 			P_pv_to_load_dc += P_battery_dc;
 			if (P_pv_to_load_dc < 0)
 				P_pv_to_load_dc = 0;
