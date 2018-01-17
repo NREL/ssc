@@ -145,18 +145,19 @@ static double conv_deg_min_sec(double degrees,
 	return dd;
 }
 
-static int cmp_ext(const char *file, const char *ext)
+static int cmp_ext(const std::string &file, const std::string &ext)
 {
 	size_t len_ext, len_file;
 	const char *extp;
 
-	if (!file || !ext) return 0;
-	len_ext = strlen(ext);
-	len_file = strlen(file);
-	extp = file + len_file - len_ext;
+	len_ext = ext.length();
+	len_file = file.length();
+	extp = file.c_str() + len_file - len_ext;
 
-	if (extp < file) return 0;
-	return CASENCMP(extp, ext, len_ext) == 0 ? 1 : 0;
+	if (extp < file.c_str())
+	  return 0;
+	else
+	  return CASENCMP(extp, ext.c_str(), len_ext) == 0;
 }
 
 
@@ -492,15 +493,15 @@ bool weatherfile::open(const std::string &file, bool header_only)
 		return false;
 	}
 
-	if (cmp_ext(file.c_str(), "tm2") || cmp_ext(file.c_str(), "tmy2"))
+	if (cmp_ext(file, "tm2") || cmp_ext(file, "tmy2"))
 		m_type = TMY2;
-	else if (cmp_ext(file.c_str(), "tm3") || cmp_ext(file.c_str(), "tmy3"))
+	else if (cmp_ext(file, "tm3") || cmp_ext(file, "tmy3"))
 		m_type = TMY3;
-	else if (cmp_ext(file.c_str(), "csv"))
+	else if (cmp_ext(file, "csv"))
 		m_type = WFCSV;
-	else if (cmp_ext(file.c_str(), "epw"))
+	else if (cmp_ext(file, "epw"))
 		m_type = EPW;
-	else if (cmp_ext(file.c_str(), "smw"))
+	else if (cmp_ext(file, "smw"))
 		m_type = SMW;
 	else
 	{
