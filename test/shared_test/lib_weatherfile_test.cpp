@@ -28,14 +28,9 @@ class CSVCase_WeatherfileTest : public weatherfileTest{
 protected:
 	void SetUp(){
 		e = 0.001;
-		std::string ssc_dir(std::getenv("SSCDIR"));
-		ssc_dir += util::path_separator();
-		ssc_dir.append("test");
-		ssc_dir += util::path_separator();
-		ssc_dir.append("input_docs");
-		ssc_dir += util::path_separator();
-		ssc_dir.append("weather-noRHum.csv");
-		file = ssc_dir;
+		char filepath[150];
+		int n1 = sprintf(filepath, "%s/test/input_docs/weather-noRHum.csv", std::getenv("SSCDIR"));
+		file = std::string(filepath);
 		ASSERT_TRUE(wf.open(file));
 	}
 };

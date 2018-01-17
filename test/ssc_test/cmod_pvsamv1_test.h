@@ -28,7 +28,9 @@ public:
 		pvsamv_nofinancial_default(data);
 	}
 	void TearDown() {
-		ssc_data_clear(data);
+		if (data) {
+			ssc_data_clear(data);
+		}
 	}
 	void SetCalculated(std::string name)
 	{
