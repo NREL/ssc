@@ -1,13 +1,12 @@
 #include <string>
 #include <vector>
 #include <cmath>
+#include <Windows.h>
  
 #include <gtest/gtest.h>
 #include "lib_weatherfile.h"
 #include "common.h"
 #include "vartab.h"
-
-using namespace std;
 
 /**
 * \class weatherfileTest
@@ -19,7 +18,7 @@ using namespace std;
 class weatherfileTest : public ::testing::Test{
 protected:
 	weatherfile wf;
-	string file;
+	std::string file;
 	double e;		//epsilon for double comparison
 
 	virtual void SetUp(){}
@@ -29,11 +28,14 @@ class CSVCase_WeatherfileTest : public weatherfileTest{
 protected:
 	void SetUp(){
 		e = 0.001;
-#ifdef _MSC_VER	
-		file = "../../../test/input_docs/weather-noRHum.csv";
-#else	
-		file = "../test/input_docs/weather-noRHum.csv";
-#endif	
+		std::string ssc_dir(std::getenv("SSCDIR"));
+		ssc_dir += util::path_separator();
+		ssc_dir.append("test");
+		ssc_dir += util::path_separator();
+		ssc_dir.append("input_docs");
+		ssc_dir += util::path_separator();
+		ssc_dir.append("weather-noRHum.csv");
+		file = ssc_dir;
 		ASSERT_TRUE(wf.open(file));
 	}
 };
@@ -271,7 +273,7 @@ protected:
 TEST_F(Data9999CaseWeatherData, initTest_lib_weatherfile){
 	weatherdata wd(input);
 	EXPECT_EQ(wd.nrecords(), 9999);
-	string error = "could not determine timestep in weatherdata";
+	std::string error = "could not determine timestep in weatherdata";
 	EXPECT_EQ(error, wd.message()) << "Timestep should be invalid";
 }
 
@@ -280,7 +282,7 @@ TEST_F(Data9999CaseWeatherData, initTest2_lib_weatherfile){
 	input->table.unassign("dn");
 	input->table.unassign("df");
 	weatherdata wd(input);
-	string error = "missing irradiance: could not find gh, dn, df, or poa";
+	std::string error = "missing irradiance: could not find gh, dn, df, or poa";
 	EXPECT_EQ(error, wd.message()) << "No irradiance provided error";
 }
 
@@ -290,6 +292,6 @@ TEST_F(Data9999CaseWeatherData, readTest2_lib_weatherfile){
 	input->table.unassign("dn");
 	input->table.assign("dn", vd_err);
 	weatherdata wd(input);
-	string error = "aod number of entries doesn't match with other fields";
+	std::string error = "aod number of entries doesn't match with other fields";
 	EXPECT_EQ(error, wd.message()) << "Irradiance entry length mismatch";
 }
