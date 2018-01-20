@@ -7,7 +7,7 @@ all:
 	make -f Makefile-ssc -j4
 	make -f Makefile-sdktool -j4
 	make -f Makefile-tcsconsole -j4 
-	make -f Makefile-gtest -j4 
+#	make -f Makefile-gtest -j4 
 
 clean:
 	make -f Makefile-shared clean
@@ -18,4 +18,4 @@ clean:
 	make -f Makefile-ssc clean
 	make -f Makefile-sdktool clean
 	make -f Makefile-tcsconsole clean
-	make -f Makefile-gtest clean
+#	make -f Makefile-gtest clean
