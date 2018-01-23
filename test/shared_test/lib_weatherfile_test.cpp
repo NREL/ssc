@@ -1,7 +1,6 @@
 #include <string>
 #include <vector>
 #include <cmath>
-#include <Windows.h>
  
 #include <gtest/gtest.h>
 #include "lib_weatherfile.h"
