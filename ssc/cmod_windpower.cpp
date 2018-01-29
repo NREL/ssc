@@ -56,54 +56,57 @@
 
 static var_info _cm_vtab_windpower[] = {
 	//	  VARTYPE           DATATYPE							NAME                                       LABEL		UNITS     META     GROUP             REQUIRED_IF                                 CONSTRAINTS                                        UI_HINTS
-	{ SSC_INPUT, SSC_STRING, "wind_resource_filename",			"local wind data file path",				"",			"",		"WindPower", "?", "LOCAL_FILE", "" },
-	{ SSC_INPUT, SSC_TABLE,  "wind_resource_data",				"wind resouce data in memory",				"",			"",		"WindPower", "?", "", "" },
+	{ SSC_INPUT, SSC_STRING,  "wind_resource_filename",			"local wind data file path",				"",			"",		"WindPower", "?", "LOCAL_FILE", "" },
+	{ SSC_INPUT, SSC_TABLE,   "wind_resource_data",				"wind resouce data in memory",				"",			"",		"WindPower", "?", "", "" },
 
-	{ SSC_INPUT, SSC_NUMBER, "wind_resource_shear",				"Shear exponent",							"",			"", "WindPower", "*", "", "" },
-	{ SSC_INPUT, SSC_NUMBER, "wind_resource_turbulence_coeff",	"Turbulence coefficient",					"%",		"", "WindPower", "*", "", "" },
-	{ SSC_INPUT, SSC_NUMBER, "system_capacity",					"Nameplate capacity",						"kW",		"", "WindPower", "*", "", "" },
+	{ SSC_INPUT, SSC_NUMBER,  "wind_resource_shear",			"Shear exponent",							"",			"", "WindPower", "*", "", "" },
+	{ SSC_INPUT, SSC_NUMBER,  "wind_resource_turbulence_coeff",	"Turbulence coefficient",					"%",		"", "WindPower", "*", "", "" },
+	{ SSC_INPUT, SSC_NUMBER,  "system_capacity",				"Nameplate capacity",						"kW",		"", "WindPower", "*", "", "" },
 
 
 	//	{ SSC_INPUT,        SSC_NUMBER,      "meas_ht",                                 "Height of resource measurement",      "m",      "",      "WindPower",      "*",                                        "INTEGER",                                          "" },
 	//	{ SSC_INPUT,        SSC_NUMBER,      "elevation",                               "Elevation",                           "m",      "",      "WindPower",      "*",                                        "",		                                            "" },
-	{ SSC_INPUT, SSC_NUMBER, "wind_resource_model_choice",		"Hourly or Weibull model",					"0/1",		"", "WindPower", "*", "INTEGER", "" },
-	{ SSC_INPUT, SSC_NUMBER, "weibull_reference_height",		"Reference height for Weibull wind speed",	"m",		"", "WindPower", "?=50", "MIN=0", "" },
-	{ SSC_INPUT, SSC_NUMBER, "weibull_k_factor",				"Weibull K factor for wind resource",		"",			"", "WindPower", "wind_resource_model_choice=1", "", "" },
-	{ SSC_INPUT, SSC_NUMBER, "weibull_wind_speed",				"Average wind speed for Weibull model",		"",			"", "WindPower", "wind_resource_model_choice=1", "", "" },
+	{ SSC_INPUT, SSC_NUMBER,  "wind_resource_model_choice",		"Hourly or Weibull model",					"0/1",		"", "WindPower", "*", "INTEGER", "" },
+	{ SSC_INPUT, SSC_NUMBER,  "weibull_reference_height",		"Reference height for Weibull wind speed",	"m",		"", "WindPower", "?=50", "MIN=0", "" },
+	{ SSC_INPUT, SSC_NUMBER,  "weibull_k_factor",				"Weibull K factor for wind resource",		"",			"", "WindPower", "wind_resource_model_choice=1", "", "" },
+	{ SSC_INPUT, SSC_NUMBER,  "weibull_wind_speed",				"Average wind speed for Weibull model",		"",			"", "WindPower", "wind_resource_model_choice=1", "", "" },
 
-	{ SSC_INPUT, SSC_NUMBER, "wind_turbine_rotor_diameter",		"Rotor diameter",							"m",		"", "WindPower", "*", "", "" },
-	{ SSC_INOUT, SSC_ARRAY,  "wind_turbine_powercurve_windspeeds", "Power curve wind speed array",			"m/s",		"", "WindPower", "*", "", "" },
-	{ SSC_INOUT, SSC_ARRAY,  "wind_turbine_powercurve_powerout","Power curve turbine output array",			"kW",		"", "WindPower", "*", "LENGTH_EQUAL=wind_turbine_powercurve_windspeeds", "" },
+	{ SSC_INPUT, SSC_NUMBER,  "wind_turbine_rotor_diameter",	"Rotor diameter",							"m",		"", "WindPower", "*", "", "" },
+	{ SSC_INOUT, SSC_ARRAY,   "wind_turbine_powercurve_windspeeds", "Power curve wind speed array",			"m/s",		"", "WindPower", "*", "", "" },
+	{ SSC_INOUT, SSC_ARRAY,   "wind_turbine_powercurve_powerout","Power curve turbine output array",			"kW",		"", "WindPower", "*", "LENGTH_EQUAL=wind_turbine_powercurve_windspeeds", "" },
 	//	{ SSC_INPUT,        SSC_ARRAY,       "wind_turbine_powercurve_pc_rpm",	        "Turbine RPM curve",                   "rpm",    "",      "WindPower",      "*",                                        "LENGTH_EQUAL=wind_turbine_powercurve_windspeeds",  "" },
 	//	{ SSC_INPUT,        SSC_ARRAY,       "wind_turbine_powercurve_hub_efficiency",  "Array of hub efficiencies",		   "%",      "",      "WindPower",      "*",                                        "LENGTH_EQUAL=wind_turbine_powercurve_windspeeds",  "" },
 	//	{ SSC_INPUT,        SSC_NUMBER,      "wind_turbine_cutin",                      "Cut-in wind speed",                   "m/s",    "",      "WindPower",      "*",                                        "",                                                 "" },
-	{ SSC_INPUT, SSC_NUMBER, "wind_turbine_hub_ht",				"Hub height",								"m",		"", "WindPower", "*", "", "" },
+	{ SSC_INPUT, SSC_NUMBER,  "wind_turbine_hub_ht",			"Hub height",								"m",		"", "WindPower", "*", "", "" },
 	//	{ SSC_INPUT,        SSC_NUMBER,      "wind_turbine_ctl_mode",                   "Control mode",                        "0/1/2",  "",      "WindPower",      "*",                                        "INTEGER",                                          "" },
-	{ SSC_INPUT, SSC_NUMBER, "wind_turbine_max_cp",				"Max cp",									"",			"", "WindPower", "wind_resource_model_choice=1", "", "" },
+	{ SSC_INPUT, SSC_NUMBER,  "wind_turbine_max_cp",			"Max cp",									"",			"", "WindPower", "wind_resource_model_choice=1", "", "" },
 
-	{ SSC_INPUT, SSC_ARRAY, "wind_farm_xCoordinates",			"Turbine X coordinates",					"m",		"", "WindPower", "*", "", "" },
-	{ SSC_INPUT, SSC_ARRAY, "wind_farm_yCoordinates",			"Turbine Y coordinates",					"m",		"", "WindPower", "*", "LENGTH_EQUAL=wind_farm_xCoordinates", "" },
-	{ SSC_INPUT, SSC_NUMBER, "wind_farm_losses_percent",		"Percentage losses",						"%",		"", "WindPower", "*", "", "" },
-	{ SSC_INPUT, SSC_NUMBER, "wind_farm_wake_model",			"Wake Model",								"0/1/2",	"", "WindPower", "*", "INTEGER", "" },
-	{ SSC_INPUT, SSC_NUMBER, "en_low_temp_cutoff",				"Enable Low Temperature Cutoff",			"0/1",		"", "WindPower", "?=0", "", "" },
-	{ SSC_INPUT, SSC_NUMBER, "low_temp_cutoff",					"Low Temperature Cutoff",					"C",		"", "WindPower", "en_low_temp_cutoff=1", "", "" },
-	{ SSC_INPUT, SSC_NUMBER, "en_icing_cutoff",					"Enable Icing Cutoff",						"0/1",		"", "WindPower", "?=0", "", "" },
-	{ SSC_INPUT, SSC_NUMBER, "icing_cutoff_temp",				"Icing Cutoff Temperature",					"C",		"", "WindPower", "en_icing_cutoff=1", "", "" },
-	{ SSC_INPUT, SSC_NUMBER, "icing_cutoff_rh",					"Icing Cutoff Relative Humidity",			"%",		"", "WindPower", "en_icing_cutoff=1", "", "" },
+	{ SSC_INPUT, SSC_ARRAY,   "wind_farm_xCoordinates",			"Turbine X coordinates",					"m",		"", "WindPower", "*", "", "" },
+	{ SSC_INPUT, SSC_ARRAY,   "wind_farm_yCoordinates",			"Turbine Y coordinates",					"m",		"", "WindPower", "*", "LENGTH_EQUAL=wind_farm_xCoordinates", "" },
+	{ SSC_INPUT, SSC_NUMBER,  "wind_farm_losses_percent",		"Percentage losses",						"%",		"", "WindPower", "*", "", "" },
+	{ SSC_INPUT, SSC_NUMBER,  "wind_farm_wake_model",			"Wake Model",								"0/1/2",	"", "WindPower", "*", "INTEGER", "" },
+	{ SSC_INPUT, SSC_NUMBER,  "en_low_temp_cutoff",				"Enable Low Temperature Cutoff",			"0/1",		"", "WindPower", "?=0", "", "" },
+	{ SSC_INPUT, SSC_NUMBER,  "low_temp_cutoff",				"Low Temperature Cutoff",					"C",		"", "WindPower", "en_low_temp_cutoff=1", "", "" },
+	{ SSC_INPUT, SSC_NUMBER,  "en_icing_cutoff",				"Enable Icing Cutoff",						"0/1",		"", "WindPower", "?=0", "", "" },
+	{ SSC_INPUT, SSC_NUMBER,  "icing_cutoff_temp",				"Icing Cutoff Temperature",					"C",		"", "WindPower", "en_icing_cutoff=1", "", "" },
+	{ SSC_INPUT, SSC_NUMBER,  "icing_cutoff_rh",				"Icing Cutoff Relative Humidity",			"%",		"", "WindPower", "en_icing_cutoff=1", "", "" },
 
 
 	// OUTPUTS ----------------------------------------------------------------------------													annual_energy									                            
-	{ SSC_OUTPUT, SSC_ARRAY, "turbine_output_by_windspeed_bin", "Turbine output by wind speed bin",			"kW",		"", "Power Curve", "", "LENGTH_EQUAL=wind_turbine_powercurve_windspeeds", "" },
-	{ SSC_OUTPUT, SSC_ARRAY, "wind_direction",					"Wind direction",							"deg",		"", "Time Series", "wind_resource_model_choice=0", "", "" },
-	{ SSC_OUTPUT, SSC_ARRAY, "wind_speed",						"Wind speed",								"m/s",		"", "Time Series", "wind_resource_model_choice=0", "", "" },
-	{ SSC_OUTPUT, SSC_ARRAY, "temp",							"Air temperature",							"'C",		"", "Time Series", "wind_resource_model_choice=0", "", "" },
-	{ SSC_OUTPUT, SSC_ARRAY, "pressure",						"Pressure",									"atm",		"", "Time Series", "wind_resource_model_choice=0", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY,  "turbine_output_by_windspeed_bin", "Turbine output by wind speed bin",			"kW",		"", "Power Curve", "", "LENGTH_EQUAL=wind_turbine_powercurve_windspeeds", "" },
+	{ SSC_OUTPUT, SSC_ARRAY,  "wind_direction",					"Wind direction",							"deg",		"", "Time Series", "wind_resource_model_choice=0", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY,  "wind_speed",						"Wind speed",								"m/s",		"", "Time Series", "wind_resource_model_choice=0", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY,  "temp",							"Air temperature",							"'C",		"", "Time Series", "wind_resource_model_choice=0", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY,  "pressure",						"Pressure",									"atm",		"", "Time Series", "wind_resource_model_choice=0", "", "" },
 
-	{ SSC_OUTPUT, SSC_ARRAY, "monthly_energy",					"Monthly Energy",							"kWh",		"", "Monthly", "*", "LENGTH=12", "" },
+	{ SSC_OUTPUT, SSC_ARRAY,  "gen",							"Total electric power to grid",             "kWh",      "", "(Sub)Hourly", "*",  "",  "" },
 
+	{ SSC_OUTPUT, SSC_ARRAY,  "monthly_energy",					"Monthly Energy",							"kWh",		"", "Monthly", "*", "LENGTH=12", "" },
 	{ SSC_OUTPUT, SSC_NUMBER, "annual_energy",					"Annual Energy",							"kWh",		"", "Annual", "*", "", "" },
 	{ SSC_OUTPUT, SSC_NUMBER, "capacity_factor",				"Capacity factor",							"%",		"", "Annual", "*", "", "" },
 	{ SSC_OUTPUT, SSC_NUMBER, "kwh_per_kw",						"First year kWh/kW",						"kWh/kW",	"", "Annual", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_NUMBER, "cutoff_losses",                  "Cutoff losses",                            "%",		"", "Annual", "", "", "" },
 
 
 
@@ -136,11 +139,19 @@ winddata::winddata(var_data *data_table)
 	for (size_t i = 0; i < len; i++)
 		m_dataid.push_back((int)p[i]);
 
-	if (m_dataid.size() != m_heights.size() || m_heights.size() == 0) return;
+	if (m_dataid.size() != m_heights.size() || m_heights.size() == 0){
+		m_errorMsg = util::format("'fields' and 'heights' must have same length");
+		return;
+	}
 
 	if (var_data *D = data_table->table.lookup("data"))
 		if (D->type == SSC_MATRIX)
 			data = D->num;
+
+	if (data.ncols() != m_heights.size()){
+		m_errorMsg = util::format("number of columns in 'data' must be same as length of 'fields' and 'heights'");
+		return;
+	}
 
 	float* rh = get_vector(data_table, "rh", &len);
 	if (rh != 0 && len == data.nrows() )
@@ -299,20 +310,23 @@ void cm_windpower::exec() throw(general_error)
 
 	// create winddata_provider
 	size_t nstep = 8760;
-	std::auto_ptr<winddata_provider> wdprov;
+	smart_ptr<winddata_provider>::ptr wdprov;
 	if (is_assigned("wind_resource_filename"))
 	{
 		// read the wind data file
 		const char *file = as_string("wind_resource_filename");
 		windfile *wp = new windfile(file);
 		nstep = wp->nrecords();
-		wdprov = std::auto_ptr<winddata_provider>(wp);
+		wdprov = smart_ptr<winddata_provider>::ptr(wp);
 		if (!wp->ok())
 			throw exec_error("windpower", "failed to read local weather file: " + std::string(file) + " " + wp->error());
 	}
 	else if (is_assigned("wind_resource_data"))
 	{
-		wdprov = std::auto_ptr<winddata_provider>(new winddata(lookup("wind_resource_data")));
+	  	wdprov = smart_ptr<winddata_provider>::ptr(new winddata(lookup("wind_resource_data")));
+      if (wdprov->error().size() > 0){
+        throw exec_error("windpower", wdprov->error());
+      }
 		nstep = wdprov->nrecords();
 		if (icingCutoff)
 			if (wdprov->relativeHumidity().size() != nstep)
@@ -368,8 +382,7 @@ void cm_windpower::exec() throw(general_error)
 	for (int i = 0; i < 12; i++)
 		monthly[i] = 0.0f;
 	double annual = 0.0;
-
-
+	double withoutLosses = 0.0;
 
 	// compute power output at i-th timestep
 	int i = 0;
@@ -419,6 +432,13 @@ void cm_windpower::exec() throw(general_error)
 					throw exec_error("windpower", util::format("the closest wind speed measurement height (%lg m) and direction measurement height (%lg m) were more than 10m apart", wt.measurementHeight, closest_dir_meas_ht));
 			}
 
+			// If the wind speed measurement height differs from the turbine hub height, use the shear to correct it. 
+			if (fabs(wt.measurementHeight - wt.hubHeight) > 1) {
+				if (wt.shearExponent > 1.0) wt.shearExponent = 1.0 / 7.0;
+				wind = wind * pow(wt.hubHeight / wt.measurementHeight, wt.shearExponent);
+				wt.measurementHeight = wt.hubHeight;
+			}
+
 			double farmp = 0;
 
 			if ((int)wpc.nTurbines != wpc.windPowerUsingResource(
@@ -440,6 +460,7 @@ void cm_windpower::exec() throw(general_error)
 				throw exec_error("windpower", util::format("error in wind calculation at time %d, details: %s", i, wpc.GetErrorDetails().c_str()));
 
 			// compute losses
+			withoutLosses += farmp * haf(hr);
 			if (lowTempCutoff){
 				if (temp < as_double("low_temp_cutoff")) farmp = 0.0;
 			}
@@ -469,6 +490,7 @@ void cm_windpower::exec() throw(general_error)
 	if (nameplate > 0) kWhperkW = annual / nameplate;
 	assign("capacity_factor", var_data((ssc_number_t)(kWhperkW / 87.6)));
 	assign("kwh_per_kw", var_data((ssc_number_t)kWhperkW));
+	assign("cutoff_losses", var_data((ssc_number_t)((withoutLosses-annual)/ withoutLosses)));
 
 } // exec
 

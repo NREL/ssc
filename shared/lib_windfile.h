@@ -51,6 +51,7 @@
 #define __lib_windfile_h
 
 #include <string>
+#include <fstream>
 #include "lib_util.h"
 
 class winddata_provider
@@ -97,7 +98,9 @@ public:
 	std::string error() { return m_errorMsg; }
 
 protected:
-	std::vector<int> m_dataid;	// stores column headers(temp, pres, dir, speed) for each measurement height
+	/// index of resource type (temp=1,pres=2,speed=3,dir=4) for each measurement height
+	std::vector<int> m_dataid;	
+	/// measurement height corresponding to each column header; same size as m_dataid
 	std::vector<double> m_heights;
 	std::vector<float> m_relativeHumidity;
 	std::string m_errorMsg;
@@ -111,8 +114,8 @@ protected:
 class windfile : public winddata_provider
 {
 private:
-	FILE *m_fp;
-	char *m_buf;
+  	std::ifstream m_ifs;
+	std::string m_buf;
 	std::string m_file;
 	size_t m_nrec;
 

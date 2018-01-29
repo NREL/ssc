@@ -19,6 +19,7 @@ OBJECTS  = \
 	../test/shared_test/lib_irradproc_test.o \
 	../test/shared_test/lib_util_test.o \
 	../test/shared_test/lib_weatherfile_test.o \
+	../test/shared_test/lib_windfile_test.o \
 	../test/shared_test/lib_windwakemodel_test.o \
 	../test/shared_test/lib_windwatts_test.o \
 	../test/ssc_test/cmod_windpower_test.o \

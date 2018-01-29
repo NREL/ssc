@@ -10,17 +10,14 @@ int windpower_nofinancial_testfile(ssc_data_t &data)
 	ssc_module_exec_set_print(0);
 	if (data == NULL)
 	{
-		printf("error: out of memory.");
+		printf("error: out of memory."); 
 		return -1;
 	}
 
-#ifdef _MSC_VER	
-	std::string file = "../../../test/input_docs/wind.srw";
-#else	
-	std::string file = "../test/input_docs/wind.srw";
-#endif	
+	char filepath[150];
+	int n1 = sprintf(filepath, "%s/test/input_docs/wind.srw", std::getenv("SSCDIR"));
 
-	ssc_data_set_string(data, "wind_resource_filename", file.c_str());
+	ssc_data_set_string(data, "wind_resource_filename", filepath);
 	ssc_data_set_number(data, "wind_resource_shear", (ssc_number_t)0.140);
 	ssc_data_set_number(data, "wind_resource_turbulence_coeff", (ssc_number_t)0.100);
 	ssc_data_set_number(data, "system_capacity", 48000);

@@ -8,7 +8,6 @@
 #include "common.h"
 #include "../input_cases/weather_inputs.h"
 #include "../input_cases/windpower_cases.h"
-#include "cmod_windpower.h"
 
 
 /**
@@ -20,28 +19,28 @@ protected:
 	ssc_data_t data;
 	double e = 1000;
 
-	bool compute();
+	bool compute(bool errorNotExpected = true);
 	void SetUp(){
 		data = ssc_data_create();
 		int errors = windpower_nofinancial_testfile(data);
 		EXPECT_FALSE(errors);
 	}
-	void TearDown(){}
+	void TearDown(){
+		ssc_data_free(data);
+	}
 };
 
-bool CMWindPowerIntegration::compute(){
+bool CMWindPowerIntegration::compute(bool errorNotExpected){
 	ssc_module_t module = ssc_module_create("windpower");
 	if (NULL == module)
 	{
-		printf("error: could not create 'windpower' module.");
-		ssc_data_free(data);
+		if (errorNotExpected) printf("error: could not create 'windpower' module.");
 		return false;
 	}
 	if (ssc_module_exec(module, data) == 0)
 	{
-		printf("error during simulation.");
+		if (errorNotExpected) printf("error during simulation.");
 		ssc_module_free(module);
-		ssc_data_free(data);
 		return false;
 	}
 	ssc_module_free(module);
