@@ -277,46 +277,46 @@ void C_sco2_recomp_csp::design_core()
 			string out_msg = "The sCO2 recompression cycle design optimization solved with the following warning(s):\n" + error_msg;
 			mc_messages.add_notice(out_msg);
 		}
-
-		// Set air cooler design parameters that are dependent on the cycle design solution
-		ms_air_cooler_des_par_dep.m_T_hot_in_des = ms_des_solved.ms_rc_cycle_solved.m_temp[C_RecompCycle::LTR_LP_OUT];
-		ms_air_cooler_des_par_dep.m_P_hot_in_des = ms_des_solved.ms_rc_cycle_solved.m_pres[C_RecompCycle::LTR_LP_OUT];
-		ms_air_cooler_des_par_dep.m_m_dot_total = ms_des_solved.ms_rc_cycle_solved.m_m_dot_mc;		//[kg/s]
-			// This pressure drop is currently uncoupled from the cycle design
-		ms_air_cooler_des_par_dep.m_delta_P_des = ms_des_par.m_deltaP_cooler_frac*ms_des_solved.ms_rc_cycle_solved.m_pres[C_RecompCycle::MC_OUT];
-		ms_air_cooler_des_par_dep.m_T_hot_out_des = ms_des_solved.ms_rc_cycle_solved.m_temp[C_RecompCycle::MC_IN];
-		ms_air_cooler_des_par_dep.m_W_dot_fan_des = ms_des_par.m_frac_fan_power*ms_des_par.m_W_dot_net/1000.0;		//[MWe]
-
-		// Initialize the PHX
-		mc_phx.initialize(ms_des_par.m_hot_fl_code, ms_des_par.mc_hot_fl_props);
-
-		// Design the PHX
-		double q_dot_des_phx = ms_des_solved.ms_rc_cycle_solved.m_W_dot_net / ms_des_solved.ms_rc_cycle_solved.m_eta_thermal;
-		//ms_phx_des_par.m_Q_dot_design = ms_des_solved.ms_rc_cycle_solved.m_W_dot_net / ms_des_solved.ms_rc_cycle_solved.m_eta_thermal;		//[kWt]
-		ms_phx_des_par.m_T_h_in = ms_des_par.m_T_htf_hot_in;	//[K] HTF hot inlet temperature 
-			// Okay, but CO2-HTF HX is assumed here. How does "structure inheritance" work?
-		ms_phx_des_par.m_P_h_in = 1.0;							// Assuming HTF is incompressible...
-		ms_phx_des_par.m_P_h_out = 1.0;						// Assuming HTF is incompressible...
-			// .................................................................................
-		ms_phx_des_par.m_T_c_in = ms_des_solved.ms_rc_cycle_solved.m_temp[C_RecompCycle::HTR_HP_OUT];		//[K]
-		ms_phx_des_par.m_P_c_in = ms_des_solved.ms_rc_cycle_solved.m_pres[C_RecompCycle::HTR_HP_OUT];		//[K]
-		ms_phx_des_par.m_P_c_out = ms_des_solved.ms_rc_cycle_solved.m_pres[C_RecompCycle::TURB_IN];		//[K]
-		ms_phx_des_par.m_m_dot_cold_des = ms_des_solved.ms_rc_cycle_solved.m_m_dot_t;	//[kg/s]
-			// Calculating the HTF mass flow rate in 'design_and_calc_m_dot_htf'
-		ms_phx_des_par.m_m_dot_hot_des = std::numeric_limits<double>::quiet_NaN();
-			// Set maximum effectiveness
-		ms_phx_des_par.m_eff_max = 1.0;
-	
-		mc_phx.design_and_calc_m_dot_htf(ms_phx_des_par, q_dot_des_phx, ms_des_par.m_phx_dt_cold_approach, ms_des_solved.ms_phx_des_solved);
-
-		// Design the air cooler
-			// Define Independent Air Cooler Design Parameters
-		ms_air_cooler_des_par_ind.m_T_amb_des = ms_des_par.m_T_amb_des;		//[K]
-		ms_air_cooler_des_par_ind.m_elev = ms_des_par.m_elevation;			//[m]
-			// Add checks from Type 424 to the air cooler design code?
-
-		mc_air_cooler.design_hx(ms_air_cooler_des_par_ind, ms_air_cooler_des_par_dep);
 	}
+
+	// Set air cooler design parameters that are dependent on the cycle design solution
+	ms_air_cooler_des_par_dep.m_T_hot_in_des = ms_des_solved.ms_rc_cycle_solved.m_temp[C_RecompCycle::LTR_LP_OUT];
+	ms_air_cooler_des_par_dep.m_P_hot_in_des = ms_des_solved.ms_rc_cycle_solved.m_pres[C_RecompCycle::LTR_LP_OUT];
+	ms_air_cooler_des_par_dep.m_m_dot_total = ms_des_solved.ms_rc_cycle_solved.m_m_dot_mc;		//[kg/s]
+		// This pressure drop is currently uncoupled from the cycle design
+	ms_air_cooler_des_par_dep.m_delta_P_des = ms_des_par.m_deltaP_cooler_frac*ms_des_solved.ms_rc_cycle_solved.m_pres[C_RecompCycle::MC_OUT];
+	ms_air_cooler_des_par_dep.m_T_hot_out_des = ms_des_solved.ms_rc_cycle_solved.m_temp[C_RecompCycle::MC_IN];
+	ms_air_cooler_des_par_dep.m_W_dot_fan_des = ms_des_par.m_frac_fan_power*ms_des_par.m_W_dot_net/1000.0;		//[MWe]
+
+	// Initialize the PHX
+	mc_phx.initialize(ms_des_par.m_hot_fl_code, ms_des_par.mc_hot_fl_props);
+
+	// Design the PHX
+	double q_dot_des_phx = ms_des_solved.ms_rc_cycle_solved.m_W_dot_net / ms_des_solved.ms_rc_cycle_solved.m_eta_thermal;
+	//ms_phx_des_par.m_Q_dot_design = ms_des_solved.ms_rc_cycle_solved.m_W_dot_net / ms_des_solved.ms_rc_cycle_solved.m_eta_thermal;		//[kWt]
+	ms_phx_des_par.m_T_h_in = ms_des_par.m_T_htf_hot_in;	//[K] HTF hot inlet temperature 
+		// Okay, but CO2-HTF HX is assumed here. How does "structure inheritance" work?
+	ms_phx_des_par.m_P_h_in = 1.0;							// Assuming HTF is incompressible...
+	ms_phx_des_par.m_P_h_out = 1.0;						// Assuming HTF is incompressible...
+		// .................................................................................
+	ms_phx_des_par.m_T_c_in = ms_des_solved.ms_rc_cycle_solved.m_temp[C_RecompCycle::HTR_HP_OUT];		//[K]
+	ms_phx_des_par.m_P_c_in = ms_des_solved.ms_rc_cycle_solved.m_pres[C_RecompCycle::HTR_HP_OUT];		//[K]
+	ms_phx_des_par.m_P_c_out = ms_des_solved.ms_rc_cycle_solved.m_pres[C_RecompCycle::TURB_IN];		//[K]
+	ms_phx_des_par.m_m_dot_cold_des = ms_des_solved.ms_rc_cycle_solved.m_m_dot_t;	//[kg/s]
+		// Calculating the HTF mass flow rate in 'design_and_calc_m_dot_htf'
+	ms_phx_des_par.m_m_dot_hot_des = std::numeric_limits<double>::quiet_NaN();
+		// Set maximum effectiveness
+	ms_phx_des_par.m_eff_max = 1.0;
+	
+	mc_phx.design_and_calc_m_dot_htf(ms_phx_des_par, q_dot_des_phx, ms_des_par.m_phx_dt_cold_approach, ms_des_solved.ms_phx_des_solved);
+
+	// Design the air cooler
+		// Define Independent Air Cooler Design Parameters
+	ms_air_cooler_des_par_ind.m_T_amb_des = ms_des_par.m_T_amb_des;		//[K]
+	ms_air_cooler_des_par_ind.m_elev = ms_des_par.m_elevation;			//[m]
+		// Add checks from Type 424 to the air cooler design code?
+
+	mc_air_cooler.design_hx(ms_air_cooler_des_par_ind, ms_air_cooler_des_par_dep);
 	
 	//*************************************************************************************
 	//*************************************************************************************

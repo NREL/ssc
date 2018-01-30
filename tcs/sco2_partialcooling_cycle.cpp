@@ -323,31 +323,20 @@ int C_PartialCooling_Cycle::C_MEQ_HTR_des::operator()(double T_HTR_LP_out /*K*/,
 	mpc_pc_cycle->m_entr_last[HTR_LP_OUT] = mpc_pc_cycle->mc_co2_props.entr;	//[kJ/kg-K]
 	mpc_pc_cycle->m_dens_last[HTR_LP_OUT] = mpc_pc_cycle->mc_co2_props.dens;	//[kg/m^3]
 
-	// ******************************************************************************
-	// ******************************************************************************
-	// Solve for the LTR solution
-	double T_LTR_LP_out_lower = mpc_pc_cycle->m_temp_last[MC_OUT];		//[K] Coldest possible outlet temperature
-	double T_LTR_LP_out_upper = mpc_pc_cycle->m_temp_last[HTR_LP_OUT];	//[K] Hottest possible outlet temperature
+	mpc_pc_cycle->mc_LTR.design_fix_UA_calc_outlet(mpc_pc_cycle->ms_des_par.m_UA_LTR, mpc_pc_cycle->ms_des_par.m_LTR_eff_max,
+		mpc_pc_cycle->m_temp_last[MC_OUT], mpc_pc_cycle->m_pres_last[MC_OUT], mpc_pc_cycle->m_m_dot_mc, mpc_pc_cycle->m_pres_last[LTR_HP_OUT],
+		mpc_pc_cycle->m_temp_last[HTR_LP_OUT], mpc_pc_cycle->m_pres_last[HTR_LP_OUT], mpc_pc_cycle->m_m_dot_t, mpc_pc_cycle->m_pres_last[LTR_LP_OUT],
+		m_Q_dot_LTR, mpc_pc_cycle->m_temp_last[LTR_HP_OUT], mpc_pc_cycle->m_temp_last[LTR_LP_OUT]);
 
-	double T_LTR_LP_out_guess_upper = std::min(T_LTR_LP_out_upper, T_LTR_LP_out_lower + 15.0);	//[K] there is nothing magic about using 15 here...
-	double T_LTR_LP_out_guess_lower = std::min(T_LTR_LP_out_guess_upper*0.99, T_LTR_LP_out_lower + 2.0);	//[K] there is nothing magic about using 2 here...
-
-	C_MEQ_LTR_des LTR_des_eq(mpc_pc_cycle);
-	C_monotonic_eq_solver LTR_des_solver(LTR_des_eq);
-
-	LTR_des_solver.settings(mpc_pc_cycle->ms_des_par.m_tol*mpc_pc_cycle->m_temp_last[MC_IN], 1000, T_LTR_LP_out_lower, T_LTR_LP_out_upper, false);
-
-	double T_LTR_LP_out_solved, tol_T_LTR_LP_out_solved;
-	T_LTR_LP_out_solved = tol_T_LTR_LP_out_solved = std::numeric_limits<double>::quiet_NaN();
-	int iter_T_LTR_LP_out = -1;
-
-	int T_LTR_LP_out_code = LTR_des_solver.solve(T_LTR_LP_out_guess_lower, T_LTR_LP_out_guess_upper, 0,
-		T_LTR_LP_out_solved, tol_T_LTR_LP_out_solved, iter_T_LTR_LP_out);
-
-	if (T_LTR_LP_out_code != C_monotonic_eq_solver::CONVERGED)
-		return 31;
-
-	m_Q_dot_LTR = LTR_des_eq.m_Q_dot_LTR;
+	prop_error_code = CO2_TP(mpc_pc_cycle->m_temp_last[LTR_LP_OUT], mpc_pc_cycle->m_pres_last[LTR_LP_OUT], &mpc_pc_cycle->mc_co2_props);
+	if (prop_error_code)
+	{
+		*diff_T_HTR_LP_out = std::numeric_limits<double>::quiet_NaN();
+		return prop_error_code;
+	}
+	mpc_pc_cycle->m_enth_last[LTR_LP_OUT] = mpc_pc_cycle->mc_co2_props.enth;	//[kJ/kg]
+	mpc_pc_cycle->m_entr_last[LTR_LP_OUT] = mpc_pc_cycle->mc_co2_props.entr;	//[kJ/kg-K]
+	mpc_pc_cycle->m_dens_last[LTR_LP_OUT] = mpc_pc_cycle->mc_co2_props.dens;	//[kg/m^3]
 
 	// *****************************************************************************
 		// Energy balance on the LTR HP stream
