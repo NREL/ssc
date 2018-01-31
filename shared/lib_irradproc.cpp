@@ -264,9 +264,21 @@ void solarpos(int year,int month,int day,int hour,double minute,double lat,doubl
 	else
 		ws = acos(arg);                   /* Sunrise hour angle in radians */
 
-					/* Sunrise and sunset in local standard time */
-	sunrise = 12.0 - (ws/DTOR)/15.0 - (lng/15.0 - tz) - E;
-	sunset  = 12.0 + (ws/DTOR)/15.0 - (lng/15.0 - tz) - E;
+	/* Sunrise and sunset in local standard time */
+	sunrise = 12.0 - (ws / DTOR) / 15.0 - (lng / 15.0 - tz) - E; //sunrise in units of hours (e.g. 5.25 = 5:15 am)
+	sunset = 12.0 + (ws / DTOR) / 15.0 - (lng / 15.0 - tz) - E; //sunset in units of hours (e.g. 18.75 = 6:45 pm)
+
+	/* bug fix jmf 1/31/18: the sunrise and sunset algorithms use the common longitude convention (negative longitude is west to -180 deg,
+	positive is east to 180 deg) and time zone convention (positive east, negative west). Duffie & Beckman define the longitude (and therefore
+	time zone) convention as degrees WEST of standard meridian, from 0-360. The algorithms below work fine when both longitude and time zone
+	are positive, or when both are negative. However, there are a few places near the international dateline that have positive time zones (+13)
+	and negative longitudes. There are potentially locations with the reverse. Using these equations as-is cause the sunrise and sunset calculations
+	to be shifted by 24 hours in one direction or the other. Therefore, shift sunrises/sunsets outside of 0 < time < 24 in order for subsequent
+	portions of the code to work correctly. Reference "Solar Engineering of Thermal Processes" Version 3, Duffie & Beckman, pages 17-19*/
+	if (sunrise > 24) sunrise -= 24; //this could be a "while" loop, but hard to figure out when there would be an instance where it was >48, might want it to return a bogus number for error identification
+	if (sunset > 24) sunset -= 24;
+	if (sunrise < 0) sunrise += 24;
+	if (sunset < 0) sunset += 24;
 
 	Eo = 1.00014 - 0.01671*cos(mnanom) - 0.00014*cos(2.0*mnanom);  /* Earth-sun distance (AU) */
 	Eo = 1.0/(Eo*Eo);                    /* Eccentricity correction factor */
