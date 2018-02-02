@@ -572,7 +572,9 @@ public:
 		C_csp_two_tank_tes::S_params *tes = &storage.ms_params;
 			// Hardcode NO TES for now
 		tes->m_field_fl = c_trough.m_Fluid;	//[-]
+		tes->m_field_fl_props = c_trough.m_field_fl_props;	//[-]
 		tes->m_tes_fl = tes->m_field_fl;	//[-]
+		tes->m_tes_fl_props = c_trough.m_field_fl_props;	//[-]
 		tes->m_is_hx = false;		//[-]
 		tes->m_W_dot_pc_design = c_heat_sink.ms_params.m_q_dot_des;	//[MWt]
 		tes->m_eta_pc = 1.0;
