@@ -2436,7 +2436,7 @@ public:
 						//						monthly_cumulative_excess_dollars[m] -= monthly_bill[m];
 					}
 					//					monthly_bill[m] = 0;
-					payment[c - 1] = 0; // fixed charges applied below
+					payment[c - 1] -= monthly_ec_charges[m];; // keep demand charges
 					monthly_ec_charges[m] = 0;
 				}
 				else // apply current month rollover and adjust
@@ -2453,7 +2453,7 @@ public:
 						}
 //						monthly_bill[m] = 0;
 						monthly_ec_charges[m] = 0;
-						payment[c - 1] = 0; // fixed charges applied below
+						payment[c - 1] -= monthly_ec_charges[m]; // fixed charges applied below
 					}
 					else
 					{
@@ -3014,7 +3014,7 @@ public:
 				{
 					monthly_cumulative_excess_dollars[m] -= monthly_ec_charges[m];
 					monthly_ec_charges[m] = 0;
-					payment[c - 1] = 0; // fixed charges applied below
+					payment[c - 1] -= monthly_ec_charges[m]; // fixed charges applied below
 				}
 				/*
 				else // apply current month rollover and adjust
