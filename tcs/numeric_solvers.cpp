@@ -286,6 +286,7 @@ int C_monotonic_eq_solver::solver_core(double x_guess_1, double y1, double x_gue
 	}
 	if( fabs(E2) < m_tol )
 	{
+		call_mono_eq(x_guess_2, &y2);
 		x_solved = x_guess_2;
 		tol_solved = E2;
 		iter_solved = 0;
