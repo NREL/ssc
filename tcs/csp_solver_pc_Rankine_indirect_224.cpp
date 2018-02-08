@@ -64,6 +64,11 @@ static C_csp_reported_outputs::S_output_info S_output_info[] =
 	{C_pc_Rankine_indirect_224::E_W_DOT, C_csp_reported_outputs::TS_WEIGHTED_AVE},
 	{C_pc_Rankine_indirect_224::E_T_HTF_IN, C_csp_reported_outputs::TS_WEIGHTED_AVE},
 	{C_pc_Rankine_indirect_224::E_T_HTF_OUT, C_csp_reported_outputs::TS_WEIGHTED_AVE},
+	{ C_pc_Rankine_indirect_224::E_T_COND_OUT, C_csp_reported_outputs::TS_WEIGHTED_AVE },
+	{ C_pc_Rankine_indirect_224::E_T_COLD, C_csp_reported_outputs::TS_WEIGHTED_AVE },
+	{ C_pc_Rankine_indirect_224::E_M_COLD, C_csp_reported_outputs::TS_LAST },
+	{ C_pc_Rankine_indirect_224::E_M_WARM, C_csp_reported_outputs::TS_LAST },
+	{ C_pc_Rankine_indirect_224::E_T_WARM,C_csp_reported_outputs::TS_WEIGHTED_AVE },
 	{C_pc_Rankine_indirect_224::E_M_DOT_WATER, C_csp_reported_outputs::TS_WEIGHTED_AVE},
 	{C_pc_Rankine_indirect_224::E_M_DOT_HTF_REF, C_csp_reported_outputs::TS_WEIGHTED_AVE},
 
@@ -227,9 +232,67 @@ void C_pc_Rankine_indirect_224::init(C_csp_power_cycle::S_solved_params &solved_
 			};
 			m_db.assign(dTemp[0], 18, 20);
 		}
+
+		else if (ms_params.m_tech_type == 5)
+		{	//	CUSTOM cycle with 3.82 m^2 annulus area last stage turbine (PT2)
+			double dTemp[18][14] =
+			{
+
+				{ 0.934693878, 1, 1.032653061, 1.032653061, 1.032653061, 1.032653061, 1.032653061, 1.032653061, 1.032653061, 1.032653061, 1.032653061, 1.032653061, 1.032653061, 1.032653061 },
+				{ 0.938286915, 0.999997561, 1.031288845, 1.031288845, 1.031288845, 1.031288845, 1.031288845, 1.031288845, 1.031288845, 1.031288845, 1.031288845, 1.031288845, 1.031288845, 1.031288845 },
+				{ 0.948399287, 1.000001337, 1.026055674, 1.026055674, 1.026055674, 1.026055674, 1.026055674, 1.026055674, 1.026055674, 1.026055674, 1.026055674, 1.026055674, 1.026055674, 1.026055674 },
+				{ 5926, 6773, 7619, 8466, 9313, 10160, 11010, 11850, 12700, 13550, 14390, 15240, 16090, 16930 },
+				{ 0.99768528, 0.999130742, 1.000314721, 1.000925831, 1.000767136, 0.999997561, 0.998767084, 0.997246634, 0.995376205, 0.993133499, 0.990501234, 0.987536045, 0.984562741, 0.981354592 },
+				{ 0.999847366, 0.999897288, 0.999931461, 0.999962443, 0.999988427, 1.000001337, 1.000028493, 1.00004393, 1.000046279, 1.000066815, 1.000061952, 1.000066479, 1.00007008, 1.000074333 },
+				{ 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1, 1.1, 1.2, 1.2, 1.2, 1.2 },
+				{ 0.220284204, 0.335077316, 0.443208856, 0.546971075, 0.645792204, 0.740207871, 0.830382622, 0.916696917, 0.999997561, 1.080369026, 1.158010111, 1.158010111, 1.158010111, 1.158010111 },
+				{ 0.262169489, 0.374236933, 0.476959401, 0.573875414, 0.666056299, 0.754252843, 0.839031969, 0.920832489, 1.000001337, 1.076859694, 1.151633382, 1.151633382, 1.151633382, 1.151633382 },
+				{ 0.934693878, 1, 1.032653061, 1.032653061, 1.032653061, 1.032653061, 1.032653061, 1.032653061, 1.032653061, 1.032653061, 1.032653061, 1.032653061, 1.032653061, 1.032653061 },
+				{ 0.812820608, 0.999410202, 1.054001648, 1.054001648, 1.054001648, 1.054001648, 1.054001648, 1.054001648, 1.054001648, 1.054001648, 1.054001648, 1.054001648, 1.054001648, 1.054001648 },
+				{ 0.928063976, 0.9953857, 0.969750541, 0.969750541, 0.969750541, 0.969750541, 0.969750541, 0.969750541, 0.969750541, 0.969750541, 0.969750541, 0.969750541, 0.969750541, 0.969750541 },
+				{ 5926, 6773, 7619, 8466, 9313, 10160, 11010, 11850, 12700, 13550, 14390, 15240, 16090, 16930 },
+				{ 0.973368235, 0.979437551, 0.982350163, 0.987385232, 0.993937913, 1.000008323, 1.005716076, 1.010910757, 1.015855584, 1.021055402, 1.027150564, 1.033035049, 1.037581407, 1.042542957 },
+				{ 0.999871373, 0.999863593, 0.99987838, 0.999903051, 0.999934948, 0.999995323, 0.999992221, 1.000017337, 1.000026351, 1.000065741, 1.000135918, 1.000163109, 1.000186174, 1.000198139 },
+				{ 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1, 1.1, 1.2, 1.2, 1.2, 1.2 },
+				{ 1.037567564, 0.963678738, 0.967717638, 0.979108713, 0.979495332, 0.984456805, 0.986082399, 0.993870343, 1.000021653, 1.007718861, 1.012984044, 1.012984044, 1.012984044, 1.012984044 },
+				{ 0.887516964, 0.852426801, 0.879803064, 0.904549767, 0.925938994, 0.945603815, 0.964745144, 0.982722796, 0.999985964, 1.016365178, 1.032512727, 1.032512727, 1.032512727, 1.032512727 }
+
+
+			};
+			m_db.assign(dTemp[0], 18, 14);
+		}
+
+		else if (ms_params.m_tech_type == 6)
+		{	//	CUSTOM cycle with 5.16 annulus area last stage turbine (PT3)
+			double dTemp[18][16] =
+			{
+				{ 0.934693878, 1, 1.032653061, 1.032653061, 1.032653061, 1.032653061, 1.032653061, 1.032653061, 1.032653061, 1.032653061, 1.032653061, 1.032653061, 1.032653061, 1.032653061, 1.032653061, 1.032653061 },
+				{ 0.93605867, 0.999997153, 1.032224891, 1.032224891, 1.032224891, 1.032224891, 1.032224891, 1.032224891, 1.032224891, 1.032224891, 1.032224891, 1.032224891, 1.032224891, 1.032224891, 1.032224891, 1.032224891 },
+				{ 0.948373373, 0.999998519, 1.026049883, 1.026049883, 1.026049883, 1.026049883, 1.026049883, 1.026049883, 1.026049883, 1.026049883, 1.026049883, 1.026049883, 1.026049883, 1.026049883, 1.026049883, 1.026049883 },
+				{ 4233, 5080, 5926, 6773, 7619, 8466, 9313, 10160, 11010, 11850, 12700, 13550, 14390, 15240, 16090, 16930 },
+				{ 1.010089206, 1.011891486, 1.01255686, 1.011668643, 1.010064388, 1.007702994, 1.004333826, 0.999997153, 0.994932378, 0.989401112, 0.983666917, 0.977280916, 0.971367352, 0.965275037, 0.95961654, 0.954000402 },
+				{ 0.99980535, 0.999865138, 0.999905332, 0.999928566, 0.999961535, 0.999980674, 0.999982728, 0.999998519, 0.999988802, 0.999985139, 0.999980561, 0.99997041, 0.999971765, 0.999951595, 0.999942177, 0.999931661 },
+				{ 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1, 1.1, 1.2, 1.2, 1.2, 1.2, 1.2, 1.2 },
+				{ 0.203401818, 0.316774236, 0.425193295, 0.529359492, 0.63020385, 0.727865926, 0.822235009, 0.912894426, 0.999997153, 1.083899111, 1.164665378, 1.164665378, 1.164665378, 1.164665378, 1.164665378, 1.164665378 },
+				{ 0.262142336, 0.374183065, 0.476895875, 0.573804722, 0.665987612, 0.754207337, 0.838995989, 0.920805643, 0.999998519, 1.076865709, 1.151654505, 1.151654505, 1.151654505, 1.151654505, 1.151654505, 1.151654505 },
+				{ 0.934693878, 1, 1.032653061, 1.032653061, 1.032653061, 1.032653061, 1.032653061, 1.032653061, 1.032653061, 1.032653061, 1.032653061, 1.032653061, 1.032653061, 1.032653061, 1.032653061, 1.032653061 },
+				{ 1.236512593, 1.000112996, 0.902833651, 0.902833651, 0.902833651, 0.902833651, 0.902833651, 0.902833651, 0.902833651, 0.902833651, 0.902833651, 0.902833651, 0.902833651, 0.902833651, 0.902833651, 0.902833651 },
+				{ 0.959982021, 0.985360908, 0.991360469, 0.991360469, 0.991360469, 0.991360469, 0.991360469, 0.991360469, 0.991360469, 0.991360469, 0.991360469, 0.991360469, 0.991360469, 0.991360469, 0.991360469, 0.991360469 },
+				{ 4233, 5080, 5926, 6773, 7619, 8466, 9313, 10160, 11010, 11850, 12700, 13550, 14390, 15240, 16090, 16930 },
+				{ 0.941125625, 0.949227756, 0.956688545, 0.966571537, 0.974045654, 0.981658828, 0.989939801, 1.000009409, 1.009363621, 1.017831067, 1.024711821, 1.032808337, 1.038321342, 1.042786096, 1.045778047, 1.04910172 },
+				{ 0.999757489, 0.999765008, 0.999801048, 0.999880464, 0.999884491, 0.999920063, 0.999993684, 1.000005181, 1.000081927, 1.000064955, 1.000086868, 1.000117945, 1.000192903, 1.000142758, 1.000200667, 1.000206522 },
+				{ 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1, 1.1, 1.2, 1.2, 1.2, 1.2, 1.2, 1.2 },
+				{ 1.053772789, 0.987075215, 0.974675865, 0.978883187, 0.986637263, 0.994729321, 0.99699617, 0.997960423, 1.000024759, 1.002289974, 1.004633484, 1.004633484, 1.004633484, 1.004633484, 1.004633484, 1.004633484 },
+				{ 0.887406641, 0.852458319, 0.879823039, 0.9045708, 0.926040902, 0.945504789, 0.964903628, 0.98267267, 1.000015564, 1.016232194, 1.03271058, 1.03271058, 1.03271058, 1.03271058, 1.03271058, 1.03271058 }
+
+			};
+			m_db.assign(dTemp[0], 18, 16);
+		}
+
+
 		else
 		{
-			m_error_msg = util::format("The power cycle technology type identifier, %d, must be [1..4]", ms_params.m_tech_type);
+			m_error_msg = util::format("The power cycle technology type identifier, %d, must be [1..6]", ms_params.m_tech_type);
 			throw(C_csp_exception(m_error_msg, "Power cycle initialization"));
 		}
 
@@ -319,6 +382,16 @@ void C_pc_Rankine_indirect_224::init(C_csp_power_cycle::S_solved_params &solved_
 			}
 
 			break;
+		case 4:		// Once-through surface condenser case ARD
+			if (ms_params.m_tech_type != 4)
+			{
+				water_TQ(ms_params.m_dT_cw_ref + 3.0 + ms_params.m_T_approach + ms_params.m_T_amb_des + 273.15, 1.0, &wp);
+				Psat_ref = wp.pres*1000.0;
+			}
+			else
+			{
+				Psat_ref = CSP::P_sat4(ms_params.m_dT_cw_ref + 3.0 + ms_params.m_T_approach + ms_params.m_T_amb_des);	// Isopentane
+			}
 		}	// end cooling technology switch()
 
 		m_eta_adj = ms_params.m_eta_ref / (Interpolate(12, 2, Psat_ref) / Interpolate(22, 2, Psat_ref));
@@ -385,7 +458,41 @@ void C_pc_Rankine_indirect_224::init(C_csp_power_cycle::S_solved_params &solved_
 	solved_params.m_m_dot_design = m_m_dot_design;		//[kg/hr]
 	solved_params.m_m_dot_min = m_m_dot_min;			//[kg/hr]
 	solved_params.m_m_dot_max = m_m_dot_max;			//[kg/hr]
-}
+	
+
+	// Cold storage setup ARD 
+	C_csp_cold_tes::S_params *cold_tes = &mc_cold_storage.ms_params;
+	cold_tes->m_field_fl = 3;									//17 for molten salt; 3 for water liquid
+	//cold_tes->m_field_fl_props = as_matrix("field_fl_props"); //OK to skip b/c only for user-defined
+	cold_tes->m_tes_fl = 3;									// 17 for molten salt; 3 for water liquid
+	//cold_tes->m_tes_fl_props = as_matrix("field_fl_props");	// OK to skip
+	cold_tes->m_is_hx = false;									// MSPT assumes direct storage, so no user input required here: hardcode = false
+	cold_tes->m_W_dot_pc_design = 115;							//[MWe]
+	cold_tes->m_eta_pc_factor = .412/(1-0.412);					//[-] In order to allow this value to be used in the formula to determine size of tanks.
+	cold_tes->m_solarm = 2.4;									//[-]
+	cold_tes->m_ts_hours = 20;									//[hrs]
+	cold_tes->m_h_tank = 20;									//tank height [m]
+	cold_tes->m_u_tank = 0.4;									//wetted loss coefficient [Wt/m^2-K]
+	cold_tes->m_tank_pairs = 1;									//parallel pairs of tanks [-]
+	cold_tes->m_hot_tank_Thtr = 0;								//set point [C]
+	cold_tes->m_hot_tank_max_heat = 30;							//heater capacity [MWe]
+	cold_tes->m_cold_tank_Thtr = 0;								//set point [C]
+	cold_tes->m_cold_tank_max_heat = 15;						//capacity [MWe]
+	cold_tes->m_dt_hot = 0.0;									// MSPT assumes direct storage, so no user input here: hardcode = 0.0
+	cold_tes->m_T_field_in_des = 10;							//HTF cold [C]
+	cold_tes->m_T_field_out_des =35;							//HTF hot [C]
+	cold_tes->m_T_tank_hot_ini = 35;							//HTF hot initial [C] same as design
+	cold_tes->m_T_tank_cold_ini = 10;							//HTF cold initial [C] same as design
+	cold_tes->m_h_tank_min = 1;									//minimum fill height [m]
+	cold_tes->m_f_V_hot_ini = 5;								//initial hot HTF [%]
+	cold_tes->m_htf_pump_coef = 0.55;							//pumping power for HTF thru power block [kW/kg/s]
+	cold_tes->dT_cw_rad=mc_cold_storage.ms_params.m_T_field_out_des - mc_cold_storage.ms_params.m_T_field_in_des;	//Reference delta T based on design values given.
+	cold_tes->m_dot_cw_rad = (mc_cold_storage.ms_params.m_W_dot_pc_design*1000000. / mc_cold_storage.ms_params.m_eta_pc_factor) / (4183 /*[J/kg-K]*/ * mc_cold_storage.ms_params.dT_cw_rad);	//Calculate design cw mass flow [kg/sec]
+
+	//Initialize cold storage ARD
+	mc_cold_storage.init();
+
+} //init
 
 double C_pc_Rankine_indirect_224::get_cold_startup_time()
 {
@@ -502,8 +609,8 @@ double C_pc_Rankine_indirect_224::get_efficiency_at_TPH(double T_degC, double P_
 
 	if( !ms_params.m_is_user_defined_pc )
 	{
-		double P_cycle, T_htf_cold, m_dot_demand, m_dot_htf_ref, m_dot_makeup, W_cool_par, f_hrsys, P_cond;
-
+		double P_cycle, T_htf_cold, m_dot_demand, m_dot_htf_ref, m_dot_makeup, W_cool_par, f_hrsys, P_cond, T_cond_out, T_cold;
+		T_cond_out=T_cold=std::numeric_limits<double>::quiet_NaN();
 //		water_state wprop;
 
 		double Twet = calc_twet(T_degC, relhum_pct, P_atm*1.01325e6);
@@ -511,9 +618,9 @@ double C_pc_Rankine_indirect_224::get_efficiency_at_TPH(double T_degC, double P_
 		RankineCycle(
 				//inputs
 				T_degC+273.15, Twet+273.15, P_atm*101325., ms_params.m_T_htf_hot_ref, m_m_dot_design, 
-				2, 0., ms_params.m_P_boil, 1., m_F_wcMin, m_F_wcMax,
+				2, 0., ms_params.m_P_boil, 1., m_F_wcMin, m_F_wcMax,T_cold,
 				//outputs
-				P_cycle, eta, T_htf_cold, m_dot_demand, m_dot_htf_ref, m_dot_makeup, W_cool_par, f_hrsys, P_cond);
+				P_cycle, eta, T_htf_cold, m_dot_demand, m_dot_htf_ref, m_dot_makeup, W_cool_par, f_hrsys, P_cond, T_cond_out);
 
         if( w_dot_condenser != 0 )
             *w_dot_condenser = W_cool_par;
@@ -569,14 +676,15 @@ double C_pc_Rankine_indirect_224::get_efficiency_at_load(double load_frac, doubl
 		double Twet = calc_twet(ms_params.m_T_amb_des, 45, 1.01325e6);
 
 		//Call
-		double P_cycle, T_htf_cold, m_dot_demand, m_dot_htf_ref, m_dot_makeup, W_cool_par, f_hrsys, P_cond;
+		double P_cycle, T_htf_cold, m_dot_demand, m_dot_htf_ref, m_dot_makeup, W_cool_par, f_hrsys, P_cond, T_cond_out,T_cold;
+		T_cond_out=T_cold=std::numeric_limits<double>::quiet_NaN();
 
         RankineCycle(
 			    //inputs
 			    ms_params.m_T_amb_des+273.15, Twet+273.15, 101325., ms_params.m_T_htf_hot_ref, mdot, 2, 
-                0., ms_params.m_P_boil, 1., m_F_wcMin, m_F_wcMax, 
+                0., ms_params.m_P_boil, 1., m_F_wcMin, m_F_wcMax, T_cold,
 			    //outputs
-			    P_cycle, eta, T_htf_cold, m_dot_demand, m_dot_htf_ref, m_dot_makeup, W_cool_par, f_hrsys, P_cond);
+			    P_cycle, eta, T_htf_cold, m_dot_demand, m_dot_htf_ref, m_dot_makeup, W_cool_par, f_hrsys, P_cond, T_cond_out);
         
         if( w_dot_condenser != 0 )
             *w_dot_condenser = W_cool_par;
@@ -643,11 +751,18 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 	double P_amb = weather.m_pres*100.0;		//[Pa], converted from mbar
 	int tou = sim_info.m_tou - 1;				//[-], convert from 1-based index
 	//double rh = weather.m_rhum/100.0;			//[-], convert from %
+	double zenith = weather.m_solzen;			//Solar zenith [deg] at mid-hour
 
 	double m_dot_st_bd = 0.0;
 
-	double P_cycle, eta, T_htf_cold, m_dot_demand, m_dot_htf_ref, m_dot_water_cooling, W_cool_par, f_hrsys, P_cond;
-	P_cycle = eta = T_htf_cold = m_dot_demand = m_dot_htf_ref = m_dot_water_cooling = W_cool_par = f_hrsys = P_cond = std::numeric_limits<double>::quiet_NaN();
+	//for cold storage 
+	bool is_dark = (zenith > 90);		//boolean for if it is dark outside. =1 if dark out.
+	double m_warm_last = mc_cold_storage.get_hot_mass_prev();	//get last converged hot mass [kg]
+	bool is_warm_empty = (m_warm_last < mc_cold_storage.ms_params.m_dot_cw_rad * 3600); //=1 if warm tank volume is at least enough to run for one hour
+
+	double P_cycle, eta, T_htf_cold, m_dot_demand, m_dot_htf_ref, m_dot_water_cooling, W_cool_par, f_hrsys, P_cond, T_cond_out, T_cold, T_warm, m_cold, m_warm;
+	P_cycle = eta = T_htf_cold = m_dot_demand = m_dot_htf_ref = m_dot_water_cooling = W_cool_par = f_hrsys = P_cond = T_cond_out=T_cold=T_warm=m_cold=m_warm= std::numeric_limits<double>::quiet_NaN();
+	
 
 	// 4.15.15 twn: hardcode these so they don't have to be passed into call(). Mode is always = 2 for CSP simulations
 	int mode = 2;
@@ -706,6 +821,7 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 		P_cycle = 0.0;		
 		eta = 0.0;									
 		T_htf_cold = ms_params.m_T_htf_cold_ref;
+		
 		// *****
 		m_dot_demand = 0.0;
 		m_dot_water_cooling = 0.0;
@@ -713,6 +829,18 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 		f_hrsys = 0.0;
 		P_cond = 0.0;
 		m_dot_st_bd = 0.0;
+
+		if (ms_params.m_CT == 4) // only if radiative cooling is chosen 
+		{
+
+			mc_cold_storage.idle(step_sec, T_db, mc_cold_storage_outputs);	//idle cold storage tanks ARD
+			T_warm = mc_cold_storage_outputs.m_T_hot_ave - 273.15;			//output warm tank temperature, convert to [C]
+			T_cold = mc_cold_storage_outputs.m_T_cold_ave - 273.15;			//output cold tank temperature, convert to [C]
+			m_cold = mc_cold_storage.get_cold_mass();						//cold tank mass [kg] - is this current or previous?
+			m_warm = mc_cold_storage.get_hot_mass();						//warm tank mass [kg]
+			T_cond_out = T_cold;											// Return same cold temperature if no heat rejection 
+
+		}
 
 		was_method_successful = true;
 
@@ -723,10 +851,46 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 		if( !ms_params.m_is_user_defined_pc )
 		{
 
-            RankineCycle(T_db, T_wb, P_amb, T_htf_hot, m_dot_htf, mode, demand_var, ms_params.m_P_boil, 
-                ms_params.m_F_wc[tou], m_F_wcMin, m_F_wcMax, 
-			P_cycle, eta, T_htf_cold, m_dot_demand, m_dot_htf_ref, m_dot_water_cooling, W_cool_par, f_hrsys, P_cond);
+			double T_cold_prev= std::numeric_limits<double>::quiet_NaN();
+			T_cold_prev= mc_cold_storage.get_cold_temp() - 273.15; // Get previous cold temperature [C]
+			RankineCycle(T_db, T_wb, P_amb, T_htf_hot, m_dot_htf, mode, demand_var, ms_params.m_P_boil,
+				ms_params.m_F_wc[tou], m_F_wcMin, m_F_wcMax, T_cold_prev,
+				P_cycle, eta, T_htf_cold, m_dot_demand, m_dot_htf_ref, m_dot_water_cooling, W_cool_par, f_hrsys, P_cond, T_cond_out);
 
+			if (ms_params.m_CT == 4) // only if radiative cooling is chosen ARD
+			{
+
+				double T_cond_in = std::numeric_limits<double>::quiet_NaN();
+				double m_dot_condenser = f_hrsys * mc_cold_storage.ms_params.m_dot_cw_rad;		//calculate cooling water flow	[kg/sec]					
+				double m_cold_last= mc_cold_storage.get_cold_mass_prev();						//get previous converged cold tank mass [kg]
+				bool is_cold_empty = (m_cold_last < m_dot_condenser * 3600);					//=1 if cold tank almost empty within one hour of use
+				
+				if (is_cold_empty)																
+				{
+					mc_cold_storage.idle(step_sec, T_db, mc_cold_storage_outputs);				//Idle tank if not enough mass (should be rare - eliminate this later. ARD)
+				}
+				else
+				{
+					if(!is_warm_empty && is_dark)												//Simultaneous charge/discharge if nighttime and both tanks OK.
+					{
+							double T_rad_out = std::numeric_limits<double>::quiet_NaN();
+							radiator(T_db, 283, 1.5, 270, 1.5, T_rad_out);						//Call radiator to calculate temperature.
+							mc_cold_storage.charge_discharge(step_sec, T_db, m_dot_condenser, T_cond_out + 273.15, mc_cold_storage.ms_params.m_dot_cw_rad, T_rad_out, mc_cold_storage_outputs);
+					}
+					else																		//If cold tank OK and can't do nighttime cooling, just charge.
+					{
+						mc_cold_storage.charge(step_sec, T_db, m_dot_condenser, T_cond_out + 273.15, T_cond_in, mc_cold_storage_outputs);
+					}
+				}
+		
+				T_warm = mc_cold_storage_outputs.m_T_hot_ave - 273.15;				//output warm tank temperature, convert to [C]
+				T_cold = mc_cold_storage_outputs.m_T_cold_ave - 273.15;				//output cold tank temperature, convert to [C]
+				m_cold = mc_cold_storage.get_cold_mass();							//cold tank mass [kg] - current calculation.
+				m_warm = mc_cold_storage.get_hot_mass();							//warm tank mass [kg]
+				
+			}
+          
+	
 			// Check the output to make sure it's reasonable. If not, return zeros.
 			if( ((eta > 1.0) || (eta < 0.0)) || ((T_htf_cold > T_htf_hot) || (T_htf_cold < ms_params.m_T_htf_cold_ref - 50.0)) )
 			{
@@ -834,6 +998,7 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 			P_cycle = 0.0;
 			eta = 0.0;
 			T_htf_cold = ms_params.m_T_htf_cold_ref;
+		
 			m_dot_demand = m_dot_sby;
 			m_dot_st_bd = 0.0;
 			m_dot_water_cooling = 0.0;
@@ -842,6 +1007,17 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 			P_cond = 0.0;
 
 			q_dot_htf = m_dot_htf/3600.0*c_htf*(T_htf_hot - T_htf_cold)/1000.0;		//[MWt]
+
+			if (ms_params.m_CT == 4) // only if radiative cooling is chosen 
+			{
+				mc_cold_storage.idle(step_sec, T_db, mc_cold_storage_outputs);	//idle cold storage tanks ARD
+				T_warm = mc_cold_storage_outputs.m_T_hot_ave - 273.15;			//output warm tank temperature, convert to [C]
+				T_cold = mc_cold_storage_outputs.m_T_cold_ave - 273.15;			//output cold tank temperature, convert to [C]
+				m_cold = mc_cold_storage.get_cold_mass();						//cold tank mass [kg]
+				m_warm = mc_cold_storage.get_hot_mass();						//warm tank mass [kg]
+				T_cond_out = T_cold;											// Return same cold temperature if no heat rejection 
+
+			}
 
 			was_method_successful = true;
 		}
@@ -854,6 +1030,7 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 		P_cycle = 0.0;
 		eta = 0.0;
 		T_htf_cold = ms_params.m_T_htf_cold_ref;
+	
 		m_dot_demand = 0.0;
 		m_dot_water_cooling = 0.0;
 		m_dot_st_bd = 0.0;
@@ -866,6 +1043,34 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 		// Cycle is off, so reset startup parameters!
 		m_startup_time_remain_calc = ms_params.m_startup_time;			//[hr]
 		m_startup_energy_remain_calc = m_startup_energy_required;		//[kWt-hr]
+
+		if (ms_params.m_CT == 4) // only if radiative cooling is chosen 
+		{
+			double T_rad_out = std::numeric_limits<double>::quiet_NaN();
+			double T_rad_in = std::numeric_limits<double>::quiet_NaN();		//inlet to radiator [K]
+			if(is_dark)													
+				if (is_warm_empty)											//If dark & warm empty, recirculate.
+				{
+					radiator(T_db, 283, 1.5, 270, 1.5, T_rad_out);			//Call radiator to calculate temperature.
+					mc_cold_storage.recirculation(step_sec, T_db, mc_cold_storage.ms_params.m_dot_cw_rad,T_rad_out, mc_cold_storage_outputs);	
+				}
+				else														//If dark & warm not empty, discharge (cooling)
+				{
+					radiator(T_db, 283, 1.5, 270, 1.5, T_rad_out);
+					mc_cold_storage.discharge(step_sec, T_db, mc_cold_storage.ms_params.m_dot_cw_rad, T_rad_out, T_rad_in, mc_cold_storage_outputs);
+				}
+			else															//If daytime
+			{
+				mc_cold_storage.idle(step_sec, T_db, mc_cold_storage_outputs);	//idle cold storage tanks ARD
+			}
+			
+			T_warm = mc_cold_storage_outputs.m_T_hot_ave - 273.15;				//output warm tank temperature, convert to [C]
+			T_cold = mc_cold_storage_outputs.m_T_cold_ave - 273.15;				//output cold tank temperature, convert to [C]
+			m_cold = mc_cold_storage.get_cold_mass();							//cold tank mass [kg] - is this current or previous?
+			m_warm = mc_cold_storage.get_hot_mass();							//warm tank mass [kg]
+			T_cond_out = T_cold;												// Return same cold temperature if no heat rejection 
+
+		}
 
 		was_method_successful = true;
 
@@ -939,6 +1144,7 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 		P_cycle = 0.0;
 		eta = 0.0;
 		T_htf_cold = ms_params.m_T_htf_cold_ref;
+	
 		m_dot_htf = m_dot_htf_req_kg_s;		//[kg/hr]
 		//m_dot_demand = m_dot_htf_required*3600.0;		//[kg/hr], convert from kg/s
 		m_dot_water_cooling = 0.0;
@@ -948,6 +1154,17 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 		P_cond = 0.0;
 
 		q_dot_htf = m_dot_htf_required*c_htf*(T_htf_hot - ms_params.m_T_htf_cold_ref)/1000.0;	//[MWt]
+
+		if (ms_params.m_CT == 4) // only if radiative cooling is chosen 
+		{
+			mc_cold_storage.idle(step_sec, T_db, mc_cold_storage_outputs);	//idle cold storage tanks ARD
+			T_warm = mc_cold_storage_outputs.m_T_hot_ave - 273.15;			//output warm tank temperature, convert to [C]
+			T_cold = mc_cold_storage_outputs.m_T_cold_ave - 273.15;			//output cold tank temperature, convert to [C]
+			m_cold = mc_cold_storage.get_cold_mass();							//cold tank mass [kg] - is this current or previous?
+			m_warm = mc_cold_storage.get_hot_mass();							//warm tank mass [kg]
+			T_cond_out = T_cold; //Same return temp [C] if no heat rejection when radiative cooling.
+			
+		}
 
 		was_method_successful = true;
 
@@ -1030,6 +1247,8 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 		}
 	}	
 
+	
+
 	// Set outputs
 	out_solver.m_P_cycle = P_cycle/1000.0;				//[MWe] Cycle power output, convert from kWe
 	mc_reported_outputs.value(E_W_DOT, P_cycle/1000.0);	//[MWe] Cycle power output, convert from kWe
@@ -1043,7 +1262,11 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 
 	//out_report.m_m_dot_makeup = (m_dot_water_cooling + m_dot_st_bd)*3600.0;		//[kg/hr] Cooling water makeup flow rate, convert from kg/s
 	mc_reported_outputs.value(E_M_DOT_WATER, (m_dot_water_cooling + m_dot_st_bd)*3600.0);		//[kg/hr] Cooling water makeup flow rate, convert from kg/s
-
+	mc_reported_outputs.value(E_T_COND_OUT, T_cond_out);										//[C] Cooling water outlet temperature from condenser
+	mc_reported_outputs.value(E_T_COLD, T_cold);			//[C] Cold storage temperature
+	mc_reported_outputs.value(E_M_COLD, m_cold);			//[kg] Cold storage tank mass
+	mc_reported_outputs.value(E_M_WARM, m_warm);			//[kg] Cold storage warm (return) tank mass
+	mc_reported_outputs.value(E_T_WARM, T_warm);				//[C] Cold storage warm (return) tank temperature
 	//out_report.m_m_dot_demand = m_dot_demand;			//[kg/hr] HTF required flow rate to meet power load
 	
 	out_solver.m_m_dot_htf = m_dot_htf;					//[kg/hr] Actual HTF flow rate passing through the power cycle
@@ -1075,8 +1298,16 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 	out_solver.m_was_method_successful = was_method_successful;	//[-]
 }
 
+void C_pc_Rankine_indirect_224::radiator(double T_db /*K*/, double T_rad_in /*K*/, double u /*m/s*/, double T_s /*K*/, double m_dot_rad /*K*/,
+	//outputs
+	double &T_rad_out /*K*/)
+{
+	T_rad_out = 293.15;
+}
+
 void C_pc_Rankine_indirect_224::converged()
 {
+	mc_cold_storage.converged();	//ARD
 	m_standby_control_prev = m_standby_control_calc;
 	m_startup_time_remain_prev = m_startup_time_remain_calc;
 	m_startup_energy_remain_prev = m_startup_energy_remain_calc;
@@ -1110,10 +1341,10 @@ int C_pc_Rankine_indirect_224::get_operating_state()
 
 void C_pc_Rankine_indirect_224::RankineCycle(double T_db, double T_wb,
 		double P_amb, double T_htf_hot, double m_dot_htf, int mode,
-		double demand_var, double P_boil, double F_wc, double F_wcmin, double F_wcmax, 
+		double demand_var, double P_boil, double F_wc, double F_wcmin, double F_wcmax, double T_cold /*[C]*/,
         //outputs
         double& P_cycle, double& eta, double& T_htf_cold, double& m_dot_demand, double& m_dot_htf_ref,
-		double& m_dot_makeup, double& W_cool_par, double& f_hrsys, double& P_cond)
+		double& m_dot_makeup, double& W_cool_par, double& f_hrsys, double& P_cond, double &T_cond_out /*[C]*/)
 {
 	
     //local names for parameters
@@ -1187,6 +1418,10 @@ void C_pc_Rankine_indirect_224::RankineCycle(double T_db, double T_wb,
 		CSP::HybridHR(/*fcall,*/ms_params.m_tech_type, P_cond_min, ms_params.m_n_pl_inc, F_wc, F_wcmax, F_wcmin, T_ITD_des, T_approach, dT_cw_ref, P_cond_ratio, (P_ref*1000.), m_eta_adj, T_db, T_wb,
 			P_amb, q_reject_est, m_dot_makeup, W_cool_parhac, W_cool_parhwc, W_cool_par, P_cond, T_cond, f_hrsys);
 		break;
+	case 4:
+		// For a once-through surface condenser
+		CSP::surface_cond(ms_params.m_tech_type, P_cond_min, ms_params.m_n_pl_inc, mc_cold_storage.ms_params.dT_cw_rad, T_approach, (P_ref*1000.), m_eta_adj, T_db, T_wb, P_amb, T_cold /*[C]*/, q_reject_est, m_dot_makeup, W_cool_par, P_cond, T_cond, f_hrsys, T_cond_out /*[C]*/);
+		break;
 	}
 
 	//   Set initial values
@@ -1243,10 +1478,19 @@ void C_pc_Rankine_indirect_224::RankineCycle(double T_db, double T_wb,
 		P_CA = Interpolate(113, 13, T_htf_hot_ND);
 		P_AB = Interpolate(112, 12, P_cond);
 		P_BC = Interpolate(123, 23, m_dot_htf_ND);
-
-		P_ND[0] = P_ND[0] * P_AB;
-		P_ND[1] = P_ND[1] * P_BC;
-		P_ND[2] = P_ND[2] * P_CA;
+		
+		if ((ms_params.m_tech_type == 5) || (ms_params.m_tech_type == 6)) //ARD: cycles 5 & 6 based on different interaction pairs.
+		{
+			P_ND[0] = P_ND[0] * P_BC;
+			P_ND[1] = P_ND[1] * P_CA;
+			P_ND[2] = P_ND[2] * P_AB;
+		}
+		else
+		{
+			P_ND[0] = P_ND[0] * P_AB;
+			P_ND[1] = P_ND[1] * P_BC;
+			P_ND[2] = P_ND[2] * P_CA;
+		}
 
 		// HEAT
 		// Main effects
@@ -1255,13 +1499,24 @@ void C_pc_Rankine_indirect_224::RankineCycle(double T_db, double T_wb,
 		Q_ND[2] = Interpolate(23, 3, m_dot_htf_ND) - 1.0;
 
 		// Interactions
-		Q_CA = Interpolate(213, 13, T_htf_hot_ND);
-		Q_AB = Interpolate(212, 12, P_cond);
-		Q_BC = Interpolate(223, 23, m_dot_htf_ND);
+			Q_CA = Interpolate(213, 13, T_htf_hot_ND);
+			Q_AB = Interpolate(212, 12, P_cond);
+			Q_BC = Interpolate(223, 23, m_dot_htf_ND);
+			
+			if ((ms_params.m_tech_type == 5) || (ms_params.m_tech_type == 6)) //ARD: cycles 5 & 6 based on different interaction pairs.
+			{
 
-		Q_ND[0] = Q_ND[0] * Q_AB;
-		Q_ND[1] = Q_ND[1] * Q_BC;
-		Q_ND[2] = Q_ND[2] * Q_CA;
+				Q_ND[0] = Q_ND[0] * Q_BC;
+				Q_ND[1] = Q_ND[1] * Q_CA;
+				Q_ND[2] = Q_ND[2] * Q_AB;
+			}
+			else
+			{
+
+				Q_ND[0] = Q_ND[0] * Q_AB;
+				Q_ND[1] = Q_ND[1] * Q_BC;
+				Q_ND[2] = Q_ND[2] * Q_CA;
+			}
 
 		// Calculate the cumulative values
 		P_ND_tot = 1.0;
@@ -1295,6 +1550,9 @@ void C_pc_Rankine_indirect_224::RankineCycle(double T_db, double T_wb,
 			case 3:
 				CSP::HybridHR(/*fcall, */ms_params.m_tech_type, P_cond_min, ms_params.m_n_pl_inc, F_wc, F_wcmax, F_wcmin, T_ITD_des, T_approach, dT_cw_ref, P_cond_ratio, (P_ref*1000.), m_eta_adj, T_db, T_wb,
 					P_amb, q_reject, m_dot_makeup, W_cool_parhac, W_cool_parhwc, W_cool_par, P_cond_guess, T_cond, f_hrsys);
+				break;
+			case 4:
+				CSP::surface_cond(ms_params.m_tech_type, P_cond_min, ms_params.m_n_pl_inc, mc_cold_storage.ms_params.dT_cw_rad, T_approach, (P_ref*1000.), m_eta_adj, T_db, T_wb, P_amb,T_cold, q_reject, m_dot_makeup, W_cool_par, P_cond_guess, T_cond, f_hrsys, T_cond_out);
 				break;
 			}
 		}
@@ -1455,3 +1713,4 @@ double C_pc_Rankine_indirect_224::Interpolate(int YT, int XT, double X)
 
 	return m_db.at(YI, lbi) + ind * (m_db.at(YI, ubi) - m_db.at(YI, lbi));
 } // Interpolate
+
