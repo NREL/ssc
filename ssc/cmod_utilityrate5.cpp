@@ -2373,7 +2373,9 @@ public:
 								{
 									charge = 0;
 									d_lower = 0;
-									demand = m_month[m].dc_tou_peak[period];
+//									demand = m_month[m].dc_tou_peak[period];
+									demand = m_month[m].dc_flat_peak;
+									if (m_month[m].dc_flat_peak_hour != m_month[m].dc_tou_peak_hour[period]) continue; // only one peak per month.
 									// find tier corresponding to peak demand
 									bool found = false;
 									for (tier = 0; tier < (int)m_month[m].dc_tou_ub.ncols() && !found; tier++)
@@ -2951,8 +2953,9 @@ public:
 								{
 									charge = 0;
 									d_lower = 0;
-									demand = m_month[m].dc_tou_peak[period];
-									// find tier corresponding to peak demand
+//									demand = m_month[m].dc_tou_peak[period];
+									demand = m_month[m].dc_flat_peak;
+									if (m_month[m].dc_flat_peak_hour != m_month[m].dc_tou_peak_hour[period]) continue; // only one peak per month.
 									bool found = false;
 									for (tier = 0; tier < (int)m_month[m].dc_tou_ub.ncols() && !found; tier++)
 									{
