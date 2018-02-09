@@ -454,7 +454,11 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
 	{ SSC_OUTPUT,       SSC_ARRAY,       "T_pc_in",              "PC HTF inlet temperature",                                     "C",            "",            "PC",             "*",                       "",           "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "T_pc_out",             "PC HTF outlet temperature",                                    "C",            "",            "PC",             "*",                       "",           "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "m_dot_water_pc",       "PC water consumption: makeup + cooling",                       "kg/s",         "",            "PC",             "*",                       "",           "" },
-	
+	{ SSC_OUTPUT,		SSC_ARRAY,		 "T_cond_out",			 "PC condenser water outlet temperature",						 "C",			 "",			"PC",			  "*",						 "",		   "" },
+	{ SSC_OUTPUT,		SSC_ARRAY,		 "T_cold",				 "Cold storage cold temperature",								 "C",			 "",			"PC",			  "*",						 "",		   "" },
+	{ SSC_OUTPUT,		SSC_ARRAY,		 "m_cold",				 "Cold storage cold tank mass",									 "kg",			 "",			"PC",			  "*",						 "",		   "" },
+	{ SSC_OUTPUT,		SSC_ARRAY,		 "m_warm",				 "Cold storage warm tank mass",									 "kg",			 "",			"PC",			  "*",						 "",		   "" },
+	{ SSC_OUTPUT,		SSC_ARRAY,		 "T_warm",				 "Cold storage warm tank temperature",							 "C",			 "",			"PC",			  "*",						 "",		   "" },
 
 		// Thermal energy storage outputs
 	{ SSC_OUTPUT,       SSC_ARRAY,       "tank_losses",          "TES thermal losses",                                           "MWt",          "",            "TES",            "*",                       "",           "" },
@@ -887,7 +891,7 @@ public:
 				pc->m_P_boil = as_double("P_boil");
 				pc->m_CT = as_integer("CT");					// cooling tech type: 1=evaporative, 2=air, 3=hybrid	
 				pc->m_tech_type = as_integer("tech_type");		// 1: Fixed, 3: Sliding
-				if (!(pc->m_tech_type == 1 || pc->m_tech_type == 3))
+				if (!(pc->m_tech_type == 1 || pc->m_tech_type == 3 || pc->m_tech_type ==5 || pc->m_tech_type==6))
 				{
 					std::string tech_msg = util::format("tech_type must be either 1 (fixed pressure) or 3 (sliding). Input was %d."
 						" Simulation proceeded with fixed pressure", pc->m_tech_type);
@@ -1378,6 +1382,11 @@ public:
 		p_csp_power_cycle->assign(C_pc_Rankine_indirect_224::E_T_HTF_IN, allocate("T_pc_in", n_steps_fixed), n_steps_fixed);
 		p_csp_power_cycle->assign(C_pc_Rankine_indirect_224::E_T_HTF_OUT, allocate("T_pc_out", n_steps_fixed), n_steps_fixed);
 		p_csp_power_cycle->assign(C_pc_Rankine_indirect_224::E_M_DOT_WATER, allocate("m_dot_water_pc", n_steps_fixed), n_steps_fixed);
+		p_csp_power_cycle->assign(C_pc_Rankine_indirect_224::E_T_COND_OUT, allocate("T_cond_out", n_steps_fixed), n_steps_fixed);
+		p_csp_power_cycle->assign(C_pc_Rankine_indirect_224::E_T_COLD, allocate("T_cold", n_steps_fixed), n_steps_fixed);
+		p_csp_power_cycle->assign(C_pc_Rankine_indirect_224::E_M_COLD, allocate("m_cold", n_steps_fixed), n_steps_fixed);
+		p_csp_power_cycle->assign(C_pc_Rankine_indirect_224::E_M_WARM, allocate("m_warm", n_steps_fixed), n_steps_fixed);
+		p_csp_power_cycle->assign(C_pc_Rankine_indirect_224::E_T_WARM, allocate("T_warm", n_steps_fixed), n_steps_fixed);
 
 
 
@@ -1551,6 +1560,7 @@ public:
 		tes->m_h_tank_min = as_double("h_tank_min");
 		tes->m_f_V_hot_ini = as_double("csp.pt.tes.init_hot_htf_percent");
 		tes->m_htf_pump_coef = as_double("pb_pump_coef");
+
 
 		// TOU parameters
 		C_csp_tou_block_schedules tou;
