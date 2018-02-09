@@ -1088,6 +1088,140 @@ void CSP::HybridHR( int tech_type, double P_cond_min, int n_pl_inc, double F_wc,
 }
 
 
+// Surface condenser calculations for once through cooling ARD
+void CSP::surface_cond(int tech_type, double P_cond_min, int n_pl_inc, double DeltaT_cw_des, double T_approach, double P_cycle,
+	double eta_ref, double T_db_K, double T_wb_K, double P_amb, double T_cold, double q_reject, double &m_dot_water,
+	double &W_dot_tot, double &P_cond, double &T_cond, double &f_hrsys, double &T_cond_out)
+{
+	/*
+	double c_air, c_cw, deltah_evap, deltat_cw, dp_evap, drift_loss_frac, dt_out, eta_fan, eta_fan_s,
+	eta_pcw_s, eta_pump, h_fan_in, h_fan_out, h_fan_out_s, h_pcw_in, h_pcw_out,
+	h_pcw_out_s, m_dot_air, m_dot_blowdown, m_dot_cw, m_dot_cw_des, m_dot_drift, blowdown_frac,
+	m_dot_evap, mass_ratio_fan, p_ratio_fan, q_reject_des, R, rho_cw, s_pcw_in, t_fan_in,
+	t_fan_in_k, t_fan_out, t_fan_out_k, w_dot_cw_pump, w_dot_fan;*/
+	/*
+	!------------------------------------------------------------------------------------------------------------
+	!--Inputs
+	!   * P_cond_min    [Pa]    Minimum allowable condenser pressure
+	!   * n_pl_inc      [-]     Number of part load heat rejection levels
+	!   * DeltaT_cw_des [K]     Cooling water temperature rise across condenser
+	!   * T_approach    [K]     Cooling tower approach temperature, difference between cw out and wet bulb temp
+	!   * P_cycle       [W]     Rated power block capacity
+	!   * eta_ref       [-]     Rated gross conversion efficiency
+	!   * T_db          [K]     Dry bulb temperature (converted to C)
+	!   * P_amb         [Pa]    Atmospheric pressure
+	!	* T_cold		[C]		Cold storage temperature (inlet to condenser)
+	!------------------------------------------------------------------------------------------------------------
+	!--Output
+	!   * m_dot_water   [kg/s]  Total cooling tower water usage
+	!   * W_dot_tot     [MW]    Total parasitic power for cooling tower model
+	!   * P_cond        [Pa]    Condenser steam pressure
+	!   * T_cond        [K]     Condenser steam temperature
+	!   * f_hrsys       [-]     Fraction of the cooling system operating
+	!	* T_cond_out	[C]		Condenser water outlet temperature
+	!------------------------------------------------------------------------------------------------------------
+	*/
+
+	// Unit conversions
+	double T_db = T_db_K - 273.15;    //[C] Converted dry bulb temp
+	double T_wb = T_wb_K - 273.15;    //[C] Converted wet bulb temp
+
+	// Values that can be estimated
+	double dt_out = 3.0;				// Temperature difference at hot side of the condenser
+	double drift_loss_frac = 0.001;    // Drift loss fraction
+	double blowdown_frac = 0.003;      // Blowdown fraction
+	double dp_evap = 0.37*1.0e5;       // [Pa] Pressure drop across the condenser and cooling tower
+	double eta_pump = 0.75;            // Total pump efficiency
+	double eta_pcw_s = 0.8;            // Isentropic cooling water pump efficiency
+	double eta_fan = 0.75;             // Fan mechanical efficiency
+	double eta_fan_s = 0.8;            // Fan isentropic efficiency
+	double p_ratio_fan = 1.0025;       // Fan pressure ratio
+	double mass_ratio_fan = 1.01;      // Ratio of air flow to water flow in the cooling tower
+
+	// Cooling water specific heat
+	water_state wp;
+	water_TP(max(T_cold, 10.0) + 273.15, P_amb / 1000.0, &wp);
+	double c_cw = wp.cp * 1000.0;		// Convert to J/kg-K
+
+	// **** Calculations for design conditions
+	double q_reject_des = P_cycle*(1. / eta_ref - 1.0);    	    // Heat rejection from the cycle
+	double m_dot_cw_des = q_reject_des / (c_cw*DeltaT_cw_des);	// Mass flow rate of cooling water required to absorb the rejected heat
+	f_hrsys = 1.0;   // Initial fraction of cooling system operating
+
+	// **** Calculations for performance
+	// Calculate the cooling water temp. rise associated with normal cooling system operation
+	double m_dot_cw = m_dot_cw_des;
+	double deltat_cw = q_reject / (m_dot_cw*c_cw);
+
+	// Condenser saturation temperature
+	T_cond = T_cold + deltat_cw + dt_out; // celcius
+
+	// Condenser back pressure
+	if (tech_type != 4)
+	{
+		water_TQ(T_cond + 273.15, 1.0, &wp);
+		P_cond = wp.pres * 1000.0;
+	}
+	else
+		P_cond = CSP::P_sat4(T_cond); // isopentane
+
+
+	// MJW 7.19.2010 :: Cooling system part-load strategy uses the number of part-load increments to determine how the coolign system is
+	// partially shut down during under design operation. The condenser pressure is reduced with the cooling system running
+	// at full load until it reaches the minimum condenser pressure. The cooling system then incrementally shuts off bays until
+	// the condenser temperature/pressure rise above their minimum level. Default cond. pressure is 1.25 inHg (4233 Pa).
+	if ((P_cond < P_cond_min) && (tech_type != 4)) // Aug 3, 2011: No lower limit on Isopentane
+	{
+		for (int i = 2; i <= n_pl_inc; i++)
+		{
+			f_hrsys = (1.0 - (float)((i - 1.0) / n_pl_inc));
+			m_dot_cw = m_dot_cw_des*f_hrsys;
+			deltat_cw = q_reject / (m_dot_cw*c_cw);
+			T_cond = T_cold + deltat_cw + dt_out;
+
+			water_TQ(T_cond + 273.15, 1.0, &wp);
+			P_cond = wp.pres * 1000.0;
+
+			if (P_cond > P_cond_min) break;
+		}
+		if (P_cond <= P_cond_min)
+		{
+			// Still below min. fix to min condenser pressure and recalc. temp.
+
+			P_cond = P_cond_min;
+
+			water_PQ(P_cond / 1000.0, 1.0, &wp);
+			T_cond = wp.temp - 273.15;
+
+			deltat_cw = T_cond - (T_cold + dt_out);
+			m_dot_cw = q_reject / (deltat_cw * c_cw);
+		}
+	}
+	water_TP(T_cond - 3.0 + 273.15, P_amb / 1000.0, &wp);
+	double h_pcw_in = wp.enth*1000.0;
+	//double s_pcw_in = wp.entr*1000.0;
+	double rho_cw = wp.dens;
+
+	double h_pcw_out_s = (dp_evap / rho_cw) + h_pcw_in;								// [J/kg] isentropic outlet enthalpy.. incompressible fluid
+	double h_pcw_out = h_pcw_in + ((h_pcw_out_s - h_pcw_in) / eta_pcw_s);			// [J/kg] Outlet enthalpy accounting for irreversibility
+	double w_dot_cw_pump = (h_pcw_out - h_pcw_in) * m_dot_cw / eta_pump * 1.0E-6;	// [MW] Cooling water circulating pump power
+
+	T_cond_out = T_cond - dt_out;	// [C] Return the condenser cooling water outlet temperature
+	
+
+	// Total cooling tower parasitic power
+	W_dot_tot = w_dot_cw_pump;   // [MW]
+
+
+	// Total power block water usage
+	m_dot_water = 0;
+
+	// Unit conversions
+	T_db = T_db + 273.15;		// [C] Converted dry bulb temp (TFF - I think this is irrelevant, since it's not passed back out)
+	T_wb = T_wb + 273.15;		// [C] Converted wet bulb temp (TFF - I think this is irrelevant, since it's not passed back out)
+	T_cond = T_cond + 273.15;	// [K] Convert to K for output
+}
+
 double CSP::eta_pl(double mf)
 {
 	return 1.0 - (0.191 - 0.409*mf + 0.218*pow(mf,2.0));	// This number should be multiplied by the design-point isen. eff to get the final.
