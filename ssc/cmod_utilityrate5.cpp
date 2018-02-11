@@ -60,6 +60,8 @@ static var_info vtab_utility_rate5[] = {
 
 	{ SSC_INPUT, SSC_NUMBER, "system_use_lifetime_output", "Lifetime hourly system outputs", "0/1", "0=hourly first year,1=hourly lifetime", "", "*", "INTEGER,MIN=0,MAX=1", "" },
 
+	{ SSC_INPUT, SSC_NUMBER, "TOU_demand_single_peak", "Use single monthly peak for TOU demand charge", "0/1", "0=use TOU peak,1=use flat peak", "", "?=0", "INTEGER,MIN=0,MAX=1", "" },
+	
 	// First year or lifetime hourly or subhourly
 	// load and gen expected to be > 0
 	// grid positive if system generation > load, negative otherwise
@@ -1291,8 +1293,8 @@ public:
 	{
 		size_t nrows, ncols, r, c, m, i, j;
 		int period, tier, month;
-		util::matrix_t<float> dc_schedwkday(12, 24, 1);
-		util::matrix_t<float> dc_schedwkend(12, 24, 1);
+//		util::matrix_t<float> dc_schedwkday(12, 24, 1);
+//		util::matrix_t<float> dc_schedwkend(12, 24, 1);
 
 		for (i = 0; i < m_ec_periods_tiers_init.size(); i++)
 			m_ec_periods_tiers_init[i].clear();
@@ -1846,6 +1848,9 @@ public:
 
 		bool excess_monthly_dollars = (as_integer("ur_metering_option") == 1);
 
+		bool tou_demand_single_peak = (as_integer("TOU_demand_single_peak") == 1);
+
+
 		size_t steps_per_hour = m_num_rec_yearly / 8760;
 		// calculate the monthly net energy and monthly hours
 		int m, d, h, s, period, tier;
@@ -2373,11 +2378,15 @@ public:
 								{
 									charge = 0;
 									d_lower = 0;
-//									demand = m_month[m].dc_tou_peak[period];
-									demand = m_month[m].dc_flat_peak;
-									if (m_month[m].dc_flat_peak_hour != m_month[m].dc_tou_peak_hour[period]) continue; // only one peak per month.
+									if (tou_demand_single_peak)
+									{
+										demand = m_month[m].dc_flat_peak;
+										if (m_month[m].dc_flat_peak_hour != m_month[m].dc_tou_peak_hour[period]) continue; // only one peak per month.
+									}
+									else
+										demand = m_month[m].dc_tou_peak[period];
 									// find tier corresponding to peak demand
-									bool found = false;
+									found = false;
 									for (tier = 0; tier < (int)m_month[m].dc_tou_ub.ncols() && !found; tier++)
 									{
 										if (demand < m_month[m].dc_tou_ub.at(period, tier))
@@ -2607,6 +2616,9 @@ public:
 		*/
 		//int metering_option = as_integer("ur_metering_option");
 		bool excess_monthly_dollars = (as_integer("ur_metering_option") == 3);
+
+		bool tou_demand_single_peak = (as_integer("TOU_demand_single_peak") == 1);
+
 
 		size_t steps_per_hour = m_num_rec_yearly / 8760;
 
@@ -2953,10 +2965,15 @@ public:
 								{
 									charge = 0;
 									d_lower = 0;
-//									demand = m_month[m].dc_tou_peak[period];
-									demand = m_month[m].dc_flat_peak;
-									if (m_month[m].dc_flat_peak_hour != m_month[m].dc_tou_peak_hour[period]) continue; // only one peak per month.
-									bool found = false;
+									if (tou_demand_single_peak)
+									{
+										demand = m_month[m].dc_flat_peak;
+										if (m_month[m].dc_flat_peak_hour != m_month[m].dc_tou_peak_hour[period]) continue; // only one peak per month.
+									}
+									else
+										demand = m_month[m].dc_tou_peak[period];
+
+									found = false;
 									for (tier = 0; tier < (int)m_month[m].dc_tou_ub.ncols() && !found; tier++)
 									{
 										if (demand < m_month[m].dc_tou_ub.at(period, tier))
