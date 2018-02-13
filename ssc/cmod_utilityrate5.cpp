@@ -2,7 +2,7 @@
 *  Copyright 2017 Alliance for Sustainable Energy, LLC
 *
 *  NOTICE: This software was developed at least in part by Alliance for Sustainable Energy, LLC
-*  (“Alliance”) under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
+*  (ï¿½Allianceï¿½) under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
 *  The Government retains for itself and others acting on its behalf a nonexclusive, paid-up,
 *  irrevocable worldwide license in the software to reproduce, prepare derivative works, distribute
 *  copies to the public, perform publicly and display publicly, and to permit others to do so.
@@ -26,8 +26,8 @@
 *  4. Redistribution of this software, without modification, must refer to the software by the same
 *  designation. Redistribution of a modified version of this software (i) may not refer to the modified
 *  version by the same designation, or by any confusingly similar designation, and (ii) must refer to
-*  the underlying software originally provided by Alliance as “System Advisor Model” or “SAM”. Except
-*  to comply with the foregoing, the terms “System Advisor Model”, “SAM”, or any confusingly similar
+*  the underlying software originally provided by Alliance as ï¿½System Advisor Modelï¿½ or ï¿½SAMï¿½. Except
+*  to comply with the foregoing, the terms ï¿½System Advisor Modelï¿½, ï¿½SAMï¿½, or any confusingly similar
 *  designation may not be used to refer to any modified version of this software or any modified
 *  version of the underlying software originally provided by Alliance without the prior written consent
 *  of Alliance.
@@ -341,6 +341,19 @@ static var_info vtab_utility_rate5[] = {
 	{ SSC_OUTPUT, SSC_MATRIX, "surplus_w_sys_ec_nov_tp", "Electricity exports with system Nov", "kWh", "", "Charges by Month", "*", "", "ROW_LABEL=UR_PERIODNUMS,COL_LABEL=UR_TIERNUMS,FORMAT_SPEC=CURRENCY,GROUP=UR_MTP" },
 	{ SSC_OUTPUT, SSC_MATRIX, "surplus_w_sys_ec_dec_tp", "Electricity exports with system Dec", "kWh", "", "Charges by Month", "*", "", "ROW_LABEL=UR_PERIODNUMS,COL_LABEL=UR_TIERNUMS,FORMAT_SPEC=CURRENCY,GROUP=UR_MTP" },
 
+<<<<<<< HEAD
+		// monthly peak demand per period
+	{ SSC_OUTPUT, SSC_MATRIX, "monthly_tou_demand_peak_w_sys", "Demand peak with system", "kW", "", "Charges by Month", "*", "", "ROW_LABEL=MONTHS,COL_LABEL=UR_MONTH_TOU_DEMAND,FORMAT_SPEC=CURRENCY" },
+	{ SSC_OUTPUT, SSC_MATRIX, "monthly_tou_demand_peak_wo_sys", "Demand peak without system", "kW", "", "Charges by Month", "*", "", "ROW_LABEL=MONTHS,COL_LABEL=UR_MONTH_TOU_DEMAND,FORMAT_SPEC=CURRENCY" },
+	{ SSC_OUTPUT, SSC_MATRIX, "monthly_tou_demand_charge_w_sys", "Demand peak charge with system", "$", "", "Charges by Month", "*", "", "ROW_LABEL=MONTHS,COL_LABEL=UR_MONTH_TOU_DEMAND,FORMAT_SPEC=CURRENCY" },
+	{ SSC_OUTPUT, SSC_MATRIX, "monthly_tou_demand_charge_wo_sys", "Demand peak charge without system", "$", "", "Charges by Month", "*", "", "ROW_LABEL=MONTHS,COL_LABEL=UR_MONTH_TOU_DEMAND,FORMAT_SPEC=CURRENCY" },
+=======
+	// monthly peak demand per period
+	{ SSC_OUTPUT, SSC_MATRIX, "monthly_tou_demand_peak_w_sys", "Demand peak with system", "kW", "", "Charges by Month", "*", "", "ROW_LABEL=MONTHS,COL_LABEL=UR_MONTH_TOU_DEMAND,FORMAT_SPEC=CURRENCY" },
+	{ SSC_OUTPUT, SSC_MATRIX, "monthly_tou_demand_peak_wo_sys", "Demand peak without system", "kW", "", "Charges by Month", "*", "", "ROW_LABEL=MONTHS,COL_LABEL=UR_MONTH_TOU_DEMAND,FORMAT_SPEC=CURRENCY" },
+	{ SSC_OUTPUT, SSC_MATRIX, "monthly_tou_demand_charge_w_sys", "Demand peak with system", "$", "", "Charges by Month", "*", "", "ROW_LABEL=MONTHS,COL_LABEL=UR_MONTH_TOU_DEMAND,FORMAT_SPEC=CURRENCY" },
+	{ SSC_OUTPUT, SSC_MATRIX, "monthly_tou_demand_charge_wo_sys", "Demand peak without system", "$", "", "Charges by Month", "*", "", "ROW_LABEL=MONTHS,COL_LABEL=UR_MONTH_TOU_DEMAND,FORMAT_SPEC=CURRENCY" },
+>>>>>>> develop
 
 
 	var_info_invalid };
@@ -725,6 +738,11 @@ public:
 		util::matrix_t<ssc_number_t> &surplus_w_sys_ec_dec_tp = allocate_matrix("surplus_w_sys_ec_dec_tp", m_month[11].ec_charge.nrows() + 2, m_month[11].ec_charge.ncols() + 2);
 
 
+<<<<<<< HEAD
+		util::matrix_t<ssc_number_t> &monthly_tou_demand_peak_w_sys = allocate_matrix("monthly_tou_demand_peak_w_sys", 13, m_dc_tou_periods.size());
+		util::matrix_t<ssc_number_t> &monthly_tou_demand_peak_wo_sys = allocate_matrix("monthly_tou_demand_peak_wo_sys", 13, m_dc_tou_periods.size());
+		util::matrix_t<ssc_number_t> &monthly_tou_demand_charge_w_sys = allocate_matrix("monthly_tou_demand_charge_w_sys", 13, m_dc_tou_periods.size());
+		util::matrix_t<ssc_number_t> &monthly_tou_demand_charge_wo_sys = allocate_matrix("monthly_tou_demand_charge_wo_sys", 13, m_dc_tou_periods.size());
 
 
 		// lifetime hourly load
@@ -866,6 +884,75 @@ public:
 				ur_update_ec_monthly(9, charge_wo_sys_ec_oct_tp, energy_wo_sys_ec_oct_tp, surplus_wo_sys_ec_oct_tp);
 				ur_update_ec_monthly(10, charge_wo_sys_ec_nov_tp, energy_wo_sys_ec_nov_tp, surplus_wo_sys_ec_nov_tp);
 				ur_update_ec_monthly(11, charge_wo_sys_ec_dec_tp, energy_wo_sys_ec_dec_tp, surplus_wo_sys_ec_dec_tp);
+
+<<<<<<< HEAD
+
+				// demand peak without system 
+				for (int irow = 0; irow <= 12; irow++)
+				{
+					for (int icol = 0; icol < (int)m_dc_tou_periods.size(); icol++)
+					{
+						if (irow == 0)
+						{
+							monthly_tou_demand_peak_wo_sys.at(0, icol) = (float)m_dc_tou_periods[icol];
+							monthly_tou_demand_charge_wo_sys.at(0, icol) = (float)m_dc_tou_periods[icol];
+						}
+						else
+						{
+							int ndx = -1;
+							int period = m_dc_tou_periods[icol];
+							std::vector<int>::iterator result = std::find(m_month[irow - 1].dc_periods.begin(), m_month[irow - 1].dc_periods.end(), period);
+							if (result == m_month[irow - 1].dc_periods.end())
+							{
+								monthly_tou_demand_peak_wo_sys.at(irow, icol) = 0;
+								monthly_tou_demand_charge_wo_sys.at(irow, icol) = 0;
+							}
+							else
+							{
+								ndx = (int)(result - m_month[irow - 1].dc_periods.begin());
+								if (ndx > -1 && ndx < (int)m_month[irow - 1].dc_tou_peak.size())
+									monthly_tou_demand_peak_wo_sys.at(irow, icol) = m_month[irow - 1].dc_tou_peak[ndx];
+								if (ndx > -1 && ndx < (int)m_month[irow - 1].dc_tou_charge.size())
+									monthly_tou_demand_charge_wo_sys.at(irow, icol) = m_month[irow - 1].dc_tou_charge[ndx];
+							}
+						}
+					}
+				}
+
+=======
+				// demand peak without system
+				for (int irow = 0; irow <= 12; irow++)
+				{
+					for (int icol = 0; icol < (int)m_dc_tou_periods.size(); icol++)
+					{
+						if (irow == 0)
+						{
+							monthly_tou_demand_peak_wo_sys.at(0, icol) = (float)m_dc_tou_periods[icol];
+							monthly_tou_demand_charge_wo_sys.at(0, icol) = (float)m_dc_tou_periods[icol];
+						}
+						else
+						{
+							int ndx = -1;
+							int period = m_dc_tou_periods[icol];
+							std::vector<int>::iterator result = std::find(m_month[irow - 1].dc_periods.begin(), m_month[irow - 1].dc_periods.end(), period);
+							if (result == m_month[irow - 1].dc_periods.end())
+							{
+								monthly_tou_demand_peak_wo_sys.at(irow, icol) = 0;
+								monthly_tou_demand_charge_wo_sys.at(irow, icol) = 0;
+							}
+							else
+							{
+								ndx = (int)(result - m_month[irow - 1].dc_periods.begin());
+								if (ndx > -1 && ndx < (int)m_month[irow - 1].dc_tou_peak.size())
+									monthly_tou_demand_peak_wo_sys.at(irow, icol) = m_month[irow - 1].dc_tou_peak[ndx];
+								if (ndx > -1 && ndx < (int)m_month[irow - 1].dc_tou_charge_per_period.size())
+									monthly_tou_demand_charge_wo_sys.at(irow, icol) = m_month[irow - 1].dc_tou_charge_per_period[ndx];
+							}
+						}
+					}
+				}
+>>>>>>> develop
+
 
 				assign("year1_hourly_dc_without_system", var_data(&demand_charge_wo_sys[0], m_num_rec_yearly));
 				assign("year1_hourly_ec_without_system", var_data(&energy_charge_wo_sys[0], m_num_rec_yearly));
@@ -1094,7 +1181,72 @@ public:
 				ur_update_ec_monthly(10, charge_w_sys_ec_nov_tp, energy_w_sys_ec_nov_tp, surplus_w_sys_ec_nov_tp);
 				ur_update_ec_monthly(11, charge_w_sys_ec_dec_tp, energy_w_sys_ec_dec_tp, surplus_w_sys_ec_dec_tp);
 
+<<<<<<< HEAD
+				// demand peak with system 
+				for (int irow = 0; irow <= 12; irow++)
+				{
+					for (int icol = 0; icol < (int)m_dc_tou_periods.size(); icol++)
+					{
+						if (irow == 0)
+						{
+							monthly_tou_demand_peak_w_sys.at(0, icol) = (float)m_dc_tou_periods[icol];
+							monthly_tou_demand_charge_w_sys.at(0, icol) = (float)m_dc_tou_periods[icol];
+						}
+						else
+						{
+							int ndx = -1;
+							int period = m_dc_tou_periods[icol];
+							std::vector<int>::iterator result = std::find(m_month[irow - 1].dc_periods.begin(), m_month[irow - 1].dc_periods.end(), period);
+							if (result == m_month[irow - 1].dc_periods.end())
+							{
+								monthly_tou_demand_peak_w_sys.at(irow, icol) = 0;
+								monthly_tou_demand_charge_w_sys.at(irow, icol) = 0;
+							}
+							else
+							{
+								ndx = (int)(result - m_month[irow - 1].dc_periods.begin());
+								if (ndx > -1 && ndx < (int)m_month[irow - 1].dc_tou_peak.size())
+									monthly_tou_demand_peak_w_sys.at(irow, icol) = m_month[irow - 1].dc_tou_peak[ndx];
+								if (ndx > -1 && ndx < (int)m_month[irow - 1].dc_tou_charge.size())
+									monthly_tou_demand_charge_w_sys.at(irow, icol) = m_month[irow - 1].dc_tou_charge[ndx];
+							}
+						}
+					}
+				}
+=======
+				// demand peak with system
+				for (int irow = 0; irow <= 12; irow++)
+				{
+					for (int icol = 0; icol < (int)m_dc_tou_periods.size(); icol++)
+					{
+						if (irow == 0)
+						{
+							monthly_tou_demand_peak_w_sys.at(0, icol) = (float)m_dc_tou_periods[icol];
+							monthly_tou_demand_charge_w_sys.at(0, icol) = (float)m_dc_tou_periods[icol];
+						}
+						else
+						{
+							int ndx = -1;
+							int period = m_dc_tou_periods[icol];
+							std::vector<int>::iterator result = std::find(m_month[irow - 1].dc_periods.begin(), m_month[irow - 1].dc_periods.end(), period);
+							if (result == m_month[irow - 1].dc_periods.end())
+							{
+								monthly_tou_demand_peak_w_sys.at(irow, icol) = 0;
+								monthly_tou_demand_charge_w_sys.at(irow, icol) = 0;
+							}
+							else
+							{
+								ndx = (int)(result - m_month[irow - 1].dc_periods.begin());
+								if (ndx > -1 && ndx < (int)m_month[irow - 1].dc_tou_peak.size())
+									monthly_tou_demand_peak_w_sys.at(irow, icol) = m_month[irow - 1].dc_tou_peak[ndx];
+								if (ndx > -1 && ndx < (int)m_month[irow - 1].dc_tou_charge_per_period.size())
+									monthly_tou_demand_charge_w_sys.at(irow, icol) = m_month[irow - 1].dc_tou_charge_per_period[ndx];
+							}
+						}
+					}
+				}
 
+>>>>>>> develop
 				assign("year1_hourly_dc_with_system", var_data(&demand_charge_w_sys[0], (int)m_num_rec_yearly));
 				assign("year1_hourly_ec_with_system", var_data(&energy_charge_w_sys[0], (int)m_num_rec_yearly));
 				assign("year1_hourly_dc_peak_per_period", var_data(&dc_hourly_peak[0], (int)m_num_rec_yearly));
@@ -3203,3 +3355,79 @@ public:
 DEFINE_MODULE_ENTRY( utilityrate5, "Complex utility rate structure net revenue calculator OpenEI Version 4 with net billing", 1 );
 
 
+
+		// monthly peak demand per period
+	{ SSC_OUTPUT, SSC_MATRIX, "monthly_tou_demand_peak_w_sys", "Demand peak with system", "kW", "", "Charges by Month", "*", "", "ROW_LABEL=MONTHS,COL_LABEL=UR_MONTH_TOU_DEMAND,FORMAT_SPEC=CURRENCY" },
+	{ SSC_OUTPUT, SSC_MATRIX, "monthly_tou_demand_peak_wo_sys", "Demand peak without system", "kW", "", "Charges by Month", "*", "", "ROW_LABEL=MONTHS,COL_LABEL=UR_MONTH_TOU_DEMAND,FORMAT_SPEC=CURRENCY" },
+	{ SSC_OUTPUT, SSC_MATRIX, "monthly_tou_demand_charge_w_sys", "Demand peak charge with system", "$", "", "Charges by Month", "*", "", "ROW_LABEL=MONTHS,COL_LABEL=UR_MONTH_TOU_DEMAND,FORMAT_SPEC=CURRENCY" },
+	{ SSC_OUTPUT, SSC_MATRIX, "monthly_tou_demand_charge_wo_sys", "Demand peak charge without system", "$", "", "Charges by Month", "*", "", "ROW_LABEL=MONTHS,COL_LABEL=UR_MONTH_TOU_DEMAND,FORMAT_SPEC=CURRENCY" },
+		util::matrix_t<ssc_number_t> &monthly_tou_demand_peak_w_sys = allocate_matrix("monthly_tou_demand_peak_w_sys", 13, m_dc_tou_periods.size());
+		util::matrix_t<ssc_number_t> &monthly_tou_demand_peak_wo_sys = allocate_matrix("monthly_tou_demand_peak_wo_sys", 13, m_dc_tou_periods.size());
+		util::matrix_t<ssc_number_t> &monthly_tou_demand_charge_w_sys = allocate_matrix("monthly_tou_demand_charge_w_sys", 13, m_dc_tou_periods.size());
+		util::matrix_t<ssc_number_t> &monthly_tou_demand_charge_wo_sys = allocate_matrix("monthly_tou_demand_charge_wo_sys", 13, m_dc_tou_periods.size());
+
+				// demand peak without system 
+				for (int irow = 0; irow <= 12; irow++)
+				{
+					for (int icol = 0; icol < (int)m_dc_tou_periods.size(); icol++)
+					{
+						if (irow == 0)
+						{
+							monthly_tou_demand_peak_wo_sys.at(0, icol) = (float)m_dc_tou_periods[icol];
+							monthly_tou_demand_charge_wo_sys.at(0, icol) = (float)m_dc_tou_periods[icol];
+						}
+						else
+						{
+							int ndx = -1;
+							int period = m_dc_tou_periods[icol];
+							std::vector<int>::iterator result = std::find(m_month[irow - 1].dc_periods.begin(), m_month[irow - 1].dc_periods.end(), period);
+							if (result == m_month[irow - 1].dc_periods.end())
+							{
+								monthly_tou_demand_peak_wo_sys.at(irow, icol) = 0;
+								monthly_tou_demand_charge_wo_sys.at(irow, icol) = 0;
+							}
+							else
+							{
+								ndx = (int)(result - m_month[irow - 1].dc_periods.begin());
+								if (ndx > -1 && ndx < (int)m_month[irow - 1].dc_tou_peak.size())
+									monthly_tou_demand_peak_wo_sys.at(irow, icol) = m_month[irow - 1].dc_tou_peak[ndx];
+								if (ndx > -1 && ndx < (int)m_month[irow - 1].dc_tou_charge.size())
+									monthly_tou_demand_charge_wo_sys.at(irow, icol) = m_month[irow - 1].dc_tou_charge[ndx];
+							}
+						}
+					}
+				}
+
+
+
+				// demand peak with system 
+				for (int irow = 0; irow <= 12; irow++)
+				{
+					for (int icol = 0; icol < (int)m_dc_tou_periods.size(); icol++)
+					{
+						if (irow == 0)
+						{
+							monthly_tou_demand_peak_w_sys.at(0, icol) = (float)m_dc_tou_periods[icol];
+							monthly_tou_demand_charge_w_sys.at(0, icol) = (float)m_dc_tou_periods[icol];
+						}
+						else
+						{
+							int ndx = -1;
+							int period = m_dc_tou_periods[icol];
+							std::vector<int>::iterator result = std::find(m_month[irow - 1].dc_periods.begin(), m_month[irow - 1].dc_periods.end(), period);
+							if (result == m_month[irow - 1].dc_periods.end())
+							{
+								monthly_tou_demand_peak_w_sys.at(irow, icol) = 0;
+								monthly_tou_demand_charge_w_sys.at(irow, icol) = 0;
+							}
+							else
+							{
+								ndx = (int)(result - m_month[irow - 1].dc_periods.begin());
+								if (ndx > -1 && ndx < (int)m_month[irow - 1].dc_tou_peak.size())
+									monthly_tou_demand_peak_w_sys.at(irow, icol) = m_month[irow - 1].dc_tou_peak[ndx];
+								if (ndx > -1 && ndx < (int)m_month[irow - 1].dc_tou_charge.size())
+									monthly_tou_demand_charge_w_sys.at(irow, icol) = m_month[irow - 1].dc_tou_charge[ndx];
+							}
+						}
+					}
+				}
