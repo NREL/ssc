@@ -459,6 +459,7 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
 	{ SSC_OUTPUT,		SSC_ARRAY,		 "m_cold",				 "Cold storage cold tank mass",									 "kg",			 "",			"PC",			  "*",						 "",		   "" },
 	{ SSC_OUTPUT,		SSC_ARRAY,		 "m_warm",				 "Cold storage warm tank mass",									 "kg",			 "",			"PC",			  "*",						 "",		   "" },
 	{ SSC_OUTPUT,		SSC_ARRAY,		 "T_warm",				 "Cold storage warm tank temperature",							 "C",			 "",			"PC",			  "*",						 "",		   "" },
+	{ SSC_OUTPUT,		SSC_ARRAY,		 "T_rad_out",			 "Radiator outlet temperature",									 "C",			 "",			"PC",			  "*",						 "",		   "" },
 
 		// Thermal energy storage outputs
 	{ SSC_OUTPUT,       SSC_ARRAY,       "tank_losses",          "TES thermal losses",                                           "MWt",          "",            "TES",            "*",                       "",           "" },
@@ -1387,6 +1388,7 @@ public:
 		p_csp_power_cycle->assign(C_pc_Rankine_indirect_224::E_M_COLD, allocate("m_cold", n_steps_fixed), n_steps_fixed);
 		p_csp_power_cycle->assign(C_pc_Rankine_indirect_224::E_M_WARM, allocate("m_warm", n_steps_fixed), n_steps_fixed);
 		p_csp_power_cycle->assign(C_pc_Rankine_indirect_224::E_T_WARM, allocate("T_warm", n_steps_fixed), n_steps_fixed);
+		p_csp_power_cycle->assign(C_pc_Rankine_indirect_224::E_T_RADOUT, allocate("T_rad_out", n_steps_fixed), n_steps_fixed);
 
 
 

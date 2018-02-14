@@ -58,7 +58,7 @@
 
 #include "ud_power_cycle.h"
 #include "csp_solver_two_tank_tes.h"
-
+#include "csp_radiator.h"
 
 class C_pc_Rankine_indirect_224 : public C_csp_power_cycle
 {
@@ -99,6 +99,9 @@ private:
 	C_csp_cold_tes mc_cold_storage;
 	C_csp_cold_tes::S_csp_tes_outputs mc_cold_storage_outputs;	// for outputs
 
+	// Instantiate radiator model
+	C_csp_radiator mc_radiator;
+
 	// track number of calls per timestep, reset = -1 in converged() call
 	int m_ncall;
 
@@ -117,10 +120,6 @@ private:
         //outputs
         double& P_cycle, double& eta, double& T_htf_cold, double& m_dot_demand, double& m_dot_htf_ref,
 		double& m_dot_makeup, double& W_cool_par, double& f_hrsys, double& P_cond, double &T_cond_out);
-
-	void radiator(double T_db /*K*/, double T_rad_in /*K*/, double u /*m/s*/, double T_s /*K*/, double m_dot_rad /*K*/,
-		//outputs
-		double &T_rad_out /*K*/);
 
 	double Interpolate(int YT, int XT, double X);
 
@@ -146,6 +145,7 @@ public:
 		E_M_COLD,			//[C] Cold storage mass
 		E_M_WARM,			//[C] Cold storage warm (return) tank mass
 		E_T_WARM,			//[C] Cold storage warm (return) tank temperature
+		E_T_RADOUT,			//[C] Radiator outlet temperature
 		E_M_DOT_WATER,		//[kg/hr] Cycle water consumption: makeup + cooling	
 
 		// Variables added for backwards compatability with TCS

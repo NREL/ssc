@@ -23,6 +23,7 @@
     <ClCompile Include="..\tcs\cavity_calcs.cpp" />
     <ClCompile Include="..\tcs\co2_compressor_library.cpp" />
     <ClCompile Include="..\tcs\csp_dispatch.cpp" />
+    <ClCompile Include="..\tcs\csp_radiator.cpp" />
     <ClCompile Include="..\tcs\csp_solver_core.cpp" />
     <ClCompile Include="..\tcs\csp_solver_gen_collector_receiver.cpp" />
     <ClCompile Include="..\tcs\csp_solver_lf_dsg_collector_receiver.cpp" />
@@ -105,6 +106,7 @@
     <ClInclude Include="..\tcs\cavity_calcs.h" />
     <ClInclude Include="..\tcs\co2_compressor_library.h" />
     <ClInclude Include="..\tcs\csp_dispatch.h" />
+    <ClInclude Include="..\tcs\csp_radiator.h" />
     <ClInclude Include="..\tcs\csp_solver_core.h" />
     <ClInclude Include="..\tcs\csp_solver_gen_collector_receiver.h" />
     <ClInclude Include="..\tcs\csp_solver_lf_dsg_collector_receiver.h" />
