@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
       <Configuration>Debug</Configuration>
@@ -53,8 +53,8 @@
     <ClCompile Include="..\tcs\sam_mw_pt_type224_csp_solver.cpp" />
     <ClCompile Include="..\tcs\sam_mw_trough_type250.cpp" />
     <ClCompile Include="..\tcs\sam_type250_input_generator.cpp" />
-    <ClCompile Include="..\tcs\sco2_pc_core.cpp" />
     <ClCompile Include="..\tcs\sco2_pc_csp_int.cpp" />
+    <ClCompile Include="..\tcs\sco2_power_cycle.cpp" />
     <ClCompile Include="..\tcs\tou_translator_csp_solver.cpp" />
     <ClCompile Include="..\tcs\ud_power_cycle.cpp" />
     <ClCompile Include="..\tcs\water_properties.cpp" />
@@ -123,8 +123,8 @@
     <ClInclude Include="..\tcs\CO2_properties.h" />
     <ClInclude Include="..\tcs\heat_exchangers.h" />
     <ClInclude Include="..\tcs\numeric_solvers.h" />
-    <ClInclude Include="..\tcs\sco2_pc_core.h" />
     <ClInclude Include="..\tcs\sco2_pc_csp_int.h" />
+    <ClInclude Include="..\tcs\sco2_power_cycle.h" />
     <ClInclude Include="..\tcs\ud_power_cycle.h" />
     <ClInclude Include="..\tcs\water_properties.h" />
     <ClInclude Include="..\tcs\fmin.h" />
@@ -143,33 +143,34 @@
   <PropertyGroup Label="Globals">
     <ProjectGuid>{3058C490-552E-4428-A409-F29EB2C50D3F}</ProjectGuid>
     <ProjectName>tcs</ProjectName>
+    <WindowsTargetPlatformVersion>10.0.16299.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <CharacterSet>MultiByte</CharacterSet>
-    <PlatformToolset>v120</PlatformToolset>
+    <PlatformToolset>v141</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <CharacterSet>MultiByte</CharacterSet>
-    <PlatformToolset>v120</PlatformToolset>
+    <PlatformToolset>v141</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <WholeProgramOptimization>false</WholeProgramOptimization>
     <CharacterSet>MultiByte</CharacterSet>
-    <PlatformToolset>v120</PlatformToolset>
+    <PlatformToolset>v141</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <WholeProgramOptimization>false</WholeProgramOptimization>
     <CharacterSet>MultiByte</CharacterSet>
-    <PlatformToolset>v120</PlatformToolset>
+    <PlatformToolset>v141</PlatformToolset>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
