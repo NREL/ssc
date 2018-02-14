@@ -949,9 +949,6 @@ bool AutoPilot::EvaluateDesign(double &obj_metric, double &flux_max, double &tot
 	
 	//get the annual optical power estimate
 	double optical_power = _SF->getAnnualPowerApproximation();
-	//power cycle efficiency
-	double cycle_eff = V->plt.eta_cycle.val * V->plt.par_factor.val;
-	double power = optical_power * cycle_eff*1.e-6;		//MW-h
 
 	//get the total plant cost
 	tot_cost = V->fin.total_installed_cost.Val();
@@ -974,7 +971,7 @@ bool AutoPilot::EvaluateDesign(double &obj_metric, double &flux_max, double &tot
 	//Set the optimization objective value
 	//double flux_overage_ratio = max(flux_max/V->recs.front().peak_flux.val, 1.);
 
-	obj_metric = tot_cost/power 
+	obj_metric = tot_cost/ optical_power
 		//* (1. + (flux_overage_ratio - 1.) * V->opt.flux_penalty.val) 
 		* (1. + (1. - power_shortage_ratio) * V->opt.power_penalty.val);
 

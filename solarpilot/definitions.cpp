@@ -132,7 +132,6 @@ void var_map::reset()
 	fin.heliostat_spec_cost          .set("financial.0.heliostat_spec_cost"  , SP_DATTYPE::SP_DOUBLE    ,                "145",       "$/m2",     true,         "",    "",    false,                        "Heliostat field", "Cost per square meter of heliostat aperture area of the heliostat field");
 	fin.is_pmt_factors               .set("financial.0.is_pmt_factors"       , SP_DATTYPE::SP_BOOL      ,              "FALSE",           "",    false, "checkbox",    "",    false,       "Enable payment weighting factors", "Enable or disable the use of weighting factors in determining field layout");
 	fin.land_spec_cost               .set("financial.0.land_spec_cost"       , SP_DATTYPE::SP_DOUBLE    ,              "10000",     "$/acre",     true,         "",    "",    false,                     "Land cost per acre", "Cost of land per acre including the footprint of the land occupied by the entire plant.");
-	fin.plant_spec_cost              .set("financial.0.plant_spec_cost"      , SP_DATTYPE::SP_DOUBLE    ,               "1440",      "$/kWe",     true,         "",    "",    false,                 "Power block and plant ", "Cost of the power block and balance of plant equipment per kilowatt (electric) gross design power");
 	fin.pmt_factors                  .set("financial.0.pmt_factors"          , SP_DATTYPE::SP_VEC_DOUBLE, "2.064,1.2,1,1.1,0.8,0.7,1,1,1",       "none",    false,         "",    "",    false,             "Payment allocation factors", "Relative value of electricity produced during this period compared to the average");
 	fin.rec_cost_exp                 .set("financial.0.rec_cost_exp"         , SP_DATTYPE::SP_DOUBLE    ,                "0.7",       "none",     true,         "",    "",    false,         "Receiver cost scaling exponent", "Exponent in the equation (total cost) = (ref. cost) * ( (area) / (ref. area) ) ^ X");
 	fin.rec_ref_area                 .set("financial.0.rec_ref_area"         , SP_DATTYPE::SP_DOUBLE    ,               "1571",         "m2",     true,         "",    "",    false,                "Receiver reference area", "Receiver surface area corresponding to the receiver reference cost");
@@ -140,23 +139,19 @@ void var_map::reset()
 	fin.sales_tax_frac               .set("financial.0.sales_tax_frac"       , SP_DATTYPE::SP_DOUBLE    ,                 "80",          "%",     true,         "",    "",    false,                 "Sales tax rate portion", "Fraction of the direct capital costs for which sales tax applies");
 	fin.sales_tax_rate               .set("financial.0.sales_tax_rate"       , SP_DATTYPE::SP_DOUBLE    ,                  "5",          "%",     true,         "",    "",    false,                         "Sales tax rate", "Sales tax rate applid to the total direct capital cost");
 	fin.site_spec_cost               .set("financial.0.site_spec_cost"       , SP_DATTYPE::SP_DOUBLE    ,                 "16",       "$/m2",     true,         "",    "",    false,                      "Site improvements", "Cost per square meter of heliostat aperture area of site improvements");
-	fin.tes_spec_cost                .set("financial.0.tes_spec_cost"        , SP_DATTYPE::SP_DOUBLE    ,                 "24",     "$/kWht",     true,         "",    "",    false,                        "Thermal storage", "Cost of thermal storage per kilowatt hour (thermal) capacity");
 	fin.tower_exp                    .set("financial.0.tower_exp"            , SP_DATTYPE::SP_DOUBLE    ,             "0.0113",       "none",     true,         "",    "",    false,            "Tower cost scaling exponent", "Exponent in the equation (total cost) = (fixed cost) * exp( X * (tower height) )");
 	fin.tower_fixed_cost             .set("financial.0.tower_fixed_cost"     , SP_DATTYPE::SP_DOUBLE    ,           "3.00E+06",          "$",     true,         "",    "",    false,                       "Fixed tower cost", "Fixed tower cost - used as the basis for scaling tower cost as a function of height");
 	fin.weekday_sched                .set("financial.0.weekday_sched"        , SP_DATTYPE::SP_STRING    , "666666554444444444444555666666554444444444444555666666554444444444444555666666554444444444444555666666554444444444444555333333332222111111222333333333332222111111222333333333332222111111222333333333332222111111222333666666554444444444444555666666554444444444444555666666554444444444444555",           "",    false,         "",    "",    false,       "Weekday dispatch period schedule", "Weekday dispatch period schedule");
 	fin.weekend_sched                .set("financial.0.weekend_sched"        , SP_DATTYPE::SP_STRING    , "666666555555555555555555666666555555555555555555666666555555555555555555666666555555555555555555666666555555555555555555333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333666666555555555555555555666666555555555555555555666666555555555555555555",           "",    false,         "",    "",    false,       "Weekend dispatch period schedule", "Weekend dispatch period schedule");
 	fin.wiring_user_spec             .set("financial.0.wiring_user_spec"     , SP_DATTYPE::SP_DOUBLE    ,                  "0",       "$/m2",     true,         "",    "",    false,                   "Wiring specific cost", "Cost of wiring per square meter of heliostat aperture area");
 	fin.contingency_cost             .setup("financial.0.contingency_cost"     , SP_DATTYPE::SP_DOUBLE    ,                                "$",    false,         "",    "",    false,                       "Contingency cost", "Contingency cost");
-	fin.cost_per_capacity            .setup("financial.0.cost_per_capacity"    , SP_DATTYPE::SP_DOUBLE    ,                            "$/kWe",    false,         "",    "",    false,      "Estimated cost per capacity (net)", "Estimated capital cost per capacity (net)");
 	fin.heliostat_cost               .setup("financial.0.heliostat_cost"       , SP_DATTYPE::SP_DOUBLE    ,                                "$",    false,         "",    "",    false,                   "Heliostat field cost", "Heliostat field cost");
 	fin.land_cost                    .setup("financial.0.land_cost"            , SP_DATTYPE::SP_DOUBLE    ,                                "$",    false,         "",    "",    false,                              "Land cost", "Land cost");
-	fin.plant_cost                   .setup("financial.0.plant_cost"           , SP_DATTYPE::SP_DOUBLE    ,                                "$",    false,         "",    "",    false,             "Power block and plant cost", "Cost of the power block and balance of plant equipment");
 	fin.pricing_array                .setup("financial.0.pricing_array"        , SP_DATTYPE::SP_VEC_DOUBLE,                             "none",    false,         "",    "",    false, "Time series schedule of price multipliers", "Yearly time series schedule of price multipliers to incentivize electricity sales at particular times");
 	fin.rec_cost                     .setup("financial.0.rec_cost"             , SP_DATTYPE::SP_DOUBLE    ,                                "$",    false,         "",    "",    false,                          "Receiver cost", "Receiver cost");
 	fin.sales_tax_cost               .setup("financial.0.sales_tax_cost"       , SP_DATTYPE::SP_DOUBLE    ,                                "$",     true,         "",    "",    false,                         "Sales tax cost", "Sales tax cost");
 	fin.schedule_array               .setup("financial.0.schedule_array"       , SP_DATTYPE::SP_VEC_INTEGER,                             "none",    false,         "",    "",    false,    "Time series schedule of TOU periods", "Yearly time series schedule of TOU periods");
 	fin.site_cost                    .setup("financial.0.site_cost"            , SP_DATTYPE::SP_DOUBLE    ,                                "$",    false,         "",    "",    false,                 "Site improvements cost", "Site improvements cost");
-	fin.tes_cost                     .setup("financial.0.tes_cost"             , SP_DATTYPE::SP_DOUBLE    ,                                "$",    false,         "",    "",    false,                   "Thermal storage cost", "Thermal storage cost");
 	fin.total_direct_cost            .setup("financial.0.total_direct_cost"    , SP_DATTYPE::SP_DOUBLE    ,                                "$",    false,         "",    "",    false,                      "Total direct cost", "Sum of all direct costs");
 	fin.total_indirect_cost          .setup("financial.0.total_indirect_cost"  , SP_DATTYPE::SP_DOUBLE    ,                                "$",    false,         "",    "",    false,                    "Total indirect cost", "Sum of all indirect costs");
 	fin.total_installed_cost         .setup("financial.0.total_installed_cost" , SP_DATTYPE::SP_DOUBLE    ,                                "$",    false,         "",    "",    false,                   "Total installed cost", "Sum of direct and indirect costs");
@@ -263,14 +258,6 @@ void var_map::reset()
 	par.upar_save_summary            .set("parametric.0.upar_save_summary"   , SP_DATTYPE::SP_BOOL      ,              "FALSE",       "none",    false, "checkbox",    "",    false,   "Save performance summary info (User)", "Save detailed system performance data to a file for each run");
 	par.user_par_values              .set("parametric.0.user_par_values"     , SP_DATTYPE::SP_STRING    ,                   "",       "none",    false,         "",    "",    false,                 "User parametric values", "User parametric values");
 
-	plt.class_name                   .set("plant.0.class_name"               , SP_DATTYPE::SP_STRING    , "Power Cycle and BOP",       "none",    false,         "",    "",    false,                             "Class name", "Class name");
-	plt.eta_cycle                    .set("plant.0.eta_cycle"                , SP_DATTYPE::SP_DOUBLE    ,              "0.412",       "none",     true,         "",    "",    false,      "Rated cycle conversion efficiency", "Thermodynamic efficiency of the power cycle, including feedwater pumps and cooling equipment parasitics");
-	plt.hours_tes                    .set("plant.0.hours_tes"                , SP_DATTYPE::SP_DOUBLE    ,                 "10",         "hr",     true,         "",    "",    false,     "Hours of full-load thermal storage", "Capacity of Hours of thermal storage operation at full cycle output");
-	plt.par_factor                   .set("plant.0.par_factor"               , SP_DATTYPE::SP_DOUBLE    ,               "0.87",       "none",     true,         "",    "",    false, "Estimated gross to net conversion factor", "Estimated ratio of net power output to gross power output at design");
-	plt.solar_mult                   .set("plant.0.solar_mult"               , SP_DATTYPE::SP_DOUBLE    ,                "2.4",       "none",     true,         "",    "",    false,                         "Solar multiple", "Ratio of thermal power output from the solar field to power cycle thermal input at design");
-	plt.power_gross                  .setup("plant.0.power_gross"              , SP_DATTYPE::SP_DOUBLE    ,                              "MWe",    false,         "",    "",    false,            "Design turbine gross output", "Rated nameplate design gross turbine electric output, not accounting for parasitic losses");
-	plt.power_net                    .setup("plant.0.power_net"                , SP_DATTYPE::SP_DOUBLE    ,                              "MWe",    false,         "",    "",    false,         "Estimated net output at design", "Estimated net electric power at design, accounting for all parasitic losses");
-
 	sf.accept_max                    .set("solarfield.0.accept_max"          , SP_DATTYPE::SP_DOUBLE    ,                "180",        "deg",     true,         "",    "",    false,       "Maximum solar field extent angle", "Upper bound of the angular range containing the heliostat field");
 	sf.accept_min                    .set("solarfield.0.accept_min"          , SP_DATTYPE::SP_DOUBLE    ,               "-180",        "deg",     true,         "",    "",    false,       "Minimum solar field extent angle", "Lower bound of the angular range containing the heliostat field");
 	sf.az_spacing                    .set("solarfield.0.az_spacing"          , SP_DATTYPE::SP_DOUBLE    ,                  "2",       "none",     true,         "",    "",    false,               "Azimuthal spacing factor", "Azimuthal spacing factor for the first row of heliostats after a reset. Heliostats separated by heliostat width times this factor.");
@@ -321,7 +308,6 @@ void var_map::reset()
 	land.addptrs( _varptrs );
 	opt.addptrs( _varptrs );
 	par.addptrs( _varptrs );
-	plt.addptrs( _varptrs );
 	sf.addptrs( _varptrs );
 
     add_heliostat(0);
@@ -486,7 +472,6 @@ void var_financial::addptrs(unordered_map<std::string, spbase*> &pmap)
 	pmap["financial.0.heliostat_spec_cost"] = &heliostat_spec_cost;
 	pmap["financial.0.is_pmt_factors"] = &is_pmt_factors;
 	pmap["financial.0.land_spec_cost"] = &land_spec_cost;
-	pmap["financial.0.plant_spec_cost"] = &plant_spec_cost;
 	pmap["financial.0.pmt_factors"] = &pmt_factors;
 	pmap["financial.0.rec_cost_exp"] = &rec_cost_exp;
 	pmap["financial.0.rec_ref_area"] = &rec_ref_area;
@@ -494,23 +479,19 @@ void var_financial::addptrs(unordered_map<std::string, spbase*> &pmap)
 	pmap["financial.0.sales_tax_frac"] = &sales_tax_frac;
 	pmap["financial.0.sales_tax_rate"] = &sales_tax_rate;
 	pmap["financial.0.site_spec_cost"] = &site_spec_cost;
-	pmap["financial.0.tes_spec_cost"] = &tes_spec_cost;
 	pmap["financial.0.tower_exp"] = &tower_exp;
 	pmap["financial.0.tower_fixed_cost"] = &tower_fixed_cost;
 	pmap["financial.0.weekday_sched"] = &weekday_sched;
 	pmap["financial.0.weekend_sched"] = &weekend_sched;
 	pmap["financial.0.wiring_user_spec"] = &wiring_user_spec;
 	pmap["financial.0.contingency_cost"] = &contingency_cost;
-	pmap["financial.0.cost_per_capacity"] = &cost_per_capacity;
 	pmap["financial.0.heliostat_cost"] = &heliostat_cost;
 	pmap["financial.0.land_cost"] = &land_cost;
-	pmap["financial.0.plant_cost"] = &plant_cost;
 	pmap["financial.0.pricing_array"] = &pricing_array;
 	pmap["financial.0.rec_cost"] = &rec_cost;
 	pmap["financial.0.sales_tax_cost"] = &sales_tax_cost;
 	pmap["financial.0.schedule_array"] = &schedule_array;
 	pmap["financial.0.site_cost"] = &site_cost;
-	pmap["financial.0.tes_cost"] = &tes_cost;
 	pmap["financial.0.total_direct_cost"] = &total_direct_cost;
 	pmap["financial.0.total_indirect_cost"] = &total_indirect_cost;
 	pmap["financial.0.total_installed_cost"] = &total_installed_cost;
@@ -696,17 +677,6 @@ void var_parametric::addptrs(unordered_map<std::string, spbase*> &pmap)
 	pmap["parametric.0.upar_save_helio"] = &upar_save_helio;
 	pmap["parametric.0.upar_save_summary"] = &upar_save_summary;
 	pmap["parametric.0.user_par_values"] = &user_par_values;
-}
-
-void var_plant::addptrs(unordered_map<std::string, spbase*> &pmap)
-{
-	pmap["plant.0.class_name"] = &class_name;
-	pmap["plant.0.eta_cycle"] = &eta_cycle;
-	pmap["plant.0.hours_tes"] = &hours_tes;
-	pmap["plant.0.par_factor"] = &par_factor;
-	pmap["plant.0.solar_mult"] = &solar_mult;
-	pmap["plant.0.power_gross"] = &power_gross;
-	pmap["plant.0.power_net"] = &power_net;
 }
 
 void var_receiver::addptrs(unordered_map<std::string, spbase*> &pmap)

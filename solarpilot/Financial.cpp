@@ -87,8 +87,6 @@ void Financial::updateCalculatedParameters(var_map &V)
     _var_fin->pricing_array.Setval( _pricing_array );
     _var_fin->tower_cost.Setval( _tower_cost );
     _var_fin->rec_cost.Setval( _rec_cost );
-    _var_fin->plant_cost.Setval( _plant_cost );
-    _var_fin->tes_cost.Setval( _tes_cost );
     _var_fin->site_cost.Setval( _site_cost );
     _var_fin->heliostat_cost.Setval( _heliostat_cost );
     _var_fin->wiring_cost.Setval( _wiring_cost );
@@ -98,7 +96,6 @@ void Financial::updateCalculatedParameters(var_map &V)
     _var_fin->land_cost.Setval( _land_cost );
     _var_fin->sales_tax_cost.Setval( _sales_tax_cost );
     _var_fin->total_installed_cost.Setval( _total_installed_cost );
-    _var_fin->cost_per_capacity.Setval( _cost_per_capacity );
 }
 
 std::vector< double >* Financial::getPricingArray()
@@ -152,17 +149,9 @@ void Financial::calcPlantCapitalCost(var_map &V){
 	double Asf = V.sf.sf_area.Val(); 
     double Arec = V.sf.rec_area.Val(); 
 
-    double power_gross = V.plt.power_gross.Val(); 
-    double power_net = V.plt.power_net.Val();
-
 	_tower_cost =  V.fin.tower_fixed_cost.val * exp(V.sf.tht.val * V.fin.tower_exp.val ) ;
 	
 	_rec_cost =  V.fin.rec_ref_cost.val * pow( Arec / V.fin.rec_ref_area.val, V.fin.rec_cost_exp.val ) ;
-	
-	_plant_cost =  V.fin.plant_spec_cost.val * power_gross * 1000. ;
-	
-    double tescap = power_gross / V.plt.eta_cycle.val * V.plt.hours_tes.val;
-	_tes_cost =  tescap * 1000. * V.fin.tes_spec_cost.val ;
 	
 	
 	_site_cost =  V.fin.site_spec_cost.val * Asf ;
@@ -174,8 +163,6 @@ void Financial::calcPlantCapitalCost(var_map &V){
         _rec_cost +
         _heliostat_cost +
         _wiring_cost +
-        _plant_cost +
-        _tes_cost +
         V.fin.fixed_cost.val ;
 
 	_contingency_cost =  V.fin.contingency_rate.val/100. * tdc ;
@@ -193,8 +180,6 @@ void Financial::calcPlantCapitalCost(var_map &V){
 	_total_installed_cost =  
         _total_direct_cost + _total_indirect_cost ;
 
-	_cost_per_capacity =  
-        _total_installed_cost / power_net / 1000. ;
 
 }
 

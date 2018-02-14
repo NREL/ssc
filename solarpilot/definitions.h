@@ -64,8 +64,6 @@
 //Enumeration of data columns in the variable map file
 
 
-//Custom module settings
-#define _CUSTOM_REC 0		//If using custom geometry functions in the CustomReceiverWindow, define 1
 //Sandbox mode
 #define _SANDBOX 0
 //demo only
@@ -130,7 +128,6 @@ struct var_financial
 	spvar< double > heliostat_spec_cost; 		//[$/m2] Cost per square meter of heliostat aperture area of the heliostat field
 	spvar< bool > is_pmt_factors; 		//[] Enable or disable the use of weighting factors in determining field layout
 	spvar< double > land_spec_cost; 		//[$/acre] Cost of land per acre including the footprint of the land occupied by the entire plant.
-	spvar< double > plant_spec_cost; 		//[$/kWe] Cost of the power block and balance of plant equipment per kilowatt (electric) gross design power
 	spvar< std::vector< double > > pmt_factors; 		//[none] Relative value of electricity produced during this period compared to the average
 	spvar< double > rec_cost_exp; 		//[none] Exponent in the equation (total cost) = (ref. cost) * ( (area) / (ref. area) ) ^ X
 	spvar< double > rec_ref_area; 		//[m2] Receiver surface area corresponding to the receiver reference cost
@@ -138,23 +135,19 @@ struct var_financial
 	spvar< double > sales_tax_frac; 		//[%] Fraction of the direct capital costs for which sales tax applies
 	spvar< double > sales_tax_rate; 		//[%] Sales tax rate applid to the total direct capital cost
 	spvar< double > site_spec_cost; 		//[$/m2] Cost per square meter of heliostat aperture area of site improvements
-	spvar< double > tes_spec_cost; 		//[$/kWht] Cost of thermal storage per kilowatt hour (thermal) capacity
 	spvar< double > tower_exp; 		//[none] Exponent in the equation (total cost) = (fixed cost) * exp( X * (tower height) )
 	spvar< double > tower_fixed_cost; 		//[$] Fixed tower cost - used as the basis for scaling tower cost as a function of height
 	spvar< std::string > weekday_sched; 		//[] Weekday dispatch period schedule
 	spvar< std::string > weekend_sched; 		//[] Weekend dispatch period schedule
 	spvar< double > wiring_user_spec; 		//[$/m2] Cost of wiring per square meter of heliostat aperture area
 	spout< double > contingency_cost; 		//[$] Contingency cost
-	spout< double > cost_per_capacity; 		//[$/kWe] Estimated capital cost per capacity (net)
 	spout< double > heliostat_cost; 		//[$] Heliostat field cost
 	spout< double > land_cost; 		//[$] Land cost
-	spout< double > plant_cost; 		//[$] Cost of the power block and balance of plant equipment
 	spout< std::vector< double > > pricing_array; 		//[none] Yearly time series schedule of price multipliers to incentivize electricity sales at particular times
 	spout< double > rec_cost; 		//[$] Receiver cost
 	spout< double > sales_tax_cost; 		//[$] Sales tax cost
 	spout< std::vector< int > > schedule_array; 		//[none] Yearly time series schedule of TOU periods
 	spout< double > site_cost; 		//[$] Site improvements cost
-	spout< double > tes_cost; 		//[$] Thermal storage cost
 	spout< double > total_direct_cost; 		//[$] Sum of all direct costs
 	spout< double > total_indirect_cost; 		//[$] Sum of all indirect costs
 	spout< double > total_installed_cost; 		//[$] Sum of direct and indirect costs
@@ -372,20 +365,6 @@ struct var_parametric
 };
 
 
-struct var_plant
-{
-	spvar< std::string > class_name; 		//[none] Class name
-	spvar< double > eta_cycle; 		//[none] Thermodynamic efficiency of the power cycle, including feedwater pumps and cooling equipment parasitics
-	spvar< double > hours_tes; 		//[hr] Capacity of Hours of thermal storage operation at full cycle output
-	spvar< double > par_factor; 		//[none] Estimated ratio of net power output to gross power output at design
-	spvar< double > solar_mult; 		//[none] Ratio of thermal power output from the solar field to power cycle thermal input at design
-	spout< double > power_gross; 		//[MWe] Rated nameplate design gross turbine electric output, not accounting for parasitic losses
-	spout< double > power_net; 		//[MWe] Estimated net electric power at design, accounting for all parasitic losses
-
-    void addptrs(unordered_map<std::string, spbase*> &pmap);
-};
-
-
 struct var_receiver
 {
 	spvar< double > absorptance; 		//[none] Energy absorbed by the receiver surface before accounting for radiation/convection losses
@@ -502,7 +481,6 @@ struct var_map
     var_land land;
     var_optimize opt;
     var_parametric par;
-    var_plant plt;
     var_solarfield sf;
     
     std::vector< var_heliostat > hels;

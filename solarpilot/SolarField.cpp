@@ -60,7 +60,6 @@
 #include "Financial.h"
 #include "Ambient.h"
 #include "Land.h"
-#include "Plant.h"
 #include "Flux.h"
 #include "heliodata.h"
 
@@ -87,7 +86,6 @@ Land *SolarField::getLandObject(){return &_land;}
 Flux *SolarField::getFluxObject(){return _flux;}
 Financial *SolarField::getFinancialObject(){return &_financial;}
 FluxSimData *SolarField::getFluxSimObject(){return &_fluxsim;}
-Plant *SolarField::getPlantObject(){return &_plant;}
 htemp_map *SolarField::getHeliostatTemplates(){return &_helio_templates;}
 Hvector *SolarField::getHeliostats(){return &_heliostats;}
 layout_shell *SolarField::getLayoutShellObject(){return &_layout;}
@@ -167,7 +165,6 @@ SolarField::SolarField( const SolarField &sf )
 	_land( sf._land ),
 	_financial( sf._financial ),
 	_fluxsim( sf._fluxsim ),
-	_plant( sf._plant ),
 	_sim_info( sf._sim_info ),
 	_sim_error( sf._sim_error ),
 	_var_map( sf._var_map )    //point to original variable map
@@ -358,9 +355,6 @@ void SolarField::Create(var_map &V){
 	}
 	
    
-	//Plant
-	_plant.Create(V);
-
 	//Clouds
 	double ext[2];
 	_land.getExtents(V, ext);
@@ -445,7 +439,6 @@ void SolarField::updateAllCalculatedParameters(var_map &V)
     _land.updateCalculatedParameters(V);
     for( int i=0; i<(int)_receivers.size(); i++)
         _receivers.at(i)->updateCalculatedParameters(V.recs.at(i), V.sf.tht.val );
-    _plant.updateCalculatedParameters(V);
     _fluxsim.updateCalculatedParameters(V);
     updateCalculatedParameters(V);
     _financial.updateCalculatedParameters(V);

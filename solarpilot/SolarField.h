@@ -62,7 +62,6 @@
 #include "Financial.h"
 #include "Ambient.h"
 #include "Land.h"
-#include "Plant.h"
 #include "Flux.h"
 #include "fluxsim.h"
 #include "OpticalMesh.h"
@@ -90,12 +89,10 @@
 class Receiver;
 class Heliostat;
 class Flux;
-class Plant;
 class LayoutSimThread;
 
 class Ambient;
 class Land;
-class Plant;
 
 typedef std::vector<Heliostat*> Hvector;
 class sim_result;
@@ -179,7 +176,6 @@ protected:
 	Land _land;
 	Financial _financial;
     FluxSimData _fluxsim;
-	Plant _plant;
 	Flux *_flux;	/*This object is a pointer because it has a recursive relationship to the SolarField object.
 					  See the SolarField constructor for the associated _flux constructor. Also, the object must
 					  be allocated and freed from memory manually.*/
@@ -222,7 +218,6 @@ public:
 	Flux *getFluxObject();
 	Financial *getFinancialObject();
     FluxSimData *getFluxSimObject();
-	Plant *getPlantObject();
 	htemp_map *getHeliostatTemplates();
 	Hvector *getHeliostats();
 	layout_shell *getLayoutShellObject();
