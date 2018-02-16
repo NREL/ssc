@@ -59,4 +59,5 @@ branches:
   only:
   - master
   - develop
-  - Host_Developer
+  - weather_forecast
+  - 2017.9.5.r3

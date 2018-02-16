@@ -51,6 +51,7 @@
 #define __lib_windfile_h
 
 #include <string>
+#include <fstream>
 #include "lib_util.h"
 
 class winddata_provider
@@ -113,8 +114,8 @@ protected:
 class windfile : public winddata_provider
 {
 private:
-	FILE *m_fp;
-	char *m_buf;
+  	std::ifstream m_ifs;
+	std::string m_buf;
 	std::string m_file;
 	size_t m_nrec;
 

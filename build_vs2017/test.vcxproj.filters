@@ -38,6 +38,9 @@
     <ClCompile Include="..\test\shared_test\lib_windfile_test.cpp">
       <Filter>shared_test</Filter>
     </ClCompile>
+    <ClCompile Include="..\test\ssc_test\cmod_pvwattsv5_test.cpp">
+      <Filter>ssc_test</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="shared_test">
@@ -82,6 +85,9 @@
       <Filter>input_cases</Filter>
     </ClInclude>
     <ClInclude Include="..\test\input_cases\windpower_cases.h">
+      <Filter>input_cases</Filter>
+    </ClInclude>
+    <ClInclude Include="..\test\input_cases\pvsamv1_common_data.h">
       <Filter>input_cases</Filter>
     </ClInclude>
   </ItemGroup>

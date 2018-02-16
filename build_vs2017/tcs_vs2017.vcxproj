@@ -56,6 +56,7 @@
     <ClCompile Include="..\tcs\sco2_cycle_components.cpp" />
     <ClCompile Include="..\tcs\sco2_partialcooling_cycle.cpp" />
     <ClCompile Include="..\tcs\sco2_pc_csp_int.cpp" />
+    <ClCompile Include="..\tcs\sco2_power_cycle.cpp" />
     <ClCompile Include="..\tcs\sco2_recompression_cycle.cpp" />
     <ClCompile Include="..\tcs\tou_translator_csp_solver.cpp" />
     <ClCompile Include="..\tcs\ud_power_cycle.cpp" />
@@ -128,6 +129,7 @@
     <ClInclude Include="..\tcs\sco2_cycle_components.h" />
     <ClInclude Include="..\tcs\sco2_partialcooling_cycle.h" />
     <ClInclude Include="..\tcs\sco2_pc_csp_int.h" />
+    <ClInclude Include="..\tcs\sco2_power_cycle.h" />
     <ClInclude Include="..\tcs\sco2_recompression_cycle.h" />
     <ClInclude Include="..\tcs\ud_power_cycle.h" />
     <ClInclude Include="..\tcs\water_properties.h" />

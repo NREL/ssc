@@ -170,7 +170,7 @@ extern "C" {
 class tcstypeinterface
 {
 public:
-	tcstypeinterface( tcscontext *cxt, tcstypeinfo *ti )
+	tcstypeinterface( tcscontext *cxt, tcstypeinfo * )
 		: m_context(cxt), m_currentTime(0.0), m_timeStep(0.0), m_values(0), m_numValues(0) {  }
 	virtual ~tcstypeinterface() {  }
 

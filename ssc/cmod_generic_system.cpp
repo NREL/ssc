@@ -57,12 +57,17 @@ static var_info _cm_vtab_generic_system[] = {
 //	  VARTYPE           DATATYPE         NAME                           LABEL                                 UNITS           META     GROUP                REQUIRED_IF        CONSTRAINTS           UI_HINTS
 	{ SSC_INPUT,        SSC_NUMBER,      "spec_mode",                  "Spec mode: 0=constant CF,1=profile",  "",             "",      "generic_system",      "*",               "",                    "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "derate",                     "Derate",                              "%",            "",      "generic_system",      "*",               "",                    "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "system_capacity",         "Nameplace Capcity",                   "kW",           "",      "generic_system",      "*",               "",                    "" },
+	{ SSC_INOUT,        SSC_NUMBER,      "system_capacity",         "Nameplace Capcity",                   "kW",           "",      "generic_system",      "*",               "",                    "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "user_capacity_factor",            "Capacity Factor",                     "%",            "",      "generic_system",      "*",               "",                    "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "heat_rate",                  "Heat Rate",                           "MMBTUs/MWhe",  "",      "generic_system",      "*",               "",                    "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "conv_eff",                   "Conversion Efficiency",               "%",            "",      "generic_system",      "*",               "",                    "" },
-	{ SSC_INPUT,        SSC_ARRAY,       "energy_output_array",        "Array of Energy Output Profile",      "kWh",          "",      "generic_system",      "*",               "",                    "" }, 
-																														      														   
+	{ SSC_INPUT,        SSC_ARRAY,       "energy_output_array",        "Array of Energy Output Profile",      "kW",          "",      "generic_system",      "*",               "",                    "" }, 
+
+// To set enet record length to handle subhourly loads
+
+	{ SSC_INPUT, SSC_ARRAY, "load", "Electricity load (year 1)", "kW", "", "Time Series", "?", "", "" },
+
+
 //    OUTPUTS ----------------------------------------------------------------------------								      														   
 //	  VARTYPE           DATATYPE         NAME                          LABEL                                   UNITS           META     GROUP                 REQUIRED_IF        CONSTRAINTS           UI_HINTS
 //	{ SSC_OUTPUT,       SSC_ARRAY,       "hourly_energy",              "Hourly Energy",                        "kWh",           "",      "Time Series",      "*",               "LENGTH=8760",         "" },
@@ -96,63 +101,70 @@ public:
 	void exec( ) throw( general_error )
 	{
 		int spec_mode = as_integer("spec_mode");
-		ssc_number_t *enet = allocate("gen", 8760);
+
+		ssc_number_t *enet;
+		size_t nrec_load = 8760;
+		if (is_assigned("load"))
+			ssc_number_t *load = as_array("load", &nrec_load);
 //		ssc_number_t *p_gen = allocate("gen", 8760);
+		size_t steps_per_hour_load = nrec_load / 8760;
+		ssc_number_t ts_hour_load = 1.0f / steps_per_hour_load;
+
+		size_t nrec_gen = nrec_load;
+		size_t steps_per_hour_gen = steps_per_hour_load;
+		ssc_number_t ts_hour_gen = ts_hour_load;
 
 		double derate = (1 - (double)as_number("derate") / 100);
-		double annual_output = 0;
+		double annual_output = 0; 
 
 		adjustment_factors haf(this, "adjust");
 		if (!haf.setup())
-			throw exec_error("pvwattsv5", "failed to setup adjustment factors: " + haf.error());
+			throw exec_error("generic system", "failed to setup adjustment factors: " + haf.error());
 
 		if (spec_mode == 0)
 		{
 			double output = (double)as_number("system_capacity")
 				* (double)as_number("user_capacity_factor") / 100
-				* derate;
+				* derate; // kW
 
-			annual_output = 8760 * output;
+			annual_output = 8760 * output; // kWh
+			enet = allocate("gen", nrec_gen);
 
 			for (int i = 0; i < 8760; i++)
 			{
-				enet[i] = (ssc_number_t)(output*haf(i));
-//				p_gen[i] = enet[i];
+				for (size_t j = 0; j < steps_per_hour_gen; j++)
+				{
+					enet[i* steps_per_hour_gen + j] = (ssc_number_t)(output*haf(i)); // kW
+				}
 			}
 		}
 		else
 		{
-			size_t count = 0;
-			ssc_number_t *data = as_array("energy_output_array", &count);
+			ssc_number_t *enet_in = as_array("energy_output_array", &nrec_gen); // kW
 
-			if (!data)
+			if (!enet_in)
 				throw exec_error("generic", util::format("energy_output_array variable had no values."));
 
-			size_t nmult = count / 8760;
-			if (nmult * 8760 != count)
-				throw exec_error("generic", util::format("energy_output_array not a multiple of 8760: len=%d.", count));
+			steps_per_hour_gen = nrec_gen / 8760;
+			if (steps_per_hour_gen * 8760 != nrec_gen)
+				throw exec_error("generic", util::format("energy_output_array not a multiple of 8760: len=%d.", nrec_gen));
 
-			int c = 0;
-			int i = 0;
-			while (c<8760 && i<(int)count)
+			if (nrec_gen < nrec_load)
+				throw exec_error("generic", util::format("energy_output_array %d must be greater than or equal to load array %d", nrec_gen, nrec_load));
+
+			enet = allocate("gen", nrec_gen);
+
+			for (int i = 0; i < 8760; i++)
 			{
-				double integ = 0;
-				for (size_t j = 0; j<nmult; j++)
+				for (size_t j = 0; j < steps_per_hour_gen; j++)
 				{
-					integ += data[i];
-					i++;
+					enet[i* steps_per_hour_gen + j] = enet_in[i* steps_per_hour_gen + j] * (ssc_number_t)(derate* haf(i));
 				}
-
-				enet[c] = (ssc_number_t)(integ*derate*haf(c));
-//				p_gen[c] = enet[c];
-
-				annual_output += enet[c];
-				c++;
 			}
 		}
 
-		accumulate_monthly("gen", "monthly_energy");
-		accumulate_annual("gen", "annual_energy");
+		accumulate_monthly("gen", "monthly_energy", ts_hour_gen);
+		annual_output = accumulate_annual("gen", "annual_energy", ts_hour_gen);
 
 		// if conversion efficiency is zero then set fuel usage to zero per email from Paul 5/17/12
 		double fuel_usage = 0.0;
@@ -166,10 +178,16 @@ public:
 		// metric outputs moved to technology
 		double kWhperkW = 0.0;
 		double nameplate = as_double("system_capacity");
-		double annual_energy = 0.0;
-		for (int i = 0; i < 8760; i++)
-			annual_energy += enet[i];
-		if (nameplate > 0) kWhperkW = annual_energy / nameplate;
+		if (nameplate <= 0) // calculate
+		{
+			nameplate = annual_output / (8760 * (double)(as_number("user_capacity_factor") / 100) * derate);
+		}
+		assign("system_capacity", (var_data)((ssc_number_t)nameplate));
+//		double annual_energy = 0.0;
+//		for (int i = 0; i < nrec_gen; i++)
+//			annual_energy += enet[i];
+//		if (nameplate > 0) kWhperkW = annual_energy / nameplate;
+		if (nameplate > 0) kWhperkW = annual_output / nameplate;
 		assign("capacity_factor", var_data((ssc_number_t)(kWhperkW / 87.6)));
 		assign("kwh_per_kw", var_data((ssc_number_t)kWhperkW));
 
