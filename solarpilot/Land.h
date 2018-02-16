@@ -75,7 +75,7 @@ public:
 	static std::vector<sp_point> *getLayoutPositions();
 	static double calcPolyLandArea(var_land &V);
 	
-	void calcLandArea(var_land &V, vector<sp_point> &layout);
+	void calcLandArea(var_land &V, std::vector<sp_point> &layout);
 
 	//methods for containment testing
 	static bool InBounds(var_land &V, sp_point &H, double tht=1.0);

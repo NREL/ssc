@@ -83,7 +83,6 @@
 //	};
 //};
 
-//using namespace std;
 
 //Declare any referenced classes first
 class Receiver;
@@ -135,7 +134,7 @@ struct sim_params
 };
 
 typedef std::vector<layout_obj> layout_shell;
-typedef map<int, Heliostat*> htemp_map;
+typedef std::map<int, Heliostat*> htemp_map;
 
 /*The SolarField class will serve as the object that binds together all of the aspects of the solar field
 into a single object. Multiple instances of the SolarField will be possible, and this will allow the 

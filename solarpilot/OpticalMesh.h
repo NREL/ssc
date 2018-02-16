@@ -52,7 +52,6 @@
 
 #include <vector>
 #include <string>
-using namespace std;
 
 struct LayoutData
 {
@@ -120,7 +119,7 @@ public:
 	derivatives(){};
 	derivatives(LayoutData &data);
 	double int_eval(double r, double lf);
-	vector<double> d_eval(double r, double beta, double lf);
+	std::vector<double> d_eval(double r, double beta, double lf);
 };
 
 //-------------------------------------------------------------------------------------------------
@@ -128,20 +127,20 @@ public:
 class tree_node
 {
 	tree_node *m0, *m1;
-	vector<void*> data;
+	std::vector<void*> data;
 	bool terminal;
 	
 protected:
-	tree_node *m_proc(string &key, int index);
-	vector<tree_node*> m_get_children();
+	tree_node *m_proc(std::string &key, int index);
+	std::vector<tree_node*> m_get_children();
 	
 public:
 	void setup(tree_node *child0);
 	void setup(tree_node *child0, tree_node *child1);
-	void setup(vector<void*> data);
+	void setup(std::vector<void*> data);
 	bool is_terminal();
-	vector<void*> *get_array();
-	vector<void*> get_child_data();
+	std::vector<void*> *get_array();
+	std::vector<void*> get_child_data();
 
 };
 
@@ -159,8 +158,8 @@ public:
 	void set_range(double xr[2], double yr[2]);
 	double *get_yr();
 	double *get_xr();
-	opt_element *process(string &key, int index);
-	vector<opt_element*> get_children();
+	opt_element *process(std::string &key, int index);
+	std::vector<opt_element*> get_children();
 };
 
 //-------------------------------------------------------------------------------------------------
@@ -168,7 +167,7 @@ public:
 class optical_hash_tree
 {
 	LayoutData *Data;
-	vector<opt_element> nodes;
+	std::vector<opt_element> nodes;
 	derivatives derivs;
 	opt_element head_node;
 	bool divs_updated;
@@ -187,10 +186,10 @@ public:
 	void create_mesh(LayoutData *Data);
 	void add_object(void *object, double locx, double locy);
 	void add_object(void *object, double locx, double locy, double res);
-	string pos_to_binary(double x, double y);
-	string pos_to_binary(double x, double y, double res);
-	vector<vector<void*>*> get_terminal_data();
-	vector<opt_element*> get_terminal_nodes();
+	std::string pos_to_binary(double x, double y);
+	std::string pos_to_binary(double x, double y, double res);
+	std::vector<std::vector<void*>*> get_terminal_data();
+	std::vector<opt_element*> get_terminal_nodes();
 	
 };
 

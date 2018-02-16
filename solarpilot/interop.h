@@ -109,7 +109,7 @@ public:
 	std::string back();
 	int Index(std::string item);
 
-	std::vector<std::string>::iterator erase(vector<std::string>::iterator position);
+	std::vector<std::string>::iterator erase(std::vector<std::string>::iterator position);
 	std::vector<std::string>::iterator begin();
 };
 
@@ -134,7 +134,7 @@ class multivar
 protected:
 	ArrayString weather_files;
 	bool wf_are_set;  //disabled in base class
-    vector<par_variable> variables;
+    std::vector<par_variable> variables;
 	ArrayString current_varpaths;
 public:
 	multivar();

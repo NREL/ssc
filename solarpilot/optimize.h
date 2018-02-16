@@ -53,8 +53,6 @@
 #include <vector>
 #include "nlopt.hpp"
 
-using namespace std;
-
 class testoptclass
 {
 	int call_count;
@@ -63,7 +61,7 @@ public:
 
 	void reset_counter();
 
-	void random_start(vector<double> &x, vector<vector<double> > &range);
+	void random_start(std::vector<double> &x, std::vector<std::vector<double> > &range);
 
 	double memfunc(unsigned n, const double *x, double *grad, void *my_func_data);
 	

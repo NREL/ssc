@@ -52,10 +52,9 @@
 
 #include <algorithm>
 #include <vector>
-using namespace std;
 
 template <typename Comparable, typename Tag>
-void insertionSort( vector<Comparable> & a, vector<Tag> & b, int left, int right );
+void insertionSort( std::vector<Comparable> & a, std::vector<Tag> & b, int left, int right );
 /**
  * Quicksort algorithm (driver).
  */
@@ -68,7 +67,7 @@ void insertionSort( vector<Comparable> & a, vector<Tag> & b, int left, int right
  * Order these and hide the pivot.
  */
 template <typename Comparable, typename Tag>
-const Comparable & median3( vector<Comparable> & a, vector<Tag> &b, int left, int right )
+const Comparable & median3( std::vector<Comparable> & a, std::vector<Tag> &b, int left, int right )
 {
     int center = ( left + right ) / 2;
     if( a[ center ] < a[ left ] ){
@@ -95,7 +94,7 @@ const Comparable & median3( vector<Comparable> & a, vector<Tag> &b, int left, in
  * right is the right-most index of the subarray.
  */
 template <typename Comparable, typename Tag>
-void insertionSort( vector<Comparable> & a, vector<Tag> & b, int left, int right )
+void insertionSort( std::vector<Comparable> & a, std::vector<Tag> & b, int left, int right )
 {
     for( int p = left + 1; p <= right; p++ )
     {
@@ -120,7 +119,7 @@ void insertionSort( vector<Comparable> & a, vector<Tag> & b, int left, int right
  * right is the right-most index of the subarray.
  */
 template <typename Comparable, typename Tag>
-void quicksort( vector<Comparable> & a, vector<Tag> & b, int left, int right )
+void quicksort( std::vector<Comparable> & a, std::vector<Tag> & b, int left, int right )
 {
     if( left + 10 <= right )
     {
@@ -158,7 +157,7 @@ void quicksort( vector<Comparable> & a, vector<Tag> & b, int left, int right )
  * Order these and hide the pivot.
  */
 template <typename Comparable>
-const Comparable & median3( vector<Comparable> & a, int left, int right )
+const Comparable & median3( std::vector<Comparable> & a, int left, int right )
 {
     int center = ( left + right ) / 2;
     if( a[ center ] < a[ left ] ){
@@ -185,7 +184,7 @@ const Comparable & median3( vector<Comparable> & a, int left, int right )
  * right is the right-most index of the subarray.
  */
 template <typename Comparable>
-void insertionSort( vector<Comparable> & a, int left, int right )
+void insertionSort( std::vector<Comparable> & a, int left, int right )
 {
     for( int p = left + 1; p <= right; p++ )
     {
@@ -210,7 +209,7 @@ void insertionSort( vector<Comparable> & a, int left, int right )
  * right is the right-most index of the subarray.
  */
 template <typename Comparable>
-void quicksort( vector<Comparable> & a, int left, int right )
+void quicksort( std::vector<Comparable> & a, int left, int right )
 {
     if( left + 10 <= right )
     {
@@ -241,7 +240,7 @@ void quicksort( vector<Comparable> & a, int left, int right )
 }
 
 template <typename Comparable, typename Tag>
-void quicksort( vector<Comparable> & a, vector<Tag> & b)
+void quicksort( std::vector<Comparable> & a, std::vector<Tag> & b)
 {
     quicksort( a, b, 0, (int)a.size( ) - 1 );
 }
@@ -249,7 +248,7 @@ void quicksort( vector<Comparable> & a, vector<Tag> & b)
 /*------------------ Quicksort for one vector -------------------- */
 
 template <typename Comparable>
-void quicksort( vector<Comparable> & a)
+void quicksort( std::vector<Comparable> & a)
 {
     quicksort( a, 0, (int)a.size( ) - 1 );
 }

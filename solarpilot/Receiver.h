@@ -56,10 +56,6 @@
 #include "mod_base.h"
 #include "definitions.h"
 
-//using namespace std;
-
-
-
 //Declare referenced classes
 class Receiver;
 class SolarField;

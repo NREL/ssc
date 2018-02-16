@@ -65,6 +65,8 @@
 
 #include "OpticalMesh.h"
 
+using namespace std;
+
 //Sim params
 sim_params::sim_params()
 {

@@ -51,13 +51,9 @@
 #define _HELIOSTAT_H_ 1
 #include <vector>
 #include <math.h>
-//#include "SolarField.h"
-//#include "Flux.h"
 #include "heliodata.h"
 #include "mod_base.h"
 #include "definitions.h"
-//using namespace std;
-//using namespace util;
 
 //declare derived classes referenced in the heliostat class
 class Flux;
@@ -77,11 +73,11 @@ class Heliostat : public mod_base
 		_track, //The tracking vector for the heliostat
 		_tower_vect,  //Heliostat-to-tower unit vector
 		_cant_vect;	//Canting vector (not normalized)
-	vector<Heliostat*>
+	std::vector<Heliostat*>
 		*_neighbors; //pointer to a vector of neighboring heliostats
 	matrix_t<Reflector>
 		_panels; //Array of cant panels
-	vector<sp_point>
+	std::vector<sp_point>
 		_corners,	//Position in global coordinates of the heliostat corners (used for blocking and shadowing)
 		_shadow;	//Position in global coordinates of the heliostat shadow
 	Heliostat* _master_template;	//Pointer to the template used to create this heliostat
@@ -118,7 +114,7 @@ class Heliostat : public mod_base
         _r_collision,   //[m] Collision radius of the heliostat
         _area,          //[m2] reflective area of the heliostat
 		_image_size_xy[2];	//[m/m] Image size on the receiver plane in {x,y}, normalized by tower height
-	string
+	std::string
 		_helio_name;		//Heliostat template name
 	Receiver *_which_rec;	//Which of the receivers is the heliostat pointing at?
 
@@ -176,9 +172,9 @@ public:
 	double getZenithTrack();
     double getArea();
     double getCollisionRadius();
-	vector<Heliostat*> *getNeighborList();
-	vector<sp_point> *getCornerCoords();
-	vector<sp_point> *getShadowCoords();
+	std::vector<Heliostat*> *getNeighborList();
+	std::vector<sp_point> *getCornerCoords();
+	std::vector<sp_point> *getShadowCoords();
 	matrix_t<double> *getMirrorShapeNormCoefObject();
 	matrix_t<double> *getMirrorShapeCoefObject();
 	matrix_t<double> *getSunShapeCoefObject();
@@ -188,8 +184,8 @@ public:
 	matrix_t<double> *getHermiteNormCoefObject();
 	double *getImageSize();
 	void getImageSize(double &sigx_n, double &sigy_n);
-	string *getHeliostatName();
-	void getSummaryResults( vector<double> &results );
+	std::string *getHeliostatName();
+	void getSummaryResults( std::vector<double> &results );
 	Heliostat* getMasterTemplate();
     var_heliostat* getVarMap();
 
@@ -201,7 +197,7 @@ public:
 	void setId(int id);
 	void setGroupId(int row, int col);
 	void setInLayout(bool in_layout);
-	void setNeighborList(vector<Heliostat*> *list);
+	void setNeighborList(std::vector<Heliostat*> *list);
 	void setEfficiencyCosine(double eta_cos);
 	void setEfficiencyAtmAtten(double eta_att);
 	void setEfficiencyIntercept(double eta_int);

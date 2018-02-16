@@ -96,7 +96,7 @@ protected:
 
     sp_optimize *_opt;
 
-	vector<double> interpolate_vectors( vector<double> &A, vector<double> &B, double alpha);
+	std::vector<double> interpolate_vectors( std::vector<double> &A, std::vector<double> &B, double alpha);
 
 
 	void PrepareFluxSimulation(sp_flux_table &fluxtab, int flux_res_x, int flux_res_y, bool is_normalized);
@@ -104,7 +104,7 @@ protected:
 	void PostProcessFlux(sim_result &result, sp_flux_map &fluxmap, int flux_layer = 0);
 	
 
-	bool CalculateFluxMapsOV1(vector<vector<double> > &sunpos, vector<vector<double> > &fluxtab, vector<double> &efficiency, 
+	bool CalculateFluxMapsOV1(std::vector<std::vector<double> > &sunpos, std::vector<std::vector<double> > &fluxtab, std::vector<double> &efficiency, 
 		int flux_res_x = 12, int flux_res_y = 10, bool is_normalized = true);
 
 	simulation_info *_summary_siminfo;
@@ -123,19 +123,19 @@ public:
 	void SetExternalSFObject(SolarField *SF);
 	bool Setup(var_map &V, bool for_optimize = false);
 	//generate weather data
-	void GenerateDesignPointSimulations(var_map &V, vector<string> &hourly_weather_data);
+	void GenerateDesignPointSimulations(var_map &V, std::vector<std::string> &hourly_weather_data);
 	//Simulation methods
 	bool EvaluateDesign(double &obj_metric, double &flux_max, double &tot_cost);
-	void PostEvaluationUpdate(int iter, vector<double> &pos,/* vector<double> &normalizers,*/ double &obj, double &flux, double &cost, std::string *note=0);
+	void PostEvaluationUpdate(int iter, std::vector<double> &pos,/* vector<double> &normalizers,*/ double &obj, double &flux, double &cost, std::string *note=0);
 	virtual bool CreateLayout(sp_layout &layout, bool do_post_process = true)=0;
 	virtual bool CalculateOpticalEfficiencyTable(sp_optical_table &opttab)=0;
 	virtual bool CalculateFluxMaps(sp_flux_table &fluxtab, int flux_res_x = 12, int flux_res_y = 10, bool is_normalized = true)=0;
-	virtual bool CalculateFluxMaps(vector<vector<double> > &sunpos, vector<vector<double> > &fluxtab, vector<double> &efficiency, 
+	virtual bool CalculateFluxMaps(std::vector<std::vector<double> > &sunpos, std::vector<std::vector<double> > &fluxtab, std::vector<double> &efficiency, 
 		int flux_res_x = 12, int flux_res_y = 10, bool is_normalized = true)=0;
-	bool Optimize(int method, vector<double*> &optvars, vector<double> &upper_range, vector<double> &lower_range, vector<double> &stepsize, vector<string> *names=0);
-	bool OptimizeRSGS(vector<double*> &optvars, vector<double> &upper_range, vector<double> &lower_range, vector<bool> &is_range_constr, vector<string> *names=0);
-    bool OptimizeAuto(vector<double*> &optvars, vector<double> &upper_range, vector<double> &lower_range, vector<double> &stepsize, vector<string> *names=0);
-    bool OptimizeSemiAuto(vector<double*> &optvars, vector<double> &upper_range, vector<double> &lower_range, vector<bool> &is_range_constr, vector<string> *names=0);
+	bool Optimize(int method, std::vector<double*> &optvars, std::vector<double> &upper_range, std::vector<double> &lower_range, std::vector<double> &stepsize, std::vector<std::string> *names=0);
+	bool OptimizeRSGS(std::vector<double*> &optvars, std::vector<double> &upper_range, std::vector<double> &lower_range, std::vector<bool> &is_range_constr, std::vector<std::string> *names=0);
+    bool OptimizeAuto(std::vector<double*> &optvars, std::vector<double> &upper_range, std::vector<double> &lower_range, std::vector<double> &stepsize, std::vector<std::string> *names=0);
+    bool OptimizeSemiAuto(std::vector<double*> &optvars, std::vector<double> &upper_range, std::vector<double> &lower_range, std::vector<bool> &is_range_constr, std::vector<std::string> *names=0);
 	//cancellation methods
 	void CancelSimulation();
 	bool IsSimulationCancelled();
@@ -158,7 +158,7 @@ public:
 	bool CreateLayout(sp_layout &layout, bool do_post_process = true);
 	bool CalculateOpticalEfficiencyTable(sp_optical_table &opttab);
 	bool CalculateFluxMaps(sp_flux_table &fluxtab, int flux_res_x = 12, int flux_res_y = 10, bool is_normalized = true);
-	bool CalculateFluxMaps(vector<vector<double> > &sunpos, vector<vector<double> > &fluxtab, vector<double> &efficiency, 
+	bool CalculateFluxMaps(std::vector<std::vector<double> > &sunpos, std::vector<std::vector<double> > &fluxtab, std::vector<double> &efficiency, 
 		int flux_res_x = 12, int flux_res_y = 10, bool is_normalized = true);
 
 };
@@ -181,7 +181,7 @@ public:
 	bool CreateLayout(sp_layout &layout, bool do_post_process = true);
 	bool CalculateOpticalEfficiencyTable(sp_optical_table &opttab);
 	bool CalculateFluxMaps(sp_flux_table &fluxtab, int flux_res_x = 12, int flux_res_y = 10, bool is_normalized = true);
-	bool CalculateFluxMaps(vector<vector<double> > &sunpos, vector<vector<double> > &fluxtab, vector<double> &efficiency, 
+	bool CalculateFluxMaps(std::vector<std::vector<double> > &sunpos, std::vector<std::vector<double> > &fluxtab, std::vector<double> &efficiency, 
 		int flux_res_x = 12, int flux_res_y = 10, bool is_normalized = true);
 
 	//other methods

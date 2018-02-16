@@ -60,6 +60,8 @@
 //#include "procs.h"
 #include "definitions.h"
 
+using namespace std;
+
 #ifdef SP_USE_SOLTRACE
 
 ST_OpticalProperties::ST_OpticalProperties()

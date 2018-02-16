@@ -69,8 +69,6 @@ using std::unordered_map;
 #include "Toolbox.h"
 #include "string_util.h"
 
-//using namespace std;
-
 #ifdef _MSC_VER
 #pragma warning(disable: 4290)  // ignore warning: 'C++ exception specification ignored except to indicate a function is not __declspec(nothrow)'
 #pragma warning(disable:4503)	//warning for name length - VS2010 compiler
@@ -82,7 +80,7 @@ using std::unordered_map;
 //typedef std::vector<std::vector<sp_point> > bounds_array;
 
 template<typename T> static std::string my_to_string(const T &value) {
-	ostringstream x;
+	std::ostringstream x;
 	x << value;
 	return x.str();
 }
@@ -310,7 +308,7 @@ public:
 		    Vp.resizeAll(nrows, 0.0);
 
             //day, hour, month, dni, tdb, pres, vwind, step_weight
-		    vector<vector<double>*> *wdvars = Vp.getEntryPointers();
+		    std::vector<std::vector<double>*> *wdvars = Vp.getEntryPointers();
 
 		    for(i=0; i<nrows; i++){
 			    vals = split(entries.at(i), ",");
@@ -446,7 +444,7 @@ protected:
 
         std::stringstream S;
 
-        vector<vector<double>*> *wp = v.getEntryPointers();
+        std::vector<std::vector<double>*> *wp = v.getEntryPointers();
 
         for(size_t i=0; i<wp->front()->size(); i++)
         {
@@ -465,7 +463,7 @@ protected:
         vout = S.str();
     };
 
-    void _as_str(std::string &vout, vector< vector< sp_point > > &v)
+    void _as_str(std::string &vout, std::vector< std::vector< sp_point > > &v)
     {
         /* 
         [POLY] separates entries
@@ -583,7 +581,7 @@ public:
         return rv;
     };
     
-    void combo_add_choice(std::string &choicename, string &mval)
+    void combo_add_choice(std::string &choicename, std::string &mval)
     {
         int mapint;
         to_integer(mval, &mapint);

@@ -58,7 +58,7 @@
 #include "solpos00.h"
 #include "sort_method.h"
 
-//using namespace std;
+using namespace std;
 
 
 //template<typename T> static std::string my_to_string( T value )

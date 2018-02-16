@@ -51,6 +51,8 @@
 #include "definitions.h"
 #include "exceptions.hpp"
 
+using namespace std;
+
 #ifdef SP_USE_SOLTRACE
 using namespace std;
 

@@ -55,6 +55,8 @@
 #include "exceptions.hpp"
 #include "definitions.h"
 
+using namespace std;
+
 void LayoutData::set_data(double Extents_r[2], double Extents_az[2], double Tht, double Alpha, double Theta, double l_f, 
 		double h_h, double h_w, double S_h, double W_rec, double F_tol, double T_res, bool Flat, bool Onslant, int Nph, int Npw)
 {	
