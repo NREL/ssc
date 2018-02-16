@@ -889,8 +889,8 @@ dispatch_automatic_t::dispatch_automatic_t(
 
 void dispatch_automatic_t::init_with_pointer(const dispatch_automatic_t * tmp)
 {
-	_P_pv_dc = tmp->_P_pv_dc;
-	_P_battery_use = tmp->_P_battery_use;
+	//_P_pv_dc = tmp->_P_pv_dc;
+	//_P_battery_use = tmp->_P_battery_use;
 	_P_battery_current = tmp->_P_battery_current;
 	_day_index = tmp->_day_index;
 	_month = tmp->_month;
