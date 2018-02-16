@@ -546,13 +546,6 @@ void ioutil::parseXMLInputFile(const string &fname,var_map &V, parametric &par_d
 	return;
 }
 
-//template<typename T> static std::string my_to_string( T value )
-//{
-//	std::ostringstream os;
-//	os << value;
-//	return os.str();
-//}
-
 
 
 bool ioutil::saveXMLInputFile(const string &fname, var_map &V, parametric &par_data, optimization &opt_data, const string &version){

@@ -66,24 +66,6 @@
 #include "fluxsim.h"
 #include "OpticalMesh.h"
 
-//
-//struct LAYOUT_DETAIL
-//{
-//	enum A {
-//	//Subset of days/hours=2;Single simulation point=1;Do not filter heliostats=0;Annual simulation=3;Limited annual simulation=4;Representative profiles=5;Map to Annual=6
-//	//Associated with _des_sim_detail
-//	NO_FILTER=0,
-//	SINGLE_POINT,
-//	SUBSET_HOURS,
-//	FULL_ANNUAL,
-//	LIMITED_ANNUAL,
-//	AVG_PROFILES,
-//	MAP_TO_ANNUAL,
-//	FOR_OPTIMIZATION
-//	};
-//};
-
-
 //Declare any referenced classes first
 class Receiver;
 class Heliostat;
@@ -142,14 +124,12 @@ maintenance and reference to a number of unique layouts and field constructions 
 class SolarField : public mod_base
 {
 protected:
-    //std::string _layout_data;   //string form of layout data
 	double 
 		_q_to_rec,		//[MW] Power to the receiver during performance runs
 		_sim_p_to_rec,	//Simulated power to the receiver. Store for plotting and reference
 		_estimated_annual_power,	//Calculated in ProcessLayoutResults().. Estimate of total annual heliostat power output
 		_q_des_withloss,			//[MW] The design point thermal power that must be met
         _sf_area;       //[m2] total heliostat area in the field
-        //_rec_area;      //[m2] total receiver surface area
 
 	bool
 		_is_aimpoints_updated,	//Are the heliostat field aim points up to date?
@@ -199,11 +179,6 @@ protected:
 
 public:
 
-    //struct HELIO_SPACING_METHOD { enum A {NO_BLOCK_DENSE=3, DELSOL_EMPIRICAL=1, NO_BLOCKING=2}; };
-    //struct SUNPOS_DESIGN { enum A {SOLSTICE_S, EQUINOX, SOLSTICE_W, ZENITH, USER }; };
-    //struct TEMPLATE_RULE{ enum A {SINGLE=0, SPEC_RANGE=1, EVEN_DIST=2}; };
-
-	//Constructors - destructor
 	SolarField (); //constructor
 
 	SolarField( const SolarField &sf );
@@ -228,7 +203,6 @@ public:
 	double calcHeliostatArea();	//[m2] returns the total aperture area of the heliostat field
 	double *getPlotBounds(bool use_land=false);	//Returns a pointer to an [4] array [xmax, xmin, ymax, ymin]
 	
-    std::string* getLayoutData();
     bool getAimpointStatus();
 	double getSimulatedPowerToReceiver();
 	double calcReceiverTotalArea();
@@ -253,7 +227,6 @@ public:
 	void setHeliostatExtents(double xmax, double xmin, double ymax, double ymin);
 	
 	//Scripts
-	void setDefaults();
 	void Create(var_map &V);
     void updateCalculatedParameters(var_map &V);
     void updateAllCalculatedParameters(var_map &V);
@@ -280,8 +253,6 @@ public:
 	
     void Simulate(double az, double zen, sim_params &P);		//Method to simulate the performance of the field
 	bool SimulateTime(int hour, int day_of_Month, int month, sim_params &P);
-	//bool SimulateTime(const std::string &data);
-	//bool SimulateTime(double sun_elevation, double sun_azimuth, double *args, int nargs);
 	
     static void SimulateHeliostatEfficiency(SolarField *SF, Vect &Sun, Heliostat *helio, sim_params &P);
 	double calcShadowBlock(Heliostat *H, Heliostat *HS, int mode, Vect &Sun);	//Calculate the shadowing or blocking between two heliostats
@@ -291,7 +262,6 @@ public:
 	int getActiveReceiverCount();
 	static bool parseHeliostatXYZFile(const std::string &filedat, layout_shell &layout );
 	int calcNumRequiredSimulations();
-	//double calcLandArea();
 	double getReceiverPipingHeatLoss(); //kWt
 	double getReceiverTotalHeatLoss();  //kWt
 	void HermiteFluxSimulation(Hvector &helios, bool keep_existing_profile = false);

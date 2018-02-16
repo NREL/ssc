@@ -53,7 +53,6 @@
 
 #ifdef SP_USE_SOLTRACE
 
-//#include <wx/wx.h>
 #include <thread>
 #include <mutex>
 #include <vector>
@@ -80,7 +79,6 @@ class STSimThread
 	
 	st_context_t ContextId;
 	std::mutex
-	//wxMutex
 		StatusLock,
 		CancelLock,
 		FinishedLock;
@@ -117,16 +115,12 @@ public:
 	st_context_t GetContextId();
 
 	void StartThread();
-//private:
-//	
-//	void *Entry();
 
 };
 
 //Multithreaded callback 
 static int STCallback_MT(st_uint_t ntracedtotal, st_uint_t ntraced, st_uint_t ntotrace, st_uint_t curstage, st_uint_t nstages, void *data)
 {
-	//STSimThread *t = (STSimThread*)data;
 	STSimThread *t = static_cast<STSimThread*>(data);
 	t->UpdateStatus(ntracedtotal, ntraced, ntotrace, curstage, nstages);
 	return t->IsTraceCancelled()? 0 : 1;

@@ -69,8 +69,6 @@ class FluxSurface;
 struct ST_System;
 typedef std::vector<FluxSurface> FluxSurfaces;
 typedef std::vector<Heliostat*> Hvector;
-//struct helio_perf_data;
-
 
 /* 
 NOTE
@@ -79,21 +77,17 @@ No references to GUI functions in these methods. These are callable by the GUI a
 code, but should operate independently from the GUI. 
 
 No references to WX library.
-
 */
-
 
 
 class ArrayString
 {
 	std::vector<std::string> data;
-	//unordered_map<string,int> ind_map;
+
 public:
 	ArrayString();
 	
-	//wxArrayStr &operator=( ArrayString &array );
 	ArrayString &operator=( std::vector<std::string> &arr );
-	
 
 	int size();
 	std::string operator[](int i);
@@ -150,22 +144,11 @@ public:
 
 class parametric : public multivar
 {
-	//vector<par_variable> variables;
-	//ArrayString current_varpaths;
-	//ArrayString weather_files;
-	//bool wf_are_set;
-	//wxArrayStr _weather_files;
 public:
+
 	parametric();
-	//void addVar(spbase *var);	//Add a variable by reference to its variable map object
-	//int size();
-	//void clear();
 	void SetWeatherFileList(ArrayString &list);
-	//par_variable &at(int index);
-	//par_variable &operator[](int index);
-	//par_variable &back();
-	//void remove(int index);
-	//int Index(std::string pathname);	//Returns the index if the pathname is found as a current variable. Otherwise returns -1.
+
 };
 
 class optimization : public multivar {};
@@ -204,7 +187,6 @@ namespace interop
 	bool ticker_increment(int lengths[], int indices[], bool changed[], int n);
 
 	//Simulation setup methods
-	//void AimpointUpdateHandler(SolarField &SF);
 	bool PerformanceSimulationPrep(SolarField &SF, Hvector &helios, int sim_method);
 #ifdef SP_USE_SOLTRACE
 	bool SolTraceFluxSimulation_ST(st_context_t cxt, SolarField &SF, Hvector &helios, Vect &sunvect,
@@ -235,24 +217,6 @@ public:
 	void initialize();
 
 };
-
-//class cost_categories
-//{
-//public:
-//	cost_categories();
-//	void reset();
-//
-//	double 
-//		c_heliostat,
-//		c_receiver,
-//		c_tower,
-//		c_tes,
-//		c_pb,
-//		c_other,
-//		c_total;
-//	void calculateTotalCost();
-//
-//};
 
 class sim_result
 {
@@ -305,8 +269,6 @@ public:
 	bool is_soltrace;
 
 	struct SIM_TYPE { enum A { LAYOUT, OPTIMIZATION, FLUX_SIMULATION, PARAMETRIC }; };
-
-	//cost_categories cap_cost;
 	
 	std::vector<std::string> receiver_names;
 

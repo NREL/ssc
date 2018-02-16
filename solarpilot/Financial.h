@@ -83,7 +83,6 @@ public:
 
     void CreateHourlyTODSchedule(var_map &V);
 	void calcPlantCapitalCost(var_map &V);
-	//void calcSimpleCOE(double *enet /*8760 MWh*/, int nval = 8760); //Calculates _simple_coe and _weighted_coe
 
  } ;
 

@@ -78,9 +78,7 @@ namespace ioutil
 	void read_chars( FILE *fp, std::string &text, int nchars=256);
 	bool read_line( FILE *fp, std::string &text, int prealloc = 256 );
 	void read_file( const std::string &fname, std::string &file, std::string &eol_marker);
-	//void parseInputFile(const string &fname, var_map &V, var_map &Defs);	//return a structure with a map of variable names and information
     void parseXMLInputFile(const std::string &fname,var_map &V, parametric &par_data, optimization &opt_data);
-	//void parseDefinitionArray(var_map &V, string disabled_mods = ""); //no longer needed
 	bool saveXMLInputFile(const std::string &fname, var_map &V, parametric &par_data, optimization &opt_data, const std::string &version);
 	std::string getDelimiter(std::string &text);	//Return the delimiter separating the text
 	//--

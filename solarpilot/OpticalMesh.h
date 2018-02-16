@@ -153,7 +153,6 @@ class opt_element : public tree_node
 		yr[2];
 public:
 	opt_element(){};
-	//opt_element(double xrlo, double xrhi, double yrlo, double yrhi);
 	void set_range(double xrlo, double xrhi, double yrlo, double yrhi);
 	void set_range(double xr[2], double yr[2]);
 	double *get_yr();

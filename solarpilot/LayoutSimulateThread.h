@@ -119,9 +119,6 @@ public:
     std::vector<std::string> *GetSimMessages();    //can be called only after simulation is terminated
 
 	void StartThread();
-//private:
-	
-	//void *Entry();
 
 };
 

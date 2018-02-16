@@ -280,7 +280,7 @@ void opt_element::set_range(double xrlo, double xrhi, double yrlo, double yrhi){
 	yr[1] = yrhi;
 }
 
-void opt_element::set_range(double *xri, double *yri){	
+void opt_element::set_range(double xri[2], double yri[2]){	
 	for(int i=0; i<2; i++){
 		xr[i] = xri[i];
 		yr[i] = yri[i];

@@ -56,12 +56,6 @@
 
 using namespace std;
 
-//template<typename T> static std::string my_to_string(const T &value) {
-//	ostringstream x;
-//	x << value;
-//	return x.str();
-//}
-
 //------ simulation info --------
 
 simulation_info::simulation_info(){ 

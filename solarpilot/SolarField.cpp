@@ -103,11 +103,6 @@ simulation_info *SolarField::getSimInfoObject(){return &_sim_info;}
 simulation_error *SolarField::getSimErrorObject(){return &_sim_error;}
 optical_hash_tree *SolarField::getOpticalHashTree(){return &_optical_mesh;}
 
-//string* SolarField::getLayoutData()
-//{
-//    return &_layout_data;
-//}
-
 //-------"SETS"
 /*min/max field radius.. function sets the value in units of [m]. Can be used as follows:
 1) SetMinFieldRadius(_tht, 0.75); 

@@ -82,7 +82,7 @@ protected:
 	void *_detail_callback_data;
 
 	SolarField *_SF;
-	//var_map _variables;
+	
 	int _sim_total;
 	int _sim_complete;
 	
@@ -126,7 +126,7 @@ public:
 	void GenerateDesignPointSimulations(var_map &V, std::vector<std::string> &hourly_weather_data);
 	//Simulation methods
 	bool EvaluateDesign(double &obj_metric, double &flux_max, double &tot_cost);
-	void PostEvaluationUpdate(int iter, std::vector<double> &pos,/* vector<double> &normalizers,*/ double &obj, double &flux, double &cost, std::string *note=0);
+	void PostEvaluationUpdate(int iter, std::vector<double> &pos, double &obj, double &flux, double &cost, std::string *note=0);
 	virtual bool CreateLayout(sp_layout &layout, bool do_post_process = true)=0;
 	virtual bool CalculateOpticalEfficiencyTable(sp_optical_table &opttab)=0;
 	virtual bool CalculateFluxMaps(sp_flux_table &fluxtab, int flux_res_x = 12, int flux_res_y = 10, bool is_normalized = true)=0;
@@ -143,8 +143,6 @@ public:
     sp_optimize *GetOptimizationObject();
     
     struct API_CANT_TYPE { enum A {NONE, ON_AXIS, EQUINOX, SOLSTICE_SUMMER, SOLSTICE_WINTER }; };
-	//struct FOCUS_TYPE { enum A { FLAT, AT_SLANT, USER_DEFINED }; };
-	//struct ATTEN_MODEL { enum A { DELSOL_CLEAR_DAY, DELSOL_HAZY_DAY, USER_DEFINED }; };
 	
 };
 

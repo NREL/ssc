@@ -121,10 +121,6 @@ class Heliostat : public mod_base
     var_heliostat *_var_helio; //pointer to applicable variable map
 		
 public:
-	//constructor and destructor
-	/*struct CANT_TYPE { enum A {FLAT=0, AT_SLANT=-1, ON_AXIS_USER=1, AT_DAY_HOUR=3, USER_VECTOR=4 }; };
-    struct FOCUS_METHOD { enum A {FLAT, AT_SLANT, GROUP_AVERAGE, USER_DEFINED}; };
-    struct TRACK_METHOD { enum A {CONTINUOUS, PERIODIC}; };*/
 
 	//Declare other subroutines
 	void Create(var_map &V, int htemp_number);
@@ -216,15 +212,12 @@ public:
 	void setTrackAngleZenith(double zenith);
 	void setTrackAngleAzimuth(double azimuth);
 	void setTrackAngles(double azimuth, double zenith);
-	void setCantMethod(int method);
 	void setCantVector(Vect &cant);
 	void setCantVector(double cant[3]);
-	void setFocusMethod(int method);
 	void setSlantRange(double L);
 	void setFocalLengthX(double L);
 	void setFocalLengthY(double L);
 	void setFocalLength(double L);
-	//void setCantRadius(double L);
 	void setWhichReceiver(Receiver *rec);
 	void setPowerToReceiver(double P);
 	void setPowerValue(double P);
@@ -250,7 +243,6 @@ class Reflector {
 public:
 	//Constructors
 	Reflector();
-	//Reflector(Reflector &R);
 	
 	//Get-Set methods
 	int getId();
@@ -260,7 +252,6 @@ public:
 	double getFocalLength();
 	int getType();
 	PointVect *getOrientation();
-	
 
 	void setId(int id);
 	void setType(int type);
