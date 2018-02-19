@@ -5,7 +5,7 @@
 
 C_csp_radiator::C_csp_radiator()
 {
-	UL=std::numeric_limits<double>::quiet_NaN();
+	
 }
 
 void C_csp_radiator::init()

@@ -11,7 +11,7 @@
 class C_csp_radiator
 {
 private:
-	double UL;
+
 	HTFProperties mc_coldhtf;
 	HTFProperties mc_air;
 public:
@@ -34,12 +34,14 @@ public:
 		double epsilonb;		//Emissivity of plate bottom surface : epsilonb[-]
 		double epsilong;		//Emissivity of ground : epsilong[-]
 		double Lsec;			//Length of series - connected sections of panels(if single panel, set equal
-				//to L) : Lsec[m]
-
+		double m_night_hrs;		//Number of hours plant will run at summer peak
+								//to L) : Lsec[m]
+		double Afield, RM;
+		int Np;
 		S_params()
 		{
-			n = 0;
-			m_dot_panel=W=L=L_c=cp_circ=th=D=k_panel=epsilon=epsilonb=epsilong=Lsec= std::numeric_limits<double>::quiet_NaN();
+			n = Np= 0;
+			m_dot_panel=W=L=L_c=cp_circ=th=D=k_panel=epsilon=epsilonb=epsilong=Lsec=m_night_hrs=Afield=RM= std::numeric_limits<double>::quiet_NaN();
 		}
 	};
 

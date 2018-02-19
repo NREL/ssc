@@ -460,6 +460,8 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
 	{ SSC_OUTPUT,		SSC_ARRAY,		 "m_warm",				 "Cold storage warm tank mass",									 "kg",			 "",			"PC",			  "*",						 "",		   "" },
 	{ SSC_OUTPUT,		SSC_ARRAY,		 "T_warm",				 "Cold storage warm tank temperature",							 "C",			 "",			"PC",			  "*",						 "",		   "" },
 	{ SSC_OUTPUT,		SSC_ARRAY,		 "T_rad_out",			 "Radiator outlet temperature",									 "C",			 "",			"PC",			  "*",						 "",		   "" },
+	{ SSC_OUTPUT,		SSC_NUMBER,		 "A_radfield",			 "Radiator field surface area",									 "m^2",			 "",			"PC",			  "*",						 "",		   "" },
+
 
 		// Thermal energy storage outputs
 	{ SSC_OUTPUT,       SSC_ARRAY,       "tank_losses",          "TES thermal losses",                                           "MWt",          "",            "TES",            "*",                       "",           "" },
@@ -1391,8 +1393,6 @@ public:
 		p_csp_power_cycle->assign(C_pc_Rankine_indirect_224::E_T_RADOUT, allocate("T_rad_out", n_steps_fixed), n_steps_fixed);
 
 
-
-
 		//heliostat field class
 		C_pt_sf_perf_interp heliostatfield;
 
@@ -2066,6 +2066,9 @@ public:
 		assign("capacity_factor", (ssc_number_t)(kWh_per_kW / ((double)n_steps_fixed / (double)steps_per_hour)*100.));
 		assign("kwh_per_kw", (ssc_number_t)kWh_per_kW);
 		 
+		//Single value outputs from radiative cooling system
+		double A_radfield = rankine_pc.mc_radiator.ms_params.Afield;
+		assign("A_radfield", (ssc_number_t)A_radfield);
 	}
 };
 

@@ -471,7 +471,7 @@ void C_pc_Rankine_indirect_224::init(C_csp_power_cycle::S_solved_params &solved_
 		//cold_tes->m_tes_fl_props = as_matrix("field_fl_props");	// OK to skip
 		cold_tes->m_is_hx = false;									// MSPT assumes direct storage, so no user input required here: hardcode = false
 		cold_tes->m_W_dot_pc_design = 115;							//[MWe]
-		cold_tes->m_eta_pc_factor = .412 / (1 - 0.412);				//[-] In order to allow this value to be used in the formula to determine size of tanks.
+		cold_tes->m_eta_pc_factor =ms_params.m_eta_ref / (1 - ms_params.m_eta_ref);	//[-] In order to allow this value to be used in the formula to determine size of tanks.
 		cold_tes->m_solarm = 2.4;									//[-]
 		cold_tes->m_ts_hours = 20;									//[hrs]
 		cold_tes->m_h_tank = 20;									//tank height [m]
@@ -512,9 +512,14 @@ void C_pc_Rankine_indirect_224::init(C_csp_power_cycle::S_solved_params &solved_
 		rad->epsilong = 0.9;										//Emissivity of ground : epsilong[-]
 		rad->Lsec = 100;											//Length of series - connected sections of panels(if single panel, set equal
 				//to L) : Lsec[m]
-
+		rad->m_night_hrs = 9;										//Numer of hours of radiative cooling in summer peak
+		rad->Np = (cold_tes->m_dot_cw_rad/rad->m_dot_panel)*(cold_tes->m_ts_hours/rad->m_night_hrs);
+		rad->Afield = rad->n*rad->W*rad->L*rad->Np;
+		
 		//Initialize
 		mc_radiator.init();
+
+	
 
 	}
 } //init
@@ -635,7 +640,7 @@ double C_pc_Rankine_indirect_224::get_efficiency_at_TPH(double T_degC, double P_
 	if( !ms_params.m_is_user_defined_pc )
 	{
 		double P_cycle, T_htf_cold, m_dot_demand, m_dot_htf_ref, m_dot_makeup, W_cool_par, f_hrsys, P_cond, T_cond_out, T_cold;
-		T_cond_out=T_cold=std::numeric_limits<double>::quiet_NaN();
+		T_cond_out=T_cold=std::numeric_limits<double>::quiet_NaN();		//check use of Tcold here
 //		water_state wprop;
 
 		double Twet = calc_twet(T_degC, relhum_pct, P_atm*1.01325e6);
@@ -787,11 +792,20 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 	double T_s_K = CSP::skytemp(T_db, T_dp, hour);				//Sky temp from correlation in [K]
 	double u = weather.m_wspd;									//Wind speed [m/s]
 	bool is_dark = (zenith > 90);								//boolean for if it is dark outside. =1 if dark out.
-	double m_warm_last = mc_cold_storage.get_hot_mass_prev();	//get last converged hot mass [kg]
-	bool is_warm_empty = (m_warm_last < mc_cold_storage.ms_params.m_dot_cw_rad * 3600); //=1 if warm tank volume is at least enough to run for one hour
+	if (ms_params.m_CT == 4)
+	{
+		m_cold_last = mc_cold_storage.get_cold_mass_prev();		//get previous converged cold tank mass [kg]
+		m_warm_last = mc_cold_storage.get_hot_mass_prev();		//get last converged hot mass [kg]
+		m_dot_radfield = mc_radiator.ms_params.m_dot_panel*mc_radiator.ms_params.Np;	//Total flow through radiator field
+		is_warm_empty = (m_warm_last < m_dot_radfield * 3600);	//=1 if warm tank volume is at least enough to run for one hour
+		is_cold_empty = (m_cold_last < mc_cold_storage.ms_params.m_dot_cw_rad * 3600);	//=1 if cold tank almost empty within one hour of use
+		T_warm_prev_K = mc_cold_storage.get_hot_temp();			// Get previous warm temperature [K]
+		T_cold_prev = mc_cold_storage.get_cold_temp() - 273.15;	// Get previous cold temperature [C]
+		m_dot_condenser = std::numeric_limits<double>::quiet_NaN();	//condenser mass flow rate at actual load
+	}
 
-	double P_cycle, eta, T_htf_cold, m_dot_demand, m_dot_htf_ref, m_dot_water_cooling, W_cool_par, f_hrsys, P_cond, T_cond_out, T_cold, T_warm, m_cold, m_warm, T_rad_out;
-	P_cycle = eta = T_htf_cold = m_dot_demand = m_dot_htf_ref = m_dot_water_cooling = W_cool_par = f_hrsys = P_cond = T_cond_out=T_cold=T_warm=m_cold=m_warm=T_rad_out= std::numeric_limits<double>::quiet_NaN();
+	double P_cycle, eta, T_htf_cold, m_dot_demand, m_dot_htf_ref, m_dot_water_cooling, W_cool_par, f_hrsys, P_cond, T_cond_out, T_rad_out;
+	P_cycle = eta = T_htf_cold = m_dot_demand = m_dot_htf_ref = m_dot_water_cooling = W_cool_par = f_hrsys = P_cond = T_cond_out=T_rad_out= std::numeric_limits<double>::quiet_NaN();
 	
 
 	// 4.15.15 twn: hardcode these so they don't have to be passed into call(). Mode is always = 2 for CSP simulations
@@ -864,12 +878,8 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 		{
 
 			mc_cold_storage.idle(step_sec, T_db, mc_cold_storage_outputs);	//idle cold storage tanks ARD
-			T_warm = mc_cold_storage_outputs.m_T_hot_ave - 273.15;			//output warm tank temperature, convert to [C]
-			T_cold = mc_cold_storage_outputs.m_T_cold_ave - 273.15;			//output cold tank temperature, convert to [C]
-			m_cold = mc_cold_storage.get_cold_mass();						//cold tank mass [kg] - is this current or previous?
-			m_warm = mc_cold_storage.get_hot_mass();						//warm tank mass [kg]
-			T_cond_out = T_cold;											//Return same cold temperature if no heat rejection [C] 
-			T_rad_out = T_warm+273.15;										//Return same warm temperature if radiator off [K]
+			T_cond_out = mc_cold_storage_outputs.m_T_hot_ave-273.15;		//Return warm tank temperature if no heat rejection [C] 
+			T_rad_out = mc_cold_storage_outputs.m_T_cold_ave;				//Return cold tank temperature if radiator off [K]
 
 		}
 
@@ -882,8 +892,6 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 		if( !ms_params.m_is_user_defined_pc )
 		{
 
-			double T_cold_prev= std::numeric_limits<double>::quiet_NaN();
-			T_cold_prev= mc_cold_storage.get_cold_temp()-273.15;							// Get previous cold temperature [C]
 			RankineCycle(T_db, T_wb, P_amb, T_htf_hot, m_dot_htf, mode, demand_var, ms_params.m_P_boil,
 				ms_params.m_F_wc[tou], m_F_wcMin, m_F_wcMax, T_cold_prev,
 				P_cycle, eta, T_htf_cold, m_dot_demand, m_dot_htf_ref, m_dot_water_cooling, W_cool_par, f_hrsys, P_cond, T_cond_out);
@@ -892,37 +900,29 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 			{
 
 				double T_cond_in = std::numeric_limits<double>::quiet_NaN();
-				double m_dot_condenser = f_hrsys * mc_cold_storage.ms_params.m_dot_cw_rad;		//calculate cooling water flow	[kg/sec]					
-				double m_cold_last= mc_cold_storage.get_cold_mass_prev();						//get previous converged cold tank mass [kg]
-				bool is_cold_empty = (m_cold_last < m_dot_condenser * 3600);					//=1 if cold tank almost empty within one hour of use
-				
+				m_dot_condenser = f_hrsys * mc_cold_storage.ms_params.m_dot_cw_rad;		//calculate cooling water flow	[kg/sec]					
+
 				if (is_cold_empty)																
 				{
 					mc_cold_storage.idle(step_sec, T_db, mc_cold_storage_outputs);				//Idle tank if not enough mass (should be rare - eliminate this later. ARD)
-					T_rad_out = mc_cold_storage_outputs.m_T_hot_ave;			//Return warm tank temp [K] if radiator not on
+					T_rad_out = mc_cold_storage_outputs.m_T_cold_ave;							//Return cold tank temp [K] if radiator not on
 
 				}
 				else
 				{
 					if(!is_warm_empty && is_dark)												//Simultaneous charge/discharge if nighttime and both tanks OK.
 					{
-							double T_warm_prev_K = std::numeric_limits<double>::quiet_NaN();
-							T_warm_prev_K = mc_cold_storage.get_hot_temp();						// Get previous warm temperature [K]
-							mc_radiator.night_cool(T_db, T_warm_prev_K, u, T_s_K, mc_radiator.ms_params.m_dot_panel, T_rad_out);						//Call radiator to calculate temperature.
-							mc_cold_storage.charge_discharge(step_sec, T_db, m_dot_condenser, T_cond_out + 273.15, mc_cold_storage.ms_params.m_dot_cw_rad, T_rad_out, mc_cold_storage_outputs);
+							mc_radiator.night_cool(T_db, T_warm_prev_K, u, T_s_K, mc_radiator.ms_params.m_dot_panel, T_rad_out);//Call radiator to calculate temperature. Single series set of panels.
+							mc_cold_storage.charge_discharge(step_sec, T_db, m_dot_condenser, T_cond_out + 273.15,m_dot_radfield , T_rad_out, mc_cold_storage_outputs);
 					}
 					else																		//If cold tank OK and can't do nighttime cooling, just charge.
 					{
 						mc_cold_storage.charge(step_sec, T_db, m_dot_condenser, T_cond_out + 273.15, T_cond_in, mc_cold_storage_outputs);
-						T_rad_out = mc_cold_storage_outputs.m_T_hot_ave;			//Return warm tank temp [K] if radiator not on
+						T_rad_out = mc_cold_storage_outputs.m_T_cold_ave;			//Return cold tank temp [K] if radiator not on
 					}
 				}
 		
-				T_warm = mc_cold_storage_outputs.m_T_hot_ave - 273.15;				//output warm tank temperature, convert to [C]
-				T_cold = mc_cold_storage_outputs.m_T_cold_ave - 273.15;				//output cold tank temperature, convert to [C]
-				m_cold = mc_cold_storage.get_cold_mass();							//cold tank mass [kg] - current calculation.
-				m_warm = mc_cold_storage.get_hot_mass();							//warm tank mass [kg]
-				
+								
 			}
           
 	
@@ -1046,12 +1046,8 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 			if (ms_params.m_CT == 4) // only if radiative cooling is chosen 
 			{
 				mc_cold_storage.idle(step_sec, T_db, mc_cold_storage_outputs);	//idle cold storage tanks ARD
-				T_warm = mc_cold_storage_outputs.m_T_hot_ave - 273.15;			//output warm tank temperature, convert to [C]
-				T_cold = mc_cold_storage_outputs.m_T_cold_ave - 273.15;			//output cold tank temperature, convert to [C]
-				m_cold = mc_cold_storage.get_cold_mass();						//cold tank mass [kg]
-				m_warm = mc_cold_storage.get_hot_mass();						//warm tank mass [kg]
-				T_cond_out = T_cold;											//Return same cold temperature if no heat rejection 
-				T_rad_out = T_warm + 273.15;									//Return same warm temperature if radiator off [K]
+				T_cond_out = mc_cold_storage_outputs.m_T_hot_ave-273.15;				//Return warm tank temperature if no heat rejection 
+				T_rad_out =  mc_cold_storage_outputs.m_T_cold_ave;						//Return cold tank temperature if radiator off [K]
 			}
 
 			was_method_successful = true;
@@ -1085,30 +1081,24 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 			double T_rad_in = std::numeric_limits<double>::quiet_NaN();	//inlet to radiator [K]
 			if (is_dark)
 			{
-				double T_warm_prev_K = std::numeric_limits<double>::quiet_NaN();
-				T_warm_prev_K = mc_cold_storage.get_hot_temp();				// Get previous warm temperature [K]
 				if (is_warm_empty)											//If dark & warm empty, recirculate.
 				{
 					mc_radiator.night_cool(T_db, T_warm_prev_K, u, T_s_K, mc_radiator.ms_params.m_dot_panel, T_rad_out);			//Call radiator to calculate temperature.
-					mc_cold_storage.recirculation(step_sec, T_db, mc_cold_storage.ms_params.m_dot_cw_rad, T_rad_out, mc_cold_storage_outputs);
+					mc_cold_storage.recirculation(step_sec, T_db, m_dot_radfield, T_rad_out, mc_cold_storage_outputs);
 				}
 				else														//If dark & warm not empty, discharge (cooling)
 				{
 					mc_radiator.night_cool(T_db, T_warm_prev_K, u, T_s_K, mc_radiator.ms_params.m_dot_panel, T_rad_out);
-					mc_cold_storage.discharge(step_sec, T_db, mc_cold_storage.ms_params.m_dot_cw_rad, T_rad_out, T_rad_in, mc_cold_storage_outputs);
+					mc_cold_storage.discharge(step_sec, T_db, m_dot_radfield, T_rad_out, T_rad_in, mc_cold_storage_outputs);
 				}
 			}
 			else															//If daytime
 			{
 				mc_cold_storage.idle(step_sec, T_db, mc_cold_storage_outputs);	//idle cold storage tanks ARD
-				T_rad_out = mc_cold_storage_outputs.m_T_hot_ave;				//Return warm tank temp [K] if radiator off
+				T_rad_out = mc_cold_storage_outputs.m_T_cold_ave;				//Return cold tank temp [K] if radiator off
 			}
 			
-			T_warm = mc_cold_storage_outputs.m_T_hot_ave - 273.15;				//output warm tank temperature, convert to [C]
-			T_cold = mc_cold_storage_outputs.m_T_cold_ave - 273.15;				//output cold tank temperature, convert to [C]
-			m_cold = mc_cold_storage.get_cold_mass();							//cold tank mass [kg] - is this current or previous?
-			m_warm = mc_cold_storage.get_hot_mass();							//warm tank mass [kg]
-			T_cond_out = T_cold;												// Return same cold temperature if no heat rejection 
+		T_cond_out = mc_cold_storage_outputs.m_T_hot_ave-273.15;			//Return warm tank temperature if no heat rejection [C]
 
 		}
 
@@ -1198,12 +1188,8 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 		if (ms_params.m_CT == 4) // only if radiative cooling is chosen 
 		{
 			mc_cold_storage.idle(step_sec, T_db, mc_cold_storage_outputs);	//idle cold storage tanks ARD
-			T_warm = mc_cold_storage_outputs.m_T_hot_ave - 273.15;			//output warm tank temperature, convert to [C]
-			T_cold = mc_cold_storage_outputs.m_T_cold_ave - 273.15;			//output cold tank temperature, convert to [C]
-			m_cold = mc_cold_storage.get_cold_mass();						//cold tank mass [kg] - is this current or previous?
-			m_warm = mc_cold_storage.get_hot_mass();						//warm tank mass [kg]
-			T_cond_out = T_cold;											//Same return temp [C] if no heat rejection when radiative cooling.
-			T_rad_out = T_warm + 273.15;									//Same return temp [K] if radiator off.
+			T_cond_out = mc_cold_storage_outputs.m_T_hot_ave-273.15;		//Same warm tank temp [C] if no heat rejection when radiative cooling.
+			T_rad_out = mc_cold_storage_outputs.m_T_cold_ave;				//Same cold tank temp [K] if radiator off.
 		}
 
 		was_method_successful = true;
@@ -1303,12 +1289,12 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 	//out_report.m_m_dot_makeup = (m_dot_water_cooling + m_dot_st_bd)*3600.0;		//[kg/hr] Cooling water makeup flow rate, convert from kg/s
 	mc_reported_outputs.value(E_M_DOT_WATER, (m_dot_water_cooling + m_dot_st_bd)*3600.0);		//[kg/hr] Cooling water makeup flow rate, convert from kg/s
 	mc_reported_outputs.value(E_T_COND_OUT, T_cond_out);										//[C] Cooling water outlet temperature from condenser
-	mc_reported_outputs.value(E_T_COLD, T_cold);			//[C] Cold storage temperature
-	mc_reported_outputs.value(E_M_COLD, m_cold);			//[kg] Cold storage tank mass
-	mc_reported_outputs.value(E_M_WARM, m_warm);			//[kg] Cold storage warm (return) tank mass
-	mc_reported_outputs.value(E_T_WARM, T_warm);				//[C] Cold storage warm (return) tank temperature
-	mc_reported_outputs.value(E_T_RADOUT, T_rad_out-273.15);		//[C] Radiator outlet temperature
-																//out_report.m_m_dot_demand = m_dot_demand;			//[kg/hr] HTF required flow rate to meet power load
+	mc_reported_outputs.value(E_T_COLD, mc_cold_storage_outputs.m_T_cold_ave - 273.15);			//[C] Cold storage temperature
+	mc_reported_outputs.value(E_M_COLD, mc_cold_storage.get_cold_mass());			//[kg] Cold storage tank mass
+	mc_reported_outputs.value(E_M_WARM, mc_cold_storage.get_hot_mass());			//[kg] Cold storage warm (return) tank mass
+	mc_reported_outputs.value(E_T_WARM, mc_cold_storage_outputs.m_T_hot_final-273.15);			//[C] Cold storage warm (return) tank temperature
+	mc_reported_outputs.value(E_T_RADOUT, T_rad_out-273.15);//[C] Radiator outlet temperature
+															//out_report.m_m_dot_demand = m_dot_demand;			//[kg/hr] HTF required flow rate to meet power load
 	
 	out_solver.m_m_dot_htf = m_dot_htf;					//[kg/hr] Actual HTF flow rate passing through the power cycle
 	mc_reported_outputs.value(E_M_DOT_HTF,m_dot_htf);	//[kg/hr] Actual HTF flow rate passing through the power cycle
