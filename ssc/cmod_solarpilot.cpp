@@ -273,8 +273,8 @@ public:
 		else 
 		{
 			//fluxmaps not required, so declare required variables and fill with zeros
-			ssc_number_t * opteff = allocate("opteff_table", 1, 3);
-			ssc_number_t * fluxdata = allocate("flux_table", 1, 1);
+			allocate("opteff_table", 1, 3);
+			allocate("flux_table", 1, 1);
 		}
 
 	}
