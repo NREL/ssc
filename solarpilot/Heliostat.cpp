@@ -754,8 +754,8 @@ Reflector *Heliostat::getPanelById(int id){
 
 Reflector *Heliostat::getPanel(int row, int col){
 	int nr, nc;
-	nr = _panels.nrows();
-	nc = _panels.ncols();
+	nr = (int)_panels.nrows();
+	nc = (int)_panels.ncols();
 	if(row < nr && col < nc) {
 	  	return &_panels.at(row, col);
 	}
