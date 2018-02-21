@@ -49,7 +49,7 @@
 
 #include "optimize.h"
 
-
+using namespace std;
 
 testoptclass::testoptclass(){
 	call_count = 0;

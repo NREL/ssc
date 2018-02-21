@@ -60,6 +60,8 @@
 //#include "procs.h"
 #include "definitions.h"
 
+using namespace std;
+
 #ifdef SP_USE_SOLTRACE
 
 ST_OpticalProperties::ST_OpticalProperties()
@@ -241,7 +243,7 @@ void ST_Sun::Write(FILE *fdat)
 	fprintf(fdat, "SUN\tPTSRC\t%d\tSHAPE\t%c\tSIGMA\t%lg\tHALFWIDTH\t%lg\n", 0, ShapeIndex, Sigma, Sigma);
 	fprintf(fdat, "XYZ\t%lg\t%lg\t%lg\tUSELDH\t%d\tLDH\t%lg\t%lg\t%lg\n", Origin[0], Origin[1], Origin[2], 0, 0., 0., 0.);
 	if( ShapeIndex == 'd' ){
-		int np = SunShapeAngle.size();
+		int np = (int)SunShapeAngle.size();
 		fprintf(fdat, "USER SHAPE DATA\t%d\n", np);
 		for (int i=0;i<np;i++)
 			fprintf(fdat, "%lg\t%lg\n", SunShapeAngle.at(i), SunShapeIntensity.at(i) );
@@ -364,7 +366,7 @@ void ST_RayData::Merge( ST_RayData &src )
 	src.m_dataCapacity = 0;
 
 	m_blockList = list;
-	m_dataCapacity = m_dataCount = m_blockList.size() * block_size;
+	m_dataCapacity = m_dataCount = (st_uint_t)m_blockList.size() * block_size;
 
 	// append all the data in the partial blocks
 
@@ -412,7 +414,7 @@ ST_RayData::ray_t *ST_RayData::Index(st_uint_t i, bool write_access)
 	block_t *b = m_blockList[block_num];
 
 	if (write_access && block_idx >= b->count)
-		b->count = block_idx+1;
+		b->count = (st_uint_t)(block_idx+1);
 
 	if (!write_access && block_idx >= b->count)
 		return 0;
@@ -433,7 +435,7 @@ void ST_RayData::Print()
 		double pos[3],cos[3];
 		int elm, stage;
 		unsigned int ray;
-		if (Query(i, pos, cos, &elm, &stage, &ray))
+		if (Query((int)i, pos, cos, &elm, &stage, &ray))
 		{
 			printf("   [%u] = { [%lg,%lg,%lg][%lg,%lg,%lg] %d %d %u }\n", (unsigned int)i,
 				pos[0], pos[1], pos[2],
@@ -674,7 +676,7 @@ bool ST_System::CreateSTSystem(SolarField &SF, Hvector &helios, Vect &sunvect){
 	}
 	else if(sun_type == 3){	//User sun
 		shape = 'd';
-		int np = V->amb.user_sun.val.nrows();
+		int np = (int)V->amb.user_sun.val.nrows();
 		double
 			*angle = new double[np],
 			*intens = new double[np];
@@ -721,7 +723,7 @@ bool ST_System::CreateSTSystem(SolarField &SF, Hvector &helios, Vect &sunvect){
 		return false;	//Error, should have been cleared earlier
 	}
 	else{	
-		nhtemp = SF.getHeliostatTemplates()->size();
+		nhtemp = (int)SF.getHeliostatTemplates()->size();
 		for(int i=0; i<nhtemp; i++){
 			OpticsList.push_back( new ST_OpticalPropertySet() );
 		}
@@ -892,7 +894,7 @@ bool ST_System::CreateSTSystem(SolarField &SF, Hvector &helios, Vect &sunvect){
 	
 	*/
 
-	int nh = helios.size();
+	int nh = (int)helios.size();
 	
 	if(h_stage->ElementList.size() != 0){
 		return false;		//error
@@ -924,8 +926,8 @@ bool ST_System::CreateSTSystem(SolarField &SF, Hvector &helios, Vect &sunvect){
 		matrix_t<Reflector> *panels = H->getPanels();
 		bool isdetail = Hv->is_faceted.val; 
 		int 
-			ncantx = isdetail ? panels->ncols() : 1,
-			ncanty = isdetail ? panels->nrows() : 1,
+			ncantx = isdetail ? (int)panels->ncols() : 1,
+			ncanty = isdetail ? (int)panels->nrows() : 1,
 			npanels = ncantx * ncanty;
 
 		//Get values that apply to the whole heliostat
@@ -1043,7 +1045,7 @@ bool ST_System::CreateSTSystem(SolarField &SF, Hvector &helios, Vect &sunvect){
 	r_stage->Name = "Receiver";
 
 	vector<Receiver*> *recs = SF.getReceivers();
-	int nrecs = recs->size();
+	int nrecs = (int)recs->size();
 	unordered_map<int, Receiver*> rstage_map;	//map between element number and pointer to the receiver
 	
 	if(r_stage->ElementList.size() > 0){
@@ -1288,7 +1290,7 @@ void ST_System::LoadIntoContext(ST_System *System, st_context_t spcxt){
 	st_sun(spcxt, 0, System->Sun.ShapeIndex, System->Sun.Sigma);
 	if(System->Sun.ShapeIndex == 'd'){
 		//Add user defined angles
-		int np = System->Sun.SunShapeAngle.size();
+		int np = (int)System->Sun.SunShapeAngle.size();
 		double
 			*angle = new double[np],
 			*intens = new double[np];
@@ -1327,7 +1329,7 @@ void ST_System::LoadIntoContext(ST_System *System, st_context_t spcxt){
 
 	//Add all of the elements and stages
 	//st_clear_stages(spcxt);
-	st_add_stages(spcxt, System->StageList.size());
+	st_add_stages(spcxt, (st_uint_t)System->StageList.size());
 
 	for (unsigned int ns=0;ns<System->StageList.size();ns++)
 	{
@@ -1339,7 +1341,7 @@ void ST_System::LoadIntoContext(ST_System *System, st_context_t spcxt){
 		st_stage_flags( spcxt, ns, stage->Virtual?1:0, stage->MultiHitsPerRay?1:0, stage->TraceThrough?1:0);
 
 		st_clear_elements(spcxt, ns);
-		st_add_elements( spcxt, ns, stage->ElementList.size() );
+		st_add_elements( spcxt, ns, (st_uint_t)stage->ElementList.size() );
 
 		for (unsigned int idx=0;idx<stage->ElementList.size();idx++)
 		{

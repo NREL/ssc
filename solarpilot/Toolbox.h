@@ -51,7 +51,6 @@
 #define _TOOLBOX_H_ 1
 
 #include <math.h>
-//#include <ctime>
 #include <vector>
 #include <time.h>
 #if defined(_WIN64)
@@ -247,7 +246,6 @@ public:
 #ifdef _DEBUG
 		VEC_ASSERT( r >= 0 && r < n_rows && c >= 0 && c < n_cols && l >= 0 && l < n_layers);
 #endif
-		//return t_array[n_cols*(n_rows*l + r)+c];
 		return t_array[n_layers*(c+r*n_cols)+l];	//Keep the last index close in memory
 	}
 
@@ -256,7 +254,6 @@ public:
 #ifdef _DEBUG
 		VEC_ASSERT( r >= 0 && r < n_rows && c >= 0 && c < n_cols && l >= 0 && l < n_layers);
 #endif
-		//return t_array[n_cols*(n_rows*l + r)+c];
 		return t_array[n_layers*(c+r*n_cols)+l];
 	}
 		
@@ -674,7 +671,7 @@ public:
 class DateTime : public DTobj {
 	//Defines date/time members and scripts
 	int monthLength[12];
-	//std::vector<std::string> _month_names;
+
 public:
 	//Constructors
 	DateTime(); //Default constructor
@@ -712,9 +709,7 @@ public:
 	int GetDayOfYear();
 	int GetDayOfYear(int year, int month, int mday);
 	static int CalculateDayOfYear( int year, int month, int mday );	//Static version
-	int GetWeekOfYear();
 	int GetHourOfYear();
-	//std::string monthName(int month){if(month<1 || month>12) return ""; return _month_names.at(month-1);};
 	static std::string GetMonthName(int month /*1-12*/);
 
 };
