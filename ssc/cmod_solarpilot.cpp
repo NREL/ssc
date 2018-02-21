@@ -270,6 +270,13 @@ public:
 				throw exec_error("solarpilot", "failed to calculate a correct flux map table");
 
 		}
+		else 
+		{
+			//fluxmaps not required, so declare required variables and fill with zeros
+			allocate("opteff_table", 1, 3);
+			allocate("flux_table", 1, 1);
+		}
+
 	}
 };
 
