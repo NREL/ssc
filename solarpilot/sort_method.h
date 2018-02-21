@@ -71,18 +71,18 @@ const Comparable & median3( std::vector<Comparable> & a, std::vector<Tag> &b, in
 {
     int center = ( left + right ) / 2;
     if( a[ center ] < a[ left ] ){
-        swap( a[ left ], a[ center ] );
-		swap( b[ left ], b[ center ] );}
+        std::swap( a[ left ], a[ center ] );
+		std::swap( b[ left ], b[ center ] );}
     if( a[ right ] < a[ left ] ){
-        swap( a[ left ], a[ right ] );
-		swap( b[ left ], b[ right ] );}
+		std::swap( a[ left ], a[ right ] );
+		std::swap( b[ left ], b[ right ] );}
     if( a[ right ] < a[ center ] ){
-        swap( a[ center ], a[ right ] );
-		swap( b[ center ], b[ right ] );}
+		std::swap( a[ center ], a[ right ] );
+		std::swap( b[ center ], b[ right ] );}
 
         // Place pivot at position right - 1
-    swap( a[ center ], a[ right - 1 ] );
-	swap( b[ center ], b[ right - 1 ] );
+	std::swap( a[ center ], a[ right - 1 ] );
+	std::swap( b[ center ], b[ right - 1 ] );
     return a[ right - 1 ];
 }
 
@@ -132,13 +132,13 @@ void quicksort( std::vector<Comparable> & a, std::vector<Tag> & b, int left, int
             while( a[ ++i ] < pivot ) { }
             while( pivot < a[ --j ] ) { }
             if( i < j ){
-                swap( a[ i ], a[ j ] );
-				swap( b[ i ], b[ j ] );}
+				std::swap( a[ i ], a[ j ] );
+				std::swap( b[ i ], b[ j ] );}
 			else {break;}
         }
 
-        swap( a[ i ], a[ right - 1 ] );  // Restore pivot
-		swap( b[ i ], b[ right - 1 ] );
+		std::swap( a[ i ], a[ right - 1 ] );  // Restore pivot
+		std::swap( b[ i ], b[ right - 1 ] );
 
         quicksort( a, b, left, i - 1 );     // Sort small elements
 		quicksort( a, b, i + 1, right );    // Sort large elements
