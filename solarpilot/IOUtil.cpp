@@ -93,7 +93,7 @@ bool ioutil::dir_exists( const char *path )
 	char *wpath = _strdup( path );
 	if (!wpath) return false;
 
-	int pos = strlen(wpath)-1;
+	int pos = (int)strlen(wpath)-1;
 	while (pos > 1 && (wpath[pos] == '/' || wpath[pos] == '\\'))
 	{
 		if (pos == 3 && wpath[pos-1] == ':') break;
@@ -707,7 +707,7 @@ string ioutil::getDelimiter(std::string &text){
 	int ns=0;
 	for(int i=0; i<4; i++){
 		vector<string> data = split(text, delims[i]);
-		if((int)data.size()>ns){ delim = delims[i]; ns = data.size(); }	//pick the delimiter that returns the most entries
+		if((int)data.size()>ns){ delim = delims[i]; ns = (int)data.size(); }	//pick the delimiter that returns the most entries
 	}
 	return delim;
 }

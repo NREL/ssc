@@ -193,7 +193,7 @@ SolarField::SolarField( const SolarField &sf )
 	The ID's are originally set according to the position in the heliostat object matrix.
 	Use this feature to reconstruct the pointer map.
 	*/
-	int npos = sf._heliostats.size();
+	int npos = (int)sf._heliostats.size();
 	_heliostats.resize(npos);
 	for(int i=0; i<npos; i++){
 		_heliostats.at(i) = hp_map[ sf._heliostats.at(i) ];
@@ -207,12 +207,12 @@ SolarField::SolarField( const SolarField &sf )
 
 	//Heliostat groups
 	int nr, nc;
-	nr = sf._helio_groups.nrows();
-	nc = sf._helio_groups.ncols();
+	nr = (int)sf._helio_groups.nrows();
+	nc = (int)sf._helio_groups.ncols();
 	_helio_groups.resize_fill(nr, nc, Hvector()); //NULL));
 	for(int i=0; i<nr; i++){
 		for(int j=0; j<nc; j++){
-			int nh = sf._helio_groups.at(i,j).size();
+			int nh = (int)sf._helio_groups.at(i,j).size();
 			_helio_groups.at(i,j).resize(nh);
 			for(int k=0; k<nh; k++){
 				_helio_groups.at(i,j).at(k) = hp_map[ sf._helio_groups.at(i,j).at(k) ];
@@ -223,7 +223,7 @@ SolarField::SolarField( const SolarField &sf )
 	//Layout groups
 	_layout_groups.resize(sf._layout_groups.size());
 	for(int j=0; j<(int)sf._layout_groups.size(); j++){
-		int nh = sf._layout_groups.at(j).size();
+		int nh = (int)sf._layout_groups.at(j).size();
 		_layout_groups.at(j).resize(nh);
 		for(int k=0; k<nh; k++){
 			_layout_groups.at(j).at(k) = hp_map[ sf._layout_groups.at(j).at(k) ];
@@ -232,12 +232,12 @@ SolarField::SolarField( const SolarField &sf )
 	
 
 	//Neighbors
-	nr = sf._neighbors.nrows();
-	nc = sf._neighbors.ncols();
+	nr = (int)sf._neighbors.nrows();
+	nc = (int)sf._neighbors.ncols();
 	_neighbors.resize_fill(nr, nc, Hvector()); //0, NULL));
 	for(int i=0; i<nr; i++){
 		for(int j=0; j<nc; j++){
-			int nh = sf._neighbors.at(i,j).size();
+			int nh = (int)sf._neighbors.at(i,j).size();
 			_neighbors.at(i,j).resize(nh);
 			for(int k=0; k<nh; k++){
 				_neighbors.at(i,j).at(k) = hp_map[ sf._neighbors.at(i,j).at(k)];
@@ -252,7 +252,7 @@ SolarField::SolarField( const SolarField &sf )
 
 	//Create receivers
 	unordered_map<Receiver*, Receiver*> r_map;	//map old receiver -> new receiver
-	int nrec = sf._receivers.size();
+	int nrec = (int)sf._receivers.size();
 	_active_receivers.clear();
 	for(int i=0; i<nrec; i++){
 		Receiver *rec = new Receiver( *sf._receivers.at(i) );
@@ -310,7 +310,7 @@ void SolarField::Create(var_map &V){
 	setAimpointStatus(false);	//the aimpoints have not yet been calculated
 	
 	//Heliostat variables, Instantiate the template objects in order
-    int nh = V.hels.size();
+    int nh = (int)V.hels.size();
 	_helio_template_objects.resize(nh);
     V.sf.temp_which.combo_clear();
     for(int j=0; j<nh; j++)
@@ -339,7 +339,7 @@ void SolarField::Create(var_map &V){
 	}
 
 	//Receiver variables
-	int Nset = V.recs.size();
+	int Nset = (int)V.recs.size();
 	_active_receivers.clear();
 	
     for(int i=0; i<Nset; i++)
@@ -472,7 +472,7 @@ void SolarField::Clean(){
 
 double SolarField::calcHeliostatArea(){
 	/* Sum up the total aperture area of all active heliostats in the solar field */
-	int Npos = _heliostats.size();
+	int Npos = (int)_heliostats.size();
 	double Asf=0.;
 	for(int i=0; i<Npos; i++){
 		if(_heliostats.at(i)->getInLayout()) 
@@ -487,7 +487,7 @@ double SolarField::calcReceiverTotalArea(){
 	Sum and return the total absorber surface area for all receivers
 	*/
 
-	int nrec = getReceivers()->size();
+	int nrec = (int)getReceivers()->size();
 	double Atot = 0.;
 	for(int i=0; i<nrec; i++){ 
         Receiver* Rec = getReceivers()->at(i);
@@ -572,7 +572,7 @@ bool SolarField::UpdateNeighborList(double lims[4], double zen){
 	_helio_groups.resize_fill(nrow, ncol, Hvector());
 
 	int col, row;	//indicates which node the heliostat is in
-	int Npos = _helio_objects.size();
+	int Npos = (int)_helio_objects.size();
 	for(int i=0; i<Npos; i++){
 		Heliostat *hptr = &_helio_objects.at(i);
 		//Find which node to add this heliostat to
@@ -596,7 +596,7 @@ bool SolarField::UpdateNeighborList(double lims[4], double zen){
 				if(k<0 || k>nrow-1) continue;	//If the search goes out of bounds in the y direction, loop to the next position
 				for(int l=j-1;l<j+2;l++){	//At each node position, get the surrounding nodes in the +/-x direction
 					if(l<0 || l>ncol-1) continue;	//If the search goes out of bounds in the x direction, loop to the next position
-					nh = _helio_groups.at(k,l).size();	//How many heliostats are in this cell?
+					nh = (int)_helio_groups.at(k,l).size();	//How many heliostats are in this cell?
 					for(int m=0; m<nh; m++){	//Add each heliostat element in the mesh to the list of neighbors for the current cell at (i,j)
 						_neighbors.at(i,j).push_back( _helio_groups.at(k,l).at(m) );
 					}
@@ -789,7 +789,7 @@ bool SolarField::UpdateLayoutGroups(double lims[4]){
 		//Now add all of the layout groups with heliostats to the main array
 		vector<vector<void* >* > tgroups = _optical_mesh.get_terminal_data();
 		for(int i=0; i<(int)tgroups.size(); i++){
-			int ntgroup = tgroups.at(i)->size();
+			int ntgroup = (int)tgroups.at(i)->size();
 			if(ntgroup == 0) continue;
 			_layout_groups.push_back(Hvector());
 			for(int j=0; j<ntgroup; j++){
@@ -823,7 +823,7 @@ bool SolarField::FieldLayout(){
 		sim_results results;
 		int sim_first, sim_last;
 		sim_first = 0;
-		sim_last = wdata.DNI.size();
+		sim_last = (int)wdata.DNI.size();
 		if(! DoLayout(this, &results, &wdata, sim_first, sim_last) )
             return false;
 
@@ -927,7 +927,7 @@ bool SolarField::PrepareFieldLayout(SolarField &SF, WeatherData *wdata, bool ref
 		/*
 		Take a previously defined layout and build up the heliostat objects
 		*/
-		int nh = layout->size();	//Number of heliostats
+		int nh = (int)layout->size();	//Number of heliostats
 
 		//Resize the HelPos array
 		HelPos.resize(nh);
@@ -955,7 +955,7 @@ bool SolarField::PrepareFieldLayout(SolarField &SF, WeatherData *wdata, bool ref
 			if(! SF.getLandObject()->InBounds(V->land, HelPos.at(j), V->sf.tht.val) ){ dels.push_back(j); }
 		}
 		//Delete in reverse order
-		int nd = dels.size();
+		int nd = (int)dels.size();
 		for(int i=0; i<nd; i++){
 			HelPos.erase( HelPos.begin()+ dels.at(nd-1-i) );
 		}
@@ -990,18 +990,18 @@ bool SolarField::PrepareFieldLayout(SolarField &SF, WeatherData *wdata, bool ref
 
             if( h_rad < SF._var_map->recs.front().rec_diameter.val/2.)
             {
-                dels.push_back(j);                        
+                dels.push_back((int)j);
                 continue; //can't delete twice
             }
 
             //azimuthal position check
             double az = atan2(x,y);
             if( (az > azmax) || (az < azmin) )
-                dels.push_back(j);
+                dels.push_back((int)j);
 
         }
         //Delete in reverse order
-		int nd = dels.size();
+		int nd = (int)dels.size();
 		for(int i=0; i<nd; i++){
 			HelPos.erase( HelPos.begin()+ dels.at(nd-1-i) );
 		}
@@ -1064,7 +1064,7 @@ bool SolarField::PrepareFieldLayout(SolarField &SF, WeatherData *wdata, bool ref
             j++;
         }
         //Delete in reverse order
-		int nd = dels.size();
+		int nd = (int)dels.size();
 		for(int i=0; i<nd; i++){
 			HelPos.erase( HelPos.begin()+ dels.at(nd-1-i) );
 		}
@@ -1078,7 +1078,7 @@ bool SolarField::PrepareFieldLayout(SolarField &SF, WeatherData *wdata, bool ref
         SF.getLandObject()->calcLandArea( V->land, HelPos );
 
 	//----For all of the heliostat positions, create the heliostat objects and assign the correct canting/focusing
-	int Npos = HelPos.size();
+	int Npos = (int)HelPos.size();
 	
     if(! SF.getSimInfoObject()->addSimulationNotice("Calculating heliostat canting and aim point information") ){
         SF.CancelSimulation();
@@ -1504,7 +1504,7 @@ void SolarField::ProcessLayoutResults( sim_results *results, int nsim_total){
 	*/
     bool needs_processing = results != 0 && nsim_total > 0;
 
-	int Npos = _heliostats.size();
+	int Npos = (int)_heliostats.size();
     int nresults = 0; //initialize
 
     if( needs_processing )
@@ -1677,13 +1677,13 @@ void SolarField::ProcessLayoutResults( sim_results *results, int nsim_total){
         isave = 0;
         for(size_t i=0; i<_heliostats.size(); i++){
             if(_heliostats.at(i)->getPowerToReceiver() > 0.) {
-                isave = i;
+                isave = (int)i;
                 break;
             }
         }
         if(isave > 0)
             _heliostats.erase(_heliostats.begin(), _heliostats.begin()+isave);
-	    Npos = _heliostats.size();
+	    Npos = (int)_heliostats.size();
     }       //end needs_processing
 
 
@@ -1793,7 +1793,7 @@ void SolarField::AnnualEfficiencySimulation( string weather_file, SolarField *SF
 	Ambient::readWeatherFile( *V ); //wdannual, weather_file, amb);
 	
 	int rindex = V->sf.hsort_method.mapval(); 
-	int Npos = SF->getHeliostats()->size();
+	int Npos = (int)SF->getHeliostats()->size();
 	//Clear the existing ranking metric value from the heliostats
 	Hvector *helios = SF->getHeliostats();
 	for(int i=0; i<Npos; i++){
@@ -1959,7 +1959,7 @@ Heliostat *SolarField::whichTemplate(int method, sp_point &pos){
 
 	*/
 
-	int Nht = _helio_templates.size();
+	int Nht = (int)_helio_templates.size();
     //count the number of enabled templates
     int Nht_active = 0;
     for(int i=0; i<(int)_helio_templates.size(); i++)
@@ -2052,7 +2052,7 @@ void SolarField::TemplateRange(int pos_order, int method, double *rrange, double
 	2 = Even radial distribution	
 	*/
 
-	int Nht = _helio_templates.size();
+	int Nht = (int)_helio_templates.size();
 	//get the field limits from the land class
 	double rad[2];
 	_land.getExtents(*_var_map, rad);
@@ -2938,7 +2938,7 @@ void SolarField::RefactorHeliostatImages(Vect &Sun){
 	position or when aim points are updated.
 	*/
 
-	int nh = _heliostats.size();
+	int nh = (int)_heliostats.size();
 	for(int i=0; i<nh; i++){
 		_flux->imagePlaneIntercept(*_var_map, *_heliostats.at(i), _heliostats.at(i)->getWhichReceiver(), &Sun);
 	}
@@ -3037,7 +3037,7 @@ void SolarField::Simulate(double azimuth, double zenith, sim_params &P)
 	
     //For each heliostat, assess the losses
 	//for layout calculations, we can speed things up by only calculating the intercept factor for representative heliostats. (similar to DELSOL).
-	int nh = _heliostats.size();
+	int nh = (int)_heliostats.size();
 	if(P.is_layout && _var_map->sf.is_opt_zoning.val){
 		//The intercept factor is the most time consuming calculation. Simulate just a single heliostat in the 
 		//neighboring group and apply it to all the rest.
@@ -3046,7 +3046,7 @@ void SolarField::Simulate(double azimuth, double zenith, sim_params &P)
 			
 			Hvector *hg = &_layout_groups.at(i);
 
-			int ngroup = hg->size();
+			int ngroup = (int)hg->size();
 
 			if(ngroup == 0) continue;
 
@@ -3121,7 +3121,7 @@ void SolarField::SimulateHeliostatEfficiency(SolarField *SF, Vect &Sun, Heliosta
 		block_tot = 1.;
 		
 	Hvector *neibs = helios->getNeighborList();
-	int nn = neibs->size();
+	int nn = (int)neibs->size();
 	for(int j=0; j<nn; j++){
 		if(helios == neibs->at(j) ) continue;	//Don't calculate blocking or shading for the same heliostat
 		
@@ -3383,7 +3383,7 @@ void SolarField::updateAllTrackVectors(Vect &Sun){
     if(_var_map->flux.aim_method.mapval() == var_fluxsim::AIM_METHOD::FREEZE_TRACKING)
         return;
     
-    int npos = _heliostats.size();
+    int npos = (int)_heliostats.size();
 	for(int i=0; i<npos; i++){
 		_heliostats.at(i)->updateTrackVector(Sun);
 	}
@@ -3396,7 +3396,7 @@ void SolarField::calcHeliostatShadows(Vect &Sun){
 	sp_point P;	//sp_point on a plane representing the ground
 	Vect Nv;	//Vector normal to the ground surface
 	Nv.Set(0., 0., 1.);
-	int npos = _heliostats.size();
+	int npos = (int)_heliostats.size();
 	//Calculate differently if the heliostats are round
 #if 0
 	if(_helio_templates.at(0)->getVarMap()->is_round.mapval() == var_heliostat::IS_ROUND::ROUND)
@@ -3477,7 +3477,7 @@ void SolarField::calcAllAimPoints(Vect &Sun, sim_params &P) //bool force_simple,
 
 	*/
 
-	int nh = _heliostats.size();
+	int nh = (int)_heliostats.size();
 
     int method = _var_map->flux.aim_method.mapval();
     if(P.is_layout && method != var_fluxsim::AIM_METHOD::KEEP_EXISTING)
@@ -3532,7 +3532,7 @@ void SolarField::calcAllAimPoints(Vect &Sun, sim_params &P) //bool force_simple,
         //RefactorHeliostatImages(Sun);
 
 		//Create a list of heliostats sorted by their Y image size
-		int nh = _heliostats.size();
+		int nh = (int)_heliostats.size();
 		for(int i=0; i<nh; i++)
         {
             //update heliostat efficiency and optical coefficients
@@ -3548,7 +3548,7 @@ void SolarField::calcAllAimPoints(Vect &Sun, sim_params &P) //bool force_simple,
         {
             if( hsort.at(i)->IsEnabled() )
             {
-                imsize_last_enabled=nh-1-i;
+                imsize_last_enabled=nh - 1 - (int)i;
                 break;
             }
         }
@@ -3666,11 +3666,11 @@ bool SolarField::parseHeliostatXYZFile(const std::string &filedat, layout_shell 
 	//Split by lines
 	vector<string> entries = split(filedat, ";"); 
 	//if there's only one entry, we used the wrong delimiter. Try "\n"
-	int nlines = entries.size();
+	int nlines = (int)entries.size();
 	if(nlines < 2){
 		entries.clear();
 		entries = split(filedat, "\n");
-		nlines = entries.size();
+		nlines = (int)entries.size();
 	}
 
 	//Resize the heliostat vector
@@ -3692,7 +3692,7 @@ bool SolarField::parseHeliostatXYZFile(const std::string &filedat, layout_shell 
 		layout.push_back(layout_obj());
 
 		//If the number of entries is less than 12 (but must be at least 4), append NULL's
-		int dsize = data.size();
+		int dsize = (int)data.size();
 		if(dsize < 4){
 			char fmt[] = "Formatting error\nLine %d in the imported layout is incorrectly formatted. The error occurred while parsing the following text:\n\"%s\"";
 			char msg[250];
@@ -3803,7 +3803,7 @@ void SolarField::HermiteFluxSimulation(Hvector &helios, bool keep_existing_profi
 void SolarField::AnalyticalFluxSimulation(Hvector &helios)
 {
 	//Simulate each receiver flux profile (non-dimensional)
-	int nrec = _receivers.size();
+	int nrec = (int)_receivers.size();
 	for(int n=0; n<nrec; n++){
 		if(! _receivers.at(n)->isReceiverEnabled() ) continue;
 		FluxSurfaces *surfaces = _receivers.at(n)->getFluxSurfaces();
@@ -3835,7 +3835,7 @@ void SolarField::CalcDimensionalFluxProfiles(Hvector &helios)
 	//double q_rec_spec = q_to_rec / Arec;
 
 	//Simulate for each receiver
-	int nrec = _receivers.size();
+	int nrec = (int)_receivers.size();
 	for(int n=0; n<nrec; n++){
 		if(! _receivers.at(n)->isReceiverEnabled() ) continue;
 		FluxSurfaces *surfaces = _receivers.at(n)->getFluxSurfaces();
@@ -3875,7 +3875,7 @@ void SolarField::copySimulationStepData(WeatherData &wdata){
 	//the weather data structure contains some pointers that need to be reset. Copy the
 	//data and reset the pointers here
 
-	int n = _var_map->sf.sim_step_data.Val().size();
+	int n = (int)_var_map->sf.sim_step_data.Val().size();
 	wdata.resizeAll(n);
 	double day, hour, month, dni, tdb, pres, vwind, step_weight;
 	for(int i=0; i<n; i++){

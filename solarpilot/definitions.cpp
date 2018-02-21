@@ -74,13 +74,13 @@ void var_map::copy( var_map &vc )
 
     //receiver templates
     for( size_t i=0; i<recs.size(); i++ )
-        drop_receiver(i);
+        drop_receiver((int)i);
     for( size_t i=0; i<vc.recs.size(); i++ )
         add_receiver( vc.recs.at(i).id.val );
 
     //heliostat templates
     for( size_t i=0; i<hels.size(); i++ )
-        drop_heliostat(i);
+        drop_heliostat((int)i);
     for( size_t i=0; i<vc.hels.size(); i++ )
         add_heliostat( vc.hels.at(i).id.val );
 

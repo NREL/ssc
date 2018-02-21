@@ -68,13 +68,6 @@ using std::unordered_map;
 #include "Toolbox.h"
 #include "string_util.h"
 
-#ifdef _MSC_VER
-#pragma warning(disable: 4290)  // ignore warning: 'C++ exception specification ignored except to indicate a function is not __declspec(nothrow)'
-#pragma warning(disable:4503)	//warning for name length - VS2010 compiler
-#pragma warning(disable:4505)	//warning for removing unused method
-#endif
- 
-
 template<typename T> static std::string my_to_string(const T &value) {
 	std::ostringstream x;
 	x << value;

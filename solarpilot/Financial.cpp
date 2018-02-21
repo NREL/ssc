@@ -116,8 +116,8 @@ void Financial::CreateHourlyTODSchedule(var_map &V){
 	Assume the year starts on a Sunday
 	*/
 
-	int nwd = V.fin.weekday_sched.val.size();
-	int nwe = V.fin.weekend_sched.val.size();
+	int nwd = (int)V.fin.weekday_sched.val.size();
+	int nwe = (int)V.fin.weekend_sched.val.size();
 
 	if(nwd != 288 || nwe != 288) return;
 

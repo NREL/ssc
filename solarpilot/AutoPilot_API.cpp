@@ -838,7 +838,7 @@ void AutoPilot::PrepareFluxSimulation(sp_flux_table &fluxtab, int flux_res_x, in
     }
     else
     {
-        nflux_sim = fluxtab.azimuths.size();
+        nflux_sim = (int)fluxtab.azimuths.size();
     }
 
 	fluxtab.flux_surfaces.clear();
@@ -1036,7 +1036,7 @@ bool AutoPilot::OptimizeRSGS(vector<double*> &optvars, vector<double> &upper_ran
 
 	_summary_siminfo->addSimulationNotice(os.str());
 	while( ! converged ){
-		sim_count_begin = objective.size() - 1;	//keep track of the simulation number at the beginning of the main iteration
+		sim_count_begin = (int)objective.size() - 1;	//keep track of the simulation number at the beginning of the main iteration
 
 		//Choose the current point to the the best of all simulations in the previous iteration
 		if(opt_iter > 0){
@@ -1550,7 +1550,7 @@ bool AutoPilot::OptimizeAuto(vector<double*> &optvars, vector<double> &upper_ran
     double flux_penalty_save = V->opt.flux_penalty.val;
     V->opt.flux_penalty.val = 0.;
 
-    nlopt::opt nlobj(nlm, optvars.size() );
+    nlopt::opt nlobj(nlm, (unsigned int)optvars.size() );
     
     //Create optimization helper class
     AutoOptHelper AO;
@@ -1588,7 +1588,7 @@ bool AutoPilot::OptimizeAuto(vector<double*> &optvars, vector<double> &upper_ran
         double *xtemp = new double[ optvars.size() ]; 
         for(int i=0; i<(int)optvars.size(); i++)
             xtemp[i] = 1.;
-        AO.Simulate(xtemp, optvars.size());
+        AO.Simulate(xtemp, (int)optvars.size());
         delete [] xtemp;
         double feas_mult = 1.;
         if( AO.m_flux.back() > V->recs.front().peak_flux.val )
@@ -1622,7 +1622,7 @@ bool AutoPilot::OptimizeAuto(vector<double*> &optvars, vector<double> &upper_ran
         _summary_siminfo->addSimulationNotice( ol.c_str() );
         
         //int iopt = 0;
-        int iopt = AO.m_objective.size()-1;
+        int iopt = (int)AO.m_objective.size()-1;
         /*double objbest = 9.e9;
         for(int i=0; i<(int)AO.m_all_points.size(); i++){
             double obj = AO.m_objective.at(i);
@@ -1763,7 +1763,7 @@ bool AutoPilot::OptimizeSemiAuto(vector<double*> &optvars, vector<double> &/*upp
                     objbest = obj;
                 }
             }
-            iter_counter += AO.m_all_points.size();
+            iter_counter += (int)AO.m_all_points.size();
 
         }
         catch(...)
@@ -1786,7 +1786,7 @@ bool AutoPilot::OptimizeSemiAuto(vector<double*> &optvars, vector<double> &/*upp
         recvars.push_back(optvars.at(1));
         recvars.push_back(optvars.at(2));
         
-        nlopt::opt nlobj(nlm, recvars.size() );
+        nlopt::opt nlobj(nlm, (unsigned int)recvars.size() );
 
         //Create optimization helper class
         AutoOptHelper AO;
@@ -1838,7 +1838,7 @@ bool AutoPilot::OptimizeSemiAuto(vector<double*> &optvars, vector<double> &/*upp
                     objbest = obj;
                 }
             }
-            iter_counter += AO.m_all_points.size();
+            iter_counter += (int)AO.m_all_points.size();
         }
         catch(...){
             //reset
@@ -1854,7 +1854,7 @@ bool AutoPilot::OptimizeSemiAuto(vector<double*> &optvars, vector<double> &/*upp
         V->opt.max_iter.val = step_max_iter + (tot_max_iter % 3);   //allow any extra runs here
 
 
-        nlopt::opt nlobj(nlm, optvars.size() );
+        nlopt::opt nlobj(nlm, (unsigned int)optvars.size() );
     
         //Create optimization helper class
         AutoOptHelper AO;
@@ -2184,7 +2184,7 @@ bool AutoPilot_S::CalculateFluxMaps(sp_flux_table &fluxtab, int flux_res_x, int 
     P.dni = dni;
     P.Tamb = 25.;
 
-	_sim_total = fluxtab.azimuths.size();	//update the expected number of simulations
+	_sim_total = (int)fluxtab.azimuths.size();	//update the expected number of simulations
 	_sim_complete = 0;
 
 	if(_has_summary_callback){
@@ -2672,7 +2672,7 @@ bool AutoPilot_MT::CalculateFluxMaps(sp_flux_table &fluxtab, int flux_res_x, int
     P.dni = dni;
     P.Tamb = 25.;
 
-	_sim_total = fluxtab.azimuths.size();	//update the expected number of simulations
+	_sim_total = (int)fluxtab.azimuths.size();	//update the expected number of simulations
 	_sim_complete = 0;
 
 	//collect the sun positions for the simulations into a single matrix_t

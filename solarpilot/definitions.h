@@ -57,10 +57,6 @@
 #include "mod_base.h"
 #include "Toolbox.h"
 
-#ifdef _MSC_VER
-#pragma warning(disable : 4267)
-#endif
-
 //Enumeration of data columns in the variable map file
 
 
