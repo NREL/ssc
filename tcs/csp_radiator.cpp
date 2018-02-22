@@ -2,6 +2,9 @@
 
 #include "csp_radiator.h"
 #include "csp_solver_util.h"
+#include <fstream>
+#include <iostream>
+
 
 C_csp_radiator::C_csp_radiator()
 {
@@ -12,6 +15,34 @@ void C_csp_radiator::init()
 {
 	mc_coldhtf.SetFluid(ms_params.m_field_fl);  //initialize class for fluid circulating
 	mc_air.SetFluid(1);							//initialize class for air
+
+	//Load measured sky temperature data
+	int ii = 0;
+	
+	std::ifstream inputFile("C:/Users/adyreson/OneDrive/Documents/PhD/09_System/Desert_Rock_Weather/DesertRock2015_TS_localhr.txt");
+	
+	
+	/*try 
+	{
+		if (!inputFile.is_open())
+		throw  20; //throw an error of 20 if can't read file.
+	}
+	catch (int error)
+	{
+		//cout << "Error reading input file" << endl;
+	}*/
+	
+	if (inputFile.is_open())	//check that input file was opened
+	{
+		while (!inputFile.eof()) //note that this only works if file is TAB separated and all spaces are deleted after end of file. Otherwise it reads last entry twice.
+		{
+			inputFile >> T_S_measured[ii];		//measured sky temp [K]
+			inputFile >> T_S_localhr[ii];		//hr
+			T_S_time[ii] = (ii + 1) * 3600;		//record the time in seconds at the end of the timestep.
+			++ii;
+		}
+	}
+	
 }
 
 void C_csp_radiator::night_cool(double T_db /*K*/, double T_rad_in /*K*/, double u /*m/s*/, double T_s /*K*/, double m_dot_rad /*K*/,

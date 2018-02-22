@@ -105,7 +105,10 @@ private:
 	double m_dot_condenser;
 	double T_warm_prev_K;
 	double T_cold_prev;
-
+	double T_s_measured;
+	double T_s_corr;
+	double T_s_K;
+	int idx_time;
 
 	// track number of calls per timestep, reset = -1 in converged() call
 	int m_ncall;
@@ -152,7 +155,8 @@ public:
 		E_T_WARM,			//[C] Cold storage warm (return) tank temperature
 		E_T_RADOUT,			//[C] Radiator outlet temperature
 		E_M_DOT_WATER,		//[kg/hr] Cycle water consumption: makeup + cooling	
-		
+		E_P_COND,			//[Pa] Cycle condensing pressure
+
 		// Variables added for backwards compatability with TCS
 		E_M_DOT_HTF_REF		//[kg/hr] HTF mass flow rate at design
 	};

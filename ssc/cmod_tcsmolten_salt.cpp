@@ -461,6 +461,7 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
 	{ SSC_OUTPUT,		SSC_ARRAY,		 "T_warm",				 "Cold storage warm tank temperature",							 "C",			 "",			"PC",			  "*",						 "",		   "" },
 	{ SSC_OUTPUT,		SSC_ARRAY,		 "T_rad_out",			 "Radiator outlet temperature",									 "C",			 "",			"PC",			  "*",						 "",		   "" },
 	{ SSC_OUTPUT,		SSC_NUMBER,		 "A_radfield",			 "Radiator field surface area",									 "m^2",			 "",			"PC",			  "*",						 "",		   "" },
+	{ SSC_OUTPUT,		SSC_ARRAY,		 "P_cond",				 "PC condensing presssure",									 "Pa",			 "",			"PC",			  "*",						 "",		   "" },
 
 
 		// Thermal energy storage outputs
@@ -1391,6 +1392,7 @@ public:
 		p_csp_power_cycle->assign(C_pc_Rankine_indirect_224::E_M_WARM, allocate("m_warm", n_steps_fixed), n_steps_fixed);
 		p_csp_power_cycle->assign(C_pc_Rankine_indirect_224::E_T_WARM, allocate("T_warm", n_steps_fixed), n_steps_fixed);
 		p_csp_power_cycle->assign(C_pc_Rankine_indirect_224::E_T_RADOUT, allocate("T_rad_out", n_steps_fixed), n_steps_fixed);
+		p_csp_power_cycle->assign(C_pc_Rankine_indirect_224::E_P_COND, allocate("P_cond", n_steps_fixed), n_steps_fixed);
 
 
 		//heliostat field class

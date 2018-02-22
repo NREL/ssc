@@ -71,6 +71,7 @@ static C_csp_reported_outputs::S_output_info S_output_info[] =
 	{ C_pc_Rankine_indirect_224::E_T_WARM,C_csp_reported_outputs::TS_WEIGHTED_AVE },
 	{ C_pc_Rankine_indirect_224::E_T_RADOUT,C_csp_reported_outputs::TS_WEIGHTED_AVE },
 	{C_pc_Rankine_indirect_224::E_M_DOT_WATER, C_csp_reported_outputs::TS_WEIGHTED_AVE},
+	{C_pc_Rankine_indirect_224::E_P_COND,C_csp_reported_outputs::TS_WEIGHTED_AVE },
 	{C_pc_Rankine_indirect_224::E_M_DOT_HTF_REF, C_csp_reported_outputs::TS_WEIGHTED_AVE},
 
 	csp_info_invalid
@@ -483,8 +484,8 @@ void C_pc_Rankine_indirect_224::init(C_csp_power_cycle::S_solved_params &solved_
 		cold_tes->m_cold_tank_max_heat = 15;						//capacity [MWe]
 		cold_tes->m_dt_hot = 0.0;									// MSPT assumes direct storage, so no user input here: hardcode = 0.0
 		cold_tes->m_T_field_in_des = 10;							//HTF cold [C]
-		cold_tes->m_T_field_out_des = 35;							//HTF hot [C]
-		cold_tes->m_T_tank_hot_ini = 35;							//HTF hot initial [C] same as design
+		cold_tes->m_T_field_out_des = 20;							//HTF hot [C]
+		cold_tes->m_T_tank_hot_ini = 20;							//HTF hot initial [C] same as design
 		cold_tes->m_T_tank_cold_ini = 10;							//HTF cold initial [C] same as design
 		cold_tes->m_h_tank_min = 1;									//minimum fill height [m]
 		cold_tes->m_f_V_hot_ini = 5;								//initial hot HTF [%]
@@ -789,7 +790,6 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 	double zenith = weather.m_solzen;							//Solar zenith [deg] at mid-hour
 	double T_dp = weather.m_tdew + 273.15;						//[K] Dewpoint temp, convert from C
 	double hour = (double)((int)(time / 3600.0) % 24);			//Hour in solar time
-	double T_s_K = CSP::skytemp(T_db, T_dp, hour);				//Sky temp from correlation in [K]
 	double u = weather.m_wspd;									//Wind speed [m/s]
 	bool is_dark = (zenith > 90);								//boolean for if it is dark outside. =1 if dark out.
 	if (ms_params.m_CT == 4)
@@ -802,6 +802,16 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 		T_warm_prev_K = mc_cold_storage.get_hot_temp();			// Get previous warm temperature [K]
 		T_cold_prev = mc_cold_storage.get_cold_temp() - 273.15;	// Get previous cold temperature [C]
 		m_dot_condenser = std::numeric_limits<double>::quiet_NaN();	//condenser mass flow rate at actual load
+		idx_time = time / 3600-1;								//Zero based index to this timestep based on end of current hour in seconds.
+		T_s_measured=mc_radiator.T_S_measured[idx_time];		//Get measured sky temperature [K]
+		if (T_s_measured != 0)
+		{
+			T_s_K = T_s_measured;								//Use measured sky temp if available [K]
+		}				
+		else
+		{
+			T_s_K = CSP::skytemp(T_db, T_dp, hour);				//Use sky temp from correlation in [K]
+		}
 	}
 
 	double P_cycle, eta, T_htf_cold, m_dot_demand, m_dot_htf_ref, m_dot_water_cooling, W_cool_par, f_hrsys, P_cond, T_cond_out, T_rad_out;
@@ -1294,7 +1304,7 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 	mc_reported_outputs.value(E_M_WARM, mc_cold_storage.get_hot_mass());			//[kg] Cold storage warm (return) tank mass
 	mc_reported_outputs.value(E_T_WARM, mc_cold_storage_outputs.m_T_hot_final-273.15);			//[C] Cold storage warm (return) tank temperature
 	mc_reported_outputs.value(E_T_RADOUT, T_rad_out-273.15);//[C] Radiator outlet temperature
-															//out_report.m_m_dot_demand = m_dot_demand;			//[kg/hr] HTF required flow rate to meet power load
+	mc_reported_outputs.value(E_P_COND, P_cond);			//[Pa] Condensing pressure					//out_report.m_m_dot_demand = m_dot_demand;			//[kg/hr] HTF required flow rate to meet power load
 	
 	out_solver.m_m_dot_htf = m_dot_htf;					//[kg/hr] Actual HTF flow rate passing through the power cycle
 	mc_reported_outputs.value(E_M_DOT_HTF,m_dot_htf);	//[kg/hr] Actual HTF flow rate passing through the power cycle

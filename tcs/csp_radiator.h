@@ -14,7 +14,13 @@ private:
 
 	HTFProperties mc_coldhtf;
 	HTFProperties mc_air;
+
+
 public:
+
+	double T_S_measured[8760] = {};	//measured sky temperature [K], initially zeros.
+	int T_S_localhr[8760] = {};	//local time in hours for measured sky temp, initially zeros.
+	double T_S_time[8760] = {};		//time in seconds at end of timestep for measured sky temp, initially zeros.
 
 	struct S_params
 	{
