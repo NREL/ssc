@@ -204,6 +204,8 @@ public:
 
 	bool did_solver_find_negative_error(int solver_exit_mode);
 
+	const S_eq_chars get_last_mono_eq_call();
+
 	const std::vector<S_eq_chars> *get_solver_call_history()
 	{
 		return &ms_eq_call_tracker;

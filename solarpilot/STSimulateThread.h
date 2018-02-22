@@ -53,12 +53,11 @@
 
 #ifdef SP_USE_SOLTRACE
 
-//#include <wx/wx.h>
 #include <thread>
 #include <mutex>
 #include <vector>
 #include "stapi.h"
-using namespace std;
+
 typedef void* st_context_t;
 
 class STSimThread 
@@ -79,14 +78,13 @@ class STSimThread
 		ThreadNum;
 	
 	st_context_t ContextId;
-	mutex
-	//wxMutex
+	std::mutex
 		StatusLock,
 		CancelLock,
 		FinishedLock;
 
-    vector<vector<double> > raydata_st0;
-    vector<vector<double> > raydata_st1;
+    std::vector<std::vector<double> > raydata_st0;
+    std::vector<std::vector<double> > raydata_st1;
 
 public:
 
@@ -94,10 +92,10 @@ public:
 
 	void Setup( st_context_t spcxt, int thd_num, int seed, bool is_load_st0data = false, bool is_save_st0data = false );
 	
-    void CopyStageRayData( vector<vector<double> > &src_dat, int which_stage /*0 or 1*/, int ind_start, int ind_end );
+    void CopyStageRayData( std::vector<std::vector<double> > &src_dat, int which_stage /*0 or 1*/, int ind_start, int ind_end );
     
-    vector<vector< double > > *GetStage0RayDataObject();
-    vector<vector< double > > *GetStage1RayDataObject();
+    std::vector<std::vector< double > > *GetStage0RayDataObject();
+    std::vector<std::vector< double > > *GetStage1RayDataObject();
 
 
 	~STSimThread();
@@ -117,21 +115,11 @@ public:
 	st_context_t GetContextId();
 
 	void StartThread();
-//private:
-//	
-//	void *Entry();
 
 };
 
 //Multithreaded callback 
-static int STCallback_MT(st_uint_t ntracedtotal, st_uint_t ntraced, st_uint_t ntotrace, st_uint_t curstage, st_uint_t nstages, void *data)
-{
-	//STSimThread *t = (STSimThread*)data;
-	STSimThread *t = static_cast<STSimThread*>(data);
-	t->UpdateStatus(ntracedtotal, ntraced, ntotrace, curstage, nstages);
-	return t->IsTraceCancelled()? 0 : 1;
-};
-
+extern int STCallback_MT(st_uint_t ntracedtotal, st_uint_t ntraced, st_uint_t ntotrace, st_uint_t curstage, st_uint_t nstages, void *data);
 
 #endif
 

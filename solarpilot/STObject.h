@@ -59,7 +59,6 @@
 
 #include "stapi.h"
 #include "mtrand.h"
-//#include "hpvm.h"
 #include "SolarField.h"
 
 class ST_OpticalProperties
@@ -77,7 +76,6 @@ public:
 	double RMSSlopeError;
 	double RMSSpecError;
 
-	//double RefractiveIndex[4];
 	double Grating[4];	
 	void Write(FILE *fdat);
 };
@@ -115,46 +113,7 @@ struct ST_Element
 	
 	/////////// SURFACE PARAMETERS ///////////////
 	char SurfaceIndex;
-	// SurfaceType; // calculated
 	double Su_A, Su_B, Su_C, Su_D, Su_E, Su_F, Su_G, Su_H;
-	//std::string SurfaceFile;
-	
-	/*double Kappa;
-	double Alpha[5];
-	double VertexCurvX;
-	double VertexCurvY;
-	double AnnularRadius;
-	double CrossSectionRadius;
-	double ConeHalfAngle;
-	double CurvOfRev;
-		
-	int FitOrder;
-	*/
-
-	// Zernike (*.mon) monomial coeffs
-	// (also used for VSHOT Zernike fits)
-	//HPM2D BCoefficients;
-
-	// Rotationally symmetric polynomial coeffs
-	//std::vector< double > PolyCoeffs;
-	
-	// Rotationally symmetric cubic spline
-	//std::vector< double > CubicSplineXData;
-	//std::vector< double > CubicSplineYData; 
-	//std::vector< double > CubicSplineY2Data;   
-	//double CubicSplineDYDXbc1;
-	//double CubicSplineDYDXbcN;
-	
-	// VSHOT file data
-	//HPM2D VSHOTData;
-	//double VSHOTRMSSlope;
-	//double VSHOTRMSScale;
-	//double VSHOTRadius;
-	//double VSHOTFocLen;
-	//double VSHOTTarDis;
-	
-	// Finite ST_Element data coeffs
-	//HPM2D FEData;	
 	
 	/////////// OPTICAL PARAMETERS ///////////////
 	int InteractionType;
@@ -282,8 +241,7 @@ struct ST_Stage
 	double Euler[3];
 	double RRefToLoc[3][3];
 	double RLocToRef[3][3];
-	string Name;
-	//ST_RayData ST_RayData;
+	std::string Name;
 	void Write(FILE *fdat);
 };
 
