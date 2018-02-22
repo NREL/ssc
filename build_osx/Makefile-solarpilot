@@ -17,7 +17,6 @@ OBJECTS = \
 	Land.o \
 	LayoutSimulateThread.o \
 	OpticalMesh.o \
-	Plant.o \
 	Receiver.o \
 	STObject.o \
 	STSimulateThread.o \
