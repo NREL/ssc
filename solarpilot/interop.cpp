@@ -58,15 +58,8 @@
 #include "solpos00.h"
 #include "sort_method.h"
 
-//using namespace std;
+using namespace std;
 
-
-//template<typename T> static std::string my_to_string( T value )
-//{
-//	std::ostringstream os;
-//	os << value;
-//	return os.str();
-//}
 
 //-------------------  arraystring ----------------
 
@@ -189,7 +182,7 @@ void interop::GenerateSimulationWeatherData(var_map &V, int design_method, Array
 
 		int nflux_sim = 0;
 		for(int i=0; i<(int)utime.size(); i++)
-			nflux_sim += utime.at(i).size();
+			nflux_sim += (int)utime.at(i).size();
 		
 		DateTime dt;
 		double hoy, hod;
@@ -399,7 +392,7 @@ void interop::GenerateSimulationWeatherData(var_map &V, int design_method, Array
 				int iind = (hr_st - floor(hr_st)) < 0.5 ? -1 : 1;
 
 				int dayind=0;
-				int nwf = wf_entries.size();
+				int nwf = (int)wf_entries.size();
 				double dnicomp;
 				double jd=hr_st;
 				/*double hr_end_choose;
@@ -726,7 +719,7 @@ bool interop::SolTraceFluxSimulation_ST(st_context_t cxt, SolarField &SF, Hvecto
 
 void interop::UpdateMapLayoutData(var_map &V, Hvector *heliostats){
 //Fill in the data
-	int npos = heliostats->size();
+	int npos = (int)heliostats->size();
 	Heliostat *H;
 
 	string *var = &V.sf.layout_data.val;
@@ -1097,7 +1090,7 @@ void sim_result::process_raytrace_simulation(SolarField &SF, int nsim_type, doub
 	sim_type = nsim_type;
 	if(sim_type == 2){
 
-		num_heliostats_used = helios.size();
+		num_heliostats_used = (int)helios.size();
 		for(int i=0; i<num_heliostats_used; i++){
 			total_heliostat_area += helios.at(i)->getArea();
 		}
@@ -1200,7 +1193,7 @@ void sim_result::process_raytrace_simulation(SolarField &SF, int nsim_type, doub
 void sim_result::process_flux(SolarField *SF, bool normalize){
 	flux_surfaces.clear();
 	receiver_names.clear();
-	int nr = SF->getReceivers()->size();
+	int nr = (int)SF->getReceivers()->size();
 	Receiver *rec;
 	for(int i=0; i<nr; i++){
 		rec = SF->getReceivers()->at(i);

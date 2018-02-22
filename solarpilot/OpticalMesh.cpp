@@ -55,6 +55,8 @@
 #include "exceptions.hpp"
 #include "definitions.h"
 
+using namespace std;
+
 void LayoutData::set_data(double Extents_r[2], double Extents_az[2], double Tht, double Alpha, double Theta, double l_f, 
 		double h_h, double h_w, double S_h, double W_rec, double F_tol, double T_res, bool Flat, bool Onslant, int Nph, int Npw)
 {	
@@ -278,7 +280,7 @@ void opt_element::set_range(double xrlo, double xrhi, double yrlo, double yrhi){
 	yr[1] = yrhi;
 }
 
-void opt_element::set_range(double *xri, double *yri){	
+void opt_element::set_range(double xri[2], double yri[2]){	
 	for(int i=0; i<2; i++){
 		xr[i] = xri[i];
 		yr[i] = yri[i];

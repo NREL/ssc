@@ -202,7 +202,7 @@ void LayoutSimThread::StartThread() //Entry()
 
         vector<double> *tous = &_SF->getVarMap()->fin.pricing_array.Val();
 
-	    int Npos = _SF->getHeliostats()->size();
+	    int Npos = (int)_SF->getHeliostats()->size();
 				
 	    //Simulate for each time
 	    StatusLock.lock();

@@ -70,6 +70,8 @@ class Receiver;
 class SolarField;
 class Ambient;
 
+typedef std::vector<Heliostat*> Hvector;
+
 class Random
 {
 	int rmax;
@@ -91,13 +93,7 @@ class Flux
 		_binomials,			//Contains the binomial coefficients
 		_binomials_hxn,		//Contains binomial coefficients for the HXN array
 		_mu_SN;		//Normalized moments of sunshape
-		//--- the following are now included as properties of the heliostat object---
-		//_mu_S,		//Moments of sunshape
-		//_mu_G,		//Moments of the error distribution
-		//_mu_M,		//Moments of the mirror shape
-		//_mu_F,		//Flux moments distrubution - result
-		//_hcoef,		//Hermite coefficients
-		//_hc_tht; 		//Hermite coefs depending on tower height - equiv. to mu_F, reused in optimization calcs
+	
 	block_t<double>
 		_mu_GN;		//Normalized moments of the error distribution
 		
@@ -171,7 +167,7 @@ class Flux
 	void initHermiteCoefs(var_map &V);
 
 	//A method to calculate the flux density given a map of values and a solar field
-	void fluxDensity(simulation_info *siminfo, FluxSurface &flux_surface, std::vector<Heliostat*> &helios, bool clear_grid = true, bool norm_grid = true, bool show_progress=false);
+	void fluxDensity(simulation_info *siminfo, FluxSurface &flux_surface, Hvector &helios, bool clear_grid = true, bool norm_grid = true, bool show_progress=false);
 
 	double hermiteFluxEval(Heliostat *H, double xs, double ys);
 

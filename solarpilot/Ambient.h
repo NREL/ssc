@@ -52,7 +52,6 @@
 #include <string>
 #include <vector>
 
-//#include "Toolbox.h"
 #include "mod_base.h"
 #include "definitions.h"
 
@@ -71,15 +70,12 @@ class Ambient : public mod_base
     var_ambient *_amb_map;
  
  public:
-	//enum CLRSKY_MODEL { MEINEL, HOTTEL, CONSTANT, MOON, ALLEN, WEATHER=-1 };
 
 	void Create(var_map &V);
     void updateCalculatedParameters(var_map &V);
 	void Clean();
 
 	static std::string getDefaultSimStep();	//d.o.m., hour, month, dni, pressure, wind
-	
-	DateTime *getDateTimeObj();
 	
 	//Calculation methods
     static void setDateTime(DateTime &DT, double day_hour, double year_day, double year = 2011.);

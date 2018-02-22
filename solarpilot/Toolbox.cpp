@@ -489,7 +489,7 @@ void WeatherData::initPointers(){
 	v_ptrs.at(6) = &V_wind;
 	v_ptrs.at(7) = &Step_weight;
 	//Initialize the number of items
-	_N_items = Day.size();
+	_N_items = (int)Day.size();
 }
 
 void WeatherData::resizeAll(int size, double val){ 
@@ -1175,7 +1175,7 @@ void Toolbox::convex_hull(std::vector<sp_point> &points, std::vector<sp_point> &
 	Source: http://en.wikibooks.org/wiki/Algorithm_Implementation/Geometry/Convex_hull/Monotone_chain
 
 	*/
-	int n = points.size(), k = 0;
+	int n = (int)points.size(), k = 0;
 	vector<sp_point> H(2*n);
 
     //copy points
@@ -1431,7 +1431,7 @@ void Toolbox::poly_from_svg(std::string &svg, std::vector< sp_point > &polygon, 
                 }
             }
 
-            int npt = points.size();
+            int npt = (int)points.size();
 
             switch (move)
             {

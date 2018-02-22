@@ -58,6 +58,8 @@
 #include "IOUtil.h"
 #include "csp_common.h"
 
+using namespace std;
+
 static var_info _cm_vtab_tcsiscc[] = {
 //    VARTYPE           DATATYPE          NAME                   LABEL                                                                UNITS           META            GROUP            REQUIRED_IF                CONSTRAINTS              UI_HINTS
     { SSC_INPUT,        SSC_STRING,      "solar_resource_file",  "local weather file path",                                           "",             "",            "Weather",        "*",                       "LOCAL_FILE",            "" },
