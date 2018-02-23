@@ -272,6 +272,16 @@ void cm_windpower::exec() throw(general_error)
 		//for (i=0;i<wt.powerCurveArrayLength;i++)
 		//	dp_hub_eff[i] = (double)hub_efficiency[i];
 
+		// check for leap day
+		bool contains_leap_day = false;
+		if (std::fmod((double)nstep, 8784) == 0)
+		{
+			wdprov = std::auto_ptr<winddata_provider>(new winddata(lookup("wind_resource_data")));
+			nstep = wdprov->nrecords(); // missing - causing issue from Galen 11/15/17
+		}
+		
+		// check for even multiple of 8760 timesteps (subhourly)
+		size_t steps_per_hour = nstep / 8760;
 
 		double turbine_kw = wpc.windPowerUsingWeibull(weibull_k, avg_speed, ref_height, &turbine_outkW[0]);
 		turbine_kw = turbine_kw * (1 - wt.lossesPercent) - wt.lossesAbsolute;
