@@ -326,11 +326,12 @@ std::string util::get_cwd()
 {
 	char buf[2048];
 #ifdef _WIN32
-	::GetCurrentDirectoryA( 2047, buf );
+	if (::GetCurrentDirectoryA(sizeof(buf), buf) == 0)
+	  return std::string();
 #else
-	::getcwd(buf, 2047);
+	if (::getcwd(buf, sizeof(buf)) == NULL)
+	  return std::string();
 #endif
-	buf[2047] = 0;
 	return std::string(buf);
 }
 
@@ -1065,11 +1066,11 @@ double util::bilinear( double rowval, double colval, const matrix_t<double> &mat
 		return std::numeric_limits<double>::quiet_NaN();
 	
 	int ridx=2; // find row position
-	while( ridx < (int)mat.nrows() && rowval > (int)mat.at(ridx, 0) )
+	while( ridx < (int)mat.nrows() && rowval > mat.at(ridx, 0) )
 		ridx++;
 	
 	int cidx=2; // find col position
-	while( cidx < (int)mat.ncols() && colval > (int)mat.at(0, cidx) )
+	while( cidx < (int)mat.ncols() && colval > mat.at(0, cidx) )
 		cidx++;
 
 	if ( ridx == (int)mat.nrows() ) ridx--;

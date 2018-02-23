@@ -157,7 +157,8 @@ public:
 
         C_csp_solver_sim_info *siminfo;     //Pointer to existing simulation info object
         C_csp_collector_receiver *col_rec;   //Pointer to collector/receiver object
-        C_csp_messages *messages;   //Pointer to message structure
+		C_csp_power_cycle *mpc_pc;	// Pointer to csp power cycle class object
+		C_csp_messages *messages;   //Pointer to message structure
 
         struct s_efftable
         {
@@ -262,7 +263,8 @@ public:
         vector<double> q_sfavail_expected;       //Expected available solar field energy
         vector<double> q_sf_expected;           //Expected solar field energy generation
         vector<double> eta_pb_expected;     //Expected power cycle conversion efficiency (normalized)
-        vector<double> eta_sf_expected;     //Expected solar field thermal efficiency (normalized)
+		vector<double> f_pb_op_limit;		//[-] Maximum normalized cycle output
+		vector<double> eta_sf_expected;     //Expected solar field thermal efficiency (normalized)
         vector<double> tes_charge_expected;     //Expected thermal energy storage charge state
         vector<double> q_pb_startup;    //thermal power going to startup
         vector<double> q_rec_startup;   //thermal power going to startup
@@ -357,8 +359,8 @@ public:
     optimization_vars();
     //~optimization_vars();
 
-    void add_var(char *vname, int var_type /* VAR_TYPE enum */, int var_dim /* VAR_DIM enum */, int var_dim_size, REAL lowbo=-DEF_INFINITE, REAL upbo=DEF_INFINITE);
-    void add_var(char *vname, int var_type /* VAR_TYPE enum */, int var_dim /* VAR_DIM enum */, int var_dim_size, int var_dim_size2, REAL lowbo=-DEF_INFINITE, REAL upbo=DEF_INFINITE);
+    void add_var(const string &vname, int var_type /* VAR_TYPE enum */, int var_dim /* VAR_DIM enum */, int var_dim_size, REAL lowbo=-DEF_INFINITE, REAL upbo=DEF_INFINITE);
+    void add_var(const string &vname, int var_type /* VAR_TYPE enum */, int var_dim /* VAR_DIM enum */, int var_dim_size, int var_dim_size2, REAL lowbo=-DEF_INFINITE, REAL upbo=DEF_INFINITE);
 
     bool construct();
 
@@ -370,14 +372,14 @@ public:
     REAL &operator()(int varindex, int ind);    
     REAL &operator()(int varindex, int ind1, int ind2);
 
-    int column(char *varname, int ind);
-    int column(char *varname, int ind1, int ind2);
+    int column(const string &varname, int ind);
+    int column(const string &varname, int ind1, int ind2);
     int column(int varindex, int ind);
     int column(int varindex, int ind1, int ind2);
 
     REAL *get_variable_array(); 
 
-    opt_var *get_var(char *varname);
+    opt_var *get_var(const string &varname);
     opt_var *get_var(int varindex);
 };
 

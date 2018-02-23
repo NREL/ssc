@@ -117,9 +117,10 @@ Vect Ambient::calcSunVectorFromAzZen(double azimuth, double zenith) {
 	return sp;	
 }
 
-void Ambient::calcSunPosition(var_map &V, DTobj &DT, double *az, double *zen){
+void Ambient::calcSunPosition(var_map &V, DTobj &DT, double *az, double *zen, bool wf_time_correction)
+{
     //[degr] [degr]
-	calcSunPosition( V.amb.latitude.val, V.amb.longitude.val, V.amb.time_zone.val, V.amb.sim_time_step.Val(), DT, az, zen);
+	calcSunPosition( V.amb.latitude.val, V.amb.longitude.val, V.amb.time_zone.val, wf_time_correction ? V.amb.sim_time_step.Val() : 0., DT, az, zen);
 }
 
 void Ambient::calcSunPosition(double lat, double lon, double timezone, double tstep, const DTobj &dt, double *az, double *zen){

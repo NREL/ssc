@@ -2,7 +2,7 @@
 *  Copyright 2017 Alliance for Sustainable Energy, LLC
 *
 *  NOTICE: This software was developed at least in part by Alliance for Sustainable Energy, LLC
-*  (“Alliance”) under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
+*  (ï¿½Allianceï¿½) under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
 *  The Government retains for itself and others acting on its behalf a nonexclusive, paid-up,
 *  irrevocable worldwide license in the software to reproduce, prepare derivative works, distribute
 *  copies to the public, perform publicly and display publicly, and to permit others to do so.
@@ -26,8 +26,8 @@
 *  4. Redistribution of this software, without modification, must refer to the software by the same
 *  designation. Redistribution of a modified version of this software (i) may not refer to the modified
 *  version by the same designation, or by any confusingly similar designation, and (ii) must refer to
-*  the underlying software originally provided by Alliance as “System Advisor Model” or “SAM”. Except
-*  to comply with the foregoing, the terms “System Advisor Model”, “SAM”, or any confusingly similar
+*  the underlying software originally provided by Alliance as ï¿½System Advisor Modelï¿½ or ï¿½SAMï¿½. Except
+*  to comply with the foregoing, the terms ï¿½System Advisor Modelï¿½, ï¿½SAMï¿½, or any confusingly similar
 *  designation may not be used to refer to any modified version of this software or any modified
 *  version of the underlying software originally provided by Alliance without the prior written consent
 *  of Alliance.
@@ -293,11 +293,8 @@ public:
 		bool contains_leap_day = false;
 		if (std::fmod((double)nstep, 8784) == 0)
 		{
-			contains_leap_day = true;
-			int leap_steps_per_hr = (int)nstep / 8784; //this will be an even multiple of 8760 because of the if statement above
-			log("This weather file appears to contain leap day. SAM will skip all of the lines of the weather file that occur on leap day. If your weather file does not contain a leap day, please check your file.", SSC_WARNING);
-			//throw exec_error("windpower", "Error: this weather file appears to contain leap day. SAM requires weather files to be a multiple of 8760 timesteps long.");
-			nstep = leap_steps_per_hr * 8760; //need to resize nrec so that it is correct for holding output variables
+			wdprov = std::auto_ptr<winddata_provider>(new winddata(lookup("wind_resource_data")));
+			nstep = wdprov->nrecords(); // missing - causing issue from Galen 11/15/17
 		}
 		
 		// check for even multiple of 8760 timesteps (subhourly)

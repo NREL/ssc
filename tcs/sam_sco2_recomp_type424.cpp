@@ -462,7 +462,6 @@ public:
 		// ******************************************************************************************
 		// Define error and warning message strings
 		std::string error_msg;
-		error_msg[0] = NULL;
 		int auto_err_code = 0;
 		
 		// Setup recompressoin cycle autodes parameter structure
@@ -492,7 +491,7 @@ public:
 			return -1;
 		}
 
-		if( error_msg[0] == NULL )
+		if( error_msg.empty() )
 		{
 			message(TCS_NOTICE, "sCO2 cycle design optimization was successful");
 		}
@@ -539,7 +538,7 @@ public:
 				return -1;
 			}
 		}
-		else if( rec_fl = HTFProperties::User_defined )
+		else if( rec_fl == HTFProperties::User_defined )
 		{
 			int nrows = 0, ncols = 0;
 			double *fl_mat = value(P_rec_fl_props, &nrows, &ncols);

@@ -2673,7 +2673,7 @@ void PipeFlowCavity( double Re, double Pr, double LoverD, double relRough, doubl
 	    // given Reynolds number (Re), Prandtl number (Pr), the pipe length diameter ratio (LoverD)
 	    // and the relative roughness
 	    double Gz = Re*Pr/LoverD;	// Eq. 5-79 Nellis and Klein
-	    double x = LoverD/Re;		// Eq. 5-58 Nellis and Klein
+	    //double x = LoverD/Re;     // Eq. 5-58 Nellis and Klein
 	    //double fR = 3.44/sqrt(x)+(1.25/(4*x)+16-3.44/sqrt(x))/(1+0.00021*pow(x,-2));	// Eq. 5-57 () Nellis and Klein
 	    //double f = 4.0*fR/Re;		// Eq. 5-57 Nellis and Klein
 	    double Nusselt_T = 3.66+((0.049+0.02/Pr)*pow(Gz,1.12))/(1.0+0.065*pow(Gz,0.7));	// Eq. 5-80 Nellis and Klein
@@ -2711,7 +2711,6 @@ void PipeFlowCavity( double Re, double Pr, double LoverD, double relRough, doubl
 void FractionFunction( int n_nodes, int n_panels, int n_band, util::matrix_t<double> & T_s_guess_1D, util::matrix_t<double> & lambda_step_band, 
 							util::matrix_t<double> & f_temp_band, util::matrix_t<double> & f_solar_band)
 {
-	/* **********************************************************************************
     // This subroutine calculates the total convective heat losses from the receiver
     // with the correlation presented in Petukhov and Popov (1963)  !ST ( Heat Exchanger Design Handbook 2008 G.F. Hewitt Section 2.5 II b) )
     // The inputs are:
@@ -2720,7 +2719,6 @@ void FractionFunction( int n_nodes, int n_panels, int n_band, util::matrix_t<dou
     //  The outputs are:
     //   - F_Thermal - fraction of blackbody radiaiton at 800K in the wavelength band from 0-lambda_step
     //   - f_solar_band - fraction of blackbody radiaiton at 5800K in the wavelength band from 0-lambda_step
-    //********************************************************************************** */
     
 	/* !integer,parameter,intent(IN)::N_nodes,N_panels
     integer::N_nodes,N_panels,N_band

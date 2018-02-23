@@ -2,7 +2,7 @@
 *  Copyright 2017 Alliance for Sustainable Energy, LLC
 *
 *  NOTICE: This software was developed at least in part by Alliance for Sustainable Energy, LLC
-*  (“Alliance”) under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
+*  (ï¿½Allianceï¿½) under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
 *  The Government retains for itself and others acting on its behalf a nonexclusive, paid-up,
 *  irrevocable worldwide license in the software to reproduce, prepare derivative works, distribute
 *  copies to the public, perform publicly and display publicly, and to permit others to do so.
@@ -26,8 +26,8 @@
 *  4. Redistribution of this software, without modification, must refer to the software by the same
 *  designation. Redistribution of a modified version of this software (i) may not refer to the modified
 *  version by the same designation, or by any confusingly similar designation, and (ii) must refer to
-*  the underlying software originally provided by Alliance as “System Advisor Model” or “SAM”. Except
-*  to comply with the foregoing, the terms “System Advisor Model”, “SAM”, or any confusingly similar
+*  the underlying software originally provided by Alliance as ï¿½System Advisor Modelï¿½ or ï¿½SAMï¿½. Except
+*  to comply with the foregoing, the terms ï¿½System Advisor Modelï¿½, ï¿½SAMï¿½, or any confusingly similar
 *  designation may not be used to refer to any modified version of this software or any modified
 *  version of the underlying software originally provided by Alliance without the prior written consent
 *  of Alliance.
@@ -377,7 +377,7 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "sd11par_AMa4",                                "Air mass modifier coeff 4",                               "",       "",                                                                  "pvsamv1",       "module_model=4",                           "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "sd11par_glass",                               "Cover glass type",                                        "",       "0=normal,1=AR glass",                                               "pvsamv1",       "module_model=4",                           "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "sd11par_tnoct",                               "Nominal operating cell temperature",                      "C",      "",                                                                  "pvsamv1",       "module_model=4",                           "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "sd11par_standoff",                            "Standoff mode",                                           "",       "0=bipv,1=>3.5in,2=2.5-3.5in,3=1.5-2.5in,4=0.5-1.5in,6=<0.5in,5=ground/rack",  "pvsamv1",       "module_model=4",                 "INTEGER,MIN=0,MAX=6",           "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "sd11par_standoff",                            "Standoff mode",                                           "",       "0=bipv,1=>3.5in,2=2.5-3.5in,3=1.5-2.5in,4=0.5-1.5in,5=<0.5in,6=ground/rack",  "pvsamv1",       "module_model=4",                 "INTEGER,MIN=0,MAX=6",           "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "sd11par_mounting",                            "Array mounting height",                                   "",       "0=one story,1=two story",                                           "pvsamv1",       "module_model=4",                           "INTEGER,MIN=0,MAX=1",           "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "sd11par_Vmp0",                                "Vmp (STC)",                                               "V",      "",                                                                  "pvsamv1",       "module_model=4",                           "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "sd11par_Imp0",                                "Imp (STC)",                                               "A",      "",                                                                  "pvsamv1",       "module_model=4",                           "",                              "" },
@@ -2533,10 +2533,10 @@ public:
 							if (trackbool)
 								shad1xf = shade_fraction_1x(solazi, solzen, sa[nn].tilt, sa[nn].azimuth, sa[nn].gcr, rot);
 
-							//execute self-shading calculations
-							ssc_number_t beam_to_use; //some self-shading calculations require DNI, NOT ibeam (beam in POA). Need to know whether to use DNI from wf or calculated, depending on radmode
-							if (radmode == DN_DF || radmode == DN_GH) beam_to_use = (ssc_number_t)wf.dn;
-							else beam_to_use = p_irrad_calc[2][idx];
+						//execute self-shading calculations
+						ssc_number_t beam_to_use; //some self-shading calculations require DNI, NOT ibeam (beam in POA). Need to know whether to use DNI from wf or calculated, depending on radmode
+						if (radmode == DN_DF || radmode == DN_GH) beam_to_use = (ssc_number_t)wf.dn;
+						else beam_to_use = p_irrad_calc[2][hour * step_per_hour]; // top of hour in first year
 
 							if (linear && trackbool) //one-axis linear
 							{
@@ -2932,7 +2932,10 @@ public:
 
 					// Battery replacement
 					if (en_batt && (ac_or_dc == charge_controller::DC_CONNECTED))
-						batt.check_replacement_schedule(batt_replacement_option, count_batt_replacement, batt_replacement, (int)iyear, (int)hour, (int)jj);
+					{
+						batt.initialize_time(iyear, hour, jj);
+						batt.check_replacement_schedule(batt_replacement_option, count_batt_replacement, batt_replacement);
+					}
 
 					// Iterative loop over DC battery
 					size_t dc_count = 0; bool iterate_dc = false;
@@ -2950,7 +2953,7 @@ public:
 							if (iyear == 0 && dc_count == 0)
 								annual_dc_power_before_battery += p_dcpwr[idx] * ts_hour;
 
-							batt.advance(*this, iyear, hour, jj, dcpwr_net*util::watt_to_kilowatt, cur_load);
+							batt.advance(*this, dcpwr_net*util::watt_to_kilowatt, cur_load);
 							dcpwr_net = util::kilowatt_to_watt * batt.outGenPower[idx];
 
 							// inverter can't handle negative dcpwr
@@ -3000,7 +3003,7 @@ public:
 								dcpwr_net *= -1;
 								acpwr_gross *= -1;
 							}
-							batt.update_post_inverted(*this, iyear, hour, jj, acpwr_gross*util::watt_to_kilowatt);
+							batt.update_post_inverted(*this, acpwr_gross*util::watt_to_kilowatt);
 							iterate_dc = batt.check_iterate(dc_count);
 							acpwr_gross = batt.outGenPower[idx] * util::kilowatt_to_watt;
 						}
@@ -3088,11 +3091,9 @@ public:
 
 					if (en_batt && ac_or_dc == charge_controller::AC_CONNECTED)
 					{
-						// Battery replacement
-						if (en_batt)
-							batt.check_replacement_schedule(batt_replacement_option, count_batt_replacement, batt_replacement, (int)iyear, (int)hour, (int)jj);
-
-						batt.advance(*this, iyear, hour, jj, p_gen[idx], p_load_full[idx]);
+						batt.initialize_time(iyear, hour, jj);
+						batt.check_replacement_schedule(batt_replacement_option, count_batt_replacement, batt_replacement);
+						batt.advance(*this, p_gen[idx], p_load_full[idx]);
 						p_gen[idx] = batt.outGenPower[idx];
 					}
 
@@ -3112,7 +3113,9 @@ public:
 						if (iyear == 0) annual_ac_lifetime_loss += p_gen[idx] * (ac_lifetime_losses[ac_loss_index] / 100) * util::watt_to_kilowatt * ts_hour; //this loss is still in percent, only keep track of it for year 0, convert from power W to energy kWh
 						p_gen[idx] *= (100 - ac_lifetime_losses[ac_loss_index]) / 100;
 					}
-
+					// Update battery with final gen to compute grid power
+					if (en_batt)
+						batt.update_grid_power(*this, p_gen[idx], p_load_full[idx], idx);
 
 					if (iyear == 0)
 						annual_energy += (ssc_number_t)(p_gen[idx] * ts_hour);

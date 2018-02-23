@@ -175,26 +175,33 @@ struct battstor
 	void initialize_automated_dispatch(ssc_number_t *pv=0, ssc_number_t *load=0);
 	~battstor();
 
-	void advance(compute_module &cm, size_t year, size_t hour_of_year, size_t step, double P_pv, double P_load);
-	void outputs_fixed(compute_module &cm, size_t year, size_t hour_of_year, size_t step);
-	void outputs_topology_dependent(compute_module &cm, size_t year, size_t hour_of_year, size_t step);
-	void metrics(compute_module &cm, size_t year, size_t hour_of_year, size_t step);
-	void update_post_inverted(compute_module &cm, size_t year, size_t hour_of_year, size_t step, double P_gen_ac);
+	void initialize_time(size_t year, size_t hour_of_year, size_t step);
+	void advance(compute_module &cm, double P_pv, double P_load);
+	void outputs_fixed(compute_module &cm);
+	void outputs_topology_dependent(compute_module &cm);
+	void metrics(compute_module &cm);
+	void update_post_inverted(compute_module &cm, double P_gen_ac);
+	void update_grid_power(compute_module &cm, double P_gen_ac, double P_load_ac, size_t index);
 	bool check_iterate(size_t count);
 	void process_messages(compute_module &cm);
 
 	// for user schedule
 	void force_replacement();
-	void check_replacement_schedule(int batt_replacement_option, size_t count_batt_replacement, ssc_number_t *batt_replacement, int iyear, int hour, int step);
+	void check_replacement_schedule(int batt_replacement_option, size_t count_batt_replacement, ssc_number_t *batt_replacement);
 	void calculate_monthly_and_annual_outputs( compute_module &cm );
 
 
 	// time quantities
-	int year;
 	size_t step_per_hour;
 	size_t nyears;
 	size_t total_steps;
 	double _dt_hour;
+
+	size_t year;
+	size_t hour;
+	size_t step;
+	size_t index; // lifetime_index (0 - nyears * steps_per_hour * 8760)
+	size_t year_index; // index for one year (0- steps_per_hour * 8760)
 
 	// member data
 	voltage_t *voltage_model;

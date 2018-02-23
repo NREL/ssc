@@ -537,7 +537,7 @@ bool dispatch_manual_t::check_constraints(double &I, int count)
 	double I_initial = I;
 
 	bool front_of_meter = false;
-	if (dispatch_manual_front_of_meter_t * dispatch = dynamic_cast<dispatch_manual_front_of_meter_t*>(this))
+	if (dynamic_cast<dispatch_manual_front_of_meter_t*>(this))
 		front_of_meter = true;
 
 	// decrease the current draw if took too much
@@ -597,9 +597,15 @@ bool dispatch_manual_t::check_constraints(double &I, int count)
 	if ((I_initial / I) < 0)
 		I = 0;
 	
+	// reset
 	if (iterate)
+	{
 		_Battery->copy(_Battery_initial);
-
+		_P_tofrom_batt = 0;
+		_P_grid_to_batt = 0;
+		_P_battery_to_grid = 0;
+		_P_pv_to_grid = 0;
+	}
 
 	return iterate;
 }
