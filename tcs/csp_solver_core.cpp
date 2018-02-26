@@ -2046,7 +2046,8 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 
 				else if (exit_mode == CSP_CONVERGED)
 				{
-					// If the CR and PC models converged, check whether the power cycle thermal input is within bounds
+					// If the CR and PC models 
+					d, check whether the power cycle thermal input is within bounds
 
 					if( operating_mode == CR_ON__PC_RM_LO__TES_OFF__AUX_OFF )
 					{	// In this mode, the power cycle thermal input needs to be greater than the minimum power cycle fraction

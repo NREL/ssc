@@ -7,12 +7,13 @@
 #include "csp_solver_util.h"
 
 #include "sam_csp_util.h"
+#include "water_properties.h"
 
 class C_csp_radiator
 {
 private:
 
-	HTFProperties mc_coldhtf;
+	water_state mc_coldhtf;
 	HTFProperties mc_air;
 
 
