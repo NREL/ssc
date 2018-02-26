@@ -1,2 +1,0 @@
-sdk-release/linux64/SDKtool: ELF 64-bit LSB executable, x86-64, version 1 (GNU/Linux), dynamically linked (uses shared libs), for GNU/Linux 2.6.32, BuildID[sha1]=d1c50b27d7ccd3aafb319f5aa705c39dd0c8be71, stripped
-sdk-release/linux64/ssc.so: ELF 64-bit LSB shared object, x86-64, version 1 (GNU/Linux), dynamically linked, BuildID[sha1]=19de6fc43db467b41c5356d5297174932e40c834, stripped

@@ -340,11 +340,9 @@ void cm_windpower::exec() throw(general_error)
 	bool contains_leap_day = false;
 	if (std::fmod((double)nstep, 8784) == 0)
 	{
+		wdprov = std::auto_ptr<winddata_provider>(new winddata(lookup("wind_resource_data")));
 		contains_leap_day = true;
-		int leap_steps_per_hr = (int)nstep / 8784; //this will be an even multiple of 8760 because of the if statement above
-		log("This weather file appears to contain leap day. SAM will skip all of the lines of the weather file that occur on leap day. If your weather file does not contain a leap day, please check your file.", SSC_WARNING);
-		//throw exec_error("windpower", "Error: this weather file appears to contain leap day. SAM requires weather files to be a multiple of 8760 timesteps long.");
-		nstep = leap_steps_per_hr * 8760; //need to resize nrec so that it is correct for holding output variables
+		nstep = wdprov->nrecords(); // missing - causing issue from Galen 11/15/17
 	}
 
 	// check for subhourly data
