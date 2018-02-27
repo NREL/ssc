@@ -727,7 +727,7 @@ bool weatherfile::open(const std::string &file, bool header_only)
 			{
 				m_hdr.tz = atof(value);
 			}
-			else if (name == "el" || name == "elev" || name == "elevation" || name == "site elevation")
+			else if (name == "el" || name == "elev" || name == "elevation" || name == "site elevation" || name == "altitude" )
 			{
 				m_hdr.elev = atof(value);
 			}
@@ -735,7 +735,7 @@ bool weatherfile::open(const std::string &file, bool header_only)
 			{
 				m_startYear = atoi(value);
 			}
-			else if (name == "id" || name == "location" || name == "location id" || name == "station" || name == "station id" || name == "wban" || name == "wban#")
+			else if (name == "id" || name == "location" || name == "location id" || name == "station" || name == "station id" || name == "wban" || name == "wban#" || name == "site" )
 			{
 				m_hdr.location = value;
 			}
@@ -751,7 +751,7 @@ bool weatherfile::open(const std::string &file, bool header_only)
 			{
 				m_hdr.country = value;
 			}
-			else if (name == "source" || name == "src")
+			else if (name == "source" || name == "src" || name == "data source" )
 			{
 				m_hdr.source = value;
 			}
@@ -908,16 +908,16 @@ bool weatherfile::open(const std::string &file, bool header_only)
 				else if (lowname == "hour" || lowname == "hr") m_columns[HOUR].index = i;
 				else if (lowname == "min" || lowname == "minute") m_columns[MINUTE].index = i;
 				else if (lowname == "ghi" || lowname == "gh" || lowname == "global" || lowname == "global horizontal" || lowname == "global horizontal irradiance") m_columns[GHI].index = i;
-				else if (lowname == "dni" || lowname == "dn" || lowname == "beam" || lowname == "direct normal" || lowname == "direct normal irradiance") m_columns[DNI].index = i;
+				else if (lowname == "dni" || lowname == "dn" || lowname == "beam" || lowname == "direct normal" || lowname == "direct normal irradiance" || lowname == "direct (beam) normal irradiance" ) m_columns[DNI].index = i;
 				else if (lowname == "dhi" || lowname == "df" || lowname == "diffuse" || lowname == "diffuse horizontal" || lowname == "diffuse horizontal irradiance") m_columns[DHI].index = i;
 				else if (lowname == "poa" || lowname == "pa" || lowname == "plane" || lowname == "plane of array" || lowname == "plane of array irradiance") m_columns[POA].index = i;
-				else if (lowname == "tdry" || lowname == "dry bulb" || lowname == "dry bulb temp" || lowname == "temperature" || lowname == "ambient" || lowname == "ambient temp") m_columns[TDRY].index = i;
+				else if (lowname == "tdry" || lowname == "dry bulb" || lowname == "dry bulb temp" || lowname == "dry bulb temperature" || lowname == "temperature" || lowname == "ambient" || lowname == "ambient temp" || lowname == "tamb" ) m_columns[TDRY].index = i;
 				else if (lowname == "twet" || lowname == "wet bulb" || lowname == "wet bulb temperature") m_columns[TWET].index = i;
 				else if (lowname == "tdew" || lowname == "dew point" || lowname == "dew point temperature") m_columns[TDEW].index = i;
-				else if (lowname == "wspd" || lowname == "wind speed") m_columns[WSPD].index = i;
-				else if (lowname == "wdir" || lowname == "wind direction") m_columns[WDIR].index = i;
+				else if (lowname == "wspd" || lowname == "wind speed" || lowname == "windspeed" || lowname == "ws" || lowname == "windvel" ) m_columns[WSPD].index = i;
+				else if (lowname == "wdir" || lowname == "wind direction" || lowname == "wd" ) m_columns[WDIR].index = i;
 				else if (lowname == "rh" || lowname == "rhum" || lowname == "relative humidity" || lowname == "humidity") m_columns[RH].index = i;
-				else if (lowname == "pres" || lowname == "pressure") m_columns[PRES].index = i;
+				else if (lowname == "pres" || lowname == "pressure" || lowname == "air pressure") m_columns[PRES].index = i;
 				else if (lowname == "snow" || lowname == "snow cover" || lowname == "snow depth") m_columns[SNOW].index = i;
 				else if (lowname == "alb" || lowname == "albedo") m_columns[ALB].index = i;
 				else if (lowname == "aod" || lowname == "aerosol" || lowname == "aerosol optical depth") m_columns[AOD].index = i;
