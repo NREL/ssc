@@ -317,7 +317,13 @@ battstor::battstor(compute_module &cm, bool setup_model, size_t nrec, double dt_
 			batt_vars->batt_ac_dc_efficiency = cm.as_double("batt_ac_dc_efficiency");
 			batt_vars->batt_dc_ac_efficiency = cm.as_double("batt_dc_ac_efficiency");
 			batt_vars->batt_dc_dc_bms_efficiency = cm.as_double("batt_dc_dc_efficiency");
-			batt_vars->pv_dc_dc_mppt_efficiency = 100. - cm.as_double("dcoptimizer_loss");
+
+			if (cm.is_assigned("dcoptimizer_loss")) {
+				batt_vars->pv_dc_dc_mppt_efficiency = 100. - cm.as_double("dcoptimizer_loss");
+			}
+			else {
+				batt_vars->pv_dc_dc_mppt_efficiency = 100;
+			}
 
 			// Ancillary equipment losses
 			batt_vars->batt_loss_choice = cm.as_integer("batt_loss_choice");
@@ -1283,7 +1289,7 @@ public:
 		if (as_boolean("en_batt"))
 		{
 			std::vector<ssc_number_t> power_input = as_vector_ssc_number_t("gen");
-			battstor batt(*this, true, power_input.size(), static_cast<double>(8760 / power_input.size()));
+			battstor batt(*this, true, power_input.size(), static_cast<double>(8760. / power_input.size()));
 
 			// Parse "Load input"
 			std::vector<ssc_number_t> power_load;
