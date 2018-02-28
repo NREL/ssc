@@ -113,6 +113,9 @@ void C_sco2_recomp_csp::design_core()
 	int auto_err_code = 0;
 
 
+	//ms_des_par.m_cycle_config = 2;
+
+
 	if (ms_des_par.m_cycle_config == 2)			// Partial Cooling Cycle
 	{
 		if (ms_des_par.m_design_method == 1)
@@ -148,10 +151,11 @@ void C_sco2_recomp_csp::design_core()
 			pc_des_params.m_N_sub_hxrs = ms_des_par.m_N_sub_hxrs;
 			pc_des_params.m_P_high_limit = ms_des_par.m_P_high_limit;
 			pc_des_params.m_tol = ms_des_par.m_tol;
+			pc_des_params.m_opt_tol = ms_des_par.m_opt_tol;
 			pc_des_params.m_N_turbine = ms_des_par.m_N_turbine;
 
-			ms_rc_cycle_des_par.m_des_objective_type = ms_des_par.m_des_objective_type;		//[-]
-			ms_rc_cycle_des_par.m_min_phx_deltaT = ms_des_par.m_min_phx_deltaT;				//[C]
+			pc_des_params.m_des_objective_type = ms_des_par.m_des_objective_type;		//[-]
+			pc_des_params.m_min_phx_deltaT = ms_des_par.m_min_phx_deltaT;				//[C]
 
 			auto_err_code = mc_partialcooling_cycle.auto_opt_design(pc_des_params);
 		}
