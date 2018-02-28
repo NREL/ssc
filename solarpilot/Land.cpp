@@ -424,14 +424,18 @@ double Land::calcPolyLandArea(var_land &V){
 void Land::calcLandArea(var_land &V, vector<sp_point> &layout)
 {
 	/* 
-	
+	Calculate the land area either using provided polygons, or using the convex hull around the heliostat field. 
+
+	For polygons, assume that the geometry provided accurately represents the land area that is to be accounted for in the cost
+	calculations. If only land exclusions are provided, use the convex hull method instead.
 	*/
 
-	if(V.is_bounds_array.val)
+	if(V.is_bounds_array.val && (V.inclusions.val.size() > 0) )
 	{
 		_bound_area = calcPolyLandArea(V);
 	}
-	else{
+	else
+	{
 		//Calculate the convex hull surrounding the heliostat positions
 		std::vector<sp_point> hull;
 		Toolbox::convex_hull(layout, hull);
