@@ -2612,12 +2612,12 @@ void C_RecompCycle::auto_opt_design_core(int & error_code)
 	ms_opt_des_par.m_W_dot_net = ms_auto_opt_des_par.m_W_dot_net;
 	ms_opt_des_par.m_T_mc_in = ms_auto_opt_des_par.m_T_mc_in;
 	ms_opt_des_par.m_T_t_in = ms_auto_opt_des_par.m_T_t_in;
-	ms_opt_des_par.m_DP_LT = ms_auto_opt_des_par.m_DP_LT;
-	ms_opt_des_par.m_DP_HT = ms_auto_opt_des_par.m_DP_HT;
-	ms_opt_des_par.m_DP_PC = ms_auto_opt_des_par.m_DP_PC;
+	ms_opt_des_par.m_DP_LT = ms_auto_opt_des_par.m_DP_LTR;
+	ms_opt_des_par.m_DP_HT = ms_auto_opt_des_par.m_DP_HTR;
+	ms_opt_des_par.m_DP_PC = ms_auto_opt_des_par.m_DP_PC_main;
 	ms_opt_des_par.m_DP_PHX = ms_auto_opt_des_par.m_DP_PHX;
-	ms_opt_des_par.m_LT_eff_max = ms_auto_opt_des_par.m_LT_eff_max;
-	ms_opt_des_par.m_HT_eff_max = ms_auto_opt_des_par.m_HT_eff_max;
+	ms_opt_des_par.m_LT_eff_max = ms_auto_opt_des_par.m_LTR_eff_max;
+	ms_opt_des_par.m_HT_eff_max = ms_auto_opt_des_par.m_HTR_eff_max;
 	ms_opt_des_par.m_UA_rec_total = ms_auto_opt_des_par.m_UA_rec_total;
 	ms_opt_des_par.m_eta_mc = ms_auto_opt_des_par.m_eta_mc;
 	ms_opt_des_par.m_eta_rc = ms_auto_opt_des_par.m_eta_rc;
@@ -2731,13 +2731,13 @@ void C_RecompCycle::auto_opt_design_hit_eta(S_auto_opt_design_hit_eta_parameters
 	ms_auto_opt_des_par.m_W_dot_net = auto_opt_des_hit_eta_in.m_W_dot_net;				//[kW] Target net cycle power
 	ms_auto_opt_des_par.m_T_mc_in = auto_opt_des_hit_eta_in.m_T_mc_in;					//[K] Compressor inlet temperature
 	ms_auto_opt_des_par.m_T_t_in = auto_opt_des_hit_eta_in.m_T_t_in;					//[K] Turbine inlet temperature
-	ms_auto_opt_des_par.m_DP_LT = auto_opt_des_hit_eta_in.m_DP_LT;						//(cold, hot) positive values are absolute [kPa], negative values are relative (-)
-	ms_auto_opt_des_par.m_DP_HT = auto_opt_des_hit_eta_in.m_DP_HT;						//(cold, hot) positive values are absolute [kPa], negative values are relative (-)
-	ms_auto_opt_des_par.m_DP_PC = auto_opt_des_hit_eta_in.m_DP_PC;						//(cold, hot) positive values are absolute [kPa], negative values are relative (-)
+	ms_auto_opt_des_par.m_DP_LTR = auto_opt_des_hit_eta_in.m_DP_LT;						//(cold, hot) positive values are absolute [kPa], negative values are relative (-)
+	ms_auto_opt_des_par.m_DP_HTR = auto_opt_des_hit_eta_in.m_DP_HT;						//(cold, hot) positive values are absolute [kPa], negative values are relative (-)
+	ms_auto_opt_des_par.m_DP_PC_main = auto_opt_des_hit_eta_in.m_DP_PC;						//(cold, hot) positive values are absolute [kPa], negative values are relative (-)
 	ms_auto_opt_des_par.m_DP_PHX = auto_opt_des_hit_eta_in.m_DP_PHX;					//(cold, hot) positive values are absolute [kPa], negative values are relative (-)
 	ms_auto_opt_des_par.m_UA_rec_total = std::numeric_limits<double>::quiet_NaN();		// ***** This method finds the UA required to hit the input efficiency! *****
-	ms_auto_opt_des_par.m_LT_eff_max = auto_opt_des_hit_eta_in.m_LT_eff_max;
-	ms_auto_opt_des_par.m_HT_eff_max = auto_opt_des_hit_eta_in.m_HT_eff_max;
+	ms_auto_opt_des_par.m_LTR_eff_max = auto_opt_des_hit_eta_in.m_LT_eff_max;
+	ms_auto_opt_des_par.m_HTR_eff_max = auto_opt_des_hit_eta_in.m_HT_eff_max;
 	ms_auto_opt_des_par.m_eta_mc = auto_opt_des_hit_eta_in.m_eta_mc;					//[-] design-point efficiency of the main compressor; isentropic if positive, polytropic if negative
 	ms_auto_opt_des_par.m_eta_rc = auto_opt_des_hit_eta_in.m_eta_rc;					//[-] design-point efficiency of the recompressor; isentropic if positive, polytropic if negative
 	ms_auto_opt_des_par.m_eta_t = auto_opt_des_hit_eta_in.m_eta_t;						//[-] design-point efficiency of the turbine; isentropic if positive, polytropic if negative
@@ -2865,32 +2865,32 @@ void C_RecompCycle::auto_opt_design_hit_eta(S_auto_opt_design_hit_eta_parameters
 		ms_auto_opt_des_par.m_eta_t = 0.1;
 	}
 
-	if( ms_auto_opt_des_par.m_LT_eff_max > 1.0 )
+	if( ms_auto_opt_des_par.m_LTR_eff_max > 1.0 )
 	{
-		error_msg.append(util::format("The LT recuperator max effectiveness, %lg, was decreased to the limit of 1.0\n", ms_auto_opt_des_par.m_LT_eff_max));
+		error_msg.append(util::format("The LT recuperator max effectiveness, %lg, was decreased to the limit of 1.0\n", ms_auto_opt_des_par.m_LTR_eff_max));
 
-		ms_auto_opt_des_par.m_LT_eff_max = 1.0;
+		ms_auto_opt_des_par.m_LTR_eff_max = 1.0;
 	}
 
-	if( ms_auto_opt_des_par.m_LT_eff_max < 0.70 )
+	if( ms_auto_opt_des_par.m_LTR_eff_max < 0.70 )
 	{
-		error_msg.append(util::format("The LT recuperator max effectiveness, %lg, was increased to the internal limit of 0.70 improve convergence\n", ms_auto_opt_des_par.m_LT_eff_max));
+		error_msg.append(util::format("The LT recuperator max effectiveness, %lg, was increased to the internal limit of 0.70 improve convergence\n", ms_auto_opt_des_par.m_LTR_eff_max));
 
-		ms_auto_opt_des_par.m_LT_eff_max = 0.7;
+		ms_auto_opt_des_par.m_LTR_eff_max = 0.7;
 	}
 
-	if( ms_auto_opt_des_par.m_HT_eff_max > 1.0 )
+	if( ms_auto_opt_des_par.m_HTR_eff_max > 1.0 )
 	{
-		error_msg.append(util::format("The HT recuperator max effectiveness, %lg, was decreased to the limit of 1.0\n", ms_auto_opt_des_par.m_HT_eff_max));
+		error_msg.append(util::format("The HT recuperator max effectiveness, %lg, was decreased to the limit of 1.0\n", ms_auto_opt_des_par.m_HTR_eff_max));
 
-		ms_auto_opt_des_par.m_HT_eff_max = 1.0;
+		ms_auto_opt_des_par.m_HTR_eff_max = 1.0;
 	}
 
-	if( ms_auto_opt_des_par.m_HT_eff_max < 0.70 )
+	if( ms_auto_opt_des_par.m_HTR_eff_max < 0.70 )
 	{
-		error_msg.append(util::format("The LT recuperator max effectiveness, %lg, was increased to the internal limit of 0.70 improve convergence\n", ms_auto_opt_des_par.m_HT_eff_max));
+		error_msg.append(util::format("The LT recuperator max effectiveness, %lg, was increased to the internal limit of 0.70 improve convergence\n", ms_auto_opt_des_par.m_HTR_eff_max));
 
-		ms_auto_opt_des_par.m_HT_eff_max = 0.7;
+		ms_auto_opt_des_par.m_HTR_eff_max = 0.7;
 	}
 
 		// Limits on high pressure limit

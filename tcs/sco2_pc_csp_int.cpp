@@ -120,7 +120,7 @@ void C_sco2_recomp_csp::design_core()
 		}
 		else if (ms_des_par.m_design_method == 2)
 		{
-			C_PartialCooling_Cycle::S_auto_opt_design_parameters pc_des_params;
+			C_sco2_cycle_core::S_auto_opt_design_parameters pc_des_params;
 			pc_des_params.m_W_dot_net = ms_des_par.m_W_dot_net;		//[kWe]
 			pc_des_params.m_T_mc_in = ms_des_par.m_T_amb_des + ms_des_par.m_dt_mc_approach;	//[K]
 			if (ms_rc_cycle_des_par.m_T_mc_in < m_T_mc_in_min)
@@ -134,8 +134,8 @@ void C_sco2_recomp_csp::design_core()
 			pc_des_params.m_T_t_in = ms_des_par.m_T_htf_hot_in - ms_des_par.m_phx_dt_hot_approach;	//[K]
 			pc_des_params.m_DP_LTR = ms_des_par.m_DP_LT;
 			pc_des_params.m_DP_HTR = ms_des_par.m_DP_HT;
-			pc_des_params.m_DP_PC_full = ms_des_par.m_DP_PC;
-			pc_des_params.m_DP_PC_partial = ms_des_par.m_DP_PC;
+			pc_des_params.m_DP_PC_pre = ms_des_par.m_DP_PC;
+			pc_des_params.m_DP_PC_main = ms_des_par.m_DP_PC;
 			pc_des_params.m_DP_PHX = ms_des_par.m_DP_PHX;
 			pc_des_params.m_UA_rec_total = ms_des_par.m_UA_recup_tot_des;	//[kW/K]
 			pc_des_params.m_LTR_eff_max = ms_des_par.m_LT_eff_max;			//[-]
@@ -152,6 +152,11 @@ void C_sco2_recomp_csp::design_core()
 
 			pc_des_params.m_des_objective_type = ms_des_par.m_des_objective_type;		//[-]
 			pc_des_params.m_min_phx_deltaT = ms_des_par.m_min_phx_deltaT;				//[C]
+
+			pc_des_params.m_PR_mc_guess = ms_des_par.m_PR_mc_guess;		//[-]
+			pc_des_params.m_fixed_PR_mc = ms_des_par.m_fixed_PR_mc;		//[-]
+
+			pc_des_params.m_is_recomp_ok = ms_des_par.m_is_recomp_ok;
 
 			auto_err_code = mc_partialcooling_cycle.auto_opt_design(pc_des_params);
 		}
@@ -226,17 +231,17 @@ void C_sco2_recomp_csp::design_core()
 			}
 
 			// Design the recompression cycle using a specified total recuperator conductance
-			C_RecompCycle::S_auto_opt_design_parameters s_rc_auto_opt_des_par;
+			C_sco2_cycle_core::S_auto_opt_design_parameters s_rc_auto_opt_des_par;
 			s_rc_auto_opt_des_par.m_W_dot_net = ms_des_par.m_W_dot_net;		//[kWe]
 			s_rc_auto_opt_des_par.m_T_mc_in = ms_des_par.m_T_amb_des + ms_des_par.m_dt_mc_approach;		//[K]
 			s_rc_auto_opt_des_par.m_T_t_in = ms_des_par.m_T_htf_hot_in - ms_des_par.m_phx_dt_hot_approach;	//[K]
-			s_rc_auto_opt_des_par.m_DP_LT = ms_des_par.m_DP_LT;
-			s_rc_auto_opt_des_par.m_DP_HT = ms_des_par.m_DP_HT;
-			s_rc_auto_opt_des_par.m_DP_PC = ms_des_par.m_DP_PC;
+			s_rc_auto_opt_des_par.m_DP_LTR = ms_des_par.m_DP_LT;
+			s_rc_auto_opt_des_par.m_DP_HTR = ms_des_par.m_DP_HT;
+			s_rc_auto_opt_des_par.m_DP_PC_main = ms_des_par.m_DP_PC;
 			s_rc_auto_opt_des_par.m_DP_PHX = ms_des_par.m_DP_PHX;
 			s_rc_auto_opt_des_par.m_UA_rec_total = ms_des_par.m_UA_recup_tot_des;	//[kW/K]
-			s_rc_auto_opt_des_par.m_LT_eff_max = ms_des_par.m_LT_eff_max;
-			s_rc_auto_opt_des_par.m_HT_eff_max = ms_des_par.m_HT_eff_max;
+			s_rc_auto_opt_des_par.m_LTR_eff_max = ms_des_par.m_LT_eff_max;
+			s_rc_auto_opt_des_par.m_HTR_eff_max = ms_des_par.m_HT_eff_max;
 			s_rc_auto_opt_des_par.m_eta_mc = ms_des_par.m_eta_mc;
 			s_rc_auto_opt_des_par.m_eta_rc = ms_des_par.m_eta_rc;
 			s_rc_auto_opt_des_par.m_eta_t = ms_des_par.m_eta_t;

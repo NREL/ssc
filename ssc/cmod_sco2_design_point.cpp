@@ -661,9 +661,9 @@ public:
 			rc_params_max_eta.m_W_dot_net = W_dot_net_des;					//[kW]
 			rc_params_max_eta.m_T_mc_in = T_amb_cycle_des + delta_T_acc;	//[K]
 			rc_params_max_eta.m_T_t_in = T_htf_hot - delta_T_t;				//[K]
-			rc_params_max_eta.m_DP_LT = DP_LT;
-			rc_params_max_eta.m_DP_HT = DP_HT;
-			rc_params_max_eta.m_DP_PC = DP_PC;
+			rc_params_max_eta.m_DP_LTR = DP_LT;
+			rc_params_max_eta.m_DP_HTR = DP_HT;
+			rc_params_max_eta.m_DP_PC_main = DP_PC;
 			rc_params_max_eta.m_DP_PHX = DP_PHX;
 
 			// Get max recuperator UA!!!

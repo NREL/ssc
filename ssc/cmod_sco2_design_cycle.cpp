@@ -127,9 +127,9 @@ public:
 
 		C_RecompCycle::S_auto_opt_design_parameters ms_rc_autodes_par;
 
-		ms_rc_autodes_par.m_DP_HT = DP_HT;
-		ms_rc_autodes_par.m_DP_LT = DP_LT;
-		ms_rc_autodes_par.m_DP_PC = DP_PC;
+		ms_rc_autodes_par.m_DP_HTR = DP_HT;
+		ms_rc_autodes_par.m_DP_LTR = DP_LT;
+		ms_rc_autodes_par.m_DP_PC_main = DP_PC;
 		ms_rc_autodes_par.m_DP_PHX = DP_PHX;
 
 		ms_rc_autodes_par.m_eta_mc = eta_mc;
