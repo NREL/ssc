@@ -112,10 +112,6 @@ void C_sco2_recomp_csp::design_core()
 	std::string error_msg;
 	int auto_err_code = 0;
 
-
-	//ms_des_par.m_cycle_config = 2;
-
-
 	if (ms_des_par.m_cycle_config == 2)			// Partial Cooling Cycle
 	{
 		if (ms_des_par.m_design_method == 1)
