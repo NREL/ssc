@@ -64,22 +64,6 @@ class C_PartialCooling_Cycle : public C_sco2_cycle_core
 {
 public:
 
-	enum E_cycle_state_points
-	{
-		MC_IN = 0,
-		MC_OUT,
-		LTR_HP_OUT,
-		MIXER_OUT,
-		HTR_HP_OUT,
-		TURB_IN,
-		TURB_OUT,
-		HTR_LP_OUT,
-		LTR_LP_OUT,
-		PC_IN,
-		PC_OUT,
-		RC_OUT
-	};
-
 	struct S_des_params
 	{
 		double m_W_dot_net;					//[kWe] Target net cycle power
@@ -329,7 +313,7 @@ public:
 
 	C_PartialCooling_Cycle()
 	{
-		m_temp_last.resize(RC_OUT + 1);
+		m_temp_last.resize(END_SCO2_STATES);
 		std::fill(m_temp_last.begin(), m_temp_last.end(), std::numeric_limits<double>::quiet_NaN());
 
 		m_pres_last = m_enth_last = m_entr_last = m_dens_last = m_temp_last;

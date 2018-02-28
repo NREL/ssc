@@ -8,6 +8,25 @@ class C_sco2_cycle_core
 {
 public:
 
+	enum E_cycle_state_points
+	{
+		// index values for c++ 0-based vectors for temperature, pressure, etc.
+		MC_IN = 0,		// Main compressor inlet
+		MC_OUT,			// Main compressor outlet
+		LTR_HP_OUT,		// Low temp recuperator high pressure outlet
+		MIXER_OUT,		// Mixer: LTR_HP_OUT + Recompressor outlet
+		HTR_HP_OUT,		// High temp recuperator high pressure outlet
+		TURB_IN,		// Turbine inlet
+		TURB_OUT,		// Turbine outlet
+		HTR_LP_OUT,		// High temp recuperator low pressure outlet
+		LTR_LP_OUT,		// Low temp recuperator low pressure outlet
+		RC_OUT,			// Recompresor outlet
+		PC_IN,			// Precompressor inlet (partial cooling cycle)
+		PC_OUT,			// Precompressor outlet (partial cooling cycle)
+
+		END_SCO2_STATES
+	};
+
 	struct S_design_solved
 	{
 		std::vector<double> m_temp, m_pres, m_enth, m_entr, m_dens;		// thermodynamic states (K, kPa, kJ/kg, kJ/kg-K, kg/m3)

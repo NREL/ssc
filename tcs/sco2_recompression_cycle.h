@@ -69,21 +69,6 @@ using namespace std;
 class C_RecompCycle : public C_sco2_cycle_core
 {
 public:
-	
-	enum E_cycle_state_points
-	{
-		// index values for c++ 0-based vectors for temperature, pressure, etc.
-		MC_IN = 0,
-		MC_OUT,
-		LTR_HP_OUT,
-		MIXER_OUT,
-		HTR_HP_OUT,
-		TURB_IN,
-		TURB_OUT,
-		HTR_LP_OUT,
-		LTR_LP_OUT,
-		RC_OUT		
-	};
 
 	struct S_design_limits
 	{
@@ -702,7 +687,7 @@ public:
 
 	C_RecompCycle()
 	{
-		m_temp_last.resize(10);
+		m_temp_last.resize(END_SCO2_STATES);
 		std::fill(m_temp_last.begin(), m_temp_last.end(), std::numeric_limits<double>::quiet_NaN());
 		m_pres_last = m_enth_last = m_entr_last = m_dens_last = m_temp_last;
 
