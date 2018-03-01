@@ -1100,6 +1100,17 @@ double C_csp_cold_tes::get_cold_mass_prev()
 	return mc_cold_tank.calc_mass_at_prev();	//[kg]
 }
 
+double C_csp_cold_tes::get_hot_massflow_avail(double step_s) //[kg/sec]
+{
+	return mc_hot_tank.m_dot_available(0, step_s);  
+}
+
+double C_csp_cold_tes::get_cold_massflow_avail(double step_s) //[kg/sec]
+{
+	return mc_cold_tank.m_dot_available(0, step_s); 
+}
+
+
 double C_csp_cold_tes::get_initial_charge_energy()
 {
 	//MWh

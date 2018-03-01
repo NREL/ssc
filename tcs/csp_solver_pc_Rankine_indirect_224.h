@@ -156,10 +156,8 @@ public:
 	// Instantiate two fully mixed tanks class for cold storage
 	C_csp_cold_tes mc_cold_storage;
 	C_csp_cold_tes::S_csp_tes_outputs mc_cold_storage_outputs;	// for outputs
-	bool is_cold_empty;
-	bool is_warm_empty;
-	double m_warm_last;
-	double m_cold_last;
+	double m_dot_cold_avail;
+	double m_dot_warm_avail;
 	double m_dot_condenser;
 	double T_warm_prev_K;
 	double T_cold_prev;
