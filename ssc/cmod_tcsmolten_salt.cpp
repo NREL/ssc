@@ -201,7 +201,32 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "h_tank_min",           "Minimum allowable HTF height in storage tank",                      "m",            "",            "TES",      "*",              "",                      "" },	
 	{ SSC_INPUT,        SSC_NUMBER,      "hot_tank_Thtr",        "Minimum allowable hot tank HTF temp",                               "C",            "",            "TES",      "*",              "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "hot_tank_max_heat",    "Rated heater capacity for hot tank heating",                        "MW",           "",            "TES",      "*",              "",                      "" },
-					     																	         
+				
+		//RADIATIVE COOLING WITH COLD STORAGE
+	{ SSC_INPUT,        SSC_NUMBER,      "h_ctes_tank_min",      "Minimum allowable water height in storage tank",					"m",            "",				"RADCOOL",		"?=0",						"",							"" },
+	{ SSC_INPUT,        SSC_NUMBER,      "ctes_tshours",         "Equivalent full load storage hours",								"hr",           "",				"RADCOOL",      "?=0",						"",							"" },
+	{ SSC_INPUT,        SSC_NUMBER,      "ctes_field_fl",        "Fluid in radiator field. 3=liquid water",							"-",            "",				"RADCOOL",      "?=3",						"",							"" },
+	{ SSC_INPUT,        SSC_NUMBER,      "h_ctes_tank",			 "Total height of cold storage tank when full",						"m",            "",				"RADCOOL",      "?=0",						"",							"" },
+	{ SSC_INPUT,        SSC_NUMBER,      "u_ctes_tank",			 "Loss coefficient from cold storage tank",							"W/m2-K",       "",				"RADCOOL",      "?=0",						"",							"" },
+	{ SSC_INPUT,        SSC_NUMBER,      "ctes_tankpairs",		 "Number of equivalent tank pairs",									"-",			"",				"RADCOOL",      "?=0",						"",							"" },
+	{ SSC_INPUT,        SSC_NUMBER,      "T_ctes_cold_design",	 "Design value of cooled water to power block",						"C",			"",				"RADCOOL",      "?=0",						"",							"" },
+	{ SSC_INPUT,        SSC_NUMBER,      "T_ctes_warm_design",   "Design value of warm water returning from power block",			"C",			"",				"RADCOOL",      "?=0",						"",							"" },
+	{ SSC_INPUT,        SSC_NUMBER,      "T_ctes_warm_ini",		 "Initial value of warm tank",										"C",			"",				"RADCOOL",      "?=0",						"",							"" },
+	{ SSC_INPUT,        SSC_NUMBER,      "T_ctes_cold_ini",		 "Initial value of cold tank",										"C",			"",				"RADCOOL",      "?=0",						"",							"" },
+	{ SSC_INPUT,        SSC_NUMBER,      "f_ctes_warm_ini",		 "Initial fraction of avail. volume that is warm",					"-",			"",				"RADCOOL",      "?=0",						"",							"" },
+	{ SSC_INPUT,        SSC_NUMBER,      "peak_power_hours",     "Max number of hours of power cycle operation in one day",			"hr",           "",            "RADCOOL",      "?=0",						 "",						"" },
+	{ SSC_INPUT,        SSC_NUMBER,      "m_dot_radpanel",	     "Mass flow rate through single radiator panel",					"kg/sec",       "",            "RADCOOL",      "?=0",						 "",						"" },
+	{ SSC_INPUT,        SSC_NUMBER,      "n_rad_tubes",		     "Number of parallel tubes in single radiator panel",				"-",		    "",            "RADCOOL",      "?=0",						 "",						"" },
+	{ SSC_INPUT,        SSC_NUMBER,      "W_rad_tubes",		     "Center-to-center distance between tubes in radiator panel",		"m",			"",            "RADCOOL",      "?=0",						 "",						"" },
+	{ SSC_INPUT,        SSC_NUMBER,      "L_rad_tubes",		     "Length of single radiator panel",									"m",			"",            "RADCOOL",      "?=0",						 "",						"" },
+	{ SSC_INPUT,        SSC_NUMBER,      "th_rad_panel",		 "Thickness of radiator panel",										"m",			"",            "RADCOOL",      "?=0",						 "",						"" },
+	{ SSC_INPUT,        SSC_NUMBER,      "D_rad_tubes",			 "Inner diameter of tubes in radiator panel",						"m",			"",            "RADCOOL",      "?=0",						 "",						"" },
+	{ SSC_INPUT,        SSC_NUMBER,      "k_panel",				 "Thermal conductivity of radiator panel material",					"W/m-K",		"",            "RADCOOL",      "?=235",						 "",						"" },
+	{ SSC_INPUT,        SSC_NUMBER,      "epsilon_radtop",		 "Emmissivity of top of radiator panel",							"-",			"",            "RADCOOL",      "?=.95",						 "",						"" },
+	{ SSC_INPUT,        SSC_NUMBER,      "epsilon_radbot",		 "Emmissivity of top of radiator panel bottom (facing ground)",		"-",			"",            "RADCOOL",      "?=.07",						 "",						"" },
+	{ SSC_INPUT,        SSC_NUMBER,      "epsilon_radgrnd",		 "Emmissivity of ground underneath radiator panel",					"-",			"",            "RADCOOL",      "?=.90",						 "",						"" },
+	{ SSC_INPUT,        SSC_NUMBER,      "L_rad_rows",			 "Length of single row of radiator panels connected in series",		"m",			"",            "RADCOOL",      "?=0",						 "",						"" },
+
     					     																	  
     // Power Cycle Inputs
 	{ SSC_INPUT,        SSC_NUMBER,      "pc_config",            "0: Steam Rankine (224), 1: user defined, 2: sCO2 Recompression (424)", "-",         "",            "powerblock",     "?=0",                     "INTEGER",               "" },    
@@ -907,6 +932,33 @@ public:
 				pc->m_pb_bd_frac = as_double("pb_bd_frac");
 				pc->m_P_cond_min = as_double("P_cond_min");
 				pc->m_n_pl_inc = as_integer("n_pl_inc");
+
+				//parameters for radiative cooling with cold storage
+				rankine_pc.mc_cold_storage.ms_params.m_h_tank_min = as_double("h_ctes_tank_min");
+				rankine_pc.mc_cold_storage.ms_params.m_ts_hours = as_double("ctes_tshours");
+				rankine_pc.mc_cold_storage.ms_params.m_field_fl = as_integer("ctes_field_fl");
+				rankine_pc.mc_cold_storage.ms_params.m_h_tank = as_double("h_ctes_tank");
+				rankine_pc.mc_cold_storage.ms_params.m_u_tank = as_double("u_ctes_tank");
+				rankine_pc.mc_cold_storage.ms_params.m_tank_pairs = as_integer("ctes_tankpairs");
+				rankine_pc.mc_cold_storage.ms_params.m_T_field_in_des = as_double("T_ctes_cold_design");
+				rankine_pc.mc_cold_storage.ms_params.m_T_field_out_des = as_double("T_ctes_warm_design");
+				rankine_pc.mc_cold_storage.ms_params.m_T_tank_hot_ini= as_double("T_ctes_warm_ini");
+				rankine_pc.mc_cold_storage.ms_params.m_T_tank_cold_ini = as_double("T_ctes_cold_ini");
+				rankine_pc.mc_cold_storage.ms_params.m_f_V_hot_ini = as_double("f_ctes_warm_ini");
+				rankine_pc.mc_radiator.ms_params.m_power_hrs = as_double("peak_power_hours");
+				rankine_pc.mc_radiator.ms_params.m_dot_panel = as_double("m_dot_radpanel");
+				rankine_pc.mc_radiator.ms_params.n = as_integer("n_rad_tubes");
+				rankine_pc.mc_radiator.ms_params.W = as_double("W_rad_tubes");
+				rankine_pc.mc_radiator.ms_params.L = as_double("L_rad_tubes");
+				rankine_pc.mc_radiator.ms_params.th = as_double("th_rad_panel");
+				rankine_pc.mc_radiator.ms_params.D = as_double("D_rad_tubes");
+				rankine_pc.mc_radiator.ms_params.k_panel = as_double("k_panel");
+				rankine_pc.mc_radiator.ms_params.epsilon = as_double("epsilon_radtop");
+				rankine_pc.mc_radiator.ms_params.epsilonb = as_double("epsilon_radbot");
+				rankine_pc.mc_radiator.ms_params.epsilong = as_double("epsilon_radgrnd");
+				rankine_pc.mc_radiator.ms_params.Lsec = as_double("L_rad_rows");
+
+
 
 				size_t n_F_wc = 0;
 				ssc_number_t *p_F_wc = as_array("F_wc", &n_F_wc);

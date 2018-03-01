@@ -33,22 +33,21 @@ public:
 		double L;				//Length of tubes : L[m]
 		double L_c;				//Characteristic length for forced convection, typically equal to n*W
 			//unless wind direction is known to determine flow path : Lc[m]
-		double cp_circ;			//Specific heat capacity of circulating fluid : cp[J / kg - K]
 		double th;				//Thickness of plate : th[m]
 		double D;				//Diameter of tube : D[m]
 		double k_panel;			//Conductivity of plate : k[W / m - K]
 		double epsilon;			//Emissivity of plate top surface : epsilon[-]
 		double epsilonb;		//Emissivity of plate bottom surface : epsilonb[-]
 		double epsilong;		//Emissivity of ground : epsilong[-]
-		double Lsec;			//Length of series - connected sections of panels(if single panel, set equal
+		double Lsec;			//Length of series - connected sections of panels(if single panel, set equal to L) : Lsec[m]
 		double m_night_hrs;		//Number of hours plant will run at summer peak
-								//to L) : Lsec[m]
+		double m_power_hrs;		//Number of hours plant operates in one day at summer peak
 		double Afield, RM;
 		int Np;
 		S_params()
 		{
 			n = Np= 0;
-			m_dot_panel=W=L=L_c=cp_circ=th=D=k_panel=epsilon=epsilonb=epsilong=Lsec=m_night_hrs=Afield=RM= std::numeric_limits<double>::quiet_NaN();
+			m_dot_panel=W=L=L_c=th=D=k_panel=epsilon=epsilonb=epsilong=Lsec=m_night_hrs=Afield=RM= std::numeric_limits<double>::quiet_NaN();
 		}
 	};
 

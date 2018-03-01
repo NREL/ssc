@@ -95,20 +95,7 @@ private:
 	// member class for User Defined Power Cycle
 	C_ud_power_cycle mc_user_defined_pc;
 		
-	// Instantiate two fully mixed tanks class for cold storage
-	C_csp_cold_tes mc_cold_storage;
-	C_csp_cold_tes::S_csp_tes_outputs mc_cold_storage_outputs;	// for outputs
-	bool is_cold_empty;
-	bool is_warm_empty;
-	double m_warm_last;
-	double m_cold_last;
-	double m_dot_condenser;
-	double T_warm_prev_K;
-	double T_cold_prev;
-	double T_s_measured;
-	double T_s_corr;
-	double T_s_K;
-	int idx_time;
+
 
 	// track number of calls per timestep, reset = -1 in converged() call
 	int m_ncall;
@@ -166,6 +153,21 @@ public:
 	// Class to save messages for up stream classes
 	C_csp_messages mc_csp_messages;
 	
+	// Instantiate two fully mixed tanks class for cold storage
+	C_csp_cold_tes mc_cold_storage;
+	C_csp_cold_tes::S_csp_tes_outputs mc_cold_storage_outputs;	// for outputs
+	bool is_cold_empty;
+	bool is_warm_empty;
+	double m_warm_last;
+	double m_cold_last;
+	double m_dot_condenser;
+	double T_warm_prev_K;
+	double T_cold_prev;
+	double T_s_measured;
+	double T_s_corr;
+	double T_s_K;
+	int idx_time;
+
 	// Instantiate radiator model
 	C_csp_radiator mc_radiator;
 	double m_dot_radfield;

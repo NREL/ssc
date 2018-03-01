@@ -98,7 +98,6 @@ void C_csp_radiator::analytical_panel_calc(double T_db /*K*/, double Tin /*K*/, 
 		% Ground temperature, often assumed equal to air temperature : Tg[K]
 		% Wind speed : u[m / s]
 		% Effective sky temperature, from measurement or correlations : Ts[K]
-		% Specific heat capacity of circulating fluid : cp[J / kg - K]
 		% Thickness of plate : th[m]
 		% Diameter of tube : D[m]
 		% Conductivity of plate : k[W / m - K]

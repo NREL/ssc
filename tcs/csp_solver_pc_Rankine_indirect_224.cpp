@@ -462,62 +462,35 @@ void C_pc_Rankine_indirect_224::init(C_csp_power_cycle::S_solved_params &solved_
 	solved_params.m_m_dot_max = m_m_dot_max;			//[kg/hr]
 	
 
-	// Cold storage setup ARD 
+	// Cold storage and radiator setup ARD 
 	if (ms_params.m_CT==4)											//only if radiative cooling chosen.
 	{
 		C_csp_cold_tes::S_params *cold_tes = &mc_cold_storage.ms_params;
-		cold_tes->m_field_fl = 3;									//17 for molten salt; 3 for water liquid; 31 for pressurized water
-		//cold_tes->m_field_fl_props = as_matrix("field_fl_props"); //OK to skip b/c only for user-defined
-		cold_tes->m_tes_fl = 3;										// 17 for molten salt; 3 for water liquid
-		//cold_tes->m_tes_fl_props = as_matrix("field_fl_props");	// OK to skip
+		cold_tes->m_tes_fl = 3;										// Hardcode 3 for water liquid
 		cold_tes->m_is_hx = false;									// MSPT assumes direct storage, so no user input required here: hardcode = false
-		cold_tes->m_W_dot_pc_design = 115;							//[MWe]
+		cold_tes->m_W_dot_pc_design = ms_params.m_P_ref/1000;		//[MWe]
 		cold_tes->m_eta_pc_factor =ms_params.m_eta_ref / (1 - ms_params.m_eta_ref);	//[-] In order to allow this value to be used in the formula to determine size of tanks.
-		cold_tes->m_solarm = 2.4;									//[-]
-		cold_tes->m_ts_hours = 20;									//[hrs]
-		cold_tes->m_h_tank = 20;									//tank height [m]
-		cold_tes->m_u_tank = 0.4;									//wetted loss coefficient [Wt/m^2-K]
-		cold_tes->m_tank_pairs = 1;									//parallel pairs of tanks [-]
 		cold_tes->m_hot_tank_Thtr = 0;								//set point [C]
 		cold_tes->m_hot_tank_max_heat = 30;							//heater capacity [MWe]
 		cold_tes->m_cold_tank_Thtr = 0;								//set point [C]
 		cold_tes->m_cold_tank_max_heat = 15;						//capacity [MWe]
 		cold_tes->m_dt_hot = 0.0;									// MSPT assumes direct storage, so no user input here: hardcode = 0.0
-		cold_tes->m_T_field_in_des = 10;							//HTF cold [C]
-		cold_tes->m_T_field_out_des = 20;							//HTF hot [C]
-		cold_tes->m_T_tank_hot_ini = 20;							//HTF hot initial [C] same as design
-		cold_tes->m_T_tank_cold_ini = 10;							//HTF cold initial [C] same as design
-		cold_tes->m_h_tank_min = 1;									//minimum fill height [m]
-		cold_tes->m_f_V_hot_ini = 5;								//initial hot HTF [%]
 		cold_tes->m_htf_pump_coef = 0.55;							//pumping power for HTF thru power block [kW/kg/s]
 		cold_tes->dT_cw_rad = mc_cold_storage.ms_params.m_T_field_out_des - mc_cold_storage.ms_params.m_T_field_in_des;	//Reference delta T based on design values given.
 		cold_tes->m_dot_cw_rad = (mc_cold_storage.ms_params.m_W_dot_pc_design*1000000. / mc_cold_storage.ms_params.m_eta_pc_factor) / (4183 /*[J/kg-K]*/ * mc_cold_storage.ms_params.dT_cw_rad);	//Calculate design cw mass flow [kg/sec]
 
-		//Initialize cold storage ARD
+		//Initialize cold storage
 		mc_cold_storage.init();
 
 		C_csp_radiator::S_params *rad = &mc_radiator.ms_params;
 		rad->m_field_fl = cold_tes->m_field_fl;						//Fluid type as designated in cold storage component
-		rad->m_dot_panel = 2.25;									//Total mass flow rate through panel : m_dot[kg / sec]
-		rad->n = 50;												//Number of parallel tubes on a single panel : n
-		rad->W = 0.2;												//Distance between two parallel tubes : W[m]
-		rad->L = 100;												//Length of tubes : L[m]
-		rad->L_c = 10;												//Characteristic length for forced convection, typically equal to n*W
+		rad->L_c = rad->n*rad->W;									//Characteristic length for forced convection, typically equal to n*W
 			//unless wind direction is known to determine flow path : Lc[m]
-		rad->cp_circ = 4183;										//Specific heat capacity of circulating fluid : cp[J / kg - K]
-		rad->th = 0.002;											//Thickness of plate : th[m]
-		rad->D = 0.02;												//Diameter of tube : D[m]
-		rad->k_panel = 235;											//Conductivity of plate : k[W / m - K]
-		rad->epsilon = 0.95;										//Emissivity of plate top surface : epsilon[-]
-		rad->epsilonb = 0.07;										//Emissivity of plate bottom surface : epsilonb[-]
-		rad->epsilong = 0.9;										//Emissivity of ground : epsilong[-]
-		rad->Lsec = 100;											//Length of series - connected sections of panels(if single panel, set equal
-				//to L) : Lsec[m]
 		rad->m_night_hrs = 9;										//Numer of hours of radiative cooling in summer peak
-		rad->Np = (cold_tes->m_dot_cw_rad/rad->m_dot_panel)*(cold_tes->m_ts_hours/rad->m_night_hrs);
+		rad->Np = static_cast<int>((cold_tes->m_dot_cw_rad/rad->m_dot_panel)*(rad->m_power_hrs/rad->m_night_hrs));
 		rad->Afield = rad->n*rad->W*rad->L*rad->Np;
 		
-		//Initialize
+		//Initialize radiator
 		mc_radiator.init();
 
 	
@@ -802,7 +775,7 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 		T_warm_prev_K = mc_cold_storage.get_hot_temp();			// Get previous warm temperature [K]
 		T_cold_prev = mc_cold_storage.get_cold_temp() - 273.15;	// Get previous cold temperature [C]
 		m_dot_condenser = std::numeric_limits<double>::quiet_NaN();	//condenser mass flow rate at actual load
-		idx_time = time / 3600-1;								//Zero based index to this timestep based on end of current hour in seconds.
+		idx_time = static_cast<int>((time / 3600-1));									//Zero based index to this timestep based on end of current hour in seconds.
 		T_s_measured=mc_radiator.T_S_measured[idx_time];		//Get measured sky temperature [K]
 		if (T_s_measured != 0)
 		{
@@ -914,9 +887,17 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 
 				if (is_cold_empty)																
 				{
-					mc_cold_storage.idle(step_sec, T_db, mc_cold_storage_outputs);				//Idle tank if not enough mass (should be rare - eliminate this later. ARD)
-					T_rad_out = mc_cold_storage_outputs.m_T_cold_ave;							//Return cold tank temp [K] if radiator not on
-
+					if (is_dark)
+					{
+						mc_radiator.night_cool(T_db, T_warm_prev_K, u, T_s_K, mc_radiator.ms_params.m_dot_panel, T_rad_out);	//Call radiator to calculate temperature. Single series set of panels.
+						mc_cold_storage.charge_discharge(step_sec, T_db, m_dot_condenser, T_cond_out + 273.15, m_dot_radfield, T_rad_out, mc_cold_storage_outputs); // OK to ch-disch because net flow will be into cold tank given that Npower>Nnight at design.
+					}
+					else 
+					{
+						mc_cold_storage.idle(step_sec, T_db, mc_cold_storage_outputs);				//Idle tank if not enough mass during day (should not happen if tank sized well)
+						T_rad_out = mc_cold_storage_outputs.m_T_cold_ave;							//Return cold tank temp [K] if radiator not on
+						//add error message here?
+					}
 				}
 				else
 				{
