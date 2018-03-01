@@ -70,8 +70,6 @@ C_sco2_recomp_csp::C_sco2_recomp_csp()
 	m_T_co2_crit = co2_fluid_info.T_critical;		//[K]
 	m_P_co2_crit = co2_fluid_info.P_critical;		//[kPa]
 
-	m_T_mc_in_min = mc_rc_cycle.get_design_limits().m_T_mc_in_min;		//[K]
-
 	// Set default optimization strategy
 	m_od_opt_objective = E_MAX_ETA;		//[-]
 	m_is_phi_optimized = true;			//[-]
@@ -112,6 +110,18 @@ void C_sco2_recomp_csp::design_core()
 	std::string error_msg;
 	int auto_err_code = 0;
 
+	if (ms_des_par.m_cycle_config == 2)
+	{
+		mpc_sco2_cycle = &mc_partialcooling_cycle;
+	}
+	else
+	{
+		mpc_sco2_cycle = &mc_rc_cycle;
+	}
+
+	// Set min temp
+	m_T_mc_in_min = mpc_sco2_cycle->get_design_limits().m_T_mc_in_min;		//[K]
+	
 	if (ms_des_par.m_cycle_config == 2)			// Partial Cooling Cycle
 	{
 		if (ms_des_par.m_design_method == 1)
@@ -158,14 +168,14 @@ void C_sco2_recomp_csp::design_core()
 
 			pc_des_params.m_is_recomp_ok = ms_des_par.m_is_recomp_ok;
 
-			auto_err_code = mc_partialcooling_cycle.auto_opt_design(pc_des_params);
+			auto_err_code = mpc_sco2_cycle->auto_opt_design(pc_des_params);
 		}
 		else
 		{
 			throw(C_csp_exception("sCO2 partial cooling cycle and CSP integration design, design method can only be 1 (specify UA) for now"));
 		}
 
-		ms_des_solved.ms_rc_cycle_solved = *mc_partialcooling_cycle.get_design_solved();
+		ms_des_solved.ms_rc_cycle_solved = *mpc_sco2_cycle->get_design_solved();
 
 		if (auto_err_code != 0)
 		{
@@ -221,7 +231,7 @@ void C_sco2_recomp_csp::design_core()
 			ms_rc_cycle_des_par.mf_callback_log = mf_callback_update;
 			ms_rc_cycle_des_par.mp_mf_active = mp_mf_update;
 
-			auto_err_code = mc_rc_cycle.auto_opt_design_hit_eta(ms_rc_cycle_des_par, error_msg);
+			auto_err_code = mpc_sco2_cycle->auto_opt_design_hit_eta(ms_rc_cycle_des_par, error_msg);
 		}
 		else if (ms_des_par.m_design_method == 2)
 		{
@@ -259,14 +269,14 @@ void C_sco2_recomp_csp::design_core()
 
 			s_rc_auto_opt_des_par.m_is_recomp_ok = ms_des_par.m_is_recomp_ok;
 
-			auto_err_code = mc_rc_cycle.auto_opt_design(s_rc_auto_opt_des_par);
+			auto_err_code = mpc_sco2_cycle->auto_opt_design(s_rc_auto_opt_des_par);
 		}
 		else
 		{
 			throw(C_csp_exception("sCO2 recompression cycle and CSP integration design, design method must be either 1 or 2\n"));
 		}
 
-		ms_des_solved.ms_rc_cycle_solved = *mc_rc_cycle.get_design_solved();
+		ms_des_solved.ms_rc_cycle_solved = *mpc_sco2_cycle->get_design_solved();
 
 		if (auto_err_code != 0)
 		{
@@ -772,7 +782,7 @@ bool C_sco2_recomp_csp::opt_P_mc_in_nest_f_recomp_max_eta_core()
 			"C_sco2_recomp_csp::opt_P_mc_in_nest_f_recomp_max_eta_core"));
 	}
 
-	ms_od_solved.ms_rc_cycle_od_solved = *mc_rc_cycle.get_od_solved();
+	ms_od_solved.ms_rc_cycle_od_solved = *mpc_sco2_cycle->get_od_solved();
 	ms_od_solved.ms_phx_od_solved = mc_phx.ms_od_solved;
 
 	return true;
@@ -1660,22 +1670,22 @@ int C_sco2_recomp_csp::off_design_core(double & eta_solved)
 	// double over_T_t_in = max(0.0, T_t_solved - mc_rc_cycle.get_design_solved()->m_temp[6-1]);
 
 	// 2) Don't let the upper pressure in the system exceed the specified max (typically also = design point P_high)
-	double over_P_high = max(0.0, (mc_rc_cycle.get_od_solved()->m_pres[C_sco2_cycle_core::MC_OUT] - 0.9999*ms_des_par.m_P_high_limit) / 1.E3);
+	double over_P_high = max(0.0, (mpc_sco2_cycle->get_od_solved()->m_pres[C_sco2_cycle_core::MC_OUT] - 0.9999*ms_des_par.m_P_high_limit) / 1.E3);
 
 	// 3) Check compressor(s) tip ratio?
-	double mc_w_tip_ratio = mc_rc_cycle.get_od_solved()->ms_mc_ms_od_solved.m_w_tip_ratio;
+	double mc_w_tip_ratio = mpc_sco2_cycle->get_od_solved()->ms_mc_ms_od_solved.m_w_tip_ratio;
 	// Recompressor has multiple stages, it's reporting the fastest tip speed
 	double rc_w_tip_ratio = 0.0;
 	if( ms_des_solved.ms_rc_cycle_solved.m_is_rc )
 	{
-		rc_w_tip_ratio = mc_rc_cycle.get_od_solved()->ms_rc_ms_od_solved.m_w_tip_ratio;
+		rc_w_tip_ratio = mpc_sco2_cycle->get_od_solved()->ms_rc_ms_od_solved.m_w_tip_ratio;
 	}
 	double comp_tip_ratio = max(mc_w_tip_ratio, rc_w_tip_ratio);
 	double over_tip_ratio = max(0.0, 10.0*(comp_tip_ratio - 0.999));
 
 	// 4) Check for compressor(s) surge?
 	// Main compressor
-	double mc_phi = mc_rc_cycle.get_od_solved()->ms_mc_ms_od_solved.m_phi;
+	double mc_phi = mpc_sco2_cycle->get_od_solved()->ms_mc_ms_od_solved.m_phi;
 	double over_surge_mc = max(0.0, C_comp_single_stage::m_snl_phi_min - mc_phi);
 	// Recompressor
 	double rc_phi_s1, rc_phi_s2;
@@ -1686,7 +1696,7 @@ int C_sco2_recomp_csp::off_design_core(double & eta_solved)
 		//rc_phi_s1 = mc_rc_cycle.get_od_solved()->ms_rc_od_solved.m_phi;
 		//rc_phi_s2 = mc_rc_cycle.get_od_solved()->ms_rc_od_solved.m_phi_2;
 		//double rc_phi_min = min(rc_phi_s1, rc_phi_s2);
-		double rc_phi_min = mc_rc_cycle.get_od_solved()->ms_rc_ms_od_solved.m_phi;
+		double rc_phi_min = mpc_sco2_cycle->get_od_solved()->ms_rc_ms_od_solved.m_phi;
 		over_surge_rc = max(0.0, (C_comp_single_stage::m_snl_phi_min - rc_phi_min) / C_comp_single_stage::m_snl_phi_min*100.0);
 	}
 
@@ -1707,7 +1717,7 @@ int C_sco2_recomp_csp::off_design_core(double & eta_solved)
 	//  then overwrite integer that code returns to calling program
 	if(over_T_t_in != 0.0)
 		od_solve_code = E_TURBINE_INLET_OVER_TEMP;
-	else if( mc_rc_cycle.get_od_solved()->m_pres[C_sco2_cycle_core::MC_OUT] > ms_des_par.m_P_high_limit )
+	else if(mpc_sco2_cycle->get_od_solved()->m_pres[C_sco2_cycle_core::MC_OUT] > ms_des_par.m_P_high_limit )
 		od_solve_code = E_OVER_PRESSURE;
 	else if (over_tip_ratio >= 1.0)
 		od_solve_code = E_TIP_RATIO;
@@ -1726,38 +1736,38 @@ int C_sco2_recomp_csp::off_design_core(double & eta_solved)
 	{
 	case E_MAX_ETA:
 	case E_MAX_ETA_FIX_PHI:
-		eta_solved = mc_rc_cycle.get_od_solved()->m_eta_thermal*scale_product;
+		eta_solved = mpc_sco2_cycle->get_od_solved()->m_eta_thermal*scale_product;
 		break;
 	case E_MAX_POWER:
 	case E_MAX_POWER_FIX_PHI:
-		eta_solved = mc_rc_cycle.get_od_solved()->m_W_dot_net / 1.E3*scale_product;		//[MWe]
+		eta_solved = mpc_sco2_cycle->get_od_solved()->m_W_dot_net / 1.E3*scale_product;		//[MWe]
 		break;
 	case E_MOO_ETA_0p1Wnd:
 	case E_MOO_ETA_0p1Wnd_FIX_PHI:
-		eta_solved = (mc_rc_cycle.get_od_solved()->m_eta_thermal + 0.05*mc_rc_cycle.get_od_solved()->m_W_dot_net/mc_rc_cycle.get_design_solved()->m_W_dot_net)*scale_product;
+		eta_solved = (mpc_sco2_cycle->get_od_solved()->m_eta_thermal + 0.05*mpc_sco2_cycle->get_od_solved()->m_W_dot_net/ mpc_sco2_cycle->get_design_solved()->m_W_dot_net)*scale_product;
 		break;
 	case E_MOO_ETA_T_T_IN:
 	case E_MOO_ETA_T_T_IN_FIX_PHI:
-		eta_solved = (mc_rc_cycle.get_od_solved()->m_eta_thermal - 0.01*max(0.0, mc_rc_cycle.get_od_solved()->m_temp[C_sco2_cycle_core::TURB_IN] - mc_rc_cycle.get_design_solved()->m_temp[C_sco2_cycle_core::TURB_IN]))*scale_product;
+		eta_solved = (mpc_sco2_cycle->get_od_solved()->m_eta_thermal - 0.01*max(0.0, mpc_sco2_cycle->get_od_solved()->m_temp[C_sco2_cycle_core::TURB_IN] - mpc_sco2_cycle->get_design_solved()->m_temp[C_sco2_cycle_core::TURB_IN]))*scale_product;
 		break;
 	case E_MAX_POWER_IN_ETA_MAX_BAND:
 	{
-		double eta_thermal = mc_rc_cycle.get_od_solved()->m_eta_thermal;					//[-]
+		double eta_thermal = mpc_sco2_cycle->get_od_solved()->m_eta_thermal;					//[-]
 		double under_eta_max = max(0.0, (0.99*m_eta_max_eta - eta_thermal)*1.E3);			//[-]
-		eta_solved = mc_rc_cycle.get_od_solved()->m_W_dot_net/1.E3*scale_product*exp(-under_eta_max);	//[MWe]
+		eta_solved = mpc_sco2_cycle->get_od_solved()->m_W_dot_net/1.E3*scale_product*exp(-under_eta_max);	//[MWe]
 		break;
 	}
 	case E_TARGET_POWER_ETA_MAX:
 	{
 		double W_dot_target = (ms_od_par.m_m_dot_htf / ms_phx_des_par.m_m_dot_hot_des) * ms_des_par.m_W_dot_net;	//[kWe]
-		double W_dot_nd = min(1.0, fabs((mc_rc_cycle.get_od_solved()->m_W_dot_net - W_dot_target) / W_dot_target));	//[-]
+		double W_dot_nd = min(1.0, fabs((mpc_sco2_cycle->get_od_solved()->m_W_dot_net - W_dot_target) / W_dot_target));	//[-]
 		if (W_dot_nd > 0.001)
 		{
 			eta_solved = (1.0 - W_dot_nd)*scale_product;
 		}
 		else
 		{
-			eta_solved = (1.0 - W_dot_nd + exp(-W_dot_nd)*mc_rc_cycle.get_od_solved()->m_eta_thermal*1.E-3)*scale_product;
+			eta_solved = (1.0 - W_dot_nd + exp(-W_dot_nd)*mpc_sco2_cycle->get_od_solved()->m_eta_thermal*1.E-3)*scale_product;
 		}
 		eta_solved = eta_solved*1.E3;
 	}
@@ -1867,7 +1877,7 @@ int C_sco2_recomp_csp::off_design(S_od_par od_par, S_od_operation_inputs od_op_i
 	// Don't care about the objective for a single off design call, but need to set it to something...
 	int od_code = off_design_core(eta_solved);
 	
-	ms_od_solved.ms_rc_cycle_od_solved = *mc_rc_cycle.get_od_solved();
+	ms_od_solved.ms_rc_cycle_od_solved = *mpc_sco2_cycle->get_od_solved();
 	ms_od_solved.ms_phx_od_solved = mc_phx.ms_od_solved;
 
 	return od_code;
@@ -2263,7 +2273,7 @@ int C_sco2_recomp_csp::C_mono_eq_T_t_in::operator()(double T_t_in /*K*/, double 
 	
 	if( mpc_sco2_rc->m_off_design_turbo_operation == E_FIXED_MC_FIXED_RC_FIXED_T )
 	{
-		rc_od_error_code = mpc_sco2_rc->mc_rc_cycle.off_design_fix_shaft_speeds(mpc_sco2_rc->ms_rc_cycle_od_phi_par);
+		rc_od_error_code = mpc_sco2_rc->mpc_sco2_cycle->off_design_fix_shaft_speeds(mpc_sco2_rc->ms_rc_cycle_od_phi_par);
 	}
 	else if( mpc_sco2_rc->m_off_design_turbo_operation == E_VFD_MC_VFD_RC_FIXED_T )
 	{
@@ -2283,10 +2293,10 @@ int C_sco2_recomp_csp::C_mono_eq_T_t_in::operator()(double T_t_in /*K*/, double 
 	}
 
 	// Solve PHX heat exchanger performance using CO2 and HTF *inlet* conditions
-	mpc_sco2_rc->ms_phx_od_par.m_T_c_in = mpc_sco2_rc->mc_rc_cycle.get_od_solved()->m_temp[C_sco2_cycle_core::HTR_HP_OUT];	//[K]
-	mpc_sco2_rc->ms_phx_od_par.m_P_c_in = mpc_sco2_rc->mc_rc_cycle.get_od_solved()->m_pres[C_sco2_cycle_core::HTR_HP_OUT];	//[kPa]
-	mpc_sco2_rc->ms_phx_od_par.m_m_dot_c = mpc_sco2_rc->mc_rc_cycle.get_od_solved()->m_m_dot_t;		//[kg/s]
-	double P_c_out = mpc_sco2_rc->mc_rc_cycle.get_od_solved()->m_pres[C_sco2_cycle_core::TURB_IN];		//[kPa]
+	mpc_sco2_rc->ms_phx_od_par.m_T_c_in = mpc_sco2_rc->mpc_sco2_cycle->get_od_solved()->m_temp[C_sco2_cycle_core::HTR_HP_OUT];	//[K]
+	mpc_sco2_rc->ms_phx_od_par.m_P_c_in = mpc_sco2_rc->mpc_sco2_cycle->get_od_solved()->m_pres[C_sco2_cycle_core::HTR_HP_OUT];	//[kPa]
+	mpc_sco2_rc->ms_phx_od_par.m_m_dot_c = mpc_sco2_rc->mpc_sco2_cycle->get_od_solved()->m_m_dot_t;		//[kg/s]
+	double P_c_out = mpc_sco2_rc->mpc_sco2_cycle->get_od_solved()->m_pres[C_sco2_cycle_core::TURB_IN];		//[kPa]
 	double q_dot, T_co2_phx_out, T_htf_cold;
 	q_dot = T_co2_phx_out = T_htf_cold = std::numeric_limits<double>::quiet_NaN();
 	
@@ -2544,7 +2554,7 @@ double C_sco2_recomp_csp::opt_P_mc_in_nest_f_recomp_max_eta(double P_mc_in /*kPa
 		throw(C_csp_exception("Off design turbomachinery operation strategy not recognized"));
 	}
 
-	double eta_solved = mc_rc_cycle.get_od_solved()->m_eta_thermal;		//[-]
+	double eta_solved = mpc_sco2_cycle->get_od_solved()->m_eta_thermal;		//[-]
 
 	if( eta_max_f_recomp_opt != eta_max_f_recomp_opt )
 	{
@@ -2572,27 +2582,27 @@ double C_sco2_recomp_csp::opt_P_mc_in_nest_f_recomp_max_eta(double P_mc_in /*kPa
 
 		if( eta_max_f_recomp_opt > 0.0 )
 		{
-			P_mc_out_of = mc_rc_cycle.get_od_solved()->m_pres[C_sco2_cycle_core::MC_OUT];	//[kPa]
+			P_mc_out_of = mpc_sco2_cycle->get_od_solved()->m_pres[C_sco2_cycle_core::MC_OUT];	//[kPa]
 			deltaP = P_mc_out_of - P_mc_in;
-			m_dot_mc = mc_rc_cycle.get_od_solved()->m_m_dot_mc;
-			m_dot_t = mc_rc_cycle.get_od_solved()->m_m_dot_t;
-			m_dot_rc = mc_rc_cycle.get_od_solved()->m_m_dot_rc;
-			N_mc = mc_rc_cycle.get_od_solved()->ms_mc_ms_od_solved.m_N;
-			phi_mc = mc_rc_cycle.get_od_solved()->ms_mc_ms_od_solved.m_phi;
-			mc_tip_ratio_of = mc_rc_cycle.get_od_solved()->ms_mc_ms_od_solved.m_w_tip_ratio;
-			f_recomp_of = mc_rc_cycle.get_od_solved()->m_recomp_frac;	//[-]
+			m_dot_mc = mpc_sco2_cycle->get_od_solved()->m_m_dot_mc;
+			m_dot_t = mpc_sco2_cycle->get_od_solved()->m_m_dot_t;
+			m_dot_rc = mpc_sco2_cycle->get_od_solved()->m_m_dot_rc;
+			N_mc = mpc_sco2_cycle->get_od_solved()->ms_mc_ms_od_solved.m_N;
+			phi_mc = mpc_sco2_cycle->get_od_solved()->ms_mc_ms_od_solved.m_phi;
+			mc_tip_ratio_of = mpc_sco2_cycle->get_od_solved()->ms_mc_ms_od_solved.m_w_tip_ratio;
+			f_recomp_of = mpc_sco2_cycle->get_od_solved()->m_recomp_frac;	//[-]
 			
-			if( mc_rc_cycle.get_design_solved()->m_is_rc )
+			if(mpc_sco2_cycle->get_design_solved()->m_is_rc )
 			{
-				rc_tip_ratio_of = mc_rc_cycle.get_od_solved()->ms_rc_ms_od_solved.m_w_tip_ratio;
+				rc_tip_ratio_of = mpc_sco2_cycle->get_od_solved()->ms_rc_ms_od_solved.m_w_tip_ratio;
 				//double rc_phi_s1 = mc_rc_cycle.get_rc_od_solved()->m_phi;
 				//double rc_phi_s2 = mc_rc_cycle.get_rc_od_solved()->m_phi_2;
 				//rc_tip_ratio_of = min(rc_phi_s1, rc_phi_s2);
-				rc_phi_of = mc_rc_cycle.get_rc_od_solved()->m_phi;
+				rc_phi_of = mpc_sco2_cycle->get_rc_od_solved()->m_phi;
 			}
 
-			W_dot_net_of = mc_rc_cycle.get_od_solved()->m_W_dot_net / 1.E3;		//[MWe]
-			Q_dot_in_of = mc_rc_cycle.get_od_solved()->m_Q_dot / 1.E3;			//[MWt]
+			W_dot_net_of = mpc_sco2_cycle->get_od_solved()->m_W_dot_net / 1.E3;		//[MWe]
+			Q_dot_in_of = mpc_sco2_cycle->get_od_solved()->m_Q_dot / 1.E3;			//[MWt]
 			T_htf_cold_of = mc_phx.ms_od_solved.m_T_h_out - 273.15;				//[C]
 
 			od_error_code = ms_od_solved.m_od_error_code;	//[-]

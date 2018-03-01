@@ -272,6 +272,9 @@ class C_sco2_recomp_csp : public C_sco2_rc_csp_template
 {
 
 private:
+	
+	C_sco2_cycle_core * mpc_sco2_cycle;
+
 	C_RecompCycle mc_rc_cycle;
 	C_HX_co2_to_htf mc_phx;
 	C_CO2_to_air_cooler mc_air_cooler;

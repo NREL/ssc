@@ -28,6 +28,19 @@ public:
 		END_SCO2_STATES
 	};
 
+	struct S_design_limits
+	{
+		double m_UA_net_power_ratio_max;		//[-/K]
+		double m_UA_net_power_ratio_min;		//[-/K]
+
+		double m_T_mc_in_min;					//[K]
+
+		S_design_limits()
+		{
+			m_UA_net_power_ratio_max = m_UA_net_power_ratio_min = std::numeric_limits<double>::quiet_NaN();
+		}
+	};
+
 	struct S_design_solved
 	{
 		std::vector<double> m_temp, m_pres, m_enth, m_entr, m_dens;		// thermodynamic states (K, kPa, kJ/kg, kJ/kg-K, kg/m3)
@@ -249,8 +262,23 @@ protected:
 
 	S_od_phi_par ms_od_phi_par;
 
+	S_design_limits ms_des_limits;
 
 public:
+
+	C_sco2_cycle_core()
+	{
+		// Set design limits!!!!
+		ms_des_limits.m_UA_net_power_ratio_max = 2.0;		//[-/K]
+		ms_des_limits.m_UA_net_power_ratio_min = 1.E-5;		//[-/K]
+
+		// Set minimum main compressor inlet temperature
+		CO2_info s_co2_info;
+
+		get_CO2_info(&s_co2_info);
+
+		ms_des_limits.m_T_mc_in_min = ceil(s_co2_info.T_critical);		//[K]
+	}
 
 	const S_design_solved * get_design_solved()
 	{
@@ -267,6 +295,13 @@ public:
 	}
 
 	virtual int off_design_fix_shaft_speeds(S_od_phi_par & od_phi_par_in) = 0;
+
+	virtual const C_comp_multi_stage::S_od_solved * get_rc_od_solved() = 0;
+
+	const S_design_limits & get_design_limits()
+	{
+		return ms_des_limits;
+	}
 };
 
 
