@@ -2528,17 +2528,19 @@ public:
 					//					if (monthly_bill[m] < 0)
 					if (monthly_ec_charges[m] < 0)
 					{
+						payment[c - 1] -= monthly_cumulative_excess_dollars[m] + monthly_ec_charges[m];
 						if (excess_monthly_dollars)
 						{
 //							monthly_cumulative_excess_dollars[m] = -monthly_bill[m];
+							dollars_applied += monthly_cumulative_excess_dollars[m] + monthly_ec_charges[m];
 							monthly_cumulative_excess_dollars[m] = -monthly_ec_charges[m];
 						}
-//						monthly_bill[m] = 0;
+						//						monthly_bill[m] = 0;
 						monthly_ec_charges[m] = 0;
-						payment[c - 1] -= monthly_ec_charges[m]; // fixed charges applied below
 					}
 					else
 					{
+						dollars_applied += monthly_cumulative_excess_dollars[m];
 						payment[c - 1] -= monthly_cumulative_excess_dollars[m];
 						monthly_cumulative_excess_dollars[m] = 0;
 					}
@@ -3100,10 +3102,38 @@ public:
 				
 				if (monthly_ec_charges[m] < 0)
 				{
-					monthly_cumulative_excess_dollars[m] -= monthly_ec_charges[m];
+					payment[c - 1] -= monthly_cumulative_excess_dollars[m] + monthly_ec_charges[m];
+					dollars_applied += monthly_cumulative_excess_dollars[m] + monthly_ec_charges[m];
+					monthly_cumulative_excess_dollars[m] = -monthly_ec_charges[m];
 					monthly_ec_charges[m] = 0;
-					payment[c - 1] -= monthly_ec_charges[m]; // fixed charges applied below
+					monthly_cumulative_excess_dollars[m] -= monthly_ec_charges[m];
 				}
+				/*
+									if (monthly_ec_charges[m] < 0)
+					{
+						payment[c - 1] -= monthly_cumulative_excess_dollars[m] + monthly_ec_charges[m];
+						if (excess_monthly_dollars)
+						{
+//							monthly_cumulative_excess_dollars[m] = -monthly_bill[m];
+							dollars_applied += monthly_cumulative_excess_dollars[m] + monthly_ec_charges[m];
+							monthly_cumulative_excess_dollars[m] = -monthly_ec_charges[m];
+						}
+						//						monthly_bill[m] = 0;
+						monthly_ec_charges[m] = 0;
+					}
+					else
+					{
+						dollars_applied += monthly_cumulative_excess_dollars[m];
+						payment[c - 1] -= monthly_cumulative_excess_dollars[m];
+						monthly_cumulative_excess_dollars[m] = 0;
+					}
+
+				
+				
+				*/
+
+
+
 				/*
 				else // apply current month rollover and adjust
 				{
