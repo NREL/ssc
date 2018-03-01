@@ -276,7 +276,7 @@ private:
 	// RecompCycle * rc_cycle;
 		// New sco2 cycle code
 	C_RecompCycle ms_rc_cycle;
-	C_RecompCycle::S_auto_opt_design_hit_eta_parameters ms_rc_autodes_hit_eta_par;
+	C_sco2_cycle_core::S_auto_opt_design_hit_eta_parameters ms_rc_autodes_hit_eta_par;
 	//C_RecompCycle::S_auto_opt_design_parameters ms_rc_autodes_par;
 	//C_RecompCycle::S_opt_target_od_parameters ms_rc_opt_od_par;
 	//C_RecompCycle::S_opt_target_od_parameters ms_rc_max_opt_od_par;

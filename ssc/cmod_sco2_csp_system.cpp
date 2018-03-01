@@ -427,7 +427,7 @@ public:
 		assign("m_dot_co2_full", (ssc_number_t)p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.m_m_dot_t);		//[kg/s]
 		assign("recomp_frac", (ssc_number_t)p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.m_recomp_frac);		//[-]
 		// Compressor
-		assign("T_comp_in", (ssc_number_t)(p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.m_temp[C_RecompCycle::MC_IN] - 273.15));		//[C] convert from K
+		assign("T_comp_in", (ssc_number_t)(p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.m_temp[C_sco2_cycle_core::MC_IN] - 273.15));		//[C] convert from K
 		assign("P_comp_in", (ssc_number_t)(p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.m_pres[1 - 1] / 1000.0));		//[MPa] convert from kPa
 		assign("P_comp_out", (ssc_number_t)(p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.m_pres[2 - 1] / 1000.0));		//[MPa] convert from kPa
 		assign("mc_phi_des", (ssc_number_t)p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.ms_mc_ms_des_solved.m_phi_des);
@@ -444,7 +444,7 @@ public:
 		assign("rc_D", (ssc_number_t)p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.ms_rc_ms_des_solved.m_D_rotor);		//[m] 
 		assign("rc_phi_surge", (ssc_number_t)p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.ms_rc_ms_des_solved.m_phi_surge);//[-]
 		// Turbine
-		assign("T_turb_in", (ssc_number_t)(p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.m_temp[C_RecompCycle::TURB_IN] - 273.15));	//[C] Turbine inlet temp, convert from K
+		assign("T_turb_in", (ssc_number_t)(p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.m_temp[C_sco2_cycle_core::TURB_IN] - 273.15));	//[C] Turbine inlet temp, convert from K
 		assign("t_nu_des", (ssc_number_t)p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.ms_t_des_solved.m_nu_design);           //[-]
 		assign("t_tip_ratio_des", (ssc_number_t)p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.ms_t_des_solved.m_w_tip_ratio);  //[-]
 		assign("t_N_des", (ssc_number_t)p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.ms_t_des_solved.m_N_design);			   //[rpm]
@@ -463,16 +463,16 @@ public:
 		assign("UA_PHX", (ssc_number_t)p_sco2_recomp_csp->get_design_solved()->ms_phx_des_solved.m_UA_design_total);			//[kW/K]
 		assign("eff_PHX", (ssc_number_t)p_sco2_recomp_csp->get_design_solved()->ms_phx_des_solved.m_eff_design);				//[-]
 		assign("NTU_PHX", (ssc_number_t)p_sco2_recomp_csp->get_design_solved()->ms_phx_des_solved.m_NTU_design);				//[-]
-		assign("T_co2_PHX_in", (ssc_number_t)(p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.m_temp[C_RecompCycle::HTR_HP_OUT] - 273.15));	//[C]
+		assign("T_co2_PHX_in", (ssc_number_t)(p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.m_temp[C_sco2_cycle_core::HTR_HP_OUT] - 273.15));	//[C]
 		assign("deltaT_HTF_PHX", (ssc_number_t)sco2_rc_des_par.m_T_htf_hot_in - T_htf_cold_calc);		//[K]
 			// Cooler
-		assign("T_cooler_in", (ssc_number_t)(p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.m_temp[C_RecompCycle::LTR_LP_OUT] - 273.15));	//[C]
-		assign("P_cooler_in", (ssc_number_t)(p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.m_pres[C_RecompCycle::LTR_LP_OUT] / 1.E3));	//[MPa]
+		assign("T_cooler_in", (ssc_number_t)(p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.m_temp[C_sco2_cycle_core::LTR_LP_OUT] - 273.15));	//[C]
+		assign("P_cooler_in", (ssc_number_t)(p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.m_pres[C_sco2_cycle_core::LTR_LP_OUT] / 1.E3));	//[MPa]
 		assign("m_dot_co2_cooler", (ssc_number_t)p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.m_m_dot_mc);			//[kg/s]
 			// State Points
-		ssc_number_t *p_T_state_points = allocate("T_state_points", C_RecompCycle::RC_OUT+1);
-		ssc_number_t *p_P_state_points = allocate("P_state_points", C_RecompCycle::RC_OUT+1);
-		for( int i = 0; i < C_RecompCycle::RC_OUT+1; i++ )
+		ssc_number_t *p_T_state_points = allocate("T_state_points", C_sco2_cycle_core::RC_OUT+1);
+		ssc_number_t *p_P_state_points = allocate("P_state_points", C_sco2_cycle_core::RC_OUT+1);
+		for( int i = 0; i < C_sco2_cycle_core::RC_OUT+1; i++ )
 		{
 			p_T_state_points[i] = (ssc_number_t)(p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.m_temp[i]-273.15);	//[C]
 			p_P_state_points[i] = (ssc_number_t)(p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.m_pres[i] / 1.E3);	//[MPa]
@@ -533,7 +533,7 @@ public:
 
 			C_sco2_recomp_csp::S_od_operation_inputs sco2_rc_od_op_par;
 				// Keep these constant, for this analysis
-			sco2_rc_od_op_par.m_P_mc_in = p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.m_pres[C_RecompCycle::MC_IN];		//[kPa]
+			sco2_rc_od_op_par.m_P_mc_in = p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.m_pres[C_sco2_cycle_core::MC_IN];		//[kPa]
 			sco2_rc_od_op_par.m_phi_mc = p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.ms_mc_ms_des_solved.m_phi_des;	//[-]
 
 			//double T_mc_in_sweep = sco2_rc_od_par.m_T_amb + p_sco2_recomp_csp->get_design_par()->m_dt_mc_approach;	//[K]
@@ -895,8 +895,8 @@ public:
 				p_sim_time_od[n_run] = (ssc_number_t)od_opt_duration;		//[s]
 					// System
 				p_eta_thermal_od[n_run] = (ssc_number_t)p_sco2_recomp_csp->get_od_solved()->ms_rc_cycle_od_solved.m_eta_thermal;		//[-]
-				p_T_mc_out_od[n_run] = (ssc_number_t)p_sco2_recomp_csp->get_od_solved()->ms_rc_cycle_od_solved.m_temp[C_RecompCycle::MC_IN] - 273.15;	//[C]
-				p_P_mc_out[n_run] = (ssc_number_t)(p_sco2_recomp_csp->get_od_solved()->ms_rc_cycle_od_solved.m_pres[C_RecompCycle::MC_OUT] / 1.E3);	//[MPa]
+				p_T_mc_out_od[n_run] = (ssc_number_t)p_sco2_recomp_csp->get_od_solved()->ms_rc_cycle_od_solved.m_temp[C_sco2_cycle_core::MC_IN] - 273.15;	//[C]
+				p_P_mc_out[n_run] = (ssc_number_t)(p_sco2_recomp_csp->get_od_solved()->ms_rc_cycle_od_solved.m_pres[C_sco2_cycle_core::MC_OUT] / 1.E3);	//[MPa]
 				p_T_htf_cold_od[n_run] = (ssc_number_t)(p_sco2_recomp_csp->get_od_solved()->ms_phx_od_solved.m_T_h_out - 273.15);		//[C]
 				p_m_dot_co2_full_od[n_run] = (ssc_number_t)p_sco2_recomp_csp->get_od_solved()->ms_rc_cycle_od_solved.m_m_dot_t;		//[kg/s]
 				p_W_dot_net_od[n_run] = (ssc_number_t)(p_sco2_recomp_csp->get_od_solved()->ms_rc_cycle_od_solved.m_W_dot_net / 1.E3);	//[MWe]
@@ -916,11 +916,11 @@ public:
 				p_eff_LTR_od[n_run] = (ssc_number_t)p_sco2_recomp_csp->get_od_solved()->ms_rc_cycle_od_solved.ms_LT_recup_od_solved.m_eff;	//[-]
 				p_eff_HTR_od[n_run] = (ssc_number_t)p_sco2_recomp_csp->get_od_solved()->ms_rc_cycle_od_solved.ms_HT_recup_od_solved.m_eff;	//[-]
 					// PHX
-				p_T_co2_PHX_in_od[n_run] = (ssc_number_t)(p_sco2_recomp_csp->get_od_solved()->ms_rc_cycle_od_solved.m_temp[C_RecompCycle::HTR_HP_OUT] - 273.15);	//[C]
-				p_T_co2_PHX_out_od[n_run] = (ssc_number_t)(p_sco2_recomp_csp->get_od_solved()->ms_rc_cycle_od_solved.m_temp[C_RecompCycle::TURB_IN] - 273.15);		//[C]
+				p_T_co2_PHX_in_od[n_run] = (ssc_number_t)(p_sco2_recomp_csp->get_od_solved()->ms_rc_cycle_od_solved.m_temp[C_sco2_cycle_core::HTR_HP_OUT] - 273.15);	//[C]
+				p_T_co2_PHX_out_od[n_run] = (ssc_number_t)(p_sco2_recomp_csp->get_od_solved()->ms_rc_cycle_od_solved.m_temp[C_sco2_cycle_core::TURB_IN] - 273.15);		//[C]
 				p_phx_eff_od[n_run] = (ssc_number_t)p_sco2_recomp_csp->get_od_solved()->ms_phx_od_solved.m_eff;		//[-]
 					// Cooler
-				p_T_cooler_in_od[n_run] = (ssc_number_t)(p_sco2_recomp_csp->get_od_solved()->ms_rc_cycle_od_solved.m_temp[C_RecompCycle::LTR_LP_OUT] - 273.15);		//[C]
+				p_T_cooler_in_od[n_run] = (ssc_number_t)(p_sco2_recomp_csp->get_od_solved()->ms_rc_cycle_od_solved.m_temp[C_sco2_cycle_core::LTR_LP_OUT] - 273.15);		//[C]
 			}
 			else
 			{	// Off-design call failed, write NaN outptus

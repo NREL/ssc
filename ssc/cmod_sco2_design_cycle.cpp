@@ -125,7 +125,7 @@ public:
 		DP_PHX[1] = 0;
 		int N_sub_hxrs = 10;
 
-		C_RecompCycle::S_auto_opt_design_parameters ms_rc_autodes_par;
+		C_sco2_cycle_core::S_auto_opt_design_parameters ms_rc_autodes_par;
 
 		ms_rc_autodes_par.m_DP_HTR = DP_HT;
 		ms_rc_autodes_par.m_DP_LTR = DP_LT;

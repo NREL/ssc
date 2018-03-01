@@ -285,12 +285,12 @@ void C_sco2_recomp_csp::design_core()
 	}
 
 	// Set air cooler design parameters that are dependent on the cycle design solution
-	ms_air_cooler_des_par_dep.m_T_hot_in_des = ms_des_solved.ms_rc_cycle_solved.m_temp[C_RecompCycle::LTR_LP_OUT];
-	ms_air_cooler_des_par_dep.m_P_hot_in_des = ms_des_solved.ms_rc_cycle_solved.m_pres[C_RecompCycle::LTR_LP_OUT];
+	ms_air_cooler_des_par_dep.m_T_hot_in_des = ms_des_solved.ms_rc_cycle_solved.m_temp[C_sco2_cycle_core::LTR_LP_OUT];
+	ms_air_cooler_des_par_dep.m_P_hot_in_des = ms_des_solved.ms_rc_cycle_solved.m_pres[C_sco2_cycle_core::LTR_LP_OUT];
 	ms_air_cooler_des_par_dep.m_m_dot_total = ms_des_solved.ms_rc_cycle_solved.m_m_dot_mc;		//[kg/s]
 		// This pressure drop is currently uncoupled from the cycle design
-	ms_air_cooler_des_par_dep.m_delta_P_des = ms_des_par.m_deltaP_cooler_frac*ms_des_solved.ms_rc_cycle_solved.m_pres[C_RecompCycle::MC_OUT];
-	ms_air_cooler_des_par_dep.m_T_hot_out_des = ms_des_solved.ms_rc_cycle_solved.m_temp[C_RecompCycle::MC_IN];
+	ms_air_cooler_des_par_dep.m_delta_P_des = ms_des_par.m_deltaP_cooler_frac*ms_des_solved.ms_rc_cycle_solved.m_pres[C_sco2_cycle_core::MC_OUT];
+	ms_air_cooler_des_par_dep.m_T_hot_out_des = ms_des_solved.ms_rc_cycle_solved.m_temp[C_sco2_cycle_core::MC_IN];
 	ms_air_cooler_des_par_dep.m_W_dot_fan_des = ms_des_par.m_frac_fan_power*ms_des_par.m_W_dot_net/1000.0;		//[MWe]
 
 	// Initialize the PHX
@@ -304,9 +304,9 @@ void C_sco2_recomp_csp::design_core()
 	ms_phx_des_par.m_P_h_in = 1.0;							// Assuming HTF is incompressible...
 	ms_phx_des_par.m_P_h_out = 1.0;						// Assuming HTF is incompressible...
 		// .................................................................................
-	ms_phx_des_par.m_T_c_in = ms_des_solved.ms_rc_cycle_solved.m_temp[C_RecompCycle::HTR_HP_OUT];		//[K]
-	ms_phx_des_par.m_P_c_in = ms_des_solved.ms_rc_cycle_solved.m_pres[C_RecompCycle::HTR_HP_OUT];		//[K]
-	ms_phx_des_par.m_P_c_out = ms_des_solved.ms_rc_cycle_solved.m_pres[C_RecompCycle::TURB_IN];		//[K]
+	ms_phx_des_par.m_T_c_in = ms_des_solved.ms_rc_cycle_solved.m_temp[C_sco2_cycle_core::HTR_HP_OUT];		//[K]
+	ms_phx_des_par.m_P_c_in = ms_des_solved.ms_rc_cycle_solved.m_pres[C_sco2_cycle_core::HTR_HP_OUT];		//[K]
+	ms_phx_des_par.m_P_c_out = ms_des_solved.ms_rc_cycle_solved.m_pres[C_sco2_cycle_core::TURB_IN];		//[K]
 	ms_phx_des_par.m_m_dot_cold_des = ms_des_solved.ms_rc_cycle_solved.m_m_dot_t;	//[kg/s]
 		// Calculating the HTF mass flow rate in 'design_and_calc_m_dot_htf'
 	ms_phx_des_par.m_m_dot_hot_des = std::numeric_limits<double>::quiet_NaN();
@@ -592,7 +592,7 @@ bool C_sco2_recomp_csp::opt_P_mc_in_nest_f_recomp_max_eta_core()
 	//	*ms_od_par, ms_rc_cycle_od_phi_par, ms_phx_od_par, ms_od_op_inputs(will set P_mc_in here and f_recomp downstream)
 	
 	// Get density at design point
-	double mc_dens_in_des = ms_des_solved.ms_rc_cycle_solved.m_dens[C_RecompCycle::MC_IN];		//[kg/m^3]
+	double mc_dens_in_des = ms_des_solved.ms_rc_cycle_solved.m_dens[C_sco2_cycle_core::MC_IN];		//[kg/m^3]
 	CO2_state co2_props;
 	// Then calculate the compressor inlet pressure that achieves this density at the off-design ambient temperature
 	CO2_TD(ms_rc_cycle_od_phi_par.m_T_mc_in, mc_dens_in_des, &co2_props);
@@ -1660,7 +1660,7 @@ int C_sco2_recomp_csp::off_design_core(double & eta_solved)
 	// double over_T_t_in = max(0.0, T_t_solved - mc_rc_cycle.get_design_solved()->m_temp[6-1]);
 
 	// 2) Don't let the upper pressure in the system exceed the specified max (typically also = design point P_high)
-	double over_P_high = max(0.0, (mc_rc_cycle.get_od_solved()->m_pres[C_RecompCycle::MC_OUT] - 0.9999*ms_des_par.m_P_high_limit) / 1.E3);
+	double over_P_high = max(0.0, (mc_rc_cycle.get_od_solved()->m_pres[C_sco2_cycle_core::MC_OUT] - 0.9999*ms_des_par.m_P_high_limit) / 1.E3);
 
 	// 3) Check compressor(s) tip ratio?
 	double mc_w_tip_ratio = mc_rc_cycle.get_od_solved()->ms_mc_ms_od_solved.m_w_tip_ratio;
@@ -1707,7 +1707,7 @@ int C_sco2_recomp_csp::off_design_core(double & eta_solved)
 	//  then overwrite integer that code returns to calling program
 	if(over_T_t_in != 0.0)
 		od_solve_code = E_TURBINE_INLET_OVER_TEMP;
-	else if( mc_rc_cycle.get_od_solved()->m_pres[C_RecompCycle::MC_OUT] > ms_des_par.m_P_high_limit )
+	else if( mc_rc_cycle.get_od_solved()->m_pres[C_sco2_cycle_core::MC_OUT] > ms_des_par.m_P_high_limit )
 		od_solve_code = E_OVER_PRESSURE;
 	else if (over_tip_ratio >= 1.0)
 		od_solve_code = E_TIP_RATIO;
@@ -1738,7 +1738,7 @@ int C_sco2_recomp_csp::off_design_core(double & eta_solved)
 		break;
 	case E_MOO_ETA_T_T_IN:
 	case E_MOO_ETA_T_T_IN_FIX_PHI:
-		eta_solved = (mc_rc_cycle.get_od_solved()->m_eta_thermal - 0.01*max(0.0, mc_rc_cycle.get_od_solved()->m_temp[C_RecompCycle::TURB_IN] - mc_rc_cycle.get_design_solved()->m_temp[C_RecompCycle::TURB_IN]))*scale_product;
+		eta_solved = (mc_rc_cycle.get_od_solved()->m_eta_thermal - 0.01*max(0.0, mc_rc_cycle.get_od_solved()->m_temp[C_sco2_cycle_core::TURB_IN] - mc_rc_cycle.get_design_solved()->m_temp[C_sco2_cycle_core::TURB_IN]))*scale_product;
 		break;
 	case E_MAX_POWER_IN_ETA_MAX_BAND:
 	{
@@ -2283,10 +2283,10 @@ int C_sco2_recomp_csp::C_mono_eq_T_t_in::operator()(double T_t_in /*K*/, double 
 	}
 
 	// Solve PHX heat exchanger performance using CO2 and HTF *inlet* conditions
-	mpc_sco2_rc->ms_phx_od_par.m_T_c_in = mpc_sco2_rc->mc_rc_cycle.get_od_solved()->m_temp[C_RecompCycle::HTR_HP_OUT];	//[K]
-	mpc_sco2_rc->ms_phx_od_par.m_P_c_in = mpc_sco2_rc->mc_rc_cycle.get_od_solved()->m_pres[C_RecompCycle::HTR_HP_OUT];	//[kPa]
+	mpc_sco2_rc->ms_phx_od_par.m_T_c_in = mpc_sco2_rc->mc_rc_cycle.get_od_solved()->m_temp[C_sco2_cycle_core::HTR_HP_OUT];	//[K]
+	mpc_sco2_rc->ms_phx_od_par.m_P_c_in = mpc_sco2_rc->mc_rc_cycle.get_od_solved()->m_pres[C_sco2_cycle_core::HTR_HP_OUT];	//[kPa]
 	mpc_sco2_rc->ms_phx_od_par.m_m_dot_c = mpc_sco2_rc->mc_rc_cycle.get_od_solved()->m_m_dot_t;		//[kg/s]
-	double P_c_out = mpc_sco2_rc->mc_rc_cycle.get_od_solved()->m_pres[C_RecompCycle::TURB_IN];		//[kPa]
+	double P_c_out = mpc_sco2_rc->mc_rc_cycle.get_od_solved()->m_pres[C_sco2_cycle_core::TURB_IN];		//[kPa]
 	double q_dot, T_co2_phx_out, T_htf_cold;
 	q_dot = T_co2_phx_out = T_htf_cold = std::numeric_limits<double>::quiet_NaN();
 	
@@ -2572,7 +2572,7 @@ double C_sco2_recomp_csp::opt_P_mc_in_nest_f_recomp_max_eta(double P_mc_in /*kPa
 
 		if( eta_max_f_recomp_opt > 0.0 )
 		{
-			P_mc_out_of = mc_rc_cycle.get_od_solved()->m_pres[C_RecompCycle::MC_OUT];	//[kPa]
+			P_mc_out_of = mc_rc_cycle.get_od_solved()->m_pres[C_sco2_cycle_core::MC_OUT];	//[kPa]
 			deltaP = P_mc_out_of - P_mc_in;
 			m_dot_mc = mc_rc_cycle.get_od_solved()->m_m_dot_mc;
 			m_dot_t = mc_rc_cycle.get_od_solved()->m_m_dot_t;

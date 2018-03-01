@@ -3114,11 +3114,11 @@ void C_RecompCycle::finalize_design(int & error_code)
 {
 	int cpp_offset = 1;
 
-	int mc_design_err = m_mc_ms.design_given_outlet_state(m_temp_last[C_RecompCycle::MC_IN],
-									m_pres_last[C_RecompCycle::MC_IN],
+	int mc_design_err = m_mc_ms.design_given_outlet_state(m_temp_last[MC_IN],
+									m_pres_last[MC_IN],
 									m_m_dot_mc,
-									m_temp_last[C_RecompCycle::MC_OUT],
-									m_pres_last[C_RecompCycle::MC_OUT]);
+									m_temp_last[MC_OUT],
+									m_pres_last[MC_OUT]);
 
 	if (mc_design_err != 0)
 	{
@@ -3152,11 +3152,11 @@ void C_RecompCycle::finalize_design(int & error_code)
 
 	if( ms_des_par.m_recomp_frac > 0.01 )
 	{
-		int rc_des_err = m_rc_ms.design_given_outlet_state(m_temp_last[C_RecompCycle::LTR_LP_OUT],
-										m_pres_last[C_RecompCycle::LTR_LP_OUT],
+		int rc_des_err = m_rc_ms.design_given_outlet_state(m_temp_last[LTR_LP_OUT],
+										m_pres_last[LTR_LP_OUT],
 										m_m_dot_rc,
-										m_temp_last[C_RecompCycle::RC_OUT],
-										m_pres_last[C_RecompCycle::RC_OUT]);
+										m_temp_last[RC_OUT],
+										m_pres_last[RC_OUT]);
 		
 		if (rc_des_err != 0)
 		{
@@ -3893,8 +3893,8 @@ int C_RecompCycle::C_mono_eq_turbo_N_fixed_m_dot::operator()(double m_dot_t_in /
 		return mc_error_code;
 	}
 
-	mpc_rc_cycle->m_pres_od[C_RecompCycle::MC_OUT] = P_mc_out;	//[kPa]
-	mpc_rc_cycle->m_temp_od[C_RecompCycle::MC_OUT] = T_mc_out;	//[K]
+	mpc_rc_cycle->m_pres_od[MC_OUT] = P_mc_out;	//[kPa]
+	mpc_rc_cycle->m_temp_od[MC_OUT] = T_mc_out;	//[K]
 
 	// Calculate main compressor power
 	int prop_err_code = CO2_TP(T_mc_out, P_mc_out, &mc_co2_props);
@@ -3925,14 +3925,14 @@ int C_RecompCycle::C_mono_eq_turbo_N_fixed_m_dot::operator()(double m_dot_t_in /
 
 	// Apply pressure drops to heat exchangers, fully defining the pressure at all states
 	int cpp_offset = 1;
-	mpc_rc_cycle->m_pres_od[C_RecompCycle::LTR_HP_OUT] = mpc_rc_cycle->m_pres_od[C_RecompCycle::MC_OUT] - DP_LT[1 - cpp_offset];		// LT recuperator (cold stream)
-	mpc_rc_cycle->m_pres_od[C_RecompCycle::MIXER_OUT] = mpc_rc_cycle->m_pres_od[C_RecompCycle::LTR_HP_OUT];								// Assume no pressure drop in mixing valve
-	mpc_rc_cycle->m_pres_od[C_RecompCycle::RC_OUT] = mpc_rc_cycle->m_pres_od[C_RecompCycle::LTR_HP_OUT];								// Assume no pressure drop in mixing valve
-	mpc_rc_cycle->m_pres_od[C_RecompCycle::HTR_HP_OUT] = mpc_rc_cycle->m_pres_od[C_RecompCycle::MIXER_OUT] - DP_HT[1 - cpp_offset];		// HT recuperator (cold stream)
-	double P_t_in = mpc_rc_cycle->m_pres_od[C_RecompCycle::TURB_IN] = mpc_rc_cycle->m_pres_od[C_RecompCycle::LTR_HP_OUT] - DP_PHX[1 - cpp_offset];		// PHX
-	mpc_rc_cycle->m_pres_od[C_RecompCycle::LTR_LP_OUT] = mpc_rc_cycle->m_pres_od[C_RecompCycle::MC_IN] + DP_PC[2 - cpp_offset];		// precooler
-	mpc_rc_cycle->m_pres_od[C_RecompCycle::HTR_LP_OUT] = mpc_rc_cycle->m_pres_od[C_RecompCycle::LTR_LP_OUT] + DP_LT[2 - cpp_offset];		// LT recuperator (hot stream)
-	double P_t_out = mpc_rc_cycle->m_pres_od[C_RecompCycle::TURB_OUT] = mpc_rc_cycle->m_pres_od[C_RecompCycle::HTR_LP_OUT] + DP_HT[2 - cpp_offset];		// HT recuperator (hot stream)
+	mpc_rc_cycle->m_pres_od[LTR_HP_OUT] = mpc_rc_cycle->m_pres_od[MC_OUT] - DP_LT[1 - cpp_offset];		// LT recuperator (cold stream)
+	mpc_rc_cycle->m_pres_od[MIXER_OUT] = mpc_rc_cycle->m_pres_od[LTR_HP_OUT];								// Assume no pressure drop in mixing valve
+	mpc_rc_cycle->m_pres_od[RC_OUT] = mpc_rc_cycle->m_pres_od[LTR_HP_OUT];								// Assume no pressure drop in mixing valve
+	mpc_rc_cycle->m_pres_od[HTR_HP_OUT] = mpc_rc_cycle->m_pres_od[MIXER_OUT] - DP_HT[1 - cpp_offset];		// HT recuperator (cold stream)
+	double P_t_in = mpc_rc_cycle->m_pres_od[TURB_IN] = mpc_rc_cycle->m_pres_od[LTR_HP_OUT] - DP_PHX[1 - cpp_offset];		// PHX
+	mpc_rc_cycle->m_pres_od[LTR_LP_OUT] = mpc_rc_cycle->m_pres_od[MC_IN] + DP_PC[2 - cpp_offset];		// precooler
+	mpc_rc_cycle->m_pres_od[HTR_LP_OUT] = mpc_rc_cycle->m_pres_od[LTR_LP_OUT] + DP_LT[2 - cpp_offset];		// LT recuperator (hot stream)
+	double P_t_out = mpc_rc_cycle->m_pres_od[TURB_OUT] = mpc_rc_cycle->m_pres_od[HTR_LP_OUT] + DP_HT[2 - cpp_offset];		// HT recuperator (hot stream)
 
 	// Calculate turbine performance
 	int t_err_code = 0;
@@ -3947,7 +3947,7 @@ int C_RecompCycle::C_mono_eq_turbo_N_fixed_m_dot::operator()(double m_dot_t_in /
 		return t_err_code;
 	}
 
-	mpc_rc_cycle->m_temp_od[C_RecompCycle::TURB_OUT] = T_t_out;	//[K]
+	mpc_rc_cycle->m_temp_od[TURB_OUT] = T_t_out;	//[K]
 
 	// Calculate difference between calculated and guessed mass flow rate
 	*diff_m_dot_t = (m_dot_t_calc - m_dot_t_in) / m_dot_t_in;
@@ -4123,9 +4123,9 @@ void C_RecompCycle::off_design_fix_shaft_speeds_core(int & error_code)
 //	CO2_state co2_props;
 
 	// Initialize a few variables
-	m_temp_od[C_RecompCycle::MC_IN] = ms_od_phi_par.m_T_mc_in;
-	m_pres_od[C_RecompCycle::MC_IN] = ms_od_phi_par.m_P_mc_in;
-	m_temp_od[C_RecompCycle::TURB_IN] = ms_od_phi_par.m_T_t_in;
+	m_temp_od[MC_IN] = ms_od_phi_par.m_T_mc_in;
+	m_pres_od[MC_IN] = ms_od_phi_par.m_P_mc_in;
+	m_temp_od[TURB_IN] = ms_od_phi_par.m_T_t_in;
 
 	// Outer loop: Solve for the recompression fraction that results in the recompressor
 	//                operating at its design shaft speed

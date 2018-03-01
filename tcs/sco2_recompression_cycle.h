@@ -192,163 +192,6 @@ public:
 		}
 	};
 
-	//struct S_auto_opt_design_hit_eta_parameters
-	//{
-	//	double m_W_dot_net;					//[kW] Target net cycle power
-	//	double m_eta_thermal;				//[-] Cycle thermal efficiency
-	//	double m_T_mc_in;					//[K] Compressor inlet temperature
-	//	double m_T_t_in;					//[K] Turbine inlet temperature
-	//	std::vector<double> m_DP_LT;		//(cold, hot) positive values are absolute [kPa], negative values are relative (-)
-	//	std::vector<double> m_DP_HT;		//(cold, hot) positive values are absolute [kPa], negative values are relative (-)
-	//	std::vector<double> m_DP_PC;		//(cold, hot) positive values are absolute [kPa], negative values are relative (-)
-	//	std::vector<double> m_DP_PHX;		//(cold, hot) positive values are absolute [kPa], negative values are relative (-)
-	//	double m_LT_eff_max;				//[-] Maximum allowable effectiveness in LT recuperator
-	//	double m_HT_eff_max;				//[-] Maximum allowable effectiveness in HT recuperator
-	//	double m_eta_mc;					//[-] design-point efficiency of the main compressor; isentropic if positive, polytropic if negative
-	//	double m_eta_rc;					//[-] design-point efficiency of the recompressor; isentropic if positive, polytropic if negative
-	//	double m_eta_t;						//[-] design-point efficiency of the turbine; isentropic if positive, polytropic if negative
-	//	int m_N_sub_hxrs;					//[-] Number of sub-heat exchangers to use when calculating UA value for a heat exchanger
-	//	double m_P_high_limit;				//[kPa] maximum allowable pressure in cycle
-	//	double m_tol;						//[-] Convergence tolerance
-	//	double m_opt_tol;					//[-] Optimization tolerance
-	//	double m_N_turbine;					//[rpm] Turbine shaft speed (negative values link turbine to compressor)
-	//	int m_is_recomp_ok;					//[-] 1 = yes, 0 = no, other = invalid
-
-	//	int m_des_objective_type;			//[2] = min phx deltat then max eta, [else] max eta
-	//	double m_min_phx_deltaT;			//[C]
-
-	//	double m_PR_mc_guess;				//[-] Initial guess for ratio of P_mc_out to P_mc_in
-	//	bool m_fixed_PR_mc;					//[-] if true, ratio of P_mc_out to P_mc_in is fixed at PR_mc_guess
-
-	//	// Callback function only log
-	//	bool(*mf_callback_log)(std::string &log_msg, std::string &progress_msg, void *data, double progress, int out_type);
-	//	void *mp_mf_active;
-
-	//	S_auto_opt_design_hit_eta_parameters()
-	//	{
-	//		m_W_dot_net = m_T_mc_in = m_T_t_in = m_LT_eff_max = m_HT_eff_max = 
-	//			m_eta_mc = m_eta_rc = m_eta_t = m_P_high_limit = 
-	//			m_tol = m_opt_tol = m_N_turbine = 
-	//			m_PR_mc_guess = std::numeric_limits<double>::quiet_NaN();
-
-	//		m_N_sub_hxrs = -1;
-
-	//		m_is_recomp_ok = -1;
-
-	//		// Default to standard optimization to maximize cycle efficiency
-	//		m_des_objective_type = 1;
-	//		m_min_phx_deltaT = 0.0;		//[C]
-
-	//		m_fixed_PR_mc = false;		//[-] If false, then should default to optimizing this parameter
-
-	//		mf_callback_log = 0;
-	//		mp_mf_active = 0;
-
-	//		m_DP_LT.resize(2);
-	//		std::fill(m_DP_LT.begin(), m_DP_LT.end(), std::numeric_limits<double>::quiet_NaN());
-	//		m_DP_HT.resize(2);
-	//		std::fill(m_DP_HT.begin(), m_DP_HT.end(), std::numeric_limits<double>::quiet_NaN());
-	//		m_DP_PC.resize(2);
-	//		std::fill(m_DP_PC.begin(), m_DP_PC.end(), std::numeric_limits<double>::quiet_NaN());
-	//		m_DP_PHX.resize(2);
-	//		std::fill(m_DP_PHX.begin(), m_DP_PHX.end(), std::numeric_limits<double>::quiet_NaN());
-	//	}
-	//};
-	
-	//struct S_auto_opt_design_parameters
-	//{
-	//	double m_W_dot_net;					//[kW] Target net cycle power
-	//	double m_T_mc_in;					//[K] Compressor inlet temperature
-	//	double m_T_t_in;					//[K] Turbine inlet temperature
-	//	std::vector<double> m_DP_LT;		//(cold, hot) positive values are absolute [kPa], negative values are relative (-)
-	//	std::vector<double> m_DP_HT;		//(cold, hot) positive values are absolute [kPa], negative values are relative (-)
-	//	std::vector<double> m_DP_PC;		//(cold, hot) positive values are absolute [kPa], negative values are relative (-)
-	//	std::vector<double> m_DP_PHX;		//(cold, hot) positive values are absolute [kPa], negative values are relative (-)
-	//	double m_UA_rec_total;				//[kW/K] Total design-point recuperator UA
-	//	double m_LT_eff_max;				//[-] Maximum allowable effectiveness in LT recuperator
-	//	double m_HT_eff_max;				//[-] Maximum allowable effectiveness in HT recuperator
-	//	double m_eta_mc;					//[-] design-point efficiency of the main compressor; isentropic if positive, polytropic if negative
-	//	double m_eta_rc;					//[-] design-point efficiency of the recompressor; isentropic if positive, polytropic if negative
-	//	double m_eta_t;						//[-] design-point efficiency of the turbine; isentropic if positive, polytropic if negative
-	//	int m_N_sub_hxrs;					//[-] Number of sub-heat exchangers to use when calculating UA value for a heat exchanger
-	//	double m_P_high_limit;				//[kPa] maximum allowable pressure in cycle
-	//	double m_tol;						//[-] Convergence tolerance
-	//	double m_opt_tol;					//[-] Optimization tolerance
-	//	double m_N_turbine;					//[rpm] Turbine shaft speed (negative values link turbine to compressor)
-	//	int m_is_recomp_ok;					//[-] 1 = yes, 0 = no, other = invalid
-
-	//	double m_PR_mc_guess;				//[-] Initial guess for ratio of P_mc_out to P_mc_in
-	//	bool m_fixed_PR_mc;					//[-] if true, ratio of P_mc_out to P_mc_in is fixed at PR_mc_guess
-
-	//	int m_des_objective_type;		//[2] = min phx deltat then max eta, [else] max eta
-	//	double m_min_phx_deltaT;		//[C]
-
-	//	// Callback function only log
-	//	bool(*mf_callback_log)(std::string &log_msg, std::string &progress_msg, void *data, double progress, int out_type);
-	//	void *mp_mf_active;
-
-	//	S_auto_opt_design_parameters()
-	//	{
-	//		m_W_dot_net = m_T_mc_in = m_T_t_in = m_UA_rec_total = m_LT_eff_max = m_HT_eff_max =
-	//			m_eta_mc = m_eta_rc = m_eta_t = m_P_high_limit = 
-	//			m_tol = m_opt_tol = m_N_turbine =
-	//			m_PR_mc_guess = std::numeric_limits<double>::quiet_NaN();
-
-	//		m_N_sub_hxrs = -1;
-
-	//		m_is_recomp_ok = -1;
-
-	//		m_fixed_PR_mc = false;		//[-] If false, then should default to optimizing this parameter
-
-	//		// Default to standard optimization to maximize cycle efficiency
-	//		m_des_objective_type = 1;
-	//		m_min_phx_deltaT = 0.0;		//[C]
-
-	//		mf_callback_log = 0;
-	//		mp_mf_active = 0;
-
-	//		m_DP_LT.resize(2);
-	//		std::fill(m_DP_LT.begin(), m_DP_LT.end(), std::numeric_limits<double>::quiet_NaN());
-	//		m_DP_HT.resize(2);
-	//		std::fill(m_DP_HT.begin(), m_DP_HT.end(), std::numeric_limits<double>::quiet_NaN());
-	//		m_DP_PC.resize(2);
-	//		std::fill(m_DP_PC.begin(), m_DP_PC.end(), std::numeric_limits<double>::quiet_NaN());
-	//		m_DP_PHX.resize(2);
-	//		std::fill(m_DP_PHX.begin(), m_DP_PHX.end(), std::numeric_limits<double>::quiet_NaN());
-	//	}
-	//};
-
-	//struct S_design_solved
-	//{
-	//	std::vector<double> m_temp, m_pres, m_enth, m_entr, m_dens;		// thermodynamic states (K, kPa, kJ/kg, kJ/kg-K, kg/m3)
-	//	double m_eta_thermal;	//[-]
-	//	double m_W_dot_net;		//[kWe]
-	//	double m_m_dot_mc;		//[kg/s]
-	//	double m_m_dot_rc;		//[kg/s]
-	//	double m_m_dot_t;		//[kg/s]
-	//	double m_recomp_frac;	//[-]
-	//	double m_UA_LT;			//[kW/K]
-	//	double m_UA_HT;			//[kW/K]
-
-	//	bool m_is_rc;
-
-	//	//C_compressor::S_design_solved ms_mc_des_solved;
-	//	C_comp_multi_stage::S_des_solved ms_mc_ms_des_solved;
-	//	//C_recompressor::S_design_solved ms_rc_des_solved;
-	//	C_comp_multi_stage::S_des_solved ms_rc_ms_des_solved;
-	//	C_turbine::S_design_solved ms_t_des_solved;
-	//	C_HX_counterflow::S_des_solved ms_LT_recup_des_solved;
-	//	C_HX_counterflow::S_des_solved ms_HT_recup_des_solved;
-
-	//	S_design_solved()
-	//	{
-	//		m_eta_thermal = m_W_dot_net = m_m_dot_mc = m_m_dot_rc = m_m_dot_t = m_recomp_frac = 
-	//			m_UA_LT = m_UA_HT = std::numeric_limits<double>::quiet_NaN();
-
-	//		m_is_rc = true;
-	//	}
-	//};
-
 	struct S_od_turbo_bal_csp_par
 	{
 		double m_P_mc_in;	//[kPa] Main compressor inlet pressure
@@ -401,32 +244,6 @@ public:
 		}
 	};
 
-	//struct S_od_solved
-	//{
-	//	std::vector<double> m_temp, m_pres, m_enth, m_entr, m_dens;		// thermodynamic states (K, kPa, kJ/kg, kJ/kg-K, kg/m3)
-	//	double m_eta_thermal;	//[-]
-	//	double m_W_dot_net;		//[kWe]
-	//	double m_Q_dot;			//[kWt]
-	//	double m_m_dot_mc;		//[kg/s]
-	//	double m_m_dot_rc;		//[kg/s]
-	//	double m_m_dot_t;		//[kg/s]
-	//	double m_recomp_frac;	//[-]
-
-	//	//C_compressor::S_od_solved ms_mc_od_solved;
-	//	C_comp_multi_stage::S_od_solved ms_mc_ms_od_solved;
-	//	//C_recompressor::S_od_solved ms_rc_od_solved;
-	//	C_comp_multi_stage::S_od_solved ms_rc_ms_od_solved;
-	//	C_turbine::S_od_solved ms_t_od_solved;
-	//	C_HX_counterflow::S_od_solved ms_LT_recup_od_solved;
-	//	C_HX_counterflow::S_od_solved ms_HT_recup_od_solved;
-
-	//	S_od_solved()
-	//	{
-	//		m_eta_thermal = m_W_dot_net = m_Q_dot = m_m_dot_mc = m_m_dot_rc = 
-	//			m_m_dot_t = m_recomp_frac = std::numeric_limits<double>::quiet_NaN();
-	//	}
-	//};
-
 	struct S_od_parameters
 	{
 		double m_T_mc_in;		//[K] Compressor inlet temperature
@@ -444,24 +261,6 @@ public:
 			m_N_sub_hxrs = -1;
 		}
 	};
-
-	//struct S_od_phi_par
-	//{
-	//	double m_T_mc_in;		//[K] Compressor inlet temperature
-	//	double m_T_t_in;		//[K] Turbine inlet temperature
-	//	double m_P_mc_in;		//[kPa] Compressor inlet pressure
-	//	double m_recomp_frac;	//[-] Fraction of flow that bypasses the precooler and main compressor
-	//	double m_phi_mc;		//[-] Main compressor flow coefficient
-	//	double m_N_t;			//[rpm] Turbine shaft speed
-	//	int m_N_sub_hxrs;		//[-] Number of sub heat exchangers
-	//	double m_tol;			//[-] Convergence tolerance
-
-	//	S_od_phi_par()
-	//	{
-	//		m_T_mc_in = m_T_t_in = m_P_mc_in = m_recomp_frac = m_phi_mc = m_N_t = m_tol = std::numeric_limits<double>::quiet_NaN();
-	//		m_N_sub_hxrs = -1;
-	//	}
-	//};
 
 	struct S_opt_od_parameters
 	{
@@ -590,11 +389,9 @@ public:
 private:
 		// Component classes
 	C_turbine m_t;
-	//C_compressor m_mc;
 	C_comp_multi_stage m_mc_ms;
-	//C_recompressor m_rc;
 	C_comp_multi_stage m_rc_ms;
-	C_HeatExchanger /*m_LT, m_HT,*/ m_PHX, m_PC;
+	C_HeatExchanger m_PHX, m_PC;
 	
 	C_HX_co2_to_co2 mc_LT_recup, mc_HT_recup;
 	
@@ -602,19 +399,14 @@ private:
 	S_design_limits ms_des_limits;
 	S_design_parameters ms_des_par;
 	S_opt_design_parameters ms_opt_des_par;
-	//S_auto_opt_design_parameters ms_auto_opt_des_par;
-	
-	//S_design_solved ms_des_solved;
 	
 	//S_od_turbo_bal_par ms_od_turbo_bal_par;
 	S_od_turbo_bal_csp_par ms_od_turbo_bal_csp_par;
 	S_od_turbo_bal_csp_solved ms_od_turbo_bal_csp_solved;
 	S_od_parameters ms_od_par;
-	//S_od_phi_par ms_od_phi_par;
 	S_opt_od_parameters ms_opt_od_par;
 	S_target_od_parameters ms_tar_od_par;
 	S_opt_target_od_parameters ms_opt_tar_od_par;
-	//S_od_solved ms_od_solved;
 	S_PHX_od_parameters ms_phx_od_par;
 
 		// Results from last 'design' solution
@@ -781,20 +573,10 @@ public:
 		return m_rc_ms.get_od_solved();
 	}
 
-	/*const S_design_solved * get_design_solved()
-	{
-		return &ms_des_solved;
-	}*/	
-
 	const S_od_turbo_bal_csp_solved *get_od_turbo_bal_csp_solved()
 	{
 		return &ms_od_turbo_bal_csp_solved;
 	}
-
-	//const S_od_solved * get_od_solved()
-	//{
-	//	return &ms_od_solved;
-	//}
 
 	double get_max_target()
 	{

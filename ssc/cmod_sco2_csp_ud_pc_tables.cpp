@@ -353,7 +353,7 @@ public:
 			// Air Cooler
 
 			// State Points
-		int n_sp = C_RecompCycle::RC_OUT + 1;
+		int n_sp = C_sco2_cycle_core::END_SCO2_STATES;		// C_RecompCycle::RC_OUT + 1;
 		ssc_number_t *p_T_co2_des = allocate("T_co2_des", n_sp);
 		ssc_number_t *p_P_co2_des = allocate("P_co2_des", n_sp);
 		for(int i = 0; i < n_sp; i++)
