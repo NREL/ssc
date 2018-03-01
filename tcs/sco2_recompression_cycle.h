@@ -401,31 +401,31 @@ public:
 		}
 	};
 
-	struct S_od_solved
-	{
-		std::vector<double> m_temp, m_pres, m_enth, m_entr, m_dens;		// thermodynamic states (K, kPa, kJ/kg, kJ/kg-K, kg/m3)
-		double m_eta_thermal;	//[-]
-		double m_W_dot_net;		//[kWe]
-		double m_Q_dot;			//[kWt]
-		double m_m_dot_mc;		//[kg/s]
-		double m_m_dot_rc;		//[kg/s]
-		double m_m_dot_t;		//[kg/s]
-		double m_recomp_frac;	//[-]
+	//struct S_od_solved
+	//{
+	//	std::vector<double> m_temp, m_pres, m_enth, m_entr, m_dens;		// thermodynamic states (K, kPa, kJ/kg, kJ/kg-K, kg/m3)
+	//	double m_eta_thermal;	//[-]
+	//	double m_W_dot_net;		//[kWe]
+	//	double m_Q_dot;			//[kWt]
+	//	double m_m_dot_mc;		//[kg/s]
+	//	double m_m_dot_rc;		//[kg/s]
+	//	double m_m_dot_t;		//[kg/s]
+	//	double m_recomp_frac;	//[-]
 
-		//C_compressor::S_od_solved ms_mc_od_solved;
-		C_comp_multi_stage::S_od_solved ms_mc_ms_od_solved;
-		//C_recompressor::S_od_solved ms_rc_od_solved;
-		C_comp_multi_stage::S_od_solved ms_rc_ms_od_solved;
-		C_turbine::S_od_solved ms_t_od_solved;
-		C_HX_counterflow::S_od_solved ms_LT_recup_od_solved;
-		C_HX_counterflow::S_od_solved ms_HT_recup_od_solved;
+	//	//C_compressor::S_od_solved ms_mc_od_solved;
+	//	C_comp_multi_stage::S_od_solved ms_mc_ms_od_solved;
+	//	//C_recompressor::S_od_solved ms_rc_od_solved;
+	//	C_comp_multi_stage::S_od_solved ms_rc_ms_od_solved;
+	//	C_turbine::S_od_solved ms_t_od_solved;
+	//	C_HX_counterflow::S_od_solved ms_LT_recup_od_solved;
+	//	C_HX_counterflow::S_od_solved ms_HT_recup_od_solved;
 
-		S_od_solved()
-		{
-			m_eta_thermal = m_W_dot_net = m_Q_dot = m_m_dot_mc = m_m_dot_rc = 
-				m_m_dot_t = m_recomp_frac = std::numeric_limits<double>::quiet_NaN();
-		}
-	};
+	//	S_od_solved()
+	//	{
+	//		m_eta_thermal = m_W_dot_net = m_Q_dot = m_m_dot_mc = m_m_dot_rc = 
+	//			m_m_dot_t = m_recomp_frac = std::numeric_limits<double>::quiet_NaN();
+	//	}
+	//};
 
 	struct S_od_parameters
 	{
@@ -614,7 +614,7 @@ private:
 	S_opt_od_parameters ms_opt_od_par;
 	S_target_od_parameters ms_tar_od_par;
 	S_opt_target_od_parameters ms_opt_tar_od_par;
-	S_od_solved ms_od_solved;
+	//S_od_solved ms_od_solved;
 	S_PHX_od_parameters ms_phx_od_par;
 
 		// Results from last 'design' solution
@@ -791,10 +791,10 @@ public:
 		return &ms_od_turbo_bal_csp_solved;
 	}
 
-	const S_od_solved * get_od_solved()
-	{
-		return &ms_od_solved;
-	}
+	//const S_od_solved * get_od_solved()
+	//{
+	//	return &ms_od_solved;
+	//}
 
 	double get_max_target()
 	{

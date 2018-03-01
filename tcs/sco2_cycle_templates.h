@@ -196,12 +196,39 @@ public:
 			std::fill(m_DP_PHX.begin(), m_DP_PHX.end(), std::numeric_limits<double>::quiet_NaN());
 		}
 	};
+
+	struct S_od_solved
+	{
+		std::vector<double> m_temp, m_pres, m_enth, m_entr, m_dens;		// thermodynamic states (K, kPa, kJ/kg, kJ/kg-K, kg/m3)
+		double m_eta_thermal;	//[-]
+		double m_W_dot_net;		//[kWe]
+		double m_Q_dot;			//[kWt]
+		double m_m_dot_mc;		//[kg/s]
+		double m_m_dot_rc;		//[kg/s]
+		double m_m_dot_t;		//[kg/s]
+		double m_recomp_frac;	//[-]
+
+		C_comp_multi_stage::S_od_solved ms_mc_ms_od_solved;
+		C_comp_multi_stage::S_od_solved ms_rc_ms_od_solved;
+		C_turbine::S_od_solved ms_t_od_solved;
+		C_HX_counterflow::S_od_solved ms_LT_recup_od_solved;
+		C_HX_counterflow::S_od_solved ms_HT_recup_od_solved;
+
+		S_od_solved()
+		{
+			m_eta_thermal = m_W_dot_net = m_Q_dot = m_m_dot_mc = m_m_dot_rc =
+				m_m_dot_t = m_recomp_frac = std::numeric_limits<double>::quiet_NaN();
+		}
+	};
 	
 protected:
 
 	S_design_solved ms_des_solved;
 
 	S_auto_opt_design_parameters ms_auto_opt_des_par;
+
+	S_od_solved ms_od_solved;
+
 
 public:
 
@@ -214,6 +241,10 @@ public:
 	
 	virtual int auto_opt_design_hit_eta(S_auto_opt_design_hit_eta_parameters & auto_opt_des_hit_eta_in, std::string & error_msg) = 0;
 
+	const S_od_solved * get_od_solved()
+	{
+		return &ms_od_solved;
+	}
 };
 
 
