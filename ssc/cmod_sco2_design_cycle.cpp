@@ -149,7 +149,7 @@ public:
 
 		C_RecompCycle ms_rc_cycle;
 		int auto_opt_error_code = 0;
-		ms_rc_cycle.auto_opt_design(ms_rc_autodes_par, auto_opt_error_code);
+		auto_opt_error_code = ms_rc_cycle.auto_opt_design(ms_rc_autodes_par);
 		if( auto_opt_error_code != 0 )
 		{
 			char tstr[300];

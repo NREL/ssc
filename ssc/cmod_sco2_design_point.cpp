@@ -678,7 +678,7 @@ public:
 			rc_params_max_eta.m_opt_tol = opt_tol;
 			rc_params_max_eta.m_N_turbine = N_t_des;
 
-			rc_cycle.auto_opt_design(rc_params_max_eta, error_code);
+			error_code = rc_cycle.auto_opt_design(rc_params_max_eta);
 
 			if(error_code != 0)
 			{

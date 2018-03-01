@@ -140,7 +140,8 @@ public:
 		return &ms_des_solved;
 	}
 
-
+	virtual int auto_opt_design(S_auto_opt_design_parameters & auto_opt_des_par_in) = 0;
+	
 };
 
 

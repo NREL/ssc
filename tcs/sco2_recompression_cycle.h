@@ -739,7 +739,7 @@ public:
 
 	//void optimize_od_turbo_balance_csp(S_od_turbo_bal_csp_par in_params, std::vector<double> &opt_params);
 
-	void auto_opt_design(S_auto_opt_design_parameters & auto_opt_des_par_in, int & error_code);
+	int auto_opt_design(S_auto_opt_design_parameters & auto_opt_des_par_in);
 
 	void auto_opt_design_hit_eta(S_auto_opt_design_hit_eta_parameters & auto_opt_des_hit_eta_in, int & error_code, string & error_msg);
 

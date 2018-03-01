@@ -259,7 +259,7 @@ void C_sco2_recomp_csp::design_core()
 
 			s_rc_auto_opt_des_par.m_is_recomp_ok = ms_des_par.m_is_recomp_ok;
 
-			mc_rc_cycle.auto_opt_design(s_rc_auto_opt_des_par, auto_err_code);
+			auto_err_code = mc_rc_cycle.auto_opt_design(s_rc_auto_opt_des_par);
 		}
 		else
 		{

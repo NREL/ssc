@@ -2586,7 +2586,7 @@ double C_RecompCycle::design_cycle_return_objective_metric(const std::vector<dou
 	return objective_metric;
 }
 
-void C_RecompCycle::auto_opt_design(S_auto_opt_design_parameters & auto_opt_des_par_in, int & error_code)
+int C_RecompCycle::auto_opt_design(S_auto_opt_design_parameters & auto_opt_des_par_in)
 {
 	ms_auto_opt_des_par = auto_opt_des_par_in;
 
@@ -2594,9 +2594,8 @@ void C_RecompCycle::auto_opt_design(S_auto_opt_design_parameters & auto_opt_des_
 
 	auto_opt_design_core(auto_opt_des_error_code);
 
-	error_code = auto_opt_des_error_code;
-	
-	return;
+	return auto_opt_des_error_code;
+
 }
 
 void C_RecompCycle::auto_opt_design_core(int & error_code)
