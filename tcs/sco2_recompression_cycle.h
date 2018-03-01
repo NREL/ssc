@@ -445,23 +445,23 @@ public:
 		}
 	};
 
-	struct S_od_phi_par
-	{
-		double m_T_mc_in;		//[K] Compressor inlet temperature
-		double m_T_t_in;		//[K] Turbine inlet temperature
-		double m_P_mc_in;		//[kPa] Compressor inlet pressure
-		double m_recomp_frac;	//[-] Fraction of flow that bypasses the precooler and main compressor
-		double m_phi_mc;		//[-] Main compressor flow coefficient
-		double m_N_t;			//[rpm] Turbine shaft speed
-		int m_N_sub_hxrs;		//[-] Number of sub heat exchangers
-		double m_tol;			//[-] Convergence tolerance
+	//struct S_od_phi_par
+	//{
+	//	double m_T_mc_in;		//[K] Compressor inlet temperature
+	//	double m_T_t_in;		//[K] Turbine inlet temperature
+	//	double m_P_mc_in;		//[kPa] Compressor inlet pressure
+	//	double m_recomp_frac;	//[-] Fraction of flow that bypasses the precooler and main compressor
+	//	double m_phi_mc;		//[-] Main compressor flow coefficient
+	//	double m_N_t;			//[rpm] Turbine shaft speed
+	//	int m_N_sub_hxrs;		//[-] Number of sub heat exchangers
+	//	double m_tol;			//[-] Convergence tolerance
 
-		S_od_phi_par()
-		{
-			m_T_mc_in = m_T_t_in = m_P_mc_in = m_recomp_frac = m_phi_mc = m_N_t = m_tol = std::numeric_limits<double>::quiet_NaN();
-			m_N_sub_hxrs = -1;
-		}
-	};
+	//	S_od_phi_par()
+	//	{
+	//		m_T_mc_in = m_T_t_in = m_P_mc_in = m_recomp_frac = m_phi_mc = m_N_t = m_tol = std::numeric_limits<double>::quiet_NaN();
+	//		m_N_sub_hxrs = -1;
+	//	}
+	//};
 
 	struct S_opt_od_parameters
 	{
@@ -610,7 +610,7 @@ private:
 	S_od_turbo_bal_csp_par ms_od_turbo_bal_csp_par;
 	S_od_turbo_bal_csp_solved ms_od_turbo_bal_csp_solved;
 	S_od_parameters ms_od_par;
-	S_od_phi_par ms_od_phi_par;
+	//S_od_phi_par ms_od_phi_par;
 	S_opt_od_parameters ms_opt_od_par;
 	S_target_od_parameters ms_tar_od_par;
 	S_opt_target_od_parameters ms_opt_tar_od_par;
@@ -747,7 +747,7 @@ public:
 
 	//void off_design_phi(S_od_phi_par & od_phi_par_in, int & error_code);
 
-	void off_design_fix_shaft_speeds(S_od_phi_par & od_phi_par_in, int & error_code);
+	int off_design_fix_shaft_speeds(S_od_phi_par & od_phi_par_in);
 
 	//void optimal_off_design(S_opt_od_parameters & opt_od_par_in, int & error_code);
 	

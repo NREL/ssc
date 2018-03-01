@@ -885,6 +885,13 @@ int C_PartialCooling_Cycle::auto_opt_design_hit_eta(S_auto_opt_design_hit_eta_pa
 	return -1;
 }
 
+int C_PartialCooling_Cycle::off_design_fix_shaft_speeds(S_od_phi_par & od_phi_par_in)
+{
+	throw(C_csp_exception("C_PartialCooling_Cycle::off_design_fix_shaft_speeds does not yet exist"));
+
+	return -1;
+}
+
 double nlopt_cb_opt_partialcooling_des(const std::vector<double> &x, std::vector<double> &grad, void *data)
 {
 	C_PartialCooling_Cycle *frame = static_cast<C_PartialCooling_Cycle*>(data);

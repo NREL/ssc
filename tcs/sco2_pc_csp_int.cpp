@@ -2263,7 +2263,7 @@ int C_sco2_recomp_csp::C_mono_eq_T_t_in::operator()(double T_t_in /*K*/, double 
 	
 	if( mpc_sco2_rc->m_off_design_turbo_operation == E_FIXED_MC_FIXED_RC_FIXED_T )
 	{
-		mpc_sco2_rc->mc_rc_cycle.off_design_fix_shaft_speeds(mpc_sco2_rc->ms_rc_cycle_od_phi_par, rc_od_error_code);
+		rc_od_error_code = mpc_sco2_rc->mc_rc_cycle.off_design_fix_shaft_speeds(mpc_sco2_rc->ms_rc_cycle_od_phi_par);
 	}
 	else if( mpc_sco2_rc->m_off_design_turbo_operation == E_VFD_MC_VFD_RC_FIXED_T )
 	{

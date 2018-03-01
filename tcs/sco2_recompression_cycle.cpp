@@ -3243,7 +3243,7 @@ void C_RecompCycle::finalize_design(int & error_code)
 //	error_code = od_error_code;
 //}
 
-void C_RecompCycle::off_design_fix_shaft_speeds(S_od_phi_par & od_phi_par_in, int & error_code)
+int C_RecompCycle::off_design_fix_shaft_speeds(S_od_phi_par & od_phi_par_in)
 {
 	ms_od_phi_par = od_phi_par_in;
 
@@ -3251,7 +3251,7 @@ void C_RecompCycle::off_design_fix_shaft_speeds(S_od_phi_par & od_phi_par_in, in
 
 	off_design_fix_shaft_speeds_core(od_error_code);
 
-	error_code = od_error_code;
+	return od_error_code;
 }
 
 double C_RecompCycle::get_od_temp(int n_state_point)

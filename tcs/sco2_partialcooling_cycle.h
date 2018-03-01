@@ -370,6 +370,8 @@ public:
 	
 	int auto_opt_design_hit_eta(S_auto_opt_design_hit_eta_parameters & auto_opt_des_hit_eta_in, std::string & error_msg);
 
+	int off_design_fix_shaft_speeds(S_od_phi_par & od_phi_par_in);
+
 	// Called by 'nlopt_callback_opt_des_1', so needs to be public
 	double design_cycle_return_objective_metric(const std::vector<double> &x);
 
