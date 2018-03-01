@@ -201,10 +201,10 @@ void C_sco2_recomp_csp::design_core()
 			ms_rc_cycle_des_par.m_T_t_in = ms_des_par.m_T_htf_hot_in - ms_des_par.m_phx_dt_hot_approach;	//[K]
 			ms_rc_cycle_des_par.m_DP_LT = ms_des_par.m_DP_LT;
 			ms_rc_cycle_des_par.m_DP_HT = ms_des_par.m_DP_HT;
-			ms_rc_cycle_des_par.m_DP_PC = ms_des_par.m_DP_PC;
+			ms_rc_cycle_des_par.m_DP_PC_main = ms_des_par.m_DP_PC;
 			ms_rc_cycle_des_par.m_DP_PHX = ms_des_par.m_DP_PHX;
-			ms_rc_cycle_des_par.m_LT_eff_max = ms_des_par.m_LT_eff_max;
-			ms_rc_cycle_des_par.m_HT_eff_max = ms_des_par.m_HT_eff_max;
+			ms_rc_cycle_des_par.m_LTR_eff_max = ms_des_par.m_LT_eff_max;
+			ms_rc_cycle_des_par.m_HTR_eff_max = ms_des_par.m_HT_eff_max;
 			ms_rc_cycle_des_par.m_eta_mc = ms_des_par.m_eta_mc;
 			ms_rc_cycle_des_par.m_eta_rc = ms_des_par.m_eta_rc;
 			ms_rc_cycle_des_par.m_eta_t = ms_des_par.m_eta_t;
@@ -221,7 +221,7 @@ void C_sco2_recomp_csp::design_core()
 			ms_rc_cycle_des_par.mf_callback_log = mf_callback_update;
 			ms_rc_cycle_des_par.mp_mf_active = mp_mf_update;
 
-			mc_rc_cycle.auto_opt_design_hit_eta(ms_rc_cycle_des_par, auto_err_code, error_msg);
+			auto_err_code = mc_rc_cycle.auto_opt_design_hit_eta(ms_rc_cycle_des_par, error_msg);
 		}
 		else if (ms_des_par.m_design_method == 2)
 		{

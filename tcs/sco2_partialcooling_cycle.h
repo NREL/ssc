@@ -56,6 +56,7 @@
 #include "heat_exchangers.h"
 #include "CO2_properties.h"
 
+#include <string>
 #include <vector>
 #include <math.h>
 #include <limits>
@@ -367,6 +368,8 @@ public:
 
 	int auto_opt_design(S_auto_opt_design_parameters & auto_opt_des_par_in);
 	
+	int auto_opt_design_hit_eta(S_auto_opt_design_hit_eta_parameters & auto_opt_des_hit_eta_in, std::string & error_msg);
+
 	// Called by 'nlopt_callback_opt_des_1', so needs to be public
 	double design_cycle_return_objective_metric(const std::vector<double> &x);
 

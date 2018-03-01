@@ -696,7 +696,7 @@ public:
 		rc_params.m_T_t_in = T_htf_hot - delta_T_t;				//[K]
 		rc_params.m_DP_LT = DP_LT;
 		rc_params.m_DP_HT = DP_HT;
-		rc_params.m_DP_PC = DP_PC;
+		rc_params.m_DP_PC_main = DP_PC;
 		rc_params.m_DP_PHX = DP_PHX;
 		rc_params.m_eta_mc = eta_c;
 		rc_params.m_eta_rc = eta_c;
@@ -749,7 +749,7 @@ public:
 		sco2_rc_od_par.m_m_dot_htf = m_dot_htf;
 		sco2_rc_od_par.m_T_amb = T_amb_cycle_des;
 
-		rc_cycle.auto_opt_design_hit_eta(rc_params, error_code, error_msg);
+		error_code = rc_cycle.auto_opt_design_hit_eta(rc_params, error_msg);
 
 		if(error_code != 0)
 		{

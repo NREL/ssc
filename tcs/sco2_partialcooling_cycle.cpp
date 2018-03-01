@@ -50,6 +50,7 @@
 #include "sco2_partialcooling_cycle.h"
 
 #include <algorithm>
+#include <string>
 
 #include "nlopt.hpp"
 #include "fmin.h"
@@ -875,6 +876,13 @@ int C_PartialCooling_Cycle::auto_opt_design_core()
 	pc_opt_des_error_code = finalize_design();
 
 	return pc_opt_des_error_code;
+}
+
+int C_PartialCooling_Cycle::auto_opt_design_hit_eta(S_auto_opt_design_hit_eta_parameters & auto_opt_des_hit_eta_in, std::string & error_msg)
+{
+	throw(C_csp_exception("C_PartialCooling_Cycle::auto_opt_design_hit_eta does not yet exist"));
+
+	return -1;
 }
 
 double nlopt_cb_opt_partialcooling_des(const std::vector<double> &x, std::vector<double> &grad, void *data)

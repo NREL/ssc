@@ -3,6 +3,7 @@
 
 #include "sco2_cycle_components.h"
 #include "heat_exchangers.h"
+#include <string>
 
 class C_sco2_cycle_core
 {
@@ -55,6 +56,75 @@ public:
 				m_UA_LTR = m_UA_HTR = std::numeric_limits<double>::quiet_NaN();
 
 			m_is_rc = true;
+		}
+	};
+
+	struct S_auto_opt_design_hit_eta_parameters
+	{
+		double m_W_dot_net;					//[kW] Target net cycle power
+		double m_eta_thermal;				//[-] Cycle thermal efficiency
+		double m_T_mc_in;					//[K] Main compressor inlet temperature
+		double m_T_pc_in;					//[K] Pre-compressor inlet temperature
+		double m_T_t_in;					//[K] Turbine inlet temperature
+		std::vector<double> m_DP_LT;		//(cold, hot) positive values are absolute [kPa], negative values are relative (-)
+		std::vector<double> m_DP_HT;		//(cold, hot) positive values are absolute [kPa], negative values are relative (-)
+		std::vector<double> m_DP_PC_pre;    //(cold, hot) positive values are absolute [kPa], negative values are relative (-)
+		std::vector<double> m_DP_PC_main;   //(cold, hot) positive values are absolute [kPa], negative values are relative (-)
+		std::vector<double> m_DP_PHX;		//(cold, hot) positive values are absolute [kPa], negative values are relative (-)
+		double m_LTR_eff_max;				//[-] Maximum allowable effectiveness in LT recuperator
+		double m_HTR_eff_max;				//[-] Maximum allowable effectiveness in HT recuperator
+		double m_eta_mc;					//[-] design-point efficiency of the main compressor; isentropic if positive, polytropic if negative
+		double m_eta_rc;					//[-] design-point efficiency of the recompressor; isentropic if positive, polytropic if negative
+		double m_eta_pc;					//[-] design-point efficiency of the pre-compressor; 
+		double m_eta_t;						//[-] design-point efficiency of the turbine; isentropic if positive, polytropic if negative
+		int m_N_sub_hxrs;					//[-] Number of sub-heat exchangers to use when calculating UA value for a heat exchanger
+		double m_P_high_limit;				//[kPa] maximum allowable pressure in cycle
+		double m_tol;						//[-] Convergence tolerance
+		double m_opt_tol;					//[-] Optimization tolerance
+		double m_N_turbine;					//[rpm] Turbine shaft speed (negative values link turbine to compressor)
+		
+		int m_is_recomp_ok;					//[-] 1 = yes, 0 = no, other = invalid
+
+		int m_des_objective_type;			//[2] = min phx deltat then max eta, [else] max eta
+		double m_min_phx_deltaT;			//[C]
+
+		double m_PR_mc_guess;				//[-] Initial guess for ratio of P_mc_out to P_mc_in
+		bool m_fixed_PR_mc;					//[-] if true, ratio of P_mc_out to P_mc_in is fixed at PR_mc_guess
+
+		// Callback function only log
+		bool(*mf_callback_log)(std::string &log_msg, std::string &progress_msg, void *data, double progress, int out_type);
+		void *mp_mf_active;
+
+		S_auto_opt_design_hit_eta_parameters()
+		{
+			m_W_dot_net = m_T_mc_in = m_T_pc_in = m_T_t_in = m_LTR_eff_max = m_HTR_eff_max =
+				m_eta_mc = m_eta_rc = m_eta_pc = m_eta_t = m_P_high_limit =
+				m_tol = m_opt_tol = m_N_turbine =
+				m_PR_mc_guess = std::numeric_limits<double>::quiet_NaN();
+
+			m_N_sub_hxrs = -1;
+
+			m_is_recomp_ok = -1;
+
+			// Default to standard optimization to maximize cycle efficiency
+			m_des_objective_type = 1;
+			m_min_phx_deltaT = 0.0;		//[C]
+
+			m_fixed_PR_mc = false;		//[-] If false, then should default to optimizing this parameter
+
+			mf_callback_log = 0;
+			mp_mf_active = 0;
+
+			m_DP_LT.resize(2);
+			std::fill(m_DP_LT.begin(), m_DP_LT.end(), std::numeric_limits<double>::quiet_NaN());
+			m_DP_HT.resize(2);
+			std::fill(m_DP_HT.begin(), m_DP_HT.end(), std::numeric_limits<double>::quiet_NaN());
+			m_DP_PC_pre.resize(2);
+			std::fill(m_DP_PC_pre.begin(), m_DP_PC_pre.end(), std::numeric_limits<double>::quiet_NaN());
+			m_DP_PC_main.resize(2);
+			std::fill(m_DP_PC_main.begin(), m_DP_PC_main.end(), std::numeric_limits<double>::quiet_NaN());
+			m_DP_PHX.resize(2);
+			std::fill(m_DP_PHX.begin(), m_DP_PHX.end(), std::numeric_limits<double>::quiet_NaN());
 		}
 	};
 
@@ -142,6 +212,8 @@ public:
 
 	virtual int auto_opt_design(S_auto_opt_design_parameters & auto_opt_des_par_in) = 0;
 	
+	virtual int auto_opt_design_hit_eta(S_auto_opt_design_hit_eta_parameters & auto_opt_des_hit_eta_in, std::string & error_msg) = 0;
+
 };
 
 
