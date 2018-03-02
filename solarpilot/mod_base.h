@@ -2,7 +2,7 @@
 *  Copyright 2017 Alliance for Sustainable Energy, LLC
 *
 *  NOTICE: This software was developed at least in part by Alliance for Sustainable Energy, LLC
-*  (“Alliance”) under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
+*  (ï¿½Allianceï¿½) under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
 *  The Government retains for itself and others acting on its behalf a nonexclusive, paid-up,
 *  irrevocable worldwide license in the software to reproduce, prepare derivative works, distribute
 *  copies to the public, perform publicly and display publicly, and to permit others to do so.
@@ -26,8 +26,8 @@
 *  4. Redistribution of this software, without modification, must refer to the software by the same
 *  designation. Redistribution of a modified version of this software (i) may not refer to the modified
 *  version by the same designation, or by any confusingly similar designation, and (ii) must refer to
-*  the underlying software originally provided by Alliance as “System Advisor Model” or “SAM”. Except
-*  to comply with the foregoing, the terms “System Advisor Model”, “SAM”, or any confusingly similar
+*  the underlying software originally provided by Alliance as ï¿½System Advisor Modelï¿½ or ï¿½SAMï¿½. Except
+*  to comply with the foregoing, the terms ï¿½System Advisor Modelï¿½, ï¿½SAMï¿½, or any confusingly similar
 *  designation may not be used to refer to any modified version of this software or any modified
 *  version of the underlying software originally provided by Alliance without the prior written consent
 *  of Alliance.
@@ -65,24 +65,11 @@ using std::unordered_map;
 #include <time.h>
 #include <algorithm>
 
-//#include "std::string_util.h"
 #include "Toolbox.h"
 #include "string_util.h"
 
-//using namespace std;
-
-#ifdef _MSC_VER
-#pragma warning(disable: 4290)  // ignore warning: 'C++ exception specification ignored except to indicate a function is not __declspec(nothrow)'
-#pragma warning(disable:4503)	//warning for name length - VS2010 compiler
-#pragma warning(disable:4505)	//warning for removing unused method
-#endif
- 
-
-//The land boundary arrays should be described with sets of polygons for inclusions and exclusions
-//typedef std::vector<std::vector<sp_point> > bounds_array;
-
 template<typename T> static std::string my_to_string(const T &value) {
-	ostringstream x;
+	std::ostringstream x;
 	x << value;
 	return x.str();
 }
@@ -96,8 +83,6 @@ class simulation_info
 	bool (*_callback)(simulation_info* siminfo, void *data);
 	void *_callback_data;
 
-	//void (SPFrame::*_fupdate)(simulation_info* siminfo);	//Pointer to the parent's update function
-	//SPFrame *_parent;
 	double
 		_sim_progress;
 	std::string
@@ -198,12 +183,6 @@ public:
         Vp = SV;
         return true;
     };
-
-    //bool _setv(std::string &SV, char* Vp)
-    //{
-    //    sprintf(Vp, "%s", SV.c_str());
-    //    return true;
-    //};
 
     static bool _setv(std::string &SV, bool &Vp)
     {
@@ -310,7 +289,7 @@ public:
 		    Vp.resizeAll(nrows, 0.0);
 
             //day, hour, month, dni, tdb, pres, vwind, step_weight
-		    vector<vector<double>*> *wdvars = Vp.getEntryPointers();
+		    std::vector<std::vector<double>*> *wdvars = Vp.getEntryPointers();
 
 		    for(i=0; i<nrows; i++){
 			    vals = split(entries.at(i), ",");
@@ -446,7 +425,7 @@ protected:
 
         std::stringstream S;
 
-        vector<vector<double>*> *wp = v.getEntryPointers();
+        std::vector<std::vector<double>*> *wp = v.getEntryPointers();
 
         for(size_t i=0; i<wp->front()->size(); i++)
         {
@@ -457,15 +436,12 @@ protected:
                 S << wp->at(j)->at(i);
                 if( j<wp->size()-1 )
                     S << ",";
-                //vout.append( std::to_string(wp->at(j)->at(i)) );
-                //if( j<wp->size()-1 )
-                    //vout.append(",");
             }
         }
         vout = S.str();
     };
 
-    void _as_str(std::string &vout, vector< vector< sp_point > > &v)
+    void _as_str(std::string &vout, std::vector< std::vector< sp_point > > &v)
     {
         /* 
         [POLY] separates entries
@@ -513,17 +489,13 @@ public:
 
     //virtual bool set_from_string(std::string &Val){ (void)Val; return false;};
     virtual bool set_from_string(const char* Val){(void)Val; return false;};
-    //virtual bool set_from_string(std::string Val){ (void)Val; return false;};
     virtual void as_string(std::string &ValAsStr){ (void)ValAsStr; throw spexception("Virtual method as_string cannot be executed in base class");};
     virtual std::string as_string(){throw spexception("Virtual method as_string cannot be executed in base class");};
     virtual bool combo_select(std::string choice){ (void)choice; throw spexception("Virtual method combo_select cannot be executed in base class"); };
     virtual bool combo_select_by_choice_index(int index){ (void)index; throw spexception("Virtual method combo_select_by_choice_index cannot be executed in base class");};
     virtual bool combo_select_by_mapval(int mapval){ (void)mapval; throw spexception("Virtual method combo_select_by_mapval cannot be executed in base class");};
-    //virtual std::string combo_get_current_label(){throw spexception("Virtual method combo_get_current_label cannot be executed in base class");};
     virtual std::vector<std::string> combo_get_choices(){throw spexception("Virtual method combo_get_choices cannot be executed in base class");};
-    //virtual std::string combo_get_key(int index){(void)index; throw spexception("Virtual method combo_get_key cannot be executed in base class");};
     virtual int combo_get_count(){throw spexception("Virtual method combo_get_count cannot be executed in base class");};
-    //virtual int Cselect(){throw spexception("Virtual method Cselect cannot be executed in base class"); };
     virtual int mapval(){throw spexception("Virtual method combo_get_current_mapval cannot be executed in base class");};
     virtual int combo_get_current_index(){throw spexception("Virtual method combo_get_current_index cannot be executed in base class");};
     virtual SP_DATTYPE get_data_type(){ return dattype; }
@@ -566,10 +538,6 @@ public:
     {
         choices.clear();
     };
-    //std::string combo_get_key(int index)
-    //{
-    //    return choices._keys.at(index);
-    //};
     
     std::vector<std::string> combo_get_choices()
     {
@@ -583,7 +551,7 @@ public:
         return rv;
     };
     
-    void combo_add_choice(std::string &choicename, string &mval)
+    void combo_add_choice(std::string &choicename, std::string &mval)
     {
         int mapint;
         to_integer(mval, &mapint);
@@ -618,16 +586,8 @@ public:
 
         return true;
     };
-    //std::string combo_get_current_label()
-    //{
-    //    return combo_get_keys().at(cselect);
-    //};
     
-    //int Cselect()
-    //{
-    //    return cselect;
-    //};
-    int mapval()
+	int mapval()
     {
         std::string valstr; 
         _as_str(valstr, val);
@@ -646,12 +606,6 @@ public:
         return (int)choices._choices.size();
     };
     /* ------------------------------- */
-
-    
-    //bool set_from_string(std::string &Val)
-    //{
-    //    return _setv(Val, val);
-    //};
     
     bool set_from_string(const char* Val)
     {
@@ -659,11 +613,6 @@ public:
     	return _setv(sval, val);
     };
     
-    //bool set_from_string(std::string Val)
-    //{
-    //	return _setv(Val, val);
-    //};
-
     void as_string(std::string &ValAsStr)
     {
         _as_str(ValAsStr, val);
@@ -781,8 +730,6 @@ public:
         std::string Label,
         std::string Description)
     {
-        //set(Address, Dtype, "", Units, Range, IsParam, Ctrl, Special, UI_disable, Label, Description);
-
         //first set supplementary info
 	    name = Address;	//Formal variable name
 	    units = Units;	//units for the variable
@@ -794,17 +741,6 @@ public:
         if( ! ctype.empty() )
             throw spexception("Special controls are not allowed for spout objects");
 
-        /*if( ctype == "combo" )
-        {
-            choices = split(Special, ",");
-        }
-        else
-        {
-            choices = std::vector<std::string>(0);
-        }*/
-
-        //cselect = 0;	//Current selection for a combo, integer corresponding to the mapped options (not the choices std::vector)
-    	
         is_param = Is_param;	//Is this variable parameterizable?
 	    is_disabled = UI_disable;	//Is this variable disabled (overridden)?
 
@@ -819,8 +755,6 @@ public:
     std::string Dattype() { return dattype; };    //data type DATTYPE enum
     std::string Short_desc() { return short_desc; }; //Short description
     std::string Long_desc() { return long_desc; };	//Long description
-    //spvar<T>::combo_choices *Choices() { return &choices; };
-    //int Cselect() { return cselect; };	//Current selection for a combo, integer corresponding to the mapped options (not the choices std::vector)
     bool Is_param() { return is_param; };	//Is this variable parameterizable?
     bool Is_disabled() { return is_disabled; };	//Is this variable disabled (overridden)?
 };
@@ -829,27 +763,16 @@ public:
 
 class mod_base
 {
-	//var_map *vars;
 	
 public:
 	std::string _working_dir;
-	//mod_base();	//default constructor
 
 	bool checkRange(std::string range, int &val, int *flag = NULL);
 	bool checkRange(std::string range, double &val, int *flag = NULL);
 
 	std::string *getWorkingDir();
 	void setWorkingDir(std::string &dir);
-
-	//error handling
-	//Type = "notice","warning","fatal"
-	//Message = "Indication of what went wrong"
-	//void error(std::string type, std::string message){return;};
-	//void error_range(int variable, std::string varname, std::string range){error_range(double(variable),varname, range);};
-	//void error_range(double variable, std::string varname, std::string range){
-	//	error("ERROR","Variable "+varname+" out of range with value "+to_std::string(variable)+". Valid range is "+range+".\n");
-	//};
-
+	
 };
 
 

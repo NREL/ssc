@@ -51,6 +51,8 @@
 #include "definitions.h"
 #include "exceptions.hpp"
 
+using namespace std;
+
 #ifdef SP_USE_SOLTRACE
 using namespace std;
 
@@ -187,5 +189,13 @@ void STSimThread::StartThread()
 	//	return NULL;
 
 };	
+
+int STCallback_MT(st_uint_t ntracedtotal, st_uint_t ntraced, st_uint_t ntotrace, st_uint_t curstage, st_uint_t nstages, void *data)
+{
+	STSimThread *t = static_cast<STSimThread*>(data);
+	t->UpdateStatus(ntracedtotal, ntraced, ntotrace, curstage, nstages);
+	return t->IsTraceCancelled() ? 0 : 1;
+};
+
 
 #endif

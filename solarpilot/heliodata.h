@@ -65,7 +65,7 @@ public:
         REFLECTIVITY, SOILING, REC_ABSORPTANCE, RANK_METRIC, ETA_CLOUD };
 	};
 	helio_perf_data();
-//	helio_perf_data( const helio_perf_data &hp);
+
 	void resetMetrics();
 	double calcTotalEfficiency();
 	

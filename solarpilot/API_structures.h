@@ -78,7 +78,6 @@ struct sp_layout
             location, 
             aimpoint;
 		int template_number; //0 based
-		//bool user_optics;	//Indicate whether the user will provide a cant/focus std::vector
         struct {double i, j, k; } cant_vector;	//[optional] Canting aim std::vector of total magnitude equal to the cant radius
 		double focal_length;	//[optional] Heliostat focal length
 	};
