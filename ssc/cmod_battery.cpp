@@ -1289,7 +1289,8 @@ public:
 		if (as_boolean("en_batt"))
 		{
 			std::vector<ssc_number_t> power_input = as_vector_ssc_number_t("gen");
-			battstor batt(*this, true, power_input.size(), static_cast<double>(8760. / power_input.size()));
+			size_t nrec = power_input.size();
+			battstor batt(*this, true, nrec, static_cast<double>(8760. / nrec));
 
 			// Parse "Load input"
 			std::vector<ssc_number_t> power_load;
