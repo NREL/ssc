@@ -146,6 +146,7 @@ public:
 				throw exec_error("generic", util::format("energy_output_array variable had no values."));
 
 			steps_per_hour_gen = nrec_gen / 8760;
+			ts_hour_gen = 1.0f / steps_per_hour_gen;
 			if (steps_per_hour_gen * 8760 != nrec_gen)
 				throw exec_error("generic", util::format("energy_output_array not a multiple of 8760: len=%d.", nrec_gen));
 
