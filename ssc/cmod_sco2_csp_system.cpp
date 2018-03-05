@@ -146,6 +146,13 @@ static var_info _cm_vtab_sco2_csp_system[] = {
 		// State Points
 	{ SSC_OUTPUT, SSC_ARRAY,  "T_state_points",       "Cycle temperature state points",      "C",	   "",   "",   "*",   "",   "" },
 	{ SSC_OUTPUT, SSC_ARRAY,  "P_state_points",       "Cycle pressure state points",         "MPa",   "",   "",   "*",   "",   "" },
+		// T-s plot data
+	{ SSC_OUTPUT, SSC_ARRAY,  "T_HP_data",            "Temperature points along HP stream, match with s_HP_data",    "C",	       "",   "",   "*",   "",   "" },
+	{ SSC_OUTPUT, SSC_ARRAY,  "s_HP_data",            "Entropy points along HP stream, match with T_HP_data",        "kJ/kg-K",    "",   "",   "*",   "",   "" },
+	{ SSC_OUTPUT, SSC_ARRAY,  "T_LP_data",            "Temperature points along LP stream, match with s_LP_data",    "C",	       "",   "",   "*",   "",   "" },
+	{ SSC_OUTPUT, SSC_ARRAY,  "s_LP_data",            "Entropy points along HP stream, match with T_LP_data",        "kJ/kg-K",    "",   "",   "*",   "",   "" },
+	{ SSC_OUTPUT, SSC_ARRAY,  "T_IP_data",            "Temperature points along IP stream, match with s_IP_data",    "C",	       "",   "",   "*",   "",   "" },
+	{ SSC_OUTPUT, SSC_ARRAY,  "s_IP_data",            "Entropy points along IP stream, match with T_IP_data",        "kJ/kg-K",    "",   "",   "*",   "",   "" },
 
 		// Air Cooler Design
 	// ?????
@@ -415,6 +422,56 @@ public:
 		while (p_sco2_recomp_csp->mc_messages.get_message(&out_type, &out_msg))
 		{
 			log(out_msg + "\n");
+		}
+
+		// Get data for T-s cycle plot
+		std::vector<double> T_HP;	//[C]
+		std::vector<double> s_HP;	//[kJ/kg-K]
+		std::vector<double> T_LP;	//[C]
+		std::vector<double> s_LP;	//[kJ/kg-K]
+		std::vector<double> T_IP;	//[C]
+		std::vector<double> s_IP;	//[kJ/kg-K]
+		int plot_data_err_code = sco2_cycle_plot_data_TS(sco2_rc_des_par.m_cycle_config,
+			p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.m_pres,
+			p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.m_entr,
+			T_HP,
+			s_HP,
+			T_LP,
+			s_LP,
+			T_IP,
+			s_IP);
+		
+		if(plot_data_err_code != 0)
+			throw exec_error("sco2_csp_system", "cycle plot data routine failed");
+
+		int n_HP_data = T_HP.size();
+		ssc_number_t *p_T_HP_data = allocate("T_HP_data", n_HP_data);
+		ssc_number_t *p_s_HP_data = allocate("s_HP_data", n_HP_data);
+		
+		for (int i = 0; i < n_HP_data; i++)
+		{
+			p_T_HP_data[i] = (ssc_number_t)(T_HP[i]);	//[C]
+			p_s_HP_data[i] = (ssc_number_t)(s_HP[i]);	//[kJ/kg-K]
+		}
+
+		int n_LP_data = T_LP.size();
+		ssc_number_t *p_T_LP_data = allocate("T_LP_data", n_LP_data);
+		ssc_number_t *p_s_LP_data = allocate("s_LP_data", n_LP_data);
+
+		for (int i = 0; i < n_LP_data; i++)
+		{
+			p_T_LP_data[i] = (ssc_number_t)(T_LP[i]);	//[C]
+			p_s_LP_data[i] = (ssc_number_t)(s_LP[i]);	//[kJ/kg-K]
+		}
+
+		int n_IP_data = T_IP.size();
+		ssc_number_t *p_T_IP_data = allocate("T_IP_data", n_IP_data);
+		ssc_number_t *p_s_IP_data = allocate("s_IP_data", n_IP_data);
+
+		for (int i = 0; i < n_IP_data; i++)
+		{
+			p_T_IP_data[i] = (ssc_number_t)(T_IP[i]);
+			p_s_IP_data[i] = (ssc_number_t)(s_IP[i]);
 		}
 
 		// Set SSC design outputs

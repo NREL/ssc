@@ -6,6 +6,8 @@
 #include "numeric_solvers.h"
 #include "csp_solver_core.h"
 
+#include "sco2_cycle_templates.h"
+
 const double C_turbine::m_nu_design = 0.7476;
 const double C_comp_single_stage::m_snl_phi_design = 0.02971;		//[-] Design-point flow coef. for Sandia compressor (corresponds to max eta)
 const double C_comp_single_stage::m_snl_phi_min = 0.02;				//[-] Approximate surge limit for SNL compressor
@@ -170,6 +172,98 @@ void isen_eta_from_poly_eta(double T_in /*K*/, double P_in /*kPa*/, double P_out
 		isen_eta = (stage_h_out - h_in) / (h_s_out - h_in);
 }
 
+int Ts_data_over_linear_dP_ds(double P_in /*kPa*/, double s_in /*kJ/kg-K*/, double P_out /*kPa*/, double s_out /*kJ/kg-K*/,
+	std::vector<double> & T_data /*C*/, std::vector<double> & s_data /*kJ/kg-K*/, int N_points /*=30*/)
+{
+	CO2_state co2_props;
+
+	int err_code = 0;
+
+	double deltaP = (P_in - P_out) / double(N_points - 1);	//[kPa]
+	double deltas = (s_in - s_out) / double(N_points - 1);	//[kJ/kg-K]
+
+	T_data.resize(N_points);	//[C]
+	s_data.resize(N_points);	//[kJ/kg-K]
+
+	double P_local = std::numeric_limits<double>::quiet_NaN();	//[kPa]
+	double s_local = std::numeric_limits<double>::quiet_NaN();	//[kJ/kg-K]
+
+	for (int i = 0; i < N_points; i++)
+	{
+		s_local = s_in - deltas * i;	//[kJ/kg-K]
+		P_local = P_in - deltaP * i;	//[kPa]
+
+		err_code = CO2_PS(P_local, s_local, &co2_props);
+		if (err_code != 0)
+			return err_code;
+
+		T_data[i] = co2_props.temp - 273.15;		//[C]
+		s_data[i] = co2_props.entr;		//[kJ/kg-K]
+	}
+
+	return 0;
+}
+
+int sco2_cycle_plot_data_TS(int cycle_config,
+	const std::vector<double> pres /*kPa*/,
+	const std::vector<double> entr /*kJ/kg-K*/,
+	std::vector<double> & T_HP /*C*/,
+	std::vector<double> & s_HP /*kJ/kg-K*/,
+	std::vector<double> & T_LP /*C*/,
+	std::vector<double> & s_LP /*kJ/kg-K*/,
+	std::vector<double> & T_IP /*C*/,
+	std::vector<double> & s_IP /*kJ/kg-K*/)
+{
+	int n_pres = pres.size();
+	int n_entr = entr.size();
+
+	if (cycle_config != 2)		// Recompression Cycle
+	{
+		if (n_pres < C_sco2_cycle_core::RC_OUT + 1 || n_entr != n_pres)
+			return -1;
+
+		// Get HP data
+		int err_code = Ts_data_over_linear_dP_ds(pres[C_sco2_cycle_core::MC_OUT], entr[C_sco2_cycle_core::MC_OUT], pres[C_sco2_cycle_core::TURB_IN], entr[C_sco2_cycle_core::TURB_IN],
+			T_HP, s_HP, 50);
+		if (err_code != 0)
+			return err_code;
+
+		// Get LP data
+		err_code = Ts_data_over_linear_dP_ds(pres[C_sco2_cycle_core::TURB_OUT], entr[C_sco2_cycle_core::TURB_OUT], pres[C_sco2_cycle_core::MC_IN], entr[C_sco2_cycle_core::MC_IN],
+			T_LP, s_LP, 50);
+		if (err_code != 0)
+			return err_code;
+
+		// Set IP data
+		T_IP.resize(1);
+		T_IP[0] = T_LP[50-1];
+		s_IP.resize(1);
+		s_IP[0] = s_LP[50-1];
+	}
+	else		// Partial Cooling Cycle
+	{
+		if (n_pres < C_sco2_cycle_core::PC_OUT + 1 || n_entr != n_pres)
+			return -1;
+
+		// Get HP data
+		int err_code = Ts_data_over_linear_dP_ds(pres[C_sco2_cycle_core::MC_OUT], entr[C_sco2_cycle_core::MC_OUT], pres[C_sco2_cycle_core::TURB_IN], entr[C_sco2_cycle_core::TURB_IN],
+			T_HP, s_HP, 50);
+		if (err_code != 0)
+			return err_code;
+
+		// Get LP data
+		err_code = Ts_data_over_linear_dP_ds(pres[C_sco2_cycle_core::TURB_OUT], entr[C_sco2_cycle_core::TURB_OUT], pres[C_sco2_cycle_core::PC_IN], entr[C_sco2_cycle_core::PC_IN],
+			T_LP, s_LP, 50);
+		if (err_code != 0)
+			return err_code;
+
+		// Set IP data
+		err_code = Ts_data_over_linear_dP_ds(pres[C_sco2_cycle_core::PC_OUT], entr[C_sco2_cycle_core::PC_OUT], pres[C_sco2_cycle_core::MC_IN], entr[C_sco2_cycle_core::MC_IN],
+			T_IP, s_IP, 20);
+	}
+
+	return 0;
+}
 
 void C_HeatExchanger::initialize(const S_design_parameters & des_par_in)
 {

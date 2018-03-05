@@ -830,7 +830,6 @@ double P_pseudocritical_1(double T_K);
 
 bool find_polynomial_coefs(const std::vector<double> x_data, const std::vector<double> y_data, int n_coefs, std::vector<double> & coefs_out, double & r_squared);
 
-
 class C_poly_curve_r_squared
 {
 private:

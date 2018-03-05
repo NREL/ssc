@@ -12,6 +12,19 @@ void calculate_turbomachinery_outlet_1(double T_in /*K*/, double P_in /*kPa*/, d
 
 void isen_eta_from_poly_eta(double T_in /*K*/, double P_in /*kPa*/, double P_out /*kPa*/, double poly_eta /*-*/, bool is_comp, int & error_code, double & isen_eta);
 
+int Ts_data_over_linear_dP_ds(double P_in /*kPa*/, double s_in /*kJ/kg-K*/, double P_out /*kPa*/, double s_out /*kJ/kg-K*/,
+	std::vector<double> & T_data /*C*/, std::vector<double> & s_data /*kJ/kg-K*/, int N_points = 30);
+
+int sco2_cycle_plot_data_TS(int cycle_config,
+	const std::vector<double> pres /*kPa*/,
+	const std::vector<double> entr /*kJ/kg-K*/,
+	std::vector<double> & T_HP /*C*/,
+	std::vector<double> & s_HP /*kJ/kg-K*/,
+	std::vector<double> & T_LP /*C*/,
+	std::vector<double> & s_LP /*kJ/kg-K*/,
+	std::vector<double> & T_IP /*C*/,
+	std::vector<double> & s_IP /*kJ/kg-K*/);
+
 // Heat Exchanger Class
 class C_HeatExchanger
 {
