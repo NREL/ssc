@@ -1264,12 +1264,14 @@ void battstor::process_messages(compute_module &cm)
 
 ///////////////////////////////////////////////////
 static var_info _cm_vtab_battery[] = {
-	/*   VARTYPE           DATATYPE         NAME                                            LABEL                                                   UNITS      META                             GROUP                  REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
-	{ SSC_INPUT,        SSC_NUMBER,      "en_batt",                                    "Enable battery storage model",                            "0/1",     "",                     "Battery",       "?=0",                                 "",                              "" },
-	{ SSC_INPUT,        SSC_ARRAY,       "gen",										   "Generic power source (AC or DC, depending on config)",    "kW",      "",                     "",             "",                           "",                               "" },
-	{ SSC_INPUT,		SSC_ARRAY,	     "load",			                           "Electricity load (year 1)",                               "kW",	     "",				     "",             "",	                       "",	                             "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "batt_replacement_option",                    "Enable battery replacement?",                             "0=none,1=capacity based,2=user schedule", "", "Battery", "?=0",                 "INTEGER,MIN=0,MAX=2",            "" },
-
+	/*   VARTYPE           DATATYPE         NAME                                            LABEL                                                   UNITS      META                           GROUP                  REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
+	{ SSC_INPUT,        SSC_NUMBER,      "en_batt",                                    "Enable battery storage model",                            "0/1",        "",                     "Battery",                      "?=0",                    "",                               "" },
+	{ SSC_INPUT,        SSC_ARRAY,       "gen",										   "System power generated",                                  "kW",         "",                     "",                             "",                       "",                               "" },
+	{ SSC_INPUT,		SSC_ARRAY,	     "load",			                           "Electricity load (year 1)",                               "kW",	        "",				        "",                             "",	                      "",	                            "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "batt_replacement_option",                    "Enable battery replacement?",                              "0=none,1=capacity based,2=user schedule", "", "Battery",             "?=0",                    "INTEGER,MIN=0,MAX=2",           "" },
+	{ SSC_INOUT,        SSC_NUMBER,      "capacity_factor",                            "Capacity factor",                                         "%",          "",                     "",                             "?=0",                    "",                               "" },
+	{ SSC_INOUT,        SSC_NUMBER,      "annual_energy",                              "Annual Energy",                                           "kWh",        "",                     "Battery",                      "?=0",                    "",                               "" },
+																																																											      
 	// other variables come from battstor common table
 	var_info_invalid };
 
@@ -1280,7 +1282,7 @@ public:
 	cm_battery()
 	{
 		add_var_info(_cm_vtab_battery);
-		add_var_info( vtab_battery_inputs );
+		add_var_info( vtab_battery_inputs);
 		add_var_info(vtab_battery_outputs);
 	}
 
@@ -1288,9 +1290,11 @@ public:
 	{
 		if (as_boolean("en_batt"))
 		{
+			// Parse "Gen input"
 			std::vector<ssc_number_t> power_input = as_vector_ssc_number_t("gen");
 			size_t nrec = power_input.size();
 			battstor batt(*this, true, nrec, static_cast<double>(8760. / nrec));
+			ssc_number_t * p_gen = allocate("gen", nrec);
 
 			// Parse "Load input"
 			std::vector<ssc_number_t> power_load;
@@ -1305,6 +1309,17 @@ public:
 					power_load.push_back(0);
 			}
 
+			// Prepare annual outputs
+			double capacity_factor_in = 0.;
+			double annual_energy_in = 0.;
+			double nameplate_in = 0.;
+
+			if (is_assigned("capacity_factor") && is_assigned("annual_energy")) {
+				capacity_factor_in = as_double("capacity_factor");
+				annual_energy_in = as_double("annual_energy");
+				nameplate_in = (annual_energy_in / (capacity_factor_in * 0.01)) / 8760.;
+			}
+	
 			// Error checking
 			if (power_input.size() != power_load.size())
 				throw exec_error("battery", "Load and PV power do not match weatherfile length");
@@ -1316,6 +1331,7 @@ public:
 			/* *********************************************************************************************
 			Run Simulation
 			*********************************************************************************************** */
+			double annual_energy = 0;
 			int lifetime_idx = 0;
 			for (size_t year = 0; year != batt.nyears; year++)
 			{
@@ -1327,19 +1343,25 @@ public:
 	
 						batt.initialize_time(year, hour, jj);
 						batt.check_replacement_schedule();
-						batt.advance(*this, power_input[year_idx] * util::watt_to_kilowatt, power_load[year_idx]);
+						batt.advance(*this, power_input[year_idx], power_load[year_idx]);
 
 						if (batt.batt_vars->batt_topology == charge_controller::DC_CONNECTED)
 						{
 							double ac = batt.outGenPower[lifetime_idx] * batt.batt_vars->inverter_efficiency;
 							batt.update_post_inverted(*this, ac);
 						}
+						p_gen[lifetime_idx] = batt.outGenPower[lifetime_idx];
+						annual_energy += p_gen[lifetime_idx] * batt._dt_hour;
 						lifetime_idx++;
 						year_idx++;
 					}
 				}
 			}
 			batt.calculate_monthly_and_annual_outputs(*this);
+
+			// update capacity factor and annual energy
+			assign("capacity_factor", var_data(static_cast<ssc_number_t>(annual_energy * 100.0 / (nameplate_in * 8760.))));
+			assign("annual_energy", var_data(static_cast<ssc_number_t>(annual_energy)));
 		}
 		else
 			assign("average_battery_roundtrip_efficiency", var_data((ssc_number_t)0.));
