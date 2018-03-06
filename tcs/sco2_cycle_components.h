@@ -25,6 +25,9 @@ int sco2_cycle_plot_data_TS(int cycle_config,
 	std::vector<double> & T_IP /*C*/,
 	std::vector<double> & s_IP /*kJ/kg-K*/);
 
+int Ts_arrays_over_constP(double T_cold /*C*/, double T_hot /*C*/, std::vector<double> P_consts /*kPa*/,
+	std::vector<std::vector<double>> & T_data /*C*/, std::vector<std::vector<double>> & s_data);
+
 // Heat Exchanger Class
 class C_HeatExchanger
 {

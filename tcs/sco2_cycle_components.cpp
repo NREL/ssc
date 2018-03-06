@@ -265,6 +265,38 @@ int sco2_cycle_plot_data_TS(int cycle_config,
 	return 0;
 }
 
+int Ts_arrays_over_constP(double T_cold /*C*/, double T_hot /*C*/, std::vector<double> P_consts /*kPa*/,
+	std::vector<std::vector<double>> & T_data /*C*/, std::vector<std::vector<double>> & s_data)
+{
+	CO2_state t_co2_props;
+	int n_points = 200;
+	T_cold = T_cold + 273.15;	//[K] convert from C
+	T_hot = T_cold + 273.15;	//[K] convert from C
+
+	int n_P = P_consts.size();
+
+	T_data.resize(n_P);
+	s_data.resize(n_P);
+
+	for (int i = 0; i < n_P; i++)
+	{
+		int co2_err = CO2_TP(T_cold, P_consts[i], &t_co2_props);
+		if (co2_err != 0)
+			return co2_err;
+		double s_cold = t_co2_props.entr;		//[kJ/kg-K]
+
+		co2_err = CO2_TP(T_hot, P_consts[i], &t_co2_props);
+		if (co2_err != 0)
+			return co2_err;
+		double s_hot = t_co2_props.entr;		//[kJ/kg-K]
+
+		Ts_data_over_linear_dP_ds(P_consts[i], s_cold, P_consts[i], s_hot, T_data[i], s_data[i], n_points);
+	}
+
+	return 0;
+}
+
+
 void C_HeatExchanger::initialize(const S_design_parameters & des_par_in)
 {
 	ms_des_par = des_par_in;
