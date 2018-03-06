@@ -144,8 +144,9 @@ static var_info _cm_vtab_sco2_csp_system[] = {
 	{ SSC_OUTPUT, SSC_NUMBER,  "P_cooler_in",          "Compressor inlet pressure",                              "MPa",        "",    "",      "*",     "",       "" },
 	{ SSC_OUTPUT, SSC_NUMBER,  "m_dot_co2_cooler",     "CO2 mass flow rate through cooler",                      "kg/s",       "",    "",      "*",     "",       "" },	
 		// State Points
-	{ SSC_OUTPUT, SSC_ARRAY,  "T_state_points",       "Cycle temperature state points",      "C",	   "",   "",   "*",   "",   "" },
-	{ SSC_OUTPUT, SSC_ARRAY,  "P_state_points",       "Cycle pressure state points",         "MPa",   "",   "",   "*",   "",   "" },
+	{ SSC_OUTPUT, SSC_ARRAY,  "T_state_points",       "Cycle temperature state points",      "C",	      "",   "",   "*",   "",   "" },
+	{ SSC_OUTPUT, SSC_ARRAY,  "P_state_points",       "Cycle pressure state points",         "MPa",       "",   "",   "*",   "",   "" },
+	{ SSC_OUTPUT, SSC_ARRAY,  "s_state_points",       "Cycle entropy state points",          "kJ/kg-K",   "",   "",   "*",   "",   "" },
 		// T-s plot data
 	{ SSC_OUTPUT, SSC_ARRAY,  "T_HP_data",            "Temperature points along HP stream, match with s_HP_data",    "C",	       "",   "",   "*",   "",   "" },
 	{ SSC_OUTPUT, SSC_ARRAY,  "s_HP_data",            "Entropy points along HP stream, match with T_HP_data",        "kJ/kg-K",    "",   "",   "*",   "",   "" },
@@ -529,10 +530,12 @@ public:
 			// State Points
 		ssc_number_t *p_T_state_points = allocate("T_state_points", C_sco2_cycle_core::END_SCO2_STATES);
 		ssc_number_t *p_P_state_points = allocate("P_state_points", C_sco2_cycle_core::END_SCO2_STATES);
+		ssc_number_t *p_s_state_points = allocate("s_state_points", C_sco2_cycle_core::END_SCO2_STATES);
 		for( int i = 0; i < C_sco2_cycle_core::END_SCO2_STATES; i++ )
 		{
 			p_T_state_points[i] = (ssc_number_t)(p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.m_temp[i]-273.15);	//[C]
 			p_P_state_points[i] = (ssc_number_t)(p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.m_pres[i] / 1.E3);	//[MPa]
+			p_s_state_points[i] = (ssc_number_t)(p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.m_entr[i]);			//[kJ/kg-K]
 		}
 
 		// Check that off-design model matches design-point with same operation inputs
