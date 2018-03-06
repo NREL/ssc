@@ -574,12 +574,23 @@ bool dispatch_manual_t::check_constraints(double &I, int count)
 			front_of_meter = true;
 
 		// Don't let PV export to grid if can still charge battery (increase charging)
-		if (_P_pv_to_grid > tolerance && _can_charge && _Battery->battery_soc() < _SOC_max - tolerance && fabs(I) < fabs(_Ic_max))
+		if (_P_pv_to_grid > low_tolerance &&
+			_can_charge &&									// only do if battery is allowed to charge
+			_Battery->battery_soc() < _SOC_max - 1.0 &&		// and battery SOC is less than max
+			fabs(I) < fabs(_Ic_max) &&						// and battery current is less than max charge current
+			fabs(_P_tofrom_batt) < _Pc_max &&				// and battery power is less than max charge power
+			I <= 0)											// and battery was not discharging
 		{
+			double dI = 0;
 			if (fabs(_P_tofrom_batt) < tolerance)
-				I -= (_P_pv_to_grid * util::kilowatt_to_watt / _Battery->battery_voltage());
+				dI = (_P_pv_to_grid * util::kilowatt_to_watt / _Battery->battery_voltage());
 			else
-				I -= (_P_pv_to_grid / fabs(_P_tofrom_batt)) *fabs(I);
+				dI = (_P_pv_to_grid / fabs(_P_tofrom_batt)) *fabs(I);
+
+			// Main problem will be that this tends to overcharge battery maximum SOC, so check
+			double dQ = 0.01 * (_SOC_max - _Battery->battery_soc()) * _Battery->battery_charge_maximum();
+
+			I -= fmin(dI, dQ / _dt_hour);
 		}
 		// Don't let battery export to the grid if behind the meter
 		else if (!front_of_meter && I > 0 && _P_battery_to_grid > tolerance)
