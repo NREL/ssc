@@ -290,7 +290,7 @@ bool dispatch_t::restrict_power(double &I)
 	bool iterate = false;
 	if (_current_choice == RESTRICT_POWER || _current_choice == RESTRICT_BOTH)
 	{
-
+		_P_tofrom_batt = I * _Battery->battery_voltage() * util::watt_to_kilowatt;
 		double dP = 0;
 
 		// charging
@@ -548,14 +548,15 @@ void dispatch_manual_t::dispatch(size_t year,
 		compute_generation();
 		compute_grid_net();
 
+		// Update contrained battery power
 		iterate = check_constraints(I, count);
+		_P_tofrom_batt = I * _Battery->battery_voltage() * util::watt_to_kilowatt;
 		count++;
 
 	} while (iterate);
 
 	// update for next step
 	_prev_charging = _charging;
-
 }
 
 bool dispatch_manual_t::check_constraints(double &I, int count)
@@ -807,7 +808,9 @@ void dispatch_manual_front_of_meter_t::dispatch(size_t year,
 		compute_generation();
 		compute_grid_net();
 
+		// Update contrained battery power
 		iterate = check_constraints(I, count);
+		_P_tofrom_batt = I * _Battery->battery_voltage() * util::watt_to_kilowatt;
 		count++;
 
 	} while (iterate);
