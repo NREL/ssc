@@ -147,13 +147,22 @@ static var_info _cm_vtab_sco2_csp_system[] = {
 	{ SSC_OUTPUT, SSC_ARRAY,  "T_state_points",       "Cycle temperature state points",      "C",	      "",   "",   "*",   "",   "" },
 	{ SSC_OUTPUT, SSC_ARRAY,  "P_state_points",       "Cycle pressure state points",         "MPa",       "",   "",   "*",   "",   "" },
 	{ SSC_OUTPUT, SSC_ARRAY,  "s_state_points",       "Cycle entropy state points",          "kJ/kg-K",   "",   "",   "*",   "",   "" },
+	{ SSC_OUTPUT, SSC_ARRAY,  "h_state_points",       "Cycle enthalpy state points",         "kJ/kg",     "",   "",   "*",   "",   "" },
 		// T-s plot data
-	{ SSC_OUTPUT, SSC_ARRAY,  "T_HP_data",            "Temperature points along HP stream, match with s_HP_data",    "C",	       "",   "",   "*",   "",   "" },
-	{ SSC_OUTPUT, SSC_ARRAY,  "s_HP_data",            "Entropy points along HP stream, match with T_HP_data",        "kJ/kg-K",    "",   "",   "*",   "",   "" },
-	{ SSC_OUTPUT, SSC_ARRAY,  "T_LP_data",            "Temperature points along LP stream, match with s_LP_data",    "C",	       "",   "",   "*",   "",   "" },
-	{ SSC_OUTPUT, SSC_ARRAY,  "s_LP_data",            "Entropy points along HP stream, match with T_LP_data",        "kJ/kg-K",    "",   "",   "*",   "",   "" },
-	{ SSC_OUTPUT, SSC_ARRAY,  "T_IP_data",            "Temperature points along IP stream, match with s_IP_data",    "C",	       "",   "",   "*",   "",   "" },
-	{ SSC_OUTPUT, SSC_ARRAY,  "s_IP_data",            "Entropy points along IP stream, match with T_IP_data",        "kJ/kg-K",    "",   "",   "*",   "",   "" },
+	{ SSC_OUTPUT, SSC_ARRAY,  "T_LTR_HP_data",        "Temperature points along LTR HP stream",        "C",	       "",   "",   "*",   "",   "" },
+	{ SSC_OUTPUT, SSC_ARRAY,  "s_LTR_HP_data",        "Entropy points along LTR HP stream",            "kJ/kg-K",    "",   "",   "*",   "",   "" },
+	{ SSC_OUTPUT, SSC_ARRAY,  "T_HTR_HP_data",        "Temperature points along HTR HP stream",        "C",	       "",   "",   "*",   "",   "" },
+	{ SSC_OUTPUT, SSC_ARRAY,  "s_HTR_HP_data",        "Entropy points along HTR HP stream",            "kJ/kg-K",    "",   "",   "*",   "",   "" },
+	{ SSC_OUTPUT, SSC_ARRAY,  "T_PHX_data",           "Temperature points along PHX stream",           "C",	       "",   "",   "*",   "",   "" },
+	{ SSC_OUTPUT, SSC_ARRAY,  "s_PHX_data",           "Entropy points along PHX stream",               "kJ/kg-K",    "",   "",   "*",   "",   "" },
+	{ SSC_OUTPUT, SSC_ARRAY,  "T_HTR_LP_data",        "Temperature points along HTR LP stream",        "C",	       "",   "",   "*",   "",   "" },
+	{ SSC_OUTPUT, SSC_ARRAY,  "s_HTR_LP_data",        "Entropy points along HTR LP stream",            "kJ/kg-K",    "",   "",   "*",   "",   "" },
+	{ SSC_OUTPUT, SSC_ARRAY,  "T_LTR_LP_data",        "Temperature points along LTR LP stream",        "C",	       "",   "",   "*",   "",   "" },
+	{ SSC_OUTPUT, SSC_ARRAY,  "s_LTR_LP_data",        "Entropy points along LTR LP stream",            "kJ/kg-K",    "",   "",   "*",   "",   "" },
+	{ SSC_OUTPUT, SSC_ARRAY,  "T_main_cooler_data",   "Temperature points along main cooler stream",   "C",	       "",   "",   "*",   "",   "" },
+	{ SSC_OUTPUT, SSC_ARRAY,  "s_main_cooler_data",   "Entropy points along main cooler stream",       "kJ/kg-K",    "",   "",   "*",   "",   "" },
+	{ SSC_OUTPUT, SSC_ARRAY,  "T_pre_cooler_data",    "Temperature points along pre cooler stream",    "C",	       "",   "",   "*",   "",   "" },
+	{ SSC_OUTPUT, SSC_ARRAY,  "s_pre_cooler_data",    "Entropy points along pre cooler stream",        "kJ/kg-K",    "",   "",   "*",   "",   "" },
 
 		// Air Cooler Design
 	// ?????
@@ -426,53 +435,102 @@ public:
 		}
 
 		// Get data for T-s cycle plot
-		std::vector<double> T_HP;	//[C]
-		std::vector<double> s_HP;	//[kJ/kg-K]
-		std::vector<double> T_LP;	//[C]
-		std::vector<double> s_LP;	//[kJ/kg-K]
-		std::vector<double> T_IP;	//[C]
-		std::vector<double> s_IP;	//[kJ/kg-K]
+		std::vector<double> T_LTR_HP;	//[C]
+		std::vector<double> s_LTR_HP;	//[kJ/kg-K]
+		std::vector<double> T_HTR_HP;	//[C]
+		std::vector<double> s_HTR_HP;	//[kJ/kg-K]
+		std::vector<double> T_PHX;		//[C]
+		std::vector<double> s_PHX;		//[kJ/kg-K]
+		std::vector<double> T_HTR_LP;	//[C]
+		std::vector<double> s_HTR_LP;	//[kJ/kg-K]
+		std::vector<double> T_LTR_LP;	//[C]
+		std::vector<double> s_LTR_LP;	//[kJ/kg-K]
+		std::vector<double> T_main_cooler;	//[C]
+		std::vector<double> s_main_cooler;	//[kJ/kg-K]
+		std::vector<double> T_pre_cooler;	//[C]
+		std::vector<double> s_pre_cooler;	//[kJ/kg-K]
 		int plot_data_err_code = sco2_cycle_plot_data_TS(sco2_rc_des_par.m_cycle_config,
 			p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.m_pres,
 			p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.m_entr,
-			T_HP,
-			s_HP,
-			T_LP,
-			s_LP,
-			T_IP,
-			s_IP);
+			T_LTR_HP,
+			s_LTR_HP,
+			T_HTR_HP,
+			s_HTR_HP,
+			T_PHX,
+			s_PHX,
+			T_HTR_LP,
+			s_HTR_LP,
+			T_LTR_LP,
+			s_LTR_LP,
+			T_main_cooler,
+			s_main_cooler,
+			T_pre_cooler,
+			s_pre_cooler);
 		
 		if(plot_data_err_code != 0)
 			throw exec_error("sco2_csp_system", "cycle plot data routine failed");
 
-		int n_HP_data = T_HP.size();
-		ssc_number_t *p_T_HP_data = allocate("T_HP_data", n_HP_data);
-		ssc_number_t *p_s_HP_data = allocate("s_HP_data", n_HP_data);
-		
-		for (int i = 0; i < n_HP_data; i++)
+		int n_v = T_LTR_HP.size();
+		ssc_number_t *p_T_LTR_HP_data = allocate("T_LTR_HP_data", n_v);
+		ssc_number_t *p_s_LTR_HP_data = allocate("s_LTR_HP_data", n_v);
+		for (int i = 0; i < n_v; i++)
 		{
-			p_T_HP_data[i] = (ssc_number_t)(T_HP[i]);	//[C]
-			p_s_HP_data[i] = (ssc_number_t)(s_HP[i]);	//[kJ/kg-K]
+			p_T_LTR_HP_data[i] = (ssc_number_t)(T_LTR_HP[i]);	//[C]
+			p_s_LTR_HP_data[i] = (ssc_number_t)(s_LTR_HP[i]);	//[kJ/kg-K]
 		}
 
-		int n_LP_data = T_LP.size();
-		ssc_number_t *p_T_LP_data = allocate("T_LP_data", n_LP_data);
-		ssc_number_t *p_s_LP_data = allocate("s_LP_data", n_LP_data);
-
-		for (int i = 0; i < n_LP_data; i++)
+		n_v = T_HTR_HP.size();
+		ssc_number_t *p_T_HTR_HP_data = allocate("T_HTR_HP_data", n_v);
+		ssc_number_t *p_s_HTR_HP_data = allocate("s_HTR_HP_data", n_v);
+		for (int i = 0; i < n_v; i++)
 		{
-			p_T_LP_data[i] = (ssc_number_t)(T_LP[i]);	//[C]
-			p_s_LP_data[i] = (ssc_number_t)(s_LP[i]);	//[kJ/kg-K]
+			p_T_HTR_HP_data[i] = (ssc_number_t)(T_HTR_HP[i]);		//[C]
+			p_s_HTR_HP_data[i] = (ssc_number_t)(s_HTR_HP[i]);		//[kJ/kg-K]
 		}
 
-		int n_IP_data = T_IP.size();
-		ssc_number_t *p_T_IP_data = allocate("T_IP_data", n_IP_data);
-		ssc_number_t *p_s_IP_data = allocate("s_IP_data", n_IP_data);
-
-		for (int i = 0; i < n_IP_data; i++)
+		n_v = T_PHX.size();
+		ssc_number_t *p_T_PHX_data = allocate("T_PHX_data", n_v);
+		ssc_number_t *p_s_PHX_data = allocate("s_PHX_data", n_v);
+		for (int i = 0; i < n_v; i++)
 		{
-			p_T_IP_data[i] = (ssc_number_t)(T_IP[i]);
-			p_s_IP_data[i] = (ssc_number_t)(s_IP[i]);
+			p_T_PHX_data[i] = (ssc_number_t)(T_PHX[i]);			//[C]
+			p_s_PHX_data[i] = (ssc_number_t)(s_PHX[i]);			//[kJ/kg-K]
+		}
+
+		n_v = T_HTR_LP.size();
+		ssc_number_t *p_T_HTR_LP_data = allocate("T_HTR_LP_data", n_v);
+		ssc_number_t *p_s_HTR_LP_data = allocate("s_HTR_LP_data", n_v);
+		for (int i = 0; i < n_v; i++)
+		{
+			p_T_HTR_LP_data[i] = (ssc_number_t)(T_HTR_LP[i]);	//[C]
+			p_s_HTR_LP_data[i] = (ssc_number_t)(s_HTR_LP[i]);	//[kJ/kg-K]
+		}
+
+		n_v = T_LTR_LP.size();
+		ssc_number_t *p_T_LTR_LP_data = allocate("T_LTR_LP_data", n_v);
+		ssc_number_t *p_s_LTR_LP_data = allocate("s_LTR_LP_data", n_v);
+		for (int i = 0; i < n_v; i++)
+		{
+			p_T_LTR_LP_data[i] = (ssc_number_t)(T_LTR_LP[i]);	//[C]
+			p_s_LTR_LP_data[i] = (ssc_number_t)(s_LTR_LP[i]);	//[kJ/kg-K]
+		}
+
+		n_v = T_main_cooler.size();
+		ssc_number_t *p_T_main_cooler = allocate("T_main_cooler_data", n_v);
+		ssc_number_t *p_s_main_cooler = allocate("s_main_cooler_data", n_v);
+		for (int i = 0; i < n_v; i++)
+		{
+			p_T_main_cooler[i] = (ssc_number_t)(T_main_cooler[i]);	//[C]
+			p_s_main_cooler[i] = (ssc_number_t)(s_main_cooler[i]);	//[kJ/kg-K]
+		}
+
+		n_v = T_pre_cooler.size();
+		ssc_number_t *p_T_pre_cooler = allocate("T_pre_cooler_data", n_v);
+		ssc_number_t *p_s_pre_cooler = allocate("s_pre_cooler_data", n_v);
+		for (int i = 0; i < n_v; i++)
+		{
+			p_T_pre_cooler[i] = (ssc_number_t)(T_pre_cooler[i]);	//[C]
+			p_s_pre_cooler[i] = (ssc_number_t)(s_pre_cooler[i]);	//[kJ/kg-K]
 		}
 
 		// Set SSC design outputs
@@ -531,11 +589,13 @@ public:
 		ssc_number_t *p_T_state_points = allocate("T_state_points", C_sco2_cycle_core::END_SCO2_STATES);
 		ssc_number_t *p_P_state_points = allocate("P_state_points", C_sco2_cycle_core::END_SCO2_STATES);
 		ssc_number_t *p_s_state_points = allocate("s_state_points", C_sco2_cycle_core::END_SCO2_STATES);
+		ssc_number_t *p_h_state_points = allocate("h_state_points", C_sco2_cycle_core::END_SCO2_STATES);
 		for( int i = 0; i < C_sco2_cycle_core::END_SCO2_STATES; i++ )
 		{
 			p_T_state_points[i] = (ssc_number_t)(p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.m_temp[i]-273.15);	//[C]
 			p_P_state_points[i] = (ssc_number_t)(p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.m_pres[i] / 1.E3);	//[MPa]
 			p_s_state_points[i] = (ssc_number_t)(p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.m_entr[i]);			//[kJ/kg-K]
+			p_h_state_points[i] = (ssc_number_t)(p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.m_enth[i]);			//[kJ/kg]
 		}
 
 		// Check that off-design model matches design-point with same operation inputs

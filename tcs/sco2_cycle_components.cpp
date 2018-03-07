@@ -207,59 +207,95 @@ int Ts_data_over_linear_dP_ds(double P_in /*kPa*/, double s_in /*kJ/kg-K*/, doub
 int sco2_cycle_plot_data_TS(int cycle_config,
 	const std::vector<double> pres /*kPa*/,
 	const std::vector<double> entr /*kJ/kg-K*/,
-	std::vector<double> & T_HP /*C*/,
-	std::vector<double> & s_HP /*kJ/kg-K*/,
-	std::vector<double> & T_LP /*C*/,
-	std::vector<double> & s_LP /*kJ/kg-K*/,
-	std::vector<double> & T_IP /*C*/,
-	std::vector<double> & s_IP /*kJ/kg-K*/)
+	std::vector<double> & T_LTR_HP /*C*/,
+	std::vector<double> & s_LTR_HP /*kJ/kg-K*/,
+	std::vector<double> & T_HTR_HP /*C*/,
+	std::vector<double> & s_HTR_HP /*kJ/kg-K*/,
+	std::vector<double> & T_PHX	   /*C*/,
+	std::vector<double> & s_PHX    /*kJ/kg-K*/,
+	std::vector<double> & T_HTR_LP /*C*/,
+	std::vector<double> & s_HTR_LP /*kJ/kg-K*/,
+	std::vector<double> & T_LTR_LP /*C*/,
+	std::vector<double> & s_LTR_LP /*kJ/kg-K*/,
+	std::vector<double> & T_main_cooler /*C*/,
+	std::vector<double> & s_main_cooler /*kJ/kg-K*/,
+	std::vector<double> & T_pre_cooler /*C*/,
+	std::vector<double> & s_pre_cooler /*kJ/kg-K*/)
 {
 	int n_pres = pres.size();
 	int n_entr = entr.size();
+
+	// Get LTR HP data
+	int err_code = Ts_data_over_linear_dP_ds(pres[C_sco2_cycle_core::MC_OUT], entr[C_sco2_cycle_core::MC_OUT],
+		pres[C_sco2_cycle_core::LTR_HP_OUT], entr[C_sco2_cycle_core::LTR_HP_OUT],
+		T_LTR_HP, s_LTR_HP, 25);
+	if (err_code != 0)
+		return err_code;
+
+	// Get HTR HP data
+	err_code = Ts_data_over_linear_dP_ds(pres[C_sco2_cycle_core::MIXER_OUT], entr[C_sco2_cycle_core::MIXER_OUT],
+		pres[C_sco2_cycle_core::HTR_HP_OUT], entr[C_sco2_cycle_core::HTR_HP_OUT],
+		T_HTR_HP, s_HTR_HP, 25);
+	if (err_code != 0)
+		return err_code;
+
+	// Get PHX data
+	err_code = Ts_data_over_linear_dP_ds(pres[C_sco2_cycle_core::HTR_HP_OUT], entr[C_sco2_cycle_core::HTR_HP_OUT],
+		pres[C_sco2_cycle_core::TURB_IN], entr[C_sco2_cycle_core::TURB_IN],
+		T_PHX, s_PHX, 25);
+	if (err_code != 0)
+		return err_code;
+
+	// Get HTR HP data
+	err_code = Ts_data_over_linear_dP_ds(pres[C_sco2_cycle_core::TURB_OUT], entr[C_sco2_cycle_core::TURB_OUT],
+		pres[C_sco2_cycle_core::HTR_LP_OUT], entr[C_sco2_cycle_core::HTR_LP_OUT],
+		T_HTR_LP, s_HTR_LP, 25);
+	if (err_code != 0)
+		return err_code;
+
+	// Get LTR HP data
+	err_code = Ts_data_over_linear_dP_ds(pres[C_sco2_cycle_core::HTR_LP_OUT], entr[C_sco2_cycle_core::HTR_LP_OUT],
+		pres[C_sco2_cycle_core::LTR_LP_OUT], entr[C_sco2_cycle_core::LTR_LP_OUT],
+		T_LTR_LP, s_LTR_LP, 25);
+	if (err_code != 0)
+		return err_code;
 
 	if (cycle_config != 2)		// Recompression Cycle
 	{
 		if (n_pres < C_sco2_cycle_core::RC_OUT + 1 || n_entr != n_pres)
 			return -1;
 
-		// Get HP data
-		int err_code = Ts_data_over_linear_dP_ds(pres[C_sco2_cycle_core::MC_OUT], entr[C_sco2_cycle_core::MC_OUT], pres[C_sco2_cycle_core::TURB_IN], entr[C_sco2_cycle_core::TURB_IN],
-			T_HP, s_HP, 50);
-		if (err_code != 0)
-			return err_code;
-
-		// Get LP data
-		err_code = Ts_data_over_linear_dP_ds(pres[C_sco2_cycle_core::TURB_OUT], entr[C_sco2_cycle_core::TURB_OUT], pres[C_sco2_cycle_core::MC_IN], entr[C_sco2_cycle_core::MC_IN],
-			T_LP, s_LP, 50);
+		// Get main cooler data
+		err_code = Ts_data_over_linear_dP_ds(pres[C_sco2_cycle_core::LTR_LP_OUT], entr[C_sco2_cycle_core::LTR_LP_OUT],
+			pres[C_sco2_cycle_core::MC_IN], entr[C_sco2_cycle_core::MC_IN],
+			T_main_cooler, s_main_cooler, 25);
 		if (err_code != 0)
 			return err_code;
 
 		// Set IP data
-		T_IP.resize(1);
-		T_IP[0] = T_LP[50-1];
-		s_IP.resize(1);
-		s_IP[0] = s_LP[50-1];
+		T_pre_cooler.resize(1);
+		T_pre_cooler[0] = T_main_cooler[0];
+		s_pre_cooler.resize(1);
+		s_pre_cooler[0] = s_main_cooler[0];
 	}
 	else		// Partial Cooling Cycle
 	{
 		if (n_pres < C_sco2_cycle_core::PC_OUT + 1 || n_entr != n_pres)
 			return -1;
 
-		// Get HP data
-		int err_code = Ts_data_over_linear_dP_ds(pres[C_sco2_cycle_core::MC_OUT], entr[C_sco2_cycle_core::MC_OUT], pres[C_sco2_cycle_core::TURB_IN], entr[C_sco2_cycle_core::TURB_IN],
-			T_HP, s_HP, 50);
+		// Get pre cooler data
+		err_code = Ts_data_over_linear_dP_ds(pres[C_sco2_cycle_core::LTR_LP_OUT], entr[C_sco2_cycle_core::LTR_LP_OUT],
+			pres[C_sco2_cycle_core::PC_IN], entr[C_sco2_cycle_core::PC_IN],
+			T_pre_cooler, s_pre_cooler, 25);
 		if (err_code != 0)
 			return err_code;
 
-		// Get LP data
-		err_code = Ts_data_over_linear_dP_ds(pres[C_sco2_cycle_core::TURB_OUT], entr[C_sco2_cycle_core::TURB_OUT], pres[C_sco2_cycle_core::PC_IN], entr[C_sco2_cycle_core::PC_IN],
-			T_LP, s_LP, 50);
+		// Get main cooler data
+		err_code = Ts_data_over_linear_dP_ds(pres[C_sco2_cycle_core::PC_OUT], entr[C_sco2_cycle_core::PC_OUT],
+			pres[C_sco2_cycle_core::MC_IN], entr[C_sco2_cycle_core::MC_IN],
+			T_main_cooler, s_main_cooler, 25);
 		if (err_code != 0)
 			return err_code;
-
-		// Set IP data
-		err_code = Ts_data_over_linear_dP_ds(pres[C_sco2_cycle_core::PC_OUT], entr[C_sco2_cycle_core::PC_OUT], pres[C_sco2_cycle_core::MC_IN], entr[C_sco2_cycle_core::MC_IN],
-			T_IP, s_IP, 20);
 	}
 
 	return 0;

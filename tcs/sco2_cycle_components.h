@@ -18,12 +18,20 @@ int Ts_data_over_linear_dP_ds(double P_in /*kPa*/, double s_in /*kJ/kg-K*/, doub
 int sco2_cycle_plot_data_TS(int cycle_config,
 	const std::vector<double> pres /*kPa*/,
 	const std::vector<double> entr /*kJ/kg-K*/,
-	std::vector<double> & T_HP /*C*/,
-	std::vector<double> & s_HP /*kJ/kg-K*/,
-	std::vector<double> & T_LP /*C*/,
-	std::vector<double> & s_LP /*kJ/kg-K*/,
-	std::vector<double> & T_IP /*C*/,
-	std::vector<double> & s_IP /*kJ/kg-K*/);
+	std::vector<double> & T_LTR_HP /*C*/,
+	std::vector<double> & s_LTR_HP /*kJ/kg-K*/,
+	std::vector<double> & T_HTR_HP /*C*/,
+	std::vector<double> & s_HTR_HP /*kJ/kg-K*/,
+	std::vector<double> & T_PHX	   /*C*/,
+	std::vector<double> & s_PHX    /*kJ/kg-K*/,
+	std::vector<double> & T_HTR_LP /*C*/,
+	std::vector<double> & s_HTR_LP /*kJ/kg-K*/,
+	std::vector<double> & T_LTR_LP /*C*/,
+	std::vector<double> & s_LTR_LP /*kJ/kg-K*/,
+	std::vector<double> & T_main_cooler /*C*/,
+	std::vector<double> & s_main_cooler /*kJ/kg-K*/,
+	std::vector<double> & T_pre_cooler /*C*/,
+	std::vector<double> & s_pre_cooler /*kJ/kg-K*/);
 
 int Ts_arrays_over_constP(double T_cold /*C*/, double T_hot /*C*/, std::vector<double> P_consts /*kPa*/,
 	std::vector<std::vector<double>> & T_data /*C*/, std::vector<std::vector<double>> & s_data);
