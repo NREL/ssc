@@ -271,7 +271,7 @@ int Ts_arrays_over_constP(double T_cold /*C*/, double T_hot /*C*/, std::vector<d
 	CO2_state t_co2_props;
 	int n_points = 200;
 	T_cold = T_cold + 273.15;	//[K] convert from C
-	T_hot = T_cold + 273.15;	//[K] convert from C
+	T_hot = T_hot + 273.15;	//[K] convert from C
 
 	int n_P = P_consts.size();
 
@@ -293,9 +293,99 @@ int Ts_arrays_over_constP(double T_cold /*C*/, double T_hot /*C*/, std::vector<d
 		Ts_data_over_linear_dP_ds(P_consts[i], s_cold, P_consts[i], s_hot, T_data[i], s_data[i], n_points);
 	}
 
+	//double T_cold = 0.0;	//[C]
+	//double T_hot = 750.0;	//[C]
+
+	//std::vector<double> P_consts;
+	//P_consts.push_back(35.E3);		//[kPa]
+	//P_consts.push_back(25.E3);		//[kPa]
+	//P_consts.push_back(15.E3);		//[kPa]
+	//P_consts.push_back(5.E3);		//[kPa]
+
+	//std::vector<std::vector<double>> T_data;
+	//std::vector<std::vector<double>> s_data;
+
+	//int errrrr = Ts_arrays_over_constP(T_cold, T_hot, P_consts,
+	//	T_data, s_data);
+
+	//ofstream myfile;
+	//myfile.open("directory:/File.txt");
+
+	//int n_P = P_consts.size();
+
+	//for (int i = 0; i < n_P; i++)
+	//{
+	//	myfile << "T_" << to_string((int)(P_consts[i] / 1.E3)) << ",";
+	//	myfile << "s_" << to_string((int)(P_consts[i] / 1.E3));
+	//	if (i < n_P - 1)
+	//		myfile << ",";
+	//	else
+	//		myfile << "\n";
+	//}
+
+	//int n_points = T_data[0].size();
+	//for (int j = 0; j < n_points; j++)
+	//{
+	//	for (int i = 0; i < n_P; i++)
+	//	{
+	//		myfile << T_data[i][j] << ",";		//[C]
+	//		myfile << s_data[i][j];
+	//		if (i < n_P - 1)
+	//			myfile << ",";
+	//		else
+	//			myfile << "\n";
+	//	}
+	//}
+
+	//myfile.close();
+
 	return 0;
 }
 
+
+int Ts_dome(double T_cold /*C*/, std::vector<double> & T_data /*C*/, std::vector<double> & s_data)
+{
+	CO2_state t_co2_props;
+	int n_x0 = 50;
+	int n_x1 = 50;
+
+	CO2_info t_co2_info;
+	get_CO2_info(&t_co2_info);
+	double T_crit = 0.999*t_co2_info.T_critical;		//[K]
+
+	T_data.resize(n_x0 + n_x1);
+	s_data.resize(n_x0 + n_x1);
+
+	T_cold = T_cold + 273.15;		//[K]
+
+	double deltaT_x0 = (T_crit - T_cold) / (n_x0 - 1);		//[K]
+	int prop_err = 0;
+	double T_i = std::numeric_limits<double>::quiet_NaN();
+
+	for (int i = 0; i < n_x0; i++)
+	{
+		T_i = T_cold + deltaT_x0 * i;			//[K]
+		prop_err = CO2_TQ(T_i, 0.0, &t_co2_props);
+		if (prop_err != 0)
+			return -1;
+
+		T_data[i] = t_co2_props.temp - 273.15;		//[C]
+		s_data[i] = t_co2_props.entr;				//[kJ/kg-K]
+	}
+
+	double deltaT_x1 = (T_cold - T_crit) / (n_x1 - 1);		//[K]
+
+	for (int i = 0; i < n_x1; i++)
+	{
+		T_i = T_crit + deltaT_x1 * i;			//[K]
+		prop_err = CO2_TQ(T_i, 1.0, &t_co2_props);
+		if (prop_err != 0)
+			return -1;
+
+		T_data[n_x0 + i] = t_co2_props.temp - 273.15;	//[C]
+		s_data[n_x0 + i] = t_co2_props.entr;			//[kJ/kg-K]
+	}
+}
 
 void C_HeatExchanger::initialize(const S_design_parameters & des_par_in)
 {
