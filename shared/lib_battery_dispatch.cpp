@@ -2,8 +2,7 @@
 *  Copyright 2017 Alliance for Sustainable Energy, LLC
 *
 *  NOTICE: This software was developed at least in part by Alliance for Sustainable Energy, LLC
-*  (“Alliance”) under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
-*  The Government retains for itself and others acting on its behalf a nonexclusive, paid-up,
+*  (ï¿½Allianceï¿½) under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U*  The Government retains for itself and others acting on its behalf a nonexclusive, paid-up,
 *  irrevocable worldwide license in the software to reproduce, prepare derivative works, distribute
 *  copies to the public, perform publicly and display publicly, and to permit others to do so.
 *
@@ -26,9 +25,7 @@
 *  4. Redistribution of this software, without modification, must refer to the software by the same
 *  designation. Redistribution of a modified version of this software (i) may not refer to the modified
 *  version by the same designation, or by any confusingly similar designation, and (ii) must refer to
-*  the underlying software originally provided by Alliance as “System Advisor Model” or “SAM”. Except
-*  to comply with the foregoing, the terms “System Advisor Model”, “SAM”, or any confusingly similar
-*  designation may not be used to refer to any modified version of this software or any modified
+*  the underlying software originally provided by Alliance as ï¿½System Advisor Modelï¿½ or ï¿½SAMï¿½.*  to comply with the foregoing, the terms ï¿½System Advisor Modelï¿½, ï¿½SAMï¿½, or any confusingly *  designation may not be used to refer to any modified version of this software or any modified
 *  version of the underlying software originally provided by Alliance without the prior written consent
 *  of Alliance.
 *
@@ -204,7 +201,7 @@ bool dispatch_t::check_constraints(double &I, int count)
 		iterate = false;
 
 	// don't allow battery to flip from charging to discharging or vice versa
-	if ((I_initial / I) < 0) {
+	if (fabs(I) > tolerance && (I_initial / I) < 0) {
 		I = 0;
 		iterate = false;
 	}
@@ -1014,8 +1011,15 @@ bool dispatch_automatic_t::check_constraints(double &I, int count)
 			// Try and force controller to meet target or custom dispatch
 			if (P_battery > _P_battery_current + tolerance || P_battery < _P_battery_current - tolerance)
 			{
+				// But only if it's possible to meet without break grid-charge contraint
+				if (_P_battery_current < 0 && _can_grid_charge || _P_battery_current > 0)
+				{
 				double dP = P_battery - _P_battery_current;
 				I -= dP * util::kilowatt_to_watt / _Battery->battery_voltage();
+			}
+				else {
+					iterate = false;
+				}
 			}
 			// Don't let PV export to grid if can still charge battery (increase charging)
 			else if (_P_pv_to_grid > tolerance && _can_charge && _Battery->battery_soc() < _SOC_max - tolerance && fabs(I) < fabs(_Ic_max))
