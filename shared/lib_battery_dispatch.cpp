@@ -229,7 +229,7 @@ bool dispatch_t::restrict_power(double &I)
 	bool iterate = false;
 	if (_current_choice == RESTRICT_POWER || _current_choice == RESTRICT_BOTH)
 	{
-
+		_P_tofrom_batt = I * _Battery->battery_voltage() * util::watt_to_kilowatt;
 		double dP = 0;
 
 		// charging
@@ -521,14 +521,15 @@ void dispatch_manual_t::dispatch(size_t year,
 		compute_generation();
 		compute_grid_net();
 
+		// Update contrained battery power
 		iterate = check_constraints(I, count);
+		_P_tofrom_batt = I * _Battery->battery_voltage() * util::watt_to_kilowatt;
 		count++;
 
 	} while (iterate);
 
 	// update for next step
 	_prev_charging = _charging;
-
 }
 
 bool dispatch_manual_t::check_constraints(double &I, int count)
@@ -561,12 +562,23 @@ bool dispatch_manual_t::check_constraints(double &I, int count)
 			I += (_P_grid_to_batt / fabs(_P_tofrom_batt)) *fabs(I);
 	}
 	// Don't let PV export to grid if can still charge battery (increase charging)
-	else if (_P_pv_to_grid > tolerance && _can_charge && _Battery->battery_soc() < _SOC_max - tolerance && fabs(I) < fabs(_Ic_max))
+	else if (_P_pv_to_grid > low_tolerance && 
+			_can_charge &&									// only do if battery is allowed to charge
+			_Battery->battery_soc() < _SOC_max - 1.0 &&		// and battery SOC is less than max
+			fabs(I) < fabs(_Ic_max) &&						// and battery current is less than max charge current
+			fabs(_P_tofrom_batt) < _Pc_max &&				// and battery power is less than max charge power
+			I <= 0)											// and battery was not discharging
 	{
+		double dI = 0;
 		if (fabs(_P_tofrom_batt) < tolerance)
-			I -= (_P_pv_to_grid * util::kilowatt_to_watt / _Battery->battery_voltage());
+			dI = (_P_pv_to_grid * util::kilowatt_to_watt / _Battery->battery_voltage());
 		else
-			I -= (_P_pv_to_grid / fabs(_P_tofrom_batt)) *fabs(I);
+			dI = (_P_pv_to_grid / fabs(_P_tofrom_batt)) *fabs(I);
+
+		// Main problem will be that this tends to overcharge battery maximum SOC, so check
+		double dQ = 0.01 * (_SOC_max - _Battery->battery_soc() ) * _Battery->battery_charge_maximum();
+
+		I -= fmin(dI, dQ / _dt_hour);
 	}
 	// Don't let battery export to the grid if behind the meter
 	else if (!front_of_meter && _P_battery_to_grid > tolerance)
@@ -582,7 +594,7 @@ bool dispatch_manual_t::check_constraints(double &I, int count)
 	// don't allow any changes to violate current limits
 	bool current_iterate = restrict_current(I);
 
-	// don't allow any changes to violate power limites
+	// don't allow any changes to violate power limite
 	bool power_iterate = restrict_power(I);
 
 	// iterate if any of the conditions are met
@@ -752,7 +764,9 @@ void dispatch_manual_front_of_meter_t::dispatch(size_t year,
 		compute_generation();
 		compute_grid_net();
 
+		// Update contrained battery power
 		iterate = check_constraints(I, count);
+		_P_tofrom_batt = I * _Battery->battery_voltage() * util::watt_to_kilowatt;
 		count++;
 
 	} while (iterate);
