@@ -1296,7 +1296,7 @@ public:
 			std::vector<ssc_number_t> power_input = as_vector_ssc_number_t("gen");
 			size_t nrec = power_input.size();
 			battstor batt(*this, true, nrec, static_cast<double>(8760. / nrec));
-			ssc_number_t * p_gen = allocate("gen", nrec);
+			ssc_number_t * p_gen = allocate("gen", nrec * batt.nyears);
 
 			// Parse "Load input"
 			std::vector<ssc_number_t> power_load;
