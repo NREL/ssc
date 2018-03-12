@@ -557,6 +557,11 @@ int C_PartialCooling_Cycle::finalize_design()
 	ms_des_solved.m_UA_LTR = ms_des_par.m_UA_LTR;
 	ms_des_solved.m_UA_HTR = ms_des_par.m_UA_HTR;
 
+	ms_des_solved.m_W_dot_t = m_W_dot_t;     //[kWe]
+	ms_des_solved.m_W_dot_mc = m_W_dot_mc;	 //[kWe]
+	ms_des_solved.m_W_dot_rc = m_W_dot_rc;	 //[kWe]
+	ms_des_solved.m_W_dot_pc = m_W_dot_pc;	 //[kWe]
+
 	return 0;
 }
 

@@ -4,6 +4,7 @@
 #include <vector>
 
 #include "numeric_solvers.h"
+#include "CO2_properties.h"
 
 void calculate_turbomachinery_outlet_1(double T_in /*K*/, double P_in /*kPa*/, double P_out /*kPa*/, double eta /*-*/, bool is_comp, int & error_code, double & enth_in /*kJ/kg*/, double & entr_in /*kJ/kg-K*/,
 	double & dens_in /*kg/m3*/, double & temp_out /*K*/, double & enth_out /*kJ/kg*/, double & entr_out /*kJ/kg-K*/, double & dens_out /*kg/m3*/, double & spec_work /*kJ/kg*/);
@@ -36,7 +37,28 @@ int sco2_cycle_plot_data_TS(int cycle_config,
 int Ts_arrays_over_constP(double T_cold /*C*/, double T_hot /*C*/, std::vector<double> P_consts /*kPa*/,
 	std::vector<std::vector<double>> & T_data /*C*/, std::vector<std::vector<double>> & s_data);
 
+int Ph_arrays_over_constT(double P_low /*MPa*/, double P_high /*MPa*/, std::vector<double> T_consts /*C*/,
+	std::vector<std::vector<double>> & P_data /*MPa*/, std::vector<std::vector<double>> & h_data);
+
 int Ts_dome(double T_cold /*C*/, std::vector<double> & T_data /*C*/, std::vector<double> & s_data);
+
+int Ts_full_dome(double T_cold /*C*/, std::vector<double> & T_data /*C*/, std::vector<double> & s_data /*kJ/kg-K*/,
+	std::vector<double> & P_data /*MPa*/, std::vector<double> & h_data /*kJ/kg*/);
+
+int Ph_dome(double P_low /*MPa*/, std::vector<double> & P_data /*MPa*/, std::vector<double> & h_data);
+
+class C_MEQ_CO2_props_at_2phase_P : public C_monotonic_equation
+{
+private:
+	
+
+public:
+	C_MEQ_CO2_props_at_2phase_P(){}
+
+	CO2_state mc_co2_props;
+
+	virtual int operator()(double T_co2 /*K*/, double *P_calc /*kPa*/);
+};
 
 // Heat Exchanger Class
 class C_HeatExchanger

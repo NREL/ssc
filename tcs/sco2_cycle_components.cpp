@@ -301,6 +301,135 @@ int sco2_cycle_plot_data_TS(int cycle_config,
 	return 0;
 }
 
+int Ph_arrays_over_constT(double P_low /*MPa*/, double P_high /*MPa*/, std::vector<double> T_consts /*C*/,
+	std::vector<std::vector<double>> & P_data /*MPa*/, std::vector<std::vector<double>> & h_data)
+{
+	CO2_state t_co2_props;
+	int n_points = 200;
+	P_low = P_low * 1.E3;		//[MPa] convert from kPa
+	P_high = P_high * 1.E3;	//[MPa] convert from kPa
+	double deltaP = (P_high - P_low) / (double)(n_points - 1);
+
+	int n_T = T_consts.size();
+
+	P_data.resize(n_T);
+	h_data.resize(n_T);
+
+	double P_i = std::numeric_limits<double>::quiet_NaN();
+
+	int prop_err_code = 0;
+
+	bool is_2phase_calc = false;
+
+	double P_x1 = std::numeric_limits<double>::quiet_NaN();
+	double h_x1 = std::numeric_limits<double>::quiet_NaN();
+
+	for (int j = 0; j < n_T; j++)
+	{
+		P_data[j].resize(n_points);
+		h_data[j].resize(n_points);
+
+		for (int i = 0; i < n_points; i++)
+		{
+			P_i = P_low + deltaP * i;
+
+			prop_err_code = CO2_TP(T_consts[j] + 273.13, P_i, &t_co2_props);
+			if (prop_err_code != 0)
+			{
+				if (prop_err_code == 205)
+				{
+					prop_err_code = CO2_TQ(T_consts[j] + 273.15, 0.0, &t_co2_props);
+					if (prop_err_code != 0)
+					{
+						return -1;
+					}
+					else if(!is_2phase_calc)
+					{
+						P_data[j][i] = t_co2_props.pres / 1.E3;		//[MPa]
+						h_data[j][i] = t_co2_props.enth;			//[kJ/kg]
+
+						prop_err_code = CO2_TQ(T_consts[j] + 273.15, 1.0, &t_co2_props);
+
+						i++;
+
+						P_x1 = t_co2_props.pres / 1.E3;		//[MPa]
+						h_x1 = t_co2_props.enth;			//[kJ/kg]
+
+						P_data[j][i] = P_x1;
+						h_data[j][i] = h_x1;
+
+						is_2phase_calc = true;
+					}
+					else
+					{
+						P_data[j][i] = P_x1;
+						h_data[j][i] = h_x1;
+					}
+				}
+				else
+				{
+					return -1;
+				}
+			}
+			else
+			{
+				P_data[j][i] = t_co2_props.pres / 1.E3;		//[MPa]
+				h_data[j][i] = t_co2_props.enth;			//[kJ/kg]
+			}
+		}
+	}
+
+	//double P_low = 5.0;		//[MPa]
+	//double P_high = 30.0;	//[MPa]
+
+	//std::vector<double> T_consts;
+	//double T_low = 0.0;
+	//double T_high = 800.0;
+	//for (double T = T_low; T <= T_high; T += 50.0)
+	//{
+	//	T_consts.push_back(T);	//[C]
+	//}
+
+	//std::vector<std::vector<double>> P_data;
+	//std::vector<std::vector<double>> h_data;
+
+	//int ph_err = Ph_arrays_over_constT(P_low, P_high, T_consts,
+	//	P_data, h_data);
+
+	//ofstream myfile;
+	//myfile.open("File.txt");
+
+	//int n_T = T_consts.size();
+
+	//for (int i = 0; i < n_T; i++)
+	//{
+	//	myfile << "P_" << to_string((int)(T_consts[i])) << ",";
+	//	myfile << "h_" << to_string((int)(T_consts[i]));
+	//	if (i < n_T - 1)
+	//		myfile << ",";
+	//	else
+	//		myfile << "\n";
+	//}
+
+	//int n_points = P_data[0].size();
+	//for (int j = 0; j < n_points; j++)
+	//{
+	//	for (int i = 0; i < n_T; i++)
+	//	{
+	//		myfile << P_data[i][j] << ",";
+	//		myfile << h_data[i][j];
+	//		if (i < n_T - 1)
+	//			myfile << ",";
+	//		else
+	//			myfile << "\n";
+	//	}
+	//}
+
+	//myfile.close();
+	
+	return 0;
+}
+
 int Ts_arrays_over_constP(double T_cold /*C*/, double T_hot /*C*/, std::vector<double> P_consts /*kPa*/,
 	std::vector<std::vector<double>> & T_data /*C*/, std::vector<std::vector<double>> & s_data)
 {
@@ -378,8 +507,15 @@ int Ts_arrays_over_constP(double T_cold /*C*/, double T_hot /*C*/, std::vector<d
 	return 0;
 }
 
-
 int Ts_dome(double T_cold /*C*/, std::vector<double> & T_data /*C*/, std::vector<double> & s_data)
+{
+	std::vector<double> P_data;
+	std::vector<double> h_data;
+	return Ts_full_dome(T_cold, T_data, s_data, P_data, h_data);
+}
+
+int Ts_full_dome(double T_cold /*C*/, std::vector<double> & T_data /*C*/, std::vector<double> & s_data /*kJ/kg-K*/,
+	std::vector<double> & P_data /*MPa*/, std::vector<double> & h_data /*kJ/kg*/)
 {
 	CO2_state t_co2_props;
 	int n_x0 = 50;
@@ -391,6 +527,8 @@ int Ts_dome(double T_cold /*C*/, std::vector<double> & T_data /*C*/, std::vector
 
 	T_data.resize(n_x0 + n_x1);
 	s_data.resize(n_x0 + n_x1);
+	P_data.resize(n_x0 + n_x1);
+	h_data.resize(n_x0 + n_x1);
 
 	T_cold = T_cold + 273.15;		//[K]
 
@@ -407,6 +545,8 @@ int Ts_dome(double T_cold /*C*/, std::vector<double> & T_data /*C*/, std::vector
 
 		T_data[i] = t_co2_props.temp - 273.15;		//[C]
 		s_data[i] = t_co2_props.entr;				//[kJ/kg-K]
+		P_data[i] = t_co2_props.pres / 1.E3;		//[MPa]
+		h_data[i] = t_co2_props.enth;				//[kJ/kg]
 	}
 
 	double deltaT_x1 = (T_cold - T_crit) / (n_x1 - 1);		//[K]
@@ -420,7 +560,55 @@ int Ts_dome(double T_cold /*C*/, std::vector<double> & T_data /*C*/, std::vector
 
 		T_data[n_x0 + i] = t_co2_props.temp - 273.15;	//[C]
 		s_data[n_x0 + i] = t_co2_props.entr;			//[kJ/kg-K]
+		P_data[n_x0 + i] = t_co2_props.pres / 1.E3;		//[MPa]
+		h_data[n_x0 + i] = t_co2_props.enth;				//[kJ/kg]
 	}
+}
+
+int Ph_dome(double P_low /*MPa*/, std::vector<double> & P_data /*MPa*/, std::vector<double> & h_data)
+{
+	CO2_info t_co2_info;
+	get_CO2_info(&t_co2_info);
+	double P_crit = 0.999*t_co2_info.P_critical;	//[kPa]
+	double T_crit = 0.999*t_co2_info.T_critical;	//[K]
+	double T_low_limit = 1.001*t_co2_info.temp_lower_limit;	//[K]
+
+	C_MEQ_CO2_props_at_2phase_P P_x0_eq;
+	C_monotonic_eq_solver P_x0_solver(P_x0_eq);
+
+	P_x0_solver.settings(1.E-3, 100, T_low_limit, T_crit, true);
+
+	double T_P_target_solved = std::numeric_limits<double>::quiet_NaN();
+	double tol_T_P_target_solved = std::numeric_limits<double>::quiet_NaN();
+	int iter_T_P_target = -1;
+
+	P_low *= 1.005;
+
+	int T_P_target_code = P_x0_solver.solve(T_crit - 10.0, T_crit - 20.0, P_low*1.E3, T_P_target_solved, tol_T_P_target_solved, iter_T_P_target);
+
+	if (T_P_target_code != C_monotonic_eq_solver::CONVERGED)
+	{
+		return T_P_target_code;
+	}
+
+	std::vector<double> T_data;
+	std::vector<double> s_data;
+
+	return Ts_full_dome(T_P_target_solved - 273.15, T_data, s_data, P_data, h_data);
+}
+
+int C_MEQ_CO2_props_at_2phase_P::operator()(double T_co2 /*K*/, double *P_calc /*kPa*/)
+{
+	int prop_err_code = CO2_TQ(T_co2, 0.0, &mc_co2_props);
+	if (prop_err_code != 0)
+	{
+		return prop_err_code;
+		*P_calc = std::numeric_limits<double>::quiet_NaN();
+	}
+	
+	*P_calc = mc_co2_props.pres;		//[kPa]
+
+	return 0;
 }
 
 void C_HeatExchanger::initialize(const S_design_parameters & des_par_in)

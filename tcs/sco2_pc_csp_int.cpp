@@ -352,9 +352,14 @@ const C_sco2_recomp_csp_10MWe_scale::S_des_solved * C_sco2_recomp_csp_10MWe_scal
 	ms_des_solved.ms_rc_cycle_solved.m_W_dot_net *= m_r_W_scale;
 	ms_des_solved.ms_rc_cycle_solved.m_m_dot_mc *= m_r_W_scale;
 	ms_des_solved.ms_rc_cycle_solved.m_m_dot_rc *= m_r_W_scale;
+	ms_des_solved.ms_rc_cycle_solved.m_m_dot_pc *= m_r_W_scale;
 	ms_des_solved.ms_rc_cycle_solved.m_m_dot_t *= m_r_W_scale;
 	ms_des_solved.ms_rc_cycle_solved.m_UA_LTR *= m_r_W_scale;
 	ms_des_solved.ms_rc_cycle_solved.m_UA_HTR *= m_r_W_scale;
+	ms_des_solved.ms_rc_cycle_solved.m_W_dot_mc *= m_r_W_scale;
+	ms_des_solved.ms_rc_cycle_solved.m_W_dot_rc *= m_r_W_scale;
+	ms_des_solved.ms_rc_cycle_solved.m_W_dot_pc *= m_r_W_scale;
+	ms_des_solved.ms_rc_cycle_solved.m_W_dot_t *= m_r_W_scale;
 		// Scale Cycle Component Solution
 			// Nothing required for turbomachinery??
 	//ms_des_solved.ms_rc_cycle_solved.ms_mc_des_solved.

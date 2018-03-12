@@ -1039,6 +1039,7 @@ void C_HX_counterflow::design_calc_UA(C_HX_counterflow::S_des_calc_UA_par des_pa
 			"Calculated design effectiveness, %lg [-] is greater than the specified maximum effectiveness, %lg [-]."));
 	}
 
+	ms_des_solved.m_Q_dot_design = q_dot_design;	//[kWt]
 	ms_des_solved.m_UA_design_total = UA_calc;
 	ms_des_solved.m_min_DT_design = min_DT_calc;
 	ms_des_solved.m_eff_design = eff_calc;
