@@ -6,15 +6,25 @@
 #include "numeric_solvers.h"
 #include "CO2_properties.h"
 
-void calculate_turbomachinery_outlet_1(double T_in /*K*/, double P_in /*kPa*/, double P_out /*kPa*/, double eta /*-*/, bool is_comp, int & error_code, double & enth_in /*kJ/kg*/, double & entr_in /*kJ/kg-K*/,
-	double & dens_in /*kg/m3*/, double & temp_out /*K*/, double & enth_out /*kJ/kg*/, double & entr_out /*kJ/kg-K*/, double & dens_out /*kg/m3*/, double & spec_work /*kJ/kg*/);
+void calculate_turbomachinery_outlet_1(double T_in /*K*/, double P_in /*kPa*/, double P_out /*kPa*/, 
+	double eta_isen /*-*/, bool is_comp, int & error_code, 
+	double & enth_in /*kJ/kg*/, double & entr_in /*kJ/kg-K*/, double & dens_in /*kg/m3*/, double & temp_out /*K*/, 
+	double & enth_out /*kJ/kg*/, double & entr_out /*kJ/kg-K*/, double & dens_out /*kg/m3*/, double & spec_work /*kJ/kg*/);
 
-void calculate_turbomachinery_outlet_1(double T_in /*K*/, double P_in /*kPa*/, double P_out /*kPa*/, double eta /*-*/, bool is_comp, int & error_code, double & spec_work /*kJ/kg*/);
+void calculate_turbomachinery_outlet_1(double T_in /*K*/, double P_in /*kPa*/, double P_out /*kPa*/, 
+	double eta_isen /*-*/, bool is_comp, int & error_code, double & spec_work /*kJ/kg*/);
 
 void isen_eta_from_poly_eta(double T_in /*K*/, double P_in /*kPa*/, double P_out /*kPa*/, double poly_eta /*-*/, bool is_comp, int & error_code, double & isen_eta);
 
+int calc_turbomachinery_eta_isen(double T_in /*K*/, double P_in /*kPa*/,
+	double T_out /*K*/, double P_out /*kPa*/, double & eta_isen);
+
 int Ts_data_over_linear_dP_ds(double P_in /*kPa*/, double s_in /*kJ/kg-K*/, double P_out /*kPa*/, double s_out /*kJ/kg-K*/,
 	std::vector<double> & T_data /*C*/, std::vector<double> & s_data /*kJ/kg-K*/, int N_points = 30);
+
+int Ph_data_over_turbomachinery(double T_in /*K*/, double P_in /*kPa*/,
+	double T_out /*K*/, double P_out /*kPa*/,
+	std::vector<double> & P_data /*MPa*/, std::vector<double> & h_data /*kJ/kg*/, int N_points = 30);
 
 int sco2_cycle_plot_data_TS(int cycle_config,
 	const std::vector<double> pres /*kPa*/,
@@ -33,6 +43,18 @@ int sco2_cycle_plot_data_TS(int cycle_config,
 	std::vector<double> & s_main_cooler /*kJ/kg-K*/,
 	std::vector<double> & T_pre_cooler /*C*/,
 	std::vector<double> & s_pre_cooler /*kJ/kg-K*/);
+
+int sco2_cycle_plot_data_PH(int cycle_config,
+	const std::vector<double> temp /*K*/,
+	const std::vector<double> pres /*kPa*/,
+	std::vector<double> & P_t /*MPa*/,
+	std::vector<double> & h_t /*kJ/kg*/,
+	std::vector<double> & P_mc /*MPa*/,
+	std::vector<double> & h_mc /*kJ/kg*/,
+	std::vector<double> & P_rc /*MPa*/,
+	std::vector<double> & h_rc /*kJ/kg*/,
+	std::vector<double> & P_pc /*MPa*/,
+	std::vector<double> & h_pc /*kJ/kg*/);
 
 int Ts_arrays_over_constP(double T_cold /*C*/, double T_hot /*C*/, std::vector<double> P_consts /*kPa*/,
 	std::vector<std::vector<double>> & T_data /*C*/, std::vector<std::vector<double>> & s_data);

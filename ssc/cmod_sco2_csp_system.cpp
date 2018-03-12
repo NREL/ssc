@@ -171,6 +171,15 @@ static var_info _cm_vtab_sco2_csp_system[] = {
 	{ SSC_OUTPUT, SSC_ARRAY,  "s_main_cooler_data",   "Entropy points along main cooler stream",       "kJ/kg-K",    "",   "",   "*",   "",   "" },
 	{ SSC_OUTPUT, SSC_ARRAY,  "T_pre_cooler_data",    "Temperature points along pre cooler stream",    "C",	       "",   "",   "*",   "",   "" },
 	{ SSC_OUTPUT, SSC_ARRAY,  "s_pre_cooler_data",    "Entropy points along pre cooler stream",        "kJ/kg-K",    "",   "",   "*",   "",   "" },
+		// P-h plot data
+	{ SSC_OUTPUT, SSC_ARRAY,  "P_t_data",             "Pressure points along turbine expansion",       "MPa",	   "",   "",   "*",   "",   "" },
+	{ SSC_OUTPUT, SSC_ARRAY,  "h_t_data",             "Enthalpy points along turbine expansion",       "kJ/kg",    "",   "",   "*",   "",   "" },
+	{ SSC_OUTPUT, SSC_ARRAY,  "P_mc_data",            "Pressure points along main compression",        "MPa",	   "",   "",   "*",   "",   "" },
+	{ SSC_OUTPUT, SSC_ARRAY,  "h_mc_data",            "Enthalpy points along main compression",        "kJ/kg",    "",   "",   "*",   "",   "" },
+	{ SSC_OUTPUT, SSC_ARRAY,  "P_rc_data",            "Pressure points along re compression",          "MPa",	   "",   "",   "*",   "",   "" },
+	{ SSC_OUTPUT, SSC_ARRAY,  "h_rc_data",            "Enthalpy points along re compression",          "kJ/kg",    "",   "",   "*",   "",   "" },
+	{ SSC_OUTPUT, SSC_ARRAY,  "P_pc_data",            "Pressure points along pre compression",         "MPa",	   "",   "",   "*",   "",   "" },
+	{ SSC_OUTPUT, SSC_ARRAY,  "h_pc_data",            "Enthalpy points along pre compression",         "kJ/kg",    "",   "",   "*",   "",   "" },
 
 		// Air Cooler Design
 	// ?????
@@ -442,6 +451,66 @@ public:
 			log(out_msg + "\n");
 		}
 
+		// Get data for P-h cycle plot
+		std::vector<double> P_t;		//[MPa]
+		std::vector<double> h_t;		//[kJ/kg]
+		std::vector<double> P_mc;		//[MPa]
+		std::vector<double> h_mc;		//[kJ/kg]
+		std::vector<double> P_rc;		//[MPa]
+		std::vector<double> h_rc;		//[kJ/kg]
+		std::vector<double> P_pc;		//[MPa]
+		std::vector<double> h_pc;		//[kJ/kg]
+		int ph_err_code = sco2_cycle_plot_data_PH(sco2_rc_des_par.m_cycle_config,
+			p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.m_temp,
+			p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.m_pres,
+			P_t,
+			h_t,
+			P_mc,
+			h_mc,
+			P_rc,
+			h_rc,
+			P_pc,
+			h_pc);
+
+		if (ph_err_code != 0)
+			throw exec_error("sco2_csp_system", "cycle plot data routine failed");
+
+		int n_v = P_t.size();
+		ssc_number_t *p_P_t_data = allocate("P_t_data", n_v);
+		ssc_number_t *p_h_t_data = allocate("h_t_data", n_v);
+		for (int i = 0; i < n_v; i++)
+		{
+			p_P_t_data[i] = (ssc_number_t)(P_t[i]);		//[MPa]
+			p_h_t_data[i] = (ssc_number_t)(h_t[i]);		//[kJ/kg]
+		}
+
+		n_v = P_mc.size();
+		ssc_number_t *p_P_mc_data = allocate("P_mc_data", n_v);
+		ssc_number_t *p_h_mc_data = allocate("h_mc_data", n_v);
+		for (int i = 0; i < n_v; i++)
+		{
+			p_P_mc_data[i] = (ssc_number_t)(P_mc[i]);		//[MPa]
+			p_h_mc_data[i] = (ssc_number_t)(h_mc[i]);		//[kJ/kg]
+		}
+
+		n_v = P_rc.size();
+		ssc_number_t *p_P_rc_data = allocate("P_rc_data", n_v);
+		ssc_number_t *p_h_rc_data = allocate("h_rc_data", n_v);
+		for (int i = 0; i < n_v; i++)
+		{
+			p_P_rc_data[i] = (ssc_number_t)(P_rc[i]);		//[MPa]
+			p_h_rc_data[i] = (ssc_number_t)(h_rc[i]);		//[kJ/kg]
+		}
+
+		n_v = P_pc.size();
+		ssc_number_t *p_P_pc_data = allocate("P_pc_data", n_v);
+		ssc_number_t *p_h_pc_data = allocate("h_pc_data", n_v);
+		for (int i = 0; i < n_v; i++)
+		{
+			p_P_pc_data[i] = (ssc_number_t)(P_pc[i]);		//[MPa]
+			p_h_pc_data[i] = (ssc_number_t)(h_pc[i]);		//[kJ/kg]
+		}
+
 		// Get data for T-s cycle plot
 		std::vector<double> T_LTR_HP;	//[C]
 		std::vector<double> s_LTR_HP;	//[kJ/kg-K]
@@ -478,7 +547,7 @@ public:
 		if(plot_data_err_code != 0)
 			throw exec_error("sco2_csp_system", "cycle plot data routine failed");
 
-		int n_v = T_LTR_HP.size();
+		n_v = T_LTR_HP.size();
 		ssc_number_t *p_T_LTR_HP_data = allocate("T_LTR_HP_data", n_v);
 		ssc_number_t *p_s_LTR_HP_data = allocate("s_LTR_HP_data", n_v);
 		for (int i = 0; i < n_v; i++)

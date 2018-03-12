@@ -14,15 +14,18 @@ const double C_comp_single_stage::m_snl_phi_min = 0.02;				//[-] Approximate sur
 const double C_comp_single_stage::m_snl_phi_max = 0.05;				//[-] Approximate x-intercept for SNL compressor
 
 
-void calculate_turbomachinery_outlet_1(double T_in /*K*/, double P_in /*kPa*/, double P_out /*kPa*/, double eta /*-*/, bool is_comp, int & error_code, double & spec_work /*kJ/kg*/)
+void calculate_turbomachinery_outlet_1(double T_in /*K*/, double P_in /*kPa*/, double P_out /*kPa*/, 
+	double eta_isen /*-*/, bool is_comp, int & error_code, double & spec_work /*kJ/kg*/)
 {
 	double enth_in, entr_in, dens_in, temp_out, enth_out, entr_out, dens_out;
 
-	calculate_turbomachinery_outlet_1(T_in, P_in, P_out, eta, is_comp, error_code, enth_in, entr_in, dens_in, temp_out, enth_out, entr_out, dens_out, spec_work);
+	calculate_turbomachinery_outlet_1(T_in, P_in, P_out, eta_isen, is_comp, error_code, enth_in, entr_in, dens_in, temp_out, enth_out, entr_out, dens_out, spec_work);
 }
 
-void calculate_turbomachinery_outlet_1(double T_in /*K*/, double P_in /*kPa*/, double P_out /*kPa*/, double eta /*-*/, bool is_comp, int & error_code, double & enth_in /*kJ/kg*/, double & entr_in /*kJ/kg-K*/,
-	double & dens_in /*kg/m3*/, double & temp_out /*K*/, double & enth_out /*kJ/kg*/, double & entr_out /*kJ/kg-K*/, double & dens_out /*kg/m3*/, double & spec_work /*kJ/kg*/)
+void calculate_turbomachinery_outlet_1(double T_in /*K*/, double P_in /*kPa*/, double P_out /*kPa*/, 
+	double eta_isen /*-*/, bool is_comp, int & error_code, 
+	double & enth_in /*kJ/kg*/, double & entr_in /*kJ/kg-K*/, double & dens_in /*kg/m3*/, double & temp_out /*K*/, 
+	double & enth_out /*kJ/kg*/, double & entr_out /*kJ/kg-K*/, double & dens_out /*kg/m3*/, double & spec_work /*kJ/kg*/)
 {
 	/*Calculates the outlet state of a compressor or turbine using its isentropic efficiency.
 	is_comp = .true.means the turbomachine is a compressor(w = w_s / eta)
@@ -54,9 +57,9 @@ void calculate_turbomachinery_outlet_1(double T_in /*K*/, double P_in /*kPa*/, d
 
 	double w = 0.0;
 	if (is_comp)
-		w = w_s / eta;						// actual specific work of compressor (negative)
+		w = w_s / eta_isen;						// actual specific work of compressor (negative)
 	else
-		w = w_s * eta;						// actual specific work of turbine (positive)
+		w = w_s * eta_isen;						// actual specific work of turbine (positive)
 
 	double h_out = h_in - w;
 
@@ -156,13 +159,13 @@ void isen_eta_from_poly_eta(double T_in /*K*/, double P_in /*kPa*/, double P_out
 		stage_P_in = stage_P_out;
 		stage_h_in = stage_h_out;
 
-		prop_error_code = CO2_PH(stage_P_in, stage_h_in, &co2_props);
-		if (prop_error_code != 0)
-		{
-			error_code = prop_error_code;
-			return;
-		}
-		stage_s_in = co2_props.entr;
+prop_error_code = CO2_PH(stage_P_in, stage_h_in, &co2_props);
+if (prop_error_code != 0)
+{
+	error_code = prop_error_code;
+	return;
+}
+stage_s_in = co2_props.entr;
 	}
 
 	// Note: last stage outlet enthalpy is equivalent to turbomachinery outlet enthalpy
@@ -170,6 +173,44 @@ void isen_eta_from_poly_eta(double T_in /*K*/, double P_in /*kPa*/, double P_out
 		isen_eta = (h_s_out - h_in) / (stage_h_out - h_in);
 	else
 		isen_eta = (stage_h_out - h_in) / (h_s_out - h_in);
+}
+
+int calc_turbomachinery_eta_isen(double T_in /*K*/, double P_in /*kPa*/,
+	double T_out /*K*/, double P_out /*kPa*/, double & eta_isen)
+{
+	CO2_state co2_props;
+
+	int prop_error_code = CO2_TP(T_in, P_in, &co2_props);		// properties at the inlet conditions
+	if (prop_error_code != 0)
+	{
+		return prop_error_code;
+	}
+	double h_in = co2_props.enth;
+	double s_in = co2_props.entr;
+
+	prop_error_code = CO2_TP(T_out, P_out, &co2_props);		// properties at the inlet conditions
+	if (prop_error_code != 0)
+	{
+		return prop_error_code;
+	}
+	double h_out = co2_props.enth;
+
+	prop_error_code = CO2_PS(P_out, s_in, &co2_props);			// outlet enthalpy if compression/expansion is isentropic
+	if (prop_error_code != 0)
+	{
+		return prop_error_code;
+	}
+	double h_s_out = co2_props.enth;
+	
+	if (P_out > P_in)
+		eta_isen = (h_s_out - h_in) / (h_out - h_in);
+	else
+		eta_isen = (h_out - h_in) / (h_s_out - h_in);
+
+	if (eta_isen > 1.0)
+		return -2;
+
+	return 0;
 }
 
 int Ts_data_over_linear_dP_ds(double P_in /*kPa*/, double s_in /*kJ/kg-K*/, double P_out /*kPa*/, double s_out /*kJ/kg-K*/,
@@ -199,6 +240,70 @@ int Ts_data_over_linear_dP_ds(double P_in /*kPa*/, double s_in /*kJ/kg-K*/, doub
 
 		T_data[i] = co2_props.temp - 273.15;		//[C]
 		s_data[i] = co2_props.entr;		//[kJ/kg-K]
+	}
+
+	return 0;
+}
+
+int Ph_data_over_turbomachinery(double T_in /*K*/, double P_in /*kPa*/,
+	double T_out /*K*/, double P_out /*kPa*/,
+	std::vector<double> & P_data /*MPa*/, std::vector<double> & h_data /*kJ/kg*/, int N_points /*30*/)
+{
+	CO2_state co2_props;
+
+	int err_code = 0;
+
+	double eta_isen = std::numeric_limits<double>::quiet_NaN();
+	err_code = calc_turbomachinery_eta_isen(T_in, P_in, T_out, P_out, eta_isen);
+	if (err_code != 0)
+	{
+		return err_code;
+	}
+
+	P_data.resize(N_points);
+	h_data.resize(N_points);
+
+	err_code = CO2_TP(T_in, P_in, &co2_props);
+	if (err_code != 0)
+	{
+		return err_code;
+	}
+
+	P_data[0] = P_in / 1.E3;	//[MPa]
+	h_data[0] = co2_props.enth;	//[kJ/kg]
+
+	double deltaP = (P_in - P_out) / double(N_points - 1);	//[kPa]
+
+	bool is_comp = false;
+	if (deltaP < 0.0)
+		is_comp = true;
+
+	double P_local = std::numeric_limits<double>::quiet_NaN();	//[kPa]
+	double h_in_local = std::numeric_limits<double>::quiet_NaN();
+	double s_in_local = std::numeric_limits<double>::quiet_NaN();
+	double rho_in_local = std::numeric_limits<double>::quiet_NaN();
+	double T_out_local = std::numeric_limits<double>::quiet_NaN();
+	double h_out_local = std::numeric_limits<double>::quiet_NaN();	//[kJ/kg]
+	double s_out_local = std::numeric_limits<double>::quiet_NaN();
+	double rho_out_local = std::numeric_limits<double>::quiet_NaN();
+	double spec_work_local = std::numeric_limits<double>::quiet_NaN();
+
+	for (int i = 1; i < N_points; i++)
+	{
+		P_local = P_in - deltaP * i;	//[kPa]
+
+		calculate_turbomachinery_outlet_1(T_in, P_in, P_local,
+			eta_isen, is_comp, err_code,
+			h_in_local, s_in_local, rho_in_local, T_out_local,
+			h_out_local, s_out_local, rho_out_local, spec_work_local);
+
+		if (err_code != 0)
+		{
+			return err_code;
+		}
+
+		P_data[i] = P_local / 1.E3;	//[MPa]
+		h_data[i] = h_out_local;	//[kJ/kg]
 	}
 
 	return 0;
@@ -294,6 +399,79 @@ int sco2_cycle_plot_data_TS(int cycle_config,
 		err_code = Ts_data_over_linear_dP_ds(pres[C_sco2_cycle_core::PC_OUT], entr[C_sco2_cycle_core::PC_OUT],
 			pres[C_sco2_cycle_core::MC_IN], entr[C_sco2_cycle_core::MC_IN],
 			T_main_cooler, s_main_cooler, 25);
+		if (err_code != 0)
+			return err_code;
+	}
+
+	return 0;
+}
+
+int sco2_cycle_plot_data_PH(int cycle_config,
+	const std::vector<double> temp /*K*/,
+	const std::vector<double> pres /*kPa*/,
+	std::vector<double> & P_t /*MPa*/,
+	std::vector<double> & h_t /*kJ/kg*/,
+	std::vector<double> & P_mc /*MPa*/,
+	std::vector<double> & h_mc /*kJ/kg*/,
+	std::vector<double> & P_rc /*MPa*/,
+	std::vector<double> & h_rc /*kJ/kg*/,
+	std::vector<double> & P_pc /*MPa*/,
+	std::vector<double> & h_pc /*kJ/kg*/)
+{
+	int n_pres = pres.size();
+	int n_temp = temp.size();
+
+	int err_code = Ph_data_over_turbomachinery(temp[C_sco2_cycle_core::TURB_IN], pres[C_sco2_cycle_core::TURB_IN],
+		temp[C_sco2_cycle_core::TURB_OUT], pres[C_sco2_cycle_core::TURB_OUT],
+		P_t, h_t, 25);
+
+	if (err_code != 0)
+		return err_code;
+
+	err_code = Ph_data_over_turbomachinery(temp[C_sco2_cycle_core::MC_IN], pres[C_sco2_cycle_core::MC_IN],
+		temp[C_sco2_cycle_core::MC_OUT], pres[C_sco2_cycle_core::MC_OUT],
+		P_mc, h_mc, 25);
+
+	if (err_code != 0)
+		return err_code;
+
+	if (cycle_config != 2)		// Recompression Cycle
+	{
+		if (n_pres < C_sco2_cycle_core::RC_OUT + 1 || n_temp != n_pres)
+			return -1;
+
+		// Recompressor
+		err_code = Ph_data_over_turbomachinery(temp[C_sco2_cycle_core::LTR_LP_OUT], pres[C_sco2_cycle_core::LTR_LP_OUT],
+			temp[C_sco2_cycle_core::RC_OUT], pres[C_sco2_cycle_core::RC_OUT],
+			P_rc, h_rc, 25);
+
+		if (err_code != 0)
+			return err_code;
+
+		// Precompressor
+		P_pc.resize(1);
+		P_pc[0] = P_mc[0];
+		h_pc.resize(1);
+		h_pc[0] = h_mc[0];
+	}
+	else		// Partial Cooling Cycle
+	{
+		if (n_pres < C_sco2_cycle_core::PC_OUT + 1 || n_temp != n_pres)
+			return -1;
+
+		// Recompressor
+		err_code = Ph_data_over_turbomachinery(temp[C_sco2_cycle_core::PC_OUT], pres[C_sco2_cycle_core::PC_OUT],
+			temp[C_sco2_cycle_core::RC_OUT], pres[C_sco2_cycle_core::RC_OUT],
+			P_rc, h_rc, 25);
+
+		if (err_code != 0)
+			return err_code;
+
+		// Precompressor
+		err_code = Ph_data_over_turbomachinery(temp[C_sco2_cycle_core::PC_IN], pres[C_sco2_cycle_core::PC_IN],
+			temp[C_sco2_cycle_core::PC_OUT], pres[C_sco2_cycle_core::PC_OUT],
+			P_pc, h_pc, 25);
+
 		if (err_code != 0)
 			return err_code;
 	}
