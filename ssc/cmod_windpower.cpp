@@ -340,9 +340,10 @@ void cm_windpower::exec() throw(general_error)
 	bool contains_leap_day = false;
 	if (std::fmod((double)nstep, 8784) == 0)
 	{
-		wdprov = std::auto_ptr<winddata_provider>(new winddata(lookup("wind_resource_data")));
 		contains_leap_day = true;
-		nstep = wdprov->nrecords(); // missing - causing issue from Galen 11/15/17
+		int leap_steps_per_hr = (int)nstep / 8784;
+		log("This weather file appears to contain a leap day. If this is not the case, please check your wind resource file.", SSC_NOTICE);
+		nstep = leap_steps_per_hr * 8760;
 	}
 
 	// check for subhourly data
