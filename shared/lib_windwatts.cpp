@@ -159,6 +159,8 @@ int windPowerCalculator::windPowerUsingResource(/*INPUTS */ double windSpeed, do
 
 	// convert barometric pressure in ATM to air density
 	double fAirDensity = (airPressureAtm * physics::Pa_PER_Atm) / (physics::R_GAS_DRY_AIR * physics::CelciusToKelvin(TdryC));   //!Air Density, kg/m^3
+
+	// calculate output power of a turbine
 	double fTurbine_output(0.0), fThrust_coeff(0.0);
 	windTurb->turbinePower(windSpeed, fAirDensity, &fTurbine_output, &fThrust_coeff);
 	if (windTurb->errDetails.length() > 0){
@@ -267,7 +269,7 @@ int windPowerCalculator::windPowerUsingResource(/*INPUTS */ double windSpeed, do
 	distanceDownwind[0] *= windTurb->rotorDiameter / 2;
 	distanceCrosswind[0] *= windTurb->rotorDiameter / 2;
 
-	// Resort output arrays by wind turbine ID (0..nwt-1)
+	// Re-sort output arrays by wind turbine ID (0..nwt-1)
 	// for consistent reporting
 	double p(0.0), t(0.0), e(0.0), w(0.0), b(0.0), dd(0.0), dc(0.0);
 	for (j = 1; j<nTurbines; j++)
