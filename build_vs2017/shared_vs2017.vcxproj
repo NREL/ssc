@@ -27,6 +27,7 @@
     <ClInclude Include="..\shared\6par_solve.h" />
     <ClInclude Include="..\shared\lib_battery.h" />
     <ClInclude Include="..\shared\lib_battery_dispatch.h" />
+    <ClInclude Include="..\shared\lib_battery_powerflow.h" />
     <ClInclude Include="..\shared\lib_cec6par.h" />
     <ClInclude Include="..\shared\lib_financial.h" />
     <ClInclude Include="..\shared\lib_geothermal.h" />
@@ -55,6 +56,7 @@
   <ItemGroup>
     <ClCompile Include="..\shared\lib_battery.cpp" />
     <ClCompile Include="..\shared\lib_battery_dispatch.cpp" />
+    <ClCompile Include="..\shared\lib_battery_powerflow.cpp" />
     <ClCompile Include="..\shared\lib_cec6par.cpp" />
     <ClCompile Include="..\shared\lib_financial.cpp" />
     <ClCompile Include="..\shared\lib_geothermal.cpp" />
