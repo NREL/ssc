@@ -30,10 +30,6 @@ public:
 	void calculateDCConnected();
 
 private:
-
-	/// Initialize the BatteryPowerObjects to 0
-
-
 	std::unique_ptr<BatteryPower> m_powerFlowAC;   /// A structure containing the AC power flow components 
 	std::unique_ptr<BatteryPower> m_powerFlowDC;   /// A structure containing the DC power flow components
 };
@@ -69,6 +65,8 @@ public:
 	double powerBatteryToGrid;     /// The power from the battery to the grid (kW)
 	double powerPVInverterDraw;	   /// The power draw from the PV inverter (kW)
 	double powerSystemLoss;        /// The parasitic power loss in the system (kW)
+	double powerConversionLoss;    /// The power loss due to conversions in the battery power electronics (kW)
+
 
 	double singlePointEfficiencyACToDC;  /// The conversion efficiency from AC power to DC power within the battery microinverter (0 - 100)
 	double singlePointEfficiencyDCToAC;  /// The conversion efficiency from DC power to AC power within the battery microinverter (0 - 100)
