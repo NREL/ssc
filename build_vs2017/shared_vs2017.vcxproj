@@ -37,6 +37,7 @@
     <ClInclude Include="..\shared\lib_physics.h" />
     <ClInclude Include="..\shared\lib_powerblock.h" />
     <ClInclude Include="..\shared\lib_power_electronics.h" />
+    <ClInclude Include="..\shared\lib_power_electronics_old.h" />
     <ClInclude Include="..\shared\lib_pvinv.h" />
     <ClInclude Include="..\shared\lib_pvmodel.h" />
     <ClInclude Include="..\shared\lib_pvshade.h" />
@@ -66,6 +67,7 @@
     <ClCompile Include="..\shared\lib_physics.cpp" />
     <ClCompile Include="..\shared\lib_powerblock.cpp" />
     <ClCompile Include="..\shared\lib_power_electronics.cpp" />
+    <ClCompile Include="..\shared\lib_power_electronics_old.cpp" />
     <ClCompile Include="..\shared\lib_pvinv.cpp" />
     <ClCompile Include="..\shared\lib_pvmodel.cpp" />
     <ClCompile Include="..\shared\lib_pvshade.cpp" />
