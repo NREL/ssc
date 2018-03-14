@@ -143,6 +143,7 @@ public:
 		E_T_RADOUT,			//[C] Radiator outlet temperature
 		E_M_DOT_WATER,		//[kg/hr] Cycle water consumption: makeup + cooling	
 		E_P_COND,			//[Pa] Cycle condensing pressure
+		E_RADCOOL_CNTRL,	//Code showing the status of radiative cooling with cold storage
 
 		// Variables added for backwards compatability with TCS
 		E_M_DOT_HTF_REF		//[kg/hr] HTF mass flow rate at design
@@ -160,6 +161,7 @@ public:
 	double m_dot_warm_avail;
 	double m_dot_condenser;
 	double T_warm_prev_K;
+	double T_cold_prev_K;
 	double T_cold_prev;
 	double T_s_measured;
 	double T_s_corr;
