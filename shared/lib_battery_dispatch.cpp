@@ -1003,26 +1003,27 @@ bool dispatch_automatic_t::check_constraints(double &I, int count)
 		if (dispatch_automatic_front_of_meter_t * dispatch = dynamic_cast<dispatch_automatic_front_of_meter_t*>(this))
 			front_of_meter = true;
 
-		// Behind the meter
-		if (!front_of_meter)
-		{
-			iterate = true;
+		// Comomon to Behind the meter and front of meter
+		iterate = true;
 
-			// Try and force controller to meet target or custom dispatch
-			if (P_battery > _P_battery_current + tolerance || P_battery < _P_battery_current - tolerance)
-			{
-				// But only if it's possible to meet without break grid-charge contraint
-				if (_P_battery_current < 0 && _can_grid_charge || _P_battery_current > 0)
-				{
-				double dP = P_battery - _P_battery_current;
+		// Try and force controller to meet target or custom dispatch
+		if (P_battery > _P_battery_current + tolerance || P_battery < _P_battery_current - tolerance)
+		{
+			// But only if it's possible to meet without break grid-charge contraint
+			double dP = P_battery - _P_battery_current;
+
+			if (_P_battery_current < 0 && dP < 0 || _can_grid_charge || _P_battery_current > 0) {
 				I -= dP * util::kilowatt_to_watt / _Battery->battery_voltage();
 			}
-				else {
-					iterate = false;
-				}
+			else {
+				iterate = false;
 			}
+		}
+		// Behind the meter
+		else if (!front_of_meter)
+		{
 			// Don't let PV export to grid if can still charge battery (increase charging)
-			else if (_P_pv_to_grid > tolerance && _can_charge && _Battery->battery_soc() < _SOC_max - tolerance && fabs(I) < fabs(_Ic_max))
+			if (_P_pv_to_grid > tolerance && _can_charge && _Battery->battery_soc() < _SOC_max - tolerance && fabs(I) < fabs(_Ic_max))
 			{
 				if (fabs(_P_tofrom_batt) < tolerance)
 					I -= (_P_pv_to_grid * util::kilowatt_to_watt / _Battery->battery_voltage());
@@ -1040,6 +1041,8 @@ bool dispatch_automatic_t::check_constraints(double &I, int count)
 			else
 				iterate = false;
 		}
+		else
+			iterate = false;
 
 		// don't allow any changes to violate current limits
 		bool current_iterate = restrict_current(I);
@@ -1575,15 +1578,11 @@ void dispatch_automatic_front_of_meter_t::dispatch(size_t year,
 	double)
 {
 	size_t step_per_hour = (size_t)(1 / _dt_hour);
-	size_t idx = 0;
-
-	if (_mode == LOOK_AHEAD || _mode == LOOK_BEHIND || _mode == MAINTAIN_TARGET)
-		idx = util::index_year_hour_step(year, hour_of_year, step, step_per_hour);
+	size_t idx = util::index_year_hour_step(year, hour_of_year, step, step_per_hour);
 
 	prepare_dispatch(hour_of_year, step, P_pv_dc_charging, P_pv_dc_discharging, P_load_dc_charging, P_load_dc_discharging, P_pv_dc_clipping);
 	update_dispatch(hour_of_year, step, idx);
 	dispatch_automatic_t::dispatch(year, hour_of_year, step, P_pv_dc_charging, P_pv_dc_discharging, P_load_dc_charging, P_load_dc_discharging, P_pv_dc_clipping, _P_battery_current);
-
 }
 
 void dispatch_automatic_front_of_meter_t::update_dispatch(size_t hour_of_year, size_t step_of_hour, size_t idx)
