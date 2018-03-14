@@ -200,6 +200,7 @@ struct batt_variables
 	util::matrix_t<size_t> ppa_weekend_schedule;
 
 	/*! Energy rates */
+	bool ec_rate_defined;
 	util::matrix_t<size_t> ec_weekday_schedule;
 	util::matrix_t<size_t> ec_weekend_schedule;
 	util::matrix_t<double> ec_tou_matrix;
