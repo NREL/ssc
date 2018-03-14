@@ -129,7 +129,7 @@ public:
 			if (count < 2) throw general_error("need at least 2 data points in irradproc");
 			diff = as_array("diffuse", &count);
 		}
-		if (irrad_mode == 1) //global and beam
+		else if (irrad_mode == 1) //global and beam
 		{
 			beam = as_array("beam", &count);
 			if (count < 2) throw general_error("need at least 2 data points in irradproc");
@@ -162,7 +162,8 @@ public:
 		int track_mode = as_integer("track_mode");
 		double rotlim = as_double("rotlim");
 		bool en_backtrack = as_boolean("backtrack");
-		double gcr = as_double("gcr");
+		double gcr = 0; //use a default value since it's needed to be passed into the set_surface function, but isn't used subsequently
+		if (is_assigned("gcr")) gcr = as_double("gcr");
 
 		double alb_const = as_double("albedo_const");
 		ssc_number_t *albvec = 0;
