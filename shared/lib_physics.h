@@ -69,7 +69,7 @@ namespace physics
 	const double GRAVITY_FTS2 =		   32.174;					// ft per second^2
 	const double SPECIFIC_HEAT_LIQUID_WATER = 4.183 /*4.1813*/;	// J/g*K = joules per gram-degrees K; 4.183 is value currently in Fortran
 	const double WATER_DENSITY =	   62.4;					// lb/ft^3
-	const double R_Gas =              287.058;
+	const double R_GAS_DRY_AIR =              287.058;
 
 	const double GAS_CONSTANT_SUPER_HEATED_STEAM =		0.461522;		// kJ/kg-K
 	const double MIN_TEMP_FOR_SUPER_HEATED =		  647.073;			// deg K
@@ -81,9 +81,15 @@ namespace physics
 	inline double FarenheitToCelcius(const double &dTempInFarenheit) { return ((5.0/9.0) * (dTempInFarenheit - 32.0)); };
 	inline double CelciusToFarenheit(const double &dTempInCelcius) { return (1.8 * dTempInCelcius) + 32.0; };
 
-	inline double KelvinToCelcius(const double &dTempInKelvin) { return (dTempInKelvin-273.15); }
-	inline double CelciusToKelvin(const double &dTempInCelcius) { return (dTempInCelcius+273.15); }
-	
+	//inline constexpr double KelvinToCelcius(const double dTempInKelvin) { return (dTempInKelvin-273.15); }
+	//inline constexpr double CelciusToKelvin(const double dTempInCelcius) { return (dTempInCelcius+273.15); }
+#ifdef _WIN32
+	inline  double KelvinToCelcius(const double &dTempInKelvin) { return (dTempInKelvin-273.15); }
+	inline  double CelciusToKelvin(const double &dTempInCelcius) { return (dTempInCelcius+273.15); }
+#else
+	inline constexpr double KelvinToCelcius(const double dTempInKelvin) { return (dTempInKelvin-273.15); }
+	inline constexpr double CelciusToKelvin(const double dTempInCelcius) { return (dTempInCelcius+273.15); }
+#endif
 	inline double FarenheitToKelvin(const double &dTempInFarenheit) {return (CelciusToKelvin(FarenheitToCelcius(dTempInFarenheit))); };
 	inline double KelvinToFarenheit(const double &dTempInKelvin) {return (CelciusToFarenheit(KelvinToCelcius(dTempInKelvin))); };
 
@@ -103,7 +109,7 @@ namespace physics
 
 	bool EnthalpyFromTempAndPressure(double tempK, double pressureBar, double& enthalpy );
 
-	const double AIR_DENSITY_SEA_LEVEL = Pa_PER_Atm/(R_Gas * CelciusToKelvin(15)); // kg/m^3 at sea level (1 atm) and 15 C
+	const double AIR_DENSITY_SEA_LEVEL = Pa_PER_Atm/(R_GAS_DRY_AIR * CelciusToKelvin(15)); // kg/m^3 at sea level (1 atm) and 15 C
 };
 
 

@@ -86,7 +86,7 @@ double CSP::interp(util::matrix_t<double> *data, double x, int low_bound, int up
 	if(low_bound < 0) low_bound = 0;
 	if (up_bound < 0) up_bound = (int)data->ncols() - 1;	//Index of the last entry
 
-	if(up_bound < low_bound) return NULL;
+	if(up_bound < low_bound) return 0;
 	if(up_bound == low_bound) return data->at(1,low_bound);
 		
 	int jl = low_bound, ju = up_bound;
@@ -143,7 +143,7 @@ double CSP::interp(double *xdat, double *ydat, double x, int low_bound, int up_b
 	Method uses bisection.
 	*/
 
-	if(up_bound < low_bound) return NULL;
+	if(up_bound < low_bound) return 0;
 	if(up_bound == low_bound) return ydat[up_bound];
 		
 	int jl = low_bound, ju = up_bound;
@@ -2213,7 +2213,7 @@ void Evacuated_Receiver::EvacReceiver(double T_1_in, double m_dot, double T_amb,
 	// Re-guess criteria
 	do
 	{
-		if( reguess_args == NULL || time <= 2 || ((int)reguess_args[0] == 1) != m_Glazing_intact.at(hn,hv) || m_P_a.at(hn,hv) != reguess_args[1] || fabs(reguess_args[2]-T_1_in) > 50.0 )
+		if( time <= 2 || ((int)mv_reguess_args[0] == 1) != m_Glazing_intact.at(hn,hv) || m_P_a.at(hn,hv) != mv_reguess_args[1] || fabs(mv_reguess_args[2]-T_1_in) > 50.0 )
 		{
 			reguess = true;
 			break;
@@ -2260,12 +2260,10 @@ void Evacuated_Receiver::EvacReceiver(double T_1_in, double m_dot, double T_amb,
 				T_upper_max = m_T_save.at(2,0) - 0.5*(m_T_save.at(2,0) - T_amb);			// Also high upper limit for T4
 			}
 			m_T_save.at(4,0) = m_T_save.at(3,0) - 2.0;
-			if( reguess_args != NULL )
-			{
-				reguess_args[1] = m_P_a.at(hn,hv);				// Reset previous pressure
-				reguess_args[0] = m_Glazing_intact.at(hn,hn);	// Reset previous glazing logic
-				reguess_args[2] = T_1_in;						// Reset previous T_1_in
-			}
+
+			mv_reguess_args[1] = m_P_a.at(hn,hv);				// Reset previous pressure
+			mv_reguess_args[0] = m_Glazing_intact.at(hn,hn);	// Reset previous glazing logic
+			mv_reguess_args[2] = T_1_in;						// Reset previous T_1_in
 		}
 		else
 		{
@@ -2274,11 +2272,10 @@ void Evacuated_Receiver::EvacReceiver(double T_1_in, double m_dot, double T_amb,
 			m_T_save.at(2,0) = m_T_save.at(1,0) + 5.0;
 			m_T_save.at(3,0) = T_amb;
 			m_T_save.at(4,0) = T_amb;
-			if( reguess_args != NULL )
-			{
-				reguess_args[0] = m_Glazing_intact.at(hn,hv) ? 1.0 : 0.0;		// Reset previous glazing logic
-				reguess_args[1] = T_1_in;										// Reset previous T_1_in
-			}
+
+			mv_reguess_args[0] = m_Glazing_intact.at(hn,hv) ? 1.0 : 0.0;		// Reset previous glazing logic
+			mv_reguess_args[1] = T_1_in;										// Reset previous T_1_in
+
 		}
 	}
 

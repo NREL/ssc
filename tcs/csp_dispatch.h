@@ -157,7 +157,8 @@ public:
 
         C_csp_solver_sim_info *siminfo;     //Pointer to existing simulation info object
         C_csp_collector_receiver *col_rec;   //Pointer to collector/receiver object
-        C_csp_messages *messages;   //Pointer to message structure
+		C_csp_power_cycle *mpc_pc;	// Pointer to csp power cycle class object
+		C_csp_messages *messages;   //Pointer to message structure
 
         struct s_efftable
         {
@@ -254,6 +255,7 @@ public:
     {
         double objective;
         double objective_relaxed;
+
         std::vector<bool> rec_operation;   //receiver startup ok?
         std::vector<bool> pb_operation;    //power block startup ok?
         std::vector<bool> pb_standby;    //power block standby ok?
@@ -272,7 +274,8 @@ public:
         util::matrix_t<double> eta_sf_expected;     //Expected solar field thermal efficiency (normalized)
         util::matrix_t<double> eta_pb_expected;     //Expected power cycle conversion efficiency (normalized)
         util::matrix_t<double> w_condf_expected;  //Expected condenser loss coefficient
-        
+		util::matrix_t<double> f_pb_op_limit;  //[-] Maximum normalized cycle output
+
         int solve_iter;             //Number of iterations required to solve
         int solve_state;
         double solve_time;
@@ -344,10 +347,6 @@ public:
     
 
 };
-
-// ----------------------------------------
-
-
 
 
 #endif

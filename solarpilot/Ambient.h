@@ -52,7 +52,6 @@
 #include <string>
 #include <vector>
 
-//#include "Toolbox.h"
 #include "mod_base.h"
 #include "definitions.h"
 
@@ -71,7 +70,6 @@ class Ambient : public mod_base
     var_ambient *_amb_map;
  
  public:
-	//enum CLRSKY_MODEL { MEINEL, HOTTEL, CONSTANT, MOON, ALLEN, WEATHER=-1 };
 
 	void Create(var_map &V);
     void updateCalculatedParameters(var_map &V);
@@ -79,11 +77,9 @@ class Ambient : public mod_base
 
 	static std::string getDefaultSimStep();	//d.o.m., hour, month, dni, pressure, wind
 	
-	DateTime *getDateTimeObj();
-	
 	//Calculation methods
     static void setDateTime(DateTime &DT, double day_hour, double year_day, double year = 2011.);
-	static void calcSunPosition(var_map &V, DTobj &DT, double *az, double *zen); //use some local info, some other info
+	static void calcSunPosition(var_map &V, DTobj &DT, double *az, double *zen, bool wf_time_correction=false); //use some local info, some other info
 	static void calcSunPosition(double lat, double lon, double timezone, double tstep, const DTobj &dt, double *az, double *zen);	//Calculate with these arguments
     static Vect calcSunVectorFromAzZen(double azimuth, double zenith);	//Calculate sun position given specified az/zen values
 	

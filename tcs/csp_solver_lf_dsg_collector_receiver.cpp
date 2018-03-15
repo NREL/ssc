@@ -441,7 +441,9 @@ void C_csp_lf_dsg_collector_receiver::init(const C_csp_collector_receiver::S_csp
 	b_optical_table.AddXAxis(xax, n_cols_abs - 1);
 	b_optical_table.AddYAxis(yax, n_rows_abs - 1);
 	b_optical_table.AddData(data);
-	delete[] xax, yax, data;
+	delete [] xax;
+	delete [] yax;
+	delete [] data;
 	optical_tables.Set_Table(&b_optical_table, 0);
 
 	// *************************
@@ -483,7 +485,9 @@ void C_csp_lf_dsg_collector_receiver::init(const C_csp_collector_receiver::S_csp
 		sh_optical_table.AddXAxis(xax1, n_cols - 1);
 		sh_optical_table.AddYAxis(yax1, n_rows - 1);
 		sh_optical_table.AddData(data1);
-		delete[] xax1, yax1, data1;
+		delete [] xax1;
+		delete [] yax1;
+		delete []data1;
 		optical_tables.Set_Table(&sh_optical_table, 1);
 	}
 	//0608
@@ -2706,46 +2710,44 @@ void C_csp_lf_dsg_collector_receiver::transient_energy_bal_numeric_int(double h_
 	double deltaT_tol = 0.001*T_x0_at_P_in;	//[K]
 	double deltaT = T_out_t_end_prev - T_x0_at_P_in;	//[K]
 
-	if( fabs(deltaT) < deltaT_tol )
-	{
-		double f_deltaT = fabs(deltaT) / deltaT_tol;	//[-]
-
-		if(T_out_t_end_prev > T_x0_at_P_in)
-		{
-			water_prop_error = water_TQ(T_out_t_end_prev, 1.0, &wp);
-			if( water_prop_error != 0 )
-			{
-				throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::transient_energy_bal_numeric_int",
-					"water_TQ T_out_t_end_prev q = 0", water_prop_error));
-			}
-			double h_x1_at_T_prev = wp.enth;	//[kJ/kg]
-
-			h_out_t_end_prev = (1.0 - f_deltaT)*h_in + f_deltaT*h_x1_at_T_prev;	//[kJ/kg]
-		}
-		else
-		{
-			water_prop_error = water_TQ(T_out_t_end_prev, 0.0, &wp);
-			if( water_prop_error != 0 )
-			{
-				throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::transient_energy_bal_numeric_int",
-					"water_TQ T_out_t_end_prev q = 0", water_prop_error));
-			}
-			double h_x0_at_T_prev = wp.enth;	//[kJ/kg]
-
-			h_out_t_end_prev = (1.0 - f_deltaT)*h_in + f_deltaT*h_x0_at_T_prev;	//[kJ/kg]
-		}
-
-		//h_out_t_end_prev = h_in;
-	}
-	else
+	if (fabs(deltaT) >= deltaT_tol)
 	{
 		water_prop_error = water_TP(T_out_t_end_prev, P_in, &wp);
-		if(water_prop_error != 0)
+		if (water_prop_error != 0)
 		{
 			throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::transient_energy_bal_numeric_int",
 				"water_TP error at T_out_t_end_prev and P_in", water_prop_error));
 		}
 		h_out_t_end_prev = wp.enth;		//[kJ/kg]
+	}
+	else
+	{
+		double f_deltaT = fabs(deltaT) / deltaT_tol;	//[-]
+
+		if (T_out_t_end_prev > T_x0_at_P_in)
+		{
+			water_prop_error = water_TQ(T_out_t_end_prev + deltaT, 1.0, &wp);
+			if (water_prop_error != 0)
+			{
+				throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::transient_energy_bal_numeric_int",
+					"water_TQ T_out_t_end_prev q = 0", water_prop_error));
+			}
+			double h_1phase = wp.enth;	//[kJ/kg]
+
+			h_out_t_end_prev = (1.0 - f_deltaT)*h_in + f_deltaT * h_1phase;		//[kJ/kg]
+		}
+		else
+		{
+			water_prop_error = water_TQ(T_out_t_end_prev + deltaT, 0.0, &wp);
+			if (water_prop_error != 0)
+			{
+				throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::transient_energy_bal_numeric_int",
+					"water_TQ T_out_t_end_prev q = 0", water_prop_error));
+			}
+			double h_1phase = wp.enth;	//[kJ/kg]
+
+			h_out_t_end_prev = (1.0 - f_deltaT)*h_in + f_deltaT * h_1phase;	//[kJ/kg]
+		}
 	}
 
 	// Guess2: outlet enthalpy is from a steady state calculation

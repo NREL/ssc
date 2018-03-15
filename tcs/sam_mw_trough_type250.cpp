@@ -639,7 +639,7 @@ private:
 	double ncall_track;
 
 	double T_save[5];
-	double reguess_args[3];
+	std::vector<double> reguess_args;
 	
 	double hour, T_sky;
 
@@ -871,8 +871,8 @@ public:
 		for( int i = 0; i < 5; i++ )
 			T_save[i] = std::numeric_limits<double>::quiet_NaN();
 
-		for( int i = 0; i < 3; i++ )
-			reguess_args[i] = std::numeric_limits<double>::quiet_NaN();
+		reguess_args.resize(3);
+		std::fill(reguess_args.begin(), reguess_args.end(), std::numeric_limits<double>::quiet_NaN());
 
 		m_htf_prop_min = std::numeric_limits<double>::quiet_NaN();
 
@@ -3048,8 +3048,6 @@ set_outputs_and_return:
 		bool glazingIntact = GlazingIntact(hn,hv); //.at(hn, hv);
 
 		//---Re-guess criteria:---
-		if(reguess_args == NULL) goto lab_reguess;
-
 		if(time<=2) goto lab_reguess;
 		
 		if(((int)reguess_args[0] == 1) != GlazingIntact(hn,hv)) goto lab_reguess;	//glazingintact state has changed
@@ -3087,11 +3085,11 @@ lab_keep_guess:
 					T_upper_max = T_save[2] - 0.5*(T_save[2]-T_amb);     //Also, low upper limit for T4
 				}                      
 				T_save[4] = T_save[3] - 2.;
-				if(reguess_args != NULL){
-					reguess_args[1]  = P_a(hn,hv);               //Reset previous pressure
-					reguess_args[0] = GlazingIntact(hn,hv) ? 1. : 0.;   //Reset previous glazing logic
-					reguess_args[2] = T_1_in;            //Reset previous T_1_in
-				}
+
+				reguess_args[1]  = P_a(hn,hv);               //Reset previous pressure
+				reguess_args[0] = GlazingIntact(hn,hv) ? 1. : 0.;   //Reset previous glazing logic
+				reguess_args[2] = T_1_in;            //Reset previous T_1_in
+
 			}
 			else{
 				T_save[0] = T_1_in;
@@ -3099,10 +3097,10 @@ lab_keep_guess:
 				T_save[2] = T_save[1] + 5.;
 				T_save[3] = T_amb;
 				T_save[4] = T_amb;
-				if(reguess_args != NULL){
-					reguess_args[0] = GlazingIntact(hn,hv) ? 1. : 0.;   //Reset previous glazing logic
-					reguess_args[1] = T_1_in;            //Reset previous T_1_in
-				}
+
+				reguess_args[0] = GlazingIntact(hn,hv) ? 1. : 0.;   //Reset previous glazing logic
+				reguess_args[1] = T_1_in;            //Reset previous T_1_in
+
 			}
 		}
 
@@ -4563,7 +4561,7 @@ lab_keep_guess:
 	   * summary - Address of string variable on which summary contents will be written.
 	---------------------------------------------------------------------------------			*/
 
-	void header_design(int nhsec, int nfsec, int nrunsec, double rho, double V_max, double V_min, double m_dot, 
+	void header_design(unsigned nhsec, int nfsec, unsigned nrunsec, double rho, double V_max, double V_min, double m_dot,
 		util::matrix_t<double> &D_hdr, util::matrix_t<double> &D_runner, std::string *summary = NULL){
 	
 		//resize the header matrices if they are incorrect
@@ -4572,10 +4570,11 @@ lab_keep_guess:
 		if(D_runner.ncells() != nrunsec) D_runner.resize(nrunsec);
 
 		//----
-		int nst,nend, nd;
+		int nend, nd;
+		unsigned nst;
 		double m_dot_max, m_dot_min, m_dot_ts, m_dot_hdr, m_dot_2loops, m_dot_temp;
 		
-		for(int i=0; i<nhsec; i++){ D_hdr[i] = 0.; }
+		for (unsigned i=0; i<nhsec; i++){ D_hdr[i] = 0.; }
 
 		//mass flow to section is always half of total
 		m_dot_ts = m_dot/2.;
@@ -4590,7 +4589,7 @@ lab_keep_guess:
 		//other runner diameters
 		m_dot_temp = m_dot_ts*(1.-float(nfsec%4)/float(nfsec));  //mjw 5.4.11 Fix mass flow rate for nfsec/2==odd 
 		if(nrunsec>1) {
-			for(int i=1; i<nrunsec; i++){
+			for (unsigned i=1; i<nrunsec; i++){
 				D_runner[i] = pipe_sched(sqrt(4.*m_dot_temp/(rho*V_max*pi)));
 				m_dot_temp = max(m_dot_temp - m_dot_hdr*2, 0.0);
 			}
@@ -4599,7 +4598,7 @@ lab_keep_guess:
 		//Calculate each section in the header
 		nst=0; nend = 0; nd = 0;
 		m_dot_max = m_dot_hdr;
-		for(int i=0; i<nhsec; i++){
+		for (unsigned i=0; i<nhsec; i++){
 			if((i==nst)&&(nd <= 10)) {
 				//If we've reached the point where a diameter adjustment must be made...
 				//Also, limit the number of diameter reductions to 10
@@ -4634,7 +4633,7 @@ lab_keep_guess:
 				V_max, V_min );
 			summary->append(tstr);
 
-			for(int i=0; i<nrunsec; i++){
+			for (unsigned i=0; i<nrunsec; i++){
 				MySnprintf(tstr, TSTRLEN, "To section %d header pipe diameter: %.4lf m (%.2lf in)\n",i+1, D_runner[i], D_runner[i]*mtoinch);
 				summary->append(tstr);
 			}
@@ -4642,7 +4641,7 @@ lab_keep_guess:
 			summary->append( "Loop No. | Diameter [m] | Diameter [in] | Diam. ID\n--------------------------------------------------\n" );
 
 			nd=1;
-			for(int i=0; i<nhsec; i++){
+			for (unsigned i=0; i<nhsec; i++){
 				if(i>1) {
 					if(D_hdr[i] != D_hdr.at(i-1)) nd=nd+1;
 				}

@@ -53,27 +53,24 @@
 #include <string>
 #include <vector>
 
-using namespace std;
-
-
 //string and data handling methods
-extern vector< string > split( const string &str, const string &delim, bool ret_empty=false, bool ret_delim=false );
-extern string join( const vector< string > &list, const string &delim );
+extern std::vector< std::string > split( const std::string &str, const std::string &delim, bool ret_empty=false, bool ret_delim=false );
+extern std::string join( const std::vector< std::string > &list, const std::string &delim );
 		
-extern bool to_integer(const string &str, int *x);
-extern bool to_float(const string &str, float *x);
-extern bool to_double(const string &str, double *x);
-extern bool to_bool(const string &str, bool &x);
+extern bool to_integer(const std::string &str, int *x);
+extern bool to_float(const std::string &str, float *x);
+extern bool to_double(const std::string &str, double *x);
+extern bool to_bool(const std::string &str, bool &x);
 		
-extern string to_string( int x, const char *fmt="%d" );
-extern string to_string( double x, const char *fmt="%lg" );
+extern std::string to_string( int x, const char *fmt="%d" );
+extern std::string to_string( double x, const char *fmt="%lg" );
 
 
-extern string lower_case( const string &in );
-extern string upper_case( const string &in );
+extern std::string lower_case( const std::string &in );
+extern std::string upper_case( const std::string &in );
 
-extern string ReplaceString(string subject, const string &search, const string &replace);
-extern void ReplaceStringInPlace(string &subject, const string &search, const string &replace);
+extern std::string ReplaceString(std::string subject, const std::string &search, const std::string &replace);
+extern void ReplaceStringInPlace(std::string &subject, const std::string &search, const std::string &replace);
 
 
 //------

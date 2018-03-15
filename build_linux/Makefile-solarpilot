@@ -1,8 +1,9 @@
 VPATH = ../solarpilot
 CC = gcc
 CXX = g++
-CFLAGS = -fPIC -Wall -g -O3 -I../ -D__64BIT__ -I../nlopt 
-CXXFLAGS=-std=c++11 $(CFLAGS)
+WARNINGS = -Wall
+CFLAGS = -fPIC $(WARNINGS) -g -O3 -I../ -D__64BIT__ -I../nlopt
+CXXFLAGS=-std=c++0x $(CFLAGS)
 
 OBJECTS = \
 	fluxsim.o \
@@ -16,7 +17,6 @@ OBJECTS = \
 	Land.o \
 	LayoutSimulateThread.o \
 	OpticalMesh.o \
-	Plant.o \
 	Receiver.o \
 	STObject.o \
 	STSimulateThread.o \

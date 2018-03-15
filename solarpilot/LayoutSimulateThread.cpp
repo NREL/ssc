@@ -202,7 +202,7 @@ void LayoutSimThread::StartThread() //Entry()
 
         vector<double> *tous = &_SF->getVarMap()->fin.pricing_array.Val();
 
-	    int Npos = _SF->getHeliostats()->size();
+	    int Npos = (int)_SF->getHeliostats()->size();
 				
 	    //Simulate for each time
 	    StatusLock.lock();
@@ -243,7 +243,7 @@ void LayoutSimThread::StartThread() //Entry()
                     P.TOUweight = tous->at(DT.GetHourOfYear());
 
 			    //latitude, longitude, and elevation should be set in the input file
-			    Ambient::calcSunPosition(*_SF->getVarMap(), DT, &az, &zen );
+			    Ambient::calcSunPosition(*_SF->getVarMap(), DT, &az, &zen, true );
 		        //If the sun is not above the horizon, don't continue
 		        if( zen > 90. )
 				        continue;

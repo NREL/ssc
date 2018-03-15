@@ -56,10 +56,6 @@
 #include "mod_base.h"
 #include "definitions.h"
 
-//using namespace std;
-
-
-
 //Declare referenced classes
 class Receiver;
 class SolarField;
@@ -165,7 +161,6 @@ public:
 	//Declare the scripts
 	void DefineFluxPoints(var_receiver &V, int rec_geom, int nx=-1, int ny=-1);
 	void Normalize();
-	void Reshape(int nx, int ny);
 	void ClearFluxGrid();
 };
 

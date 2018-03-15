@@ -3,7 +3,7 @@
 *  Copyright 2017 Alliance for Sustainable Energy, LLC
 *
 *  NOTICE: This software was developed at least in part by Alliance for Sustainable Energy, LLC
-*  (“Alliance”) under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
+*  (â€œAllianceâ€) under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
 *  The Government retains for itself and others acting on its behalf a nonexclusive, paid-up,
 *  irrevocable worldwide license in the software to reproduce, prepare derivative works, distribute
 *  copies to the public, perform publicly and display publicly, and to permit others to do so.
@@ -27,8 +27,8 @@
 *  4. Redistribution of this software, without modification, must refer to the software by the same
 *  designation. Redistribution of a modified version of this software (i) may not refer to the modified
 *  version by the same designation, or by any confusingly similar designation, and (ii) must refer to
-*  the underlying software originally provided by Alliance as “System Advisor Model” or “SAM”. Except
-*  to comply with the foregoing, the terms “System Advisor Model”, “SAM”, or any confusingly similar
+*  the underlying software originally provided by Alliance as â€œSystem Advisor Modelâ€ or â€œSAMâ€. Except
+*  to comply with the foregoing, the terms â€œSystem Advisor Modelâ€, â€œSAMâ€, or any confusingly similar
 *  designation may not be used to refer to any modified version of this software or any modified
 *  version of the underlying software originally provided by Alliance without the prior written consent
 *  of Alliance.
@@ -152,7 +152,7 @@ void Land::getExtents(var_map &V, double rval[])
 	By default tht = 1.0
 	The method returns an array size=2: {double min, double max}
 	*/
-	double radmin = NULL, radmax=NULL;
+	double radmin = 0, radmax = 0;
 	double tht = V.sf.tht.val; 
 	bool is_bounds_scaled = V.land.is_bounds_scaled.val; 
 	bool is_bounds_fixed = V.land.is_bounds_fixed.val; 
@@ -167,8 +167,8 @@ void Land::getExtents(var_map &V, double rval[])
 	if(is_bounds_fixed){
 		double min_fixed_rad = V.land.min_fixed_rad.val; 
 		double max_fixed_rad = V.land.max_fixed_rad.val; 
-		if(min_fixed_rad > radmin || radmin == NULL) radmin = min_fixed_rad;	//Only change if the fix min radius is larger than the previous bound
-		if(max_fixed_rad < radmax || radmax == NULL) radmax = max_fixed_rad;	//Only change if the fix max radius is smaller than the previous bound
+		if(min_fixed_rad > radmin || radmin == 0) radmin = min_fixed_rad;	//Only change if the fix min radius is larger than the previous bound
+		if(max_fixed_rad < radmax || radmax == 0) radmax = max_fixed_rad;	//Only change if the fix max radius is smaller than the previous bound
 	}
 	if(is_bounds_array){
 		
@@ -184,7 +184,7 @@ void Land::getExtents(var_map &V, double rval[])
         if( V.land.inclusions.val.size() > 0 )
         {
 		    if(trmax < 0. ) trmax = tht*7.5;	//use the default if nothing is set
-		    if(trmax < radmax || radmax == NULL) radmax = trmax;
+		    if(trmax < radmax || radmax == 0) radmax = trmax;
         }
         else
         {
@@ -247,7 +247,7 @@ void Land::getExtents(var_map &V, double rval[])
 			}
 		}
 		if(excheck > trmin && excheck < 9.e9) trmin = excheck;		if(trmin > radmax) trmin = 0.001;	//Use a small number larger than zero if nothing is set
-		if(trmin > radmin || radmin == NULL) radmin = trmin;
+		if(trmin > radmin || radmin == 0) radmin = trmin;
 	}
 	rval[0] = radmin;
 	rval[1] = radmax;
@@ -292,7 +292,7 @@ void Land::getExtents(var_map &V, double rval[])
 //			}
 //		}
 //		if(trmax < 0.) trmax = tht*7.5;	//use the default if nothing is set
-//		if(trmax < radmax || radmax == NULL){radmax = trmax;}	
+//		if(trmax < radmax || radmax == 0){radmax = trmax;}
 //
 //		//values for finding the minimum radius
 //		double trmin = 9.e9; 
@@ -349,7 +349,7 @@ void Land::getExtents(var_map &V, double rval[])
 //		if(excheck > trmin && excheck < 9.e9) trmin = excheck;
 //
 //		if(trmin > radmax) trmin = 0.001;	//Use a small number larger than zero if nothing is set
-//		if(trmin > radmin || radmin == NULL) radmin = trmin;
+//		if(trmin > radmin || radmin == 0) radmin = trmin;
 //	}
 //	rval[0] = radmin;
 //	rval[1] = radmax;
@@ -361,22 +361,22 @@ void Land::getRadialExtents(var_map &V, double rval[2], double tht){
 	radial boundary settings and not to the polygonal boundary settings. If no radial boundaries are used,
 	return [-1,-1].
 	*/
-	double radmin = NULL, radmax=NULL;
+	double radmin = 0, radmax = 0;
 	
 	if(V.land.is_bounds_scaled.val){
 		radmin = V.land.min_scaled_rad.val * tht;
 		radmax = V.land.max_scaled_rad.val * tht;
 	}
 	if(V.land.is_bounds_fixed.val){
-		if(V.land.min_fixed_rad.val > radmin || radmin == NULL){radmin = V.land.min_fixed_rad.val;}	//Only change if the fix min radius is larger than the previous bound
-		if(V.land.max_fixed_rad.val < radmax || radmax == NULL){radmax = V.land.max_fixed_rad.val;}	//Only change if the fix max radius is smaller than the previous bound
+		if(V.land.min_fixed_rad.val > radmin || radmin == 0){radmin = V.land.min_fixed_rad.val;}	//Only change if the fix min radius is larger than the previous bound
+		if(V.land.max_fixed_rad.val < radmax || radmax == 0){radmax = V.land.max_fixed_rad.val;}	//Only change if the fix max radius is smaller than the previous bound
 	}
 	
 	rval[0] = radmin;
 	rval[1] = radmax;
 
-	if(radmin == NULL) rval[0] = -1.;
-	if(radmax == NULL) rval[1] = -1.;
+	if(radmin == 0) rval[0] = -1.;
+	if(radmax == 0) rval[1] = -1.;
 
 
 
@@ -424,14 +424,18 @@ double Land::calcPolyLandArea(var_land &V){
 void Land::calcLandArea(var_land &V, vector<sp_point> &layout)
 {
 	/* 
-	
+	Calculate the land area either using provided polygons, or using the convex hull around the heliostat field. 
+
+	For polygons, assume that the geometry provided accurately represents the land area that is to be accounted for in the cost
+	calculations. If only land exclusions are provided, use the convex hull method instead.
 	*/
 
-	if(V.is_bounds_array.val)
+	if(V.is_bounds_array.val && (V.inclusions.val.size() > 0) )
 	{
 		_bound_area = calcPolyLandArea(V);
 	}
-	else{
+	else
+	{
 		//Calculate the convex hull surrounding the heliostat positions
 		std::vector<sp_point> hull;
 		Toolbox::convex_hull(layout, hull);

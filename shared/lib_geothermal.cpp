@@ -76,7 +76,6 @@ namespace geothermal
 
 	const double MAX_TEMP_RATIO = 1.134324;  // max valid value for (resource temp)/(plant design temp) where both are measured in Kelvin
 	const double DEFAULT_AMBIENT_TEMPC_BINARY = 10.0;			// degrees C
-	const double AMBIENT_TEMPC_FOR_GRADIENT = 10.0;				// degrees C, embedded in [2B.Resource&Well Input].D14
 	//const double WET_BULB_TEMPERATURE_FOR_FLASH_CALCS = 15.0;	// degrees C, used in Flash calcs brine effectiveness calcs an flash injection temperature calcs
 	const bool ADDITIONAL_PRESSURE_REQUIRED = false;
 	//const double EFFICIENCY_PUMP_GF = 0.6;
@@ -455,10 +454,10 @@ public:
 
 private:
 	// objects
+	SGeothermal_Outputs* mp_geo_out;
+	SGeothermal_Inputs mo_geo_in;
 	SPowerBlockParameters mo_pb_p;
 	SPowerBlockInputs mo_pb_in;
-	SGeothermal_Inputs mo_geo_in;
-	SGeothermal_Outputs* mp_geo_out;
 	CPowerBlock_Type224 mo_PowerBlock;
 
 	// variables

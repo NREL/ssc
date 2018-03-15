@@ -89,7 +89,7 @@ float calc_dewpt(float db,float rh);
 // see http://www.ejournal.unam.mx/atm/Vol07-3/ATM07304.pdf for eqns.
 double calc_twet( double T, double RH, double P );
 
-static double wiki_dew_calc(double T, double RH)
+static inline double wiki_dew_calc(double T, double RH)
 {
 	// ref: http://en.wikipedia.org/wiki/Dew_point
 
@@ -118,7 +118,6 @@ struct weather_header {
 	std::string source;
 	std::string description;
 	std::string url;
-	bool interpmet;
 	bool hasunits;
 	double tz;
 	double lat;
@@ -195,8 +194,8 @@ public:
 	void rewind(){ m_index = 0; }
 
 	///set the m_index to a specified value. next read will be at this time step index.
-	void set_counter_to(size_t cur_index){
-		if (cur_index >= 0 && cur_index < m_nRecords){
+	void set_counter_to(size_t cur_index) {
+		if (cur_index < m_nRecords){
 			m_index = cur_index;
 		}
 	}
@@ -212,9 +211,6 @@ public:
 	// virtual functions specific to weather data source
 	/// check if the data is available from weather file
 	virtual bool has_data_column(size_t id) = 0;
-
-	/// check if twet or tdew data was calculated from weather data
-	virtual bool has_calculated_data(size_t id) = 0;
 
 	/// reads one more record
 	virtual bool read( weather_record *r ) = 0; 
@@ -246,8 +242,8 @@ public:
 	weatherfile();
 	/* Detects file format, read header information, detects which data columns are available and at what index
 	and read weather record information.
-	Calculates twet if missing, and interpolates meteorological data if requested.*/
-	weatherfile( const std::string &file, bool header_only = false, bool interp = false );
+	Calculates twet if missing*/
+	weatherfile( const std::string &file, bool header_only = false );
 	virtual ~weatherfile();
 
 	void reset();
@@ -255,11 +251,10 @@ public:
 	int type();
 	std::string filename();
 
-	bool open( const std::string &file, bool header_only = false, bool interp = false );
+	bool open( const std::string &file, bool header_only = false );
 
 	bool read( weather_record *r ); 
 	bool has_data_column( size_t id );
-	bool has_calculated_data(size_t id);
 	
 	static std::string normalize_city( const std::string &in );
 	static bool convert_to_wfcsv( const std::string &input, const std::string &output );

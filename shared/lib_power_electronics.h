@@ -167,7 +167,7 @@ public:
 	// return power loss [kW]
 	virtual double gen_ac() = 0;
 	virtual double update_gen_ac(double P_gen_ac) = 0;
-
+	
 	void finalize();
 
 	// iterative solution required

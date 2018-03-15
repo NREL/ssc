@@ -74,9 +74,6 @@ private:
 	util::block_t<double> m_solar_heat_max;
 	util::block_t<double> m_plant_fuel_mass;
 	
-	// Pointer to util::block_t that can be set to whatever performance metric current call wants
-	util::block_t<double> * p_current_table;
-
 	// Cycle 1 calls
 	void set_cycle_table_props();
 	

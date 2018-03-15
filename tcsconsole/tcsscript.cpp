@@ -357,7 +357,7 @@ class ThreadedKernel : public wxThread, public tcskernel
 {
 	int m_threadId;
 	double m_start, m_end, m_step;
-	bool m_storeArr, m_proceedAnyways;
+	bool m_proceedAnyways;
 	int m_maxIter, m_simResult;
 	bool m_ok;
 
@@ -370,7 +370,7 @@ public:
 	ThreadedKernel( tcskernel *setup, tcstypeprovider *prov, int thread_id, 
 		double start, double end, double step, bool store, bool proceed, int maxiter )
 		: wxThread( ::wxTHREAD_JOINABLE ), tcskernel( prov ),
-		m_threadId(thread_id), m_start(start), m_end(end), m_step(step), m_storeArr(store),
+		m_threadId(thread_id), m_start(start), m_end(end), m_step(step),
 		m_proceedAnyways(proceed), m_maxIter(maxiter), m_simResult(0)
 	{
 		m_canceled = false;

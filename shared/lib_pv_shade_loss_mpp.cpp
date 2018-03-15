@@ -67,7 +67,7 @@ typedef unsigned int uint;
 
 short ShadeDB8_mpp::get_vmpp(size_t i)
 {
-	if (i >= 0 && i<6045840) // uint16 check
+	if (i < 6045840) // uint16 check
 		return (short)((p_vmpp[2 * i + 1] << 8) | p_vmpp[2 * i]); 
 	else 
 		return -1;
@@ -75,7 +75,7 @@ short ShadeDB8_mpp::get_vmpp(size_t i)
 
 short ShadeDB8_mpp::get_impp(size_t i)
 { 
-	if (i >= 0 && i<6045840) // uint16 check
+	if (i < 6045840) // uint16 check
 		return (short)((p_impp[2 * i + 1] << 8) | p_impp[2 * i]); 
 	else 
 		return -1; 
@@ -86,7 +86,7 @@ bool ShadeDB8_mpp::get_index(const size_t &N, const size_t &d, const  size_t &t,
 {
 	bool ret_val = false;
 	//size_t ret_ndx=-1;
-	size_t length=0, offset=0;
+	size_t length=0;
 //	size_t length_t =10, length_d=10;
 	size_t iN = 0, id = 0, it = 0;
 
@@ -109,11 +109,9 @@ bool ShadeDB8_mpp::get_index(const size_t &N, const size_t &d, const  size_t &t,
 	{
 		case VMPP:
 			length = 8;
-			offset = 0;
 			break;
 		case IMPP:
 			length = 8;
-			offset = p_vmpp_uint8_size / 2; // short offset
 			break;
 	}
 	if (length == 0) return ret_val;

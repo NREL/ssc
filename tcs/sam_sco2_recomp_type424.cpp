@@ -55,7 +55,8 @@
 
 #include "heat_exchangers.h"
 
-#include "sco2_pc_core.h"
+//#include "sco2_pc_core.h"
+#include "sco2_recompression_cycle.h"
 
 #include "nlopt.hpp"
 #include "nlopt_callbacks.h"
@@ -462,7 +463,6 @@ public:
 		// ******************************************************************************************
 		// Define error and warning message strings
 		std::string error_msg;
-		error_msg[0] = NULL;
 		int auto_err_code = 0;
 		
 		// Setup recompressoin cycle autodes parameter structure
@@ -492,7 +492,7 @@ public:
 			return -1;
 		}
 
-		if( error_msg[0] == NULL )
+		if( error_msg.empty() )
 		{
 			message(TCS_NOTICE, "sCO2 cycle design optimization was successful");
 		}
@@ -539,7 +539,7 @@ public:
 				return -1;
 			}
 		}
-		else if( rec_fl = HTFProperties::User_defined )
+		else if( rec_fl == HTFProperties::User_defined )
 		{
 			int nrows = 0, ncols = 0;
 			double *fl_mat = value(P_rec_fl_props, &nrows, &ncols);
@@ -687,19 +687,11 @@ public:
 		ms_phx_od_par.m_UA_PHX_des = m_UA_PHX_des;
 		ms_phx_od_par.m_cp_htf = m_cp_rec;		
 
-		double C_dot_htf_sby = ms_phx_od_par.m_m_dot_htf * ms_phx_od_par.m_cp_htf;
-
-		//ms_rc_cycle.opt_od_eta_for_hx(ms_rc_od_par, ms_phx_od_par, q_sby_error_code);
-
 		if( q_sby_error_code != 0 )
 		{
 			message(TCS_ERROR, "The power cycle model crashes at the specified cutoff fraction, %lg. Try increasing this value", cutoff_frac);
 			return -1;
 		}
-
-		double Q_dot_PHX_sby = ms_rc_cycle.get_od_solved()->m_Q_dot;
-
-		//double T_htf_cold_calc = m_T_htf_hot - Q_dot_PHX_sby / C_dot_htf_sby;
 
 		double m_T_PHX_in_sby = ms_rc_cycle.get_od_solved()->m_temp[5 - 1];
 

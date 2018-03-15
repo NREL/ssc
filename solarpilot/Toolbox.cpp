@@ -187,7 +187,6 @@ double &Vect::operator[](int index){
 	if( index == 1) return j;
 	if( index == 2) return k;
 	throw spexception("Index out of range in Vect()"); //range error
-	return i;
 };
 
 
@@ -490,7 +489,7 @@ void WeatherData::initPointers(){
 	v_ptrs.at(6) = &V_wind;
 	v_ptrs.at(7) = &Step_weight;
 	//Initialize the number of items
-	_N_items = Day.size();
+	_N_items = (int)Day.size();
 }
 
 void WeatherData::resizeAll(int size, double val){ 
@@ -795,7 +794,13 @@ int Toolbox::polywind( const vector<sp_point> &vt, const sp_point &pt) {
 
 	//Declarations
 	int i, np, wind = 0, which_ign;
-	double d0, d1, p0, p1, pt0, pt1; 
+	double 
+        d0=0., 
+        d1=0., 
+        p0=0., 
+        p1=0., 
+        pt0=0., 
+        pt1=0.; 
 	
 	/*The 2D polywind function can be mapped to 3D polygons by choosing a single dimension to 
 	ignore. The best ignored dimension corresponds to the largest magnitude component of the
@@ -806,10 +811,6 @@ int Toolbox::polywind( const vector<sp_point> &vt, const sp_point &pt) {
 	v2.Set((vt.at(2).x-vt.at(1).x),(vt.at(2).y - vt.at(1).y),(vt.at(2).z - vt.at(1).z));
 	Vect pn = crossprod( v1, v2 );
 
-	//PointVect ptX=vt.at(0);
-	//if (pn.j >= pn.i) {which_ign=1;}
-	//if (pn.k >= pn.j) {which_ign=2;}
-	//if (pn.i >= pn.k) {which_ign=0;}
 	which_ign = 1;
 	if(fabs(pn.j) > fabs(pn.i)) {which_ign=1;}
 	if(fabs(pn.k) > fabs(pn.j)) {which_ign=2;}
@@ -980,7 +981,7 @@ void Toolbox::rotation(double theta, int axis, sp_point &P){
 		MR2i = 0; MR2j = 0; MR2k = 1;
 		break;
 	default:
-		;
+		throw spexception("Internal error: invalid axis number specified in rotation() method.");
 	}
 
 	//Create a copy of the point
@@ -1174,7 +1175,7 @@ void Toolbox::convex_hull(std::vector<sp_point> &points, std::vector<sp_point> &
 	Source: http://en.wikibooks.org/wiki/Algorithm_Implementation/Geometry/Convex_hull/Monotone_chain
 
 	*/
-	int n = points.size(), k = 0;
+	int n = (int)points.size(), k = 0;
 	vector<sp_point> H(2*n);
 
     //copy points
@@ -1430,7 +1431,7 @@ void Toolbox::poly_from_svg(std::string &svg, std::vector< sp_point > &polygon, 
                 }
             }
 
-            int npt = points.size();
+            int npt = (int)points.size();
 
             switch (move)
             {
@@ -1839,7 +1840,8 @@ double Toolbox::intersect_ellipse_rect(double rect[4], double ellipse[2]){
 }
 
 string Toolbox::getDelimiter(std::string &text){
-	if( text.c_str() == "") return ",";
+	if (text.empty())
+	  return ",";
 	//Find the type of delimiter
 	vector<string> delims;
 	delims.push_back(",");

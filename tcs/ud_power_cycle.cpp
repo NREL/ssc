@@ -392,7 +392,7 @@ void C_ud_pc_table_generator::send_callback(int run_number, int n_runs_total,
 	if (mf_callback && mp_mf_active)
 	{
 		m_log_msg = util::format("[%d/%d] At T_htf = %lg [C],"
-			" normalized m_dot = %lg [kg/s],"
+			" normalized m_dot = %lg,"
 			" and T_amb = %lg [C]. The normalized outputs are: gross power = %lg,"
 			" thermal input = %lg, cooling power = %lg, and water use = %lg",
 			run_number, n_runs_total,

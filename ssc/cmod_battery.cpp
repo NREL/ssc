@@ -113,8 +113,9 @@ var_info vtab_battery_inputs[] = {
 	{ SSC_INPUT,		SSC_NUMBER,		"LeadAcid_tn",	                               "Time to discharge",                                      "h",        "",                     "Battery",       "",                           "",                             "" },
 
 	// charge limits and priority inputs
-	{ SSC_INPUT,        SSC_NUMBER,      "batt_minimum_SOC",		                   "Minimum allowed state-of-charge",                         "V",       "",                     "Battery",       "",                           "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "batt_maximum_SOC",                           "Minimum allowed state-of-charge",                         "V",       "",                     "Battery",       "",                           "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "batt_initial_SOC",		                   "Initial state-of-charge",                                 "%",       "",                     "Battery",       "",                           "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "batt_minimum_SOC",		                   "Minimum allowed state-of-charge",                         "%",       "",                     "Battery",       "",                           "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "batt_maximum_SOC",                           "Minimum allowed state-of-charge",                         "%",       "",                     "Battery",       "",                           "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "batt_minimum_modetime",                      "Minimum time at charge state",                            "min",     "",                     "Battery",       "",                           "",                              "" },
 
 	// lifetime inputs
@@ -307,7 +308,7 @@ battstor::battstor(compute_module &cm, bool setup_model, int replacement_option,
 				batt_vars->LeadAcid_qn_computed = cm.as_double("LeadAcid_qn_computed");
 				batt_vars->LeadAcid_tn = cm.as_double("LeadAcid_tn");
 			}
-
+			batt_vars->batt_initial_SOC = cm.as_double("batt_initial_SOC");
 			batt_vars->batt_maximum_SOC = cm.as_double("batt_maximum_soc");
 			batt_vars->batt_minimum_SOC = cm.as_double("batt_minimum_soc");
 			batt_vars->batt_current_charge_max = cm.as_double("batt_current_charge_max");
@@ -394,7 +395,6 @@ battstor::battstor(compute_module &cm, bool setup_model, int replacement_option,
 	if (!en) return;
 
 	// time quantities
-	year = 0;
 	nyears = 1;
 	_dt_hour = dt_hr;
 	step_per_hour = nrec / 8760;
@@ -632,19 +632,20 @@ battstor::battstor(compute_module &cm, bool setup_model, int replacement_option,
 			batt_vars->LeadAcid_tn,
 			batt_vars->LeadAcid_qn_computed,
 			batt_vars->LeadAcid_q10_computed,
+			batt_vars->batt_initial_SOC,
 			batt_vars->batt_maximum_SOC,
 			batt_vars->batt_minimum_SOC);
 	}
 	else if (chem == battery_t::LITHIUM_ION)
 	{
 		capacity_model = new capacity_lithium_ion_t(
-			batt_vars->batt_Qfull*batt_vars->batt_computed_strings, batt_vars->batt_maximum_SOC, batt_vars->batt_minimum_SOC);
+			batt_vars->batt_Qfull*batt_vars->batt_computed_strings, batt_vars->batt_initial_SOC, batt_vars->batt_maximum_SOC, batt_vars->batt_minimum_SOC);
 	}
 	// for now assume Flow Batteries responds quickly, like Lithium-ion, but with an independent capacity/power
 	else if (chem == battery_t::VANADIUM_REDOX || chem == battery_t::IRON_FLOW)
 	{
 		capacity_model = new capacity_lithium_ion_t(
-			batt_vars->batt_Qfull_flow, batt_vars->batt_maximum_SOC, batt_vars->batt_minimum_SOC);
+			batt_vars->batt_Qfull_flow, batt_vars->batt_initial_SOC, batt_vars->batt_maximum_SOC, batt_vars->batt_minimum_SOC);
 	}
 
 	// accumulate monthly losses
@@ -829,21 +830,21 @@ battstor::~battstor()
 	if (make_vars) delete batt_vars;
 }
 
-void battstor::check_replacement_schedule(int batt_replacement_option, size_t count_batt_replacement, ssc_number_t *batt_replacement, int iyear, int hour, int step)
+void battstor::check_replacement_schedule(int batt_replacement_option, size_t count_batt_replacement, ssc_number_t *batt_replacement )
 {
 	if (batt_replacement_option == battery_t::REPLACE_BY_SCHEDULE)
 	{
 		// don't allow replacement on first hour of first year
-		if (hour == 0 && iyear == 0)
+		if (hour == 0 && year == 0)
 			return;
 
 		bool replace = false;
-		if (iyear < (int)count_batt_replacement)
+		if (year < count_batt_replacement)
 		{
-			ssc_number_t num_repl = batt_replacement[iyear];
+			ssc_number_t num_repl = batt_replacement[year];
 			for (int j_repl = 0; j_repl < num_repl; j_repl++)
 			{
-				if ((hour == (int)(j_repl*8760.0 / num_repl)) && step == 0)
+				if ((hour == (j_repl * 8760 / num_repl)) && step == 0)
 				{
 					replace = true;
 					break;
@@ -860,21 +861,27 @@ void battstor::force_replacement()
 	battery_model->runLifetimeModel(0);
 }
 
-void battstor::advance(compute_module &cm, size_t year, size_t hour_of_year, size_t step, double P_pv_dc , double P_load_dc )
+void battstor::initialize_time(size_t year_in, size_t hour_of_year, size_t step_of_hour)
 {
-	size_t index = (hour_of_year * step_per_hour) + step;
-	charge_control->run(year, hour_of_year, step, index, P_pv_dc, P_load_dc);
-	outputs_fixed(cm, year, hour_of_year, step);
-	outputs_topology_dependent(cm, year, hour_of_year, step);
+	step = step_of_hour;
+	hour = hour_of_year;
+	year = year_in;
+	index = (year * 8760 + hour) * step_per_hour + step;
+	year_index = (hour * step_per_hour) + step;
+}
+void battstor::advance(compute_module &cm, double P_pv_dc , double P_load_dc )
+{
+	charge_control->run(year, hour, step, year_index, P_pv_dc, P_load_dc);
+	outputs_fixed(cm);
+	outputs_topology_dependent(cm);
 
 	if (topology == charge_controller::AC_CONNECTED)
-		metrics(cm, year, hour_of_year, step);
+		metrics(cm);
 }
 
-void battstor::outputs_fixed(compute_module &cm, size_t year, size_t hour_of_year, size_t step)
+void battstor::outputs_fixed(compute_module &cm)
 {
-	size_t idx = (year * 8760 + hour_of_year)*step_per_hour + step;
-	if (idx == total_steps - 1)
+	if (index == total_steps - 1)
 		process_messages(cm);
 
 	// non-lifetime outputs
@@ -883,65 +890,62 @@ void battstor::outputs_fixed(compute_module &cm, size_t year, size_t hour_of_yea
 		// Capacity Output with Losses Applied
 		if (capacity_kibam_t * kibam = dynamic_cast<capacity_kibam_t*>(capacity_model))
 		{
-			outAvailableCharge[idx] = (ssc_number_t)(kibam->q1());
-			outBoundCharge[idx] = (ssc_number_t)(kibam->q2());
+			outAvailableCharge[index] = (ssc_number_t)(kibam->q1());
+			outBoundCharge[index] = (ssc_number_t)(kibam->q2());
 		}
-		outMaxCharge[idx] = (ssc_number_t)(capacity_model->qmax());
-		outMaxChargeThermal[idx] = (ssc_number_t)(capacity_model->qmax_thermal());
-		outTotalCharge[idx] = (ssc_number_t)(capacity_model->q0());
-		outCurrent[idx] = (ssc_number_t)(capacity_model->I());
-		outBatteryVoltage[idx] = (ssc_number_t)(voltage_model->battery_voltage());
-		outBatteryTemperature[idx] = (ssc_number_t)(thermal_model->T_battery() - 273.15);
-		outCapacityThermalPercent[idx] = (ssc_number_t)(thermal_model->capacity_percent());
+		outMaxCharge[index] = (ssc_number_t)(capacity_model->qmax());
+		outMaxChargeThermal[index] = (ssc_number_t)(capacity_model->qmax_thermal());
+		outTotalCharge[index] = (ssc_number_t)(capacity_model->q0());
+		outCurrent[index] = (ssc_number_t)(capacity_model->I());
+		outBatteryVoltage[index] = (ssc_number_t)(voltage_model->battery_voltage());
+		outBatteryTemperature[index] = (ssc_number_t)(thermal_model->T_battery() - 273.15);
+		outCapacityThermalPercent[index] = (ssc_number_t)(thermal_model->capacity_percent());
 	}
 
 	// Lifetime outputs
-	outCellVoltage[idx] = (ssc_number_t)(voltage_model->cell_voltage());
-	outCycles[idx] = (ssc_number_t)(lifetime_cycle_model->cycles_elapsed());
-	outSOC[idx] = (ssc_number_t)(capacity_model->SOC());
-	outDOD[idx] = (ssc_number_t)(lifetime_cycle_model->cycle_range());
-	outCapacityPercent[idx] = (ssc_number_t)(lifetime_model->capacity_percent());
+	outCellVoltage[index] = (ssc_number_t)(voltage_model->cell_voltage());
+	outCycles[index] = (ssc_number_t)(lifetime_cycle_model->cycles_elapsed());
+	outSOC[index] = (ssc_number_t)(capacity_model->SOC());
+	outDOD[index] = (ssc_number_t)(lifetime_cycle_model->cycle_range());
+	outCapacityPercent[index] = (ssc_number_t)(lifetime_model->capacity_percent());
 }
 
-void battstor::outputs_topology_dependent(compute_module &, size_t year, size_t hour_of_year, size_t step)
+void battstor::outputs_topology_dependent(compute_module &)
 {
-	size_t idx = (year * 8760 + hour_of_year)*step_per_hour + step;
-
 	// Power output (all Powers in kWac)
-	outBatteryPower[idx] = (ssc_number_t)(charge_control->power_tofrom_battery());
-	outGridPower[idx] = (ssc_number_t)(charge_control->power_tofrom_grid());
-	outGenPower[idx] = (ssc_number_t)(charge_control->power_gen());
-	outPVToBatt[idx] = (ssc_number_t)(charge_control->power_pv_to_batt());
-	outGridToBatt[idx] = (ssc_number_t)(charge_control->power_grid_to_batt());
-	outBatteryConversionPowerLoss[idx] = (ssc_number_t)(charge_control->power_conversion_loss());
-	outBatterySystemLoss[idx] = (ssc_number_t)(charge_control->power_system_loss());
-	outPVToGrid[idx] = (ssc_number_t)(charge_control->power_pv_to_grid());
+	outBatteryPower[index] = (ssc_number_t)(charge_control->power_tofrom_battery());
+	outGridPower[index] = (ssc_number_t)(charge_control->power_tofrom_grid());
+	outGenPower[index] = (ssc_number_t)(charge_control->power_gen());
+	outPVToBatt[index] = (ssc_number_t)(charge_control->power_pv_to_batt());
+	outGridToBatt[index] = (ssc_number_t)(charge_control->power_grid_to_batt());
+	outBatteryConversionPowerLoss[index] = (ssc_number_t)(charge_control->power_conversion_loss());
+	outBatterySystemLoss[index] = (ssc_number_t)(charge_control->power_system_loss());
+	outPVToGrid[index] = (ssc_number_t)(charge_control->power_pv_to_grid());
 
 	if (batt_vars->batt_meter_position == dispatch_t::BEHIND)
 	{
-		outPVToLoad[idx] = (ssc_number_t)(charge_control->power_pv_to_load());
-		outBatteryToLoad[idx] = (ssc_number_t)(charge_control->power_battery_to_load());
-		outGridToLoad[idx] = (ssc_number_t)(charge_control->power_grid_to_load());
+		outPVToLoad[index] = (ssc_number_t)(charge_control->power_pv_to_load());
+		outBatteryToLoad[index] = (ssc_number_t)(charge_control->power_battery_to_load());
+		outGridToLoad[index] = (ssc_number_t)(charge_control->power_grid_to_load());
 
 		if (batt_vars->batt_dispatch != dispatch_t::MANUAL)
-			outGridPowerTarget[idx] = (ssc_number_t)(dispatch_model->power_grid_target());
+			outGridPowerTarget[index] = (ssc_number_t)(dispatch_model->power_grid_target());
 
 	}
 	else if (batt_vars->batt_meter_position == dispatch_t::FRONT)
 	{
-		outBatteryToGrid[idx] = (ssc_number_t)(charge_control->power_battery_to_grid());
+		outBatteryToGrid[index] = (ssc_number_t)(charge_control->power_battery_to_grid());
 	}
 }
 
-void battstor::metrics(compute_module &, size_t year, size_t hour_of_year, size_t step)
+void battstor::metrics(compute_module &)
 {
 	size_t annual_index;
 	nyears > 1 ? annual_index = year + 1 : annual_index = 0;
 	outBatteryBankReplacement[annual_index] = (ssc_number_t)(lifetime_model->replacements());
 
-	if ((hour_of_year == 8759) && (step == step_per_hour - 1))
+	if ((hour == 8759) && (step == step_per_hour - 1))
 	{
-//		int replacements = lifetime_model->replacements();
 		lifetime_model->reset_replacements();
 		outAnnualGridImportEnergy[annual_index] = (ssc_number_t)(battery_metrics->energy_grid_import_annual());
 		outAnnualGridExportEnergy[annual_index] = (ssc_number_t)(battery_metrics->energy_grid_export_annual());
@@ -952,7 +956,6 @@ void battstor::metrics(compute_module &, size_t year, size_t hour_of_year, size_
 		outAnnualEnergyLoss[annual_index] = (ssc_number_t)(battery_metrics->energy_loss_annual());
 		outAnnualEnergySystemLoss[annual_index] = (ssc_number_t)(battery_metrics->energy_system_loss_annual());
 		battery_metrics->new_year();
-		year++;
 	}
 	 
 	// Average battery conversion efficiency
@@ -977,13 +980,18 @@ void battstor::metrics(compute_module &, size_t year, size_t hour_of_year, size_
 		outPVChargePercent = 0;
 }
 
-void battstor::update_post_inverted(compute_module &cm, size_t year, size_t hour_of_year, size_t step, double p_gen_ac)
+void battstor::update_post_inverted(compute_module &cm, double p_gen_ac)
 {
 	charge_control->update_gen_ac(p_gen_ac);
-	outputs_topology_dependent(cm, year, hour_of_year, step);
-	metrics(cm, year, hour_of_year, step);
+	outputs_topology_dependent(cm);
+	metrics(cm);
 }
-
+// function needed to correctly calculate P_grid to to additional losses in P_gen post battery like wiring, curtailment, availablity
+void battstor::update_grid_power(compute_module &, double P_gen_ac, double P_load_ac, size_t index_replace)
+{
+	double P_grid = P_gen_ac - P_load_ac;
+	outGridPower[index_replace] = (ssc_number_t)(P_grid);
+}
 bool battstor::check_iterate(size_t count)
 {
 	bool iterate = false;
@@ -1108,12 +1116,13 @@ public:
 					if (batt_meter_position == dispatch_t::BEHIND)
 						load = power_load[count];
 
-					batt.advance(*this, 0, hour, jj, power_input[count] * 0.001, load);
+					batt.initialize_time(0, hour, jj);
+					batt.advance(*this, power_input[count] * 0.001, load);
 
 					if (ac_or_dc == charge_controller::DC_CONNECTED)
 					{
 						double ac = batt.outGenPower[count] * inv_eff;
-						batt.update_post_inverted(*this, 0, hour, jj, ac);
+						batt.update_post_inverted(*this, ac);
 					}
 					count++;
 				}

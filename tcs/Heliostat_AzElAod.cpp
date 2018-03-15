@@ -164,7 +164,7 @@ public:
 		Repeat list for each layer
 		*/
 		int rows, cols;
-		//double *p_map = value( P_eta_map, &rows, &cols );
+		value( P_eta_map, &rows, &cols );
 
 		//get initial values. Track the change in values over the list
 		double

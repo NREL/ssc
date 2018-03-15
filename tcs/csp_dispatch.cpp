@@ -208,6 +208,7 @@ csp_dispatch_opt::csp_dispatch_opt()
     params.q_pb_des = std::numeric_limits<double>::quiet_NaN();
     params.siminfo = 0;   
     params.col_rec = 0;
+	params.mpc_pc = 0;
     params.sf_effadj = 1.;
     params.info_time = 0.;
     params.eta_cycle_ref = std::numeric_limits<double>::quiet_NaN();
@@ -238,6 +239,7 @@ void csp_dispatch_opt::clear_output_arrays()
     outputs.q_pb_target.clear();
     outputs.rec_operation.clear();
     outputs.eta_pb_expected.clear();
+	outputs.f_pb_op_limit.clear();
     outputs.eta_sf_expected.clear();
     outputs.q_sfavail_expected.clear();
     outputs.q_sf_expected.clear();
@@ -253,8 +255,6 @@ void csp_dispatch_opt::clear_output_arrays()
 bool csp_dispatch_opt::check_setup(int nstep)
 {
     //check parameters and inputs to make sure everything has been set up correctly
-    bool ok = true;
-
     if( !m_is_weather_setup ) return false;
     if( params.siminfo == 0 ) return false;
     
@@ -297,6 +297,8 @@ bool csp_dispatch_opt::predict_performance(int step_start, int ntimeints, int di
     outputs.q_sfavail_expected.resize(m_nstep_opt, ns );
     outputs.eta_pb_expected.resize(m_nstep_opt, ns );
     outputs.w_condf_expected.resize(m_nstep_opt, ns );
+	outputs.w_condf_expected.resize(m_nstep_opt, ns);
+	outputs.f_pb_op_limit.resize(m_nstep_opt, ns);
 
     C_csp_weatherreader::S_outputs *weatherstep;
     if( forecast_params.is_stochastic )
@@ -311,6 +313,7 @@ bool csp_dispatch_opt::predict_performance(int step_start, int ntimeints, int di
         double cycle_eff_ave = 0.;
         double q_inc_ave = 0.;
         double wcond_ave = 0.;
+		double f_pb_op_lim_ave = 0.0;
 
         for(int j=0; j<divs_per_int; j++)     //take averages over hour if needed
         {
@@ -370,6 +373,11 @@ bool csp_dispatch_opt::predict_performance(int step_start, int ntimeints, int di
             cycle_eff *= params.eta_cycle_ref;  
             cycle_eff_ave += cycle_eff * ave_weight;
 
+			double f_pb_op_lim_local = std::numeric_limits<double>::quiet_NaN();
+			double m_dot_htf_max_local = std::numeric_limits<double>::quiet_NaN();
+			params.mpc_pc->get_max_power_output_operation_constraints(weatherstep->m_tdry, m_dot_htf_max_local, f_pb_op_lim_local);
+			f_pb_op_lim_ave += f_pb_op_lim_local * ave_weight;	//[-]
+
             //store the condenser parasitic power fraction
                 double wcond_f = params.wcondcoef_table_Tdb.interpolate( weatherstep->m_tdry );
             wcond_ave += wcond_f * ave_weight;
@@ -385,6 +393,8 @@ bool csp_dispatch_opt::predict_performance(int step_start, int ntimeints, int di
             outputs.q_sfavail_expected.at(t,w) = q_inc_ave;
         //power cycle efficiency
             outputs.eta_pb_expected.at(t,w) = cycle_eff_ave;
+		// Maximum power cycle output (normalized)
+			outputs.f_pb_op_limit.at(t, w) = f_pb_op_lim_ave;		//[-]
         //condenser power
             outputs.w_condf_expected.at(t,w) = wcond_ave;
     }
@@ -483,7 +493,6 @@ static void calculate_parameters(csp_dispatch_opt *optinst, unordered_map<std::s
             pars["Z_2"] = 1./(double)m * ( fi - pars["Z_1"] * fhfi );
         }
 
-        double rate1 = 0;
         pars["etap"] = pars["Z_1"]*optinst->params.eta_cycle_ref; //rate2
 
         double limit1 = (-pars["Z_2"]*pars["W_dot_cycle"])/(pars["Z_1"]*optinst->params.eta_cycle_ref);  //q at point where power curve crosses x-axis
@@ -580,7 +589,6 @@ bool csp_dispatch_opt::optimize()
 
         //Calculate the number of variables
         int nt = (int)m_nstep_opt;
-        int nz = (int)params.eff_table_load.get_size();
 
         //set up the variable structure
         optimization_vars O;
@@ -1335,26 +1343,27 @@ bool csp_dispatch_opt::optimize()
             }
         }
 
-		// Maximum electricity production constraint
+        // Maximum gross electricity production constraint
+        {
+            REAL row[1];
+            int col[1];
+
+            for( int t = 0; t<nt; t++ )
+            {
+                row[0] = 1.;
+                col[0] = O.column("wdot", t);
+
+				add_constraintex(lp, 1, row, col, LE, outputs.f_pb_op_limit.at(t) * P["W_dot_cycle"]);
+            }
+        }
+
+		// Maximum net electricity production constraint
 		{
 			REAL row[9];
 			int col[9];
 
 			for (int t = 0; t<nt; t++)
 			{
-				//// Adjust wlim if specified value is too low to permit cycle operation
-				//double wmin = (P["Ql"] * P["etap"]*outputs.eta_pb_expected.at(t) / params.eta_cycle_ref) + (P["Wdotu"] - P["etap"]*P["Qu"])*outputs.eta_pb_expected.at(t) / params.eta_cycle_ref; // Electricity generation at minimum pb thermal input
-				//double max_parasitic = 
-    //                  P["Lr"] * outputs.q_sfavail_expected.at(t) 
-    //                + (params.w_rec_ht / params.dt) 
-    //                + (params.w_stow / params.dt) 
-    //                + params.w_track 
-    //                + params.w_cycle_standby 
-    //                + params.w_cycle_pump*P["Qu"]
-    //                + outputs.w_condf_expected.at(t)*P["W_dot_cycle"];  // Largest possible parasitic load at time t
-
-    //            //save for writing to ampl
-    //            outputs.wnet_lim_min.push_back( wmin - max_parasitic );
                 
                 //check if cycle should be able to operate
 				//if (wmin - max_parasitic > w_lim.at(t))		// power cycle operation is impossible at t
@@ -2126,8 +2135,6 @@ void optimization_vars::add_var(char *vname, int var_type /* VAR_TYPE enum */, i
         throw C_csp_exception("invalid var dimension in add_var");
     case optimization_vars::VAR_DIM::DIM_2T_TRI:
         mem_size = (var_dim_size+1) * var_dim_size/2;
-        break;
-    default:
         break;
     }
 

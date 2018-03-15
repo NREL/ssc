@@ -326,11 +326,12 @@ std::string util::get_cwd()
 {
 	char buf[2048];
 #ifdef _WIN32
-	::GetCurrentDirectoryA( 2047, buf );
+	if (::GetCurrentDirectoryA(sizeof(buf), buf) == 0)
+	  return std::string();
 #else
-	::getcwd(buf, 2047);
+	if (::getcwd(buf, sizeof(buf)) == NULL)
+	  return std::string();
 #endif
-	buf[2047] = 0;
 	return std::string(buf);
 }
 
@@ -559,39 +560,42 @@ int util::sync_piped_process::spawn(const std::string &command, const std::strin
 
 #endif
 
+/**
+* Function returns a formatting string given a variable number of arguments
+* Input example: util::format("There are %d pv panels, with a power rating of %f Wdc", n_panels, n_tilt");
+* Output example: "There are 10 pv panels, with a power rating of 260.0 Wdc"
+* Overly complex for what is really just a more consise way to call sprintf
+*/
 std::string util::format(const char *fmt, ...)
 {
 	if (!fmt || *fmt == 0) return "";
 
+	// variable argument initalization
 	va_list arglist;
 	va_start( arglist, fmt );
 
+	// intialize buffer to read into
 	size_t ret = 0;
-
 	int size = 512;
 	char *buffer = new char[size];
 	if (!buffer)
 		return "";
 
-	do
-	{
-		va_list argptr_copy;
-		va_copy( argptr_copy, arglist );
-		ret = util::format_vn(buffer,size-1,fmt,argptr_copy);
-		va_end( argptr_copy );
+	// Format output string from varargs
+	va_list argptr_copy;
+	va_copy( argptr_copy, arglist );
+	ret = util::format_vn(buffer,size-1,fmt,argptr_copy);
+	va_end( argptr_copy );
 
-		if (ret == 0)
-		{
-			delete [] buffer;
-			size *= 2;
-			buffer = new char[size];
-			if (!buffer)
-				return "";
-		}
-		
+	if (ret == 0)
+	{
+		delete [] buffer;
+		size *= 2;
+		buffer = new char[size];
+		if (!buffer)
+			return "";
 	}
-	while (ret < 0);
-	
+			
 	va_end(arglist);
 
 	std::string s(buffer);
@@ -1065,11 +1069,11 @@ double util::bilinear( double rowval, double colval, const matrix_t<double> &mat
 		return std::numeric_limits<double>::quiet_NaN();
 	
 	int ridx=2; // find row position
-	while( ridx < (int)mat.nrows() && rowval > (int)mat.at(ridx, 0) )
+	while( ridx < (int)mat.nrows() && rowval > mat.at(ridx, 0) )
 		ridx++;
 	
 	int cidx=2; // find col position
-	while( cidx < (int)mat.ncols() && colval > (int)mat.at(0, cidx) )
+	while( cidx < (int)mat.ncols() && colval > mat.at(0, cidx) )
 		cidx++;
 
 	if ( ridx == (int)mat.nrows() ) ridx--;

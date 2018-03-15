@@ -657,9 +657,6 @@ void Heliostat::calcAndSetAimPointFluxPlane(sp_point &aimpos_abs, Receiver &Rec,
     double az = atan2(NV.i, NV.j);
     double el = atan2(NV.k*NV.k, NV.i*NV.i + NV.j*NV.j); 
 
-    var_receiver* R = Rec.getVarMap();
-	(void*)&R;
-
     //rotate into flux plane coordinates
     Toolbox::rotation(PI - az,2,aimpos);
 	Toolbox::rotation(PI/2. - el,0,aimpos);
@@ -745,23 +742,22 @@ Reflector *Heliostat::getPanelById(int id){
 
 	for (int j=0; j<(int)ncantx; j++) {
 		for (int i=0; i<(int)ncanty; i++) {
-			if (_panels[j,i].getId() == id){
-				return &_panels[j,i];
+		  	if (_panels.at(j,i).getId() == id) {
+			  	return &_panels.at(j,i);
 			}
 		}
 	}
 
 	//#####call an error here
-
-	return &_panels[0,0];
+	return &_panels.at(0, 0);
 }
 
 Reflector *Heliostat::getPanel(int row, int col){
 	int nr, nc;
-	nr = _panels.nrows();
-	nc = _panels.ncols();
+	nr = (int)_panels.nrows();
+	nc = (int)_panels.ncols();
 	if(row < nr && col < nc) {
-		return &_panels[row,col];
+	  	return &_panels.at(row, col);
 	}
 	else{
 		//FLAG -- this should be an error

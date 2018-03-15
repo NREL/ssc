@@ -93,7 +93,7 @@ bool ioutil::dir_exists( const char *path )
 	char *wpath = _strdup( path );
 	if (!wpath) return false;
 
-	int pos = strlen(wpath)-1;
+	int pos = (int)strlen(wpath)-1;
 	while (pos > 1 && (wpath[pos] == '/' || wpath[pos] == '\\'))
 	{
 		if (pos == 3 && wpath[pos-1] == ':') break;
@@ -188,11 +188,12 @@ std::string ioutil::get_cwd()
 {
 	char buf[2048];
 #ifdef _WIN32
-	::GetCurrentDirectoryA( 2047, buf );
+	if (::GetCurrentDirectoryA(sizeof(buf), buf) == 0)
+	  return std::string();
 #else
-	::getcwd(buf, 2047);
+	if (::getcwd(buf, sizeof(buf)) == NULL)
+	  return std::string();
 #endif
-	buf[2047] = 0;
 	return std::string(buf);
 }
 
@@ -409,7 +410,7 @@ void ioutil::parseXMLInputFile(const string &fname,var_map &V, parametric &par_d
             {
                 std::string selection = var_node->first_node("value")->value();
                 std::vector< std::string > cbchoices = v->second->combo_get_choices();
-                if( find( cbchoices.begin(), cbchoices.end(), selection ) != cbchoices.end() )
+                if(varname == "temp_which" || find( cbchoices.begin(), cbchoices.end(), selection ) != cbchoices.end() )
                     v->second->set_from_string( selection.c_str() );
             }
             else
@@ -544,13 +545,6 @@ void ioutil::parseXMLInputFile(const string &fname,var_map &V, parametric &par_d
 	}
 	return;
 }
-
-//template<typename T> static std::string my_to_string( T value )
-//{
-//	std::ostringstream os;
-//	os << value;
-//	return os.str();
-//}
 
 
 
@@ -713,7 +707,7 @@ string ioutil::getDelimiter(std::string &text){
 	int ns=0;
 	for(int i=0; i<4; i++){
 		vector<string> data = split(text, delims[i]);
-		if((int)data.size()>ns){ delim = delims[i]; ns = data.size(); }	//pick the delimiter that returns the most entries
+		if((int)data.size()>ns){ delim = delims[i]; ns = (int)data.size(); }	//pick the delimiter that returns the most entries
 	}
 	return delim;
 }
