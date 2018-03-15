@@ -57,6 +57,7 @@ class C_csp_weatherreader;
 class C_csp_solver_sim_info;     //Pointer to existing simulation info object
 class C_csp_collector_receiver;   //Pointer to collector/receiver object
 class C_csp_messages;   //Pointer to message structure
+class C_csp_power_cycle;
 
 //using namespace std;
 
