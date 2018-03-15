@@ -140,6 +140,10 @@ private:
 	double m_total_startup_time; // [s]
 	double m_total_startup_time_initial; //[s]
 	double m_minimum_startup_time; //s
+	double m_total_ramping_time; //s
+	double m_total_ramping_time_initial; //s
+
+
 	int m_n_elem;
 	int m_nz_tot;
 	vector<double> m_tm;		 //[J/K/m]
@@ -147,6 +151,8 @@ private:
 	vector<double> m_od;		 //[m]
 	vector<double> m_id;		 //[m]
 	util::matrix_t<int> m_flowelem_type;
+	util::matrix_t<double> m_tinit;
+	util::matrix_t<double> m_tinit_wall;
 
 	struct transient_inputs
 	{
@@ -154,7 +160,7 @@ private:
 		int nztot;
 		int npath;
 		double inlet_temp;
-		util::matrix_t<double> lam1, lam2, cval, tinit, tinit_wall, Rtube;
+		util::matrix_t<double> lam1, lam2, cval, aval, tinit, tinit_wall, Rtube;
 		vector<double> length, zpts;
 		vector<int> nz, startpt;
 	} trans_inputs;
@@ -184,23 +190,26 @@ private:
 
 	struct parameter_eval_inputs
 	{
-		double T_amb, T_sky, c_htf, rho_htf, mu_htf, k_htf, Pr_htf, mflow_tot;
+		double T_amb, T_sky, pres, wspd, c_htf, rho_htf, mu_htf, k_htf, Pr_htf, mflow_tot, finitial, ffinal, ramptime;
 		vector<double> tm;
 		util::matrix_t<double> Tfeval, Tseval, qinc;
 	} param_inputs;
 
-	double calc_external_convection_coeff(const C_csp_weatherreader::S_outputs &weather, double Twall);
+	double calc_external_convection_coeff(const parameter_eval_inputs &pinputs, double Twall);
 	void calc_header_size(double pdrop, double mdot, double rhof, double muf, double Lh, double &id_calc, double &th_calc, double &od_calc);
 	double interpolate(double x, const vector<double> &xarray, const vector<double> &yarray, int klow, int khigh);
 	double integrate(double xlow, double xhigh, const vector<double> &xarray, const vector<double> &yarray, int klow, int khigh);
-	void calc_ss_profile(const transient_inputs &tinputs, util::matrix_t<double> &tprofile, util::matrix_t<double> &tprofile_wall);
-	void calc_timeavg_temp(double tstep, const transient_inputs &tinputs, util::matrix_t<double> &timeavg);
-	void calc_axial_profile( double tpt, const transient_inputs &tinputs, util::matrix_t<double> &tprofile);
+	void cubic_splines(const vector<double> &xarray, const vector<double> &yarray, util::matrix_t<double> &splines);
 	double calc_single_pt(double tpt, double zpt, int flowid, int pathid, const transient_inputs &tinputs);
-	void calc_extreme_outlet_values(double tstep, const transient_inputs &tinputs, double *tmin, double *tmax, double *tptmin, double *tptmax);
-	void update_pde_parameters(const C_csp_weatherreader::S_outputs &weather, bool use_initial_t, parameter_eval_inputs &pinputs, transient_inputs &tinputs);
-	void solve_transient_model(const C_csp_weatherreader::S_outputs &weather, double tstep, double allowable_Trise, parameter_eval_inputs &pinputs, transient_inputs &tinputs, transient_outputs &toutputs);
-	void solve_transient_startup_model(const C_csp_weatherreader::S_outputs &weather, parameter_eval_inputs &pinputs, transient_inputs &tinputs, int startup_mode, double target_temperature, double min_time, double max_time, transient_outputs &toutputs, double &startup_time, double &energy);
+	double calc_timeavg_exit_temp(double tstep, int flowid, int pathid, const transient_inputs &tinputs);
+
+	
+	void calc_ss_profile(const transient_inputs &tinputs, util::matrix_t<double> &tprofile, util::matrix_t<double> &tprofile_wall);
+	void calc_axial_profile( double tpt, const transient_inputs &tinputs, util::matrix_t<double> &tprofile);
+	void calc_extreme_outlet_values(double tstep, int flowid, const transient_inputs &tinputs, util::matrix_t<double> &textreme, util::matrix_t<double> &tpt);
+	void update_pde_parameters(bool use_initial_t, parameter_eval_inputs &pinputs, transient_inputs &tinputs);
+	void solve_transient_model(double tstep, double allowable_Trise, parameter_eval_inputs &pinputs, transient_inputs &tinputs, transient_outputs &toutputs);
+	void solve_transient_startup_model(parameter_eval_inputs &pinputs, transient_inputs &tinputs, int startup_mode, double target_temperature, double min_time, double max_time, transient_outputs &toutputs, double &startup_time, double &energy);
 
 	enum startup_modes
 	{
@@ -255,7 +264,8 @@ public:
 	double m_riser_tm_mult;			//[]
 	double m_downc_tm_mult;			//[]
 	double m_heat_trace_power;		//[kW/m], convert to [W/m] in init()
-	double m_tube_flux_startup;		//[kW/m2]
+	double m_tube_flux_preheat;		//[kW/m2]
+	double m_flux_ramp_time;		//[hr], convert to [s] in init()
 	double m_preheat_target;		//[C], convert to [k] in init()
 	double m_startup_target;		//[C], convert to [k] in init()
 	double m_initial_temperature;	//[C], convert to [K] in init()

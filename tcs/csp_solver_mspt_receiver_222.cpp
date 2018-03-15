@@ -147,7 +147,8 @@ C_mspt_receiver_222::C_mspt_receiver_222()
 	m_od_downc = std::numeric_limits<double>::quiet_NaN();
 	m_Rtot_riser = std::numeric_limits<double>::quiet_NaN();
 	m_Rtot_downc = std::numeric_limits<double>::quiet_NaN();
-	m_tube_flux_startup = std::numeric_limits<double>::quiet_NaN();
+	m_tube_flux_preheat = std::numeric_limits<double>::quiet_NaN();
+	m_flux_ramp_time = std::numeric_limits<double>::quiet_NaN();
 	m_heat_trace_power = std::numeric_limits<double>::quiet_NaN();
 	m_preheat_target = std::numeric_limits<double>::quiet_NaN();
 	m_startup_target = std::numeric_limits<double>::quiet_NaN();
@@ -164,6 +165,9 @@ C_mspt_receiver_222::C_mspt_receiver_222()
 	m_total_startup_time = std::numeric_limits<double>::quiet_NaN();
 	m_total_startup_time_initial = std::numeric_limits<double>::quiet_NaN();
 	m_minimum_startup_time = std::numeric_limits<double>::quiet_NaN();
+	m_total_ramping_time_initial = std::numeric_limits<double>::quiet_NaN();
+	m_total_ramping_time = std::numeric_limits<double>::quiet_NaN();
+
 }
 
 void C_mspt_receiver_222::init()
@@ -227,6 +231,7 @@ void C_mspt_receiver_222::init()
 	m_T_htf_hot_des += 273.15;	//[K] Convert from input in [C]
 	m_T_htf_cold_des += 273.15;	//[K] Convert from input in [C]
 	m_q_rec_des *= 1.E6;		//[W] Convert from input in [MW]
+	m_flux_ramp_time *= 3600.0;  //[s], convert from input in [hr]
 
 	m_id_tube = m_od_tube - 2 * m_th_tube;			//[m] Inner diameter of receiver tube
 	m_A_tube = CSP::pi*m_od_tube / 2.0*m_h_rec;	//[m^2] Outer surface area of each tube
@@ -397,8 +402,8 @@ void C_mspt_receiver_222::init()
 
 	// Set up PDE parameters : dT/dt + lam1*dT/dz + lam2*T = C
 	m_n_elem = m_n_panels / m_n_lines + 2;		// Number of flow elements in each flow path: Inter-panel headers are lumped with panels for simplicity
-	int nz_panel = 3;						    // Number of axial evaluation points per panel or crossover header
-	int nz_tower = 6;							// Number of axial evaluation points per riser or downcomer
+	int nz_panel = 4;						    // Number of axial evaluation points per panel or crossover header
+	int nz_tower = 8;							// Number of axial evaluation points per riser or downcomer
 	m_nz_tot = nz_panel*m_n_panels / m_n_lines + 2 * nz_tower;	// Total number of axial evaluation points in one flow path
 	int crossposition = 0;
 	if (m_flow_type == 1 || m_flow_type == 2)	// Flow path contains a crossover header
@@ -424,10 +429,14 @@ void C_mspt_receiver_222::init()
 	trans_inputs.lam1.resize_fill(m_n_elem, m_n_lines, 0.0);	// Parameter 1 (lam1) [m/s] 
 	trans_inputs.lam2.resize_fill(m_n_elem, m_n_lines, 0.0);	// Parameter 2 (lam2) [1/s]
 	trans_inputs.cval.resize_fill(m_n_elem, m_n_lines, 0.0);	// Parameter 3 (C) [K/s]
+	trans_inputs.aval.resize_fill(m_n_elem, m_n_lines, 0.0);	// Parameter 4 (a) [K/s^2]
 	trans_inputs.Rtube.resize_fill(m_n_elem, m_n_lines, 0.0);	
-	trans_inputs.tinit.resize_fill(m_nz_tot, m_n_lines, m_initial_temperature);  // Initial temperature profile [K]
-	trans_inputs.tinit_wall.resize_fill(m_nz_tot, m_n_lines, m_initial_temperature);  // Initial wall temperature profile [K]
+	trans_inputs.tinit.resize(m_nz_tot, m_n_lines);
+	trans_inputs.tinit_wall.resize(m_nz_tot, m_n_lines);
 
+	m_tinit.resize_fill(m_nz_tot, m_n_lines, m_initial_temperature);  // Initial temperature profile [K]
+	m_tinit_wall.resize_fill(m_nz_tot, m_n_lines, m_initial_temperature);  // Initial wall temperature profile [K]
+	
 	m_flowelem_type.resize(m_n_elem, m_n_lines);	// Identifier for each flow element in flow path order: positive integer = receiver panel number, -1 = riser, -2 = downcomer, -3 = crossover header
 	m_flowelem_type.fill(0);
 	m_tm.resize(m_n_elem, tm_tube);
@@ -571,8 +580,8 @@ void C_mspt_receiver_222::call(const C_csp_weatherreader::S_outputs &weather,
 	bool rec_is_defocusing = false;
 	double field_eff_adj = 0.0;
 
-	double panel_req_preheat = m_tube_flux_startup * m_od_tube * m_h_rec * m_n_t;					// Panel absorbed solar energy required to meet preheat flux requirement (kW)
-	double total_req_preheat = (m_tube_flux_startup * m_od_tube * m_h_rec * m_n_t) * m_n_panels;	// Total absorbed solar energy on all panels (kW) required to meet preheat flux requirement
+	double panel_req_preheat = m_tube_flux_preheat * m_od_tube * m_h_rec * m_n_t;					// Panel absorbed solar energy required to meet preheat flux requirement (kW)
+	double total_req_preheat = (m_tube_flux_preheat * m_od_tube * m_h_rec * m_n_t) * m_n_panels;	// Total absorbed solar energy on all panels (kW) required to meet preheat flux requirement
 	bool startup_low_flux = false;
 
 	// ************* Outputs for ISCC model ****************
@@ -1055,6 +1064,8 @@ void C_mspt_receiver_222::call(const C_csp_weatherreader::S_outputs &weather,
 	if (!rec_is_off && (m_is_transient || m_is_startup_transient))
 	{
 		trans_inputs.inlet_temp = T_salt_cold_in;
+		trans_inputs.tinit = m_tinit;
+		trans_inputs.tinit_wall = m_tinit_wall;
 		param_inputs.mflow_tot = m_dot_salt_tot;
 		param_inputs.c_htf = field_htfProps.Cp(T_coolant_prop)*1000.0;		// HTF specific heat at average temperature [J/kg-K] 
 		param_inputs.rho_htf = field_htfProps.dens(T_coolant_prop, 1.0);	// HTF density at average temperature [kg/m3]
@@ -1063,6 +1074,8 @@ void C_mspt_receiver_222::call(const C_csp_weatherreader::S_outputs &weather,
 		param_inputs.Pr_htf = param_inputs.c_htf*param_inputs.mu_htf / param_inputs.k_htf;
 		param_inputs.T_amb = T_amb;
 		param_inputs.T_sky = T_sky;
+		param_inputs.wspd = weather.m_wspd;
+		param_inputs.pres = weather.m_pres*100.;
 
 		// Set panel incident solar energy and fill in initial guesses for property evaluation temperatures with steady state values
 		param_inputs.qinc.fill(0.0);				// Solar energy incident on one tube (W)
@@ -1140,7 +1153,10 @@ void C_mspt_receiver_222::call(const C_csp_weatherreader::S_outputs &weather,
 				{
 					param_inputs.tm = m_tm;	// Select combined fluid/solid thermal mass values
 					param_inputs.mflow_tot = m_dot_salt_tot;
-					update_pde_parameters(weather, false, param_inputs, trans_inputs);
+					param_inputs.finitial = 1.0;
+					param_inputs.ffinal = 1.0;
+					param_inputs.ramptime = 0.0;
+					update_pde_parameters(false, param_inputs, trans_inputs);
 					calc_ss_profile(trans_inputs, trans_outputs.t_profile, trans_outputs.t_profile_wall);
 				}
 			}
@@ -1171,6 +1187,7 @@ void C_mspt_receiver_222::call(const C_csp_weatherreader::S_outputs &weather,
 					{
 						m_startup_mode = HEAT_TRACE;
 						m_total_startup_time_initial = 0.0;
+						m_total_ramping_time_initial = 0.0;
 						m_n_call_circ_initial = -1;
 						m_minimum_startup_time = m_rec_su_delay*3600.0;
 						if (!m_is_startup_from_solved_profile)   // Start from ambient temperature
@@ -1201,7 +1218,8 @@ void C_mspt_receiver_222::call(const C_csp_weatherreader::S_outputs &weather,
 					if (m_startup_mode_initial == -1 && !m_is_enforce_min_startup && Tmin_rec > preheat_target)
 						m_minimum_startup_time = 0.0;  // Minimum time not enforced for this start when receiver begins above preheat temperature
 
-					m_total_startup_time = m_total_startup_time_initial;	// Total startup time completed in previous time steps
+					m_total_startup_time = m_total_startup_time_initial;		// Total startup time completed in previous time steps
+					m_total_ramping_time = m_total_ramping_time_initial;
 					m_n_call_circ = m_n_call_circ_initial;
 					util::matrix_t<double> tinit_start = trans_inputs.tinit;    // Initial temperature profile at the start of the overall time step [K]	
 					util::matrix_t<double> tinit_wall_start = trans_inputs.tinit_wall;
@@ -1210,6 +1228,9 @@ void C_mspt_receiver_222::call(const C_csp_weatherreader::S_outputs &weather,
 					while (time_remaining > 0.1 && m_mode == C_csp_collector_receiver::STARTUP)		// Receiver is starting up and there is time remaining in the current time step
 					{
 						trans_inputs.lam1.fill(0.0);  trans_inputs.lam2.fill(0.0);  trans_inputs.cval.fill(0.0);  // Reinitialize PDE solution parameters
+						param_inputs.finitial = 1.0;
+						param_inputs.ffinal = 1.0;
+						param_inputs.ramptime = 0.0;
 
 						switch (m_startup_mode)
 						{
@@ -1222,7 +1243,7 @@ void C_mspt_receiver_222::call(const C_csp_weatherreader::S_outputs &weather,
 								param_inputs.qinc.fill(0.0);
 								param_inputs.tm = m_tm_solid;
 								param_inputs.mflow_tot = 0.0;
-								solve_transient_startup_model(weather, param_inputs, trans_inputs, HEAT_TRACE, heat_trace_target, 0.0, time_remaining, trans_outputs, time_heattrace, q_heat_trace_energy);
+								solve_transient_startup_model(param_inputs, trans_inputs, HEAT_TRACE, heat_trace_target, 0.0, time_remaining, trans_outputs, time_heattrace, q_heat_trace_energy);
 								m_total_startup_time += time_heattrace;		
 								time_remaining -= time_heattrace;	
 								q_startup_energy += q_heat_trace_energy;   
@@ -1246,9 +1267,9 @@ void C_mspt_receiver_222::call(const C_csp_weatherreader::S_outputs &weather,
 							{
 								param_inputs.mflow_tot = 0.0;
 								param_inputs.tm = m_tm_solid;
-								param_inputs.qinc.fill(m_tube_flux_startup*1000. * m_od_tube * m_h_rec); // Absorbed solar energy on tube (W) for preheat stage
+								param_inputs.qinc.fill(m_tube_flux_preheat*1000. * m_od_tube * m_h_rec); // Absorbed solar energy on tube (W) for preheat stage
 								double preheat_energy = std::numeric_limits<double>::quiet_NaN();
-								solve_transient_startup_model(weather, param_inputs, trans_inputs, PREHEAT, preheat_target, 0.0, time_remaining, trans_outputs, time_preheat, preheat_energy);
+								solve_transient_startup_model(param_inputs, trans_inputs, PREHEAT, preheat_target, 0.0, time_remaining, trans_outputs, time_preheat, preheat_energy);
 								q_startup_energy += preheat_energy;
 								m_total_startup_time += time_preheat;									
 								time_remaining -= time_preheat;		
@@ -1286,9 +1307,19 @@ void C_mspt_receiver_222::call(const C_csp_weatherreader::S_outputs &weather,
 							param_inputs.tm = m_tm;
 							param_inputs.qinc = q_inc_panel_full;		
 
+							double ramp_time = 0.0;
+							if (m_flux_ramp_time > 0.0)
+							{
+								ramp_time = fmin(time_remaining, m_flux_ramp_time - m_total_ramping_time);
+								param_inputs.ramptime = ramp_time;
+								param_inputs.finitial = fmin(1.0, m_total_ramping_time / m_flux_ramp_time);   // Fraction of full flux at start of the time step
+								param_inputs.ffinal = fmin(1.0, (m_total_ramping_time + param_inputs.ramptime) / m_flux_ramp_time); // Fraction of full flux at the end of the time step
+							}
+
 							double circulate_energy = std::numeric_limits<double>::quiet_NaN();
-							solve_transient_startup_model(weather, param_inputs, trans_inputs, CIRCULATE, circulation_target, min_circulate_time, time_remaining, trans_outputs, time_circulate, circulate_energy);
+							solve_transient_startup_model(param_inputs, trans_inputs, CIRCULATE, circulation_target, min_circulate_time, time_remaining, trans_outputs, time_circulate, circulate_energy);
 							m_total_startup_time += time_circulate;
+							m_total_ramping_time += ramp_time;
 							q_startup_energy += circulate_energy;
 							time_remaining -= time_circulate;
 							if (time_remaining <= 0.1)			// Target outlet temperature not achieved within the current time step
@@ -1320,7 +1351,7 @@ void C_mspt_receiver_222::call(const C_csp_weatherreader::S_outputs &weather,
 							param_inputs.mflow_tot = m_dot_salt_startup;
 							if (time_hold >= time_remaining)		// Startup time requirement will not be fulfilled in the current time step
 							{
-								solve_transient_model(weather, time_hold, 150.0, param_inputs, trans_inputs, trans_outputs);	// Continue circulating fluid through receiver during hold time
+								solve_transient_model(time_hold, 150.0, param_inputs, trans_inputs, trans_outputs);	// Continue circulating fluid through receiver during hold time
 								q_startup_energy += trans_outputs.timeavg_qnet* time_hold;					// Energy [J] used for startup during the time step	
 								m_total_startup_time += time_hold;
 								time_remaining -= time_hold;	
@@ -1429,7 +1460,7 @@ void C_mspt_receiver_222::call(const C_csp_weatherreader::S_outputs &weather,
 				{
 					param_inputs.tm = m_tm;	
 					param_inputs.mflow_tot = m_dot_salt_tot;
-					update_pde_parameters(weather, false, param_inputs, trans_inputs);
+					update_pde_parameters(false, param_inputs, trans_inputs);
 					calc_ss_profile(trans_inputs, trans_outputs.t_profile, trans_outputs.t_profile_wall);
 				}
 
@@ -1454,7 +1485,10 @@ void C_mspt_receiver_222::call(const C_csp_weatherreader::S_outputs &weather,
 				{
 					param_inputs.tm = m_tm;	// Set thermal mass values with both fluid and solid
 					param_inputs.mflow_tot = m_dot_salt_tot;
-					solve_transient_model(weather, step, 100.0, param_inputs, trans_inputs, trans_outputs);
+					param_inputs.finitial = 1.0;
+					param_inputs.ffinal = 1.0;
+					param_inputs.ramptime = 0.0;
+					solve_transient_model(step, 100.0, param_inputs, trans_inputs, trans_outputs);
 					trans_outputs.timeavg_eta_therm = 1.0 - (trans_outputs.timeavg_conv_loss + trans_outputs.timeavg_rad_loss) / (q_dot_inc_sum * 1000.);	//[-] Time-averaged recevier thermal efficiency during the time step
 				}
 			}
@@ -1643,9 +1677,13 @@ void C_mspt_receiver_222::off(const C_csp_weatherreader::S_outputs &weather,
 		param_inputs.qinc.fill(0.0);
 		param_inputs.tm = m_tm_solid;
 		param_inputs.mflow_tot = 0.0;
-		trans_inputs.tinit = trans_inputs.tinit_wall; // Set "fluid" temperature to wall temperature
+		param_inputs.wspd = weather.m_wspd;
+		param_inputs.pres = weather.m_pres*100.;
+		
+		trans_inputs.tinit = m_tinit_wall;
+		trans_inputs.tinit_wall = m_tinit_wall;
 		trans_inputs.inlet_temp = 0.0;
-		solve_transient_model(weather,step, 50.0, param_inputs, trans_inputs, trans_outputs);
+		solve_transient_model(step, 50.0, param_inputs, trans_inputs, trans_outputs);
 		ms_outputs.m_Twall_inlet = trans_outputs.tube_temp_inlet - 273.15;
 		ms_outputs.m_Twall_outlet = trans_outputs.tube_temp_outlet - 273.15;
 		ms_outputs.m_Triser = trans_outputs.t_profile.at(0, 0)-273.15;
@@ -1707,8 +1745,9 @@ void C_mspt_receiver_222::converged()
 	m_startup_mode_initial = m_startup_mode;
 	m_n_call_circ_initial = m_n_call_circ;
 	m_total_startup_time_initial = m_total_startup_time;
-	trans_inputs.tinit = trans_outputs.t_profile;
-	trans_inputs.tinit_wall = trans_outputs.t_profile_wall;
+	m_total_ramping_time_initial = m_total_ramping_time;
+	m_tinit = trans_outputs.t_profile;
+	m_tinit_wall = trans_outputs.t_profile_wall;
 }
 
 int C_mspt_receiver_222::get_operating_state()
@@ -1771,11 +1810,12 @@ HTFProperties *C_mspt_receiver_222::get_htf_property_object()
     return &field_htfProps;
 }
 
-double C_mspt_receiver_222::calc_external_convection_coeff(const C_csp_weatherreader::S_outputs &weather, double Twall)
+double C_mspt_receiver_222::calc_external_convection_coeff(const parameter_eval_inputs &pinputs, double Twall)
 {
-	double T_amb = weather.m_tdry + 273.15;
-	double P_amb = weather.m_pres*100.0;
-	double v_wind_10 = weather.m_wspd;
+
+	double T_amb = pinputs.T_amb;
+	double P_amb = pinputs.pres;
+	double v_wind_10 = pinputs.wspd;
 	double v_wind = log((m_h_tower + m_h_rec / 2) / 0.003) / log(10.0 / 0.003)*v_wind_10;
 	double T_film_ave = 0.5*(T_amb + Twall);
 	double Re_for = ambient_air.dens(T_film_ave, P_amb)*v_wind*m_d_rec / ambient_air.visc(T_film_ave);			//[-] Reynolds number for external forced convection
@@ -1878,12 +1918,813 @@ double C_mspt_receiver_222::integrate(double xlow, double xhigh, const vector<do
 	return inteval;
 }
 
+void C_mspt_receiver_222::cubic_splines(const vector<double> &xarray, const vector<double> &yarray, util::matrix_t<double> &splines)
+{
+	// Fit cubic splines to data points in xarray, yarray
+	int n = xarray.size()-1;
+	splines.resize_fill(n, 5, 0.0);
 
+	vector<double> a(n + 1, 0.0);
+	vector<double> b(n, 0.0);
+	vector<double> d(n, 0.0);
+	vector<double> h(n, 0.0);
+	vector<double> alpha(n, 0.0);
+	vector<double> c(n + 1, 0.0);
+	vector<double> l(n + 1, 0.0);
+	vector<double> mu(n + 1, 0.0);
+	vector<double> z(n + 1, 0.0);
+
+	a = yarray;
+	l.at(0) = 1.0;
+	mu.at(0) = 0.0;
+	z.at(0) = 0.0;
+	for (int i = 0; i < n; i++)
+	{
+		h.at(i) = xarray.at(i + 1) - xarray.at(i);
+		if (i > 0)
+		{
+			alpha.at(i) = (3.0 / h.at(i)) * (a.at(i + 1) - a.at(i)) - (3.0 / h.at(i - 1))*(a.at(i) - a.at(i - 1));
+			l.at(i) = 2.0*(xarray.at(i + 1) - xarray.at(i-1)) - h.at(i - 1)*mu.at(i - 1);
+			mu.at(i) = h.at(i) / l.at(i);
+			z.at(i) = (alpha.at(i) - h.at(i - 1)*z.at(i - 1)) / l.at(i);
+		}
+	}
+
+	l.at(n) = 1.0;
+	z.at(n) = 0.0;
+	c.at(n) = 0.0;
+	for (int i = n - 1; i >= 0; i--)
+	{
+		c.at(i) = z.at(i) - mu.at(i)*c.at(i + 1);
+		b.at(i) = (a.at(i + 1) - a.at(i)) / h.at(i) - h.at(i)*(c.at(i + 1) + 2.0*c.at(i)) / 3.0;
+		d.at(i) = (c.at(i + 1) - c.at(i)) / 3.0 / h.at(i);
+	}
+
+	for (int i = 0; i < n; i++)
+	{
+		splines.at(i, 0) = a.at(i);
+		splines.at(i, 1) = b.at(i);
+		splines.at(i, 2) = c.at(i);
+		splines.at(i, 3) = d.at(i);
+		splines.at(i, 4) = xarray.at(i);
+	}
+}
+
+double C_mspt_receiver_222::calc_timeavg_exit_temp(double tstep, int flowid, int pathid, const transient_inputs &tinputs){
+
+	/*=====================================================================================
+	Calculate time-averaged outlet temperature for each flow element (receiver panel, downcomer, riser, etc)
+	Temperature is described by PDE: dT/dt + lam1*dT/dz + lam2*T = c with constant parameters lam1, lam2, c
+
+	tstep = time step (s)
+	flowid = integer flow element (riser, receiver panel, downcomer, etc.) position in the flow path
+	pathid = integer flow path index
+
+	tinputs:
+	inlet_temp = cold fluid inlet temperature (K)
+	npath = number of flow paths
+	nelem = total number of flow elements in one flow path (riser and downcomer are included in each flow path)
+	nztot = total number of axial evaluation points in one flow path
+	length(j) = total length of flow element j (assumed to be the same in each flow path) [m]
+	nz(j) = number of axial points for element j (assumed to be the same in each flow path)
+	zpts(j) = position of axial point j (0 at inlet of each flow element) [m]
+	startpt(j) = index of first point in element j (assumed to be the same in each flow path)
+	lam1(j,i) = PDE parameter for element j in flow path i  --> dT/dt + lam1*dT/dz + lam2*T = C+a*t
+	lam2(j,i) = PDE parameter for element j in flow path i
+	cval(j,i) = PDE parameter for element j in flow path i
+	aval(m,i) = PDE parameter for element j in flow path i
+	tinit(j,i) = fluid temperature at axial point j in flow path i [K]
+	timeavg(j,i) = time averaged fluid outlet temperature for element j in flow path i
+	=======================================================================================*/
+
+	double Tavg = std::numeric_limits<double>::quiet_NaN();
+	int p = flowid;
+	int nelem = tinputs.nelem;
+	double Tfin = tinputs.inlet_temp;
+
+	vector<double> lam1, lam2, cval, aval, len, gam, Tinit;
+	lam1.resize(nelem); lam2.resize(nelem); cval.resize(nelem); aval.resize(nelem); len.resize(nelem); gam.resize(nelem), Tinit.resize(tinputs.nztot);
+	for (int i = 0; i < nelem; i++)
+	{
+		lam1.at(i) = tinputs.lam1.at(i, pathid);
+		lam2.at(i) = tinputs.lam2.at(i, pathid);
+		cval.at(i) = tinputs.cval.at(i, pathid);
+		aval.at(i) = tinputs.aval.at(i, pathid);
+		len.at(i) = tinputs.length.at(i);
+		gam.at(i) = lam2.at(i) / lam1.at(i);
+	}
+	for (int i = 0; i < tinputs.nztot; i++)
+		Tinit.at(i) = tinputs.tinit.at(i, pathid);
+
+	double T1 = Tinit.at(tinputs.startpt.at(p) + tinputs.nz.at(p) - 1);  // Initial T at outlet
+	if (tstep < 1.e-3)		// Numerical limit for small time steps: time-average outlet temperature = initial outlet temperature
+		Tavg = T1;
+	else
+	{
+		if (lam1.at(p) == 0.0) // No mass flow rate 
+		{
+			if (lam2.at(p) != 0.0)
+				Tavg = (1.0 / lam2.at(p)) * (cval.at(p) - aval.at(p) / lam2.at(p) + aval.at(p)*tstep / 2.0) + (1.0 - exp(-lam2.at(p)*tstep)) / lam2.at(p) / tstep * (T1 - cval.at(p) / lam2.at(p) + aval.at(p) / lam2.at(p) / lam2.at(p));
+			else
+				Tavg = T1 + cval.at(p) *tstep / 2.0 + aval.at(p) * tstep*tstep / 6.0;
+		}
+		else
+		{
+			util::matrix_t<double> sum1, mult;
+			vector<double> Tint;
+			sum1.resize_fill(p+1, p+1, 0.0);
+			mult.resize_fill(p+1, p+1, 1.0);
+			Tint.resize(tinputs.nztot);
+			for (int i = 0; i <= p; i++)
+			{
+				mult.at(i, i) = exp(-gam.at(i) * len.at(i));
+				sum1.at(i, i) = len.at(i) / lam1.at(i);
+				for (int j = i + 1; j <= p; j++)
+				{
+					mult.at(i, j) = mult.at(i, j - 1) * exp(-gam.at(j) * len.at(j) );
+					sum1.at(i, j) = sum1.at(i, j - 1) + len.at(j) / lam1.at(j);
+				}
+
+				int j = tinputs.startpt.at(i);
+				for (int k = 0; k < tinputs.nz.at(i); k++)
+					Tint.at(j + k) = Tinit.at(j + k) * exp(gam.at(i) * tinputs.zpts.at(j + k));
+			}
+
+
+			// Find largest integer for which tcritq > tstep
+			int q = p;
+			double tcritq;
+			while (q > -1)
+			{
+				tcritq = sum1.at(q, p);
+				if (tcritq > tstep)
+					break;
+				q--;
+			}
+
+			// Sum terms over q+1 : p
+			double sum = 0.0;
+			for (int j = q + 1; j <= p; j++)
+			{
+				double multval = 1.0;
+				if (j + 1 <= p)
+					multval = mult.at(j + 1, p);
+
+				double intTj = integrate(0.0, len.at(j), tinputs.zpts, Tint, tinputs.startpt.at(j), tinputs.startpt.at(j) + tinputs.nz.at(j) - 1);		// Integral of initial T*exp(lam2/lam1*z) over full axial coordinate of element j
+				double term1, term2, term3;
+				term1 = 1. / lam1.at(j) * exp(-gam.at(j)*len.at(j)) * intTj;
+				if (lam2.at(j) != 0.0)
+				{
+					term2 = (cval.at(j) / lam2.at(j) - aval.at(j) / lam2.at(j) / lam2.at(j)) * (len.at(j) / lam1.at(j) - (1.0 - exp(-gam.at(j)*len.at(j))) / lam2.at(j)) + 
+						    aval.at(j) / 2.0 / lam2.at(j) * pow((len.at(j) / lam1.at(j)), 2);
+
+					term3 = (tstep - sum1(j, p)) * ((cval.at(j) / lam2.at(j) - aval.at(j) / lam2.at(j) / lam2.at(j))*(1.0 - exp(-gam.at(j)*len.at(j))) + 
+													(aval.at(j)*len.at(j) / lam1.at(j) / lam2.at(j)) + (aval.at(j) / 2.0 / lam2.at(j))*(1.0 - exp(-gam.at(j)*len.at(j)))*(tstep - sum1(j, p)));
+				}
+				else
+				{
+					term2 = pow((len.at(j) / lam1.at(j)), 2)  * ((cval.at(j) / 2.0) + (aval.at(j) / 6.0) * (len.at(j) / lam1.at(j)));
+					term3 = (tstep - sum1(j, p)) * (cval.at(j) + (aval.at(j) / 2.0) * (len.at(j) / lam1.at(j)) + (aval.at(j) / 2.0)* (tstep - sum1(j, p)));
+				}
+				sum += multval * (term1 + term2 + term3);
+			}
+
+			double multval = 1.0;
+			if (q + 1 <= p)
+				multval = mult.at(q + 1, p);
+
+			double M = std::numeric_limits<double>::quiet_NaN();
+			if (q == -1)
+				M = Tfin * (tstep-sum1(0, p));
+			else
+			{
+				double tsub = tstep;
+				double term1;
+				if (q + 1 <= p)
+					tsub -= sum1(q + 1, p);
+
+				if (lam2.at(q) != 0.0)
+					term1 = (cval.at(q) / lam2.at(q) - aval.at(q) / lam2.at(q) / lam2.at(q)) * (tsub - (1.0 / lam2.at(q))*(1.0 - exp(-lam2.at(q)*tsub))) + aval.at(q) / 2.0 / lam2.at(q) * tsub*tsub;
+				else
+					term1 = tsub*tsub * (cval.at(q) / 2.0 + aval.at(q) / 6.0 * tsub);
+
+				double intTq = integrate(len.at(q) - lam1.at(q)*tsub, len.at(q), tinputs.zpts, Tint, tinputs.startpt.at(q), tinputs.startpt.at(q) + tinputs.nz.at(q) - 1);		// Integral of initial T*exp(lam2/lam1*z) over partial axial coordinate of element q
+				M = term1 + (1.0 / lam1.at(q)) * exp(-gam.at(q)*len.at(q)) * intTq;
+			}
+			Tavg = (sum + multval*M) / tstep;  // Time-average exit temperature
+		}
+	}
+	return Tavg;
+}
+
+double C_mspt_receiver_222::calc_single_pt(double tpt, double zpt, int flowid, int pathid, const transient_inputs &tinputs)
+{
+	/*=====================================================================================
+	Calculate HTF temperature at a given time and axial position
+	Temperature is described by PDE: dT/dt + lam1*dT/dz + lam2*T = c + a*t with constant parameters lam1, lam2, c, a
+
+	tpt = time (s)
+	zpt = local flow element axial position (m): z = 0 at the flow element inlet
+	flowid = integer flow element (riser, receiver panel, downcomer, etc.) position in the flow path
+	pathid = integer flow path index
+
+	tinputs:
+	inlet_temp = cold fluid inlet temperature (K)
+	npath = number of flow paths
+	nelem = total number of flow elements in one flow path (riser and downcomer are included in each flow path)
+	nztot = total number of axial evaluation points in one flow path
+	length(j) = total length of flow element j (assumed to be the same in each flow path) [m]
+	nz(j) = number of axial points for element j (assumed to be the same in each flow path)
+	zpts(j) = position of axial point j (0 at inlet of each flow element) [m]
+	startpt(j) = index of first point in element j (assumed to be the same in each flow path)
+	lam1(j,i) = PDE parameter for element j in flow path i  --> dT/dt + lam1*dT/dz + lam2*T = C+a*t
+	lam2(j,i) = PDE parameter for element j in flow path i
+	cval(j,i) = PDE parameter for element j in flow path i
+	aval(m,i) = PDE parameter for element j in flow path i
+	tinit(j,i) = fluid temperature at axial point j in flow path i [K]
+	timeavg(j,i) = time averaged fluid outlet temperature for element j in flow path i
+	=======================================================================================*/
+
+	int k, q;
+	double Tpt, Tval, nk, tk, tj, Ap, Aj, Dk, mult, mult2, sum;
+	int p = flowid;
+	int nelem = tinputs.nelem;
+	double Tfin = tinputs.inlet_temp;
+
+	vector<double> lam1, lam2, cval, aval, len, gam, Tinit;
+	lam1.resize(nelem); lam2.resize(nelem); cval.resize(nelem); aval.resize(nelem); len.resize(nelem); gam.resize(nelem), Tinit.resize(tinputs.nztot);
+	for (int i = 0; i < nelem; i++)
+	{
+		lam1.at(i) = tinputs.lam1.at(i, pathid);
+		lam2.at(i) = tinputs.lam2.at(i, pathid);
+		cval.at(i) = tinputs.cval.at(i, pathid);
+		aval.at(i) = tinputs.aval.at(i, pathid);
+		len.at(i) = tinputs.length.at(i);
+		gam.at(i) = lam2.at(i) / lam1.at(i);
+	}
+	for (int i = 0; i < tinputs.nztot; i++)
+		Tinit.at(i) = tinputs.tinit.at(i, pathid);
+
+
+	double np = zpt - lam1.at(p) * tpt;
+	if (lam1.at(p) == 0.0 || np >= 0)
+	{
+		Tval = interpolate(np, tinputs.zpts, Tinit, tinputs.startpt.at(p), tinputs.startpt.at(p) + tinputs.nz.at(p) - 1);		// Intial temperature evaluated at point np
+		if (lam2.at(p) != 0)
+			Tpt = (cval.at(p) / lam2.at(p) - aval.at(p) / lam2.at(p) / lam2.at(p))*(1.0 - exp(-lam2.at(p)*tpt)) + aval.at(p)*tpt / lam2.at(p) + Tval*exp(-lam2.at(p)*tpt);
+		else
+			Tpt = Tval + cval.at(p)*tpt + 0.5*aval.at(p)*tpt*tpt;
+	}
+
+	else			
+	{
+		if (lam2.at(p) != 0)
+			Ap = (cval.at(p) / lam2.at(p) - (aval.at(p) / lam2.at(p) / lam2.at(p))*(1. - lam2.at(p)*tpt)) * (1. - exp(-gam.at(p)*zpt)) + aval.at(p)*zpt / lam1.at(p) / lam2.at(p) * exp(-gam.at(p)*zpt);
+		else
+			Ap = (zpt / lam1.at(p)) * (cval.at(p) + aval.at(p)*tpt) - (aval.at(p) / 2.0) * pow(zpt / lam1.at(p), 2);
+
+		k = p;
+		nk = -1;
+		tk = 0.0;
+		while (nk < 0 && k > 0)
+		{
+			k -= 1;
+			if (k == p-1)
+				tk = tpt - zpt / lam1.at(p);
+			else
+				tk -= len.at(k + 1) / lam1.at(k + 1);
+			nk = len.at(k) - lam1.at(k)*tk;
+		}
+
+		if (nk >= 0)
+			q = k + 1;
+		else
+			q = 0;
+
+		int j = p - 1;
+		sum = 0.0;
+		mult2 = 1.0;
+		while (j >= q)
+		{
+			if (j < p-1)
+				mult2 *= exp(-gam.at(j+1)*len.at(j+1));
+			
+			tj = 0.0;
+			if (j == p - 1)
+				tj = tpt - zpt / lam1.at(p);
+			else
+				tj -= len.at(j + 1) / lam1.at(j + 1);
+
+			if (lam2.at(j) != 0)
+				Aj = (cval.at(j) / lam2.at(j) - (aval.at(j) / lam2.at(j) / lam2.at(j))*(1. - lam2.at(j)*tj)) * (1. - exp(-gam.at(j)*len.at(j))) + aval.at(j)*len.at(j) / lam1.at(j) / lam2.at(j) * exp(-gam.at(j)*len.at(j));
+			else
+				Aj = (len.at(j) / lam1.at(j)) * (cval.at(j) + aval.at(j)*tj) - (aval.at(j) / 2.0) * pow(len.at(j) / lam1.at(j), 2);
+			sum += Aj * mult2;
+			j--;
+		}
+
+		mult = mult2;
+		if (q <= p-1)
+			mult *= exp(-gam.at(q)*len.at(q));
+
+		if (nk >= 0)
+		{
+			Tval = interpolate(nk, tinputs.zpts, Tinit, tinputs.startpt.at(k), tinputs.startpt.at(k) + tinputs.nz.at(k) - 1);		// Intial temperature of element k evaluated at point z = nk
+			if (lam2.at(k) != 0)
+				Dk = (cval.at(k) / lam2.at(k) - aval.at(k) / lam2.at(k) / lam2.at(k))*(1 - exp(-lam2.at(k) * tk)) + aval.at(k)*tk / lam2.at(k) + Tval * exp(-lam2.at(k) * tk);
+			else
+				Dk = cval.at(k)*tk + 0.5*aval.at(k)*tk*tk + Tval;
+			Tpt = Ap + exp(-gam.at(p)*zpt) * (Dk*mult + sum);
+		}
+		else
+			Tpt = Ap + exp(-gam.at(p)*zpt) * (mult*Tfin + sum);
+		
+	}
+	return Tpt;
+}
+
+void C_mspt_receiver_222::calc_axial_profile(double tpt, const transient_inputs &tinputs, util::matrix_t<double> &tprofile){
+
+	/*=====================================================================================
+	Calculate axial temperature profile in each flow path at a given time point
+	Temperature is described by PDE: dT/dt + lam1*dT/dz + lam2*T = c with constant parameters lam1, lam2, c
+
+	
+	tpt = time (s)
+	tinputs:
+	inlet_temp = cold fluid inlet temperature (K)
+	npath = number of flow paths
+	nelem = total number of flow elements in one flow path (riser and downcomer are included in each flow path)
+	nztot = total number of axial evaluation points in one flow path
+	length(j) = total length of flow element j (assumed to be the same in each flow path) [m]
+	nz(j) = number of axial points for element j (assumed to be the same in each flow path)
+	zpts(j) = position of axial point j (0 at inlet of each flow element) [m]
+	startpt(j) = index of first point in element j (assumed to be the same in each flow path)
+	lam1(j,i) = PDE parameter for element j in flow path i  --> dT/dt + lam1*dT/dz + lam2*T = C+a*t
+	lam2(j,i) = PDE parameter for element j in flow path i
+	cval(j,i) = PDE parameter for element j in flow path i
+	aval(m,i) = PDE parameter for element j in flow path i
+	tinit(j,i) = fluid temperature at axial point j in flow path i [K]
+	timeavg(j,i) = time averaged fluid outlet temperature for element j in flow path i
+
+	tprofile(j,i) = HTF temperature at axial position j in flow path i
+	=======================================================================================*/
+
+	int nelem = tinputs.nelem;
+	double Tfin = tinputs.inlet_temp;
+
+	//-- ODE Solution with no mass flow rate
+	if (tinputs.lam1.at(0, 0) == 0.0) 
+	{
+		double c, a, lam2, Tinit;
+		for (int pathid = 0; pathid < tinputs.npath; pathid++)  // Loop over flow paths 
+		{
+			for (int j = 0; j < tinputs.nelem; j++)				// Loop through elements on flow path
+			{
+				for (int i = 0; i < tinputs.nz.at(j); i++)		// Loop through axial positions on flow element j (except for first point)
+				{
+					int k = tinputs.startpt.at(j);				// Index of first axial position in flow element j
+					Tinit = tinputs.tinit.at(k + i, pathid);
+					c = tinputs.cval.at(j, pathid);
+					a = tinputs.aval.at(j, pathid);
+					lam2 = tinputs.lam2.at(j, pathid);
+					if (lam2 != 0)
+						tprofile.at(k + i, pathid) = (c / lam2 + a / lam2 / lam2)*(1.0 - exp(-lam2*tpt)) + a*tpt / lam2 + Tinit*exp(-lam2*tpt);
+					else
+						tprofile.at(k + i, pathid) = Tinit + c*tpt + 0.5*a*tpt*tpt;
+				}
+			}
+		}
+	}
+	
+
+	//---PDE solution with nonzero mass flow rate
+	else
+	{
+		double Aconst, Apos, Tval;
+		util::matrix_t<double> sumAconst, sumApos, mult;
+
+		for (int pathid = 0; pathid < tinputs.npath; pathid++)    // Flow paths
+		{
+			vector<double> lam1, lam2, cval, aval, len, gam, Tinit;
+			lam1.resize(nelem); lam2.resize(nelem); cval.resize(nelem); aval.resize(nelem); len.resize(nelem); gam.resize(nelem), Tinit.resize(tinputs.nztot);
+			for (int i = 0; i < nelem; i++)
+			{
+				lam1.at(i) = tinputs.lam1.at(i, pathid);
+				lam2.at(i) = tinputs.lam2.at(i, pathid);
+				cval.at(i) = tinputs.cval.at(i, pathid);
+				aval.at(i) = tinputs.aval.at(i, pathid);
+				len.at(i) = tinputs.length.at(i);
+				gam.at(i) = lam2.at(i) / lam1.at(i);
+			}
+			for (int i = 0; i < tinputs.nztot; i++)
+				Tinit.at(i) = tinputs.tinit.at(i, pathid);
+
+			// Calculate repetitive terms
+			sumAconst.resize_fill(nelem, nelem, 0.0);
+			sumApos.resize_fill(nelem, nelem, 0.0);
+			mult.resize_fill(nelem, nelem, 1.0);
+			for (int i = 0; i < nelem; i++)
+			{
+				mult.at(i, i) = exp(-gam.at(i)*len.at(i));
+				for (int j = i + 1; j < nelem; j++)
+					mult.at(i, j) = mult.at(i, j - 1) * exp(-gam.at(j)*len.at(j));
+			}
+
+			for (int i = nelem - 1; i >= 0; i--)
+			{
+				double sum = 0.0;
+				for (int j = i; j >= 0; j--)
+				{
+
+					if (lam2.at(j) != 0)
+					{
+						Aconst = (cval.at(j) / lam2.at(j) - aval.at(j) / lam2.at(j)*(1.0 / lam2.at(j) - tpt + sum)) * (1.0 - exp(-gam.at(j)*len.at(j))) + aval.at(j)*len.at(j) / lam1.at(j) / lam2.at(j)*exp(-gam.at(j)*len.at(j));
+						Apos = -aval.at(j) / lam2.at(j) * (1.0 - exp(-gam.at(j)*len.at(j)));
+					}
+					else
+					{
+						Aconst = len.at(j) / lam1.at(j) * (cval.at(j) + aval.at(j)*tpt - aval.at(j)*sum) - aval.at(j)*len.at(j)*len.at(j) / lam1.at(j) / lam1.at(j);
+						Apos = -aval.at(j)*len.at(j) / lam1.at(j);
+					}
+
+					if (j == i)
+					{
+						sumAconst.at(j, i) = Aconst;
+						sumApos.at(j, i) = Apos;
+					}
+					else
+					{
+						sumAconst.at(j, i) = sumAconst.at(j + 1, i) + Aconst*mult.at(j + 1, i);
+						sumApos.at(j, i) = sumApos.at(j + 1, i) + Apos*mult.at(j + 1, i);
+					}
+
+					sum += len.at(j) / lam1.at(j);
+				}
+			}
+
+			// Calculate temperature profiles
+			int j, k, nz, q;
+			double zp, np, nk, tk, Dk, sum, Ap;
+			for (int p = 0; p < nelem; p++)
+			{
+				nz = tinputs.nz.at(p);
+				j = tinputs.startpt.at(p);				// Index of first axial position in flow element p
+
+				if (p == 0)
+					tprofile.at(j, pathid) = Tfin;
+				else
+					tprofile.at(j, pathid) = tprofile.at(j - 1, pathid);
+
+				for (int i = 1; i < nz; i++)
+				{
+					zp = tinputs.zpts.at(j + i);
+					np = zp - lam1.at(p)*tpt;
+					if (np >= 0)
+					{
+						k = p;
+						nk = np;
+						tk = tpt;
+						Tval = interpolate(nk, tinputs.zpts, Tinit, j, j + nz - 1);		// Intial temperature of element p evaluated at point z = nk
+						if (lam2.at(k) != 0)
+							Dk = (cval.at(k) / lam2.at(k) - aval.at(k) / (lam2.at(k) *lam2.at(k))) * (1 - exp(-lam2.at(k) * tk)) + aval.at(k)*tk / lam2.at(k) + Tval * exp(-lam2.at(k) * tk);
+						else
+							Dk = cval.at(k)*tk + 0.5*aval.at(k)*tk*tk + Tval;
+						tprofile.at(j + i, pathid) = Dk;
+					}
+					else
+					{
+						k = p;
+						nk = -1;
+						tk = tpt - zp / lam1.at(p);
+						while (nk < 0 && k > 0)
+						{
+							k = k - 1;
+							if (k<p-1)
+								tk -= len.at(k + 1) / lam1.at(k + 1);
+							nk = len.at(k) - lam1.at(k)*tk;
+						}
+
+
+						q = 0;
+						if (nk >= 0)
+							q = k + 1;
+						sum = 0.0;
+						if (p > 0)
+							sum = sumAconst.at(q, p - 1) + zp / lam1.at(p) * sumApos.at(q, p - 1);
+
+
+						if (lam2.at(p) != 0)
+							Ap = (cval.at(p) / lam2.at(p) - aval.at(p) / (lam2.at(p)*lam2.at(p))*(1. - lam2.at(p)*tpt)) * (1 - exp(-gam.at(p)*zp)) + aval.at(p)*zp / lam1.at(p) / lam2.at(p) * exp(-gam.at(p)*zp);
+						else
+							Ap = (zp / lam1.at(p)) * (cval.at(p) + aval.at(p)*tpt) - aval.at(p)*zp*zp / 2.0 / (lam1.at(p) *lam1.at(p));
+
+
+						if (nk >= 0)
+						{
+							Tval = interpolate(nk, tinputs.zpts, Tinit, tinputs.startpt.at(k), tinputs.startpt.at(k) + tinputs.nz.at(k) - 1);		// Intial temperature of element k evaluated at point z = nk
+							if (lam2.at(k) != 0)
+								Dk = (cval.at(k) / lam2.at(k) - aval.at(k) / (lam2.at(k) *lam2.at(k))) * (1 - exp(-lam2.at(k) * tk)) + aval.at(k)*tk / lam2.at(k) + Tval * exp(-lam2.at(k) * tk);
+							else
+								Dk = cval.at(k)*tk + 0.5*aval.at(k)*tk*tk + Tval;
+							tprofile.at(j + i, pathid) = Ap + exp(-gam.at(p)*zp) * (Dk*mult.at(k + 1, p - 1) + sum);
+						}
+						else
+						{
+							double m = 1.0;
+							if (p > 0)
+								m = mult.at(0, p - 1);
+							tprofile.at(j + i, pathid) = Ap + exp(-gam.at(p)*zp) * (Tfin * m + sum);
+						}
+					}
+				}
+			}
+		}
+
+		// Average downcomer T profile if more than one flow path exists
+		if (tinputs.npath > 1)
+		{
+			int j = tinputs.startpt.at(nelem - 1);  // First downcomer axial position point
+			for (int i = 0; i < tinputs.nz.at(nelem - 1); i++)	
+			{
+				tprofile.at(j + i, 0) = 0.5*tprofile.at(j + i, 0) + 0.5*tprofile.at(j + i, 1);
+				tprofile.at(j + i, 1) = tprofile.at(j + i, 0);
+			}
+		}
+	}
+}
+
+void C_mspt_receiver_222::calc_extreme_outlet_values(double tstep, int flowid, const transient_inputs &tinputs, util::matrix_t<double> &textreme, util::matrix_t<double> &tpt)
+{
+	/*=====================================================================================
+	Calculate the minimum and maximum outlet temperatures which occur at any point in time within the designated time step
+	Temperature is described by PDE: dT/dt + lam1*dT/dz + lam2*T = c + a*t with constant parameters lam1, lam2, c, a
+
+	tstep = time step (s)
+	flowid = integer flow element (riser, receiver panel, downcomer, etc.) position in the flow path
+
+	tinputs:
+	inlet_temp = cold fluid inlet temperature (K)
+	npath = number of flow paths
+	nelem = total number of flow elements in one flow path (riser and downcomer are included in each flow path)
+	nztot = total number of axial evaluation points in one flow path
+	length(j) = total length of flow element j (assumed to be the same in each flow path) [m]
+	nz(j) = number of axial points for element j (assumed to be the same in each flow path)
+	zpts(j) = position of axial point j (0 at inlet of each flow element) [m]
+	startpt(j) = index of first point in element j (assumed to be the same in each flow path)
+	lam1(j,i) = PDE parameter for element j in flow path i  --> dT/dt + lam1*dT/dz + lam2*T = C
+	lam2(j,i) = PDE parameter for element j in flow path i
+	cval(j,i) = PDE parameter for element j in flow path i
+	aval(j,i) = PDE parameter for element j in flow path i
+	tinit(j,i) = fluid temperature at axial point j in flow path i [K]
+
+	textreme = extreme temperature points for each flow path
+	tpt = time at which extreme temperature occurs for each flow path
+
+	Note: Calculated values for single downcomer with multiple flow paths are only strictly accurate if parameter lam1 is the same for corresponding elements in each flow path
+	=======================================================================================*/
+	int p = flowid;
+	double zp = tinputs.length.at(flowid);
+
+	int nlines = m_n_lines;
+	bool combine = false;
+	if (flowid == m_n_elem - 1 && m_n_lines > 1) // Downcomer with more than one flow path
+	{
+		nlines = 1;
+		combine = true;
+	}
+
+	util::matrix_t<double> lam1, lam2, cval, aval, gam, Tinit;
+	lam1.resize(tinputs.nelem, m_n_lines); lam2.resize(tinputs.nelem, m_n_lines); cval.resize(tinputs.nelem, m_n_lines); aval.resize(tinputs.nelem, m_n_lines); gam.resize(tinputs.nelem, m_n_lines); Tinit.resize(tinputs.nztot, m_n_lines);
+	for (int j = 0; j < m_n_lines; j++)
+	{
+		for (int i = 0; i < tinputs.nelem; i++)
+		{
+			lam1.at(i, j) = tinputs.lam1.at(i, j);
+			lam2.at(i, j) = tinputs.lam2.at(i, j);
+			cval.at(i, j) = tinputs.cval.at(i, j);
+			aval.at(i, j) = tinputs.aval.at(i, j);
+			gam.at(i, j) = lam2.at(i, j) / lam1.at(i, j);
+		}
+		for (int i = 0; i < tinputs.nztot; i++)
+			Tinit.at(i, j) = tinputs.tinit.at(i, j);
+	}
+
+
+	//--- Set initial min/max values to values at beginning or end of time step
+	textreme.resize_fill(2, nlines, 0.0);
+	tpt.resize_fill(2, nlines, 0.0);
+	int s = tinputs.startpt.at(flowid) + tinputs.nz.at(flowid) - 1;	// Axial point index outlet from flow element 
+	double Tcalc[2];
+	for (int i = 0; i < nlines; i++)
+	{
+		textreme.at(0, i) = textreme.at(1, i) = Tinit.at(s, i);
+		if (!combine)
+			Tcalc[i] = calc_single_pt(tstep, tinputs.length.at(flowid), flowid, i, tinputs);
+		else
+			Tcalc[0] = 0.5*(calc_single_pt(tstep, tinputs.length.at(flowid), flowid, 0, tinputs) + calc_single_pt(tstep, tinputs.length.at(flowid), flowid, 1, tinputs));
+	}
+	for (int i = 0; i < nlines; i++)
+	{
+		if (Tcalc[i] < textreme.at(0, i))
+		{
+			tpt.at(0, i) = tstep;
+			textreme.at(0, i) = Tcalc[i];
+		}
+		if (Tcalc[i] > textreme.at(1, i))
+		{
+			tpt.at(1, i) = tstep;
+			textreme.at(1, i) = Tcalc[i];
+		}
+	}
+
+	//--- Find local extreme values
+	if (lam1.at(0, 0) != 0)		// lam1 > 0 
+	{
+
+		//--- Calculate useful terms
+		util::matrix_t<double> sumval;
+		util::matrix_t<double> multval;
+		sumval.resize_fill(p+1, m_n_lines, 0.0);
+		multval.resize_fill(p+1, m_n_lines, 1.0);
+		for (int m = 0; m < m_n_lines; m++)
+		{
+			double term1;
+			if (lam2.at(p, m) != 0)
+				term1 = (aval.at(p, m) / lam2.at(p, m)) * (1.0 - exp(-gam.at(p, m)*zp));
+			else
+				term1 = aval.at(p, m)*zp / lam1.at(p, m);
+
+			for (int j = 0; j < p; j++)
+			{
+				sumval.at(j, m) = term1;
+				multval.at(j, m) *= exp(-gam.at(p, m)*zp);
+				for (int k = j + 1; k < p; k++)
+				{
+					multval.at(j, m) *= exp(-gam.at(k, m)* tinputs.length.at(k));
+					double mult2 = exp(-gam.at(p, m)*zp);
+					for (int l = k + 1; l < p; l++)
+						mult2 *= exp(-gam.at(l, m)* tinputs.length.at(l));
+
+					if (lam2.at(k, m) != 0)
+						sumval.at(j, m) += aval.at(k, m) / lam2.at(k, m) * (1.0 - exp(-gam.at(k, m) *tinputs.length.at(k))) * mult2;
+					else
+						sumval.at(j, m) += aval.at(k, m)*tinputs.length.at(k) / lam1.at(k, m) * mult2;
+				}
+				sumval.at(j,m) *= (-1.0 / lam1.at(j, m));
+			}
+		}
+
+		for (int m = 0; m < nlines; m++)
+		{
+			double currentsign, sign, Tval, dTval, d2Tval, n, dz, f, df, nnew, ndiff, term2, term3, len, zint;
+			currentsign = 0;
+			for (int j = p; j >= 0; j--)
+			{
+				int k1 = tinputs.startpt.at(j);
+
+				//--- Fit cubic splines for evaluation of derivatives of initial condition
+				vector<double> x(tinputs.nz.at(j));
+				vector<double> y(tinputs.nz.at(j));
+				util::matrix_t<double> splines, splines2;
+				for (int i = 0; i < tinputs.nz.at(j); i++)
+				{
+					x.at(i) = tinputs.zpts.at(k1 + i);
+					y.at(i) = Tinit.at(k1 + i, m);
+				}
+				cubic_splines(x, y, splines);
+
+				if (combine && j < p)
+				{
+					for (int i = 0; i < tinputs.nz.at(j); i++)
+						y.at(i) = Tinit.at(k1 + i, m + 1);
+					cubic_splines(x, y, splines2);
+				}
+
+				//--- Find time points where dT/dt = 0
+
+				len = tinputs.length.at(j);
+				zint = tinputs.zpts.at(k1 + 1) - tinputs.zpts.at(k1);
+				for (int i = tinputs.nz.at(j) - 1; i >= 0; i--)
+				{
+					n = tinputs.zpts.at(k1 + i);
+					bool stop = false;
+					bool found = false;
+					int q = 0;
+					sign = 0;
+					while (q < 50 && !stop)
+					{
+						q++;
+						s = (int) fmin( (int)(n / zint), tinputs.nz.at(j)-2);
+						dz = n - splines.at(s, 4);
+						Tval = splines.at(s, 0) + splines.at(s, 1)*dz + splines.at(s, 2)*dz*dz + splines.at(s, 3)*dz*dz*dz;
+						dTval = splines.at(s, 1) + 2.0 * splines.at(s, 2)*dz + 3.0 * splines.at(s, 3)*dz*dz;
+						d2Tval = 2.0 * splines.at(s, 2) + 6.0 * splines.at(s, 3)*dz;
+
+						term2 = cval.at(j, m) / lam1.at(j, m) - gam.at(j, m) * Tval - dTval;
+						term3 = (gam.at(j, m) * cval.at(j, m) / lam1.at(j, m) - aval.at(j, m) / lam1.at(j, m) / lam1.at(j, m) - pow(gam.at(j, m), 2)*Tval - 2.0*gam.at(j, m) * dTval - d2Tval);
+						if (j == p)
+						{
+							f = -exp(-gam.at(j, m) *(zp - n))*term2;
+							if (lam2.at(j, m) != 0)
+								f -= aval.at(j, m) / lam2.at(j, m) / lam1.at(j, m) * (1.0 - exp(-gam.at(j, m) * (zp - n)));
+							else
+								f -= aval.at(j, m) / lam1.at(j, m) * (zp - n);
+							df = -exp(-gam.at(p, m)*(zp - n)) *term3;
+						}
+						else
+						{
+							f = sumval.at(j, m) - multval.at(j, m) * exp(-gam.at(j, m) * (len - n)) * term2;
+							if (lam2.at(j, m) != 0)
+								f -= multval.at(j, m) * (aval.at(j, m) / lam2.at(j, m) / lam1.at(j, m)) * (1.0 - exp(-gam.at(j, m) * (len - n)));
+							else
+								f -= multval.at(j, m) * aval.at(j, m) / lam1.at(j, m) / lam1.at(j, m) * (len - n);
+							df = -multval.at(j, m) * exp(-gam.at(j, m)* (len - n)) *term3;
+
+
+							if (combine)
+							{
+								Tval = splines2.at(s, 0) + splines2.at(s, 1)*dz + splines2.at(s, 2)*dz*dz + splines2.at(s, 3)*dz*dz*dz;
+								dTval = splines2.at(s, 1) + 2.0 * splines2.at(s, 2)*dz + 3.0 * splines2.at(s, 3)*dz*dz;
+								d2Tval = 2.0 * splines2.at(s, 2) + 6.0 * splines2.at(s, 3)*dz;
+								term2 = cval.at(j, m + 1) / lam1.at(j, m + 1) - gam.at(j, m + 1) * Tval - dTval;
+								term3 = (gam.at(j, m + 1) * cval.at(j, m + 1) / lam1.at(j, m + 1) - aval.at(j, m + 1) / lam1.at(j, m + 1) / lam1.at(j, m + 1) - pow(gam.at(j, m + 1), 2)*Tval - 2.0*gam.at(j, m + 1) * dTval - d2Tval);
+								double f2 = sumval.at(j, m+1) - multval.at(j, m+1) * exp(-gam.at(j, m+1) * (len - n)) * term2;
+								double df2 = -multval.at(j, m + 1) * exp(-gam.at(j, m + 1)* (len - n)) *term3;
+								f = 0.5*(f + f2);
+								if (lam2.at(j, m + 1) != 0)
+									f -= 0.5* (multval.at(j, m + 1) * (aval.at(j, m + 1) / lam2.at(j, m + 1) / lam1.at(j, m + 1)) * (1.0 - exp(-gam.at(j, m + 1) * (len - n))));
+								else
+									f -= 0.5*(multval.at(j, m + 1) * aval.at(j, m + 1) / lam1.at(j, m + 1) / lam1.at(j, m + 1) * (len - n));
+								df = 0.5*(df + df2);
+							}
+						}
+
+						if (q == 1)
+						{
+							sign = (f > 0) - (f < 0);
+							if (sign == currentsign)
+								stop = true;
+
+							if (sign != currentsign && i == tinputs.nz.at(j) - 1)
+							{
+								stop = true;
+								found = true;
+							}
+						}
+
+						if (!stop)
+						{
+							nnew = n - 0.8 * f / df;
+							nnew = fmin(nnew, len);
+							nnew = fmax(nnew, 0.0);
+							ndiff = abs(nnew - n);
+							n = nnew;
+							if (abs(ndiff / len) < 1.e-3 && abs(f) < 1.e-4)  // Converged
+							{
+								stop = true;
+								found = true;
+							}
+						}
+					}
+
+					currentsign = sign;
+
+					if (found)
+					{
+						double t, Textreme;
+
+						t = (len - n) / lam1.at(j, m);
+						for (int k = j + 1; k < p + 1; k++)
+							t += tinputs.length.at(k) / lam1.at(k, m);
+
+						if (t <= tstep)
+						{
+							Textreme = calc_single_pt(t, zp, flowid, m, tinputs);
+							if (combine && j < p)
+								Textreme = 0.5*Textreme + 0.5*calc_single_pt(t, zp, flowid, m + 1, tinputs);
+							if (Textreme < textreme.at(0, m))
+							{
+								tpt.at(0, m) = t;
+								textreme.at(0, m) = Textreme;
+							}
+							if (Textreme > textreme.at(1, m))
+							{
+								tpt.at(1, m) = t;
+								textreme.at(1, m) = Textreme;
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+}
 
 void C_mspt_receiver_222::calc_ss_profile(const transient_inputs &tinputs, util::matrix_t<double> &tprofile, util::matrix_t<double> &tprofile_wall)
 {
 	/*=====================================================================================
-	Calculate axial temperature profile at steady state
+	Calculate axial temperature profile at steady state (only valid if flux ramp rate is zero)
 	Temperature is described by PDE: dT/dt + lam1*dT/dz + lam2*T = c with constant parameters lam1, lam2, c
 
 	tinputs:
@@ -1935,16 +2776,16 @@ void C_mspt_receiver_222::calc_ss_profile(const transient_inputs &tinputs, util:
 	else				// lam1 != 0
 	{
 
-		for (pathid = 0; pathid < tinputs.npath; pathid++)    // Loop over flow paths 
+		for (pathid = 0; pathid < tinputs.npath; pathid++)    
 		{
 			tprofile.at(0, pathid) = tinputs.inlet_temp;
-			for (j = 0; j < tinputs.nelem; j++)						// Loop through elements on flow path
+			for (j = 0; j < tinputs.nelem; j++)						
 			{
 				k = tinputs.startpt.at(j);
 				if (j>0)
 					tprofile.at(k, pathid) = tprofile.at(k - 1, pathid);		// First point of current element = last point of previous element
 
-				for (i = 1; i < tinputs.nz.at(j); i++)						// Loop through axial positions on flow element j (except for first point)
+				for (i = 1; i < tinputs.nz.at(j); i++)						
 				{
 					z = tinputs.zpts.at(k + i);			// Local axial position on element j
 					if (tinputs.lam2.at(j, pathid) != 0)
@@ -1959,10 +2800,11 @@ void C_mspt_receiver_222::calc_ss_profile(const transient_inputs &tinputs, util:
 		// Average downcomer T profile calculated from each flow path 
 		if (tinputs.npath > 1)
 		{
-			for (i = 0; i < tinputs.nz.at(tinputs.nelem - 1); i++)		// Loop through downcomer axial positions
+			int j = tinputs.startpt.at(tinputs.nelem - 1);  // First axial position point
+			for (i = 0; i < tinputs.nz.at(tinputs.nelem - 1); i++)		
 			{
-				tprofile.at(tinputs.startpt.at(tinputs.nelem - 1) + i, 0) = 0.5*tprofile.at(tinputs.startpt.at(tinputs.nelem - 1) + i, 0) + 0.5*tprofile.at(tinputs.startpt.at(tinputs.nelem - 1) + i, 1);
-				tprofile.at(tinputs.startpt.at(tinputs.nelem - 1) + i, 1) = tprofile.at(tinputs.startpt.at(tinputs.nelem - 1) + i, 0);
+				tprofile.at(j + i, 0) = 0.5*tprofile.at(j + i, 0) + 0.5*tprofile.at(j + i, 1);
+				tprofile.at(j + i, 1) = tprofile.at(j + i, 0);
 			}
 		}
 	}
@@ -1984,643 +2826,11 @@ void C_mspt_receiver_222::calc_ss_profile(const transient_inputs &tinputs, util:
 			}
 		}
 	}
-
-}
-
-void C_mspt_receiver_222::calc_timeavg_temp(double tstep, const transient_inputs &tinputs, util::matrix_t<double> &timeavg){
-
-	/*=====================================================================================
-	Calculate time-averaged outlet temperature for each flow element (receiver panel, downcomer, riser, etc)
-	Temperature is described by PDE: dT/dt + lam1*dT/dz + lam2*T = c with constant parameters lam1, lam2, c
-
-	tstep = time step (s)
-	tinputs:
-	inlet_temp = cold fluid inlet temperature (K)
-	npath = number of flow paths
-	nelem = total number of flow elements in one flow path (riser and downcomer are included in each flow path)
-	nztot = total number of axial evaluation points in one flow path
-	length(j) = total length of flow element j (assumed to be the same in each flow path) [m]
-	nz(j) = number of axial points for element j (assumed to be the same in each flow path)
-	zpts(j) = position of axial point j (0 at inlet of each flow element) [m]
-	startpt(j) = index of first point in element j (assumed to be the same in each flow path)
-	lam1(j,i) = PDE parameter for element j in flow path i  --> dT/dt + lam1*dT/dz + lam2*T = C
-	lam2(j,i) = PDE parameter for element j in flow path i
-	cval(j,i) = PDE parameter for element j in flow path i
-	tinit(j,i) = fluid temperature at axial point j in flow path i [K]
-	timeavg(j,i) = time averaged fluid outlet temperature for element j in flow path i
-	=======================================================================================*/
-
-	int s = 0;
-	int i, j, k, m, pathid;
-	double tsscalc, s1, s2, multval, inteval, exp_eval_k, mval;
-	double n_k = 0.0;
-	double n_m = 0.0;
-
-	if (tstep < 1.e-3)		// Numerical limit for small time steps: time-average outlet temperature = initial outlet temperature
-	{
-		for (pathid = 0; pathid < tinputs.npath; pathid++)    // Loop over flow paths 
-		{
-			for (j = 0; j < tinputs.nelem; j++)				// Loop through elements on flow path
-				timeavg.at(j, pathid) = tinputs.tinit.at(tinputs.startpt.at(j) + tinputs.nz.at(j) - 1, pathid);
-		}
-	}
-
-	else		// Analytical solution for any time step except tstep-->0
-	{
-
-		if (tinputs.lam1.at(0, 0) == 0.0)		// No mass flow rate in riser--> No mass flow rate through receiver		
-		{
-			for (pathid = 0; pathid < tinputs.npath; pathid++)    // Loop over flow paths 
-			{
-				for (j = 0; j < tinputs.nelem; j++)				// Loop through elements on flow path
-				{
-					k = tinputs.startpt.at(j) + tinputs.nz.at(j) - 1;		// Index of last axial position in flow element j
-					if (tinputs.lam2.at(j, pathid) != 0)
-						timeavg.at(j, pathid) = (tinputs.cval.at(j, pathid) / tinputs.lam2.at(j, pathid)) + (tinputs.tinit.at(k, pathid) - tinputs.cval.at(j, pathid) / tinputs.lam2.at(j, pathid)) * (1.0 - exp(-tinputs.lam2.at(j, pathid)*tstep)) / (tstep * tinputs.lam2.at(j, pathid));
-					else
-						timeavg.at(j, pathid) = tinputs.tinit.at(k, pathid)  + 0.5*tinputs.cval.at(j, pathid)*tstep;
-				}
-			}
-		}
-
-
-		else			// Mass flow through receiver (lam1!=0)
-		{
-			util::matrix_t<double> sum1, mult1;
-			vector<double> Tint;
-			sum1.resize(tinputs.nelem, tinputs.nelem); mult1.resize(tinputs.nelem, tinputs.nelem); Tint.resize(tinputs.nztot);
-
-			for (pathid = 0; pathid < tinputs.npath; pathid++)		// Loop over flow paths (if more than one path exists)
-			{
-				sum1.fill(0.0); mult1.fill(1.0);
-
-				for (j = 0; j < tinputs.nelem; j++)	// Loop through elements on flow path
-				{
-					// Evaluate function values needed for integration of initial condition of element j
-					for (i = 0; i < tinputs.nz.at(j); i++)
-						Tint.at(tinputs.startpt.at(j) + i) = tinputs.tinit.at(tinputs.startpt.at(j) + i, pathid) * exp(tinputs.lam2.at(j, pathid) / tinputs.lam1.at(j, pathid) * tinputs.zpts.at(tinputs.startpt.at(j) + i));
-
-					// Update running totals
-					if (j == 0)
-					{
-						sum1.at(0, 0) = tinputs.length.at(j) / tinputs.lam1.at(j, pathid);
-						mult1.at(0, 0) = exp(-tinputs.lam2.at(j, pathid) / tinputs.lam1.at(j, pathid) * tinputs.length.at(j));
-					}
-					else
-					{
-						for (k = 0; k <= j; k++)
-						{
-							sum1.at(k, j) = sum1.at(k, j - 1) + tinputs.length.at(j) / tinputs.lam1.at(j, pathid);
-							mult1.at(k, j) = mult1.at(k, j - 1) * exp(-tinputs.lam2.at(j, pathid) / tinputs.lam1.at(j, pathid) * tinputs.length.at(j));
-						}
-					}
-
-					// Calculate time to reach steady state and find element m for which n_m>0 at the end of the time step
-					tsscalc = sum1.at(0, j);	// Time to reach steady state outlet temperature from flow element j (jfull in full array containing both flow paths)
-					m = -1;
-					if (tstep < tsscalc)			// Time step is shorter than time required to reach SS
-					{
-						for (k = j; k >= 0; k--)	// Loop backwards through flow elements prior to j and find first element m for which n_m>0
-						{
-							n_k = tinputs.lam1.at(k, pathid) * (sum1.at(k, j) - tstep);
-							if (n_k > 0)
-								break;
-						}
-						n_m = n_k;
-						m = k;
-					}
-
-					// Evaluate time-averaged temperature
-					s1 = 0.0;
-					for (k = m + 1; k <= j; k++)
-					{
-						multval = 1.0;
-						if (k < tinputs.nelem - 1)
-							multval = mult1.at(k + 1, j);
-
-						inteval = integrate(0.0, tinputs.length.at(k), tinputs.zpts, Tint, tinputs.startpt.at(k), tinputs.startpt.at(k) + tinputs.nz.at(k) - 1);		// Integral of initial T*exp(lam2/lam1*z) over full axial coordinate of element k
-						exp_eval_k = exp(-tinputs.lam2.at(k, pathid) / tinputs.lam1.at(k, pathid) * tinputs.length.at(k));	// e^(-lam2/lam1 * L) for element k
-
-						if (tinputs.lam2.at(k, pathid) != 0.0)
-							s1 = s1 + multval * (tinputs.cval.at(k, pathid) / tinputs.lam2.at(k, pathid) * (1.0 - exp_eval_k) * (tstep - sum1.at(k, j) - 1.0 / tinputs.lam2.at(k, pathid)) + tinputs.cval.at(k, pathid)*tinputs.length.at(k) / (tinputs.lam2.at(k, pathid)*tinputs.lam1.at(k, pathid)) + inteval*exp_eval_k / tinputs.lam1.at(k, pathid));
-						else
-							s1 = s1 + multval * (tinputs.cval.at(k, pathid) / tinputs.lam1.at(k, pathid) * tinputs.length.at(k) * (tstep - sum1.at(k, j)) + inteval*exp_eval_k / tinputs.lam1.at(k, pathid));
-					}
-
-					multval = 1.0;
-					if (m < tinputs.nelem - 1)
-						multval = mult1.at(m + 1, j);
-
-					if (tstep >= tsscalc)			// Time step is longer than time required to reach SS outlet temperature
-						mval = tinputs.inlet_temp * (tstep - tsscalc);
-					else					// Time step is shorter than time required to reach SS outlet temperature 
-					{
-						s2 = 0.0;
-						if (m < tinputs.nelem - 1)
-							s2 = sum1.at(m + 1, j);
-						inteval = integrate(n_m, tinputs.length.at(m), tinputs.zpts, Tint, tinputs.startpt.at(m), tinputs.startpt.at(m) + tinputs.nz.at(m) - 1);		// Integral of initial T*exp(lam2/lam1*z) between n_m and L
-						if (tinputs.lam2.at(m, pathid) != 0)
-							mval = tinputs.cval.at(m, pathid) / tinputs.lam2.at(m, pathid) * (tstep - s2 - 1.0 / tinputs.lam2.at(m, pathid) * (1 - exp(-tinputs.lam2.at(m, pathid)*(tstep - s2)))) + inteval*exp(-tinputs.lam2.at(m, pathid) / tinputs.lam1.at(m, pathid)*tinputs.length.at(m)) / tinputs.lam1.at(m, pathid);
-						else
-							mval = -0.5*tinputs.cval.at(m, pathid)*(tstep - s2)*(tstep - s2) + inteval*exp(-tinputs.lam2.at(m, pathid) / tinputs.lam1.at(m, pathid)*tinputs.length.at(m)) / tinputs.lam1.at(m, pathid);
-					}
-					timeavg.at(j, pathid) = (1.0 / tstep) * (s1 + multval * mval);
-
-				} // Ends loop over flow elements
-			} //Ends loop over flow path
-
-			// Average downcomer time-average temperature over flow paths
-			if (tinputs.npath > 1)			// More than one flow path feed into downcomer : Downcomer T = average of values calculated individually for each flow path
-			{
-				timeavg.at(tinputs.nelem - 1, 0) = 0.5*(timeavg.at(tinputs.nelem - 1, 0) + timeavg.at(tinputs.nelem - 1, 1));		// Replace calculated downcomer T with average over flow paths
-				timeavg.at(tinputs.nelem - 1, 1) = timeavg.at(tinputs.nelem - 1, 0);
-			}
-		}
-	}
-}
-
-void C_mspt_receiver_222::calc_axial_profile(double tpt, const transient_inputs &tinputs, util::matrix_t<double> &tprofile){
-
-	/*=====================================================================================
-	Calculate axial temperature profile in each flow path at a given time point
-	Temperature is described by PDE: dT/dt + lam1*dT/dz + lam2*T = c with constant parameters lam1, lam2, c
-
-	
-	tpt = time (s)
-	tinputs:
-	inlet_temp = cold fluid inlet temperature (K)
-	npath = number of flow paths
-	nelem = total number of flow elements in one flow path (riser and downcomer are included in each flow path)
-	nztot = total number of axial evaluation points in one flow path
-	length(j) = total length of flow element j (assumed to be the same in each flow path) [m]
-	nz(j) = number of axial points for element j (assumed to be the same in each flow path)
-	zpts(j) = position of axial point j (0 at inlet of each flow element) [m]
-	startpt(j) = index of first point in element j (assumed to be the same in each flow path)
-	lam1(j,i) = PDE parameter for element j in flow path i  --> dT/dt + lam1*dT/dz + lam2*T = C
-	lam2(j,i) = PDE parameter for element j in flow path i
-	cval(j,i) = PDE parameter for element j in flow path i
-	tinit(j,i) = fluid temperature at axial point j in flow path i [K]
-	timeavg(j,i) = time averaged fluid outlet temperature for element j in flow path i
-
-	tprofile(j,i) = HTF temperature at axial position j in flow path i
-	=======================================================================================*/
-
-	int s = 0;
-	int i, j, k, m, pathid;
-	double z, nval, Tval, term2, nk, tk;
-
-
-	if (tinputs.lam1.at(0, 0) == 0.0)		// No mass flow rate in riser--> No mass flow rate through receiver		
-	{
-		for (pathid = 0; pathid < tinputs.npath; pathid++)  // Loop over flow paths 
-		{
-			for (j = 0; j < tinputs.nelem; j++)				// Loop through elements on flow path
-			{
-				for (i = 0; i < tinputs.nz.at(j); i++)		// Loop through axial positions on flow element j (except for first point)
-				{
-					k = tinputs.startpt.at(j);				// Index of first axial position in flow element j
-					if (tinputs.lam2.at(j, pathid) != 0)
-						tprofile.at(k + i, pathid) = tinputs.cval.at(j, pathid) / tinputs.lam2.at(j, pathid) * (1.0 - exp(-tinputs.lam2.at(j, pathid)*tpt)) + tinputs.tinit.at(k + i, pathid)*exp(-tinputs.lam2.at(j, pathid)*tpt);
-					else
-						tprofile.at(k + i, pathid) = tinputs.tinit.at(k + i, pathid) + tinputs.cval.at(j, pathid)*tpt;
-				}
-			}
-		}
-	}
-
-
-	else		// lam1 != 0
-	{
-		util::matrix_t<double> sum1, sum2, mult1;
-		vector<double> term1, tempinterp, tcrit;
-		sum1.resize(tinputs.nelem, tinputs.nelem); sum2.resize(tinputs.nelem, tinputs.nelem); mult1.resize(tinputs.nelem, tinputs.nelem); term1.resize(tinputs.nelem); tcrit.resize(tinputs.nelem);
-		tempinterp.resize(tinputs.nztot);
-
-		for (pathid = 0; pathid < tinputs.npath; pathid++)    // Loop over flow paths 
-		{
-			tprofile.at(0, pathid) = tinputs.inlet_temp;  // First temperature node
-			sum1.fill(0.0); sum2.fill(0.0); mult1.fill(1.0);
-			for (i = 0; i < tinputs.nztot; i++)
-				tempinterp.at(i) = tinputs.tinit.at(i, pathid);
-
-			for (j = 0; j < tinputs.nelem; j++)		// Loop through elements on flow path
-			{
-
-				if (tinputs.lam2.at(j, pathid) != 0)
-					term1.at(j) = tinputs.cval.at(j, pathid) / tinputs.lam2.at(j, pathid) * (1.0 - exp(-tinputs.lam2.at(j, pathid) / tinputs.lam1.at(j, pathid) * tinputs.length.at(j)));
-				else
-					term1.at(j) = tinputs.cval.at(j, pathid) / tinputs.lam1.at(j, pathid) * tinputs.length.at(j);
-
-				// Update running total summations and multiplications
-				if (j == 0)
-				{
-					sum1.at(0, 0) = tinputs.length.at(j) / tinputs.lam1.at(j, pathid);
-					mult1.at(0, 0) = exp(-tinputs.lam2.at(j, pathid) / tinputs.lam1.at(j, pathid) * tinputs.length.at(j));
-					sum2.at(0, 0) = term1.at(j);
-				}
-				else
-				{
-					for (k = 0; k <= j; k++){
-						sum1.at(k, j) = sum1.at(k, j - 1) + tinputs.length.at(j) / tinputs.lam1.at(j, pathid);
-						mult1.at(k, j) = mult1.at(k, j - 1) * exp(-tinputs.lam2.at(j, pathid) / tinputs.lam1.at(j, pathid) * tinputs.length.at(j));
-						sum2.at(k, j) = sum2.at(k, j - 1) * exp(-tinputs.lam2.at(j, pathid) / tinputs.lam1.at(j, pathid) * tinputs.length.at(j)) + term1.at(j);
-					}
-				}
-
-				// Calculate full axial temperature profile at the designated time point tpt
-				s = tinputs.nztot*pathid + tinputs.startpt.at(j);		// Index of first axial position on flow element j in path pathid
-				if (j > 0)
-					tprofile.at(tinputs.startpt.at(j), pathid) = tprofile.at(tinputs.startpt.at(j) - 1, pathid);	// First point of element j = last point of previous element
-
-				for (i = 1; i < tinputs.nz.at(j); i++)		// Loop through axial positions on flow element j (except for first point)
-				{
-					z = tinputs.zpts.at(tinputs.startpt.at(j) + i);				// Local axial position on element j
-					if (tinputs.lam2.at(j, pathid) != 0)
-						term2 = tinputs.cval.at(j, pathid) / tinputs.lam2.at(j, pathid) * (1.0 - exp(-tinputs.lam2.at(j, pathid) / tinputs.lam1.at(j, pathid) * z));
-					else
-						term2 = tinputs.cval.at(j, pathid) / tinputs.lam1.at(j, pathid) * z;
-
-					tcrit.at(0) = z / tinputs.lam1.at(j, pathid);
-					m = j;
-					while (j > 0 && m >= 0)
-					{
-						tcrit.at(m) = tcrit.at(0) + sum1.at(m, j - 1);		// tcrit(m) = time at which n_m switches from (+) to (-) --> tcrit(0) = time at which SS is reached at axial point i
-						m--;
-					}
-
-					if (tcrit.at(j) > tpt)		// n_j > 0
-					{
-						nval = z - tinputs.lam1.at(j, pathid) * tpt;
-						Tval = interpolate(nval, tinputs.zpts, tempinterp, tinputs.startpt.at(j), tinputs.startpt.at(j) + tinputs.nz.at(j) - 1);		// Intial temperature of element j evaluated at point z = nval
-
-						if (tinputs.lam2.at(j, pathid) != 0)
-							tprofile.at(tinputs.startpt.at(j) + i, pathid) = tinputs.cval.at(j, pathid) / tinputs.lam2.at(j, pathid) * (1.0 - exp(-tinputs.lam2.at(j, pathid) * tpt)) + Tval*exp(-tinputs.lam2.at(j, pathid) * tpt);
-						else
-							tprofile.at(tinputs.startpt.at(j) + i, pathid) = tinputs.cval.at(j, pathid) * tpt + Tval*exp(-tinputs.lam2.at(j, pathid) * tpt);
-					}
-					else
-					{
-						if (tcrit.at(0) <= tpt)		// Temperature at axial point i has reached SS
-						{
-							if (j == 0)
-								tprofile.at(tinputs.startpt.at(j) + i, pathid) = term2 + exp(-tinputs.lam2.at(j, pathid) / tinputs.lam1.at(j, pathid) * z) * tinputs.inlet_temp;
-							else
-								tprofile.at(tinputs.startpt.at(j) + i, pathid) = term2 + exp(-tinputs.lam2.at(j, pathid) / tinputs.lam1.at(j, pathid) * z) * (sum2.at(0, j - 1) + tinputs.inlet_temp*mult1.at(0, j - 1));
-						}
-						else
-						{
-							for (k = j - 1; k >= 0; k--)
-							{
-								if (tcrit.at(k) > tpt)
-									break;					// k = highest integer element for which tcrit(k) > tpt
-							}
-							nk = tinputs.lam1.at(k, pathid) * (z / tinputs.lam1.at(j, pathid) + sum1.at(k, j - 1) - tpt);
-							tk = tpt - z / tinputs.lam1.at(j, pathid) - sum1.at(k + 1, j - 1);
-							Tval = interpolate(nk, tinputs.zpts, tempinterp, tinputs.startpt.at(k), tinputs.startpt.at(k) + tinputs.nz.at(k) - 1);		// Initial temperature of element k evaluated at point z = nk
-							if (tinputs.lam2.at(k, pathid) != 0)
-								tprofile.at(tinputs.startpt.at(j) + i, pathid) = term2 + exp(-tinputs.lam2.at(j, pathid) / tinputs.lam1.at(j, pathid) * z) * (sum2.at(k + 1, j - 1) + mult1.at(k + 1, j - 1) * (Tval*exp(-tinputs.lam2.at(k, pathid) * tk) + tinputs.cval.at(k, pathid) / tinputs.lam2.at(k, pathid) * (1.0 - exp(-tinputs.lam2.at(k, pathid) * tk))));
-							else
-								tprofile.at(tinputs.startpt.at(j) + i, pathid) = term2 + exp(-tinputs.lam2.at(j, pathid) / tinputs.lam1.at(j, pathid) * z) * (sum2.at(k + 1, j - 1) + mult1.at(k + 1, j - 1) * (Tval*exp(-tinputs.lam2.at(k, pathid) * tk) + tinputs.cval.at(k, pathid) * tk));
-						}
-					}
-				}		// Ends loop over axial positions
-			}		// Ends loop over flow elements
-		}		//Ends loop over flow paths
-
-		// Average downcomer T profile if more than one flow path exists
-		if (tinputs.npath > 1)
-		{
-			for (i = 0; i < tinputs.nz.at(tinputs.nelem - 1); i++)		// Loop through downcomer axial positions 
-			{
-				tprofile.at(tinputs.startpt.at(tinputs.nelem - 1) + i, 0) = 0.5*tprofile.at(tinputs.startpt.at(tinputs.nelem - 1) + i, 0) + 0.5*tprofile.at(tinputs.startpt.at(tinputs.nelem - 1) + i, 1);
-				tprofile.at(tinputs.startpt.at(tinputs.nelem - 1) + i, 1) = tprofile.at(tinputs.startpt.at(tinputs.nelem - 1) + i, 0);
-			}
-		}
-	}
-}
-
-double C_mspt_receiver_222::calc_single_pt(double tpt, double zpt, int flowid, int pathid, const transient_inputs &tinputs)
-{
-	/*=====================================================================================
-	Calculate HTF temperature at a given time and axial position
-	Temperature is described by PDE: dT/dt + lam1*dT/dz + lam2*T = c with constant parameters lam1, lam2, c
-
-	tpt = time (s)
-	zpt = local flow element axial position (m): z = 0 at the flow element inlet
-	flowid = integer flow element (riser, receiver panel, downcomer, etc.) position in the flow path
-	pathid = integer flow path index
-
-	tinputs:
-	inlet_temp = cold fluid inlet temperature (K)
-	npath = number of flow paths
-	nelem = total number of flow elements in one flow path (riser and downcomer are included in each flow path)
-	nztot = total number of axial evaluation points in one flow path
-	length(j) = total length of flow element j (assumed to be the same in each flow path) [m]
-	nz(j) = number of axial points for element j (assumed to be the same in each flow path)
-	zpts(j) = position of axial point j (0 at inlet of each flow element) [m]
-	startpt(j) = index of first point in element j (assumed to be the same in each flow path)
-	lam1(j,i) = PDE parameter for element j in flow path i  --> dT/dt + lam1*dT/dz + lam2*T = C
-	lam2(j,i) = PDE parameter for element j in flow path i
-	cval(j,i) = PDE parameter for element j in flow path i
-	tinit(j,i) = fluid temperature at axial point j in flow path i [K]
-	timeavg(j,i) = time averaged fluid outlet temperature for element j in flow path i
-	=======================================================================================*/
-
-	int j, k, m;
-	double tk, Tval, Tpt;
-	double nk = 0.0;
-
-	// Select portion of initial temperature matrix for designated flow path
-	vector<double> tempinterp;
-	tempinterp.resize(tinputs.nztot);
-	for (j = 0; j < tinputs.nztot; j++)
-		tempinterp.at(j) = tinputs.tinit.at(j, pathid);
-
-
-	if (tinputs.lam1.at(0, 0) == 0.0) // No mass flow rate in riser--> No mass flow rate through receiver	
-	{
-		Tval = interpolate(zpt, tinputs.zpts, tempinterp, tinputs.startpt.at(flowid), tinputs.startpt.at(flowid) + tinputs.nz.at(flowid) - 1);		// Intial temperature evaluated at point z = zpt
-		if (tinputs.lam2.at(flowid, pathid) != 0)
-			Tpt = tinputs.cval.at(flowid, pathid) / tinputs.lam2.at(flowid, pathid) * (1.0 - exp(-tinputs.lam2.at(flowid, pathid)*tpt)) + Tval*exp(-tinputs.lam2.at(j, pathid)*tpt);
-		else
-			Tpt = Tval + tinputs.cval.at(j, pathid)*tpt;
-	}
-
-
-	else			// lam1 != 0
-	{
-
-		double sum = 0;
-		for (k = flowid; k >= 0; k--)		// Loop over flow elements in current flow path <= current element
-		{
-			nk = tinputs.lam1.at(k, pathid) * (zpt / tinputs.lam1.at(flowid, pathid) - tpt + sum);	// Characteristic value on elemnt k
-			if (nk > 0)
-				break;
-			if (k > 0)
-				sum = sum + tinputs.length.at(k - 1) / tinputs.lam1.at(k - 1, pathid);
-		}
-
-		double mult2 = 1; double sum2 = 0;
-		double mult; double term1;
-		if (k == flowid)
-		{
-			Tval = interpolate(nk, tinputs.zpts, tempinterp, tinputs.startpt.at(k), tinputs.startpt.at(k) + tinputs.nz.at(k) - 1);		// Intial temperature of element j evaluated at point z = nval
-			if (tinputs.lam2.at(k, pathid) != 0)
-				Tpt = tinputs.cval.at(k, pathid) / tinputs.lam2.at(k, pathid) * (1.0 - exp(-tinputs.lam2.at(k, pathid) * tpt)) + Tval * exp(-tinputs.lam2.at(k, pathid) * tpt);		// Temperature solution
-			else
-				Tpt = tinputs.cval.at(k, pathid) * tpt + Tval * exp(-tinputs.lam2.at(k, pathid) * tpt);		// Temperature solution
-		}
-		else
-		{
-			for (j = k + 1; j < flowid; j++)
-			{
-				mult = 1;
-				for (m = j + 1; m < flowid; m++)
-					mult = mult*exp(-tinputs.lam2.at(m, pathid) / tinputs.lam1.at(m, pathid) * tinputs.length.at(m));
-				if (tinputs.lam2.at(j, pathid) != 0)
-					sum2 = sum2 + tinputs.cval.at(j, pathid) / tinputs.lam2.at(j, pathid) * (1.0 - exp(-tinputs.lam2.at(j, pathid) / tinputs.lam1.at(j, pathid) * tinputs.length.at(j))) * mult;
-				else
-					sum2 = sum2 + tinputs.cval.at(j, pathid) / tinputs.lam1.at(j, pathid) * tinputs.length.at(j) * mult;
-				mult2 = mult2 * exp(-tinputs.lam2.at(j, pathid) / tinputs.lam1.at(j, pathid) * tinputs.length.at(j));
-			}
-
-			if (tinputs.lam2.at(flowid, pathid) != 0)
-				term1 = tinputs.cval.at(flowid, pathid) / tinputs.lam2.at(flowid, pathid) * (1.0 - exp(-tinputs.lam2.at(flowid, pathid) / tinputs.lam1.at(flowid, pathid) * zpt));
-			else
-				term1 = tinputs.cval.at(flowid, pathid) / tinputs.lam1.at(flowid, pathid) * zpt;
-
-			if (nk <= 0)			// SS temperature
-				Tpt = term1 + exp(-tinputs.lam2.at(flowid, pathid) / tinputs.lam1.at(flowid, pathid) * zpt) * (sum2 + tinputs.inlet_temp*mult2);
-			else
-			{
-				tk = -nk / tinputs.lam1.at(k, pathid) + tinputs.length.at(k) / tinputs.lam1.at(k, pathid);
-				Tval = interpolate(nk, tinputs.zpts, tempinterp, tinputs.startpt.at(k), tinputs.startpt.at(k) + tinputs.nz.at(k) - 1);		// Intial temperature of element k evaluated at point z = nval
-
-				if (tinputs.lam2.at(k, pathid) != 0)
-					Tpt = term1 + exp(-tinputs.lam2.at(flowid, pathid) / tinputs.lam1.at(flowid, pathid) * zpt) * (sum2 + mult2*(Tval*exp(-tinputs.lam2.at(k, pathid) * tk) + tinputs.cval.at(k, pathid) / tinputs.lam2.at(k, pathid) * (1.0 - exp(-tinputs.lam2.at(k, pathid) * tk))));
-				else
-					Tpt = term1 + exp(-tinputs.lam2.at(flowid, pathid) / tinputs.lam1.at(flowid, pathid) * zpt) * (sum2 + mult2*(Tval*exp(-tinputs.lam2.at(k, pathid) * tk) + tinputs.cval.at(k, pathid) * tk));
-			}
-		}
-	}
-
-	return Tpt;
-}
-
-void C_mspt_receiver_222::calc_extreme_outlet_values(double tstep, const transient_inputs &tinputs, double *tmin, double *tmax, double *tptmin, double *tptmax)
-{
-	/*=====================================================================================
-	Calculate the minimum and maximum outlet temperatures which occur at any point in time within the designated time step
-	Temperature is described by PDE: dT/dt + lam1*dT/dz + lam2*T = c with constant parameters lam1, lam2, c
-
-	tstep = time step (s)
-	tinputs:
-	inlet_temp = cold fluid inlet temperature (K)
-	npath = number of flow paths
-	nelem = total number of flow elements in one flow path (riser and downcomer are included in each flow path)
-	nztot = total number of axial evaluation points in one flow path
-	length(j) = total length of flow element j (assumed to be the same in each flow path) [m]
-	nz(j) = number of axial points for element j (assumed to be the same in each flow path)
-	zpts(j) = position of axial point j (0 at inlet of each flow element) [m]
-	startpt(j) = index of first point in element j (assumed to be the same in each flow path)
-	lam1(j,i) = PDE parameter for element j in flow path i  --> dT/dt + lam1*dT/dz + lam2*T = C
-	lam2(j,i) = PDE parameter for element j in flow path i
-	cval(j,i) = PDE parameter for element j in flow path i
-	tinit(j,i) = fluid temperature at axial point j in flow path i [K]
-	timeavg(j,i) = time averaged fluid outlet temperature for element j in flow path i
-	tmin = array containing [0] minimum downcomer outlet T, [1] minimum receiver outlet T from flow path 1, [2] = minimum receiver outlet T from flow path 2
-	tmax = array containing [0] maximum downcomer outlet T, [1] maximum receiver outlet T from flow path 1, [2] = maximum receiver outlet T from flow path 2
-	tptmin = array of time points at which minimum temperature is achieved for [0] downcomer outlet, [1] receiver outlet from flow path 1, [2] = receiver outlet from flow path 2
-	tptmin = array of time points at which maximum temperature is achieved for [0] downcomer outlet, [1] receiver outlet from flow path 1, [2] = receiver outlet from flow path 2
-
-	Note: Calculated values for single downcomer with multiple flow paths are only strictly accurate if parameter lam1 is the same for corresponding elements in each flow path
-	=======================================================================================*/
-
-	int i, j, k, m, pathid;
-	int r = tinputs.nelem - 2;		// Last receiver panel
-	int d = tinputs.nelem - 1;		// Downcomer
-
-	//-------------------------------------------------------------------------------//
-	// Calculate min/max values which occur at the start or end of the time step
-	// Downcomer
-	double t_end;
-	tmin[0] = tinputs.tinit.at(tinputs.nztot - 1, 0);
-	tmax[0] = tinputs.tinit.at(tinputs.nztot - 1, 0);
-	tptmin[0] = 0.0;
-	tptmax[0] = 0.0;
-	t_end = calc_single_pt(tstep, tinputs.length.at(d), d, 0, tinputs);		// Downcomer outlet T at end of time step
-	if (tinputs.npath>1)
-		t_end = 0.5 * (t_end + calc_single_pt( tstep, tinputs.length.at(d), d, 1, tinputs));	// Average of outlet temperature from both flow paths
-	if (t_end > tmax[0])
-	{
-		tmax[0] = t_end;
-		tptmax[0] = tstep;
-	}
-	if (t_end < tmin[0])
-	{
-		tmin[0] = t_end;
-		tptmin[0] = tstep;
-	}
-
-	//Receiver
-	int s = tinputs.startpt.at(r) + tinputs.nz.at(r) - 1;	// Axial point index for receiver outlet
-	for (i = 0; i < tinputs.npath; i++)
-	{
-		tmin[i + 1] = tinputs.tinit.at(s, i);
-		tmax[i + 1] = tinputs.tinit.at(s, i);
-		tptmin[i + 1] = 0.0;
-		tptmax[i + 1] = 0.0;
-		t_end = calc_single_pt(tstep, tinputs.length.at(r), r, i, tinputs);		// Receiver flow path i outlet temperature at the end of the time step
-		if (t_end > tmax[i + 1])
-		{
-			tmax[i + 1] = t_end;
-			tptmax[i + 1] = tstep;
-		}
-		if (t_end < tmin[i + 1])
-		{
-			tmin[i + 1] = t_end;
-			tptmin[i + 1] = tstep;
-		}
-	}
-
-
-	if (tinputs.lam1.at(0, 0) != 0)		// lam1 > 0 --> There is mass flow through the reciever (No local extreme points are possible without mass flow)
-	{
-		//------------------------------------------------------------------------------------//
-		// Calculate spatial derivatives of the initial condition and test values at each axial position (extreme value occurs where test value = 0)
-		double newsign, nj, tpt, tval, dz;
-		double currentsign = 0.0;
-		double currentsign2 = 0.0;
-		util::matrix_t<double> tinitderiv, testval, testval2;
-		tinitderiv.resize(tinputs.nztot, tinputs.npath); testval.resize(tinputs.nztot, tinputs.npath); testval2.resize(tinputs.nztot);
-
-		for (pathid = 0; pathid < tinputs.npath; pathid++)		// Loop over flow paths
-		{
-			for (j = 0; j < tinputs.nelem; j++)				// Loop over flow elements
-			{
-				if (tinputs.cval.at(j, pathid) != 0 && tinputs.lam2.at(j, pathid) != 0)
-				{
-					dz = tinputs.length.at(j) / (double)(tinputs.nz.at(j) - 1);	// Distance between axial points
-					for (i = 0; i < tinputs.nz.at(j); i++)						// Loop over axial positions
-					{
-						m = tinputs.startpt.at(j) + i;							// Index for axial position in full array 
-
-						if (i>1 && i < tinputs.nz.at(j) - 2)
-							tinitderiv.at(m, pathid) = (-tinputs.tinit.at(m + 2, pathid) + 8 * tinputs.tinit.at(m + 1, pathid) - 8 * tinputs.tinit.at(m - 1, pathid) + tinputs.tinit.at(m - 2, pathid)) / (12.0*dz);
-						else
-						{
-							if (i == 0)		// First node
-								tinitderiv.at(m, pathid) = (tinputs.tinit.at(m + 1, pathid) - tinputs.tinit.at(m, pathid)) / dz;
-							else
-							{
-								if (i == tinputs.nz.at(j) - 1)	// Last node
-									tinitderiv.at(m, pathid) = (tinputs.tinit.at(m, pathid) - tinputs.tinit.at(m - 1, pathid)) / dz;
-								else
-									tinitderiv.at(m, pathid) = (tinputs.tinit.at(m + 1, pathid) - tinputs.tinit.at(m - 1, pathid)) / (2 * dz);
-							}
-						}
-
-						// Check for change in sign of testvalue between current and previous position
-						testval.at(m, pathid) = tinputs.cval.at(j, pathid) - tinputs.lam2.at(j, pathid) * tinputs.tinit.at(m, pathid) - tinputs.lam1.at(j, pathid) * tinitderiv.at(m, pathid);
-
-						if (j == 0 && i == 0)
-							currentsign = (testval.at(m, pathid) > 0) - (testval.at(m, pathid) < 0);		// Sign of test value at point s
-						else
-						{
-							newsign = (testval.at(m, pathid) > 0) - (testval.at(m, pathid) < 0);
-							if (newsign != currentsign)
-							{
-								currentsign = newsign;
-								nj = 0;
-								if (i > 0)
-									nj = tinputs.zpts.at(m) - testval.at(m, pathid) * dz / (testval.at(m, pathid) - testval.at(m - 1, pathid));	// nj = approximate axial position where testvalue = 0
-
-								tpt = -nj / tinputs.lam1.at(j, pathid);
-								for (k = j; k <= r; k++)
-									tpt = tpt + tinputs.length.at(k) / tinputs.lam1.at(k, pathid);		// Time at which extreme value will occur for receiver outlet
-								if (tpt<tstep && tpt>0.0)
-								{
-									tval = calc_single_pt(tpt, tinputs.length.at(r), r, pathid, tinputs);	// Receiver outlet T from flow path pathid at time tpt
-									if (tval > tmax[pathid + 1])
-									{
-										tmax[pathid + 1] = tval;
-										tptmax[pathid + 1] = tpt;
-									}
-									if (tval < tmin[pathid + 1])
-									{
-										tmin[pathid + 1] = tval;
-										tptmin[pathid + 1] = tpt;
-									}
-								}
-
-								if (tinputs.npath == 1)	// Only one flow path in the receiver --> downcomer extreme temperatures can be calculated directly from single flow path
-								{
-									tpt = -nj / tinputs.lam1.at(j, pathid);
-									for (k = j; k <= d; k++)
-										tpt = tpt + tinputs.length.at(k) / tinputs.lam1.at(k, pathid);		// Time at which extreme value will occur for receiver outlet
-									if (tpt<tstep&& tpt>0.0)
-									{
-										tval = calc_single_pt(tpt, tinputs.length.at(d), d, pathid, tinputs);	// Downcomer outlet T at time tpt
-										if (tval > tmax[0])
-										{
-											tmax[0] = tval;
-											tptmax[0] = tpt;
-										}
-										if (tval < tmin[pathid + 1])
-										{
-											tmin[0] = tval;
-											tptmin[0] = tpt;
-										}
-									}
-								}
-							}
-						}
-
-						if (pathid == 1){		// Second flow path
-							// Check for change in sign of testvalue2 between current and previous position
-							testval2.at(m) = 0.5*exp(-tinputs.lam2.at(j, 0) / tinputs.lam1.at(j, 0) * (tinputs.length.at(j) - tinputs.zpts.at(m)))*testval.at(m, 0) + 0.5*exp(-tinputs.lam2.at(j, pathid) / tinputs.lam1.at(j, pathid) * (tinputs.length.at(j) - tinputs.zpts.at(m)))*testval.at(m, pathid);
-							if (j == 0 && i == 0)
-								currentsign2 = (testval2.at(m) > 0) - (testval2.at(m) < 0);		// Sign of test value at point s
-							else
-							{
-								newsign = (testval2.at(m) > 0) - (testval2.at(m) < 0);
-								if (newsign != currentsign2)
-								{
-									currentsign2 = newsign;
-									nj = 0;
-									if (i > 0)
-										nj = tinputs.zpts.at(m) - testval2.at(m) * dz / (testval2.at(m) - testval2.at(m - 1));	// nj = approximate axial position where testvalue2 = 0
-
-									tpt = -nj / tinputs.lam1.at(j, pathid);
-									for (k = j; k <= d; k++)
-										tpt = tpt + tinputs.length.at(k) / tinputs.lam1.at(k, pathid);		// Time at which extreme value will occur for downcomer outlet
-									if (tpt<tstep && tpt>0.0)
-									{
-										tval = calc_single_pt(tpt, tinputs.length.at(d), d, 0, tinputs);	// Downcomer outlet T calculated from flow path 0
-										tval = 0.5*(tval + calc_single_pt(tpt, tinputs.length.at(d), d, 1, tinputs));	// Downcomer outlet T averaged over flow paths
-										if (tval > tmax[0])
-										{
-											tmax[0] = tval;
-											tptmax[0] = tpt;
-										}
-										if (tval < tmin[0])
-										{
-											tmin[0] = tval;
-											tptmin[0] = tpt;
-										}
-									}
-								}
-							}
-						}
-					}	// Ends loop over axial positions
-				}
-			}		// Ends loop over flow elements
-		}			// Ends loop over flow paths
-	}
 }
 
 
-void C_mspt_receiver_222::update_pde_parameters(const C_csp_weatherreader::S_outputs &weather, bool use_initial_t, parameter_eval_inputs &pinputs, transient_inputs &tinputs)
+
+void C_mspt_receiver_222::update_pde_parameters(bool use_initial_t, parameter_eval_inputs &pinputs, transient_inputs &tinputs)
 {
 
 	//Update PDE parameters and tube wall thermal resistance based on property evaluation temperatures: pinputs.Tfeval and pinputs.Tseval
@@ -2638,6 +2848,10 @@ void C_mspt_receiver_222::update_pde_parameters(const C_csp_weatherreader::S_out
 	mu_htf = HTF viscosity (kg/m/s)
 	k_htf = HTF thermal conductivity (W/m/K)
 	Pr_htf = HTF Prandtl number
+	finitial = fraction of full flux at start of period
+	ffinal = fraction of full flux at end of period
+	ramptime = time period during which the flux ramp is applied [s]
+
 	tm(j) = thermal mass of element j (assumed to be the same in each flow path) [J/m/K]
 	qinc(j,i) = incident solar energy per tube for element j in path i [W]
 	Tfeval(j,i) = fluid temperature for element j in flow path i [K]
@@ -2654,7 +2868,7 @@ void C_mspt_receiver_222::update_pde_parameters(const C_csp_weatherreader::S_out
 	lam1(j,i) = PDE parameter for element j in flow path i  --> dT/dt + lam1*dT/dz + lam2*T = C
 	lam2(j,i) = PDE parameter for element j in flow path i  --> dT/dt + lam1*dT/dz + lam2*T = C
 	cval(j,i) = PDE parameter for element j in flow path i --> dT/dt + lam1*dT/dz + lam2*T = C
-	Rtube = turbe thermal resistance for element j in flow path i
+	Rtube = tube thermal resistance for element j in flow path i
 	tinit(j,i) = fluid temperature at axial point j in flow path i [K]
 
 	================================================================================*/
@@ -2666,6 +2880,7 @@ void C_mspt_receiver_222::update_pde_parameters(const C_csp_weatherreader::S_out
 	tinputs.lam1.fill(0.0);
 	tinputs.lam2.fill(0.0);
 	tinputs.cval.fill(0.0);
+	tinputs.aval.fill(0.0);
 	tinputs.Rtube.fill(0.0);
 
 	for (i = 0; i < m_n_lines; i++)
@@ -2700,16 +2915,22 @@ void C_mspt_receiver_222::update_pde_parameters(const C_csp_weatherreader::S_out
 
 			if (m_flowelem_type.at(j, i) >= 0)				// Receiver panel
 			{
-				int jtube = m_flowelem_type.at(j, i);		//Panel number
-				double hmix = calc_external_convection_coeff(weather, pinputs.Tseval.at(j, i));
-				double Tlin = pinputs.Tseval.at(j, i);																// Linearization temperature for radiative loss [K]
-				double heff = (2.0 / CSP::pi) * m_hl_ffact * (0.5*hmix + 4 * CSP::sigma*m_epsilon*pow(Tlin, 3));	// Effective heat transfer coefficient [W/m2/K]
-				double qabstube = pinputs.qinc.at(j, i) / (CSP::pi*0.5*m_od.at(j)*tinputs.length.at(j));				// Solar flux absorbed by one tube [W/m2 tube SA]
+				//int jtube = m_flowelem_type.at(j, i);		// Panel number
+				double hmix = calc_external_convection_coeff(pinputs, pinputs.Tseval.at(j, i)) * (2.0 / CSP::pi);  // External convection coeff (2/pi scales for loss from tube front SA)
+				double Tlin = pinputs.Tseval.at(j, i);															   // Linearization temperature for radiative loss [K]
+				double heff =  m_hl_ffact * (0.5*hmix + 4*(2.0 / CSP::pi)*CSP::sigma*m_epsilon*pow(Tlin, 3));	// Effective heat transfer coefficient [W/m2/K]
+				double qabstube = pinputs.qinc.at(j, i) / (CSP::pi*0.5*m_od.at(j)*tinputs.length.at(j));			// Solar flux absorbed by one tube [W/m2 tube front SA] 
 				if (pinputs.mflow_tot > 0.0)
 					tinputs.Rtube.at(j, i) = Rwall + Rconv; // Total thermal resistance between fluid and front external tube wall	
 
-				tinputs.lam2.at(j, i) = CSP::pi*0.5*m_od.at(j)*heff / (1.0 + 0.5*m_od.at(j)*tinputs.Rtube.at(j, i)*heff) * (1.0 / pinputs.tm.at(j));
-				tinputs.cval.at(j, i) = CSP::pi*0.5*m_od.at(j) * (qabstube + (1.0 / CSP::pi)*hmix*m_hl_ffact*pinputs.T_amb + (2.0 / CSP::pi)*m_hl_ffact*m_epsilon*CSP::sigma*(3.0*pow(Tlin, 4) + 0.5*pow(pinputs.T_amb, 4) + 0.5*pow(pinputs.T_sky, 4))) / (1.0 + 0.5*m_od.at(j)*tinputs.Rtube.at(j, i)*heff) * (1.0 / pinputs.tm.at(j));
+				double den = (1.0 + 0.5*m_od.at(j)*tinputs.Rtube.at(j, i)*heff) * pinputs.tm.at(j);
+				tinputs.lam2.at(j, i) = CSP::pi*0.5*m_od.at(j)*heff / den;
+				tinputs.cval.at(j, i) = CSP::pi*0.5*m_od.at(j) * (pinputs.finitial*qabstube + 0.5*hmix*m_hl_ffact*pinputs.T_amb + (2.0 / CSP::pi)*m_hl_ffact*m_epsilon*CSP::sigma*(3.0*pow(Tlin, 4) + 0.5*pow(pinputs.T_amb, 4) + 0.5*pow(pinputs.T_sky, 4))) / den;
+				if (pinputs.ramptime > 0)
+				{
+					double ramp_rate = qabstube * (pinputs.ffinal - pinputs.finitial) / pinputs.ramptime;  // Flux ramp rate (W/m2/s)
+					tinputs.aval.at(j, i) = CSP::pi*0.5*m_od.at(j)*ramp_rate / den;
+				}
 			}
 
 			if (m_flowelem_type.at(j, i) == -1 || m_flowelem_type.at(j, i) == -2)		// Riser or downcomer
@@ -2727,8 +2948,7 @@ void C_mspt_receiver_222::update_pde_parameters(const C_csp_weatherreader::S_out
 
 }
 
-void C_mspt_receiver_222::solve_transient_model(const C_csp_weatherreader::S_outputs &weather, 
-	double tstep,
+void C_mspt_receiver_222::solve_transient_model(double tstep,
 	double allowable_Trise,
 	parameter_eval_inputs &pinputs,
 	transient_inputs &tinputs,
@@ -2754,7 +2974,6 @@ void C_mspt_receiver_222::solve_transient_model(const C_csp_weatherreader::S_out
 	================================================================================*/
 
 
-	// Initialize output values
 	toutputs.timeavg_tout = 0.0;			// Time-averaged downcomer outlet T [K]
 	toutputs.tout = 0.0;					// Downcomer outlet T at the end of the time step [K]
 	toutputs.max_tout = 0.0;				// Max downcomer outlet T during the time step [K]
@@ -2766,14 +2985,13 @@ void C_mspt_receiver_222::solve_transient_model(const C_csp_weatherreader::S_out
 	toutputs.timeavg_qthermal = 0.0;		// Average thermal power sent to power cycle or storage during the time step [W]
 	toutputs.timeavg_qnet = 0.0;			// Average net thermal power absorbed by the receiver during the time step [W]
 	toutputs.t_profile.fill(0.0);			// Axial temperature profile at the end of the time step
-	toutputs.t_profile_wall.fill(0.0);			// Axial temperature profile at the end of the time step
+	toutputs.t_profile_wall.fill(0.0);		// Axial temperature profile at the end of the time step
 	toutputs.timeavg_temp.fill(0.0);		// Time-averaged exit temperature from each flow element [K]
 	toutputs.time_min_tout = 0.0;			// Time (relative to beginning of time step) at which minimum downcomer outlet T occurs (s)
 	toutputs.tube_temp_inlet = 0.0;
 	toutputs.tube_temp_outlet = 0.0;
 
 
-	// Initialize local variables
 	double max_Trise;
 	double allowable_min_step = 60.0;		// Minimum allowable time step (s) for solving transient model (transient model time step is only reduced if allowable_Trise is exceeded)
 	double transmodel_step = tstep;			// Initial time step for solution of transient model (s)
@@ -2781,11 +2999,9 @@ void C_mspt_receiver_222::solve_transient_model(const C_csp_weatherreader::S_out
 	int qsub = 0;							// Iterations to adjust intermediate transient model time steps
 	int qmax = 50;							// Max iterations for adjustment of PDE parameters based on iterative solution of time-averaged tempeatures
 	util::matrix_t<double>tinit_start = tinputs.tinit;			// Save initial condition at start of full time step 
-	util::matrix_t<double>tinit_wall_start = tinputs.tinit_wall;
-
 
 	// Update PDE parameters using initial temperature solution
-	update_pde_parameters(weather, true, pinputs, tinputs);	
+	update_pde_parameters(true, pinputs, tinputs);	
 
 	// Solve transient model
 	while (solved_time < tstep)	       // Iterations for subdivision of full time step if temperature changes are too large for accuracy of the linearized approximation for radiative loss
@@ -2794,94 +3010,152 @@ void C_mspt_receiver_222::solve_transient_model(const C_csp_weatherreader::S_out
 
 		// Calculate time-averaged temperature and iterate to adjust linearization temperature and properties
 		double maxTdiff = 1000.0;
-		double Tconverge = 5.0;		// Convergence criteria (K) for change in property evaluation and linearization temperatures between iterations
+		double Tconverge = 10.0;		// Convergence criteria (K) for change in property evaluation and linearization temperatures between iterations
 		double panel_loss_sum, piping_loss_sum, rad_loss_sum, conv_loss_sum, qnet_sum;
 		panel_loss_sum = piping_loss_sum = rad_loss_sum = conv_loss_sum = qnet_sum = 0.0;
 		int q = 0;
 		while (maxTdiff > Tconverge && q < qmax)
 		{
 			maxTdiff = panel_loss_sum = piping_loss_sum = rad_loss_sum = conv_loss_sum = qnet_sum = 0.0;
+
+			// Update PDE parameters with specified Tfeval and Tseval	
 			if (q>0)
-				update_pde_parameters(weather, false, pinputs, tinputs);				// Update PDE parameters with specified Tfeval and Tseval	
-			calc_timeavg_temp(transmodel_step, tinputs, toutputs.timeavg_temp);		// Calculate time-averaged temperature at the outlet of each flow element
+				update_pde_parameters(false, pinputs, tinputs);			
 
-			for (int i = 0; i < m_n_lines; i++)			// Loop through flow paths
+
+			// Calculate time-averaged outlet temperatures
+			for (int i = 0; i < m_n_lines; i++)
 			{
-				for (int j = 0; j < m_n_elem; j++)		// Loop through flow elements
+				for (int j = 0; j < m_n_elem; j++)
+					toutputs.timeavg_temp.at(j, i) = calc_timeavg_exit_temp(transmodel_step, j, i, tinputs);
+			}
+			if (m_n_lines > 1)  // Average values for downcomer over flow paths
+			{
+				int j = m_n_elem - 1;
+				toutputs.timeavg_temp.at(j, 0) = 0.5*(toutputs.timeavg_temp.at(j, 0) + toutputs.timeavg_temp.at(j, 1));
+				toutputs.timeavg_temp.at(j, 1) = toutputs.timeavg_temp.at(m_n_elem - 1, 0);
+			}
+
+
+			// Calculate time-averaged wall temperatures and heat losses
+			util::matrix_t<double> Tfavg, Tsavg;
+			Tfavg.resize_fill(m_n_elem, m_n_lines, 0.0);
+			Tsavg.resize_fill(m_n_elem, m_n_lines, 0.0);
+			for (int i = 0; i < m_n_lines; i++)
+			{
+				for (int j = 0; j < m_n_elem; j++)
 				{
-					double Tfnew, Tsnew;
-					// Time-averaged inlet temperature for flow element j
-					if (pinputs.mflow_tot == 0.0)
-						Tfnew = Tsnew = toutputs.timeavg_temp.at(j, i);
-					else
+					// Average element temperature
+					double Tf[2] = { 0.0, 0.0 };
+					double Ts[2] = { 0.0, 0.0 };
+					Tf[1] = toutputs.timeavg_temp.at(j, i); // Exit 
+					if (j > 0)
+						Tf[0] = toutputs.timeavg_temp.at(j - 1, i); // Inlet 
+					else  // First element
 					{
-						double Tfavg_inlet;
-						if (j == 0)
-							Tfavg_inlet = tinputs.inlet_temp;
+						if (pinputs.mflow_tot == 0.0)
+							Tf[0] = Tf[1];
 						else
-							Tfavg_inlet = toutputs.timeavg_temp.at(j - 1, i);
+							Tf[0] = tinputs.inlet_temp;
+					}
+					
+					Tfavg.at(j, i) = 0.5*(Tf[0] + Tf[1]);
+					Tsavg.at(j, i) = Tfavg.at(j, i);
 
-						if (j == m_n_elem - 1 && m_n_lines > 1)		// Downcomer with more than one flow path
-							Tfavg_inlet = 0.5*(toutputs.timeavg_temp.at(j - 1, 0) + toutputs.timeavg_temp.at(j - 1, 1));
+					// Receiver panels
+					if (m_flowelem_type.at(j, i) >= 0)			
+					{
+						double qabs_avg = 0.5*(pinputs.finitial + pinputs.ffinal) * pinputs.qinc.at(j, i) / (0.5*CSP::pi*m_od.at(j)*tinputs.length.at(j));  // Average absorbed flux per tube [W/m2] front tube surface area
+						double hext, Tfilm, qconv, qrad;
+						qrad = qconv = 0.0;
 
-						// Time-averaged net heat transfer rate (W/m-length) from linearized approximation: Values for receiver panels are per tube
-						double qnet_out = (tinputs.cval.at(j, i) - tinputs.lam2.at(j, i)*toutputs.timeavg_temp.at(j, i)) * m_tm.at(j);		// Value at outlet
-						double qnet_in = (tinputs.cval.at(j, i) - tinputs.lam2.at(j, i)*Tfavg_inlet) * m_tm.at(j);							// Value at inlet
-						double qnet_avg = 0.5*(qnet_out + qnet_in);
-						double Ts_out, Ts_in;
-
-						if (m_flowelem_type.at(j, i) >= 0)			// Receiver panel
+						// Calculate external solid wall temperature at inlet and outlet conditions
+						for (int m = 0; m < 2; m++)  // Inlet and exit temperatures
 						{
-							Ts_out = toutputs.timeavg_temp.at(j, i) + qnet_out / CSP::pi * tinputs.Rtube.at(j, i);			// Time-averaged front external wall temperature at the flow element outlet
-							Ts_in = Tfavg_inlet + qnet_in / CSP::pi * tinputs.Rtube.at(j, i);								// Time-averaged front external wall temperature at the flow element inlet
-							qnet_sum = qnet_sum + qnet_avg*tinputs.length.at(j)*m_n_t;								// Time-averaged net heat transfer rate (W)
-							double panel_loss = pinputs.qinc.at(j, i)*m_n_t - qnet_avg*tinputs.length.at(j)*m_n_t;	// Time-averaged loss from panel = absorbed - net [W]
-							panel_loss_sum = panel_loss_sum + panel_loss;
-							double Ts_avg = 0.5*(Ts_out + Ts_in);
-							double Tlin = pinputs.Tseval.at(j, i);
-							double panel_rad_loss = m_od.at(j)* m_hl_ffact * m_epsilon*CSP::sigma * (4.0*pow(Tlin, 3.0)*Ts_avg - 3.0 * pow(Tlin, 4.0) - 0.5*pow(pinputs.T_amb, 4.0) - 0.5*pow(pinputs.T_sky, 4.0)) * tinputs.length.at(j)*m_n_t;	// Time-averged radiation loss from panel [W]
-							double panel_conv_loss = panel_loss - panel_rad_loss;   // Time-averaged panel convection loss [W] 
-							rad_loss_sum = rad_loss_sum + panel_rad_loss;			// Time-averaged total radiative loss from all panels [W]
-							conv_loss_sum = conv_loss_sum + panel_conv_loss;		// Time-averaged total convection loss from all panels [W]
-						}
-						else
-						{
-							Ts_out = toutputs.timeavg_temp.at(j, i);
-							Ts_in = Tfavg_inlet;
-							if (i == 0 || m_flowelem_type.at(j, i) == -3)		// First flow path (riser and downcomer solutions are repeated in both flow paths) or crossover header
+							if (pinputs.mflow_tot == 0.0)
+								Ts[m] = Tf[m];  
+							else
 							{
-								qnet_sum = qnet_sum + qnet_avg*tinputs.length.at(j);			// Time-averaged net heat transfer rate (W)
-								piping_loss_sum = piping_loss_sum - (qnet_avg*tinputs.length.at(j));
+								double Tsguess = Tf[m] + ((tinputs.cval.at(j, i) - tinputs.lam2.at(j, i)*Tf[m]) * m_tm.at(j)) / CSP::pi * tinputs.Rtube.at(j, i);  
+								double f, dfdT, Tsguessnew;
+								int qq = 0;
+								double delT = 100.0;
+								while (delT > 1.0 && qq < 20)
+								{
+									Tfilm = 0.5*(Tsguess + pinputs.T_amb);
+									hext = calc_external_convection_coeff(pinputs, Tsguess) * (2.0 / CSP::pi);   // 2/pi scales for loss from tube SA
+									qconv = hext * (Tsguess - Tfilm)*m_hl_ffact;
+									qrad = (2.0 / CSP::pi) * CSP::sigma*m_epsilon*(pow(Tsguess, 4) - 0.5*pow(pinputs.T_amb, 4) - 0.5*pow(pinputs.T_sky, 4))*m_hl_ffact;
+									f = Tsguess - Tf[m] - (qabs_avg - qconv - qrad)*0.5*m_od.at(j)*tinputs.Rtube.at(j, i);
+									dfdT = 1.0 + 0.5*m_od.at(j)*tinputs.Rtube.at(j, i) * (hext + 4.0 * (2.0 / CSP::pi) * m_epsilon*CSP::sigma*pow(Tsguess, 3));
+									Tsguessnew = Tsguess - f / dfdT;
+									delT = abs(Tsguessnew - Tsguess);
+									Tsguess = Tsguessnew;
+									qq++;
+								}
+								Ts[m] = Tsguess;
 							}
+							Tfilm = 0.5*(Ts[m] + pinputs.T_amb);
+							hext = calc_external_convection_coeff(pinputs, Ts[m])* (2.0 / CSP::pi);
+							qconv += 0.5 * (hext * (Ts[m] - Tfilm)*m_hl_ffact);  // [W/m2]
+							qrad += 0.5 * ((2.0 / CSP::pi) * CSP::sigma*m_epsilon*0.5*(2.0*pow(Ts[m], 4) - pow(pinputs.T_amb, 4) - pow(pinputs.T_sky, 4))*m_hl_ffact);  // [W/m2]
 						}
-						Tfnew = 0.5*(toutputs.timeavg_temp.at(j, i) + Tfavg_inlet);		// Average fluid temperature within the flow element
-						Tsnew = 0.5*(Ts_out + Ts_in);									// Average solid temperature within the flow element
+
+						// Total radiative and convective loss [W]
+						rad_loss_sum += qrad * 0.5*CSP::pi*m_od.at(j)*tinputs.length.at(j)*m_n_t;	
+						conv_loss_sum += qconv * 0.5*CSP::pi*m_od.at(j)*tinputs.length.at(j)*m_n_t;  
+						panel_loss_sum += (qconv + qrad) * 0.5*CSP::pi*m_od.at(j)*tinputs.length.at(j)*m_n_t;
+						qnet_sum += (qabs_avg - qrad - qconv) * (0.5*CSP::pi*m_od.at(j)*tinputs.length.at(j)) * m_n_t;  
+						Tsavg.at(j,i) = 0.5*(Ts[0] + Ts[1]);  // Avg of inlet/exit temperatures
 					}
 
-					maxTdiff = fmax(maxTdiff, fmax(fabs(Tsnew - pinputs.Tseval.at(j, i)), fabs(Tfnew - pinputs.Tfeval.at(j, i))));	// Update maximum difference between previous and new average fluid and solid temperatures
-					pinputs.Tfeval.at(j, i) = Tfnew;		// Update property evaluation and linearization temperatures
-					pinputs.Tseval.at(j, i) = Tsnew;
+					// Riser
+					if (m_flowelem_type.at(j, i) == -1 && i == 0)
+					{
+						double heatloss = (2.0*CSP::pi * (Tfavg.at(j, i) - pinputs.T_amb) / m_Rtot_riser) * tinputs.length.at(j); //[W]
+						piping_loss_sum += heatloss;
+						qnet_sum -= heatloss;
+					}
+
+					// Downcomer
+					if (m_flowelem_type.at(j, i) == -2 && i == 0)
+					{
+						double heatloss = (2.0*CSP::pi * (Tfavg.at(j, i) - pinputs.T_amb) / m_Rtot_downc) * tinputs.length.at(j); //[W]
+						piping_loss_sum += heatloss;
+						qnet_sum -= heatloss;
+					}
+				}
+
+			}
+
+			// Update property evaluation and linearization temperatures
+			for (int i = 0; i < m_n_lines; i++)
+			{
+				for (int j = 0; j < m_n_elem; j++)
+				{
+					maxTdiff = fmax(maxTdiff, fmax(fabs(Tsavg.at(j, i) - pinputs.Tseval.at(j, i)), fabs(Tfavg.at(j, i) - pinputs.Tfeval.at(j, i))));
 				}
 			}
+			pinputs.Tfeval = Tfavg;
+			pinputs.Tseval = Tsavg;
 			q++;
 		}
+
+		// Calculate axial profile at end of time step
 		calc_axial_profile(transmodel_step, tinputs, toutputs.t_profile);		// Calculate full axial temperature profile at the end of the time step
 
-		// Estimate the maximum temperature variation that occurs for any flow element during the time step 
-		double tmax[3] = { 0, 0, 0 };
-		double tmin[3] = { 0, 0, 0 };
-		double tptmin[3] = { 0, 0, 0 };
-		double tptmax[3] = { 0, 0, 0 };
-		if (pinputs.mflow_tot > 0.0)
-		{
-			calc_extreme_outlet_values(transmodel_step, tinputs, tmin, tmax, tptmin, tptmax);			// Calculate min/max temperatures which occur at the downcomer and receiver outlet at any point during the time step
-			max_Trise = fmax(tmax[0] - tmin[0], fmax(tmax[1] - tmin[1], tmax[2] - tmin[2]));		// Largest difference between max/min values for the receiver outlet or downcomer outlet during the time step
-		}
+		// Estimate the maximum temperature variation during the time step 
 		for (int i = 0; i < m_n_lines; i++)
 		{
 			for (int j = 0; j < m_nz_tot; j++)
 				max_Trise = fmax(max_Trise, fabs(toutputs.t_profile.at(j, i) - tinputs.tinit.at(j, i)));		// Difference between final and initial temperature at axial position j
 		}
+		util::matrix_t<double> textreme_d, tpt_d, textreme_r, tpt_r;
+		calc_extreme_outlet_values(transmodel_step, m_n_elem - 1, tinputs, textreme_d, tpt_d);   //Extreme downcomer outlet T
+		calc_extreme_outlet_values(transmodel_step, m_n_elem - 2, tinputs, textreme_r, tpt_r);   //Extreme receiver outlet T
+		max_Trise = fmax(max_Trise, fmax(textreme_d.at(1, 0) - textreme_d.at(0, 0), textreme_r.at(1, 0) - textreme_r.at(0, 0)));
+		if (m_n_lines >1)
+			max_Trise = fmax(max_Trise, textreme_r.at(1, 1) - textreme_r.at(0, 1));
 
 		// Calculate output values or subdivide time step
 		if (max_Trise < allowable_Trise || transmodel_step <= allowable_min_step)				// Maximum temperature variation is acceptable or the time step is the minimum allowable value
@@ -2891,23 +3165,23 @@ void C_mspt_receiver_222::solve_transient_model(const C_csp_weatherreader::S_out
 			toutputs.timeavg_conv_loss = toutputs.timeavg_conv_loss + conv_loss_sum*(transmodel_step / tstep);
 			toutputs.timeavg_piping_loss = toutputs.timeavg_piping_loss + piping_loss_sum*(transmodel_step / tstep);
 			toutputs.timeavg_tout = toutputs.timeavg_tout + toutputs.timeavg_temp.at(m_n_elem - 1, 0)*(transmodel_step / tstep);
-			toutputs.max_tout = fmax(toutputs.max_tout, tmax[0]);
-			if (tmin[0] < toutputs.min_tout)
+			
+			toutputs.max_tout = fmax(toutputs.max_tout, textreme_d.at(1, 0));
+			if (textreme_d.at(0, 0) < toutputs.min_tout)
 			{
-				toutputs.min_tout = tmin[0];
-				toutputs.time_min_tout = solved_time + tptmin[0];	// Time relative to beginning of full time step
+				toutputs.min_tout = textreme_d.at(1, 0);
+				toutputs.time_min_tout = solved_time + tpt_d.at(1, 0);	// Time relative to beginning of full time step
 			}
-
-			toutputs.max_rec_tout = fmax(toutputs.max_rec_tout, tmax[1]);
+			toutputs.max_rec_tout = fmax(toutputs.max_rec_tout, textreme_r.at(1, 0));
 			if (m_n_lines > 1)
-				toutputs.max_rec_tout = fmax(toutputs.max_rec_tout, tmax[2]);
+				toutputs.max_rec_tout = fmax(toutputs.max_rec_tout, textreme_r.at(1, 1));
+			
 
 			solved_time = solved_time + transmodel_step;
-			if (tstep - solved_time > 0.01)					// The full time step has not been finished
+			if (tstep - solved_time > 0.01)					// Full time step not finished
 			{
 				transmodel_step = tstep - solved_time;		// Set transient model time step = remaining fraction of the full model time step
 				tinputs.tinit = toutputs.t_profile;			// Set new initial temperature profile to profile at the end of the last successful transient model time step
-				tinputs.tinit_wall = toutputs.t_profile_wall;
 			}
 		}
 		else		// Maximum temperature variation over the transient model time step is not acceptable --> Decrease transient model time step and try again
@@ -2917,7 +3191,7 @@ void C_mspt_receiver_222::solve_transient_model(const C_csp_weatherreader::S_out
 	toutputs.tout = toutputs.t_profile.at(m_nz_tot - 1, 0);														// Downcomer outlet T at the end of the time step
 	toutputs.timeavg_qthermal = pinputs.mflow_tot * pinputs.c_htf * (toutputs.timeavg_tout - tinputs.inlet_temp);				// Time-averaged thermal power leaving the receiver during the time step [W]	
 	tinputs.tinit = tinit_start;		// Revert initial temperature profile back to profile at the start of the full time step (in case the model is called more than once during this time step)
-	tinputs.tinit_wall = tinit_wall_start;
+
 
 	// Calculate receiver wall temperature profile at the end of the time step
 	for (int i = 0; i < m_n_lines; i++)			// Loop through flow paths
@@ -2928,7 +3202,7 @@ void C_mspt_receiver_222::solve_transient_model(const C_csp_weatherreader::S_out
 			for (int q = 0; q < tinputs.nz.at(j); q++)
 			{
 				double Tf = toutputs.t_profile.at(k, i);
-				double qnet = (tinputs.cval.at(j, i) - tinputs.lam2.at(j, i)*Tf) * m_tm.at(j);
+				double qnet = (tinputs.cval.at(j, i) + tinputs.aval.at(j,i)*tstep - tinputs.lam2.at(j, i)*Tf) * m_tm.at(j);
 				toutputs.t_profile_wall.at(k, i) = Tf;
 				if (m_flowelem_type.at(j, i) >= 0)			// Receiver panel
 					toutputs.t_profile_wall.at(k, i) += qnet / CSP::pi * tinputs.Rtube.at(j, i);
@@ -2941,8 +3215,7 @@ void C_mspt_receiver_222::solve_transient_model(const C_csp_weatherreader::S_out
 }
 
 
-void C_mspt_receiver_222::solve_transient_startup_model(const C_csp_weatherreader::S_outputs &weather,
-	parameter_eval_inputs &pinputs,
+void C_mspt_receiver_222::solve_transient_startup_model(parameter_eval_inputs &pinputs,
 	transient_inputs &tinputs,
 	int startup_mode,
 	double target_temperature,
@@ -2961,7 +3234,7 @@ void C_mspt_receiver_222::solve_transient_startup_model(const C_csp_weatherreade
 		double heat_trace_energy = 0.0;
 
 		// Update PDE parameters
-		update_pde_parameters(weather, true, pinputs, tinputs);
+		update_pde_parameters(true, pinputs, tinputs);
 		for (int i = 0; i < m_n_lines; i++)
 		{
 			tinputs.cval.at(0, i) = (m_heat_trace_power + 2.0*CSP::pi*pinputs.T_amb / m_Rtot_riser) / pinputs.tm.at(0);
@@ -3042,7 +3315,7 @@ void C_mspt_receiver_222::solve_transient_startup_model(const C_csp_weatherreade
 			}
 		}
 		pinputs.Tfeval = pinputs.Tseval;
-		update_pde_parameters(weather, false, pinputs, tinputs);	// Update parameters for startup conditions using specified Tfeval and Tseval
+		update_pde_parameters(false, pinputs, tinputs);	// Update parameters for startup conditions using specified Tfeval and Tseval
 
 		// Calculate required preheating time
 		if (tinputs.lam2.at(1, 0) == 0.0)		// No heat losses
@@ -3080,55 +3353,82 @@ void C_mspt_receiver_222::solve_transient_startup_model(const C_csp_weatherreade
 		double circulate_time = 0.0;
 		double circulate_energy = 0.0;
 		double max_Trise = 150.0;
+		double total_time = 0.0;
 
-		// Estimate time required to reach SS downcomer outlet T
-		update_pde_parameters(weather, true, pinputs, tinputs);  // only need lam1 --> no temperature dependence
-		double time_ss_outlet = 0.0;
-		for (int i = 0; i < m_n_lines; i++)
+		if (pinputs.ramptime >= max_time)    // Flux ramp is applied during the full time period remaining in the time step -> Startup won't be completed in this time step
 		{
-			double time_ss = 0.0;
-			for (int j = 0; j < m_n_elem; j++)
-				time_ss = time_ss + tinputs.length.at(j) / tinputs.lam1.at(j, i);	
-			time_ss_outlet = fmax(time_ss_outlet, time_ss);
+			solve_transient_model(max_time, max_Trise, pinputs, tinputs, toutputs);		
+			circulate_energy += toutputs.timeavg_qnet * max_time; 
+			energy = circulate_energy;
+			startup_time = max_time;
 		}
 
-		// Find time at which outlet temperature reaches target value 
-		double temp_tol = 2.0;
-		double time_tol = 20.0;
-		double lowerbound = 0.0;
-		double upperbound = fmin(time_ss_outlet, max_time);	// Upper bound for circulation time = time for downcomer outlet to reach SS
-		if (min_time > 0.01)
-			lowerbound = fmin(min_time, max_time);		// Redefine lower bound if previously defined from "Hold" mode
-
-		upperbound = fmax(upperbound, lowerbound);
-		circulate_time = upperbound;
-		solve_transient_model(weather, circulate_time, max_Trise, pinputs, tinputs, toutputs);		// Solve transient model with upper bound for circulation time
-
-		if (toutputs.tout < target_temperature)	// Target outlet temperature not achieved within the current time step
-			circulate_time = max_time;
-		else	
+		else
 		{
-			if (toutputs.min_tout < target_temperature)		// Outlet temperature drops below the target during the time step --> set lower bound to time when minimum outlet T occurs
-				lowerbound = fmax(lowerbound, toutputs.time_min_tout);
-
-			double Tdiff = toutputs.tout - target_temperature;
-			while ((Tdiff < 0.0 || Tdiff > temp_tol) && (upperbound - lowerbound > time_tol))	// Outlet temperature is less than the target, or greater than the target by more than the designated tolerance
+			if (pinputs.finitial < pinputs.ffinal)  // Flux ramp is applied for only part of the time step
 			{
-				circulate_time = 0.5*(upperbound + lowerbound);
-				solve_transient_model(weather, circulate_time, max_Trise, pinputs, tinputs, toutputs);
-				Tdiff = toutputs.tout - target_temperature;
-				if (Tdiff < 0.0)
-					lowerbound = circulate_time;
-				else
-					upperbound = circulate_time;
+				solve_transient_model(pinputs.ramptime, max_Trise, pinputs, tinputs, toutputs);		// Solve transient model during portion of time step with flux ramp
+				circulate_energy += toutputs.timeavg_qnet * pinputs.ramptime; // Energy [J] used for startup during the flux ramp
+				total_time = pinputs.ramptime;
+				trans_inputs.tinit = trans_outputs.t_profile;
+				trans_inputs.tinit_wall = trans_outputs.t_profile_wall;
+				max_time -= pinputs.ramptime;
+				pinputs.finitial = 1.0;
+				pinputs.ffinal = 1.0;
+				pinputs.ramptime = 0.0;
 			}
-			if (circulate_time == max_time)
-				circulate_time -= 0.5;   // Target temperature achieved, report time < max_time to move to next stage
-		}
 
-		circulate_energy = toutputs.timeavg_qnet * circulate_time; // Energy [J] used for startup during the time step
-		energy = circulate_energy;
-		startup_time = circulate_time;
+			// Flux ramp is finished -> find time at which outlet temperature reaches target value
+			double upperbound = max_time;
+			double lowerbound = 0.0;
+			if (min_time > 0.01)
+				lowerbound = fmin(min_time, max_time);		// Redefine lower bound if previously defined from "Hold" mode
+
+			// Estimate time required to reach SS downcomer outlet T
+			update_pde_parameters(true, pinputs, tinputs);
+			double time_ss_outlet = 0.0;
+			for (int i = 0; i < m_n_lines; i++)
+			{
+				double time_ss = 0.0;
+				for (int j = 0; j < m_n_elem; j++)
+					time_ss = time_ss + tinputs.length.at(j) / tinputs.lam1.at(j, i);
+				time_ss_outlet = fmax(time_ss_outlet, time_ss);
+			}
+			upperbound = fmin(time_ss_outlet, max_time);
+			upperbound = fmax(upperbound, lowerbound);
+			circulate_time = upperbound;
+			solve_transient_model(circulate_time, max_Trise, pinputs, tinputs, toutputs);		
+
+			if (toutputs.tout < target_temperature)	// Target outlet temperature not achieved within the current time step
+				circulate_time = max_time;
+			else
+			{
+				if (toutputs.min_tout < target_temperature)		// Outlet temperature drops below the target during the time step --> set lower bound to time when minimum outlet T occurs
+					lowerbound = fmax(lowerbound, toutputs.time_min_tout);
+
+				// Find time at which outlet temperature reaches target value 
+				double Tdiff = toutputs.tout - target_temperature;
+				double temp_tol = 2.0;
+				double time_tol = 20.0;
+				while ((Tdiff < 0.0 || Tdiff > temp_tol) && (upperbound - lowerbound > time_tol))	// Outlet temperature is less than the target, or greater than the target by more than the designated tolerance
+				{
+					circulate_time = 0.5*(upperbound + lowerbound);
+					solve_transient_model(circulate_time, max_Trise, pinputs, tinputs, toutputs);
+					Tdiff = toutputs.tout - target_temperature;
+					if (Tdiff < 0.0)
+						lowerbound = circulate_time;
+					else
+						upperbound = circulate_time;
+				}
+				if (circulate_time == max_time)
+					circulate_time -= 0.01;   // Target temperature achieved, report time < max_time to move to next stage
+			}
+
+			circulate_energy += toutputs.timeavg_qnet * circulate_time; // Energy [J] used for startup during the time step
+			total_time += circulate_time;
+			energy = circulate_energy;
+			startup_time = total_time;
+		}
 	}
 	break;
 
@@ -3140,11 +3440,17 @@ void C_mspt_receiver_222::solve_transient_startup_model(const C_csp_weatherreade
 
 void C_mspt_receiver_222::est_startup_time_energy(double fract, double &est_time, double &est_energy)
 {
+	// fract = Fraction of design point thermal power 
+
 	// Typical conditions during startup  
 	double Tamb = 290.0;				// Ambient temperature (K)
-	double massflow_fraction = fract;   // Fraction of design point mass flow 
+	double Tsky = 280.0;
+	double wspd = 5.0;
+	double pres = 101325.;
+	double efficiency_est = 0.92;
 
-	double cval, time_heattrace, time_preheat, time_circulate, time_startup;
+
+	double cval, time_heattrace, time_preheat, time_circulate, time_startup, circulate_energy, qinc_approx;
 	double T_coolant_prop = 0.5*(m_T_htf_cold_des + m_T_htf_hot_des);
 
 	// Heat tracing (without losses)
@@ -3152,22 +3458,105 @@ void C_mspt_receiver_222::est_startup_time_energy(double fract, double &est_time
 	time_heattrace = (m_T_htf_cold_des - Tamb) / cval;
 
 	//Preheating (without losses)
-	cval = m_od_tube * m_tube_flux_startup*1000.0 / m_tm_solid.at(1);
+	cval = m_od_tube * m_tube_flux_preheat*1000.0 / m_tm_solid.at(1);
 	time_preheat = (m_T_htf_cold_des - Tamb) / cval;
 
+	/*
 	// Circulation (excluding cross-over header)
 	double cp_htf = field_htfProps.Cp(T_coolant_prop)*1000.0;		// HTF specific heat at average temperature [J/kg-K] 
 	double m_dot_rec_des = m_q_rec_des / (cp_htf*(m_T_htf_hot_des - m_T_htf_cold_des)); // Design point receiver mass flow rate (kg/s)
-	double mdot_startup = massflow_fraction*m_dot_rec_des;								// Typical total mass flow rate during startup (kg/s)
+	double mdot_startup = fract*m_dot_rec_des;								// Typical total mass flow rate during startup (kg/s)
 	double tube_lam1 = (mdot_startup / m_n_lines / m_n_t)*cp_htf / m_tm.at(1);
 	double downc_lam1 = mdot_startup*cp_htf / m_tm.at(m_n_elem - 1);
 	time_circulate = (m_n_panels / m_n_lines)*m_h_rec / tube_lam1 + 0.5*(m_h_tower*m_pipe_length_mult + m_pipe_length_add) / downc_lam1;
+	time_circulate = fmax(time_circulate, m_flux_ramp_time * 3600);
 
 	time_startup = time_heattrace + time_preheat + time_circulate;
 	time_startup = fmax(time_startup, m_rec_su_delay*3600.0);
-
 	est_time = time_startup;
-	est_energy = (time_preheat*(m_tube_flux_startup *1000.0* m_od_tube * m_h_rec * m_n_t * m_n_panels) + time_circulate*(m_q_rec_des*massflow_fraction)) * 1.e-6 / 3600.0;		//Energy utilized during the estimated startup time (MWt-hr)
+	est_energy = (time_preheat*(m_tube_flux_preheat *1000.0* m_od_tube * m_h_rec * m_n_t * m_n_panels) + time_circulate*(m_q_rec_des*fract)) * 1.e-6 / 3600.0;		//Energy utilized during the estimated startup time (MWt-hr)
+	*/
+
+
+	// Circulation
+	param_inputs.c_htf = field_htfProps.Cp(T_coolant_prop)*1000.0;		// HTF specific heat at average temperature [J/kg-K] 
+	param_inputs.rho_htf = field_htfProps.dens(T_coolant_prop, 1.0);	// HTF density at average temperature [kg/m3]
+	param_inputs.mu_htf = field_htfProps.visc(T_coolant_prop);			// HTF viscosity at average temperature [kg/m/s]
+	param_inputs.k_htf = field_htfProps.cond(T_coolant_prop);			// HTF conductivity at average temperature [W/m/K]
+	param_inputs.Pr_htf = param_inputs.c_htf*param_inputs.mu_htf / param_inputs.k_htf;
+	param_inputs.T_amb = Tamb;
+	param_inputs.T_sky = Tsky;
+	param_inputs.wspd = wspd;
+	param_inputs.pres = pres;
+	param_inputs.tm = m_tm;
+	
+	param_inputs.qinc.fill(0.0);
+	qinc_approx = fract*m_q_rec_des/ efficiency_est / double(m_n_panels) / double(m_n_t); // Approximate incident flux per tube [W]
+	for (int j = 0; j < m_n_elem; j++)
+	{
+		if (m_flowelem_type.at(j, 0) >= 0)
+		{
+			for (int i = 0; i < m_n_lines; i++)
+				param_inputs.qinc.at(j, i) = qinc_approx;
+		}
+	}
+
+	trans_inputs.inlet_temp = m_T_htf_cold_des;
+	trans_inputs.tinit.fill(m_T_htf_cold_des);
+	trans_inputs.tinit_wall.fill(m_T_htf_cold_des);
+
+	// Find mass flow rate that meets SS outlet temperature
+	param_inputs.finitial = 1.0;
+	param_inputs.ffinal = 1.0;
+	param_inputs.ramptime = 0.0;
+	double mguess, low, high, test, soln, Tdiff;
+	low = 0.8;
+	high = 1.2;
+	test = 1.0;
+	soln = std::numeric_limits<double>::quiet_NaN();
+	mguess = fract*m_q_rec_des / (param_inputs.c_htf *(m_T_htf_hot_des - m_T_htf_cold_des)); // receiver mass flow rate (kg/s)
+	int q = 0;
+	double tol = 5.;
+	bool converged = false;
+	while (q < 50 && !converged)
+	{
+		param_inputs.mflow_tot = test*mguess;
+		solve_transient_model(1.e6, 150.0, param_inputs, trans_inputs, trans_outputs); // Solve for SS outlet T
+		Tdiff = trans_outputs.tout - m_T_htf_hot_des;
+		if (Tdiff >= 0 && Tdiff <= tol)
+		{
+			converged = true;
+			soln = test;
+		}
+		if (Tdiff > 0)
+			low = test;
+		else
+			high = test;
+		test = 0.5*(low + high);
+		q++;
+	}
+
+	// Determine required startup time
+	param_inputs.mflow_tot = soln*mguess;
+	param_inputs.ramptime = m_flux_ramp_time;
+	param_inputs.finitial = 0.0;
+	if (m_flux_ramp_time == 0.0)
+		param_inputs.finitial = 1.0;
+	solve_transient_startup_model(param_inputs, trans_inputs, CIRCULATE, m_T_htf_hot_des, 0.0, 1.e6, trans_outputs, time_circulate, circulate_energy);
+
+	if (time_circulate == 1.e6)  // Transient model solution did not converge, use simple approximation of startup time instead
+	{
+		double tube_lam1 = (param_inputs.mflow_tot / m_n_lines / m_n_t)*param_inputs.c_htf / m_tm.at(1);
+		double downc_lam1 = param_inputs.mflow_tot*param_inputs.c_htf / m_tm.at(m_n_elem - 1);
+		time_circulate = (m_n_panels / m_n_lines)*m_h_rec / tube_lam1 + 0.5*(m_h_tower*m_pipe_length_mult + m_pipe_length_add) / downc_lam1;
+		time_circulate += m_flux_ramp_time * 3600;
+	}
+
+
+	time_startup = time_heattrace + time_preheat + time_circulate;
+	time_startup = fmax(time_startup, m_rec_su_delay*3600.0);
+	est_time = time_startup;
+	est_energy = (time_preheat*(m_tube_flux_preheat *1000.0* m_od_tube * m_h_rec * m_n_t * m_n_panels) + circulate_energy) * 1.e-6 / 3600.0;		//Energy utilized during the estimated startup time (MWt-hr)
 
 }
 

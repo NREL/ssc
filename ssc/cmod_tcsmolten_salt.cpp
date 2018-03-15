@@ -201,6 +201,7 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
 	
 	{ SSC_INPUT,		SSC_NUMBER,		 "heat_trace_power",	 "Riser/downcomer heat trace power during startup",				      "kW/m",		  "",			 "receiver",	   "?=500.0",				  "",					   "" },
 	{ SSC_INPUT,		SSC_NUMBER,		 "preheat_flux",	     "Tube absorbed solar flux during preheat",							  "kW/m2",		  "",			 "receiver",	   "?=50.0",				  "",					   "" },
+	{ SSC_INPUT,		SSC_NUMBER,		 "startup_ramp_time",	 "Time required to reach full flux during receiver startup",		  "hr",			  "",			 "receiver",	   "?=0.0",					  "",					   "" },
 	{ SSC_INPUT,		SSC_NUMBER,		 "preheat_target_Tdiff", "Target tube T at end of preheat - design pt cold HTF temperature",  "C",			  "",			 "receiver",	   "?=25.0",				  "",					   "" },
 	{ SSC_INPUT,		SSC_NUMBER,		 "startup_target_Tdiff", "Target HTF T at end of startup - design pt hot HTF temperature",	  "C",			  "",			 "receiver",	   "?=-5.0",				  "",					   "" },
 
@@ -1529,7 +1530,8 @@ public:
 		receiver.m_riser_tm_mult = as_double("riser_tm_mult");
 		receiver.m_downc_tm_mult = as_double("downc_tm_mult");
 		receiver.m_heat_trace_power = as_double("heat_trace_power");	//[kW/m]
-		receiver.m_tube_flux_startup = as_double("preheat_flux");		//[kW/m2]
+		receiver.m_tube_flux_preheat = as_double("preheat_flux");		//[kW/m2]
+		receiver.m_flux_ramp_time = as_double("startup_ramp_time");		//[hr]
 		receiver.m_preheat_target = receiver.m_T_htf_cold_des + as_double("preheat_target_Tdiff");
 		receiver.m_startup_target = receiver.m_T_htf_hot_des + as_double("startup_target_Tdiff");
 		receiver.m_initial_temperature = 5.0; //[C]
