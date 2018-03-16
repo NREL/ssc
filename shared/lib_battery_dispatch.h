@@ -182,7 +182,9 @@ protected:
 
 	// allocated and managed internally
 	std::unique_ptr<BatteryPowerFlow> m_batteryPowerFlow;
-	std::unique_ptr<BatteryPower> m_batteryPower;
+	
+	// managed elsewhere
+	BatteryPower * m_batteryPower;
 
 	// the actual power inputs chosen based on charging/discharging
 	double _P_pv;

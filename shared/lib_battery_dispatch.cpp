@@ -59,6 +59,11 @@ dispatch_t::dispatch_t(battery_t * Battery, double dt_hour, double SOC_min, doub
 	_Battery = Battery;
 	_Battery_initial = new battery_t(*_Battery);
 	init(_Battery, dt_hour, SOC_min, SOC_max, current_choice, Ic_max, Id_max, Pc_max, Pd_max, t_min, mode, pv_dispatch);
+
+	// initialize battery power flow 
+	std::unique_ptr<BatteryPowerFlow> tmp(new BatteryPowerFlow());
+	m_batteryPowerFlow = std::move(tmp);
+	m_batteryPower = m_batteryPowerFlow->getBatteryPower();
 }
 
 void dispatch_t::init(battery_t * Battery, double dt_hour, double SOC_min, double SOC_max, int current_choice, double Ic_max, double Id_max, double Pc_max, double Pd_max, double t_min, int mode, int pv_dispatch)
@@ -87,13 +92,8 @@ void dispatch_t::init(battery_t * Battery, double dt_hour, double SOC_min, doubl
 	_can_clip_charge = false;
 	_can_discharge = false;
 	_can_grid_charge = false;
-
-	// initialize battery power flow 
-	std::unique_ptr<BatteryPower> tmp(new BatteryPower());
-	m_batteryPower = std::move(tmp);
 }
 
-	
 
 void dispatch_t::prepare_dispatch(size_t, size_t, double P_pv_dc_charging, double P_pv_dc_discharging, double P_load_dc_charging, double P_load_dc_discharging, double P_pv_dc_clipping)
 {

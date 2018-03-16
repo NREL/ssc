@@ -10,6 +10,7 @@ BatteryPower::BatteryPower() :
 		powerPVToLoad(0),
 		powerPVToBattery(0),
 		powerPVToGrid(0),
+		powerClippedToBattery(0),
 		powerGridToBattery(0),
 		powerGridToLoad(0),
 		powerBatteryToLoad(0),
@@ -24,13 +25,11 @@ BatteryPowerFlow::BatteryPowerFlow()
 {
 	std::unique_ptr<BatteryPower> tmp(new BatteryPower());
 	m_powerFlowAC = std::move(tmp);
-
-	/*
-	std::unique_ptr<BatteryPower> tmp2(new BatteryPower());
-	m_powerFlowDC = std::move(tmp2);
-	*/
 }
-
+BatteryPower * BatteryPowerFlow::getBatteryPower()
+{
+	return m_powerFlowAC.get();
+}
 void BatteryPowerFlow::calculate()
 {
 	if (m_powerFlowAC->connectionMode == ChargeController::AC_CONNECTED){

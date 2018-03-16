@@ -26,6 +26,9 @@ public:
 	/// Calculate the power flow for the battery system
 	void calculate();
 
+	/// Get Battery Power object
+	BatteryPower * getBatteryPower();
+
 private:
 
 	/// Calculate the power flow for an AC connected battery system
