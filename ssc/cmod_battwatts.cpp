@@ -54,6 +54,7 @@
 #include "lib_util.h"
 #include "lib_battery.h"
 #include "cmod_battery.h"
+#include "lib_power_electronics.h"
 
 
 
@@ -225,7 +226,7 @@ public:
 		batt_vars->batt_power_discharge_max = batt_vars->batt_kw;
 
 		// Power converters and topology
-		batt_vars->batt_topology = charge_controller::AC_CONNECTED;
+		batt_vars->batt_topology = ChargeController::AC_CONNECTED;
 		batt_vars->batt_ac_dc_efficiency = 96;
 		batt_vars->batt_dc_ac_efficiency = 96;
 		batt_vars->batt_dc_dc_bms_efficiency = 99;

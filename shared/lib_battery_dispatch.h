@@ -47,6 +47,9 @@
 *  THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *******************************************************************************************************/
 
+#include <memory>
+
+#include "lib_battery_powerflow.h"
 #include "lib_battery.h"
 #include "lib_utility_rate.h"
 
@@ -109,26 +112,19 @@ public:
 
 	battery_t * battery_model(){ return _Battery; }
 
-	virtual void compute_grid_net();
-
-	// compute totals
-	virtual void compute_battery_state();
-	virtual void compute_to_batt()=0;
-	virtual void compute_to_load();
-	virtual void compute_to_grid();
-	virtual void compute_generation();
-
-	// dc powers
-	double power_tofrom_battery();
-	double power_tofrom_grid();
-	double power_gen();
-	double power_pv_to_load();
-	double power_battery_to_load();
-	double power_grid_to_load();
-	double power_pv_to_batt();
-	double power_grid_to_batt();
-	double power_pv_to_grid();
-	double power_battery_to_grid();
+	// ac outputs
+	double power_tofrom_battery() { return m_batteryPower->powerBattery; }
+	double power_tofrom_grid() { return m_batteryPower->powerGrid; }
+	double power_gen() { return m_batteryPower->powerGeneratedBySystem; }
+	double power_pv_to_load() { return m_batteryPower->powerPVToLoad; }
+	double power_battery_to_load() { return m_batteryPower->powerBatteryToLoad; }
+	double power_grid_to_load() { return m_batteryPower->powerGridToLoad; }
+	double power_pv_to_batt() { return m_batteryPower->powerPVToBattery; }
+	double power_grid_to_batt() { return m_batteryPower->powerGridToBattery; }
+	double power_pv_to_grid() { return m_batteryPower->powerPVToGrid; }
+	double power_battery_to_grid() { return m_batteryPower->powerBatteryToGrid; }
+	double power_conversion_loss() { return m_batteryPower->powerConversionLoss; }
+	double power_system_loss() { return m_batteryPower->powerSystemLoss; }
 
 	virtual double power_grid_target(){	return 0;}
 	virtual double power_batt_target(){ return 0.;}
@@ -139,6 +135,10 @@ public:
 	double battery_power_to_fill(){ return _Battery->battery_power_to_fill(_SOC_max); }
 
 	message get_messages();
+
+	BatteryPower * getBatteryPower() {
+		return m_batteryPower.get();
+	};
 
 protected:
 
@@ -180,18 +180,9 @@ protected:
 	*/
 	int _pv_dispatch_to_battery_first; 
 
-	// dc power quantities
-	double _P_gen;				 // DC
-	double _P_tofrom_batt;		 // DC
-	double _P_grid;              // DC
-	double _P_pv_to_load;		 // DC
-	double _P_battery_to_load;   // DC
-	double _P_grid_to_load;      // DC
-	double _P_pv_to_batt;	     // DC
-	double _P_clipped_to_batt;   // DC
-	double _P_grid_to_batt;      // DC
-	double _P_pv_to_grid;		 // DC
-	double _P_battery_to_grid;   // DC
+	// allocated and managed internally
+	std::unique_ptr<BatteryPowerFlow> m_batteryPowerFlow;
+	std::unique_ptr<BatteryPower> m_batteryPower;
 
 	// the actual power inputs chosen based on charging/discharging
 	double _P_pv;

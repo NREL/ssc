@@ -289,7 +289,7 @@ struct battstor
 	battery_metrics_t *battery_metrics;
 	dispatch_t *dispatch_model;
 	losses_t *losses_model;
-	charge_controller *charge_control;
+	ChargeController *charge_control;
 	UtilityRate * utilityRate;
 	
 	bool en;

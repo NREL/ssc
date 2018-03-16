@@ -436,23 +436,23 @@ battstor::battstor(compute_module &cm, bool setup_model, size_t nrec, double dt_
 				batt_vars->inverter_model = cm.as_integer("inverter_model");
 				batt_vars->inverter_count = cm.as_integer("inverter_count");
 
-				if (batt_vars->inverter_model == inverter::SANDIA_INVERTER)
+				if (batt_vars->inverter_model == BatteryInverter::SANDIA_INVERTER)
 				{
 					batt_vars->inverter_efficiency = cm.as_double("inv_snl_eff_cec");
 					batt_vars->inverter_paco = batt_vars->inverter_count * cm.as_double("inv_snl_paco") * util::watt_to_kilowatt;
 				}
-				else if (batt_vars->inverter_model == inverter::DATASHEET_INVERTER)
+				else if (batt_vars->inverter_model == BatteryInverter::DATASHEET_INVERTER)
 				{
 					batt_vars->inverter_efficiency = cm.as_double("inv_ds_eff");
 					batt_vars->inverter_paco = batt_vars->inverter_count * cm.as_double("inv_ds_paco") * util::watt_to_kilowatt;
 
 				}
-				else if (batt_vars->inverter_model == inverter::PARTLOAD_INVERTER)
+				else if (batt_vars->inverter_model == BatteryInverter::PARTLOAD_INVERTER)
 				{
 					batt_vars->inverter_efficiency = cm.as_double("inv_pd_eff");
 					batt_vars->inverter_paco = batt_vars->inverter_count * cm.as_double("inv_pd_paco") * util::watt_to_kilowatt;
 				}
-				else if (batt_vars->inverter_model == inverter::COEFFICIENT_GENERATOR)
+				else if (batt_vars->inverter_model == BatteryInverter::COEFFICIENT_GENERATOR)
 				{
 					batt_vars->inverter_efficiency = cm.as_double("inv_cec_cg_eff_cec");
 					batt_vars->inverter_paco = batt_vars->inverter_count * cm.as_double("inv_cec_cg_paco") * util::watt_to_kilowatt;
@@ -460,7 +460,7 @@ battstor::battstor(compute_module &cm, bool setup_model, size_t nrec, double dt_
 			}
 			else
 			{
-				batt_vars->inverter_model = inverter::NONE;
+				batt_vars->inverter_model = BatteryInverter::NONE;
 				batt_vars->inverter_count = 1;
 				batt_vars->inverter_efficiency = batt_vars->batt_ac_dc_efficiency;
 				batt_vars->inverter_paco = batt_vars->batt_kw;
@@ -864,12 +864,11 @@ battstor::battstor(compute_module &cm, bool setup_model, size_t nrec, double dt_
 	ac_dc = batt_vars->batt_ac_dc_efficiency;
 	dc_ac = batt_vars->batt_dc_ac_efficiency;
 
-	if (batt_vars->batt_topology == charge_controller::AC_CONNECTED)
-		charge_control = new ac_connected_battery_controller(dispatch_model, battery_metrics, ac_dc, dc_ac);
-	else if (batt_vars->batt_topology == charge_controller::DC_CONNECTED)
-		charge_control = new dc_connected_battery_controller(dispatch_model, battery_metrics, batt_vars->batt_dc_dc_bms_efficiency, batt_vars->pv_dc_dc_mppt_efficiency, batt_vars->inverter_efficiency);
+	if (batt_vars->batt_topology == ChargeController::AC_CONNECTED)
+		charge_control = new ACBatteryController(dispatch_model, battery_metrics, ac_dc, dc_ac);
+	//else if (batt_vars->batt_topology == ChargeController::DC_CONNECTED)
+	//	charge_control = new DCBatteryController(dispatch_model, battery_metrics, batt_vars->batt_dc_dc_bms_efficiency, batt_vars->pv_dc_dc_mppt_efficiency, batt_vars->inverter_efficiency);
 	
-
 	parse_configuration();
 }
 
@@ -1090,11 +1089,11 @@ void battstor::initialize_time(size_t year_in, size_t hour_of_year, size_t step_
 }
 void battstor::advance(compute_module &cm, double P_pv_dc, double P_load_dc, double P_pv_clipped )
 {
-	charge_control->run(year, hour, step, year_index, P_pv_dc, P_load_dc, P_pv_clipped);
+	charge_control->run(year, hour, step, year_index, P_pv_dc, P_load_dc /*, P_pv_clipped*/);
 	outputs_fixed(cm);
 	outputs_topology_dependent(cm);
 
-	if (batt_vars->batt_topology == charge_controller::AC_CONNECTED)
+	if (batt_vars->batt_topology == ChargeController::AC_CONNECTED)
 		metrics(cm);
 }
 
@@ -1132,20 +1131,20 @@ void battstor::outputs_fixed(compute_module &cm)
 void battstor::outputs_topology_dependent(compute_module &)
 {
 	// Power output (all Powers in kWac)
-	outBatteryPower[index] = (ssc_number_t)(charge_control->power_tofrom_battery());
-	outGridPower[index] = (ssc_number_t)(charge_control->power_tofrom_grid());
-	outGenPower[index] = (ssc_number_t)(charge_control->power_gen());
-	outPVToBatt[index] = (ssc_number_t)(charge_control->power_pv_to_batt());
-	outGridToBatt[index] = (ssc_number_t)(charge_control->power_grid_to_batt());
-	outBatteryConversionPowerLoss[index] = (ssc_number_t)(charge_control->power_conversion_loss());
-	outBatterySystemLoss[index] = (ssc_number_t)(charge_control->power_system_loss());
-	outPVToGrid[index] = (ssc_number_t)(charge_control->power_pv_to_grid());
+	outBatteryPower[index] = (ssc_number_t)(dispatch_model->power_tofrom_battery());
+	outGridPower[index] = (ssc_number_t)(dispatch_model->power_tofrom_grid());
+	outGenPower[index] = (ssc_number_t)(dispatch_model->power_gen());
+	outPVToBatt[index] = (ssc_number_t)(dispatch_model->power_pv_to_batt());
+	outGridToBatt[index] = (ssc_number_t)(dispatch_model->power_grid_to_batt());
+	outBatteryConversionPowerLoss[index] = (ssc_number_t)(dispatch_model->power_conversion_loss());
+	outBatterySystemLoss[index] = (ssc_number_t)(dispatch_model->power_system_loss());
+	outPVToGrid[index] = (ssc_number_t)(dispatch_model->power_pv_to_grid());
 
 	if (batt_vars->batt_meter_position == dispatch_t::BEHIND)
 	{
-		outPVToLoad[index] = (ssc_number_t)(charge_control->power_pv_to_load());
-		outBatteryToLoad[index] = (ssc_number_t)(charge_control->power_battery_to_load());
-		outGridToLoad[index] = (ssc_number_t)(charge_control->power_grid_to_load());
+		outPVToLoad[index] = (ssc_number_t)(dispatch_model->power_pv_to_load());
+		outBatteryToLoad[index] = (ssc_number_t)(dispatch_model->power_battery_to_load());
+		outGridToLoad[index] = (ssc_number_t)(dispatch_model->power_grid_to_load());
 
 		if (batt_vars->batt_dispatch != dispatch_t::MANUAL)
 		{
@@ -1156,7 +1155,7 @@ void battstor::outputs_topology_dependent(compute_module &)
 	}
 	else if (batt_vars->batt_meter_position == dispatch_t::FRONT)
 	{
-		outBatteryToGrid[index] = (ssc_number_t)(charge_control->power_battery_to_grid());
+		outBatteryToGrid[index] = (ssc_number_t)(dispatch_model->power_battery_to_grid());
 
 		if (batt_vars->batt_dispatch != dispatch_t::FOM_MANUAL)
 			outCostToCycle[index] = (ssc_number_t)(dispatch_model->cost_to_cycle());
@@ -1207,7 +1206,7 @@ void battstor::metrics(compute_module &)
 
 void battstor::update_post_inverted(compute_module &cm, double p_gen_ac)
 {
-	charge_control->update_gen_ac(p_gen_ac);
+	//charge_control->update_gen_ac(p_gen_ac);
 	outputs_topology_dependent(cm);
 	metrics(cm);
 }
@@ -1220,12 +1219,13 @@ void battstor::update_grid_power(compute_module &, double P_gen_ac, double P_loa
 bool battstor::check_iterate(size_t count)
 {
 	bool iterate = false;
+	/*
 	if (count < 10)
 		iterate = charge_control->check_iterate();
 
 	if (!iterate)
 		charge_control->finalize();
-
+	*/
 	return iterate;
 }
 
@@ -1347,7 +1347,7 @@ public:
 						batt.check_replacement_schedule();
 						batt.advance(*this, power_input[year_idx], power_load[year_idx]);
 
-						if (batt.batt_vars->batt_topology == charge_controller::DC_CONNECTED)
+						if (batt.batt_vars->batt_topology == ChargeController::DC_CONNECTED)
 						{
 							double ac = batt.outGenPower[lifetime_idx] * batt.batt_vars->inverter_efficiency;
 							batt.update_post_inverted(*this, ac);

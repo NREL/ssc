@@ -1,30 +1,30 @@
 #include "lib_power_electronics.h"
 
-double bidirectional_inverter::convert_to_dc(double P_ac, double * P_dc)
+double BatteryBidirectionalInverter::convert_to_dc(double P_ac, double * P_dc)
 {
 	double P_loss = P_ac * (1 - _ac_dc_efficiency);
 	*P_dc = P_ac * _ac_dc_efficiency;
 	return P_loss;
 }
-double bidirectional_inverter::convert_to_ac(double P_dc, double * P_ac)
+double BatteryBidirectionalInverter::convert_to_ac(double P_dc, double * P_ac)
 {
 	double P_loss = P_dc * (1 - _dc_ac_efficiency);
 	*P_ac = P_dc * _dc_ac_efficiency;
 	return P_loss;
 }
-double bidirectional_inverter::compute_dc_from_ac(double P_ac)
+double BatteryBidirectionalInverter::compute_dc_from_ac(double P_ac)
 {
 	return P_ac / _dc_ac_efficiency;
 }
 
-double rectifier::convert_to_dc(double P_ac, double * P_dc)
+double BatteryRectifier::convert_to_dc(double P_ac, double * P_dc)
 {
 	double P_loss = P_ac * (1 - _ac_dc_efficiency);
 	*P_dc = P_ac * _ac_dc_efficiency;
 	return P_loss;
 }
 
-ACBatteryController::ACBatteryController(dispatch_t * dispatch, battery_metrics_t * battery_metrics, double, double)
+ChargeController::ChargeController(dispatch_t * dispatch, battery_metrics_t * battery_metrics)
 {
 	m_batteryMetrics = battery_metrics;
 	m_dispatch = dispatch;
@@ -45,6 +45,26 @@ ACBatteryController::ACBatteryController(dispatch_t * dispatch, battery_metrics_
 		std::unique_ptr<dispatch_t> tmp4(new dispatch_automatic_front_of_meter_t(*dispatch));
 		m_dispatchInitial = std::move(tmp4);
 	}
+}
 
-	initialize(0, 0, 0, 0);
+ACBatteryController::ACBatteryController(dispatch_t * dispatch, battery_metrics_t * battery_metrics, double efficiencyACToDC, double efficiencyDCToAC) : ChargeController(dispatch, battery_metrics)
+{
+	std::unique_ptr<BatteryBidirectionalInverter> tmp(new BatteryBidirectionalInverter(efficiencyACToDC, efficiencyDCToAC));
+	m_bidirectionalInverter = std::move(tmp);
+	m_batteryPower = dispatch->getBatteryPower();
+	m_batteryPower->connectionMode = ChargeController::AC_CONNECTED;
+	m_batteryPower->singlePointEfficiencyACToDC = m_bidirectionalInverter->ac_dc_efficiency();
+	m_batteryPower->singlePointEfficiencyDCToDC = m_bidirectionalInverter->dc_ac_efficiency();
+}
+
+void ACBatteryController::run(size_t year, size_t hour_of_year, size_t step_of_hour, size_t index, double P_pv, double P_load)
+{
+	if (P_pv < 0)
+	{
+		m_batteryPower->powerPVInverterDraw = P_pv;
+		m_batteryPower->powerPV = 0;
+		P_pv = 0;
+	}
+	m_dispatch->dispatch(year, hour_of_year, step_of_hour, P_pv, P_pv, P_load, P_load, 0);
+
 }

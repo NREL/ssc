@@ -1,4 +1,5 @@
 #include "lib_battery_powerflow.h"
+#include "lib_power_electronics.h"
 
 BatteryPower::BatteryPower() :
 		powerPV(0),
@@ -24,8 +25,17 @@ BatteryPowerFlow::BatteryPowerFlow()
 	std::unique_ptr<BatteryPower> tmp(new BatteryPower());
 	m_powerFlowAC = std::move(tmp);
 
+	/*
 	std::unique_ptr<BatteryPower> tmp2(new BatteryPower());
 	m_powerFlowDC = std::move(tmp2);
+	*/
+}
+
+void BatteryPowerFlow::calculate()
+{
+	if (m_powerFlowAC->connectionMode == ChargeController::AC_CONNECTED){
+		calculateACConnected();
+	}
 }
 
 void BatteryPowerFlow::calculateACConnected()

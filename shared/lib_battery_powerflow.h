@@ -23,15 +23,18 @@ public:
 	/// Create a BatteryPowerFlow object
 	BatteryPowerFlow();
 
-	/// Calculate the power flow for an AC connected battery system, return the run status
-	void calculateACConnected();
-
-	/// Calculate the power flow for an DC connected battery system, return the run status
-	void calculateDCConnected();
+	/// Calculate the power flow for the battery system
+	void calculate();
 
 private:
+
+	/// Calculate the power flow for an AC connected battery system
+	void calculateACConnected();
+
+	/// Calculate the power flow for an DC connected battery system
+	void calculateDCConnected();
+
 	std::unique_ptr<BatteryPower> m_powerFlowAC;   /// A structure containing the AC power flow components 
-	std::unique_ptr<BatteryPower> m_powerFlowDC;   /// A structure containing the DC power flow components
 };
 
 /**
@@ -59,6 +62,7 @@ public:
 	double powerPVToLoad;          /// The power from PV to the electric load (kW)
 	double powerPVToBattery;       /// The power from PV to the battery (kW)
 	double powerPVToGrid;          /// The power from PV to the grid (kW)
+	double powerClippedToBattery;  /// The power from that would otherwise have been clipped to the battery (kW)
 	double powerGridToBattery;     /// The power from the grid to the battery (kW)
 	double powerGridToLoad;        /// The power from the grid to the electric load (kW)
 	double powerBatteryToLoad;     /// The power from the battery to the electric load (kW)
@@ -68,6 +72,7 @@ public:
 	double powerConversionLoss;    /// The power loss due to conversions in the battery power electronics (kW)
 
 
+	int connectionMode;					 /// 0 if DC-connected, 1 if AC-connected
 	double singlePointEfficiencyACToDC;  /// The conversion efficiency from AC power to DC power within the battery microinverter (0 - 100)
 	double singlePointEfficiencyDCToAC;  /// The conversion efficiency from DC power to AC power within the battery microinverter (0 - 100)
 	double singlePointEfficiencyDCToDC;  /// The conversion efficiency from DC power to DC power within the battery management system (0 - 100)

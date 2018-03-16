@@ -2675,7 +2675,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 	}
 
 	// Initialize DC battery predictive controller
-	if (en_batt && (batt_topology == charge_controller::DC_CONNECTED))
+	if (en_batt && (batt_topology == ChargeController::DC_CONNECTED))
 		batt.initialize_automated_dispatch(util::array_to_vector<ssc_number_t>(p_dcpwr, nlifetime), p_load_full, p_invcliploss_full);
 
 	/* *********************************************************************************************
@@ -2701,7 +2701,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 			{
 
 				// Battery replacement
-				if (en_batt && (batt_topology == charge_controller::DC_CONNECTED))
+				if (en_batt && (batt_topology == ChargeController::DC_CONNECTED))
 				{
 					batt.initialize_time(iyear, hour, jj);
 					batt.check_replacement_schedule();
@@ -2718,7 +2718,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 
 					// DC Connected Battery
 					bool battery_charging = false;
-					if (en_batt && (batt_topology == charge_controller::DC_CONNECTED))
+					if (en_batt && (batt_topology == ChargeController::DC_CONNECTED))
 					{
 						if (iyear == 0 && dc_count == 0)
 							annual_dc_power_before_battery += p_dcpwr[idx] * ts_hour;
@@ -2752,7 +2752,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 						acpwr_gross, aceff, cliploss, psoloss, pntloss);
 
 					// if dc connected battery, update post-inverted quantities
-					if (en_batt && (batt_topology == charge_controller::DC_CONNECTED))
+					if (en_batt && (batt_topology == ChargeController::DC_CONNECTED))
 					{
 						if (battery_charging)
 						{
@@ -2772,7 +2772,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 				// accumulate first year annual energy
 				if (iyear == 0)
 				{
-					if (en_batt && (batt_topology == charge_controller::DC_CONNECTED))
+					if (en_batt && (batt_topology == ChargeController::DC_CONNECTED))
 							annual_dc_power_after_battery += batt.outGenPower[idx] * ts_hour;
 
 					annual_ac_gross += acpwr_gross * util::watt_to_kilowatt * ts_hour;
@@ -2819,7 +2819,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 	}
 
 	// Initialize AC connected battery predictive control
-	if (en_batt && batt_topology == charge_controller::AC_CONNECTED)
+	if (en_batt && batt_topology == ChargeController::AC_CONNECTED)
 		batt.initialize_automated_dispatch(util::array_to_vector<ssc_number_t>(p_gen, nlifetime), p_load_full);
 
 	/* *********************************************************************************************
@@ -2846,7 +2846,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 				if (iyear == 0)
 					annual_energy_pre_battery += p_gen[idx] * ts_hour;
 
-				if (en_batt && batt_topology == charge_controller::AC_CONNECTED)
+				if (en_batt && batt_topology == ChargeController::AC_CONNECTED)
 				{
 					batt.initialize_time(iyear, hour, jj);
 					batt.check_replacement_schedule();
