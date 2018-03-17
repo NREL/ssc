@@ -65,6 +65,7 @@ public:
 	double powerPVToLoad;          /// The power from PV to the electric load (kW)
 	double powerPVToBattery;       /// The power from PV to the battery (kW)
 	double powerPVToGrid;          /// The power from PV to the grid (kW)
+	double powerPVClipped;		   /// The power from PV that will be clipped if not used in the battery (kW)
 	double powerClippedToBattery;  /// The power from that would otherwise have been clipped to the battery (kW)
 	double powerGridToBattery;     /// The power from the grid to the battery (kW)
 	double powerGridToLoad;        /// The power from the grid to the electric load (kW)

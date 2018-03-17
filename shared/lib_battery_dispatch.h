@@ -137,7 +137,7 @@ public:
 	message get_messages();
 
 	BatteryPower * getBatteryPower() {
-		return m_batteryPower.get();
+		return m_batteryPower;
 	};
 
 protected:

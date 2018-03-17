@@ -105,6 +105,10 @@ void dispatch_t::prepare_dispatch(size_t, size_t, double P_pv_dc_charging, doubl
 	_P_load_charging = P_load_dc_charging;
 	_P_load_discharging = P_load_dc_discharging;
 	_P_pv_clipping = P_pv_dc_clipping;
+
+	m_batteryPower->powerPV = P_pv_dc_charging;
+	m_batteryPower->powerLoad = P_load_dc_charging;
+	m_batteryPower->powerPVClipped = P_pv_dc_clipping;
 }
 
 // deep copy
@@ -386,12 +390,6 @@ void dispatch_manual_t::dispatch(size_t year,
 
 	do {
 		 
-		// Recompute
-		if (!_pv_dispatch_to_battery_first)
-			compute_energy_load_priority(energy_needed_to_fill);
-		else
-			compute_energy_battery_priority(energy_needed_to_fill);
-
 		// Run Battery Model to update charge based on charge/discharge
 		_Battery->run(idx, I);
 
@@ -408,7 +406,8 @@ void dispatch_manual_t::dispatch(size_t year,
 
 	} while (iterate);
 
-	// update for next step
+	// finalize power flow calculation and update for next step
+	m_batteryPowerFlow->calculate();
 	_prev_charging = _charging;
 }
 

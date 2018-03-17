@@ -10,6 +10,7 @@ BatteryPower::BatteryPower() :
 		powerPVToLoad(0),
 		powerPVToBattery(0),
 		powerPVToGrid(0),
+		powerPVClipped(0),
 		powerClippedToBattery(0),
 		powerGridToBattery(0),
 		powerGridToLoad(0),
@@ -17,6 +18,7 @@ BatteryPower::BatteryPower() :
 		powerBatteryToGrid(0),
 		powerPVInverterDraw(0),
 		powerSystemLoss(0),
+		powerConversionLoss(0),
 		singlePointEfficiencyACToDC(0),
 		singlePointEfficiencyDCToAC(0), 
 		tolerance(0.001){}
