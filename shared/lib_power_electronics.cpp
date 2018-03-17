@@ -65,6 +65,6 @@ void ACBatteryController::run(size_t year, size_t hour_of_year, size_t step_of_h
 		m_batteryPower->powerPV = 0;
 		P_pv = 0;
 	}
-	m_dispatch->dispatch(year, hour_of_year, step_of_hour, P_pv, P_pv, P_load, P_load, 0);
+	m_dispatch->dispatch(year, hour_of_year, step_of_hour, P_pv, 0, P_load);
 
 }

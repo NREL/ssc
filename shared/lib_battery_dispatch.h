@@ -95,18 +95,13 @@ public:
 
 	virtual ~dispatch_t();
 
-	// Public APIs
+	/// Public API to run the battery dispatch model for the current timestep, given the system power, and optionally the electric load and amount of system clipping
 	virtual void dispatch(size_t year,
 		size_t hour_of_year,
 		size_t step,
-		double P_pv_dc_charging,
-		double P_pv_dc_discharging,
-		double P_load_dc_charging,
-		double P_load_dc_discharging,
-		double P_pv_dc_clipped=0,
-		double P_battery=0) = 0;
-
-	virtual void prepare_dispatch(size_t hour_of_year, size_t step, double P_pv_dc_charging, double P_pv_dc_discharging, double P_load_dc_charging, double P_load_dc_discharging, double P_pv_dc_clipped);
+		double P_system,
+		double P_system_clipped=0,
+		double P_load_ac=0 ) = 0;
 
 	virtual bool check_constraints(double &I, int count);
 
@@ -141,6 +136,9 @@ public:
 	};
 
 protected:
+
+	/// Helper function to internally set up the dispatch model
+	virtual void prepareDispatch(size_t hour_of_year, size_t step, double P_system, double P_pv_dc_clipped = 0, double P_load_ac = 0);
 
 	// Initialization help
 	void init(battery_t * Battery,
@@ -185,17 +183,6 @@ protected:
 	
 	// managed elsewhere
 	BatteryPower * m_batteryPower;
-
-	// the actual power inputs chosen based on charging/discharging
-	double _P_pv;
-	double _P_load;
-
-	// the input options of what the PV and load power is that the battery sees depending on scenario
-	double _P_pv_charging;
-	double _P_pv_discharging;
-	double _P_load_charging;
-	double _P_load_discharging;
-	double _P_pv_clipping;
 
 	// Charge & current limits controllers
 	double _SOC_min;
@@ -259,19 +246,18 @@ public:
 
 	virtual ~dispatch_manual_t(){};
 
+	/// Public API to run the battery dispatch model for the current timestep, given the system power, and optionally the electric load, amount of system clipping, or specified battery power
 	virtual void dispatch(size_t year,
 		size_t hour_of_year,
 		size_t step,
-		double P_pv_dc_charging,
-		double P_pv_dc_discharging,
-		double P_load_dc_charging,
-		double P_load_dc_discharging,
-		double P_pv_dc_clipped = 0,
-		double P_battery = 0);
-
-	void compute_to_batt();
+		double P_system,
+		double P_system_clipped = 0,
+		double P_load_ac = 0);
 
 protected:
+
+	/// Helper function to internally set up the dispatch model
+	virtual void prepareDispatch(size_t hour_of_year, size_t step, double P_system, double P_pv_dc_clipped = 0, double P_load_ac = 0);
 
 	// Initialization help
 	void init(util::matrix_t<float> dm_dynamic_sched,
@@ -288,7 +274,6 @@ protected:
 		std::map<size_t, double> dm_percent_discharge,
 		std::map<size_t, double> dm_percent_gridcharge);
 
-	void prepare_dispatch(size_t hour_of_year, size_t step, double P_pv_dc_charging, double P_pv_dc_discharging, double P_load_dc_charging, double P_load_dc_discharging);
 	void reset();
 	void SOC_controller();
 	void compute_energy_load_priority(double energy_needed);
@@ -342,17 +327,13 @@ public:
 	virtual void copy(const dispatch_t * dispatch);
 
 
+	/// Public API to run the battery dispatch model for the current timestep, given the system power, and optionally the electric load, amount of system clipping, or specified battery power
 	virtual void dispatch(size_t year,
 		size_t hour_of_year,
 		size_t step,
-		double P_pv_dc_charging,
-		double P_pv_dc_discharging,
-		double P_load_dc_charging,
-		double P_load_dc_discharging,
-		double P_pv_dc_clipped = 0,
-		double P_battery = 0);
-
-	void compute_grid_net();
+		double P_system,
+		double P_system_clipped = 0,
+		double P_load_ac = 0);
 
 protected:
 	void compute_energy_no_load(double energy_needed);
@@ -428,15 +409,14 @@ public:
 	// copy members from dispatch to this
 	virtual void copy(const dispatch_t * dispatch);
 
+	/// Public API to run the battery dispatch model for the current timestep, given the system power, and optionally the electric load, amount of system clipping, or specified battery power
 	virtual void dispatch(size_t year,
 		size_t hour_of_year,
 		size_t step,
-		double P_pv_dc_charging,
-		double P_pv_dc_discharging,
-		double P_load_dc_charging,
-		double P_load_dc_discharging,
-		double P_pv_dc_clipped,
-		double P_battery);
+		double P_system,
+		double P_system_clipped = 0,
+		double P_load_ac = 0,
+		double P_battery_ac= 0);
 
 	/*! Compute the updated power to send to the battery over the next N hours */
 	virtual void update_dispatch(size_t hour_of_year, size_t step, size_t idx)=0;
@@ -454,6 +434,9 @@ public:
 	virtual bool check_constraints(double &I, int count);
 
 protected:
+
+	/// Helper function to internally set up the dispatch model
+	virtual void prepareDispatch(size_t hour_of_year, size_t step, double P_system, double P_pv_dc_clipped = 0, double P_load_ac = 0, double P_battery_ac = 0);
 
 	/*! Initialize with a pointer*/
 	void init_with_pointer(const dispatch_automatic_t * tmp);
@@ -550,15 +533,13 @@ public:
 	// copy members from dispatch to this
 	virtual void copy(const dispatch_t * dispatch);
 
+	/// Public API to run the battery dispatch model for the current timestep, given the system power, and optionally the electric load, amount of system clipping, or specified battery power
 	virtual void dispatch(size_t year,
 		size_t hour_of_year,
 		size_t step,
-		double P_pv_dc_charging,
-		double P_pv_dc_discharging,
-		double P_load_dc_charging,
-		double P_load_dc_discharging,
-		double P_pv_dc_clipped,
-		double P_battery);
+		double P_system,
+		double P_system_clipped = 0,
+		double P_load_ac = 0);
 
 	/*! Compute the updated power to send to the battery over the next N hours */
 	void update_dispatch(size_t hour_of_year, size_t step, size_t idx);
@@ -661,16 +642,13 @@ public:
 	/*! shallow copy from dispatch to this */
 	virtual void copy(const dispatch_t* dispatch);
 
-	/*! Dispatch the battery */
-	void dispatch(size_t year,
+	/// Public API to run the battery dispatch model for the current timestep, given the system power, and optionally the electric load, amount of system clipping, or specified battery power
+	virtual void dispatch(size_t year,
 		size_t hour_of_year,
 		size_t step,
-		double P_pv_dc_charging,
-		double P_pv_dc_discharging,
-		double P_load_dc_charging,
-		double P_load_dc_discharging,
-		double P_pv_dc_clipped,
-		double P_battery);
+		double P_system,
+		double P_system_clipped = 0,
+		double P_load_ac = 0);
 
 	/*! Compute the updated power to send to the battery over the next N hours */
 	void update_dispatch(size_t hour_of_year, size_t step, size_t idx);
