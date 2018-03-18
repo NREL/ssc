@@ -205,7 +205,7 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
 		//RADIATIVE COOLING WITH COLD STORAGE
 	{ SSC_INPUT,        SSC_NUMBER,      "h_ctes_tank_min",      "Minimum allowable water height in storage tank",					"m",            "",				"RADCOOL",		"?=0",						"",							"" },
 	{ SSC_INPUT,        SSC_NUMBER,      "ctes_tshours",         "Equivalent full load storage hours",								"hr",           "",				"RADCOOL",      "?=0",						"",							"" },
-	{ SSC_INPUT,        SSC_NUMBER,      "ctes_field_fl",        "Fluid in radiator field. 3=liquid water",							"-",            "",				"RADCOOL",      "?=3",						"",							"" },
+	{ SSC_INPUT,        SSC_NUMBER,      "ctes_field_fl",        "Fluid in radiator field. 3=liquid water. Other = Glycol.",							"-",            "",				"RADCOOL",      "?=3",						"",							"" },
 	{ SSC_INPUT,        SSC_NUMBER,      "h_ctes_tank",			 "Total height of cold storage tank when full",						"m",            "",				"RADCOOL",      "?=0",						"",							"" },
 	{ SSC_INPUT,        SSC_NUMBER,      "u_ctes_tank",			 "Loss coefficient from cold storage tank",							"W/m2-K",       "",				"RADCOOL",      "?=0",						"",							"" },
 	{ SSC_INPUT,        SSC_NUMBER,      "ctes_tankpairs",		 "Number of equivalent tank pairs",									"-",			"",				"RADCOOL",      "?=0",						"",							"" },
@@ -226,6 +226,7 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "epsilon_radbot",		 "Emmissivity of top of radiator panel bottom (facing ground)",		"-",			"",            "RADCOOL",      "?=.07",						 "",						"" },
 	{ SSC_INPUT,        SSC_NUMBER,      "epsilon_radgrnd",		 "Emmissivity of ground underneath radiator panel",					"-",			"",            "RADCOOL",      "?=.90",						 "",						"" },
 	{ SSC_INPUT,        SSC_NUMBER,      "L_rad_rows",			 "Length of single row of radiator panels connected in series",		"m",			"",            "RADCOOL",      "?=0",						 "",						"" },
+	{ SSC_INPUT,        SSC_NUMBER,      "epsilon_radHX",		 "Effectiveness of HX between radiative field and cold storage",	"-",			"",            "RADCOOL",      "?=.8",						 "",						"" },
 
     					     																	  
     // Power Cycle Inputs
@@ -937,7 +938,6 @@ public:
 				//parameters for radiative cooling with cold storage
 				rankine_pc.mc_cold_storage.ms_params.m_h_tank_min = as_double("h_ctes_tank_min");
 				rankine_pc.mc_cold_storage.ms_params.m_ts_hours = as_double("ctes_tshours");
-				rankine_pc.mc_cold_storage.ms_params.m_field_fl = as_integer("ctes_field_fl");
 				rankine_pc.mc_cold_storage.ms_params.m_h_tank = as_double("h_ctes_tank");
 				rankine_pc.mc_cold_storage.ms_params.m_u_tank = as_double("u_ctes_tank");
 				rankine_pc.mc_cold_storage.ms_params.m_tank_pairs = as_integer("ctes_tankpairs");
@@ -946,6 +946,7 @@ public:
 				rankine_pc.mc_cold_storage.ms_params.m_T_tank_hot_ini= as_double("T_ctes_warm_ini");
 				rankine_pc.mc_cold_storage.ms_params.m_T_tank_cold_ini = as_double("T_ctes_cold_ini");
 				rankine_pc.mc_cold_storage.ms_params.m_f_V_hot_ini = as_double("f_ctes_warm_ini");
+				rankine_pc.mc_radiator.ms_params.m_field_fl = as_integer("ctes_field_fl");
 				rankine_pc.mc_radiator.ms_params.m_power_hrs = as_double("peak_power_hours");
 				rankine_pc.mc_radiator.ms_params.m_dot_panel = as_double("m_dot_radpanel");
 				rankine_pc.mc_radiator.ms_params.n = as_integer("n_rad_tubes");
@@ -958,7 +959,7 @@ public:
 				rankine_pc.mc_radiator.ms_params.epsilonb = as_double("epsilon_radbot");
 				rankine_pc.mc_radiator.ms_params.epsilong = as_double("epsilon_radgrnd");
 				rankine_pc.mc_radiator.ms_params.Lsec = as_double("L_rad_rows");
-
+				rankine_pc.mc_radiator.ms_params.epsilon_HX = as_double("epsilon_radHX");
 
 
 				size_t n_F_wc = 0;

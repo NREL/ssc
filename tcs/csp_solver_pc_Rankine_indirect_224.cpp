@@ -468,6 +468,7 @@ void C_pc_Rankine_indirect_224::init(C_csp_power_cycle::S_solved_params &solved_
 	{
 		C_csp_cold_tes::S_params *cold_tes = &mc_cold_storage.ms_params;
 		cold_tes->m_tes_fl = 3;										// Hardcode 3 for water liquid
+		cold_tes->m_field_fl = 3;									// Hardcode 3; not used. Designate fluid in radiator model separately.
 		cold_tes->m_is_hx = false;									// MSPT assumes direct storage, so no user input required here: hardcode = false
 		cold_tes->m_W_dot_pc_design = ms_params.m_P_ref/1000;		//[MWe]
 		cold_tes->m_eta_pc_factor =ms_params.m_eta_ref / (1 - ms_params.m_eta_ref);	//[-] In order to allow this value to be used in the formula to determine size of tanks.
@@ -484,7 +485,6 @@ void C_pc_Rankine_indirect_224::init(C_csp_power_cycle::S_solved_params &solved_
 		mc_cold_storage.init();
 
 		C_csp_radiator::S_params *rad = &mc_radiator.ms_params;
-		rad->m_field_fl = cold_tes->m_field_fl;						//Fluid type as designated in cold storage component
 		rad->L_c = rad->n*rad->W;									//Characteristic length for forced convection, typically equal to n*W
 			//unless wind direction is known to determine flow path : Lc[m]
 		rad->m_night_hrs = 9;										//Numer of hours of radiative cooling in summer peak
