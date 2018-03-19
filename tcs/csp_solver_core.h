@@ -853,10 +853,12 @@ public:
 		double m_sim_time_start;	//[s]
 		double m_sim_time_end;		//[s]
 		double m_report_step;		//[s]
+		bool m_allow_exceptions;	
 
 		S_sim_setup()
 		{
 			m_sim_time_start = m_sim_time_end = m_report_step = std::numeric_limits<double>::quiet_NaN();
+			m_allow_exceptions = 1;
 		}
 	};
 

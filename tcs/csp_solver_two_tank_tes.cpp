@@ -493,9 +493,23 @@ void C_csp_two_tank_tes::init()
 	// The 'duty' definition should allow the tanks to accept whatever the field and/or power cycle can provide...
 
 	// Calculate initial storage values
+
+	// Initial storage charge based on % mass
+	double T_tes_ave = 0.5*(ms_params.m_T_field_out_des + ms_params.m_T_field_in_des);
+	double cp_ave = mc_store_htfProps.Cp(T_tes_ave);				//[kJ/kg-K] Specific heat at average temperature
+	double mtot = Q_tes_des*3600.0 / (cp_ave / 1000.0 * (ms_params.m_T_field_out_des - ms_params.m_T_field_in_des));  //[kg] Total HTF mass
+	double rho_hot = mc_store_htfProps.dens(ms_params.m_T_field_out_des, 1.0);
+	double rho_cold = mc_store_htfProps.dens(ms_params.m_T_field_in_des, 1.0);
+
 	double V_inactive = m_vol_tank - m_V_tank_active;
-	double V_hot_ini = ms_params.m_f_V_hot_ini*0.01*m_V_tank_active + V_inactive;			//[m^3]
-	double V_cold_ini = (1.0 - ms_params.m_f_V_hot_ini*0.01)*m_V_tank_active + V_inactive;	//[m^3]
+	double V_hot_ini = ms_params.m_f_V_hot_ini*0.01*mtot / rho_hot + V_inactive;			//[m^3]
+	double V_cold_ini = (1.0 - ms_params.m_f_V_hot_ini*0.01)*mtot / rho_cold + V_inactive;	//[m^3]
+
+	// Initial storage charge based on % volume
+	//double V_inactive = m_vol_tank - m_V_tank_active;
+	//double V_hot_ini = ms_params.m_f_V_hot_ini*0.01*m_V_tank_active + V_inactive;			//[m^3]
+	//double V_cold_ini = (1.0 - ms_params.m_f_V_hot_ini*0.01)*m_V_tank_active + V_inactive;	//[m^3]
+
 
 	double T_hot_ini = ms_params.m_T_tank_hot_ini;		//[K]
 	double T_cold_ini = ms_params.m_T_tank_cold_ini;	//[K]

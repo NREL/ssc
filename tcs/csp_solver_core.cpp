@@ -509,7 +509,7 @@ int C_csp_solver::steps_per_hour()
 
 void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 {
-	bool replace_exceptions_with_warnings = 1; 
+	bool replace_exceptions_with_warnings = !sim_setup.m_allow_exceptions;  // Display warning message and turn off plant during timesteps when controller fails instead of throwing exceptions 
 
 	// Get number of records in weather file
 	int n_wf_records = (int)mc_weather.m_weather_data_provider->nrecords();
@@ -1923,7 +1923,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 						{
 							// Weird that controller chose Defocus operating mode, so report message and shut down CR and PC
 							error_msg = util::format("At time = %lg the controller chose %s operating mode, but the code"
-								" failed to achieve a PC thermal powre less than the maximum. Controller will shut-down CR and PC",
+								" failed to achieve a PC thermal power less than the maximum. Controller will shut-down CR and PC",
 								mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, op_mode_str.c_str());
 							mc_csp_messages.add_message(C_csp_messages::NOTICE, error_msg);
 
@@ -4564,7 +4564,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 						{
 							throw(C_csp_exception(util::format("At time = %lg, %s should not need to defocus to meet thermal power requirements"
 								" because STARTUP_CONTROLLED should choose a mass flow rate that satisfies thermal power limits", mc_kernel.mc_sim_info.ms_ts.m_time, op_mode_str.c_str()), ""));
-					}
+						}
 					}
 
 					C_mono_eq_cr_on__pc_target__tes_full__defocus c_eq(this, pc_mode, q_pc_max);

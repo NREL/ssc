@@ -323,6 +323,8 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     { SSC_INPUT,		SSC_MATRIX,		 "fc_tdry_scenarios",	 "Forecast dry bulb temperature scenarios",                           "C",		      "",			 "sys_ctrl_disp_opt", "",						 "",					  "" },
     //{ SSC_INPUT,		SSC_NUMBER,		 "fc_steps",	         "Number of time steps per forecast block",                           "-",		      "",			 "sys_ctrl_disp_opt", "",						 "",					  "" },
 
+	{ SSC_INPUT,		SSC_NUMBER,		 "allow_controller_exceptions",   "Allow controller exceptions? (1 = true)",				  "-",		      "",			 "sys_ctrl",		 "?=1",						 "",					  "" },
+    
 
 	// Financial inputs
 	{ SSC_INPUT,        SSC_MATRIX,      "dispatch_sched_weekday", "12x24 PPA pricing Weekday schedule",                              "",             "",            "tou",            "*",                       "",                      "" }, 
@@ -831,6 +833,7 @@ public:
 		C_csp_solver::S_sim_setup sim_setup;
 		sim_setup.m_sim_time_start = as_double("time_start");		//[s] time at beginning of first time step
 		sim_setup.m_sim_time_end = as_double("time_stop");          //[s] time at end of last time step
+		sim_setup.m_allow_exceptions = as_boolean("allow_controller_exceptions");
 
         int steps_per_hour = (int)as_double("time_steps_per_hour");		//[-]
 

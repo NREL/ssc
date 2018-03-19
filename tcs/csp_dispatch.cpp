@@ -1353,7 +1353,7 @@ bool csp_dispatch_opt::optimize()
                 row[0] = 1.;
                 col[0] = O.column("wdot", t);
 
-				add_constraintex(lp, 1, row, col, LE, outputs.f_pb_op_limit.at(t) * P["W_dot_cycle"]);
+				add_constraintex(lp, 1, row, col, LE, outputs.f_pb_op_limit.at(t,0) * P["W_dot_cycle"]);
             }
         }
 
