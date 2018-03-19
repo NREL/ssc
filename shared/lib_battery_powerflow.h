@@ -81,6 +81,11 @@ public:
 	double singlePointEfficiencyDCToAC;  /// The conversion efficiency from DC power to AC power within the battery microinverter (0 - 100)
 	double singlePointEfficiencyDCToDC;  /// The conversion efficiency from DC power to DC power within the battery management system (0 - 100)
 
+	bool canPVCharge;	/// A boolean specifying whether the battery is allowed to charge from PV in the timestep
+	bool canGridCharge; /// A boolean specifying whether the battery is allowed to charge from the Grid in the timestep
+	bool canDischarge;  /// A boolean specifying whether the battery is allowed to discharge in the timestep
+
+
 	double tolerance;			  /// A numerical tolerance. Below this value, zero out the power flow
 };
 

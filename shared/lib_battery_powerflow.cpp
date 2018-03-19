@@ -52,25 +52,33 @@ void BatteryPowerFlow::calculateACConnected()
 	// charging 
 	if (P_battery <= 0)
 	{
-		// PV always charges battery first
-		P_pv_to_batt = fabs(P_battery);
-
-		// don't include any conversion efficiencies, want to compare AC to AC
-		if (P_pv_to_batt > P_pv)
-		{
-			P_pv_to_batt = P_pv;
+		if (m_powerFlowAC->canPVCharge){
+			// PV always charges battery first
+			P_pv_to_batt = fabs(P_battery);
+			if (P_pv_to_batt > P_pv)
+			{
+				P_pv_to_batt = P_pv;
+			}
+		}
+		if (m_powerFlowAC->canGridCharge){
 			P_grid_to_batt = fabs(P_battery) - P_pv_to_batt;
 		}
 
+		// Now calculate other power flow quantities
 		P_pv_to_load = P_pv - P_pv_to_batt;
-		if (P_pv_to_load > P_load)
-		{
+		if (P_pv_to_load > P_load){
 			P_pv_to_load = P_load;
 			P_pv_to_grid = P_pv - P_pv_to_batt - P_pv_to_load;
 		}
 	}
 	else
 	{
+		// Quickly test if battery is discharging erroneously
+		if (!m_powerFlowAC->canDischarge & P_battery > 0) {
+			P_batt_to_grid = P_batt_to_load = 0;
+			P_battery = 0;
+		}
+
 		P_pv_to_load = P_pv;
 		if (P_pv >= P_load)
 		{
@@ -79,25 +87,33 @@ void BatteryPowerFlow::calculateACConnected()
 
 			// discharging to grid
 			P_pv_to_grid = P_pv - P_pv_to_load;
-			P_batt_to_grid = P_battery - P_batt_to_load;
 		}
-		else if (P_battery < P_load - P_pv_to_load)
-			P_batt_to_load = P_battery;
-		else
-			// probably shouldn't happen, need to iterate and reduce I from battery
-			P_batt_to_load = P_load - P_pv_to_load;
+		else {
+			P_batt_to_load = std::fmin(P_battery, P_load - P_pv_to_load);
+		}
+		P_batt_to_grid = P_battery - P_batt_to_load;
+
 	}
 
 	// compute losses
 	P_pv_to_batt_loss = P_pv_to_batt * (1 - m_powerFlowAC->singlePointEfficiencyACToDC);
 	P_grid_to_batt_loss = P_grid_to_batt *(1 - m_powerFlowAC->singlePointEfficiencyACToDC);
 
-
+	// Compute total system output and grid power flow
 	P_grid_to_load = P_load - P_pv_to_load - P_batt_to_load;
 	P_gen = P_pv + P_battery + P_inverter_draw - P_system_loss;
 
 	// Grid charging loss accounted for in P_battery_ac 
 	P_grid = P_gen - P_load;
+
+	// Error checking for battery charging
+	if (P_pv_to_batt + P_grid_to_batt != fabs(P_battery)) {
+		P_grid_to_batt = fabs(P_battery) - P_pv_to_batt;
+	}
+
+	// Error checking for power to load
+	if (P_pv_to_load + P_grid_to_load + P_batt_to_load != P_load)
+		P_grid_to_load = P_load - P_pv_to_load - P_batt_to_load;
 
 	// check tolerances
 	if (fabs(P_grid_to_load) < m_powerFlowAC->tolerance)
