@@ -260,6 +260,16 @@ public:
 
 };
 
+struct _aof_inst 
+{ 
+    double obj; 
+    double flux; 
+	_aof_inst(double o, double f){
+        obj=o; flux=f; 
+    }; 
+	_aof_inst(){};
+};
+
 struct AutoOptHelper
 {
     int m_iter;
@@ -274,15 +284,7 @@ struct AutoOptHelper
     var_map *m_variables;
 
     class {
-        struct _inst { 
-            double obj; 
-            double flux; 
-            _inst(double o, double f){
-                obj=o; flux=f; 
-            }; 
-            _inst(){};
-        };
-        unordered_map<std::string, _inst> items;
+        unordered_map<std::string, _aof_inst> items;
 
         std::string format(std::vector<double> vars)
         {
@@ -295,7 +297,7 @@ struct AutoOptHelper
     public:
         void add_call(std::vector<double> vars, double objective, double flux)
         {
-            items[ format(vars) ] = _inst(objective, flux);
+            items[ format(vars) ] = _aof_inst(objective, flux);
         };
 
         bool check_call(std::vector<double> vars, double* obj, double* flux)

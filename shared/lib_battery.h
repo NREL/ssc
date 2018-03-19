@@ -92,7 +92,7 @@ class voltage_t;
 class capacity_t
 {
 public:
-	capacity_t(double q, double SOC_max, double SOC_min);
+	capacity_t(double q, double SOC_init, double SOC_max, double SOC_min);
 
 	// deep copy
 	virtual capacity_t * clone() = 0;
@@ -156,7 +156,7 @@ class capacity_kibam_t : public capacity_t
 public:
 
 	// Public APIs 
-	capacity_kibam_t(double q20, double t1, double q1, double q10, double SOC_max, double SOC_min);
+	capacity_kibam_t(double q20, double t1, double q1, double q10, double SOC_init, double SOC_max, double SOC_min);
 	~capacity_kibam_t(){}
 
 	// deep copy 
@@ -211,7 +211,7 @@ Lithium Ion specific capacity model
 class capacity_lithium_ion_t : public capacity_t
 {
 public:
-	capacity_lithium_ion_t(double q, double SOC_max, double SOC_min);
+	capacity_lithium_ion_t(double q, double SOC_init, double SOC_max, double SOC_min);
 	~capacity_lithium_ion_t(){};
 
 	// deep copy

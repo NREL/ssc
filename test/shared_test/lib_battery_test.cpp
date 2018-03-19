@@ -9,10 +9,12 @@ protected:
 	double q;
 	double SOC_min;
 	double SOC_max;
+	double SOC_init;
 
 	void SetUp()
 	{
 		q = 100;
+		SOC_init = 100;
 		SOC_min = 20;
 		SOC_max = 100;
 	}
@@ -26,7 +28,7 @@ protected:
 	void SetUp()
 	{
 		BatteryProperties::SetUp();
-		capacity_model = new capacity_lithium_ion_t(q, SOC_max, SOC_min);
+		capacity_model = new capacity_lithium_ion_t(q, SOC_init, SOC_max, SOC_min);
 	}
 	void TearDown()
 	{
@@ -105,7 +107,7 @@ protected:
 	void SetUp()
 	{
 		LeadAcidDC4006::SetUp();
-		capacity_model = new capacity_kibam_t(q20, t1, q1, q10, SOC_max, SOC_min);
+		capacity_model = new capacity_kibam_t(q20, t1, q1, q10, SOC_init, SOC_max, SOC_min);
 	}
 	void TearDown()
 	{
