@@ -14,7 +14,17 @@ struct BatteryPower;
 *  The BatteryPowerFlow class provides the calculations for which components of the system power flow to/from the battery,
 *  which power components go to meet the electric load, and how the utility grid is used.  It is meant to be shared by
 *  the lib_power_electronics charge controllers, which require AC power calculations, and the battery dispatch model, 
-*  which require DC power calculations.
+*  which require DC power calculations.  The interaction of this model with other's may seem complex, but the general
+*  design of the battery model is:
+*
+*  1. ChargeController - contains information about conversion efficiencies and configuration, which is passed to BatteryPowerFlow
+*  2. Dispatch - contains information about the dispatch strategy desired, and constraints around when the battery can
+*				 charge or discharge, and constraints around the state-of-charge, power and current throughput limits
+*				 Within the Dispatch, the following steps are taken:
+*				 a) Calculate battery power given the dispatch strategy and contraints
+*				 b) Dispatch the battery with that power (current)
+*				 c) Iterate on the current (due to the nonlinear relationship in P = IV) until the constraints are met
+*				 d) Calculate the final power flow for the time step.
 */
 
 class BatteryPowerFlow
@@ -31,7 +41,20 @@ public:
 
 private:
 
-	/// Calculate the power flow for an AC connected battery system
+	/**
+	* \function calculateACConnected
+	*
+	* Calculate the power flow for an AC connected battery system.  This calculation respects basic constraints about whether
+	* a battery is allowed to charge from PV, the Grid, and whether it is allowed to discharge.  The calculation also makes
+	* the following assumptions.
+	*
+	*  0. The BatteryPower contains the powerBattery that the dispatch has determined best fits the constraints
+	*  1. Battery is charged from PV before the Grid
+	*  2. Battery is charged from the Grid for any remaining power, even if this violates grid charging constraint
+	*  3. Battery discharges to the electric load first
+	*  4. Any additional battery discharge goes to the Grid.
+	*
+	*/
 	void calculateACConnected();
 
 	/// Calculate the power flow for an DC connected battery system
@@ -49,7 +72,6 @@ private:
 *  The structure also contains information about the single point efficiecies required to convert power from one form to another
 *  Power quantities in BatteryPower are either all AC or all DC depending on which part of the controller is looking at it
 */
-
 struct BatteryPower
 {
 public:
@@ -86,7 +108,7 @@ public:
 	bool canDischarge;  /// A boolean specifying whether the battery is allowed to discharge in the timestep
 
 
-	double tolerance;			  /// A numerical tolerance. Below this value, zero out the power flow
+	double tolerance;  /// A numerical tolerance. Below this value, zero out the power flow
 };
 
 

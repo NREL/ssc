@@ -53,7 +53,6 @@ void BatteryPowerFlow::calculateACConnected()
 	if (P_battery <= 0)
 	{
 		if (m_powerFlowAC->canPVCharge){
-			// PV always charges battery first
 			P_pv_to_batt = fabs(P_battery);
 			if (P_pv_to_batt > P_pv)
 			{

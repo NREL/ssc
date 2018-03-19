@@ -346,6 +346,10 @@ void dispatch_manual_t::prepareDispatch(size_t hour_of_year, size_t step, double
 	if (_can_discharge){ _percent_discharge = _percent_discharge_array[iprofile]; }
 	if (_can_charge){ _percent_charge = 100.; }
 	if (_can_grid_charge){ _percent_charge = _percent_charge_array[iprofile]; }
+
+	m_batteryPower->canDischarge = _can_discharge;
+	m_batteryPower->canPVCharge = _can_charge;
+	m_batteryPower->canGridCharge = _can_grid_charge;
 }
 void dispatch_manual_t::dispatch(size_t year,
 	size_t hour_of_year,
