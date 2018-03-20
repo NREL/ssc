@@ -731,7 +731,6 @@ void interop::UpdateMapLayoutData(var_map &V, Hvector *heliostats){
 
 
 		H = heliostats->at(i);	//shorthand the pointer
-		if(! H->getInLayout()) continue;
 
 		sp_point *loc = H->getLocation();
 		Vect *cant = H->getCantVector();
@@ -756,7 +755,7 @@ void interop::UpdateMapLayoutData(var_map &V, Hvector *heliostats){
 		//sdat4 = string(tchar3);
 
 		char tchar4[300];
-		sprintf(tchar4, "%d,%f,%f,%f,%s,%s,%s\n",H->getVarMap()->type.val, loc->x, loc->y, loc->z, tchar1, tchar2, tchar3);
+		sprintf(tchar4, "%d,%d,%d,%f,%f,%f,%s,%s,%s\n",H->getVarMap()->type.val, H->IsEnabled() ? 1 : 0, H->getInLayout() ? 1 : 0, loc->x, loc->y, loc->z, tchar1, tchar2, tchar3);
 		sdat = string(tchar4);
 		var->append(sdat);
 
