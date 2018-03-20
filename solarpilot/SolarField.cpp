@@ -1180,6 +1180,10 @@ bool SolarField::PrepareFieldLayout(SolarField &SF, WeatherData *wdata, bool ref
 				SF.getFluxObject()->simpleAimPoint(*hptr, SF);
 				Aim = *hptr->getAimPoint();				
 			}
+
+			//set status
+			hptr->IsEnabled(layout->at(i).is_enabled);
+			hptr->setInLayout(layout->at(i).is_in_layout);
 		}
 		else{	//Otherwise,
 			//Determine the simple aim point - doesn't account for flux limitations
@@ -1242,10 +1246,6 @@ bool SolarField::PrepareFieldLayout(SolarField &SF, WeatherData *wdata, bool ref
 	
 	SF.setHeliostatExtents(xmax, xmin, ymax, ymin);
 
-	for(int i=0; i<Npos; i++){
-		helio_objects->at(i).setInLayout(refresh_only);
-	}
-	
     if(! SF.getSimInfoObject()->addSimulationNotice("Determining nearest neighbors for each heliostat") ){
         SF.CancelSimulation();
         return false;
@@ -1304,7 +1304,7 @@ bool SolarField::PrepareFieldLayout(SolarField &SF, WeatherData *wdata, bool ref
 		heliostats->resize(Npos);
 		for(int i=0; i<Npos; i++){	
 			heliostats->at(i) = &helio_objects->at(i);
-			heliostats->at(i)->setInLayout(true);	//All of the heliostats are included in the final layout
+			//heliostats->at(i)->setInLayout(true);	//All of the heliostats are included in the final layout
 			//Update the tracking vector. This defines corner geometry for plotting.
 			heliostats->at(i)->updateTrackVector(sunvect);
 		}
@@ -3657,8 +3657,8 @@ bool SolarField::parseHeliostatXYZFile(const std::string &filedat, layout_shell 
 
 
 	Structure:
-		0				1				2			3			4					5			6		7			8		9		10		11
-	<template (int)> <location X> <location Y> <location Z> <x focal length> <y focal length> <cant i> <cant j> <cant k> <aim X> <aim Y> <aim Z>
+		0				1			2			3			4			5				6				7			   8		9		10		11		12	     13
+	<template (int)> <enabled> <in layout> <location X> <location Y> <location Z> <x focal length> <y focal length> <cant i> <cant j> <cant k> <aim X> <aim Y> <aim Z>
 
 	*/
 	layout.clear();
@@ -3684,6 +3684,9 @@ bool SolarField::parseHeliostatXYZFile(const std::string &filedat, layout_shell 
 	string delim = Toolbox::getDelimiter(entries.at(0));
 	data.clear();
 
+	//try to handle old version
+	bool is_old_version = false;
+
 	for(i=0; i<nlines; i++){
 		data = split(entries.at(i), delim);	
 		
@@ -3691,28 +3694,57 @@ bool SolarField::parseHeliostatXYZFile(const std::string &filedat, layout_shell 
 		if( data.size() < 2 ) continue;
 		layout.push_back(layout_obj());
 
-		//If the number of entries is less than 12 (but must be at least 4), append NULL's
+		//If the number of entries is less than 14 (but must be at least 6), append NULL's
 		int dsize = (int)data.size();
-		if(dsize < 4){
+
+		//if the data length is 12, we're loading from an old file
+		if (i == 0)
+		{
+			if (dsize == 12)
+				is_old_version = true;
+		}
+
+
+		if(dsize < 6){
 			char fmt[] = "Formatting error\nLine %d in the imported layout is incorrectly formatted. The error occurred while parsing the following text:\n\"%s\"";
 			char msg[250];
 			sprintf(msg, fmt, i+1, entries.at(i).c_str());
 			throw(spexception(msg));  //error!
 		}
-		else if(dsize < 12){
-			for(unsigned int k=dsize; k<12; k++){ data.push_back("NULL"); }
+		else if(dsize < 14){
+			for(unsigned int k=dsize; k<14; k++){ data.push_back("NULL"); }
 		}
+		
+		int col = 0; // current column
 			
 		//which template should we use?
-		to_integer(data.at(0), &layout.at(i).helio_type);
+		to_integer(data.at(col++), &layout.at(i).helio_type);
 			
+		//assign enabled and layout status
+		if (!is_old_version)
+		{
+			to_bool(data.at(col++), layout.at(i).is_enabled);
+			to_bool(data.at(col++), layout.at(i).is_in_layout);
+		}
+		else
+		{
+			layout.at(i).is_enabled = true;
+			layout.at(i).is_in_layout = true;
+		}
+
 		//Assign the location
-		for(j=0; j<3; j++){ to_double(data.at(j+1), &loc[j]); }
+		for(j=0; j<3; j++)
+		{ 
+			to_double(data.at(col++), &loc[j]); 
+		}
 		layout.at(i).location.Set(loc[0], loc[1], loc[2]);
 
 		//Assign the focal length
-		if(data.at(4)!="NULL"){
-			for(j=0; j<2; j++){ to_double(data.at(j+4), &focal[j]); }
+		if(data.at(col)!="NULL"){
+			for(j=0; j<2; j++)
+			{ 
+				to_double(data.at(col++), &focal[j]);
+			}
 			layout.at(i).focal_x = focal[0];
 			layout.at(i).focal_y = focal[1];
 			layout.at(i).is_user_focus = true;
@@ -3722,8 +3754,12 @@ bool SolarField::parseHeliostatXYZFile(const std::string &filedat, layout_shell 
 		}
 			
 		//Assign the cant vector unless its null
-		if(data.at(6)!="NULL"){
-			for(j=0; j<3; j++){ to_double(data.at(j+6), &cant[j]); }
+		if(data.at(col)!="NULL")
+		{
+			for(j=0; j<3; j++)
+			{ 
+				to_double(data.at(col++), &cant[j]);
+			}
 			layout.at(i).cant.Set(cant[0], cant[1], cant[2]);
 			layout.at(i).is_user_cant = true;
 		}
@@ -3732,8 +3768,12 @@ bool SolarField::parseHeliostatXYZFile(const std::string &filedat, layout_shell 
 		}
 			
 		//Assign the aim point unless its null
-		if(data.at(9)!="NULL"){
-			for(j=0; j<3; j++){ to_double(data.at(j+9), &aim[j]); }
+		if(data.at(col)!="NULL")
+		{
+			for(j=0; j<3; j++)
+			{ 
+				to_double(data.at(col++), &aim[j]);
+			}
 			layout.at(i).aim.Set(aim[0], aim[1], aim[2]);
 			layout.at(i).is_user_aim = true;
 		}

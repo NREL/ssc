@@ -731,7 +731,6 @@ void interop::UpdateMapLayoutData(var_map &V, Hvector *heliostats){
 
 
 		H = heliostats->at(i);	//shorthand the pointer
-		if(! H->getInLayout()) continue;
 
 		sp_point *loc = H->getLocation();
 		Vect *cant = H->getCantVector();
@@ -756,7 +755,7 @@ void interop::UpdateMapLayoutData(var_map &V, Hvector *heliostats){
 		//sdat4 = string(tchar3);
 
 		char tchar4[300];
-		sprintf(tchar4, "%d,%f,%f,%f,%s,%s,%s\n",H->getVarMap()->type.val, loc->x, loc->y, loc->z, tchar1, tchar2, tchar3);
+		sprintf(tchar4, "%d,%d,%d,%f,%f,%f,%s,%s,%s\n",H->getVarMap()->type.val, H->IsEnabled() ? 1 : 0, H->getInLayout() ? 1 : 0, loc->x, loc->y, loc->z, tchar1, tchar2, tchar3);
 		sdat = string(tchar4);
 		var->append(sdat);
 
@@ -1049,8 +1048,11 @@ void sim_result::process_analytical_simulation(SolarField &SF, int nsim_type, do
 	case sim_result::SIM_TYPE::FLUX_SIMULATION:
 	{
 		initialize();
-		for(unsigned int i=0; i<helios.size(); i++)
-			add_heliostat(*helios.at(i));
+		for (unsigned int i = 0; i < helios.size(); i++)
+		{
+			if( helios.at(i)->getInLayout() && helios.at(i)->IsEnabled() )
+				add_heliostat(*helios.at(i));
+		}
 		process_field_stats();
 		total_receiver_area = SF.calcReceiverTotalArea();
 		dni =  SF.getVarMap()->flux.flux_dni.val/1000.;

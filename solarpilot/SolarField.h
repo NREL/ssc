@@ -99,7 +99,9 @@ struct layout_obj
 	bool
 		is_user_cant,	//Data provided on canting
 		is_user_aim,	//Data provided on aiming
-		is_user_focus;	//Data provided on focusing
+		is_user_focus,	//Data provided on focusing
+		is_enabled,		//Heliostat is enabled and tracking
+		is_in_layout;	//Heliostat position included in active layout
 };
 
 struct sim_params
