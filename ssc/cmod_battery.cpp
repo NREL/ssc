@@ -599,23 +599,21 @@ battstor::battstor(compute_module &cm, bool setup_model, size_t nrec, double dt_
 	// non-lifetime outputs
 	if (nyears <= 1)
 	{
-		outTotalCharge = cm.allocate("batt_q0", nrec*nyears);
-
 		// only allocate if lead-acid
 		if (chem == 0)
 		{
 			outAvailableCharge = cm.allocate("batt_q1", nrec*nyears);
 			outBoundCharge = cm.allocate("batt_q2", nrec*nyears);
 		}
+		outCellVoltage = cm.allocate("batt_voltage_cell", nrec*nyears);
 		outMaxCharge = cm.allocate("batt_qmax", nrec*nyears);
 		outMaxChargeThermal = cm.allocate("batt_qmax_thermal", nrec*nyears);
-		outCurrent = cm.allocate("batt_I", nrec*nyears);
-		outBatteryVoltage = cm.allocate("batt_voltage", nrec*nyears);
 		outBatteryTemperature = cm.allocate("batt_temperature", nrec*nyears);
 		outCapacityThermalPercent = cm.allocate("batt_capacity_thermal_percent", nrec*nyears);
 	}
-
-	outCellVoltage = cm.allocate("batt_voltage_cell", nrec*nyears);
+	outCurrent = cm.allocate("batt_I", nrec*nyears);
+	outBatteryVoltage = cm.allocate("batt_voltage", nrec*nyears);
+	outTotalCharge = cm.allocate("batt_q0", nrec*nyears);
 	outCycles = cm.allocate("batt_cycles", nrec*nyears);
 	outSOC = cm.allocate("batt_SOC", nrec*nyears);
 	outDOD = cm.allocate("batt_DOD", nrec*nyears);
@@ -1143,17 +1141,19 @@ void battstor::outputs_fixed(compute_module &cm)
 			outAvailableCharge[index] = (ssc_number_t)(kibam->q1());
 			outBoundCharge[index] = (ssc_number_t)(kibam->q2());
 		}
+		outCellVoltage[index] = (ssc_number_t)(voltage_model->cell_voltage());
 		outMaxCharge[index] = (ssc_number_t)(capacity_model->qmax());
 		outMaxChargeThermal[index] = (ssc_number_t)(capacity_model->qmax_thermal());
-		outTotalCharge[index] = (ssc_number_t)(capacity_model->q0());
-		outCurrent[index] = (ssc_number_t)(capacity_model->I());
-		outBatteryVoltage[index] = (ssc_number_t)(voltage_model->battery_voltage());
+	
 		outBatteryTemperature[index] = (ssc_number_t)(thermal_model->T_battery() - 273.15);
 		outCapacityThermalPercent[index] = (ssc_number_t)(thermal_model->capacity_percent());
 	}
 
 	// Lifetime outputs
-	outCellVoltage[index] = (ssc_number_t)(voltage_model->cell_voltage());
+	outTotalCharge[index] = (ssc_number_t)(capacity_model->q0());
+	outCurrent[index] = (ssc_number_t)(capacity_model->I());
+	outBatteryVoltage[index] = (ssc_number_t)(voltage_model->battery_voltage());
+
 	outCycles[index] = (ssc_number_t)(lifetime_cycle_model->cycles_elapsed());
 	outSOC[index] = (ssc_number_t)(capacity_model->SOC());
 	outDOD[index] = (ssc_number_t)(lifetime_cycle_model->cycle_range());
