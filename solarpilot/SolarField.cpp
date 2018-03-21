@@ -386,15 +386,11 @@ void SolarField::updateCalculatedParameters( var_map &V )
     V.sf.sun_el_des.Setval( 90.-azzen[1] );
 
 
-    //layout data
-    //V.sf.layout_data.val = _layout_data;
-    
     //receiver area
     double arec = 0.;
     for(int i=0; i<(int)V.recs.size(); i++)
         arec += V.recs.at(0).absorber_area.Val();
 
-    //_rec_area = arec;
     V.sf.rec_area.Setval( arec );
 
     //heliostat area
@@ -430,14 +426,18 @@ void SolarField::updateAllCalculatedParameters(var_map &V)
     Update all of the calculated values in all of the child classes and in solarfield
     */
 
-    //_ambient.updateCalculatedParameters(V);
     for( int i=0; i<(int)_helio_template_objects.size(); i++)
         _helio_template_objects.at(i).updateCalculatedParameters(V, i);
+
     _land.updateCalculatedParameters(V);
+
     for( int i=0; i<(int)_receivers.size(); i++)
         _receivers.at(i)->updateCalculatedParameters(V.recs.at(i), V.sf.tht.val );
+
     _fluxsim.updateCalculatedParameters(V);
+
     updateCalculatedParameters(V);
+
     _financial.updateCalculatedParameters(V);
 
     //optimization settings
@@ -475,7 +475,7 @@ double SolarField::calcHeliostatArea(){
 	int Npos = (int)_heliostats.size();
 	double Asf=0.;
 	for(int i=0; i<Npos; i++){
-		if(_heliostats.at(i)->getInLayout()) 
+		if(_heliostats.at(i)->IsInLayout()) 
             Asf += _heliostats.at(i)->getArea();
 	}
 	_sf_area = Asf;

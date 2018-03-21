@@ -1050,7 +1050,7 @@ void sim_result::process_analytical_simulation(SolarField &SF, int nsim_type, do
 		initialize();
 		for (unsigned int i = 0; i < helios.size(); i++)
 		{
-			if( helios.at(i)->getInLayout() && helios.at(i)->IsEnabled() )
+			if( helios.at(i)->IsInLayout() && helios.at(i)->IsEnabled() )
 				add_heliostat(*helios.at(i));
 		}
 		process_field_stats();
