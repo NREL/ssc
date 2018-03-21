@@ -8,7 +8,7 @@
             "name": "(gdb) Launch",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/build_linux/SDKTool",
+            "program": "${workspaceFolder}/build_linux/SDKtool",
             "args": [],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}/build_linux",
