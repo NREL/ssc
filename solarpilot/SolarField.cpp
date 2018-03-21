@@ -1732,15 +1732,39 @@ void SolarField::ProcessLayoutResults( sim_results *results, int nsim_total){
         _estimated_annual_power = _q_to_rec;
     }
 
+	UpdateLayoutAfterChange();
+
+	return;
+}
+
+void SolarField::UpdateLayoutAfterChange()
+{
+	/*
+	This method is called upon completion of the layout, and ties up loose ends with:
+	- making sure area calculations are complete
+	- updating the layout information stored in the variable map
+	- updating the layout information stored in the _layout class member
+	- calling the method to update all solar field calculated variables
+	*/
+
+	//update calculated heliostat area
+	calcHeliostatArea();
+
 	//update the layout positions in the land area calculation
-	vector<sp_point> lpos(_heliostats.size());
+	std::vector<sp_point> lpos; 
+	lpos.reserve( _heliostats.size() );
+
 	for(int i=0; i<(int)_heliostats.size(); i++)
-		lpos.at(i) = *_heliostats.at(i)->getLocation();
-	//_land.setLayoutPositions(lpos);
-    _land.calcLandArea(_var_map->land, lpos );
-    //_var_map->land.bound_area.Setval( _land.getLandBoundArea() );
+	{
+		if( _heliostats.at(i)->IsInLayout() ) //only include heliostats that are in the layout
+			lpos.push_back( *_heliostats.at(i)->getLocation() );
+	}
+	
+	_land.calcLandArea(_var_map->land, lpos );
+    
 	//update the layout data
     interop::UpdateMapLayoutData(*_var_map, &_heliostats);
+
     //update the layout shell 
     _layout.clear();
     _layout.reserve( _heliostats.size() );
@@ -1756,6 +1780,8 @@ void SolarField::ProcessLayoutResults( sim_results *results, int nsim_total){
         lo.is_user_aim = false;
         lo.is_user_cant = H->IsUserCant();
         lo.is_user_focus = false;
+		lo.is_enabled = H->IsEnabled();
+		lo.is_in_layout = H->IsInLayout();
 
         _layout.push_back( lo );
     }

@@ -242,6 +242,7 @@ public:
 	static bool DoLayout( SolarField *SF, sim_results *results, WeatherData *wdata, int sim_first=-1, int sim_last=-1);
 	void ProcessLayoutResults(sim_results *results, int nsim_total);	//Call after simulation for multithreaded apps
 	void ProcessLayoutResultsNoSim();	//Call after layout with no simulations to process
+	void UpdateLayoutAfterChange();  //update land, layout object, and solar field calculations after the layout has changed
 	static void AnnualEfficiencySimulation( SolarField &SF, sim_results &results); //, double *azs, double *zens, double *met);
 	static void AnnualEfficiencySimulation( std::string weather_file, SolarField *SF, sim_results &results); //, double *azs, double *zens, double *met);	//overload
 	bool UpdateNeighborList(double lims[4], double zen);
