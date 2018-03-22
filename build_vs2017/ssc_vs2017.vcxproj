@@ -90,6 +90,7 @@
     <ClCompile Include="..\ssc\cmod_wfcsv.cpp" />
     <ClCompile Include="..\ssc\cmod_wfreader.cpp" />
     <ClCompile Include="..\ssc\cmod_windbos.cpp" />
+    <ClCompile Include="..\ssc\cmod_windcsm.cpp" />
     <ClCompile Include="..\ssc\cmod_windfile.cpp" />
     <ClCompile Include="..\ssc\cmod_windpower.cpp" />
     <ClCompile Include="..\ssc\cmod_lcoefcr.cpp" />
