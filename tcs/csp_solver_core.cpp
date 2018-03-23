@@ -697,6 +697,18 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 
 			progress_msg_frac_current += progress_msg_interval_frac;
 		}
+
+		// Determine if current day should be simulated or skipped
+		int day = floor(((float)mc_kernel.mc_sim_info.ms_ts.m_time_start + 0.01) / (3600.*24.));
+		int day_prevstep = floor(((float)mc_kernel.mc_sim_info.ms_ts.m_time_start - 0.01) / (3600.*24.));
+		bool skip_day = false;
+		if (mc_tou.mc_dispatch_params.m_select_days.at(day) == 0) // Skip current day
+			skip_day = true;
+		else
+		{
+			if (day > 0 && mc_tou.mc_dispatch_params.m_select_days.at(day_prevstep) == 0) // First point in simulated day after previous day was skipped -> Re-initialize storage state
+				mc_tes.reset_storage_to_initial_state();
+		}
 		
 		// Get tou for timestep
 		mc_tou.call(mc_kernel.mc_sim_info.ms_ts.m_time, mc_tou_outputs);
@@ -857,7 +869,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
         bool opt_complete = false;
 
         //Run dispatch optimization?
-        if(mc_tou.mc_dispatch_params.m_dispatch_optimize)
+        if(mc_tou.mc_dispatch_params.m_dispatch_optimize && !skip_day)
         {
 
             //time to reoptimize
@@ -1148,6 +1160,8 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 		int operating_mode = ENTRY_MODE;
 		bool are_models_converged = false;
 		reset_hierarchy_logic();
+		if (skip_day)  // don't simulate this time point
+			turn_off_plant();
 		// Reset operating mode tracker		
 		m_op_mode_tracking.resize(0);
 					

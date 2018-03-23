@@ -314,6 +314,7 @@ public:
 		double m_q_dot_rec_des_mult;
 		double m_f_q_dot_pc_overwrite;
 
+		std::vector<bool> m_select_days;
 
         S_csp_tou_params()
         {
@@ -368,6 +369,9 @@ public:
 			m_use_rule_2 = false;
 			m_q_dot_rec_des_mult = -1.23;
 			m_f_q_dot_pc_overwrite = 1.23;
+
+			m_select_days.resize(365);
+			m_select_days.assign(365, 1);
 
         };
 
@@ -733,6 +737,8 @@ public:
     virtual double get_max_charge_energy() = 0; //MWh
 
     virtual double get_degradation_rate() = 0;  // s^-1
+
+	virtual void reset_storage_to_initial_state() = 0;
 
     virtual void discharge_avail_est(double T_cold_K, double step_s, double &q_dot_dc_est, double &m_dot_field_est, double &T_hot_field_est) = 0;
 	

@@ -577,6 +577,34 @@ double C_csp_two_tank_tes::get_degradation_rate()
 	return e_loss / (m_q_pb_design * ms_params.m_ts_hours * 3600.); //s^-1  -- fraction of heat loss per second based on full charge
 }
 
+void C_csp_two_tank_tes::reset_storage_to_initial_state()
+{
+	// Initial storage charge based on % mass
+	double Q_tes_des = m_q_pb_design / 1.E6 * ms_params.m_ts_hours;		//[MWt-hr] TES thermal capacity at design
+	double T_tes_ave = 0.5*(ms_params.m_T_field_out_des + ms_params.m_T_field_in_des);
+	double cp_ave = mc_store_htfProps.Cp(T_tes_ave);				//[kJ/kg-K] Specific heat at average temperature
+	double mtot = Q_tes_des*3600.0 / (cp_ave / 1000.0 * (ms_params.m_T_field_out_des - ms_params.m_T_field_in_des));  //[kg] Total HTF mass
+	double rho_hot = mc_store_htfProps.dens(ms_params.m_T_field_out_des, 1.0);
+	double rho_cold = mc_store_htfProps.dens(ms_params.m_T_field_in_des, 1.0);
+
+	double V_inactive = m_vol_tank - m_V_tank_active;
+	double V_hot_ini = ms_params.m_f_V_hot_ini*0.01*mtot / rho_hot + V_inactive;			//[m^3]
+	double V_cold_ini = (1.0 - ms_params.m_f_V_hot_ini*0.01)*mtot / rho_cold + V_inactive;	//[m^3]
+
+	double T_hot_ini = ms_params.m_T_tank_hot_ini;		//[K]
+	double T_cold_ini = ms_params.m_T_tank_cold_ini;	//[K]
+
+	// Initialize cold and hot tanks
+	// Hot tank
+	mc_hot_tank.init(mc_store_htfProps, m_vol_tank, ms_params.m_h_tank, ms_params.m_h_tank_min,
+		ms_params.m_u_tank, ms_params.m_tank_pairs, ms_params.m_hot_tank_Thtr, ms_params.m_hot_tank_max_heat,
+		V_hot_ini, T_hot_ini);
+	// Cold tank
+	mc_cold_tank.init(mc_store_htfProps, m_vol_tank, ms_params.m_h_tank, ms_params.m_h_tank_min,
+		ms_params.m_u_tank, ms_params.m_tank_pairs, ms_params.m_cold_tank_Thtr, ms_params.m_cold_tank_max_heat,
+		V_cold_ini, T_cold_ini);
+}
+
 void C_csp_two_tank_tes::discharge_avail_est(double T_cold_K, double step_s, double &q_dot_dc_est, double &m_dot_field_est, double &T_hot_field_est) 
 {
 	double f_storage = 0.0;		// for now, hardcode such that storage always completely discharges

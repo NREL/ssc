@@ -324,6 +324,7 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     //{ SSC_INPUT,		SSC_NUMBER,		 "fc_steps",	         "Number of time steps per forecast block",                           "-",		      "",			 "sys_ctrl_disp_opt", "",						 "",					  "" },
 
 	{ SSC_INPUT,		SSC_NUMBER,		 "allow_controller_exceptions",   "Allow controller exceptions? (1 = true)",				  "-",		      "",			 "sys_ctrl",		 "?=1",						 "",					  "" },
+	{ SSC_INPUT,		SSC_ARRAY,		 "select_simulation_days",   "Selected subset of simulation days",							  "-",		      "",			 "sys_ctrl",		 "?=0",						 "",					  "" },
     
 
 	// Financial inputs
@@ -1656,6 +1657,15 @@ public:
 		tou.mc_dispatch_params.m_use_rule_2 = false;
 		tou.mc_dispatch_params.m_q_dot_rec_des_mult = -1.23;
 		tou.mc_dispatch_params.m_f_q_dot_pc_overwrite = -1.23;
+
+		size_t n_select_simulation_days = 0;
+		ssc_number_t* select_simulation_days = as_array("select_simulation_days", &n_select_simulation_days);
+		if (n_select_simulation_days == 365)
+		{
+			for (int i = 0; i < 365; i++)
+				tou.mc_dispatch_params.m_select_days.at(i) = (bool)select_simulation_days[i];
+		}
+
 
         size_t n_f_turbine = 0;
 		ssc_number_t *p_f_turbine = as_array("f_turb_tou_periods", &n_f_turbine);

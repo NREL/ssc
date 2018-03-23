@@ -231,6 +231,8 @@ public:
 
     virtual double get_degradation_rate();  // s^-1
 
+	virtual void reset_storage_to_initial_state();
+
 	virtual void discharge_avail_est(double T_cold_K, double step_s, double &q_dot_dc_est, double &m_dot_field_est, double &T_hot_field_est);
 
 	virtual void charge_avail_est(double T_hot_K, double step_s, double &q_dot_ch_est, double &m_dot_field_est, double &T_cold_field_est);
