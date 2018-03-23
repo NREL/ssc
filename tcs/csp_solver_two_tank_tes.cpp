@@ -700,7 +700,7 @@ bool C_csp_two_tank_tes::discharge(double timestep /*s*/, double T_amb /*K*/, do
 	// If no heat exchanger, no iteration is required between the heat exchanger and storage tank models
 	if(!ms_params.m_is_hx)
 	{
-		if(m_dot_htf_in > m_m_dot_tes_dc_max/timestep)
+		if(m_dot_htf_in > (m_m_dot_tes_dc_max/timestep) * 1.000001)
 		{
 			outputs.m_q_heater = std::numeric_limits<double>::quiet_NaN();
 			outputs.m_W_dot_rhtf_pump = std::numeric_limits<double>::quiet_NaN();
@@ -764,7 +764,7 @@ bool C_csp_two_tank_tes::charge(double timestep /*s*/, double T_amb /*K*/, doubl
 	// If no heat exchanger, no iteration is required between the heat exchanger and storage tank models
 	if( !ms_params.m_is_hx )
 	{
-		if( m_dot_htf_in > m_m_dot_tes_ch_max / timestep )
+		if (m_dot_htf_in > (m_m_dot_tes_ch_max / timestep)* 1.000001)
 		{
 			outputs.m_q_dot_loss = std::numeric_limits<double>::quiet_NaN();
 			outputs.m_q_heater = std::numeric_limits<double>::quiet_NaN();

@@ -2299,12 +2299,13 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 				if ((mc_pc_out_solver.m_q_dot_htf - q_pc_max) > 1.E-3)
 				{
 					error_msg = util::format("At time = %lg CR_ON__PC_SB__TES_OFF__AUX_OFF converged to a PC thermal power %lg [MWt]"
-						" larger than the maximum PC thermal power %lg [MWt]. Controller shut off plant",
+						" larger than the maximum PC thermal power %lg [MWt]. Controller shut off receiver",
 						mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, mc_pc_out_solver.m_q_dot_htf, q_pc_max);
 
 					mc_csp_messages.add_message(C_csp_messages::NOTICE, error_msg);
 
-					turn_off_plant();
+					//turn_off_plant();
+					is_rec_su_allowed = false;		// Allow controller to try CR_OFF modes 
 					are_models_converged = false;
 					break;
 				}
