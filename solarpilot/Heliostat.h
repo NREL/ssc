@@ -136,7 +136,7 @@ public:
 	//Declare access functions
 	int getId();
 	int *getGroupId();		//(row,col) nodes
-	bool getInLayout();
+	bool IsInLayout();
 	double getFocalX();
 	double getFocalY();
 	double getSlantRange();
