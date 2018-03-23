@@ -173,8 +173,8 @@ static C_csp_reported_outputs::S_output_info S_solver_output_info[] =
 	{C_csp_solver::C_solver_outputs::PRICING_MULT, C_csp_reported_outputs::TS_1ST},				  //[-] PPA price multiplier
 	{C_csp_solver::C_solver_outputs::PC_Q_DOT_SB, C_csp_reported_outputs::TS_1ST},				  //[MWt] PC required standby thermal power
 	{C_csp_solver::C_solver_outputs::PC_Q_DOT_MIN, C_csp_reported_outputs::TS_1ST},				  //[MWt] PC required min thermal power
-	{C_csp_solver::C_solver_outputs::PC_Q_DOT_TARGET, C_csp_reported_outputs::TS_1ST},			  //[MWt] PC target thermal power
-	{C_csp_solver::C_solver_outputs::PC_Q_DOT_MAX, C_csp_reported_outputs::TS_1ST},				  //[MWt] PC allowable max thermal power
+	{C_csp_solver::C_solver_outputs::PC_Q_DOT_TARGET, C_csp_reported_outputs::TS_WEIGHTED_AVE},			  //[MWt] PC target thermal power
+	{C_csp_solver::C_solver_outputs::PC_Q_DOT_MAX, C_csp_reported_outputs::TS_WEIGHTED_AVE},				  //[MWt] PC allowable max thermal power
 	{C_csp_solver::C_solver_outputs::CTRL_IS_REC_SU, C_csp_reported_outputs::TS_1ST},			  //[-] Control decision: is receiver startup allowed?
 	{C_csp_solver::C_solver_outputs::CTRL_IS_PC_SU, C_csp_reported_outputs::TS_1ST},				  //[-] Control decision: is power cycle startup allowed?
 	{C_csp_solver::C_solver_outputs::CTRL_IS_PC_SB, C_csp_reported_outputs::TS_1ST},				  //[-] Control decision: is power cycle standby allowed?
@@ -224,7 +224,7 @@ static C_csp_reported_outputs::S_output_info S_solver_output_info[] =
 	{C_csp_solver::C_solver_outputs::TES_T_COLD, C_csp_reported_outputs::TS_WEIGHTED_AVE},			  //[C] TES final cold tank temperature
 	{C_csp_solver::C_solver_outputs::TES_Q_DOT_DC, C_csp_reported_outputs::TS_WEIGHTED_AVE},		  //[MWt] TES discharge thermal power
 	{C_csp_solver::C_solver_outputs::TES_Q_DOT_CH, C_csp_reported_outputs::TS_WEIGHTED_AVE},		  //[MWt] TES charge thermal power
-	{C_csp_solver::C_solver_outputs::TES_E_CH_STATE, C_csp_reported_outputs::TS_WEIGHTED_AVE},		  //[MWht] TES charge state at the end of the time step
+	{C_csp_solver::C_solver_outputs::TES_E_CH_STATE, C_csp_reported_outputs::TS_LAST},		  //[MWht] TES charge state at the end of the time step
 	{C_csp_solver::C_solver_outputs::TES_M_DOT_DC, C_csp_reported_outputs::TS_WEIGHTED_AVE},		  //[MWt] TES discharge mass flow rate
 	{C_csp_solver::C_solver_outputs::TES_M_DOT_CH, C_csp_reported_outputs::TS_WEIGHTED_AVE},		  //[MWt] TES charge mass flow rate
 	{C_csp_solver::C_solver_outputs::COL_W_DOT_TRACK, C_csp_reported_outputs::TS_WEIGHTED_AVE},	  //[MWe] Parasitic collector tracking, startup, stow power consumption
@@ -1038,21 +1038,38 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
                  //  + dispatch.outputs.q_pb_startup.at( dispatch.m_current_read_step ) )
                   // / 1000. ;
 				
-				double fstart = 0.0;  // Fraction of time step used for power block startup
+
 				int t = dispatch.m_current_read_step;
 				if (dispatch.outputs.q_pb_startup.at(t) > 0.0 && dispatch.outputs.q_pb_target.at(t) > 0.0)  // Power block is both starting up and operating
 				{
+
+					double time_acc = 0.0;
+					int tprev = t - 1;
+					while (tprev > 0 && dispatch.outputs.q_pb_startup.at(tprev) > 0.0)
+					{
+						tprev -= 1;
+						time_acc += dispatch.params.dt;
+					}
+					double fstart_time = (dispatch.params.dt_pb_startup_cold - time_acc) / dispatch.params.dt;		
+
 					double avail_storage;
-					if (t>0)
+					if (t > 0)
 						avail_storage = dispatch.outputs.tes_charge_expected.at(t - 1) / dispatch.params.dt;
 					else
 						avail_storage = dispatch.params.e_tes_init / dispatch.params.dt;
 
-					fstart = dispatch.outputs.q_pb_startup.at(t) / fmin(dispatch.params.q_pb_max, avail_storage + dispatch.outputs.q_sf_expected.at(t));
-					//fstart = dispatch.outputs.q_pb_startup.at(t) / dispatch.params.q_pb_max;
-					fstart = fmin(fstart, 0.999);
+					double q_dot_pc_su_dispatch = fmin(dispatch.params.q_pb_max, avail_storage + dispatch.outputs.q_sf_expected.at(t));  // Max thermal power available to start up
+					double fstart = fmin(dispatch.outputs.q_pb_startup.at(t) / q_dot_pc_su_dispatch, 0.9999);    // Fraction of time step needed to complete startup at max thermal power
+					fstart = fmax(fstart, fstart_time);
+
+					if (pc_operating_state == C_csp_power_cycle::OFF || pc_operating_state == C_csp_power_cycle::STARTUP)  // Cycle currently off or starting up
+						q_pc_target = fmin(dispatch.params.q_pb_max / 1000., dispatch.outputs.q_pb_startup.at(t) / fstart / 1000.);
+					else
+						q_pc_target = fmin(dispatch.params.q_pb_max/1000., dispatch.outputs.q_pb_target.at(t) / (1. - fstart) / 1000.);   // Cycle on or in standby
 				}
-				q_pc_target = (dispatch.outputs.q_pb_target.at(t)) / (1. - fstart) / 1000.;
+				else   
+					q_pc_target = (dispatch.outputs.q_pb_target.at(t) + dispatch.outputs.q_pb_startup.at(t)) / 1000.;
+
 
                 //quality checks
 				/*
@@ -1062,14 +1079,15 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
                     q_pc_target = dispatch.params.q_pb_standby*1.e-3; 
 				*/
 
-
 				if (q_pc_target + 1.e-5 < q_pc_min)
 				{
 					is_pc_su_allowed = false;
-					//is_pc_sb_allowed = false;
 					q_pc_target = 0.0;
 				}
+				if (is_pc_sb_allowed)
+					q_pc_target = dispatch.params.q_pb_standby*1.e-3;
                 
+
 				// Calculate approximate upper limit for power cycle thermal input at current electricity generation limit
 				if (dispatch.w_lim.at(dispatch.m_current_read_step) < 1.e-6)
 					q_pc_max = 0.0;
@@ -1091,6 +1109,10 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 					q_pc_max = fmin(q_pc_max, dispatch.w_lim.at(dispatch.m_current_read_step)*1.e-3 / eta_calc); // Restrict max pc thermal input to *approximate* current allowable value (doesn't yet account for parasitics)
 					q_pc_max = fmax(q_pc_max, q_pc_target);													// calculated q_pc_target accounts for parasitics --> can be higher than approximate limit 
 				}
+
+				// Reset PC maximum mass flow rate --> Need something "close" to constrained max for convergence in defocus operating modes, but don't want mass flow guess to overconstrain thermal output
+				m_m_dot_pc_max = fmin(m_m_dot_pc_max, 1.2*(q_pc_max / m_cycle_q_dot_des) * m_m_dot_pc_des);  
+
 
                 //q_pc_sb = dispatch.outputs.q_pb_standby.at( dispatch.m_current_read_step ) / 1000. ;
 
@@ -1838,7 +1860,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 						{
 							// Weird that controller chose Defocus operating mode, so report message and shut down CR and PC
 							error_msg = util::format("At time = %lg the controller chose %s operating mode, but the code "
-								"failed to find a solution to achieve a PC HTF mass flow rate less than maximum. Controller will shut-down CR and PC",
+								"failed to find a solution to achieve a PC HTF mass flow rate less than maximum. Controller will shut-down CR.",
 								mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, op_mode_str.c_str());
 							mc_csp_messages.add_message(C_csp_messages::NOTICE, error_msg);
 
@@ -1850,6 +1872,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 							{
 								// Next operating_mode = CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
 								m_is_CR_DF__PC_MAX__TES_OFF__AUX_OFF_avail = false;
+								is_rec_su_allowed = false;   // Allow controller to try logic branch with CR_OFF
 							}
 
 							are_models_converged = false;
@@ -1923,7 +1946,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 						{
 							// Weird that controller chose Defocus operating mode, so report message and shut down CR and PC
 							error_msg = util::format("At time = %lg the controller chose %s operating mode, but the code"
-								" failed to achieve a PC thermal power less than the maximum. Controller will shut-down CR and PC",
+								" failed to achieve a PC thermal power less than the maximum. Controller will shut-down CR",
 								mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, op_mode_str.c_str());
 							mc_csp_messages.add_message(C_csp_messages::NOTICE, error_msg);
 
@@ -1935,6 +1958,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 							{
 								// Next operating_mode = CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
 								m_is_CR_DF__PC_MAX__TES_OFF__AUX_OFF_avail = false;
+								is_rec_su_allowed = false;  // Allow controller to try logic branch with CR_OFF
 							}
 
 							are_models_converged = false;
@@ -3877,11 +3901,12 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 					if ((q_dot_pc_solved - q_pc_max) / q_pc_max > 1.E-3)
 					{
 						error_msg = util::format("At time = %lg CR_ON__PC_SB__TES_DC__AUX_OFF solved with a PC thermal power %lg [MWt]"
-							" greater than the maximum %lg [MWt]. Controller shut off plant",
+							" greater than the maximum %lg [MWt]. Controller shut off receiver",
 							mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, q_dot_pc_solved, q_pc_max);
 						mc_csp_messages.add_message(C_csp_messages::NOTICE, error_msg);
 
-						turn_off_plant();
+						//turn_off_plant();
+						is_rec_su_allowed = false;
 						are_models_converged = false;
 						break;
 					}
@@ -4608,13 +4633,14 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 						}
 						else
 						{
-							// Weird that controller chose Defocus operating mode, so report message and shut down CR and PC
+							// Weird that controller chose Defocus operating mode, so report message and shut down CR
 							error_msg = util::format("At time = %lg the controller chose CR_DF__PC_MAX__TES_FULL__AUX_OFF operating mode, but the code"
-								" failed to solve. Controller will shut-down CR and PC",
+								" failed to solve. Controller will shut-down CR",
 								mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0);
 							mc_csp_messages.add_message(C_csp_messages::NOTICE, error_msg);
 
 							m_is_CR_DF__PC_MAX__TES_FULL__AUX_OFF_avail = false;
+							is_rec_su_allowed = false;   // Allow controller to try logic branch with CR_OFF
 
 							are_models_converged = false;
 
@@ -4761,6 +4787,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 							else
 							{
 								m_is_CR_DF__PC_MAX__TES_FULL__AUX_OFF_avail = false;
+								is_rec_su_allowed = false;   // Allow controller to try logic branch with CR_OFF
 								are_models_converged = false;
 								break;
 							}
@@ -5019,7 +5046,12 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 				xy_pair_1.y = diff_T_htf_cold_temp;	//[-]
 
 				// Now guess another HTF temperature
-				T_htf_cold_guess += 10.0;			//[C]
+				//T_htf_cold_guess += 10.0;			//[C]
+				if (diff_T_htf_cold_temp < 0.0)
+					T_htf_cold_guess -= 5.0;
+				else
+					T_htf_cold_guess += 5.0;
+
 				T_htf_cold_code = c_solver.test_member_function(T_htf_cold_guess, &diff_T_htf_cold_temp);
 				if (T_htf_cold_code != 0)
 				{	// If failed, go to next mode (CR_ON__PC_SU__TES_OFF)

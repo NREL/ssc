@@ -1164,6 +1164,14 @@ bool csp_dispatch_opt::optimize()
 					add_constraintex(lp, 2, row, col, LE, 1.);
 				}
 
+				// cycle startup can't be enabled during first time step if cycle is already operating or in standby
+				if (t == 0)
+				{
+					row[0] = 1.;
+					col[0] = O.column("ycsu", t);
+					add_constraintex(lp, 1, row, col, LE, std::fmin((params.is_pb_operating0 ? 0. : 1.), (params.is_pb_standby0 ? 0. : 1.)));
+				}
+
                 //Standby mode entry
                 i=0;
                 row[i  ] = 1.;
