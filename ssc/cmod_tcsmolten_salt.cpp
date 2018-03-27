@@ -227,6 +227,7 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "epsilon_radgrnd",		 "Emmissivity of ground underneath radiator panel",					"-",			"",            "RADCOOL",      "?=.90",						 "",						"" },
 	{ SSC_INPUT,        SSC_NUMBER,      "L_rad_rows",			 "Length of single row of radiator panels connected in series",		"m",			"",            "RADCOOL",      "?=0",						 "",						"" },
 	{ SSC_INPUT,        SSC_NUMBER,      "epsilon_radHX",		 "Effectiveness of HX between radiative field and cold storage",	"-",			"",            "RADCOOL",      "?=.8",						 "",						"" },
+	{ SSC_INPUT,        SSC_NUMBER,      "ctes_type",			 "Type of cold storage (2=two tank, 3= three node)",				"-",			"",            "RADCOOL",      "?=2",						 "",						"" },
 
     					     																	  
     // Power Cycle Inputs
@@ -936,16 +937,38 @@ public:
 				pc->m_n_pl_inc = as_integer("n_pl_inc");
 
 				//parameters for radiative cooling with cold storage
-				rankine_pc.mc_cold_storage.ms_params.m_h_tank_min = as_double("h_ctes_tank_min");
-				rankine_pc.mc_cold_storage.ms_params.m_ts_hours = as_double("ctes_tshours");
-				rankine_pc.mc_cold_storage.ms_params.m_h_tank = as_double("h_ctes_tank");
-				rankine_pc.mc_cold_storage.ms_params.m_u_tank = as_double("u_ctes_tank");
-				rankine_pc.mc_cold_storage.ms_params.m_tank_pairs = as_integer("ctes_tankpairs");
-				rankine_pc.mc_cold_storage.ms_params.m_T_field_in_des = as_double("T_ctes_cold_design");
-				rankine_pc.mc_cold_storage.ms_params.m_T_field_out_des = as_double("T_ctes_warm_design");
-				rankine_pc.mc_cold_storage.ms_params.m_T_tank_hot_ini= as_double("T_ctes_warm_ini");
-				rankine_pc.mc_cold_storage.ms_params.m_T_tank_cold_ini = as_double("T_ctes_cold_ini");
-				rankine_pc.mc_cold_storage.ms_params.m_f_V_hot_ini = as_double("f_ctes_warm_ini");
+				C_csp_cold_tes *two_tank = &rankine_pc.mc_two_tank_ctes;	//pointer for two tank
+				C_csp_three_node_tes *stratified = &rankine_pc.mc_three_node_ctes; //pointer for stratified
+			
+				two_tank->ms_params.m_ctes_type = as_integer("ctes_type");
+				stratified->ms_params.m_ctes_type = as_integer("ctes_type");
+
+				if (two_tank->ms_params.m_ctes_type == 2)
+				{
+					two_tank->ms_params.m_h_tank_min = as_double("h_ctes_tank_min");
+					two_tank->ms_params.m_ts_hours = as_double("ctes_tshours");
+					two_tank->ms_params.m_h_tank = as_double("h_ctes_tank");
+					two_tank->ms_params.m_u_tank = as_double("u_ctes_tank");
+					two_tank->ms_params.m_tank_pairs = as_integer("ctes_tankpairs");
+					two_tank->ms_params.m_T_field_in_des = as_double("T_ctes_cold_design");
+					two_tank->ms_params.m_T_field_out_des = as_double("T_ctes_warm_design");
+					two_tank->ms_params.m_T_tank_hot_ini = as_double("T_ctes_warm_ini");
+					two_tank->ms_params.m_T_tank_cold_ini = as_double("T_ctes_cold_ini");
+					two_tank->ms_params.m_f_V_hot_ini = as_double("f_ctes_warm_ini");
+				}
+				if (two_tank->ms_params.m_ctes_type == 3)
+				{
+					stratified->ms_params.m_h_tank_min = 0;								//hardcode zero minimum height for stratified tanks.
+					stratified->ms_params.m_ts_hours = as_double("ctes_tshours");
+					stratified->ms_params.m_h_tank = as_double("h_ctes_tank");
+					stratified->ms_params.m_u_tank = as_double("u_ctes_tank");
+					stratified->ms_params.m_tank_pairs = as_integer("ctes_tankpairs");
+					stratified->ms_params.m_T_field_in_des = as_double("T_ctes_cold_design");
+					stratified->ms_params.m_T_field_out_des = as_double("T_ctes_warm_design");
+					stratified->ms_params.m_T_tank_hot_ini = as_double("T_ctes_warm_ini");
+					stratified->ms_params.m_T_tank_cold_ini = as_double("T_ctes_cold_ini");
+					stratified->ms_params.m_f_V_hot_ini = as_double("f_ctes_warm_ini");
+				}
 				rankine_pc.mc_radiator.ms_params.m_field_fl = as_integer("ctes_field_fl");
 				rankine_pc.mc_radiator.ms_params.m_power_hrs = as_double("peak_power_hours");
 				rankine_pc.mc_radiator.ms_params.m_dot_panel = as_double("m_dot_radpanel");

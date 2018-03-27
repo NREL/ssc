@@ -378,21 +378,43 @@ void C_csp_radiator::analytical_panel_calc_HX(double T_db /*K*/, double Tin /*K*
 
 
 	//Water properties
-	water_TP(Tin, 101.3, &mc_coldhtf);							//Get water state at inlet temperature of fluid
-	double cp_water = mc_coldhtf.cp * 1000;						//mc_coldhtf.Cp(273)*1000.;               //[J / kg - K] Specific heat capacity of water
-	
+	double cp_water;
+	if (Tin <= 273)
+	{
+		cp_water = 4183;									//[J/kg-K] hardcode in case glycol loop is less than freezing point of water
+	}
+	else
+	{
+		water_TP(Tin, 101.3, &mc_coldhtf);					//Get water state at inlet temperature of fluid - this only approximates water temp
+		cp_water = mc_coldhtf.cp * 1000;					//[J / kg - K] Specific heat capacity of water
+	}
+
 	//Fluid properties within tube - using inlet temperature of water side of HX - this is approximate for glygcol temperature
-	int idx_props = static_cast<int>(Tin-273.15) - T_EG30[0][0]+1; //Truncate temperature to degree [C] and get index in EG property data as provided based on starting point of that property data.
-	double cp = cp_EG30[0][idx_props]*1000;					//Get property data based on temperature. Convert to J/kg-K
-	double rho_fluid = rho_EG30[0][idx_props];
-	double mu_fluid = mu_EG30[0][idx_props];
+	int idx_props =static_cast<int>(Tin - 273.15) - T_EG30[0][0] + 1; //Truncate temperature to degree [C] and get index in EG property data as provided based on starting point of that property data.
+	int idx_props_check= std::numeric_limits<double>::quiet_NaN();	  //In case temperature is at an extreme end, use next closest value.
+	if (idx_props > 70) 
+	{
+		idx_props_check = 70;	
+	}
+	else if (idx_props < 0)
+	{
+		idx_props_check = 0;
+	}
+	else
+	{
+		idx_props_check = idx_props;
+	}
+	
+	double cp = cp_EG30[0][idx_props_check]*1000;					//Get property data based on temperature. Convert to J/kg-K
+	double rho_fluid = rho_EG30[0][idx_props_check];
+	double mu_fluid = mu_EG30[0][idx_props_check];
 	double nu_fluid = mu_fluid / rho_fluid;
-	double alpha_fluid = alpha_EG30[0][idx_props];
-	double k_fluid = k_EG30[0][idx_props];
+	double alpha_fluid = alpha_EG30[0][idx_props_check];
+	double k_fluid = k_EG30[0][idx_props_check];
 	
 
 	//Forced convection inside tube
-	double Pr_fluid = nu_fluid / alpha_fluid;			//mc_coldhtf.Pr(273,101300.);			//[-] Prandtl number of water
+	double Pr_fluid = nu_fluid / alpha_fluid;				//[-] Prandtl number of water
 	double Re_tube = 4 * m_dot_tube / (3.1415*mu_fluid*D);	//[-] Reynolds number inside tube
 	if (Re_tube < 2300)
 	{

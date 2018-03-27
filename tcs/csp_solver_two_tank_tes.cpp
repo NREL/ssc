@@ -363,6 +363,94 @@ void C_storage_tank::energy_balance(double timestep /*s*/, double m_dot_in, doub
 	}
 }
 
+void C_storage_tank::energy_balance_constant_mass(double timestep /*s*/, double m_dot_in, double T_in /*K*/, double T_amb /*K*/,
+	double &T_ave /*K*/, double & q_heater /*MW*/, double & q_dot_loss /*MW*/)
+{
+	// Get properties from tank state at the end of last time step
+	double rho = mc_htf.dens(m_T_prev, 1.0);	//[kg/m^3]
+	double cp = mc_htf.Cp(m_T_prev)*1000.0;		//[J/kg-K] spec heat, convert from kJ/kg-K
+
+												// Calculate ending volume levels
+	m_m_calc = m_m_prev;						//[kg] Available mass at the end of this timestep, same as previous
+	m_V_calc = m_m_calc / rho;					//[m^3] Available volume at end of timestep (using initial temperature...)		
+
+
+	//Analytical method
+		double a_coef = m_dot_in/m_m_calc + m_UA / (m_m_calc*cp);
+		double b_coef = m_dot_in / m_m_calc*T_in + m_UA / (m_m_calc*cp)*T_amb;
+
+		m_T_calc = b_coef / a_coef - (b_coef/a_coef-m_T_prev)*exp(-a_coef*timestep);
+		T_ave = b_coef / a_coef - (b_coef / a_coef - m_T_prev)*exp(-a_coef*timestep/2); //estimate of average
+
+		//T_ave = a_coef / b_coef + m_m_prev * (m_T_prev - a_coef / b_coef) / ((c_coef - b_coef)*timestep)*(pow((timestep*c_coef / m_m_prev + 1.0), 1.0 - b_coef / c_coef) - 1.0);
+		//q_dot_loss = m_UA * (T_ave - T_amb) / 1.E6;		//[MW]
+
+		
+
+		
+		//Euler numerical method
+		//m_T_calc = m_T_prev + m_dot_in / m_m_calc * (T_in - m_T_prev)*timestep + m_UA / (m_m_calc*cp)*(T_amb - m_T_prev)*timestep;
+		//T_ave = m_T_prev + m_dot_in / m_m_calc * (T_in - m_T_prev)*timestep/2 + m_UA / (m_m_calc*cp)*(T_amb - m_T_prev)*timestep/2; //estimate for average
+		
+		/*if (m_T_calc < m_T_htr)
+		{
+			q_heater = b_coef * ((m_T_htr - m_T_prev * pow((timestep*c_coef / m_m_prev + 1), -b_coef / c_coef)) /
+				(-pow((timestep*c_coef / m_m_prev + 1), -b_coef / c_coef) + 1)) - a_coef;
+
+			q_heater = q_heater * cp;
+
+			q_heater /= 1.E6;
+		}
+		else
+		{*/
+			q_heater = 0.0;
+			return;
+		//}
+
+		/*if (q_heater > m_max_q_htr)
+		{
+			q_heater = m_max_q_htr;
+		}
+
+		a_coef += q_heater * 1.E6 / cp;
+
+		m_T_calc = a_coef / b_coef + (m_T_prev - a_coef / b_coef)*pow((timestep*c_coef / m_m_prev + 1), -b_coef / c_coef);
+		T_ave = a_coef / b_coef + m_m_prev * (m_T_prev - a_coef / b_coef) / ((c_coef - b_coef)*timestep)*(pow((timestep*c_coef / m_m_prev + 1.0), 1.0 - b_coef / c_coef) - 1.0);
+		q_dot_loss = m_UA * (T_ave - T_amb) / 1.E6;		//[MW]*/
+
+	
+	/*{
+		double b_coef = m_UA / (cp*m_m_prev);
+		double c_coef = m_UA / (cp*m_m_prev) * T_amb;
+
+		m_T_calc = c_coef / b_coef + (m_T_prev - c_coef / b_coef)*exp(-b_coef * timestep);
+		T_ave = c_coef / b_coef - (m_T_prev - c_coef / b_coef) / (b_coef*timestep)*(exp(-b_coef * timestep) - 1.0);
+		q_dot_loss = m_UA * (T_ave - T_amb) / 1.E6;
+
+		if (m_T_calc < m_T_htr)
+		{
+			q_heater = (b_coef*(m_T_htr - m_T_prev * exp(-b_coef * timestep)) / (-exp(-b_coef * timestep) + 1.0) - c_coef)*cp*m_m_prev;
+			q_heater /= 1.E6;	//[MW]
+		}
+		else
+		{
+			q_heater = 0.0;
+			return;
+		}
+
+		if (q_heater > m_max_q_htr)
+		{
+			q_heater = m_max_q_htr;
+		}
+
+		c_coef += q_heater * 1.E6 / (cp*m_m_prev);
+
+		m_T_calc = c_coef / b_coef + (m_T_prev - c_coef / b_coef)*exp(-b_coef * timestep);
+		T_ave = c_coef / b_coef - (m_T_prev - c_coef / b_coef) / (b_coef*timestep)*(exp(-b_coef * timestep) - 1.0);
+		q_dot_loss = m_UA * (T_ave - T_amb) / 1.E6;		//[MW]
+	}*/
+}
+
 C_csp_two_tank_tes::C_csp_two_tank_tes()
 {
 	m_vol_tank = m_V_tank_active = m_q_pb_design = m_V_tank_hot_ini = std::numeric_limits<double>::quiet_NaN();
@@ -1473,10 +1561,11 @@ bool C_csp_cold_tes::recirculation(double timestep /*s*/, double T_amb /*K*/, do
 		}
 
 		// Call energy balance on cold tank discharge to get average outlet temperature over timestep
-		mc_cold_tank.energy_balance(timestep, m_dot_cold_in, m_dot_cold_in, T_cold_in, T_amb, T_cold_ave, q_heater_cold, q_dot_loss_cold);
+		mc_cold_tank.energy_balance_constant_mass(timestep, m_dot_cold_in, T_cold_in, T_amb, T_cold_ave, q_heater_cold, q_dot_loss_cold);
 
 		// Call energy balance on hot tank charge to track tank mass and temperature while idle
 		mc_hot_tank.energy_balance(timestep, 0.0, 0.0, 0.0, T_amb, T_hot_ave, q_heater_hot, q_dot_loss_hot);
+
 	}
 
 	else

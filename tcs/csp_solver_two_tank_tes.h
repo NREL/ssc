@@ -131,6 +131,9 @@ public:
 	void energy_balance(double timestep /*s*/, double m_dot_in, double m_dot_out, double T_in /*K*/, double T_amb /*K*/, 
 		double &T_ave /*K*/, double &q_heater /*MW*/, double &q_dot_loss /*MW*/);
 
+	void energy_balance_constant_mass(double timestep /*s*/, double m_dot_in, double T_in /*K*/, double T_amb /*K*/,
+		double &T_ave /*K*/, double &q_heater /*MW*/, double &q_dot_loss /*MW*/);
+
 	void converged();
 };
 
@@ -317,6 +320,7 @@ public:
 
 		double dT_cw_rad;			//[degrees] Temperature change in cooling water for cold storage cooling.
 		double m_dot_cw_rad;		//[kg/sec]	Mass flow of cooling water for cold storage cooling at design.
+		int m_ctes_type;			//2= two tank (this model) 3=three node (other model)
 
 		S_params()
 		{
