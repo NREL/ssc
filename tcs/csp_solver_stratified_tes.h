@@ -56,7 +56,57 @@
 #include "sam_csp_util.h"
 #include "csp_solver_two_tank_tes.h"
 
-class C_csp_three_node_tes : public C_csp_tes //Class for cold storage based on two tank tes ARD
+class C_storage_node
+{
+private:
+	HTFProperties mc_htf;
+
+	double m_V_total;			//[m^3] Total volume for *one temperature* tank
+	double m_V_active;			//[m^3] active volume of *one temperature* tank (either cold or hot)
+	double m_V_inactive;		//[m^3] INactive volume of *one temperature* tank (either cold or hot)
+	double m_UA;				//[W/K] Tank loss conductance
+
+	double m_T_htr;				//[K] Tank heater set point
+	double m_max_q_htr;			//[MWt] Max tank heater capacity
+
+								// Stored values from end of previous timestep
+	double m_V_prev;		//[m^3] Volume of storage fluid in tank
+	double m_T_prev;		//[K] Temperature of storage fluid in tank
+	double m_m_prev;		//[kg] Mass of storage fluid in tank
+
+							// Calculated values for current timestep
+	double m_V_calc;		//[m^3] Volume of storage fluid in tank
+	double m_T_calc;		//[K] Temperature of storage fluid in tank
+	double m_m_calc;		//[kg] Mass of storage fluid in tank
+
+public:
+
+	C_storage_node();
+
+	double calc_mass_at_prev();
+
+	double get_m_T_prev();
+
+	double get_m_T_calc();
+
+	double get_m_m_calc();
+
+	void init(HTFProperties htf_class_in, double V_tank_one_temp, double h_tank, bool lid, double u_tank,
+		double tank_pairs, double T_htr, double max_q_htr, double V_ini, double T_ini);
+
+	double m_dot_available(double f_unavail, double timestep);
+
+	void energy_balance(double timestep /*s*/, double m_dot_in, double m_dot_out, double T_in /*K*/, double T_amb /*K*/,
+		double &T_ave /*K*/, double &q_heater /*MW*/, double &q_dot_loss /*MW*/);
+
+	void energy_balance_constant_mass(double timestep /*s*/, double m_dot_in, double T_in /*K*/, double T_amb /*K*/,
+		double &T_ave /*K*/, double &q_heater /*MW*/, double &q_dot_loss /*MW*/);
+
+	void converged();
+};
+
+
+class C_csp_stratified_tes : public C_csp_tes //Class for cold storage based on two tank tes ARD
 {
 private:
 
@@ -67,10 +117,12 @@ private:
 
 	//Storage_HX mc_hx_storage;				// Instance of Storage_HX class for heat exchanger between storage and field HTFs
 
-	C_storage_tank mc_node_one;				// Instance of storage tank class for the top node
-	C_storage_tank mc_node_two;				// Instance of storage tank class for the mid node
-	C_storage_tank mc_node_three;			// Instance of storage tank class for the bottom node	
-
+	C_storage_node mc_node_one;				// Instance of storage node class for the top node
+	C_storage_node mc_node_two;				 
+	C_storage_node mc_node_three;			
+	C_storage_node mc_node_four;			
+	C_storage_node mc_node_five;			// Upto six nodes allowed
+	C_storage_node mc_node_n;				// Instance of storage node class for the bottom node
 											// member string for exception messages
 	std::string error_msg;
 
@@ -140,9 +192,9 @@ public:
 
 	S_params ms_params;
 
-	C_csp_three_node_tes();
+	C_csp_stratified_tes();
 
-	~C_csp_three_node_tes() {};
+	~C_csp_stratified_tes() {};
 
 	virtual void init();
 

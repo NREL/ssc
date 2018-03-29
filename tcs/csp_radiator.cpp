@@ -379,7 +379,7 @@ void C_csp_radiator::analytical_panel_calc_HX(double T_db /*K*/, double Tin /*K*
 
 	//Water properties
 	double cp_water;
-	if (Tin <= 273)
+	if (Tin <= 274)
 	{
 		cp_water = 4183;									//[J/kg-K] hardcode in case glycol loop is less than freezing point of water
 	}

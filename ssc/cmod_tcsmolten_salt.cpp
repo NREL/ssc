@@ -938,7 +938,7 @@ public:
 
 				//parameters for radiative cooling with cold storage
 				C_csp_cold_tes *two_tank = &rankine_pc.mc_two_tank_ctes;	//pointer for two tank
-				C_csp_three_node_tes *stratified = &rankine_pc.mc_three_node_ctes; //pointer for stratified
+				C_csp_stratified_tes *stratified = &rankine_pc.mc_stratified_ctes; //pointer for stratified
 			
 				two_tank->ms_params.m_ctes_type = as_integer("ctes_type");
 				stratified->ms_params.m_ctes_type = as_integer("ctes_type");
@@ -956,7 +956,7 @@ public:
 					two_tank->ms_params.m_T_tank_cold_ini = as_double("T_ctes_cold_ini");
 					two_tank->ms_params.m_f_V_hot_ini = as_double("f_ctes_warm_ini");
 				}
-				if (two_tank->ms_params.m_ctes_type == 3)
+				if (two_tank->ms_params.m_ctes_type >2)
 				{
 					stratified->ms_params.m_h_tank_min = 0;								//hardcode zero minimum height for stratified tanks.
 					stratified->ms_params.m_ts_hours = as_double("ctes_tshours");

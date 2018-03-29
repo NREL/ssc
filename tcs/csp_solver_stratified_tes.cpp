@@ -51,15 +51,198 @@
 #include "csp_solver_util.h"
 
 
+C_storage_node::C_storage_node()
+{
+	m_V_prev = m_T_prev = m_m_prev =
 
-C_csp_three_node_tes::C_csp_three_node_tes()
+		m_V_total = m_V_active = m_V_inactive = m_UA =
+
+		m_T_htr = m_max_q_htr = std::numeric_limits<double>::quiet_NaN();
+}
+
+void C_storage_node::init(HTFProperties htf_class_in, double V_tank_one_temp, double h_tank, bool lid, double u_tank,
+	double tank_pairs, double T_htr, double max_q_htr, double V_ini, double T_ini)
+{
+	mc_htf = htf_class_in;
+
+	m_V_total = V_tank_one_temp;						//[m^3]
+
+	double A_cs = m_V_total / (h_tank*tank_pairs);		//[m^2] Cross-sectional area of a single tank
+
+	double diameter = pow(A_cs / CSP::pi, 0.5)*2.0;		//[m] Diameter of a single tank
+
+	if (lid)
+	{// Calculate tank conductance if including top area in losses (top node of stratified tank.)
+		m_UA = u_tank * (A_cs + CSP::pi*diameter*h_tank)*tank_pairs;	//[W/K]
+	}
+	if (!lid)
+	{// Calculate tank conductance if only including sides of node
+		m_UA = u_tank * (CSP::pi*diameter*h_tank)*tank_pairs;			//[W/K]
+
+	}
+	m_T_htr = T_htr;
+	m_max_q_htr = max_q_htr;
+
+	m_V_prev = V_ini;
+	m_T_prev = T_ini;
+	m_m_prev = calc_mass_at_prev();
+}
+
+double C_storage_node::calc_mass_at_prev()
+{
+	return m_V_prev * mc_htf.dens(m_T_prev, 1.0);	//[kg] 
+}
+
+double C_storage_node::get_m_T_prev()
+{
+	return m_T_prev;		//[K]
+}
+
+double C_storage_node::get_m_T_calc()
+{
+	return m_T_calc;
+}
+
+double C_storage_node::get_m_m_calc() //ARD new getter for current mass 
+{
+	return m_m_calc;
+}
+
+double C_storage_node::m_dot_available(double f_unavail, double timestep)
+{
+	double rho = mc_htf.dens(m_T_prev, 1.0);		//[kg/m^3]
+	double V = m_m_prev / rho;						//[m^3] Volume available in tank (one temperature)
+	double V_avail = fmax(V - m_V_inactive, 0.0);	//[m^3] Volume that is active - need to maintain minimum height (corresponding m_V_inactive)
+
+													// "Unavailable" fraction now applied to one temperature tank volume, not total tank volume
+	double m_dot_avail = fmax(V_avail - m_V_active * f_unavail, 0.0)*rho / timestep;		//[kg/s] Max mass flow rate available
+
+	return m_dot_avail;		//[kg/s]
+}
+
+void C_storage_node::converged()
+{
+	// Reset 'previous' timestep values to 'calculated' values
+	m_V_prev = m_V_calc;		//[m^3]
+	m_T_prev = m_T_calc;		//[K]
+	m_m_prev = m_m_calc;		//[kg]
+}
+
+void C_storage_node::energy_balance(double timestep /*s*/, double m_dot_in, double m_dot_out, double T_in /*K*/, double T_amb /*K*/,
+	double &T_ave /*K*/, double & q_heater /*MW*/, double & q_dot_loss /*MW*/)
+{
+	// Get properties from tank state at the end of last time step
+	double rho = mc_htf.dens(m_T_prev, 1.0);	//[kg/m^3]
+	double cp = mc_htf.Cp(m_T_prev)*1000.0;		//[J/kg-K] spec heat, convert from kJ/kg-K
+
+												// Calculate ending volume levels
+	m_m_calc = fmax(0.001, m_m_prev + timestep * (m_dot_in - m_dot_out));	//[kg] Available mass at the end of this timestep, limit to nonzero positive number
+	m_V_calc = m_m_calc / rho;					//[m^3] Available volume at end of timestep (using initial temperature...)		
+
+	if ((m_dot_in - m_dot_out) != 0.0)
+	{
+		double a_coef = m_dot_in * T_in + m_UA / cp * T_amb;
+		double b_coef = m_dot_in + m_UA / cp;
+		double c_coef = (m_dot_in - m_dot_out);
+
+		m_T_calc = a_coef / b_coef + (m_T_prev - a_coef / b_coef)*pow((timestep*c_coef / m_m_prev + 1), -b_coef / c_coef);
+		T_ave = a_coef / b_coef + m_m_prev * (m_T_prev - a_coef / b_coef) / ((c_coef - b_coef)*timestep)*(pow((timestep*c_coef / m_m_prev + 1.0), 1.0 - b_coef / c_coef) - 1.0);
+		q_dot_loss = m_UA * (T_ave - T_amb) / 1.E6;		//[MW]
+
+		if (m_T_calc < m_T_htr)
+		{
+			q_heater = b_coef * ((m_T_htr - m_T_prev * pow((timestep*c_coef / m_m_prev + 1), -b_coef / c_coef)) /
+				(-pow((timestep*c_coef / m_m_prev + 1), -b_coef / c_coef) + 1)) - a_coef;
+
+			q_heater = q_heater * cp;
+
+			q_heater /= 1.E6;
+		}
+		else
+		{
+			q_heater = 0.0;
+			return;
+		}
+
+		if (q_heater > m_max_q_htr)
+		{
+			q_heater = m_max_q_htr;
+		}
+
+		a_coef += q_heater * 1.E6 / cp;
+
+		m_T_calc = a_coef / b_coef + (m_T_prev - a_coef / b_coef)*pow((timestep*c_coef / m_m_prev + 1), -b_coef / c_coef);
+		T_ave = a_coef / b_coef + m_m_prev * (m_T_prev - a_coef / b_coef) / ((c_coef - b_coef)*timestep)*(pow((timestep*c_coef / m_m_prev + 1.0), 1.0 - b_coef / c_coef) - 1.0);
+		q_dot_loss = m_UA * (T_ave - T_amb) / 1.E6;		//[MW]
+
+	}
+	else	// No mass flow rate, tank is idle
+	{
+		double b_coef = m_UA / (cp*m_m_prev);
+		double c_coef = m_UA / (cp*m_m_prev) * T_amb;
+
+		m_T_calc = c_coef / b_coef + (m_T_prev - c_coef / b_coef)*exp(-b_coef * timestep);
+		T_ave = c_coef / b_coef - (m_T_prev - c_coef / b_coef) / (b_coef*timestep)*(exp(-b_coef * timestep) - 1.0);
+		q_dot_loss = m_UA * (T_ave - T_amb) / 1.E6;
+
+		if (m_T_calc < m_T_htr)
+		{
+			q_heater = (b_coef*(m_T_htr - m_T_prev * exp(-b_coef * timestep)) / (-exp(-b_coef * timestep) + 1.0) - c_coef)*cp*m_m_prev;
+			q_heater /= 1.E6;	//[MW]
+		}
+		else
+		{
+			q_heater = 0.0;
+			return;
+		}
+
+		if (q_heater > m_max_q_htr)
+		{
+			q_heater = m_max_q_htr;
+		}
+
+		c_coef += q_heater * 1.E6 / (cp*m_m_prev);
+
+		m_T_calc = c_coef / b_coef + (m_T_prev - c_coef / b_coef)*exp(-b_coef * timestep);
+		T_ave = c_coef / b_coef - (m_T_prev - c_coef / b_coef) / (b_coef*timestep)*(exp(-b_coef * timestep) - 1.0);
+		q_dot_loss = m_UA * (T_ave - T_amb) / 1.E6;		//[MW]
+	}
+}
+
+void C_storage_node::energy_balance_constant_mass(double timestep /*s*/, double m_dot_in, double T_in /*K*/, double T_amb /*K*/,
+	double &T_ave /*K*/, double & q_heater /*MW*/, double & q_dot_loss /*MW*/)
+{
+	// Get properties from tank state at the end of last time step
+	double rho = mc_htf.dens(m_T_prev, 1.0);	//[kg/m^3]
+	double cp = mc_htf.Cp(m_T_prev)*1000.0;		//[J/kg-K] spec heat, convert from kJ/kg-K
+
+												// Calculate ending volume levels
+	m_m_calc = m_m_prev;						//[kg] Available mass at the end of this timestep, same as previous
+	m_V_calc = m_m_calc / rho;					//[m^3] Available volume at end of timestep (using initial temperature...)		
+
+	//Analytical method to calculate final temperature at end of timestep
+	double a_coef = m_dot_in / m_m_calc + m_UA / (m_m_calc*cp);
+	double b_coef = m_dot_in / m_m_calc * T_in + m_UA / (m_m_calc*cp)*T_amb;
+
+	m_T_calc = b_coef / a_coef - (b_coef / a_coef - m_T_prev)*exp(-a_coef * timestep);
+	T_ave = b_coef / a_coef - (b_coef / a_coef - m_T_prev)*exp(-a_coef * timestep / 2); //estimate of average
+
+	q_dot_loss = m_UA * (T_ave - T_amb) / 1.E6;		//[MW]
+																					
+	q_heater = 0.0;								//Assume no heater.
+	return;
+	
+}
+
+
+C_csp_stratified_tes::C_csp_stratified_tes()
 {
 	m_vol_tank = m_V_tank_active = m_q_pb_design = m_V_tank_hot_ini = std::numeric_limits<double>::quiet_NaN();
 
 	m_m_dot_tes_dc_max = m_m_dot_tes_ch_max = std::numeric_limits<double>::quiet_NaN();
 }
 
-void C_csp_three_node_tes::init()
+void C_csp_stratified_tes::init()
 {
 	if (!(ms_params.m_ts_hours > 0.0))
 	{
@@ -181,97 +364,112 @@ void C_csp_three_node_tes::init()
 	if (ms_params.m_ts_hours > 0.0)
 	{
 		mc_hx.init(mc_field_htfProps, mc_store_htfProps, duty, ms_params.m_dt_hot, ms_params.m_T_field_out_des, ms_params.m_T_field_in_des);
-	}  
+	}
 
 	// Do we need to define minimum and maximum thermal powers to/from storage?
 	// The 'duty' definition should allow the tanks to accept whatever the field and/or power cycle can provide...
 
 	// Calculate initial storage values
-	//double V_inactive = m_vol_tank - m_V_tank_active;
-	double V_hot_ini = m_V_tank_active/3;			//[m^3]
-	double V_mid_ini = m_V_tank_active/3;			//[m^3]
-	double V_cold_ini = m_V_tank_active/3;			//[m^3]
+	int n_nodes = ms_params.m_ctes_type;			//local variable for number of nodes
+	double V_node_ini = m_V_tank_active / n_nodes;			//[m^3] Each node has equal volume
+	
 
 	double T_hot_ini = ms_params.m_T_tank_hot_ini;		//[K]
 	double T_cold_ini = ms_params.m_T_tank_cold_ini;	//[K]
-	double T_mid_ini = 0.5*(T_hot_ini + T_cold_ini);	//[K]
+	double dT_node_ini = (T_hot_ini - T_cold_ini);	//[K] spacing in temperature to initialize
+													// Initialize nodes. For these tanks disregard active versus inactive volume. Use active volume.
+	double h_node = ms_params.m_h_tank / n_nodes;	//Height of each section of tank equal divided equally
 
-	// Initialize nodes. For these tanks disregard active versus inactive volume. Use active volume.
-	// Hot tank
-	mc_node_one.init(mc_store_htfProps, V_hot_ini, ms_params.m_h_tank, ms_params.m_h_tank_min,
+	//Cold node (bottom)
+	mc_node_n.init(mc_store_htfProps, V_node_ini, h_node, false,
+		ms_params.m_u_tank, ms_params.m_tank_pairs, ms_params.m_cold_tank_Thtr, ms_params.m_cold_tank_max_heat,
+		V_node_ini, T_cold_ini);
+	switch (n_nodes)
+	{
+	case 6:
+		mc_node_five.init(mc_store_htfProps, V_node_ini, h_node, false,
+			ms_params.m_u_tank, ms_params.m_tank_pairs, ms_params.m_cold_tank_Thtr, ms_params.m_cold_tank_max_heat,
+			V_node_ini, T_cold_ini+(n_nodes-5.0)/(n_nodes-1.0)*dT_node_ini); //Assume equal spacing between initial temperatures
+	case 5:
+		mc_node_four.init(mc_store_htfProps, V_node_ini, h_node, false,
+			ms_params.m_u_tank, ms_params.m_tank_pairs, ms_params.m_cold_tank_Thtr, ms_params.m_cold_tank_max_heat,
+			V_node_ini, T_cold_ini + (n_nodes - 4.0) / (n_nodes - 1.0)*dT_node_ini);
+	case 4:
+		mc_node_three.init(mc_store_htfProps, V_node_ini, h_node, false,
+			ms_params.m_u_tank, ms_params.m_tank_pairs, ms_params.m_cold_tank_Thtr, ms_params.m_cold_tank_max_heat,
+			V_node_ini, T_cold_ini + (n_nodes - 3.0) / (n_nodes - 1.0)*dT_node_ini);
+	case 3:
+		mc_node_two.init(mc_store_htfProps, V_node_ini, h_node, false,
+			ms_params.m_u_tank, ms_params.m_tank_pairs, ms_params.m_cold_tank_Thtr, ms_params.m_cold_tank_max_heat,
+			V_node_ini, T_cold_ini + (n_nodes - 2.0) / (n_nodes - 1.0)*dT_node_ini);
+	
+	}
+	// Hot node (top)
+	mc_node_one.init(mc_store_htfProps, V_node_ini, h_node, true,
 		ms_params.m_u_tank, ms_params.m_tank_pairs, ms_params.m_hot_tank_Thtr, ms_params.m_hot_tank_max_heat,
-		V_hot_ini, T_hot_ini);
-	// Mid node
-	mc_node_two.init(mc_store_htfProps, V_mid_ini, ms_params.m_h_tank, ms_params.m_h_tank_min,
-		ms_params.m_u_tank, ms_params.m_tank_pairs, ms_params.m_cold_tank_Thtr, ms_params.m_cold_tank_max_heat,
-		V_mid_ini, T_mid_ini);
-	// Cold tank
-	mc_node_three.init(mc_store_htfProps, V_cold_ini, ms_params.m_h_tank, ms_params.m_h_tank_min,
-		ms_params.m_u_tank, ms_params.m_tank_pairs, ms_params.m_cold_tank_Thtr, ms_params.m_cold_tank_max_heat,
-		V_cold_ini, T_cold_ini);
-
+		V_node_ini, T_hot_ini);
 }
 
-bool C_csp_three_node_tes::does_tes_exist()
+bool C_csp_stratified_tes::does_tes_exist()
 {
 	return m_is_tes;
 }
 
-double C_csp_three_node_tes::get_hot_temp()
+double C_csp_stratified_tes::get_hot_temp()
 {
 	return mc_node_one.get_m_T_prev();	//[K]
 }
 
-double C_csp_three_node_tes::get_cold_temp()
+double C_csp_stratified_tes::get_cold_temp()
 {
-	return mc_node_three.get_m_T_prev();	//[K]
+	return mc_node_n.get_m_T_prev();	//[K]
 }
 
 
-double C_csp_three_node_tes::get_hot_mass()
+double C_csp_stratified_tes::get_hot_mass()
 {
 	return mc_node_one.get_m_m_calc();	// [kg]
 }
 
-double C_csp_three_node_tes::get_cold_mass()
+double C_csp_stratified_tes::get_cold_mass()
 {
-	return mc_node_three.get_m_m_calc();	//[kg]
+	return mc_node_n.get_m_m_calc();	//[kg]
 }
 
-double C_csp_three_node_tes::get_hot_mass_prev()
+double C_csp_stratified_tes::get_hot_mass_prev()
 {
 	return mc_node_one.calc_mass_at_prev();	// [kg]
 }
 
-double C_csp_three_node_tes::get_cold_mass_prev()
+double C_csp_stratified_tes::get_cold_mass_prev()
 {
-	return mc_node_three.calc_mass_at_prev();	//[kg]
+	return mc_node_n.calc_mass_at_prev();	//[kg]
 }
 
-double C_csp_three_node_tes::get_hot_massflow_avail(double step_s) //[kg/sec]
+double C_csp_stratified_tes::get_hot_massflow_avail(double step_s) //[kg/sec]
 {
 	return mc_node_one.m_dot_available(0, step_s);
 }
 
-double C_csp_three_node_tes::get_cold_massflow_avail(double step_s) //[kg/sec]
+double C_csp_stratified_tes::get_cold_massflow_avail(double step_s) //[kg/sec]
 {
-	return mc_node_three.m_dot_available(0, step_s);
+	return mc_node_n.m_dot_available(0, step_s);
 }
 
 
-double C_csp_three_node_tes::get_initial_charge_energy()
+double C_csp_stratified_tes::get_initial_charge_energy()
 {
 	//MWh
 	return m_q_pb_design * ms_params.m_ts_hours * m_V_tank_hot_ini / m_vol_tank * 1.e-6;
 }
 
-double C_csp_three_node_tes::get_min_charge_energy()
+double C_csp_stratified_tes::get_min_charge_energy()
 {
 	//MWh
 	return 0.; //ms_params.m_q_pb_design * ms_params.m_ts_hours * ms_params.m_h_tank_min / ms_params.m_h_tank*1.e-6;
 }
 
-double C_csp_three_node_tes::get_max_charge_energy()
+double C_csp_stratified_tes::get_max_charge_energy()
 {
 	//MWh
 	//double cp = mc_store_htfProps.Cp(ms_params.m_T_field_out_des);		//[kJ/kg-K] spec heat at average temperature during discharge from hot to cold
@@ -287,7 +485,7 @@ double C_csp_three_node_tes::get_max_charge_energy()
 	return m_q_pb_design * ms_params.m_ts_hours / 1.e6;
 }
 
-double C_csp_three_node_tes::get_degradation_rate()
+double C_csp_stratified_tes::get_degradation_rate()
 {
 	//calculates an approximate "average" tank heat loss rate based on some assumptions. Good for simple optimization performance projections.
 	double d_tank = sqrt(m_vol_tank / ((double)ms_params.m_tank_pairs * ms_params.m_h_tank * 3.14159));
@@ -295,7 +493,7 @@ double C_csp_three_node_tes::get_degradation_rate()
 	return e_loss / (m_q_pb_design * ms_params.m_ts_hours * 3600.); //s^-1  -- fraction of heat loss per second based on full charge
 }
 
-void C_csp_three_node_tes::discharge_avail_est(double T_cold_K, double step_s, double &q_dot_dc_est, double &m_dot_field_est, double &T_hot_field_est)
+void C_csp_stratified_tes::discharge_avail_est(double T_cold_K, double step_s, double &q_dot_dc_est, double &m_dot_field_est, double &T_hot_field_est)
 {
 	double f_storage = 0.0;		// for now, hardcode such that storage always completely discharges
 
@@ -325,7 +523,7 @@ void C_csp_three_node_tes::discharge_avail_est(double T_cold_K, double step_s, d
 	m_m_dot_tes_dc_max = m_dot_tank_disch_avail * step_s;		//[kg/s]
 }
 
-void C_csp_three_node_tes::charge_avail_est(double T_hot_K, double step_s, double &q_dot_ch_est, double &m_dot_field_est, double &T_cold_field_est)
+void C_csp_stratified_tes::charge_avail_est(double T_hot_K, double step_s, double &q_dot_ch_est, double &m_dot_field_est, double &T_cold_field_est)
 {
 	double f_ch_storage = 0.0;	// for now, hardcode such that storage always completely charges
 
@@ -355,7 +553,7 @@ void C_csp_three_node_tes::charge_avail_est(double T_hot_K, double step_s, doubl
 	m_m_dot_tes_ch_max = m_dot_tank_charge_avail * step_s;		//[kg/s]
 }
 
-void C_csp_three_node_tes::discharge_full(double timestep /*s*/, double T_amb /*K*/, double T_htf_cold_in /*K*/, double & T_htf_hot_out /*K*/, double & m_dot_htf_out /*kg/s*/, C_csp_tes::S_csp_tes_outputs &outputs)
+void C_csp_stratified_tes::discharge_full(double timestep /*s*/, double T_amb /*K*/, double T_htf_cold_in /*K*/, double & T_htf_hot_out /*K*/, double & m_dot_htf_out /*kg/s*/, C_csp_tes::S_csp_tes_outputs &outputs)
 {
 	// This method calculates the hot discharge temperature on the HX side (if applicable) during FULL DISCHARGE. If no heat exchanger (direct storage),
 	//    the discharge temperature is equal to the average (timestep) hot tank outlet temperature
@@ -401,7 +599,7 @@ void C_csp_three_node_tes::discharge_full(double timestep /*s*/, double T_amb /*
 
 }
 
-bool C_csp_three_node_tes::discharge(double timestep /*s*/, double T_amb /*K*/, double m_dot_htf_in /*kg/s*/, double T_htf_cold_in /*K*/, double & T_htf_hot_out /*K*/, C_csp_tes::S_csp_tes_outputs &outputs)
+bool C_csp_stratified_tes::discharge(double timestep /*s*/, double T_amb /*K*/, double m_dot_htf_in /*kg/s*/, double T_htf_cold_in /*K*/, double & T_htf_hot_out /*K*/, C_csp_tes::S_csp_tes_outputs &outputs)
 {
 	// This method calculates the hot discharge temperature on the HX side (if applicable). If no heat exchanger (direct storage),
 	// the discharge temperature is equal to the average (timestep) hot tank outlet temperature.
@@ -463,7 +661,7 @@ bool C_csp_three_node_tes::discharge(double timestep /*s*/, double T_amb /*K*/, 
 	return true;
 }
 
-bool C_csp_three_node_tes::charge(double timestep /*s*/, double T_amb /*K*/, double m_dot_htf_in /*kg/s*/, double T_htf_hot_in /*K*/, double & T_htf_cold_out /*K*/, C_csp_tes::S_csp_tes_outputs &outputs)
+bool C_csp_stratified_tes::charge(double timestep /*s*/, double T_amb /*K*/, double m_dot_htf_in /*kg/s*/, double T_htf_hot_in /*K*/, double & T_htf_cold_out /*K*/, C_csp_tes::S_csp_tes_outputs &outputs)
 {
 	// This method calculates the cold charge return temperature on the HX side (if applicable). If no heat exchanger (direct storage),
 	// the return charge temperature is equal to the average (timestep) cold tank outlet temperature.
@@ -531,7 +729,7 @@ bool C_csp_three_node_tes::charge(double timestep /*s*/, double T_amb /*K*/, dou
 
 
 
-bool C_csp_three_node_tes::charge_discharge(double timestep /*s*/, double T_amb /*K*/, double m_dot_hot_in /*kg/s*/, double T_hot_in /*K*/, double m_dot_cold_in /*kg/s*/, double T_cold_in /*K*/, C_csp_tes::S_csp_tes_outputs &outputs)
+bool C_csp_stratified_tes::charge_discharge(double timestep /*s*/, double T_amb /*K*/, double m_dot_hot_in /*kg/s*/, double T_hot_in /*K*/, double m_dot_cold_in /*kg/s*/, double T_cold_in /*K*/, C_csp_tes::S_csp_tes_outputs &outputs)
 {
 	// ARD This is for simultaneous charge and discharge. If no heat exchanger (direct storage),
 	// the return charge temperature is equal to the average (timestep) cold tank outlet temperature.
@@ -595,7 +793,7 @@ bool C_csp_three_node_tes::charge_discharge(double timestep /*s*/, double T_amb 
 
 }
 
-bool C_csp_three_node_tes::recirculation(double timestep /*s*/, double T_amb /*K*/, double m_dot_cold_in /*kg/s*/, double T_cold_in /*K*/, C_csp_tes::S_csp_tes_outputs &outputs)
+bool C_csp_stratified_tes::recirculation(double timestep /*s*/, double T_amb /*K*/, double m_dot_cold_in /*kg/s*/, double T_cold_in /*K*/, C_csp_tes::S_csp_tes_outputs &outputs)
 {
 	// This method calculates the average (timestep) cold tank outlet temperature when recirculating cold fluid for further cooling.
 	// This warm tank is idle and its state is also determined.
@@ -657,9 +855,9 @@ bool C_csp_three_node_tes::recirculation(double timestep /*s*/, double T_amb /*K
 
 }
 
-bool C_csp_three_node_tes::stratified_tanks(double timestep /*s*/, double T_amb /*K*/, double m_dot_cond /*kg/s*/, double T_cond_out /*K*/, double m_dot_rad /*kg/s*/, double T_rad_out /*K*/, C_csp_tes::S_csp_tes_outputs &outputs)
+bool C_csp_stratified_tes::stratified_tanks(double timestep /*s*/, double T_amb /*K*/, double m_dot_cond /*kg/s*/, double T_cond_out /*K*/, double m_dot_rad /*kg/s*/, double T_rad_out /*K*/, C_csp_tes::S_csp_tes_outputs &outputs)
 {
-	// ARD This is completing the energy balance on a stratified tank. 
+	// ARD This is completing the energy balance on a stratified tank. Uses nodal model in Duffie & Beckman. 3-6 nodes accomodated by this code.
 
 	// Inputs are:
 	// 1) The mass flow rate through condenser
@@ -668,87 +866,141 @@ bool C_csp_three_node_tes::stratified_tanks(double timestep /*s*/, double T_amb 
 	// 4) The temperature of the HTF directly entering from the radiator to bottom node
 
 // Determine mass flow rates for each node and mass-averaged inlet temperature for each node
-	double T_node_prev[3];	//Temperatures of each node at previous converged timestep
-	T_node_prev[0] = mc_node_one.get_m_T_prev();
-	T_node_prev[1] = mc_node_two.get_m_T_prev();
-	T_node_prev[2] = mc_node_three.get_m_T_prev();
-	int F_C_node[3];		//Condenser control function determining which node condenser return water goes to
-	int F_R_node[3];		//Radiator control function determining which node radiator return water goes to
-	double m_dot_in_node[3];//Mass flow rate into & out of each node
-	double T_in_node[3];	//Mass averaged inlet water temperature
-	double T_node_ave[3];
-	double q_heater[3];
-	double q_dot_loss[3];
+	int n_nodes = ms_params.m_ctes_type;	//Number of nodes specified in input (3-5)
+	int n_last = n_nodes - 1;				//Zero based index of last node
+	double T_node_prev[6] = {};			//Temperatures of each node at previous converged timestep. Initialize to zero.
+	T_node_prev[n_last] = mc_node_n.get_m_T_prev();//Bottom node
+	switch (n_nodes)							//Use switch to determine how many other nodes to access
+	{
+	case 6:
+		T_node_prev[4] = mc_node_five.get_m_T_prev();
+	case 5:
+		T_node_prev[3] = mc_node_four.get_m_T_prev();
+	case 4:
+		T_node_prev[2] = mc_node_three.get_m_T_prev();
+	case 3:
+		T_node_prev[1] = mc_node_two.get_m_T_prev();
+	}
+	T_node_prev[0] = mc_node_one.get_m_T_prev();	//Top node
+
+	int F_C_node[6] = {};		//Condenser control function determining which node condenser return water goes to
+	int F_C_down[6] = {};
+	int F_R_node[6] = {};		//Radiator control function determining which node radiator return water goes to
+	int F_R_up[6] = {};
+	double m_dot_in_node[6] = {};//Mass flow rate into & out of each node
+	double T_in_node[6] = {};	//Mass averaged inlet water temperature
+	double T_node_ave[6] = {};
+	double q_heater[6] = {};
+	double q_dot_loss[6] = {};
 
 	//Set control function for condenser return flow
 	if (T_cond_out > T_node_prev[0])
 	{
-		F_C_node[0] = 1; F_C_node[1] = 0; F_C_node[2] = 0;
+		F_C_node[0] = 1;
 	}
-	if ((T_node_prev[0] >= T_cond_out) && (T_cond_out > T_node_prev[1]))
+
+	for (int n = 1; n != n_last; ++n)
 	{
-		F_C_node[1] = 1; F_C_node[0] = 0; F_C_node[2] = 0;
+		if ( (T_node_prev[n-1] >= T_cond_out) && (T_cond_out > T_node_prev[n]) )
+		{
+			F_C_node[n] = 1;
+		}
 	}
-	if (T_node_prev[1] >= T_cond_out)
+	if (T_node_prev[n_last-1] >= T_cond_out)
 	{
-		F_C_node[2] = 1; F_C_node[0] = 0; F_C_node[1] = 0;
+		F_C_node[n_last] = 1; 
 	}
+
 	//Set control function for radiator return flow
 	if (T_rad_out > T_node_prev[0])
 	{
-		F_R_node[0] = 1; F_R_node[1] = 0; F_R_node[2] = 0;
+		F_R_node[0] = 1; 
 	}
-	if ((T_node_prev[0] >= T_rad_out) && (T_rad_out > T_node_prev[1]))
+	for (int n = 1; n != n_last; ++n)
 	{
-		F_R_node[1] = 1; F_R_node[0] = 0; F_R_node[2] = 0;
+		if ((T_node_prev[n-1] >= T_rad_out) && (T_rad_out > T_node_prev[n]))
+		{
+			F_R_node[n] = 1;
+		}
 	}
-	if (T_node_prev[1] >= T_rad_out)
+	if (T_node_prev[n_last-1] >= T_rad_out)
 	{
-		F_R_node[2] = 1; F_R_node[0] = 0; F_R_node[1] = 0;
+		F_R_node[n_last] = 1; 
 	}
 
 	//Set mass flow rates for each node
-	m_dot_in_node[0] = F_C_node[0] * m_dot_cond + F_R_node[0] * m_dot_rad + (F_R_node[1] + F_R_node[2])*m_dot_rad;
-	m_dot_in_node[1] = F_C_node[0] * m_dot_cond + F_C_node[1] * m_dot_cond + F_R_node[1] * m_dot_rad + F_R_node[2] * m_dot_rad;
-	m_dot_in_node[2] = F_C_node[2] * m_dot_cond + (F_C_node[0] + F_C_node[1])*m_dot_cond + F_R_node[2] * m_dot_rad;
-	//Determine mass averaged inlet water temperature for each node
-	T_in_node[0] = (F_C_node[0] * m_dot_cond*T_cond_out + F_R_node[0] * m_dot_rad*T_rad_out + (F_R_node[1] + F_R_node[2])*m_dot_rad*T_node_prev[1])/(0.001+m_dot_in_node[0]);
-	T_in_node[1] = (F_C_node[0] * m_dot_cond*T_node_prev[0] + F_C_node[1] * m_dot_cond*T_cond_out + F_R_node[1] * m_dot_rad*T_rad_out + F_R_node[2] * m_dot_rad*T_node_prev[2])/(0.001+m_dot_in_node[1]);
-	T_in_node[2] = (F_C_node[2] * m_dot_cond*T_cond_out + (F_C_node[0] + F_C_node[1])*m_dot_cond*T_node_prev[1] + F_R_node[2] * m_dot_rad*T_rad_out)/(0.001+m_dot_in_node[2]);
+
+	for (int j = 1; j != n_last + 1; ++j)	//Loop through all nodes below top node
+	{
+		F_R_up[0] = F_R_up[0] + F_R_node[j];
+	}
+	m_dot_in_node[0] = F_C_node[0] * m_dot_cond + F_C_down[0] * m_dot_cond + F_R_node[0] * m_dot_rad + F_R_up[0] * m_dot_rad; // Top node mass flow rate in
+	T_in_node[0] = (F_C_node[0] * m_dot_cond*T_cond_out  + F_R_node[0] * m_dot_rad*T_rad_out + F_R_up[0] * m_dot_rad*T_node_prev[1]) / (0.001 + m_dot_in_node[0]); //Top node mass-averaged temperature in
+
+	for (int n = 1; n != n_last; ++n) //Loop through all nodes except top and bottom
+	{
+		for (int i = 0; i != n; ++i)			//Loop through all nodes above
+		{
+			F_C_down[n] = F_C_down[n] + F_C_node[i];
+		}
+		for (int j = (n+1); j != n_last+1; ++j)	//Loop through all nodes below
+		{
+			F_R_up[n] = F_R_up[n] + F_R_node[j];
+		}
+		m_dot_in_node[n] = F_C_node[n] * m_dot_cond + F_C_down[n] * m_dot_cond + F_R_node[n] * m_dot_rad + F_R_up[n] * m_dot_rad;
+		T_in_node[n] = (F_C_node[n] * m_dot_cond*T_cond_out + F_C_down[n] * m_dot_cond*T_node_prev[n - 1] + F_R_node[n] * m_dot_rad*T_rad_out + F_R_up[n] * m_dot_rad*T_node_prev[n + 1]) / (0.001 + m_dot_in_node[n]);
+		
+	}
+
+	for (int i = 0; i != n_last; ++i)			//Loop through all nodes above bottom node
+	{
+		F_C_down[n_last] = F_C_down[n_last] + F_C_node[i];
+	}
+	m_dot_in_node[n_last] = F_C_node[n_last] * m_dot_cond + F_C_down[n_last] * m_dot_cond + F_R_node[n_last] * m_dot_rad; //Bottom node
+	T_in_node[n_last] = (F_C_node[n_last] * m_dot_cond*T_cond_out + F_C_down[n_last] * m_dot_cond*T_node_prev[n_last - 1] + F_R_node[n_last] * m_dot_rad*T_rad_out) / (0.001 + m_dot_in_node[n_last]);
 	
+
 	// Call energy balance on top node
-		mc_node_one.energy_balance_constant_mass(timestep, m_dot_in_node[0], T_in_node[0], T_amb, T_node_ave[0], q_heater[0], q_dot_loss[0]);
-
-		// Energy balance mid node
-		mc_node_two.energy_balance_constant_mass(timestep, m_dot_in_node[1], T_in_node[1], T_amb, T_node_ave[1], q_heater[1], q_dot_loss[1]);
-
-		// Call energy balance on cold node
+	mc_node_n.energy_balance_constant_mass(timestep, m_dot_in_node[n_last], T_in_node[n_last], T_amb, T_node_ave[n_last], q_heater[n_last], q_dot_loss[n_last]);
+	switch (n_nodes)
+	{
+	case 6:
+		mc_node_five.energy_balance_constant_mass(timestep, m_dot_in_node[4], T_in_node[4], T_amb, T_node_ave[4], q_heater[4], q_dot_loss[4]);
+	case 5:
+		mc_node_four.energy_balance_constant_mass(timestep, m_dot_in_node[3], T_in_node[3], T_amb, T_node_ave[3], q_heater[3], q_dot_loss[3]);
+	case 4:
 		mc_node_three.energy_balance_constant_mass(timestep, m_dot_in_node[2], T_in_node[2], T_amb, T_node_ave[2], q_heater[2], q_dot_loss[2]);
+	case 3:
+		mc_node_two.energy_balance_constant_mass(timestep, m_dot_in_node[1], T_in_node[1], T_amb, T_node_ave[1], q_heater[1], q_dot_loss[1]);
+	}
+	mc_node_one.energy_balance_constant_mass(timestep, m_dot_in_node[0], T_in_node[0], T_amb, T_node_ave[0], q_heater[0], q_dot_loss[0]);
 
+		
+		
 
-	outputs.m_q_heater = q_heater[0] +q_heater[1] + q_heater[2];			//[MW] Storage thermal losses
-	outputs.m_W_dot_rhtf_pump = m_dot_cond * ms_params.m_htf_pump_coef / 1.E3;	//[MWe] Pumping power for Receiver HTF, convert from kW/kg/s*kg/s
-	outputs.m_q_dot_loss = q_dot_loss[0] + q_dot_loss[1]+q_dot_loss[2];	//[MW] Heating power required to keep tanks at a minimum temperature
+	outputs.m_q_heater = q_heater[0] +q_heater[1] + q_heater[2] + q_heater[4]+q_heater[5];			//[MW] Storage thermal losses
+	//outputs.m_W_dot_rhtf_pump = m_dot_cond * ms_params.m_htf_pump_coef / 1.E3;	//[MWe] Pumping power for Receiver HTF, convert from kW/kg/s*kg/s
+	outputs.m_q_dot_loss = q_dot_loss[0] + q_dot_loss[1]+q_dot_loss[2]+q_dot_loss[3]+q_dot_loss[4]+q_dot_loss[5];	//[MW] Heating power required to keep tanks at a minimum temperature
 
 
 	outputs.m_T_hot_ave = T_node_ave[0];						//[K] Average hot tank temperature over timestep
-	outputs.m_T_cold_ave = T_node_ave[2];						//[K] Average cold tank temperature over timestep
+	outputs.m_T_cold_ave = T_node_ave[n_last];					//[K] Average cold tank temperature over timestep
 	outputs.m_T_hot_final = mc_node_one.get_m_T_calc();			//[K] Hot temperature at end of timestep
-	outputs.m_T_cold_final = mc_node_three.get_m_T_calc();		//[K] Cold temperature at end of timestep
+	outputs.m_T_cold_final = mc_node_n.get_m_T_calc();			//[K] Cold temperature at end of timestep
 
 
 																// Calculate thermal power to HTF - CHECK THESE FOR COLD STORAGE?
-	double T_htf_ave = 0.5*(T_cond_out + T_node_ave[2]);		//[K]
-	double cp_htf_ave = mc_field_htfProps.Cp(T_htf_ave);		//[kJ/kg-K]
-	outputs.m_q_dot_ch_from_htf = m_dot_cond * cp_htf_ave*(T_cond_out - T_node_ave[2]) / 1000.0;		//[MWt]
-	outputs.m_q_dot_dc_to_htf = 0.0;							//[MWt]
+	//double T_htf_ave = 0.5*(T_cond_out + T_node_ave[2]);		//[K]
+	//double cp_htf_ave = mc_field_htfProps.Cp(T_htf_ave);		//[kJ/kg-K]
+	//outputs.m_q_dot_ch_from_htf = m_dot_cond * cp_htf_ave*(T_cond_out - T_node_ave[2]) / 1000.0;		//[MWt]
+	//outputs.m_q_dot_dc_to_htf = 0.0;							//[MWt]
 
 	return true;
 
 }
 
 
-void C_csp_three_node_tes::charge_full(double timestep /*s*/, double T_amb /*K*/, double T_htf_hot_in /*K*/, double & T_htf_cold_out /*K*/, double & m_dot_htf_out /*kg/s*/, C_csp_tes::S_csp_tes_outputs &outputs)
+void C_csp_stratified_tes::charge_full(double timestep /*s*/, double T_amb /*K*/, double T_htf_hot_in /*K*/, double & T_htf_cold_out /*K*/, double & m_dot_htf_out /*kg/s*/, C_csp_tes::S_csp_tes_outputs &outputs)
 {
 	// This method calculates the cold charge return temperature and mass flow rate on the HX side (if applicable) during FULL CHARGE. If no heat exchanger (direct storage),
 	//    the charge return temperature is equal to the average (timestep) cold tank outlet temperature
@@ -797,36 +1049,60 @@ void C_csp_three_node_tes::charge_full(double timestep /*s*/, double T_amb /*K*/
 
 
 
-void C_csp_three_node_tes::idle(double timestep, double T_amb, C_csp_tes::S_csp_tes_outputs &outputs)
+void C_csp_stratified_tes::idle(double timestep, double T_amb, C_csp_tes::S_csp_tes_outputs &outputs)
 {
-	double T_hot_ave, q_hot_heater, q_dot_hot_loss;
-	T_hot_ave = q_hot_heater = q_dot_hot_loss = std::numeric_limits<double>::quiet_NaN();
+	int n_nodes = ms_params.m_ctes_type;
+	int n_last = n_nodes - 1;
+	double T_node_ave[6] = {};
+	double q_heater[6] = {};
+	double q_dot_loss[6] = {};
 
-	mc_node_one.energy_balance(timestep, 0.0, 0.0, 0.0, T_amb, T_hot_ave, q_hot_heater, q_dot_hot_loss);
+	// Call energy balance on top node
+	mc_node_n.energy_balance_constant_mass(timestep, 0, 0, T_amb, T_node_ave[n_last], q_heater[n_last], q_dot_loss[n_last]);
+	switch (n_nodes)
+	{
+	case 6:
+		mc_node_five.energy_balance_constant_mass(timestep, 0, 0, T_amb, T_node_ave[4], q_heater[4], q_dot_loss[4]);
+	case 5:
+		mc_node_four.energy_balance_constant_mass(timestep, 0, 0, T_amb, T_node_ave[3], q_heater[3], q_dot_loss[3]);
+	case 4:
+		mc_node_three.energy_balance_constant_mass(timestep, 0, 0, T_amb, T_node_ave[2], q_heater[2], q_dot_loss[2]);
+	case 3:
+		mc_node_two.energy_balance_constant_mass(timestep, 0, 0, T_amb, T_node_ave[1], q_heater[1], q_dot_loss[1]);
+	}
+	mc_node_one.energy_balance_constant_mass(timestep, 0, 0, T_amb, T_node_ave[0], q_heater[0], q_dot_loss[0]);
 
-	double T_cold_ave, q_cold_heater, q_dot_cold_loss;
-	T_cold_ave = q_cold_heater = q_dot_cold_loss = std::numeric_limits<double>::quiet_NaN();
-	//mc_node_two.energy_balance(timestep, 0.0, 0.0, 0.0, T_amb, T_cold_ave, q_cold_heater, q_dot_cold_loss);
-	mc_node_three.energy_balance(timestep, 0.0, 0.0, 0.0, T_amb, T_cold_ave, q_cold_heater, q_dot_cold_loss);
+	
+	
+	outputs.m_q_heater = q_heater[0] + q_heater[1] + q_heater[2] + q_heater[4] + q_heater[5];			//[MW] Storage thermal losses
+	//outputs.m_W_dot_rhtf_pump = 0;																		//[MWe] Pumping power for Receiver HTF, convert from kW/kg/s*kg/s
+	outputs.m_q_dot_loss = q_dot_loss[0] + q_dot_loss[1] + q_dot_loss[2] + q_dot_loss[3] + q_dot_loss[4] + q_dot_loss[5];	//[MW] Heating power required to keep tanks at a minimum temperature
 
-	outputs.m_q_heater = q_cold_heater + q_hot_heater;			//[MJ]
-	outputs.m_W_dot_rhtf_pump = 0.0;							//[MWe]
-	outputs.m_q_dot_loss = q_dot_cold_loss + q_dot_hot_loss;	//[MW]
-
-	outputs.m_T_hot_ave = T_hot_ave;							//[K]
-	outputs.m_T_cold_ave = T_cold_ave;							//[K]
+	outputs.m_T_hot_ave = T_node_ave[0];						//[K]
+	outputs.m_T_cold_ave = T_node_ave[n_last];					//[K]
 	outputs.m_T_hot_final = mc_node_one.get_m_T_calc();			//[K]
-	outputs.m_T_cold_final = mc_node_three.get_m_T_calc();		//[K]
+	outputs.m_T_cold_final = mc_node_n.get_m_T_calc();			//[K]
 
 	outputs.m_q_dot_ch_from_htf = 0.0;		//[MWt]
 	outputs.m_q_dot_dc_to_htf = 0.0;		//[MWt]
 }
 
-void C_csp_three_node_tes::converged()
+void C_csp_stratified_tes::converged()
 {
+	mc_node_n.converged();
+	switch (ms_params.m_ctes_type)
+	{
+	case 6:
+		mc_node_five.converged();
+	case 5:
+		mc_node_four.converged();
+	case 4:
+		mc_node_three.converged();
+	case 3:
+		mc_node_two.converged();
+	}
 	mc_node_one.converged();
-	mc_node_two.converged();
-	mc_node_three.converged();
+
 
 	// The max charge and discharge flow rates should be set at the beginning of each timestep
 	//   during the q_dot_xx_avail_est calls
