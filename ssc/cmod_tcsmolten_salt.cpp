@@ -214,20 +214,21 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "T_ctes_warm_ini",		 "Initial value of warm tank",										"C",			"",				"RADCOOL",      "?=0",						"",							"" },
 	{ SSC_INPUT,        SSC_NUMBER,      "T_ctes_cold_ini",		 "Initial value of cold tank",										"C",			"",				"RADCOOL",      "?=0",						"",							"" },
 	{ SSC_INPUT,        SSC_NUMBER,      "f_ctes_warm_ini",		 "Initial fraction of avail. volume that is warm",					"-",			"",				"RADCOOL",      "?=0",						"",							"" },
-	{ SSC_INPUT,        SSC_NUMBER,      "peak_power_hours",     "Max number of hours of power cycle operation in one day",			"hr",           "",            "RADCOOL",      "?=0",						 "",						"" },
+	{ SSC_INPUT,        SSC_NUMBER,      "rad_multiplier",		 "Ratio of radiator field area to solar aperature area",			"-",           "",            "RADCOOL",      "?=0",						 "",						"" },
 	{ SSC_INPUT,        SSC_NUMBER,      "m_dot_radpanel",	     "Mass flow rate through single radiator panel",					"kg/sec",       "",            "RADCOOL",      "?=0",						 "",						"" },
 	{ SSC_INPUT,        SSC_NUMBER,      "n_rad_tubes",		     "Number of parallel tubes in single radiator panel",				"-",		    "",            "RADCOOL",      "?=0",						 "",						"" },
 	{ SSC_INPUT,        SSC_NUMBER,      "W_rad_tubes",		     "Center-to-center distance between tubes in radiator panel",		"m",			"",            "RADCOOL",      "?=0",						 "",						"" },
-	{ SSC_INPUT,        SSC_NUMBER,      "L_rad_tubes",		     "Length of single radiator panel",									"m",			"",            "RADCOOL",      "?=0",						 "",						"" },
+	{ SSC_INPUT,        SSC_NUMBER,      "L_rad",			     "Length of radiator panel row",									"m",			"",            "RADCOOL",      "?=0",						 "",						"" },
 	{ SSC_INPUT,        SSC_NUMBER,      "th_rad_panel",		 "Thickness of radiator panel",										"m",			"",            "RADCOOL",      "?=0",						 "",						"" },
 	{ SSC_INPUT,        SSC_NUMBER,      "D_rad_tubes",			 "Inner diameter of tubes in radiator panel",						"m",			"",            "RADCOOL",      "?=0",						 "",						"" },
 	{ SSC_INPUT,        SSC_NUMBER,      "k_panel",				 "Thermal conductivity of radiator panel material",					"W/m-K",		"",            "RADCOOL",      "?=235",						 "",						"" },
 	{ SSC_INPUT,        SSC_NUMBER,      "epsilon_radtop",		 "Emmissivity of top of radiator panel",							"-",			"",            "RADCOOL",      "?=.95",						 "",						"" },
 	{ SSC_INPUT,        SSC_NUMBER,      "epsilon_radbot",		 "Emmissivity of top of radiator panel bottom (facing ground)",		"-",			"",            "RADCOOL",      "?=.07",						 "",						"" },
 	{ SSC_INPUT,        SSC_NUMBER,      "epsilon_radgrnd",		 "Emmissivity of ground underneath radiator panel",					"-",			"",            "RADCOOL",      "?=.90",						 "",						"" },
-	{ SSC_INPUT,        SSC_NUMBER,      "L_rad_rows",			 "Length of single row of radiator panels connected in series",		"m",			"",            "RADCOOL",      "?=0",						 "",						"" },
+	{ SSC_INPUT,        SSC_NUMBER,      "L_rad_sections",		 "Length of individual radiator panel",								"m",			"",            "RADCOOL",      "?=0",						 "",						"" },
 	{ SSC_INPUT,        SSC_NUMBER,      "epsilon_radHX",		 "Effectiveness of HX between radiative field and cold storage",	"-",			"",            "RADCOOL",      "?=.8",						 "",						"" },
 	{ SSC_INPUT,        SSC_NUMBER,      "ctes_type",			 "Type of cold storage (2=two tank, 3= three node)",				"-",			"",            "RADCOOL",      "?=2",						 "",						"" },
+	{ SSC_INPUT,        SSC_NUMBER,      "helio_area_tot",		 "Heliostat total reflective area",									"-",			"",            "RADCOOL",      "?=0",						 "",						"" },
 
     					     																	  
     // Power Cycle Inputs
@@ -970,18 +971,19 @@ public:
 					stratified->ms_params.m_f_V_hot_ini = as_double("f_ctes_warm_ini");
 				}
 				rankine_pc.mc_radiator.ms_params.m_field_fl = as_integer("ctes_field_fl");
-				rankine_pc.mc_radiator.ms_params.m_power_hrs = as_double("peak_power_hours");
+				rankine_pc.mc_radiator.ms_params.RM = as_double("rad_multiplier");
+				rankine_pc.mc_radiator.ms_params.Asolar_refl=as_double("helio_area_tot");
 				rankine_pc.mc_radiator.ms_params.m_dot_panel = as_double("m_dot_radpanel");
 				rankine_pc.mc_radiator.ms_params.n = as_integer("n_rad_tubes");
 				rankine_pc.mc_radiator.ms_params.W = as_double("W_rad_tubes");
-				rankine_pc.mc_radiator.ms_params.L = as_double("L_rad_tubes");
+				rankine_pc.mc_radiator.ms_params.L = as_double("L_rad");
 				rankine_pc.mc_radiator.ms_params.th = as_double("th_rad_panel");
 				rankine_pc.mc_radiator.ms_params.D = as_double("D_rad_tubes");
 				rankine_pc.mc_radiator.ms_params.k_panel = as_double("k_panel");
 				rankine_pc.mc_radiator.ms_params.epsilon = as_double("epsilon_radtop");
 				rankine_pc.mc_radiator.ms_params.epsilonb = as_double("epsilon_radbot");
 				rankine_pc.mc_radiator.ms_params.epsilong = as_double("epsilon_radgrnd");
-				rankine_pc.mc_radiator.ms_params.Lsec = as_double("L_rad_rows");
+				rankine_pc.mc_radiator.ms_params.Lsec = as_double("L_rad_sections");
 				rankine_pc.mc_radiator.ms_params.epsilon_HX = as_double("epsilon_radHX");
 
 

@@ -468,7 +468,7 @@ void C_pc_Rankine_indirect_224::init(C_csp_power_cycle::S_solved_params &solved_
 	{
 		//Radiator
 		C_csp_radiator::S_params *rad = &mc_radiator.ms_params;
-		rad->m_night_hrs = 9;										//Numer of hours of radiative cooling in summer peak
+		//rad->m_night_hrs = 9;										//Numer of hours of radiative cooling in summer peak
 
 		
 		//If two tank cold storage
@@ -488,8 +488,6 @@ void C_pc_Rankine_indirect_224::init(C_csp_power_cycle::S_solved_params &solved_
 			mc_two_tank_ctes.ms_params.dT_cw_rad = mc_two_tank_ctes.ms_params.m_T_field_out_des - mc_two_tank_ctes.ms_params.m_T_field_in_des;	//Reference delta T based on design values given.
 			mc_two_tank_ctes.ms_params.m_dot_cw_rad = (mc_two_tank_ctes.ms_params.m_W_dot_pc_design*1000000. / mc_two_tank_ctes.ms_params.m_eta_pc_factor) / (4183 /*[J/kg-K]*/ * mc_two_tank_ctes.ms_params.dT_cw_rad);	//Calculate design cw mass flow [kg/sec]
 			
-			rad->Np = static_cast<int>((mc_two_tank_ctes.ms_params.m_dot_cw_rad / rad->m_dot_panel)*(rad->m_power_hrs / rad->m_night_hrs));
-
 			//Initialize cold storage
 			mc_two_tank_ctes.init();
 		}
@@ -510,16 +508,16 @@ void C_pc_Rankine_indirect_224::init(C_csp_power_cycle::S_solved_params &solved_
 			mc_stratified_ctes.ms_params.dT_cw_rad = mc_stratified_ctes.ms_params.m_T_field_out_des - mc_stratified_ctes.ms_params.m_T_field_in_des;	//Reference delta T based on design values given.
 			mc_stratified_ctes.ms_params.m_dot_cw_rad = (mc_stratified_ctes.ms_params.m_W_dot_pc_design*1000000. / mc_stratified_ctes.ms_params.m_eta_pc_factor) / (4183 /*[J/kg-K]*/ * mc_stratified_ctes.ms_params.dT_cw_rad);	//Calculate design cw mass flow [kg/sec]
 
-			rad->Np = static_cast<int>((mc_stratified_ctes.ms_params.m_dot_cw_rad / rad->m_dot_panel)*(rad->m_power_hrs / rad->m_night_hrs));
 
 			//Initialize cold storage
 			mc_stratified_ctes.init();
 
 		}
 		//Radiator
-		rad->L_c = rad->n*rad->W;									//Characteristic length for forced convection, typically equal to n*W
-																	//unless wind direction is known to determine flow path : Lc[m]
-		rad->Afield = rad->n*rad->W*rad->L*rad->Np;
+		rad->L_c = rad->n*rad->W;									//Characteristic length for forced convection, typically equal to n*W unless wind direction is known to determine flow path : Lc[m]
+		double Afieldmin = rad->Asolar_refl*rad->RM;						//Determine radiator field based on solar and RM
+		rad->Np = static_cast<int>(Afieldmin/(rad->n*rad->W*rad->L))+1;		//Truncate to number of parallel sections required for minimum field area and add one to round up. 
+		rad->Afield = rad->n*rad->W*rad->L*rad->Np;							//Actual field area after rounding up to number of parallel sections.
 		//Initialize radiator
 		mc_radiator.init();
 
@@ -1191,8 +1189,6 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 					else														//If dark & warm not empty, discharge (cooling)
 					{
 						mc_radiator.night_cool(T_db, T_warm_prev_K, u, T_s_K, mc_radiator.ms_params.m_dot_panel, T_rad_out);
-						//mc_cold_storage.idle(step_sec, T_db, mc_cold_storage_outputs);	//idle cold storage tanks ARD
-
 						mc_two_tank_ctes.discharge(step_sec, T_db, m_dot_radfield, T_rad_out, T_rad_in, mc_two_tank_ctes_outputs);
 						radcool_cntrl = 41;
 					}

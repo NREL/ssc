@@ -48,13 +48,13 @@ public:
 		double Lsec;			//Length of series - connected sections of panels(if single panel, set equal to L) : Lsec[m]
 		double m_night_hrs;		//Number of hours plant will run at summer peak
 		double m_power_hrs;		//Number of hours plant operates in one day at summer peak
-		double Afield, RM;
+		double Afield, RM, Asolar_refl;
 		int Np;
 		double epsilon_HX;
 		S_params()
 		{
 			n = Np= 0;
-			m_dot_panel=W=L=L_c=th=D=k_panel=epsilon=epsilonb=epsilong=Lsec=m_night_hrs=Afield=RM=epsilon_HX= std::numeric_limits<double>::quiet_NaN();
+			m_dot_panel = W = L = L_c = th = D = k_panel = epsilon = epsilonb = epsilong = Lsec = m_night_hrs = Afield = RM = epsilon_HX = Asolar_refl = std::numeric_limits<double>::quiet_NaN();
 		}
 	};
 

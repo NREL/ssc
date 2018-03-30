@@ -16,25 +16,11 @@ void C_csp_radiator::init()
 	//mc_coldhtf.SetFluid(ms_params.m_field_fl);  //initialize class for fluid circulating - not needed if using water /steam props
 	mc_air.SetFluid(1);							//initialize class for air
 
-
-
 	
-
 	//Load measured sky temperature data
 	int ii = 0;
 	
 	std::ifstream inputFile("C:/Users/adyreson/OneDrive/Documents/PhD/09_System/Desert_Rock_Weather/DesertRock2015_TS_localhr.txt");
-	
-	
-	/*try 
-	{
-		if (!inputFile.is_open())
-		throw  20; //throw an error of 20 if can't read file.
-	}
-	catch (int error)
-	{
-		//cout << "Error reading input file" << endl;
-	}*/
 	
 	if (inputFile.is_open())	//check that input file was opened
 	{
