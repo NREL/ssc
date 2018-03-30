@@ -386,15 +386,11 @@ void SolarField::updateCalculatedParameters( var_map &V )
     V.sf.sun_el_des.Setval( 90.-azzen[1] );
 
 
-    //layout data
-    //V.sf.layout_data.val = _layout_data;
-    
     //receiver area
     double arec = 0.;
     for(int i=0; i<(int)V.recs.size(); i++)
         arec += V.recs.at(0).absorber_area.Val();
 
-    //_rec_area = arec;
     V.sf.rec_area.Setval( arec );
 
     //heliostat area
@@ -430,14 +426,18 @@ void SolarField::updateAllCalculatedParameters(var_map &V)
     Update all of the calculated values in all of the child classes and in solarfield
     */
 
-    //_ambient.updateCalculatedParameters(V);
     for( int i=0; i<(int)_helio_template_objects.size(); i++)
         _helio_template_objects.at(i).updateCalculatedParameters(V, i);
+
     _land.updateCalculatedParameters(V);
+
     for( int i=0; i<(int)_receivers.size(); i++)
         _receivers.at(i)->updateCalculatedParameters(V.recs.at(i), V.sf.tht.val );
+
     _fluxsim.updateCalculatedParameters(V);
+
     updateCalculatedParameters(V);
+
     _financial.updateCalculatedParameters(V);
 
     //optimization settings
@@ -475,7 +475,7 @@ double SolarField::calcHeliostatArea(){
 	int Npos = (int)_heliostats.size();
 	double Asf=0.;
 	for(int i=0; i<Npos; i++){
-		if(_heliostats.at(i)->getInLayout()) 
+		if(_heliostats.at(i)->IsInLayout()) 
             Asf += _heliostats.at(i)->getArea();
 	}
 	_sf_area = Asf;
@@ -1180,6 +1180,10 @@ bool SolarField::PrepareFieldLayout(SolarField &SF, WeatherData *wdata, bool ref
 				SF.getFluxObject()->simpleAimPoint(*hptr, SF);
 				Aim = *hptr->getAimPoint();				
 			}
+
+			//set status
+			hptr->IsEnabled(layout->at(i).is_enabled);
+			hptr->setInLayout(layout->at(i).is_in_layout);
 		}
 		else{	//Otherwise,
 			//Determine the simple aim point - doesn't account for flux limitations
@@ -1242,10 +1246,6 @@ bool SolarField::PrepareFieldLayout(SolarField &SF, WeatherData *wdata, bool ref
 	
 	SF.setHeliostatExtents(xmax, xmin, ymax, ymin);
 
-	for(int i=0; i<Npos; i++){
-		helio_objects->at(i).setInLayout(refresh_only);
-	}
-	
     if(! SF.getSimInfoObject()->addSimulationNotice("Determining nearest neighbors for each heliostat") ){
         SF.CancelSimulation();
         return false;
@@ -1304,7 +1304,7 @@ bool SolarField::PrepareFieldLayout(SolarField &SF, WeatherData *wdata, bool ref
 		heliostats->resize(Npos);
 		for(int i=0; i<Npos; i++){	
 			heliostats->at(i) = &helio_objects->at(i);
-			heliostats->at(i)->setInLayout(true);	//All of the heliostats are included in the final layout
+			//heliostats->at(i)->setInLayout(true);	//All of the heliostats are included in the final layout
 			//Update the tracking vector. This defines corner geometry for plotting.
 			heliostats->at(i)->updateTrackVector(sunvect);
 		}
@@ -1732,15 +1732,39 @@ void SolarField::ProcessLayoutResults( sim_results *results, int nsim_total){
         _estimated_annual_power = _q_to_rec;
     }
 
+	UpdateLayoutAfterChange();
+
+	return;
+}
+
+void SolarField::UpdateLayoutAfterChange()
+{
+	/*
+	This method is called upon completion of the layout, and ties up loose ends with:
+	- making sure area calculations are complete
+	- updating the layout information stored in the variable map
+	- updating the layout information stored in the _layout class member
+	- calling the method to update all solar field calculated variables
+	*/
+
+	//update calculated heliostat area
+	calcHeliostatArea();
+
 	//update the layout positions in the land area calculation
-	vector<sp_point> lpos(_heliostats.size());
+	std::vector<sp_point> lpos; 
+	lpos.reserve( _heliostats.size() );
+
 	for(int i=0; i<(int)_heliostats.size(); i++)
-		lpos.at(i) = *_heliostats.at(i)->getLocation();
-	//_land.setLayoutPositions(lpos);
-    _land.calcLandArea(_var_map->land, lpos );
-    //_var_map->land.bound_area.Setval( _land.getLandBoundArea() );
+	{
+		if( _heliostats.at(i)->IsInLayout() ) //only include heliostats that are in the layout
+			lpos.push_back( *_heliostats.at(i)->getLocation() );
+	}
+	
+	_land.calcLandArea(_var_map->land, lpos );
+    
 	//update the layout data
     interop::UpdateMapLayoutData(*_var_map, &_heliostats);
+
     //update the layout shell 
     _layout.clear();
     _layout.reserve( _heliostats.size() );
@@ -1756,6 +1780,8 @@ void SolarField::ProcessLayoutResults( sim_results *results, int nsim_total){
         lo.is_user_aim = false;
         lo.is_user_cant = H->IsUserCant();
         lo.is_user_focus = false;
+		lo.is_enabled = H->IsEnabled();
+		lo.is_in_layout = H->IsInLayout();
 
         _layout.push_back( lo );
     }
@@ -3657,8 +3683,8 @@ bool SolarField::parseHeliostatXYZFile(const std::string &filedat, layout_shell 
 
 
 	Structure:
-		0				1				2			3			4					5			6		7			8		9		10		11
-	<template (int)> <location X> <location Y> <location Z> <x focal length> <y focal length> <cant i> <cant j> <cant k> <aim X> <aim Y> <aim Z>
+		0				1			2			3			4			5				6				7			   8		9		10		11		12	     13
+	<template (int)> <enabled> <in layout> <location X> <location Y> <location Z> <x focal length> <y focal length> <cant i> <cant j> <cant k> <aim X> <aim Y> <aim Z>
 
 	*/
 	layout.clear();
@@ -3684,6 +3710,9 @@ bool SolarField::parseHeliostatXYZFile(const std::string &filedat, layout_shell 
 	string delim = Toolbox::getDelimiter(entries.at(0));
 	data.clear();
 
+	//try to handle old version
+	bool is_old_version = false;
+
 	for(i=0; i<nlines; i++){
 		data = split(entries.at(i), delim);	
 		
@@ -3691,28 +3720,57 @@ bool SolarField::parseHeliostatXYZFile(const std::string &filedat, layout_shell 
 		if( data.size() < 2 ) continue;
 		layout.push_back(layout_obj());
 
-		//If the number of entries is less than 12 (but must be at least 4), append NULL's
+		//If the number of entries is less than 14 (but must be at least 6), append NULL's
 		int dsize = (int)data.size();
-		if(dsize < 4){
+
+		//if the data length is 12, we're loading from an old file
+		if (i == 0)
+		{
+			if (dsize == 12)
+				is_old_version = true;
+		}
+
+
+		if(dsize < 6){
 			char fmt[] = "Formatting error\nLine %d in the imported layout is incorrectly formatted. The error occurred while parsing the following text:\n\"%s\"";
 			char msg[250];
 			sprintf(msg, fmt, i+1, entries.at(i).c_str());
 			throw(spexception(msg));  //error!
 		}
-		else if(dsize < 12){
-			for(unsigned int k=dsize; k<12; k++){ data.push_back("NULL"); }
+		else if(dsize < 14){
+			for(unsigned int k=dsize; k<14; k++){ data.push_back("NULL"); }
 		}
+		
+		int col = 0; // current column
 			
 		//which template should we use?
-		to_integer(data.at(0), &layout.at(i).helio_type);
+		to_integer(data.at(col++), &layout.at(i).helio_type);
 			
+		//assign enabled and layout status
+		if (!is_old_version)
+		{
+			to_bool(data.at(col++), layout.at(i).is_enabled);
+			to_bool(data.at(col++), layout.at(i).is_in_layout);
+		}
+		else
+		{
+			layout.at(i).is_enabled = true;
+			layout.at(i).is_in_layout = true;
+		}
+
 		//Assign the location
-		for(j=0; j<3; j++){ to_double(data.at(j+1), &loc[j]); }
+		for(j=0; j<3; j++)
+		{ 
+			to_double(data.at(col++), &loc[j]); 
+		}
 		layout.at(i).location.Set(loc[0], loc[1], loc[2]);
 
 		//Assign the focal length
-		if(data.at(4)!="NULL"){
-			for(j=0; j<2; j++){ to_double(data.at(j+4), &focal[j]); }
+		if(data.at(col)!="NULL"){
+			for(j=0; j<2; j++)
+			{ 
+				to_double(data.at(col++), &focal[j]);
+			}
 			layout.at(i).focal_x = focal[0];
 			layout.at(i).focal_y = focal[1];
 			layout.at(i).is_user_focus = true;
@@ -3722,8 +3780,12 @@ bool SolarField::parseHeliostatXYZFile(const std::string &filedat, layout_shell 
 		}
 			
 		//Assign the cant vector unless its null
-		if(data.at(6)!="NULL"){
-			for(j=0; j<3; j++){ to_double(data.at(j+6), &cant[j]); }
+		if(data.at(col)!="NULL")
+		{
+			for(j=0; j<3; j++)
+			{ 
+				to_double(data.at(col++), &cant[j]);
+			}
 			layout.at(i).cant.Set(cant[0], cant[1], cant[2]);
 			layout.at(i).is_user_cant = true;
 		}
@@ -3732,8 +3794,12 @@ bool SolarField::parseHeliostatXYZFile(const std::string &filedat, layout_shell 
 		}
 			
 		//Assign the aim point unless its null
-		if(data.at(9)!="NULL"){
-			for(j=0; j<3; j++){ to_double(data.at(j+9), &aim[j]); }
+		if(data.at(col)!="NULL")
+		{
+			for(j=0; j<3; j++)
+			{ 
+				to_double(data.at(col++), &aim[j]);
+			}
 			layout.at(i).aim.Set(aim[0], aim[1], aim[2]);
 			layout.at(i).is_user_aim = true;
 		}

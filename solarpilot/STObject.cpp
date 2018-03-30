@@ -931,7 +931,7 @@ bool ST_System::CreateSTSystem(SolarField &SF, Hvector &helios, Vect &sunvect){
 			npanels = ncantx * ncanty;
 
 		//Get values that apply to the whole heliostat
-		bool enabled = H->getInLayout();
+		bool enabled = H->IsInLayout();
 		
 		sp_point *P; 
 		Vect *V;

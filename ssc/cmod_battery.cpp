@@ -341,7 +341,7 @@ battstor::battstor(compute_module &cm, bool setup_model, size_t nrec, double dt_
 			// Storage dispatch controllers
 			batt_vars->batt_dispatch = cm.as_integer("batt_dispatch_choice");
 
-			// Automated front of meter
+			// Front of meter
 			if (batt_vars->batt_meter_position == dispatch_t::FRONT)
 			{
 				batt_vars->pv_dc_forecast = cm.as_vector_double("dc_net_forecast");
@@ -352,12 +352,17 @@ battstor::battstor(compute_module &cm, bool setup_model, size_t nrec, double dt_
 				batt_vars->ppa_weekday_schedule = cm.as_matrix_unsigned_long("dispatch_sched_weekday");
 				batt_vars->ppa_weekend_schedule = cm.as_matrix_unsigned_long("dispatch_sched_weekend");
 
-				if (cm.is_assigned("ur_ec_sched_weekday"))
+				// For automated front of meter with electricity rates
+				batt_vars->ec_rate_defined = false;
+				if (cm.is_assigned("ur_ec_tou_mat"))
 				{
 					batt_vars->ec_weekday_schedule = cm.as_matrix_unsigned_long("ur_ec_sched_weekday");
 					batt_vars->ec_weekend_schedule = cm.as_matrix_unsigned_long("ur_ec_sched_weekend");
 					batt_vars->ec_tou_matrix = cm.as_matrix("ur_ec_tou_mat");
+					batt_vars->ec_rate_defined = true;
 				}
+			
+	
 				batt_vars->batt_dispatch_auto_can_charge = cm.as_boolean("batt_dispatch_auto_can_charge");
 				batt_vars->batt_dispatch_auto_can_clipcharge = cm.as_boolean("batt_dispatch_auto_can_clipcharge");
 				batt_vars->batt_dispatch_auto_can_gridcharge = cm.as_boolean("batt_dispatch_auto_can_gridcharge");
@@ -369,6 +374,10 @@ battstor::battstor(compute_module &cm, bool setup_model, size_t nrec, double dt_
 				{
 					batt_vars->batt_look_ahead_hours = cm.as_unsigned_long("batt_look_ahead_hours");
 					batt_vars->batt_dispatch_update_frequency_hours = cm.as_double("batt_dispatch_update_frequency_hours");
+				}
+				else if (batt_vars->batt_dispatch == dispatch_t::FOM_CUSTOM_DISPATCH)
+				{
+					batt_vars->batt_custom_dispatch = cm.as_vector_double("batt_custom_dispatch");
 				}
 			}
 			// Automated behind-the-meter
@@ -590,23 +599,21 @@ battstor::battstor(compute_module &cm, bool setup_model, size_t nrec, double dt_
 	// non-lifetime outputs
 	if (nyears <= 1)
 	{
-		outTotalCharge = cm.allocate("batt_q0", nrec*nyears);
-
 		// only allocate if lead-acid
 		if (chem == 0)
 		{
 			outAvailableCharge = cm.allocate("batt_q1", nrec*nyears);
 			outBoundCharge = cm.allocate("batt_q2", nrec*nyears);
 		}
+		outCellVoltage = cm.allocate("batt_voltage_cell", nrec*nyears);
 		outMaxCharge = cm.allocate("batt_qmax", nrec*nyears);
 		outMaxChargeThermal = cm.allocate("batt_qmax_thermal", nrec*nyears);
-		outCurrent = cm.allocate("batt_I", nrec*nyears);
-		outBatteryVoltage = cm.allocate("batt_voltage", nrec*nyears);
 		outBatteryTemperature = cm.allocate("batt_temperature", nrec*nyears);
 		outCapacityThermalPercent = cm.allocate("batt_capacity_thermal_percent", nrec*nyears);
 	}
-
-	outCellVoltage = cm.allocate("batt_voltage_cell", nrec*nyears);
+	outCurrent = cm.allocate("batt_I", nrec*nyears);
+	outBatteryVoltage = cm.allocate("batt_voltage", nrec*nyears);
+	outTotalCharge = cm.allocate("batt_q0", nrec*nyears);
 	outCycles = cm.allocate("batt_cycles", nrec*nyears);
 	outSOC = cm.allocate("batt_SOC", nrec*nyears);
 	outDOD = cm.allocate("batt_DOD", nrec*nyears);
@@ -826,7 +833,12 @@ battstor::battstor(compute_module &cm, bool setup_model, size_t nrec, double dt_
 	else if (batt_vars->batt_meter_position == dispatch_t::FRONT) 
 	{
 		double efficiencyCombined = batt_vars->batt_dc_dc_bms_efficiency * 0.01 * batt_vars->inverter_efficiency;
-		utilityRate = new UtilityRate(batt_vars->ec_weekday_schedule, batt_vars->ec_weekend_schedule, batt_vars->ec_tou_matrix);
+
+		// Create UtilityRate object only if utility rate is defined
+		utilityRate = NULL;
+		if (batt_vars->ec_rate_defined) {
+			utilityRate = new UtilityRate(batt_vars->ec_weekday_schedule, batt_vars->ec_weekend_schedule, batt_vars->ec_tou_matrix);
+		}
 		dispatch_model = new dispatch_automatic_front_of_meter_t(battery_model, dt_hr, batt_vars->batt_minimum_SOC, batt_vars->batt_maximum_SOC,
 			batt_vars->batt_current_choice, batt_vars->batt_current_charge_max, batt_vars->batt_current_discharge_max,
 			batt_vars->batt_power_charge_max, batt_vars->batt_power_discharge_max, batt_vars->batt_minimum_modetime,
@@ -837,6 +849,17 @@ battstor::battstor(compute_module &cm, bool setup_model, size_t nrec, double dt_
 			batt_vars->batt_cycle_cost_choice, batt_vars->batt_cycle_cost,
 			batt_vars->ppa_factors, batt_vars->ppa_weekday_schedule, batt_vars->ppa_weekend_schedule, utilityRate,
 			batt_vars->batt_dc_dc_bms_efficiency, efficiencyCombined , efficiencyCombined);
+
+		if (batt_vars->batt_dispatch == dispatch_t::CUSTOM_DISPATCH)
+		{
+			if (dispatch_automatic_front_of_meter_t * dispatch_fom = dynamic_cast<dispatch_automatic_front_of_meter_t*>(dispatch_model))
+			{
+				if (batt_vars->batt_custom_dispatch.size() != 8760 * step_per_hour) {
+					throw compute_module::exec_error("battery", "invalid custom dispatch, must be 8760 * steps_per_hour");
+				}
+				dispatch_fom->set_custom_dispatch(batt_vars->batt_custom_dispatch);
+			}
+		}
 		
 	}
 	/*! Behind-the-meter automated dispatch for peak shaving */
@@ -900,12 +923,18 @@ void battstor::parse_configuration()
 		}
 		else if (batt_meter_position == dispatch_t::FRONT)
 		{
-			if (batt_dispatch == dispatch_t::FOM_LOOK_AHEAD)
+			if (batt_dispatch == dispatch_t::FOM_LOOK_AHEAD) {
 				look_ahead = true;
-			else if (batt_dispatch == dispatch_t::FOM_LOOK_BEHIND)
+			}
+			else if (batt_dispatch == dispatch_t::FOM_LOOK_BEHIND) {
 				look_behind = true;
-			else
+			}
+			else if (batt_dispatch == dispatch_t::FOM_FORECAST) {
 				input_forecast = true;
+			}
+			else if (batt_dispatch == dispatch_t::FOM_CUSTOM_DISPATCH) {
+				input_custom_dispatch = true;
+			}
 		}
 	}
 	else
@@ -1111,17 +1140,19 @@ void battstor::outputs_fixed(compute_module &cm)
 			outAvailableCharge[index] = (ssc_number_t)(kibam->q1());
 			outBoundCharge[index] = (ssc_number_t)(kibam->q2());
 		}
+		outCellVoltage[index] = (ssc_number_t)(voltage_model->cell_voltage());
 		outMaxCharge[index] = (ssc_number_t)(capacity_model->qmax());
 		outMaxChargeThermal[index] = (ssc_number_t)(capacity_model->qmax_thermal());
-		outTotalCharge[index] = (ssc_number_t)(capacity_model->q0());
-		outCurrent[index] = (ssc_number_t)(capacity_model->I());
-		outBatteryVoltage[index] = (ssc_number_t)(voltage_model->battery_voltage());
+	
 		outBatteryTemperature[index] = (ssc_number_t)(thermal_model->T_battery() - 273.15);
 		outCapacityThermalPercent[index] = (ssc_number_t)(thermal_model->capacity_percent());
 	}
 
 	// Lifetime outputs
-	outCellVoltage[index] = (ssc_number_t)(voltage_model->cell_voltage());
+	outTotalCharge[index] = (ssc_number_t)(capacity_model->q0());
+	outCurrent[index] = (ssc_number_t)(capacity_model->I());
+	outBatteryVoltage[index] = (ssc_number_t)(voltage_model->battery_voltage());
+
 	outCycles[index] = (ssc_number_t)(lifetime_cycle_model->cycles_elapsed());
 	outSOC[index] = (ssc_number_t)(capacity_model->SOC());
 	outDOD[index] = (ssc_number_t)(lifetime_cycle_model->cycle_range());
