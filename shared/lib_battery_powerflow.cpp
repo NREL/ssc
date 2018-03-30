@@ -19,6 +19,8 @@ BatteryPower::BatteryPower() :
 		powerPVInverterDraw(0),
 		powerSystemLoss(0),
 		powerConversionLoss(0),
+		powerBatteryChargeMax(0),
+		powerBatteryDischargeMax(0),
 		singlePointEfficiencyACToDC(0),
 		singlePointEfficiencyDCToAC(0), 
 		tolerance(0.001){}
@@ -36,6 +38,34 @@ void BatteryPowerFlow::calculate()
 {
 	if (m_powerFlowAC->connectionMode == ChargeController::AC_CONNECTED){
 		calculateACConnected();
+	}
+}
+
+void BatteryPowerFlow::initialize()
+{
+	// Is there extra power from array
+	if (m_powerFlowAC->powerPV > m_powerFlowAC->powerLoad)
+	{
+		if (m_powerFlowAC->canPVCharge)
+		{
+			// use all power available, it will only use what it can handle
+			m_powerFlowAC->powerBattery = -(m_powerFlowAC->powerPV - m_powerFlowAC->powerLoad);
+		}
+		// if we want to charge from grid without charging from array
+		else if (m_powerFlowAC->canGridCharge)
+			m_powerFlowAC->powerBattery = -m_powerFlowAC->powerBatteryChargeMax;
+	}
+	// Or, is the demand greater than or equal to what the array provides
+	else if (m_powerFlowAC->powerLoad >= m_powerFlowAC->powerPV)
+	{
+		// try to discharge full amount.  Will only use what battery can provide
+		if (m_powerFlowAC->canDischarge)
+		{
+			m_powerFlowAC->powerBattery = (m_powerFlowAC->powerLoad - m_powerFlowAC->powerPV) * 1.1;
+		}
+		// if we want to charge from grid instead of discharging
+		else if (m_powerFlowAC->canGridCharge)
+			m_powerFlowAC->powerBattery = -m_powerFlowAC->powerBatteryChargeMax;
 	}
 }
 

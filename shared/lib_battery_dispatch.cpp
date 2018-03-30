@@ -92,6 +92,10 @@ void dispatch_t::init(battery_t * Battery, double dt_hour, double SOC_min, doubl
 	_can_clip_charge = false;
 	_can_discharge = false;
 	_can_grid_charge = false;
+
+	// initialize powerflow model
+	m_batteryPower->powerBatteryChargeMax = _Pc_max;
+	m_batteryPower->powerBatteryChargeMax = _Pd_max;
 }
 
 
@@ -359,28 +363,20 @@ void dispatch_manual_t::dispatch(size_t year,
 	double P_load_ac)
 {
 	prepareDispatch(hour_of_year, step, P_system, P_system_clipping_dc, P_load_ac);
-
-	// current charge state of battery from last time step.  
-	double battery_voltage_nominal = _Battery->battery_voltage_nominal();	 // [V] 
-	double energy_needed_to_fill = _Battery->battery_energy_to_fill(_SOC_max);       // [kWh]
-	double I = 0.;															 // [A] - The  current input/draw from battery after losses
-
-	// Options for how to use PV
-	if (!_pv_dispatch_to_battery_first)
-		compute_energy_load_priority(energy_needed_to_fill);
-	else
-		compute_energy_battery_priority(energy_needed_to_fill);
+														
+	// Initialize power flow model
+	m_batteryPowerFlow->initialize();
 
 	// Controllers
 	SOC_controller();
 	switch_controller();
-	I = current_controller(battery_voltage_nominal);
+	double I = current_controller(_Battery->battery_voltage_nominal());
 
 	// Iteration variables
 	_Battery_initial->copy(_Battery);
 	bool iterate = true;
 	int count = 0;
-	size_t idx = util::index_year_hour_step((int)year, (int)hour_of_year, (int)step, (int)(1 / _dt_hour));
+	size_t idx = util::index_year_hour_step(year, hour_of_year, step, (1 / _dt_hour));
 
 	do {
 		 
@@ -514,90 +510,6 @@ void dispatch_manual_t::SOC_controller()
 		_charging = _prev_charging;
 }
 
-void dispatch_manual_t::compute_energy_load_priority(double energy_needed)
-{
-	double diff = 0.; // [%]
-
-	// Is there extra power from array
-	if (m_batteryPower->powerPV > m_batteryPower->powerLoad)
-	{
-		if (_can_charge)
-		{
-			// use all power available, it will only use what it can handle
-			m_batteryPower->powerPVToBattery = m_batteryPower->powerPV - m_batteryPower->powerLoad;
-			m_batteryPower->powerBattery = -m_batteryPower->powerPVToBattery ;
-
-			if (((m_batteryPower->powerPV - m_batteryPower->powerLoad)*_dt_hour < energy_needed) && _can_grid_charge)
-				m_batteryPower->powerBattery = -energy_needed / _dt_hour;
-		}
-		// if we want to charge from grid without charging from array
-		else if (_can_grid_charge)
-			m_batteryPower->powerBattery = -energy_needed / _dt_hour;
-	}
-	// Or, is the demand greater than or equal to what the array provides
-	else if (m_batteryPower->powerLoad >= m_batteryPower->powerPV)
-	{
-		// try to discharge full amount.  Will only use what battery can provide
-		if (_can_discharge)
-		{
-			m_batteryPower->powerBattery = (m_batteryPower->powerLoad - m_batteryPower->powerPV) * 1.1;
-			diff = fabs(_Battery->capacity_model()->SOC() - _SOC_min);
-			if ((diff < tolerance) || _grid_recharge)
-			{
-				if (_can_grid_charge)
-				{
-					_grid_recharge = true;
-					m_batteryPower->powerBattery = -energy_needed / _dt_hour;
-					diff = fabs(_Battery->capacity_model()->SOC() - _SOC_max);
-					if (diff < tolerance)
-						_grid_recharge = false;
-				}
-			}
-
-		}
-		// if we want to charge from grid
-		else if (_can_grid_charge)
-			m_batteryPower->powerBattery = -energy_needed / _dt_hour;
-		else if (!_can_grid_charge)
-			_grid_recharge = false;
-	}
-}
-
-void dispatch_manual_t::compute_energy_battery_priority(double energy_needed)
-{
-
-	bool charging = compute_energy_battery_priority_charging(energy_needed);
-
-	if (!charging && _can_discharge && m_batteryPower->powerLoad > 0)
-		m_batteryPower->powerBattery = m_batteryPower->powerLoad - m_batteryPower->powerPV;
-}
-bool dispatch_manual_t::compute_energy_battery_priority_charging(double energy_needed)
-{
-	double SOC = _Battery->capacity_model()->SOC();
-	bool charged = (round(SOC) == _SOC_max);
-	bool charging = false;
-
-	if (_can_charge && !charged != 0 && m_batteryPower->powerPV > 0)
-	{
-		if (m_batteryPower->powerPV > energy_needed / _dt_hour)
-			m_batteryPower->powerPVToBattery  = energy_needed / _dt_hour;
-		else
-			m_batteryPower->powerPVToBattery  = m_batteryPower->powerPV;
-
-		m_batteryPower->powerBattery = -m_batteryPower->powerPVToBattery ;
-
-		if (_can_grid_charge)
-			m_batteryPower->powerBattery = -energy_needed / _dt_hour;
-		charging = true;
-	}
-	else if (_can_grid_charge && !charged != 0)
-	{
-		m_batteryPower->powerBattery = -energy_needed / _dt_hour;
-		charging = true;
-	}
-	return charging;
-}
-
 dispatch_manual_front_of_meter_t::dispatch_manual_front_of_meter_t(battery_t * Battery, double dt, double SOC_min, double SOC_max, int current_choice, double Ic_max, double Id_max, double Pc_max, double Pd_max,
 	double t_min, int mode, int pv_dispatch,
 	util::matrix_t<size_t> dm_dynamic_sched, util::matrix_t<size_t> dm_dynamic_sched_weekend,
@@ -626,29 +538,21 @@ void dispatch_manual_front_of_meter_t::dispatch(size_t year,
 {
 	prepareDispatch(hour_of_year, step, P_system, P_system_clipping_dc, P_load_ac);
 
-	// current charge state of battery from last time step.  
-	double battery_voltage_nominal = _Battery->battery_voltage_nominal(); // [V] 
-	double energy_needed_to_fill = _Battery->battery_energy_to_fill(_SOC_max);    // [kWh]
-	double I = 0.;														  // [A] - The  current input/draw from battery after losses
-
-	// Options for how to use PV
-	compute_energy_no_load(energy_needed_to_fill);
+	// Initalize power flow model
+	m_batteryPowerFlow->initialize();
 
 	// Controllers
 	SOC_controller();
 	switch_controller();
-	I = current_controller(battery_voltage_nominal);
+	double I = current_controller(_Battery->battery_voltage_nominal());
 
 	// Iteration variables
 	_Battery_initial->copy(_Battery);
 	bool iterate = true;
 	int count = 0;
-	size_t idx = util::index_year_hour_step((int)year, (int)hour_of_year, (int)step, (int)(1 / _dt_hour));
+	size_t idx = util::index_year_hour_step(year, hour_of_year, step, (1 / _dt_hour));
 
 	do {
-
-		// Recompute every iteration to reset 
-		compute_energy_no_load(energy_needed_to_fill);
 
 		// Run Battery Model to update charge based on charge/discharge
 		_Battery->run(idx, I);
@@ -656,26 +560,19 @@ void dispatch_manual_front_of_meter_t::dispatch(size_t year,
 		// Update how much power was actually used to/from battery
 		I = _Battery->capacity_model()->I();
 		double battery_voltage_new = _Battery->battery_voltage();
-		m_batteryPower->powerBattery = I * battery_voltage_new * util::watt_to_kilowatt;// [kW]
+		m_batteryPower->powerBattery = I * battery_voltage_new * util::watt_to_kilowatt;
 
-		// Update contrained battery power
+		// Update power flow calculations and check the constraints
+		m_batteryPowerFlow->calculate();
 		iterate = check_constraints(I, count);
 		m_batteryPower->powerBattery = I * _Battery->battery_voltage() * util::watt_to_kilowatt;
 		count++;
 
 	} while (iterate);
 
-	// update for next step
+	// finalize power flow calculation and update for next step
+	m_batteryPowerFlow->calculate();
 	_prev_charging = _charging;
-}
-
-void dispatch_manual_front_of_meter_t::compute_energy_no_load(double energy_needed)
-{
-	bool charging = compute_energy_battery_priority_charging(energy_needed);
-
-	// set to maximum discharge possible, will be constrained by controllers
-	if (!charging && _can_discharge)
-		m_batteryPower->powerBattery = 1e38;
 }
 
 dispatch_automatic_t::dispatch_automatic_t(

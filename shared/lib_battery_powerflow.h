@@ -33,6 +33,9 @@ public:
 	/// Create a BatteryPowerFlow object
 	BatteryPowerFlow();
 
+	/// Initialize the power flow for the battery system.  Only needs to be called for manual dispatch control
+	void initialize();
+
 	/// Calculate the power flow for the battery system
 	void calculate();
 
@@ -94,6 +97,8 @@ public:
 	double powerBatteryToLoad;     /// The power from the battery to the electric load (kW)
 	double powerBatteryToGrid;     /// The power from the battery to the grid (kW)
 	double powerPVInverterDraw;	   /// The power draw from the PV inverter (kW)
+	double powerBatteryChargeMax;  /// The maximum sustained power the battery can charge (kW)
+	double powerBatteryDischargeMax;/// The maximum sustained power the battery can discharge (kW)
 	double powerSystemLoss;        /// The parasitic power loss in the system (kW)
 	double powerConversionLoss;    /// The power loss due to conversions in the battery power electronics (kW)
 
