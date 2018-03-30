@@ -355,10 +355,10 @@ void dispatch_manual_t::dispatch(size_t year,
 	size_t hour_of_year,
 	size_t step,
 	double P_system,
-	double P_load_ac,
-	double P_system_clipping_dc)
+	double P_system_clipping_dc,
+	double P_load_ac)
 {
-	prepareDispatch(hour_of_year, step, P_system, P_load_ac, P_system_clipping_dc);
+	prepareDispatch(hour_of_year, step, P_system, P_system_clipping_dc, P_load_ac);
 
 	// current charge state of battery from last time step.  
 	double battery_voltage_nominal = _Battery->battery_voltage_nominal();	 // [V] 
