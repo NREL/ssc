@@ -33,6 +33,9 @@ public:
 	/// Create a BatteryPowerFlow object
 	BatteryPowerFlow();
 
+	/// Perform a deep copy of a BatteryFlow object
+	BatteryPowerFlow(const BatteryPowerFlow& powerFlow);
+
 	/// Initialize the power flow for the battery system.  Only needs to be called for manual dispatch control
 	void initialize();
 
@@ -63,11 +66,11 @@ private:
 	/// Calculate the power flow for an DC connected battery system
 	void calculateDCConnected();
 
-	std::unique_ptr<BatteryPower> m_powerFlowAC;   /// A structure containing the AC power flow components 
+	std::unique_ptr<BatteryPower> m_BatteryPower;   /// A structure containing the AC power flow components 
 };
 
 /**
-* \struct BatteryPowerFlow
+* \struct BatteryPower
 *
 * \brief
 *
@@ -81,6 +84,9 @@ public:
 
 	/// Create a BatteryPower object.
 	BatteryPower();
+
+	/// Perform a deep copy of a BatteryPower object
+	BatteryPower(const BatteryPower& batteryPower);
 
 	double powerPV;				   /// The power production of the PV array (kW)
 	double powerLoad;			   /// The power required by the electric load (kW)

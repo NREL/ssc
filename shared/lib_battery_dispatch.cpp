@@ -56,14 +56,19 @@ Dispatch base class
 dispatch_t::dispatch_t(battery_t * Battery, double dt_hour, double SOC_min, double SOC_max, int current_choice, double Ic_max, double Id_max, double Pc_max, double Pd_max,
 	double t_min, int mode, int pv_dispatch)
 {
-	_Battery = Battery;
-	_Battery_initial = new battery_t(*_Battery);
-	init(_Battery, dt_hour, SOC_min, SOC_max, current_choice, Ic_max, Id_max, Pc_max, Pd_max, t_min, mode, pv_dispatch);
-
 	// initialize battery power flow 
 	std::unique_ptr<BatteryPowerFlow> tmp(new BatteryPowerFlow());
 	m_batteryPowerFlow = std::move(tmp);
 	m_batteryPower = m_batteryPowerFlow->getBatteryPower();
+
+	// initalize Battery and a copy of the Battery for iteration
+	_Battery = Battery;
+	_Battery_initial = new battery_t(*_Battery);
+
+	// Call the dispatch init method
+	init(_Battery, dt_hour, SOC_min, SOC_max, current_choice, Ic_max, Id_max, Pc_max, Pd_max, t_min, mode, pv_dispatch);
+
+
 }
 
 void dispatch_t::init(battery_t * Battery, double dt_hour, double SOC_min, double SOC_max, int current_choice, double Ic_max, double Id_max, double Pc_max, double Pd_max, double t_min, int mode, int pv_dispatch)
@@ -111,6 +116,10 @@ void dispatch_t::prepareDispatch(size_t, size_t, double P_system, double P_syste
 // deep copy
 dispatch_t::dispatch_t(const dispatch_t& dispatch)
 {
+	std::unique_ptr<BatteryPowerFlow> tmp(new BatteryPowerFlow(*dispatch.m_batteryPowerFlow));
+	m_batteryPowerFlow = std::move(tmp);
+	m_batteryPower = m_batteryPowerFlow->getBatteryPower();
+
 	_Battery = new battery_t(*dispatch._Battery);
 	_Battery_initial = new battery_t(*dispatch._Battery_initial);
 	init(_Battery, dispatch._dt_hour, dispatch._SOC_min, dispatch._SOC_max, dispatch._current_choice, dispatch._Ic_max, dispatch._Id_max, dispatch._Pc_max, dispatch._Pd_max, dispatch._t_min, dispatch._mode, dispatch._pv_dispatch_to_battery_first);

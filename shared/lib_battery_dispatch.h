@@ -131,8 +131,14 @@ public:
 
 	message get_messages();
 
+	/// Return a pointer to the underlying calculated power quantities
 	BatteryPower * getBatteryPower() {
 		return m_batteryPower;
+	};
+
+	/// Return a pointer to the object which calculates the battery power flow
+	BatteryPowerFlow * getBatteryPowerFlow() {
+		return m_batteryPowerFlow.get();
 	};
 
 protected:
