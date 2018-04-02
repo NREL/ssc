@@ -79,19 +79,19 @@ public:
 	std::string errDetails;
 
 	windTurbine(){ 
-		shearExponent = -1;
-		measurementHeight = -1;
-		hubHeight = -1;
-		rotorDiameter = -1;
-		lossesAbsolute = -1;
-		lossesPercent = -1;
+		shearExponent = -999;
+		measurementHeight = -999;
+		hubHeight = -999;
+		rotorDiameter = -999;
+		lossesAbsolute = -999;
+		lossesPercent = -999;
 	}
 	bool setPowerCurve(std::vector<double> windSpeeds, std::vector<double> powerOutput);
 	
 	double tipSpeedRatio(double windSpeed);
 
 	bool isInitialized(){
-		if (shearExponent > 0 && measurementHeight > 0 && hubHeight > 0 && rotorDiameter > 0 && lossesAbsolute >= 0 && lossesPercent >= 0){
+		if (shearExponent != -999 && measurementHeight != -999 && hubHeight != -999 && rotorDiameter != -999 && lossesAbsolute != -999 && lossesPercent != -999){
 			if (powerCurveArrayLength > 0) return true;
 		}
 		return false;
