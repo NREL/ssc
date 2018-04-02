@@ -59,7 +59,8 @@
 
 #include "heat_exchangers.h"
 
-#include "sco2_pc_core.h"
+//#include "sco2_pc_core.h"
+#include "sco2_recompression_cycle.h"
 
 using namespace std;
 

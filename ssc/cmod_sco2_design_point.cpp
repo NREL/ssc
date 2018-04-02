@@ -48,7 +48,10 @@
 *******************************************************************************************************/
 
 #include "core.h"
-#include "sco2_pc_core.h"
+
+//#include "sco2_pc_core.h"
+#include "sco2_recompression_cycle.h"
+
 #include "sco2_pc_csp_int.h"
 
 #include "heat_exchangers.h"
@@ -135,9 +138,6 @@ public:
 
 		c_ac.off_design_hx(T_amb_od, P_amb_od, T_hot_in, P_hot_in, m_dot_hot, T_hot_out, W_dot_fan, ac_od_code);
 
-		double W_dot_fan_new = std::numeric_limits<double>::quiet_NaN();
-		int ac_od_new_code = c_ac.off_design_given_T_out(T_amb_od, P_amb_od, T_hot_in, P_hot_in, m_dot_hot, T_hot_out, W_dot_fan_new);
-
 		// Test out multi-stage compressor model
 		CO2_state co2_props;
 		double P_in = 8000.0;		//[kPa]
@@ -149,7 +149,6 @@ public:
 		}
 		double h_in = co2_props.enth;
 		double s_in = co2_props.entr;
-		double D_in = co2_props.dens;
 
 		double P_out = 25000.0;		//[kPa]
 		double s_out_isen = s_in;	//[kJ/kg-K]
@@ -168,8 +167,6 @@ public:
 			return;
 		}
 		double T_out = co2_props.temp;	//[K]
-		double s_out = co2_props.entr;	//[kJ/kg-K]
-		double D_out = co2_props.dens;	//[kg/m^3]
 
 		/*C_compressor c_comp_old;
 		C_compressor::S_design_parameters s_des_comp_old;
@@ -187,7 +184,6 @@ public:
 		double m_dot_mc = 3000.0 / (h_out - h_in);	//[kg/s] mass flow for 3 MWe compressor
 		//s_des_comp_old.m_m_dot = m_dot_mc;
 
-		int comp_old_err_code = 0;
 		//c_comp_old.compressor_sizing(s_des_comp_old, comp_old_err_code);
 
 		//double diameter_old = c_comp_old.get_design_solved()->m_D_rotor;	//[m]
@@ -212,7 +208,6 @@ public:
 		CO2_PS(P_rc_out, s_rc_in, &co2_props);
 		double h_rc_out_isen = co2_props.enth;	//[kJ/kg]
 
-		double eta_rc_isen = 0.9;
 		double h_rc_out = h_rc_in + (h_rc_out_isen - h_rc_in) / eta_isen;
 		CO2_PH(P_rc_out, h_rc_out, &co2_props);
 		//s_rc_des_old.m_T_out = co2_props.temp;
@@ -241,7 +236,6 @@ public:
 		double m_dot_rc_od = 0.90*m_dot_rc;
 
 		int rc_od_err_code = 0;
-		double T_rc_out_od = std::numeric_limits<double>::quiet_NaN();
 		//c_rc_old.off_design_recompressor(T_rc_in_od, P_rc_in_od, m_dot_rc_od, P_rc_out, rc_od_err_code, T_rc_out_od);
 
 
@@ -254,17 +248,13 @@ public:
 		C_comp_multi_stage c_comp_ms;
 		c_comp_ms.design_given_outlet_state(T_in, P_in, m_dot_mc, T_out, P_out);
 
-		double diameter_new = c_comp_ms.mv_stages[0].ms_des_solved.m_D_rotor;
-		double N_new = c_comp_ms.ms_des_solved.m_N_design;
-		double tip_ratio_new = c_comp_ms.mv_stages[0].ms_des_solved.m_tip_ratio;
-
 		double P_in_od = 1.15*P_in;
 		double T_in_od = T_in + 5.0;
 		double m_dot_od = 0.90*m_dot_mc;
 
-		double P_out_od_old = std::numeric_limits<double>::quiet_NaN();
-		double T_out_od_old = std::numeric_limits<double>::quiet_NaN();
 		//c_comp_old.od_comp_at_N_des(T_in_od, P_in_od, m_dot_od, comp_old_err_code, T_out_od_old, P_out_od_old);
+		//double P_out_od_old = std::numeric_limits<double>::quiet_NaN();
+		//double T_out_od_old = std::numeric_limits<double>::quiet_NaN();
 
 		double P_out_od_new = std::numeric_limits<double>::quiet_NaN();
 		double T_out_od_new = std::numeric_limits<double>::quiet_NaN();
@@ -272,9 +262,6 @@ public:
 		int comp_new_err_code = 0;
 		c_comp_ms.off_design_at_N_des(T_in_od, P_in_od, m_dot_od, comp_new_err_code, T_out_od_new, P_out_od_new);
 
-
-
-		double new_cmop = 1.23;
 
 
 		// Hot sCO2 to water heat exchanger
@@ -377,7 +364,6 @@ public:
 		}
 		catch (C_csp_exception csp_except)
 		{
-			double blah_for_now = 1.23;
 			//throw exec_error("sco2-water hx", "failed");
 		}
 
@@ -516,7 +502,6 @@ public:
 			iter_P_water_in++;
 
 		}
-		double blajalahfla = 1.23;
 
 //		// Test C_HX_counterflow model as a sCO2 recuperator
 //		C_HX_counterflow mc_sco2_recup;
@@ -644,9 +629,6 @@ public:
 		
 		C_monotonic_eq_solver eq_solv(ty_mono_eq);
 
-		double result;
-		int int_success = eq_solv.test_member_function(2.0, &result);
-
 		double x_low = std::numeric_limits<double>::quiet_NaN();
 		double x_high = std::numeric_limits<double>::quiet_NaN();
 		int iter_limit = 50;
@@ -725,8 +707,6 @@ public:
 		rc_params.m_opt_tol = opt_tol;
 		rc_params.m_N_turbine = N_t_des;
 		
-		int hot_fl_code = HTFProperties::Salt_60_NaNO3_40_KNO3;
-		
 		C_sco2_recomp_csp::S_des_par sco2_rc_des_par;
 		double elevation = 300.0;		//[m] Elevation
 			// System design parameters
@@ -762,17 +742,12 @@ public:
 		C_sco2_recomp_csp sco2_recomp_csp;
 		sco2_recomp_csp.design(sco2_rc_des_par);
 		double m_dot_htf = sco2_recomp_csp.get_phx_des_par()->m_m_dot_hot_des;	//[kg/s]
-		double T_htf_cold_calc = sco2_recomp_csp.get_design_solved()->ms_phx_des_solved.m_T_c_out;		//[K]
 		
 		// Try calling off-design model with design parameters
 		C_sco2_recomp_csp::S_od_par sco2_rc_od_par;
 		sco2_rc_od_par.m_T_htf_hot = sco2_rc_des_par.m_T_htf_hot_in;
 		sco2_rc_od_par.m_m_dot_htf = m_dot_htf;
 		sco2_rc_od_par.m_T_amb = T_amb_cycle_des;
-		int od_strategy = C_sco2_recomp_csp::E_MAX_ETA;
-		//sco2_recomp_csp.off_design_opt(sco2_rc_od_par, od_strategy);
-
-
 
 		rc_cycle.auto_opt_design_hit_eta(rc_params, error_code, error_msg);
 

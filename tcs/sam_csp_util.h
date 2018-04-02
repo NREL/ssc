@@ -64,9 +64,9 @@ Define functions and methods that are useful in CSP modules
 
 namespace CSP
 {
-	static double sigma = 5.67E-8;		//[W/m2K4] stefan boltzmann constant
-	static double grav = 9.81;			//[m/s2] gravitational constant
-	static double pi = 3.1415926;		//[-]
+	const double sigma = 5.67E-8;		//[W/m2K4] stefan boltzmann constant
+	const double grav = 9.81;			//[m/s2] gravitational constant
+	const double pi = 3.1415926;		//[-]
 
 	//--- generalized interpolation functions ---
 
@@ -127,7 +127,6 @@ class P_max_check
 {
 	double P_max;
 	double P_save;
-	double P_return;
 	bool is_error;
 
 public:
@@ -492,7 +491,7 @@ private:
 	util::matrix_t<double> m_D_h;
 	util::matrix_t<double> m_flowtype;
 
-	double reguess_args[3];
+	std::vector<double> mv_reguess_args;
 
 	// Updated once per timestep
 	util::matrix_t<double> m_ColOptEff;
@@ -502,7 +501,11 @@ private:
 	
 
 public:
-	Evacuated_Receiver(){};
+	Evacuated_Receiver()
+	{
+		mv_reguess_args.resize(3);
+		std::fill(mv_reguess_args.begin(), mv_reguess_args.end(), std::numeric_limits<double>::quiet_NaN());
+	};
 
 	~Evacuated_Receiver(){};
 

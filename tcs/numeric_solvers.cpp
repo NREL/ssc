@@ -286,6 +286,9 @@ int C_monotonic_eq_solver::solver_core(double x_guess_1, double y1, double x_gue
 	}
 	if( fabs(E2) < m_tol )
 	{
+		double last_x_tried = get_last_mono_eq_call().x;
+		if(last_x_tried != x_guess_2)
+			call_mono_eq(x_guess_2, &y2);
 		x_solved = x_guess_2;
 		tol_solved = E2;
 		iter_solved = 0;
@@ -729,6 +732,22 @@ int C_monotonic_eq_solver::call_mono_eq(double x, double *y)
 	ms_eq_call_tracker.push_back(ms_eq_tracker_temp);
 
 	return ms_eq_tracker_temp.err_code;
+}
+
+const C_monotonic_eq_solver::S_eq_chars C_monotonic_eq_solver::get_last_mono_eq_call()
+{
+	// Get length of saved equation calls
+	int len = ms_eq_call_tracker.size();
+
+	if( len == 0 )
+	{
+		C_monotonic_eq_solver::S_eq_chars s_null;
+		return s_null;
+	}
+	else
+	{
+		return ms_eq_call_tracker[len - 1];
+	}
 }
 
 int C_monotonic_eq_solver::test_member_function(double x, double *y)

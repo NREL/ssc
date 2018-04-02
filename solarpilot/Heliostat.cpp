@@ -63,7 +63,6 @@ using namespace std;
 double Heliostat::calcTotalEfficiency(){ return eff_data.calcTotalEfficiency(); }
 int Heliostat::getId(){return _id;}
 int *Heliostat::getGroupId(){return _group;}		//(row,col) nodes
-bool Heliostat::getInLayout(){return _in_layout;}
 double Heliostat::getFocalX(){return _xfocal;}
 double Heliostat::getFocalY(){return _yfocal;}
 double Heliostat::getSlantRange(){return _slant;}	//[m]
@@ -112,6 +111,7 @@ var_heliostat* Heliostat::getVarMap(){return _var_helio;}
 bool Heliostat::IsUserCant(){return _is_user_canted;} //Fetch
 void Heliostat::IsUserCant(bool setting){_is_user_canted = setting;} //Set
 bool Heliostat::IsEnabled(){return _is_enabled;}
+bool Heliostat::IsInLayout(){return _in_layout;}
 void Heliostat::IsEnabled(bool enable){_is_enabled = enable;}
 
 void Heliostat::setId(int id){_id = id;}
@@ -754,8 +754,8 @@ Reflector *Heliostat::getPanelById(int id){
 
 Reflector *Heliostat::getPanel(int row, int col){
 	int nr, nc;
-	nr = _panels.nrows();
-	nc = _panels.ncols();
+	nr = (int)_panels.nrows();
+	nc = (int)_panels.ncols();
 	if(row < nr && col < nc) {
 	  	return &_panels.at(row, col);
 	}

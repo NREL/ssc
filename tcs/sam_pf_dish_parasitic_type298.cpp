@@ -508,9 +508,7 @@ public:
 					fan_speed =  m_fan_speed1;
 					
 				// Set fan speed to zero if DNI < I_cut_in
-				if(DNI >= I_cut_in)   
-					fan_speed =  fan_speed;
-				else 
+				if(DNI < I_cut_in)
 					fan_speed =  0.0;
 
 				/*System does not converge with a fan speed below 50RPM so modify code
@@ -683,33 +681,7 @@ public:
 				// Cooling Tower loop HX effectiveness-NTU for effectiveness with changing pump/tower flow
 				// ==========================================================================
 				T1 = Tower_water_outlet_temp+273.15;
-				double b_tower = 0.7;
 				rho_tower = 589.132 + 2.98577*T1 - 0.00542465*pow(T1,2);
-				double rho_tower_test = 1000;
-				double cp_tower_water_test = 4185;
-				double cp_tower_water = 5.64111E+06 - 93046.6*T1 + 614.276*pow(T1,2) - 2.02742*pow(T1,3) + 0.00334536*pow(T1,4) - 0.00000220776*pow(T1,5);
-				double C_dot_tower_test = m_tower_m_dot_water_test * cp_tower_water_test;
-				double C_dot_tower = m_tower_m_dot_water * cp_tower_water;
-				double V_dot_tower = m_tower_m_dot_water / (rho_tower+1E-8);
-				double V_dot_tower_test = m_tower_m_dot_water_test/(rho_tower_test+1E-8);
-					
-					
-				double C_dot_min_test_tower = min(C_dot_tower_test,C_dot_cool_fluid_test);
-				double C_dot_max_test_tower = max(C_dot_tower_test,C_dot_cool_fluid_test);
-				double C_dot_min_tower = min(C_dot_tower,C_dot_cool_fluid);
-				double C_dot_max_tower = max(C_dot_tower,C_dot_cool_fluid);
-				double V_dot_min_tower = min(V_dot_tower,V_dot_cool_fluid);
-				double V_dot_min_test_tower = min(V_dot_tower_test,m_test_V_dot_fluid);
-										
-				// Counter-flow Concentric-Tube NTU-effectiveness correlation
-				double Cr_tower_test = C_dot_min_test_tower / C_dot_max_test_tower;
-				double NTU_tower_test = 1.0/(Cr_tower_test-1.0)*log((m_epsilon_tower_test-1.0)/(m_epsilon_tower_test*Cr_tower_test-1+1E-8));
-					
-				// Determine overall heat xfer coef UA at test conditions
-				double UA_tower_test = NTU_tower_test * C_dot_min_test_tower;
-					
-				// determine overall heat xfer coef UA at operating conditions
-				double UA_tower = UA_tower_test*pow( (V_dot_min_tower/(V_dot_min_test_tower+1E-8)), b_tower );
 					
 				// determine new NTU value based on new C_dot of the engine
 				//double NTU_tower = UA_tower / (C_dot_min_tower+1E-8);
@@ -795,17 +767,13 @@ public:
 		
 		// =================================================================
 		// Set individual system fan power to zero when cooling tower on
-		if(m_cooling_tower_on == 0.0) 
-			P_fan = P_fan;
-		else
+		if(m_cooling_tower_on != 0.0)
 			P_fan = 0.0;
 		
 		// =================================================================
 		// Set cooling tower fan power to zero when DNI is low
 		if(DNI < 300.0) 
 			P_tower_fan = 0.0;
-		else
-			P_tower_fan = P_tower_fan;		
 		
 		// =========================================================================
 		// Determine pump power for the cooling tower to distribute water to all dishes
@@ -815,7 +783,7 @@ public:
 		double mu_tower = 0.299062 - 0.00283786*T1 + 0.0000090396*pow(T1,2) - 9.64494E-09*pow(T1,3);
 		double Re_tower = rho_tower * vel_tower * m_d_pipe_tower / (mu_tower+1E-8);
 		
-		double epsilon_wall;
+		double epsilon_wall = std::numeric_limits<double>::quiet_NaN();
 		if( m_tower_pipe_material == 1 )		// Plastic
 			epsilon_wall = 0.0000015;
 		else if( m_tower_pipe_material == 2)	// cast iron

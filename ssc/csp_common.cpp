@@ -64,6 +64,8 @@
 #define mysnprintf snprintf
 #endif
 
+using namespace std;
+
 //static bool solarpilot_callback( simulation_info *siminfo, void *data );
 static bool optimize_callback( simulation_info *siminfo, void *data );
 
@@ -200,8 +202,8 @@ bool solarpilot_invoke::run(std::shared_ptr<weather_data_provider> wdata)
 	fin.rec_cost_exp.val = m_cmod->as_double("rec_cost_exp");
 	fin.site_spec_cost.val = m_cmod->as_double("site_spec_cost");
 	fin.heliostat_spec_cost.val = m_cmod->as_double("heliostat_spec_cost");
-	fin.plant_spec_cost.val = m_cmod->as_double("plant_spec_cost") + m_cmod->as_double("bop_spec_cost");
-	fin.tes_spec_cost.val = m_cmod->as_double("tes_spec_cost");
+	//fin.plant_spec_cost.val = m_cmod->as_double("plant_spec_cost") + m_cmod->as_double("bop_spec_cost");
+	//fin.tes_spec_cost.val = m_cmod->as_double("tes_spec_cost");
 	fin.land_spec_cost.val = m_cmod->as_double("land_spec_cost");
 	fin.contingency_rate.val = m_cmod->as_double("contingency_rate");
 	fin.sales_tax_rate.val = m_cmod->as_double("sales_tax_rate");
@@ -445,22 +447,23 @@ bool solarpilot_invoke::postsim_calcs(compute_module *cm)
 
     //Update the total installed cost
     double total_direct_cost = 0.;
-    double A_rec;
+    double A_rec = std::numeric_limits<double>::quiet_NaN();
     switch (recs.front().rec_type.mapval())
     {
     case var_receiver::REC_TYPE::EXTERNAL_CYLINDRICAL:
-    {
+      {
         double h = recs.front().rec_height.val;
         double d = h/recs.front().rec_aspect.Val();
         A_rec =  h*d*3.1415926;
         break;
-    }
-    //case Receiver::REC_TYPE::CAVITY:
+      }
     case var_receiver::REC_TYPE::FLAT_PLATE:
+      {
         double h = recs.front().rec_height.val;
         double w = h/recs.front().rec_aspect.Val();
         A_rec = h*w;
         break;
+      }
     }
     double receiver = cm->as_double("rec_ref_cost")*pow(A_rec/cm->as_double("rec_ref_area"), cm->as_double("rec_cost_exp"));     //receiver cost
 
