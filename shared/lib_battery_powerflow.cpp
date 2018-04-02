@@ -1,7 +1,8 @@
 #include "lib_battery_powerflow.h"
 #include "lib_power_electronics.h"
 
-BatteryPower::BatteryPower() :
+BatteryPower::BatteryPower(double dtHour) :
+		dtHour(dtHour),
 		powerPV(0),
 		powerLoad(0),
 		powerBattery(0),
@@ -27,9 +28,9 @@ BatteryPower::BatteryPower() :
 
 BatteryPower::BatteryPower(const BatteryPower& batteryPower) { /* nothing to do */ }
 
-BatteryPowerFlow::BatteryPowerFlow()
+BatteryPowerFlow::BatteryPowerFlow(double dtHour)
 {
-	std::unique_ptr<BatteryPower> tmp(new BatteryPower());
+	std::unique_ptr<BatteryPower> tmp(new BatteryPower(dtHour));
 	m_BatteryPower = std::move(tmp);
 }
 BatteryPowerFlow::BatteryPowerFlow(const BatteryPowerFlow& powerFlow)
@@ -78,7 +79,10 @@ void BatteryPowerFlow::initialize()
 
 void BatteryPowerFlow::calculateACConnected()
 {
-	double P_battery = m_BatteryPower->powerBattery;
+	// The battery power is initially a DC power, which must be converted to AC for powerflow
+	double P_battery_dc = m_BatteryPower->powerBattery;
+
+	// These quantities are all AC quantities unless otherwise specified
 	double P_pv = m_BatteryPower->powerPV;
 	double P_inverter_draw = m_BatteryPower->powerPVInverterDraw;
 	double P_load = m_BatteryPower->powerLoad;
@@ -86,18 +90,26 @@ void BatteryPowerFlow::calculateACConnected()
 	double P_pv_to_batt, P_grid_to_batt, P_batt_to_load, P_grid_to_load, P_pv_to_load, P_pv_to_grid, P_batt_to_grid, P_gen, P_grid, P_grid_to_batt_loss, P_batt_to_load_loss, P_pv_to_batt_loss;
     P_pv_to_batt = P_grid_to_batt = P_batt_to_load = P_grid_to_load = P_pv_to_load = P_pv_to_grid = P_batt_to_grid = P_gen = P_grid = P_grid_to_batt_loss = P_batt_to_load_loss = P_pv_to_batt_loss = 0;
 
+	// convert the calculated DC power to AC, considering the microinverter efficiences
+	double P_battery_ac = 0;
+	if (P_battery_dc < 0)
+		P_battery_ac = P_battery_dc / m_BatteryPower->singlePointEfficiencyACToDC;
+	else if (P_battery_dc > 0)
+		P_battery_ac = P_battery_dc * m_BatteryPower->singlePointEfficiencyDCToAC;
+
+
 	// charging 
-	if (P_battery <= 0)
+	if (P_battery_ac <= 0)
 	{
 		if (m_BatteryPower->canPVCharge){
-			P_pv_to_batt = fabs(P_battery);
+			P_pv_to_batt = fabs(P_battery_ac);
 			if (P_pv_to_batt > P_pv)
 			{
 				P_pv_to_batt = P_pv;
 			}
 		}
 		if (m_BatteryPower->canGridCharge){
-			P_grid_to_batt = fabs(P_battery) - P_pv_to_batt;
+			P_grid_to_batt = fabs(P_battery_ac) - P_pv_to_batt;
 		}
 
 		// Now calculate other power flow quantities
@@ -109,10 +121,10 @@ void BatteryPowerFlow::calculateACConnected()
 	}
 	else
 	{
-		// Quickly test if battery is discharging erroneously
-		if (!m_BatteryPower->canDischarge & P_battery > 0) {
+		// Test if battery is discharging erroneously
+		if (!m_BatteryPower->canDischarge & P_battery_ac > 0) {
 			P_batt_to_grid = P_batt_to_load = 0;
-			P_battery = 0;
+			P_battery_ac = 0;
 		}
 
 		P_pv_to_load = P_pv;
@@ -125,9 +137,9 @@ void BatteryPowerFlow::calculateACConnected()
 			P_pv_to_grid = P_pv - P_pv_to_load;
 		}
 		else {
-			P_batt_to_load = std::fmin(P_battery, P_load - P_pv_to_load);
+			P_batt_to_load = std::fmin(P_battery_ac, P_load - P_pv_to_load);
 		}
-		P_batt_to_grid = P_battery - P_batt_to_load;
+		P_batt_to_grid = P_battery_ac - P_batt_to_load;
 
 	}
 
@@ -137,14 +149,14 @@ void BatteryPowerFlow::calculateACConnected()
 
 	// Compute total system output and grid power flow
 	P_grid_to_load = P_load - P_pv_to_load - P_batt_to_load;
-	P_gen = P_pv + P_battery + P_inverter_draw - P_system_loss;
+	P_gen = P_pv + P_battery_ac + P_inverter_draw - P_system_loss;
 
 	// Grid charging loss accounted for in P_battery_ac 
 	P_grid = P_gen - P_load;
 
 	// Error checking for battery charging
-	if (P_pv_to_batt + P_grid_to_batt != fabs(P_battery)) {
-		P_grid_to_batt = fabs(P_battery) - P_pv_to_batt;
+	if (P_pv_to_batt + P_grid_to_batt != fabs(P_battery_ac)) {
+		P_grid_to_batt = fabs(P_battery_ac) - P_pv_to_batt;
 	}
 
 	// Error checking for power to load
@@ -160,7 +172,7 @@ void BatteryPowerFlow::calculateACConnected()
 		P_grid = 0;
 
 	// assign outputs
-	m_BatteryPower->powerBattery = P_battery;
+	m_BatteryPower->powerBattery = P_battery_ac;
 	m_BatteryPower->powerGrid = P_grid;
 	m_BatteryPower->powerGeneratedBySystem = P_gen;
 	m_BatteryPower->powerPVToLoad = P_pv_to_load;
@@ -170,6 +182,7 @@ void BatteryPowerFlow::calculateACConnected()
 	m_BatteryPower->powerGridToLoad = P_grid_to_load;
 	m_BatteryPower->powerBatteryToLoad = P_batt_to_load;
 	m_BatteryPower->powerBatteryToGrid = P_batt_to_grid;
+	m_BatteryPower->powerConversionLoss = P_batt_to_load_loss + P_grid_to_batt_loss + P_pv_to_batt_loss;
 }
 
 void BatteryPowerFlow::calculateDCConnected()

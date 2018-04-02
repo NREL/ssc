@@ -31,7 +31,7 @@ class BatteryPowerFlow
 {
 public:
 	/// Create a BatteryPowerFlow object
-	BatteryPowerFlow();
+	BatteryPowerFlow(double dtHour);
 
 	/// Perform a deep copy of a BatteryFlow object
 	BatteryPowerFlow(const BatteryPowerFlow& powerFlow);
@@ -83,7 +83,7 @@ struct BatteryPower
 public:
 
 	/// Create a BatteryPower object.
-	BatteryPower();
+	BatteryPower(double dtHour);
 
 	/// Perform a deep copy of a BatteryPower object
 	BatteryPower(const BatteryPower& batteryPower);
@@ -108,6 +108,8 @@ public:
 	double powerSystemLoss;        /// The parasitic power loss in the system (kW)
 	double powerConversionLoss;    /// The power loss due to conversions in the battery power electronics (kW)
 
+	//double annualEnergySystemLoss;  /// The total annual loss due to user-specified system losses
+	//double annualEnergyConversionLoss;  /// The total annual loss due to power electronic conversions
 
 	int connectionMode;					 /// 0 if DC-connected, 1 if AC-connected
 	double singlePointEfficiencyACToDC;  /// The conversion efficiency from AC power to DC power within the battery microinverter (0 - 100)
@@ -120,6 +122,7 @@ public:
 
 
 	double tolerance;  /// A numerical tolerance. Below this value, zero out the power flow
+	double dtHour;	   /// The timestep in hours, used for accumulated power losses
 };
 
 

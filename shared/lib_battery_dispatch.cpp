@@ -57,7 +57,7 @@ dispatch_t::dispatch_t(battery_t * Battery, double dt_hour, double SOC_min, doub
 	double t_min, int mode, int pv_dispatch)
 {
 	// initialize battery power flow 
-	std::unique_ptr<BatteryPowerFlow> tmp(new BatteryPowerFlow());
+	std::unique_ptr<BatteryPowerFlow> tmp(new BatteryPowerFlow(dt_hour));
 	m_batteryPowerFlow = std::move(tmp);
 	m_batteryPower = m_batteryPowerFlow->getBatteryPower();
 
@@ -400,12 +400,14 @@ void dispatch_manual_t::dispatch(size_t year,
 		// Update power flow calculations and check the constraints
 		m_batteryPowerFlow->calculate();
 		iterate = check_constraints(I, count);
+
+		// Recalculate the DC battery power
 		m_batteryPower->powerBattery = I * _Battery->battery_voltage() * util::watt_to_kilowatt;
 		count++;
 
 	} while (iterate);
 
-	// finalize power flow calculation and update for next step
+	// finalize AC power flow calculation and update for next step
 	m_batteryPowerFlow->calculate();
 	_prev_charging = _charging;
 }

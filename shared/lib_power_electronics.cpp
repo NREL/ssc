@@ -54,7 +54,7 @@ ACBatteryController::ACBatteryController(dispatch_t * dispatch, battery_metrics_
 	m_batteryPower = dispatch->getBatteryPower();
 	m_batteryPower->connectionMode = ChargeController::AC_CONNECTED;
 	m_batteryPower->singlePointEfficiencyACToDC = m_bidirectionalInverter->ac_dc_efficiency();
-	m_batteryPower->singlePointEfficiencyDCToDC = m_bidirectionalInverter->dc_ac_efficiency();
+	m_batteryPower->singlePointEfficiencyDCToAC = m_bidirectionalInverter->dc_ac_efficiency();
 }
 
 void ACBatteryController::run(size_t year, size_t hour_of_year, size_t step_of_hour, size_t index, double P_pv, double P_load)
