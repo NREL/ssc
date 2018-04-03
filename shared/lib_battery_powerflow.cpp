@@ -118,6 +118,11 @@ void BatteryPowerFlow::calculateACConnected()
 			P_pv_to_load = P_load;
 			P_pv_to_grid = P_pv - P_pv_to_batt - P_pv_to_load;
 		}
+
+		// Error checking for battery charging
+		if (P_pv_to_batt + P_grid_to_batt != fabs(P_battery_ac)) {
+			P_grid_to_batt = fabs(P_battery_ac) - P_pv_to_batt;
+		}
 	}
 	else
 	{
@@ -153,11 +158,6 @@ void BatteryPowerFlow::calculateACConnected()
 
 	// Grid charging loss accounted for in P_battery_ac 
 	P_grid = P_gen - P_load;
-
-	// Error checking for battery charging
-	if (P_pv_to_batt + P_grid_to_batt != fabs(P_battery_ac)) {
-		P_grid_to_batt = fabs(P_battery_ac) - P_pv_to_batt;
-	}
 
 	// Error checking for power to load
 	if (P_pv_to_load + P_grid_to_load + P_batt_to_load != P_load)

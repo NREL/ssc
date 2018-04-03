@@ -52,8 +52,8 @@ ACBatteryController::ACBatteryController(dispatch_t * dispatch, battery_metrics_
 	m_bidirectionalInverter = std::move(tmp);
 	m_batteryPower = dispatch->getBatteryPower();
 	m_batteryPower->connectionMode = ChargeController::AC_CONNECTED;
-	m_batteryPower->singlePointEfficiencyACToDC = efficiencyACToDC;
-	m_batteryPower->singlePointEfficiencyDCToAC = efficiencyDCToAC;
+	m_batteryPower->singlePointEfficiencyACToDC = m_bidirectionalInverter->ac_dc_efficiency();
+	m_batteryPower->singlePointEfficiencyDCToAC = m_bidirectionalInverter->dc_ac_efficiency();
 }
 
 void ACBatteryController::run(size_t year, size_t hour_of_year, size_t step_of_hour, size_t index, double P_pv, double P_load)
@@ -62,7 +62,7 @@ void ACBatteryController::run(size_t year, size_t hour_of_year, size_t step_of_h
 	{
 		m_batteryPower->powerPVInverterDraw = P_pv;
 		m_batteryPower->powerPV = 0;
-		P_pv = 0;
+		P_pv = 0; 
 	}
 	// Dispatch the battery
 	m_dispatch->dispatch(year, hour_of_year, step_of_hour, P_pv, 0, P_load);
