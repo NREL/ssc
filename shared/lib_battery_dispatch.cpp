@@ -1437,9 +1437,8 @@ void dispatch_automatic_front_of_meter_t::costToCycle()
 	}
 }
 
-battery_metrics_t::battery_metrics_t(battery_t * Battery, double dt_hour)
+battery_metrics_t::battery_metrics_t(double dt_hour)
 {
-	_Battery = Battery;
 	_dt_hour = dt_hour;
 
 	// single value metrics
@@ -1474,16 +1473,16 @@ double battery_metrics_t::energy_grid_export_annual(){ return _e_grid_export_ann
 double battery_metrics_t::energy_loss_annual(){ return _e_loss_annual; }
 double battery_metrics_t::energy_system_loss_annual(){ return _e_loss_system_annual; };
 
-void battery_metrics_t::compute_metrics_ac(double P_tofrom_batt, double P_system_loss, double P_pv_to_batt, double P_grid_to_batt, double P_tofrom_grid)
+void battery_metrics_t::compute_metrics_ac(const BatteryPower * batteryPower)
 {
-	accumulate_grid_annual(P_tofrom_grid);
-	accumulate_battery_charge_components(P_tofrom_batt, P_pv_to_batt, P_grid_to_batt);
-	accumulate_energy_charge(P_tofrom_batt);
-	accumulate_energy_discharge(P_tofrom_batt);
-	accumulate_energy_system_loss(P_system_loss);
+	accumulate_grid_annual(batteryPower->powerGrid);
+	accumulate_battery_charge_components(batteryPower->powerBattery, batteryPower->powerPVToBattery, batteryPower->powerGridToBattery);
+	accumulate_energy_charge(batteryPower->powerBattery);
+	accumulate_energy_discharge(batteryPower->powerBattery);
+	accumulate_energy_system_loss(batteryPower->powerSystemLoss);
 	compute_annual_loss();
 }
-
+/*
 void battery_metrics_t::compute_metrics_dc(dispatch_t * dispatch)
 {
 	// dc quantities
@@ -1498,6 +1497,7 @@ void battery_metrics_t::compute_metrics_dc(dispatch_t * dispatch)
 	accumulate_battery_charge_components(P_tofrom_batt, P_pv_to_batt, P_grid_to_batt);
 	compute_annual_loss();
 }
+*/
 void battery_metrics_t::compute_annual_loss()
 {
 	double e_conversion_loss = 0.;

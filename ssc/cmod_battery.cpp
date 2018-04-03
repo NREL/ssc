@@ -778,7 +778,7 @@ battstor::battstor(compute_module &cm, bool setup_model, size_t nrec, double dt_
 		batt_system_losses);
 
 	battery_model->initialize(capacity_model, voltage_model, lifetime_model, thermal_model, losses_model);
-	battery_metrics = new battery_metrics_t(battery_model, dt_hr);
+	battery_metrics = new battery_metrics_t(dt_hr);
 
 	/*! Process the dispatch options and create the appropriate model */
 	if ((batt_vars->batt_meter_position == dispatch_t::BEHIND && batt_vars->batt_dispatch == dispatch_t::MANUAL) ||

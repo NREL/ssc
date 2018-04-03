@@ -186,8 +186,6 @@ protected:
 	BatteryPower * m_batteryPower;			/// A structure containing all of the components in the battery power flow calculations
 	dispatch_t * m_dispatch;				/// An object containing the framework to run a battery and check operational constraints
 	battery_metrics_t *m_batteryMetrics;    /// An object that tracks battery metrics for later analysis
-
-
 };
 
 /**

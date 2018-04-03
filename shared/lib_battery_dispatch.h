@@ -706,11 +706,11 @@ class battery_metrics_t
 	5. Percentage of energy charged from PV
 	*/
 public:
-	battery_metrics_t(battery_t * Battery, double dt_hour);
+	battery_metrics_t(double dt_hour);
 	~battery_metrics_t(){};
 
-	void compute_metrics_ac(double P_tofrom_batt, double P_system_loss, double P_pv_to_batt, double P_grid_to_batt, double P_tofrom_grid);
-	void compute_metrics_dc(dispatch_t * dispatch);
+	void compute_metrics_ac(const BatteryPower * batteryPower);
+	//void compute_metrics_dc(const BatteryPower * batteryPower);
 	void compute_annual_loss();
 
 	void accumulate_energy_charge(double P_tofrom_batt);
@@ -762,7 +762,6 @@ protected:
 	double _e_grid_export_annual;	   // [Kwh]
 	double _e_loss_annual;			   // [kWh]
 
-	battery_t * _Battery;
 	double _dt_hour;
 };
 
