@@ -101,7 +101,7 @@ public:
 		size_t step,
 		double P_system,
 		double P_system_clipped=0,
-		double P_load_ac=0 ) = 0;
+		double P_load_ac=0) = 0;
 
 	virtual bool check_constraints(double &I, int count);
 
@@ -142,6 +142,9 @@ public:
 
 protected:
 
+	/// Helper function to run common dispatch tasks.  Requires that m_batteryPower->powerBattery is previously defined
+	virtual void runDispatch(size_t year, size_t hour, size_t step);
+
 	/// Helper function to internally set up the dispatch model
 	virtual void prepareDispatch(size_t hour_of_year, size_t step, double P_system, double P_pv_dc_clipped = 0, double P_load_ac = 0);
 
@@ -156,8 +159,7 @@ protected:
 		double Pc_max,
 		double Pd_max,
 		double t_min,
-		int mode,
-		int pv_dispatch);
+		int mode);
 
 	// Controllers
 	void switch_controller();
@@ -177,9 +179,6 @@ protected:
 	*/
 	int _mode; 
 
-	/// The position of the battery relative to the meter (0 = behind, 1 = front)
-	int m_battMeterPosition;
-	
 	// allocated and managed internally
 	std::unique_ptr<BatteryPowerFlow> m_batteryPowerFlow;
 	
@@ -203,12 +202,6 @@ protected:
 	bool _charging;
 	bool _prev_charging;
 	bool _grid_recharge;
-
-	// Charging rules
-	bool  _can_charge;
-	bool  _can_clip_charge;
-	bool  _can_discharge;
-	bool  _can_grid_charge;
 
 	// messages
 	message _message;

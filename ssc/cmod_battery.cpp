@@ -360,11 +360,6 @@ battstor::battstor(compute_module &cm, bool setup_model, size_t nrec, double dt_
 					batt_vars->ec_tou_matrix = cm.as_matrix("ur_ec_tou_mat");
 					batt_vars->ec_rate_defined = true;
 				}
-			
-	
-				batt_vars->batt_dispatch_auto_can_charge = cm.as_boolean("batt_dispatch_auto_can_charge");
-				batt_vars->batt_dispatch_auto_can_clipcharge = cm.as_boolean("batt_dispatch_auto_can_clipcharge");
-				batt_vars->batt_dispatch_auto_can_gridcharge = cm.as_boolean("batt_dispatch_auto_can_gridcharge");
 
 				batt_vars->batt_cycle_cost_choice = cm.as_integer("batt_cycle_cost_choice");
 				batt_vars->batt_cycle_cost = cm.as_double("batt_cycle_cost");
@@ -407,6 +402,18 @@ battstor::battstor(compute_module &cm, bool setup_model, size_t nrec, double dt_
 				batt_vars->batt_gridcharge_percent = cm.as_vector_double("dispatch_manual_percent_gridcharge");
 				batt_vars->batt_discharge_schedule_weekday = cm.as_matrix_unsigned_long("dispatch_manual_sched");
 				batt_vars->batt_discharge_schedule_weekend = cm.as_matrix_unsigned_long("dispatch_manual_sched_weekend");
+			}
+
+			// Common to automated methods
+			batt_vars->batt_dispatch_auto_can_gridcharge = cm.as_boolean("batt_dispatch_auto_can_gridcharge");
+			batt_vars->batt_dispatch_auto_can_charge = true;
+			batt_vars->batt_dispatch_auto_can_clipcharge = true;
+
+			if (cm.is_assigned("batt_dispatch_auto_can_charge")) {
+				batt_vars->batt_dispatch_auto_can_charge = cm.as_boolean("batt_dispatch_auto_can_charge");
+			}
+			if (cm.is_assigned("batt_dispatch_auto_can_clipcharge")) {
+				batt_vars->batt_dispatch_auto_can_clipcharge = cm.as_boolean("batt_dispatch_auto_can_clipcharge");
 			}
 
 			// Battery bank replacement

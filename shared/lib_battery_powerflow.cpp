@@ -160,7 +160,6 @@ void BatteryPowerFlow::calculateACConnected()
 			P_batt_to_load = std::fmin(P_battery_ac, P_load - P_pv_to_load);
 		}
 		P_batt_to_grid = P_battery_ac - P_batt_to_load;
-
 	}
 
 	// compute losses
