@@ -440,10 +440,27 @@ int C_monotonic_eq_solver::solver_core(double x_guess_1, double y1, double x_gue
 				diff_x_bounds = m_x_neg_err - m_x_pos_err;
 			}
 		}
-		if( m_is_err_rel )
+		if (m_is_err_rel)
 		{
-			diff_x_bounds = diff_x_bounds / std::max(m_x_neg_err, m_x_pos_err);
+			// Not sure that it necessarily makes sense to tie normalization of diff_x_bounds to relative y error...
+			// But for now, at least need to make sure that diff_x_bounds doesn't end up nan
+			if (std::isfinite(m_x_neg_err) && std::isfinite(m_x_pos_err))
+			{
+				diff_x_bounds = diff_x_bounds / std::max(m_x_neg_err, m_x_pos_err);
+			}
+			else if (std::isfinite(m_x_neg_err))
+			{
+				diff_x_bounds = diff_x_bounds / m_x_neg_err;
+			}
+			else if (std::isfinite(m_x_pos_err))
+			{
+				diff_x_bounds = diff_x_bounds / m_x_pos_err;
+			}
+
+			// diff_x_bounds = diff_x_bounds / std::max(m_x_neg_err, m_x_pos_err);
 		}
+
+		// If it is early in the iteration and it was not set with finite bounds, then diff_x_bounds might be nan
 		if( fabs(diff_x_bounds) < m_tol / 10.0 )
 		{	// Assumes if x values are too close, then *something* is preventing convergence
 
