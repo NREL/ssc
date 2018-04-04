@@ -255,7 +255,6 @@ public:
 		// Storage dispatch controllers
 		int dispatch = as_integer("batt_simple_dispatch");
 		batt_vars->batt_dispatch = (dispatch == 0 ? dispatch_t::LOOK_AHEAD : dispatch_t::LOOK_BEHIND);
-		batt_vars->batt_pv_choice = dispatch_t::MEET_LOAD;
 
 		// Battery bank replacement
 		batt_vars->batt_replacement_capacity = 0.;

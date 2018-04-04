@@ -9,19 +9,19 @@ TEST_F(BatteryPowerFlowTest, TestInitialize)
 	m_batteryPower->canPVCharge = true;
 	m_batteryPower->powerPV = 100;
 	m_batteryPower->powerLoad = 50;
-	m_batteryPowerFlow->initialize();
+	m_batteryPowerFlow->initialize(50);
 	EXPECT_EQ(m_batteryPower->powerBattery, -50);
 
 	// Grid charging Scenario
 	m_batteryPower->canGridCharge = true;
-	m_batteryPowerFlow->initialize();
+	m_batteryPowerFlow->initialize(50);
 	EXPECT_EQ(m_batteryPower->powerBattery, -m_batteryPower->powerBatteryChargeMax);
 
 	// Discharging Scenario
 	m_batteryPower->canDischarge = true;
 	m_batteryPower->powerPV = 50;
 	m_batteryPower->powerLoad = 100;
-	m_batteryPowerFlow->initialize();
+	m_batteryPowerFlow->initialize(50);
 	EXPECT_EQ(m_batteryPower->powerBattery, 50);
 }
 
@@ -33,7 +33,7 @@ TEST_F(BatteryPowerFlowTest, TestACConnected)
 	m_batteryPower->canPVCharge = true;
 	m_batteryPower->powerPV = 100;
 	m_batteryPower->powerLoad = 50;
-	m_batteryPowerFlow->initialize();
+	m_batteryPowerFlow->initialize(50);
 	m_batteryPowerFlow->calculate();
 
 	EXPECT_NEAR(m_batteryPower->powerBattery, -52.08, error); // The extra 2.08 kW is due to conversion efficiency
@@ -47,7 +47,7 @@ TEST_F(BatteryPowerFlowTest, TestACConnected)
 	m_batteryPower->canPVCharge = false;
 	m_batteryPower->powerPV = 100;
 	m_batteryPower->powerLoad = 50;
-	m_batteryPowerFlow->initialize();
+	m_batteryPowerFlow->initialize(50);
 	m_batteryPowerFlow->calculate();
 
 	EXPECT_NEAR(m_batteryPower->powerBattery, -104.166, error);
@@ -61,7 +61,7 @@ TEST_F(BatteryPowerFlowTest, TestACConnected)
 	m_batteryPower->canDischarge = true;
 	m_batteryPower->powerPV = 50;
 	m_batteryPower->powerLoad = 100;
-	m_batteryPowerFlow->initialize();
+	m_batteryPowerFlow->initialize(50);
 	m_batteryPowerFlow->calculate();
 
 	EXPECT_NEAR(m_batteryPower->powerBattery, 48 , error);

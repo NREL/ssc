@@ -83,7 +83,7 @@ public:
 		double Pd_max,
 		double t_min,
 		int dispatch_mode,
-		int pv_dispatch);
+		int meter_position);
 
 	// deep copy constructor (new memory), from dispatch to this
 	dispatch_t(const dispatch_t& dispatch);
@@ -126,7 +126,6 @@ public:
 	virtual double cost_to_cycle() { return 0.;}
 
 	// control settings
-	int pv_dispatch_priority(){ return _pv_dispatch_to_battery_first; }
 	double battery_power_to_fill(){ return _Battery->battery_power_to_fill(_SOC_max); }
 
 	message get_messages();
@@ -178,12 +177,9 @@ protected:
 	*/
 	int _mode; 
 
-	/**
-	The priority for how PV power should be directed.
-	0 = meet load first, 1 = charge battery first
-	*/
-	int _pv_dispatch_to_battery_first; 
-
+	/// The position of the battery relative to the meter (0 = behind, 1 = front)
+	int m_battMeterPosition;
+	
 	// allocated and managed internally
 	std::unique_ptr<BatteryPowerFlow> m_batteryPowerFlow;
 	
@@ -235,8 +231,7 @@ public:
 		double Pd_max,
 		double t_min,
 		int mode,
-		int pv_dispatch,
-		int batt_meter_position,
+		int meterPosition,
 		util::matrix_t<size_t> dm_dynamic_sched,
 		util::matrix_t<size_t> dm_dynamic_sched_weekend,
 		std::vector<bool> can_charge,
@@ -296,54 +291,7 @@ protected:
 
 	std::map<size_t, double>  _percent_discharge_array;
 	std::map<size_t, double> _percent_charge_array;
-
-	int battMeterPosition;
 };
-/* Manual dispatch for utility scale (front of meter)*/
-class dispatch_manual_front_of_meter_t : public dispatch_manual_t
-{
-public:
-	dispatch_manual_front_of_meter_t(battery_t * Battery,
-		double dt_hour,
-		double SOC_min,
-		double SOC_max,
-		int current_choice,
-		double Ic_max,
-		double Id_max,
-		double Pc_max,
-		double Pd_max,
-		double t_min,
-		int mode,
-		int pv_dispatch,
-		util::matrix_t<size_t> dm_dynamic_sched,
-		util::matrix_t<size_t> dm_dynamic_sched_weekend,
-		std::vector<bool> can_charge,
-		std::vector<bool> can_discharge,
-		std::vector<bool> can_gridcharge,
-		std::map<size_t, double> dm_percent_discharge,
-		std::map<size_t, double> dm_percent_gridcharge);
-
-	~dispatch_manual_front_of_meter_t(){};
-
-	// deep copy constructor (new memory), from dispatch to this
-	dispatch_manual_front_of_meter_t(const dispatch_t & dispatch);
-
-	// copy members from dispatch to this
-	virtual void copy(const dispatch_t * dispatch);
-
-
-	/// Public API to run the battery dispatch model for the current timestep, given the system power, and optionally the electric load, amount of system clipping, or specified battery power
-	virtual void dispatch(size_t year,
-		size_t hour_of_year,
-		size_t step,
-		double P_system,
-		double P_system_clipped = 0,
-		double P_load_ac = 0);
-
-protected:
-	void compute_energy_no_load(double energy_needed);
-};
-
 
 /*! Class containing calculated grid power at a single time step */
 class grid_point

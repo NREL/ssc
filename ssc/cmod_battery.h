@@ -69,7 +69,6 @@ struct batt_variables
 	int batt_voltage_choice;
 	int batt_current_choice;
 	int batt_meter_position;
-	int batt_pv_choice;
 	int batt_target_choice;
 	int batt_loss_choice;
 	int batt_calendar_choice;

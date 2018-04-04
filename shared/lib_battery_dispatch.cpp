@@ -73,7 +73,7 @@ dispatch_t::dispatch_t(battery_t * Battery, double dt_hour, double SOC_min, doub
 
 }
 
-void dispatch_t::init(battery_t * Battery, double dt_hour, double SOC_min, double SOC_max, int current_choice, double Ic_max, double Id_max, double Pc_max, double Pd_max, double t_min, int mode, int pv_dispatch)
+void dispatch_t::init(battery_t * Battery, double dt_hour, double SOC_min, double SOC_max, int current_choice, double Ic_max, double Id_max, double Pc_max, double Pd_max, double t_min, int mode, int battMeterPosition)
 {
 	_dt_hour = dt_hour; 
 	_SOC_min = SOC_min;
@@ -85,7 +85,7 @@ void dispatch_t::init(battery_t * Battery, double dt_hour, double SOC_min, doubl
 	_Pd_max = Pd_max;
 	_t_min = t_min;
 	_mode = mode;
-	_pv_dispatch_to_battery_first = pv_dispatch;
+	m_battMeterPosition = battMeterPosition;
 
 	// limit the switch from charging to discharge so that doesn't flip-flop subhourly
 	_t_at_mode = 1000;
@@ -124,7 +124,7 @@ dispatch_t::dispatch_t(const dispatch_t& dispatch)
 
 	_Battery = new battery_t(*dispatch._Battery);
 	_Battery_initial = new battery_t(*dispatch._Battery_initial);
-	init(_Battery, dispatch._dt_hour, dispatch._SOC_min, dispatch._SOC_max, dispatch._current_choice, dispatch._Ic_max, dispatch._Id_max, dispatch._Pc_max, dispatch._Pd_max, dispatch._t_min, dispatch._mode, dispatch._pv_dispatch_to_battery_first);
+	init(_Battery, dispatch._dt_hour, dispatch._SOC_min, dispatch._SOC_max, dispatch._current_choice, dispatch._Ic_max, dispatch._Id_max, dispatch._Pc_max, dispatch._Pd_max, dispatch._t_min, dispatch._mode, dispatch.m_battMeterPosition);
 }
 
 // shallow copy from dispatch to this
@@ -132,7 +132,7 @@ void dispatch_t::copy(const dispatch_t * dispatch)
 {
 	_Battery->copy(dispatch->_Battery);
 	_Battery_initial->copy(dispatch->_Battery_initial);
-	init(_Battery, dispatch->_dt_hour, dispatch->_SOC_min, dispatch->_SOC_max, dispatch->_current_choice, dispatch->_Ic_max, dispatch->_Id_max, dispatch->_Pc_max, dispatch->_Pc_max, dispatch->_t_min, dispatch->_mode, dispatch->_pv_dispatch_to_battery_first);
+	init(_Battery, dispatch->_dt_hour, dispatch->_SOC_min, dispatch->_SOC_max, dispatch->_current_choice, dispatch->_Ic_max, dispatch->_Id_max, dispatch->_Pc_max, dispatch->_Pc_max, dispatch->_t_min, dispatch->_mode, dispatch->m_battMeterPosition);
 }
 void dispatch_t::delete_clone()
 {
@@ -294,13 +294,12 @@ bool dispatch_t::restrict_power(double &I)
 Manual Dispatch
 */
 dispatch_manual_t::dispatch_manual_t(battery_t * Battery, double dt, double SOC_min, double SOC_max, int current_choice, double Ic_max, double Id_max, double Pc_max, double Pd_max,
-	double t_min, int mode, int pv_dispatch, int batt_meter_position,
+	double t_min, int mode, int battMeterPosition,
 	util::matrix_t<size_t> dm_dynamic_sched, util::matrix_t<size_t> dm_dynamic_sched_weekend,
 	std::vector<bool> dm_charge, std::vector<bool> dm_discharge, std::vector<bool> dm_gridcharge, std::map<size_t, double>  dm_percent_discharge, std::map<size_t, double>  dm_percent_gridcharge)
 	: dispatch_t(Battery, dt, SOC_min, SOC_max, current_choice, Ic_max, Id_max,Pc_max, Pd_max,
-	t_min, mode, pv_dispatch)
+	t_min, mode, battMeterPosition)
 {
-	battMeterPosition = batt_meter_position;
 	init_with_vects(dm_dynamic_sched, dm_dynamic_sched_weekend, dm_charge, dm_discharge, dm_gridcharge, dm_percent_discharge, dm_percent_gridcharge);
 }
 
@@ -446,7 +445,7 @@ bool dispatch_manual_t::check_constraints(double &I, int count)
 			I -= fmin(dI, dQ / _dt_hour);
 		}
 		// Don't let battery export to the grid if behind the meter
-		else if (battMeterPosition == dispatch_t::BEHIND && I > 0 && m_batteryPower->powerBatteryToGrid > tolerance)
+		else if (m_battMeterPosition == dispatch_t::BEHIND && I > 0 && m_batteryPower->powerBatteryToGrid > tolerance)
 		{
 			if (fabs(m_batteryPower->powerBattery) < tolerance)
 				I -= (m_batteryPower->powerBatteryToGrid * util::kilowatt_to_watt / _Battery->battery_voltage());
@@ -519,71 +518,6 @@ void dispatch_manual_t::SOC_controller()
 	}
 	else
 		_charging = _prev_charging;
-}
-
-dispatch_manual_front_of_meter_t::dispatch_manual_front_of_meter_t(battery_t * Battery, double dt, double SOC_min, double SOC_max, int current_choice, double Ic_max, double Id_max, double Pc_max, double Pd_max,
-	double t_min, int mode, int pv_dispatch,
-	util::matrix_t<size_t> dm_dynamic_sched, util::matrix_t<size_t> dm_dynamic_sched_weekend,
-	std::vector<bool> dm_charge, std::vector<bool> dm_discharge, std::vector<bool> dm_gridcharge, std::map<size_t, double>  dm_percent_discharge, std::map<size_t, double>  dm_percent_gridcharge)
-	: dispatch_manual_t(Battery, dt, SOC_min, SOC_max, current_choice, Ic_max, Id_max,Pc_max, Pd_max,
-	t_min, mode, pv_dispatch, 1,
-	dm_dynamic_sched, dm_dynamic_sched_weekend,
-	dm_charge, dm_discharge, dm_gridcharge, dm_percent_discharge, dm_percent_gridcharge){};
-
-// deep copy from dispatch to this
-dispatch_manual_front_of_meter_t::dispatch_manual_front_of_meter_t(const dispatch_t & dispatch) :
-dispatch_manual_t(dispatch){}
-
-// shallow copy from dispatch to this
-void dispatch_manual_front_of_meter_t::copy(const dispatch_t * dispatch)
-{
-	dispatch_manual_t::copy(dispatch);
-}
-
-void dispatch_manual_front_of_meter_t::dispatch(size_t year,
-	size_t hour_of_year,
-	size_t step,
-	double P_system,
-	double P_system_clipping_dc,
-	double P_load_ac)
-{
-	prepareDispatch(hour_of_year, step, P_system, P_system_clipping_dc, P_load_ac);
-
-	// Initalize power flow model
-	m_batteryPowerFlow->initialize(0);
-
-	// Controllers
-	SOC_controller();
-	switch_controller();
-	double I = current_controller(_Battery->battery_voltage_nominal());
-
-	// Iteration variables
-	_Battery_initial->copy(_Battery);
-	bool iterate = true;
-	int count = 0;
-	size_t idx = util::index_year_hour_step(year, hour_of_year, step, (1 / _dt_hour));
-
-	do {
-
-		// Run Battery Model to update charge based on charge/discharge
-		_Battery->run(idx, I);
-
-		// Update how much power was actually used to/from battery
-		I = _Battery->capacity_model()->I();
-		double battery_voltage_new = _Battery->battery_voltage();
-		m_batteryPower->powerBattery = I * battery_voltage_new * util::watt_to_kilowatt;
-
-		// Update power flow calculations and check the constraints
-		m_batteryPowerFlow->calculate();
-		iterate = check_constraints(I, count);
-		m_batteryPower->powerBattery = I * _Battery->battery_voltage() * util::watt_to_kilowatt;
-		count++;
-
-	} while (iterate);
-
-	// finalize power flow calculation and update for next step
-	m_batteryPowerFlow->calculate();
-	_prev_charging = _charging;
 }
 
 dispatch_automatic_t::dispatch_automatic_t(
