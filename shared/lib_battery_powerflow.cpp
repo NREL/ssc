@@ -69,7 +69,7 @@ void BatteryPowerFlow::initialize()
 		// try to discharge full amount.  Will only use what battery can provide
 		if (m_BatteryPower->canDischarge)
 		{
-			m_BatteryPower->powerBattery = (m_BatteryPower->powerLoad - m_BatteryPower->powerPV) * 1.1;
+			m_BatteryPower->powerBattery = (m_BatteryPower->powerLoad - m_BatteryPower->powerPV);
 		}
 		// if we want to charge from grid instead of discharging
 		else if (m_BatteryPower->canGridCharge)
@@ -101,23 +101,25 @@ void BatteryPowerFlow::calculateACConnected()
 	// charging 
 	if (P_battery_ac <= 0)
 	{
+		// PV always goes to load first
+		P_pv_to_load = P_load;
+		if (P_pv_to_load > P_load) {
+			P_pv_to_load = P_load;
+		}
+		// Excess PV can go to battery
 		if (m_BatteryPower->canPVCharge){
 			P_pv_to_batt = fabs(P_battery_ac);
-			if (P_pv_to_batt > P_pv)
+			if (P_pv_to_batt > P_pv - P_pv_to_load)
 			{
-				P_pv_to_batt = P_pv;
+				P_pv_to_batt = P_pv - P_pv_to_load;
 			}
 		}
+		// Grid can also charge battery
 		if (m_BatteryPower->canGridCharge){
 			P_grid_to_batt = fabs(P_battery_ac) - P_pv_to_batt;
 		}
 
-		// Now calculate other power flow quantities
-		P_pv_to_load = P_pv - P_pv_to_batt;
-		if (P_pv_to_load > P_load){
-			P_pv_to_load = P_load;
-			P_pv_to_grid = P_pv - P_pv_to_batt - P_pv_to_load;
-		}
+		P_pv_to_grid = P_pv - P_pv_to_batt - P_pv_to_load;
 
 		// Error checking for battery charging
 		if (P_pv_to_batt + P_grid_to_batt != fabs(P_battery_ac)) {
@@ -151,6 +153,7 @@ void BatteryPowerFlow::calculateACConnected()
 	// compute losses
 	P_pv_to_batt_loss = P_pv_to_batt * (1 - m_BatteryPower->singlePointEfficiencyACToDC);
 	P_grid_to_batt_loss = P_grid_to_batt *(1 - m_BatteryPower->singlePointEfficiencyACToDC);
+	P_batt_to_load_loss = P_batt_to_load * (1 / m_BatteryPower->singlePointEfficiencyDCToAC - 1);
 
 	// Compute total system output and grid power flow
 	P_grid_to_load = P_load - P_pv_to_load - P_batt_to_load;
