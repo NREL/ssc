@@ -1,7 +1,6 @@
 #include <gtest/gtest.h>
 
 #include "lib_battery_powerflow_test.h"
-#include <lib_power_electronics.h>
 
 TEST_F(BatteryPowerFlowTest, TestInitialize)
 {
@@ -22,7 +21,7 @@ TEST_F(BatteryPowerFlowTest, TestInitialize)
 	m_batteryPower->powerPV = 50;
 	m_batteryPower->powerLoad = 100;
 	m_batteryPowerFlow->initialize(50);
-	EXPECT_EQ(m_batteryPower->powerBattery, 50);
+	EXPECT_EQ(m_batteryPower->powerBattery, m_batteryPower->powerBatteryDischargeMax);
 }
 
 TEST_F(BatteryPowerFlowTest, TestACConnected)

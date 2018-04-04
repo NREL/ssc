@@ -3,6 +3,8 @@
 
 #include <gtest/gtest.h>
 #include <lib_battery_powerflow.h>
+#include <lib_power_electronics.h>
+
 
 class BatteryPowerFlowTest : public ::testing::Test
 {
@@ -25,7 +27,8 @@ public:
 		m_batteryPower->singlePointEfficiencyACToDC = 0.96;
 		m_batteryPower->singlePointEfficiencyDCToAC = 0.96;
 		m_batteryPower->powerBatteryChargeMax = 100;
-
+		m_batteryPower->powerBatteryDischargeMax = 50;
+		m_batteryPower->connectionMode = ChargeController::AC_CONNECTED;
 	}
 	void TearDown()
 	{
