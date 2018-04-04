@@ -59,8 +59,8 @@ void BatteryPowerFlow::initialize()
 			// use all power available, it will only use what it can handle
 			m_BatteryPower->powerBattery = -(m_BatteryPower->powerPV - m_BatteryPower->powerLoad);
 		}
-		// if we want to charge from grid without charging from array
-		else if (m_BatteryPower->canGridCharge)
+		// if we want to charge from grid in addition to, or without array, we can always charge at max power
+		if (m_BatteryPower->canGridCharge)
 			m_BatteryPower->powerBattery = -m_BatteryPower->powerBatteryChargeMax;
 	}
 	// Or, is the demand greater than or equal to what the array provides
