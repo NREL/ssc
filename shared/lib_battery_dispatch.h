@@ -236,6 +236,7 @@ public:
 		double t_min,
 		int mode,
 		int pv_dispatch,
+		int batt_meter_position,
 		util::matrix_t<size_t> dm_dynamic_sched,
 		util::matrix_t<size_t> dm_dynamic_sched_weekend,
 		std::vector<bool> can_charge,
@@ -295,6 +296,8 @@ protected:
 
 	std::map<size_t, double>  _percent_discharge_array;
 	std::map<size_t, double> _percent_charge_array;
+
+	int battMeterPosition;
 };
 /* Manual dispatch for utility scale (front of meter)*/
 class dispatch_manual_front_of_meter_t : public dispatch_manual_t

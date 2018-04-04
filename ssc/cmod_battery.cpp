@@ -812,18 +812,18 @@ battstor::battstor(compute_module &cm, bool setup_model, size_t nrec, double dt_
 				batt_vars->batt_current_charge_max, batt_vars->batt_current_discharge_max,
 				batt_vars->batt_power_charge_max, batt_vars->batt_power_discharge_max,
 				batt_vars->batt_minimum_modetime,
-				batt_vars->batt_dispatch, batt_vars->batt_pv_choice,
+				batt_vars->batt_dispatch, batt_vars->batt_pv_choice,batt_vars->batt_meter_position,
 				batt_vars->batt_discharge_schedule_weekday, batt_vars->batt_discharge_schedule_weekend,
 				batt_vars->batt_can_charge, batt_vars->batt_can_discharge, batt_vars->batt_can_gridcharge, dm_percent_discharge, dm_percent_gridcharge);
 		}
 		/*! Front of meter dispatch model */
 		else if (batt_vars->batt_meter_position == dispatch_t::FRONT && batt_vars->batt_dispatch == dispatch_t::FOM_MANUAL)
 		{
-			dispatch_model = new dispatch_manual_front_of_meter_t(battery_model, dt_hr, batt_vars->batt_minimum_SOC, batt_vars->batt_maximum_SOC,
-				batt_vars->batt_current_choice,
+			dispatch_model = new dispatch_manual_t(battery_model, dt_hr, batt_vars->batt_minimum_SOC, batt_vars->batt_maximum_SOC,
+				batt_vars->batt_current_choice, 
 				batt_vars->batt_current_charge_max, batt_vars->batt_current_discharge_max,
 				batt_vars->batt_power_charge_max, batt_vars->batt_power_discharge_max, batt_vars->batt_minimum_modetime,
-				batt_vars->batt_dispatch, batt_vars->batt_pv_choice,
+				batt_vars->batt_dispatch, batt_vars->batt_pv_choice, batt_vars->batt_meter_position,
 				batt_vars->batt_discharge_schedule_weekday, batt_vars->batt_discharge_schedule_weekend,
 				batt_vars->batt_can_charge, batt_vars->batt_can_discharge, batt_vars->batt_can_gridcharge, dm_percent_discharge, dm_percent_gridcharge);
 

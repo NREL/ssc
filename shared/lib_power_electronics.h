@@ -226,7 +226,7 @@ public:
 	~DCBatteryController() {};
 
 	// function to determine appropriate pv and load to send to battery
-	void run(size_t year, size_t hour_of_year, size_t step_of_hour, size_t index, double P_pv, double P_pv_clipped=0, double P_load=0 ) {};
+	void run(size_t year, size_t hour_of_year, size_t step_of_hour, size_t index, double P_pv, double P_pv_clipped=0, double P_load=0 );
 
 private:
 	

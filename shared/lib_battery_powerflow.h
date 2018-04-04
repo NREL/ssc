@@ -37,7 +37,7 @@ public:
 	BatteryPowerFlow(const BatteryPowerFlow& powerFlow);
 
 	/// Initialize the power flow for the battery system.  Only needs to be called for manual dispatch control
-	void initialize();
+	void initialize(double stateOfCharge);
 
 	/// Calculate the power flow for the battery system
 	void calculate();
@@ -59,6 +59,7 @@ private:
 	*  2. Battery is charged from the Grid for any remaining power, even if this violates grid charging constraint
 	*  3. Battery discharges to the electric load first
 	*  4. Any additional battery discharge goes to the Grid.
+	*  5. In the event that the battery is allowed to charge and discharge, it will discharge.
 	*
 	*/
 	void calculateACConnected();
@@ -67,10 +68,10 @@ private:
 	void calculateDCConnected();
 
 	/// Initialize the AC connected battery
-	void initializeAC();
+	void initializeAC(double stateOfCharge);
 
 	/// Initialize the DC connected battery
-	void initializeDC();
+	void initializeDC(double stateOfCharge);
 
 	std::unique_ptr<BatteryPower> m_BatteryPower;   /// A structure containing the AC power flow components 
 };
@@ -118,16 +119,18 @@ public:
 	//double annualEnergyConversionLoss;  /// The total annual loss due to power electronic conversions
 
 	int connectionMode;					 /// 0 if DC-connected, 1 if AC-connected
-	double singlePointEfficiencyACToDC;  /// The conversion efficiency from AC power to DC power within the battery microinverter (0 - 100)
-	double singlePointEfficiencyDCToAC;  /// The conversion efficiency from DC power to AC power within the battery microinverter (0 - 100)
-	double singlePointEfficiencyDCToDC;  /// The conversion efficiency from DC power to DC power within the battery management system (0 - 100)
-	double sharedInverterEfficiency;	 /// The estimated efficiency of the shared inverter between the PV and battery for a DC-connected system (0-100)
+	double singlePointEfficiencyACToDC;  /// The conversion efficiency from AC power to DC power within the battery microinverter (0 - 1)
+	double singlePointEfficiencyDCToAC;  /// The conversion efficiency from DC power to AC power within the battery microinverter (0 - 1)
+	double singlePointEfficiencyDCToDC;  /// The conversion efficiency from DC power to DC power within the battery management system (0 - 1)
+	double sharedInverterEfficiency;	 /// The estimated efficiency of the shared inverter between the PV and battery for a DC-connected system (0-1)
 
 	bool canPVCharge;	/// A boolean specifying whether the battery is allowed to charge from PV in the timestep
 	bool canClipCharge;	/// A boolean specifying whether the battery is allowed to charge from otherwise clipped PV in the timestep
 	bool canGridCharge; /// A boolean specifying whether the battery is allowed to charge from the Grid in the timestep
 	bool canDischarge;  /// A boolean specifying whether the battery is allowed to discharge in the timestep
 
+	double stateOfChargeMax;    /// The maximum state of charge (0-100)
+	double stateOfChargeMin;    /// The minimum state of charge (0-100)
 
 	double tolerance;  /// A numerical tolerance. Below this value, zero out the power flow
 	double dtHour;	   /// The timestep in hours, used for accumulated power losses

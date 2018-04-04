@@ -60,6 +60,8 @@ dispatch_t::dispatch_t(battery_t * Battery, double dt_hour, double SOC_min, doub
 	std::unique_ptr<BatteryPowerFlow> tmp(new BatteryPowerFlow(dt_hour));
 	m_batteryPowerFlow = std::move(tmp);
 	m_batteryPower = m_batteryPowerFlow->getBatteryPower();
+	m_batteryPower->stateOfChargeMax = SOC_max;
+	m_batteryPower->stateOfChargeMin = SOC_min;
 
 	// initalize Battery and a copy of the Battery for iteration
 	_Battery = Battery;
@@ -100,7 +102,7 @@ void dispatch_t::init(battery_t * Battery, double dt_hour, double SOC_min, doubl
 
 	// initialize powerflow model
 	m_batteryPower->powerBatteryChargeMax = _Pc_max;
-	m_batteryPower->powerBatteryChargeMax = _Pd_max;
+	m_batteryPower->powerBatteryDischargeMax = _Pd_max;
 }
 
 
@@ -292,12 +294,13 @@ bool dispatch_t::restrict_power(double &I)
 Manual Dispatch
 */
 dispatch_manual_t::dispatch_manual_t(battery_t * Battery, double dt, double SOC_min, double SOC_max, int current_choice, double Ic_max, double Id_max, double Pc_max, double Pd_max,
-	double t_min, int mode, int pv_dispatch,
+	double t_min, int mode, int pv_dispatch, int batt_meter_position,
 	util::matrix_t<size_t> dm_dynamic_sched, util::matrix_t<size_t> dm_dynamic_sched_weekend,
 	std::vector<bool> dm_charge, std::vector<bool> dm_discharge, std::vector<bool> dm_gridcharge, std::map<size_t, double>  dm_percent_discharge, std::map<size_t, double>  dm_percent_gridcharge)
 	: dispatch_t(Battery, dt, SOC_min, SOC_max, current_choice, Ic_max, Id_max,Pc_max, Pd_max,
 	t_min, mode, pv_dispatch)
 {
+	battMeterPosition = batt_meter_position;
 	init_with_vects(dm_dynamic_sched, dm_dynamic_sched_weekend, dm_charge, dm_discharge, dm_gridcharge, dm_percent_discharge, dm_percent_gridcharge);
 }
 
@@ -374,7 +377,7 @@ void dispatch_manual_t::dispatch(size_t year,
 	prepareDispatch(hour_of_year, step, P_system, P_system_clipping_dc, P_load_ac);
 														
 	// Initialize power flow model
-	m_batteryPowerFlow->initialize();
+	m_batteryPowerFlow->initialize(_Battery->capacity_model()->SOC());
 
 	// Controllers
 	SOC_controller();
@@ -422,10 +425,7 @@ bool dispatch_manual_t::check_constraints(double &I, int count)
 	{
 		double I_initial = I;
 		iterate = true;
-		bool front_of_meter = false;
-		if (dispatch_manual_front_of_meter_t * dispatch = dynamic_cast<dispatch_manual_front_of_meter_t*>(this))
-			front_of_meter = true;
-
+		
 		// Don't let PV export to grid if can still charge battery (increase charging)
 		if (m_batteryPower->powerPVToGrid > low_tolerance &&
 			_can_charge &&									// only do if battery is allowed to charge
@@ -446,7 +446,7 @@ bool dispatch_manual_t::check_constraints(double &I, int count)
 			I -= fmin(dI, dQ / _dt_hour);
 		}
 		// Don't let battery export to the grid if behind the meter
-		else if (!front_of_meter && I > 0 && m_batteryPower->powerBatteryToGrid > tolerance)
+		else if (battMeterPosition == dispatch_t::BEHIND && I > 0 && m_batteryPower->powerBatteryToGrid > tolerance)
 		{
 			if (fabs(m_batteryPower->powerBattery) < tolerance)
 				I -= (m_batteryPower->powerBatteryToGrid * util::kilowatt_to_watt / _Battery->battery_voltage());
@@ -526,7 +526,7 @@ dispatch_manual_front_of_meter_t::dispatch_manual_front_of_meter_t(battery_t * B
 	util::matrix_t<size_t> dm_dynamic_sched, util::matrix_t<size_t> dm_dynamic_sched_weekend,
 	std::vector<bool> dm_charge, std::vector<bool> dm_discharge, std::vector<bool> dm_gridcharge, std::map<size_t, double>  dm_percent_discharge, std::map<size_t, double>  dm_percent_gridcharge)
 	: dispatch_manual_t(Battery, dt, SOC_min, SOC_max, current_choice, Ic_max, Id_max,Pc_max, Pd_max,
-	t_min, mode, pv_dispatch,
+	t_min, mode, pv_dispatch, 1,
 	dm_dynamic_sched, dm_dynamic_sched_weekend,
 	dm_charge, dm_discharge, dm_gridcharge, dm_percent_discharge, dm_percent_gridcharge){};
 
@@ -550,7 +550,7 @@ void dispatch_manual_front_of_meter_t::dispatch(size_t year,
 	prepareDispatch(hour_of_year, step, P_system, P_system_clipping_dc, P_load_ac);
 
 	// Initalize power flow model
-	m_batteryPowerFlow->initialize();
+	m_batteryPowerFlow->initialize(0);
 
 	// Controllers
 	SOC_controller();

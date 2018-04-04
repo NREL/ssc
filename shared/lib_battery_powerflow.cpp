@@ -30,6 +30,8 @@ BatteryPower::BatteryPower(double dtHour) :
 		canClipCharge(false),
 		canGridCharge(false),
 		canDischarge(false),
+		stateOfChargeMax(1),
+		stateOfChargeMin(0),
 		tolerance(0.001){}
 
 BatteryPower::BatteryPower(const BatteryPower& batteryPower) { /* nothing to do */ }
@@ -55,16 +57,22 @@ void BatteryPowerFlow::calculate()
 	}
 
 }
-void BatteryPowerFlow::initialize()
+void BatteryPowerFlow::initialize(double stateOfCharge)
 {
 	if (m_BatteryPower->connectionMode == ChargeController::AC_CONNECTED) {
-		initializeAC();
+		initializeAC(stateOfCharge);
 	}
 }
-void BatteryPowerFlow::initializeAC()
+void BatteryPowerFlow::initializeAC(double stateOfCharge)
 {
+	// If the battery is allowed to discharge, do so
+	if (m_BatteryPower->canDischarge && stateOfCharge > m_BatteryPower->stateOfChargeMin + 1.0)
+	{
+		// try to discharge full amount.  Will only use what battery can provide
+		m_BatteryPower->powerBattery = m_BatteryPower->powerBatteryDischargeMax;
+	}
 	// Is there extra power from system
-	if (m_BatteryPower->powerPV > m_BatteryPower->powerLoad)
+	else if (m_BatteryPower->powerPV > m_BatteryPower->powerLoad && m_BatteryPower->canPVCharge || m_BatteryPower->canGridCharge)
 	{
 		if (m_BatteryPower->canPVCharge)
 		{
@@ -72,23 +80,13 @@ void BatteryPowerFlow::initializeAC()
 			m_BatteryPower->powerBattery = -(m_BatteryPower->powerPV - m_BatteryPower->powerLoad);
 		}
 		// if we want to charge from grid in addition to, or without array, we can always charge at max power
-		if (m_BatteryPower->canGridCharge)
+		if (m_BatteryPower->canGridCharge) {
 			m_BatteryPower->powerBattery = -m_BatteryPower->powerBatteryChargeMax;
-	}
-	// Or, is the demand greater than or equal to what the array provides
-	else if (m_BatteryPower->powerLoad >= m_BatteryPower->powerPV)
-	{
-		// try to discharge full amount.  Will only use what battery can provide
-		if (m_BatteryPower->canDischarge)
-		{
-			m_BatteryPower->powerBattery = (m_BatteryPower->powerLoad - m_BatteryPower->powerPV);
 		}
-		// if we want to charge from grid instead of discharging
-		else if (m_BatteryPower->canGridCharge)
-			m_BatteryPower->powerBattery = -m_BatteryPower->powerBatteryChargeMax;
 	}
+
 }
-void BatteryPowerFlow::initializeDC() {}
+void BatteryPowerFlow::initializeDC(double stateOfCharge) {}
 
 
 void BatteryPowerFlow::calculateACConnected()
@@ -116,9 +114,10 @@ void BatteryPowerFlow::calculateACConnected()
 	if (P_battery_ac <= 0)
 	{
 		// PV always goes to load first
-		P_pv_to_load = P_load;
+		P_pv_to_load = P_pv;
 		if (P_pv_to_load > P_load) {
 			P_pv_to_load = P_load;
+
 		}
 		// Excess PV can go to battery
 		if (m_BatteryPower->canPVCharge){
