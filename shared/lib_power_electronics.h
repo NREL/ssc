@@ -205,24 +205,31 @@ public:
 	~ACBatteryController() {};
 
 	/// Runs the battery dispatch model with the current PV and Load information
-	void run(size_t year, size_t hour_of_year, size_t step_of_hour, size_t index, double P_pv, double P_load);
+	void run(size_t year, size_t hour_of_year, size_t step_of_hour, size_t index, double P_pv, double P_load=0);
 
 private:
 	// allocated and managed internally
 	std::unique_ptr<BatteryBidirectionalInverter> m_bidirectionalInverter;  /// Model for the battery bi-directional inverter
 };
 
+/**
+*
+* \class DCBatteryController
+*
+*  A DCBatteryController is derived from the ChargeController, and contains information specific to a battery connected on the DC-side
+*  of a power generating source.  It requires information about the efficiency to convert power from DC to DC between the battery and DC source
+*/
 class DCBatteryController : public ChargeController
 {
 public:
-	DCBatteryController(dispatch_t * dispatch, battery_metrics_t * battery_metrics, double efficiencyDCToDC);
+	DCBatteryController(dispatch_t * dispatch, battery_metrics_t * battery_metrics, double efficiencyDCToDC, double inverterEfficiency);
 	~DCBatteryController() {};
 
 	// function to determine appropriate pv and load to send to battery
-	void run(size_t year, size_t hour_of_year, size_t step_of_hour, size_t index, double P_pv, double P_load, double P_pv_clipped) {};
+	void run(size_t year, size_t hour_of_year, size_t step_of_hour, size_t index, double P_pv, double P_pv_clipped=0, double P_load=0 ) {};
 
 private:
-		
+	
 	// allocated and managed internally
 	std::unique_ptr<Battery_DC_DC_ChargeController> m_DCDCChargeController;  /// Model for the battery DC/DC charge controller with Battery Management System
 

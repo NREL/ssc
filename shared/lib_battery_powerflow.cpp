@@ -18,12 +18,18 @@ BatteryPower::BatteryPower(double dtHour) :
 		powerBatteryToLoad(0),
 		powerBatteryToGrid(0),
 		powerPVInverterDraw(0),
-		powerSystemLoss(0),
-		powerConversionLoss(0),
 		powerBatteryChargeMax(0),
 		powerBatteryDischargeMax(0),
-		singlePointEfficiencyACToDC(0),
-		singlePointEfficiencyDCToAC(0), 
+		powerSystemLoss(0),
+		powerConversionLoss(0),
+		connectionMode(0),
+		singlePointEfficiencyACToDC(0.96),
+		singlePointEfficiencyDCToAC(0.96), 
+		singlePointEfficiencyDCToDC(0.99),
+		canPVCharge(false),
+		canClipCharge(false),
+		canGridCharge(false),
+		canDischarge(false),
 		tolerance(0.001){}
 
 BatteryPower::BatteryPower(const BatteryPower& batteryPower) { /* nothing to do */ }
@@ -44,14 +50,20 @@ BatteryPower * BatteryPowerFlow::getBatteryPower()
 }
 void BatteryPowerFlow::calculate()
 {
-	if (m_BatteryPower->connectionMode == ChargeController::AC_CONNECTED){
+	if (m_BatteryPower->connectionMode == ChargeController::AC_CONNECTED) {
 		calculateACConnected();
 	}
-}
 
+}
 void BatteryPowerFlow::initialize()
 {
-	// Is there extra power from array
+	if (m_BatteryPower->connectionMode == ChargeController::AC_CONNECTED) {
+		initializeAC();
+	}
+}
+void BatteryPowerFlow::initializeAC()
+{
+	// Is there extra power from system
 	if (m_BatteryPower->powerPV > m_BatteryPower->powerLoad)
 	{
 		if (m_BatteryPower->canPVCharge)
@@ -76,6 +88,8 @@ void BatteryPowerFlow::initialize()
 			m_BatteryPower->powerBattery = -m_BatteryPower->powerBatteryChargeMax;
 	}
 }
+void BatteryPowerFlow::initializeDC() {}
+
 
 void BatteryPowerFlow::calculateACConnected()
 {

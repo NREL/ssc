@@ -69,5 +69,28 @@ void ACBatteryController::run(size_t year, size_t hour_of_year, size_t step_of_h
 
 	// Compute annual metrics
 	m_batteryMetrics->compute_metrics_ac(m_dispatch->getBatteryPower());
+}
 
+DCBatteryController::DCBatteryController(dispatch_t * dispatch, battery_metrics_t * battery_metrics, double efficiencyDCToDC, double inverterEfficiency) : ChargeController(dispatch, battery_metrics)
+{
+	std::unique_ptr<Battery_DC_DC_ChargeController> tmp(new Battery_DC_DC_ChargeController(efficiencyDCToDC, 100));
+	m_DCDCChargeController = std::move(tmp);
+	m_batteryPower = dispatch->getBatteryPower();
+	m_batteryPower->connectionMode = ChargeController::DC_CONNECTED;
+	m_batteryPower->singlePointEfficiencyDCToDC = m_DCDCChargeController->batt_dc_dc_bms_efficiency();
+	m_batteryPower->sharedInverterEfficiency = inverterEfficiency * 0.01;
+}
+
+void DCBatteryController::run(size_t year, size_t hour_of_year, size_t step_of_hour, size_t index, double P_pv, double P_clipped, double P_load)
+{
+	if (P_pv < 0)
+	{
+		m_batteryPower->powerPV = 0;
+		P_pv = 0;
+	}
+	// Dispatch the battery
+	m_dispatch->dispatch(year, hour_of_year, step_of_hour, P_pv, P_clipped, P_load);
+
+	// Compute annual metrics
+	//m_batteryMetrics->compute_metrics_ac(m_dispatch->getBatteryPower());
 }

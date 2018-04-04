@@ -66,6 +66,12 @@ private:
 	/// Calculate the power flow for an DC connected battery system
 	void calculateDCConnected();
 
+	/// Initialize the AC connected battery
+	void initializeAC();
+
+	/// Initialize the DC connected battery
+	void initializeDC();
+
 	std::unique_ptr<BatteryPower> m_BatteryPower;   /// A structure containing the AC power flow components 
 };
 
@@ -115,8 +121,10 @@ public:
 	double singlePointEfficiencyACToDC;  /// The conversion efficiency from AC power to DC power within the battery microinverter (0 - 100)
 	double singlePointEfficiencyDCToAC;  /// The conversion efficiency from DC power to AC power within the battery microinverter (0 - 100)
 	double singlePointEfficiencyDCToDC;  /// The conversion efficiency from DC power to DC power within the battery management system (0 - 100)
+	double sharedInverterEfficiency;	 /// The estimated efficiency of the shared inverter between the PV and battery for a DC-connected system (0-100)
 
 	bool canPVCharge;	/// A boolean specifying whether the battery is allowed to charge from PV in the timestep
+	bool canClipCharge;	/// A boolean specifying whether the battery is allowed to charge from otherwise clipped PV in the timestep
 	bool canGridCharge; /// A boolean specifying whether the battery is allowed to charge from the Grid in the timestep
 	bool canDischarge;  /// A boolean specifying whether the battery is allowed to discharge in the timestep
 
