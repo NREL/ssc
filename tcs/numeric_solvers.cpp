@@ -404,7 +404,7 @@ int C_monotonic_eq_solver::solver_core(double x_guess_1, double y1, double x_gue
 	m_iter = 0;		// Counter is first line inside loop, so first iteration = 1
 
 	// Start iteration loop
-	while( fabs(m_y_err) > m_tol || m_y_err != m_y_err )
+	while( fabs(m_y_err) > m_tol || !std::isfinite(m_y_err) )
 	{
 		m_iter++;		// First iteration = 1
 

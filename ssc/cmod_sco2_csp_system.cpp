@@ -75,6 +75,7 @@ static var_info _cm_vtab_sco2_csp_system[] = {
 	{ SSC_INPUT,  SSC_NUMBER,  "is_PR_fixed",          "0 = No, >0 = fixed pressure ratio",                      "",           "",    "",      "?=0",   "",       "" },
 	{ SSC_INPUT,  SSC_NUMBER,  "des_objective",        "[2] = hit min phx deltat then max eta, [else] max eta",  "",           "",    "",      "?=0",   "",       "" },
 	{ SSC_INPUT,  SSC_NUMBER,  "min_phx_deltaT",       "Minimum design temperature difference across PHX",       "C",          "",    "",      "?=0",   "",       "" },	
+	{ SSC_INPUT,  SSC_NUMBER,  "rel_tol",              "Baseline solver and optimization relative tolerance exponent (10^-rel_tol)", "-", "", "", "?=3","",       "" },	
 	// Cycle Design
 	{ SSC_INPUT,  SSC_NUMBER,  "eta_isen_mc",          "Design main compressor isentropic efficiency",           "-",          "",    "",      "*",     "",       "" },
 	{ SSC_INPUT,  SSC_NUMBER,  "eta_isen_rc",          "Design re-compressor isentropic efficiency",             "-",          "",    "",      "*",     "",       "" },
@@ -386,8 +387,10 @@ public:
 		//sco2_rc_des_par.m_N_turbine = 3600.0;
 		sco2_rc_des_par.m_N_turbine = 30000.0;
 
-		sco2_rc_des_par.m_tol = 1.E-3;
-		sco2_rc_des_par.m_opt_tol = 1.E-3;
+		//sco2_rc_des_par.m_tol = 1.E-3;
+		//sco2_rc_des_par.m_opt_tol = 1.E-3;
+		sco2_rc_des_par.m_tol = pow(10, -as_double("rel_tol"));
+		sco2_rc_des_par.m_opt_tol = pow(10, -as_double("rel_tol"));
 		
 			// Remaining cycle design parameters
 		sco2_rc_des_par.m_LT_eff_max = as_double("LT_recup_eff_max");
