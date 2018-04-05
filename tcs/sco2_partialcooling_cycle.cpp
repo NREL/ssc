@@ -303,7 +303,17 @@ int C_PartialCooling_Cycle::design_core()
 	m_eta_thermal_calc_last = m_W_dot_net_last / PHX_des_par.m_Q_dot_design;	//[-]
 	m_energy_bal_last = (PHX_des_par.m_Q_dot_design - m_W_dot_net_last - PC_partial_des_par.m_Q_dot_design - PC_full_des_par.m_Q_dot_design) / PHX_des_par.m_Q_dot_design;	//[-]
 
-	m_objective_metric_last = m_eta_thermal_calc_last;
+	if (ms_des_par.m_des_objective_type == 2)
+	{
+		double phx_deltaT = m_temp_last[TURB_IN] - m_temp_last[HTR_HP_OUT];
+		double under_min_deltaT = std::max(0.0, ms_des_par.m_min_phx_deltaT - phx_deltaT);
+		double eta_deltaT_scale = std::exp(-under_min_deltaT);
+		m_objective_metric_last = m_eta_thermal_calc_last * eta_deltaT_scale;
+	}
+	else
+	{
+		m_objective_metric_last = m_eta_thermal_calc_last;
+	}
 
 	return 0;
 }
@@ -324,10 +334,18 @@ int C_PartialCooling_Cycle::C_MEQ_HTR_des::operator()(double T_HTR_LP_out /*K*/,
 	mpc_pc_cycle->m_entr_last[HTR_LP_OUT] = mpc_pc_cycle->mc_co2_props.entr;	//[kJ/kg-K]
 	mpc_pc_cycle->m_dens_last[HTR_LP_OUT] = mpc_pc_cycle->mc_co2_props.dens;	//[kg/m^3]
 
-	mpc_pc_cycle->mc_LTR.design_fix_UA_calc_outlet(mpc_pc_cycle->ms_des_par.m_UA_LTR, mpc_pc_cycle->ms_des_par.m_LTR_eff_max,
-		mpc_pc_cycle->m_temp_last[MC_OUT], mpc_pc_cycle->m_pres_last[MC_OUT], mpc_pc_cycle->m_m_dot_mc, mpc_pc_cycle->m_pres_last[LTR_HP_OUT],
-		mpc_pc_cycle->m_temp_last[HTR_LP_OUT], mpc_pc_cycle->m_pres_last[HTR_LP_OUT], mpc_pc_cycle->m_m_dot_t, mpc_pc_cycle->m_pres_last[LTR_LP_OUT],
-		m_Q_dot_LTR, mpc_pc_cycle->m_temp_last[LTR_HP_OUT], mpc_pc_cycle->m_temp_last[LTR_LP_OUT]);
+	try
+	{
+		mpc_pc_cycle->mc_LTR.design_fix_UA_calc_outlet(mpc_pc_cycle->ms_des_par.m_UA_LTR, mpc_pc_cycle->ms_des_par.m_LTR_eff_max,
+			mpc_pc_cycle->m_temp_last[MC_OUT], mpc_pc_cycle->m_pres_last[MC_OUT], mpc_pc_cycle->m_m_dot_mc, mpc_pc_cycle->m_pres_last[LTR_HP_OUT],
+			mpc_pc_cycle->m_temp_last[HTR_LP_OUT], mpc_pc_cycle->m_pres_last[HTR_LP_OUT], mpc_pc_cycle->m_m_dot_t, mpc_pc_cycle->m_pres_last[LTR_LP_OUT],
+			m_Q_dot_LTR, mpc_pc_cycle->m_temp_last[LTR_HP_OUT], mpc_pc_cycle->m_temp_last[LTR_LP_OUT]);
+	}
+	catch (C_csp_exception &)
+	{
+		*diff_T_HTR_LP_out = std::numeric_limits<double>::quiet_NaN();
+		return -2;
+	}
 
 	prop_error_code = CO2_TP(mpc_pc_cycle->m_temp_last[LTR_LP_OUT], mpc_pc_cycle->m_pres_last[LTR_LP_OUT], &mpc_pc_cycle->mc_co2_props);
 	if (prop_error_code)
