@@ -1580,8 +1580,11 @@ void battery_t::runThermalModel(double I)
 
 void battery_t::runCapacityModel(double &I)
 {
-	// Need to first update capacity model to ensure temperature accounted for
-	_capacity->updateCapacityForThermal(_thermal->capacity_percent());
+	// Don't update max capacity if the battery is idle
+	if (fabs(I) > tolerance) {
+		// Need to first update capacity model to ensure temperature accounted for
+		_capacity->updateCapacityForThermal(_thermal->capacity_percent());
+	}
 	_capacity->updateCapacity(I, _dt_hour );
 }
 

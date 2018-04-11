@@ -126,7 +126,7 @@ public:
 	virtual double cost_to_cycle() { return 0.;}
 
 	// control settings
-	double battery_power_to_fill(){ return _Battery->battery_power_to_fill(_SOC_max); }
+	double battery_power_to_fill(){ return _Battery->battery_power_to_fill(m_batteryPower->stateOfChargeMax); }
 
 	message get_messages();
 
@@ -151,17 +151,12 @@ protected:
 	// Initialization help
 	void init(battery_t * Battery,
 		double dt_hour,
-		double SOC_min,
-		double SOC_max,
 		int current_choice,
-		double Ic_max,
-		double Id_max,
-		double Pc_max,
-		double Pd_max,
 		double t_min,
 		int mode);
 
 	// Controllers
+	virtual	void SOC_controller();
 	void switch_controller();
 	double current_controller(double battery_voltage);
 	bool restrict_current(double &I);
@@ -186,13 +181,7 @@ protected:
 	BatteryPower * m_batteryPower;
 
 	// Charge & current limits controllers
-	double _SOC_min;
-	double _SOC_max;
 	int _current_choice;
-	double _Pc_max;
-	double _Pd_max;
-	double _Ic_max;
-	double _Id_max;
 	double _t_min;
 	double _e_max;
 	double _P_target;
