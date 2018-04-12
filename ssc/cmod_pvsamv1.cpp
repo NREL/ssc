@@ -1751,6 +1751,17 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 	int batt_topology = (en_batt == true ? batt.batt_vars->batt_topology : 0);
 	std::vector<ssc_number_t> p_invcliploss_full;
 	p_invcliploss_full.reserve(nlifetime);
+
+	std::vector<ssc_number_t> p_pv_clipping_forecast;
+	std::vector<ssc_number_t> p_pv_dc_forecast;
+	std::vector<ssc_number_t> p_pv_dc_use;
+
+	if (is_assigned("batt_pv_clipping_forecast")) {
+		p_pv_clipping_forecast = as_vector_ssc_number_t("batt_pv_clipping_forecast");
+	}
+	if (is_assigned("batt_pv_dc_forecast")) {
+		p_pv_dc_forecast = as_vector_ssc_number_t("batt_pv_dc_forecast");
+	}
 		
 	// electric load - lifetime load data? 
 	double cur_load = 0.0;
@@ -2662,9 +2673,21 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 
 				// Predict clipping for DC battery controller
 				double acpwr_gross = 0, aceff = 0, pntloss = 0, psoloss = 0, cliploss = 0;
-				run_inverter(&snlinv, &plinv,
-					inv_type, dcpwr_net, num_inverters, dc_string_voltage,
+				double dcpwr = p_dcpwr[idx];
+
+				if (p_pv_dc_forecast.size() > 1 && p_pv_dc_forecast.size() > idx % (8760 * step_per_hour)) {
+					dcpwr = p_pv_dc_forecast[idx % (8760 * step_per_hour)];
+				}
+				p_pv_dc_use.push_back(static_cast<ssc_number_t>(dcpwr));
+
+ 				run_inverter(&snlinv, &plinv,
+					inv_type, dcpwr * util::kilowatt_to_watt, num_inverters, dc_string_voltage,
 					acpwr_gross, aceff, cliploss, psoloss, pntloss);
+				 
+				if (p_pv_clipping_forecast.size() > 1 && p_pv_clipping_forecast.size() > idx % (8760 * step_per_hour)) {
+					cliploss = p_pv_clipping_forecast[idx % (8760 * step_per_hour)] * util::kilowatt_to_watt;
+				}
+
 				p_invcliploss_full.push_back(static_cast<ssc_number_t>(cliploss * util::watt_to_kilowatt));
 
 				idx++;
@@ -2676,7 +2699,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 
 	// Initialize DC battery predictive controller
 	if (en_batt && (batt_topology == charge_controller::DC_CONNECTED))
-		batt.initialize_automated_dispatch(util::array_to_vector<ssc_number_t>(p_dcpwr, nlifetime), p_load_full, p_invcliploss_full);
+		batt.initialize_automated_dispatch(p_pv_dc_use, p_load_full, p_invcliploss_full);
 
 	/* *********************************************************************************************
 	PV AC calculation

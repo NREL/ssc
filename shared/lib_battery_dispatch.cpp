@@ -1602,7 +1602,7 @@ void dispatch_automatic_front_of_meter_t::update_dispatch(size_t hour_of_year, s
 
 			/*! Cost to cycle the battery at all, using maximum DOD or user input */
 			costToCycle();
-
+			 
 			/*! Cost to purchase electricity from the utility */
 			double usage_cost = _utilityRateCalculator->getEnergyRate(hour_of_year);
 
