@@ -2,9 +2,9 @@
 #define _LIB_BATTERY_POWERFLOW_H_
 
 #include <memory>
+//#include "lib_power_electronics.h"
 
 struct BatteryPower;
-
 
 /**
 * \class BatteryPowerFlow
@@ -26,7 +26,6 @@ struct BatteryPower;
 *				 c) Iterate on the current (due to the nonlinear relationship in P = IV) until the constraints are met
 *				 d) Calculate the final power flow for the time step.
 */
-
 class BatteryPowerFlow
 {
 public:
@@ -114,6 +113,7 @@ public:
 	double powerBatteryDischargeMax;/// The maximum sustained power the battery can discharge (kW)
 	double powerSystemLoss;        /// The parasitic power loss in the system (kW)
 	double powerConversionLoss;    /// The power loss due to conversions in the battery power electronics (kW)
+	double voltageSystem;		   /// The system voltage
 
 	//double annualEnergySystemLoss;  /// The total annual loss due to user-specified system losses
 	//double annualEnergyConversionLoss;  /// The total annual loss due to power electronic conversions
@@ -122,7 +122,7 @@ public:
 	double singlePointEfficiencyACToDC;  /// The conversion efficiency from AC power to DC power within the battery microinverter (0 - 1)
 	double singlePointEfficiencyDCToAC;  /// The conversion efficiency from DC power to AC power within the battery microinverter (0 - 1)
 	double singlePointEfficiencyDCToDC;  /// The conversion efficiency from DC power to DC power within the battery management system (0 - 1)
-	double sharedInverterEfficiency;	 /// The estimated efficiency of the shared inverter between the PV and battery for a DC-connected system (0-1)
+	//SharedInverter * sharedInverter;	 /// The shared inverter between the PV and battery for a DC-connected system
 
 	bool canPVCharge;	/// A boolean specifying whether the battery is allowed to charge from PV in the timestep
 	bool canClipCharge;	/// A boolean specifying whether the battery is allowed to charge from otherwise clipped PV in the timestep

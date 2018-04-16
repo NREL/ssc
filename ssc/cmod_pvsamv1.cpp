@@ -1515,9 +1515,8 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 	}
 	ratedACOutput *= num_inverters;
 
-
-
-
+	// The shared inverter of the PV array and a tightly-coupled DC connected battery
+	std::unique_ptr<SharedInverter> sharedInverter(new SharedInverter(inv_type, num_inverters, &snlinv, &plinv));
 
 	// Warning workaround
 	static bool is32BitLifetime = (__ARCHBITS__ == 32 && system_use_lifetime_output);
@@ -1748,6 +1747,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 	// setup battery model
 	bool en_batt = as_boolean("en_batt");
 	battstor batt(*this, en_batt, nrec, ts_hour);
+	batt.setSharedInverter(sharedInverter.get());
 	int batt_topology = (en_batt == true ? batt.batt_vars->batt_topology : 0);
 	std::vector<ssc_number_t> p_invcliploss_full;
 	p_invcliploss_full.reserve(nlifetime);
@@ -2680,8 +2680,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 				}
 				p_pv_dc_use.push_back(static_cast<ssc_number_t>(dcpwr));
 
- 				run_inverter(&snlinv, &plinv,
-					inv_type, dcpwr * util::kilowatt_to_watt, num_inverters, dc_string_voltage,
+ 				sharedInverter->calculateACPower(dcpwr * util::kilowatt_to_watt, dc_string_voltage,
 					acpwr_gross, aceff, cliploss, psoloss, pntloss);
 				 
 				if (p_pv_clipping_forecast.size() > 1 && p_pv_clipping_forecast.size() > idx % (8760 * step_per_hour)) {
@@ -2747,12 +2746,11 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 							annual_dc_power_before_battery += p_dcpwr[idx] * ts_hour;
 
 						// Compute PV clipping before adding battery
-						run_inverter(&snlinv, &plinv,
-							inv_type, dcpwr_net, num_inverters, dc_string_voltage,
+						sharedInverter->calculateACPower(dcpwr_net, dc_string_voltage,
 							acpwr_gross, aceff, cliploss, psoloss, pntloss);
 
 						// Run battery
-						batt.advance(*this, dcpwr_net*util::watt_to_kilowatt, cur_load, cliploss*util::watt_to_kilowatt);
+						batt.advance(*this, dcpwr_net*util::watt_to_kilowatt, dc_string_voltage, cur_load, cliploss*util::watt_to_kilowatt);
 						dcpwr_net = util::kilowatt_to_watt * batt.outGenPower[idx];
 
 						// inverter can't handle negative dcpwr
@@ -2770,8 +2768,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 					// inverter: runs at all hours of the day, even if no DC power.  important
 					// for capturing tare losses			
 					acpwr_gross = 0, aceff = 0, pntloss = 0, psoloss = 0, cliploss = 0, ac_wiringloss = 0;
-					run_inverter(&snlinv, &plinv,
-						inv_type, dcpwr_net, num_inverters, dc_string_voltage,
+					sharedInverter->calculateACPower(dcpwr_net, dc_string_voltage,
 						acpwr_gross, aceff, cliploss, psoloss, pntloss);
 
 					// if dc connected battery, update post-inverted quantities
@@ -2873,7 +2870,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 				{
 					batt.initialize_time(iyear, hour, jj);
 					batt.check_replacement_schedule();
-					batt.advance(*this, p_gen[idx], p_load_full[idx]);
+					batt.advance(*this, p_gen[idx], 0, p_load_full[idx]);
 					p_gen[idx] = batt.outGenPower[idx];
 				}
 
@@ -3313,36 +3310,6 @@ double cm_pvsamv1::module_eff(int mod_type)
 
 	if (eff == 0.0) eff = -1;
 	return eff;
-}
-
-void cm_pvsamv1::run_inverter(sandia_inverter_t * snlinv, partload_inverter_t * plinv, 
-	const int inv_type, const double dcpwr_net, const int num_inverters, const double dc_string_voltage,
-	double & acpwr_gross, double & aceff, double & cliploss, double & psoloss, double & pntloss)
-{
-	// inverter: runs at all hours of the day, even if no DC power.  important
-	// for capturing tare losses			
-	if ((inv_type == 0) || (inv_type == 1) || (inv_type == 3))
-	{
-		double _par, _plr;
-		snlinv->acpower(dcpwr_net / num_inverters, dc_string_voltage,
-			&acpwr_gross, &_par, &_plr, &aceff, &cliploss, &psoloss, &pntloss);
-
-		acpwr_gross *= num_inverters;
-		cliploss *= num_inverters;
-		psoloss *= num_inverters;
-		pntloss *= num_inverters;
-		aceff *= 100;
-	}
-	else if (inv_type == 2) // partload
-	{
-		double _par, _plr;
-		plinv->acpower(dcpwr_net / num_inverters, &acpwr_gross, &_par, &_plr, &aceff, &cliploss, &pntloss);
-		acpwr_gross *= num_inverters;
-		cliploss *= num_inverters;
-		psoloss *= num_inverters;
-		pntloss *= num_inverters;
-		aceff *= 100;
-	}
 }
 
 void cm_pvsamv1::inverter_vdcmax_check()

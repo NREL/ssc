@@ -458,23 +458,23 @@ battstor::battstor(compute_module &cm, bool setup_model, size_t nrec, double dt_
 				batt_vars->inverter_model = cm.as_integer("inverter_model");
 				batt_vars->inverter_count = cm.as_integer("inverter_count");
 
-				if (batt_vars->inverter_model == BatteryInverter::SANDIA_INVERTER)
+				if (batt_vars->inverter_model == SharedInverter::SANDIA_INVERTER)
 				{
 					batt_vars->inverter_efficiency = cm.as_double("inv_snl_eff_cec");
 					batt_vars->inverter_paco = batt_vars->inverter_count * cm.as_double("inv_snl_paco") * util::watt_to_kilowatt;
 				}
-				else if (batt_vars->inverter_model == BatteryInverter::DATASHEET_INVERTER)
+				else if (batt_vars->inverter_model == SharedInverter::DATASHEET_INVERTER)
 				{
 					batt_vars->inverter_efficiency = cm.as_double("inv_ds_eff");
 					batt_vars->inverter_paco = batt_vars->inverter_count * cm.as_double("inv_ds_paco") * util::watt_to_kilowatt;
 
 				}
-				else if (batt_vars->inverter_model == BatteryInverter::PARTLOAD_INVERTER)
+				else if (batt_vars->inverter_model == SharedInverter::PARTLOAD_INVERTER)
 				{
 					batt_vars->inverter_efficiency = cm.as_double("inv_pd_eff");
 					batt_vars->inverter_paco = batt_vars->inverter_count * cm.as_double("inv_pd_paco") * util::watt_to_kilowatt;
 				}
-				else if (batt_vars->inverter_model == BatteryInverter::COEFFICIENT_GENERATOR)
+				else if (batt_vars->inverter_model == SharedInverter::COEFFICIENT_GENERATOR)
 				{
 					batt_vars->inverter_efficiency = cm.as_double("inv_cec_cg_eff_cec");
 					batt_vars->inverter_paco = batt_vars->inverter_count * cm.as_double("inv_cec_cg_paco") * util::watt_to_kilowatt;
@@ -482,7 +482,7 @@ battstor::battstor(compute_module &cm, bool setup_model, size_t nrec, double dt_
 			}
 			else
 			{
-				batt_vars->inverter_model = BatteryInverter::NONE;
+				batt_vars->inverter_model = SharedInverter::NONE;
 				batt_vars->inverter_count = 1;
 				batt_vars->inverter_efficiency = batt_vars->batt_ac_dc_efficiency;
 				batt_vars->inverter_paco = batt_vars->batt_kw;
@@ -887,14 +887,13 @@ battstor::battstor(compute_module &cm, bool setup_model, size_t nrec, double dt_
 		}
 	}
 
-	ac_dc = batt_vars->batt_ac_dc_efficiency;
-	dc_ac = batt_vars->batt_dc_ac_efficiency;
+	if (batt_vars->batt_topology == ChargeController::AC_CONNECTED) {
+		charge_control = new ACBatteryController(dispatch_model, battery_metrics, batt_vars->batt_ac_dc_efficiency, batt_vars->batt_dc_ac_efficiency);
+	}
+	else if (batt_vars->batt_topology == ChargeController::DC_CONNECTED) {
+		charge_control = new DCBatteryController(dispatch_model, battery_metrics, batt_vars->batt_dc_dc_bms_efficiency);
+	}
 
-	if (batt_vars->batt_topology == ChargeController::AC_CONNECTED)
-		charge_control = new ACBatteryController(dispatch_model, battery_metrics, ac_dc, dc_ac);
-	//else if (batt_vars->batt_topology == ChargeController::DC_CONNECTED)
-	//	charge_control = new DCBatteryController(dispatch_model, battery_metrics, batt_vars->batt_dc_dc_bms_efficiency, batt_vars->pv_dc_dc_mppt_efficiency, batt_vars->inverter_efficiency);
-	
 	parse_configuration();
 }
 
@@ -1113,16 +1112,20 @@ void battstor::initialize_time(size_t year_in, size_t hour_of_year, size_t step_
 	year_index = (hour * step_per_hour) + step; 
 	step_per_year = 8760 * step_per_hour;
 }
-void battstor::advance(compute_module &cm, double P_pv_dc, double P_load_dc, double P_pv_clipped )
+void battstor::advance(compute_module &cm, double P_pv, double V_pv, double P_load, double P_pv_clipped )
 {
-	charge_control->run(year, hour, step, year_index, P_pv_dc, P_load_dc /*, P_pv_clipped*/);
+	charge_control->run(year, hour, step, year_index, P_pv, V_pv, P_load, P_pv_clipped);
 	outputs_fixed(cm);
 	outputs_topology_dependent(cm);
 
 	if (batt_vars->batt_topology == ChargeController::AC_CONNECTED)
 		metrics(cm);
 }
-
+void battstor::setSharedInverter(SharedInverter * sharedInverter)
+{
+	if (DCBatteryController * tmp = dynamic_cast<DCBatteryController *>(charge_control))
+		tmp->setSharedInverter(sharedInverter);
+}
 void battstor::outputs_fixed(compute_module &cm)
 {
 	if (index == total_steps - 1)

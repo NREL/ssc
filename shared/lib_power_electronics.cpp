@@ -1,5 +1,31 @@
 #include "lib_power_electronics.h"
 
+SharedInverter::SharedInverter(int inverterType, int numberOfInverters,
+	sandia_inverter_t * sandiaInverter, partload_inverter_t * partloadInverter)
+{
+	m_inverterType = inverterType;
+	m_numInverters = numberOfInverters;
+	m_sandiaInverter = sandiaInverter;
+	m_partloadInverter = partloadInverter;
+}
+
+void SharedInverter::calculateACPower(const double powerDC, const double DCStringVoltage,
+	double & powerAC, double & efficiencyAC, double & powerClipLoss, double & powerConsumptionLoss, double & powerNightLoss)
+{
+	double P_par, P_lr;
+	if (m_inverterType == SANDIA_INVERTER)
+		m_sandiaInverter->acpower(powerDC / m_numInverters, DCStringVoltage, &powerAC, &P_par, &P_lr, &efficiencyAC, &powerClipLoss, &powerConsumptionLoss, &powerNightLoss);
+	else if (m_inverterType == PARTLOAD_INVERTER)
+		m_partloadInverter->acpower(powerDC / m_numInverters, &powerAC, &P_lr, &P_par, &efficiencyAC, &powerClipLoss, &powerNightLoss);
+
+	powerAC *= m_numInverters;
+	powerClipLoss *= m_numInverters;
+	powerConsumptionLoss *= m_numInverters;
+	powerNightLoss *= m_numInverters;
+	efficiencyAC *= 100;
+}
+
+
 double BatteryBidirectionalInverter::convert_to_dc(double P_ac, double * P_dc)
 {
 	double P_loss = P_ac * (1 - _ac_dc_efficiency);
@@ -52,7 +78,8 @@ ACBatteryController::ACBatteryController(dispatch_t * dispatch, battery_metrics_
 	m_batteryPower->singlePointEfficiencyDCToAC = m_bidirectionalInverter->dc_ac_efficiency();
 }
 
-void ACBatteryController::run(size_t year, size_t hour_of_year, size_t step_of_hour, size_t index, double P_pv, double P_load)
+void ACBatteryController::run(size_t year, size_t hour_of_year, size_t step_of_hour, size_t index, 
+	double P_pv, double V_pv, double P_load, double P_clipped)
 {
 	if (P_pv < 0)
 	{
@@ -61,23 +88,28 @@ void ACBatteryController::run(size_t year, size_t hour_of_year, size_t step_of_h
 		P_pv = 0; 
 	}
 	// Dispatch the battery
-	m_dispatch->dispatch(year, hour_of_year, step_of_hour, P_pv, 0, P_load);
+	m_dispatch->dispatch(year, hour_of_year, step_of_hour, P_pv, V_pv, P_load, P_clipped);
 
 	// Compute annual metrics
 	m_batteryMetrics->compute_metrics_ac(m_dispatch->getBatteryPower());
 }
 
-DCBatteryController::DCBatteryController(dispatch_t * dispatch, battery_metrics_t * battery_metrics, double efficiencyDCToDC, double inverterEfficiency) : ChargeController(dispatch, battery_metrics)
+DCBatteryController::DCBatteryController(dispatch_t * dispatch, battery_metrics_t * battery_metrics, double efficiencyDCToDC) : ChargeController(dispatch, battery_metrics)
 {
 	std::unique_ptr<Battery_DC_DC_ChargeController> tmp(new Battery_DC_DC_ChargeController(efficiencyDCToDC, 100));
 	m_DCDCChargeController = std::move(tmp);
 	m_batteryPower = dispatch->getBatteryPower();
 	m_batteryPower->connectionMode = ChargeController::DC_CONNECTED;
 	m_batteryPower->singlePointEfficiencyDCToDC = m_DCDCChargeController->batt_dc_dc_bms_efficiency();
-	m_batteryPower->sharedInverterEfficiency = inverterEfficiency * 0.01;
 }
 
-void DCBatteryController::run(size_t year, size_t hour_of_year, size_t step_of_hour, size_t index, double P_pv, double P_clipped, double P_load)
+void DCBatteryController::setSharedInverter(SharedInverter * sharedInverter)
+{
+	m_sharedInverter = sharedInverter;
+}
+
+void DCBatteryController::run(size_t year, size_t hour_of_year, size_t step_of_hour, size_t index, 
+	double P_pv, double V_pv, double P_load, double P_clipped)
 {
 	if (P_pv < 0)
 	{
@@ -85,7 +117,7 @@ void DCBatteryController::run(size_t year, size_t hour_of_year, size_t step_of_h
 		P_pv = 0;
 	}
 	// Dispatch the battery
-	m_dispatch->dispatch(year, hour_of_year, step_of_hour, P_pv, P_clipped, P_load);
+	m_dispatch->dispatch(year, hour_of_year, step_of_hour, P_pv, V_pv, P_load, P_clipped);
 
 	// Compute annual metrics
 	//m_batteryMetrics->compute_metrics_ac(m_dispatch->getBatteryPower());

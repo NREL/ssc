@@ -228,14 +228,12 @@ struct battstor
 
 	void initialize_time(size_t year, size_t hour_of_year, size_t step);
 
-	//! Run the battery model for the current time
-	/*!	
-	  \param cm a reference to the compute module
-	  \param P_pv the current PV power (kW)
-	  \param P_load the current electric load (kW)
-	  \param P_pv_clipped the amount of PV which will be clipped with no battery usage (kW)
-	*/
-	void advance(compute_module &cm, double P_pv, double P_load=0, double P_pv_clipped=0);
+	/// Run the battery for the current timestep, given the PV power, load, and clipped power
+	void advance(compute_module &cm, double P_pv, double V_pv=0, double P_load=0, double P_pv_clipped=0);
+
+	/// Given a DC connected battery, set the shared PV and battery invertr
+	void setSharedInverter(SharedInverter * sharedInverter);
+
 	void outputs_fixed(compute_module &cm);
 	void outputs_topology_dependent(compute_module &cm);
 	void metrics(compute_module &cm);
@@ -309,8 +307,6 @@ struct battstor
 	std::vector<double> target_power;
 	std::vector<double> target_power_monthly;
 	
-	double dc_dc, ac_dc, dc_ac;
-
 	double e_charge;
 	double e_discharge;
 

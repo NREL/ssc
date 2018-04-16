@@ -100,8 +100,10 @@ public:
 		size_t hour_of_year,
 		size_t step,
 		double P_system,
-		double P_system_clipped=0,
-		double P_load_ac=0) = 0;
+		double V_system,
+		double P_load_ac=0,
+		double P_system_clipped = 0
+		) = 0;
 
 	virtual bool check_constraints(double &I, int count);
 
@@ -146,7 +148,7 @@ protected:
 	virtual void runDispatch(size_t year, size_t hour, size_t step);
 
 	/// Helper function to internally set up the dispatch model
-	virtual void prepareDispatch(size_t hour_of_year, size_t step, double P_system, double P_pv_dc_clipped = 0, double P_load_ac = 0);
+	virtual void prepareDispatch(size_t hour_of_year, size_t step, double P_system, double V_system, double P_load_ac = 0, double P_pv_dc_clipped = 0);
 
 	// Initialization help
 	void init(battery_t * Battery,
@@ -235,13 +237,15 @@ public:
 		size_t hour_of_year,
 		size_t step,
 		double P_system,
-		double P_system_clipped = 0,
-		double P_load_ac = 0);
+		double V_system = 0,
+		double P_load_ac = 0,
+		double P_system_clipped = 0
+	);
 
 protected:
 
 	/// Helper function to internally set up the dispatch model
-	virtual void prepareDispatch(size_t hour_of_year, size_t step, double P_system, double P_pv_dc_clipped = 0, double P_load_ac = 0);
+	virtual void prepareDispatch(size_t hour_of_year, size_t step, double P_system, double V_system, double P_load_ac = 0, double P_pv_dc_clipped = 0);
 
 	// Initialization help
 	void init(util::matrix_t<float> dm_dynamic_sched,
@@ -348,8 +352,9 @@ public:
 		size_t hour_of_year,
 		size_t step,
 		double P_system,
-		double P_system_clipped = 0,
+		double V_system,
 		double P_load_ac = 0,
+		double P_system_clipped = 0,
 		double P_battery_ac= 0);
 
 	/*! Compute the updated power to send to the battery over the next N hours */
@@ -370,7 +375,7 @@ public:
 protected:
 
 	/// Helper function to internally set up the dispatch model
-	virtual void prepareDispatch(size_t hour_of_year, size_t step, double P_system, double P_pv_dc_clipped = 0, double P_load_ac = 0, double P_battery_ac = 0);
+	virtual void prepareDispatch(size_t hour_of_year, size_t step, double P_system, double V_system, double P_load_ac = 0, double P_pv_dc_clipped = 0, double P_battery_ac = 0);
 
 	/*! Initialize with a pointer*/
 	void init_with_pointer(const dispatch_automatic_t * tmp);
@@ -472,8 +477,9 @@ public:
 		size_t hour_of_year,
 		size_t step,
 		double P_system,
-		double P_system_clipped = 0,
-		double P_load_ac = 0);
+		double V_system,
+		double P_load_ac = 0,
+		double P_system_clipped = 0);
 
 	/*! Compute the updated power to send to the battery over the next N hours */
 	void update_dispatch(size_t hour_of_year, size_t step, size_t idx);
@@ -581,8 +587,9 @@ public:
 		size_t hour_of_year,
 		size_t step,
 		double P_system,
-		double P_system_clipped = 0,
-		double P_load_ac = 0);
+		double V_system,
+		double P_load_ac = 0,
+		double P_system_clipped = 0);
 
 	/*! Compute the updated power to send to the battery over the next N hours */
 	void update_dispatch(size_t hour_of_year, size_t step, size_t idx);

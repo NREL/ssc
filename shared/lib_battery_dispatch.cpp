@@ -98,13 +98,14 @@ void dispatch_t::init(battery_t * Battery, double dt_hour, int current_choice, d
 }
 
 
-void dispatch_t::prepareDispatch(size_t, size_t, double P_system, double P_system_clipping, double P_load_ac)
+void dispatch_t::prepareDispatch(size_t, size_t, double P_system, double V_system, double P_load_ac, double P_system_clipping)
 {
 	_charging = true;
 
 	m_batteryPower->powerPV = P_system;
 	m_batteryPower->powerPVClipped = P_system_clipping;
 	m_batteryPower->powerLoad = P_load_ac;
+	m_batteryPower->voltageSystem = V_system;
 }
 
 // deep copy
@@ -339,7 +340,7 @@ void dispatch_t::runDispatch(size_t year, size_t hour_of_year, size_t step)
 		// Update how much power was actually used to/from battery
 		I = _Battery->capacity_model()->I();
 		double battery_voltage_new = _Battery->battery_voltage();
-		m_batteryPower->powerBattery = I * battery_voltage_new * util::watt_to_kilowatt;// [kW]
+		m_batteryPower->powerBattery = I * battery_voltage_new * util::watt_to_kilowatt;
 
 		// Update power flow calculations and check the constraints
 		m_batteryPowerFlow->calculate();
@@ -403,9 +404,9 @@ void dispatch_manual_t::copy(const dispatch_t * dispatch)
 	init_with_vects(tmp->_sched, tmp->_sched_weekend, tmp->_charge_array, tmp->_discharge_array, tmp->_gridcharge_array, tmp->_percent_discharge_array, tmp->_percent_charge_array);
 }
 
-void dispatch_manual_t::prepareDispatch(size_t hour_of_year, size_t step, double P_system, double P_system_clipping, double P_load_ac)
+void dispatch_manual_t::prepareDispatch(size_t hour_of_year, size_t step, double P_system, double V_system, double P_load_ac, double P_system_clipping)
 {
-	dispatch_t::prepareDispatch(hour_of_year, step, P_system, P_system_clipping, P_load_ac);
+	dispatch_t::prepareDispatch(hour_of_year, step, P_system, V_system, P_load_ac, P_system_clipping);
 
 	size_t m, h;
 	util::month_hour(hour_of_year, m, h);
@@ -432,10 +433,11 @@ void dispatch_manual_t::dispatch(size_t year,
 	size_t hour_of_year,
 	size_t step,
 	double P_system,
-	double P_system_clipping_dc,
-	double P_load_ac)
+	double V_system,
+	double P_load_ac,
+	double P_system_clipping_dc)
 {
-	prepareDispatch(hour_of_year, step, P_system, P_system_clipping_dc, P_load_ac);
+	prepareDispatch(hour_of_year, step, P_system, V_system, P_system_clipping_dc, P_load_ac);
 														
 	// Initialize power flow model by calculating the battery power to dispatch
 	m_batteryPowerFlow->initialize(_Battery->capacity_model()->SOC());
@@ -638,9 +640,9 @@ void dispatch_automatic_t::update_pv_data(std::vector<double> P_pv_dc){ _P_pv_dc
 void dispatch_automatic_t::set_custom_dispatch(std::vector<double> P_batt_dc) { _P_battery_use = P_batt_dc; }
 int dispatch_automatic_t::get_mode(){ return _mode; }
 
-void dispatch_automatic_t::prepareDispatch(size_t hour_of_year, size_t step, double P_system, double P_system_clipping, double P_load_ac, double P_battery_ac)
+void dispatch_automatic_t::prepareDispatch(size_t hour_of_year, size_t step, double P_system, double V_system, double P_load_ac, double P_system_clipping, double P_battery_ac)
 {
-	dispatch_t::prepareDispatch(hour_of_year, step, P_system, P_system_clipping, P_load_ac);
+	dispatch_t::prepareDispatch(hour_of_year, step, P_system, V_system, P_load_ac, P_system_clipping);
 	m_batteryPower->powerBattery = P_battery_ac;
 }
 
@@ -648,12 +650,13 @@ void dispatch_automatic_t::dispatch(size_t year,
 	size_t hour_of_year,
 	size_t step,
 	double P_system,
-	double P_system_clipping_dc,
+	double V_system,
 	double P_load_ac,
+	double P_system_clipping_dc,
 	double P_battery_ac
 	)
 {
-	prepareDispatch(hour_of_year, step, P_system, P_system_clipping_dc, P_load_ac, P_battery_ac);
+	prepareDispatch(hour_of_year, step, P_system, V_system, P_load_ac, P_system_clipping_dc, P_battery_ac);
 	runDispatch(year, hour_of_year, step);
 }
 
@@ -844,8 +847,9 @@ void dispatch_automatic_behind_the_meter_t::dispatch(size_t year,
 	size_t hour_of_year,
 	size_t step,
 	double P_system,
-	double P_system_clipping_dc,
-	double P_load_ac)
+	double V_system,
+	double P_load_ac,
+	double P_system_clipping_dc)
 {
 	size_t step_per_hour = (size_t)(1 / _dt_hour);
 	size_t idx = util::index_year_hour_step(year, hour_of_year, step, step_per_hour);
@@ -1243,13 +1247,15 @@ void dispatch_automatic_front_of_meter_t::dispatch(size_t year,
 	size_t hour_of_year,
 	size_t step,
 	double P_system,
-	double P_system_clipped,
-	double P_load_ac)
+	double V_system,
+	double P_load_ac,
+	double P_system_clipped
+	)
 {
 	size_t step_per_hour = (size_t)(1 / _dt_hour);
 	size_t idx = util::index_year_hour_step(year, hour_of_year, step, step_per_hour);
 
-	prepareDispatch(hour_of_year, step, P_system, P_system_clipped, P_load_ac);
+	prepareDispatch(hour_of_year, step, P_system, V_system, P_load_ac, P_system_clipped);
 	update_dispatch(hour_of_year, step, idx);
 	dispatch_automatic_t::dispatch(year, hour_of_year, step, P_system, P_system_clipped, P_load_ac, _P_battery_current);
 }
