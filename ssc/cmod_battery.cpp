@@ -160,7 +160,9 @@ var_info vtab_battery_inputs[] = {
 	{ SSC_INPUT,        SSC_NUMBER,     "batt_target_choice",                          "Target power input option",                              "0/1",      "",                     "Battery",       "?=0",                        "",                             "" },
 	{ SSC_INPUT,        SSC_ARRAY,      "batt_custom_dispatch",                        "Custom battery power for every time step",               "kW",       "",                     "Battery",       "?=0",                        "",                             "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "batt_dispatch_choice",                        "Battery dispatch algorithm",                             "0/1/2/3/4", "",                    "Battery",       "?=0",                        "",                             "" },
-	{ SSC_INPUT,        SSC_ARRAY,      "dc_net_forecast",                             "PV forecast",                                            "kW",       "",                     "Battery",       "en_batt=1&batt_meter_position=1&batt_dispatch_choice=2",  "",          "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "batt_pv_choice",                              "Prioritize PV usage for load or battery",                "0/1",      "",                     "Battery",       "?=0",                        "",                             "" },
+	{ SSC_INPUT,        SSC_ARRAY,      "batt_pv_clipping_forecast",                   "PV clipping forecast",                                   "kW",       "",                     "Battery",       "en_batt=1&batt_meter_position=1&batt_dispatch_choice=2",  "",          "" },
+	{ SSC_INPUT,        SSC_ARRAY,      "batt_pv_dc_forecast",                         "PV dc power forecast",                                   "kW",       "",                     "Battery",       "en_batt=1&batt_meter_position=1&batt_dispatch_choice=2",  "",          "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "batt_dispatch_auto_can_gridcharge",           "Grid charging allowed for automated dispatch?",          "kW",       "",                     "Battery",       "",                           "",                             "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "batt_dispatch_auto_can_charge",               "PV charging allowed for automated dispatch?",            "kW",       "",                     "Battery",       "",                           "",                             "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "batt_dispatch_auto_can_clipcharge",           "Battery can charge from clipped PV for automated dispatch?", "kW",   "",                     "Battery",       "",                           "",                             "" },
@@ -343,7 +345,8 @@ battstor::battstor(compute_module &cm, bool setup_model, size_t nrec, double dt_
 			// Front of meter
 			if (batt_vars->batt_meter_position == dispatch_t::FRONT)
 			{
-				batt_vars->pv_dc_forecast = cm.as_vector_double("dc_net_forecast");
+				batt_vars->pv_clipping_forecast = cm.as_vector_double("batt_pv_clipping_forecast");
+				batt_vars->pv_dc_power_forecast = cm.as_vector_double("batt_pv_dc_forecast");
 				double ppa_price = cm.as_double("ppa_price_input");
 				batt_vars->ppa_factors = cm.as_vector_double("dispatch_tod_factors");
 				for (size_t i = 0; i != batt_vars->ppa_factors.size(); i++)
@@ -360,6 +363,11 @@ battstor::battstor(compute_module &cm, bool setup_model, size_t nrec, double dt_
 					batt_vars->ec_tou_matrix = cm.as_matrix("ur_ec_tou_mat");
 					batt_vars->ec_rate_defined = true;
 				}
+			
+	
+				batt_vars->batt_dispatch_auto_can_charge = cm.as_boolean("batt_dispatch_auto_can_charge");
+				batt_vars->batt_dispatch_auto_can_clipcharge = cm.as_boolean("batt_dispatch_auto_can_clipcharge");
+				batt_vars->batt_dispatch_auto_can_gridcharge = cm.as_boolean("batt_dispatch_auto_can_gridcharge");
 
 				batt_vars->batt_cycle_cost_choice = cm.as_integer("batt_cycle_cost_choice");
 				batt_vars->batt_cycle_cost = cm.as_double("batt_cycle_cost");
@@ -543,6 +551,7 @@ battstor::battstor(compute_module &cm, bool setup_model, size_t nrec, double dt_
 	nyears = 1;
 	_dt_hour = dt_hr;
 	step_per_hour = static_cast<size_t>(1. / _dt_hour);
+	initialize_time(0, 0, 0);
 	if (batt_vars->system_use_lifetime_output)
 		nyears = batt_vars->analysis_period;
 	else
@@ -1000,19 +1009,13 @@ void battstor::initialize_automated_dispatch(std::vector<ssc_number_t> pv, std::
 			{
 				if (pv.size() != 0)
 				{
-					for (size_t idx = 0; idx != 24 * step_per_hour; idx++){
-						pv_prediction.push_back(batt_vars->pv_dc_forecast[idx]);
-					}
-				}
-				if (load.size() !=0 )
-				{
-					for (size_t idx = 0; idx != 24 * step_per_hour; idx++) {
-						load_prediction.push_back(load[idx]);
+					for (size_t idx = 0; idx != nrec; idx++) {
+						pv_prediction.push_back(pv[idx]);
 					}
 				}
 				if (cliploss.size() != 0)
 				{
-					for (size_t idx = 0; idx != 24 * step_per_hour; idx++) {
+					for (size_t idx = 0; idx != nrec; idx++) {
 						cliploss_prediction.push_back(cliploss[idx]);
 					}
 				}

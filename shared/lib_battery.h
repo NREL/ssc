@@ -398,11 +398,8 @@ public:
 	// copy from lifetime_cycle to this
 	void copy(lifetime_cycle_t *);
 
-	// return dq, the accumulated percent damage
+	// return q, the effective capacity percent
 	double runCycleLifetime(double DOD);
-
-	// return dq, the accumulated percent damage
-	double totalCapacityDegraded();
 
 	// return hypothetical dq for the given DOD at the current cycle count
 	double computeCycleDamageAtDOD(double DOD=0);
@@ -459,6 +456,7 @@ public:
 	// copy from lifetime_calendar to this
 	void copy(lifetime_calendar_t *);
 
+	/// Given the index of the simulation, the tempertature and SOC, return the effective capacity percent
 	double runLifetimeCalendarModel(size_t idx, double T, double SOC);
 
 	void replaceBattery();

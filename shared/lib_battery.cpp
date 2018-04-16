@@ -804,20 +804,21 @@ void lifetime_t::copy(lifetime_t * lifetime)
 double lifetime_t::capacity_percent(){ return _q; }
 void lifetime_t::runLifetimeModels(size_t idx, capacity_t * capacity, double T_battery)
 {
-	double dq_cycle = _lifetime_cycle->totalCapacityDegraded();
 	double q_last = _q;
+	double q_cycle = _q;
+	double q_calendar = _q;
 
 	if (_q > 0) 
 	{
 		if (capacity->chargeChanged())
-			dq_cycle = _lifetime_cycle->runCycleLifetime((capacity->prev_DOD()));
+			q_cycle = _lifetime_cycle->runCycleLifetime((capacity->prev_DOD()));
 		else if (idx==0)
-			dq_cycle = _lifetime_cycle->runCycleLifetime((capacity->DOD()));
+			q_cycle = _lifetime_cycle->runCycleLifetime((capacity->DOD()));
 		
-		double dq_calendar = _lifetime_calendar->runLifetimeCalendarModel(idx, T_battery, capacity->SOC()*0.01);
+		double q_calendar = _lifetime_calendar->runLifetimeCalendarModel(idx, T_battery, capacity->SOC()*0.01);
 
-		// total capacity is linear combination of cycle and calendar degradation effects
-		_q = 100. - dq_cycle - dq_calendar;
+		// total capacity is min of cycle (Q_neg) and calendar (Q_li) capacity
+		_q = fmin(q_cycle, q_calendar);
 	}
 	if (_q < 0)
 		_q = 0;
@@ -890,10 +891,6 @@ void lifetime_cycle_t::copy(lifetime_cycle_t * lifetime_cycle)
 	_Range = lifetime_cycle->_Range;
 	_average_range = lifetime_cycle->_average_range;
 }
-double lifetime_cycle_t::totalCapacityDegraded()
-{
-	return 100. - _q;
-}
 double lifetime_cycle_t::computeCycleDamageAtDOD(double DOD)
 {
 	if (DOD == 0)
@@ -903,7 +900,9 @@ double lifetime_cycle_t::computeCycleDamageAtDOD(double DOD)
 double lifetime_cycle_t::runCycleLifetime(double DOD)
 {
 	rainflow(DOD);
-	return totalCapacityDegraded();
+
+	// return the effective capacity (Q_neg)
+	return _q;
 }
 
 void lifetime_cycle_t::rainflow(double DOD)
@@ -1228,13 +1227,8 @@ double lifetime_calendar_t::runLifetimeCalendarModel(size_t idx, double T, doubl
 
 			_last_idx = idx;
 		}
-
-		// don't allow negative degradation
-		dq = 100 - _q;
-		if (dq < 0)
-			dq = 0;
 	}
-	return dq; 
+	return _q;
 }
 void lifetime_calendar_t::runLithiumIonModel(double T, double SOC)
 {
