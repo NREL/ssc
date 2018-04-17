@@ -196,7 +196,7 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
 	{ SSC_INPUT,		SSC_NUMBER,		 "rec_tm_mult",			 "Receiver thermal mass multiplier",								  "",			  "",			 "receiver",	   "?=1.0",					  "",					   "" },
 	{ SSC_INPUT,		SSC_NUMBER,		 "riser_tm_mult",		 "Riser thermal mass multiplier",									  "",			  "",			 "tower",		   "?=1.0",					  "",					   "" },
 	{ SSC_INPUT,		SSC_NUMBER,		 "downc_tm_mult",		 "Downcomer thermal mass multiplier",								  "",			  "",			 "tower",		   "?=1.0",					  "",					   "" },
-	{ SSC_INPUT,		SSC_NUMBER,		 "u_riser",				 "Design point HTF velocity in riser",								  "m/s",		  "",			 "tower",		   "*",						  "",					   "" },
+	{ SSC_INPUT,		SSC_NUMBER,		 "u_riser",				 "Design point HTF velocity in riser",								  "m/s",		  "",			 "tower",		   "?=4.0",						  "",					   "" },
 	{ SSC_INPUT,		SSC_NUMBER,		 "th_riser",			 "Riser or downcomer tube wall thickness",							  "mm",			  "",			 "tower",		   "?=15.0",				  "",					   "" },
 	
 	{ SSC_INPUT,		SSC_NUMBER,		 "heat_trace_power",	 "Riser/downcomer heat trace power during startup",				      "kW/m",		  "",			 "receiver",	   "?=500.0",				  "",					   "" },
