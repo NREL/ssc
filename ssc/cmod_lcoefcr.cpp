@@ -75,7 +75,6 @@ public:
 	void exec( ) throw( general_error )
 	{
 		double aep = 1; // annual output, get from performance model
-		double aoe = 0; // annual operating costs
 		double fcr = 0; // fixed charge rate, before tax revenues required
 		double icc = 0; // initial investment, or capital cost
 		double voc = 0; // variable operating cost

@@ -260,6 +260,16 @@ public:
 
 };
 
+struct _aof_inst 
+{ 
+    double obj; 
+    double flux; 
+	_aof_inst(double o, double f){
+        obj=o; flux=f; 
+    }; 
+	_aof_inst(){};
+};
+
 struct AutoOptHelper
 {
     int m_iter;
@@ -274,15 +284,7 @@ struct AutoOptHelper
     var_map *m_variables;
 
     class {
-        struct _inst { 
-            double obj; 
-            double flux; 
-            _inst(double o, double f){
-                obj=o; flux=f; 
-            }; 
-            _inst(){};
-        };
-        unordered_map<std::string, _inst> items;
+        unordered_map<std::string, _aof_inst> items;
 
         std::string format(std::vector<double> vars)
         {
@@ -295,7 +297,7 @@ struct AutoOptHelper
     public:
         void add_call(std::vector<double> vars, double objective, double flux)
         {
-            items[ format(vars) ] = _inst(objective, flux);
+            items[ format(vars) ] = _aof_inst(objective, flux);
         };
 
         bool check_call(std::vector<double> vars, double* obj, double* flux)
@@ -838,7 +840,7 @@ void AutoPilot::PrepareFluxSimulation(sp_flux_table &fluxtab, int flux_res_x, in
     }
     else
     {
-        nflux_sim = fluxtab.azimuths.size();
+        nflux_sim = (int)fluxtab.azimuths.size();
     }
 
 	fluxtab.flux_surfaces.clear();
@@ -949,9 +951,6 @@ bool AutoPilot::EvaluateDesign(double &obj_metric, double &flux_max, double &tot
 	
 	//get the annual optical power estimate
 	double optical_power = _SF->getAnnualPowerApproximation();
-	//power cycle efficiency
-	double cycle_eff = V->plt.eta_cycle.val * V->plt.par_factor.val;
-	double power = optical_power * cycle_eff*1.e-6;		//MW-h
 
 	//get the total plant cost
 	tot_cost = V->fin.total_installed_cost.Val();
@@ -974,8 +973,7 @@ bool AutoPilot::EvaluateDesign(double &obj_metric, double &flux_max, double &tot
 	//Set the optimization objective value
 	//double flux_overage_ratio = max(flux_max/V->recs.front().peak_flux.val, 1.);
 
-	obj_metric = tot_cost/power 
-		//* (1. + (flux_overage_ratio - 1.) * V->opt.flux_penalty.val) 
+	obj_metric = tot_cost/ optical_power *1.e6 //$/MWh
 		* (1. + (1. - power_shortage_ratio) * V->opt.power_penalty.val);
 
 	return true;
@@ -1039,7 +1037,7 @@ bool AutoPilot::OptimizeRSGS(vector<double*> &optvars, vector<double> &upper_ran
 
 	_summary_siminfo->addSimulationNotice(os.str());
 	while( ! converged ){
-		sim_count_begin = objective.size() - 1;	//keep track of the simulation number at the beginning of the main iteration
+		sim_count_begin = (int)objective.size() - 1;	//keep track of the simulation number at the beginning of the main iteration
 
 		//Choose the current point to the the best of all simulations in the previous iteration
 		if(opt_iter > 0){
@@ -1206,9 +1204,8 @@ bool AutoPilot::OptimizeRSGS(vector<double*> &optvars, vector<double> &upper_ran
 		Reg.cur_pos = current;
 		vector<double> stepto(current);
 		double min_val;
-		nlopt::result dres;
 		try{
-			dres = steep.optimize(stepto, min_val);
+			steep.optimize(stepto, min_val);
 		}
 		catch( std::exception &e )
 		{
@@ -1554,7 +1551,7 @@ bool AutoPilot::OptimizeAuto(vector<double*> &optvars, vector<double> &upper_ran
     double flux_penalty_save = V->opt.flux_penalty.val;
     V->opt.flux_penalty.val = 0.;
 
-    nlopt::opt nlobj(nlm, optvars.size() );
+    nlopt::opt nlobj(nlm, (unsigned int)optvars.size() );
     
     //Create optimization helper class
     AutoOptHelper AO;
@@ -1592,7 +1589,7 @@ bool AutoPilot::OptimizeAuto(vector<double*> &optvars, vector<double> &upper_ran
         double *xtemp = new double[ optvars.size() ]; 
         for(int i=0; i<(int)optvars.size(); i++)
             xtemp[i] = 1.;
-        AO.Simulate(xtemp, optvars.size());
+        AO.Simulate(xtemp, (int)optvars.size());
         delete [] xtemp;
         double feas_mult = 1.;
         if( AO.m_flux.back() > V->recs.front().peak_flux.val )
@@ -1626,7 +1623,7 @@ bool AutoPilot::OptimizeAuto(vector<double*> &optvars, vector<double> &upper_ran
         _summary_siminfo->addSimulationNotice( ol.c_str() );
         
         //int iopt = 0;
-        int iopt = AO.m_objective.size()-1;
+        int iopt = (int)AO.m_objective.size()-1;
         /*double objbest = 9.e9;
         for(int i=0; i<(int)AO.m_all_points.size(); i++){
             double obj = AO.m_objective.at(i);
@@ -1760,16 +1757,14 @@ bool AutoPilot::OptimizeSemiAuto(vector<double*> &optvars, vector<double> &/*upp
            nlobj.optimize( start, fmin );
             _summary_siminfo->addSimulationNotice( ol.c_str() );
         
-            int iopt = 0;
             double objbest = 9.e9;
             for(int i=0; i<(int)AO.m_all_points.size(); i++){
                 double obj = AO.m_objective.at(i);
                 if( obj < objbest ){
                     objbest = obj;
-                    iopt = i;
                 }
             }
-            iter_counter += AO.m_all_points.size();
+            iter_counter += (int)AO.m_all_points.size();
 
         }
         catch(...)
@@ -1792,7 +1787,7 @@ bool AutoPilot::OptimizeSemiAuto(vector<double*> &optvars, vector<double> &/*upp
         recvars.push_back(optvars.at(1));
         recvars.push_back(optvars.at(2));
         
-        nlopt::opt nlobj(nlm, recvars.size() );
+        nlopt::opt nlobj(nlm, (unsigned int)recvars.size() );
 
         //Create optimization helper class
         AutoOptHelper AO;
@@ -1837,16 +1832,14 @@ bool AutoPilot::OptimizeSemiAuto(vector<double*> &optvars, vector<double> &/*upp
             nlobj.optimize( start, fmin );
             _summary_siminfo->addSimulationNotice( ol.c_str() );
         
-            int iopt = 0;
             double objbest = 9.e9;
             for(int i=0; i<(int)AO.m_all_points.size(); i++){
                 double obj = AO.m_objective.at(i);
                 if( obj < objbest ){
                     objbest = obj;
-                    iopt = i;
                 }
             }
-            iter_counter += AO.m_all_points.size();
+            iter_counter += (int)AO.m_all_points.size();
         }
         catch(...){
             //reset
@@ -1862,7 +1855,7 @@ bool AutoPilot::OptimizeSemiAuto(vector<double*> &optvars, vector<double> &/*upp
         V->opt.max_iter.val = step_max_iter + (tot_max_iter % 3);   //allow any extra runs here
 
 
-        nlopt::opt nlobj(nlm, optvars.size() );
+        nlopt::opt nlobj(nlm, (unsigned int)optvars.size() );
     
         //Create optimization helper class
         AutoOptHelper AO;
@@ -2192,7 +2185,7 @@ bool AutoPilot_S::CalculateFluxMaps(sp_flux_table &fluxtab, int flux_res_x, int 
     P.dni = dni;
     P.Tamb = 25.;
 
-	_sim_total = fluxtab.azimuths.size();	//update the expected number of simulations
+	_sim_total = (int)fluxtab.azimuths.size();	//update the expected number of simulations
 	_sim_complete = 0;
 
 	if(_has_summary_callback){
@@ -2680,7 +2673,7 @@ bool AutoPilot_MT::CalculateFluxMaps(sp_flux_table &fluxtab, int flux_res_x, int
     P.dni = dni;
     P.Tamb = 25.;
 
-	_sim_total = fluxtab.azimuths.size();	//update the expected number of simulations
+	_sim_total = (int)fluxtab.azimuths.size();	//update the expected number of simulations
 	_sim_complete = 0;
 
 	//collect the sun positions for the simulations into a single matrix_t

@@ -48,7 +48,11 @@
 *******************************************************************************************************/
 
 #include "sco2_pc_csp_int.h"
-#include "sco2_pc_core.h"
+
+//#include "sco2_pc_core.h"
+#include "sco2_recompression_cycle.h"
+#include "sco2_partialcooling_cycle.h"
+
 #include "csp_solver_util.h"
 #include "CO2_properties.h"
 #include <cmath>
@@ -107,6 +111,73 @@ void C_sco2_recomp_csp::design_core()
 	// using -> C_RecompCycle::S_auto_opt_design_hit_eta_parameters
 	std::string error_msg;
 	int auto_err_code = 0;
+
+
+	if (false)
+	{
+		C_PartialCooling_Cycle::S_opt_des_params pc_des_params;
+		pc_des_params.m_W_dot_net = ms_des_par.m_W_dot_net;		//[kWe]
+		pc_des_params.m_T_mc_in = ms_des_par.m_T_amb_des + ms_des_par.m_dt_mc_approach;	//[K]
+		if (ms_rc_cycle_des_par.m_T_mc_in < m_T_mc_in_min)
+		{
+			std::string msg = util::format("The input design main compressor inlet temperature is %lg [C]."
+				" The sCO2 cycle design code reset it to the minimum allowable design main compressor inlet temperature: %lg [C].",
+				ms_rc_cycle_des_par.m_T_mc_in - 273.15,
+				m_T_mc_in_min - 273.15);
+		}
+		pc_des_params.m_T_pc_in = pc_des_params.m_T_mc_in;		//[K]
+		pc_des_params.m_T_t_in = ms_des_par.m_T_htf_hot_in - ms_des_par.m_phx_dt_hot_approach;	//[K]
+		pc_des_params.m_DP_LTR = ms_des_par.m_DP_LT;	
+		pc_des_params.m_DP_HTR = ms_des_par.m_DP_HT;
+		pc_des_params.m_DP_PC_full = ms_des_par.m_DP_PC;
+		pc_des_params.m_DP_PC_partial = ms_des_par.m_DP_PC;
+		pc_des_params.m_DP_PHX = ms_des_par.m_DP_PHX;
+		pc_des_params.m_UA_rec_total = ms_des_par.m_UA_recup_tot_des;	//[kW/K]
+		pc_des_params.m_LTR_eff_max = ms_des_par.m_LT_eff_max;			//[-]
+		pc_des_params.m_HTR_eff_max = ms_des_par.m_HT_eff_max;			//[-]
+		pc_des_params.m_eta_mc = ms_des_par.m_eta_mc;
+		pc_des_params.m_eta_rc = ms_des_par.m_eta_rc;
+		pc_des_params.m_eta_pc = ms_des_par.m_eta_rc;
+		pc_des_params.m_eta_t = ms_des_par.m_eta_t;
+		pc_des_params.m_N_sub_hxrs = ms_des_par.m_N_sub_hxrs;
+		pc_des_params.m_P_high_limit = ms_des_par.m_P_high_limit;
+		pc_des_params.m_tol = ms_des_par.m_tol;
+		pc_des_params.m_N_turbine = ms_des_par.m_N_turbine;
+
+		pc_des_params.m_P_mc_out_guess = ms_des_par.m_P_high_limit;		//[kPa]
+		pc_des_params.m_fixed_P_mc_out = true;
+
+		pc_des_params.m_PR_total_guess = ms_des_par.m_P_high_limit / 6500.0;	//[-]
+		pc_des_params.m_fixed_PR_total = false;
+
+		pc_des_params.m_f_PR_mc_guess = (ms_des_par.m_P_high_limit - 8500.0) / (ms_des_par.m_P_high_limit - 6500.0);	//[kPa]
+		pc_des_params.m_fixed_f_PR_mc = false;
+
+		pc_des_params.m_recomp_frac_guess = 0.25;	//[-]
+		pc_des_params.m_fixed_recomp_frac = false;
+
+		pc_des_params.m_LTR_frac_guess = 0.5;		//[-]
+		pc_des_params.m_fixed_LTR_frac = false;
+
+
+		C_PartialCooling_Cycle pc;
+		pc.opt_design(pc_des_params);
+
+
+		//pc_des_params.m_P_pc_in = 6500.0;	//[kPa]
+		//pc_des_params.m_P_mc_in = 8500.0;	//[kPa]
+		//pc_des_params.m_P_mc_out = ms_des_par.m_P_high_limit;	//[kPa]
+
+		//pc_des_params.m_UA_LTR = ms_des_par.m_UA_recup_tot_des*0.5;
+		//pc_des_params.m_UA_HTR = ms_des_par.m_UA_recup_tot_des*0.5;
+
+		//pc_des_params.m_recomp_frac = 0.25;
+
+		//C_PartialCooling_Cycle pc;
+		//int pc_des_code = pc.design(pc_des_params);
+	}
+
+
 
 	if(ms_des_par.m_design_method == 1)
 	{
@@ -518,7 +589,7 @@ bool C_sco2_recomp_csp::opt_P_mc_in_nest_f_recomp_max_eta_core()
 	double mc_dens_in_des = ms_des_solved.ms_rc_cycle_solved.m_dens[C_RecompCycle::MC_IN];		//[kg/m^3]
 	CO2_state co2_props;
 	// Then calculate the compressor inlet pressure that achieves this density at the off-design ambient temperature
-	int co2_code = CO2_TD(ms_rc_cycle_od_phi_par.m_T_mc_in, mc_dens_in_des, &co2_props);
+	CO2_TD(ms_rc_cycle_od_phi_par.m_T_mc_in, mc_dens_in_des, &co2_props);
 	double mc_pres_dens_des_od = co2_props.pres;	//[kPa]
 	ms_rc_cycle_od_phi_par.m_P_mc_in = mc_pres_dens_des_od;	//[kPa]
 
@@ -695,7 +766,6 @@ bool C_sco2_recomp_csp::opt_P_mc_in_nest_f_recomp_max_eta_core()
 			"C_sco2_recomp_csp::opt_P_mc_in_nest_f_recomp_max_eta_core"));
 	}
 
-	double eta_max = mc_rc_cycle.get_od_solved()->m_eta_thermal;
 	ms_od_solved.ms_rc_cycle_od_solved = *mc_rc_cycle.get_od_solved();
 	ms_od_solved.ms_phx_od_solved = mc_phx.ms_od_solved;
 
@@ -2391,8 +2461,6 @@ int C_sco2_recomp_csp::C_sco2_csp_od::operator()(S_f_inputs inputs, S_f_outputs 
 	double W_dot_gross_design = mpc_sco2_rc->get_design_solved()->ms_rc_cycle_solved.m_W_dot_net;	//[kWe]
 	double Q_dot_in_design = mpc_sco2_rc->get_design_solved()->ms_rc_cycle_solved.m_W_dot_net
 								/ mpc_sco2_rc->get_design_solved()->ms_rc_cycle_solved.m_eta_thermal;	//[kWt]
-	double W_dot_cooling_design = mpc_sco2_rc->get_design_par()->m_frac_fan_power*W_dot_gross_design;	//[kWe]
-	double m_dot_water_design = 0.0;		//[kg/s]
 
 	outputs.m_W_dot_gross_ND = mpc_sco2_rc->get_od_solved()->ms_rc_cycle_od_solved.m_W_dot_net
 								/ W_dot_gross_design;
@@ -2458,7 +2526,7 @@ double C_sco2_recomp_csp::opt_P_mc_in_nest_f_recomp_max_eta(double P_mc_in /*kPa
 
 	if( m_off_design_turbo_operation == E_FIXED_MC_FIXED_RC_FIXED_T )
 	{
-		int od_err_code = off_design_core(eta_max_f_recomp_opt);
+		off_design_core(eta_max_f_recomp_opt);
 	}
 	else if( m_off_design_turbo_operation == E_VFD_MC_VFD_RC_FIXED_T )
 	{
@@ -2470,7 +2538,6 @@ double C_sco2_recomp_csp::opt_P_mc_in_nest_f_recomp_max_eta(double P_mc_in /*kPa
 		throw(C_csp_exception("Off design turbomachinery operation strategy not recognized"));
 	}
 
-	double f_recomp_opt = mc_rc_cycle.get_od_solved()->m_recomp_frac;	//[-]
 	double eta_solved = mc_rc_cycle.get_od_solved()->m_eta_thermal;		//[-]
 
 	if( eta_max_f_recomp_opt != eta_max_f_recomp_opt )

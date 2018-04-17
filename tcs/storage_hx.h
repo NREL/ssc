@@ -89,7 +89,6 @@ public:
 private:
 	HTFProperties m_field_htfProps;
 	HTFProperties m_store_htfProps;
-	bool m_is_direct;
 	int m_config;
 	double m_dt_cold_des;
 	double m_dt_hot_des;

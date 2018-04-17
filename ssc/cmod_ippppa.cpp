@@ -488,7 +488,6 @@ private:
 	double debt_frac;
 	double adjusted_installed_cost;
 	double ppa_soln_tolerance;
-	double lcoe_nom;
 	double lcoe_real;
 	double net_present_value;
 

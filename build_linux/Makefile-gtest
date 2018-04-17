@@ -1,7 +1,7 @@
 VPATH = ../test
 
 SSCLIB = ./ssc.so
-GTDIR = ../../googletest/googletest
+GTDIR = $(GTEST)
 GTLIB = $(GTDIR)/make/gtest_main.a
 
 CC = gcc
@@ -17,8 +17,13 @@ OBJECTS  = \
 	../test/input_cases/weather_inputs.o \
 	../test/shared_test/lib_battery_test.o \
 	../test/shared_test/lib_irradproc_test.o \
+	../test/shared_test/lib_util_test.o \
 	../test/shared_test/lib_weatherfile_test.o \
+	../test/shared_test/lib_windfile_test.o \
+	../test/shared_test/lib_windwakemodel_test.o \
+	../test/shared_test/lib_windwatts_test.o \
 	../test/ssc_test/cmod_windpower_test.o \
+	../test/ssc_test/cmod_pvsamv1_test.o\
 	../test/tcs_test/csp_solver_core_test.o \
 	main.o
 	

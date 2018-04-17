@@ -51,6 +51,7 @@
 #define __NUMERIC_SOLVERS_
 
 #include <vector>
+#include <limits>
 
 class C_monotonic_equation
 {
@@ -202,6 +203,8 @@ public:
 	bool did_solver_find_positive_error(int solver_exit_mode);
 
 	bool did_solver_find_negative_error(int solver_exit_mode);
+
+	const S_eq_chars get_last_mono_eq_call();
 
 	const std::vector<S_eq_chars> *get_solver_call_history()
 	{

@@ -46,6 +46,7 @@
     <ClInclude Include="..\shared\lib_util.h" />
     <ClInclude Include="..\shared\lib_weatherfile.h" />
     <ClInclude Include="..\shared\lib_windfile.h" />
+    <ClInclude Include="..\shared\lib_windwakemodel.h" />
     <ClInclude Include="..\shared\lib_windwatts.h" />
     <ClInclude Include="..\shared\lib_wind_obos.h" />
     <ClInclude Include="..\shared\lsqfit.h" />
@@ -72,6 +73,7 @@
     <ClCompile Include="..\shared\lib_util.cpp" />
     <ClCompile Include="..\shared\lib_weatherfile.cpp" />
     <ClCompile Include="..\shared\lib_windfile.cpp" />
+    <ClCompile Include="..\shared\lib_windwakemodel.cpp" />
     <ClCompile Include="..\shared\lib_windwatts.cpp" />
     <ClCompile Include="..\shared\lib_wind_obos.cpp" />
     <ClCompile Include="..\shared\lsqfit.cpp" />

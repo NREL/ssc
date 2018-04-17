@@ -117,9 +117,9 @@ static var_info _cm_vtab_solarpilot[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "rec_cost_exp",              "Receiver cost scaling exponent",             "",       "",         "SolarPILOT",   "*",                "",                "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "site_spec_cost",            "Site improvement cost",                      "$/m2",   "",         "SolarPILOT",   "*",                "",                "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "heliostat_spec_cost",       "Heliostat field cost",                       "$/m2",   "",         "SolarPILOT",   "*",                "",                "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "plant_spec_cost",           "Power cycle specific cost",                  "$/kWe",  "",         "SolarPILOT",   "*",                "",                "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "bop_spec_cost",             "BOS specific cost",                          "$/kWe",  "",         "SolarPILOT",   "*",                "",                "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "tes_spec_cost",             "Thermal energy storage cost",                "$/kWht", "",         "SolarPILOT",   "*",                "",                "" },
+	//{ SSC_INPUT,        SSC_NUMBER,      "plant_spec_cost",           "Power cycle specific cost",                  "$/kWe",  "",         "SolarPILOT",   "*",                "",                "" },
+	//{ SSC_INPUT,        SSC_NUMBER,      "bop_spec_cost",             "BOS specific cost",                          "$/kWe",  "",         "SolarPILOT",   "*",                "",                "" },
+	//{ SSC_INPUT,        SSC_NUMBER,      "tes_spec_cost",             "Thermal energy storage cost",                "$/kWht", "",         "SolarPILOT",   "*",                "",                "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "land_spec_cost",            "Total land area cost",                       "$/acre", "",         "SolarPILOT",   "*",                "",                "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "contingency_rate",          "Contingency for cost overrun",               "%",      "",         "SolarPILOT",   "*",                "",                "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "sales_tax_rate",            "Sales tax rate",                             "%",      "",         "SolarPILOT",   "*",                "",                "" },
@@ -177,10 +177,9 @@ public:
 
 	void exec( ) throw( general_error )
 	{
-		shared_ptr<weather_data_provider> wdata = make_shared<weatherfile>(as_string("solar_resource_file"));
-        solarpilot_invoke spi( this );
-        spi.run(wdata);
-        AutoPilot_S *sapi = spi.GetSAPI();
+		std::shared_ptr<weather_data_provider> wdata = std::make_shared<weatherfile>(as_string("solar_resource_file"));
+		solarpilot_invoke spi( this );
+		spi.run(wdata);
 
 		assign("h_tower_opt", (ssc_number_t)spi.sf.tht.val);
 		assign("rec_height_opt", (ssc_number_t)spi.recs.front().rec_height.val);
@@ -271,10 +270,11 @@ public:
 				throw exec_error("solarpilot", "failed to calculate a correct flux map table");
 
 		}
-		else{
+		else 
+		{
 			//fluxmaps not required, so declare required variables and fill with zeros
-			ssc_number_t *opteff = allocate( "opteff_table", 1, 3 );
-			ssc_number_t *fluxdata = allocate( "flux_table", 1, 1 );
+			allocate("opteff_table", 1, 3);
+			allocate("flux_table", 1, 1);
 		}
 
 	}

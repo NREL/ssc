@@ -235,8 +235,9 @@ C_csp_trough_collector_receiver::C_csp_trough_collector_receiver()
 	for (int i = 0; i < 5; i++)
 		m_T_save[i] = std::numeric_limits<double>::quiet_NaN();
 
-	for (int i = 0; i < 3; i++)
-		m_reguess_args[i] = std::numeric_limits<double>::quiet_NaN();
+	mv_reguess_args.resize(3);
+	std::fill(mv_reguess_args.begin(), mv_reguess_args.end(), std::numeric_limits<double>::quiet_NaN());
+
 
 	m_AnnulusGasMat.fill(NULL);
 	m_AbsorberPropMat.fill(NULL);
@@ -515,7 +516,7 @@ bool C_csp_trough_collector_receiver::init_fieldgeom()
 
 		//Need to loop through to calculate the weighted average optical efficiency at design
 		//Start by initializing sensitive variables
-		double x1 = 0.0, x2 = 0.0, loss_tot = 0.0;
+		double loss_tot = 0.0;
 		m_opteff_des = 0.0;
 		m_m_dot_design = 0.0;
 
@@ -1137,7 +1138,6 @@ int C_csp_trough_collector_receiver::loop_energy_balance_T_t_int(const C_csp_wea
 		E_HR_cold = (m_v_cold*rho_hdr_cold*m_cp_sys_c_t_int + m_mc_bal_cold)*(m_T_sys_c_t_end - m_T_sys_c_t_end_last)*1.E-6;		//[MJ]
 		E_HR_cold_htf = m_dot_htf_loop*float(m_nLoops)*m_cp_sys_c_t_int*(m_T_htf_in_t_int[0] - T_htf_cold_in)*sim_info.ms_ts.m_step / 1.E6;	//[MJ]
 		E_HR_cold_bal = -E_HR_cold_losses - E_HR_cold_htf - E_HR_cold;		//[MJ]
-		double blah = 0.0;
 	}
 	else		// m_accept_loc == 2, only modeling loop
 	{
@@ -1293,7 +1293,6 @@ int C_csp_trough_collector_receiver::loop_energy_balance_T_t_int(const C_csp_wea
 			E_xover_abs[i] = -q_dot_loss_xover[i]*sim_info.ms_ts.m_step/1.E6;		//[MJ]
 			E_xover_htf[i] = m_dot_htf_loop*c_htf_i*(m_T_htf_in_t_int[i+1] - m_T_htf_out_t_int[i])*sim_info.ms_ts.m_step/1.E6;	//[MJ]
 			E_xover_bal[i] = E_xover_abs[i] - E_xover_htf[i] - E_xover[i];			//[MJ]
-			double blahadfa = 1.23;
 		}
 	}
 
@@ -1344,8 +1343,6 @@ int C_csp_trough_collector_receiver::loop_energy_balance_T_t_int(const C_csp_wea
 		E_HR_hot = (m_v_hot*rho_hdr_hot*m_c_hdr_hot + m_mc_bal_hot)*(m_T_sys_h_t_end - m_T_sys_h_t_end_last)*1.E-6;		//[MJ]
 
 		E_HR_hot_bal = -E_HR_hot_losses - E_HR_hot_htf - E_HR_hot;		//[MJ]
-
-		double fadfafa = 1.23;
 	}
 	else
 	{
@@ -1430,9 +1427,6 @@ int C_csp_trough_collector_receiver::loop_energy_balance_T_t_int(const C_csp_wea
 	double Q_loss_HR_hot = q_dot_loss_HR_hot*sim_info.ms_ts.m_step*1.E-6;		//[MJ]
 
 	m_Q_field_losses_total_subts = Q_loss_xover + Q_loss_HR_cold + Q_loss_HR_hot - Q_abs_scas_summed;		//[MJ]
-
-	double E_bal = Q_abs_scas_summed - Q_loss_xover - Q_loss_HR_cold  - Q_loss_HR_hot
-					- Q_htf - E_HR_cold - E_scas_summed - E_xovers_summed - E_HR_hot;
 
 	return E_loop_energy_balance_exit::SOLVED;
 }
@@ -2620,7 +2614,6 @@ void C_csp_trough_collector_receiver::call(const C_csp_weatherreader::S_outputs 
 	//******************************************************************************************************************************
 	double I_b = weather.m_beam;			//[W/m^2] DNI 	
 	double T_db = weather.m_tdry;			//[C] Dry bulb air temperature 
-	double V_wind = weather.m_wspd;			//[m/s] Ambient windspeed 
 	double P_amb = weather.m_pres;			//[mbar] Ambient pressure 
 	double T_dp = weather.m_tdew;			//[C] The dewpoint temperature 
 	double T_cold_in = htf_state_in.m_temp;	//[C] HTF return temperature 
@@ -3547,10 +3540,8 @@ set_outputs_and_return:
 	double W_dot_pump_out = W_dot_pump / 1000.;			//[MW] from kW
 	double E_fp_tot_out = E_fp_tot*1.e-6;				//[MW] from W
 	double T_sys_c_out = m_TCS_T_sys_c - 273.15;			//[C] from K
-	double EqOpteff_out = m_EqOpteff*m_CosTh_ave;
 	double m_dot_htf_tot_out = m_m_dot_htf_tot *3600.;	//[kg/hr] from kg/s
 	double E_bal_startup_out = E_bal_startup / (dt*1.e6);	//[MW] from J
-	double q_inc_sf_tot = m_Ap_tot*I_b / 1.e6;
 	double q_abs_tot = 0.;
 	double q_loss_tot = 0.;
 	double q_loss_spec_tot = 0.;
@@ -3575,7 +3566,6 @@ set_outputs_and_return:
 		CosTh_ave_out = m_CosTh_ave;
 
 	double dni_costh = I_b*m_CosTh_ave;
-	double qinc_costh = dni_costh * m_Ap_tot / 1.e6;
 	double T_loop_outlet = m_TCS_T_htf_out[m_nSCA - 1] - 273.15;
 
 	double E_loop_accum_out = E_loop_accum * 3.6e-9;
@@ -3835,15 +3825,13 @@ void C_csp_trough_collector_receiver::EvacReceiver(double T_1_in, double m_dot, 
 	bool glazingIntact = m_GlazingIntact(hn, hv); //.at(hn, hv);
 
 	//---Re-guess criteria:---
-	if (m_reguess_args == NULL) goto lab_reguess;
-
 	if (time <= 2) goto lab_reguess;
 	
-	if (((int)m_reguess_args[0] == 1) != m_GlazingIntact(hn, hv)) goto lab_reguess;	//glazingintact state has changed
+	if (((int)mv_reguess_args[0] == 1) != m_GlazingIntact(hn, hv)) goto lab_reguess;	//glazingintact state has changed
 
-	if (m_P_a(hn, hv) != m_reguess_args[1]) goto lab_reguess;                   //Reguess for different annulus pressure
+	if (m_P_a(hn, hv) != mv_reguess_args[1]) goto lab_reguess;                   //Reguess for different annulus pressure
 
-	if (fabs(m_reguess_args[2] - T_1_in) > 50.) goto lab_reguess;
+	if (fabs(mv_reguess_args[2] - T_1_in) > 50.) goto lab_reguess;
 
 	for (int i = 0; i<5; i++){ if (m_T_save[i] < m_T_sky - 1.) goto lab_reguess; }
 
@@ -3874,11 +3862,11 @@ lab_keep_guess:
 				T_upper_max = m_T_save[2] - 0.5*(m_T_save[2] - T_amb);     //Also, low upper limit for T4
 			}
 			m_T_save[4] = m_T_save[3] - 2.;
-			if (m_reguess_args != NULL){
-				m_reguess_args[1] = m_P_a(hn, hv);               //Reset previous pressure
-				m_reguess_args[0] = m_GlazingIntact(hn, hv) ? 1. : 0.;   //Reset previous glazing logic
-				m_reguess_args[2] = T_1_in;            //Reset previous T_1_in
-			}
+
+			mv_reguess_args[1] = m_P_a(hn, hv);               //Reset previous pressure
+			mv_reguess_args[0] = m_GlazingIntact(hn, hv) ? 1. : 0.;   //Reset previous glazing logic
+			mv_reguess_args[2] = T_1_in;            //Reset previous T_1_in
+
 		}
 		else{
 			m_T_save[0] = T_1_in;
@@ -3886,10 +3874,10 @@ lab_keep_guess:
 			m_T_save[2] = m_T_save[1] + 5.;
 			m_T_save[3] = T_amb;
 			m_T_save[4] = T_amb;
-			if (m_reguess_args != NULL){
-				m_reguess_args[0] = m_GlazingIntact(hn, hv) ? 1. : 0.;   //Reset previous glazing logic
-				m_reguess_args[1] = T_1_in;            //Reset previous T_1_in
-			}
+
+			mv_reguess_args[0] = m_GlazingIntact(hn, hv) ? 1. : 0.;   //Reset previous glazing logic
+			mv_reguess_args[1] = T_1_in;            //Reset previous T_1_in
+
 		}
 	}
 

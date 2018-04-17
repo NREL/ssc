@@ -194,8 +194,8 @@ public:
 	void rewind(){ m_index = 0; }
 
 	///set the m_index to a specified value. next read will be at this time step index.
-	void set_counter_to(size_t cur_index){
-		if (cur_index >= 0 && cur_index < m_nRecords){
+	void set_counter_to(size_t cur_index) {
+		if (cur_index < m_nRecords){
 			m_index = cur_index;
 		}
 	}
