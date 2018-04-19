@@ -241,8 +241,8 @@ void BatteryPowerFlow::calculateDCConnected()
 		charging = true;
 	}
 
-	//m_BatteryPower->sharedInverter->calculateACPower(powerToInvert, m_BatteryPower->voltageSystem,
-	//	P_gen_ac, efficiencyAC, p_cliploss, p_consumptionloss, p_nightloss);
+	m_BatteryPower->sharedInverter->calculateACPower(powerToInvert, m_BatteryPower->voltageSystem,
+		P_gen_ac, efficiencyAC, p_cliploss, p_consumptionloss, p_nightloss);
 	P_gen_ac *= util::watt_to_kilowatt;
 
 	if (charging)

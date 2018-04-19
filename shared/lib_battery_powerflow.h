@@ -2,7 +2,7 @@
 #define _LIB_BATTERY_POWERFLOW_H_
 
 #include <memory>
-//#include "lib_power_electronics.h"
+#include "lib_shared_inverter.h"
 
 struct BatteryPower;
 
@@ -122,7 +122,7 @@ public:
 	double singlePointEfficiencyACToDC;  /// The conversion efficiency from AC power to DC power within the battery microinverter (0 - 1)
 	double singlePointEfficiencyDCToAC;  /// The conversion efficiency from DC power to AC power within the battery microinverter (0 - 1)
 	double singlePointEfficiencyDCToDC;  /// The conversion efficiency from DC power to DC power within the battery management system (0 - 1)
-	//SharedInverter * sharedInverter;	 /// The shared inverter between the PV and battery for a DC-connected system
+	SharedInverter * sharedInverter;	 /// The shared inverter between the PV and battery for a DC-connected system
 
 	bool canPVCharge;	/// A boolean specifying whether the battery is allowed to charge from PV in the timestep
 	bool canClipCharge;	/// A boolean specifying whether the battery is allowed to charge from otherwise clipped PV in the timestep
