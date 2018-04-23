@@ -881,7 +881,6 @@ dispatch_automatic_t::dispatch_automatic_t(
 	_index_last_updated = 0;
 
 	_look_ahead_hours = look_ahead_hours;
-
 	_steps_per_hour = (size_t)(1. / dt_hour);
 	_num_steps = 24 * _steps_per_hour;
 
@@ -1009,11 +1008,23 @@ bool dispatch_automatic_t::check_constraints(double &I, int count)
 		// Try and force controller to meet target or custom dispatch
 		if (P_battery > _P_battery_current + tolerance || P_battery < _P_battery_current - tolerance)
 		{
-			// But only if it's possible to meet without break grid-charge contraint
+			// Difference between the dispatch and the desired dispatch
 			double dP = P_battery - _P_battery_current;
+			double SOC = _Battery->battery_soc();
 
-			if (_P_battery_current < 0 && dP < 0 || _can_grid_charge || _P_battery_current > 0) {
-				I -= dP * util::kilowatt_to_watt / _Battery->battery_voltage();
+			// But only if it's possible to meet without break grid-charge contraint
+			if ((_P_battery_current < 0 && _can_grid_charge) ||
+				(_P_battery_current > 0))
+			{
+				// Also don't violate SOC contraints
+				if ((_P_battery_current > 0 && SOC > _SOC_min + tolerance) ||
+					(_P_battery_current < 0 && SOC < _SOC_max - tolerance)) {
+					I -= dP * util::kilowatt_to_watt / _Battery->battery_voltage();
+				}
+				else {
+					iterate = false;
+				}
+
 			}
 			else {
 				iterate = false;
@@ -1607,11 +1618,11 @@ void dispatch_automatic_front_of_meter_t::update_dispatch(size_t hour_of_year, s
 			double usage_cost = _utilityRateCalculator->getEnergyRate(hour_of_year);
 
 			// Compute forecast variables which don't change from year to year
-			auto max_ppa_cost = std::max_element(_ppa_cost_vector.begin() + hour_of_year, _ppa_cost_vector.begin() + hour_of_year + _look_ahead_hours);
+			auto max_ppa_cost = std::max_element(_ppa_cost_vector.begin() + idx, _ppa_cost_vector.begin() + idx + _look_ahead_hours *_steps_per_hour);
 			double ppa_cost = _ppa_cost_vector[hour_of_year];
 
 			// Compute forecast variables which potentially do change from year to year
-			double energyToStoreClipped = std::accumulate(_P_cliploss_dc.begin() + idx, _P_cliploss_dc.begin() + idx + _look_ahead_hours, 0.0f) * _dt_hour;
+			double energyToStoreClipped = std::accumulate(_P_cliploss_dc.begin() + idx, _P_cliploss_dc.begin() + idx + _look_ahead_hours*_steps_per_hour, 0.0f) * _dt_hour;
 
 			/*! Economic benefit of charging from the grid in current time step to discharge sometime in next X hours ($/kWh)*/
 			double benefitToGridCharge = *max_ppa_cost * m_etaDischarge - usage_cost / m_etaGridCharge;
