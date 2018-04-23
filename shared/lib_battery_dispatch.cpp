@@ -1543,22 +1543,25 @@ void dispatch_automatic_front_of_meter_t::init_with_pointer(const dispatch_autom
 void dispatch_automatic_front_of_meter_t::setup_cost_vector(util::matrix_t<size_t> ppa_weekday_schedule, util::matrix_t<size_t> ppa_weekend_schedule)
 {
 	_ppa_cost_vector.clear();
-	_ppa_cost_vector.reserve(8760 * _steps_per_hour);
+	_ppa_cost_vector.reserve(8760 * _steps_per_hour * _nyears);
 	size_t month, hour, iprofile;
 	double cost;
-	for (size_t hour_of_year = 0; hour_of_year != 8760 + _look_ahead_hours; hour_of_year++)
-	{
-		size_t mod_hour_of_year = hour_of_year % 8760;
-		util::month_hour(mod_hour_of_year, month, hour);
-		if (util::weekday(mod_hour_of_year))
-			iprofile = ppa_weekday_schedule(month - 1, hour - 1);
-		else
-			iprofile = ppa_weekend_schedule(month - 1, hour - 1);
+	for (size_t year = 0; year != _nyears; year++) {
+		for (size_t hour_of_year = 0; hour_of_year != 8760 + _look_ahead_hours; hour_of_year++)
+		{
+			size_t mod_hour_of_year = hour_of_year % 8760;
+			util::month_hour(mod_hour_of_year, month, hour);
+			if (util::weekday(mod_hour_of_year))
+				iprofile = ppa_weekday_schedule(month - 1, hour - 1);
+			else
+				iprofile = ppa_weekend_schedule(month - 1, hour - 1);
 
-		cost = _ppa_factors[iprofile - 1];
+			cost = _ppa_factors[iprofile - 1];
 
-		for (size_t s = 0; s != _steps_per_hour; s++)
-			_ppa_cost_vector.push_back(cost);
+			for (size_t s = 0; s != _steps_per_hour; s++) {
+				_ppa_cost_vector.push_back(cost);
+			}
+		}
 	}
 }
 
@@ -1644,7 +1647,7 @@ void dispatch_automatic_front_of_meter_t::update_dispatch(size_t hour_of_year, s
 			// Always Charge if PV is clipping 
 			if (_can_clip_charge && _P_pv_clipping > 0 && benefitToClipCharge > m_cycleCost && _P_pv_clipping > 0)
 			{
-				powerBattery = -_P_pv_clipping;
+				powerBattery = -_P_pv_clipping / m_etaPVCharge;
 			}
 
 			// Increase charge from PV if it is more valuable later than selling now
