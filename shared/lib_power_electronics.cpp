@@ -79,7 +79,7 @@ DCBatteryController::DCBatteryController(dispatch_t * dispatch, battery_metrics_
 
 void DCBatteryController::setSharedInverter(SharedInverter * sharedInverter)
 {
-	m_sharedInverter = sharedInverter;
+	m_batteryPower->setSharedInverter(sharedInverter);
 }
 
 void DCBatteryController::run(size_t year, size_t hour_of_year, size_t step_of_hour, size_t index, 

@@ -36,6 +36,10 @@ BatteryPower::BatteryPower(double dtHour) :
 
 BatteryPower::BatteryPower(const BatteryPower& batteryPower) { /* nothing to do */ }
 
+void BatteryPower::setSharedInverter(SharedInverter * a_sharedInverter) {
+	sharedInverter = a_sharedInverter;
+}
+
 BatteryPowerFlow::BatteryPowerFlow(double dtHour)
 {
 	std::unique_ptr<BatteryPower> tmp(new BatteryPower(dtHour));
@@ -58,7 +62,6 @@ void BatteryPowerFlow::calculate()
 	else if (m_BatteryPower->connectionMode == ChargeController::DC_CONNECTED) {
 		calculateDCConnected();
 	}
-
 }
 void BatteryPowerFlow::initialize(double stateOfCharge)
 {
@@ -228,22 +231,30 @@ void BatteryPowerFlow::calculateDCConnected()
 	else if (P_battery_dc > 0)
 		P_battery_dc = P_battery_dc_pre_bms * m_BatteryPower->singlePointEfficiencyDCToDC;
 
-	// convert the DC power to AC
+	
 	double P_battery_ac, P_pv_ac, P_gen_ac, efficiencyAC, p_cliploss, p_consumptionloss, p_nightloss;
 	P_battery_ac = P_pv_ac = P_gen_ac = efficiencyAC = p_cliploss = p_consumptionloss = p_nightloss = 0;
 
+
 	double P_gen_dc = P_pv_dc + P_battery_dc;
 	
+	// if battery is charging, must covert negative power to positive for inverter
 	bool charging = false;
 	double powerToInvert = P_gen_dc * util::kilowatt_to_watt;
 	if (P_gen_dc < 0) {
 		powerToInvert *= -1;
 		charging = true;
 	}
+	// in the event that PV system isn't operating, assume battery BMS converts battery voltage to nominal inverter input
+	double voltage = m_BatteryPower->voltageSystem;
+	if (voltage <= 0)
+		voltage = m_BatteryPower->sharedInverter->getInverterDCNominalVoltage();
 
-	m_BatteryPower->sharedInverter->calculateACPower(powerToInvert, m_BatteryPower->voltageSystem,
+	// convert the DC power to AC
+	m_BatteryPower->sharedInverter->calculateACPower(powerToInvert, voltage,
 		P_gen_ac, efficiencyAC, p_cliploss, p_consumptionloss, p_nightloss);
 	P_gen_ac *= util::watt_to_kilowatt;
+
 
 	if (charging)
 		P_gen_ac *= -1;

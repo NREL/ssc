@@ -1485,6 +1485,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 	}
 	else if (inv_type == 2) // partload curve
 	{
+		plinv.Vdco = as_double("inv_pd_vdco");
 		plinv.Paco = as_double("inv_pd_paco");
 		plinv.Pdco = as_double("inv_pd_pdco");
 		plinv.Pntare = as_double("inv_pd_pnt");
@@ -2732,60 +2733,60 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 				// Iterative loop over DC battery
 				size_t dc_count = 0; bool iterate_dc = false;
 				double dcpwr_net = 0, acpwr_gross = 0, aceff = 0, pntloss = 0, psoloss = 0, cliploss = 0, ac_wiringloss = 0;
-				do {
+				//do {
 
-					cur_load = p_load_full[idx];
-					dcpwr_net = util::kilowatt_to_watt * p_dcpwr[idx];
-					double dc_string_voltage = p_inv_dc_voltage[idx];
+				cur_load = p_load_full[idx];
+				dcpwr_net = util::kilowatt_to_watt * p_dcpwr[idx];
+				double dc_string_voltage = p_inv_dc_voltage[idx];
 
-					// DC Connected Battery
-					bool battery_charging = false;
-					if (en_batt && (batt_topology == ChargeController::DC_CONNECTED))
-					{
-						if (iyear == 0 && dc_count == 0)
-							annual_dc_power_before_battery += p_dcpwr[idx] * ts_hour;
+				// DC Connected Battery
+				bool battery_charging = false;
+				if (en_batt && (batt_topology == ChargeController::DC_CONNECTED))
+				{
+					if (iyear == 0 && dc_count == 0)
+						annual_dc_power_before_battery += p_dcpwr[idx] * ts_hour;
 
-						// Compute PV clipping before adding battery
-						sharedInverter->calculateACPower(dcpwr_net, dc_string_voltage,
-							acpwr_gross, aceff, cliploss, psoloss, pntloss);
-
-						// Run battery
-						batt.advance(*this, dcpwr_net*util::watt_to_kilowatt, dc_string_voltage, cur_load, cliploss*util::watt_to_kilowatt);
-						dcpwr_net = util::kilowatt_to_watt * batt.outGenPower[idx];
-
-						// inverter can't handle negative dcpwr
-						if (dcpwr_net < 0)
-						{
-							if (batt.outBatteryPower[idx] < 0)
-							{
-								battery_charging = true;
-								dcpwr_net = fabs(dcpwr_net);
-							}
-							else
-								dcpwr_net = 0;
-						}
-					}
-					// inverter: runs at all hours of the day, even if no DC power.  important
-					// for capturing tare losses			
-					acpwr_gross = 0, aceff = 0, pntloss = 0, psoloss = 0, cliploss = 0, ac_wiringloss = 0;
+					// Compute PV clipping before adding battery
 					sharedInverter->calculateACPower(dcpwr_net, dc_string_voltage,
 						acpwr_gross, aceff, cliploss, psoloss, pntloss);
 
-					// if dc connected battery, update post-inverted quantities
-					if (en_batt && (batt_topology == ChargeController::DC_CONNECTED))
+					// Run battery
+					batt.advance(*this, dcpwr_net*util::watt_to_kilowatt, dc_string_voltage, cur_load, cliploss*util::watt_to_kilowatt);
+					dcpwr_net = util::kilowatt_to_watt * batt.outGenPower[idx];
+
+					// inverter can't handle negative dcpwr
+					if (dcpwr_net < 0)
 					{
-						if (battery_charging)
+						if (batt.outBatteryPower[idx] < 0)
 						{
-							// change sign back now that is inverted
-							dcpwr_net *= -1;
-							acpwr_gross *= -1;
+							battery_charging = true;
+							dcpwr_net = fabs(dcpwr_net);
 						}
-						batt.update_post_inverted(*this, acpwr_gross*util::watt_to_kilowatt);
-						iterate_dc = batt.check_iterate(dc_count);
-						acpwr_gross = batt.outGenPower[idx] * util::kilowatt_to_watt;
+						else
+							dcpwr_net = 0;
 					}
-					dc_count++;
-				} while (iterate_dc);
+				}
+				// inverter: runs at all hours of the day, even if no DC power.  important
+				// for capturing tare losses			
+				acpwr_gross = 0, aceff = 0, pntloss = 0, psoloss = 0, cliploss = 0, ac_wiringloss = 0;
+				sharedInverter->calculateACPower(dcpwr_net, dc_string_voltage,
+					acpwr_gross, aceff, cliploss, psoloss, pntloss);
+
+				// if dc connected battery, update post-inverted quantities
+				if (en_batt && (batt_topology == ChargeController::DC_CONNECTED))
+				{
+					if (battery_charging)
+					{
+						// change sign back now that is inverted
+						dcpwr_net *= -1;
+						acpwr_gross *= -1;
+					}
+					batt.update_post_inverted(*this, acpwr_gross*util::watt_to_kilowatt);
+					iterate_dc = batt.check_iterate(dc_count);
+					acpwr_gross = batt.outGenPower[idx] * util::kilowatt_to_watt;
+				}
+				dc_count++;
+				//} while (iterate_dc);
 					 
 				ac_wiringloss = fabs(acpwr_gross) * ac_loss_percent * 0.01;
 

@@ -437,7 +437,7 @@ void dispatch_manual_t::dispatch(size_t year,
 	double P_load_ac,
 	double P_system_clipping_dc)
 {
-	prepareDispatch(hour_of_year, step, P_system, V_system, P_system_clipping_dc, P_load_ac);
+	prepareDispatch(hour_of_year, step, P_system, V_system, P_load_ac, P_system_clipping_dc);
 														
 	// Initialize power flow model by calculating the battery power to dispatch
 	m_batteryPowerFlow->initialize(_Battery->capacity_model()->SOC());

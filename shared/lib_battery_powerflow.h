@@ -94,6 +94,9 @@ public:
 	/// Perform a deep copy of a BatteryPower object
 	BatteryPower(const BatteryPower& batteryPower);
 
+	/// Register the shared inverter which has previously been defined
+	void setSharedInverter(SharedInverter * sharedInverter);
+
 	double powerPV;				   /// The power production of the PV array (kW)
 	double powerLoad;			   /// The power required by the electric load (kW)
 	double powerBattery; 	       /// The power flow to and from the battery (> 0, discharging, < 0 charging) (kW)

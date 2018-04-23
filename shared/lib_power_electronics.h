@@ -209,10 +209,6 @@ public:
 
 private:
 	
-	// managed elsewhere
-	SharedInverter * m_sharedInverter;	/// The PV plus battery inverter
-
-
 	// allocated and managed internally
 	std::unique_ptr<Battery_DC_DC_ChargeController> m_DCDCChargeController;  /// Model for the battery DC/DC charge controller with Battery Management System
 

@@ -24,3 +24,11 @@ void SharedInverter::calculateACPower(const double powerDC, const double DCStrin
 	powerNightLoss *= m_numInverters;
 	efficiencyAC *= 100;
 }
+
+double SharedInverter::getInverterDCNominalVoltage()
+{
+	if (m_inverterType == SANDIA_INVERTER)
+		return m_sandiaInverter->Vdco;
+	else if (m_inverterType == PARTLOAD_INVERTER)
+		return m_partloadInverter->Vdco;
+}

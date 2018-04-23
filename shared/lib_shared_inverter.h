@@ -23,9 +23,14 @@ public:
 	void calculateACPower(const double powerDC, const double DCStringVoltage,
 		double & powerAC, double & efficiencyAC, double & powerClipLoss, double & powerConsumptionLoss, double & powerNightLoss);
 
+	/// Return the nominal DC voltage input
+	double getInverterDCNominalVoltage();  
+
 	enum { SANDIA_INVERTER, DATASHEET_INVERTER, PARTLOAD_INVERTER, COEFFICIENT_GENERATOR, NONE };
 
 protected:
+
+
 	int m_inverterType;  /// The inverter type
 	int m_numInverters;  /// The number of inverters in the system
 
