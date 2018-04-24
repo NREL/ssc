@@ -372,7 +372,9 @@ battstor::battstor(compute_module &cm, bool setup_model, size_t nrec, double dt_
 				batt_vars->batt_cycle_cost_choice = cm.as_integer("batt_cycle_cost_choice");
 				batt_vars->batt_cycle_cost = cm.as_double("batt_cycle_cost");
 
-				if (batt_vars->batt_dispatch == dispatch_t::FOM_LOOK_AHEAD || batt_vars->batt_dispatch == dispatch_t::FOM_FORECAST)
+				if (batt_vars->batt_dispatch == dispatch_t::FOM_LOOK_AHEAD || 
+					batt_vars->batt_dispatch == dispatch_t::FOM_FORECAST || 
+					batt_vars->batt_dispatch == dispatch_t::FOM_LOOK_BEHIND)
 				{
 					batt_vars->batt_look_ahead_hours = cm.as_unsigned_long("batt_look_ahead_hours");
 					batt_vars->batt_dispatch_update_frequency_hours = cm.as_double("batt_dispatch_update_frequency_hours");

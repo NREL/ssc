@@ -872,6 +872,7 @@ dispatch_automatic_t::dispatch_automatic_t(
 	) : dispatch_t(Battery, dt_hour, SOC_min, SOC_max, current_choice, Ic_max, Id_max, Pc_max, Pd_max,
 	t_min, dispatch_mode, pv_dispatch)
 {
+	_mode = dispatch_mode;
 
 	_dt_hour = dt_hour;
 	_dt_hour_update = dispatch_update_frequency_hours;
@@ -888,13 +889,10 @@ dispatch_automatic_t::dispatch_automatic_t(
 	_month = 1;
 	_nyears = nyears;
 
-	_mode = dispatch_mode;
 	_safety_factor = 0.03;
 	_can_charge = can_charge;
 	_can_clip_charge = can_clip_charge;
 	_can_grid_charge = can_grid_charge;
-
-
 }
 
 void dispatch_automatic_t::init_with_pointer(const dispatch_automatic_t * tmp)
@@ -1499,6 +1497,10 @@ dispatch_automatic_front_of_meter_t::dispatch_automatic_front_of_meter_t(
 	double etaGridCharge,
 	double etaDischarge) : dispatch_automatic_t(Battery, dt_hour, SOC_min, SOC_max, current_choice, Ic_max, Id_max, Pc_max, Pd_max, t_min, dispatch_mode, pv_dispatch, nyears, look_ahead_hours, dispatch_update_frequency_hours, can_charge, can_clip_charge, can_grid_charge)
 {
+	// if look behind, only allow 24 hours
+	if (_mode == dispatch_t::FOM_LOOK_BEHIND)
+		_look_ahead_hours = 24;
+
 	_inverter_paco = inverter_paco;
 	_ppa_factors = ppa_factors;
 
@@ -1546,6 +1548,12 @@ void dispatch_automatic_front_of_meter_t::setup_cost_vector(util::matrix_t<size_
 	_ppa_cost_vector.reserve(8760 * _steps_per_hour * _nyears);
 	size_t month, hour, iprofile;
 	double cost;
+
+	if (_mode == dispatch_t::FOM_LOOK_BEHIND) {
+		for (int i = 0; i != _look_ahead_hours * _steps_per_hour; i++)
+			_ppa_cost_vector.push_back(0);
+	}
+
 	for (size_t year = 0; year != _nyears; year++) {
 		for (size_t hour_of_year = 0; hour_of_year != 8760 + _look_ahead_hours; hour_of_year++)
 		{
