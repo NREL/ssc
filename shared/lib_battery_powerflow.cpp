@@ -232,8 +232,8 @@ void BatteryPowerFlow::calculateDCConnected()
 		P_battery_dc = P_battery_dc_pre_bms * m_BatteryPower->singlePointEfficiencyDCToDC;
 
 	
-	double P_battery_ac, P_pv_ac, P_gen_ac, efficiencyAC, p_cliploss, p_consumptionloss, p_nightloss;
-	P_battery_ac = P_pv_ac = P_gen_ac = efficiencyAC = p_cliploss = p_consumptionloss = p_nightloss = 0;
+	double P_battery_ac, P_pv_ac, P_gen_ac;
+	P_battery_ac = P_pv_ac = P_gen_ac = 0;
 
 
 	double P_gen_dc = P_pv_dc + P_battery_dc;
@@ -251,15 +251,14 @@ void BatteryPowerFlow::calculateDCConnected()
 		voltage = m_BatteryPower->sharedInverter->getInverterDCNominalVoltage();
 
 	// convert the DC power to AC
-	m_BatteryPower->sharedInverter->calculateACPower(powerToInvert, voltage,
-		P_gen_ac, efficiencyAC, p_cliploss, p_consumptionloss, p_nightloss);
-	P_gen_ac *= util::watt_to_kilowatt;
+	m_BatteryPower->sharedInverter->calculateACPower(powerToInvert, voltage);
+	P_gen_ac = m_BatteryPower->sharedInverter->powerAC_kW;
 
 
 	if (charging)
 		P_gen_ac *= -1;
 
-	P_battery_ac = efficiencyAC * 0.01 * P_battery_dc;
+	P_battery_ac = m_BatteryPower->sharedInverter->efficiencyAC * 0.01 * P_battery_dc;
 
 	// charging 
 	if (P_battery_ac <= 0)

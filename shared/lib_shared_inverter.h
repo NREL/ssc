@@ -19,22 +19,30 @@ public:
 	SharedInverter(int inverterType, int numberOfInverters,
 		sandia_inverter_t * sandiaInverter, partload_inverter_t * partloadInverter);
 
-	/// Given the combined PV plus battery DC power and voltage, compute the AC power
-	void calculateACPower(const double powerDC, const double DCStringVoltage,
-		double & powerAC, double & efficiencyAC, double & powerClipLoss, double & powerConsumptionLoss, double & powerNightLoss);
+	/// Given the combined PV plus battery DC power (W) and voltage, compute the AC power (kW)
+	void calculateACPower(const double powerDC, const double DCStringVoltage);
 
 	/// Return the nominal DC voltage input
 	double getInverterDCNominalVoltage();  
 
 	enum { SANDIA_INVERTER, DATASHEET_INVERTER, PARTLOAD_INVERTER, COEFFICIENT_GENERATOR, NONE };
 
-protected:
+public:
 
+	// calculated values for the current timestep
+	double powerDC_kW;
+	double powerAC_kW;
+	double efficiencyAC;
+	double powerClipLoss_kW;
+	double powerConsumptionLoss_kW;
+	double powerNightLoss_kW;
+
+protected:
 
 	int m_inverterType;  /// The inverter type
 	int m_numInverters;  /// The number of inverters in the system
 
-						 // Memory managed elsewehre
+	// Memory managed elsewehre
 	sandia_inverter_t * m_sandiaInverter;
 	partload_inverter_t * m_partloadInverter;
 };

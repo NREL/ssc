@@ -2681,8 +2681,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 				}
 				p_pv_dc_use.push_back(static_cast<ssc_number_t>(dcpwr));
 
- 				sharedInverter->calculateACPower(dcpwr * util::kilowatt_to_watt, dc_string_voltage,
-					acpwr_gross, aceff, cliploss, psoloss, pntloss);
+ 				sharedInverter->calculateACPower(dcpwr * util::kilowatt_to_watt, dc_string_voltage);
 				 
 				if (p_pv_clipping_forecast.size() > 1 && p_pv_clipping_forecast.size() > idx % (8760 * step_per_hour)) {
 					cliploss = p_pv_clipping_forecast[idx % (8760 * step_per_hour)] * util::kilowatt_to_watt;
@@ -2730,11 +2729,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 					batt.check_replacement_schedule();
 				}
 
-				// Iterative loop over DC battery
-				size_t dc_count = 0; bool iterate_dc = false;
-				double dcpwr_net = 0, acpwr_gross = 0, aceff = 0, pntloss = 0, psoloss = 0, cliploss = 0, ac_wiringloss = 0;
-				//do {
-
+				double dcpwr_net = 0, acpwr_gross = 0, ac_wiringloss = 0;
 				cur_load = p_load_full[idx];
 				dcpwr_net = util::kilowatt_to_watt * p_dcpwr[idx];
 				double dc_string_voltage = p_inv_dc_voltage[idx];
@@ -2743,70 +2738,43 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 				bool battery_charging = false;
 				if (en_batt && (batt_topology == ChargeController::DC_CONNECTED))
 				{
-					if (iyear == 0 && dc_count == 0)
+					if (iyear == 0)
 						annual_dc_power_before_battery += p_dcpwr[idx] * ts_hour;
 
 					// Compute PV clipping before adding battery
-					sharedInverter->calculateACPower(dcpwr_net, dc_string_voltage,
-						acpwr_gross, aceff, cliploss, psoloss, pntloss);
+					sharedInverter->calculateACPower(dcpwr_net, dc_string_voltage);
 
-					// Run battery
-					batt.advance(*this, dcpwr_net*util::watt_to_kilowatt, dc_string_voltage, cur_load, cliploss*util::watt_to_kilowatt);
-					dcpwr_net = util::kilowatt_to_watt * batt.outGenPower[idx];
-
-					// inverter can't handle negative dcpwr
-					if (dcpwr_net < 0)
-					{
-						if (batt.outBatteryPower[idx] < 0)
-						{
-							battery_charging = true;
-							dcpwr_net = fabs(dcpwr_net);
-						}
-						else
-							dcpwr_net = 0;
-					}
+					// Run PV plus battery through sharedInverter, returns AC power
+					batt.advance(*this, dcpwr_net*util::watt_to_kilowatt, dc_string_voltage, cur_load, sharedInverter->powerClipLoss_kW);
 				}
-				// inverter: runs at all hours of the day, even if no DC power.  important
-				// for capturing tare losses			
-				acpwr_gross = 0, aceff = 0, pntloss = 0, psoloss = 0, cliploss = 0, ac_wiringloss = 0;
-				sharedInverter->calculateACPower(dcpwr_net, dc_string_voltage,
-					acpwr_gross, aceff, cliploss, psoloss, pntloss);
-
-				// if dc connected battery, update post-inverted quantities
-				if (en_batt && (batt_topology == ChargeController::DC_CONNECTED))
+				else
 				{
-					if (battery_charging)
-					{
-						// change sign back now that is inverted
-						dcpwr_net *= -1;
-						acpwr_gross *= -1;
-					}
-					batt.update_post_inverted(*this, acpwr_gross*util::watt_to_kilowatt);
-					iterate_dc = batt.check_iterate(dc_count);
-					acpwr_gross = batt.outGenPower[idx] * util::kilowatt_to_watt;
+					// inverter: runs at all hours of the day, even if no DC power.  important
+					// for capturing tare losses			
+					sharedInverter->calculateACPower(dcpwr_net, dc_string_voltage);
 				}
-				dc_count++;
-				//} while (iterate_dc);
-					 
+		
+				acpwr_gross = sharedInverter->powerAC_kW;
 				ac_wiringloss = fabs(acpwr_gross) * ac_loss_percent * 0.01;
 
 				// accumulate first year annual energy
 				if (iyear == 0)
 				{
+					// need to update this output to be a DC value, currently is the ac power after battery
 					if (en_batt && (batt_topology == ChargeController::DC_CONNECTED))
-							annual_dc_power_after_battery += batt.outGenPower[idx] * ts_hour;
+							annual_dc_power_after_battery += sharedInverter->powerDC_kW * ts_hour;
 
-					annual_ac_gross += acpwr_gross * util::watt_to_kilowatt * ts_hour;
-					p_inveff[idx] = (ssc_number_t)(aceff);
-					p_invcliploss[idx] = (ssc_number_t)(cliploss * util::watt_to_kilowatt);
-					p_invpsoloss[idx] = (ssc_number_t)(psoloss * util::watt_to_kilowatt);
-					p_invpntloss[idx] = (ssc_number_t)(pntloss * util::watt_to_kilowatt);
-					p_ac_wiringloss[idx] = (ssc_number_t)(ac_wiringloss * util::watt_to_kilowatt);
+					annual_ac_gross += acpwr_gross * ts_hour;
+					p_inveff[idx] = (ssc_number_t)(sharedInverter->efficiencyAC);
+					p_invcliploss[idx] = (ssc_number_t)(sharedInverter->powerClipLoss_kW);
+					p_invpsoloss[idx] = (ssc_number_t)(sharedInverter->powerConsumptionLoss_kW);
+					p_invpntloss[idx] = (ssc_number_t)(sharedInverter->powerNightLoss_kW);
+					p_ac_wiringloss[idx] = (ssc_number_t)(ac_wiringloss);
 				}
-				p_dcpwr[idx] = (ssc_number_t)(dcpwr_net * util::watt_to_kilowatt);
+				p_dcpwr[idx] = (ssc_number_t)(sharedInverter->powerDC_kW);
 					
 				//ac losses should always be subtracted, this means you can't just multiply by the derate because at nighttime it will add power
-				p_gen[idx] = (ssc_number_t)((acpwr_gross - ac_wiringloss) * util::watt_to_kilowatt);
+				p_gen[idx] = (ssc_number_t)(acpwr_gross - ac_wiringloss);
 
 				// apply transformer loss
 				// load loss

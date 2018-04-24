@@ -1,4 +1,5 @@
 #include "lib_shared_inverter.h"
+#include "lib_util.h"
 
 SharedInverter::SharedInverter(int inverterType, int numberOfInverters,
 	sandia_inverter_t * sandiaInverter, partload_inverter_t * partloadInverter)
@@ -9,19 +10,22 @@ SharedInverter::SharedInverter(int inverterType, int numberOfInverters,
 	m_partloadInverter = partloadInverter;
 }
 
-void SharedInverter::calculateACPower(const double powerDC, const double DCStringVoltage,
-	double & powerAC, double & efficiencyAC, double & powerClipLoss, double & powerConsumptionLoss, double & powerNightLoss)
+void SharedInverter::calculateACPower(const double powerDC_Watts, const double DCStringVoltage)
 {
 	double P_par, P_lr;
-	if (m_inverterType == SANDIA_INVERTER)
-		m_sandiaInverter->acpower(powerDC / m_numInverters, DCStringVoltage, &powerAC, &P_par, &P_lr, &efficiencyAC, &powerClipLoss, &powerConsumptionLoss, &powerNightLoss);
-	else if (m_inverterType == PARTLOAD_INVERTER)
-		m_partloadInverter->acpower(powerDC / m_numInverters, &powerAC, &P_lr, &P_par, &efficiencyAC, &powerClipLoss, &powerNightLoss);
 
-	powerAC *= m_numInverters;
-	powerClipLoss *= m_numInverters;
-	powerConsumptionLoss *= m_numInverters;
-	powerNightLoss *= m_numInverters;
+	// Power quantities go in and come out in units of W
+	if (m_inverterType == SANDIA_INVERTER)
+		m_sandiaInverter->acpower(powerDC_Watts / m_numInverters, DCStringVoltage, &powerAC_kW, &P_par, &P_lr, &efficiencyAC, &powerClipLoss_kW, &powerConsumptionLoss_kW, &powerNightLoss_kW);
+	else if (m_inverterType == PARTLOAD_INVERTER)
+		m_partloadInverter->acpower(powerDC_Watts / m_numInverters, &powerAC_kW, &P_lr, &P_par, &efficiencyAC, &powerClipLoss_kW, &powerNightLoss_kW);
+
+	// Convert units to kW
+	powerDC_kW = powerDC_Watts * util::watt_to_kilowatt;
+	powerAC_kW *= m_numInverters * util::watt_to_kilowatt;
+	powerClipLoss_kW *= m_numInverters * util::watt_to_kilowatt;
+	powerConsumptionLoss_kW *= m_numInverters * util::watt_to_kilowatt;
+	powerNightLoss_kW *= m_numInverters * util::watt_to_kilowatt;
 	efficiencyAC *= 100;
 }
 
