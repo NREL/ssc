@@ -1117,9 +1117,7 @@ void battstor::advance(compute_module &cm, double P_pv, double V_pv, double P_lo
 	charge_control->run(year, hour, step, year_index, P_pv, V_pv, P_load, P_pv_clipped);
 	outputs_fixed(cm);
 	outputs_topology_dependent(cm);
-
-	if (batt_vars->batt_topology == ChargeController::AC_CONNECTED)
-		metrics(cm);
+	metrics(cm);
 }
 void battstor::setSharedInverter(SharedInverter * sharedInverter)
 {

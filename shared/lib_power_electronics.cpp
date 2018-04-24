@@ -94,5 +94,5 @@ void DCBatteryController::run(size_t year, size_t hour_of_year, size_t step_of_h
 	m_dispatch->dispatch(year, hour_of_year, step_of_hour, P_pv, V_pv, P_load, P_clipped);
 
 	// Compute annual metrics
-	//m_batteryMetrics->compute_metrics_ac(m_dispatch->getBatteryPower());
+	m_batteryMetrics->compute_metrics_ac(m_dispatch->getBatteryPower());
 }
