@@ -34,7 +34,7 @@ BatteryPower::BatteryPower(double dtHour) :
 		stateOfChargeMin(0),
 		tolerance(0.001){}
 
-BatteryPower::BatteryPower(const BatteryPower& batteryPower) { /* nothing to do */ }
+BatteryPower::BatteryPower(const BatteryPower& ) { /* nothing to do */ }
 
 void BatteryPower::setSharedInverter(SharedInverter * a_sharedInverter) {
 	sharedInverter = a_sharedInverter;
@@ -140,7 +140,7 @@ void BatteryPowerFlow::calculateACConnected()
 	else
 	{
 		// Test if battery is discharging erroneously
-		if (!m_BatteryPower->canDischarge & P_battery_ac > 0) {
+		if (!m_BatteryPower->canDischarge && P_battery_ac > 0) {
 			P_batt_to_grid_ac = P_batt_to_load_ac = 0;
 			P_battery_ac = 0;
 		}
@@ -201,7 +201,6 @@ void BatteryPowerFlow::calculateACConnected()
 void BatteryPowerFlow::calculateDCConnected()
 {
 	// Quanities are AC in KW unless otherwise specified
-	double P_inverter_draw_ac = m_BatteryPower->powerPVInverterDraw;
 	double P_load_ac = m_BatteryPower->powerLoad;
 	double P_system_loss_ac = m_BatteryPower->powerSystemLoss;
 	double P_battery_ac, P_pv_ac, P_gen_ac, P_pv_to_batt_ac, P_grid_to_batt_ac, P_batt_to_load_ac, P_grid_to_load_ac, P_pv_to_load_ac, P_pv_to_grid_ac, P_batt_to_grid_ac, P_grid_ac, P_conversion_loss_ac;
@@ -235,12 +234,13 @@ void BatteryPowerFlow::calculateDCConnected()
 	// convert the DC power to AC
 	m_BatteryPower->sharedInverter->calculateACPower(powerToInvert, voltage);
 	P_gen_ac = m_BatteryPower->sharedInverter->powerAC_kW;
-	double efficiencyDCAC = m_BatteryPower->sharedInverter->efficiencyAC * 0.01;
-	double efficiencyDCDC = m_BatteryPower->singlePointEfficiencyDCToDC;
-
 	if (charging)
 		P_gen_ac *= -1;
 
+	// if all PV going to battery could have 0% efficiency of inverter
+	double efficiencyDCAC = m_BatteryPower->sharedInverter->efficiencyAC * 0.01;
+	if (efficiencyDCAC == 0)
+		efficiencyDCAC = 1.0;
 	P_battery_ac = efficiencyDCAC * P_battery_dc;
 	P_pv_ac = efficiencyDCAC * P_pv_dc;
 
@@ -287,7 +287,7 @@ void BatteryPowerFlow::calculateDCConnected()
 	else
 	{
 		// Test if battery is discharging erroneously
-		if (!m_BatteryPower->canDischarge & P_battery_ac > 0) {
+		if (!m_BatteryPower->canDischarge && P_battery_ac > 0) {
 			P_batt_to_grid_ac = P_batt_to_load_ac = 0;
 			P_battery_ac = 0;
 		}
