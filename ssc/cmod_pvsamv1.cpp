@@ -2673,7 +2673,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 				p_dcpwr[idx] = (ssc_number_t)(dcpwr_net * util::watt_to_kilowatt);
 
 				// Predict clipping for DC battery controller
-				double acpwr_gross = 0, aceff = 0, pntloss = 0, psoloss = 0, cliploss = 0;
+				double cliploss = 0; 
 				double dcpwr = p_dcpwr[idx];
 
 				if (p_pv_dc_forecast.size() > 1 && p_pv_dc_forecast.size() > idx % (8760 * step_per_hour)) {
@@ -2704,7 +2704,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 	PV AC calculation
 	*********************************************************************************************** */
 	idx = 0; ireport = 0; ireplast = 0; percent_baseline = percent_complete;
-	double annual_dc_power_before_battery = 0, annual_dc_power_after_battery = 0;
+	double annual_battery_loss = 0;
 	for (size_t iyear = 0; iyear < nyears; iyear++)
 	{
 		for (hour = 0; hour < 8760; hour++)
@@ -2735,12 +2735,8 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 				double dc_string_voltage = p_inv_dc_voltage[idx];
 
 				// DC Connected Battery
-				bool battery_charging = false;
 				if (en_batt && (batt_topology == ChargeController::DC_CONNECTED))
 				{
-					if (iyear == 0)
-						annual_dc_power_before_battery += p_dcpwr[idx] * ts_hour;
-
 					// Compute PV clipping before adding battery
 					sharedInverter->calculateACPower(dcpwr_net, dc_string_voltage);
 
@@ -2759,11 +2755,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 
 				// accumulate first year annual energy
 				if (iyear == 0)
-				{
-					// need to update this output to be a DC value, currently is the ac power after battery
-					if (en_batt && (batt_topology == ChargeController::DC_CONNECTED))
-							annual_dc_power_after_battery += sharedInverter->powerDC_kW * ts_hour;
-
+				{ 
 					annual_ac_gross += acpwr_gross * ts_hour;
 					p_inveff[idx] = (ssc_number_t)(sharedInverter->efficiencyAC);
 					p_invcliploss[idx] = (ssc_number_t)(sharedInverter->powerClipLoss_kW);
@@ -2804,6 +2796,13 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 
 				idx++;
 			}
+		}
+
+		if (iyear == 0)
+		{
+			// accumulate DC power after the battery
+			if (en_batt && (batt_topology == ChargeController::DC_CONNECTED))
+				annual_battery_loss = batt.outAnnualEnergyLoss[iyear] * ts_hour;
 		}
 	}
 
@@ -3110,7 +3109,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 	assign("annual_dc_perf_adj_loss_percent", var_data((ssc_number_t)percent));
 
 	percent = 0;
-	if (annual_dc_gross > 0) percent = 100 * (annual_dc_power_before_battery - annual_dc_power_after_battery) / annual_dc_gross;
+	if (annual_dc_gross > 0) percent = 100 * annual_battery_loss / annual_dc_gross;
 	assign("annual_dc_battery_loss_percent", var_data((ssc_number_t)percent));
 
 	percent = 0;
