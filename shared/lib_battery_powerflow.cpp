@@ -65,16 +65,6 @@ void BatteryPowerFlow::calculate()
 }
 void BatteryPowerFlow::initialize(double stateOfCharge)
 {
-	if (m_BatteryPower->connectionMode == ChargeController::AC_CONNECTED) {
-		initializeAC(stateOfCharge);
-	}
-	// current set to the same initialization, any reason for two?
-	else if (m_BatteryPower->connectionMode == ChargeController::DC_CONNECTED) {
-		initializeAC(stateOfCharge);
-	}
-}
-void BatteryPowerFlow::initializeAC(double stateOfCharge)
-{
 	// If the battery is allowed to discharge, do so
 	if (m_BatteryPower->canDischarge && stateOfCharge > m_BatteryPower->stateOfChargeMin + 1.0)
 	{
@@ -94,10 +84,6 @@ void BatteryPowerFlow::initializeAC(double stateOfCharge)
 			m_BatteryPower->powerBattery = -m_BatteryPower->powerBatteryChargeMax;
 		}
 	}
-
-}
-void BatteryPowerFlow::initializeDC(double stateOfCharge) 
-{
 }
 
 
@@ -249,13 +235,14 @@ void BatteryPowerFlow::calculateDCConnected()
 	// convert the DC power to AC
 	m_BatteryPower->sharedInverter->calculateACPower(powerToInvert, voltage);
 	P_gen_ac = m_BatteryPower->sharedInverter->powerAC_kW;
-
+	double efficiencyDCAC = m_BatteryPower->sharedInverter->efficiencyAC * 0.01;
+	double efficiencyDCDC = m_BatteryPower->singlePointEfficiencyDCToDC;
 
 	if (charging)
 		P_gen_ac *= -1;
 
-	P_battery_ac = m_BatteryPower->sharedInverter->efficiencyAC * 0.01 * P_battery_dc;
-	P_pv_ac = m_BatteryPower->sharedInverter->efficiencyAC * 0.01 * P_pv_dc;
+	P_battery_ac = efficiencyDCAC * P_battery_dc;
+	P_pv_ac = efficiencyDCAC * P_pv_dc;
 
 	// charging 
 	if (P_battery_ac <= 0)
@@ -264,16 +251,27 @@ void BatteryPowerFlow::calculateDCConnected()
 		P_pv_to_load_ac = P_pv_ac;
 		if (P_pv_to_load_ac > P_load_ac) {
 			P_pv_to_load_ac = P_load_ac;
-
 		}
+
 		// Excess PV can go to battery
 		if (m_BatteryPower->canPVCharge) {
+
+			double P_pv_to_batt_max_dc = (P_pv_dc - P_pv_to_load_ac / efficiencyDCAC);
+			double P_pv_to_batt_max_ac = P_pv_to_batt_max_dc * efficiencyDCAC;
+
 			P_pv_to_batt_ac = fabs(P_battery_ac);
-			if (P_pv_to_batt_ac > P_pv_ac - P_pv_to_load_ac)
+			if (P_pv_to_batt_ac > P_pv_to_batt_max_ac)
 			{
-				P_pv_to_batt_ac = P_pv_ac - P_pv_to_load_ac;
+				P_pv_to_batt_ac = P_pv_to_batt_max_ac;
 			}
 		}
+
+		// Update P_pv_ac to reflect that some PV didn't go through inverter
+		double P_pv_to_load_dc = (P_pv_to_load_ac / efficiencyDCAC);
+		double P_pv_to_batt_dc = (P_pv_to_batt_ac / efficiencyDCAC);
+		double P_pv_to_grid_dc = P_pv_dc - P_pv_to_load_dc - P_pv_to_batt_dc;
+		P_pv_ac = (P_pv_to_load_dc + P_pv_to_grid_dc) * efficiencyDCAC + P_pv_to_batt_ac;
+
 		// Grid can also charge battery
 		if (m_BatteryPower->canGridCharge) {
 			P_grid_to_batt_ac = fabs(P_battery_ac) - P_pv_to_batt_ac;

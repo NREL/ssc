@@ -71,5 +71,54 @@ TEST_F(BatteryPowerFlowTest, TestACConnected)
 	EXPECT_NEAR(m_batteryPower->powerGridToBattery, 0, error);
 	EXPECT_NEAR(m_batteryPower->powerGridToLoad, 2, error);
 	EXPECT_NEAR(m_batteryPower->powerConversionLoss, 2, error);
+}
 
+
+TEST_F(BatteryPowerFlowTest, TestDCConnected)
+{
+	m_batteryPower->connectionMode = ChargeController::DC_CONNECTED;
+
+	// PV and Grid Charging Scenario
+	m_batteryPower->canPVCharge = true;
+	m_batteryPower->powerPV = 300;
+	m_batteryPower->powerLoad = 200;
+	m_batteryPowerFlow->initialize(50);
+	m_batteryPowerFlow->calculate();
+
+	EXPECT_NEAR(m_batteryPower->powerBattery, -98.85, error); 
+	EXPECT_NEAR(m_batteryPower->powerPVToLoad, 200, error);
+	EXPECT_NEAR(m_batteryPower->powerPVToBattery, 90.63, error);
+	EXPECT_NEAR(m_batteryPower->powerGridToBattery, 8.22, error);  // Note, grid power charging is NOT allowed here, but this model does not enforce.  It is enforced elsewhere, where this would be iterated upon.
+	EXPECT_NEAR(m_batteryPower->powerConversionLoss, 8.22, error);
+
+	// Exclusive Grid Charging Scenario
+	m_batteryPower->canGridCharge = true;
+	m_batteryPower->canPVCharge = false;
+	m_batteryPower->powerPV = 300;
+	m_batteryPower->powerLoad = 200;
+	m_batteryPowerFlow->initialize(50);
+	m_batteryPowerFlow->calculate();
+
+	EXPECT_NEAR(m_batteryPower->powerBattery, -98.85, error);
+	EXPECT_NEAR(m_batteryPower->powerPVToLoad, 200, error);
+	EXPECT_NEAR(m_batteryPower->powerPVToBattery, 0, error);
+	EXPECT_NEAR(m_batteryPower->powerPVToGrid, 90.63, error);
+	EXPECT_NEAR(m_batteryPower->powerGridToBattery, 98.85, error);
+	EXPECT_NEAR(m_batteryPower->powerConversionLoss, 8.22, error);
+
+	// Discharging Scenario
+	m_batteryPower->canDischarge = true;
+	m_batteryPower->powerPV = 200;
+	m_batteryPower->powerLoad = 300;
+	m_batteryPowerFlow->initialize(50);
+	m_batteryPowerFlow->calculate();
+
+	EXPECT_NEAR(m_batteryPower->powerBattery, 47.49, error);
+	EXPECT_NEAR(m_batteryPower->powerBatteryToLoad, 47.49, error);
+	EXPECT_NEAR(m_batteryPower->powerPVToLoad, 193.83, error);
+	EXPECT_NEAR(m_batteryPower->powerPVToBattery, 0, error);
+	EXPECT_NEAR(m_batteryPower->powerPVToGrid, 0, error);
+	EXPECT_NEAR(m_batteryPower->powerGridToBattery, 0, error);
+	EXPECT_NEAR(m_batteryPower->powerGridToLoad, 58.68, error);
+	EXPECT_NEAR(m_batteryPower->powerConversionLoss, 8.68, error);
 }

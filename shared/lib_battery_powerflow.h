@@ -66,12 +66,6 @@ private:
 	/// Calculate the power flow for an DC connected battery system
 	void calculateDCConnected();
 
-	/// Initialize the AC connected battery
-	void initializeAC(double stateOfCharge);
-
-	/// Initialize the DC connected battery
-	void initializeDC(double stateOfCharge);
-
 	std::unique_ptr<BatteryPower> m_BatteryPower;   /// A structure containing the AC power flow components 
 };
 
