@@ -1235,29 +1235,11 @@ void battstor::metrics(compute_module &)
 		outPVChargePercent = 0;
 }
 
-void battstor::update_post_inverted(compute_module &cm, double p_gen_ac)
-{
-	//charge_control->update_gen_ac(p_gen_ac);
-	outputs_topology_dependent(cm);
-	metrics(cm);
-}
 // function needed to correctly calculate P_grid to to additional losses in P_gen post battery like wiring, curtailment, availablity
 void battstor::update_grid_power(compute_module &, double P_gen_ac, double P_load_ac, size_t index_replace)
 {
 	double P_grid = P_gen_ac - P_load_ac;
 	outGridPower[index_replace] = (ssc_number_t)(P_grid);
-}
-bool battstor::check_iterate(size_t count)
-{
-	bool iterate = false;
-	/*
-	if (count < 10)
-		iterate = charge_control->check_iterate();
-
-	if (!iterate)
-		charge_control->finalize();
-	*/
-	return iterate;
 }
 
 void battstor::calculate_monthly_and_annual_outputs( compute_module &cm )
@@ -1381,7 +1363,6 @@ public:
 						if (batt.batt_vars->batt_topology == ChargeController::DC_CONNECTED)
 						{
 							double ac = batt.outGenPower[lifetime_idx] * batt.batt_vars->inverter_efficiency;
-							batt.update_post_inverted(*this, ac);
 						}
 						p_gen[lifetime_idx] = batt.outGenPower[lifetime_idx];
 						annual_energy += p_gen[lifetime_idx] * batt._dt_hour;

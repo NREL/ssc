@@ -2687,7 +2687,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 					cliploss = p_pv_clipping_forecast[idx % (8760 * step_per_hour)] * util::kilowatt_to_watt;
 				}
 
-				p_invcliploss_full.push_back(static_cast<ssc_number_t>(cliploss * util::watt_to_kilowatt));
+				p_invcliploss_full.push_back(static_cast<ssc_number_t>(sharedInverter->powerClipLoss_kW));
 
 				idx++;
 			}
@@ -2742,15 +2742,17 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 
 					// Run PV plus battery through sharedInverter, returns AC power
 					batt.advance(*this, dcpwr_net*util::watt_to_kilowatt, dc_string_voltage, cur_load, sharedInverter->powerClipLoss_kW);
+					acpwr_gross = batt.outGenPower[idx];
 				}
 				else
 				{
 					// inverter: runs at all hours of the day, even if no DC power.  important
 					// for capturing tare losses			
 					sharedInverter->calculateACPower(dcpwr_net, dc_string_voltage);
+					acpwr_gross = sharedInverter->powerAC_kW;
 				}
 		
-				acpwr_gross = sharedInverter->powerAC_kW;
+				
 				ac_wiringloss = fabs(acpwr_gross) * ac_loss_percent * 0.01;
 
 				// accumulate first year annual energy
@@ -2800,9 +2802,12 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 
 		if (iyear == 0)
 		{
+			int year_idx = 0;
+			if (system_use_lifetime_output)
+				year_idx = 1;
 			// accumulate DC power after the battery
 			if (en_batt && (batt_topology == ChargeController::DC_CONNECTED))
-				annual_battery_loss = batt.outAnnualEnergyLoss[iyear] * ts_hour;
+				annual_battery_loss = batt.outAnnualEnergyLoss[year_idx];
 		}
 	}
 

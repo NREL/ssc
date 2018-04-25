@@ -237,9 +237,7 @@ struct battstor
 	void outputs_fixed(compute_module &cm);
 	void outputs_topology_dependent(compute_module &cm);
 	void metrics(compute_module &cm);
-	void update_post_inverted(compute_module &cm, double P_gen_ac);
 	void update_grid_power(compute_module &cm, double P_gen_ac, double P_load_ac, size_t index);
-	bool check_iterate(size_t count);
 	void process_messages(compute_module &cm);
 
 	/*! Manual dispatch*/

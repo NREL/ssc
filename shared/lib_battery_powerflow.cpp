@@ -239,8 +239,10 @@ void BatteryPowerFlow::calculateDCConnected()
 
 	// if all PV going to battery could have 0% efficiency of inverter
 	double efficiencyDCAC = m_BatteryPower->sharedInverter->efficiencyAC * 0.01;
-	if (efficiencyDCAC == 0)
+	if (efficiencyDCAC == 0) {
 		efficiencyDCAC = 1.0;
+		P_gen_ac = P_gen_dc;
+	}
 	P_battery_ac = efficiencyDCAC * P_battery_dc;
 	P_pv_ac = efficiencyDCAC * P_pv_dc;
 

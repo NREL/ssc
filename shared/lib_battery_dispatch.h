@@ -619,7 +619,7 @@ protected:
 	std::vector<double> _ppa_cost_vector;
 
 	/*! Utility rate information */
-	UtilityRateCalculator * _utilityRateCalculator;
+	std::unique_ptr<UtilityRateCalculator> m_utilityRateCalculator;
 
 	/*! Cost to replace battery per kWh */
 	double m_battReplacementCostPerKWH;

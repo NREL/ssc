@@ -52,7 +52,7 @@ ACBatteryController::ACBatteryController(dispatch_t * dispatch, battery_metrics_
 	m_batteryPower->singlePointEfficiencyDCToAC = m_bidirectionalInverter->dc_ac_efficiency();
 }
 
-void ACBatteryController::run(size_t year, size_t hour_of_year, size_t step_of_hour, size_t index, 
+void ACBatteryController::run(size_t year, size_t hour_of_year, size_t step_of_hour, size_t, 
 	double P_pv, double V_pv, double P_load, double P_clipped)
 {
 	if (P_pv < 0)
@@ -82,7 +82,7 @@ void DCBatteryController::setSharedInverter(SharedInverter * sharedInverter)
 	m_batteryPower->setSharedInverter(sharedInverter);
 }
 
-void DCBatteryController::run(size_t year, size_t hour_of_year, size_t step_of_hour, size_t index, 
+void DCBatteryController::run(size_t year, size_t hour_of_year, size_t step_of_hour, size_t, 
 	double P_pv, double V_pv, double P_load, double P_clipped)
 {
 	if (P_pv < 0)

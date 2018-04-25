@@ -1171,9 +1171,9 @@ dispatch_automatic_front_of_meter_t::dispatch_automatic_front_of_meter_t(
 	_ppa_factors = ppa_factors;
 
 	// only create utility rate calculator if utility rate is defined
-	_utilityRateCalculator = NULL;
 	if (utilityRate) {
-		_utilityRateCalculator = new UtilityRateCalculator(utilityRate, _steps_per_hour);
+		std::unique_ptr<UtilityRateCalculator> tmp(new UtilityRateCalculator(utilityRate, _steps_per_hour));
+		m_utilityRateCalculator = std::move(tmp);
 	}
 
 	m_battReplacementCostPerKWH = batt_cost_per_kwh;
@@ -1189,12 +1189,7 @@ dispatch_automatic_front_of_meter_t::dispatch_automatic_front_of_meter_t(
 	
 	setup_cost_vector(ppa_weekday_schedule, ppa_weekend_schedule);
 }
-dispatch_automatic_front_of_meter_t::~dispatch_automatic_front_of_meter_t()
-{
-	if (_utilityRateCalculator) {
-		delete _utilityRateCalculator;
-	}
-}
+dispatch_automatic_front_of_meter_t::~dispatch_automatic_front_of_meter_t(){ /* NOTHING TO DO */}
 void dispatch_automatic_front_of_meter_t::init_with_pointer(const dispatch_automatic_front_of_meter_t* tmp)
 {
 	_look_ahead_hours = tmp->_look_ahead_hours;
@@ -1291,7 +1286,7 @@ void dispatch_automatic_front_of_meter_t::update_dispatch(size_t hour_of_year, s
 			costToCycle();
 			 
 			/*! Cost to purchase electricity from the utility */
-			double usage_cost = _utilityRateCalculator->getEnergyRate(hour_of_year);
+			double usage_cost = m_utilityRateCalculator->getEnergyRate(hour_of_year);
 
 			// Compute forecast variables which don't change from year to year
 			auto max_ppa_cost = std::max_element(_ppa_cost_vector.begin() + idx, _ppa_cost_vector.begin() + idx + _look_ahead_hours *_steps_per_hour);
@@ -1381,7 +1376,7 @@ void dispatch_automatic_front_of_meter_t::update_cliploss_data(double_vec P_clip
 	_P_cliploss_dc = P_cliploss;
 
 	// append to end to allow for look-ahead
-	for (size_t i = 0; i != _look_ahead_hours; i++)
+	for (size_t i = 0; i != _look_ahead_hours * _steps_per_hour; i++)
 		_P_cliploss_dc.push_back(P_cliploss[i]);
 }
 
