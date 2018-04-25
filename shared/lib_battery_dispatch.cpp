@@ -204,7 +204,7 @@ bool dispatch_t::check_constraints(double &I, int count)
 
 	return iterate;
 }
-
+message dispatch_t::get_messages(){ return _message; };
 
 void dispatch_t::SOC_controller()
 {
@@ -330,7 +330,7 @@ void dispatch_t::runDispatch(size_t year, size_t hour_of_year, size_t step)
 	_Battery_initial->copy(_Battery);
 	bool iterate = true;
 	int count = 0;
-	size_t idx = util::index_year_hour_step(year, hour_of_year, step, (1 / _dt_hour));
+	size_t idx = util::index_year_hour_step(year, hour_of_year, step, static_cast<size_t>(1 / _dt_hour));
 
 	do {
 
@@ -574,7 +574,6 @@ dispatch_automatic_t::dispatch_automatic_t(
 	) : dispatch_t(Battery, dt_hour, SOC_min, SOC_max, current_choice, Ic_max, Id_max, Pc_max, Pd_max,
 	t_min, dispatch_mode, pv_dispatch)
 {
-	_mode = dispatch_mode;
 
 	_dt_hour = dt_hour;
 	_dt_hour_update = dispatch_update_frequency_hours;
@@ -591,6 +590,7 @@ dispatch_automatic_t::dispatch_automatic_t(
 	_month = 1;
 	_nyears = nyears;
 
+	_mode = dispatch_mode;
 	_safety_factor = 0.03;
 
 	m_batteryPower->canClipCharge = can_clip_charge;
