@@ -1427,22 +1427,6 @@ void battery_metrics_t::compute_metrics_ac(const BatteryPower * batteryPower)
 	accumulate_energy_system_loss(batteryPower->powerSystemLoss);
 	compute_annual_loss();
 }
-/*
-void battery_metrics_t::compute_metrics_dc(dispatch_t * dispatch)
-{
-	// dc quantities
-	double P_tofrom_grid = dispatch->power_tofrom_grid();
-	double P_tofrom_batt = dispatch->power_tofrom_battery();
-	double P_pv_to_batt = dispatch->power_pv_to_batt();
-	double P_grid_to_batt = dispatch->power_grid_to_batt();
-
-	accumulate_grid_annual(P_tofrom_grid);
-	accumulate_energy_charge(P_tofrom_batt);
-	accumulate_energy_discharge(P_tofrom_batt);
-	accumulate_battery_charge_components(P_tofrom_batt, P_pv_to_batt, P_grid_to_batt);
-	compute_annual_loss();
-}
-*/
 void battery_metrics_t::compute_annual_loss()
 {
 	double e_conversion_loss = 0.;
