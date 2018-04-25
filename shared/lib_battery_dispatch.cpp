@@ -66,7 +66,7 @@ dispatch_t::dispatch_t(battery_t * Battery, double dt_hour, double SOC_min, doub
 	m_batteryPower->stateOfChargeMin = SOC_min;
 	m_batteryPower->powerBatteryChargeMax = Pc_max;
 	m_batteryPower->powerBatteryDischargeMax = Pd_max;
-	m_batteryPower->connectionMode = battMeterPosition;
+	m_batteryPower->meterPosition = battMeterPosition;
 
 	// initalize Battery and a copy of the Battery for iteration
 	_Battery = Battery;
@@ -477,7 +477,7 @@ bool dispatch_manual_t::check_constraints(double &I, int count)
 			I -= fmin(dI, dQ / _dt_hour);
 		}
 		// Don't let battery export to the grid if behind the meter
-		else if (m_batteryPower->connectionMode == dispatch_t::BEHIND && I > 0 && m_batteryPower->powerBatteryToGrid > tolerance)
+		else if (m_batteryPower->meterPosition == dispatch_t::BEHIND && I > 0 && m_batteryPower->powerBatteryToGrid > tolerance)
 		{
 			if (fabs(m_batteryPower->powerBattery) < tolerance)
 				I -= (m_batteryPower->powerBatteryToGrid * util::kilowatt_to_watt / _Battery->battery_voltage());
@@ -700,7 +700,7 @@ bool dispatch_automatic_t::check_constraints(double &I, int count)
 			}
 		}
 		// Behind the meter
-		else if (m_batteryPower->connectionMode == dispatch_t::BEHIND)
+		else if (m_batteryPower->meterPosition == dispatch_t::BEHIND)
 		{
 			// Don't let PV export to grid if can still charge battery (increase charging)
 			if (m_batteryPower->powerPVToGrid  > tolerance && m_batteryPower->canPVCharge && _Battery->battery_soc() < m_batteryPower->stateOfChargeMax - tolerance && fabs(I) < fabs(m_batteryPower->currentChargeMax))

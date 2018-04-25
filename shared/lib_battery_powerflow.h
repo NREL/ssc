@@ -116,6 +116,7 @@ public:
 	//double annualEnergyConversionLoss;  /// The total annual loss due to power electronic conversions
 
 	int connectionMode;					 /// 0 if DC-connected, 1 if AC-connected
+	int meterPosition;					 /// 0 if behind-the-meter, 1 if front-of-meter
 	double singlePointEfficiencyACToDC;  /// The conversion efficiency from AC power to DC power within the battery microinverter (0 - 1)
 	double singlePointEfficiencyDCToAC;  /// The conversion efficiency from DC power to AC power within the battery microinverter (0 - 1)
 	double singlePointEfficiencyDCToDC;  /// The conversion efficiency from DC power to DC power within the battery management system (0 - 1)
