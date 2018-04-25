@@ -10,14 +10,14 @@ compiler:
   - gcc
 
 before_script:
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then wget -q https://github.com/wxWidgets/wxWidgets/releases/download/v3.1.0/wxWidgets-3.1.0.tar.bz2; fi
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then tar jxf wxWidgets-3.1.0.tar.bz2; fi
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then cd wxWidgets-3.1.0; fi
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then (./configure --prefix=$HOME/wx-3.1.0 --enable-shared=no --enable-stl=yes --enable-debug=no --with-gtk=2 --with-libjpeg=builtin --with-libpng=builtin --with-regex=builtin --with-libtiff=builtin --with-zlib=builtin --with-expat=builtin --without-libjbig --without-liblzma --without-gtkprint --with-libnotify=no --with-libmspack=no --with-gnomevfs=no --with-opengl=yes --with-sdl=no --with-cxx=11); fi
-#  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then (./configure --prefix=$HOME/wx-3.1.0 --enable-stl=yes --enable-debug=no --enable-shared=no --with-cocoa --enable-macosx_arch=x86_64 --enable-unicode --enable-webview --with-cxx=11 --with-macosx-version-min=10.9  --with-libjpeg=builtin --with-libpng=builtin --with-regex=builtin --with-libtiff=builtin --with-zlib=builtin --with-expat=builtin --disable-qtkit --disable-mediactrl); fi
-#  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then (./configure --prefix=$HOME/wx-3.1.0 --enable-stl=yes --enable-debug=no --enable-shared=no --enable-macosx_arch=x86_64 --with-cxx=11 --with-macosx-version-min=10.9 --with-libjpeg=builtin --with-libpng=builtin --with-regex=builtin --with-libtiff=builtin --with-zlib=builtin --with-expat=builtin --without-libjbig --without-liblzma --without-gtkprint --with-libnotify=no --with-libmspack=no --with-gnomevfs=no --with-opengl=yes --with-sdl=no --with-cxx=11 --disable-qtkit --disable-mediactrl); fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then wget -q https://github.com/wxWidgets/wxWidgets/releases/download/v3.1.1/wxWidgets-3.1.1.tar.bz2; fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then tar jxf wxWidgets-3.1.1.tar.bz2; fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then cd wxWidgets-3.1.1; fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then (./configure --prefix=$HOME/wx-3.1.1 --enable-shared=no --enable-stl=yes --enable-debug=no --with-gtk=2 --with-libjpeg=builtin --with-libpng=builtin --with-regex=builtin --with-libtiff=builtin --with-zlib=builtin --with-expat=builtin --without-libjbig --without-liblzma --without-gtkprint --with-libnotify=no --with-libmspack=no --with-gnomevfs=no --with-opengl=yes --with-sdl=no --with-cxx=11); fi
+#  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then (./configure --prefix=$HOME/wx-3.1.1 --enable-stl=yes --enable-debug=no --enable-shared=no --with-cocoa --enable-macosx_arch=x86_64 --enable-unicode --enable-webview --with-cxx=11 --with-macosx-version-min=10.9  --with-libjpeg=builtin --with-libpng=builtin --with-regex=builtin --with-libtiff=builtin --with-zlib=builtin --with-expat=builtin --disable-qtkit --disable-mediactrl); fi
+#  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then (./configure --prefix=$HOME/wx-3.1.1 --enable-stl=yes --enable-debug=no --enable-shared=no --enable-macosx_arch=x86_64 --with-cxx=11 --with-macosx-version-min=10.9 --with-libjpeg=builtin --with-libpng=builtin --with-regex=builtin --with-libtiff=builtin --with-zlib=builtin --with-expat=builtin --without-libjbig --without-liblzma --without-gtkprint --with-libnotify=no --with-libmspack=no --with-gnomevfs=no --with-opengl=yes --with-sdl=no --with-cxx=11 --disable-qtkit --disable-mediactrl); fi
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then make -j4 all install; fi
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then ln -s $HOME/wx-3.1.0/bin/wx-config $HOME/wx-3.1.0/bin/wx-config-3; fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then ln -s $HOME/wx-3.1.1/bin/wx-config $HOME/wx-3.1.1/bin/wx-config-3; fi
   - user=$(echo $TRAVIS_REPO_SLUG | sed 's,/.*$,,')
   - (cd ../ && pwd)
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then export GTEST=/home/travis/build/$user/googletest/googletest; fi
@@ -34,7 +34,7 @@ before_script:
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then git clone https://github.com/$user/wex $WEXDIR; fi
 
 script:
-  - export PATH=$PATH:$HOME/wx-3.1.0/bin
+  - export PATH=$PATH:$HOME/wx-3.1.1/bin
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then make -C $GTEST/make; fi
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then make -j4 -C $LKDIR/build_linux; fi
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then make -j4 -C $WEXDIR/build_linux; fi
@@ -60,4 +60,4 @@ branches:
   - master
   - develop
   - weather_forecast
-  - 2017.9.5.r3
+  

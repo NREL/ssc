@@ -51,6 +51,12 @@
 
 static var_info _cm_vtab_windcsm[] = {
 /*   VARTYPE           DATATYPE         NAME                              LABEL                                                      UNITS     META                      GROUP          REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/			
+	{ SSC_INPUT,        SSC_NUMBER,      "turbine_class",					"Turbine class",                                          "",     "",                      "wind_csm",    "?=0", "INTEGER,MIN=0,MAX=3", "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "turbine_user_exponent",					"Turbine user exponent",                                          "",     "",                      "wind_csm",    "?=2.5", "", "" },
+	{ SSC_INPUT,		SSC_NUMBER, "turbine_carbon_blades", "Turbine carbon blades", "0/1", "", "wind_csm", "?=0", "INTEGER,MIN=0,MAX=1", "" },
+	{ SSC_INPUT,		SSC_NUMBER, "turbine_rotor_diameter", "Turbine rotor diameter", "m", "", "wind_csm", "*", "", "" },
+
+
 
 	// Rotor														      								                             
 	{ SSC_INPUT,        SSC_NUMBER,      "blades",							"Blade mass",                                          "kg",     "",                      "wind_csm",      "*",                       "",                              "" },
@@ -97,7 +103,55 @@ public:
 	void exec( ) throw( general_error )
 	{
 		// get values
-		double blades = (double) as_number("blades");
+		double blades = (double)as_number("blades");
+		double turbine_user_exponent = (double)as_number("turbine_user_exponent");
+		double turbine_rotor_diameter = (double)as_number("turbine_rotor_diameter");
+		bool turbine_carbon_blades = as_integer("turbine_carbon_blades")==1;
+		int turbine_class = as_integer("turbine_class");
+		double exponent = 0;
+		switch (turbine_class)
+		{
+		case 0:
+			exponent = turbine_user_exponent;
+			break;
+		case 1:
+		{
+			if (turbine_carbon_blades)
+				exponent = 2.47;
+			else
+				exponent = 2.54;
+		}
+			break;
+		case 2:
+		case 3:
+		{
+			if (turbine_carbon_blades)
+				exponent = 2.44;
+			else
+				exponent = 2.50;
+		}
+		break;
+		default:
+			exponent = 2.5;
+		}
+		double blade_mass = 0.5 * pow((0.5*turbine_rotor_diameter), exponent);
+
+		// hub mass
+		double hub_mass = 2.3 * blade_mass + 1320.0;
+
+		// pitch mass
+		double pitch_bearing_mass = 0.1295 * blade_mass * blades + 491.31;
+		double pitch_mass = pitch_bearing_mass * (1.0 + 0.3280) + 555.0;
+
+		// spinner mass
+		double spinner_mass = 15.5 * turbine_rotor_diameter - 980.0;
+
+
+		// Rotor mass = blade_mass + hub_mass + pitch_mass + spinner_mass
+
+
+		// Drivetrain - 13 subcomponents
+
 
 		// assign outputs
 //		assign( "rotor_cost", var_data(output) );

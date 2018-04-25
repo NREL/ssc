@@ -204,7 +204,7 @@ bool dispatch_t::check_constraints(double &I, int count)
 
 	return iterate;
 }
-message dispatch_t::get_messages(){ return _message; };
+
 
 void dispatch_t::SOC_controller()
 {
@@ -574,6 +574,7 @@ dispatch_automatic_t::dispatch_automatic_t(
 	) : dispatch_t(Battery, dt_hour, SOC_min, SOC_max, current_choice, Ic_max, Id_max, Pc_max, Pd_max,
 	t_min, dispatch_mode, pv_dispatch)
 {
+	_mode = dispatch_mode;
 
 	_dt_hour = dt_hour;
 	_dt_hour_update = dispatch_update_frequency_hours;
@@ -583,7 +584,6 @@ dispatch_automatic_t::dispatch_automatic_t(
 	_index_last_updated = 0;
 
 	_look_ahead_hours = look_ahead_hours;
-
 	_steps_per_hour = (size_t)(1. / dt_hour);
 	_num_steps = 24 * _steps_per_hour;
 
@@ -591,7 +591,6 @@ dispatch_automatic_t::dispatch_automatic_t(
 	_month = 1;
 	_nyears = nyears;
 
-	_mode = dispatch_mode;
 	_safety_factor = 0.03;
 
 	m_batteryPower->canClipCharge = can_clip_charge;
@@ -1164,6 +1163,10 @@ dispatch_automatic_front_of_meter_t::dispatch_automatic_front_of_meter_t(
 	double etaGridCharge,
 	double etaDischarge) : dispatch_automatic_t(Battery, dt_hour, SOC_min, SOC_max, current_choice, Ic_max, Id_max, Pc_max, Pd_max, t_min, dispatch_mode, pv_dispatch, nyears, look_ahead_hours, dispatch_update_frequency_hours, can_charge, can_clip_charge, can_grid_charge)
 {
+	// if look behind, only allow 24 hours
+	if (_mode == dispatch_t::FOM_LOOK_BEHIND)
+		_look_ahead_hours = 24;
+
 	_inverter_paco = inverter_paco;
 	_ppa_factors = ppa_factors;
 
@@ -1208,22 +1211,31 @@ void dispatch_automatic_front_of_meter_t::init_with_pointer(const dispatch_autom
 void dispatch_automatic_front_of_meter_t::setup_cost_vector(util::matrix_t<size_t> ppa_weekday_schedule, util::matrix_t<size_t> ppa_weekend_schedule)
 {
 	_ppa_cost_vector.clear();
-	_ppa_cost_vector.reserve(8760 * _steps_per_hour);
+	_ppa_cost_vector.reserve(8760 * _steps_per_hour * _nyears);
 	size_t month, hour, iprofile;
 	double cost;
-	for (size_t hour_of_year = 0; hour_of_year != 8760 + _look_ahead_hours; hour_of_year++)
-	{
-		size_t mod_hour_of_year = hour_of_year % 8760;
-		util::month_hour(mod_hour_of_year, month, hour);
-		if (util::weekday(mod_hour_of_year))
-			iprofile = ppa_weekday_schedule(month - 1, hour - 1);
-		else
-			iprofile = ppa_weekend_schedule(month - 1, hour - 1);
 
-		cost = _ppa_factors[iprofile - 1];
+	if (_mode == dispatch_t::FOM_LOOK_BEHIND) {
+		for (int i = 0; i != _look_ahead_hours * _steps_per_hour; i++)
+			_ppa_cost_vector.push_back(0);
+	}
 
-		for (size_t s = 0; s != _steps_per_hour; s++)
-			_ppa_cost_vector.push_back(cost);
+	for (size_t year = 0; year != _nyears; year++) {
+		for (size_t hour_of_year = 0; hour_of_year != 8760 + _look_ahead_hours; hour_of_year++)
+		{
+			size_t mod_hour_of_year = hour_of_year % 8760;
+			util::month_hour(mod_hour_of_year, month, hour);
+			if (util::weekday(mod_hour_of_year))
+				iprofile = ppa_weekday_schedule(month - 1, hour - 1);
+			else
+				iprofile = ppa_weekend_schedule(month - 1, hour - 1);
+
+			cost = _ppa_factors[iprofile - 1];
+
+			for (size_t s = 0; s != _steps_per_hour; s++) {
+				_ppa_cost_vector.push_back(cost);
+			}
+		}
 	}
 }
 
@@ -1282,11 +1294,11 @@ void dispatch_automatic_front_of_meter_t::update_dispatch(size_t hour_of_year, s
 			double usage_cost = _utilityRateCalculator->getEnergyRate(hour_of_year);
 
 			// Compute forecast variables which don't change from year to year
-			auto max_ppa_cost = std::max_element(_ppa_cost_vector.begin() + hour_of_year, _ppa_cost_vector.begin() + hour_of_year + _look_ahead_hours);
+			auto max_ppa_cost = std::max_element(_ppa_cost_vector.begin() + idx, _ppa_cost_vector.begin() + idx + _look_ahead_hours *_steps_per_hour);
 			double ppa_cost = _ppa_cost_vector[hour_of_year];
 
 			// Compute forecast variables which potentially do change from year to year
-			double energyToStoreClipped = std::accumulate(_P_cliploss_dc.begin() + idx, _P_cliploss_dc.begin() + idx + _look_ahead_hours, 0.0f) * _dt_hour;
+			double energyToStoreClipped = std::accumulate(_P_cliploss_dc.begin() + idx, _P_cliploss_dc.begin() + idx + _look_ahead_hours*_steps_per_hour, 0.0f) * _dt_hour;
 
 			/*! Economic benefit of charging from the grid in current time step to discharge sometime in next X hours ($/kWh)*/
 			double benefitToGridCharge = *max_ppa_cost * m_etaDischarge - usage_cost / m_etaGridCharge;
