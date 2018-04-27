@@ -272,6 +272,9 @@ void BatteryPowerFlow::calculateDCConnected()
 		if (P_pv_to_batt_dc + P_grid_to_batt_ac > 0) {
 			P_battery_ac = -(P_pv_to_batt_dc + P_grid_to_batt_ac);
 		}
+		
+		// Assign this as AC values, even though they are fully DC
+		P_pv_to_batt_ac = P_pv_to_batt_dc;
 	}
 	else
 	{
@@ -281,7 +284,7 @@ void BatteryPowerFlow::calculateDCConnected()
 		double efficiencyDCAC = m_BatteryPower->sharedInverter->efficiencyAC * 0.01;
 
 		P_battery_ac = P_battery_dc * efficiencyDCAC;
-		P_pv_dc = P_pv_ac * efficiencyDCAC;
+		P_pv_ac = P_pv_dc * efficiencyDCAC;
 
 		// Test if battery is discharging erroneously
 		if (!m_BatteryPower->canDischarge && P_battery_ac > 0) {
