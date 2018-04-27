@@ -476,6 +476,23 @@ bool dispatch_manual_t::check_constraints(double &I, int count)
 
 			I -= fmin(dI, dQ / _dt_hour);
 		}
+		// Don't let PV serve battery before load (decrease charging)
+		else if (m_batteryPower->meterPosition == dispatch_t::BEHIND && I < 0 && m_batteryPower->powerGridToLoad > tolerance &&
+			m_batteryPower->powerPVToBattery > 0) {
+
+			double dP = m_batteryPower->powerGridToLoad;
+			if (dP > m_batteryPower->powerPVToBattery) {
+				dP = m_batteryPower->powerPVToBattery;
+			}
+
+			double dI = 0;
+			if (dP < tolerance)
+				dI = dP / _Battery->battery_voltage();
+			else
+				dI = (dP / fabs(m_batteryPower->powerBattery)) *fabs(I);
+
+			I += dI;
+		}
 		// Don't let battery export to the grid if behind the meter
 		else if (m_batteryPower->meterPosition == dispatch_t::BEHIND && I > 0 && m_batteryPower->powerBatteryToGrid > tolerance)
 		{
