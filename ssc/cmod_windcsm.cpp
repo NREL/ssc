@@ -56,7 +56,13 @@ static var_info _cm_vtab_windcsm[] = {
 	{ SSC_INPUT,		SSC_NUMBER, "turbine_carbon_blades", "Turbine carbon blades", "0/1", "", "wind_csm", "?=0", "INTEGER,MIN=0,MAX=1", "" },
 	{ SSC_INPUT,		SSC_NUMBER, "turbine_rotor_diameter", "Turbine rotor diameter", "m", "", "wind_csm", "*", "", "" },
 
+	{ SSC_INPUT,		SSC_NUMBER, "machine_rating", "Machine rating", "kW", "", "wind_csm", "*", "", "" },
 
+	{ SSC_INPUT,		SSC_NUMBER, "rotor_torque", "Rotor torque", "Nm", "", "wind_csm", "*", "", "" },
+
+	{ SSC_INPUT,		SSC_NUMBER, "onbard_crane", "Onboard crane", "0/1", "", "wind_csm", "?=0", "INTEGER,MIN=0,MAX=1", "" },
+
+	{ SSC_INPUT,		SSC_NUMBER, "hub_height", "Hub height", "m", "", "wind_csm", "*", "", "" },
 
 	// Rotor														      								                             
 	{ SSC_INPUT,        SSC_NUMBER,      "blades",							"Blade mass",                                          "kg",     "",                      "wind_csm",      "*",                       "",                              "" },
@@ -83,7 +89,12 @@ static var_info _cm_vtab_windcsm[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "tower",							"Tower mass",                                          "kg",     "",                      "wind_csm",      "*",                       "",                              "" },
 
 	// Outputs intermediate percentages and cost breakdown and total cost
-	{ SSC_OUTPUT,       SSC_NUMBER,      "rotor_cost",             "Rotor Cost",                                 "$",     "",                      "wind_csm",      "*",                       "",                              "" },
+{ SSC_OUTPUT,       SSC_NUMBER,      "rotor_mass",             "Rotor mass",                                 "kg",     "",                      "wind_csm",      "*",                       "",                              "" },
+{ SSC_OUTPUT,       SSC_NUMBER,      "rotor_cost",             "Rotor cost",                                 "$",     "",                      "wind_csm",      "*",                       "",                              "" },
+{ SSC_OUTPUT,       SSC_NUMBER,      "drivetrain_mass",        "Drivetrain mass",                            "kg",     "",                      "wind_csm",      "*",                       "",                              "" },
+{ SSC_OUTPUT,       SSC_NUMBER,      "drivetrain_cost",             "Drivetrain cost",                                 "$",     "",                      "wind_csm",      "*",                       "",                              "" },
+{ SSC_OUTPUT,       SSC_NUMBER,      "tower_mass",             "Tower mass",                                 "kg",     "",                      "wind_csm",      "*",                       "",                              "" },
+{ SSC_OUTPUT,       SSC_NUMBER,      "tower_cost",             "Tower cost",                                 "$",     "",                      "wind_csm",      "*",                       "",                              "" },
 
 var_info_invalid };
 
@@ -146,11 +157,64 @@ public:
 		// spinner mass
 		double spinner_mass = 15.5 * turbine_rotor_diameter - 980.0;
 
+		// First output
+		double rotor_mass = blade_mass + hub_mass + pitch_mass + spinner_mass;
+		assign( "rotor_mass", var_data(ssc_number_t(rotor_mass)) );
+		// cost
 
-		// Rotor mass = blade_mass + hub_mass + pitch_mass + spinner_mass
-
-
+		///////////////////////////////////////////////////////////////////////////////////////
 		// Drivetrain - 13 subcomponents
+
+		double machine_rating = as_double("machine_rating"); //kW
+
+		double low_speed_shaft_mass = 13.0 * pow((blade_mass *  machine_rating / 1000.0), 0.65) + 775.0;
+
+		double bearing_mass = 0.0001 * pow(turbine_rotor_diameter, 3.5);
+
+		double rotor_torque = as_double("rotor_torque");
+
+		double gearbox_mass = 113.0 * pow(rotor_torque / 1000.0, 0.71);
+
+		double high_speed_side_mass = 0.19894 * machine_rating;
+
+		double generator_mass = 2300.0 * machine_rating / 1000.0 + 3400.0;
+
+		double bedplate_mass = pow(turbine_rotor_diameter, 2.2);
+
+		double yaw_system_mass = 1.5 * (0.0009 * pow(turbine_rotor_diameter, 3.314));
+
+		double hydraulic_cooling_mass = 0.08 * machine_rating;
+
+		double nacelle_cover_mass = 1.2817 * machine_rating + 428.19;
+
+		bool onboard_crane = as_integer("onboard_crane") == 1;
+
+		double crane_mass = 0.0;
+		if (onboard_crane) crane_mass = 3000.0; //kg
+
+		double nacelle_platforms_mass = 0.125 * bedplate_mass;
+
+		double other_mass = nacelle_platforms_mass + crane_mass;
+
+		double transformer_mass = 1915.0 * machine_rating / 1000.0 + 1910.0;
+
+		double drivetrain_mass = low_speed_shaft_mass + bearing_mass + gearbox_mass + high_speed_side_mass
+			+ generator_mass + bedplate_mass + yaw_system_mass + hydraulic_cooling_mass
+			+ nacelle_cover_mass + other_mass + transformer_mass;
+
+		assign("drivetrain_mass", var_data(ssc_number_t(drivetrain_mass)));
+		// cost
+
+
+		//////////////////////////////////////////////////////////////////////////////////////
+		// tower mass
+		double hub_height = as_double("hub_height");
+
+		double tower_mass = 19.828 * pow(hub_height, 2.0282);
+
+		assign("tower_mass", var_data(ssc_number_t(tower_mass)));
+		// cost
+
 
 
 		// assign outputs
