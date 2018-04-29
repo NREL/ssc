@@ -64,37 +64,15 @@ static var_info _cm_vtab_windcsm[] = {
 
 	{ SSC_INPUT,		SSC_NUMBER, "hub_height", "Hub height", "m", "", "wind_csm", "*", "", "" },
 
-	// Rotor														      								                             
-	{ SSC_INPUT,        SSC_NUMBER,      "blades",							"Blade mass",                                          "kg",     "",                      "wind_csm",      "*",                       "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "hub",								"Hub mass",                                          "kg",     "",                      "wind_csm",      "*",                       "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "pitch",							"Pitch mass",                                          "kg",     "",                      "wind_csm",      "*",                       "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "spinner",							"Spinner mass",                                          "kg",     "",                      "wind_csm",      "*",                       "",                              "" },
-
-	// Drivetrain
-	{ SSC_INPUT,        SSC_NUMBER,      "lowspeedshaft",					"Low speed shaft mass",                                          "kg",     "",                      "wind_csm",      "*",                       "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "bearings",						"Bearings mass",                                          "kg",     "",                      "wind_csm",      "*",                       "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "gearbox",							"Gearbox mass",                                          "kg",     "",                      "wind_csm",      "*",                       "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "brake",							"Brake mass",                                          "kg",     "",                      "wind_csm",      "*",                       "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "generator",						"Low speed shaft mass",                                          "kg",     "",                      "wind_csm",      "*",                       "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "variablespeed",					"Variable speed electronics mass",                                          "kg",     "",                      "wind_csm",      "*",                       "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "yaw",								"Yaw mass",                                          "kg",     "",                      "wind_csm",      "*",                       "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "bedplate",						"Bedplate mass",                                          "kg",     "",                      "wind_csm",      "*",                       "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "connections",						"Electrical connections mass",                                          "kg",     "",                      "wind_csm",      "*",                       "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "hydraulic",						"Hydraulics mass",                                          "kg",     "",                      "wind_csm",      "*",                       "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "nacelle",							"Nacelle mass",                                          "kg",     "",                      "wind_csm",      "*",                       "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "controls",						"Controls mass",                                          "kg",     "",                      "wind_csm",      "*",                       "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "other",							"Other rivetrain mass",                                          "kg",     "",                      "wind_csm",      "*",                       "",                              "" },
-
-	// Tower
-	{ SSC_INPUT,        SSC_NUMBER,      "tower",							"Tower mass",                                          "kg",     "",                      "wind_csm",      "*",                       "",                              "" },
+	{ SSC_INPUT,		SSC_NUMBER, "num_blades", "Number of blades", "", "", "wind_csm", "?=3", "INTEGER,MIN=1", "" },
 
 	// Outputs intermediate percentages and cost breakdown and total cost
-{ SSC_OUTPUT,       SSC_NUMBER,      "rotor_mass",             "Rotor mass",                                 "kg",     "",                      "wind_csm",      "*",                       "",                              "" },
-{ SSC_OUTPUT,       SSC_NUMBER,      "rotor_cost",             "Rotor cost",                                 "$",     "",                      "wind_csm",      "*",                       "",                              "" },
-{ SSC_OUTPUT,       SSC_NUMBER,      "drivetrain_mass",        "Drivetrain mass",                            "kg",     "",                      "wind_csm",      "*",                       "",                              "" },
-{ SSC_OUTPUT,       SSC_NUMBER,      "drivetrain_cost",             "Drivetrain cost",                                 "$",     "",                      "wind_csm",      "*",                       "",                              "" },
-{ SSC_OUTPUT,       SSC_NUMBER,      "tower_mass",             "Tower mass",                                 "kg",     "",                      "wind_csm",      "*",                       "",                              "" },
-{ SSC_OUTPUT,       SSC_NUMBER,      "tower_cost",             "Tower cost",                                 "$",     "",                      "wind_csm",      "*",                       "",                              "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "rotor_mass",             "Rotor mass",                                 "kg",     "",                      "wind_csm",      "*",                       "",                              "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "rotor_cost",             "Rotor cost",                                 "$",     "",                      "wind_csm",      "*",                       "",                              "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "drivetrain_mass",        "Drivetrain mass",                            "kg",     "",                      "wind_csm",      "*",                       "",                              "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "drivetrain_cost",             "Drivetrain cost",                                 "$",     "",                      "wind_csm",      "*",                       "",                              "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "tower_mass",             "Tower mass",                                 "kg",     "",                      "wind_csm",      "*",                       "",                              "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "tower_cost",             "Tower cost",                                 "$",     "",                      "wind_csm",      "*",                       "",                              "" },
 
 var_info_invalid };
 
@@ -113,6 +91,10 @@ public:
 
 	void exec( ) throw( general_error )
 	{
+		// mass values from nrel_csm_tcc_2015.py
+		// Cost values from turbine_costsse_2015.py
+
+
 		// get values
 		double blades = (double)as_number("blades");
 		double turbine_user_exponent = (double)as_number("turbine_user_exponent");
@@ -146,21 +128,47 @@ public:
 			exponent = 2.5;
 		}
 		double blade_mass = 0.5 * pow((0.5*turbine_rotor_diameter), exponent);
+		double blade_mass_cost_coeff = 14.6; // line 27
+		double blade_mass_cost_coeff_2015 = 13.08; // line 152
+		double blade_cost_2015 = blade_mass_cost_coeff * blade_mass;
 
 		// hub mass
 		double hub_mass = 2.3 * blade_mass + 1320.0;
+		double hub_mass_cost_coeff = 3.9; // line 45
+		double hub_mass_cost_coeff_2015 = 3.8; // line 154
+		double hub_cost_2015 = hub_mass_cost_coeff * hub_mass;
 
 		// pitch mass
 		double pitch_bearing_mass = 0.1295 * blade_mass * blades + 491.31;
 		double pitch_mass = pitch_bearing_mass * (1.0 + 0.3280) + 555.0;
+		double pitch_mass_cost_coeff = 22.1; // line 63
+		double pitch_mass_cost_coeff_2015 = 22.91; // line 156
+		double pitch_cost_2015 = pitch_mass_cost_coeff * pitch_mass;
 
 		// spinner mass
 		double spinner_mass = 15.5 * turbine_rotor_diameter - 980.0;
+		double spinner_mass_cost_coeff = 11.1; // line 81
+		double spinner_mass_cost_coeff_2015 = 15.59; // line 158
+		double spinner_cost_2015 = spinner_mass_cost_coeff * spinner_mass;
 
-		// First output
+
 		double rotor_mass = blade_mass + hub_mass + pitch_mass + spinner_mass;
 		assign( "rotor_mass", var_data(ssc_number_t(rotor_mass)) );
-		// cost
+
+		// cost adders
+		double hub_assembly_cost_multiplier = 0.0;
+		double hub_overhead_cost_multiplier = 0.0;
+		double hub_profit_multiplier = 0.0;
+		double hub_transport_multiplier = 0.0;
+
+		double parts_cost = hub_cost_2015 + pitch_cost_2015 + spinner_cost_2015;
+		double hub_system_cost_adder_2015 = (1.0 + hub_transport_multiplier + hub_profit_multiplier)
+			* ((1.0 + hub_overhead_cost_multiplier + hub_assembly_cost_multiplier) * parts_cost);
+
+		int num_blades = as_integer("num_blades");
+		double rotor_cost_added_2015 = blade_cost_2015 * (double)num_blades + hub_system_cost_adder_2015;
+
+
 
 		///////////////////////////////////////////////////////////////////////////////////////
 		// Drivetrain - 13 subcomponents
@@ -168,6 +176,8 @@ public:
 		double machine_rating = as_double("machine_rating"); //kW
 
 		double low_speed_shaft_mass = 13.0 * pow((blade_mass *  machine_rating / 1000.0), 0.65) + 775.0;
+		double low_speed_shaft_mass_cost_coeff = 11.9;; // line 211
+		double low_speed_shaft_cost = low_speed_shaft_mass_cost_coeff * low_speed_shaft_mass;
 
 		double bearing_mass = 0.0001 * pow(turbine_rotor_diameter, 3.5);
 
@@ -213,9 +223,7 @@ public:
 		double tower_mass = 19.828 * pow(hub_height, 2.0282);
 
 		assign("tower_mass", var_data(ssc_number_t(tower_mass)));
-		// cost
-
-
+	
 
 		// assign outputs
 //		assign( "rotor_cost", var_data(output) );
