@@ -1545,31 +1545,25 @@ void dispatch_automatic_front_of_meter_t::init_with_pointer(const dispatch_autom
 void dispatch_automatic_front_of_meter_t::setup_cost_vector(util::matrix_t<size_t> ppa_weekday_schedule, util::matrix_t<size_t> ppa_weekend_schedule)
 {
 	_ppa_cost_vector.clear();
-	_ppa_cost_vector.reserve(8760 * _steps_per_hour * _nyears);
+	_ppa_cost_vector.reserve(8760);
 	size_t month, hour, iprofile;
 	double cost;
 
 	if (_mode == dispatch_t::FOM_LOOK_BEHIND) {
-		for (int i = 0; i != _look_ahead_hours * _steps_per_hour; i++)
+		for (int i = 0; i != _look_ahead_hours; i++)
 			_ppa_cost_vector.push_back(0);
 	}
 
-	for (size_t year = 0; year != _nyears; year++) {
-		for (size_t hour_of_year = 0; hour_of_year != 8760 + _look_ahead_hours; hour_of_year++)
-		{
-			size_t mod_hour_of_year = hour_of_year % 8760;
-			util::month_hour(mod_hour_of_year, month, hour);
-			if (util::weekday(mod_hour_of_year))
-				iprofile = ppa_weekday_schedule(month - 1, hour - 1);
-			else
-				iprofile = ppa_weekend_schedule(month - 1, hour - 1);
+	for (size_t hour_of_year = 0; hour_of_year != 8760 + _look_ahead_hours; hour_of_year++)
+	{
+		util::month_hour(hour_of_year, month, hour);
+		if (util::weekday(hour_of_year))
+			iprofile = ppa_weekday_schedule(month - 1, hour - 1);
+		else
+			iprofile = ppa_weekend_schedule(month - 1, hour - 1);
 
-			cost = _ppa_factors[iprofile - 1];
-
-			for (size_t s = 0; s != _steps_per_hour; s++) {
-				_ppa_cost_vector.push_back(cost);
-			}
-		}
+		cost = _ppa_factors[iprofile - 1];
+		_ppa_cost_vector.push_back(cost);
 	}
 }
 
@@ -1607,7 +1601,7 @@ void dispatch_automatic_front_of_meter_t::dispatch(size_t year,
 	dispatch_automatic_t::dispatch(year, hour_of_year, step, P_pv_dc_charging, P_pv_dc_discharging, P_load_dc_charging, P_load_dc_discharging, P_pv_dc_clipping, _P_battery_current);
 }
 
-void dispatch_automatic_front_of_meter_t::update_dispatch(size_t hour_of_year, size_t step_of_hour, size_t idx)
+void dispatch_automatic_front_of_meter_t::update_dispatch(size_t hour_of_year, size_t , size_t idx)
 {
 
 	if (_mode != dispatch_t::FOM_CUSTOM_DISPATCH)
@@ -1629,7 +1623,7 @@ void dispatch_automatic_front_of_meter_t::update_dispatch(size_t hour_of_year, s
 			double usage_cost = _utilityRateCalculator->getEnergyRate(hour_of_year);
 
 			// Compute forecast variables which don't change from year to year
-			auto max_ppa_cost = std::max_element(_ppa_cost_vector.begin() + idx, _ppa_cost_vector.begin() + idx + _look_ahead_hours *_steps_per_hour);
+			auto max_ppa_cost = std::max_element(_ppa_cost_vector.begin() + hour_of_year, _ppa_cost_vector.begin() + hour_of_year + _look_ahead_hours);
 			double ppa_cost = _ppa_cost_vector[hour_of_year];
 
 			// Compute forecast variables which potentially do change from year to year
