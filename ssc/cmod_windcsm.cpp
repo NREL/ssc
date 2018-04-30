@@ -65,6 +65,8 @@ static var_info _cm_vtab_windcsm[] = {
 	{ SSC_INPUT,		SSC_NUMBER, "hub_height", "Hub height", "m", "", "wind_csm", "*", "", "" },
 
 	{ SSC_INPUT,		SSC_NUMBER, "num_blades", "Number of blades", "", "", "wind_csm", "?=3", "INTEGER,MIN=1", "" },
+	
+	{ SSC_INPUT,		SSC_NUMBER, "num_bearings", "Number of main bearings", "", "", "wind_csm", "?=2", "INTEGER,MIN=1", "" },
 
 	// Outputs intermediate percentages and cost breakdown and total cost
 	{ SSC_OUTPUT,       SSC_NUMBER,      "rotor_mass",             "Rotor mass",                                 "kg",     "",                      "wind_csm",      "*",                       "",                              "" },
@@ -166,7 +168,7 @@ public:
 			* ((1.0 + hub_overhead_cost_multiplier + hub_assembly_cost_multiplier) * parts_cost);
 
 		int num_blades = as_integer("num_blades");
-		double rotor_cost_added_2015 = blade_cost_2015 * (double)num_blades + hub_system_cost_adder_2015;
+		double rotor_cost_adder_2015 = blade_cost_2015 * (double)num_blades + hub_system_cost_adder_2015;
 
 
 
@@ -179,41 +181,101 @@ public:
 		double low_speed_shaft_mass_cost_coeff = 11.9;; // line 211
 		double low_speed_shaft_cost = low_speed_shaft_mass_cost_coeff * low_speed_shaft_mass;
 
-		double bearing_mass = 0.0001 * pow(turbine_rotor_diameter, 3.5);
+		double bearings_mass = 0.0001 * pow(turbine_rotor_diameter, 3.5);
+		int num_bearings = as_integer("num_bearings");
+		double bearings_mass_cost_coeff = 4.5; // line 230
+		double bearings_cost = (double)num_bearings * bearings_mass_cost_coeff * bearings_mass;
 
 		double rotor_torque = as_double("rotor_torque");
 
 		double gearbox_mass = 113.0 * pow(rotor_torque / 1000.0, 0.71);
+		double gearbox_mass_cost_coeff = 12.9; // line 248
+		double gearbox_cost = gearbox_mass_cost_coeff * gearbox_mass;
 
 		double high_speed_side_mass = 0.19894 * machine_rating;
+		double high_speed_side_mass_cost_coeff = 6.8; // line 266
+		double high_speed_side_cost = high_speed_side_mass_cost_coeff * high_speed_side_mass;
 
 		double generator_mass = 2300.0 * machine_rating / 1000.0 + 3400.0;
+		double generator_mass_cost_coeff = 12.4; // line 284
+		double generator_cost = generator_mass_cost_coeff * generator_mass;
 
 		double bedplate_mass = pow(turbine_rotor_diameter, 2.2);
+		double bedplate_mass_cost_coeff = 2.9; // line 302
+		double bedplate_cost = bedplate_mass_cost_coeff * bedplate_mass;
 
 		double yaw_system_mass = 1.5 * (0.0009 * pow(turbine_rotor_diameter, 3.314));
+		double yaw_system_mass_cost_coeff = 8.3; // line 320
+		double yaw_system_cost = yaw_system_mass_cost_coeff * yaw_system_mass;
+
+// Variable speed - no mass calculations but have costs
+		double variable_speed_elec_mass = 0; //???
+		double variable_speed_elec_mass_cost_coeff = 18.8; // line 338
+		double variable_speed_elec_cost = variable_speed_elec_mass_cost_coeff * variable_speed_elec_mass;
 
 		double hydraulic_cooling_mass = 0.08 * machine_rating;
+		double hydraulic_cooling_mass_cost_coeff = 124.0; // line 356
+		double hydraulic_cooling_cost = hydraulic_cooling_mass_cost_coeff * hydraulic_cooling_mass;
 
 		double nacelle_cover_mass = 1.2817 * machine_rating + 428.19;
+		double nacelle_cover_mass_cost_coeff = 5.7; // line 374
+		double nacelle_cover_cost = nacelle_cover_mass_cost_coeff * nacelle_cover_mass;
 
-		bool onboard_crane = as_integer("onboard_crane") == 1;
+// No mass calculations for electornic connections and controls - based on turbine rating only.
+		double elec_connec_machine_rating_mass_cost_coeff = 41.85; // line 392
+		double elec_connec_machine_rating_cost = elec_connec_machine_rating_mass_cost_coeff * machine_rating;
 
-		double crane_mass = 0.0;
-		if (onboard_crane) crane_mass = 3000.0; //kg
+		double controls_machine_rating_mass_cost_coeff = 21.15; // line 409
+		double controls_machine_rating_cost = controls_machine_rating_mass_cost_coeff * machine_rating;
+
 
 		double nacelle_platforms_mass = 0.125 * bedplate_mass;
+		double nacelle_platforms_mass_cost_coeff = 17.1; // line 427
+		double nacelle_platforms_cost = nacelle_platforms_mass_cost_coeff * nacelle_platforms_mass;
+
+		bool onboard_crane = as_integer("onboard_crane") == 1;
+		double crane_mass = 0.0, crane_cost = 0.0;
+		if (onboard_crane)
+		{
+			crane_mass = 3000.0; //kg line 259 nrel_csm_tcc_2015.py
+			crane_cost = 12000.0; // line 429 nrel_csm_costsse_2015.py
+			nacelle_platforms_cost = nacelle_platforms_mass_cost_coeff * (nacelle_platforms_mass - crane_mass);
+		}
+
+		// bedplate cost is input and crane cost is hard coded at line 429
+		// Note that bedplate cost only used in base hardware cost which is commented out 
+		// turbine_costsse_2015.py line 450.
+		double base_hardware_cost_coeff = 0.7;
+		double base_hardware_cost = base_hardware_cost_coeff * bedplate_cost;
+
+		double mainframe_cost = nacelle_platforms_cost + crane_cost;
 
 		double other_mass = nacelle_platforms_mass + crane_mass;
 
 		double transformer_mass = 1915.0 * machine_rating / 1000.0 + 1910.0;
+		double transformer_mass_cost_coeff = 18.8; // line 462
+		double transformer_cost = transformer_mass_cost_coeff * transformer_mass;
 
-		double drivetrain_mass = low_speed_shaft_mass + bearing_mass + gearbox_mass + high_speed_side_mass
+		double drivetrain_mass = low_speed_shaft_mass + bearings_mass + gearbox_mass + high_speed_side_mass
 			+ generator_mass + bedplate_mass + yaw_system_mass + hydraulic_cooling_mass
 			+ nacelle_cover_mass + other_mass + transformer_mass;
 
 		assign("drivetrain_mass", var_data(ssc_number_t(drivetrain_mass)));
 		// cost
+		// inputs?
+		double nacelle_assembly_cost_multiplier = 0.0;
+		double nacelle_overhead_cost_multiplier = 0.0;
+		double nacelle_profit_multiplier = 0.0;
+		double nacelle_transport_multiplier = 0.0;
+
+		parts_cost = low_speed_shaft_cost + bearings_cost + gearbox_cost + high_speed_side_cost
+			+ generator_cost + bedplate_cost + yaw_system_cost + variable_speed_elec_cost
+			+ hydraulic_cooling_cost + nacelle_cover_cost + elec_connec_machine_rating_cost 
+			+ controls_machine_rating_cost + mainframe_cost + transformer_cost;
+
+		double nacelle_system_cost_adder_2015 = (1.0 + nacelle_transport_multiplier
+			+ nacelle_profit_multiplier) * ((1.0 + nacelle_overhead_cost_multiplier
+				+ nacelle_assembly_cost_multiplier) * parts_cost);
 
 
 		//////////////////////////////////////////////////////////////////////////////////////
@@ -221,7 +283,29 @@ public:
 		double hub_height = as_double("hub_height");
 
 		double tower_mass = 19.828 * pow(hub_height, 2.0282);
+		double tower_mass_cost_coeff = 2.9; // line 660
+		double tower_cost = tower_mass_cost_coeff * tower_mass;
 
+		double tower_assembly_cost_multiplier = 0.0;
+		double tower_overhead_cost_multiplier = 0.0;
+		double tower_profit_multiplier = 0.0;
+		double tower_transport_multiplier = 0.0;
+
+		double tower_cost_adder_2015 = (1.0 + tower_transport_multiplier + tower_profit_multiplier)
+			* ((1.0 + tower_overhead_cost_multiplier + tower_assembly_cost_multiplier) * tower_cost);
+
+
+		double turbine_assembly_cost_multiplier = 0.0;
+		double turbine_overhead_cost_multiplier = 0.0;
+		double turbine_profit_multiplier = 0.0;
+		double turbine_transport_multiplier = 0.0;
+
+		parts_cost = rotor_cost_adder_2015 + nacelle_system_cost_adder_2015 + tower_cost_adder_2015;
+
+		double turbine_cost_adder_2015 = (1.0 + turbine_transport_multiplier + turbine_profit_multiplier)
+			* ((1.0 + turbine_overhead_cost_multiplier + turbine_assembly_cost_multiplier) * parts_cost);
+
+		
 		assign("tower_mass", var_data(ssc_number_t(tower_mass)));
 	
 
