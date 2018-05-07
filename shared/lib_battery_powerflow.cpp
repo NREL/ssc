@@ -232,7 +232,7 @@ void BatteryPowerFlow::calculateDCConnected()
 
 
 	// charging 
-	if (P_battery_dc <= 0)
+	if (P_battery_dc < 0)
 	{
 		// First check whether battery charging came from PV.  
 		// Assumes that if battery is charging and can charge from PV, that it will charge from PV before the using the grid
@@ -255,12 +255,12 @@ void BatteryPowerFlow::calculateDCConnected()
 
 		// if all PV going to battery could have 0% efficiency of inverter
 		double efficiencyDCAC = m_BatteryPower->sharedInverter->efficiencyAC * 0.01;
-		if (efficiencyDCAC == 0 && P_pv_to_inverter_dc == 0 )
+		if (efficiencyDCAC == 0)
 			efficiencyDCAC = 1;
 		// For now, treat the AC/DC conversion as a single point efficiency until gain clarification on real behavior.
-		else if (efficiencyDCAC <= 0.01 && P_grid_to_batt_dc > 0) {
+		else if (efficiencyDCAC <= 0.05 && P_grid_to_batt_dc > 0) {
  			efficiencyDCAC = 0.96;
-			m_BatteryPower->sharedInverter->efficiencyAC = efficiencyDCAC;
+			m_BatteryPower->sharedInverter->efficiencyAC = efficiencyDCAC * 100;
 			m_BatteryPower->sharedInverter->powerAC_kW = P_gen_dc_inverter * efficiencyDCAC;
 		}
 
