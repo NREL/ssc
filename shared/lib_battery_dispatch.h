@@ -71,6 +71,7 @@ public:
 	enum PV_PRIORITY { MEET_LOAD, CHARGE_BATTERY };
 	enum CURRENT_CHOICE { RESTRICT_POWER, RESTRICT_CURRENT, RESTRICT_BOTH };
 	enum FOM_CYCLE_COST {MODEL_CYCLE_COST, INPUT_CYCLE_COST};
+	enum CONNECTION { DC_CONNECTED, AC_CONNECTED };
 
 	dispatch_t(battery_t * Battery,
 		double dt,
@@ -354,8 +355,7 @@ public:
 		double P_system,
 		double V_system,
 		double P_load_ac = 0,
-		double P_system_clipped = 0,
-		double P_battery_ac= 0);
+		double P_system_clipped = 0);
 
 	/*! Compute the updated power to send to the battery over the next N hours */
 	virtual void update_dispatch(size_t hour_of_year, size_t step, size_t idx)=0;
@@ -366,16 +366,10 @@ public:
 	/*! Pass in the user-defined dispatch power vector */
 	virtual void set_custom_dispatch(std::vector<double> P_batt_dc);
 
-	/* Compute the components going to the battery */
-	virtual void compute_to_batt();
-
 	/* Check constraints and re-dispatch if needed */
 	virtual bool check_constraints(double &I, int count);
 
 protected:
-
-	/// Helper function to internally set up the dispatch model
-	virtual void prepareDispatch(size_t hour_of_year, size_t step, double P_system, double V_system, double P_load_ac = 0, double P_pv_dc_clipped = 0, double P_battery_ac = 0);
 
 	/*! Initialize with a pointer*/
 	void init_with_pointer(const dispatch_automatic_t * tmp);
@@ -397,9 +391,6 @@ protected:
 
 	/*! Time series of length (24 hours * steps_per_hour) of battery powers [kW] */
 	double_vec _P_battery_use;
-
-	/*! The battery power target at the current time [kW] */
-	double _P_battery_current;
 
 	/*! The index of year the dispatch was last updated */
 	size_t _hour_last_updated;
@@ -492,7 +483,7 @@ public:
 
 	/*! Target power outputs */
 	double power_grid_target(){ return _P_target_current; };
-	double power_batt_target(){ return _P_battery_current; };
+	double power_batt_target() { return m_batteryPower->powerBattery; };
 
 
 protected:
@@ -594,8 +585,8 @@ public:
 	/*! Compute the updated power to send to the battery over the next N hours */
 	void update_dispatch(size_t hour_of_year, size_t step, size_t idx);
 
-	/*! Pass in the clipping loss forecast */
-	void update_cliploss_data(std::vector<double> P_cliploss_dc);
+	/// Update cliploss data
+	void update_cliploss_data(double_vec P_cliploss);
 
 	/*! Calculate the cost to cycle */
 	void costToCycle();

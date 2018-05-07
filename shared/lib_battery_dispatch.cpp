@@ -618,9 +618,6 @@ dispatch_automatic_t::dispatch_automatic_t(
 
 void dispatch_automatic_t::init_with_pointer(const dispatch_automatic_t * tmp)
 {
-	//_P_pv_dc = tmp->_P_pv_dc;
-	//_P_battery_use = tmp->_P_battery_use;
-	_P_battery_current = tmp->_P_battery_current;
 	_day_index = tmp->_day_index;
 	_month = tmp->_month;
 	_num_steps = tmp->_num_steps;
@@ -656,23 +653,15 @@ void dispatch_automatic_t::update_pv_data(std::vector<double> P_pv_dc){ _P_pv_dc
 void dispatch_automatic_t::set_custom_dispatch(std::vector<double> P_batt_dc) { _P_battery_use = P_batt_dc; }
 int dispatch_automatic_t::get_mode(){ return _mode; }
 
-void dispatch_automatic_t::prepareDispatch(size_t hour_of_year, size_t step, double P_system, double V_system, double P_load_ac, double P_system_clipping, double P_battery_ac)
-{
-	dispatch_t::prepareDispatch(hour_of_year, step, P_system, V_system, P_load_ac, P_system_clipping);
-	m_batteryPower->powerBattery = P_battery_ac;
-}
-
 void dispatch_automatic_t::dispatch(size_t year,
 	size_t hour_of_year,
 	size_t step,
 	double P_system,
 	double V_system,
 	double P_load_ac,
-	double P_system_clipping_dc,
-	double P_battery_ac
-	)
+	double P_system_clipping_dc)
 {
-	prepareDispatch(hour_of_year, step, P_system, V_system, P_load_ac, P_system_clipping_dc, P_battery_ac);
+	prepareDispatch(hour_of_year, step, P_system, V_system, P_load_ac, P_system_clipping_dc);
 	runDispatch(year, hour_of_year, step);
 }
 
@@ -687,29 +676,37 @@ bool dispatch_automatic_t::check_constraints(double &I, int count)
 		double I_initial = I;
 		double P_battery = I * _Battery->battery_voltage() * util::watt_to_kilowatt;
 
-		// Comomon to Behind the meter and front of meter
+		// Comomon to automated behind the meter and front of meter
 		iterate = true;
-
+		
+		/*
+		// Don't charge from the grid if bidirectional inverter efficiency is very low
+		if (P_battery < 0 && m_batteryPower->sharedInverter->efficiencyAC <= 0.10 && m_batteryPower->connectionMode == dispatch_t::DC_CONNECTED)
+		{
+			double dP = fabs(P_battery) - m_batteryPower->powerPVToBattery;
+			I += dP * util::kilowatt_to_watt / _Battery->battery_voltage();
+			m_batteryPower->powerBatteryTarget += dP;
+		}
+		*/
 		// Try and force controller to meet target or custom dispatch
-		if (P_battery > _P_battery_current + tolerance || P_battery < _P_battery_current - tolerance)
+		if (P_battery > m_batteryPower->powerBatteryTarget + tolerance || P_battery < m_batteryPower->powerBatteryTarget - tolerance)
 		{
 			// Difference between the dispatch and the desired dispatch
-			double dP = P_battery - _P_battery_current;
+			double dP = P_battery - m_batteryPower->powerBatteryTarget;
 			double SOC = _Battery->battery_soc();
 
 			// But only if it's possible to meet without break grid-charge contraint
-			if ((_P_battery_current < 0 && m_batteryPower->canGridCharge) ||
-				(_P_battery_current > 0))
+			if ((m_batteryPower->powerBatteryTarget < 0 && m_batteryPower->canGridCharge) ||
+				(m_batteryPower->powerBatteryTarget > 0))
 			{
-				// Also don't violate SOC contraints
-				if ((_P_battery_current > 0 && SOC > m_batteryPower->stateOfChargeMin + tolerance) ||
-					(_P_battery_current < 0 && SOC < m_batteryPower->stateOfChargeMax - tolerance)) {
+				// Also don't violate SOC contraints, current limits
+				if ((m_batteryPower->powerBatteryTarget > 0 && SOC > m_batteryPower->stateOfChargeMin + tolerance && I < m_batteryPower->currentDischargeMax) ||
+					(m_batteryPower->powerBatteryTarget < 0 && SOC < m_batteryPower->stateOfChargeMax - tolerance && I > m_batteryPower->currentChargeMax)) {
 					I -= dP * util::kilowatt_to_watt / _Battery->battery_voltage();
 				}
 				else {
 					iterate = false;
 				}
-
 			}
 			else {
 				iterate = false;
@@ -769,29 +766,6 @@ bool dispatch_automatic_t::check_constraints(double &I, int count)
 		}
 	}
 	return iterate;
-}
-
-
-void dispatch_automatic_t::compute_to_batt()
-{
-	// Compute how much power went to battery from each component
-	if (m_batteryPower->powerBattery < 0)
-	{
-		// First take power from clipping
-		m_batteryPower->powerClippedToBattery = m_batteryPower->powerPV;
-		if (m_batteryPower->powerClippedToBattery > fabs(m_batteryPower->powerBattery)) {
-			m_batteryPower->powerClippedToBattery = fabs(m_batteryPower->powerBattery);
-		}
-		else
-		{
-			// Next take power from PV
-			m_batteryPower->powerPVToBattery  = fabs(m_batteryPower->powerBattery) - m_batteryPower->powerClippedToBattery;
-			if (m_batteryPower->powerPVToBattery  > m_batteryPower->powerPV) {
-				m_batteryPower->powerPVToBattery  = fabs(m_batteryPower->powerPV);
-			}
-		}
-		m_batteryPower->powerGridToBattery = fabs(m_batteryPower->powerBattery) - m_batteryPower->powerClippedToBattery - m_batteryPower->powerPVToBattery ;
-	}
 }
 
 dispatch_automatic_behind_the_meter_t::dispatch_automatic_behind_the_meter_t(
@@ -863,7 +837,7 @@ void dispatch_automatic_behind_the_meter_t::dispatch(size_t year,
 	size_t hour_of_year,
 	size_t step,
 	double P_system,
-	double V_system,
+	double ,
 	double P_load_ac,
 	double P_system_clipping_dc)
 {
@@ -871,7 +845,7 @@ void dispatch_automatic_behind_the_meter_t::dispatch(size_t year,
 	size_t idx = util::index_year_hour_step(year, hour_of_year, step, step_per_hour);
 
 	update_dispatch(hour_of_year, step, idx);
-	dispatch_automatic_t::dispatch(year, hour_of_year, step, P_system, P_system_clipping_dc, P_load_ac, _P_battery_current);
+	dispatch_automatic_t::dispatch(year, hour_of_year, step, P_system, P_system_clipping_dc, P_load_ac);
 }
 
 void dispatch_automatic_behind_the_meter_t::update_load_data(std::vector<double> P_load_dc){ _P_load_dc = P_load_dc; }
@@ -910,13 +884,14 @@ void dispatch_automatic_behind_the_meter_t::update_dispatch(size_t hour_of_year,
 		}
 		// save for extraction
 		_P_target_current = _P_target_use[_day_index];
-		_P_battery_current = _P_battery_use[_day_index];
+		m_batteryPower->powerBatteryTarget = _P_battery_use[_day_index];
 	}
 	else
 	{
-		_P_battery_current = _P_battery_use[idx % (8760 *_steps_per_hour)];
+		m_batteryPower->powerBatteryTarget = _P_battery_use[idx % (8760 *_steps_per_hour)];
 	}
 	
+	m_batteryPower->powerBattery = m_batteryPower->powerBatteryTarget;
 
 	if (debug)
 		fclose(p);
@@ -926,6 +901,8 @@ void dispatch_automatic_behind_the_meter_t::initialize(size_t hour_of_year)
 	_hour_last_updated = hour_of_year;
 	_P_target_use.clear();
 	_P_battery_use.clear();
+	m_batteryPower->powerBattery = 0;
+	m_batteryPower->powerBatteryTarget = 0;
 
 	// clean up vectors
 	for (int ii = 0; ii != _num_steps; ii++)
@@ -1281,11 +1258,14 @@ void dispatch_automatic_front_of_meter_t::dispatch(size_t year,
 
 	prepareDispatch(hour_of_year, step, P_system, V_system, P_load_ac, P_system_clipped);
 	update_dispatch(hour_of_year, step, idx);
-	dispatch_automatic_t::dispatch(year, hour_of_year, step, P_system, P_system_clipped, P_load_ac, _P_battery_current);
+	dispatch_automatic_t::dispatch(year, hour_of_year, step, P_system, P_system_clipped, P_load_ac);
 }
 
-void dispatch_automatic_front_of_meter_t::update_dispatch(size_t hour_of_year, size_t step_of_hour, size_t idx)
+void dispatch_automatic_front_of_meter_t::update_dispatch(size_t hour_of_year, size_t , size_t idx)
 {
+	// Initialize
+	m_batteryPower->powerBattery = 0;
+	m_batteryPower->powerBatteryTarget = 0;
 
 	if (_mode != dispatch_t::FOM_CUSTOM_DISPATCH)
 	{
@@ -1380,12 +1360,14 @@ void dispatch_automatic_front_of_meter_t::update_dispatch(size_t hour_of_year, s
 			}
 		}
 		// save for extraction
-		_P_battery_current = powerBattery;
+		m_batteryPower->powerBatteryTarget = powerBattery;
 	}
 	else
 	{
-		_P_battery_current = _P_battery_use[idx % (8760 * _steps_per_hour)];
+		m_batteryPower->powerBatteryTarget = _P_battery_use[idx % (8760 * _steps_per_hour)];
 	}
+
+	m_batteryPower->powerBattery = m_batteryPower->powerBatteryTarget;
 }
 
 void dispatch_automatic_front_of_meter_t::update_cliploss_data(double_vec P_cliploss)
