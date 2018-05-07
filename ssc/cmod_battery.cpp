@@ -1343,6 +1343,13 @@ public:
 			if (batt.step_per_hour > 60 || batt.total_steps != power_input.size() * batt.nyears)
 				throw exec_error("battery", util::format("invalid number of data records (%u): must be an integer multiple of 8760", batt.total_steps));
 
+			// Battery cannot be run in DC-connected mode for generic system.  
+			// We don't have detailed inverter voltage info or clipping info (if PV)
+			if (batt.batt_vars->batt_topology == ChargeController::DC_CONNECTED) {
+				batt.batt_vars->batt_topology = ChargeController::AC_CONNECTED;
+				throw exec_error("battery", "Generic System must be AC connected to battery");
+			}
+
 			/* *********************************************************************************************
 			Run Simulation
 			*********************************************************************************************** */
@@ -1359,11 +1366,6 @@ public:
 						batt.initialize_time(year, hour, jj);
 						batt.check_replacement_schedule();
 						batt.advance(*this, power_input[year_idx], power_load[year_idx]);
-
-						if (batt.batt_vars->batt_topology == ChargeController::DC_CONNECTED)
-						{
-							double ac = batt.outGenPower[lifetime_idx] * batt.batt_vars->inverter_efficiency;
-						}
 						p_gen[lifetime_idx] = batt.outGenPower[lifetime_idx];
 						annual_energy += p_gen[lifetime_idx] * batt._dt_hour;
 						lifetime_idx++;

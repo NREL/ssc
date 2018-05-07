@@ -1208,7 +1208,7 @@ void dispatch_automatic_front_of_meter_t::setup_cost_vector(util::matrix_t<size_
 
 	for (size_t hour_of_year = 0; hour_of_year != 8760 + _look_ahead_hours; hour_of_year++)
 	{
-		util::month_hour(hour_of_year, month, hour);
+		util::month_hour(hour_of_year % 8760, month, hour);
 		if (util::weekday(hour_of_year))
 			iprofile = ppa_weekday_schedule(month - 1, hour - 1);
 		else
@@ -1273,15 +1273,21 @@ void dispatch_automatic_front_of_meter_t::update_dispatch(size_t hour_of_year, s
 			/*! Cost to cycle the battery at all, using maximum DOD or user input */
 			costToCycle();
 			 
-			/*! Cost to purchase electricity from the utility */
-			double usage_cost = m_utilityRateCalculator->getEnergyRate(hour_of_year);
-
 			// Compute forecast variables which don't change from year to year
 			auto max_ppa_cost = std::max_element(_ppa_cost_vector.begin() + hour_of_year, _ppa_cost_vector.begin() + hour_of_year + _look_ahead_hours);
 			double ppa_cost = _ppa_cost_vector[hour_of_year];
 
+			/*! Cost to purchase electricity from the utility */
+			double usage_cost = ppa_cost;
+			if (m_utilityRateCalculator) {
+				usage_cost = m_utilityRateCalculator->getEnergyRate(hour_of_year);
+			}
+
 			// Compute forecast variables which potentially do change from year to year
-			double energyToStoreClipped = std::accumulate(_P_cliploss_dc.begin() + idx, _P_cliploss_dc.begin() + idx + _look_ahead_hours*_steps_per_hour, 0.0f) * _dt_hour;
+			double energyToStoreClipped = 0;
+			if (_P_cliploss_dc.size() > idx + _look_ahead_hours) {
+				std::accumulate(_P_cliploss_dc.begin() + idx, _P_cliploss_dc.begin() + idx + _look_ahead_hours * _steps_per_hour, 0.0f) * _dt_hour;
+			}
 
 			/*! Economic benefit of charging from the grid in current time step to discharge sometime in next X hours ($/kWh)*/
 			double benefitToGridCharge = *max_ppa_cost * m_etaDischarge - usage_cost / m_etaGridCharge;

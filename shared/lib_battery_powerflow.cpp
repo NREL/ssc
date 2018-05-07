@@ -230,7 +230,6 @@ void BatteryPowerFlow::calculateDCConnected()
 	if (voltage <= 0)
 		voltage = m_BatteryPower->sharedInverter->getInverterDCNominalVoltage();
 
-
 	// charging 
 	if (P_battery_dc < 0)
 	{

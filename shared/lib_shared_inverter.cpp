@@ -35,4 +35,6 @@ double SharedInverter::getInverterDCNominalVoltage()
 		return m_sandiaInverter->Vdco;
 	else if (m_inverterType == PARTLOAD_INVERTER)
 		return m_partloadInverter->Vdco;
+	else
+		return 0.;
 }
