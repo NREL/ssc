@@ -68,7 +68,7 @@ void BatteryPowerFlow::initialize(double stateOfCharge)
 {
 	// If the battery is allowed to discharge, do so
 	if (m_BatteryPower->canDischarge && stateOfCharge > m_BatteryPower->stateOfChargeMin + 1.0 &&
-		m_BatteryPower->powerPV < m_BatteryPower->powerLoad)
+		(m_BatteryPower->powerPV < m_BatteryPower->powerLoad || m_BatteryPower->meterPosition == dispatch_t::FRONT))
 	{
 		// try to discharge full amount.  Will only use what battery can provide
 		m_BatteryPower->powerBattery = m_BatteryPower->powerBatteryDischargeMax;
