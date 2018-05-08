@@ -399,6 +399,7 @@ battstor::battstor(compute_module &cm, bool setup_model, size_t nrec, double dt_
 				}
 
 				batt_vars->batt_dispatch_auto_can_gridcharge = cm.as_boolean("batt_dispatch_auto_can_gridcharge");
+				batt_vars->batt_dispatch_auto_can_charge = cm.as_boolean("batt_dispatch_auto_can_charge");
 			}
 
 			// Manual dispatch
