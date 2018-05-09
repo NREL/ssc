@@ -74,7 +74,7 @@ void BatteryPowerFlow::initialize(double stateOfCharge)
 		m_BatteryPower->powerBattery = m_BatteryPower->powerBatteryDischargeMax;
 	}
 	// Is there extra power from system
-	else if (m_BatteryPower->powerPV > m_BatteryPower->powerLoad && m_BatteryPower->canPVCharge || m_BatteryPower->canGridCharge)
+	else if ((m_BatteryPower->powerPV > m_BatteryPower->powerLoad && m_BatteryPower->canPVCharge) || m_BatteryPower->canGridCharge)
 	{
 		if (m_BatteryPower->canPVCharge)
 		{
@@ -206,7 +206,7 @@ void BatteryPowerFlow::calculateDCConnected()
 	double P_load_ac = m_BatteryPower->powerLoad;
 	double P_system_loss_ac = m_BatteryPower->powerSystemLoss;
 	double P_battery_ac, P_pv_ac, P_gen_ac, P_pv_to_batt_ac, P_grid_to_batt_ac, P_batt_to_load_ac, P_grid_to_load_ac, P_pv_to_load_ac, P_pv_to_grid_ac, P_batt_to_grid_ac, P_grid_ac, P_conversion_loss_ac;
-	P_battery_ac = P_pv_ac = P_gen_ac = P_pv_to_batt_ac = P_grid_to_batt_ac = P_batt_to_load_ac = P_grid_to_load_ac = P_pv_to_load_ac = P_pv_to_grid_ac = P_batt_to_grid_ac = P_gen_ac = P_grid_ac = P_conversion_loss_ac = 0;
+	P_battery_ac = P_pv_ac = P_pv_to_batt_ac = P_grid_to_batt_ac = P_batt_to_load_ac = P_grid_to_load_ac = P_pv_to_load_ac = P_pv_to_grid_ac = P_batt_to_grid_ac = P_gen_ac = P_grid_ac = P_conversion_loss_ac = 0;
 	
 	// Quantitites are DC in KW unless otherwise specified
 	double P_pv_to_batt_dc, P_grid_to_batt_dc, P_pv_to_inverter_dc;

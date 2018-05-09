@@ -1,4 +1,6 @@
+#include <cmath>
 #include "lib_utility_rate.h"
+
 
 UtilityRate::UtilityRate(util::matrix_t<size_t> ecWeekday, util::matrix_t<size_t> ecWeekend, util::matrix_t<double> ecRatesMatrix)
 {

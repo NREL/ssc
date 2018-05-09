@@ -156,9 +156,9 @@ protected:
 	std::unique_ptr<dispatch_t> m_dispatchInitial;	/// An internally managed copy of the initial dispatch of the timestep
 
 	// memory managed elsewhere
-	BatteryPower * m_batteryPower;			/// A structure containing all of the components in the battery power flow calculations
-	dispatch_t * m_dispatch;				/// An object containing the framework to run a battery and check operational constraints
+	BatteryPower * m_batteryPower;		/// A structure containing all of the components in the battery power flow calculations
 	battery_metrics_t *m_batteryMetrics;    /// An object that tracks battery metrics for later analysis
+        dispatch_t * m_dispatch;		/// An object containing the framework to run a battery and check operational constraints
 };
 
 /**
