@@ -794,7 +794,7 @@ dispatch_automatic_behind_the_meter_t::dispatch_automatic_behind_the_meter_t(
 	grid.reserve(_num_steps);
 	sorted_grid.reserve(_num_steps);
 
-	for (int ii = 0; ii != _num_steps; ii++)
+	for (size_t ii = 0; ii != _num_steps; ii++)
 	{
 		grid.push_back(grid_point(0., 0, 0));
 		sorted_grid.push_back(grid[ii]);
@@ -902,7 +902,7 @@ void dispatch_automatic_behind_the_meter_t::initialize(size_t hour_of_year)
 	m_batteryPower->powerBatteryTarget = 0;
 
 	// clean up vectors
-	for (int ii = 0; ii != _num_steps; ii++)
+	for (size_t ii = 0; ii != _num_steps; ii++)
 	{
 		grid[ii] = grid_point(0., 0, 0); 
 		sorted_grid[ii] = grid[ii];
@@ -951,16 +951,16 @@ void dispatch_automatic_behind_the_meter_t::sort_grid(FILE *p, bool debug, size_
 		fprintf(p, "Index\t P_load (kW)\t P_pv (kW)\t P_grid (kW)\n");
 
 	// compute grid net from pv and load (no battery)
-	int count = 0;
-	for (int hour = 0; hour != 24; hour++)
+	size_t count = 0;
+	for (size_t hour = 0; hour != 24; hour++)
 	{
-		for (int step = 0; step != _steps_per_hour; step++)
+		for (size_t step = 0; step != _steps_per_hour; step++)
 		{
 			grid[count] = grid_point(_P_load_dc[idx] - _P_pv_dc[idx], hour, step);
 			sorted_grid[count] = grid[count];
 
 			if (debug)
-				fprintf(p, "%d\t %.1f\t %.1f\t %.1f\n", count, _P_load_dc[idx], _P_pv_dc[idx], _P_load_dc[idx] - _P_pv_dc[idx]);
+				fprintf(p, "%lu\t %.1f\t %.1f\t %.1f\n", count, _P_load_dc[idx], _P_pv_dc[idx], _P_load_dc[idx] - _P_pv_dc[idx]);
 
 			idx++;
 			count++;
@@ -984,7 +984,7 @@ void dispatch_automatic_behind_the_meter_t::compute_energy(FILE *p, bool debug, 
 void dispatch_automatic_behind_the_meter_t::target_power(FILE*p, bool debug, double E_useful, size_t idx)
 {
 	// if target power set, use that
-	if ((int)_P_target_input.size() > idx && _P_target_input[idx] >= 0)
+	if (_P_target_input.size() > idx && _P_target_input[idx] >= 0)
 	{
 		double_vec::const_iterator first = _P_target_input.begin() + idx;
 		double_vec::const_iterator last = _P_target_input.begin() + idx + _num_steps;
@@ -995,7 +995,7 @@ void dispatch_automatic_behind_the_meter_t::target_power(FILE*p, bool debug, dou
 	// don't calculate if peak grid demand is less than a previous target in the month
 	else if (sorted_grid[0].Grid() < _P_target_month)
 	{
-		for (int i = 0; i != _num_steps; i++)
+		for (size_t i = 0; i != _num_steps; i++)
 			_P_target_use[i] = _P_target_month;
 		return;
 	}
@@ -1037,7 +1037,7 @@ void dispatch_automatic_behind_the_meter_t::target_power(FILE*p, bool debug, dou
 		std::vector<double> sorted_grid_diff;
 		sorted_grid_diff.reserve(_num_steps - 1);
 
-		for (int ii = 0; ii != _num_steps - 1; ii++)
+		for (size_t ii = 0; ii != _num_steps - 1; ii++)
 			sorted_grid_diff.push_back(sorted_grid[ii].Grid() - sorted_grid[ii + 1].Grid());
 
 		P_target = sorted_grid[0].Grid(); // target power to shave to [kW]
@@ -1045,7 +1045,7 @@ void dispatch_automatic_behind_the_meter_t::target_power(FILE*p, bool debug, dou
 		if (debug)
 			fprintf(p, "Step\tTarget_Power\tEnergy_Sum\tEnergy_charged\n");
 
-		for (int ii = 0; ii != _num_steps - 1; ii++)
+		for (size_t ii = 0; ii != _num_steps - 1; ii++)
 		{
 			// don't look at negative grid power
 			if (sorted_grid[ii + 1].Grid() < 0)
@@ -1055,7 +1055,7 @@ void dispatch_automatic_behind_the_meter_t::target_power(FILE*p, bool debug, dou
 				P_target = sorted_grid[ii + 1].Grid();
 
 			if (debug)
-				fprintf(p, "%d\t %.3f\t", ii, P_target);
+				fprintf(p, "%lu\t %.3f\t", ii, P_target);
 
 			// implies a repeated power
 			if (sorted_grid_diff[ii] == 0)
@@ -1079,7 +1079,7 @@ void dispatch_automatic_behind_the_meter_t::target_power(FILE*p, bool debug, dou
 				P_target += (sum - E_charge_vec[ii]) / ((ii + 1)*_dt_hour);
 				sum = E_charge_vec[ii];
 				if (debug)
-					fprintf(p, "%d\t %.3f\t%.3f\t%.3f\n", ii, P_target, sum, E_charge_vec[ii]);
+					fprintf(p, "%lu\t %.3f\t%.3f\t%.3f\n", ii, P_target, sum, E_charge_vec[ii]);
 				break;
 			}
 			// only allow one cycle per day
@@ -1088,7 +1088,7 @@ void dispatch_automatic_behind_the_meter_t::target_power(FILE*p, bool debug, dou
 				P_target += (sum - E_useful) / ((ii + 1)*_dt_hour);
 				sum = E_useful;
 				if (debug)
-					fprintf(p, "%d\t %.3f\t%.3f\t%.3f\n", ii, P_target, sum, E_charge_vec[ii]);
+					fprintf(p, "%lu\t %.3f\t%.3f\t%.3f\n", ii, P_target, sum, E_charge_vec[ii]);
 				break;
 			}
 		}
@@ -1106,7 +1106,7 @@ void dispatch_automatic_behind_the_meter_t::target_power(FILE*p, bool debug, dou
 			_P_target_month = P_target;
 
 		// write vector of targets
-		for (int i = 0; i != _num_steps; i++)
+		for (size_t i = 0; i != _num_steps; i++)
 			_P_target_use[i] = P_target;
 	}
 }
@@ -1202,7 +1202,7 @@ void dispatch_automatic_front_of_meter_t::setup_cost_vector(util::matrix_t<size_
 	double cost;
 
 	if (_mode == dispatch_t::FOM_LOOK_BEHIND) {
-		for (int i = 0; i != _look_ahead_hours; i++)
+		for (size_t i = 0; i != _look_ahead_hours; i++)
 			_ppa_cost_vector.push_back(0);
 	}
 
@@ -1286,7 +1286,7 @@ void dispatch_automatic_front_of_meter_t::update_dispatch(size_t hour_of_year, s
 			// Compute forecast variables which potentially do change from year to year
 			double energyToStoreClipped = 0;
 			if (_P_cliploss_dc.size() > idx + _look_ahead_hours) {
-				std::accumulate(_P_cliploss_dc.begin() + idx, _P_cliploss_dc.begin() + idx + _look_ahead_hours * _steps_per_hour, 0.0f) * _dt_hour;
+				energyToStoreClipped = std::accumulate(_P_cliploss_dc.begin() + idx, _P_cliploss_dc.begin() + idx + _look_ahead_hours * _steps_per_hour, 0.0f) * _dt_hour;
 			}
 
 			/*! Economic benefit of charging from the grid in current time step to discharge sometime in next X hours ($/kWh)*/

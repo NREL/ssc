@@ -91,6 +91,9 @@ public:
 	/// Register the shared inverter which has previously been defined
 	void setSharedInverter(SharedInverter * sharedInverter);
 
+
+	double dtHour;	   /// The timestep in hours, used for accumulated power losses
+
 	double powerPV;				   /// The power production of the PV array (kW)
 	double powerLoad;			   /// The power required by the electric load (kW)
 	double powerBattery; 	       /// The power flow to and from the battery (> 0, discharging, < 0 charging) (kW)
@@ -136,7 +139,6 @@ public:
 
 
 	double tolerance;  /// A numerical tolerance. Below this value, zero out the power flow
-	double dtHour;	   /// The timestep in hours, used for accumulated power losses
 };
 
 

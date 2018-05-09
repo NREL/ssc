@@ -994,7 +994,7 @@ std::string util::schedule_int_to_month( int m )
 
 bool util::translate_schedule( int tod[8760], const char *wkday, const char *wkend, int min_val, int max_val)
 {
-	int i=0;
+	size_t i=0;
 	if (!wkday || !wkend || strlen(wkday) != 288 || strlen(wkend) != 288)
 	{
 		for (i=0;i<8760;i++) tod[i] = min_val;
@@ -1002,16 +1002,16 @@ bool util::translate_schedule( int tod[8760], const char *wkday, const char *wke
 	}
 
 	int wday = 5;
-	for (int m=0;m<12;m++)
+	for (size_t m=0;m<12;m++)
 	{
-		for (int d=0;d<nday[m];d++)
+		for (size_t d=0;d<nday[m];d++)
 		{
 			const char *sptr = (wday<=0) ? wkend : wkday;
 
 			if (wday >= 0) wday--;
 			else wday = 5;
 
-			for (int h=0;h<24;h++)
+			for (size_t h=0;h<24;h++)
 			{
 				tod[i] = schedule_char_to_int(sptr[ m*24 + h ])-1;
 				if (tod[i] < min_val) tod[i] = min_val;
@@ -1027,30 +1027,30 @@ bool util::translate_schedule( int tod[8760], const char *wkday, const char *wke
 
 bool util::translate_schedule(int tod[8760], const matrix_t<float> &wkday, const matrix_t<float> &wkend, int min_val, int max_val)
 {
-	int i = 0;
+	size_t i = 0;
 	if ((wkday.nrows() != 12) || (wkend.nrows() != 12) || (wkday.ncols() != 24) || (wkend.ncols() != 24) )
 	{
 		for (i = 0; i<8760; i++) tod[i] = min_val;
 		return false;
 	}
 
-	int wday = 5; // start on Monday
+	size_t wday = 5; // start on Monday
 	bool is_weekday = true;
-	for (int m = 0; m<12; m++)
+	for (size_t m = 0; m<12; m++)
 	{
-		for (int d = 0; d<nday[m]; d++)
+		for (size_t d = 0; d<nday[m]; d++)
 		{
 			is_weekday = (wday > 0);
 
 			if (wday >= 0) wday--;
 			else wday = 5;
 
-			for (int h = 0; h<24; h++)
+			for (size_t h = 0; h<24; h++)
 			{
 				if (is_weekday)
-					tod[i] = (int)wkday.at(m, h);
+					tod[i] = (size_t)wkday.at(m, h);
 				else
-					tod[i] = (int)wkend.at(m, h);
+					tod[i] = (size_t)wkend.at(m, h);
 
 				if (tod[i] < min_val) tod[i] = min_val;
 				if (tod[i] > max_val) tod[i] = max_val;
