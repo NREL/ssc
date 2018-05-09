@@ -85,10 +85,10 @@ TEST_F(BatteryPowerFlowTest, TestDCConnected)
 	m_batteryPowerFlow->initialize(50);
 	m_batteryPowerFlow->calculate();
 
-	EXPECT_NEAR(m_batteryPower->powerBattery, -98.85, error); 
-	EXPECT_NEAR(m_batteryPower->powerPVToLoad, 200, error);
-	EXPECT_NEAR(m_batteryPower->powerPVToBattery, 90.63, error);
-	EXPECT_NEAR(m_batteryPower->powerGridToBattery, 8.22, error);  // Note, grid power charging is NOT allowed here, but this model does not enforce.  It is enforced elsewhere, where this would be iterated upon.
+	EXPECT_NEAR(m_batteryPower->powerBattery, -102.04, error); 
+	EXPECT_NEAR(m_batteryPower->powerPVToLoad, 191.78, error);
+	EXPECT_NEAR(m_batteryPower->powerPVToBattery, 102.04, error);
+	EXPECT_NEAR(m_batteryPower->powerGridToBattery, 0.00, error);  
 	EXPECT_NEAR(m_batteryPower->powerConversionLoss, 8.22, error);
 
 	// Exclusive Grid Charging Scenario
@@ -103,7 +103,7 @@ TEST_F(BatteryPowerFlowTest, TestDCConnected)
 	EXPECT_NEAR(m_batteryPower->powerPVToLoad, 200, error);
 	EXPECT_NEAR(m_batteryPower->powerPVToBattery, 0, error);
 	EXPECT_NEAR(m_batteryPower->powerPVToGrid, 90.63, error);
-	EXPECT_NEAR(m_batteryPower->powerGridToBattery, 98.85, error);
+	EXPECT_NEAR(m_batteryPower->powerGridToBattery, 105.33, error);
 	EXPECT_NEAR(m_batteryPower->powerConversionLoss, 8.22, error);
 
 	// Discharging Scenario
