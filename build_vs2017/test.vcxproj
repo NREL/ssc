@@ -32,6 +32,7 @@
     <ClCompile Include="..\test\shared_test\lib_windwatts_test.cpp" />
     <ClCompile Include="..\test\ssc_test\cmod_pvwattsv5_test.cpp" />
     <ClCompile Include="..\test\ssc_test\cmod_windpower_test.cpp" />
+    <ClCompile Include="..\test\ssc_test\cmod_windpower_test2.cpp" />
     <ClCompile Include="..\test\tcs_test\csp_solver_core_test.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -46,6 +47,8 @@
     <ClInclude Include="..\test\ssc_test\cmod_pvsamv1_test.h" />
     <ClInclude Include="..\test\ssc_test\cmod_pvwattsv5_test.h" />
     <ClInclude Include="..\test\ssc_test\cmod_windpower_test.h" />
+    <ClInclude Include="..\test\ssc_test\computeModuleTest.h" />
+    <ClInclude Include="..\test\ssc_test\simulation_test_info.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{37B3B5AF-8923-4C67-BA46-9D90EAC49E0E}</ProjectGuid>
