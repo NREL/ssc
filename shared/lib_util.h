@@ -95,7 +95,7 @@ namespace util
 	const size_t hours_per_day = 24;
 	const size_t hours_per_year = 8760;
 
-	static const int nday[12] = { 31,28,31,30,31,30,31,31,30,31,30,31 };
+	static const size_t nday[12] = { 31,28,31,30,31,30,31,31,30,31,30,31 };
 
 	std::vector< std::string > split( const std::string &str, const std::string &delim, bool ret_empty=false, bool ret_delim=false );
 	std::string join( const std::vector< std::string > &list, const std::string &delim );
@@ -116,15 +116,15 @@ namespace util
 	std::string read_file( const std::string &file );
 	bool read_line( FILE *fp, std::string &text, int prealloc = 256 );
 	
-	int hours_in_month(int month); /* returns the number of hours in a month, as used in month_of() */
-	int hour_of_day(int hour_of_year); /* return the hour of day (0 - 23) given the hour of year (0 - 8759) */
+	size_t hours_in_month(size_t month); /* returns the number of hours in a month, as used in month_of() */
+	size_t hour_of_day(size_t hour_of_year); /* return the hour of day (0 - 23) given the hour of year (0 - 8759) */
 	double percent_of_year(int month, int hours); /* returns the fraction of a year, based on months and hours */
 	int month_of(double time); /* hour: 0 = jan 1st 12am-1am, returns 1-12 */
 	int day_of_month(int month, double time); /* month: 1-12 time: hours, starting 0=jan 1st 12am, returns 1-nday*/
 	int days_in_month(int month); /*month: 0-11, return 0-30, depending on the month*/
-	void month_hour(int hour_of_year, int & out_month, int & out_hour); /*given the hour of year, return the month, and hour of day*/
-	bool weekday(int hour_of_year); /* return true if is a weekday, assuming first hour of year is Monday at 12 am*/
-	size_t index_year_hour_step(int year, int hour_of_year, int step_of_hour, int steps_per_hour);
+	void month_hour(size_t hour_of_year, size_t & out_month, size_t & out_hour); /*given the hour of year, return the month, and hour of day*/
+	bool weekday(size_t hour_of_year); /* return true if is a weekday, assuming first hour of year is Monday at 12 am*/
+	size_t index_year_hour_step(size_t year, size_t hour_of_year, size_t step_of_hour, size_t steps_per_hour);
 
 	int schedule_char_to_int( char c );
 	std::string schedule_int_to_month( int m );
@@ -141,6 +141,27 @@ namespace util
 	std::string get_cwd();
 	bool set_cwd( const std::string &path );
 	
+	template <class T>
+	std::vector<T> array_to_vector(T * array_in, size_t n)
+	{
+		if (array_in != 0)
+		{
+			std::vector<T> vector_out(array_in, array_in + n);
+			return vector_out;
+		}
+		else {
+			std::vector<T> vector_out;
+			return vector_out;
+		}
+	}
+
+	template <class T>
+	void vector_multiply_scalar(std::vector<T> &v, T scalar)
+	{
+		for (size_t i = 0; i != v.size(); i++)
+			v[i] *= scalar;
+	}
+
 	class sync_piped_process
 	{
 	public:

@@ -66,9 +66,9 @@ static var_info vtab_utility_rate5[] = {
 	// load and gen expected to be > 0
 	// grid positive if system generation > load, negative otherwise
 	{ SSC_INPUT, SSC_ARRAY, "gen", "System power generated", "kW", "", "Time Series", "*", "", "" },
-
+	 
 	// input from user as kW and output as kW
-	{ SSC_INOUT, SSC_ARRAY, "load", "Electricity load (year 1)", "kW", "", "Time Series", "*", "", "" },
+	{ SSC_INOUT, SSC_ARRAY, "load", "Electricity load (year 1)", "kW", "", "Time Series", "", "", "" },
 	//  output as kWh - same as load (kW) for hourly simulations
 	{ SSC_OUTPUT, SSC_ARRAY, "bill_load", "Bill load (year 1)", "kWh", "", "Time Series", "*", "", "" },
 
