@@ -1,6 +1,7 @@
 #ifndef __TestInfo__
 #define __TestInfo__
 #include <unordered_map>
+#include <iostream>
 
 enum {
 	STR,
