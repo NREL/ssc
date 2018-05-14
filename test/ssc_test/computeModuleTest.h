@@ -17,7 +17,10 @@ namespace {
 }
 
 class computeModuleTest : public TestWithParam<SimulationTestTable*> {
+	const char* errorMsg;
+
 public:
+	const char* getErrorMsg() { return errorMsg; }
 	void SetUp() {
 		table_ = GetParam();
 		data_ = ssc_data_create();
@@ -38,7 +41,13 @@ public:
 		}
 		if (ssc_module_exec(module, data_) == 0)
 		{
-			printf("error during simulation.");
+			compute_module *cm = static_cast<compute_module*>(module);
+			printf("error during simulation: \n");
+			int i = 0;
+			while (cm->log(i) != nullptr) {
+				printf("%s\n", cm->log(i)->text.c_str());
+				i++;
+			}
 			ssc_module_free(module);
 			return false;
 		}
