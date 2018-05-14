@@ -99,7 +99,7 @@ TEST_F(BatteryPowerFlowTest, TestDCConnected)
 	m_batteryPowerFlow->initialize(50);
 	m_batteryPowerFlow->calculate();
 
-	EXPECT_NEAR(m_batteryPower->powerBattery, -98.85, error);
+	EXPECT_NEAR(m_batteryPower->powerBattery, -105.33, error);
 	EXPECT_NEAR(m_batteryPower->powerPVToLoad, 200, error);
 	EXPECT_NEAR(m_batteryPower->powerPVToBattery, 0, error);
 	EXPECT_NEAR(m_batteryPower->powerPVToGrid, 90.63, error);

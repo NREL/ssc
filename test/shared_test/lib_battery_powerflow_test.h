@@ -20,7 +20,7 @@ public:
 
 	void SetUp()
 	{
-		error = 0.01;
+		error = 0.02;
 		double dtHour = 1.0;
 		m_batteryPowerFlow = new BatteryPowerFlow(dtHour);
 		m_batteryPower = m_batteryPowerFlow->getBatteryPower();
