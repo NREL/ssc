@@ -159,6 +159,8 @@ enum{
 	P_SCADEFOCUSARRAY,
 
 	PO_A_APER_TOT,
+	PO_HEADER_DIAMS,
+	PO_RUNNER_DIAMS,
 
 	I_I_B,
 	I_T_DB,
@@ -319,6 +321,8 @@ tcsvarinfo sam_mw_trough_type250_variables[] = {
 
 	// Field design calculations
 	{ TCS_PARAM,          TCS_NUMBER,     PO_A_APER_TOT,             "A_aper_tot",                                          "Total solar field aperture area",                           "m^2",             "",             "",             "-1.23" },
+	{ TCS_PARAM,          TCS_ARRAY,     PO_HEADER_DIAMS,            "header_diams",                                          "Header piping diameter array",                            "m",             "",             "",             "" },
+	{ TCS_PARAM,          TCS_ARRAY,     PO_RUNNER_DIAMS,            "runner_diams",                                          "Runner piping diameter array",                            "m",             "",             "",             "" },
 
 	{ TCS_INPUT,          TCS_NUMBER,               I_I_B,                    "I_b",                                                "Direct normal incident solar irradiation",        "W/m^2",             "",             "",             "" },
 	{ TCS_INPUT,          TCS_NUMBER,              I_T_DB,                   "T_db",                                                                "Dry bulb air temperature",            "C",             "",             "",             "" },
@@ -1361,6 +1365,16 @@ public:
 
 			std::string summary;
 			header_design(nhdrsec, nfsec, nrunsec, rho_ave, V_hdr_max, V_hdr_min, m_dot_design, D_hdr, D_runner, &summary);
+			
+			//report the header and runner diameters
+			double *header_diams = allocate(PO_HEADER_DIAMS, D_hdr.ncells());
+			double *runner_diams = allocate(PO_HEADER_DIAMS, D_runner.ncells());
+
+			for (size_t i = 0; i < D_hdr.ncells(); i++)
+				header_diams[i] = D_hdr.at(i);
+			for (size_t i = 0; i < D_runner.ncells(); i++)
+				runner_diams[i] = D_runner.at(i);
+
 			//if(ErrorFound()) return
 
 			/*
@@ -1511,7 +1525,6 @@ public:
 
 		// Write Calculated Design Parameters
 		value(PO_A_APER_TOT, Ap_tot);	//[m^2] Total solar field aperture area
-
 		return true;
 	}
 

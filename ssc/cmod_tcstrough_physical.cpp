@@ -284,7 +284,9 @@ static var_info _cm_vtab_tcstrough_physical[] = {
     { SSC_OUTPUT,       SSC_ARRAY,       "tou_value",         "Resource Time-of-use value",                                      "",             "",            "tou",            "*",                      "",                      "" },
 																																																			 			             
     //Solar field																																															 			             
-    { SSC_OUTPUT,       SSC_ARRAY,       "Theta_ave",         "Field collector solar incidence angle",                          "deg",          "",            "Type250",        "*",                       "",                      "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "header_diams",      "Field piping header diameters",								    "m",          "",            "Type250",        "*",                       "",                      "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "runner_diams",      "Field piping runner diameters",									"m",          "",            "Type250",        "*",                       "",                      "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "Theta_ave",         "Field collector solar incidence angle",                          "deg",          "",            "Type250",        "*",                       "",                      "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "CosTh_ave",         "Field collector cosine efficiency",                              "",         "",            "Type250",        "*",                           "",                      "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "IAM_ave",           "Field collector incidence angle modifier",                       "",         "",            "Type250",        "*",                           "",                      "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "RowShadow_ave",     "Field collector row shadowing loss",                             "",         "",            "Type250",        "*",                           "",                      "" },
@@ -794,8 +796,16 @@ public:
 		if( count != nrec )
 			throw exec_error("tcstrough_physical", out_msg);
 
-
-
+		//design parameters
+		size_t nv;
+		ssc_number_t *header_diams = as_array("header_diams", &nv);
+		ssc_number_t *header_diams_cm = allocate("header_diams", nv);
+		for (size_t i = 0; i < nv; i++)
+			header_diams_cm[i] = header_diams[i];
+		ssc_number_t *runner_diams = as_array("runner_diams", &nv);
+		ssc_number_t *runner_diams_cm = allocate("runner_diams", nv);
+		for (size_t i = 0; i < nv; i++)
+			runner_diams_cm[i] = runner_diams[i];
 
 		// performance adjustement factors
 		adjustment_factors haf(this, "adjust");
