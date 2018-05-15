@@ -1274,6 +1274,13 @@ int irrad::calc()
 
 }
 
+int irrad::calc_rear_side(double transmissionFactor, double bifaciality, double groundCoverageRatio)
+{
+	double slopeLength = 1.;								/// The unit slope length of the panel
+	double rowToRow = slopeLength / groundCoverageRatio;	/// Row to row spacing between the front of one row to the front of the next row
+	double 
+}
+
 static double cosd( double x ) { return cos( DTOR*x ); }
 static double sind( double x ) { return sin( DTOR*x ); }
 //static double tand( double x ) { return tan( DTOR*x ); }

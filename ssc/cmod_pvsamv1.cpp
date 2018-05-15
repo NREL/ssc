@@ -404,6 +404,11 @@ static var_info _cm_vtab_pvsamv1[] = {
 	
 	// NOTE:  other battery storage model inputs and outputs are defined in batt_common.h/batt_common.cpp
 	
+	// bifacial model
+	{ SSC_INPUT,        SSC_NUMBER,      "pv_is_bifacial",                             "Modules are bifacial",                                     "0/1",     "",                     "pvsamv1",       "?=0",                                 "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "pv_bifacial_transmission_factor",            "Bifacial transmission factor",                             "0-1",     "",                     "pvsamv1",       "?",                                   "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "pv_bifaciality",                             "Bifaciality factor",                                       "%",       "",                     "pvsamv1",       "?",                                   "",                              "" },
+
 	// outputs
 
 /* environmental conditions */
@@ -2383,6 +2388,15 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 								log("Soiling may already be accounted for in the input POA data. Please confirm that the input data does not contain soiling effects, or remove the additional losses on the Losses page.", SSC_WARNING);
 						}
 						beam_shading_factor *= soiling_factor;
+					}
+
+					// calculate rear-side irradiance for bifacial modules
+					if (as_boolean("pv_is_bifacial"))
+					{
+						double transmissionFactor = as_double("pv_bifacial_transmission");
+						double bifaciality = as_double("pv_bifaciality");
+
+						irr.calc_rear_side(transmissionFactor, bifaciality, sa[nn].gcr);
 					}
 
 					if (iyear == 0)

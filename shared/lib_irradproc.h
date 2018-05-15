@@ -125,6 +125,7 @@ public:
 	void set_poa_pyranometer( double poa, poaDecompReq* );
 
 	int calc();
+	int calc_rear_side(double transmissionFactor, double bifaciality, double groundCoverageRatio);
 	
 	void get_sun( double *solazi,
 		double *solzen,
