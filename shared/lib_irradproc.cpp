@@ -51,6 +51,7 @@
 #include <math.h>
 #include <string.h>
 #include <stdlib.h>
+#include <vector>
 
 #include <limits>
 #include <iostream>
@@ -1274,11 +1275,97 @@ int irrad::calc()
 
 }
 
-int irrad::calc_rear_side(double transmissionFactor, double bifaciality, double groundCoverageRatio)
+int irrad::calc_rear_side(double transmissionFactor, double bifaciality)
 {
-	double slopeLength = 1.;								/// The unit slope length of the panel
-	double rowToRow = slopeLength / groundCoverageRatio;	/// Row to row spacing between the front of one row to the front of the next row
-	double 
+	double slopeLength = 1.;										/// The unit slope length of the panel
+	double rowToRow = slopeLength / this->gcr;						/// Row to row spacing between the front of one row to the front of the next row
+	double tiltRadian = this->tilt * M_PI / 180.;
+	double clearanceGround = slopeLength;							/// The normalized clearance from the bottom edge of module to ground
+	double distanceBetweenRows = rowToRow - std::cos(tiltRadian);	/// The normalized distance from the read of module to front of module in next row
+	double verticalHeight = std::sin(tiltRadian);
+	double horizontalLength = std::cos(tiltRadian);
+
+	// Calculate sky configuration factors using 100 intervals
+	size_t intervals = 100;
+	double deltaInterval = static_cast<double>(rowToRow / intervals);
+	double x = -deltaInterval / 2.0;
+	std::vector<double> rearSkyConfigFactors;
+	std::vector<double> readGroundShade;
+	rearSkyConfigFactors.reserve(intervals);
+	readGroundShade.reserve(intervals);
+
+	for (int i = 0; i != intervals; i++)
+	{
+		x += deltaInterval;
+		double angleA = std::atan((verticalHeight + clearanceGround) / (2.0 * rowToRow + horizontalLength - x));
+		if (angleA < 0.0) {
+			angleA += M_PI;
+		}
+		double angleB = std::atan(clearanceGround / (2.0 * rowToRow - x));
+		if (angleB < 0.0) {
+			angleB += M_PI;
+		}
+		double beta1 = std::fmax(angleA, angleB);
+
+		double angleC = std::atan((verticalHeight + clearanceGround) / (rowToRow + horizontalLength - x));
+		if (angleC < 0.0) {
+			angleC += M_PI;
+		}
+		double angleD = std::atan(clearanceGround / (rowToRow - x));
+		if (angleD < 0.0) {
+			angleD += M_PI;
+		}
+		double beta2 = std::fmin(angleC, angleD);
+		double beta3 = std::fmax(angleC, angleD);
+
+		double beta4 = std::atan((verticalHeight + clearanceGround) / (horizontalLength - x));
+		if (beta4 < 0.0) {
+			beta4 += M_PI;
+		}
+
+		double beta5 = std::atan(clearanceGround / (-x));
+		if (beta5 < 0.0) {
+			beta5 += M_PI;
+		}
+
+		double beta6 = std::atan((verticalHeight + clearanceGround) / (-distanceBetweenRows - x));
+		if (beta6 < 0.0) {
+			beta6 += M_PI;
+		}
+		double sky1, sky2, sky3, skyAll;
+		sky1 = sky2 = sky3 = skyAll = 0;
+		if (beta2 > beta1) {
+			sky1 = 0.5 * (std::cos(beta1) - std::cos(beta2));
+		}
+		if (beta4 > beta3) {
+			sky2 = 0.5 * (std::cos(beta3) - std::cos(beta4));
+		}
+		if (beta6 > beta5) {
+			sky3 = 0.5 * (std::cos(beta5) - std::cos(beta6));
+		}
+		double skyAll = sky1 + sky2 + sky3;
+
+		rearSkyConfigFactors.push_back(skyAll);
+	}
+
+	// calculate ground shade factors
+	double surfaceAzimuthAngle = this->sazm * 180 / M_PI;
+	double solarAzimuthAngle = sun[0] * (180 / M_PI);
+	double solarElevationAngle = sun[2] * (180 / M_PI);
+
+	/// Horizontal length of shadow perpindicular to row from top of module to bottom of module
+	double lengthHorizontalShadow = (verticalHeight / std::tan(solarElevationAngle)) * std::cos(surfaceAzimuthAngle - solarAzimuthAngle);
+
+	///  Horizontal length of shadow perpindicular to row from top of module to ground level
+	double lengthHorizontalShadowClearance = ((clearanceGround + verticalHeight) / std::tan(solarElevationAngle)) * std::cos(surfaceAzimuthAngle - solarAzimuthAngle);
+
+	/// Horizontal length of shadow perpindicular to row from bottom of module to ground level
+	double lengthHorizontalShadowGround = (clearanceGround / std::tan(solarElevationAngle)) * std::cos(surfaceAzimuthAngle - solarAzimuthAngle);
+
+
+
+
+	return true;
 }
 
 static double cosd( double x ) { return cos( DTOR*x ); }

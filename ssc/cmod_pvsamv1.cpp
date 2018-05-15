@@ -2396,7 +2396,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 						double transmissionFactor = as_double("pv_bifacial_transmission");
 						double bifaciality = as_double("pv_bifaciality");
 
-						irr.calc_rear_side(transmissionFactor, bifaciality, sa[nn].gcr);
+						irr.calc_rear_side(transmissionFactor, bifaciality);
 					}
 
 					if (iyear == 0)
