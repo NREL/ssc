@@ -1343,7 +1343,7 @@ int irrad::calc_rear_side(double transmissionFactor, double bifaciality)
 		if (beta6 > beta5) {
 			sky3 = 0.5 * (std::cos(beta5) - std::cos(beta6));
 		}
-		double skyAll = sky1 + sky2 + sky3;
+		skyAll = sky1 + sky2 + sky3;
 
 		rearSkyConfigFactors.push_back(skyAll);
 	}
@@ -1352,6 +1352,9 @@ int irrad::calc_rear_side(double transmissionFactor, double bifaciality)
 	double surfaceAzimuthAngle = this->sazm * 180 / M_PI;
 	double solarAzimuthAngle = sun[0] * (180 / M_PI);
 	double solarElevationAngle = sun[2] * (180 / M_PI);
+	double pvBackSurfaceShadeFraction = 0;
+	double shadingStart1, shadingStart2, shadingEnd1, shadingEnd2;
+	shadingStart1 = shadingStart2;
 
 	/// Horizontal length of shadow perpindicular to row from top of module to bottom of module
 	double lengthHorizontalShadow = (verticalHeight / std::tan(solarElevationAngle)) * std::cos(surfaceAzimuthAngle - solarAzimuthAngle);
@@ -1362,6 +1365,89 @@ int irrad::calc_rear_side(double transmissionFactor, double bifaciality)
 	/// Horizontal length of shadow perpindicular to row from bottom of module to ground level
 	double lengthHorizontalShadowGround = (clearanceGround / std::tan(solarElevationAngle)) * std::cos(surfaceAzimuthAngle - solarAzimuthAngle);
 
+	// Front side of PV module partially shaded, back completely shaded, ground completely shaded
+	if (lengthHorizontalShadow > distanceBetweenRows) {
+		pvBackSurfaceShadeFraction = 1.0;
+		shadingStart1 = 0.0;
+		shadingEnd1 = rowToRow;
+	}
+	// Back side of PV module partially shaded, front completely shaded, ground completely shaded
+	else if (lengthHorizontalShadow < -(rowToRow + horizontalLength)) {
+		pvBackSurfaceShadeFraction = (lengthHorizontalShadow + rowToRow + horizontalLength) / (lengthHorizontalShadow + horizontalLength);
+		shadingStart1 = 0.0;
+		shadingEnd1 = rowToRow;
+	}
+	// Assume ground is partially shaded
+	else 
+	{
+		if (lengthHorizontalShadowClearance >= 0) 
+		{
+			pvBackSurfaceShadeFraction = 1.0;
+			double shadowStart = lengthHorizontalShadowGround;
+			double shadowEnd = lengthHorizontalShadowClearance + horizontalLength;
+			while (shadowStart > rowToRow) 
+			{
+				shadowStart -= rowToRow;
+				shadowEnd -= rowToRow;
+			}
+			shadingStart1 = shadowStart;
+			shadingEnd1 = shadowEnd;
+			if (shadingEnd1 > rowToRow) 
+			{
+				shadingEnd1 = rowToRow;
+				shadingStart2 = 0.0;
+				shadingEnd2 = shadowEnd - rowToRow;
+				// ground completely shaded
+				if (shadingEnd2 > shadingStart1) 
+				{
+					shadingStart1 = 0.0;
+					shadingEnd1 = rowToRow;
+				}
+
+			}
+		}
+		// Shadow to front of row, either front or back might be shaded, depending on tilt and other factors
+		else 
+		{
+			double shadowStart = 0.0;
+			double shadowEnd = 0.0;
+			if (lengthHorizontalShadowClearance < lengthHorizontalShadowGround + horizontalLength) 
+			{
+				pvBackSurfaceShadeFraction = 1.0;
+				shadowStart = lengthHorizontalShadowClearance;
+				shadowEnd = lengthHorizontalShadowGround + horizontalLength;
+			}
+			else 
+			{
+				pvBackSurfaceShadeFraction = 0.0;
+				shadowStart = lengthHorizontalShadowGround + horizontalLength;
+				shadowEnd = lengthHorizontalShadowClearance;
+
+			}
+			while (shadowStart < 0.0) 
+			{
+				shadowStart += rowToRow;
+				shadowEnd += rowToRow;
+			}
+
+			shadingStart1 = shadowStart;
+			shadingEnd1 = shadowEnd;
+
+			if (shadingEnd1 > rowToRow) 
+			{
+				shadingEnd1 = rowToRow;
+				shadingStart2 = 0.0;
+				shadingEnd2 = shadowEnd - rowToRow;
+				if (shadingEnd2 > shadingStart1) 
+				{
+					shadingStart1 = 0.0;
+					shadingEnd1 = rowToRow;
+				}
+			}
+				
+			
+		}
+	}
 
 
 
