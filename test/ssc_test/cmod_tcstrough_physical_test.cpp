@@ -8,7 +8,7 @@
 // first test must contain all possible inputs
 std::vector<SimulationTestTable*> physTroughTests;
 std::unordered_map<const char*, size_t> physTroughVarMap;
-computeModuleTestData physTroughTesting(&physTroughTests, &physTroughVarMap, "physTrough");
+computeModuleTestData physTroughTesting(&physTroughTests, &physTroughVarMap, "tcstrough_physical");
 
 // Set up data resource file paths
 char weatherfile[150];
@@ -342,21 +342,21 @@ TestInfo physTroughPPASingleDefaultInfo[] = {
 	{"Rough",                               MAT,                Rough,                  4,4},
 	{"alpha_env",                           MAT,                alpha_env,              4,4},
 	{"epsilon_3_11",                        MAT,                epsilon_3_11,           9,2},
-	{"epsilon_3_12",                        NUM,                "0.64999997615814209"   },
-	{"epsilon_3_13",                        NUM,                "0.64999997615814209"   },
-	{"epsilon_3_14",                        NUM,                "0"                     },
+	{"epsilon_3_12",                        MAT,                "0.64999997615814209",  1,1},
+	{"epsilon_3_13",                        MAT,                "0.64999997615814209",  1,1 },
+	{"epsilon_3_14",                        MAT,                "0",                    1,1 },
 	{"epsilon_3_21",                        MAT,                epsilon_3_21,           9,2},
-	{"epsilon_3_22",                        NUM,                "0.64999997615814209"   },
-	{"epsilon_3_23",                        NUM,                "0.64999997615814209"   },
-	{"epsilon_3_24",                        NUM,                "0"                     },
+	{"epsilon_3_22",                        MAT,                "0.64999997615814209",  1,1 },
+	{"epsilon_3_23",                        MAT,                "0.64999997615814209",  1,1 },
+	{"epsilon_3_24",                        MAT,                "0",                    1,1 },
 	{"epsilon_3_31",                        MAT,                epsilon_3_31,           9,2},
-	{"epsilon_3_32",                        NUM,                "0.64999997615814209"   },
-	{"epsilon_3_33",                        NUM,                "0.64999997615814209"   },
-	{"epsilon_3_34",                        NUM,                "0"                     },
+	{"epsilon_3_32",                        MAT,                "0.64999997615814209",  1,1 },
+	{"epsilon_3_33",                        MAT,                "0.64999997615814209",  1,1 },
+	{"epsilon_3_34",                        MAT,                "0",                    1,1 },
 	{"epsilon_3_41",                        MAT,                epsilon_3_41,           9,2},
-	{"epsilon_3_42",                        NUM,                "0.64999997615814209"   },
-	{"epsilon_3_43",                        NUM,                "0.64999997615814209"   },
-	{"epsilon_3_44",                        NUM,                "0"                     },
+	{"epsilon_3_42",                        MAT,                "0.64999997615814209",  1,1 },
+	{"epsilon_3_43",                        MAT,                "0.64999997615814209",  1,1 },
+	{"epsilon_3_44",                        MAT,                "0",                    1,1},
 	{"alpha_abs",                           MAT,                alpha_abs,              4,4},
 	{"Tau_envelope",                        MAT,                Tau_envelope,           4,4},
 	{"EPSILON_4",                           MAT,                EPSILON_4,              4,4},
@@ -370,8 +370,8 @@ TestInfo physTroughPPASingleDefaultInfo[] = {
 	{"Design_loss",                         MAT,                Design_loss,            4,4},
 	{"SCAInfoArray",                        MAT,                SCAInfoArray,           8,2},
 	{"SCADefocusArray",                     ARR,                SCADefocusArray,        8},
-	{"field_fl_props",                      NUM,                "0"                     },
-	{"store_fl_props",                      NUM,                "1"                     },
+	{"field_fl_props",                      MAT,                "0",                    1,1 },
+	{"store_fl_props",                      MAT,                "1",                    1,1 },
 	{"store_fluid",                         NUM,                "18"                    },
 	{"tshours",                             NUM,                "6"                     },
 	{"is_hx",                               NUM,                "1"                     },
