@@ -159,8 +159,6 @@ enum{
 	P_SCADEFOCUSARRAY,
 
 	PO_A_APER_TOT,
-	PO_HEADER_DIAMS,
-	PO_RUNNER_DIAMS,
 
 	I_I_B,
 	I_T_DB,
@@ -175,6 +173,9 @@ enum{
 	I_LONGITUDE,
 	I_SHIFT,
 
+	O_HEADER_DIAMS,
+	O_RUNNER_DIAMS,
+	O_RUNNER_LENGTHS,
 	O_T_SYS_H,
 	O_M_DOT_AVAIL,
 	O_Q_AVAIL,
@@ -321,8 +322,6 @@ tcsvarinfo sam_mw_trough_type250_variables[] = {
 
 	// Field design calculations
 	{ TCS_PARAM,          TCS_NUMBER,     PO_A_APER_TOT,             "A_aper_tot",                                          "Total solar field aperture area",                           "m^2",             "",             "",             "-1.23" },
-	{ TCS_PARAM,          TCS_ARRAY,     PO_HEADER_DIAMS,            "header_diams",                                          "Header piping diameter array",                            "m",             "",             "",             "" },
-	{ TCS_PARAM,          TCS_ARRAY,     PO_RUNNER_DIAMS,            "runner_diams",                                          "Runner piping diameter array",                            "m",             "",             "",             "" },
 
 	{ TCS_INPUT,          TCS_NUMBER,               I_I_B,                    "I_b",                                                "Direct normal incident solar irradiation",        "W/m^2",             "",             "",             "" },
 	{ TCS_INPUT,          TCS_NUMBER,              I_T_DB,                   "T_db",                                                                "Dry bulb air temperature",            "C",             "",             "",             "" },
@@ -337,6 +336,9 @@ tcsvarinfo sam_mw_trough_type250_variables[] = {
 	{ TCS_INPUT,          TCS_NUMBER,         I_LONGITUDE,              "longitude",                                                   "Site longitude read from weather file",          "deg",             "",             "",             "" },
 	{ TCS_INPUT,          TCS_NUMBER,             I_SHIFT,                  "shift",                                         "shift in longitude from local standard meridian",          "deg",             "",             "",             "" },
 
+	{ TCS_OUTPUT,          TCS_ARRAY,     O_HEADER_DIAMS,        "pipe_header_diams",					                                     "Header piping diameter array",                            "m",             "",             "",             "" },
+	{ TCS_OUTPUT,          TCS_ARRAY,     O_RUNNER_DIAMS,        "pipe_runner_diams",                                                            "Runner piping diameter array",            "m",             "",             "",             "" },
+	{ TCS_OUTPUT,          TCS_ARRAY,     O_RUNNER_LENGTHS,    "pipe_runner_lengths",                                                              "Runner piping length array",            "m",             "",             "",             "" },
 	{ TCS_OUTPUT,          TCS_NUMBER,           O_T_SYS_H,                "T_sys_h",                                                      "Solar field HTF outlet temperature",            "C",             "",             "",             "" },
 	{ TCS_OUTPUT,          TCS_NUMBER,       O_M_DOT_AVAIL,            "m_dot_avail",                                                       "HTF mass flow rate from the field",        "kg/hr",             "",             "",             "" },
 	{ TCS_OUTPUT,          TCS_NUMBER,           O_Q_AVAIL,                "q_avail",                                                     "Thermal power produced by the field",          "MWt",             "",             "",             "" },
@@ -1367,8 +1369,8 @@ public:
 			header_design(nhdrsec, nfsec, nrunsec, rho_ave, V_hdr_max, V_hdr_min, m_dot_design, D_hdr, D_runner, &summary);
 			
 			//report the header and runner diameters
-			double *header_diams = allocate(PO_HEADER_DIAMS, D_hdr.ncells());
-			double *runner_diams = allocate(PO_HEADER_DIAMS, D_runner.ncells());
+			double *header_diams = allocate(O_HEADER_DIAMS, D_hdr.ncells());
+			double *runner_diams = allocate(O_RUNNER_DIAMS, D_runner.ncells());
 
 			for (size_t i = 0; i < D_hdr.ncells(); i++)
 				header_diams[i] = D_hdr.at(i);
@@ -1419,6 +1421,11 @@ public:
 			{
 				v_tofrom_sgs = v_tofrom_sgs + 2.*L_runner[i] * pi*pow(D_runner[i], 2) / 4.;  //This is the volume of the runner in 1 direction.
 			}
+
+			//report runner lengths
+			double *runner_lengths = allocate(O_RUNNER_LENGTHS, L_runner.ncells());
+			for (size_t i = 0; i < L_runner.ncells(); i++)
+				runner_lengths[i] = L_runner.at(i);
 
 			//6/14/12, TN: Multiplier for runner heat loss. In main section of code, are only calculating loss for one path.
 			//Since there will be two symmetric paths (when nrunsec > 1), need to calculate multiplier for heat loss, considering
