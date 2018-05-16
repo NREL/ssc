@@ -1444,8 +1444,20 @@ int irrad::calc_rear_side(double transmissionFactor, double bifaciality)
 					shadingEnd1 = rowToRow;
 				}
 			}
-				
-			
+		}
+
+		x = -deltaInterval / 2.0;
+		for (int i = 0; i != intervals; i++)
+		{
+			x += deltaInterval;
+			if ((x >= shadingStart1 && x < shadingEnd2) || (x >= shadingStart2 && x < shadingEnd2))
+			{
+				readGroundShade.push_back(1);
+			}
+			else
+			{
+				readGroundShade.push_back(0);
+			}
 		}
 	}
 
