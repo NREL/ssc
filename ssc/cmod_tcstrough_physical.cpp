@@ -50,6 +50,7 @@
 // Trough CSP - physical model
 #include "core.h"
 #include "tckernel.h"
+#include <algorithm>
 // for adjustment factors
 #include "common.h"
 
@@ -801,18 +802,15 @@ public:
 		int nv;
 		double *header_diams = get_unit_value(type250_solarfield, "pipe_header_diams", &nv);
 		ssc_number_t *header_diams_cm = allocate("pipe_header_diams", nv);
-		for (size_t i = 0; i < nv; i++)
-			header_diams_cm[i] = header_diams[i];
-		double *runner_diams = get_unit_value(type250_solarfield, "pipe_runner_diams", &nv);
+        std::copy(header_diams, header_diams + nv, header_diams_cm);
+        double *runner_diams = get_unit_value(type250_solarfield, "pipe_runner_diams", &nv);
 		ssc_number_t *runner_diams_cm = allocate("pipe_runner_diams", nv);
-		for (size_t i = 0; i < nv; i++)
-			runner_diams_cm[i] = runner_diams[i];
+        std::copy(runner_diams, runner_diams + nv, runner_diams_cm);
 		double *pipe_runner_lengths = get_unit_value(type250_solarfield, "pipe_runner_lengths", &nv);
 		ssc_number_t *pipe_runner_lengths_cm = allocate("pipe_runner_lengths", nv);
-		for (size_t i = 0; i < nv; i++)
-			pipe_runner_lengths_cm[i] = pipe_runner_lengths[i];
-
-		// performance adjustement factors
+        std::copy(pipe_runner_lengths, pipe_runner_lengths + nv, pipe_runner_lengths_cm);
+		
+		// performance adjustment factors
 		adjustment_factors haf(this, "adjust");
 		if (!haf.setup())
 			throw exec_error("tcstrough_physical", "failed to setup adjustment factors: " + haf.error());
