@@ -173,6 +173,9 @@ enum{
 	I_LONGITUDE,
 	I_SHIFT,
 
+	O_HEADER_DIAMS,
+	O_RUNNER_DIAMS,
+	O_RUNNER_LENGTHS,
 	O_T_SYS_H,
 	O_M_DOT_AVAIL,
 	O_Q_AVAIL,
@@ -333,6 +336,9 @@ tcsvarinfo sam_mw_trough_type250_variables[] = {
 	{ TCS_INPUT,          TCS_NUMBER,         I_LONGITUDE,              "longitude",                                                   "Site longitude read from weather file",          "deg",             "",             "",             "" },
 	{ TCS_INPUT,          TCS_NUMBER,             I_SHIFT,                  "shift",                                         "shift in longitude from local standard meridian",          "deg",             "",             "",             "" },
 
+	{ TCS_OUTPUT,          TCS_ARRAY,     O_HEADER_DIAMS,        "pipe_header_diams",					                                     "Header piping diameter array",                            "m",             "",             "",             "" },
+	{ TCS_OUTPUT,          TCS_ARRAY,     O_RUNNER_DIAMS,        "pipe_runner_diams",                                                            "Runner piping diameter array",            "m",             "",             "",             "" },
+	{ TCS_OUTPUT,          TCS_ARRAY,     O_RUNNER_LENGTHS,    "pipe_runner_lengths",                                                              "Runner piping length array",            "m",             "",             "",             "" },
 	{ TCS_OUTPUT,          TCS_NUMBER,           O_T_SYS_H,                "T_sys_h",                                                      "Solar field HTF outlet temperature",            "C",             "",             "",             "" },
 	{ TCS_OUTPUT,          TCS_NUMBER,       O_M_DOT_AVAIL,            "m_dot_avail",                                                       "HTF mass flow rate from the field",        "kg/hr",             "",             "",             "" },
 	{ TCS_OUTPUT,          TCS_NUMBER,           O_Q_AVAIL,                "q_avail",                                                     "Thermal power produced by the field",          "MWt",             "",             "",             "" },
@@ -1361,6 +1367,16 @@ public:
 
 			std::string summary;
 			header_design(nhdrsec, nfsec, nrunsec, rho_ave, V_hdr_max, V_hdr_min, m_dot_design, D_hdr, D_runner, &summary);
+			
+			//report the header and runner diameters
+			double *header_diams = allocate(O_HEADER_DIAMS, D_hdr.ncells());
+			double *runner_diams = allocate(O_RUNNER_DIAMS, D_runner.ncells());
+
+			for (size_t i = 0; i < D_hdr.ncells(); i++)
+				header_diams[i] = D_hdr.at(i);
+			for (size_t i = 0; i < D_runner.ncells(); i++)
+				runner_diams[i] = D_runner.at(i);
+
 			//if(ErrorFound()) return
 
 			/*
@@ -1405,6 +1421,11 @@ public:
 			{
 				v_tofrom_sgs = v_tofrom_sgs + 2.*L_runner[i] * pi*pow(D_runner[i], 2) / 4.;  //This is the volume of the runner in 1 direction.
 			}
+
+			//report runner lengths
+			double *runner_lengths = allocate(O_RUNNER_LENGTHS, L_runner.ncells());
+			for (size_t i = 0; i < L_runner.ncells(); i++)
+				runner_lengths[i] = L_runner.at(i);
 
 			//6/14/12, TN: Multiplier for runner heat loss. In main section of code, are only calculating loss for one path.
 			//Since there will be two symmetric paths (when nrunsec > 1), need to calculate multiplier for heat loss, considering
@@ -1511,7 +1532,6 @@ public:
 
 		// Write Calculated Design Parameters
 		value(PO_A_APER_TOT, Ap_tot);	//[m^2] Total solar field aperture area
-
 		return true;
 	}
 
