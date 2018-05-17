@@ -53,6 +53,7 @@
 #include "sam_csp_util.h"
 
 #include <cmath>
+#include <algorithm>
 
 using namespace std;
 
@@ -1371,11 +1372,8 @@ public:
 			//report the header and runner diameters
 			double *header_diams = allocate(O_HEADER_DIAMS, D_hdr.ncells());
 			double *runner_diams = allocate(O_RUNNER_DIAMS, D_runner.ncells());
-
-			for (size_t i = 0; i < D_hdr.ncells(); i++)
-				header_diams[i] = D_hdr.at(i);
-			for (size_t i = 0; i < D_runner.ncells(); i++)
-				runner_diams[i] = D_runner.at(i);
+            std::copy(D_hdr.data(), D_hdr.data() + D_hdr.ncells(), header_diams);
+            std::copy(D_runner.data(), D_runner.data() + D_runner.ncells(), runner_diams);
 
 			//if(ErrorFound()) return
 
@@ -1424,8 +1422,7 @@ public:
 
 			//report runner lengths
 			double *runner_lengths = allocate(O_RUNNER_LENGTHS, L_runner.ncells());
-			for (size_t i = 0; i < L_runner.ncells(); i++)
-				runner_lengths[i] = L_runner.at(i);
+            std::copy(L_runner.data(), L_runner.data() + L_runner.ncells(), runner_lengths);
 
 			//6/14/12, TN: Multiplier for runner heat loss. In main section of code, are only calculating loss for one path.
 			//Since there will be two symmetric paths (when nrunsec > 1), need to calculate multiplier for heat loss, considering
