@@ -954,10 +954,6 @@ void perez( double , double dn, double df, double alb, double inc, double tilt, 
 		}
 }
 
-
-
-
-
 irrad::irrad()
 {
 	year=month=day=hour = -999;
@@ -1284,15 +1280,54 @@ int irrad::calc_rear_side(double transmissionFactor, double bifaciality)
 	double distanceBetweenRows = rowToRow - std::cos(tiltRadian);	/// The normalized distance from the read of module to front of module in next row
 	double verticalHeight = std::sin(tiltRadian);
 	double horizontalLength = std::cos(tiltRadian);
+	std::vector<double> rearSkyConfigFactors;
+	std::vector<int> rearGroundShade;
+	std::vector<double> rearGroundGHI;
+	double poa[3] = { 0,0,0 };
+	double diffc[3] = { 0,0,0 };
 
+	this->getSkyConfigurationFactors(rowToRow, verticalHeight, clearanceGround, distanceBetweenRows, horizontalLength, rearSkyConfigFactors);
+	this->getGroundShadeFactors(rowToRow, verticalHeight, clearanceGround, distanceBetweenRows, horizontalLength, rearGroundShade);
+	perez(0, this->dn, this->df, this->alb, angle[0], angle[1], sun[1], poa, diffc);
+
+	/*
+	poa = plane - of - array irradiances(W / m2)
+		poa[0]:  incident beam
+		poa[1] : incident sky diffuse
+		poa[2] : incident ground diffuse
+
+		diffc = diffuse components, if an array is provided
+		diffc[0] = isotropic
+		diffc[1] = circumsolar
+		diffc[2] = horizon brightening
+	*/
+
+	for (size_t i = 0; i != 100; i++)
+	{
+		// Add diffuse sky component viewed by ground
+		rearGroundGHI.push_back(rearSkyConfigFactors[i] * diffc[0]);
+
+		if (rearGroundShade[i] == 0)
+		{
+			// Add beam and circumsolar component if not shaded
+			rearGroundGHI[i] += poa[0] + diffc[1];
+		}
+		else
+		{
+			// Add beam and circumsolar component transmitted thru module spacing if shaded
+			rearGroundGHI[i] += (poa[0] + diffc[1]) * transmissionFactor;
+		}
+	}
+	
+	return true;
+}
+
+void irrad::getSkyConfigurationFactors(double rowToRow, double verticalHeight, double clearanceGround, double distanceBetweenRows, double horizontalLength, std::vector<double> & rearSkyConfigFactors)
+{
 	// Calculate sky configuration factors using 100 intervals
 	size_t intervals = 100;
 	double deltaInterval = static_cast<double>(rowToRow / intervals);
 	double x = -deltaInterval / 2.0;
-	std::vector<double> rearSkyConfigFactors;
-	std::vector<double> readGroundShade;
-	rearSkyConfigFactors.reserve(intervals);
-	readGroundShade.reserve(intervals);
 
 	for (int i = 0; i != intervals; i++)
 	{
@@ -1347,14 +1382,20 @@ int irrad::calc_rear_side(double transmissionFactor, double bifaciality)
 
 		rearSkyConfigFactors.push_back(skyAll);
 	}
+}
 
-	// calculate ground shade factors
+
+void irrad::getGroundShadeFactors(double rowToRow, double verticalHeight, double clearanceGround, double distanceBetweenRows, double horizontalLength, std::vector<int> & rearGroundShade)
+{
+	// calculate ground shade factors using 100 intervals
+	size_t intervals = 100;
+	double deltaInterval = static_cast<double>(rowToRow / intervals);
 	double surfaceAzimuthAngle = this->sazm * 180 / M_PI;
 	double solarAzimuthAngle = sun[0] * (180 / M_PI);
 	double solarElevationAngle = sun[2] * (180 / M_PI);
 	double pvBackSurfaceShadeFraction = 0;
 	double shadingStart1, shadingStart2, shadingEnd1, shadingEnd2;
-	shadingStart1 = shadingStart2;
+	shadingStart1 = shadingStart2 = shadingEnd1 = shadingEnd2 = 0;
 
 	/// Horizontal length of shadow perpindicular to row from top of module to bottom of module
 	double lengthHorizontalShadow = (verticalHeight / std::tan(solarElevationAngle)) * std::cos(surfaceAzimuthAngle - solarAzimuthAngle);
@@ -1378,27 +1419,27 @@ int irrad::calc_rear_side(double transmissionFactor, double bifaciality)
 		shadingEnd1 = rowToRow;
 	}
 	// Assume ground is partially shaded
-	else 
+	else
 	{
-		if (lengthHorizontalShadowClearance >= 0) 
+		if (lengthHorizontalShadowClearance >= 0)
 		{
 			pvBackSurfaceShadeFraction = 1.0;
 			double shadowStart = lengthHorizontalShadowGround;
 			double shadowEnd = lengthHorizontalShadowClearance + horizontalLength;
-			while (shadowStart > rowToRow) 
+			while (shadowStart > rowToRow)
 			{
 				shadowStart -= rowToRow;
 				shadowEnd -= rowToRow;
 			}
 			shadingStart1 = shadowStart;
 			shadingEnd1 = shadowEnd;
-			if (shadingEnd1 > rowToRow) 
+			if (shadingEnd1 > rowToRow)
 			{
 				shadingEnd1 = rowToRow;
 				shadingStart2 = 0.0;
 				shadingEnd2 = shadowEnd - rowToRow;
 				// ground completely shaded
-				if (shadingEnd2 > shadingStart1) 
+				if (shadingEnd2 > shadingStart1)
 				{
 					shadingStart1 = 0.0;
 					shadingEnd1 = rowToRow;
@@ -1407,24 +1448,24 @@ int irrad::calc_rear_side(double transmissionFactor, double bifaciality)
 			}
 		}
 		// Shadow to front of row, either front or back might be shaded, depending on tilt and other factors
-		else 
+		else
 		{
 			double shadowStart = 0.0;
 			double shadowEnd = 0.0;
-			if (lengthHorizontalShadowClearance < lengthHorizontalShadowGround + horizontalLength) 
+			if (lengthHorizontalShadowClearance < lengthHorizontalShadowGround + horizontalLength)
 			{
 				pvBackSurfaceShadeFraction = 1.0;
 				shadowStart = lengthHorizontalShadowClearance;
 				shadowEnd = lengthHorizontalShadowGround + horizontalLength;
 			}
-			else 
+			else
 			{
 				pvBackSurfaceShadeFraction = 0.0;
 				shadowStart = lengthHorizontalShadowGround + horizontalLength;
 				shadowEnd = lengthHorizontalShadowClearance;
 
 			}
-			while (shadowStart < 0.0) 
+			while (shadowStart < 0.0)
 			{
 				shadowStart += rowToRow;
 				shadowEnd += rowToRow;
@@ -1433,12 +1474,12 @@ int irrad::calc_rear_side(double transmissionFactor, double bifaciality)
 			shadingStart1 = shadowStart;
 			shadingEnd1 = shadowEnd;
 
-			if (shadingEnd1 > rowToRow) 
+			if (shadingEnd1 > rowToRow)
 			{
 				shadingEnd1 = rowToRow;
 				shadingStart2 = 0.0;
 				shadingEnd2 = shadowEnd - rowToRow;
-				if (shadingEnd2 > shadingStart1) 
+				if (shadingEnd2 > shadingStart1)
 				{
 					shadingStart1 = 0.0;
 					shadingEnd1 = rowToRow;
@@ -1446,24 +1487,20 @@ int irrad::calc_rear_side(double transmissionFactor, double bifaciality)
 			}
 		}
 
-		x = -deltaInterval / 2.0;
-		for (int i = 0; i != intervals; i++)
+	}
+	double x = -deltaInterval / 2.0;
+	for (int i = 0; i != intervals; i++)
+	{
+		x += deltaInterval;
+		if ((x >= shadingStart1 && x < shadingEnd2) || (x >= shadingStart2 && x < shadingEnd2))
 		{
-			x += deltaInterval;
-			if ((x >= shadingStart1 && x < shadingEnd2) || (x >= shadingStart2 && x < shadingEnd2))
-			{
-				readGroundShade.push_back(1);
-			}
-			else
-			{
-				readGroundShade.push_back(0);
-			}
+			rearGroundShade.push_back(1);
+		}
+		else
+		{
+			rearGroundShade.push_back(0);
 		}
 	}
-
-
-
-	return true;
 }
 
 static double cosd( double x ) { return cos( DTOR*x ); }

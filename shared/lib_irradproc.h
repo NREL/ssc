@@ -147,6 +147,9 @@ public:
 	void get_irrad (double *ghi, double *dni, double *dhi);
 	double get_ghi();
 	double get_sunpos_calc_hour();
+
+	void getSkyConfigurationFactors(double rowToRow, double verticalHeight, double clearanceGround, double distanceBetweenRows, double horizontalLength, std::vector<double> & rearSkyConfigFactors);
+	void getGroundShadeFactors(double rowToRow, double verticalHeight, double clearanceGround, double distanceBetweenRows, double horizontalLength, std::vector<int> & groundFactors);
 };
 
 

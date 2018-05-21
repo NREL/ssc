@@ -2393,7 +2393,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 					// calculate rear-side irradiance for bifacial modules
 					if (as_boolean("pv_is_bifacial"))
 					{
-						double transmissionFactor = as_double("pv_bifacial_transmission");
+						double transmissionFactor = as_double("pv_bifacial_transmission_factor");
 						double bifaciality = as_double("pv_bifaciality");
 
 						irr.calc_rear_side(transmissionFactor, bifaciality);
