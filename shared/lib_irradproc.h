@@ -150,7 +150,7 @@ public:
 
 	void getSkyConfigurationFactors(double rowToRow, double verticalHeight, double clearanceGround, double distanceBetweenRows, double horizontalLength, std::vector<double> & rearSkyConfigFactors);
 	void getGroundShadeFactors(double rowToRow, double verticalHeight, double clearanceGround, double distanceBetweenRows, double horizontalLength, std::vector<int> & groundFactors, double & maxShadow, double & pvBackShadeFraction);
-	void getBackSurfaceIrradiances(double maxShadow, double pvBackShadeFraction, double clearanceGround, double distanceBetweenRows, std::vector<double> & rearIrradiance, double & rearAverageIrradiance)
+	void getBackSurfaceIrradiances(double maxShadow, double pvBackShadeFraction, double rowToRow, double verticalHeight, double clearanceGround, double distanceBetweenRows, double horizontalLength, std::vector<double> rearGroundGHI, std::vector<double> & rearIrradiance, double & rearAverageIrradiance);
 };
 
 

@@ -1321,7 +1321,7 @@ int irrad::calc_rear_side(double transmissionFactor, double bifaciality)
 	// Calculate the irradiance on the back of the PV module
 	std::vector<double> rearIrradiancePerCellrow;
 	double rearAverageIrradiance;
-	getBackSurfaceIrradiances(maxShadow, pvBackShadeFraction, clearanceGround, distanceBetweenRows, rearIrradiancePerCellrow, rearAverageIrradiance);
+	getBackSurfaceIrradiances(maxShadow, pvBackShadeFraction, rowToRow, verticalHeight, clearanceGround, distanceBetweenRows, horizontalLength, rearGroundGHI, rearIrradiancePerCellrow, rearAverageIrradiance);
 
 
 	return true;
@@ -1507,8 +1507,87 @@ void irrad::getGroundShadeFactors(double rowToRow, double verticalHeight, double
 	}
 	maxShadow = std::fmax(shadingStart1, shadingEnd1);
 }
-void irrad::getBackSurfaceIrradiances(double maxShadow, double pvBackShadeFraction, double clearanceGround, double distanceBetweenRows, std::vector<double> & rearIrradiance, double & rearAverageIrradiance)
+void irrad::getBackSurfaceIrradiances(double maxShadow, double pvBackShadeFraction, double rowToRow, double verticalHeight, double clearanceGround, double distanceBetweenRows, double horizontalLength, std::vector<double> rearGroundGHI, std::vector<double> & rearIrradiance, double & rearAverageIrradiance)
 {
+	double poa[3] = { 0,0,0 };
+	double diffc[3] = { 0,0,0 };
+	double sunAzimuth = sun[0];
+	double solarZenith = sun[1];
+
+	// Average GHI on ground under PV array for cases when x projection exceed 2*rtr
+	double averageGroundGHI = 0.0;          
+	for (size_t i = 0; i != rearGroundGHI.size(); i++)
+		averageGroundGHI += rearGroundGHI[i] / rearGroundGHI.size();
+
+	// Calculate diffuse isotropic irradiance for a horizontal surface
+	perez(0, this->dn, this->df, this->alb, solarZenith, 0, solarZenith, poa, diffc);
+	double isotropicSkyDiffuse = diffc[0];
+
+	// Calculate components for a 90 degree tilt 
+	double angle[5] = { 0,0,0,0,0 };
+	incidence(0, 90.0, 180.0, 45.0, solarZenith, sunAzimuth, this->en_backtrack, this->gcr, angle);
+	perez(0, this->dn, this->df, this->alb, angle[0], angle[1], solarZenith, poa, diffc);
+	double horizonDiffuse = diffc[2];
+
+	// Calculate x,y coordinates of bottom and top edges of PV row in back of desired PV row so that portions of sky and ground viewed by the 
+	// PV cell may be determined. Origin of x-y axis is the ground point below the lower front edge of the desired PV row. The row in back of 
+	// the desired row is in the positive x direction.
+	double PbotX = rowToRow;                         // x value for point on bottom edge of PV module/panel of row in back of (in PV panel slope lengths)
+	double PbotY = clearanceGround;                  // y value for point on bottom edge of PV module/panel of row in back of (in PV panel slope lengths)
+	double PtopX = rowToRow + horizontalLength;      // x value for point on top edge of PV module/panel of row in back of (in PV panel slope lengths)
+	double PtopY = verticalHeight + clearanceGround; // y value for point on top edge of PV module/panel of row in back of (in PV panel slope lengths)
+
+	// Calculate diffuse and direct component irradiances for each cell row (assuming 6 rows)
+	size_t cellRows = 6;
+	for (size_t i = 0; i != cellRows; i++)
+	{
+		// Calculate diffuse irradiances and reflected amounts for each cell row over its field of view of 180 degrees, 
+		// beginning with the angle providing the upper most view of the sky (j=0)
+		double PcellX = horizontalLength * (i + 0.5) / ((double)cellRows);				   // x value for location of PV cell with OFFSET FOR SARA REFERENCE CELLS     4/26/2016
+		double PcellY = clearanceGround + verticalHeight * (i + 0.5) / ((double)cellRows); // y value for location of PV cell with OFFSET FOR SARA REFERENCE CELLS     4/26/2016
+		double elevationAngleUp = std::atan((PtopY - PcellY) / (PtopX - PcellX));          // Elevation angle up from PV cell to top of PV module/panel, radians
+		double elevationAngleDown = std::atan((PcellY - PbotY) / (PbotX - PcellX));        // Elevation angle down from PV cell to bottom of PV module/panel, radians
+		int iStopIso = (this->tilt - elevationAngleUp) / DTOR;							   // Last whole degree in arc range that sees sky, first is 0
+		int iHorBright = std::fmax(0.0, 6.0 - elevationAngleUp / DTOR);	   			       // Number of whole degrees for which horizon brightening occurs
+		int iStartGrd = (this->tilt + elevationAngleDown) / DTOR;                          // First whole degree in arc range that sees ground, last is 180
+
+		rearIrradiance.push_back(0);
+		for (size_t j = 0; j != iStopIso; j++)
+		{
+			rearIrradiance[i] += 0.5 * (std::cos(j * DTOR) - std::cos((j + 1)*DTOR)) * isotropicSkyDiffuse;
+			if ((iStopIso - j) < iHorBright)
+			{
+				rearIrradiance[i] += 0.5 * (std::cos(j * DTOR) - std::cos((j + 1) * DTOR)) * horizonDiffuse / 0.052246; // 0.052246 = 0.5 * [cos(84) - cos(90)]
+			}
+		}
+
+		// Add relections from PV module front surfaces
+
+
+		// Add ground reflected component
+		for (size_t j = iStartGrd; j < 180; j++)
+		{
+			double startElevationDown = (j - iStartGrd) * DTOR + elevationAngleDown;
+			double stopElevationDown = (j + 1 - iStartGrd) * DTOR + elevationAngleDown;
+			double projectedX2 = PcellX + PcellY / std::tan(startElevationDown);
+			double projectedX1 = PcellX + PcellY / std::tan(stopElevationDown);
+			double actualGroundGHI = 0.0;
+
+			if (std::fabs(projectedX1 - projectedX2) > 0.99 * rowToRow)
+			{
+				// Use average value if projection approximates the rtr      
+				actualGroundGHI = averageGroundGHI;
+			}
+			else
+			{
+				projectedX1 = 100.0 * projectedX1 / rowToRow;
+				projectedX2 = 100.0 * projectedX2 / rowToRow;
+
+			}
+		}
+
+
+	}
 
 }
 
