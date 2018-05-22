@@ -668,19 +668,19 @@ TestInfo physTroughPPASingleDefaultInfo[] = {
 // test_types: equal (EQ), near(approx equal) (NR), greater than (GT), less than (LT), bool (TF), cmod error (ERR)
 TestResult physTroughPPASingleDefaultResult[] = {
 /*  SSC Var Name                            Test Type           Test Result             Error Bound % */
-    { "annual_energy",                      NR,                 354225632.,             0.1 },
+    { "annual_energy",                      NR,                 354285696.,             0.1 },
     { "annual_fuel_usage",                  NR,                 0.,                     0.1 },
-    { "capacity_factor",                    NR,                 40.4772,                0.1 },
-    { "annual_q_dump",                      NR,                 48108.,                 0.1 },
-    { "annual_W_cycle_gross",               NR,                 405422.,                0.1 },
-    { "kwh_per_kw",                         NR,                 3545.8,                 0.1 },
-    { "conversion_factor",                  NR,                 91.0154,                0.1 },
+    { "capacity_factor",                    NR,                 40.4841,                0.1 },
+    { "annual_q_dump",                      NR,                 48151.5,                0.1 },
+    { "annual_W_cycle_gross",               NR,                 405550.,                0.1 },
+    { "kwh_per_kw",                         NR,                 3546.4,                 0.1 },
+    { "conversion_factor",                  NR,                 91.0024,                0.1 },
     { "system_heat_rate",                   NR,                 3.413,                  0.1 },
-    { "annual_q_to_tes",                    NR,                 7441.4,                 0.1 },
-    { "annual_q_pb",                        NR,                 1.1232e06,              0.1 },
-    { "annual_q_avail",                     NR,                 1.12836e06,             0.1 },
-    { "annual_total_water_use",             NR,                 80976.6,                0.1 },
-    { "annual_q_abs_tot",                   NR,                 1.1694e06,              0.1 },
+    { "annual_q_to_tes",                    NR,                 7443.62,                0.1 },
+    { "annual_q_pb",                        NR,                 1.12351e06,             0.1 },
+    { "annual_q_avail",                     NR,                 1.12872e06,             0.1 },
+    { "annual_total_water_use",             NR,                 80986.,                 0.1 },
+    { "annual_q_abs_tot",                   NR,                 1.1696e06,              0.1 },
     { "annual_q_aux",                       NR,                 0.,                     0.1 },
     { "annual_q_inc_sf_tot",                NR,                 2.50421e06,             0.1 }
 };
