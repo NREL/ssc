@@ -4598,7 +4598,11 @@ lab_keep_guess:
 	   * V_cold_min - [m/s] Minimum cold fluid velocity at design
        * V_hot_max -  [m/s] Maximum hot fluid velocity at design
        * V_hot_min -  [m/s] Minimum hot fluid velocity at design
+<<<<<<< HEAD
        * N_max_hdr_diams - [-] Maximum number of diameters in each hot/cold header
+=======
+       * nmaxhdrdiams - [-] Maximum number of diameters in each hot/cold header
+>>>>>>> Differentiated hot/cold header sizing and updated test
 	   * m_dot - [kg/s] Mass flow rate at design
 	--Outputs
 	   * D_hdr - [m] An ARRAY containing the header diameter for each loop section
