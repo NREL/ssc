@@ -1509,6 +1509,7 @@ void irrad::getGroundShadeFactors(double rowToRow, double verticalHeight, double
 }
 void irrad::getBackSurfaceIrradiances(double maxShadow, double pvBackShadeFraction, double rowToRow, double verticalHeight, double clearanceGround, double distanceBetweenRows, double horizontalLength, std::vector<double> rearGroundGHI, std::vector<double> & rearIrradiance, double & rearAverageIrradiance)
 {
+	size_t intervals = 100;
 	double poa[3] = { 0,0,0 };
 	double diffc[3] = { 0,0,0 };
 	double sunAzimuth = sun[0];
@@ -1580,8 +1581,21 @@ void irrad::getBackSurfaceIrradiances(double maxShadow, double pvBackShadeFracti
 			}
 			else
 			{
-				projectedX1 = 100.0 * projectedX1 / rowToRow;
-				projectedX2 = 100.0 * projectedX2 / rowToRow;
+				projectedX1 = intervals * projectedX1 / rowToRow;
+				projectedX2 = intervals * projectedX2 / rowToRow;
+
+				// offset so array indexed are less than number of intervals
+				while (projectedX1 >= intervals || projectedX2 >= intervals)
+				{
+					projectedX1 -= intervals;
+					projectedX2 -= intervals;
+				}
+				while (projectedX1 < -intervals || projectedX2 < -intervals)
+				{
+					projectedX1 += intervals;
+					projectedX2 += intervals;
+				}
+				size_t index = static_cast<size_t>(projectedX1 + intervals) - intervals;
 
 			}
 		}
