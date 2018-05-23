@@ -304,8 +304,11 @@ TestInfo physTroughPPASingleDefaultInfo[] = {
 	{"Fluid",                               NUM,                "21"                    },
 	{"T_fp",                                NUM,                "150"                   },
 	{"I_bn_des",                            NUM,                "950"                   },
-	{"V_hdr_max",                           NUM,                "3"                     },
-	{"V_hdr_min",                           NUM,                "2"                     },
+	{"V_hdr_cold_max",                      NUM,                "3"                     },
+	{"V_hdr_cold_min",                      NUM,                "2"                     },
+    {"V_hdr_hot_max",                       NUM,                "3"                     },
+    {"V_hdr_hot_min",                       NUM,                "2"                     },
+    {"N_max_hdr_diams",                     NUM,                "10"                    },
 	{"Pipe_hl_coef",                        NUM,                "0.44999998807907104"   },
 	{"SCA_drives_elec",                     NUM,                "125"                   },
 	{"fthrok",                              NUM,                "1"                     },
@@ -668,19 +671,19 @@ TestInfo physTroughPPASingleDefaultInfo[] = {
 // test_types: equal (EQ), near(approx equal) (NR), greater than (GT), less than (LT), bool (TF), cmod error (ERR)
 TestResult physTroughPPASingleDefaultResult[] = {
 /*  SSC Var Name                            Test Type           Test Result             Error Bound % */
-    { "annual_energy",                      NR,                 354285696.,             0.1 },  // Annual Energy [kWh]
+    { "annual_energy",                      NR,                 354497440.,             0.1 },  // Annual Energy [kWh]
     { "annual_fuel_usage",                  NR,                 0.,                     0.1 },  // Annual fuel usage [kWht]
-    { "capacity_factor",                    NR,                 40.4841,                0.1 },  // Capacity factor [%]
-    { "annual_q_dump",                      NR,                 48151.5,                0.1 },  // Dumped thermal energy [MWht]
-    { "annual_W_cycle_gross",               NR,                 405550.,                0.1 },  // Electrical source - Power cycle gross output [MWhe]
-    { "kwh_per_kw",                         NR,                 3546.4,                 0.1 },  // First year kWh/kW [kWh/kW]
-    { "conversion_factor",                  NR,                 91.0024,                0.1 },  // Gross to Net Conversion Factor [%]
+    { "capacity_factor",                    NR,                 40.5083,                0.1 },  // Capacity factor [%]
+    { "annual_q_dump",                      NR,                 48256.1,                0.1 },  // Dumped thermal energy [MWht]
+    { "annual_W_cycle_gross",               NR,                 405948.,                0.1 },  // Electrical source - Power cycle gross output [MWhe]
+    { "kwh_per_kw",                         NR,                 3548.52,                0.1 },  // First year kWh/kW [kWh/kW]
+    { "conversion_factor",                  NR,                 90.9674,                0.1 },  // Gross to Net Conversion Factor [%]
     { "system_heat_rate",                   NR,                 3.413,                  0.1 },  // System heat rate [MMBtu/MWh]
-    { "annual_q_to_tes",                    NR,                 7443.62,                0.1 },  // Thermal energy into storage [MWht]
-    { "annual_q_pb",                        NR,                 1.12351e06,             0.1 },  // Thermal energy to the power block [MWht]
-    { "annual_q_avail",                     NR,                 1.12872e06,             0.1 },  // Thermal power produced by the field [MWht]
-    { "annual_total_water_use",             NR,                 80986.,                 0.1 },  // Total Annual Water Usage: cycle + mirror washing [m3]
-    { "annual_q_abs_tot",                   NR,                 1.1696e06,              0.1 },  // Total absorbed energy [MWht]
+    { "annual_q_to_tes",                    NR,                 7443.46,                0.1 },  // Thermal energy into storage [MWht]
+    { "annual_q_pb",                        NR,                 1.12439e06,             0.1 },  // Thermal energy to the power block [MWht]
+    { "annual_q_avail",                     NR,                 1.12956e06,             0.1 },  // Thermal power produced by the field [MWht]
+    { "annual_total_water_use",             NR,                 81018.8,                0.1 },  // Total Annual Water Usage: cycle + mirror washing [m3]
+    { "annual_q_abs_tot",                   NR,                 1.17022e06,             0.1 },  // Total absorbed energy [MWht]
     { "annual_q_aux",                       NR,                 0.,                     0.1 },  // Total fossil fuel usage by all plant subsystems [MMBTU]
     { "annual_q_inc_sf_tot",                NR,                 2.50421e06,             0.1 }   // Total power incident on the field [MWht]
 };
