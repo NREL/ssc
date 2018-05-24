@@ -228,7 +228,9 @@ public:
 		weather_reader.m_trackmode = 0;
 		weather_reader.m_tilt = 0.0;
 		weather_reader.m_azimuth = 0.0;
+		// Initialize to get weather file info
 		weather_reader.init();
+		if (weather_reader.has_error()) throw exec_error("linear_fresnel_dsg_iph", weather_reader.get_error());
 
 		// Set up ssc output arrays
 		// Set steps per hour
