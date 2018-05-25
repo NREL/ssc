@@ -3,7 +3,7 @@
 
 #include <stdio.h>
 #include <string>
-#include "input_cases/code_generator_utilities.h"
+#include "code_generator_utilities.h"
 
 /**
 *   Data for high-level integration test that verifies whether results for a no-financials 

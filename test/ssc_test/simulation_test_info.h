@@ -2,6 +2,7 @@
 #define __TestInfo__
 #include <unordered_map>
 #include <iostream>
+#include <vector>
 
 enum {
 	STR,
