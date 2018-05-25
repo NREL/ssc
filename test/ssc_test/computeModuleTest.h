@@ -34,16 +34,16 @@ public:
 	
 	/// runs compute module and returns true if successful
 	bool compute() {
-		ssc_module_t module = ssc_module_create(table_->getCMODType());
+		ssc_module_t module = ssc_module_create(table_->getCMODType().c_str());
 		if (NULL == module)
 		{
-			printf("error: could not create %s module.", table_->getCMODType());
+			printf("error: could not create %s module.", table_->getCMODType().c_str());
 			return false;
 		}
 		if (ssc_module_exec(module, data_) == 0)
 		{
 			compute_module *cm = static_cast<compute_module*>(module);
-			printf("%s - %s did not compute: \n", table_->getCMODType(), table_->name);
+			printf("%s - %s did not compute: \n", table_->getCMODType().c_str(), table_->name.c_str());
 
 			int i = 0;
 			while (cm->log(i) != nullptr) {
@@ -67,10 +67,10 @@ private:
 		for (int i = 0; i < table_->getNumInfo(); i++) {
 			const TestInfo* info = &(table_->getInfo())[i];
 			if (info->dataType == STR) {
-				ssc_data_set_string(data_, info->sscVarName, info->values);
+				ssc_data_set_string(data_, info->sscVarName.c_str(), info->values.c_str());
 			}
 			else if (info->dataType == NUM) {
-				ssc_data_set_number(data_, info->sscVarName, (ssc_number_t)atof(info->values));
+				ssc_data_set_number(data_, info->sscVarName.c_str(), (ssc_number_t)atof(info->values.c_str()));
 			}
 			else if (info->dataType == ARR) {
 				size_t n = info->length;
@@ -82,7 +82,7 @@ private:
 					ssc_number_t value = (ssc_number_t)atof(substr.c_str());
 					val[j] = value;
 				}
-				ssc_data_set_array(data_, info->sscVarName, val, (int)n);
+				ssc_data_set_array(data_, info->sscVarName.c_str(), val, (int)n);
 			}
 			else if (info->dataType == MAT) {
 				size_t n = info->length;
@@ -94,7 +94,7 @@ private:
 					getline(ss, substr, ',');
 					val[j] = (ssc_number_t)atof(substr.c_str());
 				}
-				ssc_data_set_matrix(data_, info->sscVarName, val, (int)n, (int)m);
+				ssc_data_set_matrix(data_, info->sscVarName.c_str(), val, (int)n, (int)m);
 			}
 			else {
 				return false;

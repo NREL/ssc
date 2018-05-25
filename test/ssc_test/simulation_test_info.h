@@ -3,6 +3,7 @@
 #include <unordered_map>
 #include <iostream>
 #include <vector>
+#include <string>
 
 enum {
 	STR,
@@ -12,12 +13,23 @@ enum {
 };
 
 struct TestInfo{
-	const char* sscVarName;		///< same name as SSC variable
+	std::string sscVarName;		///< same name as SSC variable
 	unsigned int dataType;		///< 0: string, 1: number, 2: array, 3: matrix
 
-	const char* values;			///< comma-separated for array of values
+	std::string values;			///< comma-separated for array of values
 	size_t length = 1;			///< length of array/matrix
 	size_t width = 1;			///< width of matrix
+
+	TestInfo(std::string varName, unsigned int type, std::string val, size_t len = 1, size_t wid = 1)
+	{
+		sscVarName = varName;
+		dataType = type;
+		values = val;
+		length = len; 
+		width = wid;
+	}
+
+	TestInfo() {}
 };
 
 // enum for test_types: equal, near (approx equal), greater than, less than, bool, cmod error
@@ -33,7 +45,7 @@ enum {
 struct TestResult {
 	//TestInfo* test_values;
 
-	const char* sscVarName;
+	std::string sscVarName;
 	unsigned int testType;	
 	double expectedResult;		///< expected test results per value
 	double errorBound;			///< percent error allowed
@@ -42,8 +54,8 @@ struct TestResult {
 
 class SimulationTestTable {
 public:
-	const char* name;
-	SimulationTestTable(const char* cmodType, const char* testName, TestInfo* I, int nInfo, TestResult* R, int nRes) {
+	std::string name;
+	SimulationTestTable(std::string cmodType, std::string testName, TestInfo* I, int nInfo, TestResult* R, int nRes) {
 		name = testName;
 		computeModuleType = cmodType;
 		info = I;
@@ -76,7 +88,7 @@ public:
 
 	}
 	//to add dtor
-	const char* getCMODType() { return computeModuleType; }
+	std::string getCMODType() { return computeModuleType; }
 	int getNumInfo() { return nI; }
 	int getNumResult() { return nR; }
 	TestInfo* getInfo() { return info; }
@@ -88,10 +100,10 @@ public:
 		return *this;
 	}
 
-	bool modifyTestInfo(std::unordered_map<const char*, size_t>& map, TestInfo* I, size_t nInfo, const char* name) {
+	bool modifyTestInfo(std::unordered_map<std::string, size_t>& map, TestInfo* I, size_t nInfo, std::string name) {
 		for (size_t i = 0; i < nInfo; i++) {
 			size_t varIndex = 0;
-			std::unordered_map<const char*, size_t>::iterator it = map.find(I[i].sscVarName);
+			std::unordered_map<std::string, size_t>::iterator it = map.find(I[i].sscVarName);
 			if (it != map.end()) {
 				varIndex = (*it).second;
 				info[varIndex].values = I[i].values;
@@ -106,7 +118,7 @@ public:
 	}
 
 protected:
-	const char* computeModuleType;
+	std::string computeModuleType;
 	TestInfo* info;
 	TestResult* result;
 	int nI, nR;
@@ -126,10 +138,10 @@ protected:
 class computeModuleTestData {
 public:
 	std::vector<SimulationTestTable*>* tests;
-	std::unordered_map<const char*, size_t>* map;
-	const char* name;
+	std::unordered_map<std::string, size_t>* map;
+	std::string name;
 
-	computeModuleTestData(std::vector<SimulationTestTable*>* t, std::unordered_map<const char*, size_t>* m, const char* n) {
+	computeModuleTestData(std::vector<SimulationTestTable*>* t, std::unordered_map<std::string, size_t>* m, std::string n) {
 		tests = t;
 		map = m;
 		name = n;
