@@ -4,6 +4,7 @@
 #include <gtest/gtest.h>
 #include <string>
 
+
 #include "core.h"
 #include "vartab.h"
 #include "common.h"
@@ -42,7 +43,8 @@ public:
 		if (ssc_module_exec(module, data_) == 0)
 		{
 			compute_module *cm = static_cast<compute_module*>(module);
-			printf("error during simulation: \n");
+			printf("%s - %s did not compute: \n", table_->getCMODType(), table_->name);
+
 			int i = 0;
 			while (cm->log(i) != nullptr) {
 				printf("%s\n", cm->log(i)->text.c_str());
