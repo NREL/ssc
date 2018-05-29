@@ -7,8 +7,8 @@
 
 // first test must contain all possible inputs
 std::vector<SimulationTestTable*> physTroughTests;
-std::unordered_map<const char*, size_t> physTroughVarMap;
-computeModuleTestData physTroughTesting(&physTroughTests, &physTroughVarMap, "physTrough");
+std::unordered_map<std::string, size_t> physTroughVarMap;
+computeModuleTestData physTroughTesting(&physTroughTests, &physTroughVarMap, "tcstrough_physical");
 
 // Set up data resource file paths
 char weatherfile[150];
