@@ -104,6 +104,12 @@ private:
 	int tms[3];
 	double ghi;
 
+
+	double poaRear[3];
+	double diffcRear[3];
+	double poaRearAverage;
+
+
 	poaDecompReq* poaAll;
 
 public:
@@ -144,6 +150,7 @@ public:
 		double *btdiff );
 	void get_poa( double *beam, double *skydiff, double *gnddiff,
 		double *isotrop, double *circum, double *horizon );
+	double get_poa_rear();
 	void get_irrad (double *ghi, double *dni, double *dhi);
 	double get_ghi();
 	double get_sunpos_calc_hour();

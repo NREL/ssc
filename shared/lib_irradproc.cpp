@@ -963,10 +963,12 @@ irrad::irrad()
 	for (int i=0;i<9;i++) sun[i] = std::numeric_limits<double>::quiet_NaN();
 	angle[0]=angle[1]=angle[2]=angle[3]=angle[4]= std::numeric_limits<double>::quiet_NaN();
 	poa[0]=poa[1]=poa[2]=diffc[0]=diffc[1]=diffc[2] = std::numeric_limits<double>::quiet_NaN();
+	poaRear[0] = poaRear[1] = poaRear[2] = diffcRear[0] = diffcRear[1] = diffcRear[2] = std::numeric_limits<double>::quiet_NaN();
 	tms[0]=tms[1]=tms[2] = -999;
 	gcr=std::numeric_limits<double>::quiet_NaN();
 	en_backtrack = false;
 	ghi = std::numeric_limits<double>::quiet_NaN();
+	poaRearAverage = 0;
 }
 
 int irrad::check()
@@ -1040,6 +1042,11 @@ void irrad::get_poa( double *beam, double *skydiff, double *gnddiff,
 	if ( isotrop != 0 ) *isotrop = diffc[0];
 	if ( circum != 0 ) *circum = diffc[1];
 	if ( horizon != 0 ) *horizon = diffc[2];
+}
+
+double irrad::get_poa_rear()
+{
+	return poaRearAverage;
 }
 
 void irrad::get_irrad (double *ghi, double *dni, double *dhi){
@@ -1202,7 +1209,6 @@ int irrad::calc()
 	ghi = 0;
 
 	// do irradiance calculations if sun is up
-
 	if (tms[2] > 0)
 	{				
 		// compute incidence angles onto fixed or tracking surface
@@ -1292,12 +1298,10 @@ int irrad::calc_rear_side(double transmissionFactor, double bifaciality)
 	this->getGroundShadeFactors(rowToRow, verticalHeight, clearanceGround, distanceBetweenRows, horizontalLength, rearGroundShade, maxShadow, pvBackShadeFraction);
 
 	// Calculate the diffuse components of irradiance
-	double poa[3] = { 0,0,0 };
-	double diffc[3] = { 0,0,0 };
-	perez(0, this->dn, this->df, this->alb, angle[0], angle[1], sun[1], poa, diffc);
-	double incidentBeam = poa[0];
-	double isotropicDiffuse = diffc[0];
-	double circumsolarDiffuse = diffc[1];
+	perez(0, this->dn, this->df, this->alb, angle[0], angle[1], sun[1], poaRear, diffcRear);
+	double incidentBeam = poaRear[0];
+	double isotropicDiffuse = diffcRear[0];
+	double circumsolarDiffuse = diffcRear[1];
 
 	// Sum the irradiance components for each of the ground segments to the front and rear of the front of the PV row
 	std::vector<double> rearGroundGHI;
@@ -1322,8 +1326,7 @@ int irrad::calc_rear_side(double transmissionFactor, double bifaciality)
 	std::vector<double> rearIrradiancePerCellrow;
 	double rearAverageIrradiance;
 	getBackSurfaceIrradiances(maxShadow, pvBackShadeFraction, rowToRow, verticalHeight, clearanceGround, distanceBetweenRows, horizontalLength, rearGroundGHI, rearIrradiancePerCellrow, rearAverageIrradiance);
-
-
+	poaRearAverage = rearAverageIrradiance;
 	return true;
 }
 
@@ -1448,7 +1451,6 @@ void irrad::getGroundShadeFactors(double rowToRow, double verticalHeight, double
 					shadingStart1 = 0.0;
 					shadingEnd1 = rowToRow;
 				}
-
 			}
 		}
 		// Shadow to front of row, either front or back might be shaded, depending on tilt and other factors
@@ -1510,8 +1512,6 @@ void irrad::getGroundShadeFactors(double rowToRow, double verticalHeight, double
 void irrad::getBackSurfaceIrradiances(double maxShadow, double pvBackShadeFraction, double rowToRow, double verticalHeight, double clearanceGround, double distanceBetweenRows, double horizontalLength, std::vector<double> rearGroundGHI, std::vector<double> & rearIrradiance, double & rearAverageIrradiance)
 {
 	size_t intervals = 100;
-	double poa[3] = { 0,0,0 };
-	double diffc[3] = { 0,0,0 };
 	double sunAzimuth = sun[0];
 	double solarZenith = sun[1];
 
@@ -1521,14 +1521,14 @@ void irrad::getBackSurfaceIrradiances(double maxShadow, double pvBackShadeFracti
 		averageGroundGHI += rearGroundGHI[i] / rearGroundGHI.size();
 
 	// Calculate diffuse isotropic irradiance for a horizontal surface
-	perez(0, this->dn, this->df, this->alb, solarZenith, 0, solarZenith, poa, diffc);
-	double isotropicSkyDiffuse = diffc[0];
+	perez(0, this->dn, this->df, this->alb, solarZenith, 0, solarZenith, poaRear, diffcRear);
+	double isotropicSkyDiffuse = diffcRear[0];
 
 	// Calculate components for a 90 degree tilt 
 	double angle[5] = { 0,0,0,0,0 };
 	incidence(0, 90.0, 180.0, 45.0, solarZenith, sunAzimuth, this->en_backtrack, this->gcr, angle);
-	perez(0, this->dn, this->df, this->alb, angle[0], angle[1], solarZenith, poa, diffc);
-	double horizonDiffuse = diffc[2];
+	perez(0, this->dn, this->df, this->alb, angle[0], angle[1], solarZenith, poaRear, diffcRear);
+	double horizonDiffuse = diffcRear[2];
 
 	// Calculate x,y coordinates of bottom and top edges of PV row in back of desired PV row so that portions of sky and ground viewed by the 
 	// PV cell may be determined. Origin of x-y axis is the ground point below the lower front edge of the desired PV row. The row in back of 
@@ -1595,17 +1595,73 @@ void irrad::getBackSurfaceIrradiances(double maxShadow, double pvBackShadeFracti
 					projectedX1 += intervals;
 					projectedX2 += intervals;
 				}
-				size_t index = static_cast<size_t>(projectedX1 + intervals) - intervals;
+				int index1 = static_cast<int>(projectedX1 + intervals) - intervals;
+				int index2 = static_cast<int>(projectedX2 + intervals) - intervals;
 
+				if (index1 == index2)
+				{
+					if (index1 < 0)
+					{
+						// Need to also add in frontGroundGHI
+						if (index1 > 0) {
+							actualGroundGHI = rearGroundGHI[index1];
+						}
+					}
+				}
+				else
+				{
+					// Sum irradiances on the ground if projects are in different groundGHI elements
+					for (int k = index1; k <= index2; k++)
+					{
+						if (k == index1)
+						{
+							if (k > 0) {
+								actualGroundGHI += rearGroundGHI[k] * (k + 1.0 - projectedX1);
+							}
+						}
+						else if (k == index2)
+						{
+							if (k > 0) {
+								actualGroundGHI += rearGroundGHI[k] * (projectedX2 - k);
+							}
+						}
+						else
+						{
+							if (k > 0) {
+								actualGroundGHI += rearGroundGHI[k];
+							}
+						}
+					}
+					// Irradiance on the ground in the 1-degree field of view
+					actualGroundGHI /= projectedX2 - projectedX1;
+				}
 			}
+			// No AOI corrections here
+			rearGroundGHI[i] += 0.5 * std::cos(j * DTOR) - std::cos((j + 1) * DTOR) * averageGroundGHI * this->alb;
+		}
+		// Calculate and add direct and circumsolar irradiance components
+		incidence(0, 180.0 - tilt / DTOR, this->sazm / DTOR - 180.0, 45.0, solarZenith, this->sazm, this->en_backtrack, this->gcr, angle);
+		perez(0, this->dn, this->df, this->alb, angle[0], angle[1], solarZenith, poaRear, diffcRear);
+
+		double cellShade = pvBackShadeFraction * cellRows - i;
+		
+		// Fully shaded if >1, no shade if < 0, otherwise fractionally shaded
+		if (cellShade > 1.0) {
+			cellShade = 1.0;
+		}
+		else if (cellShade < 0.0) {
+			cellShade = 0.0;
 		}
 
-
+		// Cell not shaded entirely and incidence angle < 90 degrees 
+		if (cellShade < 1.0 && angle[0] < M_PI / 2.0)
+		{
+			// doesn't include AOI correction
+			rearGroundGHI[i] += (1.0 - cellShade) * (poaRear[0] + diffcRear[1]);
+		}
+		rearAverageIrradiance += rearGroundGHI[i] / cellRows;
 	}
-
 }
-
-
 
 static double cosd( double x ) { return cos( DTOR*x ); }
 static double sind( double x ) { return sin( DTOR*x ); }
