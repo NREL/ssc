@@ -1,140 +1,8 @@
 #include <stdlib.h>
-#include <gtest/gtest.h>
 
-#include "lib_irradproc.h"
+#include "lib_irradproc_test.h"
 
-using namespace std;
-
-/**
- * \class IrradTest
- *
- * Month: 1-12, Hour: 0-23, Minute: 0-59.
- *
- */
-
-class IrradTest : public ::testing::Test{
-protected:
-	double lat, lon, tz, alb, tilt, azim, rotlim, gcr;
-	int year, month, day, skymodel, tracking;
-	bool backtrack_on;
-	double calc_sunrise, calc_sunset;
-	double e;
-
-	void SetUp(){
-		// parameters
-		lat = 31.6340;
-		lon = 74.8723;
-		tz = 5.5;
-		year = 2017;
-		month = 7;
-		day = 19;
-		skymodel = 2;
-		alb = 0.2;
-		tracking = 0;
-		tilt = 10;
-		azim = 180;
-		rotlim = 0;
-		backtrack_on = false;
-		gcr = 0;
-		e = 0.0001;
-
-		// correct sunrise and sunset times
-		calc_sunrise = 5.70924; // 5:43 am
-		calc_sunset = 19.5179;  // 7:31 pm
-	}
-};
-
-class NightCaseIrradProc : public IrradTest{
-protected:
-	// Test time: 1:30 am
-	irrad irr_hourly_night;
-	// Test time: 1:15 am
-	irrad irr_15m_night;
-
-	void SetUp(){
-		IrradTest::SetUp();
-		int night_hr(1);
-		irr_hourly_night.set_time(year, month, day, night_hr, 30, 1);
-		irr_hourly_night.set_location(lat, lon, tz);
-		irr_hourly_night.set_sky_model(skymodel, alb);
-		irr_hourly_night.set_beam_diffuse(0, 0);
-		irr_hourly_night.set_surface(tracking, tilt, azim, rotlim, backtrack_on, gcr);
-		irr_15m_night.set_time(year, month, day, night_hr, 15, -1);
-		irr_15m_night.set_location(lat, lon, tz);
-		irr_15m_night.set_sky_model(skymodel, alb);
-		irr_15m_night.set_beam_diffuse(0, 0);
-		irr_15m_night.set_surface(tracking, tilt, azim, rotlim, backtrack_on, gcr);
-	}
-};
-
-class SunriseCaseIrradProc : public IrradTest{
-protected:
-	// Test time: 5:30 am
-	irrad irr_hourly_sunrise;
-	// Test time: 5:30 am
-	irrad irr_15m_sunrise;
-
-	void SetUp(){
-		IrradTest::SetUp();
-		int sr_hr(5);
-		irr_hourly_sunrise.set_time(year, month, day, sr_hr, 30, 1);
-		irr_hourly_sunrise.set_location(lat, lon, tz);
-		irr_hourly_sunrise.set_sky_model(skymodel, alb);
-		irr_hourly_sunrise.set_beam_diffuse(0, 1);
-		irr_hourly_sunrise.set_surface(tracking, tilt, azim, rotlim, backtrack_on, gcr);
-		irr_15m_sunrise.set_time(year, month, day, sr_hr, 30, 1);
-		irr_15m_sunrise.set_location(lat, lon, tz);
-		irr_15m_sunrise.set_sky_model(skymodel, alb);
-		irr_15m_sunrise.set_beam_diffuse(0, 1);
-		irr_15m_sunrise.set_surface(tracking, tilt, azim, rotlim, backtrack_on, gcr);
-	}
-};
-
-class DayCaseIrradProc : public IrradTest{
-protected:
-	// Test time: 12:30 pm
-	irrad irr_hourly_day;
-	// Test time: 12:45 pm
-	irrad irr_15m_day;
-	
-	void SetUp(){
-		IrradTest::SetUp();
-		int day_hr(12);
-		irr_hourly_day.set_time(year, month, day, day_hr, 30, 1);
-		irr_hourly_day.set_location(lat, lon, tz);
-		irr_hourly_day.set_sky_model(skymodel, alb);
-		irr_hourly_day.set_beam_diffuse(2, 2);
-		irr_hourly_day.set_surface(tracking, tilt, azim, rotlim, backtrack_on, gcr);
-		irr_15m_day.set_time(year, month, day, day_hr, 45, 1);
-		irr_15m_day.set_location(lat, lon, tz);
-		irr_15m_day.set_sky_model(skymodel, alb);
-		irr_15m_day.set_beam_diffuse(2, 2);
-		irr_15m_day.set_surface(tracking, tilt, azim, rotlim, backtrack_on, gcr);
-	}
-};
-
-class SunsetCaseIrradProc : public IrradTest{
-protected:
-	// Test time: 7:30 pm
-	irrad irr_hourly_sunset;
-	// Test time: 7:30 pm
-	irrad irr_15m_sunset;
-	
-	virtual void SetUp(){
-		IrradTest::SetUp();
-		int ss_hr(19);
-		irr_hourly_sunset.set_time(year, month, day, ss_hr, 30, 1);
-		irr_hourly_sunset.set_location(lat, lon, tz);
-		irr_hourly_sunset.set_sky_model(skymodel, alb);
-		irr_hourly_sunset.set_beam_diffuse(0, 1);
-		irr_hourly_sunset.set_surface(tracking, tilt, azim, rotlim, backtrack_on, gcr);
-		irr_15m_sunset.set_time(year, month, day, ss_hr, 30, 1);
-		irr_15m_sunset.set_location(lat, lon, tz);
-		irr_15m_sunset.set_sky_model(skymodel, alb);
-		irr_15m_sunset.set_beam_diffuse(0, 1);
-		irr_15m_sunset.set_surface(tracking, tilt, azim, rotlim, backtrack_on, gcr);
-	}
-};
+using std::vector;
 
 /**
  * Solar Position Function Tests
@@ -577,4 +445,22 @@ TEST_F(SunsetCaseIrradProc, CalcTestRadMode0_lib_irradproc){
 	printf("poa: %f, %f, %f, %f, %f, %f \n", poa_p[0], poa_p[1], poa_p[2], poa_p[3], poa_p[4], poa_p[5]);
 	printf("irrad: %f, %f, %f \n", &rad_p[0], &rad_p[1], &rad_p[2]);
 	*/
+}
+
+/**
+*   Test Sky Configuration factors.  These factors do not change with time, just system geometry
+*/
+TEST_F(BifacialIrradTest, TestSkyConfigFactors)
+{
+	// Determine the factors for points on the ground from the leading edge of one row of PV panels to the edge of the next row of panels behind
+	std::vector<double> rearSkyConfigFactors;
+	irr->getSkyConfigurationFactors(rowToRow, verticalHeight, clearanceGround, distanceBetweenRows, horizontalLength, rearSkyConfigFactors);
+	std::vector<double> expectedSkyConfigFactors = { 0.31746528768349, 0.3166898597414707, 0.3158845617514987, 0.31505447092609884, 0.31420468029924176, 0.313340276953247, 0.3124663205405842, 0.3115878222383039, 0.31070972426429816, 0.3098368800746455, 0.3089740353501973, 0.3081258098684984, 0.3072966803444087, 0.30649096430957745, 0.30571280508756976, 0.30496615790809833, 0.30425477719079363, 0.303582205016401, 0.3029517607914656, 0.30236653210158737, 0.30182936673836325, 0.30134286587627956, 0.30090937836815723, 0.30053099612133727, 0.30020955051164644, 0.299946609788294, 0.299743477420189, 0.29960119133268404, 0.29952052398337214, 0.29950198322619537, 0.2995458139146673, 0.2996520001973526, 0.2998202684617832, 0.3000500908865539, 0.30034068956536697, 0.300691041171112, 0.30109988213257166, 0.3015657143009256, 0.3020868110877593, 0.30266122406068663, 0.3032867899868308, 0.30396113831827176, 0.30468169911696935, 0.305445711419659, 0.3062502320456547, 0.30709214485236613, 0.30796817044461977, 0.3088748763445053, 0.30980868762847524, 0.3107658980377686, 0.31174268156691937, 0.3127351045331717, 0.31373913812706444, 0.31475067144128155, 0.315765524971164, 0.31677946457604256, 0.31778821588586126, 0.3187874791324413, 0.3197729443792757, 0.3207403071179795, 0.3216852841935352, 0.3226036300143336, 0.3234911529967789, 0.32434373218801665, 0.3251573340041737, 0.32592802901550877, 0.32665200870411437, 0.3273256021143607, 0.3279452923112385, 0.32850773255720117, 0.3290097621141306, 0.32944842157370274, 0.32982096761685376, 0.3301248871012388, 0.33035791037468787, 0.3305180237127191, 0.33060348077924484, 0.33061281301177303, 0.3305448388356977, 0.3303986716167246, 0.3301737262661392, 0.3298697244204676, 0.32948669812513764, 0.3290249919609623, 0.3284852635626013, 0.32786848248955747, 0.3271759274226039, 0.3264091816717319, 0.32557012699560445, 0.32466093574692756, 0.3236840613729327, 0.32264222731510417, 0.3215384143671419, 0.3203758465647328, 0.3191579756947288, 0.3178884645246083, 0.3165711688653665, 0.3152101185920348, 0.3138094977556616, 0.3123736239286202 };
+	
+	ASSERT_EQ(rearSkyConfigFactors.size(), expectedSkyConfigFactors.size());
+
+	// Can eventually use GoogleMock to do this more easily
+	for (size_t i = 0; i != rearSkyConfigFactors.size(); i++){
+		ASSERT_NEAR(rearSkyConfigFactors[i], expectedSkyConfigFactors[i], e);
+	}
 }

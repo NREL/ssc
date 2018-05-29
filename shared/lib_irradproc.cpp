@@ -1326,7 +1326,7 @@ int irrad::calc_rear_side(double transmissionFactor, double bifaciality)
 	std::vector<double> rearIrradiancePerCellrow;
 	double rearAverageIrradiance;
 	getBackSurfaceIrradiances(maxShadow, pvBackShadeFraction, rowToRow, verticalHeight, clearanceGround, distanceBetweenRows, horizontalLength, rearGroundGHI, rearIrradiancePerCellrow, rearAverageIrradiance);
-	poaRearAverage = rearAverageIrradiance;
+	poaRearAverage = rearAverageIrradiance * bifaciality;
 	return true;
 }
 
