@@ -464,3 +464,22 @@ TEST_F(BifacialIrradTest, TestSkyConfigFactors)
 		ASSERT_NEAR(rearSkyConfigFactors[i], expectedSkyConfigFactors[i], e);
 	}
 }
+/**
+*   Test Ground Shade factors.  These factors do not change with time, just system geometry
+*/
+TEST_F(BifacialIrradTest, TestGroundShadeFactors)
+{
+	// Determine if ground is shading from direct beam radio for points on the ground from leading edge of PV panels to leading edge of next row behind
+	double maxShadow = 0;
+	double pvBackShadeFraction = 0;
+	std::vector<int> rearGroundShade;
+	irr->getGroundShadeFactors(rowToRow, verticalHeight, clearanceGround, distanceBetweenRows, horizontalLength, sunAzimuthRadians, sunElevationRadians, rearGroundShade, maxShadow, pvBackShadeFraction);
+	std::vector<int> expectedGroundShade = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 };
+
+	ASSERT_EQ(rearGroundShade.size(), expectedGroundShade.size());
+
+	// Can eventually use GoogleMock to do this more easily
+	for (size_t i = 0; i != rearGroundShade.size(); i++) {
+		ASSERT_NEAR(rearGroundShade[i], expectedGroundShade[i], e);
+	}
+}

@@ -143,6 +143,8 @@ class BifacialIrradTest : public ::testing::Test {
 protected:
 	double tilt, azim, transmissionFactor, bifaciality, gcr, rotlim;
 	double slopeLength, rowToRow, clearanceGround, distanceBetweenRows, verticalHeight, horizontalLength;
+	int year, month, day, hour, minute;
+	double lat, lon, tz, sun[9], sunElevationRadians, sunAzimuthRadians;
 	int tracking;
 	bool backtrack;
 	irrad * irr;
@@ -173,11 +175,25 @@ protected:
 		horizontalLength = std::cos(tiltRadian);
 
 		// for January 1, 11:00 AM (add for a full 8760)
+		year = 1955;
+		month = 1;
+		day = 1;
+		minute = 0;
+		tz = -5.0;
+		lat = 37.517;
+		lon = -77.317;
 		beam = 476; 
 		diffuse = 149;
+
+		// Setup irradiance
 		irr = new irrad();
 		irr->set_surface(tracking, tilt, azim, rotlim, backtrack, gcr);
 		irr->set_beam_diffuse(beam, diffuse);
+		
+		// Need to reconcile this calc, for now hardcode
+		solarpos(year, month, day, hour, minute, lat, lon, tz, sun);
+		sunElevationRadians = 0.0507092387015;
+		sunAzimuthRadians = 2.12737365475;
 	}
 	void TearDown() {
 		if (irr) {

@@ -1295,7 +1295,7 @@ int irrad::calc_rear_side(double transmissionFactor, double bifaciality)
 	double maxShadow = 0;
 	double pvBackShadeFraction = 0;
 	std::vector<int> rearGroundShade;
-	this->getGroundShadeFactors(rowToRow, verticalHeight, clearanceGround, distanceBetweenRows, horizontalLength, rearGroundShade, maxShadow, pvBackShadeFraction);
+	this->getGroundShadeFactors(rowToRow, verticalHeight, clearanceGround, distanceBetweenRows, horizontalLength, sun[0], this->sazm * DTOR, rearGroundShade, maxShadow, pvBackShadeFraction);
 
 	// Calculate the diffuse components of irradiance
 	perez(0, this->dn, this->df, this->alb, angle[0], angle[1], sun[1], poaRear, diffcRear);
@@ -1325,7 +1325,7 @@ int irrad::calc_rear_side(double transmissionFactor, double bifaciality)
 	// Calculate the irradiance on the back of the PV module
 	std::vector<double> rearIrradiancePerCellrow;
 	double rearAverageIrradiance;
-	getBackSurfaceIrradiances(maxShadow, pvBackShadeFraction, rowToRow, verticalHeight, clearanceGround, distanceBetweenRows, horizontalLength, rearGroundGHI, rearIrradiancePerCellrow, rearAverageIrradiance);
+	getBackSurfaceIrradiances(pvBackShadeFraction, rowToRow, verticalHeight, clearanceGround, distanceBetweenRows, horizontalLength, rearGroundGHI, rearIrradiancePerCellrow, rearAverageIrradiance);
 	poaRearAverage = rearAverageIrradiance * bifaciality;
 	return true;
 }
@@ -1393,25 +1393,23 @@ void irrad::getSkyConfigurationFactors(double rowToRow, double verticalHeight, d
 }
 
 
-void irrad::getGroundShadeFactors(double rowToRow, double verticalHeight, double clearanceGround, double distanceBetweenRows, double horizontalLength, std::vector<int> & rearGroundShade, double & maxShadow, double & pvBackSurfaceShadeFraction)
+void irrad::getGroundShadeFactors(double rowToRow, double verticalHeight, double clearanceGround, double distanceBetweenRows, double horizontalLength, double solarAzimuthRadians, double solarElevationRadians, std::vector<int> & rearGroundShade, double & maxShadow, double & pvBackSurfaceShadeFraction)
 {
 	// calculate ground shade factors using 100 intervals
 	size_t intervals = 100;
 	double deltaInterval = static_cast<double>(rowToRow / intervals);
-	double surfaceAzimuthAngle = this->sazm * 180 / M_PI;
-	double solarAzimuthAngle = sun[0] * (180 / M_PI);
-	double solarElevationAngle = sun[2] * (180 / M_PI);
+	double surfaceAzimuthAngleRadians = this->sazm * DTOR;
 	double shadingStart1, shadingStart2, shadingEnd1, shadingEnd2;
 	shadingStart1 = shadingStart2 = shadingEnd1 = shadingEnd2 = pvBackSurfaceShadeFraction = 0;
 
 	/// Horizontal length of shadow perpindicular to row from top of module to bottom of module
-	double lengthHorizontalShadow = (verticalHeight / std::tan(solarElevationAngle)) * std::cos(surfaceAzimuthAngle - solarAzimuthAngle);
+	double lengthHorizontalShadow = (verticalHeight / std::tan(solarElevationRadians)) * std::cos(surfaceAzimuthAngleRadians - solarAzimuthRadians);
 
 	///  Horizontal length of shadow perpindicular to row from top of module to ground level
-	double lengthHorizontalShadowClearance = ((clearanceGround + verticalHeight) / std::tan(solarElevationAngle)) * std::cos(surfaceAzimuthAngle - solarAzimuthAngle);
+	double lengthHorizontalShadowClearance = ((clearanceGround + verticalHeight) / std::tan(solarElevationRadians)) * std::cos(surfaceAzimuthAngleRadians - solarAzimuthRadians);
 
 	/// Horizontal length of shadow perpindicular to row from bottom of module to ground level
-	double lengthHorizontalShadowGround = (clearanceGround / std::tan(solarElevationAngle)) * std::cos(surfaceAzimuthAngle - solarAzimuthAngle);
+	double lengthHorizontalShadowGround = (clearanceGround / std::tan(solarElevationRadians)) * std::cos(surfaceAzimuthAngleRadians - solarAzimuthRadians);
 
 	// Front side of PV module partially shaded, back completely shaded, ground completely shaded
 	if (lengthHorizontalShadow > distanceBetweenRows) {
@@ -1498,7 +1496,7 @@ void irrad::getGroundShadeFactors(double rowToRow, double verticalHeight, double
 	for (int i = 0; i != intervals; i++)
 	{
 		x += deltaInterval;
-		if ((x >= shadingStart1 && x < shadingEnd2) || (x >= shadingStart2 && x < shadingEnd2))
+		if ((x >= shadingStart1 && x < shadingEnd1) || (x >= shadingStart2 && x < shadingEnd2))
 		{
 			rearGroundShade.push_back(1);
 		}
@@ -1509,7 +1507,7 @@ void irrad::getGroundShadeFactors(double rowToRow, double verticalHeight, double
 	}
 	maxShadow = std::fmax(shadingStart1, shadingEnd1);
 }
-void irrad::getBackSurfaceIrradiances(double maxShadow, double pvBackShadeFraction, double rowToRow, double verticalHeight, double clearanceGround, double distanceBetweenRows, double horizontalLength, std::vector<double> rearGroundGHI, std::vector<double> & rearIrradiance, double & rearAverageIrradiance)
+void irrad::getBackSurfaceIrradiances(double pvBackShadeFraction, double rowToRow, double verticalHeight, double clearanceGround, double distanceBetweenRows, double horizontalLength, std::vector<double> rearGroundGHI, std::vector<double> & rearIrradiance, double & rearAverageIrradiance)
 {
 	size_t intervals = 100;
 	double sunAzimuth = sun[0];
