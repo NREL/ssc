@@ -50,58 +50,58 @@
 #include "core.h"
 
 static var_info _cm_vtab_windcsm[] = {
-/*   VARTYPE           DATATYPE         NAME                              LABEL                                                      UNITS     META                      GROUP          REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/			
-	{ SSC_INPUT,        SSC_NUMBER,      "turbine_class",					"Turbine class",                                          "",     "",                      "wind_csm",    "?=0", "INTEGER,MIN=0,MAX=3", "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "turbine_user_exponent",					"Turbine user exponent",                                          "",     "",                      "wind_csm",    "?=2.5", "", "" },
-	{ SSC_INPUT,		SSC_NUMBER, "turbine_carbon_blades", "Turbine carbon blades", "0/1", "", "wind_csm", "?=0", "INTEGER,MIN=0,MAX=1", "" },
-	{ SSC_INPUT,		SSC_NUMBER, "turbine_rotor_diameter", "Turbine rotor diameter", "m", "", "wind_csm", "*", "", "" },
+/*   VARTYPE           DATATYPE         NAME                                LABEL                                UNITS     META           GROUP          REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/			
+	{ SSC_INPUT,        SSC_NUMBER,      "turbine_class",					 "Turbine class",                     "",      "",            "wind_csm",      "?=0",                    "INTEGER,MIN=0,MAX=3",            "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "turbine_user_exponent",			 "Turbine user exponent",             "",      "",            "wind_csm",      "?=2.5",                  "",                               "" },
+	{ SSC_INPUT,		SSC_NUMBER,      "turbine_carbon_blades",            "Turbine carbon blades",             "0/1",   "",            "wind_csm",      "?=0",                    "INTEGER,MIN=0,MAX=1",            "" },
+	{ SSC_INPUT,		SSC_NUMBER,      "turbine_rotor_diameter",           "Turbine rotor diameter",            "m",     "",            "wind_csm",      "*",                      "",                               "" },
 
-	{ SSC_INPUT,		SSC_NUMBER, "machine_rating", "Machine rating", "kW", "", "wind_csm", "*", "", "" },
+	{ SSC_INPUT,		SSC_NUMBER,      "machine_rating",                   "Machine rating",                    "kW",    "",            "wind_csm",      "*",                      "",                               "" },
 
-	{ SSC_INPUT,		SSC_NUMBER, "rotor_torque", "Rotor torque", "Nm", "", "wind_csm", "*", "", "" },
+	{ SSC_INPUT,		SSC_NUMBER,      "rotor_torque",                     "Rotor torque",                      "Nm",    "",            "wind_csm",      "*",                      "",                               "" },
 
-	{ SSC_INPUT,		SSC_NUMBER, "onboard_crane", "Onboard crane", "0/1", "", "wind_csm", "?=0", "INTEGER,MIN=0,MAX=1", "" },
+	{ SSC_INPUT,		SSC_NUMBER,      "onboard_crane",                    "Onboard crane",                     "0/1",   "",            "wind_csm",      "?=0",                    "INTEGER,MIN=0,MAX=1",            "" },
 
-	{ SSC_INPUT,		SSC_NUMBER, "hub_height", "Hub height", "m", "", "wind_csm", "*", "", "" },
+	{ SSC_INPUT,		SSC_NUMBER,      "hub_height",                       "Hub height",                        "m",     "",            "wind_csm",      "*",                      "",                               "" },
 
-	{ SSC_INPUT,		SSC_NUMBER, "num_blades", "Number of blades", "", "", "wind_csm", "?=3", "INTEGER,MIN=1", "" },
+	{ SSC_INPUT,		SSC_NUMBER,      "num_blades",                       "Number of blades",                  "",      "",            "wind_csm",      "?=3",                    "INTEGER,MIN=1",                  "" },
 	
-	{ SSC_INPUT,		SSC_NUMBER, "num_bearings", "Number of main bearings", "", "", "wind_csm", "?=2", "INTEGER,MIN=1", "" },
+	{ SSC_INPUT,		SSC_NUMBER,      "num_bearings",                     "Number of main bearings",           "",      "",            "wind_csm",      "?=2",                    "INTEGER,MIN=1",                  "" },
 
 	// Outputs intermediate percentages and cost breakdown and total cost
-	{ SSC_OUTPUT,       SSC_NUMBER,      "rotor_mass",             "Rotor mass",                                 "kg",     "",                      "wind_csm",      "*",                       "",                              "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,      "rotor_cost",             "Rotor cost",                                 "$",     "",                      "wind_csm",      "*",                       "",                              "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "rotor_mass",                       "Rotor mass",                        "kg",    "",            "wind_csm",      "*",                       "",                              "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "rotor_cost",                       "Rotor cost",                        "$",     "",            "wind_csm",      "*",                       "",                              "" },
 	// rotor breakdown
-	{ SSC_OUTPUT,       SSC_NUMBER,      "blade_cost",             "Rotor cost",                                 "$",     "",                      "wind_csm",      "*",                       "",                              "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,      "hub_cost",             "Hub cost",                                 "$",     "",                      "wind_csm",      "*",                       "",                              "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,      "pitch_cost",             "Pitch cost",                                 "$",     "",                      "wind_csm",      "*",                       "",                              "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,      "spinner_cost",             "Spinner cost",                                 "$",     "",                      "wind_csm",      "*",                       "",                              "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "blade_cost",                       "Rotor cost",                        "$",     "",            "wind_csm",      "*",                       "",                              "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "hub_cost",                         "Hub cost",                          "$",     "",            "wind_csm",      "*",                       "",                              "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "pitch_cost",                       "Pitch cost",                        "$",     "",            "wind_csm",      "*",                       "",                              "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "spinner_cost",                     "Spinner cost",                      "$",     "",            "wind_csm",      "*",                       "",                              "" },
 
 	
-	{ SSC_OUTPUT,       SSC_NUMBER,      "drivetrain_mass",        "Drivetrain mass",                            "kg",     "",                      "wind_csm",      "*",                       "",                              "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,      "drivetrain_cost",             "Drivetrain cost",                                 "$",     "",                      "wind_csm",      "*",                       "",                              "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "drivetrain_mass",                  "Drivetrain mass",                   "kg",    "",            "wind_csm",      "*",                       "",                              "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "drivetrain_cost",                  "Drivetrain cost",                   "$",     "",            "wind_csm",      "*",                       "",                              "" },
 	// Drive train or Nacelle breakdown
-	{ SSC_OUTPUT,       SSC_NUMBER,      "low_speed_side_cost",             "Low speed side cost",                                 "$",     "",                      "wind_csm",      "*",                       "",                              "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,      "main_bearings_cost",             "Main bearings cost",                                 "$",     "",                      "wind_csm",      "*",                       "",                              "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,      "gearbox_cost",             "Gearbox cost",                                 "$",     "",                      "wind_csm",      "*",                       "",                              "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,      "high_speed_side_cost",             "High speed side cost",                                 "$",     "",                      "wind_csm",      "*",                       "",                              "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,      "generator_cost",             "Generator cost",                                 "$",     "",                      "wind_csm",      "*",                       "",                              "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,      "bedplate_cost",             "Bedplate cost",                                 "$",     "",                      "wind_csm",      "*",                       "",                              "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,      "yaw_system_cost",             "Yaw system cost",                                 "$",     "",                      "wind_csm",      "*",                       "",                              "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,      "variable_speed_electronics_cost",             "Variable speed electronics cost",                                 "$",     "",                      "wind_csm",      "*",                       "",                              "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,      "hvac_cost",             "HVAC cost",                                 "$",     "",                      "wind_csm",      "*",                       "",                              "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,      "electrical_connections_cost",             "Electrical connections cost",                                 "$",     "",                      "wind_csm",      "*",                       "",                              "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,      "controls_cost",             "Controls cost",                                 "$",     "",                      "wind_csm",      "*",                       "",                              "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,      "mainframe_cost",             "Mainframe cost",                                 "$",     "",                      "wind_csm",      "*",                       "",                              "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,      "transformer_cost",             "Transformer cost",                                 "$",     "",                      "wind_csm",      "*",                       "",                              "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "low_speed_side_cost",              "Low speed side cost",               "$",     "",            "wind_csm",      "*",                       "",                              "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "main_bearings_cost",               "Main bearings cost",                "$",     "",            "wind_csm",      "*",                       "",                              "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "gearbox_cost",                     "Gearbox cost",                      "$",     "",            "wind_csm",      "*",                       "",                              "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "high_speed_side_cost",             "High speed side cost",              "$",     "",            "wind_csm",      "*",                       "",                              "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "generator_cost",                   "Generator cost",                    "$",     "",            "wind_csm",      "*",                       "",                              "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "bedplate_cost",                    "Bedplate cost",                     "$",     "",            "wind_csm",      "*",                       "",                              "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "yaw_system_cost",                  "Yaw system cost",                   "$",     "",            "wind_csm",      "*",                       "",                              "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "variable_speed_electronics_cost",  "Variable speed electronics cost",   "$",     "",            "wind_csm",      "*",                       "",                              "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "hvac_cost",                        "HVAC cost",                         "$",     "",            "wind_csm",      "*",                       "",                              "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "electrical_connections_cost",      "Electrical connections cost",       "$",     "",            "wind_csm",      "*",                       "",                              "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "controls_cost",                    "Controls cost",                     "$",     "",            "wind_csm",      "*",                       "",                              "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "mainframe_cost",                   "Mainframe cost",                    "$",     "",            "wind_csm",      "*",                       "",                              "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "transformer_cost",                 "Transformer cost",                  "$",     "",            "wind_csm",      "*",                       "",                              "" },
 
 
 
-	{ SSC_OUTPUT,       SSC_NUMBER,      "tower_mass",             "Tower mass",                                 "kg",     "",                      "wind_csm",      "*",                       "",                              "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,      "tower_cost",             "Tower cost",                                 "$",     "",                      "wind_csm",      "*",                       "",                              "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "tower_mass",                       "Tower mass",                        "kg",    "",            "wind_csm",      "*",                       "",                              "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "tower_cost",                       "Tower cost",                        "$",     "",            "wind_csm",      "*",                       "",                              "" },
 
 	// overall cost
-	{ SSC_OUTPUT,       SSC_NUMBER,      "turbine_cost",             "Turbine cost",                                 "$",     "",                      "wind_csm",      "*",                       "",                              "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "turbine_cost",                     "Turbine cost",                      "$",     "",            "wind_csm",      "*",                       "",                              "" },
 
 
 var_info_invalid };
