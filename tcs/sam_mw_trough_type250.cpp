@@ -2066,8 +2066,8 @@ overtemp_iter_flag: //10 continue     //Return loop for over-temp conditions
             
 					//Calculate inlet temperature of the next SCA
 					T_htf_in[i+1] = T_htf_out[i] - Pipe_hl_coef*D_3(HT,0)*pi*L_int*(T_htf_out[i] - T_db)/(m_dot_htf*c_htf[i]);
-					//mjw 1.18.2011 Add the internal energy of the crossover piping
-					E_int_loop[i] = E_int_loop[i] + L_int*(pow(D_3(HT,0),2)/4.*pi + mc_bal_sca/c_htf[i])*(T_htf_out[i] - 298.150);
+					//mjw 1.18.2011 Add the internal energy of the crossover piping and interconnects
+					E_int_loop[i] = E_int_loop[i] + L_int*(pow(D_3(HT,0),2)/4.*pi * rho_htf[i] * c_htf[i] + mc_bal_sca)*(T_htf_out[i] - 298.150);
 				}
 
 			}
@@ -2667,12 +2667,12 @@ calc_final_metrics_goto:
 				m_dot_run_in = m_dot_htf_tot / 2.0;
 			}
 
-			x3 = float(nrunsec) - 1.0;  //Number of contractions/expansions
 			m_dot_temp = m_dot_run_in;
 			DP_toField = 0.0;
 			DP_fromField = 0.0;
 			for( int i = 0; i<nrunsec; i++ )
 			{
+                if (i < nrunsec - 1) { x3 = 1.0; }  // contractions/expansions
 				DP_toField = DP_toField + PressureDrop(m_dot_temp, T_loop_in, 1.0, D_runner[i], HDR_rough, L_runner[i], 0.0, x3, 0.0, 0.0,
 					max(float(CSP::nint(L_runner[i] / 70.))*4., 8.), 1.0, 0.0, 1.0, 0.0, 0.0, 0.0);   //*m_dot_temp/m_dot_run_in  //mjw 5.11.11 Correct for less than all mass flow passing through each section
 				//if(ErrorFound()) return 1                  
