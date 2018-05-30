@@ -304,10 +304,8 @@ TestInfo physTroughPPASingleDefaultInfo[] = {
 	{"Fluid",                               NUM,                "21"                    },
 	{"T_fp",                                NUM,                "150"                   },
 	{"I_bn_des",                            NUM,                "950"                   },
-	{"V_hdr_cold_max",                      NUM,                "3"                     },
-	{"V_hdr_cold_min",                      NUM,                "2"                     },
-    {"V_hdr_hot_max",                       NUM,                "3"                     },
-    {"V_hdr_hot_min",                       NUM,                "2"                     },
+	{"V_hdr_max",                           NUM,                "3"                     },
+	{"V_hdr_min",                           NUM,                "2"                     },
 	{"Pipe_hl_coef",                        NUM,                "0.44999998807907104"   },
 	{"SCA_drives_elec",                     NUM,                "125"                   },
 	{"fthrok",                              NUM,                "1"                     },
@@ -344,21 +342,21 @@ TestInfo physTroughPPASingleDefaultInfo[] = {
 	{"Rough",                               MAT,                Rough,                  4,4},
 	{"alpha_env",                           MAT,                alpha_env,              4,4},
 	{"epsilon_3_11",                        MAT,                epsilon_3_11,           9,2},
-	{"epsilon_3_12",                        MAT,                "0.64999997615814209",  1,1},
-	{"epsilon_3_13",                        MAT,                "0.64999997615814209",  1,1 },
-	{"epsilon_3_14",                        MAT,                "0",                    1,1 },
+	{"epsilon_3_12",                        NUM,                "0.64999997615814209"   },
+	{"epsilon_3_13",                        NUM,                "0.64999997615814209"   },
+	{"epsilon_3_14",                        NUM,                "0"                     },
 	{"epsilon_3_21",                        MAT,                epsilon_3_21,           9,2},
-	{"epsilon_3_22",                        MAT,                "0.64999997615814209",  1,1 },
-	{"epsilon_3_23",                        MAT,                "0.64999997615814209",  1,1 },
-	{"epsilon_3_24",                        MAT,                "0",                    1,1 },
+	{"epsilon_3_22",                        NUM,                "0.64999997615814209"   },
+	{"epsilon_3_23",                        NUM,                "0.64999997615814209"   },
+	{"epsilon_3_24",                        NUM,                "0"                     },
 	{"epsilon_3_31",                        MAT,                epsilon_3_31,           9,2},
-	{"epsilon_3_32",                        MAT,                "0.64999997615814209",  1,1 },
-	{"epsilon_3_33",                        MAT,                "0.64999997615814209",  1,1 },
-	{"epsilon_3_34",                        MAT,                "0",                    1,1 },
+	{"epsilon_3_32",                        NUM,                "0.64999997615814209"   },
+	{"epsilon_3_33",                        NUM,                "0.64999997615814209"   },
+	{"epsilon_3_34",                        NUM,                "0"                     },
 	{"epsilon_3_41",                        MAT,                epsilon_3_41,           9,2},
-	{"epsilon_3_42",                        MAT,                "0.64999997615814209",  1,1 },
-	{"epsilon_3_43",                        MAT,                "0.64999997615814209",  1,1 },
-	{"epsilon_3_44",                        MAT,                "0",                    1,1},
+	{"epsilon_3_42",                        NUM,                "0.64999997615814209"   },
+	{"epsilon_3_43",                        NUM,                "0.64999997615814209"   },
+	{"epsilon_3_44",                        NUM,                "0"                     },
 	{"alpha_abs",                           MAT,                alpha_abs,              4,4},
 	{"Tau_envelope",                        MAT,                Tau_envelope,           4,4},
 	{"EPSILON_4",                           MAT,                EPSILON_4,              4,4},
@@ -372,8 +370,8 @@ TestInfo physTroughPPASingleDefaultInfo[] = {
 	{"Design_loss",                         MAT,                Design_loss,            4,4},
 	{"SCAInfoArray",                        MAT,                SCAInfoArray,           8,2},
 	{"SCADefocusArray",                     ARR,                SCADefocusArray,        8},
-	{"field_fl_props",                      MAT,                "0",                    1,1 },
-	{"store_fl_props",                      MAT,                "1",                    1,1 },
+	{"field_fl_props",                      NUM,                "0"                     },
+	{"store_fl_props",                      NUM,                "1"                     },
 	{"store_fluid",                         NUM,                "18"                    },
 	{"tshours",                             NUM,                "6"                     },
 	{"is_hx",                               NUM,                "1"                     },
@@ -670,21 +668,21 @@ TestInfo physTroughPPASingleDefaultInfo[] = {
 // test_types: equal (EQ), near(approx equal) (NR), greater than (GT), less than (LT), bool (TF), cmod error (ERR)
 TestResult physTroughPPASingleDefaultResult[] = {
 /*  SSC Var Name                            Test Type           Test Result             Error Bound % */
-    { "annual_energy",                      NR,                 354497440.,             0.1 },      // Annual Energy (kWh)
-    { "annual_fuel_usage",                  NR,                 0.,                     0.1 },      // Annual fuel usage (kWht)
-    { "capacity_factor",                    NR,                 40.5083,                0.1 },      // Capacity factor (%)
-    { "annual_q_dump",                      NR,                 48256.1,                0.1 },      // Dumped thermal energy (MWht)
-    { "annual_W_cycle_gross",               NR,                 405948.,                0.1 },      // Electrical source - Power cycle gross output (MWhe)
-    { "kwh_per_kw",                         NR,                 3548.52,                0.1 },      // First year kWh/kW (kWh/kW)
-    { "conversion_factor",                  NR,                 90.9674,                0.1 },      // Gross to Net Conversion Factor (%)
-    { "system_heat_rate",                   NR,                 3.413,                  0.1 },      // System heat rate (MMBtu/MWh)
-    { "annual_q_to_tes",                    NR,                 7443.46,                0.1 },      // Thermal energy into storage (MWht)
-    { "annual_q_pb",                        NR,                 1.12439e06,             0.1 },      // Thermal energy to the power block (MWht)
-    { "annual_q_avail",                     NR,                 1.12956e06,             0.1 },      // Thermal power produced by the field (MWht)
-    { "annual_total_water_use",             NR,                 81018.8,                0.1 },      // Total Annual Water Usage: cycle + mirror washing (m3)
-    { "annual_q_abs_tot",                   NR,                 1.17022e06,             0.1 },      // Total absorbed energy (MWht)
-    { "annual_q_aux",                       NR,                 0.,                     0.1 },      // Total fossil fuel usage by all plant subsystems (MMBTU)
-    { "annual_q_inc_sf_tot",                NR,                 2.50421e06,             0.1 }       // Total power incident on the field (MWht)
+    { "annual_energy",                      NR,                 354285696.,             0.1 },
+    { "annual_fuel_usage",                  NR,                 0.,                     0.1 },
+    { "capacity_factor",                    NR,                 40.4841,                0.1 },
+    { "annual_q_dump",                      NR,                 48151.5,                0.1 },
+    { "annual_W_cycle_gross",               NR,                 405550.,                0.1 },
+    { "kwh_per_kw",                         NR,                 3546.4,                 0.1 },
+    { "conversion_factor",                  NR,                 91.0024,                0.1 },
+    { "system_heat_rate",                   NR,                 3.413,                  0.1 },
+    { "annual_q_to_tes",                    NR,                 7443.62,                0.1 },
+    { "annual_q_pb",                        NR,                 1.12351e06,             0.1 },
+    { "annual_q_avail",                     NR,                 1.12872e06,             0.1 },
+    { "annual_total_water_use",             NR,                 80986.,                 0.1 },
+    { "annual_q_abs_tot",                   NR,                 1.1696e06,              0.1 },
+    { "annual_q_aux",                       NR,                 0.,                     0.1 },
+    { "annual_q_inc_sf_tot",                NR,                 2.50421e06,             0.1 }
 };
 
 testDeclaration defaultTest1(physTroughTesting, "default", &physTroughPPASingleDefaultInfo[0], 383, &physTroughPPASingleDefaultResult[0], 15);
