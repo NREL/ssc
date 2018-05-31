@@ -2137,7 +2137,6 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 
 
 					// Get Incident angles and irradiances
-
 					irr.get_sun(&solazi, &solzen, &solalt, 0, 0, 0, &sunup, 0, 0, 0);
 					irr.get_angles(&aoi, &stilt, &sazi, &rot, &btd);
 					irr.get_poa(&ibeam, &iskydiff, &ignddiff, 0, 0, 0);

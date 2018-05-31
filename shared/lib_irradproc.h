@@ -130,6 +130,9 @@ public:
 	void set_poa_reference( double poa, poaDecompReq* );
 	void set_poa_pyranometer( double poa, poaDecompReq* );
 
+	/// Function to overwrite internally calculated sun position values, primarily to enable testing against other libraries using different sun position calculations
+	void set_sun_component(size_t index, double value);
+
 	int calc();
 	int calc_rear_side(double transmissionFactor, double bifaciality);
 	
@@ -157,6 +160,7 @@ public:
 
 	void getSkyConfigurationFactors(double rowToRow, double verticalHeight, double clearanceGround, double distanceBetweenRows, double horizontalLength, std::vector<double> & rearSkyConfigFactors);
 	void getGroundShadeFactors(double rowToRow, double verticalHeight, double clearanceGround, double distanceBetweenRows, double horizontalLength, double solarAzimuthRadians, double solarElevationRadians, std::vector<int> & groundFactors, double & maxShadow, double & pvBackShadeFraction);
+	void getRearGroundGHI(double transmissionFactor, std::vector<double> rearSkyConfigFactors, std::vector<int> groundFactors, std::vector<double> & rearGroundGHI);
 	void getBackSurfaceIrradiances(double pvBackShadeFraction, double rowToRow, double verticalHeight, double clearanceGround, double distanceBetweenRows, double horizontalLength, std::vector<double> rearGroundGHI, std::vector<double> & rearIrradiance, double & rearAverageIrradiance);
 };
 

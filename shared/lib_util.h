@@ -86,6 +86,10 @@ Define _DEBUG if compile with debugging
 #define sind(x) sin( (M_PI/180.0)*(x) )
 #define cosd(x) cos( (M_PI/180.0)*(x) )
 
+#ifndef DTOR
+#define DTOR 0.0174532925
+#endif
+
 namespace util
 {
 	const double watt_to_kilowatt = 1. / 1000;

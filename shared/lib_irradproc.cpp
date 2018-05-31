@@ -57,14 +57,10 @@
 #include <vector>
 
 #include "lib_irradproc.h"
+#include "lib_util.h"
 
-#ifndef M_PI
-#define M_PI 3.14159265358979323
-#endif
-
-#ifndef DTOR
-#define DTOR 0.0174532925
-#endif
+using std::cos;
+using std::sin;
 
 static const int __nday[12] = {31,28,31,30,31,30,31,31,30,31,30,31};
 
@@ -1121,7 +1117,12 @@ void irrad::set_poa_pyranometer( double poa, poaDecompReq* pA ){
 	this->radmode = POA_P;
 	this->poaAll = pA;
 }
-
+void irrad::set_sun_component(size_t index, double value)
+{
+	if (index < sizeof(sun) / sizeof(sun[0])) {
+		sun[index] = value;
+	}
+}
 
 int irrad::calc()
 {
@@ -1297,30 +1298,9 @@ int irrad::calc_rear_side(double transmissionFactor, double bifaciality)
 	std::vector<int> rearGroundShade;
 	this->getGroundShadeFactors(rowToRow, verticalHeight, clearanceGround, distanceBetweenRows, horizontalLength, sun[0], this->sazm * DTOR, rearGroundShade, maxShadow, pvBackShadeFraction);
 
-	// Calculate the diffuse components of irradiance
-	perez(0, this->dn, this->df, this->alb, angle[0], angle[1], sun[1], poaRear, diffcRear);
-	double incidentBeam = poaRear[0];
-	double isotropicDiffuse = diffcRear[0];
-	double circumsolarDiffuse = diffcRear[1];
-
-	// Sum the irradiance components for each of the ground segments to the front and rear of the front of the PV row
+	// Get the rear ground GHI
 	std::vector<double> rearGroundGHI;
-	for (size_t i = 0; i != 100; i++)
-	{
-		// Add diffuse sky component viewed by ground
-		rearGroundGHI.push_back(rearSkyConfigFactors[i] * isotropicDiffuse);
-
-		if (rearGroundShade[i] == 0)
-		{
-			// Add beam and circumsolar component if not shaded
-			rearGroundGHI[i] += incidentBeam + circumsolarDiffuse;
-		}
-		else
-		{
-			// Add beam and circumsolar component transmitted thru module spacing if shaded
-			rearGroundGHI[i] += (incidentBeam + circumsolarDiffuse) * transmissionFactor;
-		}
-	}
+	this->getRearGroundGHI(transmissionFactor, rearSkyConfigFactors, rearGroundShade, rearGroundGHI);
 	
 	// Calculate the irradiance on the back of the PV module
 	std::vector<double> rearIrradiancePerCellrow;
@@ -1507,6 +1487,35 @@ void irrad::getGroundShadeFactors(double rowToRow, double verticalHeight, double
 	}
 	maxShadow = std::fmax(shadingStart1, shadingEnd1);
 }
+
+void irrad::getRearGroundGHI(double transmissionFactor, std::vector<double> rearSkyConfigFactors, std::vector<int> rearGroundShade, std::vector<double> & rearGroundGHI)
+{
+	// Calculate the diffuse components of irradiance
+	perez(0, this->dn, this->df, this->alb, sun[1], 0.0, sun[1], poaRear, diffcRear);
+	double incidentBeam = poaRear[0];
+	double isotropicDiffuse = diffcRear[0];
+	double circumsolarDiffuse = diffcRear[1];
+
+	// Sum the irradiance components for each of the ground segments to the front and rear of the front of the PV row
+	for (size_t i = 0; i != 100; i++)
+	{
+		// Add diffuse sky component viewed by ground
+		rearGroundGHI.push_back(rearSkyConfigFactors[i] * isotropicDiffuse);
+
+		if (rearGroundShade[i] == 0)
+		{
+			// Add beam and circumsolar component if not shaded
+			rearGroundGHI[i] += incidentBeam + circumsolarDiffuse;
+		}
+		else
+		{
+			// Add beam and circumsolar component transmitted thru module spacing if shaded
+			rearGroundGHI[i] += (incidentBeam + circumsolarDiffuse) * transmissionFactor;
+		}
+	}
+}
+
+
 void irrad::getBackSurfaceIrradiances(double pvBackShadeFraction, double rowToRow, double verticalHeight, double clearanceGround, double distanceBetweenRows, double horizontalLength, std::vector<double> rearGroundGHI, std::vector<double> & rearIrradiance, double & rearAverageIrradiance)
 {
 	size_t intervals = 100;
@@ -1660,11 +1669,6 @@ void irrad::getBackSurfaceIrradiances(double pvBackShadeFraction, double rowToRo
 		rearAverageIrradiance += rearGroundGHI[i] / cellRows;
 	}
 }
-
-static double cosd( double x ) { return cos( DTOR*x ); }
-static double sind( double x ) { return sin( DTOR*x ); }
-//static double tand( double x ) { return tan( DTOR*x ); }
-//static double acosd( double x ) { return acos(x)/DTOR; }
 
 static double vec_dot(double a[3], double b[3])
 {
