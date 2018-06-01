@@ -2032,8 +2032,8 @@ overtemp_iter_flag: //10 continue     //Return loop for over-temp conditions
             
 					//Calculate inlet temperature of the next SCA
 					T_htf_in[i+1] = T_htf_out[i] - Pipe_hl_coef*D_3(HT,0)*pi*L_int*(T_htf_out[i] - T_db)/(m_dot_htf*c_htf[i]);
-					//mjw 1.18.2011 Add the internal energy of the crossover piping
-					E_int_loop[i] = E_int_loop[i] + L_int*(pow(D_3(HT,0),2)/4.*pi + mc_bal_sca/c_htf[i])*(T_htf_out[i] - 298.150);
+					//mjw 1.18.2011 Add the internal energy of the crossover piping and interconnects
+					E_int_loop[i] = E_int_loop[i] + L_int*(pow(D_3(HT,0),2)/4.*pi * rho_htf[i] * c_htf[i] + mc_bal_sca)*(T_htf_out[i] - 298.150);
 				}
 
 			}
