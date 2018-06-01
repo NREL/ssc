@@ -2633,12 +2633,13 @@ calc_final_metrics_goto:
 				m_dot_run_in = m_dot_htf_tot / 2.0;
 			}
 
-			x3 = float(nrunsec) - 1.0;  //Number of contractions/expansions
+            double x3;
 			m_dot_temp = m_dot_run_in;
 			DP_toField = 0.0;
 			DP_fromField = 0.0;
 			for( int i = 0; i<nrunsec; i++ )
 			{
+                (i < nrunsec - 1 ? x3 = 1.0 : x3 = 0.0);  // contractions/expansions
 				DP_toField = DP_toField + PressureDrop(m_dot_temp, T_loop_in, 1.0, D_runner[i], HDR_rough, L_runner[i], 0.0, x3, 0.0, 0.0,
 					max(float(CSP::nint(L_runner[i] / 70.))*4., 8.), 1.0, 0.0, 1.0, 0.0, 0.0, 0.0);   //*m_dot_temp/m_dot_run_in  //mjw 5.11.11 Correct for less than all mass flow passing through each section
 				//if(ErrorFound()) return 1                  
