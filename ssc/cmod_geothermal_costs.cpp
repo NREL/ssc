@@ -47,124 +47,63 @@
 *  THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *******************************************************************************************************/
 
-#ifndef __common_h
-#define __common_h
-
-#include <memory>
-#include <vector>
 #include "core.h"
 
-#include "lib_weatherfile.h"
-#include "lib_pv_shade_loss_mpp.h"
+static var_info _cm_vtab_geothermal_costs[] = {
+/*   VARTYPE           DATATYPE         NAME                              LABEL                                                      UNITS     META                      GROUP                   REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
+																	      								                             
+	// Inputs		
+	//example input types, names, labels, units, required_if, constraints- delete or change
+	{ SSC_INPUT,        SSC_NUMBER,      "machine_rating",                "Machine Rating",                                          "kW",     "",                      "geothermal_costs",      "*",                       "INTEGER,MIN=0,MAX=1",           "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "rotor_diameter",                "Rotor Diameter",                                          "m",      "",                      "geothermal_costs",      "?=20",                    "BOOLEAN",                       "" },
+	{ SSC_INPUT,        SSC_STRING,      "solar_resource_file",           "Weather file in TMY2, TMY3, EPW, or SAM CSV.",            "",       "",                      "geothermal_costs",      "?",                       "POSITIVE",                      "" },
+	{ SSC_INPUT,        SSC_ARRAY,       "dc_degradation",                "Annual module degradation",                               "%/yr",   "",                      "geothermal_costs",      "rotor_diameter=1",        "LENGTH=12",                     "" },
 
-extern var_info vtab_standard_financial[];
-extern var_info vtab_standard_loan[];
-extern var_info vtab_oandm[];
-extern var_info vtab_depreciation[];
-extern var_info vtab_tax_credits[];
-extern var_info vtab_payment_incentives[];
+	// Outputs	
+	//example output, delete or change
+	{ SSC_OUTPUT,       SSC_NUMBER,      "project_total_budgeted_cost",   "Project Total Budgeted Cost",                             "$s",     "",                      "geothermal_costs",      "*",                       "",                              "" },
 
-extern var_info vtab_adjustment_factors[];
-extern var_info vtab_dc_adjustment_factors[];
-extern var_info vtab_sf_adjustment_factors[];
-extern var_info vtab_technology_outputs[];
+var_info_invalid };
 
-class adjustment_factors
+class cm_geothermal_costs : public compute_module
 {
-	compute_module *m_cm;
-	std::vector<float> m_factors;
-	std::string m_error;
-	std::string m_prefix;
 public:
-	adjustment_factors(compute_module *cm, const std::string &prefix);
-	bool setup(int nsteps=8760);
-	float operator()(size_t time);
-	std::string error() { return m_error; }
+	cm_geothermal_costs()
+	{
+		add_var_info(_cm_vtab_geothermal_costs);
+	}
+
+	//example typedef- delete or change
+	typedef enum { FLAT_TO_ROLLING, RIDGE_TOP, MOUNTAINOUS } SiteTerrain;
+
+	//example function within compute module- delete or change
+	double farmSize(double rating, int nTurb){
+		return rating * nTurb / 1000.0;
+	}
+
+
+	void exec( ) throw( general_error )
+	{
+		//first get values from input variable table
+		//examples- delete or change
+		double rating = (double) as_number("machine_rating");
+		int nTurb = as_integer("number_of_turbines");
+		const char *file = as_string("solar_resource_file");
+
+		//reading in an array- create a pointer
+		size_t count_dc_degrad = 0;
+		ssc_number_t *dc_degrad = 0;
+		dc_degrad = as_array("dc_degradation", &count_dc_degrad);
+
+
+		// run model calculations here- delete or change
+		//can call out to functions defined above
+		double cost = 566;
+
+		// assign outputs
+		//example- delete or change
+		assign( "project_total_budgeted_cost", var_data(cost) );
+	}
 };
 
-class sf_adjustment_factors
-{
-	compute_module *m_cm;
-	std::vector<float> m_factors;
-	std::string m_error;
-public:
-	sf_adjustment_factors(compute_module *cm);
-	bool setup(int nsteps=8760);
-    int size();
-	float operator()(size_t time);
-	std::string error() { return m_error; }
-};
-
-
-class shading_factor_calculator
-{
-	std::vector<std::string> m_errors;
-	util::matrix_t<double> m_azaltvals;
-	bool m_enAzAlt;
-	double m_diffFactor;
-
-	// shading database mods
-	int m_string_option;// 0=shading db, 1=average, 2=max, 3=min
-	//ShadeDB8_mpp *m_db8;
-	//std::unique_ptr<ShadeDB8_mpp> m_db8;
-	double m_beam_shade_factor;
-	double m_dc_shade_factor;
-
-	// subhourly modifications
-	int m_steps_per_hour;
-	bool m_enTimestep;
-	util::matrix_t<double> m_beamFactors;
-	bool m_enMxH;
-	util::matrix_t<double> m_mxhFactors;
-
-public:
-	shading_factor_calculator();
-	bool setup(compute_module *cm, const std::string &prefix = "");
-	std::string get_error(size_t i = 0);
-
-	size_t get_row_index_for_input(size_t hour, size_t hour_step, size_t steps_per_hour);
-	bool use_shade_db();
-
-	// beam and diffuse loss factors (0: full loss, 1: no loss )
-	bool fbeam(size_t hour, double solalt, double solazi, size_t hour_step = 0, size_t steps_per_hour = 1);
-	// shading database instantiated once outside of shading factor calculator
-	bool fbeam_shade_db(std::unique_ptr<ShadeDB8_mpp> & p_shadedb, size_t hour, double solalt, double solazi, size_t hour_step = 0, size_t steps_per_hour = 1, double gpoa = 0.0, double dpoa = 0.0, double pv_cell_temp = 0.0, int mods_per_str = 0, double str_vmp_stc = 0.0, double mppt_lo = 0.0, double mppt_hi = 0.0);
-
-	double fdiff();
-
-	double beam_shade_factor();
-	double dc_shade_factor();
-};
-
-class weatherdata : public weather_data_provider
-{
-	std::vector< weather_record* > m_data;
-	std::vector<size_t> m_columns;
-
-	struct vec {
-		ssc_number_t *p;
-		size_t len;
-	};
-
-	vec get_vector(var_data *v, const char *name, size_t *len = nullptr);
-	ssc_number_t get_number(var_data *v, const char *name);
-
-	size_t name_to_id(const char *name);
-
-public:
-	/* Detects file format, read header information, detects which data columns are available and at what index
-	and read weather record information.
-	If wet-bulb temperature or dew point are missing, calculate using tdry, pres & rhum or tdry & rhum, respectively.
-	Interpolates meteorological data if requested.*/
-	weatherdata(var_data *data_table);
-	virtual ~weatherdata();
-
-	void set_counter_to(size_t cur_index);
-	bool read(weather_record *r); // reads one more record	
-	bool has_data_column(size_t id);
-};
-
-bool ssc_cmod_update(std::string &log_msg, std::string &progress_msg, void *data, double progress, int out_type);
-
-#endif
-
+DEFINE_MODULE_ENTRY( geothermal_costs, "Computes geothermal plant cost", 1 )

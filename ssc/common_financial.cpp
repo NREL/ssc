@@ -3205,8 +3205,27 @@ bool hourly_energy_calculation::calculate(compute_module *cm)
 
 
 	ssc_number_t *pgen;
-	size_t nrec_gen = 0, step_per_hour_gen = 1;
+	size_t nrec_gen = 0, step_per_hour_gen = 1, i;
 	pgen = m_cm->as_array("gen", &nrec_gen);
+
+	// in front of meter 
+	// update for battery in front of meter case
+	if ((cm->is_assigned("en_batt")) && (cm->as_number("en_batt") == 1) && (cm->is_assigned("batt_meter_position") ) && (cm->as_number("batt_meter_position") == 1) && cm->is_assigned("grid_to_batt"))
+	{ // add grid_batt to gen for ppa revenue
+		ssc_number_t *pgrid_batt;
+		size_t nrec_grid_batt = 0;
+		pgrid_batt = m_cm->as_array("grid_to_batt", &nrec_grid_batt);
+		if (nrec_gen != nrec_grid_batt)
+		{
+			throw compute_module::exec_error("hourly_energy_calculations", util::format("number of grid to battery records (%d) must be equal to number of gen records (%d)", (int)nrec_grid_batt, (int)nrec_gen));
+			return false;
+		}
+		for (i = 0; i < nrec_gen; i++)
+			pgen[i] += pgrid_batt[i];
+	}
+
+
+
 	// for lifetime analysis
 	size_t nrec_gen_per_year = nrec_gen;
 	if (m_cm->as_integer("system_use_lifetime_output") == 1)

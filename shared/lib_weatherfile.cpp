@@ -1290,8 +1290,8 @@ bool weatherfile::open(const std::string &file, bool header_only)
 
 	}
 
-	if( n_leap_data_removed > 0 )
-		m_message = util::format("Skipped %d data lines for February 29th (leap day).", n_leap_data_removed );
+//	if( n_leap_data_removed > 0 )
+//		m_message = util::format("Skipped %d data lines for February 29th (leap day).", n_leap_data_removed );
 
 	if (m_type == WFCSV)
 	{

@@ -51,51 +51,25 @@
 #define _power_electronics_h_
 
 #include "lib_battery_dispatch.h"
+#include "lib_battery_powerflow.h"
 #include "lib_sandia.h"
 #include "lib_pvinv.h"
+#include "lib_shared_inverter.h"
 
-class inverter
+
+
+class BatteryBidirectionalInverter
 {
 public:
-	inverter(int inverter_type, int ){
-		_inverter_type = inverter_type;
-	}
 
-	void set_sandia(sandia_inverter_t * sandia_inverter){ _sandia_inverter = sandia_inverter; }
-	void set_partlaod(partload_inverter_t * partload_inverter){ _partload_inverter = partload_inverter; }
-	
-
-	void ac_power(double P_dc, double V_dc, double &P_ac)
-	{
-		double P_par, P_lr, Eff, P_cliploss, P_soloss, P_ntloss;
-		if (_inverter_type == SANDIA_INVERTER)
-			_sandia_inverter->acpower(P_dc, V_dc, &P_ac, &P_par, &P_lr, &Eff, &P_cliploss, &P_soloss, &P_ntloss);
-		else if (_inverter_type == PARTLOAD_INVERTER)
-			_partload_inverter->acpower(P_dc, &P_ac, &P_lr, &P_par, &Eff, &P_cliploss, &P_ntloss);
-	}
-	enum { SANDIA_INVERTER, DATASHEET_INVERTER, PARTLOAD_INVERTER, COEFFICIENT_GENERATOR };
-
-protected:
-	int _inverter_type;
-	int _num_inverters;
-
-	sandia_inverter_t * _sandia_inverter;
-	partload_inverter_t * _partload_inverter;
-};
-
-
-class bidirectional_inverter
-{
-public:
-	
-	bidirectional_inverter(double ac_dc_efficiency, double dc_ac_efficiency)
+	BatteryBidirectionalInverter(double ac_dc_efficiency, double dc_ac_efficiency)
 	{
 		_dc_ac_efficiency = 0.01*dc_ac_efficiency;
 		_ac_dc_efficiency = 0.01*ac_dc_efficiency;
 	}
 
-	double dc_ac_efficiency(){ return _dc_ac_efficiency; }
-	double ac_dc_efficiency(){ return _ac_dc_efficiency; }
+	double dc_ac_efficiency() { return _dc_ac_efficiency; }
+	double ac_dc_efficiency() { return _ac_dc_efficiency; }
 
 
 	// return power loss [kW]
@@ -114,19 +88,19 @@ protected:
 	double _loss_ac_dc;
 };
 
-class dc_dc_charge_controller
+class Battery_DC_DC_ChargeController
 {
 public:
-	
-	dc_dc_charge_controller(double batt_dc_dc_bms_efficiency, double pv_dc_dc_mppt_efficiency)
-	{ 
+
+	Battery_DC_DC_ChargeController(double batt_dc_dc_bms_efficiency, double pv_dc_dc_mppt_efficiency)
+	{
 		_batt_dc_dc_bms_efficiency = 0.01*batt_dc_dc_bms_efficiency;
 		_pv_dc_dc_mppt_efficiency = 0.01*pv_dc_dc_mppt_efficiency;
 
 	}
 
-	double batt_dc_dc_bms_efficiency(){ return _batt_dc_dc_bms_efficiency; };
-	double pv_dc_dc_mppt_efficiency(){ return _pv_dc_dc_mppt_efficiency; };
+	double batt_dc_dc_bms_efficiency() { return _batt_dc_dc_bms_efficiency; };
+	double pv_dc_dc_mppt_efficiency() { return _pv_dc_dc_mppt_efficiency; };
 
 
 protected:
@@ -135,144 +109,110 @@ protected:
 	double _loss_dc_dc;
 };
 
-class rectifier
+class BatteryRectifier
 {
 public:
 	// don't know if I need this component in AC or DC charge controllers
-	rectifier(double ac_dc_efficiency){_ac_dc_efficiency = 0.01 * ac_dc_efficiency;}
-	double ac_dc_efficiency(){ return _ac_dc_efficiency; }
+	BatteryRectifier(double ac_dc_efficiency) { _ac_dc_efficiency = 0.01 * ac_dc_efficiency; }
+	double ac_dc_efficiency() { return _ac_dc_efficiency; }
 
 	// return power loss [kW]
-	double convert_to_dc(double P_ac, double * P_dc );
+	double convert_to_dc(double P_ac, double * P_dc);
 
 protected:
 	double _ac_dc_efficiency;
 	double _loss_dc_ac;
 };
-// Charge controller base class
-class charge_controller
+
+/**
+*
+* \class ChargeController
+*
+*  A ChargeController is a mostly abstract base class which defines the structure of battery charge controllers
+*  The ChargeController requires information about the battery dispatch.  At every time step, the charge controller
+*  runs the dispatch model and returns to the calling function.  While the ChargeController may seem to be an unnecessary
+*  step in the calculation, it provides a location to store the initial dispatch in a timestep, and iterate upon that dispatch
+*  if necessary.  It also houses the framework of battery power electronics components, which currently have single-point
+*  efficiences, but could be expanded to have more detailed models.
+*/
+class ChargeController
 {
 public:
-	charge_controller(dispatch_t * dispatch, battery_metrics_t * battery_metrics, double efficiency_1, double efficiency_2);
-	virtual ~charge_controller();
+	/// Construct an ChargeController with a dispatch object, battery metrics object
+	ChargeController(dispatch_t * dispatch, battery_metrics_t * battery_metrics);
 
-	void initialize(double P_pv, double P_load, size_t index);
+	/// Virtual destructor for ChargeController
+	virtual ~ChargeController() {};
 
-	// function to determine appropriate pv and load to send to battery
-	virtual void preprocess_pv_load() = 0;
+	/// Virtual method to run the charge controller given the current timestep, PV production, and load
+	virtual void run(size_t year, size_t hour_of_year, size_t step_of_hour, size_t index, double P_pv, double V_pv, double P_load, double P_clipped) = 0;
 
-	virtual void run(size_t year, size_t hour_of_year, size_t step_of_hour, size_t index, double P_pv, double P_load) = 0;
-	virtual void compute_to_batt_load_grid(double P_battery_ac_or_dc, double P_pv_ac_or_dc, double P_load_ac, double inverter_efficiency) = 0;
+	/// The supported configurations of a battery system
+	enum { DC_CONNECTED, AC_CONNECTED };
 
-	// return power loss [kW]
-	virtual double gen_ac() = 0;
-	virtual double update_gen_ac(double P_gen_ac) = 0;
+protected:
+
+	// allocated and managed internally
+	std::unique_ptr<dispatch_t> m_dispatchInitial;	/// An internally managed copy of the initial dispatch of the timestep
+
+	// memory managed elsewhere
+	BatteryPower * m_batteryPower;		/// A structure containing all of the components in the battery power flow calculations
+	battery_metrics_t *m_batteryMetrics;    /// An object that tracks battery metrics for later analysis
+        dispatch_t * m_dispatch;		/// An object containing the framework to run a battery and check operational constraints
+};
+
+/**
+*
+* \class ACBatteryController
+*
+*  A ACBatteryController is derived from the ChargeController, and contains information specific to a battery connected on the AC-side
+*  of a power generating source.  It requires information about the efficiency to convert power from AC to DC and back to AC.
+*/
+class ACBatteryController : public ChargeController
+{
+public:
+	/// Construct an ACBatteryController with a dispatch object, battery metrics object, and single-point efficiencies for the battery bidirectional inverter
+	ACBatteryController(dispatch_t * dispatch, battery_metrics_t * battery_metrics, double efficiencyACToDC, double efficiencyDCToAC);
+
+	/// Destroy the ACBatteryController
+	~ACBatteryController() {};
+
+	/// Runs the battery dispatch model with the current PV and Load information
+	void run(size_t year, size_t hour_of_year, size_t step_of_hour, size_t index, double P_pv, double V_pv=0, double P_load=0, double P_clipped=0);
+
+private:
+	// allocated and managed internally
+	std::unique_ptr<BatteryBidirectionalInverter> m_bidirectionalInverter;  /// Model for the battery bi-directional inverter
+};
+
+/**
+*
+* \class DCBatteryController
+*
+*  A DCBatteryController is derived from the ChargeController, and contains information specific to a battery connected on the DC-side
+*  of a power generating source.  It requires information about the efficiency to convert power from DC to DC between the battery and DC source
+*/
+class DCBatteryController : public ChargeController
+{
+public:
+	/// Construct a DCBatteryController with a dispatch object, battery metrics object, and single-point efficiency for the battery charge controller
+	DCBatteryController(dispatch_t * dispatch, battery_metrics_t * battery_metrics, double efficiencyDCToDC);
+
+	/// Destroy the DCBatteryController object
+	~DCBatteryController() {};
+
+	/// Sets the shared inverter used by the PV and battery system
+	void setSharedInverter(SharedInverter * sharedInverter);
+
+	/// Runs the battery dispatch model with the current PV and Load information
+	void run(size_t year, size_t hour_of_year, size_t step_of_hour, size_t index, double P_pv, double V_pv, double P_load=0, double P_pv_clipped = 0);
+
+private:
 	
-	void finalize();
-
-	// iterative solution required
-	bool check_iterate();
-	void check_constraints();
-
-	// ac outputs
-	double power_tofrom_battery(){ return _P_battery;}
-	double power_tofrom_grid(){ return _P_grid; }
-	double power_gen(){ return _P_gen; }
-	double power_pv_to_load(){ return _P_pv_to_load;}
-	double power_battery_to_load(){ return _P_battery_to_load; }
-	double power_grid_to_load(){ return _P_grid_to_load; }
-	double power_pv_to_batt(){ return _P_pv_to_battery; }
-	double power_grid_to_batt(){ return _P_grid_to_batt; }
-	double power_pv_to_grid(){ return _P_pv_to_grid; }
-	double power_battery_to_grid(){ return _P_battery_to_grid; }
-	double power_conversion_loss(){ return _P_loss; }
-	double power_system_loss(){ return _P_system_loss; }
-
-	enum {DC_CONNECTED, AC_CONNECTED};
-
-protected:
-
-	dispatch_t * _dispatch;
-	dispatch_t * _dispatch_initial;
-
-	battery_metrics_t * _battery_metrics;
-
-	// ac powers to report
-	double _P_load;
-	double _P_grid;
-	double _P_grid_to_load;
-	double _P_grid_to_batt;
-	double _P_gen;
-	double _P_battery_to_load;
-	double _P_pv_to_load;
-	double _P_pv_to_battery;
-	double _P_pv_to_grid;
-	double _P_battery_to_grid;
-	double _P_battery;
-	double _P_system_loss;
-	double _P_loss;
-	double _P_inverter_draw;
-
-	// ac or dc pv input
-	double _P_pv;
-
-	// inputs to battery dispatch
-	double _P_pv_dc_discharge_input;
-	double _P_pv_dc_charge_input;
-	double _P_load_dc_discharge_input;
-	double _P_load_dc_charge_input;
-
-	// does battery need to iterate
-	bool _iterate;
-
-	// index of simulation
-	size_t _index;
+	// allocated and managed internally
+	std::unique_ptr<Battery_DC_DC_ChargeController> m_DCDCChargeController;  /// Model for the battery DC/DC charge controller with Battery Management System
 
 };
 
-class dc_connected_battery_controller : public charge_controller
-{
-public:
-	dc_connected_battery_controller(dispatch_t * dispatch,
-									battery_metrics_t * battery_metrics,
-									double batt_dc_dc_bms_efficiency,
-									double pv_dc_dc_mppt_efficiency,
-									double inverter_efficiency);
-	~dc_connected_battery_controller();
-
-	void preprocess_pv_load();
-	void run(size_t year, size_t hour_of_year, size_t step_of_hour, size_t index, double P_pv, double P_load);
-	void process_dispatch();
-	void compute_to_batt_load_grid(double P_battery_ac, double P_pv_dc, double P_load_ac, double inverter_efficiency);
-	double gen_ac(){ return 0.; };
-	double update_gen_ac(double P_gen_ac);
-
-
-protected:
-	dc_dc_charge_controller * _dc_dc_charge_controller;
-	double _inverter_efficiency;
-};
-
-class ac_connected_battery_controller : public charge_controller
-{
-public:
-	ac_connected_battery_controller(dispatch_t * dispatch, battery_metrics_t * battery_metrics, double ac_dc_efficiency, double dc_ac_efficiency);
-	~ac_connected_battery_controller();
-
-	void preprocess_pv_load();
-	void run(size_t year, size_t hour_of_year, size_t step_of_hour, size_t index, double P_pv, double P_load);
-	void process_dispatch();
-	void compute_to_batt_load_grid( double P_battery_ac, double P_pv_ac, double P_load_ac, double inverter_efficiency = 0.);
-
-	double gen_ac();
-	double update_gen_ac(double )
-	{	
-		// nothing to do
-		return 0.;
-	}
-
-protected:
-	bidirectional_inverter * _bidirectional_inverter;
-};
 
 #endif

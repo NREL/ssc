@@ -63,6 +63,7 @@ OBJECTS = \
 	cmod_ippppa.o \
 	cmod_swh.o \
 	cmod_geothermal.o \
+	cmod_geothermal_costs.o \
 	cmod_poacalib.o \
 	core.o \
 	vartab.o \
