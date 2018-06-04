@@ -48,6 +48,7 @@
 *******************************************************************************************************/
 
 #include "cmod_pvsamv1.h"
+#include "lib_pv_io_manager.h"
 
 // comment following define if do not want shading database validation outputs
 //#define SHADE_DB_OUTPUTS
@@ -813,74 +814,24 @@ void cm_pvsamv1::setup_noct_model( const std::string &prefix, noct_celltemp_t &n
 }
 	
 void cm_pvsamv1::exec( ) throw (compute_module::general_error)
-{		
-	smart_ptr<weather_data_provider>::ptr wdprov;
-	if ( is_assigned( "solar_resource_file" ) )
-	{
-		const char *file = as_string("solar_resource_file");
-		wdprov = smart_ptr<weather_data_provider>::ptr( new weatherfile( file ) );
+{
 
-		weatherfile *wfile = dynamic_cast<weatherfile*>(wdprov.get());
-		if (!wfile->ok()) throw exec_error("pvsamv1", wfile->message());
-		if( wfile->has_message() ) log( wfile->message(), SSC_WARNING);
-	}
-	else if ( is_assigned( "solar_resource_data" ) )
-	{
-		wdprov = smart_ptr<weather_data_provider>::ptr( new weatherdata( lookup("solar_resource_data") ) );
-		if (wdprov->has_message()) log(wdprov->message(), SSC_WARNING);
-	}
-	else
-		throw exec_error("pvsamv1", "no weather data supplied");
-		
-								
-	// assumes instantaneous values, unless hourly file with no minute column specified
-	double ts_shift_hours = 0.0;
-	bool instantaneous = true;
-	if ( wdprov->has_data_column( weather_data_provider::MINUTE ) )
-	{
-		// if we have an file with a minute column, then
-		// the starting time offset equals the time 
-		// of the first record (for correct plotting)
-		// this holds true even for hourly data with a minute column
-		weather_record rec;
-		if ( wdprov->read( &rec ) )
-			ts_shift_hours = rec.minute/60.0;
-
-		wdprov->rewind();
-	}
-	else if ( wdprov->nrecords() == 8760 )
-	{
-		// hourly file with no minute data column.  assume
-		// integrated/averaged values and use mid point convention for interpreting results
-		instantaneous = false;
-		ts_shift_hours = 0.5;
-	}
-	else
-		throw exec_error("pvsamv1", "subhourly weather files must specify the minute for each record" );
-
-	assign( "ts_shift_hours", var_data( (ssc_number_t)ts_shift_hours ) );
-
-	weather_header hdr;
-	wdprov->header( &hdr );
-
-	weather_record wf;		
-
-	//total number of records in the weather file (i.e. 8760 * timestep)
-	size_t nrec = wdprov->nrecords();
-	size_t step_per_hour = nrec/8760;
-	if ( step_per_hour < 1 || step_per_hour > 60 || step_per_hour*8760 != nrec )
-		throw exec_error( "pvsamv1", util::format("invalid number of data records (%d): must be an integer multiple of 8760", (int)nrec ) );
-		
-	double ts_hour = 1.0/step_per_hour;
-
-	// lifetime control variables - used to set array sizes
-	int system_use_lifetime_output = as_integer("system_use_lifetime_output");
-	size_t nyears = 1;
-	if (system_use_lifetime_output == 1)
-		nyears = as_integer("analysis_period");
-	size_t nlifetime = nyears * nrec;
-
-	// shading database if necessary
+	/// Underlying class which parses the compute module structure and sets up model inputs and outputs
+	std::unique_ptr<PVIOManager> IOManager(new PVIOManager(this, "pvsamv1"));
+	Simulation_IO * Simulation = IOManager->getSimulationIO();
+	Irradiance_IO * Irradiance = IOManager->getIrradianceIO();
+	size_t nrec = Simulation->numberOfWeatherFileRecords;
+	size_t nlifetime = Simulation->numberOfSteps;
+	size_t nyears = Simulation->numberOfYears;
+	double ts_hour = Simulation->dtHour;
+	size_t step_per_hour = Simulation->stepsPerHour;
+	bool system_use_lifetime_output = Simulation->useLifetimeOutput;
+	weather_header hdr = Irradiance->weatherHeader;
+	weather_record wf = Irradiance->weatherRecord;
+	weather_data_provider * wdprov = Irradiance->weatherDataProvider.get();
+	bool instantaneous = Irradiance->instantaneous;
+	
+	/// shading database if necessary
 	smart_ptr<ShadeDB8_mpp>::ptr  p_shade_db; // (new ShadeDB8_mpp());
 
 	bool en_snow_model = (as_integer("en_snow_model") > 0); // snow model activation
@@ -1555,7 +1506,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 
 		if (count_dc_degrad == 1)
 		{
-			for (size_t i = 1; i < nyears; i++)
+			for (size_t i = 1; i < nyears + 1; i++)
 				p_dc_degrade_factor[i+1] = (ssc_number_t)pow((1.0 - dc_degrad[0] / 100.0), i);
 		}
 		else if (count_dc_degrad > 0)
@@ -1580,41 +1531,6 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 				throw exec_error("pvsamv1", "Length of the lifetime daily AC losses array must be equal to the analysis period * 365");
 		}
 	}
-
-	// output arrays for weather info- same for all four subarrays	
-	ssc_number_t *p_glob = allocate( "gh", nrec );
-	ssc_number_t *p_beam = allocate("dn", nrec);
-	ssc_number_t *p_diff = allocate("df", nrec);
-	ssc_number_t *p_wfpoa = allocate("wfpoa", nrec);    // POA irradiance from weather file
-	ssc_number_t *p_sunpos_hour = allocate("sunpos_hour", nrec);
-	ssc_number_t *p_wspd = allocate("wspd", nrec);
-	ssc_number_t *p_tdry = allocate("tdry", nrec);
-	ssc_number_t *p_albedo = allocate("alb", nrec);
-	ssc_number_t *p_snowdepth = allocate("snowdepth", nrec);
-
-	//set up the calculated components of irradiance such that they aren't reported if they aren't assigned
-	//three possible calculated irradiance: gh, df, dn
-	ssc_number_t *p_irrad_calc[3] = { 0, 0, 0 };
-	if (radmode == DN_DF) p_irrad_calc[0] = allocate("gh_calc", nrec); //don't calculate global for POA models
-	if (radmode == DN_GH || radmode == POA_R || radmode == POA_P) p_irrad_calc[1] = allocate("df_calc", nrec);
-	if (radmode == GH_DF || radmode == POA_R || radmode == POA_P) p_irrad_calc[2] = allocate("dn_calc", nrec);
-
-	//output arrays for solar position calculations- same for all four subarrays
-	ssc_number_t *p_solzen = allocate("sol_zen", nrec);
-	ssc_number_t *p_solalt = allocate("sol_alt", nrec);
-	ssc_number_t *p_solazi = allocate("sol_azi", nrec);
-	ssc_number_t *p_airmass = allocate("airmass", nrec);
-	ssc_number_t *p_sunup = allocate("sunup", nrec);
-
-	/*
-	ssc_number_t *p_nonlinear_dc_derate0 = allocate("p_nonlinear_dc_derate0", nrec);
-	ssc_number_t *p_nonlinear_derate_X = allocate("p_nonlinear_derate_X", nrec);
-	ssc_number_t *p_nonlinear_derate_S = allocate("p_nonlinear_derate_S", nrec);
-	ssc_number_t *p_nonlinear_Ee_ratio = allocate("p_nonlinear_Ee_ratio", nrec);
-	ssc_number_t *p_nonlinear_shad1xf = allocate("p_nonlinear_shad1xf", nrec);
-	ssc_number_t *p_nonlinear_skyd1xf = allocate("p_nonlinear_skyd1xf", nrec);
-	ssc_number_t *p_nonlinear_gndd1xf = allocate("p_nonlinear_gndd1xf", nrec);
-	*/
 		
 	//output arrays for subarray-specific parameters
 	ssc_number_t *p_aoi[4];
@@ -2101,8 +2017,8 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 							double gh_temp, df_temp, dn_temp;
 							gh_temp = df_temp = dn_temp = 0;
 							irr.get_irrad(&gh_temp, &dn_temp, &df_temp);
-							p_irrad_calc[1][idx] = (ssc_number_t)df_temp;
-							p_irrad_calc[2][idx] = (ssc_number_t)dn_temp;
+							Irradiance->p_IrradianceCalculated[1][idx] = (ssc_number_t)df_temp;
+							Irradiance->p_IrradianceCalculated[2][idx] = (ssc_number_t)dn_temp;
 						}
 					}
 					// beam, skydiff, and grounddiff IN THE PLANE OF ARRAY
@@ -2142,7 +2058,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 					irr.get_poa(&ibeam, &iskydiff, &ignddiff, 0, 0, 0);
 
 					if (iyear == 0)
-						p_sunpos_hour[idx] = (ssc_number_t)irr.get_sunpos_calc_hour();
+						Irradiance->p_sunPositionTime[idx] = (ssc_number_t)irr.get_sunpos_calc_hour();
 
 					// save weather file beam, diffuse, and global for output and for use later in pvsamv1- year 1 only
 					/*jmf 2016: these calculations are currently redundant with calculations in irrad.calc() because ibeam and idiff in that function are DNI and DHI, **NOT** in the plane of array
@@ -2151,44 +2067,44 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 					if (iyear == 0)
 					{
 						// Apply all irradiance component data from weather file (if it exists)
-						p_wfpoa[idx] = (ssc_number_t)wf.poa;
-						p_beam[idx] = (ssc_number_t)wf.dn;
-						p_glob[idx] = (ssc_number_t)(wf.gh);
-						p_diff[idx] = (ssc_number_t)(wf.df);
+						Irradiance->p_weatherFilePOA[0][idx] = (ssc_number_t)wf.poa;
+						Irradiance->p_weatherFileDNI[idx] = (ssc_number_t)wf.dn;
+						Irradiance->p_weatherFileGHI[idx] = (ssc_number_t)(wf.gh);
+						Irradiance->p_weatherFileDHI[idx] = (ssc_number_t)(wf.df);
 
 						// calculate beam if global & diffuse are selected as inputs
 						if (radmode == GH_DF)
 						{
-							p_irrad_calc[2][idx] = (ssc_number_t)((wf.gh - wf.df) / cos(solzen*3.1415926 / 180));
-							if (p_irrad_calc[2][idx] < -1)
+							Irradiance->p_IrradianceCalculated[2][idx] = (ssc_number_t)((wf.gh - wf.df) / cos(solzen*3.1415926 / 180));
+							if (Irradiance->p_IrradianceCalculated[2][idx] < -1)
 							{
 								log(util::format("SAM calculated negative direct normal irradiance %lg W/m2 at time [y:%d m:%d d:%d h:%d], set to zero.",
-									p_irrad_calc[2][idx], wf.year, wf.month, wf.day, wf.hour), SSC_WARNING, (float)idx);
-								p_irrad_calc[2][idx] = 0;
+									Irradiance->p_IrradianceCalculated[2][idx], wf.year, wf.month, wf.day, wf.hour), SSC_WARNING, (float)idx);
+								Irradiance->p_IrradianceCalculated[2][idx] = 0;
 							}
 						}
 
 						// calculate global if beam & diffuse are selected as inputs
 						if (radmode == DN_DF)
 						{
-							p_irrad_calc[0][idx] = (ssc_number_t)(wf.df + wf.dn * cos(solzen*3.1415926 / 180));
-							if (p_irrad_calc[0][idx] < -1)
+							Irradiance->p_IrradianceCalculated[0][idx] = (ssc_number_t)(wf.df + wf.dn * cos(solzen*3.1415926 / 180));
+							if (Irradiance->p_IrradianceCalculated[0][idx] < -1)
 							{
 								log(util::format("SAM calculated negative global horizontal irradiance %lg W/m2 at time [y:%d m:%d d:%d h:%d], set to zero.",
-									p_irrad_calc[0][idx], wf.year, wf.month, wf.day, wf.hour), SSC_WARNING, (float)idx);
-								p_irrad_calc[0][idx] = 0;
+									Irradiance->p_IrradianceCalculated[0][idx], wf.year, wf.month, wf.day, wf.hour), SSC_WARNING, (float)idx);
+								Irradiance->p_IrradianceCalculated[0][idx] = 0;
 							}
 						}
 
 						// calculate diffuse if total & beam are selected as inputs
 						if (radmode == DN_GH)
 						{
-							p_irrad_calc[1][idx] = (ssc_number_t)(wf.gh - wf.dn * cos(solzen*3.1415926 / 180));
-							if (p_irrad_calc[1][idx] < -1)
+							Irradiance->p_IrradianceCalculated[1][idx] = (ssc_number_t)(wf.gh - wf.dn * cos(solzen*3.1415926 / 180));
+							if (Irradiance->p_IrradianceCalculated[1][idx] < -1)
 							{
 								log(util::format("SAM calculated negative diffuse horizontal irradiance %lg W/m2 at time [y:%d m:%d d:%d h:%d], set to zero.",
-									p_irrad_calc[1][idx], wf.year, wf.month, wf.day, wf.hour), SSC_WARNING, (float)idx);
-								p_irrad_calc[1][idx] = 0;
+									Irradiance->p_IrradianceCalculated[1][idx], wf.year, wf.month, wf.day, wf.hour), SSC_WARNING, (float)idx);
+								Irradiance->p_IrradianceCalculated[1][idx] = 0;
 							}
 						}
 					}
@@ -2323,7 +2239,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 						//execute self-shading calculations
 						ssc_number_t beam_to_use; //some self-shading calculations require DNI, NOT ibeam (beam in POA). Need to know whether to use DNI from wf or calculated, depending on radmode
 						if (radmode == DN_DF || radmode == DN_GH) beam_to_use = (ssc_number_t)wf.dn;
-						else beam_to_use = p_irrad_calc[2][hour * step_per_hour]; // top of hour in first year
+						else beam_to_use = Irradiance->p_IrradianceCalculated[2][hour * step_per_hour]; // top of hour in first year
 
 						if (linear && trackbool) //one-axis linear
 						{
@@ -2668,18 +2584,18 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 				// save other array-level environmental and irradiance outputs	- year 1 only outputs
 				if (iyear == 0)
 				{
-					p_wspd[idx] = (ssc_number_t)wf.wspd;
-					p_tdry[idx] = (ssc_number_t)wf.tdry;
-					p_albedo[idx] = (ssc_number_t)alb;
-					p_snowdepth[idx] = (ssc_number_t)wf.snow;
+					Irradiance->p_weatherFileWindSpeed[idx] = (ssc_number_t)wf.wspd;
+					Irradiance->p_weatherFileAmbientTemp[idx] = (ssc_number_t)wf.tdry;
+					Irradiance->p_weatherFileAlbedo[idx] = (ssc_number_t)alb;
+					Irradiance->p_weatherFileSnowDepth[idx] = (ssc_number_t)wf.snow;
 
-					p_solzen[idx] = (ssc_number_t)solzen;
-					p_solalt[idx] = (ssc_number_t)solalt;
-					p_solazi[idx] = (ssc_number_t)solazi;
+					Irradiance->p_sunZenithAngle[idx] = (ssc_number_t)solzen;
+					Irradiance->p_sunAltitudeAngle[idx] = (ssc_number_t)solalt;
+					Irradiance->p_sunAzimuthAngle[idx] = (ssc_number_t)solazi;
 
 					// absolute relative airmass calculation as f(zenith angle, site elevation)
-					p_airmass[idx] = sunup > 0 ? (ssc_number_t)(exp(-0.0001184 * hdr.elev) / (cos(solzen*3.1415926 / 180) + 0.5057*pow(96.080 - solzen, -1.634))) : 0.0f;
-					p_sunup[idx] = (ssc_number_t)sunup;
+					Irradiance->p_absoluteAirmass[idx] = sunup > 0 ? (ssc_number_t)(exp(-0.0001184 * hdr.elev) / (cos(solzen*3.1415926 / 180) + 0.5057*pow(96.080 - solzen, -1.634))) : 0.0f;
+					Irradiance->p_sunUpOverHorizon[idx] = (ssc_number_t)sunup;
 
 					// save radiation values.  the ts_accum_* variables are units of (W), 
 					// and are sums of radiation power on each subarray for the current timestep
@@ -3246,6 +3162,8 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 		p_load_in = as_vector_ssc_number_t("load");
 		nload = p_load_in.size();
 	}
+
+	Irradiance->AssignOutputs(this);
 }
 	
 double cm_pvsamv1::module_eff(int mod_type)
