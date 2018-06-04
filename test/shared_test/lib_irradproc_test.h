@@ -176,12 +176,12 @@ protected:
 		verticalHeight = std::sin(tiltRadian);
 		horizontalLength = std::cos(tiltRadian);
 
-		// for January 1, 11:00 AM (add for a full 8760)
+		// for January 1, 7:30 AM (add for a full 8760)
 		year = 1987;
 		month = 1;
 		day = 1;
-		hour = 8;
-		minute = 0;
+		hour = 7;
+		minute = 30;
 		tz = -5.0;
 		lat = 37.517;
 		lon = -77.317;
@@ -196,13 +196,6 @@ protected:
 		irr->set_location(lat, lon, tz);
 		irr->set_sky_model(skyModel, albedo);
 		irr->calc();
-
-		// desired test data, which doesn't match with internal calculations due to sun position treatment
-		sunElevationRadians = 0.0507092387015;
-		sunAzimuthRadians = 2.12737365475;
-		irr->set_sun_component(0, sunAzimuthRadians);
-		irr->set_sun_component(1, 1.52008);
-		irr->set_sun_component(2, sunElevationRadians);
 	}
 	void TearDown() {
 		if (irr) {
