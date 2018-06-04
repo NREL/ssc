@@ -458,7 +458,6 @@ TEST_F(BifacialIrradTest, TestSkyConfigFactors)
 	
 	ASSERT_EQ(rearSkyConfigFactors.size(), expectedSkyConfigFactors.size());
 
-	// Can eventually use GoogleMock to do this more easily
 	for (size_t i = 0; i != rearSkyConfigFactors.size(); i++){
 		ASSERT_NEAR(rearSkyConfigFactors[i], expectedSkyConfigFactors[i], e);
 	}
@@ -475,12 +474,13 @@ TEST_F(BifacialIrradTest, TestGroundShadeFactors)
 	irr->getGroundShadeFactors(rowToRow, verticalHeight, clearanceGround, distanceBetweenRows, horizontalLength, sunAzimuthRadians, sunElevationRadians, rearGroundShade, maxShadow, pvBackShadeFraction);
 	ASSERT_EQ(rearGroundShade.size(), expectedGroundShade.size());
 
-	// Can eventually use GoogleMock to do this more easily
 	for (size_t i = 0; i != rearGroundShade.size(); i++) {
 		ASSERT_NEAR(rearGroundShade[i], expectedGroundShade[i], e);
 	}
 }
-
+/**
+*   Test calculation of rear ground GHI.  This changes with sun position and system geometry
+*/
 TEST_F(BifacialIrradTest, TestRearGroundGHI)
 {
 	std::vector<double> rearGroundGHI;
@@ -488,7 +488,6 @@ TEST_F(BifacialIrradTest, TestRearGroundGHI)
 
 	ASSERT_EQ(rearGroundGHI.size(), expectedRearGroundGHI.size());
 
-	// Can eventually use GoogleMock to do this more easily
 	for (size_t i = 0; i != rearGroundGHI.size(); i++) {
 		ASSERT_NEAR(rearGroundGHI[i], expectedRearGroundGHI[i], e);
 	}

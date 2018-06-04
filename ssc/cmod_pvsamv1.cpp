@@ -2397,11 +2397,13 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 
 					// calculate rear-side irradiance for bifacial modules
 					double ipoa_rear = 0.;
+					double ipoa_front = ibeam + iskydiff + ignddiff;
+					double ipoa_front_reflected = 0;
 					if (as_boolean("pv_is_bifacial"))
 					{
 						double transmissionFactor = as_double("pv_bifacial_transmission_factor");
 						double bifaciality = as_double("pv_bifaciality");
-
+						
 						irr.calc_rear_side(transmissionFactor, bifaciality);
 						ipoa_rear = irr.get_poa_rear();
 					}
@@ -2413,7 +2415,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 						p_poaeffbeam[nn][idx] = (ssc_number_t)ibeam;
 						p_poaeffdiff[nn][idx] = (ssc_number_t)(iskydiff + ignddiff);
 						p_poaRear[nn][idx] = (ssc_number_t)(ipoa_rear);
-						p_poaeff[nn][idx] = (radmode == POA_R) ? (ssc_number_t)ipoa : (ssc_number_t)(ibeam + iskydiff + ignddiff + ipoa_rear);
+						p_poaeff[nn][idx] = (radmode == POA_R) ? (ssc_number_t)ipoa : (ssc_number_t)(ipoa_front + ipoa_rear);
 						p_shad[nn][idx] = (ssc_number_t)beam_shading_factor;
 						p_rot[nn][idx] = (ssc_number_t)rot;
 						p_idealrot[nn][idx] = (ssc_number_t)(rot - btd);
