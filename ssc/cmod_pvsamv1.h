@@ -154,6 +154,7 @@ struct subarray
 		double ibeam;
 		double iskydiff;
 		double ignddiff;
+		double irear;
 		double ipoa;
 		int sunup;
 		double aoi;

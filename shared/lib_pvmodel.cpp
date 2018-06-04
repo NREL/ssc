@@ -68,7 +68,7 @@ pvinput_t::pvinput_t()
 }
 
 
-pvinput_t::pvinput_t( double ib, double id, double ig, double ip,
+pvinput_t::pvinput_t( double ib, double id, double ig, double irear, double ip,
 		double ta, double td, double ws, double wd, double patm,
 		double zen, double inc, 
 		double elv, double tlt, double azi,
@@ -77,6 +77,7 @@ pvinput_t::pvinput_t( double ib, double id, double ig, double ip,
 	Ibeam = ib;
 	Idiff = id;
 	Ignd = ig;
+	Irear = irear;
 	poaIrr = ip;
 	Tdry = ta;
 	Tdew = td;

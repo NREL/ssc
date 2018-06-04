@@ -2224,7 +2224,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 						if (sunup > 0)
 						{
 							// calculate cell temperature using selected temperature model
-							pvinput_t in(ibeam, iskydiff, ignddiff, ipoa,
+							pvinput_t in(ibeam, iskydiff, ignddiff, 0, ipoa,
 								wf.tdry, wf.tdew, wf.wspd, wf.wdir, wf.pres,
 								solzen, aoi, hdr.elev,
 								stilt, sazi,
@@ -2433,12 +2433,12 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 					sa[nn].poa.ibeam = ibeam;
 					sa[nn].poa.iskydiff = iskydiff;
 					sa[nn].poa.ignddiff = ignddiff;
+					sa[nn].poa.irear = ipoa_rear;
 					sa[nn].poa.ipoa = ipoa;
 					sa[nn].poa.aoi = aoi;
 					sa[nn].poa.sunup = sunup;
 					sa[nn].poa.stilt = stilt;
 					sa[nn].poa.sazi = sazi;
-
 				}
 
 				// compute dc power output of one module in each subarray
@@ -2462,7 +2462,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 						{
 							if (!sa[nn].enable || sa[nn].nstrings < 1) continue; // skip disabled subarrays
 
-							pvinput_t in(sa[nn].poa.ibeam, sa[nn].poa.iskydiff, sa[nn].poa.ignddiff, sa[nn].poa.ipoa,
+							pvinput_t in(sa[nn].poa.ibeam, sa[nn].poa.iskydiff, sa[nn].poa.ignddiff, sa[nn].poa.irear, sa[nn].poa.ipoa,
 								wf.tdry, wf.tdew, wf.wspd, wf.wdir, wf.pres,
 								solzen, sa[nn].poa.aoi, hdr.elev,
 								sa[nn].poa.stilt, sa[nn].poa.sazi,
@@ -2511,7 +2511,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 						|| sa[nn].nstrings < 1)
 						continue; // skip disabled subarrays
 
-					pvinput_t in(sa[nn].poa.ibeam, sa[nn].poa.iskydiff, sa[nn].poa.ignddiff, sa[nn].poa.ipoa,
+					pvinput_t in(sa[nn].poa.ibeam, sa[nn].poa.iskydiff, sa[nn].poa.ignddiff, sa[nn].poa.irear, sa[nn].poa.ipoa,
 						wf.tdry, wf.tdew, wf.wspd, wf.wdir, wf.pres,
 						solzen, sa[nn].poa.aoi, hdr.elev,
 						sa[nn].poa.stilt, sa[nn].poa.sazi,

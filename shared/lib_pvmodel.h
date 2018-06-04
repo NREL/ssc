@@ -59,7 +59,7 @@ class pvinput_t
 {
 public:
 	pvinput_t();
-	pvinput_t( double ib, double id, double ig, double ip, 
+	pvinput_t( double ib, double id, double ig, double irear, double ip, 
 		double ta, double td, double ws, double wd, double patm,
 		double zen, double inc, 
 		double elv, double tlt, double azi,
@@ -68,6 +68,7 @@ public:
 	double Ibeam; // beam irradiance, W/m2
 	double Idiff; // sky diffuse irradiance, W/m2
 	double Ignd; // ground reflected irradiance, W/m2
+	double Irear; // rear side irradiance, W/m2
 	double poaIrr; // plane of array irradiance, W/m2
 	double Tdry; // dry bulb temp, C
 	double Tdew; // dew point temp, C

@@ -172,16 +172,18 @@ bool cec6par_module_t::operator() ( pvinput_t &input, double TcellC, double opvo
 	double G_total, Geff_total;
 
 	if( input.radmode != 3){ // Determine if the model needs to skip the cover effects (will only be skipped if the user is using POA reference cell data) 
-		G_total = input.Ibeam + input.Idiff + input.Ignd; // total incident irradiance on tilted surface, W/m2
+		G_total = input.Ibeam + input.Idiff + input.Ignd + input.Irear; // total incident irradiance on tilted surface, W/m2
 	
 		Geff_total = G_total;
+
+		// Need to disentangle AOI for front, rear, remove from module model.
 		Geff_total = irradiance_through_cover(
 			input.IncAng,
 			input.Zenith,
 			input.Tilt,
 			input.Ibeam,
 			input.Idiff,
-			input.Ignd );
+			input.Ignd ) + input.Irear;
 
 	
 		double theta_z = input.Zenith;
@@ -195,7 +197,7 @@ bool cec6par_module_t::operator() ( pvinput_t &input, double TcellC, double opvo
 			G_total = Geff_total = input.poaIrr;
 		else{
 			G_total = input.poaIrr;
-			Geff_total = input.Ibeam + input.Idiff + input.Ignd;
+			Geff_total = input.Ibeam + input.Idiff + input.Ignd + input.Irear;
 		}
 
 	}
