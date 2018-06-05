@@ -89,8 +89,8 @@ C_sco2_recomp_csp::C_sco2_recomp_csp()
 	mf_callback_update = 0;		// NULL
 	mp_mf_update = 0;			// NULL
 
-	m_is_write_mc_out_file = false;
-	m_is_only_write_frecomp_opt_iters = false;
+	//m_is_write_mc_out_file = false;
+	//m_is_only_write_frecomp_opt_iters = false;
 
 	//sco2_od_opt_file.open("C:/Users/tneises/Documents/Projects/ssc_trunk/examples/sco2_od_opt_file.csv");
 
@@ -491,8 +491,8 @@ int C_sco2_recomp_csp::off_design_nested_opt(C_sco2_recomp_csp::S_od_par od_par,
 	ms_phx_od_par.m_P_c_in = std::numeric_limits<double>::quiet_NaN();		//[kPa]
 	ms_phx_od_par.m_m_dot_c = std::numeric_limits<double>::quiet_NaN();		//[kg/s]
 
-	m_is_write_mc_out_file = false;
-	m_is_only_write_frecomp_opt_iters = true;
+	//m_is_write_mc_out_file = false;
+	//m_is_only_write_frecomp_opt_iters = true;
 
 	mstr_base_name = "C:/Users/tneises/Documents/Brayton-Rankine/APOLLO/Off_design_turbo_balance/fixed_N_recomp/";
 
@@ -715,10 +715,10 @@ bool C_sco2_recomp_csp::opt_P_mc_in_nest_f_recomp_max_eta_core()
 		}
 	}
 
-	if (m_is_write_mc_out_file)
+	/*if (m_is_write_mc_out_file)
 	{
 		mc_P_mc_vary_f_recomp_opt_file.close();
-	}
+	}*/
 
 	if (!is_P_opt_success)
 	{
@@ -2505,74 +2505,74 @@ double C_sco2_recomp_csp::opt_P_mc_in_nest_f_recomp_max_eta(double P_mc_in /*kPa
 		eta_max_f_recomp_opt = 0.0;
 	}
 		 
-	if( m_is_write_mc_out_file )
-	{
-		double deltaP = 0.0;
-		double P_mc_out_of = 0.0;		//[kPa]
-		double m_dot_mc = 0.0;			//[kg/s]
-		double m_dot_t = 0.0;			//[kg/s]
-		double N_mc = 0.0;				//[rpm]
-		double phi_mc = 0.0;			//[-]
-		double mc_tip_ratio_of = 0.0;	//[-]
-		double f_recomp_of = 0.0;		//[-]
-		double m_dot_rc = 0.0;			//[kg/s]
-		double rc_phi_of = 0.0;			//[-]
-		double rc_tip_ratio_of = 0.0;	//[-]
-		int od_error_code = -1;			//[-]
+	//if( m_is_write_mc_out_file )
+	//{
+	//	double deltaP = 0.0;
+	//	double P_mc_out_of = 0.0;		//[kPa]
+	//	double m_dot_mc = 0.0;			//[kg/s]
+	//	double m_dot_t = 0.0;			//[kg/s]
+	//	double N_mc = 0.0;				//[rpm]
+	//	double phi_mc = 0.0;			//[-]
+	//	double mc_tip_ratio_of = 0.0;	//[-]
+	//	double f_recomp_of = 0.0;		//[-]
+	//	double m_dot_rc = 0.0;			//[kg/s]
+	//	double rc_phi_of = 0.0;			//[-]
+	//	double rc_tip_ratio_of = 0.0;	//[-]
+	//	int od_error_code = -1;			//[-]
 
-		double W_dot_net_of = 0.0;		//[MWe]
-		double Q_dot_in_of = 0.0;		//[MWt]
-		double T_htf_cold_of = 0.0;		//[C]
+	//	double W_dot_net_of = 0.0;		//[MWe]
+	//	double Q_dot_in_of = 0.0;		//[MWt]
+	//	double T_htf_cold_of = 0.0;		//[C]
 
-		if( eta_max_f_recomp_opt > 0.0 )
-		{
-			P_mc_out_of = mpc_sco2_cycle->get_od_solved()->m_pres[C_sco2_cycle_core::MC_OUT];	//[kPa]
-			deltaP = P_mc_out_of - P_mc_in;
-			m_dot_mc = mpc_sco2_cycle->get_od_solved()->m_m_dot_mc;
-			m_dot_t = mpc_sco2_cycle->get_od_solved()->m_m_dot_t;
-			m_dot_rc = mpc_sco2_cycle->get_od_solved()->m_m_dot_rc;
-			N_mc = mpc_sco2_cycle->get_od_solved()->ms_mc_ms_od_solved.m_N;
-			phi_mc = mpc_sco2_cycle->get_od_solved()->ms_mc_ms_od_solved.m_phi;
-			mc_tip_ratio_of = mpc_sco2_cycle->get_od_solved()->ms_mc_ms_od_solved.m_w_tip_ratio;
-			f_recomp_of = mpc_sco2_cycle->get_od_solved()->m_recomp_frac;	//[-]
-			
-			if(mpc_sco2_cycle->get_design_solved()->m_is_rc )
-			{
-				rc_tip_ratio_of = mpc_sco2_cycle->get_od_solved()->ms_rc_ms_od_solved.m_w_tip_ratio;
-				//double rc_phi_s1 = mc_rc_cycle.get_rc_od_solved()->m_phi;
-				//double rc_phi_s2 = mc_rc_cycle.get_rc_od_solved()->m_phi_2;
-				//rc_tip_ratio_of = min(rc_phi_s1, rc_phi_s2);
-				rc_phi_of = mpc_sco2_cycle->get_rc_od_solved()->m_phi;
-			}
+	//	if( eta_max_f_recomp_opt > 0.0 )
+	//	{
+	//		P_mc_out_of = mpc_sco2_cycle->get_od_solved()->m_pres[C_sco2_cycle_core::MC_OUT];	//[kPa]
+	//		deltaP = P_mc_out_of - P_mc_in;
+	//		m_dot_mc = mpc_sco2_cycle->get_od_solved()->m_m_dot_mc;
+	//		m_dot_t = mpc_sco2_cycle->get_od_solved()->m_m_dot_t;
+	//		m_dot_rc = mpc_sco2_cycle->get_od_solved()->m_m_dot_rc;
+	//		N_mc = mpc_sco2_cycle->get_od_solved()->ms_mc_ms_od_solved.m_N;
+	//		phi_mc = mpc_sco2_cycle->get_od_solved()->ms_mc_ms_od_solved.m_phi;
+	//		mc_tip_ratio_of = mpc_sco2_cycle->get_od_solved()->ms_mc_ms_od_solved.m_w_tip_ratio;
+	//		f_recomp_of = mpc_sco2_cycle->get_od_solved()->m_recomp_frac;	//[-]
+	//		
+	//		if(mpc_sco2_cycle->get_design_solved()->m_is_rc )
+	//		{
+	//			rc_tip_ratio_of = mpc_sco2_cycle->get_od_solved()->ms_rc_ms_od_solved.m_w_tip_ratio;
+	//			//double rc_phi_s1 = mc_rc_cycle.get_rc_od_solved()->m_phi;
+	//			//double rc_phi_s2 = mc_rc_cycle.get_rc_od_solved()->m_phi_2;
+	//			//rc_tip_ratio_of = min(rc_phi_s1, rc_phi_s2);
+	//			rc_phi_of = mpc_sco2_cycle->get_rc_od_solved()->m_phi;
+	//		}
 
-			W_dot_net_of = mpc_sco2_cycle->get_od_solved()->m_W_dot_net / 1.E3;		//[MWe]
-			Q_dot_in_of = mpc_sco2_cycle->get_od_solved()->m_Q_dot / 1.E3;			//[MWt]
-			T_htf_cold_of = mc_phx.ms_od_solved.m_T_h_out - 273.15;				//[C]
+	//		W_dot_net_of = mpc_sco2_cycle->get_od_solved()->m_W_dot_net / 1.E3;		//[MWe]
+	//		Q_dot_in_of = mpc_sco2_cycle->get_od_solved()->m_Q_dot / 1.E3;			//[MWt]
+	//		T_htf_cold_of = mc_phx.ms_od_solved.m_T_h_out - 273.15;				//[C]
 
-			od_error_code = ms_od_solved.m_od_error_code;	//[-]
-		}
+	//		od_error_code = ms_od_solved.m_od_error_code;	//[-]
+	//	}
 
-		mc_P_mc_vary_f_recomp_opt_file << ms_od_par.m_T_amb - 273.15 << ","
-			<< ms_od_par.m_m_dot_htf / mc_phx.ms_des_calc_UA_par.m_m_dot_hot_des << ","
-			<< ms_od_par.m_T_htf_hot - 273.15 << ","
-			<< util::format("%.4f",P_mc_in) << ","
-			<< deltaP << ","
-			<< util::format("%.4f",P_mc_out_of) << ","
-			<< m_dot_mc << ","
-			<< m_dot_t << ","
-			<< N_mc << ","
-			<< phi_mc << ","
-			<< mc_tip_ratio_of << ","
-			<< util::format("%.4f",f_recomp_of) << ","
-			<< m_dot_rc << ","
-			<< rc_tip_ratio_of << "," 
-			<< rc_phi_of << ","
-			<< eta_solved << ","
-			<< W_dot_net_of << ","
-			<< Q_dot_in_of << ","
-			<< T_htf_cold_of << ","
-			<< od_error_code << "\n";
-	}
+	//	mc_P_mc_vary_f_recomp_opt_file << ms_od_par.m_T_amb - 273.15 << ","
+	//		<< ms_od_par.m_m_dot_htf / mc_phx.ms_des_calc_UA_par.m_m_dot_hot_des << ","
+	//		<< ms_od_par.m_T_htf_hot - 273.15 << ","
+	//		<< util::format("%.4f",P_mc_in) << ","
+	//		<< deltaP << ","
+	//		<< util::format("%.4f",P_mc_out_of) << ","
+	//		<< m_dot_mc << ","
+	//		<< m_dot_t << ","
+	//		<< N_mc << ","
+	//		<< phi_mc << ","
+	//		<< mc_tip_ratio_of << ","
+	//		<< util::format("%.4f",f_recomp_of) << ","
+	//		<< m_dot_rc << ","
+	//		<< rc_tip_ratio_of << "," 
+	//		<< rc_phi_of << ","
+	//		<< eta_solved << ","
+	//		<< W_dot_net_of << ","
+	//		<< Q_dot_in_of << ","
+	//		<< T_htf_cold_of << ","
+	//		<< od_error_code << "\n";
+	//}
 
 	return eta_max_f_recomp_opt;
 }

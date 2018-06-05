@@ -404,8 +404,8 @@ public:
 
 	double opt_P_mc_in_nest_f_recomp_max_eta(double P_mc_in /*kPa*/);
 
-	bool m_is_write_mc_out_file;
-	bool m_is_only_write_frecomp_opt_iters;
+	//bool m_is_write_mc_out_file;
+	//bool m_is_only_write_frecomp_opt_iters;
 
 	ofstream mc_P_mc_in_fixed_f_recomp_vary_file;
 	ofstream mc_P_mc_vary_f_recomp_opt_file;
