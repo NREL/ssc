@@ -93,6 +93,14 @@ static var_info _cm_vtab_tcstrough_physical[] = {
     { SSC_INPUT,        SSC_NUMBER,      "V_hdr_hot_max",             "Maximum HTF velocity in the hot headers at design",                                "m/s",          "",               "solar_field",    "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "V_hdr_hot_min",             "Minimum HTF velocity in the hot headers at design",                                "m/s",          "",               "solar_field",    "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "N_max_hdr_diams",           "Maximum number of diameters in each of the hot and cold headers",                  "none",         "",               "solar_field",    "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "L_rnr_pb",                  "Length of runner pipe in power block",                                             "m",            "",               "solar_field",    "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "L_rnr_per_xpan",            "Threshold length of straight runner pipe without an expansion loop",               "m",            "",               "solar_field",    "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "L_xpan_hdr",                "Compined perpendicular lengths of each header expansion loop",                     "m",            "",               "solar_field",    "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "L_xpan_rnr",                "Compined perpendicular lengths of each runner expansion loop",                     "m",            "",               "solar_field",    "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "Min_rnr_xpans",             "Minimum number of expansion loops per single-diameter runner section",             "none",         "",               "solar_field",    "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "northsouth_field_sep",      "North/south separation between subfields. 0 = SCAs are touching",                  "m",            "",               "solar_field",    "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "N_hdr_per_xpan",            "Number of collector loops per expansion loop",                                     "none",         "",               "solar_field",    "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "offset_xpan_hdr",           "Location of first header expansion loop. 1 = after first collector loop",          "none",         "",               "solar_field",    "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "Pipe_hl_coef",              "Loss coefficient from the header, runner pipe, and non-HCE piping",                "W/m2-K",       "",               "solar_field",    "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "SCA_drives_elec",           "Tracking power, in Watts per SCA drive",                                           "W/SCA",        "",               "solar_field",    "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "fthrok",                    "Flag to allow partial defocusing of the collectors",                               "",             "",               "solar_field",    "*",                       "INTEGER",               "" },
@@ -288,17 +296,18 @@ static var_info _cm_vtab_tcstrough_physical[] = {
     { SSC_OUTPUT,       SSC_ARRAY,       "tou_value",         "Resource Time-of-use value",                                      "",             "",            "tou",            "*",                      "",                      "" },
 																																																			 			             
     //Solar field																																															 			             
-	{ SSC_OUTPUT,       SSC_ARRAY,       "pipe_header_diams",      "Field piping header diameters",								    "m",          "",            "Type250",        "*",                       "",                      "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "pipe_runner_diams",      "Field piping runner diameters",									"m",          "",            "Type250",        "*",                       "",                      "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "pipe_runner_lengths",    "Field piping runner lengths",									"m",          "",            "Type250",        "*",                       "",                      "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "Theta_ave",         "Field collector solar incidence angle",                          "deg",          "",            "Type250",        "*",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "CosTh_ave",         "Field collector cosine efficiency",                              "",         "",            "Type250",        "*",                           "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "IAM_ave",           "Field collector incidence angle modifier",                       "",         "",            "Type250",        "*",                           "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "RowShadow_ave",     "Field collector row shadowing loss",                             "",         "",            "Type250",        "*",                           "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "EndLoss_ave",       "Field collector optical end loss",                               "",         "",            "Type250",        "*",                           "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "dni_costh",         "Field collector DNI-cosine product",                             "W/m2",         "",            "Type250",        "*",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "SCAs_def",          "Field collector fraction of focused SCA's",                      "",         "",            "Type250",        "*",                           "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "EqOpteff",          "Field collector optical efficiency",                             "",         "",            "Type250",        "*",                           "",                      "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "pipe_header_diams", "Field piping header diameters",								    "m",             "",            "Type250",        "*",                       "",                      "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "pipe_runner_diams", "Field piping runner diameters",									"m",             "",            "Type250",        "*",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "pipe_header_lengths",    "Field piping header lengths",                               "m",             "",            "Type250",        "*",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "pipe_runner_lengths",    "Field piping runner lengths",								"m",             "",            "Type250",        "*",                       "",                      "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "Theta_ave",         "Field collector solar incidence angle",                          "deg",           "",            "Type250",        "*",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "CosTh_ave",         "Field collector cosine efficiency",                              "",              "",            "Type250",        "*",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "IAM_ave",           "Field collector incidence angle modifier",                       "",              "",            "Type250",        "*",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "RowShadow_ave",     "Field collector row shadowing loss",                             "",              "",            "Type250",        "*",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "EndLoss_ave",       "Field collector optical end loss",                               "",              "",            "Type250",        "*",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "dni_costh",         "Field collector DNI-cosine product",                             "W/m2",          "",            "Type250",        "*",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "SCAs_def",          "Field collector fraction of focused SCA's",                      "",              "",            "Type250",        "*",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "EqOpteff",          "Field collector optical efficiency",                             "",              "",            "Type250",        "*",                       "",                      "" },
     																																																		 			             
     { SSC_OUTPUT,       SSC_ARRAY,       "q_inc_sf_tot",      "Field thermal power incident",                                   "MWt",          "",            "Type250",        "*",                       "",                      "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "qinc_costh",        "Field thermal power incident after cosine",                      "MWt",          "",            "Type250",        "*",                       "",                      "" },
@@ -528,6 +537,14 @@ public:
         set_unit_value_ssc_double(type250_solarfield, "V_hdr_hot_max"); // , 3);
         set_unit_value_ssc_double(type250_solarfield, "V_hdr_hot_min"); // , 2);
         set_unit_value_ssc_double(type250_solarfield, "N_max_hdr_diams"); // , 10);
+        set_unit_value_ssc_double(type250_solarfield, "L_rnr_pb"); // , 25);
+        set_unit_value_ssc_double(type250_solarfield, "L_rnr_per_xpan"); // , 70);
+        set_unit_value_ssc_double(type250_solarfield, "L_xpan_hdr"); // , 20);
+        set_unit_value_ssc_double(type250_solarfield, "L_xpan_rnr"); // , 20);
+        set_unit_value_ssc_double(type250_solarfield, "Min_rnr_xpans"); // , 1);
+        set_unit_value_ssc_double(type250_solarfield, "northsouth_field_sep"); // , 20);
+        set_unit_value_ssc_double(type250_solarfield, "N_hdr_per_xpan"); // , 2);
+        set_unit_value_ssc_double(type250_solarfield, "offset_xpan_hdr"); // , 1);
         set_unit_value_ssc_double(type250_solarfield, "Pipe_hl_coef" ); // , 0.45);
         set_unit_value_ssc_double(type250_solarfield, "SCA_drives_elec" ); // , 125);
         set_unit_value_ssc_double(type250_solarfield, "fthrok" ); // , 1);
@@ -812,6 +829,9 @@ public:
         double *runner_diams = get_unit_value(type250_solarfield, "pipe_runner_diams", &nv);
 		ssc_number_t *runner_diams_cm = allocate("pipe_runner_diams", nv);
         std::copy(runner_diams, runner_diams + nv, runner_diams_cm);
+        double *pipe_header_lengths = get_unit_value(type250_solarfield, "pipe_header_lengths", &nv);
+        ssc_number_t *pipe_header_lengths_cm = allocate("pipe_header_lengths", nv);
+        std::copy(pipe_header_lengths, pipe_header_lengths + nv, pipe_header_lengths_cm);
 		double *pipe_runner_lengths = get_unit_value(type250_solarfield, "pipe_runner_lengths", &nv);
 		ssc_number_t *pipe_runner_lengths_cm = allocate("pipe_runner_lengths", nv);
         std::copy(pipe_runner_lengths, pipe_runner_lengths + nv, pipe_runner_lengths_cm);
