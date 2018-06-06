@@ -669,6 +669,8 @@ bool C_sco2_recomp_csp::opt_P_mc_in_nest_f_recomp_max_eta_core()
 	// * P_mc_in_guess
 	// * P_mc_in_upper
 
+	int opt_code = 1;
+
 	bool is_P_opt_success = false;
 	int opt_iter = 0;
 	while (true)
@@ -676,9 +678,50 @@ bool C_sco2_recomp_csp::opt_P_mc_in_nest_f_recomp_max_eta_core()
 		opt_iter++;
 
 		// Optimize compressor inlet pressure using fmin
-		double P_mc_in_opt = fminbr(
-			P_mc_in_lower, P_mc_in_upper,
-			&fmin_opt_P_mc_in_nest_f_recomp_max_eta, this, m_od_opt_ftol);
+		double P_mc_in_opt = std::numeric_limits<double>::quiet_NaN();
+		
+		if (opt_code == 0)
+		{
+			P_mc_in_opt = fminbr(P_mc_in_lower, P_mc_in_upper,
+				&fmin_opt_P_mc_in_nest_f_recomp_max_eta, this, m_od_opt_ftol);
+		}
+		else
+		{
+			std::vector<double> x;
+			std::vector<double> lb;
+			std::vector<double> ub;
+			std::vector<double> scale;
+			
+			x.resize(1, P_mc_in_guess);	//[kPa]
+			
+			lb.resize(1, P_mc_in_lower);	//[kPa]
+
+			ub.resize(1, P_mc_in_upper);	//[kPa]
+
+			scale.resize(1);
+			scale[0] = (0.5*P_mc_in_upper + 0.5*P_mc_in_lower) - x[0];	//[kPa]
+			
+			// Set up instance of nlopt class and set optimization parameters
+			nlopt::opt  nlopt_P_mc_in_opt_max_of(nlopt::LN_NELDERMEAD, 1);
+			nlopt_P_mc_in_opt_max_of.set_lower_bounds(lb);
+			nlopt_P_mc_in_opt_max_of.set_upper_bounds(ub);
+			nlopt_P_mc_in_opt_max_of.set_initial_step(scale);
+			nlopt_P_mc_in_opt_max_of.set_xtol_rel(m_od_opt_xtol);
+			nlopt_P_mc_in_opt_max_of.set_ftol_rel(m_od_opt_ftol);
+			
+			// Set max objective function
+			nlopt_P_mc_in_opt_max_of.set_max_objective(nlopt_max_opt_P_mc_in_nest_f_recomp, this);
+			
+			double nlopt_max_eta = std::numeric_limits<double>::quiet_NaN();
+			nlopt::result    nlopt_result = nlopt_P_mc_in_opt_max_of.optimize(x, nlopt_max_eta);
+			
+			P_mc_in_opt = x[0];
+			
+			if( nlopt_max_eta != nlopt_max_eta )
+			{
+				P_mc_in_opt = P_mc_in_guess;
+			}
+		}
 
 		// Now, call off-design with the optimized compressor inlet pressure		
 		ms_rc_cycle_od_phi_par.m_P_mc_in = P_mc_in_opt;	//[kPa]
@@ -2730,14 +2773,14 @@ double C_sco2_recomp_csp::opt_P_mc_in_nest_f_recomp_max_eta(double P_mc_in /*kPa
 //		return 0;
 //}
 
-//double nlopt_max_opt_P_mc_in_nest_f_recomp(const std::vector<double> &x, std::vector<double> &grad, void *data)
-//{
-//	C_sco2_recomp_csp *frame = static_cast<C_sco2_recomp_csp*>(data);
-//	if( frame != NULL )  
-//		return frame->opt_P_mc_in_nest_f_recomp_max_eta(x[0]);	
-//	else
-//		return 0;
-//}
+double nlopt_max_opt_P_mc_in_nest_f_recomp(const std::vector<double> &x, std::vector<double> &grad, void *data)
+{
+	C_sco2_recomp_csp *frame = static_cast<C_sco2_recomp_csp*>(data);
+	if( frame != NULL )  
+		return frame->opt_P_mc_in_nest_f_recomp_max_eta(x[0]);	
+	else
+		return 0;
+}
 
 double fmin_opt_P_mc_in_nest_f_recomp_max_eta(double x, void *data)
 {

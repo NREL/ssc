@@ -416,7 +416,7 @@ public:
 
 //double fmin_f_recomp_cycle_eta(double x, void *data);
 
-//double nlopt_max_opt_P_mc_in_nest_f_recomp(const std::vector<double> &x, std::vector<double> &grad, void *data);
+double nlopt_max_opt_P_mc_in_nest_f_recomp(const std::vector<double> &x, std::vector<double> &grad, void *data);
 
 double fmin_opt_P_mc_in_nest_f_recomp_max_eta(double x, void *data);
 
