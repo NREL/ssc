@@ -625,7 +625,6 @@ private:
 		E_int_loop, E_accum, E_avail, E_abs_max,v_1,q_loss_SCAtot, q_abs_SCAtot, q_SCA, T_htf_in0, T_htf_out0, 
 		T_htf_ave0, E_fp, q_1abs_tot, q_1abs, q_i, IAM, EndGain, EndLoss, RowShadow;
 	double T_sys_c_last, T_sys_h_last; //stored values for header thermal inertia calculations
-	double N_run_mult;	
 	double v_hot, v_cold;	//Header HTF volume
 	double defocus_new, defocus_old, ftrack;
 	bool 
@@ -1390,7 +1389,7 @@ public:
 			{
 				x1 = 1.;     //the first runners are short
 			}
-			L_runner[0] = 50.;  //Assume 50 [m] of runner piping in and around the power block before it heads out to the field in the main runners
+			L_runner[0] = 25.;  //Assume 25 [m] of runner piping in and around the power block before it heads out to the field in the main runners
 			if( nrunsec > 1 )
 			{
 				for( int i = 1; i < nrunsec; i++ )
@@ -1405,15 +1404,6 @@ public:
 			{
 				v_tofrom_sgs = v_tofrom_sgs + 2.*L_runner[i] * pi*pow(D_runner[i], 2) / 4.;  //This is the volume of the runner in 1 direction.
 			}
-
-			//6/14/12, TN: Multiplier for runner heat loss. In main section of code, are only calculating loss for one path.
-			//Since there will be two symmetric paths (when nrunsec > 1), need to calculate multiplier for heat loss, considering
-			//that the first 50 meters of runner is assumed shared.
-			double lsum = 0.;
-			for( int i = 0; i < nrunsec; i++ ){
-				lsum += L_runner[i];
-			}
-			N_run_mult = 1.0 + (1.0 - 50.0 / lsum);
 
 			//-------piping from header into and out of the HCE's
 			double v_loop_tot = 0.;
@@ -2156,7 +2146,7 @@ freeze_prot_flag: //7   continue
 
 				E_field_loss_tot *= 1.e-6 * dt;
 
-				double E_field_pipe_hl = N_run_mult*Runner_hl_hot + float(nfsec)*Header_hl_hot + N_run_mult*Runner_hl_cold + float(nfsec)*Header_hl_cold;
+				double E_field_pipe_hl = 2*Runner_hl_hot + float(nfsec)*Header_hl_hot + 2*Runner_hl_cold + float(nfsec)*Header_hl_cold;
 
 				E_field_pipe_hl *= dt;		//[J]
 
@@ -2763,8 +2753,8 @@ calc_final_metrics_goto:
 				(v_cold*rho_hdr_cold*c_hdr_cold + mc_bal_cold)*(T_sys_c - 298.150));   //cold header and piping
 
 			//6/14/12, TN: Redefine pipe heat losses with header and runner components to get total system losses
-			Pipe_hl_hot = N_run_mult*Runner_hl_hot + float(nfsec)*Header_hl_hot;
-			Pipe_hl_cold = N_run_mult*Runner_hl_cold + float(nfsec)*Header_hl_cold;
+			Pipe_hl_hot = 2*Runner_hl_hot + float(nfsec)*Header_hl_hot;
+			Pipe_hl_cold = 2*Runner_hl_cold + float(nfsec)*Header_hl_cold;
 
 			Pipe_hl = Pipe_hl_hot + Pipe_hl_cold;
 
