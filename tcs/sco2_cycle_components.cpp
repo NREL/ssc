@@ -1464,9 +1464,12 @@ void C_comp_multi_stage::off_design_given_N(double T_in /*K*/, double P_in /*kPa
 	ms_od_solved.m_T_out = T_out;
 
 	ms_od_solved.m_surge = is_surge;
-	ms_od_solved.m_eta = (h_out_isen - h_in) / (h_out - h_in);
-	ms_od_solved.m_phi = mv_stages[0].ms_od_solved.m_phi;
-	ms_od_solved.m_w_tip_ratio = tip_ratio_max;
+	ms_od_solved.m_eta = (h_out_isen - h_in) / (h_out - h_in);		//[-] Overall compressor efficiency
+	
+	ms_od_solved.m_phi = mv_stages[0].ms_od_solved.m_phi;			//[-] First stage flow coefficient
+	ms_od_solved.m_phi = phi_min;									//[-] Min (all stages) flow coefficient
+
+	ms_od_solved.m_w_tip_ratio = tip_ratio_max;						//[-] Max (all stages) tip ratio overall
 
 	ms_od_solved.m_N = N_rpm;
 

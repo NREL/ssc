@@ -1673,7 +1673,7 @@ int C_sco2_recomp_csp::off_design_core(double & eta_solved)
 	// 4) Check for compressor(s) surge?
 	// Main compressor
 	double mc_phi = mpc_sco2_cycle->get_od_solved()->ms_mc_ms_od_solved.m_phi;
-	double over_surge_mc = max(0.0, C_comp_single_stage::m_snl_phi_min - mc_phi);
+	double over_surge_mc = max(0.0, (C_comp_single_stage::m_snl_phi_min - mc_phi) / C_comp_single_stage::m_snl_phi_min*100.0);
 	// Recompressor
 	double rc_phi_s1, rc_phi_s2;
 	rc_phi_s1 = rc_phi_s2 = 0.0;
