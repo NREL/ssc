@@ -841,25 +841,17 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 	bool use_wf_alb = Irradiance->useWeatherFileAlbedo;
 	std::vector<double> alb_array = Irradiance->userSpecifiedMonthlyAlbedo;
 
-	// Get Subarray Inputs
+	// Get System or Subarray Inputs
 	double aspect_ratio = Subarrays[0]->moduleAspectRatio;
 	size_t num_subarrays = PVSystem->numberOfSubarrays;
+	int mod_type = Subarrays[0]->moduleType;
+	int modules_per_string = PVSystem->modulesPerString;
+	int strings_in_parallel = PVSystem->stringsInParallel;
+	int num_inverters = PVSystem->numberOfInverters;
 
-	/// shading database if necessary
-	smart_ptr<ShadeDB8_mpp>::ptr  p_shade_db; // (new ShadeDB8_mpp());
 
 	double annual_snow_loss = 0;
-
-	int modules_per_string = as_integer("modules_per_string");
-	int strings_in_parallel = as_integer("strings_in_parallel");
-	int num_inverters = as_integer("inverter_count");
-//		double ac_derate = (1 - as_double("acwiring_loss") / 100) * (1 - as_double("transformer_loss") / 100);	//calculate using ac wiring and step up transformer losses
-	double ac_derate = 1 - as_double("acwiring_loss") / 100;	//calculate using ac wiring 
-	double ac_loss_percent = (1 - ac_derate) * 100;
-	assign("ac_loss", var_data((ssc_number_t)ac_loss_percent));
-
 	// run some preliminary checks on inputs
-	int mod_type = as_integer("module_model");
 		
 	spe_module_t spe;
 	sandia_celltemp_t spe_tc;
@@ -1836,6 +1828,8 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 						double shadedb_mppt_lo = V_mppt_lo_1module * modules_per_string;;
 						double shadedb_mppt_hi = V_mppt_hi_1module * modules_per_string;;
 
+						/// shading database if necessary
+						smart_ptr<ShadeDB8_mpp>::ptr  p_shade_db;
 						if (!Subarrays[nn]->shadeCalculator.fbeam_shade_db(p_shade_db, hour, solalt, solazi, jj, step_per_hour, shadedb_gpoa, shadedb_dpoa, tcell, modules_per_string, shadedb_str_vmp_stc, shadedb_mppt_lo, shadedb_mppt_hi))
 						{
 							throw exec_error("pvsamv1", util::format("Error calculating shading factor for subarray %d", nn));
@@ -2373,7 +2367,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 				}
 		
 				
-				ac_wiringloss = fabs(acpwr_gross) * ac_loss_percent * 0.01;
+				ac_wiringloss = fabs(acpwr_gross) * PVSystem->acLossPercent * 0.01;
 
 				// accumulate first year annual energy
 				if (iyear == 0)
@@ -2665,7 +2659,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 	double total_percent = acwiring; // +transformer;
 	double acwiring_loss = 0; // , transformer_loss = 0;
 	sys_output = annual_ac_gross;
-	double ac_loss = sys_output*(1.0 - ac_derate);
+	double ac_loss = sys_output*(1.0 - PVSystem->acDerate);
 
 	if (total_percent != 0)
 	{
@@ -2847,6 +2841,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 
 	Irradiance->AssignOutputs(this);
 	Subarrays[0]->AssignOutputs(this);
+	PVSystem->AssignOutputs(this);
 }
 	
 double cm_pvsamv1::module_eff(int mod_type)

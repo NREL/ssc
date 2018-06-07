@@ -108,7 +108,7 @@ struct Irradiance_IO
 	static const int irradiationMax = 1500;						  /// The maximum irradiation (W/m2) allowed
 	static const int irradprocNoInterpolateSunriseSunset = -1;    /// Interpolate the sunrise/sunset
 
-																  // Irradiance Data Inputs
+	// Irradiance Data Inputs
 	std::unique_ptr<weather_data_provider> weatherDataProvider;   /// A class which encapsulates the weather data regardless of input method
 	weather_record weatherRecord;								  /// Describes the weather data
 	weather_header weatherHeader;								  /// Describes the weather data header
@@ -164,6 +164,7 @@ struct PVSystem_IO
 	PVSystem_IO(compute_module* cm, std::string cmName, Simulation_IO * SimulationIO, Irradiance_IO * IrradianceIO, std::vector<Subarray_IO*> Subarrays);
 
 	void AllocateOutputs(compute_module *cm);
+	void AssignOutputs(compute_module *cm);
 
 	size_t numberOfSubarrays;
 	Irradiance_IO * Irradiance;
@@ -173,6 +174,12 @@ struct PVSystem_IO
 	// Inputs assumed to apply to all subarrays
 	bool enableDCLifetimeLosses;
 	bool enableACLifetimeLosses;
+
+	int modulesPerString;
+	int stringsInParallel;
+	int numberOfInverters;
+	double acDerate;
+	double acLossPercent;
 
 	ssc_number_t transformerLoadLossFraction;
 	ssc_number_t transformerNoLoadLossFraction;
@@ -276,6 +283,8 @@ struct Subarray_IO
 	// Inputs
 	bool enable;						/// Enable the subarray
 	size_t nStrings;					/// Number of strings in the subarray
+	int moduleType;						/// The PV module type for this subarray
+
 	std::vector<double> monthlySoiling; /// The soiling loss by month [%]
 	double dcLoss;						/// The DC loss due to mismatch, diodes, wiring, tracking, optimizers [%]
 	double groundCoverageRatio;			/// The ground coverage ratio [0 - 1]

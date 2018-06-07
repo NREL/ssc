@@ -180,6 +180,7 @@ Subarray_IO::Subarray_IO(compute_module* cm, std::string cmName, size_t subarray
 	if (enable)
 	{
 		nStrings = cm->as_integer(prefix + "nstrings");
+		moduleType = cm->as_integer("module_model");
 		nModulesPerString = cm->as_integer("modules_per_string");
 		tiltDegrees = fabs(cm->as_double(prefix + "tilt"));
 		azimuthDegrees = cm->as_double(prefix + "azimuth");
@@ -267,6 +268,13 @@ Subarray_IO::Subarray_IO(compute_module* cm, std::string cmName, size_t subarray
 
 	}
 }
+void Subarray_IO::AssignOutputs(compute_module* cm)
+{
+	//assign output dc loss
+	double tmp = (1 - dcLoss) * 100;
+	cm->assign(prefix + "dcloss", var_data((ssc_number_t)tmp));
+}
+
 
 PVSystem_IO::PVSystem_IO(compute_module* cm, std::string cmName, Simulation_IO * SimulationIO, Irradiance_IO * IrradianceIO, std::vector<Subarray_IO*> SubarraysAll)
 {
@@ -276,6 +284,12 @@ PVSystem_IO::PVSystem_IO(compute_module* cm, std::string cmName, Simulation_IO *
 	numberOfSubarrays = Subarrays.size();
 
 	AllocateOutputs(cm);
+
+	modulesPerString = cm->as_integer("modules_per_string");
+	stringsInParallel = cm->as_integer("strings_in_parallel");
+	numberOfInverters = cm->as_integer("inverter_count");
+	acDerate = 1 - cm->as_double("acwiring_loss") / 100;	
+	acLossPercent = (1 - acDerate) * 100;
 
 	enableDCLifetimeLosses = cm->as_boolean("en_dc_lifetime_losses");
 	enableACLifetimeLosses = cm->as_boolean("en_ac_lifetime_losses");
@@ -404,13 +418,7 @@ void PVSystem_IO::AllocateOutputs(compute_module* cm)
 	}
 
 }
-
-
-void Subarray_IO::AssignOutputs(compute_module* cm)
+void PVSystem_IO::AssignOutputs(compute_module* cm)
 {
-	//assign output dc loss
-	double tmp = (1 - dcLoss) * 100;
-	cm->assign(prefix + "dcloss", var_data((ssc_number_t)tmp));
+	cm->assign("ac_loss", var_data((ssc_number_t)acLossPercent));
 }
-
-
