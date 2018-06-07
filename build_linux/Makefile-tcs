@@ -67,7 +67,6 @@ OBJECTS = tcskernel.o \
 	trnsys_weatherreader.o \
 	typelib.o \
 	waterprop.o \
-	weatherreader.o \
 	weatherreader_csp_solver.o \
 	csp_solver_weatherreader.o \
 	csp_solver_util.o \

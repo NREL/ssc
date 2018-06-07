@@ -60,6 +60,7 @@ class partload_inverter_t
 public:
 	partload_inverter_t( );
 
+	double Vdco;    /* Nominal DC voltage inptu (Vdc) */
 	double Paco;    /* Maximum AC power rating, upper limit value  (Wac) */
 	double Pdco;    /* DC power level at which Paco is achieved (Wdc) */
 	double Pntare;  /* AC power consumed by inverter at night as parasitic load (Wac) */

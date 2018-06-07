@@ -65,27 +65,27 @@ TEST_F(CMPvsamv1PowerIntegration, DefaultResidentialModel)
 
 		ssc_number_t elec_cost_without_system_year1;
 		ssc_data_get_number(data, "elec_cost_without_system_year1", &elec_cost_without_system_year1);
-		EXPECT_NEAR(elec_cost_without_system_year1, 973, m_error_tolerance_hi) << "Electricity bill without system (year 1)";
+		EXPECT_NEAR(elec_cost_without_system_year1, 1082, m_error_tolerance_hi) << "Electricity bill without system (year 1)";
 
 		ssc_number_t elec_cost_with_system_year1;
 		ssc_data_get_number(data, "elec_cost_with_system_year1", &elec_cost_with_system_year1);
-		EXPECT_NEAR(elec_cost_with_system_year1, 125, m_error_tolerance_hi) << "Electricity bill with system (year 1)";
+		EXPECT_NEAR(elec_cost_with_system_year1, 128, m_error_tolerance_hi) << "Electricity bill with system (year 1)";
 
 		ssc_number_t savings_year1;
 		ssc_data_get_number(data, "savings_year1", &savings_year1);
-		EXPECT_NEAR(savings_year1, 848, m_error_tolerance_hi) << "Net savings with system (year 1)";
+		EXPECT_NEAR(savings_year1, 954, m_error_tolerance_hi) << "Net savings with system (year 1)";
 
 		ssc_number_t npv;
 		ssc_data_get_number(data, "npv", &npv);
-		EXPECT_NEAR(npv, 4648, m_error_tolerance_hi) << "Net present value";
+		EXPECT_NEAR(npv, 5902, m_error_tolerance_hi) << "Net present value";
 
 		ssc_number_t payback;
 		ssc_data_get_number(data, "payback", &payback);
-		EXPECT_NEAR(payback, 11.8, m_error_tolerance_lo) << "Payback period";
+		EXPECT_NEAR(payback, 10.2, m_error_tolerance_lo) << "Payback period";
 
 		ssc_number_t discounted_payback;
 		ssc_data_get_number(data, "discounted_payback", &discounted_payback);
-		EXPECT_NEAR(discounted_payback, 22.9, m_error_tolerance_lo) << "Discounted payback period";
+		EXPECT_NEAR(discounted_payback, 16.9, m_error_tolerance_lo) << "Discounted payback period";
 
 		ssc_number_t adjusted_installed_cost;
 		ssc_data_get_number(data, "adjusted_installed_cost", &adjusted_installed_cost);

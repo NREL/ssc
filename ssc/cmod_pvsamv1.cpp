@@ -344,7 +344,7 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "sd11par_Imp0",                                "Imp (STC)",                                               "A",      "",                                                                  "pvsamv1",       "module_model=4",                           "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "sd11par_Voc0",                                "Voc (STC)",                                               "V",      "",                                                                  "pvsamv1",       "module_model=4",                           "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "sd11par_Isc0",                                "Isc (STC)",                                               "A",      "",                                                                  "pvsamv1",       "module_model=4",                           "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "sd11par_alphaIsc",                            "Open circuit voltage temperature coefficient",            "A/C",    "",                                                                  "pvsamv1",       "module_model=4",                           "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "sd11par_alphaIsc",                            "Short curcuit current temperature coefficient",            "A/C",    "",                                                                  "pvsamv1",       "module_model=4",                           "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "sd11par_n",                                   "Diode nonideality factor",                                "",       "",                                                                  "pvsamv1",       "module_model=4",                           "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "sd11par_Il",                                  "Light current",                                           "A",      "",                                                                  "pvsamv1",       "module_model=4",                           "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "sd11par_Io",                                  "Saturation current",                                      "A",      "",                                                                  "pvsamv1",       "module_model=4",                           "",                              "" },
@@ -400,10 +400,7 @@ static var_info _cm_vtab_pvsamv1[] = {
 	
 	// battery storage and dispatch
 	{ SSC_INPUT,        SSC_NUMBER,      "en_batt",                                    "Enable battery storage model",                            "0/1",     "",                     "Battery",       "?=0",                                 "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "batt_replacement_option",                    "Enable battery replacement?",                             "0=none,1=capacity based,2=user schedule", "", "Battery", "?=0", "INTEGER,MIN=0,MAX=2", "" },
-	{ SSC_INPUT,        SSC_ARRAY,       "batt_replacement_schedule",                  "Battery bank replacements per year (user specified)",     "number/year", "", "Battery", "batt_replacement_option=2", "", "" },
-
-	{ SSC_INPUT,        SSC_ARRAY,       "load",                                       "Electricity load (year 1)",                         "kW", "", "Battery", "?", "", "" },
+	{ SSC_INPUT,        SSC_ARRAY,       "load",                                       "Electricity load (year 1)",                                "kW", "", "Battery", "?", "", "" },
 	
 	// NOTE:  other battery storage model inputs and outputs are defined in batt_common.h/batt_common.cpp
 	
@@ -644,14 +641,21 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_OUTPUT, SSC_NUMBER, "annual_dc_nameplate_loss", "DC nameplate loss", "kWh", "", "Annual (Year 1)", "*", "", "" },
 	{ SSC_OUTPUT, SSC_NUMBER, "annual_dc_optimizer_loss", "DC power optimizer loss", "kWh", "", "Annual (Year 1)", "*", "", "" },
 
-	// loss diagram energy outputs: nominal poa, nominal array at STC, net dc, net ac, system output annual_poa_nom, annual_dc_nominal, annual_dc_net, annual_ac_net, annual_energy
-	// loss diagram % losses: annual_poa_nom
-
+	// loss diagram energy outputs nominal poa, nominal array at STC, net dc, net ac, system output
+	// annual_poa_nom, annual_dc_nominal, annual_dc_net, annual_ac_net, annual_energy
+	// loss diagram % losses 
+	// annual_poa_nom
 	{ SSC_OUTPUT, SSC_NUMBER, "annual_poa_shading_loss_percent", "POA shading loss", "%", "", "Loss", "*", "", "" },
 	{ SSC_OUTPUT, SSC_NUMBER, "annual_poa_soiling_loss_percent", "POA soiling loss", "%", "", "Loss", "*", "", "" },
+	// annual_dc_nominal
 	{ SSC_OUTPUT, SSC_NUMBER, "annual_dc_module_loss_percent", "DC module modeled loss", "%", "", "Loss", "*", "", "" },
+	// annual_dc_gross
 	{ SSC_OUTPUT, SSC_NUMBER, "annual_dc_snow_loss_percent", "DC snow loss", "%", "", "Loss", "*", "", "" },
+	
+	
 	{ SSC_OUTPUT, SSC_NUMBER, "annual_dc_mppt_clip_loss_percent", "DC inverter MPPT clipping loss", "%", "", "Loss", "*", "", "" },
+
+	
 	{ SSC_OUTPUT, SSC_NUMBER, "annual_dc_mismatch_loss_percent", "DC mismatch loss", "%", "", "Loss", "*", "", "" },
 	{ SSC_OUTPUT, SSC_NUMBER, "annual_dc_diodes_loss_percent", "DC diodes and connections loss", "%", "", "Loss", "*", "", "" },
 	{ SSC_OUTPUT, SSC_NUMBER, "annual_dc_wiring_loss_percent", "DC wiring loss", "%", "", "Loss", "*", "", "" },
@@ -666,7 +670,6 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_OUTPUT, SSC_NUMBER, "annual_ac_inv_clip_loss_percent", "AC inverter power clipping loss", "%", "", "Loss", "*", "", "" },
 	{ SSC_OUTPUT, SSC_NUMBER, "annual_ac_inv_pso_loss_percent", "AC inverter power consumption loss", "%", "", "Loss", "*", "", "" },
 	{ SSC_OUTPUT, SSC_NUMBER, "annual_ac_inv_pnt_loss_percent", "AC inverter night tare loss", "%", "", "Loss", "*", "", "" },
-
 	// annual_ac_gross
 	{ SSC_OUTPUT, SSC_NUMBER, "annual_ac_inv_eff_loss_percent", "AC inverter efficiency loss", "%", "", "Loss", "*", "", "" },
 	{ SSC_OUTPUT, SSC_NUMBER, "annual_ac_wiring_loss_percent", "AC wiring loss", "%", "", "Loss", "*", "", "" },
@@ -674,6 +677,7 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_OUTPUT, SSC_NUMBER, "annual_ac_lifetime_loss_percent", "Lifetime daily AC loss- year 1", "%", "", "Loss", "*", "", "" },
 	{ SSC_OUTPUT, SSC_NUMBER, "annual_ac_battery_loss_percent", "AC connected battery loss- year 1", "%", "", "Loss", "*", "", "" },
 	{ SSC_OUTPUT, SSC_NUMBER, "annual_xfmr_loss_percent", "Transformer loss percent", "%", "", "Loss", "", "", "" },
+
 
 	// annual_ac_net
 	{ SSC_OUTPUT, SSC_NUMBER, "annual_ac_perf_adj_loss_percent", "AC performance adjustment loss", "%", "", "Loss", "*", "", "" },
@@ -715,6 +719,8 @@ static var_info _cm_vtab_pvsamv1[] = {
 	//miscellaneous outputs
 	{ SSC_OUTPUT,        SSC_NUMBER,      "ts_shift_hours",                            "Sun position time offset",   "hours",  "",  "Miscellaneous", "*",                       "",                          "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "nameplate_dc_rating",                        "System nameplate DC rating", "kW",     "",  "Miscellaneous",       "*",                    "",                              "" },
+
+
 
 // test outputs
 #ifdef SHADE_DB_OUTPUTS
@@ -765,6 +771,8 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "p_nonlinear_skyd1xf",                         "SS1x skydiff derate",                                          "",    "",                      "pvsamv1",       "*",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "p_nonlinear_gndd1xf",                         "SS1x gnddiff derate",                                          "",    "",                      "pvsamv1",       "*",                    "",                              "" },
 	*/
+
+
 
 var_info_invalid };
 
@@ -855,6 +863,14 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 		throw exec_error( "pvsamv1", util::format("invalid number of data records (%d): must be an integer multiple of 8760", (int)nrec ) );
 		
 	double ts_hour = 1.0/step_per_hour;
+
+	// lifetime control variables - used to set array sizes
+	int system_use_lifetime_output = as_integer("system_use_lifetime_output");
+	size_t nyears = 1;
+	if (system_use_lifetime_output == 1)
+		nyears = as_integer("analysis_period");
+	size_t nlifetime = nyears * nrec;
+
 	// shading database if necessary
 	smart_ptr<ShadeDB8_mpp>::ptr  p_shade_db; // (new ShadeDB8_mpp());
 
@@ -1469,12 +1485,13 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 	}
 	else if (inv_type == 2) // partload curve
 	{
+		plinv.Vdco = as_double("inv_pd_vdco");
 		plinv.Paco = as_double("inv_pd_paco");
 		plinv.Pdco = as_double("inv_pd_pdco");
 		plinv.Pntare = as_double("inv_pd_pnt");
 
-		std::vector<double> pl_pd = as_doublevec("inv_pd_partload");
-		std::vector<double> eff_pd = as_doublevec("inv_pd_efficiency");
+		std::vector<double> pl_pd = as_vector_double("inv_pd_partload");
+		std::vector<double> eff_pd = as_vector_double("inv_pd_efficiency");
 
 		plinv.Partload = pl_pd;
 		plinv.Efficiency = eff_pd;
@@ -1499,13 +1516,8 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 	}
 	ratedACOutput *= num_inverters;
 
-
-
-	// lifetime control variables - used to set array sizes
-	int system_use_lifetime_output = as_integer("system_use_lifetime_output");
-	size_t nyears = 1;
-	if (system_use_lifetime_output == 1)
-		nyears = as_integer("analysis_period");
+	// The shared inverter of the PV array and a tightly-coupled DC connected battery
+	std::unique_ptr<SharedInverter> sharedInverter(new SharedInverter(inv_type, num_inverters, &snlinv, &plinv));
 
 	// Warning workaround
 	static bool is32BitLifetime = (__ARCHBITS__ == 32 && system_use_lifetime_output);
@@ -1573,7 +1585,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 
 	//set up the calculated components of irradiance such that they aren't reported if they aren't assigned
 	//three possible calculated irradiance: gh, df, dn
-	ssc_number_t *p_irrad_calc[3] = {0, 0, 0};
+	ssc_number_t *p_irrad_calc[3] = { 0, 0, 0 };
 	if (radmode == DN_DF) p_irrad_calc[0] = allocate("gh_calc", nrec); //don't calculate global for POA models
 	if (radmode == DN_GH || radmode == POA_R || radmode == POA_P) p_irrad_calc[1] = allocate("df_calc", nrec);
 	if (radmode == GH_DF || radmode == POA_R || radmode == POA_P) p_irrad_calc[2] = allocate("dn_calc", nrec);
@@ -1709,7 +1721,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 		
 	ssc_number_t *p_dcsnowloss = allocate("dc_snow_loss", nrec);
 
-	ssc_number_t *p_inv_dc_voltage = allocate( "inverter_dc_voltage", nrec * nyears );
+	ssc_number_t *p_inv_dc_voltage = allocate( "inverter_dc_voltage", nlifetime);
 	ssc_number_t *p_inveff = allocate("inv_eff", nrec);
 	ssc_number_t *p_invcliploss = allocate( "inv_cliploss", nrec );
 	ssc_number_t *p_invmpptloss = allocate("dc_invmppt_loss", nrec);
@@ -1719,9 +1731,9 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 	ssc_number_t *p_ac_wiringloss = allocate("ac_wiring_loss", nrec);
 
 	// lifetime outputs
-	ssc_number_t *p_dcpwr = allocate("dc_net", nrec * nyears);
-	ssc_number_t *p_gen = allocate("gen", nrec * nyears);
-	ssc_number_t *p_load_full = allocate("load_full", nrec* nyears);
+	ssc_number_t *p_dcpwr = allocate("dc_net", nlifetime);
+	ssc_number_t *p_gen = allocate("gen", nlifetime);
+	std::vector<ssc_number_t> p_load_full; p_load_full.reserve(nlifetime);
 
 	//dc hourly adjustment factors
 	adjustment_factors dc_haf(this, "dc_adjust");
@@ -1735,35 +1747,31 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 		
 	// setup battery model
 	bool en_batt = as_boolean("en_batt");
-	int batt_replacement_option = as_integer("batt_replacement_option");
-	battstor batt(*this, en_batt, batt_replacement_option, nrec, ts_hour);
-		
-	int batt_dispatch = 0;
-	int ac_or_dc = 0;
-	bool look_ahead = false;
-	bool look_behind = false;
+	battstor batt(*this, en_batt, nrec, ts_hour);
+	batt.setSharedInverter(sharedInverter.get());
+	int batt_topology = (en_batt == true ? batt.batt_vars->batt_topology : 0);
+	std::vector<ssc_number_t> p_invcliploss_full;
+	p_invcliploss_full.reserve(nlifetime);
 
-	if (en_batt)
-	{
-		ac_or_dc = batt.batt_vars->batt_topology;
-		batt_dispatch = batt.batt_vars->batt_dispatch;
-		look_ahead = (batt_dispatch == dispatch_t::LOOK_AHEAD || batt_dispatch == dispatch_t::MAINTAIN_TARGET);
-		look_behind = batt_dispatch == dispatch_t::LOOK_BEHIND;
+	std::vector<ssc_number_t> p_pv_clipping_forecast;
+	std::vector<ssc_number_t> p_pv_dc_forecast;
+	std::vector<ssc_number_t> p_pv_dc_use;
+
+	if (is_assigned("batt_pv_clipping_forecast")) {
+		p_pv_clipping_forecast = as_vector_ssc_number_t("batt_pv_clipping_forecast");
+	}
+	if (is_assigned("batt_pv_dc_forecast")) {
+		p_pv_dc_forecast = as_vector_ssc_number_t("batt_pv_dc_forecast");
 	}
 		
-	// user replacement schedule
-	size_t count_batt_replacement = 0;
-	ssc_number_t *batt_replacement = 0;
-	if (batt_replacement_option==2)
-		batt_replacement = as_array("batt_replacement_schedule", &count_batt_replacement);
-		
+	// electric load - lifetime load data? 
 	double cur_load = 0.0;
 	size_t nload = 0;
-	ssc_number_t *p_load_in = 0;
-
+	std::vector<ssc_number_t> p_load_in;
 	if ( is_assigned( "load" ) )
 	{
-		p_load_in = as_array( "load", &nload );
+		p_load_in = as_vector_ssc_number_t("load");
+		nload = p_load_in.size();
 		if ( nload != nrec && nload != 8760 )
 			throw exec_error("pvsamv1", "electric load profile must have same number of values as weather file, or 8760");
 	}
@@ -1921,22 +1929,21 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 			// only hourly electric load, even
 			// if PV simulation is subhourly.  load is assumed constant over the hour.
 			// if no load profile supplied, load = 0
-			if (p_load_in != 0 && nload == 8760)
+			if (nload == 8760)
 				cur_load = p_load_in[hour];
 
 			for (size_t jj = 0; jj < step_per_hour; jj++)
 			{
-
 				// electric load is subhourly
 				// if no load profile supplied, load = 0
-				if (p_load_in != 0 && nload == nrec)
+				if (nload == nrec)
 					cur_load = p_load_in[hour*step_per_hour + jj];
 
 				// log cur_load to check both hourly and sub hourly load data
 				// load data over entrie lifetime period not currently supported.
 				//					log(util::format("year=%d, hour=%d, step per hour=%d, load=%g",
 				//						iyear, hour, jj, cur_load), SSC_WARNING, (float)idx);
-				p_load_full[idx] = (ssc_number_t)cur_load;
+				p_load_full.push_back((ssc_number_t)cur_load);
 
 				if (!wdprov->read(&wf))
 					throw exec_error("pvsamv1", "could not read data line " + util::to_string((int)(idx + 1)) + " in weather file");
@@ -2659,13 +2666,28 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 					p_poashaded_ts_total[idx] = (ssc_number_t)(ts_accum_poa_shaded * util::watt_to_kilowatt); // kW
 					p_poaeff_ts_total[idx] = (ssc_number_t)(ts_accum_poa_eff * util::watt_to_kilowatt); // kW
 					p_poabeameff_ts_total[idx] = (ssc_number_t)(ts_accum_poa_beam_eff * util::watt_to_kilowatt); // kW
-
-
 					p_invmpptloss[idx] = (ssc_number_t)(mppt_clip_window * util::watt_to_kilowatt);
-
 				}
+				
 				p_inv_dc_voltage[idx] = (ssc_number_t)dc_string_voltage;
 				p_dcpwr[idx] = (ssc_number_t)(dcpwr_net * util::watt_to_kilowatt);
+
+				// Predict clipping for DC battery controller
+				double cliploss = 0; 
+				double dcpwr = p_dcpwr[idx];
+
+				if (p_pv_dc_forecast.size() > 1 && p_pv_dc_forecast.size() > idx % (8760 * step_per_hour)) {
+					dcpwr = p_pv_dc_forecast[idx % (8760 * step_per_hour)];
+				}
+				p_pv_dc_use.push_back(static_cast<ssc_number_t>(dcpwr));
+
+ 				sharedInverter->calculateACPower(dcpwr * util::kilowatt_to_watt, dc_string_voltage);
+				 
+				if (p_pv_clipping_forecast.size() > 1 && p_pv_clipping_forecast.size() > idx % (8760 * step_per_hour)) {
+					cliploss = p_pv_clipping_forecast[idx % (8760 * step_per_hour)] * util::kilowatt_to_watt;
+				}
+
+				p_invcliploss_full.push_back(static_cast<ssc_number_t>(sharedInverter->powerClipLoss_kW));
 
 				idx++;
 			}
@@ -2675,14 +2697,14 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 	}
 
 	// Initialize DC battery predictive controller
-	if (en_batt && (ac_or_dc == charge_controller::DC_CONNECTED) && (look_ahead || look_behind))
-		batt.initialize_automated_dispatch(p_dcpwr, p_load_full);
+	if (en_batt && (batt_topology == ChargeController::DC_CONNECTED))
+		batt.initialize_automated_dispatch(util::array_to_vector<ssc_number_t>(p_dcpwr, nlifetime), p_load_full, p_invcliploss_full);
 
 	/* *********************************************************************************************
 	PV AC calculation
 	*********************************************************************************************** */
 	idx = 0; ireport = 0; ireplast = 0; percent_baseline = percent_complete;
-	double annual_dc_power_before_battery = 0, annual_dc_power_after_battery = 0;
+	double annual_battery_loss = 0;
 	for (size_t iyear = 0; iyear < nyears; iyear++)
 	{
 		for (hour = 0; hour < 8760; hour++)
@@ -2701,104 +2723,52 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 			{
 
 				// Battery replacement
-				if (en_batt && (ac_or_dc == charge_controller::DC_CONNECTED))
+				if (en_batt && (batt_topology == ChargeController::DC_CONNECTED))
 				{
 					batt.initialize_time(iyear, hour, jj);
-					batt.check_replacement_schedule(batt_replacement_option, count_batt_replacement, batt_replacement);
+					batt.check_replacement_schedule();
 				}
 
-				// Iterative loop over DC battery
-				size_t dc_count = 0; bool iterate_dc = false;
-				double dcpwr_net = 0, acpwr_gross = 0, aceff = 0, pntloss = 0, psoloss = 0, cliploss = 0, ac_wiringloss = 0;
-				do {
+				double dcpwr_net = 0, acpwr_gross = 0, ac_wiringloss = 0;
+				cur_load = p_load_full[idx];
+				dcpwr_net = util::kilowatt_to_watt * p_dcpwr[idx];
+				double dc_string_voltage = p_inv_dc_voltage[idx];
 
-					cur_load = p_load_full[idx];
-					dcpwr_net = util::kilowatt_to_watt * p_dcpwr[idx];
-					double dc_string_voltage = p_inv_dc_voltage[idx];
+				// DC Connected Battery
+				if (en_batt && (batt_topology == ChargeController::DC_CONNECTED))
+				{
+					// Compute PV clipping before adding battery
+					sharedInverter->calculateACPower(dcpwr_net, dc_string_voltage);
 
-					// DC Connected Battery
-					bool battery_charging = false;
-					if (en_batt && (ac_or_dc == charge_controller::DC_CONNECTED))
-					{
-						if (iyear == 0 && dc_count == 0)
-							annual_dc_power_before_battery += p_dcpwr[idx] * ts_hour;
-
-						batt.advance(*this, dcpwr_net*util::watt_to_kilowatt, cur_load);
-						dcpwr_net = util::kilowatt_to_watt * batt.outGenPower[idx];
-
-						// inverter can't handle negative dcpwr
-						if (dcpwr_net < 0)
-						{
-							if (batt.outBatteryPower[idx] < 0)
-							{
-								battery_charging = true;
-								dcpwr_net = fabs(dcpwr_net);
-							}
-							else
-								dcpwr_net = 0;
-						}
-					}
+					// Run PV plus battery through sharedInverter, returns AC power
+					batt.advance(*this, dcpwr_net*util::watt_to_kilowatt, dc_string_voltage, cur_load, sharedInverter->powerClipLoss_kW);
+					acpwr_gross = batt.outGenPower[idx];
+				}
+				else
+				{
 					// inverter: runs at all hours of the day, even if no DC power.  important
 					// for capturing tare losses			
-					acpwr_gross = 0, aceff = 0, pntloss = 0, psoloss = 0, cliploss = 0, ac_wiringloss = 0;
-					if ((inv_type == 0) || (inv_type == 1) || (inv_type == 3))
-					{
-						double _par, _plr;
-						snlinv.acpower(dcpwr_net / num_inverters, dc_string_voltage,
-							&acpwr_gross, &_par, &_plr, &aceff, &cliploss, &psoloss, &pntloss);
-
-						acpwr_gross *= num_inverters;
-						cliploss *= num_inverters;
-						psoloss *= num_inverters;
-						pntloss *= num_inverters;
-						aceff *= 100;
-					}
-					else if (inv_type == 2) // partload
-					{
-						double _par, _plr;
-						plinv.acpower(dcpwr_net / num_inverters, &acpwr_gross, &_par, &_plr, &aceff, &cliploss, &pntloss);
-						acpwr_gross *= num_inverters;
-						cliploss *= num_inverters;
-						psoloss *= num_inverters;
-						pntloss *= num_inverters;
-						aceff *= 100;
-					}
-
-					// if dc connected battery, update post-inverted quantities
-					if (en_batt && (ac_or_dc == charge_controller::DC_CONNECTED))
-					{
-						if (battery_charging)
-						{
-							// change sign back now that is inverted
-							dcpwr_net *= -1;
-							acpwr_gross *= -1;
-						}
-						batt.update_post_inverted(*this, acpwr_gross*util::watt_to_kilowatt);
-						iterate_dc = batt.check_iterate(dc_count);
-						acpwr_gross = batt.outGenPower[idx] * util::kilowatt_to_watt;
-					}
-					dc_count++;
-				} while (iterate_dc);
-
+					sharedInverter->calculateACPower(dcpwr_net, dc_string_voltage);
+					acpwr_gross = sharedInverter->powerAC_kW;
+				}
+		
+				
 				ac_wiringloss = fabs(acpwr_gross) * ac_loss_percent * 0.01;
 
 				// accumulate first year annual energy
 				if (iyear == 0)
-				{
-					if (en_batt && (ac_or_dc == charge_controller::DC_CONNECTED))
-							annual_dc_power_after_battery += batt.outGenPower[idx] * ts_hour;
-
-					annual_ac_gross += acpwr_gross * util::watt_to_kilowatt * ts_hour;
-					p_inveff[idx] = (ssc_number_t)(aceff);
-					p_invcliploss[idx] = (ssc_number_t)(cliploss * util::watt_to_kilowatt);
-					p_invpsoloss[idx] = (ssc_number_t)(psoloss * util::watt_to_kilowatt);
-					p_invpntloss[idx] = (ssc_number_t)(pntloss * util::watt_to_kilowatt);
-					p_ac_wiringloss[idx] = (ssc_number_t)(ac_wiringloss * util::watt_to_kilowatt);
+				{ 
+					annual_ac_gross += acpwr_gross * ts_hour;
+					p_inveff[idx] = (ssc_number_t)(sharedInverter->efficiencyAC);
+					p_invcliploss[idx] = (ssc_number_t)(sharedInverter->powerClipLoss_kW);
+					p_invpsoloss[idx] = (ssc_number_t)(sharedInverter->powerConsumptionLoss_kW);
+					p_invpntloss[idx] = (ssc_number_t)(sharedInverter->powerNightLoss_kW);
+					p_ac_wiringloss[idx] = (ssc_number_t)(ac_wiringloss);
 				}
-				p_dcpwr[idx] = (ssc_number_t)(dcpwr_net * util::watt_to_kilowatt);
+				p_dcpwr[idx] = (ssc_number_t)(sharedInverter->powerDC_kW);
 					
 				//ac losses should always be subtracted, this means you can't just multiply by the derate because at nighttime it will add power
-				p_gen[idx] = (ssc_number_t)((acpwr_gross - ac_wiringloss) * util::watt_to_kilowatt);
+				p_gen[idx] = (ssc_number_t)(acpwr_gross - ac_wiringloss);
 
 				// apply transformer loss
 				// load loss
@@ -2829,11 +2799,21 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 				idx++;
 			}
 		}
+
+		if (iyear == 0)
+		{
+			int year_idx = 0;
+			if (system_use_lifetime_output)
+				year_idx = 1;
+			// accumulate DC power after the battery
+			if (en_batt && (batt_topology == ChargeController::DC_CONNECTED))
+				annual_battery_loss = batt.outAnnualEnergyLoss[year_idx];
+		}
 	}
 
 	// Initialize AC connected battery predictive control
-	if (en_batt && ac_or_dc == charge_controller::AC_CONNECTED && (look_ahead || look_behind))
-		batt.initialize_automated_dispatch(p_gen, p_load_full);
+	if (en_batt && batt_topology == ChargeController::AC_CONNECTED)
+		batt.initialize_automated_dispatch(util::array_to_vector<ssc_number_t>(p_gen, nlifetime), p_load_full);
 
 	/* *********************************************************************************************
 	Post PV AC 
@@ -2859,11 +2839,11 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 				if (iyear == 0)
 					annual_energy_pre_battery += p_gen[idx] * ts_hour;
 
-				if (en_batt && ac_or_dc == charge_controller::AC_CONNECTED)
+				if (en_batt && batt_topology == ChargeController::AC_CONNECTED)
 				{
 					batt.initialize_time(iyear, hour, jj);
-					batt.check_replacement_schedule(batt_replacement_option, count_batt_replacement, batt_replacement);
-					batt.advance(*this, p_gen[idx], p_load_full[idx]);
+					batt.check_replacement_schedule();
+					batt.advance(*this, p_gen[idx], 0, p_load_full[idx]);
 					p_gen[idx] = batt.outGenPower[idx];
 				}
 
@@ -3134,7 +3114,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 	assign("annual_dc_perf_adj_loss_percent", var_data((ssc_number_t)percent));
 
 	percent = 0;
-	if (annual_dc_gross > 0) percent = 100 * (annual_dc_power_before_battery - annual_dc_power_after_battery) / annual_dc_gross;
+	if (annual_dc_gross > 0) percent = 100 * annual_battery_loss / annual_dc_gross;
 	assign("annual_dc_battery_loss_percent", var_data((ssc_number_t)percent));
 
 	percent = 0;
@@ -3238,6 +3218,12 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 	if (nameplate > 0) kWhperkW = annual_energy / nameplate;
 	assign("capacity_factor", var_data((ssc_number_t)(kWhperkW / 87.6)));
 	assign("kwh_per_kw", var_data((ssc_number_t)kWhperkW));
+
+	if (is_assigned("load"))
+	{
+		p_load_in = as_vector_ssc_number_t("load");
+		nload = p_load_in.size();
+	}
 }
 	
 double cm_pvsamv1::module_eff(int mod_type)

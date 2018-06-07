@@ -27,6 +27,7 @@
     <ClInclude Include="..\shared\6par_solve.h" />
     <ClInclude Include="..\shared\lib_battery.h" />
     <ClInclude Include="..\shared\lib_battery_dispatch.h" />
+    <ClInclude Include="..\shared\lib_battery_powerflow.h" />
     <ClInclude Include="..\shared\lib_cec6par.h" />
     <ClInclude Include="..\shared\lib_financial.h" />
     <ClInclude Include="..\shared\lib_geothermal.h" />
@@ -42,8 +43,10 @@
     <ClInclude Include="..\shared\lib_pvwatts.h" />
     <ClInclude Include="..\shared\lib_pv_shade_loss_mpp.h" />
     <ClInclude Include="..\shared\lib_sandia.h" />
+    <ClInclude Include="..\shared\lib_shared_inverter.h" />
     <ClInclude Include="..\shared\lib_snowmodel.h" />
     <ClInclude Include="..\shared\lib_util.h" />
+    <ClInclude Include="..\shared\lib_utility_rate.h" />
     <ClInclude Include="..\shared\lib_weatherfile.h" />
     <ClInclude Include="..\shared\lib_windfile.h" />
     <ClInclude Include="..\shared\lib_windwakemodel.h" />
@@ -56,6 +59,7 @@
   <ItemGroup>
     <ClCompile Include="..\shared\lib_battery.cpp" />
     <ClCompile Include="..\shared\lib_battery_dispatch.cpp" />
+    <ClCompile Include="..\shared\lib_battery_powerflow.cpp" />
     <ClCompile Include="..\shared\lib_cec6par.cpp" />
     <ClCompile Include="..\shared\lib_financial.cpp" />
     <ClCompile Include="..\shared\lib_geothermal.cpp" />
@@ -71,8 +75,10 @@
     <ClCompile Include="..\shared\lib_pvwatts.cpp" />
     <ClCompile Include="..\shared\lib_pv_shade_loss_mpp.cpp" />
     <ClCompile Include="..\shared\lib_sandia.cpp" />
+    <ClCompile Include="..\shared\lib_shared_inverter.cpp" />
     <ClCompile Include="..\shared\lib_snowmodel.cpp" />
     <ClCompile Include="..\shared\lib_util.cpp" />
+    <ClCompile Include="..\shared\lib_utility_rate.cpp" />
     <ClCompile Include="..\shared\lib_weatherfile.cpp" />
     <ClCompile Include="..\shared\lib_windfile.cpp" />
     <ClCompile Include="..\shared\lib_windwakemodel.cpp" />
