@@ -47,6 +47,9 @@
 *  THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *******************************************************************************************************/
 
+#ifndef __6_PAR_JACOBIAN_H__
+#define __6_PAR_JACOBIAN_H__
+
 template< typename Real, typename F, int n, int m >
 void jacobian( Real x[n], Real f[m], Real J[n][m], F &func, Real epsrel )
 {
@@ -81,3 +84,4 @@ void jacobian( Real x[n], Real f[m], Real J[n][m], F &func, Real epsrel )
 			J[i][j] = ( f1[i] - f[i] ) / dx;
 	}
 }
+#endif

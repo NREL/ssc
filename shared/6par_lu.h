@@ -47,6 +47,8 @@
 *  THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *******************************************************************************************************/
 
+#ifndef __6_PAR_LU_H__
+#define __6_PAR_LU_H__
 
 template< typename Real, int n >
 bool lu_decomp( const Real a[n][n], 
@@ -157,3 +159,5 @@ void lu_solve( const Real lu[n][n], const int permute[n],
 		x[i]=sum/lu[i][i];
 	}
 }
+
+#endif

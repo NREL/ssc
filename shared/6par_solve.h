@@ -47,6 +47,11 @@
 *  THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *******************************************************************************************************/
 
+#ifndef __6_PAR_SOLVE_H__
+#define __6_PAR_SOLVE_H__
+
+#include "6par_newton.h"
+
 class notification_interface
 {
 public:
@@ -551,3 +556,5 @@ public:
 
 	
 };
+
+#endif

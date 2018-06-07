@@ -47,6 +47,13 @@
 *  THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *******************************************************************************************************/
 
+#ifndef __6_PAR_NEWTON_H__
+#define __6_PAR_NEWTON_H__
+
+#include "6par_search.h"
+#include "6par_jacobian.h"
+#include "6par_lu.h"
+#include "6par_gamma.h"
 
 template< typename Real, typename F, int n >
 int newton( Real x[n], Real residual[n], bool &check, F &func, 
@@ -148,3 +155,5 @@ int newton( Real x[n], Real residual[n], bool &check, F &func,
 	
 	return -1;
 }
+
+#endif

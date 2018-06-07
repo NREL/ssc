@@ -6,8 +6,12 @@
 #include <math.h>
 #include <string>
 
+#include "6par_solve.h"
+#include "lib_cec6par.h"
+#include "lib_iec61853.h"
 #include "lib_irradproc.h"
 #include "lib_pvshade.h"
+#include "lib_sandia.h"
 #include "lib_snowmodel.h"
 #include "lib_util.h"
 
@@ -269,8 +273,10 @@ struct PVSystem_IO
 */
 struct Subarray_IO
 {
+public:
+
 	/// Construct the Subarray_IO structure from the compute module input. 
-	Subarray_IO(compute_module* cm, std::string cmName, size_t subarrayNumber, Module_IO * ModuleIO);
+	Subarray_IO(compute_module* cm, std::string cmName, size_t subarrayNumber);
 
 	/// Allocate the Subarray_IO outputs
 	void AllocateOutputs(compute_module* cm);
@@ -283,10 +289,12 @@ struct Subarray_IO
 	enum tracking { FIXED_TILT, SINGLE_AXIS, TWO_AXIS, AZIMUTH_AXIS, SEASONAL_TILT};
 	enum self_shading {NO_SHADING, NON_LINEAR_SHADING, LINEAR_SHADING};
 
+	// Managed by Subarray
+	std::unique_ptr<Module_IO> Module;/// The PV module for this subarray
+
 	// Inputs
 	bool enable;						/// Enable the subarray
 	size_t nStrings;					/// Number of strings in the subarray
-	Module_IO * Module;					/// The PV module for this subarray
 	std::vector<double> monthlySoiling; /// The soiling loss by month [%]
 	double dcLoss;						/// The DC loss due to mismatch, diodes, wiring, tracking, optimizers [%]
 	double groundCoverageRatio;			/// The ground coverage ratio [0 - 1]
@@ -350,18 +358,39 @@ struct Module_IO
 {
 public:
 	/// Construct the Module_IO structure from the compute module input. 
-	Module_IO(compute_module* cm, std::string cmName);
+	Module_IO(compute_module* cm, std::string cmName, double dcLoss);
 
-	/// Allocate the Module_IO outputs
-	void AllocateOutputs(compute_module* cm);
+	/// Setup the Nominal Operating Cell Temperature (NOCT) model
+	void setupNOCTModel(compute_module* cm, const std::string &prefix);
 
 	/// Assign outputs from member data after the PV Model has run 
 	void AssignOutputs(compute_module* cm);
 
-	enum moduleModelList {MODULE_SIMPLE_EFFICIENCY, MODULE_CEC_DATABASE, MODULE_CEC_USER_INPUT, MODULE_SANDIA, MODULE_IEC61853};
+	enum moduleTypeList {MODULE_SIMPLE_EFFICIENCY, MODULE_CEC_DATABASE, MODULE_CEC_USER_INPUT, MODULE_SANDIA, MODULE_IEC61853};
+	enum mountingSpecificConfigurationList {NONE, RACK_MOUNTING, FLUSH_MOUNTING, INTEGRATED_MOUNTING, GAP_MOUNTING};
 
 	int moduleType;						/// The PV module model selected
+	bool enableMismatchVoltageCalc;		/// Whether or not to compute string level subarray mismatch
+	double referenceArea;				/// The module area [m2]
+	double moduleWattsSTC;				/// The module energy output at STC [W]
+	double voltageMaxPower;				/// The voltage at max power [V]
+	double selfShadingFillFactor;		/// Self shading fill factor
+	bool isConcentratingPV;				/// If the sandia model is being used for CPV
 
+
+	bool simpleEfficiencyForceNoPOA;	/// Flag to avoid calling as_integer(...) repeatedly later on
+	bool mountingSpecificCellTemperatureForceNoPOA;
+
+	spe_module_t simpleEfficiencyModel;
+	cec6par_module_t cecModel;
+	noct_celltemp_t nominalOperatingCellTemp;
+	mcsp_celltemp_t mountingSpecificCellTemp;
+	sandia_module_t sandiaModel;
+	sandia_celltemp_t sandiaCellTemp;
+	iec61853_module_t elevenParamSingleDiodeModel; 
+	pvcelltemp_t *cellTempModel;
+	pvmodule_t *moduleModel;
 };
 
 #endif
+

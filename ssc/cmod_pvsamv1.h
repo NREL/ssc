@@ -91,9 +91,6 @@ public:
 	//! PV model class constructor
 	cm_pvsamv1();
 
-	//! Setup the Nominal Operating Cell Temperature (NOCT) model
-	void setup_noct_model(const std::string &prefix, noct_celltemp_t &noct_tc);
-	
 	//! Run the PV model
 	void exec() throw (compute_module::general_error);
 	

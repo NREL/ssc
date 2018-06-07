@@ -797,23 +797,6 @@ cm_pvsamv1::cm_pvsamv1()
 	add_var_info(vtab_battery_outputs);
 }
 
-void cm_pvsamv1::setup_noct_model( const std::string &prefix, noct_celltemp_t &noct_tc )
-{		
-	noct_tc.Tnoct = as_double(prefix+"_tnoct");
-	noct_tc.ffv_wind = 0.51; // less than 22ft high (1 story)
-	if ( as_integer(prefix+"_mounting") == 1 ) noct_tc.ffv_wind = 0.61;  // greater than 22ft high (2 story)
-		
-	int standoff = as_integer(prefix+"_standoff"); // bipv,3.5in,2.5-3.5in,1.5-2.5in,0.5-1.5in,ground/rack
-	noct_tc.standoff_tnoct_adj = 0;
-	switch( standoff )
-	{
-	case 2: noct_tc.standoff_tnoct_adj = 2; break; // between 2.5 and 3.5 inches
-	case 3: noct_tc.standoff_tnoct_adj = 6; break; // between 1.5 and 2.5 inches
-	case 4: noct_tc.standoff_tnoct_adj = 11; break; // between 0.5 and 1.5 inches
-	case 5: noct_tc.standoff_tnoct_adj = 18; break; // less than 0.5 inches
-	}
-}
-	
 void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 {
 
@@ -823,7 +806,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 	Irradiance_IO * Irradiance = IOManager->getIrradianceIO();
 	std::vector<Subarray_IO *> Subarrays = IOManager->getSubarrays();
 	PVSystem_IO * PVSystem = IOManager->getPVSystemIO();
-
+	
 	size_t nrec = Simulation->numberOfWeatherFileRecords;
 	size_t nlifetime = Simulation->numberOfSteps;
 	size_t nyears = Simulation->numberOfYears;
@@ -845,383 +828,23 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 	double aspect_ratio = Subarrays[0]->moduleAspectRatio;
 	size_t num_subarrays = PVSystem->numberOfSubarrays;
 	int mod_type = Subarrays[0]->Module->moduleType;
+	double ref_area_m2 = Subarrays[0]->Module->referenceArea;
+	double module_watts_stc = Subarrays[0]->Module->moduleWattsSTC;
+	bool enable_mismatch_vmax_calc = Subarrays[0]->Module->enableMismatchVoltageCalc;
 	int modules_per_string = PVSystem->modulesPerString;
 	int strings_in_parallel = PVSystem->stringsInParallel;
 	int num_inverters = PVSystem->numberOfInverters;
 
 	double annual_snow_loss = 0;
-		
-	spe_module_t spe;
-	sandia_celltemp_t spe_tc;
-
-	cec6par_module_t cec;
-	noct_celltemp_t noct_tc;
-	mcsp_celltemp_t mcsp_tc;
-
-	sandia_module_t snl;
-	sandia_celltemp_t snl_tc;
-
-	iec61853_module_t sd11; // 11 parameter single diode, uses noct_tc from above
-
-	pvcelltemp_t *celltemp_model = 0;
-	pvmodule_t *module_model = 0;		
-
-	double ref_area_m2 = 0;
-
-	double self_shading_fill_factor = 0;
-	double ssVmp = 0;
-
-	double module_watts_stc = -1.0;
-
-	//"0=spe,1=cec,2=6par_user,3=snl,4=sd11-iec61853"
-	bool enable_mismatch_vmax_calc = as_boolean("enable_mismatch_vmax_calc");
-	if (enable_mismatch_vmax_calc 
-		&& mod_type != 1 && mod_type != 2 && mod_type != 4 )
-		throw exec_error( "pvsamv1", "String level subarray mismatch can only be calculated using a single-diode based module model.");
-
-
-	bool speForceNoPOA = false;		// SEV 151002 - Set these flags to avoid calling as_integer(...) repeatedly later on
-	bool mcspForceNoPOA = false;    //   These flags are used to ensure that the usePOAFromWF flag for each sub array will be force
-									//   to false
-
-	if ( mod_type == 0 )
-	{
-		spe.VmpNominal = as_double("spe_vmp");
-		spe.VocNominal = as_double("spe_voc");
-		spe.Area = as_double("spe_area");
-		ref_area_m2 = spe.Area;
-		for (int i=0;i<5;i++)
-		{
-			spe.Rad[i] = as_double( util::format("spe_rad%d", i));
-			spe.Eff[i] = 0.01*as_double( util::format("spe_eff%d", i));
-			if (i > 0 && spe.Rad[i] <= spe.Rad[i-1])
-				throw exec_error( "pvsamv1", "SPE model radiation levels must increase monotonically");
-		}
-		
-		spe.Gamma = as_double("spe_temp_coeff");
-		spe.Reference = as_integer("spe_reference");
-		
-		switch(as_integer("spe_module_structure"))
-		{
-		case 0: //glass/cell/polymer sheet - open rack
-			spe_tc.a = -3.56;
-			spe_tc.b = -0.0750;
-			spe_tc.DT0 = 3;
-			break;
-		case 1: //glass/cell/glass - open rack
-			spe_tc.a = -3.47;
-			spe_tc.b = -0.0594;
-			spe_tc.DT0 = 3;
-			break;
-		case 2: //polymer/thin film/steel - open rack
-			spe_tc.a = -3.58;
-			spe_tc.b = -0.113;
-			spe_tc.DT0 = 3;
-			break;
-		case 3: //Insulated back (building-integrated PV)
-			spe_tc.a = -2.81;
-			spe_tc.b = -0.0455;
-			spe_tc.DT0 = 0;
-			break;
-		case 4: //close roof mount
-			spe_tc.a = -2.98;
-			spe_tc.b = -0.0471;
-			spe_tc.DT0 = 1;
-			break;
-		case 5: //user defined
-			spe_tc.a = as_double("spe_a");
-			spe_tc.b = as_double("spe_b");
-			spe_tc.DT0 = as_double("spe_dT");
-			break;
-		default:
-			throw exec_error("pvsamv1", "invalid spe module structure and mounting");
-		}
-
-		spe.fd = as_double("spe_fd");
-		spe_tc.fd = spe.fd;
-			
-		if(spe.fd < 1.0)
-			speForceNoPOA = true;
-
-		celltemp_model = &spe_tc;
-		module_model = &spe;
-		module_watts_stc = spe.WattsStc();
-		ssVmp = spe.VmpNominal;
-	}
-	else if ( mod_type == 1 )
-	{
-		cec.Area = as_double("cec_area");
-		ref_area_m2 = cec.Area;
-		cec.Vmp = as_double("cec_v_mp_ref");
-		cec.Imp = as_double("cec_i_mp_ref");
-		cec.Voc = as_double("cec_v_oc_ref");
-		cec.Isc = as_double("cec_i_sc_ref");
-		cec.alpha_isc = as_double("cec_alpha_sc");
-		cec.beta_voc = as_double("cec_beta_oc");
-		cec.a = as_double("cec_a_ref");
-		cec.Il = as_double("cec_i_l_ref");
-		cec.Io = as_double("cec_i_o_ref");
-		cec.Rs = as_double("cec_r_s");
-		cec.Rsh = as_double("cec_r_sh_ref");
-		cec.Adj = as_double("cec_adjust");
-
-		self_shading_fill_factor = cec.Vmp * cec.Imp / cec.Voc / cec.Isc;
-		ssVmp = cec.Vmp;
-
-		if ( as_integer("cec_temp_corr_mode") == 0 )
-		{
-			noct_tc.Tnoct = as_double("cec_t_noct");
-			int standoff = as_integer("cec_standoff");
-			noct_tc.standoff_tnoct_adj = 0;
-			switch(standoff)
-			{
-			case 2: noct_tc.standoff_tnoct_adj = 2; break; // between 2.5 and 3.5 inches
-			case 3: noct_tc.standoff_tnoct_adj = 6; break; // between 1.5 and 2.5 inches
-			case 4: noct_tc.standoff_tnoct_adj = 11; break; // between 0.5 and 1.5 inches
-			case 5: noct_tc.standoff_tnoct_adj = 18; break; // less than 0.5 inches
-				// note: all others, standoff_tnoct_adj = 0;
-			}
-
-			int height = as_integer("cec_height");
-			noct_tc.ffv_wind = 0.51;
-			if ( height == 1 )
-				noct_tc.ffv_wind = 0.61;
-
-			celltemp_model = &noct_tc;
-		}
-		else
-		{
-			/*	int MC; // Mounting configuration (1=rack,2=flush,3=integrated,4=gap)
-				int HTD; // Heat transfer dimension (1=Module,2=Array)
-				int MSO; // Mounting structure orientation (1=does not impede flow beneath, 2=vertical supports, 3=horizontal supports)
-				int Nrows, Ncols; // number of modules in rows and columns, when using array heat transfer dimensions
-				double Length; // module length, along horizontal dimension, (m)
-				double Width; // module width, along vertical dimension, (m)
-				double Wgap;  // gap width spacing (m)
-				double TbackInteg; */
-
-			mcsp_tc.DcDerate = Subarrays[0]->dcLoss;  // TODO dc_derate needs to updated for each subarray
-			mcsp_tc.MC = as_integer("cec_mounting_config")+1;
-			mcsp_tc.HTD = as_integer("cec_heat_transfer")+1;
-			mcsp_tc.MSO = as_integer("cec_mounting_orientation")+1;
-			mcsp_tc.Wgap = as_double("cec_gap_spacing");
-			mcsp_tc.Length = as_double("cec_module_length");
-			mcsp_tc.Width = as_double("cec_module_width");
-			mcsp_tc.Nrows = (int)as_integer("cec_array_rows");
-			mcsp_tc.Ncols = (int)as_integer("cec_array_cols");
-			mcsp_tc.TbackInteg = as_double("cec_backside_temp");
-
-			celltemp_model = &mcsp_tc;
-			mcspForceNoPOA = true;
-		}
-			
-		module_model = &cec;
-		module_watts_stc = cec.Vmp * cec.Imp;
-	}
-	else if ( mod_type == 3 )
-	{
-		snl.A0 = as_double("snl_a0");
-		snl.A1 = as_double("snl_a1");
-		snl.A2 = as_double("snl_a2");
-		snl.A3 = as_double("snl_a3");
-		snl.A4 = as_double("snl_a4");
-		snl.aImp = as_double("snl_aimp");
-		snl.aIsc = as_double("snl_aisc");
-		snl.Area = as_double("snl_area");
-		ref_area_m2 = snl.Area;
-		snl.B0 = as_double("snl_b0");
-		snl.B1 = as_double("snl_b1");
-		snl.B2 = as_double("snl_b2");
-		snl.B3 = as_double("snl_b3");
-		snl.B4 = as_double("snl_b4");
-		snl.B5 = as_double("snl_b5");
-		snl.BVmp0 = as_double("snl_bvmpo");
-		snl.BVoc0 = as_double("snl_bvoco");
-		snl.C0 = as_double("snl_c0");
-		snl.C1 = as_double("snl_c1");
-		snl.C2 = as_double("snl_c2");
-		snl.C3 = as_double("snl_c3");
-		snl.C4 = as_double("snl_c4");
-		snl.C5 = as_double("snl_c5");
-		snl.C6 = as_double("snl_c6");
-		snl.C7 = as_double("snl_c7");
-		snl.fd = as_double("snl_fd");
-		snl.Imp0 = as_double("snl_impo");
-		snl.Isc0 = as_double("snl_isco");
-		snl.Ix0 = as_double("snl_ixo");
-		snl.Ixx0 = as_double("snl_ixxo");
-		snl.mBVmp = as_double("snl_mbvmp");
-		snl.mBVoc = as_double("snl_mbvoc");
-		snl.DiodeFactor = as_double("snl_n");
-		snl.NcellSer = as_integer("snl_series_cells");
-		snl.Vmp0 = as_double("snl_vmpo");
-		snl.Voc0 = as_double("snl_voco");
-
-		self_shading_fill_factor = snl.Vmp0 * snl.Imp0 / snl.Voc0 / snl.Isc0;
-		ssVmp = snl.Vmp0;
-
-		// by default, use database values
-		double A = as_double("snl_a");
-		double B = as_double("snl_b");
-		double DT = as_double("snl_dtc");
 	
-		switch(as_integer("snl_module_structure"))
-		{
-		case 1: //glass/cell/polymer sheet - open rack
-			A = -3.56;
-			B = -0.0750;
-			DT = 3;
-			break;
-		case 2: //glass/cell/glass - open rack
-			A = -3.47;
-			B = -0.0594;
-			DT = 3;
-			break;
-		case 3: //polymer/thin film/steel - open rack
-			A = -3.58;
-			B = -0.113;
-			DT = 3;
-			break;
-		case 4: //Insulated back (building-integrated PV)
-			A = -2.81;
-			B = -0.0455;
-			DT = 0;
-			break;
-		case 5: //close roof mount
-			A = -2.98;
-			B = -0.0471;
-			DT = 1;
-			break;
-		case 6: //user defined
-			A = as_double("snl_ref_a");
-			B = as_double("snl_ref_b");
-			DT = as_double("snl_ref_dT");
-			break;
-
-		default:
-			break;
-		}
-		
-		snl_tc.a = A;
-		snl_tc.b = B;
-		snl_tc.DT0 = DT;
-		snl_tc.fd = snl.fd;
-			
-		celltemp_model = &snl_tc;
-		module_model = &snl;
-		module_watts_stc = snl.Vmp0 * snl.Imp0;
-	}
-	else if ( mod_type == 2 )
-	{
-		// calculate the 6 parameters
-		// adjust TNOCT and FFV_wind
-
-		int tech_id = module6par::monoSi;
-		int type = as_integer("6par_celltech"); // "monoSi,multiSi,CdTe,CIS,CIGS,Amorphous"
-		switch( type )
-		{
-		case 0: tech_id = module6par::monoSi; break;
-		case 1: tech_id = module6par::multiSi; break;
-		case 2: tech_id = module6par::CdTe; break;
-		case 3: tech_id = module6par::CIS; break;
-		case 4: tech_id = module6par::CIGS; break;
-		case 5: tech_id = module6par::Amorphous; break;
-		}
-
-		double Vmp = as_double("6par_vmp");
-		double Imp = as_double("6par_imp");
-		double Voc = as_double("6par_voc");
-		double Isc = as_double("6par_isc");
-		double alpha = as_double("6par_aisc");
-		double beta = as_double("6par_bvoc");
-		double gamma = as_double("6par_gpmp");
-		int nser = as_integer("6par_nser");
-		
-		module6par m(tech_id, Vmp, Imp, Voc, Isc, beta, alpha, gamma, nser, 298.15);
-		int err = m.solve_with_sanity_and_heuristics<double>( 300, 1e-7 );
-
-		if (err != 0)
-			throw exec_error( "pvsamv1", "CEC 6 parameter model:  Could not solve for normalized coefficients.  Please check your inputs.");
-
-		cec.Area = as_double("6par_area");
-		ref_area_m2 = cec.Area;
-		cec.Vmp = Vmp;
-		cec.Imp = Imp;
-		cec.Voc = Voc;
-		cec.Isc = Isc;
-		cec.alpha_isc = alpha;
-		cec.beta_voc = beta;
-		cec.a = m.a;
-		cec.Il = m.Il;
-		cec.Io = m.Io;
-		cec.Rs = m.Rs;
-		cec.Rsh = m.Rsh;
-		cec.Adj = m.Adj;
-		
-		self_shading_fill_factor = cec.Vmp * cec.Imp / cec.Voc / cec.Isc;
-		ssVmp = cec.Vmp;
-
-		setup_noct_model( "6par", noct_tc );
-			
-		celltemp_model = &noct_tc;
-		module_model = &cec;
-		module_watts_stc = cec.Vmp * cec.Imp;
-	}
-	else if ( mod_type == 4 )
-	{
-		// IEC 61853 model
-		sd11.NcellSer = as_integer("sd11par_nser");
-		sd11.Area = as_double("sd11par_area");
-		sd11.AMA[0] = as_double("sd11par_AMa0");
-		sd11.AMA[1] = as_double("sd11par_AMa1");
-		sd11.AMA[2] = as_double("sd11par_AMa2");    
-		sd11.AMA[3] = as_double("sd11par_AMa3");    
-		sd11.AMA[4] = as_double("sd11par_AMa4");  
-		sd11.GlassAR = as_boolean("sd11par_glass");  
-
-		setup_noct_model( "sd11par", noct_tc );
-			
-		sd11.Vmp0 = as_double( "sd11par_Vmp0" ); 
-		sd11.Imp0 = as_double( "sd11par_Imp0" );
-		sd11.Voc0 = as_double( "sd11par_Voc0" );
-		sd11.Isc0 = as_double( "sd11par_Isc0" );
-		sd11.alphaIsc = as_double( "sd11par_alphaIsc" );
-		sd11.n = as_double("sd11par_n" );
-		sd11.Il = as_double("sd11par_Il");
-		sd11.Io = as_double("sd11par_Io");
-		sd11.Egref = as_double("sd11par_Egref");
-		sd11.D1 = as_double("sd11par_d1");
-		sd11.D2 = as_double("sd11par_d2");
-		sd11.D3 = as_double("sd11par_d3");
-		sd11.C1 = as_double("sd11par_c1");
-		sd11.C2 = as_double("sd11par_c2");
-		sd11.C3 = as_double("sd11par_c3");
-
-		celltemp_model = &noct_tc;
-		module_model = &sd11;
-		module_watts_stc = sd11.Vmp0 * sd11.Imp0;
-		ref_area_m2 = sd11.Area;			
-		self_shading_fill_factor = sd11.Vmp0 * sd11.Imp0 / sd11.Voc0 / sd11.Isc0;
-		ssVmp = sd11.Vmp0;
-	}
-	else
-		throw exec_error("pvsamv1", "invalid pv module model type");
-
-	//boolean to determine if the sandia model is being used for CPV
-	bool is_cpv = false;
-
-	if (as_integer("module_model") == 3 // sandia model 
-		&& as_double("snl_fd") == 0)
-		is_cpv = true;
-
 	// SELF-SHADING MODULE INFORMATION
 	double width = sqrt((ref_area_m2 / aspect_ratio));
 	for (size_t nn = 0; nn < num_subarrays; nn++)
 	{
 		Subarrays[nn]->selfShadingInputs.width = width;
 		Subarrays[nn]->selfShadingInputs.length = width * aspect_ratio;
-		Subarrays[nn]->selfShadingInputs.FF0 = self_shading_fill_factor;
-		Subarrays[nn]->selfShadingInputs.Vmp = ssVmp;
+		Subarrays[nn]->selfShadingInputs.FF0 = Subarrays[nn]->Module->selfShadingFillFactor;
+		Subarrays[nn]->selfShadingInputs.Vmp = Subarrays[nn]->Module->voltageMaxPower;
 		double b = 0;
 		if (Subarrays[nn]->selfShadingInputs.mod_orient == 0)
 			b = Subarrays[nn]->selfShadingInputs.nmody * Subarrays[nn]->selfShadingInputs.length;
@@ -1712,13 +1335,13 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 						ipoa = wf.poa;
 					}
 
-					if (speForceNoPOA && (radmode == POA_R || radmode == POA_P)){  // only will be true if using a poa model AND spe module model AND spe_fp is < 1
+					if (Subarrays[nn]->Module->simpleEfficiencyForceNoPOA && (radmode == POA_R || radmode == POA_P)){  // only will be true if using a poa model AND spe module model AND spe_fp is < 1
 						Subarrays[nn]->poa.usePOAFromWF = false;
 						if (idx == 0)
 							log("The combination of POA irradiance as in input, single point efficiency module model, and module diffuse utilization factor less than one means that SAM must use a POA decomposition model to calculate the incident diffuse irradiance", SSC_WARNING);
 					}
 
-					if (mcspForceNoPOA && (radmode == POA_R || radmode == POA_P)){
+					if (Subarrays[nn]->Module->mountingSpecificCellTemperatureForceNoPOA && (radmode == POA_R || radmode == POA_P)){
 						Subarrays[nn]->poa.usePOAFromWF = false;
 						if (idx == 0)
 							log("The combination of POA irradiance as input and heat transfer method for cell temperature means that SAM must use a POA decomposition model to calculate the beam irradiance required by the cell temperature model", SSC_WARNING);
@@ -1820,9 +1443,9 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 								((double)wf.hour) + wf.minute / 60.0,
 								radmode, Subarrays[nn]->poa.usePOAFromWF);
 							// voltage set to -1 for max power
-							(*celltemp_model)(in, *module_model, -1.0, tcell);
+							(*Subarrays[nn]->Module->cellTempModel)(in, *Subarrays[nn]->Module->moduleModel, -1.0, tcell);
 						}
-						double shadedb_str_vmp_stc = modules_per_string * ssVmp;
+						double shadedb_str_vmp_stc = modules_per_string * Subarrays[nn]->Module->voltageMaxPower;
 						double shadedb_mppt_lo = V_mppt_lo_1module * modules_per_string;;
 						double shadedb_mppt_hi = V_mppt_hi_1module * modules_per_string;;
 
@@ -2039,7 +1662,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 				{
 					if (num_subarrays <= 1)
 						throw exec_error("pvsamv1", "Subarray voltage mismatch calculation requires more than one subarray. Please check your inputs.");
-					double vmax = module_model->VocRef()*1.3; // maximum voltage
+					double vmax = Subarrays[0]->Module->moduleModel->VocRef()*1.3; // maximum voltage
 					double vmin = 0.4 * vmax; // minimum voltage
 					const int NP = 100;
 					double V[NP], I[NP], P[NP];
@@ -2064,9 +1687,9 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 							{
 								double tcell = wf.tdry;
 								// calculate cell temperature using selected temperature model
-								(*celltemp_model)(in, *module_model, V[i], tcell);
+								(*Subarrays[nn]->Module->cellTempModel)(in, *Subarrays[nn]->Module->moduleModel, V[i], tcell);
 								// calculate module power output using conversion model previously specified
-								(*module_model)(in, tcell, V[i], out);
+								(*Subarrays[nn]->Module->moduleModel)(in, tcell, V[i], out);
 							}
 							I[i] += out.Current;
 						}
@@ -2086,7 +1709,6 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 					}
 
 				}
-
 
 				//  at this point we have 
 				// a array maximum power module voltage
@@ -2115,8 +1737,8 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 					{
 						// calculate cell temperature using selected temperature model
 						// calculate module power output using conversion model previously specified
-						(*celltemp_model)(in, *module_model, module_voltage, tcell);
-						(*module_model)(in, tcell, module_voltage, out);
+						(*Subarrays[nn]->Module->cellTempModel)(in, *Subarrays[nn]->Module->moduleModel, module_voltage, tcell);
+						(*Subarrays[nn]->Module->moduleModel)(in, tcell, module_voltage, out);
 
 						// if mismatch was enabled, the module voltage already was clipped to the inverter MPPT range if appropriate
 						// here, if the module was running at mppt by default, and mppt window clipping is possible, recalculate
@@ -2127,21 +1749,21 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 							if (out.Voltage < V_mppt_lo_1module)
 							{
 								module_voltage = V_mppt_lo_1module;
-								(*celltemp_model)(in, *module_model, module_voltage, tcell);
-								(*module_model)(in, tcell, module_voltage, out);
+								(*Subarrays[nn]->Module->cellTempModel)(in, *Subarrays[nn]->Module->moduleModel, module_voltage, tcell);
+								(*Subarrays[nn]->Module->moduleModel)(in, tcell, module_voltage, out);
 							}
 							else if (out.Voltage > V_mppt_hi_1module)
 							{
 								module_voltage = V_mppt_hi_1module;
-								(*celltemp_model)(in, *module_model, module_voltage, tcell);
-								(*module_model)(in, tcell, module_voltage, out);
+								(*Subarrays[nn]->Module->cellTempModel)(in, *Subarrays[nn]->Module->moduleModel, module_voltage, tcell);
+								(*Subarrays[nn]->Module->moduleModel)(in, tcell, module_voltage, out);
 							}
 							// MPPT loss
 						}
 						if (iyear == 0)	mppt_clip_window -= out.Power;
 					}
 
-					if (out.Voltage > module_model->VocRef()*1.3)
+					if (out.Voltage > Subarrays[nn]->Module->moduleModel->VocRef()*1.3)
 						log(util::format("Module voltage is unrealistically high (exceeds 1.3*VocRef) at [mdhm: %d %d %d %lg]: %lg V\n", wf.month, wf.day, wf.hour, wf.minute, out.Voltage), SSC_NOTICE);
 
 					if (!std::isfinite(out.Power))
@@ -2533,8 +2155,8 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 	double annual_inv_psoloss = accumulate_annual_for_year("inv_psoloss", "annual_inv_psoloss", ts_hour, step_per_hour );
 	double annual_inv_pntloss = accumulate_annual_for_year("inv_pntloss", "annual_inv_pntloss", ts_hour, step_per_hour);
 	
-	double nom_rad = is_cpv ? annual_poa_beam_nom : annual_poa_nom;
-	double inp_rad = is_cpv ? annual_poa_beam_eff : annual_poa_eff;
+	double nom_rad = Subarrays[0]->Module->isConcentratingPV ? annual_poa_beam_nom : annual_poa_nom;
+	double inp_rad = Subarrays[0]->Module->isConcentratingPV ? annual_poa_beam_eff : annual_poa_eff;
 	double ac_net = as_double("annual_ac_net");
 	double mod_eff = module_eff( mod_type );
 
@@ -2815,16 +2437,6 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 
 
 	// end of losses
-
-		
-	assign( "6par_a", var_data((ssc_number_t) cec.a) );
-	assign( "6par_Io", var_data((ssc_number_t) cec.Io) );
-	assign( "6par_Il", var_data((ssc_number_t) cec.Il) );
-	assign( "6par_Rs", var_data((ssc_number_t) cec.Rs) );
-	assign( "6par_Rsh", var_data((ssc_number_t) cec.Rsh) );
-	assign( "6par_Adj", var_data((ssc_number_t) cec.Adj) );
-
-
 	double kWhperkW = 0.0;
 	double nameplate = as_double("system_capacity");
 	if (nameplate > 0) kWhperkW = annual_energy / nameplate;
