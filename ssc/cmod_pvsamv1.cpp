@@ -822,7 +822,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 	Simulation_IO * Simulation = IOManager->getSimulationIO();
 	Irradiance_IO * Irradiance = IOManager->getIrradianceIO();
 	std::vector<Subarray_IO *> Subarrays = IOManager->getSubarrays();
-	SubarraysOutput * SubarraysOutput = IOManager->getSubarrayOutput();
+	PVSystem_IO * PVSystem = IOManager->getPVSystemIO();
 
 	size_t nrec = Simulation->numberOfWeatherFileRecords;
 	size_t nlifetime = Simulation->numberOfSteps;
@@ -843,7 +843,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 
 	// Get Subarray Inputs
 	double aspect_ratio = Subarrays[0]->moduleAspectRatio;
-	size_t num_subarrays = SubarraysOutput->numberOfSubarrays;
+	size_t num_subarrays = PVSystem->numberOfSubarrays;
 
 	/// shading database if necessary
 	smart_ptr<ShadeDB8_mpp>::ptr  p_shade_db; // (new ShadeDB8_mpp());
@@ -1388,38 +1388,13 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 		}
 	}
 	
-	// transformer loss outputs
-	ssc_number_t *p_xfmr_nll_ts = allocate("xfmr_nll_ts", nrec);
-	ssc_number_t *p_xfmr_ll_ts = allocate("xfmr_ll_ts", nrec);
-	ssc_number_t *p_xfmr_loss_ts = allocate("xfmr_loss_ts", nrec);
-
-
+	// transformer losses
 	ssc_number_t xfmr_rating = (ssc_number_t)(ratedACOutput * util::watt_to_kilowatt); // W to kW
 	ssc_number_t xfmr_ll_frac = (ssc_number_t)(as_number("transformer_load_loss") *0.01); // % to frac
 	ssc_number_t xfmr_nll = (ssc_number_t)(as_number("transformer_no_load_loss") *0.01); // % to frac
-	xfmr_nll *=  (ssc_number_t)(ts_hour * xfmr_rating); // kW
-
-	// outputs summed across all subarrays
-	ssc_number_t *p_poanom_ts_total = allocate( "poa_nom", nrec );
-	ssc_number_t *p_poabeamnom_ts_total = allocate( "poa_beam_nom", nrec );
-	ssc_number_t *p_poashaded_ts_total = allocate("poa_shaded", nrec );
-	ssc_number_t *p_poaeff_ts_total = allocate("poa_eff", nrec );
-	ssc_number_t *p_poabeameff_ts_total = allocate("poa_beam_eff", nrec );
-		
-	ssc_number_t *p_dcsnowloss = allocate("dc_snow_loss", nrec);
-
-	ssc_number_t *p_inv_dc_voltage = allocate( "inverter_dc_voltage", nlifetime);
-	ssc_number_t *p_inveff = allocate("inv_eff", nrec);
-	ssc_number_t *p_invcliploss = allocate( "inv_cliploss", nrec );
-	ssc_number_t *p_invmpptloss = allocate("dc_invmppt_loss", nrec);
-		
-	ssc_number_t *p_invpsoloss = allocate( "inv_psoloss", nrec );
-	ssc_number_t *p_invpntloss = allocate( "inv_pntloss", nrec );
-	ssc_number_t *p_ac_wiringloss = allocate("ac_wiring_loss", nrec);
+	xfmr_nll *= (ssc_number_t)(ts_hour * xfmr_rating); // kW
 
 	// lifetime outputs
-	ssc_number_t *p_dcpwr = allocate("dc_net", nlifetime);
-	ssc_number_t *p_gen = allocate("gen", nlifetime);
 	std::vector<ssc_number_t> p_load_full; p_load_full.reserve(nlifetime);
 
 	//dc hourly adjustment factors
@@ -1873,9 +1848,9 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 					if (iyear == 0)
 					{
 						if (radmode != POA_R)
-							SubarraysOutput->p_poaNominal[nn][idx] = (ssc_number_t)((ibeam + iskydiff + ignddiff));
+							PVSystem->p_poaNominal[nn][idx] = (ssc_number_t)((ibeam + iskydiff + ignddiff));
 						else
-							SubarraysOutput->p_poaNominal[nn][idx] = (ssc_number_t)((ipoa));
+							PVSystem->p_poaNominal[nn][idx] = (ssc_number_t)((ipoa));
 					}
 
 					// note: ibeam, iskydiff, ignddiff are in units of W/m2
@@ -1930,7 +1905,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 							log("shade db hour " + util::to_string((int)hour) +"\n" + p_shade_db->get_warning());
 #endif
 							// fraction shaded for comparison
-							SubarraysOutput->p_shadeDBShadeFraction[nn][idx] = (ssc_number_t)(Subarrays[nn]->shadeCalculator.dc_shade_factor());
+							PVSystem->p_shadeDBShadeFraction[nn][idx] = (ssc_number_t)(Subarrays[nn]->shadeCalculator.dc_shade_factor());
 						}
 					}
 					else
@@ -2007,10 +1982,10 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 							beam_shading_factor *= (1 - shad1xf);
 							if (iyear == 0)
 							{
-								SubarraysOutput->p_derateSelfShading[nn][idx] = (ssc_number_t)1;
-								SubarraysOutput->p_derateLinear[nn][idx] = (ssc_number_t)(1 - shad1xf);
-								SubarraysOutput->p_derateSelfShadingDiffuse[nn][idx] = (ssc_number_t)1; //no diffuse derate for linear shading
-								SubarraysOutput->p_derateSelfShadingReflected[nn][idx] = (ssc_number_t)1; //no reflected derate for linear shading
+								PVSystem->p_derateSelfShading[nn][idx] = (ssc_number_t)1;
+								PVSystem->p_derateLinear[nn][idx] = (ssc_number_t)(1 - shad1xf);
+								PVSystem->p_derateSelfShadingDiffuse[nn][idx] = (ssc_number_t)1; //no diffuse derate for linear shading
+								PVSystem->p_derateSelfShadingReflected[nn][idx] = (ssc_number_t)1; //no reflected derate for linear shading
 							}
 						}
 
@@ -2022,20 +1997,20 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 								beam_shading_factor *= (1 - Subarrays[nn]->selfShadingOutputs.m_shade_frac_fixed);
 								if (iyear == 0)
 								{
-									SubarraysOutput->p_derateSelfShading[nn][idx] = (ssc_number_t)1;
-									SubarraysOutput->p_derateLinear[nn][idx] = (ssc_number_t)(1 - Subarrays[nn]->selfShadingOutputs.m_shade_frac_fixed);
-									SubarraysOutput->p_derateSelfShadingDiffuse[nn][idx] = (ssc_number_t)1; //no diffuse derate for linear shading
-									SubarraysOutput->p_derateSelfShadingReflected[nn][idx] = (ssc_number_t)1; //no reflected derate for linear shading
+									PVSystem->p_derateSelfShading[nn][idx] = (ssc_number_t)1;
+									PVSystem->p_derateLinear[nn][idx] = (ssc_number_t)(1 - Subarrays[nn]->selfShadingOutputs.m_shade_frac_fixed);
+									PVSystem->p_derateSelfShadingDiffuse[nn][idx] = (ssc_number_t)1; //no diffuse derate for linear shading
+									PVSystem->p_derateSelfShadingReflected[nn][idx] = (ssc_number_t)1; //no reflected derate for linear shading
 								}
 							}
 							else //non-linear: fixed tilt AND one-axis
 							{
 								if (iyear == 0)
 								{
-									SubarraysOutput->p_derateSelfShadingDiffuse[nn][idx] = (ssc_number_t)Subarrays[nn]->selfShadingOutputs.m_diffuse_derate;
-									SubarraysOutput->p_derateSelfShadingReflected[nn][idx] = (ssc_number_t)Subarrays[nn]->selfShadingOutputs.m_reflected_derate;
-									SubarraysOutput->p_derateSelfShading[nn][idx] = (ssc_number_t)Subarrays[nn]->selfShadingOutputs.m_dc_derate;
-									SubarraysOutput->p_derateLinear[nn][idx] = (ssc_number_t)1;
+									PVSystem->p_derateSelfShadingDiffuse[nn][idx] = (ssc_number_t)Subarrays[nn]->selfShadingOutputs.m_diffuse_derate;
+									PVSystem->p_derateSelfShadingReflected[nn][idx] = (ssc_number_t)Subarrays[nn]->selfShadingOutputs.m_reflected_derate;
+									PVSystem->p_derateSelfShading[nn][idx] = (ssc_number_t)Subarrays[nn]->selfShadingOutputs.m_dc_derate;
+									PVSystem->p_derateLinear[nn][idx] = (ssc_number_t)1;
 								}
 
 								// Sky diffuse and ground-reflected diffuse are derated according to C. Deline's algorithm
@@ -2087,18 +2062,18 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 					if (iyear == 0)
 					{
 						// save sub-array level outputs			
-						SubarraysOutput->p_poaShaded[nn][idx] = (ssc_number_t)poashad;
-						SubarraysOutput->p_poaBeamFront[nn][idx] = (ssc_number_t)ibeam;
-						SubarraysOutput->p_poaDiffuseFront[nn][idx] = (ssc_number_t)(iskydiff + ignddiff);
-						SubarraysOutput->p_poaRear[nn][idx] = (ssc_number_t)(ipoa_rear);
-						SubarraysOutput->p_poaTotal[nn][idx] = (radmode == POA_R) ? (ssc_number_t)ipoa : (ssc_number_t)(ipoa_front + ipoa_rear);
-						SubarraysOutput->p_beamShadingFactor[nn][idx] = (ssc_number_t)beam_shading_factor;
-						SubarraysOutput->p_axisRotation[nn][idx] = (ssc_number_t)rot;
-						SubarraysOutput->p_idealRotation[nn][idx] = (ssc_number_t)(rot - btd);
-						SubarraysOutput->p_angleOfIncidence[nn][idx] = (ssc_number_t)aoi;
-						SubarraysOutput->p_surfaceTilt[nn][idx] = (ssc_number_t)stilt;
-						SubarraysOutput->p_surfaceAzimuth[nn][idx] = (ssc_number_t)sazi;
-						SubarraysOutput->p_derateSoiling[nn][idx] = (ssc_number_t)soiling_factor;
+						PVSystem->p_poaShaded[nn][idx] = (ssc_number_t)poashad;
+						PVSystem->p_poaBeamFront[nn][idx] = (ssc_number_t)ibeam;
+						PVSystem->p_poaDiffuseFront[nn][idx] = (ssc_number_t)(iskydiff + ignddiff);
+						PVSystem->p_poaRear[nn][idx] = (ssc_number_t)(ipoa_rear);
+						PVSystem->p_poaTotal[nn][idx] = (radmode == POA_R) ? (ssc_number_t)ipoa : (ssc_number_t)(ipoa_front + ipoa_rear);
+						PVSystem->p_beamShadingFactor[nn][idx] = (ssc_number_t)beam_shading_factor;
+						PVSystem->p_axisRotation[nn][idx] = (ssc_number_t)rot;
+						PVSystem->p_idealRotation[nn][idx] = (ssc_number_t)(rot - btd);
+						PVSystem->p_angleOfIncidence[nn][idx] = (ssc_number_t)aoi;
+						PVSystem->p_surfaceTilt[nn][idx] = (ssc_number_t)stilt;
+						PVSystem->p_surfaceAzimuth[nn][idx] = (ssc_number_t)sazi;
+						PVSystem->p_derateSoiling[nn][idx] = (ssc_number_t)soiling_factor;
 					}
 
 					// accumulate incident total radiation (W) in this timestep (all subarrays)
@@ -2289,9 +2264,9 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 
 						if (iyear == 0)
 						{
-							SubarraysOutput->p_snowLoss[nn][idx] = (ssc_number_t)(util::watt_to_kilowatt*Subarrays[nn]->module.dcPowerW*smLoss);
-							p_dcsnowloss[idx] += (ssc_number_t)(util::watt_to_kilowatt*Subarrays[nn]->module.dcPowerW*smLoss);
-							SubarraysOutput->p_snowCoverage[nn][idx] = (ssc_number_t)(Subarrays[nn]->snowModel.coverage);
+							PVSystem->p_snowLoss[nn][idx] = (ssc_number_t)(util::watt_to_kilowatt*Subarrays[nn]->module.dcPowerW*smLoss);
+							PVSystem->p_snowLossTotal[idx] += (ssc_number_t)(util::watt_to_kilowatt*Subarrays[nn]->module.dcPowerW*smLoss);
+							PVSystem->p_snowCoverage[nn][idx] = (ssc_number_t)(Subarrays[nn]->snowModel.coverage);
 							annual_snow_loss += (ssc_number_t)(util::watt_to_kilowatt*Subarrays[nn]->module.dcPowerW*smLoss);
 						}
 
@@ -2306,12 +2281,12 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 						dc_gross[nn] += Subarrays[nn]->module.dcPowerW*util::watt_to_kilowatt*ts_hour; //power W to	energy kWh
 						annual_mppt_window_clipping += mppt_clip_window*util::watt_to_kilowatt*ts_hour; //power W to	energy kWh
 						// save to SSC output arrays
-						SubarraysOutput->p_temperatureCell[nn][idx] = (ssc_number_t)Subarrays[nn]->module.temperatureCellCelcius;
-						SubarraysOutput->p_moduleEfficiency[nn][idx] = (ssc_number_t)Subarrays[nn]->module.dcEfficiency;
-						SubarraysOutput->p_dcVoltage[nn][idx] = (ssc_number_t)Subarrays[nn]->module.dcVoltage * modules_per_string;
-						SubarraysOutput->p_voltageOpenCircuit[nn][idx] = (ssc_number_t)Subarrays[nn]->module.voltageOpenCircuit * modules_per_string;
-						SubarraysOutput->p_currentShortCircuit[nn][idx] = (ssc_number_t)Subarrays[nn]->module.currentShortCircuit;
-						SubarraysOutput->p_dcPowerGross[nn][idx] = (ssc_number_t)(Subarrays[nn]->module.dcPowerW * util::watt_to_kilowatt);
+						PVSystem->p_temperatureCell[nn][idx] = (ssc_number_t)Subarrays[nn]->module.temperatureCellCelcius;
+						PVSystem->p_moduleEfficiency[nn][idx] = (ssc_number_t)Subarrays[nn]->module.dcEfficiency;
+						PVSystem->p_dcVoltage[nn][idx] = (ssc_number_t)Subarrays[nn]->module.dcVoltage * modules_per_string;
+						PVSystem->p_voltageOpenCircuit[nn][idx] = (ssc_number_t)Subarrays[nn]->module.voltageOpenCircuit * modules_per_string;
+						PVSystem->p_currentShortCircuit[nn][idx] = (ssc_number_t)Subarrays[nn]->module.currentShortCircuit;
+						PVSystem->p_dcPowerGross[nn][idx] = (ssc_number_t)(Subarrays[nn]->module.dcPowerW * util::watt_to_kilowatt);
 					}
 					// Sara 1/25/16 - shading database derate applied to dc only
 					// shading loss applied to beam if not from shading database
@@ -2357,22 +2332,21 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 					Irradiance->p_absoluteAirmass[idx] = sunup > 0 ? (ssc_number_t)(exp(-0.0001184 * hdr.elev) / (cos(solzen*3.1415926 / 180) + 0.5057*pow(96.080 - solzen, -1.634))) : 0.0f;
 					Irradiance->p_sunUpOverHorizon[idx] = (ssc_number_t)sunup;
 
-					// save radiation values.  the ts_accum_* variables are units of (W), 
-					// and are sums of radiation power on each subarray for the current timestep
-					p_poanom_ts_total[idx] = (ssc_number_t)(ts_accum_poa_nom * util::watt_to_kilowatt); // kW
-					p_poabeamnom_ts_total[idx] = (ssc_number_t)(ts_accum_poa_beam_nom * util::watt_to_kilowatt); // kW
-					p_poashaded_ts_total[idx] = (ssc_number_t)(ts_accum_poa_shaded * util::watt_to_kilowatt); // kW
-					p_poaeff_ts_total[idx] = (ssc_number_t)(ts_accum_poa_eff * util::watt_to_kilowatt); // kW
-					p_poabeameff_ts_total[idx] = (ssc_number_t)(ts_accum_poa_beam_eff * util::watt_to_kilowatt); // kW
-					p_invmpptloss[idx] = (ssc_number_t)(mppt_clip_window * util::watt_to_kilowatt);
+					// Sum of radiation power on each subarray for the current timestep [kW]
+					PVSystem->p_poaNominalTotal[idx] = (ssc_number_t)(ts_accum_poa_nom * util::watt_to_kilowatt); 
+					PVSystem->p_poaBeamFrontNominalTotal[idx] = (ssc_number_t)(ts_accum_poa_beam_nom * util::watt_to_kilowatt); 
+					PVSystem->p_poaShadedTotal[idx] = (ssc_number_t)(ts_accum_poa_shaded * util::watt_to_kilowatt); 
+					PVSystem->p_poaTotalAllSubarrays[idx] = (ssc_number_t)(ts_accum_poa_eff * util::watt_to_kilowatt); 
+					PVSystem->p_poaBeamFrontTotal[idx] = (ssc_number_t)(ts_accum_poa_beam_eff * util::watt_to_kilowatt);
+					PVSystem->p_inverterMPPTLoss[idx] = (ssc_number_t)(mppt_clip_window * util::watt_to_kilowatt);
 				}
 				
-				p_inv_dc_voltage[idx] = (ssc_number_t)dc_string_voltage;
-				p_dcpwr[idx] = (ssc_number_t)(dcpwr_net * util::watt_to_kilowatt);
+				PVSystem->p_inverterDCVoltage[idx] = (ssc_number_t)dc_string_voltage;
+				PVSystem->p_systemDCPower[idx] = (ssc_number_t)(dcpwr_net * util::watt_to_kilowatt);
 
 				// Predict clipping for DC battery controller
 				double cliploss = 0; 
-				double dcpwr = p_dcpwr[idx];
+				double dcpwr = PVSystem->p_systemDCPower[idx];
 
 				if (p_pv_dc_forecast.size() > 1 && p_pv_dc_forecast.size() > idx % (8760 * step_per_hour)) {
 					dcpwr = p_pv_dc_forecast[idx % (8760 * step_per_hour)];
@@ -2396,7 +2370,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 
 	// Initialize DC battery predictive controller
 	if (en_batt && (batt_topology == ChargeController::DC_CONNECTED))
-		batt.initialize_automated_dispatch(util::array_to_vector<ssc_number_t>(p_dcpwr, nlifetime), p_load_full, p_invcliploss_full);
+		batt.initialize_automated_dispatch(util::array_to_vector<ssc_number_t>(PVSystem->p_systemDCPower, nlifetime), p_load_full, p_invcliploss_full);
 
 	/* *********************************************************************************************
 	PV AC calculation
@@ -2429,8 +2403,8 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 
 				double dcpwr_net = 0, acpwr_gross = 0, ac_wiringloss = 0;
 				cur_load = p_load_full[idx];
-				dcpwr_net = util::kilowatt_to_watt * p_dcpwr[idx];
-				double dc_string_voltage = p_inv_dc_voltage[idx];
+				dcpwr_net = util::kilowatt_to_watt * PVSystem->p_systemDCPower[idx];
+				double dc_string_voltage = PVSystem->p_inverterDCVoltage[idx];
 
 				// DC Connected Battery
 				if (en_batt && (batt_topology == ChargeController::DC_CONNECTED))
@@ -2457,31 +2431,31 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 				if (iyear == 0)
 				{ 
 					annual_ac_gross += acpwr_gross * ts_hour;
-					p_inveff[idx] = (ssc_number_t)(sharedInverter->efficiencyAC);
-					p_invcliploss[idx] = (ssc_number_t)(sharedInverter->powerClipLoss_kW);
-					p_invpsoloss[idx] = (ssc_number_t)(sharedInverter->powerConsumptionLoss_kW);
-					p_invpntloss[idx] = (ssc_number_t)(sharedInverter->powerNightLoss_kW);
-					p_ac_wiringloss[idx] = (ssc_number_t)(ac_wiringloss);
+					PVSystem->p_inverterEfficiency[idx] = (ssc_number_t)(sharedInverter->efficiencyAC);
+					PVSystem->p_inverterClipLoss[idx] = (ssc_number_t)(sharedInverter->powerClipLoss_kW);
+					PVSystem->p_inverterPowerConsumptionLoss[idx] = (ssc_number_t)(sharedInverter->powerConsumptionLoss_kW);
+					PVSystem->p_inverterNightTimeLoss[idx] = (ssc_number_t)(sharedInverter->powerNightLoss_kW);
+					PVSystem->p_acWiringLoss[idx] = (ssc_number_t)(ac_wiringloss);
 				}
-				p_dcpwr[idx] = (ssc_number_t)(sharedInverter->powerDC_kW);
+				PVSystem->p_systemDCPower[idx] = (ssc_number_t)(sharedInverter->powerDC_kW);
 					
 				//ac losses should always be subtracted, this means you can't just multiply by the derate because at nighttime it will add power
-				p_gen[idx] = (ssc_number_t)(acpwr_gross - ac_wiringloss);
+				PVSystem->p_systemACPower[idx] = (ssc_number_t)(acpwr_gross - ac_wiringloss);
 
 				// apply transformer loss
 				// load loss
 				ssc_number_t xfmr_ll = 0.0;
 				if (xfmr_ll_frac != 0 && xfmr_rating != 0)
 				{
-					if (p_gen[idx] < xfmr_rating)
-						xfmr_ll = xfmr_ll_frac * p_gen[idx] * p_gen[idx] / xfmr_rating;
+					if (PVSystem->p_systemACPower[idx] < xfmr_rating)
+						xfmr_ll = xfmr_ll_frac * PVSystem->p_systemACPower[idx] * PVSystem->p_systemACPower[idx] / xfmr_rating;
 					else // should really have user size transformer correctly!
-						xfmr_ll = xfmr_ll_frac * p_gen[idx];
+						xfmr_ll = xfmr_ll_frac * PVSystem->p_systemACPower[idx];
 				} 
 				// total load loss
 				ssc_number_t xfmr_loss = xfmr_ll + xfmr_nll;
 				// apply transformer loss
-				p_gen[idx] -= xfmr_loss;
+				PVSystem->p_systemACPower[idx] -= xfmr_loss;
 
 				// accumulate first year annual energy
 				if (iyear == 0)
@@ -2489,9 +2463,9 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 					annual_xfmr_nll += xfmr_nll;
 					annual_xfmr_ll += xfmr_ll;
 					annual_xfmr_loss += xfmr_loss;
-					p_xfmr_nll_ts[idx] = xfmr_nll;
-					p_xfmr_ll_ts[idx] = xfmr_ll;
-					p_xfmr_loss_ts[idx] = xfmr_loss;
+					PVSystem->p_transformerNoLoadLoss[idx] = xfmr_nll;
+					PVSystem->p_transformerLoadLoss[idx] = xfmr_ll;
+					PVSystem->p_transformerLoss[idx] = xfmr_loss;
 				}
 
 				idx++;
@@ -2511,7 +2485,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 
 	// Initialize AC connected battery predictive control
 	if (en_batt && batt_topology == ChargeController::AC_CONNECTED)
-		batt.initialize_automated_dispatch(util::array_to_vector<ssc_number_t>(p_gen, nlifetime), p_load_full);
+		batt.initialize_automated_dispatch(util::array_to_vector<ssc_number_t>(PVSystem->p_systemACPower, nlifetime), p_load_full);
 
 	/* *********************************************************************************************
 	Post PV AC 
@@ -2535,38 +2509,38 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 			for (size_t jj = 0; jj < step_per_hour; jj++)
 			{
 				if (iyear == 0)
-					annual_energy_pre_battery += p_gen[idx] * ts_hour;
+					annual_energy_pre_battery += PVSystem->p_systemACPower[idx] * ts_hour;
 
 				if (en_batt && batt_topology == ChargeController::AC_CONNECTED)
 				{
 					batt.initialize_time(iyear, hour, jj);
 					batt.check_replacement_schedule();
-					batt.advance(*this, p_gen[idx], 0, p_load_full[idx]);
-					p_gen[idx] = batt.outGenPower[idx];
+					batt.advance(*this, PVSystem->p_systemACPower[idx], 0, p_load_full[idx]);
+					PVSystem->p_systemACPower[idx] = batt.outGenPower[idx];
 				}
 
 				// accumulate system generation before curtailment and availability
 				if (iyear == 0)
-					annual_ac_pre_avail += p_gen[idx] * ts_hour;
+					annual_ac_pre_avail += PVSystem->p_systemACPower[idx] * ts_hour;
 		
 
 				//apply availability and curtailment
-				p_gen[idx] *= haf(hour);
+				PVSystem->p_systemACPower[idx] *= haf(hour);
 
 				//apply lifetime daily AC losses only if they are enabled
 				if (system_use_lifetime_output == 1 && en_ac_lifetime_losses)
 				{
 					//current index of the lifetime daily AC losses is the number of years that have passed (iyear, because it is 0-indexed) * days in a year + the number of complete days that have passed
 					int ac_loss_index = (int)iyear * 365 + (int)floor(hour / 24); //in units of days
-					if (iyear == 0) annual_ac_lifetime_loss += p_gen[idx] * (ac_lifetime_losses[ac_loss_index] / 100) * util::watt_to_kilowatt * ts_hour; //this loss is still in percent, only keep track of it for year 0, convert from power W to energy kWh
-					p_gen[idx] *= (100 - ac_lifetime_losses[ac_loss_index]) / 100;
+					if (iyear == 0) annual_ac_lifetime_loss += PVSystem->p_systemACPower[idx] * (ac_lifetime_losses[ac_loss_index] / 100) * util::watt_to_kilowatt * ts_hour; //this loss is still in percent, only keep track of it for year 0, convert from power W to energy kWh
+					PVSystem->p_systemACPower[idx] *= (100 - ac_lifetime_losses[ac_loss_index]) / 100;
 				}
 				// Update battery with final gen to compute grid power
 				if (en_batt)
-					batt.update_grid_power(*this, p_gen[idx], p_load_full[idx], idx);
+					batt.update_grid_power(*this, PVSystem->p_systemACPower[idx], p_load_full[idx], idx);
 
 				if (iyear == 0)
-					annual_energy += (ssc_number_t)(p_gen[idx] * ts_hour);
+					annual_energy += (ssc_number_t)(PVSystem->p_systemACPower[idx] * ts_hour);
 
 				idx++;
 			}

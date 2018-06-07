@@ -24,7 +24,7 @@ struct Irradiance_IO;
 struct Subarray_IO;
 
 /// Structure containing the aggregate outputs for all subarrays
-struct SubarraysOutput;
+struct PVSystem_IO;
 
 /**
 * \class PVIOManager
@@ -57,8 +57,8 @@ public:
 	/// Return all Subarray's
 	std::vector<Subarray_IO *> getSubarrays() const;
 
-	/// Get Subarrays as one object
-	SubarraysOutput * getSubarrayOutput() const;
+	/// Get PVSystem as one object
+	PVSystem_IO * getPVSystemIO() const;
 
 
 public:
@@ -68,7 +68,7 @@ public:
 	*/
 	std::unique_ptr<Simulation_IO> m_SimulationIO;
 	std::unique_ptr<Irradiance_IO> m_IrradianceIO;
-	std::unique_ptr<SubarraysOutput> m_SubarraysOutput;
+	std::unique_ptr<PVSystem_IO> m_PVSystemIO;
 	std::vector<std::unique_ptr<Subarray_IO>> m_SubarraysIO;
 	std::unique_ptr<ShadeDB8_mpp> m_shadeDatabase;
 	size_t nSubarrays;
@@ -155,19 +155,19 @@ struct Simulation_IO
 
 /***
 *
-* \struct Subarrays_IO
+* \struct PVSystem_IO
 *
-* This structure cointains output data for all subarrays
-*
+* This structure contains input and output data for the combined PV system (all subarrays)
 */
-struct SubarraysOutput
+struct PVSystem_IO
 {
-	SubarraysOutput(compute_module* cm, Irradiance_IO * IrradianceIO, std::vector<Subarray_IO*> Subarrays);
+	PVSystem_IO(compute_module* cm, Simulation_IO * SimulationIO, Irradiance_IO * IrradianceIO, std::vector<Subarray_IO*> Subarrays);
 
 	void AllocateOutputs(compute_module *cm);
 
 	size_t numberOfSubarrays;
 	Irradiance_IO * Irradiance;
+	Simulation_IO * Simulation;
 	std::vector<Subarray_IO*> Subarrays;
 
 	// General Outputs
@@ -196,11 +196,11 @@ struct SubarraysOutput
 	std::vector<ssc_number_t *> p_derateSelfShadingReflected; /// The angle of incidence of the subarray [degrees]
 	std::vector<ssc_number_t *> p_shadeDBShadeFraction; /// The angle of incidence of the subarray [degrees]
 
-														// Snow Model outputs
+	// Snow Model outputs
 	std::vector<ssc_number_t *> p_snowLoss; /// The angle of incidence of the subarray [degrees]
 	std::vector<ssc_number_t *> p_snowCoverage; /// The angle of incidence of the subarray [degrees]
 
-												// Shade Database Validation
+	// Shade Database Validation
 	std::vector<ssc_number_t *> p_shadeDB_GPOA; /// The angle of incidence of the subarray [degrees]
 	std::vector<ssc_number_t *> p_shadeDB_DPOA; /// The angle of incidence of the subarray [degrees]
 	std::vector<ssc_number_t *> p_shadeDB_temperatureCell; /// The angle of incidence of the subarray [degrees]
@@ -208,6 +208,35 @@ struct SubarraysOutput
 	std::vector<ssc_number_t *> p_shadeDB_voltageMaxPowerSTC; /// The angle of incidence of the subarray [degrees]
 	std::vector<ssc_number_t *> p_shadeDB_voltageMPPTLow; /// The angle of incidence of the subarray [degrees]
 	std::vector<ssc_number_t *> p_shadeDB_voltageMPPTHigh; /// The angle of incidence of the subarray [degrees]
+
+	// Degradation
+	ssc_number_t *p_dcDegradationFactor;
+
+	// transformer loss outputs (single array)
+	ssc_number_t *p_transformerNoLoadLoss;
+	ssc_number_t *p_transformerLoadLoss;
+	ssc_number_t *p_transformerLoss;
+
+	// outputs summed across all subarrays (some could be moved to other structures)
+	ssc_number_t *p_poaNominalTotal;
+	ssc_number_t *p_poaBeamFrontNominalTotal;
+	ssc_number_t *p_poaShadedTotal;
+	ssc_number_t *p_poaTotalAllSubarrays;
+	ssc_number_t *p_poaBeamFrontTotal;
+
+	ssc_number_t *p_snowLossTotal;
+
+	ssc_number_t *p_inverterDCVoltage;
+	ssc_number_t *p_inverterEfficiency;
+	ssc_number_t *p_inverterClipLoss;
+	ssc_number_t *p_inverterMPPTLoss;
+
+	ssc_number_t *p_inverterPowerConsumptionLoss;
+	ssc_number_t *p_inverterNightTimeLoss;
+	ssc_number_t *p_acWiringLoss;
+
+	ssc_number_t *p_systemDCPower;
+	ssc_number_t *p_systemACPower;
 };
 
 

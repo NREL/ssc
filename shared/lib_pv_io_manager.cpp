@@ -30,8 +30,8 @@ PVIOManager::PVIOManager(compute_module*  cm, std::string cmName)
 	}
 
 	// Aggregate Subarray outputs in different structure
-	std::unique_ptr<SubarraysOutput> subarrays(new SubarraysOutput(cm, m_IrradianceIO.get(), getSubarrays()));
-	m_SubarraysOutput = std::move(subarrays);
+	std::unique_ptr<PVSystem_IO> pvSystem(new PVSystem_IO(cm, m_SimulationIO.get(), m_IrradianceIO.get(), getSubarrays()));
+	m_PVSystemIO = std::move(pvSystem);
 
 
 	m_computeModule = cm;
@@ -51,7 +51,7 @@ std::vector<Subarray_IO *> PVIOManager::getSubarrays() const
 	return subarrays;
 }
 
-SubarraysOutput * PVIOManager::getSubarrayOutput() const { return m_SubarraysOutput.get(); }
+PVSystem_IO * PVIOManager::getPVSystemIO() const { return m_PVSystemIO.get(); }
 
 Simulation_IO * PVIOManager::getSimulationIO() const { return m_SimulationIO.get(); }
 
@@ -268,23 +268,26 @@ Subarray_IO::Subarray_IO(compute_module* cm, std::string cmName, size_t subarray
 	}
 }
 
-SubarraysOutput::SubarraysOutput(compute_module* cm, Irradiance_IO * IrradianceIO, std::vector<Subarray_IO*> SubarraysAll)
+PVSystem_IO::PVSystem_IO(compute_module* cm, Simulation_IO * SimulationIO, Irradiance_IO * IrradianceIO, std::vector<Subarray_IO*> SubarraysAll)
 {
 	Irradiance = IrradianceIO;
+	Simulation = SimulationIO;
 	Subarrays = SubarraysAll;
 	numberOfSubarrays = Subarrays.size();
 
 	AllocateOutputs(cm);
 }
 
-void SubarraysOutput::AllocateOutputs(compute_module* cm)
+void PVSystem_IO::AllocateOutputs(compute_module* cm)
 {
+	size_t numberOfWeatherFileRecords = Irradiance->numberOfWeatherFileRecords;
+	size_t numberOfLifetimeRecords = Simulation->numberOfSteps;
+
 	for (size_t subarray = 0; subarray < Subarrays.size(); subarray++)
 	{
 		if (Subarrays[subarray]->enable)
 		{
 			std::string prefix = Subarrays[subarray]->prefix;
-			size_t numberOfWeatherFileRecords = Irradiance->numberOfWeatherFileRecords;
 			p_angleOfIncidence.push_back(cm->allocate(prefix + "aoi", numberOfWeatherFileRecords));
 			p_surfaceTilt.push_back(cm->allocate(prefix + "surf_tilt", numberOfWeatherFileRecords));
 			p_surfaceAzimuth.push_back(cm->allocate(prefix + "surf_azi", numberOfWeatherFileRecords));
@@ -328,7 +331,31 @@ void SubarraysOutput::AllocateOutputs(compute_module* cm)
 			p_shadeDBShadeFraction.push_back(cm->allocate("shadedb_" + prefix + "shade_frac", numberOfWeatherFileRecords));
 		}
 	}
+	p_transformerNoLoadLoss = cm->allocate("xfmr_nll_ts", numberOfWeatherFileRecords);
+	p_transformerLoadLoss = cm->allocate("xfmr_ll_ts", numberOfWeatherFileRecords);
+	p_transformerLoss = cm->allocate("xfmr_loss_ts", numberOfWeatherFileRecords);
+
+	p_poaNominalTotal = cm->allocate("poa_nom", numberOfWeatherFileRecords);
+	p_poaBeamFrontNominalTotal = cm->allocate("poa_beam_nom", numberOfWeatherFileRecords);
+	p_poaShadedTotal = cm->allocate("poa_shaded", numberOfWeatherFileRecords);
+	p_poaTotalAllSubarrays = cm->allocate("poa_eff", numberOfWeatherFileRecords);
+	p_poaBeamFrontTotal = cm->allocate("poa_beam_eff", numberOfWeatherFileRecords);
+
+	p_snowLossTotal = cm->allocate("dc_snow_loss", numberOfWeatherFileRecords);
+
+	p_inverterDCVoltage = cm->allocate("inverter_dc_voltage", numberOfLifetimeRecords);
+	p_inverterEfficiency = cm->allocate("inv_eff", numberOfWeatherFileRecords);
+	p_inverterClipLoss = cm->allocate("inv_cliploss", numberOfWeatherFileRecords);
+	p_inverterMPPTLoss = cm->allocate("dc_invmppt_loss", numberOfWeatherFileRecords);
+
+	p_inverterPowerConsumptionLoss = cm->allocate("inv_psoloss", numberOfWeatherFileRecords);
+	p_inverterNightTimeLoss = cm->allocate("inv_pntloss", numberOfWeatherFileRecords);
+	p_acWiringLoss = cm->allocate("ac_wiring_loss", numberOfWeatherFileRecords);
+
+	p_systemDCPower = cm->allocate("dc_net", numberOfLifetimeRecords);
+	p_systemACPower = cm->allocate("gen", numberOfLifetimeRecords);
 }
+
 
 void Subarray_IO::AssignOutputs(compute_module* cm)
 {
