@@ -1341,58 +1341,6 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 		throw exec_error( "pvsamv1", "Lifetime simulation of PV systems is only available in the 64 bit version of SAM.");
 
 
-	ssc_number_t *p_dc_degrade_factor = 0;
-
-	bool en_dc_lifetime_losses = as_boolean("en_dc_lifetime_losses");
-	ssc_number_t *dc_lifetime_losses = 0; //daily losses over the lifetime of the system, optional
-	bool en_ac_lifetime_losses = as_boolean("en_ac_lifetime_losses");
-	ssc_number_t *ac_lifetime_losses = 0; //daily losses over the lifetime of the system, optional
-
-	if (system_use_lifetime_output == 1)
-	{
-		size_t count_dc_degrad = 0;
-		ssc_number_t *dc_degrad = 0;
-		dc_degrad = as_array("dc_degradation", &count_dc_degrad);
-		// setup output arrays
-		p_dc_degrade_factor = allocate("dc_degrade_factor", nyears + 1);
-		//ssc_number_t *p_ac_degrade_factor = allocate("ac_degrade_factor", nyears);
-
-		p_dc_degrade_factor[0] = 1.0; // degradation assumed to start at year 2
-		p_dc_degrade_factor[1] = 1.0; // degradation assumed to start at year 2
-
-		if (count_dc_degrad == 1)
-		{
-			for (size_t i = 1; i < nyears + 1; i++)
-				p_dc_degrade_factor[i+1] = (ssc_number_t)pow((1.0 - dc_degrad[0] / 100.0), i);
-		}
-		else if (count_dc_degrad > 0)
-		{
-			for (size_t i = 1; i < nyears && i < count_dc_degrad; i++)
-				p_dc_degrade_factor[i+1] = (ssc_number_t)(1.0 - dc_degrad[i] / 100.0);
-		}
-
-		//read in optional DC and AC lifetime daily losses, error check length of arrays
-		if (en_dc_lifetime_losses)
-		{
-			size_t count_dc_lifetime = 0;
-			dc_lifetime_losses = as_array("dc_lifetime_losses", &count_dc_lifetime);
-			if (count_dc_lifetime != nyears * 365)
-				throw exec_error("pvsamv1", "Length of the lifetime daily DC losses array must be equal to the analysis period * 365");
-		}
-		if (en_ac_lifetime_losses)
-		{
-			size_t count_ac_lifetime = 0;
-			ac_lifetime_losses = as_array("ac_lifetime_losses", &count_ac_lifetime);
-			if (count_ac_lifetime != nyears * 365)
-				throw exec_error("pvsamv1", "Length of the lifetime daily AC losses array must be equal to the analysis period * 365");
-		}
-	}
-	
-	// transformer losses
-	ssc_number_t xfmr_rating = (ssc_number_t)(ratedACOutput * util::watt_to_kilowatt); // W to kW
-	ssc_number_t xfmr_ll_frac = (ssc_number_t)(as_number("transformer_load_loss") *0.01); // % to frac
-	ssc_number_t xfmr_nll = (ssc_number_t)(as_number("transformer_no_load_loss") *0.01); // % to frac
-	xfmr_nll *= (ssc_number_t)(ts_hour * xfmr_rating); // kW
 
 	// lifetime outputs
 	std::vector<ssc_number_t> p_load_full; p_load_full.reserve(nlifetime);
@@ -2301,19 +2249,19 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 
 				//module degradation and lifetime DC losses apply to all subarrays
 				if (system_use_lifetime_output == 1)
-					dcpwr_net *= p_dc_degrade_factor[iyear + 1];
+					dcpwr_net *= PVSystem->p_dcDegradationFactor[iyear + 1];
 
 				//dc adjustment factors apply to all subarrays
 				if (iyear == 0) annual_dc_adjust_loss += dcpwr_net * (1 - dc_haf(hour)) * util::watt_to_kilowatt * ts_hour; //only keep track of this loss for year 0, convert from power W to energy kWh
 				dcpwr_net *= dc_haf(hour);
 
 				//lifetime daily DC losses apply to all subarrays and should be applied last. Only applied if they are enabled.
-				if (system_use_lifetime_output == 1 && en_dc_lifetime_losses)
+				if (system_use_lifetime_output == 1 && PVSystem->enableDCLifetimeLosses)
 				{
 					//current index of the lifetime daily DC losses is the number of years that have passed (iyear, because it is 0-indexed) * the number of days + the number of complete days that have passed
 					int dc_loss_index = (int)iyear * 365 + (int)floor(hour / 24); //in units of days
-					if (iyear == 0) annual_dc_lifetime_loss += dcpwr_net * (dc_lifetime_losses[dc_loss_index] / 100) * util::watt_to_kilowatt * ts_hour; //this loss is still in percent, only keep track of it for year 0, convert from power W to energy kWh
-					dcpwr_net *= (100 - dc_lifetime_losses[dc_loss_index]) / 100;
+					if (iyear == 0) annual_dc_lifetime_loss += dcpwr_net * (PVSystem->p_dcLifetimeLosses[dc_loss_index] / 100) * util::watt_to_kilowatt * ts_hour; //this loss is still in percent, only keep track of it for year 0, convert from power W to energy kWh
+					dcpwr_net *= (100 - PVSystem->p_dcLifetimeLosses[dc_loss_index]) / 100;
 				}
 
 				// save other array-level environmental and irradiance outputs	- year 1 only outputs
@@ -2442,28 +2390,28 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 				//ac losses should always be subtracted, this means you can't just multiply by the derate because at nighttime it will add power
 				PVSystem->p_systemACPower[idx] = (ssc_number_t)(acpwr_gross - ac_wiringloss);
 
-				// apply transformer loss
-				// load loss
-				ssc_number_t xfmr_ll = 0.0;
-				if (xfmr_ll_frac != 0 && xfmr_rating != 0)
+				// Apply transformer loss
+				ssc_number_t transformerRatingkW = static_cast<ssc_number_t>(ratedACOutput * util::watt_to_kilowatt);
+				ssc_number_t xfmr_ll = PVSystem->transformerLoadLossFraction;
+				ssc_number_t xfmr_nll = PVSystem->transformerNoLoadLossFraction * static_cast<ssc_number_t>(ts_hour * transformerRatingkW);
+
+				if (PVSystem->transformerLoadLossFraction != 0 && transformerRatingkW != 0)
 				{
-					if (PVSystem->p_systemACPower[idx] < xfmr_rating)
-						xfmr_ll = xfmr_ll_frac * PVSystem->p_systemACPower[idx] * PVSystem->p_systemACPower[idx] / xfmr_rating;
-					else // should really have user size transformer correctly!
-						xfmr_ll = xfmr_ll_frac * PVSystem->p_systemACPower[idx];
+					if (PVSystem->p_systemACPower[idx] < transformerRatingkW)
+						xfmr_ll *= PVSystem->p_systemACPower[idx] * PVSystem->p_systemACPower[idx] / transformerRatingkW;
+					else 
+						xfmr_ll *= PVSystem->p_systemACPower[idx];
 				} 
-				// total load loss
 				ssc_number_t xfmr_loss = xfmr_ll + xfmr_nll;
-				// apply transformer loss
 				PVSystem->p_systemACPower[idx] -= xfmr_loss;
 
 				// accumulate first year annual energy
 				if (iyear == 0)
 				{
-					annual_xfmr_nll += xfmr_nll;
+					annual_xfmr_nll += PVSystem->transformerNoLoadLossFraction;
 					annual_xfmr_ll += xfmr_ll;
 					annual_xfmr_loss += xfmr_loss;
-					PVSystem->p_transformerNoLoadLoss[idx] = xfmr_nll;
+					PVSystem->p_transformerNoLoadLoss[idx] = PVSystem->transformerNoLoadLossFraction;
 					PVSystem->p_transformerLoadLoss[idx] = xfmr_ll;
 					PVSystem->p_transformerLoss[idx] = xfmr_loss;
 				}
@@ -2528,12 +2476,12 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 				PVSystem->p_systemACPower[idx] *= haf(hour);
 
 				//apply lifetime daily AC losses only if they are enabled
-				if (system_use_lifetime_output == 1 && en_ac_lifetime_losses)
+				if (system_use_lifetime_output == 1 && PVSystem->enableACLifetimeLosses)
 				{
 					//current index of the lifetime daily AC losses is the number of years that have passed (iyear, because it is 0-indexed) * days in a year + the number of complete days that have passed
 					int ac_loss_index = (int)iyear * 365 + (int)floor(hour / 24); //in units of days
-					if (iyear == 0) annual_ac_lifetime_loss += PVSystem->p_systemACPower[idx] * (ac_lifetime_losses[ac_loss_index] / 100) * util::watt_to_kilowatt * ts_hour; //this loss is still in percent, only keep track of it for year 0, convert from power W to energy kWh
-					PVSystem->p_systemACPower[idx] *= (100 - ac_lifetime_losses[ac_loss_index]) / 100;
+					if (iyear == 0) annual_ac_lifetime_loss += PVSystem->p_systemACPower[idx] * (PVSystem->p_acLifetimeLosses[ac_loss_index] / 100) * util::watt_to_kilowatt * ts_hour; //this loss is still in percent, only keep track of it for year 0, convert from power W to energy kWh
+					PVSystem->p_systemACPower[idx] *= (100 - PVSystem->p_acLifetimeLosses[ac_loss_index]) / 100;
 				}
 				// Update battery with final gen to compute grid power
 				if (en_batt)

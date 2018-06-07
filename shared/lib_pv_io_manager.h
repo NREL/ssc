@@ -161,7 +161,7 @@ struct Simulation_IO
 */
 struct PVSystem_IO
 {
-	PVSystem_IO(compute_module* cm, Simulation_IO * SimulationIO, Irradiance_IO * IrradianceIO, std::vector<Subarray_IO*> Subarrays);
+	PVSystem_IO(compute_module* cm, std::string cmName, Simulation_IO * SimulationIO, Irradiance_IO * IrradianceIO, std::vector<Subarray_IO*> Subarrays);
 
 	void AllocateOutputs(compute_module *cm);
 
@@ -169,6 +169,13 @@ struct PVSystem_IO
 	Irradiance_IO * Irradiance;
 	Simulation_IO * Simulation;
 	std::vector<Subarray_IO*> Subarrays;
+
+	// Inputs assumed to apply to all subarrays
+	bool enableDCLifetimeLosses;
+	bool enableACLifetimeLosses;
+
+	ssc_number_t transformerLoadLossFraction;
+	ssc_number_t transformerNoLoadLossFraction;
 
 	// General Outputs
 	std::vector<ssc_number_t *> p_angleOfIncidence; /// The angle of incidence of the subarray [degrees]
@@ -211,6 +218,9 @@ struct PVSystem_IO
 
 	// Degradation
 	ssc_number_t *p_dcDegradationFactor;
+	ssc_number_t *p_dcLifetimeLosses;
+	ssc_number_t *p_acLifetimeLosses;
+
 
 	// transformer loss outputs (single array)
 	ssc_number_t *p_transformerNoLoadLoss;

@@ -30,7 +30,7 @@ PVIOManager::PVIOManager(compute_module*  cm, std::string cmName)
 	}
 
 	// Aggregate Subarray outputs in different structure
-	std::unique_ptr<PVSystem_IO> pvSystem(new PVSystem_IO(cm, m_SimulationIO.get(), m_IrradianceIO.get(), getSubarrays()));
+	std::unique_ptr<PVSystem_IO> pvSystem(new PVSystem_IO(cm, cmName, m_SimulationIO.get(), m_IrradianceIO.get(), getSubarrays()));
 	m_PVSystemIO = std::move(pvSystem);
 
 
@@ -268,7 +268,7 @@ Subarray_IO::Subarray_IO(compute_module* cm, std::string cmName, size_t subarray
 	}
 }
 
-PVSystem_IO::PVSystem_IO(compute_module* cm, Simulation_IO * SimulationIO, Irradiance_IO * IrradianceIO, std::vector<Subarray_IO*> SubarraysAll)
+PVSystem_IO::PVSystem_IO(compute_module* cm, std::string cmName, Simulation_IO * SimulationIO, Irradiance_IO * IrradianceIO, std::vector<Subarray_IO*> SubarraysAll)
 {
 	Irradiance = IrradianceIO;
 	Simulation = SimulationIO;
@@ -276,12 +276,55 @@ PVSystem_IO::PVSystem_IO(compute_module* cm, Simulation_IO * SimulationIO, Irrad
 	numberOfSubarrays = Subarrays.size();
 
 	AllocateOutputs(cm);
+
+	enableDCLifetimeLosses = cm->as_boolean("en_dc_lifetime_losses");
+	enableACLifetimeLosses = cm->as_boolean("en_ac_lifetime_losses");
+
+	// PV Degradation
+	if (Simulation->useLifetimeOutput)
+	{
+		std::vector<double> dc_degrad = cm->as_vector_double("dc_degradation");
+
+		// degradation assumed to start at year 2
+		p_dcDegradationFactor[0] = 1.0;
+		p_dcDegradationFactor[1] = 1.0;
+
+		if (dc_degrad.size() == 1)
+		{
+			for (size_t i = 1; i < Simulation->numberOfYears + 1; i++)
+				p_dcDegradationFactor[i + 1] = (ssc_number_t)pow((1.0 - dc_degrad[0] / 100.0), i);
+		}
+		else if (dc_degrad.size() > 0)
+		{
+			for (size_t i = 1; i < Simulation->numberOfYears && i < dc_degrad.size(); i++)
+				p_dcDegradationFactor[i + 1] = (ssc_number_t)(1.0 - dc_degrad[i] / 100.0);
+		}
+
+		//read in optional DC and AC lifetime daily losses, error check length of arrays
+		if (enableDCLifetimeLosses)
+		{
+
+			std::vector<double> dc_lifetime_losses = cm->as_vector_double("dc_lifetime_losses");
+			if (dc_lifetime_losses.size() != Simulation->numberOfYears * 365)
+				throw compute_module::exec_error(cmName, "Length of the lifetime daily DC losses array must be equal to the analysis period * 365");
+		}
+		if (enableACLifetimeLosses)
+		{
+			std::vector<double> ac_lifetime_losses = cm->as_vector_double("ac_lifetime_losses");
+			if (ac_lifetime_losses.size() != Simulation->numberOfYears * 365)
+				throw compute_module::exec_error(cmName, "Length of the lifetime daily AC losses array must be equal to the analysis period * 365");
+		}
+	}
+	// Transformer losses
+	transformerLoadLossFraction = cm->as_number("transformer_load_loss") * (ssc_number_t)(util::percent_to_fraction);  
+	transformerNoLoadLossFraction = cm->as_number("transformer_no_load_loss") *(ssc_number_t)(util::percent_to_fraction);
 }
 
 void PVSystem_IO::AllocateOutputs(compute_module* cm)
 {
 	size_t numberOfWeatherFileRecords = Irradiance->numberOfWeatherFileRecords;
 	size_t numberOfLifetimeRecords = Simulation->numberOfSteps;
+	size_t numberOfYears = Simulation->numberOfYears;
 
 	for (size_t subarray = 0; subarray < Subarrays.size(); subarray++)
 	{
@@ -354,6 +397,12 @@ void PVSystem_IO::AllocateOutputs(compute_module* cm)
 
 	p_systemDCPower = cm->allocate("dc_net", numberOfLifetimeRecords);
 	p_systemACPower = cm->allocate("gen", numberOfLifetimeRecords);
+
+	if (Simulation->useLifetimeOutput)
+	{
+		p_dcDegradationFactor = cm->allocate("dc_degrade_factor", numberOfYears + 1);
+	}
+
 }
 
 

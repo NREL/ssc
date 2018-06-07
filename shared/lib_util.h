@@ -92,6 +92,8 @@ Define _DEBUG if compile with debugging
 
 namespace util
 {
+	const double percent_to_fraction = 0.01;
+	const double fraction_to_percent = 100;
 	const double watt_to_kilowatt = 1. / 1000;
 	const double kilowatt_to_watt = 1000;
 	const double hour_to_min = 60.;
