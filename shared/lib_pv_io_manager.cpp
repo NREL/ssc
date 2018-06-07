@@ -17,12 +17,14 @@ PVIOManager::PVIOManager(compute_module*  cm, std::string cmName)
 
 	// Gather subarrays which are enabled
 	nSubarrays = 1;
-	std::unique_ptr<Subarray_IO> subarray1(new Subarray_IO(cm, cmName, 1));
+	std::unique_ptr<Module_IO> module1(new Module_IO(cm, cmName));
+	std::unique_ptr<Subarray_IO> subarray1(new Subarray_IO(cm, cmName, 1, module1.get()));
 	m_SubarraysIO.push_back(std::move(subarray1));
 
 	for (size_t subarray = 2; subarray <= 4; subarray++)
 	{
-		std::unique_ptr<Subarray_IO> ptr3(new Subarray_IO(cm, cmName, subarray));
+		// can eventually create a module for each Subarray to allow flexibility.
+		std::unique_ptr<Subarray_IO> ptr3(new Subarray_IO(cm, cmName, subarray, module1.get()));
 		if (ptr3->enable) {
 			m_SubarraysIO.push_back(std::move(ptr3));
 			nSubarrays++;
@@ -169,7 +171,7 @@ void Irradiance_IO::AssignOutputs(compute_module* cm)
 	cm->assign("ts_shift_hours", var_data((ssc_number_t)tsShiftHours));
 }
 
-Subarray_IO::Subarray_IO(compute_module* cm, std::string cmName, size_t subarrayNumber)
+Subarray_IO::Subarray_IO(compute_module* cm, std::string cmName, size_t subarrayNumber, Module_IO * ModuleIO)
 {
 	prefix = "subarray" + util::to_string(static_cast<int>(subarrayNumber)) + "_";
 
@@ -180,7 +182,7 @@ Subarray_IO::Subarray_IO(compute_module* cm, std::string cmName, size_t subarray
 	if (enable)
 	{
 		nStrings = cm->as_integer(prefix + "nstrings");
-		moduleType = cm->as_integer("module_model");
+		Module = ModuleIO;
 		nModulesPerString = cm->as_integer("modules_per_string");
 		tiltDegrees = fabs(cm->as_double(prefix + "tilt"));
 		azimuthDegrees = cm->as_double(prefix + "azimuth");
@@ -421,4 +423,9 @@ void PVSystem_IO::AllocateOutputs(compute_module* cm)
 void PVSystem_IO::AssignOutputs(compute_module* cm)
 {
 	cm->assign("ac_loss", var_data((ssc_number_t)acLossPercent));
+}
+
+Module_IO::Module_IO(compute_module* cm, std::string cmName)
+{
+	moduleType = cm->as_integer("module_model");
 }

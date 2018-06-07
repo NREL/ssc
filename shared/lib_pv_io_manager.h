@@ -23,6 +23,9 @@ struct Irradiance_IO;
 /// Structure containing subarray-level IO information
 struct Subarray_IO;
 
+/// Structure containing module-level IO information
+struct Module_IO;
+
 /// Structure containing the aggregate outputs for all subarrays
 struct PVSystem_IO;
 
@@ -267,7 +270,7 @@ struct PVSystem_IO
 struct Subarray_IO
 {
 	/// Construct the Subarray_IO structure from the compute module input. 
-	Subarray_IO(compute_module* cm, std::string cmName, size_t subarrayNumber);
+	Subarray_IO(compute_module* cm, std::string cmName, size_t subarrayNumber, Module_IO * ModuleIO);
 
 	/// Allocate the Subarray_IO outputs
 	void AllocateOutputs(compute_module* cm);
@@ -283,8 +286,7 @@ struct Subarray_IO
 	// Inputs
 	bool enable;						/// Enable the subarray
 	size_t nStrings;					/// Number of strings in the subarray
-	int moduleType;						/// The PV module type for this subarray
-
+	Module_IO * Module;					/// The PV module for this subarray
 	std::vector<double> monthlySoiling; /// The soiling loss by month [%]
 	double dcLoss;						/// The DC loss due to mismatch, diodes, wiring, tracking, optimizers [%]
 	double groundCoverageRatio;			/// The ground coverage ratio [0 - 1]
@@ -334,6 +336,31 @@ struct Subarray_IO
 		double dcEfficiency;		/// The DC conversion efficiency of the subarray [%]
 		double temperatureCellCelcius; /// The average cell temperature of the modules in the subarray [C]
 	} module;
+
+};
+
+/**
+* \struct Module_IO
+*
+* This structure contains the input and output data needed for an individual module
+* It is contained within the IOManager.
+*
+*/
+struct Module_IO
+{
+public:
+	/// Construct the Module_IO structure from the compute module input. 
+	Module_IO(compute_module* cm, std::string cmName);
+
+	/// Allocate the Module_IO outputs
+	void AllocateOutputs(compute_module* cm);
+
+	/// Assign outputs from member data after the PV Model has run 
+	void AssignOutputs(compute_module* cm);
+
+	enum moduleModelList {MODULE_SIMPLE_EFFICIENCY, MODULE_CEC_DATABASE, MODULE_CEC_USER_INPUT, MODULE_SANDIA, MODULE_IEC61853};
+
+	int moduleType;						/// The PV module model selected
 
 };
 

@@ -844,14 +844,12 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 	// Get System or Subarray Inputs
 	double aspect_ratio = Subarrays[0]->moduleAspectRatio;
 	size_t num_subarrays = PVSystem->numberOfSubarrays;
-	int mod_type = Subarrays[0]->moduleType;
+	int mod_type = Subarrays[0]->Module->moduleType;
 	int modules_per_string = PVSystem->modulesPerString;
 	int strings_in_parallel = PVSystem->stringsInParallel;
 	int num_inverters = PVSystem->numberOfInverters;
 
-
 	double annual_snow_loss = 0;
-	// run some preliminary checks on inputs
 		
 	spe_module_t spe;
 	sandia_celltemp_t spe_tc;
