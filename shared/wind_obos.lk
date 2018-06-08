@@ -1,0 +1,13 @@
+vt = csvread("C:/Projects/SAM/Documentation/OpenSource/PullRequests/ssc_152/wind_obos_defaults.csv",'table');
+outln(vt);
+for (i=0;i<#vt;i++)
+{
+t = vt[i][0];
+if (t == "INPUT")
+	x = "{SSC_INPUT, SSC_NUMBER, \"" + vt[i][1] + "\",\"" + vt[i][2] + "\",\"" + vt[i][4] + "\",\"";
+elseif (t == "OUTPUT")
+	x = "{SSC_OUTPUT, SSC_NUMBER, \"" + vt[i][1] + "\",\"" + vt[i][2] + "\",\"" + vt[i][4] + "\",\"";
+else
+	x = "//" + t;
+outln(x);
+}
