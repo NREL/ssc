@@ -466,7 +466,7 @@ class cm_wind_obos : public compute_module
 public:
   wobos obos;
   vector<var_info> variables_vec;
-  
+/*
   cm_wind_obos() {
     obos = wobos();
 
@@ -493,12 +493,13 @@ public:
     _cm_vtab_wind_obos = &variables_vec[0];
     add_var_info(_cm_vtab_wind_obos);
   }
-
+  */
   // BEGIN WRAPPER OF LIB_OBOS 
   // **********************************************************************
 
   void exec() throw(general_error) {
     //Assign inputs********************************************************
+	  // use static vartable generated from wind_obos_defaults.csv using wind_obos.lk in SDKTool
     int nvar = variables_vec.size();
     for (int k=0; k<=nvar; k++) {
       if (variables_vec[k].var_type != SSC_INPUT) continue;

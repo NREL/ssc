@@ -50,7 +50,7 @@
 #ifndef __wind_obos_h
 #define __wind_obos_h
 
-#include "lib_wind_obos_defaults.h"
+//#include "lib_wind_obos_defaults.h"
 #include "lib_wind_obos_cable_vessel.h"
 #include <vector>
 #include <tuple>
@@ -74,7 +74,7 @@ enum  { PRIMARYVESSEL, FEEDERBARGE } ;
 class wobos {//WIND OFFSHORE BOS STRUCTURE TO HOLD ALL INPUTS AND OUTPUTS AND ALLOW MEMBER FUNCTIONS TO OPERATE ON THOSE VALUES
  public:
   // DEFAULTS FROM CSV FILE
-  wind_obos_defaults wobos_default;
+//  wind_obos_defaults wobos_default;
   
   //MAIN INPUTS************************************************************************************************************
   double turbCapEx; //turbine capital cost ($/kW)

@@ -69,7 +69,7 @@
 #endif
 
 using namespace std;
-
+/*
 // For Python wrapping with c_types
 extern "C" {
   wobos* pywobos_new() {return new wobos();}
@@ -80,13 +80,13 @@ extern "C" {
   void pywobos_set_map_variable(wobos* obos, const char* key, double val) {obos->set_map_variable(key, val);}
   double pywobos_get_map_variable(wobos* obos, const char* key) {return obos->get_map_variable(key);}
 }
-
+*/
 
 // Default constructor loads values from text file
 wobos::wobos() {
   // Set cable and vessel templates
   set_templates();
-
+  /*
   // Load in defaults from csv-file and store locally for use in SAM and WISDEM
   wobos_default = wind_obos_defaults();
 
@@ -113,6 +113,7 @@ wobos::wobos() {
 
   // Store all doubles from map to actual class variables
   map2variables();
+  */
 }
 
 
