@@ -98,6 +98,7 @@ public:
         bool is_ampl_engine;        //run with external AMPL engine
         std::string ampl_data_dir;  //directory to write ampl data files
         std::string ampl_exec_call; //system call for running ampl
+        std::string ampl_thread_id;  //unique ID for running multiple AMPL files simultaneously
 
         s_solver_params()
         {

@@ -2003,7 +2003,10 @@ bool csp_dispatch_opt::optimize_ampl()
 			std::vector<std::string> parse = util::split(execsub, " ");
 			if (parse.size() > 1)
 			{
-				outfile = parse.at(1) + ".txt";
+                outfile = parse.at(1);
+                if (solver_params.ampl_thread_id.size() > 0)
+                    outfile.append("_" + solver_params.ampl_thread_id);
+                outfile.append(".txt");
 			}
 		}
 	}
