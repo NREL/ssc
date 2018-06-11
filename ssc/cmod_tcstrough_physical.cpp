@@ -50,6 +50,7 @@
 // Trough CSP - physical model
 #include "core.h"
 #include "tckernel.h"
+#include <algorithm>
 // for adjustment factors
 #include "common.h"
 
@@ -87,8 +88,11 @@ static var_info _cm_vtab_tcstrough_physical[] = {
                                                                                                                                                               
 	{ SSC_INPUT,        SSC_NUMBER,      "T_fp",                      "Freeze protection temperature (heat trace activation temperature)",                "C",            "",               "solar_field",    "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "I_bn_des",                  "Solar irradiation at design",                                                      "W/m2",         "",               "solar_field",    "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "V_hdr_max",                 "Maximum HTF velocity in the header at design",                                     "m/s",          "",               "solar_field",    "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "V_hdr_min",                 "Minimum HTF velocity in the header at design",                                     "m/s",          "",               "solar_field",    "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "V_hdr_cold_max",            "Maximum HTF velocity in the cold headers at design",                               "m/s",          "",               "solar_field",    "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "V_hdr_cold_min",            "Minimum HTF velocity in the cold headers at design",                               "m/s",          "",               "solar_field",    "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "V_hdr_hot_max",             "Maximum HTF velocity in the hot headers at design",                                "m/s",          "",               "solar_field",    "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "V_hdr_hot_min",             "Minimum HTF velocity in the hot headers at design",                                "m/s",          "",               "solar_field",    "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "N_max_hdr_diams",           "Maximum number of diameters in each of the hot and cold headers",                  "none",         "",               "solar_field",    "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "Pipe_hl_coef",              "Loss coefficient from the header, runner pipe, and non-HCE piping",                "W/m2-K",       "",               "solar_field",    "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "SCA_drives_elec",           "Tracking power, in Watts per SCA drive",                                           "W/SCA",        "",               "solar_field",    "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "fthrok",                    "Flag to allow partial defocusing of the collectors",                               "",             "",               "solar_field",    "*",                       "INTEGER",               "" },
@@ -519,8 +523,11 @@ public:
 		set_unit_value_ssc_matrix(type250_solarfield, "field_fl_props");
 		set_unit_value_ssc_double(type250_solarfield, "T_fp" ); // , 150);
         set_unit_value_ssc_double(type250_solarfield, "I_bn_des" ); // , 950);
-        set_unit_value_ssc_double(type250_solarfield, "V_hdr_max" ); // , 3);
-        set_unit_value_ssc_double(type250_solarfield, "V_hdr_min" ); // , 2);
+        set_unit_value_ssc_double(type250_solarfield, "V_hdr_cold_max" ); // , 3);
+        set_unit_value_ssc_double(type250_solarfield, "V_hdr_cold_min" ); // , 2);
+        set_unit_value_ssc_double(type250_solarfield, "V_hdr_hot_max"); // , 3);
+        set_unit_value_ssc_double(type250_solarfield, "V_hdr_hot_min"); // , 2);
+        set_unit_value_ssc_double(type250_solarfield, "N_max_hdr_diams"); // , 10);
         set_unit_value_ssc_double(type250_solarfield, "Pipe_hl_coef" ); // , 0.45);
         set_unit_value_ssc_double(type250_solarfield, "SCA_drives_elec" ); // , 125);
         set_unit_value_ssc_double(type250_solarfield, "fthrok" ); // , 1);
@@ -801,18 +808,15 @@ public:
 		int nv;
 		double *header_diams = get_unit_value(type250_solarfield, "pipe_header_diams", &nv);
 		ssc_number_t *header_diams_cm = allocate("pipe_header_diams", nv);
-		for (size_t i = 0; i < nv; i++)
-			header_diams_cm[i] = header_diams[i];
-		double *runner_diams = get_unit_value(type250_solarfield, "pipe_runner_diams", &nv);
+        std::copy(header_diams, header_diams + nv, header_diams_cm);
+        double *runner_diams = get_unit_value(type250_solarfield, "pipe_runner_diams", &nv);
 		ssc_number_t *runner_diams_cm = allocate("pipe_runner_diams", nv);
-		for (size_t i = 0; i < nv; i++)
-			runner_diams_cm[i] = runner_diams[i];
+        std::copy(runner_diams, runner_diams + nv, runner_diams_cm);
 		double *pipe_runner_lengths = get_unit_value(type250_solarfield, "pipe_runner_lengths", &nv);
 		ssc_number_t *pipe_runner_lengths_cm = allocate("pipe_runner_lengths", nv);
-		for (size_t i = 0; i < nv; i++)
-			pipe_runner_lengths_cm[i] = pipe_runner_lengths[i];
-
-		// performance adjustement factors
+        std::copy(pipe_runner_lengths, pipe_runner_lengths + nv, pipe_runner_lengths_cm);
+		
+		// performance adjustment factors
 		adjustment_factors haf(this, "adjust");
 		if (!haf.setup())
 			throw exec_error("tcstrough_physical", "failed to setup adjustment factors: " + haf.error());
