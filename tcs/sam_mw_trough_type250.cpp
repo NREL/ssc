@@ -86,6 +86,14 @@ enum{
     P_V_HDR_HOT_MAX,
     P_V_HDR_HOT_MIN,
     P_NMAX_HDR_DIAMS,
+    P_L_RNR_PB,
+    P_L_RNR_PER_XPAN,
+    P_L_XPAN_HDR,
+    P_L_XPAN_RNR,
+    P_MIN_RNR_XPANS,
+    P_NTHSTH_FIELD_SEP,
+    P_NHDR_PER_XPAN,
+    P_OFFSET_XPAN_HDR,
 	P_PIPE_HL_COEF,
 	P_SCA_DRIVES_ELEC,
 	P_FTHROK,
@@ -179,6 +187,7 @@ enum{
 
 	O_HEADER_DIAMS,
 	O_RUNNER_DIAMS,
+    O_HEADER_LENGTHS,
 	O_RUNNER_LENGTHS,
 	O_T_SYS_H,
 	O_M_DOT_AVAIL,
@@ -251,6 +260,14 @@ tcsvarinfo sam_mw_trough_type250_variables[] = {
     { TCS_PARAM,          TCS_NUMBER,     P_V_HDR_HOT_MAX,          "V_hdr_hot_max",                                       "Maximum HTF velocity in the hot headers at design",          "m/s",             "",             "",            "3" },
     { TCS_PARAM,          TCS_NUMBER,     P_V_HDR_HOT_MIN,          "V_hdr_hot_min",                                       "Minimum HTF velocity in the hot headers at design",          "m/s",             "",             "",            "2" },
     { TCS_PARAM,          TCS_NUMBER,    P_NMAX_HDR_DIAMS,        "N_max_hdr_diams",                         "Maximum number of diameters in each of the hot and cold headers",         "none",             "",             "",           "10" },
+    { TCS_PARAM,          TCS_NUMBER,          P_L_RNR_PB,               "L_rnr_pb",                                                    "Length of runner pipe in power block",            "m",             "",             "",          "25" },
+    { TCS_PARAM,          TCS_NUMBER,    P_L_RNR_PER_XPAN,         "L_rnr_per_xpan",                      "Threshold length of straight runner pipe without an expansion loop",            "m",             "",             "",          "70" },
+    { TCS_PARAM,          TCS_NUMBER,        P_L_XPAN_HDR,             "L_xpan_hdr",                            "Combined perpendicular lengths of each header expansion loop",            "m",             "",             "",          "20" },
+    { TCS_PARAM,          TCS_NUMBER,        P_L_XPAN_RNR,             "L_xpan_rnr",                            "Combined perpendicular lengths of each runner expansion loop",            "m",             "",             "",          "20" },
+    { TCS_PARAM,          TCS_NUMBER,     P_MIN_RNR_XPANS,          "Min_rnr_xpans",                    "Minimum number of expansion loops per single-diameter runner section",         "none",             "",             "",           "1" },
+    { TCS_PARAM,          TCS_NUMBER,  P_NTHSTH_FIELD_SEP,   "northsouth_field_sep",                         "North/south separation between subfields. 0 = SCAs are touching",            "m",             "",             "",          "20" },
+    { TCS_PARAM,          TCS_NUMBER,     P_NHDR_PER_XPAN,         "N_hdr_per_xpan",                                            "Number of collector loops per expansion loop",         "none",             "",             "",           "2" },
+    { TCS_PARAM,          TCS_NUMBER,   P_OFFSET_XPAN_HDR,        "offset_xpan_hdr",                 "Location of first header expansion loop. 1 = after first collector loop",         "none",             "",             "",           "1" },
 	{ TCS_PARAM,          TCS_NUMBER,      P_PIPE_HL_COEF,           "Pipe_hl_coef",                       "Loss coefficient from the header, runner pipe, and non-HCE piping",       "W/m2-K",             "",             "",         "0.45" },
 	{ TCS_PARAM,          TCS_NUMBER,   P_SCA_DRIVES_ELEC,        "SCA_drives_elec",                                                  "Tracking power, in Watts per SCA drive",        "W/SCA",             "",             "",          "125" },
 	{ TCS_PARAM,          TCS_NUMBER,            P_FTHROK,                 "fthrok",                                      "Flag to allow partial defocusing of the collectors",         "none",             "",             "",            "1" },
@@ -345,7 +362,8 @@ tcsvarinfo sam_mw_trough_type250_variables[] = {
 
 	{ TCS_OUTPUT,          TCS_ARRAY,     O_HEADER_DIAMS,        "pipe_header_diams",					                                     "Header piping diameter array",                            "m",             "",             "",             "" },
 	{ TCS_OUTPUT,          TCS_ARRAY,     O_RUNNER_DIAMS,        "pipe_runner_diams",                                                            "Runner piping diameter array",            "m",             "",             "",             "" },
-	{ TCS_OUTPUT,          TCS_ARRAY,     O_RUNNER_LENGTHS,    "pipe_runner_lengths",                                                              "Runner piping length array",            "m",             "",             "",             "" },
+    { TCS_OUTPUT,          TCS_ARRAY,     O_HEADER_LENGTHS,    "pipe_header_lengths",                                                              "Header piping length array",            "m",             "",             "",             "" },
+    { TCS_OUTPUT,          TCS_ARRAY,     O_RUNNER_LENGTHS,    "pipe_runner_lengths",                                                              "Runner piping length array",            "m",             "",             "",             "" },
 	{ TCS_OUTPUT,          TCS_NUMBER,           O_T_SYS_H,                "T_sys_h",                                                      "Solar field HTF outlet temperature",            "C",             "",             "",             "" },
 	{ TCS_OUTPUT,          TCS_NUMBER,       O_M_DOT_AVAIL,            "m_dot_avail",                                                       "HTF mass flow rate from the field",        "kg/hr",             "",             "",             "" },
 	{ TCS_OUTPUT,          TCS_NUMBER,           O_Q_AVAIL,                "q_avail",                                                     "Thermal power produced by the field",          "MWt",             "",             "",             "" },
@@ -423,6 +441,14 @@ private:
     double V_hdr_hot_max;		//Maximum HTF velocity in the hot headers at design
     double V_hdr_hot_min;		//Minimum HTF velocity in the hot headers at design
     int N_max_hdr_diams;        //Maximum number of diameters in each of the hot and cold headers
+    double L_rnr_pb;            //Length of runner pipe in power block
+    double L_rnr_per_xpan;      //Threshold length of straight runner pipe without an expansion loop
+    double L_xpan_hdr;          //Compined perpendicular lengths of each header expansion loop
+    double L_xpan_rnr;          //Compined perpendicular lengths of each runner expansion loop
+    int Min_rnr_xpans;          //Minimum number of expansion loops per single-diameter runner section
+    double northsouth_field_sep; //North/south separation between subfields. 0 = SCAs are touching
+    int N_hdr_per_xpan;         //Number of collector loops per expansion loop
+    int offset_xpan_hdr;        //Location of first header expansion loop. 1 = after first collector loop
 	double Pipe_hl_coef;		//Loss coefficient from the header, runner pipe, and non-HCE piping
 	double SCA_drives_elec;		//Tracking power, in Watts per SCA drive
 	int fthrok;		//Flag to allow partial defocusing of the collectors
@@ -634,7 +660,7 @@ private:
 	util::matrix_t<double> L_actSCA, A_cs, D_h, ColOptEff /*nColt, nSCA*/;
 	util::matrix_t<bool> GlazingIntact;
 	emit_table epsilon_3;
-	util::matrix_t<double> D_runner, L_runner, D_hdr;
+    util::matrix_t<double> D_runner, L_runner, D_hdr, L_hdr, N_rnr_xpans;
 
 	util::matrix_t<double> 
 		T_htf_in, T_htf_out, T_htf_ave, q_loss, q_abs, c_htf, rho_htf,DP_tube, E_abs_field, 
@@ -704,6 +730,14 @@ public:
         V_hdr_hot_max = std::numeric_limits<double>::quiet_NaN();
         V_hdr_hot_min = std::numeric_limits<double>::quiet_NaN();
         N_max_hdr_diams = -1;
+        L_rnr_pb = std::numeric_limits<double>::quiet_NaN();
+        L_rnr_per_xpan = std::numeric_limits<double>::quiet_NaN();
+        L_xpan_hdr = std::numeric_limits<double>::quiet_NaN();
+        L_xpan_rnr = std::numeric_limits<double>::quiet_NaN();
+        Min_rnr_xpans = -1;
+        northsouth_field_sep = std::numeric_limits<double>::quiet_NaN();
+        N_hdr_per_xpan = -1;
+        offset_xpan_hdr = -1;
 		Pipe_hl_coef	= std::numeric_limits<double>::quiet_NaN();
 		SCA_drives_elec	= std::numeric_limits<double>::quiet_NaN();
 		fthrok	= -1;
@@ -1007,7 +1041,15 @@ public:
 		V_hdr_cold_min = value(P_V_HDR_COLD_MIN);	//Minimum HTF velocity in the cold headers at design [m/s]
         V_hdr_hot_max = value(P_V_HDR_HOT_MAX);		//Maximum HTF velocity in the hot headers at design [m/s]
         V_hdr_hot_min = value(P_V_HDR_HOT_MIN);		//Minimum HTF velocity in the hot headers at design [m/s]
-        N_max_hdr_diams = value(P_NMAX_HDR_DIAMS);     //Maximum number of diameters in each of the hot and cold headers
+        N_max_hdr_diams = value(P_NMAX_HDR_DIAMS);  //Maximum number of diameters in each of the hot and cold headers
+        L_rnr_pb = value(P_L_RNR_PB);               //Length of runner pipe in power block
+        L_rnr_per_xpan = value(P_L_RNR_PER_XPAN);   //Threshold length of straight runner pipe without an expansion loop
+        L_xpan_hdr = value(P_L_XPAN_HDR);           //Compined perpendicular lengths of each header expansion loop
+        L_xpan_rnr = value(P_L_XPAN_RNR);           //Compined perpendicular lengths of each runner expansion loop
+        Min_rnr_xpans = value(P_MIN_RNR_XPANS);     //Minimum number of expansion loops per single-diameter runner section
+        northsouth_field_sep = value(P_NTHSTH_FIELD_SEP); //North/south separation between subfields. 0 = SCAs are touching
+        N_hdr_per_xpan = value(P_NHDR_PER_XPAN);         //Number of collector loops per expansion loop
+        offset_xpan_hdr = value(P_OFFSET_XPAN_HDR);        //Location of first header expansion loop. 1 = after first collector loop
 		Pipe_hl_coef = value(P_PIPE_HL_COEF);		//Loss coefficient from the header, runner pipe, and non-HCE piping [W/m2-K]
 		SCA_drives_elec = value(P_SCA_DRIVES_ELEC);		//Tracking power, in Watts per SCA drive [W/SCA]
 		fthrok = (int)value(P_FTHROK);		//Flag to allow partial defocusing of the collectors [none]
@@ -1085,7 +1127,7 @@ public:
 		L_SCA = value(P_L_SCA, &nval_L_SCA);		//The length of the SCA  [m]
 		L_aperture = value(P_L_APERTURE, &nval_L_aperture);		//The length of a single mirror/HCE unit [m]
 		ColperSCA = value(P_COLPERSCA, &nval_ColperSCA);		//The number of individual collector sections in an SCA  [none]
-		Distance_SCA = value(P_DISTANCE_SCA, &nval_Distance_SCA);		// piping distance between SCA's in the field [m]
+		Distance_SCA = value(P_DISTANCE_SCA, &nval_Distance_SCA);		// linear distance between SCA's in the field [m]
 
 		HCE_FieldFrac_in = value(P_HCE_FIELDFRAC, &nrow_HCE_FieldFrac, &ncol_HCE_FieldFrac);		//The fraction of the field occupied by this HCE type  [none]
 		D_2_in = value(P_D_2, &nrow_D_2, &ncol_D_2);		//The inner absorber tube diameter [m]
@@ -1334,7 +1376,7 @@ public:
 			nhdrsec = (int)ceil(float(nLoops) / float(nfsec * 2));
 
 			//Allocate space for the D_hdr array
-			D_hdr.resize_fill(nhdrsec, 0.);
+			D_hdr.resize_fill(2*nhdrsec, 0.);
 
 			//We need to determine design information about the field for purposes of header sizing ONLY
 			c_htf_ave = htfProps.Cp((T_loop_out + T_loop_in_des) / 2.0)*1000.;    //Specific heat
@@ -1378,7 +1420,9 @@ public:
 			nrunsec = (int)floor(float(nfsec) / 4.0) + 1;  //The number of unique runner diameters
 			D_runner.resize(nrunsec);
 			L_runner.resize(nrunsec);
+            N_rnr_xpans.resize(nrunsec);  //calculated number of expansion loops in the runner section
 			D_hdr.resize(2*nhdrsec);
+            L_hdr.resize(2*nhdrsec);
 
 			std::string summary;
 			header_design(nhdrsec, nfsec, nrunsec, rho_ave, V_hdr_cold_max, V_hdr_cold_min, V_hdr_hot_max, V_hdr_hot_min, N_max_hdr_diams, m_dot_design, D_hdr, D_runner, &summary);
@@ -1391,8 +1435,20 @@ public:
 
 			//if(ErrorFound()) return
 
-			/*
-			Do one-time calculations for system geometry. Calculate all HTF volume, set runner piping length
+			// Do one-time calculations for system geometry.
+            // Determine header section lengths, including expansion loops
+            L_hdr.fill(2*Row_Distance);
+            for (int i = 0; i < nhdrsec; i++)
+            {
+                if ((i - offset_xpan_hdr) % N_hdr_per_xpan == 0)
+                {
+                    L_hdr[i] += L_xpan_hdr;                     // start with cold loop
+                    L_hdr[2*nhdrsec - 1 - i] += L_xpan_hdr;     // pair hot loop
+                }
+            }
+            
+            /*
+            Calculate all HTF volume, set runner piping length
 			Assume there are two field subsections per span, then if there's an even number of spans in the field,
 			we count the first header section as half-length. I.e., if a field looks like this:
 			(1)        (2)
@@ -1418,13 +1474,18 @@ public:
 			{
 				x1 = 1.;     //the first runners are short
 			}
-			L_runner[0] = 25.;  //Assume 25 [m] of runner piping in and around the power block before it heads out to the field in the main runners
+
+			L_runner[0] = L_rnr_pb;  // Runner piping in and around the power block
+            N_rnr_xpans[0] = 0;
 			if( nrunsec > 1 )
 			{
+                double L_runner_linear = 0;  // Runner length minus expansion loops
 				for( int i = 1; i < nrunsec; i++ )
 				{
 					int j = (int)SCAInfoArray.at(0, 1) - 1;
-					L_runner[i] = x1 * (2 * Row_Distance + (L_SCA[j] + Distance_SCA[j])*float(nSCA) / 2.);
+					L_runner_linear = x1 * (northsouth_field_sep + (L_SCA[j] + Distance_SCA[j])*float(nSCA) / 2.);  // no expansion loops
+                    N_rnr_xpans[i] = max(Min_rnr_xpans, (int)CSP::nint(L_runner_linear/L_rnr_per_xpan));
+                    L_runner[i] = L_runner_linear + L_xpan_rnr * N_rnr_xpans;
 					x1 = 2.;   //tn 4.25.11 Default to 2 for subsequent runners
 				}
 			}
@@ -1434,8 +1495,10 @@ public:
 				v_tofrom_sgs = v_tofrom_sgs + 2.*L_runner[i] * pi*pow(D_runner[i], 2) / 4.;  //This is the volume of the runner in 1 flow direction.
 			}
 
-			//report runner lengths
+			//report the header and runner lengths
+            double *header_lengths = allocate(O_HEADER_LENGTHS, L_hdr.ncells());
 			double *runner_lengths = allocate(O_RUNNER_LENGTHS, L_runner.ncells());
+            std::copy(L_hdr.data(), L_hdr.data() + L_hdr.ncells(), header_lengths);
             std::copy(L_runner.data(), L_runner.data() + L_runner.ncells(), runner_lengths);
 
 			//-------piping from header into and out of the HCE's
@@ -1447,11 +1510,12 @@ public:
 					int CT = (int)SCAInfoArray.at(i, 1) - 1;   //Collector type    
 					int HT = (int)SCAInfoArray.at(i, 0) - 1;    //HCE type
 					//v_loop_bal = v_loop_bal + Distance_SCA(CT)*A_cs(HT,j)*HCE_FieldFrac(HT,j)*float(nLoops)
-					v_loop_tot += (L_SCA[CT] + Distance_SCA[CT])*A_cs(HT, j)*HCE_FieldFrac(HT, j)*float(nLoops);
+                    v_loop_tot += (L_SCA[CT] + Distance_SCA[CT])*A_cs(HT, j)*HCE_FieldFrac(HT, j)*float(nLoops);
 				}
 			}
 
-			//mjw 1.13.2011 Add on volume for the crossover piping 
+			//mjw 1.13.2011 Add on volume for the interconnects and crossover piping
+            // TODO - Redo this v_loop_tot equation for new interconnect definition
 			//v_loop_tot = v_loop_tot + Row_Distance*A_cs(SCAInfoArray(nSCA/2,1),1)*float(nLoops)
 			v_loop_tot += Row_Distance*A_cs((int)SCAInfoArray(max(2, nSCA) / 2 - 1, 0), 0)*float(nLoops);      //TN 6/20: need to solve for nSCA = 1
 
@@ -1461,10 +1525,11 @@ public:
 			for( int i = 0; i < nhdrsec; i++ )
 			{
 				//Also calculate the hot and cold header volume for later use. 4.25 is for header expansion bends
-				v_header_cold += D_hdr[i] * D_hdr[i] / 4.*pi*(Row_Distance + 4.275)*float(nfsec)*2.0;  //tn 4.25.11 The header distance should be multiplied by 2 row spacings
-                v_header_hot += D_hdr[i + nhdrsec] * D_hdr[i + nhdrsec] / 4.*pi*(Row_Distance + 4.275)*float(nfsec)*2.0;
+				v_header_cold += pi * D_hdr[i] * D_hdr[i] / 4. * L_hdr[i] * float(nfsec);
+                v_header_hot += pi * D_hdr[i + nhdrsec] * D_hdr[i + nhdrsec] / 4. * L_hdr[i + nhdrsec] * float(nfsec);
 			}
 			//Add on inlet/outlet from the header to the loop. Assume header to loop inlet ~= 10 [m] (Kelley/Kearney)
+            // TODO - Redo these v_header equations for new interconnect definition
 			v_header_cold += 20.*A_cs(0, 0)*float(nLoops);
             v_header_hot += 20.*A_cs(0, 0)*float(nLoops);
 
@@ -2043,7 +2108,7 @@ overtemp_iter_flag: //10 continue     //Return loop for over-temp conditions
 				//minus the heat losses in intermediate piping
 				if(i < nSCA-1) 
 				{
-					//Determine the length between SCA's to use.  if halfway down the loop, use the row distance.
+					////Determine the length between SCA's to use.  if halfway down the loop, use the row distance.
 					double L_int;
 					if(i==nSCA/2-1) 
 					{ 
@@ -2055,8 +2120,9 @@ overtemp_iter_flag: //10 continue     //Return loop for over-temp conditions
 					}
             
 					//Calculate inlet temperature of the next SCA
+                    // TODO - Replace D_3 and L_int with the values from the new interconnect definition
 					T_htf_in[i+1] = T_htf_out[i] - Pipe_hl_coef*D_3(HT,0)*pi*L_int*(T_htf_out[i] - T_db)/(m_dot_htf*c_htf[i]);
-					//mjw 1.18.2011 Add the internal energy of the crossover piping and interconnects
+					//mjw 1.18.2011 Add the internal energy of the crossover piping and interconnects between the current SCA and the next one
 					E_int_loop[i] = E_int_loop[i] + L_int*(pow(D_3(HT,0),2)/4.*pi * rho_htf[i] * c_htf[i] + mc_bal_sca)*(T_htf_out[i] - 298.150);
 				}
 
@@ -2594,6 +2660,7 @@ calc_final_metrics_goto:
 		// ******************************************************************************************************************************
 		//m_dot_htf = 8.673
 		//------Inlet, Outlet, and COP
+        // TODO - Recalculate for new interconnect definition
 		DP_IOCOP = PressureDrop(m_dot_htf,(T_loop_in + T_loop_outX)/2.0,1.0,D_h((int)SCAInfoArray(0,0),0),
 										HDR_rough,(40.+Row_Distance),0.0,0.0,2.0,0.0,0.0,2.0,0.0,0.0,2.0,1.0,0.0);
 						//if(ErrorFound()) return 1
@@ -2606,7 +2673,7 @@ calc_final_metrics_goto:
 				int CT = (int)SCAInfoArray(i,1)-1;    //Collector type    
 				int HT = (int)SCAInfoArray(i,0)-1;    //HCE type
         
-				//Account for extra fittings on the first HCE
+				////Account for extra fittings on the first HCE
 				double x1, x2;
 				if(i==0) 
 				{ 
@@ -2619,13 +2686,13 @@ calc_final_metrics_goto:
 					x2 = 1.0;
 				}
 				DP_tube[i] = DP_tube[i] + PressureDrop(m_dot_htf,T_htf_ave[i],1.0,D_h(HT,j),(Rough(HT,j)*D_h(HT,j)),
-							 (L_SCA[CT]+Distance_SCA[CT]),0.0,0.0,x1,0.0,0.0,0.0,0.0,0.0,0.0,0.0,x2)*HCE_FieldFrac(HT,j);
+                    (L_SCA[CT] + Distance_SCA[CT]), 0.0, 0.0, x1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, x2)*HCE_FieldFrac(HT, j);
 				//if(ErrorFound()) return 1
 			}
 		}
 		//The pressure drop only across the loop
 		DP_loop = 0.;
-		for(int j=0; j<nSCA; j++){ DP_loop += DP_tube[j];}
+        for (int j = 0; j<nSCA; j++) { DP_loop += DP_tube[j]; }
 
 		if( accept_loc == 1 )
 			m_dot_htf_tot = m_dot_htf*float(nLoops);
@@ -2658,6 +2725,7 @@ calc_final_metrics_goto:
 			}
 
             double x3;
+            int elbows_per_xpan = 4;
 			m_dot_temp = m_dot_run_in;
 			DP_toField = 0.0;
 			DP_fromField = 0.0;
@@ -2665,11 +2733,11 @@ calc_final_metrics_goto:
 			{
                 (i < nrunsec - 1 ? x3 = 1.0 : x3 = 0.0);  // contractions/expansions
 				DP_toField = DP_toField + PressureDrop(m_dot_temp, T_loop_in, 1.0, D_runner[i], HDR_rough, L_runner[i], 0.0, x3, 0.0, 0.0,
-					max(float(CSP::nint(L_runner[i] / 70.))*4., 8.), 1.0, 0.0, 1.0, 0.0, 0.0, 0.0);   //*m_dot_temp/m_dot_run_in  //mjw 5.11.11 Correct for less than all mass flow passing through each section
+					N_rnr_xpans[i]*elbows_per_xpan, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0);   //*m_dot_temp/m_dot_run_in  //mjw 5.11.11 Correct for less than all mass flow passing through each section
 				//if(ErrorFound()) return 1                  
 				//-------SGS from field section
 				DP_fromField = DP_fromField + PressureDrop(m_dot_temp, T_loop_outX, 1.0, D_runner[i], HDR_rough, L_runner[i], x3, 0.0, 0.0, 0.0,
-					max(float(CSP::nint(L_runner[i] / 70.))*4., 8.), 1.0, 0.0, 0.0, 0.0, 0.0, 0.0);   //*m_dot_temp/m_dot_run_in  //mjw 5.11.11 Correct for less than all mass flow passing through each section
+                    N_rnr_xpans[i]*elbows_per_xpan, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0);   //*m_dot_temp/m_dot_run_in  //mjw 5.11.11 Correct for less than all mass flow passing through each section
 				//if(ErrorFound()) return 1
 				if( i>1 )
 					m_dot_temp = max(m_dot_temp - 2.*m_dot_htf_tot / float(nfsec), 0.0);
@@ -2689,9 +2757,9 @@ calc_final_metrics_goto:
 					if( D_hdr[i] != D_hdr[i - 1] )
 						x2 = 1.;
 				}
-
+                // TODO - Make sure every PressureDrop() equation is consistent with the new interconnect definition
 				DP_hdr_cold += PressureDrop(m_dot_header, T_loop_in, 1.0, D_hdr[i], HDR_rough,
-					(Row_Distance + 4.275)*2., 0.0, x2, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0); //*m_dot_header/m_dot_header_in  //mjw/tn 1.25.12 already account for m_dot_header in function call //mjw 5.11.11 scale by mass flow passing though
+					L_hdr[i], 0.0, x2, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0); //*m_dot_header/m_dot_header_in  //mjw/tn 1.25.12 already account for m_dot_header in function call //mjw 5.11.11 scale by mass flow passing though
 				//if(ErrorFound()) return 1
 				//Siphon off header mass flow rate at each loop.  Multiply by 2 because there are 2 loops per hdr section
 				m_dot_header = max(m_dot_header - 2.*m_dot_htf, 0.0);
@@ -2711,7 +2779,7 @@ calc_final_metrics_goto:
                 }
 
                 DP_hdr_hot += PressureDrop(m_dot_header, T_loop_outX, 1.0, D_hdr[i], HDR_rough,
-                    (Row_Distance + 4.275)*2., x2, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0); //*m_dot_header/m_dot_header_in  //mjw 5.11.11
+                    L_hdr[i], x2, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0); //*m_dot_header/m_dot_header_in  //mjw 5.11.11
                 //if(ErrorFound()) return 1
                 //Add to header mass flow rate at each loop.  Multiply by 2 because there are 2 loops per hdr section
                 m_dot_header = m_dot_header + 2.*m_dot_htf;
