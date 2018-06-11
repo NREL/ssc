@@ -47,7 +47,8 @@
 *  THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *******************************************************************************************************/
 
-
+/// Newton Method using Line Search and Backtracking
+/// from Globally Convergent Methods for Nonlinear Systems of Equations, "Numerical Recipes in C"
 template< typename Real, typename F, int n >
 int newton( Real x[n], Real residual[n], bool &check, F &func, 
 	int MAXITER, const Real TOLF, const Real TOLMIN, const Real STPMX,
