@@ -78,28 +78,30 @@ enum  { ON, OFF };
 */
 //static var_info* _cm_vtab_wind_obos;
 
-static var_info _cm_vtab_wind_obos[] = {
+static var_info vtab_wind_obos[] = {
   //  VARTYPE           DATATYPE         NAME                              LABEL                                                      UNITS                 META                      GROUP          REQUIRED_IF                 CONSTRAINTS                      UI_HINTS
   //#IN/OUT
   //# Turbine / Plant parameters
 	{ SSC_INPUT, SSC_NUMBER, "turbCapEx","Turbine Capital Cost","$/kW","","wobos","?=1605","","" },
-{ SSC_INPUT, SSC_NUMBER, "nTurb","Number of Turbines","","","wobos","?=20","MIN=2_MAX=200","" },
-{ SSC_INPUT, SSC_NUMBER, "turbR","Turbine Rating","MW","","wobos","?=5","MIN=1_MAX=10","" },
+{ SSC_INPUT, SSC_NUMBER, "nTurb","Number of Turbines","","","wobos","?=20","MIN=2,MAX=200","" },
+{ SSC_INPUT, SSC_NUMBER, "turbR","Turbine Rating","MW","","wobos","?=5","MIN=1,MAX=10","" },
 { SSC_INPUT, SSC_NUMBER, "rotorD","Rotor Diameter","m","","wobos","?=120","","" },
 { SSC_INPUT, SSC_NUMBER, "hubH","Hub Height","m","","wobos","?=90","","" },
-{ SSC_INPUT, SSC_NUMBER, "waterD","Max Water Depth","m","","wobos","?=30","MIN=3_MAX=1000","" },
-{ SSC_INPUT, SSC_NUMBER, "distShore","Distance to Landfall","km","","wobos","?=90","MIN=5_MAX=1000","" },
-{ SSC_INPUT, SSC_NUMBER, "distPort","Distance from Installation Port to Site","km","","wobos","?=90","MIN=5_MAX=1000","" },
-{ SSC_INPUT, SSC_NUMBER, "distPtoA","Distance from Installation Port to Inshore Assembly Area","km","","wobos","?=90","MIN=5_MAX=1000","" },
-{ SSC_INPUT, SSC_NUMBER, "distAtoS","Distance form Inshore Assembly Area to Site","km","","wobos","?=90","MIN=5_MAX=1000","" },
-{ SSC_INPUT, SSC_NUMBER, "substructure","Substructure Type","","","wobos","?=0","INTEGER","" },
-{ SSC_INPUT, SSC_NUMBER, "anchor","Anchor Type","","","wobos","?=0","INTEGER","" },
-{ SSC_INPUT, SSC_NUMBER, "turbInstallMethod","Turbine Installation Method","","","wobos","?=0","INTEGER","" },
-{ SSC_INPUT, SSC_NUMBER, "towerInstallMethod","Tower Installation Method","","","wobos","?=0","INTEGER","" },
-{ SSC_INPUT, SSC_NUMBER, "installStrategy","Installation Vessel Strategy","","","wobos","?=0","INTEGER","" },
-{ SSC_INPUT, SSC_NUMBER, "cableOptimizer","Electrical Cable Cost Optimization","","","wobos","?=0","INTEGER","" },
+{ SSC_INPUT, SSC_NUMBER, "waterD","Max Water Depth","m","","wobos","?=30","MIN=3,MAX=1000","" },
+{ SSC_INPUT, SSC_NUMBER, "distShore","Distance to Landfall","km","","wobos","?=90","MIN=5,MAX=1000","" },
+{ SSC_INPUT, SSC_NUMBER, "distPort","Distance from Installation Port to Site","km","","wobos","?=90","MIN=5,MAX=1000","" },
+{ SSC_INPUT, SSC_NUMBER, "distPtoA","Distance from Installation Port to Inshore Assembly Area","km","","wobos","?=90","MIN=5,MAX=1000","" },
+{ SSC_INPUT, SSC_NUMBER, "distAtoS","Distance form Inshore Assembly Area to Site","km","","wobos","?=90","MIN=5,MAX=1000","" },
+// String inputs for lib_wind_obos calculation engine.
+{ SSC_INPUT, SSC_STRING, "substructure","Substructure Type","","","wobos","?=MONOPILE","","" },
+{ SSC_INPUT, SSC_STRING, "anchor","Anchor Type","","","wobos","?=DRAGEMBEDMENT","","" },
+{ SSC_INPUT, SSC_STRING, "turbInstallMethod","Turbine Installation Method","","","wobos","?=INDIVIDUAL","","" },
+{ SSC_INPUT, SSC_STRING, "towerInstallMethod","Tower Installation Method","","","wobos","?=ONEPIECE","","" },
+{ SSC_INPUT, SSC_STRING, "installStrategy","Installation Vessel Strategy","","","wobos","?=PRIMARYVESSEL","","" },
+{ SSC_INPUT, SSC_STRING, "cableOptimizer","Electrical Cable Cost Optimization","","","wobos","?=FALSE","","" },
+
 { SSC_INPUT, SSC_NUMBER, "moorLines","Number Of Mooring Lines","","","wobos","?=3","","" },
-{ SSC_INPUT, SSC_NUMBER, "buryDepth","Electrical Cable Burial Depth","m","","wobos","?=2","MIN=0_MAX=15","" },
+{ SSC_INPUT, SSC_NUMBER, "buryDepth","Electrical Cable Burial Depth","m","","wobos","?=2","MIN=0,MAX=15","" },
 { SSC_INPUT, SSC_NUMBER, "arrayY","Spacing Between Turbines in Rows","rotor diameters","","wobos","?=9","MIN=1","" },
 { SSC_INPUT, SSC_NUMBER, "arrayX","Spacing Between Turbine Rows","rotor diameters","","wobos","?=9","MIN=1","" },
 { SSC_INPUT, SSC_NUMBER, "substructCont","Substructure Install Weather Contingency","%","","wobos","?=0.3","","" },
@@ -126,8 +128,8 @@ static var_info _cm_vtab_wind_obos[] = {
 //#Substructure & Foundation
 { SSC_INPUT, SSC_NUMBER, "mpileCR","Monopile Cost Rate","$/tonne","","wobos","?=2250","","" },
 { SSC_INPUT, SSC_NUMBER, "mtransCR","Monopile Transition Piece Cost Rate","$/tonne","","wobos","?=3230","","" },
-{ SSC_INPUT, SSC_NUMBER, "mpileD","Monopile Diameter","m","","wobos","?=0","MIN=0.01","" },
-{ SSC_INPUT, SSC_NUMBER, "mpileL","Monopile Length","m","","wobos","?=0","MIN=0.01","" },
+{ SSC_INPUT, SSC_NUMBER, "mpileD","Monopile Diameter","m","","wobos","?=0.01","MIN=0.01","" },
+{ SSC_INPUT, SSC_NUMBER, "mpileL","Monopile Length","m","","wobos","?=0.01","MIN=0.01","" },
 { SSC_INPUT, SSC_NUMBER, "mpEmbedL","Monopile Embedment Length","m","","wobos","?=30","","" },
 { SSC_INPUT, SSC_NUMBER, "jlatticeCR","Jacket Main Lattice Cost Rate","$/tonne","","wobos","?=4680","","" },
 { SSC_INPUT, SSC_NUMBER, "jtransCR","Jacket Transition Piece Cost Rate","$/tonne","","wobos","?=4500","","" },
@@ -143,8 +145,8 @@ static var_info _cm_vtab_wind_obos[] = {
 { SSC_INPUT, SSC_NUMBER, "ssTrussCR","Semi-submersible Truss Cost Rate","$/tonne","","wobos","?=6250","","" },
 { SSC_INPUT, SSC_NUMBER, "ssHeaveCR","Semi-submersible Heave Plate Cost Rate","$/tonne","","wobos","?=6250","","" },
 { SSC_INPUT, SSC_NUMBER, "sSteelCR","Secondary/Outfitting Steel Cost Rate","$/tonne","","wobos","?=7250","","" },
-{ SSC_INPUT, SSC_NUMBER, "moorDia","Mooring Line Diameter","m","","wobos","?=0","MIN=0.09","" },
-{ SSC_INPUT, SSC_NUMBER, "moorCR","Mooring Line Cost Rate","$/m","","wobos","?=0","MIN=399","" },
+{ SSC_INPUT, SSC_NUMBER, "moorDia","Mooring Line Diameter","m","","wobos","?=0.09","MIN=0.09","" },
+{ SSC_INPUT, SSC_NUMBER, "moorCR","Mooring Line Cost Rate","$/m","","wobos","?=399","MIN=399","" },
 { SSC_INPUT, SSC_NUMBER, "scourMat","Scour Protection Material Cost","$/location","","wobos","?=250000","","" },
 { SSC_INPUT, SSC_NUMBER, "number_install_seasons","Number of Installation Seasons","","","wobos","?=1","","" },
 //#Electrical Infrastructure
@@ -180,9 +182,9 @@ static var_info _cm_vtab_wind_obos[] = {
 { SSC_INPUT, SSC_NUMBER, "expCabMass","Export cable mass","kg/m","","wobos","?=71.9","","" },
 { SSC_INPUT, SSC_NUMBER, "expCabCR","Export cable cost rate","$/m","","wobos","?=495.411","","" },
 { SSC_INPUT, SSC_NUMBER, "expSubsInterCR","Export cable substation interface cost","$/interface","","wobos","?=57500","","" },
-//# Vector inputs
-{ SSC_INPUT, SSC_NUMBER, "arrayCables","Inter-array cables to consider by voltage","kV","","wobos","?=33 66","","" },
-{ SSC_INPUT, SSC_NUMBER, "exportCables","Export cables to consider by voltage","kV","","wobos","?=132 220","","" },
+//# Vector inputs 
+{ SSC_INPUT, SSC_STRING, "arrayCables","Inter-array cables to consider by voltage","kV","","wobos","?=33 66","","" },
+{ SSC_INPUT, SSC_STRING, "exportCables","Export cables to consider by voltage","kV","","wobos","?=132 220","","" },
 //#Assembly & Installation
 { SSC_INPUT, SSC_NUMBER, "moorTimeFac","Anchor & Mooring Water Depth Time Factor","","","wobos","?=0.005","","" },
 { SSC_INPUT, SSC_NUMBER, "moorLoadout","Anchor & Mooring Loadout Time","hours","","wobos","?=5","","" },
@@ -368,6 +370,11 @@ static var_info _cm_vtab_wind_obos[] = {
 class cm_wind_obos : public compute_module
 {
 public:
+	cm_wind_obos()
+	{
+		add_var_info(vtab_wind_obos);
+	}
+
   wobos obos;
  // vector<var_info> variables_vec;
 /*
@@ -406,11 +413,16 @@ public:
 	  // use static vartable generated from wind_obos_defaults.csv using wind_obos.lk in SDKTool
 	size_t k= 0;
 
-	while (_cm_vtab_wind_obos[k].data_type != SSC_INVALID)
+	while (vtab_wind_obos[k].data_type != SSC_INVALID)
 	{
-		if (_cm_vtab_wind_obos[k].var_type != SSC_INPUT) continue;
-		const char *vname = _cm_vtab_wind_obos[k].name;
-		obos.set_map_variable(vname, (double)as_number(vname));
+		if (vtab_wind_obos[k].var_type == SSC_INPUT)
+		{
+			const char *vname = vtab_wind_obos[k].name;
+			if (vtab_wind_obos[k].data_type == SSC_STRING)
+				obos.set_map_variable(vname, as_string(vname));
+			else
+				obos.set_map_variable(vname, (double)as_number(vname));
+		}
 		k++;
 	}
 	/*
@@ -428,12 +440,14 @@ public:
 		
     //Assign outputs*******************************************************
 	k = 0;
-	while (_cm_vtab_wind_obos[k].data_type != SSC_INVALID)
+	while (vtab_wind_obos[k].data_type != SSC_INVALID)
 	{
-		if (_cm_vtab_wind_obos[k].var_type != SSC_OUTPUT) continue;
-		const char *vname = _cm_vtab_wind_obos[k].name;
-		double myval = obos.get_map_variable(vname);
-		assign(vname, var_data((ssc_number_t)(ssc_number_t)myval));
+		if (vtab_wind_obos[k].var_type == SSC_OUTPUT)
+		{
+			const char *vname = vtab_wind_obos[k].name;
+			double myval = obos.get_map_variable(vname);
+			assign(vname, var_data((ssc_number_t)(ssc_number_t)myval));
+		}
 		k++;
 	}
 	/*
