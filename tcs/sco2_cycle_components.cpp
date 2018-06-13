@@ -1376,10 +1376,24 @@ int C_comp_multi_stage::design_given_outlet_state(double T_in /*K*/, double P_in
 
 	ms_des_solved.m_N_design = mv_stages[n_stages - 1].ms_des_solved.m_N_design;		//[rpm]
 	ms_des_solved.m_phi_des = mv_stages[0].ms_des_solved.m_phi_des;		//[-]
-	ms_des_solved.m_w_tip_ratio = max_calc_tip_speed;					//[-]
+	ms_des_solved.m_tip_ratio_max = max_calc_tip_speed;					//[-]
 	ms_des_solved.m_n_stages = n_stages;								//[-]
-	ms_des_solved.m_D_rotor = mv_stages[0].ms_des_solved.m_D_rotor;		//[m]
 	ms_des_solved.m_phi_surge = mv_stages[0].m_snl_phi_min;				//[-]
+
+	ms_des_solved.mv_D.resize(n_stages);
+	ms_des_solved.mv_tip_speed_ratio.resize(n_stages);
+	ms_des_solved.mv_eta_stages.resize(n_stages);
+	for (int i = 0; i < n_stages; i++)
+	{
+		ms_des_solved.mv_D[i] = mv_stages[i].ms_des_solved.m_D_rotor;	//[m]
+		ms_des_solved.mv_tip_speed_ratio[i] = mv_stages[i].ms_des_solved.m_tip_ratio;	//[-]
+		ms_des_solved.mv_eta_stages[i] = mv_stages[i].ms_des_solved.m_eta_design;	//[-]
+	}
+
+	// Also need to size OD vectors here
+	ms_od_solved.mv_eta.resize(n_stages);
+	ms_od_solved.mv_phi.resize(n_stages);
+	ms_od_solved.mv_tip_speed_ratio.resize(n_stages);
 
 	return 0;
 }
@@ -1466,15 +1480,22 @@ void C_comp_multi_stage::off_design_given_N(double T_in /*K*/, double P_in /*kPa
 	ms_od_solved.m_surge = is_surge;
 	ms_od_solved.m_eta = (h_out_isen - h_in) / (h_out - h_in);		//[-] Overall compressor efficiency
 	
-	ms_od_solved.m_phi = mv_stages[0].ms_od_solved.m_phi;			//[-] First stage flow coefficient
-	ms_od_solved.m_phi = phi_min;									//[-] Min (all stages) flow coefficient
+	//ms_od_solved.m_phi = mv_stages[0].ms_od_solved.m_phi;			//[-] First stage flow coefficient
+	ms_od_solved.m_phi_min = phi_min;								//[-] Min (all stages) flow coefficient
 
-	ms_od_solved.m_w_tip_ratio = tip_ratio_max;						//[-] Max (all stages) tip ratio overall
+	ms_od_solved.m_tip_ratio_max = tip_ratio_max;					//[-] Max (all stages) tip ratio overall
 
 	ms_od_solved.m_N = N_rpm;
 
 	ms_od_solved.m_W_dot_in = m_dot*(h_out - h_in);
 	ms_od_solved.m_surge_safety = surge_safety_min;
+
+	for (int i = 0; i < n_stages; i++)
+	{
+		ms_od_solved.mv_tip_speed_ratio[i] = mv_stages[i].ms_od_solved.m_w_tip_ratio;	//[-]
+		ms_od_solved.mv_phi[i] = mv_stages[i].ms_od_solved.m_phi;		//[-]
+		ms_od_solved.mv_eta[i] = mv_stages[i].ms_od_solved.m_eta;		//[-]
+	}
 
 }
 

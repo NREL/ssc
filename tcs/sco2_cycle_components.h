@@ -336,13 +336,17 @@ public:
 		// Mass flow
 		double m_m_dot;			//[kg/s]
 
-		// Geometry
-		double m_N_design;		//[rpm]
-		double m_phi_des;		//[-]
-		double m_w_tip_ratio;	//[-] Max tip ratio over all stages
+		// Stage Metrics
 		int m_n_stages;			//[-] Number of stages
-		double m_D_rotor;		//[m] First stage rotor diameter
+		double m_tip_ratio_max;	//[-] Max tip ratio over all stages
+			// Metrics shared by all stages
+		double m_N_design;		//[rpm] Shaft speed
+		double m_phi_des;		//[-] Design flow coefficient
 		double m_phi_surge;		//[-] Flow coefficient at surge
+			// Metrics that vary by stage
+		std::vector<double> mv_D;	//[m] Diameter
+		std::vector<double> mv_tip_speed_ratio;	//[-]
+		std::vector<double> mv_eta_stages;	//[-]
 
 		S_des_solved()
 		{
@@ -351,7 +355,8 @@ public:
 			m_T_in = m_P_in = m_D_in = m_h_in = m_s_in =
 				m_T_out = m_P_out = m_h_out = m_D_out =
 				m_m_dot =
-				m_N_design = m_phi_des = m_w_tip_ratio = std::numeric_limits<double>::quiet_NaN();
+				m_tip_ratio_max = 
+				m_N_design = m_phi_des = m_phi_surge = std::numeric_limits<double>::quiet_NaN();
 		}
 	};
 
@@ -365,13 +370,18 @@ public:
 
 		bool m_surge;			//[-]
 		double m_eta;			//[-]
-		double m_phi;			//[-] Min phi over all stages
-		double m_w_tip_ratio;	//[-] Max tip ratio over all stages
+		double m_phi_min;		//[-] Min phi over all stages
+		double m_tip_ratio_max;	//[-] Max tip ratio over all stages
 
 		double m_N;			//[rpm]
 
 		double m_W_dot_in;		//[KWe] Power required by compressor, positive value expected
 		double m_surge_safety;	//[-] Flow coefficient / min flow coefficient
+
+			// Metrics that vary by stage
+		std::vector<double> mv_tip_speed_ratio;	//[-]
+		std::vector<double> mv_phi;		//[-]
+		std::vector<double> mv_eta;		//[-]
 
 		S_od_solved()
 		{
@@ -379,7 +389,7 @@ public:
 				m_P_out = m_T_out = std::numeric_limits<double>::quiet_NaN();
 
 			m_surge = false;
-			m_eta = m_phi = m_w_tip_ratio = m_N =
+			m_eta = m_phi_min = m_tip_ratio_max = m_N =
 				m_W_dot_in = m_surge_safety = std::numeric_limits<double>::quiet_NaN();
 		}
 	};

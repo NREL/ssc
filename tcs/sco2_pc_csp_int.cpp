@@ -1660,19 +1660,19 @@ int C_sco2_recomp_csp::off_design_core(double & eta_solved)
 	double over_P_high = max(0.0, (mpc_sco2_cycle->get_od_solved()->m_pres[C_sco2_cycle_core::MC_OUT] - 0.9999*ms_des_par.m_P_high_limit) / 1.E3);
 
 	// 3) Check compressor(s) tip ratio?
-	double mc_w_tip_ratio = mpc_sco2_cycle->get_od_solved()->ms_mc_ms_od_solved.m_w_tip_ratio;
+	double mc_w_tip_ratio = mpc_sco2_cycle->get_od_solved()->ms_mc_ms_od_solved.m_tip_ratio_max;
 	// Recompressor has multiple stages, it's reporting the fastest tip speed
 	double rc_w_tip_ratio = 0.0;
 	if( ms_des_solved.ms_rc_cycle_solved.m_is_rc )
 	{
-		rc_w_tip_ratio = mpc_sco2_cycle->get_od_solved()->ms_rc_ms_od_solved.m_w_tip_ratio;
+		rc_w_tip_ratio = mpc_sco2_cycle->get_od_solved()->ms_rc_ms_od_solved.m_tip_ratio_max;
 	}
 	double comp_tip_ratio = max(mc_w_tip_ratio, rc_w_tip_ratio);
 	double over_tip_ratio = max(0.0, 10.0*(comp_tip_ratio - 0.999));
 
 	// 4) Check for compressor(s) surge?
 	// Main compressor
-	double mc_phi = mpc_sco2_cycle->get_od_solved()->ms_mc_ms_od_solved.m_phi;
+	double mc_phi = mpc_sco2_cycle->get_od_solved()->ms_mc_ms_od_solved.m_phi_min;
 	double over_surge_mc = max(0.0, (C_comp_single_stage::m_snl_phi_min - mc_phi) / C_comp_single_stage::m_snl_phi_min*100.0);
 	// Recompressor
 	double rc_phi_s1, rc_phi_s2;
@@ -1683,7 +1683,7 @@ int C_sco2_recomp_csp::off_design_core(double & eta_solved)
 		//rc_phi_s1 = mc_rc_cycle.get_od_solved()->ms_rc_od_solved.m_phi;
 		//rc_phi_s2 = mc_rc_cycle.get_od_solved()->ms_rc_od_solved.m_phi_2;
 		//double rc_phi_min = min(rc_phi_s1, rc_phi_s2);
-		double rc_phi_min = mpc_sco2_cycle->get_od_solved()->ms_rc_ms_od_solved.m_phi;
+		double rc_phi_min = mpc_sco2_cycle->get_od_solved()->ms_rc_ms_od_solved.m_phi_min;
 		over_surge_rc = max(0.0, (C_comp_single_stage::m_snl_phi_min - rc_phi_min) / C_comp_single_stage::m_snl_phi_min*100.0);
 	}
 
