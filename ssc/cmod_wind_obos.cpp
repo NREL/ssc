@@ -92,6 +92,17 @@ static var_info vtab_wind_obos[] = {
 { SSC_INPUT, SSC_NUMBER, "distPort","Distance from Installation Port to Site","km","","wobos","?=90","MIN=5,MAX=1000","" },
 { SSC_INPUT, SSC_NUMBER, "distPtoA","Distance from Installation Port to Inshore Assembly Area","km","","wobos","?=90","MIN=5,MAX=1000","" },
 { SSC_INPUT, SSC_NUMBER, "distAtoS","Distance form Inshore Assembly Area to Site","km","","wobos","?=90","MIN=5,MAX=1000","" },
+
+// Change to integers to work with SAM
+// String inputs for lib_wind_obos calculation engine.
+{ SSC_INPUT, SSC_NUMBER, "substructure","Substructure Type","","","wobos","?=0","","" },
+{ SSC_INPUT, SSC_NUMBER, "anchor","Anchor Type","","","wobos","?=0","","" },
+{ SSC_INPUT, SSC_NUMBER, "turbInstallMethod","Turbine Installation Method","","","wobos","?=0","","" },
+{ SSC_INPUT, SSC_NUMBER, "towerInstallMethod","Tower Installation Method","","","wobos","?=0","","" },
+{ SSC_INPUT, SSC_NUMBER, "installStrategy","Installation Vessel Strategy","","","wobos","?=0","","" },
+{ SSC_INPUT, SSC_NUMBER, "cableOptimizer","Electrical Cable Cost Optimization","","","wobos","?=0","","" },
+
+/*
 // String inputs for lib_wind_obos calculation engine.
 { SSC_INPUT, SSC_STRING, "substructure","Substructure Type","","","wobos","?=MONOPILE","","" },
 { SSC_INPUT, SSC_STRING, "anchor","Anchor Type","","","wobos","?=DRAGEMBEDMENT","","" },
@@ -99,7 +110,13 @@ static var_info vtab_wind_obos[] = {
 { SSC_INPUT, SSC_STRING, "towerInstallMethod","Tower Installation Method","","","wobos","?=ONEPIECE","","" },
 { SSC_INPUT, SSC_STRING, "installStrategy","Installation Vessel Strategy","","","wobos","?=PRIMARYVESSEL","","" },
 { SSC_INPUT, SSC_STRING, "cableOptimizer","Electrical Cable Cost Optimization","","","wobos","?=FALSE","","" },
+*/
+// not used in SAM
+//# Vector inputs 
+{ SSC_INPUT, SSC_STRING, "arrayCables","Inter-array cables to consider by voltage","kV","","wobos","?=33 66","","" },
+{ SSC_INPUT, SSC_STRING, "exportCables","Export cables to consider by voltage","kV","","wobos","?=132 220","","" },
 
+//
 { SSC_INPUT, SSC_NUMBER, "moorLines","Number Of Mooring Lines","","","wobos","?=3","","" },
 { SSC_INPUT, SSC_NUMBER, "buryDepth","Electrical Cable Burial Depth","m","","wobos","?=2","MIN=0,MAX=15","" },
 { SSC_INPUT, SSC_NUMBER, "arrayY","Spacing Between Turbines in Rows","rotor diameters","","wobos","?=9","MIN=1","" },
@@ -182,9 +199,6 @@ static var_info vtab_wind_obos[] = {
 { SSC_INPUT, SSC_NUMBER, "expCabMass","Export cable mass","kg/m","","wobos","?=71.9","","" },
 { SSC_INPUT, SSC_NUMBER, "expCabCR","Export cable cost rate","$/m","","wobos","?=495.411","","" },
 { SSC_INPUT, SSC_NUMBER, "expSubsInterCR","Export cable substation interface cost","$/interface","","wobos","?=57500","","" },
-//# Vector inputs 
-{ SSC_INPUT, SSC_STRING, "arrayCables","Inter-array cables to consider by voltage","kV","","wobos","?=33 66","","" },
-{ SSC_INPUT, SSC_STRING, "exportCables","Export cables to consider by voltage","kV","","wobos","?=132 220","","" },
 //#Assembly & Installation
 { SSC_INPUT, SSC_NUMBER, "moorTimeFac","Anchor & Mooring Water Depth Time Factor","","","wobos","?=0.005","","" },
 { SSC_INPUT, SSC_NUMBER, "moorLoadout","Anchor & Mooring Loadout Time","hours","","wobos","?=5","","" },

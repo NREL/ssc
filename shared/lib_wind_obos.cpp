@@ -127,6 +127,10 @@ void wobos::map2variables() {
   installStrategy = (int)mapVars["installStrategy"];
   cableOptimizer = (mapVars["cableOptimizer"] == 0.0) ? false : true;
 
+  // called here to set values instead of when mapping
+  set_vessel_defaults();
+
+
   // Turbine / Plant variables
   turbCapEx = mapVars["turbCapEx"];
   nTurb = mapVars["nTurb"];
@@ -421,6 +425,7 @@ void wobos::map2variables() {
   commissioning = mapVars["commissioning"];
   decomCost = mapVars["decomCost"];
   total_bos_cost = mapVars["total_bos_cost"];
+
 }
 
 
