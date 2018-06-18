@@ -51,9 +51,11 @@
 #include "tcstype.h"
 #include "htf_props.h"
 #include "sam_csp_util.h"
+#include "interconnect.h"
 
 #include <cmath>
 #include <algorithm>
+#include <vector>
 #include <fstream>
 
 using namespace std;
@@ -654,14 +656,17 @@ private:
 	util::matrix_t<double> HCE_FieldFrac, D_2, D_3, D_4, D_5, D_p, Flow_type, Rough, alpha_env, epsilon_3_11, epsilon_3_12, 
 		epsilon_3_13, epsilon_3_14, epsilon_3_21, epsilon_3_22, epsilon_3_23, epsilon_3_24, epsilon_3_31, epsilon_3_32, epsilon_3_33, 
 		epsilon_3_34, epsilon_3_41, epsilon_3_42, epsilon_3_43, epsilon_3_44, alpha_abs, Tau_envelope, EPSILON_4, EPSILON_5, 
-		GlazingIntactIn, P_a, AnnulusGas, AbsorberMaterial, Shadowing, Dirt_HCE, Design_loss, SCAInfoArray, K_intc, D_intc, L_intc, Type_intc;
+		GlazingIntactIn, P_a, AnnulusGas, AbsorberMaterial, Shadowing, Dirt_HCE, Design_loss, SCAInfoArray, K_intc, D_intc, L_intc, Type_intc,
+        rough_intc, u_intc, mc_intc;
+	
+    vector<intc_assy> intc_assys;
 
 	util::matrix_t<double> IAM_matrix;
 	//int n_c_iam_matrix = 0;
 	//int n_r_iam_matrix = 0;
 	int n_c_iam_matrix;
 	int n_r_iam_matrix;
-	
+
 	//Declare variables that require storage from step to step
 	double 
 		Ap_tot, //Total aperture area m2
@@ -1244,7 +1249,13 @@ public:
         D_intc.assign(D_intc_in, nrow_D_intc, ncol_D_intc);
         L_intc.assign(L_intc_in, nrow_L_intc, ncol_L_intc);
         Type_intc.assign(Type_intc_in, nrow_Type_intc, ncol_Type_intc);
-		
+        rough_intc.resize_fill(nrow_K_intc, ncol_K_intc, HDR_rough);
+        u_intc.resize_fill(nrow_K_intc, ncol_K_intc, Pipe_hl_coef);
+        mc_intc.resize(nrow_K_intc, ncol_K_intc);
+        for (std::size_t i = 0; i < mc_intc.ncells(); i++) {
+            mc_intc[i] = mc_bal_sca * 3.6e3 * L_intc[i];
+        }
+
         //std::ofstream logK;
         //logK.open("logK.txt");
         //logK << "K_intc" << "\n";
@@ -1256,6 +1267,12 @@ public:
         //    logK << "\n";
         //}
         //logK.close();
+
+        intc_assys.reserve(nrow_K_intc);  // nrow_K_intc = number of interconnect assemblies
+        for (std::size_t i = 0; i < nrow_K_intc; i++) {
+            intc_assys.push_back(intc_assy(&htfProps, K_intc.row(i).data(), D_intc.row(i).data(), L_intc.row(i).data(),
+                rough_intc.row(i).data(), u_intc.row(i).data(), mc_intc.row(i).data(), Type_intc.row(i).data()));
+        }
 
 		//The glazingintact array should be converted to bools
 		GlazingIntact.resize(nrow_GlazingIntactIn, ncol_GlazingIntactIn);
@@ -1563,15 +1580,19 @@ public:
 					int CT = (int)SCAInfoArray.at(i, 1) - 1;   //Collector type    
 					int HT = (int)SCAInfoArray.at(i, 0) - 1;    //HCE type
 					//v_loop_bal = v_loop_bal + Distance_SCA(CT)*A_cs(HT,j)*HCE_FieldFrac(HT,j)*float(nLoops)
-                    v_loop_tot += (L_SCA[CT] + Distance_SCA[CT])*A_cs(HT, j)*HCE_FieldFrac(HT, j)*float(nLoops);
+					v_loop_tot += L_SCA[CT]*A_cs(HT, j)*HCE_FieldFrac(HT, j)*float(nLoops);
 				}
 			}
 
-			//mjw 1.13.2011 Add on volume for the interconnects and crossover piping
-            // TODO - Redo this v_loop_tot equation for new interconnect definition
-			//v_loop_tot = v_loop_tot + Row_Distance*A_cs(SCAInfoArray(nSCA/2,1),1)*float(nLoops)
-			v_loop_tot += Row_Distance*A_cs((int)SCAInfoArray(max(2, nSCA) / 2 - 1, 0), 0)*float(nLoops);      //TN 6/20: need to solve for nSCA = 1
-
+			// Add on volume for the interconnects and crossover piping
+            for (int i = 0; i < intc_assys.size(); i++) {
+                if (i == 0 || i == intc_assys.size() - 1) {
+                    v_loop_tot += intc_assys[i].getVolume() / 2 * float(nLoops);  // halve the inlet and outlet piping so to not double count
+                }
+                else {
+                    v_loop_tot += intc_assys[i].getVolume() * float(nLoops);
+                }
+            }
 
 			//-------field header loop
             double v_header_cold = 0.0; double v_header_hot = 0.0;
@@ -1581,10 +1602,6 @@ public:
 				v_header_cold += pi * D_hdr[i] * D_hdr[i] / 4. * L_hdr[i] * float(nfsec);
                 v_header_hot += pi * D_hdr[i + nhdrsec] * D_hdr[i + nhdrsec] / 4. * L_hdr[i + nhdrsec] * float(nfsec);
 			}
-			//Add on inlet/outlet from the header to the loop. Assume header to loop inlet ~= 10 [m] (Kelley/Kearney)
-            // TODO - Redo these v_header equations for new interconnect definition
-			v_header_cold += 20.*A_cs(0, 0)*float(nLoops);
-            v_header_hot += 20.*A_cs(0, 0)*float(nLoops);
 
 			//Calculate the HTF volume associated with pumps and the SGS
 			double v_sgs = Pump_SGS(rho_ave, m_dot_design, solar_mult);
@@ -2158,30 +2175,20 @@ overtemp_iter_flag: //10 continue     //Return loop for over-temp conditions
 				}
         
 				//Set the inlet temperature of the next SCA equal to the outlet temperature of the current SCA
-				//minus the heat losses in intermediate piping
+				//minus the heat losses in the interconnects
 				if(i < nSCA-1) 
-				{
-					////Determine the length between SCA's to use.  if halfway down the loop, use the row distance.
-					double L_int;
-					if(i==nSCA/2-1) 
-					{ 
-						L_int = 2.+ Row_Distance;
-					} 
-					else 
-					{
-						L_int = Distance_SCA[CT];
-					}
-            
+				{            
 					//Calculate inlet temperature of the next SCA
-                    // TODO - Replace D_3 and L_int with the values from the new interconnect definition
-					T_htf_in[i+1] = T_htf_out[i] - Pipe_hl_coef*D_3(HT,0)*pi*L_int*(T_htf_out[i] - T_db)/(m_dot_htf*c_htf[i]);
+                    IntcOutputs intc_state = intc_assys[i+2].State(m_dot_htf, T_htf_out[i], T_db, 1.);
+					T_htf_in[i+1] = intc_state.temp_out;
 					//mjw 1.18.2011 Add the internal energy of the crossover piping and interconnects between the current SCA and the next one
-					E_int_loop[i] = E_int_loop[i] + L_int*(pow(D_3(HT,0),2)/4.*pi * rho_htf[i] * c_htf[i] + mc_bal_sca)*(T_htf_out[i] - 298.150);
+					E_int_loop[i] += intc_state.internal_energy;
 				}
 
 			}
 
 			//Set the loop outlet temperature
+            // TODO - Maybe change this?
 			T_loop_outX = T_htf_out[nSCA - 1];
 
 			if( accept_loc == 1 )
@@ -2711,13 +2718,13 @@ calc_final_metrics_goto:
 		// ******************************************************************************************************************************
 		// Calculate the pressure drop across the piping system
 		// ******************************************************************************************************************************
-		//m_dot_htf = 8.673
 		//------Inlet, Outlet, and COP
-        // TODO - Recalculate for new interconnect definition
-		DP_IOCOP = PressureDrop(m_dot_htf,(T_loop_in + T_loop_outX)/2.0,1.0,D_h((int)SCAInfoArray(0,0),0),
-										HDR_rough,(40.+Row_Distance),0.0,0.0,2.0,0.0,0.0,2.0,0.0,0.0,2.0,1.0,0.0);
-						//if(ErrorFound()) return 1
-		//-------HCE's
+        IntcOutputs inlet_state = intc_assys[0].State(m_dot_htf * 2, T_loop_in, T_db, 1.);
+        IntcOutputs crossover_state = intc_assys[intc_assys.size() / 2].State(m_dot_htf, T_htf_out[nSCA / 2 - 1], T_db, 1.);
+        IntcOutputs outlet_state = intc_assys[intc_assys.size() - 1].State(m_dot_htf * 2, T_loop_outX, T_db, 1.);
+        DP_IOCOP = inlet_state.pressure_drop + crossover_state.pressure_drop + outlet_state.pressure_drop;
+
+		//-------HCE's (no interconnects)
 		DP_tube.fill(0.0);
 		for(int j=0; j<nHCEVar; j++)
 		{
@@ -2726,26 +2733,20 @@ calc_final_metrics_goto:
 				int CT = (int)SCAInfoArray(i,1)-1;    //Collector type    
 				int HT = (int)SCAInfoArray(i,0)-1;    //HCE type
         
-				////Account for extra fittings on the first HCE
-				double x1, x2;
-				if(i==0) 
-				{ 
-					x1 = 10.0;
-					x2 = 3.0;
-				} 
-				else 
-				{
-					x1 = 0.0;
-					x2 = 1.0;
-				}
 				DP_tube[i] = DP_tube[i] + PressureDrop(m_dot_htf,T_htf_ave[i],1.0,D_h(HT,j),(Rough(HT,j)*D_h(HT,j)),
-                    (L_SCA[CT] + Distance_SCA[CT]), 0.0, 0.0, x1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, x2)*HCE_FieldFrac(HT, j);
-				//if(ErrorFound()) return 1
+							 L_SCA[CT],0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0)*HCE_FieldFrac(HT,j);
 			}
 		}
-		//The pressure drop only across the loop
-		DP_loop = 0.;
-        for (int j = 0; j<nSCA; j++) { DP_loop += DP_tube[j]; }
+		//The pressure drop only across the loop (excludes IOCOP)
+        IntcOutputs intc_state = intc_assys[1].State(m_dot_htf, inlet_state.temp_out, T_db, 1.);
+        DP_loop = intc_state.pressure_drop;  // just before first SCA
+		for(int j=0; j<nSCA; j++)
+        {
+            if (j != nSCA/2 - 1) {   // exclude crossover
+                intc_state = intc_assys[j + 2].State(m_dot_htf, T_htf_out[j], T_db, 1.);
+                DP_loop += intc_state.pressure_drop;
+            }
+        }
 
 		if( accept_loc == 1 )
 			m_dot_htf_tot = m_dot_htf*float(nLoops);
@@ -2810,7 +2811,6 @@ calc_final_metrics_goto:
 					if( D_hdr[i] != D_hdr[i - 1] )
 						x2 = 1.;
 				}
-                // TODO - Make sure every PressureDrop() equation is consistent with the new interconnect definition
 				DP_hdr_cold += PressureDrop(m_dot_header, T_loop_in, 1.0, D_hdr[i], HDR_rough,
 					L_hdr[i], 0.0, x2, 0.0, 0.0, N_hdr_xpans[i]*4, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0); //*m_dot_header/m_dot_header_in  //mjw/tn 1.25.12 already account for m_dot_header in function call //mjw 5.11.11 scale by mass flow passing though
 				//if(ErrorFound()) return 1
