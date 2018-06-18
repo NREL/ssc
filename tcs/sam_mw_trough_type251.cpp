@@ -1387,7 +1387,8 @@ public:
 					// Look ahead for DNI resource to decide whether cycle should start back up
 					if((dnifc<I_bn_des*cycle_cutoff_frac)&&(fc_on))	mode = pb_off_or_standby;
 					// If it's night time and TES is 0 and power cycle is below cutoff then don't restart the turbine
-					if(m_dot_field == 0.)	mode = pb_off_or_standby;
+					if(m_dot_field == 0. && (qs_disch_avail < q_pb_design*cycle_cutoff_frac) )	
+                        mode = pb_off_or_standby;
 				}
 
                 // MJW 6.18.2018
