@@ -302,6 +302,12 @@ public:
 		return &ms_des_solved;
 	}
 
+	double calc_psi_design(double phi_design /*-*/);
+
+	double calc_psi_off_design(double phi_od /*-*/, double N_rpm_od /*rpm*/);
+
+	double calc_eta_off_design(double phi_od /*-*/, double N_rpm_od /*rpm*/);
+
 	int design_given_shaft_speed(double T_in /*K*/, double P_in /*kPa*/, double m_dot /*kg/s*/,
 		double N_rpm /*rpm*/, double eta_isen /*-*/, double & P_out /*kPa*/, double & T_out /*K*/, double & tip_ratio /*-*/);
 

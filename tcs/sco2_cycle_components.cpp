@@ -950,6 +950,12 @@ void C_turbine::od_turbine_at_N_des(double T_in, double P_in, double P_out, int 
 	return;
 }
 
+double C_comp_single_stage::calc_psi_design(double phi_design /*-*/)
+{
+	return ((((-498626.0*phi_design) + 53224.0) * phi_design - 2505.0) * phi_design + 54.6) *
+		phi_design + 0.04049;		// from dimensionless modified head curve(at design - point, psi and modified psi are equal)
+}
+
 int C_comp_single_stage::design_given_shaft_speed(double T_in /*K*/, double P_in /*kPa*/, double m_dot /*kg/s*/,
 	double N_rpm /*rpm*/, double eta_isen /*-*/, double & P_out /*kPa*/, double & T_out /*K*/, double & tip_ratio /*-*/)
 {
@@ -972,8 +978,7 @@ int C_comp_single_stage::design_given_shaft_speed(double T_in /*K*/, double P_in
 	double D_rotor = std::pow(m_dot / (m_snl_phi_design * rho_in * 0.5 * N_rad_s), 1.0 / 3.0);		//[m]
 
 	// Calculate psi at the design-point phi using Horner's method
-	double psi_design = ((((-498626.0*m_snl_phi_design) + 53224.0) * m_snl_phi_design - 2505.0) * m_snl_phi_design + 54.6) *
-		m_snl_phi_design + 0.04049;		// from dimensionless modified head curve(at design - point, psi and modified psi are equal)
+	double psi_design = calc_psi_design(m_snl_phi_design);
 
 	// Solve for idea head
 	double U_tip = 0.5 * D_rotor * N_rad_s;		//[m/s]
@@ -1058,8 +1063,7 @@ int C_comp_single_stage::design_single_stage_comp(double T_in /*K*/, double P_in
 	double h_out = out_props.enth;
 
 	// Calculate psi at the design-point phi using Horner's method
-	double psi_design = ((((-498626.0*m_snl_phi_design) + 53224.0) * m_snl_phi_design - 2505.0) * m_snl_phi_design + 54.6) *
-		m_snl_phi_design + 0.04049;		// from dimensionless modified head curve(at design - point, psi and modified psi are equal)
+	double psi_design = calc_psi_design(m_snl_phi_design);	//[-]
 
 	// Determine required size and speed of compressor
 	double w_i = h_isen_out - h_in;						//[kJ/kg] positive isentropic specific work of compressor
@@ -1118,6 +1122,20 @@ int C_comp_single_stage::calc_m_dot__phi_des(double T_in /*K*/, double P_in /*kP
 	return 0;
 }
 
+double C_comp_single_stage::calc_psi_off_design(double phi_od /*-*/, double N_rpm_od /*rpm*/)
+{
+	double psi_star = calc_psi_design(phi_od);			// from dimensionless modified head curve
+	
+	return psi_star / pow(ms_des_solved.m_N_design / N_rpm_od, pow(20.0*phi_od, 3.0));
+}
+
+double C_comp_single_stage::calc_eta_off_design(double phi_od /*-*/, double N_rpm_od /*rpm*/)
+{
+	double eta_star = ((((-1.638e6*phi_od) + 182725.0)*phi_od - 8089.0)*phi_od + 168.6)*phi_od - 0.7069;	// from dimensionless modified efficiency curve
+	
+	return eta_star * 1.47528 / pow(ms_des_solved.m_N_design / N_rpm_od, pow(20.0*phi_od, 5.0));		// Efficiency is normalized so it equals 1.0 at snl_phi_design
+}
+
 int C_comp_single_stage::off_design_given_N(double T_in /*K*/, double P_in /*kPa*/, double m_dot /*kg/s*/, double N_rpm /*rpm*/,
 	double & T_out /*K*/, double & P_out /*kPa*/)
 {
@@ -1147,11 +1165,12 @@ int C_comp_single_stage::off_design_given_N(double T_in /*K*/, double P_in /*kPa
 		ms_od_solved.m_surge = false;
 
 	double phi_star = phi*pow(ms_od_solved.m_N / ms_des_solved.m_N_design, 0.2);		//[-] modified flow coefficient
-	double psi_star = ((((-498626.0*phi_star) + 53224.0)*phi_star - 2505.0)*phi_star + 54.6)*phi_star + 0.04049;	// from dimensionless modified head curve
-	double eta_star = ((((-1.638e6*phi_star) + 182725.0)*phi_star - 8089.0)*phi_star + 168.6)*phi_star - 0.7069;	// from dimensionless modified efficiency curve
-	double psi = psi_star / pow(ms_des_solved.m_N_design / ms_od_solved.m_N, pow(20.0*phi_star, 3.0));
-	double eta_0 = eta_star*1.47528 / pow(ms_des_solved.m_N_design / ms_od_solved.m_N, pow(20.0*phi_star, 5.0));		// Efficiency is normalized so it equals 1.0 at snl_phi_design
-	ms_od_solved.m_eta = std::max(eta_0*ms_des_solved.m_eta_design, 0.0);		//[-] Actual compressor efficiency, not allowed to go negative
+	
+	double psi = calc_psi_off_design(phi_star, N_rpm);		//[-]
+
+	double eta_ND_od = calc_eta_off_design(phi_star, N_rpm);
+
+	ms_od_solved.m_eta = std::max(eta_ND_od*ms_des_solved.m_eta_design, 0.0);		//[-] Actual compressor efficiency, not allowed to go negative
 
 	// Check that the specified mass flow rate is possible with the compressor's current shaft speed
 	if (psi <= 0.0)
