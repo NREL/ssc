@@ -330,6 +330,40 @@ int C_sco2_recomp_csp_10MWe_scale::off_design_nested_opt(C_sco2_rc_csp_template:
 	return mc_rc_csp_10MWe.off_design_nested_opt(s_10MWe_od_par, off_design_strategy);
 }
 
+int C_sco2_recomp_csp::off_design_fix_P_mc_in(C_sco2_rc_csp_template::S_od_par od_par, double P_mc_in /*MPa*/, int off_design_strategy, double od_opt_tol)
+{
+	setup_off_design_info(od_par, off_design_strategy, od_opt_tol);
+	
+	// Now, call off-design with the optimized compressor inlet pressure		
+	ms_rc_cycle_od_phi_par.m_P_mc_in = P_mc_in*1.E3;	//[kPa] convert from MPa
+	double eta_od_solved = std::numeric_limits<double>::quiet_NaN();
+	int od_core_error_code = off_design_core(eta_od_solved);
+	
+	ms_od_solved.ms_rc_cycle_od_solved = *mpc_sco2_cycle->get_od_solved();
+	ms_od_solved.ms_phx_od_solved = mc_phx.ms_od_solved;
+
+	return od_core_error_code;
+}
+
+int C_sco2_recomp_csp_10MWe_scale::off_design_fix_P_mc_in(C_sco2_rc_csp_template::S_od_par od_par, double P_mc_in /*MPa*/, int off_design_strategy, double od_opt_tol)
+{
+	if (ms_des_par.m_cycle_config == 2)
+	{
+		throw(C_csp_exception("sCO2 cycle and CSP off-design only currently developed for the recompression cycle\n"));
+	}
+
+	// Check if callback info has changed. If so, pass to member sco2 10MWe cycle
+	mc_rc_csp_10MWe.mf_callback_update = mf_callback_update;
+	mc_rc_csp_10MWe.mp_mf_update = mp_mf_update;
+	// **************************************************
+
+	// Scale od_par
+	C_sco2_rc_csp_template::S_od_par s_10MWe_od_par = od_par;
+	s_10MWe_od_par.m_m_dot_htf /= m_r_W_scale;
+
+	return mc_rc_csp_10MWe.off_design_fix_P_mc_in(s_10MWe_od_par, P_mc_in, off_design_strategy);
+}
+
 const C_sco2_recomp_csp_10MWe_scale::S_des_par * C_sco2_recomp_csp_10MWe_scale::get_design_par()
 {
 	// Don't to scale anything here, because ms_des_par is not modified by C_sco2_recomp_csp
@@ -429,17 +463,16 @@ int C_sco2_recomp_csp_10MWe_scale::generate_ud_pc_tables(double T_htf_low /*C*/,
 		T_htf_ind, T_amb_ind, m_dot_htf_ND_ind);
 }
 
-
-int C_sco2_recomp_csp::off_design_nested_opt(C_sco2_recomp_csp::S_od_par od_par, int off_design_strategy, double od_opt_tol)
+void C_sco2_recomp_csp::setup_off_design_info(C_sco2_recomp_csp::S_od_par od_par, int off_design_strategy, double od_opt_tol)
 {
-	ms_od_par = od_par;	
+	ms_od_par = od_par;
 
 	// Optimization variables:
 	m_od_opt_objective = off_design_strategy;
-	if( m_od_opt_objective == E_MAX_ETA_FIX_PHI ||
+	if (m_od_opt_objective == E_MAX_ETA_FIX_PHI ||
 		m_od_opt_objective == E_MAX_POWER_FIX_PHI ||
 		m_od_opt_objective == E_MOO_ETA_0p1Wnd_FIX_PHI ||
-		m_od_opt_objective == E_MOO_ETA_T_T_IN_FIX_PHI )
+		m_od_opt_objective == E_MOO_ETA_T_T_IN_FIX_PHI)
 	{
 		m_is_phi_optimized = false;
 	}
@@ -450,21 +483,8 @@ int C_sco2_recomp_csp::off_design_nested_opt(C_sco2_recomp_csp::S_od_par od_par,
 	m_od_opt_ftol = od_opt_tol;
 	// ****************************************
 
-
-
-	//if (m_od_opt_objective == E_MAX_POWER_FIX_PHI ||
-	//	m_od_opt_objective == E_MAX_POWER)
-	//{
-	//	m_od_opt_objective = E_TARGET_POWER_ETA_MAX;
-	//}
-
-
-
-
-	// Define ms_rc_cycle_od_par
-	// Defined now
 	ms_rc_cycle_od_phi_par.m_T_mc_in = ms_od_par.m_T_amb + ms_des_par.m_dt_mc_approach;		//[K]
-	if( ms_rc_cycle_od_phi_par.m_T_mc_in < m_T_mc_in_min )
+	if (ms_rc_cycle_od_phi_par.m_T_mc_in < m_T_mc_in_min)
 	{
 		std::string msg = util::format("The off-design main compressor inlet temperature is %lg [C]."
 			" The sCO2 cycle off-design code reset it to the minimum allowable main compressor inlet temperature: %lg [C].",
@@ -476,66 +496,31 @@ int C_sco2_recomp_csp::off_design_nested_opt(C_sco2_recomp_csp::S_od_par od_par,
 	ms_rc_cycle_od_phi_par.m_N_sub_hxrs = ms_des_par.m_N_sub_hxrs;			//[-]
 	ms_rc_cycle_od_phi_par.m_tol = ms_des_par.m_tol;						//[-]
 	ms_rc_cycle_od_phi_par.m_N_t = ms_des_solved.ms_rc_cycle_solved.ms_t_des_solved.m_N_design;	//[rpm]
-	// Defined downstream
+																								// Defined downstream
 	ms_rc_cycle_od_phi_par.m_T_t_in = std::numeric_limits<double>::quiet_NaN();			//[K]			
 	ms_rc_cycle_od_phi_par.m_P_mc_in = std::numeric_limits<double>::quiet_NaN();		//[kPa]
 	ms_rc_cycle_od_phi_par.m_recomp_frac = std::numeric_limits<double>::quiet_NaN();	//[-]
 	ms_rc_cycle_od_phi_par.m_phi_mc = std::numeric_limits<double>::quiet_NaN();			//[-]
-	// Define ms_phx_od_par
-	// Defined now
+																						// Define ms_phx_od_par
+																						// Defined now
 	ms_phx_od_par.m_T_h_in = ms_od_par.m_T_htf_hot;			//[K]
 	ms_phx_od_par.m_P_h_in = ms_phx_des_par.m_P_h_in;		//[kPa] Assuming fluid is incompressible in that pressure doesn't affect its properties
 	ms_phx_od_par.m_m_dot_h = ms_od_par.m_m_dot_htf;		//[kg/s]
-	// Defined downstream
+															// Defined downstream
 	ms_phx_od_par.m_T_c_in = std::numeric_limits<double>::quiet_NaN();		//[K]
 	ms_phx_od_par.m_P_c_in = std::numeric_limits<double>::quiet_NaN();		//[kPa]
 	ms_phx_od_par.m_m_dot_c = std::numeric_limits<double>::quiet_NaN();		//[kg/s]
+}
 
-	//m_is_write_mc_out_file = false;
-	//m_is_only_write_frecomp_opt_iters = true;
+int C_sco2_recomp_csp::off_design_nested_opt(C_sco2_recomp_csp::S_od_par od_par, int off_design_strategy, double od_opt_tol)
+{
+	setup_off_design_info(od_par, off_design_strategy, od_opt_tol);
 
-	mstr_base_name = "C:/Users/tneises/Documents/Brayton-Rankine/APOLLO/Off_design_turbo_balance/fixed_N_recomp/";
-
-	//ms_rc_cycle_od_phi_par.m_phi_mc = mc_rc_cycle.get_design_solved()->ms_mc_ms_des_solved.m_phi_des;	//[-]
-
-	//double P_mc_in_min = 5000.0;		//[kPa]
-	//double P_mc_in_max = 8000.0;		//[kPa]
-	//double P_mc_in_inc = 25.0;			//[kPa]
-	//
-	//off_design_P_mc_in_parameteric(P_mc_in_min, P_mc_in_max, P_mc_in_inc);
-	//return -1;
-
-	//double P_mc_in_parametric = 9279.7;		//[kPa]
-	//double f_recomp_start = 0.21;			//[-]
-	//double f_recomp_end = 0.26;				//[-]
-	//double f_recomp_inc = 1.e-4;			//[-]
-	//
-	//off_design_fix_P_mc_in_parametric_f_recomp(P_mc_in_parametric, f_recomp_start, f_recomp_end, f_recomp_inc);	
-
-	//m_eta_max_eta = 0.0;
-	//m_od_opt_objective = E_MAX_ETA_FIX_PHI;
-	
-	//m_od_opt_objective = E_MAX_POWER_FIX_PHI;
-	//m_od_opt_ftol = 1.E-7;
-	//m_od_opt_objective = E_MAX_POWER_FIX_PHI;
 	bool opt_success_2_par = opt_P_mc_in_nest_f_recomp_max_eta_core();
 	if( !opt_success_2_par )
 	{
 		throw(C_csp_exception("2D nested optimization to maximize efficiency failed"));
 	}
-
-	// Set max efficiency
-	/*
-	m_eta_max_eta = ms_od_solved.ms_rc_cycle_od_solved.m_eta_thermal;		//[-]
-	m_od_opt_ftol = 1.E-7;
-
-	m_od_opt_objective = E_MAX_POWER_IN_ETA_MAX_BAND;
-	opt_success_2_par = opt_P_mc_in_nest_f_recomp_max_eta_core();
-	if( !opt_success_2_par )
-	{
-		throw(C_csp_exception("2D nested optimization to maximize efficiency failed"));
-	}
-	*/
 
 	return 0;
 }
@@ -1631,6 +1616,7 @@ int C_sco2_recomp_csp::off_design_core(double & eta_solved)
 	{
 		eta_solved = 0.0;
 		ms_od_solved.m_od_error_code = -1;
+		ms_od_solved.m_is_converged = false;
 		return ms_od_solved.m_od_error_code;
 	}
 
@@ -1648,8 +1634,10 @@ int C_sco2_recomp_csp::off_design_core(double & eta_solved)
 		}
 
 		ms_od_solved.m_od_error_code = nested_error_code;
+		ms_od_solved.m_is_converged = false;
 		return nested_error_code;
 	}
+	ms_od_solved.m_is_converged = true;
 
 	// Now, need to filter results that exceed temperature/pressure/other limitations
 	// 1) Don't let the turbine inlet temperature exceed the design inlet temperature

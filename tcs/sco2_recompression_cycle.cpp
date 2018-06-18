@@ -4002,6 +4002,32 @@ int C_RecompCycle::C_mono_eq_x_f_recomp_y_N_rc::operator()(double f_recomp /*-*/
 
 	// Generate two guess values
 	double m_dot_guess_upper = mpc_rc_cycle->ms_des_solved.m_m_dot_t;		//[kg/s]
+	double y_m_dot_guess_upper = std::numeric_limits<double>::quiet_NaN();	//[-]
+
+	int m_dot_guess_iter = 0;
+	int m_dot_err_code = 1;
+	while (m_dot_err_code != 0)
+	{
+		if (m_dot_guess_iter > 0)
+			m_dot_guess_upper *= 0.9;
+		if (m_dot_guess_iter > 10)
+			return -71;
+		m_dot_guess_iter++;
+		m_dot_err_code = c_turbo_bal_solver.call_mono_eq(m_dot_guess_upper, &y_m_dot_guess_upper);
+	}
+
+	//C_monotonic_eq_solver::S_xy_pair  m_dot_guess_1st;
+	//m_dot_guess_1st.x = m_dot_guess_upper;
+	//m_dot_guess_1st.y = y_m_dot_guess_upper;
+
+
+	//double m_dot_guess_upper = mpc_rc_cycle->ms_des_solved.m_m_dot_t;		//[kg/s]
+
+	//double m_dot_guess_upper_calc = m_dot_guess_upper;
+	//int m_dot_guess_err = mpc_rc_cycle->m_mc_ms.calc_m_dot__N_des__phi_des_first_stage(m_T_mc_in, m_P_mc_in, m_dot_guess_upper_calc);
+	//if (m_dot_guess_err == 0)
+	//	m_dot_guess_upper = std::min(m_dot_guess_upper, m_dot_guess_upper_calc);
+
 	double m_dot_guess_lower = 0.7*m_dot_guess_upper;		//[kg/s]
 
 	// Now, solve for the turbine mass flow rate

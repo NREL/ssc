@@ -198,10 +198,12 @@ public:
 		C_sco2_cycle_core::S_od_solved ms_rc_cycle_od_solved;
 		C_HX_counterflow::S_od_solved ms_phx_od_solved;
 		int m_od_error_code;
+		bool m_is_converged;
 
 		S_od_solved()
 		{
 			m_od_error_code = 0;
+			m_is_converged = false;
 		}
 	};
 
@@ -260,6 +262,8 @@ public:
 
 	virtual int off_design_nested_opt(C_sco2_rc_csp_template::S_od_par od_par, int off_design_strategy, double od_opt_tol = 1.E-4) = 0;
 
+	virtual int off_design_fix_P_mc_in(C_sco2_rc_csp_template::S_od_par od_par, double P_mc_in /*MPa*/, int off_design_strategy, double od_opt_tol = 1.E-4) = 0;
+
 	virtual int generate_ud_pc_tables(double T_htf_low /*C*/, double T_htf_high /*C*/, int n_T_htf /*-*/,
 		double T_amb_low /*C*/, double T_amb_high /*C*/, int n_T_amb /*-*/,
 		double m_dot_htf_ND_low /*-*/, double m_dot_htf_ND_high /*-*/, int n_m_dot_htf_ND,
@@ -316,6 +320,8 @@ private:
 
 	double adjust_P_mc_in_away_2phase(double T_co2 /*K*/, double P_mc_in /*kPa*/);
 
+	void setup_off_design_info(C_sco2_recomp_csp::S_od_par od_par, int off_design_strategy, double od_opt_tol);
+
 	//int od_fix_T_mc__nl_opt_shell__opt_eta();
 
 public:	
@@ -365,6 +371,8 @@ public:
 
 	virtual int off_design_nested_opt(C_sco2_recomp_csp::S_od_par od_par, int off_design_strategy, double od_opt_tol = 1.E-4);
 
+	virtual int off_design_fix_P_mc_in(C_sco2_rc_csp_template::S_od_par od_par, double P_mc_in /*MPa*/, int off_design_strategy, double od_opt_tol = 1.E-4);
+	
 	//bool opt_f_recomp_fix_P_mc_in_max_eta_core();
 
 	bool opt_P_mc_in_nest_f_recomp_max_eta_core();
@@ -407,9 +415,9 @@ public:
 	//bool m_is_write_mc_out_file;
 	//bool m_is_only_write_frecomp_opt_iters;
 
-	ofstream mc_P_mc_in_fixed_f_recomp_vary_file;
-	ofstream mc_P_mc_vary_f_recomp_opt_file;
-	std::string mstr_base_name;
+	//ofstream mc_P_mc_in_fixed_f_recomp_vary_file;
+	//ofstream mc_P_mc_vary_f_recomp_opt_file;
+	//std::string mstr_base_name;
 };
 
 //double nlopt_max_f_recomp_cycle_eta(const std::vector<double> &x, std::vector<double> &grad, void *data);
@@ -449,6 +457,8 @@ public:
 
 	virtual int off_design_nested_opt(C_sco2_rc_csp_template::S_od_par od_par, int off_design_strategy, double od_opt_tol = 1.E-4);
 	
+	virtual int off_design_fix_P_mc_in(C_sco2_rc_csp_template::S_od_par od_par, double P_mc_in /*MPa*/, int off_design_strategy, double od_opt_tol = 1.E-4);
+
 	virtual int generate_ud_pc_tables(double T_htf_low /*C*/, double T_htf_high /*C*/, int n_T_htf /*-*/,
 		double T_amb_low /*C*/, double T_amb_high /*C*/, int n_T_amb /*-*/,
 		double m_dot_htf_ND_low /*-*/, double m_dot_htf_ND_high /*-*/, int n_m_dot_htf_ND,

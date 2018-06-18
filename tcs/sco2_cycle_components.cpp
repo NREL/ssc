@@ -1097,6 +1097,27 @@ int C_comp_single_stage::design_single_stage_comp(double T_in /*K*/, double P_in
 	return 0;
 }
 
+int C_comp_single_stage::calc_m_dot__phi_des(double T_in /*K*/, double P_in /*kPa*/, double N_rpm /*rpm*/, double & m_dot /*kg/s*/)
+{
+	CO2_state co2_props;
+
+	// Fully define the inlet state of the compressor
+	int prop_error_code = CO2_TP(T_in, P_in, &co2_props);
+	if (prop_error_code != 0)
+	{
+		return prop_error_code;
+	}
+	double rho_in = co2_props.dens;	//[kg/m^3]
+	double h_in = co2_props.enth;	//[kJ/kg]
+	double s_in = co2_props.entr;	//[kJ/kg-K]
+
+	// Calculate the modified flow and head coefficients and efficiency
+	double U_tip = ms_des_solved.m_D_rotor*0.5*N_rpm*0.104719755;	//[m/s]
+	m_dot = ms_des_solved.m_phi_des * U_tip * rho_in * pow(ms_des_solved.m_D_rotor, 2);					//[kg/s]
+
+	return 0;
+}
+
 int C_comp_single_stage::off_design_given_N(double T_in /*K*/, double P_in /*kPa*/, double m_dot /*kg/s*/, double N_rpm /*rpm*/,
 	double & T_out /*K*/, double & P_out /*kPa*/)
 {
@@ -1404,6 +1425,13 @@ void C_comp_multi_stage::off_design_at_N_des(double T_in /*K*/, double P_in /*kP
 	double N = ms_des_solved.m_N_design;	//[rpm]
 
 	off_design_given_N(T_in, P_in, m_dot, N, error_code, T_out, P_out);
+}
+
+int C_comp_multi_stage::calc_m_dot__N_des__phi_des_first_stage(double T_in /*K*/, double P_in /*kPa*/, double & m_dot /*kg/s*/)
+{
+	double N_des = mv_stages[0].ms_des_solved.m_N_design;		//[rpm]
+
+	return mv_stages[0].calc_m_dot__phi_des(T_in, P_in, N_des, m_dot);
 }
 
 void C_comp_multi_stage::off_design_given_N(double T_in /*K*/, double P_in /*kPa*/, double m_dot /*kg/s*/, double N_rpm /*rpm*/,

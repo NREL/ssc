@@ -312,6 +312,8 @@ public:
 		double & T_out /*K*/, double & P_out /*kPa*/);
 
 	int calc_N_from_phi(double T_in /*K*/, double P_in /*kPa*/, double m_dot /*kg/s*/, double phi_in /*-*/, double & N_rpm /*rpm*/);
+
+	int calc_m_dot__phi_des(double T_in /*K*/, double P_in /*kPa*/, double N_rpm /*rpm*/, double & m_dot /*kg/s*/);
 };
 
 class C_comp_multi_stage
@@ -490,6 +492,7 @@ public:
 	void off_design_given_P_out(double T_in /*K*/, double P_in /*kPa*/, double m_dot /*kg/s*/,
 		double P_out /*kPa*/, int & error_code, double & T_out /*K*/);
 
+	int calc_m_dot__N_des__phi_des_first_stage(double T_in /*K*/, double P_in /*kPa*/, double & m_dot /*kg/s*/);
 };
 
 

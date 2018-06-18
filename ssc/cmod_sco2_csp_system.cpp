@@ -90,6 +90,7 @@ static var_info _cm_vtab_sco2_csp_system[] = {
 	{ SSC_INPUT,  SSC_NUMBER,  "deltaP_cooler_frac",   "Fraction of cycle high pressure that is design point cooler CO2 pressure drop", "", "", "", "*","",       "" },
 	// ** Off-design Inputs **
 	{ SSC_INPUT,  SSC_MATRIX,  "od_cases",             "Columns: T_htf_C, m_dot_htf_ND, T_amb_C, od_opt_obj (1: MAX_ETA, 2: MAX_POWER), Rows: cases",   "",           "",    "",      "",      "",       "" },
+	{ SSC_INPUT,  SSC_ARRAY,   "od_P_mc_in_sweep",     "Columns: T_htf_C, m_dot_htf_ND, T_amb_C, od_opt_obj (1: MAX_ETA, 2: MAX_POWER)", "", "", "", "",  "",       "" },
 	{ SSC_INPUT,  SSC_NUMBER,  "is_gen_od_polynomials","Generate off-design polynomials for Generic CSP models? 1 = Yes, 0 = No", "", "", "",  "?=0",     "",       "" },
 
 	//{ SSC_INPUT,  SSC_NUMBER,  "is_m_dot_htf_fracs",   "0 = No analysis of HTF off design mass flow rate, 1 = Yes", "",        "",    "",      "*",     "",       "" },
@@ -1115,37 +1116,77 @@ public:
 
 		// Check if 'od_cases' is assigned
 		bool is_od_cases_assigned = is_assigned("od_cases");
-		if (!is_od_cases_assigned)
+		bool is_P_mc_in_od_sweep_assigned = is_assigned("od_P_mc_in_sweep");
+		if (is_od_cases_assigned && is_P_mc_in_od_sweep_assigned)
 		{
-			log("No off-design cases specified");
+			log("Both off design cases and main compressor inlet sweep assigned. Only modeling off design cases");
+			is_P_mc_in_od_sweep_assigned = false;
+		}
+		if (!is_od_cases_assigned && !is_P_mc_in_od_sweep_assigned)
+		{
+			log("No off-design cases or main compressor inlet sweep specified");
 			return;
 		}
 		
 		// Set up off-design analysis
-		util::matrix_t<double> od_cases = as_matrix("od_cases");
+		util::matrix_t<double> od_cases;
+		if (is_od_cases_assigned)
+		{
+			od_cases = as_matrix("od_cases");
 
-		// Check if off cases exist and correctly formatted
-		int n_od_cols = (int)od_cases.ncols();
+			// Check if off cases exist and correctly formatted
+			int n_od_cols_loc = (int)od_cases.ncols();
+			int n_od_runs_loc = (int)od_cases.nrows();
+
+			if (n_od_cols_loc != 5 && n_od_runs_loc == 1)
+			{
+				// No off-design cases specified
+				log("No off-design cases specified");
+				return;
+			}
+			if (n_od_cols_loc != 5 && n_od_runs_loc > 1)
+			{
+				std::string err_msg = util::format("The matrix of off design cases requires 5 columns. The entered matrix has %d columns", n_od_cols_loc);
+				throw exec_error("sco2_csp_system", err_msg);
+			}
+		}
+		else
+		{
+			std::vector<double> od_case = as_vector_double("od_P_mc_in_sweep");
+			int n_od = od_case.size();
+			if (n_od != 5)
+			{
+				std::string err_msg = util::format("The matrix of off design cases requires 5 columns. The entered matrix has %d columns", n_od);
+				throw exec_error("sco2_csp_system", err_msg);
+			}
+
+			double P_mc_in_des = p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.m_pres[C_sco2_cycle_core::MC_IN] / 1000.0;		//[MPa] convert from kPa
+
+			int n_P_mc_in = 101;
+
+			double delta_P = 10.0;	//[MPa]
+			double P_mc_in_low = P_mc_in_des - delta_P / 2.0;	//[MPa]
+
+			double delta_P_i = delta_P / (n_P_mc_in - 1);	//[MPa]
+
+			od_cases.resize(n_P_mc_in, 6);
+
+			for (int i = 0; i < n_P_mc_in; i++)
+			{
+				od_cases(i, 0) = od_case[0];
+				od_cases(i, 1) = od_case[1];
+				od_cases(i, 2) = od_case[2];
+				od_cases(i, 3) = od_case[3];
+				od_cases(i, 4) = od_case[4];
+				od_cases(i, 5) = P_mc_in_low + delta_P_i * i;	//[MPa]
+			}
+		}
+		
 		int n_od_runs = (int)od_cases.nrows();
-
-		if( n_od_cols != 5 && n_od_runs == 1 )
-		{
-			// No off-design cases specified
-			log("No off-design cases specified");
-			return;
-		}
-		if( n_od_cols != 5 && n_od_runs > 1 )
-		{
-			std::string err_msg = util::format("The matrix of off design cases requires 3 columns. The entered matrix has %d columns", n_od_cols);
-			throw exec_error("sco2_csp_system", err_msg);
-		}
-
 		allocate_ssc_outputs(n_od_runs, n_mc_stages, n_rc_stages);
 
 		for(int n_run = 0; n_run < n_od_runs; n_run++)
-		{
-
-			
+		{			
 			// Try calling off-design model with design parameters
 				// Set outputs
 			p_T_htf_hot_od[n_run] = (ssc_number_t)od_cases(n_run, 0);			//[C]
@@ -1164,11 +1205,19 @@ public:
 			std::clock_t clock_start = std::clock();
 			try
 			{
+				if (is_od_cases_assigned)
+				{
 					// 2D optimization
-				//off_design_code = sco2_recomp_csp.off_design_opt(sco2_rc_od_par, od_strategy);
-					// Nested optimization
-				od_strategy = C_sco2_rc_csp_template::E_TARGET_POWER_ETA_MAX;
-				off_design_code = p_sco2_recomp_csp->off_design_nested_opt(sco2_rc_od_par, od_strategy);
+					//off_design_code = sco2_recomp_csp.off_design_opt(sco2_rc_od_par, od_strategy);
+						// Nested optimization
+					od_strategy = C_sco2_rc_csp_template::E_TARGET_POWER_ETA_MAX;
+					off_design_code = p_sco2_recomp_csp->off_design_nested_opt(sco2_rc_od_par, od_strategy);
+				}
+				else if (is_P_mc_in_od_sweep_assigned)
+				{
+					od_strategy = C_sco2_rc_csp_template::E_TARGET_POWER_ETA_MAX;
+					off_design_code = p_sco2_recomp_csp->off_design_fix_P_mc_in(sco2_rc_od_par, od_cases(n_run, 5), od_strategy);
+				}
 			}
 			catch( C_csp_exception &csp_exception )
 			{
@@ -1187,7 +1236,7 @@ public:
 			double od_opt_duration = (clock_end - clock_start)/(double) CLOCKS_PER_SEC;		//[s]
 
 			p_od_code[n_run] = (ssc_number_t)off_design_code;
-			if(off_design_code == 0)
+			if(off_design_code == 0 || (is_P_mc_in_od_sweep_assigned && p_sco2_recomp_csp->get_od_solved()->m_is_converged))
 			{	// Off-design call was successful, so write outputs
 					// Control parameters
 				p_P_comp_in_od[n_run] = (ssc_number_t)(p_sco2_recomp_csp->get_od_solved()->ms_rc_cycle_od_solved.m_pres[C_sco2_cycle_core::MC_IN] / 1000.0);	//[MPa]
