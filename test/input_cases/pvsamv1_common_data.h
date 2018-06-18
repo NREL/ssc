@@ -76,6 +76,7 @@ void pvsamv_nofinancial_default(ssc_data_t &data)
 	ssc_data_set_number(data, "subarray4_nameplate_loss", 0);
 	ssc_data_set_number(data, "dcoptimizer_loss", 0);
 	ssc_data_set_number(data, "acwiring_loss", 1);
+	ssc_data_set_number(data, "transmission_loss", 0);
 	ssc_data_set_number(data, "subarray1_mod_orient", 0);
 	ssc_data_set_number(data, "subarray1_nmodx", 7);
 	ssc_data_set_number(data, "subarray1_nmody", 2);
@@ -402,6 +403,7 @@ void pvsamv1_with_residential_default(ssc_data_t &data)
 	ssc_data_set_number(data, "subarray4_nameplate_loss", 0);
 	ssc_data_set_number(data, "dcoptimizer_loss", 0);
 	ssc_data_set_number(data, "acwiring_loss", 1);
+	ssc_data_set_number(data, "transmission_loss", 0);
 	ssc_data_set_number(data, "subarray1_mod_orient", 0);
 	ssc_data_set_number(data, "subarray1_nmodx", 7);
 	ssc_data_set_number(data, "subarray1_nmody", 2);
