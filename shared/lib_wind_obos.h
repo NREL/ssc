@@ -50,7 +50,7 @@
 #ifndef __wind_obos_h
 #define __wind_obos_h
 
-#include "lib_wind_obos_defaults.h"
+//#include "lib_wind_obos_defaults.h"
 #include "lib_wind_obos_cable_vessel.h"
 #include <vector>
 #include <tuple>
@@ -74,7 +74,7 @@ enum  { PRIMARYVESSEL, FEEDERBARGE } ;
 class wobos {//WIND OFFSHORE BOS STRUCTURE TO HOLD ALL INPUTS AND OUTPUTS AND ALLOW MEMBER FUNCTIONS TO OPERATE ON THOSE VALUES
  public:
   // DEFAULTS FROM CSV FILE
-  wind_obos_defaults wobos_default;
+//  wind_obos_defaults wobos_default;
   
   //MAIN INPUTS************************************************************************************************************
   double turbCapEx; //turbine capital cost ($/kW)
@@ -423,7 +423,7 @@ class wobos {//WIND OFFSHORE BOS STRUCTURE TO HOLD ALL INPUTS AND OUTPUTS AND AL
   set<string> variable_percentage {"substructCont", "turbCont", "elecCont", "plantComm", "procurement_contingency", "install_contingency",
       "construction_insurance", "capital_cost_year_0", "capital_cost_year_1", "capital_cost_year_2", "capital_cost_year_3",
       "capital_cost_year_4", "capital_cost_year_5", "tax_rate", "interest_during_construction"};
-  
+ 
   map<string, double> mapVars {
     {"substructure", 0.0},
     {"anchor", 0.0},
@@ -722,7 +722,7 @@ class wobos {//WIND OFFSHORE BOS STRUCTURE TO HOLD ALL INPUTS AND OUTPUTS AND AL
   {"decomCost", 0.0},
   {"total_bos_cost", 0.0}
   };
-
+  
   void set_templates();
   vector<cableFamily> set_cables(vector<int> cableVoltages);
   vector<vessel> set_vessels(vector<string> vesselNames);
@@ -783,7 +783,7 @@ class wobos {//WIND OFFSHORE BOS STRUCTURE TO HOLD ALL INPUTS AND OUTPUTS AND AL
 };
 
 // For SAM
-extern wobos wobos_obj;
-extern wobos *wobos_cm;
+//extern wobos wobos_obj;
+//extern wobos *wobos_cm;
 
 #endif
