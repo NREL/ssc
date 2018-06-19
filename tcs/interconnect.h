@@ -69,6 +69,8 @@ struct IntcOutputs
     double temp_out;
     double temp_ave;
     double pressure_drop;
+    double pressure_out;
+    double pressure_ave;
     double internal_energy;
 
     IntcOutputs();
@@ -117,6 +119,7 @@ public:
     void setHLCoef(double);
     double getHeatCap() const;
     void setHeatCap(double);
+    IntcType getType() const;
     double getSurfArea();
     double getVolume();
 
@@ -149,17 +152,28 @@ private:
     void calcVolume();
 public:
     intc_assy();
-    intc_assy(HTFProperties *fluidProps, double *k, double *d, double *l, double *rough, double *u, double *mc, double *type);
+    intc_assy(HTFProperties *fluidProps, double *k, double *d, double *l, double *rough, double *u, double *mc,
+        double *type, int n_intcs);
     ~intc_assy();
 
-    void import_intcs(double *k, double *d, double *l, double *rough, double *u, double *mc, double *type);
+    void import_intcs(double *k, double *d, double *l, double *rough, double *u, double *mc, double *type, int n_intcs);
     void resetValues();
 
     void setFluidProps(HTFProperties *fluidProps);
+    int getNintcs();
+    double getK(std::size_t intc) const;
+    double getD(std::size_t intc) const;
     double getLength();
+    double getLength(std::size_t intc) const;
+    double getRelRough(std::size_t intc) const;
+    double getHLCoef(std::size_t intc) const;
     double getHeatCap();
+    double getHeatCap(std::size_t intc) const;
+    IntcType getType(std::size_t intc) const;
     double getSurfArea();
+    double getSurfArea(std::size_t intc);
     double getVolume();
+    double getVolume(std::size_t intc);
 
     IntcOutputs State(double m_dot, double T_in, double T_db, double P_in);
 };
