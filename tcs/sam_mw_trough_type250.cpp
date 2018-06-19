@@ -660,7 +660,7 @@ private:
 	util::matrix_t<double> L_actSCA, A_cs, D_h, ColOptEff /*nColt, nSCA*/;
 	util::matrix_t<bool> GlazingIntact;
 	emit_table epsilon_3;
-    util::matrix_t<double> D_runner, L_runner, D_hdr, L_hdr, N_rnr_xpans;
+    util::matrix_t<double> D_runner, L_runner, D_hdr, L_hdr, N_rnr_xpans, N_hdr_xpans;
 
 	util::matrix_t<double> 
 		T_htf_in, T_htf_out, T_htf_ave, q_loss, q_abs, c_htf, rho_htf,DP_tube, E_abs_field, 
@@ -1423,6 +1423,7 @@ public:
             N_rnr_xpans.resize(nrunsec);  //calculated number of expansion loops in the runner section
 			D_hdr.resize(2*nhdrsec);
             L_hdr.resize(2*nhdrsec);
+            N_hdr_xpans.resize(2*nhdrsec);
 
 			std::string summary;
 			header_design(nhdrsec, nfsec, nrunsec, rho_ave, V_hdr_cold_max, V_hdr_cold_min, V_hdr_hot_max, V_hdr_hot_min, N_max_hdr_diams, m_dot_design, D_hdr, D_runner, &summary);
@@ -1438,12 +1439,15 @@ public:
 			// Do one-time calculations for system geometry.
             // Determine header section lengths, including expansion loops
             L_hdr.fill(2*Row_Distance);
+            N_hdr_xpans.fill(0);
             for (int i = 0; i < nhdrsec; i++)
             {
                 if ((i - offset_xpan_hdr) % N_hdr_per_xpan == 0)
                 {
                     L_hdr[i] += L_xpan_hdr;                     // start with cold loop
+                    N_hdr_xpans[i]++;
                     L_hdr[2*nhdrsec - 1 - i] += L_xpan_hdr;     // pair hot loop
+                    N_hdr_xpans[2*nhdrsec - 1 - i]++;
                 }
             }
             
@@ -2759,7 +2763,7 @@ calc_final_metrics_goto:
 				}
                 // TODO - Make sure every PressureDrop() equation is consistent with the new interconnect definition
 				DP_hdr_cold += PressureDrop(m_dot_header, T_loop_in, 1.0, D_hdr[i], HDR_rough,
-					L_hdr[i], 0.0, x2, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0); //*m_dot_header/m_dot_header_in  //mjw/tn 1.25.12 already account for m_dot_header in function call //mjw 5.11.11 scale by mass flow passing though
+					L_hdr[i], 0.0, x2, 0.0, 0.0, N_hdr_xpans[i]*4, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0); //*m_dot_header/m_dot_header_in  //mjw/tn 1.25.12 already account for m_dot_header in function call //mjw 5.11.11 scale by mass flow passing though
 				//if(ErrorFound()) return 1
 				//Siphon off header mass flow rate at each loop.  Multiply by 2 because there are 2 loops per hdr section
 				m_dot_header = max(m_dot_header - 2.*m_dot_htf, 0.0);
@@ -2779,7 +2783,7 @@ calc_final_metrics_goto:
                 }
 
                 DP_hdr_hot += PressureDrop(m_dot_header, T_loop_outX, 1.0, D_hdr[i], HDR_rough,
-                    L_hdr[i], x2, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0); //*m_dot_header/m_dot_header_in  //mjw 5.11.11
+                    L_hdr[i], x2, 0.0, 0.0, 0.0, N_hdr_xpans[i]*4, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0); //*m_dot_header/m_dot_header_in  //mjw 5.11.11
                 //if(ErrorFound()) return 1
                 //Add to header mass flow rate at each loop.  Multiply by 2 because there are 2 loops per hdr section
                 m_dot_header = m_dot_header + 2.*m_dot_htf;
