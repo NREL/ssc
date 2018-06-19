@@ -62,6 +62,8 @@ IntcOutputs::IntcOutputs() {
     temp_out = 0;
     temp_ave = 0;
     pressure_drop = 0;
+    pressure_out = 0;
+    pressure_ave = 0;
     internal_energy = 0;
 }
 
@@ -245,6 +247,10 @@ void interconnect::setHeatCap(double mc) {
     }
 }
 
+IntcType interconnect::getType() const {
+    return Type;
+}
+
 double interconnect::getSurfArea() {
     if (!SurfArea_valid_) { calcSurfArea(); }
     return SurfArea_;
@@ -281,15 +287,23 @@ double interconnect::TempDrop(HTFProperties *fluidProps, double m_dot, double T_
 double interconnect::PressureDrop(HTFProperties *fluidProps, double m_dot, double T_htf_ave, double P_htf_ave) const {
     double rho = fluidProps->dens(T_htf_ave, P_htf_ave);
     double vel = m_dot / rho;
+    double Re, ff;
 
     switch (Type)
     {
         case IntcType::Fitting:
             return MinorPressureDrop(vel, rho, k_);
         case IntcType::Pipe:
-            double Re = fluidProps->Re(T_htf_ave, P_htf_ave, vel, d_);
-            double ff = FrictionFactor(rough_ / d_, Re);
+            Re = fluidProps->Re(T_htf_ave, P_htf_ave, vel, d_);
+            ff = FrictionFactor(rough_ / d_, Re);
             return MajorPressureDrop(vel, rho, ff, l_, d_);
+        case IntcType::Flex_Hose:
+            // TODO : Differentiate this pressure drop relation for flex hoses
+            Re = fluidProps->Re(T_htf_ave, P_htf_ave, vel, d_);
+            ff = FrictionFactor(rough_ / d_, Re);
+            return MajorPressureDrop(vel, rho, ff, l_, d_);
+        default:
+            throw std::invalid_argument("This interconnect type has no pressure drop calculation.");
     }
 }
 
@@ -305,6 +319,8 @@ IntcOutputs interconnect::State(HTFProperties *fluidProps, double m_dot, double 
     output.temp_out = T_in - output.temp_drop;
     output.temp_ave = (T_in + output.temp_out) / 2;
     output.pressure_drop = PressureDrop(fluidProps, m_dot, output.temp_ave, P_htf_ave);
+    output.pressure_out = P_htf_ave - output.pressure_drop / 2;  // just an approximation to fill an output
+    output.pressure_ave = P_htf_ave;
     output.internal_energy = InternalEnergy(fluidProps, T_intc, output.temp_ave, P_htf_ave);
 
     return output;
@@ -325,7 +341,7 @@ intc_assy::intc_assy()
 {
 }
 
-intc_assy::intc_assy(HTFProperties *fluidProps, double *k, double *d, double *l, double *rel_rough, double *u, double *mc, double *type)
+intc_assy::intc_assy(HTFProperties *fluidProps, double *k, double *d, double *l, double *rel_rough, double *u, double *mc, double *type, int n_intcs)
     :N_intcs_(0),
     Length_valid_(false),
     l_(0),
@@ -336,7 +352,7 @@ intc_assy::intc_assy(HTFProperties *fluidProps, double *k, double *d, double *l,
     Volume_valid_(false),
     Volume_(0)
 {
-    import_intcs(k, d, l, rel_rough, u, mc, type);
+    import_intcs(k, d, l, rel_rough, u, mc, type, n_intcs);
     setFluidProps(fluidProps);
 }
 
@@ -344,17 +360,17 @@ intc_assy::~intc_assy()
 {
 }
 
-void intc_assy::import_intcs(double *k, double *d, double *l, double *rel_rough, double *u, double *mc, double *type)
+void intc_assy::import_intcs(double *k, double *d, double *l, double *rel_rough, double *u, double *mc, double *type, int n_intcs)
 {
-    std::size_t max_ints = sizeof(k) / sizeof(k[0]);  // assuming all arguments are equal length
-    std::size_t n_ints = 0;
+    std::size_t max_ints = n_intcs;
+    std::size_t n_ints = 0;  // double check number of interconnects
     while (k[n_ints] != NA_intc && n_ints < max_ints) { n_ints++; }
 
     if (!intcs.empty()) { intcs.clear(); }
     intcs.reserve(n_ints);
 
     interconnect intc;
-    for (int i; i < n_ints; i++) {
+    for (int i = 0; i < n_ints; i++) {
         if (type[i] < 0 || type[i] >= static_cast<int>(IntcType::FINAL_ENTRY)) {
             throw std::invalid_argument("The interconnect type is out of range at index" + std::to_string(i));
         }
@@ -372,10 +388,6 @@ void intc_assy::import_intcs(double *k, double *d, double *l, double *rel_rough,
     Volume_valid_ = true;
 }
 
-void intc_assy::setFluidProps(HTFProperties *fluidProps) {
-    FluidProps_ = fluidProps;
-}
-
 void intc_assy::resetValues() {
     intcs.clear();
     N_intcs_ = 0;
@@ -390,9 +402,32 @@ void intc_assy::resetValues() {
     Volume_ = 0;
 }
 
+void intc_assy::setFluidProps(HTFProperties *fluidProps) {
+    FluidProps_ = fluidProps;
+}
+
+int intc_assy::getNintcs() {
+    return N_intcs_;
+}
+
+double intc_assy::getK(std::size_t intc) const
+{
+    return intcs.at(intc).getK();
+}
+
+double intc_assy::getD(std::size_t intc) const
+{
+    return intcs.at(intc).getD();
+}
+
 double intc_assy::getLength() {
     if (!Length_valid_) { calcLength(); }
     return l_;
+}
+
+double intc_assy::getLength(std::size_t intc) const
+{
+    return intcs.at(intc).getLength();
 }
 
 void intc_assy::calcLength() {
@@ -403,9 +438,24 @@ void intc_assy::calcLength() {
     Length_valid_ = true;
 }
 
+double intc_assy::getRelRough(std::size_t intc) const
+{
+    return intcs.at(intc).getRelRough();
+}
+
+double intc_assy::getHLCoef(std::size_t intc) const
+{
+    return intcs.at(intc).getHLCoef();
+}
+
 double intc_assy::getHeatCap() {
     if (!HeatCap_valid_) { calcHeatCap(); }
     return mc_;
+}
+
+double intc_assy::getHeatCap(std::size_t intc) const
+{
+    return intcs.at(intc).getHeatCap();
 }
 
 void intc_assy::calcHeatCap() {
@@ -416,9 +466,17 @@ void intc_assy::calcHeatCap() {
     HeatCap_valid_ = true;
 }
 
+IntcType intc_assy::getType(std::size_t intc) const {
+    return intcs.at(intc).getType();
+}
+
 double intc_assy::getSurfArea() {
     if (!SurfArea_valid_) { calcSurfArea(); }
     return SurfArea_;
+}
+
+double intc_assy::getSurfArea(std::size_t intc) {
+    return intcs.at(intc).getSurfArea();
 }
 
 void intc_assy::calcSurfArea() {
@@ -432,6 +490,10 @@ void intc_assy::calcSurfArea() {
 double intc_assy::getVolume() {
     if (!Volume_valid_) { calcVolume(); }
     return Volume_;
+}
+
+double intc_assy::getVolume(std::size_t intc) {
+    return intcs.at(intc).getVolume();
 }
 
 void intc_assy::calcVolume() {
@@ -460,6 +522,8 @@ IntcOutputs intc_assy::State(double m_dot, double T_in, double T_db, double P_in
     AssyOutput.temp_drop = T_in - IntcOutput.temp_out;
     AssyOutput.temp_out = IntcOutput.temp_out;
     AssyOutput.temp_ave = (T_in + AssyOutput.temp_out) / 2;
+    AssyOutput.pressure_out = P_in - AssyOutput.pressure_drop;
+    AssyOutput.pressure_ave = (P_in + AssyOutput.pressure_out) / 2;
     
     return AssyOutput;
 }
