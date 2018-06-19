@@ -1034,7 +1034,7 @@ void wobos::set_templates() {
 vector<cableFamily> wobos::set_cables(vector<int> cableVoltages) {
   vector<cableFamily> outvec;
   outvec.resize(cableVoltages.size());
-  for (int i=0; i<cableVoltages.size(); i++)
+  for (size_t i=0; i<cableVoltages.size(); i++)
     outvec[i] = cableFamily( arrayTemplates[cableVoltages[i]] );
   return outvec;
 }
@@ -1044,7 +1044,7 @@ vector<cableFamily> wobos::set_cables(vector<int> cableVoltages) {
 vector<vessel> wobos::set_vessels(vector<string> vesselNames) {
   vector<vessel> outvec;
   outvec.resize(vesselNames.size());
-  for (int i=0; i<vesselNames.size(); i++)
+  for (size_t i=0; i<vesselNames.size(); i++)
     outvec[i] = vessel( vesselTemplates[vesselNames[i]] );
   return outvec;
 }
