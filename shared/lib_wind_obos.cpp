@@ -1294,7 +1294,7 @@ tuple<double, double> wobos::calculate_semi() {
 
 tuple<double, double> wobos::calculate_secondary_steel(int substructure) {
   // calculate the secondary steel mass in tonnes for a single substructure (ladders, boat landings, railing, etc.)
-  double sSteelM;
+  double sSteelM=0;
   switch (substructure) {
   case MONOPILE:
   case JACKET:
@@ -1349,7 +1349,7 @@ void wobos::calculate_mooring() {
     double moorBL = 419449 * pow(moorDia, 2) + 93415 * moorDia - 3577.9;
     
     //calculate mooring line length and anchor cost depending on anchor type
-    double moorLeng, anchorCost;
+    double moorLeng=0, anchorCost=0;
     switch (anchor) {
     case DRAGEMBEDMENT:
       moorLeng   = 0.0002*pow(waterD, 2.0) + 1.264*waterD + 47.776 + deaFixLeng;
@@ -1700,7 +1700,7 @@ double wobos::MinTurbDeckArea() {
 
 
 double wobos::TurbineInstall() {
-  double sum;
+  double sum=0;
   //check turbine installation method
   switch (turbInstallMethod) {
   case ROTORASSEMBLED:

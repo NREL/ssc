@@ -33,7 +33,7 @@ cableFamily::cableFamily() {
 cableFamily::cableFamily( const cableFamily &obj ) {
   voltage = obj.voltage;
   cables.resize( obj.cables.size() );
-  for (int k=0; k<cables.size(); k++) cables[k] = cable(obj.cables[k]);
+  for (size_t k=0; k<cables.size(); k++) cables[k] = cable(obj.cables[k]);
   initializeFlag = true;
 }
 
