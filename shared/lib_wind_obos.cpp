@@ -1547,7 +1547,8 @@ double wobos::calculate_subsea_cable_cost() {
   if (cableOptimizer) ExportCabCostOptimizer();
 
   // Note, class variables that are set inside this function are used, not the output total that includes installation costs too
-  double expCabCostTot = calculate_export_cable_cost(expCurrRating, expVoltage, expCabMass, expSubsInterCR, expCabCR);
+//  double expCabCostTot = calculate_export_cable_cost(expCurrRating, expVoltage, expCabMass, expSubsInterCR, expCabCR);
+  calculate_export_cable_cost(expCurrRating, expVoltage, expCabMass, expSubsInterCR, expCabCR);
 
   // Calculate the number of substations that are required (this impacts array cable calculations)
   nSubstation = max(1.0, ceil(0.5 * nExpCab) );
@@ -1556,8 +1557,10 @@ double wobos::calculate_subsea_cable_cost() {
   if (cableOptimizer) ArrayCabCostOptimizer();
 
   // Note, class variables that are set inside this function are used, not the output total that includes installation costs too
-  double arrCabCostTot = calculate_array_cable_cost(cab1CurrRating, cab2CurrRating, arrVoltage, arrCab1Mass, arrCab2Mass,
-						    cab1CR, cab2CR, cab1TurbInterCR, cab2TurbInterCR, cab2SubsInterCR);
+//  double arrCabCostTot = calculate_array_cable_cost(cab1CurrRating, cab2CurrRating, arrVoltage, arrCab1Mass, arrCab2Mass,
+//	  cab1CR, cab2CR, cab1TurbInterCR, cab2TurbInterCR, cab2SubsInterCR);
+  calculate_array_cable_cost(cab1CurrRating, cab2CurrRating, arrVoltage, arrCab1Mass, arrCab2Mass,
+	  cab1CR, cab2CR, cab1TurbInterCR, cab2TurbInterCR, cab2SubsInterCR);
 
   //calculate the total cost in dollars of the sub-sea cabling which includes export and array cabling
   return (arrCab1Cost + arrCab2Cost + expCabCost);
