@@ -443,7 +443,7 @@ namespace util
 		inline T &at(size_t i)
 		{
 	#ifdef _DEBUG
-			VEC_ASSERT( i >= 0 && i < n_cols );
+			VEC_ASSERT( i >= 0 && i < n_rows*n_cols );
 	#endif
 			return t_array[i];
 		}
@@ -451,7 +451,7 @@ namespace util
 		inline const T&at(size_t i) const
 		{
 	#ifdef _DEBUG
-			VEC_ASSERT( i >= 0 && i < n_cols );
+			VEC_ASSERT( i >= 0 && i < n_rows*n_cols );
 	#endif
 			return t_array[i];
 		}
@@ -491,7 +491,7 @@ namespace util
 		T operator[] (size_t i) const
 		{
 	#ifdef _DEBUG
-			VEC_ASSERT( i >= 0 && i < n_cols );
+			VEC_ASSERT( i >= 0 && i < n_rows*n_cols );
 	#endif
 			return t_array[i];
 		}
@@ -499,11 +499,33 @@ namespace util
 		T &operator[] (size_t i)
 		{
 	#ifdef _DEBUG
-			VEC_ASSERT( i >= 0 && i < n_cols );
+			VEC_ASSERT( i >= 0 && i < n_rows*n_cols );
 	#endif
 			return t_array[i];
 		}
-				
+		
+        matrix_t row(const size_t r) const
+        {
+    #ifdef _DEBUG
+            VEC_ASSERT(r >= 0 && r < n_rows);
+    #endif
+            matrix_t<T> array(n_cols);
+            for (size_t i = 0; i < n_cols; i++)
+                array[i] = t_array[i + r*n_cols];
+            return array;
+        }
+
+        matrix_t col(const size_t c) const
+        {
+    #ifdef _DEBUG
+            VEC_ASSERT(c >= 0 && c < n_cols);
+    #endif
+            matrix_t<T> array(n_rows);
+            for (size_t i = 0; i < n_rows; i++)
+                array[i] = t_array[i*n_cols + c];
+            return array;
+        }
+
 		inline size_t nrows() const
 		{
 			return n_rows;

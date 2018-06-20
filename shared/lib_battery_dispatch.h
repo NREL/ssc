@@ -56,7 +56,10 @@
 #ifndef __LIB_BATTERY_DISPATCH_H__
 #define __LIB_BATTERY_DISPATCH_H__
 
-
+namespace battery_dispatch
+{
+	const size_t constraintCount = 10;
+}
 
 /*
 Dispatch Base Class - can envision many potential modifications. Goal is to define standard API

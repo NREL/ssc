@@ -167,6 +167,11 @@ bool dispatch_t::check_constraints(double &I, int count)
 		else
 			I += (m_batteryPower->powerGridToBattery / fabs(m_batteryPower->powerBattery)) *fabs(I);
 	}
+	// Don't allow battery to discharge if it gets wasted due to inverter efficiency limitations
+	else if (m_batteryPower->connectionMode == dispatch_t::DC_CONNECTED && m_batteryPower->sharedInverter->efficiencyAC < 90)
+	{
+		I *= m_batteryPower->sharedInverter->efficiencyAC*0.01;
+	}
 	else
 		iterate = false;
 
@@ -177,11 +182,11 @@ bool dispatch_t::check_constraints(double &I, int count)
 	bool power_iterate = restrict_power(I);
 
 	// iterate if any of the conditions are met
-	if (iterate || current_iterate || power_iterate)
+	if (iterate || current_iterate || power_iterate) 
 		iterate = true;
 
-	// stop iterating after 5 tries
-	if (count > 5)
+	// stop iterating after n tries
+	if (count > battery_dispatch::constraintCount)
 		iterate = false;
 
 	// don't allow battery to flip from charging to discharging or vice versa
@@ -512,7 +517,7 @@ bool dispatch_manual_t::check_constraints(double &I, int count)
 			iterate = true;
 
 		// stop iterating after 5 tries
-		if (count > 5)
+		if (count > battery_dispatch::constraintCount)
 			iterate = false;
 
 		// don't allow battery to flip from charging to discharging or vice versa
@@ -744,8 +749,8 @@ bool dispatch_automatic_t::check_constraints(double &I, int count)
 		if (iterate || current_iterate || power_iterate)
 			iterate = true;
 
-		// stop iterating after 5 tries
-		if (count > 5)
+		// stop iterating after n tries
+		if (count > battery_dispatch::constraintCount)
 			iterate = false;
 
 		// don't allow battery to flip from charging to discharging or vice versa
