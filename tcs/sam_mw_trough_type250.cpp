@@ -194,9 +194,15 @@ enum{
 	I_SHIFT,
 
 	O_HEADER_DIAMS,
-	O_RUNNER_DIAMS,
     O_HEADER_LENGTHS,
+    O_HEADER_XPANS,
+    O_HEADER_MDOT_DSN,
+    O_HEADER_V_DSN,
+	O_RUNNER_DIAMS,
 	O_RUNNER_LENGTHS,
+    O_RUNNER_XPANS,
+    O_RUNNER_MDOT_DSN,
+    O_RUNNER_V_DSN,
 	O_T_SYS_H,
 	O_M_DOT_AVAIL,
 	O_Q_AVAIL,
@@ -373,10 +379,17 @@ tcsvarinfo sam_mw_trough_type250_variables[] = {
 	{ TCS_INPUT,          TCS_NUMBER,         I_LONGITUDE,              "longitude",                                                   "Site longitude read from weather file",          "deg",             "",             "",             "" },
 	{ TCS_INPUT,          TCS_NUMBER,             I_SHIFT,                  "shift",                                         "shift in longitude from local standard meridian",          "deg",             "",             "",             "" },
 
-	{ TCS_OUTPUT,          TCS_ARRAY,     O_HEADER_DIAMS,        "pipe_header_diams",					                                     "Header piping diameter array",                            "m",             "",             "",             "" },
-	{ TCS_OUTPUT,          TCS_ARRAY,     O_RUNNER_DIAMS,        "pipe_runner_diams",                                                            "Runner piping diameter array",            "m",             "",             "",             "" },
-    { TCS_OUTPUT,          TCS_ARRAY,     O_HEADER_LENGTHS,    "pipe_header_lengths",                                                              "Header piping length array",            "m",             "",             "",             "" },
-    { TCS_OUTPUT,          TCS_ARRAY,     O_RUNNER_LENGTHS,    "pipe_runner_lengths",                                                              "Runner piping length array",            "m",             "",             "",             "" },
+	{ TCS_OUTPUT,          TCS_ARRAY,      O_HEADER_DIAMS,      "pipe_header_diams",					                                        "Header piping diameter array",            "m",             "",             "",             "" },
+    { TCS_OUTPUT,          TCS_ARRAY,    O_HEADER_LENGTHS,    "pipe_header_lengths",                                                              "Header piping length array",            "m",             "",             "",             "" },
+    { TCS_OUTPUT,          TCS_ARRAY,      O_HEADER_XPANS, "pipe_header_expansions",                                                      "Number of header piping expansions",            "-",             "",             "",             "" },
+    { TCS_OUTPUT,          TCS_ARRAY,   O_HEADER_MDOT_DSN,   "pipe_header_mdot_dsn",					                              "Header piping mass flow rate at design",         "kg/s",             "",             "",             "" },
+    { TCS_OUTPUT,          TCS_ARRAY,      O_HEADER_V_DSN,    "pipe_header_vel_dsn",					                                    "Header piping velocity at design",          "m/s",             "",             "",             "" },
+	{ TCS_OUTPUT,          TCS_ARRAY,      O_RUNNER_DIAMS,      "pipe_runner_diams",                                                            "Runner piping diameter array",            "m",             "",             "",             "" },
+    { TCS_OUTPUT,          TCS_ARRAY,    O_RUNNER_LENGTHS,    "pipe_runner_lengths",                                                              "Runner piping length array",            "m",             "",             "",             "" },
+    { TCS_OUTPUT,          TCS_ARRAY,      O_RUNNER_XPANS, "pipe_runner_expansions",                                                      "Number of runner piping expansions",            "-",             "",             "",             "" },
+    { TCS_OUTPUT,          TCS_ARRAY,   O_RUNNER_MDOT_DSN,   "pipe_runner_mdot_dsn",					                              "Runner piping mass flow rate at design",         "kg/s",             "",             "",             "" },
+    { TCS_OUTPUT,          TCS_ARRAY,      O_RUNNER_V_DSN,    "pipe_runner_vel_dsn",					                                    "Runner piping velocity at design",          "m/s",             "",             "",             "" },
+
 	{ TCS_OUTPUT,          TCS_NUMBER,           O_T_SYS_H,                "T_sys_h",                                                      "Solar field HTF outlet temperature",            "C",             "",             "",             "" },
 	{ TCS_OUTPUT,          TCS_NUMBER,       O_M_DOT_AVAIL,            "m_dot_avail",                                                       "HTF mass flow rate from the field",        "kg/hr",             "",             "",             "" },
 	{ TCS_OUTPUT,          TCS_NUMBER,           O_Q_AVAIL,                "q_avail",                                                     "Thermal power produced by the field",          "MWt",             "",             "",             "" },
@@ -687,7 +700,8 @@ private:
 	util::matrix_t<double> L_actSCA, A_cs, D_h, ColOptEff /*nColt, nSCA*/;
 	util::matrix_t<bool> GlazingIntact;
 	emit_table epsilon_3;
-    util::matrix_t<double> D_runner, L_runner, D_hdr, L_hdr, N_rnr_xpans, N_hdr_xpans;
+    util::matrix_t<double> D_runner, L_runner, m_dot_rnr_dsn, V_rnr_dsn, N_rnr_xpans,
+        D_hdr, L_hdr, m_dot_hdr_dsn, V_hdr_dsn, N_hdr_xpans;
 
 	util::matrix_t<double> 
 		T_htf_in, T_htf_out, T_htf_ave, q_loss, q_abs, c_htf, rho_htf,DP_tube, E_abs_field, 
@@ -1457,9 +1471,6 @@ public:
 			*/
 			nhdrsec = (int)ceil(float(nLoops) / float(nfsec * 2));
 
-			//Allocate space for the D_hdr array
-			D_hdr.resize_fill(2*nhdrsec, 0.);
-
 			//We need to determine design information about the field for purposes of header sizing ONLY
 			c_htf_ave = htfProps.Cp((T_loop_out + T_loop_in_des) / 2.0)*1000.;    //Specific heat
 
@@ -1502,19 +1513,33 @@ public:
 			nrunsec = (int)floor(float(nfsec) / 4.0) + 1;  //The number of unique runner diameters
 			D_runner.resize(nrunsec);
 			L_runner.resize(nrunsec);
+            m_dot_rnr_dsn.resize(nrunsec);
+            V_rnr_dsn.resize(nrunsec);
             N_rnr_xpans.resize(nrunsec);  //calculated number of expansion loops in the runner section
 			D_hdr.resize(2*nhdrsec);
             L_hdr.resize(2*nhdrsec);
             N_hdr_xpans.resize(2*nhdrsec);
+            m_dot_hdr_dsn.resize(2*nhdrsec);
+            V_hdr_dsn.resize(2*nhdrsec);
 
 			std::string summary;
-			header_design(nhdrsec, nfsec, nrunsec, rho_ave, V_hdr_cold_max, V_hdr_cold_min, V_hdr_hot_max, V_hdr_hot_min, N_max_hdr_diams, m_dot_design, D_hdr, D_runner, &summary);
+			header_design(nhdrsec, nfsec, nrunsec, rho_ave, V_hdr_cold_max, V_hdr_cold_min,
+                V_hdr_hot_max, V_hdr_hot_min, N_max_hdr_diams, m_dot_design, D_hdr, D_runner,
+                m_dot_rnr_dsn, m_dot_hdr_dsn, V_rnr_dsn, V_hdr_dsn, &summary);
 			
-			//report the header and runner diameters
+			//report the header and runner metrics
 			double *header_diams = allocate(O_HEADER_DIAMS, (int)D_hdr.ncells());
+            double *header_massflow_design = allocate(O_HEADER_MDOT_DSN, (int)m_dot_hdr_dsn.ncells());
+            double *header_velocity_design = allocate(O_HEADER_V_DSN, (int)V_hdr_dsn.ncells());
 			double *runner_diams = allocate(O_RUNNER_DIAMS, (int)D_runner.ncells());
+            double *runner_massflow_design = allocate(O_RUNNER_MDOT_DSN, (int)m_dot_rnr_dsn.ncells());
+            double *runner_velocity_design = allocate(O_RUNNER_V_DSN, (int)V_rnr_dsn.ncells());
             std::copy(D_hdr.data(), D_hdr.data() + D_hdr.ncells(), header_diams);
+            std::copy(m_dot_hdr_dsn.data(), m_dot_hdr_dsn.data() + m_dot_hdr_dsn.ncells(), header_massflow_design);
+            std::copy(V_hdr_dsn.data(), V_hdr_dsn.data() + V_hdr_dsn.ncells(), header_velocity_design);
             std::copy(D_runner.data(), D_runner.data() + D_runner.ncells(), runner_diams);
+            std::copy(m_dot_rnr_dsn.data(), m_dot_rnr_dsn.data() + m_dot_rnr_dsn.ncells(), runner_massflow_design);
+            std::copy(V_rnr_dsn.data(), V_rnr_dsn.data() + V_rnr_dsn.ncells(), runner_velocity_design);
 
 			//if(ErrorFound()) return
 
@@ -1583,9 +1608,13 @@ public:
 
 			//report the header and runner lengths
             double *header_lengths = allocate(O_HEADER_LENGTHS, (int)L_hdr.ncells());
+            double *header_xpans = allocate(O_HEADER_XPANS, (int)N_hdr_xpans.ncells());
 			double *runner_lengths = allocate(O_RUNNER_LENGTHS, (int)L_runner.ncells());
+            double *runner_xpans = allocate(O_RUNNER_XPANS, (int)N_rnr_xpans.ncells());
             std::copy(L_hdr.data(), L_hdr.data() + L_hdr.ncells(), header_lengths);
+            std::copy(N_hdr_xpans.data(), N_hdr_xpans.data() + N_hdr_xpans.ncells(), header_xpans);
             std::copy(L_runner.data(), L_runner.data() + L_runner.ncells(), runner_lengths);
+            std::copy(N_rnr_xpans.data(), N_rnr_xpans.data() + N_rnr_xpans.ncells(), runner_xpans);
 
 			//-------piping from header into and out of the HCE's
 			double v_loop_tot = 0.;
@@ -4743,43 +4772,52 @@ lab_keep_guess:
 	   * m_dot - [kg/s] Mass flow rate at design
 	--Outputs
 	   * D_hdr - [m] An ARRAY containing the header diameter for each loop section
+       * m_dot_hdr - [kg/s] Mass flow rate in each header section at design
+       * V_hdr - [m/s] Velocity in each header section at design
 	   * D_runner - [m] An ARRAY containing the diameter of the runner pipe sections
+       * m_dot_rnr - [kg/s] Mass flow rate in each runner section at design
+       * V_rnr - [m/s] Velocity in each runner section at design
 	   * summary - Address of string variable on which summary contents will be written.
 	---------------------------------------------------------------------------------			*/
 
 	void header_design(unsigned nhsec, int nfsec, unsigned nrunsec, double rho, double V_cold_max, double V_cold_min,
         double V_hot_max, double V_hot_min, int N_max_hdr_diams, double m_dot, util::matrix_t<double> &D_hdr, util::matrix_t<double> &D_runner,
+        util::matrix_t<double> &m_dot_rnr, util::matrix_t<double> &m_dot_hdr, util::matrix_t<double> &V_rnr, util::matrix_t<double> &V_hdr,
         std::string *summary = NULL){
 	
 		//resize the header matrices if they are incorrect
 		//real(8),intent(out):: D_hdr(nhsec), D_runner(nrunsec)
 		if(D_hdr.ncells() != 2*nhsec) D_hdr.resize(2*nhsec);
+        if(m_dot_hdr.ncells() != 2*nhsec) m_dot_hdr.resize(2*nhsec);
+        if(V_hdr.ncells() != 2*nhsec) V_hdr.resize(2*nhsec);
 		if(D_runner.ncells() != nrunsec) D_runner.resize(nrunsec);
+        if(m_dot_rnr.ncells() != nrunsec) m_dot_rnr.resize(nrunsec);
+        if(V_rnr.ncells() != nrunsec) V_rnr.resize(nrunsec);
 
 		//----
 		int nend, nd;
 		unsigned nst;
-		double m_dot_max, m_dot_min, m_dot_ts, m_dot_hdr, m_dot_2loops, m_dot_temp;
+		double m_dot_hdrs, m_dot_2loops;
 		
-		for (unsigned i=0; i<2*nhsec; i++){ D_hdr[i] = 0.; }
-
-		//mass flow through half-length runners is always half of total
-		m_dot_ts = m_dot/2.;
 		//Mass flow into 1 header
-		m_dot_hdr = 2.*m_dot_ts/(float(nfsec));
+		m_dot_hdrs = m_dot/(float(nfsec));
 		//Mass flow into the 2 loops attached to a single header section
-		m_dot_2loops = m_dot_hdr/float(nhsec);
+		m_dot_2loops = m_dot_hdrs/float(nhsec);
 
 		//Runner diameters
 		//runner pipe needs some length to go from the power block to the headers
-		D_runner.at(0) = pipe_sched(sqrt(4.*m_dot_ts/(rho*V_cold_max*pi)));
-		//other runner diameters
-		m_dot_temp = m_dot_ts*(1.-float(nfsec%4)/float(nfsec));  //Adjust mass flow for first full-length runners when nfsec/2==odd 
-		if(nrunsec>1) {
-			for (unsigned i=1; i<nrunsec; i++){
-				D_runner[i] = pipe_sched(sqrt(4.*m_dot_temp/(rho*V_cold_max*pi)));
-				m_dot_temp = max(m_dot_temp - m_dot_hdr*2, 0.0);
-			}
+		m_dot_rnr[0] = m_dot/2.;   //mass flow through half-length runners is always half of total
+		D_runner.at(0) = pipe_sched(sqrt(4.*m_dot_rnr[0]/(rho*V_cold_max*pi)));
+        V_rnr.at(0) = 4.*m_dot_rnr[0] / (rho*pow(D_runner.at(0), 2)*pi);
+		for (unsigned i=1; i<nrunsec; i++){
+            if (i == 1) {
+		        m_dot_rnr[i] = m_dot_rnr[i-1]*(1.-float(nfsec%4)/float(nfsec));  //Adjust mass flow for first full-length runners when nfsec/2==odd 
+            }
+            else {
+				m_dot_rnr[i] = max(m_dot_rnr[i-1] - m_dot_hdrs*2, 0.0);
+            }
+			D_runner[i] = pipe_sched(sqrt(4.*m_dot_rnr[i]/(rho*V_cold_max*pi)));
+            V_rnr.at(i) = 4.*m_dot_rnr[i] / (rho*pow(D_runner.at(i), 2)*pi);
 		}
 
 		//Calculate each section in the cold header
@@ -4790,7 +4828,7 @@ lab_keep_guess:
         nd = 0;
         for (std::size_t i = 0; i < nhsec; i++) {
             if (i == 0) {
-                m_dot_enter = m_dot_hdr;
+                m_dot_enter = m_dot_hdrs;
                 // Size cold header diameter using V_max to allow for mass loss into loops
                 // Select actual pipe that is larger (param=true) than ideal pipe b/c if smaller it will definitely exceed V_max
                 D_hdr[i] = pipe_sched(sqrt(4.*m_dot_enter / (rho*V_hdr_cold_max*pi)), true);
@@ -4834,6 +4872,8 @@ lab_keep_guess:
             else {
                 D_hdr[i] = D_hdr[i - 1];
             }
+            m_dot_hdr[i] = m_dot_enter;
+            V_hdr[i] = V_enter;
         }
 
         //Calculate each section in the hot header
@@ -4888,6 +4928,8 @@ lab_keep_guess:
             else {
                 D_hdr[i] = D_hdr[i - 1];
             }
+            m_dot_hdr[i] = m_dot_leave;
+            V_hdr[i] = V_leave;
         }
 
 		

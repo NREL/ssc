@@ -301,10 +301,16 @@ static var_info _cm_vtab_tcstrough_physical[] = {
     { SSC_OUTPUT,       SSC_ARRAY,       "tou_value",         "Resource Time-of-use value",                                      "",             "",            "tou",            "*",                      "",                      "" },
 																																																			 			             
     //Solar field																																															 			             
-	{ SSC_OUTPUT,       SSC_ARRAY,       "pipe_header_diams", "Field piping header diameters",								    "m",             "",            "Type250",        "*",                       "",                      "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "pipe_runner_diams", "Field piping runner diameters",									"m",             "",            "Type250",        "*",                       "",                      "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "pipe_header_diams",      "Field piping header diameters",							    "m",             "",            "Type250",        "*",                       "",                      "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "pipe_header_lengths",    "Field piping header lengths",                               "m",             "",            "Type250",        "*",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "pipe_header_expansions", "Number of field piping header expansions",                  "-",             "",            "Type250",        "*",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "pipe_header_mdot_dsn",   "Field piping header mass flow at design",				    "kg/s",          "",            "Type250",        "*",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "pipe_header_vel_dsn",    "Field piping header velocity at design",				    "m/s",           "",            "Type250",        "*",                       "",                      "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "pipe_runner_diams",      "Field piping runner diameters",								"m",             "",            "Type250",        "*",                       "",                      "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "pipe_runner_lengths",    "Field piping runner lengths",								"m",             "",            "Type250",        "*",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "pipe_runner_expansions", "Number of field piping runner expansions",                  "-",             "",            "Type250",        "*",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "pipe_runner_mdot_dsn",   "Field piping runner mass flow at design",				    "kg/s",          "",            "Type250",        "*",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "pipe_runner_vel_dsn",    "Field piping runner velocity at design",				    "m/s",           "",            "Type250",        "*",                       "",                      "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "Theta_ave",         "Field collector solar incidence angle",                          "deg",           "",            "Type250",        "*",                       "",                      "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "CosTh_ave",         "Field collector cosine efficiency",                              "",              "",            "Type250",        "*",                       "",                      "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "IAM_ave",           "Field collector incidence angle modifier",                       "",              "",            "Type250",        "*",                       "",                      "" },
@@ -835,15 +841,33 @@ public:
 		double *header_diams = get_unit_value(type250_solarfield, "pipe_header_diams", &nv);
 		ssc_number_t *header_diams_cm = allocate("pipe_header_diams", nv);
         std::copy(header_diams, header_diams + nv, header_diams_cm);
-        double *runner_diams = get_unit_value(type250_solarfield, "pipe_runner_diams", &nv);
-		ssc_number_t *runner_diams_cm = allocate("pipe_runner_diams", nv);
-        std::copy(runner_diams, runner_diams + nv, runner_diams_cm);
         double *pipe_header_lengths = get_unit_value(type250_solarfield, "pipe_header_lengths", &nv);
         ssc_number_t *pipe_header_lengths_cm = allocate("pipe_header_lengths", nv);
         std::copy(pipe_header_lengths, pipe_header_lengths + nv, pipe_header_lengths_cm);
+        double *pipe_header_expansions = get_unit_value(type250_solarfield, "pipe_header_expansions", &nv);
+        ssc_number_t *pipe_header_expansions_cm = allocate("pipe_header_expansions", nv);
+        std::copy(pipe_header_expansions, pipe_header_expansions + nv, pipe_header_expansions_cm);
+        double *header_massflow_design = get_unit_value(type250_solarfield, "pipe_header_mdot_dsn", &nv);
+        ssc_number_t *header_massflow_design_cm = allocate("pipe_header_mdot_dsn", nv);
+        std::copy(header_massflow_design, header_massflow_design + nv, header_massflow_design_cm);
+        double *header_velocity_design = get_unit_value(type250_solarfield, "pipe_header_vel_dsn", &nv);
+        ssc_number_t *header_velocity_design_cm = allocate("pipe_header_vel_dsn", nv);
+        std::copy(header_velocity_design, header_velocity_design + nv, header_velocity_design_cm);
+        double *runner_diams = get_unit_value(type250_solarfield, "pipe_runner_diams", &nv);
+		ssc_number_t *runner_diams_cm = allocate("pipe_runner_diams", nv);
+        std::copy(runner_diams, runner_diams + nv, runner_diams_cm);
 		double *pipe_runner_lengths = get_unit_value(type250_solarfield, "pipe_runner_lengths", &nv);
 		ssc_number_t *pipe_runner_lengths_cm = allocate("pipe_runner_lengths", nv);
         std::copy(pipe_runner_lengths, pipe_runner_lengths + nv, pipe_runner_lengths_cm);
+        double *pipe_runner_expansions = get_unit_value(type250_solarfield, "pipe_runner_expansions", &nv);
+        ssc_number_t *pipe_runner_expansions_cm = allocate("pipe_runner_expansions", nv);
+        std::copy(pipe_runner_expansions, pipe_runner_expansions + nv, pipe_runner_expansions_cm);
+        double *runner_massflow_design = get_unit_value(type250_solarfield, "pipe_runner_mdot_dsn", &nv);
+        ssc_number_t *runner_massflow_design_cm = allocate("pipe_runner_mdot_dsn", nv);
+        std::copy(runner_massflow_design, runner_massflow_design + nv, runner_massflow_design_cm);
+        double *runner_velocity_design = get_unit_value(type250_solarfield, "pipe_runner_vel_dsn", &nv);
+        ssc_number_t *runner_velocity_design_cm = allocate("pipe_runner_vel_dsn", nv);
+        std::copy(runner_velocity_design, runner_velocity_design + nv, runner_velocity_design_cm);
 		
 		// performance adjustment factors
 		adjustment_factors haf(this, "adjust");
