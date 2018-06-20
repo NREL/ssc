@@ -8,7 +8,8 @@ TEST_P(computeModuleTest, RunSimulationTest) {
 	for (int i = 0; i < n; i++) {
 		const TestResult* testResult = &(table_->getResult())[i];
 		if (testResult->testType == ERR) {
-			EXPECT_FALSE(boolCompute);
+			ASSERT_FALSE(boolCompute);
+			return;
 		}
 		ASSERT_TRUE(boolCompute) << table_->getCMODType() << "-" << table_->name << ": did not compute.";
 		ssc_number_t actualResult = 0.0;

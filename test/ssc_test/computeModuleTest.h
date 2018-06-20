@@ -96,6 +96,10 @@ private:
 				}
 				ssc_data_set_matrix(data_, info->sscVarName.c_str(), val, (int)n, (int)m);
 			}
+			else if (info->dataType == DAT) {
+				var_table * vt = static_cast<var_table*>(data_);
+				if (info->data != NULL) vt->assign(info->sscVarName.c_str(), *(info->data));
+			}
 			else {
 				return false;
 			}

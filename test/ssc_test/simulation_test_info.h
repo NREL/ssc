@@ -5,11 +5,14 @@
 #include <vector>
 #include <string>
 
+#include "common.h"
+
 enum {
 	STR,
 	NUM,
 	ARR,
-	MAT
+	MAT,
+	DAT
 };
 
 struct TestInfo{
@@ -17,6 +20,7 @@ struct TestInfo{
 	unsigned int dataType;		///< 0: string, 1: number, 2: array, 3: matrix
 
 	std::string values;			///< comma-separated for array of values
+	var_data* data;
 	size_t length = 1;			///< length of array/matrix
 	size_t width = 1;			///< width of matrix
 
@@ -27,6 +31,17 @@ struct TestInfo{
 		values = val;
 		length = len; 
 		width = wid;
+		data = nullptr;
+	}
+
+	TestInfo(std::string varName, unsigned int type, var_data* dat)
+	{
+		sscVarName = varName;
+		dataType = DAT;
+		values = "";
+		length = 1;
+		width = 1;
+		data = dat;
 	}
 
 	TestInfo() {}
@@ -49,6 +64,19 @@ struct TestResult {
 	unsigned int testType;	
 	double expectedResult;		///< expected test results per value
 	double errorBound;			///< percent error allowed
+
+	TestResult(std::string n, unsigned int type, double exp, double err) {
+		sscVarName = n;
+		testType = type;
+		expectedResult = exp;
+		errorBound = err/100.;
+	}
+
+	TestResult(int ERR) {
+		testType = ERR;
+	}
+	
+	TestResult() {}
 };
 
 
@@ -71,15 +99,16 @@ public:
 		nR = first.nR;
 		info = new TestInfo[nI];
 		result = new TestResult[nR];
-		for (size_t i = 0; i < nI; i++) {
+		for (int i = 0; i < nI; i++) {
 			info[i].dataType = first.getInfo()[i].dataType;
 			info[i].length = first.getInfo()[i].length;
 			info[i].sscVarName = first.getInfo()[i].sscVarName;
 			info[i].values = first.getInfo()[i].values;
 			info[i].width = first.getInfo()[i].width;
+			info[i].data = first.getInfo()[i].data;
 
 		}
-		for (size_t i = 0; i < nR; i++) {
+		for (int i = 0; i < nR; i++) {
 			result[i].errorBound = first.getResult()[i].errorBound;
 			result[i].expectedResult = first.getResult()[i].expectedResult;
 			result[i].sscVarName = first.getResult()[i].sscVarName;
@@ -106,11 +135,18 @@ public:
 			std::unordered_map<std::string, size_t>::iterator it = map.find(I[i].sscVarName);
 			if (it != map.end()) {
 				varIndex = (*it).second;
-				info[varIndex].values = I[i].values;
+				if (info[varIndex].dataType != DAT) {
+					if (I[i].values.length() > 0 ) info[varIndex].values = I[i].values;
+					else return false;
+				}
+				else {
+					if (I[i].data) info[varIndex].data = I[i].data;
+					else return false;
+				}
 			}
 			else {
 				std::cout << computeModuleType << "-" << name << ": could not find sscVarName "
-					<< I[i].sscVarName << "\n";
+					<< I[i].sscVarName << " in default TestInfo \n";
 				return false;
 			}
 		}
@@ -159,8 +195,10 @@ class testDeclaration {
 public:
 	testDeclaration(computeModuleTestData& testData, const char* testName, TestInfo* I, size_t nInfo, TestResult* R, int nRes) {
 		std::vector<SimulationTestTable*>* allTests = testData.tests;
-		if (allTests->size() > 0 && nInfo < (*allTests)[0]->getNumInfo()) {
-			test = new SimulationTestTable(*(*allTests)[0]);
+		// if a TestTable already exists with all the defaults, modify
+		if (allTests->size() > 0 && (int)nInfo < (*allTests)[0]->getNumInfo()) {
+			SimulationTestTable* defaultTest = (*allTests)[0];
+			test = new SimulationTestTable(*defaultTest);
 			test->name = testName;
 			bool success = test->modifyTestInfo(*(testData.map), I, nInfo, testName);
 			if (success) {
@@ -168,8 +206,17 @@ public:
 				(*allTests).push_back(test);
 			}
 		}
+		// else create as default TestTable
 		else {
 			for (size_t i = 0; i < nInfo; i++) {
+				/*switch (I[i].dataType) 
+				{
+				case STR:
+				case NUM:
+				case ARR:
+				case MAT:
+				case DAT:
+				}*/
 				(*testData.map)[I[i].sscVarName] = i;
 			}
 			test = new SimulationTestTable(testData.name, testName, I, (int)nInfo, R, nRes);
