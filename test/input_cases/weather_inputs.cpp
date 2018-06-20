@@ -24,11 +24,19 @@ var_data* create_winddata_array(int intervalsPerHour, int nMeasurementHeights){
 			fields[i * 4 + j] = (float)j+1;
 		}
 	}
+
+	float* rh = new float[8760 * intervalsPerHour];
+	for (unsigned int i = 0; i < 8760 * intervalsPerHour; i++) {
+		if (i % 2 == 0) rh[i] = 0.75f;
+		else rh[i] = 0.0f;
+	}
+	var_data rh_vd = var_data(rh, 8760 * intervalsPerHour);
 	var_data data_vd = var_data(year_data, 8760 * intervalsPerHour, 4 * nMeasurementHeights);
 	var_data height_vd = var_data(height, 4 * nMeasurementHeights);
 	var_data fields_vd = var_data(fields, 4 * nMeasurementHeights);
 
 	var_table* vt = new var_table;
+	vt->assign("rh", rh_vd);
 	vt->assign("heights", height_vd);
 	vt->assign("data", data_vd);
 	vt->assign("fields", fields_vd);

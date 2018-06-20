@@ -67,7 +67,8 @@ private:
 		for (int i = 0; i < table_->getNumInfo(); i++) {
 			const TestInfo* info = &(table_->getInfo())[i];
 			if (info->dataType == STR) {
-				ssc_data_set_string(data_, info->sscVarName.c_str(), info->values.c_str());
+				if (info->values.size() == 0) ssc_data_unassign(data_, info->sscVarName.c_str());
+				else ssc_data_set_string(data_, info->sscVarName.c_str(), info->values.c_str());
 			}
 			else if (info->dataType == NUM) {
 				ssc_data_set_number(data_, info->sscVarName.c_str(), (ssc_number_t)atof(info->values.c_str()));

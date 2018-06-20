@@ -16,6 +16,7 @@ TEST_P(computeModuleTest, RunSimulationTest) {
 		std::stringstream ss(testResult->sscVarName);
 		std::string varName, index;
 		size_t varIndex;
+		// get data as element in array or as a single-value
 		getline(ss, varName, '[');
 		if (varName.length() < strlen(testResult->sscVarName.c_str())) {
 			getline(ss, index, ']');
@@ -39,8 +40,18 @@ TEST_P(computeModuleTest, RunSimulationTest) {
 		else if (testResult->testType == LT) {
 			EXPECT_LT(actualResult, testResult->expectedResult) << failureMsg.str();
 		}
+		else if (testResult->testType == TF) {
+			if ((bool)testResult->expectedResult == true) EXPECT_TRUE(actualResult) << failureMsg.str();
+			else EXPECT_FALSE(actualResult) << failureMsg.str();
+		}
+		else if (testResult->testType == SIZE) {
+			int siz = 0;
+			ssc_data_get_array(data_, varName.c_str(), &siz);
+			EXPECT_NEAR(siz, testResult->expectedResult, testResult->errorBound*testResult->expectedResult) << failureMsg.str();
+		}
 		else {
-			EXPECT_TRUE(1);
+			std::cout << table_->getCMODType() << "-" << table_->name << ":\n\t" << testResult->sscVarName << " test type unknown.\n";
+			EXPECT_TRUE(0);
 		}
 	}
 }

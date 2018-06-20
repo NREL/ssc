@@ -667,7 +667,7 @@ TestInfo physTroughPPASingleDefaultInfo[] = {
 
 // test_types: equal (EQ), near(approx equal) (NR), greater than (GT), less than (LT), bool (TF), cmod error (ERR)
 TestResult physTroughPPASingleDefaultResult[] = {
-/*  SSC Var Name                            Test Type           Test Result             Error Bound % */
+/*  SSC Var Name                            Test Type           Test Result             Error Bound Ratio */
     { "annual_energy",                      NR,                 354225632.,             0.1 },  // Annual Energy [kWh]
     { "annual_fuel_usage",                  NR,                 0.,                     0.1 },  // Annual fuel usage [kWht]
     { "capacity_factor",                    NR,                 40.4772,                0.1 },  // Capacity factor [%]

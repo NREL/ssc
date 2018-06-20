@@ -47,14 +47,15 @@ struct TestInfo{
 	TestInfo() {}
 };
 
-// enum for test_types: equal, near (approx equal), greater than, less than, bool, cmod error
+
 enum {
-	EQ,
-	NR,
-	GT,
-	LT,
-	TF,
-	ERR
+	EQ,			// equal
+	NR,			// near (approx equal)
+	GT,			// greater than
+	LT,			// less than
+	TF,			// 0 for false, 1 for true
+	ERR,		// expect error
+	SIZE		// compare size of output variable
 };
 
 struct TestResult {
@@ -69,7 +70,7 @@ struct TestResult {
 		sscVarName = n;
 		testType = type;
 		expectedResult = exp;
-		errorBound = err/100.;
+		errorBound = err;
 	}
 
 	TestResult(int ERR) {
@@ -136,8 +137,7 @@ public:
 			if (it != map.end()) {
 				varIndex = (*it).second;
 				if (info[varIndex].dataType != DAT) {
-					if (I[i].values.length() > 0 ) info[varIndex].values = I[i].values;
-					else return false;
+					info[varIndex].values = I[i].values;
 				}
 				else {
 					if (I[i].data) info[varIndex].data = I[i].data;
