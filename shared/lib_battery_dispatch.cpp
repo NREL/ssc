@@ -142,7 +142,7 @@ dispatch_t::~dispatch_t()
 	_Battery_initial->delete_clone();
 	delete _Battery_initial;
 }
-bool dispatch_t::check_constraints(double &I, int count)
+bool dispatch_t::check_constraints(double &I, size_t count)
 {
 	bool iterate = true;
 	double I_initial = I;
@@ -331,7 +331,7 @@ void dispatch_t::runDispatch(size_t year, size_t hour_of_year, size_t step)
 	// Setup battery iteration
 	_Battery_initial->copy(_Battery);
 	bool iterate = true;
-	int count = 0;
+	size_t count = 0;
 	size_t idx = util::index_year_hour_step(year, hour_of_year, step, static_cast<size_t>(1 / _dt_hour));
 
 	do {
@@ -448,7 +448,7 @@ void dispatch_manual_t::dispatch(size_t year,
 	runDispatch(year, hour_of_year, step);
 }
 
-bool dispatch_manual_t::check_constraints(double &I, int count)
+bool dispatch_manual_t::check_constraints(double &I, size_t count)
 {
 	// check common constraints before checking manual dispatch specific ones
 	bool iterate = dispatch_t::check_constraints(I, count);
@@ -668,7 +668,7 @@ void dispatch_automatic_t::dispatch(size_t year,
 }
 
 
-bool dispatch_automatic_t::check_constraints(double &I, int count)
+bool dispatch_automatic_t::check_constraints(double &I, size_t count)
 {
 	// check common constraints before checking manual dispatch specific ones
 	bool iterate = dispatch_t::check_constraints(I, count);
@@ -965,7 +965,7 @@ void dispatch_automatic_behind_the_meter_t::sort_grid(FILE *p, bool debug, size_
 			sorted_grid[count] = grid[count];
 
 			if (debug)
-				fprintf(p, "%lu\t %.1f\t %.1f\t %.1f\n", count, _P_load_dc[idx], _P_pv_dc[idx], _P_load_dc[idx] - _P_pv_dc[idx]);
+				fprintf(p, "%zu\t %.1f\t %.1f\t %.1f\n", count, _P_load_dc[idx], _P_pv_dc[idx], _P_load_dc[idx] - _P_pv_dc[idx]);
 
 			idx++;
 			count++;
