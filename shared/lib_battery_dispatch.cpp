@@ -142,7 +142,7 @@ dispatch_t::~dispatch_t()
 	_Battery_initial->delete_clone();
 	delete _Battery_initial;
 }
-bool dispatch_t::check_constraints(double &I, int count)
+bool dispatch_t::check_constraints(double &I, size_t count)
 {
 	bool iterate = true;
 	double I_initial = I;
@@ -167,6 +167,11 @@ bool dispatch_t::check_constraints(double &I, int count)
 		else
 			I += (m_batteryPower->powerGridToBattery / fabs(m_batteryPower->powerBattery)) *fabs(I);
 	}
+	// Don't allow battery to discharge if it gets wasted due to inverter efficiency limitations
+	else if (m_batteryPower->connectionMode == dispatch_t::DC_CONNECTED && m_batteryPower->sharedInverter->efficiencyAC < 90)
+	{
+		I *= m_batteryPower->sharedInverter->efficiencyAC*0.01;
+	}
 	else
 		iterate = false;
 
@@ -177,11 +182,11 @@ bool dispatch_t::check_constraints(double &I, int count)
 	bool power_iterate = restrict_power(I);
 
 	// iterate if any of the conditions are met
-	if (iterate || current_iterate || power_iterate)
+	if (iterate || current_iterate || power_iterate) 
 		iterate = true;
 
-	// stop iterating after 5 tries
-	if (count > 5)
+	// stop iterating after n tries
+	if (count > battery_dispatch::constraintCount)
 		iterate = false;
 
 	// don't allow battery to flip from charging to discharging or vice versa
@@ -326,7 +331,7 @@ void dispatch_t::runDispatch(size_t year, size_t hour_of_year, size_t step)
 	// Setup battery iteration
 	_Battery_initial->copy(_Battery);
 	bool iterate = true;
-	int count = 0;
+	size_t count = 0;
 	size_t idx = util::index_year_hour_step(year, hour_of_year, step, static_cast<size_t>(1 / _dt_hour));
 
 	do {
@@ -443,7 +448,7 @@ void dispatch_manual_t::dispatch(size_t year,
 	runDispatch(year, hour_of_year, step);
 }
 
-bool dispatch_manual_t::check_constraints(double &I, int count)
+bool dispatch_manual_t::check_constraints(double &I, size_t count)
 {
 	// check common constraints before checking manual dispatch specific ones
 	bool iterate = dispatch_t::check_constraints(I, count);
@@ -512,7 +517,7 @@ bool dispatch_manual_t::check_constraints(double &I, int count)
 			iterate = true;
 
 		// stop iterating after 5 tries
-		if (count > 5)
+		if (count > battery_dispatch::constraintCount)
 			iterate = false;
 
 		// don't allow battery to flip from charging to discharging or vice versa
@@ -663,7 +668,7 @@ void dispatch_automatic_t::dispatch(size_t year,
 }
 
 
-bool dispatch_automatic_t::check_constraints(double &I, int count)
+bool dispatch_automatic_t::check_constraints(double &I, size_t count)
 {
 	// check common constraints before checking manual dispatch specific ones
 	bool iterate = dispatch_t::check_constraints(I, count);
@@ -744,8 +749,8 @@ bool dispatch_automatic_t::check_constraints(double &I, int count)
 		if (iterate || current_iterate || power_iterate)
 			iterate = true;
 
-		// stop iterating after 5 tries
-		if (count > 5)
+		// stop iterating after n tries
+		if (count > battery_dispatch::constraintCount)
 			iterate = false;
 
 		// don't allow battery to flip from charging to discharging or vice versa
@@ -960,7 +965,7 @@ void dispatch_automatic_behind_the_meter_t::sort_grid(FILE *p, bool debug, size_
 			sorted_grid[count] = grid[count];
 
 			if (debug)
-				fprintf(p, "%lu\t %.1f\t %.1f\t %.1f\n", count, _P_load_dc[idx], _P_pv_dc[idx], _P_load_dc[idx] - _P_pv_dc[idx]);
+				fprintf(p, "%zu\t %.1f\t %.1f\t %.1f\n", count, _P_load_dc[idx], _P_pv_dc[idx], _P_load_dc[idx] - _P_pv_dc[idx]);
 
 			idx++;
 			count++;
