@@ -146,6 +146,8 @@ interconnect::interconnect(double k = 0, double d = 0, double l = 0, double roug
     Type(type),
     SurfArea_valid_(false),
     SurfArea_(0),
+    CrossSecArea_valid_(false),
+    CrossSecArea_(0),
     Volume_valid_(false),
     Volume_(0)
 {
@@ -261,6 +263,16 @@ void interconnect::calcSurfArea() {
     SurfArea_valid_ = true;
 }
 
+double interconnect::getCrossSecArea() {
+    if (!CrossSecArea_valid_) { calcCrossSecArea(); }
+    return CrossSecArea_;
+}
+
+void interconnect::calcCrossSecArea() {
+    CrossSecArea_ = pi * (d_ * d_) / 4;
+    CrossSecArea_valid_ = true;
+}
+
 double interconnect::getVolume() {
     if (!Volume_valid_) { calcVolume(); }
     return Volume_;
@@ -284,9 +296,9 @@ double interconnect::TempDrop(HTFProperties *fluidProps, double m_dot, double T_
     return HeatLoss(T_intc, T_db) / (m_dot * fluidProps->Cp(T_in));   // positive value means T_out < T_in
 }
 
-double interconnect::PressureDrop(HTFProperties *fluidProps, double m_dot, double T_htf_ave, double P_htf_ave) const {
+double interconnect::PressureDrop(HTFProperties *fluidProps, double m_dot, double T_htf_ave, double P_htf_ave) {
     double rho = fluidProps->dens(T_htf_ave, P_htf_ave);
-    double vel = m_dot / rho;
+    double vel = m_dot / ( rho * getCrossSecArea() );
     double Re, ff;
 
     switch (Type)
@@ -485,6 +497,10 @@ void intc_assy::calcSurfArea() {
         SurfArea_ += it->getSurfArea();  // interconnect::getSurfArea()
     }
     SurfArea_ = true;
+}
+
+double intc_assy::getCrossSecArea(std::size_t intc) {
+    return intcs.at(intc).getCrossSecArea();
 }
 
 double intc_assy::getVolume() {
