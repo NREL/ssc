@@ -10,7 +10,7 @@
 
 const double C_turbine::m_nu_design = 0.7476;
 const double C_comp_single_stage::m_snl_phi_design = 0.02971;		//[-] Design-point flow coef. for Sandia compressor (corresponds to max eta)
-const double C_comp_single_stage::m_snl_phi_min = 0.02;				//[-] Approximate surge limit for SNL compressor
+const double C_comp_single_stage::m_snl_phi_min = 0.0225;			//[-] Approximate surge limit for SNL compressor
 const double C_comp_single_stage::m_snl_phi_max = 0.05;				//[-] Approximate x-intercept for SNL compressor
 
 
@@ -952,8 +952,10 @@ void C_turbine::od_turbine_at_N_des(double T_in, double P_in, double P_out, int 
 
 double C_comp_single_stage::calc_psi_design(double phi_design /*-*/)
 {
-	return ((((-498626.0*phi_design) + 53224.0) * phi_design - 2505.0) * phi_design + 54.6) *
-		phi_design + 0.04049;		// from dimensionless modified head curve(at design - point, psi and modified psi are equal)
+	if (phi_design >= 0.0225)
+		return ((((-498626.0*phi_design) + 53224.0) * phi_design - 2505.0) * phi_design + 54.6)*phi_design + 0.04049;  // from dimensionless modified head curve(at design - point, psi and modified psi are equal)
+	else
+		return (1 + 0.5*(0.0225 - phi_design) / 0.0225)*0.47929;		//[-] Check for surge after model converges	
 }
 
 int C_comp_single_stage::design_given_shaft_speed(double T_in /*K*/, double P_in /*kPa*/, double m_dot /*kg/s*/,
@@ -1159,7 +1161,7 @@ int C_comp_single_stage::off_design_given_N(double T_in /*K*/, double P_in /*kPa
 	if (phi < m_snl_phi_min)
 	{
 		ms_od_solved.m_surge = true;
-		phi = m_snl_phi_min;
+		//phi = m_snl_phi_min;
 	}
 	else
 		ms_od_solved.m_surge = false;
@@ -1579,7 +1581,7 @@ void C_comp_multi_stage::off_design_given_P_out(double T_in /*K*/, double P_in /
 
 	// Set upper and lower bounds
 	double phi_upper = mv_stages[0].ms_des_solved.m_phi_max;
-	double phi_lower = mv_stages[0].ms_des_solved.m_phi_surge;
+	double phi_lower = 0.001;		// mv_stages[0].ms_des_solved.m_phi_surge;
 
 	// Generate first x-y pair
 	double phi_guess_lower = ms_des_solved.m_phi_des;
@@ -1623,6 +1625,7 @@ void C_comp_multi_stage::off_design_given_P_out(double T_in /*K*/, double P_in /
 			for (int i = 6; i < 10; i++)
 			{
 				phi_guess_upper = phi_guess_lower*i / 10.0 + ms_des_solved.m_phi_surge*(10 - i) / 10.0;
+				//phi_guess_upper = phi_guess_lower * i / 10.0 + phi_lower*(10 - i) / 10.0;
 				test_code = c_rd_od_solver.test_member_function(phi_guess_upper, &P_solved_phi_guess_upper);
 				if (test_code == 0)
 					break;
