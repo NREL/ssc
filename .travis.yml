@@ -37,7 +37,7 @@ before_script:
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then git clone https://github.com/$user/wex $WEXDIR; fi
 
 script:
-  - ./configure --enable-gcov && make && make_check
+ # - ./configure --enable-gcov && make && make_check
   - export PATH=$PATH:$HOME/wx-3.1.1/bin
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then make -C $GTEST/make; fi
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then make -j4 -C $LKDIR/build_linux; fi
