@@ -97,10 +97,13 @@ private:
     IntcType Type;
     bool SurfArea_valid_;
     double SurfArea_;
+    bool CrossSecArea_valid_;
+    double CrossSecArea_;
     bool Volume_valid_;
     double Volume_;
 
     void calcSurfArea();
+    void calcCrossSecArea();
     void calcVolume();
 
 public:
@@ -121,12 +124,13 @@ public:
     void setHeatCap(double);
     IntcType getType() const;
     double getSurfArea();
+    double getCrossSecArea();
     double getVolume();
 
     double HeatLoss(double T_intc, double T_db);
     double TempDrop(HTFProperties *fluidProps, double m_dot, double T_in, double heatLoss);
     double TempDrop(HTFProperties *fluidProps, double m_dot, double T_in, double T_intc, double T_db);
-    virtual double PressureDrop(HTFProperties *fluidProps, double m_dot, double T_htf_ave, double P_htf_ave) const;
+    virtual double PressureDrop(HTFProperties *fluidProps, double m_dot, double T_htf_ave, double P_htf_ave);
     double InternalEnergy(HTFProperties *fluidProps, double T_intc, double T_htf, double P_htf_ave);
     IntcOutputs State(HTFProperties *fluidProps, double m_dot, double T_in, double T_intc, double T_db, double P_htf_ave);
 };
@@ -172,6 +176,7 @@ public:
     IntcType getType(std::size_t intc) const;
     double getSurfArea();
     double getSurfArea(std::size_t intc);
+    double getCrossSecArea(std::size_t intc);
     double getVolume();
     double getVolume(std::size_t intc);
 
