@@ -289,11 +289,13 @@ double interconnect::HeatLoss(double T_intc, double T_db) {
 }
 
 double interconnect::TempDrop(HTFProperties *fluidProps, double m_dot, double T_in, double heatLoss) {
-    return heatLoss / (m_dot * fluidProps->Cp(T_in));   // positive value means T_out < T_in
+    double cp = fluidProps->Cp(T_in) * 1000;  // J/kg-K
+    return heatLoss / (m_dot * cp);   // positive value means T_out < T_in
 }
 
 double interconnect::TempDrop(HTFProperties *fluidProps, double m_dot, double T_in, double T_intc, double T_db) {
-    return HeatLoss(T_intc, T_db) / (m_dot * fluidProps->Cp(T_in));   // positive value means T_out < T_in
+    double cp = fluidProps->Cp(T_in) * 1000;  // J/kg-K
+    return HeatLoss(T_intc, T_db) / (m_dot * cp);   // positive value means T_out < T_in
 }
 
 double interconnect::PressureDrop(HTFProperties *fluidProps, double m_dot, double T_htf_ave, double P_htf_ave) {
@@ -320,7 +322,8 @@ double interconnect::PressureDrop(HTFProperties *fluidProps, double m_dot, doubl
 }
 
 double interconnect::InternalEnergy(HTFProperties *fluidProps, double T_intc, double T_htf_ave, double P_htf_ave) {
-    return (getVolume() * fluidProps->dens(T_htf_ave, P_htf_ave) * fluidProps->Cp(T_htf_ave) +
+    double cp = fluidProps->Cp(T_htf_ave) * 1000;  // J/kg-K
+    return (getVolume() * fluidProps->dens(T_htf_ave, P_htf_ave) * cp +
         getHeatCap()) * (T_intc - T_ref_K);
 }
 
@@ -521,25 +524,38 @@ void intc_assy::calcVolume() {
 }
 
 IntcOutputs intc_assy::State(double m_dot, double T_in, double T_db, double P_in) {
-    IntcOutputs IntcOutput;
     IntcOutputs AssyOutput;
-    double T_out_prev = T_in;
-    double P_out_prev = P_in;
+    
+    if (N_intcs_ > 0) {
+        IntcOutputs IntcOutput;
+        double T_out_prev = T_in;
+        double P_out_prev = P_in;
 
-    for (std::vector<interconnect>::iterator it = intcs.begin(); it < intcs.end(); ++it) {
-        IntcOutput = it->State(FluidProps_, m_dot, T_out_prev, T_out_prev, T_db, P_out_prev);  // interconnect::State()
-        AssyOutput.heat_loss += IntcOutput.heat_loss;
-        AssyOutput.pressure_drop += IntcOutput.pressure_drop;
-        AssyOutput.internal_energy += IntcOutput.internal_energy;
+        for (std::vector<interconnect>::iterator it = intcs.begin(); it < intcs.end(); ++it) {
+            IntcOutput = it->State(FluidProps_, m_dot, T_out_prev, T_out_prev, T_db, P_out_prev);  // interconnect::State()
+            AssyOutput.heat_loss += IntcOutput.heat_loss;
+            AssyOutput.pressure_drop += IntcOutput.pressure_drop;
+            AssyOutput.internal_energy += IntcOutput.internal_energy;
 
-        T_out_prev = IntcOutput.temp_out;
-        P_out_prev = P_out_prev - IntcOutput.pressure_drop;
+            T_out_prev = IntcOutput.temp_out;
+            P_out_prev = P_out_prev - IntcOutput.pressure_drop;
+        }
+        AssyOutput.temp_drop = T_in - IntcOutput.temp_out;
+        AssyOutput.temp_out = IntcOutput.temp_out;
+        AssyOutput.temp_ave = (T_in + AssyOutput.temp_out) / 2;
+        AssyOutput.pressure_out = P_in - AssyOutput.pressure_drop;
+        AssyOutput.pressure_ave = (P_in + AssyOutput.pressure_out) / 2;
     }
-    AssyOutput.temp_drop = T_in - IntcOutput.temp_out;
-    AssyOutput.temp_out = IntcOutput.temp_out;
-    AssyOutput.temp_ave = (T_in + AssyOutput.temp_out) / 2;
-    AssyOutput.pressure_out = P_in - AssyOutput.pressure_drop;
-    AssyOutput.pressure_ave = (P_in + AssyOutput.pressure_out) / 2;
+    else {
+        AssyOutput.heat_loss = 0;
+        AssyOutput.temp_drop = 0;
+        AssyOutput.temp_out = T_in;
+        AssyOutput.temp_ave = T_in;
+        AssyOutput.pressure_drop = 0;
+        AssyOutput.pressure_out = P_in;
+        AssyOutput.pressure_ave = P_in;
+        AssyOutput.internal_energy = 0;
+    }
     
     return AssyOutput;
 }
