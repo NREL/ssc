@@ -149,7 +149,7 @@ class weatherdata : public weather_data_provider
 	vec get_vector(var_data *v, const char *name, size_t *len = nullptr);
 	ssc_number_t get_number(var_data *v, const char *name);
 
-	size_t name_to_id(const char *name);
+	int name_to_id(const char *name);
 
 public:
 	/* Detects file format, read header information, detects which data columns are available and at what index

@@ -7,7 +7,7 @@
 
 // first test must be contain all possible inputs
 std::vector<SimulationTestTable*> windIntgTests;
-std::unordered_map<const char*, size_t> windIntgVarMap;
+std::unordered_map<std::string, size_t> windIntgVarMap;
 computeModuleTestData windPowerTesting(&windIntgTests, &windIntgVarMap, "windpower");
 
 // Set up wind resource file paths

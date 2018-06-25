@@ -295,6 +295,8 @@ PVSystem_IO::PVSystem_IO(compute_module* cm, std::string cmName, Simulation_IO *
 	numberOfInverters = cm->as_integer("inverter_count");
 	acDerate = 1 - cm->as_double("acwiring_loss") / 100;	
 	acLossPercent = (1 - acDerate) * 100;
+	transmissionDerate = 1 - cm->as_double("transmission_loss") / 100;
+	transmissionLossPercent = (1 - transmissionDerate) * 100;
 
 	enableDCLifetimeLosses = cm->as_boolean("en_dc_lifetime_losses");
 	enableACLifetimeLosses = cm->as_boolean("en_ac_lifetime_losses");
@@ -413,7 +415,7 @@ void PVSystem_IO::AllocateOutputs(compute_module* cm)
 	p_inverterPowerConsumptionLoss = cm->allocate("inv_psoloss", numberOfWeatherFileRecords);
 	p_inverterNightTimeLoss = cm->allocate("inv_pntloss", numberOfWeatherFileRecords);
 	p_acWiringLoss = cm->allocate("ac_wiring_loss", numberOfWeatherFileRecords);
-
+	p_transmissionLoss = cm->allocate("ac_transmission_loss", numberOfWeatherFileRecords);
 	p_systemDCPower = cm->allocate("dc_net", numberOfLifetimeRecords);
 	p_systemACPower = cm->allocate("gen", numberOfLifetimeRecords);
 

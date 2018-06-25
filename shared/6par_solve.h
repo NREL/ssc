@@ -134,7 +134,7 @@ public:
 		
 		f[5] = gamma - gPmp;
 	}
-	
+
 	bool exec(Real &_a, Real &_Il, Real &_Io, Real &_Rs, Real &_Rsh, Real &_Adj, 
 		int max_iter, double tol, notification_interface *nif )
 	{	
@@ -508,7 +508,7 @@ public:
 		int err = solve<Real>( max_iter, tol, nif );
 		
 		
-		if ( err < 0 && Type == Amorphous )
+		if ( err < 0 && (Type == Amorphous || Type == CdTe) )
 		{
 			// attempt decreasing 'a' and solving
 			int downattempt = 0;

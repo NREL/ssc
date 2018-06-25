@@ -56,7 +56,10 @@
 #ifndef __LIB_BATTERY_DISPATCH_H__
 #define __LIB_BATTERY_DISPATCH_H__
 
-
+namespace battery_dispatch
+{
+	const size_t constraintCount = 10;
+}
 
 /*
 Dispatch Base Class - can envision many potential modifications. Goal is to define standard API
@@ -106,7 +109,7 @@ public:
 		double P_system_clipped = 0
 		) = 0;
 
-	virtual bool check_constraints(double &I, int count);
+	virtual bool check_constraints(double &I, size_t count);
 
 	battery_t * battery_model(){ return _Battery; }
 
@@ -264,7 +267,7 @@ protected:
 		std::map<size_t, double> dm_percent_gridcharge);
 
 	void SOC_controller();
-	bool check_constraints(double &I, int count);
+	bool check_constraints(double &I, size_t count);
 
 	util::matrix_t < size_t > _sched;
 	util::matrix_t < size_t > _sched_weekend;
@@ -367,7 +370,7 @@ public:
 	virtual void set_custom_dispatch(std::vector<double> P_batt_dc);
 
 	/* Check constraints and re-dispatch if needed */
-	virtual bool check_constraints(double &I, int count);
+	virtual bool check_constraints(double &I, size_t count);
 
 protected:
 

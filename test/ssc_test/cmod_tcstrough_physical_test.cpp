@@ -7,14 +7,14 @@
 
 // first test must contain all possible inputs
 std::vector<SimulationTestTable*> physTroughTests;
-std::unordered_map<const char*, size_t> physTroughVarMap;
-computeModuleTestData physTroughTesting(&physTroughTests, &physTroughVarMap, "physTrough");
+std::unordered_map<std::string, size_t> physTroughVarMap;
+computeModuleTestData physTroughTesting(&physTroughTests, &physTroughVarMap, "tcstrough_physical");
 
 // Set up data resource file paths
 char weatherfile[150];
-int d = sprintf(weatherfile, "%s/deploy/solar_resource/USA AZ Tucson (TMY2).csv", std::getenv("SAMNTDIR"));
-char dispatch_factors_ts[150];
-int e = sprintf(dispatch_factors_ts, "%s/../sdktool_debug/dispatch_factors_ts.csv", std::getenv("SAMNTDIR"));
+int d = sprintf(weatherfile, "%s/test/input_cases/pvsamv1_data/USA AZ Tucson (TMY2).csv", std::getenv("SSCDIR"));
+//char dispatch_factors_ts[150];
+//int e = sprintf(dispatch_factors_ts, "%s/../sdktool_debug/dispatch_factors_ts.csv", std::getenv("SAMNTDIR"));
 
 // 0. Default Test Arrays and Matrices: using SAM GUI defaults
 const char* W_aperture = "6, 6, 6, 6";
@@ -342,21 +342,21 @@ TestInfo physTroughPPASingleDefaultInfo[] = {
 	{"Rough",                               MAT,                Rough,                  4,4},
 	{"alpha_env",                           MAT,                alpha_env,              4,4},
 	{"epsilon_3_11",                        MAT,                epsilon_3_11,           9,2},
-	{"epsilon_3_12",                        NUM,                "0.64999997615814209"   },
-	{"epsilon_3_13",                        NUM,                "0.64999997615814209"   },
-	{"epsilon_3_14",                        NUM,                "0"                     },
+	{"epsilon_3_12",                        MAT,                "0.64999997615814209",  1,1},
+	{"epsilon_3_13",                        MAT,                "0.64999997615814209",  1,1},
+	{"epsilon_3_14",                        MAT,                "0",                    1,1},
 	{"epsilon_3_21",                        MAT,                epsilon_3_21,           9,2},
-	{"epsilon_3_22",                        NUM,                "0.64999997615814209"   },
-	{"epsilon_3_23",                        NUM,                "0.64999997615814209"   },
-	{"epsilon_3_24",                        NUM,                "0"                     },
+	{"epsilon_3_22",                        MAT,                "0.64999997615814209",  1,1},
+	{"epsilon_3_23",                        MAT,                "0.64999997615814209",  1,1},
+	{"epsilon_3_24",                        MAT,                "0",                    1,1},
 	{"epsilon_3_31",                        MAT,                epsilon_3_31,           9,2},
-	{"epsilon_3_32",                        NUM,                "0.64999997615814209"   },
-	{"epsilon_3_33",                        NUM,                "0.64999997615814209"   },
-	{"epsilon_3_34",                        NUM,                "0"                     },
+	{"epsilon_3_32",                        MAT,                "0.64999997615814209",  1,1},
+	{"epsilon_3_33",                        MAT,                "0.64999997615814209",  1,1},
+	{"epsilon_3_34",                        MAT,                "0",                    1,1},
 	{"epsilon_3_41",                        MAT,                epsilon_3_41,           9,2},
-	{"epsilon_3_42",                        NUM,                "0.64999997615814209"   },
-	{"epsilon_3_43",                        NUM,                "0.64999997615814209"   },
-	{"epsilon_3_44",                        NUM,                "0"                     },
+	{"epsilon_3_42",                        MAT,                "0.64999997615814209",  1,1},
+	{"epsilon_3_43",                        MAT,                "0.64999997615814209",  1,1},
+	{"epsilon_3_44",                        MAT,                "0",                    1,1},
 	{"alpha_abs",                           MAT,                alpha_abs,              4,4},
 	{"Tau_envelope",                        MAT,                Tau_envelope,           4,4},
 	{"EPSILON_4",                           MAT,                EPSILON_4,              4,4},
@@ -370,8 +370,8 @@ TestInfo physTroughPPASingleDefaultInfo[] = {
 	{"Design_loss",                         MAT,                Design_loss,            4,4},
 	{"SCAInfoArray",                        MAT,                SCAInfoArray,           8,2},
 	{"SCADefocusArray",                     ARR,                SCADefocusArray,        8},
-	{"field_fl_props",                      NUM,                "0"                     },
-	{"store_fl_props",                      NUM,                "1"                     },
+	{"field_fl_props",                      MAT,                "0",                    1,1},
+	{"store_fl_props",                      MAT,                "1",                    1,1},
 	{"store_fluid",                         NUM,                "18"                    },
 	{"tshours",                             NUM,                "6"                     },
 	{"is_hx",                               NUM,                "1"                     },
@@ -414,7 +414,7 @@ TestInfo physTroughPPASingleDefaultInfo[] = {
 	{"nodes",                               NUM,                "2000"                  },
 	{"f_tc_cold",                           NUM,                "2"                     },
 	{"weekday_schedule",                    MAT,                weekday_schedule,       12,24},
-	{"weekend_schedule",                    MAT,                weekend_schedule,       12,24 },
+	{"weekend_schedule",                    MAT,                weekend_schedule,       12,24},
 	{"pc_config",                           NUM,                "0"                     },
 	{"eta_ref",                             NUM,                "0.35600000619888306"   },
 	{"startup_time",                        NUM,                "0.5"                   },
@@ -668,21 +668,21 @@ TestInfo physTroughPPASingleDefaultInfo[] = {
 // test_types: equal (EQ), near(approx equal) (NR), greater than (GT), less than (LT), bool (TF), cmod error (ERR)
 TestResult physTroughPPASingleDefaultResult[] = {
 /*  SSC Var Name                            Test Type           Test Result             Error Bound % */
-    { "annual_energy",                      NR,                 354225632.,             0.1 },
-    { "annual_fuel_usage",                  NR,                 0.,                     0.1 },
-    { "capacity_factor",                    NR,                 40.4772,                0.1 },
-    { "annual_q_dump",                      NR,                 48108.,                 0.1 },
-    { "annual_W_cycle_gross",               NR,                 405422.,                0.1 },
-    { "kwh_per_kw",                         NR,                 3545.8,                 0.1 },
-    { "conversion_factor",                  NR,                 91.0154,                0.1 },
-    { "system_heat_rate",                   NR,                 3.413,                  0.1 },
-    { "annual_q_to_tes",                    NR,                 7441.4,                 0.1 },
-    { "annual_q_pb",                        NR,                 1.1232e06,              0.1 },
-    { "annual_q_avail",                     NR,                 1.12836e06,             0.1 },
-    { "annual_total_water_use",             NR,                 80976.6,                0.1 },
-    { "annual_q_abs_tot",                   NR,                 1.1694e06,              0.1 },
-    { "annual_q_aux",                       NR,                 0.,                     0.1 },
-    { "annual_q_inc_sf_tot",                NR,                 2.50421e06,             0.1 }
+    { "annual_energy",                      NR,                 354225632.,             0.1 },  // Annual Energy [kWh]
+    { "annual_fuel_usage",                  NR,                 0.,                     0.1 },  // Annual fuel usage [kWht]
+    { "capacity_factor",                    NR,                 40.4772,                0.1 },  // Capacity factor [%]
+    { "annual_q_dump",                      NR,                 48108.,                 0.1 },  // Dumped thermal energy [MWht]
+    { "annual_W_cycle_gross",               NR,                 405422.,                0.1 },  // Electrical source - Power cycle gross output [MWhe]
+    { "kwh_per_kw",                         NR,                 3545.8,                 0.1 },  // First year kWh/kW [kWh/kW]
+    { "conversion_factor",                  NR,                 91.0154,                0.1 },  // Gross to Net Conversion Factor [%]
+    { "system_heat_rate",                   NR,                 3.413,                  0.1 },  // System heat rate [MMBtu/MWh]
+    { "annual_q_to_tes",                    NR,                 7441.4,                 0.1 },  // Thermal energy into storage [MWht]
+    { "annual_q_pb",                        NR,                 1.1232e06,              0.1 },  // Thermal energy to the power block [MWht]
+    { "annual_q_avail",                     NR,                 1.12836e06,             0.1 },  // Thermal power produced by the field [MWht]
+    { "annual_total_water_use",             NR,                 80976.6,                0.1 },  // Total Annual Water Usage: cycle + mirror washing [m3]
+    { "annual_q_abs_tot",                   NR,                 1.1694e06,              0.1 },  // Total absorbed energy [MWht]
+    { "annual_q_aux",                       NR,                 0.,                     0.1 },  // Total fossil fuel usage by all plant subsystems [MMBTU]
+    { "annual_q_inc_sf_tot",                NR,                 2.50421e06,             0.1 }   // Total power incident on the field [MWht]
 };
 
 testDeclaration defaultTest1(physTroughTesting, "default", &physTroughPPASingleDefaultInfo[0], 383, &physTroughPPASingleDefaultResult[0], 15);

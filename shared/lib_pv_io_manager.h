@@ -188,6 +188,8 @@ struct PVSystem_IO
 	int numberOfInverters;
 	double acDerate;
 	double acLossPercent;
+	double transmissionDerate;
+	double transmissionLossPercent;
 
 	ssc_number_t transformerLoadLossFraction;
 	ssc_number_t transformerNoLoadLossFraction;
@@ -236,7 +238,6 @@ struct PVSystem_IO
 	ssc_number_t *p_dcLifetimeLosses;
 	ssc_number_t *p_acLifetimeLosses;
 
-
 	// transformer loss outputs (single array)
 	ssc_number_t *p_transformerNoLoadLoss;
 	ssc_number_t *p_transformerLoadLoss;
@@ -259,6 +260,7 @@ struct PVSystem_IO
 	ssc_number_t *p_inverterPowerConsumptionLoss;
 	ssc_number_t *p_inverterNightTimeLoss;
 	ssc_number_t *p_acWiringLoss;
+	ssc_number_t *p_transmissionLoss;
 
 	ssc_number_t *p_systemDCPower;
 	ssc_number_t *p_systemACPower;

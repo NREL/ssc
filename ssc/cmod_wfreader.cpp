@@ -137,10 +137,6 @@ public:
 
 		size_t records = wfile.nrecords();
 		
-		for (int i = 3; i < 100; i++){
-
-		}
-
 		assign( "lat", var_data( (ssc_number_t)hdr.lat ) );
 		assign( "lon", var_data( (ssc_number_t)hdr.lon ) );
 		assign( "tz", var_data( (ssc_number_t)hdr.tz ) );

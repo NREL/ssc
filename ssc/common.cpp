@@ -887,7 +887,7 @@ weatherdata::~weatherdata()
 }
 
 
-size_t weatherdata::name_to_id( const char *name )
+int weatherdata::name_to_id( const char *name )
 {
 	std::string n( util::lower_case( name ) );
 

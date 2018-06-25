@@ -2,7 +2,7 @@
 *  Copyright 2017 Alliance for Sustainable Energy, LLC
 *
 *  NOTICE: This software was developed at least in part by Alliance for Sustainable Energy, LLC
-*  (ï¿½Allianceï¿½) under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
+*  (“Alliance”) under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
 *  The Government retains for itself and others acting on its behalf a nonexclusive, paid-up,
 *  irrevocable worldwide license in the software to reproduce, prepare derivative works, distribute
 *  copies to the public, perform publicly and display publicly, and to permit others to do so.
@@ -26,8 +26,8 @@
 *  4. Redistribution of this software, without modification, must refer to the software by the same
 *  designation. Redistribution of a modified version of this software (i) may not refer to the modified
 *  version by the same designation, or by any confusingly similar designation, and (ii) must refer to
-*  the underlying software originally provided by Alliance as ï¿½System Advisor Modelï¿½ or ï¿½SAMï¿½. Except
-*  to comply with the foregoing, the terms ï¿½System Advisor Modelï¿½, ï¿½SAMï¿½, or any confusingly similar
+*  the underlying software originally provided by Alliance as “System Advisor Model” or “SAM”. Except
+*  to comply with the foregoing, the terms “System Advisor Model”, “SAM”, or any confusingly similar
 *  designation may not be used to refer to any modified version of this software or any modified
 *  version of the underlying software originally provided by Alliance without the prior written consent
 *  of Alliance.
@@ -47,115 +47,63 @@
 *  THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *******************************************************************************************************/
 
-#ifndef __6_PAR_NEWTON_H__
-#define __6_PAR_NEWTON_H__
+#include "core.h"
 
-#include "6par_search.h"
-#include "6par_jacobian.h"
-#include "6par_lu.h"
-#include "6par_gamma.h"
+static var_info _cm_vtab_geothermal_costs[] = {
+/*   VARTYPE           DATATYPE         NAME                              LABEL                                                      UNITS     META                      GROUP                   REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
+																	      								                             
+	// Inputs		
+	//example input types, names, labels, units, required_if, constraints- delete or change
+	{ SSC_INPUT,        SSC_NUMBER,      "machine_rating",                "Machine Rating",                                          "kW",     "",                      "geothermal_costs",      "*",                       "INTEGER,MIN=0,MAX=1",           "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "rotor_diameter",                "Rotor Diameter",                                          "m",      "",                      "geothermal_costs",      "?=20",                    "BOOLEAN",                       "" },
+	{ SSC_INPUT,        SSC_STRING,      "solar_resource_file",           "Weather file in TMY2, TMY3, EPW, or SAM CSV.",            "",       "",                      "geothermal_costs",      "?",                       "POSITIVE",                      "" },
+	{ SSC_INPUT,        SSC_ARRAY,       "dc_degradation",                "Annual module degradation",                               "%/yr",   "",                      "geothermal_costs",      "rotor_diameter=1",        "LENGTH=12",                     "" },
 
-/// Newton Method using Line Search and Backtracking
-/// from Globally Convergent Methods for Nonlinear Systems of Equations, "Numerical Recipes in C"
-template< typename Real, typename F, int n >
-int newton( Real x[n], Real residual[n], bool &check, F &func, 
-	int MAXITER, const Real TOLF, const Real TOLMIN, const Real STPMX,
-	bool (*notify)(int iter, Real x[], Real resid[], const int, void *) = 0,
-	void *notify_data = 0)
+	// Outputs	
+	//example output, delete or change
+	{ SSC_OUTPUT,       SSC_NUMBER,      "project_total_budgeted_cost",   "Project Total Budgeted Cost",                             "$s",     "",                      "geothermal_costs",      "*",                       "",                              "" },
+
+var_info_invalid };
+
+class cm_geothermal_costs : public compute_module
 {
-	const Real TOLX = std::numeric_limits<Real>::epsilon();
-	
-	int i,j,its;
-	Real den,f,fold,stpmax,sum,temp,test;
-	Real g[n],p[n],xold[n];
-	Real fjac[n][n];
-	
-	Real lu[n][n];
-	int permute[n];
-		
-	f = fminsum<Real, F, n>(x, residual, func);
-	test=0.0;
-	for (i=0;i<n;i++)
-		if (fabs(residual[i]) > test) 
-			test=fabs(residual[i]);
-		
-	if (test < 0.01*TOLF)
+public:
+	cm_geothermal_costs()
 	{
-		check = false;
-		return 0;
+		add_var_info(_cm_vtab_geothermal_costs);
 	}
-	
-	sum=0.0;
-	for (i=0;i<n;i++)
-		sum += x[i]*x[i];
-		
-	stpmax = STPMX*mymax(sqrt(sum), (Real)n);
-	for (its=0;its<MAXITER;its++)
+
+	//example typedef- delete or change
+	typedef enum { FLAT_TO_ROLLING, RIDGE_TOP, MOUNTAINOUS } SiteTerrain;
+
+	//example function within compute module- delete or change
+	double farmSize(double rating, int nTurb){
+		return rating * nTurb / 1000.0;
+	}
+
+
+	void exec( ) throw( general_error )
 	{
-		if ( notify != 0 )
-		{
-			bool ok = (*notify)(its, x, residual, n, notify_data);
-			if (!ok)
-				return -3;
-		}
+		//first get values from input variable table
+		//examples- delete or change
+		double rating = (double) as_number("machine_rating");
+		int nTurb = as_integer("number_of_turbines");
+		const char *file = as_string("solar_resource_file");
 
-		jacobian<Real, F, n, n>( x, residual, fjac, func, 1e-8 );
-		
-		for (i=0;i<n;i++) 
-		{
-			sum=0.0;
-			for (j=0;j<n;j++) sum += fjac[j][i]*residual[j];
-			g[i]=sum;
-		}
-		
-		for (i=0;i<n;i++)
-			xold[i]=x[i];
-			
-		fold=f;
-		
-		for (i=0;i<n;i++)
-			p[i] = -residual[i];
-		
-				
-		if (!lu_decomp<Real, n>( fjac, lu, permute )) return false;			
-		lu_solve<Real, n>( lu, permute, p, p );
-		
-		if (!search<Real, F, n>(xold, fold, g, p, x, f, stpmax, check, func, residual))
-			return -2;
-		
-		test=0.0;
-		for (i=0;i<n;i++)
-			if (fabs(residual[i]) > test)
-				test=fabs(residual[i]);
-				
-		if (test < TOLF)
-		{
-			check=false;
-			return its+1;
-		}
-		
-		if (check) {
-			test=0.0;
-			den=mymax(f,0.5*n);
-			for (i=0;i<n;i++) {
-				temp=fabs(g[i])*mymax(fabs(x[i]),1.0)/den;
-				if (temp > test) test=temp;
-			}
-			check=(test < TOLMIN) ? true : false;
-			return its+1;
-		}
-		
-		test=0.0;
-		for (i=0;i<n;i++) {
-			temp=(fabs(x[i]-xold[i]))/mymax(fabs(x[i]),1.0);
-			if (temp > test) test=temp;
-		}
-		
-		if (test < TOLX)
-			return its+1;
+		//reading in an array- create a pointer
+		size_t count_dc_degrad = 0;
+		ssc_number_t *dc_degrad = 0;
+		dc_degrad = as_array("dc_degradation", &count_dc_degrad);
+
+
+		// run model calculations here- delete or change
+		//can call out to functions defined above
+		double cost = 566;
+
+		// assign outputs
+		//example- delete or change
+		assign( "project_total_budgeted_cost", var_data(cost) );
 	}
-	
-	return -1;
-}
+};
 
-#endif
+DEFINE_MODULE_ENTRY( geothermal_costs, "Computes geothermal plant cost", 1 )

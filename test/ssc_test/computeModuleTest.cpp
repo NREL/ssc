@@ -16,13 +16,13 @@ TEST_P(computeModuleTest, RunSimulationTest) {
 		std::string varName, index;
 		size_t varIndex;
 		getline(ss, varName, '[');
-		if (varName.length() < strlen(testResult->sscVarName)) {
+		if (varName.length() < strlen(testResult->sscVarName.c_str())) {
 			getline(ss, index, ']');
 			varIndex = (int)atof(index.c_str());
 			actualResult = ssc_data_get_array(data_, varName.c_str(), nullptr)[varIndex];
 		}
 		else {
-			ssc_data_get_number(data_, testResult->sscVarName, &actualResult);
+			ssc_data_get_number(data_, testResult->sscVarName.c_str(), &actualResult);
 		}
 		std::stringstream failureMsg;
 		failureMsg << table_->getCMODType() << "-" << table_->name << ":\n\t" << testResult->sscVarName << " failed. Actual/Expected: " << std::to_string(actualResult) << " / " << std::to_string(testResult->expectedResult);
