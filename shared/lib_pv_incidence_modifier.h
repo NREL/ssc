@@ -21,12 +21,9 @@ double iam(double theta_deg, bool ar_glass); // incidence angle modifier factor 
 
 double iam_nonorm(double theta_deg, bool ar_glass);  // non-normalized cover loss (typically use one above!)
 
-double irradiance_through_cover(
-	double theta,
-	double theta_z,
-	double tilt,
-	double G_beam,
-	double G_sky,
-	double G_gnd);
+
+/// Calculate Irradiance through the cover using the DeSoto model
+double calculateIrradianceThroughCoverDeSoto(double incidenceAngleDegrees, double zenithAngleDegrees, double tiltDegrees,
+		double poaBeam, double poaSkyDiffuse, double poaGroundReflected);
 
 #endif

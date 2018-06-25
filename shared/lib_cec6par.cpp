@@ -100,7 +100,7 @@ bool cec6par_module_t::operator() ( pvinput_t &input, double TcellC, double opvo
 		Geff_total = G_total;
 
 		// Need to disentangle AOI for front, rear, remove from module model.
-		Geff_total = irradiance_through_cover(
+		Geff_total = calculateIrradianceThroughCoverDeSoto(
 			input.IncAng,
 			input.Zenith,
 			input.Tilt,
@@ -193,7 +193,7 @@ bool noct_celltemp_t::operator() ( pvinput_t &input, pvmodule_t &module, double 
 		G_total = input.Ibeam + input.Idiff + input.Ignd; // total incident irradiance on tilted surface, W/m2
 			
 		Geff_total = G_total;
-		Geff_total = irradiance_through_cover(
+		Geff_total = calculateIrradianceThroughCoverDeSoto(
 			input.IncAng,
 			input.Zenith,
 			input.Tilt,

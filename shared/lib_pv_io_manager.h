@@ -10,6 +10,7 @@
 #include "lib_cec6par.h"
 #include "lib_iec61853.h"
 #include "lib_irradproc.h"
+#include "lib_pv_incidence_modifier.h"
 #include "lib_pvshade.h"
 #include "lib_sandia.h"
 #include "lib_snowmodel.h"
@@ -129,7 +130,7 @@ struct Irradiance_IO
 	int skyModel;												  /// Specify which sky diffuse model should be used: 0=isotropic, 1=hdkr, 2=perez
 	bool useWeatherFileAlbedo;									  /// Specify whether to use the weather file albedo
 	std::vector<double> userSpecifiedMonthlyAlbedo;				  /// User can provide monthly ground albedo values (0-1)
-
+	
 	// Irradiance data Outputs (p_ is just a convention to organize all pointer outputs)
 	ssc_number_t * p_weatherFileGHI;			/// The Global Horizonal Irradiance from the weather file [W/m2]
 	ssc_number_t * p_weatherFileDNI;			/// The Direct Normal (Beam) Irradiance from the weather file [W/m2]
