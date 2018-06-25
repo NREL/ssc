@@ -99,7 +99,7 @@ bool cec6par_module_t::operator() ( pvinput_t &input, double TcellC, double opvo
 	
 		Geff_total = G_total;
 
-		// Need to disentangle AOI for front, rear, remove from module model.
+		// Rear irradiance already corrected for AOI using Marion model 
 		Geff_total = calculateIrradianceThroughCoverDeSoto(
 			input.IncAng,
 			input.Zenith,

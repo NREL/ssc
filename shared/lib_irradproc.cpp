@@ -57,6 +57,7 @@
 #include <vector>
 
 #include "lib_irradproc.h"
+#include "lib_pv_incidence_modifier.h"
 #include "lib_util.h"
 
 using std::cos;
@@ -1562,10 +1563,10 @@ void irrad::getBackSurfaceIrradiances(double pvBackShadeFraction, double rowToRo
 		rearIrradiance.push_back(0);
 		for (size_t j = 0; j != iStopIso; j++)
 		{
-			rearIrradiance[i] += 0.5 * (std::cos(j * DTOR) - std::cos((j + 1)*DTOR)) * isotropicSkyDiffuse;
+			rearIrradiance[i] += 0.5 * (std::cos(j * DTOR) - std::cos((j + 1)*DTOR)) * MarionAOICorrectionFactorsGlass[j]* isotropicSkyDiffuse;
 			if ((iStopIso - j) < iHorBright)
 			{
-				rearIrradiance[i] += 0.5 * (std::cos(j * DTOR) - std::cos((j + 1) * DTOR)) * horizonDiffuse / 0.052246; // 0.052246 = 0.5 * [cos(84) - cos(90)]
+				rearIrradiance[i] += 0.5 * (std::cos(j * DTOR) - std::cos((j + 1) * DTOR)) * MarionAOICorrectionFactorsGlass[j]* horizonDiffuse / 0.052246; // 0.052246 = 0.5 * [cos(84) - cos(90)]
 			}
 		}
 
@@ -1643,8 +1644,7 @@ void irrad::getBackSurfaceIrradiances(double pvBackShadeFraction, double rowToRo
 					actualGroundGHI /= projectedX2 - projectedX1;
 				}
 			}
-			// No AOI corrections here
-			rearGroundGHI[i] += 0.5 * std::cos(j * DTOR) - std::cos((j + 1) * DTOR) * averageGroundGHI * this->alb;
+			rearGroundGHI[i] += 0.5 * std::cos(j * DTOR) - std::cos((j + 1) * DTOR) * MarionAOICorrectionFactorsGlass[j] * averageGroundGHI * this->alb;
 		}
 		// Calculate and add direct and circumsolar irradiance components
 		incidence(0, 180.0 - tilt / DTOR, this->sazm / DTOR - 180.0, 45.0, solarZenith, this->sazm, this->en_backtrack, this->gcr, angle);
