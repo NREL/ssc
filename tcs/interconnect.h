@@ -89,21 +89,21 @@ class interconnect
 {
 private:
     double k_;                       // minor loss coefficient [-]
-    double d_;                       // inner diameter [m]
+    double d_in_;                    // inner diameter [m]
     double l_;                       // length [m]
-    double rough_;                   // roughness [m]
+    double rough_;                   // roughness (inside) [m]
     double hl_coef_;                 // overall heat loss coefficient [W/(m2-K)]
     double mc_;                      // heat capacity w/o htf [J/K]
     IntcType Type;
-    bool SurfArea_valid_;
-    double SurfArea_;
-    bool CrossSecArea_valid_;
-    double CrossSecArea_;
+    bool OuterSurfArea_valid_;
+    double OuterSurfArea_;
+    bool FlowArea_valid_;
+    double FlowArea_;
     bool Volume_valid_;
     double Volume_;
 
-    void calcSurfArea();
-    void calcCrossSecArea();
+    void calcOuterSurfArea();
+    void calcFlowArea();
     void calcVolume();
 
 public:
@@ -123,8 +123,8 @@ public:
     double getHeatCap() const;
     void setHeatCap(double);
     IntcType getType() const;
-    double getSurfArea();
-    double getCrossSecArea();
+    double getOuterSurfArea();
+    double getFlowArea();
     double getVolume();
 
     double HeatLoss(double T_intc, double T_db);
@@ -145,14 +145,14 @@ private:
     double l_;
     bool HeatCap_valid_;
     double mc_;
-    bool SurfArea_valid_;
-    double SurfArea_;
+    bool OuterSurfArea_valid_;
+    double OuterSurfArea_;
     bool Volume_valid_;
     double Volume_;
 
     void calcLength();
     void calcHeatCap();
-    void calcSurfArea();
+    void calcOuterSurfArea();
     void calcVolume();
 public:
     intc_assy();
@@ -174,9 +174,9 @@ public:
     double getHeatCap();
     double getHeatCap(std::size_t intc) const;
     IntcType getType(std::size_t intc) const;
-    double getSurfArea();
-    double getSurfArea(std::size_t intc);
-    double getCrossSecArea(std::size_t intc);
+    double getOuterSurfArea();
+    double getOuterSurfArea(std::size_t intc);
+    double getFlowArea(std::size_t intc);
     double getVolume();
     double getVolume(std::size_t intc);
 
