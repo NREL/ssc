@@ -1632,10 +1632,10 @@ public:
 			// Add on volume for the interconnects and crossover piping
             for (int i = 0; i < intc_assys.size(); i++) {
                 if (i == 0 || i == intc_assys.size() - 1) {
-                    v_loop_tot += intc_assys[i].getVolume() / 2 * float(nLoops);  // halve the inlet and outlet piping so to not double count
+                    v_loop_tot += intc_assys[i].getFluidVolume() / 2 * float(nLoops);  // halve the inlet and outlet piping so to not double count
                 }
                 else {
-                    v_loop_tot += intc_assys[i].getVolume() * float(nLoops);
+                    v_loop_tot += intc_assys[i].getFluidVolume() * float(nLoops);
                 }
             }
 

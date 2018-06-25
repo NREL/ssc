@@ -67,6 +67,11 @@ IntcOutputs::IntcOutputs() {
     internal_energy = 0;
 }
 
+double WallThickness(double d_in) {
+    // regression of Wagner-2011 Table 9 values with an R^2=1.000
+    return 0.0194*d_in;
+}
+
 double MinorPressureDrop(double vel, double rho, double k) {
     return k * (vel * vel) * rho / 2;
 }
@@ -143,13 +148,14 @@ interconnect::interconnect(double k = 0, double d = 0, double l = 0, double roug
     rough_(rough),
     hl_coef_(u),
     mc_(mc),
+    wall_thick_(0),
     Type(type),
     OuterSurfArea_valid_(false),
     OuterSurfArea_(0),
     FlowArea_valid_(false),
     FlowArea_(0),
-    Volume_valid_(false),
-    Volume_(0)
+    FluidVolume_valid_(false),
+    FluidVolume_(0)
 {
     if (k_ < 0) throw std::invalid_argument("The minor loss coefficient (K) cannot be less than 0.");
     if (d_in_ < 0) throw std::invalid_argument("The inner diameter (D_in) cannot be less than 0.");
@@ -157,6 +163,8 @@ interconnect::interconnect(double k = 0, double d = 0, double l = 0, double roug
     if (rough_ < 0) throw std::invalid_argument("The relative roughness cannot be less than 0.");
     if (hl_coef_ < 0) throw std::invalid_argument("The heat loss coefficient (U) cannot be less than 0.");
     if (mc_ < 0) throw std::invalid_argument("The heat capacity cannot be less than 0.");
+
+    setWallThick(WallThickness(d_in_));
 }
 
 interconnect::~interconnect()
@@ -249,6 +257,20 @@ void interconnect::setHeatCap(double mc) {
     }
 }
 
+double interconnect::getWallThick() const {
+    return wall_thick_;
+}
+
+void interconnect::setWallThick(double wall_thick) {
+    if (wall_thick >= 0)
+    {
+        wall_thick_ = wall_thick;
+    }
+    else {
+        throw std::invalid_argument("The wall thickness cannot be less than 0.");
+    }
+}
+
 IntcType interconnect::getType() const {
     return Type;
 }
@@ -259,7 +281,7 @@ double interconnect::getOuterSurfArea() {
 }
 
 void interconnect::calcOuterSurfArea() {
-    OuterSurfArea_ = pi * d_in_ * l_;
+    OuterSurfArea_ = pi * (d_in_ + 2*wall_thick_) * l_;
     OuterSurfArea_valid_ = true;
 }
 
@@ -273,14 +295,14 @@ void interconnect::calcFlowArea() {
     FlowArea_valid_ = true;
 }
 
-double interconnect::getVolume() {
-    if (!Volume_valid_) { calcVolume(); }
-    return Volume_;
+double interconnect::getFluidVolume() {
+    if (!FluidVolume_valid_) { calcFluidVolume(); }
+    return FluidVolume_;
 }
 
-void interconnect::calcVolume() {
-    Volume_ = pi * (d_in_ * d_in_) / 4. * l_;
-    Volume_valid_ = true;
+void interconnect::calcFluidVolume() {
+    FluidVolume_ = pi * (d_in_ * d_in_) / 4. * l_;
+    FluidVolume_valid_ = true;
 }
 
 double interconnect::HeatLoss(double T_intc, double T_db) {
@@ -323,7 +345,7 @@ double interconnect::PressureDrop(HTFProperties *fluidProps, double m_dot, doubl
 
 double interconnect::InternalEnergy(HTFProperties *fluidProps, double T_intc, double T_htf_ave, double P_htf_ave) {
     double cp = fluidProps->Cp(T_htf_ave) * 1000;  // J/kg-K
-    return (getVolume() * fluidProps->dens(T_htf_ave, P_htf_ave) * cp +
+    return (getFluidVolume() * fluidProps->dens(T_htf_ave, P_htf_ave) * cp +
         getHeatCap()) * (T_intc - T_ref_K);
 }
 
@@ -351,8 +373,8 @@ intc_assy::intc_assy()
     mc_(0),
     OuterSurfArea_valid_(false),
     OuterSurfArea_(0),
-    Volume_valid_(false),
-    Volume_(0)
+    FluidVolume_valid_(false),
+    FluidVolume_(0)
 {
 }
 
@@ -364,8 +386,8 @@ intc_assy::intc_assy(HTFProperties *fluidProps, double *k, double *d, double *l,
     mc_(0),
     OuterSurfArea_valid_(false),
     OuterSurfArea_(0),
-    Volume_valid_(false),
-    Volume_(0)
+    FluidVolume_valid_(false),
+    FluidVolume_(0)
 {
     import_intcs(k, d, l, rel_rough, u, mc, type, n_intcs);
     setFluidProps(fluidProps);
@@ -395,12 +417,12 @@ void intc_assy::import_intcs(double *k, double *d, double *l, double *rel_rough,
         l_ += intc.getLength();
         mc_ += intc.getHeatCap();
         OuterSurfArea_ += intc.getOuterSurfArea();
-        Volume_ += intc.getVolume();
+        FluidVolume_ += intc.getFluidVolume();
     }
     Length_valid_ = true;
     HeatCap_valid_ = true;
     OuterSurfArea_valid_ = true;
-    Volume_valid_ = true;
+    FluidVolume_valid_ = true;
 }
 
 void intc_assy::resetValues() {
@@ -413,8 +435,8 @@ void intc_assy::resetValues() {
     mc_ = 0;
     OuterSurfArea_valid_ = false;
     OuterSurfArea_ = 0;
-    Volume_valid_ = false;
-    Volume_ = 0;
+    FluidVolume_valid_ = false;
+    FluidVolume_ = 0;
 }
 
 void intc_assy::setFluidProps(HTFProperties *fluidProps) {
@@ -506,21 +528,21 @@ double intc_assy::getFlowArea(std::size_t intc) {
     return intcs.at(intc).getFlowArea();
 }
 
-double intc_assy::getVolume() {
-    if (!Volume_valid_) { calcVolume(); }
-    return Volume_;
+double intc_assy::getFluidVolume() {
+    if (!FluidVolume_valid_) { calcFluidVolume(); }
+    return FluidVolume_;
 }
 
-double intc_assy::getVolume(std::size_t intc) {
-    return intcs.at(intc).getVolume();
+double intc_assy::getFluidVolume(std::size_t intc) {
+    return intcs.at(intc).getFluidVolume();
 }
 
-void intc_assy::calcVolume() {
-    Volume_ = 0;
+void intc_assy::calcFluidVolume() {
+    FluidVolume_ = 0;
     for (std::vector<interconnect>::iterator it = intcs.begin(); it < intcs.end(); ++it) {
-        Volume_ += it->getVolume();  // interconnect::getVolume()
+        FluidVolume_ += it->getFluidVolume();  // interconnect::getFluidVolume()
     }
-    Volume_valid_ = true;
+    FluidVolume_valid_ = true;
 }
 
 IntcOutputs intc_assy::State(double m_dot, double T_in, double T_db, double P_in) {
