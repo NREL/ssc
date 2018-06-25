@@ -1081,7 +1081,9 @@ public:
 		
 		
 		T_field_ini = value(P_T_FIELD_INI);		//Initial field temperature [C]
-        P_field_in = 18 / 1.e-5;                //Assumed inlet htf pressure for property lookups (DP_tot_max = 16 bar, + 1 atm, + 1 leeway) [Pa]
+        // TODO: Need to replace this with the calculated total pressure drop in the system (+ 1 atm)
+        // TODO: Track pressures throughout system
+        P_field_in = 17 / 1.e-5;                //Assumed inlet htf pressure for property lookups (DP_tot_max = 16 bar + 1 atm) [Pa]
 		
 		T_field_ini = 0.5*(T_field_ini + T_loop_in_des);
 		
