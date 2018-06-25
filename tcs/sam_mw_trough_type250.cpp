@@ -1280,29 +1280,29 @@ public:
                 rough_intc.row(i).data(), u_intc.row(i).data(), mc_intc.row(i).data(), Type_intc.row(i).data(), K_intc.ncols()));
         }
 
-        std::ofstream logAssys;
-        logAssys.open("logAssys.txt");
-        logAssys << "K" << "\t" << "D" << "\t" << "L" << "\t" << "Type" << "\n";
-        for (std::vector<intc_assy>::iterator ita = intc_assys.begin(); ita < intc_assys.end(); ++ita) {
-            for (std::vector<interconnect>::size_type i = 0; i != ita->getNintcs(); i++) {
-                logAssys << ita->getK(i) << "-";
-            }
-            logAssys << "\t";
-            for (std::vector<interconnect>::size_type i = 0; i != ita->getNintcs(); i++) {
-                logAssys << ita->getD(i) << "-";
-            }
-            logAssys << "\t";
-            for (std::vector<interconnect>::size_type i = 0; i != ita->getNintcs(); i++) {
-                logAssys << ita->getLength(i) << "-";
-            }
-            logAssys << "\t";
-            for (std::vector<interconnect>::size_type i = 0; i != ita->getNintcs(); i++) {
-                logAssys << (int)ita->getType(i) << "-";
-            }
-            //log.flush();
-            logAssys << "\n";
-        }
-        logAssys.close();
+        //std::ofstream logAssys;
+        //logAssys.open("logAssys.txt");
+        //logAssys << "K" << "\t" << "D" << "\t" << "L" << "\t" << "Type" << "\n";
+        //for (std::vector<intc_assy>::iterator ita = intc_assys.begin(); ita < intc_assys.end(); ++ita) {
+        //    for (std::vector<interconnect>::size_type i = 0; i != ita->getNintcs(); i++) {
+        //        logAssys << ita->getK(i) << "-";
+        //    }
+        //    logAssys << "\t";
+        //    for (std::vector<interconnect>::size_type i = 0; i != ita->getNintcs(); i++) {
+        //        logAssys << ita->getD(i) << "-";
+        //    }
+        //    logAssys << "\t";
+        //    for (std::vector<interconnect>::size_type i = 0; i != ita->getNintcs(); i++) {
+        //        logAssys << ita->getLength(i) << "-";
+        //    }
+        //    logAssys << "\t";
+        //    for (std::vector<interconnect>::size_type i = 0; i != ita->getNintcs(); i++) {
+        //        logAssys << (int)ita->getType(i) << "-";
+        //    }
+        //    //log.flush();
+        //    logAssys << "\n";
+        //}
+        //logAssys.close();
 
 		//The glazingintact array should be converted to bools
 		GlazingIntact.resize(nrow_GlazingIntactIn, ncol_GlazingIntactIn);
