@@ -10,7 +10,7 @@ compiler:
   - gcc
 
 before_install:
-  - pip install --user cpp-coveralls
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then pip install --user cpp-coveralls; fi
 
 before_script:
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then wget -q https://github.com/wxWidgets/wxWidgets/releases/download/v3.1.1/wxWidgets-3.1.1.tar.bz2; fi
@@ -60,9 +60,10 @@ install:
   #- if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then export PATH="/usr/local/opt/ccache/libexec:$PATH"; fi 
 
 after_sucess:
-   - coveralls --exclude lib --exclude tests --gcov-options '\-lp'
+   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then coveralls --exclude lib --exclude tests --gcov-options '\-lp'; fi
    
 branches:
   only:
   - master
-  - develop  
+  - develop 
+  - bifacial
