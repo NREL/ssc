@@ -76,6 +76,8 @@ struct IntcOutputs
     IntcOutputs();
 };
 
+double WallThickness(double d_in);
+
 double MinorPressureDrop(double vel, double rho, double k);
 
 double MajorPressureDrop(double vel, double rho, double ff, double l, double d);
@@ -94,17 +96,18 @@ private:
     double rough_;                   // roughness (inside) [m]
     double hl_coef_;                 // overall heat loss coefficient [W/(m2-K)]
     double mc_;                      // heat capacity w/o htf [J/K]
+    double wall_thick_;              // wall thickness [m]
     IntcType Type;
     bool OuterSurfArea_valid_;
     double OuterSurfArea_;
     bool FlowArea_valid_;
-    double FlowArea_;
-    bool Volume_valid_;
-    double Volume_;
+    double FlowArea_;                // cross-sectional area for flow [m^2]
+    bool FluidVolume_valid_;
+    double FluidVolume_;
 
     void calcOuterSurfArea();
     void calcFlowArea();
-    void calcVolume();
+    void calcFluidVolume();
 
 public:
     interconnect(double k, double d, double l, double rough, double u, double mc, IntcType type);
@@ -117,15 +120,17 @@ public:
     double getLength() const;
     void setLength(double l);
     double getRelRough() const;
-    void setRelRough(double);
+    void setRelRough(double rough);
     double getHLCoef() const;
-    void setHLCoef(double);
+    void setHLCoef(double u);
     double getHeatCap() const;
-    void setHeatCap(double);
+    void setHeatCap(double mc);
+    double getWallThick() const;
+    void setWallThick(double wall_thick);
     IntcType getType() const;
     double getOuterSurfArea();
     double getFlowArea();
-    double getVolume();
+    double getFluidVolume();
 
     double HeatLoss(double T_intc, double T_db);
     double TempDrop(HTFProperties *fluidProps, double m_dot, double T_in, double heatLoss);
@@ -147,13 +152,13 @@ private:
     double mc_;
     bool OuterSurfArea_valid_;
     double OuterSurfArea_;
-    bool Volume_valid_;
-    double Volume_;
+    bool FluidVolume_valid_;
+    double FluidVolume_;
 
     void calcLength();
     void calcHeatCap();
     void calcOuterSurfArea();
-    void calcVolume();
+    void calcFluidVolume();
 public:
     intc_assy();
     intc_assy(HTFProperties *fluidProps, double *k, double *d, double *l, double *rough, double *u, double *mc,
@@ -177,8 +182,8 @@ public:
     double getOuterSurfArea();
     double getOuterSurfArea(std::size_t intc);
     double getFlowArea(std::size_t intc);
-    double getVolume();
-    double getVolume(std::size_t intc);
+    double getFluidVolume();
+    double getFluidVolume(std::size_t intc);
 
     IntcOutputs State(double m_dot, double T_in, double T_db, double P_in);
 };
