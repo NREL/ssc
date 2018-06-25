@@ -111,7 +111,7 @@ private:
 
 public:
     interconnect(double k, double d, double l, double rough, double u, double mc, IntcType type);
-    virtual ~interconnect();
+    ~interconnect();
 
     double getK() const;
     void setK(double k);
@@ -135,7 +135,7 @@ public:
     double HeatLoss(double T_intc, double T_db);
     double TempDrop(HTFProperties *fluidProps, double m_dot, double T_in, double heatLoss);
     double TempDrop(HTFProperties *fluidProps, double m_dot, double T_in, double T_intc, double T_db);
-    virtual double PressureDrop(HTFProperties *fluidProps, double m_dot, double T_htf_ave, double P_htf_ave);
+    double PressureDrop(HTFProperties *fluidProps, double m_dot, double T_htf_ave, double P_htf_ave);
     double InternalEnergy(HTFProperties *fluidProps, double T_intc, double T_htf, double P_htf_ave);
     IntcOutputs State(HTFProperties *fluidProps, double m_dot, double T_in, double T_intc, double T_db, double P_htf_ave);
 };
