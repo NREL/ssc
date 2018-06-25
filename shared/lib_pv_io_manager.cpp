@@ -441,6 +441,8 @@ Module_IO::Module_IO(compute_module* cm, std::string cmName, double dcLoss)
 	}
 
 	simpleEfficiencyForceNoPOA = false;
+	mountingSpecificCellTemperatureForceNoPOA = false;
+
 	selfShadingFillFactor = 0;
 	isConcentratingPV = false;
 
