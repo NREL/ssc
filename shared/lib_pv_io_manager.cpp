@@ -444,9 +444,9 @@ Module_IO::Module_IO(compute_module* cm, std::string cmName, double dcLoss)
 
 	simpleEfficiencyForceNoPOA = false;
 	mountingSpecificCellTemperatureForceNoPOA = false;
-
 	selfShadingFillFactor = 0;
 	isConcentratingPV = false;
+	isBifacial = false;
 
 	if (moduleType == MODULE_SIMPLE_EFFICIENCY)
 	{
@@ -514,6 +514,9 @@ Module_IO::Module_IO(compute_module* cm, std::string cmName, double dcLoss)
 	}
 	else if (moduleType == MODULE_CEC_DATABASE)
 	{
+		isBifacial = cm->as_boolean("cec_is_bifacial");
+		bifaciality = cm->as_double("cec_bifaciality");
+		bifacialTransmissionFactor = cm->as_double("cec_bifacial_transmission_factor");
 		cecModel.Area = cm->as_double("cec_area");
 		referenceArea = cecModel.Area;
 		cecModel.Vmp = cm->as_double("cec_v_mp_ref");
@@ -584,6 +587,10 @@ Module_IO::Module_IO(compute_module* cm, std::string cmName, double dcLoss)
 	}
 	else if (moduleType == MODULE_CEC_USER_INPUT)
 	{
+		isBifacial = cm->as_boolean("6par_is_bifacial");
+		bifaciality = cm->as_double("6par_bifaciality");
+		bifacialTransmissionFactor = cm->as_double("6par_bifacial_transmission_factor");
+
 		int tech_id = module6par::monoSi;
 		int type = cm->as_integer("6par_celltech"); // "monoSi,multiSi,CdTe,CIS,CIGS,Amorphous"
 		switch (type)

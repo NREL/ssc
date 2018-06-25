@@ -379,7 +379,9 @@ public:
 	double voltageMaxPower;				/// The voltage at max power [V]
 	double selfShadingFillFactor;		/// Self shading fill factor
 	bool isConcentratingPV;				/// If the sandia model is being used for CPV
-
+	bool isBifacial;					/// If the model is bifacial
+	double bifaciality;					/// The relative efficiency of the rearside to the front side
+	double bifacialTransmissionFactor;  /// Factor describing how much light can travel through the module
 
 	bool simpleEfficiencyForceNoPOA;	/// Flag to avoid calling as_integer(...) repeatedly later on
 	bool mountingSpecificCellTemperatureForceNoPOA;

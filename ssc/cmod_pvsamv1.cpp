@@ -259,7 +259,11 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "cec_v_mp_ref",                                "Maximum power point voltage",                             "V",      "",                              "pvsamv1",              "module_model=1",           "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "cec_v_oc_ref",                                "Open circuit voltage",                                    "V",      "",                              "pvsamv1",              "module_model=1",           "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "cec_temp_corr_mode",                          "Cell temperature model selection",                        "",       "0=noct,1=mc",                   "pvsamv1",              "module_model=1",           "INTEGER,MIN=0,MAX=1",           "" },
-	
+	{ SSC_INPUT,        SSC_NUMBER,      "cec_is_bifacial",                             "Modules are bifacial",                                     "0/1",     "",                            "pvsamv1",              "module_model=1",           "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "cec_bifacial_transmission_factor",            "Bifacial transmission factor",                             "0-1",     "",                            "pvsamv1",              "module_model=1",           "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "cec_bifaciality",                             "Bifaciality factor",                                       "%",       "",                            "pvsamv1",              "module_model=1",           "",                              "" },
+
+
 	{ SSC_INPUT,        SSC_NUMBER,      "cec_standoff",                                "Standoff mode",                                           "",       "0=bipv,1=>3.5in,2=2.5-3.5in,3=1.5-2.5in,4=0.5-1.5in,5=<0.5in,6=ground/rack",  "pvsamv1",       "module_model=1",                           "INTEGER,MIN=0,MAX=6",       "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "cec_height",                                  "Array mounting height",                                   "",       "0=one story,1=two story",                                           "pvsamv1",       "module_model=1",                           "INTEGER,MIN=0,MAX=1",       "" },
 
@@ -286,7 +290,11 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "6par_tnoct",                                  "Nominal operating cell temperature",                      "C",      "",                                                                  "pvsamv1",       "module_model=2",                           "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "6par_standoff",                               "Standoff mode",                                           "",       "0=bipv,1=>3.5in,2=2.5-3.5in,3=1.5-2.5in,4=0.5-1.5in,5=<0.5in,6=ground/rack",  "pvsamv1",       "module_model=2",                           "INTEGER,MIN=0,MAX=6",           "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "6par_mounting",                               "Array mounting height",                                   "",       "0=one story,1=two story",                                           "pvsamv1",       "module_model=2",                           "INTEGER,MIN=0,MAX=1",           "" },
-	
+	{ SSC_INPUT,        SSC_NUMBER,      "6par_is_bifacial",                            "Modules are bifacial",                                     "0/1",     "",                                                                "pvsamv1",       "module_model=2",                          "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "6par_bifacial_transmission_factor",           "Bifacial transmission factor",                             "0-1",     "",                                                                "pvsamv1",       "module_model=2",                          "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "6par_bifaciality",                            "Bifaciality factor",                                       "%",       "",                                                                "pvsamv1",       "module_model=2",                          "",                              "" },
+
+
 	{ SSC_INPUT,        SSC_NUMBER,      "snl_module_structure",                        "Module and mounting structure configuration",             "",       "0=Use Database Values,1=glass/cell/polymer sheet - open rack,2=glass/cell/glass - open rack,3=polymer/thin film/steel - open rack,4=Insulated back building-integrated PV,5=close roof mount,6=user-defined",                      "pvsamv1",       "module_model=3",                    "INTEGER,MIN=0,MAX=6",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "snl_a",                                       "Temperature coefficient a",                               "",       "",                      "pvsamv1",       "module_model=3",                    "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "snl_b",                                       "Temperature coefficient b",                               "",       "",                      "pvsamv1",       "module_model=3",                    "",                              "" },
@@ -406,13 +414,7 @@ static var_info _cm_vtab_pvsamv1[] = {
 	
 	// NOTE:  other battery storage model inputs and outputs are defined in batt_common.h/batt_common.cpp
 	
-	// bifacial model
-	{ SSC_INPUT,        SSC_NUMBER,      "pv_is_bifacial",                             "Modules are bifacial",                                     "0/1",     "",                     "pvsamv1",       "?=0",                                 "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "pv_bifacial_transmission_factor",            "Bifacial transmission factor",                             "0-1",     "",                     "pvsamv1",       "?",                                   "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "pv_bifaciality",                             "Bifaciality factor",                                       "%",       "",                     "pvsamv1",       "?",                                   "",                              "" },
-
-	// outputs
-
+	
 /* environmental conditions */
 	// irradiance data from weather file
 	{ SSC_OUTPUT,        SSC_ARRAY,      "gh",                                         "Irradiance GHI from weather file",                                     "W/m2",   "",                      "Time Series",       "*",                    "",                              "" },
@@ -1616,12 +1618,9 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 					double ipoa_rear = 0.;
 					double ipoa_front = ibeam + iskydiff + ignddiff;
 					double ipoa_front_reflected = 0;
-					if (as_boolean("pv_is_bifacial"))
+					if (Subarrays[0]->Module->isBifacial)
 					{
-						double transmissionFactor = as_double("pv_bifacial_transmission_factor");
-						double bifaciality = as_double("pv_bifaciality");
-						
-						irr.calc_rear_side(transmissionFactor, bifaciality);
+						irr.calc_rear_side(Subarrays[0]->Module->bifacialTransmissionFactor, Subarrays[0]->Module->bifaciality);
 						ipoa_rear = irr.get_poa_rear();
 					}
 
