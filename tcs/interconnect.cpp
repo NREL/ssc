@@ -73,7 +73,7 @@ double MinorPressureDrop(double vel, double rho, double k) {
 
 double MajorPressureDrop(double vel, double rho, double ff, double l, double d) {
 // Darcy Weisbach pressure drop for an incompressible fluid using a Darcy friction factor
-    if (d <= 0) throw std::invalid_argument("The diameter must be greater than 0.");
+    if (d <= 0) throw std::invalid_argument("The inner diameter must be greater than 0.");
 
     return ff * (vel * vel) * l * rho / (2 * d);
 }
@@ -138,21 +138,21 @@ double FricFactor_Iter(double rel_rough, double Re) {
 interconnect::interconnect(double k = 0, double d = 0, double l = 0, double rough = 0, double u = 0,
     double mc = 0, IntcType type = IntcType::Fitting)
     :k_(k),
-    d_(d),
+    d_in_(d),
     l_(l),
     rough_(rough),
     hl_coef_(u),
     mc_(mc),
     Type(type),
-    SurfArea_valid_(false),
-    SurfArea_(0),
-    CrossSecArea_valid_(false),
-    CrossSecArea_(0),
+    OuterSurfArea_valid_(false),
+    OuterSurfArea_(0),
+    FlowArea_valid_(false),
+    FlowArea_(0),
     Volume_valid_(false),
     Volume_(0)
 {
     if (k_ < 0) throw std::invalid_argument("The minor loss coefficient (K) cannot be less than 0.");
-    if (d_ < 0) throw std::invalid_argument("The diameter (D) cannot be less than 0.");
+    if (d_in_ < 0) throw std::invalid_argument("The inner diameter (D_in) cannot be less than 0.");
     if (l_ < 0) throw std::invalid_argument("The length (L) cannot be less than 0.");
     if (rough_ < 0) throw std::invalid_argument("The relative roughness cannot be less than 0.");
     if (hl_coef_ < 0) throw std::invalid_argument("The heat loss coefficient (U) cannot be less than 0.");
@@ -178,17 +178,17 @@ void interconnect::setK(double k) {
 }
 
 double interconnect::getD() const {
-    return d_;
+    return d_in_;
 }
 
 void interconnect::setD(double d) {
     if (d >= 0)
     {
-        d_ = d;
-        SurfArea_valid_ = false;
+        d_in_ = d;
+        OuterSurfArea_valid_ = false;
     }
     else {
-        throw std::invalid_argument("The diameter (D) cannot be less than 0.");
+        throw std::invalid_argument("The inner diameter (D_in) cannot be less than 0.");
     }
 }
 
@@ -200,7 +200,7 @@ void interconnect::setLength(double l) {
     if (l >= 0)
     {
         l_ = l;
-        SurfArea_valid_ = false;
+        OuterSurfArea_valid_ = false;
     }
     else {
         throw std::invalid_argument("The length (L) cannot be less than 0.");
@@ -253,24 +253,24 @@ IntcType interconnect::getType() const {
     return Type;
 }
 
-double interconnect::getSurfArea() {
-    if (!SurfArea_valid_) { calcSurfArea(); }
-    return SurfArea_;
+double interconnect::getOuterSurfArea() {
+    if (!OuterSurfArea_valid_) { calcOuterSurfArea(); }
+    return OuterSurfArea_;
 }
 
-void interconnect::calcSurfArea() {
-    SurfArea_ = pi * d_ * l_;
-    SurfArea_valid_ = true;
+void interconnect::calcOuterSurfArea() {
+    OuterSurfArea_ = pi * d_in_ * l_;
+    OuterSurfArea_valid_ = true;
 }
 
-double interconnect::getCrossSecArea() {
-    if (!CrossSecArea_valid_) { calcCrossSecArea(); }
-    return CrossSecArea_;
+double interconnect::getFlowArea() {
+    if (!FlowArea_valid_) { calcFlowArea(); }
+    return FlowArea_;
 }
 
-void interconnect::calcCrossSecArea() {
-    CrossSecArea_ = pi * (d_ * d_) / 4;
-    CrossSecArea_valid_ = true;
+void interconnect::calcFlowArea() {
+    FlowArea_ = pi * (d_in_ * d_in_) / 4;
+    FlowArea_valid_ = true;
 }
 
 double interconnect::getVolume() {
@@ -279,12 +279,12 @@ double interconnect::getVolume() {
 }
 
 void interconnect::calcVolume() {
-    Volume_ = pi * (d_ * d_) / 4. * l_;
+    Volume_ = pi * (d_in_ * d_in_) / 4. * l_;
     Volume_valid_ = true;
 }
 
 double interconnect::HeatLoss(double T_intc, double T_db) {
-    double A = getSurfArea();  // fun needed b/c area is not always valid
+    double A = getOuterSurfArea();  // fun needed b/c area is not always valid
     return hl_coef_ * A * (T_intc - T_db);
 }
 
@@ -300,7 +300,7 @@ double interconnect::TempDrop(HTFProperties *fluidProps, double m_dot, double T_
 
 double interconnect::PressureDrop(HTFProperties *fluidProps, double m_dot, double T_htf_ave, double P_htf_ave) {
     double rho = fluidProps->dens(T_htf_ave, P_htf_ave);
-    double vel = m_dot / ( rho * getCrossSecArea() );
+    double vel = m_dot / ( rho * getFlowArea() );
     double Re, ff;
 
     switch (Type)
@@ -308,14 +308,14 @@ double interconnect::PressureDrop(HTFProperties *fluidProps, double m_dot, doubl
         case IntcType::Fitting:
             return MinorPressureDrop(vel, rho, k_);
         case IntcType::Pipe:
-            Re = fluidProps->Re(T_htf_ave, P_htf_ave, vel, d_);
-            ff = FrictionFactor(rough_ / d_, Re);
-            return MajorPressureDrop(vel, rho, ff, l_, d_);
+            Re = fluidProps->Re(T_htf_ave, P_htf_ave, vel, d_in_);
+            ff = FrictionFactor(rough_ / d_in_, Re);
+            return MajorPressureDrop(vel, rho, ff, l_, d_in_);
         case IntcType::Flex_Hose:
             // TODO : Differentiate this pressure drop relation for flex hoses
-            Re = fluidProps->Re(T_htf_ave, P_htf_ave, vel, d_);
-            ff = FrictionFactor(rough_ / d_, Re);
-            return MajorPressureDrop(vel, rho, ff, l_, d_);
+            Re = fluidProps->Re(T_htf_ave, P_htf_ave, vel, d_in_);
+            ff = FrictionFactor(rough_ / d_in_, Re);
+            return MajorPressureDrop(vel, rho, ff, l_, d_in_);
         default:
             throw std::invalid_argument("This interconnect type has no pressure drop calculation.");
     }
@@ -349,8 +349,8 @@ intc_assy::intc_assy()
     l_(0),
     HeatCap_valid_(false),
     mc_(0),
-    SurfArea_valid_(false),
-    SurfArea_(0),
+    OuterSurfArea_valid_(false),
+    OuterSurfArea_(0),
     Volume_valid_(false),
     Volume_(0)
 {
@@ -362,8 +362,8 @@ intc_assy::intc_assy(HTFProperties *fluidProps, double *k, double *d, double *l,
     l_(0),
     HeatCap_valid_(false),
     mc_(0),
-    SurfArea_valid_(false),
-    SurfArea_(0),
+    OuterSurfArea_valid_(false),
+    OuterSurfArea_(0),
     Volume_valid_(false),
     Volume_(0)
 {
@@ -394,12 +394,12 @@ void intc_assy::import_intcs(double *k, double *d, double *l, double *rel_rough,
         N_intcs_++;
         l_ += intc.getLength();
         mc_ += intc.getHeatCap();
-        SurfArea_ += intc.getSurfArea();
+        OuterSurfArea_ += intc.getOuterSurfArea();
         Volume_ += intc.getVolume();
     }
     Length_valid_ = true;
     HeatCap_valid_ = true;
-    SurfArea_valid_ = true;
+    OuterSurfArea_valid_ = true;
     Volume_valid_ = true;
 }
 
@@ -411,8 +411,8 @@ void intc_assy::resetValues() {
     l_ = 0;
     HeatCap_valid_ = false;
     mc_ = 0;
-    SurfArea_valid_ = false;
-    SurfArea_ = 0;
+    OuterSurfArea_valid_ = false;
+    OuterSurfArea_ = 0;
     Volume_valid_ = false;
     Volume_ = 0;
 }
@@ -485,25 +485,25 @@ IntcType intc_assy::getType(std::size_t intc) const {
     return intcs.at(intc).getType();
 }
 
-double intc_assy::getSurfArea() {
-    if (!SurfArea_valid_) { calcSurfArea(); }
-    return SurfArea_;
+double intc_assy::getOuterSurfArea() {
+    if (!OuterSurfArea_valid_) { calcOuterSurfArea(); }
+    return OuterSurfArea_;
 }
 
-double intc_assy::getSurfArea(std::size_t intc) {
-    return intcs.at(intc).getSurfArea();
+double intc_assy::getOuterSurfArea(std::size_t intc) {
+    return intcs.at(intc).getOuterSurfArea();
 }
 
-void intc_assy::calcSurfArea() {
-    SurfArea_ = 0;
+void intc_assy::calcOuterSurfArea() {
+    OuterSurfArea_ = 0;
     for (std::vector<interconnect>::iterator it = intcs.begin(); it < intcs.end(); ++it) {
-        SurfArea_ += it->getSurfArea();  // interconnect::getSurfArea()
+        OuterSurfArea_ += it->getOuterSurfArea();  // interconnect::getOuterSurfArea()
     }
-    SurfArea_ = true;
+    OuterSurfArea_ = true;
 }
 
-double intc_assy::getCrossSecArea(std::size_t intc) {
-    return intcs.at(intc).getCrossSecArea();
+double intc_assy::getFlowArea(std::size_t intc) {
+    return intcs.at(intc).getFlowArea();
 }
 
 double intc_assy::getVolume() {
