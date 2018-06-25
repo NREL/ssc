@@ -52,10 +52,6 @@
 #include <limits>
 #include <iostream>
 
-#ifndef M_PI
-#define M_PI 3.14159265358979323846264338327
-#endif
-
 
 pvinput_t::pvinput_t()
 {
@@ -397,63 +393,4 @@ double maxpower_5par( double Voc_ubound, double a, double Il, double Io, double 
 	if ( __Vmp ) *__Vmp = V;
 	if ( __Imp ) *__Imp = I;
 	return P;
-}
-
-double transmittance( double theta1_deg, /* incidence angle of incoming radiation (deg) */
-		double n_cover,  /* refractive index of cover material, n_glass = 1.586 */
-		double n_incoming, /* refractive index of incoming material, typically n_air = 1.0 */
-		double k,        /* proportionality constant assumed to be 4 (1/m) for derivation of Bouguer's law (set to zero to skip bougeur's law */
-		double l_thick,  /* material thickness (set to zero to skip Bouguer's law */
-		double *_theta2_deg ) /* thickness of cover material (m), usually 2 mm for typical module */
-{
-	// reference: duffie & beckman, Ch 5.3
-	
-	double theta1 = theta1_deg * M_PI/180.0;
-	double theta2 = asin( n_incoming / n_cover * sin(theta1 ) ); // snell's law, assuming n_air = 1.0
-	// fresnel's equation for non-reflected unpolarized radiation as an average of perpendicular and parallel components
-	double tr = 1 - 0.5 *
-			( pow( sin(theta2-theta1), 2 )/pow( sin(theta2+theta1), 2)
-			+ pow( tan(theta2-theta1), 2 )/pow( tan(theta2+theta1), 2 ) );
-	
-	if ( _theta2_deg ) *_theta2_deg = theta2 * 180/M_PI;
-
-	return tr * exp( -k * l_thick / cos(theta2) );
-}
-
-double iam( double theta, bool ar_glass )
-{
-	if ( theta < AOI_MIN ) theta = AOI_MIN;
-	if ( theta > AOI_MAX ) theta = AOI_MAX;
-
-	double normal = iam_nonorm( 1, ar_glass );
-	double actual = iam_nonorm( theta, ar_glass );
-	return actual/normal;	
-}
-
-double iam_nonorm( double theta, bool ar_glass )
-{
-	double n_air = 1.0;
-
-	double n_g = 1.526;
-	double k_g = 4;
-	double l_g = 0.002;
-
-	double n_arc = 1.3;
-	double k_arc = 4;
-	double l_arc = l_g*0.01;  // assume 1/100th thickness of glass for AR coating
-
-	if ( theta < AOI_MIN ) theta = AOI_MIN;
-	if ( theta > AOI_MAX ) theta = AOI_MAX;
-
-	if ( ar_glass )
-	{
-		double theta2 = 1;
-		double tau_coating = transmittance( theta, n_arc, n_air, k_arc, l_arc, &theta2 );
-		double tau_glass = transmittance( theta2, n_g, n_arc, k_g, l_g );
-		return tau_coating*tau_glass;
-	}
-	else
-	{
-		return transmittance(theta, n_g, n_air, k_g, l_g );
-	}
 }

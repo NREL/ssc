@@ -79,16 +79,32 @@ Define _DEBUG if compile with debugging
 
 #define RCINDEX(arr, ncols, r, c) arr[ncols*r+c]
 
-
 #ifndef M_PI
 #define M_PI 3.14159265358979323846264338327
 #endif
-#define sind(x) sin( (M_PI/180.0)*(x) )
-#define cosd(x) cos( (M_PI/180.0)*(x) )
 
 #ifndef DTOR
-#define DTOR 0.0174532925
+#define DTOR 0.017453292519943295769236907684886
 #endif
+
+#ifndef RTOD
+#define RTOD 57.295779513082320876798154814105
+#endif
+
+#ifndef MAX
+#define MAX(a,b) ( (a)>(b) ? (a) : (b) )
+#endif
+
+#ifndef MIN
+#define MIN(a,b) ( (a)<(b) ? (a) : (b) )
+#endif
+
+#define sind(x) sin( DTOR*(x) )
+#define cosd(x) cos( DTOR*(x) )
+#define tand(x) tan( DTOR*(x) )
+#define asind(x) (RTOD *asin(x))
+#define acosd(x) (RTOD *acos(x))
+#define atand(x) (RTOD*atan(x))
 
 namespace util
 {

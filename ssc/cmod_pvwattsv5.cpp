@@ -58,6 +58,7 @@
 #include "lib_pvwatts.h"
 #include "lib_pvshade.h"
 #include "lib_pvmodel.h"
+#include "lib_pv_incidence_modifier.h"
 
 #ifndef DTOR
 #define DTOR 0.0174532925
