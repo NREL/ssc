@@ -460,6 +460,8 @@ TEST_F(BifacialIrradTest, TestSkyConfigFactors)
 
 	for (size_t i = 0; i != rearSkyConfigFactors.size(); i++){
 		ASSERT_NEAR(rearSkyConfigFactors[i], expectedSkyConfigFactors[i], e);
+		ASSERT_NEAR(frontSkyConfigFactors[i], expectedSkyConfigFactors[i], e);
+
 	}
 }
 /**
@@ -476,6 +478,7 @@ TEST_F(BifacialIrradTest, TestGroundShadeFactors)
 
 	for (size_t i = 0; i != rearGroundShade.size(); i++) {
 		ASSERT_NEAR(rearGroundShade[i], expectedGroundShade[i], e);
+		ASSERT_NEAR(frontGroundShade[i], expectedGroundShade[i], e);
 	}
 }
 /**
@@ -487,8 +490,10 @@ TEST_F(BifacialIrradTest, TestGroundGHI)
 	irr->getGroundGHI(transmissionFactor, expectedSkyConfigFactors, expectedSkyConfigFactors, expectedGroundShade, expectedGroundShade, rearGroundGHI, frontGroundGHI);
 
 	ASSERT_EQ(rearGroundGHI.size(), expectedRearGroundGHI.size());
+	ASSERT_EQ(frontGroundGHI.size(), expectedFrontGroundGHI.size());
 
 	for (size_t i = 0; i != rearGroundGHI.size(); i++) {
 		ASSERT_NEAR(rearGroundGHI[i], expectedRearGroundGHI[i], e);
+		ASSERT_NEAR(frontGroundGHI[i], expectedFrontGroundGHI[i], e);
 	}
 }
