@@ -21,6 +21,21 @@ double iam(double theta_deg, bool ar_glass); // incidence angle modifier factor 
 
 double iam_nonorm(double theta_deg, bool ar_glass);  // non-normalized cover loss (typically use one above!)
 
+/**
+* function: iamSjerpsKoomen
+*
+* This method calculates the correction factor for angle of incidence, a factor from
+* zero to one (no correction) using the air-glass model of Sjerps-Koomen et al in "A Simple
+* Model for PV Module Reflection Losses under Field Conditons in Solar Energy
+* 1997; 57:421-432. 5/27/2014
+*
+* Variables passed to the method:
+*       n2 = index of refraction for glazing (1.526 for glass, 1.4 for Tefzel, 1.3 for AR glass)
+*      inc = incident angle in radians
+*
+*
+*/
+double iamSjerpsKoomen(double n, double incidenceAngleRadians);
 
 /// Calculate Irradiance through the cover using the DeSoto model
 double calculateIrradianceThroughCoverDeSoto(double incidenceAngleDegrees, double zenithAngleDegrees, double tiltDegrees,

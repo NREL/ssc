@@ -155,6 +155,9 @@ void pvsamv_nofinancial_default(ssc_data_t &data)
 	ssc_data_set_number(data, "spe_fd", 1);
 	ssc_data_set_number(data, "spe_vmp", 30);
 	ssc_data_set_number(data, "spe_voc", 36);
+	ssc_data_set_number(data, "cec_is_bifacial", 0);
+	ssc_data_set_number(data, "cec_bifacial_transmission_factor", 0);
+	ssc_data_set_number(data, "cec_bifaciality", 0);
 	ssc_data_set_number(data, "cec_area", 1.6310000419616699);
 	ssc_data_set_number(data, "cec_a_ref", 2.4200999736785889);
 	ssc_data_set_number(data, "cec_adjust", 5.0100002288818359);
@@ -184,6 +187,9 @@ void pvsamv_nofinancial_default(ssc_data_t &data)
 	ssc_data_set_number(data, "cec_array_cols", 10);
 	ssc_data_set_number(data, "cec_backside_temp", 20);
 	ssc_data_set_number(data, "6par_celltech", 1);
+	ssc_data_set_number(data, "6par_is_bifacial", 0);
+	ssc_data_set_number(data, "6par_bifacial_transmission_factor", 0);
+	ssc_data_set_number(data, "6par_bifaciality", 0);
 	ssc_data_set_number(data, "6par_vmp", 30);
 	ssc_data_set_number(data, "6par_imp", 6);
 	ssc_data_set_number(data, "6par_voc", 37);
@@ -483,6 +489,9 @@ void pvsamv1_with_residential_default(ssc_data_t &data)
 	ssc_data_set_number(data, "spe_fd", 1);
 	ssc_data_set_number(data, "spe_vmp", 30);
 	ssc_data_set_number(data, "spe_voc", 36);
+	ssc_data_set_number(data, "cec_is_bifacial", 0);
+	ssc_data_set_number(data, "cec_bifacial_transmission_factor", 0);
+	ssc_data_set_number(data, "cec_bifaciality", 0);
 	ssc_data_set_number(data, "cec_area", 1.6310000419616699);
 	ssc_data_set_number(data, "cec_a_ref", 2.4200999736785889);
 	ssc_data_set_number(data, "cec_adjust", 5.0100002288818359);
@@ -511,6 +520,9 @@ void pvsamv1_with_residential_default(ssc_data_t &data)
 	ssc_data_set_number(data, "cec_array_rows", 1);
 	ssc_data_set_number(data, "cec_array_cols", 10);
 	ssc_data_set_number(data, "cec_backside_temp", 20);
+	ssc_data_set_number(data, "6par_is_bifacial", 0);
+	ssc_data_set_number(data, "6par_bifacial_transmission_factor", 0);
+	ssc_data_set_number(data, "6par_bifaciality", 0);
 	ssc_data_set_number(data, "6par_celltech", 1);
 	ssc_data_set_number(data, "6par_vmp", 30);
 	ssc_data_set_number(data, "6par_imp", 6);

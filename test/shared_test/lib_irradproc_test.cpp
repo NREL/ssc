@@ -453,8 +453,8 @@ TEST_F(SunsetCaseIrradProc, CalcTestRadMode0_lib_irradproc){
 TEST_F(BifacialIrradTest, TestSkyConfigFactors)
 {
 	// Determine the factors for points on the ground from the leading edge of one row of PV panels to the edge of the next row of panels behind
-	std::vector<double> rearSkyConfigFactors;
-	irr->getSkyConfigurationFactors(rowToRow, verticalHeight, clearanceGround, distanceBetweenRows, horizontalLength, rearSkyConfigFactors);
+	std::vector<double> rearSkyConfigFactors, frontSkyConfigFactors;
+	irr->getSkyConfigurationFactors(rowToRow, verticalHeight, clearanceGround, distanceBetweenRows, horizontalLength, rearSkyConfigFactors, frontSkyConfigFactors);
 	
 	ASSERT_EQ(rearSkyConfigFactors.size(), expectedSkyConfigFactors.size());
 
@@ -468,10 +468,10 @@ TEST_F(BifacialIrradTest, TestSkyConfigFactors)
 TEST_F(BifacialIrradTest, TestGroundShadeFactors)
 {
 	// Determine if ground is shading from direct beam radio for points on the ground from leading edge of PV panels to leading edge of next row behind
-	double maxShadow = 0;
-	double pvBackShadeFraction = 0;
-	std::vector<int> rearGroundShade;
-	irr->getGroundShadeFactors(rowToRow, verticalHeight, clearanceGround, distanceBetweenRows, horizontalLength, sunAzimuthRadians, sunElevationRadians, rearGroundShade, maxShadow, pvBackShadeFraction);
+	double maxShadow, pvBackShadeFraction, pvFrontShadeFraction;
+	maxShadow = pvBackShadeFraction = pvFrontShadeFraction = 0;
+	std::vector<int> rearGroundShade, frontGroundShade;
+	irr->getGroundShadeFactors(rowToRow, verticalHeight, clearanceGround, distanceBetweenRows, horizontalLength, sunAzimuthRadians, sunElevationRadians, rearGroundShade, frontGroundShade, maxShadow, pvBackShadeFraction, pvFrontShadeFraction);
 	ASSERT_EQ(rearGroundShade.size(), expectedGroundShade.size());
 
 	for (size_t i = 0; i != rearGroundShade.size(); i++) {
@@ -479,12 +479,12 @@ TEST_F(BifacialIrradTest, TestGroundShadeFactors)
 	}
 }
 /**
-*   Test calculation of rear ground GHI.  This changes with sun position and system geometry
+*   Test calculation of ground GHI.  This changes with sun position and system geometry
 */
-TEST_F(BifacialIrradTest, TestRearGroundGHI)
+TEST_F(BifacialIrradTest, TestGroundGHI)
 {
-	std::vector<double> rearGroundGHI;
-	irr->getRearGroundGHI(transmissionFactor, expectedSkyConfigFactors, expectedGroundShade, rearGroundGHI);
+	std::vector<double> rearGroundGHI, frontGroundGHI;
+	irr->getGroundGHI(transmissionFactor, expectedSkyConfigFactors, expectedSkyConfigFactors, expectedGroundShade, expectedGroundShade, rearGroundGHI, frontGroundGHI);
 
 	ASSERT_EQ(rearGroundGHI.size(), expectedRearGroundGHI.size());
 

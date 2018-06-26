@@ -59,7 +59,27 @@ double iam_nonorm(double theta, bool ar_glass)
 		return transmittance(theta, n_g, n_air, k_g, l_g);
 	}
 }
+double iamSjerpsKoomen(double n2, double incidenceAngleRadians)
+{
+	//  Only calculates valid value for 0 <= inc <= 90 degrees
+	double cor = -9999.0;   
 
+		// Reflectance at normal incidence, Beckman p217
+		double r0 = std::pow((n2 - 1.0) / (n2 + 1), 2);	
+
+		if (incidenceAngleRadians == 0) {	
+			cor = 1.0;		
+		}
+		else if (incidenceAngleRadians > 0.0 && incidenceAngleRadians <= M_PI / 2.0) {
+
+			double refrAng = std::asin(std::sin(incidenceAngleRadians) / n2); 
+			double r1 = (std::pow(std::sin(refrAng - incidenceAngleRadians), 2.0) / std::pow(std::sin(refrAng + incidenceAngleRadians), 2.0));
+			double r2 = (std::pow(std::tan(refrAng - incidenceAngleRadians), 2.0) / std::pow(std::tan(refrAng + incidenceAngleRadians), 2.0));
+			cor = 1.0 - 0.5 * (r1 + r2);
+			cor /= 1.0 - r0;	
+		}
+		return cor;
+}
 double calculateIrradianceThroughCoverDeSoto(double theta, double theta_z, double tilt, double G_beam, double G_sky, double G_gnd)
 {
 	// establish limits on incidence angle and zenith angle
