@@ -473,8 +473,10 @@ TEST_F(BifacialIrradTest, TestGroundShadeFactors)
 	double maxShadow, pvBackShadeFraction, pvFrontShadeFraction;
 	maxShadow = pvBackShadeFraction = pvFrontShadeFraction = 0;
 	std::vector<int> rearGroundShade, frontGroundShade;
-	irr->getGroundShadeFactors(rowToRow, verticalHeight, clearanceGround, distanceBetweenRows, horizontalLength, sunAzimuthRadians, sunElevationRadians, rearGroundShade, frontGroundShade, maxShadow, pvBackShadeFraction, pvFrontShadeFraction);
+	irr->getGroundShadeFactors(rowToRow, verticalHeight, clearanceGround, distanceBetweenRows, horizontalLength, irr->get_sun_component(0) , irr->get_sun_component(2), rearGroundShade, frontGroundShade, maxShadow, pvBackShadeFraction, pvFrontShadeFraction);
+	
 	ASSERT_EQ(rearGroundShade.size(), expectedGroundShade.size());
+	ASSERT_NEAR(pvFrontShadeFraction, expectedPVFrontShadeFraction, e);
 
 	for (size_t i = 0; i != rearGroundShade.size(); i++) {
 		ASSERT_NEAR(rearGroundShade[i], expectedGroundShade[i], e);
@@ -495,5 +497,24 @@ TEST_F(BifacialIrradTest, TestGroundGHI)
 	for (size_t i = 0; i != rearGroundGHI.size(); i++) {
 		ASSERT_NEAR(rearGroundGHI[i], expectedRearGroundGHI[i], e);
 		ASSERT_NEAR(frontGroundGHI[i], expectedFrontGroundGHI[i], e);
+	}
+}
+
+/**
+*   Test calculation of front surface irradiances.  This changes with sun position and system geometry
+*/
+TEST_F(BifacialIrradTest, TestFrontSurfaceIrradiance)
+{
+	std::vector<double> frontIrradiance, frontReflected;
+	double frontAverageIrradiance;
+	irr->getFrontSurfaceIrradiances(expectedPVFrontShadeFraction, rowToRow, verticalHeight, clearanceGround, distanceBetweenRows, horizontalLength, expectedFrontGroundGHI, frontIrradiance, frontAverageIrradiance, frontReflected);
+
+	ASSERT_EQ(frontIrradiance.size(), expectedFrontIrradiance.size());
+	ASSERT_NEAR(frontAverageIrradiance, expectedFrontAverageIrradiance, e);
+
+
+	for (size_t i = 0; i != frontIrradiance.size(); i++) {
+		ASSERT_NEAR(frontIrradiance[i], expectedFrontIrradiance[i], e);
+		ASSERT_NEAR(frontReflected[i], expectedFrontReflected[i], e);
 	}
 }

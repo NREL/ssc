@@ -145,6 +145,7 @@ public:
 		double *eccfac,
 		double *tst,
 		double *hextra );
+	double get_sun_component(size_t i) { return sun[i]; }
 	void get_angles( double *aoi,
 		double *surftilt,
 		double *surfazi,
