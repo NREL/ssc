@@ -506,7 +506,7 @@ TEST_F(BifacialIrradTest, TestGroundGHI)
 TEST_F(BifacialIrradTest, TestFrontSurfaceIrradiance)
 {
 	std::vector<double> frontIrradiance, frontReflected;
-	double frontAverageIrradiance;
+	double frontAverageIrradiance = 0;
 	irr->getFrontSurfaceIrradiances(expectedPVFrontShadeFraction, rowToRow, verticalHeight, clearanceGround, distanceBetweenRows, horizontalLength, expectedFrontGroundGHI, frontIrradiance, frontAverageIrradiance, frontReflected);
 
 	ASSERT_EQ(frontIrradiance.size(), expectedFrontIrradiance.size());
@@ -516,5 +516,22 @@ TEST_F(BifacialIrradTest, TestFrontSurfaceIrradiance)
 	for (size_t i = 0; i != frontIrradiance.size(); i++) {
 		ASSERT_NEAR(frontIrradiance[i], expectedFrontIrradiance[i], e);
 		ASSERT_NEAR(frontReflected[i], expectedFrontReflected[i], e);
+	}
+}
+
+/**
+*   Test calculation of rear surface irradiances.  This changes with sun position and system geometry
+*/
+TEST_F(BifacialIrradTest, TestRearSurfaceIrradiance)
+{
+	std::vector<double> rearIrradiance;
+	double rearAverageIrradiance = 0;
+	irr->getBackSurfaceIrradiances(expectedPVRearShadeFraction, rowToRow, verticalHeight, clearanceGround, distanceBetweenRows, horizontalLength, expectedRearGroundGHI, expectedFrontGroundGHI, expectedFrontReflected, rearIrradiance, rearAverageIrradiance);
+
+	ASSERT_EQ(rearIrradiance.size(), expectedRearIrradiance.size());
+	ASSERT_NEAR(rearAverageIrradiance, expectedRearAverageIrradiance, e);
+
+	for (size_t i = 0; i != rearIrradiance.size(); i++) {
+		ASSERT_NEAR(rearIrradiance[i], expectedRearIrradiance[i], e);
 	}
 }

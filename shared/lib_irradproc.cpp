@@ -1311,7 +1311,7 @@ int irrad::calc_rear_side(double transmissionFactor, double bifaciality)
 	// Calculate the irradiance on the back of the PV module
 	std::vector<double> rearIrradiancePerCellrow;
 	double rearAverageIrradiance;
-	getBackSurfaceIrradiances(pvBackShadeFraction, rowToRow, verticalHeight, clearanceGround, distanceBetweenRows, horizontalLength, rearGroundGHI, frontReflected, rearIrradiancePerCellrow, rearAverageIrradiance);
+	getBackSurfaceIrradiances(pvBackShadeFraction, rowToRow, verticalHeight, clearanceGround, distanceBetweenRows, horizontalLength, rearGroundGHI, frontGroundGHI, frontReflected, rearIrradiancePerCellrow, rearAverageIrradiance);
 	poaRearAverage = rearAverageIrradiance * bifaciality;
 	return true;
 }
@@ -1547,9 +1547,9 @@ void irrad::getFrontSurfaceIrradiances(double pvFrontShadeFraction, double rowTo
 	double solarZenithRadians = sun[1];
 
 	// Average GHI on ground under PV array for cases when x projection exceed 2*rtr
-	frontAverageIrradiance = 0.0;
+	double averageGroundGHI = 0.0;
 	for (size_t i = 0; i != frontGroundGHI.size(); i++)
-		frontAverageIrradiance += frontGroundGHI[i] / frontGroundGHI.size();
+		averageGroundGHI += frontGroundGHI[i] / frontGroundGHI.size();
 
 	// Calculate diffuse isotropic irradiance for a horizontal surface
 	double * poa = poaRear;
@@ -1615,7 +1615,7 @@ void irrad::getFrontSurfaceIrradiances(double pvFrontShadeFraction, double rowTo
 			if (std::fabs(projectedX1 - projectedX2) > 0.99 * rowToRow)
 			{
 				// Use average value if projection approximates the rtr      
-				actualGroundGHI = frontAverageIrradiance;
+				actualGroundGHI = averageGroundGHI;
 			}
 			else
 			{
@@ -1691,17 +1691,18 @@ void irrad::getFrontSurfaceIrradiances(double pvFrontShadeFraction, double rowTo
 			double cor = iamSjerpsKoomen(n2, angle[0]);
 			frontIrradiance[i] += (1.0 - cellShade) * (poa[0] + diffc[1]) * cor;
 		}
+		frontAverageIrradiance += frontIrradiance[i] / cellRows;
 	}
 }
 
-void irrad::getBackSurfaceIrradiances(double pvBackShadeFraction, double rowToRow, double verticalHeight, double clearanceGround, double distanceBetweenRows, double horizontalLength, std::vector<double> rearGroundGHI, std::vector<double> frontReflected, std::vector<double> & rearIrradiance, double & rearAverageIrradiance)
+void irrad::getBackSurfaceIrradiances(double pvBackShadeFraction, double rowToRow, double verticalHeight, double clearanceGround, double distanceBetweenRows, double horizontalLength, std::vector<double> rearGroundGHI, std::vector<double> frontGroundGHI, std::vector<double> frontReflected, std::vector<double> & rearIrradiance, double & rearAverageIrradiance)
 {
 	// front surface assumed to be glass
 	double n2 = 1.526;
 
 	size_t intervals = 100;
-	double sunAzimuth = sun[0];
-	double solarZenith = sun[1];
+	double solarAzimuthRadians = sun[0];
+	double solarZenithRadians = sun[1];
 
 	// Average GHI on ground under PV array for cases when x projection exceed 2*rtr
 	double averageGroundGHI = 0.0;          
@@ -1709,13 +1710,13 @@ void irrad::getBackSurfaceIrradiances(double pvBackShadeFraction, double rowToRo
 		averageGroundGHI += rearGroundGHI[i] / rearGroundGHI.size();
 
 	// Calculate diffuse isotropic irradiance for a horizontal surface
-	perez(0, this->dn, this->df, this->alb, solarZenith, 0, solarZenith, poaRear, diffcRear);
+	perez(0, this->dn, this->df, this->alb, solarZenithRadians, 0, solarZenithRadians, poaRear, diffcRear);
 	double isotropicSkyDiffuse = diffcRear[0];
 
 	// Calculate components for a 90 degree tilt 
 	double angle[5] = { 0,0,0,0,0 };
-	incidence(0, 90.0, 180.0, 45.0, solarZenith, sunAzimuth, this->en_backtrack, this->gcr, angle);
-	perez(0, this->dn, this->df, this->alb, angle[0], angle[1], solarZenith, poaRear, diffcRear);
+	incidence(0, 90.0, 180.0, 45.0, solarZenithRadians, solarAzimuthRadians, this->en_backtrack, this->gcr, angle);
+	perez(0, this->dn, this->df, this->alb, angle[0], angle[1], solarZenithRadians, poaRear, diffcRear);
 	double horizonDiffuse = diffcRear[2];
 
 	// Calculate x,y coordinates of bottom and top edges of PV row in back of desired PV row so that portions of sky and ground viewed by the 
@@ -1736,15 +1737,15 @@ void irrad::getBackSurfaceIrradiances(double pvBackShadeFraction, double rowToRo
 		double PcellY = clearanceGround + verticalHeight * (i + 0.5) / ((double)cellRows); // y value for location of PV cell with OFFSET FOR SARA REFERENCE CELLS     4/26/2016
 		double elevationAngleUp = std::atan((PtopY - PcellY) / (PtopX - PcellX));          // Elevation angle up from PV cell to top of PV module/panel, radians
 		double elevationAngleDown = std::atan((PcellY - PbotY) / (PbotX - PcellX));        // Elevation angle down from PV cell to bottom of PV module/panel, radians
-		int iStopIso = (this->tilt - elevationAngleUp) / DTOR;							   // Last whole degree in arc range that sees sky, first is 0
-		int iHorBright = std::fmax(0.0, 6.0 - elevationAngleUp / DTOR);	   			       // Number of whole degrees for which horizon brightening occurs
-		int iStartGrd = (this->tilt + elevationAngleDown) / DTOR;                          // First whole degree in arc range that sees ground, last is 180
+		int iStopIso = std::round((this->tilt * DTOR - elevationAngleUp) / DTOR);							   // Last whole degree in arc range that sees sky, first is 0
+		int iHorBright = std::round(std::fmax(0.0, 6.0 - elevationAngleUp / DTOR));	   			       // Number of whole degrees for which horizon brightening occurs
+		int iStartGrd = std::round((this->tilt  * DTOR + elevationAngleDown) / DTOR);                          // First whole degree in arc range that sees ground, last is 180
 
 		rearIrradiance.push_back(0);
 		for (size_t j = 0; j != iStopIso; j++)
 		{
 			rearIrradiance[i] += 0.5 * (std::cos(j * DTOR) - std::cos((j + 1)*DTOR)) * MarionAOICorrectionFactorsGlass[j]* isotropicSkyDiffuse;
-			if ((iStopIso - j) < iHorBright)
+			if ((iStopIso - j) <= iHorBright)
 			{
 				rearIrradiance[i] += 0.5 * (std::cos(j * DTOR) - std::cos((j + 1) * DTOR)) * MarionAOICorrectionFactorsGlass[j]* horizonDiffuse / 0.052246; // 0.052246 = 0.5 * [cos(84) - cos(90)]
 			}
@@ -1754,38 +1755,42 @@ void irrad::getBackSurfaceIrradiances(double pvBackShadeFraction, double rowToRo
 		for (size_t j = iStopIso; j < iStartGrd; j++)
 		{
 			double diagonalDistance = (PbotX - PcellX) / std::cos(elevationAngleDown);
-			double startAlpha = -(j - iStopIso) * DTOR + elevationAngleUp + elevationAngleDown;
-			double stopAlpha = -(j + 1 - iStopIso) * DTOR + elevationAngleUp + elevationAngleDown;
+			double startAlpha = -(double)(j - iStopIso) * DTOR + elevationAngleUp + elevationAngleDown;
+			double stopAlpha = -(double)(j + 1 - iStopIso) * DTOR + elevationAngleUp + elevationAngleDown;
 			double m = diagonalDistance * std::sin(startAlpha);
-			double theta = M_PI - elevationAngleDown - (M_PI / 2.0 - stopAlpha) - this->tilt;
+			double theta = M_PI - elevationAngleDown - (M_PI / 2.0 - startAlpha) - this->tilt * DTOR;
+			double projectedX2 = m / std::cos(theta);
+
+			m = diagonalDistance * std::sin(stopAlpha);
+			theta = M_PI - elevationAngleDown - (M_PI / 2.0 - stopAlpha) - this->tilt * DTOR;
 			double projectedX1 = m / std::cos(theta);
-			double projectedX2 = std::fmax(0.0, projectedX1);
+			projectedX1 = std::fmax(0.0, projectedX1);
 
 			double PVreflectedIrradiance = 0.0;
 			double deltaCell = 1.0 / cellRows;
-
+			double tolerance = 0.0001;
 			for (size_t k = 0; k < cellRows; k++)
 			{
 				double cellBottom = k * deltaCell;
 				double cellTop = (k + 1) * deltaCell;
 				double cellLengthSeen = 0.0;
 
-				if (cellBottom >= projectedX1 && cellTop <= projectedX2) {
+				if (cellBottom >= projectedX1 - tolerance && cellTop <= projectedX2 + tolerance) {
 					cellLengthSeen = cellTop - cellBottom;
 				}
-				else if (cellBottom <= projectedX1 && cellTop >= projectedX2) {
+				else if (cellBottom <= projectedX1 + tolerance && cellTop >= projectedX2 - tolerance) {
 					cellLengthSeen = projectedX2 - projectedX1;
 				}
-				else if (cellBottom >= projectedX1 && projectedX2 > cellBottom && cellTop >= projectedX2) {
+				else if (cellBottom >= projectedX1 - tolerance && projectedX2 > cellBottom - tolerance && cellTop >= projectedX2 - tolerance) {
 					cellLengthSeen = projectedX2 - cellBottom;
 				}
-				else if (cellBottom <= projectedX1 && projectedX1 < cellTop && cellTop <= projectedX2) {
+				else if (cellBottom <= projectedX1 + tolerance && projectedX1 < cellTop + tolerance && cellTop <= projectedX2 + tolerance) {
 					cellLengthSeen = cellTop - projectedX1;
 				}
 
 				PVreflectedIrradiance += cellLengthSeen * frontReflected[k];
 			}
-			PVreflectedIrradiance /= projectedX1 - projectedX1;
+			PVreflectedIrradiance /= projectedX2 - projectedX1;
 			rearIrradiance[i] += 0.5 * (std::cos(j * DTOR) - std::cos((j + 1) * DTOR)) * MarionAOICorrectionFactorsGlass[j] * PVreflectedIrradiance;
 		}
 
@@ -1793,8 +1798,8 @@ void irrad::getBackSurfaceIrradiances(double pvBackShadeFraction, double rowToRo
 		// Add ground reflected component
 		for (size_t j = iStartGrd; j < 180; j++)
 		{
-			double startElevationDown = (j - iStartGrd) * DTOR + elevationAngleDown;
-			double stopElevationDown = (j + 1 - iStartGrd) * DTOR + elevationAngleDown;
+			double startElevationDown = (double)(j - iStartGrd) * DTOR + elevationAngleDown;
+			double stopElevationDown = (double)(j + 1 - iStartGrd) * DTOR + elevationAngleDown;
 			double projectedX2 = PcellX + PcellY / std::tan(startElevationDown);
 			double projectedX1 = PcellX + PcellY / std::tan(stopElevationDown);
 			double actualGroundGHI = 0.0;
@@ -1815,7 +1820,7 @@ void irrad::getBackSurfaceIrradiances(double pvBackShadeFraction, double rowToRo
 					projectedX1 -= intervals;
 					projectedX2 -= intervals;
 				}
-				while (projectedX1 < -intervals || projectedX2 < -intervals)
+				while (projectedX1 < -(int)intervals || projectedX2 < -(int)intervals)
 				{
 					projectedX1 += intervals;
 					projectedX2 += intervals;
@@ -1840,19 +1845,28 @@ void irrad::getBackSurfaceIrradiances(double pvBackShadeFraction, double rowToRo
 					{
 						if (k == index1)
 						{
-							if (k > 0) {
+							if (k < 0) {
+								actualGroundGHI += frontGroundGHI[k + intervals] * (k + 1.0 - projectedX1);
+							}
+							else {
 								actualGroundGHI += rearGroundGHI[k] * (k + 1.0 - projectedX1);
 							}
 						}
 						else if (k == index2)
 						{
-							if (k > 0) {
+							if (k < 0) {
+								actualGroundGHI += frontGroundGHI[k + intervals] * (projectedX2 - k);
+							}
+							else {
 								actualGroundGHI += rearGroundGHI[k] * (projectedX2 - k);
 							}
 						}
 						else
 						{
-							if (k > 0) {
+							if (k < 0) {
+								actualGroundGHI += frontGroundGHI[k + 100];
+							}
+							else {
 								actualGroundGHI += rearGroundGHI[k];
 							}
 						}
@@ -1861,11 +1875,11 @@ void irrad::getBackSurfaceIrradiances(double pvBackShadeFraction, double rowToRo
 					actualGroundGHI /= projectedX2 - projectedX1;
 				}
 			}
-			rearGroundGHI[i] += 0.5 * std::cos(j * DTOR) - std::cos((j + 1) * DTOR) * MarionAOICorrectionFactorsGlass[j] * averageGroundGHI * this->alb;
+			rearIrradiance[i] += 0.5 * (std::cos(j * DTOR) - std::cos((j + 1) * DTOR)) * MarionAOICorrectionFactorsGlass[j] * actualGroundGHI * this->alb;
 		}
 		// Calculate and add direct and circumsolar irradiance components
-		incidence(0, 180.0 - tilt / DTOR, this->sazm / DTOR - 180.0, 45.0, solarZenith, this->sazm, this->en_backtrack, this->gcr, angle);
-		perez(0, this->dn, this->df, this->alb, angle[0], angle[1], solarZenith, poaRear, diffcRear);
+		incidence(0, 180.0 - tilt, (this->sazm - 180.0), 45.0, solarZenithRadians, solarAzimuthRadians, this->en_backtrack, this->gcr, angle);
+		perez(0, this->dn, this->df, this->alb, angle[0], angle[1], solarZenithRadians, poaRear, diffcRear);
 
 		double cellShade = pvBackShadeFraction * cellRows - i;
 		
@@ -1883,7 +1897,7 @@ void irrad::getBackSurfaceIrradiances(double pvBackShadeFraction, double rowToRo
 			// doesn't include AOI correction
 			rearGroundGHI[i] += (1.0 - cellShade) * (poaRear[0] + diffcRear[1]);
 		}
-		rearAverageIrradiance += rearGroundGHI[i] / cellRows;
+		rearAverageIrradiance += rearIrradiance[i] / cellRows;
 	}
 }
 
