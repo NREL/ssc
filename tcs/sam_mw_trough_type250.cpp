@@ -173,10 +173,10 @@ enum{
 	P_SCAINFOARRAY,
 	P_SCADEFOCUSARRAY,
 
-    P_K_INTC,
-    P_D_INTC,
-    P_L_INTC,
-    P_TYPE_INTC,
+    P_K_CPNT,
+    P_D_CPNT,
+    P_L_CPNT,
+    P_TYPE_CPNT,
 
 	PO_A_APER_TOT,
 
@@ -358,10 +358,10 @@ tcsvarinfo sam_mw_trough_type250_variables[] = {
 	{ TCS_PARAM,          TCS_MATRIX,      P_SCAINFOARRAY,        "SCAInfoArray",                       "(:,1) = HCE type, (:,2)= Collector type for each SCA in the loop ",         "none",             "",             "","[1,1][1,1][1,1][1,1][1,1][1,1][1,1][1,1]" },
 	{ TCS_PARAM,           TCS_ARRAY,   P_SCADEFOCUSARRAY,     "SCADefocusArray",                                            "Order in which the SCA's should be defocused",         "none",             "",             "","8,7,6,5,4,3,2,1" },
     
-    { TCS_PARAM,          TCS_MATRIX,            P_K_INTC,              "K_intc",                           "Interconnect minor loss coefficients, row=assy, col=component",         "none",             "",             "",           "-1" },
-    { TCS_PARAM,          TCS_MATRIX,            P_D_INTC,              "D_intc",                                         "Interconnect diameters, row=assy, col=component",         "none",             "",             "",           "-1" },
-    { TCS_PARAM,          TCS_MATRIX,            P_L_INTC,              "L_intc",                                           "Interconnect lengths, row=assy, col=component",         "none",             "",             "",           "-1" },
-    { TCS_PARAM,          TCS_MATRIX,           P_TYPE_INTC,         "Type_intc",                                              "Interconnect type, row=assy, col=component",         "none",             "",             "",           "-1" },
+    { TCS_PARAM,          TCS_MATRIX,            P_K_CPNT,              "K_cpnt",                      "Interconnect component minor loss coefficients, row=intc, col=cpnt",         "none",             "",             "",           "-1" },
+    { TCS_PARAM,          TCS_MATRIX,            P_D_CPNT,              "D_cpnt",                                    "Interconnect component diameters, row=intc, col=cpnt",         "none",             "",             "",           "-1" },
+    { TCS_PARAM,          TCS_MATRIX,            P_L_CPNT,              "L_cpnt",                                      "Interconnect component lengths, row=intc, col=cpnt",         "none",             "",             "",           "-1" },
+    { TCS_PARAM,          TCS_MATRIX,           P_TYPE_CPNT,         "Type_cpnt",                                         "Interconnect component type, row=intc, col=cpnt",         "none",             "",             "",           "-1" },
 
 	// Field design calculations
 	{ TCS_PARAM,          TCS_NUMBER,     PO_A_APER_TOT,             "A_aper_tot",                                          "Total solar field aperture area",                           "m^2",             "",             "",             "-1.23" },
@@ -608,14 +608,14 @@ private:
 	double* SCADefocusArray;		//Order in which the SCA's should be defocused
 	int nval_SCADefocusArray;
 
-    double* K_intc_in;         // Interconnect minor loss coefficients, row=assy, col=component
-    int nrow_K_intc, ncol_K_intc;
-    double* D_intc_in;         // Interconnect diameters, row=assy, col=component
-    int nrow_D_intc, ncol_D_intc;
-    double* L_intc_in;         // Interconnect lengths, row=assy, col=component
-    int nrow_L_intc, ncol_L_intc;
-    double* Type_intc_in;        // Interconnect type, row=assy, col=component
-    int nrow_Type_intc, ncol_Type_intc;
+    double* K_cpnt_in;         // Interconnect component minor loss coefficients, row=intc, col=component
+    int nrow_K_cpnt, ncol_K_cpnt;
+    double* D_cpnt_in;         // Interconnect component diameters, row=intc, col=component
+    int nrow_D_cpnt, ncol_D_cpnt;
+    double* L_cpnt_in;         // Interconnect component lengths, row=intc, col=component
+    int nrow_L_cpnt, ncol_L_cpnt;
+    double* Type_cpnt_in;        // Interconnect component type, row=intc, col=component
+    int nrow_Type_cpnt, ncol_Type_cpnt;
     IntcOutputs inlet_state, crossover_state, outlet_state, intc_state;
 
 	double I_b;		//Direct normal incident solar irradiation
@@ -671,10 +671,10 @@ private:
 	util::matrix_t<double> HCE_FieldFrac, D_2, D_3, D_4, D_5, D_p, Flow_type, Rough, alpha_env, epsilon_3_11, epsilon_3_12, 
 		epsilon_3_13, epsilon_3_14, epsilon_3_21, epsilon_3_22, epsilon_3_23, epsilon_3_24, epsilon_3_31, epsilon_3_32, epsilon_3_33, 
 		epsilon_3_34, epsilon_3_41, epsilon_3_42, epsilon_3_43, epsilon_3_44, alpha_abs, Tau_envelope, EPSILON_4, EPSILON_5, 
-		GlazingIntactIn, P_a, AnnulusGas, AbsorberMaterial, Shadowing, Dirt_HCE, Design_loss, SCAInfoArray, K_intc, D_intc, L_intc, Type_intc,
-        rough_intc, u_intc, mc_intc;
+		GlazingIntactIn, P_a, AnnulusGas, AbsorberMaterial, Shadowing, Dirt_HCE, Design_loss, SCAInfoArray, K_cpnt, D_cpnt, L_cpnt, Type_cpnt,
+        rough_cpnt, u_cpnt, mc_cpnt;
 	
-    vector<intc_assy> intc_assys;
+    vector<interconnect> interconnects;
 
 	util::matrix_t<double> IAM_matrix;
 	//int n_c_iam_matrix = 0;
@@ -912,14 +912,14 @@ public:
 		nrow_SCAInfoArray = -1, ncol_SCAInfoArray = -1;
 		SCADefocusArray	= NULL;
 		nval_SCADefocusArray = -1;
-        K_intc_in = NULL;
-        nrow_K_intc = -1, ncol_K_intc = -1;
-        D_intc_in = NULL;
-        nrow_D_intc = -1, ncol_D_intc = -1;
-        L_intc_in = NULL;
-        nrow_L_intc = -1, ncol_L_intc = -1;
-        Type_intc_in = NULL;
-        nrow_Type_intc = -1, ncol_Type_intc = -1;
+        K_cpnt_in = NULL;
+        nrow_K_cpnt = -1, ncol_K_cpnt = -1;
+        D_cpnt_in = NULL;
+        nrow_D_cpnt = -1, ncol_D_cpnt = -1;
+        L_cpnt_in = NULL;
+        nrow_L_cpnt = -1, ncol_L_cpnt = -1;
+        Type_cpnt_in = NULL;
+        nrow_Type_cpnt = -1, ncol_Type_cpnt = -1;
 		I_b	= std::numeric_limits<double>::quiet_NaN();
 		T_db	= std::numeric_limits<double>::quiet_NaN();
 		V_wind	= std::numeric_limits<double>::quiet_NaN();
@@ -1222,10 +1222,10 @@ public:
 		SCAInfoArray_in = value(P_SCAINFOARRAY, &nrow_SCAInfoArray, &ncol_SCAInfoArray);		//(:,1) = HCE type, (:,2)= Collector type for each SCA in the loop  [none]
 		SCADefocusArray = value(P_SCADEFOCUSARRAY, &nval_SCADefocusArray);		//Order in which the SCA's should be defocused [none]
 
-        K_intc_in = value(P_K_INTC, &nrow_K_intc, &ncol_K_intc);
-        D_intc_in = value(P_D_INTC, &nrow_D_intc, &ncol_D_intc);
-        L_intc_in = value(P_L_INTC, &nrow_L_intc, &ncol_L_intc);
-        Type_intc_in = value(P_TYPE_INTC, &nrow_Type_intc, &ncol_Type_intc);
+        K_cpnt_in = value(P_K_CPNT, &nrow_K_cpnt, &ncol_K_cpnt);
+        D_cpnt_in = value(P_D_CPNT, &nrow_D_cpnt, &ncol_D_cpnt);
+        L_cpnt_in = value(P_L_CPNT, &nrow_L_cpnt, &ncol_L_cpnt);
+        Type_cpnt_in = value(P_TYPE_CPNT, &nrow_Type_cpnt, &ncol_Type_cpnt);
 
 		//Put all of the matrices into a more handlable format
 		HCE_FieldFrac.assign(HCE_FieldFrac_in, nrow_HCE_FieldFrac, ncol_HCE_FieldFrac);
@@ -1265,46 +1265,47 @@ public:
 		Dirt_HCE.assign(Dirt_HCE_in, nrow_Dirt_HCE, ncol_Dirt_HCE);
 		Design_loss.assign(Design_loss_in, nrow_Design_loss, ncol_Design_loss);
 		SCAInfoArray.assign(SCAInfoArray_in, nrow_SCAInfoArray, ncol_SCAInfoArray);
-        K_intc.assign(K_intc_in, nrow_K_intc, ncol_K_intc);
-        D_intc.assign(D_intc_in, nrow_D_intc, ncol_D_intc);
-        L_intc.assign(L_intc_in, nrow_L_intc, ncol_L_intc);
-        Type_intc.assign(Type_intc_in, nrow_Type_intc, ncol_Type_intc);
-        rough_intc.resize_fill(nrow_K_intc, ncol_K_intc, HDR_rough);
-        u_intc.resize_fill(nrow_K_intc, ncol_K_intc, Pipe_hl_coef);
-        mc_intc.resize(nrow_K_intc, ncol_K_intc);
-        for (std::size_t i = 0; i < mc_intc.ncells(); i++) {
-            mc_intc[i] = mc_bal_sca * 3.6e3 * L_intc[i];
+        K_cpnt.assign(K_cpnt_in, nrow_K_cpnt, ncol_K_cpnt);
+        D_cpnt.assign(D_cpnt_in, nrow_D_cpnt, ncol_D_cpnt);
+        L_cpnt.assign(L_cpnt_in, nrow_L_cpnt, ncol_L_cpnt);
+        Type_cpnt.assign(Type_cpnt_in, nrow_Type_cpnt, ncol_Type_cpnt);
+        rough_cpnt.resize_fill(nrow_K_cpnt, ncol_K_cpnt, HDR_rough);
+        u_cpnt.resize_fill(nrow_K_cpnt, ncol_K_cpnt, Pipe_hl_coef);
+        mc_cpnt.resize(nrow_K_cpnt, ncol_K_cpnt);
+        for (std::size_t i = 0; i < mc_cpnt.ncells(); i++) {
+            mc_cpnt[i] = mc_bal_sca * 3.6e3 * L_cpnt[i];
         }
 
-        intc_assys.reserve(nrow_K_intc);  // nrow_K_intc = number of interconnect assemblies
-        for (std::size_t i = 0; i < nrow_K_intc; i++) {
-            intc_assys.push_back(intc_assy(&htfProps, K_intc.row(i).data(), D_intc.row(i).data(), L_intc.row(i).data(),
-                rough_intc.row(i).data(), u_intc.row(i).data(), mc_intc.row(i).data(), Type_intc.row(i).data(), K_intc.ncols()));
+        interconnects.reserve(nrow_K_cpnt);  // nrow_K_cpnt = number of interconnects
+        for (std::size_t i = 0; i < nrow_K_cpnt; i++) {
+            interconnects.push_back(interconnect(&htfProps, K_cpnt.row(i).data(), D_cpnt.row(i).data(), L_cpnt.row(i).data(),
+                rough_cpnt.row(i).data(), u_cpnt.row(i).data(), mc_cpnt.row(i).data(), Type_cpnt.row(i).data(), K_cpnt.ncols()));
         }
 
-        //std::ofstream logAssys;
-        //logAssys.open("logAssys.txt");
-        //logAssys << "K" << "\t" << "D" << "\t" << "L" << "\t" << "Type" << "\n";
-        //for (std::vector<intc_assy>::iterator ita = intc_assys.begin(); ita < intc_assys.end(); ++ita) {
-        //    for (std::vector<interconnect>::size_type i = 0; i != ita->getNintcs(); i++) {
-        //        logAssys << ita->getK(i) << "-";
+        //std::ofstream logIntcs;
+        //logIntcs.open("logIntcs.txt");
+        //logIntcs << "K" << "\t" << "D" << "\t" << "L" << "\t" << "Type" << "\n";
+
+        //for (std::vector<interconnect>::iterator it = interconnects.begin(); it < interconnects.end(); ++it) {
+        //    for (std::vector<intc_cpnt>::size_type i = 0; i != it->getNcpnts(); i++) {
+        //        logIntcs << it->getK(i) << "-";
         //    }
-        //    logAssys << "\t";
-        //    for (std::vector<interconnect>::size_type i = 0; i != ita->getNintcs(); i++) {
-        //        logAssys << ita->getD(i) << "-";
+        //    logIntcs << "\t";
+        //    for (std::vector<intc_cpnt>::size_type i = 0; i != it->getNcpnts(); i++) {
+        //        logIntcs << it->getD(i) << "-";
         //    }
-        //    logAssys << "\t";
-        //    for (std::vector<interconnect>::size_type i = 0; i != ita->getNintcs(); i++) {
-        //        logAssys << ita->getLength(i) << "-";
+        //    logIntcs << "\t";
+        //    for (std::vector<intc_cpnt>::size_type i = 0; i != it->getNcpnts(); i++) {
+        //        logIntcs << it->getLength(i) << "-";
         //    }
-        //    logAssys << "\t";
-        //    for (std::vector<interconnect>::size_type i = 0; i != ita->getNintcs(); i++) {
-        //        logAssys << (int)ita->getType(i) << "-";
+        //    logIntcs << "\t";
+        //    for (std::vector<intc_cpnt>::size_type i = 0; i != it->getNcpnts(); i++) {
+        //        logIntcs << (int)it->getType(i) << "-";
         //    }
         //    //log.flush();
-        //    logAssys << "\n";
+        //    logIntcs << "\n";
         //}
-        //logAssys.close();
+        //logIntcs.close();
 
 		//The glazingintact array should be converted to bools
 		GlazingIntact.resize(nrow_GlazingIntactIn, ncol_GlazingIntactIn);
@@ -1632,12 +1633,12 @@ public:
 			}
 
 			// Add on volume for the interconnects and crossover piping
-            for (int i = 0; i < intc_assys.size(); i++) {
-                if (i == 0 || i == intc_assys.size() - 1) {
-                    v_loop_tot += intc_assys[i].getFluidVolume() / 2. * float(nLoops);  // halve the inlet and outlet piping so to not double count
+            for (int i = 0; i < interconnects.size(); i++) {
+                if (i == 0 || i == interconnects.size() - 1) {
+                    v_loop_tot += interconnects[i].getFluidVolume() / 2. * float(nLoops);  // halve the inlet and outlet piping so to not double count
                 }
                 else {
-                    v_loop_tot += intc_assys[i].getFluidVolume() * float(nLoops);
+                    v_loop_tot += interconnects[i].getFluidVolume() * float(nLoops);
                 }
             }
 
@@ -2227,7 +2228,7 @@ overtemp_iter_flag: //10 continue     //Return loop for over-temp conditions
 				if(i < nSCA-1) 
 				{            
 					//Calculate inlet temperature of the next SCA
-                    IntcOutputs intc_state = intc_assys[i+2].State(m_dot_htf, T_htf_out[i], T_db, P_intc_in);
+                    IntcOutputs intc_state = interconnects[i+2].State(m_dot_htf, T_htf_out[i], T_db, P_intc_in);
                     P_intc_in -= intc_state.pressure_drop;  // pressure drops in HCAs only accounted for later
 					T_htf_in[i+1] = intc_state.temp_out;
 					//mjw 1.18.2011 Add the internal energy of the crossover piping and interconnects between the current SCA and the next one
@@ -2768,9 +2769,9 @@ calc_final_metrics_goto:
 		// Calculate the pressure drop across the piping system
 		// ******************************************************************************************************************************
 		//------Inlet, Outlet, and COP
-        inlet_state = intc_assys[0].State(m_dot_htf * 2, T_loop_in, T_db, P_field_in);
-        crossover_state = intc_assys[intc_assys.size() / 2].State(m_dot_htf, T_htf_out[nSCA / 2 - 1], T_db, P_field_in/2);
-        outlet_state = intc_assys[intc_assys.size() - 1].State(m_dot_htf * 2, T_loop_outX, T_db, 1.e5);  // assumption for press.
+        inlet_state = interconnects[0].State(m_dot_htf * 2, T_loop_in, T_db, P_field_in);
+        crossover_state = interconnects[interconnects.size() / 2].State(m_dot_htf, T_htf_out[nSCA / 2 - 1], T_db, P_field_in/2);
+        outlet_state = interconnects[interconnects.size() - 1].State(m_dot_htf * 2, T_loop_outX, T_db, 1.e5);  // assumption for press.
         DP_IOCOP = inlet_state.pressure_drop + crossover_state.pressure_drop + outlet_state.pressure_drop;
 
 		//-------HCE's (no interconnects)
@@ -2788,12 +2789,12 @@ calc_final_metrics_goto:
 			}
 		}
 		//The pressure drop only across the loop (excludes IOCOP)
-        intc_state = intc_assys[1].State(m_dot_htf, inlet_state.temp_out, T_db, inlet_state.pressure_out);
+        intc_state = interconnects[1].State(m_dot_htf, inlet_state.temp_out, T_db, inlet_state.pressure_out);
         DP_loop = intc_state.pressure_drop;  // just before first SCA
 		for(int j=0; j<nSCA; j++)
         {
             DP_loop += DP_tube[j];
-            intc_state = intc_assys[j + 2].State(m_dot_htf, T_htf_out[j], T_db, intc_state.pressure_out - DP_tube[j]);
+            intc_state = interconnects[j + 2].State(m_dot_htf, T_htf_out[j], T_db, intc_state.pressure_out - DP_tube[j]);
             if (j != nSCA/2 - 1) {   // exclude crossover
                 DP_loop += intc_state.pressure_drop;
             }
