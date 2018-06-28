@@ -68,7 +68,7 @@ TestResult windpowerDefaultResult[] = {
 	{"monthly_energy[11]",					NR,					2.8218e6,				.1}
 };
 
-testDeclaration defaultTest(windPowerTesting, "default", &windpowerDefaultInfo[0], 24, &windpowerDefaultResult[0], 3);
+testDeclaration windPowerdefaultTest(windPowerTesting, "default", &windpowerDefaultInfo[0], 24, &windpowerDefaultResult[0], 3);
 
 
 /*
@@ -80,7 +80,7 @@ TestInfo windpowerLeapYearInfo[] = {
 	{"wind_resource_filename",				STR,				leapYear }
 };
 
-testDeclaration leapYearTest(windPowerTesting, "leapYear", &windpowerLeapYearInfo[0], 1, &windpowerDefaultResult[0], 3);
+testDeclaration windPowerleapYearTest(windPowerTesting, "leapYear", &windpowerLeapYearInfo[0], 1, &windpowerDefaultResult[0], 3);
 
 
 /*
@@ -100,7 +100,7 @@ TestResult hubHeightErrorResult[] = {
 	{										ERR }
 };
 
-testDeclaration hubHeightErrorTest(windPowerTesting, "hubHeightError", &hubHeightErrorInfo[0], 3, &hubHeightErrorResult[0], 1);
+testDeclaration windPowerhubHeightErrorTest(windPowerTesting, "hubHeightError", &hubHeightErrorInfo[0], 3, &hubHeightErrorResult[0], 1);
 
 
 /*
@@ -120,7 +120,7 @@ TestResult hubHeightInterpolateResult[] = {
 	{"annual_energy",						GT,					33224154,				.1 }
 };
 
-testDeclaration hubHeightInterpolateTest(windPowerTesting, "hubHeightInterpolate", &hubHeightInterpolateInfo[0], 3, &hubHeightInterpolateResult[0], 1);
+testDeclaration windPowerhubHeightInterpolateTest(windPowerTesting, "hubHeightInterpolate", &hubHeightInterpolateInfo[0], 3, &hubHeightInterpolateResult[0], 1);
 
 
 /*
@@ -201,20 +201,20 @@ testDeclaration weibullTest(windPowerTesting, "waspModel", &weibullInfo[0], 1, &
 * Icing and Low Temp Cutoff, with Wind Resource Data
 */
 TestInfo icingLowTempInfo[] = {
-	{"wind_resource_filename",				STR,				"" },
-	{"wind_resource_data",					DAT,				windresourcedata },
-	{"en_low_temp_cutoff",					NUM,				"1"									},
-	{"en_icing_cutoff",						NUM,				"1"									},
-	{"low_temp_cutoff",						NUM,				"-10"								},
-	{"icing_cutoff_temp",					NUM,				"20"								},
-	{"icing_cutoff_rh",						NUM,				"0.7"								}
+	{"wind_resource_filename",				STR,				""							},
+	{"wind_resource_data",					DAT,				windresourcedata			},
+	{"en_low_temp_cutoff",					NUM,				"1"							},
+	{"en_icing_cutoff",						NUM,				"1"							},
+	{"low_temp_cutoff",						NUM,				"-10"						},
+	{"icing_cutoff_temp",					NUM,				"20"						},
+	{"icing_cutoff_rh",						NUM,				"0.7"						}
 };
 
 TestResult icingLowTempResult[] = {
-	{"annual_energy",						NR,					33224154 / 2,				.1 },
-	{"monthly_energy[0]",					NR,					2.8218e6 / 2,				.1 },
-	{"monthly_energy[11]",					NR,					2.8218e6 / 2,				.1 },
-	{"cutoff_losses",						NR,					0.5,						.1 }
+	{"annual_energy",						NR,					33224154 / 2,			.1 },
+	{"monthly_energy[0]",					NR,					2.8218e6 / 2,			.1 },
+	{"monthly_energy[11]",					NR,					2.8218e6 / 2,			.1 },
+	{"cutoff_losses",						NR,					0.5,					.1 }
 };
 
 testDeclaration icingLowTempTest(windPowerTesting, "waspModel", &icingLowTempInfo[0], 7, &icingLowTempResult[0], 4);

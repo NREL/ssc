@@ -87,12 +87,6 @@
     <ClInclude Include="..\test\input_cases\pvsamv1_cases.h">
       <Filter>input_cases</Filter>
     </ClInclude>
-    <ClInclude Include="..\test\ssc_test\cmod_pvwattsv5_test.h">
-      <Filter>ssc_test</Filter>
-    </ClInclude>
-    <ClInclude Include="..\test\input_cases\pvwattsv5_cases.h">
-      <Filter>input_cases</Filter>
-    </ClInclude>
     <ClInclude Include="..\test\input_cases\windpower_cases.h">
       <Filter>input_cases</Filter>
     </ClInclude>

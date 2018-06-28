@@ -685,7 +685,7 @@ TestResult physTroughPPASingleDefaultResult[] = {
     { "annual_q_inc_sf_tot",                NR,                 2.50421e06,             0.1 }   // Total power incident on the field [MWht]
 };
 
-testDeclaration defaultTest1(physTroughTesting, "default", &physTroughPPASingleDefaultInfo[0], 383, &physTroughPPASingleDefaultResult[0], 15);
+testDeclaration physTroughDefaultTest(physTroughTesting, "default", &physTroughPPASingleDefaultInfo[0], 383, &physTroughPPASingleDefaultResult[0], 15);
 
 
 
