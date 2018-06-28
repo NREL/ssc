@@ -55,7 +55,7 @@
 #include "htf_props.h"
 
 
-enum class IntcType {
+enum class CpntType {
     Fitting,
     Pipe,
     Flex_Hose,
@@ -87,7 +87,7 @@ double FrictionFactor(double rel_rough, double Re);
 double FricFactor_Iter(double rel_rough, double Re);
 
 
-class interconnect
+class intc_cpnt
 {
 private:
     double k_;                       // minor loss coefficient [-]
@@ -97,7 +97,7 @@ private:
     double hl_coef_;                 // overall heat loss coefficient [W/(m2-K)]
     double mc_;                      // heat capacity w/o htf [J/K]
     double wall_thick_;              // wall thickness [m]
-    IntcType Type;
+    CpntType Type;
     bool OuterSurfArea_valid_;
     double OuterSurfArea_;
     bool FlowArea_valid_;
@@ -110,8 +110,8 @@ private:
     void calcFluidVolume();
 
 public:
-    interconnect(double k, double d, double l, double rough, double u, double mc, IntcType type);
-    ~interconnect();
+    intc_cpnt(double k, double d, double l, double rough, double u, double mc, CpntType type);
+    ~intc_cpnt();
 
     double getK() const;
     void setK(double k);
@@ -127,24 +127,24 @@ public:
     void setHeatCap(double mc);
     double getWallThick() const;
     void setWallThick(double wall_thick);
-    IntcType getType() const;
+    CpntType getType() const;
     double getOuterSurfArea();
     double getFlowArea();
     double getFluidVolume();
 
-    double HeatLoss(double T_intc, double T_db);
+    double HeatLoss(double T_cpnt, double T_db);
     double TempDrop(HTFProperties *fluidProps, double m_dot, double T_in, double heatLoss);
-    double TempDrop(HTFProperties *fluidProps, double m_dot, double T_in, double T_intc, double T_db);
+    double TempDrop(HTFProperties *fluidProps, double m_dot, double T_in, double T_cpnt, double T_db);
     double PressureDrop(HTFProperties *fluidProps, double m_dot, double T_htf_ave, double P_htf_ave);
-    double InternalEnergy(HTFProperties *fluidProps, double T_intc, double T_htf, double P_htf_ave);
-    IntcOutputs State(HTFProperties *fluidProps, double m_dot, double T_in, double T_intc, double T_db, double P_htf_ave);
+    double InternalEnergy(HTFProperties *fluidProps, double T_cpnt, double T_htf, double P_htf_ave);
+    IntcOutputs State(HTFProperties *fluidProps, double m_dot, double T_in, double T_cpnt, double T_db, double P_htf_ave);
 };
 
-class intc_assy
+class interconnect
 {
 private:
-    std::vector<interconnect> intcs;
-    int N_intcs_;
+    std::vector<intc_cpnt> cpnts;
+    int N_cpnts_;
     HTFProperties *FluidProps_;
     bool Length_valid_;
     double l_;
@@ -160,30 +160,30 @@ private:
     void calcOuterSurfArea();
     void calcFluidVolume();
 public:
-    intc_assy();
-    intc_assy(HTFProperties *fluidProps, double *k, double *d, double *l, double *rough, double *u, double *mc,
-        double *type, int n_intcs);
-    ~intc_assy();
+    interconnect();
+    interconnect(HTFProperties *fluidProps, double *k, double *d, double *l, double *rough, double *u, double *mc,
+        double *type, int n_cpnts);
+    ~interconnect();
 
-    void import_intcs(double *k, double *d, double *l, double *rough, double *u, double *mc, double *type, int n_intcs);
+    void import_cpnts(double *k, double *d, double *l, double *rough, double *u, double *mc, double *type, int num_cpnts);
     void resetValues();
 
     void setFluidProps(HTFProperties *fluidProps);
-    int getNintcs();
-    double getK(std::size_t intc) const;
-    double getD(std::size_t intc) const;
+    int getNcpnts();
+    double getK(std::size_t cpnt) const;
+    double getD(std::size_t cpnt) const;
     double getLength();
-    double getLength(std::size_t intc) const;
-    double getRelRough(std::size_t intc) const;
-    double getHLCoef(std::size_t intc) const;
+    double getLength(std::size_t cpnt) const;
+    double getRelRough(std::size_t cpnt) const;
+    double getHLCoef(std::size_t cpnt) const;
     double getHeatCap();
-    double getHeatCap(std::size_t intc) const;
-    IntcType getType(std::size_t intc) const;
+    double getHeatCap(std::size_t cpnt) const;
+    CpntType getType(std::size_t cpnt) const;
     double getOuterSurfArea();
-    double getOuterSurfArea(std::size_t intc);
-    double getFlowArea(std::size_t intc);
+    double getOuterSurfArea(std::size_t cpnt);
+    double getFlowArea(std::size_t cpnt);
     double getFluidVolume();
-    double getFluidVolume(std::size_t intc);
+    double getFluidVolume(std::size_t cpnt);
 
     IntcOutputs State(double m_dot, double T_in, double T_db, double P_in);
 };

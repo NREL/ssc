@@ -54,7 +54,7 @@
 
 double pi = acos(-1.);
 double T_ref_K = 298.150;
-int NA_intc = -1;
+int NA_cpnt = -1;
 
 IntcOutputs::IntcOutputs() {
     heat_loss = 0;
@@ -140,8 +140,8 @@ double FricFactor_Iter(double rel_rough, double Re) {
 //}
 
 
-interconnect::interconnect(double k = 0, double d = 0, double l = 0, double rough = 0, double u = 0,
-    double mc = 0, IntcType type = IntcType::Fitting)
+intc_cpnt::intc_cpnt(double k = 0, double d = 0, double l = 0, double rough = 0, double u = 0,
+    double mc = 0, CpntType type = CpntType::Fitting)
     :k_(k),
     d_in_(d),
     l_(l),
@@ -167,15 +167,15 @@ interconnect::interconnect(double k = 0, double d = 0, double l = 0, double roug
     setWallThick(WallThickness(d_in_));
 }
 
-interconnect::~interconnect()
+intc_cpnt::~intc_cpnt()
 {
 }
 
-double interconnect::getK() const {
+double intc_cpnt::getK() const {
     return k_;
 }
 
-void interconnect::setK(double k) {
+void intc_cpnt::setK(double k) {
     if (k >= 0)
     {
         k_ = k;
@@ -185,11 +185,11 @@ void interconnect::setK(double k) {
     }
 }
 
-double interconnect::getD() const {
+double intc_cpnt::getD() const {
     return d_in_;
 }
 
-void interconnect::setD(double d) {
+void intc_cpnt::setD(double d) {
     if (d >= 0)
     {
         d_in_ = d;
@@ -200,11 +200,11 @@ void interconnect::setD(double d) {
     }
 }
 
-double interconnect::getLength() const {
+double intc_cpnt::getLength() const {
     return l_;
 }
 
-void interconnect::setLength(double l) {
+void intc_cpnt::setLength(double l) {
     if (l >= 0)
     {
         l_ = l;
@@ -215,11 +215,11 @@ void interconnect::setLength(double l) {
     }
 }
 
-double interconnect::getRelRough() const {
+double intc_cpnt::getRelRough() const {
     return rough_;
 }
 
-void interconnect::setRelRough(double rough) {
+void intc_cpnt::setRelRough(double rough) {
     if (rough >= 0)
     {
         rough_ = rough;
@@ -229,11 +229,11 @@ void interconnect::setRelRough(double rough) {
     }
 }
 
-double interconnect::getHLCoef() const {
+double intc_cpnt::getHLCoef() const {
     return hl_coef_;
 }
 
-void interconnect::setHLCoef(double u) {
+void intc_cpnt::setHLCoef(double u) {
     if (u >= 0)
     {
         hl_coef_ = u;
@@ -243,11 +243,11 @@ void interconnect::setHLCoef(double u) {
     }
 }
 
-double interconnect::getHeatCap() const {
+double intc_cpnt::getHeatCap() const {
     return mc_;
 }
 
-void interconnect::setHeatCap(double mc) {
+void intc_cpnt::setHeatCap(double mc) {
     if (mc >= 0)
     {
         mc_ = mc;
@@ -257,11 +257,11 @@ void interconnect::setHeatCap(double mc) {
     }
 }
 
-double interconnect::getWallThick() const {
+double intc_cpnt::getWallThick() const {
     return wall_thick_;
 }
 
-void interconnect::setWallThick(double wall_thick) {
+void intc_cpnt::setWallThick(double wall_thick) {
     if (wall_thick >= 0)
     {
         wall_thick_ = wall_thick;
@@ -271,102 +271,102 @@ void interconnect::setWallThick(double wall_thick) {
     }
 }
 
-IntcType interconnect::getType() const {
+CpntType intc_cpnt::getType() const {
     return Type;
 }
 
-double interconnect::getOuterSurfArea() {
+double intc_cpnt::getOuterSurfArea() {
     if (!OuterSurfArea_valid_) { calcOuterSurfArea(); }
     return OuterSurfArea_;
 }
 
-void interconnect::calcOuterSurfArea() {
+void intc_cpnt::calcOuterSurfArea() {
     OuterSurfArea_ = pi * (d_in_ + 2*wall_thick_) * l_;
     OuterSurfArea_valid_ = true;
 }
 
-double interconnect::getFlowArea() {
+double intc_cpnt::getFlowArea() {
     if (!FlowArea_valid_) { calcFlowArea(); }
     return FlowArea_;
 }
 
-void interconnect::calcFlowArea() {
+void intc_cpnt::calcFlowArea() {
     FlowArea_ = pi * (d_in_ * d_in_) / 4;
     FlowArea_valid_ = true;
 }
 
-double interconnect::getFluidVolume() {
+double intc_cpnt::getFluidVolume() {
     if (!FluidVolume_valid_) { calcFluidVolume(); }
     return FluidVolume_;
 }
 
-void interconnect::calcFluidVolume() {
+void intc_cpnt::calcFluidVolume() {
     FluidVolume_ = pi * (d_in_ * d_in_) / 4. * l_;
     FluidVolume_valid_ = true;
 }
 
-double interconnect::HeatLoss(double T_intc, double T_db) {
+double intc_cpnt::HeatLoss(double T_cpnt, double T_db) {
     double A = getOuterSurfArea();  // fun needed b/c area is not always valid
-    return hl_coef_ * A * (T_intc - T_db);
+    return hl_coef_ * A * (T_cpnt - T_db);
 }
 
-double interconnect::TempDrop(HTFProperties *fluidProps, double m_dot, double T_in, double heatLoss) {
+double intc_cpnt::TempDrop(HTFProperties *fluidProps, double m_dot, double T_in, double heatLoss) {
     double cp = fluidProps->Cp(T_in) * 1000;  // J/kg-K
     return heatLoss / (m_dot * cp);   // positive value means T_out < T_in
 }
 
-double interconnect::TempDrop(HTFProperties *fluidProps, double m_dot, double T_in, double T_intc, double T_db) {
+double intc_cpnt::TempDrop(HTFProperties *fluidProps, double m_dot, double T_in, double T_cpnt, double T_db) {
     double cp = fluidProps->Cp(T_in) * 1000;  // J/kg-K
-    return HeatLoss(T_intc, T_db) / (m_dot * cp);   // positive value means T_out < T_in
+    return HeatLoss(T_cpnt, T_db) / (m_dot * cp);   // positive value means T_out < T_in
 }
 
-double interconnect::PressureDrop(HTFProperties *fluidProps, double m_dot, double T_htf_ave, double P_htf_ave) {
+double intc_cpnt::PressureDrop(HTFProperties *fluidProps, double m_dot, double T_htf_ave, double P_htf_ave) {
     double rho = fluidProps->dens(T_htf_ave, P_htf_ave);
     double vel = m_dot / ( rho * getFlowArea() );
     double Re, ff;
 
     switch (Type)
     {
-        case IntcType::Fitting:
+        case CpntType::Fitting:
             return MinorPressureDrop(vel, rho, k_);
-        case IntcType::Pipe:
+        case CpntType::Pipe:
             Re = fluidProps->Re(T_htf_ave, P_htf_ave, vel, d_in_);
             ff = FrictionFactor(rough_ / d_in_, Re);
             return MajorPressureDrop(vel, rho, ff, l_, d_in_);
-        case IntcType::Flex_Hose:
+        case CpntType::Flex_Hose:
             // TODO : Differentiate this pressure drop relation for flex hoses
             Re = fluidProps->Re(T_htf_ave, P_htf_ave, vel, d_in_);
             ff = FrictionFactor(rough_ / d_in_, Re);
             return MajorPressureDrop(vel, rho, ff, l_, d_in_);
         default:
-            throw std::invalid_argument("This interconnect type has no pressure drop calculation.");
+            throw std::invalid_argument("This component type has no pressure drop calculation.");
     }
 }
 
-double interconnect::InternalEnergy(HTFProperties *fluidProps, double T_intc, double T_htf_ave, double P_htf_ave) {
+double intc_cpnt::InternalEnergy(HTFProperties *fluidProps, double T_cpnt, double T_htf_ave, double P_htf_ave) {
     double cp = fluidProps->Cp(T_htf_ave) * 1000;  // J/kg-K
     return (getFluidVolume() * fluidProps->dens(T_htf_ave, P_htf_ave) * cp +
-        getHeatCap()) * (T_intc - T_ref_K);
+        getHeatCap()) * (T_cpnt - T_ref_K);
 }
 
-IntcOutputs interconnect::State(HTFProperties *fluidProps, double m_dot, double T_in, double T_intc, double T_db, double P_htf_ave) {
+IntcOutputs intc_cpnt::State(HTFProperties *fluidProps, double m_dot, double T_in, double T_cpnt, double T_db, double P_htf_ave) {
     IntcOutputs output;
-    output.heat_loss = HeatLoss(T_intc, T_db);
+    output.heat_loss = HeatLoss(T_cpnt, T_db);
     output.temp_drop = TempDrop(fluidProps, m_dot, T_in, output.heat_loss);
     output.temp_out = T_in - output.temp_drop;
     output.temp_ave = (T_in + output.temp_out) / 2;
     output.pressure_drop = PressureDrop(fluidProps, m_dot, output.temp_ave, P_htf_ave);
     output.pressure_out = P_htf_ave - output.pressure_drop / 2;  // just an approximation to fill an output
     output.pressure_ave = P_htf_ave;
-    output.internal_energy = InternalEnergy(fluidProps, T_intc, output.temp_ave, P_htf_ave);
+    output.internal_energy = InternalEnergy(fluidProps, T_cpnt, output.temp_ave, P_htf_ave);
 
     return output;
 }
 
 
 
-intc_assy::intc_assy()
-    :N_intcs_(0),
+interconnect::interconnect()
+    :N_cpnts_(0),
     Length_valid_(false),
     l_(0),
     HeatCap_valid_(false),
@@ -378,8 +378,8 @@ intc_assy::intc_assy()
 {
 }
 
-intc_assy::intc_assy(HTFProperties *fluidProps, double *k, double *d, double *l, double *rel_rough, double *u, double *mc, double *type, int n_intcs)
-    :N_intcs_(0),
+interconnect::interconnect(HTFProperties *fluidProps, double *k, double *d, double *l, double *rel_rough, double *u, double *mc, double *type, int n_cpnts)
+    :N_cpnts_(0),
     Length_valid_(false),
     l_(0),
     HeatCap_valid_(false),
@@ -389,35 +389,35 @@ intc_assy::intc_assy(HTFProperties *fluidProps, double *k, double *d, double *l,
     FluidVolume_valid_(false),
     FluidVolume_(0)
 {
-    import_intcs(k, d, l, rel_rough, u, mc, type, n_intcs);
+    import_cpnts(k, d, l, rel_rough, u, mc, type, n_cpnts);
     setFluidProps(fluidProps);
 }
 
-intc_assy::~intc_assy()
+interconnect::~interconnect()
 {
 }
 
-void intc_assy::import_intcs(double *k, double *d, double *l, double *rel_rough, double *u, double *mc, double *type, int n_intcs)
+void interconnect::import_cpnts(double *k, double *d, double *l, double *rel_rough, double *u, double *mc, double *type, int num_cpnts)
 {
-    std::size_t max_ints = n_intcs;
-    std::size_t n_ints = 0;  // double check number of interconnects
-    while (k[n_ints] != NA_intc && n_ints < max_ints) { n_ints++; }
+    std::size_t max_cpnts = num_cpnts;
+    std::size_t n_cpnts = 0;  // double check number of components
+    while (k[n_cpnts] != NA_cpnt && n_cpnts < max_cpnts) { n_cpnts++; }
 
-    if (!intcs.empty()) { intcs.clear(); }
-    intcs.reserve(n_ints);
+    if (!cpnts.empty()) { cpnts.clear(); }
+    cpnts.reserve(n_cpnts);
 
-    interconnect intc;
-    for (int i = 0; i < n_ints; i++) {
-        if (type[i] < 0 || type[i] >= static_cast<int>(IntcType::FINAL_ENTRY)) {
-            throw std::invalid_argument("The interconnect type is out of range at index" + std::to_string(i));
+    intc_cpnt cpnt;
+    for (int i = 0; i < n_cpnts; i++) {
+        if (type[i] < 0 || type[i] >= static_cast<int>(CpntType::FINAL_ENTRY)) {
+            throw std::invalid_argument("The component type is out of range at index" + std::to_string(i));
         }
-        intc = interconnect(k[i], d[i], l[i], rel_rough[i], u[i], mc[i], static_cast<IntcType>((int)type[i]));
-        intcs.push_back(intc);
-        N_intcs_++;
-        l_ += intc.getLength();
-        mc_ += intc.getHeatCap();
-        OuterSurfArea_ += intc.getOuterSurfArea();
-        FluidVolume_ += intc.getFluidVolume();
+        cpnt = intc_cpnt(k[i], d[i], l[i], rel_rough[i], u[i], mc[i], static_cast<CpntType>((int)type[i]));
+        cpnts.push_back(cpnt);
+        N_cpnts_++;
+        l_ += cpnt.getLength();
+        mc_ += cpnt.getHeatCap();
+        OuterSurfArea_ += cpnt.getOuterSurfArea();
+        FluidVolume_ += cpnt.getFluidVolume();
     }
     Length_valid_ = true;
     HeatCap_valid_ = true;
@@ -425,9 +425,9 @@ void intc_assy::import_intcs(double *k, double *d, double *l, double *rel_rough,
     FluidVolume_valid_ = true;
 }
 
-void intc_assy::resetValues() {
-    intcs.clear();
-    N_intcs_ = 0;
+void interconnect::resetValues() {
+    cpnts.clear();
+    N_cpnts_ = 0;
     FluidProps_ = NULL;
     Length_valid_ = false;
     l_ = 0;
@@ -439,147 +439,147 @@ void intc_assy::resetValues() {
     FluidVolume_ = 0;
 }
 
-void intc_assy::setFluidProps(HTFProperties *fluidProps) {
+void interconnect::setFluidProps(HTFProperties *fluidProps) {
     FluidProps_ = fluidProps;
 }
 
-int intc_assy::getNintcs() {
-    return N_intcs_;
+int interconnect::getNcpnts() {
+    return N_cpnts_;
 }
 
-double intc_assy::getK(std::size_t intc) const
+double interconnect::getK(std::size_t cpnt) const
 {
-    return intcs.at(intc).getK();
+    return cpnts.at(cpnt).getK();
 }
 
-double intc_assy::getD(std::size_t intc) const
+double interconnect::getD(std::size_t cpnt) const
 {
-    return intcs.at(intc).getD();
+    return cpnts.at(cpnt).getD();
 }
 
-double intc_assy::getLength() {
+double interconnect::getLength() {
     if (!Length_valid_) { calcLength(); }
     return l_;
 }
 
-double intc_assy::getLength(std::size_t intc) const
+double interconnect::getLength(std::size_t cpnt) const
 {
-    return intcs.at(intc).getLength();
+    return cpnts.at(cpnt).getLength();
 }
 
-void intc_assy::calcLength() {
+void interconnect::calcLength() {
     l_ = 0;
-    for (std::vector<interconnect>::iterator it = intcs.begin(); it < intcs.end(); ++it) {
-        l_ += it->getLength();  // interconnect::getLength()
+    for (std::vector<intc_cpnt>::iterator it = cpnts.begin(); it < cpnts.end(); ++it) {
+        l_ += it->getLength();  // intc_cpnt::getLength()
     }
     Length_valid_ = true;
 }
 
-double intc_assy::getRelRough(std::size_t intc) const
+double interconnect::getRelRough(std::size_t cpnt) const
 {
-    return intcs.at(intc).getRelRough();
+    return cpnts.at(cpnt).getRelRough();
 }
 
-double intc_assy::getHLCoef(std::size_t intc) const
+double interconnect::getHLCoef(std::size_t cpnt) const
 {
-    return intcs.at(intc).getHLCoef();
+    return cpnts.at(cpnt).getHLCoef();
 }
 
-double intc_assy::getHeatCap() {
+double interconnect::getHeatCap() {
     if (!HeatCap_valid_) { calcHeatCap(); }
     return mc_;
 }
 
-double intc_assy::getHeatCap(std::size_t intc) const
+double interconnect::getHeatCap(std::size_t cpnt) const
 {
-    return intcs.at(intc).getHeatCap();
+    return cpnts.at(cpnt).getHeatCap();
 }
 
-void intc_assy::calcHeatCap() {
+void interconnect::calcHeatCap() {
     mc_ = 0;
-    for (std::vector<interconnect>::iterator it = intcs.begin(); it < intcs.end(); ++it) {
-        mc_ += it->getHeatCap();  // interconnect::getHeatCap()
+    for (std::vector<intc_cpnt>::iterator it = cpnts.begin(); it < cpnts.end(); ++it) {
+        mc_ += it->getHeatCap();  // intc_cpnt::getHeatCap()
     }
     HeatCap_valid_ = true;
 }
 
-IntcType intc_assy::getType(std::size_t intc) const {
-    return intcs.at(intc).getType();
+CpntType interconnect::getType(std::size_t cpnt) const {
+    return cpnts.at(cpnt).getType();
 }
 
-double intc_assy::getOuterSurfArea() {
+double interconnect::getOuterSurfArea() {
     if (!OuterSurfArea_valid_) { calcOuterSurfArea(); }
     return OuterSurfArea_;
 }
 
-double intc_assy::getOuterSurfArea(std::size_t intc) {
-    return intcs.at(intc).getOuterSurfArea();
+double interconnect::getOuterSurfArea(std::size_t cpnt) {
+    return cpnts.at(cpnt).getOuterSurfArea();
 }
 
-void intc_assy::calcOuterSurfArea() {
+void interconnect::calcOuterSurfArea() {
     OuterSurfArea_ = 0;
-    for (std::vector<interconnect>::iterator it = intcs.begin(); it < intcs.end(); ++it) {
-        OuterSurfArea_ += it->getOuterSurfArea();  // interconnect::getOuterSurfArea()
+    for (std::vector<intc_cpnt>::iterator it = cpnts.begin(); it < cpnts.end(); ++it) {
+        OuterSurfArea_ += it->getOuterSurfArea();  // intc_cpnt::getOuterSurfArea()
     }
     OuterSurfArea_ = true;
 }
 
-double intc_assy::getFlowArea(std::size_t intc) {
-    return intcs.at(intc).getFlowArea();
+double interconnect::getFlowArea(std::size_t cpnt) {
+    return cpnts.at(cpnt).getFlowArea();
 }
 
-double intc_assy::getFluidVolume() {
+double interconnect::getFluidVolume() {
     if (!FluidVolume_valid_) { calcFluidVolume(); }
     return FluidVolume_;
 }
 
-double intc_assy::getFluidVolume(std::size_t intc) {
-    return intcs.at(intc).getFluidVolume();
+double interconnect::getFluidVolume(std::size_t cpnt) {
+    return cpnts.at(cpnt).getFluidVolume();
 }
 
-void intc_assy::calcFluidVolume() {
+void interconnect::calcFluidVolume() {
     FluidVolume_ = 0;
-    for (std::vector<interconnect>::iterator it = intcs.begin(); it < intcs.end(); ++it) {
-        FluidVolume_ += it->getFluidVolume();  // interconnect::getFluidVolume()
+    for (std::vector<intc_cpnt>::iterator it = cpnts.begin(); it < cpnts.end(); ++it) {
+        FluidVolume_ += it->getFluidVolume();  // intc_cpnt::getFluidVolume()
     }
     FluidVolume_valid_ = true;
 }
 
-IntcOutputs intc_assy::State(double m_dot, double T_in, double T_db, double P_in) {
-    IntcOutputs AssyOutput;
+IntcOutputs interconnect::State(double m_dot, double T_in, double T_db, double P_in) {
+    IntcOutputs output;
     
-    if (N_intcs_ > 0) {
+    if (N_cpnts_ > 0) {
         IntcOutputs IntcOutput;
         double T_out_prev = T_in;
         double P_out_prev = P_in;
 
-        for (std::vector<interconnect>::iterator it = intcs.begin(); it < intcs.end(); ++it) {
-            IntcOutput = it->State(FluidProps_, m_dot, T_out_prev, T_out_prev, T_db, P_out_prev);  // interconnect::State()
-            AssyOutput.heat_loss += IntcOutput.heat_loss;
-            AssyOutput.pressure_drop += IntcOutput.pressure_drop;
-            AssyOutput.internal_energy += IntcOutput.internal_energy;
+        for (std::vector<intc_cpnt>::iterator it = cpnts.begin(); it < cpnts.end(); ++it) {
+            IntcOutput = it->State(FluidProps_, m_dot, T_out_prev, T_out_prev, T_db, P_out_prev);  // intc_cpnt::State()
+            output.heat_loss += IntcOutput.heat_loss;
+            output.pressure_drop += IntcOutput.pressure_drop;
+            output.internal_energy += IntcOutput.internal_energy;
 
             T_out_prev = IntcOutput.temp_out;
             P_out_prev = P_out_prev - IntcOutput.pressure_drop;
         }
-        AssyOutput.temp_drop = T_in - IntcOutput.temp_out;
-        AssyOutput.temp_out = IntcOutput.temp_out;
-        AssyOutput.temp_ave = (T_in + AssyOutput.temp_out) / 2;
-        AssyOutput.pressure_out = P_in - AssyOutput.pressure_drop;
-        AssyOutput.pressure_ave = (P_in + AssyOutput.pressure_out) / 2;
+        output.temp_drop = T_in - IntcOutput.temp_out;
+        output.temp_out = IntcOutput.temp_out;
+        output.temp_ave = (T_in + output.temp_out) / 2;
+        output.pressure_out = P_in - output.pressure_drop;
+        output.pressure_ave = (P_in + output.pressure_out) / 2;
     }
     else {
-        AssyOutput.heat_loss = 0;
-        AssyOutput.temp_drop = 0;
-        AssyOutput.temp_out = T_in;
-        AssyOutput.temp_ave = T_in;
-        AssyOutput.pressure_drop = 0;
-        AssyOutput.pressure_out = P_in;
-        AssyOutput.pressure_ave = P_in;
-        AssyOutput.internal_energy = 0;
+        output.heat_loss = 0;
+        output.temp_drop = 0;
+        output.temp_out = T_in;
+        output.temp_ave = T_in;
+        output.pressure_drop = 0;
+        output.pressure_out = P_in;
+        output.pressure_ave = P_in;
+        output.internal_energy = 0;
     }
     
-    return AssyOutput;
+    return output;
 }
 
 
