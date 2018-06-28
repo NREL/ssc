@@ -170,10 +170,10 @@ static var_info _cm_vtab_tcstrough_physical[] = {
     { SSC_INPUT,        SSC_MATRIX,      "SCAInfoArray",              "Receiver (,1) and collector (,2) type for each assembly in loop",                 "none",          "",             "solar_field",    "*",                       "",                      "" },
     { SSC_INPUT,        SSC_ARRAY,       "SCADefocusArray",           "Collector defocus order",                                                         "none",          "",             "solar_field",    "*",                       "",                      "" },
 
-    { SSC_INPUT,        SSC_MATRIX,      "K_intc",                    "Interconnect minor loss coefficients, row=assy, col=component",                   "none",          "",             "solar_field",    "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_MATRIX,      "D_intc",                    "Interconnect diameters, row=assy, col=component",                                 "none",          "",             "solar_field",    "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_MATRIX,      "L_intc",                    "Interconnect lengths, row=assy, col=component",                                   "none",          "",             "solar_field",    "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_MATRIX,      "Type_intc",                 "Interconnect type, row=assy, col=component",                                      "none",          "",             "solar_field",    "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_MATRIX,      "K_cpnt",                    "Interconnect component minor loss coefficients, row=intc, col=cpnt",              "none",          "",             "solar_field",    "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_MATRIX,      "D_cpnt",                    "Interconnect component diameters, row=intc, col=cpnt",                            "none",          "",             "solar_field",    "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_MATRIX,      "L_cpnt",                    "Interconnect component lengths, row=intc, col=cpnt",                              "none",          "",             "solar_field",    "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_MATRIX,      "Type_cpnt",                 "Interconnect component type, row=intc, col=cpnt",                                 "none",          "",             "solar_field",    "*",                       "",                      "" },
 														          															          
 //   controller (type 251) inputs							          
 //   VARTYPE            DATATYPE          NAME                        LABEL                                                             UNITS           META            GROUP             REQUIRED_IF                CONSTRAINTS              UI_HINTS
@@ -628,10 +628,10 @@ public:
         set_unit_value_ssc_matrix(type250_solarfield, "Design_loss" ); // , [[150,1100,1500,0],[150,1100,1500,0],[150,1100,1500,0],[150,1100,1500,0]]);
         set_unit_value_ssc_matrix(type250_solarfield, "SCAInfoArray" ); // , [[1,1],[1,1],[1,1],[1,1],[1,1],[1,1],[1,1],[1,1]]);
         set_unit_value_ssc_array(type250_solarfield, "SCADefocusArray" ); // , [8,7,6,5,4,3,2,1]);
-        set_unit_value_ssc_matrix(type250_solarfield, "K_intc");
-        set_unit_value_ssc_matrix(type250_solarfield, "D_intc");
-        set_unit_value_ssc_matrix(type250_solarfield, "L_intc");
-        set_unit_value_ssc_matrix(type250_solarfield, "Type_intc");
+        set_unit_value_ssc_matrix(type250_solarfield, "K_cpnt");
+        set_unit_value_ssc_matrix(type250_solarfield, "D_cpnt");
+        set_unit_value_ssc_matrix(type250_solarfield, "L_cpnt");
+        set_unit_value_ssc_matrix(type250_solarfield, "Type_cpnt");
 			// Set the initial values required from "downstream" types
         set_unit_value_ssc_double(type250_solarfield, "defocus", 1.0); // , 1.);
 		set_unit_value_ssc_double(type250_solarfield, "T_cold_in", as_double("T_loop_in_des")); // , 293.);
