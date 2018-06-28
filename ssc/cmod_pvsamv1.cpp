@@ -1617,7 +1617,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 					// calculate rear-side irradiance for bifacial modules
 					double ipoa_rear = 0.;
 					double ipoa_front = ibeam + iskydiff + ignddiff;
-					double ipoa_front_reflected = 0;
+
 					if (Subarrays[0]->Module->isBifacial)
 					{
 						irr.calc_rear_side(Subarrays[0]->Module->bifacialTransmissionFactor, Subarrays[0]->Module->bifaciality);

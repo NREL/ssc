@@ -1305,12 +1305,12 @@ int irrad::calc_rear_side(double transmissionFactor, double bifaciality)
 	
 	// Calculate the irradiance on the front of the PV module (to get front reflected)
 	std::vector<double> frontIrradiancePerCellrow, frontReflected;
-	double frontAverageIrradiance;
+	double frontAverageIrradiance = 0;
 	getFrontSurfaceIrradiances(pvFrontShadeFraction, rowToRow, verticalHeight, clearanceGround, distanceBetweenRows, horizontalLength, frontGroundGHI, frontIrradiancePerCellrow, frontAverageIrradiance, frontReflected);
 
 	// Calculate the irradiance on the back of the PV module
 	std::vector<double> rearIrradiancePerCellrow;
-	double rearAverageIrradiance;
+	double rearAverageIrradiance = 0;
 	getBackSurfaceIrradiances(pvBackShadeFraction, rowToRow, verticalHeight, clearanceGround, distanceBetweenRows, horizontalLength, rearGroundGHI, frontGroundGHI, frontReflected, rearIrradiancePerCellrow, rearAverageIrradiance);
 	poaRearAverage = rearAverageIrradiance * bifaciality;
 	return true;

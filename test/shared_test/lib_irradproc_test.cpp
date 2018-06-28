@@ -461,7 +461,6 @@ TEST_F(BifacialIrradTest, TestSkyConfigFactors)
 	for (size_t i = 0; i != rearSkyConfigFactors.size(); i++){
 		ASSERT_NEAR(rearSkyConfigFactors[i], expectedSkyConfigFactors[i], e);
 		ASSERT_NEAR(frontSkyConfigFactors[i], expectedSkyConfigFactors[i], e);
-
 	}
 }
 /**
