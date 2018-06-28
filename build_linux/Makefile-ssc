@@ -40,6 +40,7 @@ OBJECTS = \
 	cmod_windpower.o \
 	cmod_windbos.o \
 	cmod_wind_obos.o \
+	cmod_windcsm.o \
 	cmod_pv6parmod.o \
 	cmod_pvsandiainv.o \
 	cmod_pvsamv1.o \
@@ -62,6 +63,7 @@ OBJECTS = \
 	cmod_ippppa.o \
 	cmod_swh.o \
 	cmod_geothermal.o \
+	cmod_geothermal_costs.o \
 	cmod_poacalib.o \
 	core.o \
 	vartab.o \

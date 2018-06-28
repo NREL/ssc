@@ -6,7 +6,7 @@
 #include "core.h"
 #include "vartab.h"
 #include "common.h"
-#include "input_cases/pvwattsv5_cases.h"
+#include "../input_cases/pvwattsv5_cases.h"
 
 /**
 * CMPVWattsV5 tests cmod_pvwattsv5 using a solar resource file. SetUp() creates default case,
@@ -16,7 +16,7 @@ class CMPvwattsV5Integration : public ::testing::Test {
 protected: //doesn't really matter if this is protected or public, but you need to declare one or the other or it will default to private which doesn't work
 	ssc_data_t data;
 
-	double error_tolerance = 1.0;
+	double error_tolerance = 1.0e-3;
 
 	bool compute();
 	void SetUp() { //if you always want to set up with the same default case, this can go in the class. otherwise it probably makes sense in the test itself.

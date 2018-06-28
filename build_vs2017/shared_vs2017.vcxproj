@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
@@ -27,6 +27,7 @@
     <ClInclude Include="..\shared\6par_solve.h" />
     <ClInclude Include="..\shared\lib_battery.h" />
     <ClInclude Include="..\shared\lib_battery_dispatch.h" />
+    <ClInclude Include="..\shared\lib_battery_powerflow.h" />
     <ClInclude Include="..\shared\lib_cec6par.h" />
     <ClInclude Include="..\shared\lib_financial.h" />
     <ClInclude Include="..\shared\lib_geothermal.h" />
@@ -42,18 +43,22 @@
     <ClInclude Include="..\shared\lib_pvwatts.h" />
     <ClInclude Include="..\shared\lib_pv_shade_loss_mpp.h" />
     <ClInclude Include="..\shared\lib_sandia.h" />
+    <ClInclude Include="..\shared\lib_shared_inverter.h" />
     <ClInclude Include="..\shared\lib_snowmodel.h" />
     <ClInclude Include="..\shared\lib_util.h" />
+    <ClInclude Include="..\shared\lib_utility_rate.h" />
     <ClInclude Include="..\shared\lib_weatherfile.h" />
     <ClInclude Include="..\shared\lib_windfile.h" />
     <ClInclude Include="..\shared\lib_windwakemodel.h" />
     <ClInclude Include="..\shared\lib_windwatts.h" />
     <ClInclude Include="..\shared\lib_wind_obos.h" />
+    <ClInclude Include="..\shared\lib_wind_obos_cable_vessel.h" />
     <ClInclude Include="..\shared\lsqfit.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\shared\lib_battery.cpp" />
     <ClCompile Include="..\shared\lib_battery_dispatch.cpp" />
+    <ClCompile Include="..\shared\lib_battery_powerflow.cpp" />
     <ClCompile Include="..\shared\lib_cec6par.cpp" />
     <ClCompile Include="..\shared\lib_financial.cpp" />
     <ClCompile Include="..\shared\lib_geothermal.cpp" />
@@ -69,13 +74,16 @@
     <ClCompile Include="..\shared\lib_pvwatts.cpp" />
     <ClCompile Include="..\shared\lib_pv_shade_loss_mpp.cpp" />
     <ClCompile Include="..\shared\lib_sandia.cpp" />
+    <ClCompile Include="..\shared\lib_shared_inverter.cpp" />
     <ClCompile Include="..\shared\lib_snowmodel.cpp" />
     <ClCompile Include="..\shared\lib_util.cpp" />
+    <ClCompile Include="..\shared\lib_utility_rate.cpp" />
     <ClCompile Include="..\shared\lib_weatherfile.cpp" />
     <ClCompile Include="..\shared\lib_windfile.cpp" />
     <ClCompile Include="..\shared\lib_windwakemodel.cpp" />
     <ClCompile Include="..\shared\lib_windwatts.cpp" />
     <ClCompile Include="..\shared\lib_wind_obos.cpp" />
+    <ClCompile Include="..\shared\lib_wind_obos_cable_vessel.cpp" />
     <ClCompile Include="..\shared\lsqfit.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
