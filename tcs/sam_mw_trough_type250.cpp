@@ -488,6 +488,8 @@ private:
 	int accept_loc;			//In acceptance testing mode - temperature sensor location (1=hx,2=loop)
 	bool is_using_input_gen;
 	
+    bool design_sizing;      // is the field being sized at design conditions, including the pressures?
+
 	double solar_mult;		//Solar multiple
 	double mc_bal_hot;		//The heat capacity of the balance of plant on the hot side
 	double mc_bal_cold;		//The heat capacity of the balance of plant on the cold side
@@ -791,6 +793,8 @@ public:
 		accept_init	= false;
 		accept_loc	= -1;
 		is_using_input_gen = false;
+
+        design_sizing = false;
 
 		solar_mult	= std::numeric_limits<double>::quiet_NaN();
 		mc_bal_hot	= std::numeric_limits<double>::quiet_NaN();
@@ -1115,6 +1119,8 @@ public:
 		accept_loc = (int)value(P_ACCEPT_LOC);					// In acceptance testing mode - temperature sensor location (1=hx,2=loop) [none]
 		is_using_input_gen = (value(P_USING_INPUT_GEN)>0);	// Is model getting inputs from input generator (true) or from other components in physical trough SYSTEM model (false)
 		
+        design_sizing = true;                   // placeholder for parameter
+
 		solar_mult = value(P_SOLAR_MULT);		//Solar multiple [none]
 		mc_bal_hot = value(P_MC_BAL_HOT);		//The heat capacity of the balance of plant on the hot side [kWht/K-MWt]
 		mc_bal_cold = value(P_MC_BAL_COLD);		//The heat capacity of the balance of plant on the cold side [kWht/K-MWt]
@@ -1717,8 +1723,51 @@ public:
 		else
 			ss_init_complete = true;
 
+        // Design Sizing
+        if (design_sizing) {
+            int accept_mode_orig = accept_mode;
+            bool accept_init_orig = accept_init;
+            int accept_loc_orig = accept_loc;
+            bool is_using_input_gen_orig = is_using_input_gen;
+
+            accept_mode = 1;                    // use acceptance testing code
+            accept_init = true;                 // require steady-state
+            accept_loc = 1;                     // don't just model a single loop
+            is_using_input_gen = false;         // using parameter values set below instead
+
+            value(I_I_B, I_bn_des);		        // Direct normal incident solar irradiation [W/m^2]
+            value(I_T_DB, 30);		            // Dry bulb air temperature [C]
+            value(I_V_WIND, 5);		            // Ambient windspeed  [m/s]
+            //value(I_P_AMB, );		            // Ambient pressure [mbar]   - use first value in weather file
+            value(I_T_DP, 30 - 10);		        // The dewpoint temperature [C]
+            value(I_T_COLD_IN, T_loop_in_des - 273.15); // HTF return temperature, to the field [C]
+            value(I_M_DOT_IN, m_dot_design * 3600);     // HTF mass flow rate at the inlet to the field  [kg/hr]
+            value(I_DEFOCUS, 1);		        // Defocus control  [none] (1 = no defocus)
+            value(I_SOLARAZ, ColAz*r2d + 180);	// Solar azimuth angle, 0 = North [deg], before SolarAz is converted so to make them equal
+            latitude = value(I_LATITUDE);		// Site latitude read from weather file [deg]
+            longitude = value(I_LONGITUDE);		// Site longitude read from weather file [deg]
+            shift = value(I_SHIFT);			    // [deg]
+
+            call(43200, 0, 0);      // 43200 = noon
+
+            // Restore parameters
+            design_sizing = false;
+            start_time = -1;
+            accept_mode = accept_mode_orig;
+            accept_init = accept_init_orig;
+            accept_loc = accept_loc_orig;
+            is_using_input_gen = is_using_input_gen_orig;
+            T_sys_c_last = T_field_ini;
+            T_sys_h_last = T_field_ini;
+            T_htf_in0.fill(T_field_ini);
+            T_htf_out0.fill(T_field_ini);
+            T_htf_ave0.fill(T_field_ini);
+        }
+
 		// Write Calculated Design Parameters
 		value(PO_A_APER_TOT, Ap_tot);	//[m^2] Total solar field aperture area
+        // TODO - output design pressures
+
 		return true;
 	}
 
@@ -1757,7 +1806,7 @@ public:
 		P_amb *= 100.0; //mbar -> Pa
 		T_cold_in += 273.15;
 		m_dot_in *= 1/3600.;
-		SolarAz = (SolarAz - 180.0) * d2r;
+		SolarAz = (SolarAz - 180.0) * d2r;      // convert from North=0 to South=0
 		latitude *= d2r;
 		longitude *= d2r;
 		shift *= d2r;
@@ -1873,12 +1922,19 @@ public:
 			double SolarTime = StdTime+((shift)*180.0/pi)/15.0+ EOT/60.0;
 			// hour angle (arc of sun) in radians
 			double omega = (SolarTime - 12.0)*15.0*pi/180.0;
-			// B. Stine equation for Solar Altitude angle in radians
-			SolarAlt = asin(sin(Dec)*sin(latitude)+cos(latitude)*cos(Dec)*cos(omega));
-			if( (accept_init  &&  time == start_time) || is_using_input_gen )
-			{  //MJW 1.14.2011 
-				SolarAz = CSP::sign(omega)*fabs(acos(min(1.0,(cos(pi/2.-SolarAlt)*sin(latitude)-sin(Dec))/(sin(pi/2.-SolarAlt)*cos(latitude)))));
-			}
+
+            if (design_sizing) {
+                SolarAlt = ColTilt;
+                SolarAz = ColAz;
+            }
+            else {
+                // B. Stine equation for Solar Altitude angle in radians
+                SolarAlt = asin(sin(Dec)*sin(latitude) + cos(latitude)*cos(Dec)*cos(omega));
+                if ((accept_init  &&  time == start_time) || is_using_input_gen)
+                {  //MJW 1.14.2011 
+                    SolarAz = CSP::sign(omega)*fabs(acos(min(1.0, (cos(pi / 2. - SolarAlt)*sin(latitude) - sin(Dec)) / (sin(pi / 2. - SolarAlt)*cos(latitude)))));
+                }
+            }
     
 			// Calculation of Tracking Angle for Trough. Stine Reference
 			double TrackAngle = atan ( cos(SolarAlt) * sin(SolarAz-ColAz) / 
