@@ -761,7 +761,7 @@ namespace util
 	#endif
 			return t_array[i];
 		}
-				
+		
 		inline size_t nrows() const
 		{
 			return n_rows;
