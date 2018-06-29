@@ -110,7 +110,8 @@ private:
     void calcFluidVolume();
 
 public:
-    intc_cpnt(double k, double d, double l, double rough, double u, double mc, CpntType type);
+    intc_cpnt(double k = 0, double d = 0, double l = 0, double rough = 0, double u = 0,
+        double mc = 0, CpntType type = CpntType::Fitting);
     ~intc_cpnt();
 
     double getK() const;
