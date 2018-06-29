@@ -140,8 +140,7 @@ double FricFactor_Iter(double rel_rough, double Re) {
 //}
 
 
-intc_cpnt::intc_cpnt(double k = 0, double d = 0, double l = 0, double rough = 0, double u = 0,
-    double mc = 0, CpntType type = CpntType::Fitting)
+intc_cpnt::intc_cpnt(double k, double d, double l, double rough, double u, double mc, CpntType type)
     :k_(k),
     d_in_(d),
     l_(l),
