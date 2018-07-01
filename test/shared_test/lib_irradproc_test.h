@@ -9,9 +9,9 @@
 #include "input_cases/bifacialvf_data/expectedWeather.h"
 /*
 #include "input_cases/bifacialvf_data/expectedFrontGroundGHI.h"
+#include "input_cases/bifacialvf_data/expectedRearGroundGHI.h"
 #include "input_cases/bifacialvf_data/expectedFrontIrradiance.h"
 #include "input_cases/bifacialvf_data/expectedFrontReflected.h"
-#include "input_cases/bifacialvf_data/expectedRearGroundGHI.h"
 #include "input_cases/bifacialvf_data/expectedRearIrradiance.h"
 #include "input_cases/bifacialvf_data/expectedScalarValues.h"
 */

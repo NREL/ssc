@@ -1,5 +1,5 @@
-#ifndef _EXPECTED_WEATHER_H_
-#define _EXPECTED_WEATHER_H_
+#ifndef _EXPECTED_WEATHER_H_ 
+#define _EXPECTED_WEATHER_H_ 
 #include <vector>
 static std::vector<std::vector<double>> expectedWeather = {
 {1987,1,1,7,30,2,9},
@@ -4757,6 +4757,5 @@ static std::vector<std::vector<double>> expectedWeather = {
 {1978,12,31,13,30,1,216},
 {1978,12,31,14,30,40,164},
 {1978,12,31,15,30,69,88},
-{1978,12,31,16,30,3,11},
 };
 #endif

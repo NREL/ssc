@@ -1,7 +1,7 @@
-#ifndef _EXPECTED_SCALAR_H_
-#define _EXPECTED_SCALAR_H_
+#ifndef _EXPECTED_SCALAR_H_ 
+#define _EXPECTED_SCALAR_H_ 
 #include <vector>
-static std::vector<std::vector<double>> expectedRearIrradiance = {
+static std::vector<std::vector<double>> expectedScalarValues = {
 {8.43696909087,1.6383216187,0.462809265051,1.0},
 {55.1702322244,10.13210059,0.0656485836061,1.0},
 {71.0892379481,13.4369260783,0.0,1.0},
@@ -4757,4 +4757,5 @@ static std::vector<std::vector<double>> expectedRearIrradiance = {
 {210.713341644,36.6882420539,0.0,1.0},
 {181.040735434,27.4607813367,0.0,1.0},
 {106.343747857,14.6728107186,0.0,1.0},
-{10.4579517539,2.00323539262,0.290481342904,1.0},
+};
+#endif
