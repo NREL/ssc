@@ -306,11 +306,18 @@ static var_info _cm_vtab_tcstrough_physical[] = {
     { SSC_OUTPUT,       SSC_ARRAY,       "pipe_header_expansions", "Number of field piping header expansions",                  "-",             "",            "Type250",        "*",                       "",                      "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "pipe_header_mdot_dsn",   "Field piping header mass flow at design",				    "kg/s",          "",            "Type250",        "*",                       "",                      "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "pipe_header_vel_dsn",    "Field piping header velocity at design",				    "m/s",           "",            "Type250",        "*",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "pipe_header_T_dsn",      "Field piping header temperature at design",				    "C",             "",            "Type250",        "*",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "pipe_header_P_dsn",      "Field piping header pressure at design",				    "bar",           "",            "Type250",        "*",                       "",                      "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "pipe_runner_diams",      "Field piping runner diameters",								"m",             "",            "Type250",        "*",                       "",                      "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "pipe_runner_lengths",    "Field piping runner lengths",								"m",             "",            "Type250",        "*",                       "",                      "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "pipe_runner_expansions", "Number of field piping runner expansions",                  "-",             "",            "Type250",        "*",                       "",                      "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "pipe_runner_mdot_dsn",   "Field piping runner mass flow at design",				    "kg/s",          "",            "Type250",        "*",                       "",                      "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "pipe_runner_vel_dsn",    "Field piping runner velocity at design",				    "m/s",           "",            "Type250",        "*",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "pipe_runner_T_dsn",      "Field piping runner temperature at design",				    "C",             "",            "Type250",        "*",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "pipe_runner_P_dsn",      "Field piping runner pressure at design",				    "bar",           "",            "Type250",        "*",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "pipe_loop_T_dsn",        "Field piping loop temperature at design",				    "C",             "",            "Type250",        "*",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "pipe_loop_P_dsn",        "Field piping loop pressure at design",				        "bar",           "",            "Type250",        "*",                       "",                      "" },
+
 	{ SSC_OUTPUT,       SSC_ARRAY,       "Theta_ave",         "Field collector solar incidence angle",                          "deg",           "",            "Type250",        "*",                       "",                      "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "CosTh_ave",         "Field collector cosine efficiency",                              "",              "",            "Type250",        "*",                       "",                      "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "IAM_ave",           "Field collector incidence angle modifier",                       "",              "",            "Type250",        "*",                       "",                      "" },
@@ -853,6 +860,12 @@ public:
         double *header_velocity_design = get_unit_value(type250_solarfield, "pipe_header_vel_dsn", &nv);
         ssc_number_t *header_velocity_design_cm = allocate("pipe_header_vel_dsn", nv);
         std::copy(header_velocity_design, header_velocity_design + nv, header_velocity_design_cm);
+        double *header_temp_design = get_unit_value(type250_solarfield, "pipe_header_temp_dsn", &nv);
+        ssc_number_t *header_temp_design_cm = allocate("pipe_header_temp_dsn", nv);
+        std::copy(header_temp_design, header_temp_design + nv, header_temp_design_cm);
+        double *header_pressure_design = get_unit_value(type250_solarfield, "pipe_header_pressure_dsn", &nv);
+        ssc_number_t *header_pressure_design_cm = allocate("pipe_header_pressure_dsn", nv);
+        std::copy(header_pressure_design, header_pressure_design + nv, header_pressure_design_cm);
         double *runner_diams = get_unit_value(type250_solarfield, "pipe_runner_diams", &nv);
 		ssc_number_t *runner_diams_cm = allocate("pipe_runner_diams", nv);
         std::copy(runner_diams, runner_diams + nv, runner_diams_cm);
@@ -868,6 +881,18 @@ public:
         double *runner_velocity_design = get_unit_value(type250_solarfield, "pipe_runner_vel_dsn", &nv);
         ssc_number_t *runner_velocity_design_cm = allocate("pipe_runner_vel_dsn", nv);
         std::copy(runner_velocity_design, runner_velocity_design + nv, runner_velocity_design_cm);
+        double *runner_temp_design = get_unit_value(type250_solarfield, "pipe_runner_temp_dsn", &nv);
+        ssc_number_t *runner_temp_design_cm = allocate("pipe_runner_temp_dsn", nv);
+        std::copy(runner_temp_design, runner_temp_design + nv, runner_temp_design_cm);
+        double *runner_pressure_design = get_unit_value(type250_solarfield, "pipe_runner_pressure_dsn", &nv);
+        ssc_number_t *runner_pressure_design_cm = allocate("pipe_runner_pressure_dsn", nv);
+        std::copy(runner_pressure_design, runner_pressure_design + nv, runner_pressure_design_cm);
+        double *loop_temp_design = get_unit_value(type250_solarfield, "pipe_loop_temp_dsn", &nv);
+        ssc_number_t *loop_temp_design_cm = allocate("pipe_loop_temp_dsn", nv);
+        std::copy(loop_temp_design, loop_temp_design + nv, loop_temp_design_cm);
+        double *loop_pressure_design = get_unit_value(type250_solarfield, "pipe_loop_pressure_dsn", &nv);
+        ssc_number_t *loop_pressure_design_cm = allocate("pipe_loop_pressure_dsn", nv);
+        std::copy(loop_pressure_design, loop_pressure_design + nv, loop_pressure_design_cm);
 		
 		// performance adjustment factors
 		adjustment_factors haf(this, "adjust");
