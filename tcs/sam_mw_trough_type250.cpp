@@ -198,11 +198,17 @@ enum{
     O_HEADER_XPANS,
     O_HEADER_MDOT_DSN,
     O_HEADER_V_DSN,
+    O_HEADER_T_DSN,
+    O_HEADER_P_DSN,
 	O_RUNNER_DIAMS,
 	O_RUNNER_LENGTHS,
     O_RUNNER_XPANS,
     O_RUNNER_MDOT_DSN,
     O_RUNNER_V_DSN,
+    O_RUNNER_T_DSN,
+    O_RUNNER_P_DSN,
+    O_LOOP_T_DSN,
+    O_LOOP_P_DSN,
 	O_T_SYS_H,
 	O_M_DOT_AVAIL,
 	O_Q_AVAIL,
@@ -384,11 +390,17 @@ tcsvarinfo sam_mw_trough_type250_variables[] = {
     { TCS_OUTPUT,          TCS_ARRAY,      O_HEADER_XPANS, "pipe_header_expansions",                                                      "Number of header piping expansions",            "-",             "",             "",             "" },
     { TCS_OUTPUT,          TCS_ARRAY,   O_HEADER_MDOT_DSN,   "pipe_header_mdot_dsn",					                              "Header piping mass flow rate at design",         "kg/s",             "",             "",             "" },
     { TCS_OUTPUT,          TCS_ARRAY,      O_HEADER_V_DSN,    "pipe_header_vel_dsn",					                                    "Header piping velocity at design",          "m/s",             "",             "",             "" },
+    { TCS_OUTPUT,          TCS_ARRAY,      O_HEADER_T_DSN,      "pipe_header_T_dsn",					                                 "Header piping temperature at design",            "C",             "",             "",             "" },
+    { TCS_OUTPUT,          TCS_ARRAY,      O_HEADER_P_DSN,      "pipe_header_P_dsn",					                                    "Header piping pressure at design",          "bar",             "",             "",             "" },
 	{ TCS_OUTPUT,          TCS_ARRAY,      O_RUNNER_DIAMS,      "pipe_runner_diams",                                                            "Runner piping diameter array",            "m",             "",             "",             "" },
     { TCS_OUTPUT,          TCS_ARRAY,    O_RUNNER_LENGTHS,    "pipe_runner_lengths",                                                              "Runner piping length array",            "m",             "",             "",             "" },
     { TCS_OUTPUT,          TCS_ARRAY,      O_RUNNER_XPANS, "pipe_runner_expansions",                                                      "Number of runner piping expansions",            "-",             "",             "",             "" },
     { TCS_OUTPUT,          TCS_ARRAY,   O_RUNNER_MDOT_DSN,   "pipe_runner_mdot_dsn",					                              "Runner piping mass flow rate at design",         "kg/s",             "",             "",             "" },
     { TCS_OUTPUT,          TCS_ARRAY,      O_RUNNER_V_DSN,    "pipe_runner_vel_dsn",					                                    "Runner piping velocity at design",          "m/s",             "",             "",             "" },
+    { TCS_OUTPUT,          TCS_ARRAY,      O_RUNNER_T_DSN,      "pipe_runner_T_dsn",					                                 "Runner piping temperature at design",            "C",             "",             "",             "" },
+    { TCS_OUTPUT,          TCS_ARRAY,      O_RUNNER_P_DSN,      "pipe_runner_P_dsn",					                                    "Runner piping pressure at design",          "bar",             "",             "",             "" },
+    { TCS_OUTPUT,          TCS_ARRAY,      O_LOOP_T_DSN,          "pipe_loop_T_dsn",					                                 "Runner piping temperature at design",            "C",             "",             "",             "" },
+    { TCS_OUTPUT,          TCS_ARRAY,      O_LOOP_P_DSN,          "pipe_loop_P_dsn",					                                    "Runner piping pressure at design",          "bar",             "",             "",             "" },
 
 	{ TCS_OUTPUT,          TCS_NUMBER,           O_T_SYS_H,                "T_sys_h",                                                      "Solar field HTF outlet temperature",            "C",             "",             "",             "" },
 	{ TCS_OUTPUT,          TCS_NUMBER,       O_M_DOT_AVAIL,            "m_dot_avail",                                                       "HTF mass flow rate from the field",        "kg/hr",             "",             "",             "" },
@@ -702,9 +714,9 @@ private:
 	util::matrix_t<double> L_actSCA, A_cs, D_h, ColOptEff /*nColt, nSCA*/;
 	util::matrix_t<bool> GlazingIntact;
 	emit_table epsilon_3;
-    util::matrix_t<double> D_runner, L_runner, m_dot_rnr_dsn, V_rnr_dsn, N_rnr_xpans, DP_rnr, P_rnr, T_rnr,
-        D_hdr, L_hdr, m_dot_hdr_dsn, V_hdr_dsn, N_hdr_xpans, DP_hdr, P_hdr, T_hdr,
-        DP_intc, P_intc, DP_loop, P_loop, T_loop;
+    util::matrix_t<double> D_runner, L_runner, m_dot_rnr_dsn, V_rnr_dsn, N_rnr_xpans, DP_rnr, T_rnr, P_rnr,
+        D_hdr, L_hdr, m_dot_hdr_dsn, V_hdr_dsn, N_hdr_xpans, DP_hdr, T_hdr, P_hdr,
+        DP_intc, P_intc, DP_loop, T_loop, P_loop;
 
 	util::matrix_t<double> 
 		T_htf_in, T_htf_out, T_htf_ave, q_loss, q_abs, c_htf, rho_htf, DP_tube, E_abs_field, 
@@ -2216,7 +2228,7 @@ overtemp_iter_flag: //10 continue     //Return loop for over-temp conditions
             intc_state = interconnects[0].State(m_dot_htf * 2, T_loop[0], T_db, P_intc_in);
             T_loop[1] = intc_state.temp_out;
             intc_state = interconnects[1].State(m_dot_htf, T_loop[1], T_db, intc_state.pressure_out);
-            T_htf_in[0] = intc_state.temp_out;      // redefine T_htf_in[0] considering new interconnects    
+            T_htf_in[0] = intc_state.temp_out; 
 
             for (int i = 0; i < nSCA; i++)
             {
@@ -2343,8 +2355,7 @@ overtemp_iter_flag: //10 continue     //Return loop for over-temp conditions
                 T_loop[loop_i + 1] = T_htf_out[sca_i];
                 loop_i = loop_i + 2; sca_i++;
             }
-
-
+            
 			if( accept_loc == 1 )
 			{								
 				//Consider heat loss from hot piping
@@ -3242,6 +3253,42 @@ set_outputs_and_return:
 		E_tot_accum = E_loop_accum_out + E_hdr_accum_out;
 		
 		double E_field_out = E_field*3.6e-9;
+
+        if (design_sizing) {
+            util::matrix_t<double> T_rnr_out, P_rnr_out, T_hdr_out, P_hdr_out, T_loop_out, P_loop_out;
+            T_rnr_out.resize(2 * nrunsec);
+            P_rnr_out.resize(2 * nrunsec);
+            T_hdr_out.resize(2 * nhdrsec);
+            P_hdr_out.resize(2 * nhdrsec);
+            T_loop_out.resize(2 * nSCA + 3);
+            P_loop_out.resize(2 * nSCA + 3);
+
+            for (int i = 0; i < 2 * nrunsec; i++) {
+                T_rnr_out[i] = T_rnr[i] - 273.15; // K to C
+                P_rnr_out[i] = P_rnr[i] / 1.e5;   // Pa to bar
+            }
+            for (int i = 0; i < 2 * nhdrsec; i++) {
+                T_hdr_out[i] = T_hdr[i] - 273.15;
+                P_hdr_out[i] = P_hdr[i] / 1.e5;
+            }
+            for (int i = 0; i < 2 * nSCA + 3; i++) {
+                T_loop_out[i] = T_loop[i] - 273.15;
+                P_loop_out[i] = P_loop[i] / 1.e5;
+            }
+            
+            double *runner_temp_design = allocate(O_RUNNER_T_DSN, (int)T_rnr.ncells());
+            std::copy(T_rnr.data(), T_rnr.data() + T_rnr.ncells(), runner_temp_design);
+            double *runner_pressure_design = allocate(O_RUNNER_P_DSN, (int)P_rnr.ncells());
+            std::copy(P_rnr.data(), P_rnr.data() + P_rnr.ncells(), runner_pressure_design);
+            double *header_temp_design = allocate(O_HEADER_T_DSN, (int)T_hdr.ncells());
+            std::copy(T_hdr.data(), T_hdr.data() + T_hdr.ncells(), header_temp_design);
+            double *header_pressure_design = allocate(O_HEADER_P_DSN, (int)P_hdr.ncells());
+            std::copy(P_hdr.data(), P_hdr.data() + P_hdr.ncells(), header_pressure_design);
+            double *loop_temp_design = allocate(O_LOOP_T_DSN, (int)T_loop.ncells());
+            std::copy(T_loop.data(), T_loop.data() + T_loop.ncells(), loop_temp_design);
+            double *loop_pressure_design = allocate(O_LOOP_P_DSN, (int)P_loop.ncells());
+            std::copy(P_loop.data(), P_loop.data() + P_loop.ncells(), loop_pressure_design);
+        }
 		//------------------------------------------------------------------
 
 		
