@@ -1131,7 +1131,7 @@ public:
 		accept_loc = (int)value(P_ACCEPT_LOC);					// In acceptance testing mode - temperature sensor location (1=hx,2=loop) [none]
 		is_using_input_gen = (value(P_USING_INPUT_GEN)>0);	// Is model getting inputs from input generator (true) or from other components in physical trough SYSTEM model (false)
 		
-        design_sizing = true;                   // placeholder for parameter
+        design_sizing = false;                   // placeholder for parameter
 
 		solar_mult = value(P_SOLAR_MULT);		//Solar multiple [none]
 		mc_bal_hot = value(P_MC_BAL_HOT);		//The heat capacity of the balance of plant on the hot side [kWht/K-MWt]
@@ -1794,7 +1794,6 @@ public:
 
 		// Write Calculated Design Parameters
 		value(PO_A_APER_TOT, Ap_tot);	//[m^2] Total solar field aperture area
-        // TODO - output design pressures
         // Update P_field_in value
 
 		return true;
@@ -3037,8 +3036,8 @@ calc_final_metrics_goto:
         DP_loop_tot = accumulate(DP_tube.data(), DP_tube.data() + DP_tube.ncells(), 0.0) +
             accumulate(DP_intc.data(), DP_intc.data() + DP_intc.ncells(), 0.0) -
             DP_IOCOP;
-        DP_hdr_cold = accumulate(DP_hdr.data(), DP_tube.data() + DP_tube.ncells() / 2, 0.0); // TODO - manually verify these
-        DP_hdr_hot = accumulate(DP_tube.data() + DP_tube.ncells() / 2 + 1, DP_tube.data() + DP_tube.ncells(), 0.0); // TODO - manually verify these
+        DP_hdr_cold = accumulate(DP_hdr.data(), DP_hdr.data() + DP_hdr.ncells() / 2, 0.0); // TODO - manually verify these
+        DP_hdr_hot = accumulate(DP_hdr.data() + DP_hdr.ncells() / 2 + 1, DP_hdr.data() + DP_hdr.ncells(), 0.0); // TODO - manually verify these
         DP_toField = accumulate(DP_rnr.data(), DP_rnr.data() + DP_rnr.ncells() / 2, 0.0); // TODO - manually verify these
         DP_fromField = accumulate(DP_rnr.data() + DP_rnr.ncells() / 2 + 1, DP_rnr.data() + DP_rnr.ncells(), 0.0); // TODO - manually verify these
 
