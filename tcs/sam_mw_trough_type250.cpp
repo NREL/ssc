@@ -807,7 +807,7 @@ public:
 		accept_loc	= -1;
 		is_using_input_gen = false;
 
-        design_sizing = false;
+        design_sizing = true;
 
 		solar_mult	= std::numeric_limits<double>::quiet_NaN();
 		mc_bal_hot	= std::numeric_limits<double>::quiet_NaN();
@@ -3032,14 +3032,40 @@ calc_final_metrics_goto:
 		}
 
         // Aggregate pressures
-        DP_IOCOP = DP_intc[0] - DP_intc[DP_intc.ncells() / 2] - DP_intc[DP_intc.ncells() - 1];
+        DP_IOCOP = DP_intc[0] + DP_intc[(DP_intc.ncells() - 1) / 2] + DP_intc[DP_intc.ncells() - 1];
         DP_loop_tot = accumulate(DP_tube.data(), DP_tube.data() + DP_tube.ncells(), 0.0) +
             accumulate(DP_intc.data(), DP_intc.data() + DP_intc.ncells(), 0.0) -
             DP_IOCOP;
-        DP_hdr_cold = accumulate(DP_hdr.data(), DP_hdr.data() + DP_hdr.ncells() / 2, 0.0); // TODO - manually verify these
-        DP_hdr_hot = accumulate(DP_hdr.data() + DP_hdr.ncells() / 2 + 1, DP_hdr.data() + DP_hdr.ncells(), 0.0); // TODO - manually verify these
-        DP_toField = accumulate(DP_rnr.data(), DP_rnr.data() + DP_rnr.ncells() / 2, 0.0); // TODO - manually verify these
-        DP_fromField = accumulate(DP_rnr.data() + DP_rnr.ncells() / 2 + 1, DP_rnr.data() + DP_rnr.ncells(), 0.0); // TODO - manually verify these
+        DP_hdr_cold = accumulate(DP_hdr.data(), DP_hdr.data() + DP_hdr.ncells() / 2, 0.0);
+        DP_hdr_hot = accumulate(DP_hdr.data() + DP_hdr.ncells() / 2, DP_hdr.data() + DP_hdr.ncells(), 0.0);
+        DP_toField = accumulate(DP_rnr.data(), DP_rnr.data() + DP_rnr.ncells() / 2, 0.0);
+        DP_fromField = accumulate(DP_rnr.data() + DP_rnr.ncells() / 2, DP_rnr.data() + DP_rnr.ncells(), 0.0);
+
+
+        //std::ofstream logDPs;             // moved to top of call()
+        //logDPs.open("logDPs.txt");
+
+        //logDPs << "DP_tube" << "\n";
+        //for (int i = 0; i < DP_tube.ncells(); i++) {
+        //    logDPs << DP_tube.at(i) << "\n";
+        //}
+        //logDPs << "\n";
+
+        //logDPs << "DP_hdr" << "\n";
+        //for (int i = 0; i < DP_hdr.ncells(); i++) {
+        //    logDPs << DP_hdr.at(i) << "\n";
+        //}
+        //logDPs << "\n";
+
+        //logDPs << "DP_rnr" << "\n";
+        //for (int i = 0; i < DP_rnr.ncells(); i++) {
+        //    logDPs << DP_rnr.at(i) << "\n";
+        //}
+
+        ////log.flush();
+        //logDPs << "\n";
+        //logDPs.close();
+        
 
 		if( accept_loc == 1 )
 		{
