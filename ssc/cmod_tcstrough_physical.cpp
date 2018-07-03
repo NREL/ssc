@@ -860,11 +860,11 @@ public:
         double *header_velocity_design = get_unit_value(type250_solarfield, "pipe_header_vel_dsn", &nv);
         ssc_number_t *header_velocity_design_cm = allocate("pipe_header_vel_dsn", nv);
         std::copy(header_velocity_design, header_velocity_design + nv, header_velocity_design_cm);
-        double *header_temp_design = get_unit_value(type250_solarfield, "pipe_header_temp_dsn", &nv);
-        ssc_number_t *header_temp_design_cm = allocate("pipe_header_temp_dsn", nv);
+        double *header_temp_design = get_unit_value(type250_solarfield, "pipe_header_T_dsn", &nv);
+        ssc_number_t *header_temp_design_cm = allocate("pipe_header_T_dsn", nv);
         std::copy(header_temp_design, header_temp_design + nv, header_temp_design_cm);
-        double *header_pressure_design = get_unit_value(type250_solarfield, "pipe_header_pressure_dsn", &nv);
-        ssc_number_t *header_pressure_design_cm = allocate("pipe_header_pressure_dsn", nv);
+        double *header_pressure_design = get_unit_value(type250_solarfield, "pipe_header_P_dsn", &nv);
+        ssc_number_t *header_pressure_design_cm = allocate("pipe_header_P_dsn", nv);
         std::copy(header_pressure_design, header_pressure_design + nv, header_pressure_design_cm);
         double *runner_diams = get_unit_value(type250_solarfield, "pipe_runner_diams", &nv);
 		ssc_number_t *runner_diams_cm = allocate("pipe_runner_diams", nv);
@@ -881,17 +881,17 @@ public:
         double *runner_velocity_design = get_unit_value(type250_solarfield, "pipe_runner_vel_dsn", &nv);
         ssc_number_t *runner_velocity_design_cm = allocate("pipe_runner_vel_dsn", nv);
         std::copy(runner_velocity_design, runner_velocity_design + nv, runner_velocity_design_cm);
-        double *runner_temp_design = get_unit_value(type250_solarfield, "pipe_runner_temp_dsn", &nv);
-        ssc_number_t *runner_temp_design_cm = allocate("pipe_runner_temp_dsn", nv);
+        double *runner_temp_design = get_unit_value(type250_solarfield, "pipe_runner_T_dsn", &nv);
+        ssc_number_t *runner_temp_design_cm = allocate("pipe_runner_T_dsn", nv);
         std::copy(runner_temp_design, runner_temp_design + nv, runner_temp_design_cm);
-        double *runner_pressure_design = get_unit_value(type250_solarfield, "pipe_runner_pressure_dsn", &nv);
-        ssc_number_t *runner_pressure_design_cm = allocate("pipe_runner_pressure_dsn", nv);
+        double *runner_pressure_design = get_unit_value(type250_solarfield, "pipe_runner_P_dsn", &nv);
+        ssc_number_t *runner_pressure_design_cm = allocate("pipe_runner_P_dsn", nv);
         std::copy(runner_pressure_design, runner_pressure_design + nv, runner_pressure_design_cm);
-        double *loop_temp_design = get_unit_value(type250_solarfield, "pipe_loop_temp_dsn", &nv);
-        ssc_number_t *loop_temp_design_cm = allocate("pipe_loop_temp_dsn", nv);
+        double *loop_temp_design = get_unit_value(type250_solarfield, "pipe_loop_T_dsn", &nv);
+        ssc_number_t *loop_temp_design_cm = allocate("pipe_loop_T_dsn", nv);
         std::copy(loop_temp_design, loop_temp_design + nv, loop_temp_design_cm);
-        double *loop_pressure_design = get_unit_value(type250_solarfield, "pipe_loop_pressure_dsn", &nv);
-        ssc_number_t *loop_pressure_design_cm = allocate("pipe_loop_pressure_dsn", nv);
+        double *loop_pressure_design = get_unit_value(type250_solarfield, "pipe_loop_P_dsn", &nv);
+        ssc_number_t *loop_pressure_design_cm = allocate("pipe_loop_P_dsn", nv);
         std::copy(loop_pressure_design, loop_pressure_design + nv, loop_pressure_design_cm);
 		
 		// performance adjustment factors
