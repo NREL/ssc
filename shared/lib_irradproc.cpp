@@ -1389,37 +1389,37 @@ void irrad::getGroundShadeFactors(double rowToRow, double verticalHeight, double
 	shadingStart1 = shadingStart2 = shadingEnd1 = shadingEnd2 = pvBackSurfaceShadeFraction = 0;
 
 	/// Horizontal length of shadow perpindicular to row from top of module to bottom of module
-	double lengthHorizontalShadow = (verticalHeight / std::tan(solarElevationRadians)) * std::cos(surfaceAzimuthAngleRadians - solarAzimuthRadians);
+	double Lh = (verticalHeight / std::tan(solarElevationRadians)) * std::cos(surfaceAzimuthAngleRadians - solarAzimuthRadians);
 
 	///  Horizontal length of shadow perpindicular to row from top of module to ground level
-	double lengthHorizontalShadowClearance = ((clearanceGround + verticalHeight) / std::tan(solarElevationRadians)) * std::cos(surfaceAzimuthAngleRadians - solarAzimuthRadians);
+	double Lhc = ((clearanceGround + verticalHeight) / std::tan(solarElevationRadians)) * std::cos(surfaceAzimuthAngleRadians - solarAzimuthRadians);
 
 	/// Horizontal length of shadow perpindicular to row from bottom of module to ground level
-	double lengthHorizontalShadowGround = (clearanceGround / std::tan(solarElevationRadians)) * std::cos(surfaceAzimuthAngleRadians - solarAzimuthRadians);
+	double Lc = (clearanceGround / std::tan(solarElevationRadians)) * std::cos(surfaceAzimuthAngleRadians - solarAzimuthRadians);
 
 	// Front side of PV module partially shaded, back completely shaded, ground completely shaded
-	if (lengthHorizontalShadow > distanceBetweenRows) {
-		pvFrontSurfaceShadeFraction = (lengthHorizontalShadow - distanceBetweenRows) / (lengthHorizontalShadow + horizontalLength);
+	if (Lh > distanceBetweenRows) {
+		pvFrontSurfaceShadeFraction = (Lh - distanceBetweenRows) / (Lh + horizontalLength);
 		pvBackSurfaceShadeFraction = 1.0;
 		shadingStart1 = 0.0;
 		shadingEnd1 = rowToRow;
 	}
 	// Back side of PV module partially shaded, front completely shaded, ground completely shaded
-	else if (lengthHorizontalShadow < -(rowToRow + horizontalLength)) {
+	else if (Lh < -(rowToRow + horizontalLength)) {
 		pvFrontSurfaceShadeFraction = 1.0;
-		pvBackSurfaceShadeFraction = (lengthHorizontalShadow + rowToRow + horizontalLength) / (lengthHorizontalShadow + horizontalLength);
+		pvBackSurfaceShadeFraction = (Lh + rowToRow + horizontalLength) / (Lh + horizontalLength);
 		shadingStart1 = 0.0;
 		shadingEnd1 = rowToRow;
 	}
 	// Assume ground is partially shaded
 	else
 	{
-		if (lengthHorizontalShadowClearance >= 0)
+		if (Lhc >= 0)
 		{
 			pvFrontSurfaceShadeFraction = 0.0;
 			pvBackSurfaceShadeFraction = 1.0;
-			double shadowStart = lengthHorizontalShadowGround;
-			double shadowEnd = lengthHorizontalShadowClearance + horizontalLength;
+			double shadowStart = Lc;
+			double shadowEnd = Lhc + horizontalLength;
 			while (shadowStart > rowToRow)
 			{
 				shadowStart -= rowToRow;
@@ -1445,19 +1445,19 @@ void irrad::getGroundShadeFactors(double rowToRow, double verticalHeight, double
 		{
 			double shadowStart = 0.0;
 			double shadowEnd = 0.0;
-			if (lengthHorizontalShadowClearance < lengthHorizontalShadowGround + horizontalLength)
+			if (Lc < Lhc + horizontalLength)
 			{
 				pvFrontSurfaceShadeFraction = 0.0;
 				pvBackSurfaceShadeFraction = 1.0;
-				shadowStart = lengthHorizontalShadowClearance;
-				shadowEnd = lengthHorizontalShadowGround + horizontalLength;
+				shadowStart = Lc;
+				shadowEnd = Lhc + horizontalLength;
 			}
 			else
 			{
 				pvFrontSurfaceShadeFraction = 1.0;
 				pvBackSurfaceShadeFraction = 0.0;
-				shadowStart = lengthHorizontalShadowGround + horizontalLength;
-				shadowEnd = lengthHorizontalShadowClearance;
+				shadowStart = Lhc + horizontalLength;
+				shadowEnd = Lc;
 
 			}
 			while (shadowStart < 0.0)

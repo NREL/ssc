@@ -468,18 +468,31 @@ TEST_F(BifacialIrradTest, TestSkyConfigFactors)
 */
 TEST_F(BifacialIrradTest, TestGroundShadeFactors)
 {
-	// Determine if ground is shading from direct beam radio for points on the ground from leading edge of PV panels to leading edge of next row behind
-	double maxShadow, pvBackShadeFraction, pvFrontShadeFraction;
-	maxShadow = pvBackShadeFraction = pvFrontShadeFraction = 0;
-	std::vector<int> rearGroundShade, frontGroundShade;
-	irr->getGroundShadeFactors(rowToRow, verticalHeight, clearanceGround, distanceBetweenRows, horizontalLength, irr->get_sun_component(0) , irr->get_sun_component(2), rearGroundShade, frontGroundShade, maxShadow, pvBackShadeFraction, pvFrontShadeFraction);
-	
-	ASSERT_EQ(rearGroundShade.size(), expectedGroundShade.size());
-	ASSERT_NEAR(pvFrontShadeFraction, expectedPVFrontShadeFraction, e);
+	for (size_t t = 1; t < numberOfTimeSteps; t++)
+	{
+		runIrradCalc(t);
 
-	for (size_t i = 0; i != rearGroundShade.size(); i++) {
-		ASSERT_NEAR(rearGroundShade[i], expectedGroundShade[i], e);
-		ASSERT_NEAR(frontGroundShade[i], expectedGroundShade[i], e);
+		readLineFromTextFile(frontGroundShadeFile, t, expectedFrontGroundShade);
+		readLineFromTextFile(rearGroundShadeFile, t, expectedRearGroundShade);
+
+		// Determine if ground is shading from direct beam radio for points on the ground from leading edge of PV panels to leading edge of next row behind
+		double maxShadow, pvBackShadeFraction, pvFrontShadeFraction;
+		maxShadow = pvBackShadeFraction = pvFrontShadeFraction = 0;
+		std::vector<int> rearGroundShade, frontGroundShade;
+		irr->getGroundShadeFactors(rowToRow, verticalHeight, clearanceGround, distanceBetweenRows, horizontalLength, irr->get_sun_component(0), irr->get_sun_component(2), rearGroundShade, frontGroundShade, maxShadow, pvBackShadeFraction, pvFrontShadeFraction);
+
+		ASSERT_EQ(rearGroundShade.size(), expectedRearGroundShade.size()) << "Failed at t = " << t;
+		ASSERT_EQ(frontGroundShade.size(), expectedFrontGroundShade.size()) << "Failed at t = " << t;;
+		ASSERT_NEAR(pvFrontShadeFraction, expectedPVFrontShadeFraction[t], e) << "Failed at t = " << t;;
+		ASSERT_NEAR(pvBackShadeFraction, expectedPVRearShadeFraction[t], e) << "Failed at t = " << t;;
+
+		if (debugFullGroundShade)
+		{
+			for (size_t i = 0; i != rearGroundShade.size(); i++) {
+				ASSERT_NEAR(rearGroundShade[i], expectedRearGroundShade[i], e) << "Failed at t = " << t << " i = " << i;;
+				ASSERT_NEAR(frontGroundShade[i], expectedFrontGroundShade[i], e) << "Failed at t = " << t << " i = " << i;;
+			}
+		}
 	}
 }
 /**
@@ -487,20 +500,23 @@ TEST_F(BifacialIrradTest, TestGroundShadeFactors)
 */
 TEST_F(BifacialIrradTest, TestGroundGHI)
 {
-	for (size_t t = 0; t < 1; t++)
+	for (size_t t = 0; t < numberOfTimeSteps; t++)
 	{
-		std::vector<double> expectedFrontGroundGHI;
-		readDataFromTextFile(frontGroundGHIFile, t, expectedFrontGroundGHI);
+		runIrradCalc(t);
+		readLineFromTextFile(frontGroundShadeFile, t, expectedFrontGroundShade);
+		readLineFromTextFile(rearGroundShadeFile, t, expectedRearGroundShade);
+		readLineFromTextFile(frontGroundGHIFile, t, expectedFrontGroundGHI);
+		readLineFromTextFile(rearGroundGHIFile, t, expectedRearGroundGHI);
 
 		std::vector<double> rearGroundGHI, frontGroundGHI;
-		irr->getGroundGHI(transmissionFactor, expectedSkyConfigFactors, expectedSkyConfigFactors, expectedGroundShade, expectedGroundShade, rearGroundGHI, frontGroundGHI);
+		irr->getGroundGHI(transmissionFactor, expectedSkyConfigFactors, expectedSkyConfigFactors, expectedRearGroundShade, expectedFrontGroundShade, rearGroundGHI, frontGroundGHI);
 
-		ASSERT_EQ(rearGroundGHI.size(), expectedRearGroundGHI.size());
-		ASSERT_EQ(frontGroundGHI.size(), expectedFrontGroundGHI.size());
+		ASSERT_EQ(rearGroundGHI.size(), expectedRearGroundGHI.size()) << "Failed at t = " << t;
+		ASSERT_EQ(frontGroundGHI.size(), expectedFrontGroundGHI.size()) << "Failed at t = " << t;
 
 		for (size_t i = 0; i != rearGroundGHI.size(); i++) {
-			ASSERT_NEAR(rearGroundGHI[i], expectedRearGroundGHI[i], e);
-			ASSERT_NEAR(frontGroundGHI[i], expectedFrontGroundGHI[i], e);
+			ASSERT_NEAR(rearGroundGHI[i], expectedRearGroundGHI[i], e) << "Failed at t = " << t << " i = " << i;
+			ASSERT_NEAR(frontGroundGHI[i], expectedFrontGroundGHI[i], e) << "Failed at t = " << t << " i = " << i;
 		}
 	}
 }
@@ -511,11 +527,11 @@ TEST_F(BifacialIrradTest, TestGroundGHI)
 TEST_F(BifacialIrradTest, TestFrontSurfaceIrradiance)
 {
 	std::vector<double> expectedFrontGroundGHI;
-	readDataFromTextFile(frontGroundGHIFile, 0, expectedFrontGroundGHI);
+	readLineFromTextFile<double>(frontGroundGHIFile, 0, expectedFrontGroundGHI);
 
 	std::vector<double> frontIrradiance, frontReflected;
 	double frontAverageIrradiance = 0;
-	irr->getFrontSurfaceIrradiances(expectedPVFrontShadeFraction, rowToRow, verticalHeight, clearanceGround, distanceBetweenRows, horizontalLength, expectedFrontGroundGHI, frontIrradiance, frontAverageIrradiance, frontReflected);
+	irr->getFrontSurfaceIrradiances(expectedPVFrontShadeFraction[0], rowToRow, verticalHeight, clearanceGround, distanceBetweenRows, horizontalLength, expectedFrontGroundGHI, frontIrradiance, frontAverageIrradiance, frontReflected);
 
 	ASSERT_EQ(frontIrradiance.size(), expectedFrontIrradiance.size());
 	ASSERT_NEAR(frontAverageIrradiance, expectedFrontAverageIrradiance, e);
@@ -532,12 +548,13 @@ TEST_F(BifacialIrradTest, TestFrontSurfaceIrradiance)
 */
 TEST_F(BifacialIrradTest, TestRearSurfaceIrradiance)
 {
-	std::vector<double> expectedFrontGroundGHI;
-	readDataFromTextFile(frontGroundGHIFile, 0, expectedFrontGroundGHI);
+	std::vector<double> expectedFrontGroundGHI, expectedRearGroundGHI;
+	readLineFromTextFile<double>(frontGroundGHIFile, 0, expectedFrontGroundGHI);
+	readLineFromTextFile<double>(rearGroundGHIFile, 0, expectedRearGroundGHI);
 
 	std::vector<double> rearIrradiance;
 	double rearAverageIrradiance = 0;
-	irr->getBackSurfaceIrradiances(expectedPVRearShadeFraction, rowToRow, verticalHeight, clearanceGround, distanceBetweenRows, horizontalLength, expectedRearGroundGHI, expectedFrontGroundGHI, expectedFrontReflected, rearIrradiance, rearAverageIrradiance);
+	irr->getBackSurfaceIrradiances(expectedPVRearShadeFraction[0], rowToRow, verticalHeight, clearanceGround, distanceBetweenRows, horizontalLength, expectedRearGroundGHI, expectedFrontGroundGHI, expectedFrontReflected, rearIrradiance, rearAverageIrradiance);
 
 	ASSERT_EQ(rearIrradiance.size(), expectedRearIrradiance.size());
 	ASSERT_NEAR(rearAverageIrradiance, expectedRearAverageIrradiance, e);
