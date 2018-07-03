@@ -487,15 +487,21 @@ TEST_F(BifacialIrradTest, TestGroundShadeFactors)
 */
 TEST_F(BifacialIrradTest, TestGroundGHI)
 {
-	std::vector<double> rearGroundGHI, frontGroundGHI;
-	irr->getGroundGHI(transmissionFactor, expectedSkyConfigFactors, expectedSkyConfigFactors, expectedGroundShade, expectedGroundShade, rearGroundGHI, frontGroundGHI);
+	for (size_t t = 0; t < 1; t++)
+	{
+		std::vector<double> expectedFrontGroundGHI;
+		readDataFromTextFile(frontGroundGHIFile, t, expectedFrontGroundGHI);
 
-	ASSERT_EQ(rearGroundGHI.size(), expectedRearGroundGHI.size());
-	ASSERT_EQ(frontGroundGHI.size(), expectedFrontGroundGHI.size());
+		std::vector<double> rearGroundGHI, frontGroundGHI;
+		irr->getGroundGHI(transmissionFactor, expectedSkyConfigFactors, expectedSkyConfigFactors, expectedGroundShade, expectedGroundShade, rearGroundGHI, frontGroundGHI);
 
-	for (size_t i = 0; i != rearGroundGHI.size(); i++) {
-		ASSERT_NEAR(rearGroundGHI[i], expectedRearGroundGHI[i], e);
-		ASSERT_NEAR(frontGroundGHI[i], expectedFrontGroundGHI[i], e);
+		ASSERT_EQ(rearGroundGHI.size(), expectedRearGroundGHI.size());
+		ASSERT_EQ(frontGroundGHI.size(), expectedFrontGroundGHI.size());
+
+		for (size_t i = 0; i != rearGroundGHI.size(); i++) {
+			ASSERT_NEAR(rearGroundGHI[i], expectedRearGroundGHI[i], e);
+			ASSERT_NEAR(frontGroundGHI[i], expectedFrontGroundGHI[i], e);
+		}
 	}
 }
 
@@ -504,6 +510,9 @@ TEST_F(BifacialIrradTest, TestGroundGHI)
 */
 TEST_F(BifacialIrradTest, TestFrontSurfaceIrradiance)
 {
+	std::vector<double> expectedFrontGroundGHI;
+	readDataFromTextFile(frontGroundGHIFile, 0, expectedFrontGroundGHI);
+
 	std::vector<double> frontIrradiance, frontReflected;
 	double frontAverageIrradiance = 0;
 	irr->getFrontSurfaceIrradiances(expectedPVFrontShadeFraction, rowToRow, verticalHeight, clearanceGround, distanceBetweenRows, horizontalLength, expectedFrontGroundGHI, frontIrradiance, frontAverageIrradiance, frontReflected);
@@ -523,6 +532,9 @@ TEST_F(BifacialIrradTest, TestFrontSurfaceIrradiance)
 */
 TEST_F(BifacialIrradTest, TestRearSurfaceIrradiance)
 {
+	std::vector<double> expectedFrontGroundGHI;
+	readDataFromTextFile(frontGroundGHIFile, 0, expectedFrontGroundGHI);
+
 	std::vector<double> rearIrradiance;
 	double rearAverageIrradiance = 0;
 	irr->getBackSurfaceIrradiances(expectedPVRearShadeFraction, rowToRow, verticalHeight, clearanceGround, distanceBetweenRows, horizontalLength, expectedRearGroundGHI, expectedFrontGroundGHI, expectedFrontReflected, rearIrradiance, rearAverageIrradiance);
