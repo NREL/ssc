@@ -468,8 +468,9 @@ TEST_F(BifacialIrradTest, TestSkyConfigFactors)
 */
 TEST_F(BifacialIrradTest, TestGroundShadeFactors)
 {
-	for (size_t t = 1; t < numberOfTimeSteps; t++)
+	for (size_t s = 0; s < numberOfSamples; s++)
 	{
+		size_t t = samples[s];
 		runIrradCalc(t);
 
 		readLineFromTextFile(frontGroundShadeFile, t, expectedFrontGroundShade);
@@ -486,22 +487,20 @@ TEST_F(BifacialIrradTest, TestGroundShadeFactors)
 		ASSERT_NEAR(pvFrontShadeFraction, expectedPVFrontShadeFraction[t], e) << "Failed at t = " << t;;
 		ASSERT_NEAR(pvBackShadeFraction, expectedPVRearShadeFraction[t], e) << "Failed at t = " << t;;
 
-		if (debugFullGroundShade)
-		{
-			for (size_t i = 0; i != rearGroundShade.size(); i++) {
-				ASSERT_NEAR(rearGroundShade[i], expectedRearGroundShade[i], e) << "Failed at t = " << t << " i = " << i;;
-				ASSERT_NEAR(frontGroundShade[i], expectedFrontGroundShade[i], e) << "Failed at t = " << t << " i = " << i;;
-			}
+		for (size_t i = 0; i != rearGroundShade.size(); i++) {
+			ASSERT_NEAR(rearGroundShade[i], expectedRearGroundShade[i], e) << "Failed at t = " << t << " i = " << i;;
+			ASSERT_NEAR(frontGroundShade[i], expectedFrontGroundShade[i], e) << "Failed at t = " << t << " i = " << i;;
 		}
 	}
-}
+} 
 /**
 *   Test calculation of ground GHI.  This changes with sun position and system geometry
 */
 TEST_F(BifacialIrradTest, TestGroundGHI)
 {
-	for (size_t t = 0; t < numberOfTimeSteps; t++)
+	for (size_t s = 0; s < numberOfSamples; s++)
 	{
+		size_t t = samples[s];
 		runIrradCalc(t);
 		readLineFromTextFile(frontGroundShadeFile, t, expectedFrontGroundShade);
 		readLineFromTextFile(rearGroundShadeFile, t, expectedRearGroundShade);
@@ -526,20 +525,26 @@ TEST_F(BifacialIrradTest, TestGroundGHI)
 */
 TEST_F(BifacialIrradTest, TestFrontSurfaceIrradiance)
 {
-	std::vector<double> expectedFrontGroundGHI;
-	readLineFromTextFile<double>(frontGroundGHIFile, 0, expectedFrontGroundGHI);
+	for (size_t s = 0; s < numberOfSamples; s++)
+	{
+		size_t t = samples[s];
+		runIrradCalc(t);
+		readLineFromTextFile<double>(frontGroundGHIFile, t, expectedFrontGroundGHI);
+		readLineFromTextFile<double>(averageIrradianceFile, t, expectedAverageIrradiance);
+		readLineFromTextFile<double>(frontIrradianceFile, t, expectedFrontIrradiance);
+		readLineFromTextFile<double>(frontReflectedFile, t, expectedFrontReflected);
 
-	std::vector<double> frontIrradiance, frontReflected;
-	double frontAverageIrradiance = 0;
-	irr->getFrontSurfaceIrradiances(expectedPVFrontShadeFraction[0], rowToRow, verticalHeight, clearanceGround, distanceBetweenRows, horizontalLength, expectedFrontGroundGHI, frontIrradiance, frontAverageIrradiance, frontReflected);
+		std::vector<double> frontIrradiance, frontReflected;
+		double frontAverageIrradiance = 0;
+		irr->getFrontSurfaceIrradiances(expectedPVFrontShadeFraction[t], rowToRow, verticalHeight, clearanceGround, distanceBetweenRows, horizontalLength, expectedFrontGroundGHI, frontIrradiance, frontAverageIrradiance, frontReflected);
 
-	ASSERT_EQ(frontIrradiance.size(), expectedFrontIrradiance.size());
-	ASSERT_NEAR(frontAverageIrradiance, expectedFrontAverageIrradiance, e);
+		ASSERT_EQ(frontIrradiance.size(), expectedFrontIrradiance.size()) << "Failed at t = " << t;
+		ASSERT_NEAR(frontAverageIrradiance, expectedAverageIrradiance[0], e) << "Failed at t = " << t;
 
-
-	for (size_t i = 0; i != frontIrradiance.size(); i++) {
-		ASSERT_NEAR(frontIrradiance[i], expectedFrontIrradiance[i], e);
-		ASSERT_NEAR(frontReflected[i], expectedFrontReflected[i], e);
+		for (size_t i = 0; i != frontIrradiance.size(); i++) {
+			ASSERT_NEAR(frontIrradiance[i], expectedFrontIrradiance[i], e) << "Failed at t = " << t << " i = " << i;
+			ASSERT_NEAR(frontReflected[i], expectedFrontReflected[i], e) << "Failed at t = " << t << " i = " << i;
+		}
 	}
 }
 
@@ -548,18 +553,26 @@ TEST_F(BifacialIrradTest, TestFrontSurfaceIrradiance)
 */
 TEST_F(BifacialIrradTest, TestRearSurfaceIrradiance)
 {
-	std::vector<double> expectedFrontGroundGHI, expectedRearGroundGHI;
-	readLineFromTextFile<double>(frontGroundGHIFile, 0, expectedFrontGroundGHI);
-	readLineFromTextFile<double>(rearGroundGHIFile, 0, expectedRearGroundGHI);
+	for (size_t s = 0; s < numberOfSamples; s++)
+	{
+		size_t t = samples[s];
+		runIrradCalc(t);
 
-	std::vector<double> rearIrradiance;
-	double rearAverageIrradiance = 0;
-	irr->getBackSurfaceIrradiances(expectedPVRearShadeFraction[0], rowToRow, verticalHeight, clearanceGround, distanceBetweenRows, horizontalLength, expectedRearGroundGHI, expectedFrontGroundGHI, expectedFrontReflected, rearIrradiance, rearAverageIrradiance);
+		readLineFromTextFile<double>(frontGroundGHIFile, t, expectedFrontGroundGHI);
+		readLineFromTextFile<double>(rearGroundGHIFile, t, expectedRearGroundGHI);
+		readLineFromTextFile<double>(frontReflectedFile, t, expectedFrontReflected);
+		readLineFromTextFile<double>(rearIrradianceFile, t, expectedRearIrradiance);
+		readLineFromTextFile<double>(averageIrradianceFile, t, expectedAverageIrradiance);
 
-	ASSERT_EQ(rearIrradiance.size(), expectedRearIrradiance.size());
-	ASSERT_NEAR(rearAverageIrradiance, expectedRearAverageIrradiance, e);
+		std::vector<double> rearIrradiance;
+		double rearAverageIrradiance = 0;
+		irr->getBackSurfaceIrradiances(expectedPVRearShadeFraction[t], rowToRow, verticalHeight, clearanceGround, distanceBetweenRows, horizontalLength, expectedRearGroundGHI, expectedFrontGroundGHI, expectedFrontReflected, rearIrradiance, rearAverageIrradiance);
 
-	for (size_t i = 0; i != rearIrradiance.size(); i++) {
-		ASSERT_NEAR(rearIrradiance[i], expectedRearIrradiance[i], e);
+		ASSERT_EQ(rearIrradiance.size(), expectedRearIrradiance.size()) << "Failed at t = " << t;
+		ASSERT_NEAR(rearAverageIrradiance, expectedAverageIrradiance[1], e) << "Failed at t = " << t;
+
+		for (size_t i = 0; i != rearIrradiance.size(); i++) {
+			ASSERT_NEAR(rearIrradiance[i], expectedRearIrradiance[i], e) << "Failed at t = " << t << " i = " << i;
+		}
 	}
 }

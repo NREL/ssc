@@ -1894,8 +1894,8 @@ void irrad::getBackSurfaceIrradiances(double pvBackShadeFraction, double rowToRo
 		// Cell not shaded entirely and incidence angle < 90 degrees 
 		if (cellShade < 1.0 && angle[0] < M_PI / 2.0)
 		{
-			// doesn't include AOI correction
-			rearGroundGHI[i] += (1.0 - cellShade) * (poaRear[0] + diffcRear[1]);
+			double iam = iamSjerpsKoomen(n2, angle[0]);
+			rearIrradiance[i] += (1.0 - cellShade) * (poaRear[0] + diffcRear[1]) * iam;
 		}
 		rearAverageIrradiance += rearIrradiance[i] / cellRows;
 	}
