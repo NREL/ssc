@@ -912,11 +912,6 @@ int C_PartialCooling_Cycle::off_design_fix_shaft_speeds_core()
 {
 	// Need to reset 'ms_od_solved' here
 	clear_ms_od_solved();
-	// Check if recompression fraction is > 0
-	if (!ms_des_solved.m_is_rc)
-	{
-		ms_od_phi_par.m_recomp_frac = 0.0;
-	}
 
 	throw(C_csp_exception("C_PartialCooling_Cycle::off_design_fix_shaft_speeds does not yet exist"));
 

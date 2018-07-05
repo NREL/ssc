@@ -3627,7 +3627,7 @@ int C_RecompCycle::C_mono_eq_LTR_od::operator()(double T_LTR_LP_out_guess /*K*/,
 	mpc_rc_cycle->m_entr_od[LTR_LP_OUT] = mpc_rc_cycle->mc_co2_props.entr;	//[kJ/kg-K]
 	mpc_rc_cycle->m_dens_od[LTR_LP_OUT] = mpc_rc_cycle->mc_co2_props.dens;	//[kg/m^3]
 
-	if( mpc_rc_cycle->ms_od_phi_par.m_recomp_frac >= 1.E-12 )		// Determine the required shaft speed for the recompressor
+	if( m_m_dot_rc >= 1.E-12 )		// Determine the required shaft speed for the recompressor
 	{
 		int rc_error_code = 0;
 		mpc_rc_cycle->m_rc_ms.off_design_given_P_out(mpc_rc_cycle->m_temp_od[LTR_LP_OUT], mpc_rc_cycle->m_pres_od[LTR_LP_OUT], m_m_dot_rc,
@@ -3744,11 +3744,12 @@ int C_RecompCycle::C_mono_eq_HTR_od::operator()(double T_HTR_LP_out_guess /*K*/,
 	mpc_rc_cycle->m_dens_od[LTR_HP_OUT] = mpc_rc_cycle->mc_co2_props.dens;	//[kg/m^3]
 
 	// Go through mixing valve
-	if( mpc_rc_cycle->ms_od_phi_par.m_recomp_frac >= 1.E-12 )
+	if( m_m_dot_rc >= 1.E-12 )
 	{
+		double f_recomp = mpc_rc_cycle->m_m_dot_rc / mpc_rc_cycle->m_m_dot_t;	//[-]
 		// Conservation of energy
-		mpc_rc_cycle->m_enth_od[MIXER_OUT] = (1.0 - mpc_rc_cycle->ms_od_phi_par.m_recomp_frac)*mpc_rc_cycle->m_enth_od[LTR_HP_OUT] +
-												mpc_rc_cycle->ms_od_phi_par.m_recomp_frac*mpc_rc_cycle->m_enth_od[RC_OUT];
+		mpc_rc_cycle->m_enth_od[MIXER_OUT] = (1.0 - f_recomp)*mpc_rc_cycle->m_enth_od[LTR_HP_OUT] +
+												f_recomp*mpc_rc_cycle->m_enth_od[RC_OUT];
 		prop_error_code = CO2_PH(mpc_rc_cycle->m_pres_od[MIXER_OUT], mpc_rc_cycle->m_enth_od[MIXER_OUT], &mpc_rc_cycle->mc_co2_props);
 		if( prop_error_code != 0 )
 		{
@@ -3980,9 +3981,6 @@ int C_RecompCycle::C_mono_eq_turbo_N_fixed_m_dot::operator()(double m_dot_t_in /
 
 int C_RecompCycle::C_mono_eq_x_f_recomp_y_N_rc::operator()(double f_recomp /*-*/, double *diff_N_rc /*-*/)
 {
-	// Set f_recomp in S_od_par here
-	mpc_rc_cycle->ms_od_phi_par.m_recomp_frac = f_recomp;
-
 	C_mono_eq_turbo_N_fixed_m_dot c_turbo_bal(mpc_rc_cycle, m_T_mc_in,
 															m_P_mc_in,
 															f_recomp,
@@ -4143,23 +4141,16 @@ void C_RecompCycle::off_design_fix_shaft_speeds_core(int & error_code)
 {
 	// Need to reset 'ms_od_solved' here
 	clear_ms_od_solved();
-	// Check if recompression fraction is > 0 and whether cycle is simple or recompression
-	if( !ms_des_solved.m_is_rc )
-	{
-		ms_od_phi_par.m_recomp_frac = 0.0;
-	}
-
-//	CO2_state co2_props;
 
 	// Initialize a few variables
 	m_temp_od[MC_IN] = ms_od_phi_par.m_T_mc_in;
-	m_pres_od[MC_IN] = ms_od_phi_par.m_P_mc_in;
+	m_pres_od[MC_IN] = ms_od_phi_par.m_P_LP_comp_in;
 	m_temp_od[TURB_IN] = ms_od_phi_par.m_T_t_in;
 
 	// Outer loop: Solve for the recompression fraction that results in the recompressor
 	//                operating at its design shaft speed
 	C_mono_eq_x_f_recomp_y_N_rc c_turbo_bal_f_recomp(this, ms_od_phi_par.m_T_mc_in,
-															ms_od_phi_par.m_P_mc_in,
+															ms_od_phi_par.m_P_LP_comp_in,
 															ms_od_phi_par.m_T_t_in);
 
 	C_monotonic_eq_solver c_turbo_bal_f_recomp_solver(c_turbo_bal_f_recomp);
@@ -4288,7 +4279,7 @@ void C_RecompCycle::off_design_fix_shaft_speeds_core(int & error_code)
 	double w_t = m_enth_od[TURB_IN] - m_enth_od[TURB_OUT];	//[kJ/kg] (positive) specific work of turbine
 
 	double w_rc = 0.0;
-	if( ms_od_phi_par.m_recomp_frac > 0.0 )
+	if( m_dot_rc > 0.0 )
 		w_rc = m_enth_od[LTR_LP_OUT] - m_enth_od[RC_OUT];	//[kJ/kg] (negative) specific work of recompressor
 
 
@@ -4311,7 +4302,7 @@ void C_RecompCycle::off_design_fix_shaft_speeds_core(int & error_code)
 	ms_od_solved.m_m_dot_mc = m_dot_mc;
 	ms_od_solved.m_m_dot_rc = m_dot_rc;
 	ms_od_solved.m_m_dot_t = m_dot_t;
-	ms_od_solved.m_recomp_frac = ms_od_phi_par.m_recomp_frac;
+	ms_od_solved.m_recomp_frac = m_dot_rc / m_dot_t;
 
 	ms_od_solved.m_temp = m_temp_od;
 	ms_od_solved.m_pres = m_pres_od;
