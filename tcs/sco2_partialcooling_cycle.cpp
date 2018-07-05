@@ -908,11 +908,26 @@ int C_PartialCooling_Cycle::auto_opt_design_hit_eta(S_auto_opt_design_hit_eta_pa
 	return -1;
 }
 
-int C_PartialCooling_Cycle::off_design_fix_shaft_speeds(S_od_phi_par & od_phi_par_in)
+int C_PartialCooling_Cycle::off_design_fix_shaft_speeds_core()
 {
+	// Need to reset 'ms_od_solved' here
+	clear_ms_od_solved();
+	// Check if recompression fraction is > 0
+	if (!ms_des_solved.m_is_rc)
+	{
+		ms_od_phi_par.m_recomp_frac = 0.0;
+	}
+
 	throw(C_csp_exception("C_PartialCooling_Cycle::off_design_fix_shaft_speeds does not yet exist"));
 
 	return -1;
+}
+
+int C_PartialCooling_Cycle::off_design_fix_shaft_speeds(S_od_phi_par & od_phi_par_in)
+{
+	ms_od_phi_par = od_phi_par_in;
+
+	return off_design_fix_shaft_speeds_core();
 }
 
 double nlopt_cb_opt_partialcooling_des(const std::vector<double> &x, std::vector<double> &grad, void *data)

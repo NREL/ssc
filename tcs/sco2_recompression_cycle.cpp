@@ -3867,11 +3867,11 @@ int C_RecompCycle::C_mono_eq_HTR_od::operator()(double T_HTR_LP_out_guess /*K*/,
 //
 //}
 
-void C_RecompCycle::clear_ms_od_solved()
-{
-	S_od_solved s_od_solved_temp;
-	ms_od_solved = s_od_solved_temp;
-}
+//void C_RecompCycle::clear_ms_od_solved()
+//{
+//	S_od_solved s_od_solved_temp;
+//	ms_od_solved = s_od_solved_temp;
+//}
 
 int C_RecompCycle::C_mono_eq_turbo_N_fixed_m_dot::operator()(double m_dot_t_in /*kg/s*/, double *diff_m_dot_t /*-*/)
 {

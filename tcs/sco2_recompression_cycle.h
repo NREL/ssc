@@ -473,7 +473,7 @@ private:
 
 	//void target_off_design_core(int & error_code);	
 
-	void clear_ms_od_solved();
+	//void clear_ms_od_solved();
 
 public:
 

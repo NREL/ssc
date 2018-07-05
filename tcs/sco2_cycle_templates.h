@@ -269,6 +269,12 @@ protected:
 
 	S_design_limits ms_des_limits;
 
+	void clear_ms_od_solved()
+	{
+		S_od_solved s_od_solved_temp;
+		ms_od_solved = s_od_solved_temp;
+	}
+
 public:
 
 	C_sco2_cycle_core()

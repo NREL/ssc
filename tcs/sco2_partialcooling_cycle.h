@@ -239,6 +239,8 @@ private:
 
 	int opt_design_core();
 
+	int off_design_fix_shaft_speeds_core();
+
 public:
 
 	C_PartialCooling_Cycle()
