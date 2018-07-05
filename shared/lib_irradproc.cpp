@@ -1297,7 +1297,7 @@ int irrad::calc_rear_side(double transmissionFactor, double bifaciality)
 	double pvBackShadeFraction, pvFrontShadeFraction, maxShadow;
 	pvBackShadeFraction = pvFrontShadeFraction = maxShadow = 0;
 	std::vector<int> rearGroundShade, frontGroundShade;
-	this->getGroundShadeFactors(rowToRow, verticalHeight, clearanceGround, distanceBetweenRows, horizontalLength, sun[0], this->sazm * DTOR, rearGroundShade, frontGroundShade, maxShadow, pvBackShadeFraction, pvFrontShadeFraction);
+	this->getGroundShadeFactors(rowToRow, verticalHeight, clearanceGround, distanceBetweenRows, horizontalLength, sun[0], sun[2], rearGroundShade, frontGroundShade, maxShadow, pvBackShadeFraction, pvFrontShadeFraction);
 
 	// Get the rear ground GHI
 	std::vector<double> rearGroundGHI, frontGroundGHI;
@@ -1894,8 +1894,8 @@ void irrad::getBackSurfaceIrradiances(double pvBackShadeFraction, double rowToRo
 		// Cell not shaded entirely and incidence angle < 90 degrees 
 		if (cellShade < 1.0 && angle[0] < M_PI / 2.0)
 		{
-			double iam = iamSjerpsKoomen(n2, angle[0]);
-			rearIrradiance[i] += (1.0 - cellShade) * (poaRear[0] + diffcRear[1]) * iam;
+			double iamMod = iamSjerpsKoomen(n2, angle[0]);
+			rearIrradiance[i] += (1.0 - cellShade) * (poaRear[0] + diffcRear[1]) * iamMod;
 		}
 		rearAverageIrradiance += rearIrradiance[i] / cellRows;
 	}

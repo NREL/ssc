@@ -445,6 +445,7 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray1_surf_tilt",                  "Subarray 1 Surface tilt",                                              "deg",    "", "Time Series (Subarray 1)",       "*",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray1_surf_azi",                   "Subarray 1 Surface azimuth",                                           "deg",    "", "Time Series (Subarray 1)",       "*",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray1_aoi",                        "Subarray 1 Angle of incidence",                                        "deg",    "", "Time Series (Subarray 1)",       "*",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray1_aoi_modifier",               "Subarray 1 Angle of incidence Modifier",                               "0-1",    "", "Time Series (Subarray 1)",       "*",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray1_axisrot",                    "Subarray 1 Axis rotation for 1 axis trackers",                         "deg",    "", "Time Series (Subarray 1)",       "*",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray1_idealrot",                   "Subarray 1 Axis rotation ideal for 1 axis trackers",                   "deg",    "", "Time Series (Subarray 1)",       "*",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray1_poa_eff_beam",               "Subarray 1 POA front beam irradiance after shading and soiling",             "W/m2",   "", "Time Series (Subarray 1)",       "*",                    "",                              "" },
@@ -1695,7 +1696,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 								Subarrays[nn]->poa.surfaceTiltDegrees, Subarrays[nn]->poa.surfaceAzimuthDegrees,
 								((double)wf.hour) + wf.minute / 60.0,
 								radmode, Subarrays[nn]->poa.usePOAFromWF);
-							pvoutput_t out(0, 0, 0, 0, 0, 0, 0);
+							pvoutput_t out(0, 0, 0, 0, 0, 0, 0, 0);
 							if (Subarrays[nn]->poa.sunUp)
 							{
 								double tcell = wf.tdry;
@@ -1743,7 +1744,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 						Subarrays[nn]->poa.surfaceTiltDegrees, Subarrays[nn]->poa.surfaceAzimuthDegrees,
 						((double)wf.hour) + wf.minute / 60.0,
 						radmode, Subarrays[nn]->poa.usePOAFromWF);
-					pvoutput_t out(0, 0, 0, 0, 0, 0, 0);
+					pvoutput_t out(0, 0, 0, 0, 0, 0, 0, 0);
 
 					double tcell = wf.tdry;
 					if (Subarrays[nn]->poa.sunUp)
@@ -1798,6 +1799,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 					Subarrays[nn]->module.temperatureCellCelcius = out.CellTemp;
 					Subarrays[nn]->module.currentShortCircuit = out.Isc_oper;
 					Subarrays[nn]->module.voltageOpenCircuit = out.Voc_oper;
+					Subarrays[nn]->module.angleOfIncidenceModifier = out.AOIModifier;
 
 					voltage_sum += out.Voltage;
 					n_voltage_values++;
@@ -1862,6 +1864,8 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 						PVSystem->p_voltageOpenCircuit[nn][idx] = (ssc_number_t)Subarrays[nn]->module.voltageOpenCircuit * modules_per_string;
 						PVSystem->p_currentShortCircuit[nn][idx] = (ssc_number_t)Subarrays[nn]->module.currentShortCircuit;
 						PVSystem->p_dcPowerGross[nn][idx] = (ssc_number_t)(Subarrays[nn]->module.dcPowerW * util::watt_to_kilowatt);
+						PVSystem->p_angleOfIncidenceModifier[nn][idx] = (ssc_number_t)(Subarrays[nn]->module.angleOfIncidenceModifier);
+
 					}
 					// Sara 1/25/16 - shading database derate applied to dc only
 					// shading loss applied to beam if not from shading database

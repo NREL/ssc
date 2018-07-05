@@ -104,7 +104,7 @@ pvoutput_t::pvoutput_t()
 
 pvoutput_t::pvoutput_t( double p, double v,
 		double c, double e, 
-		double voc, double isc, double t )
+		double voc, double isc, double t, double aoi_modifier)
 {
 	Power = p;
 	Voltage = v;
@@ -113,6 +113,7 @@ pvoutput_t::pvoutput_t( double p, double v,
 	Voc_oper = voc;
 	Isc_oper = isc;
 	CellTemp = t;
+	AOIModifier = aoi_modifier;
 }
 
 

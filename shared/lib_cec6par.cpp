@@ -90,23 +90,30 @@ bool cec6par_module_t::operator() ( pvinput_t &input, double TcellC, double opvo
 	//double muVoc = beta_voc * (1+Adj/100);
 	
 	/* initialize output first */
-	out.Power = out.Voltage = out.Current = out.Efficiency = out.Voc_oper = out.Isc_oper = 0.0;
+	out.Power = out.Voltage = out.Current = out.Efficiency = out.Voc_oper = out.Isc_oper= out.AOIModifier = 0.0;
 	
-	double G_total, Geff_total;
+	double G_front, G_total, Geff_front_total, Geff_total;
 
 	if( input.radmode != 3){ // Determine if the model needs to skip the cover effects (will only be skipped if the user is using POA reference cell data) 
-		G_total = input.Ibeam + input.Idiff + input.Ignd + input.Irear; // total incident irradiance on tilted surface, W/m2
-	
-		Geff_total = G_total;
-
-		// Rear irradiance already corrected for AOI using Marion model 
-		Geff_total = calculateIrradianceThroughCoverDeSoto(
+		G_front = input.Ibeam + input.Idiff + input.Ignd;
+		G_total = G_front + input.Irear; // total incident irradiance on tilted surface, W/m2
+			
+		// Rear side already accounts for these losses
+		Geff_front_total = calculateIrradianceThroughCoverDeSoto(
 			input.IncAng,
 			input.Zenith,
 			input.Tilt,
 			input.Ibeam,
 			input.Idiff,
-			input.Ignd ) + input.Irear;
+			input.Ignd);
+
+		Geff_total = Geff_front_total + input.Irear;
+
+		double aoi_modifier = 0.0;
+		if (G_front > 0.) {
+			aoi_modifier = Geff_front_total / G_front;
+		}
+		out.AOIModifier = aoi_modifier;
 
 	
 		double theta_z = input.Zenith;

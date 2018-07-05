@@ -91,7 +91,7 @@ public:
 	pvoutput_t();
 	pvoutput_t( double p, double v,
 		double c, double e, 
-		double voc, double isc, double t );
+		double voc, double isc, double t, double aoi_modifier);
 
 	double Power; // output power, Watts
 	double Voltage; // operating voltage, V
@@ -100,6 +100,7 @@ public:
 	double Voc_oper; // open circuit voltage at operating condition, V
 	double Isc_oper; // short circuit current at operating condition, A
 	double CellTemp; // cell temperature, 'C
+	double AOIModifier; // angle-of-incidence modifier for total poa irradiance on front side of module (0-1)
 };
 
 class pvmodule_t; // forward decl
@@ -125,6 +126,7 @@ public:
 	virtual double ImpRef() = 0;
 	virtual double VocRef() = 0;
 	virtual double IscRef() = 0;
+
 
 	virtual bool operator() ( pvinput_t &input, double TcellC, double opvoltage, pvoutput_t &output ) = 0;
 	std::string error();

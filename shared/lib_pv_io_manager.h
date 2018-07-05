@@ -196,6 +196,7 @@ struct PVSystem_IO
 
 	// General Outputs
 	std::vector<ssc_number_t *> p_angleOfIncidence; /// The angle of incidence of the subarray [degrees]
+	std::vector<ssc_number_t *> p_angleOfIncidenceModifier; /// The weighted angle of incidence modifier for total poa irradiation on subarrray
 	std::vector<ssc_number_t *> p_surfaceTilt;      /// The surface tilt angle [degrees]
 	std::vector<ssc_number_t *> p_surfaceAzimuth;   /// The angle of incidence of the subarray [degrees]
 	std::vector<ssc_number_t *> p_axisRotation;     /// The angle of incidence of the subarray [degrees]
@@ -350,6 +351,7 @@ public:
 		double currentShortCircuit; /// The DC short circuit current of the subarray [A]
 		double dcEfficiency;		/// The DC conversion efficiency of the subarray [%]
 		double temperatureCellCelcius; /// The average cell temperature of the modules in the subarray [C]
+		double angleOfIncidenceModifier; /// The angle of incidence modifier on the total poa front-side irradiance [0-1]
 	} module;
 
 };

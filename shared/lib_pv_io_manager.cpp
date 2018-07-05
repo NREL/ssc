@@ -353,6 +353,7 @@ void PVSystem_IO::AllocateOutputs(compute_module* cm)
 		{
 			std::string prefix = Subarrays[subarray]->prefix;
 			p_angleOfIncidence.push_back(cm->allocate(prefix + "aoi", numberOfWeatherFileRecords));
+			p_angleOfIncidenceModifier.push_back(cm->allocate(prefix + "aoi_modifier", numberOfWeatherFileRecords));
 			p_surfaceTilt.push_back(cm->allocate(prefix + "surf_tilt", numberOfWeatherFileRecords));
 			p_surfaceAzimuth.push_back(cm->allocate(prefix + "surf_azi", numberOfWeatherFileRecords));
 			p_axisRotation.push_back(cm->allocate(prefix + "axisrot", numberOfWeatherFileRecords));
