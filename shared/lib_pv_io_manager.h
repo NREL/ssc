@@ -204,6 +204,7 @@ struct PVSystem_IO
 	std::vector<ssc_number_t *> p_poaShaded;		/// The angle of incidence of the subarray [degrees]
 	std::vector<ssc_number_t *> p_poaBeamFront; /// The angle of incidence of the subarray [degrees]
 	std::vector<ssc_number_t *> p_poaDiffuseFront; /// The angle of incidence of the subarray [degrees]
+	std::vector<ssc_number_t *> p_poaFront; /// The angle of incidence of the subarray [degrees]
 	std::vector<ssc_number_t *> p_poaTotal; /// The angle of incidence of the subarray [degrees]
 	std::vector<ssc_number_t *> p_poaRear; /// The angle of incidence of the subarray [degrees]
 	std::vector<ssc_number_t *> p_derateSoiling; /// The angle of incidence of the subarray [degrees]
@@ -244,11 +245,14 @@ struct PVSystem_IO
 	ssc_number_t *p_transformerLoss;
 
 	// outputs summed across all subarrays (some could be moved to other structures)
-	ssc_number_t *p_poaNominalTotal;
-	ssc_number_t *p_poaBeamFrontNominalTotal;
-	ssc_number_t *p_poaShadedTotal;
+	ssc_number_t *p_poaFrontNominalTotal;
+	ssc_number_t *p_poaFrontBeamNominalTotal;
+	ssc_number_t *p_poaFrontBeamTotal;
+	ssc_number_t *p_poaFrontShadedTotal;
+	ssc_number_t *p_poaRearTotal;
+	ssc_number_t *p_poaFrontTotal;
 	ssc_number_t *p_poaTotalAllSubarrays;
-	ssc_number_t *p_poaBeamFrontTotal;
+
 
 	ssc_number_t *p_snowLossTotal;
 

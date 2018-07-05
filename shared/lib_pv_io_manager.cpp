@@ -363,6 +363,7 @@ void PVSystem_IO::AllocateOutputs(compute_module* cm)
 			p_poaDiffuseFront.push_back(cm->allocate(prefix + "poa_eff_diff", numberOfWeatherFileRecords));
 			p_poaTotal.push_back(cm->allocate(prefix + "poa_eff", numberOfWeatherFileRecords));
 			p_poaRear.push_back(cm->allocate(prefix + "poa_rear", numberOfWeatherFileRecords));
+			p_poaFront.push_back(cm->allocate(prefix + "poa_front", numberOfWeatherFileRecords));
 			p_derateSoiling.push_back(cm->allocate(prefix + "soiling_derate", numberOfWeatherFileRecords));
 			p_beamShadingFactor.push_back(cm->allocate(prefix + "beam_shading_factor", numberOfWeatherFileRecords));
 			p_temperatureCell.push_back(cm->allocate(prefix + "celltemp", numberOfWeatherFileRecords));
@@ -399,11 +400,13 @@ void PVSystem_IO::AllocateOutputs(compute_module* cm)
 	p_transformerLoadLoss = cm->allocate("xfmr_ll_ts", numberOfWeatherFileRecords);
 	p_transformerLoss = cm->allocate("xfmr_loss_ts", numberOfWeatherFileRecords);
 
-	p_poaNominalTotal = cm->allocate("poa_nom", numberOfWeatherFileRecords);
-	p_poaBeamFrontNominalTotal = cm->allocate("poa_beam_nom", numberOfWeatherFileRecords);
-	p_poaShadedTotal = cm->allocate("poa_shaded", numberOfWeatherFileRecords);
+	p_poaFrontNominalTotal = cm->allocate("poa_nom", numberOfWeatherFileRecords);
+	p_poaFrontBeamNominalTotal = cm->allocate("poa_beam_nom", numberOfWeatherFileRecords);
+	p_poaFrontBeamTotal = cm->allocate("poa_beam_eff", numberOfWeatherFileRecords);
+	p_poaFrontShadedTotal = cm->allocate("poa_shaded", numberOfWeatherFileRecords);
+	p_poaFrontTotal = cm->allocate("poa_front", numberOfWeatherFileRecords);
+	p_poaRearTotal = cm->allocate("poa_rear", numberOfWeatherFileRecords);
 	p_poaTotalAllSubarrays = cm->allocate("poa_eff", numberOfWeatherFileRecords);
-	p_poaBeamFrontTotal = cm->allocate("poa_beam_eff", numberOfWeatherFileRecords);
 
 	p_snowLossTotal = cm->allocate("dc_snow_loss", numberOfWeatherFileRecords);
 
