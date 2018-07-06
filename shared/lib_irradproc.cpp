@@ -1283,7 +1283,8 @@ int irrad::calc_rear_side(double transmissionFactor, double bifaciality)
 	// System geometry
 	double slopeLength = 1.;										/// The unit slope length of the panel
 	double rowToRow = slopeLength / this->gcr;						/// Row to row spacing between the front of one row to the front of the next row
-	double tiltRadian = this->tilt * M_PI / 180.;
+	double tiltRadian = angle[1];									/// The tracked angle in radians
+	double surfaceAzimuthRadians = angle[2];						/// The tracked angle in radians
 	double clearanceGround = slopeLength;							/// The normalized clearance from the bottom edge of module to ground
 	double distanceBetweenRows = rowToRow - std::cos(tiltRadian);	/// The normalized distance from the read of module to front of module in next row
 	double verticalHeight = std::sin(tiltRadian);
@@ -1384,7 +1385,7 @@ void irrad::getGroundShadeFactors(double rowToRow, double verticalHeight, double
 	// calculate ground shade factors using 100 intervals
 	size_t intervals = 100;
 	double deltaInterval = static_cast<double>(rowToRow / intervals);
-	double surfaceAzimuthAngleRadians = this->sazm * DTOR;
+	double surfaceAzimuthAngleRadians = angle[2];
 	double shadingStart1, shadingStart2, shadingEnd1, shadingEnd2;
 	shadingStart1 = shadingStart2 = shadingEnd1 = shadingEnd2 = pvBackSurfaceShadeFraction = 0;
 
@@ -1545,6 +1546,8 @@ void irrad::getFrontSurfaceIrradiances(double pvFrontShadeFraction, double rowTo
 	size_t intervals = 100;
 	double solarAzimuthRadians = sun[0];
 	double solarZenithRadians = sun[1];
+	double tiltRadians = angle[1]; 
+	double surfaceAzimuthRadians = angle[2];
 
 	// Average GHI on ground under PV array for cases when x projection exceed 2*rtr
 	double averageGroundGHI = 0.0;
@@ -1558,9 +1561,9 @@ void irrad::getFrontSurfaceIrradiances(double pvFrontShadeFraction, double rowTo
 	double isotropicSkyDiffuse = diffc[0];
 
 	// Calculate components for a 90 degree tilt 
-	double angle[5] = { 0,0,0,0,0 };
-	incidence(0, 90.0, 180.0, 45.0, solarZenithRadians, solarAzimuthRadians, this->en_backtrack, this->gcr, angle);
-	perez(0, this->dn, this->df, this->alb, angle[0], angle[1], solarZenithRadians, poa, diffc);
+	double angleTmp[5] = { 0,0,0,0,0 };
+	incidence(0, 90.0, 180.0, 45.0, solarZenithRadians, solarAzimuthRadians, this->en_backtrack, this->gcr, angleTmp);
+	perez(0, this->dn, this->df, this->alb, angleTmp[0], angleTmp[1], solarZenithRadians, poa, diffc);
 	double horizonDiffuse = diffc[2];
 
 	// Calculate x,y coordinates of bottom and top edges of PV row in back of desired PV row so that portions of sky and ground viewed by the 
@@ -1581,9 +1584,9 @@ void irrad::getFrontSurfaceIrradiances(double pvFrontShadeFraction, double rowTo
 		double PcellY = clearanceGround + verticalHeight * (i + 0.5) / ((double)cellRows); // y value for location of PV cell with OFFSET FOR SARA REFERENCE CELLS     4/26/2016
 		double elevationAngleUp = std::atan((PtopY - PcellY) / (PcellX - PtopX));          // Elevation angle up from PV cell to top of PV module/panel, radians
 		double elevationAngleDown = std::atan((PcellY - PbotY) / (PcellX - PbotX));        // Elevation angle down from PV cell to bottom of PV module/panel, radians
-		int iStopIso = std::round((M_PI - this->tilt * DTOR - elevationAngleUp) / DTOR);							   // Last whole degree in arc range that sees sky, first is 0
+		int iStopIso = std::round((M_PI - tiltRadians - elevationAngleUp) / DTOR);							   // Last whole degree in arc range that sees sky, first is 0
 		int iHorBright = std::round(std::fmax(0.0, 6.0 - elevationAngleUp / DTOR));	   			       // Number of whole degrees for which horizon brightening occurs
-		int iStartGrd = std::round((M_PI - this->tilt * DTOR + elevationAngleDown) / DTOR);                          // First whole degree in arc range that sees ground, last is 180
+		int iStartGrd = std::round((M_PI - tiltRadians + elevationAngleDown) / DTOR);                          // First whole degree in arc range that sees ground, last is 180
 
 		frontIrradiance.push_back(0.);
 		frontReflected.push_back(0.);
@@ -1672,7 +1675,7 @@ void irrad::getFrontSurfaceIrradiances(double pvFrontShadeFraction, double rowTo
 			frontReflected[i] += 0.5 * (std::cos(j * DTOR) - std::cos((j + 1) * DTOR)) * actualGroundGHI * this->alb * (1.0 - MarionAOICorrectionFactorsGlass[j] * (1.0 - reflectanceNormalIncidence));
 		}
 		// Calculate and add direct and circumsolar irradiance components
-		incidence(0, tilt, this->sazm, 45.0, solarZenithRadians, solarAzimuthRadians, this->en_backtrack, this->gcr, angle);
+		incidence(0, tiltRadians * RTOD, surfaceAzimuthRadians * RTOD, 45.0, solarZenithRadians, solarAzimuthRadians, this->en_backtrack, this->gcr, angle);
 		perez(0, this->dn, this->df, this->alb, angle[0], angle[1], solarZenithRadians, poa, diffc);
 
 		double cellShade = pvFrontShadeFraction * cellRows - i;
@@ -1703,6 +1706,8 @@ void irrad::getBackSurfaceIrradiances(double pvBackShadeFraction, double rowToRo
 	size_t intervals = 100;
 	double solarAzimuthRadians = sun[0];
 	double solarZenithRadians = sun[1];
+	double tiltRadians = angle[1];
+	double surfaceAzimuthRadians = angle[2];
 
 	// Average GHI on ground under PV array for cases when x projection exceed 2*rtr
 	double averageGroundGHI = 0.0;          
@@ -1737,9 +1742,9 @@ void irrad::getBackSurfaceIrradiances(double pvBackShadeFraction, double rowToRo
 		double PcellY = clearanceGround + verticalHeight * (i + 0.5) / ((double)cellRows); // y value for location of PV cell with OFFSET FOR SARA REFERENCE CELLS     4/26/2016
 		double elevationAngleUp = std::atan((PtopY - PcellY) / (PtopX - PcellX));          // Elevation angle up from PV cell to top of PV module/panel, radians
 		double elevationAngleDown = std::atan((PcellY - PbotY) / (PbotX - PcellX));        // Elevation angle down from PV cell to bottom of PV module/panel, radians
-		int iStopIso = std::round((this->tilt * DTOR - elevationAngleUp) / DTOR);							   // Last whole degree in arc range that sees sky, first is 0
+		int iStopIso = std::round((tiltRadians - elevationAngleUp) / DTOR);							   // Last whole degree in arc range that sees sky, first is 0
 		int iHorBright = std::round(std::fmax(0.0, 6.0 - elevationAngleUp / DTOR));	   			       // Number of whole degrees for which horizon brightening occurs
-		int iStartGrd = std::round((this->tilt  * DTOR + elevationAngleDown) / DTOR);                          // First whole degree in arc range that sees ground, last is 180
+		int iStartGrd = std::round((tiltRadians + elevationAngleDown) / DTOR);                          // First whole degree in arc range that sees ground, last is 180
 
 		rearIrradiance.push_back(0);
 		for (size_t j = 0; j != iStopIso; j++)
@@ -1758,11 +1763,11 @@ void irrad::getBackSurfaceIrradiances(double pvBackShadeFraction, double rowToRo
 			double startAlpha = -(double)(j - iStopIso) * DTOR + elevationAngleUp + elevationAngleDown;
 			double stopAlpha = -(double)(j + 1 - iStopIso) * DTOR + elevationAngleUp + elevationAngleDown;
 			double m = diagonalDistance * std::sin(startAlpha);
-			double theta = M_PI - elevationAngleDown - (M_PI / 2.0 - startAlpha) - this->tilt * DTOR;
+			double theta = M_PI - elevationAngleDown - (M_PI / 2.0 - startAlpha) - tiltRadians;
 			double projectedX2 = m / std::cos(theta);
 
 			m = diagonalDistance * std::sin(stopAlpha);
-			theta = M_PI - elevationAngleDown - (M_PI / 2.0 - stopAlpha) - this->tilt * DTOR;
+			theta = M_PI - elevationAngleDown - (M_PI / 2.0 - stopAlpha) - tiltRadians;
 			double projectedX1 = m / std::cos(theta);
 			projectedX1 = std::fmax(0.0, projectedX1);
 
@@ -1878,7 +1883,7 @@ void irrad::getBackSurfaceIrradiances(double pvBackShadeFraction, double rowToRo
 			rearIrradiance[i] += 0.5 * (std::cos(j * DTOR) - std::cos((j + 1) * DTOR)) * MarionAOICorrectionFactorsGlass[j] * actualGroundGHI * this->alb;
 		}
 		// Calculate and add direct and circumsolar irradiance components
-		incidence(0, 180.0 - tilt, (this->sazm - 180.0), 45.0, solarZenithRadians, solarAzimuthRadians, this->en_backtrack, this->gcr, angle);
+		incidence(0, 180.0 - tiltRadians * RTOD, (surfaceAzimuthRadians * RTOD - 180.0), 45.0, solarZenithRadians, solarAzimuthRadians, this->en_backtrack, this->gcr, angle);
 		perez(0, this->dn, this->df, this->alb, angle[0], angle[1], solarZenithRadians, poaRear, diffcRear);
 
 		double cellShade = pvBackShadeFraction * cellRows - i;
