@@ -50,6 +50,8 @@
 #ifndef __6_PAR_GAMMA_H__
 #define __6_PAR_GAMMA_H__
 
+#include "6par_newton.h"
+
 template< typename Real >
 class __PTnonlinear
 {
