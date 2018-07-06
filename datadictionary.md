@@ -15,9 +15,21 @@
   * [V_hdr_hot_min](#v_hdr_hot_min)
 - [Outputs](#outputs)
   * [pipe_header_diams](#pipe_header_diams)
+  * [pipe_header_expansions](#pipe_header_expansions)
   * [pipe_header_lengths](#pipe_header_lengths)
+  * [pipe_header_mdot_dsn](#pipe_header_mdot_dsn)
+  * [pipe_header_P_dsn](#pipe_header_P_dsn)
+  * [pipe_header_T_dsn](#pipe_header_T_dsn)
+  * [pipe_header_vel_dsn](#pipe_header_vel_dsn)
+  * [pipe_loop_P_dsn](#pipe_loop_P_dsn)
+  * [pipe_loop_T_dsn](#pipe_loop_T_dsn)
   * [pipe_runner_diams](#pipe_runner_diams)
+  * [pipe_runner_expansions](#pipe_runner_expansions)
   * [pipe_runner_lengths](#pipe_runner_lengths)
+  * [pipe_runner_mdot_dsn](#pipe_runner_mdot_dsn)
+  * [pipe_runner_P_dsn](#pipe_runner_P_dsn)
+  * [pipe_runner_T_dsn](#pipe_runner_T_dsn)
+  * [pipe_runner_vel_dsn](#pipe_runner_vel_dsn)
  
  
 <!-- toc -->
@@ -51,24 +63,63 @@ north/south separation between subfields, in meters, defined as the shortest dis
 location of the first header expansion loop. Default = 1, which means that the first expansion loop is after the first collector loop closest to the runner. [^](#toc)
 				
 ### V_hdr_cold_max
-maximum allowed velocity in the cold header at design conditions. This value can be exceeded if the minimum would also be exceeded, but only if this puts it less out of range [^](#toc)
+maximum allowed velocity in the cold header at design conditions. This value can be exceeded if the minimum would also be exceeded, but only if this puts it less out of range. [^](#toc)
 
 ### V_hdr_cold_min
-minimum allowed velocity in the cold header at design conditions. This value can be exceeded if the maximum would also be exceeded, but only if this puts it less out of range [^](#toc)
+minimum allowed velocity in the cold header at design conditions. This value can be exceeded if the maximum would also be exceeded, but only if this puts it less out of range. [^](#toc)
 
 ### V_hdr_hot_max
-maximum allowed velocity in the hot header at design conditions. This value can be exceeded if the minimum would also be exceeded, but only if this puts it less out of range [^](#toc)
+maximum allowed velocity in the hot header at design conditions. This value can be exceeded if the minimum would also be exceeded, but only if this puts it less out of range. [^](#toc)
 
 ### V_hdr_hot_min
-minimum allowed velocity in the hot header at design conditions. This value can be exceeded if the maximum would also be exceeded, but only if this puts it less out of range [^](#toc)
+minimum allowed velocity in the hot header at design conditions. This value can be exceeded if the maximum would also be exceeded, but only if this puts it less out of range. [^](#toc)
 
 
 ## Outputs
 ### pipe_header_diams
 diameters in meters of all of the header sections in the cold and hot headers in one subfield. The first diameter is that before the first set of loops in the cold header and the last diameter is that after the last set of loops in the hot header. [^](#toc)
 
+### pipe_header_expansions
+number of expansions or contractions in the given header section [^](#toc)
+
 ### pipe_header_lengths
-lengths in meters of the all of the header sections, including the added lengths of any expansion loops. The first length is that before the first set of loops in the cold header and last length is that after the last set of loops in the hot header.  [^](#toc)
+lengths in meters of the all of the header sections, including the added lengths of any expansion loops. The first length is that before the first set of loops in the cold header and last length is that after the last set of loops in the hot header. [^](#toc)
+
+### pipe_header_mdot_dsn
+mass flow rate in kg/s of the heat transfer fluid in each header section at design conditions. The first value is in the section before the first set of loops in the cold header and the last value is in the section after the last set of loops in the hot header. The mass flow for the cold header sections is the same as that entering the section, and the mass flow for the hot header sections is the same as that leaving the section. [^](#toc)
+
+### pipe_header_P_dsn
+gauge pressure in bar of the heat transfer fluid entering each section of the farthest header at design conditions. The first value is for the section before the first set of loops in the cold header and the last value is for the section after the last set of loops in the hot header. [^](#toc)
+
+### pipe_header_T_dsn
+temperature in Celsius of the heat transfer fluid entering each section of the farthest header at design conditions. The first value is for the section before the first set of loops in the cold header and the last value is for the section after the last set of loops in the hot header. [^](#toc)
+
+### pipe_header_vel_dsn
+velocity in m/s of the heat transfer fluid in each header section at design conditions. The first value is in the section before the first set of loops in the cold header and the last value is in the section after the last set of loops in the hot header. The velocity for the cold header sections is the same as that entering the section, and the velocity for the hot header sections is the same as that leaving the section. [^](#toc)
+
+### pipe_loop_P_dsn
+gauge pressure in bar of the heat transfer fluid entering each node in the farthest loop at design conditions. The values correspond to: [^](#toc)
+- 0: &nbsp;&nbsp;&nbsp; the inlet interconnect carrying twice the loop mass flow rate
+- 1: &nbsp;&nbsp;&nbsp; the interconnect before the first SCA
+- 2: &nbsp;&nbsp;&nbsp; the first SCA
+- 3: &nbsp;&nbsp;&nbsp; the interconnect between the first and second SCA
+- 4: &nbsp;&nbsp;&nbsp; the second SCA
+- ...
+- n-3: &nbsp;&nbsp;&nbsp; the last SCA
+- n-2: &nbsp;&nbsp;&nbsp; the interconnect after the last SCA
+- n-1: &nbsp;&nbsp;&nbsp; the outlet interconnect carrying twice the loop mass flow rate
+
+### pipe_loop_T_dsn
+temperature in Celsius of the heat transfer fluid entering each node in the farthest loop at design conditions. The values correspond to: [^](#toc)
+- 0: &nbsp;&nbsp;&nbsp; the inlet interconnect carrying twice the loop mass flow rate
+- 1: &nbsp;&nbsp;&nbsp; the interconnect before the first SCA
+- 2: &nbsp;&nbsp;&nbsp; the first SCA
+- 3: &nbsp;&nbsp;&nbsp; the interconnect between the first and second SCA
+- 4: &nbsp;&nbsp;&nbsp; the second SCA
+- ...
+- n-3: &nbsp;&nbsp;&nbsp; the last SCA
+- n-2: &nbsp;&nbsp;&nbsp; the interconnect after the last SCA
+- n-1: &nbsp;&nbsp;&nbsp; the outlet interconnect carrying twice the loop mass flow rate
 
 ### pipe_runner_diams
 diameters in meters of the runners listed in L_runner. The first diameter is for the runner that carries half the total mass flow. Example diameters are: [^](#toc)
@@ -78,6 +129,9 @@ diameters in meters of the runners listed in L_runner. The first diameter is for
 * 8 field sections = {x1, x1, x3}
 * 10 field sections = {x1, x4, x5}
 
+### pipe_runner_expansions
+number of expansions or contractions in the given runner section [^](#toc)
+
 ### pipe_runner_lengths
 lengths in meters of the different diameter runners that extend away from the power block in one direction. L_runner[0] is currently defaulted to 25, which is for the runner piping in and around the power block before it heads out to the field in the main runners. L_runner[0] was previously shared with the other identical set of runners for the other half of the solar field, but this is no longer the case. The runner lengths include expansion loops, except for L_runner[0]. For a given row spacing, SCA length, gap between SCAs, and number of SCA's, example values are: [^](#toc)
 * 2 field sections = {L_rnr_pb}
@@ -86,3 +140,14 @@ lengths in meters of the different diameter runners that extend away from the po
 * 8 field sections = {L_rnr_pb, x, 2x}
 * 10 field sections = {L_rnr_pb, 2x, 2x}
 
+### pipe_runner_mdot_dsn
+mass flow rate in kg/s of the heat transfer fluid in each runner section at design conditions. The first value is in the section in and around the power block before it heads out to the field in the main runners. The last value is in the section in and around the power block after it comes back from the field. The mass flow for the cold runner sections is the same as that entering the section, and the mass flow for the hot runner sections is the same as that leaving the section. [^](#toc)
+
+### pipe_runner_P_dsn
+pressure in bar of the heat transfer fluid entering each runner section at design conditions. The first value is for the section in and around the power block before it heads out to the field in the main runners. The last value is in the section in and around the power block after it comes back from the field. [^](#toc)
+
+### pipe_runner_T_dsn
+temperature in Celsius of the heat transfer fluid entering each runner section at design conditions. The first value is for the section in and around the power block before it heads out to the field in the main runners. The last value is in the section in and around the power block after it comes back from the field. [^](#toc)
+
+### pipe_runner_vel_dsn
+velocity in m/s of the heat transfer fluid in each runner section at design conditions. The first value is in the section in and around the power block before it heads out to the field in the main runners. The last value is in the section in and around the power block after it comes back from the field. The velocity for the cold runner sections is the same as that entering the section, and the velocity for the hot runner sections is the same as that leaving the section. [^](#toc)
