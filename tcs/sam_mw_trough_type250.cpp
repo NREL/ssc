@@ -1867,8 +1867,8 @@ public:
 		double DP_toField, DP_fromField;
 		double m_dot_hdr_in, m_dot_hdr, DP_hdr_cold, DP_hdr_hot;
 		double E_avail_tot, rho_ave, E_int_sum;
-		double q_abs_maxOT;
-		q_abs_maxOT=0;
+		double q_abs_maxOT = 0;
+        int loop_i, sca_i, intc_i;
 
 		if (ncall==0)  //mjw 3.5.11 We only need to calculate these values once per timestep..
 		{
@@ -2346,7 +2346,7 @@ overtemp_iter_flag: //10 continue     //Return loop for over-temp conditions
             T_loop_outX = intc_state.temp_out;
 
             //Fill in rest of T_loop using the SCA inlet and outlet temps
-            int loop_i = 2; int sca_i = 0;
+            loop_i = 2; sca_i = 0;
             while (loop_i < 2*nSCA + 2) {
                 T_loop[loop_i] = T_htf_in[sca_i];
                 T_loop[loop_i + 1] = T_htf_out[sca_i];
@@ -2924,7 +2924,7 @@ calc_final_metrics_goto:
         //-------IOCOP, HCE's and all other Interconnects
         DP_loop[0] = DP_intc[0];  // inlet
         DP_loop[1] = DP_intc[1];  // before first SCA
-        int loop_i = 2; int sca_i = 0; int intc_i = 2;
+        loop_i = 2; sca_i = 0; intc_i = 2;
         while(loop_i < nSCA + interconnects.size() - 1) {
             DP_loop[loop_i++] = DP_tube[sca_i++];
             DP_loop[loop_i++] = DP_intc[intc_i++];
