@@ -198,11 +198,17 @@ enum{
     O_HEADER_XPANS,
     O_HEADER_MDOT_DSN,
     O_HEADER_V_DSN,
+    O_HEADER_T_DSN,
+    O_HEADER_P_DSN,
 	O_RUNNER_DIAMS,
 	O_RUNNER_LENGTHS,
     O_RUNNER_XPANS,
     O_RUNNER_MDOT_DSN,
     O_RUNNER_V_DSN,
+    O_RUNNER_T_DSN,
+    O_RUNNER_P_DSN,
+    O_LOOP_T_DSN,
+    O_LOOP_P_DSN,
 	O_T_SYS_H,
 	O_M_DOT_AVAIL,
 	O_Q_AVAIL,
@@ -384,11 +390,17 @@ tcsvarinfo sam_mw_trough_type250_variables[] = {
     { TCS_OUTPUT,          TCS_ARRAY,      O_HEADER_XPANS, "pipe_header_expansions",                                                      "Number of header piping expansions",            "-",             "",             "",             "" },
     { TCS_OUTPUT,          TCS_ARRAY,   O_HEADER_MDOT_DSN,   "pipe_header_mdot_dsn",					                              "Header piping mass flow rate at design",         "kg/s",             "",             "",             "" },
     { TCS_OUTPUT,          TCS_ARRAY,      O_HEADER_V_DSN,    "pipe_header_vel_dsn",					                                    "Header piping velocity at design",          "m/s",             "",             "",             "" },
+    { TCS_OUTPUT,          TCS_ARRAY,      O_HEADER_T_DSN,      "pipe_header_T_dsn",					                                 "Header piping temperature at design",            "C",             "",             "",             "" },
+    { TCS_OUTPUT,          TCS_ARRAY,      O_HEADER_P_DSN,      "pipe_header_P_dsn",					                                    "Header piping pressure at design",          "bar",             "",             "",             "" },
 	{ TCS_OUTPUT,          TCS_ARRAY,      O_RUNNER_DIAMS,      "pipe_runner_diams",                                                            "Runner piping diameter array",            "m",             "",             "",             "" },
     { TCS_OUTPUT,          TCS_ARRAY,    O_RUNNER_LENGTHS,    "pipe_runner_lengths",                                                              "Runner piping length array",            "m",             "",             "",             "" },
     { TCS_OUTPUT,          TCS_ARRAY,      O_RUNNER_XPANS, "pipe_runner_expansions",                                                      "Number of runner piping expansions",            "-",             "",             "",             "" },
     { TCS_OUTPUT,          TCS_ARRAY,   O_RUNNER_MDOT_DSN,   "pipe_runner_mdot_dsn",					                              "Runner piping mass flow rate at design",         "kg/s",             "",             "",             "" },
     { TCS_OUTPUT,          TCS_ARRAY,      O_RUNNER_V_DSN,    "pipe_runner_vel_dsn",					                                    "Runner piping velocity at design",          "m/s",             "",             "",             "" },
+    { TCS_OUTPUT,          TCS_ARRAY,      O_RUNNER_T_DSN,      "pipe_runner_T_dsn",					                                 "Runner piping temperature at design",            "C",             "",             "",             "" },
+    { TCS_OUTPUT,          TCS_ARRAY,      O_RUNNER_P_DSN,      "pipe_runner_P_dsn",					                                    "Runner piping pressure at design",          "bar",             "",             "",             "" },
+    { TCS_OUTPUT,          TCS_ARRAY,      O_LOOP_T_DSN,          "pipe_loop_T_dsn",					                                 "Runner piping temperature at design",            "C",             "",             "",             "" },
+    { TCS_OUTPUT,          TCS_ARRAY,      O_LOOP_P_DSN,          "pipe_loop_P_dsn",					                                    "Runner piping pressure at design",          "bar",             "",             "",             "" },
 
 	{ TCS_OUTPUT,          TCS_NUMBER,           O_T_SYS_H,                "T_sys_h",                                                      "Solar field HTF outlet temperature",            "C",             "",             "",             "" },
 	{ TCS_OUTPUT,          TCS_NUMBER,       O_M_DOT_AVAIL,            "m_dot_avail",                                                       "HTF mass flow rate from the field",        "kg/hr",             "",             "",             "" },
@@ -488,6 +500,8 @@ private:
 	int accept_loc;			//In acceptance testing mode - temperature sensor location (1=hx,2=loop)
 	bool is_using_input_gen;
 	
+    bool design_sizing;      // is the field being sized at design conditions, including the pressures?
+
 	double solar_mult;		//Solar multiple
 	double mc_bal_hot;		//The heat capacity of the balance of plant on the hot side
 	double mc_bal_cold;		//The heat capacity of the balance of plant on the cold side
@@ -700,11 +714,12 @@ private:
 	util::matrix_t<double> L_actSCA, A_cs, D_h, ColOptEff /*nColt, nSCA*/;
 	util::matrix_t<bool> GlazingIntact;
 	emit_table epsilon_3;
-    util::matrix_t<double> D_runner, L_runner, m_dot_rnr_dsn, V_rnr_dsn, N_rnr_xpans,
-        D_hdr, L_hdr, m_dot_hdr_dsn, V_hdr_dsn, N_hdr_xpans;
+    util::matrix_t<double> D_runner, L_runner, m_dot_rnr_dsn, V_rnr_dsn, N_rnr_xpans, DP_rnr, T_rnr, P_rnr,
+        D_hdr, L_hdr, m_dot_hdr_dsn, V_hdr_dsn, N_hdr_xpans, DP_hdr, T_hdr, P_hdr,
+        DP_intc, P_intc, DP_loop, T_loop, P_loop;
 
 	util::matrix_t<double> 
-		T_htf_in, T_htf_out, T_htf_ave, q_loss, q_abs, c_htf, rho_htf,DP_tube, E_abs_field, 
+		T_htf_in, T_htf_out, T_htf_ave, q_loss, q_abs, c_htf, rho_htf, DP_tube, E_abs_field, 
 		E_int_loop, E_accum, E_avail, E_abs_max,v_1,q_loss_SCAtot, q_abs_SCAtot, q_SCA, T_htf_in0, T_htf_out0, 
 		T_htf_ave0, E_fp, q_1abs_tot, q_1abs, q_i, IAM, EndGain, EndLoss, RowShadow;
 	double T_sys_c_last, T_sys_h_last; //stored values for header thermal inertia calculations
@@ -714,8 +729,8 @@ private:
 		no_fp,	//Freeze protection flag
 		is_fieldgeom_init;	//Flag to indicate whether the field geometry has been initialized
 	double T_cold_in_1, c_hdr_cold, start_time, dt, SolarAlt, costh, theta, shift,
-		q_SCA_tot, m_dot_htfX, Header_hl_cold, Runner_hl_cold, Pipe_hl_cold, T_loop_in,
-		T_loop_outX, Runner_hl_hot, Header_hl_hot, Pipe_hl_hot, c_hdr_hot, time_hr, dt_hr;
+		q_SCA_tot, m_dot_htfX, Header_hl_cold, Header_hl_cold_tot, Runner_hl_cold, Runner_hl_cold_tot, Pipe_hl_cold, T_loop_in,
+		T_loop_outX, Runner_hl_hot, Runner_hl_hot_tot, Header_hl_hot, Header_hl_hot_tot, Pipe_hl_hot, c_hdr_hot, time_hr, dt_hr;
 	int day_of_year, SolveMode, dfcount;
 
 	double ncall_track;
@@ -791,6 +806,8 @@ public:
 		accept_init	= false;
 		accept_loc	= -1;
 		is_using_input_gen = false;
+
+        design_sizing = true;
 
 		solar_mult	= std::numeric_limits<double>::quiet_NaN();
 		mc_bal_hot	= std::numeric_limits<double>::quiet_NaN();
@@ -1082,7 +1099,6 @@ public:
 		
 		T_field_ini = value(P_T_FIELD_INI);		//Initial field temperature [C]
         // TODO: Need to replace this with the calculated total pressure drop in the system (+ 1 atm)
-        // TODO: Track pressures throughout system
         P_field_in = 17 / 1.e-5;                //Assumed inlet htf pressure for property lookups (DP_tot_max = 16 bar + 1 atm) [Pa]
 		
 		T_field_ini = 0.5*(T_field_ini + T_loop_in_des);
@@ -1115,6 +1131,8 @@ public:
 		accept_loc = (int)value(P_ACCEPT_LOC);					// In acceptance testing mode - temperature sensor location (1=hx,2=loop) [none]
 		is_using_input_gen = (value(P_USING_INPUT_GEN)>0);	// Is model getting inputs from input generator (true) or from other components in physical trough SYSTEM model (false)
 		
+        design_sizing = true;                   // placeholder for parameter
+
 		solar_mult = value(P_SOLAR_MULT);		//Solar multiple [none]
 		mc_bal_hot = value(P_MC_BAL_HOT);		//The heat capacity of the balance of plant on the hot side [kWht/K-MWt]
 		mc_bal_cold = value(P_MC_BAL_COLD);		//The heat capacity of the balance of plant on the cold side [kWht/K-MWt]
@@ -1514,16 +1532,27 @@ public:
 			double rho_ave = htfProps.dens((T_loop_out + T_loop_in_des) / 2.0, P_field_in / 2); //kg/m3
 			//Calculate the header design
 			nrunsec = (int)floor(float(nfsec) / 4.0) + 1;  //The number of unique runner diameters
-			D_runner.resize(nrunsec);
-			L_runner.resize(nrunsec);
-            m_dot_rnr_dsn.resize(nrunsec);
-            V_rnr_dsn.resize(nrunsec);
-            N_rnr_xpans.resize(nrunsec);  //calculated number of expansion loops in the runner section
+			D_runner.resize(2*nrunsec);
+			L_runner.resize(2*nrunsec);
+            m_dot_rnr_dsn.resize(2*nrunsec);
+            V_rnr_dsn.resize(2*nrunsec);
+            N_rnr_xpans.resize(2*nrunsec);  //calculated number of expansion loops in the runner section
+            DP_rnr.resize(2*nrunsec);
+            P_rnr.resize(2*nrunsec);
+            T_rnr.resize(2*nrunsec);
 			D_hdr.resize(2*nhdrsec);
             L_hdr.resize(2*nhdrsec);
             N_hdr_xpans.resize(2*nhdrsec);
             m_dot_hdr_dsn.resize(2*nhdrsec);
             V_hdr_dsn.resize(2*nhdrsec);
+            DP_hdr.resize(2*nhdrsec);
+            P_hdr.resize(2*nhdrsec);
+            T_hdr.resize(2*nhdrsec);
+            DP_intc.resize(nSCA + 3);
+            P_intc.resize(nSCA + 3);
+            DP_loop.resize(2*nSCA + 3);
+            P_loop.resize(2*nSCA + 3);
+            T_loop.resize(2*nSCA + 3);
 
 			std::string summary;
 			header_design(nhdrsec, nfsec, nrunsec, rho_ave, V_hdr_cold_max, V_hdr_cold_min,
@@ -1590,7 +1619,9 @@ public:
 			}
 
 			L_runner[0] = L_rnr_pb;  // Runner piping in and around the power block
+            L_runner[2 * nrunsec - 1] = L_rnr_pb;  // assume symmetric runners
             N_rnr_xpans[0] = 0;
+            N_rnr_xpans[2 * nrunsec - 1] = N_rnr_xpans[0];
 			if( nrunsec > 1 )
 			{
                 double L_runner_linear = 0;  // Runner length minus expansion loops
@@ -1599,14 +1630,17 @@ public:
 					int j = (int)SCAInfoArray.at(0, 1) - 1;
 					L_runner_linear = x1 * (northsouth_field_sep + (L_SCA[j] + Distance_SCA[j])*float(nSCA) / 2.);  // no expansion loops
                     N_rnr_xpans[i] = max(Min_rnr_xpans, (int)CSP::nint(L_runner_linear/L_rnr_per_xpan));
+                    N_rnr_xpans[2 * nrunsec - i - 1] = N_rnr_xpans[i];
                     L_runner[i] = L_runner_linear + L_xpan_rnr * N_rnr_xpans;
+                    L_runner[2 * nrunsec - i - 1] = L_runner[i];    // assume symmetric runners
 					x1 = 2.;   //tn 4.25.11 Default to 2 for subsequent runners
 				}
 			}
-			double v_tofrom_sgs = 0.0;
+            double v_from_sgs = 0.0; double v_to_sgs = 0.0;
 			for( int i = 0; i < nrunsec; i++ )
 			{
-				v_tofrom_sgs = v_tofrom_sgs + 2.*L_runner[i] * pi*pow(D_runner[i], 2) / 4.;  //This is the volume of the runner in 1 flow direction.
+				v_from_sgs = v_from_sgs + 2.*L_runner[i] * pi*pow(D_runner[i], 2) / 4.;  // volume of the runner going away from sgs
+                v_to_sgs = v_to_sgs + 2.*L_runner[2*nrunsec - i - 1] * pi*pow(D_runner[2 * nrunsec - i - 1], 2) / 4.;  // ...and going to the sgs
 			}
 
 			//report the header and runner lengths
@@ -1655,8 +1689,8 @@ public:
 			double v_sgs = Pump_SGS(rho_ave, m_dot_design, solar_mult);
 
 			//Calculate the hot and cold balance-of-plant volumes
-			v_hot = v_header_hot + v_tofrom_sgs;
-			v_cold = v_header_cold + v_tofrom_sgs;
+			v_hot = v_header_hot + v_to_sgs;
+			v_cold = v_header_cold + v_from_sgs;
 
 			//Write the volume totals to the piping diameter file
 			summary.append(	"\n----------------------------------------------\n"
@@ -1717,8 +1751,51 @@ public:
 		else
 			ss_init_complete = true;
 
+        // Design Sizing
+        if (design_sizing) {
+            int accept_mode_orig = accept_mode;
+            bool accept_init_orig = accept_init;
+            int accept_loc_orig = accept_loc;
+            bool is_using_input_gen_orig = is_using_input_gen;
+
+            accept_mode = 1;                    // use acceptance testing code
+            accept_init = true;                 // require steady-state
+            accept_loc = 1;                     // don't just model a single loop
+            is_using_input_gen = false;         // using parameter values set below instead
+
+            value(I_I_B, I_bn_des);		        // Direct normal incident solar irradiation [W/m^2]
+            value(I_T_DB, 30);		            // Dry bulb air temperature [C]
+            value(I_V_WIND, 5);		            // Ambient windspeed  [m/s]
+            //value(I_P_AMB, );		            // Ambient pressure [mbar]   - use first value in weather file
+            value(I_T_DP, 30 - 10);		        // The dewpoint temperature [C]
+            value(I_T_COLD_IN, T_loop_in_des - 273.15); // HTF return temperature, to the field [C]
+            value(I_M_DOT_IN, m_dot_design * 3600);     // HTF mass flow rate at the inlet to the field  [kg/hr]
+            value(I_DEFOCUS, 1);		        // Defocus control  [none] (1 = no defocus)
+            value(I_SOLARAZ, ColAz*r2d + 180);	// Solar azimuth angle, 0 = North [deg], before SolarAz is converted so to make them equal
+            latitude = value(I_LATITUDE);		// Site latitude read from weather file [deg]
+            longitude = value(I_LONGITUDE);		// Site longitude read from weather file [deg]
+            shift = value(I_SHIFT);			    // [deg]
+
+            call(43200, 0, 0);      // 43200 = noon
+
+            // Restore parameters
+            design_sizing = false;
+            start_time = -1;
+            accept_mode = accept_mode_orig;
+            accept_init = accept_init_orig;
+            accept_loc = accept_loc_orig;
+            is_using_input_gen = is_using_input_gen_orig;
+            T_sys_c_last = T_field_ini;
+            T_sys_h_last = T_field_ini;
+            T_htf_in0.fill(T_field_ini);
+            T_htf_out0.fill(T_field_ini);
+            T_htf_ave0.fill(T_field_ini);
+        }
+
 		// Write Calculated Design Parameters
 		value(PO_A_APER_TOT, Ap_tot);	//[m^2] Total solar field aperture area
+        // Update P_field_in value
+
 		return true;
 	}
 
@@ -1757,7 +1834,7 @@ public:
 		P_amb *= 100.0; //mbar -> Pa
 		T_cold_in += 273.15;
 		m_dot_in *= 1/3600.;
-		SolarAz = (SolarAz - 180.0) * d2r;
+		SolarAz = (SolarAz - 180.0) * d2r;      // convert from North=0 to South=0
 		latitude *= d2r;
 		longitude *= d2r;
 		shift *= d2r;
@@ -1786,12 +1863,13 @@ public:
 		double T_in_lower, y_fp_lower, T_in_upper, y_fp_upper;
 		double y_upper, y_lower;
 		double upmult, t_tol, err;
-		double DP_IOCOP, DP_loop, m_dot_run_in, x3, m_dot_temp;
+		double DP_IOCOP, DP_loop_tot, m_dot_run_in, x3, m_dot_temp;
 		double DP_toField, DP_fromField;
-		double m_dot_header_in, m_dot_header, DP_hdr_cold, DP_hdr_hot;
+		double m_dot_hdr_in, m_dot_hdr, DP_hdr_cold, DP_hdr_hot;
 		double E_avail_tot, rho_ave, E_int_sum;
+        int loop_i, sca_i, intc_i;
 		double q_abs_maxOT;
-		q_abs_maxOT=0;
+        q_abs_maxOT = 0;
 
 		if (ncall==0)  //mjw 3.5.11 We only need to calculate these values once per timestep..
 		{
@@ -1873,12 +1951,19 @@ public:
 			double SolarTime = StdTime+((shift)*180.0/pi)/15.0+ EOT/60.0;
 			// hour angle (arc of sun) in radians
 			double omega = (SolarTime - 12.0)*15.0*pi/180.0;
-			// B. Stine equation for Solar Altitude angle in radians
-			SolarAlt = asin(sin(Dec)*sin(latitude)+cos(latitude)*cos(Dec)*cos(omega));
-			if( (accept_init  &&  time == start_time) || is_using_input_gen )
-			{  //MJW 1.14.2011 
-				SolarAz = CSP::sign(omega)*fabs(acos(min(1.0,(cos(pi/2.-SolarAlt)*sin(latitude)-sin(Dec))/(sin(pi/2.-SolarAlt)*cos(latitude)))));
-			}
+
+            if (design_sizing) {
+                SolarAlt = pi/2. - ColTilt;
+                SolarAz = ColAz;
+            }
+            else {
+                // B. Stine equation for Solar Altitude angle in radians
+                SolarAlt = asin(sin(Dec)*sin(latitude) + cos(latitude)*cos(Dec)*cos(omega));
+                if ((accept_init  &&  time == start_time) || is_using_input_gen)
+                {  //MJW 1.14.2011 
+                    SolarAz = CSP::sign(omega)*fabs(acos(min(1.0, (cos(pi / 2. - SolarAlt)*sin(latitude) - sin(Dec)) / (sin(pi / 2. - SolarAlt)*cos(latitude)))));
+                }
+            }
     
 			// Calculation of Tracking Angle for Trough. Stine Reference
 			double TrackAngle = atan ( cos(SolarAlt) * sin(SolarAz-ColAz) / 
@@ -2073,195 +2158,234 @@ overtemp_iter_flag: //10 continue     //Return loop for over-temp conditions
 		// ******************************************************************************************************************************
 		//                   Iterative section
 		// ******************************************************************************************************************************
-		while ((fabs(err) > t_tol) && (qq < 30))
-		{
-  
-			qq++; //Iteration counter
-			q_loss_SCAtot.fill(0.); 
-			q_abs_SCAtot.fill(0.);
-			q_1abs_tot.fill(0.);
-			E_avail.fill(0.);
-			E_accum.fill(0.);
-			E_int_loop.fill(0.);
-			EqOpteff = 0.0;
-			c_htf.fill(0.);
-			rho_htf.fill(0.);
+        while ((fabs(err) > t_tol) && (qq < 30))
+        {
 
-			m_dot_htf = m_dot_htfX;
-			
-			if( accept_loc == 1 )
-				m_dot_htf_tot = m_dot_htf*float(nLoops);
-			else
-				m_dot_htf_tot = m_dot_htf;
-    
-			if(accept_loc == 1) 
-			{
-				T_sys_c  = (T_sys_c_last - T_cold_in_1)*exp(-(m_dot_htf*float(nLoops))/(v_cold*rho_hdr_cold+mc_bal_cold/c_hdr_cold_last)*dt) + T_cold_in_1;
-				c_hdr_cold = htfProps.Cp(T_sys_c)*1000.0; //mjw 1.6.2011 Adding mc_bal to the cold header inertia
-				//Consider heat loss from cold piping
-				//Pipe_hl_cold = 0.0
-				Header_hl_cold = 0.0;
-				Runner_hl_cold = 0.0;
-				//Header
-				for(int i=0; i<nhdrsec; i++)
-				{
-					//Pipe_hl_cold = Pipe_hl_cold + Row_Distance*D_hdr[i]*pi*Pipe_hl_coef*(T_sys_c - T_db)  //[W]
-					Header_hl_cold += Row_Distance*D_hdr[i]*pi*Pipe_hl_coef*(T_sys_c - T_db);  //[W]
-				}
-				//Runner
-				for(int i=0; i<nrunsec; i++)
-				{
-					//Pipe_hl_cold = Pipe_hl_cold + L_runner[i]*pi*D_runner[i]*Pipe_hl_coef*(T_sys_c - T_db)  //[W]
-					Runner_hl_cold = Runner_hl_cold + L_runner[i]*pi*D_runner[i]*Pipe_hl_coef*(T_sys_c - T_db);  //[W]
-				}
-				Pipe_hl_cold = Header_hl_cold + Runner_hl_cold;
-        
-				T_loop_in   = T_sys_c - Pipe_hl_cold/(m_dot_htf*float(nLoops)*c_hdr_cold);
-				T_htf_in[0] = T_loop_in;
-			} 
-			else		// accept_loc == 2, only modeling loop
-			{
-				T_htf_in[0] = T_cold_in_1;
-				T_sys_c = T_htf_in[0];
-			}    
-    
-			//---------------------
-            double P_intc_in = P_field_in;  //approximate
-			for(int i=0; i<nSCA; i++)
-			{
-				q_loss.fill(0.);
-				q_abs.fill(0.);
-				q_1abs.fill(0.);
+            qq++; //Iteration counter
+            q_loss_SCAtot.fill(0.);
+            q_abs_SCAtot.fill(0.);
+            q_1abs_tot.fill(0.);
+            E_avail.fill(0.);
+            E_accum.fill(0.);
+            E_int_loop.fill(0.);
+            EqOpteff = 0.0;
+            c_htf.fill(0.);
+            rho_htf.fill(0.);
 
-				int HT = (int)SCAInfoArray(i,0)-1;    //HCE type
-				int CT = (int)SCAInfoArray(i,1)-1;    //Collector type
-       
-				for(int j=0; j<nHCEVar; j++)
-				{
-					            
-					//Check to see if the field fraction for this HCE is zero.  if so, don't bother calculating for this variation
-					if(HCE_FieldFrac(HT,j)==0.0) continue;
-            
-					/*if(epsilon_3l(HT,j)>1) {
-						xx(:)=epsilon_3t(HT,j,:)
-						yy(:)=epsilon_3(HT,j,:)
-						//call interp((T_htf_ave[i]-273.15),epsilon_3l(HT,j),xx,yy,eps3sav,eps_3): Now calculate inside of receiver subroutine such that correct temp is used
-					} else {
-						eps_3 = epsilon_3(HT,j,1)
-					}*/	//cc--> Emittance is stored in objects that the EvacReceiver sub. has access to. No need to calculate here
-					double c_htf_j, rho_htf_j;//                                               hn, hv
-					EvacReceiver(T_htf_in[i], m_dot_htf, T_db, T_sky, V_wind, P_amb, q_SCA[i], HT, j, CT, i, false,  ncall, time_hr,
-								 //outputs
-								 q_loss[j], q_abs[j], q_1abs[j], c_htf_j, rho_htf_j );
-					
-					if(q_abs[j] != q_abs[j])	//cc--> Check for NaN
-					{	
-						m_dot_htfX = m_dot_htfmax;
-						if(dfcount > 20) 
-						{
-							message(TCS_WARNING, "The solution encountered an unresolvable NaN error in the heat loss calculations. Continuing calculations...");
-							return 0;
-						}
-						goto overtemp_iter_flag;
-					}
+            m_dot_htf = m_dot_htfX;
 
-					//Keep a running sum of all of the absorbed/lost heat for each SCA in the loop
-					double temp[] = {q_loss[j], q_abs[j], L_actSCA[CT], HCE_FieldFrac(HT,j)}; 
+            if (accept_loc == 1)
+                m_dot_htf_tot = m_dot_htf * float(nLoops);
+            else
+                m_dot_htf_tot = m_dot_htf;
 
-					q_abs_SCAtot[i] += q_abs[j]*L_actSCA[CT]*HCE_FieldFrac(HT,j);
-					q_loss_SCAtot[i] += q_loss[j]*L_actSCA[CT]*HCE_FieldFrac(HT,j);
-					q_1abs_tot[i] += q_1abs[j]*HCE_FieldFrac(HT,j);  //losses in W/m from the absorber surface
-					c_htf[i] += c_htf_j*HCE_FieldFrac(HT,j);
-					rho_htf[i] += rho_htf_j*HCE_FieldFrac(HT,j);
+            if (accept_loc == 1)
+            {
+                T_sys_c = (T_sys_c_last - T_cold_in_1)*exp(-(m_dot_htf*float(nLoops)) / (v_cold*rho_hdr_cold + mc_bal_cold / c_hdr_cold_last)*dt) + T_cold_in_1;
+                //Consider heat loss from cold piping
+                //Runner
+                Runner_hl_cold = 0.0;
+                Runner_hl_cold_tot = 0.0;
+                T_rnr[0] = T_sys_c;             // using whole system thermal inertia (T_sys_c vs. T_cold_in_1) - TODO - adjust this
+                c_hdr_cold = htfProps.Cp(T_sys_c)*1000.0;
+                for (int i = 0; i < nrunsec; i++)
+                {
+                    if (i != 0) {
+                        T_rnr[i] = T_rnr[i - 1] - Runner_hl_cold / (m_dot_runner(m_dot_htf_tot, nfsec, i - 1)*c_hdr_cold);
+                    }
+                    Runner_hl_cold = L_runner[i] * pi*D_runner[i] * Pipe_hl_coef*(T_rnr[i] - T_db);  //[W]
+                    Runner_hl_cold_tot += Runner_hl_cold;
+                }
 
-					//keep track of the total equivalent optical efficiency
-					EqOpteff += ColOptEff(CT,i)*Shadowing(HT,j)*Dirt_HCE(HT,j)*alpha_abs(HT,j)*Tau_envelope(HT,j)*(L_actSCA[CT]/L_tot)*HCE_FieldFrac(HT,j);;
-				}  //nHCEVar loop
+                //Header
+                Header_hl_cold = 0.0;
+                Header_hl_cold_tot = 0.0;
+                T_hdr[0] = T_rnr[nrunsec - 1] - Runner_hl_cold / (m_dot_runner(m_dot_htf_tot, nfsec, nrunsec - 1)*c_hdr_cold);  // T's for farthest headers
+                for (int i = 0; i < nhdrsec; i++)
+                {
+                    if (i != 0) {
+                        T_hdr[i] = T_hdr[i - 1] - Header_hl_cold / (m_dot_header(m_dot_htf_tot, nfsec, nLoops, i - 1)*c_hdr_cold);
+                    }
+                    Header_hl_cold = Row_Distance * D_hdr[i] * pi*Pipe_hl_coef*(T_hdr[i] - T_db);  //[W]
+                    Header_hl_cold_tot += Header_hl_cold;
+                }
 
-				//Calculate the specific heat for the node
-				c_htf[i] *= 1000.0;
-				//Calculate the average node outlet temperature, including transient effects
-				double m_node = rho_htf[i]*A_cs(HT,1)*L_actSCA[CT];
-        
-				//MJW 12.14.2010 The first term should represent the difference between the previous average temperature and the new 
-				//average temperature. Thus, the heat addition in the first term should be divided by 2 rather than include the whole magnitude
-				//of the heat addition.
-				//mjw & tn 5.1.11: There was an error in the assumption about average and outlet temperature      
-				T_htf_out[i] = q_abs_SCAtot[i]/(m_dot_htf*c_htf[i]) + T_htf_in[i] + 
-							   2.0 * (T_htf_ave0[i] - T_htf_in[i] - q_abs_SCAtot[i]/(2.0 * m_dot_htf * c_htf[i])) * 
-							   exp(-2. * m_dot_htf * c_htf[i] * dt / (m_node * c_htf[i] + mc_bal_sca * L_actSCA[CT]));
-				//Recalculate the average temperature for the SCA
-				T_htf_ave[i] = (T_htf_in[i] + T_htf_out[i])/2.0;
-        
-        
-				//Calculate the actual amount of energy absorbed by the field that doesn't go into changing the SCA's average temperature
-				//MJW 1.16.2011 Include the thermal inertia term
-				if( !is_using_input_gen )
-				{
-					if( q_abs_SCAtot[i] > 0.0 )
-					{
-						//E_avail[i] = max(q_abs_SCAtot[i]*dt*3600. - A_cs(HT,1)*L_actSCA[CT]*rho_htf[i]*c_htf[i]*(T_htf_ave[i]- T_htf_ave0[i]),0.0)
-						double x1 = (A_cs(HT, 1)*L_actSCA[CT] * rho_htf[i] * c_htf[i] + L_actSCA[CT] * mc_bal_sca);  //mjw 4.29.11 removed c_htf[i] -> it doesn't make sense on the mc_bal_sca term
-						E_accum[i] = x1*(T_htf_ave[i] - T_htf_ave0[i]);
-						E_int_loop[i] = x1*(T_htf_ave[i] - 298.15);  //mjw 1.18.2011 energy relative to ambient 
-						E_avail[i] = max(q_abs_SCAtot[i] * dt - E_accum[i], 0.0);      //[J/s]*[hr]*[s/hr]: [J]
+                T_loop_in = T_hdr[nhdrsec - 1] - Header_hl_cold / (m_dot_header(m_dot_htf_tot, nfsec, nLoops, nhdrsec - 1)*c_hdr_cold);
+                T_htf_in[0] = T_loop_in;
+            }
+            else		// accept_loc == 2, only modeling loop
+            {
+                T_htf_in[0] = T_cold_in_1;
+                T_sys_c = T_htf_in[0];
+            }
 
-						//Equation: m_dot_avail*c_htf[i]*(T_hft_out - T_htf_in) = E_avail/(dt*3600)
-						//m_dot_avail = (E_avail[i]/(dt*3600.))/(c_htf[i]*(T_htf_out[i] - T_htf_in[i]))   //[J/s]*[kg-K/J]*[K]: 
-					}
-				}
-				else
-				{
-					//E_avail[i] = max(q_abs_SCAtot[i]*dt*3600. - A_cs(HT,1)*L_actSCA[CT]*rho_htf[i]*c_htf[i]*(T_htf_ave[i]- T_htf_ave0[i]),0.0)
-					double x1 = (A_cs(HT, 1)*L_actSCA[CT] * rho_htf[i] * c_htf[i] + L_actSCA[CT] * mc_bal_sca);  //mjw 4.29.11 removed c_htf[i] -> it doesn't make sense on the mc_bal_sca term
-					E_accum[i] = x1*(T_htf_ave[i] - T_htf_ave0[i]);
-					E_int_loop[i] = x1*(T_htf_ave[i] - 298.15);  //mjw 1.18.2011 energy relative to ambient 
-					//E_avail[i] = max(q_abs_SCAtot[i] * dt - E_accum[i], 0.0);      //[J/s]*[hr]*[s/hr]: [J]
-					E_avail[i] = (q_abs_SCAtot[i] * dt - E_accum[i]);      //[J/s]*[hr]*[s/hr]: [J]
+            //---------------------
+            double P_intc_in = P_field_in;
 
-					//Equation: m_dot_avail*c_htf[i]*(T_hft_out - T_htf_in) = E_avail/(dt*3600)
-					//m_dot_avail = (E_avail[i]/(dt*3600.))/(c_htf[i]*(T_htf_out[i] - T_htf_in[i]))   //[J/s]*[kg-K/J]*[K]: 
-				}
-        
-				//Set the inlet temperature of the next SCA equal to the outlet temperature of the current SCA
-				//minus the heat losses in the interconnects
-				if(i < nSCA-1) 
-				{            
-					//Calculate inlet temperature of the next SCA
-                    IntcOutputs intc_state = interconnects[i+2].State(m_dot_htf, T_htf_out[i], T_db, P_intc_in);
+            T_loop[0] = T_loop_in;
+            intc_state = interconnects[0].State(m_dot_htf * 2, T_loop[0], T_db, P_intc_in);
+            T_loop[1] = intc_state.temp_out;
+            intc_state = interconnects[1].State(m_dot_htf, T_loop[1], T_db, intc_state.pressure_out);
+            T_htf_in[0] = intc_state.temp_out; 
+
+            for (int i = 0; i < nSCA; i++)
+            {
+                q_loss.fill(0.);
+                q_abs.fill(0.);
+                q_1abs.fill(0.);
+
+                int HT = (int)SCAInfoArray(i, 0) - 1;    //HCE type
+                int CT = (int)SCAInfoArray(i, 1) - 1;    //Collector type
+
+                for (int j = 0; j < nHCEVar; j++)
+                {
+
+                    //Check to see if the field fraction for this HCE is zero.  if so, don't bother calculating for this variation
+                    if (HCE_FieldFrac(HT, j) == 0.0) continue;
+
+                    /*if(epsilon_3l(HT,j)>1) {
+                        xx(:)=epsilon_3t(HT,j,:)
+                        yy(:)=epsilon_3(HT,j,:)
+                        //call interp((T_htf_ave[i]-273.15),epsilon_3l(HT,j),xx,yy,eps3sav,eps_3): Now calculate inside of receiver subroutine such that correct temp is used
+                    } else {
+                        eps_3 = epsilon_3(HT,j,1)
+                    }*/	//cc--> Emittance is stored in objects that the EvacReceiver sub. has access to. No need to calculate here
+                    double c_htf_j, rho_htf_j;//                                               hn, hv
+                    EvacReceiver(T_htf_in[i], m_dot_htf, T_db, T_sky, V_wind, P_amb, q_SCA[i], HT, j, CT, i, false, ncall, time_hr,
+                        //outputs
+                        q_loss[j], q_abs[j], q_1abs[j], c_htf_j, rho_htf_j);
+
+                    if (q_abs[j] != q_abs[j])	//cc--> Check for NaN
+                    {
+                        m_dot_htfX = m_dot_htfmax;
+                        if (dfcount > 20)
+                        {
+                            message(TCS_WARNING, "The solution encountered an unresolvable NaN error in the heat loss calculations. Continuing calculations...");
+                            return 0;
+                        }
+                        goto overtemp_iter_flag;
+                    }
+
+                    //Keep a running sum of all of the absorbed/lost heat for each SCA in the loop
+                    double temp[] = { q_loss[j], q_abs[j], L_actSCA[CT], HCE_FieldFrac(HT,j) };
+
+                    q_abs_SCAtot[i] += q_abs[j] * L_actSCA[CT] * HCE_FieldFrac(HT, j);
+                    q_loss_SCAtot[i] += q_loss[j] * L_actSCA[CT] * HCE_FieldFrac(HT, j);
+                    q_1abs_tot[i] += q_1abs[j] * HCE_FieldFrac(HT, j);  //losses in W/m from the absorber surface
+                    c_htf[i] += c_htf_j * HCE_FieldFrac(HT, j);
+                    rho_htf[i] += rho_htf_j * HCE_FieldFrac(HT, j);
+
+                    //keep track of the total equivalent optical efficiency
+                    EqOpteff += ColOptEff(CT, i)*Shadowing(HT, j)*Dirt_HCE(HT, j)*alpha_abs(HT, j)*Tau_envelope(HT, j)*(L_actSCA[CT] / L_tot)*HCE_FieldFrac(HT, j);;
+                }  //nHCEVar loop
+
+                //Calculate the specific heat for the node
+                c_htf[i] *= 1000.0;
+                //Calculate the average node outlet temperature, including transient effects
+                double m_node = rho_htf[i] * A_cs(HT, 1)*L_actSCA[CT];
+
+                //MJW 12.14.2010 The first term should represent the difference between the previous average temperature and the new 
+                //average temperature. Thus, the heat addition in the first term should be divided by 2 rather than include the whole magnitude
+                //of the heat addition.
+                //mjw & tn 5.1.11: There was an error in the assumption about average and outlet temperature      
+                T_htf_out[i] = q_abs_SCAtot[i] / (m_dot_htf*c_htf[i]) + T_htf_in[i] +
+                    2.0 * (T_htf_ave0[i] - T_htf_in[i] - q_abs_SCAtot[i] / (2.0 * m_dot_htf * c_htf[i])) *
+                    exp(-2. * m_dot_htf * c_htf[i] * dt / (m_node * c_htf[i] + mc_bal_sca * L_actSCA[CT]));
+                //Recalculate the average temperature for the SCA
+                T_htf_ave[i] = (T_htf_in[i] + T_htf_out[i]) / 2.0;
+
+
+                //Calculate the actual amount of energy absorbed by the field that doesn't go into changing the SCA's average temperature
+                //MJW 1.16.2011 Include the thermal inertia term
+                if (!is_using_input_gen)
+                {
+                    if (q_abs_SCAtot[i] > 0.0)
+                    {
+                        //E_avail[i] = max(q_abs_SCAtot[i]*dt*3600. - A_cs(HT,1)*L_actSCA[CT]*rho_htf[i]*c_htf[i]*(T_htf_ave[i]- T_htf_ave0[i]),0.0)
+                        double x1 = (A_cs(HT, 1)*L_actSCA[CT] * rho_htf[i] * c_htf[i] + L_actSCA[CT] * mc_bal_sca);  //mjw 4.29.11 removed c_htf[i] -> it doesn't make sense on the mc_bal_sca term
+                        E_accum[i] = x1 * (T_htf_ave[i] - T_htf_ave0[i]);
+                        E_int_loop[i] = x1 * (T_htf_ave[i] - 298.15);  //mjw 1.18.2011 energy relative to ambient 
+                        E_avail[i] = max(q_abs_SCAtot[i] * dt - E_accum[i], 0.0);      //[J/s]*[hr]*[s/hr]: [J]
+
+                        //Equation: m_dot_avail*c_htf[i]*(T_hft_out - T_htf_in) = E_avail/(dt*3600)
+                        //m_dot_avail = (E_avail[i]/(dt*3600.))/(c_htf[i]*(T_htf_out[i] - T_htf_in[i]))   //[J/s]*[kg-K/J]*[K]: 
+                    }
+                }
+                else
+                {
+                    //E_avail[i] = max(q_abs_SCAtot[i]*dt*3600. - A_cs(HT,1)*L_actSCA[CT]*rho_htf[i]*c_htf[i]*(T_htf_ave[i]- T_htf_ave0[i]),0.0)
+                    double x1 = (A_cs(HT, 1)*L_actSCA[CT] * rho_htf[i] * c_htf[i] + L_actSCA[CT] * mc_bal_sca);  //mjw 4.29.11 removed c_htf[i] -> it doesn't make sense on the mc_bal_sca term
+                    E_accum[i] = x1 * (T_htf_ave[i] - T_htf_ave0[i]);
+                    E_int_loop[i] = x1 * (T_htf_ave[i] - 298.15);  //mjw 1.18.2011 energy relative to ambient 
+                    //E_avail[i] = max(q_abs_SCAtot[i] * dt - E_accum[i], 0.0);      //[J/s]*[hr]*[s/hr]: [J]
+                    E_avail[i] = (q_abs_SCAtot[i] * dt - E_accum[i]);      //[J/s]*[hr]*[s/hr]: [J]
+
+                    //Equation: m_dot_avail*c_htf[i]*(T_hft_out - T_htf_in) = E_avail/(dt*3600)
+                    //m_dot_avail = (E_avail[i]/(dt*3600.))/(c_htf[i]*(T_htf_out[i] - T_htf_in[i]))   //[J/s]*[kg-K/J]*[K]: 
+                }
+
+                //Set the inlet temperature of the next SCA equal to the outlet temperature of the current SCA
+                //minus the heat losses in the interconnects
+                if (i < nSCA - 1)
+                {
+                    //Calculate inlet temperature of the next SCA
+                    IntcOutputs intc_state = interconnects[i + 2].State(m_dot_htf, T_htf_out[i], T_db, P_intc_in);
                     P_intc_in -= intc_state.pressure_drop;  // pressure drops in HCAs only accounted for later
-					T_htf_in[i+1] = intc_state.temp_out;
-					//mjw 1.18.2011 Add the internal energy of the crossover piping and interconnects between the current SCA and the next one
-					E_int_loop[i] += intc_state.internal_energy;
-				}
+                    T_htf_in[i + 1] = intc_state.temp_out;
+                    //mjw 1.18.2011 Add the internal energy of the crossover piping and interconnects between the current SCA and the next one
+                    E_int_loop[i] += intc_state.internal_energy;
+                }
 
-			}
+            }
+
+            intc_state = interconnects[interconnects.size() - 2].State(m_dot_htf, T_htf_out[nSCA - 1], T_db, P_intc_in);
+            T_loop[2*nSCA + 2] = intc_state.temp_out;
+            P_intc_in -= intc_state.pressure_drop;  // pressure drops in HCAs only accounted for later
 
 			//Set the loop outlet temperature
-            // TODO - Maybe change this?
-			T_loop_outX = T_htf_out[nSCA - 1];
+            intc_state = interconnects[interconnects.size() - 1].State(m_dot_htf * 2, T_loop[2*nSCA + 2], T_db, P_intc_in);
+            T_loop_outX = intc_state.temp_out;
 
+            //Fill in rest of T_loop using the SCA inlet and outlet temps
+            loop_i = 2; sca_i = 0;
+            while (loop_i < 2*nSCA + 2) {
+                T_loop[loop_i] = T_htf_in[sca_i];
+                T_loop[loop_i + 1] = T_htf_out[sca_i];
+                loop_i = loop_i + 2; sca_i++;
+            }
+            
 			if( accept_loc == 1 )
 			{								
-				//Calculation for heat losses from hot header and runner pipe
-				//Pipe_hl_hot = 0.0 //initialize
-				Runner_hl_hot = 0.0;    //initialize
-				Header_hl_hot = 0.0;   //initialize
+				//Consider heat loss from hot piping
+                //Header
+                Header_hl_hot = 0.0;
+				Header_hl_hot_tot = 0.0;
+                T_hdr[nhdrsec] = T_loop_outX;
+				c_hdr_hot = htfProps.Cp(T_loop_outX)* 1000.;
 				for( int i = nhdrsec; i < 2*nhdrsec; i++ )
 				{
-					//Pipe_hl_hot = Pipe_hl_hot + Row_Distance*D_hdr[i]*pi*Pipe_hl_coef*(T_loop_outX - T_db)
-					Header_hl_hot += Row_Distance*D_hdr[i] * pi*Pipe_hl_coef*(T_loop_outX - T_db);
+                    if (i != nhdrsec) {
+                        T_hdr[i] = T_hdr[i - 1] - Header_hl_hot / (m_dot_header(m_dot_htf_tot, nfsec, nLoops, i - 1)*c_hdr_hot);
+                    }
+                    Header_hl_hot = Row_Distance*D_hdr[i]*pi*Pipe_hl_coef*(T_hdr[i] - T_db);
+                    Header_hl_hot_tot += Header_hl_hot;
 				}
 
-				//Add the runner length
-				for( int i = 0; i < nrunsec; i++ )
+				//Runner
+                Runner_hl_hot = 0.0;
+				Runner_hl_hot_tot = 0.0;
+                T_rnr[nrunsec] = T_hdr[2*nhdrsec - 1] - Header_hl_hot / (m_dot_header(m_dot_htf_tot, nfsec, nLoops, 2*nhdrsec - 1)*c_hdr_hot);
+				for( int i = nrunsec; i < 2*nrunsec; i++ )
 				{
-					//Pipe_hl_hot = Pipe_hl_hot + L_runner[i]*pi*D_runner[i]*Pipe_hl_coef*(T_loop_outX - T_db)  //Wt
-					Runner_hl_hot = Runner_hl_hot + L_runner[i] * pi*D_runner[i] * Pipe_hl_coef*(T_loop_outX - T_db);  //Wt
+                    if (i != nrunsec) {
+                        T_rnr[i] = T_rnr[i - 1] - Runner_hl_hot / (m_dot_runner(m_dot_htf_tot, nfsec, i - 1)*c_hdr_hot);
+                    }
+					Runner_hl_hot = L_runner[i]*pi*D_runner[i]*Pipe_hl_coef*(T_rnr[i] - T_db);  //Wt
+                    Runner_hl_hot_tot += Runner_hl_hot;
 				}
-				Pipe_hl_hot = Header_hl_hot + Runner_hl_hot;
 
-				c_hdr_hot = htfProps.Cp(T_loop_outX)* 1000.;
+				Pipe_hl_hot = Header_hl_hot_tot + Runner_hl_hot_tot;
+
 
 				//Adjust the loop outlet temperature to account for thermal losses incurred in the hot header and the runner pipe
 				T_sys_h = T_loop_outX - Pipe_hl_hot / (m_dot_htf_tot*c_hdr_hot);
@@ -2356,7 +2480,7 @@ freeze_prot_flag: //7   continue
 
 				E_field_loss_tot *= 1.e-6 * dt;
 
-				double E_field_pipe_hl = 2*Runner_hl_hot + float(nfsec)*Header_hl_hot + 2*Runner_hl_cold + float(nfsec)*Header_hl_cold;
+				double E_field_pipe_hl = 2*Runner_hl_hot_tot + float(nfsec)*Header_hl_hot_tot + 2*Runner_hl_cold_tot + float(nfsec)*Header_hl_cold_tot;
 
 				E_field_pipe_hl *= dt;		//[J]
 
@@ -2768,11 +2892,11 @@ calc_final_metrics_goto:
 		// ******************************************************************************************************************************
 		// Calculate the pressure drop across the piping system
 		// ******************************************************************************************************************************
-		//------Inlet, Outlet, and COP
+		//------Inlet and Outlet
         inlet_state = interconnects[0].State(m_dot_htf * 2, T_loop_in, T_db, P_field_in);
-        crossover_state = interconnects[interconnects.size() / 2].State(m_dot_htf, T_htf_out[nSCA / 2 - 1], T_db, P_field_in/2);
         outlet_state = interconnects[interconnects.size() - 1].State(m_dot_htf * 2, T_loop_outX, T_db, 1.e5);  // assumption for press.
-        DP_IOCOP = inlet_state.pressure_drop + crossover_state.pressure_drop + outlet_state.pressure_drop;
+        DP_intc[0] = inlet_state.pressure_drop;
+        DP_intc[interconnects.size() - 1] = outlet_state.pressure_drop;
 
 		//-------HCE's (no interconnects)
 		DP_tube.fill(0.0);
@@ -2788,22 +2912,32 @@ calc_final_metrics_goto:
 
 			}
 		}
-		//The pressure drop only across the loop (excludes IOCOP)
+
+		//-------Interconnect's (no HCEs, no inlet nor outlet)
         intc_state = interconnects[1].State(m_dot_htf, inlet_state.temp_out, T_db, inlet_state.pressure_out);
-        DP_loop = intc_state.pressure_drop;  // just before first SCA
-		for(int j=0; j<nSCA; j++)
+        DP_intc[1] = intc_state.pressure_drop;  // just before first SCA
+		for(int i=2; i<interconnects.size() - 1; i++)
         {
-            DP_loop += DP_tube[j];
-            intc_state = interconnects[j + 2].State(m_dot_htf, T_htf_out[j], T_db, intc_state.pressure_out - DP_tube[j]);
-            if (j != nSCA/2 - 1) {   // exclude crossover
-                DP_loop += intc_state.pressure_drop;
-            }
+            intc_state = interconnects[i].State(m_dot_htf, T_htf_out[i - 2], T_db, intc_state.pressure_out - DP_tube[i - 2]);
+            DP_intc[i] = intc_state.pressure_drop;
         }
+
+        //-------IOCOP, HCE's and all other Interconnects
+        DP_loop[0] = DP_intc[0];  // inlet
+        DP_loop[1] = DP_intc[1];  // before first SCA
+        loop_i = 2; sca_i = 0; intc_i = 2;
+        while(loop_i < nSCA + interconnects.size() - 1) {
+            DP_loop[loop_i++] = DP_tube[sca_i++];
+            DP_loop[loop_i++] = DP_intc[intc_i++];
+        }
+        DP_loop[loop_i] = DP_intc[intc_i];  // outlet
+
 
 		if( accept_loc == 1 )
 			m_dot_htf_tot = m_dot_htf*float(nLoops);
 		else
 			m_dot_htf_tot = m_dot_htf;
+
 
 		//-------SGS to field section
 		//if(FieldConfig==1.) { //"H" type
@@ -2838,22 +2972,19 @@ calc_final_metrics_goto:
 			for( int i = 0; i<nrunsec; i++ )
 			{
                 (i < nrunsec - 1 ? x3 = 1.0 : x3 = 0.0);  // contractions/expansions
-				DP_toField = DP_toField + PressureDrop(m_dot_temp, T_loop_in, P_field_in, D_runner[i], HDR_rough, L_runner[i], 0.0, x3, 0.0, 0.0,
-					N_rnr_xpans[i]*elbows_per_xpan, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0);   //*m_dot_temp/m_dot_run_in  //mjw 5.11.11 Correct for less than all mass flow passing through each section
-				//if(ErrorFound()) return 1                  
-				//-------SGS from field section
-				DP_fromField = DP_fromField + PressureDrop(m_dot_temp, T_loop_outX, 1.e5, D_runner[i], HDR_rough, L_runner[i], x3, 0.0, 0.0, 0.0,
-                    N_rnr_xpans[i]*elbows_per_xpan, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0);   //*m_dot_temp/m_dot_run_in  //mjw 5.11.11 Correct for less than all mass flow passing through each section
-				//if(ErrorFound()) return 1
+                DP_rnr[i] = PressureDrop(m_dot_temp, T_loop_in, P_field_in, D_runner[i], HDR_rough,
+                    L_runner[i], 0.0, x3, 0.0, 0.0, N_rnr_xpans[i] * elbows_per_xpan, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0);
+                DP_rnr[2*nrunsec - i - 1] = PressureDrop(m_dot_temp, T_loop_outX, 1.e5, D_runner[2 * nrunsec - i - 1], HDR_rough,
+                    L_runner[2 * nrunsec - i - 1], x3, 0.0, 0.0, 0.0, N_rnr_xpans[2 * nrunsec - i - 1] * elbows_per_xpan, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0);
+
 				if( i>1 )
 					m_dot_temp = max(m_dot_temp - 2.*m_dot_htf_tot / float(nfsec), 0.0);
 			}
 
             //Calculate pressure drop in cold header
-			m_dot_header_in = m_dot_htf_tot / float(nfsec);
-			m_dot_header = m_dot_header_in;
+			m_dot_hdr_in = m_dot_htf_tot / float(nfsec);
+			m_dot_hdr = m_dot_hdr_in;
             double x2 = 0.0;
-			DP_hdr_cold = 0.0;
 			for( int i = 0; i<nhdrsec; i++ )
 			{
 				//Determine whether the particular section has a contraction fitting (at the beginning of the section)
@@ -2863,16 +2994,16 @@ calc_final_metrics_goto:
 					if( D_hdr[i] != D_hdr[i - 1] )
 						x2 = 1.;
 				}
-				DP_hdr_cold += PressureDrop(m_dot_header, T_loop_in, P_field_in, D_hdr[i], HDR_rough,
-					L_hdr[i], 0.0, x2, 0.0, 0.0, N_hdr_xpans[i]*4, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0); //*m_dot_header/m_dot_header_in  //mjw/tn 1.25.12 already account for m_dot_header in function call //mjw 5.11.11 scale by mass flow passing though
+
+                DP_hdr[i] = PressureDrop(m_dot_hdr, T_loop_in, P_field_in, D_hdr[i], HDR_rough,
+                    L_hdr[i], 0.0, x2, 0.0, 0.0, N_hdr_xpans[i] * 4, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
 				//if(ErrorFound()) return 1
 				//Siphon off header mass flow rate at each loop.  Multiply by 2 because there are 2 loops per hdr section
-				m_dot_header = max(m_dot_header - 2.*m_dot_htf, 0.0);
+				m_dot_hdr = max(m_dot_hdr - 2.*m_dot_htf, 0.0);
 			}
 
             //Calculate pressure drop in hot header
-            m_dot_header = 2.*m_dot_htf;
-            DP_hdr_hot = 0.0;
+            m_dot_hdr = 2.*m_dot_htf;
             for (int i = nhdrsec; i<2*nhdrsec; i++)
             {
                 //Determine whether the particular section has an expansion fitting (at the beginning of the section)
@@ -2883,19 +3014,72 @@ calc_final_metrics_goto:
                         x2 = 1.;
                 }
 
-                DP_hdr_hot += PressureDrop(m_dot_header, T_loop_outX, 1.e5, D_hdr[i], HDR_rough,
-                    L_hdr[i], x2, 0.0, 0.0, 0.0, N_hdr_xpans[i]*4, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0); //*m_dot_header/m_dot_header_in  //mjw 5.11.11
+                DP_hdr[i] = PressureDrop(m_dot_hdr, T_loop_outX, 1.e5, D_hdr[i], HDR_rough,
+                    L_hdr[i], x2, 0.0, 0.0, 0.0, N_hdr_xpans[i] * 4, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
                 //if(ErrorFound()) return 1
                 //Add to header mass flow rate at each loop.  Multiply by 2 because there are 2 loops per hdr section
-                m_dot_header = m_dot_header + 2.*m_dot_htf;
+                m_dot_hdr = m_dot_hdr + 2.*m_dot_htf;
             }
 
 		}
 
+        // Aggregate pressures
+        DP_IOCOP = DP_intc[0] + DP_intc[(DP_intc.ncells() - 1) / 2] + DP_intc[DP_intc.ncells() - 1];
+        DP_loop_tot = accumulate(DP_tube.data(), DP_tube.data() + DP_tube.ncells(), 0.0) +
+            accumulate(DP_intc.data(), DP_intc.data() + DP_intc.ncells(), 0.0) -
+            DP_IOCOP;
+        DP_hdr_cold = accumulate(DP_hdr.data(), DP_hdr.data() + DP_hdr.ncells() / 2, 0.0);
+        DP_hdr_hot = accumulate(DP_hdr.data() + DP_hdr.ncells() / 2, DP_hdr.data() + DP_hdr.ncells(), 0.0);
+        DP_toField = accumulate(DP_rnr.data(), DP_rnr.data() + DP_rnr.ncells() / 2, 0.0);
+        DP_fromField = accumulate(DP_rnr.data() + DP_rnr.ncells() / 2, DP_rnr.data() + DP_rnr.ncells(), 0.0);
+
+
+        //std::ofstream logDPs;             // moved to top of call()
+        //logDPs.open("logDPs.txt");
+
+        //logDPs << "DP_tube" << "\n";
+        //for (int i = 0; i < DP_tube.ncells(); i++) {
+        //    logDPs << DP_tube.at(i) << "\n";
+        //}
+        //logDPs << "\n";
+
+        //logDPs << "DP_hdr" << "\n";
+        //for (int i = 0; i < DP_hdr.ncells(); i++) {
+        //    logDPs << DP_hdr.at(i) << "\n";
+        //}
+        //logDPs << "\n";
+
+        //logDPs << "DP_rnr" << "\n";
+        //for (int i = 0; i < DP_rnr.ncells(); i++) {
+        //    logDPs << DP_rnr.at(i) << "\n";
+        //}
+
+        ////log.flush();
+        //logDPs << "\n";
+        //logDPs.close();
+        
+
 		if( accept_loc == 1 )
 		{
 			// The total pressure drop in all of the piping
-			DP_tot = (DP_loop + DP_hdr_cold + DP_hdr_hot + DP_fromField + DP_toField + DP_IOCOP);
+			DP_tot = (DP_loop_tot + DP_hdr_cold + DP_hdr_hot + DP_fromField + DP_toField + DP_IOCOP);
+            
+            // Convert pressure drops to gauge pressures
+            P_rnr[0] = DP_tot;
+            for (int i = 1; i < 2*nrunsec; i++) {
+                P_rnr[i] = P_rnr[i - 1] - DP_rnr[i - 1];
+                if (i == nrunsec) { P_rnr[i] -= (DP_hdr_cold + DP_loop_tot + DP_IOCOP + DP_hdr_hot); }
+            }
+            P_hdr[0] = P_rnr[nrunsec - 1] - DP_rnr[nrunsec - 1];    // report pressures for farthest subfield
+            for (int i = 1; i < 2*nhdrsec; i++) {
+                P_hdr[i] = P_hdr[i - 1] - DP_hdr[i - 1];
+                if (i == nhdrsec) { P_hdr[i] -= (DP_loop_tot + DP_IOCOP); }
+            }
+            P_loop[0] = P_hdr[nhdrsec - 1] - DP_hdr[nhdrsec - 1];   // report pressures for farthest loop
+            for (int i = 1; i < nSCA + interconnects.size(); i++) {
+                P_loop[i] = P_loop[i - 1] - DP_loop[i - 1];
+            }
+
 			// The total pumping power consumption
 			W_dot_pump = DP_tot*m_dot_htf_tot / (rho_hdr_cold*eta_pump) / 1000.;  //[kW]
 
@@ -2912,7 +3096,14 @@ calc_final_metrics_goto:
 		else
 		{
 			// The total pressure drop in all of the piping
-			DP_tot = (DP_loop + DP_IOCOP);
+			DP_tot = (DP_loop_tot + DP_IOCOP);
+
+            // Convert pressure drops to gauge pressures
+            P_loop[0] = DP_tot;
+            for (int i = 1; i < nSCA + interconnects.size(); i++) {
+                P_loop[i] = P_loop[i - 1] - DP_loop[i - 1];
+            }
+
 			// The total pumping power consumption
 			W_dot_pump = DP_tot*m_dot_htf / (rho_hdr_cold*eta_pump) / 1000.;  //[kW]
 
@@ -2926,6 +3117,7 @@ calc_final_metrics_goto:
 				SCA_par_tot = 0.0;
 			}
 		}
+
 
 		// ******************************************************************
 		// Calculate the system transient temperature for the next time step
@@ -2978,8 +3170,8 @@ calc_final_metrics_goto:
 				(v_cold*rho_hdr_cold*c_hdr_cold + mc_bal_cold)*(T_sys_c - 298.150));   //cold header and piping
 
 			//6/14/12, TN: Redefine pipe heat losses with header and runner components to get total system losses
-			Pipe_hl_hot = 2*Runner_hl_hot + float(nfsec)*Header_hl_hot;
-			Pipe_hl_cold = 2*Runner_hl_cold + float(nfsec)*Header_hl_cold;
+			Pipe_hl_hot = 2*Runner_hl_hot_tot + float(nfsec)*Header_hl_hot_tot;
+			Pipe_hl_cold = 2*Runner_hl_cold_tot + float(nfsec)*Header_hl_cold_tot;
 
 			Pipe_hl = Pipe_hl_hot + Pipe_hl_cold;
 
@@ -3080,6 +3272,42 @@ set_outputs_and_return:
 		E_tot_accum = E_loop_accum_out + E_hdr_accum_out;
 		
 		double E_field_out = E_field*3.6e-9;
+
+        if (design_sizing) {
+            util::matrix_t<double> T_rnr_out, P_rnr_out, T_hdr_out, P_hdr_out, T_loop_out, P_loop_out;
+            T_rnr_out.resize(2 * nrunsec);
+            P_rnr_out.resize(2 * nrunsec);
+            T_hdr_out.resize(2 * nhdrsec);
+            P_hdr_out.resize(2 * nhdrsec);
+            T_loop_out.resize(2 * nSCA + 3);
+            P_loop_out.resize(2 * nSCA + 3);
+
+            for (int i = 0; i < 2 * nrunsec; i++) {
+                T_rnr_out[i] = T_rnr[i] - 273.15; // K to C
+                P_rnr_out[i] = P_rnr[i] / 1.e5;   // Pa to bar
+            }
+            for (int i = 0; i < 2 * nhdrsec; i++) {
+                T_hdr_out[i] = T_hdr[i] - 273.15;
+                P_hdr_out[i] = P_hdr[i] / 1.e5;
+            }
+            for (int i = 0; i < 2 * nSCA + 3; i++) {
+                T_loop_out[i] = T_loop[i] - 273.15;
+                P_loop_out[i] = P_loop[i] / 1.e5;
+            }
+            
+            double *runner_temp_design = allocate(O_RUNNER_T_DSN, (int)T_rnr_out.ncells());
+            std::copy(T_rnr_out.data(), T_rnr_out.data() + T_rnr_out.ncells(), runner_temp_design);
+            double *runner_pressure_design = allocate(O_RUNNER_P_DSN, (int)P_rnr_out.ncells());
+            std::copy(P_rnr_out.data(), P_rnr_out.data() + P_rnr_out.ncells(), runner_pressure_design);
+            double *header_temp_design = allocate(O_HEADER_T_DSN, (int)T_hdr_out.ncells());
+            std::copy(T_hdr_out.data(), T_hdr_out.data() + T_hdr_out.ncells(), header_temp_design);
+            double *header_pressure_design = allocate(O_HEADER_P_DSN, (int)P_hdr_out.ncells());
+            std::copy(P_hdr_out.data(), P_hdr_out.data() + P_hdr_out.ncells(), header_pressure_design);
+            double *loop_temp_design = allocate(O_LOOP_T_DSN, (int)T_loop_out.ncells());
+            std::copy(T_loop_out.data(), T_loop_out.data() + T_loop_out.ncells(), loop_temp_design);
+            double *loop_pressure_design = allocate(O_LOOP_P_DSN, (int)P_loop_out.ncells());
+            std::copy(P_loop_out.data(), P_loop_out.data() + P_loop_out.ncells(), loop_pressure_design);
+        }
 		//------------------------------------------------------------------
 
 		
@@ -4759,7 +4987,59 @@ lab_keep_guess:
 		return 0;
 	}
 
-	
+    // Returns runner mass flow for a given runner index
+    double m_dot_runner(double m_dot_field, int nfieldsec, int irnr) {
+        int nrnrsec = (int)floor(float(nfieldsec) / 4.0) + 1;
+
+        if (irnr < 0 || irnr > 2*nrnrsec - 1) { throw std::invalid_argument("Invalid runner index"); }
+        
+        int irnr_onedir;
+        double m_dot_rnr;
+        double m_dot_rnr_0;
+        double m_dot_rnr_1;
+
+        // convert index to a mass flow equivalent cold runner index
+        if (irnr > nrnrsec - 1) {
+            irnr_onedir = 2 * nrnrsec - irnr - 1;
+        }
+        else {
+            irnr_onedir = irnr;
+        }
+
+        m_dot_rnr_0 = m_dot_field / 2.;
+        m_dot_rnr_1 = m_dot_rnr_0 * (1. - float(nfieldsec % 4) / float(nfieldsec));
+
+        switch (irnr_onedir) {
+            case 0:
+                m_dot_rnr = m_dot_rnr_0;
+            case 1:
+                m_dot_rnr = m_dot_rnr_1;
+            default:
+                m_dot_rnr = m_dot_rnr_1 - (irnr_onedir - 1)*m_dot_field / float(nfsec) * 2;
+        }
+
+        return max(m_dot_rnr, 0.0);
+    }
+
+    // Returns header mass flow for a given header index
+    double m_dot_header(double m_dot_field, int nfieldsec, int nLoopsField, int ihdr) {
+        int nhdrsec = (int)ceil(float(nLoopsField) / float(nfieldsec * 2));  // in the cold or hot headers
+
+        if (ihdr < 0 || ihdr > 2*nhdrsec - 1) { throw std::invalid_argument("Invalid header index"); }
+        
+        int ihdr_onedir;
+
+        // convert index to a mass flow equivalent cold header index
+        if (ihdr > nhdrsec - 1) {
+            ihdr_onedir = 2*nhdrsec - ihdr - 1;
+        }
+        else {
+            ihdr_onedir = ihdr;
+        }
+
+        double m_dot_oneloop = m_dot_field / float(nLoopsField);
+        return m_dot_field / float(nfieldsec) - ihdr_onedir * 2 * m_dot_oneloop;
+    }
 	/**************************************************************************************************
 	---------------------------------------------------------------------------------
 	--Inputs
@@ -4793,9 +5073,9 @@ lab_keep_guess:
 		if(D_hdr.ncells() != 2*nhsec) D_hdr.resize(2*nhsec);
         if(m_dot_hdr.ncells() != 2*nhsec) m_dot_hdr.resize(2*nhsec);
         if(V_hdr.ncells() != 2*nhsec) V_hdr.resize(2*nhsec);
-		if(D_runner.ncells() != nrunsec) D_runner.resize(nrunsec);
-        if(m_dot_rnr.ncells() != nrunsec) m_dot_rnr.resize(nrunsec);
-        if(V_rnr.ncells() != nrunsec) V_rnr.resize(nrunsec);
+		if(D_runner.ncells() != 2*nrunsec) D_runner.resize(2*nrunsec);
+        if(m_dot_rnr.ncells() != 2*nrunsec) m_dot_rnr.resize(2*nrunsec);
+        if(V_rnr.ncells() != 2*nrunsec) V_rnr.resize(2*nrunsec);
 
 		//----
 		int nend, nd;
@@ -4803,24 +5083,31 @@ lab_keep_guess:
 		double m_dot_hdrs, m_dot_2loops;
 		
 		//Mass flow into 1 header
-		m_dot_hdrs = m_dot/(float(nfsec));
+		m_dot_hdrs = m_dot/float(nfsec);
 		//Mass flow into the 2 loops attached to a single header section
 		m_dot_2loops = m_dot_hdrs/float(nhsec);
 
 		//Runner diameters
 		//runner pipe needs some length to go from the power block to the headers
+        //assume symmetric hot and cold runners
 		m_dot_rnr[0] = m_dot/2.;   //mass flow through half-length runners is always half of total
+        m_dot_rnr[2 * nrunsec - 1] = m_dot_rnr[0];
 		D_runner.at(0) = pipe_sched(sqrt(4.*m_dot_rnr[0]/(rho*V_cold_max*pi)));
+        D_runner.at(2 * nrunsec - 1) = D_runner.at(0);
         V_rnr.at(0) = 4.*m_dot_rnr[0] / (rho*pow(D_runner.at(0), 2)*pi);
+        V_rnr.at(2 * nrunsec - 1) = V_rnr.at(0);
 		for (unsigned i=1; i<nrunsec; i++){
             if (i == 1) {
-		        m_dot_rnr[i] = m_dot_rnr[i-1]*(1.-float(nfsec%4)/float(nfsec));  //Adjust mass flow for first full-length runners when nfsec/2==odd 
+		        m_dot_rnr[i] = m_dot_rnr[i-1]*(1.-float(nfsec%4)/float(nfsec));  //Adjust mass flow for first full-length runners when nfsec/2==odd
             }
             else {
 				m_dot_rnr[i] = max(m_dot_rnr[i-1] - m_dot_hdrs*2, 0.0);
             }
+            m_dot_rnr[2 * nrunsec - i - 1] = m_dot_rnr[i];
 			D_runner[i] = pipe_sched(sqrt(4.*m_dot_rnr[i]/(rho*V_cold_max*pi)));
+            D_runner[2 * nrunsec - i - 1] = D_runner[i];
             V_rnr.at(i) = 4.*m_dot_rnr[i] / (rho*pow(D_runner.at(i), 2)*pi);
+            V_rnr.at(2 * nrunsec - i - 1) = V_rnr.at(i);
 		}
 
 		//Calculate each section in the cold header
@@ -4946,7 +5233,7 @@ lab_keep_guess:
 				max(V_cold_max, V_hot_max), min(V_cold_min, V_hot_min));
 			summary->append(tstr);
 
-			for (unsigned i=0; i<nrunsec; i++){
+			for (unsigned i=0; i<2*nrunsec; i++){
 				MySnprintf(tstr, TSTRLEN, "To section %d header pipe diameter: %.4lf m (%.2lf in)\n",i+1, D_runner[i], D_runner[i]*mtoinch);
 				summary->append(tstr);
 			}
