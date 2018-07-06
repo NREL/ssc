@@ -1131,7 +1131,7 @@ public:
 		accept_loc = (int)value(P_ACCEPT_LOC);					// In acceptance testing mode - temperature sensor location (1=hx,2=loop) [none]
 		is_using_input_gen = (value(P_USING_INPUT_GEN)>0);	// Is model getting inputs from input generator (true) or from other components in physical trough SYSTEM model (false)
 		
-        design_sizing = false;                   // placeholder for parameter
+        design_sizing = true;                   // placeholder for parameter
 
 		solar_mult = value(P_SOLAR_MULT);		//Solar multiple [none]
 		mc_bal_hot = value(P_MC_BAL_HOT);		//The heat capacity of the balance of plant on the hot side [kWht/K-MWt]
@@ -1952,7 +1952,7 @@ public:
 			double omega = (SolarTime - 12.0)*15.0*pi/180.0;
 
             if (design_sizing) {
-                SolarAlt = ColTilt;
+                SolarAlt = pi/2. - ColTilt;
                 SolarAz = ColAz;
             }
             else {
@@ -2209,9 +2209,7 @@ overtemp_iter_flag: //10 continue     //Return loop for over-temp conditions
                     Header_hl_cold_tot += Header_hl_cold;
                 }
 
-                Pipe_hl_cold = Header_hl_cold_tot + Runner_hl_cold_tot;
-
-                T_loop_in = T_sys_c - Pipe_hl_cold / (m_dot_htf*float(nLoops)*c_hdr_cold);
+                T_loop_in = T_hdr[nhdrsec - 1] - Header_hl_cold / (m_dot_header(m_dot_htf_tot, nfsec, nLoops, nhdrsec - 1)*c_hdr_cold);
                 T_htf_in[0] = T_loop_in;
             }
             else		// accept_loc == 2, only modeling loop
@@ -2927,10 +2925,9 @@ calc_final_metrics_goto:
         DP_loop[0] = DP_intc[0];  // inlet
         DP_loop[1] = DP_intc[1];  // before first SCA
         int loop_i = 2; int sca_i = 0; int intc_i = 2;
-        while(loop_i < nSCA + interconnects.size() - 3) {
-            DP_loop[loop_i] = DP_tube[sca_i];
-            DP_loop[loop_i + 1] = DP_intc[intc_i];
-            loop_i = loop_i + 2; sca_i++; intc_i++;
+        while(loop_i < nSCA + interconnects.size() - 1) {
+            DP_loop[loop_i++] = DP_tube[sca_i++];
+            DP_loop[loop_i++] = DP_intc[intc_i++];
         }
         DP_loop[loop_i] = DP_intc[intc_i];  // outlet
 
@@ -2987,7 +2984,6 @@ calc_final_metrics_goto:
 			m_dot_hdr_in = m_dot_htf_tot / float(nfsec);
 			m_dot_hdr = m_dot_hdr_in;
             double x2 = 0.0;
-			DP_hdr_cold = 0.0;
 			for( int i = 0; i<nhdrsec; i++ )
 			{
 				//Determine whether the particular section has a contraction fitting (at the beginning of the section)
@@ -3000,8 +2996,6 @@ calc_final_metrics_goto:
 
                 DP_hdr[i] = PressureDrop(m_dot_hdr, T_loop_in, P_field_in, D_hdr[i], HDR_rough,
                     L_hdr[i], 0.0, x2, 0.0, 0.0, N_hdr_xpans[i] * 4, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
-				DP_hdr_cold += PressureDrop(m_dot_hdr, T_loop_in, P_field_in, D_hdr[i], HDR_rough,
-					L_hdr[i], 0.0, x2, 0.0, 0.0, N_hdr_xpans[i]*4, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0); //*m_dot_hdr/m_dot_hdr_in  //mjw/tn 1.25.12 already account for m_dot_hdr in function call //mjw 5.11.11 scale by mass flow passing though
 				//if(ErrorFound()) return 1
 				//Siphon off header mass flow rate at each loop.  Multiply by 2 because there are 2 loops per hdr section
 				m_dot_hdr = max(m_dot_hdr - 2.*m_dot_htf, 0.0);
@@ -3009,7 +3003,6 @@ calc_final_metrics_goto:
 
             //Calculate pressure drop in hot header
             m_dot_hdr = 2.*m_dot_htf;
-            DP_hdr_hot = 0.0;
             for (int i = nhdrsec; i<2*nhdrsec; i++)
             {
                 //Determine whether the particular section has an expansion fitting (at the beginning of the section)
@@ -3022,8 +3015,6 @@ calc_final_metrics_goto:
 
                 DP_hdr[i] = PressureDrop(m_dot_hdr, T_loop_outX, 1.e5, D_hdr[i], HDR_rough,
                     L_hdr[i], x2, 0.0, 0.0, 0.0, N_hdr_xpans[i] * 4, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
-                DP_hdr_hot += PressureDrop(m_dot_hdr, T_loop_outX, 1.e5, D_hdr[i], HDR_rough,
-                    L_hdr[i], x2, 0.0, 0.0, 0.0, N_hdr_xpans[i]*4, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0); //*m_dot_hdr/m_dot_hdr_in  //mjw 5.11.11
                 //if(ErrorFound()) return 1
                 //Add to header mass flow rate at each loop.  Multiply by 2 because there are 2 loops per hdr section
                 m_dot_hdr = m_dot_hdr + 2.*m_dot_htf;
@@ -3074,12 +3065,14 @@ calc_final_metrics_goto:
             
             // Convert pressure drops to gauge pressures
             P_rnr[0] = DP_tot;
-            for (int i = 1; i < nrunsec; i++) {
+            for (int i = 1; i < 2*nrunsec; i++) {
                 P_rnr[i] = P_rnr[i - 1] - DP_rnr[i - 1];
+                if (i == nrunsec) { P_rnr[i] -= (DP_hdr_cold + DP_loop_tot + DP_IOCOP + DP_hdr_hot); }
             }
             P_hdr[0] = P_rnr[nrunsec - 1] - DP_rnr[nrunsec - 1];    // report pressures for farthest subfield
-            for (int i = 1; i < nhdrsec; i++) {
+            for (int i = 1; i < 2*nhdrsec; i++) {
                 P_hdr[i] = P_hdr[i - 1] - DP_hdr[i - 1];
+                if (i == nhdrsec) { P_hdr[i] -= (DP_loop_tot + DP_IOCOP); }
             }
             P_loop[0] = P_hdr[nhdrsec - 1] - DP_hdr[nhdrsec - 1];   // report pressures for farthest loop
             for (int i = 1; i < nSCA + interconnects.size(); i++) {
@@ -3301,18 +3294,18 @@ set_outputs_and_return:
                 P_loop_out[i] = P_loop[i] / 1.e5;
             }
             
-            double *runner_temp_design = allocate(O_RUNNER_T_DSN, (int)T_rnr.ncells());
-            std::copy(T_rnr.data(), T_rnr.data() + T_rnr.ncells(), runner_temp_design);
-            double *runner_pressure_design = allocate(O_RUNNER_P_DSN, (int)P_rnr.ncells());
-            std::copy(P_rnr.data(), P_rnr.data() + P_rnr.ncells(), runner_pressure_design);
-            double *header_temp_design = allocate(O_HEADER_T_DSN, (int)T_hdr.ncells());
-            std::copy(T_hdr.data(), T_hdr.data() + T_hdr.ncells(), header_temp_design);
-            double *header_pressure_design = allocate(O_HEADER_P_DSN, (int)P_hdr.ncells());
-            std::copy(P_hdr.data(), P_hdr.data() + P_hdr.ncells(), header_pressure_design);
-            double *loop_temp_design = allocate(O_LOOP_T_DSN, (int)T_loop.ncells());
-            std::copy(T_loop.data(), T_loop.data() + T_loop.ncells(), loop_temp_design);
-            double *loop_pressure_design = allocate(O_LOOP_P_DSN, (int)P_loop.ncells());
-            std::copy(P_loop.data(), P_loop.data() + P_loop.ncells(), loop_pressure_design);
+            double *runner_temp_design = allocate(O_RUNNER_T_DSN, (int)T_rnr_out.ncells());
+            std::copy(T_rnr_out.data(), T_rnr_out.data() + T_rnr_out.ncells(), runner_temp_design);
+            double *runner_pressure_design = allocate(O_RUNNER_P_DSN, (int)P_rnr_out.ncells());
+            std::copy(P_rnr_out.data(), P_rnr_out.data() + P_rnr_out.ncells(), runner_pressure_design);
+            double *header_temp_design = allocate(O_HEADER_T_DSN, (int)T_hdr_out.ncells());
+            std::copy(T_hdr_out.data(), T_hdr_out.data() + T_hdr_out.ncells(), header_temp_design);
+            double *header_pressure_design = allocate(O_HEADER_P_DSN, (int)P_hdr_out.ncells());
+            std::copy(P_hdr_out.data(), P_hdr_out.data() + P_hdr_out.ncells(), header_pressure_design);
+            double *loop_temp_design = allocate(O_LOOP_T_DSN, (int)T_loop_out.ncells());
+            std::copy(T_loop_out.data(), T_loop_out.data() + T_loop_out.ncells(), loop_temp_design);
+            double *loop_pressure_design = allocate(O_LOOP_P_DSN, (int)P_loop_out.ncells());
+            std::copy(P_loop_out.data(), P_loop_out.data() + P_loop_out.ncells(), loop_pressure_design);
         }
 		//------------------------------------------------------------------
 
