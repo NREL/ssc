@@ -242,15 +242,16 @@ public:
 	struct S_od_phi_par
 	{
 		double m_T_mc_in;		//[K] Compressor inlet temperature
+		double m_T_pc_in;		//[K] Precompressor inlet temperature
 		double m_T_t_in;		//[K] Turbine inlet temperature
-		double m_P_LP_comp_in;		//[kPa] Compressor inlet pressure
+		double m_P_LP_comp_in;	//[kPa] Compressor inlet pressure (low pressure comp in partial cooling cycle)
 		
 		int m_N_sub_hxrs;		//[-] Number of sub heat exchangers
 		double m_tol;			//[-] Convergence tolerance
 
 		S_od_phi_par()
 		{
-			m_T_mc_in = m_T_t_in = m_P_LP_comp_in = 
+			m_T_mc_in = m_T_pc_in = m_T_t_in = m_P_LP_comp_in = 
 				m_tol = std::numeric_limits<double>::quiet_NaN();
 			m_N_sub_hxrs = -1;
 		}

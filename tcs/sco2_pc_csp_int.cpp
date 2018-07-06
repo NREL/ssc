@@ -505,7 +505,8 @@ void C_sco2_recomp_csp::setup_off_design_info(C_sco2_recomp_csp::S_od_par od_par
 	ms_phx_od_par.m_T_h_in = ms_od_par.m_T_htf_hot;			//[K]
 	ms_phx_od_par.m_P_h_in = ms_phx_des_par.m_P_h_in;		//[kPa] Assuming fluid is incompressible in that pressure doesn't affect its properties
 	ms_phx_od_par.m_m_dot_h = ms_od_par.m_m_dot_htf;		//[kg/s]
-															// Defined downstream
+
+	// Defined downstream
 	ms_phx_od_par.m_T_c_in = std::numeric_limits<double>::quiet_NaN();		//[K]
 	ms_phx_od_par.m_P_c_in = std::numeric_limits<double>::quiet_NaN();		//[kPa]
 	ms_phx_od_par.m_m_dot_c = std::numeric_limits<double>::quiet_NaN();		//[kg/s]
@@ -1813,35 +1814,10 @@ int C_sco2_recomp_csp::off_design_core(double & eta_solved)
 
 int C_sco2_recomp_csp::off_design(S_od_par od_par, S_od_operation_inputs od_op_inputs)
 {
-	ms_od_par = od_par;
+	setup_off_design_info(od_par, -1, 1.E-3);
 
-	// Define ms_rc_cycle_od_par
-		// Defined here
-	ms_rc_cycle_od_phi_par.m_T_mc_in = ms_od_par.m_T_amb + ms_des_par.m_dt_mc_approach;		//[K]
-	if( ms_rc_cycle_od_phi_par.m_T_mc_in < m_T_mc_in_min )
-	{
-		std::string msg = util::format("The off-design main compressor inlet temperature is %lg [C]."
-			" The sCO2 cycle off-design code reset it to the minimum allowable main compressor inlet temperature: %lg [C].",
-			ms_rc_cycle_od_phi_par.m_T_mc_in - 273.15,
-			m_T_mc_in_min - 273.15);
-		ms_rc_cycle_od_phi_par.m_T_mc_in = m_T_mc_in_min;
-	}
-	ms_rc_cycle_od_phi_par.m_N_sub_hxrs = ms_des_par.m_N_sub_hxrs;			//[-]
-	ms_rc_cycle_od_phi_par.m_tol = ms_des_par.m_tol;						//[-]
-		// Operational Inputs
+		// Setting pressure, here
 	ms_rc_cycle_od_phi_par.m_P_LP_comp_in = od_op_inputs.m_P_mc_in;			//[kPa]
-		// Defined downstream
-	ms_rc_cycle_od_phi_par.m_T_t_in = std::numeric_limits<double>::quiet_NaN();			//[K]
-	
-	// Define ms_phx_od_par
-		// Defined here
-	ms_phx_od_par.m_T_h_in = ms_od_par.m_T_htf_hot;			//[K]
-	ms_phx_od_par.m_P_h_in = ms_phx_des_par.m_P_h_in;		//[kPa] Assuming fluid is incompressible in that pressure doesn't affect its properties
-	ms_phx_od_par.m_m_dot_h = ms_od_par.m_m_dot_htf;		//[kg/s]
-		// Defined downstream
-	ms_phx_od_par.m_T_c_in = std::numeric_limits<double>::quiet_NaN();		//[K]
-	ms_phx_od_par.m_P_c_in = std::numeric_limits<double>::quiet_NaN();		//[kPa]
-	ms_phx_od_par.m_m_dot_c = std::numeric_limits<double>::quiet_NaN();		//[kg/s]
 
 	double eta_solved = std::numeric_limits<double>::quiet_NaN();
 
