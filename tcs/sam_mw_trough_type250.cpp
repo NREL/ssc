@@ -1867,8 +1867,9 @@ public:
 		double DP_toField, DP_fromField;
 		double m_dot_hdr_in, m_dot_hdr, DP_hdr_cold, DP_hdr_hot;
 		double E_avail_tot, rho_ave, E_int_sum;
-		double q_abs_maxOT = 0;
         int loop_i, sca_i, intc_i;
+		double q_abs_maxOT;
+        q_abs_maxOT = 0;
 
 		if (ncall==0)  //mjw 3.5.11 We only need to calculate these values once per timestep..
 		{
