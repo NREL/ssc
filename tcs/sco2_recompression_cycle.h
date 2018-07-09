@@ -403,7 +403,7 @@ private:
 	//S_od_turbo_bal_par ms_od_turbo_bal_par;
 	S_od_turbo_bal_csp_par ms_od_turbo_bal_csp_par;
 	S_od_turbo_bal_csp_solved ms_od_turbo_bal_csp_solved;
-	S_od_parameters ms_od_par;
+	//S_od_parameters ms_od_par;
 	S_opt_od_parameters ms_opt_od_par;
 	S_target_od_parameters ms_tar_od_par;
 	S_opt_target_od_parameters ms_opt_tar_od_par;
@@ -539,7 +539,7 @@ public:
 
 	//void off_design_phi(S_od_phi_par & od_phi_par_in, int & error_code);
 
-	int off_design_fix_shaft_speeds(S_od_phi_par & od_phi_par_in);
+	int off_design_fix_shaft_speeds(S_od_par & od_phi_par_in);
 
 	//void optimal_off_design(S_opt_od_parameters & opt_od_par_in, int & error_code);
 	

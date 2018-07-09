@@ -129,40 +129,40 @@ void C_sco2_recomp_csp::design_core()
 
 		// Design the recompression cycle to hit a specified efficiency
 		// Define sCO2 cycle design parameter structure
-		ms_rc_cycle_des_par.m_W_dot_net = ms_des_par.m_W_dot_net;		//[kWe]
-		ms_rc_cycle_des_par.m_eta_thermal = ms_des_par.m_eta_thermal;	//[-]
-		ms_rc_cycle_des_par.m_T_mc_in = ms_des_par.m_T_amb_des + ms_des_par.m_dt_mc_approach;	//[K]
-		if (ms_rc_cycle_des_par.m_T_mc_in < m_T_mc_in_min)
+		ms_cycle_des_par.m_W_dot_net = ms_des_par.m_W_dot_net;		//[kWe]
+		ms_cycle_des_par.m_eta_thermal = ms_des_par.m_eta_thermal;	//[-]
+		ms_cycle_des_par.m_T_mc_in = ms_des_par.m_T_amb_des + ms_des_par.m_dt_mc_approach;	//[K]
+		if (ms_cycle_des_par.m_T_mc_in < m_T_mc_in_min)
 		{
 			std::string msg = util::format("The input design main compressor inlet temperature is %lg [C]."
 				" The sCO2 cycle design code reset it to the minimum allowable design main compressor inlet temperature: %lg [C].",
-				ms_rc_cycle_des_par.m_T_mc_in - 273.15,
+				ms_cycle_des_par.m_T_mc_in - 273.15,
 				m_T_mc_in_min - 273.15);
 		}
-		ms_rc_cycle_des_par.m_T_t_in = ms_des_par.m_T_htf_hot_in - ms_des_par.m_phx_dt_hot_approach;	//[K]
-		ms_rc_cycle_des_par.m_DP_LT = ms_des_par.m_DP_LT;
-		ms_rc_cycle_des_par.m_DP_HT = ms_des_par.m_DP_HT;
-		ms_rc_cycle_des_par.m_DP_PC_main = ms_des_par.m_DP_PC;
-		ms_rc_cycle_des_par.m_DP_PHX = ms_des_par.m_DP_PHX;
-		ms_rc_cycle_des_par.m_LTR_eff_max = ms_des_par.m_LT_eff_max;
-		ms_rc_cycle_des_par.m_HTR_eff_max = ms_des_par.m_HT_eff_max;
-		ms_rc_cycle_des_par.m_eta_mc = ms_des_par.m_eta_mc;
-		ms_rc_cycle_des_par.m_eta_rc = ms_des_par.m_eta_rc;
-		ms_rc_cycle_des_par.m_eta_t = ms_des_par.m_eta_t;
-		ms_rc_cycle_des_par.m_N_sub_hxrs = ms_des_par.m_N_sub_hxrs;
-		ms_rc_cycle_des_par.m_P_high_limit = ms_des_par.m_P_high_limit;
-		ms_rc_cycle_des_par.m_tol = ms_des_par.m_tol;
-		ms_rc_cycle_des_par.m_opt_tol = ms_des_par.m_opt_tol;
-		ms_rc_cycle_des_par.m_N_turbine = ms_des_par.m_N_turbine;
-		ms_rc_cycle_des_par.m_is_recomp_ok = ms_des_par.m_is_recomp_ok;
+		ms_cycle_des_par.m_T_t_in = ms_des_par.m_T_htf_hot_in - ms_des_par.m_phx_dt_hot_approach;	//[K]
+		ms_cycle_des_par.m_DP_LT = ms_des_par.m_DP_LT;
+		ms_cycle_des_par.m_DP_HT = ms_des_par.m_DP_HT;
+		ms_cycle_des_par.m_DP_PC_main = ms_des_par.m_DP_PC;
+		ms_cycle_des_par.m_DP_PHX = ms_des_par.m_DP_PHX;
+		ms_cycle_des_par.m_LTR_eff_max = ms_des_par.m_LT_eff_max;
+		ms_cycle_des_par.m_HTR_eff_max = ms_des_par.m_HT_eff_max;
+		ms_cycle_des_par.m_eta_mc = ms_des_par.m_eta_mc;
+		ms_cycle_des_par.m_eta_rc = ms_des_par.m_eta_rc;
+		ms_cycle_des_par.m_eta_t = ms_des_par.m_eta_t;
+		ms_cycle_des_par.m_N_sub_hxrs = ms_des_par.m_N_sub_hxrs;
+		ms_cycle_des_par.m_P_high_limit = ms_des_par.m_P_high_limit;
+		ms_cycle_des_par.m_tol = ms_des_par.m_tol;
+		ms_cycle_des_par.m_opt_tol = ms_des_par.m_opt_tol;
+		ms_cycle_des_par.m_N_turbine = ms_des_par.m_N_turbine;
+		ms_cycle_des_par.m_is_recomp_ok = ms_des_par.m_is_recomp_ok;
 
-		ms_rc_cycle_des_par.m_des_objective_type = ms_des_par.m_des_objective_type;		//[-]
-		ms_rc_cycle_des_par.m_min_phx_deltaT = ms_des_par.m_min_phx_deltaT;				//[C]
+		ms_cycle_des_par.m_des_objective_type = ms_des_par.m_des_objective_type;		//[-]
+		ms_cycle_des_par.m_min_phx_deltaT = ms_des_par.m_min_phx_deltaT;				//[C]
 
-		ms_rc_cycle_des_par.mf_callback_log = mf_callback_update;
-		ms_rc_cycle_des_par.mp_mf_active = mp_mf_update;
+		ms_cycle_des_par.mf_callback_log = mf_callback_update;
+		ms_cycle_des_par.mp_mf_active = mp_mf_update;
 
-		auto_err_code = mpc_sco2_cycle->auto_opt_design_hit_eta(ms_rc_cycle_des_par, error_msg);
+		auto_err_code = mpc_sco2_cycle->auto_opt_design_hit_eta(ms_cycle_des_par, error_msg);
 	}
 	else if (ms_des_par.m_design_method == 2)
 	{
@@ -174,11 +174,11 @@ void C_sco2_recomp_csp::design_core()
 		C_sco2_cycle_core::S_auto_opt_design_parameters des_params;
 		des_params.m_W_dot_net = ms_des_par.m_W_dot_net;		//[kWe]
 		des_params.m_T_mc_in = ms_des_par.m_T_amb_des + ms_des_par.m_dt_mc_approach;	//[K]
-		if (ms_rc_cycle_des_par.m_T_mc_in < m_T_mc_in_min)
+		if (ms_cycle_des_par.m_T_mc_in < m_T_mc_in_min)
 		{
 			std::string msg = util::format("The input design main compressor inlet temperature is %lg [C]."
 				" The sCO2 cycle design code reset it to the minimum allowable design main compressor inlet temperature: %lg [C].",
-				ms_rc_cycle_des_par.m_T_mc_in - 273.15,
+				ms_cycle_des_par.m_T_mc_in - 273.15,
 				m_T_mc_in_min - 273.15);
 		}
 		des_params.m_T_pc_in = des_params.m_T_mc_in;		//[K]
@@ -335,7 +335,7 @@ int C_sco2_recomp_csp::off_design_fix_P_mc_in(C_sco2_rc_csp_template::S_od_par o
 	setup_off_design_info(od_par, off_design_strategy, od_opt_tol);
 	
 	// Now, call off-design with the optimized compressor inlet pressure		
-	ms_rc_cycle_od_phi_par.m_P_LP_comp_in = P_mc_in*1.E3;	//[kPa] convert from MPa
+	ms_cycle_od_par.m_P_LP_comp_in = P_mc_in*1.E3;	//[kPa] convert from MPa
 	double eta_od_solved = std::numeric_limits<double>::quiet_NaN();
 	int od_core_error_code = off_design_core(eta_od_solved);
 	
@@ -484,22 +484,22 @@ void C_sco2_recomp_csp::setup_off_design_info(C_sco2_recomp_csp::S_od_par od_par
 	m_od_opt_ftol = od_opt_tol;
 	// ****************************************
 
-	ms_rc_cycle_od_phi_par.m_T_mc_in = ms_od_par.m_T_amb + ms_des_par.m_dt_mc_approach;		//[K]
-	if (ms_rc_cycle_od_phi_par.m_T_mc_in < m_T_mc_in_min)
+	ms_cycle_od_par.m_T_mc_in = ms_od_par.m_T_amb + ms_des_par.m_dt_mc_approach;		//[K]
+	if (ms_cycle_od_par.m_T_mc_in < m_T_mc_in_min)
 	{
 		std::string msg = util::format("The off-design main compressor inlet temperature is %lg [C]."
 			" The sCO2 cycle off-design code reset it to the minimum allowable main compressor inlet temperature: %lg [C].",
-			ms_rc_cycle_od_phi_par.m_T_mc_in - 273.15,
+			ms_cycle_od_par.m_T_mc_in - 273.15,
 			m_T_mc_in_min - 273.15);
-		ms_rc_cycle_od_phi_par.m_T_mc_in = m_T_mc_in_min;
+		ms_cycle_od_par.m_T_mc_in = m_T_mc_in_min;
 	}
 
-	ms_rc_cycle_od_phi_par.m_N_sub_hxrs = ms_des_par.m_N_sub_hxrs;			//[-]
-	ms_rc_cycle_od_phi_par.m_tol = ms_des_par.m_tol;						//[-]
+	ms_cycle_od_par.m_N_sub_hxrs = ms_des_par.m_N_sub_hxrs;			//[-]
+	ms_cycle_od_par.m_tol = ms_des_par.m_tol;						//[-]
 
 	// Defined downstream
-	ms_rc_cycle_od_phi_par.m_T_t_in = std::numeric_limits<double>::quiet_NaN();			//[K]			
-	ms_rc_cycle_od_phi_par.m_P_LP_comp_in = std::numeric_limits<double>::quiet_NaN();	//[kPa]
+	ms_cycle_od_par.m_T_t_in = std::numeric_limits<double>::quiet_NaN();			//[K]			
+	ms_cycle_od_par.m_P_LP_comp_in = std::numeric_limits<double>::quiet_NaN();	//[kPa]
 	
 	// Define ms_phx_od_par
 	ms_phx_od_par.m_T_h_in = ms_od_par.m_T_htf_hot;			//[K]
@@ -534,9 +534,9 @@ bool C_sco2_recomp_csp::opt_P_mc_in_nest_f_recomp_max_eta_core()
 	double mc_dens_in_des = ms_des_solved.ms_rc_cycle_solved.m_dens[C_sco2_cycle_core::MC_IN];		//[kg/m^3]
 	CO2_state co2_props;
 	// Then calculate the compressor inlet pressure that achieves this density at the off-design ambient temperature
-	CO2_TD(ms_rc_cycle_od_phi_par.m_T_mc_in, mc_dens_in_des, &co2_props);
+	CO2_TD(ms_cycle_od_par.m_T_mc_in, mc_dens_in_des, &co2_props);
 	double mc_pres_dens_des_od = co2_props.pres;	//[kPa]
-	ms_rc_cycle_od_phi_par.m_P_LP_comp_in = mc_pres_dens_des_od;	//[kPa]
+	ms_cycle_od_par.m_P_LP_comp_in = mc_pres_dens_des_od;	//[kPa]
 
 	double P_mc_in_guess = -1.23;
 	double P_mc_in_upper = -1.23;
@@ -549,7 +549,7 @@ bool C_sco2_recomp_csp::opt_P_mc_in_nest_f_recomp_max_eta_core()
 		od_core_error_code_dens = off_design_core(eta_od_core);
 		if (od_core_error_code_dens == 0)
 		{	// Have found one feasible compressor inlet pressure
-			P_mc_in_guess = ms_rc_cycle_od_phi_par.m_P_LP_comp_in;	//[kPa]
+			P_mc_in_guess = ms_cycle_od_par.m_P_LP_comp_in;	//[kPa]
 
 			P_mc_in_upper = P_mc_in_guess;
 			// Increase compressor inlet temperature until off design returns error code
@@ -558,7 +558,7 @@ bool C_sco2_recomp_csp::opt_P_mc_in_nest_f_recomp_max_eta_core()
 			{
 				iter_P_mc_in_upper++;
 				P_mc_in_upper = 0.95*P_mc_in_upper + 0.05*ms_des_par.m_P_high_limit;	//[kPa]
-				ms_rc_cycle_od_phi_par.m_P_LP_comp_in = P_mc_in_upper;	//[kPa]
+				ms_cycle_od_par.m_P_LP_comp_in = P_mc_in_upper;	//[kPa]
 
 				int od_core_error_code = off_design_core(eta_od_core);
 
@@ -584,10 +584,10 @@ bool C_sco2_recomp_csp::opt_P_mc_in_nest_f_recomp_max_eta_core()
 
 			while (true)
 			{
-				P_mc_in_upper = ms_rc_cycle_od_phi_par.m_P_LP_comp_in;	//[kPa]
+				P_mc_in_upper = ms_cycle_od_par.m_P_LP_comp_in;	//[kPa]
 				P_mc_in_guess = 0.98*P_mc_in_upper;					//[kPa]
 
-				ms_rc_cycle_od_phi_par.m_P_LP_comp_in = P_mc_in_guess;	//[kPa]
+				ms_cycle_od_par.m_P_LP_comp_in = P_mc_in_guess;	//[kPa]
 
 				int od_core_error_code = off_design_core(eta_od_core);
 
@@ -611,10 +611,10 @@ bool C_sco2_recomp_csp::opt_P_mc_in_nest_f_recomp_max_eta_core()
 
 			while (true)
 			{
-				P_mc_in_upper = ms_rc_cycle_od_phi_par.m_P_LP_comp_in;	//[kPa]
+				P_mc_in_upper = ms_cycle_od_par.m_P_LP_comp_in;	//[kPa]
 				P_mc_in_guess = 0.98*P_mc_in_upper;					//[kPa]
 
-				ms_rc_cycle_od_phi_par.m_P_LP_comp_in = P_mc_in_guess;	//[kPa]
+				ms_cycle_od_par.m_P_LP_comp_in = P_mc_in_guess;	//[kPa]
 
 				int od_core_error_code = off_design_core(eta_od_core);
 
@@ -709,7 +709,7 @@ bool C_sco2_recomp_csp::opt_P_mc_in_nest_f_recomp_max_eta_core()
 		}
 
 		// Now, call off-design with the optimized compressor inlet pressure		
-		ms_rc_cycle_od_phi_par.m_P_LP_comp_in = P_mc_in_opt;	//[kPa]
+		ms_cycle_od_par.m_P_LP_comp_in = P_mc_in_opt;	//[kPa]
 		double eta_od_core_1st = std::numeric_limits<double>::quiet_NaN();
 		int od_core_error_code = off_design_core(eta_od_core_1st);
 		if (od_core_error_code == 0)
@@ -1583,7 +1583,7 @@ double C_sco2_recomp_csp::adjust_P_mc_in_away_2phase(double T_co2 /*K*/, double 
 
 int C_sco2_recomp_csp::off_design_core(double & eta_solved)
 {
-	ms_rc_cycle_od_phi_par.m_P_LP_comp_in = adjust_P_mc_in_away_2phase(ms_rc_cycle_od_phi_par.m_T_mc_in, ms_rc_cycle_od_phi_par.m_P_LP_comp_in);
+	ms_cycle_od_par.m_P_LP_comp_in = adjust_P_mc_in_away_2phase(ms_cycle_od_par.m_T_mc_in, ms_cycle_od_par.m_P_LP_comp_in);
 
 	// Apply 1 var solver to find the turbine inlet temperature that results in a "converged" PHX
 	C_mono_eq_T_t_in c_phx_cycle(this);
@@ -1800,7 +1800,7 @@ int C_sco2_recomp_csp::off_design_core(double & eta_solved)
 		{
 			ms_od_opt_eta_tracking.m_is_opt_found = true;
 			ms_od_opt_eta_tracking.m_eta_max = eta_solved;
-			ms_od_opt_eta_tracking.ms_od_op_in_max.m_P_mc_in = ms_rc_cycle_od_phi_par.m_P_LP_comp_in;
+			ms_od_opt_eta_tracking.ms_od_op_in_max.m_P_mc_in = ms_cycle_od_par.m_P_LP_comp_in;
 			ms_od_opt_eta_tracking.ms_od_op_in_max.m_recomp_frac = mpc_sco2_cycle->get_od_solved()->m_m_dot_rc / mpc_sco2_cycle->get_od_solved()->m_m_dot_t;
 			ms_od_opt_eta_tracking.ms_od_op_in_max.m_phi_mc = mpc_sco2_cycle->get_od_solved()->ms_mc_ms_od_solved.mv_phi[0];
 		}
@@ -1817,7 +1817,7 @@ int C_sco2_recomp_csp::off_design(S_od_par od_par, S_od_operation_inputs od_op_i
 	setup_off_design_info(od_par, -1, 1.E-3);
 
 		// Setting pressure, here
-	ms_rc_cycle_od_phi_par.m_P_LP_comp_in = od_op_inputs.m_P_mc_in;			//[kPa]
+	ms_cycle_od_par.m_P_LP_comp_in = od_op_inputs.m_P_mc_in;			//[kPa]
 
 	double eta_solved = std::numeric_limits<double>::quiet_NaN();
 
@@ -2213,14 +2213,14 @@ int C_sco2_recomp_csp::C_mono_eq_T_t_in::operator()(double T_t_in /*K*/, double 
 	//	-ms_phx_od_par
 
 	// 1) Update Turbine Inlet Temperature in sco2 cycle off design parameter structure
-	mpc_sco2_rc->ms_rc_cycle_od_phi_par.m_T_t_in = T_t_in;
+	mpc_sco2_rc->ms_cycle_od_par.m_T_t_in = T_t_in;
 
 	// 2) Solve the off-design cycle model with off design parameter structure
 	int rc_od_error_code = 0;
 	
 	if( mpc_sco2_rc->m_off_design_turbo_operation == E_FIXED_MC_FIXED_RC_FIXED_T )
 	{
-		rc_od_error_code = mpc_sco2_rc->mpc_sco2_cycle->off_design_fix_shaft_speeds(mpc_sco2_rc->ms_rc_cycle_od_phi_par);
+		rc_od_error_code = mpc_sco2_rc->mpc_sco2_cycle->off_design_fix_shaft_speeds(mpc_sco2_rc->ms_cycle_od_par);
 	}
 	else if( mpc_sco2_rc->m_off_design_turbo_operation == E_VFD_MC_VFD_RC_FIXED_T )
 	{
@@ -2483,7 +2483,7 @@ const C_sco2_recomp_csp::S_od_solved * C_sco2_recomp_csp::get_od_solved()
 
 double C_sco2_recomp_csp::opt_P_mc_in_nest_f_recomp_max_eta(double P_mc_in /*kPa*/)
 {
-	ms_rc_cycle_od_phi_par.m_P_LP_comp_in = P_mc_in;	//[kPa]	
+	ms_cycle_od_par.m_P_LP_comp_in = P_mc_in;	//[kPa]	
 
 	double eta_max_f_recomp_opt = std::numeric_limits<double>::quiet_NaN();
 

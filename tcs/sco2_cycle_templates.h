@@ -239,7 +239,7 @@ public:
 		}
 	};
 
-	struct S_od_phi_par
+	struct S_od_par
 	{
 		double m_T_mc_in;		//[K] Compressor inlet temperature
 		double m_T_pc_in;		//[K] Precompressor inlet temperature
@@ -249,7 +249,7 @@ public:
 		int m_N_sub_hxrs;		//[-] Number of sub heat exchangers
 		double m_tol;			//[-] Convergence tolerance
 
-		S_od_phi_par()
+		S_od_par()
 		{
 			m_T_mc_in = m_T_pc_in = m_T_t_in = m_P_LP_comp_in = 
 				m_tol = std::numeric_limits<double>::quiet_NaN();
@@ -265,7 +265,7 @@ protected:
 
 	S_od_solved ms_od_solved;
 
-	S_od_phi_par ms_od_phi_par;
+	S_od_par ms_od_par;
 
 	S_design_limits ms_des_limits;
 
@@ -305,7 +305,7 @@ public:
 		return &ms_od_solved;
 	}
 
-	virtual int off_design_fix_shaft_speeds(S_od_phi_par & od_phi_par_in) = 0;
+	virtual int off_design_fix_shaft_speeds(S_od_par & od_phi_par_in) = 0;
 
 	virtual const C_comp_multi_stage::S_od_solved * get_rc_od_solved() = 0;
 

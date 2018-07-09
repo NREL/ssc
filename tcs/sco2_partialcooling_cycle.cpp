@@ -918,9 +918,9 @@ int C_PartialCooling_Cycle::off_design_fix_shaft_speeds_core()
 	return -1;
 }
 
-int C_PartialCooling_Cycle::off_design_fix_shaft_speeds(S_od_phi_par & od_phi_par_in)
+int C_PartialCooling_Cycle::off_design_fix_shaft_speeds(S_od_par & od_phi_par_in)
 {
-	ms_od_phi_par = od_phi_par_in;
+	ms_od_par = od_phi_par_in;
 
 	return off_design_fix_shaft_speeds_core();
 }

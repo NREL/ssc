@@ -3246,9 +3246,9 @@ void C_RecompCycle::finalize_design(int & error_code)
 //	error_code = od_error_code;
 //}
 
-int C_RecompCycle::off_design_fix_shaft_speeds(S_od_phi_par & od_phi_par_in)
+int C_RecompCycle::off_design_fix_shaft_speeds(S_od_par & od_phi_par_in)
 {
-	ms_od_phi_par = od_phi_par_in;
+	ms_od_par = od_phi_par_in;
 
 	int od_error_code = 0;
 
@@ -4143,15 +4143,15 @@ void C_RecompCycle::off_design_fix_shaft_speeds_core(int & error_code)
 	clear_ms_od_solved();
 
 	// Initialize a few variables
-	m_temp_od[MC_IN] = ms_od_phi_par.m_T_mc_in;
-	m_pres_od[MC_IN] = ms_od_phi_par.m_P_LP_comp_in;
-	m_temp_od[TURB_IN] = ms_od_phi_par.m_T_t_in;
+	m_temp_od[MC_IN] = ms_od_par.m_T_mc_in;
+	m_pres_od[MC_IN] = ms_od_par.m_P_LP_comp_in;
+	m_temp_od[TURB_IN] = ms_od_par.m_T_t_in;
 
 	// Outer loop: Solve for the recompression fraction that results in the recompressor
 	//                operating at its design shaft speed
-	C_mono_eq_x_f_recomp_y_N_rc c_turbo_bal_f_recomp(this, ms_od_phi_par.m_T_mc_in,
-															ms_od_phi_par.m_P_LP_comp_in,
-															ms_od_phi_par.m_T_t_in);
+	C_mono_eq_x_f_recomp_y_N_rc c_turbo_bal_f_recomp(this, ms_od_par.m_T_mc_in,
+															ms_od_par.m_P_LP_comp_in,
+															ms_od_par.m_T_t_in);
 
 	C_monotonic_eq_solver c_turbo_bal_f_recomp_solver(c_turbo_bal_f_recomp);
 
