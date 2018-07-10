@@ -207,7 +207,7 @@ private:
 	C_turbine mc_t;
 	C_comp_multi_stage mc_mc, mc_rc, mc_pc;
 	C_HX_co2_to_co2 mc_LTR, mc_HTR;
-	C_HeatExchanger mc_PHX, mc_PC_full, mc_PC_partial;	
+	C_HeatExchanger mc_PHX, mc_cooler_pc, mc_cooler_mc;	
 
 	S_des_params ms_des_par;
 	S_opt_des_params ms_opt_des_par;
@@ -230,6 +230,12 @@ private:
 		// Structures and data for auto-optimization
 	double m_objective_metric_auto_opt;
 	S_des_params ms_des_par_auto_opt;
+
+	// Results from last off-design solution
+	std::vector<double> mv_temp_od, mv_pres_od, mv_enth_od, mv_entr_od, mv_dens_od;
+	double m_eta_thermal_od;
+	double m_W_dot_net_od;
+	double m_Q_dot_PHX_od;
 
 	int design_core();
 
@@ -254,7 +260,84 @@ public:
 		m_W_dot_mc = m_W_dot_pc = m_W_dot_rc = m_W_dot_t = std::numeric_limits<double>::quiet_NaN();
 		m_eta_thermal_calc_last = m_W_dot_net_last = m_energy_bal_last =
 		m_objective_metric_last = m_objective_metric_opt = m_objective_metric_auto_opt = std::numeric_limits<double>::quiet_NaN();
+
+		mv_temp_od = mv_pres_od = mv_enth_od = mv_entr_od = mv_dens_od = m_temp_last;
+		m_eta_thermal_od = m_W_dot_net_od = m_Q_dot_PHX_od = std::numeric_limits<double>::quiet_NaN();
 	}
+
+	class C_MEQ__f_recomp__y_N_rc : public C_monotonic_equation
+	{
+	private:
+		C_PartialCooling_Cycle * mpc_pc_cycle;
+
+		double m_T_pc_in;		//[K] Pre-compressor inlet temperature
+		double m_P_pc_in;		//[kPa] Pre-compressor inlet pressure
+		double m_T_mc_in;		//[K] Main compressor inlet temperature
+		double m_T_t_in;		//[K] Turbine inlet temperature
+
+	public:
+
+		double m_m_dot_t;		//[kg/s]
+		double m_m_dot_pc;		//[kg/s]
+		double m_m_dot_rc;		//[kg/s]
+		double m_m_dot_mc;		//[kg/s]
+
+		C_MEQ__f_recomp__y_N_rc(C_PartialCooling_Cycle *pc_pc_cycle,
+			double T_pc_in /*K*/, double P_pc_in /*kPa*/, 
+			double T_mc_in /*K*/, double T_t_in /*K*/)
+		{
+			mpc_pc_cycle = pc_pc_cycle;
+			m_T_pc_in = T_pc_in;		//[K]
+			m_P_pc_in = P_pc_in;		//[kPa]
+			m_T_mc_in = T_mc_in;		//[K]
+			m_T_t_in = T_t_in;			//[K]
+			
+			m_m_dot_t = m_m_dot_pc = m_m_dot_rc = m_m_dot_mc = std::numeric_limits<double>::quiet_NaN();
+		}
+
+		virtual int operator()(double f_recomp /*-*/, double *diff_N_rc /*-*/);
+	};
+
+	class C_MEQ__t_m_dot__bal_turbomachinery : public C_monotonic_equation
+	{
+	private:
+		C_PartialCooling_Cycle * mpc_pc_cycle;
+
+		double m_T_pc_in;		//[K] Pre-compressor inlet temperature
+		double m_P_pc_in;		//[kPa] Pre-compressor inlet pressure
+		double m_T_mc_in;		//[K] Main compressor inlet temperature
+		double m_f_recomp;		//[-] Recompression fraction
+		double m_T_t_in;		//[K] Turbine inlet temperature
+
+	public:
+		C_MEQ__t_m_dot__bal_turbomachinery(C_PartialCooling_Cycle *pc_pc_cycle,
+			double T_pc_in /*K*/, double P_pc_in /*kPa*/, double T_mc_in /*K*/,
+			double f_recomp /*-*/, double T_t_in /*K*/)
+		{
+			mpc_pc_cycle = pc_pc_cycle;
+			m_T_pc_in = T_pc_in;		//[K]
+			m_P_pc_in = P_pc_in;		//[kPa]
+			m_T_mc_in = T_mc_in;		//[K]
+			m_f_recomp = f_recomp;		//[-]
+			m_T_t_in = T_t_in;			//[K]
+		}
+
+		virtual int operator()(double m_dot_t /*kg/s*/, double *diff_m_dot_t /*-*/);
+	};
+
+	class C_MEQ_recup_od : public C_monotonic_equation
+	{
+	private:
+		C_PartialCooling_Cycle * mpc_pc_cycle;
+
+	public:
+		C_MEQ_recup_od(C_PartialCooling_Cycle *pc_pc_cycle)
+		{
+			mpc_pc_cycle = pc_pc_cycle;
+		}
+
+		virtual int operator()(double T_HTR_LP_out_guess /*K*/, double *diff_T_HTR_LP_out /*K*/);
+	};
 
 	class C_MEQ_HTR_des : public C_monotonic_equation
 	{
