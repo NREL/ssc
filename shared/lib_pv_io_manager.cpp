@@ -221,7 +221,7 @@ Subarray_IO::Subarray_IO(compute_module* cm, std::string cmName, size_t subarray
 		selfShadingInputs.mod_orient = cm->as_integer(prefix + "mod_orient");
 		selfShadingInputs.nmody = cm->as_integer(prefix + "nmody");
 		selfShadingInputs.nmodx = cm->as_integer(prefix + "nmodx");
-		selfShadingInputs.mod_orient = selfShadingInputs.nmodx / nModulesPerString;
+		selfShadingInputs.nstrx = selfShadingInputs.nmodx / nModulesPerString;
 		poa.nonlinearDCShadingDerate = 1;
 
 		if (trackMode == FIXED_TILT || trackMode == SEASONAL_TILT || (trackMode == SINGLE_AXIS && backtrackingEnabled))
@@ -521,6 +521,7 @@ Module_IO::Module_IO(compute_module* cm, std::string cmName, double dcLoss)
 		isBifacial = cm->as_boolean("cec_is_bifacial");
 		bifaciality = cm->as_double("cec_bifaciality");
 		bifacialTransmissionFactor = cm->as_double("cec_bifacial_transmission_factor");
+		groundClearanceHeight = cm->as_double("cec_bifacial_ground_clearance_height");
 		cecModel.Area = cm->as_double("cec_area");
 		referenceArea = cecModel.Area;
 		cecModel.Vmp = cm->as_double("cec_v_mp_ref");
@@ -594,6 +595,7 @@ Module_IO::Module_IO(compute_module* cm, std::string cmName, double dcLoss)
 		isBifacial = cm->as_boolean("6par_is_bifacial");
 		bifaciality = cm->as_double("6par_bifaciality");
 		bifacialTransmissionFactor = cm->as_double("6par_bifacial_transmission_factor");
+		groundClearanceHeight = cm->as_double("6par_bifacial_ground_clearance_height");
 
 		int tech_id = module6par::monoSi;
 		int type = cm->as_integer("6par_celltech"); // "monoSi,multiSi,CdTe,CIS,CIGS,Amorphous"

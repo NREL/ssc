@@ -262,6 +262,7 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "cec_is_bifacial",                             "Modules are bifacial",                                     "0/1",     "",                            "pvsamv1",              "module_model=1",           "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "cec_bifacial_transmission_factor",            "Bifacial transmission factor",                             "0-1",     "",                            "pvsamv1",              "module_model=1",           "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "cec_bifaciality",                             "Bifaciality factor",                                       "%",       "",                            "pvsamv1",              "module_model=1",           "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "cec_bifacial_ground_clearance_height",        "Module ground clearance height",                           "m",       "",                            "pvsamv1",              "module_model=1",           "",                              "" },
 
 
 	{ SSC_INPUT,        SSC_NUMBER,      "cec_standoff",                                "Standoff mode",                                           "",       "0=bipv,1=>3.5in,2=2.5-3.5in,3=1.5-2.5in,4=0.5-1.5in,5=<0.5in,6=ground/rack",  "pvsamv1",       "module_model=1",                           "INTEGER,MIN=0,MAX=6",       "" },
@@ -293,6 +294,7 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "6par_is_bifacial",                            "Modules are bifacial",                                     "0/1",     "",                                                                "pvsamv1",       "module_model=2",                          "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "6par_bifacial_transmission_factor",           "Bifacial transmission factor",                             "0-1",     "",                                                                "pvsamv1",       "module_model=2",                          "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "6par_bifaciality",                            "Bifaciality factor",                                       "%",       "",                                                                "pvsamv1",       "module_model=2",                          "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "6par_bifacial_ground_clearance_height",        "Module ground clearance height",                           "m",       "",                                                               "pvsamv1",       "module_model=2",                          "",                              "" },
 
 
 	{ SSC_INPUT,        SSC_NUMBER,      "snl_module_structure",                        "Module and mounting structure configuration",             "",       "0=Use Database Values,1=glass/cell/polymer sheet - open rack,2=glass/cell/glass - open rack,3=polymer/thin film/steel - open rack,4=Insulated back building-integrated PV,5=close roof mount,6=user-defined",                      "pvsamv1",       "module_model=3",                    "INTEGER,MIN=0,MAX=6",                              "" },
@@ -1635,15 +1637,19 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 					ts_accum_poa_front_shaded_soiled += ipoa_front * ref_area_m2 * modules_per_string * Subarrays[nn]->nStrings;
 
 					// Calculate rear-side irradiance for bifacial modules
-					double ipoa_rear = 0.;
+					double ipoa_rear = 0.; 
 					if (Subarrays[0]->Module->isBifacial)
 					{
-						irr.calc_rear_side(Subarrays[0]->Module->bifacialTransmissionFactor, Subarrays[0]->Module->bifaciality);
+						double slopeLength = Subarrays[nn]->selfShadingInputs.length * Subarrays[nn]->selfShadingInputs.nmody;
+						if (Subarrays[nn]->selfShadingInputs.mod_orient == 1) {
+							slopeLength = Subarrays[nn]->selfShadingInputs.width * Subarrays[nn]->selfShadingInputs.nmody;
+						}
+						irr.calc_rear_side(Subarrays[0]->Module->bifacialTransmissionFactor, Subarrays[0]->Module->bifaciality, Subarrays[0]->Module->groundClearanceHeight, slopeLength);
 						ipoa_rear = irr.get_poa_rear();
 					}
 					ts_accum_poa_rear += ipoa_rear * ref_area_m2 * modules_per_string * Subarrays[nn]->nStrings;
 
-					if (iyear == 0)
+					if (iyear == 0) 
 					{
 						// save sub-array level outputs			
 						PVSystem->p_poaShaded[nn][idx] = (ssc_number_t)poashad;

@@ -388,6 +388,7 @@ public:
 	bool isBifacial;					/// If the model is bifacial
 	double bifaciality;					/// The relative efficiency of the rearside to the front side
 	double bifacialTransmissionFactor;  /// Factor describing how much light can travel through the module
+	double groundClearanceHeight;		/// The ground clearance of a module [m]
 
 	bool simpleEfficiencyForceNoPOA;	/// Flag to avoid calling as_integer(...) repeatedly later on
 	bool mountingSpecificCellTemperatureForceNoPOA;

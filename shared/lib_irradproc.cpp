@@ -1275,43 +1275,46 @@ int irrad::calc()
 
 }
 
-int irrad::calc_rear_side(double transmissionFactor, double bifaciality)
+int irrad::calc_rear_side(double transmissionFactor, double bifaciality, double groundClearanceHeight, double slopeLength)
 {
-	// System geometry
-	double slopeLength = 1.;										/// The unit slope length of the panel
-	double rowToRow = slopeLength / this->gcr;						/// Row to row spacing between the front of one row to the front of the next row
-	double tiltRadian = angle[1];									/// The tracked angle in radians
-	//double surfaceAzimuthRadians = angle[2];						/// The tracked angle in radians
-	double clearanceGround = slopeLength;							/// The normalized clearance from the bottom edge of module to ground
-	double distanceBetweenRows = rowToRow - cos(tiltRadian);	/// The normalized distance from the read of module to front of module in next row
-	double verticalHeight = sin(tiltRadian);
-	double horizontalLength = cos(tiltRadian);
+	// do irradiance calculations if sun is up
+	if (tms[2] > 0)
+	{
 
-	// Determine the factors for points on the ground from the leading edge of one row of PV panels to the edge of the next row of panels behind
-	std::vector<double> rearSkyConfigFactors, frontSkyConfigFactors;
-	this->getSkyConfigurationFactors(rowToRow, verticalHeight, clearanceGround, distanceBetweenRows, horizontalLength, rearSkyConfigFactors, frontSkyConfigFactors);
+		// System geometry
+		double rowToRow = slopeLength / this->gcr;						/// Row to row spacing between the front of one row to the front of the next row
+		double tiltRadian = angle[1];									/// The tracked angle in radians
+		double clearanceGround = groundClearanceHeight;					/// The normalized clearance from the bottom edge of module to ground
+		double distanceBetweenRows = rowToRow - cos(tiltRadian);	    /// The normalized distance from the read of module to front of module in next row
+		double verticalHeight = slopeLength * sin(tiltRadian);
+		double horizontalLength = slopeLength * cos(tiltRadian);
 
-	// Determine if ground is shading from direct beam radio for points on the ground from leading edge of PV panels to leading edge of next row behind
-	double pvBackShadeFraction, pvFrontShadeFraction, maxShadow;
-	pvBackShadeFraction = pvFrontShadeFraction = maxShadow = 0;
-	std::vector<int> rearGroundShade, frontGroundShade;
-	this->getGroundShadeFactors(rowToRow, verticalHeight, clearanceGround, distanceBetweenRows, horizontalLength, sun[0], sun[2], rearGroundShade, frontGroundShade, maxShadow, pvBackShadeFraction, pvFrontShadeFraction);
+		// Determine the factors for points on the ground from the leading edge of one row of PV panels to the edge of the next row of panels behind
+		std::vector<double> rearSkyConfigFactors, frontSkyConfigFactors;
+		this->getSkyConfigurationFactors(rowToRow, verticalHeight, clearanceGround, distanceBetweenRows, horizontalLength, rearSkyConfigFactors, frontSkyConfigFactors);
 
-	// Get the rear ground GHI
-	std::vector<double> rearGroundGHI, frontGroundGHI;
-	this->getGroundGHI(transmissionFactor, rearSkyConfigFactors, frontSkyConfigFactors, rearGroundShade, frontGroundShade, rearGroundGHI, frontGroundGHI);
-	
-	// Calculate the irradiance on the front of the PV module (to get front reflected)
-	std::vector<double> frontIrradiancePerCellrow, frontReflected;
-	double frontAverageIrradiance = 0;
-	getFrontSurfaceIrradiances(pvFrontShadeFraction, rowToRow, verticalHeight, clearanceGround, distanceBetweenRows, horizontalLength, frontGroundGHI, frontIrradiancePerCellrow, frontAverageIrradiance, frontReflected);
+		// Determine if ground is shading from direct beam radio for points on the ground from leading edge of PV panels to leading edge of next row behind
+		double pvBackShadeFraction, pvFrontShadeFraction, maxShadow;
+		pvBackShadeFraction = pvFrontShadeFraction = maxShadow = 0;
+		std::vector<int> rearGroundShade, frontGroundShade;
+		this->getGroundShadeFactors(rowToRow, verticalHeight, clearanceGround, distanceBetweenRows, horizontalLength, sun[0], sun[2], rearGroundShade, frontGroundShade, maxShadow, pvBackShadeFraction, pvFrontShadeFraction);
 
-	// Calculate the irradiance on the back of the PV module
-	std::vector<double> rearIrradiancePerCellrow;
-	double rearAverageIrradiance = 0;
-	getBackSurfaceIrradiances(pvBackShadeFraction, rowToRow, verticalHeight, clearanceGround, distanceBetweenRows, horizontalLength, rearGroundGHI, frontGroundGHI, frontReflected, rearIrradiancePerCellrow, rearAverageIrradiance);
-	poaRearAverage = rearAverageIrradiance * bifaciality;
-	return true;
+		// Get the rear ground GHI
+		std::vector<double> rearGroundGHI, frontGroundGHI;
+		this->getGroundGHI(transmissionFactor, rearSkyConfigFactors, frontSkyConfigFactors, rearGroundShade, frontGroundShade, rearGroundGHI, frontGroundGHI);
+
+		// Calculate the irradiance on the front of the PV module (to get front reflected)
+		std::vector<double> frontIrradiancePerCellrow, frontReflected;
+		double frontAverageIrradiance = 0;
+		getFrontSurfaceIrradiances(pvFrontShadeFraction, rowToRow, verticalHeight, clearanceGround, distanceBetweenRows, horizontalLength, frontGroundGHI, frontIrradiancePerCellrow, frontAverageIrradiance, frontReflected);
+
+		// Calculate the irradiance on the back of the PV module
+		std::vector<double> rearIrradiancePerCellrow;
+		double rearAverageIrradiance = 0;
+		getBackSurfaceIrradiances(pvBackShadeFraction, rowToRow, verticalHeight, clearanceGround, distanceBetweenRows, horizontalLength, rearGroundGHI, frontGroundGHI, frontReflected, rearIrradiancePerCellrow, rearAverageIrradiance);
+		poaRearAverage = rearAverageIrradiance * bifaciality;
+		return true;
+	}
 }
 
 void irrad::getSkyConfigurationFactors(double rowToRow, double verticalHeight, double clearanceGround, double distanceBetweenRows, double horizontalLength, std::vector<double> & rearSkyConfigFactors, std::vector<double> & frontSkyConfigFactors)

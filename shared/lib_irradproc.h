@@ -133,7 +133,7 @@ public:
 	void set_sun_component(size_t index, double value);
 
 	int calc();
-	int calc_rear_side(double transmissionFactor, double bifaciality);
+	int calc_rear_side(double transmissionFactor, double bifaciality, double groundClearanceHeight, double slopeLength);
 	
 	void get_sun( double *solazi,
 		double *solzen,
