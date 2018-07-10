@@ -1313,8 +1313,8 @@ int irrad::calc_rear_side(double transmissionFactor, double bifaciality, double 
 		double rearAverageIrradiance = 0;
 		getBackSurfaceIrradiances(pvBackShadeFraction, rowToRow, verticalHeight, clearanceGround, distanceBetweenRows, horizontalLength, rearGroundGHI, frontGroundGHI, frontReflected, rearIrradiancePerCellrow, rearAverageIrradiance);
 		poaRearAverage = rearAverageIrradiance * bifaciality;
-		return true;
 	}
+	return true;
 }
 
 void irrad::getSkyConfigurationFactors(double rowToRow, double verticalHeight, double clearanceGround, double distanceBetweenRows, double horizontalLength, std::vector<double> & rearSkyConfigFactors, std::vector<double> & frontSkyConfigFactors)
