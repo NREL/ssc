@@ -1,3 +1,5 @@
+#include <math.h>
+
 #include "lib_pv_incidence_modifier.h"
 
 
@@ -65,16 +67,16 @@ double iamSjerpsKoomen(double n2, double incidenceAngleRadians)
 	double cor = -9999.0;   
 
 		// Reflectance at normal incidence, Beckman p217
-		double r0 = std::pow((n2 - 1.0) / (n2 + 1), 2);	
+		double r0 = pow((n2 - 1.0) / (n2 + 1), 2);	
 
 		if (incidenceAngleRadians == 0) {	
 			cor = 1.0;		
 		}
 		else if (incidenceAngleRadians > 0.0 && incidenceAngleRadians <= M_PI / 2.0) {
 
-			double refrAng = std::asin(std::sin(incidenceAngleRadians) / n2); 
-			double r1 = (std::pow(std::sin(refrAng - incidenceAngleRadians), 2.0) / std::pow(std::sin(refrAng + incidenceAngleRadians), 2.0));
-			double r2 = (std::pow(std::tan(refrAng - incidenceAngleRadians), 2.0) / std::pow(std::tan(refrAng + incidenceAngleRadians), 2.0));
+			double refrAng = asin(sin(incidenceAngleRadians) / n2); 
+			double r1 = (pow(sin(refrAng - incidenceAngleRadians), 2.0) / pow(sin(refrAng + incidenceAngleRadians), 2.0));
+			double r2 = (pow(tan(refrAng - incidenceAngleRadians), 2.0) / pow(tan(refrAng + incidenceAngleRadians), 2.0));
 			cor = 1.0 - 0.5 * (r1 + r2);
 			cor /= 1.0 - r0;	
 		}

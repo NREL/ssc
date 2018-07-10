@@ -50,6 +50,8 @@
 #ifndef __6_PAR_SEARCH_H__
 #define __6_PAR_SEARCH_H__
 
+#include <limits>
+
 template< typename Real > Real mymax(Real a, Real b) { return a > b ? a : b; }
 
 template< typename Real, typename F, int n >

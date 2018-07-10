@@ -54,6 +54,7 @@
 #include <vector>
 #include "core.h"
 
+#include "lib_util.h"
 #include "lib_weatherfile.h"
 #include "lib_pv_shade_loss_mpp.h"
 

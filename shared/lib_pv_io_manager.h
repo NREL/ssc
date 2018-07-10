@@ -16,8 +16,8 @@
 #include "lib_snowmodel.h"
 #include "lib_util.h"
 
-#include "../ssc/common.h"
-#include "../ssc/core.h"
+#include "common.h"
+#include "core.h"
 
 /// Structure containing data relevent at the SimulationManager level
 struct Simulation_IO;
@@ -51,22 +51,22 @@ public:
 	PVIOManager(compute_module* cm, std::string cmName);
 
 	/// Return pointer to compute module
-	compute_module * getComputeModule() const;
+	compute_module * getComputeModule();
 
 	/// Return Simulation specific information
-	Simulation_IO * getSimulationIO() const;
+	Simulation_IO * getSimulationIO();
 
 	/// Return Irradiance specific information
-	Irradiance_IO * getIrradianceIO() const;
+	Irradiance_IO * getIrradianceIO();
 
 	/// Return Subarray specific information for the given subarray
-	Subarray_IO * getSubarrayIO(size_t subarray) const;
+	Subarray_IO * getSubarrayIO(size_t subarray);
 
 	/// Return all Subarray's
-	std::vector<Subarray_IO *> getSubarrays() const;
+	std::vector<Subarray_IO *> getSubarrays();
 
 	/// Get PVSystem as one object
-	PVSystem_IO * getPVSystemIO() const;
+	PVSystem_IO * getPVSystemIO();
 
 
 public:

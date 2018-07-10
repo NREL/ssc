@@ -25,6 +25,7 @@ OBJECTS  = \
 	../test/shared_test/lib_windwatts_test.o \
 	../test/ssc_test/computeModuleTest.o \
 	../test/ssc_test/cmod_windpower_test.o \
+	../test/ssc_test/cmod_windpower_test2.o \
 	../test/ssc_test/cmod_pvsamv1_test.o\
 	../test/ssc_test/cmod_pvwattsv5_test.o\
 	../test/ssc_test/cmod_tcstrough_physical_test.o\

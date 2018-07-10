@@ -96,14 +96,9 @@
 
 /* Define to C thread-local keyword, or to nothing if this is not supported in
    your compiler. */
-#ifdef __WXMSW__
- #define THREADLOCAL
-#else
- #define THREADLOCAL __thread
-#endif
+#define THREADLOCAL __thread
 
-/* Define to 1 if you can safely include both <sys/time.h> and <time.h>. 
-   Use https://www.codefull.org/2015/12/systime-h-replacement-for-windows/ for Windows*/
+/* Define to 1 if you can safely include both <sys/time.h> and <time.h>. */
 #define TIME_WITH_SYS_TIME 1
 
 /* Define to empty if `const' does not conform to ANSI C. */

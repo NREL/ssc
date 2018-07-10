@@ -60,9 +60,6 @@
 #include "lib_pv_incidence_modifier.h"
 #include "lib_util.h"
 
-using std::cos;
-using std::sin;
-
 static const int __nday[12] = {31,28,31,30,31,30,31,31,30,31,30,31};
 
 static int julian(int yr,int month,int day)    /* Calculates julian day of year */
@@ -1284,11 +1281,11 @@ int irrad::calc_rear_side(double transmissionFactor, double bifaciality)
 	double slopeLength = 1.;										/// The unit slope length of the panel
 	double rowToRow = slopeLength / this->gcr;						/// Row to row spacing between the front of one row to the front of the next row
 	double tiltRadian = angle[1];									/// The tracked angle in radians
-	double surfaceAzimuthRadians = angle[2];						/// The tracked angle in radians
+	//double surfaceAzimuthRadians = angle[2];						/// The tracked angle in radians
 	double clearanceGround = slopeLength;							/// The normalized clearance from the bottom edge of module to ground
-	double distanceBetweenRows = rowToRow - std::cos(tiltRadian);	/// The normalized distance from the read of module to front of module in next row
-	double verticalHeight = std::sin(tiltRadian);
-	double horizontalLength = std::cos(tiltRadian);
+	double distanceBetweenRows = rowToRow - cos(tiltRadian);	/// The normalized distance from the read of module to front of module in next row
+	double verticalHeight = sin(tiltRadian);
+	double horizontalLength = cos(tiltRadian);
 
 	// Determine the factors for points on the ground from the leading edge of one row of PV panels to the edge of the next row of panels behind
 	std::vector<double> rearSkyConfigFactors, frontSkyConfigFactors;
@@ -1324,54 +1321,54 @@ void irrad::getSkyConfigurationFactors(double rowToRow, double verticalHeight, d
 	double deltaInterval = static_cast<double>(rowToRow / intervals);
 	double x = -deltaInterval / 2.0;
 
-	for (int i = 0; i != intervals; i++)
+	for (size_t i = 0; i != intervals; i++)
 	{
 		x += deltaInterval;
-		double angleA = std::atan((verticalHeight + clearanceGround) / (2.0 * rowToRow + horizontalLength - x));
+		double angleA = atan((verticalHeight + clearanceGround) / (2.0 * rowToRow + horizontalLength - x));
 		if (angleA < 0.0) {
 			angleA += M_PI;
 		}
-		double angleB = std::atan(clearanceGround / (2.0 * rowToRow - x));
+		double angleB = atan(clearanceGround / (2.0 * rowToRow - x));
 		if (angleB < 0.0) {
 			angleB += M_PI;
 		}
-		double beta1 = std::fmax(angleA, angleB);
+		double beta1 = fmax(angleA, angleB);
 
-		double angleC = std::atan((verticalHeight + clearanceGround) / (rowToRow + horizontalLength - x));
+		double angleC = atan((verticalHeight + clearanceGround) / (rowToRow + horizontalLength - x));
 		if (angleC < 0.0) {
 			angleC += M_PI;
 		}
-		double angleD = std::atan(clearanceGround / (rowToRow - x));
+		double angleD = atan(clearanceGround / (rowToRow - x));
 		if (angleD < 0.0) {
 			angleD += M_PI;
 		}
-		double beta2 = std::fmin(angleC, angleD);
-		double beta3 = std::fmax(angleC, angleD);
+		double beta2 = fmin(angleC, angleD);
+		double beta3 = fmax(angleC, angleD);
 
-		double beta4 = std::atan((verticalHeight + clearanceGround) / (horizontalLength - x));
+		double beta4 = atan((verticalHeight + clearanceGround) / (horizontalLength - x));
 		if (beta4 < 0.0) {
 			beta4 += M_PI;
 		}
 
-		double beta5 = std::atan(clearanceGround / (-x));
+		double beta5 = atan(clearanceGround / (-x));
 		if (beta5 < 0.0) {
 			beta5 += M_PI;
 		}
 
-		double beta6 = std::atan((verticalHeight + clearanceGround) / (-distanceBetweenRows - x));
+		double beta6 = atan((verticalHeight + clearanceGround) / (-distanceBetweenRows - x));
 		if (beta6 < 0.0) {
 			beta6 += M_PI;
 		}
 		double sky1, sky2, sky3, skyAll;
 		sky1 = sky2 = sky3 = skyAll = 0;
 		if (beta2 > beta1) {
-			sky1 = 0.5 * (std::cos(beta1) - std::cos(beta2));
+			sky1 = 0.5 * (cos(beta1) - cos(beta2));
 		}
 		if (beta4 > beta3) {
-			sky2 = 0.5 * (std::cos(beta3) - std::cos(beta4));
+			sky2 = 0.5 * (cos(beta3) - cos(beta4));
 		}
 		if (beta6 > beta5) {
-			sky3 = 0.5 * (std::cos(beta5) - std::cos(beta6));
+			sky3 = 0.5 * (cos(beta5) - cos(beta6));
 		}
 		skyAll = sky1 + sky2 + sky3;
 
@@ -1390,13 +1387,13 @@ void irrad::getGroundShadeFactors(double rowToRow, double verticalHeight, double
 	shadingStart1 = shadingStart2 = shadingEnd1 = shadingEnd2 = pvBackSurfaceShadeFraction = 0;
 
 	/// Horizontal length of shadow perpindicular to row from top of module to bottom of module
-	double Lh = (verticalHeight / std::tan(solarElevationRadians)) * std::cos(surfaceAzimuthAngleRadians - solarAzimuthRadians);
+	double Lh = (verticalHeight / tan(solarElevationRadians)) * cos(surfaceAzimuthAngleRadians - solarAzimuthRadians);
 
 	///  Horizontal length of shadow perpindicular to row from top of module to ground level
-	double Lhc = ((clearanceGround + verticalHeight) / std::tan(solarElevationRadians)) * std::cos(surfaceAzimuthAngleRadians - solarAzimuthRadians);
+	double Lhc = ((clearanceGround + verticalHeight) / tan(solarElevationRadians)) * cos(surfaceAzimuthAngleRadians - solarAzimuthRadians);
 
 	/// Horizontal length of shadow perpindicular to row from bottom of module to ground level
-	double Lc = (clearanceGround / std::tan(solarElevationRadians)) * std::cos(surfaceAzimuthAngleRadians - solarAzimuthRadians);
+	double Lc = (clearanceGround / tan(solarElevationRadians)) * cos(surfaceAzimuthAngleRadians - solarAzimuthRadians);
 
 	// Front side of PV module partially shaded, back completely shaded, ground completely shaded
 	if (Lh > distanceBetweenRows) {
@@ -1485,7 +1482,7 @@ void irrad::getGroundShadeFactors(double rowToRow, double verticalHeight, double
 
 	}
 	double x = -deltaInterval / 2.0;
-	for (int i = 0; i != intervals; i++)
+	for (size_t i = 0; i != intervals; i++)
 	{
 		x += deltaInterval;
 		if ((x >= shadingStart1 && x < shadingEnd1) || (x >= shadingStart2 && x < shadingEnd2))
@@ -1499,7 +1496,7 @@ void irrad::getGroundShadeFactors(double rowToRow, double verticalHeight, double
 			frontGroundShade.push_back(0);
 		}
 	}
-	maxShadow = std::fmax(shadingStart1, shadingEnd1);
+	maxShadow = fmax(shadingStart1, shadingEnd1);
 }
 
 void irrad::getGroundGHI(double transmissionFactor, std::vector<double> rearSkyConfigFactors, std::vector<double> frontSkyConfigFactors, std::vector<int> rearGroundShade, std::vector<int> frontGroundShade, std::vector<double> & rearGroundGHI, std::vector<double> & frontGroundGHI)
@@ -1582,26 +1579,26 @@ void irrad::getFrontSurfaceIrradiances(double pvFrontShadeFraction, double rowTo
 		// beginning with the angle providing the upper most view of the sky (j=0)
 		double PcellX = horizontalLength * (i + 0.5) / ((double)cellRows);				   // x value for location of PV cell with OFFSET FOR SARA REFERENCE CELLS     4/26/2016
 		double PcellY = clearanceGround + verticalHeight * (i + 0.5) / ((double)cellRows); // y value for location of PV cell with OFFSET FOR SARA REFERENCE CELLS     4/26/2016
-		double elevationAngleUp = std::atan((PtopY - PcellY) / (PcellX - PtopX));          // Elevation angle up from PV cell to top of PV module/panel, radians
-		double elevationAngleDown = std::atan((PcellY - PbotY) / (PcellX - PbotX));        // Elevation angle down from PV cell to bottom of PV module/panel, radians
-		int iStopIso = std::round((M_PI - tiltRadians - elevationAngleUp) / DTOR);							   // Last whole degree in arc range that sees sky, first is 0
-		int iHorBright = std::round(std::fmax(0.0, 6.0 - elevationAngleUp / DTOR));	   			       // Number of whole degrees for which horizon brightening occurs
-		int iStartGrd = std::round((M_PI - tiltRadians + elevationAngleDown) / DTOR);                          // First whole degree in arc range that sees ground, last is 180
+		double elevationAngleUp = atan((PtopY - PcellY) / (PcellX - PtopX));          // Elevation angle up from PV cell to top of PV module/panel, radians
+		double elevationAngleDown = atan((PcellY - PbotY) / (PcellX - PbotX));        // Elevation angle down from PV cell to bottom of PV module/panel, radians
+		size_t iStopIso = (size_t)round((M_PI - tiltRadians - elevationAngleUp) / DTOR);							   // Last whole degree in arc range that sees sky, first is 0
+		size_t iHorBright = (size_t)round(fmax(0.0, 6.0 - elevationAngleUp / DTOR));	   			       // Number of whole degrees for which horizon brightening occurs
+		size_t iStartGrd = (size_t)round((M_PI - tiltRadians + elevationAngleDown) / DTOR);                          // First whole degree in arc range that sees ground, last is 180
 
 		frontIrradiance.push_back(0.);
 		frontReflected.push_back(0.);
-		double reflectanceNormalIncidence = std::pow((n2 - 1.0) / (n2 + 1.0), 2.0);
+		double reflectanceNormalIncidence = pow((n2 - 1.0) / (n2 + 1.0), 2.0);
 
 		// Add sky diffuse component and horizon brightening if present
 		for (size_t j = 0; j != iStopIso; j++)
 		{
-			frontIrradiance[i] += 0.5 * (std::cos(j * DTOR) - std::cos((j + 1)*DTOR)) * MarionAOICorrectionFactorsGlass[j] * isotropicSkyDiffuse;
-			frontReflected[i] += 0.5 * (std::cos(j * DTOR) - std::cos((j + 1)*DTOR)) * isotropicSkyDiffuse * (1.0 - MarionAOICorrectionFactorsGlass[j] * (1.0 - reflectanceNormalIncidence));
+			frontIrradiance[i] += 0.5 * (cos(j * DTOR) - cos((j + 1)*DTOR)) * MarionAOICorrectionFactorsGlass[j] * isotropicSkyDiffuse;
+			frontReflected[i] += 0.5 * (cos(j * DTOR) - cos((j + 1)*DTOR)) * isotropicSkyDiffuse * (1.0 - MarionAOICorrectionFactorsGlass[j] * (1.0 - reflectanceNormalIncidence));
 
 			if ((iStopIso - j) <= iHorBright)
 			{
-				frontIrradiance[i] += 0.5 * (std::cos(j * DTOR) - std::cos((j + 1) * DTOR)) * MarionAOICorrectionFactorsGlass[j] * horizonDiffuse / 0.052246; // 0.052246 = 0.5 * [cos(84) - cos(90)]
-				frontReflected[i] += 0.5 * (std::cos(j * DTOR) - std::cos((j + 1) * DTOR)) * (horizonDiffuse / 0.052246) * (1.0 - MarionAOICorrectionFactorsGlass[j] * (1.0 - reflectanceNormalIncidence));
+				frontIrradiance[i] += 0.5 * (cos(j * DTOR) - cos((j + 1) * DTOR)) * MarionAOICorrectionFactorsGlass[j] * horizonDiffuse / 0.052246; // 0.052246 = 0.5 * [cos(84) - cos(90)]
+				frontReflected[i] += 0.5 * (cos(j * DTOR) - cos((j + 1) * DTOR)) * (horizonDiffuse / 0.052246) * (1.0 - MarionAOICorrectionFactorsGlass[j] * (1.0 - reflectanceNormalIncidence));
 			}
 		}
 
@@ -1611,11 +1608,11 @@ void irrad::getFrontSurfaceIrradiances(double pvFrontShadeFraction, double rowTo
 		{
 			double startElevationDown = (j - iStartGrd) * DTOR + elevationAngleDown;
 			double stopElevationDown = (j + 1 - iStartGrd) * DTOR + elevationAngleDown;
-			double projectedX1 = PcellX - PcellY / std::tan(startElevationDown);
-			double projectedX2 = PcellX - PcellY / std::tan(stopElevationDown);
+			double projectedX1 = PcellX - PcellY / tan(startElevationDown);
+			double projectedX2 = PcellX - PcellY / tan(stopElevationDown);
 			double actualGroundGHI = 0.0;
 
-			if (std::fabs(projectedX1 - projectedX2) > 0.99 * rowToRow)
+			if (fabs(projectedX1 - projectedX2) > 0.99 * rowToRow)
 			{
 				// Use average value if projection approximates the rtr      
 				actualGroundGHI = averageGroundGHI;
@@ -1632,8 +1629,8 @@ void irrad::getFrontSurfaceIrradiances(double pvFrontShadeFraction, double rowTo
 					projectedX2 += intervals;
 				}
 				
-				int index1 = static_cast<int>(projectedX1);
-				int index2 = static_cast<int>(projectedX2);
+				size_t index1 = static_cast<size_t>(projectedX1);
+				size_t index2 = static_cast<size_t>(projectedX2);
 
 				if (index1 == index2)
 				{
@@ -1642,7 +1639,7 @@ void irrad::getFrontSurfaceIrradiances(double pvFrontShadeFraction, double rowTo
 				else
 				{
 					// Sum irradiances on the ground if projects are in different groundGHI elements
-					for (int k = index1; k <= index2; k++)
+					for (size_t k = index1; k <= index2; k++)
 					{
 						if (k == index1)
 						{
@@ -1671,8 +1668,8 @@ void irrad::getFrontSurfaceIrradiances(double pvFrontShadeFraction, double rowTo
 					actualGroundGHI /= projectedX2 - projectedX1;
 				}
 			}
-			frontIrradiance[i] += 0.5 * (std::cos(j * DTOR) - std::cos((j + 1) * DTOR)) * MarionAOICorrectionFactorsGlass[j] * actualGroundGHI * this->alb;
-			frontReflected[i] += 0.5 * (std::cos(j * DTOR) - std::cos((j + 1) * DTOR)) * actualGroundGHI * this->alb * (1.0 - MarionAOICorrectionFactorsGlass[j] * (1.0 - reflectanceNormalIncidence));
+			frontIrradiance[i] += 0.5 * (cos(j * DTOR) - cos((j + 1) * DTOR)) * MarionAOICorrectionFactorsGlass[j] * actualGroundGHI * this->alb;
+			frontReflected[i] += 0.5 * (cos(j * DTOR) - cos((j + 1) * DTOR)) * actualGroundGHI * this->alb * (1.0 - MarionAOICorrectionFactorsGlass[j] * (1.0 - reflectanceNormalIncidence));
 		}
 		// Calculate and add direct and circumsolar irradiance components
 		incidence(0, tiltRadians * RTOD, surfaceAzimuthRadians * RTOD, 45.0, solarZenithRadians, solarAzimuthRadians, this->en_backtrack, this->gcr, angle);
@@ -1740,36 +1737,36 @@ void irrad::getBackSurfaceIrradiances(double pvBackShadeFraction, double rowToRo
 		// beginning with the angle providing the upper most view of the sky (j=0)
 		double PcellX = horizontalLength * (i + 0.5) / ((double)cellRows);				   // x value for location of PV cell with OFFSET FOR SARA REFERENCE CELLS     4/26/2016
 		double PcellY = clearanceGround + verticalHeight * (i + 0.5) / ((double)cellRows); // y value for location of PV cell with OFFSET FOR SARA REFERENCE CELLS     4/26/2016
-		double elevationAngleUp = std::atan((PtopY - PcellY) / (PtopX - PcellX));          // Elevation angle up from PV cell to top of PV module/panel, radians
-		double elevationAngleDown = std::atan((PcellY - PbotY) / (PbotX - PcellX));        // Elevation angle down from PV cell to bottom of PV module/panel, radians
-		int iStopIso = std::round((tiltRadians - elevationAngleUp) / DTOR);							   // Last whole degree in arc range that sees sky, first is 0
-		int iHorBright = std::round(std::fmax(0.0, 6.0 - elevationAngleUp / DTOR));	   			       // Number of whole degrees for which horizon brightening occurs
-		int iStartGrd = std::round((tiltRadians + elevationAngleDown) / DTOR);                          // First whole degree in arc range that sees ground, last is 180
+		double elevationAngleUp = atan((PtopY - PcellY) / (PtopX - PcellX));          // Elevation angle up from PV cell to top of PV module/panel, radians
+		double elevationAngleDown = atan((PcellY - PbotY) / (PbotX - PcellX));        // Elevation angle down from PV cell to bottom of PV module/panel, radians
+		size_t iStopIso = (size_t)round((tiltRadians - elevationAngleUp) / DTOR);							   // Last whole degree in arc range that sees sky, first is 0
+		size_t iHorBright = (size_t)round(fmax(0.0, 6.0 - elevationAngleUp / DTOR));	   			       // Number of whole degrees for which horizon brightening occurs
+		size_t iStartGrd = (size_t)round((tiltRadians + elevationAngleDown) / DTOR);                          // First whole degree in arc range that sees ground, last is 180
 
 		rearIrradiance.push_back(0);
 		for (size_t j = 0; j != iStopIso; j++)
 		{
-			rearIrradiance[i] += 0.5 * (std::cos(j * DTOR) - std::cos((j + 1)*DTOR)) * MarionAOICorrectionFactorsGlass[j]* isotropicSkyDiffuse;
+			rearIrradiance[i] += 0.5 * (cos(j * DTOR) - cos((j + 1)*DTOR)) * MarionAOICorrectionFactorsGlass[j]* isotropicSkyDiffuse;
 			if ((iStopIso - j) <= iHorBright)
 			{
-				rearIrradiance[i] += 0.5 * (std::cos(j * DTOR) - std::cos((j + 1) * DTOR)) * MarionAOICorrectionFactorsGlass[j]* horizonDiffuse / 0.052246; // 0.052246 = 0.5 * [cos(84) - cos(90)]
+				rearIrradiance[i] += 0.5 * (cos(j * DTOR) - cos((j + 1) * DTOR)) * MarionAOICorrectionFactorsGlass[j]* horizonDiffuse / 0.052246; // 0.052246 = 0.5 * [cos(84) - cos(90)]
 			}
 		}
 
 		// Add relections from PV module front surfaces
 		for (size_t j = iStopIso; j < iStartGrd; j++)
 		{
-			double diagonalDistance = (PbotX - PcellX) / std::cos(elevationAngleDown);
+			double diagonalDistance = (PbotX - PcellX) / cos(elevationAngleDown);
 			double startAlpha = -(double)(j - iStopIso) * DTOR + elevationAngleUp + elevationAngleDown;
 			double stopAlpha = -(double)(j + 1 - iStopIso) * DTOR + elevationAngleUp + elevationAngleDown;
-			double m = diagonalDistance * std::sin(startAlpha);
+			double m = diagonalDistance * sin(startAlpha);
 			double theta = M_PI - elevationAngleDown - (M_PI / 2.0 - startAlpha) - tiltRadians;
-			double projectedX2 = m / std::cos(theta);
+			double projectedX2 = m / cos(theta);
 
-			m = diagonalDistance * std::sin(stopAlpha);
+			m = diagonalDistance * sin(stopAlpha);
 			theta = M_PI - elevationAngleDown - (M_PI / 2.0 - stopAlpha) - tiltRadians;
-			double projectedX1 = m / std::cos(theta);
-			projectedX1 = std::fmax(0.0, projectedX1);
+			double projectedX1 = m / cos(theta);
+			projectedX1 = fmax(0.0, projectedX1);
 
 			double PVreflectedIrradiance = 0.0;
 			double deltaCell = 1.0 / cellRows;
@@ -1796,7 +1793,7 @@ void irrad::getBackSurfaceIrradiances(double pvBackShadeFraction, double rowToRo
 				PVreflectedIrradiance += cellLengthSeen * frontReflected[k];
 			}
 			PVreflectedIrradiance /= projectedX2 - projectedX1;
-			rearIrradiance[i] += 0.5 * (std::cos(j * DTOR) - std::cos((j + 1) * DTOR)) * MarionAOICorrectionFactorsGlass[j] * PVreflectedIrradiance;
+			rearIrradiance[i] += 0.5 * (cos(j * DTOR) - cos((j + 1) * DTOR)) * MarionAOICorrectionFactorsGlass[j] * PVreflectedIrradiance;
 		}
 
 
@@ -1805,11 +1802,11 @@ void irrad::getBackSurfaceIrradiances(double pvBackShadeFraction, double rowToRo
 		{
 			double startElevationDown = (double)(j - iStartGrd) * DTOR + elevationAngleDown;
 			double stopElevationDown = (double)(j + 1 - iStartGrd) * DTOR + elevationAngleDown;
-			double projectedX2 = PcellX + PcellY / std::tan(startElevationDown);
-			double projectedX1 = PcellX + PcellY / std::tan(stopElevationDown);
+			double projectedX2 = PcellX + PcellY / tan(startElevationDown);
+			double projectedX1 = PcellX + PcellY / tan(stopElevationDown);
 			double actualGroundGHI = 0.0;
 
-			if (std::fabs(projectedX1 - projectedX2) > 0.99 * rowToRow)
+			if (fabs(projectedX1 - projectedX2) > 0.99 * rowToRow)
 			{
 				// Use average value if projection approximates the rtr      
 				actualGroundGHI = averageGroundGHI;
@@ -1880,7 +1877,7 @@ void irrad::getBackSurfaceIrradiances(double pvBackShadeFraction, double rowToRo
 					actualGroundGHI /= projectedX2 - projectedX1;
 				}
 			}
-			rearIrradiance[i] += 0.5 * (std::cos(j * DTOR) - std::cos((j + 1) * DTOR)) * MarionAOICorrectionFactorsGlass[j] * actualGroundGHI * this->alb;
+			rearIrradiance[i] += 0.5 * (cos(j * DTOR) - cos((j + 1) * DTOR)) * MarionAOICorrectionFactorsGlass[j] * actualGroundGHI * this->alb;
 		}
 		// Calculate and add direct and circumsolar irradiance components
 		incidence(0, 180.0 - tiltRadians * RTOD, (surfaceAzimuthRadians * RTOD - 180.0), 45.0, solarZenithRadians, solarAzimuthRadians, this->en_backtrack, this->gcr, angle);

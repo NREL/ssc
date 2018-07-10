@@ -46,6 +46,14 @@
 *  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
 *  THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *******************************************************************************************************/
+#ifndef _LIB_6PAR_NEWTON_H_
+#define _LIB_6PAR_NEWTON_H_
+
+#include "6par_jacobian.h"
+#include "6par_lu.h"
+#include "6par_search.h"
+
+#include <limits>
 
 /// Newton Method using Line Search and Backtracking
 /// from Globally Convergent Methods for Nonlinear Systems of Equations, "Numerical Recipes in C"
@@ -149,3 +157,4 @@ int newton( Real x[n], Real residual[n], bool &check, F &func,
 	
 	return -1;
 }
+#endif

@@ -91,13 +91,9 @@ Define _DEBUG if compile with debugging
 #define RTOD 57.295779513082320876798154814105
 #endif
 
-#ifndef MAX
-#define MAX(a,b) ( (a)>(b) ? (a) : (b) )
-#endif
 
-#ifndef MIN
+#define MAX(a,b) ( (a)>(b) ? (a) : (b) )
 #define MIN(a,b) ( (a)<(b) ? (a) : (b) )
-#endif
 
 #define sind(x) sin( DTOR*(x) )
 #define cosd(x) cos( DTOR*(x) )

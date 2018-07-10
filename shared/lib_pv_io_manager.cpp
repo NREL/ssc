@@ -38,11 +38,11 @@ PVIOManager::PVIOManager(compute_module*  cm, std::string cmName)
 	m_computeModuleName = cmName;
 }
 
-Irradiance_IO * PVIOManager::getIrradianceIO() const { return m_IrradianceIO.get(); }
-compute_module * PVIOManager::getComputeModule() const { return m_computeModule; }
-Subarray_IO * PVIOManager::getSubarrayIO(size_t subarrayNumber) const { return m_SubarraysIO[subarrayNumber].get(); }
+Irradiance_IO * PVIOManager::getIrradianceIO()  { return m_IrradianceIO.get(); }
+compute_module * PVIOManager::getComputeModule()  { return m_computeModule; }
+Subarray_IO * PVIOManager::getSubarrayIO(size_t subarrayNumber)  { return m_SubarraysIO[subarrayNumber].get(); }
 
-std::vector<Subarray_IO *> PVIOManager::getSubarrays() const
+std::vector<Subarray_IO *> PVIOManager::getSubarrays() 
 {
 	std::vector<Subarray_IO*> subarrays;
 	for (size_t subarray = 0; subarray < m_SubarraysIO.size(); subarray++) {
@@ -51,9 +51,9 @@ std::vector<Subarray_IO *> PVIOManager::getSubarrays() const
 	return subarrays;
 }
 
-PVSystem_IO * PVIOManager::getPVSystemIO() const { return m_PVSystemIO.get(); }
+PVSystem_IO * PVIOManager::getPVSystemIO()  { return m_PVSystemIO.get(); }
 
-Simulation_IO * PVIOManager::getSimulationIO() const { return m_SimulationIO.get(); }
+Simulation_IO * PVIOManager::getSimulationIO()  { return m_SimulationIO.get(); }
 
 
 Simulation_IO::Simulation_IO(compute_module* cm, Irradiance_IO & IrradianceIO)
@@ -237,7 +237,7 @@ Subarray_IO::Subarray_IO(compute_module* cm, std::string cmName, size_t subarray
 
 				// Otherwise, if self-shading configuration does not have equal number of modules as specified on system design page for that subarray,
 				// compute dc derate using the self-shading configuration and apply it to the whole subarray. Give warning.
-				if ((selfShadingInputs.nmodx * selfShadingInputs.nmody * selfShadingInputs.nrows) != (nStrings * nModulesPerString))
+				if ((size_t)(selfShadingInputs.nmodx * selfShadingInputs.nmody * selfShadingInputs.nrows) != (size_t)(nStrings * nModulesPerString))
 					cm->log(util::format("The product of number of modules along side and bottom for subarray %d is not equal to the number of modules in the subarray. Check your inputs for self shading.",
 						int(subarrayNumber)), SSC_WARNING);
 

@@ -41,7 +41,7 @@ double iamSjerpsKoomen(double n, double incidenceAngleRadians);
 double calculateIrradianceThroughCoverDeSoto(double incidenceAngleDegrees, double zenithAngleDegrees, double tiltDegrees,
 		double poaBeam, double poaSkyDiffuse, double poaGroundReflected);
 
-static double MarionAOICorrectionFactorsGlass[] = 
+static const double MarionAOICorrectionFactorsGlass[] = 
 	{0.057563, 0.128570, 0.199651, 0.265024, 0.324661, 0.378968, 0.428391, 0.473670, 0.514788, 0.552454,
 	0.586857, 0.618484, 0.647076, 0.673762, 0.698029, 0.720118, 0.740726, 0.759671, 0.776946, 0.792833,
 	0.807374, 0.821010, 0.833534, 0.845241, 0.855524, 0.865562, 0.874567, 0.882831, 0.890769, 0.897939,

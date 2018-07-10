@@ -60,17 +60,6 @@
 #include "lib_pvmodel.h"
 #include "lib_pv_incidence_modifier.h"
 
-#ifndef DTOR
-#define DTOR 0.0174532925
-#endif
-#ifndef M_PI
-#define M_PI 3.14159265358979323846264338327
-#endif
-#define sind(x) sin( (M_PI/180.0)*(x) )
-#define cosd(x) cos( (M_PI/180.0)*(x) )
-#define tand(x) tan( (M_PI/180.0)*(x) )
-#define asind(x) (180/M_PI*asin(x))
-
 static var_info _cm_vtab_pvwattsv5_part1[] = {
 /*   VARTYPE           DATATYPE          NAME                         LABEL                                               UNITS        META                      GROUP          REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
 	{ SSC_INPUT,        SSC_STRING,      "solar_resource_file",            "Weather file path",                           "",          "",                       "Weather",     "?",                        "",                              "" },
