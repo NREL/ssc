@@ -295,7 +295,6 @@ private:
 	S_od_par ms_od_par;
 	C_sco2_cycle_core::S_od_par ms_cycle_od_par;
 	C_HX_counterflow::S_od_par ms_phx_od_par;
-	S_od_opt_eta_tracking ms_od_opt_eta_tracking;
 
 	S_od_solved ms_od_solved;
 	
@@ -315,8 +314,6 @@ private:
 	double m_P_co2_crit;		//[kPa]
 
 	void design_core();
-
-	void reset_S_od_opt_eta_tracking();
 
 	double adjust_P_mc_in_away_2phase(double T_co2 /*K*/, double P_mc_in /*kPa*/);
 

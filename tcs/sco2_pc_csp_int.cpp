@@ -347,11 +347,6 @@ int C_sco2_recomp_csp::off_design_fix_P_mc_in(C_sco2_rc_csp_template::S_od_par o
 
 int C_sco2_recomp_csp_10MWe_scale::off_design_fix_P_mc_in(C_sco2_rc_csp_template::S_od_par od_par, double P_mc_in /*MPa*/, int off_design_strategy, double od_opt_tol)
 {
-	if (ms_des_par.m_cycle_config == 2)
-	{
-		throw(C_csp_exception("sCO2 cycle and CSP off-design only currently developed for the recompression cycle\n"));
-	}
-
 	// Check if callback info has changed. If so, pass to member sco2 10MWe cycle
 	mc_rc_csp_10MWe.mf_callback_update = mf_callback_update;
 	mc_rc_csp_10MWe.mp_mf_update = mp_mf_update;
@@ -492,6 +487,19 @@ void C_sco2_recomp_csp::setup_off_design_info(C_sco2_recomp_csp::S_od_par od_par
 			ms_cycle_od_par.m_T_mc_in - 273.15,
 			m_T_mc_in_min - 273.15);
 		ms_cycle_od_par.m_T_mc_in = m_T_mc_in_min;
+	}
+
+	if (ms_des_par.m_cycle_config == 2)
+	{
+		ms_cycle_od_par.m_T_pc_in = ms_od_par.m_T_amb + ms_des_par.m_dt_mc_approach;	//[K]
+		if (ms_cycle_od_par.m_T_pc_in < m_T_mc_in_min)
+		{
+			std::string msg = util::format("The off-design main compressor in let temperture is %lg [C]."
+				" The sCO2 cycle off-design code reset it to the minimum allowable main compressor inlet temperature: %lg [C].",
+				ms_cycle_od_par.m_T_pc_in - 273.15,
+				m_T_mc_in_min - 273.15);
+			ms_cycle_od_par.m_T_pc_in = m_T_mc_in_min;
+		}
 	}
 
 	ms_cycle_od_par.m_N_sub_hxrs = ms_des_par.m_N_sub_hxrs;			//[-]
@@ -1521,19 +1529,6 @@ bool C_sco2_recomp_csp::opt_P_mc_in_nest_f_recomp_max_eta_core()
 //	return sco2_od_code;
 //}
 
-void C_sco2_recomp_csp::reset_S_od_opt_eta_tracking()
-{
-	ms_od_opt_eta_tracking.m_is_opt_found = false;
-
-	ms_od_opt_eta_tracking.m_eta_max = 0.0;
-
-	ms_od_opt_eta_tracking.ms_od_op_in_max.m_P_mc_in = 
-		ms_od_opt_eta_tracking.ms_od_op_in_max.m_recomp_frac = 
-		ms_od_opt_eta_tracking.ms_od_op_in_max.m_phi_mc = 
-		ms_od_opt_eta_tracking.m_over_T_t_in_at_eta_max = 
-		ms_od_opt_eta_tracking.m_over_P_high_at_eta_max = std::numeric_limits<double>::quiet_NaN();
-}
-
 double C_sco2_recomp_csp::adjust_P_mc_in_away_2phase(double T_co2 /*K*/, double P_mc_in /*kPa*/)
 {	
 	double P_mc_in_restricted = std::numeric_limits<double>::quiet_NaN();	//[kPa]
@@ -1755,29 +1750,6 @@ int C_sco2_recomp_csp::off_design_core(double & eta_solved)
 	}
 
 
-	// Weight delta_T_HTF with power cycle efficiency
-	//double eta_mult = 1.E3;
-	//double eta_solved = scale_product*(eta_mult*mc_rc_cycle.get_od_solved()->m_eta_thermal + 20.0) - std::fabs(mc_phx.ms_od_solved.m_T_h_out - mc_phx.ms_des_solved.m_T_h_out);
-
-	// Minimize deltaT (need 1000.0 in here for optimization to work correctly (compared to 100, at least)
-	//double eta_solved = scale_product*(1000.0 - std::fabs(mc_phx.ms_od_solved.m_T_h_out - mc_phx.ms_des_solved.m_T_h_out));
-
-	// Weight delta_T_HTF with power cycle output
-	//double work_mult = 1000.0;
-	//double eta_solved = scale_product*(work_mult*mc_rc_cycle.get_od_solved()->m_W_dot_net/mc_rc_cycle.get_design_solved()->m_W_dot_net + 20.0) - std::fabs(mc_phx.ms_od_solved.m_T_h_out - mc_phx.ms_des_solved.m_T_h_out);
-
-	// BUT, need to inform upstream code that a solution in this gradient is not acceptable
-	//if( over_T_t_in == 0.0 && over_P_high == 0.0 && over_tip_ratio == 0.0 && over_surge_mc == 0.0 && over_surge_rc == 0.0 )
-	//{
-	//	//sco2_od_opt_file << mc_rc_cycle.get_od_solved()->m_pres[C_RecompCycle::MC_IN]/1.E3 << ","
-	//	//				<< mc_rc_cycle.get_od_solved()->m_recomp_frac << ","
-	//	//				<< mc_rc_cycle.get_od_solved()->ms_mc_od_solved.m_phi << ","
-	//	//				<< mc_rc_cycle.get_od_solved()->m_eta_thermal << "," 
-	//	//				<< mc_rc_cycle.get_od_solved()->m_W_dot_net/1.E3 << "\n";
-	//
-	//	ms_od_opt_eta_tracking.m_is_opt_found = true;
-	//}
-
 	if(eta_solved != eta_solved)
 	{
 		eta_solved = 0.0;
@@ -1790,24 +1762,6 @@ int C_sco2_recomp_csp::off_design_core(double & eta_solved)
 		od_solve_code == E_TIP_RATIO || od_solve_code == E_MC_SURGE || od_solve_code == E_RC_SURGE) )
 		return 0;
 
-	if( eta_solved > ms_od_opt_eta_tracking.m_eta_max )
-	{
-		if( scale_product < 1.0 )
-		{	// Scaled eta could still be the current max that NLOPT sees, so need to communicate upstream that it's breaking limits
-			ms_od_opt_eta_tracking.m_is_opt_found = false;
-		}
-		else
-		{
-			ms_od_opt_eta_tracking.m_is_opt_found = true;
-			ms_od_opt_eta_tracking.m_eta_max = eta_solved;
-			ms_od_opt_eta_tracking.ms_od_op_in_max.m_P_mc_in = ms_cycle_od_par.m_P_LP_comp_in;
-			ms_od_opt_eta_tracking.ms_od_op_in_max.m_recomp_frac = mpc_sco2_cycle->get_od_solved()->m_m_dot_rc / mpc_sco2_cycle->get_od_solved()->m_m_dot_t;
-			ms_od_opt_eta_tracking.ms_od_op_in_max.m_phi_mc = mpc_sco2_cycle->get_od_solved()->ms_mc_ms_od_solved.mv_phi[0];
-		}
-		
-		ms_od_opt_eta_tracking.m_over_T_t_in_at_eta_max = over_T_t_in;
-		ms_od_opt_eta_tracking.m_over_P_high_at_eta_max = over_P_high;
-	}
 
 	return od_solve_code;
 }
