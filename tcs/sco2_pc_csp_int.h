@@ -94,6 +94,7 @@ public:
 		double m_HT_eff_max;				//[-] Maximum allowable effectiveness in HT recuperator
 		double m_eta_mc;					//[-] design-point efficiency of the main compressor; isentropic if positive, polytropic if negative
 		double m_eta_rc;					//[-] design-point efficiency of the recompressor; isentropic if positive, polytropic if negative
+		double m_eta_pc;					//[-] design-point efficiency of the precompressor; isentropic if positive, polytropic if negative
 		double m_eta_t;						//[-] design-point efficiency of the turbine; isentropic if positive, polytropic if negative
 		int m_N_sub_hxrs;					//[-] Number of sub-heat exchangers to use when calculating UA value for a heat exchanger
 		double m_P_high_limit;				//[kPa] maximum allowable pressure in cycle
@@ -132,7 +133,7 @@ public:
 			m_T_htf_hot_in = m_phx_dt_hot_approach = m_T_amb_des = m_dt_mc_approach =
 				m_elevation = m_W_dot_net = m_eta_thermal = m_LT_eff_max = m_HT_eff_max =
 
-				m_eta_mc = m_eta_rc = m_eta_t =
+				m_eta_mc = m_eta_rc = m_eta_pc = m_eta_t =
 				m_P_high_limit = m_tol = m_opt_tol = m_N_turbine =
 
 				m_PR_mc_guess =
@@ -227,7 +228,8 @@ public:
 		E_OVER_PRESSURE,
 		E_TIP_RATIO,
 		E_MC_SURGE,
-		E_RC_SURGE
+		E_RC_SURGE,
+		E_PC_SURGE
 	};
 
 	enum E_off_design_turbo_operation

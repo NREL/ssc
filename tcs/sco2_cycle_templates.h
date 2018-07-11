@@ -228,6 +228,7 @@ public:
 
 		C_comp_multi_stage::S_od_solved ms_mc_ms_od_solved;
 		C_comp_multi_stage::S_od_solved ms_rc_ms_od_solved;
+		C_comp_multi_stage::S_od_solved ms_pc_ms_od_solved;
 		C_turbine::S_od_solved ms_t_od_solved;
 		C_HX_counterflow::S_od_solved ms_LT_recup_od_solved;
 		C_HX_counterflow::S_od_solved ms_HT_recup_od_solved;

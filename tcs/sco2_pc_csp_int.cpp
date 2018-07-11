@@ -193,7 +193,7 @@ void C_sco2_recomp_csp::design_core()
 		des_params.m_HTR_eff_max = ms_des_par.m_HT_eff_max;			//[-]
 		des_params.m_eta_mc = ms_des_par.m_eta_mc;
 		des_params.m_eta_rc = ms_des_par.m_eta_rc;
-		des_params.m_eta_pc = ms_des_par.m_eta_rc;
+		des_params.m_eta_pc = ms_des_par.m_eta_pc;
 		des_params.m_eta_t = ms_des_par.m_eta_t;
 		des_params.m_N_sub_hxrs = ms_des_par.m_N_sub_hxrs;
 		des_params.m_P_high_limit = ms_des_par.m_P_high_limit;
@@ -313,11 +313,6 @@ void C_sco2_recomp_csp_10MWe_scale::design(C_sco2_rc_csp_template::S_des_par des
 
 int C_sco2_recomp_csp_10MWe_scale::off_design_nested_opt(C_sco2_rc_csp_template::S_od_par od_par, int off_design_strategy, double od_opt_tol)
 {
-	if (ms_des_par.m_cycle_config == 2)
-	{
-		throw(C_csp_exception("sCO2 cycle and CSP off-design only currently developed for the recompression cycle\n"));
-	}
-
 	// Check if callback info has changed. If so, pass to member sco2 10MWe cycle
 	mc_rc_csp_10MWe.mf_callback_update = mf_callback_update;
 	mc_rc_csp_10MWe.mp_mf_update = mp_mf_update;
@@ -432,6 +427,8 @@ const C_sco2_recomp_csp_10MWe_scale::S_od_solved * C_sco2_recomp_csp_10MWe_scale
 	ms_od_solved.ms_rc_cycle_od_solved.ms_mc_ms_od_solved.m_W_dot_in *= m_r_W_scale;	//[kWe]
 		// Recompressor
 	ms_od_solved.ms_rc_cycle_od_solved.ms_rc_ms_od_solved.m_W_dot_in *= m_r_W_scale;	//[kWe]
+		// Precompressor
+	ms_od_solved.ms_rc_cycle_od_solved.ms_pc_ms_od_solved.m_W_dot_in *= m_r_W_scale;	//[kWe]
 		// Turbine
 	ms_od_solved.ms_rc_cycle_od_solved.ms_t_od_solved.m_W_dot_out *= m_r_W_scale;	//[kWe]
 		// Low Temp Recuperator
@@ -539,7 +536,13 @@ bool C_sco2_recomp_csp::opt_P_mc_in_nest_f_recomp_max_eta_core()
 	//	*ms_od_par, ms_rc_cycle_od_phi_par, ms_phx_od_par, ms_od_op_inputs(will set P_mc_in here and f_recomp downstream)
 	
 	// Get density at design point
-	double mc_dens_in_des = ms_des_solved.ms_rc_cycle_solved.m_dens[C_sco2_cycle_core::MC_IN];		//[kg/m^3]
+	double mc_dens_in_des = std::numeric_limits<double>::quiet_NaN();
+	
+	if (ms_des_par.m_cycle_config == 1)
+		mc_dens_in_des = ms_des_solved.ms_rc_cycle_solved.m_dens[C_sco2_cycle_core::MC_IN];		//[kg/m^3]
+	else
+		mc_dens_in_des = ms_des_solved.ms_rc_cycle_solved.m_dens[C_sco2_cycle_core::PC_IN];		//[kg/m^3]
+
 	CO2_state co2_props;
 	// Then calculate the compressor inlet pressure that achieves this density at the off-design ambient temperature
 	CO2_TD(ms_cycle_od_par.m_T_mc_in, mc_dens_in_des, &co2_props);
@@ -1650,7 +1653,12 @@ int C_sco2_recomp_csp::off_design_core(double & eta_solved)
 	{
 		rc_w_tip_ratio = mpc_sco2_cycle->get_od_solved()->ms_rc_ms_od_solved.m_tip_ratio_max;
 	}
-	double comp_tip_ratio = max(mc_w_tip_ratio, rc_w_tip_ratio);
+	double pc_w_tip_ratio = 0.0;
+	if (ms_des_par.m_cycle_config == 2)
+	{
+		pc_w_tip_ratio = mpc_sco2_cycle->get_od_solved()->ms_pc_ms_od_solved.m_tip_ratio_max;
+	}
+	double comp_tip_ratio = max(pc_w_tip_ratio, max(mc_w_tip_ratio, rc_w_tip_ratio));
 	double over_tip_ratio = max(0.0, 10.0*(comp_tip_ratio - 0.999));
 
 	// 4) Check for compressor(s) surge?
@@ -1658,16 +1666,18 @@ int C_sco2_recomp_csp::off_design_core(double & eta_solved)
 	double mc_phi = mpc_sco2_cycle->get_od_solved()->ms_mc_ms_od_solved.m_phi_min;
 	double over_surge_mc = max(0.0, (C_comp_single_stage::m_snl_phi_min - mc_phi) / C_comp_single_stage::m_snl_phi_min*100.0);
 	// Recompressor
-	double rc_phi_s1, rc_phi_s2;
-	rc_phi_s1 = rc_phi_s2 = 0.0;
 	double over_surge_rc = 0.0;
 	if( ms_des_solved.ms_rc_cycle_solved.m_is_rc )
 	{
-		//rc_phi_s1 = mc_rc_cycle.get_od_solved()->ms_rc_od_solved.m_phi;
-		//rc_phi_s2 = mc_rc_cycle.get_od_solved()->ms_rc_od_solved.m_phi_2;
-		//double rc_phi_min = min(rc_phi_s1, rc_phi_s2);
 		double rc_phi_min = mpc_sco2_cycle->get_od_solved()->ms_rc_ms_od_solved.m_phi_min;
 		over_surge_rc = max(0.0, (C_comp_single_stage::m_snl_phi_min - rc_phi_min) / C_comp_single_stage::m_snl_phi_min*100.0);
+	}
+	// Pre-compressor
+	double over_surge_pc = 0.0;
+	if (ms_des_par.m_cycle_config == 2)
+	{
+		double pc_phi_min = mpc_sco2_cycle->get_od_solved()->ms_pc_ms_od_solved.m_phi_min;
+		over_surge_pc = max(0.0, (C_comp_single_stage::m_snl_phi_min - pc_phi_min) / C_comp_single_stage::m_snl_phi_min*100.0);
 	}
 
 
@@ -1680,6 +1690,7 @@ int C_sco2_recomp_csp::off_design_core(double & eta_solved)
 	double eta_tip_ratio_scale = exp(-over_tip_ratio);
 	double eta_surge_mc_scale = exp(-over_surge_mc);
 	double eta_surge_rc_scale = exp(-over_surge_rc);
+	double eta_surge_pc_scale = exp(-over_surge_pc);
 
 	int od_solve_code = 0;
 
@@ -1695,12 +1706,15 @@ int C_sco2_recomp_csp::off_design_core(double & eta_solved)
 		od_solve_code = E_MC_SURGE;
 	else if(over_surge_rc != 0.0)
 		od_solve_code = E_RC_SURGE;
+	else if(over_surge_pc != 0.0)
+		od_solve_code = E_PC_SURGE;
 
 	double scale_product = eta_T_t_in_scale*
 		eta_P_high_scale*
 		eta_tip_ratio_scale*
 		eta_surge_mc_scale*
-		eta_surge_rc_scale;
+		eta_surge_rc_scale*
+		eta_surge_pc_scale;
 
 	switch( m_od_opt_objective )
 	{
@@ -1759,7 +1773,7 @@ int C_sco2_recomp_csp::off_design_core(double & eta_solved)
 
 	// Want to make an efficiency value available to the optimization although it may be decreased by system operation constraints
 	if( !(od_solve_code == 0 || od_solve_code == E_TURBINE_INLET_OVER_TEMP || od_solve_code == E_OVER_PRESSURE ||
-		od_solve_code == E_TIP_RATIO || od_solve_code == E_MC_SURGE || od_solve_code == E_RC_SURGE) )
+		od_solve_code == E_TIP_RATIO || od_solve_code == E_MC_SURGE || od_solve_code == E_RC_SURGE || od_solve_code == E_PC_SURGE) )
 		return 0;
 
 

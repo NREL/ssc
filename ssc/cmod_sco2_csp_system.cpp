@@ -76,9 +76,10 @@ static var_info _cm_vtab_sco2_csp_system[] = {
 	{ SSC_INPUT,  SSC_NUMBER,  "des_objective",        "[2] = hit min phx deltat then max eta, [else] max eta",  "",           "",    "",      "?=0",   "",       "" },
 	{ SSC_INPUT,  SSC_NUMBER,  "min_phx_deltaT",       "Minimum design temperature difference across PHX",       "C",          "",    "",      "?=0",   "",       "" },	
 	{ SSC_INPUT,  SSC_NUMBER,  "rel_tol",              "Baseline solver and optimization relative tolerance exponent (10^-rel_tol)", "-", "", "", "?=3","",       "" },	
-	// Cycle Design
+		// Cycle Design
 	{ SSC_INPUT,  SSC_NUMBER,  "eta_isen_mc",          "Design main compressor isentropic efficiency",           "-",          "",    "",      "*",     "",       "" },
 	{ SSC_INPUT,  SSC_NUMBER,  "eta_isen_rc",          "Design re-compressor isentropic efficiency",             "-",          "",    "",      "*",     "",       "" },
+	{ SSC_INPUT,  SSC_NUMBER,  "eta_isen_pc",          "Design precompressor isentropic efficiency",             "-",          "",    "",      "*",     "",       "" },
 	{ SSC_INPUT,  SSC_NUMBER,  "eta_isen_t",           "Design turbine isentropic efficiency",                   "-",          "",    "",      "*",     "",       "" },
 	{ SSC_INPUT,  SSC_NUMBER,  "LT_recup_eff_max",     "Maximum allowable effectiveness in LT recuperator",      "-",          "",    "",      "*",     "",       "" },
 	{ SSC_INPUT,  SSC_NUMBER,  "HT_recup_eff_max",     "Maximum allowable effectiveness in LT recuperator",      "-",          "",    "",      "*",     "",       "" },
@@ -129,6 +130,8 @@ static var_info _cm_vtab_sco2_csp_system[] = {
 	{ SSC_OUTPUT, SSC_NUMBER,  "rc_phi_surge",         "Recompressor flow coefficient where surge occurs",       "",           "",    "",      "*",     "",       "" },
 	{ SSC_OUTPUT, SSC_ARRAY,   "rc_eta_stages_des",    "Recompressor design stage isenstropic efficiencies",     "",           "",    "",      "*",     "",       "" },
 		// Precompressor	
+	{ SSC_OUTPUT, SSC_NUMBER,  "pc_T_in_des",          "Precompressor inlet temperature",                        "C",          "",    "",      "*",     "",       "" },
+	{ SSC_OUTPUT, SSC_NUMBER,  "pc_P_in_des",          "Precompressor inlet pressure",                           "MPa",        "",    "",      "*",     "",       "" },
 	{ SSC_OUTPUT, SSC_NUMBER,  "pc_W_dot",             "Precompressor power",                                    "MWe",        "",    "",      "*",     "",       "" },
 	{ SSC_OUTPUT, SSC_NUMBER,  "pc_m_dot_des",         "Precompressor mass flow rate",                           "kg/s",       "",    "",      "*",     "",       "" },
 	{ SSC_OUTPUT, SSC_NUMBER,  "pc_phi_des",           "Precompressor design flow coefficient",                  "",           "",    "",      "*",     "",       "" },
@@ -237,6 +240,16 @@ static var_info _cm_vtab_sco2_csp_system[] = {
 	{ SSC_OUTPUT, SSC_ARRAY,   "rc_N_od",              "Off-design recompressor shaft speed",                    "rpm",		   "",    "",      "",     "",       "" },
 	{ SSC_OUTPUT, SSC_MATRIX,  "rc_tip_ratio_od",      "Off-design recompressor tip speed ratio [od run][stage]","-",		   "",    "",      "",     "",       "" },
 	{ SSC_OUTPUT, SSC_MATRIX,  "rc_eta_stages_od",     "Off-design recompressor stages isentropic efficiency [od run][stage]", "",    "",    "",      "",     "",       "" },
+		// Precompressor
+	{ SSC_OUTPUT, SSC_ARRAY,   "pc_T_in_od",           "Off-design precompressor inlet temperature",             "C",          "",    "",      "",     "",       "" },
+	{ SSC_OUTPUT, SSC_ARRAY,   "pc_P_in_od",           "Off-design precompressor inlet pressure",                "MPa",        "",    "",      "",     "",       "" },
+	{ SSC_OUTPUT, SSC_ARRAY,   "pc_W_dot_od",          "Off-design precompressor power",                         "MWe",        "",    "",      "",     "",       "" },
+	{ SSC_OUTPUT, SSC_ARRAY,   "pc_m_dot_od",          "Off-design precompressor mass flow",                     "kg/s",       "",    "",      "",     "",       "" },
+	{ SSC_OUTPUT, SSC_ARRAY,   "pc_eta_od",            "Off-design precompressor overal isentropic efficiency",  "",           "",    "",      "",     "",       "" },
+	{ SSC_OUTPUT, SSC_MATRIX,  "pc_phi_od",            "Off-design precompressor flow coefficient [od run][stage]", "-",	   "",    "",      "",     "",       "" },
+	{ SSC_OUTPUT, SSC_ARRAY,   "pc_N_od",              "Off-design precompressor shaft speed",                   "rpm",		   "",    "",      "",     "",       "" },
+	{ SSC_OUTPUT, SSC_MATRIX,  "pc_tip_ratio_od",      "Off-design precompressor tip speed ratio [od run][stage]","-",		   "",    "",      "",     "",       "" },
+	{ SSC_OUTPUT, SSC_MATRIX,  "pc_eta_stages_od",     "Off-design precompressor stages isentropic efficiency [od run][stage]", "",    "",    "",      "",     "",       "" },
 		// Turbine																											   
 	{ SSC_OUTPUT, SSC_ARRAY,   "t_W_dot_od",           "Off-design turbine power",                               "MWe",        "",    "",      "",     "",       "" },
 	{ SSC_OUTPUT, SSC_ARRAY,   "t_nu_od",              "Off-design turbine velocity ratio",	                     "-",	       "",    "",      "",     "",       "" },
@@ -314,6 +327,16 @@ public:
 	ssc_number_t *p_rc_N_od;
 	ssc_number_t *pm_rc_tip_ratio_od;
 	ssc_number_t *pm_rc_eta_stages_od;
+	// Precompressor
+	ssc_number_t *p_pc_T_in_od;
+	ssc_number_t *p_pc_P_in_od;
+	ssc_number_t *p_pc_W_dot_od;
+	ssc_number_t *p_pc_m_dot_od;
+	ssc_number_t *p_pc_eta_od;
+	ssc_number_t *pm_pc_phi_od;
+	ssc_number_t *p_pc_N_od;
+	ssc_number_t *pm_pc_tip_ratio_od;
+	ssc_number_t *pm_pc_eta_stages_od;
 	// Turbine
 	ssc_number_t *p_t_W_dot_od;
 	ssc_number_t *p_t_nu_od;
@@ -441,6 +464,7 @@ public:
 		sco2_rc_des_par.m_HT_eff_max = as_double("HT_recup_eff_max");
 		sco2_rc_des_par.m_eta_mc = as_double("eta_isen_mc");
 		sco2_rc_des_par.m_eta_rc = as_double("eta_isen_rc");
+		sco2_rc_des_par.m_eta_pc = as_double("eta_isen_pc");
 		sco2_rc_des_par.m_eta_t = as_double("eta_isen_t");
 		sco2_rc_des_par.m_P_high_limit = as_double("P_high_limit")*1000.0;		//[kPa], convert from MPa		
 			
@@ -743,12 +767,14 @@ public:
 			n_rc_stages = 1;
 		}
 		
-		// Precompressor
+		// Precompressor		
 		assign("pc_W_dot", (ssc_number_t)(p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.m_W_dot_pc*1.E-3));	//[MWe] convert from kWe
 		assign("pc_m_dot_des", (ssc_number_t)(p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.m_m_dot_pc));		//[kg/s]
 		int n_pc_stages = 0;
 		if (sco2_rc_des_par.m_cycle_config == 2)
 		{
+			assign("pc_T_in_des", (ssc_number_t)(p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.ms_pc_ms_des_solved.m_T_in - 273.15));
+			assign("pc_P_in_des", (ssc_number_t)(p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.ms_pc_ms_des_solved.m_P_in*1.E-3));
 			assign("pc_phi_des", (ssc_number_t)(p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.ms_pc_ms_des_solved.m_phi_des)); //[-]
 			
 			n_pc_stages = p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.ms_pc_ms_des_solved.m_n_stages;		//[-]
@@ -772,6 +798,8 @@ public:
 		else
 		{
 			double ssc_nan = std::numeric_limits<ssc_number_t>::quiet_NaN();
+			assign("pc_T_in_des", ssc_nan);
+			assign("pc_P_in_des", ssc_nan);
 			assign("pc_phi_des", ssc_nan);
 			assign("pc_n_stages", ssc_nan);
 			assign("pc_N_des", ssc_nan);
@@ -1210,12 +1238,22 @@ public:
 				throw exec_error("sco2_csp_system", err_msg);
 			}
 
-			double P_mc_in_des = p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.m_pres[C_sco2_cycle_core::MC_IN] / 1000.0;		//[MPa] convert from kPa
+			double P_LP_comp_in = std::numeric_limits<double>::quiet_NaN();
+			double delta_P = std::numeric_limits<double>::quiet_NaN();
 
+			if (sco2_rc_des_par.m_cycle_config == 1)
+			{
+				P_LP_comp_in = p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.m_pres[C_sco2_cycle_core::MC_IN] / 1000.0;		//[MPa] convert from kPa
+				delta_P = 10.0;
+			}
+			else
+			{
+				P_LP_comp_in = p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.m_pres[C_sco2_cycle_core::PC_IN] / 1000.0;		//[MPa] convert from kPa
+				delta_P = 6.0;
+			}
 			int n_P_mc_in = 101;
 
-			double delta_P = 10.0;	//[MPa]
-			double P_mc_in_low = P_mc_in_des - delta_P / 2.0;	//[MPa]
+			double P_mc_in_low = P_LP_comp_in - delta_P / 2.0;	//[MPa]
 
 			double delta_P_i = delta_P / (n_P_mc_in - 1);	//[MPa]
 
@@ -1233,7 +1271,7 @@ public:
 		}
 		
 		int n_od_runs = (int)od_cases.nrows();
-		allocate_ssc_outputs(n_od_runs, n_mc_stages, n_rc_stages);
+		allocate_ssc_outputs(n_od_runs, n_mc_stages, n_rc_stages, n_pc_stages);
 
 		for(int n_run = 0; n_run < n_od_runs; n_run++)
 		{			
@@ -1344,6 +1382,39 @@ public:
 						pm_rc_eta_stages_od[n_run*n_rc_stages + i_s] = std::numeric_limits<ssc_number_t>::quiet_NaN();
 					}
 				}
+					// Precompressor
+				if (sco2_rc_des_par.m_cycle_config == 2)
+				{
+					p_pc_T_in_od[n_run] = (ssc_number_t)(p_sco2_recomp_csp->get_od_solved()->ms_rc_cycle_od_solved.ms_pc_ms_od_solved.m_T_in - 273.15);		//[C]
+					p_pc_P_in_od[n_run] = (ssc_number_t)(p_sco2_recomp_csp->get_od_solved()->ms_rc_cycle_od_solved.ms_pc_ms_od_solved.m_P_in*1.E-3);		//[MPa]
+					p_pc_W_dot_od[n_run] = (ssc_number_t)(-p_sco2_recomp_csp->get_od_solved()->ms_rc_cycle_od_solved.ms_pc_ms_od_solved.m_W_dot_in*1.E-3);	//[MWe] convert from kWe
+					p_pc_m_dot_od[n_run] = p_m_dot_co2_full_od[n_run];		//[kg/s]
+					p_pc_eta_od[n_run] = (ssc_number_t)p_sco2_recomp_csp->get_od_solved()->ms_rc_cycle_od_solved.ms_pc_ms_od_solved.m_eta;		//[-]
+					for (int i_s = 0; i_s < n_pc_stages; i_s++)
+						pm_pc_phi_od[n_run*n_pc_stages + i_s] = (ssc_number_t)p_sco2_recomp_csp->get_od_solved()->ms_rc_cycle_od_solved.ms_pc_ms_od_solved.mv_phi[i_s];
+					p_pc_N_od[n_run] = (ssc_number_t)p_sco2_recomp_csp->get_od_solved()->ms_rc_cycle_od_solved.ms_pc_ms_od_solved.m_N;			//[rpm]
+					for (int i_s = 0; i_s < n_pc_stages; i_s++)
+					{
+						pm_pc_tip_ratio_od[n_run*n_pc_stages + i_s] = (ssc_number_t)p_sco2_recomp_csp->get_od_solved()->ms_rc_cycle_od_solved.ms_pc_ms_od_solved.mv_tip_speed_ratio[i_s];	//[-]
+						pm_pc_eta_stages_od[n_run*n_pc_stages + i_s] = (ssc_number_t)p_sco2_recomp_csp->get_od_solved()->ms_rc_cycle_od_solved.ms_pc_ms_od_solved.mv_eta[i_s];				//[-]
+					}
+				}
+				else
+				{
+					p_pc_T_in_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
+					p_pc_P_in_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
+					p_pc_W_dot_od[n_run] = 0.0;
+					p_pc_m_dot_od[n_run] = 0.0;
+					p_pc_eta_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
+					for (int i_s = 0; i_s < n_pc_stages; i_s++)
+						pm_pc_phi_od[n_run*n_pc_stages + i_s] = std::numeric_limits<ssc_number_t>::quiet_NaN();
+					p_pc_N_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
+					for (int i_s = 0; i_s < n_pc_stages; i_s++)
+					{
+						pm_pc_tip_ratio_od[n_run*n_pc_stages + i_s] = std::numeric_limits<ssc_number_t>::quiet_NaN();
+						pm_pc_eta_stages_od[n_run*n_pc_stages + i_s] = std::numeric_limits<ssc_number_t>::quiet_NaN();
+					}
+				}
 					// Turbine
 				p_t_W_dot_od[n_run] = (ssc_number_t)(p_sco2_recomp_csp->get_od_solved()->ms_rc_cycle_od_solved.ms_t_od_solved.m_W_dot_out*1.E-3);	//[MWe] convert from kWe
 				p_t_nu_od[n_run] = (ssc_number_t)p_sco2_recomp_csp->get_od_solved()->ms_rc_cycle_od_solved.ms_t_od_solved.m_nu;		//[-]
@@ -1401,6 +1472,20 @@ public:
 					pm_rc_tip_ratio_od[n_run*n_rc_stages + i_s] = std::numeric_limits<ssc_number_t>::quiet_NaN();
 					pm_rc_eta_stages_od[n_run*n_rc_stages + i_s] = std::numeric_limits<ssc_number_t>::quiet_NaN();
 				}
+					// Precompressor
+				p_pc_T_in_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
+				p_pc_P_in_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
+				p_pc_W_dot_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
+				p_pc_m_dot_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
+				p_pc_eta_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
+				for (int i_s = 0; i_s < n_pc_stages; i_s++)
+					pm_pc_phi_od[n_run*n_pc_stages + i_s] = std::numeric_limits<ssc_number_t>::quiet_NaN();
+				p_pc_N_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
+				for (int i_s = 0; i_s < n_pc_stages; i_s++)
+				{
+					pm_pc_tip_ratio_od[n_run*n_pc_stages + i_s] = std::numeric_limits<ssc_number_t>::quiet_NaN();
+					pm_pc_eta_stages_od[n_run*n_pc_stages + i_s] = std::numeric_limits<ssc_number_t>::quiet_NaN();
+				}
 					// Turbine
 				p_t_W_dot_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
 				p_t_nu_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
@@ -1433,7 +1518,7 @@ public:
 		
 	}
 
-	void allocate_ssc_outputs(int n_od_runs, int n_mc_stages, int n_rc_stages)
+	void allocate_ssc_outputs(int n_od_runs, int n_mc_stages, int n_rc_stages, int n_pc_stages)
 	{
 		// Off-design parameters
 		p_m_dot_htf_fracs = allocate("m_dot_htf_fracs", n_od_runs);
@@ -1472,6 +1557,16 @@ public:
 		p_rc_N_od = allocate("rc_N_od", n_od_runs);
 		pm_rc_tip_ratio_od = allocate("rc_tip_ratio_od", n_od_runs, n_rc_stages);
 		pm_rc_eta_stages_od = allocate("rc_eta_stages_od", n_od_runs, n_rc_stages);
+		// Precompressor
+		p_pc_T_in_od = allocate("pc_T_in_od", n_od_runs);
+		p_pc_P_in_od = allocate("pc_P_in_od", n_od_runs);
+		p_pc_W_dot_od = allocate("pc_W_dot_od", n_od_runs);
+		p_pc_m_dot_od = allocate("pc_m_dot_od", n_od_runs);
+		p_pc_eta_od = allocate("pc_eta_od", n_od_runs);
+		pm_pc_phi_od = allocate("pc_phi_od", n_od_runs, n_pc_stages);
+		p_pc_N_od = allocate("pc_N_od", n_od_runs);
+		pm_pc_tip_ratio_od = allocate("pc_tip_ratio_od", n_od_runs, n_pc_stages);
+		pm_pc_eta_stages_od = allocate("pc_eta_stages_od", n_od_runs, n_pc_stages);
 		// Turbine
 		p_t_W_dot_od = allocate("t_W_dot_od", n_od_runs);
 		p_t_nu_od = allocate("t_nu_od", n_od_runs);

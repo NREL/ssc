@@ -1141,6 +1141,7 @@ int C_PartialCooling_Cycle::off_design_fix_shaft_speeds_core()
 	//ms_od_solved.ms_mc_od_solved = *m_mc.get_od_solved();
 	ms_od_solved.ms_mc_ms_od_solved = *mc_mc.get_od_solved();
 	ms_od_solved.ms_rc_ms_od_solved = *mc_rc.get_od_solved();
+	ms_od_solved.ms_pc_ms_od_solved = *mc_pc.get_od_solved();
 	ms_od_solved.ms_t_od_solved = *mc_t.get_od_solved();
 	ms_od_solved.ms_LT_recup_od_solved = mc_LTR.ms_od_solved;
 	ms_od_solved.ms_HT_recup_od_solved = mc_HTR.ms_od_solved;
