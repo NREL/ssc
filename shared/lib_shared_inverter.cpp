@@ -10,27 +10,25 @@ SharedInverter::SharedInverter(int inverterType, int numberOfInverters,
 	m_sandiaInverter = sandiaInverter;
 	m_partloadInverter = partloadInverter;
 	m_tempEnabled = false;
-	m_tempV = {0, 0};
-	m_tempSlope = {0, 0, 0};
-	m_tempStartC = {-99, -99, -99};
 }
 
-bool sortByVoltage(double[] i, double[] j)
+bool sortByVoltage(const double i[], const double j[])
 {
 	return (i[0] < j[0]);
 }
 
-bool setTempDerateCurves(double[] curve1, double[] curve2, double[] curve3 )
+bool SharedInverter::setTempDerateCurves(double* curve1, double* curve2, double* curve3)
 {
-	if (curve1[0] < 0 || curve1[1] < 0 || curve1[2] >= 0) return false;
+	if (curve1[0] < 0 || curve1[1] <= -99 || curve1[2] >= 0) return false;
 
 	// if multiple curves provided, partition operating V range
 	std::vector<double*> derateCurves;
-	if (curve2[0] > 0){
+	derateCurves.push_back(curve1);
+	if (curve2 != NULL){
 		if (curve2[1] <= -99 || curve2[2] >= 0) return false;
 		derateCurves.push_back(curve2);
 	}
-	if (curve3[0] > 0){
+	if (curve3 != NULL){
 		if (curve3[1] <= -99 || curve3[2] >= 0) return false;
 		derateCurves.push_back(curve3);
 	}
@@ -40,13 +38,13 @@ bool setTempDerateCurves(double[] curve1, double[] curve2, double[] curve3 )
 	m_tempSlope[0] = derateCurves[0][2];
 
 	if (derateCurves.size() > 1){
-		m_tempV[0] = (derateCurves[1][0] - derateCurves[0][0]/2);
+		m_tempV[0] = (derateCurves[1][0] + derateCurves[0][0])/2;
 		m_tempStartC[1] = derateCurves[1][1];
 		m_tempSlope[1] = derateCurves[1][2];
 		if (derateCurves.size() > 2) {
-			m_tempV[1] = (derateCurves[2][0] - derateCurves[1][0]/2);
-			m_tempStartC[3] = derateCurves[3][1];
-			m_tempSlope[3] = derateCurves[3][2];
+			m_tempV[1] = (derateCurves[2][0] + derateCurves[1][0])/2;
+			m_tempStartC[2] = derateCurves[2][1];
+			m_tempSlope[2] = derateCurves[2][2];
 		}
 	}
 
@@ -54,8 +52,21 @@ bool setTempDerateCurves(double[] curve1, double[] curve2, double[] curve3 )
 	return true;
 }
 
+void SharedInverter::getTempDerateCurves(double* vParts, double* startC, double* slope) {
+	vParts[0] = m_tempV[0];
+	vParts[1] = m_tempV[1];
+	startC[0] = m_tempStartC[0];
+	startC[1] = m_tempStartC[1];
+	startC[2] = m_tempStartC[2];
+	slope[0] = m_tempSlope[0];
+	slope[1] = m_tempSlope[1];
+	slope[2] = m_tempSlope[2];
+}
+
 void SharedInverter::calculateTempDerate(double V, double T, double& pAC, double& eff, double& loss)
 {
+	if (eff == 0. || pAC == 0.) return;
+
 	double slope = 0.0;
 	double deltaT = 0.0;
 
@@ -78,7 +89,8 @@ void SharedInverter::calculateTempDerate(double V, double T, double& pAC, double
 	}
 
 	double pDC = pAC/eff;
-	eff -= deltaT*slope;
+	eff += deltaT*slope;
+	if (eff < 0) eff = 0.;
 	loss = pAC - (pDC * eff);
 	pAC = pDC * eff;	
 }
@@ -95,7 +107,7 @@ void SharedInverter::calculateACPower(const double powerDC_Watts, const double D
 
 	double tempLoss = 0.0;
 	if (m_tempEnabled){
-		calculateTempDerate(DCStringVoltage, T, &powerAC_kW, &efficiencyAC, &tempLoss);
+		calculateTempDerate(DCStringVoltage, T, powerAC_kW, efficiencyAC, tempLoss);
 	}
 
 	// Convert units to kW

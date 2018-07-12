@@ -398,8 +398,20 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "inv_pd_vdco",                                "DC input voltage for the rated AC power rating",           "Vdc",     "",                     "pvsamv1",       "inverter_model=2",                    "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "inv_pd_vdcmax",                              "Maximum DC input operating voltage",                       "Vdc",     "",                     "pvsamv1",       "inverter_model=2",                    "",                              "" },
 	
+	{ SSC_INPUT,		SSC_NUMBER,		 "en_inv_tdc",								   "Enable inverter temperature derating curve(s)",			   "0/1",     "",					  "pvsamv1"		   "?=0",								  "",							   "" },
+	{ SSC_INPUT,		SSC_NUMBER,		 "inv_tdc_V1",								   "Temperature derate curve at DC voltage 1",				   "Vdc",	  "",					  "pvsamv1",	   "en_inv_tdc=1",						  "",							   "" },
+	{ SSC_INPUT,		SSC_NUMBER,		 "inv_tdc_V2",								   "Temperature derate curve at DC voltage 2",				   "Vdc",	  "",					  "pvsamv1",	   "",									  "",							   "" },
+	{ SSC_INPUT,		SSC_NUMBER,		 "inv_tdc_V3",								   "Temperature derate curve at DC voltage 3",				   "Vdc",	  "",					  "pvsamv1",	   "",									  "",							   "" },
+	{ SSC_INPUT,		SSC_NUMBER,		 "inv_tdc_T1",								   "Start temp to derate for curve 1",						   "C",		  "",					  "pvsamv1",	   "en_inv_tdc=1",						  "",							   "" },
+	{ SSC_INPUT,		SSC_NUMBER,		 "inv_tdc_T2",								   "Start temp to derate for curve 2",						   "C",		  "",					  "pvsamv1",	   "",									  "",							   "" },
+	{ SSC_INPUT,		SSC_NUMBER,		 "inv_tdc_T3",								   "Start temp to derate for curve 3",						   "C",		  "",					  "pvsamv1",	   "",									  "",							   "" },
+	{ SSC_INPUT,		SSC_NUMBER,		 "inv_tdc_S1",								   "Efficiency derate slope for curve 1",					   "%/C",	  "",					  "pvsamv1",	   "en_inv_tdc=1",						  "",							   "" },
+	{ SSC_INPUT,		SSC_NUMBER,		 "inv_tdc_S2",								   "Efficiency derate slope for curve 2",					   "%/C",	  "",					  "pvsamv1",	   "",									  "",							   "" },
+	{ SSC_INPUT,		SSC_NUMBER,		 "inv_tdc_S3",								   "Efficiency derate slope for curve 3",					   "%/C",	  "",					  "pvsamv1",	   "",									  "",							   "" },
+
+
 	// battery storage and dispatch
-	{ SSC_INPUT,        SSC_NUMBER,      "en_batt",                                    "Enable battery storage model",                            "0/1",     "",                     "Battery",       "?=0",                                 "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "en_batt",                                    "Enable battery storage model",                             "0/1",     "",                     "Battery",       "?=0",                                 "",                              "" },
 	{ SSC_INPUT,        SSC_ARRAY,       "load",                                       "Electricity load (year 1)",                                "kW", "", "Battery", "?", "", "" },
 	
 	// NOTE:  other battery storage model inputs and outputs are defined in batt_common.h/batt_common.cpp

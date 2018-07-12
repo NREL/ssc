@@ -21,8 +21,9 @@ public:
 		sandia_inverter_t * sandiaInverter, partload_inverter_t * partloadInverter);
 
 	/// Setup efficiency vs ambient T curves at up to 3 input voltages for temp derating, returns true if successful
-	bool setTempDerateCurves(double[] curve1,
-		double[] curve2 = {0, -99, 0}, double[] curve3 = {0, -99, 0} );
+	bool setTempDerateCurves(double* curve1, double* curve2 = NULL, double* curve3 = NULL );
+
+	void getTempDerateCurves(double* vParts, double* startC, double* slope);
 
 	/// Given DC voltage and ambient temperate, calculate derated power, eff and loss
 	void calculateTempDerate(double V, double T, double& pAC, double& eff, double& loss);
@@ -53,9 +54,9 @@ protected:
 
 	// temperature derate curves
 	bool m_tempEnabled;
-	double[2] m_tempV;				/// ordered DC voltages which divide operating V range into up to 2 partitions
-	double[3] m_tempStartC;		/// for each V range, the temperature at which derate begins to be applied
-	double[3] m_tempSlope;		/// for each V range, the slope, efficiency%/degree C
+	double m_tempV[2] = { 0, 0 };					/// ordered DC voltages which divide operating V range into up to 2 partitions
+	double m_tempStartC[3] = { -99, -99, -99 }; 	/// for each V range, the temperature at which derate begins to be applied
+	double m_tempSlope[3] = { 0, 0, 0 };			/// for each V range, the slope, efficiency%/degree C
 
 	// Memory managed elsewehre
 	sandia_inverter_t * m_sandiaInverter;
