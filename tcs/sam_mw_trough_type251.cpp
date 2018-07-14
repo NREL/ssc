@@ -165,6 +165,7 @@ enum {
 
 	//Outputs
 	O_defocus,
+    O_recirc,
 	O_standby,   
 	O_m_dot_pb,  
 	O_T_pb_in,   
@@ -223,7 +224,7 @@ tcsvarinfo sam_mw_trough_type251_variables[] = {
     { TCS_PARAM,    TCS_NUMBER,        P_T_set_aux,          "T_set_aux",            "Aux heater outlet temp set point",                        "C",            "",        "",        ""},    
     { TCS_PARAM,    TCS_NUMBER,        P_V_tank_hot_ini,     "V_tank_hot_ini",       "Initial hot tank fluid volume",                           "m3",           "",        "",        ""},
     { TCS_PARAM,    TCS_NUMBER,        P_T_tank_hot_ini,     "T_tank_hot_ini",       "Initial hot tank fluid temperature",                      "C",            "",        "",        ""},
-    { TCS_PARAM,    TCS_NUMBER,        P_T_tank_cold_ini,    "T_tank_cold_ini",      "Initial cold tank fluid tmeperature",                     "C",            "",        "",        ""},
+    { TCS_PARAM,    TCS_NUMBER,        P_T_tank_cold_ini,    "T_tank_cold_ini",      "Initial cold tank fluid temperature",                     "C",            "",        "",        ""},
     { TCS_PARAM,    TCS_NUMBER,        P_vol_tank,           "vol_tank",             "Total tank volume, including unusable HTF at bottom",     "m3",           "",        "",        ""},
     { TCS_PARAM,    TCS_NUMBER,        P_h_tank,             "h_tank",               "Total height of tank (height of HTF when tank is full",   "m",            "",        "",        ""},
     { TCS_PARAM,    TCS_NUMBER,        P_h_tank_min,         "h_tank_min",           "Minimum allowable HTF height in storage tank",            "m",            "",        "",        ""},
@@ -240,8 +241,8 @@ tcsvarinfo sam_mw_trough_type251_variables[] = {
     { TCS_PARAM,    TCS_NUMBER,        P_cycle_max_frac,     "cycle_max_frac",       "Maximum turbine over design operation fraction",          "-",            "",        "",        ""},
     { TCS_PARAM,    TCS_NUMBER,        P_cycle_cutoff_frac,  "cycle_cutoff_frac",    "Minimum turbine operation fraction before shutdown",      "-",            "",        "",        ""},
     { TCS_PARAM,    TCS_NUMBER,        P_solarm,             "solarm",               "Solar Multiple",                                          "-",            "",        "",        ""},
-    { TCS_PARAM,    TCS_NUMBER,        P_pb_pump_coef,       "pb_pump_coef",         "Pumping power to move 1kg of HTF through PB loop",        "kW/kg",        "",        "",        ""},
-    { TCS_PARAM,    TCS_NUMBER,        P_tes_pump_coef,      "tes_pump_coef",        "Pumping power to move 1kg of HTF through tes loop",       "kW/kg",        "",        "",        ""},
+    { TCS_PARAM,    TCS_NUMBER,        P_pb_pump_coef,       "pb_pump_coef",         "Pumping power to move 1kg of HTF through PB loop",        "kW/(kg/s)",    "",        "",        ""},
+    { TCS_PARAM,    TCS_NUMBER,        P_tes_pump_coef,      "tes_pump_coef",        "Pumping power to move 1kg of HTF through tes loop",       "kW/(kg/s)",    "",        "",        ""},
     { TCS_PARAM,    TCS_NUMBER,        P_pb_fixed_par,       "pb_fixed_par",         "Fraction of rated gross power constantly consumed",       "-",            "",        "",        ""},
     { TCS_PARAM,    TCS_ARRAY,         P_bop_array,          "bop_array",            "Coefficients for balance of plant parasitics calcs",      "-",            "",        "",        ""},
     { TCS_PARAM,    TCS_ARRAY,         P_aux_array,          "aux_array",            "Coefficients for auxiliary heater parasitics calcs",      "-",            "",        "",        ""},
@@ -307,14 +308,15 @@ tcsvarinfo sam_mw_trough_type251_variables[] = {
 
     // OUTPUTS
     { TCS_OUTPUT,   TCS_NUMBER,        O_defocus,            "defocus",              "Absolute defocus",                                        "-",            "",        "",        ""},
+    { TCS_OUTPUT,   TCS_NUMBER,        O_recirc,             "recirculating",        "Field recirculating bypass valve control",                "-",            "",        "",        ""},
 	{ TCS_OUTPUT,   TCS_NUMBER,	       O_standby,            "standby_control",      "Standby control flag",                                    "-",            "",        "",        ""},
     { TCS_OUTPUT,   TCS_NUMBER,        O_m_dot_pb,           "m_dot_pb",             "Mass flow rate of HTF to PB",                             "kg/hr",        "",        "",        ""},
 	{ TCS_OUTPUT,   TCS_NUMBER,        O_T_pb_in,            "T_pb_in",              "HTF temperature to power block",                          "C",            "",        "",        ""},
 	{ TCS_OUTPUT,   TCS_NUMBER,        O_T_field_in,         "T_field_in",           "HTF temperature into collector field header",             "C",            "",        "",        ""},
 	{ TCS_OUTPUT,   TCS_NUMBER,        O_charge_field,       "m_dot_charge_field",   "Mass flow rate on field side of HX",                      "kg/hr",        "",        "",        ""}, 	
 	{ TCS_OUTPUT,   TCS_NUMBER,        O_charge_tank,        "m_dot_discharge_tank", "Mass flow rate on storage side of HX",                    "kg/hr",        "",        "",        ""},
-	{ TCS_OUTPUT,   TCS_NUMBER,        O_Ts_hot,             "Ts_hot",               "Hot HTF exiting storage HX",                              "C",            "",        "",        ""},
-	{ TCS_OUTPUT,   TCS_NUMBER,        O_Ts_cold,            "Ts_cold",              "Cold HTF exiting storage HX",                             "C",            "",        "",        ""},
+	{ TCS_OUTPUT,   TCS_NUMBER,        O_Ts_hot,             "Ts_hot",               "Field/pb HTF exiting HX (or hot tank) during discharge",  "C",            "",        "",        ""},
+	{ TCS_OUTPUT,   TCS_NUMBER,        O_Ts_cold,            "Ts_cold",              "Field/pb HTF exiting HX (or cold tank) during charge",    "C",            "",        "",        ""},
 	{ TCS_OUTPUT,   TCS_NUMBER,        O_T_tank_hot_in,      "T_tank_hot_in",        "Hot tank HTF inlet temperature",                          "C",            "",        "",        ""},
 	{ TCS_OUTPUT,   TCS_NUMBER,        O_T_tank_cold_in,     "T_tank_cold_in",       "Cold tank HTF inlet temperature",                         "C",            "",        "",        ""},
 	{ TCS_OUTPUT,   TCS_NUMBER,        O_vol_tank_hot_fin,   "vol_tank_hot_fin",     "Hot tank HTF volume at end of timestep",                  "m3",           "",        "",        ""},
@@ -324,7 +326,7 @@ tcsvarinfo sam_mw_trough_type251_variables[] = {
 	{ TCS_OUTPUT,   TCS_NUMBER,        O_q_par_fp,           "tank_fp_par",          "Total parasitic power required for tank freeze protect.", "MWe",          "",        "",        ""},
 	{ TCS_OUTPUT,   TCS_NUMBER,        O_m_dot_aux,          "m_dot_aux",            "Auxiliary heater mass flow rate",                         "kg/hr",        "",        "",        ""},
 	{ TCS_OUTPUT,   TCS_NUMBER,        O_q_aux_heat,         "q_aux_heat",           "Thermal energy provided to fluid by aux heater",          "MWt",          "",        "",        ""},
-	{ TCS_OUTPUT,   TCS_NUMBER,        O_q_aux_fuel,         "q_aux_fuel",           "Heat content of fuel required to provided aux heat",      "MMBTU",        "",        "",        ""},
+	{ TCS_OUTPUT,   TCS_NUMBER,        O_q_aux_fuel,         "q_aux_fuel",           "Heat content of fuel required to provide aux heat",       "MMBTU",        "",        "",        ""},
 	{ TCS_OUTPUT,   TCS_NUMBER,        O_vol_tank_total,     "vol_tank_total",       "Total HTF volume in storage",                             "m3",           "",        "",        ""},
 	{ TCS_OUTPUT,   TCS_NUMBER,        O_hx_eff,             "hx_eff",               "Heat exchanger effectiveness",                            "-",            "",        "",        ""},
 	{ TCS_OUTPUT,   TCS_NUMBER,        O_mass_tank_hot,      "mass_tank_hot",        "Mass of total fluid in the hot tank",                     "kg",           "",        "",        ""},
@@ -405,6 +407,10 @@ private:
 	double * tslogic_b;
 	double * tslogic_c;
 	double * ffrac;
+    //bool tanks_in_parallel;         // TODO - make scriptable - parallel tanks like in original or series like in direct molten salt (false)
+    //bool has_hot_tank_bypass;       // TODO - make scriptable - is a hot tank bypass valve present, applicable for series tanks in direct systems
+    //double T_min_hot_tank_bypass;   // TODO - make scriptable - the max hot tank inlet temperature that the bypass valve is open, thus bypassing the hot tank
+    double T_max_recirc;
 	//double * TOU_schedule;
 	//int nTOU_schedule;
 
@@ -437,6 +443,7 @@ private:
 	double m_tank_cold_prev;
 	int pb_on_prev;
 	double defocus_prev_ncall;
+    bool recirc_prev_ncall;
 	double t_standby_prev;
 
 	//"Real-time" variables representing "Storage" variables
@@ -516,6 +523,10 @@ public:
 		tslogic_b	= 0;
 		tslogic_c	= 0;
 		ffrac		= 0;
+        //tanks_in_parallel = false;
+        //has_hot_tank_bypass = false;
+        //T_min_hot_tank_bypass = std::numeric_limits<double>::quiet_NaN();
+        T_max_recirc = std::numeric_limits<double>::quiet_NaN();
 		//TOU_schedule = NULL;
 
 		//Thermocline Parameters
@@ -545,6 +556,7 @@ public:
 		m_tank_cold_prev= std::numeric_limits<double>::quiet_NaN();
 		pb_on_prev		= -1; 
 		defocus_prev_ncall	= std::numeric_limits<double>::quiet_NaN();
+        recirc_prev_ncall = false;
 		t_standby_prev	= std::numeric_limits<double>::quiet_NaN();
 
 		//"Real-time" variables representing "Storage" variables
@@ -722,6 +734,10 @@ public:
 				return -1;
 			}
 		numtou = l_tslogic_a;
+        //tanks_in_parallel = true;               // TODO - change to a parameter input
+        //has_hot_tank_bypass = false;            // TODO - change to a parameter input
+        //T_min_hot_tank_bypass = 400 + 273.15;   // TODO - change to a parameter input
+        T_max_recirc = 400;
 		//TOU_schedule = value(P_TOU_schedule, &nTOU_schedule);
 
 		//Thermocline Parameters
@@ -845,8 +861,8 @@ public:
 		{
 			//if( !hx_storage.hx_size(field_htfProps, store_htfProps, hx_config, duty, dt_hot, dt_cold, T_field_out_des, T_field_in_des) )
 			//if( !hx_storage.hx_size(field_htfProps, store_htfProps, hx_config, duty, vol_tank, h_tank, u_tank, tank_pairs, hot_tank_Thtr, cold_tank_Thtr, tank_max_heat, dt_hot, dt_cold, T_field_out_des, T_field_in_des)  )
-			if( !hx_storage.define_storage(field_htfProps, store_htfProps, !is_hx, hx_config, duty, vol_tank, h_tank, u_tank, tank_pairs, hot_tank_Thtr, cold_tank_Thtr, 
-				cold_tank_max_heat, hot_tank_max_heat, dt_hot, dt_cold, T_field_out_des, T_field_in_des) )
+			if( !hx_storage.define_storage(field_htfProps, store_htfProps, !is_hx, hx_config, duty, vol_tank, h_tank, u_tank, tank_pairs,
+                hot_tank_Thtr, cold_tank_Thtr, cold_tank_max_heat, hot_tank_max_heat, dt_hot, dt_cold, T_field_out_des, T_field_in_des) )
 			{
 				message(TCS_ERROR, "Heat exchanger sizing failed");
 				return -1;
@@ -883,6 +899,7 @@ public:
 		m_tank_cold_prev = V_tank_cold_prev*store_htfProps.dens(T_tank_cold_prev, 1.0);	//[kg]
 		pb_on_prev = 0;								//[-] power block initially off
 		defocus_prev_ncall = 1.;								//[-] initial defocus
+        recirc_prev_ncall = false;                              // recirculating bypass valve initally closed (no recirc) 
 		t_standby_prev = t_standby_reset;					//[s] 
 		//*********************************************************
 
@@ -980,7 +997,7 @@ public:
 
 		// Determine which storage dispatch strategy to use, depending on if any solar resource is available
 		double * tselect;
-		if(I_bn > 1.E6) {tselect = tslogic_b;}
+		if(I_bn > 1.E6) {tselect = tslogic_b;}              // TODO - What's up with this?
 		else {tselect = tslogic_a;}
 		// *************************************************************************************************
 		//int touperiod = CSP::TOU_Reader(TOU_schedule, time, nTOU_schedule);
@@ -1001,8 +1018,8 @@ public:
 		double rho_tank_cold_avg, T_tank_cold_avg_guess, V_tank_cold_avg, V_tank_cold_avail, m_tank_charge_avail;
 		T_tank_hot_avg_guess	= T_tank_hot_prev;		//[K] Guess average (w/r/t timestep) hot tank temp - will update after controller calculations
 		T_tank_cold_avg_guess	= T_tank_cold_prev;		//[K] Guess average (w/r/t timestep) cold tank temp - will update after controller calculations
-		double ms_disch_avail;	//Actual discharge available to PB HTF
-		double ms_charge_avail;	//Actual charge avaiable to field HTF
+		double ms_disch_avail;	                        //[kg/s] current max mass flow of field/pb htf through storage HX during storage discharging
+		double ms_charge_avail;                         //[kg/s] current max mass flow of field/pb htf through storage HX during storage charging
 		double T_tank_hot_out, eff_disch, q_disch, T_tank_cold_in, Ts_hot;
 		double T_tank_cold_out, eff_charge, q_charge, T_tank_hot_in, Ts_cold;
 		double c_htf_aux, m_dot_aux_avail;
@@ -1015,18 +1032,22 @@ public:
 		//T_pb_in = 664.63;				// So for testing, set to the value TRNSYS uses on the first iteration when time=39
 		//*********************************************************
 
-		double c_htf_disch, c_htf_charge, c_htf_field, c_htf_pb;
+        double c_htf_disch, c_htf_charge;       // spec. heat in J/kg-K of field/pb htf in storage HX when storage discharging and charging, respectively
+        double c_htf_field, c_htf_pb;
 		double q_pb_demand_guess;
-		double qs_disch_avail, qs_charge_avail;
+        double qs_disch_avail;                  // current max heat gain in W to field/pb htf during storage discharging
+        double qs_charge_avail;                 // current max heat loss in W from field/pb htf during storage charging
 		double q_aux_avail,	q_field_avail;
 		double q_int, T_int, m_int;
 		bool called_TC;
-		double ms_disch=0., ms_charge=0.;
+		double ms_disch=0., ms_charge=0.;       // mass flow in kg/s of field/pb htf through storage HX during storage discharging and charging, respectively
 		double q_aux, m_dot_aux, q_demand_aux;
 		int mode;
 		double defocus = defocus_prev_ncall;
+        bool recirculating = recirc_prev_ncall;
 		int cycle_pl_control, standby_control;
-		double m_dot_pb;
+        double m_dot_field_avail;
+        double m_dot_pb;
 		//int tempmode=0;
 		double err, err_prev_iter, derr;
 		double defocus_prev_iter, tol;
@@ -1035,6 +1056,7 @@ public:
 		double m_tank_disch, m_tank_charge;
 		double T_tank_hot_avg, vol_tank_hot_avg, q_loss_tank_hot, q_htr_tank_hot;
 		double T_tank_cold_avg, vol_tank_cold_avg, q_loss_tank_cold, q_htr_tank_cold;
+        bool hot_tank_bypassed;
 
 		t_standby = t_standby_prev;	//[s] Initialize t_standby
 
@@ -1160,10 +1182,44 @@ public:
 			}
 			else	{m_dot_aux_avail = 0.;}
 
-			// mjw 12.8.2010
-			if(T_field_out < T_startup) {m_dot_field = 0.;}
+			// Determine the actual and available field mass flows
+            if(T_field_out < T_startup) {
+                recirculating = true;
+                m_dot_field = 0.;
+            }
+            else {
+                recirculating = false;
+            }
+            //if (tanks_in_parallel) {      // If tanks are in parallel with the field flow
+            //    if (T_field_out < T_startup) {
+            //        m_dot_field_avail = m_dot_field = 0.;
+            //    }
+            //    else {
+            //        m_dot_field_avail = m_dot_field;
+            //    }
+            //    hot_tank_bypassed = false;
+            //}
+            //else {
+            //    if (T_field_out < t_dis_out_min) {
+            //        if (has_hot_tank_bypass) {
+            //            // TODO - Could maybe do something like this for the indirect case where the tank fluid is pumped back and forth
+            //            m_dot_field = minimum_field_mass_flow_rate;   // keep field htf flowing so the large cold tank thermal mass keeps it from freezing
+            //            m_dot_field_avail = 0.;
+            //            hot_tank_bypassed = true;
+            //        }
+            //        else {
+            //            m_dot_field_avail = m_dot_field = 0.;
+            //            hot_tank_bypassed = false;
+            //        }
+            //    }
+            //    else {
+            //        m_dot_field_avail = m_dot_field;
+            //        hot_tank_bypassed = false;
+            //    }
+            //}
 			// Calculate the maximum potentially available mass flow
 			m_avail_tot = ms_disch_avail + m_dot_aux_avail + m_dot_field;
+            //m_avail_tot = ms_disch_avail + m_dot_aux_avail + m_dot_field_avail;
 			// Calculate the demanded values from the power block
 			//*** Need to be sure TOU schedule is provided with starting index of 0
 			q_pb_demand = q_pb_max_input*tslogic_c[touperiod];		// [W] Adjust the power block demand energy for the TOU period*/
@@ -1178,9 +1234,20 @@ public:
 			in the case where storage is charging and an intermediate heat exchanger is used.
 			For cases with iteration, set the initial guess values*/
 			if(m_dot_field > 0.0)	// MJW 12.14.2010  base the field inlet temperature only on the mass flow rate from the field
-			{T_field_in_guess = T_pb_out;}
+            {T_field_in_guess = T_pb_out;}
 			else
 			{T_field_in_guess = T_field_out;}
+                
+                
+   //             if (tanks_in_parallel) {
+   //                 T_field_in_guess = T_pb_out;
+   //             }
+   //             else {
+   //                 T_field_in_guess = T_tank_cold_avg_guess;
+   //             }
+			//else {
+   //             T_field_in_guess = T_field_out;
+   //         }
 
 			//err = 999.; iter = 0; derr=999.; errx = 9999.; defocusX=1.; tol = 0.001
 			//50 continue  !iterative loop header
@@ -1193,8 +1260,8 @@ public:
 
 				// Calculate available heat flows
                 if(has_TES){
-				    c_htf_disch		= field_htfProps.Cp( (Ts_hot + T_pb_out)/2. )*1000.0;				// mjw 1.18.2011
-				    c_htf_charge	= field_htfProps.Cp( (T_field_out + Ts_cold)/2. )*1000.0;			// Specific heat for charge flow
+				    c_htf_disch		= field_htfProps.Cp( (Ts_hot + T_pb_out)/2. )*1000.0;				// field/pb htf in storage HX when storage discharging
+				    c_htf_charge	= field_htfProps.Cp( (T_field_out + Ts_cold)/2. )*1000.0;			// field/pb htf in storage HX when storage charging
                 }
                 else{
                     c_htf_disch = 0.;
@@ -1222,8 +1289,8 @@ public:
 				}
 				else
 				{
-					qs_disch_avail = max(ms_disch_avail*c_htf_disch*(Ts_hot - T_pb_out),0.0);  
-					qs_charge_avail = max(ms_charge_avail*c_htf_charge*(T_field_out - Ts_cold),0.0);
+					qs_disch_avail = max(ms_disch_avail*c_htf_disch*(Ts_hot - T_pb_out),0.0);        // current max heat gain to field/pb htf during storage discharging
+					qs_charge_avail = max(ms_charge_avail*c_htf_charge*(T_field_out - Ts_cold),0.0); // current max heat loss from field/pb htf during storage charging
 				}
 
 				q_aux_avail		= max(m_dot_aux_avail*c_htf_aux*(T_set_aux - T_pb_out),0.0); 
@@ -1766,7 +1833,7 @@ public:
 				else
 				{
 					//No heat exchanger
-					T_tank_cold_in	= T_pb_out;		// mjw 3.10.11
+					T_tank_cold_in	= T_pb_out;		// TODO - this could also be T_field_out depending on the state of the bypass valve
 					T_tank_hot_in	= T_field_out;
 					Ts_cold		= T_tank_cold_out;
 					Ts_hot		= T_tank_hot_out;
@@ -1831,6 +1898,7 @@ public:
 		// Reset mode and defocus
 		mode_prev_ncall = mode;
 		defocus_prev_ncall = defocus;
+        recirc_prev_ncall = recirculating;
 		
 		// Calculate final output values
 		// double pb_on;
@@ -1846,7 +1914,12 @@ public:
 		}
 		else
 		{
-			htf_pump_power = pb_pump_coef*(fabs(ms_disch-ms_charge) + m_dot_pb)/1000.0;	//[MW]
+            //if (tanks_in_parallel) {
+			    htf_pump_power = pb_pump_coef*(fabs(ms_disch-ms_charge) + m_dot_pb)/1000.0;	//[MW]
+            //}
+            //else {
+            //    htf_pump_power = pb_pump_coef*(m_dot_field + m_dot_pb)/1000.0;	//[MW]   // TODO - Am I adding m_dot_field here or in 250?
+            //}
 		}
 
 		// Variable parasitic power
@@ -1901,6 +1974,7 @@ public:
 
 		// Set outputs
 		value( O_defocus, defocus );
+        value( O_recirc, recirculating );
 		value( O_standby, standby_control );
 		value( O_m_dot_pb, m_dot_pb*3600.0 );
 		value( O_T_pb_in, T_pb_in - 273.15 );

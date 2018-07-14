@@ -201,8 +201,8 @@ static var_info _cm_vtab_tcstrough_physical[] = {
     { SSC_INPUT,        SSC_NUMBER,      "W_pb_design",               "Rated plant capacity",                                           "MWe",          "",             "controller",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "cycle_max_frac",            "Maximum turbine over design operation fraction",                 "-",            "",             "controller",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "cycle_cutoff_frac",         "Minimum turbine operation fraction before shutdown",             "-",            "",             "controller",     "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "pb_pump_coef",              "Pumping power to move 1kg of HTF through PB loop",               "kW/kg",        "",             "controller",     "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "tes_pump_coef",             "Pumping power to move 1kg of HTF through tes loop",              "kW/kg",        "",             "controller",     "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "pb_pump_coef",              "Pumping power to move 1kg of HTF through PB loop",               "kW/(kg/s)",    "",             "controller",     "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "tes_pump_coef",             "Pumping power to move 1kg of HTF through tes loop",              "kW/(kg/s)",    "",             "controller",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "pb_fixed_par",              "Fraction of rated gross power constantly consumed",              "-",            "",             "controller",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_ARRAY,       "bop_array",                 "Coefficients for balance of plant parasitics calcs",             "-",            "",             "controller",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_ARRAY,       "aux_array",                 "Coefficients for auxiliary heater parasitics calcs",             "-",            "",             "controller",     "*",                       "",                      "" },
@@ -540,7 +540,7 @@ public:
         set_unit_value_ssc_double(type250_solarfield, "theta_dep" ); // , 10);
         set_unit_value_ssc_double(type250_solarfield, "Row_Distance" ); // , 15);
         set_unit_value_ssc_double(type250_solarfield, "FieldConfig" ); // , 2);
-        set_unit_value_ssc_double(type250_solarfield, "T_startup" ); // , 300);
+        //set_unit_value_ssc_double(type250_solarfield, "T_startup" ); // , 300);
         set_unit_value_ssc_double(type250_solarfield, "m_dot_htfmin" ); // , 1);
         set_unit_value_ssc_double(type250_solarfield, "m_dot_htfmax" ); // , 12);
         set_unit_value_ssc_double(type250_solarfield, "T_loop_in_des" ); // , 293);
@@ -642,6 +642,7 @@ public:
 			// Set the initial values required from "downstream" types
         set_unit_value_ssc_double(type250_solarfield, "defocus", 1.0); // , 1.);
 		set_unit_value_ssc_double(type250_solarfield, "T_cold_in", as_double("T_loop_in_des")); // , 293.);
+        set_unit_value_ssc_double(type250_solarfield, "recirculating", 0.); // false
 		//Connect Solar Field Inputs
 		bool bConnected = connect(weather, "beam", type250_solarfield, "I_b", 0);
 		bConnected &= connect(weather, "tdry", type250_solarfield, "T_db", 0);
@@ -651,6 +652,7 @@ public:
 		bConnected &= connect(weather, "solazi", type250_solarfield, "SolarAz", 0);
 		bConnected &= connect(type251_controller, "defocus", type250_solarfield, "defocus" );
 		bConnected &= connect(type251_controller, "T_field_in", type250_solarfield, "T_cold_in" );
+        bConnected &= connect(type251_controller, "recirculating", type250_solarfield, "recirculating");
 
 		//Set controller parameters ===========================================
 		set_unit_value_ssc_double(type251_controller, "field_fluid", as_double("Fluid") ); // , 21);

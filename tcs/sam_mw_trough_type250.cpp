@@ -73,7 +73,6 @@ enum{
 	P_THETA_DEP,
 	P_ROW_DISTANCE,
 	P_FIELDCONFIG,
-	P_T_STARTUP,
 	P_PB_RATED_CAP,
 	P_M_DOT_HTFMIN,
 	P_M_DOT_HTFMAX,
@@ -188,6 +187,7 @@ enum{
 	I_T_COLD_IN,
 	I_M_DOT_IN,
 	I_DEFOCUS,
+    I_RECIRC,
 	I_SOLARAZ,
 	I_LATITUDE,
 	I_LONGITUDE,
@@ -264,7 +264,6 @@ tcsvarinfo sam_mw_trough_type250_variables[] = {
 	{ TCS_PARAM,          TCS_NUMBER,         P_THETA_DEP,              "theta_dep",                                                                            "deploy angle",          "deg",             "",             "",           "10" },
 	{ TCS_PARAM,          TCS_NUMBER,      P_ROW_DISTANCE,           "Row_Distance",                                         "Spacing between rows (centerline to centerline)",            "m",             "",             "",           "15" },
 	{ TCS_PARAM,          TCS_NUMBER,       P_FIELDCONFIG,            "FieldConfig",                                                              "Number of subfield headers",         "none",             "",             "",            "2" },
-	{ TCS_PARAM,          TCS_NUMBER,         P_T_STARTUP,              "T_startup",        "The required temperature of the system before the power block can be switched on",            "C",             "",             "",          "150" },
 	{ TCS_PARAM,          TCS_NUMBER,      P_PB_RATED_CAP,           "pb_rated_cap",                                                                    "Rated plant capacity",          "MWe",             "",             "",          "111" },
 	{ TCS_PARAM,          TCS_NUMBER,      P_M_DOT_HTFMIN,           "m_dot_htfmin",                                                              "Minimum loop HTF flow rate",         "kg/s",             "",             "",            "1" },
 	{ TCS_PARAM,          TCS_NUMBER,      P_M_DOT_HTFMAX,           "m_dot_htfmax",                                                              "Maximum loop HTF flow rate",         "kg/s",             "",             "",           "12" },
@@ -378,8 +377,9 @@ tcsvarinfo sam_mw_trough_type250_variables[] = {
 	{ TCS_INPUT,          TCS_NUMBER,             I_P_AMB,                  "P_amb",                                                                        "Ambient pressure",         "mbar",             "",             "",             "" },
 	{ TCS_INPUT,          TCS_NUMBER,              I_T_DP,                   "T_dp",                                                                "The dewpoint temperature",            "C",             "",             "",             "" },
 	{ TCS_INPUT,          TCS_NUMBER,         I_T_COLD_IN,              "T_cold_in",                                                                  "HTF return temperature",            "C",             "",             "",             "" },
-	{ TCS_INPUT,          TCS_NUMBER,          I_M_DOT_IN,               "m_dot_in",                                                        "HTF mass flow rate at the inlet ",        "kg/hr",             "",             "",             "" },
-	{ TCS_INPUT,          TCS_NUMBER,           I_DEFOCUS,                "defocus",                                                                        "Defocus control ",         "none",             "",             "",             "" },
+	{ TCS_INPUT,          TCS_NUMBER,          I_M_DOT_IN,               "m_dot_in",                                                         "HTF mass flow rate at the inlet",        "kg/hr",             "",             "",             "" },
+	{ TCS_INPUT,          TCS_NUMBER,           I_DEFOCUS,                "defocus",                                                                         "Defocus control",         "none",             "",             "",             "" },
+    { TCS_INPUT,          TCS_NUMBER,            I_RECIRC,          "recirculating",                                                "Field recirculating bypass valve control",         "none",             "",             "",             "" },
 	{ TCS_INPUT,          TCS_NUMBER,           I_SOLARAZ,                "SolarAz",                                 "Solar azimuth angle reported by the Type15 weather file",          "deg",             "",             "",             "" },
 	{ TCS_INPUT,          TCS_NUMBER,          I_LATITUDE,               "latitude",                                                    "Site latitude read from weather file",          "deg",             "",             "",             "" },
 	{ TCS_INPUT,          TCS_NUMBER,         I_LONGITUDE,              "longitude",                                                   "Site longitude read from weather file",          "deg",             "",             "",             "" },
@@ -462,7 +462,6 @@ private:
 	double theta_dep;		//deploy angle
 	double Row_Distance;		//Spacing between rows (centerline to centerline)
 	int FieldConfig;		//Number of subfield headers
-	double T_startup;		//The required temperature of the system before the power block can be switched on
 	double pb_rated_cap;		//Rated plant capacity
 	double m_dot_htfmin;		//Minimum loop HTF flow rate
 	double m_dot_htfmax;		//Maximum loop HTF flow rate
@@ -639,7 +638,8 @@ private:
 	double T_dp;		//The dewpoint temperature
 	double T_cold_in;		//HTF return temperature
 	double m_dot_in;		//HTF mass flow rate at the inlet 
-	double defocus;		//Defocus control 
+	double defocus;		//Defocus control
+    bool recirculating; // Field recirculating bypass valve control
 	double SolarAz;		//Solar azimuth angle reported by the Type15 weather file
 	double latitude;		//Site latitude read from weather file
 	double longitude;		//Site longitude read from weather file
@@ -769,7 +769,6 @@ public:
 		theta_dep	= std::numeric_limits<double>::quiet_NaN();
 		Row_Distance	= std::numeric_limits<double>::quiet_NaN();
 		FieldConfig	= -1;
-		T_startup	= std::numeric_limits<double>::quiet_NaN();
 		pb_rated_cap	= std::numeric_limits<double>::quiet_NaN();
 		m_dot_htfmin	= std::numeric_limits<double>::quiet_NaN();
 		m_dot_htfmax	= std::numeric_limits<double>::quiet_NaN();
@@ -945,6 +944,7 @@ public:
 		T_cold_in	= std::numeric_limits<double>::quiet_NaN();
 		m_dot_in	= std::numeric_limits<double>::quiet_NaN();
 		defocus	= std::numeric_limits<double>::quiet_NaN();
+        recirculating = false;
 		SolarAz	= std::numeric_limits<double>::quiet_NaN();
 		latitude = std::numeric_limits<double>::quiet_NaN();
 		longitude = std::numeric_limits<double>::quiet_NaN();
@@ -1087,7 +1087,6 @@ public:
 		theta_dep = value(P_THETA_DEP);		//deploy angle [deg]
 		Row_Distance = value(P_ROW_DISTANCE);		//Spacing between rows (centerline to centerline) [m]
 		FieldConfig = (int)value(P_FIELDCONFIG);		//Number of subfield headers [none]
-		T_startup = value(P_T_STARTUP);		//The required temperature of the system before the power block can be switched on [C]
 		pb_rated_cap = value(P_PB_RATED_CAP);		//Rated plant capacity [MWe]
 		m_dot_htfmin = value(P_M_DOT_HTFMIN);		//Minimum loop HTF flow rate [kg/s]
 		m_dot_htfmax = value(P_M_DOT_HTFMAX);		//Maximum loop HTF flow rate [kg/s]
@@ -1355,7 +1354,6 @@ public:
 		//Unit conversions
 		theta_stow *= d2r;
 		theta_dep *= d2r;
-		T_startup += 273.15;
 		T_loop_in_des += 273.15;
 		T_loop_out += 273.15;
 		T_field_ini += 273.15;
@@ -1771,6 +1769,7 @@ public:
             value(I_T_COLD_IN, T_loop_in_des - 273.15); // HTF return temperature, to the field [C]
             value(I_M_DOT_IN, m_dot_design * 3600);     // HTF mass flow rate at the inlet to the field  [kg/hr]
             value(I_DEFOCUS, 1);		        // Defocus control  [none] (1 = no defocus)
+            value(I_RECIRC, 0.);                // Field recirculating bypass valve control (0 = not recirculating)
             value(I_SOLARAZ, ColAz*r2d + 180);	// Solar azimuth angle, 0 = North [deg], before SolarAz is converted so to make them equal
             latitude = value(I_LATITUDE);		// Site latitude read from weather file [deg]
             longitude = value(I_LONGITUDE);		// Site longitude read from weather file [deg]
@@ -3191,7 +3190,7 @@ calc_final_metrics_goto:
 		if( !is_using_input_gen )
 		{
 			//Calculate the thermal power produced by the field
-			if( T_sys_h >= T_startup )   // MJW 12.14.2010 Limit field production to above startup temps. Otherwise we get strange results during startup. Does this affect turbine startup?
+			if( !recirculating )   // MJW 12.14.2010 Limit field production to above startup temps. Otherwise we get strange results during startup. Does this affect turbine startup?
 			{
 				q_avail = E_avail_tot / (dt)*1.e-6;  //[MW]
 				//Calculate the available mass flow of HTF
@@ -5327,14 +5326,16 @@ lab_keep_guess:
 		v_dotsf = m_dotsf/rho;
 
 		//Set the volumetric flow rate for each line.
-		V_dot[0] = v_dotsf;
-		V_dot[1] = v_dotsf/2.0;
-		V_dot[2] = V_dot[1];
-		V_dot[3] = v_dotsf;
-		V_dot[4] = V_dot[3];
-		V_dot[5] = v_dotpb;
-		V_dot[6] = V_dot[5];
-		V_dot[7] = V_dot[5];
+		V_dot[0] = v_dotsf;         //   0.0 m - NA - Expansion vessel or thermal storage tank to pump suction header
+		V_dot[1] = v_dotsf/2.0;     //   0.0 m -  1 - Individual pump suction line, from suction header to pump inlet
+                                    //                 50% -> "/2.0" . The flow rate (i.e., diameter) is sized here for the case when one pump is down.
+		V_dot[2] = V_dot[1];        //  90.0 m -  2 - Individual pump discharge line, from pump discharge to discharge header
+                                    //                 90 m = 3 * 30 m, so this is the flow in each of the three lines. Also at 50% of the field flow.
+		V_dot[3] = v_dotsf;         // 100.0 m -  3 - Pump discharge header (Now we're back to v_dotsf from 1.5*v_dotsf)
+		V_dot[4] = V_dot[3];        // 120.0 m -  4 - Collector field outlet header to expansion vessel or thermal storage tank
+		V_dot[5] = v_dotpb;         //  80.0 m -  5 - Steam generator supply header
+		V_dot[6] = V_dot[5];        // 120.0 m -  6 - Inter steam generator piping
+		V_dot[7] = V_dot[5];        //  80.0 m -  7 - Steam generator exit header to expansion vessel or thermal storage
 		
 		//for each line..
 		double psum=0.;
