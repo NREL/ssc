@@ -29,7 +29,7 @@ public:
 	void calculateTempDerate(double V, double T, double& pAC, double& eff, double& loss);
 
 	/// Given the combined PV plus battery DC power (W), voltage and ambient T, compute the AC power (kW)
-	void calculateACPower(const double powerDC, const double DCStringVoltage, double ambientT = 0.0);
+	void calculateACPower(const double powerDC, const double DCStringVoltage, double ambientT);
 
 	/// Return the nominal DC voltage input
 	double getInverterDCNominalVoltage();

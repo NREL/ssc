@@ -263,7 +263,10 @@ void pvsamv_nofinancial_default(ssc_data_t &data)
 	ssc_data_set_number(data, "sd11par_c1", 1930.1500244140625);
 	ssc_data_set_number(data, "sd11par_c2", 474.6400146484375);
 	ssc_data_set_number(data, "sd11par_c3", 1.4874600172042847);
-	ssc_data_set_number(data, "inverter_model", 0);
+	ssc_data_set_number(data, "inverter_model", 1);
+	ssc_data_set_number(data, "inv_tdc_V1", 1);
+	ssc_data_set_number(data, "inv_tdc_T1", 52.8);
+	ssc_data_set_number(data, "inv_tdc_S1", -0.021);
 	ssc_data_set_number(data, "mppt_low_inverter", 250);
 	ssc_data_set_number(data, "mppt_hi_inverter", 480);
 	ssc_data_set_number(data, "inv_snl_c0", -3.1800000215298496e-06);
@@ -306,6 +309,10 @@ void pvsamv_nofinancial_default(ssc_data_t &data)
 	ssc_data_set_number(data, "inv_snl_eff_cec", 96.636932373046875);
 	ssc_data_set_number(data, "inv_pd_eff", 95);
 	ssc_data_set_number(data, "inv_cec_cg_eff_cec", 96.636306762695313);
+	ssc_data_set_number(data, "en_inv_tdc", 1);
+	ssc_data_set_number(data, "inv_tdc_V1", 1);
+	ssc_data_set_number(data, "inv_tdc_T1", 52.8);
+	ssc_data_set_number(data, "inv_tdc_S1", -0.021);
 }
 
 
@@ -628,6 +635,10 @@ void pvsamv1_with_residential_default(ssc_data_t &data)
 	ssc_data_set_number(data, "inv_pd_pnt", 0);
 	ssc_data_set_number(data, "inv_pd_vdco", 310);
 	ssc_data_set_number(data, "inv_pd_vdcmax", 600);
+	ssc_data_set_number(data, "en_inv_tdc", 1);
+	ssc_data_set_number(data, "inv_tdc_V1", 1);
+	ssc_data_set_number(data, "inv_tdc_T1", 52.8);
+	ssc_data_set_number(data, "inv_tdc_S1", -0.021);
 	ssc_data_set_number(data, "en_batt", 0);
 	ssc_data_set_number(data, "batt_replacement_option", 0);
 	ssc_number_t p_batt_replacement_schedule[1] = { 0 };

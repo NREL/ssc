@@ -81,6 +81,131 @@ TEST_F(sharedInverterTest, setUpTempDerateTest2_lib_shared_inverter) {
 	EXPECT_NEAR(slope[2], 0, e) << "set up temp derate case 4";
 }
 
+TEST_F(sharedInverterTest, tempDerateTest1Curve_lib_shared_inverter) {
+	double pAC = 100.;
+	double eff = 0.;
+	double loss = 0.;
+	double V = 200.;
+	double T = 20.;
+	inv->setTempDerateCurves(c1);
+
+	// zero efficiency error case
+	inv->calculateTempDerate(V, T, pAC, eff, loss);
+	EXPECT_NEAR(pAC, 100., e) << "zero efficiency error case";
+	EXPECT_NEAR(eff, 0., e) << "zero efficiency error case";
+	EXPECT_NEAR(loss, 0, e) << "zero efficiency error case";
+
+	// zero power error case
+	pAC = 0.;
+	eff = 1.;
+	inv->calculateTempDerate(V, T, pAC, eff, loss);
+	EXPECT_NEAR(pAC, 0, e) << "zero power error case";
+	EXPECT_NEAR(eff, 1., e) << "zero power error case";
+	EXPECT_NEAR(loss, 0, e) << "zero power error case";
+
+	// no derate cases
+	pAC = 100.;
+	eff = 1.;
+	inv->calculateTempDerate(V, T, pAC, eff, loss);
+	EXPECT_NEAR(pAC, 100, e) << "no derate case 1";
+	EXPECT_NEAR(eff, 1, e) << "no derate case 1";
+	EXPECT_NEAR(loss, 0, e) << "no derate case 1";
+
+	// curve used { 200., 30., -0.3 }
+	V = 150.;
+	T = 31.;
+	inv->calculateTempDerate(V, T, pAC, eff, loss);
+	EXPECT_NEAR(pAC, 70, e) << "curve used";
+	EXPECT_NEAR(eff, .7, e) << "curve used";
+	EXPECT_NEAR(loss, 30, e) << "curve used";
+}
+
+TEST_F(sharedInverterTest, tempDerateTest2Curves_lib_shared_inverter) {
+	double pAC = 100.;
+	double eff = 0.;
+	double loss = 0.;
+	double V = 200.;
+	double T = 20.;
+	inv->setTempDerateCurves(c1, c2);
+
+	// zero efficiency error case
+	inv->calculateTempDerate(V, T, pAC, eff, loss);
+	EXPECT_NEAR(pAC, 100., e) << "zero efficiency error case";
+	EXPECT_NEAR(eff, 0., e) << "zero efficiency error case";
+	EXPECT_NEAR(loss, 0, e) << "zero efficiency error case";
+
+	// zero power error case
+	pAC = 0.;
+	eff = 1.;
+	inv->calculateTempDerate(V, T, pAC, eff, loss);
+	EXPECT_NEAR(pAC, 0, e) << "zero power error case";
+	EXPECT_NEAR(eff, 1., e) << "zero power error case";
+	EXPECT_NEAR(loss, 0, e) << "zero power error case";
+
+	// no derate cases
+	pAC = 100.;
+	eff = 1.;
+	inv->calculateTempDerate(V, T, pAC, eff, loss);
+	EXPECT_NEAR(pAC, 100, e) << "no derate case 1";
+	EXPECT_NEAR(eff, 1, e) << "no derate case 1";
+	EXPECT_NEAR(loss, 0, e) << "no derate case 1";
+
+	// curve 1 used { 200., 30., -0.3 }
+	V = 150.;
+	T = 31.;
+	inv->calculateTempDerate(V, T, pAC, eff, loss);
+	EXPECT_NEAR(pAC, 70, e) << "curve 1 used case 1";
+	EXPECT_NEAR(eff, .7, e) << "curve 1 used case 1";
+	EXPECT_NEAR(loss, 30, e) << "curve 1 used case 1";
+
+	pAC = 100.;
+	eff = 1.;
+	loss = 0.;
+	V = 210.;
+	inv->calculateTempDerate(V, T, pAC, eff, loss);
+	EXPECT_NEAR(pAC, 70, e) << "curve 1 used case 2";
+	EXPECT_NEAR(eff, .7, e) << "curve 1 used case 2";
+	EXPECT_NEAR(loss, 30, e) << "curve 1 used case 2";
+
+	pAC = 100.;
+	eff = 1.;
+	loss = 0.;
+	T = 34.;
+	inv->calculateTempDerate(V, T, pAC, eff, loss);
+	EXPECT_NEAR(pAC, 0, e) << "curve 1 used with negative efficiency";
+	EXPECT_NEAR(eff, 0, e) << "curve 1 used with negative efficiency";
+	EXPECT_NEAR(loss, 100, e) << "curve 1 used with negative efficiency";
+
+	// curve 2 used {300., 50., -0.1}
+	pAC = 100.;
+	eff = 1.;
+	loss = 0.;
+	V = 260.;
+	T = 51.;
+	inv->calculateTempDerate(V, T, pAC, eff, loss);
+	EXPECT_NEAR(pAC, 90, e) << "curve 2 used case 1";
+	EXPECT_NEAR(eff, .9, e) << "curve 2 used case 1";
+	EXPECT_NEAR(loss, 10, e) << "curve 2 used case 1";
+
+	pAC = 100.;
+	eff = 1.;
+	loss = 0.;
+	V = 310.;
+	inv->calculateTempDerate(V, T, pAC, eff, loss);
+	EXPECT_NEAR(pAC, 90, e) << "curve 2 used case 2";
+	EXPECT_NEAR(eff, .9, e) << "curve 2 used case 2";
+	EXPECT_NEAR(loss, 10, e) << "curve 2 used case 2";
+
+	pAC = 100.;
+	eff = 1.;
+	loss = 0.;
+	T = 61.;
+	inv->calculateTempDerate(V, T, pAC, eff, loss);
+	EXPECT_NEAR(pAC, 0, e) << "curve 2 used with negative efficiency";
+	EXPECT_NEAR(eff, 0, e) << "curve 2 used with negative efficiency";
+	EXPECT_NEAR(loss, 100, e) << "curve 2 used with negative efficiency";	
+}
+
 TEST_F(sharedInverterTest, tempDerateTest3Curves_lib_shared_inverter) {
 	double pAC = 100.;
 	double eff = 0.;
