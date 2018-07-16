@@ -263,7 +263,7 @@ void pvsamv_nofinancial_default(ssc_data_t &data)
 	ssc_data_set_number(data, "sd11par_c1", 1930.1500244140625);
 	ssc_data_set_number(data, "sd11par_c2", 474.6400146484375);
 	ssc_data_set_number(data, "sd11par_c3", 1.4874600172042847);
-	ssc_data_set_number(data, "inverter_model", 1);
+	ssc_data_set_number(data, "inverter_model", 0);
 	ssc_data_set_number(data, "inv_tdc_V1", 1);
 	ssc_data_set_number(data, "inv_tdc_T1", 52.8);
 	ssc_data_set_number(data, "inv_tdc_S1", -0.021);
