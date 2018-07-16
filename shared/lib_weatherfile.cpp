@@ -1171,7 +1171,7 @@ bool weatherfile::open(const std::string &file, bool header_only)
 				break;
 			}
 
-			if (ifs.eof() && i<(m_nRecords-1))
+			if (ifs.eof() && i<((int)m_nRecords-1))
 			{
 				m_message = "TMY3: data line formatting error at record " + util::to_string(i);
 				return false;
