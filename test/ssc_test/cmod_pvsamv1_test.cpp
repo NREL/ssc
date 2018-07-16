@@ -14,7 +14,7 @@ TEST_F(CMPvsamv1PowerIntegration, DefaultNoFinancialModel){
 	{
 		ssc_number_t annual_energy;
 		ssc_data_get_number(data, "annual_energy", &annual_energy);
-		EXPECT_NEAR(annual_energy, 8714, m_error_tolerance_hi*annual_energy) << "Annual energy.";
+		EXPECT_NEAR(annual_energy, 8714, m_error_tolerance_hi) << "Annual energy.";
 
 		ssc_number_t capacity_factor;
 		ssc_data_get_number(data, "capacity_factor", &capacity_factor);
@@ -22,7 +22,7 @@ TEST_F(CMPvsamv1PowerIntegration, DefaultNoFinancialModel){
 
 		ssc_number_t kwh_per_kw;
 		ssc_data_get_number(data, "kwh_per_kw", &kwh_per_kw);
-		EXPECT_NEAR(kwh_per_kw, 1857, m_error_tolerance_hi*kwh_per_kw) << "Energy yield";
+		EXPECT_NEAR(kwh_per_kw, 1857, m_error_tolerance_hi) << "Energy yield";
 
 		ssc_number_t performance_ratio;
 		ssc_data_get_number(data, "performance_ratio", &performance_ratio);
@@ -115,7 +115,7 @@ TEST_F(CMPvsamv1PowerIntegration, NoFinancialModelCustomWeatherFile) {
 	{
 		ssc_number_t annual_energy;
 		ssc_data_get_number(data, "annual_energy", &annual_energy);
-		EXPECT_NEAR(annual_energy, 7587, m_error_tolerance_hi*annual_energy) << "Annual energy.";
+		EXPECT_NEAR(annual_energy, 7587, m_error_tolerance_hi) << "Annual energy.";
 
 		ssc_number_t capacity_factor;
 		ssc_data_get_number(data, "capacity_factor", &capacity_factor);
@@ -123,7 +123,7 @@ TEST_F(CMPvsamv1PowerIntegration, NoFinancialModelCustomWeatherFile) {
 
 		ssc_number_t kwh_per_kw;
 		ssc_data_get_number(data, "kwh_per_kw", &kwh_per_kw);
-		EXPECT_NEAR(kwh_per_kw, 1617, m_error_tolerance_hi*kwh_per_kw) << "Energy yield";
+		EXPECT_NEAR(kwh_per_kw, 1617, m_error_tolerance_hi) << "Energy yield";
 
 		ssc_number_t performance_ratio;
 		ssc_data_get_number(data, "performance_ratio", &performance_ratio);
@@ -152,7 +152,7 @@ TEST_F(CMPvsamv1PowerIntegration, NoFinancialModelSkyDiffuseAndIrradModels)
 			{
 				ssc_number_t annual_energy;
 				ssc_data_get_number(data, "annual_energy", &annual_energy);
-				EXPECT_NEAR(annual_energy, annual_energy_expected[count], m_error_tolerance_hi*annual_energy) << "Annual energy.";
+				EXPECT_NEAR(annual_energy, annual_energy_expected[count], m_error_tolerance_hi) << "Annual energy.";
 			}
 			count++;
 		}
@@ -165,7 +165,7 @@ TEST_F(CMPvsamv1PowerIntegration, NoFinancialModelSkyDiffuseAndIrradModels)
 	EXPECT_FALSE(pvsam_errors);
 	if (!pvsam_errors) {
 		SetCalculated("annual_energy");
-		EXPECT_NEAR(calculated_value, annual_energy_expected[count], m_error_tolerance_hi*calculated_value);
+		EXPECT_NEAR(calculated_value, annual_energy_expected[count], m_error_tolerance_hi);
 		count++;
 	}
 
@@ -175,7 +175,7 @@ TEST_F(CMPvsamv1PowerIntegration, NoFinancialModelSkyDiffuseAndIrradModels)
 	EXPECT_FALSE(pvsam_errors);
 	if (!pvsam_errors) {
 		SetCalculated("annual_energy");
-		EXPECT_NEAR(calculated_value, annual_energy_expected[count], m_error_tolerance_hi*calculated_value);
+		EXPECT_NEAR(calculated_value, annual_energy_expected[count], m_error_tolerance_hi);
 	}
 }
 	
@@ -233,7 +233,7 @@ TEST_F(CMPvsamv1PowerIntegration, NoFinancialModelSystemDesign)
 		{
 			ssc_number_t annual_energy;
 			ssc_data_get_number(data, "annual_energy", &annual_energy);
-			EXPECT_NEAR(annual_energy, annual_energy_expected[tracking_option], m_error_tolerance_hi*annual_energy) << "Annual energy.";
+			EXPECT_NEAR(annual_energy, annual_energy_expected[tracking_option], m_error_tolerance_hi) << "Annual energy.";
 		}
 	}
 
@@ -247,7 +247,7 @@ TEST_F(CMPvsamv1PowerIntegration, NoFinancialModelSystemDesign)
 	{
 		ssc_number_t annual_energy;
 		ssc_data_get_number(data, "annual_energy", &annual_energy);
-		EXPECT_NEAR(annual_energy, 237340, m_error_tolerance_hi*annual_energy) << "Annual energy.";
+		EXPECT_NEAR(annual_energy, 237340, m_error_tolerance_hi) << "Annual energy.";
 	}
 
 	// Test multiple sub-arrays with different tracking, tilt, azimuth, gcr, tracker rotation limit
@@ -313,7 +313,7 @@ TEST_F(CMPvsamv1PowerIntegration, NoFinancialModelSystemDesign)
 		{
 			ssc_number_t annual_energy;
 			ssc_data_get_number(data, "annual_energy", &annual_energy);
-			EXPECT_NEAR(annual_energy, annual_energy_expected[i], m_error_tolerance_hi*annual_energy) << "Index: " << i;
+			EXPECT_NEAR(annual_energy, annual_energy_expected[i], m_error_tolerance_hi) << "Index: " << i;
 		}
 	}
 }
@@ -339,7 +339,7 @@ TEST_F(CMPvsamv1PowerIntegration, NoFinancialModelShading)
 	EXPECT_FALSE(pvsam_errors);
 	if (!pvsam_errors) {
 		SetCalculated("annual_energy");
-		EXPECT_NEAR(calculated_value, annual_energy_expected[0], m_error_tolerance_hi*calculated_value);
+		EXPECT_NEAR(calculated_value, annual_energy_expected[0], m_error_tolerance_hi);
 	}
 
 	// 1. Add 3D Shading
@@ -352,7 +352,7 @@ TEST_F(CMPvsamv1PowerIntegration, NoFinancialModelShading)
 	EXPECT_FALSE(pvsam_errors);
 	if (!pvsam_errors) {
 		SetCalculated("annual_energy");
-		EXPECT_NEAR(calculated_value, annual_energy_expected[1], m_error_tolerance_hi*calculated_value);
+		EXPECT_NEAR(calculated_value, annual_energy_expected[1], m_error_tolerance_hi);
 	}
 	
 	// 2. Add Self Shading to 3D shading
@@ -369,7 +369,7 @@ TEST_F(CMPvsamv1PowerIntegration, NoFinancialModelShading)
 	EXPECT_FALSE(pvsam_errors);
 	if (!pvsam_errors) {
 		SetCalculated("annual_energy");
-		EXPECT_NEAR(calculated_value, annual_energy_expected[2], m_error_tolerance_hi*calculated_value);
+		EXPECT_NEAR(calculated_value, annual_energy_expected[2], m_error_tolerance_hi);
 	}
 
 	// 3. Add Snow losses to all shading
@@ -378,7 +378,7 @@ TEST_F(CMPvsamv1PowerIntegration, NoFinancialModelShading)
 	EXPECT_FALSE(pvsam_errors);
 	if (!pvsam_errors) {
 		SetCalculated("annual_energy");
-		EXPECT_NEAR(calculated_value, annual_energy_expected[3], m_error_tolerance_hi*calculated_value);
+		EXPECT_NEAR(calculated_value, annual_energy_expected[3], m_error_tolerance_hi);
 	}
 
 }
@@ -395,7 +395,7 @@ TEST_F(CMPvsamv1PowerIntegration, NoFinancialModelLosses)
 	EXPECT_FALSE(pvsam_errors);
 	if (!pvsam_errors) {
 		SetCalculated("annual_energy");
-		EXPECT_NEAR(calculated_value, annual_energy_expected[0], m_error_tolerance_hi*calculated_value);
+		EXPECT_NEAR(calculated_value, annual_energy_expected[0], m_error_tolerance_hi);
 	}
 
 	// 1: Modify Point Losses
@@ -416,7 +416,7 @@ TEST_F(CMPvsamv1PowerIntegration, NoFinancialModelLosses)
 	EXPECT_FALSE(pvsam_errors);
 	if (!pvsam_errors) {
 		SetCalculated("annual_energy");
-		EXPECT_NEAR(calculated_value, annual_energy_expected[1], m_error_tolerance_hi*calculated_value);
+		EXPECT_NEAR(calculated_value, annual_energy_expected[1], m_error_tolerance_hi);
 	}
 
 	// 2. Modify availability losses
@@ -429,7 +429,7 @@ TEST_F(CMPvsamv1PowerIntegration, NoFinancialModelLosses)
 	EXPECT_FALSE(pvsam_errors);
 	if (!pvsam_errors) {
 		SetCalculated("annual_energy");
-		EXPECT_NEAR(calculated_value, annual_energy_expected[2], m_error_tolerance_hi*calculated_value);
+		EXPECT_NEAR(calculated_value, annual_energy_expected[2], m_error_tolerance_hi);
 	}
 }
 
