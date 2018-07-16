@@ -258,7 +258,7 @@ public:
 	bool SimulateTime(int hour, int day_of_Month, int month, sim_params &P);
 	
     static void SimulateHeliostatEfficiency(SolarField *SF, Vect &Sun, Heliostat *helio, sim_params &P);
-	double calcShadowBlock(Heliostat *H, Heliostat *HS, int mode, Vect &Sun);	//Calculate the shadowing or blocking between two heliostats
+	double calcShadowBlock(Heliostat *H, Heliostat *HS, int mode, Vect &Sun, double interaction_limit = 100.);	//Calculate the shadowing or blocking between two heliostats
 	void updateAllTrackVectors(Vect &Sun);	//Macro for calculating corner positions
 	void calcHeliostatShadows(Vect &Sun);	//Macro for calculating heliostat shadows
 	void calcAllAimPoints(Vect &Sun, sim_params &P); //bool force_simple=false, bool quiet=true); 
