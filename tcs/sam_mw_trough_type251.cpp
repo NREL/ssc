@@ -1000,7 +1000,7 @@ public:
 
 		// Determine which storage dispatch strategy to use, depending on if any solar resource is available
 		double * tselect;
-		if(I_bn > 1.E6) {tselect = tslogic_b;}              // TODO - What's up with this?
+		if(I_bn > 1.E-6) {tselect = tslogic_b;}              // TODO - What's up with this?
 		else {tselect = tslogic_a;}
 		// *************************************************************************************************
 		//int touperiod = CSP::TOU_Reader(TOU_schedule, time, nTOU_schedule);
@@ -1012,7 +1012,7 @@ public:
 		double f_storage = tselect[touperiod];				//*** Need to be sure TOU schedule is provided with starting index of 0
 
 		if( ncall == 0 )
-			T_pb_in = T_field_out_des;
+			T_pb_in = T_field_out_des;      // TODO - test carrying over T_pb_in instead of resetting it to this design condition
 
 		// Need to fill in iteration controls once inner loops are finished
 		
@@ -1120,7 +1120,7 @@ public:
 					}
 					else	{ms_charge_avail = 0.0; Ts_cold = T_tank_cold_out;}
 				}
-				else	// No heat exchanger, or thermocline
+				else	// No heat exchanger
 				{
 					if(tes_type==2)         // Thermocline
 					{
@@ -1178,13 +1178,14 @@ public:
 
 			//Account for any available auxiliary heater flow
 			c_htf_aux = field_htfProps.Cp( (T_set_aux + T_pb_out)/2. )*1000.0;		//[J/kg-K] Average specific heat
+            // TODO - Seems like you can get rid of this if-else block because if ffrac==0, m_dot_aux_avail=0. (Can ffrac < 0?)
 			if(ffrac[touperiod] > 0.0)	//*** Need to be sure TOU schedule is provided with starting index of 0
 			{
 				m_dot_aux_avail = min( q_max_aux, ffrac[touperiod]*q_pb_max_input )/(c_htf_aux*max( (T_set_aux - T_pb_out), 1.0 ));	
 			}
 			else	{m_dot_aux_avail = 0.;}
 
-			// Set whether field is recirculating
+			// Recirculate field if needed
             if ((tanks_in_parallel == true && T_field_out <= T_startup) ||
                 (tanks_in_parallel == false && T_field_out <= T_tank_hot_inlet_min)) {
                 recirculating = true;
@@ -1195,7 +1196,7 @@ public:
             }
 
 			// Calculate the maximum potentially available mass flow
-			m_avail_tot = ms_disch_avail + m_dot_aux_avail + m_dot_field;
+			m_avail_tot = ms_disch_avail + m_dot_aux_avail + m_dot_field;       // this is also true for tanks in series with the field
 
 			// Calculate the demanded values from the power block
 			//*** Need to be sure TOU schedule is provided with starting index of 0
@@ -1209,22 +1210,22 @@ public:
 
 			A small degree of iteration is needed to get the field inlet temperature to converge
 			in the case where storage is charging and an intermediate heat exchanger is used.
-			For cases with iteration, set the initial guess values*/
-			if(m_dot_field > 0.0)	// MJW 12.14.2010  base the field inlet temperature only on the mass flow rate from the field
-            {T_field_in_guess = T_pb_out;}
-			else
-			{T_field_in_guess = T_field_out;}
-                
-                
-   //             if (tanks_in_parallel) {
-   //                 T_field_in_guess = T_pb_out;
-   //             }
-   //             else {
-   //                 T_field_in_guess = T_tank_cold_avg_guess;
-   //             }
-			//else {
-   //             T_field_in_guess = T_field_out;
-   //         }
+			For cases with iteration, set the initial guess values*/              
+            if (m_dot_field > 0.0) {                    // bypass valve is closed
+                if (tanks_in_parallel) {
+                    T_field_in_guess = T_pb_out;        // TODO - maybe during charging factor in cold tank temp?
+                }
+                else
+                    T_field_in_guess = T_tank_cold_avg_guess;
+                }
+			else {                                      // bypass valve is open
+                if (tanks_in_parallel || (!tanks_in_parallel && !has_hot_tank_bypass)) {
+                    T_field_in_guess = T_field_out;
+                }
+                else {
+                    T_field_in_guess = T_tank_cold_avg_guess;       // tanks in series and bypass valve is only for hot tank
+                }
+            }
 
 			//err = 999.; iter = 0; derr=999.; errx = 9999.; defocusX=1.; tol = 0.001
 			//50 continue  !iterative loop header
