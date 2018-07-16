@@ -297,7 +297,7 @@ void C_sco2_recomp_csp_10MWe_scale::design(C_sco2_rc_csp_template::S_des_par des
 	return;
 }
 
-int C_sco2_recomp_csp_10MWe_scale::off_design_nested_opt(C_sco2_rc_csp_template::S_od_par od_par, int off_design_strategy, double od_opt_tol)
+int C_sco2_recomp_csp_10MWe_scale::optimize_off_design(C_sco2_rc_csp_template::S_od_par od_par, int off_design_strategy, double od_opt_tol)
 {
 	// Check if callback info has changed. If so, pass to member sco2 10MWe cycle
 	mc_rc_csp_10MWe.mf_callback_update = mf_callback_update;
@@ -308,7 +308,7 @@ int C_sco2_recomp_csp_10MWe_scale::off_design_nested_opt(C_sco2_rc_csp_template:
 	C_sco2_rc_csp_template::S_od_par s_10MWe_od_par = od_par;
 	s_10MWe_od_par.m_m_dot_htf /= m_r_W_scale;
 
-	return mc_rc_csp_10MWe.off_design_nested_opt(s_10MWe_od_par, off_design_strategy);
+	return mc_rc_csp_10MWe.optimize_off_design(s_10MWe_od_par, off_design_strategy);
 }
 
 int C_sco2_recomp_csp::off_design_fix_P_mc_in(C_sco2_rc_csp_template::S_od_par od_par, double P_mc_in /*MPa*/, int off_design_strategy, double od_opt_tol)
@@ -447,6 +447,7 @@ void C_sco2_recomp_csp::setup_off_design_info(C_sco2_recomp_csp::S_od_par od_par
 	ms_od_par = od_par;
 
 	// Optimization variables:
+	m_od_opt_objective = off_design_strategy;
 	m_od_opt_ftol = od_opt_tol;
 	// ****************************************
 
@@ -491,15 +492,50 @@ void C_sco2_recomp_csp::setup_off_design_info(C_sco2_recomp_csp::S_od_par od_par
 	ms_phx_od_par.m_m_dot_c = std::numeric_limits<double>::quiet_NaN();		//[kg/s]
 }
 
-int C_sco2_recomp_csp::off_design_nested_opt(C_sco2_recomp_csp::S_od_par od_par, int off_design_strategy, double od_opt_tol)
+int C_sco2_recomp_csp::optimize_off_design(C_sco2_recomp_csp::S_od_par od_par, int off_design_strategy, double od_opt_tol)
 {
+	// This sets: T_mc_in, T_pc_in, etc.
 	setup_off_design_info(od_par, off_design_strategy, od_opt_tol);
 
-	bool opt_success_2_par = opt_P_LP_comp_in__fixed_N_turbo();
-	if( !opt_success_2_par )
+	if (m_off_design_turbo_operation == E_FIXED_MC_FIXED_RC_FIXED_T)
 	{
-		throw(C_csp_exception("2D nested optimization to maximize efficiency failed"));
+		int opt_P_LP_err = opt_P_LP_comp_in__fixed_N_turbo();
+		if (opt_P_LP_err != 0)
+		{
+			throw(C_csp_exception("2D nested optimization to maximize efficiency failed"));
+		}
+
+		// Check if power output is < target AND RC is very close to surge AND outlet pressure < max
+		/*double W_dot_rel_diff = mpc_sco2_cycle->get_od_solved()->m_W_dot_net / 
+					(mpc_sco2_cycle->get_design_solved()->m_W_dot_net*(ms_od_par.m_m_dot_htf / ms_phx_des_par.m_m_dot_hot_des));
+		double P_HP_rel_diff = mpc_sco2_cycle->get_od_solved()->m_pres[C_sco2_cycle_core::MC_OUT] / ms_des_par.m_P_high_limit;
+
+		double rc_phi_diff = mpc_sco2_cycle->get_od_solved()->ms_rc_ms_od_solved.m_phi_min / mpc_sco2_cycle->get_design_solved()->ms_rc_ms_des_solved.m_phi_surge;
+		
+		while (W_dot_rel_diff < 0.995 && P_HP_rel_diff < 0.99 && rc_phi_diff < 1.005)
+		{
+			ms_cycle_od_par.m_T_mc_in += 0.5;
+			ms_cycle_od_par.m_T_pc_in += 0.5;
+
+			opt_P_LP_err = opt_P_LP_comp_in__fixed_N_turbo();
+			if (opt_P_LP_err != 0)
+			{
+				throw(C_csp_exception("2D nested optimization to maximize efficiency failed"));
+			}
+
+			W_dot_rel_diff = mpc_sco2_cycle->get_od_solved()->m_W_dot_net /
+				(mpc_sco2_cycle->get_design_solved()->m_W_dot_net*(ms_od_par.m_m_dot_htf / ms_phx_des_par.m_m_dot_hot_des));
+			P_HP_rel_diff = mpc_sco2_cycle->get_od_solved()->m_pres[C_sco2_cycle_core::MC_OUT] / ms_des_par.m_P_high_limit;
+
+			rc_phi_diff = mpc_sco2_cycle->get_od_solved()->ms_rc_ms_od_solved.m_phi_min / mpc_sco2_cycle->get_design_solved()->ms_rc_ms_des_solved.m_phi_surge;
+		}*/
 	}
+	else
+	{
+		throw(C_csp_exception("Off design turbomachinery operation strategy not recognized"));
+	}
+
+	
 
 	return 0;
 }
@@ -1028,9 +1064,7 @@ int C_sco2_recomp_csp::C_sco2_csp_od::operator()(S_f_inputs inputs, S_f_outputs 
 
 	int off_design_code = -1;	//[-]
 
-	//off_design_code = mpc_sco2_rc->off_design_opt(sco2_od_par, od_strategy);
-
-	off_design_code = mpc_sco2_rc->off_design_nested_opt(sco2_od_par, od_strategy);
+	off_design_code = mpc_sco2_rc->optimize_off_design(sco2_od_par, od_strategy);
 
 	// Cycle off-design may want to operate below this value, so ND value could be < 1 everywhere
 	double W_dot_gross_design = mpc_sco2_rc->get_design_solved()->ms_rc_cycle_solved.m_W_dot_net;	//[kWe]

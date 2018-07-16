@@ -956,7 +956,7 @@ public:
 					//off_design_code = sco2_recomp_csp.off_design_opt(sco2_rc_od_par, od_strategy);
 						// Nested optimization
 					od_strategy = C_sco2_rc_csp_template::E_TARGET_POWER_ETA_MAX;
-					off_design_code = p_sco2_recomp_csp->off_design_nested_opt(sco2_rc_od_par, od_strategy);
+					off_design_code = p_sco2_recomp_csp->optimize_off_design(sco2_rc_od_par, od_strategy);
 				}
 				else if (is_P_mc_in_od_sweep_assigned)
 				{

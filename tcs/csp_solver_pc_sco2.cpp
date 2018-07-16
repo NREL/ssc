@@ -346,7 +346,7 @@ void C_pc_sco2::call(const C_csp_weatherreader::S_outputs &weather,
 			int off_design_code = 0;
 			try
 			{
-				off_design_code = mpc_sco2_recomp->off_design_nested_opt(sco2_rc_od_par, od_strategy);
+				off_design_code = mpc_sco2_recomp->optimize_off_design(sco2_rc_od_par, od_strategy);
 			}
 			catch( C_csp_exception &csp_exception )
 			{

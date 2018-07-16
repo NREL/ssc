@@ -254,7 +254,7 @@ public:
 
 	virtual const S_od_solved * get_od_solved() = 0;
 
-	virtual int off_design_nested_opt(C_sco2_rc_csp_template::S_od_par od_par, int off_design_strategy, double od_opt_tol = 1.E-4) = 0;
+	virtual int optimize_off_design(C_sco2_rc_csp_template::S_od_par od_par, int off_design_strategy, double od_opt_tol = 1.E-4) = 0;
 
 	virtual int off_design_fix_P_mc_in(C_sco2_rc_csp_template::S_od_par od_par, double P_mc_in /*MPa*/, int off_design_strategy, double od_opt_tol = 1.E-4) = 0;
 
@@ -351,7 +351,7 @@ public:
 
 	virtual void design(C_sco2_rc_csp_template::S_des_par des_par);
 
-	virtual int off_design_nested_opt(C_sco2_recomp_csp::S_od_par od_par, int off_design_strategy, double od_opt_tol = 1.E-4);
+	virtual int optimize_off_design(C_sco2_recomp_csp::S_od_par od_par, int off_design_strategy, double od_opt_tol = 1.E-4);
 
 	virtual int off_design_fix_P_mc_in(C_sco2_rc_csp_template::S_od_par od_par, double P_mc_in /*MPa*/, int off_design_strategy, double od_opt_tol = 1.E-4);
 	
@@ -407,7 +407,7 @@ public:
 
 	virtual void design(C_sco2_rc_csp_template::S_des_par des_par);
 
-	virtual int off_design_nested_opt(C_sco2_rc_csp_template::S_od_par od_par, int off_design_strategy, double od_opt_tol = 1.E-4);
+	virtual int optimize_off_design(C_sco2_rc_csp_template::S_od_par od_par, int off_design_strategy, double od_opt_tol = 1.E-4);
 	
 	virtual int off_design_fix_P_mc_in(C_sco2_rc_csp_template::S_od_par od_par, double P_mc_in /*MPa*/, int off_design_strategy, double od_opt_tol = 1.E-4);
 
