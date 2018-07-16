@@ -590,7 +590,8 @@ bool C_sco2_recomp_csp::opt_P_mc_in_nest_f_recomp_max_eta_core()
 			double r = (3.0 - sqrt(5.0)) / 2.0;		// Gold section ratio
 			P_mc_in_lower = (P_mc_in_guess - (r*P_mc_in_upper)) / (1.0 - r);
 		}
-		else if (od_core_error_code_dens == -14)
+		else if (od_core_error_code_dens == -14 || od_core_error_code_dens == 4 || 
+					od_core_error_code_dens == 5 || od_core_error_code_dens == -11)
 		{	// Compressor outlet pressure is too high; decrease compressor inlet pressure
 
 			while (true)
@@ -606,7 +607,8 @@ bool C_sco2_recomp_csp::opt_P_mc_in_nest_f_recomp_max_eta_core()
 				{
 					break;
 				}
-				else if (od_core_error_code != -14)
+				else if (od_core_error_code != -14 && od_core_error_code != 4 && 
+							od_core_error_code != 5 && od_core_error_code != -11)
 				{	// So we've gone from error = -14 to error = something else, and this is a problem
 					// Could try bisecting P_mc_in_upper and P_mc_in_guess, but there's not much room there, given the step size...
 					throw(C_csp_exception("Failed to find a feasible guess value for compressor inlet pressure"));
@@ -617,33 +619,33 @@ bool C_sco2_recomp_csp::opt_P_mc_in_nest_f_recomp_max_eta_core()
 			double r = (3.0 - sqrt(5.0)) / 2.0;		// Gold section ratio
 			P_mc_in_lower = (P_mc_in_guess - (r*P_mc_in_upper)) / (1.0 - r);
 		}
-		else if (od_core_error_code_dens == 4 || od_core_error_code_dens == 5 || od_core_error_code_dens == -11)
-		{	// Inlet state is too dense, resulting in a small recompression fraction, and the recompressor can't reach target pressure
+		//else if (od_core_error_code_dens == 4 || od_core_error_code_dens == 5 || od_core_error_code_dens == -11)
+		//{	// Inlet state is too dense, resulting in a small recompression fraction, and the recompressor can't reach target pressure
 
-			while (true)
-			{
-				P_mc_in_upper = ms_cycle_od_par.m_P_LP_comp_in;	//[kPa]
-				P_mc_in_guess = 0.98*P_mc_in_upper;					//[kPa]
+		//	while (true)
+		//	{
+		//		P_mc_in_upper = ms_cycle_od_par.m_P_LP_comp_in;	//[kPa]
+		//		P_mc_in_guess = 0.98*P_mc_in_upper;					//[kPa]
 
-				ms_cycle_od_par.m_P_LP_comp_in = P_mc_in_guess;	//[kPa]
+		//		ms_cycle_od_par.m_P_LP_comp_in = P_mc_in_guess;	//[kPa]
 
-				int od_core_error_code = off_design_core(eta_od_core);
+		//		int od_core_error_code = off_design_core(eta_od_core);
 
-				if (od_core_error_code == 0)
-				{
-					break;
-				}
-				else if (od_core_error_code != 4 && od_core_error_code != 5 && od_core_error_code != -11)
-				{	// So we've gone from error = -14 to error = something else, and this is a problem
-					// Could try bisecting P_mc_in_upper and P_mc_in_guess, but there's not much room there, given the step size...
-					throw(C_csp_exception("Failed to find a feasible guess value for compressor inlet pressure"));
-				}
-			}
+		//		if (od_core_error_code == 0)
+		//		{
+		//			break;
+		//		}
+		//		else if (od_core_error_code != 4 && od_core_error_code != 5 && od_core_error_code != -11)
+		//		{	// So we've gone from error = -14 to error = something else, and this is a problem
+		//			// Could try bisecting P_mc_in_upper and P_mc_in_guess, but there's not much room there, given the step size...
+		//			throw(C_csp_exception("Failed to find a feasible guess value for compressor inlet pressure"));
+		//		}
+		//	}
 
-			// Calculate P_mc_in_lower such that first guess in fmin is P_mc_in_guess
-			double r = (3.0 - sqrt(5.0)) / 2.0;		// Gold section ratio
-			P_mc_in_lower = (P_mc_in_guess - (r*P_mc_in_upper)) / (1.0 - r);
-		}
+		//	// Calculate P_mc_in_lower such that first guess in fmin is P_mc_in_guess
+		//	double r = (3.0 - sqrt(5.0)) / 2.0;		// Gold section ratio
+		//	P_mc_in_lower = (P_mc_in_guess - (r*P_mc_in_upper)) / (1.0 - r);
+		//}
 		else
 		{
 			std::string err_msg = util::format("Off design error code %d current not accounted for", od_core_error_code_dens);
