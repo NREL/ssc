@@ -407,9 +407,9 @@ private:
 	double * tslogic_b;
 	double * tslogic_c;
 	double * ffrac;
-    //bool tanks_in_parallel;         // TODO - make scriptable - parallel tanks like in original or series like in direct molten salt (false)
-    //bool has_hot_tank_bypass;       // TODO - make scriptable - is a hot tank bypass valve present, applicable for series tanks in direct systems
-    //double T_min_hot_tank_bypass;   // TODO - make scriptable - the max hot tank inlet temperature that the bypass valve is open, thus bypassing the hot tank
+    bool tanks_in_parallel;         // TODO - make scriptable - parallel tanks like in original or series like in direct molten salt (false)
+    bool has_hot_tank_bypass;       // TODO - make scriptable - is a hot tank bypass valve present, applicable for series tanks in direct systems
+    double T_tank_hot_inlet_min;   // TODO - make scriptable - the max hot tank inlet temperature that the bypass valve is open, thus bypassing the hot tank
     double T_max_recirc;
 	//double * TOU_schedule;
 	//int nTOU_schedule;
@@ -523,9 +523,9 @@ public:
 		tslogic_b	= 0;
 		tslogic_c	= 0;
 		ffrac		= 0;
-        //tanks_in_parallel = false;
-        //has_hot_tank_bypass = false;
-        //T_min_hot_tank_bypass = std::numeric_limits<double>::quiet_NaN();
+        tanks_in_parallel = false;
+        has_hot_tank_bypass = false;
+        T_tank_hot_inlet_min = std::numeric_limits<double>::quiet_NaN();
         T_max_recirc = std::numeric_limits<double>::quiet_NaN();
 		//TOU_schedule = NULL;
 
@@ -734,9 +734,9 @@ public:
 				return -1;
 			}
 		numtou = l_tslogic_a;
-        //tanks_in_parallel = true;               // TODO - change to a parameter input
-        //has_hot_tank_bypass = false;            // TODO - change to a parameter input
-        //T_min_hot_tank_bypass = 400 + 273.15;   // TODO - change to a parameter input
+        tanks_in_parallel = true;               // TODO - change to a parameter input
+        has_hot_tank_bypass = false;            // TODO - change to a parameter input
+        T_tank_hot_inlet_min = 400 + 273.15;   // TODO - change to a parameter input
         T_max_recirc = 400;
 		//TOU_schedule = value(P_TOU_schedule, &nTOU_schedule);
 
@@ -1046,7 +1046,6 @@ public:
 		double defocus = defocus_prev_ncall;
         bool recirculating = recirc_prev_ncall;
 		int cycle_pl_control, standby_control;
-        double m_dot_field_avail;
         double m_dot_pb;
 		//int tempmode=0;
 		double err, err_prev_iter, derr;
@@ -1182,44 +1181,19 @@ public:
 			}
 			else	{m_dot_aux_avail = 0.;}
 
-			// Determine the actual and available field mass flows
-            if(T_field_out < T_startup) {
+			// Set whether field is recirculating
+            if ((tanks_in_parallel == true && T_field_out <= T_startup) ||
+                (tanks_in_parallel == false && T_field_out <= T_tank_hot_inlet_min)) {
                 recirculating = true;
                 m_dot_field = 0.;
             }
             else {
                 recirculating = false;
             }
-            //if (tanks_in_parallel) {      // If tanks are in parallel with the field flow
-            //    if (T_field_out < T_startup) {
-            //        m_dot_field_avail = m_dot_field = 0.;
-            //    }
-            //    else {
-            //        m_dot_field_avail = m_dot_field;
-            //    }
-            //    hot_tank_bypassed = false;
-            //}
-            //else {
-            //    if (T_field_out < t_dis_out_min) {
-            //        if (has_hot_tank_bypass) {
-            //            // TODO - Could maybe do something like this for the indirect case where the tank fluid is pumped back and forth
-            //            m_dot_field = minimum_field_mass_flow_rate;   // keep field htf flowing so the large cold tank thermal mass keeps it from freezing
-            //            m_dot_field_avail = 0.;
-            //            hot_tank_bypassed = true;
-            //        }
-            //        else {
-            //            m_dot_field_avail = m_dot_field = 0.;
-            //            hot_tank_bypassed = false;
-            //        }
-            //    }
-            //    else {
-            //        m_dot_field_avail = m_dot_field;
-            //        hot_tank_bypassed = false;
-            //    }
-            //}
+
 			// Calculate the maximum potentially available mass flow
 			m_avail_tot = ms_disch_avail + m_dot_aux_avail + m_dot_field;
-            //m_avail_tot = ms_disch_avail + m_dot_aux_avail + m_dot_field_avail;
+
 			// Calculate the demanded values from the power block
 			//*** Need to be sure TOU schedule is provided with starting index of 0
 			q_pb_demand = q_pb_max_input*tslogic_c[touperiod];		// [W] Adjust the power block demand energy for the TOU period*/
