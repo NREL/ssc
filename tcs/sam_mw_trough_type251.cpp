@@ -760,8 +760,10 @@ public:
 		if(tshours>0.0)
 		{
 			//if( !hx_storage.hx_size(field_htfProps, store_htfProps, hx_config, duty, dt_hot, dt_cold, T_field_out_des, T_field_in_des) )
-			//if( !hx_storage.hx_size(field_htfProps, store_htfProps, hx_config, duty, vol_tank, h_tank, u_tank, tank_pairs, hot_tank_Thtr, cold_tank_Thtr, tank_max_heat, dt_hot, dt_cold, T_field_out_des, T_field_in_des)  )
-			if( !hx_storage.define_storage(field_htfProps, store_htfProps, !is_hx, hx_config, duty, vol_tank, h_tank, u_tank, tank_pairs, hot_tank_Thtr, cold_tank_Thtr, tank_max_heat, dt_hot, dt_cold, T_field_out_des, T_field_in_des)  )
+			//if( !hx_storage.hx_size(field_htfProps, store_htfProps, hx_config, duty, vol_tank, h_tank, u_tank, tank_pairs, hot_tank_Thtr,
+            //    cold_tank_Thtr, tank_max_heat, dt_hot, dt_cold, T_field_out_des, T_field_in_des)  )
+			if( !hx_storage.define_storage(field_htfProps, store_htfProps, !is_hx, hx_config, duty, vol_tank, h_tank, u_tank, tank_pairs, hot_tank_Thtr,
+                cold_tank_Thtr, tank_max_heat, dt_hot, dt_cold, T_field_out_des, T_field_in_des)  )
 			{
 				message( "Heat exchanger sizing failed" );
 				return -1;
@@ -860,7 +862,8 @@ public:
 		if( tshours>0.0 )
 		{
 			//if( !hx_storage.hx_size(field_htfProps, store_htfProps, hx_config, duty, dt_hot, dt_cold, T_field_out_des, T_field_in_des) )
-			//if( !hx_storage.hx_size(field_htfProps, store_htfProps, hx_config, duty, vol_tank, h_tank, u_tank, tank_pairs, hot_tank_Thtr, cold_tank_Thtr, tank_max_heat, dt_hot, dt_cold, T_field_out_des, T_field_in_des)  )
+			//if( !hx_storage.hx_size(field_htfProps, store_htfProps, hx_config, duty, vol_tank, h_tank, u_tank, tank_pairs, hot_tank_Thtr,
+            //    cold_tank_Thtr, tank_max_heat, dt_hot, dt_cold, T_field_out_des, T_field_in_des)  )
 			if( !hx_storage.define_storage(field_htfProps, store_htfProps, !is_hx, hx_config, duty, vol_tank, h_tank, u_tank, tank_pairs,
                 hot_tank_Thtr, cold_tank_Thtr, cold_tank_max_heat, hot_tank_max_heat, dt_hot, dt_cold, T_field_out_des, T_field_in_des) )
 			{
@@ -872,9 +875,7 @@ public:
 		// Calculate maximum value for power block mass flow
 		double c_pb_ref = field_htfProps.Cp((T_field_in_des + T_field_out_des) / 2.0)*1000.;		//[J/kg-K] Reference power block specific heat 
 		m_dot_pb_max = cycle_max_frac * q_pb_design / (c_pb_ref*(T_field_out_des - T_field_in_des));	//[kg/s] Maximum power block mass flow rate
-
-		T_pb_in = T_field_out_des;
-
+        
 		// Calculate the maximum charge/discharge rates for storage  MJW 7.13.2010
 		// Charge max is either the power block max flow, or the solar multiple-1 times the design PB mass flow rate
 		if( is_hx )
@@ -890,20 +891,22 @@ public:
 		// *****************************************************
 
 		//Set initial storage values
-		V_tank_hot_prev = value(P_V_tank_hot_ini);			//[m3]
-		T_tank_hot_prev = value(P_T_tank_hot_ini) + 273.15;	//[K] convert from [C]
-		V_tank_cold_prev = vol_tank - V_tank_hot_prev;		//[m3] Initial cold tank fluid volume
+		V_tank_hot_prev = value(P_V_tank_hot_ini);              //[m3]
+		T_tank_hot_prev = value(P_T_tank_hot_ini) + 273.15;	    //[K] convert from [C]
+		V_tank_cold_prev = vol_tank - V_tank_hot_prev;		    //[m3] Initial cold tank fluid volume
 		T_tank_cold_prev = value(P_T_tank_cold_ini) + 273.15;	//[K] convert from [C]
-		mode_prev_ncall = 1;								//[-]
+		mode_prev_ncall = 1;								    //[-]
 		m_tank_hot_prev = V_tank_hot_prev*store_htfProps.dens(T_tank_hot_prev, 1.0);		//[kg]
-		m_tank_cold_prev = V_tank_cold_prev*store_htfProps.dens(T_tank_cold_prev, 1.0);	//[kg]
-		pb_on_prev = 0;								//[-] power block initially off
+		m_tank_cold_prev = V_tank_cold_prev*store_htfProps.dens(T_tank_cold_prev, 1.0);     //[kg]
+		pb_on_prev = 0;								            //[-] power block initially off
 		defocus_prev_ncall = 1.;								//[-] initial defocus
-        recirc_prev_ncall = false;                              // recirculating bypass valve initally closed (no recirc) 
-		t_standby_prev = t_standby_reset;					//[s] 
+        recirc_prev_ncall = false;                              //[-] recirculating bypass valve initally closed (no recirc) 
+		t_standby_prev = t_standby_reset;					    //[s] 
 		//*********************************************************
 
 		V_tank_active = vol_tank*(1. - 2.*h_tank_min / h_tank);	//[m3] Active tank volume.. that is, volume above the minimum fluid level and below the maximum level
+        
+        tanks_in_parallel ? T_pb_in = T_field_out_des : T_pb_in = T_tank_hot_prev;
 
 		if( tes_type == 2 )
 		{
@@ -961,15 +964,15 @@ public:
 			initialize_sco2 = false;
 		}
 
-		double I_bn			= value(I_I_bn);				// [W/m2]
-		double m_dot_field	= value(I_m_dot_field)/3600.;	// [kg/s] convert from [kg/hr]
+		double I_bn			= value(I_I_bn);				    // [W/m2]
+		double m_dot_field	= value(I_m_dot_field)/3600.;	    // [kg/s] convert from [kg/hr]
 		//double m_dot_htf_ref= value(I_m_dot_htf_ref)/3600.;	// [kg/s] convert from [kg/hr]
-		double T_field_out	= value(I_T_field_out)+273.15;	// [K] convert from [C]
-		double T_pb_out		= value(I_T_pb_out)+273.15;		// [K] convert from [C]
-		double T_amb		= value(I_T_amb)+273.15;		// [K] convert from [C]
+		double T_field_out	= value(I_T_field_out)+273.15;	    // [K] convert from [C]
+		double T_pb_out		= value(I_T_pb_out)+273.15;		    // [K] convert from [C]
+		double T_amb		= value(I_T_amb)+273.15;		    // [K] convert from [C]
 		//double m_pb_demand	= value(I_m_pb_demand)/3600.;	// [kg/s] convert from [kg/hr]
-		//double q_startup	= value(I_q_startup);			// [MWt-hr]
-		int touperiod       = (int)value(I_TOUPeriod) - 1; // control value between 1 & 9, have to change to 0-8 for array index
+		//double q_startup	= value(I_q_startup);			    // [MWt-hr]
+		int touperiod       = (int)value(I_TOUPeriod) - 1;      // control value between 1 & 9, have to change to 0-8 for array index
 		double dnifc;		
 		if( fc_on ) 
 			dnifc = value(I_dnifc);				// [W/m2]
