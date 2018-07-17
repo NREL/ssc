@@ -1238,8 +1238,14 @@ public:
 
 				// Calculate available heat flows
                 if(has_TES){
-				    c_htf_disch		= field_htfProps.Cp( (Ts_hot + T_pb_out)/2. )*1000.0;				// field/pb htf in storage HX when storage discharging
-				    c_htf_charge	= field_htfProps.Cp( (T_field_out + Ts_cold)/2. )*1000.0;			// field/pb htf in storage HX when storage charging
+                    if (is_hx) {
+				        c_htf_disch		= field_htfProps.Cp( (Ts_hot + T_pb_out)/2. )*1000.0;				// field/pb htf in storage HX when storage discharging
+				        c_htf_charge	= field_htfProps.Cp( (T_field_out + Ts_cold)/2. )*1000.0;			// field/pb htf in storage HX when storage charging
+                    }
+                    else {
+                        c_htf_disch = field_htfProps.Cp(Ts_hot)*1000.0;
+                        c_htf_charge = field_htfProps.Cp(Ts_cold)*1000.0;
+                    }
                 }
                 else{
                     c_htf_disch = 0.;
@@ -1260,7 +1266,7 @@ public:
 				else
 				{q_pb_demand_guess = q_pb_demand;}
 
-				if(tes_type==2 || ! has_TES)
+				if(tes_type==2 || ! has_TES)    // TODO - why is the available qs_disch and charge 0 for thermoclines?
 				{
 					qs_disch_avail	= 0.0;
 					qs_charge_avail = 0.0;
@@ -1292,7 +1298,7 @@ public:
 					m_int = m_dot_field;
 			
 					// If energy is coming from the field, adjust the intermediate temperature
-					if(q_int > 0.) {T_int = T_field_out;}
+					if(q_int > 0.) {tanks_in_parallel ? T_int = T_field_out : T_int = T_tank_hot_out;}
 
 					// Next, try to add energy from thermocline 
 					if( (ms_disch_avail>0.0)&&(tes_type==2))   
@@ -1326,7 +1332,7 @@ public:
 						// mode 2: Fossil tops off the available energy. The total fossil contrib. can't exceed the control fraction.
 						if (fossil_mode == 1)
 						{
-							q_demand_aux = ffrac[touperiod]*q_pb_max_input;
+							q_demand_aux = ffrac[touperiod]*q_pb_max_input;     // the overall minimum needed energy input to power block
 							if(q_int < q_demand_aux)
 							{
 								q_aux		= q_demand_aux - q_int;
@@ -1346,7 +1352,7 @@ public:
 						{
 							// Lastly, add any available auxiliary heat to get to the design point
 							if((q_int + q_aux_avail) < q_pb_demand_guess)
-							{
+							{   // TODO - add a q_aux here and factor out the 'if(q_int > 0.)' lines, changing q_int to q_aux, and put after the 'if(fossil_mode == 1)' block
 								q_int		= q_int + q_aux_avail;
 								m_dot_aux	= m_dot_aux_avail;
 								m_int		= m_int + m_dot_aux;
@@ -1362,7 +1368,8 @@ public:
 								m_dot_aux	= q_aux/(c_htf_aux*max((T_set_aux - T_pb_out),1.0));  
 								m_int		= m_int + m_dot_aux;
 								// Adjust the intermediate temperature
-								T_int = (m_dot_field*T_field_out + ms_disch*Ts_hot + m_dot_aux*T_set_aux)/m_int;
+								//T_int = (m_dot_field*T_field_out + ms_disch*Ts_hot + m_dot_aux*T_set_aux)/m_int;
+                                if (q_int > 0.) T_int = (T_int*(m_dot_field + ms_disch) + T_set_aux * m_dot_aux) / m_int;
 							}
 						}				
 					}
@@ -1376,7 +1383,7 @@ public:
 						m_int		= m_int + ms_disch;
 						ms_charge	= 0.;
 						m_dot_aux	= 0.;
-						T_int		= (m_dot_field*T_field_out + ms_disch*Ts_hot)/m_int;
+						T_int		= (m_dot_field*T_int + ms_disch*Ts_hot)/m_int;
 					}
 					// Run a check to see if the energy produced is above the cycle cutout fraction
 					if(q_int < q_pb_design*cycle_cutoff_frac)	mode = pb_off_or_standby;
@@ -1389,7 +1396,7 @@ public:
 			
 					// MJW 11.3.2010: Need to specify m_int in cases where we've entered "sticky mode" operation
 					m_int	= m_dot_field;
-					T_int	= T_field_out;        
+                    tanks_in_parallel ? T_int = T_field_out : T_int = T_tank_hot_out;
 			
 					if((ms_charge_avail>0.0)&&(tes_type==2))
 					{
@@ -1482,14 +1489,20 @@ public:
 									called_TC = true;
 								}
 								else	// 2-tank
-								{ms_disch = q_sby_storage / (c_htf_disch * (Ts_hot - T_pb_out));}        //[kg/s]              
+								{ms_disch = q_sby_storage / (c_htf_disch * (Ts_hot - T_pb_out));}        //[kg/s]
+
+                                if (tanks_in_parallel) {
+								    T_pb_in = (T_field_out*m_dot_field + Ts_hot*ms_disch)/(m_dot_field + ms_disch);	//[K]
+                                }
+                                else {
+                                    T_pb_in = Ts_hot;
+                                }
 			    
-								T_pb_in = (T_field_out*m_dot_field + Ts_hot*ms_disch)/(m_dot_field + ms_disch);	//[K]
 							}
 							else		// (q_field_avail > q_sby), need to charge/defocus
 							{
 								ms_disch	= 0.0;	//[kg/s] Discharge mass flow rate
-								T_pb_in		= (T_field_out*m_dot_field + Ts_hot*ms_disch)/(m_dot_field + ms_disch);	//[K]
+                                tanks_in_parallel ? T_pb_in = T_field_out : T_pb_in = T_tank_hot_out; //[K]
 								ms_charge	= max(m_dot_field - q_sby/(c_htf_pb*(T_pb_in - T_pb_out)), 0.0);		//[kg/s] Calculate mass flow rate that is not used by PB in
 			                
 								if(tes_type == 2)	// thermocline code
@@ -1630,7 +1643,7 @@ public:
 						defocus = ((int)(nSCA*pow( ((qs_charge_avail + q_pb_demand_guess)/max(q_field_avail, 1.0)), ccoef)))/nSCA;	// TN 4.9.12
 					}
 
-					T_pb_in		= T_field_out;
+                    tanks_in_parallel ? T_pb_in = T_field_out : T_pb_in = T_tank_hot_out;
 					m_dot_pb	= max(q_pb_demand_guess/(c_htf_pb*(T_pb_in - T_pb_out)), 0.0);		// mjw 1.18.2011
 					ms_disch	= 0.;
 					cycle_pl_control= 2;	// 1=demand, 2=part load
@@ -1661,8 +1674,8 @@ public:
 					}
 
 					// m_dot_pb = dmax1(q_pb_demandX/(c_htf_fld*dmax1(T_field_out - T_pb_out,1.d0)),0.d0)      !MJW 7.15.2010 1.e-6 -> 1.
-					m_dot_pb	= max(q_pb_demand_guess/(c_htf_pb*max(T_field_out - T_pb_out, 1.0)) ,0.0);		// MJW 3.6.11 changing c_htf
-					T_pb_in		= T_field_out;
+					m_dot_pb	= max(q_pb_demand_guess/(c_htf_pb*max(T_pb_in - T_pb_out, 1.0)) ,0.0);		// MJW 3.6.11 changing c_htf
+                    tanks_in_parallel ? T_pb_in = T_field_out : T_pb_in = T_tank_hot_out;
 					ms_disch	= 0.0;
 					cycle_pl_control= 2;	// 1=demand, 2=part load
 					standby_control = 1;	// 1=normal operation, 2=standby, 3=shut down
@@ -1687,8 +1700,12 @@ public:
 				}
 				// If during iteration, the mass flow ends up being zero, switch to temperature mode 2
 				if(m_dot_pb + ms_charge == 0.) tempmode = 2;
-				if(tempmode == 1)
-					T_field_in_guess = (m_dot_pb*T_pb_out + ms_charge*Ts_cold)/(m_dot_pb + ms_charge);
+                if (!tanks_in_parallel) {
+                    T_field_in_guess = T_tank_cold_out;
+                }
+                else if (tempmode == 1) {
+                    T_field_in_guess = (m_dot_pb*T_pb_out + ms_charge * Ts_cold) / (m_dot_pb + ms_charge);
+                }
 				else if(tempmode == 2)
 				{
 					if( sf_type == 1 )
@@ -1732,7 +1749,7 @@ public:
 					else
 					{
 						// We are primarily concerned with whether the solution has converged. 
-						// If the change in the error has stabilized, it is save to move on.
+						// If the change in the error has stabilized, it is safe to move on.
 						if(derr < 0.001)
 						{
 							iterate_mass_temp = false;
@@ -1811,7 +1828,12 @@ public:
 				else
 				{
 					//No heat exchanger
-					T_tank_cold_in	= T_pb_out;		// TODO - this could also be T_field_out depending on the state of the bypass valve
+                    if (!tanks_in_parallel && has_hot_tank_bypass && recirculating) {
+                        T_tank_cold_in = T_field_out;
+                    }
+                    else {
+					    T_tank_cold_in	= T_pb_out;
+                    }
 					T_tank_hot_in	= T_field_out;
 					Ts_cold		= T_tank_cold_out;
 					Ts_hot		= T_tank_hot_out;
@@ -1892,12 +1914,12 @@ public:
 		}
 		else
 		{
-            //if (tanks_in_parallel) {
+            if (tanks_in_parallel) {
 			    htf_pump_power = pb_pump_coef*(fabs(ms_disch-ms_charge) + m_dot_pb)/1000.0;	//[MW]
-            //}
-            //else {
-            //    htf_pump_power = pb_pump_coef*(m_dot_field + m_dot_pb)/1000.0;	//[MW]   // TODO - Am I adding m_dot_field here or in 250?
-            //}
+            }
+            else {
+                htf_pump_power = pb_pump_coef * m_dot_pb / 1000.0;	//[MW]
+            }
 		}
 
 		// Variable parasitic power
