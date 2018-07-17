@@ -50,7 +50,7 @@
 #ifndef __lib_vartab_h
 #define __lib_vartab_h
 
-#include "lib_util.h"
+#include "../shared/lib_util.h"
 #include <string>
 #include "sscapi.h"
 
