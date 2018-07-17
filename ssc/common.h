@@ -54,9 +54,9 @@
 #include <vector>
 #include "core.h"
 
-#include "lib_util.h"
-#include "lib_weatherfile.h"
-#include "lib_pv_shade_loss_mpp.h"
+#include "../shared/lib_util.h"
+#include "../shared/lib_weatherfile.h"
+#include "../shared/lib_pv_shade_loss_mpp.h"
 
 extern var_info vtab_standard_financial[];
 extern var_info vtab_standard_loan[];
