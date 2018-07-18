@@ -506,13 +506,13 @@ int C_sco2_recomp_csp::optimize_off_design(C_sco2_recomp_csp::S_od_par od_par, i
 		}
 
 		// Check if power output is < target AND RC is very close to surge AND outlet pressure < max
-		/*double W_dot_rel_diff = mpc_sco2_cycle->get_od_solved()->m_W_dot_net / 
+		double W_dot_rel_diff = mpc_sco2_cycle->get_od_solved()->m_W_dot_net / 
 					(mpc_sco2_cycle->get_design_solved()->m_W_dot_net*(ms_od_par.m_m_dot_htf / ms_phx_des_par.m_m_dot_hot_des));
 		double P_HP_rel_diff = mpc_sco2_cycle->get_od_solved()->m_pres[C_sco2_cycle_core::MC_OUT] / ms_des_par.m_P_high_limit;
 
 		double rc_phi_diff = mpc_sco2_cycle->get_od_solved()->ms_rc_ms_od_solved.m_phi_min / mpc_sco2_cycle->get_design_solved()->ms_rc_ms_des_solved.m_phi_surge;
 		
-		while (W_dot_rel_diff < 0.995 && P_HP_rel_diff < 0.99 && rc_phi_diff < 1.005)
+		while (W_dot_rel_diff < 0.995 && P_HP_rel_diff < 0.99 && rc_phi_diff < 1.05)
 		{
 			ms_cycle_od_par.m_T_mc_in += 0.5;
 			ms_cycle_od_par.m_T_pc_in += 0.5;
@@ -528,7 +528,7 @@ int C_sco2_recomp_csp::optimize_off_design(C_sco2_recomp_csp::S_od_par od_par, i
 			P_HP_rel_diff = mpc_sco2_cycle->get_od_solved()->m_pres[C_sco2_cycle_core::MC_OUT] / ms_des_par.m_P_high_limit;
 
 			rc_phi_diff = mpc_sco2_cycle->get_od_solved()->ms_rc_ms_od_solved.m_phi_min / mpc_sco2_cycle->get_design_solved()->ms_rc_ms_des_solved.m_phi_surge;
-		}*/
+		}
 	}
 	else
 	{
