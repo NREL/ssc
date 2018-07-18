@@ -275,24 +275,30 @@ public:
 		double m_T_mc_in;		//[K] Main compressor inlet temperature
 		double m_T_t_in;		//[K] Turbine inlet temperature
 
+		double m_f_mc_pc_bypass;	//[-] Fraction of main and pre compressors bypassed to respective coolers
+
 	public:
 
 		double m_m_dot_t;		//[kg/s]
 		double m_m_dot_pc;		//[kg/s]
 		double m_m_dot_rc;		//[kg/s]
 		double m_m_dot_mc;		//[kg/s]
+		double m_m_dot_LTR_HP;	//[kg/s]
 
 		C_MEQ__f_recomp__y_N_rc(C_PartialCooling_Cycle *pc_pc_cycle,
 			double T_pc_in /*K*/, double P_pc_in /*kPa*/, 
-			double T_mc_in /*K*/, double T_t_in /*K*/)
+			double T_mc_in /*K*/, double T_t_in /*K*/,
+			double f_mc_pc_bypass /*-*/)
 		{
 			mpc_pc_cycle = pc_pc_cycle;
 			m_T_pc_in = T_pc_in;		//[K]
 			m_P_pc_in = P_pc_in;		//[kPa]
 			m_T_mc_in = T_mc_in;		//[K]
 			m_T_t_in = T_t_in;			//[K]
+			m_f_mc_pc_bypass = f_mc_pc_bypass;	//[-]
 			
-			m_m_dot_t = m_m_dot_pc = m_m_dot_rc = m_m_dot_mc = std::numeric_limits<double>::quiet_NaN();
+			m_m_dot_t = m_m_dot_pc = m_m_dot_rc = 
+				m_m_dot_mc = m_m_dot_LTR_HP = std::numeric_limits<double>::quiet_NaN();
 		}
 
 		virtual int operator()(double f_recomp /*-*/, double *diff_N_rc /*-*/);
@@ -309,10 +315,13 @@ public:
 		double m_f_recomp;		//[-] Recompression fraction
 		double m_T_t_in;		//[K] Turbine inlet temperature
 
+		double m_f_mc_pc_bypass;	//[-] Fraction of main and pre compressors bypassed to respective coolers
+
 	public:
 		C_MEQ__t_m_dot__bal_turbomachinery(C_PartialCooling_Cycle *pc_pc_cycle,
 			double T_pc_in /*K*/, double P_pc_in /*kPa*/, double T_mc_in /*K*/,
-			double f_recomp /*-*/, double T_t_in /*K*/)
+			double f_recomp /*-*/, double T_t_in /*K*/,
+			double f_mc_pc_bypass /*-*/)
 		{
 			mpc_pc_cycle = pc_pc_cycle;
 			m_T_pc_in = T_pc_in;		//[K]
@@ -320,6 +329,7 @@ public:
 			m_T_mc_in = T_mc_in;		//[K]
 			m_f_recomp = f_recomp;		//[-]
 			m_T_t_in = T_t_in;			//[K]
+			m_f_mc_pc_bypass = f_mc_pc_bypass;	//[-]
 		}
 
 		virtual int operator()(double m_dot_t /*kg/s*/, double *diff_m_dot_t /*-*/);
@@ -330,10 +340,21 @@ public:
 	private:
 		C_PartialCooling_Cycle * mpc_pc_cycle;
 
+		double m_m_dot_LTR_HP;		//[kg/s]
+		double m_m_dot_t;			//[kg/s]
+		double m_m_dot_rc;			//[kg/s]
+
 	public:
-		C_MEQ_recup_od(C_PartialCooling_Cycle *pc_pc_cycle)
+		C_MEQ_recup_od(C_PartialCooling_Cycle *pc_pc_cycle,
+			double m_dot_LTR_HP /*kg/s*/,
+			double m_dot_t /*kg/s*/,
+			double m_dot_rc /*kg/s*/)
 		{
 			mpc_pc_cycle = pc_pc_cycle;
+
+			m_m_dot_LTR_HP = m_dot_LTR_HP;
+			m_m_dot_t = m_dot_t;
+			m_m_dot_rc = m_dot_rc;
 		}
 
 		virtual int operator()(double T_HTR_LP_out_guess /*K*/, double *diff_T_HTR_LP_out /*K*/);
