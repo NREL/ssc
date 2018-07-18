@@ -456,11 +456,11 @@ TEST_F(BifacialIrradTest, TestSkyConfigFactors)
 	std::vector<double> rearSkyConfigFactors, frontSkyConfigFactors;
 	irr->getSkyConfigurationFactors(rowToRow, verticalHeight, clearanceGround, distanceBetweenRows, horizontalLength, rearSkyConfigFactors, frontSkyConfigFactors);
 	
-	ASSERT_EQ(rearSkyConfigFactors.size(), expectedSkyConfigFactors.size());
+	ASSERT_EQ(rearSkyConfigFactors.size(), expectedRearSkyConfigFactors.size());
 
 	for (size_t i = 0; i != rearSkyConfigFactors.size(); i++){
-		ASSERT_NEAR(rearSkyConfigFactors[i], expectedSkyConfigFactors[i], e);
-		ASSERT_NEAR(frontSkyConfigFactors[i], expectedSkyConfigFactors[i], e);
+		ASSERT_NEAR(rearSkyConfigFactors[i], expectedRearSkyConfigFactors[i], e);
+		ASSERT_NEAR(frontSkyConfigFactors[i], expectedFrontSkyConfigFactors[i], e);
 	}
 }
 /**
@@ -508,7 +508,7 @@ TEST_F(BifacialIrradTest, TestGroundGHI)
 		readLineFromTextFile(rearGroundGHIFile, t, expectedRearGroundGHI);
 
 		std::vector<double> rearGroundGHI, frontGroundGHI;
-		irr->getGroundGHI(transmissionFactor, expectedSkyConfigFactors, expectedSkyConfigFactors, expectedRearGroundShade, expectedFrontGroundShade, rearGroundGHI, frontGroundGHI);
+		irr->getGroundGHI(transmissionFactor, expectedRearSkyConfigFactors, expectedFrontSkyConfigFactors, expectedRearGroundShade, expectedFrontGroundShade, rearGroundGHI, frontGroundGHI);
 
 		ASSERT_EQ(rearGroundGHI.size(), expectedRearGroundGHI.size()) << "Failed at t = " << t;
 		ASSERT_EQ(frontGroundGHI.size(), expectedFrontGroundGHI.size()) << "Failed at t = " << t;

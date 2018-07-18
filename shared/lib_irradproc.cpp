@@ -1752,7 +1752,7 @@ void irrad::getBackSurfaceIrradiances(double pvBackShadeFraction, double rowToRo
 			rearIrradiance[i] += 0.5 * (cos(j * DTOR) - cos((j + 1)*DTOR)) * MarionAOICorrectionFactorsGlass[j]* isotropicSkyDiffuse;
 			if ((iStopIso - j) <= iHorBright)
 			{
-				rearIrradiance[i] += 0.5 * (cos(j * DTOR) - cos((j + 1) * DTOR)) * MarionAOICorrectionFactorsGlass[j]* horizonDiffuse / 0.052246; // 0.052246 = 0.5 * [cos(84) - cos(90)]
+				rearIrradiance[i] += 0.5 * (cos(j * DTOR) - cos((j + 1) * DTOR)) * MarionAOICorrectionFactorsGlass[j]* horizonDiffuse / 0.052264; // 0.052246 = 0.5 * [cos(84) - cos(90)]
 			}
 		}
 
@@ -1835,12 +1835,11 @@ void irrad::getBackSurfaceIrradiances(double pvBackShadeFraction, double rowToRo
 
 				if (index1 == index2)
 				{
-					if (index1 < 0)
-					{
-						// Need to also add in frontGroundGHI
-						if (index1 > 0) {
-							actualGroundGHI = rearGroundGHI[index1];
-						}
+					if (index1 < 0){
+						actualGroundGHI = frontGroundGHI[index1 + 100];
+					}
+					else {
+						actualGroundGHI = rearGroundGHI[index1];
 					}
 				}
 				else
@@ -1881,6 +1880,10 @@ void irrad::getBackSurfaceIrradiances(double pvBackShadeFraction, double rowToRo
 				}
 			}
 			rearIrradiance[i] += 0.5 * (cos(j * DTOR) - cos((j + 1) * DTOR)) * MarionAOICorrectionFactorsGlass[j] * actualGroundGHI * this->alb;
+			FILE *p;
+			p = fopen("test.txt", "a");
+			fprintf(p, "%d %d %f\n", i, j, rearIrradiance[i]);
+			fclose(p);
 		}
 		// Calculate and add direct and circumsolar irradiance components
 		incidence(0, 180.0 - tiltRadians * RTOD, (surfaceAzimuthRadians * RTOD - 180.0), 45.0, solarZenithRadians, solarAzimuthRadians, this->en_backtrack, this->gcr, angle);
