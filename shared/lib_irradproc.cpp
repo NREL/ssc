@@ -1880,10 +1880,6 @@ void irrad::getBackSurfaceIrradiances(double pvBackShadeFraction, double rowToRo
 				}
 			}
 			rearIrradiance[i] += 0.5 * (cos(j * DTOR) - cos((j + 1) * DTOR)) * MarionAOICorrectionFactorsGlass[j] * actualGroundGHI * this->alb;
-			FILE *p;
-			p = fopen("test.txt", "a");
-			fprintf(p, "%d %d %f\n", i, j, rearIrradiance[i]);
-			fclose(p);
 		}
 		// Calculate and add direct and circumsolar irradiance components
 		incidence(0, 180.0 - tiltRadians * RTOD, (surfaceAzimuthRadians * RTOD - 180.0), 45.0, solarZenithRadians, solarAzimuthRadians, this->en_backtrack, this->gcr, angle);
