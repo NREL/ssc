@@ -499,7 +499,7 @@ private:
 	int accept_loc;			//In acceptance testing mode - temperature sensor location (1=hx,2=loop)
 	bool is_using_input_gen;
 	
-    bool design_sizing;      // is the field being sized at design conditions, including the pressures?
+    bool calc_design_pipe_vals;      // is the field being sized at design conditions, including the pressures?
 
 	double solar_mult;		//Solar multiple
 	double mc_bal_hot;		//The heat capacity of the balance of plant on the hot side
@@ -806,7 +806,7 @@ public:
 		accept_loc	= -1;
 		is_using_input_gen = false;
 
-        design_sizing = true;
+        calc_design_pipe_vals = true;
 
 		solar_mult	= std::numeric_limits<double>::quiet_NaN();
 		mc_bal_hot	= std::numeric_limits<double>::quiet_NaN();
@@ -1130,7 +1130,7 @@ public:
 		accept_loc = (int)value(P_ACCEPT_LOC);					// In acceptance testing mode - temperature sensor location (1=hx,2=loop) [none]
 		is_using_input_gen = (value(P_USING_INPUT_GEN)>0);	// Is model getting inputs from input generator (true) or from other components in physical trough SYSTEM model (false)
 		
-        design_sizing = true;                   // placeholder for parameter
+        calc_design_pipe_vals = true;                   // placeholder for parameter
 
 		solar_mult = value(P_SOLAR_MULT);		//Solar multiple [none]
 		mc_bal_hot = value(P_MC_BAL_HOT);		//The heat capacity of the balance of plant on the hot side [kWht/K-MWt]
@@ -1750,7 +1750,7 @@ public:
 			ss_init_complete = true;
 
         // Design Sizing
-        if (design_sizing) {
+        if (calc_design_pipe_vals) {
             int accept_mode_orig = accept_mode;
             bool accept_init_orig = accept_init;
             int accept_loc_orig = accept_loc;
@@ -1778,7 +1778,7 @@ public:
             call(43200, 0, 0);      // 43200 = noon
 
             // Restore parameters
-            design_sizing = false;
+            calc_design_pipe_vals = false;
             start_time = -1;
             accept_mode = accept_mode_orig;
             accept_init = accept_init_orig;
@@ -1951,7 +1951,7 @@ public:
 			// hour angle (arc of sun) in radians
 			double omega = (SolarTime - 12.0)*15.0*pi/180.0;
 
-            if (design_sizing) {
+            if (calc_design_pipe_vals) {
                 SolarAlt = pi/2. - ColTilt;
                 SolarAz = ColAz;
             }
@@ -3272,7 +3272,7 @@ set_outputs_and_return:
 		
 		double E_field_out = E_field*3.6e-9;
 
-        if (design_sizing) {
+        if (calc_design_pipe_vals) {
             util::matrix_t<double> T_rnr_out, P_rnr_out, T_hdr_out, P_hdr_out, T_loop_out, P_loop_out;
             T_rnr_out.resize(2 * nrunsec);
             P_rnr_out.resize(2 * nrunsec);

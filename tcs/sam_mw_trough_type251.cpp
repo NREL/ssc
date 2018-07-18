@@ -92,6 +92,9 @@ enum {
 	P_hot_tank_Thtr,	
 	P_cold_tank_max_heat,
 	P_hot_tank_max_heat,
+    //P_tanks_in_parallel,
+    //P_hot_tank_bypass,
+    //P_T_tank_hot_in_min,
 	P_T_field_in_des,
 	P_T_field_out_des,
 	P_q_pb_design,
@@ -234,6 +237,9 @@ tcsvarinfo sam_mw_trough_type251_variables[] = {
     { TCS_PARAM,    TCS_NUMBER,        P_hot_tank_Thtr,      "hot_tank_Thtr",        "Minimum allowable hot tank HTF temp",                     "C",            "",        "",        ""},
     { TCS_PARAM,    TCS_NUMBER,        P_cold_tank_max_heat, "cold_tank_max_heat",   "Rated heater capacity for cold tank heating",             "MW",           "",        "",        ""},
 	{ TCS_PARAM,    TCS_NUMBER,        P_hot_tank_max_heat,  "hot_tank_max_heat",    "Rated heater capacity for hot tank heating",              "MW",           "",        "",        ""},
+    //{ TCS_PARAM,    TCS_NUMBER,        P_tanks_in_parallel,  "tanks_in_parallel",    "Tanks are in parallel, not in series, with solar field",  "-",            "",        "",        ""},
+    //{ TCS_PARAM,    TCS_NUMBER,        P_hot_tank_bypass,    "has_hot_tank_bypass",  "Bypass valve connects field outlet to cold tank",         "-",            "",        "",        ""},
+    //{ TCS_PARAM,    TCS_NUMBER,        P_T_tank_hot_in_min,  "T_tank_hot_inlet_min", "Rated heater capacity for hot tank heating",              "C",            "",        "",        ""},
     { TCS_PARAM,    TCS_NUMBER,        P_T_field_in_des,     "T_field_in_des",       "Field design inlet temperature",                          "C",            "",        "",        ""},
     { TCS_PARAM,    TCS_NUMBER,        P_T_field_out_des,    "T_field_out_des",      "Field design outlet temperature",                         "C",            "",        "",        ""},
     { TCS_PARAM,    TCS_NUMBER,        P_q_pb_design,        "q_pb_design",          "Design heat input to power block",                        "MWt",          "",        "",        ""},
@@ -407,9 +413,9 @@ private:
 	double * tslogic_b;
 	double * tslogic_c;
 	double * ffrac;
-    bool tanks_in_parallel;         // TODO - make scriptable - parallel tanks like in original or series like in direct molten salt (false)
-    bool has_hot_tank_bypass;       // TODO - make scriptable - is a hot tank bypass valve present, applicable for series tanks in direct systems
-    double T_tank_hot_inlet_min;   // TODO - make scriptable - the max hot tank inlet temperature that the bypass valve is open, thus bypassing the hot tank
+    bool tanks_in_parallel;
+    bool has_hot_tank_bypass;
+    double T_tank_hot_inlet_min;
     double T_max_recirc;
 	//double * TOU_schedule;
 	//int nTOU_schedule;
@@ -734,9 +740,9 @@ public:
 				return -1;
 			}
 		numtou = l_tslogic_a;
-        tanks_in_parallel = true;               // TODO - change to a parameter input
-        has_hot_tank_bypass = false;            // TODO - change to a parameter input
-        T_tank_hot_inlet_min = 400 + 273.15;   // TODO - change to a parameter input
+        tanks_in_parallel = true; //value(P_tanks_in_parallel);
+        has_hot_tank_bypass = false; //value(P_hot_tank_bypass);
+        T_tank_hot_inlet_min = 400 + 273.15; //value(P_T_tank_hot_in_min) + 273.15;
         T_max_recirc = 400;
 		//TOU_schedule = value(P_TOU_schedule, &nTOU_schedule);
 
