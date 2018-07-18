@@ -194,6 +194,7 @@ enum{
 	I_SHIFT,
 
 	O_HEADER_DIAMS,
+    O_HEADER_WALLTHK,
     O_HEADER_LENGTHS,
     O_HEADER_XPANS,
     O_HEADER_MDOT_DSN,
@@ -201,6 +202,7 @@ enum{
     O_HEADER_T_DSN,
     O_HEADER_P_DSN,
 	O_RUNNER_DIAMS,
+    O_RUNNER_WALLTHK,
 	O_RUNNER_LENGTHS,
     O_RUNNER_XPANS,
     O_RUNNER_MDOT_DSN,
@@ -386,6 +388,7 @@ tcsvarinfo sam_mw_trough_type250_variables[] = {
 	{ TCS_INPUT,          TCS_NUMBER,             I_SHIFT,                  "shift",                                         "shift in longitude from local standard meridian",          "deg",             "",             "",             "" },
 
 	{ TCS_OUTPUT,          TCS_ARRAY,      O_HEADER_DIAMS,      "pipe_header_diams",					                                        "Header piping diameter array",            "m",             "",             "",             "" },
+    { TCS_OUTPUT,          TCS_ARRAY,    O_HEADER_WALLTHK,    "pipe_header_wallthk",					                                  "Header piping wall thickness array",            "m",             "",             "",             "" },
     { TCS_OUTPUT,          TCS_ARRAY,    O_HEADER_LENGTHS,    "pipe_header_lengths",                                                              "Header piping length array",            "m",             "",             "",             "" },
     { TCS_OUTPUT,          TCS_ARRAY,      O_HEADER_XPANS, "pipe_header_expansions",                                                      "Number of header piping expansions",            "-",             "",             "",             "" },
     { TCS_OUTPUT,          TCS_ARRAY,   O_HEADER_MDOT_DSN,   "pipe_header_mdot_dsn",					                              "Header piping mass flow rate at design",         "kg/s",             "",             "",             "" },
@@ -393,6 +396,7 @@ tcsvarinfo sam_mw_trough_type250_variables[] = {
     { TCS_OUTPUT,          TCS_ARRAY,      O_HEADER_T_DSN,      "pipe_header_T_dsn",					                                 "Header piping temperature at design",            "C",             "",             "",             "" },
     { TCS_OUTPUT,          TCS_ARRAY,      O_HEADER_P_DSN,      "pipe_header_P_dsn",					                                    "Header piping pressure at design",          "bar",             "",             "",             "" },
 	{ TCS_OUTPUT,          TCS_ARRAY,      O_RUNNER_DIAMS,      "pipe_runner_diams",                                                            "Runner piping diameter array",            "m",             "",             "",             "" },
+    { TCS_OUTPUT,          TCS_ARRAY,    O_RUNNER_WALLTHK,    "pipe_runner_wallthk",					                                  "Runner piping wall thickness array",            "m",             "",             "",             "" },
     { TCS_OUTPUT,          TCS_ARRAY,    O_RUNNER_LENGTHS,    "pipe_runner_lengths",                                                              "Runner piping length array",            "m",             "",             "",             "" },
     { TCS_OUTPUT,          TCS_ARRAY,      O_RUNNER_XPANS, "pipe_runner_expansions",                                                      "Number of runner piping expansions",            "-",             "",             "",             "" },
     { TCS_OUTPUT,          TCS_ARRAY,   O_RUNNER_MDOT_DSN,   "pipe_runner_mdot_dsn",					                              "Runner piping mass flow rate at design",         "kg/s",             "",             "",             "" },
@@ -714,8 +718,8 @@ private:
 	util::matrix_t<double> L_actSCA, A_cs, D_h, ColOptEff /*nColt, nSCA*/;
 	util::matrix_t<bool> GlazingIntact;
 	emit_table epsilon_3;
-    util::matrix_t<double> D_runner, L_runner, m_dot_rnr_dsn, V_rnr_dsn, N_rnr_xpans, DP_rnr, T_rnr, P_rnr,
-        D_hdr, L_hdr, m_dot_hdr_dsn, V_hdr_dsn, N_hdr_xpans, DP_hdr, T_hdr, P_hdr,
+    util::matrix_t<double> D_runner, WallThk_runner, L_runner, m_dot_rnr_dsn, V_rnr_dsn, N_rnr_xpans, DP_rnr, T_rnr, P_rnr,
+        D_hdr, WallThk_hdr, L_hdr, m_dot_hdr_dsn, V_hdr_dsn, N_hdr_xpans, DP_hdr, T_hdr, P_hdr,
         DP_intc, P_intc, DP_loop, T_loop, P_loop;
 
 	util::matrix_t<double> 
@@ -1531,6 +1535,7 @@ public:
 			//Calculate the header design
 			nrunsec = (int)floor(float(nfsec) / 4.0) + 1;  //The number of unique runner diameters
 			D_runner.resize(2*nrunsec);
+            WallThk_runner.resize(2*nrunsec);
 			L_runner.resize(2*nrunsec);
             m_dot_rnr_dsn.resize(2*nrunsec);
             V_rnr_dsn.resize(2*nrunsec);
@@ -1539,6 +1544,7 @@ public:
             P_rnr.resize(2*nrunsec);
             T_rnr.resize(2*nrunsec);
 			D_hdr.resize(2*nhdrsec);
+            WallThk_hdr.resize(2*nhdrsec);
             L_hdr.resize(2*nhdrsec);
             N_hdr_xpans.resize(2*nhdrsec);
             m_dot_hdr_dsn.resize(2*nhdrsec);
@@ -1556,18 +1562,30 @@ public:
 			header_design(nhdrsec, nfsec, nrunsec, rho_ave, V_hdr_cold_max, V_hdr_cold_min,
                 V_hdr_hot_max, V_hdr_hot_min, N_max_hdr_diams, m_dot_design, D_hdr, D_runner,
                 m_dot_rnr_dsn, m_dot_hdr_dsn, V_rnr_dsn, V_hdr_dsn, &summary);
+
+            // Calculate pipe wall thicknesses
+            for (int i = 0; i < D_runner.ncells(); i++) {
+                WallThk_runner[i] = WallThickness(D_runner[i]);
+            }
+            for (int i = 0; i < D_hdr.ncells(); i++) {
+                WallThk_hdr[i] = WallThickness(D_hdr[i]);
+            }
 			
 			//report the header and runner metrics
 			double *header_diams = allocate(O_HEADER_DIAMS, (int)D_hdr.ncells());
+            double *header_wallthk = allocate(O_HEADER_WALLTHK, (int)WallThk_hdr.ncells());
             double *header_massflow_design = allocate(O_HEADER_MDOT_DSN, (int)m_dot_hdr_dsn.ncells());
             double *header_velocity_design = allocate(O_HEADER_V_DSN, (int)V_hdr_dsn.ncells());
 			double *runner_diams = allocate(O_RUNNER_DIAMS, (int)D_runner.ncells());
+            double *runner_wallthk = allocate(O_RUNNER_WALLTHK, (int)WallThk_runner.ncells());
             double *runner_massflow_design = allocate(O_RUNNER_MDOT_DSN, (int)m_dot_rnr_dsn.ncells());
             double *runner_velocity_design = allocate(O_RUNNER_V_DSN, (int)V_rnr_dsn.ncells());
             std::copy(D_hdr.data(), D_hdr.data() + D_hdr.ncells(), header_diams);
+            std::copy(WallThk_hdr.data(), WallThk_hdr.data() + WallThk_hdr.ncells(), header_wallthk);
             std::copy(m_dot_hdr_dsn.data(), m_dot_hdr_dsn.data() + m_dot_hdr_dsn.ncells(), header_massflow_design);
             std::copy(V_hdr_dsn.data(), V_hdr_dsn.data() + V_hdr_dsn.ncells(), header_velocity_design);
             std::copy(D_runner.data(), D_runner.data() + D_runner.ncells(), runner_diams);
+            std::copy(WallThk_runner.data(), WallThk_runner.data() + WallThk_runner.ncells(), runner_wallthk);
             std::copy(m_dot_rnr_dsn.data(), m_dot_rnr_dsn.data() + m_dot_rnr_dsn.ncells(), runner_massflow_design);
             std::copy(V_rnr_dsn.data(), V_rnr_dsn.data() + V_rnr_dsn.ncells(), runner_velocity_design);
 
