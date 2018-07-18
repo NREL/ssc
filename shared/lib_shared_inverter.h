@@ -21,7 +21,7 @@ public:
 		sandia_inverter_t * sandiaInverter, partload_inverter_t * partloadInverter);
 
 	/// Setup efficiency vs ambient T curves at up to 3 input voltages for temp derating, returns true if successful
-	bool setTempDerateCurves(double* curve1, double* curve2 = NULL, double* curve3 = NULL );
+	bool setTempDerateCurves(std::vector<double> curve1, std::vector<double> curve2, std::vector<double> curve3);
 
 	void getTempDerateCurves(double* vParts, double* startC, double* slope);
 

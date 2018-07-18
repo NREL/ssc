@@ -12,24 +12,22 @@ SharedInverter::SharedInverter(int inverterType, int numberOfInverters,
 	m_tempEnabled = false;
 }
 
-bool sortByVoltage(const double i[], const double j[])
+bool sortByVoltage(std::vector<double> i, std::vector<double> j)
 {
 	return (i[0] < j[0]);
 }
 
-bool SharedInverter::setTempDerateCurves(double* curve1, double* curve2, double* curve3)
+bool SharedInverter::setTempDerateCurves(std::vector<double> curve1, std::vector<double> curve2, std::vector<double> curve3)
 {
-	if (curve1[0] < 0 || curve1[1] <= -99 || curve1[2] >= 0) return false;
+	if (curve1[0] <= 0.0 || curve1[1] <= -293 || curve1[2] > 0) return false;
 
 	// if multiple curves provided, partition operating V range
-	std::vector<double*> derateCurves;
+	std::vector<std::vector<double>> derateCurves;
 	derateCurves.push_back(curve1);
-	if (curve2 != NULL){
-		if (curve2[1] <= -99 || curve2[2] >= 0) return false;
+	if (curve2[0] > 0.0 && curve2[1] > -293 && curve2[2] <= 0.){
 		derateCurves.push_back(curve2);
 	}
-	if (curve3 != NULL){
-		if (curve3[1] <= -99 || curve3[2] >= 0) return false;
+	if (curve3[0] > 0.0 && curve3[1] > -293 && curve3[2] <= 0.){
 		derateCurves.push_back(curve3);
 	}
 

@@ -10,9 +10,10 @@ protected:
 	SharedInverter* inv;
 	sandia_inverter_t sinv;
 	partload_inverter_t plinv;
-	double c1[3] = { 200., 30., -0.3 };		/// Temp derate curve 1 at 200 Vdc, start temp 30 C, slope -0.3
-	double c2[3] = { 300., 50., -0.1 };		/// Curve 2 at 300 Vdc, start temp 50 C, slope -0.1
-	double c3[3] = { 400., 40., -0.2 };		/// Curve 3 at 400 Vdc, start temp 40 C, slope -0.2
+	std::vector<double> empty = { 0., 0., 0. };			/// Default curve is all 0, invalid because V == 0
+	std::vector<double> c1 = { 200., 30., -0.3 };		/// Temp derate curve 1 at 200 Vdc, start temp 30 C, slope -0.3
+	std::vector<double> c2 = { 300., 50., -0.1 };		/// Curve 2 at 300 Vdc, start temp 50 C, slope -0.1
+	std::vector<double> c3 = { 400., 40., -0.2 };		/// Curve 3 at 400 Vdc, start temp 40 C, slope -0.2
 	double e = 0.01;
 public:
 	void SetUp() {
@@ -57,7 +58,7 @@ TEST_F(sharedInverterTest, setUpTempDerateTest2_lib_shared_inverter) {
 	double V[2] = { 0,0 };
 	double startC[3] = { -99,-99,-99 };
 	double slope[3] = { 0,0,0 };
-	EXPECT_TRUE(inv->setTempDerateCurves(c1)) << "set up temp derate case 3";
+	EXPECT_TRUE(inv->setTempDerateCurves(c1, empty, empty)) << "set up temp derate case 3";
 	inv->getTempDerateCurves(V, startC, slope);
 	EXPECT_NEAR(V[0], 0, e) << "set up temp derate case 3";
 	EXPECT_NEAR(V[1], 0, e) << "set up temp derate case 3";
@@ -69,7 +70,7 @@ TEST_F(sharedInverterTest, setUpTempDerateTest2_lib_shared_inverter) {
 	EXPECT_NEAR(slope[2], 0, e) << "set up temp derate case 3";
 
 	// case 4: use 2 voltage curves
-	EXPECT_TRUE(inv->setTempDerateCurves(c1, c2)) << "set up temp derate case 4";
+	EXPECT_TRUE(inv->setTempDerateCurves(c1, c2, empty)) << "set up temp derate case 4";
 	inv->getTempDerateCurves(V, startC, slope);
 	EXPECT_NEAR(V[0], 250, e) << "set up temp derate case 4";
 	EXPECT_NEAR(V[1], 0, e) << "set up temp derate case 4";
@@ -87,7 +88,7 @@ TEST_F(sharedInverterTest, tempDerateTest1Curve_lib_shared_inverter) {
 	double loss = 0.;
 	double V = 200.;
 	double T = 20.;
-	inv->setTempDerateCurves(c1);
+	inv->setTempDerateCurves(c1, empty, empty);
 
 	// zero efficiency error case
 	inv->calculateTempDerate(V, T, pAC, eff, loss);
@@ -126,7 +127,7 @@ TEST_F(sharedInverterTest, tempDerateTest2Curves_lib_shared_inverter) {
 	double loss = 0.;
 	double V = 200.;
 	double T = 20.;
-	inv->setTempDerateCurves(c1, c2);
+	inv->setTempDerateCurves(c1, c2, empty);
 
 	// zero efficiency error case
 	inv->calculateTempDerate(V, T, pAC, eff, loss);

@@ -398,16 +398,10 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "inv_pd_vdco",                                "DC input voltage for the rated AC power rating",           "Vdc",     "",                     "pvsamv1",       "inverter_model=2",                    "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "inv_pd_vdcmax",                              "Maximum DC input operating voltage",                       "Vdc",     "",                     "pvsamv1",       "inverter_model=2",                    "",                              "" },
 
-	{ SSC_INPUT,		SSC_NUMBER,		 "en_inv_tdc",								   "Enable inverter temperature derating curve(s)",			   "0/1",     "",					  "pvsamv1"		   "*",								  "",							   "" },
-	{ SSC_INPUT,		SSC_NUMBER,		 "inv_tdc_V1",								   "Temperature derate curve at DC voltage 1",				   "Vdc",	  "",					  "pvsamv1",	   "en_inv_tdc=1",						  "",							   "" },
-	{ SSC_INPUT,		SSC_NUMBER,		 "inv_tdc_V2",								   "Temperature derate curve at DC voltage 2",				   "Vdc",	  "",					  "pvsamv1",	   "",									  "",							   "" },
-	{ SSC_INPUT,		SSC_NUMBER,		 "inv_tdc_V3",								   "Temperature derate curve at DC voltage 3",				   "Vdc",	  "",					  "pvsamv1",	   "",									  "",							   "" },
-	{ SSC_INPUT,		SSC_NUMBER,		 "inv_tdc_T1",								   "Start temp to derate for curve 1",						   "C",		  "",					  "pvsamv1",	   "en_inv_tdc=1",						  "",							   "" },
-	{ SSC_INPUT,		SSC_NUMBER,		 "inv_tdc_T2",								   "Start temp to derate for curve 2",						   "C",		  "",					  "pvsamv1",	   "",									  "",							   "" },
-	{ SSC_INPUT,		SSC_NUMBER,		 "inv_tdc_T3",								   "Start temp to derate for curve 3",						   "C",		  "",					  "pvsamv1",	   "",									  "",							   "" },
-	{ SSC_INPUT,		SSC_NUMBER,		 "inv_tdc_S1",								   "Efficiency derate slope for curve 1",					   "%/C",	  "",					  "pvsamv1",	   "en_inv_tdc=1",						  "",							   "" },
-	{ SSC_INPUT,		SSC_NUMBER,		 "inv_tdc_S2",								   "Efficiency derate slope for curve 2",					   "%/C",	  "",					  "pvsamv1",	   "",									  "",							   "" },
-	{ SSC_INPUT,		SSC_NUMBER,		 "inv_tdc_S3",								   "Efficiency derate slope for curve 3",					   "%/C",	  "",					  "pvsamv1",	   "",									  "",							   "" },
+	{ SSC_INPUT,		SSC_MATRIX,		 "inv_tdc_cec_db",							   "Temperature derate curves for CEC database",			   "Vdc",	  "",					  "pvsamv1",	   "en_inv_tdc=1",						  "",							   "" },
+	{ SSC_INPUT,		SSC_MATRIX,		 "inv_tdc_cec_cg",							   "Temperature derate curves for CEC Coef Gen",			   "Vdc",	  "",					  "pvsamv1",	   "",									  "",							   "" },
+	{ SSC_INPUT,		SSC_MATRIX,		 "inv_tdc_ds",								   "Temperature derate curves for Inv Datasheet",			   "Vdc",	  "",					  "pvsamv1",	   "",									  "",							   "" },
+	{ SSC_INPUT,		SSC_MATRIX,		 "inv_tdc_plc",								   "Temperature derate curves for Part Load Curve",			   "C",		  "",					  "pvsamv1",	   "en_inv_tdc=1",						  "",							   "" },
 
 
 	// battery storage and dispatch
@@ -564,8 +558,8 @@ static var_info _cm_vtab_pvsamv1[] = {
     { SSC_OUTPUT,        SSC_ARRAY,      "inv_cliploss",                         "Inverter clipping loss AC power limit",                "kW",   "",  "Time Series (Inverter)",       "*",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "inv_psoloss",                          "Inverter power consumption loss",                      "kW",   "",  "Time Series (Inverter)",       "*",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "inv_pntloss",                          "Inverter night time loss",                             "kW",   "",  "Time Series (Inverter)",       "*",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "inv_tdcloss",                       	 "Inverter thermal derate loss",                         "kW",   "",   "Time Series (Inverter)",              "en_inv_tdc=1",             "",                   "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "ac_wiring_loss",                       "AC wiring loss",                                       "kW",   "",   "Time Series (Inverter)",              "*",                        "",                   "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "inv_tdcloss",                       	 "Inverter thermal derate loss",                         "kW",   "",   "Time Series (Inverter)",      "*",             "",                   "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "ac_wiring_loss",                       "AC wiring loss",                                       "kW",   "",   "Time Series (Inverter)",      "*",                        "",                   "" },
 
 	// transformer model outputs
 	{ SSC_OUTPUT,        SSC_ARRAY,      "xfmr_nll_ts",                          "Transformer no load loss",                              "kW", "",    "Time Series (Transformer)", "", "", "" },
@@ -1473,6 +1467,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 		log( "Inverter MPPT voltage tracking window not defined - modules always operate at MPPT.", SSC_NOTICE );
 	}
 
+	util::matrix_t<double> inv_tdc;
 	if (inv_type == 0) // cec database
 	{
 		snlinv.Paco = as_double("inv_snl_paco");
@@ -1485,6 +1480,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 		snlinv.C2 = as_double("inv_snl_c2");
 		snlinv.C3 = as_double("inv_snl_c3");
 		ratedACOutput = snlinv.Paco;
+		inv_tdc = as_double("inv_tdc_cec_db");
 	}
 	else if (inv_type == 1) // datasheet data
 	{
@@ -1502,6 +1498,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 		snlinv.C2 = 0;
 		snlinv.C3 = 0;
 		ratedACOutput = snlinv.Paco;
+		inv_tdc = as_double("inv_tdc_ds");
 	}
 	else if (inv_type == 2) // partload curve
 	{
@@ -1516,6 +1513,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 		plinv.Partload = pl_pd;
 		plinv.Efficiency = eff_pd;
 		ratedACOutput = plinv.Paco;
+		inv_tdc = as_double("inv_tdc_plc");
 	}
 	else if (inv_type == 3) // coefficient generator
 	{
@@ -1529,6 +1527,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 		snlinv.C2 = as_double("inv_cec_cg_c2");
 		snlinv.C3 = as_double("inv_cec_cg_c3");
 		ratedACOutput = snlinv.Paco;
+		inv_tdc = as_double("inv_tdc_cec_cg");
 	}
 	else
 	{
@@ -1539,50 +1538,18 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 	// The shared inverter of the PV array and a tightly-coupled DC connected battery
 	std::unique_ptr<SharedInverter> sharedInverter(new SharedInverter(inv_type, num_inverters, &snlinv, &plinv));
 
-	// Inverter thermal derate curves
-	bool en_inv_tdc = as_boolean("en_inv_tdc");
-	if (en_inv_tdc) {
-		double* curve1 = new double[3];
-		curve1[0] = as_double("inv_tdc_V1");
-		curve1[1] = as_double("inv_tdc_T1");
-		curve1[2] = as_double("inv_tdc_S1");
-		
-		double* curve2 = new double[3];
-		try {
-			curve2[0] = as_double("inv_tdc_V2");
-			curve2[1] = as_double("inv_tdc_T2");
-			curve2[2] = as_double("inv_tdc_S2");
-		}
-		catch (general_error &){
-			curve2[0] = 0;
-			curve2[1] = -99;
-			curve2[2] = 0;
-		}
-		if (curve2[0] <= 0 || curve2[1] <= -98 || curve2[0] >= 0) {
-			delete curve2;
-			curve2 = NULL;
-		}
+	
 
-		double* curve3 = new double[3];
-		try {
-			curve3[0] = as_double("inv_tdc_V3");
-			curve3[1] = as_double("inv_tdc_T3");
-			curve3[2] = as_double("inv_tdc_S3");
-		}
-		catch (general_error &) {
-			curve3[0] = 0;
-			curve3[1] = -99;
-			curve3[2] = 0;
-		}
-		if (curve3[0] <= 0 || curve3[1] <= -98 || curve3[0] >= 0) {
-			delete curve3;
-			curve3 = NULL;
-		}
-		if (!sharedInverter->setTempDerateCurves(curve1, curve2, curve3)) {
-			throw exec_error("pvsamv1", "Error setting up inverter temperature derate curves");
-		}
+	// Inverter thermal derate curves
+	std::vector<std::vector<double>> curves;
+	for (size_t i = 0; i < 3; i++) {
+		for (size_t j = 0; j < 3; j++)
+			curves[i][j] = inv_tdc.at(i, j);
 	}
 	
+	if (!sharedInverter->setTempDerateCurves(curves[0], curves[1], curves[2])) {
+		throw exec_error("pvsamv1", "Error setting up inverter temperature derate curves");
+	}
 
 	// Warning workaround
 	static bool is32BitLifetime = (__ARCHBITS__ == 32 && system_use_lifetime_output);
