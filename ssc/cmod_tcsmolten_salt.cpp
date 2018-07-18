@@ -229,6 +229,12 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "epsilon_radHX",		 "Effectiveness of HX between radiative field and cold storage",	"-",			"",            "RADCOOL",      "?=.8",						 "",						"" },
 	{ SSC_INPUT,        SSC_NUMBER,      "ctes_type",			 "Type of cold storage (2=two tank, 3= three node)",				"-",			"",            "RADCOOL",      "?=2",						 "",						"" },
 	{ SSC_INPUT,        SSC_NUMBER,      "helio_area_tot",		 "Heliostat total reflective area",									"-",			"",            "RADCOOL",      "?=0",						 "",						"" },
+	{ SSC_INPUT,        SSC_NUMBER,      "radiator_unitcost",	 "Cost of radiative panels",										"$/m^2",		"",            "RADCOOL",      "?=0",						 "",						"" },
+	{ SSC_INPUT,        SSC_NUMBER,      "radiator_installcost", "Installation cost of radiative panels",							"$/m^2",		"",            "RADCOOL",      "?=0",						 "",						"" },
+	{ SSC_INPUT,        SSC_NUMBER,      "radiator_fluidcost",	 "Cost of circulating fluid in radiative panels",					"$/L",			"",            "RADCOOL",      "?=0",						 "",						"" },
+	{ SSC_INPUT,        SSC_NUMBER,      "radfluid_vol_ratio",	 "Ratio of fluid in distribution to fluid in panels",				"-",			"",            "RADCOOL",      "?=0",						 "",						"" },
+	{ SSC_INPUT,        SSC_NUMBER,      "ctes_cost",			 "Cost of cold storage construction",								"$/L",			"",            "RADCOOL",      "?=0",						 "",						"" },
+	{ SSC_INPUT,        SSC_NUMBER,      "rad_pressuredrop", "Average pressure drop through a radiative panel & distribution",	"kPa",			"",            "RADCOOL",      "?=0",						 "",						"" },
 
     					     																	  
     // Power Cycle Inputs
@@ -383,6 +389,7 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
 	{ SSC_OUTPUT,       SSC_NUMBER,      "csp.pt.cost.receiver",	            "Receiver cost",                          "$",            "",            "system_costs",   "*",        "",  "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,      "csp.pt.cost.storage",	                "TES cost",                               "$",            "",            "system_costs",   "*",        "",  "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,      "csp.pt.cost.power_block",	            "Power cycle cost",                       "$",            "",            "system_costs",   "*",        "",  "" },
+	{ SSC_OUTPUT,		SSC_NUMBER,		 "csp.pt.cost.rad_cool",				    "Radiative cooling cost"				  "$",			  "",			 "system_costs",   "*",		   "",	"" },
 	{ SSC_OUTPUT,       SSC_NUMBER,      "csp.pt.cost.bop",	                    "BOP cost",                               "$",            "",            "system_costs",   "*",        "",  "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,      "csp.pt.cost.fossil",	                "Fossil backup cost",                     "$",            "",            "system_costs",   "*",        "",  "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,      "ui_direct_subtotal",	                "Direct capital precontingency cost",     "$",            "",            "system_costs",   "*",        "",  "" },
@@ -985,7 +992,7 @@ public:
 				rankine_pc.mc_radiator.ms_params.epsilong = as_double("epsilon_radgrnd");
 				rankine_pc.mc_radiator.ms_params.Lsec = as_double("L_rad_sections");
 				rankine_pc.mc_radiator.ms_params.epsilon_HX = as_double("epsilon_radHX");
-
+				rankine_pc.mc_radiator.ms_params.radfield_dp = as_double("rad_pressuredrop");
 
 				size_t n_F_wc = 0;
 				ssc_number_t *p_F_wc = as_array("F_wc", &n_F_wc);
@@ -1921,6 +1928,23 @@ public:
 		sys_costs.ms_par.W_dot_design = as_double("P_ref");
 		sys_costs.ms_par.power_cycle_spec_cost = as_double("plant_spec_cost");
 
+		sys_costs.ms_par.radfield_area= rankine_pc.mc_radiator.ms_params.Afield;
+		sys_costs.ms_par.radfield_vol = rankine_pc.mc_radiator.ms_params.D*rankine_pc.mc_radiator.ms_params.D / 4 * PI*rankine_pc.mc_radiator.ms_params.n*rankine_pc.mc_radiator.ms_params.Np*rankine_pc.mc_radiator.ms_params.L; //Calculate volume in radiator panel tubes = pi/4*d^2*L*n*Np
+		if (rankine_pc.mc_two_tank_ctes.ms_params.m_ctes_type == 2) //If two tank
+		{
+			sys_costs.ms_par.coldstorage_vol = rankine_pc.mc_two_tank_ctes.get_physical_volume();
+		}
+		if (rankine_pc.mc_two_tank_ctes.ms_params.m_ctes_type > 2) //If stratified 
+		{
+			sys_costs.ms_par.coldstorage_vol = rankine_pc.mc_stratified_ctes.get_physical_volume();	
+
+		}
+		sys_costs.ms_par.rad_unitcost = as_double("radiator_unitcost");
+		sys_costs.ms_par.rad_installcost = as_double("radiator_installcost");
+		sys_costs.ms_par.rad_fluidcost = as_double("radiator_fluidcost");
+		sys_costs.ms_par.rad_volmulti = as_double("radfluid_vol_ratio");
+		sys_costs.ms_par.coldstorage_unitcost = as_double("ctes_cost");
+
 		sys_costs.ms_par.bop_spec_cost = as_double("bop_spec_cost");
 
 		sys_costs.ms_par.fossil_backup_spec_cost = as_double("fossil_spec_cost");
@@ -1928,7 +1952,7 @@ public:
 		sys_costs.ms_par.contingency_rate = as_double("contingency_rate");
 
 		//land area
-		sys_costs.ms_par.total_land_area = as_double("land_area_base") * as_double("csp.pt.sf.land_overhead_factor") + as_double("csp.pt.sf.fixed_land_area");
+		sys_costs.ms_par.total_land_area = as_double("land_area_base") * as_double("csp.pt.sf.land_overhead_factor") + as_double("csp.pt.sf.fixed_land_area")+ sys_costs.ms_par.radfield_area/4046.86 /*acres/m^2*/ ;
 		assign("csp.pt.cost.total_land_area", (ssc_number_t)sys_costs.ms_par.total_land_area);
 
 		sys_costs.ms_par.plant_net_capacity = system_capacity / 1000.0;			//[MWe], convert from kWe
@@ -1961,6 +1985,7 @@ public:
 		assign("csp.pt.cost.receiver", (ssc_number_t)sys_costs.ms_out.receiver_cost);
 		assign("csp.pt.cost.storage", (ssc_number_t)sys_costs.ms_out.tes_cost);
 		assign("csp.pt.cost.power_block", (ssc_number_t)sys_costs.ms_out.power_cycle_cost);
+		assign("csp.pt.cost.rad_cool", (ssc_number_t)sys_costs.ms_out.rad_cool_cost);
 		assign("csp.pt.cost.bop", (ssc_number_t)sys_costs.ms_out.bop_cost);
 		assign("csp.pt.cost.fossil", (ssc_number_t)sys_costs.ms_out.fossil_backup_cost);
 		assign("ui_direct_subtotal", (ssc_number_t)sys_costs.ms_out.direct_capital_precontingency_cost);

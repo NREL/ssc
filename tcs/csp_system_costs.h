@@ -84,6 +84,16 @@ public:
 			// Power Cycle
 		double W_dot_design;			//[MWe] Power cycle design output (w/o subtracting plant parasitics)
 		double power_cycle_spec_cost;	//[$/kWe] Power cycle specific cost
+		
+			//Radiative cooling & cold storage
+		double radfield_area;			//[m^2] Radiator field area if any 
+		double coldstorage_vol;			//[m^3] Cold storage tank volume (total of all tanks)
+		double radfield_vol;			//[m^3] Volume of fluid in radiator panels
+		double rad_unitcost;			//[$/m^2] Radiator area
+		double rad_installcost;			//[$/m^2] Radiator installation cost per square meter
+		double rad_volmulti;			//[-]	Multiplier for the volume of fluid in delivery versus in radiators
+		double rad_fluidcost;			//[$/L]	Cooling fluid unit cost
+		double coldstorage_unitcost;	//[$/L] Cold storage construction cost
 
 			// Balance Of Plant
 		double bop_spec_cost;			//[$/kWe] BOP specific cost
@@ -117,6 +127,9 @@ public:
 				total_land_area = plant_net_capacity = EPC_land_spec_cost = EPC_land_perc_direct_cost = EPC_land_per_power_cost = EPC_land_fixed_cost = 
 				total_land_spec_cost = total_land_perc_direct_cost = total_land_per_power_cost = total_land_fixed_cost = sales_tax_basis = sales_tax_rate =
 				std::numeric_limits<double>::quiet_NaN();
+
+			rad_fluidcost = rad_installcost = rad_unitcost = rad_volmulti = coldstorage_unitcost =
+				radfield_area = coldstorage_vol =radfield_vol= 0;	//Initialize these two variables to zero.
 		}
 
 	};
@@ -129,6 +142,7 @@ public:
 		double receiver_cost;			//[$]
 		double tes_cost;				//[$]
 		double power_cycle_cost;		//[$]
+		double rad_cool_cost;			//[$]
 		double bop_cost;				//[$]
 		double fossil_backup_cost;		//[$]
 		double direct_capital_precontingency_cost;	//[$]
@@ -178,6 +192,8 @@ namespace N_mspt
 
 	double power_cycle_cost(double W_dot_design /*MWe*/, double power_cycle_spec_cost /*$/kWe*/);
 
+	double rad_cool_cost(double rad_area /*m^2*/, double cold_volume /*m^3*/,double rad_field /*m^3*/, double panelcost /*$/m^2*/, double panelinstallcost /*$/m^2*/, double fluidcost /*$/L*/, double muliplier_volume /*-*/, double storagecost /*$/L*/);
+
 	double bop_cost(double W_dot_design /*MWe*/, double bop_spec_cost /*$/kWe*/);
 
 	double fossil_backup_cost(double W_dot_design /*MWe*/, double fossil_backup_spec_cost /*$/kWe*/);
@@ -188,6 +204,7 @@ namespace N_mspt
 		double receiver_cost /*$*/,
 		double tes_cost /*$*/,
 		double power_cycle_cost /*$*/,
+		double rad_cool_cost /*$*/,
 		double bop_cost /*$*/,
 		double fossil_backup_cost /*$*/);
 	

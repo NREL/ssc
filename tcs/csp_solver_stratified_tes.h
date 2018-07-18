@@ -212,6 +212,8 @@ public:
 
 	virtual double get_cold_mass_prev();
 
+	virtual double get_physical_volume(); //m^3
+
 	virtual double get_hot_massflow_avail(double step_s); //kg/sec
 
 	virtual double get_cold_massflow_avail(double step_s); //kg/sec

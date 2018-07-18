@@ -228,6 +228,8 @@ public:
 
 	virtual double get_cold_temp();
 
+
+
     virtual double get_initial_charge_energy(); //MWh
 
     virtual double get_min_charge_energy(); //MWh
@@ -328,6 +330,7 @@ public:
 			m_is_hx = true;
 
 			m_ts_hours = 0.0;		//[hr] Default to 0 so that if storage isn't defined, simulation won't crash
+			m_ctes_type = 0;		// Default to <2 so that storage is not assumed in cost calculations.
 
 			m_W_dot_pc_design = m_eta_pc_factor = m_solarm = m_h_tank = m_u_tank = m_hot_tank_Thtr = m_hot_tank_max_heat = m_cold_tank_Thtr =
 				m_cold_tank_max_heat = m_dt_hot = m_T_field_in_des = m_T_field_out_des = m_T_tank_hot_ini =
@@ -356,6 +359,8 @@ public:
 	virtual double get_hot_mass_prev();
 
 	virtual double get_cold_mass_prev();
+
+	virtual double get_physical_volume(); //m^3
 
 	virtual double get_hot_massflow_avail(double step_s); //kg/sec
 

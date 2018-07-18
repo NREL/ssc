@@ -37,7 +37,7 @@ void C_csp_radiator::init()
 
 void C_csp_radiator::night_cool(double T_db /*K*/, double T_rad_in /*K*/, double u /*m/s*/, double T_s /*K*/, double m_dot_rad /*K*/,
 	//outputs
-	double &T_rad_out /*K*/)
+	double &T_rad_out /*K*/, double &W_radpump /*MW*/)
 {
 	double Tp= std::numeric_limits<double>::quiet_NaN();
 	double error_Tp = 10;		//[K]
@@ -50,7 +50,7 @@ void C_csp_radiator::night_cool(double T_db /*K*/, double T_rad_in /*K*/, double
 		{
 			analytical_panel_calc(T_db /*K*/, T_rad_in /*K*/, Tp_est /*K*/, u /*m/s*/, T_s /*K*/, m_dot_rad /*K*/,
 				//outputs
-				T_rad_out /*K*/, Tp /*K*/);
+				T_rad_out /*K*/, Tp /*K*/, W_radpump /*MW*/);
 			error_Tp = abs(Tp_est - Tp);	//Update error
 			Tp_est = Tp;					//Update guess value
 		}
@@ -61,7 +61,7 @@ void C_csp_radiator::night_cool(double T_db /*K*/, double T_rad_in /*K*/, double
 		{
 			analytical_panel_calc_HX(T_db /*K*/, T_rad_in /*K*/, Tp_est /*K*/, u /*m/s*/, T_s /*K*/, m_dot_rad /*K*/,
 				//outputs
-				T_rad_out /*K*/, Tp /*K*/);
+				T_rad_out /*K*/, Tp /*K*/, W_radpump /*MW*/);
 			error_Tp = abs(Tp_est - Tp);	//Update error
 			Tp_est = Tp;					//Update guess value
 		}
@@ -70,7 +70,7 @@ void C_csp_radiator::night_cool(double T_db /*K*/, double T_rad_in /*K*/, double
 
 void C_csp_radiator::analytical_panel_calc(double T_db /*K*/, double Tin /*K*/, double Tp_est /*K*/, double u /*m/s*/, double T_s /*K*/, double m_dot /*K*/,
 	//outputs
-	double &T_rad_out /*K*/, double &Tp /*K*/)
+	double &T_rad_out /*K*/, double &Tp /*K*/, double &W_radpump /*MW*/)
 {
 	/*	% Author: Ana Dyreson University of Wisconsin - Madison
 		% Summary : This function determines the outlet temperature of a fluid
@@ -231,11 +231,13 @@ void C_csp_radiator::analytical_panel_calc(double T_db /*K*/, double Tin /*K*/, 
 		Tp = Qu / (ULad*A_c) + Tad;																			//Plate temperature
 		double Tpa = 0.5*(Tp+T_db);																				//Updated value for average of plate & ambient temperature.
 
+		//Pumping
+		W_radpump = (ms_params.radfield_dp*ms_params.m_dot_panel*ms_params.Np) / (rho_water*0.75*0.85)/1000;	//MWe pumping power when radiator field is operating. Isentropic eff = 0.75 and Mechanical pump eff = 0.85.
 }// adiabatic calc
 
 void C_csp_radiator::analytical_panel_calc_HX(double T_db /*K*/, double Tin /*K*/, double Tp_est /*K*/, double u /*m/s*/, double T_s /*K*/, double m_dot /*K*/,
 	//outputs
-	double &T_rad_out /*K*/, double &Tp /*K*/)
+	double &T_rad_out /*K*/, double &Tp /*K*/, double &W_radpump /*MW*/)
 {
 	/*	% Author: Ana Dyreson University of Wisconsin - Madison
 	% Summary : This function determines the outlet temperature of a fluid
@@ -436,5 +438,8 @@ void C_csp_radiator::analytical_panel_calc_HX(double T_db /*K*/, double Tin /*K*
 	T_rad_out = Tin - Qu / (m_dot*cp_water);															//Outlet temperature of water side of HX
 	Tp = Qu / (ULad*A_c) + Tad;																					//Plate temperature
 	double Tpa = 0.5*(Tp + T_db);																				//Updated value for average of plate & ambient temperature.
+	//Pumping
+	W_radpump = (ms_params.radfield_dp*ms_params.m_dot_panel*ms_params.Np) / (rho_fluid*0.75*0.85) / 1000;	//MWe pumping power when radiator field is operating. Isentropic eff = 0.75 and Mechanical pump eff = 0.85.
+
 
 }// adiabatic calc using a separate fluid in radiator loop 

@@ -446,6 +446,12 @@ double C_csp_stratified_tes::get_cold_mass_prev()
 	return mc_node_n.calc_mass_at_prev();	//[kg]
 }
 
+double C_csp_stratified_tes::get_physical_volume()
+
+{
+	return m_vol_tank;				//[m^3]
+}
+
 double C_csp_stratified_tes::get_hot_massflow_avail(double step_s) //[kg/sec]
 {
 	return mc_node_one.m_dot_available(0, step_s);

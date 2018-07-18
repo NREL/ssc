@@ -621,6 +621,7 @@ double C_csp_two_tank_tes::get_cold_temp()
 }
 
 
+
 double C_csp_two_tank_tes::get_initial_charge_energy() 
 {
     //MWh
@@ -1186,6 +1187,12 @@ double C_csp_cold_tes::get_hot_mass_prev()
 double C_csp_cold_tes::get_cold_mass_prev()
 {
 	return mc_cold_tank.calc_mass_at_prev();	//[kg]
+}
+
+double C_csp_cold_tes::get_physical_volume()
+
+{
+	return m_vol_tank;				//[m^3]
 }
 
 double C_csp_cold_tes::get_hot_massflow_avail(double step_s) //[kg/sec]

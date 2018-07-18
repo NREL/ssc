@@ -57,12 +57,13 @@ public:
 		double m_night_hrs;		//Number of hours plant will run at summer peak
 		double m_power_hrs;		//Number of hours plant operates in one day at summer peak
 		double Afield, RM, Asolar_refl;
-		int Np;
-		double epsilon_HX;
+		int Np;					//Number of radiator panels in parallel
+		double epsilon_HX;		//Effectiveness of the heat exchanger between cold storage and radiative field
+		double radfield_dp;		//Pressure drop through panel and distribution in radiative field [kPa]
 		S_params()
 		{
-			n = Np= 0;
-			m_dot_panel = W = L = L_c = th = D = k_panel = epsilon = epsilonb = epsilong = Lsec = m_night_hrs = Afield = RM = epsilon_HX = Asolar_refl = std::numeric_limits<double>::quiet_NaN();
+			n = Np=Afield= radfield_dp=0;
+			m_dot_panel = W = L = L_c = th = D = k_panel = epsilon = epsilonb = epsilong = Lsec = m_night_hrs = RM = epsilon_HX = Asolar_refl = std::numeric_limits<double>::quiet_NaN();
 		}
 	};
 
@@ -74,15 +75,15 @@ public:
 
 	void night_cool(double T_db /*K*/, double T_rad_in /*K*/, double u /*m/s*/, double T_s /*K*/, double m_dot_rad /*K*/,
 		//outputs
-		double &T_rad_out /*K*/);
+		double &T_rad_out /*K*/,double &W_radpump /*MW*/);
 
 	void analytical_panel_calc(double T_db /*K*/, double T_rad_in /*K*/, double Tp_est /*K*/, double u /*m/s*/, double T_s /*K*/, double m_dot_rad /*K*/,
 		//outputs
-		double &T_rad_out /*K*/,double &T_p /*K*/);
+		double &T_rad_out /*K*/,double &T_p /*K*/, double &W_radpump /*MW*/);
 
 	void analytical_panel_calc_HX(double T_db /*K*/, double T_rad_in /*K*/, double Tp_est /*K*/, double u /*m/s*/, double T_s /*K*/, double m_dot_rad /*K*/,
 		//outputs
-		double &T_rad_out /*K*/, double &T_p /*K*/);
+		double &T_rad_out /*K*/, double &T_p /*K*/, double &W_radpump /*MW*/);
 
 };
 

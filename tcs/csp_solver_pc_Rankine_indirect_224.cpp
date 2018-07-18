@@ -836,7 +836,7 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 	bool is_dark = (zenith > 90);								//boolean for if it is dark outside. =1 if dark out.
 	bool is_two_tank = (mc_two_tank_ctes.ms_params.m_ctes_type == 2); //boolean for cold storage type
 	bool is_stratified = (mc_two_tank_ctes.ms_params.m_ctes_type >2);
-	
+	double W_radpump = 0;										//[MW] To include pumping for radiative cooling field
 	if (ms_params.m_CT == 4)
 
 	{
@@ -1008,7 +1008,7 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 						{
 							if (m_dot_warm_avail > (m_dot_radfield - m_dot_condenser))				//warm tank has sufficient for net flow also
 							{
-								mc_radiator.night_cool(T_db, T_warm_prev_K, u, T_s_K, mc_radiator.ms_params.m_dot_panel, T_rad_out);	//Call radiator to calculate temperature. Single series set of panels.
+								mc_radiator.night_cool(T_db, T_warm_prev_K, u, T_s_K, mc_radiator.ms_params.m_dot_panel, T_rad_out,W_radpump);	//Call radiator to calculate temperature. Single series set of panels.
 								mc_two_tank_ctes.charge_discharge(step_sec, T_db, m_dot_condenser, T_cond_out + 273.15, m_dot_radfield, T_rad_out, mc_two_tank_ctes_outputs);
 								radcool_cntrl = 21;
 							}
@@ -1021,7 +1021,8 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 						}
 						else																		//rarely would cold not be sufficient because the net flow in charge-discharge is typically into cold
 						{
-							mc_radiator.night_cool(T_db, T_warm_prev_K, u, T_s_K, mc_radiator.ms_params.m_dot_panel, T_rad_out);
+							mc_radiator.night_cool(T_db, T_warm_prev_K, u, T_s_K, mc_radiator.ms_params.m_dot_panel, T_rad_out,W_radpump);
+
 							//mc_cold_storage.idle(step_sec, T_db, mc_cold_storage_outputs);				//Idle tank if not enough mass during day (should not happen if tank sized well)
 
 							mc_two_tank_ctes.discharge(step_sec, T_db, m_dot_radfield, T_rad_out, T_rad_in, mc_two_tank_ctes_outputs);
@@ -1044,7 +1045,7 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 					} 
 					else //night
 					{
-						mc_radiator.night_cool(T_db, T_warm_prev_K, u, T_s_K, mc_radiator.ms_params.m_dot_panel, T_rad_out);	//Call radiator to calculate temperature. Single series set of panels.
+						mc_radiator.night_cool(T_db, T_warm_prev_K, u, T_s_K, mc_radiator.ms_params.m_dot_panel, T_rad_out,W_radpump);	//Call radiator to calculate temperature. Single series set of panels.
 						mc_stratified_ctes.stratified_tanks(step_sec, T_db, m_dot_condenser, T_cond_out+273.15,m_dot_radfield, T_rad_out, mc_stratified_ctes_outputs);
 						radcool_cntrl = 21;
 										
@@ -1224,13 +1225,13 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 				{
 					if (m_dot_warm_avail < m_dot_radfield)						//If dark & warm empty, recirculate.
 					{
-						mc_radiator.night_cool(T_db, T_cold_prev_K, u, T_s_K, mc_radiator.ms_params.m_dot_panel, T_rad_out);			//Call radiator to calculate temperature.
+						mc_radiator.night_cool(T_db, T_cold_prev_K, u, T_s_K, mc_radiator.ms_params.m_dot_panel, T_rad_out,W_radpump);			//Call radiator to calculate temperature.
 						mc_two_tank_ctes.recirculation(step_sec, T_db, m_dot_radfield, T_rad_out, mc_two_tank_ctes_outputs);
 						radcool_cntrl = 40;
 					}
 					else														//If dark & warm not empty, discharge (cooling)
 					{
-						mc_radiator.night_cool(T_db, T_warm_prev_K, u, T_s_K, mc_radiator.ms_params.m_dot_panel, T_rad_out);
+						mc_radiator.night_cool(T_db, T_warm_prev_K, u, T_s_K, mc_radiator.ms_params.m_dot_panel, T_rad_out,W_radpump);
 						mc_two_tank_ctes.discharge(step_sec, T_db, m_dot_radfield, T_rad_out, T_rad_in, mc_two_tank_ctes_outputs);
 						radcool_cntrl = 41;
 					}
@@ -1260,7 +1261,7 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 				}
 				else //night
 				{
-					mc_radiator.night_cool(T_db, T_warm_prev_K, u, T_s_K, mc_radiator.ms_params.m_dot_panel, T_rad_out);	//Call radiator to calculate temperature. Single series set of panels.
+					mc_radiator.night_cool(T_db, T_warm_prev_K, u, T_s_K, mc_radiator.ms_params.m_dot_panel, T_rad_out,W_radpump);	//Call radiator to calculate temperature. Single series set of panels.
 					mc_stratified_ctes.stratified_tanks(step_sec, T_db, 0.0, T_cond_out+273.15, m_dot_radfield, T_rad_out, mc_stratified_ctes_outputs);
 					radcool_cntrl = 41;
 
@@ -1492,7 +1493,7 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 	
 	//out_report.m_m_dot_htf_ref = m_dot_htf_ref;		//[kg/hr] Calculated reference HTF flow rate at design
 	mc_reported_outputs.value(E_M_DOT_HTF_REF, m_dot_htf_ref);	//[kg/hr]
-	out_solver.m_W_cool_par = W_cool_par;				//[MWe] Cooling system parasitic load
+	out_solver.m_W_cool_par = W_cool_par+W_radpump;				//[MWe] Cooling system parasitic load
 	//out_report.m_P_ref = ms_params.m_P_ref / 1000.0;		//[MWe] Reference power level output at design, convert from kWe
 	//out_report.m_f_hrsys = f_hrsys;					//[-] Fraction of operating heat rejection system
 	//out_report.m_P_cond = P_cond;						//[Pa] Condenser pressure
