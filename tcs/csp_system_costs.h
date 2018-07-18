@@ -142,7 +142,9 @@ public:
 		double receiver_cost;			//[$]
 		double tes_cost;				//[$]
 		double power_cycle_cost;		//[$]
-		double rad_cool_cost;			//[$]
+		double rad_field_totcost;			//[$]
+		double rad_fluid_totcost;			//[$]
+		double rad_storage_totcost;		//[$]
 		double bop_cost;				//[$]
 		double fossil_backup_cost;		//[$]
 		double direct_capital_precontingency_cost;	//[$]
@@ -160,6 +162,7 @@ public:
 			site_improvement_cost = heliostat_cost = tower_cost = receiver_cost = tes_cost = power_cycle_cost = bop_cost = fossil_backup_cost =
 				direct_capital_precontingency_cost = contingency_cost = total_direct_cost = epc_and_owner_cost = total_land_cost = 
 				sales_tax_cost = total_indirect_cost = total_installed_cost = estimated_installed_cost_per_cap = 
+				rad_field_totcost=rad_fluid_totcost=rad_storage_totcost=
 				std::numeric_limits<double>::quiet_NaN();
 		}
 	};
@@ -192,7 +195,9 @@ namespace N_mspt
 
 	double power_cycle_cost(double W_dot_design /*MWe*/, double power_cycle_spec_cost /*$/kWe*/);
 
-	double rad_cool_cost(double rad_area /*m^2*/, double cold_volume /*m^3*/,double rad_field /*m^3*/, double panelcost /*$/m^2*/, double panelinstallcost /*$/m^2*/, double fluidcost /*$/L*/, double muliplier_volume /*-*/, double storagecost /*$/L*/);
+	double rad_field_totcost(double rad_area /*m^2*/, double panelcost /*$/m^2*/, double panelinstallcost /*$/m^2*/);
+	double rad_fluid_totcost(double rad_field /*m^3*/,  double fluidcost /*$/L*/, double muliplier_volume /*-*/);
+	double rad_storage_totcost(double cold_volume /*m^3*/, double storagecost /*$/L*/);
 
 	double bop_cost(double W_dot_design /*MWe*/, double bop_spec_cost /*$/kWe*/);
 
@@ -204,7 +209,9 @@ namespace N_mspt
 		double receiver_cost /*$*/,
 		double tes_cost /*$*/,
 		double power_cycle_cost /*$*/,
-		double rad_cool_cost /*$*/,
+		double rad_field_totcost /*$*/,
+		double rad_fluid_totcost /*$*/,
+		double rad_storage_totcost /*$*/,
 		double bop_cost /*$*/,
 		double fossil_backup_cost /*$*/);
 	

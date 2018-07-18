@@ -389,7 +389,9 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
 	{ SSC_OUTPUT,       SSC_NUMBER,      "csp.pt.cost.receiver",	            "Receiver cost",                          "$",            "",            "system_costs",   "*",        "",  "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,      "csp.pt.cost.storage",	                "TES cost",                               "$",            "",            "system_costs",   "*",        "",  "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,      "csp.pt.cost.power_block",	            "Power cycle cost",                       "$",            "",            "system_costs",   "*",        "",  "" },
-	{ SSC_OUTPUT,		SSC_NUMBER,		 "csp.pt.cost.rad_cool",				    "Radiative cooling cost"				  "$",			  "",			 "system_costs",   "*",		   "",	"" },
+	{ SSC_OUTPUT,		SSC_NUMBER,		 "csp.pt.cost.rad_field",			    "Radiative field cost"					  "$",			  "",			 "system_costs",   "*",		   "",	"" },
+	{ SSC_OUTPUT,		SSC_NUMBER,		 "csp.pt.cost.rad_fluid",			    "Radiative fluid cost"					  "$",			  "",			 "system_costs",   "*",		   "",	"" },
+	{ SSC_OUTPUT,		SSC_NUMBER,		 "csp.pt.cost.rad_storage",			    "Cold storage cost"						  "$",			  "",			 "system_costs",   "*",		   "",	"" },
 	{ SSC_OUTPUT,       SSC_NUMBER,      "csp.pt.cost.bop",	                    "BOP cost",                               "$",            "",            "system_costs",   "*",        "",  "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,      "csp.pt.cost.fossil",	                "Fossil backup cost",                     "$",            "",            "system_costs",   "*",        "",  "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,      "ui_direct_subtotal",	                "Direct capital precontingency cost",     "$",            "",            "system_costs",   "*",        "",  "" },
@@ -579,6 +581,8 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
 	// Annual single-value outputs
 	{ SSC_OUTPUT,       SSC_NUMBER,      "annual_energy",        "Annual total electric power to grid",                          "kWhe",       "",            "System",         "*",                       "",           "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,      "annual_W_cycle_gross", "Electrical source - Power cycle gross output",                 "kWhe",       "",            "PC",             "*",                       "",           "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "annual_W_cooling_tower", "Total of condenser operation parasitics",				      "kWhe",       "",            "PC",             "*",                       "",           "" },
+
 	{ SSC_OUTPUT,       SSC_NUMBER,      "conversion_factor",    "Gross to Net Conversion Factor",                               "%",            "",            "PostProcess",    "*",                       "",           "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,      "capacity_factor",      "Capacity factor",                                              "%",            "",            "PostProcess",    "*",                       "",           "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,      "kwh_per_kw",           "First year kWh/kW",                                            "kWh/kW",       "",            "",               "*",                       "",           "" },
@@ -1985,7 +1989,9 @@ public:
 		assign("csp.pt.cost.receiver", (ssc_number_t)sys_costs.ms_out.receiver_cost);
 		assign("csp.pt.cost.storage", (ssc_number_t)sys_costs.ms_out.tes_cost);
 		assign("csp.pt.cost.power_block", (ssc_number_t)sys_costs.ms_out.power_cycle_cost);
-		assign("csp.pt.cost.rad_cool", (ssc_number_t)sys_costs.ms_out.rad_cool_cost);
+		assign("csp.pt.cost.rad_field", (ssc_number_t)sys_costs.ms_out.rad_field_totcost);
+		assign("csp.pt.cost.rad_fluid", (ssc_number_t)sys_costs.ms_out.rad_fluid_totcost);
+		assign("csp.pt.cost.rad_storage", (ssc_number_t)sys_costs.ms_out.rad_storage_totcost);
 		assign("csp.pt.cost.bop", (ssc_number_t)sys_costs.ms_out.bop_cost);
 		assign("csp.pt.cost.fossil", (ssc_number_t)sys_costs.ms_out.fossil_backup_cost);
 		assign("ui_direct_subtotal", (ssc_number_t)sys_costs.ms_out.direct_capital_precontingency_cost);
@@ -2145,6 +2151,8 @@ public:
 		accumulate_annual_for_year("gen", "annual_energy", sim_setup.m_report_step / 3600.0, steps_per_hour, 1, n_steps_fixed/steps_per_hour);
 		
 		accumulate_annual_for_year("P_cycle", "annual_W_cycle_gross", 1000.0*sim_setup.m_report_step / 3600.0, steps_per_hour, 1, n_steps_fixed/steps_per_hour);		//[kWe-hr]
+		accumulate_annual_for_year("P_cooling_tower_tot", "annual_W_cooling_tower", 1000.0*sim_setup.m_report_step / 3600.0, steps_per_hour, 1, n_steps_fixed / steps_per_hour);		//[kWe-hr]
+
 
         accumulate_annual_for_year("disp_objective", "disp_objective_ann", 1000.0*sim_setup.m_report_step / 3600.0, steps_per_hour, 1, n_steps_fixed/steps_per_hour);
         accumulate_annual_for_year("disp_solve_iter", "disp_iter_ann", 1000.0*sim_setup.m_report_step / 3600.0, steps_per_hour, 1, n_steps_fixed/steps_per_hour);
