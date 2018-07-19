@@ -92,9 +92,9 @@ enum {
 	P_hot_tank_Thtr,	
 	P_cold_tank_max_heat,
 	P_hot_tank_max_heat,
-    //P_tanks_in_parallel,
-    //P_hot_tank_bypass,
-    //P_T_tank_hot_in_min,
+    P_tanks_in_parallel,
+    P_hot_tank_bypass,
+    P_T_tank_hot_in_min,
 	P_T_field_in_des,
 	P_T_field_out_des,
 	P_q_pb_design,
@@ -104,6 +104,11 @@ enum {
 	P_solarm,
 	P_pb_pump_coef,
 	P_tes_pump_coef,
+    P_V_tes_des,
+    P_L_tes_col,
+    P_L_tes_gen,
+    P_custom_tes_p_loss,
+    P_tes_k_loss_coeffs,
 	P_pb_fixed_par,
 	P_bop_array,
 	P_aux_array,
@@ -237,9 +242,9 @@ tcsvarinfo sam_mw_trough_type251_variables[] = {
     { TCS_PARAM,    TCS_NUMBER,        P_hot_tank_Thtr,      "hot_tank_Thtr",        "Minimum allowable hot tank HTF temp",                     "C",            "",        "",        ""},
     { TCS_PARAM,    TCS_NUMBER,        P_cold_tank_max_heat, "cold_tank_max_heat",   "Rated heater capacity for cold tank heating",             "MW",           "",        "",        ""},
 	{ TCS_PARAM,    TCS_NUMBER,        P_hot_tank_max_heat,  "hot_tank_max_heat",    "Rated heater capacity for hot tank heating",              "MW",           "",        "",        ""},
-    //{ TCS_PARAM,    TCS_NUMBER,        P_tanks_in_parallel,  "tanks_in_parallel",    "Tanks are in parallel, not in series, with solar field",  "-",            "",        "",        ""},
-    //{ TCS_PARAM,    TCS_NUMBER,        P_hot_tank_bypass,    "has_hot_tank_bypass",  "Bypass valve connects field outlet to cold tank",         "-",            "",        "",        ""},
-    //{ TCS_PARAM,    TCS_NUMBER,        P_T_tank_hot_in_min,  "T_tank_hot_inlet_min", "Rated heater capacity for hot tank heating",              "C",            "",        "",        ""},
+    { TCS_PARAM,    TCS_NUMBER,        P_tanks_in_parallel,  "tanks_in_parallel",    "Tanks are in parallel, not in series, with solar field",  "-",            "",        "",    "true"},
+    { TCS_PARAM,    TCS_NUMBER,        P_hot_tank_bypass,    "has_hot_tank_bypass",  "Bypass valve connects field outlet to cold tank",         "-",            "",        "",   "false"},
+    { TCS_PARAM,    TCS_NUMBER,        P_T_tank_hot_in_min,  "T_tank_hot_inlet_min", "Minimum hot tank htf inlet temperature",                  "C",            "",        "",     "400"},
     { TCS_PARAM,    TCS_NUMBER,        P_T_field_in_des,     "T_field_in_des",       "Field design inlet temperature",                          "C",            "",        "",        ""},
     { TCS_PARAM,    TCS_NUMBER,        P_T_field_out_des,    "T_field_out_des",      "Field design outlet temperature",                         "C",            "",        "",        ""},
     { TCS_PARAM,    TCS_NUMBER,        P_q_pb_design,        "q_pb_design",          "Design heat input to power block",                        "MWt",          "",        "",        ""},
@@ -249,6 +254,11 @@ tcsvarinfo sam_mw_trough_type251_variables[] = {
     { TCS_PARAM,    TCS_NUMBER,        P_solarm,             "solarm",               "Solar Multiple",                                          "-",            "",        "",        ""},
     { TCS_PARAM,    TCS_NUMBER,        P_pb_pump_coef,       "pb_pump_coef",         "Pumping power to move 1kg of HTF through PB loop",        "kW/(kg/s)",    "",        "",        ""},
     { TCS_PARAM,    TCS_NUMBER,        P_tes_pump_coef,      "tes_pump_coef",        "Pumping power to move 1kg of HTF through tes loop",       "kW/(kg/s)",    "",        "",        ""},
+    { TCS_PARAM,    TCS_NUMBER,        P_V_tes_des,          "V_tes_des",            "Design-point velocity to size the TES pipe diameters",    "m/s",          "",        "",        ""},
+    { TCS_PARAM,    TCS_ARRAY,         P_L_tes_col,          "L_tes_col",            "Length of TES pipes in collection loop",                  "m",            "",        "",        ""},
+    { TCS_PARAM,    TCS_ARRAY,         P_L_tes_gen,          "L_tes_gen",            "Length of TES pipes in generation loop",                  "m",            "",        "",        ""},
+    { TCS_PARAM,    TCS_NUMBER,        P_custom_tes_p_loss,  "custom_tes_p_loss",    "TES pipe losses are based on custom lengths and coeffs",  "-",            "",        "",        ""},
+    { TCS_PARAM,    TCS_ARRAY,         P_tes_k_loss_coeffs,  "tes_k_loss_coeffs",    "Minor loss coeffs for the coll, gen, and bypass loops",   "-",            "",        "",        ""},
     { TCS_PARAM,    TCS_NUMBER,        P_pb_fixed_par,       "pb_fixed_par",         "Fraction of rated gross power constantly consumed",       "-",            "",        "",        ""},
     { TCS_PARAM,    TCS_ARRAY,         P_bop_array,          "bop_array",            "Coefficients for balance of plant parasitics calcs",      "-",            "",        "",        ""},
     { TCS_PARAM,    TCS_ARRAY,         P_aux_array,          "aux_array",            "Coefficients for auxiliary heater parasitics calcs",      "-",            "",        "",        ""},
@@ -394,7 +404,18 @@ private:
 	double solarm;
 	double pb_pump_coef;
 	double tes_pump_coef;
-	double pb_fixed_par;
+    double V_tes_des;
+    int l_L_tes_col;
+    double * L_tes_col_in;
+    util::matrix_t<double> L_tes_col;
+    int l_L_tes_gen;
+    double * L_tes_gen_in;
+    util::matrix_t<double> L_tes_gen;
+    bool custom_tes_p_loss;
+    int l_tes_k_loss_coeffs;
+    double * tes_k_loss_coeffs_in;
+    util::matrix_t<double> tes_k_loss_coeffs;
+    double pb_fixed_par;
 	int l_bop_array;		
 	double * bop_array;
 	int l_aux_array;
@@ -416,7 +437,6 @@ private:
     bool tanks_in_parallel;
     bool has_hot_tank_bypass;
     double T_tank_hot_inlet_min;
-    double T_max_recirc;
 	//double * TOU_schedule;
 	//int nTOU_schedule;
 
@@ -510,6 +530,14 @@ public:
 		solarm			= std::numeric_limits<double>::quiet_NaN();
 		pb_pump_coef	= std::numeric_limits<double>::quiet_NaN();
 		tes_pump_coef	= std::numeric_limits<double>::quiet_NaN();
+        V_tes_des       = std::numeric_limits<double>::quiet_NaN();
+        l_L_tes_col     = -1;
+        L_tes_col_in    = 0;
+        l_L_tes_gen     = -1;
+        L_tes_gen_in    = 0;
+        custom_tes_p_loss       = false;
+        l_tes_k_loss_coeffs     = -1;
+        tes_k_loss_coeffs_in    = 0;
 		pb_fixed_par	= std::numeric_limits<double>::quiet_NaN();
 		l_bop_array		= -1;
 		bop_array	= 0;
@@ -532,7 +560,6 @@ public:
         tanks_in_parallel = false;
         has_hot_tank_bypass = false;
         T_tank_hot_inlet_min = std::numeric_limits<double>::quiet_NaN();
-        T_max_recirc = std::numeric_limits<double>::quiet_NaN();
 		//TOU_schedule = NULL;
 
 		//Thermocline Parameters
@@ -710,6 +737,15 @@ public:
 		solarm			= value(P_solarm);					//[-]
 		pb_pump_coef	= value(P_pb_pump_coef);			//[kW/kg]
 		tes_pump_coef	= value(P_tes_pump_coef);			//[kW/kg]
+        V_tes_des       = value(P_V_tes_des);               //[m/s]
+        L_tes_col_in    = value(P_L_tes_col, &l_L_tes_col); //[m]
+        L_tes_col.assign(L_tes_col_in, l_L_tes_col);
+        L_tes_gen_in    = value(P_L_tes_gen, &l_L_tes_gen); //[m]
+        L_tes_gen.assign(L_tes_gen_in, l_L_tes_gen);
+        custom_tes_p_loss       = (bool) value(P_custom_tes_p_loss);                  //[-]
+        tes_k_loss_coeffs_in    = value(P_tes_k_loss_coeffs, &l_tes_k_loss_coeffs);   //[-]
+        tes_k_loss_coeffs.assign(tes_k_loss_coeffs_in, l_tes_k_loss_coeffs);
+
 		pb_fixed_par	= value(P_pb_fixed_par);			//[-]
 	
 		bop_array	= value(P_bop_array, &l_bop_array);		
@@ -740,10 +776,9 @@ public:
 				return -1;
 			}
 		numtou = l_tslogic_a;
-        tanks_in_parallel = true; //value(P_tanks_in_parallel);
-        has_hot_tank_bypass = false; //value(P_hot_tank_bypass);
-        T_tank_hot_inlet_min = 400 + 273.15; //value(P_T_tank_hot_in_min) + 273.15;
-        T_max_recirc = 400;
+        tanks_in_parallel = (bool) value(P_tanks_in_parallel);
+        has_hot_tank_bypass = (bool) value(P_hot_tank_bypass);
+        T_tank_hot_inlet_min = value(P_T_tank_hot_in_min) + 273.15;
 		//TOU_schedule = value(P_TOU_schedule, &nTOU_schedule);
 
 		//Thermocline Parameters

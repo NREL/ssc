@@ -88,6 +88,7 @@ static var_info _cm_vtab_tcstrough_physical[] = {
                                                                                                                                                               
 	{ SSC_INPUT,        SSC_NUMBER,      "T_fp",                      "Freeze protection temperature (heat trace activation temperature)",                "C",            "",               "solar_field",    "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "I_bn_des",                  "Solar irradiation at design",                                                      "W/m2",         "",               "solar_field",    "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "calc_design_pipe_vals",     "Calculate temps and pressures at design conditions for runners and headers",       "none",         "",               "solar_field",    "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "V_hdr_cold_max",            "Maximum HTF velocity in the cold headers at design",                               "m/s",          "",               "solar_field",    "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "V_hdr_cold_min",            "Minimum HTF velocity in the cold headers at design",                               "m/s",          "",               "solar_field",    "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "V_hdr_hot_max",             "Maximum HTF velocity in the hot headers at design",                                "m/s",          "",               "solar_field",    "*",                       "",                      "" },
@@ -197,12 +198,20 @@ static var_info _cm_vtab_tcstrough_physical[] = {
     { SSC_INPUT,        SSC_NUMBER,      "cold_tank_Thtr",            "Minimum allowable cold tank HTF temp",                           "C",            "",             "controller",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "hot_tank_Thtr",             "Minimum allowable hot tank HTF temp",                            "C",            "",             "controller",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "tank_max_heat",             "Rated heater capacity for tank heating",                         "MW",           "",             "controller",     "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "tanks_in_parallel",         "Tanks are in parallel, not in series, with solar field",         "-",            "",             "controller",     "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "has_hot_tank_bypass",       "Bypass valve connects field outlet to cold tank",                "-",            "",             "controller",     "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "T_tank_hot_inlet_min",      "Minimum hot tank htf inlet temperature",                         "C",            "",             "controller",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "q_pb_design",               "Design heat input to power block",                               "MWt",          "",             "controller",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "W_pb_design",               "Rated plant capacity",                                           "MWe",          "",             "controller",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "cycle_max_frac",            "Maximum turbine over design operation fraction",                 "-",            "",             "controller",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "cycle_cutoff_frac",         "Minimum turbine operation fraction before shutdown",             "-",            "",             "controller",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "pb_pump_coef",              "Pumping power to move 1kg of HTF through PB loop",               "kW/(kg/s)",    "",             "controller",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "tes_pump_coef",             "Pumping power to move 1kg of HTF through tes loop",              "kW/(kg/s)",    "",             "controller",     "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "V_tes_des",                 "Design-point velocity to size the TES pipe diameters",           "m/s",          "",             "controller",     "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_ARRAY,       "L_tes_col",                 "Length of TES pipes in collection loop",                         "m",            "",             "controller",     "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_ARRAY,       "L_tes_gen",                 "Length of TES pipes in generation loop",                         "m",            "",             "controller",     "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "custom_tes_p_loss",         "TES pipe losses are based on custom lengths and coeffs",         "-",            "",             "controller",     "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_ARRAY,       "tes_k_loss_coeffs",         "Minor loss coeffs for the coll, gen, and bypass loops",          "-",            "",             "controller",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "pb_fixed_par",              "Fraction of rated gross power constantly consumed",              "-",            "",             "controller",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_ARRAY,       "bop_array",                 "Coefficients for balance of plant parasitics calcs",             "-",            "",             "controller",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_ARRAY,       "aux_array",                 "Coefficients for auxiliary heater parasitics calcs",             "-",            "",             "controller",     "*",                       "",                      "" },
@@ -552,6 +561,7 @@ public:
 		set_unit_value_ssc_matrix(type250_solarfield, "field_fl_props");
 		set_unit_value_ssc_double(type250_solarfield, "T_fp" ); // , 150);
         set_unit_value_ssc_double(type250_solarfield, "I_bn_des" ); // , 950);
+        set_unit_value_ssc_double(type250_solarfield, "calc_design_pipe_vals"); // , true);
         set_unit_value_ssc_double(type250_solarfield, "V_hdr_cold_max" ); // , 3);
         set_unit_value_ssc_double(type250_solarfield, "V_hdr_cold_min" ); // , 2);
         set_unit_value_ssc_double(type250_solarfield, "V_hdr_hot_max"); // , 3);
@@ -683,6 +693,9 @@ public:
 		set_unit_value_ssc_double(type251_controller, "hot_tank_max_heat", "tank_max_heat");
 		set_unit_value_ssc_double(type251_controller, "T_field_in_des", as_double("T_loop_in_des")); // , 293);
 		set_unit_value_ssc_double(type251_controller, "T_field_out_des", as_double("T_loop_out")); // , 391);
+        set_unit_value_ssc_double(type251_controller, "tanks_in_parallel"); // , 1 = true);
+        set_unit_value_ssc_double(type251_controller, "has_hot_tank_bypass"); // , 0 = false);
+        set_unit_value_ssc_double(type251_controller, "T_tank_hot_inlet_min"); // , 400);
 		set_unit_value_ssc_double(type251_controller, "q_pb_design" ); // , 294.118);
 		set_unit_value_ssc_double(type251_controller, "W_pb_design" ); // , 111);
 		set_unit_value_ssc_double(type251_controller, "cycle_max_frac" ); // , 1.05);
@@ -690,6 +703,11 @@ public:
 		set_unit_value_ssc_double(type251_controller, "solarm", as_double("solar_mult") ); // , 2);
 		set_unit_value_ssc_double(type251_controller, "pb_pump_coef" ); // , 0.55);
 		set_unit_value_ssc_double(type251_controller, "tes_pump_coef" ); // , 0.15);
+        set_unit_value_ssc_double(type251_controller, "V_tes_des"); // , 1.85);
+        set_unit_value_ssc_array(type251_controller, "L_tes_col"); // , []);
+        set_unit_value_ssc_array(type251_controller, "L_tes_gen"); // , []);
+        set_unit_value_ssc_double(type251_controller, "custom_tes_p_loss"); // , false);
+        set_unit_value_ssc_array(type251_controller, "tes_k_loss_coeffs"); // , []);
 		set_unit_value_ssc_double(type251_controller, "pb_fixed_par" ); // , 0.0055);
 		set_unit_value_ssc_array(type251_controller, "bop_array" ); // , [0,1,0.483,0.517,0]);
 		set_unit_value_ssc_array(type251_controller, "aux_array" ); // , [0.02273,1,0.483,0.517,0]);

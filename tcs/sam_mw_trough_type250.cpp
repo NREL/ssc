@@ -83,6 +83,7 @@ enum{
 	P_FIELD_FL_PROPS,
 	P_T_FP,
 	P_I_BN_DES,
+    P_DES_PIPE_VALS,
 	P_V_HDR_COLD_MAX,
 	P_V_HDR_COLD_MIN,
     P_V_HDR_HOT_MAX,
@@ -276,6 +277,7 @@ tcsvarinfo sam_mw_trough_type250_variables[] = {
 	{ TCS_PARAM,          TCS_MATRIX,    P_FIELD_FL_PROPS,         "field_fl_props",                                                                     "Fluid property data",         "none","7 columns (T,Cp,dens,visc,kvisc,cond,h), at least 3 rows",             "",             "" },
 	{ TCS_PARAM,          TCS_NUMBER,              P_T_FP,                   "T_fp",                       "Freeze protection temperature (heat trace activation temperature)",            "C",             "",             "",          "150" },
 	{ TCS_PARAM,          TCS_NUMBER,          P_I_BN_DES,               "I_bn_des",                                                             "Solar irradiation at design",         "W/m2",             "",             "",          "950" },
+    { TCS_PARAM,          TCS_NUMBER,     P_DES_PIPE_VALS,  "calc_design_pipe_vals",              "Calculate temps and pressures at design conditions for runners and headers",            "-",             "",             "",         "true" },
 	{ TCS_PARAM,          TCS_NUMBER,    P_V_HDR_COLD_MAX,         "V_hdr_cold_max",                                      "Maximum HTF velocity in the cold headers at design",          "m/s",             "",             "",            "3" },
 	{ TCS_PARAM,          TCS_NUMBER,    P_V_HDR_COLD_MIN,         "V_hdr_cold_min",                                      "Minimum HTF velocity in the cold headers at design",          "m/s",             "",             "",            "2" },
     { TCS_PARAM,          TCS_NUMBER,     P_V_HDR_HOT_MAX,          "V_hdr_hot_max",                                       "Maximum HTF velocity in the hot headers at design",          "m/s",             "",             "",            "3" },
@@ -478,6 +480,7 @@ private:
 	int nrow_HTF_data,	ncol_HTF_data;
 	double T_fp;		//Freeze protection temperature (heat trace activation temperature)
 	double I_bn_des;		//Solar irradiation at design
+    bool calc_design_pipe_vals; //Calculate temps and pressures at design conditions for runners and headers
 	double V_hdr_cold_max;		//Maximum HTF velocity in the cold headers at design
 	double V_hdr_cold_min;		//Minimum HTF velocity in the cold headers at design
     double V_hdr_hot_max;		//Maximum HTF velocity in the hot headers at design
@@ -502,8 +505,6 @@ private:
 	bool accept_init;		//In acceptance testing mode - require steady-state startup
 	int accept_loc;			//In acceptance testing mode - temperature sensor location (1=hx,2=loop)
 	bool is_using_input_gen;
-	
-    bool calc_design_pipe_vals;      // is the field being sized at design conditions, including the pressures?
 
 	double solar_mult;		//Solar multiple
 	double mc_bal_hot;		//The heat capacity of the balance of plant on the hot side
@@ -785,6 +786,7 @@ public:
 		nrow_HTF_data = -1, ncol_HTF_data = -1;
 		T_fp	= std::numeric_limits<double>::quiet_NaN();
 		I_bn_des	= std::numeric_limits<double>::quiet_NaN();
+        calc_design_pipe_vals = false;
 		V_hdr_cold_max	= std::numeric_limits<double>::quiet_NaN();
 		V_hdr_cold_min	= std::numeric_limits<double>::quiet_NaN();
         V_hdr_hot_max = std::numeric_limits<double>::quiet_NaN();
@@ -1109,6 +1111,7 @@ public:
 		
 		T_fp = value(P_T_FP);		//Freeze protection temperature (heat trace activation temperature) [C]
 		I_bn_des = value(P_I_BN_DES);		//Solar irradiation at design [W/m2]
+        calc_design_pipe_vals = value(P_DES_PIPE_VALS); //Calculate temps and pressures at design conditions for runners and headers
 		V_hdr_cold_max = value(P_V_HDR_COLD_MAX);	//Maximum HTF velocity in the cold headers at design [m/s]
 		V_hdr_cold_min = value(P_V_HDR_COLD_MIN);	//Minimum HTF velocity in the cold headers at design [m/s]
         V_hdr_hot_max = value(P_V_HDR_HOT_MAX);		//Maximum HTF velocity in the hot headers at design [m/s]
