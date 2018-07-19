@@ -53,6 +53,9 @@
     <ClCompile Include="..\test\ssc_test\computeModuleTest.cpp">
       <Filter>ssc_test</Filter>
     </ClCompile>
+    <ClCompile Include="..\test\shared_test\lib_shared_inverter_test.cpp">
+      <Filter>shared_test</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="shared_test">

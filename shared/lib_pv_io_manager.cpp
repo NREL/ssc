@@ -78,19 +78,17 @@ Irradiance_IO::Irradiance_IO(compute_module* cm, std::string cmName)
 
 	if (cm->is_assigned("solar_resource_file")) {
 		weatherDataProvider = std::unique_ptr<weather_data_provider>(new weatherfile(cm->as_string("solar_resource_file")));
+		weatherfile *weatherFile = dynamic_cast<weatherfile*>(weatherDataProvider.get());
+		if (!weatherFile->ok()) throw compute_module::exec_error(cmName, weatherFile->message());
+		if (weatherFile->has_message()) cm->log(weatherFile->message(), SSC_WARNING);
 	}
 	else if (cm->is_assigned("solar_resource_data")) {
 		weatherDataProvider = std::unique_ptr<weather_data_provider>(new weatherdata(cm->lookup("solar_resource_data")));
+		if (weatherDataProvider->has_message()) cm->log(weatherDataProvider->message(), SSC_WARNING);
 	}
 	else {
 		throw compute_module::exec_error(cmName, "No weather data supplied");
 	}
-
-	// Check weather file
-	if (weatherDataProvider->has_message()) cm->log(weatherDataProvider->message(), SSC_WARNING);
-	weatherfile *weatherFile = dynamic_cast<weatherfile*>(weatherDataProvider.get());
-	if (!weatherFile->ok()) throw compute_module::exec_error(cmName, weatherFile->message());
-	if (weatherFile->has_message()) cm->log(weatherFile->message(), SSC_WARNING);
 
 	// assumes instantaneous values, unless hourly file with no minute column specified
 	tsShiftHours = 0.0;
@@ -418,6 +416,8 @@ void PVSystem_IO::AllocateOutputs(compute_module* cm)
 
 	p_inverterPowerConsumptionLoss = cm->allocate("inv_psoloss", numberOfWeatherFileRecords);
 	p_inverterNightTimeLoss = cm->allocate("inv_pntloss", numberOfWeatherFileRecords);
+	p_inverterThermalLoss = cm->allocate("inv_tdcloss", numberOfWeatherFileRecords);
+
 	p_acWiringLoss = cm->allocate("ac_wiring_loss", numberOfWeatherFileRecords);
 	p_transmissionLoss = cm->allocate("ac_transmission_loss", numberOfWeatherFileRecords);
 	p_systemDCPower = cm->allocate("dc_net", numberOfLifetimeRecords);

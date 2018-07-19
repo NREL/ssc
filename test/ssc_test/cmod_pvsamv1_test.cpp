@@ -2,6 +2,7 @@
 
 #include "cmod_pvsamv1_test.h"
 #include "../input_cases/pvsamv1_cases.h"
+#include "../input_cases/weather_inputs.h"
 
 /// Test PVSAMv1 with all defaults and no-financial model
 TEST_F(CMPvsamv1PowerIntegration, DefaultNoFinancialModel){
@@ -432,4 +433,38 @@ TEST_F(CMPvsamv1PowerIntegration, NoFinancialModelLosses)
 		SetCalculated("annual_energy");
 		EXPECT_NEAR(calculated_value, annual_energy_expected[2], m_error_tolerance_hi);
 	}
+}
+
+/// Test inverter temperature derate 
+TEST_F(CMPvsamv1PowerIntegration, InvTempDerate) {
+	var_data* weatherData = create_weatherdata_array(1);
+	ssc_data_unassign(data, "solar_resource_file");
+
+	// change half of all temperatures so that inv is derated by ~50% for half the year
+	float temp[8760];
+	for (size_t i = 0; i < 4380; i++) {
+		temp[i] = 76.6f;
+	}
+	for (size_t i = 4380; i < 8760; i++) {
+		temp[i] = 26.f;
+	}
+	var_data tdry_vd = var_data(temp, 8760);
+	weatherData->table.assign("tdry", tdry_vd);
+	var_table *vt = static_cast<var_table*>(data);
+	vt->assign("solar_resource_data", *weatherData);
+
+	EXPECT_FALSE(run_module(data, "pvsamv1"));
+
+	ssc_number_t annual_energy, percent_loss, monthly_energy;
+	ssc_data_get_number(data, "annual_energy", &annual_energy);
+	EXPECT_NEAR(annual_energy, 3540, 10) << "Annual energy reduced";
+
+	ssc_data_get_number(data, "annual_ac_inv_tdc_loss_percent", &percent_loss);
+	EXPECT_NEAR(percent_loss, 20, 2);
+
+	monthly_energy = ssc_data_get_array(data, "monthly_energy", nullptr)[0];
+	EXPECT_NEAR(monthly_energy, 291, 10) << "Monthly energy of January reduced";
+
+	monthly_energy = ssc_data_get_array(data, "monthly_energy", nullptr)[11];
+	EXPECT_NEAR(monthly_energy, 740, 10) << "Month energy of December not reduced";
 }

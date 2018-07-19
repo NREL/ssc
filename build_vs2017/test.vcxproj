@@ -25,6 +25,7 @@
     <ClCompile Include="..\test\shared_test\lib_battery_powerflow_test.cpp" />
     <ClCompile Include="..\test\shared_test\lib_battery_test.cpp" />
     <ClCompile Include="..\test\shared_test\lib_irradproc_test.cpp" />
+    <ClCompile Include="..\test\shared_test\lib_shared_inverter_test.cpp" />
     <ClCompile Include="..\test\shared_test\lib_util_test.cpp" />
     <ClCompile Include="..\test\shared_test\lib_weatherfile_test.cpp" />
     <ClCompile Include="..\test\shared_test\lib_windfile_test.cpp" />
