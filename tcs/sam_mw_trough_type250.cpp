@@ -1843,6 +1843,7 @@ public:
 		T_cold_in = value(I_T_COLD_IN);		//HTF return temperature [C]
 		m_dot_in = value(I_M_DOT_IN);		//HTF mass flow rate at the inlet  [kg/hr]
 		defocus_new = value(I_DEFOCUS);		//Defocus control  [none]
+        recirculating = value(I_RECIRC);    // Field recirculating bypass valve control (0 = not recirculating))
 		SolarAz = value(I_SOLARAZ);		//Solar azimuth angle reported by the Type15 weather file [deg]
 		latitude = value(I_LATITUDE);		//Site latitude read from weather file [deg]
 		longitude = value(I_LONGITUDE);		//Site longitude read from weather file [deg]
