@@ -176,7 +176,8 @@ public:
 	// Instantiate radiator model
 	C_csp_radiator mc_radiator;
 	double m_dot_radfield;
-
+	double m_dot_radact;
+	double W_radpumptest;
 	struct S_params
 	{
 			// Parameters with common SSCINPUT name for both Rankine Cycle and User Defined Cycle

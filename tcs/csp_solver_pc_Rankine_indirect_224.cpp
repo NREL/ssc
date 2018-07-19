@@ -430,7 +430,8 @@ void C_pc_Rankine_indirect_224::init(C_csp_power_cycle::S_solved_params &solved_
 		case 4:		// Once-through surface condenser case ARD
 			if (ms_params.m_tech_type != 4)
 			{
-				water_TQ(ms_params.m_dT_cw_ref + 3.0 + ms_params.m_T_approach + ms_params.m_T_amb_des + 273.15, 1.0, &wp);
+				
+				water_TQ(ms_params.m_dT_cw_ref + 3.0 /*dT at hot side*/ + ms_params.m_T_approach + ms_params.m_T_amb_des + 273.15, 1.0, &wp);
 				Psat_ref = wp.pres*1000.0;
 			}
 			else
@@ -836,6 +837,7 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 	bool is_dark = (zenith > 90);								//boolean for if it is dark outside. =1 if dark out.
 	bool is_two_tank = (mc_two_tank_ctes.ms_params.m_ctes_type == 2); //boolean for cold storage type
 	bool is_stratified = (mc_two_tank_ctes.ms_params.m_ctes_type >2);
+	bool is_waterloop = (mc_radiator.ms_params.m_field_fl == 3);	//If circulating fluid in radiator is water.
 	double W_radpump = 0;										//[MW] To include pumping for radiative cooling field
 	if (ms_params.m_CT == 4)
 
@@ -861,6 +863,7 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 		}
 		m_dot_radfield = mc_radiator.ms_params.m_dot_panel*mc_radiator.ms_params.Np;	//Total flow through radiator field
 		m_dot_condenser = std::numeric_limits<double>::quiet_NaN();	//condenser mass flow rate at actual load
+		m_dot_radact = std::numeric_limits<double>::quiet_NaN();
 		idx_time = static_cast<int>((time / 3600-1));									//Zero based index to this timestep based on end of current hour in seconds.
 		T_s_measured=mc_radiator.T_S_measured[idx_time];		//Get measured sky temperature [K]
 		if (T_s_measured != 0)
@@ -1045,8 +1048,18 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 					} 
 					else //night
 					{
-						mc_radiator.night_cool(T_db, T_warm_prev_K, u, T_s_K, mc_radiator.ms_params.m_dot_panel, T_rad_out,W_radpump);	//Call radiator to calculate temperature. Single series set of panels.
-						mc_stratified_ctes.stratified_tanks(step_sec, T_db, m_dot_condenser, T_cond_out+273.15,m_dot_radfield, T_rad_out, mc_stratified_ctes_outputs);
+						mc_radiator.night_cool(T_db, T_warm_prev_K, u, T_s_K, mc_radiator.ms_params.m_dot_panel, T_rad_out,W_radpumptest);	//Call radiator to calculate temperature. Single series set of panels.
+						if (T_rad_out < 273.15)
+						{
+							m_dot_radact = 0.0;	//If the radiator would get water to freezing, just circulate; do not cool tanks.
+							W_radpump = W_radpumptest * is_waterloop;	//If water would freeze, continue to circulate if fluid is water but do not circulate if fluid is glycol.						}
+						}
+						else
+						{
+							m_dot_radact = m_dot_radfield;	//If the radiator not too cold, use the fluid to cool tanks.
+							W_radpump = W_radpumptest;		//If the radiator not too cold, the pumps circulate regardless of fluid type.
+						}
+						mc_stratified_ctes.stratified_tanks(step_sec, T_db, m_dot_condenser, T_cond_out+273.15,m_dot_radact, T_rad_out, mc_stratified_ctes_outputs);
 						radcool_cntrl = 21;
 										
 					}
@@ -1261,8 +1274,18 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 				}
 				else //night
 				{
-					mc_radiator.night_cool(T_db, T_warm_prev_K, u, T_s_K, mc_radiator.ms_params.m_dot_panel, T_rad_out,W_radpump);	//Call radiator to calculate temperature. Single series set of panels.
-					mc_stratified_ctes.stratified_tanks(step_sec, T_db, 0.0, T_cond_out+273.15, m_dot_radfield, T_rad_out, mc_stratified_ctes_outputs);
+					mc_radiator.night_cool(T_db, T_warm_prev_K, u, T_s_K, mc_radiator.ms_params.m_dot_panel, T_rad_out,W_radpumptest);	//Call radiator to calculate temperature. Single series set of panels.
+					if (T_rad_out < 273.15)
+					{
+						m_dot_radact = 0.0;	//If the radiator would get water to freezing, just circulate; do not cool tanks.
+						W_radpump = W_radpumptest * is_waterloop;	//If water would freeze, continue to circulate if fluid is water but do not circulate if fluid is glycol.						}
+					}
+					else
+					{
+						m_dot_radact = m_dot_radfield;	//If the radiator not too cold, use the fluid to cool tanks.
+						W_radpump = W_radpumptest;		//If the radiator not too cold, the pumps circulate regardless of fluid type.
+					}
+					mc_stratified_ctes.stratified_tanks(step_sec, T_db, 0.0, T_cond_out+273.15, m_dot_radact, T_rad_out, mc_stratified_ctes_outputs);
 					radcool_cntrl = 41;
 
 				}
