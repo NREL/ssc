@@ -398,10 +398,10 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "inv_pd_vdco",                                "DC input voltage for the rated AC power rating",           "Vdc",     "",                     "pvsamv1",       "inverter_model=2",                    "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "inv_pd_vdcmax",                              "Maximum DC input operating voltage",                       "Vdc",     "",                     "pvsamv1",       "inverter_model=2",                    "",                              "" },
 
-	{ SSC_INPUT,		SSC_MATRIX,		 "inv_tdc_cec_db",							   "Temperature derate curves for CEC database",			   "Vdc",	  "",					  "pvsamv1",	   "en_inv_tdc=1",						  "",							   "" },
-	{ SSC_INPUT,		SSC_MATRIX,		 "inv_tdc_cec_cg",							   "Temperature derate curves for CEC Coef Gen",			   "Vdc",	  "",					  "pvsamv1",	   "",									  "",							   "" },
-	{ SSC_INPUT,		SSC_MATRIX,		 "inv_tdc_ds",								   "Temperature derate curves for Inv Datasheet",			   "Vdc",	  "",					  "pvsamv1",	   "",									  "",							   "" },
-	{ SSC_INPUT,		SSC_MATRIX,		 "inv_tdc_plc",								   "Temperature derate curves for Part Load Curve",			   "C",		  "",					  "pvsamv1",	   "en_inv_tdc=1",						  "",							   "" },
+	{ SSC_INPUT,		SSC_MATRIX,		 "inv_tdc_cec_db",							   "Temperature derate curves for CEC Database",			   "Vdc",	  "",					  "pvsamv1",	   "inverter_model=0",					  "",							   "" },
+	{ SSC_INPUT,		SSC_MATRIX,		 "inv_tdc_cec_cg",							   "Temperature derate curves for CEC Coef Gen",			   "Vdc",	  "",					  "pvsamv1",	   "inverter_model=3",					  "",							   "" },
+	{ SSC_INPUT,		SSC_MATRIX,		 "inv_tdc_ds",								   "Temperature derate curves for Inv Datasheet",			   "Vdc",	  "",					  "pvsamv1",	   "inverter_model=1",					  "",							   "" },
+	{ SSC_INPUT,		SSC_MATRIX,		 "inv_tdc_plc",								   "Temperature derate curves for Part Load Curve",			   "C",		  "",					  "pvsamv1",	   "inverter_model=2",					  "",							   "" },
 
 
 	// battery storage and dispatch
@@ -1480,7 +1480,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 		snlinv.C2 = as_double("inv_snl_c2");
 		snlinv.C3 = as_double("inv_snl_c3");
 		ratedACOutput = snlinv.Paco;
-		inv_tdc = as_double("inv_tdc_cec_db");
+		inv_tdc = as_matrix("inv_tdc_cec_db");
 	}
 	else if (inv_type == 1) // datasheet data
 	{
@@ -1498,7 +1498,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 		snlinv.C2 = 0;
 		snlinv.C3 = 0;
 		ratedACOutput = snlinv.Paco;
-		inv_tdc = as_double("inv_tdc_ds");
+		inv_tdc = as_matrix("inv_tdc_ds");
 	}
 	else if (inv_type == 2) // partload curve
 	{
@@ -1513,7 +1513,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 		plinv.Partload = pl_pd;
 		plinv.Efficiency = eff_pd;
 		ratedACOutput = plinv.Paco;
-		inv_tdc = as_double("inv_tdc_plc");
+		inv_tdc = as_matrix("inv_tdc_plc");
 	}
 	else if (inv_type == 3) // coefficient generator
 	{
@@ -1527,7 +1527,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 		snlinv.C2 = as_double("inv_cec_cg_c2");
 		snlinv.C3 = as_double("inv_cec_cg_c3");
 		ratedACOutput = snlinv.Paco;
-		inv_tdc = as_double("inv_tdc_cec_cg");
+		inv_tdc = as_matrix("inv_tdc_cec_cg");
 	}
 	else
 	{
@@ -1541,7 +1541,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 	
 
 	// Inverter thermal derate curves
-	std::vector<std::vector<double>> curves;
+	std::vector<std::vector<double>> curves(3, std::vector<double>(3, 0));
 	for (size_t i = 0; i < 3; i++) {
 		for (size_t j = 0; j < 3; j++)
 			curves[i][j] = inv_tdc.at(i, j);
@@ -3187,7 +3187,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 	sys_output = annual_dc_net;
 	sys_output -= (annual_inv_cliploss + annual_inv_pntloss + annual_inv_psoloss + annual_inv_tdcloss);
 	percent = 0.;
-	if (annual_dc_net > 0) percent = 100 * (annual_dc_net - sys_output) / annual_dc_net;
+	if (sys_output > 0) percent = 100 * (sys_output - annual_ac_gross) / sys_output;
 	assign("annual_ac_inv_eff_loss_percent", var_data((ssc_number_t)percent));
 
 
