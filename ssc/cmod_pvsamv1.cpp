@@ -873,7 +873,8 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 	bool enable_mismatch_vmax_calc = Subarrays[0]->Module->enableMismatchVoltageCalc;
 	int modules_per_string = PVSystem->modulesPerString;
 	int strings_in_parallel = PVSystem->stringsInParallel;
-	int num_inverters = PVSystem->numberOfInverters;
+	SharedInverter * sharedInverter = PVSystem->m_sharedInverter.get();
+
 
 	double annual_snow_loss = 0;
 	
@@ -895,150 +896,10 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 
 	double nameplate_kw = modules_per_string * strings_in_parallel * module_watts_stc * util::watt_to_kilowatt;
 
-	::sandia_inverter_t snlinv;
-	::partload_inverter_t plinv;
-
-	int inv_type = as_integer("inverter_model");
-	double V_mppt_lo_1module = as_double("mppt_low_inverter") / modules_per_string;
-	double V_mppt_hi_1module = as_double("mppt_hi_inverter") / modules_per_string;
-	bool clip_mppt_window = false;
-	double ratedACOutput = 0;
-
-	if ( V_mppt_lo_1module > 0 && V_mppt_hi_1module > V_mppt_lo_1module )
-	{
-		if ( mod_type == 1     // cec with database
-			|| mod_type == 2   // cec with user specs
-			|| mod_type == 4 ) // iec61853 single diode
-		{
-			clip_mppt_window = true;
-		}
-		else
-		{
-			log( "The simple efficiency and Sandia module models do not allow limiting module voltage to the MPPT tracking range of the inverter.", SSC_NOTICE );
-		}
-	}
-	else
-	{
-		log( "Inverter MPPT voltage tracking window not defined - modules always operate at MPPT.", SSC_NOTICE );
-	}
-
-	if (inv_type == 0) // cec database
-	{
-		snlinv.Paco = as_double("inv_snl_paco");
-		snlinv.Pdco = as_double("inv_snl_pdco");
-		snlinv.Vdco = as_double("inv_snl_vdco");
-		snlinv.Pso = as_double("inv_snl_pso");
-		snlinv.Pntare = as_double("inv_snl_pnt");
-		snlinv.C0 = as_double("inv_snl_c0");
-		snlinv.C1 = as_double("inv_snl_c1");
-		snlinv.C2 = as_double("inv_snl_c2");
-		snlinv.C3 = as_double("inv_snl_c3");
-		ratedACOutput = snlinv.Paco;
-	}
-	else if (inv_type == 1) // datasheet data
-	{
-		double eff_ds = as_double("inv_ds_eff") / 100.0;
-		snlinv.Paco = as_double("inv_ds_paco");
-		if (eff_ds != 0)
-			snlinv.Pdco = snlinv.Paco / eff_ds;
-		else
-			snlinv.Pdco = 0;
-		snlinv.Vdco = as_double("inv_ds_vdco");
-		snlinv.Pso = as_double("inv_ds_pso");
-		snlinv.Pntare = as_double("inv_ds_pnt");
-		snlinv.C0 = 0;
-		snlinv.C1 = 0;
-		snlinv.C2 = 0;
-		snlinv.C3 = 0;
-		ratedACOutput = snlinv.Paco;
-	}
-	else if (inv_type == 2) // partload curve
-	{
-		plinv.Vdco = as_double("inv_pd_vdco");
-		plinv.Paco = as_double("inv_pd_paco");
-		plinv.Pdco = as_double("inv_pd_pdco");
-		plinv.Pntare = as_double("inv_pd_pnt");
-
-		std::vector<double> pl_pd = as_vector_double("inv_pd_partload");
-		std::vector<double> eff_pd = as_vector_double("inv_pd_efficiency");
-
-		plinv.Partload = pl_pd;
-		plinv.Efficiency = eff_pd;
-		ratedACOutput = plinv.Paco;
-	}
-	else if (inv_type == 3) // coefficient generator
-	{
-		snlinv.Paco = as_double("inv_cec_cg_paco");
-		snlinv.Pdco = as_double("inv_cec_cg_pdco");
-		snlinv.Vdco = as_double("inv_cec_cg_vdco");
-		snlinv.Pso = as_double("inv_cec_cg_psco");
-		snlinv.Pntare = as_double("inv_cec_cg_pnt");
-		snlinv.C0 = as_double("inv_cec_cg_c0");
-		snlinv.C1 = as_double("inv_cec_cg_c1");
-		snlinv.C2 = as_double("inv_cec_cg_c2");
-		snlinv.C3 = as_double("inv_cec_cg_c3");
-		ratedACOutput = snlinv.Paco;
-	}
-	else
-	{
-		throw exec_error("pvsamv1", "invalid inverter model type");
-	}
-	ratedACOutput *= num_inverters;
-
-	// The shared inverter of the PV array and a tightly-coupled DC connected battery
-	std::unique_ptr<SharedInverter> sharedInverter(new SharedInverter(inv_type, num_inverters, &snlinv, &plinv));
-
-	// Inverter thermal derate curves
-	bool en_inv_tdc = as_boolean("en_inv_tdc");
-	if (en_inv_tdc) {
-		double* curve1 = new double[3];
-		curve1[0] = as_double("inv_tdc_V1");
-		curve1[1] = as_double("inv_tdc_T1");
-		curve1[2] = as_double("inv_tdc_S1");
-		
-		double* curve2 = new double[3];
-		try {
-			curve2[0] = as_double("inv_tdc_V2");
-			curve2[1] = as_double("inv_tdc_T2");
-			curve2[2] = as_double("inv_tdc_S2");
-		}
-		catch (general_error &){
-			curve2[0] = 0;
-			curve2[1] = -99;
-			curve2[2] = 0;
-		}
-		if (curve2[0] <= 0 || curve2[1] <= -98 || curve2[0] >= 0) {
-			delete curve2;
-			curve2 = NULL;
-		}
-
-		double* curve3 = new double[3];
-		try {
-			curve3[0] = as_double("inv_tdc_V3");
-			curve3[1] = as_double("inv_tdc_T3");
-			curve3[2] = as_double("inv_tdc_S3");
-		}
-		catch (general_error &) {
-			curve3[0] = 0;
-			curve3[1] = -99;
-			curve3[2] = 0;
-		}
-		if (curve3[0] <= 0 || curve3[1] <= -98 || curve3[0] >= 0) {
-			delete curve3;
-			curve3 = NULL;
-		}
-		if (!sharedInverter->setTempDerateCurves(curve1, curve2, curve3)) {
-			throw exec_error("pvsamv1", "Error setting up inverter temperature derate curves");
-		}
-	}
-	
-
 	// Warning workaround
 	static bool is32BitLifetime = (__ARCHBITS__ == 32 && system_use_lifetime_output);
 	if (is32BitLifetime)
 		throw exec_error( "pvsamv1", "Lifetime simulation of PV systems is only available in the 64 bit version of SAM.");
-
-
 
 	// lifetime outputs
 	std::vector<ssc_number_t> p_load_full; p_load_full.reserve(nlifetime);
@@ -1056,7 +917,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 	// setup battery model
 	bool en_batt = as_boolean("en_batt");
 	battstor batt(*this, en_batt, nrec, ts_hour);
-	batt.setSharedInverter(sharedInverter.get());
+	batt.setSharedInverter(sharedInverter);
 	int batt_topology = (en_batt == true ? batt.batt_vars->batt_topology : 0);
 	std::vector<ssc_number_t> p_invcliploss_full;
 	p_invcliploss_full.reserve(nlifetime);
@@ -1534,8 +1395,8 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 							(*Subarrays[nn]->Module->cellTempModel)(in, *Subarrays[nn]->Module->moduleModel, -1.0, tcell);
 						}
 						double shadedb_str_vmp_stc = modules_per_string * Subarrays[nn]->Module->voltageMaxPower;
-						double shadedb_mppt_lo = V_mppt_lo_1module * modules_per_string;;
-						double shadedb_mppt_hi = V_mppt_hi_1module * modules_per_string;;
+						double shadedb_mppt_lo = PVSystem->voltageMpptLow1Module * modules_per_string;;
+						double shadedb_mppt_hi = PVSystem->voltageMpptHi1Module * modules_per_string;;
 
 						/// shading database if necessary
 						smart_ptr<ShadeDB8_mpp>::ptr  p_shade_db;
@@ -1794,10 +1655,10 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 						}
 					}
 
-					if (clip_mppt_window)
+					if (PVSystem->clipMpptWindow)
 					{
-						if (module_voltage < V_mppt_lo_1module) module_voltage = V_mppt_lo_1module;
-						if (module_voltage > V_mppt_hi_1module) module_voltage = V_mppt_hi_1module;
+						if (module_voltage < PVSystem->voltageMpptLow1Module) module_voltage = PVSystem->voltageMpptLow1Module;
+						if (module_voltage > PVSystem->voltageMpptHi1Module) module_voltage = PVSystem->voltageMpptHi1Module;
 					}
 
 				}
@@ -1837,17 +1698,17 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 						// here, if the module was running at mppt by default, and mppt window clipping is possible, recalculate
 						// module power output to determine actual module power using the voltage window of the inverter
 						if (iyear == 0) mppt_clip_window = out.Power;
-						if (!enable_mismatch_vmax_calc && clip_mppt_window)
+						if (!enable_mismatch_vmax_calc && PVSystem->clipMpptWindow)
 						{
-							if (out.Voltage < V_mppt_lo_1module)
+							if (out.Voltage < PVSystem->voltageMpptLow1Module)
 							{
-								module_voltage = V_mppt_lo_1module;
+								module_voltage = PVSystem->voltageMpptLow1Module;
 								(*Subarrays[nn]->Module->cellTempModel)(in, *Subarrays[nn]->Module->moduleModel, module_voltage, tcell);
 								(*Subarrays[nn]->Module->moduleModel)(in, tcell, module_voltage, out);
 							}
-							else if (out.Voltage > V_mppt_hi_1module)
+							else if (out.Voltage > PVSystem->voltageMpptHi1Module)
 							{
-								module_voltage = V_mppt_hi_1module;
+								module_voltage = PVSystem->voltageMpptHi1Module;
 								(*Subarrays[nn]->Module->cellTempModel)(in, *Subarrays[nn]->Module->moduleModel, module_voltage, tcell);
 								(*Subarrays[nn]->Module->moduleModel)(in, tcell, module_voltage, out);
 							}
@@ -2108,7 +1969,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 				PVSystem->p_systemACPower[idx] = (ssc_number_t)(acpwr_gross - ac_wiringloss);
 
 				// Apply transformer loss
-				ssc_number_t transformerRatingkW = static_cast<ssc_number_t>(ratedACOutput * util::watt_to_kilowatt);
+				ssc_number_t transformerRatingkW = static_cast<ssc_number_t>(PVSystem->ratedACOutput * util::watt_to_kilowatt);
 				ssc_number_t xfmr_ll = PVSystem->transformerLoadLossFraction;
 				ssc_number_t xfmr_nll = PVSystem->transformerNoLoadLossFraction * static_cast<ssc_number_t>(ts_hour * transformerRatingkW);
 

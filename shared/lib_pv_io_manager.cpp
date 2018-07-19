@@ -15,6 +15,9 @@ PVIOManager::PVIOManager(compute_module*  cm, std::string cmName)
 	m_shadeDatabase = std::move(shadeDatabase);
 	m_shadeDatabase->init();
 
+	std::unique_ptr<Inverter_IO> ptrInv(new Inverter_IO(cm, cmName));
+	m_InverterIO = std::move(ptrInv);
+
 	// Gather subarrays which are enabled
 	nSubarrays = 1;
 	std::unique_ptr<Subarray_IO> subarray1(new Subarray_IO(cm, cmName, 1));
@@ -31,7 +34,7 @@ PVIOManager::PVIOManager(compute_module*  cm, std::string cmName)
 	}
 
 	// Aggregate Subarray outputs in different structure
-	std::unique_ptr<PVSystem_IO> pvSystem(new PVSystem_IO(cm, cmName, m_SimulationIO.get(), m_IrradianceIO.get(), getSubarrays()));
+	std::unique_ptr<PVSystem_IO> pvSystem(new PVSystem_IO(cm, cmName, m_SimulationIO.get(), m_IrradianceIO.get(), getSubarrays(), m_InverterIO.get()));
 	m_PVSystemIO = std::move(pvSystem);
 
 	m_computeModule = cm;
@@ -279,11 +282,13 @@ void Subarray_IO::AssignOutputs(compute_module* cm)
 }
 
 
-PVSystem_IO::PVSystem_IO(compute_module* cm, std::string cmName, Simulation_IO * SimulationIO, Irradiance_IO * IrradianceIO, std::vector<Subarray_IO*> SubarraysAll)
+PVSystem_IO::PVSystem_IO(compute_module* cm, std::string cmName, Simulation_IO * SimulationIO, Irradiance_IO * IrradianceIO, std::vector<Subarray_IO*> SubarraysAll, Inverter_IO * InverterIO)
 {
 	Irradiance = IrradianceIO;
 	Simulation = SimulationIO;
 	Subarrays = SubarraysAll;
+	Inverter = InverterIO;
+
 	numberOfSubarrays = Subarrays.size();
 
 	AllocateOutputs(cm);
@@ -291,6 +296,7 @@ PVSystem_IO::PVSystem_IO(compute_module* cm, std::string cmName, Simulation_IO *
 	modulesPerString = cm->as_integer("modules_per_string");
 	stringsInParallel = cm->as_integer("strings_in_parallel");
 	numberOfInverters = cm->as_integer("inverter_count");
+	ratedACOutput = Inverter->ratedACOutput * numberOfInverters;
 	acDerate = 1 - cm->as_double("acwiring_loss") / 100;	
 	acLossPercent = (1 - acDerate) * 100;
 	transmissionDerate = 1 - cm->as_double("transmission_loss") / 100;
@@ -298,6 +304,13 @@ PVSystem_IO::PVSystem_IO(compute_module* cm, std::string cmName, Simulation_IO *
 
 	enableDCLifetimeLosses = cm->as_boolean("en_dc_lifetime_losses");
 	enableACLifetimeLosses = cm->as_boolean("en_ac_lifetime_losses");
+
+	// The shared inverter of the PV array and a tightly-coupled DC connected battery
+	std::unique_ptr<SharedInverter> tmpSharedInverter(new SharedInverter(Inverter->inverterType, numberOfInverters, &Inverter->sandiaInverter, &Inverter->partloadInverter));
+	m_sharedInverter = std::move(tmpSharedInverter);
+	
+	// Register shared inverter with inverter_IO
+	InverterIO->setupSharedInverter(cm, m_sharedInverter.get());
 
 	// PV Degradation
 	if (Simulation->useLifetimeOutput)
@@ -337,6 +350,30 @@ PVSystem_IO::PVSystem_IO(compute_module* cm, std::string cmName, Simulation_IO *
 	// Transformer losses
 	transformerLoadLossFraction = cm->as_number("transformer_load_loss") * (ssc_number_t)(util::percent_to_fraction);  
 	transformerNoLoadLossFraction = cm->as_number("transformer_no_load_loss") *(ssc_number_t)(util::percent_to_fraction);
+
+	// MPPT
+	voltageMpptLow1Module = cm->as_double("mppt_low_inverter") / modulesPerString;
+	voltageMpptHi1Module = cm->as_double("mppt_hi_inverter") / modulesPerString;
+	clipMpptWindow = false;
+
+	if (voltageMpptLow1Module > 0 && voltageMpptHi1Module > voltageMpptLow1Module)
+	{
+		int moduleType = Subarrays[0]->Module->moduleType;
+		if (moduleType == 1     // cec with database
+			|| moduleType == 2   // cec with user specs
+			|| moduleType == 4) // iec61853 single diode
+		{
+			clipMpptWindow = true;
+		}
+		else
+		{
+			cm->log("The simple efficiency and Sandia module models do not allow limiting module voltage to the MPPT tracking range of the inverter.", SSC_NOTICE);
+		}
+	}
+	else
+	{
+		cm->log("Inverter MPPT voltage tracking window not defined - modules always operate at MPPT.", SSC_NOTICE);
+	}
 }
 
 void PVSystem_IO::AllocateOutputs(compute_module* cm)
@@ -809,4 +846,121 @@ void Module_IO::AssignOutputs(compute_module* cm)
 	cm->assign("6par_Rs", var_data((ssc_number_t)cecModel.Rs));
 	cm->assign("6par_Rsh", var_data((ssc_number_t)cecModel.Rsh));
 	cm->assign("6par_Adj", var_data((ssc_number_t)cecModel.Adj));
+}
+
+Inverter_IO::Inverter_IO(compute_module *cm, std::string cmName)
+{
+	inverterType =  cm->as_integer("inverter_model");
+	
+	if (inverterType == 0) // cec database
+	{
+		sandiaInverter.Paco = cm->as_double("inv_snl_paco");
+		sandiaInverter.Pdco = cm->as_double("inv_snl_pdco");
+		sandiaInverter.Vdco = cm->as_double("inv_snl_vdco");
+		sandiaInverter.Pso = cm->as_double("inv_snl_pso");
+		sandiaInverter.Pntare = cm->as_double("inv_snl_pnt");
+		sandiaInverter.C0 = cm->as_double("inv_snl_c0");
+		sandiaInverter.C1 = cm->as_double("inv_snl_c1");
+		sandiaInverter.C2 = cm->as_double("inv_snl_c2");
+		sandiaInverter.C3 = cm->as_double("inv_snl_c3");
+		ratedACOutput = sandiaInverter.Paco;
+	}
+	else if (inverterType == 1) // datasheet data
+	{
+		double eff_ds = cm->as_double("inv_ds_eff") / 100.0;
+		sandiaInverter.Paco = cm->as_double("inv_ds_paco");
+		if (eff_ds != 0)
+			sandiaInverter.Pdco = sandiaInverter.Paco / eff_ds;
+		else
+			sandiaInverter.Pdco = 0;
+		sandiaInverter.Vdco = cm->as_double("inv_ds_vdco");
+		sandiaInverter.Pso = cm->as_double("inv_ds_pso");
+		sandiaInverter.Pntare = cm->as_double("inv_ds_pnt");
+		sandiaInverter.C0 = 0;
+		sandiaInverter.C1 = 0;
+		sandiaInverter.C2 = 0;
+		sandiaInverter.C3 = 0;
+		ratedACOutput = sandiaInverter.Paco;
+	}
+	else if (inverterType == 2) // partload curve
+	{
+		partloadInverter.Vdco = cm->as_double("inv_pd_vdco");
+		partloadInverter.Paco = cm->as_double("inv_pd_paco");
+		partloadInverter.Pdco = cm->as_double("inv_pd_pdco");
+		partloadInverter.Pntare = cm->as_double("inv_pd_pnt");
+
+		std::vector<double> pl_pd = cm->as_vector_double("inv_pd_partload");
+		std::vector<double> eff_pd = cm->as_vector_double("inv_pd_efficiency");
+
+		partloadInverter.Partload = pl_pd;
+		partloadInverter.Efficiency = eff_pd;
+		ratedACOutput = partloadInverter.Paco;
+	}
+	else if (inverterType == 3) // coefficient generator
+	{
+		sandiaInverter.Paco = cm->as_double("inv_cec_cg_paco");
+		sandiaInverter.Pdco = cm->as_double("inv_cec_cg_pdco");
+		sandiaInverter.Vdco = cm->as_double("inv_cec_cg_vdco");
+		sandiaInverter.Pso = cm->as_double("inv_cec_cg_psco");
+		sandiaInverter.Pntare = cm->as_double("inv_cec_cg_pnt");
+		sandiaInverter.C0 = cm->as_double("inv_cec_cg_c0");
+		sandiaInverter.C1 = cm->as_double("inv_cec_cg_c1");
+		sandiaInverter.C2 = cm->as_double("inv_cec_cg_c2");
+		sandiaInverter.C3 = cm->as_double("inv_cec_cg_c3");
+		ratedACOutput = sandiaInverter.Paco;
+	}
+	else
+	{
+		throw compute_module::exec_error("pvsamv1", "invalid inverter model type");
+	}
+}
+
+void Inverter_IO::setupSharedInverter(compute_module* cm, SharedInverter * a_sharedInverter)
+{
+	sharedInverter = a_sharedInverter;
+
+	// Inverter thermal derate curves
+	bool en_inv_tdc = cm->as_boolean("en_inv_tdc");
+	if (en_inv_tdc) {
+		double* curve1 = new double[3];
+		curve1[0] = cm->as_double("inv_tdc_V1");
+		curve1[1] = cm->as_double("inv_tdc_T1");
+		curve1[2] = cm->as_double("inv_tdc_S1");
+
+		double* curve2 = new double[3];
+		try {
+			curve2[0] = cm->as_double("inv_tdc_V2");
+			curve2[1] = cm->as_double("inv_tdc_T2");
+			curve2[2] = cm->as_double("inv_tdc_S2");
+		}
+		catch (compute_module::general_error &) {
+			curve2[0] = 0;
+			curve2[1] = -99;
+			curve2[2] = 0;
+		}
+		if (curve2[0] <= 0 || curve2[1] <= -98 || curve2[0] >= 0) {
+			delete curve2;
+			curve2 = NULL;
+		}
+
+		double* curve3 = new double[3];
+		try {
+			curve3[0] = cm->as_double("inv_tdc_V3");
+			curve3[1] = cm->as_double("inv_tdc_T3");
+			curve3[2] = cm->as_double("inv_tdc_S3");
+		}
+		catch (compute_module::general_error &) {
+			curve3[0] = 0;
+			curve3[1] = -99;
+			curve3[2] = 0;
+		}
+		if (curve3[0] <= 0 || curve3[1] <= -98 || curve3[0] >= 0) {
+			delete curve3;
+			curve3 = NULL;
+		}
+		if (!sharedInverter->setTempDerateCurves(curve1, curve2, curve3)) {
+			throw compute_module::exec_error("pvsamv1", "Error setting up inverter temperature derate curves");
+		}
+	}
+
 }

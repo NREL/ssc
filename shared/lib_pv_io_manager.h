@@ -10,9 +10,11 @@
 #include "lib_cec6par.h"
 #include "lib_iec61853.h"
 #include "lib_irradproc.h"
+#include "lib_pvinv.h"
 #include "lib_pv_incidence_modifier.h"
 #include "lib_pvshade.h"
 #include "lib_sandia.h"
+#include "lib_shared_inverter.h"
 #include "lib_snowmodel.h"
 #include "lib_util.h"
 
@@ -30,6 +32,9 @@ struct Subarray_IO;
 
 /// Structure containing module-level IO information
 struct Module_IO;
+
+/// Structure containing module-level IO information
+struct Inverter_IO;
 
 /// Structure containing the aggregate outputs for all subarrays
 struct PVSystem_IO;
@@ -77,6 +82,7 @@ public:
 	std::unique_ptr<Simulation_IO> m_SimulationIO;
 	std::unique_ptr<Irradiance_IO> m_IrradianceIO;
 	std::unique_ptr<PVSystem_IO> m_PVSystemIO;
+	std::unique_ptr<Inverter_IO> m_InverterIO;
 	std::vector<std::unique_ptr<Subarray_IO>> m_SubarraysIO;
 	std::unique_ptr<ShadeDB8_mpp> m_shadeDatabase;
 	size_t nSubarrays;
@@ -169,15 +175,20 @@ struct Simulation_IO
 */
 struct PVSystem_IO
 {
-	PVSystem_IO(compute_module* cm, std::string cmName, Simulation_IO * SimulationIO, Irradiance_IO * IrradianceIO, std::vector<Subarray_IO*> Subarrays);
+	PVSystem_IO(compute_module* cm, std::string cmName, Simulation_IO * SimulationIO, Irradiance_IO * IrradianceIO, std::vector<Subarray_IO*> Subarrays, Inverter_IO * InverterIO);
 
 	void AllocateOutputs(compute_module *cm);
 	void AssignOutputs(compute_module *cm);
 
 	size_t numberOfSubarrays;
+	size_t numberOfInverters;
+
 	Irradiance_IO * Irradiance;
 	Simulation_IO * Simulation;
 	std::vector<Subarray_IO*> Subarrays;
+	Inverter_IO * Inverter;
+
+	std::unique_ptr<SharedInverter> m_sharedInverter;
 
 	// Inputs assumed to apply to all subarrays
 	bool enableDCLifetimeLosses;
@@ -185,7 +196,12 @@ struct PVSystem_IO
 
 	int modulesPerString;
 	int stringsInParallel;
-	int numberOfInverters;
+	double ratedACOutput;  /// AC Power rating for whole system (all inverters)
+
+	double voltageMpptLow1Module;
+	double voltageMpptHi1Module;
+	bool clipMpptWindow;
+
 	double acDerate;
 	double acLossPercent;
 	double transmissionDerate;
@@ -404,6 +420,37 @@ public:
 	iec61853_module_t elevenParamSingleDiodeModel; 
 	pvcelltemp_t *cellTempModel;
 	pvmodule_t *moduleModel;
+};
+
+
+/**
+* \struct Inverter_IO
+*
+* This structure contains the input and output data needed for a single inverter
+* It is contained within the IOManager.
+*
+*/
+struct Inverter_IO
+{
+public:
+	/// Construct the Inverter_IO structure from the compute module input. 
+	Inverter_IO(compute_module* cm, std::string cmName);
+
+	/// Setup shared inverter properties
+	void setupSharedInverter(compute_module* cm, SharedInverter * a_sharedInverter);
+
+	/// Assign outputs from member data after the PV Model has run 
+	void AssignOutputs(compute_module* cm);
+
+	enum inverterTypeList { INVERTER_CEC_DATABASE, INVERTER_DATASHEET, INVERTER_PARTLOAD, INVERTER_COEFFICIENT_GEN };
+
+	int inverterType;		/// From inverterTypeList
+	double ratedACOutput;   /// Rated power for one inverter
+
+	::sandia_inverter_t sandiaInverter;
+	::partload_inverter_t partloadInverter;
+
+	SharedInverter * sharedInverter;
 };
 
 #endif

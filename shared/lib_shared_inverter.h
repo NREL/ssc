@@ -17,7 +17,7 @@ class SharedInverter
 public:
 
 	/// Construct a shared inverter by registering the previously constructed inverter
-	SharedInverter(int inverterType, int numberOfInverters,
+	SharedInverter(int inverterType, size_t numberOfInverters,
 		sandia_inverter_t * sandiaInverter, partload_inverter_t * partloadInverter);
 
 	/// Setup efficiency vs ambient T curves at up to 3 input voltages for temp derating, returns true if successful
@@ -50,7 +50,7 @@ public:
 protected:
 
 	int m_inverterType;  /// The inverter type
-	int m_numInverters;  /// The number of inverters in the system
+	size_t m_numInverters;  /// The number of inverters in the system
 
 	// temperature derate curves
 	bool m_tempEnabled;
