@@ -3,10 +3,10 @@
   * [calc_design_pipe_vals](#calc_design_pipe_vals)
   * [custom_tes_p_loss](#custom_tes_p_loss)
   * [has_hot_tank_bypass](#has_hot_tank_bypass)
+  * [k_tes_loss_coeffs](#tes_k_loss_coeffs)
   * [L_rnr_pb](#l_rnr_pb)
   * [L_rnr_per_xpan](#l_rnr_per_xpan)
-  * [L_tes_col](#l_tes_col)
-  * [L_tes_gen](#l_tes_gen)
+  * [L_tes_col_gen](#l_tes_col)
   * [L_xpan_hdr](#l_xpan_hdr)
   * [L_xpan_rnr](#l_xpan_rnr)
   * [Min_rnr_xpans](#min_rnr_xpans)
@@ -15,7 +15,6 @@
   * [northsouth_field_sep](#northsouth_field_sep)
   * [offset_xpan_hdr](#offset_xpan_hdr)
   * [tanks_in_parallel](#tanks_in_parallel)
-  * [tes_k_loss_coeffs](#tes_k_loss_coeffs)
   * [T_tank_hot_inlet_min](#t_tank_hot_inlet_min)
   * [V_hdr_cold_max](#v_hdr_cold_max)
   * [V_hdr_cold_min](#v_hdr_cold_min)
@@ -53,17 +52,17 @@ true if the TES piping losses should be calculated using the TES pipe lengths an
 ### has_hot_tank_bypass
 true if the solar field bypass valve causes the field htf to bypasses just the hot tank (and power block and auxiliary boiler) and enter the cold tank before flowing back to the field. Value is false if the bypass valve bypasses both the hot and cold tank. Default = false. [^](#toc)
 
+### k_tes_loss_coeffs
+the combined minor loss coefficients of the fittings and valves in the collection (including bypass) and generation loops in the TES piping to be used in the equation DP = K * U^2 * rho / 2. Defaults = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0} [^](#toc)
+
 ### L_rnr_pb
 length of runner pipe in meters, for either the hot or cold lines. This length was previously shared with the other identical set of runners for the other half of the solar field, but this is no longer the case. Default = 25 m. [^](#toc)
 
 ### L_rnr_per_xpan
 the threshold length of straight runner pipe without an expansion loop. Once this length has been reached, an expansion loop is added (without increasing the linear distance). Default = 70 m. [^](#toc)
 
-### L_tes_col
-length of piping in TES collection flow loop [m]. Defaults = {45, 45, 100, 120, 120}. [^](#toc)
-
-### L_tes_gen
-length of piping in TES generation flow loop [m]. defaults = {80, 80, 80, 80, 120, 80}. [^](#toc)
+### L_tes_col_gen
+length of piping in the TES collection flow loop followed by the generation flow loop [m]. Defaults = {0, 90, 100, 120, 0, 0, 0, 0, 80, 120, 80}. [^](#toc)
 
 ### L_xpan_hdr
 combined length in meters of the two perpendicular segments of a header expansion loop. This is the additional pipe length for each expansion loop. Default = 20 m [^](#toc)
@@ -88,9 +87,6 @@ location of the first header expansion loop. Default = 1, which means that the f
 
 ### tanks_in_parallel
 true if the hot and cold storage tank branch is in parallel with the solar field (traditional case), or false if the tanks are in series with the solar field (only applicable for direct storage). Default = true. [^](#toc)
-
-### tes_k_loss_coeffs
-the combined minor loss coefficients of the fittings and valves in the collection, generation, and bypass loops in the TES	piping to be used in the equation DP = K * U^2 * rho / 2. {k_TES_col, k_TES_gen, k_TES_bypass}. Defaults = {0.4, 0.4, 0.4} [^](#toc)
 
 ### T_tank_hot_inlet_min
 the minimum field htf temperature that may enter the hot tank [C]. If below this temperature the bypass valve is opened and the field recirculates. Default = 400 C. [^](#toc)
