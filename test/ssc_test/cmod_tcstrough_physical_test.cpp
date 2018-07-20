@@ -204,6 +204,8 @@ const char* Type_cpnt = "0, 1, 0, 1, 0, -1, -1, -1, -1, -1, -1,  "
                         "0, 2, 0, 2, 0, 1, 0, 2, 0, 0, 1,  "
                         "0, 1, 0, 1, 0, -1, -1, -1, -1, -1, -1";
 const char* bop_array = "0, 1, 0.4830000102519989, 0.51700001955032349, 0";
+const char* L_tes_col_gen = "0, 90, 100, 120, 0, 0, 0, 0, 80, 120, 80";
+const char* k_tes_loss_coeffs = "0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0";
 const char* aux_array = "0.02273000031709671, 1, 0.4830000102519989, 0.51700001955032349, 0";
 const char* tslogic_a = "0, 0, 0, 0, 0, 0, 0, 0, 0";
 const char* tslogic_b = "0, 0, 0, 0, 0, 0, 0, 0, 0";
@@ -349,6 +351,7 @@ TestInfo physTroughPPASingleDefaultInfo[] = {
 	{"Fluid",                               NUM,                "21"                    },
 	{"T_fp",                                NUM,                "150"                   },
 	{"I_bn_des",                            NUM,                "950"                   },
+    {"calc_design_pipe_vals",               NUM,                "1"                     },
 	{"V_hdr_cold_max",                      NUM,                "3"                     },
 	{"V_hdr_cold_min",                      NUM,                "2"                     },
     {"V_hdr_hot_max",                       NUM,                "3"                     },
@@ -450,12 +453,19 @@ TestInfo physTroughPPASingleDefaultInfo[] = {
 	{"cold_tank_Thtr",                      NUM,                "250"                   },
 	{"hot_tank_Thtr",                       NUM,                "365"                   },
 	{"tank_max_heat",                       NUM,                "25"                    },
+    {"tanks_in_parallel",                   NUM,                "1"                     },
+    {"has_hot_tank_bypass",                 NUM,                "0"                     },
+    {"T_tank_hot_inlet_min",                NUM,                "400"                   },
 	{"q_pb_design",                         NUM,                "311.79776000976563"    },
 	{"W_pb_design",                         NUM,                "111"                   },
 	{"cycle_max_frac",                      NUM,                "1.0499999523162842"    },
 	{"cycle_cutoff_frac",                   NUM,                "0.20000000298023224"   },
 	{"pb_pump_coef",                        NUM,                "0.55000001192092896"   },
 	{"tes_pump_coef",                       NUM,                "0.15000000596046448"   },
+    {"V_tes_des",                           NUM,                "1.85"                  },
+    {"L_tes_col_gen",                       ARR,                L_tes_col_gen,          },
+    {"custom_tes_p_loss",                   NUM,                "0"                     },
+    {"k_tes_loss_coeffs",                   ARR,                k_tes_loss_coeffs,      },
 	{"pb_fixed_par",                        NUM,                "0.0054999999701976776" },
 	{"bop_array",                           ARR,                bop_array,              5},
 	{"aux_array",                           ARR,                aux_array,              5},
