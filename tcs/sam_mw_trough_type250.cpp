@@ -5113,7 +5113,7 @@ lab_keep_guess:
         //assume symmetric hot and cold runners
 		m_dot_rnr[0] = m_dot/2.;   //mass flow through half-length runners is always half of total
         m_dot_rnr[2 * nrunsec - 1] = m_dot_rnr[0];
-		D_runner.at(0) = pipe_sched(sqrt(4.*m_dot_rnr[0]/(rho*V_cold_max*pi)));
+		D_runner.at(0) = CSP::pipe_sched(sqrt(4.*m_dot_rnr[0]/(rho*V_cold_max*pi)));
         D_runner.at(2 * nrunsec - 1) = D_runner.at(0);
         V_rnr.at(0) = 4.*m_dot_rnr[0] / (rho*pow(D_runner.at(0), 2)*pi);
         V_rnr.at(2 * nrunsec - 1) = V_rnr.at(0);
@@ -5125,7 +5125,7 @@ lab_keep_guess:
 				m_dot_rnr[i] = max(m_dot_rnr[i-1] - m_dot_hdrs*2, 0.0);
             }
             m_dot_rnr[2 * nrunsec - i - 1] = m_dot_rnr[i];
-			D_runner[i] = pipe_sched(sqrt(4.*m_dot_rnr[i]/(rho*V_cold_max*pi)));
+			D_runner[i] = CSP::pipe_sched(sqrt(4.*m_dot_rnr[i]/(rho*V_cold_max*pi)));
             D_runner[2 * nrunsec - i - 1] = D_runner[i];
             V_rnr.at(i) = 4.*m_dot_rnr[i] / (rho*pow(D_runner.at(i), 2)*pi);
             V_rnr.at(2 * nrunsec - i - 1) = V_rnr.at(i);
@@ -5142,10 +5142,10 @@ lab_keep_guess:
                 m_dot_enter = m_dot_hdrs;
                 // Size cold header diameter using V_max to allow for mass loss into loops
                 // Select actual pipe that is larger (param=true) than ideal pipe b/c if smaller it will definitely exceed V_max
-                D_hdr[i] = pipe_sched(sqrt(4.*m_dot_enter / (rho*V_hdr_cold_max*pi)), true);
+                D_hdr[i] = CSP::pipe_sched(sqrt(4.*m_dot_enter / (rho*V_hdr_cold_max*pi)), true);
                 V_enter = 4.*m_dot_enter / (rho*pi*D_hdr[i] * D_hdr[i]);
                 if (V_enter < V_hdr_cold_min) {  // if the entering velocity will be below the minimum (it won't exceed V_max)
-                    D_hdr_next = pipe_sched(sqrt(4.*m_dot_enter / (rho*V_hdr_cold_max*pi)), false);   // size smaller this time, will definitely exceed V_max
+                    D_hdr_next = CSP::pipe_sched(sqrt(4.*m_dot_enter / (rho*V_hdr_cold_max*pi)), false);   // size smaller this time, will definitely exceed V_max
                     V_enter_next = 4.*m_dot_enter / (rho*pi*D_hdr_next*D_hdr_next);
                     // Choose the smaller diameter (faster V) if it's closer to being in range
                     if (V_enter_next - V_hdr_cold_max <= V_hdr_cold_min - V_enter) {  // '<=' is so the smaller (faster) pipe is preferred in a tie
@@ -5158,11 +5158,11 @@ lab_keep_guess:
                 m_dot_enter -= m_dot_2loops;
                 V_enter = 4.*m_dot_enter / (rho*pi*D_hdr[i - 1] * D_hdr[i - 1]);  // assuming no diameter change
                 if (V_enter < V_hdr_cold_min) {   // if the entering velocity will be below the minimum if there is no diameter change
-                    D_hdr_next = pipe_sched(sqrt(4.*m_dot_enter / (rho*V_hdr_cold_max*pi)), true);  // size larger than optimal so it won't exceed V_max
+                    D_hdr_next = CSP::pipe_sched(sqrt(4.*m_dot_enter / (rho*V_hdr_cold_max*pi)), true);  // size larger than optimal so it won't exceed V_max
                     V_enter_next = 4.*m_dot_enter / (rho*pi*D_hdr_next*D_hdr_next);
                     if (V_enter_next < V_hdr_cold_min) {  // if the velocity is still below V_min (it won't exceed V_max)
                         // try smaller than the optimal this time and choose the one with the velocity closest to being in range
-                        D_hdr_next2 = pipe_sched(sqrt(4.*m_dot_enter / (rho*V_hdr_cold_max*pi)), false);  // size smaller this time (will exceed V_max)
+                        D_hdr_next2 = CSP::pipe_sched(sqrt(4.*m_dot_enter / (rho*V_hdr_cold_max*pi)), false);  // size smaller this time (will exceed V_max)
                         V_enter_next2 = 4.*m_dot_enter / (rho*pi*D_hdr_next2*D_hdr_next2);
                         if (V_hdr_cold_min - V_enter_next < V_enter_next2 - V_hdr_cold_max) {   // '<' is so the smaller (faster) pipe is preferred in a tie
                             D_hdr[i] = D_hdr_next;
@@ -5198,10 +5198,10 @@ lab_keep_guess:
                 m_dot_leave = m_dot_2loops;
                 // Size hot header diameter using V_min to allow for mass addition from downstream loops
                 // Select actual pipe that is smaller than ideal pipe b/c if sizing larger it will definitely deceed V_min
-                D_hdr[i] = pipe_sched(sqrt(4.*m_dot_leave / (rho*V_hdr_hot_min*pi)), false);
+                D_hdr[i] = CSP::pipe_sched(sqrt(4.*m_dot_leave / (rho*V_hdr_hot_min*pi)), false);
                 V_leave = 4.*m_dot_leave / (rho*pi*D_hdr[i] * D_hdr[i]);
                 if (V_leave > V_hdr_hot_max) {   // if the leaving velocity will be above the maximum (it won't deceed V_min)
-                    D_hdr_next = pipe_sched(sqrt(4.*m_dot_leave / (rho*V_hdr_hot_min*pi)), true);   // size larger this time, will definitely be below V_min
+                    D_hdr_next = CSP::pipe_sched(sqrt(4.*m_dot_leave / (rho*V_hdr_hot_min*pi)), true);   // size larger this time, will definitely be below V_min
                     V_leave_next = 4.*m_dot_leave / (rho*pi*D_hdr_next*D_hdr_next);
                         // Choose the larger diameter (slower V) if it's closer to being in range
                         if (V_hdr_hot_min - V_leave_next < V_leave - V_hdr_hot_max) {  // '<' is so the smaller (cheaper) pipe is preferred in a tie
@@ -5214,11 +5214,11 @@ lab_keep_guess:
                 m_dot_leave += m_dot_2loops;
                 V_leave = 4.*m_dot_leave / (rho*pi*D_hdr[i - 1] * D_hdr[i - 1]);  // assuming no diameter change
                 if (V_leave > V_hdr_hot_max) {   // if the leaving velocity will be above the maximum if there is no diameter change
-                    D_hdr_next = pipe_sched(sqrt(4.*m_dot_leave / (rho*V_hdr_hot_min*pi)), false);  // size smaller than optimal so it won't deceed V_min
+                    D_hdr_next = CSP::pipe_sched(sqrt(4.*m_dot_leave / (rho*V_hdr_hot_min*pi)), false);  // size smaller than optimal so it won't deceed V_min
                     V_leave_next = 4.*m_dot_leave / (rho*pi*D_hdr_next*D_hdr_next);
                     if (V_leave_next > V_hdr_hot_max) {  // if the velocity is still above V_max (it won't be below V_min)
                         // try larger than the optimal this time and choose the one with the velocity closest to being in range
-                        D_hdr_next2 = pipe_sched(sqrt(4.*m_dot_leave / (rho*V_hdr_hot_min*pi)), true);  // size larger this time (will be below V_min)
+                        D_hdr_next2 = CSP::pipe_sched(sqrt(4.*m_dot_leave / (rho*V_hdr_hot_min*pi)), true);  // size larger this time (will be below V_min)
                         V_leave_next2 = 4.*m_dot_leave / (rho*pi*D_hdr_next2*D_hdr_next2);
                         if (V_leave_next - V_hdr_hot_max <= V_hdr_hot_min - V_leave_next2) {   // '<=' is so the smaller (cheaper) pipe is preferred in a tie
                             D_hdr[i] = D_hdr_next;
@@ -5274,47 +5274,6 @@ lab_keep_guess:
 
 	}
 	
-	/***************************************************************************************************
-	This function takes a piping diameter "De" [m] and locates the appropriate pipe schedule
-	from a list of common pipe sizes. The function always returns the pipe schedule equal to or
-	immediately larger than the ideal diameter De.
-	The pipe sizes are selected based on the assumption of a maximum hoop stress of 105 MPa and a total
-	solar field pressure drop of 20 Bar. The sizes correspond to the pipe schedule with a wall thickness
-	sufficient to match these conditions. For very large pipe diameters (above 42in), no suitable schedule 
-	was found, so the largest available schedule is applied.
-	Data and stress calculations were obtained from Kelly & Kearney piping model, rev. 1/2011.
-	*/
-
-    double pipe_sched(double De, bool selectLarger = true) {
-
-        //D_inch = (/2.50, 3.0, 4.0, 6.0, 8.0, 10.0, 12.0, 14.0, 16.0, 18.0, 20.0, 22.0, 24.0, 26.0, &
-        //           28.0, 30.0, 32.0, 34.0, 36.0, 42.0, 48.0, 54.0, 60.0, 66.0, 72.0/)
-
-        double D_m[] = { 0.06880860, 0.08468360, 0.1082040, 0.16146780, 0.2063750, 0.260350, 0.311150, 0.33975040,
-                        0.39055040, 0.438150, 0.488950, 0.53340, 0.58420, 0.6350, 0.679450, 0.730250, 0.781050,
-                        0.82864960, 0.87630, 1.02870, 1.16840, 1.32080, 1.47320, 1.62560, 1.7780 };
-        int np = sizeof(D_m) / sizeof(D_m[0]);
-
-        if(selectLarger) {
-            //Select the smallest real pipe diameter greater than the design diameter provided
-            for (int i = 0; i < np; i++) {
-                if (D_m[i] >= De) return D_m[i];
-            }
-        }
-        if (!selectLarger) {
-            //Select the smallest real pipe diameter less than the design diameter provided
-            for (int i = np-1; i >= 0; i--) {
-                if (D_m[i] <= De) return D_m[i];
-            }
-        }
-
-		//Nothing was found, so return an error
-		message( TCS_WARNING, "No suitable pipe schedule found for this plant design. Looking for a schedule above %.2f in ID. "
-			"Maximum schedule is %.2f in ID. Using the exact pipe diameter instead." 
-            "Consider increasing the header design velocity range or the number of field subsections.", 
-            De*mtoinch, D_m[np-1]*mtoinch);
-		return De;  //mjw 10/10/2014 - NO! ---> std::numeric_limits<double>::quiet_NaN();
-	}
 
 	//***************************************************************************************************
 	double Pump_SGS(double rho, double m_dotsf, double sm){
@@ -5363,7 +5322,7 @@ lab_keep_guess:
 		double psum=0.;
 		for(int i=0; i<nl; i++){
 			//Calculate the pipe diameter
-			D[i] = pipe_sched(sqrt(4.0*V_dot[i]/(vel_max*pi)));
+			D[i] = CSP::pipe_sched(sqrt(4.0*V_dot[i]/(vel_max*pi)));
 			//Calculate the total volume
 			V[i] = pow(D[i],2)/4.*pi*L_line[i];
 			psum += V[i];
