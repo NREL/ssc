@@ -105,10 +105,9 @@ enum {
 	P_pb_pump_coef,
 	P_tes_pump_coef,
     P_V_tes_des,
-    P_L_tes_col,
-    P_L_tes_gen,
+    P_L_tes_col_gen,
     P_custom_tes_p_loss,
-    P_tes_k_loss_coeffs,
+    P_k_tes_loss_coeffs,
 	P_pb_fixed_par,
 	P_bop_array,
 	P_aux_array,
@@ -255,10 +254,9 @@ tcsvarinfo sam_mw_trough_type251_variables[] = {
     { TCS_PARAM,    TCS_NUMBER,        P_pb_pump_coef,       "pb_pump_coef",         "Pumping power to move 1kg of HTF through PB loop",        "kW/(kg/s)",    "",        "",        ""},
     { TCS_PARAM,    TCS_NUMBER,        P_tes_pump_coef,      "tes_pump_coef",        "Pumping power to move 1kg of HTF through tes loop",       "kW/(kg/s)",    "",        "",        ""},
     { TCS_PARAM,    TCS_NUMBER,        P_V_tes_des,          "V_tes_des",            "Design-point velocity to size the TES pipe diameters",    "m/s",          "",        "",        ""},
-    { TCS_PARAM,    TCS_ARRAY,         P_L_tes_col,          "L_tes_col",            "Length of TES pipes in collection loop",                  "m",            "",        "",        ""},
-    { TCS_PARAM,    TCS_ARRAY,         P_L_tes_gen,          "L_tes_gen",            "Length of TES pipes in generation loop",                  "m",            "",        "",        ""},
+    { TCS_PARAM,    TCS_ARRAY,         P_L_tes_col_gen,      "L_tes_col_gen",        "Length of TES pipes in collection and generation loops",  "m",            "",        "",        ""},
     { TCS_PARAM,    TCS_NUMBER,        P_custom_tes_p_loss,  "custom_tes_p_loss",    "TES pipe losses are based on custom lengths and coeffs",  "-",            "",        "",        ""},
-    { TCS_PARAM,    TCS_ARRAY,         P_tes_k_loss_coeffs,  "tes_k_loss_coeffs",    "Minor loss coeffs for the coll, gen, and bypass loops",   "-",            "",        "",        ""},
+    { TCS_PARAM,    TCS_ARRAY,         P_k_tes_loss_coeffs,  "k_tes_loss_coeffs",    "Minor loss coeffs for the coll, gen, and bypass loops",   "-",            "",        "",        ""},
     { TCS_PARAM,    TCS_NUMBER,        P_pb_fixed_par,       "pb_fixed_par",         "Fraction of rated gross power constantly consumed",       "-",            "",        "",        ""},
     { TCS_PARAM,    TCS_ARRAY,         P_bop_array,          "bop_array",            "Coefficients for balance of plant parasitics calcs",      "-",            "",        "",        ""},
     { TCS_PARAM,    TCS_ARRAY,         P_aux_array,          "aux_array",            "Coefficients for auxiliary heater parasitics calcs",      "-",            "",        "",        ""},
@@ -405,16 +403,13 @@ private:
 	double pb_pump_coef;
 	double tes_pump_coef;
     double V_tes_des;
-    int l_L_tes_col;
-    double * L_tes_col_in;
-    util::matrix_t<double> L_tes_col;
-    int l_L_tes_gen;
-    double * L_tes_gen_in;
-    util::matrix_t<double> L_tes_gen;
+    int l_L_tes_col_gen;
+    double * L_tes_col_gen_in;
+    util::matrix_t<double> L_tes_col_gen;
     bool custom_tes_p_loss;
-    int l_tes_k_loss_coeffs;
-    double * tes_k_loss_coeffs_in;
-    util::matrix_t<double> tes_k_loss_coeffs;
+    int l_k_tes_loss_coeffs;
+    double * k_tes_loss_coeffs_in;
+    util::matrix_t<double> k_tes_loss_coeffs;
     double pb_fixed_par;
 	int l_bop_array;		
 	double * bop_array;
@@ -531,13 +526,11 @@ public:
 		pb_pump_coef	= std::numeric_limits<double>::quiet_NaN();
 		tes_pump_coef	= std::numeric_limits<double>::quiet_NaN();
         V_tes_des       = std::numeric_limits<double>::quiet_NaN();
-        l_L_tes_col     = -1;
-        L_tes_col_in    = 0;
-        l_L_tes_gen     = -1;
-        L_tes_gen_in    = 0;
+        l_L_tes_col_gen = -1;
+        L_tes_col_gen_in        = 0;
         custom_tes_p_loss       = false;
-        l_tes_k_loss_coeffs     = -1;
-        tes_k_loss_coeffs_in    = 0;
+        l_k_tes_loss_coeffs     = -1;
+        k_tes_loss_coeffs_in    = 0;
 		pb_fixed_par	= std::numeric_limits<double>::quiet_NaN();
 		l_bop_array		= -1;
 		bop_array	= 0;
@@ -738,13 +731,11 @@ public:
 		pb_pump_coef	= value(P_pb_pump_coef);			//[kW/kg]
 		tes_pump_coef	= value(P_tes_pump_coef);			//[kW/kg]
         V_tes_des       = value(P_V_tes_des);               //[m/s]
-        L_tes_col_in    = value(P_L_tes_col, &l_L_tes_col); //[m]
-        L_tes_col.assign(L_tes_col_in, l_L_tes_col);
-        L_tes_gen_in    = value(P_L_tes_gen, &l_L_tes_gen); //[m]
-        L_tes_gen.assign(L_tes_gen_in, l_L_tes_gen);
+        L_tes_col_gen_in  = value(P_L_tes_col_gen, &l_L_tes_col_gen);                 //[m]
+        L_tes_col_gen.assign(L_tes_col_gen_in, l_L_tes_col_gen);
         custom_tes_p_loss       = (bool) value(P_custom_tes_p_loss);                  //[-]
-        tes_k_loss_coeffs_in    = value(P_tes_k_loss_coeffs, &l_tes_k_loss_coeffs);   //[-]
-        tes_k_loss_coeffs.assign(tes_k_loss_coeffs_in, l_tes_k_loss_coeffs);
+        k_tes_loss_coeffs_in    = value(P_k_tes_loss_coeffs, &l_k_tes_loss_coeffs);   //[-]
+        k_tes_loss_coeffs.assign(k_tes_loss_coeffs_in, l_k_tes_loss_coeffs);
 
 		pb_fixed_par	= value(P_pb_fixed_par);			//[-]
 	
@@ -2114,81 +2105,66 @@ public:
 		return 0;
 	}
 	
-    int size_sgs_piping(double vel_dsn, util::matrix_t<double> L_col, util::matrix_t<double> L_gen, double rho, double m_dot_sf,
-        double solarm, bool tanks_in_parallel, double &vol_tot, util::matrix_t<double> &v_sf_rel, util::matrix_t<double> &diams,
+    int size_sgs_piping(double vel_dsn, util::matrix_t<double> L, double rho, double m_dot_sf, double solarm,
+        bool tanks_in_parallel, double &vol_tot, util::matrix_t<double> &v_dot_sf_rel, util::matrix_t<double> &diams,
         util::matrix_t<double> &wall_thk, util::matrix_t<double> &lengths, util::matrix_t<double> &m_dot, util::matrix_t<double> &vel)
     {
+        const int bypass_index = 4;
         double v_dot;                               // volumetric flow rate
         double Area;
         vol_tot = 0.0;                              // total volume in SGS piping
-        std::size_t nPipes = L_col.ncells() + L_gen.ncells();
-        v_sf_rel.resize_fill(nPipes, 0.0);          // volumetric flow rate relative to solar field
+        std::size_t nPipes = L.ncells();
+        v_dot_sf_rel.resize_fill(nPipes, 0.0);      // volumetric flow rate relative to solar field
         diams.resize_fill(nPipes, 0.0);
         wall_thk.resize_fill(nPipes, 0.0);
         lengths.resize_fill(nPipes, 0.0);
         m_dot.resize_fill(nPipes, 0.0);
         vel.resize_fill(nPipes, 0.0);
-        std::size_t i_sec = 0;
-        std::vector<double> v_col_sf_rel(L_col.ncells(), 0.0);
-        std::vector<double> v_gen_sf_rel(L_gen.ncells(), 0.0);
+        std::vector<int> sections_no_bypass;
 
         double v_dot_sf = m_dot_sf / rho;
 
         //The volumetric flow rate relative to the solar field for each collection section (v_rel = v_dot / v_dot_sf)
-        v_col_sf_rel.at(0) = 1 / 2.0;               // 1 - Solar field (SF) pump suction header to individual SF pump inlet
+        v_dot_sf_rel.at(0) = 1 / 2.0;               // 1 - Solar field (SF) pump suction header to individual SF pump inlet
                                                     //     50% -> "/2.0" . The flow rate (i.e., diameter) is sized here for the case when one pump is down.
-        v_col_sf_rel.at(1) = 1 / 2.0;               // 2 - Individual SF pump discharge to SF pump discharge header
-        v_col_sf_rel.at(2) = 1;                     // 3 - SF pump discharge header to collection field section headers (i.e., runners)
-        v_col_sf_rel.at(3) = 1;                     // 4 - Collector field section outlet headers (i.e., runners) to expansion vessel (indirect storage) or
+        v_dot_sf_rel.at(1) = 1 / 2.0;               // 2 - Individual SF pump discharge to SF pump discharge header
+        v_dot_sf_rel.at(2) = 1;                     // 3 - SF pump discharge header to collection field section headers (i.e., runners)
+        v_dot_sf_rel.at(3) = 1;                     // 4 - Collector field section outlet headers (i.e., runners) to expansion vessel (indirect storage) or
                                                     //     hot thermal storage tank (direct storage)
-        v_col_sf_rel.at(4) = 1;                     // 5 - Bypass branch - Collector field section outlet headers (i.e., runners) to pump suction header (indirect) or
+        v_dot_sf_rel.at(4) = 1;                     // 5 - Bypass branch - Collector field section outlet headers (i.e., runners) to pump suction header (indirect) or
                                                     //     cold thermal storage tank (direct)
 
         //The volumetric flow rate relative to the solar field for each generation section
-        v_gen_sf_rel.at(0) = 1 / (2.0 * solarm);    // 2 - SGS pump suction header to individual SGS pump inlet (applicable only for storage in series with SF)
+        v_dot_sf_rel.at(5) = 1 / (2.0 * solarm);    // 2 - SGS pump suction header to individual SGS pump inlet (applicable only for storage in series with SF)
                                                     //     50% -> "/2.0" . The flow rate (i.e., diameter) is sized here for the case when one pump is down.
-        v_gen_sf_rel.at(1) = 1 / (2.0 * solarm);    // 3 - Individual SGS pump discharge to SGS pump discharge header (only for series storage)
-        v_gen_sf_rel.at(2) = 1 / solarm;            // 4 - SGS pump discharge header to steam generator supply header (only for series storage)
+        v_dot_sf_rel.at(6) = 1 / (2.0 * solarm);    // 3 - Individual SGS pump discharge to SGS pump discharge header (only for series storage)
+        v_dot_sf_rel.at(7) = 1 / solarm;            // 4 - SGS pump discharge header to steam generator supply header (only for series storage)
 
-        v_gen_sf_rel.at(3) = 1 / solarm;            // 5 - Steam generator supply header to inter-steam generator piping
-        v_gen_sf_rel.at(4) = 1 / solarm;            // 6 - Inter-steam generator piping to steam generator outlet header
-        v_gen_sf_rel.at(5) = 1 / solarm;            // 7 - Steam generator outlet header to SF pump suction header (indirect) or cold thermal storage tank (direct)
+        v_dot_sf_rel.at(8) = 1 / solarm;            // 5 - Steam generator supply header to inter-steam generator piping
+        v_dot_sf_rel.at(9) = 1 / solarm;            // 6 - Inter-steam generator piping to steam generator outlet header
+        v_dot_sf_rel.at(10) = 1 / solarm;           // 7 - Steam generator outlet header to SF pump suction header (indirect) or cold thermal storage tank (direct)
 
-        // Collection loop
-        for (std::vector<double>::size_type i = 0; i != v_col_sf_rel.size(); i++) {
-            v_sf_rel.at(i_sec) = v_col_sf_rel.at(i);
-            v_dot = v_dot_sf * v_col_sf_rel.at(i);
-            diams.at(i_sec) = CSP::pipe_sched(sqrt(4.0*v_dot / vel_dsn * CSP::pi));
-            wall_thk.at(i_sec) = CSP::WallThickness( diams.at(i_sec) );
-            lengths.at(i_sec) = L_col.at(i);
-            m_dot.at(i_sec) = v_dot * rho;
-            Area = CSP::pi * pow(diams.at(i_sec), 2) / 4.;
-            vel.at(i_sec) = v_dot / Area;
-
-            // Exclude bypass branch from volume calculation
-            if (i != 4) {
-                vol_tot += Area * lengths.at(i_sec);
-            }
-            i_sec++;
+        if (tanks_in_parallel) {
+            sections_no_bypass = { 0, 1, 2, 3, 8, 9, 10 };
+        }
+        else {  // tanks in series
+            sections_no_bypass = { 0, 1, 2, 3, 5, 6, 7, 8, 9, 10 };
         }
 
-        // Generation loop
-        for (std::vector<double>::size_type i = 0; i != v_gen_sf_rel.size(); i++) {
-            v_sf_rel.at(i_sec) = v_gen_sf_rel.at(i);
-            v_dot = v_dot_sf * v_gen_sf_rel.at(i);
-            diams.at(i_sec) = CSP::pipe_sched(sqrt(4.0*v_dot / vel_dsn * CSP::pi));
-            wall_thk.at(i_sec) = CSP::WallThickness( diams.at(i_sec) );
-            lengths.at(i_sec) = L_gen.at(i);
-            m_dot.at(i_sec) = v_dot * rho;
-            Area = CSP::pi * pow(diams.at(i_sec), 2) / 4.;
-            vel.at(i_sec) = v_dot / Area;
+        // Collection loop followed by generation loop
+        for (std::size_t i = 0; i < nPipes; i++) {
+            v_dot = v_dot_sf * v_dot_sf_rel.at(i);
+            diams.at(i) = CSP::pipe_sched(sqrt(4.0*v_dot / vel_dsn * CSP::pi));
+            wall_thk.at(i) = CSP::WallThickness( diams.at(i) );
+            lengths.at(i) = L.at(i);
+            m_dot.at(i) = v_dot * rho;
+            Area = CSP::pi * pow(diams.at(i), 2) / 4.;
+            vel.at(i) = v_dot / Area;
 
-            // Exclude series tanks-only branches if tanks are in parallel
-            // (the first three gen. branch lengths should be 0 if tanks are in parallel, but in case not:)
-            if (!tanks_in_parallel || i > 2) {
-                vol_tot += Area * lengths.at(i_sec);
+            // Exclude bypass branch from volume calculation
+            if ( std::find(sections_no_bypass.begin(), sections_no_bypass.end(), i) != sections_no_bypass.end() ) {
+                vol_tot += Area * lengths.at(i);
             }
-            i_sec++;
         }
 
         return 0;
@@ -2196,9 +2172,8 @@ public:
 
     double sgs_pressure_drop(double m_dot_sf, util::matrix_t<double> v_dot_sf_rel, double T_sf_in, double T_sf_out,
         double T_pb_in, double T_pb_out, util::matrix_t<double> L, util::matrix_t<double> D,
-        util::matrix_t<double> k_coeffs, double rel_rough, bool recirculating)
+        util::matrix_t<double> k_coeffs, double rel_rough, bool tanks_in_parallel, bool recirculating)
     {
-        const std::size_t recirc_index = 4;
         const std::size_t first_gen_index = 5;
         const double P_hi = 17 / 1.e-5;               // downstream SF pump pressure [Pa]
         const double P_lo =  1 / 1.e-5;               // atmospheric pressure [Pa]
@@ -2215,7 +2190,10 @@ public:
         if (recirculating) {
             sections = { 0, 1, 2, 4 };
         }
-        else {
+        else if (tanks_in_parallel) {
+            sections = { 0, 1, 2, 3, 8, 9, 10 };
+        }
+        else {  // tanks in series
             sections = { 0, 1, 2, 3, 5, 6, 7, 8, 9, 10 };
         }
 

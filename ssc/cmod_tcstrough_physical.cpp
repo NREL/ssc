@@ -208,10 +208,9 @@ static var_info _cm_vtab_tcstrough_physical[] = {
     { SSC_INPUT,        SSC_NUMBER,      "pb_pump_coef",              "Pumping power to move 1kg of HTF through PB loop",               "kW/(kg/s)",    "",             "controller",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "tes_pump_coef",             "Pumping power to move 1kg of HTF through tes loop",              "kW/(kg/s)",    "",             "controller",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "V_tes_des",                 "Design-point velocity to size the TES pipe diameters",           "m/s",          "",             "controller",     "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_ARRAY,       "L_tes_col",                 "Length of TES pipes in collection loop",                         "m",            "",             "controller",     "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_ARRAY,       "L_tes_gen",                 "Length of TES pipes in generation loop",                         "m",            "",             "controller",     "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_ARRAY,       "L_tes_col_gen",             "Length of TES pipes in collection and generation loops",         "m",            "",             "controller",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "custom_tes_p_loss",         "TES pipe losses are based on custom lengths and coeffs",         "-",            "",             "controller",     "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_ARRAY,       "tes_k_loss_coeffs",         "Minor loss coeffs for the coll, gen, and bypass loops",          "-",            "",             "controller",     "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_ARRAY,       "k_tes_loss_coeffs",         "Minor loss coeffs for the coll, gen, and bypass loops",          "-",            "",             "controller",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "pb_fixed_par",              "Fraction of rated gross power constantly consumed",              "-",            "",             "controller",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_ARRAY,       "bop_array",                 "Coefficients for balance of plant parasitics calcs",             "-",            "",             "controller",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_ARRAY,       "aux_array",                 "Coefficients for auxiliary heater parasitics calcs",             "-",            "",             "controller",     "*",                       "",                      "" },
@@ -704,8 +703,7 @@ public:
 		set_unit_value_ssc_double(type251_controller, "pb_pump_coef" ); // , 0.55);
 		set_unit_value_ssc_double(type251_controller, "tes_pump_coef" ); // , 0.15);
         set_unit_value_ssc_double(type251_controller, "V_tes_des"); // , 1.85);
-        set_unit_value_ssc_array(type251_controller, "L_tes_col"); // , []);
-        set_unit_value_ssc_array(type251_controller, "L_tes_gen"); // , []);
+        set_unit_value_ssc_array(type251_controller, "L_tes_col_gen"); // , []);
         set_unit_value_ssc_double(type251_controller, "custom_tes_p_loss"); // , false);
         set_unit_value_ssc_array(type251_controller, "tes_k_loss_coeffs"); // , []);
 		set_unit_value_ssc_double(type251_controller, "pb_fixed_par" ); // , 0.0055);
