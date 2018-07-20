@@ -705,7 +705,7 @@ public:
         set_unit_value_ssc_double(type251_controller, "V_tes_des"); // , 1.85);
         set_unit_value_ssc_array(type251_controller, "L_tes_col_gen"); // , []);
         set_unit_value_ssc_double(type251_controller, "custom_tes_p_loss"); // , false);
-        set_unit_value_ssc_array(type251_controller, "tes_k_loss_coeffs"); // , []);
+        set_unit_value_ssc_array(type251_controller, "k_tes_loss_coeffs"); // , []);
 		set_unit_value_ssc_double(type251_controller, "pb_fixed_par" ); // , 0.0055);
 		set_unit_value_ssc_array(type251_controller, "bop_array" ); // , [0,1,0.483,0.517,0]);
 		set_unit_value_ssc_array(type251_controller, "aux_array" ); // , [0.02273,1,0.483,0.517,0]);
