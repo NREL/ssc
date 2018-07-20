@@ -1568,10 +1568,10 @@ public:
 
             // Calculate pipe wall thicknesses
             for (int i = 0; i < D_runner.ncells(); i++) {
-                WallThk_runner[i] = WallThickness(D_runner[i]);
+                WallThk_runner[i] = CSP::WallThickness(D_runner[i]);
             }
             for (int i = 0; i < D_hdr.ncells(); i++) {
-                WallThk_hdr[i] = WallThickness(D_hdr[i]);
+                WallThk_hdr[i] = CSP::WallThickness(D_hdr[i]);
             }
 			
 			//report the header and runner metrics

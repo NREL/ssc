@@ -76,16 +76,6 @@ struct IntcOutputs
     IntcOutputs();
 };
 
-double WallThickness(double d_in);
-
-double MinorPressureDrop(double vel, double rho, double k);
-
-double MajorPressureDrop(double vel, double rho, double ff, double l, double d);
-
-double FrictionFactor(double rel_rough, double Re);
-
-double FricFactor_Iter(double rel_rough, double Re);
-
 
 class intc_cpnt
 {

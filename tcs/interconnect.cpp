@@ -51,6 +51,7 @@
 #include <cmath>
 #include "interconnect.h"
 #include "htf_props.h"
+#include "sam_csp_util.h"
 
 double pi = acos(-1.);
 double T_ref_K = 298.150;
@@ -66,78 +67,6 @@ IntcOutputs::IntcOutputs() {
     pressure_ave = 0;
     internal_energy = 0;
 }
-
-double WallThickness(double d_in) {
-    // regression of Wagner-2011 Table 9 values with an R^2=1.000
-    return 0.0194*d_in;
-}
-
-double MinorPressureDrop(double vel, double rho, double k) {
-    return k * (vel * vel) * rho / 2;
-}
-
-double MajorPressureDrop(double vel, double rho, double ff, double l, double d) {
-// Darcy Weisbach pressure drop for an incompressible fluid using a Darcy friction factor
-    if (d <= 0) throw std::invalid_argument("The inner diameter must be greater than 0.");
-
-    return ff * (vel * vel) * l * rho / (2 * d);
-}
-
-double FrictionFactor(double rel_rough, double Re) {
-    if (Re < 2100) {  // laminar flow
-        return 64 / Re;
-    }
-    else if(Re < 4000) {  // transitional flow
-        // see Cheng, N.S. 2008 "Formulas for friction factors in transitional regions" for non-iterative solution
-        return FricFactor_Iter(rel_rough, Re);
-    }
-    else {  // turbulent flow
-        // Calculates according to Zigrang, Sylvester 1982 for Re = 4e3 to 1e8 and e/D = 4e-5 to 5e-2
-        return pow(-2.0*log10(rel_rough / 3.7 - 5.02 / Re * log10(rel_rough / 3.7 - 5.02 / Re *
-            log10(rel_rough / 3.7 + 13.0 / Re))), -2);
-    }
-}
-
-double FricFactor_Iter(double rel_rough, double Re) {
-// Uses an iterative method to solve the implicit Colebrook friction factor function.
-// Taken from Piping loss model
-
-    double Test, TestOld, X, Xold, Slope;
-    double Acc = .01; //0.0001
-    int NumTries;
-
-    if (Re < 2750.) {
-        return 64. / std::max(Re, 1.0);
-    }
-
-    X = 33.33333;  //1. / 0.03
-    TestOld = X + 2. * log10(rel_rough / 3.7 + 2.51 * X / Re);
-    Xold = X;
-    X = 28.5714;  //1. / (0.03 + 0.005)
-    NumTries = 0;
-
-    while (NumTries < 21) {
-        NumTries++;
-        Test = X + 2 * log10(rel_rough / 3.7 + 2.51 * X / Re);
-        if (fabs(Test - TestOld) <= Acc) {
-            return 1. / (X * X);
-        }
-
-        Slope = (Test - TestOld) / (X - Xold);
-        Xold = X;
-        TestOld = Test;
-        X = std::max((Slope * X - Test) / Slope, 1.e-5);
-    }
-
-    //call Messages(-1," Could not find friction factor solution",'Warning',0,250) 
-    return 0;
-}
-
-
-//double Re(double rho, double vel, double d, double mu) {
-//// Reynold's Number
-//    return rho * vel * d / mu;
-//}
 
 
 intc_cpnt::intc_cpnt(double k, double d, double l, double rough, double u, double mc, CpntType type)
@@ -163,7 +92,7 @@ intc_cpnt::intc_cpnt(double k, double d, double l, double rough, double u, doubl
     if (hl_coef_ < 0) throw std::invalid_argument("The heat loss coefficient (U) cannot be less than 0.");
     if (mc_ < 0) throw std::invalid_argument("The heat capacity cannot be less than 0.");
 
-    setWallThick(WallThickness(d_in_));
+    setWallThick(CSP::WallThickness(d_in_));
 }
 
 intc_cpnt::~intc_cpnt()
@@ -327,16 +256,16 @@ double intc_cpnt::PressureDrop(HTFProperties *fluidProps, double m_dot, double T
     switch (Type)
     {
         case CpntType::Fitting:
-            return MinorPressureDrop(vel, rho, k_);
+            return CSP::MinorPressureDrop(vel, rho, k_);
         case CpntType::Pipe:
             Re = fluidProps->Re(T_htf_ave, P_htf_ave, vel, d_in_);
-            ff = FrictionFactor(rough_ / d_in_, Re);
-            return MajorPressureDrop(vel, rho, ff, l_, d_in_);
+            ff = CSP::FrictionFactor(rough_ / d_in_, Re);
+            return CSP::MajorPressureDrop(vel, rho, ff, l_, d_in_);
         case CpntType::Flex_Hose:
             // TODO : Differentiate this pressure drop relation for flex hoses
             Re = fluidProps->Re(T_htf_ave, P_htf_ave, vel, d_in_);
-            ff = FrictionFactor(rough_ / d_in_, Re);
-            return MajorPressureDrop(vel, rho, ff, l_, d_in_);
+            ff = CSP::FrictionFactor(rough_ / d_in_, Re);
+            return CSP::MajorPressureDrop(vel, rho, ff, l_, d_in_);
         default:
             throw std::invalid_argument("This component type has no pressure drop calculation.");
     }
