@@ -111,6 +111,7 @@ enum{
 	P_MC_BAL_HOT,
 	P_MC_BAL_COLD,
 	P_MC_BAL_SCA,
+    P_V_SGS,
 
 	P_OPTCHARTYPE,
 	P_COLLECTORTYPE,
@@ -305,6 +306,7 @@ tcsvarinfo sam_mw_trough_type250_variables[] = {
 	{ TCS_PARAM,          TCS_NUMBER,        P_MC_BAL_HOT,             "mc_bal_hot",                               "The heat capacity of the balance of plant on the hot side",   "kWht/K-MWt",             "",             "",          "0.2" },
 	{ TCS_PARAM,          TCS_NUMBER,       P_MC_BAL_COLD,            "mc_bal_cold",                              "The heat capacity of the balance of plant on the cold side",   "kWht/K-MWt",             "",             "",          "0.2" },
 	{ TCS_PARAM,          TCS_NUMBER,        P_MC_BAL_SCA,             "mc_bal_sca",                        "Non-HTF heat capacity associated with each SCA - per meter basis",      "Wht/K-m",             "",             "",          "4.5" },
+    { TCS_INPUT,          TCS_NUMBER,             P_V_SGS,                  "v_sgs",                                                     "HTF volume in SGS minus bypass loop",           "m3",             "",             "",           "-1" },
 
 	{ TCS_PARAM,           TCS_ARRAY,       P_OPTCHARTYPE,            "OptCharType",                                                    "The optical characterization method ",         "none",             "",             "",      "1,1,1,1" },
 	{ TCS_PARAM,           TCS_ARRAY,     P_COLLECTORTYPE,          "CollectorType",                                                "{1=user defined, 2=LS-2, 3=LS-3, 4=IST} ",         "none",             "",             "",      "1,1,1,1" },
@@ -1478,7 +1480,7 @@ public:
 
 		if( accept_loc == 1 )
 		{
-			Ap_tot *= float(nLoops);
+            Ap_tot *= float(nLoops);
 
 			//Calculate header diameters here based on min/max velocities
 			//output file with calculated header diameter "header_diam.out"
@@ -1573,7 +1575,7 @@ public:
             for (int i = 0; i < D_hdr.ncells(); i++) {
                 WallThk_hdr[i] = CSP::WallThickness(D_hdr[i]);
             }
-			
+
 			//report the header and runner metrics
 			double *header_diams = allocate(O_HEADER_DIAMS, (int)D_hdr.ncells());
             double *header_wallthk = allocate(O_HEADER_WALLTHK, (int)WallThk_hdr.ncells());
@@ -1705,7 +1707,7 @@ public:
 			}
 
 			//Calculate the HTF volume associated with pumps and the SGS
-			double v_sgs = Pump_SGS(rho_ave, m_dot_design, solar_mult);
+            double v_sgs = value(P_V_SGS);
 
 			//Calculate the hot and cold balance-of-plant volumes
 			v_hot = v_header_hot + v_to_sgs;
@@ -5274,70 +5276,6 @@ lab_keep_guess:
 
 	}
 	
-
-	//***************************************************************************************************
-	double Pump_SGS(double rho, double m_dotsf, double sm){
-	
-		int nl = 8;
-		double v_dotpb, v_dotsf, m_dotpb, vel_max;
-		double
-			*V_dot = new double[nl],
-			*D = new double[nl],
-			*V = new double[nl];
-
-		//Line no.	
-		//1	Expansion vessel or thermal storage tank to pump suction header
-		//2	Individual pump suction line, from suction header to pump inlet
-		//3	Individual pump discharge line, from pump discharge to discharge header
-		//4	Pump discharge header
-		//5	Collector field outlet header to expansion vessel or thermal storage tank
-		//6	Steam generator supply header
-		//7	Inter steam generator piping
-		//8	Steam generator exit header to expansion vessel or thermal storage
-		//Assume standard lengths for each line [m] (Kelly & Kearney)
-		//Assume 3 pumps at 50% each. #3) 3*30. 
-		double L_line[] = {0.0, 0.0, 90.0, 100.0, 120.0, 80.0, 120.0, 80.0};
-
-		//Assume a maximum HTF velocity of 1.85 m/s (based on average from Kelly & Kearney model
-		vel_max = 1.85;
-
-		//design-point vol. flow rate m3/s
-		m_dotpb = m_dotsf/sm;
-		v_dotpb = m_dotpb/rho;
-		v_dotsf = m_dotsf/rho;
-
-		//Set the volumetric flow rate for each line.
-		V_dot[0] = v_dotsf;         //   0.0 m - NA - Expansion vessel or thermal storage tank to pump suction header
-		V_dot[1] = v_dotsf/2.0;     //   0.0 m -  1 - Individual pump suction line, from suction header to pump inlet
-                                    //                 50% -> "/2.0" . The flow rate (i.e., diameter) is sized here for the case when one pump is down.
-		V_dot[2] = V_dot[1];        //  90.0 m -  2 - Individual pump discharge line, from pump discharge to discharge header
-                                    //                 90 m = 3 * 30 m, so this is the flow in each of the three lines. Also at 50% of the field flow.
-		V_dot[3] = v_dotsf;         // 100.0 m -  3 - Pump discharge header (Now we're back to v_dotsf from 1.5*v_dotsf)
-		V_dot[4] = V_dot[3];        // 120.0 m -  4 - Collector field outlet header to expansion vessel or thermal storage tank
-		V_dot[5] = v_dotpb;         //  80.0 m -  5 - Steam generator supply header
-		V_dot[6] = V_dot[5];        // 120.0 m -  6 - Inter steam generator piping
-		V_dot[7] = V_dot[5];        //  80.0 m -  7 - Steam generator exit header to expansion vessel or thermal storage
-		
-		//for each line..
-		double psum=0.;
-		for(int i=0; i<nl; i++){
-			//Calculate the pipe diameter
-			D[i] = CSP::pipe_sched(sqrt(4.0*V_dot[i]/(vel_max*pi)));
-			//Calculate the total volume
-			V[i] = pow(D[i],2)/4.*pi*L_line[i];
-			psum += V[i];
-		}
-
-		delete [] V_dot;
-		delete [] D;
-		delete [] V;
-
-		return psum;
-
-	}
-
-	//***************************************************************************************************
-
 
 };
 

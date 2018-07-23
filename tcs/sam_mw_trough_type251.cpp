@@ -171,6 +171,7 @@ enum {
 	// I_DELTAT_T,
 
 	//Outputs
+    O_V_sgs,
 	O_defocus,
     O_recirc,
 	O_standby,   
@@ -321,6 +322,7 @@ tcsvarinfo sam_mw_trough_type251_variables[] = {
 	//{ TCS_INPUT, TCS_NUMBER, I_DELTAT_T,        "o_deltaT_t",          "Temperature difference btw hot HTF and turbine inlet",  "K",     "",  "",  "" },
 
     // OUTPUTS
+    { TCS_OUTPUT,   TCS_NUMBER,        O_V_sgs,              "SGS_vol_tot",          "HTF volume in SGS minus bypass loop",                    "m3",            "",        "",        ""},
     { TCS_OUTPUT,   TCS_NUMBER,        O_defocus,            "defocus",              "Absolute defocus",                                        "-",            "",        "",        ""},
     { TCS_OUTPUT,   TCS_NUMBER,        O_recirc,             "recirculating",        "Field recirculating bypass valve control",                "-",            "",        "",        ""},
 	{ TCS_OUTPUT,   TCS_NUMBER,	       O_standby,            "standby_control",      "Standby control flag",                                    "-",            "",        "",        ""},
@@ -942,6 +944,17 @@ public:
 		V_tank_active = vol_tank*(1. - 2.*h_tank_min / h_tank);	//[m3] Active tank volume.. that is, volume above the minimum fluid level and below the maximum level
         
         tanks_in_parallel ? T_pb_in = T_field_out_des : T_pb_in = T_tank_hot_prev;
+
+        // Size SGS piping
+        double rho_avg = field_htfProps.dens((T_field_in_des + T_field_out_des) / 2, 9 / 1.e-5);
+        double SGS_vol_tot;
+        util::matrix_t<double> SGS_v_dot_pb_rel, SGS_diams, SGS_wall_thk, SGS_lengths, SGS_m_dot, SGS_vel;
+        if ( size_sgs_piping(V_tes_des, L_tes_col_gen, rho_avg, m_dot_pb_design, solarm, tanks_in_parallel,     // Inputs
+            SGS_vol_tot, SGS_v_dot_pb_rel, SGS_diams, SGS_wall_thk, SGS_lengths, SGS_m_dot, SGS_vel) ) {        // Outputs
+            message(TCS_ERROR, "SGS piping sizing failed.");
+            return -1;
+        }
+        value(O_V_sgs, SGS_vol_tot);
 
 		if( tes_type == 2 )
 		{
@@ -1957,6 +1970,42 @@ public:
             }
 		}
 
+
+        //if (is_hx)
+        //{
+        //    if (custom_tes_p_loss) {
+        //        // The efficiencies of the SF and SGS pumps are assumed equal (eta_pump)
+        //        DP_SGS = sgs_pressure_drop();
+        //        rho
+        //        htf_pump_power = (tes_pump_coef*fabs(m_tank_disch - m_tank_charge) +
+        //            DP_SGS/eta_pump * (fabs(ms_disch - ms_charge)/rho_storage + m_dot_pb/rho_pb))) / 1e6;  //[MW]
+        //    }
+        //    else {
+        //        htf_pump_power = (tes_pump_coef*fabs(m_tank_disch - m_tank_charge) + pb_pump_coef * (fabs(ms_disch - ms_charge) + m_dot_pb)) / 1000.0;	//[MW]
+        //    }
+        //}
+        //else
+        //{
+        //    if (custom_tes_p_loss) {
+        //        if (tanks_in_parallel) {
+
+        //        }
+        //        else {
+
+        //        }
+        //    }
+        //    else {
+        //        if (tanks_in_parallel) {
+        //            htf_pump_power = pb_pump_coef * (fabs(ms_disch - ms_charge) + m_dot_pb) / 1000.0;	//[MW]
+        //        }
+        //        else {
+        //            htf_pump_power = pb_pump_coef * m_dot_pb / 1000.0;	//[MW]
+        //        }
+        //    }
+        //}
+        //
+
+
 		// Variable parasitic power
 		double bop_par;
 		double q_pb = m_dot_pb*c_htf_pb*(T_pb_in - T_pb_out);		//[MW]
@@ -2108,7 +2157,7 @@ public:
 		return 0;
 	}
 	
-    int size_sgs_piping(double vel_dsn, util::matrix_t<double> L, double rho, double m_dot_pb, double solarm,
+    int size_sgs_piping(double vel_dsn, util::matrix_t<double> L, double rho_avg, double m_dot_pb, double solarm,
         bool tanks_in_parallel, double &vol_tot, util::matrix_t<double> &v_dot_pb_rel, util::matrix_t<double> &diams,
         util::matrix_t<double> &wall_thk, util::matrix_t<double> &lengths, util::matrix_t<double> &m_dot, util::matrix_t<double> &vel)
     {
@@ -2125,7 +2174,7 @@ public:
         vel.resize_fill(nPipes, 0.0);
         std::vector<int> sections_no_bypass;
 
-        double v_dot_pb = m_dot_pb / rho;
+        double v_dot_pb = m_dot_pb / rho_avg;
 
         //The volumetric flow rate relative to the power block for each collection section (v_rel = v_dot / v_dot_pb)
         v_dot_pb_rel.at(0) = solarm / 2.;           // 1 - Solar field (SF) pump suction header to individual SF pump inlet
@@ -2157,10 +2206,10 @@ public:
         // Collection loop followed by generation loop
         for (std::size_t i = 0; i < nPipes; i++) {
             v_dot = v_dot_pb * v_dot_pb_rel.at(i);
-            diams.at(i) = CSP::pipe_sched(sqrt(4.0*v_dot / vel_dsn * CSP::pi));
+            diams.at(i) = CSP::pipe_sched(sqrt(4.0*v_dot / (vel_dsn * CSP::pi)));
             wall_thk.at(i) = CSP::WallThickness( diams.at(i) );
             lengths.at(i) = L.at(i);
-            m_dot.at(i) = v_dot * rho;
+            m_dot.at(i) = v_dot * rho_avg;
             Area = CSP::pi * pow(diams.at(i), 2) / 4.;
             vel.at(i) = v_dot / Area;
 
