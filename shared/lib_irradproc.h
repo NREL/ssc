@@ -104,6 +104,11 @@ private:
 	int tms[3];
 	double ghi;
 
+	double poaRear[3];
+	double diffcRear[3];
+	double poaRearAverage;
+
+
 	poaDecompReq* poaAll;
 
 public:
@@ -124,7 +129,11 @@ public:
 	void set_poa_reference( double poa, poaDecompReq* );
 	void set_poa_pyranometer( double poa, poaDecompReq* );
 
+	/// Function to overwrite internally calculated sun position values, primarily to enable testing against other libraries using different sun position calculations
+	void set_sun_component(size_t index, double value);
+
 	int calc();
+	int calc_rear_side(double transmissionFactor, double bifaciality, double groundClearanceHeight, double slopeLength);
 	
 	void get_sun( double *solazi,
 		double *solzen,
@@ -136,6 +145,7 @@ public:
 		double *eccfac,
 		double *tst,
 		double *hextra );
+	double get_sun_component(size_t i) { return sun[i]; }
 	void get_angles( double *aoi,
 		double *surftilt,
 		double *surfazi,
@@ -143,9 +153,16 @@ public:
 		double *btdiff );
 	void get_poa( double *beam, double *skydiff, double *gnddiff,
 		double *isotrop, double *circum, double *horizon );
+	double get_poa_rear();
 	void get_irrad (double *ghi, double *dni, double *dhi);
 	double get_ghi();
 	double get_sunpos_calc_hour();
+
+	void getSkyConfigurationFactors(double rowToRow, double verticalHeight, double clearanceGround, double distanceBetweenRows, double horizontalLength, std::vector<double> & rearSkyConfigFactors, std::vector<double> & frontSkyConfigFactors);
+	void getGroundShadeFactors(double rowToRow, double verticalHeight, double clearanceGround, double distanceBetweenRows, double horizontalLength, double solarAzimuthRadians, double solarElevationRadians, std::vector<int> & rearGroundFactors, std::vector<int> & frontGroundFactors, double & maxShadow, double & pvBackShadeFraction, double & pvFrontShadeFraction);
+	void getGroundGHI(double transmissionFactor, std::vector<double> rearSkyConfigFactors, std::vector<double> frontSkyConfigFactors, std::vector<int> rearGroundShadeFactors, std::vector<int> frontGroundShadeFactors, std::vector<double> & rearGroundGHI, std::vector<double> & frontGroundGHI);
+	void getBackSurfaceIrradiances(double pvBackShadeFraction, double rowToRow, double verticalHeight, double clearanceGround, double distanceBetweenRows, double horizontalLength, std::vector<double> rearGroundGHI, std::vector<double> frontGroundGHI, std::vector<double> frontReflected, std::vector<double> & rearIrradiance, double & rearAverageIrradiance);
+	void getFrontSurfaceIrradiances(double pvBackShadeFraction, double rowToRow, double verticalHeight, double clearanceGround, double distanceBetweenRows, double horizontalLength, std::vector<double> frontGroundGHI, std::vector<double> & frontIrradiance, double & frontAverageIrradiance, std::vector<double> & frontReflected);
 };
 
 

@@ -54,33 +54,8 @@
 #include <iostream>
 
 #include "lib_cec6par.h"
-
-#ifndef M_PI
-#define M_PI 3.141592653589793238462643383279
-#endif
-
-#ifndef MAX
-#define MAX(a,b) ( (a)>(b) ? (a) : (b) )
-#endif
-
-#ifndef MIN
-#define MIN(a,b) ( (a)<(b) ? (a) : (b) )
-#endif
-
-
-#define sinD(x) sin((x)*0.017453292519943295769236907684886)
-#define cosD(x) cos((x)*0.017453292519943295769236907684886)
-#define tanD(x) tan((x)*0.017453292519943295769236907684886)
-#define asinD(x) (57.295779513082320876798154814105*asin(x))
-#define acosD(x) (57.295779513082320876798154814105*acos(x))
-#define atanD(x) (57.295779513082320876798154814105*atan(x))
-
-
-#define min(a,b) ((a)<(b)?(a):(b))
-#define max(a,b) ((a)>(b)?(a):(b))
-
-
-
+#include "lib_pv_incidence_modifier.h"
+#include "lib_util.h"
 
 static const double KB = 8.618e-5; // Boltzmann constant [eV/K] note units
 static const double k_air=0.02676, mu_air=1.927E-5, Pr_air=0.724;  // !Viscosity in units of N-s/m^2
@@ -88,64 +63,12 @@ static const double EmisC = 0.84, EmisB = 0.7;  // Emissivities of glass cover, 
 static const double sigma = 5.66961E-8, cp_air = 1005.5;
 static double amavec[5] = { 0.918093, 0.086257, -0.024459, 0.002816, -0.000126 };	// !Air mass modifier coefficients as indicated in DeSoto paper
 
-static const double n_cover = 1.526;   // !refractive index of glass
-static const double l_thick = 0.002;   // !thickness of glass cover
-static const double k_trans = 4; // proportionality constant for 
-
-
 static const double Tc_ref = (25+273.15); // 25 'C
 static const double I_ref = 1000; // 1000 W/m2
 static const double Tamb_noct = 20;  // 20 Ambient NOCT temp ('C)
 static const double I_noct = 800; // 800 NOCT Irradiance W/m2
 static const double TauAlpha = 0.9; // 0.9
 static const double eg0 = 1.12; // 1.12
-
-
-static double irradiance_through_cover(
-	double theta,
-	double theta_z,
-	double tilt,
-	double G_beam,
-	double G_sky,
-	double G_gnd
-	)
-{
-	// establish limits on incidence angle and zenith angle
-	if (theta < 1) theta = 1;
-	if (theta > 89) theta = 89;
-		
-	if (theta_z > 86.0) theta_z = 86.0; // !Zenith angle must be < 90 (?? why 86?)
-	if (theta_z < 0) theta_z = 0; // Zenith angle must be >= 0
-		
-	// incidence angle modifier calculations to determine
-	// effective irradiance transmitted through glass cover
-
-	// transmittance at angle normal to surface (0 deg), use 1 (deg) to avoid numerical probs.
-	double tau_norm = transmittance( 1.0, n_cover, 1.0, k_trans, l_thick );
-	
-	// transmittance of beam radiation, at incidence angle
-	double tau_beam = transmittance( theta, n_cover, 1.0, k_trans, l_thick );
-
-	// transmittance of sky diffuse, at modified angle by (D&B Eqn 5.4.2)
-	double theta_sky = 59.7 - 0.1388*tilt + 0.001497*tilt*tilt;
-	double tau_sky = transmittance( theta_sky, n_cover, 1.0,  k_trans, l_thick );
-	
-	// transmittance of ground diffuse, at modified angle by (D&B Eqn 5.4.1)
-	double theta_gnd = 90.0 - 0.5788*tilt  + 0.002693*tilt*tilt;
-	double tau_gnd = transmittance( theta_gnd, n_cover, 1.0, k_trans, l_thick );
-
-	// calculate component incidence angle modifiers, D&B Chap. 5 eqn 5.12.1, DeSoto'04
-	double Kta_beam = tau_beam / tau_norm;
-	double Kta_sky = tau_sky / tau_norm;
-	double Kta_gnd = tau_gnd / tau_norm;
-	
-	// total effective irradiance absorbed by solar cell
-	double Geff_total = G_beam*Kta_beam + G_sky*Kta_sky + G_gnd*Kta_gnd;
-
-	if (Geff_total < 0) Geff_total = 0;
-	
-	return Geff_total;
-}
 
 cec6par_module_t::cec6par_module_t( )
 {
@@ -167,21 +90,30 @@ bool cec6par_module_t::operator() ( pvinput_t &input, double TcellC, double opvo
 	//double muVoc = beta_voc * (1+Adj/100);
 	
 	/* initialize output first */
-	out.Power = out.Voltage = out.Current = out.Efficiency = out.Voc_oper = out.Isc_oper = 0.0;
+	out.Power = out.Voltage = out.Current = out.Efficiency = out.Voc_oper = out.Isc_oper= out.AOIModifier = 0.0;
 	
-	double G_total, Geff_total;
+	double G_front, G_total, Geff_front_total, Geff_total;
 
 	if( input.radmode != 3){ // Determine if the model needs to skip the cover effects (will only be skipped if the user is using POA reference cell data) 
-		G_total = input.Ibeam + input.Idiff + input.Ignd; // total incident irradiance on tilted surface, W/m2
-	
-		Geff_total = G_total;
-		Geff_total = irradiance_through_cover(
+		G_front = input.Ibeam + input.Idiff + input.Ignd;
+		G_total = G_front + input.Irear; // total incident irradiance on tilted surface, W/m2
+			
+		// Rear side already accounts for these losses
+		Geff_front_total = calculateIrradianceThroughCoverDeSoto(
 			input.IncAng,
 			input.Zenith,
 			input.Tilt,
 			input.Ibeam,
 			input.Idiff,
-			input.Ignd );
+			input.Ignd);
+
+		Geff_total = Geff_front_total + input.Irear;
+
+		double aoi_modifier = 0.0;
+		if (G_front > 0.) {
+			aoi_modifier = Geff_front_total / G_front;
+		}
+		out.AOIModifier = aoi_modifier;
 
 	
 		double theta_z = input.Zenith;
@@ -195,7 +127,7 @@ bool cec6par_module_t::operator() ( pvinput_t &input, double TcellC, double opvo
 			G_total = Geff_total = input.poaIrr;
 		else{
 			G_total = input.poaIrr;
-			Geff_total = input.Ibeam + input.Idiff + input.Ignd;
+			Geff_total = input.Ibeam + input.Idiff + input.Ignd + input.Irear;
 		}
 
 	}
@@ -268,7 +200,7 @@ bool noct_celltemp_t::operator() ( pvinput_t &input, pvmodule_t &module, double 
 		G_total = input.Ibeam + input.Idiff + input.Ignd; // total incident irradiance on tilted surface, W/m2
 			
 		Geff_total = G_total;
-		Geff_total = irradiance_through_cover(
+		Geff_total = calculateIrradianceThroughCoverDeSoto(
 			input.IncAng,
 			input.Zenith,
 			input.Tilt,
@@ -346,9 +278,9 @@ static double free_convection_194( double TC, double TA, double SLOPE, double rh
 
 	// !Horizontal Heated Upward Facing Plate (L_ch_f)
 	// !OR Cooled Downward Facing Plate
-	g_spec    = grav*max(0.,cosD(SLOPE));//  !Adjustment of gravity vector;
+	g_spec    = grav*MAX(0.,cosd(SLOPE));//  !Adjustment of gravity vector;
 	Gr        = g_spec*Beta*fabs(TC-TA)*pow(L_ch_f,3)/pow(nu,2); //    !Grashof Number
-	Ra        = max(0.0001,Gr*Pr_air); //                 !Rayleigh Number
+	Ra        = MAX(0.0001,Gr*Pr_air); //                 !Rayleigh Number
 
 	C_lam     = 0.671/pow(1. + pow(0.492/Pr_air, 9./16.) , 4./9.); //  !Eq. 6-49 (Nellis&Klein)
 	Nu_lam    = 1.4/log(1.+(1.4/(0.835*C_lam*pow(Ra,0.25)))); // !Eq. 6-56 (Nellis&Klein)
@@ -358,25 +290,25 @@ static double free_convection_194( double TC, double TA, double SLOPE, double rh
 	h_up      = Nu_bar*k_air/L_ch_f;
 
 	// !Vertical Plate (Length)
-	g_spec    = grav*sinD(SLOPE);  //          !Adjustment of gravity vector
+	g_spec    = grav*sind(SLOPE);  //          !Adjustment of gravity vector
 	Gr        = g_spec*Beta*fabs(TC-TA)*pow(Length,3)/pow(nu,2);        
-	Ra        = max(0.0001,Gr*Pr_air);
+	Ra        = MAX(0.0001,Gr*Pr_air);
 	
 	Nu_bar    = pow(0.825+(0.387*pow(Ra,(1./6.)))/pow(1+ pow(0.492/Pr_air, 9./16.), (8./27.)),2)  ;  // !(Incropera et al.,2006)
 	h_vert    = Nu_bar*k_air/Length;  
 
 	// !Horizontal Heated Downward Facing Plate
 	// !OR Cooled Upward Facing Plate
-	g_spec    = grav*max(0.,-cosD(SLOPE));
+	g_spec    = grav*MAX(0.,-cosd(SLOPE));
 	Gr        = g_spec*Beta*fabs(TC-TA)*pow(L_ch_f,3)/pow(nu,2);
-	Ra        = max(0.0001,Gr*Pr_air);
+	Ra        = MAX(0.0001,Gr*Pr_air);
 
 	Nu_bar    = 2.5/log(1.+(2.5/(0.527*pow(Ra,0.2)))*pow(1.+pow(1.9/Pr_air,0.9),2./9.));//    !Eq. 6-59  (Nellis&Klein)
 	h_down    = Nu_bar*k_air/L_ch_f;
 
 	// !Take Maximum of 3 Calculated Heat Transfer Coefficients
 
-	return max(max(h_down,h_vert),h_up); //  !Fig. 6-12  (Nellis&Klein)
+	return MAX(MAX(h_down,h_vert),h_up); //  !Fig. 6-12  (Nellis&Klein)
 }
 
 static double ffd_194( double D_h, double Re_dh )
@@ -385,7 +317,7 @@ static double ffd_194( double D_h, double Re_dh )
 	// !Solution for friction factor of channel flow as presented in Nellis and Klein (2008) and EES.
 
 	static const double e = 0.005;
-	return pow( (-2.*log10(max(1.e-6,((2.*e/(7.54*D_h)-5.02/Re_dh*log10(2.*e/(7.54*D_h)+13./Re_dh)))))), -2.0 );
+	return pow( (-2.*log10(MAX(1.e-6,((2.*e/(7.54*D_h)-5.02/Re_dh*log10(2.*e/(7.54*D_h)+13./Re_dh)))))), -2.0 );
 }
 
 static double channel_free_194( double W_gap, double SLOPE, double TA, double T_cr, double k_air,
@@ -400,10 +332,10 @@ static double channel_free_194( double W_gap, double SLOPE, double TA, double T_
 
 	nu_air    = mu_air / rho_air; //          !Kinematic Viscosity 
 
-	g_spec    = max(0.1, sinD(SLOPE)*grav);
+	g_spec    = MAX(0.1, sind(SLOPE)*grav);
 	Beta   	= 1./((T_cr+TA)/2.);
 	alpha 	= k_air / (rho_air * cp_air);
-	Ra	    = max(0.001,g_spec*pow(W_gap,3)*Beta*(T_cr-TA)/(nu_air*alpha));
+	Ra	    = MAX(0.001,g_spec*pow(W_gap,3)*Beta*(T_cr-TA)/(nu_air*alpha));
 	Nu     	= Ra/24.*W_gap/Length*pow(1.0-exp(-35./Ra*Length/W_gap),0.75);
 
 	return  Nu*k_air/W_gap;
@@ -428,26 +360,26 @@ bool mcsp_celltemp_t::operator() ( pvinput_t &input, pvmodule_t &module, double 
 
 	double n2         = 1.526; //   !refractive index of glass
 
-	double RefrAng1   = asinD(sinD(THETA)/n2);
-	double TransSurf1 = 1-0.5*( pow(sinD(RefrAng1-THETA),2)/pow(sinD(RefrAng1+THETA),2)
-			+ pow(tanD(RefrAng1-THETA),2)/pow(tanD(RefrAng1+THETA),2) );
-	double TransCoverAbs1 = exp(-k_trans*l_thick/cosD(RefrAng1));
+	double RefrAng1   = asind(sind(THETA)/n2);
+	double TransSurf1 = 1-0.5*( pow(sind(RefrAng1-THETA),2)/pow(sind(RefrAng1+THETA),2)
+			+ pow(tand(RefrAng1-THETA),2)/pow(tand(RefrAng1+THETA),2) );
+	double TransCoverAbs1 = exp(-k_trans*l_thick/cosd(RefrAng1));
 	double tau1       = TransCoverAbs1*TransSurf1;
         
 	//!Evaluating transmittance at angle Normal to surface (0), use 1 to avoid probs.
 	double THETA2     = 1;
-	double RefrAng2   = asinD(sinD(THETA2)/n2);
-	double TransSurf2 = 1-0.5*( pow(sinD(RefrAng2-1),2)/pow(sinD(RefrAng2+1),2)
-		+ pow(tanD(RefrAng2-1),2)/pow(tanD(RefrAng2+1),2) );
-	double TransCoverAbs2 = exp(-k_trans*l_thick/cosD(RefrAng2));
+	double RefrAng2   = asind(sind(THETA2)/n2);
+	double TransSurf2 = 1-0.5*( pow(sind(RefrAng2-1),2)/pow(sind(RefrAng2+1),2)
+		+ pow(tand(RefrAng2-1),2)/pow(tand(RefrAng2+1),2) );
+	double TransCoverAbs2 = exp(-k_trans*l_thick/cosd(RefrAng2));
 	double tau2       = TransCoverAbs2*TransSurf2;
 
 	//!Evaluating transmittance at equivalent angle for diffuse 
 	double THETA3 = 59.7 - 0.1388*input.Tilt  + 0.001497*pow(input.Tilt,2);
-	double RefrAng3   = asinD(sinD(THETA3)/n2);
-	double TransSurf3 = 1-.5*( pow(sinD(RefrAng3-THETA3),2)/pow(sinD(RefrAng3+THETA3),2)
-		+ pow(tanD(RefrAng3-THETA3),2)/pow(tanD(RefrAng3+THETA3),2) );
-	double TransCoverAbs3 = exp(-k_trans*l_thick/cosD(RefrAng3));
+	double RefrAng3   = asind(sind(THETA3)/n2);
+	double TransSurf3 = 1-.5*( pow(sind(RefrAng3-THETA3),2)/pow(sind(RefrAng3+THETA3),2)
+		+ pow(tand(RefrAng3-THETA3),2)/pow(tand(RefrAng3+THETA3),2) );
+	double TransCoverAbs3 = exp(-k_trans*l_thick/cosd(RefrAng3));
 	double TransCoverDiff = TransCoverAbs3;
 	double tau3       = TransCoverAbs3*TransSurf3;
 	double TADIR      = tau1/tau2;
@@ -456,10 +388,10 @@ bool mcsp_celltemp_t::operator() ( pvinput_t &input, pvmodule_t &module, double 
 
 	// !Evaluating transmittance at equivalent angle for ground reflected radiation 
 	THETA3 = 90.0 - 0.5788*input.Tilt  + 0.002693*pow(input.Tilt,2);
-	RefrAng3   = asinD(sinD(THETA3)/n2);
-	TransSurf3 = 1-.5*( pow(sinD(RefrAng3-THETA3),2)/pow(sinD(RefrAng3+THETA3),2)
-		+ pow(tanD(RefrAng3-THETA3),2)/pow(tanD(RefrAng3+THETA3),2) );
-	TransCoverAbs3 = exp(-k_trans*l_thick/cosD(RefrAng3));
+	RefrAng3   = asind(sind(THETA3)/n2);
+	TransSurf3 = 1-.5*( pow(sind(RefrAng3-THETA3),2)/pow(sind(RefrAng3+THETA3),2)
+		+ pow(tand(RefrAng3-THETA3),2)/pow(tand(RefrAng3+THETA3),2) );
+	TransCoverAbs3 = exp(-k_trans*l_thick/cosd(RefrAng3));
 	tau3       = TransCoverAbs3*TransSurf3;
 	double TAGND     = tau3/tau2;
       
@@ -484,7 +416,7 @@ bool mcsp_celltemp_t::operator() ( pvinput_t &input, pvmodule_t &module, double 
 
 	//!Calculation of Air Mass Modifier
 	if  (THETAZ < 0) THETAZ=0;
-	//double AMASS      = 1/(cosD(THETAZ)+0.5057*pow(96.080-THETAZ,-1.634));
+	//double AMASS      = 1/(cosd(THETAZ)+0.5057*pow(96.080-THETAZ,-1.634));
 	double MAM        = //a0+a1*AMASS+a2*pow(AMASS,2)+a3*pow(AMASS,3)+a4*pow(AMASS,4);
 		air_mass_modifier( THETAZ, input.Elev, amavec );
 	SUNEFF     = SUNEFF*MAM;
@@ -553,16 +485,16 @@ bool mcsp_celltemp_t::operator() ( pvinput_t &input, pvmodule_t &module, double 
 
 	// !Adjust backside wind speed based on mounting structure orientation for "gap" mounting configuration
 	if (MC == 4) {
-		if (MSO==2) V_WIND  = MAX(0.001,fabs(cosD(input.Wdir-input.Azimuth))*V_WIND);
-		if (MSO==3) V_WIND  = MAX(0.001,fabs(cosD(input.Wdir+90.-input.Azimuth))*V_WIND);
+		if (MSO==2) V_WIND  = MAX(0.001,fabs(cosd(input.Wdir-input.Azimuth))*V_WIND);
+		if (MSO==3) V_WIND  = MAX(0.001,fabs(cosd(input.Wdir+90.-input.Azimuth))*V_WIND);
 		v_ch = V_WIND * 0.3;   // !Give realistic starting value to channel air velocity
 	}
 
-	Fcg        = (1. - cosD(input.Tilt))/2;  // !view factor between top of tilted plate and horizontal plane adjacent to bottom edge of plate
+	Fcg        = (1. - cosd(input.Tilt))/2;  // !view factor between top of tilted plate and horizontal plane adjacent to bottom edge of plate
 	Fcs        = 1. - Fcg;              // !view factor between top of tilted plate and everything else (sky)
 	Fbs        = Fcg;                   // !view factor bewteen top and ground = bottom and sky
 	Fbg        = Fcs;                   // !view factor bewteen bottom and ground = top and sky
-	T_sky      = TA*pow(0.711+0.0056*input.Tdew+0.000073*pow(input.Tdew,2)+0.013*cosD(input.HourOfDay), 0.25);   // !Sky Temperature: Berdahl and Martin  
+	T_sky      = TA*pow(0.711+0.0056*input.Tdew+0.000073*pow(input.Tdew,2)+0.013*cosd(input.HourOfDay), 0.25);   // !Sky Temperature: Berdahl and Martin  
 	T_ground   = TA;                    // !Set ground temp equal to ambient temp
 	T_rw       = TA;                    // !Initial guess for roof or wall temp
 	
@@ -589,7 +521,7 @@ bool mcsp_celltemp_t::operator() ( pvinput_t &input, pvmodule_t &module, double 
 			{
 
 				double rho_air    = Patm*28.967/8314.34*(1./((TA+TC)/2.)) ; // !density of air as a function of pressure and ambient temp
-				double Re_forced  = max(0.1,rho_air*V_cover*L_char/mu_air) ; //  !Reynolds number of wind moving across module
+				double Re_forced  = MAX(0.1,rho_air*V_cover*L_char/mu_air) ; //  !Reynolds number of wind moving across module
 				double Nu_forced  = 0.037 * pow(Re_forced,4./5.) * pow(Pr_air, 1./3.) ; //  !Nusselt Number (Incropera et al., 2006)
 				double h_forced   = Nu_forced * k_air / L_char;
 				double h_sky      = (TC*TC+T_sky*T_sky)*(TC+T_sky);
@@ -622,7 +554,7 @@ bool mcsp_celltemp_t::operator() ( pvinput_t &input, pvmodule_t &module, double 
 			while( fabs(err_TC) > 0.001)
 			{
 				double rho_air    = Patm*28.967/8314.34*(1 / ((TA+TC)/2.)); // !density of air a function of pressure and ambient temp
-				double Re_forced  = max(0.1,rho_air*V_cover*L_char/mu_air); //  !Reynolds number of wind moving across panel: function of L_char: array depen?
+				double Re_forced  = MAX(0.1,rho_air*V_cover*L_char/mu_air); //  !Reynolds number of wind moving across panel: function of L_char: array depen?
 				double Nu_forced  = 0.037 * pow(Re_forced, 4./5.) * pow(Pr_air, 1./3.);
 				double h_forced   = Nu_forced * k_air / L_char;
 				double h_sky      = (TC*TC+T_sky*T_sky)*(TC+T_sky);
@@ -647,7 +579,7 @@ bool mcsp_celltemp_t::operator() ( pvinput_t &input, pvmodule_t &module, double 
 				double TbackK = TbackInteg + 273.15;
 				double rho_air    = Patm*28.967/8314.34*(1 / ((TA+TC)/2.)); // !density of air a function of pressure and film temp
 				double rho_bk     = Patm*28.967/8314.34*(1 / ((TbackK+TC)/2.));
-				double Re_forced  = max(0.1,rho_air*V_cover*L_char/mu_air); //  !Reynolds number of wind moving across panel: function of L_char: array depen?
+				double Re_forced  = MAX(0.1,rho_air*V_cover*L_char/mu_air); //  !Reynolds number of wind moving across panel: function of L_char: array depen?
 				double Nu_forced  = 0.037 * pow(Re_forced, 4./5.) * pow(Pr_air, 1./3.);
 				double h_forced   = Nu_forced * k_air / L_char;					
 				double h_sky      = (TC*TC+T_sky*T_sky)*(TC+T_sky);
@@ -678,8 +610,8 @@ bool mcsp_celltemp_t::operator() ( pvinput_t &input, pvmodule_t &module, double 
 				{
 					// !Define channel length and width for gap mounting configuration that does not block air flow in any direction
 					// !Use minimum dimension for length so that MSO 1 will have lower temp than MSO 2 or 3
-					L_charB = min(Width, Length);
-					L_str   = max(Width, Length);
+					L_charB = MIN(Width, Length);
+					L_str   = MAX(Width, Length);
 						
 					// !These values are dependent on MSO
 					A_c        = Wgap * L_str;     // !Cross Sectional area of channel
@@ -723,7 +655,7 @@ bool mcsp_celltemp_t::operator() ( pvinput_t &input, pvmodule_t &module, double 
 						double f_fd       = ffd_194(D_h,Re_dh_ch)  ; //         !Friction factor of channel flow
 						double tau_s      = f_fd*rho_air*pow(v_ch,2/8.); //        !Shear stress on air
 						double P_out      = P_in - tau_s*Per_cw*L_charB/A_c; // !Dynamic pressure at outlet
-						double v_ch1      = sqrt(max(0.0005,(2*P_out/rho_air))); //  !velocity
+						double v_ch1      = sqrt(MAX(0.0005,(2*P_out/rho_air))); //  !velocity
 						err_v      = v_ch1 - v_ch; //                   !Current Error
 						double err_v_sign = err_v * err_v_p; //                !Did error switch signs between previous calc?
 						err_v_p    = err_v; //                          !Previous Error     
@@ -736,7 +668,7 @@ bool mcsp_celltemp_t::operator() ( pvinput_t &input, pvmodule_t &module, double 
 
 					
 					// !Heat transfer on cover of module: using un-adjusted wind speed input
-					double Re_forced  = max(0.1,rho_air*V_cover*L_char/mu_air); //  !Reynolds number of wind moving across panel
+					double Re_forced  = MAX(0.1,rho_air*V_cover*L_char/mu_air); //  !Reynolds number of wind moving across panel
 					double Nu_forced  = 0.037*pow(Re_forced,4./5.)*pow(Pr_air,1./3.);
 					double h_forced   = Nu_forced * k_air / L_char;
 					double h_sky      = (TC*TC+T_sky*T_sky)*(TC+T_sky);
@@ -750,7 +682,7 @@ bool mcsp_celltemp_t::operator() ( pvinput_t &input, pvmodule_t &module, double 
 					// !This approach (rather than channel flow correlations) allows channel equations to approach open rack as gap increases
 					double Nus_ch     = 0.037*pow(Re_fp,4./5.)*pow(Pr_air,1./3.);
 					double h_ch       = Nus_ch * k_air / L_charB;
-					h_ch       = min(h_ch, h_forced); //           !Make sure gap mounted doesn't calc lower temps than open rack
+					h_ch       = MIN(h_ch, h_forced); //           !Make sure gap mounted doesn't calc lower temps than open rack
 						
 					// !Set iteration  counter and initial error for roof/wall temperature iteration
 					int iter_T_rw  = 0;
@@ -782,14 +714,14 @@ bool mcsp_celltemp_t::operator() ( pvinput_t &input, pvmodule_t &module, double 
 						double T_m = T_cr-(T_cr-TA)*exp(-2*(Area/AR)*h_conv_b/(m_dot*cp_air));
 						 
 						// !Using air temp at end of channel, calculate heat transfer to air in the channel: Then adjust for entire array (AR)
-						double Q_air = max(0.0001, cp_air*m_dot*(T_m - TA)) * AR;
+						double Q_air = MAX(0.0001, cp_air*m_dot*(T_m - TA)) * AR;
 
 						// !Determine the ratio of the heat transfered to channel that was from module and roof/wall by comparing temperatures
 						double DELTAT_r   = T_rw - TA;
 						double DELTAT_c   = TC - TA;
 							
-						double R_r        = min(1., DELTAT_r / max(0.1,(DELTAT_r + DELTAT_c)));
-						double R_c        = min(1., DELTAT_c / max(0.1,(DELTAT_r + DELTAT_c)));
+						double R_r        = MIN(1., DELTAT_r / MAX(0.1,(DELTAT_r + DELTAT_c)));
+						double R_c        = MIN(1., DELTAT_c / MAX(0.1,(DELTAT_r + DELTAT_c)));
 							
 						// !Adjust to flux
 						Q_conv_c   = R_c * Q_air / Area;
@@ -798,7 +730,7 @@ bool mcsp_celltemp_t::operator() ( pvinput_t &input, pvmodule_t &module, double 
 						// !Calculate heat transfer coefficient for radiation
 						h_radbk    = (TC*TC+T_rw*T_rw)*(TC+T_rw);
 						// !Energy Balance to calculate roof/wall temperature     
-						double T_rw1        = max(TA, TC - Q_conv_r/(EmisB*sigma*h_radbk));
+						double T_rw1        = MAX(TA, TC - Q_conv_r/(EmisB*sigma*h_radbk));
 
 						err_T_rw    = T_rw1 - T_rw; //   !Error
 						T_rw        = T_rw + (0.5-0.495*(iter_T_rw/60))*err_T_rw; //  !Reset guess

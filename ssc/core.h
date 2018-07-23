@@ -119,7 +119,7 @@ struct smart_ptr
 #define __DEBUG__ 0
 #endif
 
-#include "../shared/lib_util.h"
+//#include "lib_util.h"
 #include "vartab.h"
 #include "sscapi.h"
 

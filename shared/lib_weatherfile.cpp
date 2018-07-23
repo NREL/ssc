@@ -49,6 +49,7 @@
 
 #include <stdio.h>
 #include <cmath>
+#include <algorithm>
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
@@ -97,6 +98,15 @@ static std::vector<std::string> split(const std::string &buf, char delim = ',')
 	while (std::getline(tokenStream, token, delim))
 		tokens.push_back(token);
 	return tokens;
+}
+
+
+static float col_or_zero(const std::string &s)
+{
+	if (!s.empty() && std::all_of(s.begin(), s.end(), ::isdigit))
+		return (float)stof(s);
+	else
+		return 0.0f;
 }
 
 static double conv_deg_min_sec(double degrees,
@@ -1071,11 +1081,11 @@ bool weatherfile::open(const std::string &file, bool header_only)
 			{
 				getline(ifs, buf);
 				auto cols = split(buf);
-				if (cols.size() < 68)
-				{
-					m_message = "TMY3: data line does not have at least 68 fields at record " + util::to_string(i);
-					return false;
-				}
+//				if (cols.size() < 68)
+//				{
+//					m_message = "TMY3: data line does not have at least 68 fields at record " + util::to_string(i);
+//					return false;
+//				}
 
 				const char *p = cols[0].c_str();
 
@@ -1117,11 +1127,11 @@ bool weatherfile::open(const std::string &file, bool header_only)
 				m_columns[DAY].data[i] = (float)day;
 				m_columns[HOUR].data[i] = (float)hour;
 				m_columns[MINUTE].data[i] = 30;
-
+/*
 				m_columns[GHI].data[i] = (float)stof(cols[4]);
 				m_columns[DNI].data[i] = (float)stof(cols[7]);
 				m_columns[DHI].data[i] = (float)stof(cols[10]);
-				m_columns[POA].data[i] = (float)(-999);       /* No POA in TMY3 */
+				m_columns[POA].data[i] = (float)(-999);       //No POA in TMY3 
 
 				m_columns[TDRY].data[i] = (float)stof(cols[31]);
 				m_columns[TDEW].data[i] = (float)stof(cols[34]);
@@ -1133,6 +1143,23 @@ bool weatherfile::open(const std::string &file, bool header_only)
 				m_columns[PRES].data[i] = (float)stof(cols[40]);
 				m_columns[SNOW].data[i] = -999.0; // no snowfall in TMY3
 				m_columns[ALB].data[i] = (float)stof(cols[61]);
+				m_columns[AOD].data[i] = -999; // no AOD in TMY3 
+*/
+				m_columns[GHI].data[i] = col_or_zero(cols[4]);
+				m_columns[DNI].data[i] = col_or_zero(cols[7]);
+				m_columns[DHI].data[i] = col_or_zero(cols[10]);
+				m_columns[POA].data[i] = (float)(-999);       /* No POA in TMY3 */
+
+				m_columns[TDRY].data[i] = col_or_zero(cols[31]);
+				m_columns[TDEW].data[i] = col_or_zero(cols[34]);
+
+				m_columns[WSPD].data[i] = col_or_zero(cols[46]);
+				m_columns[WDIR].data[i] = col_or_zero(cols[43]);
+
+				m_columns[RH].data[i] = col_or_zero(cols[37]);
+				m_columns[PRES].data[i] = col_or_zero(cols[40]);
+				m_columns[SNOW].data[i] = -999.0; // no snowfall in TMY3
+				m_columns[ALB].data[i] = col_or_zero(cols[61]);
 				m_columns[AOD].data[i] = -999; /* no AOD in TMY3 */
 
 				m_columns[TWET].data[i] 
@@ -1144,7 +1171,7 @@ bool weatherfile::open(const std::string &file, bool header_only)
 				break;
 			}
 
-			if (ifs.eof())
+			if (ifs.eof() && i<((int)m_nRecords-1))
 			{
 				m_message = "TMY3: data line formatting error at record " + util::to_string(i);
 				return false;

@@ -2,7 +2,7 @@ VPATH = ../shared
 CC = gcc
 CXX = g++
 WARNINGS = -Wall -Werror -Wno-strict-aliasing
-CFLAGS = $(WARNINGS) -g -O3 -D__64BIT__ -fPIC
+CFLAGS =-I../ssc -I../shared $(WARNINGS) -g -O3 -D__64BIT__ -fPIC
 CXXFLAGS=-std=c++0x $(CFLAGS)
 
 
@@ -21,6 +21,8 @@ OBJECTS = \
 	lib_powerblock.o \
 	lib_power_electronics.o \
 	lib_pvinv.o \
+	lib_pv_incidence_modifier.o \
+	lib_pv_io_manager.o \
 	lib_pvmodel.o \
 	lib_pvshade.o \
 	lib_pv_shade_loss_mpp.o \
