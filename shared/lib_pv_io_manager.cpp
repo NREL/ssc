@@ -938,4 +938,17 @@ void Inverter_IO::setupSharedInverter(compute_module* cm, SharedInverter * a_sha
 		inv_tdc = cm->as_matrix("inv_tdc_cec_cg");
 	}
 
+	// Parse into std::vector form
+	std::vector<std::vector<double>> thermalDerateCurves;
+	for (size_t r = 0; r < inv_tdc.nrows(); r++) {
+		std::vector<double> row;
+		for (size_t c = 0; c < inv_tdc.row(r).ncells(); c++) {
+			row.push_back(inv_tdc.at(r, c));
+		}
+		thermalDerateCurves.push_back(row);
+	}
+	int err = sharedInverter->setTempDerateCurves(thermalDerateCurves);
+	if ( err < 1) {
+		throw compute_module::exec_error("pvsamv1", "Inverter temperature derate curve " + util::to_string((int)( -err - 1)) + " is invalid.");
+	}
 }

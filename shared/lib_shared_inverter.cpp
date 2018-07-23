@@ -17,48 +17,28 @@ bool sortByVoltage(std::vector<double> i, std::vector<double> j)
 	return (i[0] < j[0]);
 }
 
-bool SharedInverter::setTempDerateCurves(std::vector<double> curve1, std::vector<double> curve2, std::vector<double> curve3)
+bool SharedInverter::setTempDerateCurves(std::vector<std::vector<double>> derateCurves)
 {
-	if (curve1[0] <= 0.0 || curve1[1] <= -293 || curve1[2] > 0) return false;
-
-	// if multiple curves provided, partition operating V range
-	std::vector<std::vector<double>> derateCurves;
-	derateCurves.push_back(curve1);
-	if (curve2[0] > 0.0 && curve2[1] > -293 && curve2[2] <= 0.){
-		derateCurves.push_back(curve2);
-	}
-	if (curve3[0] > 0.0 && curve3[1] > -293 && curve3[2] <= 0.){
-		derateCurves.push_back(curve3);
-	}
-
-	std::sort(derateCurves.begin(), derateCurves.end(), sortByVoltage);
-	m_tempStartC[0] = derateCurves[0][1];
-	m_tempSlope[0] = derateCurves[0][2];
-
-	if (derateCurves.size() > 1){
-		m_tempV[0] = (derateCurves[1][0] + derateCurves[0][0])/2;
-		m_tempStartC[1] = derateCurves[1][1];
-		m_tempSlope[1] = derateCurves[1][2];
-		if (derateCurves.size() > 2) {
-			m_tempV[1] = (derateCurves[2][0] + derateCurves[1][0])/2;
-			m_tempStartC[2] = derateCurves[2][1];
-			m_tempSlope[2] = derateCurves[2][2];
+	// Check derate curves have V > 0, and that for each pair T > -273, slope < 0
+	for (size_t r = 0; r < derateCurves.size(); r++) {
+		if (derateCurves[r][0] <= 0.) return -(r+1);
+		size_t tempSlopeEntries = derateCurves[r].size() - 1;
+		if ((tempSlopeEntries % 2) != 0) return -(r + 1);
+		for (size_t p = 0; p < tempSlopeEntries / 2; p++) {
+			if ( derateCurves[r][2*p+1] <= -273. || derateCurves[r][2*p+2] >= 0.)  return -(r + 1);
 		}
+		m_thermalDerateCurves.push_back(derateCurves[r]);
 	}
 
-	m_tempEnabled = true;
-	return true;
+	// Sort by DC voltage
+	std::sort(m_thermalDerateCurves.begin(), m_thermalDerateCurves.end(), sortByVoltage);
+	
+	if (m_thermalDerateCurves.size() > 0 ) m_tempEnabled = true;
+	return m_tempEnabled;
 }
 
-void SharedInverter::getTempDerateCurves(double* vParts, double* startC, double* slope) {
-	vParts[0] = m_tempV[0];
-	vParts[1] = m_tempV[1];
-	startC[0] = m_tempStartC[0];
-	startC[1] = m_tempStartC[1];
-	startC[2] = m_tempStartC[2];
-	slope[0] = m_tempSlope[0];
-	slope[1] = m_tempSlope[1];
-	slope[2] = m_tempSlope[2];
+std::vector<std::vector<double>> SharedInverter::getTempDerateCurves() {
+	return m_thermalDerateCurves;
 }
 
 void SharedInverter::calculateTempDerate(double V, double T, double& pAC, double& eff, double& loss)
@@ -68,24 +48,30 @@ void SharedInverter::calculateTempDerate(double V, double T, double& pAC, double
 	double slope = 0.0;
 	double deltaT = 0.0;
 
-	if (m_tempV[0] == 0 || (m_tempV[0] != 0 && V <= m_tempV[0])){
-		if (T <= m_tempStartC[0]) return;
-		slope = m_tempSlope[0];
-		deltaT = T - m_tempStartC[0];
-	}
-	else{
-		if (m_tempV[1] == 0 || (m_tempV[1] != 0 && V <= m_tempV[1])){
-			if (T <= m_tempStartC[1]) return;
-			slope = m_tempSlope[1];
-			deltaT = T - m_tempStartC[1];
-		}
-		else{
-			if (T <= m_tempStartC[2]) return;
-			slope = m_tempSlope[2];
-			deltaT = T - m_tempStartC[2];
-		}
+	size_t idx = 0;
+	while (V > m_thermalDerateCurves[idx][0] && idx < m_thermalDerateCurves.size()) {
+		idx++;
 	}
 
+	// Find temp and slope of lower curve
+	size_t p = 0;
+	while (T > m_thermalDerateCurves[idx - 1][2 * p + 1] && p < m_thermalDerateCurves[idx - 1].size()) {
+		p++;
+	}
+	deltaT = T - m_thermalDerateCurves[idx - 1][2 * (p - 1) + 1];
+	slope = m_thermalDerateCurves[idx - 1][2 * (p - 1) + 1];
+
+	// Average with values from upper curve if it exists
+	if (idx < m_thermalDerateCurves.size()) {
+		p = 0;
+		while (T > m_thermalDerateCurves[idx][2 * p + 1] && p < m_thermalDerateCurves[idx].size()) {
+			p++;
+		}
+		deltaT = (deltaT + (T - m_thermalDerateCurves[idx][2 * (p - 1) + 1])) / 2.;
+		slope = (slope + m_thermalDerateCurves[idx][2 * (p - 1)]) / 2.;
+	}
+	
+	// Power in units of W, eff as ratio
 	double pDC = pAC/eff;
 	eff += deltaT*slope;
 	if (eff < 0) eff = 0.;
