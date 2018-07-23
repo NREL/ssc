@@ -453,7 +453,7 @@ void PVSystem_IO::AllocateOutputs(compute_module* cm)
 
 	p_inverterPowerConsumptionLoss = cm->allocate("inv_psoloss", numberOfWeatherFileRecords);
 	p_inverterNightTimeLoss = cm->allocate("inv_pntloss", numberOfWeatherFileRecords);
-	p_inverterThermalLoss = cm->allocate("inv_tdcloss", numberOfWeatherFileRecords);
+	//p_inverterThermalLoss = cm->allocate("inv_tdcloss", numberOfWeatherFileRecords);
 
 	p_acWiringLoss = cm->allocate("ac_wiring_loss", numberOfWeatherFileRecords);
 	p_transmissionLoss = cm->allocate("ac_transmission_loss", numberOfWeatherFileRecords);
@@ -920,7 +920,7 @@ void Inverter_IO::setupSharedInverter(compute_module* cm, SharedInverter * a_sha
 	sharedInverter = a_sharedInverter;
 
 	// Inverter thermal derate curves
-	bool en_inv_tdc = cm->as_boolean("en_inv_tdc");
+	bool en_inv_tdc = false; // cm->as_boolean("en_inv_tdc");
 	if (en_inv_tdc) {
 		double* curve1 = new double[3];
 		curve1[0] = cm->as_double("inv_tdc_V1");

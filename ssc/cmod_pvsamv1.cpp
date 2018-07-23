@@ -409,7 +409,7 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "inv_pd_pnt",                                 "AC power consumed by inverter at night",                   "Wac",     "",                     "pvsamv1",       "inverter_model=2",                    "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "inv_pd_vdco",                                "DC input voltage for the rated AC power rating",           "Vdc",     "",                     "pvsamv1",       "inverter_model=2",                    "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "inv_pd_vdcmax",                              "Maximum DC input operating voltage",                       "Vdc",     "",                     "pvsamv1",       "inverter_model=2",                    "",                              "" },
-
+	/*
 	{ SSC_INPUT,		SSC_NUMBER,		 "en_inv_tdc",								   "Enable inverter temperature derating curve(s)",			   "0/1",     "",					  "pvsamv1"		   "*",								  "",							   "" },
 	{ SSC_INPUT,		SSC_NUMBER,		 "inv_tdc_V1",								   "Temperature derate curve at DC voltage 1",				   "Vdc",	  "",					  "pvsamv1",	   "en_inv_tdc=1",						  "",							   "" },
 	{ SSC_INPUT,		SSC_NUMBER,		 "inv_tdc_V2",								   "Temperature derate curve at DC voltage 2",				   "Vdc",	  "",					  "pvsamv1",	   "",									  "",							   "" },
@@ -420,8 +420,8 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_INPUT,		SSC_NUMBER,		 "inv_tdc_S1",								   "Efficiency derate slope for curve 1",					   "%/C",	  "",					  "pvsamv1",	   "en_inv_tdc=1",						  "",							   "" },
 	{ SSC_INPUT,		SSC_NUMBER,		 "inv_tdc_S2",								   "Efficiency derate slope for curve 2",					   "%/C",	  "",					  "pvsamv1",	   "",									  "",							   "" },
 	{ SSC_INPUT,		SSC_NUMBER,		 "inv_tdc_S3",								   "Efficiency derate slope for curve 3",					   "%/C",	  "",					  "pvsamv1",	   "",									  "",							   "" },
-
-
+	*/
+		 
 	// battery storage and dispatch
 	{ SSC_INPUT,        SSC_NUMBER,      "en_batt",                                    "Enable battery storage model",                             "0/1",     "",                     "Battery",       "?=0",                                 "",                              "" },
 	{ SSC_INPUT,        SSC_ARRAY,       "load",                                       "Electricity load (year 1)",                                "kW", "", "Battery", "?", "", "" },
@@ -590,7 +590,7 @@ static var_info _cm_vtab_pvsamv1[] = {
     { SSC_OUTPUT,        SSC_ARRAY,      "inv_cliploss",                         "Inverter clipping loss AC power limit",                "kW",   "",  "Time Series (Inverter)",       "*",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "inv_psoloss",                          "Inverter power consumption loss",                      "kW",   "",  "Time Series (Inverter)",       "*",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "inv_pntloss",                          "Inverter night time loss",                             "kW",   "",  "Time Series (Inverter)",       "*",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "inv_tdcloss",                       	 "Inverter thermal derate loss",                         "kW",   "",   "Time Series (Inverter)",              "en_inv_tdc=1",             "",                   "" },
+	//{ SSC_OUTPUT,        SSC_ARRAY,      "inv_tdcloss",                       	 "Inverter thermal derate loss",                         "kW",   "",   "Time Series (Inverter)",              "en_inv_tdc=1",             "",                   "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "ac_wiring_loss",                       "AC wiring loss",                                       "kW",   "",   "Time Series (Inverter)",              "*",                        "",                   "" },
 
 	// transformer model outputs
@@ -610,7 +610,7 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_OUTPUT,        SSC_NUMBER,     "annual_inv_cliploss",                  "Inverter clipping loss AC power limit",                  "kWh/yr",    "",                      "Annual (Year 1)",       "*",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "annual_inv_psoloss",                   "Inverter power consumption loss",                        "kWh/yr",    "",                      "Annual (Year 1)",       "*",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "annual_inv_pntloss",                   "Inverter night time loss",                               "kWh/yr",    "",                      "Annual (Year 1)",       "*",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "annual_inv_tdcloss",                   "Inverter thermal derate loss",				                   "kWh/yr",    "",                      "Annual (Year 1)",       "*",                    "",                              "" },
+	//{ SSC_OUTPUT,        SSC_NUMBER,     "annual_inv_tdcloss",                   "Inverter thermal derate loss",				                   "kWh/yr",    "",                      "Annual (Year 1)",       "*",                    "",                              "" },
 
 	{ SSC_OUTPUT,        SSC_NUMBER,      "subarray1_dcloss",                    "Subarray 1 Total DC power loss",                                       "%",      "", "Annual (Year 1)",              "*",                        "",                   "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,      "subarray2_dcloss",                    "Subarray 2 Total DC power loss",                                       "%",      "", "Annual (Year 1)",              "",                        "",                   "" },
@@ -717,7 +717,7 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_OUTPUT, SSC_NUMBER, "annual_ac_inv_clip_loss_percent", "AC inverter power clipping loss", "%", "", "Loss", "*", "", "" },
 	{ SSC_OUTPUT, SSC_NUMBER, "annual_ac_inv_pso_loss_percent", "AC inverter power consumption loss", "%", "", "Loss", "*", "", "" },
 	{ SSC_OUTPUT, SSC_NUMBER, "annual_ac_inv_pnt_loss_percent", "AC inverter night tare loss", "%", "", "Loss", "*", "", "" },
-	{ SSC_OUTPUT, SSC_NUMBER, "annual_ac_inv_tdc_loss_percent", "AC inverter thermal derate loss", "%", "", "Loss", "*", "", "" },
+	//{ SSC_OUTPUT, SSC_NUMBER, "annual_ac_inv_tdc_loss_percent", "AC inverter thermal derate loss", "%", "", "Loss", "*", "", "" },
 	// annual_ac_gross
 	{ SSC_OUTPUT, SSC_NUMBER, "annual_ac_inv_eff_loss_percent", "AC inverter efficiency loss", "%", "", "Loss", "*", "", "" },
 	{ SSC_OUTPUT, SSC_NUMBER, "annual_ac_wiring_loss_percent", "AC wiring loss", "%", "", "Loss", "*", "", "" },
@@ -1959,7 +1959,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 					PVSystem->p_inverterClipLoss[idx] = (ssc_number_t)(sharedInverter->powerClipLoss_kW);
 					PVSystem->p_inverterPowerConsumptionLoss[idx] = (ssc_number_t)(sharedInverter->powerConsumptionLoss_kW);
 					PVSystem->p_inverterNightTimeLoss[idx] = (ssc_number_t)(sharedInverter->powerNightLoss_kW);
-					PVSystem->p_inverterThermalLoss[idx] = (ssc_number_t)(sharedInverter->powerTempLoss_kW);
+					//PVSystem->p_inverterThermalLoss[idx] = (ssc_number_t)(sharedInverter->powerTempLoss_kW);
 					PVSystem->p_acWiringLoss[idx] = (ssc_number_t)(ac_wiringloss);
 					PVSystem->p_transmissionLoss[idx] = (ssc_number_t)(transmissionloss);
 				}
@@ -2123,7 +2123,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 
 	double annual_inv_psoloss = accumulate_annual_for_year("inv_psoloss", "annual_inv_psoloss", ts_hour, step_per_hour );
 	double annual_inv_pntloss = accumulate_annual_for_year("inv_pntloss", "annual_inv_pntloss", ts_hour, step_per_hour);
-	double annual_inv_tdcloss = accumulate_annual_for_year("inv_tdcloss", "annual_inv_tdcloss", ts_hour, step_per_hour);
+	//double annual_inv_tdcloss = accumulate_annual_for_year("inv_tdcloss", "annual_inv_tdcloss", ts_hour, step_per_hour);
 
 	double nom_rad = Subarrays[0]->Module->isConcentratingPV ? annual_poa_beam_nom : annual_poa_nom;
 	double inp_rad = Subarrays[0]->Module->isConcentratingPV ? annual_poa_beam_eff : annual_poa_eff;
@@ -2243,8 +2243,8 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 	assign("annual_ac_after_inv_psoloss", var_data((ssc_number_t)sys_output));
 	sys_output -= annual_inv_pntloss;
 	assign("annual_ac_after_inv_pntloss", var_data((ssc_number_t)sys_output));
-	sys_output -= annual_inv_tdcloss;
-	assign("annual_ac_after_inv_tdcloss", var_data((ssc_number_t)sys_output));
+	//sys_output -= annual_inv_tdcloss;
+	//assign("annual_ac_after_inv_tdcloss", var_data((ssc_number_t)sys_output));
 
 	double acwiring = as_double("acwiring_loss");
 	double transmission = as_double("transmission_loss");
@@ -2349,8 +2349,8 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 	assign("annual_ac_inv_pnt_loss_percent", var_data((ssc_number_t)percent));
 
 	percent = 0.;
-	if (annual_dc_net > 0) percent = 100 * annual_inv_tdcloss / annual_dc_net;
-	assign("annual_ac_inv_tdc_loss_percent", var_data((ssc_number_t)percent));
+	//if (annual_dc_net > 0) percent = 100 * annual_inv_tdcloss / annual_dc_net;
+	//assign("annual_ac_inv_tdc_loss_percent", var_data((ssc_number_t)percent));
 
 	sys_output = annual_dc_net;
 	sys_output -= (annual_inv_cliploss + annual_inv_pntloss + annual_inv_psoloss);

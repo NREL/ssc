@@ -318,7 +318,7 @@ void pvsamv_nofinancial_default(ssc_data_t &data)
 	ssc_data_set_number(data, "inv_snl_eff_cec", 96.636932373046875);
 	ssc_data_set_number(data, "inv_pd_eff", 95);
 	ssc_data_set_number(data, "inv_cec_cg_eff_cec", 96.636306762695313);
-	ssc_data_set_number(data, "en_inv_tdc", 1);
+	//ssc_data_set_number(data, "en_inv_tdc", 1);
 	ssc_data_set_number(data, "inv_tdc_V1", 1);
 	ssc_data_set_number(data, "inv_tdc_T1", 52.8);
 	ssc_data_set_number(data, "inv_tdc_S1", -0.021);
@@ -653,7 +653,7 @@ void pvsamv1_with_residential_default(ssc_data_t &data)
 	ssc_data_set_number(data, "inv_pd_pnt", 0);
 	ssc_data_set_number(data, "inv_pd_vdco", 310);
 	ssc_data_set_number(data, "inv_pd_vdcmax", 600);
-	ssc_data_set_number(data, "en_inv_tdc", 1);
+	//ssc_data_set_number(data, "en_inv_tdc", 1);
 	ssc_data_set_number(data, "inv_tdc_V1", 1);
 	ssc_data_set_number(data, "inv_tdc_T1", 52.8);
 	ssc_data_set_number(data, "inv_tdc_S1", -0.021);

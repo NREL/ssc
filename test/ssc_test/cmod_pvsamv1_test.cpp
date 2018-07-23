@@ -436,7 +436,7 @@ TEST_F(CMPvsamv1PowerIntegration, NoFinancialModelLosses)
 }
 
 /// Test inverter temperature derate 
-TEST_F(CMPvsamv1PowerIntegration, InvTempDerate) {
+TEST_F(CMPvsamv1PowerIntegration, DISABLED_InvTempDerate) {
 	var_data* weatherData = create_weatherdata_array(1);
 	ssc_data_unassign(data, "solar_resource_file");
 
