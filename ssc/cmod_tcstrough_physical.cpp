@@ -182,7 +182,9 @@ static var_info _cm_vtab_tcstrough_physical[] = {
     { SSC_INPUT,        SSC_MATRIX,      "store_fl_props",            "User defined storage fluid property data",                       "-",            "",             "controller",     "*",                       "",                      "" },    
 	{ SSC_INPUT,        SSC_NUMBER,      "store_fluid",               "Material number for storage fluid",                              "-",            "",             "controller",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "tshours",                   "Equivalent full-load thermal storage hours",                     "hr",           "",             "controller",     "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "is_hx",                     "Heat exchanger (HX) exists (1=yes, 0=no)" ,                       "-",            "",             "controller",     "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "eta_pump",                  "HTF pump efficiency",                                            "none",         "",             "controller",     "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "HDR_rough",                 "Header pipe roughness - used as general pipe roughness",         "m",            "",             "controller",     "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "is_hx",                     "Heat exchanger (HX) exists (1=yes, 0=no)" ,                      "-",            "",             "controller",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "dt_hot",                    "Hot side HX approach temp",                                      "C",            "",             "controller",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "dt_cold",                   "Cold side HX approach temp",                                     "C",            "",             "controller",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "hx_config",                 "HX configuration",                                               "-",            "",             "controller",     "*",                       "",                      "" },
@@ -673,6 +675,8 @@ public:
 		set_unit_value_ssc_matrix(type251_controller, "store_fl_props" );				
 		set_unit_value_ssc_double(type251_controller, "store_fluid"); // , 18);
 		set_unit_value_ssc_double(type251_controller, "tshours" ); // , 6);
+        set_unit_value_ssc_double(type251_controller, "eta_pump"); // , 0.85);
+        set_unit_value_ssc_double(type251_controller, "HDR_rough"); // , 4.57E-05);
 		set_unit_value_ssc_double(type251_controller, "is_hx" ); // , 1);
 		set_unit_value_ssc_double(type251_controller, "dt_hot" ); // , 5);
 		set_unit_value_ssc_double(type251_controller, "dt_cold" ); // , 7);

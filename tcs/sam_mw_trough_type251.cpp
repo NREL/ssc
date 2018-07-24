@@ -73,6 +73,8 @@ enum {
 	P_store_fl,
 	P_store_fl_props,
 	P_tshours,
+    P_eta_pump,
+    P_hdr_rough,
 	P_is_hx,
 	P_dt_hot,
 	P_dt_cold,
@@ -222,7 +224,9 @@ tcsvarinfo sam_mw_trough_type251_variables[] = {
 	{ TCS_PARAM,    TCS_MATRIX,        P_field_fl_props,     "field_fl_props",       "User defined field fluid property data",                  "-",            "7 columns (T,Cp,dens,visc,kvisc,cond,h), at least 3 rows",        "",        ""},			
 	{ TCS_PARAM,    TCS_NUMBER,        P_store_fl,           "store_fluid",          "Material number for storage fluid",                       "-",            "",        "",        ""},
 	{ TCS_PARAM,    TCS_MATRIX,        P_store_fl_props,     "store_fl_props",       "User defined fluid property data",                        "-",            "7 columns (T,Cp,dens,visc,kvisc,cond,h), at least 3 rows",        "",        ""},
-	{ TCS_PARAM,    TCS_NUMBER,        P_tshours,            "tshours",              "Equivalent full-load thermal storage hours",              "hr",           "",        "",        ""},            
+	{ TCS_PARAM,    TCS_NUMBER,        P_tshours,            "tshours",              "Equivalent full-load thermal storage hours",              "hr",           "",        "",        ""},
+    { TCS_PARAM,    TCS_NUMBER,        P_eta_pump,           "eta_pump",             "HTF pump efficiency",                                     "-",            "",        "",        ""},
+    { TCS_PARAM,    TCS_NUMBER,        P_hdr_rough,          "HDR_rough",            "Header pipe roughness - used as general pipe roughness",  "m",            "",        "",        ""},
     { TCS_PARAM,    TCS_NUMBER,        P_is_hx,              "is_hx",                "1=yes, 0=no"                                              "-",            "",        "",        ""},
     { TCS_PARAM,    TCS_NUMBER,        P_dt_hot,             "dt_hot",               "Hot side HX approach temp",                               "C",            "",        "",        ""},    
     { TCS_PARAM,    TCS_NUMBER,        P_dt_cold,            "dt_cold",              "Cold side HX approach temp",                              "C",            "",        "",        ""},
@@ -376,7 +380,9 @@ private:
 	Thermocline_TES thermocline;
 
 	// Parameters
-	double tshours;	
+	double tshours;
+    double eta_pump;
+    double HDR_rough;
 	bool is_hx;
 	double dt_hot;
 	double dt_cold;
@@ -456,6 +462,11 @@ private:
 	double V_tank_active;
 	double t_standby;
 	int tempmode;
+    util::matrix_t<double> SGS_v_dot_rel;
+    util::matrix_t<double> SGS_diams;
+    util::matrix_t<double> SGS_wall_thk;
+    util::matrix_t<double> SGS_m_dot;
+    util::matrix_t<double> SGS_vel;
 
 	//"Storage" Variables
 	double V_tank_hot_prev;
@@ -500,7 +511,9 @@ public:
 	sam_mw_trough_type251( tcscontext *cxt, tcstypeinfo *ti )
 		: tcstypeinterface( cxt, ti )
 	{
-		tshours		= std::numeric_limits<double>::quiet_NaN();		
+		tshours		= std::numeric_limits<double>::quiet_NaN();
+        eta_pump	= std::numeric_limits<double>::quiet_NaN();
+        HDR_rough	= std::numeric_limits<double>::quiet_NaN();
 		is_hx		= false;
 		dt_hot		= std::numeric_limits<double>::quiet_NaN();
 		dt_cold		= std::numeric_limits<double>::quiet_NaN();
@@ -710,6 +723,8 @@ public:
 		}
 
 		tshours		= value(P_tshours);					//[hr]
+        eta_pump    = value(eta_pump);                  //[-]
+        HDR_rough   = value(P_hdr_rough);               //[m]
 		dt_hot		= value(P_dt_hot);					//[K]
 		dt_cold		= value(P_dt_cold);					//[K]
 		hx_config	= (int) value(P_hx_config);			//[-]
@@ -948,7 +963,6 @@ public:
         // Size SGS piping
         double rho_avg = field_htfProps.dens((T_field_in_des + T_field_out_des) / 2, 9 / 1.e-5);
         double SGS_vol_tot;
-        util::matrix_t<double> SGS_v_dot_rel, SGS_diams, SGS_wall_thk, SGS_lengths, SGS_m_dot, SGS_vel;
         if ( size_sgs_piping(V_tes_des, L_tes_col_gen, rho_avg, m_dot_pb_design, solarm, tanks_in_parallel,     // Inputs
             SGS_vol_tot, SGS_v_dot_rel, SGS_diams, SGS_wall_thk, SGS_m_dot, SGS_vel) ) {        // Outputs
             message(TCS_ERROR, "SGS piping sizing failed.");
@@ -1956,70 +1970,36 @@ public:
 
 		// Pumping power
 		double htf_pump_power;
-		if(is_hx)
-		{
-			htf_pump_power = (tes_pump_coef*fabs(m_tank_disch - m_tank_charge) + pb_pump_coef*(fabs(ms_disch-ms_charge) + m_dot_pb))/1000.0;	//[MW]
-		}
-		else
-		{
-            if (tanks_in_parallel) {
-			    htf_pump_power = pb_pump_coef*(fabs(ms_disch-ms_charge) + m_dot_pb)/1000.0;	//[MW]
+        if (custom_tes_p_loss) {
+            double rho_sf, rho_pb;
+            double DP_col, DP_gen;
+            sgs_pressure_drops(m_dot_field, m_dot_pb, SGS_v_dot_rel, T_field_in, T_field_out, T_pb_in, T_pb_out,
+                L_tes_col_gen, SGS_diams, HDR_rough, k_tes_loss_coeffs, tanks_in_parallel, recirculating, DP_col, DP_gen);
+            rho_sf = field_htfProps.dens((T_field_in + T_field_out) / 2., 8e5);
+            rho_pb = field_htfProps.dens((T_pb_in + T_pb_out) / 2., 1e5);
+            if (is_hx) {
+                htf_pump_power = tes_pump_coef * fabs(m_tank_disch - m_tank_charge) / 1000 +
+                    (DP_col * m_dot_field / (rho_sf * eta_pump) + DP_gen * m_dot_pb / (rho_pb * eta_pump)) / 1e6;   //[MW]
             }
             else {
-                htf_pump_power = pb_pump_coef * m_dot_pb / 1000.0;	//[MW]
+                htf_pump_power = (DP_col * m_dot_field / (rho_sf * eta_pump) + DP_gen * m_dot_pb / (rho_pb * eta_pump)) / 1e6;   //[MW]
             }
-		}
+        }
+        else {    // original methods
+            if (is_hx) {
+                htf_pump_power = (tes_pump_coef*fabs(m_tank_disch - m_tank_charge) + pb_pump_coef * (fabs(ms_disch - ms_charge) + m_dot_pb)) / 1000.0;	//[MW]
+            }
+            else {
+                if (tanks_in_parallel) {
+                    htf_pump_power = pb_pump_coef * (fabs(ms_disch - ms_charge) + m_dot_pb) / 1000.0;	//[MW]
+                }
+                else {
+                    htf_pump_power = pb_pump_coef * m_dot_pb / 1000.0;	//[MW]
+                }
+            }
+        }
 
-
-        // TODO - Maybe put recirculation as first 'if' test?
-        //if (is_hx)
-        //{
-        //    if (custom_tes_p_loss) {
-        //        DP_SGS = sgs_pressure_drop();
-        //        if (ms_disch > ms_charge) {             // storage discharging
-        //            Ts = (Ts_hot + T_pb_out) / 2.;      // avg temp in storage branch
-        //        }
-        //        else {                                  // storage charging
-        //            Ts = (T_field_out + Ts_cold) / 2.;
-        //        }
-        //        rho_s = field_htfProps.dens(Ts, 1e5);
-        //        rho_pb = field_htfProps.dens( (T_pb_in + T_pb_out)/2., 1e5);
-        //        htf_pump_power = (tes_pump_coef*fabs(m_tank_disch - m_tank_charge) +
-        //            DP_SGS/eta_pump * (fabs(ms_disch - ms_charge)/rho_s + m_dot_pb/rho_pb)) / 1e6;  //[MW]
-        //    }
-        //    else {
-        //        htf_pump_power = (tes_pump_coef*fabs(m_tank_disch - m_tank_charge) + pb_pump_coef * (fabs(ms_disch - ms_charge) + m_dot_pb)) / 1000.0;	//[MW]
-        //    }
-        //}
-        //else
-        //{
-        //    if (custom_tes_p_loss) {
-        //        if (tanks_in_parallel) {
-        //            DP_SGS = sgs_pressure_drop();
-        //            T_s = (Ts_hot + Ts_cold) / 2.;      // avg temp in (separate) storage branches
-        //            rho_s = field_htfProps.dens(Ts, 1e5);
-        //            rho_pb = field_htfProps.dens((T_pb_in + T_pb_out) / 2., 1e5);
-        //            htf_pump_power = DP_SGS / eta_pump * (fabs(ms_disch - ms_charge) / rho_s + m_dot_pb / rho_pb) / 1e6;  //[MW]
-        //        }
-        //        else {
-        //            DP_SGS = sgs_pressure_drop();
-        //            // The efficiencies of the SF and SGS pumps are assumed equal (eta_pump)
-        //            htf_pump_power = DP_SGS / eta_pump * 
-        //        }
-        //    }
-        //    else {
-        //        if (tanks_in_parallel) {
-        //            htf_pump_power = pb_pump_coef * (fabs(ms_disch - ms_charge) + m_dot_pb) / 1000.0;	//[MW]
-        //        }
-        //        else {
-        //            htf_pump_power = pb_pump_coef * m_dot_pb / 1000.0;	//[MW]
-        //        }
-        //    }
-        //}
-        
-
-
-		// Variable parasitic power
+        // Variable parasitic power
 		double bop_par;
 		double q_pb = m_dot_pb*c_htf_pb*(T_pb_in - T_pb_out);		//[MW]
 		if(q_pb > 0.0)
@@ -2344,7 +2324,7 @@ public:
 
     int sgs_pressure_drops(double m_dot_sf, double m_dot_pb, util::matrix_t<double> v_dot_rel,
         double T_sf_in, double T_sf_out, double T_pb_in, double T_pb_out,
-        util::matrix_t<double> L, util::matrix_t<double> D, double rel_rough,
+        util::matrix_t<double> L, util::matrix_t<double> D, double pipe_rough,
         util::matrix_t<double> k_coeffs, bool tanks_in_parallel, bool recirculating,
         double &P_drop_col, double &P_drop_gen)
     {
@@ -2359,7 +2339,7 @@ public:
         double k;                                     // effective minor loss coefficient
         double Re, ff;
         double v_dot_ref;
-        std::vector<double> P_drops(num_sections, 0);
+        std::vector<double> P_drops(num_sections, 0.0);
 
         v_dot_sf = m_dot_sf / field_htfProps.dens((T_sf_in + T_sf_out) / 2, (P_hi + P_lo) / 2);
         v_dot_pb = m_dot_pb / field_htfProps.dens((T_pb_in + T_pb_out) / 2, P_lo);
@@ -2377,15 +2357,14 @@ public:
             vel = v_dot / Area;
             rho = field_htfProps.dens(T, P);
             Re = field_htfProps.Re(T, P, vel, D.at(i));
-            ff = CSP::FrictionFactor(rel_rough, Re);
+            ff = CSP::FrictionFactor(pipe_rough/D.at(i), Re);
             if (i != bypass_section || recirculating) {
                 P_drops.at(i) += CSP::MajorPressureDrop(vel, rho, ff, L.at(i), D.at(i));
                 P_drops.at(i) += CSP::MinorPressureDrop(vel, rho, k_coeffs.at(i));
             }
         }
 
-        // TODO - Verify these
-        P_drop_col = std::accumulate(P_drops.begin(), P_drops.begin() + gen_first_section - 1, 0.0);
+        P_drop_col = std::accumulate(P_drops.begin(), P_drops.begin() + gen_first_section, 0.0);
         P_drop_gen = std::accumulate(P_drops.begin() + gen_first_section, P_drops.end(), 0.0);
 
         return 0;
