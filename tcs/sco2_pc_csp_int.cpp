@@ -761,7 +761,14 @@ int C_sco2_recomp_csp::opt_P_LP_comp_in__fixed_N_turbo()
 			ub.resize(1, P_mc_in_upper);	//[kPa]
 
 			scale.resize(1);
-			scale[0] = (0.5*P_mc_in_upper + 0.5*P_mc_in_lower) - x[0];	//[kPa]
+			double diff_P_low = P_mc_in_guess - P_mc_in_lower;
+			double diff_P_up = P_mc_in_upper - P_mc_in_guess;
+			if (diff_P_up > diff_P_low)
+				scale[0] = -0.99*diff_P_low;
+			else
+				scale[0] = 0.99*diff_P_up;
+				
+				//scale[0] = (0.5*P_mc_in_upper + 0.5*P_mc_in_lower) - x[0];	//[kPa]
 			
 			// Set up instance of nlopt class and set optimization parameters
 			nlopt::opt  nlopt_P_mc_in_opt_max_of(nlopt::LN_NELDERMEAD, 1);
