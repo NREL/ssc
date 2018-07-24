@@ -62,7 +62,7 @@ length of runner pipe in meters, for either the hot or cold lines. This length w
 the threshold length of straight runner pipe without an expansion loop. Once this length has been reached, an expansion loop is added (without increasing the linear distance). Default = 70 m. [^](#toc)
 
 ### L_tes_col_gen
-length of piping in the TES collection flow loop followed by the generation flow loop [m]. Defaults = {0, 90, 100, 120, 0, 0, 0, 0, 80, 120, 80}. [^](#toc)
+length of piping in the TES collection flow loop followed by the generation flow loop [m]. Defaults = {0, 90, 100, 120, 0, 0, 0, 0, 80, 120, 80}. Lengths at indices 0, 1, 5 and 6 are the summed lengths of the multiple individual pump sections. [^](#toc)
 
 ### L_xpan_hdr
 combined length in meters of the two perpendicular segments of a header expansion loop. This is the additional pipe length for each expansion loop. Default = 20 m [^](#toc)
