@@ -948,9 +948,9 @@ public:
         // Size SGS piping
         double rho_avg = field_htfProps.dens((T_field_in_des + T_field_out_des) / 2, 9 / 1.e-5);
         double SGS_vol_tot;
-        util::matrix_t<double> SGS_v_dot_pb_rel, SGS_diams, SGS_wall_thk, SGS_lengths, SGS_m_dot, SGS_vel;
+        util::matrix_t<double> SGS_v_dot_rel, SGS_diams, SGS_wall_thk, SGS_lengths, SGS_m_dot, SGS_vel;
         if ( size_sgs_piping(V_tes_des, L_tes_col_gen, rho_avg, m_dot_pb_design, solarm, tanks_in_parallel,     // Inputs
-            SGS_vol_tot, SGS_v_dot_pb_rel, SGS_diams, SGS_wall_thk, SGS_lengths, SGS_m_dot, SGS_vel) ) {        // Outputs
+            SGS_vol_tot, SGS_v_dot_rel, SGS_diams, SGS_wall_thk, SGS_m_dot, SGS_vel) ) {        // Outputs
             message(TCS_ERROR, "SGS piping sizing failed.");
             return -1;
         }
@@ -1971,14 +1971,21 @@ public:
 		}
 
 
+        // TODO - Maybe put recirculation as first 'if' test?
         //if (is_hx)
         //{
         //    if (custom_tes_p_loss) {
-        //        // The efficiencies of the SF and SGS pumps are assumed equal (eta_pump)
         //        DP_SGS = sgs_pressure_drop();
-        //        rho
+        //        if (ms_disch > ms_charge) {             // storage discharging
+        //            Ts = (Ts_hot + T_pb_out) / 2.;      // avg temp in storage branch
+        //        }
+        //        else {                                  // storage charging
+        //            Ts = (T_field_out + Ts_cold) / 2.;
+        //        }
+        //        rho_s = field_htfProps.dens(Ts, 1e5);
+        //        rho_pb = field_htfProps.dens( (T_pb_in + T_pb_out)/2., 1e5);
         //        htf_pump_power = (tes_pump_coef*fabs(m_tank_disch - m_tank_charge) +
-        //            DP_SGS/eta_pump * (fabs(ms_disch - ms_charge)/rho_storage + m_dot_pb/rho_pb))) / 1e6;  //[MW]
+        //            DP_SGS/eta_pump * (fabs(ms_disch - ms_charge)/rho_s + m_dot_pb/rho_pb)) / 1e6;  //[MW]
         //    }
         //    else {
         //        htf_pump_power = (tes_pump_coef*fabs(m_tank_disch - m_tank_charge) + pb_pump_coef * (fabs(ms_disch - ms_charge) + m_dot_pb)) / 1000.0;	//[MW]
@@ -1988,10 +1995,16 @@ public:
         //{
         //    if (custom_tes_p_loss) {
         //        if (tanks_in_parallel) {
-
+        //            DP_SGS = sgs_pressure_drop();
+        //            T_s = (Ts_hot + Ts_cold) / 2.;      // avg temp in (separate) storage branches
+        //            rho_s = field_htfProps.dens(Ts, 1e5);
+        //            rho_pb = field_htfProps.dens((T_pb_in + T_pb_out) / 2., 1e5);
+        //            htf_pump_power = DP_SGS / eta_pump * (fabs(ms_disch - ms_charge) / rho_s + m_dot_pb / rho_pb) / 1e6;  //[MW]
         //        }
         //        else {
-
+        //            DP_SGS = sgs_pressure_drop();
+        //            // The efficiencies of the SF and SGS pumps are assumed equal (eta_pump)
+        //            htf_pump_power = DP_SGS / eta_pump * 
         //        }
         //    }
         //    else {
@@ -2003,7 +2016,7 @@ public:
         //        }
         //    }
         //}
-        //
+        
 
 
 		// Variable parasitic power
@@ -2158,43 +2171,48 @@ public:
 	}
 	
     int size_sgs_piping(double vel_dsn, util::matrix_t<double> L, double rho_avg, double m_dot_pb, double solarm,
-        bool tanks_in_parallel, double &vol_tot, util::matrix_t<double> &v_dot_pb_rel, util::matrix_t<double> &diams,
-        util::matrix_t<double> &wall_thk, util::matrix_t<double> &lengths, util::matrix_t<double> &m_dot, util::matrix_t<double> &vel)
+        bool tanks_in_parallel, double &vol_tot, util::matrix_t<double> &v_dot_rel, util::matrix_t<double> &diams,
+        util::matrix_t<double> &wall_thk, util::matrix_t<double> &m_dot, util::matrix_t<double> &vel)
     {
-        const int bypass_index = 4;
+        const std::size_t bypass_index = 4;
+        const std::size_t gen_first_index = 5;      // first generation section index in combined col. gen. loops
+        double m_dot_sf;
+        double v_dot_sf, v_dot_pb;                  // solar field and power block vol. flow rates
+        double v_dot_ref;
         double v_dot;                               // volumetric flow rate
         double Area;
         vol_tot = 0.0;                              // total volume in SGS piping
         std::size_t nPipes = L.ncells();
-        v_dot_pb_rel.resize_fill(nPipes, 0.0);      // volumetric flow rate relative to power block HX
+        v_dot_rel.resize_fill(nPipes, 0.0);         // volumetric flow rate relative to the solar field or power block flow
         diams.resize_fill(nPipes, 0.0);
         wall_thk.resize_fill(nPipes, 0.0);
-        lengths.resize_fill(nPipes, 0.0);
         m_dot.resize_fill(nPipes, 0.0);
         vel.resize_fill(nPipes, 0.0);
         std::vector<int> sections_no_bypass;
 
-        double v_dot_pb = m_dot_pb / rho_avg;
+        m_dot_sf = m_dot_pb * solarm;
+        v_dot_sf = m_dot_sf / rho_avg;
+        v_dot_pb = m_dot_pb / rho_avg;
 
-        //The volumetric flow rate relative to the power block for each collection section (v_rel = v_dot / v_dot_pb)
-        v_dot_pb_rel.at(0) = solarm / 2.;           // 1 - Solar field (SF) pump suction header to individual SF pump inlet
+        //The volumetric flow rate relative to the solar field for each collection section (v_rel = v_dot / v_dot_pb)
+        v_dot_rel.at(0) = 1.0 / 2;                  // 1 - Solar field (SF) pump suction header to individual SF pump inlet
                                                     //     50% -> "/2.0" . The flow rate (i.e., diameter) is sized here for the case when one pump is down.
-        v_dot_pb_rel.at(1) = solarm / 2.;           // 2 - Individual SF pump discharge to SF pump discharge header
-        v_dot_pb_rel.at(2) = solarm;                // 3 - SF pump discharge header to collection field section headers (i.e., runners)
-        v_dot_pb_rel.at(3) = solarm;                // 4 - Collector field section outlet headers (i.e., runners) to expansion vessel (indirect storage) or
+        v_dot_rel.at(1) = 1.0 / 2;                  // 2 - Individual SF pump discharge to SF pump discharge header
+        v_dot_rel.at(2) = 1.0;                      // 3 - SF pump discharge header to collection field section headers (i.e., runners)
+        v_dot_rel.at(3) = 1.0;                      // 4 - Collector field section outlet headers (i.e., runners) to expansion vessel (indirect storage) or
                                                     //     hot thermal storage tank (direct storage)
-        v_dot_pb_rel.at(4) = solarm;                // 5 - Bypass branch - Collector field section outlet headers (i.e., runners) to pump suction header (indirect) or
+        v_dot_rel.at(4) = 1.0;                      // 5 - Bypass branch - Collector field section outlet headers (i.e., runners) to pump suction header (indirect) or
                                                     //     cold thermal storage tank (direct)
 
-        //The volumetric flow rate relative to the solar field for each generation section
-        v_dot_pb_rel.at(5) = 1. / 2.;               // 2 - SGS pump suction header to individual SGS pump inlet (applicable only for storage in series with SF)
+        //The volumetric flow rate relative to the power block for each generation section
+        v_dot_rel.at(5) = 1.0 / 2;                  // 2 - SGS pump suction header to individual SGS pump inlet (applicable only for storage in series with SF)
                                                     //     50% -> "/2.0" . The flow rate (i.e., diameter) is sized here for the case when one pump is down.
-        v_dot_pb_rel.at(6) = 1. / 2.;               // 3 - Individual SGS pump discharge to SGS pump discharge header (only for series storage)
-        v_dot_pb_rel.at(7) = 1.;                    // 4 - SGS pump discharge header to steam generator supply header (only for series storage)
+        v_dot_rel.at(6) = 1.0 / 2;                  // 3 - Individual SGS pump discharge to SGS pump discharge header (only for series storage)
+        v_dot_rel.at(7) = 1.0;                      // 4 - SGS pump discharge header to steam generator supply header (only for series storage)
 
-        v_dot_pb_rel.at(8) = 1.;                    // 5 - Steam generator supply header to inter-steam generator piping
-        v_dot_pb_rel.at(9) = 1.;                    // 6 - Inter-steam generator piping to steam generator outlet header
-        v_dot_pb_rel.at(10) = 1.;                   // 7 - Steam generator outlet header to SF pump suction header (indirect) or cold thermal storage tank (direct)
+        v_dot_rel.at(8) = 1.0;                      // 5 - Steam generator supply header to inter-steam generator piping
+        v_dot_rel.at(9) = 1.0;                      // 6 - Inter-steam generator piping to steam generator outlet header
+        v_dot_rel.at(10) = 1.0;                     // 7 - Steam generator outlet header to SF pump suction header (indirect) or cold thermal storage tank (direct)
 
         if (tanks_in_parallel) {
             sections_no_bypass = { 0, 1, 2, 3, 8, 9, 10 };
@@ -2205,24 +2223,25 @@ public:
 
         // Collection loop followed by generation loop
         for (std::size_t i = 0; i < nPipes; i++) {
-            v_dot = v_dot_pb * v_dot_pb_rel.at(i);
+            i < gen_first_index ? v_dot_ref = v_dot_sf : v_dot_ref = v_dot_pb;
+            v_dot = v_dot_ref * v_dot_rel.at(i);
             diams.at(i) = CSP::pipe_sched(sqrt(4.0*v_dot / (vel_dsn * CSP::pi)));
             wall_thk.at(i) = CSP::WallThickness( diams.at(i) );
-            lengths.at(i) = L.at(i);
             m_dot.at(i) = v_dot * rho_avg;
             Area = CSP::pi * pow(diams.at(i), 2) / 4.;
             vel.at(i) = v_dot / Area;
 
             // Exclude bypass branch from volume calculation
             if ( std::find(sections_no_bypass.begin(), sections_no_bypass.end(), i) != sections_no_bypass.end() ) {
-                vol_tot += Area * lengths.at(i);
+                vol_tot += Area * L.at(i);
             }
         }
 
         return 0;
     }
 
-    double sgs_pressure_drop(double m_dot_pb, util::matrix_t<double> v_dot_pb_rel, double T_sf_in, double T_sf_out,
+    // TODO - remove these commented out functions
+    /*double sgs_pressure_drop_old(double m_dot_pb, util::matrix_t<double> v_dot_pb_rel, double T_sf_in, double T_sf_out,
         double T_pb_in, double T_pb_out, util::matrix_t<double> L, util::matrix_t<double> D,
         util::matrix_t<double> k_coeffs, double rel_rough, bool tanks_in_parallel, bool recirculating)
     {
@@ -2257,7 +2276,7 @@ public:
             if (*it == first_gen_index + 4) T = (T_pb_in + T_pb_out) / 2.;                // 9
             if (*it == first_gen_index + 5) T = T_pb_out;                                 // 10
 
-            v_dot = v_dot_pb_rel * v_dot_pb;
+            v_dot = v_dot_pb_rel.at(*it) * v_dot_pb;
             Area = CSP::pi * pow(D, 2) / 4.;
             vel = v_dot / Area;
             rho = field_htfProps.dens(T, P);
@@ -2268,6 +2287,108 @@ public:
         }
 
         return P_drop;
+    }
+
+    int sgs_pressure_drops_old(double m_dot_sf, double m_dot_pb, util::matrix_t<double> v_dot_rel,
+        double T_sf_in, double T_sf_out, double T_pb_in, double T_pb_out,
+        util::matrix_t<double> L, util::matrix_t<double> D, double rel_rough,
+        util::matrix_t<double> k_coeffs, bool tanks_in_parallel, bool recirculating,
+        double &P_drop_col, double &P_drop_gen)
+    {
+        const std::size_t num_sections = 11;          // total number of col. + gen. sections
+        const std::size_t gen_first_section = 5;      // first generation section index in combined col. gen. loops
+        const double P_hi = 17 / 1.e-5;               // downstream SF pump pressure [Pa]
+        const double P_lo = 1 / 1.e-5;                // atmospheric pressure [Pa]
+        double P, T, rho, v_dot, vel;                 // htf properties
+        double Area;                                  // cross-sectional pipe area
+        double v_dot_sf, v_dot_pb;                    // solar field and power block vol. flow rates
+        double k;                                     // effective minor loss coefficient
+        double Re, ff;
+
+
+        // Collection loop (plus bypass)
+        v_dot_sf = m_dot_sf / field_htfProps.dens((T_sf_in + T_sf_out) / 2, (P_hi + P_lo) / 2);
+        for (std::size_t i = 0; i < gen_first_section; i++) {
+            (i > 0 && i < 3) ? P = P_hi : P = P_lo;
+            if (i < 3) T = T_sf_in;                                                       // 0, 1, 2
+            if (i == 3 || i == 4) T = T_sf_out;                                           // 3, 4
+            v_dot = v_dot_rel.at(i) * v_dot_sf;
+            Area = CSP::pi * pow(D, 2) / 4.;
+            vel = v_dot / Area;
+            rho = field_htfProps.dens(T, P);
+            Re = field_htfProps.Re(T, P, vel, D.at(i));
+            ff = CSP::FrictionFactor(rel_rough, Re);
+            P_drop_col += CSP::MajorPressureDrop(vel, rho, ff, L.at(i), D.at(i));
+            P_drop_col += CSP::MinorPressureDrop(vel, rho, k_coeffs.at(i));
+        }
+
+        // Generation loop
+        v_dot_pb = m_dot_pb / field_htfProps.dens((T_pb_in + T_pb_out) / 2, P_lo);
+        for (std::size_t i = gen_first_section; i < num_sections; i++) {
+            P = P_lo;
+            if (i >= gen_first_section && i < gen_first_section + 4) T = T_pb_in;         // 5, 6, 7, 8
+            if (i == gen_first_section + 4) T = (T_pb_in + T_pb_out) / 2.;                // 9
+            if (i == gen_first_section + 5) T = T_pb_out;                                 // 10
+            v_dot = v_dot_rel.at(i) * v_dot_pb;
+            Area = CSP::pi * pow(D, 2) / 4.;
+            vel = v_dot / Area;
+            rho = field_htfProps.dens(T, P);
+            Re = field_htfProps.Re(T, P, vel, D.at(i));
+            ff = CSP::FrictionFactor(rel_rough, Re);
+            P_drop_gen += CSP::MajorPressureDrop(vel, rho, ff, L.at(i), D.at(i));
+            P_drop_gen += CSP::MinorPressureDrop(vel, rho, k_coeffs.at(i));
+        }
+
+        return 0;
+    }*/
+
+    int sgs_pressure_drops(double m_dot_sf, double m_dot_pb, util::matrix_t<double> v_dot_rel,
+        double T_sf_in, double T_sf_out, double T_pb_in, double T_pb_out,
+        util::matrix_t<double> L, util::matrix_t<double> D, double rel_rough,
+        util::matrix_t<double> k_coeffs, bool tanks_in_parallel, bool recirculating,
+        double &P_drop_col, double &P_drop_gen)
+    {
+        const std::size_t num_sections = 11;          // total number of col. + gen. sections
+        const std::size_t bypass_section = 4;         // bypass section index
+        const std::size_t gen_first_section = 5;      // first generation section index in combined col. gen. loops
+        const double P_hi = 17 / 1.e-5;               // downstream SF pump pressure [Pa]
+        const double P_lo = 1 / 1.e-5;                // atmospheric pressure [Pa]
+        double P, T, rho, v_dot, vel;                 // htf properties
+        double Area;                                  // cross-sectional pipe area
+        double v_dot_sf, v_dot_pb;                    // solar field and power block vol. flow rates
+        double k;                                     // effective minor loss coefficient
+        double Re, ff;
+        double v_dot_ref;
+        std::vector<double> P_drops(num_sections, 0);
+
+        v_dot_sf = m_dot_sf / field_htfProps.dens((T_sf_in + T_sf_out) / 2, (P_hi + P_lo) / 2);
+        v_dot_pb = m_dot_pb / field_htfProps.dens((T_pb_in + T_pb_out) / 2, P_lo);
+
+        for (std::size_t i = 0; i < num_sections; i++) {
+            (i > 0 && i < 3) ? P = P_hi : P = P_lo;
+            if (i < 3) T = T_sf_in;                                                       // 0, 1, 2
+            if (i == 3 || i == 4) T = T_sf_out;                                           // 3, 4
+            if (i >= gen_first_section && i < gen_first_section + 4) T = T_pb_in;         // 5, 6, 7, 8
+            if (i == gen_first_section + 4) T = (T_pb_in + T_pb_out) / 2.;                // 9
+            if (i == gen_first_section + 5) T = T_pb_out;                                 // 10
+            i < gen_first_section ? v_dot_ref = v_dot_sf : v_dot_ref = v_dot_pb;
+            v_dot = v_dot_rel.at(i) * v_dot_ref;
+            Area = CSP::pi * pow(D, 2) / 4.;
+            vel = v_dot / Area;
+            rho = field_htfProps.dens(T, P);
+            Re = field_htfProps.Re(T, P, vel, D.at(i));
+            ff = CSP::FrictionFactor(rel_rough, Re);
+            if (i != bypass_section || recirculating) {
+                P_drops.at(i) += CSP::MajorPressureDrop(vel, rho, ff, L.at(i), D.at(i));
+                P_drops.at(i) += CSP::MinorPressureDrop(vel, rho, k_coeffs.at(i));
+            }
+        }
+
+        // TODO - Verify these
+        P_drop_col = std::accumulate(P_drops.begin(), P_drops.begin() + gen_first_section - 1, 0.0);
+        P_drop_gen = std::accumulate(P_drops.begin() + gen_first_section, P_drops.end(), 0.0);
+
+        return 0;
     }
 };
 
