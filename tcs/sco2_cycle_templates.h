@@ -223,8 +223,12 @@ public:
 		double m_Q_dot;			//[kWt]
 		double m_m_dot_mc;		//[kg/s]
 		double m_m_dot_rc;		//[kg/s]
+		double m_m_dot_pc;		//[kg/s]
 		double m_m_dot_t;		//[kg/s]
 		double m_recomp_frac;	//[-]
+
+		double m_mc_f_bypass;	//[-]
+		double m_pc_f_bypass;	//[-]
 
 		C_comp_multi_stage::S_od_solved ms_mc_ms_od_solved;
 		C_comp_multi_stage::S_od_solved ms_rc_ms_od_solved;
@@ -235,8 +239,8 @@ public:
 
 		S_od_solved()
 		{
-			m_eta_thermal = m_W_dot_net = m_Q_dot = m_m_dot_mc = m_m_dot_rc =
-				m_m_dot_t = m_recomp_frac = std::numeric_limits<double>::quiet_NaN();
+			m_eta_thermal = m_W_dot_net = m_Q_dot = m_m_dot_mc = m_m_dot_rc = m_m_dot_pc =
+				m_m_dot_t = m_recomp_frac = m_mc_f_bypass = m_pc_f_bypass = std::numeric_limits<double>::quiet_NaN();
 		}
 	};
 
@@ -247,6 +251,8 @@ public:
 		double m_T_t_in;		//[K] Turbine inlet temperature
 		double m_P_LP_comp_in;	//[kPa] Compressor inlet pressure (low pressure comp in partial cooling cycle)
 		
+		double m_f_mc_pc_bypass;	//[-] Fraction of pre and main compressor flow that is bypassed back to the respective compressor cooler
+
 		int m_N_sub_hxrs;		//[-] Number of sub heat exchangers
 		double m_tol;			//[-] Convergence tolerance
 
@@ -255,6 +261,8 @@ public:
 			m_T_mc_in = m_T_pc_in = m_T_t_in = m_P_LP_comp_in = 
 				m_tol = std::numeric_limits<double>::quiet_NaN();
 			m_N_sub_hxrs = -1;
+
+			m_f_mc_pc_bypass = 0.0;	//[-]
 		}
 	};
 	

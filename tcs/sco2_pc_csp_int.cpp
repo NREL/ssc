@@ -406,6 +406,7 @@ const C_sco2_recomp_csp_10MWe_scale::S_od_solved * C_sco2_recomp_csp_10MWe_scale
 	ms_od_solved.ms_rc_cycle_od_solved.m_Q_dot *= m_r_W_scale;		//[kWt]
 	ms_od_solved.ms_rc_cycle_od_solved.m_m_dot_mc *= m_r_W_scale;	//[kg/s]
 	ms_od_solved.ms_rc_cycle_od_solved.m_m_dot_rc *= m_r_W_scale;	//[kg/s]
+	ms_od_solved.ms_rc_cycle_od_solved.m_m_dot_pc *= m_r_W_scale;	//[kg/s]
 	ms_od_solved.ms_rc_cycle_od_solved.m_m_dot_t *= m_r_W_scale;	//[kg/s]
 
 	// Scale Cycle Components
@@ -474,6 +475,9 @@ void C_sco2_recomp_csp::setup_off_design_info(C_sco2_recomp_csp::S_od_par od_par
 		}
 	}
 
+	// Begin with no compressor bypass
+	ms_cycle_od_par.m_f_mc_pc_bypass = 0.0;
+
 	ms_cycle_od_par.m_N_sub_hxrs = ms_des_par.m_N_sub_hxrs;			//[-]
 	ms_cycle_od_par.m_tol = ms_des_par.m_tol;						//[-]
 
@@ -497,37 +501,91 @@ int C_sco2_recomp_csp::optimize_off_design(C_sco2_recomp_csp::S_od_par od_par, i
 	// This sets: T_mc_in, T_pc_in, etc.
 	setup_off_design_info(od_par, off_design_strategy, od_opt_tol);
 
+	
+
 	if (m_off_design_turbo_operation == E_FIXED_MC_FIXED_RC_FIXED_T)
 	{
 		int opt_P_LP_err = opt_P_LP_comp_in__fixed_N_turbo();
-		if (opt_P_LP_err != 0)
+		if (opt_P_LP_err != 0 && opt_P_LP_err != -31)
 		{
 			throw(C_csp_exception("2D nested optimization to maximize efficiency failed"));
 		}
-
-		// Check if power output is < target AND RC is very close to surge AND outlet pressure < max
-		double W_dot_rel_diff = mpc_sco2_cycle->get_od_solved()->m_W_dot_net / 
-					(mpc_sco2_cycle->get_design_solved()->m_W_dot_net*(ms_od_par.m_m_dot_htf / ms_phx_des_par.m_m_dot_hot_des));
-		double P_HP_rel_diff = mpc_sco2_cycle->get_od_solved()->m_pres[C_sco2_cycle_core::MC_OUT] / ms_des_par.m_P_high_limit;
-
-		double rc_phi_diff = mpc_sco2_cycle->get_od_solved()->ms_rc_ms_od_solved.m_phi_min / mpc_sco2_cycle->get_design_solved()->ms_rc_ms_des_solved.m_phi_surge;
-		
-		while (W_dot_rel_diff < 0.995 && P_HP_rel_diff < 0.99 && rc_phi_diff < 1.05)
+		if (opt_P_LP_err == -31)
 		{
-			ms_cycle_od_par.m_T_mc_in += 0.5;
-			ms_cycle_od_par.m_T_pc_in += 0.5;
+			while (opt_P_LP_err == -31 && ms_cycle_od_par.m_f_mc_pc_bypass < 0.9)
+			{
+				ms_cycle_od_par.m_f_mc_pc_bypass += 0.01;
+				opt_P_LP_err = opt_P_LP_comp_in__fixed_N_turbo();
+
+				if (opt_P_LP_err != 0 && opt_P_LP_err != -31)
+				{
+					throw(C_csp_exception("2D nested optimization to maximize efficiency failed"));
+				}
+			}
+			if(opt_P_LP_err != 0)
+				throw(C_csp_exception("off design optimization, fixed shaft speed config, failed"));
+		}
+		else
+		{
+			// Check if power output is < target AND RC is very close to surge AND outlet pressure < max		
+			double W_dot_rel_diff = mpc_sco2_cycle->get_od_solved()->m_W_dot_net /
+				(mpc_sco2_cycle->get_design_solved()->m_W_dot_net*(ms_od_par.m_m_dot_htf / ms_phx_des_par.m_m_dot_hot_des));
+			double P_HP_rel_diff = mpc_sco2_cycle->get_od_solved()->m_pres[C_sco2_cycle_core::MC_OUT] / ms_des_par.m_P_high_limit;
+
+			double rc_phi_diff = mpc_sco2_cycle->get_od_solved()->ms_rc_ms_od_solved.m_phi_min / mpc_sco2_cycle->get_design_solved()->ms_rc_ms_des_solved.m_phi_surge;
+
+			while (W_dot_rel_diff < 0.995 && P_HP_rel_diff < 0.99 && rc_phi_diff < 1.05)
+			{
+				ms_cycle_od_par.m_T_mc_in += 0.5;
+				ms_cycle_od_par.m_T_pc_in += 0.5;
+
+				opt_P_LP_err = opt_P_LP_comp_in__fixed_N_turbo();
+				if (opt_P_LP_err != 0)
+				{
+					throw(C_csp_exception("2D nested optimization to maximize efficiency failed"));
+				}
+
+				W_dot_rel_diff = mpc_sco2_cycle->get_od_solved()->m_W_dot_net /
+					(mpc_sco2_cycle->get_design_solved()->m_W_dot_net*(ms_od_par.m_m_dot_htf / ms_phx_des_par.m_m_dot_hot_des));
+				P_HP_rel_diff = mpc_sco2_cycle->get_od_solved()->m_pres[C_sco2_cycle_core::MC_OUT] / ms_des_par.m_P_high_limit;
+
+				rc_phi_diff = mpc_sco2_cycle->get_od_solved()->ms_rc_ms_od_solved.m_phi_min / mpc_sco2_cycle->get_design_solved()->ms_rc_ms_des_solved.m_phi_surge;
+			}
+
+			double eta_calc = ms_od_solved.ms_rc_cycle_od_solved.m_eta_thermal;		//[-]
+			double eta_calc_prev = 0.0;		//[-]
+
+			double W_dot_calc = mpc_sco2_cycle->get_od_solved()->m_W_dot_net;		//[kWe]
+			double W_dot_calc_prev = 0.0;	//[kWe]
+
+			while (eta_calc > eta_calc_prev && (W_dot_calc - W_dot_calc_prev) / W_dot_calc > -0.005)
+			{
+				ms_cycle_od_par.m_T_mc_in += 0.5;
+				ms_cycle_od_par.m_T_pc_in += 0.5;
+
+				opt_P_LP_err = opt_P_LP_comp_in__fixed_N_turbo();
+				if (opt_P_LP_err != 0)
+				{
+					break;
+					// throw(C_csp_exception("2D nested optimization to maximize efficiency failed"));
+				}
+
+				W_dot_calc_prev = W_dot_calc;		//[kWe]
+				W_dot_calc = mpc_sco2_cycle->get_od_solved()->m_W_dot_net;		//[kWe]
+
+				eta_calc_prev = eta_calc;
+				eta_calc = ms_od_solved.ms_rc_cycle_od_solved.m_eta_thermal;		//[-]
+			}
+
+			// Have increased temp until eta < eta_prev, so go back one step
+			ms_cycle_od_par.m_T_mc_in -= 0.5;
+			ms_cycle_od_par.m_T_pc_in -= 0.5;
 
 			opt_P_LP_err = opt_P_LP_comp_in__fixed_N_turbo();
 			if (opt_P_LP_err != 0)
 			{
 				throw(C_csp_exception("2D nested optimization to maximize efficiency failed"));
 			}
-
-			W_dot_rel_diff = mpc_sco2_cycle->get_od_solved()->m_W_dot_net /
-				(mpc_sco2_cycle->get_design_solved()->m_W_dot_net*(ms_od_par.m_m_dot_htf / ms_phx_des_par.m_m_dot_hot_des));
-			P_HP_rel_diff = mpc_sco2_cycle->get_od_solved()->m_pres[C_sco2_cycle_core::MC_OUT] / ms_des_par.m_P_high_limit;
-
-			rc_phi_diff = mpc_sco2_cycle->get_od_solved()->ms_rc_ms_od_solved.m_phi_min / mpc_sco2_cycle->get_design_solved()->ms_rc_ms_des_solved.m_phi_surge;
 		}
 	}
 	else
@@ -621,13 +679,41 @@ int C_sco2_recomp_csp::opt_P_LP_comp_in__fixed_N_turbo()
 							od_core_error_code != 5 && od_core_error_code != -11)
 				{	// So we've gone from error = -14 to error = something else, and this is a problem
 					// Could try bisecting P_mc_in_upper and P_mc_in_guess, but there's not much room there, given the step size...
-					throw(C_csp_exception("Failed to find a feasible guess value for compressor inlet pressure"));
+					
+					return -31;
+
+					//throw(C_csp_exception("Failed to find a feasible guess value for compressor inlet pressure"));
 				}
 			}
 			
 			// Calculate P_mc_in_lower such that first guess in fmin is P_mc_in_guess
 			double r = (3.0 - sqrt(5.0)) / 2.0;		// Gold section ratio
 			P_mc_in_lower = (P_mc_in_guess - (r*P_mc_in_upper)) / (1.0 - r);
+		}
+		else if (od_core_error_code_dens == -12 || od_core_error_code_dens == -10)
+		{
+			while (true)
+			{
+				P_mc_in_lower = ms_cycle_od_par.m_P_LP_comp_in;	//[kPa]
+				P_mc_in_guess = 1.02*P_mc_in_lower;				//[kPa]
+
+				ms_cycle_od_par.m_P_LP_comp_in = P_mc_in_guess;	//[kPa]
+
+				int od_core_error_code = off_design_core(eta_od_core);
+
+				if (od_core_error_code == 0)
+				{
+					break;
+				}
+				else if (od_core_error_code != -12 && od_core_error_code != -10)
+				{
+					return -31;
+				}
+			}
+
+			// Calculate P_mc_in_upper such that first guess in fmin is P_mc_in_guess
+			double r = (3.0 - sqrt(5.0)) / 2.0;		// Gold section ratio
+			P_mc_in_upper = (P_mc_in_guess - P_mc_in_lower * (1.0 - r)) / r;
 		}
 		else
 		{
@@ -648,7 +734,6 @@ int C_sco2_recomp_csp::opt_P_LP_comp_in__fixed_N_turbo()
 
 	int opt_code = 1;
 
-	bool is_P_opt_success = false;
 	int opt_iter = 0;
 	while (true)
 	{
@@ -706,7 +791,6 @@ int C_sco2_recomp_csp::opt_P_LP_comp_in__fixed_N_turbo()
 		int od_core_error_code = off_design_core(eta_od_core_1st);
 		if (od_core_error_code == 0)
 		{
-			is_P_opt_success = true;
 			if ( (P_mc_in_opt - P_mc_in_lower)/P_mc_in_lower < 0.05 )
 			{
 				// Need to check for an optimum pressure that is less than P_mc_in_lower...
@@ -722,23 +806,42 @@ int C_sco2_recomp_csp::opt_P_LP_comp_in__fixed_N_turbo()
 			}
 			else if (P_mc_in_opt == P_mc_in_upper && P_mc_in_opt < ms_des_par.m_P_high_limit)
 			{
-				throw(C_csp_exception("Don't have code to handle optimal pressure equaling maximum pressure"));
+				// Need to check for an optimum pressure that is less than P_mc_in_lower...
+				double r = (3. - sqrt(5.0)) / 2;       /* Gold section ratio           */
+
+				P_mc_in_guess = P_mc_in_opt;
+				P_mc_in_lower = 0.9*P_mc_in_opt;
+				P_mc_in_upper = (P_mc_in_guess - (1.0 - r)*P_mc_in_lower) / r;
+
+				continue;
+				
+				//throw(C_csp_exception("Don't have code to handle optimal pressure equaling maximum pressure"));
 			}
 			else
 			{
 				break;
 			}
 		}
-		else
+		else if (od_core_error_code == -14)
 		{
-			throw(C_csp_exception("Calculated optimal pressure returned an error"));
-		}
-	}
+			int i_P_mc_in_guess = 0;
+			while (i_P_mc_in_guess < 20 && od_core_error_code == -14)
+			{
+				i_P_mc_in_guess++;
 
-	if (!is_P_opt_success)
-	{
-		throw(C_csp_exception("Off-design optimization on compressor inlet pressure failed",
-			"C_sco2_recomp_csp::opt_P_mc_in_nest_f_recomp_max_eta_core"));
+				P_mc_in_guess *= 0.998;
+
+				ms_cycle_od_par.m_P_LP_comp_in = P_mc_in_guess;		//[kPa]
+
+				od_core_error_code = off_design_core(eta_od_core_1st);
+			}
+		}
+		
+		if(od_core_error_code != 0)
+		{
+			throw(C_csp_exception("Off-design optimization on compressor inlet pressure failed",
+				"C_sco2_recomp_csp::opt_P_mc_in_nest_f_recomp_max_eta_core"));
+		}
 	}
 
 	ms_od_solved.ms_rc_cycle_od_solved = *mpc_sco2_cycle->get_od_solved();

@@ -330,7 +330,13 @@ public:
 			m_f_recomp = f_recomp;		//[-]
 			m_T_t_in = T_t_in;			//[K]
 			m_f_mc_pc_bypass = f_mc_pc_bypass;	//[-]
+
+			m_m_dot_mc = m_m_dot_pc = m_m_dot_LTR_HP = std::numeric_limits<double>::quiet_NaN();
 		}
+
+		double m_m_dot_mc;		//[kg/s]
+		double m_m_dot_pc;		//[kg/s]
+		double m_m_dot_LTR_HP;	//[kg/s]
 
 		virtual int operator()(double m_dot_t /*kg/s*/, double *diff_m_dot_t /*-*/);
 	};

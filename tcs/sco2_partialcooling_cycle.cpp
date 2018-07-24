@@ -921,13 +921,12 @@ int C_PartialCooling_Cycle::off_design_fix_shaft_speeds_core()
 
 	mv_temp_od[TURB_IN] = ms_od_par.m_T_t_in;		//[K]
 
-	double f_mc_pc_bypass = 0.0;		//[-]
 	// Solve for recompression fraction that results in all turbomachinery operating at design/target speeds
 	C_MEQ__f_recomp__y_N_rc c_rc_shaft_speed(this, ms_od_par.m_T_pc_in,
 													ms_od_par.m_P_LP_comp_in,
 													ms_od_par.m_T_mc_in,
 													ms_od_par.m_T_t_in,
-													f_mc_pc_bypass);
+													ms_od_par.m_f_mc_pc_bypass);
 
 	C_monotonic_eq_solver c_rc_shaft_speed_solver(c_rc_shaft_speed);
 
@@ -1155,8 +1154,12 @@ int C_PartialCooling_Cycle::off_design_fix_shaft_speeds_core()
 	ms_od_solved.m_Q_dot = m_Q_dot_PHX_od;
 	ms_od_solved.m_m_dot_mc = m_dot_mc;
 	ms_od_solved.m_m_dot_rc = m_dot_rc;
+	ms_od_solved.m_m_dot_pc = m_dot_pc;
 	ms_od_solved.m_m_dot_t = m_dot_t;
 	ms_od_solved.m_recomp_frac = m_dot_rc / m_dot_t;
+
+	ms_od_solved.m_mc_f_bypass = 1.0 - m_dot_LTR_HP / m_dot_mc;	//[kg/s]
+	ms_od_solved.m_pc_f_bypass = 1.0 - m_dot_t / m_dot_pc;		//[kg/s]
 
 	ms_od_solved.m_temp = mv_temp_od;
 	ms_od_solved.m_pres = mv_pres_od;
@@ -1305,11 +1308,12 @@ int C_PartialCooling_Cycle::C_MEQ__f_recomp__y_N_rc::operator()(double f_recomp 
 		return m_dot_t_code;
 	}
 
+	m_m_dot_mc = c_turbo_bal.m_m_dot_mc;		//[kg/s]
+	m_m_dot_pc = c_turbo_bal.m_m_dot_pc;		//[kg/s]
+	m_m_dot_LTR_HP = c_turbo_bal.m_m_dot_LTR_HP;	//[kg/s]
+
 	m_m_dot_t = m_dot_t_solved;	//[kg/s]
-	m_m_dot_pc = m_m_dot_t / (1.0 - m_f_mc_pc_bypass);		//[kg/s]
 	m_m_dot_rc = m_m_dot_t * f_recomp;	//[kg/s]
-	m_m_dot_LTR_HP = m_m_dot_t - m_m_dot_rc;			//[kg/s]
-	m_m_dot_mc = m_m_dot_LTR_HP / (1.0 - m_f_mc_pc_bypass);		//[kg/s]
 
 	// Now we know the required recompressor performance, so we can solve the recompressor
 	//     model for shaft speed and report design/target
@@ -1343,16 +1347,16 @@ int C_PartialCooling_Cycle::C_MEQ__f_recomp__y_N_rc::operator()(double f_recomp 
 int C_PartialCooling_Cycle::C_MEQ__t_m_dot__bal_turbomachinery::operator()(double m_dot_t_in /*kg/s*/, double *diff_m_dot_t /*-*/)
 {
 	// Calculate the main compressor mass flow rate
-	double m_dot_LTR_HP = (1.0 - m_f_recomp)*m_dot_t_in;		//[kg/s]
-	double m_dot_mc = m_dot_LTR_HP/(1.0 - m_f_mc_pc_bypass);	//[kg/s]
-	double m_dot_pc = m_dot_t_in / (1.0 - m_f_mc_pc_bypass);		//[kg/s]
+	m_m_dot_LTR_HP = (1.0 - m_f_recomp)*m_dot_t_in;		//[kg/s]
+	m_m_dot_mc = m_m_dot_LTR_HP/(1.0 - 3.0*m_f_mc_pc_bypass);	//[kg/s]
+	m_m_dot_pc = m_dot_t_in / (1.0 - m_f_mc_pc_bypass);		//[kg/s]
 
 	// Calculate Pre-compressor performance
 	int pc_error_code = 0;
 	double T_pc_out, P_pc_out;
 	T_pc_out = P_pc_out = std::numeric_limits<double>::quiet_NaN();
 
-	mpc_pc_cycle->mc_pc.off_design_at_N_des(m_T_pc_in, m_P_pc_in, m_dot_pc, pc_error_code,
+	mpc_pc_cycle->mc_pc.off_design_at_N_des(m_T_pc_in, m_P_pc_in, m_m_dot_pc, pc_error_code,
 								T_pc_out, P_pc_out);
 
 	// Check that pre-compressor performance solved
@@ -1369,7 +1373,7 @@ int C_PartialCooling_Cycle::C_MEQ__t_m_dot__bal_turbomachinery::operator()(doubl
 	std::vector<double> DP_cooler_main;
 	std::vector<double> m_dot_cooler_main;
 	m_dot_cooler_main.push_back(0.0);
-	m_dot_cooler_main.push_back(m_dot_mc);		//[kg/s]
+	m_dot_cooler_main.push_back(m_m_dot_mc);		//[kg/s]
 	mpc_pc_cycle->mc_cooler_mc.hxr_pressure_drops(m_dot_cooler_main, DP_cooler_main);
 
 	mpc_pc_cycle->mv_pres_od[MC_IN] = mpc_pc_cycle->mv_pres_od[PC_OUT] - DP_cooler_main[1];	//[kPa]
@@ -1380,7 +1384,7 @@ int C_PartialCooling_Cycle::C_MEQ__t_m_dot__bal_turbomachinery::operator()(doubl
 	T_mc_out = P_mc_out = std::numeric_limits<double>::quiet_NaN();
 
 	// Solve main compressor performance at design/target shaft speed
-	mpc_pc_cycle->mc_mc.off_design_at_N_des(m_T_mc_in, mpc_pc_cycle->mv_pres_od[MC_IN], m_dot_mc,
+	mpc_pc_cycle->mc_mc.off_design_at_N_des(m_T_mc_in, mpc_pc_cycle->mv_pres_od[MC_IN], m_m_dot_mc,
 				mc_error_code, T_mc_out, P_mc_out);
 
 	// Check that main compressor performance solved
@@ -1397,7 +1401,7 @@ int C_PartialCooling_Cycle::C_MEQ__t_m_dot__bal_turbomachinery::operator()(doubl
 		// Low temp recuperator
 	std::vector<double> DP_LTR;
 	DP_LTR.resize(2);
-	DP_LTR[0] = mpc_pc_cycle->mc_LTR.od_delta_p_cold(m_dot_LTR_HP);
+	DP_LTR[0] = mpc_pc_cycle->mc_LTR.od_delta_p_cold(m_m_dot_LTR_HP);
 	DP_LTR[1] = mpc_pc_cycle->mc_LTR.od_delta_p_hot(m_dot_t_in);
 		// High temp recuperator
 	std::vector<double> DP_HTR;
@@ -1414,7 +1418,7 @@ int C_PartialCooling_Cycle::C_MEQ__t_m_dot__bal_turbomachinery::operator()(doubl
 	std::vector<double> DP_cooler_pre;
 	std::vector<double> m_dot_cooler_pre;
 	m_dot_cooler_pre.push_back(0.0);
-	m_dot_cooler_pre.push_back(m_dot_pc);
+	m_dot_cooler_pre.push_back(m_m_dot_pc);
 	mpc_pc_cycle->mc_cooler_pc.hxr_pressure_drops(m_dot_cooler_pre, DP_cooler_pre);
 		
 	// Apply pressure drops to heat exchangers, fully defining the pressure at all states
