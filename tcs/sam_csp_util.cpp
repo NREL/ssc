@@ -1150,6 +1150,7 @@ double CSP::MinorPressureDrop(double vel, double rho, double k) {
 double CSP::MajorPressureDrop(double vel, double rho, double ff, double l, double d) {
     // Darcy Weisbach pressure drop for an incompressible fluid using a Darcy friction factor
     if (d <= 0) throw std::invalid_argument("The inner diameter must be greater than 0.");
+    if (vel == 0) return 0;      // handles cases where ff = inf because vel and thus Re = 0
 
     return ff * (vel * vel) * l * rho / (2 * d);
 }
