@@ -357,6 +357,11 @@ static var_info _cm_vtab_tcstrough_physical[] = {
     { SSC_OUTPUT,       SSC_ARRAY,       "T_field_in",        "Field HTF temperature collector inlet",                          "C",            "",            "Type251",        "*",                       "",                      "" },
     																																																		 			             
     //thermal storage																																														 			             
+    { SSC_OUTPUT,       SSC_ARRAY,       "pipe_sgs_diams",    "Pipe diameters in SGS",                                          "m",            "",            "Type251",        "*",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "pipe_sgs_wallthk",  "Pipe wall thickness in SGS",                                     "m",            "",            "Type251",        "*",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "pipe_sgs_mdot_dsn", "Mass flow SGS pipes at design conditions",                       "kg/s",         "",            "Type251",        "*",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "pipe_sgs_vel_dsn",  "Velocity in SGS pipes at design conditions",                     "m/s",          "",            "Type251",        "*",                       "",                      "" },
+
     { SSC_OUTPUT,       SSC_ARRAY,       "mass_tank_cold",    "TES HTF mass in cold tank",                                      "kg",           "",            "Type251",        "*",                       "",                      "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "mass_tank_hot",     "TES HTF mass in hot tank",                                       "kg",           "",            "Type251",        "*",                       "",                      "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "m_dot_charge_field","TES HTF mass flow rate - field side of HX",                      "kg/hr",        "",            "Type250",        "*",                       "",                      "" },
@@ -871,6 +876,7 @@ public:
 
 		//design parameters
 		int nv;
+        // header
 		double *header_diams = get_unit_value(type250_solarfield, "pipe_header_diams", &nv);
 		ssc_number_t *header_diams_cm = allocate("pipe_header_diams", nv);
         std::copy(header_diams, header_diams + nv, header_diams_cm);
@@ -895,6 +901,7 @@ public:
         double *header_pressure_design = get_unit_value(type250_solarfield, "pipe_header_P_dsn", &nv);
         ssc_number_t *header_pressure_design_cm = allocate("pipe_header_P_dsn", nv);
         std::copy(header_pressure_design, header_pressure_design + nv, header_pressure_design_cm);
+        // runner
         double *runner_diams = get_unit_value(type250_solarfield, "pipe_runner_diams", &nv);
 		ssc_number_t *runner_diams_cm = allocate("pipe_runner_diams", nv);
         std::copy(runner_diams, runner_diams + nv, runner_diams_cm);
@@ -919,12 +926,26 @@ public:
         double *runner_pressure_design = get_unit_value(type250_solarfield, "pipe_runner_P_dsn", &nv);
         ssc_number_t *runner_pressure_design_cm = allocate("pipe_runner_P_dsn", nv);
         std::copy(runner_pressure_design, runner_pressure_design + nv, runner_pressure_design_cm);
+        // loop
         double *loop_temp_design = get_unit_value(type250_solarfield, "pipe_loop_T_dsn", &nv);
         ssc_number_t *loop_temp_design_cm = allocate("pipe_loop_T_dsn", nv);
         std::copy(loop_temp_design, loop_temp_design + nv, loop_temp_design_cm);
         double *loop_pressure_design = get_unit_value(type250_solarfield, "pipe_loop_P_dsn", &nv);
         ssc_number_t *loop_pressure_design_cm = allocate("pipe_loop_P_dsn", nv);
         std::copy(loop_pressure_design, loop_pressure_design + nv, loop_pressure_design_cm);
+        // SGS
+        double *sgs_diams = get_unit_value(type251_controller, "SGS_diams", &nv);
+        ssc_number_t *sgs_diams_cm = allocate("pipe_sgs_diams", nv);
+        std::copy(sgs_diams, sgs_diams + nv, sgs_diams_cm);
+        double *sgs_wallthk = get_unit_value(type251_controller, "SGS_wall_thk", &nv);
+        ssc_number_t *sgs_wallthk_cm = allocate("pipe_sgs_wallthk", nv);
+        std::copy(sgs_wallthk, sgs_wallthk + nv, sgs_wallthk_cm);
+        double *sgs_mdot_dsn = get_unit_value(type251_controller, "SGS_m_dot_des", &nv);
+        ssc_number_t *sgs_mdot_dsn_cm = allocate("pipe_sgs_mdot_dsn", nv);
+        std::copy(sgs_mdot_dsn, sgs_mdot_dsn + nv, sgs_mdot_dsn_cm);
+        double *sgs_vel_dsn = get_unit_value(type251_controller, "SGS_vel_des", &nv);
+        ssc_number_t *sgs_vel_dsn_cm = allocate("pipe_sgs_vel_dsn", nv);
+        std::copy(sgs_vel_dsn, sgs_vel_dsn + nv, sgs_vel_dsn_cm);
 		
 		// performance adjustment factors
 		adjustment_factors haf(this, "adjust");
