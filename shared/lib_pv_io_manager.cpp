@@ -393,8 +393,9 @@ void PVSystem_IO::AllocateOutputs(compute_module* cm)
 			p_surfaceAzimuth.push_back(cm->allocate(prefix + "surf_azi", numberOfWeatherFileRecords));
 			p_axisRotation.push_back(cm->allocate(prefix + "axisrot", numberOfWeatherFileRecords));
 			p_idealRotation.push_back(cm->allocate(prefix + "idealrot", numberOfWeatherFileRecords));
-			p_poaNominal.push_back(cm->allocate(prefix + "poa_nom", numberOfWeatherFileRecords));
-			p_poaShaded.push_back(cm->allocate(prefix + "poa_shaded", numberOfWeatherFileRecords));
+			p_poaNominalFront.push_back(cm->allocate(prefix + "poa_nom", numberOfWeatherFileRecords));
+			p_poaShadedFront.push_back(cm->allocate(prefix + "poa_shaded", numberOfWeatherFileRecords));
+			p_poaShadedSoiledFront.push_back(cm->allocate(prefix + "poa_shaded_soiled", numberOfWeatherFileRecords));
 			p_poaBeamFront.push_back(cm->allocate(prefix + "poa_eff_beam", numberOfWeatherFileRecords));
 			p_poaDiffuseFront.push_back(cm->allocate(prefix + "poa_eff_diff", numberOfWeatherFileRecords));
 			p_poaTotal.push_back(cm->allocate(prefix + "poa_eff", numberOfWeatherFileRecords));
@@ -440,6 +441,7 @@ void PVSystem_IO::AllocateOutputs(compute_module* cm)
 	p_poaFrontBeamNominalTotal = cm->allocate("poa_beam_nom", numberOfWeatherFileRecords);
 	p_poaFrontBeamTotal = cm->allocate("poa_beam_eff", numberOfWeatherFileRecords);
 	p_poaFrontShadedTotal = cm->allocate("poa_shaded", numberOfWeatherFileRecords);
+	p_poaFrontShadedSoiledTotal = cm->allocate("poa_shaded_soiled", numberOfWeatherFileRecords);
 	p_poaFrontTotal = cm->allocate("poa_front", numberOfWeatherFileRecords);
 	p_poaRearTotal = cm->allocate("poa_rear", numberOfWeatherFileRecords);
 	p_poaTotalAllSubarrays = cm->allocate("poa_eff", numberOfWeatherFileRecords);

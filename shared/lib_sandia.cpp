@@ -362,6 +362,7 @@ bool sandia_module_t::operator() ( pvinput_t &in, double TcellC, double opvoltag
 		out.Voltage = V;
 		out.Current = I;
 		out.Efficiency = I*V/(Gtotal*Area);
+		out.AOIModifier = Ee / Gtotal;
 		out.Voc_oper = Voc;
 		out.Isc_oper = Isc;
 		out.CellTemp = TcellC;
