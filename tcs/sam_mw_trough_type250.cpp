@@ -366,7 +366,7 @@ tcsvarinfo sam_mw_trough_type250_variables[] = {
 	{ TCS_PARAM,          TCS_MATRIX,          P_DIRT_HCE,            "Dirt_HCE",                                               "Loss due to dirt on the receiver envelope",         "none",             "",             "","[0.98,0.98,1,0.98][0.98,0.98,1,0.98][0.98,0.98,1,0.98][0.98,0.98,1,0.98]" },
 	{ TCS_PARAM,          TCS_MATRIX,       P_DESIGN_LOSS,         "Design_loss",                                                            "Receiver heat loss at design",          "W/m",             "",             "","[150,1100,1500,0][150,1100,1500,0][150,1100,1500,0][150,1100,1500,0]" },
 
-	{ TCS_PARAM,          TCS_MATRIX,      P_SCAINFOARRAY,        "SCAInfoArray",                       "(:,1) = HCE type, (:,2)= Collector type for each SCA in the loop ",         "none",             "",             "","[1,1][1,1][1,1][1,1][1,1][1,1][1,1][1,1]" },
+	{ TCS_PARAM,          TCS_MATRIX,      P_SCAINFOARRAY,        "SCAInfoArray",                       "(:,0) = HCE type, (:,1)= Collector type for each SCA in the loop ",         "none",             "",             "","[1,1][1,1][1,1][1,1][1,1][1,1][1,1][1,1]" },
 	{ TCS_PARAM,           TCS_ARRAY,   P_SCADEFOCUSARRAY,     "SCADefocusArray",                                            "Order in which the SCA's should be defocused",         "none",             "",             "","8,7,6,5,4,3,2,1" },
     
     { TCS_PARAM,          TCS_MATRIX,            P_K_CPNT,              "K_cpnt",                      "Interconnect component minor loss coefficients, row=intc, col=cpnt",         "none",             "",             "",           "-1" },
@@ -1121,8 +1121,8 @@ public:
         N_max_hdr_diams = (int)value(P_NMAX_HDR_DIAMS);  //Maximum number of diameters in each of the hot and cold headers
         L_rnr_pb = value(P_L_RNR_PB);               //Length of runner pipe in power block
         L_rnr_per_xpan = value(P_L_RNR_PER_XPAN);   //Threshold length of straight runner pipe without an expansion loop
-        L_xpan_hdr = value(P_L_XPAN_HDR);           //Compined perpendicular lengths of each header expansion loop
-        L_xpan_rnr = value(P_L_XPAN_RNR);           //Compined perpendicular lengths of each runner expansion loop
+        L_xpan_hdr = value(P_L_XPAN_HDR);           //Combined perpendicular lengths of each header expansion loop
+        L_xpan_rnr = value(P_L_XPAN_RNR);           //Combined perpendicular lengths of each runner expansion loop
         Min_rnr_xpans = (int)value(P_MIN_RNR_XPANS);     //Minimum number of expansion loops per single-diameter runner section
         northsouth_field_sep = value(P_NTHSTH_FIELD_SEP); //North/south separation between subfields. 0 = SCAs are touching
         N_hdr_per_xpan = (int)value(P_NHDR_PER_XPAN);         //Number of collector loops per expansion loop
@@ -1598,65 +1598,18 @@ public:
 
 			// Do one-time calculations for system geometry.
             // Determine header section lengths, including expansion loops
-            L_hdr.fill(2*Row_Distance);
-            N_hdr_xpans.fill(0);
-            for (int i = 0; i < nhdrsec; i++)
-            {
-                if ((i - offset_xpan_hdr) % N_hdr_per_xpan == 0)
-                {
-                    L_hdr[i] += L_xpan_hdr;                     // start with cold loop
-                    N_hdr_xpans[i]++;
-                    L_hdr[2*nhdrsec - 1 - i] += L_xpan_hdr;     // pair hot loop
-                    N_hdr_xpans[2*nhdrsec - 1 - i]++;
-                }
+            if (size_hdr_lengths(Row_Distance, nhdrsec, offset_xpan_hdr, N_hdr_per_xpan, L_xpan_hdr, L_hdr, N_hdr_xpans)) {
+                message(TCS_ERROR, "header length sizing failed");
+                return -1;
             }
             
-            /*
-            Calculate all HTF volume, set runner piping length
-			Assume there are two field subsections per span, then if there's an even number of spans in the field,
-			we count the first header section as half-length. I.e., if a field looks like this:
-			(1)        (2)
-			|||||||   |||||||
-			-----------------
-			||||||| : |||||||
-			:
-			[P]
-			:
-			||||||| : |||||||
-			-----------------
-			|||||||   |||||||
-			(3)        (4)
-			Then the field has 4 subfields and two spans. The runner pipe (:) is half the distance between the two spans.
-			If the number of subfields were 6 (3 spans), the two runner pipe segments would both be equal to the full
-			distance between spans.
-			*/
-			if( nfsec / 2 % 2 == 1 )
-			{
-				x1 = 2.;     //the first runners are normal
-			}
-			else
-			{
-				x1 = 1.;     //the first runners are short
-			}
-
-			L_runner[0] = L_rnr_pb;  // Runner piping in and around the power block
-            L_runner[2 * nrunsec - 1] = L_rnr_pb;  // assume symmetric runners
-            N_rnr_xpans[0] = 0;
-            N_rnr_xpans[2 * nrunsec - 1] = N_rnr_xpans[0];
-			if( nrunsec > 1 )
-			{
-                double L_runner_linear = 0;  // Runner length minus expansion loops
-				for( int i = 1; i < nrunsec; i++ )
-				{
-					int j = (int)SCAInfoArray.at(0, 1) - 1;
-					L_runner_linear = x1 * (northsouth_field_sep + (L_SCA[j] + Distance_SCA[j])*float(nSCA) / 2.);  // no expansion loops
-                    N_rnr_xpans[i] = max(Min_rnr_xpans, (int)CSP::nint(L_runner_linear/L_rnr_per_xpan));
-                    N_rnr_xpans[2 * nrunsec - i - 1] = N_rnr_xpans[i];
-                    L_runner[i] = L_runner_linear + L_xpan_rnr * N_rnr_xpans;
-                    L_runner[2 * nrunsec - i - 1] = L_runner[i];    // assume symmetric runners
-					x1 = 2.;   //tn 4.25.11 Default to 2 for subsequent runners
-				}
-			}
+            // Determine runner section lengths, including expansion loops
+            if (size_rnr_lengths(nfsec, L_rnr_pb, nrunsec, SCAInfoArray.at(0, 1), northsouth_field_sep,
+                L_SCA, Min_rnr_xpans, Distance_SCA, nSCA, L_rnr_per_xpan, L_xpan_rnr, L_runner, N_rnr_xpans)) {
+                message(TCS_ERROR, "runner length sizing failed");
+                return -1;
+            }
+            
             double v_from_sgs = 0.0; double v_to_sgs = 0.0;
 			for( int i = 0; i < nrunsec; i++ )
 			{
@@ -3399,6 +3352,107 @@ set_outputs_and_return:
 
 	// ------------------------------------------ supplemental methods -----------------------------------------------------------
 
+    int size_hdr_lengths(double L_row_sep, int Nhdrsec, int offset_hdr_xpan, int Ncol_loops_per_xpan, double L_hdr_xpan,
+        util::matrix_t<double> &L_hdr, util::matrix_t<double> &N_hdr_xpans) {
+        // Parameters:
+        // L_row_sep			distance between SCA rows, centerline to centerline
+        // Nhdrsec				number of header sections (tee-conns.) per field section			
+        // offset_hdr_xpan		location of first header expansion loop							
+        // Ncol_loops_per_xpan	number of collector loops per expansion loop						
+        // L_hdr_xpan			combined perpendicular lengths of each header expansion loop		
+
+        // Outputs :
+        // &L_hdr				length of the header sections
+        // &N_hdr_xpans			number of expansion loops in the header section
+
+        L_hdr.fill(2 * L_row_sep);
+        N_hdr_xpans.fill(0);
+        for (int i = 0; i < Nhdrsec; i++)
+        {
+            if ((i - offset_hdr_xpan) % Ncol_loops_per_xpan == 0)
+            {
+                L_hdr[i] += L_hdr_xpan;                       // start with cold loop
+                N_hdr_xpans[i]++;
+                L_hdr[2 * Nhdrsec - 1 - i] += L_hdr_xpan;     // pair hot loop
+                N_hdr_xpans[2 * Nhdrsec - 1 - i]++;
+            }
+        }
+
+        return 0;
+    }
+
+    int size_rnr_lengths(int Nfieldsec, double L_rnr_pb, int Nrnrsec, int ColType, double northsouth_field_sep,
+        const double *L_SCA, int min_rnr_xpans, const double *L_gap_sca, double Nsca_loop,
+        double L_rnr_per_xpan, double L_rnr_xpan, util::matrix_t<double> &L_runner, util::matrix_t<double> &N_rnr_xpans) {
+        // Parameters:
+        // Nfieldsec				number of field sections
+        // L_rnr_pb				    length of runner piping in and around the power block
+        // Nrnrsec					the number of unique runner diameters
+        // ColType	                the collector type
+        // northsouth_field_sep	    north-south separation between subfields. 0=SCAs are touching
+        // L_SCA[]					the length of the SCAs
+        // min_rnr_xpans			minimum number of expansion loops per single-diameter runner section
+        // L_gap_sca[]			    gap distance between SCAs in the same row
+        // Nsca_loop				number of SCAs in a loop
+        // L_rnr_per_xpan			threshold length of straight runner pipe without an expansion loop
+        // L_rnr_xpan				combined perpendicular lengths of each runner expansion loop
+
+        // Outputs :
+        // &L_runner				length of the runner sections
+        // &N_rnr_xpans			    number of expansion loops in the runner section
+        
+        // Assume there are two field subsections per span, then if there's an even number of spans in the field,
+        //    we count the first header section as half - length.I.e., if a field looks like this:
+        //     (1)        (2)
+        //    |||||||   |||||||
+        //    ---------------- -
+        //    ||||||| : |||||||
+        //            :
+        //           [P]
+        //            :
+        //    ||||||| : |||||||
+        //    ---------------- -
+        //    |||||||   |||||||
+        //      (3)        (4)
+        // Then the field has 4 subfields and two spans.The runner pipe(:) is half the distance between the two spans.
+        // If the number of subfields were 6 (3 spans), the two runner pipe segments would both be equal to the full
+        // distance between spans.
+
+        double x1;
+        int j;
+        double L_runner_linear;
+
+            if (Nfieldsec / 2 % 2 == 1)
+            {
+                x1 = 2.;     //the first runners are normal
+            }
+            else
+            {
+                x1 = 1.;     //the first runners are short
+            }
+
+        L_runner[0] = L_rnr_pb;  // Runner piping in and around the power block
+        L_runner[2 * Nrnrsec - 1] = L_rnr_pb;  // assume symmetric runners
+        N_rnr_xpans[0] = 0;
+        N_rnr_xpans[2 * Nrnrsec - 1] = N_rnr_xpans[0];
+        if (Nrnrsec > 1)
+        {
+            L_runner_linear = 0;  // Runner length minus expansion loops
+            for (int i = 1; i < Nrnrsec; i++)
+            {
+                j = ColType - 1;
+                L_runner_linear = x1 * (northsouth_field_sep + (L_SCA[j] + L_gap_sca[j])*float(Nsca_loop) / 2.);  // no expansion loops
+                N_rnr_xpans[i] = max(min_rnr_xpans, (int)CSP::nint(L_runner_linear / L_rnr_per_xpan));
+                N_rnr_xpans[2 * Nrnrsec - i - 1] = N_rnr_xpans[i];
+                L_runner[i] = L_runner_linear + L_rnr_xpan * N_rnr_xpans;
+                L_runner[2 * Nrnrsec - i - 1] = L_runner[i];    // assume symmetric runners
+                x1 = 2.;   //tn 4.25.11 Default to 2 for subsequent runners
+            }
+        }
+
+
+        return 0;
+    }
 
 	/*
 	This subroutine contains the trough detailed plant model.  The collector field is modeled
