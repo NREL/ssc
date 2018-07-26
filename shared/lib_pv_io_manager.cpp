@@ -728,10 +728,6 @@ Module_IO::Module_IO(compute_module* cm, std::string cmName, double dcLoss)
 		sandiaModel.NcellSer = cm->as_integer("snl_series_cells");
 		sandiaModel.Vmp0 = cm->as_double("snl_vmpo");
 		sandiaModel.Voc0 = cm->as_double("snl_voco");
-		isBifacial = cm->as_boolean("snl_is_bifacial");
-		bifaciality = cm->as_double("snl_bifaciality");
-		bifacialTransmissionFactor = cm->as_double("snl_bifacial_transmission_factor");
-		groundClearanceHeight = cm->as_double("snl_bifacial_ground_clearance_height");
 
 		selfShadingFillFactor = sandiaModel.Vmp0 * sandiaModel.Imp0 / sandiaModel.Voc0 / sandiaModel.Isc0;
 		voltageMaxPower = sandiaModel.Vmp0;
