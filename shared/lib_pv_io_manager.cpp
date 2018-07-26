@@ -395,6 +395,7 @@ void PVSystem_IO::AllocateOutputs(compute_module* cm)
 			p_idealRotation.push_back(cm->allocate(prefix + "idealrot", numberOfWeatherFileRecords));
 			p_poaNominalFront.push_back(cm->allocate(prefix + "poa_nom", numberOfWeatherFileRecords));
 			p_poaShadedFront.push_back(cm->allocate(prefix + "poa_shaded", numberOfWeatherFileRecords));
+			p_poaShadedSoiledFront.push_back(cm->allocate(prefix + "poa_shaded_soiled", numberOfWeatherFileRecords));
 			p_poaBeamFront.push_back(cm->allocate(prefix + "poa_eff_beam", numberOfWeatherFileRecords));
 			p_poaDiffuseFront.push_back(cm->allocate(prefix + "poa_eff_diff", numberOfWeatherFileRecords));
 			p_poaTotal.push_back(cm->allocate(prefix + "poa_eff", numberOfWeatherFileRecords));
