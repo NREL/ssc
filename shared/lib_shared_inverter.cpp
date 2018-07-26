@@ -2,8 +2,6 @@
 #include "lib_util.h"
 #include <algorithm>
 
-#include <iostream>
-
 SharedInverter::SharedInverter(int inverterType, size_t numberOfInverters,
 	sandia_inverter_t * sandiaInverter, partload_inverter_t * partloadInverter)
 {
@@ -68,17 +66,22 @@ void SharedInverter::calculateTempDerate(double V, double T, double& pAC, double
 	double startT2 = 0.0;
 	double Vdc2 = 0.0;
 
+	// Find the appropriate derate curve depending on DC voltage
 	size_t idx = 0;
-	while (idx < m_thermalDerateCurves.size() && V > m_thermalDerateCurves[idx][0]) {
-		idx++;
-	}
-	
-
-	// Find temp and slope of lower and upper curves for interpolation if they both exist
 	double deltaT = 0.0;
 	double slopeInterpolated = 0.0;
 	double startTInterpolated = 0.0;
-	if (idx > 0 && idx < m_thermalDerateCurves.size()) {
+
+	while (idx < m_thermalDerateCurves.size() && V > m_thermalDerateCurves[idx][0]) {
+		idx++;
+	}
+	if (m_thermalDerateCurves.size() == 1) {
+		Vdc2 = m_thermalDerateCurves[0][0];
+		startTInterpolated = m_thermalDerateCurves[0][1];
+		slopeInterpolated = m_thermalDerateCurves[0][2];
+	}
+	// Use temp and slope of lower and upper curves for interpolation if they both exist
+	else if (idx > 0 && idx < m_thermalDerateCurves.size()) {
 		Vdc2 = m_thermalDerateCurves[idx][0];
 		Vdc = m_thermalDerateCurves[idx - 1][0];
 		double startTGuess = 0.0;
@@ -97,7 +100,7 @@ void SharedInverter::calculateTempDerate(double V, double T, double& pAC, double
 			}
 		}
 	}
-	// otherwise extrapolate using first start temp, avoiding inconsistent start temps
+	// otherwise extrapolate using first start temps of each curve in order to avoid inconsistent start temps
 	else {
 		if (idx == 0) {
 			Vdc2 = m_thermalDerateCurves[idx][0];
@@ -116,19 +119,14 @@ void SharedInverter::calculateTempDerate(double V, double T, double& pAC, double
 			slopeInterpolated = (slope2 - slope) / (Vdc2 - Vdc)*(V - Vdc2) + slope2;
 		}
 	}
-	std::cout << "startT2, 1: " << startT2 << ", " << startT << ", slope2,1: " << slope2 << "," << slope <<"\n";
-	//double startTInt = (startT2 - startT) / (Vdc2 - Vdc)*(V - Vdc2) + startT2;
 	deltaT = T - startTInterpolated;
 
 	// If less than start temp, no derating
 	if (deltaT <= 0) return;
-	//double slopeInt = (slope2 - slope) / (Vdc2 - Vdc)*(V - Vdc2) + slope2;
 
 	// If slope is positive, set to zero with no derating
 	if (slopeInterpolated >= 0) return;
-
 	if (slopeInterpolated < -1) slopeInterpolated = -1;
-	std::cout << "deltaT, slope: " << deltaT << ", " << slopeInterpolated << "\n";
 
 	// Power in units of W, eff as ratio
 	double pDC = pAC/eff;

@@ -315,11 +315,11 @@ void pvsamv_nofinancial_default(ssc_data_t &data)
 	ssc_data_set_number(data, "inv_snl_eff_cec", 96.636932373046875);
 	ssc_data_set_number(data, "inv_pd_eff", 95);
 	ssc_data_set_number(data, "inv_cec_cg_eff_cec", 96.636306762695313);
-	ssc_number_t array_inv_tdc[9] = { 1., 52.8, -0.021, 0., 0., 0. };
-	ssc_data_set_matrix(data, "inv_tdc_cec_db", array_inv_tdc, 3,3);
-	ssc_data_set_matrix(data, "inv_tdc_cec_cg", array_inv_tdc, 3, 3);
-	ssc_data_set_matrix(data, "inv_tdc_plc", array_inv_tdc, 3, 3);
-	ssc_data_set_matrix(data, "inv_tdc_ds", array_inv_tdc, 3, 3);
+	ssc_number_t matrix_inv_tdc[3] = { 1., 52.8, -0.021 };
+	ssc_data_set_matrix(data, "inv_tdc_cec_db", matrix_inv_tdc, 1, 3);
+	ssc_data_set_matrix(data, "inv_tdc_cec_cg", matrix_inv_tdc, 1, 3);
+	ssc_data_set_matrix(data, "inv_tdc_plc", matrix_inv_tdc, 1, 3);
+	ssc_data_set_matrix(data, "inv_tdc_ds", matrix_inv_tdc, 1, 3);
 }
 
 
@@ -651,11 +651,11 @@ void pvsamv1_with_residential_default(ssc_data_t &data)
 	ssc_data_set_number(data, "inv_pd_pnt", 0);
 	ssc_data_set_number(data, "inv_pd_vdco", 310);
 	ssc_data_set_number(data, "inv_pd_vdcmax", 600);
-	ssc_number_t array_inv_tdc[9] = { 1., 52.8, -0.021, 0., 0., 0. };
-	ssc_data_set_matrix(data, "inv_tdc_cec_db", array_inv_tdc, 3,3);
-	ssc_data_set_matrix(data, "inv_tdc_cec_cg", array_inv_tdc, 3, 3);
-	ssc_data_set_matrix(data, "inv_tdc_plc", array_inv_tdc, 3, 3);
-	ssc_data_set_matrix(data, "inv_tdc_ds", array_inv_tdc, 3, 3);
+	ssc_number_t matrix_inv_tdc[3] = { 1., 52.8, -0.021 };
+	ssc_data_set_matrix(data, "inv_tdc_cec_db", matrix_inv_tdc, 1,3);
+	ssc_data_set_matrix(data, "inv_tdc_cec_cg", matrix_inv_tdc, 1, 3);
+	ssc_data_set_matrix(data, "inv_tdc_plc", matrix_inv_tdc, 1, 3);
+	ssc_data_set_matrix(data, "inv_tdc_ds", matrix_inv_tdc, 1, 3);
 	ssc_data_set_number(data, "en_batt", 0);
 	ssc_data_set_number(data, "batt_replacement_option", 0);
 	ssc_number_t p_batt_replacement_schedule[1] = { 0 };

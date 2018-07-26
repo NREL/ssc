@@ -453,7 +453,7 @@ void PVSystem_IO::AllocateOutputs(compute_module* cm)
 
 	p_inverterPowerConsumptionLoss = cm->allocate("inv_psoloss", numberOfWeatherFileRecords);
 	p_inverterNightTimeLoss = cm->allocate("inv_pntloss", numberOfWeatherFileRecords);
-	//p_inverterThermalLoss = cm->allocate("inv_tdcloss", numberOfWeatherFileRecords);
+	p_inverterThermalLoss = cm->allocate("inv_tdcloss", numberOfWeatherFileRecords);
 
 	p_acWiringLoss = cm->allocate("ac_wiring_loss", numberOfWeatherFileRecords);
 	p_transmissionLoss = cm->allocate("ac_transmission_loss", numberOfWeatherFileRecords);
@@ -923,7 +923,7 @@ void Inverter_IO::setupSharedInverter(compute_module* cm, SharedInverter * a_sha
 	util::matrix_t<double> inv_tdc;
 	if (inverterType == 0) // cec database
 	{
-		cm->as_matrix("inv_tdc_cec_db");
+		inv_tdc = cm->as_matrix("inv_tdc_cec_db");
 	}
 	else if (inverterType == 1) // datasheet data
 	{
@@ -948,7 +948,7 @@ void Inverter_IO::setupSharedInverter(compute_module* cm, SharedInverter * a_sha
 		thermalDerateCurves.push_back(row);
 	}
 	int err = sharedInverter->setTempDerateCurves(thermalDerateCurves);
-	if ( err < 1) {
+	if ( err > 1) {
 		throw compute_module::exec_error("pvsamv1", "Inverter temperature derate curve " + util::to_string((int)( -err - 1)) + " is invalid.");
 	}
 }
