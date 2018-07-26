@@ -435,29 +435,35 @@ TEST_F(CMPvsamv1PowerIntegration, NoFinancialModelLosses)
 	}
 }
 
-/// Test inverter temperature derate 
-TEST_F(CMPvsamv1PowerIntegration, DISABLED_InvTempDerate) {
+/// Change half of all temperatures so that inv eff is derated by ~50% for half the year
+/// DC production & inverter efficiency both decrease as result
+TEST_F(CMPvsamv1PowerIntegration, InvTempDerate) {
 	var_data* weatherData = create_weatherdata_array(1);
 	ssc_data_unassign(data, "solar_resource_file");
-
-	// change half of all temperatures so that inv is derated by ~50% for half the year
+	var_table *vt = static_cast<var_table*>(data);
+	
 	float temp[8760];
+	for (size_t i = 0; i < 8760; i++) {
+		temp[i] = 26.f;
+	}
 	for (size_t i = 0; i < 4380; i++) {
 		temp[i] = 76.6f;
 	}
-	for (size_t i = 4380; i < 8760; i++) {
-		temp[i] = 26.f;
-	}
+	
 	var_data tdry_vd = var_data(temp, 8760);
+	tdry_vd = var_data(temp, 8760);
 	weatherData->table.assign("tdry", tdry_vd);
-	var_table *vt = static_cast<var_table*>(data);
 	vt->assign("solar_resource_data", *weatherData);
 
 	EXPECT_FALSE(run_module(data, "pvsamv1"));
 
-	ssc_number_t annual_energy, percent_loss, monthly_energy;
+	ssc_number_t annual_energy, loss, percent_loss, monthly_energy;
+
 	ssc_data_get_number(data, "annual_energy", &annual_energy);
 	EXPECT_NEAR(annual_energy, 3540, 10) << "Annual energy reduced";
+
+	ssc_data_get_number(data, "annual_inv_tdcloss", &loss);
+	EXPECT_NEAR(loss, 992, 10) << "Annual loss";
 
 	ssc_data_get_number(data, "annual_ac_inv_tdc_loss_percent", &percent_loss);
 	EXPECT_NEAR(percent_loss, 20, 2);

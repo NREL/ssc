@@ -20,12 +20,12 @@ public:
 	SharedInverter(int inverterType, size_t numberOfInverters,
 		sandia_inverter_t * sandiaInverter, partload_inverter_t * partloadInverter);
 
-	/// Setup efficiency vs ambient T curves at up to 3 input voltages for temp derating, returns true if successful
-	bool setTempDerateCurves(double* curve1, double* curve2 = NULL, double* curve3 = NULL );
+	/// Setup efficiency vs ambient T curves for temp derating, returns which curve has error if fails, 0 success
+	int setTempDerateCurves(std::vector<std::vector<double>> tempDerateCurves);
 
-	void getTempDerateCurves(double* vParts, double* startC, double* slope);
+	std::vector<std::vector<double>> getTempDerateCurves();
 
-	/// Given DC voltage and ambient temperate, calculate derated power, eff and loss
+	/// Modifies pAc, eff, and loss by calculating derate, using curves interpolated by input V
 	void calculateTempDerate(double V, double T, double& pAC, double& eff, double& loss);
 
 	/// Given the combined PV plus battery DC power (W), voltage and ambient T, compute the AC power (kW)
@@ -52,11 +52,11 @@ protected:
 	int m_inverterType;  /// The inverter type
 	size_t m_numInverters;  /// The number of inverters in the system
 
-	// temperature derate curves
+	/// Temperate Derating: each curve contains DC voltage and pairs of start-derate temp [C] and slope [efficiency% lost per C]
 	bool m_tempEnabled;
-	double m_tempV[2] = { 0, 0 };					/// ordered DC voltages which divide operating V range into up to 2 partitions
-	double m_tempStartC[3] = { -99, -99, -99 }; 	/// for each V range, the temperature at which derate begins to be applied
-	double m_tempSlope[3] = { 0, 0, 0 };			/// for each V range, the slope, efficiency%/degree C
+	std::vector<std::vector<double>> m_thermalDerateCurves;		/// ordered by DC V	
+	/// Given a temp, find which slope to apply
+	void findPointOnCurve(size_t idx, double T, double& startT, double& slope);
 
 	// Memory managed elsewehre
 	sandia_inverter_t * m_sandiaInverter;

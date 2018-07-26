@@ -395,7 +395,6 @@ void PVSystem_IO::AllocateOutputs(compute_module* cm)
 			p_idealRotation.push_back(cm->allocate(prefix + "idealrot", numberOfWeatherFileRecords));
 			p_poaNominalFront.push_back(cm->allocate(prefix + "poa_nom", numberOfWeatherFileRecords));
 			p_poaShadedFront.push_back(cm->allocate(prefix + "poa_shaded", numberOfWeatherFileRecords));
-			p_poaShadedSoiledFront.push_back(cm->allocate(prefix + "poa_shaded_soiled", numberOfWeatherFileRecords));
 			p_poaBeamFront.push_back(cm->allocate(prefix + "poa_eff_beam", numberOfWeatherFileRecords));
 			p_poaDiffuseFront.push_back(cm->allocate(prefix + "poa_eff_diff", numberOfWeatherFileRecords));
 			p_poaTotal.push_back(cm->allocate(prefix + "poa_eff", numberOfWeatherFileRecords));
@@ -455,7 +454,7 @@ void PVSystem_IO::AllocateOutputs(compute_module* cm)
 
 	p_inverterPowerConsumptionLoss = cm->allocate("inv_psoloss", numberOfWeatherFileRecords);
 	p_inverterNightTimeLoss = cm->allocate("inv_pntloss", numberOfWeatherFileRecords);
-	//p_inverterThermalLoss = cm->allocate("inv_tdcloss", numberOfWeatherFileRecords);
+	p_inverterThermalLoss = cm->allocate("inv_tdcloss", numberOfWeatherFileRecords);
 
 	p_acWiringLoss = cm->allocate("ac_wiring_loss", numberOfWeatherFileRecords);
 	p_transmissionLoss = cm->allocate("ac_transmission_loss", numberOfWeatherFileRecords);
@@ -926,47 +925,35 @@ void Inverter_IO::setupSharedInverter(compute_module* cm, SharedInverter * a_sha
 	sharedInverter = a_sharedInverter;
 
 	// Inverter thermal derate curves
-	bool en_inv_tdc = false; // cm->as_boolean("en_inv_tdc");
-	if (en_inv_tdc) {
-		double* curve1 = new double[3];
-		curve1[0] = cm->as_double("inv_tdc_V1");
-		curve1[1] = cm->as_double("inv_tdc_T1");
-		curve1[2] = cm->as_double("inv_tdc_S1");
-
-		double* curve2 = new double[3];
-		try {
-			curve2[0] = cm->as_double("inv_tdc_V2");
-			curve2[1] = cm->as_double("inv_tdc_T2");
-			curve2[2] = cm->as_double("inv_tdc_S2");
-		}
-		catch (compute_module::general_error &) {
-			curve2[0] = 0;
-			curve2[1] = -99;
-			curve2[2] = 0;
-		}
-		if (curve2[0] <= 0 || curve2[1] <= -98 || curve2[0] >= 0) {
-			delete curve2;
-			curve2 = NULL;
-		}
-
-		double* curve3 = new double[3];
-		try {
-			curve3[0] = cm->as_double("inv_tdc_V3");
-			curve3[1] = cm->as_double("inv_tdc_T3");
-			curve3[2] = cm->as_double("inv_tdc_S3");
-		}
-		catch (compute_module::general_error &) {
-			curve3[0] = 0;
-			curve3[1] = -99;
-			curve3[2] = 0;
-		}
-		if (curve3[0] <= 0 || curve3[1] <= -98 || curve3[0] >= 0) {
-			delete curve3;
-			curve3 = NULL;
-		}
-		if (!sharedInverter->setTempDerateCurves(curve1, curve2, curve3)) {
-			throw compute_module::exec_error("pvsamv1", "Error setting up inverter temperature derate curves");
-		}
+	util::matrix_t<double> inv_tdc;
+	if (inverterType == 0) // cec database
+	{
+		inv_tdc = cm->as_matrix("inv_tdc_cec_db");
+	}
+	else if (inverterType == 1) // datasheet data
+	{
+		inv_tdc = cm->as_matrix("inv_tdc_ds");
+	}
+	else if (inverterType == 2) // partload curve
+	{
+		inv_tdc = cm->as_matrix("inv_tdc_plc");
+	}
+	else if (inverterType == 3) // coefficient generator
+	{
+		inv_tdc = cm->as_matrix("inv_tdc_cec_cg");
 	}
 
+	// Parse into std::vector form
+	std::vector<std::vector<double>> thermalDerateCurves;
+	for (size_t r = 0; r < inv_tdc.nrows(); r++) {
+		std::vector<double> row;
+		for (size_t c = 0; c < inv_tdc.row(r).ncells(); c++) {
+			row.push_back(inv_tdc.at(r, c));
+		}
+		thermalDerateCurves.push_back(row);
+	}
+	int err = sharedInverter->setTempDerateCurves(thermalDerateCurves);
+	if ( err > 1) {
+		//throw compute_module::exec_error("pvsamv1", "Inverter temperature derate curve " + util::to_string((int)( -err - 1)) + " is invalid.");
+	}
 }
