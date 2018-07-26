@@ -217,8 +217,9 @@ struct PVSystem_IO
 	std::vector<ssc_number_t *> p_surfaceAzimuth;   /// The angle of incidence of the subarray [degrees]
 	std::vector<ssc_number_t *> p_axisRotation;     /// The angle of incidence of the subarray [degrees]
 	std::vector<ssc_number_t *> p_idealRotation;   /// The angle of incidence of the subarray [degrees]
-	std::vector<ssc_number_t *> p_poaNominal;      /// The angle of incidence of the subarray [degrees]
-	std::vector<ssc_number_t *> p_poaShaded;		/// The angle of incidence of the subarray [degrees]
+	std::vector<ssc_number_t *> p_poaNominalFront;      /// The angle of incidence of the subarray [degrees]
+	std::vector<ssc_number_t *> p_poaShadedFront;		/// The angle of incidence of the subarray [degrees]
+	std::vector<ssc_number_t *> p_poaShadedSoiledFront;  
 	std::vector<ssc_number_t *> p_poaBeamFront; /// The angle of incidence of the subarray [degrees]
 	std::vector<ssc_number_t *> p_poaDiffuseFront; /// The angle of incidence of the subarray [degrees]
 	std::vector<ssc_number_t *> p_poaFront; /// The angle of incidence of the subarray [degrees]
@@ -266,6 +267,7 @@ struct PVSystem_IO
 	ssc_number_t *p_poaFrontBeamNominalTotal;
 	ssc_number_t *p_poaFrontBeamTotal;
 	ssc_number_t *p_poaFrontShadedTotal;
+	ssc_number_t *p_poaFrontShadedSoiledTotal;
 	ssc_number_t *p_poaRearTotal;
 	ssc_number_t *p_poaFrontTotal;
 	ssc_number_t *p_poaTotalAllSubarrays;
