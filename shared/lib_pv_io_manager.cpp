@@ -497,6 +497,10 @@ Module_IO::Module_IO(compute_module* cm, std::string cmName, double dcLoss)
 		simpleEfficiencyModel.VocNominal = cm->as_double("spe_voc");
 		simpleEfficiencyModel.Area = cm->as_double("spe_area");
 		referenceArea = simpleEfficiencyModel.Area;
+		isBifacial = cm->as_boolean("spe_is_bifacial");
+		bifaciality = cm->as_double("spe_bifaciality");
+		bifacialTransmissionFactor = cm->as_double("spe_bifacial_transmission_factor");
+		groundClearanceHeight = cm->as_double("spe_bifacial_ground_clearance_height");
 		for (int i = 0; i<5; i++)
 		{
 			simpleEfficiencyModel.Rad[i] = cm->as_double(util::format("spe_rad%d", i));
