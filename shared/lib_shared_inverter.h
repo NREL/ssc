@@ -20,8 +20,8 @@ public:
 	SharedInverter(int inverterType, size_t numberOfInverters,
 		sandia_inverter_t * sandiaInverter, partload_inverter_t * partloadInverter);
 
-	/// Setup efficiency vs ambient T curves for temp derating, returns which curve has error if fails
-	bool setTempDerateCurves(std::vector<std::vector<double>> tempDerateCurves);
+	/// Setup efficiency vs ambient T curves for temp derating, returns which curve has error if fails, 0 success
+	int setTempDerateCurves(std::vector<std::vector<double>> tempDerateCurves);
 
 	std::vector<std::vector<double>> getTempDerateCurves();
 
@@ -55,6 +55,8 @@ protected:
 	/// Temperate Derating: each curve contains DC voltage and pairs of start-derate temp [C] and slope [efficiency% lost per C]
 	bool m_tempEnabled;
 	std::vector<std::vector<double>> m_thermalDerateCurves;		/// ordered by DC V	
+	/// Given a temp, find which slope to apply
+	void findPointOnCurve(size_t idx, double T, double& startT, double& slope);
 
 	// Memory managed elsewehre
 	sandia_inverter_t * m_sandiaInverter;
