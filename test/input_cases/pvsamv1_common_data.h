@@ -155,6 +155,10 @@ void pvsamv_nofinancial_default(ssc_data_t &data)
 	ssc_data_set_number(data, "spe_fd", 1);
 	ssc_data_set_number(data, "spe_vmp", 30);
 	ssc_data_set_number(data, "spe_voc", 36);
+	ssc_data_set_number(data, "spe_is_bifacial", 0);
+	ssc_data_set_number(data, "spe_bifacial_transmission_factor", 0);
+	ssc_data_set_number(data, "spe_bifaciality", 0);
+	ssc_data_set_number(data, "spe_bifacial_ground_clearance_height", 0);
 	ssc_data_set_number(data, "cec_is_bifacial", 0);
 	ssc_data_set_number(data, "cec_bifacial_transmission_factor", 0);
 	ssc_data_set_number(data, "cec_bifaciality", 0);
@@ -496,6 +500,10 @@ void pvsamv1_with_residential_default(ssc_data_t &data)
 	ssc_data_set_number(data, "spe_fd", 1);
 	ssc_data_set_number(data, "spe_vmp", 30);
 	ssc_data_set_number(data, "spe_voc", 36);
+	ssc_data_set_number(data, "spe_is_bifacial", 0);
+	ssc_data_set_number(data, "spe_bifacial_transmission_factor", 0);
+	ssc_data_set_number(data, "spe_bifaciality", 0);
+	ssc_data_set_number(data, "spe_bifacial_ground_clearance_height", 0);
 	ssc_data_set_number(data, "cec_is_bifacial", 0);
 	ssc_data_set_number(data, "cec_bifacial_transmission_factor", 0);
 	ssc_data_set_number(data, "cec_bifaciality", 0);
