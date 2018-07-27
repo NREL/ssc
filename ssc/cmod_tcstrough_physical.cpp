@@ -175,6 +175,14 @@ static var_info _cm_vtab_tcstrough_physical[] = {
     { SSC_INPUT,        SSC_MATRIX,      "D_cpnt",                    "Interconnect component diameters, row=intc, col=cpnt",                            "none",          "",             "solar_field",    "*",                       "",                      "" },
     { SSC_INPUT,        SSC_MATRIX,      "L_cpnt",                    "Interconnect component lengths, row=intc, col=cpnt",                              "none",          "",             "solar_field",    "*",                       "",                      "" },
     { SSC_INPUT,        SSC_MATRIX,      "Type_cpnt",                 "Interconnect component type, row=intc, col=cpnt",                                 "none",          "",             "solar_field",    "*",                       "",                      "" },
+
+    { SSC_INPUT,        SSC_NUMBER,      "custom_sf_pipe_sizes",      "Use custom solar field pipe diams, wallthks, and lengths",                        "none",          "",             "solar_field",    "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_ARRAY,       "sf_rnr_diams",              "Custom runner diameters",                                                            "m",          "",             "solar_field",    "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_ARRAY,       "sf_rnr_wallthicks",         "Custom runner wall thicknesses",                                                     "m",          "",             "solar_field",    "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_ARRAY,       "sf_rnr_lengths",            "Custom runner lengths",                                                              "m",          "",             "solar_field",    "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_ARRAY,       "sf_hdr_diams",              "Custom header diameters",                                                            "m",          "",             "solar_field",    "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_ARRAY,       "sf_hdr_wallthicks",         "Custom header wall thicknesses",                                                     "m",          "",             "solar_field",    "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_ARRAY,       "sf_hdr_lengths",            "Custom header lengths",                                                              "m",          "",             "solar_field",    "*",                       "",                      "" },
 														          															          
 //   controller (type 251) inputs							          
 //   VARTYPE            DATATYPE          NAME                        LABEL                                                             UNITS           META            GROUP             REQUIRED_IF                CONSTRAINTS              UI_HINTS
@@ -213,6 +221,10 @@ static var_info _cm_vtab_tcstrough_physical[] = {
     { SSC_INPUT,        SSC_ARRAY,       "L_tes_col_gen",             "Length of TES pipes in collection and generation loops",         "m",            "",             "controller",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "custom_tes_p_loss",         "TES pipe losses are based on custom lengths and coeffs",         "-",            "",             "controller",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_ARRAY,       "k_tes_loss_coeffs",         "Minor loss coeffs for the coll, gen, and bypass loops",          "-",            "",             "controller",     "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "custom_sgs_pipe_sizes",     "Use custom SGS pipe diams, wallthks, and lengths",               "-",            "",             "controller",     "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_ARRAY,       "sgs_diams",                 "Custom SGS diameters",                                           "m",            "",             "controller",     "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_ARRAY,       "sgs_wallthicks",            "Custom SGS wall thicknesses",                                    "m",            "",             "controller",     "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_ARRAY,       "sgs_lengths",               "Custom SGS lengths",                                             "m",            "",             "controller",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "pb_fixed_par",              "Fraction of rated gross power constantly consumed",              "-",            "",             "controller",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_ARRAY,       "bop_array",                 "Coefficients for balance of plant parasitics calcs",             "-",            "",             "controller",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_ARRAY,       "aux_array",                 "Coefficients for auxiliary heater parasitics calcs",             "-",            "",             "controller",     "*",                       "",                      "" },
@@ -657,6 +669,13 @@ public:
         set_unit_value_ssc_matrix(type250_solarfield, "D_cpnt");
         set_unit_value_ssc_matrix(type250_solarfield, "L_cpnt");
         set_unit_value_ssc_matrix(type250_solarfield, "Type_cpnt");
+        set_unit_value_ssc_double(type250_solarfield, "custom_sf_pipe_sizes");
+        set_unit_value_ssc_array(type250_solarfield, "sf_rnr_diams");
+        set_unit_value_ssc_array(type250_solarfield, "sf_rnr_wallthicks");
+        set_unit_value_ssc_array(type250_solarfield, "sf_rnr_lengths");
+        set_unit_value_ssc_array(type250_solarfield, "sf_hdr_diams");
+        set_unit_value_ssc_array(type250_solarfield, "sf_hdr_wallthicks");
+        set_unit_value_ssc_array(type250_solarfield, "sf_hdr_lengths");
 			// Set the initial values required from "downstream" types
         set_unit_value_ssc_double(type250_solarfield, "defocus", 1.0); // , 1.);
 		set_unit_value_ssc_double(type250_solarfield, "T_cold_in", as_double("T_loop_in_des")); // , 293.);
@@ -717,6 +736,10 @@ public:
         set_unit_value_ssc_array(type251_controller, "L_tes_col_gen"); // , []);
         set_unit_value_ssc_double(type251_controller, "custom_tes_p_loss"); // , false);
         set_unit_value_ssc_array(type251_controller, "k_tes_loss_coeffs"); // , []);
+        set_unit_value_ssc_double(type251_controller, "custom_sgs_pipe_sizes"); // , []);
+        set_unit_value_ssc_array(type251_controller, "sgs_diams"); // , []);
+        set_unit_value_ssc_array(type251_controller, "sgs_wallthicks"); // , []);
+        set_unit_value_ssc_array(type251_controller, "sgs_lengths"); // , []);
 		set_unit_value_ssc_double(type251_controller, "pb_fixed_par" ); // , 0.0055);
 		set_unit_value_ssc_array(type251_controller, "bop_array" ); // , [0,1,0.483,0.517,0]);
 		set_unit_value_ssc_array(type251_controller, "aux_array" ); // , [0.02273,1,0.483,0.517,0]);

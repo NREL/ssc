@@ -110,6 +110,10 @@ enum {
     P_L_tes_col_gen,
     P_custom_tes_p_loss,
     P_k_tes_loss_coeffs,
+    P_custom_sgs_pipe_sizes,
+    P_sgs_diams,
+    P_sgs_wallthicks,
+    P_sgs_lengths,
 	P_pb_fixed_par,
 	P_bop_array,
 	P_aux_array,
@@ -266,6 +270,10 @@ tcsvarinfo sam_mw_trough_type251_variables[] = {
     { TCS_PARAM,    TCS_ARRAY,         P_L_tes_col_gen,      "L_tes_col_gen",        "Length of TES pipes in collection and generation loops",  "m",            "",        "",        ""},
     { TCS_PARAM,    TCS_NUMBER,        P_custom_tes_p_loss,  "custom_tes_p_loss",    "TES pipe losses are based on custom lengths and coeffs",  "-",            "",        "",        ""},
     { TCS_PARAM,    TCS_ARRAY,         P_k_tes_loss_coeffs,  "k_tes_loss_coeffs",    "Minor loss coeffs for the coll, gen, and bypass loops",   "-",            "",        "",        ""},
+    { TCS_PARAM,    TCS_NUMBER,        P_custom_sgs_pipe_sizes, "custom_sgs_pipe_sizes", "Use custom SGS pipe diams, wallthks, and lengths",    "-",            "",        "",   "false"},
+    { TCS_PARAM,    TCS_ARRAY,         P_sgs_diams,          "sgs_diams",            "Custom SGS diameters",                                    "m",            "",        "",        ""},
+    { TCS_PARAM,    TCS_ARRAY,         P_sgs_wallthicks,     "sgs_wallthicks",       "Custom SGS wall thicknesses",                             "m",            "",        "",        ""},
+    { TCS_PARAM,    TCS_ARRAY,         P_sgs_lengths,        "sgs_lengths",          "Custom SGS lengths",                                      "m",            "",        "",        ""},
     { TCS_PARAM,    TCS_NUMBER,        P_pb_fixed_par,       "pb_fixed_par",         "Fraction of rated gross power constantly consumed",       "-",            "",        "",        ""},
     { TCS_PARAM,    TCS_ARRAY,         P_bop_array,          "bop_array",            "Coefficients for balance of plant parasitics calcs",      "-",            "",        "",        ""},
     { TCS_PARAM,    TCS_ARRAY,         P_aux_array,          "aux_array",            "Coefficients for auxiliary heater parasitics calcs",      "-",            "",        "",        ""},
@@ -426,6 +434,13 @@ private:
     int l_k_tes_loss_coeffs;
     double * k_tes_loss_coeffs_in;
     util::matrix_t<double> k_tes_loss_coeffs;
+    bool custom_sgs_pipe_sizes;
+    int l_sgs_diams;
+    double * sgs_diams;
+    int l_sgs_wallthicks;
+    double * sgs_wallthicks;
+    int l_sgs_lengths;
+    double * sgs_lengths;
     double pb_fixed_par;
 	int l_bop_array;		
 	double * bop_array;
@@ -763,6 +778,11 @@ public:
         custom_tes_p_loss       = (bool) value(P_custom_tes_p_loss);                  //[-]
         k_tes_loss_coeffs_in    = value(P_k_tes_loss_coeffs, &l_k_tes_loss_coeffs);   //[-]
         k_tes_loss_coeffs.assign(k_tes_loss_coeffs_in, l_k_tes_loss_coeffs);
+
+        custom_sgs_pipe_sizes = (bool) value(P_custom_sgs_pipe_sizes);
+        sgs_diams = value(P_sgs_diams, &l_sgs_diams);                   //[m]
+        sgs_wallthicks = value(P_sgs_wallthicks, &l_sgs_wallthicks);    //[m]
+        sgs_lengths = value(P_sgs_lengths, &l_sgs_lengths);             //[m]
 
 		pb_fixed_par	= value(P_pb_fixed_par);			//[-]
 	

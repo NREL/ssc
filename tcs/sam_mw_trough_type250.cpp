@@ -179,6 +179,14 @@ enum{
     P_L_CPNT,
     P_TYPE_CPNT,
 
+    P_CUSTOM_SF_PIPE_SIZES,
+    P_SF_RNR_DIAMS,
+    P_SF_RNR_WALLTHICKS,
+    P_SF_RNR_LENGTHS,
+    P_SF_HDR_DIAMS,
+    P_SF_HDR_WALLTHICKS,
+    P_SF_HDR_LENGTHS,
+
 	PO_A_APER_TOT,
 
 	I_I_B,
@@ -370,9 +378,17 @@ tcsvarinfo sam_mw_trough_type250_variables[] = {
 	{ TCS_PARAM,           TCS_ARRAY,   P_SCADEFOCUSARRAY,     "SCADefocusArray",                                            "Order in which the SCA's should be defocused",         "none",             "",             "","8,7,6,5,4,3,2,1" },
     
     { TCS_PARAM,          TCS_MATRIX,            P_K_CPNT,              "K_cpnt",                      "Interconnect component minor loss coefficients, row=intc, col=cpnt",         "none",             "",             "",           "-1" },
-    { TCS_PARAM,          TCS_MATRIX,            P_D_CPNT,              "D_cpnt",                                    "Interconnect component diameters, row=intc, col=cpnt",         "none",             "",             "",           "-1" },
-    { TCS_PARAM,          TCS_MATRIX,            P_L_CPNT,              "L_cpnt",                                      "Interconnect component lengths, row=intc, col=cpnt",         "none",             "",             "",           "-1" },
-    { TCS_PARAM,          TCS_MATRIX,           P_TYPE_CPNT,         "Type_cpnt",                                         "Interconnect component type, row=intc, col=cpnt",         "none",             "",             "",           "-1" },
+    { TCS_PARAM,          TCS_MATRIX,            P_D_CPNT,              "D_cpnt",                                    "Interconnect component diameters, row=intc, col=cpnt",            "m",             "",             "",           "-1" },
+    { TCS_PARAM,          TCS_MATRIX,            P_L_CPNT,              "L_cpnt",                                      "Interconnect component lengths, row=intc, col=cpnt",            "m",             "",             "",           "-1" },
+    { TCS_PARAM,          TCS_MATRIX,         P_TYPE_CPNT,           "Type_cpnt",                                         "Interconnect component type, row=intc, col=cpnt",         "none",             "",             "",           "-1" },
+
+    { TCS_PARAM,          TCS_NUMBER, P_CUSTOM_SF_PIPE_SIZES, "custom_sf_pipe_sizes",                            "Use custom solar field pipe diams, wallthks, and lengths",         "none",             "",             "",         "false"},
+    { TCS_PARAM,          TCS_ARRAY,       P_SF_RNR_DIAMS,        "sf_rnr_diams",                                                                 "Custom runner diameters",            "m",             "",             "",           "-1" },
+    { TCS_PARAM,          TCS_ARRAY,  P_SF_RNR_WALLTHICKS,   "sf_rnr_wallthicks",                                                          "Custom runner wall thicknesses",            "m",             "",             "",           "-1" },
+    { TCS_PARAM,          TCS_ARRAY,     P_SF_RNR_LENGTHS,      "sf_rnr_lengths",                                                                   "Custom runner lengths",            "m",             "",             "",           "-1" },
+    { TCS_PARAM,          TCS_ARRAY,       P_SF_HDR_DIAMS,        "sf_hdr_diams",                                                                 "Custom header diameters",            "m",             "",             "",           "-1" },
+    { TCS_PARAM,          TCS_ARRAY,  P_SF_HDR_WALLTHICKS,   "sf_hdr_wallthicks",                                                          "Custom header wall thicknesses",            "m",             "",             "",           "-1" },
+    { TCS_PARAM,          TCS_ARRAY,     P_SF_HDR_LENGTHS,      "sf_hdr_lengths",                                                                   "Custom header lengths",            "m",             "",             "",           "-1" },
 
 	// Field design calculations
 	{ TCS_PARAM,          TCS_NUMBER,     PO_A_APER_TOT,             "A_aper_tot",                                          "Total solar field aperture area",                           "m^2",             "",             "",             "-1.23" },
@@ -512,6 +528,7 @@ private:
 	double mc_bal_hot;		//The heat capacity of the balance of plant on the hot side
 	double mc_bal_cold;		//The heat capacity of the balance of plant on the cold side
 	double mc_bal_sca;		//Non-HTF heat capacity associated with each SCA - per meter basis
+    bool custom_sf_pipe_sizes;  //Use custom solar field pipe diams, wallthks, and lengths
 
 	double* OptCharType;		//The optical characterization method 
 	int nval_OptCharType;
@@ -637,6 +654,19 @@ private:
     double* Type_cpnt_in;        // Interconnect component type, row=intc, col=component
     int nrow_Type_cpnt, ncol_Type_cpnt;
     IntcOutputs inlet_state, crossover_state, outlet_state, intc_state;
+
+    double* sf_rnr_diams;       // Custom runner diameters
+    int nval_sf_rnr_diams;
+    double* sf_rnr_wallthicks;  // Custom runner wall thicknesses
+    int nval_sf_rnr_wallthicks;
+    double* sf_rnr_lengths;     // Custom runner lengths
+    int nval_sf_rnr_lengths;
+    double* sf_hdr_diams;       // Custom header diameters
+    int nval_sf_hdr_diams;
+    double* sf_hdr_wallthicks;  // Custom header wall thicknesses
+    int nval_sf_hdr_wallthicks;
+    double* sf_hdr_lengths;     // Custom header lengths
+    int nval_sf_hdr_lengths;
 
 	double I_b;		//Direct normal incident solar irradiation
 	double T_db;		//Dry bulb air temperature
@@ -820,6 +850,7 @@ public:
 		mc_bal_hot	= std::numeric_limits<double>::quiet_NaN();
 		mc_bal_cold	= std::numeric_limits<double>::quiet_NaN();
 		mc_bal_sca	= std::numeric_limits<double>::quiet_NaN();
+        custom_sf_pipe_sizes = false;
 		OptCharType	= NULL;
 		nval_OptCharType = -1;
 		CollectorType	= NULL;
@@ -944,6 +975,18 @@ public:
         nrow_L_cpnt = -1, ncol_L_cpnt = -1;
         Type_cpnt_in = NULL;
         nrow_Type_cpnt = -1, ncol_Type_cpnt = -1;
+        sf_rnr_diams = NULL;
+        nval_sf_rnr_diams = -1;
+        sf_rnr_wallthicks = NULL;
+        nval_sf_rnr_wallthicks = -1;
+        sf_rnr_lengths = NULL;
+        nval_sf_rnr_lengths = -1;
+        sf_hdr_diams = NULL;
+        nval_sf_hdr_diams = -1;
+        sf_hdr_wallthicks = NULL;
+        nval_sf_hdr_wallthicks = -1;
+        sf_hdr_lengths = NULL;
+        nval_sf_hdr_lengths = -1;
 		I_b	= std::numeric_limits<double>::quiet_NaN();
 		T_db	= std::numeric_limits<double>::quiet_NaN();
 		V_wind	= std::numeric_limits<double>::quiet_NaN();
@@ -1145,6 +1188,7 @@ public:
 		mc_bal_hot = value(P_MC_BAL_HOT);		//The heat capacity of the balance of plant on the hot side [kWht/K-MWt]
 		mc_bal_cold = value(P_MC_BAL_COLD);		//The heat capacity of the balance of plant on the cold side [kWht/K-MWt]
 		mc_bal_sca = value(P_MC_BAL_SCA);		//Non-HTF heat capacity associated with each SCA - per meter basis [Wht/K-m]
+        custom_sf_pipe_sizes = (bool)value(P_CUSTOM_SF_PIPE_SIZES);         //Use custom solar field pipe diams, wallthks, and lengths
 
 		OptCharType = value(P_OPTCHARTYPE, &nval_OptCharType);		//The optical characterization method  [none]
 		CollectorType = value(P_COLLECTORTYPE, &nval_CollectorType);		//{1=user defined, 2=LS-2, 3=LS-3, 4=IST}  [none]
@@ -1253,6 +1297,13 @@ public:
         L_cpnt_in = value(P_L_CPNT, &nrow_L_cpnt, &ncol_L_cpnt);
         Type_cpnt_in = value(P_TYPE_CPNT, &nrow_Type_cpnt, &ncol_Type_cpnt);
 
+        sf_rnr_diams = value(P_SF_RNR_DIAMS, &nval_sf_rnr_diams);
+        sf_rnr_wallthicks = value(P_SF_RNR_WALLTHICKS, &nval_sf_rnr_wallthicks);
+        sf_rnr_lengths = value(P_SF_RNR_LENGTHS, &nval_sf_rnr_lengths);
+        sf_hdr_diams = value(P_SF_HDR_DIAMS, &nval_sf_hdr_diams);
+        sf_hdr_wallthicks = value(P_SF_HDR_WALLTHICKS, &nval_sf_hdr_wallthicks);
+        sf_hdr_lengths = value(P_SF_HDR_LENGTHS, &nval_sf_hdr_lengths);
+
 		//Put all of the matrices into a more handlable format
 		HCE_FieldFrac.assign(HCE_FieldFrac_in, nrow_HCE_FieldFrac, ncol_HCE_FieldFrac);
 		D_2.assign(D_2_in, nrow_D_2, ncol_D_2);
@@ -1308,30 +1359,22 @@ public:
                 rough_cpnt.row(i).data(), u_cpnt.row(i).data(), mc_cpnt.row(i).data(), Type_cpnt.row(i).data(), K_cpnt.ncols()));
         }
 
-        //std::ofstream logIntcs;
-        //logIntcs.open("logIntcs.txt");
-        //logIntcs << "K" << "\t" << "D" << "\t" << "L" << "\t" << "Type" << "\n";
+        //std::ofstream logCustomSFPipes;
+        //logCustomSFPipes.open("logCustomSFPipes.txt");
+        //logCustomSFPipes << "Rnr_D" << "\t" << "Rnr_WT" << "\t" << "Rnr_L" << "\t" << "HDR_D" << "\t" << "HDR_WT" << "\t" << "HDR_L" << "\n";
 
-        //for (std::vector<interconnect>::iterator it = interconnects.begin(); it < interconnects.end(); ++it) {
-        //    for (std::vector<intc_cpnt>::size_type i = 0; i != it->getNcpnts(); i++) {
-        //        logIntcs << it->getK(i) << "-";
-        //    }
-        //    logIntcs << "\t";
-        //    for (std::vector<intc_cpnt>::size_type i = 0; i != it->getNcpnts(); i++) {
-        //        logIntcs << it->getD(i) << "-";
-        //    }
-        //    logIntcs << "\t";
-        //    for (std::vector<intc_cpnt>::size_type i = 0; i != it->getNcpnts(); i++) {
-        //        logIntcs << it->getLength(i) << "-";
-        //    }
-        //    logIntcs << "\t";
-        //    for (std::vector<intc_cpnt>::size_type i = 0; i != it->getNcpnts(); i++) {
-        //        logIntcs << (int)it->getType(i) << "-";
-        //    }
+        //for (int i = 0; i < 4; i++) {
+        //    logCustomSFPipes << sf_rnr_diams[i] << "\t";
+        //    logCustomSFPipes << sf_rnr_wallthicks[i] << "\t";
+        //    logCustomSFPipes << sf_rnr_lengths[i] << "\t";
+        //    logCustomSFPipes << sf_hdr_diams[i] << "\t";
+        //    logCustomSFPipes << sf_hdr_wallthicks[i] << "\t";
+        //    logCustomSFPipes << sf_hdr_lengths[i] << "\t";
+
+        //    logCustomSFPipes << "\n";
         //    //log.flush();
-        //    logIntcs << "\n";
         //}
-        //logIntcs.close();
+        //logCustomSFPipes.close();
 
 		//The glazingintact array should be converted to bools
 		GlazingIntact.resize(nrow_GlazingIntactIn, ncol_GlazingIntactIn);
