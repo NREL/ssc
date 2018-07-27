@@ -107,7 +107,6 @@ enum {
 	P_pb_pump_coef,
 	P_tes_pump_coef,
     P_V_tes_des,
-    P_L_tes_col_gen,
     P_custom_tes_p_loss,
     P_k_tes_loss_coeffs,
     P_custom_sgs_pipe_sizes,
@@ -267,7 +266,6 @@ tcsvarinfo sam_mw_trough_type251_variables[] = {
     { TCS_PARAM,    TCS_NUMBER,        P_pb_pump_coef,       "pb_pump_coef",         "Pumping power to move 1kg of HTF through PB loop",        "kW/(kg/s)",    "",        "",        ""},
     { TCS_PARAM,    TCS_NUMBER,        P_tes_pump_coef,      "tes_pump_coef",        "Pumping power to move 1kg of HTF through tes loop",       "kW/(kg/s)",    "",        "",        ""},
     { TCS_PARAM,    TCS_NUMBER,        P_V_tes_des,          "V_tes_des",            "Design-point velocity to size the TES pipe diameters",    "m/s",          "",        "",        ""},
-    { TCS_PARAM,    TCS_ARRAY,         P_L_tes_col_gen,      "L_tes_col_gen",        "Length of TES pipes in collection and generation loops",  "m",            "",        "",        ""},
     { TCS_PARAM,    TCS_NUMBER,        P_custom_tes_p_loss,  "custom_tes_p_loss",    "TES pipe losses are based on custom lengths and coeffs",  "-",            "",        "",        ""},
     { TCS_PARAM,    TCS_ARRAY,         P_k_tes_loss_coeffs,  "k_tes_loss_coeffs",    "Minor loss coeffs for the coll, gen, and bypass loops",   "-",            "",        "",        ""},
     { TCS_PARAM,    TCS_NUMBER,        P_custom_sgs_pipe_sizes, "custom_sgs_pipe_sizes", "Use custom SGS pipe diams, wallthks, and lengths",    "-",            "",        "",   "false"},
@@ -427,9 +425,6 @@ private:
 	double pb_pump_coef;
 	double tes_pump_coef;
     double V_tes_des;
-    int l_L_tes_col_gen;
-    double * L_tes_col_gen_in;
-    util::matrix_t<double> L_tes_col_gen;
     bool custom_tes_p_loss;
     int l_k_tes_loss_coeffs;
     double * k_tes_loss_coeffs_in;
@@ -440,7 +435,7 @@ private:
     int l_sgs_wallthicks;
     double * sgs_wallthicks;
     int l_sgs_lengths;
-    double * sgs_lengths;
+    double * sgs_lengths_in;
     double pb_fixed_par;
 	int l_bop_array;		
 	double * bop_array;
@@ -488,6 +483,7 @@ private:
     util::matrix_t<double> SGS_v_dot_rel;
     util::matrix_t<double> SGS_diams;
     util::matrix_t<double> SGS_wall_thk;
+    util::matrix_t<double> SGS_lengths;
     util::matrix_t<double> SGS_m_dot_des;
     util::matrix_t<double> SGS_vel_des;
 
@@ -565,8 +561,6 @@ public:
 		pb_pump_coef	= std::numeric_limits<double>::quiet_NaN();
 		tes_pump_coef	= std::numeric_limits<double>::quiet_NaN();
         V_tes_des       = std::numeric_limits<double>::quiet_NaN();
-        l_L_tes_col_gen = -1;
-        L_tes_col_gen_in        = 0;
         custom_tes_p_loss       = false;
         l_k_tes_loss_coeffs     = -1;
         k_tes_loss_coeffs_in    = 0;
@@ -773,8 +767,6 @@ public:
 		pb_pump_coef	= value(P_pb_pump_coef);			//[kW/kg]
 		tes_pump_coef	= value(P_tes_pump_coef);			//[kW/kg]
         V_tes_des       = value(P_V_tes_des);               //[m/s]
-        L_tes_col_gen_in  = value(P_L_tes_col_gen, &l_L_tes_col_gen);                 //[m]
-        L_tes_col_gen.assign(L_tes_col_gen_in, l_L_tes_col_gen);
         custom_tes_p_loss       = (bool) value(P_custom_tes_p_loss);                  //[-]
         k_tes_loss_coeffs_in    = value(P_k_tes_loss_coeffs, &l_k_tes_loss_coeffs);   //[-]
         k_tes_loss_coeffs.assign(k_tes_loss_coeffs_in, l_k_tes_loss_coeffs);
@@ -782,7 +774,8 @@ public:
         custom_sgs_pipe_sizes = (bool) value(P_custom_sgs_pipe_sizes);
         sgs_diams = value(P_sgs_diams, &l_sgs_diams);                   //[m]
         sgs_wallthicks = value(P_sgs_wallthicks, &l_sgs_wallthicks);    //[m]
-        sgs_lengths = value(P_sgs_lengths, &l_sgs_lengths);             //[m]
+        sgs_lengths_in = value(P_sgs_lengths, &l_sgs_lengths);             //[m]
+        SGS_lengths.assign(sgs_lengths_in, l_sgs_lengths);
 
 		pb_fixed_par	= value(P_pb_fixed_par);			//[-]
 	
@@ -989,10 +982,14 @@ public:
         tanks_in_parallel ? T_pb_in = T_field_out_des : T_pb_in = T_tank_hot_prev;
 
         // Size SGS piping and output values
+        if (custom_sgs_pipe_sizes) {
+            SGS_diams.assign(sgs_diams, l_sgs_diams);
+            SGS_wall_thk.assign(sgs_wallthicks, l_sgs_wallthicks);
+        }
         double rho_avg = field_htfProps.dens((T_field_in_des + T_field_out_des) / 2, 9 / 1.e-5);
         double SGS_vol_tot;
-        if ( size_sgs_piping(V_tes_des, L_tes_col_gen, rho_avg, m_dot_pb_design, solarm, tanks_in_parallel,     // Inputs
-            SGS_vol_tot, SGS_v_dot_rel, SGS_diams, SGS_wall_thk, SGS_m_dot_des, SGS_vel_des) ) {        // Outputs
+        if ( size_sgs_piping(V_tes_des, SGS_lengths, rho_avg, m_dot_pb_design, solarm, tanks_in_parallel,     // Inputs
+            SGS_vol_tot, SGS_v_dot_rel, SGS_diams, SGS_wall_thk, SGS_m_dot_des, SGS_vel_des, custom_sgs_pipe_sizes) ) {        // Outputs
             message(TCS_ERROR, "SGS piping sizing failed.");
             return -1;
         }
@@ -2011,7 +2008,7 @@ public:
             double rho_sf, rho_pb;
             double DP_col, DP_gen;
             sgs_pressure_drops(m_dot_field, m_dot_pb, SGS_v_dot_rel, T_field_in, T_field_out, T_pb_in, T_pb_out,
-                L_tes_col_gen, SGS_diams, HDR_rough, k_tes_loss_coeffs, tanks_in_parallel, recirculating, DP_col, DP_gen);
+                SGS_lengths, SGS_diams, HDR_rough, k_tes_loss_coeffs, tanks_in_parallel, recirculating, DP_col, DP_gen);
             rho_sf = field_htfProps.dens((T_field_in + T_field_out) / 2., 8e5);
             rho_pb = field_htfProps.dens((T_pb_in + T_pb_out) / 2., 1e5);
             if (is_hx) {
@@ -2192,7 +2189,7 @@ public:
 	
     int size_sgs_piping(double vel_dsn, util::matrix_t<double> L, double rho_avg, double m_dot_pb, double solarm,
         bool tanks_in_parallel, double &vol_tot, util::matrix_t<double> &v_dot_rel, util::matrix_t<double> &diams,
-        util::matrix_t<double> &wall_thk, util::matrix_t<double> &m_dot, util::matrix_t<double> &vel)
+        util::matrix_t<double> &wall_thk, util::matrix_t<double> &m_dot, util::matrix_t<double> &vel, bool custom_sizes = false)
     {
         const std::size_t bypass_index = 4;
         const std::size_t gen_first_index = 5;      // first generation section index in combined col. gen. loops
@@ -2204,11 +2201,13 @@ public:
         vol_tot = 0.0;                              // total volume in SGS piping
         std::size_t nPipes = L.ncells();
         v_dot_rel.resize_fill(nPipes, 0.0);         // volumetric flow rate relative to the solar field or power block flow
-        diams.resize_fill(nPipes, 0.0);
-        wall_thk.resize_fill(nPipes, 0.0);
         m_dot.resize_fill(nPipes, 0.0);
         vel.resize_fill(nPipes, 0.0);
         std::vector<int> sections_no_bypass;
+        if (!custom_sizes) {
+            diams.resize_fill(nPipes, 0.0);
+            wall_thk.resize_fill(nPipes, 0.0);
+        }
 
         m_dot_sf = m_dot_pb * solarm;
         v_dot_sf = m_dot_sf / rho_avg;
@@ -2246,8 +2245,10 @@ public:
             if (L.at(i) > 0) {
                 i < gen_first_index ? v_dot_ref = v_dot_sf : v_dot_ref = v_dot_pb;
                 v_dot = v_dot_ref * v_dot_rel.at(i);
-                diams.at(i) = CSP::pipe_sched(sqrt(4.0*v_dot / (vel_dsn * CSP::pi)));
-                wall_thk.at(i) = CSP::WallThickness(diams.at(i));
+                if (!custom_sizes) {
+                    diams.at(i) = CSP::pipe_sched(sqrt(4.0*v_dot / (vel_dsn * CSP::pi)));
+                    wall_thk.at(i) = CSP::WallThickness(diams.at(i));
+                }
                 m_dot.at(i) = v_dot * rho_avg;
                 Area = CSP::pi * pow(diams.at(i), 2) / 4.;
                 vel.at(i) = v_dot / Area;

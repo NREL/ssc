@@ -1606,17 +1606,28 @@ public:
             P_loop.resize(2*nSCA + 3);
             T_loop.resize(2*nSCA + 3);
 
-			std::string summary;
-			header_design(nhdrsec, nfsec, nrunsec, rho_ave, V_hdr_cold_max, V_hdr_cold_min,
-                V_hdr_hot_max, V_hdr_hot_min, N_max_hdr_diams, m_dot_design, D_hdr, D_runner,
-                m_dot_rnr_dsn, m_dot_hdr_dsn, V_rnr_dsn, V_hdr_dsn, &summary);
-
-            // Calculate pipe wall thicknesses
-            for (int i = 0; i < D_runner.ncells(); i++) {
-                WallThk_runner[i] = CSP::WallThickness(D_runner[i]);
+            if (custom_sf_pipe_sizes) {
+                D_runner.assign(sf_rnr_diams, nval_sf_rnr_diams);
+                WallThk_runner.assign(sf_rnr_wallthicks, nval_sf_rnr_wallthicks);
+                L_runner.assign(sf_rnr_lengths, nval_sf_rnr_lengths);
+                D_hdr.assign(sf_hdr_diams, nval_sf_hdr_diams);
+                WallThk_hdr.assign(sf_hdr_wallthicks, nval_sf_hdr_wallthicks);
+                L_hdr.assign(sf_hdr_lengths, nval_sf_hdr_lengths);
             }
-            for (int i = 0; i < D_hdr.ncells(); i++) {
-                WallThk_hdr[i] = CSP::WallThickness(D_hdr[i]);
+
+			std::string summary;
+            rnr_and_hdr_design(nhdrsec, nfsec, nrunsec, rho_ave, V_hdr_cold_max, V_hdr_cold_min,
+                V_hdr_hot_max, V_hdr_hot_min, N_max_hdr_diams, m_dot_design, D_hdr, D_runner,
+                m_dot_rnr_dsn, m_dot_hdr_dsn, V_rnr_dsn, V_hdr_dsn, &summary, custom_sf_pipe_sizes);
+
+            if (!custom_sf_pipe_sizes) {
+                // Calculate pipe wall thicknesses
+                for (int i = 0; i < D_runner.ncells(); i++) {
+                    WallThk_runner[i] = CSP::WallThickness(D_runner[i]);
+                }
+                for (int i = 0; i < D_hdr.ncells(); i++) {
+                    WallThk_hdr[i] = CSP::WallThickness(D_hdr[i]);
+                }
             }
 
 			//report the header and runner metrics
@@ -1641,14 +1652,14 @@ public:
 
 			// Do one-time calculations for system geometry.
             // Determine header section lengths, including expansion loops
-            if (size_hdr_lengths(Row_Distance, nhdrsec, offset_xpan_hdr, N_hdr_per_xpan, L_xpan_hdr, L_hdr, N_hdr_xpans)) {
+            if (size_hdr_lengths(Row_Distance, nhdrsec, offset_xpan_hdr, N_hdr_per_xpan, L_xpan_hdr, L_hdr, N_hdr_xpans, custom_sf_pipe_sizes)) {
                 message(TCS_ERROR, "header length sizing failed");
                 return -1;
             }
             
             // Determine runner section lengths, including expansion loops
             if (size_rnr_lengths(nfsec, L_rnr_pb, nrunsec, SCAInfoArray.at(0, 1), northsouth_field_sep,
-                L_SCA, Min_rnr_xpans, Distance_SCA, nSCA, L_rnr_per_xpan, L_xpan_rnr, L_runner, N_rnr_xpans)) {
+                L_SCA, Min_rnr_xpans, Distance_SCA, nSCA, L_rnr_per_xpan, L_xpan_rnr, L_runner, N_rnr_xpans, custom_sf_pipe_sizes)) {
                 message(TCS_ERROR, "runner length sizing failed");
                 return -1;
             }
@@ -3396,28 +3407,31 @@ set_outputs_and_return:
 	// ------------------------------------------ supplemental methods -----------------------------------------------------------
 
     int size_hdr_lengths(double L_row_sep, int Nhdrsec, int offset_hdr_xpan, int Ncol_loops_per_xpan, double L_hdr_xpan,
-        util::matrix_t<double> &L_hdr, util::matrix_t<double> &N_hdr_xpans) {
+        util::matrix_t<double> &L_hdr, util::matrix_t<double> &N_hdr_xpans, bool custom_lengths = false) {
         // Parameters:
         // L_row_sep			distance between SCA rows, centerline to centerline
         // Nhdrsec				number of header sections (tee-conns.) per field section			
         // offset_hdr_xpan		location of first header expansion loop							
         // Ncol_loops_per_xpan	number of collector loops per expansion loop						
-        // L_hdr_xpan			combined perpendicular lengths of each header expansion loop		
+        // L_hdr_xpan			combined perpendicular lengths of each header expansion loop
+        // custom_lengths       should the lengths be input instead of calculated?
 
         // Outputs :
         // &L_hdr				length of the header sections
         // &N_hdr_xpans			number of expansion loops in the header section
 
-        L_hdr.fill(2 * L_row_sep);
+        if (!custom_lengths) L_hdr.fill(2 * L_row_sep);
         N_hdr_xpans.fill(0);
         for (int i = 0; i < Nhdrsec; i++)
         {
             if ((i - offset_hdr_xpan) % Ncol_loops_per_xpan == 0)
             {
-                L_hdr[i] += L_hdr_xpan;                       // start with cold loop
-                N_hdr_xpans[i]++;
-                L_hdr[2 * Nhdrsec - 1 - i] += L_hdr_xpan;     // pair hot loop
-                N_hdr_xpans[2 * Nhdrsec - 1 - i]++;
+                N_hdr_xpans[i]++;                                 // start with cold loop
+                N_hdr_xpans[2 * Nhdrsec - 1 - i]++;               // pair hot loop
+                if (!custom_lengths) {
+                    L_hdr[i] += L_hdr_xpan;                       // cold loop
+                    L_hdr[2 * Nhdrsec - 1 - i] += L_hdr_xpan;     // pair hot loop
+                }
             }
         }
 
@@ -3426,7 +3440,8 @@ set_outputs_and_return:
 
     int size_rnr_lengths(int Nfieldsec, double L_rnr_pb, int Nrnrsec, int ColType, double northsouth_field_sep,
         const double *L_SCA, int min_rnr_xpans, const double *L_gap_sca, double Nsca_loop,
-        double L_rnr_per_xpan, double L_rnr_xpan, util::matrix_t<double> &L_runner, util::matrix_t<double> &N_rnr_xpans) {
+        double L_rnr_per_xpan, double L_rnr_xpan, util::matrix_t<double> &L_runner, util::matrix_t<double> &N_rnr_xpans,
+        bool custom_lengths = false) {
         // Parameters:
         // Nfieldsec				number of field sections
         // L_rnr_pb				    length of runner piping in and around the power block
@@ -3439,6 +3454,7 @@ set_outputs_and_return:
         // Nsca_loop				number of SCAs in a loop
         // L_rnr_per_xpan			threshold length of straight runner pipe without an expansion loop
         // L_rnr_xpan				combined perpendicular lengths of each runner expansion loop
+        // custom_lengths           should the lengths be input instead of calculated?
 
         // Outputs :
         // &L_runner				length of the runner sections
@@ -3474,8 +3490,10 @@ set_outputs_and_return:
                 x1 = 1.;     //the first runners are short
             }
 
-        L_runner[0] = L_rnr_pb;  // Runner piping in and around the power block
-        L_runner[2 * Nrnrsec - 1] = L_rnr_pb;  // assume symmetric runners
+        if (!custom_lengths) {
+            L_runner[0] = L_rnr_pb;  // Runner piping in and around the power block
+            L_runner[2 * Nrnrsec - 1] = L_rnr_pb;  // assume symmetric runners
+        }
         N_rnr_xpans[0] = 0;
         N_rnr_xpans[2 * Nrnrsec - 1] = N_rnr_xpans[0];
         if (Nrnrsec > 1)
@@ -3487,12 +3505,13 @@ set_outputs_and_return:
                 L_runner_linear = x1 * (northsouth_field_sep + (L_SCA[j] + L_gap_sca[j])*float(Nsca_loop) / 2.);  // no expansion loops
                 N_rnr_xpans[i] = max(min_rnr_xpans, (int)CSP::nint(L_runner_linear / L_rnr_per_xpan));
                 N_rnr_xpans[2 * Nrnrsec - i - 1] = N_rnr_xpans[i];
-                L_runner[i] = L_runner_linear + L_rnr_xpan * N_rnr_xpans;
-                L_runner[2 * Nrnrsec - i - 1] = L_runner[i];    // assume symmetric runners
+                if (!custom_lengths) {
+                    L_runner[i] = L_runner_linear + L_rnr_xpan * N_rnr_xpans;
+                    L_runner[2 * Nrnrsec - i - 1] = L_runner[i];    // assume symmetric runners
+                }
                 x1 = 2.;   //tn 4.25.11 Default to 2 for subsequent runners
             }
         }
-
 
         return 0;
     }
@@ -5181,19 +5200,22 @@ lab_keep_guess:
        * m_dot_rnr - [kg/s] Mass flow rate in each runner section at design
        * V_rnr - [m/s] Velocity in each runner section at design
 	   * summary - Address of string variable on which summary contents will be written.
+       * custom_diams - [-] Should the diameters be input instead of calculated? 
 	---------------------------------------------------------------------------------			*/
 
-	void header_design(unsigned nhsec, int nfsec, unsigned nrunsec, double rho, double V_cold_max, double V_cold_min,
+	void rnr_and_hdr_design(unsigned nhsec, int nfsec, unsigned nrunsec, double rho, double V_cold_max, double V_cold_min,
         double V_hot_max, double V_hot_min, int N_max_hdr_diams, double m_dot, util::matrix_t<double> &D_hdr, util::matrix_t<double> &D_runner,
         util::matrix_t<double> &m_dot_rnr, util::matrix_t<double> &m_dot_hdr, util::matrix_t<double> &V_rnr, util::matrix_t<double> &V_hdr,
-        std::string *summary = NULL){
+        std::string *summary = NULL, bool custom_diams = false){
 	
 		//resize the header matrices if they are incorrect
 		//real(8),intent(out):: D_hdr(nhsec), D_runner(nrunsec)
-		if(D_hdr.ncells() != 2*nhsec) D_hdr.resize(2*nhsec);
+        if (!custom_diams) {
+		    if(D_hdr.ncells() != 2*nhsec) D_hdr.resize(2*nhsec);
+		    if(D_runner.ncells() != 2*nrunsec) D_runner.resize(2*nrunsec);
+        }
         if(m_dot_hdr.ncells() != 2*nhsec) m_dot_hdr.resize(2*nhsec);
         if(V_hdr.ncells() != 2*nhsec) V_hdr.resize(2*nhsec);
-		if(D_runner.ncells() != 2*nrunsec) D_runner.resize(2*nrunsec);
         if(m_dot_rnr.ncells() != 2*nrunsec) m_dot_rnr.resize(2*nrunsec);
         if(V_rnr.ncells() != 2*nrunsec) V_rnr.resize(2*nrunsec);
 
@@ -5212,8 +5234,10 @@ lab_keep_guess:
         //assume symmetric hot and cold runners
 		m_dot_rnr[0] = m_dot/2.;   //mass flow through half-length runners is always half of total
         m_dot_rnr[2 * nrunsec - 1] = m_dot_rnr[0];
-		D_runner.at(0) = CSP::pipe_sched(sqrt(4.*m_dot_rnr[0]/(rho*V_cold_max*pi)));
-        D_runner.at(2 * nrunsec - 1) = D_runner.at(0);
+        if (!custom_diams) {
+		    D_runner.at(0) = CSP::pipe_sched(sqrt(4.*m_dot_rnr[0]/(rho*V_cold_max*pi)));
+            D_runner.at(2 * nrunsec - 1) = D_runner.at(0);
+        }
         V_rnr.at(0) = 4.*m_dot_rnr[0] / (rho*pow(D_runner.at(0), 2)*pi);
         V_rnr.at(2 * nrunsec - 1) = V_rnr.at(0);
 		for (unsigned i=1; i<nrunsec; i++){
@@ -5224,8 +5248,10 @@ lab_keep_guess:
 				m_dot_rnr[i] = max(m_dot_rnr[i-1] - m_dot_hdrs*2, 0.0);
             }
             m_dot_rnr[2 * nrunsec - i - 1] = m_dot_rnr[i];
-			D_runner[i] = CSP::pipe_sched(sqrt(4.*m_dot_rnr[i]/(rho*V_cold_max*pi)));
-            D_runner[2 * nrunsec - i - 1] = D_runner[i];
+            if (!custom_diams) {
+			    D_runner[i] = CSP::pipe_sched(sqrt(4.*m_dot_rnr[i]/(rho*V_cold_max*pi)));
+                D_runner[2 * nrunsec - i - 1] = D_runner[i];
+            }
             V_rnr.at(i) = 4.*m_dot_rnr[i] / (rho*pow(D_runner.at(i), 2)*pi);
             V_rnr.at(2 * nrunsec - i - 1) = V_rnr.at(i);
 		}
@@ -5236,55 +5262,72 @@ lab_keep_guess:
         double D_hdr_next = 0; double V_enter_next = 0;
         double D_hdr_next2 = 0; double V_enter_next2 = 0;
         nd = 0;
-        for (std::size_t i = 0; i < nhsec; i++) {
-            if (i == 0) {
-                m_dot_enter = m_dot_hdrs;
-                // Size cold header diameter using V_max to allow for mass loss into loops
-                // Select actual pipe that is larger (param=true) than ideal pipe b/c if smaller it will definitely exceed V_max
-                D_hdr[i] = CSP::pipe_sched(sqrt(4.*m_dot_enter / (rho*V_hdr_cold_max*pi)), true);
-                V_enter = 4.*m_dot_enter / (rho*pi*D_hdr[i] * D_hdr[i]);
-                if (V_enter < V_hdr_cold_min) {  // if the entering velocity will be below the minimum (it won't exceed V_max)
-                    D_hdr_next = CSP::pipe_sched(sqrt(4.*m_dot_enter / (rho*V_hdr_cold_max*pi)), false);   // size smaller this time, will definitely exceed V_max
-                    V_enter_next = 4.*m_dot_enter / (rho*pi*D_hdr_next*D_hdr_next);
-                    // Choose the smaller diameter (faster V) if it's closer to being in range
-                    if (V_enter_next - V_hdr_cold_max <= V_hdr_cold_min - V_enter) {  // '<=' is so the smaller (faster) pipe is preferred in a tie
-                        D_hdr[i] = D_hdr_next;
-                    }
+        if (custom_diams) {
+            for (std::size_t i = 0; i < nhsec; i++) {
+                if (i == 0) {
+                    m_dot_enter = m_dot_hdrs;
+                    V_enter = 4.*m_dot_enter / (rho*pi*D_hdr[i] * D_hdr[i]);
                 }
-                nd++;
+                else if (nd < N_max_hdr_diams) {
+                    m_dot_enter -= m_dot_2loops;
+                    V_enter = 4.*m_dot_enter / (rho*pi*D_hdr[i - 1] * D_hdr[i - 1]);  // assuming no diameter change
+                }
+                m_dot_hdr[i] = m_dot_enter;
+                V_hdr[i] = V_enter;
             }
-            else if (nd < N_max_hdr_diams) {
-                m_dot_enter -= m_dot_2loops;
-                V_enter = 4.*m_dot_enter / (rho*pi*D_hdr[i - 1] * D_hdr[i - 1]);  // assuming no diameter change
-                if (V_enter < V_hdr_cold_min) {   // if the entering velocity will be below the minimum if there is no diameter change
-                    D_hdr_next = CSP::pipe_sched(sqrt(4.*m_dot_enter / (rho*V_hdr_cold_max*pi)), true);  // size larger than optimal so it won't exceed V_max
-                    V_enter_next = 4.*m_dot_enter / (rho*pi*D_hdr_next*D_hdr_next);
-                    if (V_enter_next < V_hdr_cold_min) {  // if the velocity is still below V_min (it won't exceed V_max)
-                        // try smaller than the optimal this time and choose the one with the velocity closest to being in range
-                        D_hdr_next2 = CSP::pipe_sched(sqrt(4.*m_dot_enter / (rho*V_hdr_cold_max*pi)), false);  // size smaller this time (will exceed V_max)
-                        V_enter_next2 = 4.*m_dot_enter / (rho*pi*D_hdr_next2*D_hdr_next2);
-                        if (V_hdr_cold_min - V_enter_next < V_enter_next2 - V_hdr_cold_max) {   // '<' is so the smaller (faster) pipe is preferred in a tie
+        }
+        else {
+            for (std::size_t i = 0; i < nhsec; i++) {
+                if (i == 0) {
+                    m_dot_enter = m_dot_hdrs;
+                    // Size cold header diameter using V_max to allow for mass loss into loops
+                    // Select actual pipe that is larger (param=true) than ideal pipe b/c if smaller it will definitely exceed V_max
+                    D_hdr[i] = CSP::pipe_sched(sqrt(4.*m_dot_enter / (rho*V_hdr_cold_max*pi)), true);
+                    V_enter = 4.*m_dot_enter / (rho*pi*D_hdr[i] * D_hdr[i]);
+                    if (V_enter < V_hdr_cold_min) {  // if the entering velocity will be below the minimum (it won't exceed V_max)
+                        D_hdr_next = CSP::pipe_sched(sqrt(4.*m_dot_enter / (rho*V_hdr_cold_max*pi)), false);   // size smaller this time, will definitely exceed V_max
+                        V_enter_next = 4.*m_dot_enter / (rho*pi*D_hdr_next*D_hdr_next);
+                        // Choose the smaller diameter (faster V) if it's closer to being in range
+                        if (V_enter_next - V_hdr_cold_max <= V_hdr_cold_min - V_enter) {  // '<=' is so the smaller (faster) pipe is preferred in a tie
                             D_hdr[i] = D_hdr_next;
                         }
-                        else {
-                            D_hdr[i] = D_hdr_next2;
+                    }
+                    nd++;
+                }
+                else if (nd < N_max_hdr_diams) {
+                    m_dot_enter -= m_dot_2loops;
+                    V_enter = 4.*m_dot_enter / (rho*pi*D_hdr[i - 1] * D_hdr[i - 1]);  // assuming no diameter change
+                    if (V_enter < V_hdr_cold_min) {   // if the entering velocity will be below the minimum if there is no diameter change
+                        D_hdr_next = CSP::pipe_sched(sqrt(4.*m_dot_enter / (rho*V_hdr_cold_max*pi)), true);  // size larger than optimal so it won't exceed V_max
+                        V_enter_next = 4.*m_dot_enter / (rho*pi*D_hdr_next*D_hdr_next);
+                        if (V_enter_next < V_hdr_cold_min) {  // if the velocity is still below V_min (it won't exceed V_max)
+                            // try smaller than the optimal this time and choose the one with the velocity closest to being in range
+                            D_hdr_next2 = CSP::pipe_sched(sqrt(4.*m_dot_enter / (rho*V_hdr_cold_max*pi)), false);  // size smaller this time (will exceed V_max)
+                            V_enter_next2 = 4.*m_dot_enter / (rho*pi*D_hdr_next2*D_hdr_next2);
+                            if (V_hdr_cold_min - V_enter_next < V_enter_next2 - V_hdr_cold_max) {   // '<' is so the smaller (faster) pipe is preferred in a tie
+                                D_hdr[i] = D_hdr_next;
+                            }
+                            else {
+                                D_hdr[i] = D_hdr_next2;
+                            }
                         }
+                        else {
+                            D_hdr[i] = D_hdr_next;
+                        }
+                        if ((D_hdr[i - 1] - D_hdr[i]) > 0.001) { nd++; }
                     }
                     else {
-                        D_hdr[i] = D_hdr_next;
+                        D_hdr[i] = D_hdr[i - 1];
                     }
-                    if ((D_hdr[i - 1] - D_hdr[i]) > 0.001) { nd++; }
                 }
                 else {
                     D_hdr[i] = D_hdr[i - 1];
                 }
+                m_dot_hdr[i] = m_dot_enter;
+                V_hdr[i] = V_enter;
             }
-            else {
-                D_hdr[i] = D_hdr[i - 1];
-            }
-            m_dot_hdr[i] = m_dot_enter;
-            V_hdr[i] = V_enter;
         }
+
 
         //Calculate each section in the hot header
         double m_dot_leave = 0;
@@ -5292,56 +5335,71 @@ lab_keep_guess:
         D_hdr_next = 0; double V_leave_next = 0;
         D_hdr_next2 = 0; double V_leave_next2 = 0;
         nd = 0;
-        for (std::size_t i = nhsec; i < 2*nhsec; i++) {
-            if (i == nhsec) {
-                m_dot_leave = m_dot_2loops;
-                // Size hot header diameter using V_min to allow for mass addition from downstream loops
-                // Select actual pipe that is smaller than ideal pipe b/c if sizing larger it will definitely deceed V_min
-                D_hdr[i] = CSP::pipe_sched(sqrt(4.*m_dot_leave / (rho*V_hdr_hot_min*pi)), false);
-                V_leave = 4.*m_dot_leave / (rho*pi*D_hdr[i] * D_hdr[i]);
-                if (V_leave > V_hdr_hot_max) {   // if the leaving velocity will be above the maximum (it won't deceed V_min)
-                    D_hdr_next = CSP::pipe_sched(sqrt(4.*m_dot_leave / (rho*V_hdr_hot_min*pi)), true);   // size larger this time, will definitely be below V_min
-                    V_leave_next = 4.*m_dot_leave / (rho*pi*D_hdr_next*D_hdr_next);
-                        // Choose the larger diameter (slower V) if it's closer to being in range
-                        if (V_hdr_hot_min - V_leave_next < V_leave - V_hdr_hot_max) {  // '<' is so the smaller (cheaper) pipe is preferred in a tie
-                            D_hdr[i] = D_hdr_next;
-                        }
+        if (custom_diams) {
+            for (std::size_t i = nhsec; i < 2 * nhsec; i++) {
+                if (i == nhsec) {
+                    m_dot_leave = m_dot_2loops;
+                    V_leave = 4.*m_dot_leave / (rho*pi*D_hdr[i] * D_hdr[i]);
                 }
-                nd++;
+                else if (nd < N_max_hdr_diams) {
+                    m_dot_leave += m_dot_2loops;
+                    V_leave = 4.*m_dot_leave / (rho*pi*D_hdr[i - 1] * D_hdr[i - 1]);  // assuming no diameter change
+                }
+                m_dot_hdr[i] = m_dot_leave;
+                V_hdr[i] = V_leave;
             }
-            else if (nd < N_max_hdr_diams) {
-                m_dot_leave += m_dot_2loops;
-                V_leave = 4.*m_dot_leave / (rho*pi*D_hdr[i - 1] * D_hdr[i - 1]);  // assuming no diameter change
-                if (V_leave > V_hdr_hot_max) {   // if the leaving velocity will be above the maximum if there is no diameter change
-                    D_hdr_next = CSP::pipe_sched(sqrt(4.*m_dot_leave / (rho*V_hdr_hot_min*pi)), false);  // size smaller than optimal so it won't deceed V_min
-                    V_leave_next = 4.*m_dot_leave / (rho*pi*D_hdr_next*D_hdr_next);
-                    if (V_leave_next > V_hdr_hot_max) {  // if the velocity is still above V_max (it won't be below V_min)
-                        // try larger than the optimal this time and choose the one with the velocity closest to being in range
-                        D_hdr_next2 = CSP::pipe_sched(sqrt(4.*m_dot_leave / (rho*V_hdr_hot_min*pi)), true);  // size larger this time (will be below V_min)
-                        V_leave_next2 = 4.*m_dot_leave / (rho*pi*D_hdr_next2*D_hdr_next2);
-                        if (V_leave_next - V_hdr_hot_max <= V_hdr_hot_min - V_leave_next2) {   // '<=' is so the smaller (cheaper) pipe is preferred in a tie
-                            D_hdr[i] = D_hdr_next;
+        }
+        else {
+            for (std::size_t i = nhsec; i < 2*nhsec; i++) {
+                if (i == nhsec) {
+                    m_dot_leave = m_dot_2loops;
+                    // Size hot header diameter using V_min to allow for mass addition from downstream loops
+                    // Select actual pipe that is smaller than ideal pipe b/c if sizing larger it will definitely deceed V_min
+                    D_hdr[i] = CSP::pipe_sched(sqrt(4.*m_dot_leave / (rho*V_hdr_hot_min*pi)), false);
+                    V_leave = 4.*m_dot_leave / (rho*pi*D_hdr[i] * D_hdr[i]);
+                    if (V_leave > V_hdr_hot_max) {   // if the leaving velocity will be above the maximum (it won't deceed V_min)
+                        D_hdr_next = CSP::pipe_sched(sqrt(4.*m_dot_leave / (rho*V_hdr_hot_min*pi)), true);   // size larger this time, will definitely be below V_min
+                        V_leave_next = 4.*m_dot_leave / (rho*pi*D_hdr_next*D_hdr_next);
+                            // Choose the larger diameter (slower V) if it's closer to being in range
+                            if (V_hdr_hot_min - V_leave_next < V_leave - V_hdr_hot_max) {  // '<' is so the smaller (cheaper) pipe is preferred in a tie
+                                D_hdr[i] = D_hdr_next;
+                            }
+                    }
+                    nd++;
+                }
+                else if (nd < N_max_hdr_diams) {
+                    m_dot_leave += m_dot_2loops;
+                    V_leave = 4.*m_dot_leave / (rho*pi*D_hdr[i - 1] * D_hdr[i - 1]);  // assuming no diameter change
+                    if (V_leave > V_hdr_hot_max) {   // if the leaving velocity will be above the maximum if there is no diameter change
+                        D_hdr_next = CSP::pipe_sched(sqrt(4.*m_dot_leave / (rho*V_hdr_hot_min*pi)), false);  // size smaller than optimal so it won't deceed V_min
+                        V_leave_next = 4.*m_dot_leave / (rho*pi*D_hdr_next*D_hdr_next);
+                        if (V_leave_next > V_hdr_hot_max) {  // if the velocity is still above V_max (it won't be below V_min)
+                            // try larger than the optimal this time and choose the one with the velocity closest to being in range
+                            D_hdr_next2 = CSP::pipe_sched(sqrt(4.*m_dot_leave / (rho*V_hdr_hot_min*pi)), true);  // size larger this time (will be below V_min)
+                            V_leave_next2 = 4.*m_dot_leave / (rho*pi*D_hdr_next2*D_hdr_next2);
+                            if (V_leave_next - V_hdr_hot_max <= V_hdr_hot_min - V_leave_next2) {   // '<=' is so the smaller (cheaper) pipe is preferred in a tie
+                                D_hdr[i] = D_hdr_next;
+                            }
+                            else {
+                                D_hdr[i] = D_hdr_next2;
+                            }
                         }
                         else {
-                            D_hdr[i] = D_hdr_next2;
+                            D_hdr[i] = D_hdr_next;
                         }
+                        if ((D_hdr[i] - D_hdr[i - 1]) > 0.001) { nd++; }
                     }
                     else {
-                        D_hdr[i] = D_hdr_next;
+                        D_hdr[i] = D_hdr[i - 1];
                     }
-                    if ((D_hdr[i] - D_hdr[i - 1]) > 0.001) { nd++; }
                 }
                 else {
                     D_hdr[i] = D_hdr[i - 1];
                 }
+                m_dot_hdr[i] = m_dot_leave;
+                V_hdr[i] = V_leave;
             }
-            else {
-                D_hdr[i] = D_hdr[i - 1];
-            }
-            m_dot_hdr[i] = m_dot_leave;
-            V_hdr[i] = V_leave;
         }
-
 		
 		//Print the results to a string
 		if(summary != NULL){
