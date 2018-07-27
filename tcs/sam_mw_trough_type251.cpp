@@ -394,6 +394,7 @@ private:
 	Thermocline_TES thermocline;
 
 	// Parameters
+    const int N_sgs_pipe_sections = 11;
 	double tshours;
     double eta_pump;
     double HDR_rough;
@@ -983,8 +984,14 @@ public:
 
         // Size SGS piping and output values
         if (custom_sgs_pipe_sizes) {
-            SGS_diams.assign(sgs_diams, l_sgs_diams);
-            SGS_wall_thk.assign(sgs_wallthicks, l_sgs_wallthicks);
+            if (l_sgs_diams == N_sgs_pipe_sections && l_sgs_wallthicks == N_sgs_pipe_sections) {
+                SGS_diams.assign(sgs_diams, l_sgs_diams);
+                SGS_wall_thk.assign(sgs_wallthicks, l_sgs_wallthicks);
+            }
+            else {
+                message(TCS_ERROR, "The number of custom SGS pipe sections is not correct.");
+                return -1;
+            }
         }
         double rho_avg = field_htfProps.dens((T_field_in_des + T_field_out_des) / 2, 9 / 1.e-5);
         double SGS_vol_tot;

@@ -1607,12 +1607,19 @@ public:
             T_loop.resize(2*nSCA + 3);
 
             if (custom_sf_pipe_sizes) {
-                D_runner.assign(sf_rnr_diams, nval_sf_rnr_diams);
-                WallThk_runner.assign(sf_rnr_wallthicks, nval_sf_rnr_wallthicks);
-                L_runner.assign(sf_rnr_lengths, nval_sf_rnr_lengths);
-                D_hdr.assign(sf_hdr_diams, nval_sf_hdr_diams);
-                WallThk_hdr.assign(sf_hdr_wallthicks, nval_sf_hdr_wallthicks);
-                L_hdr.assign(sf_hdr_lengths, nval_sf_hdr_lengths);
+                if (nval_sf_rnr_diams == 2*nrunsec && nval_sf_rnr_wallthicks == 2*nrunsec && nval_sf_rnr_lengths == 2*nrunsec &&
+                    nval_sf_hdr_diams == 2*nhdrsec && nval_sf_hdr_wallthicks == 2*nhdrsec && nval_sf_hdr_lengths == 2*nhdrsec) {
+                    D_runner.assign(sf_rnr_diams, nval_sf_rnr_diams);
+                    WallThk_runner.assign(sf_rnr_wallthicks, nval_sf_rnr_wallthicks);
+                    L_runner.assign(sf_rnr_lengths, nval_sf_rnr_lengths);
+                    D_hdr.assign(sf_hdr_diams, nval_sf_hdr_diams);
+                    WallThk_hdr.assign(sf_hdr_wallthicks, nval_sf_hdr_wallthicks);
+                    L_hdr.assign(sf_hdr_lengths, nval_sf_hdr_lengths);
+                }
+                else {
+                    message(TCS_ERROR, "The number of custom solar field pipe sections is not correct.");
+                    return -1;
+                }
             }
 
 			std::string summary;
