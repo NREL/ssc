@@ -63,7 +63,7 @@
 true if the htf temperatures and pressures at design conditions in the runners, farthest header, and farthest loop should be calculated and output. Default = true. [^](#toc)
 
 ### custom_sf_pipe_sizes
-true if the runner and header diameters, wall thicknesses and lengths parameters should be used instead of calculating them. (Note that changing the lengths does not affect the field layout.) [^](#toc)
+true if the runner and header diameters, wall thicknesses and lengths parameters should be used instead of calculating them. Note that changing the lengths does not affect the field layout. [^](#toc)
 
 ### custom_sgs_pipe_sizes
 true if the SGS diameters and wall thicknesses parameters should be used instead of calculating them. (Note that the SGS lengths are always input). [^](#toc)
@@ -105,25 +105,25 @@ north/south separation between subfields, in meters, defined as the shortest dis
 location of the first header expansion loop. Default = 1, which means that the first expansion loop is after the first collector loop closest to the runner. [^](#toc)
 
 ### sf_hdr_diams
-custom diameters for the header piping. Utilized if custom_sf_pipe_sizes is true. [^](#toc)
+custom diameters for the header piping. Utilized if custom_sf_pipe_sizes is true. Do not change the number of values (sections) as this will result in unpredictable model behavior. [^](#toc)
  
 ### sf_hdr_lengths
-custom lengths for the header piping. Utilized if custom_sf_pipe_sizes is true. Changing the lengths does not affect the field layout. [^](#toc)
+custom lengths for the header piping. Utilized if custom_sf_pipe_sizes is true. Changing the lengths does not affect the field layout. Do not change the number of values (sections) as this will result in unpredictable model behavior. [^](#toc)
  
 ### sf_hdr_wallthicks
-custom wall thicknesses for the header piping. Utilized if custom_sf_pipe_sizes is true. [^](#toc)
+custom wall thicknesses for the header piping. Utilized if custom_sf_pipe_sizes is true. Do not change the number of values (sections) as this will result in unpredictable model behavior. [^](#toc)
  
 ### sf_rnr_diams
-custom diameters for the runner piping. Utilized if custom_sf_pipe_sizes is true. [^](#toc)
+custom diameters for the runner piping. Utilized if custom_sf_pipe_sizes is true. Do not change the number of values (sections) as this will result in unpredictable model behavior. [^](#toc)
  
 ### sf_rnr_lengths
-custom lengths for the runner piping. Utilized if custom_sf_pipe_sizes is true. Changing the lengths does not affect the field layout. [^](#toc)
+custom lengths for the runner piping. Utilized if custom_sf_pipe_sizes is true. Changing the lengths does not affect the field layout. Do not change the number of values (sections) as this will result in unpredictable model behavior. [^](#toc)
  
 ### sf_rnr_wallthicks
-custom wall thicknesses for the runner piping. Utilized if custom_sf_pipe_sizes is true. [^](#toc)
+custom wall thicknesses for the runner piping. Utilized if custom_sf_pipe_sizes is true. Do not change the number of values (sections) as this will result in unpredictable model behavior. [^](#toc)
  
 ### sgs_diams
-custom diameters for the SGS piping. Utilized if custom_sgs_pipe_sizes is true. [^](#toc)
+custom diameters for the SGS piping. Utilized if custom_sgs_pipe_sizes is true. Do not change the number of values (sections) as this will result in unpredictable model behavior. [^](#toc)
 
 Collection Sections:
 - 0: &nbsp;&nbsp;&nbsp; Solar field (SF) pump suction header to individual SF pump inlet
@@ -141,10 +141,10 @@ Generation Sections:
 - 10: &nbsp;&nbsp;&nbsp; Steam generator outlet header to SF pump suction header (indirect) or cold thermal storage tank (direct)
 
 ### sgs_lengths
-length of piping in the SGS collection flow loop followed by the generation flow loop [m]. Defaults = {0, 90, 100, 120, 0, 0, 0, 0, 80, 120, 80}. Lengths at indices 0, 1, 5 and 6 are the summed lengths of the multiple individual pump sections. [^](#toc)
+length of piping in the SGS collection flow loop followed by the generation flow loop [m]. Defaults = {0, 90, 100, 120, 0, 0, 0, 0, 80, 120, 80}. Lengths at indices 0, 1, 5 and 6 are the summed lengths of the multiple individual pump sections. Do not change the number of values (sections) as this will result in unpredictable model behavior. [^](#toc)
 
 ### sgs_wallthicks
-custom wall thicknesses for the SGS piping. Utilized if custom_sgs_pipe_sizes is true. [^](#toc)
+custom wall thicknesses for the SGS piping. Utilized if custom_sgs_pipe_sizes is true. Do not change the number of values (sections) as this will result in unpredictable model behavior. [^](#toc)
 
 ### tanks_in_parallel
 true if the hot and cold storage tank branch is in parallel with the solar field (traditional case), or false if the tanks are in series with the solar field (only applicable for direct storage). Default = true. [^](#toc)
