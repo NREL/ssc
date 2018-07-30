@@ -208,6 +208,31 @@ TEST_F(CMPvsamv1PowerIntegration, NoFinancialModelModuleAndInverterModels)
 	}
 }
 
+/// Test PVSAMv1 with default no-financial model and combinations of module thermal, spectral, and reflection models
+//This test can be expanded when we allow different combinations of thermal, spectral, and reflection models with different module models 
+TEST_F(CMPvsamv1PowerIntegration, NoFinancialModelModuleThermalSpectralReflection)
+{
+	std::vector<double> annual_energy_expected = { 8714, 8749 };
+	std::map<std::string, double> pairs;
+	size_t count = 0;
+
+	// Module thermal models: NOCT, Heat Transfer Method
+	for (int cec_temp_corr_mode = 0; cec_temp_corr_mode < 1; cec_temp_corr_mode++)
+	{
+		pairs["cec_temp_corr_mode"] = cec_temp_corr_mode;
+		int pvsam_errors = modify_ssc_data_and_run_module(data, "pvsamv1", pairs);
+		EXPECT_FALSE(pvsam_errors);
+
+		if (!pvsam_errors)
+		{
+			ssc_number_t annual_energy;
+			ssc_data_get_number(data, "annual_energy", &annual_energy);
+			EXPECT_NEAR(annual_energy, annual_energy_expected[count], m_error_tolerance_hi) << "Annual energy.";
+		}
+		count++;
+	}	
+}
+
 /// Test PVSAMv1 with default no-financial model and sytem design page changes
 TEST_F(CMPvsamv1PowerIntegration, NoFinancialModelSystemDesign)
 {
