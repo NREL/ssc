@@ -322,7 +322,8 @@ static var_info _cm_vtab_tcstrough_physical[] = {
     { SSC_OUTPUT,       SSC_ARRAY,       "tou_value",         "Resource Time-of-use value",                                      "",             "",            "tou",            "*",                      "",                      "" },
 																																																			 			             
     //Solar field																																															 			             
-	{ SSC_OUTPUT,       SSC_ARRAY,       "pipe_header_diams",      "Field piping header diameters",							    "m",             "",            "Type250",        "*",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "recirculating",          "Field recirculating bypass valve control",			        "-",             "",            "Type250",        "*",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "pipe_header_diams",      "Field piping header diameters",							    "m",             "",            "Type250",        "*",                       "",                      "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "pipe_header_wallthk",    "Field piping header wall thicknesses",	    			    "m",             "",            "Type250",        "*",                       "",                      "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "pipe_header_lengths",    "Field piping header lengths",                               "m",             "",            "Type250",        "*",                       "",                      "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "pipe_header_expansions", "Number of field piping header expansions",                  "-",             "",            "Type250",        "*",                       "",                      "" },
