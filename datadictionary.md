@@ -5,7 +5,7 @@
   * [custom_sgs_pipe_sizes](#custom_sgs_pipe_sizes)
   * [custom_tes_p_loss](#custom_tes_p_loss)
   * [has_hot_tank_bypass](#has_hot_tank_bypass)
-  * [k_tes_loss_coeffs](#tes_k_loss_coeffs)
+  * [k_tes_loss_coeffs](#k_tes_loss_coeffs)
   * [L_rnr_pb](#l_rnr_pb)
   * [L_rnr_per_xpan](#l_rnr_per_xpan)
   * [L_xpan_hdr](#l_xpan_hdr)
@@ -69,7 +69,7 @@ true if the runner and header diameters, wall thicknesses and lengths parameters
 true if the SGS diameters and wall thicknesses parameters should be used instead of calculating them. (Note that the SGS lengths are always input). [^](#toc)
 
 ### custom_tes_p_loss
-true if the TES piping losses should be calculated using the TES pipe lengths and combined minor loss coefficients (k_TES_col, k_TES_gen, and k_TES_bypass) or false if using the pumping power parameters on the parasitics page. Default = false. [^](#toc)
+true if the TES piping losses should be calculated using the TES pipe lengths and minor loss coefficients (k_tes_loss_coeffs) or false if using the pumping power parameters on the parasitics page. Default = false. [^](#toc)
 
 ### has_hot_tank_bypass
 true if the solar field bypass valve causes the field htf to bypasses just the hot tank (and power block and auxiliary boiler) and enter the cold tank before flowing back to the field. Value is false if the bypass valve bypasses both the hot and cold tank. Default = false. [^](#toc)
@@ -105,25 +105,25 @@ north/south separation between subfields, in meters, defined as the shortest dis
 location of the first header expansion loop. Default = 1, which means that the first expansion loop is after the first collector loop closest to the runner. [^](#toc)
 
 ### sf_hdr_diams
-custom diameters for the header piping. Utilized if custom_sf_pipe_sizes is true. Do not change the number of values (sections) as this will result in unpredictable model behavior. [^](#toc)
+custom diameters for the header piping as read from the modified output files. Utilized if custom_sf_pipe_sizes is true. Do not change the number of values (sections) as this will result in unpredictable model behavior. [^](#toc)
  
 ### sf_hdr_lengths
-custom lengths for the header piping. Utilized if custom_sf_pipe_sizes is true. Changing the lengths does not affect the field layout. Do not change the number of values (sections) as this will result in unpredictable model behavior. [^](#toc)
+custom lengths for the header piping as read from the modified output files. Utilized if custom_sf_pipe_sizes is true. Changing the lengths does not affect the field layout. Do not change the number of values (sections) as this will result in unpredictable model behavior. [^](#toc)
  
 ### sf_hdr_wallthicks
-custom wall thicknesses for the header piping. Utilized if custom_sf_pipe_sizes is true. Do not change the number of values (sections) as this will result in unpredictable model behavior. [^](#toc)
+custom wall thicknesses for the header piping as read from the modified output files. Utilized if custom_sf_pipe_sizes is true. Do not change the number of values (sections) as this will result in unpredictable model behavior. [^](#toc)
  
 ### sf_rnr_diams
-custom diameters for the runner piping. Utilized if custom_sf_pipe_sizes is true. Do not change the number of values (sections) as this will result in unpredictable model behavior. [^](#toc)
+custom diameters for the runner piping as read from the modified output files. Utilized if custom_sf_pipe_sizes is true. Do not change the number of values (sections) as this will result in unpredictable model behavior. [^](#toc)
  
 ### sf_rnr_lengths
-custom lengths for the runner piping. Utilized if custom_sf_pipe_sizes is true. Changing the lengths does not affect the field layout. Do not change the number of values (sections) as this will result in unpredictable model behavior. [^](#toc)
+custom lengths for the runner piping as read from the modified output files. Utilized if custom_sf_pipe_sizes is true. Changing the lengths does not affect the field layout. Do not change the number of values (sections) as this will result in unpredictable model behavior. [^](#toc)
  
 ### sf_rnr_wallthicks
-custom wall thicknesses for the runner piping. Utilized if custom_sf_pipe_sizes is true. Do not change the number of values (sections) as this will result in unpredictable model behavior. [^](#toc)
+custom wall thicknesses for the runner piping as read from the modified output files. Utilized if custom_sf_pipe_sizes is true. Do not change the number of values (sections) as this will result in unpredictable model behavior. [^](#toc)
  
 ### sgs_diams
-custom diameters for the SGS piping. Utilized if custom_sgs_pipe_sizes is true. Do not change the number of values (sections) as this will result in unpredictable model behavior. [^](#toc)
+custom diameters for the SGS piping as read from the modified output files. Utilized if custom_sgs_pipe_sizes is true. Do not change the number of values (sections) as this will result in unpredictable model behavior. [^](#toc)
 
 Collection Sections:
 - 0: &nbsp;&nbsp;&nbsp; Solar field (SF) pump suction header to individual SF pump inlet
@@ -141,10 +141,10 @@ Generation Sections:
 - 10: &nbsp;&nbsp;&nbsp; Steam generator outlet header to SF pump suction header (indirect) or cold thermal storage tank (direct)
 
 ### sgs_lengths
-length of piping in the SGS collection flow loop followed by the generation flow loop [m]. Defaults = {0, 90, 100, 120, 0, 0, 0, 0, 80, 120, 80}. Lengths at indices 0, 1, 5 and 6 are the summed lengths of the multiple individual pump sections. Do not change the number of values (sections) as this will result in unpredictable model behavior. [^](#toc)
+length of piping in the SGS collection flow loop followed by the generation flow loop [m]. These are not read from the modified output files. Defaults = {0, 90, 100, 120, 0, 0, 0, 0, 80, 120, 80}. Lengths at indices 0, 1, 5 and 6 are the summed lengths of the multiple individual pump sections. Do not change the number of values (sections) as this will result in unpredictable model behavior. [^](#toc)
 
 ### sgs_wallthicks
-custom wall thicknesses for the SGS piping. Utilized if custom_sgs_pipe_sizes is true. Do not change the number of values (sections) as this will result in unpredictable model behavior. [^](#toc)
+custom wall thicknesses for the SGS piping as read from the modified output files. Utilized if custom_sgs_pipe_sizes is true. Do not change the number of values (sections) as this will result in unpredictable model behavior. [^](#toc)
 
 ### tanks_in_parallel
 true if the hot and cold storage tank branch is in parallel with the solar field (traditional case), or false if the tanks are in series with the solar field (only applicable for direct storage). Default = true. [^](#toc)
