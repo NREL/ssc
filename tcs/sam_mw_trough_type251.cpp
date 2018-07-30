@@ -1115,7 +1115,8 @@ public:
 		double f_storage = tselect[touperiod];				//*** Need to be sure TOU schedule is provided with starting index of 0
 
 		if( ncall == 0 )
-			T_pb_in = T_field_out_des;      // TODO - test carrying over T_pb_in instead of resetting it to this design condition
+            // TODO - test carrying over T_pb_in instead of resetting it to this design condition
+            tanks_in_parallel ? T_pb_in = T_field_out_des : T_pb_in = T_tank_hot_prev;
 
 		// Need to fill in iteration controls once inner loops are finished
 		
@@ -1825,7 +1826,16 @@ public:
 				err = sqrt(
 						pow( ((ms_charge + m_dot_pb - ms_disch) - m_dot_field)/max(m_dot_field, 1.e-6), 2) + 
 						pow( ((T_field_in - T_field_in_guess)/T_field_in), 2));
-				derr = fabs((err - err_prev_iter)/err_prev_iter);
+                if (err_prev_iter != 0) {
+                    derr = fabs((err - err_prev_iter) / err_prev_iter);
+                }
+                else if (err != 0) {
+                    derr = fabs((err - err_prev_iter) / err);
+                }
+                else {
+                    derr = fabs(err - err_prev_iter);
+                }
+
 				err_prev_iter = err;
 
 				iterate_mass_temp = true;
