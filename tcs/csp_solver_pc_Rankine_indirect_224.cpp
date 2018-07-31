@@ -490,7 +490,7 @@ void C_pc_Rankine_indirect_224::init(C_csp_power_cycle::S_solved_params &solved_
 			mc_two_tank_ctes.ms_params.m_htf_pump_coef = 0.55;							//pumping power for HTF thru power block [kW/kg/s]
 			mc_two_tank_ctes.ms_params.dT_cw_rad = mc_two_tank_ctes.ms_params.m_T_field_out_des - mc_two_tank_ctes.ms_params.m_T_field_in_des;	//Reference delta T based on design values given.
 			mc_two_tank_ctes.ms_params.m_dot_cw_rad = (mc_two_tank_ctes.ms_params.m_W_dot_pc_design*1000000. / mc_two_tank_ctes.ms_params.m_eta_pc_factor) / (4183 /*[J/kg-K]*/ * mc_two_tank_ctes.ms_params.dT_cw_rad);	//Calculate design cw mass flow [kg/sec]
-			
+			mc_two_tank_ctes.ms_params.m_dot_cw_cold = (mc_two_tank_ctes.ms_params.m_dot_cw_cold*mc_two_tank_ctes.ms_params.m_ts_hours) / 9;//Set the flow rate on the storage system between tank and HX to radiative field to fill the tank in the shortest night of year (9 hours in Las Vegas Nevada).
 			//Initialize cold storage
 			mc_two_tank_ctes.init();
 		}
@@ -510,7 +510,7 @@ void C_pc_Rankine_indirect_224::init(C_csp_power_cycle::S_solved_params &solved_
 			mc_stratified_ctes.ms_params.m_htf_pump_coef = 0.55;							//pumping power for HTF thru power block [kW/kg/s]
 			mc_stratified_ctes.ms_params.dT_cw_rad = mc_stratified_ctes.ms_params.m_T_field_out_des - mc_stratified_ctes.ms_params.m_T_field_in_des;	//Reference delta T based on design values given.
 			mc_stratified_ctes.ms_params.m_dot_cw_rad = (mc_stratified_ctes.ms_params.m_W_dot_pc_design*1000000. / mc_stratified_ctes.ms_params.m_eta_pc_factor) / (4183 /*[J/kg-K]*/ * mc_stratified_ctes.ms_params.dT_cw_rad);	//Calculate design cw mass flow [kg/sec]
-
+			mc_stratified_ctes.ms_params.m_dot_cw_cold = (mc_stratified_ctes.ms_params.m_dot_cw_rad*mc_stratified_ctes.ms_params.m_ts_hours) / 9;	//Set the flow rate on the storage system between tank and HX to radiative field to fill the tank in the shortest night of year (9 hours in Las Vegas Nevada).
 
 			//Initialize cold storage
 			mc_stratified_ctes.init();
@@ -810,6 +810,7 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 			T_cold_prev_K = mc_two_tank_ctes.get_cold_temp();		// Get previous cold temperature [K]
 			T_cold_prev = mc_two_tank_ctes.get_cold_temp() - 273.15;	// Get previous cold temperature [C]
 			dT_cw_design = mc_two_tank_ctes.ms_params.dT_cw_rad;		//Cooling condenser cooling water design temperature drop
+			m_dot_radfield = mc_two_tank_ctes.ms_params.m_dot_cw_cold;	//Total flow through hx on storage side which connects to radiative field.
 		}
 		if (is_stratified)		//If stratified cold storage
 		{
@@ -819,9 +820,9 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 			T_cold_prev_K = mc_stratified_ctes.get_cold_temp();		// Get previous cold temperature [K]
 			T_cold_prev = mc_stratified_ctes.get_cold_temp() - 273.15;	// Get previous cold temperature [C]
 			dT_cw_design = mc_stratified_ctes.ms_params.dT_cw_rad;		//Cooling condenser cooling water design temperature drop
+			m_dot_radfield = mc_stratified_ctes.ms_params.m_dot_cw_cold;	//Total flow through hx on storage side which connects to radiative field.
 
 		}
-		m_dot_radfield = mc_radiator.ms_params.m_dot_panel*mc_radiator.ms_params.Np;	//Total flow through radiator field
 		m_dot_condenser = std::numeric_limits<double>::quiet_NaN();	//condenser mass flow rate at actual load
 		m_dot_radact = std::numeric_limits<double>::quiet_NaN();
 		idx_time = static_cast<int>((time / 3600-1));									//Zero based index to this timestep based on end of current hour in seconds.

@@ -176,6 +176,7 @@ public:
 		double dT_cw_rad;			//[degrees] Temperature change in cooling water for cold storage cooling.
 		double m_dot_cw_rad;		//[kg/sec]	Mass flow of cooling water for cold storage cooling at design.
 		int m_ctes_type;			//2= two tank (this model) 3=three node (other model)
+		double m_dot_cw_cold;		//[kg/sec]	Mass flow of storage water between cold storage and radiative field HX.
 
 		S_params()
 		{
@@ -186,7 +187,7 @@ public:
 
 			m_W_dot_pc_design = m_eta_pc_factor = m_solarm = m_h_tank = m_u_tank = m_hot_tank_Thtr = m_hot_tank_max_heat = m_cold_tank_Thtr =
 				m_cold_tank_max_heat = m_dt_hot = m_T_field_in_des = m_T_field_out_des = m_T_tank_hot_ini =
-				m_T_tank_cold_ini = m_h_tank_min = m_f_V_hot_ini = m_htf_pump_coef = dT_cw_rad = m_dot_cw_rad = std::numeric_limits<double>::quiet_NaN();
+				m_T_tank_cold_ini = m_h_tank_min = m_f_V_hot_ini = m_htf_pump_coef = dT_cw_rad = m_dot_cw_rad = m_dot_cw_cold= std::numeric_limits<double>::quiet_NaN();
 		}
 	};
 
