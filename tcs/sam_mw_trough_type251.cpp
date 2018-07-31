@@ -1160,6 +1160,7 @@ public:
 		int iter, iter_tank;
 		bool iterate_mass_temp, iterate_tank_temp;
 		double m_tank_disch, m_tank_charge;
+        double m_tank_cold_in, m_tank_cold_out, m_tank_hot_in, m_tank_hot_out;
 		double T_tank_hot_avg, vol_tank_hot_avg, q_loss_tank_hot, q_htr_tank_hot;
 		double T_tank_cold_avg, vol_tank_cold_avg, q_loss_tank_cold, q_htr_tank_cold;
         bool hot_tank_bypassed;
@@ -1894,6 +1895,8 @@ public:
 						message( TCS_ERROR, "heat exchanger performance calculations failed" );
 						return -1;
 					}
+                    m_tank_cold_out = m_tank_hot_in = m_tank_charge;
+                    m_tank_cold_in = m_tank_hot_out = 0.;
 					eff_disch = -9.99; T_tank_cold_in = T_tank_cold_prev; q_disch = 0; m_tank_disch = 0.;
 
 					// 7/9/14 twn: Calculate the specific heat with the same temps as 'hx_perf' uses so that reported energy in / energy out is consistent
@@ -1908,6 +1911,8 @@ public:
 						message( TCS_ERROR, "heat exchanger performance calculations failed" );
 						return -1;
 					}
+                    m_tank_cold_in = m_tank_hot_out = m_tank_disch;
+                    m_tank_cold_out = m_tank_hot_in = 0;
 					eff_charge = -9.99; T_tank_hot_in = T_tank_hot_prev; q_charge = 0; m_tank_charge = 0.;
 
 					// 7/9/14 twn: Calculate the specific heat with the same temps as 'hx_reverse' uses so that reported energy in / energy out is consistent
@@ -1920,8 +1925,8 @@ public:
 					Ts_hot		= T_field_out;
 					T_tank_cold_in	= T_field_in;
 					T_tank_hot_in	= T_field_out;
-					m_tank_charge	= 0.; 
-					m_tank_disch	= 0.;   
+					m_tank_charge = m_tank_disch = 0.;
+                    m_tank_cold_in = m_tank_cold_out = m_tank_hot_in = m_tank_hot_out = 0.;
 				}
 			}
 			else
@@ -1933,6 +1938,7 @@ public:
 
 					m_tank_charge = 0.0;
 					m_tank_disch = 0.0;
+                    m_tank_cold_in = m_tank_cold_out = m_tank_hot_in = m_tank_hot_out = 0.;     // TODO - are these needed?:
 					T_tank_cold_in = T_field_in_des;
 					T_tank_hot_in = T_field_out_des;
 					T_tank_hot_out = T_field_out_des;
@@ -1941,12 +1947,56 @@ public:
 				else
 				{
 					//No heat exchanger
-                    if (!tanks_in_parallel && has_hot_tank_bypass && recirculating) {
-                        T_tank_cold_in = T_field_out;
+                    if (tanks_in_parallel) {
+                        if (recirculating) {
+                            if (has_hot_tank_bypass) {
+                                T_tank_cold_in = T_field_out;
+                                m_tank_cold_in = m_dot_field;
+                                m_tank_cold_out = m_dot_field;
+                                m_tank_hot_in = 0.;
+                                m_tank_hot_out = 0.;
+                            }
+                            else {  // both tanks bypassed
+                                T_tank_cold_in = T_pb_out;
+                                m_tank_cold_in = m_tank_cold_out = m_tank_hot_in = m_tank_hot_out = 0.;
+                            }
+                        }
+                        else {
+                            T_tank_cold_in = T_pb_out;
+                            m_tank_cold_in = ms_disch;
+                            m_tank_cold_out = ms_charge;
+                            m_tank_hot_in = ms_charge;
+                            m_tank_hot_out = ms_disch;
+                        }
                     }
-                    else {
-					    T_tank_cold_in	= T_pb_out;
+                    else {  // tanks in series
+                        m_tank_hot_out = m_dot_pb;
+                        if (recirculating) {
+                            m_tank_hot_in = 0.;
+                            if (has_hot_tank_bypass) {
+                                if (m_dot_field + m_dot_pb != 0) {
+                                    T_tank_cold_in = (m_dot_field * T_field_out + m_dot_pb * T_pb_out) / (m_dot_field + m_dot_pb);
+                                }
+                                else {
+                                    T_tank_cold_in = T_tank_cold_prev;
+                                }
+                                m_tank_cold_in = m_dot_field + m_dot_pb;
+                                m_tank_cold_out = m_dot_field;
+                            }
+                            else {  // both tanks bypassed
+                                T_tank_cold_in = T_pb_out;
+                                m_tank_cold_in = m_dot_pb;
+                                m_tank_cold_out = 0.;
+                            }
+                        }
+                        else {
+                            T_tank_cold_in = T_pb_out;
+                            m_tank_cold_in = m_dot_pb;
+                            m_tank_cold_out = m_dot_field;
+                            m_tank_hot_in = m_dot_field;
+                        }
                     }
+
 					T_tank_hot_in	= T_field_out;
 					Ts_cold		= T_tank_cold_out;
 					Ts_hot		= T_tank_hot_out;
@@ -1962,11 +2012,11 @@ public:
 				if(tes_type==1)
 				{
 					// Hot Tank					
-					hx_storage.mixed_tank( true, step, m_tank_hot_prev, T_tank_hot_prev, m_tank_charge, m_tank_disch, 
+					hx_storage.mixed_tank( true, step, m_tank_hot_prev, T_tank_hot_prev, m_tank_hot_in, m_tank_hot_out, 
 											T_tank_hot_in, T_amb, T_tank_hot_avg, vol_tank_hot_avg, q_loss_tank_hot,
 											T_tank_hot_fin, vol_tank_hot_fin, m_tank_hot_fin, q_htr_tank_hot );
 					// Cold Tank					
-					hx_storage.mixed_tank( false, step, m_tank_cold_prev, T_tank_cold_prev, m_tank_disch, m_tank_charge,
+					hx_storage.mixed_tank( false, step, m_tank_cold_prev, T_tank_cold_prev, m_tank_cold_in, m_tank_cold_out,
 											T_tank_cold_in, T_amb, T_tank_cold_avg, vol_tank_cold_avg, q_loss_tank_cold,
 											T_tank_cold_fin, vol_tank_cold_fin, m_tank_cold_fin, q_htr_tank_cold );
 			
