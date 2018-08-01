@@ -2351,22 +2351,24 @@ public:
         v_dot_pb = m_dot_pb / field_htfProps.dens((T_pb_in + T_pb_out) / 2, P_lo);
 
         for (std::size_t i = 0; i < num_sections; i++) {
-            (i > 0 && i < 3) ? P = P_hi : P = P_lo;
-            if (i < 3) T = T_sf_in;                                                       // 0, 1, 2
-            if (i == 3 || i == 4) T = T_sf_out;                                           // 3, 4
-            if (i >= gen_first_section && i < gen_first_section + 4) T = T_pb_in;         // 5, 6, 7, 8
-            if (i == gen_first_section + 4) T = (T_pb_in + T_pb_out) / 2.;                // 9
-            if (i == gen_first_section + 5) T = T_pb_out;                                 // 10
-            i < gen_first_section ? v_dot_ref = v_dot_sf : v_dot_ref = v_dot_pb;
-            v_dot = v_dot_rel.at(i) * v_dot_ref;
-            Area = CSP::pi * pow(D, 2) / 4.;
-            vel = v_dot / Area;
-            rho = field_htfProps.dens(T, P);
-            Re = field_htfProps.Re(T, P, vel, D.at(i));
-            ff = CSP::FrictionFactor(pipe_rough/D.at(i), Re);
-            if (i != bypass_section || recirculating) {
-                P_drops.at(i) += CSP::MajorPressureDrop(vel, rho, ff, L.at(i), D.at(i));
-                P_drops.at(i) += CSP::MinorPressureDrop(vel, rho, k_coeffs.at(i));
+            if (L.at(i) > 0 && D.at(i) > 0) {
+                (i > 0 && i < 3) ? P = P_hi : P = P_lo;
+                if (i < 3) T = T_sf_in;                                                       // 0, 1, 2
+                if (i == 3 || i == 4) T = T_sf_out;                                           // 3, 4
+                if (i >= gen_first_section && i < gen_first_section + 4) T = T_pb_in;         // 5, 6, 7, 8
+                if (i == gen_first_section + 4) T = (T_pb_in + T_pb_out) / 2.;                // 9
+                if (i == gen_first_section + 5) T = T_pb_out;                                 // 10
+                i < gen_first_section ? v_dot_ref = v_dot_sf : v_dot_ref = v_dot_pb;
+                v_dot = v_dot_rel.at(i) * v_dot_ref;
+                Area = CSP::pi * pow(D, 2) / 4.;
+                vel = v_dot / Area;
+                rho = field_htfProps.dens(T, P);
+                Re = field_htfProps.Re(T, P, vel, D.at(i));
+                ff = CSP::FrictionFactor(pipe_rough/D.at(i), Re);
+                if (i != bypass_section || recirculating) {
+                    P_drops.at(i) += CSP::MajorPressureDrop(vel, rho, ff, L.at(i), D.at(i));
+                    P_drops.at(i) += CSP::MinorPressureDrop(vel, rho, k_coeffs.at(i));
+                }
             }
         }
 
