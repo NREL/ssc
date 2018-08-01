@@ -765,7 +765,7 @@ public:
 			//Connections to controller
 		bConnected &= connect(weather, "beam", type251_controller, "I_bn", 0);
 		bConnected &= connect(weather, "tdry", type251_controller, "T_amb", 0);
-		bConnected &= connect(type250_solarfield, "m_dot_avail", type251_controller, "m_dot_field");
+		bConnected &= connect(type250_solarfield, "m_dot_htf_tot", type251_controller, "m_dot_field");
 		bConnected &= connect(type224_powerblock, "m_dot_htf_ref", type251_controller, "m_dot_htf_ref");
 		bConnected &= connect(type250_solarfield, "T_sys_h", type251_controller, "T_field_out");
 		bConnected &= connect(type224_powerblock, "T_htf_cold", type251_controller, "T_pb_out");

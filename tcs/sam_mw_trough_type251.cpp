@@ -1153,6 +1153,7 @@ public:
 		double defocus = defocus_prev_ncall;
         bool recirculating = recirc_prev_ncall;
 		int cycle_pl_control, standby_control;
+        double m_dot_field_avail;
         double m_dot_pb;
 		//int tempmode=0;
 		double err, err_prev_iter, derr;
@@ -1294,14 +1295,15 @@ public:
             if ((tanks_in_parallel == true && T_field_out <= T_startup) ||
                 (tanks_in_parallel == false && T_field_out <= T_tank_hot_inlet_min)) {
                 recirculating = true;
-                m_dot_field = 0.;
+                m_dot_field_avail = 0.;
             }
             else {
                 recirculating = false;
+                m_dot_field_avail = m_dot_field;
             }
 
 			// Calculate the maximum potentially available mass flow
-			m_avail_tot = ms_disch_avail + m_dot_aux_avail + m_dot_field;       // this is also true for tanks in series with the field
+			m_avail_tot = ms_disch_avail + m_dot_aux_avail + m_dot_field_avail;       // this is also true for tanks in series with the field
 
 			// Calculate the demanded values from the power block
 			//*** Need to be sure TOU schedule is provided with starting index of 0
@@ -1316,14 +1318,14 @@ public:
 			A small degree of iteration is needed to get the field inlet temperature to converge
 			in the case where storage is charging and an intermediate heat exchanger is used.
 			For cases with iteration, set the initial guess values*/              
-            if (m_dot_field > 0.0) {                    // bypass valve is closed
+            if (!recirculating) {
                 if (tanks_in_parallel) {
                     T_field_in_guess = T_pb_out;        // TODO - maybe during charging factor in cold tank temp?
                 }
                 else
                     T_field_in_guess = T_tank_cold_avg_guess;
                 }
-			else {                                      // bypass valve is open
+			else {
                 if (tanks_in_parallel || (!tanks_in_parallel && !has_hot_tank_bypass)) {
                     T_field_in_guess = T_field_out;
                 }
@@ -1383,7 +1385,7 @@ public:
 				}
 
 				q_aux_avail		= max(m_dot_aux_avail*c_htf_aux*(T_set_aux - T_pb_out),0.0); 
-				q_field_avail	= max(m_dot_field*c_htf_field*(T_field_out - T_field_in_guess),0.0);		// mjw 1.18.2011
+				q_field_avail	= max(m_dot_field_avail*c_htf_field*(T_field_out - T_field_in_guess),0.0);		// mjw 1.18.2011
 
 				// Initial values
 				q_int	= 0.0;			// Intermediate equivalent power output from the various heat sources
@@ -1400,7 +1402,7 @@ public:
 				{
 					//First add the available energy from the field
 					q_int = q_field_avail;  
-					m_int = m_dot_field;
+					m_int = m_dot_field_avail;
 			
 					// If energy is coming from the field, adjust the intermediate temperature
 					if(q_int > 0.) {tanks_in_parallel ? T_int = T_field_out : T_int = T_tank_hot_out;}
@@ -1428,9 +1430,9 @@ public:
 						q_int		= q_int + qs_disch_avail;
 						ms_disch	= ms_disch_avail;
 						ms_charge	= 0.;
-						m_int		= m_dot_field + ms_disch;
+						m_int		= m_dot_field_avail + ms_disch;
 						//Adjust the intermediate temperature, if needed
-						if(q_int > 0.) T_int = (T_int*m_dot_field + Ts_hot*ms_disch)/(m_int);
+						if(q_int > 0.) T_int = (T_int*m_dot_field_avail + Ts_hot*ms_disch)/(m_int);
 
 						// MJW 11.1.2010: The auxiliary heater can operate in 1 of 2 modes.. 
 						// mode 1: Fossil fraction specifies the minimum pb fraction during the period. Fossil provides the balance.
@@ -1445,7 +1447,7 @@ public:
 								m_dot_aux	= q_aux/(c_htf_aux*max((T_set_aux - T_pb_out),1.0));
 								m_int		= m_int + m_dot_aux;
 								// Adjust the intermediate temperature, if needed
-								if(q_int > 0.) T_int = (T_int*(m_dot_field + ms_disch) + T_set_aux*m_dot_aux)/m_int;
+								if(q_int > 0.) T_int = (T_int*(m_dot_field_avail + ms_disch) + T_set_aux*m_dot_aux)/m_int;
 							}
 							else	// MJW 1.12.2011
 							{
@@ -1462,7 +1464,7 @@ public:
 								m_dot_aux	= m_dot_aux_avail;
 								m_int		= m_int + m_dot_aux;
 								// Adjust the intermediate temperature, if needed
-								if(q_int > 0.) T_int = (T_int*(m_dot_field + ms_disch) + T_set_aux*m_dot_aux)/m_int;
+								if(q_int > 0.) T_int = (T_int*(m_dot_field_avail + ms_disch) + T_set_aux*m_dot_aux)/m_int;
 							}
 							else
 							{
@@ -1473,8 +1475,8 @@ public:
 								m_dot_aux	= q_aux/(c_htf_aux*max((T_set_aux - T_pb_out),1.0));  
 								m_int		= m_int + m_dot_aux;
 								// Adjust the intermediate temperature
-								//T_int = (m_dot_field*T_field_out + ms_disch*Ts_hot + m_dot_aux*T_set_aux)/m_int;
-                                if (q_int > 0.) T_int = (T_int*(m_dot_field + ms_disch) + T_set_aux * m_dot_aux) / m_int;
+								//T_int = (m_dot_field_avail*T_field_out + ms_disch*Ts_hot + m_dot_aux*T_set_aux)/m_int;
+                                if (q_int > 0.) T_int = (T_int*(m_dot_field_avail + ms_disch) + T_set_aux * m_dot_aux) / m_int;
 							}
 						}				
 					}
@@ -1488,7 +1490,7 @@ public:
 						m_int		= m_int + ms_disch;
 						ms_charge	= 0.;
 						m_dot_aux	= 0.;
-						T_int		= (m_dot_field*T_int + ms_disch*Ts_hot)/m_int;
+						T_int		= (m_dot_field_avail*T_int + ms_disch*Ts_hot)/m_int;
 					}
 					// Run a check to see if the energy produced is above the cycle cutout fraction
 					if(q_int < q_pb_design*cycle_cutoff_frac)	mode = pb_off_or_standby;
@@ -1500,7 +1502,7 @@ public:
 					// the excess flow will be used to charge it.
 			
 					// MJW 11.3.2010: Need to specify m_int in cases where we've entered "sticky mode" operation
-					m_int	= m_dot_field;
+					m_int	= m_dot_field_avail;
                     tanks_in_parallel ? T_int = T_field_out : T_int = T_tank_hot_out;
 			
 					if((ms_charge_avail>0.0)&&(tes_type==2))
@@ -1544,7 +1546,7 @@ public:
 					// Look ahead for DNI resource to decide whether cycle should start back up
 					if((dnifc<I_bn_des*cycle_cutoff_frac)&&(fc_on))	mode = pb_off_or_standby;
 					// If it's night time and TES is 0 and power cycle is below cutoff then don't restart the turbine
-					if(m_dot_field == 0. && (qs_disch_avail < q_pb_design*cycle_cutoff_frac) )	
+					if(m_dot_field_avail == 0. && (qs_disch_avail < q_pb_design*cycle_cutoff_frac) )	
                         mode = pb_off_or_standby;
 				}
 
@@ -1597,7 +1599,7 @@ public:
 								{ms_disch = q_sby_storage / (c_htf_disch * (Ts_hot - T_pb_out));}        //[kg/s]
 
                                 if (tanks_in_parallel) {
-								    T_pb_in = (T_field_out*m_dot_field + Ts_hot*ms_disch)/(m_dot_field + ms_disch);	//[K]
+								    T_pb_in = (T_field_out*m_dot_field_avail + Ts_hot*ms_disch)/(m_dot_field_avail + ms_disch);	//[K]
                                 }
                                 else {
                                     T_pb_in = Ts_hot;
@@ -1608,7 +1610,7 @@ public:
 							{
 								ms_disch	= 0.0;	//[kg/s] Discharge mass flow rate
                                 tanks_in_parallel ? T_pb_in = T_field_out : T_pb_in = T_tank_hot_out; //[K]
-								ms_charge	= max(m_dot_field - q_sby/(c_htf_pb*(T_pb_in - T_pb_out)), 0.0);		//[kg/s] Calculate mass flow rate that is not used by PB in
+								ms_charge	= max(m_dot_field_avail - q_sby/(c_htf_pb*(T_pb_in - T_pb_out)), 0.0);		//[kg/s] Calculate mass flow rate that is not used by PB in
 			                
 								if(tes_type == 2)	// thermocline code
 								{ 									
@@ -1628,7 +1630,7 @@ public:
 									ms_charge = min(ms_charge_avail, ms_charge);	// limit charge mass flow rate to the max. available
 								}
 			    
-								if(m_dot_field > 0.)
+								if(m_dot_field_avail > 0.)
 									//!defocus = defocus0*((qs_charge_avail+q_sby)/qfield_avail)**ccoef			//Absolute defocus
 								{defocus = pow( ((qs_charge_avail+q_sby)/q_field_avail), ccoef);}    //!TN 4.9.12, relative defocus
 								else
@@ -1639,13 +1641,13 @@ public:
 						else	//tshours == 0
 						{
 							defocus		= 1.0;
-							m_dot_field = 0.0;
+							m_dot_field_avail = 0.0;
 							T_pb_in		= T_field_out;
 						}  				
 				
 						m_dot_pb = 0.0;		//!the power block code will calculate the mass flow for this mode
 						// charge storage with any additional field flow, if possible
-						// T_pb_in = (T_field_out*m_dot_field + Ts_hot*ms_disch)/(m_dot_field + ms_disch)
+						// T_pb_in = (T_field_out*m_dot_field_avail + Ts_hot*ms_disch)/(m_dot_field_avail + ms_disch)
 				    
 						cycle_pl_control	= 2;		// 1=demand, 2=part load
 						standby_control		= 2;		// 1=normal operation, 2=standby, 3=shut down
@@ -1658,13 +1660,13 @@ public:
 					{
 						// normal, non-standby operation
 						// If below the cutout fraction, check to see if extra energy can be dumped into storage
-						if((m_dot_field>0.0)&&(ms_charge_avail>0.0)&&(tes_type==2))
+						if((m_dot_field_avail>0.0)&&(ms_charge_avail>0.0)&&(tes_type==2))
 						{
 							// thermocline code
 							double dummy1, dummy2, dummy3, dummy4, dummy5, dummy6, dummy7, dummy8, dummy9;
 							dummy1 = dummy2 = dummy3 = dummy4 = dummy5 = dummy6 = dummy7 = dummy8 = dummy9 = -999.9;
 
-							thermocline.Solve_TC( T_field_out - 273.15, m_dot_field*3600.0, T_pb_out - 273.15, 0.0, T_amb - 273.15, 1, 0.0, 0.0, f_storage, step/3600.0,
+							thermocline.Solve_TC( T_field_out - 273.15, m_dot_field_avail*3600.0, T_pb_out - 273.15, 0.0, T_amb - 273.15, 1, 0.0, 0.0, f_storage, step/3600.0,
 								                    ms_charge_avail, Ts_cold, qs_charge_avail, dummy1, dummy2, dummy3, dummy4, dummy5, dummy6, dummy7, dummy8, dummy9 );
 							ms_charge_avail /= 3600.0;
 							Ts_cold += 273.15;
@@ -1676,18 +1678,18 @@ public:
 							called_TC = false;	
 						}
 
-						ms_charge	= max( min(ms_charge_avail, m_dot_field), 0.0);
+						ms_charge	= max( min(ms_charge_avail, m_dot_field_avail), 0.0);
 						ms_disch	= 0.0;
 						m_dot_pb	= 0.0;
 						T_pb_in		= T_pb_out;
 
 						if(has_TES)
 						{    
-							if(m_dot_field > 0.)
+							if(m_dot_field_avail > 0.)
 							{
 								// Defocus according the the amount of charge accepted as compared to what is produced. 
-								// defocus = defocus0*(ms_charge/m_dot_field)**ccoef !MJW 12.9.2010
-								defocus = pow( (ms_charge/m_dot_field), ccoef);	// TN 4.9.12
+								// defocus = defocus0*(ms_charge/m_dot_field_avail)**ccoef !MJW 12.9.2010
+								defocus = pow( (ms_charge/m_dot_field_avail), ccoef);	// TN 4.9.12
 							}
 							else
 							{
@@ -1699,7 +1701,7 @@ public:
 						{
 							// Here we need to allow the field to run normally and artificially force the power block to dump energy
 							defocus		= 1.0;
-							m_dot_field = 0.0;
+							m_dot_field_avail = 0.0;
 						}
 						cycle_pl_control	= 2;	// 1=demand, 2=part load
 						standby_control		= 3;	// 1=normal operation, 2=standby, 3=shut down
@@ -1798,7 +1800,7 @@ public:
 				// MJW 12.9.2010----		
 				if((ncall==0)||(mode_prev_ncall != mode))
 				{
-					if(m_dot_field > 0.)	//mjw 1.12.2011 Be consistent with the criteria above
+					if(m_dot_field_avail > 0.)	//mjw 1.12.2011 Be consistent with the criteria above
 						tempmode = 1;
 					else
 						tempmode = 2;
@@ -1825,7 +1827,7 @@ public:
 				
 				// convergence error is based on actual field mass flow rate compared to balance of mass flow rates
 				err = sqrt(
-						pow( ((ms_charge + m_dot_pb - ms_disch) - m_dot_field)/max(m_dot_field, 1.e-6), 2) + 
+						pow( ((ms_charge + m_dot_pb - ms_disch) - m_dot_field_avail)/max(m_dot_field_avail, 1.e-6), 2) + 
 						pow( ((T_field_in - T_field_in_guess)/T_field_in), 2));
                 if (err_prev_iter != 0) {
                     derr = fabs((err - err_prev_iter) / err_prev_iter);
@@ -1974,12 +1976,8 @@ public:
                         if (recirculating) {
                             m_tank_hot_in = 0.;
                             if (has_hot_tank_bypass) {
-                                if (m_dot_field + m_dot_pb != 0) {
-                                    T_tank_cold_in = (m_dot_field * T_field_out + m_dot_pb * T_pb_out) / (m_dot_field + m_dot_pb);
-                                }
-                                else {
-                                    T_tank_cold_in = T_tank_cold_prev;
-                                }
+                                T_tank_cold_in = (m_dot_field * T_field_out + m_dot_pb * T_pb_out) / (m_dot_field + m_dot_pb);
+                                if (std::isnan(T_tank_cold_in)) T_tank_cold_in = T_tank_cold_prev;
                                 m_tank_cold_in = m_dot_field + m_dot_pb;
                                 m_tank_cold_out = m_dot_field;
                             }
