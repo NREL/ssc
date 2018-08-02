@@ -558,7 +558,7 @@ int C_sco2_recomp_csp::optimize_off_design(C_sco2_recomp_csp::S_od_par od_par, i
 			double W_dot_calc = mpc_sco2_cycle->get_od_solved()->m_W_dot_net;		//[kWe]
 			double W_dot_calc_prev = 0.0;	//[kWe]
 
-			while (eta_calc > eta_calc_prev && (W_dot_calc - W_dot_calc_prev) / W_dot_calc > -0.005)
+			while (eta_calc - eta_calc_prev > -0.001 && (W_dot_calc - W_dot_calc_prev) / W_dot_calc > -0.005)
 			{
 				ms_cycle_od_par.m_T_mc_in += 0.5;
 				ms_cycle_od_par.m_T_pc_in += 0.5;
@@ -675,15 +675,20 @@ int C_sco2_recomp_csp::opt_P_LP_comp_in__fixed_N_turbo()
 				{
 					break;
 				}
-				else if (od_core_error_code != -14 && od_core_error_code != 4 && 
-							od_core_error_code != 5 && od_core_error_code != -11)
-				{	// So we've gone from error = -14 to error = something else, and this is a problem
-					// Could try bisecting P_mc_in_upper and P_mc_in_guess, but there's not much room there, given the step size...
-					
+				else if (P_mc_in_guess < 1000)
+				{
 					return -31;
-
-					//throw(C_csp_exception("Failed to find a feasible guess value for compressor inlet pressure"));
 				}
+				//else if (od_core_error_code != -14 && od_core_error_code != 4 && 
+				//			od_core_error_code != 5 && od_core_error_code != -11 &&
+				//			od_core_error_code != 7)
+				//{	// So we've gone from error = -14 to error = something else, and this is a problem
+				//	// Could try bisecting P_mc_in_upper and P_mc_in_guess, but there's not much room there, given the step size...
+				//	
+				//	return -31;
+				//
+				//	//throw(C_csp_exception("Failed to find a feasible guess value for compressor inlet pressure"));
+				//}
 			}
 			
 			// Calculate P_mc_in_lower such that first guess in fmin is P_mc_in_guess
@@ -771,16 +776,20 @@ int C_sco2_recomp_csp::opt_P_LP_comp_in__fixed_N_turbo()
 				//scale[0] = (0.5*P_mc_in_upper + 0.5*P_mc_in_lower) - x[0];	//[kPa]
 			
 			// Set up instance of nlopt class and set optimization parameters
-			nlopt::opt  nlopt_P_mc_in_opt_max_of(nlopt::LN_NELDERMEAD, 1);
+			//nlopt::opt  nlopt_P_mc_in_opt_max_of(nlopt::LN_NELDERMEAD, 1);
+			nlopt::opt  nlopt_P_mc_in_opt_max_of(nlopt::LN_SBPLX, 1);
+			
 			nlopt_P_mc_in_opt_max_of.set_lower_bounds(lb);
 			nlopt_P_mc_in_opt_max_of.set_upper_bounds(ub);
-			nlopt_P_mc_in_opt_max_of.set_initial_step(scale);
+			//nlopt_P_mc_in_opt_max_of.set_initial_step(scale);
 			nlopt_P_mc_in_opt_max_of.set_xtol_rel(m_od_opt_xtol);
 			nlopt_P_mc_in_opt_max_of.set_ftol_rel(m_od_opt_ftol);
 			
 			// Set max objective function
 			nlopt_P_mc_in_opt_max_of.set_max_objective(nlopt_opt_P_LP_in__fixed_N_turbo, this);
 			
+			m_nlopt_iter = 0;
+
 			double nlopt_max_eta = std::numeric_limits<double>::quiet_NaN();
 			nlopt::result    nlopt_result = nlopt_P_mc_in_opt_max_of.optimize(x, nlopt_max_eta);
 			
@@ -798,7 +807,7 @@ int C_sco2_recomp_csp::opt_P_LP_comp_in__fixed_N_turbo()
 		int od_core_error_code = off_design_core(eta_od_core_1st);
 		if (od_core_error_code == 0)
 		{
-			if ( (P_mc_in_opt - P_mc_in_lower)/P_mc_in_lower < 0.05 )
+			if ( (P_mc_in_opt - P_mc_in_lower)/P_mc_in_lower < 0.005 )
 			{
 				// Need to check for an optimum pressure that is less than P_mc_in_lower...
 				double r = (3. - sqrt(5.0)) / 2;       /* Gold section ratio           */
@@ -1053,15 +1062,16 @@ int C_sco2_recomp_csp::off_design_core(double & eta_solved)
 	{
 		double W_dot_target = (ms_od_par.m_m_dot_htf / ms_phx_des_par.m_m_dot_hot_des) * ms_des_par.m_W_dot_net;	//[kWe]
 		double W_dot_nd = min(1.0, fabs((mpc_sco2_cycle->get_od_solved()->m_W_dot_net - W_dot_target) / W_dot_target));	//[-]
-		if (W_dot_nd > 0.001)
-		{
-			eta_solved = (1.0 - W_dot_nd)*scale_product;
-		}
-		else
-		{
-			eta_solved = (1.0 - W_dot_nd + exp(-W_dot_nd)*mpc_sco2_cycle->get_od_solved()->m_eta_thermal*1.E-3)*scale_product;
-		}
-		eta_solved = eta_solved*1.E3;
+		//if (W_dot_nd > 0.001 || od_solve_code != 0)
+		//{
+		//	eta_solved = (1.0 - W_dot_nd)*scale_product;
+		//}
+		//else
+		//{
+		//	eta_solved = (1.0 - W_dot_nd + mpc_sco2_cycle->get_od_solved()->m_eta_thermal*1.E-3)*scale_product;
+		//}
+		//eta_solved = eta_solved*1.E3;
+		eta_solved = (1.0 - W_dot_nd)*scale_product*1.E3;
 	}
 		break;
 
@@ -1239,6 +1249,8 @@ const C_sco2_recomp_csp::S_od_solved * C_sco2_recomp_csp::get_od_solved()
 
 double C_sco2_recomp_csp::opt_P_LP_in__fixed_N_turbo__return_f_obj(double P_mc_in /*kPa*/)
 {
+	m_nlopt_iter++;
+	
 	ms_cycle_od_par.m_P_LP_comp_in = P_mc_in;	//[kPa]	
 
 	double f_obj_max = std::numeric_limits<double>::quiet_NaN();

@@ -298,6 +298,8 @@ private:
 	double m_od_opt_xtol;		//[-] Relative tolerance for od optimization: independent variable convergence
 	// ******************************************************
 
+	int m_nlopt_iter;		//[-]
+
 	int m_off_design_turbo_operation;	//[-] How is turbomachinery controlled off-design?
 
 	double m_T_mc_in_min;		//[K]

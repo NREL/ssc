@@ -1319,7 +1319,9 @@ int C_comp_multi_stage::design_given_outlet_state(double T_in /*K*/, double P_in
 
 	double max_calc_tip_speed = mv_stages[0].ms_des_solved.m_tip_ratio;
 
-	if (mv_stages[0].ms_des_solved.m_tip_ratio > 0.9)
+	double tip_speed_limit = 0.85;
+
+	if (mv_stages[0].ms_des_solved.m_tip_ratio > tip_speed_limit)
 	{
 		CO2_state co2_props;
 
@@ -1342,6 +1344,8 @@ int C_comp_multi_stage::design_given_outlet_state(double T_in /*K*/, double P_in
 
 		while (is_add_stages)
 		{
+			tip_speed_limit = 0.9;		//[-] If multi-stage, increase tip speed limit to 0.9
+			
 			n_stages++;
 
 			mv_stages.resize(n_stages);
@@ -1389,7 +1393,7 @@ int C_comp_multi_stage::design_given_outlet_state(double T_in /*K*/, double P_in
 				max_calc_tip_speed = std::max(max_calc_tip_speed, mv_stages[i].ms_des_solved.m_tip_ratio);
 			}
 
-			if (max_calc_tip_speed < 0.9)
+			if (max_calc_tip_speed < tip_speed_limit)
 			{
 				is_add_stages = false;
 			}
