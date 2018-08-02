@@ -203,9 +203,17 @@ const char* Type_cpnt = "0, 1, 0, 1, 0, -1, -1, -1, -1, -1, -1,  "
                         "0, 2, 0, 2, 0, 1, 0, 2, 0, 2, 0,  "
                         "0, 2, 0, 2, 0, 1, 0, 2, 0, 0, 1,  "
                         "0, 1, 0, 1, 0, -1, -1, -1, -1, -1, -1";
+const char* sf_rnr_diams = "-1";
+const char* sf_rnr_wallthicks = "-1";
+const char* sf_rnr_lengths = "-1";
+const char* sf_hdr_diams = "-1";
+const char* sf_hdr_wallthicks = "-1";
+const char* sf_hdr_lengths = "-1";
 const char* bop_array = "0, 1, 0.4830000102519989, 0.51700001955032349, 0";
-const char* L_tes_col_gen = "0, 90, 100, 120, 0, 0, 0, 0, 80, 120, 80";
 const char* k_tes_loss_coeffs = "0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0";
+const char* sgs_diams = "-1";
+const char* sgs_wallthicks = "-1";
+const char* sgs_lengths = "0, 90, 100, 120, 0, 0, 0, 0, 80, 120, 80";
 const char* aux_array = "0.02273000031709671, 1, 0.4830000102519989, 0.51700001955032349, 0";
 const char* tslogic_a = "0, 0, 0, 0, 0, 0, 0, 0, 0";
 const char* tslogic_b = "0, 0, 0, 0, 0, 0, 0, 0, 0";
@@ -433,6 +441,13 @@ TestInfo physTroughPPASingleDefaultInfo[] = {
     {"D_cpnt",                              MAT,                D_cpnt,                 11,11},
     {"L_cpnt",                              MAT,                L_cpnt,                 11,11},
     {"Type_cpnt",                           MAT,                Type_cpnt,              11,11},
+    {"custom_sf_pipe_sizes",                NUM,                "0"                     },
+    {"sf_rnr_diams",                        ARR,                sf_rnr_diams,           1},
+    {"sf_rnr_wallthicks",                   ARR,                sf_rnr_wallthicks,      1},
+    {"sf_rnr_lengths",                      ARR,                sf_rnr_lengths,         1},
+    {"sf_hdr_diams",                        ARR,                sf_hdr_diams,           1},
+    {"sf_hdr_wallthicks",                   ARR,                sf_hdr_wallthicks,      1},
+    {"sf_hdr_lengths",                      ARR,                sf_hdr_lengths,         1},
 	{"field_fl_props",                      MAT,                "0",                    1,1},
 	{"store_fl_props",                      MAT,                "1",                    1,1},
 	{"store_fluid",                         NUM,                "18"                    },
@@ -463,9 +478,12 @@ TestInfo physTroughPPASingleDefaultInfo[] = {
 	{"pb_pump_coef",                        NUM,                "0.55000001192092896"   },
 	{"tes_pump_coef",                       NUM,                "0.15000000596046448"   },
     {"V_tes_des",                           NUM,                "1.85"                  },
-    {"L_tes_col_gen",                       ARR,                L_tes_col_gen,          },
     {"custom_tes_p_loss",                   NUM,                "0"                     },
-    {"k_tes_loss_coeffs",                   ARR,                k_tes_loss_coeffs,      },
+    {"k_tes_loss_coeffs",                   ARR,                k_tes_loss_coeffs,      11},
+    {"custom_sgs_pipe_sizes",               NUM,                "0"                     },
+    {"sgs_diams",                           ARR,                sgs_diams,              1},
+    {"sgs_wallthicks",                      ARR,                sgs_wallthicks,         1},
+    {"sgs_lengths",                         ARR,                sgs_lengths,            11},
 	{"pb_fixed_par",                        NUM,                "0.0054999999701976776" },
 	{"bop_array",                           ARR,                bop_array,              5},
 	{"aux_array",                           ARR,                aux_array,              5},
