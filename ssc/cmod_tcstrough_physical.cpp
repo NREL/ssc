@@ -322,7 +322,7 @@ static var_info _cm_vtab_tcstrough_physical[] = {
     { SSC_OUTPUT,       SSC_ARRAY,       "tou_value",         "Resource Time-of-use value",                                      "",             "",            "tou",            "*",                      "",                      "" },
 																																																			 			             
     //Solar field																																															 			             
-    { SSC_OUTPUT,       SSC_ARRAY,       "recirculating",          "Field recirculating bypass valve control",			        "-",             "",            "Type250",        "*",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "recirculating",          "Field recirculating (bypass valve open)",			        "-",             "",            "Type250",        "*",                       "",                      "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "pipe_header_diams",      "Field piping header diameters",							    "m",             "",            "Type250",        "*",                       "",                      "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "pipe_header_wallthk",    "Field piping header wall thicknesses",	    			    "m",             "",            "Type250",        "*",                       "",                      "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "pipe_header_lengths",    "Field piping header lengths",                               "m",             "",            "Type250",        "*",                       "",                      "" },
@@ -363,6 +363,8 @@ static var_info _cm_vtab_tcstrough_physical[] = {
     { SSC_OUTPUT,       SSC_ARRAY,       "E_bal_startup",     "Field HTF energy inertial (consumed)",                           "MWht",          "",            "Type250",        "*",                      "",                      "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "m_dot_avail",       "Field HTF mass flow rate total",                                 "kg/hr",        "",            "Type250",        "*",                       "",                      "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "m_dot_htf2",        "Field HTF mass flow rate loop",                                  "kg/s",         "",            "Type250",        "*",                       "",                      "" },
+    //{ SSC_OUTPUT,       SSC_ARRAY,       "m_dot_htf_tot",     "Field HTF mass flow rate",                                       "kg/hr",        "",            "Type250",        "*",                       "",                      "" },
+    //{ SSC_OUTPUT,       SSC_ARRAY,       "m_dot_field_htf",   "Field HTF mass flow rate total inc. recirc.",                    "kg/hr",        "",            "Type250",        "*",                       "",                      "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "DP_tot",            "Field HTF pressure drop total",                                  "bar",          "",            "Type250",        "*",                       "",                      "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "T_sys_c",           "Field HTF temperature cold header inlet",                        "C",            "",            "Type250",        "*",                       "",                      "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "T_sys_h",           "Field HTF temperature hot header outlet",                        "C",            "",            "Type250",        "*",                       "",                      "" },
@@ -570,6 +572,12 @@ public:
         set_unit_value_ssc_double(type250_solarfield, "Row_Distance" ); // , 15);
         set_unit_value_ssc_double(type250_solarfield, "FieldConfig" ); // , 2);
         //set_unit_value_ssc_double(type250_solarfield, "T_startup" ); // , 300);
+        if (as_boolean("tanks_in_parallel")) {
+            set_unit_value_ssc_double(type250_solarfield, "T_recirc", as_double("T_startup"));
+        }
+        else {
+            set_unit_value_ssc_double(type250_solarfield, "T_recirc", as_double("T_tank_hot_inlet_min"));
+        }
         set_unit_value_ssc_double(type250_solarfield, "m_dot_htfmin" ); // , 1);
         set_unit_value_ssc_double(type250_solarfield, "m_dot_htfmax" ); // , 12);
         set_unit_value_ssc_double(type250_solarfield, "T_loop_in_des" ); // , 293);
@@ -679,7 +687,6 @@ public:
 			// Set the initial values required from "downstream" types
         set_unit_value_ssc_double(type250_solarfield, "defocus", 1.0); // , 1.);
 		set_unit_value_ssc_double(type250_solarfield, "T_cold_in", as_double("T_loop_in_des")); // , 293.);
-        set_unit_value_ssc_double(type250_solarfield, "recirculating", 0.); // false
 		//Connect Solar Field Inputs
 		bool bConnected = connect(weather, "beam", type250_solarfield, "I_b", 0);
 		bConnected &= connect(weather, "tdry", type250_solarfield, "T_db", 0);
@@ -689,7 +696,7 @@ public:
 		bConnected &= connect(weather, "solazi", type250_solarfield, "SolarAz", 0);
 		bConnected &= connect(type251_controller, "defocus", type250_solarfield, "defocus" );
 		bConnected &= connect(type251_controller, "T_field_in", type250_solarfield, "T_cold_in" );
-        bConnected &= connect(type251_controller, "recirculating", type250_solarfield, "recirculating");
+        //bConnected &= connect(type251_controller, "recirculating", type250_solarfield, "recirculating");
         set_unit_value_ssc_double(type250_solarfield, "v_sgs", -999);                                       // indicate that this value should be propagated at the simulation start
         bConnected &= connect(type251_controller, "SGS_vol_tot", type250_solarfield, "v_sgs");              // output first param, input second
 
@@ -765,7 +772,7 @@ public:
 			//Connections to controller
 		bConnected &= connect(weather, "beam", type251_controller, "I_bn", 0);
 		bConnected &= connect(weather, "tdry", type251_controller, "T_amb", 0);
-		bConnected &= connect(type250_solarfield, "m_dot_htf_tot", type251_controller, "m_dot_field");
+		bConnected &= connect(type250_solarfield, "m_dot_field_htf", type251_controller, "m_dot_field");
 		bConnected &= connect(type224_powerblock, "m_dot_htf_ref", type251_controller, "m_dot_htf_ref");
 		bConnected &= connect(type250_solarfield, "T_sys_h", type251_controller, "T_field_out");
 		bConnected &= connect(type224_powerblock, "T_htf_cold", type251_controller, "T_pb_out");

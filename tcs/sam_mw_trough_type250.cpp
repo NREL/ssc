@@ -73,6 +73,7 @@ enum{
 	P_THETA_DEP,
 	P_ROW_DISTANCE,
 	P_FIELDCONFIG,
+    P_T_RECIRC,
 	P_PB_RATED_CAP,
 	P_M_DOT_HTFMIN,
 	P_M_DOT_HTFMAX,
@@ -197,7 +198,6 @@ enum{
 	I_T_COLD_IN,
 	I_M_DOT_IN,
 	I_DEFOCUS,
-    I_RECIRC,
 	I_SOLARAZ,
 	I_LATITUDE,
 	I_LONGITUDE,
@@ -222,7 +222,9 @@ enum{
     O_LOOP_T_DSN,
     O_LOOP_P_DSN,
 	O_T_SYS_H,
+    O_RECIRC,
 	O_M_DOT_AVAIL,
+    O_M_DOT_FIELD_HTF,
 	O_Q_AVAIL,
 	O_DP_TOT,
 	O_W_DOT_PUMP,
@@ -276,6 +278,7 @@ tcsvarinfo sam_mw_trough_type250_variables[] = {
 	{ TCS_PARAM,          TCS_NUMBER,         P_THETA_DEP,              "theta_dep",                                                                            "deploy angle",          "deg",             "",             "",           "10" },
 	{ TCS_PARAM,          TCS_NUMBER,      P_ROW_DISTANCE,           "Row_Distance",                                         "Spacing between rows (centerline to centerline)",            "m",             "",             "",           "15" },
 	{ TCS_PARAM,          TCS_NUMBER,       P_FIELDCONFIG,            "FieldConfig",                                                              "Number of subfield headers",         "none",             "",             "",            "2" },
+    { TCS_PARAM,          TCS_NUMBER,          P_T_RECIRC,               "T_recirc",                                      "The temperature which below the field recirculates",            "C",             "",             "",          "300" },
 	{ TCS_PARAM,          TCS_NUMBER,      P_PB_RATED_CAP,           "pb_rated_cap",                                                                    "Rated plant capacity",          "MWe",             "",             "",          "111" },
 	{ TCS_PARAM,          TCS_NUMBER,      P_M_DOT_HTFMIN,           "m_dot_htfmin",                                                              "Minimum loop HTF flow rate",         "kg/s",             "",             "",            "1" },
 	{ TCS_PARAM,          TCS_NUMBER,      P_M_DOT_HTFMAX,           "m_dot_htfmax",                                                              "Maximum loop HTF flow rate",         "kg/s",             "",             "",           "12" },
@@ -401,7 +404,6 @@ tcsvarinfo sam_mw_trough_type250_variables[] = {
 	{ TCS_INPUT,          TCS_NUMBER,         I_T_COLD_IN,              "T_cold_in",                                                                  "HTF return temperature",            "C",             "",             "",             "" },
 	{ TCS_INPUT,          TCS_NUMBER,          I_M_DOT_IN,               "m_dot_in",                                                         "HTF mass flow rate at the inlet",        "kg/hr",             "",             "",             "" },
 	{ TCS_INPUT,          TCS_NUMBER,           I_DEFOCUS,                "defocus",                                                                         "Defocus control",         "none",             "",             "",             "" },
-    { TCS_INPUT,          TCS_NUMBER,            I_RECIRC,          "recirculating",                                                "Field recirculating bypass valve control",         "none",             "",             "",             "" },
 	{ TCS_INPUT,          TCS_NUMBER,           I_SOLARAZ,                "SolarAz",                                 "Solar azimuth angle reported by the Type15 weather file",          "deg",             "",             "",             "" },
 	{ TCS_INPUT,          TCS_NUMBER,          I_LATITUDE,               "latitude",                                                    "Site latitude read from weather file",          "deg",             "",             "",             "" },
 	{ TCS_INPUT,          TCS_NUMBER,         I_LONGITUDE,              "longitude",                                                   "Site longitude read from weather file",          "deg",             "",             "",             "" },
@@ -427,7 +429,9 @@ tcsvarinfo sam_mw_trough_type250_variables[] = {
     { TCS_OUTPUT,          TCS_ARRAY,      O_LOOP_P_DSN,          "pipe_loop_P_dsn",					                                    "Runner piping pressure at design",          "bar",             "",             "",             "" },
 
 	{ TCS_OUTPUT,          TCS_NUMBER,           O_T_SYS_H,                "T_sys_h",                                                      "Solar field HTF outlet temperature",            "C",             "",             "",             "" },
+    { TCS_OUTPUT,          TCS_NUMBER,            O_RECIRC,          "recirculating",                                                 "Field recirculating (bypass valve open)",         "none",             "",             "",             "" },
 	{ TCS_OUTPUT,          TCS_NUMBER,       O_M_DOT_AVAIL,            "m_dot_avail",                                                       "HTF mass flow rate from the field",        "kg/hr",             "",             "",             "" },
+    { TCS_OUTPUT,          TCS_NUMBER,   O_M_DOT_FIELD_HTF,        "m_dot_field_htf",                         "HTF mass flow rate from the field, including when recirculating",        "kg/hr",             "",             "",             "" },
 	{ TCS_OUTPUT,          TCS_NUMBER,           O_Q_AVAIL,                "q_avail",                                                     "Thermal power produced by the field",          "MWt",             "",             "",             "" },
 	{ TCS_OUTPUT,          TCS_NUMBER,            O_DP_TOT,                 "DP_tot",                                                                 "Total HTF pressure drop",          "bar",             "",             "",             "" },
 	{ TCS_OUTPUT,          TCS_NUMBER,        O_W_DOT_PUMP,             "W_dot_pump",                                                      "Required solar field pumping power",          "MWe",             "",             "",             "" },
@@ -486,6 +490,7 @@ private:
 	double theta_dep;		//deploy angle
 	double Row_Distance;		//Spacing between rows (centerline to centerline)
 	int FieldConfig;		//Number of subfield headers
+    double T_recirc;        //The temperature which below the field recirculates
 	double pb_rated_cap;		//Rated plant capacity
 	double m_dot_htfmin;		//Minimum loop HTF flow rate
 	double m_dot_htfmax;		//Maximum loop HTF flow rate
@@ -676,7 +681,7 @@ private:
 	double T_cold_in;		//HTF return temperature
 	double m_dot_in;		//HTF mass flow rate at the inlet 
 	double defocus;		//Defocus control
-    bool recirculating; // Field recirculating bypass valve control
+    bool recirculating; // Field recirculating (bypass valve open)
 	double SolarAz;		//Solar azimuth angle reported by the Type15 weather file
 	double latitude;		//Site latitude read from weather file
 	double longitude;		//Site longitude read from weather file
@@ -684,6 +689,7 @@ private:
 
 	double T_sys_h;		//Solar field HTF outlet temperature
 	double m_dot_avail;		//HTF mass flow rate from the field
+    double m_dot_field_htf;  //HTF mass flow rate from the field, including when recirculating
 	double q_avail;		//Thermal power produced by the field
 	double DP_tot;		//Total HTF pressure drop
 	double W_dot_pump;		//Required solar field pumping power
@@ -806,6 +812,7 @@ public:
 		theta_dep	= std::numeric_limits<double>::quiet_NaN();
 		Row_Distance	= std::numeric_limits<double>::quiet_NaN();
 		FieldConfig	= -1;
+        T_recirc        = std::numeric_limits<double>::quiet_NaN();
 		pb_rated_cap	= std::numeric_limits<double>::quiet_NaN();
 		m_dot_htfmin	= std::numeric_limits<double>::quiet_NaN();
 		m_dot_htfmax	= std::numeric_limits<double>::quiet_NaN();
@@ -995,13 +1002,13 @@ public:
 		T_cold_in	= std::numeric_limits<double>::quiet_NaN();
 		m_dot_in	= std::numeric_limits<double>::quiet_NaN();
 		defocus	= std::numeric_limits<double>::quiet_NaN();
-        recirculating = false;
 		SolarAz	= std::numeric_limits<double>::quiet_NaN();
 		latitude = std::numeric_limits<double>::quiet_NaN();
 		longitude = std::numeric_limits<double>::quiet_NaN();
 		//timezone = std::numeric_limits<double>::quiet_NaN();
 		T_sys_h	= std::numeric_limits<double>::quiet_NaN();
 		m_dot_avail	= std::numeric_limits<double>::quiet_NaN();
+        m_dot_field_htf = std::numeric_limits<double>::quiet_NaN();
 		q_avail	= std::numeric_limits<double>::quiet_NaN();
 		DP_tot	= std::numeric_limits<double>::quiet_NaN();
 		W_dot_pump	= std::numeric_limits<double>::quiet_NaN();
@@ -1138,6 +1145,7 @@ public:
 		theta_dep = value(P_THETA_DEP);		//deploy angle [deg]
 		Row_Distance = value(P_ROW_DISTANCE);		//Spacing between rows (centerline to centerline) [m]
 		FieldConfig = (int)value(P_FIELDCONFIG);		//Number of subfield headers [none]
+        T_recirc = value(P_T_RECIRC);               //The temperature which below the field recirculates
 		pb_rated_cap = value(P_PB_RATED_CAP);		//Rated plant capacity [MWe]
 		m_dot_htfmin = value(P_M_DOT_HTFMIN);		//Minimum loop HTF flow rate [kg/s]
 		m_dot_htfmax = value(P_M_DOT_HTFMAX);		//Maximum loop HTF flow rate [kg/s]
@@ -1406,6 +1414,7 @@ public:
 		//Unit conversions
 		theta_stow *= d2r;
 		theta_dep *= d2r;
+        T_recirc += 273.15;
 		T_loop_in_des += 273.15;
 		T_loop_out += 273.15;
 		T_field_ini += 273.15;
@@ -1806,7 +1815,6 @@ public:
             value(I_T_COLD_IN, T_loop_in_des - 273.15); // HTF return temperature, to the field [C]
             value(I_M_DOT_IN, m_dot_design * 3600);     // HTF mass flow rate at the inlet to the field  [kg/hr]
             value(I_DEFOCUS, 1);		        // Defocus control  [none] (1 = no defocus)
-            value(I_RECIRC, 0.);                // Field recirculating bypass valve control (0 = not recirculating)
             value(I_SOLARAZ, ColAz*r2d + 180);	// Solar azimuth angle, 0 = North [deg], before SolarAz is converted so to make them equal
             latitude = value(I_LATITUDE);		// Site latitude read from weather file [deg]
             longitude = value(I_LONGITUDE);		// Site longitude read from weather file [deg]
@@ -1859,7 +1867,6 @@ public:
 		T_cold_in = value(I_T_COLD_IN);		//HTF return temperature [C]
 		m_dot_in = value(I_M_DOT_IN);		//HTF mass flow rate at the inlet  [kg/hr]
 		defocus_new = value(I_DEFOCUS);		//Defocus control  [none]
-        recirculating = value(I_RECIRC);    // Field recirculating bypass valve control (0 = not recirculating))
 		SolarAz = value(I_SOLARAZ);		//Solar azimuth angle reported by the Type15 weather file [deg]
 		latitude = value(I_LATITUDE);		//Site latitude read from weather file [deg]
 		longitude = value(I_LONGITUDE);		//Site longitude read from weather file [deg]
@@ -3228,20 +3235,22 @@ calc_final_metrics_goto:
 		if( !is_using_input_gen )
 		{
 			//Calculate the thermal power produced by the field
-			if( !recirculating )   // MJW 12.14.2010 Limit field production to above startup temps. Otherwise we get strange results during startup. Does this affect turbine startup?
+            q_avail = E_avail_tot / (dt)*1.e-6;  //[MW]
+			//Calculate the available mass flow of HTF
+			m_dot_avail = max(q_avail*1.e6 / (c_htf_ave*(T_sys_h - T_cold_in_1)), 0.0); //[kg/s]
+            m_dot_field_htf = m_dot_avail;
+			if( T_sys_h < T_recirc )   // MJW 12.14.2010 Limit field production to above startup temps. Otherwise we get strange results during startup. Does this affect turbine startup?
 			{
-				q_avail = E_avail_tot / (dt)*1.e-6;  //[MW]
-				//Calculate the available mass flow of HTF
-				m_dot_avail = max(q_avail*1.e6 / (c_htf_ave*(T_sys_h - T_cold_in_1)), 0.0); //[kg/s]     
-			}
-			else
-			{
-				q_avail = 0.0;
+                recirculating = true;
+                q_avail = 0.0;
 				m_dot_avail = 0.0;
+                m_dot_field_htf = m_dot_htf_tot;
+                //m_dot_field_htf = 0;
 			}
 		}
 		else
 		{
+            recirculating = false;
 			q_avail = E_avail_tot / (dt)*1.e-6;  //[MW]
 			//Calculate the available mass flow of HTF
 			m_dot_avail = max(q_avail*1.e6 / (c_htf_ave*(T_sys_h - T_cold_in_1)), 0.0); //[kg/s]     
@@ -3268,6 +3277,7 @@ set_outputs_and_return:
 		 
 		double T_sys_h_out = T_sys_h - 273.15;			//[C] from K
 		double m_dot_avail_out = m_dot_avail*3600.;		//[kg/hr] from kg/s
+        double m_dot_field_htf_out = m_dot_field_htf*3600.;  //[kg/hr] from kg/s
 		double W_dot_pump_out = W_dot_pump/1000.;		//[MW] from kW
 		double E_fp_tot_out = E_fp_tot*1.e-6;			//[MW] from W
 		double T_sys_c_out = T_sys_c - 273.15;			//[C] from K
@@ -3351,7 +3361,9 @@ set_outputs_and_return:
 
 		//Set outputs
 		value(O_T_SYS_H, T_sys_h_out);				//[C] Solar field HTF outlet temperature
+        value(O_RECIRC, recirculating);             //[none] field recirculating (bypass valve open)
 		value(O_M_DOT_AVAIL, m_dot_avail_out);		//[kg/hr] HTF mass flow rate from the field
+        value(O_M_DOT_FIELD_HTF, m_dot_field_htf_out);  //[kg/hr] HTF mass flow rate from the field, including when recirculating
 		value(O_Q_AVAIL, q_avail);					//[MWt] Thermal power produced by the field
 		value(O_DP_TOT, DP_tot);					//[bar] Total HTF pressure drop
 		value(O_W_DOT_PUMP, W_dot_pump_out);		//[MWe] Required solar field pumping power
