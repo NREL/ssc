@@ -175,6 +175,14 @@ static var_info _cm_vtab_tcstrough_physical[] = {
     { SSC_INPUT,        SSC_MATRIX,      "D_cpnt",                    "Interconnect component diameters, row=intc, col=cpnt",                            "none",          "",             "solar_field",    "*",                       "",                      "" },
     { SSC_INPUT,        SSC_MATRIX,      "L_cpnt",                    "Interconnect component lengths, row=intc, col=cpnt",                              "none",          "",             "solar_field",    "*",                       "",                      "" },
     { SSC_INPUT,        SSC_MATRIX,      "Type_cpnt",                 "Interconnect component type, row=intc, col=cpnt",                                 "none",          "",             "solar_field",    "*",                       "",                      "" },
+
+    { SSC_INPUT,        SSC_NUMBER,      "custom_sf_pipe_sizes",      "Use custom solar field pipe diams, wallthks, and lengths",                        "none",          "",             "solar_field",    "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_ARRAY,       "sf_rnr_diams",              "Custom runner diameters",                                                            "m",          "",             "solar_field",    "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_ARRAY,       "sf_rnr_wallthicks",         "Custom runner wall thicknesses",                                                     "m",          "",             "solar_field",    "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_ARRAY,       "sf_rnr_lengths",            "Custom runner lengths",                                                              "m",          "",             "solar_field",    "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_ARRAY,       "sf_hdr_diams",              "Custom header diameters",                                                            "m",          "",             "solar_field",    "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_ARRAY,       "sf_hdr_wallthicks",         "Custom header wall thicknesses",                                                     "m",          "",             "solar_field",    "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_ARRAY,       "sf_hdr_lengths",            "Custom header lengths",                                                              "m",          "",             "solar_field",    "*",                       "",                      "" },
 														          															          
 //   controller (type 251) inputs							          
 //   VARTYPE            DATATYPE          NAME                        LABEL                                                             UNITS           META            GROUP             REQUIRED_IF                CONSTRAINTS              UI_HINTS
@@ -210,9 +218,12 @@ static var_info _cm_vtab_tcstrough_physical[] = {
     { SSC_INPUT,        SSC_NUMBER,      "pb_pump_coef",              "Pumping power to move 1kg of HTF through PB loop",               "kW/(kg/s)",    "",             "controller",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "tes_pump_coef",             "Pumping power to move 1kg of HTF through tes loop",              "kW/(kg/s)",    "",             "controller",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "V_tes_des",                 "Design-point velocity to size the TES pipe diameters",           "m/s",          "",             "controller",     "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_ARRAY,       "L_tes_col_gen",             "Length of TES pipes in collection and generation loops",         "m",            "",             "controller",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "custom_tes_p_loss",         "TES pipe losses are based on custom lengths and coeffs",         "-",            "",             "controller",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_ARRAY,       "k_tes_loss_coeffs",         "Minor loss coeffs for the coll, gen, and bypass loops",          "-",            "",             "controller",     "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "custom_sgs_pipe_sizes",     "Use custom SGS pipe diams, wallthks, and lengths",               "-",            "",             "controller",     "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_ARRAY,       "sgs_diams",                 "Custom SGS diameters",                                           "m",            "",             "controller",     "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_ARRAY,       "sgs_wallthicks",            "Custom SGS wall thicknesses",                                    "m",            "",             "controller",     "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_ARRAY,       "sgs_lengths",               "Custom SGS lengths",                                             "m",            "",             "controller",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "pb_fixed_par",              "Fraction of rated gross power constantly consumed",              "-",            "",             "controller",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_ARRAY,       "bop_array",                 "Coefficients for balance of plant parasitics calcs",             "-",            "",             "controller",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_ARRAY,       "aux_array",                 "Coefficients for auxiliary heater parasitics calcs",             "-",            "",             "controller",     "*",                       "",                      "" },
@@ -311,7 +322,8 @@ static var_info _cm_vtab_tcstrough_physical[] = {
     { SSC_OUTPUT,       SSC_ARRAY,       "tou_value",         "Resource Time-of-use value",                                      "",             "",            "tou",            "*",                      "",                      "" },
 																																																			 			             
     //Solar field																																															 			             
-	{ SSC_OUTPUT,       SSC_ARRAY,       "pipe_header_diams",      "Field piping header diameters",							    "m",             "",            "Type250",        "*",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "recirculating",          "Field recirculating (bypass valve open)",			        "-",             "",            "Type250",        "*",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "pipe_header_diams",      "Field piping header diameters",							    "m",             "",            "Type250",        "*",                       "",                      "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "pipe_header_wallthk",    "Field piping header wall thicknesses",	    			    "m",             "",            "Type250",        "*",                       "",                      "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "pipe_header_lengths",    "Field piping header lengths",                               "m",             "",            "Type250",        "*",                       "",                      "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "pipe_header_expansions", "Number of field piping header expansions",                  "-",             "",            "Type250",        "*",                       "",                      "" },
@@ -351,6 +363,8 @@ static var_info _cm_vtab_tcstrough_physical[] = {
     { SSC_OUTPUT,       SSC_ARRAY,       "E_bal_startup",     "Field HTF energy inertial (consumed)",                           "MWht",          "",            "Type250",        "*",                      "",                      "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "m_dot_avail",       "Field HTF mass flow rate total",                                 "kg/hr",        "",            "Type250",        "*",                       "",                      "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "m_dot_htf2",        "Field HTF mass flow rate loop",                                  "kg/s",         "",            "Type250",        "*",                       "",                      "" },
+    //{ SSC_OUTPUT,       SSC_ARRAY,       "m_dot_htf_tot",     "Field HTF mass flow rate",                                       "kg/hr",        "",            "Type250",        "*",                       "",                      "" },
+    //{ SSC_OUTPUT,       SSC_ARRAY,       "m_dot_field_htf",   "Field HTF mass flow rate total inc. recirc.",                    "kg/hr",        "",            "Type250",        "*",                       "",                      "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "DP_tot",            "Field HTF pressure drop total",                                  "bar",          "",            "Type250",        "*",                       "",                      "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "T_sys_c",           "Field HTF temperature cold header inlet",                        "C",            "",            "Type250",        "*",                       "",                      "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "T_sys_h",           "Field HTF temperature hot header outlet",                        "C",            "",            "Type250",        "*",                       "",                      "" },
@@ -558,6 +572,12 @@ public:
         set_unit_value_ssc_double(type250_solarfield, "Row_Distance" ); // , 15);
         set_unit_value_ssc_double(type250_solarfield, "FieldConfig" ); // , 2);
         //set_unit_value_ssc_double(type250_solarfield, "T_startup" ); // , 300);
+        if (as_boolean("tanks_in_parallel")) {
+            set_unit_value_ssc_double(type250_solarfield, "T_recirc", as_double("T_startup"));
+        }
+        else {
+            set_unit_value_ssc_double(type250_solarfield, "T_recirc", as_double("T_tank_hot_inlet_min"));
+        }
         set_unit_value_ssc_double(type250_solarfield, "m_dot_htfmin" ); // , 1);
         set_unit_value_ssc_double(type250_solarfield, "m_dot_htfmax" ); // , 12);
         set_unit_value_ssc_double(type250_solarfield, "T_loop_in_des" ); // , 293);
@@ -657,10 +677,16 @@ public:
         set_unit_value_ssc_matrix(type250_solarfield, "D_cpnt");
         set_unit_value_ssc_matrix(type250_solarfield, "L_cpnt");
         set_unit_value_ssc_matrix(type250_solarfield, "Type_cpnt");
+        set_unit_value_ssc_double(type250_solarfield, "custom_sf_pipe_sizes");
+        set_unit_value_ssc_array(type250_solarfield, "sf_rnr_diams");
+        set_unit_value_ssc_array(type250_solarfield, "sf_rnr_wallthicks");
+        set_unit_value_ssc_array(type250_solarfield, "sf_rnr_lengths");
+        set_unit_value_ssc_array(type250_solarfield, "sf_hdr_diams");
+        set_unit_value_ssc_array(type250_solarfield, "sf_hdr_wallthicks");
+        set_unit_value_ssc_array(type250_solarfield, "sf_hdr_lengths");
 			// Set the initial values required from "downstream" types
         set_unit_value_ssc_double(type250_solarfield, "defocus", 1.0); // , 1.);
 		set_unit_value_ssc_double(type250_solarfield, "T_cold_in", as_double("T_loop_in_des")); // , 293.);
-        set_unit_value_ssc_double(type250_solarfield, "recirculating", 0.); // false
 		//Connect Solar Field Inputs
 		bool bConnected = connect(weather, "beam", type250_solarfield, "I_b", 0);
 		bConnected &= connect(weather, "tdry", type250_solarfield, "T_db", 0);
@@ -670,7 +696,7 @@ public:
 		bConnected &= connect(weather, "solazi", type250_solarfield, "SolarAz", 0);
 		bConnected &= connect(type251_controller, "defocus", type250_solarfield, "defocus" );
 		bConnected &= connect(type251_controller, "T_field_in", type250_solarfield, "T_cold_in" );
-        bConnected &= connect(type251_controller, "recirculating", type250_solarfield, "recirculating");
+        //bConnected &= connect(type251_controller, "recirculating", type250_solarfield, "recirculating");
         set_unit_value_ssc_double(type250_solarfield, "v_sgs", -999);                                       // indicate that this value should be propagated at the simulation start
         bConnected &= connect(type251_controller, "SGS_vol_tot", type250_solarfield, "v_sgs");              // output first param, input second
 
@@ -714,9 +740,12 @@ public:
 		set_unit_value_ssc_double(type251_controller, "pb_pump_coef" ); // , 0.55);
 		set_unit_value_ssc_double(type251_controller, "tes_pump_coef" ); // , 0.15);
         set_unit_value_ssc_double(type251_controller, "V_tes_des"); // , 1.85);
-        set_unit_value_ssc_array(type251_controller, "L_tes_col_gen"); // , []);
         set_unit_value_ssc_double(type251_controller, "custom_tes_p_loss"); // , false);
         set_unit_value_ssc_array(type251_controller, "k_tes_loss_coeffs"); // , []);
+        set_unit_value_ssc_double(type251_controller, "custom_sgs_pipe_sizes"); // , []);
+        set_unit_value_ssc_array(type251_controller, "sgs_diams"); // , []);
+        set_unit_value_ssc_array(type251_controller, "sgs_wallthicks"); // , []);
+        set_unit_value_ssc_array(type251_controller, "sgs_lengths"); // , []);
 		set_unit_value_ssc_double(type251_controller, "pb_fixed_par" ); // , 0.0055);
 		set_unit_value_ssc_array(type251_controller, "bop_array" ); // , [0,1,0.483,0.517,0]);
 		set_unit_value_ssc_array(type251_controller, "aux_array" ); // , [0.02273,1,0.483,0.517,0]);
@@ -743,7 +772,7 @@ public:
 			//Connections to controller
 		bConnected &= connect(weather, "beam", type251_controller, "I_bn", 0);
 		bConnected &= connect(weather, "tdry", type251_controller, "T_amb", 0);
-		bConnected &= connect(type250_solarfield, "m_dot_avail", type251_controller, "m_dot_field");
+		bConnected &= connect(type250_solarfield, "m_dot_field_htf", type251_controller, "m_dot_field");
 		bConnected &= connect(type224_powerblock, "m_dot_htf_ref", type251_controller, "m_dot_htf_ref");
 		bConnected &= connect(type250_solarfield, "T_sys_h", type251_controller, "T_field_out");
 		bConnected &= connect(type224_powerblock, "T_htf_cold", type251_controller, "T_pb_out");

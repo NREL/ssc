@@ -1,12 +1,13 @@
 <a name="toc"></a>
 - [Parameters](#parameters)
   * [calc_design_pipe_vals](#calc_design_pipe_vals)
+  * [custom_sf_pipe_sizes](#custom_sf_pipe_sizes)
+  * [custom_sgs_pipe_sizes](#custom_sgs_pipe_sizes)
   * [custom_tes_p_loss](#custom_tes_p_loss)
   * [has_hot_tank_bypass](#has_hot_tank_bypass)
-  * [k_tes_loss_coeffs](#tes_k_loss_coeffs)
+  * [k_tes_loss_coeffs](#k_tes_loss_coeffs)
   * [L_rnr_pb](#l_rnr_pb)
   * [L_rnr_per_xpan](#l_rnr_per_xpan)
-  * [L_tes_col_gen](#l_tes_col)
   * [L_xpan_hdr](#l_xpan_hdr)
   * [L_xpan_rnr](#l_xpan_rnr)
   * [Min_rnr_xpans](#min_rnr_xpans)
@@ -14,6 +15,15 @@
   * [N_max_hdr_diams](#N_max_hdr_diams)
   * [northsouth_field_sep](#northsouth_field_sep)
   * [offset_xpan_hdr](#offset_xpan_hdr)
+  * [sf_hdr_diams](#sf_hdr_diams)
+  * [sf_hdr_lengths](#sf_hdr_lengths)
+  * [sf_hdr_wallthicks](#sf_hdr_wallthicks)
+  * [sf_rnr_diams](#sf_rnr_diams)
+  * [sf_rnr_lengths](#sf_rnr_lengths)
+  * [sf_rnr_wallthicks](#sf_rnr_wallthicks)
+  * [sgs_diams](#sgs_diams)
+  * [sgs_lengths](#sgs_lengths)
+  * [sgs_wallthicks](#sgs_wallthicks)
   * [tanks_in_parallel](#tanks_in_parallel)
   * [T_tank_hot_inlet_min](#t_tank_hot_inlet_min)
   * [V_hdr_cold_max](#v_hdr_cold_max)
@@ -29,6 +39,7 @@
   * [pipe_header_P_dsn](#pipe_header_P_dsn)
   * [pipe_header_T_dsn](#pipe_header_T_dsn)
   * [pipe_header_vel_dsn](#pipe_header_vel_dsn)
+  * [pipe_header_wallthk](#pipe_header_wallthk)
   * [pipe_loop_P_dsn](#pipe_loop_P_dsn)
   * [pipe_loop_T_dsn](#pipe_loop_T_dsn)
   * [pipe_runner_diams](#pipe_runner_diams)
@@ -38,6 +49,11 @@
   * [pipe_runner_P_dsn](#pipe_runner_P_dsn)
   * [pipe_runner_T_dsn](#pipe_runner_T_dsn)
   * [pipe_runner_vel_dsn](#pipe_runner_vel_dsn)
+  * [pipe_runner_wallthk](#pipe_runner_wallthk)
+  * [pipe_sgs_diams](#pipe_sgs_diams)
+  * [pipe_sgs_mdot_dsn](#pipe_sgs_mdot_dsn)
+  * [pipe_sgs_vel_dsn](#pipe_sgs_vel_dsn)
+  * [pipe_sgs_wallthk](#pipe_sgs_wallthk)
  
  
 <!-- toc -->
@@ -46,8 +62,14 @@
 ### calc_design_pipe_vals
 true if the htf temperatures and pressures at design conditions in the runners, farthest header, and farthest loop should be calculated and output. Default = true. [^](#toc)
 
+### custom_sf_pipe_sizes
+true if the runner and header diameters, wall thicknesses and lengths parameters should be used instead of calculating them. Note that changing the lengths does not affect the field layout. [^](#toc)
+
+### custom_sgs_pipe_sizes
+true if the SGS diameters and wall thicknesses parameters should be used instead of calculating them. (Note that the SGS lengths are always input). [^](#toc)
+
 ### custom_tes_p_loss
-true if the TES piping losses should be calculated using the TES pipe lengths and combined minor loss coefficients (k_TES_col, k_TES_gen, and k_TES_bypass) or false if using the pumping power parameters on the parasitics page. Default = false. [^](#toc)
+true if the TES piping losses should be calculated using the TES pipe lengths and minor loss coefficients (k_tes_loss_coeffs) or false if using the pumping power parameters on the parasitics page. Default = false. [^](#toc)
 
 ### has_hot_tank_bypass
 true if the solar field bypass valve causes the field htf to bypasses just the hot tank (and power block and auxiliary boiler) and enter the cold tank before flowing back to the field. Value is false if the bypass valve bypasses both the hot and cold tank. Default = false. [^](#toc)
@@ -60,9 +82,6 @@ length of runner pipe in meters, for either the hot or cold lines. This length w
 
 ### L_rnr_per_xpan
 the threshold length of straight runner pipe without an expansion loop. Once this length has been reached, an expansion loop is added (without increasing the linear distance). Default = 70 m. [^](#toc)
-
-### L_tes_col_gen
-length of piping in the TES collection flow loop followed by the generation flow loop [m]. Defaults = {0, 90, 100, 120, 0, 0, 0, 0, 80, 120, 80}. Lengths at indices 0, 1, 5 and 6 are the summed lengths of the multiple individual pump sections. [^](#toc)
 
 ### L_xpan_hdr
 combined length in meters of the two perpendicular segments of a header expansion loop. This is the additional pipe length for each expansion loop. Default = 20 m [^](#toc)
@@ -84,6 +103,48 @@ north/south separation between subfields, in meters, defined as the shortest dis
 
 ### offset_xpan_hdr
 location of the first header expansion loop. Default = 1, which means that the first expansion loop is after the first collector loop closest to the runner. [^](#toc)
+
+### sf_hdr_diams
+custom diameters for the header piping as read from the modified output files. Utilized if custom_sf_pipe_sizes is true. Do not change the number of values (sections) as this will result in unpredictable model behavior. [^](#toc)
+ 
+### sf_hdr_lengths
+custom lengths for the header piping as read from the modified output files. Utilized if custom_sf_pipe_sizes is true. Changing the lengths does not affect the field layout. Do not change the number of values (sections) as this will result in unpredictable model behavior. [^](#toc)
+ 
+### sf_hdr_wallthicks
+custom wall thicknesses for the header piping as read from the modified output files. Utilized if custom_sf_pipe_sizes is true. Do not change the number of values (sections) as this will result in unpredictable model behavior. [^](#toc)
+ 
+### sf_rnr_diams
+custom diameters for the runner piping as read from the modified output files. Utilized if custom_sf_pipe_sizes is true. Do not change the number of values (sections) as this will result in unpredictable model behavior. [^](#toc)
+ 
+### sf_rnr_lengths
+custom lengths for the runner piping as read from the modified output files. Utilized if custom_sf_pipe_sizes is true. Changing the lengths does not affect the field layout. Do not change the number of values (sections) as this will result in unpredictable model behavior. [^](#toc)
+ 
+### sf_rnr_wallthicks
+custom wall thicknesses for the runner piping as read from the modified output files. Utilized if custom_sf_pipe_sizes is true. Do not change the number of values (sections) as this will result in unpredictable model behavior. [^](#toc)
+ 
+### sgs_diams
+custom diameters for the SGS piping as read from the modified output files. Utilized if custom_sgs_pipe_sizes is true. Do not change the number of values (sections) as this will result in unpredictable model behavior. [^](#toc)
+
+Collection Sections:
+- 0: &nbsp;&nbsp;&nbsp; Solar field (SF) pump suction header to individual SF pump inlet
+- 1: &nbsp;&nbsp;&nbsp; Individual SF pump discharge to SF pump discharge header
+- 2: &nbsp;&nbsp;&nbsp; SF pump discharge header to collection field section headers (i.e., runners)
+- 3: &nbsp;&nbsp;&nbsp; Collector field section outlet headers (i.e., runners) to expansion vessel (indirect storage) or hot thermal storage tank (direct storage)
+- 4: &nbsp;&nbsp;&nbsp; Bypass branch - Collector field section outlet headers (i.e., runners) to pump suction header (indirect) or cold thermal storage tank (direct)
+
+Generation Sections:
+- 5: &nbsp;&nbsp;&nbsp; SGS pump suction header to individual SGS pump inlet (applicable only for storage in series with SF)
+- 6: &nbsp;&nbsp;&nbsp; Individual SGS pump discharge to SGS pump discharge header (only for series storage)
+- 7: &nbsp;&nbsp;&nbsp; SGS pump discharge header to steam generator supply header (only for series storage)
+- 8: &nbsp;&nbsp;&nbsp; Steam generator supply header to inter-steam generator piping
+- 9: &nbsp;&nbsp;&nbsp; Inter-steam generator piping to steam generator outlet header
+- 10: &nbsp;&nbsp;&nbsp; Steam generator outlet header to SF pump suction header (indirect) or cold thermal storage tank (direct)
+
+### sgs_lengths
+length of piping in the SGS collection flow loop followed by the generation flow loop [m]. These are not read from the modified output files. Defaults = {0, 90, 100, 120, 0, 0, 0, 0, 80, 120, 80}. Lengths at indices 0, 1, 5 and 6 are the summed lengths of the multiple individual pump sections. Do not change the number of values (sections) as this will result in unpredictable model behavior. [^](#toc)
+
+### sgs_wallthicks
+custom wall thicknesses for the SGS piping as read from the modified output files. Utilized if custom_sgs_pipe_sizes is true. Do not change the number of values (sections) as this will result in unpredictable model behavior. [^](#toc)
 
 ### tanks_in_parallel
 true if the hot and cold storage tank branch is in parallel with the solar field (traditional case), or false if the tanks are in series with the solar field (only applicable for direct storage). Default = true. [^](#toc)
@@ -128,6 +189,9 @@ temperature in Celsius of the heat transfer fluid entering each section of the f
 
 ### pipe_header_vel_dsn
 velocity in m/s of the heat transfer fluid in each header section at design conditions. The first value is in the section before the first set of loops in the cold header and the last value is in the section after the last set of loops in the hot header. The velocity for the cold header sections is the same as that entering the section, and the velocity for the hot header sections is the same as that leaving the section. [^](#toc)
+
+### pipe_header_wallthk
+wall thickness of header pipe sections in [m] [^](#toc)
 
 ### pipe_loop_P_dsn
 gauge pressure in bar of the heat transfer fluid entering each node in the farthest loop at design conditions. The values correspond to: [^](#toc)
@@ -183,3 +247,18 @@ temperature in Celsius of the heat transfer fluid entering each runner section a
 
 ### pipe_runner_vel_dsn
 velocity in m/s of the heat transfer fluid in each runner section at design conditions. The first value is in the section in and around the power block before it heads out to the field in the main runners. The last value is in the section in and around the power block after it comes back from the field. The velocity for the cold runner sections is the same as that entering the section, and the velocity for the hot runner sections is the same as that leaving the section. [^](#toc)
+
+### pipe_runner_wallthk
+wall thickness of runner pipe sections in [m] [^](#toc)
+
+### pipe_sgs_diams
+SGS pipe diameters in [m] [^](#toc)
+ 
+### pipe_sgs_mdot_dsn
+SGS mass flow in each pipe section in [kg/s] [^](#toc)
+ 
+### pipe_sgs_vel_dsn
+SGS velocity in each pipe section in [m/s] [^](#toc)
+ 
+### pipe_sgs_wallthk
+SGS wall thickness of each pipe section in [m] [^](#toc)

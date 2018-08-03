@@ -107,9 +107,12 @@ enum {
 	P_pb_pump_coef,
 	P_tes_pump_coef,
     P_V_tes_des,
-    P_L_tes_col_gen,
     P_custom_tes_p_loss,
     P_k_tes_loss_coeffs,
+    P_custom_sgs_pipe_sizes,
+    P_sgs_diams,
+    P_sgs_wallthicks,
+    P_sgs_lengths,
 	P_pb_fixed_par,
 	P_bop_array,
 	P_aux_array,
@@ -263,9 +266,12 @@ tcsvarinfo sam_mw_trough_type251_variables[] = {
     { TCS_PARAM,    TCS_NUMBER,        P_pb_pump_coef,       "pb_pump_coef",         "Pumping power to move 1kg of HTF through PB loop",        "kW/(kg/s)",    "",        "",        ""},
     { TCS_PARAM,    TCS_NUMBER,        P_tes_pump_coef,      "tes_pump_coef",        "Pumping power to move 1kg of HTF through tes loop",       "kW/(kg/s)",    "",        "",        ""},
     { TCS_PARAM,    TCS_NUMBER,        P_V_tes_des,          "V_tes_des",            "Design-point velocity to size the TES pipe diameters",    "m/s",          "",        "",        ""},
-    { TCS_PARAM,    TCS_ARRAY,         P_L_tes_col_gen,      "L_tes_col_gen",        "Length of TES pipes in collection and generation loops",  "m",            "",        "",        ""},
     { TCS_PARAM,    TCS_NUMBER,        P_custom_tes_p_loss,  "custom_tes_p_loss",    "TES pipe losses are based on custom lengths and coeffs",  "-",            "",        "",        ""},
     { TCS_PARAM,    TCS_ARRAY,         P_k_tes_loss_coeffs,  "k_tes_loss_coeffs",    "Minor loss coeffs for the coll, gen, and bypass loops",   "-",            "",        "",        ""},
+    { TCS_PARAM,    TCS_NUMBER,        P_custom_sgs_pipe_sizes, "custom_sgs_pipe_sizes", "Use custom SGS pipe diams, wallthks, and lengths",    "-",            "",        "",   "false"},
+    { TCS_PARAM,    TCS_ARRAY,         P_sgs_diams,          "sgs_diams",            "Custom SGS diameters",                                    "m",            "",        "",        ""},
+    { TCS_PARAM,    TCS_ARRAY,         P_sgs_wallthicks,     "sgs_wallthicks",       "Custom SGS wall thicknesses",                             "m",            "",        "",        ""},
+    { TCS_PARAM,    TCS_ARRAY,         P_sgs_lengths,        "sgs_lengths",          "Custom SGS lengths",                                      "m",            "",        "",        ""},
     { TCS_PARAM,    TCS_NUMBER,        P_pb_fixed_par,       "pb_fixed_par",         "Fraction of rated gross power constantly consumed",       "-",            "",        "",        ""},
     { TCS_PARAM,    TCS_ARRAY,         P_bop_array,          "bop_array",            "Coefficients for balance of plant parasitics calcs",      "-",            "",        "",        ""},
     { TCS_PARAM,    TCS_ARRAY,         P_aux_array,          "aux_array",            "Coefficients for auxiliary heater parasitics calcs",      "-",            "",        "",        ""},
@@ -388,6 +394,7 @@ private:
 	Thermocline_TES thermocline;
 
 	// Parameters
+    const int N_sgs_pipe_sections = 11;
 	double tshours;
     double eta_pump;
     double HDR_rough;
@@ -419,13 +426,17 @@ private:
 	double pb_pump_coef;
 	double tes_pump_coef;
     double V_tes_des;
-    int l_L_tes_col_gen;
-    double * L_tes_col_gen_in;
-    util::matrix_t<double> L_tes_col_gen;
     bool custom_tes_p_loss;
     int l_k_tes_loss_coeffs;
     double * k_tes_loss_coeffs_in;
     util::matrix_t<double> k_tes_loss_coeffs;
+    bool custom_sgs_pipe_sizes;
+    int l_sgs_diams;
+    double * sgs_diams;
+    int l_sgs_wallthicks;
+    double * sgs_wallthicks;
+    int l_sgs_lengths;
+    double * sgs_lengths_in;
     double pb_fixed_par;
 	int l_bop_array;		
 	double * bop_array;
@@ -473,6 +484,7 @@ private:
     util::matrix_t<double> SGS_v_dot_rel;
     util::matrix_t<double> SGS_diams;
     util::matrix_t<double> SGS_wall_thk;
+    util::matrix_t<double> SGS_lengths;
     util::matrix_t<double> SGS_m_dot_des;
     util::matrix_t<double> SGS_vel_des;
 
@@ -550,8 +562,6 @@ public:
 		pb_pump_coef	= std::numeric_limits<double>::quiet_NaN();
 		tes_pump_coef	= std::numeric_limits<double>::quiet_NaN();
         V_tes_des       = std::numeric_limits<double>::quiet_NaN();
-        l_L_tes_col_gen = -1;
-        L_tes_col_gen_in        = 0;
         custom_tes_p_loss       = false;
         l_k_tes_loss_coeffs     = -1;
         k_tes_loss_coeffs_in    = 0;
@@ -758,11 +768,15 @@ public:
 		pb_pump_coef	= value(P_pb_pump_coef);			//[kW/kg]
 		tes_pump_coef	= value(P_tes_pump_coef);			//[kW/kg]
         V_tes_des       = value(P_V_tes_des);               //[m/s]
-        L_tes_col_gen_in  = value(P_L_tes_col_gen, &l_L_tes_col_gen);                 //[m]
-        L_tes_col_gen.assign(L_tes_col_gen_in, l_L_tes_col_gen);
         custom_tes_p_loss       = (bool) value(P_custom_tes_p_loss);                  //[-]
         k_tes_loss_coeffs_in    = value(P_k_tes_loss_coeffs, &l_k_tes_loss_coeffs);   //[-]
         k_tes_loss_coeffs.assign(k_tes_loss_coeffs_in, l_k_tes_loss_coeffs);
+
+        custom_sgs_pipe_sizes = (bool) value(P_custom_sgs_pipe_sizes);
+        sgs_diams = value(P_sgs_diams, &l_sgs_diams);                   //[m]
+        sgs_wallthicks = value(P_sgs_wallthicks, &l_sgs_wallthicks);    //[m]
+        sgs_lengths_in = value(P_sgs_lengths, &l_sgs_lengths);             //[m]
+        SGS_lengths.assign(sgs_lengths_in, l_sgs_lengths);
 
 		pb_fixed_par	= value(P_pb_fixed_par);			//[-]
 	
@@ -969,10 +983,20 @@ public:
         tanks_in_parallel ? T_pb_in = T_field_out_des : T_pb_in = T_tank_hot_prev;
 
         // Size SGS piping and output values
+        if (custom_sgs_pipe_sizes) {
+            if (l_sgs_diams == N_sgs_pipe_sections && l_sgs_wallthicks == N_sgs_pipe_sections) {
+                SGS_diams.assign(sgs_diams, l_sgs_diams);
+                SGS_wall_thk.assign(sgs_wallthicks, l_sgs_wallthicks);
+            }
+            else {
+                message(TCS_ERROR, "The number of custom SGS pipe sections is not correct.");
+                return -1;
+            }
+        }
         double rho_avg = field_htfProps.dens((T_field_in_des + T_field_out_des) / 2, 9 / 1.e-5);
         double SGS_vol_tot;
-        if ( size_sgs_piping(V_tes_des, L_tes_col_gen, rho_avg, m_dot_pb_design, solarm, tanks_in_parallel,     // Inputs
-            SGS_vol_tot, SGS_v_dot_rel, SGS_diams, SGS_wall_thk, SGS_m_dot_des, SGS_vel_des) ) {        // Outputs
+        if ( size_sgs_piping(V_tes_des, SGS_lengths, rho_avg, m_dot_pb_design, solarm, tanks_in_parallel,     // Inputs
+            SGS_vol_tot, SGS_v_dot_rel, SGS_diams, SGS_wall_thk, SGS_m_dot_des, SGS_vel_des, custom_sgs_pipe_sizes) ) {        // Outputs
             message(TCS_ERROR, "SGS piping sizing failed.");
             return -1;
         }
@@ -1091,7 +1115,8 @@ public:
 		double f_storage = tselect[touperiod];				//*** Need to be sure TOU schedule is provided with starting index of 0
 
 		if( ncall == 0 )
-			T_pb_in = T_field_out_des;      // TODO - test carrying over T_pb_in instead of resetting it to this design condition
+            // TODO - test carrying over T_pb_in instead of resetting it to this design condition
+            tanks_in_parallel ? T_pb_in = T_field_out_des : T_pb_in = T_tank_hot_prev;
 
 		// Need to fill in iteration controls once inner loops are finished
 		
@@ -1128,6 +1153,7 @@ public:
 		double defocus = defocus_prev_ncall;
         bool recirculating = recirc_prev_ncall;
 		int cycle_pl_control, standby_control;
+        double m_dot_field_avail;
         double m_dot_pb;
 		//int tempmode=0;
 		double err, err_prev_iter, derr;
@@ -1135,6 +1161,7 @@ public:
 		int iter, iter_tank;
 		bool iterate_mass_temp, iterate_tank_temp;
 		double m_tank_disch, m_tank_charge;
+        double m_tank_cold_in, m_tank_cold_out, m_tank_hot_in, m_tank_hot_out;
 		double T_tank_hot_avg, vol_tank_hot_avg, q_loss_tank_hot, q_htr_tank_hot;
 		double T_tank_cold_avg, vol_tank_cold_avg, q_loss_tank_cold, q_htr_tank_cold;
         bool hot_tank_bypassed;
@@ -1268,14 +1295,15 @@ public:
             if ((tanks_in_parallel == true && T_field_out <= T_startup) ||
                 (tanks_in_parallel == false && T_field_out <= T_tank_hot_inlet_min)) {
                 recirculating = true;
-                m_dot_field = 0.;
+                m_dot_field_avail = 0.;
             }
             else {
                 recirculating = false;
+                m_dot_field_avail = m_dot_field;
             }
 
 			// Calculate the maximum potentially available mass flow
-			m_avail_tot = ms_disch_avail + m_dot_aux_avail + m_dot_field;       // this is also true for tanks in series with the field
+			m_avail_tot = ms_disch_avail + m_dot_aux_avail + m_dot_field_avail;       // this is also true for tanks in series with the field
 
 			// Calculate the demanded values from the power block
 			//*** Need to be sure TOU schedule is provided with starting index of 0
@@ -1290,14 +1318,14 @@ public:
 			A small degree of iteration is needed to get the field inlet temperature to converge
 			in the case where storage is charging and an intermediate heat exchanger is used.
 			For cases with iteration, set the initial guess values*/              
-            if (m_dot_field > 0.0) {                    // bypass valve is closed
+            if (!recirculating) {
                 if (tanks_in_parallel) {
                     T_field_in_guess = T_pb_out;        // TODO - maybe during charging factor in cold tank temp?
                 }
                 else
                     T_field_in_guess = T_tank_cold_avg_guess;
                 }
-			else {                                      // bypass valve is open
+			else {
                 if (tanks_in_parallel || (!tanks_in_parallel && !has_hot_tank_bypass)) {
                     T_field_in_guess = T_field_out;
                 }
@@ -1357,7 +1385,7 @@ public:
 				}
 
 				q_aux_avail		= max(m_dot_aux_avail*c_htf_aux*(T_set_aux - T_pb_out),0.0); 
-				q_field_avail	= max(m_dot_field*c_htf_field*(T_field_out - T_field_in_guess),0.0);		// mjw 1.18.2011
+				q_field_avail	= max(m_dot_field_avail*c_htf_field*(T_field_out - T_field_in_guess),0.0);		// mjw 1.18.2011
 
 				// Initial values
 				q_int	= 0.0;			// Intermediate equivalent power output from the various heat sources
@@ -1374,7 +1402,7 @@ public:
 				{
 					//First add the available energy from the field
 					q_int = q_field_avail;  
-					m_int = m_dot_field;
+					m_int = m_dot_field_avail;
 			
 					// If energy is coming from the field, adjust the intermediate temperature
 					if(q_int > 0.) {tanks_in_parallel ? T_int = T_field_out : T_int = T_tank_hot_out;}
@@ -1402,9 +1430,9 @@ public:
 						q_int		= q_int + qs_disch_avail;
 						ms_disch	= ms_disch_avail;
 						ms_charge	= 0.;
-						m_int		= m_dot_field + ms_disch;
+						m_int		= m_dot_field_avail + ms_disch;
 						//Adjust the intermediate temperature, if needed
-						if(q_int > 0.) T_int = (T_int*m_dot_field + Ts_hot*ms_disch)/(m_int);
+						if(q_int > 0.) T_int = (T_int*m_dot_field_avail + Ts_hot*ms_disch)/(m_int);
 
 						// MJW 11.1.2010: The auxiliary heater can operate in 1 of 2 modes.. 
 						// mode 1: Fossil fraction specifies the minimum pb fraction during the period. Fossil provides the balance.
@@ -1419,7 +1447,7 @@ public:
 								m_dot_aux	= q_aux/(c_htf_aux*max((T_set_aux - T_pb_out),1.0));
 								m_int		= m_int + m_dot_aux;
 								// Adjust the intermediate temperature, if needed
-								if(q_int > 0.) T_int = (T_int*(m_dot_field + ms_disch) + T_set_aux*m_dot_aux)/m_int;
+								if(q_int > 0.) T_int = (T_int*(m_dot_field_avail + ms_disch) + T_set_aux*m_dot_aux)/m_int;
 							}
 							else	// MJW 1.12.2011
 							{
@@ -1436,7 +1464,7 @@ public:
 								m_dot_aux	= m_dot_aux_avail;
 								m_int		= m_int + m_dot_aux;
 								// Adjust the intermediate temperature, if needed
-								if(q_int > 0.) T_int = (T_int*(m_dot_field + ms_disch) + T_set_aux*m_dot_aux)/m_int;
+								if(q_int > 0.) T_int = (T_int*(m_dot_field_avail + ms_disch) + T_set_aux*m_dot_aux)/m_int;
 							}
 							else
 							{
@@ -1447,8 +1475,8 @@ public:
 								m_dot_aux	= q_aux/(c_htf_aux*max((T_set_aux - T_pb_out),1.0));  
 								m_int		= m_int + m_dot_aux;
 								// Adjust the intermediate temperature
-								//T_int = (m_dot_field*T_field_out + ms_disch*Ts_hot + m_dot_aux*T_set_aux)/m_int;
-                                if (q_int > 0.) T_int = (T_int*(m_dot_field + ms_disch) + T_set_aux * m_dot_aux) / m_int;
+								//T_int = (m_dot_field_avail*T_field_out + ms_disch*Ts_hot + m_dot_aux*T_set_aux)/m_int;
+                                if (q_int > 0.) T_int = (T_int*(m_dot_field_avail + ms_disch) + T_set_aux * m_dot_aux) / m_int;
 							}
 						}				
 					}
@@ -1462,7 +1490,7 @@ public:
 						m_int		= m_int + ms_disch;
 						ms_charge	= 0.;
 						m_dot_aux	= 0.;
-						T_int		= (m_dot_field*T_int + ms_disch*Ts_hot)/m_int;
+						T_int		= (m_dot_field_avail*T_int + ms_disch*Ts_hot)/m_int;
 					}
 					// Run a check to see if the energy produced is above the cycle cutout fraction
 					if(q_int < q_pb_design*cycle_cutoff_frac)	mode = pb_off_or_standby;
@@ -1474,7 +1502,7 @@ public:
 					// the excess flow will be used to charge it.
 			
 					// MJW 11.3.2010: Need to specify m_int in cases where we've entered "sticky mode" operation
-					m_int	= m_dot_field;
+					m_int	= m_dot_field_avail;
                     tanks_in_parallel ? T_int = T_field_out : T_int = T_tank_hot_out;
 			
 					if((ms_charge_avail>0.0)&&(tes_type==2))
@@ -1518,7 +1546,7 @@ public:
 					// Look ahead for DNI resource to decide whether cycle should start back up
 					if((dnifc<I_bn_des*cycle_cutoff_frac)&&(fc_on))	mode = pb_off_or_standby;
 					// If it's night time and TES is 0 and power cycle is below cutoff then don't restart the turbine
-					if(m_dot_field == 0. && (qs_disch_avail < q_pb_design*cycle_cutoff_frac) )	
+					if(m_dot_field_avail == 0. && (qs_disch_avail < q_pb_design*cycle_cutoff_frac) )	
                         mode = pb_off_or_standby;
 				}
 
@@ -1571,7 +1599,7 @@ public:
 								{ms_disch = q_sby_storage / (c_htf_disch * (Ts_hot - T_pb_out));}        //[kg/s]
 
                                 if (tanks_in_parallel) {
-								    T_pb_in = (T_field_out*m_dot_field + Ts_hot*ms_disch)/(m_dot_field + ms_disch);	//[K]
+								    T_pb_in = (T_field_out*m_dot_field_avail + Ts_hot*ms_disch)/(m_dot_field_avail + ms_disch);	//[K]
                                 }
                                 else {
                                     T_pb_in = Ts_hot;
@@ -1582,7 +1610,7 @@ public:
 							{
 								ms_disch	= 0.0;	//[kg/s] Discharge mass flow rate
                                 tanks_in_parallel ? T_pb_in = T_field_out : T_pb_in = T_tank_hot_out; //[K]
-								ms_charge	= max(m_dot_field - q_sby/(c_htf_pb*(T_pb_in - T_pb_out)), 0.0);		//[kg/s] Calculate mass flow rate that is not used by PB in
+								ms_charge	= max(m_dot_field_avail - q_sby/(c_htf_pb*(T_pb_in - T_pb_out)), 0.0);		//[kg/s] Calculate mass flow rate that is not used by PB in
 			                
 								if(tes_type == 2)	// thermocline code
 								{ 									
@@ -1602,7 +1630,7 @@ public:
 									ms_charge = min(ms_charge_avail, ms_charge);	// limit charge mass flow rate to the max. available
 								}
 			    
-								if(m_dot_field > 0.)
+								if(m_dot_field_avail > 0.)
 									//!defocus = defocus0*((qs_charge_avail+q_sby)/qfield_avail)**ccoef			//Absolute defocus
 								{defocus = pow( ((qs_charge_avail+q_sby)/q_field_avail), ccoef);}    //!TN 4.9.12, relative defocus
 								else
@@ -1613,13 +1641,13 @@ public:
 						else	//tshours == 0
 						{
 							defocus		= 1.0;
-							m_dot_field = 0.0;
+							m_dot_field_avail = 0.0;
 							T_pb_in		= T_field_out;
 						}  				
 				
 						m_dot_pb = 0.0;		//!the power block code will calculate the mass flow for this mode
 						// charge storage with any additional field flow, if possible
-						// T_pb_in = (T_field_out*m_dot_field + Ts_hot*ms_disch)/(m_dot_field + ms_disch)
+						// T_pb_in = (T_field_out*m_dot_field_avail + Ts_hot*ms_disch)/(m_dot_field_avail + ms_disch)
 				    
 						cycle_pl_control	= 2;		// 1=demand, 2=part load
 						standby_control		= 2;		// 1=normal operation, 2=standby, 3=shut down
@@ -1632,13 +1660,13 @@ public:
 					{
 						// normal, non-standby operation
 						// If below the cutout fraction, check to see if extra energy can be dumped into storage
-						if((m_dot_field>0.0)&&(ms_charge_avail>0.0)&&(tes_type==2))
+						if((m_dot_field_avail>0.0)&&(ms_charge_avail>0.0)&&(tes_type==2))
 						{
 							// thermocline code
 							double dummy1, dummy2, dummy3, dummy4, dummy5, dummy6, dummy7, dummy8, dummy9;
 							dummy1 = dummy2 = dummy3 = dummy4 = dummy5 = dummy6 = dummy7 = dummy8 = dummy9 = -999.9;
 
-							thermocline.Solve_TC( T_field_out - 273.15, m_dot_field*3600.0, T_pb_out - 273.15, 0.0, T_amb - 273.15, 1, 0.0, 0.0, f_storage, step/3600.0,
+							thermocline.Solve_TC( T_field_out - 273.15, m_dot_field_avail*3600.0, T_pb_out - 273.15, 0.0, T_amb - 273.15, 1, 0.0, 0.0, f_storage, step/3600.0,
 								                    ms_charge_avail, Ts_cold, qs_charge_avail, dummy1, dummy2, dummy3, dummy4, dummy5, dummy6, dummy7, dummy8, dummy9 );
 							ms_charge_avail /= 3600.0;
 							Ts_cold += 273.15;
@@ -1650,18 +1678,18 @@ public:
 							called_TC = false;	
 						}
 
-						ms_charge	= max( min(ms_charge_avail, m_dot_field), 0.0);
+						ms_charge	= max( min(ms_charge_avail, m_dot_field_avail), 0.0);
 						ms_disch	= 0.0;
 						m_dot_pb	= 0.0;
 						T_pb_in		= T_pb_out;
 
 						if(has_TES)
 						{    
-							if(m_dot_field > 0.)
+							if(m_dot_field_avail > 0.)
 							{
 								// Defocus according the the amount of charge accepted as compared to what is produced. 
-								// defocus = defocus0*(ms_charge/m_dot_field)**ccoef !MJW 12.9.2010
-								defocus = pow( (ms_charge/m_dot_field), ccoef);	// TN 4.9.12
+								// defocus = defocus0*(ms_charge/m_dot_field_avail)**ccoef !MJW 12.9.2010
+								defocus = pow( (ms_charge/m_dot_field_avail), ccoef);	// TN 4.9.12
 							}
 							else
 							{
@@ -1673,7 +1701,7 @@ public:
 						{
 							// Here we need to allow the field to run normally and artificially force the power block to dump energy
 							defocus		= 1.0;
-							m_dot_field = 0.0;
+							m_dot_field_avail = 0.0;
 						}
 						cycle_pl_control	= 2;	// 1=demand, 2=part load
 						standby_control		= 3;	// 1=normal operation, 2=standby, 3=shut down
@@ -1772,7 +1800,7 @@ public:
 				// MJW 12.9.2010----		
 				if((ncall==0)||(mode_prev_ncall != mode))
 				{
-					if(m_dot_field > 0.)	//mjw 1.12.2011 Be consistent with the criteria above
+					if(m_dot_field_avail > 0.)	//mjw 1.12.2011 Be consistent with the criteria above
 						tempmode = 1;
 					else
 						tempmode = 2;
@@ -1799,9 +1827,18 @@ public:
 				
 				// convergence error is based on actual field mass flow rate compared to balance of mass flow rates
 				err = sqrt(
-						pow( ((ms_charge + m_dot_pb - ms_disch) - m_dot_field)/max(m_dot_field, 1.e-6), 2) + 
+						pow( ((ms_charge + m_dot_pb - ms_disch) - m_dot_field_avail)/max(m_dot_field_avail, 1.e-6), 2) + 
 						pow( ((T_field_in - T_field_in_guess)/T_field_in), 2));
-				derr = fabs((err - err_prev_iter)/err_prev_iter);
+                if (err_prev_iter != 0) {
+                    derr = fabs((err - err_prev_iter) / err_prev_iter);
+                }
+                else if (err != 0) {
+                    derr = fabs((err - err_prev_iter) / err);
+                }
+                else {
+                    derr = fabs(err - err_prev_iter);
+                }
+
 				err_prev_iter = err;
 
 				iterate_mass_temp = true;
@@ -1860,6 +1897,8 @@ public:
 						message( TCS_ERROR, "heat exchanger performance calculations failed" );
 						return -1;
 					}
+                    m_tank_cold_out = m_tank_hot_in = m_tank_charge;
+                    m_tank_cold_in = m_tank_hot_out = 0.;
 					eff_disch = -9.99; T_tank_cold_in = T_tank_cold_prev; q_disch = 0; m_tank_disch = 0.;
 
 					// 7/9/14 twn: Calculate the specific heat with the same temps as 'hx_perf' uses so that reported energy in / energy out is consistent
@@ -1874,6 +1913,8 @@ public:
 						message( TCS_ERROR, "heat exchanger performance calculations failed" );
 						return -1;
 					}
+                    m_tank_cold_in = m_tank_hot_out = m_tank_disch;
+                    m_tank_cold_out = m_tank_hot_in = 0;
 					eff_charge = -9.99; T_tank_hot_in = T_tank_hot_prev; q_charge = 0; m_tank_charge = 0.;
 
 					// 7/9/14 twn: Calculate the specific heat with the same temps as 'hx_reverse' uses so that reported energy in / energy out is consistent
@@ -1886,8 +1927,8 @@ public:
 					Ts_hot		= T_field_out;
 					T_tank_cold_in	= T_field_in;
 					T_tank_hot_in	= T_field_out;
-					m_tank_charge	= 0.; 
-					m_tank_disch	= 0.;   
+					m_tank_charge = m_tank_disch = 0.;
+                    m_tank_cold_in = m_tank_cold_out = m_tank_hot_in = m_tank_hot_out = 0.;
 				}
 			}
 			else
@@ -1899,6 +1940,7 @@ public:
 
 					m_tank_charge = 0.0;
 					m_tank_disch = 0.0;
+                    m_tank_cold_in = m_tank_cold_out = m_tank_hot_in = m_tank_hot_out = 0.;     // TODO - are these needed?:
 					T_tank_cold_in = T_field_in_des;
 					T_tank_hot_in = T_field_out_des;
 					T_tank_hot_out = T_field_out_des;
@@ -1907,12 +1949,52 @@ public:
 				else
 				{
 					//No heat exchanger
-                    if (!tanks_in_parallel && has_hot_tank_bypass && recirculating) {
-                        T_tank_cold_in = T_field_out;
+                    if (tanks_in_parallel) {
+                        if (recirculating) {
+                            if (has_hot_tank_bypass) {
+                                T_tank_cold_in = T_field_out;
+                                m_tank_cold_in = m_dot_field;
+                                m_tank_cold_out = m_dot_field;
+                                m_tank_hot_in = 0.;
+                                m_tank_hot_out = 0.;
+                            }
+                            else {  // both tanks bypassed
+                                T_tank_cold_in = T_pb_out;
+                                m_tank_cold_in = m_tank_cold_out = m_tank_hot_in = m_tank_hot_out = 0.;
+                            }
+                        }
+                        else {
+                            T_tank_cold_in = T_pb_out;
+                            m_tank_cold_in = ms_disch;
+                            m_tank_cold_out = ms_charge;
+                            m_tank_hot_in = ms_charge;
+                            m_tank_hot_out = ms_disch;
+                        }
                     }
-                    else {
-					    T_tank_cold_in	= T_pb_out;
+                    else {  // tanks in series
+                        m_tank_hot_out = m_dot_pb;
+                        if (recirculating) {
+                            m_tank_hot_in = 0.;
+                            if (has_hot_tank_bypass) {
+                                T_tank_cold_in = (m_dot_field * T_field_out + m_dot_pb * T_pb_out) / (m_dot_field + m_dot_pb);
+                                if (std::isnan(T_tank_cold_in)) T_tank_cold_in = T_tank_cold_prev;
+                                m_tank_cold_in = m_dot_field + m_dot_pb;
+                                m_tank_cold_out = m_dot_field;
+                            }
+                            else {  // both tanks bypassed
+                                T_tank_cold_in = T_pb_out;
+                                m_tank_cold_in = m_dot_pb;
+                                m_tank_cold_out = 0.;
+                            }
+                        }
+                        else {
+                            T_tank_cold_in = T_pb_out;
+                            m_tank_cold_in = m_dot_pb;
+                            m_tank_cold_out = m_dot_field;
+                            m_tank_hot_in = m_dot_field;
+                        }
                     }
+
 					T_tank_hot_in	= T_field_out;
 					Ts_cold		= T_tank_cold_out;
 					Ts_hot		= T_tank_hot_out;
@@ -1928,11 +2010,11 @@ public:
 				if(tes_type==1)
 				{
 					// Hot Tank					
-					hx_storage.mixed_tank( true, step, m_tank_hot_prev, T_tank_hot_prev, m_tank_charge, m_tank_disch, 
+					hx_storage.mixed_tank( true, step, m_tank_hot_prev, T_tank_hot_prev, m_tank_hot_in, m_tank_hot_out, 
 											T_tank_hot_in, T_amb, T_tank_hot_avg, vol_tank_hot_avg, q_loss_tank_hot,
 											T_tank_hot_fin, vol_tank_hot_fin, m_tank_hot_fin, q_htr_tank_hot );
 					// Cold Tank					
-					hx_storage.mixed_tank( false, step, m_tank_cold_prev, T_tank_cold_prev, m_tank_disch, m_tank_charge,
+					hx_storage.mixed_tank( false, step, m_tank_cold_prev, T_tank_cold_prev, m_tank_cold_in, m_tank_cold_out,
 											T_tank_cold_in, T_amb, T_tank_cold_avg, vol_tank_cold_avg, q_loss_tank_cold,
 											T_tank_cold_fin, vol_tank_cold_fin, m_tank_cold_fin, q_htr_tank_cold );
 			
@@ -1991,7 +2073,7 @@ public:
             double rho_sf, rho_pb;
             double DP_col, DP_gen;
             sgs_pressure_drops(m_dot_field, m_dot_pb, SGS_v_dot_rel, T_field_in, T_field_out, T_pb_in, T_pb_out,
-                L_tes_col_gen, SGS_diams, HDR_rough, k_tes_loss_coeffs, tanks_in_parallel, recirculating, DP_col, DP_gen);
+                SGS_lengths, SGS_diams, HDR_rough, k_tes_loss_coeffs, tanks_in_parallel, recirculating, DP_col, DP_gen);
             rho_sf = field_htfProps.dens((T_field_in + T_field_out) / 2., 8e5);
             rho_pb = field_htfProps.dens((T_pb_in + T_pb_out) / 2., 1e5);
             if (is_hx) {
@@ -2172,7 +2254,7 @@ public:
 	
     int size_sgs_piping(double vel_dsn, util::matrix_t<double> L, double rho_avg, double m_dot_pb, double solarm,
         bool tanks_in_parallel, double &vol_tot, util::matrix_t<double> &v_dot_rel, util::matrix_t<double> &diams,
-        util::matrix_t<double> &wall_thk, util::matrix_t<double> &m_dot, util::matrix_t<double> &vel)
+        util::matrix_t<double> &wall_thk, util::matrix_t<double> &m_dot, util::matrix_t<double> &vel, bool custom_sizes = false)
     {
         const std::size_t bypass_index = 4;
         const std::size_t gen_first_index = 5;      // first generation section index in combined col. gen. loops
@@ -2184,11 +2266,13 @@ public:
         vol_tot = 0.0;                              // total volume in SGS piping
         std::size_t nPipes = L.ncells();
         v_dot_rel.resize_fill(nPipes, 0.0);         // volumetric flow rate relative to the solar field or power block flow
-        diams.resize_fill(nPipes, 0.0);
-        wall_thk.resize_fill(nPipes, 0.0);
         m_dot.resize_fill(nPipes, 0.0);
         vel.resize_fill(nPipes, 0.0);
         std::vector<int> sections_no_bypass;
+        if (!custom_sizes) {
+            diams.resize_fill(nPipes, 0.0);
+            wall_thk.resize_fill(nPipes, 0.0);
+        }
 
         m_dot_sf = m_dot_pb * solarm;
         v_dot_sf = m_dot_sf / rho_avg;
@@ -2226,8 +2310,10 @@ public:
             if (L.at(i) > 0) {
                 i < gen_first_index ? v_dot_ref = v_dot_sf : v_dot_ref = v_dot_pb;
                 v_dot = v_dot_ref * v_dot_rel.at(i);
-                diams.at(i) = CSP::pipe_sched(sqrt(4.0*v_dot / (vel_dsn * CSP::pi)));
-                wall_thk.at(i) = CSP::WallThickness(diams.at(i));
+                if (!custom_sizes) {
+                    diams.at(i) = CSP::pipe_sched(sqrt(4.0*v_dot / (vel_dsn * CSP::pi)));
+                    wall_thk.at(i) = CSP::WallThickness(diams.at(i));
+                }
                 m_dot.at(i) = v_dot * rho_avg;
                 Area = CSP::pi * pow(diams.at(i), 2) / 4.;
                 vel.at(i) = v_dot / Area;
@@ -2265,22 +2351,24 @@ public:
         v_dot_pb = m_dot_pb / field_htfProps.dens((T_pb_in + T_pb_out) / 2, P_lo);
 
         for (std::size_t i = 0; i < num_sections; i++) {
-            (i > 0 && i < 3) ? P = P_hi : P = P_lo;
-            if (i < 3) T = T_sf_in;                                                       // 0, 1, 2
-            if (i == 3 || i == 4) T = T_sf_out;                                           // 3, 4
-            if (i >= gen_first_section && i < gen_first_section + 4) T = T_pb_in;         // 5, 6, 7, 8
-            if (i == gen_first_section + 4) T = (T_pb_in + T_pb_out) / 2.;                // 9
-            if (i == gen_first_section + 5) T = T_pb_out;                                 // 10
-            i < gen_first_section ? v_dot_ref = v_dot_sf : v_dot_ref = v_dot_pb;
-            v_dot = v_dot_rel.at(i) * v_dot_ref;
-            Area = CSP::pi * pow(D, 2) / 4.;
-            vel = v_dot / Area;
-            rho = field_htfProps.dens(T, P);
-            Re = field_htfProps.Re(T, P, vel, D.at(i));
-            ff = CSP::FrictionFactor(pipe_rough/D.at(i), Re);
-            if (i != bypass_section || recirculating) {
-                P_drops.at(i) += CSP::MajorPressureDrop(vel, rho, ff, L.at(i), D.at(i));
-                P_drops.at(i) += CSP::MinorPressureDrop(vel, rho, k_coeffs.at(i));
+            if (L.at(i) > 0 && D.at(i) > 0) {
+                (i > 0 && i < 3) ? P = P_hi : P = P_lo;
+                if (i < 3) T = T_sf_in;                                                       // 0, 1, 2
+                if (i == 3 || i == 4) T = T_sf_out;                                           // 3, 4
+                if (i >= gen_first_section && i < gen_first_section + 4) T = T_pb_in;         // 5, 6, 7, 8
+                if (i == gen_first_section + 4) T = (T_pb_in + T_pb_out) / 2.;                // 9
+                if (i == gen_first_section + 5) T = T_pb_out;                                 // 10
+                i < gen_first_section ? v_dot_ref = v_dot_sf : v_dot_ref = v_dot_pb;
+                v_dot = v_dot_rel.at(i) * v_dot_ref;
+                Area = CSP::pi * pow(D, 2) / 4.;
+                vel = v_dot / Area;
+                rho = field_htfProps.dens(T, P);
+                Re = field_htfProps.Re(T, P, vel, D.at(i));
+                ff = CSP::FrictionFactor(pipe_rough/D.at(i), Re);
+                if (i != bypass_section || recirculating) {
+                    P_drops.at(i) += CSP::MajorPressureDrop(vel, rho, ff, L.at(i), D.at(i));
+                    P_drops.at(i) += CSP::MinorPressureDrop(vel, rho, k_coeffs.at(i));
+                }
             }
         }
 
