@@ -756,21 +756,21 @@ TestInfo physTroughPPASingleDefaultInfo[] = {
 // test_types: equal (EQ), near(approx equal) (NR), greater than (GT), less than (LT), bool (TF), cmod error (ERR)
 TestResult physTroughPPASingleDefaultResult[] = {
 /*  SSC Var Name                            Test Type           Test Result             Error Bound % */
-    { "annual_energy",                      NR,                 355772960.,             0.1 },  // Annual Energy [kWh]
+    { "annual_energy",                      NR,                 355030080.,             0.1 },  // Annual Energy [kWh]
     { "annual_fuel_usage",                  NR,                 0.,                     0.1 },  // Annual fuel usage [kWht]
-    { "capacity_factor",                    NR,                 40.654,                 0.1 },  // Capacity factor [%]
-    { "annual_q_dump",                      NR,                 48661.9,                0.1 },  // Dumped thermal energy [MWht]
-    { "annual_W_cycle_gross",               NR,                 406323.,                0.1 },  // Electrical source - Power cycle gross output [MWhe]
-    { "kwh_per_kw",                         NR,                 3561.29,                0.1 },  // First year kWh/kW [kWh/kW]
-    { "conversion_factor",                  NR,                 91.2104,                0.1 },  // Gross to Net Conversion Factor [%]
+    { "capacity_factor",                    NR,                 40.5691,                0.1 },  // Capacity factor [%]
+    { "annual_q_dump",                      NR,                 48441.5,                0.1 },  // Dumped thermal energy [MWht]
+    { "annual_W_cycle_gross",               NR,                 405653.,                0.1 },  // Electrical source - Power cycle gross output [MWhe]
+    { "kwh_per_kw",                         NR,                 3553.85,                0.1 },  // First year kWh/kW [kWh/kW]
+    { "conversion_factor",                  NR,                 91.17,                  0.1 },  // Gross to Net Conversion Factor [%]
     { "system_heat_rate",                   NR,                 3.413,                  0.1 },  // System heat rate [MMBtu/MWh]
-    { "annual_q_to_tes",                    NR,                 7452.49,                0.1 },  // Thermal energy into storage [MWht]
-    { "annual_q_pb",                        NR,                 1.12543e06,             0.1 },  // Thermal energy to the power block [MWht]
-    { "annual_q_avail",                     NR,                 1.13069e06,             0.1 },  // Thermal power produced by the field [MWht]
-    { "annual_total_water_use",             NR,                 81055.5,                0.1 },  // Total Annual Water Usage: cycle + mirror washing [m3]
-    { "annual_q_abs_tot",                   NR,                 1.17112e06,             0.1 },  // Total absorbed energy [MWht]
+    { "annual_q_to_tes",                    NR,                 7383.12,                0.1 },  // Thermal energy into storage [MWht]
+    { "annual_q_pb",                        NR,                 1.12348e06,             0.1 },  // Thermal energy to the power block [MWht]
+    { "annual_q_avail",                     NR,                 1.12864e06,             0.1 },  // Thermal power produced by the field [MWht]
+    { "annual_total_water_use",             NR,                 80988.9,                0.1 },  // Total Annual Water Usage: cycle + mirror washing [m3]
+    { "annual_q_abs_tot",                   NR,                 1.17421e06,             0.1 },  // Total absorbed energy [MWht]
     { "annual_q_aux",                       NR,                 0.,                     0.1 },  // Total fossil fuel usage by all plant subsystems [MMBTU]
-    { "annual_q_inc_sf_tot",                NR,                 2.50421e06,             0.1 }   // Total power incident on the field [MWht]
+    { "annual_q_inc_sf_tot",                NR,                 2.50511e06,             0.1 }   // Total power incident on the field [MWht]
 };
 
 testDeclaration defaultTest1(physTroughTesting, "default", &physTroughPPASingleDefaultInfo[0], 383, &physTroughPPASingleDefaultResult[0], 15);
