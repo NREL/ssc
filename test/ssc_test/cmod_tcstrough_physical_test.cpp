@@ -203,9 +203,17 @@ const char* Type_cpnt = "0, 1, 0, 1, 0, -1, -1, -1, -1, -1, -1,  "
                         "0, 2, 0, 2, 0, 1, 0, 2, 0, 2, 0,  "
                         "0, 2, 0, 2, 0, 1, 0, 2, 0, 0, 1,  "
                         "0, 1, 0, 1, 0, -1, -1, -1, -1, -1, -1";
+const char* sf_rnr_diams = "-1";
+const char* sf_rnr_wallthicks = "-1";
+const char* sf_rnr_lengths = "-1";
+const char* sf_hdr_diams = "-1";
+const char* sf_hdr_wallthicks = "-1";
+const char* sf_hdr_lengths = "-1";
 const char* bop_array = "0, 1, 0.4830000102519989, 0.51700001955032349, 0";
-const char* L_tes_col_gen = "0, 90, 100, 120, 0, 0, 0, 0, 80, 120, 80";
 const char* k_tes_loss_coeffs = "0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0";
+const char* sgs_diams = "-1";
+const char* sgs_wallthicks = "-1";
+const char* sgs_lengths = "0, 90, 100, 120, 0, 0, 0, 0, 80, 120, 80";
 const char* aux_array = "0.02273000031709671, 1, 0.4830000102519989, 0.51700001955032349, 0";
 const char* tslogic_a = "0, 0, 0, 0, 0, 0, 0, 0, 0";
 const char* tslogic_b = "0, 0, 0, 0, 0, 0, 0, 0, 0";
@@ -433,6 +441,13 @@ TestInfo physTroughPPASingleDefaultInfo[] = {
     {"D_cpnt",                              MAT,                D_cpnt,                 11,11},
     {"L_cpnt",                              MAT,                L_cpnt,                 11,11},
     {"Type_cpnt",                           MAT,                Type_cpnt,              11,11},
+    {"custom_sf_pipe_sizes",                NUM,                "0"                     },
+    {"sf_rnr_diams",                        ARR,                sf_rnr_diams,           1},
+    {"sf_rnr_wallthicks",                   ARR,                sf_rnr_wallthicks,      1},
+    {"sf_rnr_lengths",                      ARR,                sf_rnr_lengths,         1},
+    {"sf_hdr_diams",                        ARR,                sf_hdr_diams,           1},
+    {"sf_hdr_wallthicks",                   ARR,                sf_hdr_wallthicks,      1},
+    {"sf_hdr_lengths",                      ARR,                sf_hdr_lengths,         1},
 	{"field_fl_props",                      MAT,                "0",                    1,1},
 	{"store_fl_props",                      MAT,                "1",                    1,1},
 	{"store_fluid",                         NUM,                "18"                    },
@@ -463,9 +478,12 @@ TestInfo physTroughPPASingleDefaultInfo[] = {
 	{"pb_pump_coef",                        NUM,                "0.55000001192092896"   },
 	{"tes_pump_coef",                       NUM,                "0.15000000596046448"   },
     {"V_tes_des",                           NUM,                "1.85"                  },
-    {"L_tes_col_gen",                       ARR,                L_tes_col_gen,          },
     {"custom_tes_p_loss",                   NUM,                "0"                     },
-    {"k_tes_loss_coeffs",                   ARR,                k_tes_loss_coeffs,      },
+    {"k_tes_loss_coeffs",                   ARR,                k_tes_loss_coeffs,      11},
+    {"custom_sgs_pipe_sizes",               NUM,                "0"                     },
+    {"sgs_diams",                           ARR,                sgs_diams,              1},
+    {"sgs_wallthicks",                      ARR,                sgs_wallthicks,         1},
+    {"sgs_lengths",                         ARR,                sgs_lengths,            11},
 	{"pb_fixed_par",                        NUM,                "0.0054999999701976776" },
 	{"bop_array",                           ARR,                bop_array,              5},
 	{"aux_array",                           ARR,                aux_array,              5},
@@ -738,21 +756,21 @@ TestInfo physTroughPPASingleDefaultInfo[] = {
 // test_types: equal (EQ), near(approx equal) (NR), greater than (GT), less than (LT), bool (TF), cmod error (ERR)
 TestResult physTroughPPASingleDefaultResult[] = {
 /*  SSC Var Name                            Test Type           Test Result             Error Bound % */
-    { "annual_energy",                      NR,                 355772960.,             0.1 },  // Annual Energy [kWh]
+    { "annual_energy",                      NR,                 355030080.,             0.1 },  // Annual Energy [kWh]
     { "annual_fuel_usage",                  NR,                 0.,                     0.1 },  // Annual fuel usage [kWht]
-    { "capacity_factor",                    NR,                 40.654,                 0.1 },  // Capacity factor [%]
-    { "annual_q_dump",                      NR,                 48661.9,                0.1 },  // Dumped thermal energy [MWht]
-    { "annual_W_cycle_gross",               NR,                 406323.,                0.1 },  // Electrical source - Power cycle gross output [MWhe]
-    { "kwh_per_kw",                         NR,                 3561.29,                0.1 },  // First year kWh/kW [kWh/kW]
-    { "conversion_factor",                  NR,                 91.2104,                0.1 },  // Gross to Net Conversion Factor [%]
+    { "capacity_factor",                    NR,                 40.5691,                0.1 },  // Capacity factor [%]
+    { "annual_q_dump",                      NR,                 48441.5,                0.1 },  // Dumped thermal energy [MWht]
+    { "annual_W_cycle_gross",               NR,                 405653.,                0.1 },  // Electrical source - Power cycle gross output [MWhe]
+    { "kwh_per_kw",                         NR,                 3553.85,                0.1 },  // First year kWh/kW [kWh/kW]
+    { "conversion_factor",                  NR,                 91.17,                  0.1 },  // Gross to Net Conversion Factor [%]
     { "system_heat_rate",                   NR,                 3.413,                  0.1 },  // System heat rate [MMBtu/MWh]
-    { "annual_q_to_tes",                    NR,                 7452.49,                0.1 },  // Thermal energy into storage [MWht]
-    { "annual_q_pb",                        NR,                 1.12543e06,             0.1 },  // Thermal energy to the power block [MWht]
-    { "annual_q_avail",                     NR,                 1.13069e06,             0.1 },  // Thermal power produced by the field [MWht]
-    { "annual_total_water_use",             NR,                 81055.5,                0.1 },  // Total Annual Water Usage: cycle + mirror washing [m3]
-    { "annual_q_abs_tot",                   NR,                 1.17112e06,             0.1 },  // Total absorbed energy [MWht]
+    { "annual_q_to_tes",                    NR,                 7383.12,                0.1 },  // Thermal energy into storage [MWht]
+    { "annual_q_pb",                        NR,                 1.12348e06,             0.1 },  // Thermal energy to the power block [MWht]
+    { "annual_q_avail",                     NR,                 1.12864e06,             0.1 },  // Thermal power produced by the field [MWht]
+    { "annual_total_water_use",             NR,                 80988.9,                0.1 },  // Total Annual Water Usage: cycle + mirror washing [m3]
+    { "annual_q_abs_tot",                   NR,                 1.17421e06,             0.1 },  // Total absorbed energy [MWht]
     { "annual_q_aux",                       NR,                 0.,                     0.1 },  // Total fossil fuel usage by all plant subsystems [MMBTU]
-    { "annual_q_inc_sf_tot",                NR,                 2.50421e06,             0.1 }   // Total power incident on the field [MWht]
+    { "annual_q_inc_sf_tot",                NR,                 2.50511e06,             0.1 }   // Total power incident on the field [MWht]
 };
 
 testDeclaration defaultTest1(physTroughTesting, "default", &physTroughPPASingleDefaultInfo[0], 383, &physTroughPPASingleDefaultResult[0], 15);
