@@ -112,6 +112,9 @@ struct Irradiance_IO
 	/// Construct the Irradiance_IO structure from the compute module input.  This sets up all inputs for the IrradianceModel
 	Irradiance_IO(compute_module* cm, std::string cmName);
 
+	/// Check weather file
+	void checkWeatherFile(compute_module* cm, std::string cmName);
+
 	/// Allocate the Irradiance_IO outputs
 	void AllocateOutputs(compute_module* cm);
 

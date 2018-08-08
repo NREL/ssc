@@ -1172,67 +1172,6 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 					if (!Subarrays[nn]->enable
 						|| Subarrays[nn]->nStrings < 1)
 						continue; // skip disabled subarrays
-#define IRRMAX 1500
-					// Sev 2015-09-15 Update check for bad irradiance values
-
-					// Check for missing data
-					// *note this method may not work for all compilers (lookin at you, MACs!)
-					if ((wf.gh != wf.gh) && (radmode == DN_GH || radmode == GH_DF)){
-						log(util::format("missing global irradiance %lg W/m2 at time [y:%d m:%d d:%d h:%d], exiting",
-							wf.gh, wf.year, wf.month, wf.day, wf.hour), SSC_ERROR, (float)idx);
-						return;
-					}
-					if ((wf.dn != wf.dn) && (radmode == DN_DF || radmode == DN_GH)){
-						log(util::format("missing beam irradiance %lg W/m2 at time [y:%d m:%d d:%d h:%d], exiting",
-							wf.dn, wf.year, wf.month, wf.day, wf.hour), SSC_ERROR, (float)idx);
-						return;
-					}
-					if ((wf.df != wf.df) && (radmode == DN_DF || radmode == GH_DF)){
-						log(util::format("missing diffuse irradiance %lg W/m2 at time [y:%d m:%d d:%d h:%d], exiting",
-							wf.df, wf.year, wf.month, wf.day, wf.hour), SSC_ERROR, (float)idx);
-						return;
-					}
-					if ((wf.poa != wf.poa) && (radmode == POA_R || radmode == POA_P)){
-						log(util::format("missing POA irradiance %lg W/m2 at time [y:%d m:%d d:%d h:%d], exiting",
-							wf.poa, wf.year, wf.month, wf.day, wf.hour), SSC_ERROR, (float)idx);
-						return;
-					}
-					if (wf.tdry != wf.tdry){
-						log(util::format("missing temperature %lg W/m2 at time [y:%d m:%d d:%d h:%d], exiting",
-							wf.tdry, wf.year, wf.month, wf.day, wf.hour), SSC_ERROR, (float)idx);
-						return;
-					}
-					if (wf.wspd != wf.wspd){
-						log(util::format("missing wind speed %lg W/m2 at time [y:%d m:%d d:%d h:%d], exiting",
-							wf.wspd, wf.year, wf.month, wf.day, wf.hour), SSC_ERROR, (float)idx);
-						return;
-					}
-
-					// Check for bad data
-					if ((wf.gh < 0 || wf.gh > IRRMAX) && (radmode == DN_GH || radmode == GH_DF))
-					{
-						log(util::format("out of range global irradiance %lg W/m2 at time [y:%d m:%d d:%d h:%d], set to zero",
-							wf.gh, wf.year, wf.month, wf.day, wf.hour), SSC_WARNING, (float)idx);
-						wf.gh = 0;
-					}
-					if ((wf.dn < 0 || wf.dn > IRRMAX) && (radmode == DN_DF || radmode == DN_GH))
-					{
-						log(util::format("out of range beam irradiance %lg W/m2 at time [y:%d m:%d d:%d h:%d], set to zero",
-							wf.dn, wf.year, wf.month, wf.day, wf.hour), SSC_WARNING, (float)idx);
-						wf.dn = 0;
-					}
-					if ((wf.df < 0 || wf.df > IRRMAX) && (radmode == DN_DF || radmode == GH_DF))
-					{
-						log(util::format("out of range diffuse irradiance %lg W/m2 at time [y:%d m:%d d:%d h:%d], set to zero",
-							wf.df, wf.year, wf.month, wf.day, wf.hour), SSC_WARNING, (float)idx);
-						wf.df = 0;
-					}
-					if ((wf.poa < 0 || wf.poa > IRRMAX) && (radmode == POA_R || radmode == POA_P))
-					{
-						log(util::format("out of range POA irradiance %lg W/m2 at time [y:%d m:%d d:%d h:%d], set to zero",
-							wf.poa, wf.year, wf.month, wf.day, wf.hour), SSC_WARNING, (float)idx);
-						wf.poa = 0;
-					}
 
 					irrad irr;
 					irr.set_time(wf.year, wf.month, wf.day, wf.hour, wf.minute,
