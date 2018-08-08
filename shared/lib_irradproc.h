@@ -50,6 +50,8 @@
 #ifndef __irradproc_h
 #define __irradproc_h
 
+#include "lib_pv_io_manager.h"
+
 /* aug2011 - apd
 	solar position and radiation processing split out from pvwatts.
 	added isotropic sky model and hdkr model for diffuse on a tilted surface
@@ -61,33 +63,12 @@ void perez( double hextra, double dn,double df,double alb,double inc,double tilt
 void isotropic( double hextra, double dn, double df, double alb, double inc, double tilt, double zen, double poa[3], double diffc[3] /* can be NULL */ );
 void hdkr( double hextra, double dn, double df, double alb, double inc, double tilt, double zen, double poa[3], double diffc[3] /* can be NULL */ );
 
-// Sev: 2015-11-24 Added to keep track of what each radmode interger means
-enum RADMODE {DN_DF, DN_GH, GH_DF, POA_R, POA_P};
-
-// 2015-10-25: Added by Sev to allow for the poa decomp model to take all daily POA measurements into consideration
-struct poaDecompReq {
-	poaDecompReq() : i(0), dayStart(0), stepSize(1), stepScale('h'), doy(-1) {}
-	size_t i; // Current time index
-	size_t dayStart; // time index corresponding to the start of the current day
-	double stepSize;
-	char stepScale; // indicates whether time steps are hours (h) or minutes (m)
-	double* POA; // Pointer to entire POA array (will have size 8760 if time step is 1 hour)
-	double* inc; // Pointer to angle of incident array (same size as POA)
-	double* tilt; // Pointer to angle of incident array (same size as POA)
-	double* zen; // Pointer to angle of incident array (same size as POA)
-	double* exTer; // Pointer to angle of incident array (same size as POA)
-	double tDew;
-	int doy;
-	double elev;
-};
-
 // 2015/09/11 - Sev
 // Create functions for POA decomposition
 
 void poaDecomp( double wfPOA, double angle[], double sun[], double alb, poaDecompReq* pA, double &dn, double &df, double &gh, double poa[3], double diffc[3]);
 double ModifiedDISC(const double g[3], const double z[3], double td, double alt, int doy, double &dn);
 void ModifiedDISC(const double kt[3], const double kt1[3], const double g[3], const double z[3], double td, double alt, int doy, double &dn);
-
 
 class irrad
 {
@@ -108,12 +89,17 @@ private:
 	double diffcRear[3];
 	double poaRearAverage;
 
-
 	poaDecompReq* poaAll;
+
+	Irradiance_IO * irradiance;
+	Subarray_IO * subarray;
 
 public:
 
 	irrad();
+	irrad(Irradiance_IO * , Subarray_IO *);
+
+	void setup();
 	int check();
 	
 	// if delt_hr is less than zero, do not interpolate sunrise and sunset hours
@@ -157,6 +143,7 @@ public:
 	void get_irrad (double *ghi, double *dni, double *dhi);
 	double get_ghi();
 	double get_sunpos_calc_hour();
+	double getAlbedo();
 
 	void getSkyConfigurationFactors(double rowToRow, double verticalHeight, double clearanceGround, double distanceBetweenRows, double horizontalLength, std::vector<double> & rearSkyConfigFactors, std::vector<double> & frontSkyConfigFactors);
 	void getGroundShadeFactors(double rowToRow, double verticalHeight, double clearanceGround, double distanceBetweenRows, double horizontalLength, double solarAzimuthRadians, double solarElevationRadians, std::vector<int> & rearGroundFactors, std::vector<int> & frontGroundFactors, double & maxShadow, double & pvBackShadeFraction, double & pvFrontShadeFraction);

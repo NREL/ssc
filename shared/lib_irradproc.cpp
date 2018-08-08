@@ -947,38 +947,86 @@ void perez( double , double dn, double df, double alb, double inc, double tilt, 
 		}
 }
 
-irrad::irrad()
+void irrad::setup()
 {
-	year=month=day=hour = -999;
-	minute=delt=lat=lon=tz=-999;
-	radmode=skymodel=track = -1;
-	gh=dn=df=alb=tilt=sazm=rlim=-999;
-	
-	for (int i=0;i<9;i++) sun[i] = std::numeric_limits<double>::quiet_NaN();
-	angle[0]=angle[1]=angle[2]=angle[3]=angle[4]= std::numeric_limits<double>::quiet_NaN();
-	poa[0]=poa[1]=poa[2]=diffc[0]=diffc[1]=diffc[2] = std::numeric_limits<double>::quiet_NaN();
+	year = month = day = hour = -999;
+	minute = delt = lat = lon = tz = -999;
+	radmode = skymodel = track = -1;
+	gh = dn = df = alb = tilt = sazm = rlim = -999;
+
+	for (int i = 0; i<9; i++) sun[i] = std::numeric_limits<double>::quiet_NaN();
+	angle[0] = angle[1] = angle[2] = angle[3] = angle[4] = std::numeric_limits<double>::quiet_NaN();
+	poa[0] = poa[1] = poa[2] = diffc[0] = diffc[1] = diffc[2] = std::numeric_limits<double>::quiet_NaN();
 	poaRear[0] = poaRear[1] = poaRear[2] = diffcRear[0] = diffcRear[1] = diffcRear[2] = std::numeric_limits<double>::quiet_NaN();
-	tms[0]=tms[1]=tms[2] = -999;
-	gcr=std::numeric_limits<double>::quiet_NaN();
+	tms[0] = tms[1] = tms[2] = -999;
+	gcr = std::numeric_limits<double>::quiet_NaN();
 	en_backtrack = false;
 	ghi = std::numeric_limits<double>::quiet_NaN();
 	poaRearAverage = 0;
+}
+irrad::irrad()
+{
+	setup();
+}
+irrad::irrad(Irradiance_IO * irradianceIO, Subarray_IO * subarrayIO)
+{
+	setup();
+	irradiance = irradianceIO;
+	subarray = subarrayIO;
+
+	weather_record wf = irradiance->weatherRecord;
+	weather_header hdr = irradiance->weatherHeader;
+
+	int month_idx = wf.month - 1;
+	if (irradiance->useWeatherFileAlbedo && std::isfinite(wf.alb) && wf.alb > 0 && wf.alb < 1) {
+		alb = wf.alb;
+	}
+	else if (month_idx >= 0 && month_idx < 12) {
+		alb = irradiance->userSpecifiedMonthlyAlbedo[month_idx];
+	}
+	
+	set_time(wf.year, wf.month, wf.day, wf.hour, wf.minute,
+		irradiance->instantaneous ? IRRADPROC_NO_INTERPOLATE_SUNRISE_SUNSET : irradiance->dtHour);
+	set_location(hdr.lat, hdr.lon, hdr.tz);
+	set_sky_model(irradiance->skyModel, alb);
+
+	radmode = irradiance->radiationMode;
+	if (radmode == Irradiance_IO::DN_DF) set_beam_diffuse(wf.dn, wf.df);
+	else if (radmode == Irradiance_IO::DN_GH) set_global_beam(wf.gh, wf.dn);
+	else if (radmode == Irradiance_IO::GH_DF) set_global_diffuse(wf.gh, wf.df);
+	else if (radmode == Irradiance_IO::POA_R) set_poa_reference(wf.poa, &(subarray->poa.poaAll));
+	else if (radmode == Irradiance_IO::POA_P) set_poa_pyranometer(wf.poa, &subarray->poa.poaAll);
+
+	if (subarray->trackMode == 4) //timeseries tilt input
+		subarray->tiltDegrees = subarray->monthlyTiltDegrees[month_idx]; //overwrite the tilt input with the current tilt to be used in calculations
+
+	set_surface(subarray->trackMode,
+		subarray->tiltDegrees,
+		subarray->azimuthDegrees,
+		subarray->trackerRotationLimitDegrees,
+		subarray->backtrackingEnabled,
+		subarray->groundCoverageRatio);	
 }
 
 int irrad::check()
 {
 	if (year < 0 || month < 0 || day < 0 || hour < 0 || minute < 0 || delt > 1) return -1;
 	if ( lat < -90 || lat > 90 || lon < -180 || lon > 180 || tz < -15 || tz > 15 ) return -2;
-	if ( radmode < DN_DF || radmode > POA_P || skymodel < 0 || skymodel > 2 ) return -3;
+	if ( radmode < Irradiance_IO::DN_DF || radmode > Irradiance_IO::POA_P || skymodel < 0 || skymodel > 2 ) return -3;
 	if ( track < 0 || track > 4 ) return -4;
-	if ( radmode == DN_DF && (dn < 0 || dn > 1500 || df < 0 || df > 1500)) return -5;
-	if ( radmode == DN_GH && (gh < 0 || gh > 1500 || dn < 0 || dn > 1500)) return -6;
+	if ( radmode == Irradiance_IO::DN_DF && (dn < 0 || dn > 1500 || df < 0 || df > 1500)) return -5;
+	if ( radmode == Irradiance_IO::DN_GH && (gh < 0 || gh > 1500 || dn < 0 || dn > 1500)) return -6;
 	if ( alb < 0 || alb > 1 ) return -7;
 	if ( tilt < 0 || tilt > 90 ) return -8;
 	if ( sazm < 0 || sazm >= 360 ) return -9;
 	if ( rlim < -90 || rlim > 90 ) return -10;
-	if ( radmode == GH_DF && (gh < 0 || gh > 1500 || df < 0 || df > 1500)) return -11;
+	if ( radmode == Irradiance_IO::GH_DF && (gh < 0 || gh > 1500 || df < 0 || df > 1500)) return -11;
 	return 0;
+}
+
+double irrad::getAlbedo()
+{
+	return alb;
 }
 
 double irrad::get_ghi()
@@ -1088,31 +1136,31 @@ void irrad::set_beam_diffuse( double beam, double diffuse )
 {
 	this->dn = beam;
 	this->df = diffuse;
-	this->radmode = DN_DF;
+	this->radmode = Irradiance_IO::DN_DF;
 }
 
 void irrad::set_global_beam( double global, double beam )
 {
 	this->gh = global;
 	this->dn = beam;
-	this->radmode = DN_GH;
+	this->radmode = Irradiance_IO::DN_GH;
 }
 
 void irrad::set_global_diffuse(double global, double diffuse)
 {
 	this->gh = global;
 	this->df = diffuse;
-	this->radmode = GH_DF;
+	this->radmode = Irradiance_IO::GH_DF;
 }
 
 void irrad::set_poa_reference( double poa, poaDecompReq* pA){
 	this->wfpoa = poa;
-	this->radmode = POA_R;
+	this->radmode = Irradiance_IO::POA_R;
 	this->poaAll = pA;
 }
 void irrad::set_poa_pyranometer( double poa, poaDecompReq* pA ){
 	this->wfpoa = poa;
-	this->radmode = POA_P;
+	this->radmode = Irradiance_IO::POA_P;
 	this->poaAll = pA;
 }
 void irrad::set_sun_component(size_t index, double value)
@@ -1213,7 +1261,7 @@ int irrad::calc()
 		// compute incidence angles onto fixed or tracking surface
 		incidence( track, tilt, sazm, rlim, sun[1], sun[0], en_backtrack, gcr, angle );
 
-		if(radmode < POA_R){  // Sev 2015-09-11 - Run this code if no POA decomposition is required
+		if(radmode < Irradiance_IO::POA_R){  // Sev 2015-09-11 - Run this code if no POA decomposition is required
 			double hextra = sun[8];
 			double hbeam = dn*cos( sun[1] ); // calculated beam on horizontal surface: sun[1]=zenith
 				
@@ -1228,18 +1276,18 @@ int irrad::calc()
 			//ibeam and idiff in this calculation are DNI and DHI, they are NOT in the plane of array! those are poa[0-2]!!!
 			double ibeam = dn;
 			double idiff = 0.0;
-			if (radmode == DN_DF)  // Beam+Diffuse
+			if (radmode == Irradiance_IO::DN_DF)  // Beam+Diffuse
 			{
 				idiff = df;
 				ibeam = dn;
 			}
-			else if (radmode == DN_GH) // Total+Beam
+			else if (radmode == Irradiance_IO::DN_GH) // Total+Beam
 			{
 				idiff = gh - hbeam;
 				if (idiff < 0) idiff = 0; //error checking added 12/18/15 jmf to prevent negative dh values if input data is bad
 				ibeam = dn;
 			}
-			else if (radmode == GH_DF) //Total+Diffuse
+			else if (radmode == Irradiance_IO::GH_DF) //Total+Diffuse
 			{
 				idiff = df;
 				ibeam = (gh - df) / cos(sun[1]); //compute beam from total, diffuse, and zenith angle

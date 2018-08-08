@@ -199,6 +199,18 @@ void Irradiance_IO::checkWeatherFile(compute_module * cm, std::string cmName)
 				weatherRecord.poa, weatherRecord.year, weatherRecord.month, weatherRecord.day, weatherRecord.hour), SSC_WARNING, (float)idx);
 			weatherRecord.poa = 0;
 		}
+		int month_idx = weatherRecord.month - 1;
+		bool albedoError = false;
+		if (useWeatherFileAlbedo && (!std::isfinite(weatherRecord.alb) || weatherRecord.alb < 0 || weatherRecord.alb > 1)) {
+			albedoError = true;
+		}
+		else if ((month_idx >= 0 && month_idx < 12) && (userSpecifiedMonthlyAlbedo[month_idx] < 0 || userSpecifiedMonthlyAlbedo[month_idx] > 1)) {
+			albedoError = true;
+		}
+		if (albedoError) {
+			throw compute_module::exec_error(cmName,
+				util::format("Error retrieving albedo value: Invalid month in weather file or invalid albedo value in weather file"));
+		}
 	}
 	weatherDataProvider->rewind();
 }
