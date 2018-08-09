@@ -63,9 +63,7 @@ void perez( double hextra, double dn,double df,double alb,double inc,double tilt
 void isotropic( double hextra, double dn, double df, double alb, double inc, double tilt, double zen, double poa[3], double diffc[3] /* can be NULL */ );
 void hdkr( double hextra, double dn, double df, double alb, double inc, double tilt, double zen, double poa[3], double diffc[3] /* can be NULL */ );
 
-// 2015/09/11 - Sev
 // Create functions for POA decomposition
-
 void poaDecomp( double wfPOA, double angle[], double sun[], double alb, poaDecompReq* pA, double &dn, double &df, double &gh, double poa[3], double diffc[3]);
 double ModifiedDISC(const double g[3], const double z[3], double td, double alt, int doy, double &dn);
 void ModifiedDISC(const double kt[3], const double kt1[3], const double g[3], const double z[3], double td, double alt, int doy, double &dn);
@@ -73,26 +71,48 @@ void ModifiedDISC(const double kt[3], const double kt1[3], const double g[3], co
 class irrad
 {
 private:
+
+	poaDecompReq * poaAll;
+	Irradiance_IO * irradiance;
+	Subarray_IO * subarray;
+
+	// Time inputs
 	int year, month, day, hour;
 	double minute, delt;
 
-	double lat, lon, tz;
-	int radmode, skymodel, track;
-	double gh, dn, df, wfpoa, alb;
-	double tilt, sazm, rlim, gcr;
-	bool en_backtrack;
-	double sun[9], angle[5], poa[3], diffc[3];
-	int tms[3];
-	double ghi;
+	// Position inputs
+	double latitudeDegrees;
+	double longitudeDegrees;
+	double timezone;
 
-	double poaRear[3];
-	double diffcRear[3];
-	double poaRearAverage;
+	// Model settings
+	int radiationMode;
+	int skyModel;
+	int trackingMode;
+	bool enableBacktrack;
 
-	poaDecompReq* poaAll;
+	// Irradiation components
+	double globalHorizontal;
+	double directNormal;
+	double diffuseHorizontal;
+	double weatherFilePOA;
+	double albedo;
 
-	Irradiance_IO * irradiance;
-	Subarray_IO * subarray;
+	// Subarray properties
+	double tiltDegrees;
+	double surfaceAzimuthDegrees;
+	double rotationLimitDegrees;
+	double groundCoverageRatio;
+
+	// Outputs
+	double sunAnglesRadians[9];
+	double surfaceAnglesRadians[5];
+	double planeOfArrayIrradianceFront[3];
+	double planeOfArrayIrradianceRear[3];
+	double diffuseIrradianceFront[3];
+	double diffuseIrradianceRear[3];
+	int timeStepSunPosition[3];
+	double planeOfArrayIrradianceRearAverage;
 
 public:
 
@@ -131,7 +151,7 @@ public:
 		double *eccfac,
 		double *tst,
 		double *hextra );
-	double get_sun_component(size_t i) { return sun[i]; }
+	double get_sun_component(size_t i) { return sunAnglesRadians[i]; }
 	void get_angles( double *aoi,
 		double *surftilt,
 		double *surfazi,
@@ -141,7 +161,6 @@ public:
 		double *isotrop, double *circum, double *horizon );
 	double get_poa_rear();
 	void get_irrad (double *ghi, double *dni, double *dhi);
-	double get_ghi();
 	double get_sunpos_calc_hour();
 	double getAlbedo();
 

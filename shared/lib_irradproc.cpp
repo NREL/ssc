@@ -646,7 +646,7 @@ void poaDecomp( double , double angle[], double sun[], double alb, poaDecompReq 
 	/* added by Severin Ryberg. Decomposes POA into direct normal and diffuse irradiances
 
 	List of Parameters Passed to Function:
-	wfPOA	  = Plane of array irradiance measured from weatherfile (W/m2)
+	weatherFilePOA	  = Plane of array irradiance measured from weatherfile (W/m2)
 	angle[]   = array of elements to return angles to calling function
 	 angle[0] = inc  = incident angle in radians
 	 angle[1] = tilt = tilt angle of surface from horizontal in radians
@@ -950,19 +950,18 @@ void perez( double , double dn, double df, double alb, double inc, double tilt, 
 void irrad::setup()
 {
 	year = month = day = hour = -999;
-	minute = delt = lat = lon = tz = -999;
-	radmode = skymodel = track = -1;
-	gh = dn = df = alb = tilt = sazm = rlim = -999;
+	minute = delt = latitudeDegrees = longitudeDegrees = timezone = -999;
+	radiationMode = skyModel = trackingMode = -1;
+	globalHorizontal = directNormal = diffuseHorizontal = albedo = tiltDegrees = surfaceAzimuthDegrees = rotationLimitDegrees = -999;
 
-	for (int i = 0; i<9; i++) sun[i] = std::numeric_limits<double>::quiet_NaN();
-	angle[0] = angle[1] = angle[2] = angle[3] = angle[4] = std::numeric_limits<double>::quiet_NaN();
-	poa[0] = poa[1] = poa[2] = diffc[0] = diffc[1] = diffc[2] = std::numeric_limits<double>::quiet_NaN();
-	poaRear[0] = poaRear[1] = poaRear[2] = diffcRear[0] = diffcRear[1] = diffcRear[2] = std::numeric_limits<double>::quiet_NaN();
-	tms[0] = tms[1] = tms[2] = -999;
-	gcr = std::numeric_limits<double>::quiet_NaN();
-	en_backtrack = false;
-	ghi = std::numeric_limits<double>::quiet_NaN();
-	poaRearAverage = 0;
+	for (int i = 0; i<9; i++) sunAnglesRadians[i] = std::numeric_limits<double>::quiet_NaN();
+	surfaceAnglesRadians[0] = surfaceAnglesRadians[1] = surfaceAnglesRadians[2] = surfaceAnglesRadians[3] = surfaceAnglesRadians[4] = std::numeric_limits<double>::quiet_NaN();
+	planeOfArrayIrradianceFront[0] = planeOfArrayIrradianceFront[1] = planeOfArrayIrradianceFront[2] = diffuseIrradianceFront[0] = diffuseIrradianceFront[1] = diffuseIrradianceFront[2] = std::numeric_limits<double>::quiet_NaN();
+	planeOfArrayIrradianceRear[0] = planeOfArrayIrradianceRear[1] = planeOfArrayIrradianceRear[2] = diffuseIrradianceRear[0] = diffuseIrradianceRear[1] = diffuseIrradianceRear[2] = std::numeric_limits<double>::quiet_NaN();
+	timeStepSunPosition[0] = timeStepSunPosition[1] = timeStepSunPosition[2] = -999;
+	groundCoverageRatio = std::numeric_limits<double>::quiet_NaN();
+	enableBacktrack = false;
+	planeOfArrayIrradianceRearAverage = 0;
 }
 irrad::irrad()
 {
@@ -979,23 +978,23 @@ irrad::irrad(Irradiance_IO * irradianceIO, Subarray_IO * subarrayIO)
 
 	int month_idx = wf.month - 1;
 	if (irradiance->useWeatherFileAlbedo && std::isfinite(wf.alb) && wf.alb > 0 && wf.alb < 1) {
-		alb = wf.alb;
+		albedo = wf.alb;
 	}
 	else if (month_idx >= 0 && month_idx < 12) {
-		alb = irradiance->userSpecifiedMonthlyAlbedo[month_idx];
+		albedo = irradiance->userSpecifiedMonthlyAlbedo[month_idx];
 	}
 	
 	set_time(wf.year, wf.month, wf.day, wf.hour, wf.minute,
 		irradiance->instantaneous ? IRRADPROC_NO_INTERPOLATE_SUNRISE_SUNSET : irradiance->dtHour);
 	set_location(hdr.lat, hdr.lon, hdr.tz);
-	set_sky_model(irradiance->skyModel, alb);
+	set_sky_model(irradiance->skyModel, albedo);
 
-	radmode = irradiance->radiationMode;
-	if (radmode == Irradiance_IO::DN_DF) set_beam_diffuse(wf.dn, wf.df);
-	else if (radmode == Irradiance_IO::DN_GH) set_global_beam(wf.gh, wf.dn);
-	else if (radmode == Irradiance_IO::GH_DF) set_global_diffuse(wf.gh, wf.df);
-	else if (radmode == Irradiance_IO::POA_R) set_poa_reference(wf.poa, &(subarray->poa.poaAll));
-	else if (radmode == Irradiance_IO::POA_P) set_poa_pyranometer(wf.poa, &subarray->poa.poaAll);
+	radiationMode = irradiance->radiationMode;
+	if (radiationMode == Irradiance_IO::DN_DF) set_beam_diffuse(wf.dn, wf.df);
+	else if (radiationMode == Irradiance_IO::DN_GH) set_global_beam(wf.gh, wf.dn);
+	else if (radiationMode == Irradiance_IO::GH_DF) set_global_diffuse(wf.gh, wf.df);
+	else if (radiationMode == Irradiance_IO::POA_R) set_poa_reference(wf.poa, &(subarray->poa.poaAll));
+	else if (radiationMode == Irradiance_IO::POA_P) set_poa_pyranometer(wf.poa, &subarray->poa.poaAll);
 
 	if (subarray->trackMode == 4) //timeseries tilt input
 		subarray->tiltDegrees = subarray->monthlyTiltDegrees[month_idx]; //overwrite the tilt input with the current tilt to be used in calculations
@@ -1011,32 +1010,27 @@ irrad::irrad(Irradiance_IO * irradianceIO, Subarray_IO * subarrayIO)
 int irrad::check()
 {
 	if (year < 0 || month < 0 || day < 0 || hour < 0 || minute < 0 || delt > 1) return -1;
-	if ( lat < -90 || lat > 90 || lon < -180 || lon > 180 || tz < -15 || tz > 15 ) return -2;
-	if ( radmode < Irradiance_IO::DN_DF || radmode > Irradiance_IO::POA_P || skymodel < 0 || skymodel > 2 ) return -3;
-	if ( track < 0 || track > 4 ) return -4;
-	if ( radmode == Irradiance_IO::DN_DF && (dn < 0 || dn > 1500 || df < 0 || df > 1500)) return -5;
-	if ( radmode == Irradiance_IO::DN_GH && (gh < 0 || gh > 1500 || dn < 0 || dn > 1500)) return -6;
-	if ( alb < 0 || alb > 1 ) return -7;
-	if ( tilt < 0 || tilt > 90 ) return -8;
-	if ( sazm < 0 || sazm >= 360 ) return -9;
-	if ( rlim < -90 || rlim > 90 ) return -10;
-	if ( radmode == Irradiance_IO::GH_DF && (gh < 0 || gh > 1500 || df < 0 || df > 1500)) return -11;
+	if ( latitudeDegrees < -90 || latitudeDegrees > 90 || longitudeDegrees < -180 || longitudeDegrees > 180 || timezone < -15 || timezone > 15 ) return -2;
+	if ( radiationMode < Irradiance_IO::DN_DF || radiationMode > Irradiance_IO::POA_P || skyModel < 0 || skyModel > 2 ) return -3;
+	if ( trackingMode < 0 || trackingMode > 4 ) return -4;
+	if ( radiationMode == Irradiance_IO::DN_DF && (directNormal < 0 || directNormal > Irradiance_IO::irradiationMax || diffuseHorizontal < 0 || diffuseHorizontal > 1500)) return -5;
+	if ( radiationMode == Irradiance_IO::DN_GH && (globalHorizontal < 0 || globalHorizontal > 1500 || directNormal < 0 || directNormal > 1500)) return -6;
+	if ( albedo < 0 || albedo > 1 ) return -7;
+	if ( tiltDegrees < 0 || tiltDegrees > 90 ) return -8;
+	if ( surfaceAzimuthDegrees < 0 || surfaceAzimuthDegrees >= 360 ) return -9;
+	if ( rotationLimitDegrees < -90 || rotationLimitDegrees > 90 ) return -10;
+	if ( radiationMode == Irradiance_IO::GH_DF && (globalHorizontal < 0 || globalHorizontal > 1500 || diffuseHorizontal < 0 || diffuseHorizontal > 1500)) return -11;
 	return 0;
 }
 
 double irrad::getAlbedo()
 {
-	return alb;
-}
-
-double irrad::get_ghi()
-{
-	return ghi;
+	return albedo;
 }
 
 double irrad::get_sunpos_calc_hour()
 {
-	return ((double)tms[0]) + ((double)tms[1])/60.0;
+	return ((double)timeStepSunPosition[0]) + ((double)timeStepSunPosition[1])/60.0;
 }
 
 void irrad::get_sun( double *solazi,
@@ -1050,16 +1044,16 @@ void irrad::get_sun( double *solazi,
 	double *tst,
 	double *hextra )
 {
-	if ( solazi != 0 ) *solazi = sun[0] * (180/M_PI);
-	if ( solzen != 0 ) *solzen = sun[1] * (180/M_PI);
-	if ( solelv != 0 ) *solelv = sun[2] * (180/M_PI);
-	if ( soldec != 0 ) *soldec = sun[3] * (180/M_PI);
-	if ( sunrise != 0 ) *sunrise = sun[4];
-	if ( sunset != 0 ) *sunset = sun[5];
-	if ( sunup != 0 ) *sunup = tms[2];
-	if ( eccfac != 0 ) *eccfac = sun[6];
-	if ( tst != 0 ) *tst = sun[7];
-	if ( hextra != 0 ) *hextra = sun[8];
+	if ( solazi != 0 ) *solazi = sunAnglesRadians[0] * (180/M_PI);
+	if ( solzen != 0 ) *solzen = sunAnglesRadians[1] * (180/M_PI);
+	if ( solelv != 0 ) *solelv = sunAnglesRadians[2] * (180/M_PI);
+	if ( soldec != 0 ) *soldec = sunAnglesRadians[3] * (180/M_PI);
+	if ( sunrise != 0 ) *sunrise = sunAnglesRadians[4];
+	if ( sunset != 0 ) *sunset = sunAnglesRadians[5];
+	if ( sunup != 0 ) *sunup = timeStepSunPosition[2];
+	if ( eccfac != 0 ) *eccfac = sunAnglesRadians[6];
+	if ( tst != 0 ) *tst = sunAnglesRadians[7];
+	if ( hextra != 0 ) *hextra = sunAnglesRadians[8];
 }
 
 void irrad::get_angles( double *aoi,
@@ -1068,33 +1062,33 @@ void irrad::get_angles( double *aoi,
 	double *axisrot,
 	double *btdiff )
 {
-	if ( aoi != 0 ) *aoi = angle[0] * (180/M_PI);
-	if ( surftilt != 0 ) *surftilt = angle[1] * (180/M_PI);
-	if ( surfazi != 0 ) *surfazi = angle[2] * (180/M_PI);
-	if ( axisrot != 0 ) *axisrot = angle[3] * (180/M_PI);
-	if ( btdiff != 0 ) *btdiff = angle[4] * (180/M_PI);
+	if ( aoi != 0 ) *aoi = surfaceAnglesRadians[0] * (180/M_PI);
+	if ( surftilt != 0 ) *surftilt = surfaceAnglesRadians[1] * (180/M_PI);
+	if ( surfazi != 0 ) *surfazi = surfaceAnglesRadians[2] * (180/M_PI);
+	if ( axisrot != 0 ) *axisrot = surfaceAnglesRadians[3] * (180/M_PI);
+	if ( btdiff != 0 ) *btdiff = surfaceAnglesRadians[4] * (180/M_PI);
 }
 	
 void irrad::get_poa( double *beam, double *skydiff, double *gnddiff,
 	double *isotrop, double *circum, double *horizon )
 {
-	if ( beam != 0 ) *beam = poa[0];
-	if ( skydiff != 0 ) *skydiff = poa[1];
-	if ( gnddiff != 0 ) *gnddiff = poa[2];
-	if ( isotrop != 0 ) *isotrop = diffc[0];
-	if ( circum != 0 ) *circum = diffc[1];
-	if ( horizon != 0 ) *horizon = diffc[2];
+	if ( beam != 0 ) *beam = planeOfArrayIrradianceFront[0];
+	if ( skydiff != 0 ) *skydiff = planeOfArrayIrradianceFront[1];
+	if ( gnddiff != 0 ) *gnddiff = planeOfArrayIrradianceFront[2];
+	if ( isotrop != 0 ) *isotrop = diffuseIrradianceFront[0];
+	if ( circum != 0 ) *circum = diffuseIrradianceFront[1];
+	if ( horizon != 0 ) *horizon = diffuseIrradianceFront[2];
 }
 
 double irrad::get_poa_rear()
 {
-	return poaRearAverage;
+	return planeOfArrayIrradianceRearAverage;
 }
 
 void irrad::get_irrad (double *ghi, double *dni, double *dhi){
-	*ghi = gh;
-	*dni = dn;
-	*dhi = df;
+	*ghi = globalHorizontal;
+	*dni = directNormal;
+	*dhi = diffuseHorizontal;
 }
 
 void irrad::set_time( int year, int month, int day, int hour, double minute, double delt_hr )
@@ -1107,66 +1101,66 @@ void irrad::set_time( int year, int month, int day, int hour, double minute, dou
 	this->delt = delt_hr;
 }
 
-void irrad::set_location( double lat, double lon, double tz )
+void irrad::set_location( double latitudeDegrees, double longitudeDegrees, double timezone )
 {
-	this->lat = lat;
-	this->lon = lon;
-	this->tz = tz;
+	this->latitudeDegrees = latitudeDegrees;
+	this->longitudeDegrees = longitudeDegrees;
+	this->timezone = timezone;
 }
 
-void irrad::set_sky_model( int skymodel, double albedo )
+void irrad::set_sky_model( int skyModel, double albedo )
 {
-	this->skymodel = skymodel;
-	this->alb = albedo;
+	this->skyModel = skyModel;
+	this->albedo = albedo;
 }
 
-void irrad::set_surface( int tracking, double tilt_deg, double azimuth_deg, double rotlim_deg, bool en_backtrack, double gcr )
+void irrad::set_surface( int tracking, double tilt_deg, double azimuth_deg, double rotlim_deg, bool enableBacktrack, double groundCoverageRatio )
 {
-	this->track = tracking;
+	this->trackingMode = tracking;
 	if (tracking == 4)
-		this->track = 0; //treat timeseries tilt as fixed tilt
-	this->tilt = tilt_deg;
-	this->sazm = azimuth_deg;
-	this->rlim = rotlim_deg;
-	this->en_backtrack = en_backtrack;
-	this->gcr = gcr;
+		this->trackingMode = 0; //treat timeseries tilt as fixed tilt
+	this->tiltDegrees = tilt_deg;
+	this->surfaceAzimuthDegrees = azimuth_deg;
+	this->rotationLimitDegrees = rotlim_deg;
+	this->enableBacktrack = enableBacktrack;
+	this->groundCoverageRatio = groundCoverageRatio;
 }
 	
 void irrad::set_beam_diffuse( double beam, double diffuse )
 {
-	this->dn = beam;
-	this->df = diffuse;
-	this->radmode = Irradiance_IO::DN_DF;
+	this->directNormal = beam;
+	this->diffuseHorizontal = diffuse;
+	this->radiationMode = Irradiance_IO::DN_DF;
 }
 
 void irrad::set_global_beam( double global, double beam )
 {
-	this->gh = global;
-	this->dn = beam;
-	this->radmode = Irradiance_IO::DN_GH;
+	this->globalHorizontal = global;
+	this->directNormal = beam;
+	this->radiationMode = Irradiance_IO::DN_GH;
 }
 
 void irrad::set_global_diffuse(double global, double diffuse)
 {
-	this->gh = global;
-	this->df = diffuse;
-	this->radmode = Irradiance_IO::GH_DF;
+	this->globalHorizontal = global;
+	this->diffuseHorizontal = diffuse;
+	this->radiationMode = Irradiance_IO::GH_DF;
 }
 
-void irrad::set_poa_reference( double poa, poaDecompReq* pA){
-	this->wfpoa = poa;
-	this->radmode = Irradiance_IO::POA_R;
+void irrad::set_poa_reference( double planeOfArrayIrradianceFront, poaDecompReq* pA){
+	this->weatherFilePOA = planeOfArrayIrradianceFront;
+	this->radiationMode = Irradiance_IO::POA_R;
 	this->poaAll = pA;
 }
-void irrad::set_poa_pyranometer( double poa, poaDecompReq* pA ){
-	this->wfpoa = poa;
-	this->radmode = Irradiance_IO::POA_P;
+void irrad::set_poa_pyranometer( double planeOfArrayIrradianceFront, poaDecompReq* pA ){
+	this->weatherFilePOA = planeOfArrayIrradianceFront;
+	this->radiationMode = Irradiance_IO::POA_P;
 	this->poaAll = pA;
 }
 void irrad::set_sun_component(size_t index, double value)
 {
-	if (index < sizeof(sun) / sizeof(sun[0])) {
-		sun[index] = value;
+	if (index < sizeof(sunAnglesRadians) / sizeof(sunAnglesRadians[0])) {
+		sunAnglesRadians[index] = value;
 	}
 }
 
@@ -1178,23 +1172,21 @@ int irrad::calc()
 /*
 	calculates effective sun position at current timestep, with delt specified in hours
 
-	sun: results from solarpos
-	tms: [0]  effective hour of day used for sun position
+	sunAnglesRadians: results from solarpos
+	timeStepSunPosition: [0]  effective hour of day used for sun position
 			[1]  effective minute of hour used for sun position
 			[2]  is sun up?  (0=no, 1=midday, 2=sunup, 3=sundown)
-	angle: result from incidence
-	poa: result from sky model
+	surfaceAnglesRadians: result from incidence
+	planeOfArrayIrradianceFront: result from sky model
 	diff: broken out diffuse components from sky model
-
-	lat, lon, tilt, sazm, rlim: angles in degrees
 */	
 	double t_cur = hour + minute/60.0;
 
 	// calculate sunrise and sunset hours in local standard time for the current day
-	solarpos( year, month, day, 12, 0.0, lat, lon, tz, sun );
+	solarpos( year, month, day, 12, 0.0, latitudeDegrees, longitudeDegrees, timezone, sunAnglesRadians );
 
-	double t_sunrise = sun[4];
-	double t_sunset = sun[5];
+	double t_sunrise = sunAnglesRadians[4];
+	double t_sunset = sunAnglesRadians[5];
 
 	// recall: if delt <= 0.0, do not interpolate sunrise and sunset hours, just use specified time stamp
 	if ( delt > 0
@@ -1206,12 +1198,12 @@ int irrad::calc()
 		int hr_calc = (int)t_calc;
 		double min_calc = (t_calc-hr_calc)*60.0;
 
-		tms[0] = hr_calc;
-		tms[1] = (int)min_calc;
+		timeStepSunPosition[0] = hr_calc;
+		timeStepSunPosition[1] = (int)min_calc;
 				
-		solarpos( year, month, day, hr_calc, min_calc, lat, lon, tz, sun );
+		solarpos( year, month, day, hr_calc, min_calc, latitudeDegrees, longitudeDegrees, timezone, sunAnglesRadians );
 
-		tms[2] = 2;				
+		timeStepSunPosition[2] = 2;				
 	}
 	else if ( delt > 0
 		&& t_cur > t_sunset - delt/2.0
@@ -1222,48 +1214,46 @@ int irrad::calc()
 		int hr_calc = (int)t_calc;
 		double min_calc = (t_calc-hr_calc)*60.0;
 
-		tms[0] = hr_calc;
-		tms[1] = (int)min_calc;
+		timeStepSunPosition[0] = hr_calc;
+		timeStepSunPosition[1] = (int)min_calc;
 				
-		solarpos( year, month, day, hr_calc, min_calc, lat, lon, tz, sun );
+		solarpos( year, month, day, hr_calc, min_calc, latitudeDegrees, longitudeDegrees, timezone, sunAnglesRadians );
 
-		tms[2] = 3;
+		timeStepSunPosition[2] = 3;
 	}
 	else if (t_cur >= t_sunrise && t_cur <= t_sunset)
 	{
 		// timestep is not sunrise nor sunset, but sun is up  (calculate position at provided t_cur)			
-		tms[0] = hour;
-		tms[1] = (int)minute;
-		solarpos( year, month, day, hour, minute, lat, lon, tz, sun );
-		tms[2] = 1;
+		timeStepSunPosition[0] = hour;
+		timeStepSunPosition[1] = (int)minute;
+		solarpos( year, month, day, hour, minute, latitudeDegrees, longitudeDegrees, timezone, sunAnglesRadians );
+		timeStepSunPosition[2] = 1;
 	}
 	else
 	{	
 		// sun is down, assign sundown values
-		sun[0] = -999*DTOR; //avoid returning a junk azimuth angle (return in radians)
-		sun[1] = -999*DTOR; //avoid returning a junk zenith angle (return in radians)
-		sun[2] = -999*DTOR; //avoid returning a junk elevation angle (return in radians)
-		tms[0] = 0;
-		tms[1] = 0;
-		tms[2] = 0;
+		sunAnglesRadians[0] = -999*DTOR; //avoid returning a junk azimuth angle (return in radians)
+		sunAnglesRadians[1] = -999*DTOR; //avoid returning a junk zenith angle (return in radians)
+		sunAnglesRadians[2] = -999*DTOR; //avoid returning a junk elevation angle (return in radians)
+		timeStepSunPosition[0] = 0;
+		timeStepSunPosition[1] = 0;
+		timeStepSunPosition[2] = 0;
 	}
 
 			
-	poa[0]=poa[1]=poa[2] = 0;
-	diffc[0]=diffc[1]=diffc[2] = 0;
-	angle[0]=angle[1]=angle[2]=angle[3]=angle[4] = 0;
-
-	ghi = 0;
+	planeOfArrayIrradianceFront[0]=planeOfArrayIrradianceFront[1]=planeOfArrayIrradianceFront[2] = 0;
+	diffuseIrradianceFront[0]=diffuseIrradianceFront[1]=diffuseIrradianceFront[2] = 0;
+	surfaceAnglesRadians[0]=surfaceAnglesRadians[1]=surfaceAnglesRadians[2]=surfaceAnglesRadians[3]=surfaceAnglesRadians[4] = 0;
 
 	// do irradiance calculations if sun is up
-	if (tms[2] > 0)
+	if (timeStepSunPosition[2] > 0)
 	{				
 		// compute incidence angles onto fixed or tracking surface
-		incidence( track, tilt, sazm, rlim, sun[1], sun[0], en_backtrack, gcr, angle );
+		incidence( trackingMode, tiltDegrees, surfaceAzimuthDegrees, rotationLimitDegrees, sunAnglesRadians[1], sunAnglesRadians[0], enableBacktrack, groundCoverageRatio, surfaceAnglesRadians );
 
-		if(radmode < Irradiance_IO::POA_R){  // Sev 2015-09-11 - Run this code if no POA decomposition is required
-			double hextra = sun[8];
-			double hbeam = dn*cos( sun[1] ); // calculated beam on horizontal surface: sun[1]=zenith
+		if(radiationMode < Irradiance_IO::POA_R){  
+			double hextra = sunAnglesRadians[8];
+			double hbeam = directNormal*cos( sunAnglesRadians[1] ); // calculated beam on horizontal surface: sunAnglesRadians[1]=zenith
 				
 			// check beam irradiance against extraterrestrial irradiance
 			if ( hbeam > hextra )
@@ -1274,23 +1264,23 @@ int irrad::calc()
 
 			// compute beam and diffuse inputs based on irradiance inputs mode
 			//ibeam and idiff in this calculation are DNI and DHI, they are NOT in the plane of array! those are poa[0-2]!!!
-			double ibeam = dn;
+			double ibeam = directNormal;
 			double idiff = 0.0;
-			if (radmode == Irradiance_IO::DN_DF)  // Beam+Diffuse
+			if (radiationMode == Irradiance_IO::DN_DF)  // Beam+Diffuse
 			{
-				idiff = df;
-				ibeam = dn;
+				idiff = diffuseHorizontal;
+				ibeam = directNormal;
 			}
-			else if (radmode == Irradiance_IO::DN_GH) // Total+Beam
+			else if (radiationMode == Irradiance_IO::DN_GH) // Total+Beam
 			{
-				idiff = gh - hbeam;
+				idiff = globalHorizontal - hbeam;
 				if (idiff < 0) idiff = 0; //error checking added 12/18/15 jmf to prevent negative dh values if input data is bad
-				ibeam = dn;
+				ibeam = directNormal;
 			}
-			else if (radmode == Irradiance_IO::GH_DF) //Total+Diffuse
+			else if (radiationMode == Irradiance_IO::GH_DF) //Total+Diffuse
 			{
-				idiff = df;
-				ibeam = (gh - df) / cos(sun[1]); //compute beam from total, diffuse, and zenith angle
+				idiff = diffuseHorizontal;
+				ibeam = (globalHorizontal - diffuseHorizontal) / cos(sunAnglesRadians[1]); //compute beam from total, diffuse, and zenith angle
 				if (ibeam > 1500) ibeam = 1500; //error checking on computation
 				if (ibeam < 0) ibeam = 0; //error checking on computation
 			}
@@ -1299,25 +1289,23 @@ int irrad::calc()
 
 
 			// compute incident irradiance on tilted surface
-			switch( skymodel )
+			switch( skyModel )
 			{
 			case 0:
-				isotropic( hextra, ibeam, idiff, alb, angle[0], angle[1], sun[1], poa, diffc );
+				isotropic( hextra, ibeam, idiff, albedo, surfaceAnglesRadians[0], surfaceAnglesRadians[1], sunAnglesRadians[1], planeOfArrayIrradianceFront, diffuseIrradianceFront );
 				break;
 			case 1:
-				hdkr( hextra, ibeam, idiff, alb, angle[0], angle[1], sun[1], poa, diffc );
+				hdkr( hextra, ibeam, idiff, albedo, surfaceAnglesRadians[0], surfaceAnglesRadians[1], sunAnglesRadians[1], planeOfArrayIrradianceFront, diffuseIrradianceFront );
 				break;
 			default:
-				perez( hextra, ibeam, idiff, alb, angle[0], angle[1], sun[1], poa, diffc );
+				perez( hextra, ibeam, idiff, albedo, surfaceAnglesRadians[0], surfaceAnglesRadians[1], sunAnglesRadians[1], planeOfArrayIrradianceFront, diffuseIrradianceFront );
 				break;
 			} 
-
-			ghi = idiff;
 		} 
 		else { // Sev 2015/09/11 - perform a POA decomp.
-			poaDecomp( wfpoa, angle, sun, alb, poaAll, dn, df, gh, poa, diffc);
+			poaDecomp( weatherFilePOA, surfaceAnglesRadians, sunAnglesRadians, albedo, poaAll, directNormal, diffuseHorizontal, globalHorizontal, planeOfArrayIrradianceFront, diffuseIrradianceFront);
 		}
-	} else { gh=0; dn=0; df=0;}
+	} else { globalHorizontal=0; directNormal=0; diffuseHorizontal=0;}
 
 	return 0;
 
@@ -1326,12 +1314,12 @@ int irrad::calc()
 int irrad::calc_rear_side(double transmissionFactor, double bifaciality, double groundClearanceHeight, double slopeLength)
 {
 	// do irradiance calculations if sun is up
-	if (tms[2] > 0)
+	if (timeStepSunPosition[2] > 0)
 	{
 
 		// System geometry
-		double rowToRow = slopeLength / this->gcr;						/// Row to row spacing between the front of one row to the front of the next row
-		double tiltRadian = angle[1];									/// The tracked angle in radians
+		double rowToRow = slopeLength / this->groundCoverageRatio;						/// Row to row spacing between the front of one row to the front of the next row
+		double tiltRadian = surfaceAnglesRadians[1];									/// The tracked angle in radians
 		double clearanceGround = groundClearanceHeight;					/// The normalized clearance from the bottom edge of module to ground
 		double distanceBetweenRows = rowToRow - cos(tiltRadian);	    /// The normalized distance from the read of module to front of module in next row
 		double verticalHeight = slopeLength * sin(tiltRadian);
@@ -1345,7 +1333,7 @@ int irrad::calc_rear_side(double transmissionFactor, double bifaciality, double 
 		double pvBackShadeFraction, pvFrontShadeFraction, maxShadow;
 		pvBackShadeFraction = pvFrontShadeFraction = maxShadow = 0;
 		std::vector<int> rearGroundShade, frontGroundShade;
-		this->getGroundShadeFactors(rowToRow, verticalHeight, clearanceGround, distanceBetweenRows, horizontalLength, sun[0], sun[2], rearGroundShade, frontGroundShade, maxShadow, pvBackShadeFraction, pvFrontShadeFraction);
+		this->getGroundShadeFactors(rowToRow, verticalHeight, clearanceGround, distanceBetweenRows, horizontalLength, sunAnglesRadians[0], sunAnglesRadians[2], rearGroundShade, frontGroundShade, maxShadow, pvBackShadeFraction, pvFrontShadeFraction);
 
 		// Get the rear ground GHI
 		std::vector<double> rearGroundGHI, frontGroundGHI;
@@ -1360,7 +1348,7 @@ int irrad::calc_rear_side(double transmissionFactor, double bifaciality, double 
 		std::vector<double> rearIrradiancePerCellrow;
 		double rearAverageIrradiance = 0;
 		getBackSurfaceIrradiances(pvBackShadeFraction, rowToRow, verticalHeight, clearanceGround, distanceBetweenRows, horizontalLength, rearGroundGHI, frontGroundGHI, frontReflected, rearIrradiancePerCellrow, rearAverageIrradiance);
-		poaRearAverage = rearAverageIrradiance * bifaciality;
+		planeOfArrayIrradianceRearAverage = rearAverageIrradiance * bifaciality;
 	}
 	return true;
 }
@@ -1433,7 +1421,7 @@ void irrad::getGroundShadeFactors(double rowToRow, double verticalHeight, double
 	// calculate ground shade factors using 100 intervals
 	size_t intervals = 100;
 	double deltaInterval = static_cast<double>(rowToRow / intervals);
-	double surfaceAzimuthAngleRadians = angle[2];
+	double surfaceAzimuthAngleRadians = surfaceAnglesRadians[2];
 	double shadingStart1, shadingStart2, shadingEnd1, shadingEnd2;
 	shadingStart1 = shadingStart2 = shadingEnd1 = shadingEnd2 = pvBackSurfaceShadeFraction = 0;
 
@@ -1553,10 +1541,10 @@ void irrad::getGroundShadeFactors(double rowToRow, double verticalHeight, double
 void irrad::getGroundGHI(double transmissionFactor, std::vector<double> rearSkyConfigFactors, std::vector<double> frontSkyConfigFactors, std::vector<int> rearGroundShade, std::vector<int> frontGroundShade, std::vector<double> & rearGroundGHI, std::vector<double> & frontGroundGHI)
 {
 	// Calculate the diffuse components of irradiance
-	perez(0, this->dn, this->df, this->alb, sun[1], 0.0, sun[1], poaRear, diffcRear);
-	double incidentBeam = poaRear[0];
-	double isotropicDiffuse = diffcRear[0];
-	double circumsolarDiffuse = diffcRear[1];
+	perez(0, this->directNormal, this->diffuseHorizontal, this->albedo, sunAnglesRadians[1], 0.0, sunAnglesRadians[1], planeOfArrayIrradianceRear, diffuseIrradianceRear);
+	double incidentBeam = planeOfArrayIrradianceRear[0];
+	double isotropicDiffuse = diffuseIrradianceRear[0];
+	double circumsolarDiffuse = diffuseIrradianceRear[1];
 
 	// Sum the irradiance components for each of the ground segments to the front and rear of the front of the PV row
 	for (size_t i = 0; i != 100; i++)
@@ -1592,10 +1580,10 @@ void irrad::getFrontSurfaceIrradiances(double pvFrontShadeFraction, double rowTo
 	double n2 = 1.526;
 
 	size_t intervals = 100;
-	double solarAzimuthRadians = sun[0];
-	double solarZenithRadians = sun[1];
-	double tiltRadians = angle[1]; 
-	double surfaceAzimuthRadians = angle[2];
+	double solarAzimuthRadians = sunAnglesRadians[0];
+	double solarZenithRadians = sunAnglesRadians[1];
+	double tiltRadians = surfaceAnglesRadians[1]; 
+	double surfaceAzimuthRadians = surfaceAnglesRadians[2];
 
 	// Average GHI on ground under PV array for cases when x projection exceed 2*rtr
 	double averageGroundGHI = 0.0;
@@ -1603,15 +1591,15 @@ void irrad::getFrontSurfaceIrradiances(double pvFrontShadeFraction, double rowTo
 		averageGroundGHI += frontGroundGHI[i] / frontGroundGHI.size();
 
 	// Calculate diffuse isotropic irradiance for a horizontal surface
-	double * poa = poaRear;
-	double * diffc = diffcRear;
-	perez(0, this->dn, this->df, this->alb, solarZenithRadians, 0, solarZenithRadians, poa, diffc);
+	double * poa = planeOfArrayIrradianceRear;
+	double * diffc = diffuseIrradianceRear;
+	perez(0, this->directNormal, this->diffuseHorizontal, this->albedo, solarZenithRadians, 0, solarZenithRadians, poa, diffc);
 	double isotropicSkyDiffuse = diffc[0];
 
 	// Calculate components for a 90 degree tilt 
 	double angleTmp[5] = { 0,0,0,0,0 };
-	incidence(0, 90.0, 180.0, 45.0, solarZenithRadians, solarAzimuthRadians, this->en_backtrack, this->gcr, angleTmp);
-	perez(0, this->dn, this->df, this->alb, angleTmp[0], angleTmp[1], solarZenithRadians, poa, diffc);
+	incidence(0, 90.0, 180.0, 45.0, solarZenithRadians, solarAzimuthRadians, this->enableBacktrack, this->groundCoverageRatio, angleTmp);
+	perez(0, this->directNormal, this->diffuseHorizontal, this->albedo, angleTmp[0], angleTmp[1], solarZenithRadians, poa, diffc);
 	double horizonDiffuse = diffc[2];
 
 	// Calculate x,y coordinates of bottom and top edges of PV row in back of desired PV row so that portions of sky and ground viewed by the 
@@ -1719,12 +1707,12 @@ void irrad::getFrontSurfaceIrradiances(double pvFrontShadeFraction, double rowTo
 					actualGroundGHI /= projectedX2 - projectedX1;
 				}
 			}
-			frontIrradiance[i] += 0.5 * (cos(j * DTOR) - cos((j + 1) * DTOR)) * MarionAOICorrectionFactorsGlass[j] * actualGroundGHI * this->alb;
-			frontReflected[i] += 0.5 * (cos(j * DTOR) - cos((j + 1) * DTOR)) * actualGroundGHI * this->alb * (1.0 - MarionAOICorrectionFactorsGlass[j] * (1.0 - reflectanceNormalIncidence));
+			frontIrradiance[i] += 0.5 * (cos(j * DTOR) - cos((j + 1) * DTOR)) * MarionAOICorrectionFactorsGlass[j] * actualGroundGHI * this->albedo;
+			frontReflected[i] += 0.5 * (cos(j * DTOR) - cos((j + 1) * DTOR)) * actualGroundGHI * this->albedo * (1.0 - MarionAOICorrectionFactorsGlass[j] * (1.0 - reflectanceNormalIncidence));
 		}
 		// Calculate and add direct and circumsolar irradiance components
-		incidence(0, tiltRadians * RTOD, surfaceAzimuthRadians * RTOD, 45.0, solarZenithRadians, solarAzimuthRadians, this->en_backtrack, this->gcr, angle);
-		perez(0, this->dn, this->df, this->alb, angle[0], angle[1], solarZenithRadians, poa, diffc);
+		incidence(0, tiltRadians * RTOD, surfaceAzimuthRadians * RTOD, 45.0, solarZenithRadians, solarAzimuthRadians, this->enableBacktrack, this->groundCoverageRatio, surfaceAnglesRadians);
+		perez(0, this->directNormal, this->diffuseHorizontal, this->albedo, surfaceAnglesRadians[0], surfaceAnglesRadians[1], solarZenithRadians, poa, diffc);
 
 		double cellShade = pvFrontShadeFraction * cellRows - i;
 
@@ -1737,9 +1725,9 @@ void irrad::getFrontSurfaceIrradiances(double pvFrontShadeFraction, double rowTo
 		}
 
 		// Cell not shaded entirely and incidence angle < 90 degrees 
-		if (cellShade < 1.0 && angle[0] < M_PI / 2.0)
+		if (cellShade < 1.0 && surfaceAnglesRadians[0] < M_PI / 2.0)
 		{
-			double cor = iamSjerpsKoomen(n2, angle[0]);
+			double cor = iamSjerpsKoomen(n2, surfaceAnglesRadians[0]);
 			frontIrradiance[i] += (1.0 - cellShade) * (poa[0] + diffc[1]) * cor;
 		}
 		frontAverageIrradiance += frontIrradiance[i] / cellRows;
@@ -1752,10 +1740,10 @@ void irrad::getBackSurfaceIrradiances(double pvBackShadeFraction, double rowToRo
 	double n2 = 1.526;
 
 	size_t intervals = 100;
-	double solarAzimuthRadians = sun[0];
-	double solarZenithRadians = sun[1];
-	double tiltRadians = angle[1];
-	double surfaceAzimuthRadians = angle[2];
+	double solarAzimuthRadians = sunAnglesRadians[0];
+	double solarZenithRadians = sunAnglesRadians[1];
+	double tiltRadians = surfaceAnglesRadians[1];
+	double surfaceAzimuthRadians = surfaceAnglesRadians[2];
 
 	// Average GHI on ground under PV array for cases when x projection exceed 2*rtr
 	double averageGroundGHI = 0.0;          
@@ -1763,14 +1751,14 @@ void irrad::getBackSurfaceIrradiances(double pvBackShadeFraction, double rowToRo
 		averageGroundGHI += rearGroundGHI[i] / rearGroundGHI.size();
 
 	// Calculate diffuse isotropic irradiance for a horizontal surface
-	perez(0, this->dn, this->df, this->alb, solarZenithRadians, 0, solarZenithRadians, poaRear, diffcRear);
-	double isotropicSkyDiffuse = diffcRear[0];
+	perez(0, this->directNormal, this->diffuseHorizontal, this->albedo, solarZenithRadians, 0, solarZenithRadians, planeOfArrayIrradianceRear, diffuseIrradianceRear);
+	double isotropicSkyDiffuse = diffuseIrradianceRear[0];
 
 	// Calculate components for a 90 degree tilt 
-	double angle[5] = { 0,0,0,0,0 };
-	incidence(0, 90.0, 180.0, 45.0, solarZenithRadians, solarAzimuthRadians, this->en_backtrack, this->gcr, angle);
-	perez(0, this->dn, this->df, this->alb, angle[0], angle[1], solarZenithRadians, poaRear, diffcRear);
-	double horizonDiffuse = diffcRear[2];
+	double surfaceAnglesRadians[5] = { 0,0,0,0,0 };
+	incidence(0, 90.0, 180.0, 45.0, solarZenithRadians, solarAzimuthRadians, this->enableBacktrack, this->groundCoverageRatio, surfaceAnglesRadians);
+	perez(0, this->directNormal, this->diffuseHorizontal, this->albedo, surfaceAnglesRadians[0], surfaceAnglesRadians[1], solarZenithRadians, planeOfArrayIrradianceRear, diffuseIrradianceRear);
+	double horizonDiffuse = diffuseIrradianceRear[2];
 
 	// Calculate x,y coordinates of bottom and top edges of PV row in back of desired PV row so that portions of sky and ground viewed by the 
 	// PV cell may be determined. Origin of x-y axis is the ground point below the lower front edge of the desired PV row. The row in back of 
@@ -1927,11 +1915,11 @@ void irrad::getBackSurfaceIrradiances(double pvBackShadeFraction, double rowToRo
 					actualGroundGHI /= projectedX2 - projectedX1;
 				}
 			}
-			rearIrradiance[i] += 0.5 * (cos(j * DTOR) - cos((j + 1) * DTOR)) * MarionAOICorrectionFactorsGlass[j] * actualGroundGHI * this->alb;
+			rearIrradiance[i] += 0.5 * (cos(j * DTOR) - cos((j + 1) * DTOR)) * MarionAOICorrectionFactorsGlass[j] * actualGroundGHI * this->albedo;
 		}
 		// Calculate and add direct and circumsolar irradiance components
-		incidence(0, 180.0 - tiltRadians * RTOD, (surfaceAzimuthRadians * RTOD - 180.0), 45.0, solarZenithRadians, solarAzimuthRadians, this->en_backtrack, this->gcr, angle);
-		perez(0, this->dn, this->df, this->alb, angle[0], angle[1], solarZenithRadians, poaRear, diffcRear);
+		incidence(0, 180.0 - tiltRadians * RTOD, (surfaceAzimuthRadians * RTOD - 180.0), 45.0, solarZenithRadians, solarAzimuthRadians, this->enableBacktrack, this->groundCoverageRatio, surfaceAnglesRadians);
+		perez(0, this->directNormal, this->diffuseHorizontal, this->albedo, surfaceAnglesRadians[0], surfaceAnglesRadians[1], solarZenithRadians, planeOfArrayIrradianceRear, diffuseIrradianceRear);
 
 		double cellShade = pvBackShadeFraction * cellRows - i;
 		
@@ -1944,10 +1932,10 @@ void irrad::getBackSurfaceIrradiances(double pvBackShadeFraction, double rowToRo
 		}
 
 		// Cell not shaded entirely and incidence angle < 90 degrees 
-		if (cellShade < 1.0 && angle[0] < M_PI / 2.0)
+		if (cellShade < 1.0 && surfaceAnglesRadians[0] < M_PI / 2.0)
 		{
-			double iamMod = iamSjerpsKoomen(n2, angle[0]);
-			rearIrradiance[i] += (1.0 - cellShade) * (poaRear[0] + diffcRear[1]) * iamMod;
+			double iamMod = iamSjerpsKoomen(n2, surfaceAnglesRadians[0]);
+			rearIrradiance[i] += (1.0 - cellShade) * (planeOfArrayIrradianceRear[0] + diffuseIrradianceRear[1]) * iamMod;
 		}
 		rearAverageIrradiance += rearIrradiance[i] / cellRows;
 	}
