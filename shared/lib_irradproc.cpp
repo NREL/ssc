@@ -962,6 +962,9 @@ void irrad::setup()
 	groundCoverageRatio = std::numeric_limits<double>::quiet_NaN();
 	enableBacktrack = false;
 	planeOfArrayIrradianceRearAverage = 0;
+
+	calculatedDirectNormal = directNormal;
+	calculatedDiffuseHorizontal = 0.0;
 }
 irrad::irrad()
 {
@@ -1262,27 +1265,24 @@ int irrad::calc()
 				return -1;
 			}
 
-			// compute beam and diffuse inputs based on irradiance inputs mode
-			//ibeam and idiff in this calculation are DNI and DHI, they are NOT in the plane of array! those are poa[0-2]!!!
-			double ibeam = directNormal;
-			double idiff = 0.0;
+			// compute beam and diffuse inputs on horizontal based on irradiance inputs mode
 			if (radiationMode == Irradiance_IO::DN_DF)  // Beam+Diffuse
 			{
-				idiff = diffuseHorizontal;
-				ibeam = directNormal;
+				calculatedDiffuseHorizontal = diffuseHorizontal;
+				calculatedDirectNormal = directNormal;
 			}
 			else if (radiationMode == Irradiance_IO::DN_GH) // Total+Beam
 			{
-				idiff = globalHorizontal - hbeam;
-				if (idiff < 0) idiff = 0; //error checking added 12/18/15 jmf to prevent negative dh values if input data is bad
-				ibeam = directNormal;
+				calculatedDiffuseHorizontal = globalHorizontal - hbeam;
+				if (calculatedDiffuseHorizontal < 0) calculatedDiffuseHorizontal = 0;
+				calculatedDirectNormal = directNormal;
 			}
 			else if (radiationMode == Irradiance_IO::GH_DF) //Total+Diffuse
 			{
-				idiff = diffuseHorizontal;
-				ibeam = (globalHorizontal - diffuseHorizontal) / cos(sunAnglesRadians[1]); //compute beam from total, diffuse, and zenith angle
-				if (ibeam > 1500) ibeam = 1500; //error checking on computation
-				if (ibeam < 0) ibeam = 0; //error checking on computation
+				calculatedDiffuseHorizontal = diffuseHorizontal;
+				calculatedDirectNormal = (globalHorizontal - diffuseHorizontal) / cos(sunAnglesRadians[1]); //compute beam from total, diffuse, and zenith angle
+				if (calculatedDirectNormal > Irradiance_IO::irradiationMax) calculatedDirectNormal = Irradiance_IO::irradiationMax;
+				if (calculatedDirectNormal < 0) calculatedDirectNormal = 0;
 			}
 			else
 				return -2; // just in case of a weird error
@@ -1292,13 +1292,13 @@ int irrad::calc()
 			switch( skyModel )
 			{
 			case 0:
-				isotropic( hextra, ibeam, idiff, albedo, surfaceAnglesRadians[0], surfaceAnglesRadians[1], sunAnglesRadians[1], planeOfArrayIrradianceFront, diffuseIrradianceFront );
+				isotropic( hextra, calculatedDirectNormal, calculatedDiffuseHorizontal, albedo, surfaceAnglesRadians[0], surfaceAnglesRadians[1], sunAnglesRadians[1], planeOfArrayIrradianceFront, diffuseIrradianceFront );
 				break;
 			case 1:
-				hdkr( hextra, ibeam, idiff, albedo, surfaceAnglesRadians[0], surfaceAnglesRadians[1], sunAnglesRadians[1], planeOfArrayIrradianceFront, diffuseIrradianceFront );
+				hdkr( hextra, calculatedDirectNormal, calculatedDiffuseHorizontal, albedo, surfaceAnglesRadians[0], surfaceAnglesRadians[1], sunAnglesRadians[1], planeOfArrayIrradianceFront, diffuseIrradianceFront );
 				break;
 			default:
-				perez( hextra, ibeam, idiff, albedo, surfaceAnglesRadians[0], surfaceAnglesRadians[1], sunAnglesRadians[1], planeOfArrayIrradianceFront, diffuseIrradianceFront );
+				perez( hextra, calculatedDirectNormal, calculatedDiffuseHorizontal, albedo, surfaceAnglesRadians[0], surfaceAnglesRadians[1], sunAnglesRadians[1], planeOfArrayIrradianceFront, diffuseIrradianceFront );
 				break;
 			} 
 		} 
@@ -1541,7 +1541,7 @@ void irrad::getGroundShadeFactors(double rowToRow, double verticalHeight, double
 void irrad::getGroundGHI(double transmissionFactor, std::vector<double> rearSkyConfigFactors, std::vector<double> frontSkyConfigFactors, std::vector<int> rearGroundShade, std::vector<int> frontGroundShade, std::vector<double> & rearGroundGHI, std::vector<double> & frontGroundGHI)
 {
 	// Calculate the diffuse components of irradiance
-	perez(0, this->directNormal, this->diffuseHorizontal, this->albedo, sunAnglesRadians[1], 0.0, sunAnglesRadians[1], planeOfArrayIrradianceRear, diffuseIrradianceRear);
+	perez(0, calculatedDirectNormal, calculatedDiffuseHorizontal,albedo, sunAnglesRadians[1], 0.0, sunAnglesRadians[1], planeOfArrayIrradianceRear, diffuseIrradianceRear);
 	double incidentBeam = planeOfArrayIrradianceRear[0];
 	double isotropicDiffuse = diffuseIrradianceRear[0];
 	double circumsolarDiffuse = diffuseIrradianceRear[1];
@@ -1593,13 +1593,13 @@ void irrad::getFrontSurfaceIrradiances(double pvFrontShadeFraction, double rowTo
 	// Calculate diffuse isotropic irradiance for a horizontal surface
 	double * poa = planeOfArrayIrradianceRear;
 	double * diffc = diffuseIrradianceRear;
-	perez(0, this->directNormal, this->diffuseHorizontal, this->albedo, solarZenithRadians, 0, solarZenithRadians, poa, diffc);
+	perez(0, calculatedDirectNormal, calculatedDiffuseHorizontal, albedo, solarZenithRadians, 0, solarZenithRadians, poa, diffc);
 	double isotropicSkyDiffuse = diffc[0];
 
 	// Calculate components for a 90 degree tilt 
 	double angleTmp[5] = { 0,0,0,0,0 };
 	incidence(0, 90.0, 180.0, 45.0, solarZenithRadians, solarAzimuthRadians, this->enableBacktrack, this->groundCoverageRatio, angleTmp);
-	perez(0, this->directNormal, this->diffuseHorizontal, this->albedo, angleTmp[0], angleTmp[1], solarZenithRadians, poa, diffc);
+	perez(0, calculatedDirectNormal, calculatedDiffuseHorizontal, albedo, angleTmp[0], angleTmp[1], solarZenithRadians, poa, diffc);
 	double horizonDiffuse = diffc[2];
 
 	// Calculate x,y coordinates of bottom and top edges of PV row in back of desired PV row so that portions of sky and ground viewed by the 
@@ -1712,7 +1712,7 @@ void irrad::getFrontSurfaceIrradiances(double pvFrontShadeFraction, double rowTo
 		}
 		// Calculate and add direct and circumsolar irradiance components
 		incidence(0, tiltRadians * RTOD, surfaceAzimuthRadians * RTOD, 45.0, solarZenithRadians, solarAzimuthRadians, this->enableBacktrack, this->groundCoverageRatio, surfaceAnglesRadians);
-		perez(0, this->directNormal, this->diffuseHorizontal, this->albedo, surfaceAnglesRadians[0], surfaceAnglesRadians[1], solarZenithRadians, poa, diffc);
+		perez(0, calculatedDirectNormal, calculatedDiffuseHorizontal, albedo, surfaceAnglesRadians[0], surfaceAnglesRadians[1], solarZenithRadians, poa, diffc);
 
 		double cellShade = pvFrontShadeFraction * cellRows - i;
 
@@ -1751,13 +1751,13 @@ void irrad::getBackSurfaceIrradiances(double pvBackShadeFraction, double rowToRo
 		averageGroundGHI += rearGroundGHI[i] / rearGroundGHI.size();
 
 	// Calculate diffuse isotropic irradiance for a horizontal surface
-	perez(0, this->directNormal, this->diffuseHorizontal, this->albedo, solarZenithRadians, 0, solarZenithRadians, planeOfArrayIrradianceRear, diffuseIrradianceRear);
+	perez(0, calculatedDirectNormal, calculatedDiffuseHorizontal, albedo, solarZenithRadians, 0, solarZenithRadians, planeOfArrayIrradianceRear, diffuseIrradianceRear);
 	double isotropicSkyDiffuse = diffuseIrradianceRear[0];
 
 	// Calculate components for a 90 degree tilt 
 	double surfaceAnglesRadians[5] = { 0,0,0,0,0 };
 	incidence(0, 90.0, 180.0, 45.0, solarZenithRadians, solarAzimuthRadians, this->enableBacktrack, this->groundCoverageRatio, surfaceAnglesRadians);
-	perez(0, this->directNormal, this->diffuseHorizontal, this->albedo, surfaceAnglesRadians[0], surfaceAnglesRadians[1], solarZenithRadians, planeOfArrayIrradianceRear, diffuseIrradianceRear);
+	perez(0, calculatedDirectNormal, calculatedDiffuseHorizontal, albedo, surfaceAnglesRadians[0], surfaceAnglesRadians[1], solarZenithRadians, planeOfArrayIrradianceRear, diffuseIrradianceRear);
 	double horizonDiffuse = diffuseIrradianceRear[2];
 
 	// Calculate x,y coordinates of bottom and top edges of PV row in back of desired PV row so that portions of sky and ground viewed by the 
@@ -1919,7 +1919,7 @@ void irrad::getBackSurfaceIrradiances(double pvBackShadeFraction, double rowToRo
 		}
 		// Calculate and add direct and circumsolar irradiance components
 		incidence(0, 180.0 - tiltRadians * RTOD, (surfaceAzimuthRadians * RTOD - 180.0), 45.0, solarZenithRadians, solarAzimuthRadians, this->enableBacktrack, this->groundCoverageRatio, surfaceAnglesRadians);
-		perez(0, this->directNormal, this->diffuseHorizontal, this->albedo, surfaceAnglesRadians[0], surfaceAnglesRadians[1], solarZenithRadians, planeOfArrayIrradianceRear, diffuseIrradianceRear);
+		perez(0, calculatedDirectNormal, calculatedDiffuseHorizontal, albedo, surfaceAnglesRadians[0], surfaceAnglesRadians[1], solarZenithRadians, planeOfArrayIrradianceRear, diffuseIrradianceRear);
 
 		double cellShade = pvBackShadeFraction * cellRows - i;
 		

@@ -91,12 +91,16 @@ private:
 	int trackingMode;
 	bool enableBacktrack;
 
-	// Irradiation components
+	// Input Front-Side Irradiation components 
 	double globalHorizontal;
 	double directNormal;
 	double diffuseHorizontal;
 	double weatherFilePOA;
 	double albedo;
+
+	// Calculated Front-Side Irradiation components
+	double calculatedDirectNormal;
+	double calculatedDiffuseHorizontal;
 
 	// Subarray properties
 	double tiltDegrees;
