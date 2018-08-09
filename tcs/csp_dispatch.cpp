@@ -1898,7 +1898,11 @@ std::string csp_dispatch_opt::write_ampl()
 
         std::stringstream outname;
         //outname << solver_params.ampl_data_dir << "data_" << day << ".dat";        
-        outname << solver_params.ampl_data_dir << "sdk_data.dat";
+
+        outname << solver_params.ampl_data_dir << (solver_params.ampl_data_dir.back() == '/' ? "" : "/") << "sdk_data";
+        if( solver_params.ampl_thread_id.size() > 0 )
+            outname << "_" << solver_params.ampl_thread_id;
+        outname << ".dat";
         
         sname = outname.str();    //save string
 
@@ -1988,13 +1992,34 @@ bool csp_dispatch_opt::optimize_ampl()
     
 	std::string sday = "Optimizing day " + util::to_string( (int)(params.siminfo->ms_ts.m_time / 3600 / 24) );
 	puts( sday.c_str() );
-    int sysret = system("ampl sdk_solution.run >> log.txt;"); //tstring.str().c_str());
+	std::string outfile = "sdk_solution.txt";
+	if (solver_params.ampl_exec_call == "")
+		system("ampl sdk_solution.run >> log.txt;"); //tstring.str().c_str());
+	else
+	{
+		system(solver_params.ampl_exec_call.c_str());
+
+		//Use the run file name as the out file name
+		int sufpos = solver_params.ampl_exec_call.find(".run");
+		if (sufpos < solver_params.ampl_exec_call.size())
+		{
+			std::string execsub = solver_params.ampl_exec_call.substr(0, sufpos);
+			std::vector<std::string> parse = util::split(execsub, " ");
+			if (parse.size() > 1)
+			{
+                outfile = parse.at(1);
+                //if (solver_params.ampl_thread_id.size() > 0)
+                //    outfile.append("_" + solver_params.ampl_thread_id);
+                outfile.append(".txt");
+			}
+		}
+	}
 
 
     //read back ampl solution
     tstring.str(std::string()); //clear
 
-    tstring << solver_params.ampl_data_dir << "sdk_solution.txt";
+    tstring << solver_params.ampl_data_dir << (solver_params.ampl_data_dir.back() == '/' ? "" : "/") << outfile;
     std::ifstream infile(tstring.str().c_str());
 
     if(! infile.is_open() )

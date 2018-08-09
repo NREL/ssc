@@ -304,6 +304,7 @@ public:
         bool m_is_ampl_engine;
         std::string m_ampl_data_dir;
         std::string m_ampl_exec_call;
+        std::string m_ampl_thread_id;
 		
 		bool m_is_block_dispatch;
 
