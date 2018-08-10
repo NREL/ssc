@@ -47,6 +47,13 @@
 *  THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *******************************************************************************************************/
 
+#ifndef __6_PAR_SOLVE_H__
+#define __6_PAR_SOLVE_H__
+
+#include "6par_gamma.h"
+#include "6par_newton.h"
+#include "lib_util.h"
+
 class notification_interface
 {
 public:
@@ -159,13 +166,6 @@ public:
 		return true;
 	}
 };
-
-
-
-
-#ifndef MAX
-#define MAX(a,b)  ((a>b)?a:b)
-#endif
 
 class module6par
 {
@@ -551,3 +551,5 @@ public:
 
 	
 };
+
+#endif
