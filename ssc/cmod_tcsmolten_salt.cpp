@@ -1638,8 +1638,9 @@ public:
 
 				// check for mismatch between dispatch time step and scenario time steps
 				scenarios_ok = true;
-				int nstep = tou.mc_dispatch_params.m_optimize_horizon * tou.mc_dispatch_params.m_disp_steps_per_hour*365;
-				int nstep_min = nstep - (tou.mc_dispatch_params.m_optimize_horizon - tou.mc_dispatch_params.m_optimize_frequency) *  tou.mc_dispatch_params.m_disp_steps_per_hour; // nstep without look-ahead for last day
+				int n_opt_periods = (int)ceil(8760. / (double)tou.mc_dispatch_params.m_optimize_frequency);
+				int nstep = (tou.mc_dispatch_params.m_optimize_horizon * tou.mc_dispatch_params.m_disp_steps_per_hour)*n_opt_periods;
+				int nstep_min = nstep - (tou.mc_dispatch_params.m_optimize_horizon - tou.mc_dispatch_params.m_optimize_frequency) *  tou.mc_dispatch_params.m_disp_steps_per_hour; // nstep without look-ahead for last optimization period
 				if (tou.mc_dispatch_params.m_is_dni_scenarios && tou.mc_dispatch_params.m_fc_dni_scenarios.nrows() != nstep && tou.mc_dispatch_params.m_fc_dni_scenarios.nrows() != nstep_min)
 					scenarios_ok = false;
 				if (tou.mc_dispatch_params.m_is_tdry_scenarios && tou.mc_dispatch_params.m_fc_tdry_scenarios.nrows() != nstep && tou.mc_dispatch_params.m_fc_tdry_scenarios.nrows() != nstep_min)

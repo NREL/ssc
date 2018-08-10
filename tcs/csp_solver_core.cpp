@@ -959,6 +959,10 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
                     int nstepopt = opt_horizon * mc_tou.mc_dispatch_params.m_disp_steps_per_hour;
                     int stepstart = mc_kernel.mc_sim_info.ms_ts.m_time/ baseline_step - 1;
 
+					double opt_period = (mc_kernel.mc_sim_info.ms_ts.m_time - baseline_step) / (3600.*mc_tou.mc_dispatch_params.m_optimize_frequency);
+					int sc_start = (int)opt_period * mc_tou.mc_dispatch_params.m_optimize_horizon*mc_tou.mc_dispatch_params.m_disp_steps_per_hour;  // First point in scenario arrays
+
+
 					if (mc_tou.mc_dispatch_params.m_is_stochastic_dispatch)
                     {
 						dispatch.forecast_params.is_stochastic = mc_tou.mc_dispatch_params.m_is_stochastic_dispatch;
@@ -979,13 +983,13 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
                             for( int ss=0; ss<dispatch.forecast_params.n_scenarios; ss++)
                             {
                                 if( dispatch.forecast_params.is_dni_scenarios )
-                                    dispatch.forecast_outputs.dni_scenarios.at(tt, ss) = mc_tou.mc_dispatch_params.m_fc_dni_scenarios.at( 2*stepstart + tt, ss );
+                                    dispatch.forecast_outputs.dni_scenarios.at(tt, ss) = mc_tou.mc_dispatch_params.m_fc_dni_scenarios.at(sc_start + tt, ss );
                                 
                                 if( dispatch.forecast_params.is_tdry_scenarios )
-                                    dispatch.forecast_outputs.tdry_scenarios.at(tt, ss) = mc_tou.mc_dispatch_params.m_fc_tdry_scenarios.at( 2*stepstart + tt, ss );
+                                    dispatch.forecast_outputs.tdry_scenarios.at(tt, ss) = mc_tou.mc_dispatch_params.m_fc_tdry_scenarios.at(sc_start + tt, ss );
                                 
                                 if( dispatch.forecast_params.is_price_scenarios )
-                                    dispatch.forecast_outputs.price_scenarios.at(tt, ss) = mc_tou.mc_dispatch_params.m_fc_price_scenarios.at( 2*stepstart + tt, ss );
+                                    dispatch.forecast_outputs.price_scenarios.at(tt, ss) = mc_tou.mc_dispatch_params.m_fc_price_scenarios.at(sc_start + tt, ss );
                                 else
                                     dispatch.forecast_outputs.price_scenarios.at(tt, ss) = dispatch.forecast_outputs.price_scenarios.at(tt, 0); //if not provided, use the array assigned above
                             }
