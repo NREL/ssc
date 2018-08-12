@@ -17,8 +17,8 @@
 #include "lib_snowmodel.h"
 #include "lib_util.h"
 
-#include "common.h"
-#include "core.h"
+#include "../ssc/common.h"
+#include "../ssc/core.h"
 
 /// Structure containing data relevent at the SimulationManager level
 struct Simulation_IO;

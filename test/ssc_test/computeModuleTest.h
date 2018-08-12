@@ -5,9 +5,9 @@
 #include <string>
 
 
-#include "core.h"
-#include "vartab.h"
-#include "common.h"
+#include "../ssc/core.h"
+#include "../ssc/vartab.h"
+#include "../ssc/common.h"
 
 #include "simulation_test_info.h"
 

@@ -3,9 +3,9 @@
 #define _CMOD_PVWATTSV5_TEST_H_
 
 #include <gtest/gtest.h>
-#include "core.h"
-#include "vartab.h"
-#include "common.h"
+#include "../ssc/core.h"
+#include "../ssc/vartab.h"
+#include "../ssc/common.h"
 #include "../input_cases/pvwattsv5_cases.h"
 
 /**
