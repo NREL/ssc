@@ -1900,8 +1900,8 @@ std::string csp_dispatch_opt::write_ampl()
         //outname << solver_params.ampl_data_dir << "data_" << day << ".dat";        
 
         outname << solver_params.ampl_data_dir << (solver_params.ampl_data_dir.back() == '/' ? "" : "/") << "sdk_data";
-        if( solver_params.ampl_thread_id.size() > 0 )
-            outname << "_" << solver_params.ampl_thread_id;
+        if( !solver_params.ampl_thread_id.empty() )
+            outname << solver_params.ampl_thread_id;
         outname << ".dat";
         
         sname = outname.str();    //save string
