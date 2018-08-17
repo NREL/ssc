@@ -194,7 +194,6 @@ struct PVSystem_IO
 	bool enableDCLifetimeLosses;
 	bool enableACLifetimeLosses;
 
-	int modulesPerString;
 	int stringsInParallel;
 	double ratedACOutput;  /// AC Power rating for whole system (all inverters)
 
@@ -321,10 +320,13 @@ public:
 	std::unique_ptr<Module_IO> Module;/// The PV module for this subarray
 
 	// Inputs
-	bool enable;						/// Enable the subarray
+	bool enable;						/// Whether or not the subarray is enabled
+
+	// Electrical characteristics
 	size_t nStrings;					/// Number of strings in the subarray
-	std::vector<double> monthlySoiling; /// The soiling loss by month [%]
-	double dcLoss;						/// The DC loss due to mismatch, diodes, wiring, tracking, optimizers [%]
+	int nModulesPerString;				/// The number of modules per string
+
+	// Physical characteristics
 	double groundCoverageRatio;			/// The ground coverage ratio [0 - 1]
 	double tiltDegrees;					/// The surface tilt [degrees]						
 	double azimuthDegrees;				/// The surface azimuth [degrees]
@@ -334,14 +336,18 @@ public:
 	std::vector<double> monthlyTiltDegrees; /// The seasonal tilt [degrees]
 	bool backtrackingEnabled;			/// Backtracking enabled or not
 	double moduleAspectRatio;			/// The aspect ratio of the models used in the subarray
-	bool usePOAFromWeatherFile;		
+	int nStringsBottom;					/// Number of strings along bottom from self-shading
+	
+
+	// Subarray-specific losses
+	std::vector<double> monthlySoiling; /// The soiling loss by month [%]
+	double dcLoss;						/// The DC loss due to mismatch, diodes, wiring, tracking, optimizers [%]
 
 	// Shading and snow
-	bool enableShowModel;				
+	bool enableSnowModel;	//jmf why is this in the subarray structure? it isn't subarray specific, but a global setting.			
 	bool enableSelfShadingOutputs;			/// Choose whether additional self-shading outputs are displayed
 	int shadeMode;						/// The shading mode of the subarray [0 = none, 1 = standard (non-linear), 2 = thin film (linear)]
-	int nModulesPerString;				/// The number of modules per string
-	int nStringsBottom;					/// Number of strings along bottom from self-shading
+	bool usePOAFromWeatherFile;			/// Flag for whether or not a shading model has been selected that means POA can't be used directly for that subarray
 	ssinputs selfShadingInputs;			/// Inputs and calculation methods for self-shading of the subarray
 	ssoutputs selfShadingOutputs;		/// Outputs for the self-shading of the subarray
 	shading_factor_calculator shadeCalculator; /// The shading calculator model for self-shading
@@ -447,6 +453,9 @@ public:
 	enum inverterTypeList { INVERTER_CEC_DATABASE, INVERTER_DATASHEET, INVERTER_PARTLOAD, INVERTER_COEFFICIENT_GEN };
 
 	int inverterType;		/// From inverterTypeList
+	int nMpptInputs;        /// Number of maximum power point tracking (MPPT) inputs on one inverter
+	double mpptLowVoltage;  /// Lower limit of inverter voltage range for maximum power point tracking (MPPT) per MPPT input
+	double mpptHiVoltage;   /// Upper limit of inverter voltage range for maximum power point tracking (MPPT) per MPPT input
 	double ratedACOutput;   /// Rated power for one inverter
 
 	::sandia_inverter_t sandiaInverter;

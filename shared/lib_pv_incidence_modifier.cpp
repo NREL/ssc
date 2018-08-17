@@ -2,7 +2,7 @@
 
 #include "lib_pv_incidence_modifier.h"
 
-
+///Supporting function for IAM functions to calculate transmissance of a module cover at a specific angle- reference: duffie & beckman, Ch 5.3
 double transmittance(double theta1_deg, /* incidence angle of incoming radiation (deg) */
 	double n_cover,  /* refractive index of cover material, n_glass = 1.586 */
 	double n_incoming, /* refractive index of incoming material, typically n_air = 1.0 */
@@ -10,8 +10,6 @@ double transmittance(double theta1_deg, /* incidence angle of incoming radiation
 	double l_thick,  /* material thickness (set to zero to skip Bouguer's law */
 	double *_theta2_deg) /* thickness of cover material (m), usually 2 mm for typical module */
 {
-	// reference: duffie & beckman, Ch 5.3
-
 	double theta1 = theta1_deg * M_PI / 180.0;
 	double theta2 = asin(n_incoming / n_cover * sin(theta1)); // snell's law, assuming n_air = 1.0
 															  // fresnel's equation for non-reflected unpolarized radiation as an average of perpendicular and parallel components
@@ -24,16 +22,7 @@ double transmittance(double theta1_deg, /* incidence angle of incoming radiation
 	return tr * exp(-k * l_thick / cos(theta2));
 }
 
-double iam(double theta, bool ar_glass)
-{
-	if (theta < AOI_MIN) theta = AOI_MIN;
-	if (theta > AOI_MAX) theta = AOI_MAX;
-
-	double normal = iam_nonorm(1, ar_glass);
-	double actual = iam_nonorm(theta, ar_glass);
-	return actual / normal;
-}
-
+///Incidence angle modifier not normalized relative to normal incidence (used as a supporting function to normalized IAM function)
 double iam_nonorm(double theta, bool ar_glass)
 {
 	double n_air = 1.0;
@@ -61,6 +50,19 @@ double iam_nonorm(double theta, bool ar_glass)
 		return transmittance(theta, n_g, n_air, k_g, l_g);
 	}
 }
+
+///Incidence angle modifier normalized relative to normal incidence- used by 61853 model and PVWatts
+double iam(double theta, bool ar_glass) //jmf- we should rename this to something more descriptive
+{
+	if (theta < AOI_MIN) theta = AOI_MIN;
+	if (theta > AOI_MAX) theta = AOI_MAX;
+
+	double normal = iam_nonorm(1, ar_glass);
+	double actual = iam_nonorm(theta, ar_glass);
+	return actual / normal;
+}
+
+///Only used in a test to compare against bifacial model
 double iamSjerpsKoomen(double n2, double incidenceAngleRadians)
 {
 	//  Only calculates valid value for 0 <= inc <= 90 degrees
@@ -82,6 +84,8 @@ double iamSjerpsKoomen(double n2, double incidenceAngleRadians)
 		}
 		return cor;
 }
+
+///DeSoto IAM model used by CEC model
 double calculateIrradianceThroughCoverDeSoto(double theta, double theta_z, double tilt, double G_beam, double G_sky, double G_gnd)
 {
 	// establish limits on incidence angle and zenith angle

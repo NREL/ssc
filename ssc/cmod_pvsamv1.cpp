@@ -83,13 +83,13 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "irrad_mode",                                  "Irradiance input translation mode",                    "",         "0=beam&diffuse,1=total&beam,2=total&diffuse,3=poa_reference,4=poa_pyranometer",   "pvsamv1",              "?=0",      "INTEGER,MIN=0,MAX=4",           "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "sky_model",                                   "Diffuse sky model",                                    "",         "0=isotropic,1=hkdr,2=perez",    "pvsamv1",              "?=2",                      "INTEGER,MIN=0,MAX=2",           "" },
 
-	{ SSC_INPUT,        SSC_NUMBER,      "modules_per_string",                          "Modules per string",                                    "",        "",                              "pvsamv1",              "*",                        "INTEGER,POSITIVE",              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "strings_in_parallel",                         "String in parallel",                                    "",        "",                              "pvsamv1",              "*",                        "INTEGER,POSITIVE",              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "inverter_count",                              "Number of inverters",                                   "",        "",                              "pvsamv1",              "*",                        "INTEGER,POSITIVE",              "" },
 
 	{ SSC_INPUT,        SSC_NUMBER,      "enable_mismatch_vmax_calc",                   "Enable mismatched subarray Vmax calculation",           "",        "",                              "pvsamv1",              "?=0",                      "BOOLEAN",                       "" },
 
-	{ SSC_INPUT,        SSC_NUMBER,      "subarray1_nstrings",                          "Sub-array 1 Number of parallel strings",                  "",       "",                             "pvsamv1",              "",						 "INTEGER",                       "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "subarray1_nstrings",                          "Sub-array 1 Number of parallel strings",                "",        "",                              "pvsamv1",              "",						 "INTEGER",                       "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "subarray1_modules_per_string",                "Sub-array 1 Modules per string",                        "",        "",                              "pvsamv1",              "*",                        "INTEGER,POSITIVE",              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray1_tilt",                              "Sub-array 1 Tilt",                                      "deg",     "0=horizontal,90=vertical",      "pvsamv1",              "naof:subarray1_tilt_eq_lat", "MIN=0,MAX=90",                "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray1_tilt_eq_lat",                       "Sub-array 1 Tilt=latitude override",                    "0/1",     "",                              "pvsamv1",              "na:subarray1_tilt",          "BOOLEAN",                     "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray1_azimuth",                           "Sub-array 1 Azimuth",                                   "deg",     "0=N,90=E,180=S,270=W",          "pvsamv1",              "*",                        "MIN=0,MAX=359.9",               "" },
@@ -148,6 +148,7 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray1_backtrack",                         "Sub-array 1 Backtracking enabled",                        "",       "0=no backtracking,1=backtrack", "pvsamv1",              "subarray1_track_mode=1",   "BOOLEAN",                       "" },
 
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray2_enable",                            "Sub-array 2 Enable",                                      "0/1",    "0=disabled,1=enabled",          "pvsamv1",              "?=0",                      "BOOLEAN",                       "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "subarray2_modules_per_string",                "Sub-array 2 Modules per string",                          "",       "",                              "pvsamv1",              "*",                        "INTEGER,POSITIVE",              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray2_nstrings",                          "Sub-array 2 Number of parallel strings",                  "",       "",                              "pvsamv1",              "subarray2_enable=1",       "INTEGER",                       "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray2_tilt",                              "Sub-array 2 Tilt",                                        "deg",    "0=horizontal,90=vertical",      "pvsamv1",              "naof:subarray2_tilt_eq_lat", "MIN=0,MAX=90",                "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray2_tilt_eq_lat",                       "Sub-array 2 Tilt=latitude override",                      "0/1",    "",                              "pvsamv1",              "na:subarray2_tilt",          "BOOLEAN",                     "" },
@@ -172,6 +173,7 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray2_backtrack",                         "Sub-array 2 Backtracking enabled",                        "",       "0=no backtracking,1=backtrack", "pvsamv1",              "subarray2_track_mode=1",   "BOOLEAN",                       "" },
 
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray3_enable",                            "Sub-array 3 Enable",                                      "0/1",    "0=disabled,1=enabled",          "pvsamv1",              "?=0",                      "BOOLEAN",                       "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "subarray3_modules_per_string",                "Sub-array 3 Modules per string",                          "",       "",                              "pvsamv1",              "*",                        "INTEGER,POSITIVE",              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray3_nstrings",                          "Sub-array 3 Number of parallel strings",                  "",       "",                              "pvsamv1",              "subarray3_enable=1",       "INTEGER",                       "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray3_tilt",                              "Sub-array 3 Tilt",                                        "deg",    "0=horizontal,90=vertical",      "pvsamv1",              "naof:subarray3_tilt_eq_lat", "MIN=0,MAX=90",                "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray3_tilt_eq_lat",                       "Sub-array 3 Tilt=latitude override",                      "0/1",    "",                              "pvsamv1",              "na:subarray3_tilt",          "BOOLEAN",                     "" },
@@ -196,6 +198,7 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray3_backtrack",                         "Sub-array 3 Backtracking enabled",                        "",       "0=no backtracking,1=backtrack", "pvsamv1",              "subarray3_track_mode=1",   "BOOLEAN",                       "" },
 
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray4_enable",                            "Sub-array 4 Enable",                                      "0/1",    "0=disabled,1=enabled",          "pvsamv1",              "?=0",                      "BOOLEAN",                       "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "subarray4_modules_per_string",                "Sub-array 4 Modules per string",                          "",       "",                              "pvsamv1",              "*",                        "INTEGER,POSITIVE",              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray4_nstrings",                          "Sub-array 4 Number of parallel strings",                  "",       "",                              "pvsamv1",              "subarray4_enable=1",       "INTEGER",                       "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray4_tilt",                              "Sub-array 4 Tilt",                                        "deg",    "0=horizontal,90=vertical",      "pvsamv1",              "naof:subarray4_tilt_eq_lat", "MIN=0,MAX=90",                "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray4_tilt_eq_lat",                       "Sub-array 4 Tilt=latitude override",                      "0/1",    "",                              "pvsamv1",              "na:subarray4_tilt",          "BOOLEAN",                     "" },
@@ -374,9 +377,10 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "sd11par_c3",                                  "Rsh fit parameter 3",                                     "",       "",                                                                  "pvsamv1",       "module_model=4",                           "",                              "" },
 
 // inverter model
-	{ SSC_INPUT,        SSC_NUMBER,      "inverter_model",                              "Inverter model specifier",                                "",        "0=cec,1=datasheet,2=partload,3=coefficientgenerator",        "pvsamv1",               "*",                         "INTEGER,MIN=0,MAX=3",           "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "mppt_low_inverter",                           "Minimum inverter MPPT voltage window",                    "Vdc",     "",                     "pvsamv1",       "",                    "?=0",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "mppt_hi_inverter",                            "Maximum inverter MPPT voltage window",                    "Vdc",     "",                     "pvsamv1",       "",                    "?=0",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "inverter_model",                              "Inverter model specifier",                                "",        "0=cec,1=datasheet,2=partload,3=coefficientgenerator",   "pvsamv1",   "*",      "INTEGER,MIN=0,MAX=3",           "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "mppt_low_inverter",                           "Minimum inverter MPPT voltage window",                    "Vdc",     "",                     "pvsamv1",       "?=0",                                 "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "mppt_hi_inverter",                            "Maximum inverter MPPT voltage window",                    "Vdc",     "",                     "pvsamv1",       "?=0",                                 "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "inv_num_mppt",                                "Number of MPPT inputs",                                   "",        "",                     "pvsamv1",       "?=1",                                 "INTEGER,POSITIVE",              "" },
 
 	{ SSC_INPUT,        SSC_NUMBER,      "inv_snl_c0",                                  "Curvature between AC power and DC power at ref",          "1/W",     "",                     "pvsamv1",       "inverter_model=0",                    "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "inv_snl_c1",                                  "Coefficient of Pdco variation with DC input voltage",     "1/V",     "",                     "pvsamv1",       "inverter_model=0",                    "",                              "" },
@@ -389,31 +393,31 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "inv_snl_vdco",                                "DC input voltage for the rated AC power rating",          "Vdc",     "",                     "pvsamv1",       "inverter_model=0",                    "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "inv_snl_vdcmax",                              "Maximum DC input operating voltage",                      "Vdc",     "",                     "pvsamv1",       "inverter_model=0",                    "",                              "" },
 
-	{ SSC_INPUT,		SSC_NUMBER,		 "inv_cec_cg_c0",								"Curvature between AC power and DC power at ref",		   "1/W",	  "",					  "pvsamv1",	   "inverter_model=3",					  "", "" },
-	{ SSC_INPUT,		SSC_NUMBER,		 "inv_cec_cg_c1",								"Coefficient of Pdco variation with DC input voltage",	   "1/V",	  "",					  "pvsamv1",	   "inverter_model=3",					  "", "" },
-	{ SSC_INPUT,		SSC_NUMBER,		 "inv_cec_cg_c2",								"Coefficient of Pso variation with DC input voltage",	   "1/V",	  "",					  "pvsamv1",	   "inverter_model=3",					  "", "" },
-	{ SSC_INPUT,		SSC_NUMBER,		 "inv_cec_cg_c3",								"Coefficient of Co variation with DC input voltage",	   "1/V",	  "",					  "pvsamv1",	   "inverter_model=3",					  "", "" },
-	{ SSC_INPUT,		SSC_NUMBER,		 "inv_cec_cg_paco",								"AC maximum power rating",								   "Wac",	  "",					  "pvsamv1",	   "inverter_model=3",					  "", "" },
-	{ SSC_INPUT,		SSC_NUMBER,		 "inv_cec_cg_pdco",								"DC input power at which AC power rating is achieved",	   "Wdc",	  "",					  "pvsamv1",	   "inverter_model=3",					  "", "" },
-	{ SSC_INPUT,		SSC_NUMBER,		 "inv_cec_cg_pnt",								"AC power consumed by inverter at night",				   "Wac",	  "",					  "pvsamv1",	   "inverter_model=3",					  "", "" },
-	{ SSC_INPUT,		SSC_NUMBER,		 "inv_cec_cg_psco",								"DC power required to enable the inversion process",	   "Wdc",	  "",					  "pvsamv1",	   "inverter_model=3",					  "", "" },
-	{ SSC_INPUT,		SSC_NUMBER,		 "inv_cec_cg_vdco",								"DC input voltage for the rated AC power rating",		   "Vdc",	  "",					  "pvsamv1",	   "inverter_model=3",					  "", "" },
-	{ SSC_INPUT,		SSC_NUMBER,		 "inv_cec_cg_vdcmax",							"Maximum DC input operating voltage",					   "Vdc",	  "",					  "pvsamv1",	   "inverter_model=3",					  "", "" },
+	{ SSC_INPUT,		SSC_NUMBER,		 "inv_cec_cg_c0",								"Curvature between AC power and DC power at ref",		   "1/W",	  "",					  "pvsamv1",	   "inverter_model=3",					  "",                              "" },
+	{ SSC_INPUT,		SSC_NUMBER,		 "inv_cec_cg_c1",								"Coefficient of Pdco variation with DC input voltage",	   "1/V",	  "",					  "pvsamv1",	   "inverter_model=3",					  "",                              "" },
+	{ SSC_INPUT,		SSC_NUMBER,		 "inv_cec_cg_c2",								"Coefficient of Pso variation with DC input voltage",	   "1/V",	  "",					  "pvsamv1",	   "inverter_model=3",					  "",                              "" },
+	{ SSC_INPUT,		SSC_NUMBER,		 "inv_cec_cg_c3",								"Coefficient of Co variation with DC input voltage",	   "1/V",	  "",					  "pvsamv1",	   "inverter_model=3",					  "",                              "" },
+	{ SSC_INPUT,		SSC_NUMBER,		 "inv_cec_cg_paco",								"AC maximum power rating",								   "Wac",	  "",					  "pvsamv1",	   "inverter_model=3",					  "",                              "" },
+	{ SSC_INPUT,		SSC_NUMBER,		 "inv_cec_cg_pdco",								"DC input power at which AC power rating is achieved",	   "Wdc",	  "",					  "pvsamv1",	   "inverter_model=3",					  "",                              "" },
+	{ SSC_INPUT,		SSC_NUMBER,		 "inv_cec_cg_pnt",								"AC power consumed by inverter at night",				   "Wac",	  "",					  "pvsamv1",	   "inverter_model=3",					  "",                              "" },
+	{ SSC_INPUT,		SSC_NUMBER,		 "inv_cec_cg_psco",								"DC power required to enable the inversion process",	   "Wdc",	  "",					  "pvsamv1",	   "inverter_model=3",					  "",                              "" },
+	{ SSC_INPUT,		SSC_NUMBER,		 "inv_cec_cg_vdco",								"DC input voltage for the rated AC power rating",		   "Vdc",	  "",					  "pvsamv1",	   "inverter_model=3",					  "",                              "" },
+	{ SSC_INPUT,		SSC_NUMBER,		 "inv_cec_cg_vdcmax",							"Maximum DC input operating voltage",					   "Vdc",	  "",					  "pvsamv1",	   "inverter_model=3",					  "",                              "" },
 
-	{ SSC_INPUT,        SSC_NUMBER,      "inv_ds_paco",                                "AC maximum power rating",                                  "Wac",     "",                     "pvsamv1",       "inverter_model=1",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "inv_ds_eff",                                 "Weighted or Peak or Nominal Efficiency",				   "Wdc",     "",                     "pvsamv1",       "inverter_model=1",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "inv_ds_pnt",                                 "AC power consumed by inverter at night",                   "Wac",     "",                     "pvsamv1",       "inverter_model=1",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "inv_ds_pso",                                 "DC power required to enable the inversion process",        "Wdc",     "",                     "pvsamv1",       "inverter_model=1",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "inv_ds_vdco",                                "DC input voltage for the rated AC power rating",           "Vdc",     "",                     "pvsamv1",       "inverter_model=1",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "inv_ds_vdcmax",                              "Maximum DC input operating voltage",                       "Vdc",     "",                     "pvsamv1",       "inverter_model=1",                    "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "inv_ds_paco",                                 "AC maximum power rating",                                 "Wac",     "",                     "pvsamv1",       "inverter_model=1",                    "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "inv_ds_eff",                                  "Weighted or Peak or Nominal Efficiency",				   "Wdc",     "",                     "pvsamv1",       "inverter_model=1",                    "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "inv_ds_pnt",                                  "AC power consumed by inverter at night",                  "Wac",     "",                     "pvsamv1",       "inverter_model=1",                    "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "inv_ds_pso",                                  "DC power required to enable the inversion process",       "Wdc",     "",                     "pvsamv1",       "inverter_model=1",                    "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "inv_ds_vdco",                                 "DC input voltage for the rated AC power rating",          "Vdc",     "",                     "pvsamv1",       "inverter_model=1",                    "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "inv_ds_vdcmax",                               "Maximum DC input operating voltage",                      "Vdc",     "",                     "pvsamv1",       "inverter_model=1",                    "",                              "" },
 
-	{ SSC_INPUT,        SSC_NUMBER,      "inv_pd_paco",                                "AC maximum power rating",                                  "Wac",     "",                     "pvsamv1",       "inverter_model=2",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "inv_pd_pdco",                                "DC input power at which AC power rating is achieved",      "Wdc",     "",                     "pvsamv1",       "inverter_model=2",                    "",                              "" },
-	{ SSC_INPUT,        SSC_ARRAY,       "inv_pd_partload",                            "Partload curve partload values",                           "%",       "",                     "pvsamv1",       "inverter_model=2",                    "",                              "" },
-	{ SSC_INPUT,        SSC_ARRAY,       "inv_pd_efficiency",                          "Partload curve efficiency values",                         "%",       "",                     "pvsamv1",       "inverter_model=2",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "inv_pd_pnt",                                 "AC power consumed by inverter at night",                   "Wac",     "",                     "pvsamv1",       "inverter_model=2",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "inv_pd_vdco",                                "DC input voltage for the rated AC power rating",           "Vdc",     "",                     "pvsamv1",       "inverter_model=2",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "inv_pd_vdcmax",                              "Maximum DC input operating voltage",                       "Vdc",     "",                     "pvsamv1",       "inverter_model=2",                    "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "inv_pd_paco",                                 "AC maximum power rating",                                 "Wac",     "",                     "pvsamv1",       "inverter_model=2",                    "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "inv_pd_pdco",                                 "DC input power at which AC power rating is achieved",     "Wdc",     "",                     "pvsamv1",       "inverter_model=2",                    "",                              "" },
+	{ SSC_INPUT,        SSC_ARRAY,       "inv_pd_partload",                             "Partload curve partload values",                          "%",       "",                     "pvsamv1",       "inverter_model=2",                    "",                              "" },
+	{ SSC_INPUT,        SSC_ARRAY,       "inv_pd_efficiency",                           "Partload curve efficiency values",                        "%",       "",                     "pvsamv1",       "inverter_model=2",                    "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "inv_pd_pnt",                                  "AC power consumed by inverter at night",                  "Wac",     "",                     "pvsamv1",       "inverter_model=2",                    "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "inv_pd_vdco",                                 "DC input voltage for the rated AC power rating",          "Vdc",     "",                     "pvsamv1",       "inverter_model=2",                    "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "inv_pd_vdcmax",                               "Maximum DC input operating voltage",                      "Vdc",     "",                     "pvsamv1",       "inverter_model=2",                    "",                              "" },
 
 	{ SSC_INPUT,		SSC_MATRIX,		 "inv_tdc_cec_db",							   "Temperature derate curves for CEC Database",			   "Vdc",	  "",					  "pvsamv1",	   "inverter_model=0",					  "",							   "" },
 	{ SSC_INPUT,		SSC_MATRIX,		 "inv_tdc_cec_cg",							   "Temperature derate curves for CEC Coef Gen",			   "Vdc",	  "",					  "pvsamv1",	   "inverter_model=3",					  "",							   "" },
@@ -876,7 +880,6 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 	double ref_area_m2 = Subarrays[0]->Module->referenceArea;
 	double module_watts_stc = Subarrays[0]->Module->moduleWattsSTC;
 	bool enable_mismatch_vmax_calc = Subarrays[0]->Module->enableMismatchVoltageCalc;
-	int modules_per_string = PVSystem->modulesPerString;
 	int strings_in_parallel = PVSystem->stringsInParallel;
 	SharedInverter * sharedInverter = PVSystem->m_sharedInverter.get();
 
@@ -899,7 +902,11 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 		Subarrays[nn]->selfShadingInputs.row_space = b / Subarrays[nn]->groundCoverageRatio;
 	}
 
-	double nameplate_kw = modules_per_string * strings_in_parallel * module_watts_stc * util::watt_to_kilowatt;
+	double nameplate_kw = 0;
+	for (size_t nn = 0; nn < num_subarrays; nn++)
+	{
+		nameplate_kw += Subarrays[nn]->nModulesPerString * Subarrays[nn]->nStrings * module_watts_stc * util::watt_to_kilowatt;
+	}
 
 	// Warning workaround
 	static bool is32BitLifetime = (__ARCHBITS__ == 32 && system_use_lifetime_output);
@@ -1373,12 +1380,12 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 
 					// record sub-array contribution to total POA power for this time step  (W)
 					if (radmode != POA_R)
-						ts_accum_poa_front_nom += (ibeam + iskydiff + ignddiff) * ref_area_m2 * modules_per_string * Subarrays[nn]->nStrings;
+						ts_accum_poa_front_nom += (ibeam + iskydiff + ignddiff) * ref_area_m2 * Subarrays[nn]->nModulesPerString * Subarrays[nn]->nStrings;
 					else
-						ts_accum_poa_front_nom += (ipoa)* ref_area_m2 * modules_per_string * Subarrays[nn]->nStrings;
+						ts_accum_poa_front_nom += (ipoa)* ref_area_m2 * Subarrays[nn]->nModulesPerString * Subarrays[nn]->nStrings;
 
 					// record sub-array contribution to total POA beam power for this time step (W)
-					ts_accum_poa_front_beam_nom += ibeam * ref_area_m2 * modules_per_string * Subarrays[nn]->nStrings;
+					ts_accum_poa_front_beam_nom += ibeam * ref_area_m2 * Subarrays[nn]->nModulesPerString * Subarrays[nn]->nStrings;
 
 					// for non-linear shading from shading database
 					if (Subarrays[nn]->shadeCalculator.use_shade_db())
@@ -1400,13 +1407,13 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 							// voltage set to -1 for max power
 							(*Subarrays[nn]->Module->cellTempModel)(in, *Subarrays[nn]->Module->moduleModel, -1.0, tcell);
 						}
-						double shadedb_str_vmp_stc = modules_per_string * Subarrays[nn]->Module->voltageMaxPower;
-						double shadedb_mppt_lo = PVSystem->voltageMpptLow1Module * modules_per_string;;
-						double shadedb_mppt_hi = PVSystem->voltageMpptHi1Module * modules_per_string;;
+						double shadedb_str_vmp_stc = Subarrays[nn]->nModulesPerString * Subarrays[nn]->Module->voltageMaxPower;
+						double shadedb_mppt_lo = PVSystem->Inverter->mpptLowVoltage;
+						double shadedb_mppt_hi = PVSystem->Inverter->mpptHiVoltage;
 
 						/// shading database if necessary
 						smart_ptr<ShadeDB8_mpp>::ptr  p_shade_db;
-						if (!Subarrays[nn]->shadeCalculator.fbeam_shade_db(p_shade_db, hour, solalt, solazi, jj, step_per_hour, shadedb_gpoa, shadedb_dpoa, tcell, modules_per_string, shadedb_str_vmp_stc, shadedb_mppt_lo, shadedb_mppt_hi))
+						if (!Subarrays[nn]->shadeCalculator.fbeam_shade_db(p_shade_db, hour, solalt, solazi, jj, step_per_hour, shadedb_gpoa, shadedb_dpoa, tcell, Subarrays[nn]->nModulesPerString, shadedb_str_vmp_stc, shadedb_mppt_lo, shadedb_mppt_hi))
 						{
 							throw exec_error("pvsamv1", util::format("Error calculating shading factor for subarray %d", nn));
 						}
@@ -1416,7 +1423,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 							p_shadedb_gpoa[nn][idx] = (ssc_number_t)shadedb_gpoa;
 							p_shadedb_dpoa[nn][idx] = (ssc_number_t)shadedb_dpoa;
 							p_shadedb_pv_cell_temp[nn][idx] = (ssc_number_t)tcell;
-							p_shadedb_mods_per_str[nn][idx] = (ssc_number_t)modules_per_string;
+							p_shadedb_mods_per_str[nn][idx] = (ssc_number_t)Subarrays[nn]->nModulesPerString;
 							p_shadedb_str_vmp_stc[nn][idx] = (ssc_number_t)shadedb_str_vmp_stc;
 							p_shadedb_mppt_lo[nn][idx] = (ssc_number_t)shadedb_mppt_lo;
 							p_shadedb_mppt_hi[nn][idx] = (ssc_number_t)shadedb_mppt_hi;
@@ -1545,7 +1552,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 					double poashad = (radmode == POA_R) ? ipoa : (ibeam + iskydiff + ignddiff);
 
 					// determine sub-array contribution to total shaded plane of array for this hour
-					ts_accum_poa_front_shaded += poashad * ref_area_m2 * modules_per_string * Subarrays[nn]->nStrings;
+					ts_accum_poa_front_shaded += poashad * ref_area_m2 * Subarrays[nn]->nModulesPerString * Subarrays[nn]->nStrings;
 
 					// apply soiling derate to all components of irradiance
 					double soiling_factor = 1.0;
@@ -1565,7 +1572,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 
 					// Calculate total front irradiation after soiling added to shading
 					ipoa_front = ibeam + iskydiff + ignddiff;
-					ts_accum_poa_front_shaded_soiled += ipoa_front * ref_area_m2 * modules_per_string * Subarrays[nn]->nStrings;
+					ts_accum_poa_front_shaded_soiled += ipoa_front * ref_area_m2 * Subarrays[nn]->nModulesPerString * Subarrays[nn]->nStrings;
 					
 					// Calculate rear-side irradiance for bifacial modules
 					if (Subarrays[0]->Module->isBifacial)
@@ -1577,7 +1584,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 						irr.calc_rear_side(Subarrays[0]->Module->bifacialTransmissionFactor, Subarrays[0]->Module->bifaciality, Subarrays[0]->Module->groundClearanceHeight, slopeLength);
 						ipoa_rear = irr.get_poa_rear();
 					}
-					ts_accum_poa_rear += ipoa_rear * ref_area_m2 * modules_per_string * Subarrays[nn]->nStrings;
+					ts_accum_poa_rear += ipoa_rear * ref_area_m2 * Subarrays[nn]->nModulesPerString * Subarrays[nn]->nStrings;
 
 					if (iyear == 0) 
 					{
@@ -1597,7 +1604,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 					}
 
 					// accumulate incident total radiation (W) in this timestep (all subarrays)
-					ts_accum_poa_front_beam_eff += ibeam * ref_area_m2 * modules_per_string * Subarrays[nn]->nStrings;
+					ts_accum_poa_front_beam_eff += ibeam * ref_area_m2 * Subarrays[nn]->nModulesPerString * Subarrays[nn]->nStrings;
 
 					// save the required irradiance inputs on array plane for the module output calculations.
 					Subarrays[nn]->poa.poaBeamFront = ibeam;
@@ -1611,9 +1618,19 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 					Subarrays[nn]->poa.surfaceAzimuthDegrees = sazi;
 				}
 
+				// module-related models that do not change with MPPT control can be performed separately upstream of the module power model!!!!!!!!!!!!!!!!!!!!!!jmf
+				//
+				
 				// compute dc power output of one module in each subarray
 				double module_voltage = -1;
 
+				//mismatch calculations assume that inverter operates all subarrays at the same voltage.
+				//the algorithm sweeps across voltages, calculating current for one module in each subarray at that voltage.
+				//it adds the currents together for the subarrays (since they're all at the same voltage), and multiples V*i to get P.
+				//it finds the maximum P from the voltage sweep, and records the voltage corresponding to it, then uses that in subsequent
+				//power calculations for each subarray. Checking only one module in the subarray has worked historically because subarrays
+				//are constrained to have the same module and same number of modules per string in each subarray.
+				//If those were different, would this work? What would the inverter do????? jmf
 				if (enable_mismatch_vmax_calc)
 				{
 					if (num_subarrays <= 1)
@@ -1623,7 +1640,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 					const int NP = 100;
 					double V[NP], I[NP], P[NP];
 					double Pmax = 0;
-					// sweep voltage, calculating current for each subarray module, and adding
+					// sweep voltage, calculating current for each subarray, add all subarray currents together at each voltage
 					for (int i = 0; i < NP; i++)
 					{
 						V[i] = vmin + (vmax - vmin)*i / ((double)NP);
@@ -1632,6 +1649,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 						{
 							if (!Subarrays[nn]->enable || Subarrays[nn]->nStrings < 1) continue; // skip disabled subarrays
 
+							//initalize pvinput and pvoutput structures for the model
 							pvinput_t in(Subarrays[nn]->poa.poaBeamFront, Subarrays[nn]->poa.poaDiffuseFront, Subarrays[nn]->poa.poaGroundFront, Subarrays[nn]->poa.poaRear, Subarrays[nn]->poa.poaTotal,
 								wf.tdry, wf.tdew, wf.wspd, wf.wdir, wf.pres,
 								solzen, Subarrays[nn]->poa.angleOfIncidenceDegrees, hdr.elev,
@@ -1639,6 +1657,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 								((double)wf.hour) + wf.minute / 60.0,
 								radmode, Subarrays[nn]->poa.usePOAFromWF);
 							pvoutput_t out(0, 0, 0, 0, 0, 0, 0, 0);
+							//calculate the output power
 							if (Subarrays[nn]->poa.sunUp)
 							{
 								double tcell = wf.tdry;
@@ -1664,13 +1683,10 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 						if (module_voltage > PVSystem->voltageMpptHi1Module) module_voltage = PVSystem->voltageMpptHi1Module;
 					}
 
-				}
+				} //now we have the voltage at which the array will produce max power, to be used in subsequent calcs
 
 
-				//  at this point we have 
-				// a array maximum power module voltage
-
-				// for averaging voltage in the case that mismatch calcs are disabled.
+				// the next few values are for averaging voltage in the case that mismatch calcs are disabled.
 				int n_voltage_values = 0;
 				double voltage_sum = 0.0;
 				double mppt_clip_window = 0;
@@ -1703,15 +1719,17 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 						if (iyear == 0) mppt_clip_window = out.Power;
 						if (!enable_mismatch_vmax_calc && PVSystem->clipMpptWindow)
 						{
-							if (out.Voltage < PVSystem->voltageMpptLow1Module)
+							double voltageMpptLow1Module = PVSystem->Inverter->mpptLowVoltage / Subarrays[nn]->nModulesPerString;
+							double voltageMpptHi1Module = PVSystem->Inverter->mpptHiVoltage / Subarrays[nn]->nModulesPerString;
+							if (out.Voltage < voltageMpptLow1Module)
 							{
-								module_voltage = PVSystem->voltageMpptLow1Module;
+								module_voltage = voltageMpptLow1Module;
 								(*Subarrays[nn]->Module->cellTempModel)(in, *Subarrays[nn]->Module->moduleModel, module_voltage, tcell);
 								(*Subarrays[nn]->Module->moduleModel)(in, tcell, module_voltage, out);
 							}
-							else if (out.Voltage > PVSystem->voltageMpptHi1Module)
+							else if (out.Voltage > voltageMpptHi1Module)
 							{
-								module_voltage = PVSystem->voltageMpptHi1Module;
+								module_voltage = voltageMpptHi1Module;
 								(*Subarrays[nn]->Module->cellTempModel)(in, *Subarrays[nn]->Module->moduleModel, module_voltage, tcell);
 								(*Subarrays[nn]->Module->moduleModel)(in, tcell, module_voltage, out);
 							}
@@ -1751,8 +1769,8 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 						PVSystem->p_poaFront[nn][idx] = (radmode == POA_R) ? (ssc_number_t)ipoa : (ssc_number_t)(ipoa_front);
 						PVSystem->p_poaTotal[nn][idx] = (radmode == POA_R) ? (ssc_number_t)ipoa : (ssc_number_t)(ipoa_front + ipoa_rear);
 
-						ts_accum_poa_front_total += ipoa_front * ref_area_m2 * modules_per_string * Subarrays[nn]->nStrings;
-						ts_accum_poa_total_eff += ((radmode == POA_R) ? ipoa : (ipoa_front + ipoa_rear)) * ref_area_m2 * modules_per_string * Subarrays[nn]->nStrings;
+						ts_accum_poa_front_total += ipoa_front * ref_area_m2 * Subarrays[nn]->nModulesPerString * Subarrays[nn]->nStrings;
+						ts_accum_poa_total_eff += ((radmode == POA_R) ? ipoa : (ipoa_front + ipoa_rear)) * ref_area_m2 * Subarrays[nn]->nModulesPerString * Subarrays[nn]->nStrings;
 					}
 
 					voltage_sum += out.Voltage;
@@ -1778,11 +1796,11 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 					if (iyear == 0) mppt_clip_window *= Subarrays[nn]->poa.nonlinearDCShadingDerate;
 
 					// scale power and voltage to array dimensions
-					Subarrays[nn]->module.dcPowerW *= modules_per_string* Subarrays[nn]->nStrings;
-					if (iyear == 0) mppt_clip_window *= modules_per_string* Subarrays[nn]->nStrings;
+					Subarrays[nn]->module.dcPowerW *= Subarrays[nn]->nModulesPerString* Subarrays[nn]->nStrings;
+					if (iyear == 0) mppt_clip_window *= Subarrays[nn]->nModulesPerString* Subarrays[nn]->nStrings;
 
 					// Calculate and apply snow coverage losses if activated
-					if (Subarrays[0]->enableShowModel)
+					if (Subarrays[0]->enableSnowModel)
 					{
 						float smLoss = 0.0f;
 
@@ -1814,8 +1832,8 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 						// save to SSC output arrays
 						PVSystem->p_temperatureCell[nn][idx] = (ssc_number_t)Subarrays[nn]->module.temperatureCellCelcius;
 						PVSystem->p_moduleEfficiency[nn][idx] = (ssc_number_t)Subarrays[nn]->module.dcEfficiency;
-						PVSystem->p_dcVoltage[nn][idx] = (ssc_number_t)Subarrays[nn]->module.dcVoltage * modules_per_string;
-						PVSystem->p_voltageOpenCircuit[nn][idx] = (ssc_number_t)Subarrays[nn]->module.voltageOpenCircuit * modules_per_string;
+						PVSystem->p_dcVoltage[nn][idx] = (ssc_number_t)Subarrays[nn]->module.dcVoltage * Subarrays[nn]->nModulesPerString;
+						PVSystem->p_voltageOpenCircuit[nn][idx] = (ssc_number_t)Subarrays[nn]->module.voltageOpenCircuit * Subarrays[nn]->nModulesPerString;
 						PVSystem->p_currentShortCircuit[nn][idx] = (ssc_number_t)Subarrays[nn]->module.currentShortCircuit;
 						PVSystem->p_dcPowerGross[nn][idx] = (ssc_number_t)(Subarrays[nn]->module.dcPowerW * util::watt_to_kilowatt);
 						PVSystem->p_angleOfIncidenceModifier[nn][idx] = (ssc_number_t)(Subarrays[nn]->module.angleOfIncidenceModifier);
@@ -2094,7 +2112,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 	//   have the same number of bad values
 	//  *Also accumulate monthly and annual loss values 
 
-	if (Subarrays[0]->enableShowModel){
+	if (Subarrays[0]->enableSnowModel){
 		if (Subarrays[0]->snowModel.badValues > 0){
 			log(util::format("The snow model has detected %d bad snow depth values (less than 0 or greater than 610 cm). These values have been set to zero.", Subarrays[0]->snowModel.badValues), SSC_WARNING);
 		}

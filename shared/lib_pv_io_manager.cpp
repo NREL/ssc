@@ -181,7 +181,7 @@ Subarray_IO::Subarray_IO(compute_module* cm, std::string cmName, size_t subarray
 	if (enable)
 	{
 		nStrings = cm->as_integer(prefix + "nstrings");
-		nModulesPerString = cm->as_integer("modules_per_string");
+		nModulesPerString = cm->as_integer(prefix + "modules_per_string");
 		tiltDegrees = fabs(cm->as_double(prefix + "tilt"));
 		azimuthDegrees = cm->as_double(prefix + "azimuth");
 		trackMode = cm->as_integer(prefix + "track_mode");
@@ -250,8 +250,8 @@ Subarray_IO::Subarray_IO(compute_module* cm, std::string cmName, size_t subarray
 		}
 
 		// Snow model
-		enableShowModel = cm->as_boolean("en_snow_model");
-		if (enableShowModel)
+		enableSnowModel = cm->as_boolean("en_snow_model");
+		if (enableSnowModel)
 		{
 			if (trackMode == SEASONAL_TILT)
 				throw compute_module::exec_error(cmName, "Time-series tilt input may not be used with the snow model at this time: subarray " + util::to_string((int)(subarrayNumber)));
@@ -293,7 +293,6 @@ PVSystem_IO::PVSystem_IO(compute_module* cm, std::string cmName, Simulation_IO *
 
 	AllocateOutputs(cm);
 
-	modulesPerString = cm->as_integer("modules_per_string");
 	stringsInParallel = cm->as_integer("strings_in_parallel");
 	numberOfInverters = cm->as_integer("inverter_count");
 	ratedACOutput = Inverter->ratedACOutput * numberOfInverters;
@@ -414,7 +413,7 @@ void PVSystem_IO::AllocateOutputs(compute_module* cm)
 			p_derateSelfShadingDiffuse.push_back(cm->allocate(prefix + "ss_diffuse_derate", numberOfWeatherFileRecords));
 			p_derateSelfShadingReflected.push_back(cm->allocate(prefix + "ss_reflected_derate", numberOfWeatherFileRecords));
 
-			if (Subarrays[subarray]->enableShowModel) {
+			if (Subarrays[subarray]->enableSnowModel) {
 				p_snowLoss.push_back(cm->allocate(prefix + "snow_loss", numberOfWeatherFileRecords));
 				p_snowCoverage.push_back(cm->allocate(prefix + "snow_coverage", numberOfWeatherFileRecords));
 			}
@@ -857,6 +856,9 @@ void Module_IO::AssignOutputs(compute_module* cm)
 Inverter_IO::Inverter_IO(compute_module *cm, std::string cmName)
 {
 	inverterType =  cm->as_integer("inverter_model");
+	nMpptInputs = cm->as_integer("inv_num_mppt");
+	mpptLowVoltage = cm->as_double("mppt_low_inverter");
+	mpptHiVoltage = cm->as_double("mppt_hi_inverter");
 	
 	if (inverterType == 0) // cec database
 	{
