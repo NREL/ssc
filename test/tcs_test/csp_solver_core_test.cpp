@@ -6,13 +6,13 @@
 #include <gtest/gtest.h>
 #include "../input_cases/weather_inputs.h"
 
-#include "common.h"
-#include "csp_solver_core.h"
-#include "csp_solver_mspt_receiver_222.h"
-#include "csp_solver_mspt_collector_receiver.h"
-#include "csp_solver_pc_Rankine_indirect_224.h"
-#include "csp_solver_two_tank_tes.h"
-#include "csp_solver_tou_block_schedules.h"
+#include "../ssc/common.h"
+#include "../tcs/csp_solver_core.h"
+#include "../tcs/csp_solver_mspt_receiver_222.h"
+#include "../tcs/csp_solver_mspt_collector_receiver.h"
+#include "../tcs/csp_solver_pc_Rankine_indirect_224.h"
+#include "../tcs/csp_solver_two_tank_tes.h"
+#include "../tcs/csp_solver_tou_block_schedules.h"
 
 /**
  * This class tests the C_csp_weatherreader's functions and ensures that the interface is the

@@ -103,8 +103,11 @@ static std::vector<std::string> split(const std::string &buf, char delim = ',')
 
 static float col_or_zero(const std::string &s)
 {
-	if (!s.empty() && std::all_of(s.begin(), s.end(), ::isdigit))
+	if (!s.empty() && 
+		std::any_of(s.begin(), s.end(), ::isdigit)) 
+	{
 		return (float)stof(s);
+	}
 	else
 		return 0.0f;
 }

@@ -1,7 +1,7 @@
 #include <string>
 #include <vector>
 
-#include "common.h"
+#include "../ssc/common.h"
 #include "weather_inputs.h"
 
 var_data* create_winddata_array(int intervalsPerHour, int nMeasurementHeights){
