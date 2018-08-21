@@ -1290,13 +1290,8 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 
 
 					// record sub-array contribution to total POA power for this time step  (W)
-<<<<<<< HEAD
-					if (radmode != POA_R)
-						ts_accum_poa_front_nom += (ibeam + iskydiff + ignddiff) * ref_area_m2 * Subarrays[nn]->nModulesPerString * Subarrays[nn]->nStrings;
-=======
 					if (radmode != Irradiance_IO::POA_R)
-						ts_accum_poa_front_nom += (ibeam + iskydiff + ignddiff) * ref_area_m2 * modules_per_string * Subarrays[nn]->nStrings;
->>>>>>> develop
+						ts_accum_poa_front_nom += (ibeam + iskydiff + ignddiff) * ref_area_m2 * Subarrays[nn]->nModulesPerString * Subarrays[nn]->nStrings;
 					else
 						ts_accum_poa_front_nom += (ipoa)* ref_area_m2 * Subarrays[nn]->nModulesPerString * Subarrays[nn]->nStrings;
 
@@ -1686,13 +1681,8 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 						PVSystem->p_poaFront[nn][idx] = (radmode == Irradiance_IO::POA_R) ? (ssc_number_t)ipoa : (ssc_number_t)(ipoa_front);
 						PVSystem->p_poaTotal[nn][idx] = (radmode == Irradiance_IO::POA_R) ? (ssc_number_t)ipoa : (ssc_number_t)(ipoa_front + ipoa_rear);
 
-<<<<<<< HEAD
 						ts_accum_poa_front_total += ipoa_front * ref_area_m2 * Subarrays[nn]->nModulesPerString * Subarrays[nn]->nStrings;
-						ts_accum_poa_total_eff += ((radmode == POA_R) ? ipoa : (ipoa_front + ipoa_rear)) * ref_area_m2 * Subarrays[nn]->nModulesPerString * Subarrays[nn]->nStrings;
-=======
-						ts_accum_poa_front_total += ipoa_front * ref_area_m2 * modules_per_string * Subarrays[nn]->nStrings;
-						ts_accum_poa_total_eff += ((radmode == Irradiance_IO::POA_R) ? ipoa : (ipoa_front + ipoa_rear)) * ref_area_m2 * modules_per_string * Subarrays[nn]->nStrings;
->>>>>>> develop
+						ts_accum_poa_total_eff += ((radmode == Irradiance_IO::POA_R) ? ipoa : (ipoa_front + ipoa_rear)) * ref_area_m2 * Subarrays[nn]->nModulesPerString * Subarrays[nn]->nStrings;
 					}
 
 					voltage_sum += out.Voltage;
