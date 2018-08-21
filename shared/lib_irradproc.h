@@ -52,15 +52,142 @@
 
 #include "lib_pv_io_manager.h"
 
-/* aug2011 - apd
-	solar position and radiation processing split out from pvwatts.
-	added isotropic sky model and hdkr model for diffuse on a tilted surface
-	*/
+/**
+* \file
+* \brief File containing calculations for front-side and rear-side irradiance of tracked-tilted surfaces.
+*/
 
+/**
+* \brief Function calculates the sun position given the local standard time and location.
+*   This function is based on a paper by Michalsky published in Solar Energy
+*	Vol. 40, No. 3, pp. 227-235, 1988. It calculates solar position for the
+*	time and location passed to the function based on the Astronomical
+*	Almanac's Algorithm for the period 1950-2050. For data averaged over an
+*	interval, the appropriate time passed is the midpoint of the interval.
+*	(Example: For hourly data averaged from 10 to 11, the time passed to the
+*	function should be 10 hours and 30 minutes). The exception is when the time
+*	interval includes a sunrise or sunset. For these intervals, the appropriate
+*	time should be the midpoint of the portion of the interval when the sun is
+*	above the horizon. (Example: For hourly data averaged from 7 to 8 with a
+*	sunrise time of 7:30, the time passed to the function should be 7 hours and
+*	and 45 minutes).
+*
+* \param year (e.g. 1986)
+* \param month (1-12)
+* \param day day of month
+* \param hour hour of day local standard time (1-24)
+* \param minute minutes pas the hour, local standard time (1-24)
+* \param lat latitude in degrees, north positive
+* \param lng longitude in degrees, east positive
+* \param tz time zone, west longitudes negative
+* \param sunn array of elements to return sun parameters to calling function
+* \param sunn[0] sun azimuth in radians, measured east from north, 0 to 2*pi
+* \param sunn[1] sun zenith in radians, 0 to pi
+* \param sunn[2] sun elevation in radians, -pi/2 to pi/2
+* \param sunn[3] sun declination in radians
+* \param sunn[4] sunrise in local standard time (hrs), not corrected for refraction
+* \param sunn[5] sunset in local standard time (hrs), not corrected for refraction
+* \param sunn[6] eccentricity correction factor
+* \param sunn[7] true solar time (hrs)
+* \param sunn[8] extraterrestrial solar irradiance on horizontal at particular time (W/m2)
+* \return Array of sun angles passed by reference
+*/
 void solarpos(int year,int month,int day,int hour,double minute,double lat,double lng,double tz,double sunn[9]);
+
+/**
+* \brief Function calculates the incident angle of direct beam radiation to a surface.
+* The calculation is done for a given sun position, latitude, and surface orientation. 
+* The modes available are fixed tilt, 1-axis tracking, and 2-axis tracking.
+*
+* \param mode 0 for fixed-tilt, 1 for 1-axis tracking, 2 for 2-axis tracking, 3 for azimuth-axis tracking, 4 for timeseries tilt tracking (in "set surface" function, this is set as mode 0)
+* \param tilt tilt angle of surface from horizontal in degrees (mode 0), or tilt angle of tracker axis from horizontal in degrees (mode 1), MUST BE FROM 0 to 90 degrees.
+* \param sazm surface azimuth in degrees of collector (mode 0), 
+				or surface azimuth of tracker axis (mode 1) with axis azimuth directed from raised to lowered end of axis if axis tilted.
+* \param rlim plus or minus rotation in degrees permitted by physical constraints of tracker, range is 0 to 180 degrees.
+* \param zen sun zenith in radians, MUST BE LESS THAN PI/2
+* \param azm sun azimuth in radians, measured east from north
+* \param en_backtrack enable backtracking, using Ground coverage ratio ( below )
+* \param gcr  ground coverage ratio ( used for backtracking )
+* \param angle array of elements to return angles to calling function
+* \param angle[0] incident angle in radians
+* \param angle[1] tilt angle of surface from horizontal in radians
+* \param angle[2] surface azimuth in radians, measured east from north
+* \param angle[3] tracking axis rotation angle in radians, measured from surface normal of unrotating axis (only for 1 axis trackers)
+* \param angle[4] backtracking difference (rot - ideal_rot) will be zero except in case of backtracking for 1 axis tracking
+* \return Array of surface angles passed by reference
+*/
 void incidence(int mode,double tilt,double sazm,double rlim,double zen,double azm, bool en_backtrack, double gcr, double angle[5]);
+
+
+/**
+* \brief Defines the Perez function for calculating values of diffuse + direct 
+* solar radiation + ground reflected radiation for a tilted surface and returns the total plane-of-array irradiance(poa),
+* see also isotropic(), hdkr().
+*
+* Function does not check all input for valid entries; consequently, this should be
+* done before calling the function.  (Reference: Perez et al, Solar Energy Vol. 44, No.5, pp.271-289,1990.) 
+*
+* \param hextra extraterrestrial irradiance on horizontal surface (W/m2) (unused in perez model)
+* \param dn direct normal radiation (W/m2)
+* \param df diffuse horizontal radiation (W/m2)
+* \param alb surface albedo (decimal fraction)
+* \param inc incident angle of direct beam radiation to surface in radians
+* \param tilt surface tilt angle from horizontal in radians
+* \param zen sun zenith angle in radians
+* \param poa calculated plane-of-array irradiances (W/m2)
+* \param poa[0] incident beam
+* \param poa[1] incident sky diffuse
+* \param poa[2] incident ground diffuse
+* \param diffc diffuse components, if an array is provided
+* \param diffc[0] isotropic diffuse
+* \param diffc[1] circumsolar diffuse
+* \param diffc[2] horizon brightening
+* \return Array of poa irradiances and diffuse irradiance components passed by reference
+*/
 void perez( double hextra, double dn,double df,double alb,double inc,double tilt,double zen, double poa[3], double diffc[3] /* can be NULL */ );
+
+/**
+* \brief Defines isotropic sky model for diffuse irradiance on a tilted surface, see also perez(), hdkr().
+*
+* \param hextra extraterrestrial irradiance on horizontal surface (W/m2) (unused in perez model)
+* \param dn direct normal radiation (W/m2)
+* \param df diffuse horizontal radiation (W/m2)
+* \param alb surface albedo (decimal fraction)
+* \param inc incident angle of direct beam radiation to surface in radians
+* \param tilt surface tilt angle from horizontal in radians
+* \param zen sun zenith angle in radians
+* \param poa calculated plane-of-array irradiances (W/m2)
+* \param poa[0] incident beam
+* \param poa[1] incident sky diffuse
+* \param poa[2] incident ground diffuse
+* \param diffc diffuse components, if an array is provided
+* \param diffc[0] isotropic diffuse
+* \param diffc[1] circumsolar diffuse
+* \param diffc[2] horizon brightening
+* \return Array of poa irradiances and diffuse irradiance components passed by reference
+*/
 void isotropic( double hextra, double dn, double df, double alb, double inc, double tilt, double zen, double poa[3], double diffc[3] /* can be NULL */ );
+
+/**
+* \brief Defines Hay, Davies, Klutcher, Reindl model for diffuse irradiance on a tilted surface, see also perez(), isotropic().
+*
+* \param hextra extraterrestrial irradiance on horizontal surface (W/m2) (unused in perez model)
+* \param dn direct normal radiation (W/m2)
+* \param df diffuse horizontal radiation (W/m2)
+* \param alb surface albedo (decimal fraction)
+* \param inc incident angle of direct beam radiation to surface in radians
+* \param tilt surface tilt angle from horizontal in radians
+* \param zen sun zenith angle in radians
+* \param poa calculated plane-of-array irradiances (W/m2)
+* \param poa[0] incident beam
+* \param poa[1] incident sky diffuse
+* \param poa[2] incident ground diffuse
+* \param diffc diffuse components, if an array is provided
+* \param diffc[0] isotropic diffuse
+* \param diffc[1] circumsolar diffuse
+* \param diffc[2] horizon brightening
+* \return Array of poa irradiances and diffuse irradiance components passed by reference
+*/
 void hdkr( double hextra, double dn, double df, double alb, double inc, double tilt, double zen, double poa[3], double diffc[3] /* can be NULL */ );
 
 // Create functions for POA decomposition

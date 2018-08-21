@@ -62,7 +62,8 @@
 
 static const int __nday[12] = {31,28,31,30,31,30,31,31,30,31,30,31};
 
-static int julian(int yr,int month,int day)    /* Calculates julian day of year */
+/// Compute the Julian day of year
+static int julian(int yr,int month,int day)    
 {
 	int i=1,jday=0,k;
 
@@ -82,7 +83,7 @@ static int julian(int yr,int month,int day)    /* Calculates julian day of year 
 		jday = jday + day;
 	return(jday);
 }
-
+/// Compute the day of year
 static int day_of_year( int month, int day_of_month ) /* returns 1-365 */
 {
 	int i=1,iday=0;
@@ -95,46 +96,12 @@ static int day_of_year( int month, int day_of_month ) /* returns 1-365 */
 
 void solarpos(int year,int month,int day,int hour,double minute,double lat,double lng,double tz,double sunn[9])
 {
-/* This function is based on a paper by Michalsky published in Solar Energy
-	Vol. 40, No. 3, pp. 227-235, 1988. It calculates solar position for the
-	time and location passed to the function based on the Astronomical
-	Almanac's Algorithm for the period 1950-2050. For data averaged over an
-	interval, the appropriate time passed is the midpoint of the interval.
-	(Example: For hourly data averaged from 10 to 11, the time passed to the
-	function should be 10 hours and 30 minutes). The exception is when the time
-	interval includes a sunrise or sunset. For these intervals, the appropriate
-	time should be the midpoint of the portion of the interval when the sun is
-	above the horizon. (Example: For hourly data averaged from 7 to 8 with a
-	sunrise time of 7:30, the time passed to the function should be 7 hours and
-	and 45 minutes).
-
+/* 
 	Revised 5/15/98. Replaced algorithm for solar azimuth with one by Iqbal
 	so latitudes below the equator are correctly handled. Also put in checks
 	to allow an elevation of 90 degrees without crashing the program and prevented
 	elevation from exceeding 90 degrees after refraction correction.
-
-	This function calls the function julian to get the julian day of year.
-
-	List of Parameters Passed to Function:
-	year   = year (e.g. 1986)
-	month  = month of year (e.g. 1=Jan)
-	day    = day of month
-	hour   = hour of day, local standard time, (1-24, or 0-23)
-	minute = minutes past the hour, local standard time
-	lat    = latitude in degrees, north positive
-	lng    = longitude in degrees, east positive
-	tz     = time zone, west longitudes negative
-
-	sunn[]  = array of elements to return sun parameters to calling function
-	sunn[0] = azm = sun azimuth in radians, measured east from north, 0 to 2*pi
-	sunn[1] = 0.5*pi - elv = sun zenith in radians, 0 to pi
-	sunn[2] = elv = sun elevation in radians, -pi/2 to pi/2
-	sunn[3] = dec = sun declination in radians
-	sunn[4] = sunrise in local standard time (hrs), not corrected for refraction
-	sunn[5] = sunset in local standard time (hrs), not corrected for refraction
-	sunn[6] = Eo = eccentricity correction factor
-	sunn[7] = tst = true solar time (hrs)               
-	sunn[8] = hextra = extraterrestrial solar irradiance on horizontal at particular time (W/m2)  */
+ */
 
 	int jday,delta,leap;                           /* Local variables */
 	double zulu,jd,time,mnlong,mnanom,
@@ -303,34 +270,8 @@ void solarpos(int year,int month,int day,int hour,double minute,double lat,doubl
 
 void incidence(int mode,double tilt,double sazm,double rlim,double zen,double azm, bool en_backtrack, double gcr, double angle[5])
 {
-/* This function calculates the incident angle of direct beam radiation to a
-	surface for a given sun position, latitude, and surface orientation. The
-	modes available are fixed tilt, 1-axis tracking, and 2-axis tracking.
-	Azimuth angles are for N=0 or 2pi, E=pi/2, S=pi, and W=3pi/2.  8/13/98
+	// Azimuth angles are for N=0 or 2pi, E=pi/2, S=pi, and W=3pi/2.  8/13/98
 
-	List of Parameters Passed to Function:
-	mode         = 0 for fixed-tilt, 1 for 1-axis tracking, 2 for 2-axis tracking, 3 for azimuth-axis tracking, 4 for timeseries tilt tracking (in "set surface" function, this is set as mode 0)
-	tilt         = tilt angle of surface from horizontal in degrees (mode 0),
-				   or tilt angle of tracker axis from horizontal in degrees (mode 1),
-				   MUST BE FROM 0 to 90 degrees.
-	sazm         = surface azimuth in degrees of collector (mode 0), or surface
-				   azimuth of tracker axis (mode 1) with axis azimuth directed from
-				   raised to lowered end of axis if axis tilted.
-	rlim         = plus or minus rotation in degrees permitted by physical constraints
-			      	of tracker, range is 0 to 180 degrees.
-	zen          = sun zenith in radians, MUST BE LESS THAN PI/2
-	azm          = sun azimuth in radians, measured east from north
-	en_backtrack = enable backtracking, using Ground coverage ratio ( below )
-	gcr          = ground coverage ratio ( used for backtracking )
-
-	Parameters Returned:
-	angle[]  = array of elements to return angles to calling function
-	angle[0] = inc  = incident angle in radians
-	angle[1] = tilt = tilt angle of surface from horizontal in radians
-	angle[2] = sazm = surface azimuth in radians, measured east from north
-	angle[3] = rot = tracking axis rotation angle in radians, measured from surface normal of unrotating axis (only for 1 axis trackers)
-	angle[4] = btdiff = (rot - ideal_rot) will be zero except in case of backtracking for 1 axis tracking
-	*/
 	/* Local variables: rot is the angle that the collector is rotated about the
 	axis when viewed from the raised end of the 1-axis tracker. If rotated
 	counter clockwise the angle is negative. Range is -180 to +180 degrees.
@@ -798,41 +739,14 @@ void isotropic( double , double dn, double df, double alb, double inc, double ti
 
 void perez( double , double dn, double df, double alb, double inc, double tilt, double zen, double poa[3], double diffc[3] )
 {
-/* Modified aug2011 by aron dobos to split out beam, diffuse, ground for output.
+/* 
+	Based on original FORTRAN program by Howard Bisner.
 	Total POA is poa[0]+poa[1]+poa[2]
-
-   Defines the Perez function for calculating values of diffuse + direct
-	solar radiation + ground reflected radiation for a tilted surface
-	and returns the total plane-of-array irradiance(poa).  Function does
-	not check all input for valid entries; consequently, this should be
-	done before calling the function.  (Reference: Perez et al, Solar
-	Energy Vol. 44, No.5, pp.271-289,1990.) Based on original FORTRAN
-	program by Howard Bisner.
-
+	Modified aug2011 by aron dobos to split out beam, diffuse, ground for output.
 	Modified 6/10/98 so that for zenith angles between 87.5 and 90.0 degrees,
 	the diffuse radiation is treated as isotropic instead of 0.0.
 
-	List of Parameters Passed to Function:
-	hextra = extraterrestrial irradiance on horizontal surface (W/m2) (unused in perez model)
-	dn     = direct normal radiation (W/m2)
-	df     = diffuse horizontal radiation (W/m2)
-	alb    = surface albedo (decimal fraction)
-	inc    = incident angle of direct beam radiation to surface in radians
-	tilt   = surface tilt angle from horizontal in radians
-	zen    = sun zenith angle in radians
-
-	Variable Returned
-	poa    = plane-of-array irradiances (W/m2)
-				poa[0]: incident beam
-				poa[1]: incident sky diffuse
-				poa[2]: incident ground diffuse 
-				
-	diffc   = diffuse components, if an array is provided
-				diffc[0] = isotropic
-				diffc[1] = circumsolar
-				diffc[2] = horizon brightening
-
-				*/
+*/
 
 													/* Local variables */
 	double F11R[8] = { -0.0083117, 0.1299457, 0.3296958, 0.5682053,
