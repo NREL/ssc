@@ -885,8 +885,8 @@ irrad::irrad(Irradiance_IO * irradianceIO, Subarray_IO * subarrayIO)
 	else if (radiationMode == Irradiance_IO::POA_R) set_poa_reference(wf.poa, &(subarray->poa.poaAll));
 	else if (radiationMode == Irradiance_IO::POA_P) set_poa_pyranometer(wf.poa, &subarray->poa.poaAll);
 
-	if (subarray->trackMode == 4) //timeseries tilt input
-		subarray->tiltDegrees = subarray->monthlyTiltDegrees[month_idx]; //overwrite the tilt input with the current tilt to be used in calculations
+	if (subarray->trackMode == Subarray_IO::SEASONAL_TILT) 
+		subarray->tiltDegrees = subarray->monthlyTiltDegrees[month_idx];
 
 	set_surface(subarray->trackMode,
 		subarray->tiltDegrees,
@@ -1204,13 +1204,13 @@ int irrad::calc_rear_side(double transmissionFactor, double bifaciality, double 
 	{
 
 		// Update ground clearance height for HSAT
-		double tiltRadian = surfaceAnglesRadians[1];		/// The tracked angle in radians
+		double tiltRadian = surfaceAnglesRadians[1];		// The tracked angle in radians
 		groundClearanceHeight = groundClearanceHeight - (0.5 * slopeLength) * sin(fabs(tiltRadian));
 
 		// System geometry
-		double rowToRow = slopeLength / this->groundCoverageRatio;		/// Row to row spacing between the front of one row to the front of the next row
-		double clearanceGround = groundClearanceHeight;					/// The normalized clearance from the bottom edge of module to ground
-		double distanceBetweenRows = rowToRow - cos(tiltRadian);	    /// The normalized distance from the read of module to front of module in next row
+		double rowToRow = slopeLength / this->groundCoverageRatio;		// Row to row spacing between the front of one row to the front of the next row
+		double clearanceGround = groundClearanceHeight;					// The normalized clearance from the bottom edge of module to ground
+		double distanceBetweenRows = rowToRow - cos(tiltRadian);	    // The normalized distance from the read of module to front of module in next row
 		double verticalHeight = slopeLength * sin(tiltRadian);
 		double horizontalLength = slopeLength * cos(tiltRadian);
 
@@ -1314,13 +1314,13 @@ void irrad::getGroundShadeFactors(double rowToRow, double verticalHeight, double
 	double shadingStart1, shadingStart2, shadingEnd1, shadingEnd2;
 	shadingStart1 = shadingStart2 = shadingEnd1 = shadingEnd2 = pvBackSurfaceShadeFraction = 0;
 
-	/// Horizontal length of shadow perpindicular to row from top of module to bottom of module
+	// Horizontal length of shadow perpindicular to row from top of module to bottom of module
 	double Lh = (verticalHeight / tan(solarElevationRadians)) * cos(surfaceAzimuthAngleRadians - solarAzimuthRadians);
 
-	///  Horizontal length of shadow perpindicular to row from top of module to ground level
+	//  Horizontal length of shadow perpindicular to row from top of module to ground level
 	double Lhc = ((clearanceGround + verticalHeight) / tan(solarElevationRadians)) * cos(surfaceAzimuthAngleRadians - solarAzimuthRadians);
 
-	/// Horizontal length of shadow perpindicular to row from bottom of module to ground level
+	// Horizontal length of shadow perpindicular to row from bottom of module to ground level
 	double Lc = (clearanceGround / tan(solarElevationRadians)) * cos(surfaceAzimuthAngleRadians - solarAzimuthRadians);
 
 	// Front side of PV module partially shaded, back completely shaded, ground completely shaded

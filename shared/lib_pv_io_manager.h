@@ -125,6 +125,7 @@ struct Irradiance_IO
 	static const int irradprocNoInterpolateSunriseSunset = -1;    /// Interpolate the sunrise/sunset
 
 	enum RADMODE { DN_DF, DN_GH, GH_DF, POA_R, POA_P };
+	enum SKYMODEL { ISOTROPIC, HDKR, PEREZ };
 
 	// Irradiance Data Inputs
 	std::unique_ptr<weather_data_provider> weatherDataProvider;   /// A class which encapsulates the weather data regardless of input method
@@ -296,7 +297,7 @@ struct PVSystem_IO
 };
 
 
-/// allow for the poa decomp model to take all daily POA measurements into consideration
+// allow for the poa decomp model to take all daily POA measurements into consideration
 struct poaDecompReq {
 	poaDecompReq() : i(0), dayStart(0), stepSize(1), stepScale('h'), doy(-1) {}
 	size_t i; // Current time index
