@@ -20,6 +20,8 @@
 #include "../ssc/common.h"
 #include "../ssc/core.h"
 
+enum modulePowerModelList { MODULE_SIMPLE_EFFICIENCY, MODULE_CEC_DATABASE, MODULE_CEC_USER_INPUT, MODULE_SANDIA, MODULE_IEC61853 };
+
 /// Structure containing data relevent at the SimulationManager level
 struct Simulation_IO;
 
@@ -201,9 +203,9 @@ struct PVSystem_IO
 	int stringsInParallel;
 	double ratedACOutput;  /// AC Power rating for whole system (all inverters)
 
-	double voltageMpptLow1Module;
-	double voltageMpptHi1Module;
 	bool clipMpptWindow;
+	std::vector<std::vector<int> > mpptMapping;	///vector to hold the mapping between subarrays and mppt inputs
+	bool enableMismatchVoltageCalc;		/// Whether or not to compute mismatch between multiple subarrays attached to the same mppt input
 
 	double acDerate;
 	double acLossPercent;
@@ -346,6 +348,7 @@ public:
 	// Electrical characteristics
 	size_t nStrings;					/// Number of strings in the subarray
 	int nModulesPerString;				/// The number of modules per string
+	int mpptInput;						/// Which inverter MPPT input this subarray is connected to
 
 	// Physical characteristics
 	double groundCoverageRatio;			/// The ground coverage ratio [0 - 1]
@@ -422,11 +425,9 @@ public:
 	/// Assign outputs from member data after the PV Model has run 
 	void AssignOutputs(compute_module* cm);
 
-	enum moduleTypeList {MODULE_SIMPLE_EFFICIENCY, MODULE_CEC_DATABASE, MODULE_CEC_USER_INPUT, MODULE_SANDIA, MODULE_IEC61853};
 	enum mountingSpecificConfigurationList {NONE, RACK_MOUNTING, FLUSH_MOUNTING, INTEGRATED_MOUNTING, GAP_MOUNTING};
 
-	int moduleType;						/// The PV module model selected
-	bool enableMismatchVoltageCalc;		/// Whether or not to compute string level subarray mismatch
+	int modulePowerModel;						/// The PV module model selected
 	double referenceArea;				/// The module area [m2]
 	double moduleWattsSTC;				/// The module energy output at STC [W]
 	double voltageMaxPower;				/// The voltage at max power [V]

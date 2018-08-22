@@ -263,6 +263,7 @@ Subarray_IO::Subarray_IO(compute_module* cm, std::string cmName, size_t subarray
 	{
 		nStrings = cm->as_integer(prefix + "nstrings");
 		nModulesPerString = cm->as_integer(prefix + "modules_per_string");
+		mpptInput = cm->as_integer(prefix + "mppt_input");
 		tiltDegrees = fabs(cm->as_double(prefix + "tilt"));
 		azimuthDegrees = cm->as_double(prefix + "azimuth");
 		trackMode = cm->as_integer(prefix + "track_mode");
@@ -431,17 +432,15 @@ PVSystem_IO::PVSystem_IO(compute_module* cm, std::string cmName, Simulation_IO *
 	transformerLoadLossFraction = cm->as_number("transformer_load_loss") * (ssc_number_t)(util::percent_to_fraction);  
 	transformerNoLoadLossFraction = cm->as_number("transformer_no_load_loss") *(ssc_number_t)(util::percent_to_fraction);
 
-	// MPPT
-	voltageMpptLow1Module = cm->as_double("mppt_low_inverter") / modulesPerString;
-	voltageMpptHi1Module = cm->as_double("mppt_hi_inverter") / modulesPerString;
+	// Determine whether MPPT clipping should be enabled or not
 	clipMpptWindow = false;
 
-	if (voltageMpptLow1Module > 0 && voltageMpptHi1Module > voltageMpptLow1Module)
+	if (InverterIO->mpptLowVoltage > 0 && InverterIO->mpptHiVoltage > InverterIO->mpptLowVoltage)
 	{
-		int moduleType = Subarrays[0]->Module->moduleType;
-		if (moduleType == 1     // cec with database
-			|| moduleType == 2   // cec with user specs
-			|| moduleType == 4) // iec61853 single diode
+		int modulePowerModel = Subarrays[0]->Module->modulePowerModel;
+		if (modulePowerModel == 1     // cec with database
+			|| modulePowerModel == 2   // cec with user specs
+			|| modulePowerModel == 4) // iec61853 single diode
 		{
 			clipMpptWindow = true;
 		}
@@ -454,6 +453,35 @@ PVSystem_IO::PVSystem_IO(compute_module* cm, std::string cmName, Simulation_IO *
 	{
 		cm->log("Inverter MPPT voltage tracking window not defined - modules always operate at MPPT.", SSC_NOTICE);
 	}
+
+	// Check that system MPPT inputs align correctly
+	for (int n_subarray = 0; n_subarray < numberOfSubarrays; n_subarray++)
+		if (Subarrays[n_subarray]->enable)
+			if (Subarrays[n_subarray]->mpptInput > Inverter->nMpptInputs)
+				throw compute_module::exec_error(cmName, "Subarray " + util::to_string(n_subarray) + " MPPT input is greater than the number of inverter MPPT inputs.");
+	for (int mppt = 1; mppt <= Inverter->nMpptInputs; mppt++) //indexed at 1 to match mppt input numbering convention
+	{
+		std::vector<int> mppt_n; //create a temporary vector to hold which subarrays are on this mppt input
+		//find all subarrays on this mppt input
+		for (int n_subarray = 0; n_subarray < 4; n_subarray++) //jmf update this so that all subarray markers are consistent, get rid of "enable" check
+			if (Subarrays[n_subarray]->enable)
+				if (Subarrays[n_subarray]->mpptInput == mppt)
+					mppt_n.push_back(n_subarray);
+		if (mppt_n.size() < 1)
+			throw compute_module::exec_error(cmName, "At least one subarray must be assigned to each inverter MPPT input.");
+		mpptMapping.push_back(mppt_n); //add the subarrays on this input to the total mppt mapping vector
+	}
+
+	//Subarray mismatch calculations
+	enableMismatchVoltageCalc = cm->as_boolean("enable_mismatch_vmax_calc");
+	if (enableMismatchVoltageCalc &&
+		Subarrays[0]->Module->modulePowerModel != MODULE_CEC_DATABASE &&
+		Subarrays[0]->Module->modulePowerModel != MODULE_CEC_USER_INPUT &&
+		Subarrays[0]->Module->modulePowerModel != MODULE_IEC61853) {
+		throw compute_module::exec_error(cmName, "String level subarray mismatch can only be calculated using a single-diode based module model.");
+	}
+	if (numberOfSubarrays <= 1)
+		throw compute_module::exec_error(cmName, "Subarray voltage mismatch calculation requires more than one subarray. Please check your inputs.");
 }
 
 void PVSystem_IO::AllocateOutputs(compute_module* cm)
@@ -555,15 +583,7 @@ void PVSystem_IO::AssignOutputs(compute_module* cm)
 
 Module_IO::Module_IO(compute_module* cm, std::string cmName, double dcLoss)
 {
-	moduleType = cm->as_integer("module_model");
-
-	enableMismatchVoltageCalc = cm->as_boolean("enable_mismatch_vmax_calc");
-	if (enableMismatchVoltageCalc && 
-		moduleType != MODULE_CEC_DATABASE && 
-		moduleType != MODULE_CEC_USER_INPUT && 
-		moduleType != MODULE_IEC61853) {
-		throw compute_module::exec_error(cmName, "String level subarray mismatch can only be calculated using a single-diode based module model.");
-	}
+	modulePowerModel = cm->as_integer("module_model");
 
 	simpleEfficiencyForceNoPOA = false;
 	mountingSpecificCellTemperatureForceNoPOA = false;
@@ -571,7 +591,7 @@ Module_IO::Module_IO(compute_module* cm, std::string cmName, double dcLoss)
 	isConcentratingPV = false;
 	isBifacial = false;
 
-	if (moduleType == MODULE_SIMPLE_EFFICIENCY)
+	if (modulePowerModel == MODULE_SIMPLE_EFFICIENCY)
 	{
 		simpleEfficiencyModel.VmpNominal = cm->as_double("spe_vmp");
 		simpleEfficiencyModel.VocNominal = cm->as_double("spe_voc");
@@ -639,7 +659,7 @@ Module_IO::Module_IO(compute_module* cm, std::string cmName, double dcLoss)
 		moduleWattsSTC = simpleEfficiencyModel.WattsStc();
 		voltageMaxPower = simpleEfficiencyModel.VmpNominal;
 	}
-	else if (moduleType == MODULE_CEC_DATABASE)
+	else if (modulePowerModel == MODULE_CEC_DATABASE)
 	{
 		isBifacial = cm->as_boolean("cec_is_bifacial");
 		bifaciality = cm->as_double("cec_bifaciality");
@@ -713,7 +733,7 @@ Module_IO::Module_IO(compute_module* cm, std::string cmName, double dcLoss)
 		moduleModel = &cecModel;
 		moduleWattsSTC = cecModel.Vmp * cecModel.Imp;
 	}
-	else if (moduleType == MODULE_CEC_USER_INPUT)
+	else if (modulePowerModel == MODULE_CEC_USER_INPUT)
 	{
 		isBifacial = cm->as_boolean("6par_is_bifacial");
 		bifaciality = cm->as_double("6par_bifaciality");
@@ -770,7 +790,7 @@ Module_IO::Module_IO(compute_module* cm, std::string cmName, double dcLoss)
 		moduleModel = &cecModel;
 		moduleWattsSTC = cecModel.Vmp * cecModel.Imp;
 	}
-	else if (moduleType == MODULE_SANDIA)
+	else if (modulePowerModel == MODULE_SANDIA)
 	{
 		sandiaModel.A0 = cm->as_double("snl_a0");
 		sandiaModel.A1 = cm->as_double("snl_a1");
@@ -867,7 +887,7 @@ Module_IO::Module_IO(compute_module* cm, std::string cmName, double dcLoss)
 		moduleModel = &sandiaModel;
 		moduleWattsSTC = sandiaModel.Vmp0 * sandiaModel.Imp0;
 	}
-	else if (moduleType == MODULE_IEC61853 )
+	else if (modulePowerModel == MODULE_IEC61853 )
 	{
 		// IEC 61853 model
 		elevenParamSingleDiodeModel.NcellSer = cm->as_integer("sd11par_nser");

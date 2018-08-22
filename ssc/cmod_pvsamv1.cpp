@@ -90,6 +90,7 @@ static var_info _cm_vtab_pvsamv1[] = {
 
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray1_nstrings",                          "Sub-array 1 Number of parallel strings",                "",        "",                              "pvsamv1",              "",						 "INTEGER",                       "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray1_modules_per_string",                "Sub-array 1 Modules per string",                        "",        "",                              "pvsamv1",              "*",                        "INTEGER,POSITIVE",              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "subarray1_mppt_input",                        "Sub-array 1 Inverter MPPT input number",                "",        "",                              "pvsamv1",              "?=1",                      "INTEGER,POSITIVE",              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray1_tilt",                              "Sub-array 1 Tilt",                                      "deg",     "0=horizontal,90=vertical",      "pvsamv1",              "naof:subarray1_tilt_eq_lat", "MIN=0,MAX=90",                "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray1_tilt_eq_lat",                       "Sub-array 1 Tilt=latitude override",                    "0/1",     "",                              "pvsamv1",              "na:subarray1_tilt",          "BOOLEAN",                     "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray1_azimuth",                           "Sub-array 1 Azimuth",                                   "deg",     "0=N,90=E,180=S,270=W",          "pvsamv1",              "*",                        "MIN=0,MAX=359.9",               "" },
@@ -150,6 +151,7 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray2_enable",                            "Sub-array 2 Enable",                                      "0/1",    "0=disabled,1=enabled",          "pvsamv1",              "?=0",                      "BOOLEAN",                       "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray2_modules_per_string",                "Sub-array 2 Modules per string",                          "",       "",                              "pvsamv1",              "*",                        "INTEGER,POSITIVE",              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray2_nstrings",                          "Sub-array 2 Number of parallel strings",                  "",       "",                              "pvsamv1",              "subarray2_enable=1",       "INTEGER",                       "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "subarray2_mppt_input",                        "Sub-array 2 Inverter MPPT input number",                  "",       "",                              "pvsamv1",              "?=1",                      "INTEGER,POSITIVE",              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray2_tilt",                              "Sub-array 2 Tilt",                                        "deg",    "0=horizontal,90=vertical",      "pvsamv1",              "naof:subarray2_tilt_eq_lat", "MIN=0,MAX=90",                "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray2_tilt_eq_lat",                       "Sub-array 2 Tilt=latitude override",                      "0/1",    "",                              "pvsamv1",              "na:subarray2_tilt",          "BOOLEAN",                     "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray2_azimuth",                           "Sub-array 2 Azimuth",                                     "deg",    "0=N,90=E,180=S,270=W",          "pvsamv1",              "subarray2_enable=1",       "MIN=0,MAX=359.9",               "" },
@@ -175,6 +177,7 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray3_enable",                            "Sub-array 3 Enable",                                      "0/1",    "0=disabled,1=enabled",          "pvsamv1",              "?=0",                      "BOOLEAN",                       "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray3_modules_per_string",                "Sub-array 3 Modules per string",                          "",       "",                              "pvsamv1",              "*",                        "INTEGER,POSITIVE",              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray3_nstrings",                          "Sub-array 3 Number of parallel strings",                  "",       "",                              "pvsamv1",              "subarray3_enable=1",       "INTEGER",                       "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "subarray3_mppt_input",                        "Sub-array 3 Inverter MPPT input number",                  "",       "",                              "pvsamv1",              "?=1",                      "INTEGER,POSITIVE",              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray3_tilt",                              "Sub-array 3 Tilt",                                        "deg",    "0=horizontal,90=vertical",      "pvsamv1",              "naof:subarray3_tilt_eq_lat", "MIN=0,MAX=90",                "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray3_tilt_eq_lat",                       "Sub-array 3 Tilt=latitude override",                      "0/1",    "",                              "pvsamv1",              "na:subarray3_tilt",          "BOOLEAN",                     "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray3_azimuth",                           "Sub-array 3 Azimuth",                                     "deg",    "0=N,90=E,180=S,270=W",          "pvsamv1",              "subarray3_enable=1",       "MIN=0,MAX=359.9",               "" },
@@ -200,6 +203,7 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray4_enable",                            "Sub-array 4 Enable",                                      "0/1",    "0=disabled,1=enabled",          "pvsamv1",              "?=0",                      "BOOLEAN",                       "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray4_modules_per_string",                "Sub-array 4 Modules per string",                          "",       "",                              "pvsamv1",              "*",                        "INTEGER,POSITIVE",              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray4_nstrings",                          "Sub-array 4 Number of parallel strings",                  "",       "",                              "pvsamv1",              "subarray4_enable=1",       "INTEGER",                       "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "subarray4_mppt_input",                        "Sub-array 4 Inverter MPPT input number",                "",        "",                              "pvsamv1",              "?=1",                      "INTEGER,POSITIVE",              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray4_tilt",                              "Sub-array 4 Tilt",                                        "deg",    "0=horizontal,90=vertical",      "pvsamv1",              "naof:subarray4_tilt_eq_lat", "MIN=0,MAX=90",                "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray4_tilt_eq_lat",                       "Sub-array 4 Tilt=latitude override",                      "0/1",    "",                              "pvsamv1",              "na:subarray4_tilt",          "BOOLEAN",                     "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray4_azimuth",                           "Sub-array 4 Azimuth",                                     "deg",    "0=N,90=E,180=S,270=W",          "pvsamv1",              "subarray4_enable=1",       "MIN=0,MAX=359.9",               "" },
@@ -871,10 +875,9 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 	// Get System or Subarray Inputs
 	double aspect_ratio = Subarrays[0]->moduleAspectRatio;
 	size_t num_subarrays = PVSystem->numberOfSubarrays;
-	int mod_type = Subarrays[0]->Module->moduleType;
+	int mod_type = Subarrays[0]->Module->modulePowerModel;
 	double ref_area_m2 = Subarrays[0]->Module->referenceArea;
 	double module_watts_stc = Subarrays[0]->Module->moduleWattsSTC;
-	bool enable_mismatch_vmax_calc = Subarrays[0]->Module->enableMismatchVoltageCalc;
 	int strings_in_parallel = PVSystem->stringsInParallel;
 	SharedInverter * sharedInverter = PVSystem->m_sharedInverter.get();
 
@@ -1530,159 +1533,172 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 					Subarrays[nn]->poa.surfaceAzimuthDegrees = sazi;
 				}
 
-				// module-related models that do not change with MPPT control can be performed separately upstream of the module power model!!!!!!!!!!!!!!!!!!!!!!jmf
-				//
-				
-				// compute dc power output of one module in each subarray
-				double module_voltage = -1;
-
-				//mismatch calculations assume that inverter operates all subarrays at the same voltage.
-				//the algorithm sweeps across voltages, calculating current for one module in each subarray at that voltage.
-				//it adds the currents together for the subarrays (since they're all at the same voltage), and multiples V*i to get P.
-				//it finds the maximum P from the voltage sweep, and records the voltage corresponding to it, then uses that in subsequent
-				//power calculations for each subarray. Checking only one module in the subarray has worked historically because subarrays
-				//are constrained to have the same module and same number of modules per string in each subarray.
-				//If those were different, would this work? What would the inverter do????? jmf
-				if (enable_mismatch_vmax_calc)
+				//Calculate power of each MPPT input
+				for (int mppt_input = 0; mppt_input < PVSystem->Inverter->nMpptInputs; mppt_input++) //remember that actual named mppt inputs are 1-indexed, and these are 0-indexed
 				{
-					if (num_subarrays <= 1)
-						throw exec_error("pvsamv1", "Subarray voltage mismatch calculation requires more than one subarray. Please check your inputs.");
-					double vmax = Subarrays[0]->Module->moduleModel->VocRef()*1.3; // maximum voltage
-					double vmin = 0.4 * vmax; // minimum voltage
-					const int NP = 100;
-					double V[NP], I[NP], P[NP];
-					double Pmax = 0;
-					// sweep voltage, calculating current for each subarray, add all subarray currents together at each voltage
-					for (int i = 0; i < NP; i++)
-					{
-						V[i] = vmin + (vmax - vmin)*i / ((double)NP);
-						I[i] = 0;
-						for (int nn = 0; nn < 4; nn++)
-						{
-							if (!Subarrays[nn]->enable || Subarrays[nn]->nStrings < 1) continue; // skip disabled subarrays
+					int nSubarraysOnMpptInput = PVSystem->mpptMapping[mppt_input].size(); //number of subarrays attached to this MPPT input
+					std::vector<int> SubarraysOnMpptInput = PVSystem->mpptMapping[mppt_input]; //vector of which subarrays are attached to this MPPT input
 
-							//initalize pvinput and pvoutput structures for the model
-							pvinput_t in(Subarrays[nn]->poa.poaBeamFront, Subarrays[nn]->poa.poaDiffuseFront, Subarrays[nn]->poa.poaGroundFront, Subarrays[nn]->poa.poaRear, Subarrays[nn]->poa.poaTotal,
-								wf.tdry, wf.tdew, wf.wspd, wf.wdir, wf.pres,
-								solzen, Subarrays[nn]->poa.angleOfIncidenceDegrees, hdr.elev,
-								Subarrays[nn]->poa.surfaceTiltDegrees, Subarrays[nn]->poa.surfaceAzimuthDegrees,
-								((double)wf.hour) + wf.minute / 60.0,
-								radmode, Subarrays[nn]->poa.usePOAFromWF);
-							pvoutput_t out(0, 0, 0, 0, 0, 0, 0, 0);
-							//calculate the output power
-							if (Subarrays[nn]->poa.sunUp)
+					//module voltage value to be passed into module power function. 
+					//if -1 is passed in, power will be calculated at max power point. 
+					//if a voltage value is passed in, power will be calculated at the specified voltage for all single-diode module models
+					double module_voltage = -1;
+
+					//mismatch calculations assume that the inverter MPPT operates all subarrays on that MPPT input at the same voltage.
+					//this algorithm sweeps across a range of voltages, calculating total power for all subarrays on this MPPT input at each voltage.
+					//it finds the maximum total MPPT power of all voltages swept, then uses that in subsequent power calculations for each subarray. 
+					if (PVSystem->enableMismatchVoltageCalc)
+					{
+						double vmax = Subarrays[0]->Module->moduleModel->VocRef()*1.3; //maximum voltage to sweep to
+						double vmin = 0.4 * vmax; //minimum voltage to sweep from
+						const int NP = 100; //number of points in between max and min voltage to sweep
+						double Pmax = 0; //variable to store the maximum power for comparison between different points along the voltage sweep
+						// sweep voltage, calculating current for each subarray, add all subarray currents together at each voltage
+						for (int i = 0; i < NP; i++)
+						{
+							double V = vmin + (vmax - vmin)*i / ((double)NP); //calculate the voltage for this point in the voltage sweep
+
+							//first check that this voltage wouldn't violate the max power point tracking range for any subarray, if it does, skip it
+							bool okForAllSubarrays = true;
+							for (int nSubarray = 0; nSubarray < nSubarraysOnMpptInput; nSubarray++)
 							{
-								double tcell = wf.tdry;
-								// calculate cell temperature using selected temperature model
-								(*Subarrays[nn]->Module->cellTempModel)(in, *Subarrays[nn]->Module->moduleModel, V[i], tcell);
-								// calculate module power output using conversion model previously specified
-								(*Subarrays[nn]->Module->moduleModel)(in, tcell, V[i], out);
+								int nn = SubarraysOnMpptInput[nSubarray]; //get the index of the subarray we're checking here
+								if (PVSystem->clipMpptWindow)
+								{
+									if ((V * Subarrays[nn]->nModulesPerString) < PVSystem->Inverter->mpptLowVoltage) okForAllSubarrays = false;
+									if ((V * Subarrays[nn]->nModulesPerString) > PVSystem->Inverter->mpptHiVoltage) okForAllSubarrays = false;
+								}
 							}
-							I[i] += out.Current;
+							if (!okForAllSubarrays) continue;
+
+							//if the voltage is ok, continue to calculate total power on this MPPT input at this voltage
+							double P = 0; //temporary variable to store the total power on this MPPT input at this voltage
+							for (int nSubarray = 0; nSubarray < nSubarraysOnMpptInput; nSubarray++) //sweep across all subarrays connected to this MPPT input
+							{
+								int nn = SubarraysOnMpptInput[nSubarray]; //get the index of the subarray we're checking here
+
+								//initalize pvinput and pvoutput structures for the model
+								pvinput_t in(Subarrays[nn]->poa.poaBeamFront, Subarrays[nn]->poa.poaDiffuseFront, Subarrays[nn]->poa.poaGroundFront, Subarrays[nn]->poa.poaRear, Subarrays[nn]->poa.poaTotal,
+									wf.tdry, wf.tdew, wf.wspd, wf.wdir, wf.pres,
+									solzen, Subarrays[nn]->poa.angleOfIncidenceDegrees, hdr.elev,
+									Subarrays[nn]->poa.surfaceTiltDegrees, Subarrays[nn]->poa.surfaceAzimuthDegrees,
+									((double)wf.hour) + wf.minute / 60.0,
+									radmode, Subarrays[nn]->poa.usePOAFromWF);
+								pvoutput_t out(0, 0, 0, 0, 0, 0, 0, 0);
+
+								//calculate the output power for one module in this subarray at this voltage
+								if (Subarrays[nn]->poa.sunUp)
+								{
+									double tcell = wf.tdry;
+									// calculate cell temperature using selected temperature model
+									(*Subarrays[nn]->Module->cellTempModel)(in, *Subarrays[nn]->Module->moduleModel, V, tcell);
+									// calculate module power output using conversion model previously specified
+									(*Subarrays[nn]->Module->moduleModel)(in, tcell, V, out);
+								}
+								//add the power from this subarray to the total power
+								P += V * out.Current * Subarrays[nn]->nModulesPerString * Subarrays[nn]->nStrings;
+							}
+
+							//check if the total power at this voltage is higher than the power values we've calculated before, if so, set it as the new max
+							if (P > Pmax)
+							{
+								Pmax = P;
+								module_voltage = V;
+							}
 						}
 
-						P[i] = V[i] * I[i];
-						if (P[i] > Pmax)
+					} //now we have the voltage at which the MPPT input will produce max power, to be used in subsequent calcs
+
+
+
+
+
+
+
+
+					//jmf got to here
+					// the next few values are for averaging voltage in the case that mismatch calcs are disabled.
+					int n_voltage_values = 0;
+					double voltage_sum = 0.0;
+					double mppt_clip_window = 0;
+
+					for (int nn = 0; nn < num_subarrays; nn++)
+					{
+						pvinput_t in(Subarrays[nn]->poa.poaBeamFront, Subarrays[nn]->poa.poaDiffuseFront, Subarrays[nn]->poa.poaGroundFront, Subarrays[nn]->poa.poaRear, Subarrays[nn]->poa.poaTotal,
+							wf.tdry, wf.tdew, wf.wspd, wf.wdir, wf.pres,
+							solzen, Subarrays[nn]->poa.angleOfIncidenceDegrees, hdr.elev,
+							Subarrays[nn]->poa.surfaceTiltDegrees, Subarrays[nn]->poa.surfaceAzimuthDegrees,
+							((double)wf.hour) + wf.minute / 60.0,
+							radmode, Subarrays[nn]->poa.usePOAFromWF);
+						pvoutput_t out(0, 0, 0, 0, 0, 0, 0, 0);
+
+						double tcell = wf.tdry;
+						if (Subarrays[nn]->poa.sunUp)
 						{
-							Pmax = P[i];
-							module_voltage = V[i];
+							// calculate cell temperature using selected temperature model
+							// calculate module power output using conversion model previously specified
+							(*Subarrays[nn]->Module->cellTempModel)(in, *Subarrays[nn]->Module->moduleModel, module_voltage, tcell);
+							(*Subarrays[nn]->Module->moduleModel)(in, tcell, module_voltage, out);
+
+							// if mismatch was enabled, the module voltage already was clipped to the inverter MPPT range if appropriate
+							// here, if the module was running at mppt by default, and mppt window clipping is possible, recalculate
+							// module power output to determine actual module power using the voltage window of the inverter
+							if (iyear == 0) mppt_clip_window = out.Power;
+							if (!PVSystem->enableMismatchVoltageCalc && PVSystem->clipMpptWindow)
+							{
+								double voltageMpptLow1Module = PVSystem->Inverter->mpptLowVoltage / Subarrays[nn]->nModulesPerString;
+								double voltageMpptHi1Module = PVSystem->Inverter->mpptHiVoltage / Subarrays[nn]->nModulesPerString;
+								if (out.Voltage < voltageMpptLow1Module)
+								{
+									module_voltage = voltageMpptLow1Module;
+									(*Subarrays[nn]->Module->cellTempModel)(in, *Subarrays[nn]->Module->moduleModel, module_voltage, tcell);
+									(*Subarrays[nn]->Module->moduleModel)(in, tcell, module_voltage, out);
+								}
+								else if (out.Voltage > voltageMpptHi1Module)
+								{
+									module_voltage = voltageMpptHi1Module;
+									(*Subarrays[nn]->Module->cellTempModel)(in, *Subarrays[nn]->Module->moduleModel, module_voltage, tcell);
+									(*Subarrays[nn]->Module->moduleModel)(in, tcell, module_voltage, out);
+								}
+								// MPPT loss
+							}
+							if (iyear == 0)	mppt_clip_window -= out.Power;
 						}
-					}
 
-					if (PVSystem->clipMpptWindow)
-					{
-						if (module_voltage < PVSystem->voltageMpptLow1Module) module_voltage = PVSystem->voltageMpptLow1Module;
-						if (module_voltage > PVSystem->voltageMpptHi1Module) module_voltage = PVSystem->voltageMpptHi1Module;
-					}
+						if (out.Voltage > Subarrays[nn]->Module->moduleModel->VocRef()*1.3)
+							log(util::format("Module voltage is unrealistically high (exceeds 1.3*VocRef) at [mdhm: %d %d %d %lg]: %lg V\n", wf.month, wf.day, wf.hour, wf.minute, out.Voltage), SSC_NOTICE);
 
-				} //now we have the voltage at which the array will produce max power, to be used in subsequent calcs
-
-
-				// the next few values are for averaging voltage in the case that mismatch calcs are disabled.
-				int n_voltage_values = 0;
-				double voltage_sum = 0.0;
-				double mppt_clip_window = 0;
-
-				for (int nn = 0; nn < num_subarrays; nn++)
-				{
-					if (!Subarrays[nn]->enable
-						|| Subarrays[nn]->nStrings < 1)
-						continue; // skip disabled subarrays
-
-					pvinput_t in(Subarrays[nn]->poa.poaBeamFront, Subarrays[nn]->poa.poaDiffuseFront, Subarrays[nn]->poa.poaGroundFront, Subarrays[nn]->poa.poaRear, Subarrays[nn]->poa.poaTotal,
-						wf.tdry, wf.tdew, wf.wspd, wf.wdir, wf.pres,
-						solzen, Subarrays[nn]->poa.angleOfIncidenceDegrees, hdr.elev,
-						Subarrays[nn]->poa.surfaceTiltDegrees, Subarrays[nn]->poa.surfaceAzimuthDegrees,
-						((double)wf.hour) + wf.minute / 60.0,
-						radmode, Subarrays[nn]->poa.usePOAFromWF);
-					pvoutput_t out(0, 0, 0, 0, 0, 0, 0, 0);
-
-					double tcell = wf.tdry;
-					if (Subarrays[nn]->poa.sunUp)
-					{
-						// calculate cell temperature using selected temperature model
-						// calculate module power output using conversion model previously specified
-						(*Subarrays[nn]->Module->cellTempModel)(in, *Subarrays[nn]->Module->moduleModel, module_voltage, tcell);
-						(*Subarrays[nn]->Module->moduleModel)(in, tcell, module_voltage, out);
-
-						// if mismatch was enabled, the module voltage already was clipped to the inverter MPPT range if appropriate
-						// here, if the module was running at mppt by default, and mppt window clipping is possible, recalculate
-						// module power output to determine actual module power using the voltage window of the inverter
-						if (iyear == 0) mppt_clip_window = out.Power;
-						if (!enable_mismatch_vmax_calc && PVSystem->clipMpptWindow)
+						if (!std::isfinite(out.Power))
 						{
-							double voltageMpptLow1Module = PVSystem->Inverter->mpptLowVoltage / Subarrays[nn]->nModulesPerString;
-							double voltageMpptHi1Module = PVSystem->Inverter->mpptHiVoltage / Subarrays[nn]->nModulesPerString;
-							if (out.Voltage < voltageMpptLow1Module)
-							{
-								module_voltage = voltageMpptLow1Module;
-								(*Subarrays[nn]->Module->cellTempModel)(in, *Subarrays[nn]->Module->moduleModel, module_voltage, tcell);
-								(*Subarrays[nn]->Module->moduleModel)(in, tcell, module_voltage, out);
-							}
-							else if (out.Voltage > voltageMpptHi1Module)
-							{
-								module_voltage = voltageMpptHi1Module;
-								(*Subarrays[nn]->Module->cellTempModel)(in, *Subarrays[nn]->Module->moduleModel, module_voltage, tcell);
-								(*Subarrays[nn]->Module->moduleModel)(in, tcell, module_voltage, out);
-							}
-							// MPPT loss
+							out.Power = 0;
+							out.Voltage = 0;
+							out.Current = 0;
+							out.Efficiency = 0;
+							out.CellTemp = tcell;
+							log(util::format("Non-finite power output calculated at [mdhm: %d %d %d %lg], set to zero.\n"
+								"could be due to anomolous equation behavior at very low irradiances (poa: %lg W/m2)",
+								wf.month, wf.day, wf.hour, wf.minute, Subarrays[nn]->poa.poaTotal), SSC_NOTICE);
 						}
-						if (iyear == 0)	mppt_clip_window -= out.Power;
-					}
 
-					if (out.Voltage > Subarrays[nn]->Module->moduleModel->VocRef()*1.3)
-						log(util::format("Module voltage is unrealistically high (exceeds 1.3*VocRef) at [mdhm: %d %d %d %lg]: %lg V\n", wf.month, wf.day, wf.hour, wf.minute, out.Voltage), SSC_NOTICE);
+						// save DC module outputs for this subarray
+						Subarrays[nn]->module.dcPowerW = out.Power;
+						Subarrays[nn]->module.dcEfficiency = out.Efficiency * 100;
+						Subarrays[nn]->module.dcVoltage = out.Voltage;
+						Subarrays[nn]->module.temperatureCellCelcius = out.CellTemp;
+						Subarrays[nn]->module.currentShortCircuit = out.Isc_oper;
+						Subarrays[nn]->module.voltageOpenCircuit = out.Voc_oper;
+						Subarrays[nn]->module.angleOfIncidenceModifier = out.AOIModifier;
 
-					if (!std::isfinite(out.Power))
-					{
-						out.Power = 0;
-						out.Voltage = 0;
-						out.Current = 0;
-						out.Efficiency = 0;
-						out.CellTemp = tcell;
-						log(util::format("Non-finite power output calculated at [mdhm: %d %d %d %lg], set to zero.\n"
-							"could be due to anomolous equation behavior at very low irradiances (poa: %lg W/m2)",
-							wf.month, wf.day, wf.hour, wf.minute, Subarrays[nn]->poa.poaTotal), SSC_NOTICE);
-					}
+						// Output front-side irradiance after the cover
+						if (iyear == 0)
+						{
+							ipoa_front *= out.AOIModifier;
+							PVSystem->p_poaFront[nn][idx] = (radmode == Irradiance_IO::POA_R) ? (ssc_number_t)ipoa : (ssc_number_t)(ipoa_front);
+							PVSystem->p_poaTotal[nn][idx] = (radmode == Irradiance_IO::POA_R) ? (ssc_number_t)ipoa : (ssc_number_t)(ipoa_front + ipoa_rear);
 
-					// save DC module outputs for this subarray
-					Subarrays[nn]->module.dcPowerW = out.Power;
-					Subarrays[nn]->module.dcEfficiency = out.Efficiency * 100;
-					Subarrays[nn]->module.dcVoltage = out.Voltage;
-					Subarrays[nn]->module.temperatureCellCelcius = out.CellTemp;
-					Subarrays[nn]->module.currentShortCircuit = out.Isc_oper;
-					Subarrays[nn]->module.voltageOpenCircuit = out.Voc_oper;
-					Subarrays[nn]->module.angleOfIncidenceModifier = out.AOIModifier;
-
-					// Output front-side irradiance after the cover
-					if (iyear == 0)
-					{
-						ipoa_front *= out.AOIModifier;
-						PVSystem->p_poaFront[nn][idx] = (radmode == Irradiance_IO::POA_R) ? (ssc_number_t)ipoa : (ssc_number_t)(ipoa_front);
-						PVSystem->p_poaTotal[nn][idx] = (radmode == Irradiance_IO::POA_R) ? (ssc_number_t)ipoa : (ssc_number_t)(ipoa_front + ipoa_rear);
-
-						ts_accum_poa_front_total += ipoa_front * ref_area_m2 * Subarrays[nn]->nModulesPerString * Subarrays[nn]->nStrings;
-						ts_accum_poa_total_eff += ((radmode == Irradiance_IO::POA_R) ? ipoa : (ipoa_front + ipoa_rear)) * ref_area_m2 * Subarrays[nn]->nModulesPerString * Subarrays[nn]->nStrings;
+							ts_accum_poa_front_total += ipoa_front * ref_area_m2 * Subarrays[nn]->nModulesPerString * Subarrays[nn]->nStrings;
+							ts_accum_poa_total_eff += ((radmode == Irradiance_IO::POA_R) ? ipoa : (ipoa_front + ipoa_rear)) * ref_area_m2 * Subarrays[nn]->nModulesPerString * Subarrays[nn]->nStrings;
+						}
 					}
 
 					voltage_sum += out.Voltage;
