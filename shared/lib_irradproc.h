@@ -58,7 +58,7 @@
 */
 
 /**
-* \brief Function calculates the sun position given the local standard time and location.
+*   solarpos function calculates the sun position given the local standard time and location.
 *   This function is based on a paper by Michalsky published in Solar Energy
 *	Vol. 40, No. 3, pp. 227-235, 1988. It calculates solar position for the
 *	time and location passed to the function based on the Astronomical
@@ -72,128 +72,193 @@
 *	sunrise time of 7:30, the time passed to the function should be 7 hours and
 *	and 45 minutes).
 *
-* \param year (e.g. 1986)
-* \param month (1-12)
-* \param day day of month
-* \param hour hour of day local standard time (1-24)
-* \param minute minutes pas the hour, local standard time (1-24)
-* \param lat latitude in degrees, north positive
-* \param lng longitude in degrees, east positive
-* \param tz time zone, west longitudes negative
-* \param sunn array of elements to return sun parameters to calling function
-* \param sunn[0] sun azimuth in radians, measured east from north, 0 to 2*pi
-* \param sunn[1] sun zenith in radians, 0 to pi
-* \param sunn[2] sun elevation in radians, -pi/2 to pi/2
-* \param sunn[3] sun declination in radians
-* \param sunn[4] sunrise in local standard time (hrs), not corrected for refraction
-* \param sunn[5] sunset in local standard time (hrs), not corrected for refraction
-* \param sunn[6] eccentricity correction factor
-* \param sunn[7] true solar time (hrs)
-* \param sunn[8] extraterrestrial solar irradiance on horizontal at particular time (W/m2)
-* \return Array of sun angles passed by reference
+* \param[in] year (e.g. 1986)
+* \param[in] month (1-12)
+* \param[in] day day of month
+* \param[in] hour hour of day local standard time (1-24)
+* \param[in] minute minutes pas the hour, local standard time (1-24)
+* \param[in] lat latitude in degrees, north positive
+* \param[in] lng longitude in degrees, east positive
+* \param[in] tz time zone, west longitudes negative
+* \param[out] sunn array of elements to return sun parameters to calling function
+* \param[out] sunn[0] sun azimuth in radians, measured east from north, 0 to 2*pi
+* \param[out] sunn[1] sun zenith in radians, 0 to pi
+* \param[out] sunn[2] sun elevation in radians, -pi/2 to pi/2
+* \param[out] sunn[3] sun declination in radians
+* \param[out] sunn[4] sunrise in local standard time (hrs), not corrected for refraction
+* \param[out] sunn[5] sunset in local standard time (hrs), not corrected for refraction
+* \param[out] sunn[6] eccentricity correction factor
+* \param[out] sunn[7] true solar time (hrs)
+* \param[out] sunn[8] extraterrestrial solar irradiance on horizontal at particular time (W/m2)
 */
 void solarpos(int year,int month,int day,int hour,double minute,double lat,double lng,double tz,double sunn[9]);
 
 /**
-* \brief Function calculates the incident angle of direct beam radiation to a surface.
+* incidence function calculates the incident angle of direct beam radiation to a surface.
 * The calculation is done for a given sun position, latitude, and surface orientation. 
 * The modes available are fixed tilt, 1-axis tracking, and 2-axis tracking.
 *
-* \param mode 0 for fixed-tilt, 1 for 1-axis tracking, 2 for 2-axis tracking, 3 for azimuth-axis tracking, 4 for timeseries tilt tracking (in "set surface" function, this is set as mode 0)
-* \param tilt tilt angle of surface from horizontal in degrees (mode 0), or tilt angle of tracker axis from horizontal in degrees (mode 1), MUST BE FROM 0 to 90 degrees.
-* \param sazm surface azimuth in degrees of collector (mode 0), 
-				or surface azimuth of tracker axis (mode 1) with axis azimuth directed from raised to lowered end of axis if axis tilted.
-* \param rlim plus or minus rotation in degrees permitted by physical constraints of tracker, range is 0 to 180 degrees.
-* \param zen sun zenith in radians, MUST BE LESS THAN PI/2
-* \param azm sun azimuth in radians, measured east from north
-* \param en_backtrack enable backtracking, using Ground coverage ratio ( below )
-* \param gcr  ground coverage ratio ( used for backtracking )
-* \param angle array of elements to return angles to calling function
-* \param angle[0] incident angle in radians
-* \param angle[1] tilt angle of surface from horizontal in radians
-* \param angle[2] surface azimuth in radians, measured east from north
-* \param angle[3] tracking axis rotation angle in radians, measured from surface normal of unrotating axis (only for 1 axis trackers)
-* \param angle[4] backtracking difference (rot - ideal_rot) will be zero except in case of backtracking for 1 axis tracking
-* \return Array of surface angles passed by reference
+* \param[in] mode 0 for fixed-tilt, 1 for 1-axis tracking, 2 for 2-axis tracking, 3 for azimuth-axis tracking, 4 for timeseries tilt tracking (in "set surface" function, this is set as mode 0)
+* \param[in] tilt tilt angle of surface from horizontal in degrees (mode 0), or tilt angle of tracker axis from horizontal in degrees (mode 1), MUST BE FROM 0 to 90 degrees.
+* \param[in] sazm surface azimuth in degrees of collector (mode 0), or surface azimuth of tracker axis (mode 1) with axis azimuth directed from raised to lowered end of axis if axis tilted.
+* \param[in] rlim plus or minus rotation in degrees permitted by physical constraints of tracker, range is 0 to 180 degrees.
+* \param[in] zen sun zenith in radians, MUST BE LESS THAN PI/2
+* \param[in] azm sun azimuth in radians, measured east from north
+* \param[in] en_backtrack enable backtracking, using Ground coverage ratio ( below )
+* \param[in] gcr  ground coverage ratio ( used for backtracking )
+* \param[out] angle array of elements to return angles to calling function
+* \param[out] angle[0] incident angle in radians
+* \param[out] angle[1] tilt angle of surface from horizontal in radians
+* \param[out] angle[2] surface azimuth in radians, measured east from north
+* \param[out] angle[3] tracking axis rotation angle in radians, measured from surface normal of unrotating axis (only for 1 axis trackers)
+* \param[out] angle[4] backtracking difference (rot - ideal_rot) will be zero except in case of backtracking for 1 axis tracking
 */
 void incidence(int mode,double tilt,double sazm,double rlim,double zen,double azm, bool en_backtrack, double gcr, double angle[5]);
 
 
 /**
-* \brief Defines the Perez function for calculating values of diffuse + direct 
+* Perez function for calculating values of diffuse + direct 
 * solar radiation + ground reflected radiation for a tilted surface and returns the total plane-of-array irradiance(poa),
 * see also isotropic(), hdkr().
 *
 * Function does not check all input for valid entries; consequently, this should be
 * done before calling the function.  (Reference: Perez et al, Solar Energy Vol. 44, No.5, pp.271-289,1990.) 
 *
-* \param hextra extraterrestrial irradiance on horizontal surface (W/m2) (unused in perez model)
-* \param dn direct normal radiation (W/m2)
-* \param df diffuse horizontal radiation (W/m2)
-* \param alb surface albedo (decimal fraction)
-* \param inc incident angle of direct beam radiation to surface in radians
-* \param tilt surface tilt angle from horizontal in radians
-* \param zen sun zenith angle in radians
-* \param poa calculated plane-of-array irradiances (W/m2)
-* \param poa[0] incident beam
-* \param poa[1] incident sky diffuse
-* \param poa[2] incident ground diffuse
-* \param diffc diffuse components, if an array is provided
-* \param diffc[0] isotropic diffuse
-* \param diffc[1] circumsolar diffuse
-* \param diffc[2] horizon brightening
-* \return Array of poa irradiances and diffuse irradiance components passed by reference
+* \param[in] hextra extraterrestrial irradiance on horizontal surface (W/m2) (unused in perez model)
+* \param[in] dn direct normal radiation (W/m2)
+* \param[in] df diffuse horizontal radiation (W/m2)
+* \param[in] alb surface albedo (decimal fraction)
+* \param[in] inc incident angle of direct beam radiation to surface in radians
+* \param[in] tilt surface tilt angle from horizontal in radians
+* \param[in] zen sun zenith angle in radians
+* \param[out] poa calculated plane-of-array irradiances (W/m2)
+* \param[out] poa[0] incident beam
+* \param[out] poa[1] incident sky diffuse
+* \param[out] poa[2] incident ground diffuse
+* \param[out] diffc diffuse components, if an array is provided
+* \param[out] diffc[0] isotropic diffuse
+* \param[out] diffc[1] circumsolar diffuse
+* \param[out] diffc[2] horizon brightening
 */
 void perez( double hextra, double dn,double df,double alb,double inc,double tilt,double zen, double poa[3], double diffc[3] /* can be NULL */ );
 
 /**
-* \brief Defines isotropic sky model for diffuse irradiance on a tilted surface, see also perez(), hdkr().
+* Isotropic sky model for diffuse irradiance on a tilted surface, see also perez(), hdkr().
 *
-* \param hextra extraterrestrial irradiance on horizontal surface (W/m2) (unused in perez model)
-* \param dn direct normal radiation (W/m2)
-* \param df diffuse horizontal radiation (W/m2)
-* \param alb surface albedo (decimal fraction)
-* \param inc incident angle of direct beam radiation to surface in radians
-* \param tilt surface tilt angle from horizontal in radians
-* \param zen sun zenith angle in radians
-* \param poa calculated plane-of-array irradiances (W/m2)
-* \param poa[0] incident beam
-* \param poa[1] incident sky diffuse
-* \param poa[2] incident ground diffuse
-* \param diffc diffuse components, if an array is provided
-* \param diffc[0] isotropic diffuse
-* \param diffc[1] circumsolar diffuse
-* \param diffc[2] horizon brightening
-* \return Array of poa irradiances and diffuse irradiance components passed by reference
+* \param[in] hextra extraterrestrial irradiance on horizontal surface (W/m2) (unused in perez model)
+* \param[in] dn direct normal radiation (W/m2)
+* \param[in] df diffuse horizontal radiation (W/m2)
+* \param[in] alb surface albedo (decimal fraction)
+* \param[in] inc incident angle of direct beam radiation to surface in radians
+* \param[in] tilt surface tilt angle from horizontal in radians
+* \param[in] zen sun zenith angle in radians
+* \param[out] poa calculated plane-of-array irradiances (W/m2)
+* \param[out] poa[0] incident beam
+* \param[out] poa[1] incident sky diffuse
+* \param[out] poa[2] incident ground diffuse
+* \param[out] diffc diffuse components, if an array is provided
+* \param[out] diffc[0] isotropic diffuse
+* \param[out] diffc[1] circumsolar diffuse
+* \param[out] diffc[2] horizon brightening
 */
 void isotropic( double hextra, double dn, double df, double alb, double inc, double tilt, double zen, double poa[3], double diffc[3] /* can be NULL */ );
 
 /**
-* \brief Defines Hay, Davies, Klutcher, Reindl model for diffuse irradiance on a tilted surface, see also perez(), isotropic().
+* HDKR (Hay, Davies, Klutcher, Reindl) model for diffuse irradiance on a tilted surface, see also perez(), isotropic().
 *
-* \param hextra extraterrestrial irradiance on horizontal surface (W/m2) (unused in perez model)
-* \param dn direct normal radiation (W/m2)
-* \param df diffuse horizontal radiation (W/m2)
-* \param alb surface albedo (decimal fraction)
-* \param inc incident angle of direct beam radiation to surface in radians
-* \param tilt surface tilt angle from horizontal in radians
-* \param zen sun zenith angle in radians
-* \param poa calculated plane-of-array irradiances (W/m2)
-* \param poa[0] incident beam
-* \param poa[1] incident sky diffuse
-* \param poa[2] incident ground diffuse
-* \param diffc diffuse components, if an array is provided
-* \param diffc[0] isotropic diffuse
-* \param diffc[1] circumsolar diffuse
-* \param diffc[2] horizon brightening
-* \return Array of poa irradiances and diffuse irradiance components passed by reference
+* \param[in] hextra extraterrestrial irradiance on horizontal surface (W/m2) (unused in perez model)
+* \param[in] dn direct normal radiation (W/m2)
+* \param[in] df diffuse horizontal radiation (W/m2)
+* \param[in] alb surface albedo (decimal fraction)
+* \param[in] inc incident angle of direct beam radiation to surface in radians
+* \param[in] tilt surface tilt angle from horizontal in radians
+* \param[in] zen sun zenith angle in radians
+* \param[out] poa calculated plane-of-array irradiances (W/m2)
+* \param[out] poa[0] incident beam
+* \param[out] poa[1] incident sky diffuse
+* \param[out] poa[2] incident ground diffuse
+* \param[out] diffc diffuse components
+* \param[out] diffc[0] isotropic diffuse
+* \param[out] diffc[1] circumsolar diffuse
+* \param[out] diffc[2] horizon brightening
 */
 void hdkr( double hextra, double dn, double df, double alb, double inc, double tilt, double zen, double poa[3], double diffc[3] /* can be NULL */ );
 
-// Create functions for POA decomposition
+
+/**
+* poaDecomp is a function to decompose input plane-of-array irradiance into direct normal, diffuse horizontal, and global horizontal.
+*
+* \param[in] weatherFilePOA Plane of array irradiance measured from weatherfile (W/m2)
+* \param[in] angle[] surface angles calculated from incidence()
+* \param[in] sun sun position angles calculated from solarpos()
+* \param[in] alb albedo (0-1)
+* \param[out] dn Direct Normal Irradiance (W/m2)
+* \param[out] df Diffuse Horizontal Irradiance (W/m2)
+* \param[out] gh Global Horizontal Irradiance (W/m2)
+* \param[out] poa calculated plane-of-array irradiances (beam, sky diffuse, ground diffuse) (W/m2)
+* \param[out] diffc diffuse components (isotropic, circumsolar, horizon) (W/m2)
+* 
+*/
 void poaDecomp( double wfPOA, double angle[], double sun[], double alb, poaDecompReq* pA, double &dn, double &df, double &gh, double poa[3], double diffc[3]);
+
+/**
+* ModifiedDISC calculates direct normal (beam) radiation from global horizontal radiation.
+*  This function uses a disc beam model to calculate the beam irradiance returned. 
+*  The argument g is an array of 3 values. The values are the global irradiance of the
+*  previous reading, the current reading ,and the next reading in that order. The argument
+*  z uses the same format, except the values are the respective solar zenith angles. If any 
+*  of the g or z values are not available or the previous or next readings did not occur 
+*  within 1.5 hours of the current reading then the appropriate value or values should be 
+*  replaced with a -999.0. If the argument td is missing then the value -999.0 should be 
+*  used in place of the missing argument. The current global irradiance (g[1]) must have a
+*  value. If the dew point temperature (td) is missing then td is not used to find an index 
+*  into the correction matrix (cm), instead a special column in the matrix is used. If the 
+*  previous global irradiance (g[0]) or solar zenith angle (z[0]) and the next global 
+*  irradiance (g[2]) or solar zenith angle (z[2]) are missing then delta kt' (dkt1) is not 
+*  used to find an index into the correction matrix (cm), instead a special column in the 
+*  matrix is used.
+*
+* \param[in] g[3] global irradiance array (watts / sq. meter)
+* \param[in] z[3] solar zenith angle array (radians)
+* \param[in] td dew point temperature (degrees c)
+* \param[in] doy julian day of year
+* \param[in] alt altitude of site (meters)
+* \param[out] dn beam irradiance (W/m2)
+*/
 double ModifiedDISC(const double g[3], const double z[3], double td, double alt, int doy, double &dn);
+
+/**
+* ModifiedDISC calculates direct normal (beam) radiation from global horizontal radiation.
+* This is a modification to the orininally provided Modified-DISC model which takes
+* as input the four bin variables and GHI and returns the resulting DNI
+*
+* \param[in] kt[3] incidence angle modifiers for direct, diffuse, global
+* \param[in] kt1[3] kt prime
+* \param[in] g[3] global irradiance array (watts / sq. meter)
+* \param[in] z[3] solar zenith angle array (radians)
+* \param[in] td dew point temperature (degrees c)
+* \param[in] alt altitude of site (meters)
+* \param[in] doy julian day of year
+* \param[out] dn beam irradiance (watts / sq. meter) through call-by-reference
+*/
 void ModifiedDISC(const double kt[3], const double kt1[3], const double g[3], const double z[3], double td, double alt, int doy, double &dn);
+
+/**
+* shadeFraction1x calculates if the system is shaded based on the sun position and surface position
+*
+* \param[in] solazi sun azimuth in radians, measured east from north, 0 to 2*pi
+* \param[in] solzen sun zenith in radians, 0 to pi
+* \param[in] tilt surface tilt angle from horizontal in radians
+* \param[in] surface azimuth in degrees of collector
+* \param[in] gcr grount coverage ratio of system
+* \param[in] rotation tracking axis rotation angle in radians, measured from surface normal of unrotating axis (only for 1 axis trackers)
+* \return fraction shaded (0-1) if system is shaded (0 for unshaded)
+*/
+double shadeFraction1x(double solazi, double solzen, double tilt, double azimuth, double gcr, double rotation);
+
+double backtrack(double solazi, double solzen,
+	double axis_tilt, double axis_azimuth,
+	double rotlim, double gcr, double rotation_ideal);
 
 class irrad
 {
@@ -301,16 +366,5 @@ public:
 	void getBackSurfaceIrradiances(double pvBackShadeFraction, double rowToRow, double verticalHeight, double clearanceGround, double distanceBetweenRows, double horizontalLength, std::vector<double> rearGroundGHI, std::vector<double> frontGroundGHI, std::vector<double> frontReflected, std::vector<double> & rearIrradiance, double & rearAverageIrradiance);
 	void getFrontSurfaceIrradiances(double pvBackShadeFraction, double rowToRow, double verticalHeight, double clearanceGround, double distanceBetweenRows, double horizontalLength, std::vector<double> frontGroundGHI, std::vector<double> & frontIrradiance, double & frontAverageIrradiance, std::vector<double> & frontReflected);
 };
-
-
-
-
-double shade_fraction_1x( double solazi, double solzen, 
-						 double axis_tilt, double axis_azimuth, 
-						 double gcr, double rotation );
-
-double backtrack( double solazi, double solzen, 
-				 double axis_tilt, double axis_azimuth, 
-				 double rotlim, double gcr, double rotation_ideal);
 
 #endif
