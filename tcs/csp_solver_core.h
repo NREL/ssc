@@ -281,6 +281,7 @@ public:
         int m_optimize_frequency;
         int m_disp_steps_per_hour;
         int m_optimize_horizon;
+		int m_horizon_update_frequency;
         double m_solver_timeout;
         double m_mip_gap;
         int m_presolve_type;
@@ -328,6 +329,7 @@ public:
             m_optimize_frequency = 24;          //[hr] Optimization occurs every X hours
             m_disp_steps_per_hour = 1;          //[-] Steps per hour for dispatch optimization
             m_optimize_horizon = 48;            //[hr] Optimization time horizon
+			m_horizon_update_frequency = 24;	//[hr] Optimization time horizon is updated every X hours
             m_solver_timeout = 5.;
             m_mip_gap = 0.055;
             m_max_iterations = 10000;

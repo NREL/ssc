@@ -296,7 +296,8 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     { SSC_INPUT,        SSC_NUMBER,      "is_dispatch",          "Allow dispatch optimization?",  /*TRUE=1*/                          "-",            "",            "sys_ctrl_disp_opt", "?=0",                     "",                      "" }, 
     { SSC_INPUT,        SSC_NUMBER,      "disp_horizon",         "Time horizon for dispatch optimization",                            "hour",         "",            "sys_ctrl_disp_opt", "is_dispatch=1",           "",                      "" }, 
     { SSC_INPUT,        SSC_NUMBER,      "disp_frequency",       "Frequency for dispatch optimization calculations",                  "hour",         "",            "sys_ctrl_disp_opt", "is_dispatch=1",           "",                      "" }, 
-    { SSC_INPUT,        SSC_NUMBER,      "disp_steps_per_hour",  "Time steps per hour for dispatch optimization calculations",        "-",            "",            "sys_ctrl_disp_opt", "?=1",                     "",                      "" }, 
+	{ SSC_INPUT,        SSC_NUMBER,      "disp_horizon_update",  "Frequency for dispatch time horizon update",						  "hour",         "",            "sys_ctrl_disp_opt", "?=0",					 "",                      "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "disp_steps_per_hour",  "Time steps per hour for dispatch optimization calculations",        "-",            "",            "sys_ctrl_disp_opt", "?=1",                     "",                      "" }, 
     { SSC_INPUT,        SSC_NUMBER,      "disp_max_iter",        "Max. no. dispatch optimization iterations",                         "-",            "",            "sys_ctrl_disp_opt", "is_dispatch=1",           "",                      "" }, 
     { SSC_INPUT,        SSC_NUMBER,      "disp_timeout",         "Max. dispatch optimization solve duration",                         "s",            "",            "sys_ctrl_disp_opt", "is_dispatch=1",           "",                      "" }, 
     { SSC_INPUT,        SSC_NUMBER,      "disp_mip_gap",         "Dispatch optimization solution tolerance",                          "-",            "",            "sys_ctrl_disp_opt", "is_dispatch=1",           "",                      "" }, 
@@ -1604,6 +1605,22 @@ public:
 					tou.mc_dispatch_params.m_w_lim_full.at(i) = (double)wlim_series[i];
 			}
 
+
+
+			tou.mc_dispatch_params.m_horizon_update_frequency = tou.mc_dispatch_params.m_optimize_frequency;
+			int horizon_update = as_integer("disp_horizon_update");
+			if (horizon_update > 0)
+			{
+				if (horizon_update % tou.mc_dispatch_params.m_optimize_frequency == 0)
+					tou.mc_dispatch_params.m_horizon_update_frequency = horizon_update;
+				else
+					throw exec_error("tcsmolten_salt", "The specified dispatch horizon update frequency ('disp_horizon_update') must be an integer multiple of the frequency for dispatch optimization calculations ('disp_freq')");
+
+				if (tou.mc_dispatch_params.m_horizon_update_frequency > tou.mc_dispatch_params.m_optimize_horizon)
+					throw exec_error("tcsmolten_salt", "The specified dispatch horizon update frequency ('disp_horizon_update') cannot be longer than the specified optimization horizon ('disp_horizon').");
+			}
+
+
             if( tou.mc_dispatch_params.m_is_stochastic_dispatch )
             {
                 if(! tou.mc_dispatch_params.m_is_ampl_engine )
@@ -1638,21 +1655,35 @@ public:
 
 				// check for mismatch between dispatch time step and scenario time steps
 				scenarios_ok = true;
-				int n_opt_periods = (int)ceil(8760. / (double)tou.mc_dispatch_params.m_optimize_frequency);
-				int nstep = (tou.mc_dispatch_params.m_optimize_horizon * tou.mc_dispatch_params.m_disp_steps_per_hour)*n_opt_periods;
-				int nstep_min = nstep - (tou.mc_dispatch_params.m_optimize_horizon - tou.mc_dispatch_params.m_optimize_frequency) *  tou.mc_dispatch_params.m_disp_steps_per_hour; // nstep without look-ahead for last optimization period
-				if (tou.mc_dispatch_params.m_is_dni_scenarios && tou.mc_dispatch_params.m_fc_dni_scenarios.nrows() != nstep && tou.mc_dispatch_params.m_fc_dni_scenarios.nrows() != nstep_min)
+
+				int opt_freq = tou.mc_dispatch_params.m_optimize_frequency;
+				int opt_horizon = tou.mc_dispatch_params.m_optimize_horizon;
+				int horizon_update = tou.mc_dispatch_params.m_horizon_update_frequency;
+
+				int n_update_periods = (int)ceil(8760. / (double)horizon_update);	// optimization horizon updates per year
+				int n_opt_periods = (int)ceil(8760. / (double)opt_freq);			// optimizations per year
+				int n_opt_per_update = horizon_update / opt_freq;					// optimizations per horizon update 
+				int n_hour_per_update = (n_opt_per_update * opt_horizon) - opt_freq * (n_opt_per_update*(n_opt_per_update - 1) / 2);	// hours in scenarios per horizon update
+				int nstep = tou.mc_dispatch_params.m_disp_steps_per_hour * n_hour_per_update * n_update_periods;
+
+				if (n_opt_periods < n_update_periods * n_opt_per_update)  
+				{
+					int n_opt_last_update = n_opt_periods - (n_update_periods - 1) * n_opt_per_update;  // optimizations in last horizon udpate
+					int n_hour_last_update = (n_opt_last_update * opt_horizon) - opt_freq * (n_opt_last_update*(n_opt_last_update - 1) / 2);
+					nstep = tou.mc_dispatch_params.m_disp_steps_per_hour * (n_hour_per_update * (n_update_periods - 1) + n_hour_last_update);  // expected steps in scenario files 
+				}
+
+				if (tou.mc_dispatch_params.m_is_dni_scenarios && tou.mc_dispatch_params.m_fc_dni_scenarios.nrows() != nstep)
 					scenarios_ok = false;
-				if (tou.mc_dispatch_params.m_is_tdry_scenarios && tou.mc_dispatch_params.m_fc_tdry_scenarios.nrows() != nstep && tou.mc_dispatch_params.m_fc_tdry_scenarios.nrows() != nstep_min)
+				if (tou.mc_dispatch_params.m_is_tdry_scenarios && tou.mc_dispatch_params.m_fc_tdry_scenarios.nrows() != nstep)
 					scenarios_ok = false;
-				if (tou.mc_dispatch_params.m_is_price_scenarios && tou.mc_dispatch_params.m_fc_price_scenarios.nrows() != nstep && tou.mc_dispatch_params.m_fc_price_scenarios.nrows() != nstep_min)
+				if (tou.mc_dispatch_params.m_is_price_scenarios && tou.mc_dispatch_params.m_fc_price_scenarios.nrows() != nstep)
 					scenarios_ok = false;
 				if (!scenarios_ok)
-					throw exec_error("tcsmolten_salt", "The number of time points in at least one of the provided scenarios does not match the number specified by 'disp_steps_per_hour' and 'disp_opt_horizon'");
+					throw exec_error("tcsmolten_salt", "The number of time points in at least one of the provided scenarios does not match the number calculated from 'disp_steps_per_hour', 'disp_frequency, 'disp_horizon', and 'disp_horizon_update'");
 				
             }
 
-	
 		}
 		tou.mc_dispatch_params.m_is_block_dispatch = ! tou.mc_dispatch_params.m_dispatch_optimize;      //mw
 		tou.mc_dispatch_params.m_use_rule_1 = true;

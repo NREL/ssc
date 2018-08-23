@@ -883,6 +883,13 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 				&& disp_time_last != mc_kernel.mc_sim_info.ms_ts.m_time
                 )
             {
+				
+				// updated optimization time horizon
+				double time_start = mc_kernel.mc_sim_info.ms_ts.m_time - baseline_step;
+				if (mc_tou.mc_dispatch_params.m_horizon_update_frequency != mc_tou.mc_dispatch_params.m_optimize_frequency)
+					opt_horizon = mc_tou.mc_dispatch_params.m_optimize_horizon - (int)(((int)time_start % (3600 * mc_tou.mc_dispatch_params.m_horizon_update_frequency)) / 3600.);
+
+
                 //if this is the last day of the year, update the optimization horizon to be no more than the last 24 hours. 
 				
                 if( hour_now >= (8760 - opt_horizon) )
@@ -956,15 +963,13 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 
                 //update the forecast scenarios, if needed
                 { 
-                    int nstepopt = opt_horizon * mc_tou.mc_dispatch_params.m_disp_steps_per_hour;
-                    int stepstart = mc_kernel.mc_sim_info.ms_ts.m_time/ baseline_step - 1;
 
-					double opt_period = (mc_kernel.mc_sim_info.ms_ts.m_time - baseline_step) / (3600.*mc_tou.mc_dispatch_params.m_optimize_frequency);
-					int sc_start = (int)opt_period * mc_tou.mc_dispatch_params.m_optimize_horizon*mc_tou.mc_dispatch_params.m_disp_steps_per_hour;  // First point in scenario arrays
-
+                    int nstepopt = opt_horizon * mc_tou.mc_dispatch_params.m_disp_steps_per_hour;	
+                    int stepstart = (int) (mc_kernel.mc_sim_info.ms_ts.m_time/ baseline_step) - 1; 
 
 					if (mc_tou.mc_dispatch_params.m_is_stochastic_dispatch)
                     {
+
 						dispatch.forecast_params.is_stochastic = mc_tou.mc_dispatch_params.m_is_stochastic_dispatch;
 
                         //check which scenario tables are provided
@@ -975,6 +980,21 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
                         //resize arrays. note price_scenarios is sized above.
                         dispatch.forecast_outputs.dni_scenarios.resize( nstepopt, dispatch.forecast_params.n_scenarios );
                         dispatch.forecast_outputs.tdry_scenarios.resize( nstepopt, dispatch.forecast_params.n_scenarios );
+
+
+						// find location in full scenario input arrays
+						int opt_period = (int)(time_start / 3600. / mc_tou.mc_dispatch_params.m_optimize_frequency);
+						int update_period = (int)floor(time_start / 3600. / mc_tou.mc_dispatch_params.m_horizon_update_frequency);
+
+						int n_opt_per_update = mc_tou.mc_dispatch_params.m_horizon_update_frequency / mc_tou.mc_dispatch_params.m_optimize_frequency;	// optimizations per horizon update 
+						int n_hour_per_update = (n_opt_per_update * mc_tou.mc_dispatch_params.m_optimize_horizon) - mc_tou.mc_dispatch_params.m_optimize_frequency * (n_opt_per_update*(n_opt_per_update - 1) / 2);
+						int nstep_per_update = n_hour_per_update * mc_tou.mc_dispatch_params.m_disp_steps_per_hour;	// time steps in full input arrays per optimizaton horizon update 
+
+						int sc_start = update_period * nstep_per_update;  // first point in scenario arrays for this optimization
+						int p = opt_period - update_period * n_opt_per_update;
+						if (p > 0)
+							sc_start += mc_tou.mc_dispatch_params.m_disp_steps_per_hour * (mc_tou.mc_dispatch_params.m_optimize_horizon*p - mc_tou.mc_dispatch_params.m_optimize_frequency * (p*(p - 1) / 2)); 
+
 
 
                         //assign the data
