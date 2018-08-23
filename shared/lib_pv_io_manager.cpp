@@ -371,11 +371,13 @@ PVSystem_IO::PVSystem_IO(compute_module* cm, std::string cmName, Simulation_IO *
 	Inverter = InverterIO;
 
 	numberOfSubarrays = Subarrays.size();
-
+	stringsInParallel = 0;
+	for (size_t s = 0; s < numberOfSubarrays; s++) {
+		stringsInParallel += static_cast<int>(Subarrays[s]->nStrings);
+	}
 	AllocateOutputs(cm);
 
 	modulesPerString = cm->as_integer("modules_per_string");
-	stringsInParallel = cm->as_integer("strings_in_parallel");
 	numberOfInverters = cm->as_integer("inverter_count");
 	ratedACOutput = Inverter->ratedACOutput * numberOfInverters;
 	acDerate = 1 - cm->as_double("acwiring_loss") / 100;	

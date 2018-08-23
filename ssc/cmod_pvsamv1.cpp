@@ -84,7 +84,6 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "sky_model",                                   "Diffuse sky model",                                    "",         "0=isotropic,1=hkdr,2=perez",    "pvsamv1",              "?=2",                      "INTEGER,MIN=0,MAX=2",           "" },
 
 	{ SSC_INPUT,        SSC_NUMBER,      "modules_per_string",                          "Modules per string",                                    "",        "",                              "pvsamv1",              "*",                        "INTEGER,POSITIVE",              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "strings_in_parallel",                         "String in parallel",                                    "",        "",                              "pvsamv1",              "*",                        "INTEGER,POSITIVE",              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "inverter_count",                              "Number of inverters",                                   "",        "",                              "pvsamv1",              "*",                        "INTEGER,POSITIVE",              "" },
 
 	{ SSC_INPUT,        SSC_NUMBER,      "enable_mismatch_vmax_calc",                   "Enable mismatched subarray Vmax calculation",           "",        "",                              "pvsamv1",              "?=0",                      "BOOLEAN",                       "" },
@@ -872,9 +871,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 	double module_watts_stc = Subarrays[0]->Module->moduleWattsSTC;
 	bool enable_mismatch_vmax_calc = Subarrays[0]->Module->enableMismatchVoltageCalc;
 	int modules_per_string = PVSystem->modulesPerString;
-	int strings_in_parallel = PVSystem->stringsInParallel;
 	SharedInverter * sharedInverter = PVSystem->m_sharedInverter.get();
-
 
 	double annual_snow_loss = 0;
 	
@@ -894,7 +891,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 		Subarrays[nn]->selfShadingInputs.row_space = b / Subarrays[nn]->groundCoverageRatio;
 	}
 
-	double nameplate_kw = modules_per_string * strings_in_parallel * module_watts_stc * util::watt_to_kilowatt;
+	double nameplate_kw = modules_per_string *  PVSystem->stringsInParallel * module_watts_stc * util::watt_to_kilowatt;
 
 	// Warning workaround
 	static bool is32BitLifetime = (__ARCHBITS__ == 32 && system_use_lifetime_output);
@@ -991,8 +988,6 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 					if (Subarrays[nn]->trackMode == Subarray_IO::SEASONAL_TILT)
 						Subarrays[nn]->tiltDegrees = Subarrays[nn]->monthlyTiltDegrees[month_idx]; //overwrite the tilt input with the current tilt to be used in calculations
 						
-
-
 					// save POA data
 					if(wf.poa > 0)
 						Subarrays[nn]->poa.poaAll.POA[ii] = wf.poa;
@@ -1070,7 +1065,6 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 						angle[3] = -999;
 						angle[4] = -999;	
 					}
-
 
 					Subarrays[nn]->poa.poaAll.inc[ii] = angle[ 0 ];
 					Subarrays[nn]->poa.poaAll.tilt[ii] = angle[ 1 ];

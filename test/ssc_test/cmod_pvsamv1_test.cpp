@@ -243,7 +243,6 @@ TEST_F(CMPvsamv1PowerIntegration, NoFinancialModelSystemDesign)
 	std::map<std::string, double> pairs;
 	pairs["modules_per_string"] = 6;
 	pairs["subarray1_nstrings"] = 49;
-	pairs["strings_in_parallel"] = 49;
 	pairs["inverter_count"] = 22;
 	pairs["subarray1_track_mode"] = 0;
 
@@ -353,7 +352,6 @@ TEST_F(CMPvsamv1PowerIntegration, NoFinancialModelShading)
 
 	// 2 subarrays, one pointing east, one west
 	pairs["modules_per_string"] = 6;
-	pairs["strings_in_parallel"] = 4;
 	pairs["inverter_count"] = 2;
 	pairs["subarray1_nstrings"] = 2;
 	pairs["subarray1_azimuth"] = 90;
