@@ -4,6 +4,7 @@
   * [custom_sf_pipe_sizes](#custom_sf_pipe_sizes)
   * [custom_sgs_pipe_sizes](#custom_sgs_pipe_sizes)
   * [custom_tes_p_loss](#custom_tes_p_loss)
+  * [DP_SGS](#dp_sgs)
   * [has_hot_tank_bypass](#has_hot_tank_bypass)
   * [k_tes_loss_coeffs](#k_tes_loss_coeffs)
   * [L_rnr_pb](#l_rnr_pb)
@@ -52,6 +53,8 @@
   * [pipe_runner_wallthk](#pipe_runner_wallthk)
   * [pipe_sgs_diams](#pipe_sgs_diams)
   * [pipe_sgs_mdot_dsn](#pipe_sgs_mdot_dsn)
+  * [pipe_sgs_P_dsn](#pipe_sgs_p_dsn)
+  * [pipe_sgs_T_dsn](#pipe_sgs_t_dsn)
   * [pipe_sgs_vel_dsn](#pipe_sgs_vel_dsn)
   * [pipe_sgs_wallthk](#pipe_sgs_wallthk)
  
@@ -70,6 +73,9 @@ true if the SGS diameters and wall thicknesses parameters should be used instead
 
 ### custom_tes_p_loss
 true if the TES piping losses should be calculated using the TES pipe lengths and minor loss coefficients (k_tes_loss_coeffs) or false if using the pumping power parameters on the parasitics page. Default = false. [^](#toc)
+
+### DP_SGS
+the pressure drop in bar within the steam generator system (SGS) Default = 0. [^](#toc)
 
 ### has_hot_tank_bypass
 true if the solar field bypass valve causes the field htf to bypasses just the hot tank (and power block and auxiliary boiler) and enter the cold tank before flowing back to the field. Value is false if the bypass valve bypasses both the hot and cold tank. Default = false. [^](#toc)
@@ -105,7 +111,7 @@ north/south separation between subfields, in meters, defined as the shortest dis
 location of the first header expansion loop. Default = 1, which means that the first expansion loop is after the first collector loop closest to the runner. [^](#toc)
 
 ### sf_hdr_diams
-custom diameters for the header piping as read from the modified output files. Utilized if custom_sf_pipe_sizes is true. Do not change the number of values (sections) as this will result in unpredictable model behavior. [^](#toc)
+custom inner diameters for the header piping as read from the modified output files. Utilized if custom_sf_pipe_sizes is true. Do not change the number of values (sections) as this will result in unpredictable model behavior. [^](#toc)
  
 ### sf_hdr_lengths
 custom lengths for the header piping as read from the modified output files. Utilized if custom_sf_pipe_sizes is true. Changing the lengths does not affect the field layout. Do not change the number of values (sections) as this will result in unpredictable model behavior. [^](#toc)
@@ -114,7 +120,7 @@ custom lengths for the header piping as read from the modified output files. Uti
 custom wall thicknesses for the header piping as read from the modified output files. Utilized if custom_sf_pipe_sizes is true. Do not change the number of values (sections) as this will result in unpredictable model behavior. [^](#toc)
  
 ### sf_rnr_diams
-custom diameters for the runner piping as read from the modified output files. Utilized if custom_sf_pipe_sizes is true. Do not change the number of values (sections) as this will result in unpredictable model behavior. [^](#toc)
+custom inner diameters for the runner piping as read from the modified output files. Utilized if custom_sf_pipe_sizes is true. Do not change the number of values (sections) as this will result in unpredictable model behavior. [^](#toc)
  
 ### sf_rnr_lengths
 custom lengths for the runner piping as read from the modified output files. Utilized if custom_sf_pipe_sizes is true. Changing the lengths does not affect the field layout. Do not change the number of values (sections) as this will result in unpredictable model behavior. [^](#toc)
@@ -123,7 +129,7 @@ custom lengths for the runner piping as read from the modified output files. Uti
 custom wall thicknesses for the runner piping as read from the modified output files. Utilized if custom_sf_pipe_sizes is true. Do not change the number of values (sections) as this will result in unpredictable model behavior. [^](#toc)
  
 ### sgs_diams
-custom diameters for the SGS piping as read from the modified output files. Utilized if custom_sgs_pipe_sizes is true. Do not change the number of values (sections) as this will result in unpredictable model behavior. [^](#toc)
+custom inner diameters for the SGS piping as read from the modified output files. Utilized if custom_sgs_pipe_sizes is true. Do not change the number of values (sections) as this will result in unpredictable model behavior. [^](#toc)
 
 Collection Sections:
 - 0: &nbsp;&nbsp;&nbsp; Solar field (SF) pump suction header to individual SF pump inlet
@@ -170,7 +176,7 @@ design-point velocity for sizing the diameters of the TES piping [m/s]. Default 
 
 ## Outputs
 ### pipe_header_diams
-diameters in meters of all of the header sections in the cold and hot headers in one subfield. The first diameter is that before the first set of loops in the cold header and the last diameter is that after the last set of loops in the hot header. [^](#toc)
+inner diameters in meters of all of the header sections in the cold and hot headers in one subfield. The first diameter is that before the first set of loops in the cold header and the last diameter is that after the last set of loops in the hot header. [^](#toc)
 
 ### pipe_header_expansions
 number of expansions or contractions in the given header section [^](#toc)
@@ -218,7 +224,7 @@ temperature in Celsius of the heat transfer fluid entering each node in the fart
 - n-1: &nbsp;&nbsp;&nbsp; the outlet interconnect carrying twice the loop mass flow rate
 
 ### pipe_runner_diams
-diameters in meters of the runners listed in L_runner. The first diameter is for the runner that carries half the total mass flow. Example diameters are: [^](#toc)
+inner diameters in meters of the runners listed in L_runner. The first diameter is for the runner that carries half the total mass flow. Example diameters are: [^](#toc)
 * 2 field sections = {x1}
 * 4 field sections = {x1, x1}
 * 6 field sections = {x1, x2}
@@ -252,10 +258,16 @@ velocity in m/s of the heat transfer fluid in each runner section at design cond
 wall thickness of runner pipe sections in [m] [^](#toc)
 
 ### pipe_sgs_diams
-SGS pipe diameters in [m] [^](#toc)
+SGS pipe inner diameters in [m] [^](#toc)
  
 ### pipe_sgs_mdot_dsn
 SGS mass flow in each pipe section in [kg/s] [^](#toc)
+
+### pipe_sgs_P_dsn
+SGS pressure in each pipe section in [bar] [^](#toc)
+
+### pipe_sgs_T_dsn
+SGS temperature in each pipe section in [C] [^](#toc)
  
 ### pipe_sgs_vel_dsn
 SGS velocity in each pipe section in [m/s] [^](#toc)
