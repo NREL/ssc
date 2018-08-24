@@ -221,6 +221,9 @@ enum{
     O_RUNNER_P_DSN,
     O_LOOP_T_DSN,
     O_LOOP_P_DSN,
+    O_T_FIELD_IN_AT_DSN,
+    O_T_FIELD_OUT_AT_DSN,
+    O_P_FIELD_IN_AT_DSN,
 	O_T_SYS_H,
     O_RECIRC,
 	O_M_DOT_AVAIL,
@@ -289,7 +292,7 @@ tcsvarinfo sam_mw_trough_type250_variables[] = {
 	{ TCS_PARAM,          TCS_MATRIX,    P_FIELD_FL_PROPS,         "field_fl_props",                                                                     "Fluid property data",         "none","7 columns (T,Cp,dens,visc,kvisc,cond,h), at least 3 rows",             "",             "" },
 	{ TCS_PARAM,          TCS_NUMBER,              P_T_FP,                   "T_fp",                       "Freeze protection temperature (heat trace activation temperature)",            "C",             "",             "",          "150" },
 	{ TCS_PARAM,          TCS_NUMBER,          P_I_BN_DES,               "I_bn_des",                                                             "Solar irradiation at design",         "W/m2",             "",             "",          "950" },
-    { TCS_PARAM,          TCS_NUMBER,     P_DES_PIPE_VALS,  "calc_design_pipe_vals",              "Calculate temps and pressures at design conditions for runners and headers",            "-",             "",             "",         "true" },
+    { TCS_PARAM,          TCS_NUMBER,     P_DES_PIPE_VALS,  "calc_design_pipe_vals",                                      "Calculate temps and pressures at design conditions",            "-",             "",             "",         "true" },
 	{ TCS_PARAM,          TCS_NUMBER,    P_V_HDR_COLD_MAX,         "V_hdr_cold_max",                                      "Maximum HTF velocity in the cold headers at design",          "m/s",             "",             "",            "3" },
 	{ TCS_PARAM,          TCS_NUMBER,    P_V_HDR_COLD_MIN,         "V_hdr_cold_min",                                      "Minimum HTF velocity in the cold headers at design",          "m/s",             "",             "",            "2" },
     { TCS_PARAM,          TCS_NUMBER,     P_V_HDR_HOT_MAX,          "V_hdr_hot_max",                                       "Maximum HTF velocity in the hot headers at design",          "m/s",             "",             "",            "3" },
@@ -425,8 +428,11 @@ tcsvarinfo sam_mw_trough_type250_variables[] = {
     { TCS_OUTPUT,          TCS_ARRAY,      O_RUNNER_V_DSN,    "pipe_runner_vel_dsn",					                                    "Runner piping velocity at design",          "m/s",             "",             "",             "" },
     { TCS_OUTPUT,          TCS_ARRAY,      O_RUNNER_T_DSN,      "pipe_runner_T_dsn",					                                 "Runner piping temperature at design",            "C",             "",             "",             "" },
     { TCS_OUTPUT,          TCS_ARRAY,      O_RUNNER_P_DSN,      "pipe_runner_P_dsn",					                                    "Runner piping pressure at design",          "bar",             "",             "",             "" },
-    { TCS_OUTPUT,          TCS_ARRAY,      O_LOOP_T_DSN,          "pipe_loop_T_dsn",					                                 "Runner piping temperature at design",            "C",             "",             "",             "" },
-    { TCS_OUTPUT,          TCS_ARRAY,      O_LOOP_P_DSN,          "pipe_loop_P_dsn",					                                    "Runner piping pressure at design",          "bar",             "",             "",             "" },
+    { TCS_OUTPUT,          TCS_ARRAY,        O_LOOP_T_DSN,        "pipe_loop_T_dsn",					                                 "Runner piping temperature at design",            "C",             "",             "",             "" },
+    { TCS_OUTPUT,          TCS_ARRAY,        O_LOOP_P_DSN,        "pipe_loop_P_dsn",					                                    "Runner piping pressure at design",          "bar",             "",             "",             "" },
+    { TCS_OUTPUT,          TCS_NUMBER, O_T_FIELD_IN_AT_DSN,     "T_field_in_at_des",	                                 "Field/runner inlet temperature at design conditions",            "C",             "",             "",             "" },
+    { TCS_OUTPUT,          TCS_NUMBER, O_T_FIELD_OUT_AT_DSN,   "T_field_out_at_des",		                            "Field/runner outlet temperature at design conditions",            "C",             "",             "",             "" },
+    { TCS_OUTPUT,          TCS_NUMBER, O_P_FIELD_IN_AT_DSN,     "P_field_in_at_des",		                                "Field/runner inlet pressure at design conditions",          "bar",             "",             "",             "" },
 
 	{ TCS_OUTPUT,          TCS_NUMBER,           O_T_SYS_H,                "T_sys_h",                                                      "Solar field HTF outlet temperature",            "C",             "",             "",             "" },
     { TCS_OUTPUT,          TCS_NUMBER,            O_RECIRC,          "recirculating",                                                 "Field recirculating (bypass valve open)",         "none",             "",             "",             "" },
@@ -1189,8 +1195,6 @@ public:
 		accept_init = value(P_ACCEPT_INIT) == 1;				// In acceptance testing mode - require steady-state startup [none]
 		accept_loc = (int)value(P_ACCEPT_LOC);					// In acceptance testing mode - temperature sensor location (1=hx,2=loop) [none]
 		is_using_input_gen = (value(P_USING_INPUT_GEN)>0);	// Is model getting inputs from input generator (true) or from other components in physical trough SYSTEM model (false)
-		
-        calc_design_pipe_vals = true;                   // placeholder for parameter
 
 		solar_mult = value(P_SOLAR_MULT);		//Solar multiple [none]
 		mc_bal_hot = value(P_MC_BAL_HOT);		//The heat capacity of the balance of plant on the hot side [kWht/K-MWt]
@@ -3354,6 +3358,10 @@ set_outputs_and_return:
             std::copy(T_loop_out.data(), T_loop_out.data() + T_loop_out.ncells(), loop_temp_design);
             double *loop_pressure_design = allocate(O_LOOP_P_DSN, (int)P_loop_out.ncells());
             std::copy(P_loop_out.data(), P_loop_out.data() + P_loop_out.ncells(), loop_pressure_design);
+
+            value(O_T_FIELD_IN_AT_DSN, T_rnr_out.at(0));
+            value(O_T_FIELD_OUT_AT_DSN, T_rnr_out.at(T_rnr_out.ncells() - 1));
+            value(O_P_FIELD_IN_AT_DSN, P_rnr_out.at(0));
         }
 		//------------------------------------------------------------------
 

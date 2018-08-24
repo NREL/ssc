@@ -97,6 +97,7 @@ enum {
     P_tanks_in_parallel,
     P_hot_tank_bypass,
     P_T_tank_hot_in_min,
+    P_des_pipe_vals,
 	P_T_field_in_des,
 	P_T_field_out_des,
 	P_q_pb_design,
@@ -113,6 +114,7 @@ enum {
     P_sgs_diams,
     P_sgs_wallthicks,
     P_sgs_lengths,
+    P_dp_sgs,
 	P_pb_fixed_par,
 	P_bop_array,
 	P_aux_array,
@@ -149,7 +151,9 @@ enum {
 	// I_q_startup,
 	I_dnifc,
 	I_TOUPeriod,
-
+    I_T_field_in_at_des,
+    I_T_field_out_at_des,
+    I_P_field_in_at_des,
 	I_T_HTF_COLD_DES,
 
 	// I_W_DOT_NET,
@@ -181,6 +185,8 @@ enum {
     O_wall_thk_sgs,
     O_m_dot_des_sgs,
     O_vel_des_sgs,
+    O_t_des_sgs,
+    O_p_des_sgs,
 	O_defocus,
     O_recirc,
 	O_standby,   
@@ -256,6 +262,7 @@ tcsvarinfo sam_mw_trough_type251_variables[] = {
     { TCS_PARAM,    TCS_NUMBER,        P_tanks_in_parallel,  "tanks_in_parallel",    "Tanks are in parallel, not in series, with solar field",  "-",            "",        "",    "true"},
     { TCS_PARAM,    TCS_NUMBER,        P_hot_tank_bypass,    "has_hot_tank_bypass",  "Bypass valve connects field outlet to cold tank",         "-",            "",        "",   "false"},
     { TCS_PARAM,    TCS_NUMBER,        P_T_tank_hot_in_min,  "T_tank_hot_inlet_min", "Minimum hot tank htf inlet temperature",                  "C",            "",        "",     "400"},
+    { TCS_PARAM,    TCS_NUMBER,        P_des_pipe_vals,      "calc_design_pipe_vals", "Calculate pipe temps and pressures at design conditions", "-",           "",        "",        ""},
     { TCS_PARAM,    TCS_NUMBER,        P_T_field_in_des,     "T_field_in_des",       "Field design inlet temperature",                          "C",            "",        "",        ""},
     { TCS_PARAM,    TCS_NUMBER,        P_T_field_out_des,    "T_field_out_des",      "Field design outlet temperature",                         "C",            "",        "",        ""},
     { TCS_PARAM,    TCS_NUMBER,        P_q_pb_design,        "q_pb_design",          "Design heat input to power block",                        "MWt",          "",        "",        ""},
@@ -272,6 +279,7 @@ tcsvarinfo sam_mw_trough_type251_variables[] = {
     { TCS_PARAM,    TCS_ARRAY,         P_sgs_diams,          "sgs_diams",            "Custom SGS diameters",                                    "m",            "",        "",        ""},
     { TCS_PARAM,    TCS_ARRAY,         P_sgs_wallthicks,     "sgs_wallthicks",       "Custom SGS wall thicknesses",                             "m",            "",        "",        ""},
     { TCS_PARAM,    TCS_ARRAY,         P_sgs_lengths,        "sgs_lengths",          "Custom SGS lengths",                                      "m",            "",        "",        ""},
+    { TCS_PARAM,    TCS_NUMBER,        P_dp_sgs,             "DP_SGS",               "Pressure drop within the steam generator",                "bar",          "",        "",        ""},
     { TCS_PARAM,    TCS_NUMBER,        P_pb_fixed_par,       "pb_fixed_par",         "Fraction of rated gross power constantly consumed",       "-",            "",        "",        ""},
     { TCS_PARAM,    TCS_ARRAY,         P_bop_array,          "bop_array",            "Coefficients for balance of plant parasitics calcs",      "-",            "",        "",        ""},
     { TCS_PARAM,    TCS_ARRAY,         P_aux_array,          "aux_array",            "Coefficients for auxiliary heater parasitics calcs",      "-",            "",        "",        ""},
@@ -308,7 +316,10 @@ tcsvarinfo sam_mw_trough_type251_variables[] = {
     //{ TCS_INPUT,    TCS_NUMBER,        I_m_pb_demand,        "m_pb_demand",          "Demand htf flow from the PB",                             "kg/hr",        "",        "",        ""},
     //{ TCS_INPUT,    TCS_NUMBER,        I_q_startup,          "q_startup",            "Startup energy reported by the collector field",          "MWt-hr",       "",        "",        ""},
     { TCS_INPUT,    TCS_NUMBER,        I_dnifc,              "dnifc",                "Forecast DNI",                                            "W/m2",         "",        "",        ""},
-	{ TCS_INPUT,    TCS_NUMBER,        I_TOUPeriod,          "TOUPeriod",            "The time-of-use period",                                  "",             "",        "",        ""},
+	{ TCS_INPUT,    TCS_NUMBER,        I_TOUPeriod,          "TOUPeriod",            "The time-of-use period",                                   "",            "",        "",        ""},
+    { TCS_INPUT,    TCS_NUMBER,        I_T_field_in_at_des,  "T_field_in_at_des",    "Field inlet temperature at design conditions",            "C",           "",        "",        ""},
+    { TCS_INPUT,    TCS_NUMBER,        I_T_field_out_at_des, "T_field_out_at_des",   "Field outlet temperature at design conditions",           "C",           "",        "",        ""},
+    { TCS_INPUT,    TCS_NUMBER,        I_P_field_in_at_des,  "P_field_in_at_des",    "Field inlet pressure at design conditions",               "bar",         "",        "",        ""},
 
 	// sCO2 cycle design parameters from type 424 - only used if "pb_tech_type" = 424
 	{ TCS_OUTPUT, TCS_NUMBER, I_T_HTF_COLD_DES,  "i_T_htf_cold_des",    "Calculated htf cold temperature at design",             "C",     "",  "",  "" },
@@ -341,6 +352,8 @@ tcsvarinfo sam_mw_trough_type251_variables[] = {
     { TCS_OUTPUT,   TCS_ARRAY,         O_wall_thk_sgs,       "SGS_wall_thk",         "Pipe wall thickness in SGS",                             "m",             "",        "",        ""},
     { TCS_OUTPUT,   TCS_ARRAY,         O_m_dot_des_sgs,      "SGS_m_dot_des",        "Mass flow SGS pipes at design conditions",               "kg/s",          "",        "",        ""},
     { TCS_OUTPUT,   TCS_ARRAY,         O_vel_des_sgs,        "SGS_vel_des",          "Velocity in SGS pipes at design conditions",             "m/s",           "",        "",        ""},
+    { TCS_OUTPUT,   TCS_ARRAY,         O_t_des_sgs,          "SGS_T_des",            "Temperature in SGS pipes at design conditions",          "C",             "",        "",        "" },
+    { TCS_OUTPUT,   TCS_ARRAY,         O_p_des_sgs,          "SGS_P_des",            "Pressure in SGS pipes at design conditions",             "bar",           "",        "",        "" },
     { TCS_OUTPUT,   TCS_NUMBER,        O_defocus,            "defocus",              "Absolute defocus",                                        "-",            "",        "",        ""},
     { TCS_OUTPUT,   TCS_NUMBER,        O_recirc,             "recirculating",        "Field recirculating bypass valve control",                "-",            "",        "",        ""},
 	{ TCS_OUTPUT,   TCS_NUMBER,	       O_standby,            "standby_control",      "Standby control flag",                                    "-",            "",        "",        ""},
@@ -437,6 +450,7 @@ private:
     double * sgs_wallthicks;
     int l_sgs_lengths;
     double * sgs_lengths_in;
+    double DP_SGS;
     double pb_fixed_par;
 	int l_bop_array;		
 	double * bop_array;
@@ -459,6 +473,10 @@ private:
     bool tanks_in_parallel;
     bool has_hot_tank_bypass;
     double T_tank_hot_inlet_min;
+    bool calc_design_pipe_vals;
+    double T_field_in_at_des;
+    double T_field_out_at_des;
+    double P_field_in_at_des;
 	//double * TOU_schedule;
 	//int nTOU_schedule;
 
@@ -487,6 +505,8 @@ private:
     util::matrix_t<double> SGS_lengths;
     util::matrix_t<double> SGS_m_dot_des;
     util::matrix_t<double> SGS_vel_des;
+    util::matrix_t<double> SGS_T_des;
+    util::matrix_t<double> SGS_P_des;
 
 	//"Storage" Variables
 	double V_tank_hot_prev;
@@ -565,6 +585,7 @@ public:
         custom_tes_p_loss       = false;
         l_k_tes_loss_coeffs     = -1;
         k_tes_loss_coeffs_in    = 0;
+        DP_SGS          = std::numeric_limits<double>::quiet_NaN();
 		pb_fixed_par	= std::numeric_limits<double>::quiet_NaN();
 		l_bop_array		= -1;
 		bop_array	= 0;
@@ -587,6 +608,10 @@ public:
         tanks_in_parallel = false;
         has_hot_tank_bypass = false;
         T_tank_hot_inlet_min = std::numeric_limits<double>::quiet_NaN();
+        calc_design_pipe_vals = false;
+        T_field_in_at_des = std::numeric_limits<double>::quiet_NaN();
+        T_field_out_at_des = std::numeric_limits<double>::quiet_NaN();
+        P_field_in_at_des = std::numeric_limits<double>::quiet_NaN();
 		//TOU_schedule = NULL;
 
 		//Thermocline Parameters
@@ -777,6 +802,7 @@ public:
         sgs_wallthicks = value(P_sgs_wallthicks, &l_sgs_wallthicks);    //[m]
         sgs_lengths_in = value(P_sgs_lengths, &l_sgs_lengths);             //[m]
         SGS_lengths.assign(sgs_lengths_in, l_sgs_lengths);
+        DP_SGS = value(P_dp_sgs);                           //[bar]
 
 		pb_fixed_par	= value(P_pb_fixed_par);			//[-]
 	
@@ -811,6 +837,8 @@ public:
         tanks_in_parallel = (bool) value(P_tanks_in_parallel);
         has_hot_tank_bypass = (bool) value(P_hot_tank_bypass);
         T_tank_hot_inlet_min = value(P_T_tank_hot_in_min) + 273.15;
+        calc_design_pipe_vals = (bool) value(P_des_pipe_vals);
+
 		//TOU_schedule = value(P_TOU_schedule, &nTOU_schedule);
 
 		//Thermocline Parameters
@@ -1066,6 +1094,22 @@ public:
 			}
 			initialize_sco2 = false;
 		}
+
+        if (calc_design_pipe_vals) {
+            T_field_in_at_des = value(I_T_field_in_at_des) + 273.15;
+            T_field_out_at_des = value(I_T_field_out_at_des) + 273.15;
+            P_field_in_at_des = value(I_P_field_in_at_des) * 1.e5;        // bar to Pa
+
+            size_sgs_piping_TandP(T_field_in_at_des, T_field_out_at_des, P_field_in_at_des, DP_SGS,
+                SGS_lengths, k_tes_loss_coeffs, HDR_rough, tanks_in_parallel, SGS_diams, SGS_vel_des,
+                SGS_T_des, SGS_P_des);                          // Outputs
+            
+            double *sgs_t_des = allocate(O_t_des_sgs, (int)SGS_T_des.ncells());
+            std::copy(SGS_T_des.data(), SGS_T_des.data() + SGS_T_des.ncells(), sgs_t_des);
+            double *sgs_p_des = allocate(O_p_des_sgs, (int)SGS_P_des.ncells());
+            std::copy(SGS_P_des.data(), SGS_P_des.data() + SGS_P_des.ncells(), sgs_p_des);
+            calc_design_pipe_vals = false;
+        }
 
 		double I_bn			= value(I_I_bn);				    // [W/m2]
 		double m_dot_field	= value(I_m_dot_field)/3600.;	    // [kg/s] convert from [kg/hr]
@@ -1492,6 +1536,7 @@ public:
 						m_dot_aux	= 0.;
 						T_int		= (m_dot_field_avail*T_int + ms_disch*Ts_hot)/m_int;
 					}
+
 					// Run a check to see if the energy produced is above the cycle cutout fraction
 					if(q_int < q_pb_design*cycle_cutoff_frac)	mode = pb_off_or_standby;
 					else	mode = pb_partial_load;
@@ -2073,7 +2118,7 @@ public:
             double rho_sf, rho_pb;
             double DP_col, DP_gen;
             sgs_pressure_drops(m_dot_field, m_dot_pb, SGS_v_dot_rel, T_field_in, T_field_out, T_pb_in, T_pb_out,
-                SGS_lengths, SGS_diams, HDR_rough, k_tes_loss_coeffs, tanks_in_parallel, recirculating, DP_col, DP_gen);
+                SGS_lengths, SGS_diams, HDR_rough, DP_SGS, k_tes_loss_coeffs, tanks_in_parallel, recirculating, DP_col, DP_gen);
             rho_sf = field_htfProps.dens((T_field_in + T_field_out) / 2., 8e5);
             rho_pb = field_htfProps.dens((T_pb_in + T_pb_out) / 2., 1e5);
             if (is_hx) {
@@ -2328,10 +2373,118 @@ public:
         return 0;
     }
 
+    int size_sgs_piping_TandP(double T_field_in, double T_field_out, double P_field_in, double DP_SGS,
+        const util::matrix_t<double> &L, const util::matrix_t<double> &k_tes_loss_coeffs, double pipe_rough,
+        bool tanks_in_parallel, const util::matrix_t<double> &diams, const util::matrix_t<double> &vel,
+        util::matrix_t<double> &SGS_T_des, util::matrix_t<double> &SGS_P_des)
+    {
+        std::size_t nPipes = L.ncells();
+        SGS_T_des.resize_fill(nPipes, 0.0);
+        SGS_P_des.resize_fill(nPipes, 0.0);
+
+        // Calculate Design Temperatures, in C
+        SGS_T_des.at(0) = T_field_in - 273.15;
+        SGS_T_des.at(1) = T_field_in - 273.15;
+        SGS_T_des.at(2) = T_field_in - 273.15;
+        SGS_T_des.at(3) = T_field_out - 273.15;
+        SGS_T_des.at(4) = T_field_out - 273.15;
+        if (tanks_in_parallel) {
+            SGS_T_des.at(5) = -1;
+            SGS_T_des.at(6) = -1;
+            SGS_T_des.at(7) = -1;
+        }
+        else {
+            SGS_T_des.at(5) = T_field_out - 273.15;
+            SGS_T_des.at(6) = T_field_out - 273.15;
+            SGS_T_des.at(7) = T_field_out - 273.15;
+        }
+        SGS_T_des.at(8) = T_field_out - 273.15;
+        SGS_T_des.at(9) = T_field_in - 273.15;
+        SGS_T_des.at(10) = T_field_in - 273.15;
+
+
+        // Calculate Design Pressures, in Pa
+        double P, ff;
+        double rho_avg = field_htfProps.dens((T_field_in + T_field_out) / 2, 9 / 1.e-5);
+        const double P_hi = 17 / 1.e-5;               // downstream SF pump pressure [Pa]
+        const double P_lo = 1 / 1.e-5;                // atmospheric pressure [Pa]
+
+        // P_10
+        ff = CSP::FrictionFactor(pipe_rough, field_htfProps.Re(SGS_T_des.at(10), P_lo, vel.at(10), diams.at(10)));
+        SGS_P_des.at(10) = 0 +
+            CSP::MajorPressureDrop(vel.at(10), rho_avg, ff, L.at(10), diams.at(10)) +
+            CSP::MinorPressureDrop(vel.at(10), rho_avg, k_tes_loss_coeffs.at(10));
+
+        // P_9
+        ff = CSP::FrictionFactor(pipe_rough, field_htfProps.Re(SGS_T_des.at(9), P_lo, vel.at(9), diams.at(9)));
+        SGS_P_des.at(9) = SGS_P_des.at(10) +
+            CSP::MajorPressureDrop(vel.at(9), rho_avg, ff, L.at(9), diams.at(9)) +
+            CSP::MinorPressureDrop(vel.at(9), rho_avg, k_tes_loss_coeffs.at(9));
+        
+        // P_8
+        ff = CSP::FrictionFactor(pipe_rough, field_htfProps.Re(SGS_T_des.at(8), P_hi, vel.at(8), diams.at(8)));
+        SGS_P_des.at(8) = SGS_P_des.at(9) + DP_SGS + 
+            CSP::MajorPressureDrop(vel.at(8), rho_avg, ff, L.at(8), diams.at(8)) +
+            CSP::MinorPressureDrop(vel.at(8), rho_avg, k_tes_loss_coeffs.at(8));
+
+        if (tanks_in_parallel) {
+            SGS_P_des.at(7) = 0;
+            SGS_P_des.at(6) = 0;
+            SGS_P_des.at(5) = 0;
+        }
+        else {
+            // P_7
+            ff = CSP::FrictionFactor(pipe_rough, field_htfProps.Re(SGS_T_des.at(7), P_hi, vel.at(7), diams.at(7)));
+            SGS_P_des.at(7) = SGS_P_des.at(8) +
+                CSP::MajorPressureDrop(vel.at(7), rho_avg, ff, L.at(7), diams.at(7)) +
+                CSP::MinorPressureDrop(vel.at(7), rho_avg, k_tes_loss_coeffs.at(7));
+
+            // P_6
+            ff = CSP::FrictionFactor(pipe_rough, field_htfProps.Re(SGS_T_des.at(6), P_hi, vel.at(6), diams.at(6)));
+            SGS_P_des.at(6) = SGS_P_des.at(7) +
+                CSP::MajorPressureDrop(vel.at(6), rho_avg, ff, L.at(6), diams.at(6)) +
+                CSP::MinorPressureDrop(vel.at(6), rho_avg, k_tes_loss_coeffs.at(6));
+
+            // P_5
+            SGS_P_des.at(5) = 0;
+        }
+
+        // P_3
+        ff = CSP::FrictionFactor(pipe_rough, field_htfProps.Re(SGS_T_des.at(3), P_lo, vel.at(3), diams.at(3)));
+        SGS_P_des.at(3) = 0 +
+            CSP::MajorPressureDrop(vel.at(3), rho_avg, ff, L.at(3), diams.at(3)) +
+            CSP::MinorPressureDrop(vel.at(3), rho_avg, k_tes_loss_coeffs.at(3));
+
+        // P_4
+        SGS_P_des.at(4) = SGS_P_des.at(3);
+
+        // P_2
+        ff = CSP::FrictionFactor(pipe_rough, field_htfProps.Re(SGS_T_des.at(2), P_hi, vel.at(2), diams.at(2)));
+        SGS_P_des.at(2) = P_field_in +
+            CSP::MajorPressureDrop(vel.at(2), rho_avg, ff, L.at(2), diams.at(2)) +
+            CSP::MinorPressureDrop(vel.at(2), rho_avg, k_tes_loss_coeffs.at(2));
+
+        // P_1
+        ff = CSP::FrictionFactor(pipe_rough, field_htfProps.Re(SGS_T_des.at(1), P_hi, vel.at(1), diams.at(1)));
+        SGS_P_des.at(1) = SGS_P_des.at(2) +
+            CSP::MajorPressureDrop(vel.at(1), rho_avg, ff, L.at(1), diams.at(1)) +
+            CSP::MinorPressureDrop(vel.at(1), rho_avg, k_tes_loss_coeffs.at(1));
+
+        // P_0
+        SGS_P_des.at(0) = 0;
+
+        // Convert Pa to bar
+        for (int i = 0; i < nPipes; i++) {
+            SGS_P_des.at(i) = SGS_P_des.at(i) / 1.e5;
+        }
+
+        return 0;
+    }
+
     int sgs_pressure_drops(double m_dot_sf, double m_dot_pb, util::matrix_t<double> v_dot_rel,
         double T_sf_in, double T_sf_out, double T_pb_in, double T_pb_out,
         util::matrix_t<double> L, util::matrix_t<double> D, double pipe_rough,
-        util::matrix_t<double> k_coeffs, bool tanks_in_parallel, bool recirculating,
+        double DP_SGS, util::matrix_t<double> k_coeffs, bool tanks_in_parallel, bool recirculating,
         double &P_drop_col, double &P_drop_gen)
     {
         const std::size_t num_sections = 11;          // total number of col. + gen. sections
@@ -2373,7 +2526,7 @@ public:
         }
 
         P_drop_col = std::accumulate(P_drops.begin(), P_drops.begin() + gen_first_section, 0.0);
-        P_drop_gen = std::accumulate(P_drops.begin() + gen_first_section, P_drops.end(), 0.0);
+        P_drop_gen = DP_SGS + std::accumulate(P_drops.begin() + gen_first_section, P_drops.end(), 0.0);
 
         return 0;
     }

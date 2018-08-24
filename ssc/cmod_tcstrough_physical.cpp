@@ -224,6 +224,7 @@ static var_info _cm_vtab_tcstrough_physical[] = {
     { SSC_INPUT,        SSC_ARRAY,       "sgs_diams",                 "Custom SGS diameters",                                           "m",            "",             "controller",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_ARRAY,       "sgs_wallthicks",            "Custom SGS wall thicknesses",                                    "m",            "",             "controller",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_ARRAY,       "sgs_lengths",               "Custom SGS lengths",                                             "m",            "",             "controller",     "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "DP_SGS",                    "Pressure drop within the steam generator",                       "bar",          "",             "controller",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "pb_fixed_par",              "Fraction of rated gross power constantly consumed",              "-",            "",             "controller",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_ARRAY,       "bop_array",                 "Coefficients for balance of plant parasitics calcs",             "-",            "",             "controller",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_ARRAY,       "aux_array",                 "Coefficients for auxiliary heater parasitics calcs",             "-",            "",             "controller",     "*",                       "",                      "" },
@@ -375,6 +376,8 @@ static var_info _cm_vtab_tcstrough_physical[] = {
     { SSC_OUTPUT,       SSC_ARRAY,       "pipe_sgs_wallthk",  "Pipe wall thickness in SGS",                                     "m",            "",            "Type251",        "*",                       "",                      "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "pipe_sgs_mdot_dsn", "Mass flow SGS pipes at design conditions",                       "kg/s",         "",            "Type251",        "*",                       "",                      "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "pipe_sgs_vel_dsn",  "Velocity in SGS pipes at design conditions",                     "m/s",          "",            "Type251",        "*",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "pipe_sgs_T_dsn",    "Temperature in SGS pipes at design conditions",                  "C",            "",            "Type251",        "*",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "pipe_sgs_P_dsn",    "Pressure in SGS pipes at design conditions",                     "bar",          "",            "Type251",        "*",                       "",                      "" },
 
     { SSC_OUTPUT,       SSC_ARRAY,       "mass_tank_cold",    "TES HTF mass in cold tank",                                      "kg",           "",            "Type251",        "*",                       "",                      "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "mass_tank_hot",     "TES HTF mass in hot tank",                                       "kg",           "",            "Type251",        "*",                       "",                      "" },
@@ -732,6 +735,7 @@ public:
         set_unit_value_ssc_double(type251_controller, "tanks_in_parallel"); // , 1 = true);
         set_unit_value_ssc_double(type251_controller, "has_hot_tank_bypass"); // , 0 = false);
         set_unit_value_ssc_double(type251_controller, "T_tank_hot_inlet_min"); // , 400);
+        set_unit_value_ssc_double(type251_controller, "calc_design_pipe_vals"); // , 1 = true);
 		set_unit_value_ssc_double(type251_controller, "q_pb_design" ); // , 294.118);
 		set_unit_value_ssc_double(type251_controller, "W_pb_design" ); // , 111);
 		set_unit_value_ssc_double(type251_controller, "cycle_max_frac" ); // , 1.05);
@@ -746,6 +750,7 @@ public:
         set_unit_value_ssc_array(type251_controller, "sgs_diams"); // , []);
         set_unit_value_ssc_array(type251_controller, "sgs_wallthicks"); // , []);
         set_unit_value_ssc_array(type251_controller, "sgs_lengths"); // , []);
+        set_unit_value_ssc_double(type251_controller, "DP_SGS"); // , []);
 		set_unit_value_ssc_double(type251_controller, "pb_fixed_par" ); // , 0.0055);
 		set_unit_value_ssc_array(type251_controller, "bop_array" ); // , [0,1,0.483,0.517,0]);
 		set_unit_value_ssc_array(type251_controller, "aux_array" ); // , [0.02273,1,0.483,0.517,0]);
@@ -777,6 +782,10 @@ public:
 		bConnected &= connect(type250_solarfield, "T_sys_h", type251_controller, "T_field_out");
 		bConnected &= connect(type224_powerblock, "T_htf_cold", type251_controller, "T_pb_out");
 		bConnected &= connect(tou, "tou_value", type251_controller, "TOUPeriod");
+        bConnected &= connect(type250_solarfield, "T_field_in_at_des", type251_controller, "T_field_in_at_des");
+        bConnected &= connect(type250_solarfield, "T_field_out_at_des", type251_controller, "T_field_out_at_des");
+        bConnected &= connect(type250_solarfield, "P_field_in_at_des", type251_controller, "P_field_in_at_des");
+
 
 			//Set controller initial values
 		set_unit_value_ssc_double(type251_controller, "I_bn", 0.0);           // , 0.);
@@ -975,6 +984,12 @@ public:
         double *sgs_vel_dsn = get_unit_value(type251_controller, "SGS_vel_des", &nv);
         ssc_number_t *sgs_vel_dsn_cm = allocate("pipe_sgs_vel_dsn", nv);
         std::copy(sgs_vel_dsn, sgs_vel_dsn + nv, sgs_vel_dsn_cm);
+        double *sgs_T_dsn = get_unit_value(type251_controller, "SGS_T_des", &nv);
+        ssc_number_t *sgs_T_dsn_cm = allocate("pipe_sgs_T_dsn", nv);
+        std::copy(sgs_T_dsn, sgs_T_dsn + nv, sgs_T_dsn_cm);
+        double *sgs_P_dsn = get_unit_value(type251_controller, "SGS_P_des", &nv);
+        ssc_number_t *sgs_P_dsn_cm = allocate("pipe_sgs_P_dsn", nv);
+        std::copy(sgs_P_dsn, sgs_P_dsn + nv, sgs_P_dsn_cm);
 		
 		// performance adjustment factors
 		adjustment_factors haf(this, "adjust");
