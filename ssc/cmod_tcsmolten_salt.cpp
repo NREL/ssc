@@ -307,10 +307,10 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     { SSC_INPUT,        SSC_NUMBER,      "disp_spec_scaling",    "Dispatch optimization scaling heuristic",                           "-",            "",            "sys_ctrl_disp_opt", "?=-1",                    "",                      "" }, 
     { SSC_INPUT,        SSC_NUMBER,      "disp_time_weighting",  "Dispatch optimization future time discounting factor",              "-",            "",            "sys_ctrl_disp_opt", "?=0.99",                    "",                      "" }, 
     { SSC_INPUT,        SSC_NUMBER,      "is_write_ampl_dat",    "Write AMPL data files for dispatch run",                            "-",            "",            "sys_ctrl_disp_opt", "?=0",                     "",                      "" }, 
-    { SSC_INPUT,        SSC_STRING,      "ampl_data_dir",        "AMPL data file directory",                                          "-",            "",            "sys_ctrl_disp_opt", "?=''",                    "",                      "" }, 
+    { SSC_INPUT,        SSC_STRING,      "ampl_data_dir",        "AMPL data file directory",                                          "-",            "",            "sys_ctrl_disp_opt", "?",                    "",                      "" }, 
     { SSC_INPUT,        SSC_NUMBER,      "is_ampl_engine",       "Run dispatch optimization with external AMPL engine",               "-",            "",            "sys_ctrl_disp_opt", "?=0",                     "",                      "" }, 
     { SSC_INPUT,        SSC_STRING,      "ampl_exec_call",       "System command to run AMPL code",                                   "-",            "",            "sys_ctrl_disp_opt", "?='ampl sdk_solution.run'", "",                    "" },
-    { SSC_INPUT,        SSC_STRING,      "ampl_thread_id",       "AMPL run file thread ID",                                           "-",            "",            "sys_ctrl_disp_opt", "?=''",                   "",                      "" },
+    { SSC_INPUT,        SSC_STRING,      "ampl_thread_id",       "AMPL run file thread ID",                                           "-",            "",            "sys_ctrl_disp_opt", "?",                   "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "disp_rsu_cost",        "Receiver startup cost",                                             "$",            "",            "sys_ctrl_disp_opt", "is_dispatch=1",           "",                      "" }, 
     { SSC_INPUT,        SSC_NUMBER,      "disp_csu_cost",        "Cycle startup cost",                                                "$",            "",            "sys_ctrl_disp_opt", "is_dispatch=1",           "",                      "" }, 
     { SSC_INPUT,        SSC_NUMBER,      "disp_pen_delta_w",     "Dispatch cycle production change penalty",                          "$/kWe-change", "",            "sys_ctrl_disp_opt", "is_dispatch=1",           "",                      "" }, 
@@ -600,6 +600,11 @@ public:
 		// Get info from the weather reader initialization
 		double site_elevation = weather_reader.ms_solved_params.m_elev;		//[m]
         
+        // handle pure optional parameters
+        if (!is_assigned("ampl_thread_id"))
+            assign("ampl_thread_id", var_data("") );
+        if (!is_assigned("ampl_data_dir"))
+            assign("ampl_data_dir", var_data(""));
         
 		int tes_type = 1;
 

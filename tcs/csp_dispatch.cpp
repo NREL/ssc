@@ -1992,9 +1992,20 @@ bool csp_dispatch_opt::optimize_ampl()
     
 	std::string sday = "Optimizing day " + util::to_string( (int)(params.siminfo->ms_ts.m_time / 3600 / 24) );
 	puts( sday.c_str() );
-	std::string outfile = "sdk_solution.txt";
-	if (solver_params.ampl_exec_call == "")
-		system("ampl sdk_solution.run >> log.txt;"); //tstring.str().c_str());
+
+    std::stringstream outfile;
+    std::stringstream ampl_call;
+
+    if (solver_params.ampl_exec_call == "")
+    {
+
+        ampl_call << "ampl sdk_solution";
+        if (solver_params.ampl_thread_id.size() > 0)
+            ampl_call << solver_params.ampl_thread_id;
+        ampl_call << ".run >> log.txt;";
+        
+		system(outfile.str().c_str()); 
+    }
 	else
 	{
 		system(solver_params.ampl_exec_call.c_str());
@@ -2007,10 +2018,10 @@ bool csp_dispatch_opt::optimize_ampl()
 			std::vector<std::string> parse = util::split(execsub, " ");
 			if (parse.size() > 1)
 			{
-                outfile = parse.at(1);
-                //if (solver_params.ampl_thread_id.size() > 0)
-                //    outfile.append("_" + solver_params.ampl_thread_id);
-                outfile.append(".txt");
+                outfile << parse.at(1);
+                if (solver_params.ampl_thread_id.size() > 0)
+                    outfile << solver_params.ampl_thread_id;
+                outfile << ".txt";
 			}
 		}
 	}
@@ -2019,7 +2030,7 @@ bool csp_dispatch_opt::optimize_ampl()
     //read back ampl solution
     tstring.str(std::string()); //clear
 
-    tstring << solver_params.ampl_data_dir << (solver_params.ampl_data_dir.back() == '/' ? "" : "/") << outfile;
+    tstring << solver_params.ampl_data_dir << (solver_params.ampl_data_dir.back() == '/' ? "" : "/") << outfile.str();
     std::ifstream infile(tstring.str().c_str());
 
     if(! infile.is_open() )
