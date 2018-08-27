@@ -785,6 +785,7 @@ public:
         bConnected &= connect(type250_solarfield, "T_field_in_at_des", type251_controller, "T_field_in_at_des");
         bConnected &= connect(type250_solarfield, "T_field_out_at_des", type251_controller, "T_field_out_at_des");
         bConnected &= connect(type250_solarfield, "P_field_in_at_des", type251_controller, "P_field_in_at_des");
+        bConnected &= connect(type251_controller, "SGS_P_des_1", type250_solarfield, "DP_SGS_1");
 
 
 			//Set controller initial values

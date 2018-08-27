@@ -187,6 +187,7 @@ enum {
     O_vel_des_sgs,
     O_t_des_sgs,
     O_p_des_sgs,
+    O_p_des_sgs_1,
 	O_defocus,
     O_recirc,
 	O_standby,   
@@ -352,8 +353,9 @@ tcsvarinfo sam_mw_trough_type251_variables[] = {
     { TCS_OUTPUT,   TCS_ARRAY,         O_wall_thk_sgs,       "SGS_wall_thk",         "Pipe wall thickness in SGS",                             "m",             "",        "",        ""},
     { TCS_OUTPUT,   TCS_ARRAY,         O_m_dot_des_sgs,      "SGS_m_dot_des",        "Mass flow SGS pipes at design conditions",               "kg/s",          "",        "",        ""},
     { TCS_OUTPUT,   TCS_ARRAY,         O_vel_des_sgs,        "SGS_vel_des",          "Velocity in SGS pipes at design conditions",             "m/s",           "",        "",        ""},
-    { TCS_OUTPUT,   TCS_ARRAY,         O_t_des_sgs,          "SGS_T_des",            "Temperature in SGS pipes at design conditions",          "C",             "",        "",        "" },
-    { TCS_OUTPUT,   TCS_ARRAY,         O_p_des_sgs,          "SGS_P_des",            "Pressure in SGS pipes at design conditions",             "bar",           "",        "",        "" },
+    { TCS_OUTPUT,   TCS_ARRAY,         O_t_des_sgs,          "SGS_T_des",            "Temperature in SGS pipes at design conditions",          "C",             "",        "",        ""},
+    { TCS_OUTPUT,   TCS_ARRAY,         O_p_des_sgs,          "SGS_P_des",            "Pressure in SGS pipes at design conditions",             "bar",           "",        "",        ""},
+    { TCS_OUTPUT,   TCS_NUMBER,        O_p_des_sgs_1,        "SGS_P_des_1",          "Pressure in first SGS pipe section at design conditions", "bar",          "",        "",        ""},
     { TCS_OUTPUT,   TCS_NUMBER,        O_defocus,            "defocus",              "Absolute defocus",                                        "-",            "",        "",        ""},
     { TCS_OUTPUT,   TCS_NUMBER,        O_recirc,             "recirculating",        "Field recirculating bypass valve control",                "-",            "",        "",        ""},
 	{ TCS_OUTPUT,   TCS_NUMBER,	       O_standby,            "standby_control",      "Standby control flag",                                    "-",            "",        "",        ""},
@@ -1104,10 +1106,19 @@ public:
                 SGS_lengths, k_tes_loss_coeffs, HDR_rough, tanks_in_parallel, SGS_diams, SGS_vel_des,
                 SGS_T_des, SGS_P_des);                          // Outputs
             
+            // Adjust first two pressures after field pumps, because the field inlet pressure used above was
+            // not yet corrected for the section in the TES/PB before the hot tank
+            double DP_before_hot_tank = SGS_P_des.at(3);        // first section before hot tank
+            SGS_P_des.at(1) += DP_before_hot_tank;
+            SGS_P_des.at(2) += DP_before_hot_tank;
+
             double *sgs_t_des = allocate(O_t_des_sgs, (int)SGS_T_des.ncells());
             std::copy(SGS_T_des.data(), SGS_T_des.data() + SGS_T_des.ncells(), sgs_t_des);
             double *sgs_p_des = allocate(O_p_des_sgs, (int)SGS_P_des.ncells());
             std::copy(SGS_P_des.data(), SGS_P_des.data() + SGS_P_des.ncells(), sgs_p_des);
+
+            value(O_p_des_sgs_1, DP_before_hot_tank);           // for adjusting field design pressures
+
             calc_design_pipe_vals = false;
         }
 

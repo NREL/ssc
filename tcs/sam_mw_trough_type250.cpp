@@ -85,6 +85,7 @@ enum{
 	P_T_FP,
 	P_I_BN_DES,
     P_DES_PIPE_VALS,
+    P_DP_SGS_1,
 	P_V_HDR_COLD_MAX,
 	P_V_HDR_COLD_MIN,
     P_V_HDR_HOT_MAX,
@@ -293,6 +294,7 @@ tcsvarinfo sam_mw_trough_type250_variables[] = {
 	{ TCS_PARAM,          TCS_NUMBER,              P_T_FP,                   "T_fp",                       "Freeze protection temperature (heat trace activation temperature)",            "C",             "",             "",          "150" },
 	{ TCS_PARAM,          TCS_NUMBER,          P_I_BN_DES,               "I_bn_des",                                                             "Solar irradiation at design",         "W/m2",             "",             "",          "950" },
     { TCS_PARAM,          TCS_NUMBER,     P_DES_PIPE_VALS,  "calc_design_pipe_vals",                                      "Calculate temps and pressures at design conditions",            "-",             "",             "",         "true" },
+    { TCS_PARAM,          TCS_NUMBER,          P_DP_SGS_1,               "DP_SGS_1",           "Pressure drop in first section of TES/PB before hot tank at design conditions",          "bar",             "",             "",            "0" },
 	{ TCS_PARAM,          TCS_NUMBER,    P_V_HDR_COLD_MAX,         "V_hdr_cold_max",                                      "Maximum HTF velocity in the cold headers at design",          "m/s",             "",             "",            "3" },
 	{ TCS_PARAM,          TCS_NUMBER,    P_V_HDR_COLD_MIN,         "V_hdr_cold_min",                                      "Minimum HTF velocity in the cold headers at design",          "m/s",             "",             "",            "2" },
     { TCS_PARAM,          TCS_NUMBER,     P_V_HDR_HOT_MAX,          "V_hdr_hot_max",                                       "Maximum HTF velocity in the hot headers at design",          "m/s",             "",             "",            "3" },
@@ -510,6 +512,8 @@ private:
 	double T_fp;		//Freeze protection temperature (heat trace activation temperature)
 	double I_bn_des;		//Solar irradiation at design
     bool calc_design_pipe_vals; //Calculate temps and pressures at design conditions for runners and headers
+    double DP_SGS_1;            //Pressure drop in first section of TES/PB before hot tank at design conditions
+    bool SGS_sizing_adjusted;   //Has the field design pressure drop been adjusted for the first section in the TES/PB?
 	double V_hdr_cold_max;		//Maximum HTF velocity in the cold headers at design
 	double V_hdr_cold_min;		//Minimum HTF velocity in the cold headers at design
     double V_hdr_hot_max;		//Maximum HTF velocity in the hot headers at design
@@ -765,7 +769,8 @@ private:
 	emit_table epsilon_3;
     util::matrix_t<double> D_runner, WallThk_runner, L_runner, m_dot_rnr_dsn, V_rnr_dsn, N_rnr_xpans, DP_rnr, T_rnr, P_rnr,
         D_hdr, WallThk_hdr, L_hdr, m_dot_hdr_dsn, V_hdr_dsn, N_hdr_xpans, DP_hdr, T_hdr, P_hdr,
-        DP_intc, P_intc, DP_loop, T_loop, P_loop;
+        DP_intc, P_intc, DP_loop, T_loop, P_loop,
+        T_rnr_des_out, P_rnr_des_out, T_hdr_des_out, P_hdr_des_out, T_loop_des_out, P_loop_des_out;
 
 	util::matrix_t<double> 
 		T_htf_in, T_htf_out, T_htf_ave, q_loss, q_abs, c_htf, rho_htf, DP_tube, E_abs_field, 
@@ -832,6 +837,8 @@ public:
 		T_fp	= std::numeric_limits<double>::quiet_NaN();
 		I_bn_des	= std::numeric_limits<double>::quiet_NaN();
         calc_design_pipe_vals = false;
+        DP_SGS_1 = std::numeric_limits<double>::quiet_NaN();
+        SGS_sizing_adjusted = false;
 		V_hdr_cold_max	= std::numeric_limits<double>::quiet_NaN();
 		V_hdr_cold_min	= std::numeric_limits<double>::quiet_NaN();
         V_hdr_hot_max = std::numeric_limits<double>::quiet_NaN();
@@ -1171,6 +1178,7 @@ public:
 		T_fp = value(P_T_FP);		//Freeze protection temperature (heat trace activation temperature) [C]
 		I_bn_des = value(P_I_BN_DES);		//Solar irradiation at design [W/m2]
         calc_design_pipe_vals = value(P_DES_PIPE_VALS); //Calculate temps and pressures at design conditions for runners and headers
+        value(P_DP_SGS_1, -1);                      //Set this to a negative value for signalling that it has not yet been set
 		V_hdr_cold_max = value(P_V_HDR_COLD_MAX);	//Maximum HTF velocity in the cold headers at design [m/s]
 		V_hdr_cold_min = value(P_V_HDR_COLD_MIN);	//Minimum HTF velocity in the cold headers at design [m/s]
         V_hdr_hot_max = value(P_V_HDR_HOT_MAX);		//Maximum HTF velocity in the hot headers at design [m/s]
@@ -3325,43 +3333,63 @@ set_outputs_and_return:
 		double E_field_out = E_field*3.6e-9;
 
         if (calc_design_pipe_vals) {
-            util::matrix_t<double> T_rnr_out, P_rnr_out, T_hdr_out, P_hdr_out, T_loop_out, P_loop_out;
-            T_rnr_out.resize(2 * nrunsec);
-            P_rnr_out.resize(2 * nrunsec);
-            T_hdr_out.resize(2 * nhdrsec);
-            P_hdr_out.resize(2 * nhdrsec);
-            T_loop_out.resize(2 * nSCA + 3);
-            P_loop_out.resize(2 * nSCA + 3);
+            T_rnr_des_out.resize(2 * nrunsec);
+            P_rnr_des_out.resize(2 * nrunsec);
+            T_hdr_des_out.resize(2 * nhdrsec);
+            P_hdr_des_out.resize(2 * nhdrsec);
+            T_loop_des_out.resize(2 * nSCA + 3);
+            P_loop_des_out.resize(2 * nSCA + 3);
 
             for (int i = 0; i < 2 * nrunsec; i++) {
-                T_rnr_out[i] = T_rnr[i] - 273.15; // K to C
-                P_rnr_out[i] = P_rnr[i] / 1.e5;   // Pa to bar
+                T_rnr_des_out[i] = T_rnr[i] - 273.15; // K to C
+                P_rnr_des_out[i] = P_rnr[i] / 1.e5;   // Pa to bar
             }
             for (int i = 0; i < 2 * nhdrsec; i++) {
-                T_hdr_out[i] = T_hdr[i] - 273.15;
-                P_hdr_out[i] = P_hdr[i] / 1.e5;
+                T_hdr_des_out[i] = T_hdr[i] - 273.15;
+                P_hdr_des_out[i] = P_hdr[i] / 1.e5;
             }
             for (int i = 0; i < 2 * nSCA + 3; i++) {
-                T_loop_out[i] = T_loop[i] - 273.15;
-                P_loop_out[i] = P_loop[i] / 1.e5;
+                T_loop_des_out[i] = T_loop[i] - 273.15;
+                P_loop_des_out[i] = P_loop[i] / 1.e5;
             }
-            
-            double *runner_temp_design = allocate(O_RUNNER_T_DSN, (int)T_rnr_out.ncells());
-            std::copy(T_rnr_out.data(), T_rnr_out.data() + T_rnr_out.ncells(), runner_temp_design);
-            double *runner_pressure_design = allocate(O_RUNNER_P_DSN, (int)P_rnr_out.ncells());
-            std::copy(P_rnr_out.data(), P_rnr_out.data() + P_rnr_out.ncells(), runner_pressure_design);
-            double *header_temp_design = allocate(O_HEADER_T_DSN, (int)T_hdr_out.ncells());
-            std::copy(T_hdr_out.data(), T_hdr_out.data() + T_hdr_out.ncells(), header_temp_design);
-            double *header_pressure_design = allocate(O_HEADER_P_DSN, (int)P_hdr_out.ncells());
-            std::copy(P_hdr_out.data(), P_hdr_out.data() + P_hdr_out.ncells(), header_pressure_design);
-            double *loop_temp_design = allocate(O_LOOP_T_DSN, (int)T_loop_out.ncells());
-            std::copy(T_loop_out.data(), T_loop_out.data() + T_loop_out.ncells(), loop_temp_design);
-            double *loop_pressure_design = allocate(O_LOOP_P_DSN, (int)P_loop_out.ncells());
-            std::copy(P_loop_out.data(), P_loop_out.data() + P_loop_out.ncells(), loop_pressure_design);
 
-            value(O_T_FIELD_IN_AT_DSN, T_rnr_out.at(0));
-            value(O_T_FIELD_OUT_AT_DSN, T_rnr_out.at(T_rnr_out.ncells() - 1));
-            value(O_P_FIELD_IN_AT_DSN, P_rnr_out.at(0));
+            value(O_T_FIELD_IN_AT_DSN, T_rnr_des_out.at(0));
+            value(O_T_FIELD_OUT_AT_DSN, T_rnr_des_out.at(T_rnr_des_out.ncells() - 1));
+            value(O_P_FIELD_IN_AT_DSN, P_rnr_des_out.at(0));
+
+            // wait to output arrays until TES/PB sizing has finished so P can be adjusted
+        }
+
+        DP_SGS_1 = value(P_DP_SGS_1);
+        if (!SGS_sizing_adjusted && DP_SGS_1 >= 0) {
+            // Adjust design P values with pressure drop in first section of TES/PB (after controller model has finished sizing)
+
+            for (int i = 0; i < P_rnr_des_out.ncells(); i++) {
+                P_rnr_des_out.at(i) += DP_SGS_1;
+            }
+
+            for (int i = 0; i < P_hdr_des_out.ncells(); i++) {
+                P_hdr_des_out.at(i) += DP_SGS_1;
+            }
+
+            for (int i = 0; i < P_loop_des_out.ncells(); i++) {
+                P_loop_des_out.at(i) += DP_SGS_1;
+            }
+
+            double *runner_temp_design = allocate(O_RUNNER_T_DSN, (int)T_rnr_des_out.ncells());
+            std::copy(T_rnr_des_out.data(), T_rnr_des_out.data() + T_rnr_des_out.ncells(), runner_temp_design);
+            double *runner_pressure_design = allocate(O_RUNNER_P_DSN, (int)P_rnr_des_out.ncells());
+            std::copy(P_rnr_des_out.data(), P_rnr_des_out.data() + P_rnr_des_out.ncells(), runner_pressure_design);
+            double *header_temp_design = allocate(O_HEADER_T_DSN, (int)T_hdr_des_out.ncells());
+            std::copy(T_hdr_des_out.data(), T_hdr_des_out.data() + T_hdr_des_out.ncells(), header_temp_design);
+            double *header_pressure_design = allocate(O_HEADER_P_DSN, (int)P_hdr_des_out.ncells());
+            std::copy(P_hdr_des_out.data(), P_hdr_des_out.data() + P_hdr_des_out.ncells(), header_pressure_design);
+            double *loop_temp_design = allocate(O_LOOP_T_DSN, (int)T_loop_des_out.ncells());
+            std::copy(T_loop_des_out.data(), T_loop_des_out.data() + T_loop_des_out.ncells(), loop_temp_design);
+            double *loop_pressure_design = allocate(O_LOOP_P_DSN, (int)P_loop_des_out.ncells());
+            std::copy(P_loop_des_out.data(), P_loop_des_out.data() + P_loop_des_out.ncells(), loop_pressure_design);
+
+            SGS_sizing_adjusted = true;
         }
 		//------------------------------------------------------------------
 
