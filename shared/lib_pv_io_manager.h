@@ -9,7 +9,6 @@
 #include "6par_solve.h"
 #include "lib_cec6par.h"
 #include "lib_iec61853.h"
-#include "lib_irradproc.h"
 #include "lib_pvinv.h"
 #include "lib_pv_incidence_modifier.h"
 #include "lib_pvshade.h"
@@ -18,8 +17,8 @@
 #include "lib_snowmodel.h"
 #include "lib_util.h"
 
-#include "common.h"
-#include "core.h"
+#include "../ssc/common.h"
+#include "../ssc/core.h"
 
 /// Structure containing data relevent at the SimulationManager level
 struct Simulation_IO;
@@ -112,6 +111,9 @@ struct Irradiance_IO
 	/// Construct the Irradiance_IO structure from the compute module input.  This sets up all inputs for the IrradianceModel
 	Irradiance_IO(compute_module* cm, std::string cmName);
 
+	/// Check weather file
+	void checkWeatherFile(compute_module* cm, std::string cmName);
+
 	/// Allocate the Irradiance_IO outputs
 	void AllocateOutputs(compute_module* cm);
 
@@ -121,6 +123,9 @@ struct Irradiance_IO
 	// Constants
 	static const int irradiationMax = 1500;						  /// The maximum irradiation (W/m2) allowed
 	static const int irradprocNoInterpolateSunriseSunset = -1;    /// Interpolate the sunrise/sunset
+
+	enum RADMODE { DN_DF, DN_GH, GH_DF, POA_R, POA_P };
+	enum SKYMODEL { ISOTROPIC, HDKR, PEREZ };
 
 	// Irradiance Data Inputs
 	std::unique_ptr<weather_data_provider> weatherDataProvider;   /// A class which encapsulates the weather data regardless of input method
@@ -291,6 +296,23 @@ struct PVSystem_IO
 	ssc_number_t *p_systemACPower;
 };
 
+
+// allow for the poa decomp model to take all daily POA measurements into consideration
+struct poaDecompReq {
+	poaDecompReq() : i(0), dayStart(0), stepSize(1), stepScale('h'), doy(-1) {}
+	size_t i; // Current time index
+	size_t dayStart; // time index corresponding to the start of the current day
+	double stepSize;
+	char stepScale; // indicates whether time steps are hours (h) or minutes (m)
+	double* POA; // Pointer to entire POA array (will have size 8760 if time step is 1 hour)
+	double* inc; // Pointer to angle of incident array (same size as POA)
+	double* tilt; // Pointer to angle of incident array (same size as POA)
+	double* zen; // Pointer to angle of incident array (same size as POA)
+	double* exTer; // Pointer to angle of incident array (same size as POA)
+	double tDew;
+	int doy;
+	double elev;
+};
 
 /**
 * \struct Subarray_IO
