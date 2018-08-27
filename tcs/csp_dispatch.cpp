@@ -1901,7 +1901,7 @@ std::string csp_dispatch_opt::write_ampl()
 
         outname << solver_params.ampl_data_dir << (solver_params.ampl_data_dir.back() == '/' ? "" : "/") << "sdk_data";
         if( !solver_params.ampl_thread_id.empty() )
-            outname << solver_params.ampl_thread_id;
+            outname << "_" << solver_params.ampl_thread_id;
         outname << ".dat";
         
         sname = outname.str();    //save string
@@ -1996,15 +1996,19 @@ bool csp_dispatch_opt::optimize_ampl()
     std::stringstream outfile;
     std::stringstream ampl_call;
 
-    if (solver_params.ampl_exec_call == "")
+    if (solver_params.ampl_exec_call.empty())
     {
 
         ampl_call << "ampl sdk_solution";
+        outfile << "sdk_solution";
         if (solver_params.ampl_thread_id.size() > 0)
-            ampl_call << solver_params.ampl_thread_id;
+        {
+            ampl_call << "_" << solver_params.ampl_thread_id;
+            outfile << "_" << solver_params.ampl_thread_id;
+        }
         ampl_call << ".run >> log.txt;";
-        
-		system(outfile.str().c_str()); 
+        outfile << ".txt";
+		system(ampl_call.str().c_str()); 
     }
 	else
 	{
@@ -2015,18 +2019,16 @@ bool csp_dispatch_opt::optimize_ampl()
 		if (sufpos < solver_params.ampl_exec_call.size())
 		{
 			std::string execsub = solver_params.ampl_exec_call.substr(0, sufpos);
-			std::vector<std::string> parse = util::split(execsub, " ");
+			std::vector<std::string> parse = util::split(execsub, "<");
 			if (parse.size() > 1)
 			{
                 outfile << parse.at(1);
                 if (solver_params.ampl_thread_id.size() > 0)
-                    outfile << solver_params.ampl_thread_id;
+                    outfile << "_" << solver_params.ampl_thread_id;
                 outfile << ".txt";
 			}
 		}
 	}
-
-
     //read back ampl solution
     tstring.str(std::string()); //clear
 
@@ -2035,7 +2037,7 @@ bool csp_dispatch_opt::optimize_ampl()
 
     if(! infile.is_open() )
         return false;
-    
+
     std::vector< std::string > F;
 
     std::string line;
@@ -2043,7 +2045,6 @@ bool csp_dispatch_opt::optimize_ampl()
     {
         F.push_back( line );
     }
-
     /* 
     expects:
     1.  objective (1)
@@ -2080,6 +2081,8 @@ bool csp_dispatch_opt::optimize_ampl()
     std::vector< std::string > svals;
 
     svals = util::split( F.at(2), "," );
+
+    
     for(int i=0; i<nt; i++)
     {
         int v;
