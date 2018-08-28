@@ -974,7 +974,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 	size_t hour = 0;
 
 	// variables used to calculate loss diagram
-	double annual_energy = 0, annual_ac_gross = 0, annual_ac_pre_avail = 0, dc_gross[4] = { 0, 0, 0, 0 }, annual_mppt_window_clipping = 0, annual_dc_adjust_loss = 0, annual_dc_lifetime_loss = 0, annual_ac_lifetime_loss = 0, annual_ac_battery_loss = 0, annual_xfmr_nll = 0, annual_xfmr_ll = 0, annual_xfmr_loss = 0;
+	double annual_energy = 0, annual_ac_gross = 0, annual_ac_pre_avail = 0, dc_gross[4] = { 0, 0, 0, 0 }, annualMpptVoltageClipping = 0, annual_dc_adjust_loss = 0, annual_dc_lifetime_loss = 0, annual_ac_lifetime_loss = 0, annual_ac_battery_loss = 0, annual_xfmr_nll = 0, annual_xfmr_ll = 0, annual_xfmr_loss = 0;
 
 	// Check if a POA model is used, if so load all POA data into the poaData struct
 	if (radmode == Irradiance_IO::POA_R || radmode == Irradiance_IO::POA_P ){
@@ -1536,7 +1536,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 					Subarrays[nn]->poa.surfaceAzimuthDegrees = sazi;
 				}
 
-				double totalMPPTVoltageClipping = 0; //variable to store the MPPT voltage range clipping for the ENTIRE array, not just one MPPT input
+				std::vector<double> mpptVoltageClipping; //a vector to store power that is clipped due to the inverter MPPT low & high voltage limits for each subarray
 
 				//Calculate power of each MPPT input
 				for (int mppt_input = 0; mppt_input < PVSystem->Inverter->nMpptInputs; mppt_input++) //remember that actual named mppt inputs are 1-indexed, and these are 0-indexed
@@ -1606,7 +1606,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 
 					} //now we have the string voltage at which the MPPT input will produce max power, to be used in subsequent calcs
 
-					double mpptVoltageClipping = 0; //value to store power that is clipped due to the inverter MPPT low & high voltage limits for this MPPT input
+
 
 					//now calculate power for each subarray on this mppt input. stringVoltage will still be -1 if mismatch calcs aren't enabled, or the value decided by mismatch calcs if they are enabled
 					for (int nSubarray = 0; nSubarray < nSubarraysOnMpptInput; nSubarray++) //sweep across all subarrays connected to this MPPT input
@@ -1634,7 +1634,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 							(*Subarrays[nn]->Module->cellTempModel)(in, *Subarrays[nn]->Module->moduleModel, module_voltage, tcell);
 							(*Subarrays[nn]->Module->moduleModel)(in, tcell, module_voltage, out);
 
-							if (iyear == 0) mpptVoltageClipping = out.Power; //initialize the voltage clipping loss with the power at module MPP, subtract from this later for the actual MPPT clipping loss
+							if (iyear == 0) mpptVoltageClipping[nn] = out.Power; //initialize the voltage clipping loss with the power at module MPP, subtract from this later for the actual MPPT clipping loss
 
 							// if mismatch is enabled, the voltage already was clipped to the inverter MPPT range as needed
 							// if mismatch isn't enabled, need to check the voltage at the module's MPP against the inverter MPPT voltage range
@@ -1656,7 +1656,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 									(*Subarrays[nn]->Module->moduleModel)(in, tcell, module_voltage, out);
 								}
 							}
-							if (iyear == 0)	mpptVoltageClipping -= out.Power; //subtract the power that remains after voltage clipping in order to get the total loss. if no power was lost, all the power will be subtracted away again.
+							if (iyear == 0)	mpptVoltageClipping[nn] -= out.Power; //subtract the power that remains after voltage clipping in order to get the total loss. if no power was lost, all the power will be subtracted away again.
 						}
 
 						//check for weird results
@@ -1675,13 +1675,13 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 						}
 
 						// save DC module outputs for this subarray
-						Subarrays[nn]->module.dcPowerW = out.Power;
-						Subarrays[nn]->module.dcEfficiency = out.Efficiency * 100;
-						Subarrays[nn]->module.dcVoltage = out.Voltage;
-						Subarrays[nn]->module.temperatureCellCelcius = out.CellTemp;
-						Subarrays[nn]->module.currentShortCircuit = out.Isc_oper;
-						Subarrays[nn]->module.voltageOpenCircuit = out.Voc_oper;
-						Subarrays[nn]->module.angleOfIncidenceModifier = out.AOIModifier;
+						Subarrays[nn]->Module->dcPowerW = out.Power;
+						Subarrays[nn]->Module->dcEfficiency = out.Efficiency * 100;
+						Subarrays[nn]->Module->dcVoltage = out.Voltage;
+						Subarrays[nn]->Module->temperatureCellCelcius = out.CellTemp;
+						Subarrays[nn]->Module->currentShortCircuit = out.Isc_oper;
+						Subarrays[nn]->Module->voltageOpenCircuit = out.Voc_oper;
+						Subarrays[nn]->Module->angleOfIncidenceModifier = out.AOIModifier;
 
 						// Output front-side irradiance after the cover- needs to be after the module model for now because cover effects are part of the module model
 						if (iyear == 0)
@@ -1697,7 +1697,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 						//assign final string voltage output
 						if (iyear == 0)
 						{
-							PVSystem->p_dcStringVoltage[nn][idx] = (ssc_number_t)Subarrays[nn]->module.dcVoltage * Subarrays[nn]->nModulesPerString;
+							PVSystem->p_dcStringVoltage[nn][idx] = (ssc_number_t)Subarrays[nn]->Module->dcVoltage * Subarrays[nn]->nModulesPerString;
 						}
 					}
 
@@ -1725,21 +1725,19 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 				// sum up all DC power from the whole array
 				for (int nn = 0; nn < num_subarrays; nn++)
 				{
-					if (!Subarrays[nn]->enable
-						|| Subarrays[nn]->nStrings < 1)
-						continue; // skip disabled subarrays
+					// DC derates for snow and shading must be applied first
+					// these can't be applied before the power calculation because they are POWER derates
 
-					// apply self-shading derate (by default it is 1.0 if disbled)
-					Subarrays[nn]->module.dcPowerW *= Subarrays[nn]->poa.nonlinearDCShadingDerate;
+					// self-shading derate (by default it is 1.0 if disbled)
+					Subarrays[nn]->Module->dcPowerW *= Subarrays[nn]->poa.nonlinearDCShadingDerate;
+					if (iyear == 0) mpptVoltageClipping[nn] *= Subarrays[nn]->poa.nonlinearDCShadingDerate;
 
-					if (iyear == 0) mpptVoltageClipping *= Subarrays[nn]->poa.nonlinearDCShadingDerate;
-
-					// scale power and voltage to array dimensions
-					Subarrays[nn]->module.dcPowerW *= Subarrays[nn]->nModulesPerString* Subarrays[nn]->nStrings;
-					if (iyear == 0) mpptVoltageClipping *= Subarrays[nn]->nModulesPerString* Subarrays[nn]->nStrings;
+					// Sara 1/25/16 - shading database derate applied to dc only
+					// shading loss applied to beam if not from shading database
+					Subarrays[nn]->Module->dcPowerW *= Subarrays[nn]->shadeCalculator.dc_shade_factor();
 
 					// Calculate and apply snow coverage losses if activated
-					if (Subarrays[0]->enableSnowModel)
+					if (PVSystem->enableSnowModel)
 					{
 						float smLoss = 0.0f;
 
@@ -1752,38 +1750,39 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 
 						if (iyear == 0)
 						{
-							PVSystem->p_snowLoss[nn][idx] = (ssc_number_t)(util::watt_to_kilowatt*Subarrays[nn]->module.dcPowerW*smLoss);
-							PVSystem->p_snowLossTotal[idx] += (ssc_number_t)(util::watt_to_kilowatt*Subarrays[nn]->module.dcPowerW*smLoss);
+							PVSystem->p_snowLoss[nn][idx] = (ssc_number_t)(util::watt_to_kilowatt*Subarrays[nn]->Module->dcPowerW*smLoss);
+							PVSystem->p_snowLossTotal[idx] += (ssc_number_t)(util::watt_to_kilowatt*Subarrays[nn]->Module->dcPowerW*smLoss);
 							PVSystem->p_snowCoverage[nn][idx] = (ssc_number_t)(Subarrays[nn]->snowModel.coverage);
-							annual_snow_loss += (ssc_number_t)(util::watt_to_kilowatt*Subarrays[nn]->module.dcPowerW*smLoss);
+							annual_snow_loss += (ssc_number_t)(util::watt_to_kilowatt*Subarrays[nn]->Module->dcPowerW*smLoss);
 						}
 
-						Subarrays[nn]->module.dcPowerW *= (1 - smLoss);
+						Subarrays[nn]->Module->dcPowerW *= (1 - smLoss);
+						if (iyear == 0) mpptVoltageClipping[nn] *= (1 - smLoss);
 					}
 
-					// apply pre-inverter power derate
-					// apply yearly degradation as necessary
+					// scale power and mppt voltage clipping to array dimensions
+					Subarrays[nn]->dcPowerSubarray = Subarrays[nn]->Module->dcPowerW * Subarrays[nn]->nModulesPerString * Subarrays[nn]->nStrings;
+					if (iyear == 0) mpptVoltageClipping[nn] *= Subarrays[nn]->nModulesPerString* Subarrays[nn]->nStrings;
 
+					//assign gross outputs at this point
 					if (iyear == 0)
 					{
-						dc_gross[nn] += Subarrays[nn]->module.dcPowerW*util::watt_to_kilowatt*ts_hour; //power W to	energy kWh
-						annual_mppt_window_clipping += mpptVoltageClipping*util::watt_to_kilowatt*ts_hour; //power W to	energy kWh
+						//Gross DC power
+						dc_gross[nn] += Subarrays[nn]->dcPowerSubarray*util::watt_to_kilowatt*ts_hour; //power W to	energy kWh
+						PVSystem->p_dcPowerGross[nn][idx] = (ssc_number_t)dc_gross[nn];
+						//Add to annual MPPT clipping
+						annualMpptVoltageClipping += mpptVoltageClipping[nn]*util::watt_to_kilowatt*ts_hour; //power W to energy kWh
 						// save to SSC output arrays
-						PVSystem->p_temperatureCell[nn][idx] = (ssc_number_t)Subarrays[nn]->module.temperatureCellCelcius;
-						PVSystem->p_moduleEfficiency[nn][idx] = (ssc_number_t)Subarrays[nn]->module.dcEfficiency;
-						
-						PVSystem->p_voltageOpenCircuit[nn][idx] = (ssc_number_t)Subarrays[nn]->module.voltageOpenCircuit * Subarrays[nn]->nModulesPerString;
-						PVSystem->p_currentShortCircuit[nn][idx] = (ssc_number_t)Subarrays[nn]->module.currentShortCircuit;
-						PVSystem->p_dcPowerGross[nn][idx] = (ssc_number_t)(Subarrays[nn]->module.dcPowerW * util::watt_to_kilowatt);
-						PVSystem->p_angleOfIncidenceModifier[nn][idx] = (ssc_number_t)(Subarrays[nn]->module.angleOfIncidenceModifier);
+						PVSystem->p_temperatureCell[nn][idx] = (ssc_number_t)Subarrays[nn]->Module->temperatureCellCelcius;
+						PVSystem->p_moduleEfficiency[nn][idx] = (ssc_number_t)Subarrays[nn]->Module->dcEfficiency;					
+						PVSystem->p_voltageOpenCircuit[nn][idx] = (ssc_number_t)Subarrays[nn]->Module->voltageOpenCircuit * Subarrays[nn]->nModulesPerString;
+						PVSystem->p_currentShortCircuit[nn][idx] = (ssc_number_t)Subarrays[nn]->Module->currentShortCircuit;
+						PVSystem->p_angleOfIncidenceModifier[nn][idx] = (ssc_number_t)(Subarrays[nn]->Module->angleOfIncidenceModifier);
 
 					}
-					// Sara 1/25/16 - shading database derate applied to dc only
-					// shading loss applied to beam if not from shading database
-					Subarrays[nn]->module.dcPowerW *= Subarrays[nn]->shadeCalculator.dc_shade_factor();
-
-
-					dcpwr_net += Subarrays[nn]->module.dcPowerW *  Subarrays[nn]->dcLoss;
+					
+					// apply pre-inverter power derate
+					dcpwr_net += Subarrays[nn]->dcPowerSubarray * Subarrays[nn]->dcLoss;
 
 				}
 				// bug fix jmf 12/13/16- losses that apply to ALL subarrays need to be applied OUTSIDE of the subarray summing loop
@@ -1805,6 +1804,8 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 					if (iyear == 0) annual_dc_lifetime_loss += dcpwr_net * (PVSystem->p_dcLifetimeLosses[dc_loss_index] / 100) * util::watt_to_kilowatt * ts_hour; //this loss is still in percent, only keep track of it for year 0, convert from power W to energy kWh
 					dcpwr_net *= (100 - PVSystem->p_dcLifetimeLosses[dc_loss_index]) / 100;
 				}
+
+				PVSystem->p_systemDCPower[idx] = (ssc_number_t)(dcpwr_net * util::watt_to_kilowatt);
 
 				// save other array-level environmental and irradiance outputs	- year 1 only outputs
 				if (iyear == 0)
@@ -1831,27 +1832,30 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 					PVSystem->p_poaRearTotal[idx] = (ssc_number_t)(ts_accum_poa_rear * util::watt_to_kilowatt);
 					PVSystem->p_poaTotalAllSubarrays[idx] = (ssc_number_t)(ts_accum_poa_total_eff * util::watt_to_kilowatt); 
 					PVSystem->p_poaFrontBeamTotal[idx] = (ssc_number_t)(ts_accum_poa_front_beam_eff * util::watt_to_kilowatt);
-					PVSystem->p_inverterMPPTLoss[idx] = (ssc_number_t)(mpptVoltageClipping * util::watt_to_kilowatt);
+					PVSystem->p_inverterMPPTLoss[idx] = 0;
+					for (int nn = 0; nn < num_subarrays; nn++)
+						PVSystem->p_inverterMPPTLoss[idx] == (ssc_number_t)(mpptVoltageClipping[nn] * util::watt_to_kilowatt);
 				}
-				
-				PVSystem->p_systemDCPower[idx] = (ssc_number_t)(dcpwr_net * util::watt_to_kilowatt);
 
 				// Predict clipping for DC battery controller
-				double cliploss = 0; 
-				double dcpwr = PVSystem->p_systemDCPower[idx];
+				if (en_batt)
+				{
+					double cliploss = 0;
+					double dcpwr = PVSystem->p_systemDCPower[idx];
 
-				if (p_pv_dc_forecast.size() > 1 && p_pv_dc_forecast.size() > idx % (8760 * step_per_hour)) {
-					dcpwr = p_pv_dc_forecast[idx % (8760 * step_per_hour)];
+					if (p_pv_dc_forecast.size() > 1 && p_pv_dc_forecast.size() > idx % (8760 * step_per_hour)) {
+						dcpwr = p_pv_dc_forecast[idx % (8760 * step_per_hour)];
+					}
+					p_pv_dc_use.push_back(static_cast<ssc_number_t>(dcpwr));
+
+					sharedInverter->calculateACPower(dcpwr * util::kilowatt_to_watt, PVSystem->p_mpptVoltage[0][idx], 0.0); //multiple MPPT arrays are disabled with DC battery, so first MPPT input will be only MPPT input
+
+					if (p_pv_clipping_forecast.size() > 1 && p_pv_clipping_forecast.size() > idx % (8760 * step_per_hour)) {
+						cliploss = p_pv_clipping_forecast[idx % (8760 * step_per_hour)] * util::kilowatt_to_watt;
+					}
+
+					p_invcliploss_full.push_back(static_cast<ssc_number_t>(sharedInverter->powerClipLoss_kW));
 				}
-				p_pv_dc_use.push_back(static_cast<ssc_number_t>(dcpwr));
-
- 				sharedInverter->calculateACPower(dcpwr * util::kilowatt_to_watt, dc_string_voltage, 0.0);
-
-				if (p_pv_clipping_forecast.size() > 1 && p_pv_clipping_forecast.size() > idx % (8760 * step_per_hour)) {
-					cliploss = p_pv_clipping_forecast[idx % (8760 * step_per_hour)] * util::kilowatt_to_watt;
-				}
-
-				p_invcliploss_full.push_back(static_cast<ssc_number_t>(sharedInverter->powerClipLoss_kW));
 
 				idx++;
 			}
@@ -1897,37 +1901,58 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 				double dcpwr_net = 0, acpwr_gross = 0, ac_wiringloss = 0, transmissionloss = 0;
 				cur_load = p_load_full[idx];
 				dcpwr_net = util::kilowatt_to_watt * PVSystem->p_systemDCPower[idx];
-				double dc_string_voltage = PVSystem->p_inverterDCVoltage[idx];
 				wdprov->read(&Irradiance->weatherRecord);
 				weather_record wf = Irradiance->weatherRecord;
 
-				// DC Connected Battery
-				if (en_batt && (batt_topology == ChargeController::DC_CONNECTED))
+				for (int mppt_input = 0; mppt_input < PVSystem->Inverter->nMpptInputs; mppt_input++)
 				{
-					// Compute PV clipping before adding battery
-					sharedInverter->calculateACPower(dcpwr_net, dc_string_voltage, wf.tdry);
+					// DC Connected Battery- multiple MPPT arrays are disabled with DC battery, so first MPPT input will be only MPPT input
+					if (en_batt && (batt_topology == ChargeController::DC_CONNECTED))
+					{
+						// Compute PV clipping before adding battery
+						sharedInverter->calculateACPower(dcpwr_net, PVSystem->p_mpptVoltage[mppt_input][idx], wf.tdry); 
 
-					// Run PV plus battery through sharedInverter, returns AC power
-					batt.advance(*this, dcpwr_net*util::watt_to_kilowatt, dc_string_voltage, cur_load, sharedInverter->powerClipLoss_kW);
-					acpwr_gross = batt.outGenPower[idx];
-				}
-				else
-				{
-					// inverter: runs at all hours of the day, even if no DC power.  important
-					// for capturing tare losses
-					sharedInverter->calculateACPower(dcpwr_net, dc_string_voltage, wf.tdry);
-					acpwr_gross = sharedInverter->powerAC_kW;
-				}
+						// Run PV plus battery through sharedInverter, returns AC power
+						batt.advance(*this, dcpwr_net*util::watt_to_kilowatt, PVSystem->p_mpptVoltage[0][idx], cur_load, sharedInverter->powerClipLoss_kW);
+						acpwr_gross = batt.outGenPower[idx];
+					}
+					else
+					{
+						// inverter: runs at all hours of the day, even if no DC power.  important
+						// for capturing tare losses
+						sharedInverter->calculateACPower(dcpwr_net, PVSystem->p_mpptVoltage[mppt_input][idx], wf.tdry);
+						acpwr_gross = sharedInverter->powerAC_kW;
+					}
+
+					if (iyear == 0)
+					{
+						PVSystem->p_inverterEfficiency[mppt_input][idx] = (ssc_number_t)(sharedInverter->efficiencyAC);
+
+
+
+
+
+
+
+
+
+
 		
 				
 				ac_wiringloss = fabs(acpwr_gross) * PVSystem->acLossPercent * 0.01;
 				transmissionloss = fabs(acpwr_gross) * PVSystem->transmissionLossPercent * 0.01;
 
+
+
+
+
+
+
 				// accumulate first year annual energy
 				if (iyear == 0)
 				{ 
 					annual_ac_gross += acpwr_gross * ts_hour;
-					PVSystem->p_inverterEfficiency[idx] = (ssc_number_t)(sharedInverter->efficiencyAC);
+					
 					PVSystem->p_inverterClipLoss[idx] = (ssc_number_t)(sharedInverter->powerClipLoss_kW);
 					PVSystem->p_inverterPowerConsumptionLoss[idx] = (ssc_number_t)(sharedInverter->powerConsumptionLoss_kW);
 					PVSystem->p_inverterNightTimeLoss[idx] = (ssc_number_t)(sharedInverter->powerNightLoss_kW);
@@ -2264,12 +2289,12 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 	assign("annual_dc_snow_loss_percent", var_data((ssc_number_t)percent));
 
 	// apply clipping window loss
-	if (annual_dc_nominal > 0) percent = 100 * annual_mppt_window_clipping / annual_dc_nominal;
+	if (annual_dc_nominal > 0) percent = 100 * annualMpptVoltageClipping / annual_dc_nominal;
 	assign("annual_dc_mppt_clip_loss_percent", var_data((ssc_number_t)percent));
 
 	// module loss depends on if MPPT clipping enabled.
 	percent = 0.;
-	if (annual_dc_nominal > 0) percent = 100 * (annual_dc_nominal - (annual_dc_gross + annual_snow_loss + annual_mppt_window_clipping)) / annual_dc_nominal;
+	if (annual_dc_nominal > 0) percent = 100 * (annual_dc_nominal - (annual_dc_gross + annual_snow_loss + annualMpptVoltageClipping)) / annual_dc_nominal;
 	assign("annual_dc_module_loss_percent", var_data((ssc_number_t)percent));
 
 

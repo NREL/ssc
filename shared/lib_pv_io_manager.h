@@ -200,6 +200,7 @@ struct PVSystem_IO
 	// Inputs assumed to apply to all subarrays
 	bool enableDCLifetimeLosses;
 	bool enableACLifetimeLosses;
+	bool enableSnowModel;	
 
 	int stringsInParallel;
 	double ratedACOutput;  /// AC Power rating for whole system (all inverters)
@@ -236,7 +237,7 @@ struct PVSystem_IO
 	std::vector<ssc_number_t *> p_temperatureCell; 
 	std::vector<ssc_number_t *> p_moduleEfficiency; 
 	std::vector<ssc_number_t *> p_dcStringVoltage; /// An output vector containing dc string voltage for each subarray [V]
-	std::vector<ssc_number_t *> p_voltageOpenCircuit; 
+	std::vector<ssc_number_t *> p_voltageOpenCircuit; /// Open circuit voltage of a string in the subarray [V]
 	std::vector<ssc_number_t *> p_currentShortCircuit; 
 	std::vector<ssc_number_t *> p_dcPowerGross; 
 	std::vector<ssc_number_t *> p_derateLinear; 
@@ -284,7 +285,7 @@ struct PVSystem_IO
 
 	ssc_number_t *p_snowLossTotal;
 
-	ssc_number_t *p_inverterEfficiency;
+	std::vector<ssc_number_t *>p_inverterEfficiency;
 	ssc_number_t *p_inverterClipLoss;
 	ssc_number_t *p_inverterMPPTLoss;
 
@@ -364,23 +365,22 @@ public:
 	bool backtrackingEnabled;			/// Backtracking enabled or not
 	double moduleAspectRatio;			/// The aspect ratio of the models used in the subarray
 	int nStringsBottom;					/// Number of strings along bottom from self-shading
-	
 
 	// Subarray-specific losses
 	std::vector<double> monthlySoiling; /// The soiling loss by month [%]
 	double dcLoss;						/// The DC loss due to mismatch, diodes, wiring, tracking, optimizers [%]
 
-	// Shading and snow
-	bool enableSnowModel;	//jmf why is this in the subarray structure? it isn't subarray specific, but a global setting.			
+	// Shading and snow	
 	bool enableSelfShadingOutputs;			/// Choose whether additional self-shading outputs are displayed
 	int shadeMode;						/// The shading mode of the subarray [0 = none, 1 = standard (non-linear), 2 = thin film (linear)]
 	bool usePOAFromWeatherFile;			/// Flag for whether or not a shading model has been selected that means POA can't be used directly for that subarray
 	ssinputs selfShadingInputs;			/// Inputs and calculation methods for self-shading of the subarray
 	ssoutputs selfShadingOutputs;		/// Outputs for the self-shading of the subarray
 	shading_factor_calculator shadeCalculator; /// The shading calculator model for self-shading
-	pvsnowmodel snowModel;				/// The underlying snow model for this subarray
+	bool subarrayEnableSnow;
+	pvsnowmodel snowModel;				/// A structure to store the geometry inputs for the snow model for this subarray- even though the snow model is system wide, its effect is subarray-dependent
 
-										/// Calculated plane-of-array (POA) irradiace for the subarray and related geometry
+	/// Calculated plane-of-array (POA) irradiace for the subarray and related geometry
 	struct {
 		double poaBeamFront;	/// POA due to beam irradiance on the front of the subarray [W/m2]	
 		double poaDiffuseFront; /// POA due to diffuse irradiance on the front of the subarray [W/m2]
@@ -397,15 +397,8 @@ public:
 		poaDecompReq poaAll;	/// A structure containing POA decompositions into the three irrradiance components from input POA
 	} poa;
 
-	struct {
-		double dcPowerW;			/// The DC power output of the modules in the subarray [W]
-		double dcVoltage;			/// The DC voltage the subarray [V]
-		double voltageOpenCircuit;  /// The DC open circuit voltage of the subarray [V]
-		double currentShortCircuit; /// The DC short circuit current of the subarray [A]
-		double dcEfficiency;		/// The DC conversion efficiency of the subarray [%]
-		double temperatureCellCelcius; /// The average cell temperature of the modules in the subarray [C]
-		double angleOfIncidenceModifier; /// The angle of incidence modifier on the total poa front-side irradiance [0-1]
-	} module;
+	//calculated- subarray power
+	double dcPowerSubarray; /// DC power for this subarray [W]
 
 };
 
@@ -453,6 +446,16 @@ public:
 	iec61853_module_t elevenParamSingleDiodeModel; 
 	pvcelltemp_t *cellTempModel;
 	pvmodule_t *moduleModel;
+
+	//outputs
+	double dcPowerW;			/// The DC power output of one module [W]
+	double dcVoltage;			/// The DC voltage of the module [V]
+	double voltageOpenCircuit;  /// The DC open circuit voltage of the module [V]
+	double currentShortCircuit; /// The DC short circuit current of the module [A]
+	double dcEfficiency;		/// The DC conversion efficiency of the module [%]
+	double temperatureCellCelcius; /// The average cell temperature of the module [C]
+	double angleOfIncidenceModifier; /// The angle of incidence modifier on the total poa front-side irradiance [0-1]
+	
 };
 
 
