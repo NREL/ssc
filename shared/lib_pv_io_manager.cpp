@@ -283,7 +283,13 @@ Subarray_IO::Subarray_IO(compute_module* cm, std::string cmName, size_t subarray
 		trackingLossPercent = cm->as_double(prefix + "tracking_loss") / 100;
 		nameplateLossPercent = cm->as_double(prefix + "nameplate_loss") / 100;
 
-		dcLossTotalPercent = dcOptimizerLossPercent + mismatchLossPercent + diodesLossPercent + dcWiringLossPercent + trackingLossPercent + nameplateLossPercent;
+		dcLossTotalPercent = 1 - (
+			(1 - dcOptimizerLossPercent) * 
+			(1 - mismatchLossPercent) * 
+			(1 - diodesLossPercent) * 
+			(1 - dcWiringLossPercent) * 
+			(1 - trackingLossPercent) * 
+			(1 - nameplateLossPercent));
 
 		if (groundCoverageRatio < 0.01)
 			throw compute_module::exec_error(cmName, "array ground coverage ratio must obey 0.01 < gcr");
