@@ -372,10 +372,12 @@ PVSystem_IO::PVSystem_IO(compute_module* cm, std::string cmName, Simulation_IO *
 	Inverter = InverterIO;
 
 	numberOfSubarrays = Subarrays.size();
-
+	stringsInParallel = 0;
+	for (size_t s = 0; s < numberOfSubarrays; s++) {
+		stringsInParallel += static_cast<int>(Subarrays[s]->nStrings);
+	}
 	AllocateOutputs(cm);
 
-	stringsInParallel = cm->as_integer("strings_in_parallel");
 	numberOfInverters = cm->as_integer("inverter_count");
 	ratedACOutput = Inverter->ratedACOutput * numberOfInverters;
 	acDerate = 1 - cm->as_double("acwiring_loss") / 100;	
@@ -513,7 +515,7 @@ void PVSystem_IO::AllocateOutputs(compute_module* cm)
 			p_beamShadingFactor.push_back(cm->allocate(prefix + "beam_shading_factor", numberOfWeatherFileRecords));
 			p_temperatureCell.push_back(cm->allocate(prefix + "celltemp", numberOfWeatherFileRecords));
 			p_moduleEfficiency.push_back(cm->allocate(prefix + "modeff", numberOfWeatherFileRecords));
-			p_dcVoltage.push_back(cm->allocate(prefix + "dc_voltage", numberOfWeatherFileRecords));
+			p_dcStringVoltage.push_back(cm->allocate(prefix + "dc_voltage", numberOfWeatherFileRecords));
 			p_voltageOpenCircuit.push_back(cm->allocate(prefix + "voc", numberOfWeatherFileRecords));
 			p_currentShortCircuit.push_back(cm->allocate(prefix + "isc", numberOfWeatherFileRecords));
 			p_dcPowerGross.push_back(cm->allocate(prefix + "dc_gross", numberOfWeatherFileRecords));
@@ -541,6 +543,12 @@ void PVSystem_IO::AllocateOutputs(compute_module* cm)
 			p_shadeDBShadeFraction.push_back(cm->allocate("shadedb_" + prefix + "shade_frac", numberOfWeatherFileRecords));
 		}
 	}
+
+	for (int mppt_input = 0; mppt_input < Inverter->nMpptInputs; mppt_input++)
+	{
+		p_mpptVoltage.push_back(cm->allocate("inverterMppt" + std::to_string(mppt_input + 1) + "_DCVoltage", numberOfLifetimeRecords));
+	}
+
 	p_transformerNoLoadLoss = cm->allocate("xfmr_nll_ts", numberOfWeatherFileRecords);
 	p_transformerLoadLoss = cm->allocate("xfmr_ll_ts", numberOfWeatherFileRecords);
 	p_transformerLoss = cm->allocate("xfmr_loss_ts", numberOfWeatherFileRecords);
@@ -556,7 +564,6 @@ void PVSystem_IO::AllocateOutputs(compute_module* cm)
 
 	p_snowLossTotal = cm->allocate("dc_snow_loss", numberOfWeatherFileRecords);
 
-	p_inverterDCVoltage = cm->allocate("inverter_dc_voltage", numberOfLifetimeRecords);
 	p_inverterEfficiency = cm->allocate("inv_eff", numberOfWeatherFileRecords);
 	p_inverterClipLoss = cm->allocate("inv_cliploss", numberOfWeatherFileRecords);
 	p_inverterMPPTLoss = cm->allocate("dc_invmppt_loss", numberOfWeatherFileRecords);

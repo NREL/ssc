@@ -127,6 +127,7 @@ struct Irradiance_IO
 	static const int irradprocNoInterpolateSunriseSunset = -1;    /// Interpolate the sunrise/sunset
 
 	enum RADMODE { DN_DF, DN_GH, GH_DF, POA_R, POA_P };
+	enum SKYMODEL { ISOTROPIC, HDKR, PEREZ };
 
 	// Irradiance Data Inputs
 	std::unique_ptr<weather_data_provider> weatherDataProvider;   /// A class which encapsulates the weather data regardless of input method
@@ -215,34 +216,37 @@ struct PVSystem_IO
 	ssc_number_t transformerLoadLossFraction;
 	ssc_number_t transformerNoLoadLossFraction;
 
-	// General Outputs
+	// Timeseries Subarray Level Outputs
 	std::vector<ssc_number_t *> p_angleOfIncidence; /// The angle of incidence of the subarray [degrees]
 	std::vector<ssc_number_t *> p_angleOfIncidenceModifier; /// The weighted angle of incidence modifier for total poa irradiation on subarrray
-	std::vector<ssc_number_t *> p_surfaceTilt;      /// The surface tilt angle [degrees]
-	std::vector<ssc_number_t *> p_surfaceAzimuth;   /// The angle of incidence of the subarray [degrees]
-	std::vector<ssc_number_t *> p_axisRotation;     /// The angle of incidence of the subarray [degrees]
-	std::vector<ssc_number_t *> p_idealRotation;   /// The angle of incidence of the subarray [degrees]
-	std::vector<ssc_number_t *> p_poaNominalFront;      /// The angle of incidence of the subarray [degrees]
-	std::vector<ssc_number_t *> p_poaShadedFront;		/// The angle of incidence of the subarray [degrees]
+	std::vector<ssc_number_t *> p_surfaceTilt; ///The tilt of the surface [degrees]   
+	std::vector<ssc_number_t *> p_surfaceAzimuth; ///The azimuth of the surface [degrees]   
+	std::vector<ssc_number_t *> p_axisRotation;     
+	std::vector<ssc_number_t *> p_idealRotation; 
+	std::vector<ssc_number_t *> p_poaNominalFront;     
+	std::vector<ssc_number_t *> p_poaShadedFront;		
 	std::vector<ssc_number_t *> p_poaShadedSoiledFront;  
-	std::vector<ssc_number_t *> p_poaBeamFront; /// The angle of incidence of the subarray [degrees]
-	std::vector<ssc_number_t *> p_poaDiffuseFront; /// The angle of incidence of the subarray [degrees]
-	std::vector<ssc_number_t *> p_poaFront; /// The angle of incidence of the subarray [degrees]
-	std::vector<ssc_number_t *> p_poaTotal; /// The angle of incidence of the subarray [degrees]
-	std::vector<ssc_number_t *> p_poaRear; /// The angle of incidence of the subarray [degrees]
-	std::vector<ssc_number_t *> p_derateSoiling; /// The angle of incidence of the subarray [degrees]
-	std::vector<ssc_number_t *> p_beamShadingFactor; /// The angle of incidence of the subarray [degrees]
-	std::vector<ssc_number_t *> p_temperatureCell; /// The angle of incidence of the subarray [degrees]
-	std::vector<ssc_number_t *> p_moduleEfficiency; /// The angle of incidence of the subarray [degrees]
-	std::vector<ssc_number_t *> p_dcVoltage; /// The angle of incidence of the subarray [degrees]
-	std::vector<ssc_number_t *> p_voltageOpenCircuit; /// The angle of incidence of the subarray [degrees]
-	std::vector<ssc_number_t *> p_currentShortCircuit; /// The angle of incidence of the subarray [degrees]
-	std::vector<ssc_number_t *> p_dcPowerGross; /// The angle of incidence of the subarray [degrees]
-	std::vector<ssc_number_t *> p_derateLinear; /// The angle of incidence of the subarray [degrees]
-	std::vector<ssc_number_t *> p_derateSelfShading; /// The angle of incidence of the subarray [degrees]
-	std::vector<ssc_number_t *> p_derateSelfShadingDiffuse; /// The angle of incidence of the subarray [degrees]
-	std::vector<ssc_number_t *> p_derateSelfShadingReflected; /// The angle of incidence of the subarray [degrees]
-	std::vector<ssc_number_t *> p_shadeDBShadeFraction; /// The angle of incidence of the subarray [degrees]
+	std::vector<ssc_number_t *> p_poaBeamFront; 
+	std::vector<ssc_number_t *> p_poaDiffuseFront; 
+	std::vector<ssc_number_t *> p_poaFront; 
+	std::vector<ssc_number_t *> p_poaTotal; 
+	std::vector<ssc_number_t *> p_poaRear; 
+	std::vector<ssc_number_t *> p_derateSoiling; 
+	std::vector<ssc_number_t *> p_beamShadingFactor; 
+	std::vector<ssc_number_t *> p_temperatureCell; 
+	std::vector<ssc_number_t *> p_moduleEfficiency; 
+	std::vector<ssc_number_t *> p_dcStringVoltage; /// An output vector containing dc string voltage for each subarray [V]
+	std::vector<ssc_number_t *> p_voltageOpenCircuit; 
+	std::vector<ssc_number_t *> p_currentShortCircuit; 
+	std::vector<ssc_number_t *> p_dcPowerGross; 
+	std::vector<ssc_number_t *> p_derateLinear; 
+	std::vector<ssc_number_t *> p_derateSelfShading; 
+	std::vector<ssc_number_t *> p_derateSelfShadingDiffuse;
+	std::vector<ssc_number_t *> p_derateSelfShadingReflected; 
+	std::vector<ssc_number_t *> p_shadeDBShadeFraction; 
+
+	// MPPT level outputs
+	std::vector<ssc_number_t *> p_mpptVoltage; /// A vector containing input DC voltage to that MPPT input
 
 	// Snow Model outputs
 	std::vector<ssc_number_t *> p_snowLoss; /// The angle of incidence of the subarray [degrees]
@@ -280,7 +284,6 @@ struct PVSystem_IO
 
 	ssc_number_t *p_snowLossTotal;
 
-	ssc_number_t *p_inverterDCVoltage;
 	ssc_number_t *p_inverterEfficiency;
 	ssc_number_t *p_inverterClipLoss;
 	ssc_number_t *p_inverterMPPTLoss;
@@ -297,7 +300,7 @@ struct PVSystem_IO
 };
 
 
-/// allow for the poa decomp model to take all daily POA measurements into consideration
+// allow for the poa decomp model to take all daily POA measurements into consideration
 struct poaDecompReq {
 	poaDecompReq() : i(0), dayStart(0), stepSize(1), stepScale('h'), doy(-1) {}
 	size_t i; // Current time index

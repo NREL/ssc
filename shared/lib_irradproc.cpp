@@ -62,7 +62,8 @@
 
 static const int __nday[12] = {31,28,31,30,31,30,31,31,30,31,30,31};
 
-static int julian(int yr,int month,int day)    /* Calculates julian day of year */
+/// Compute the Julian day of year
+static int julian(int yr,int month,int day)    
 {
 	int i=1,jday=0,k;
 
@@ -82,7 +83,7 @@ static int julian(int yr,int month,int day)    /* Calculates julian day of year 
 		jday = jday + day;
 	return(jday);
 }
-
+/// Compute the day of year
 static int day_of_year( int month, int day_of_month ) /* returns 1-365 */
 {
 	int i=1,iday=0;
@@ -95,46 +96,12 @@ static int day_of_year( int month, int day_of_month ) /* returns 1-365 */
 
 void solarpos(int year,int month,int day,int hour,double minute,double lat,double lng,double tz,double sunn[9])
 {
-/* This function is based on a paper by Michalsky published in Solar Energy
-	Vol. 40, No. 3, pp. 227-235, 1988. It calculates solar position for the
-	time and location passed to the function based on the Astronomical
-	Almanac's Algorithm for the period 1950-2050. For data averaged over an
-	interval, the appropriate time passed is the midpoint of the interval.
-	(Example: For hourly data averaged from 10 to 11, the time passed to the
-	function should be 10 hours and 30 minutes). The exception is when the time
-	interval includes a sunrise or sunset. For these intervals, the appropriate
-	time should be the midpoint of the portion of the interval when the sun is
-	above the horizon. (Example: For hourly data averaged from 7 to 8 with a
-	sunrise time of 7:30, the time passed to the function should be 7 hours and
-	and 45 minutes).
-
+/* 
 	Revised 5/15/98. Replaced algorithm for solar azimuth with one by Iqbal
 	so latitudes below the equator are correctly handled. Also put in checks
 	to allow an elevation of 90 degrees without crashing the program and prevented
 	elevation from exceeding 90 degrees after refraction correction.
-
-	This function calls the function julian to get the julian day of year.
-
-	List of Parameters Passed to Function:
-	year   = year (e.g. 1986)
-	month  = month of year (e.g. 1=Jan)
-	day    = day of month
-	hour   = hour of day, local standard time, (1-24, or 0-23)
-	minute = minutes past the hour, local standard time
-	lat    = latitude in degrees, north positive
-	lng    = longitude in degrees, east positive
-	tz     = time zone, west longitudes negative
-
-	sunn[]  = array of elements to return sun parameters to calling function
-	sunn[0] = azm = sun azimuth in radians, measured east from north, 0 to 2*pi
-	sunn[1] = 0.5*pi - elv = sun zenith in radians, 0 to pi
-	sunn[2] = elv = sun elevation in radians, -pi/2 to pi/2
-	sunn[3] = dec = sun declination in radians
-	sunn[4] = sunrise in local standard time (hrs), not corrected for refraction
-	sunn[5] = sunset in local standard time (hrs), not corrected for refraction
-	sunn[6] = Eo = eccentricity correction factor
-	sunn[7] = tst = true solar time (hrs)               
-	sunn[8] = hextra = extraterrestrial solar irradiance on horizontal at particular time (W/m2)  */
+ */
 
 	int jday,delta,leap;                           /* Local variables */
 	double zulu,jd,time,mnlong,mnanom,
@@ -303,34 +270,8 @@ void solarpos(int year,int month,int day,int hour,double minute,double lat,doubl
 
 void incidence(int mode,double tilt,double sazm,double rlim,double zen,double azm, bool en_backtrack, double gcr, double angle[5])
 {
-/* This function calculates the incident angle of direct beam radiation to a
-	surface for a given sun position, latitude, and surface orientation. The
-	modes available are fixed tilt, 1-axis tracking, and 2-axis tracking.
-	Azimuth angles are for N=0 or 2pi, E=pi/2, S=pi, and W=3pi/2.  8/13/98
+	// Azimuth angles are for N=0 or 2pi, E=pi/2, S=pi, and W=3pi/2.  8/13/98
 
-	List of Parameters Passed to Function:
-	mode         = 0 for fixed-tilt, 1 for 1-axis tracking, 2 for 2-axis tracking, 3 for azimuth-axis tracking, 4 for timeseries tilt tracking (in "set surface" function, this is set as mode 0)
-	tilt         = tilt angle of surface from horizontal in degrees (mode 0),
-				   or tilt angle of tracker axis from horizontal in degrees (mode 1),
-				   MUST BE FROM 0 to 90 degrees.
-	sazm         = surface azimuth in degrees of collector (mode 0), or surface
-				   azimuth of tracker axis (mode 1) with axis azimuth directed from
-				   raised to lowered end of axis if axis tilted.
-	rlim         = plus or minus rotation in degrees permitted by physical constraints
-			      	of tracker, range is 0 to 180 degrees.
-	zen          = sun zenith in radians, MUST BE LESS THAN PI/2
-	azm          = sun azimuth in radians, measured east from north
-	en_backtrack = enable backtracking, using Ground coverage ratio ( below )
-	gcr          = ground coverage ratio ( used for backtracking )
-
-	Parameters Returned:
-	angle[]  = array of elements to return angles to calling function
-	angle[0] = inc  = incident angle in radians
-	angle[1] = tilt = tilt angle of surface from horizontal in radians
-	angle[2] = sazm = surface azimuth in radians, measured east from north
-	angle[3] = rot = tracking axis rotation angle in radians, measured from surface normal of unrotating axis (only for 1 axis trackers)
-	angle[4] = btdiff = (rot - ideal_rot) will be zero except in case of backtracking for 1 axis tracking
-	*/
 	/* Local variables: rot is the angle that the collector is rotated about the
 	axis when viewed from the raised end of the 1-axis tracker. If rotated
 	counter clockwise the angle is negative. Range is -180 to +180 degrees.
@@ -643,36 +584,8 @@ double GTI_DIRINT( const double poa[3], const double inc[3], double zen, double 
 }
 
 void poaDecomp( double , double angle[], double sun[], double alb, poaDecompReq *pA, double &dn, double &df, double &gh, double poa[3], double diffc[3]){
-	/* added by Severin Ryberg. Decomposes POA into direct normal and diffuse irradiances
+	/* Decomposes POA into direct normal and diffuse irradiances */
 
-	List of Parameters Passed to Function:
-	weatherFilePOA	  = Plane of array irradiance measured from weatherfile (W/m2)
-	angle[]   = array of elements to return angles to calling function
-	 angle[0] = inc  = incident angle in radians
-	 angle[1] = tilt = tilt angle of surface from horizontal in radians
-	 angle[2] = sazm = surface azimuth in radians, measured east from north
-	 angle[3] = rot = tracking axis rotation angle in radians, measured from surface normal of unrotating axis (only for 1 axis trackers)
-	 angle[4] = btdiff = (rot - ideal_rot) will be zero except in case of backtracking for 1 axis tracking
-	sun		  = array of elements to return sun position angles to calling function
-	 sun[1]   = zeninth angle
-	 sun[8]   = extraterrestrial radiation
-	alb       = albedo
-
-
-	Variable Returned
-	dn     = Direct Normal Irradiance (W/m2)
-	df     = Diffuse Horizontal Irradiance (W/m2)
-	gh     = Global Horizontal Irradiance (W/m2)
-	poa    = plane-of-array irradiances (W/m2)
-				poa[0]: incident beam
-				poa[1]: incident sky diffuse
-				poa[2]: incident ground diffuse 
-				
-	diffc   = diffuse components, if an array is provided
-				diffc[0] = isotropic
-				diffc[1] = circumsolar
-				diffc[2] = horizon brightening
-*/
 	double r90(M_PI/2), r80( 80.0/180*M_PI ), r65(65.0/180*M_PI);
 
 	if ( angle[0] < r90 ){  // Check if incident angle if greater than 90 degrees
@@ -798,41 +711,14 @@ void isotropic( double , double dn, double df, double alb, double inc, double ti
 
 void perez( double , double dn, double df, double alb, double inc, double tilt, double zen, double poa[3], double diffc[3] )
 {
-/* Modified aug2011 by aron dobos to split out beam, diffuse, ground for output.
+/* 
+	Based on original FORTRAN program by Howard Bisner.
 	Total POA is poa[0]+poa[1]+poa[2]
-
-   Defines the Perez function for calculating values of diffuse + direct
-	solar radiation + ground reflected radiation for a tilted surface
-	and returns the total plane-of-array irradiance(poa).  Function does
-	not check all input for valid entries; consequently, this should be
-	done before calling the function.  (Reference: Perez et al, Solar
-	Energy Vol. 44, No.5, pp.271-289,1990.) Based on original FORTRAN
-	program by Howard Bisner.
-
+	Modified aug2011 by aron dobos to split out beam, diffuse, ground for output.
 	Modified 6/10/98 so that for zenith angles between 87.5 and 90.0 degrees,
 	the diffuse radiation is treated as isotropic instead of 0.0.
 
-	List of Parameters Passed to Function:
-	hextra = extraterrestrial irradiance on horizontal surface (W/m2) (unused in perez model)
-	dn     = direct normal radiation (W/m2)
-	df     = diffuse horizontal radiation (W/m2)
-	alb    = surface albedo (decimal fraction)
-	inc    = incident angle of direct beam radiation to surface in radians
-	tilt   = surface tilt angle from horizontal in radians
-	zen    = sun zenith angle in radians
-
-	Variable Returned
-	poa    = plane-of-array irradiances (W/m2)
-				poa[0]: incident beam
-				poa[1]: incident sky diffuse
-				poa[2]: incident ground diffuse 
-				
-	diffc   = diffuse components, if an array is provided
-				diffc[0] = isotropic
-				diffc[1] = circumsolar
-				diffc[2] = horizon brightening
-
-				*/
+*/
 
 													/* Local variables */
 	double F11R[8] = { -0.0083117, 0.1299457, 0.3296958, 0.5682053,
@@ -999,8 +885,8 @@ irrad::irrad(Irradiance_IO * irradianceIO, Subarray_IO * subarrayIO)
 	else if (radiationMode == Irradiance_IO::POA_R) set_poa_reference(wf.poa, &(subarray->poa.poaAll));
 	else if (radiationMode == Irradiance_IO::POA_P) set_poa_pyranometer(wf.poa, &subarray->poa.poaAll);
 
-	if (subarray->trackMode == 4) //timeseries tilt input
-		subarray->tiltDegrees = subarray->monthlyTiltDegrees[month_idx]; //overwrite the tilt input with the current tilt to be used in calculations
+	if (subarray->trackMode == Subarray_IO::SEASONAL_TILT) 
+		subarray->tiltDegrees = subarray->monthlyTiltDegrees[month_idx];
 
 	set_surface(subarray->trackMode,
 		subarray->tiltDegrees,
@@ -1317,11 +1203,14 @@ int irrad::calc_rear_side(double transmissionFactor, double bifaciality, double 
 	if (timeStepSunPosition[2] > 0)
 	{
 
+		// Update ground clearance height for HSAT
+		double tiltRadian = surfaceAnglesRadians[1];		// The tracked angle in radians
+		groundClearanceHeight = groundClearanceHeight - (0.5 * slopeLength) * sin(fabs(tiltRadian));
+
 		// System geometry
-		double rowToRow = slopeLength / this->groundCoverageRatio;						/// Row to row spacing between the front of one row to the front of the next row
-		double tiltRadian = surfaceAnglesRadians[1];									/// The tracked angle in radians
-		double clearanceGround = groundClearanceHeight;					/// The normalized clearance from the bottom edge of module to ground
-		double distanceBetweenRows = rowToRow - cos(tiltRadian);	    /// The normalized distance from the read of module to front of module in next row
+		double rowToRow = slopeLength / this->groundCoverageRatio;		// Row to row spacing between the front of one row to the front of the next row
+		double clearanceGround = groundClearanceHeight;					// The normalized clearance from the bottom edge of module to ground
+		double distanceBetweenRows = rowToRow - cos(tiltRadian);	    // The normalized distance from the read of module to front of module in next row
 		double verticalHeight = slopeLength * sin(tiltRadian);
 		double horizontalLength = slopeLength * cos(tiltRadian);
 
@@ -1425,13 +1314,13 @@ void irrad::getGroundShadeFactors(double rowToRow, double verticalHeight, double
 	double shadingStart1, shadingStart2, shadingEnd1, shadingEnd2;
 	shadingStart1 = shadingStart2 = shadingEnd1 = shadingEnd2 = pvBackSurfaceShadeFraction = 0;
 
-	/// Horizontal length of shadow perpindicular to row from top of module to bottom of module
+	// Horizontal length of shadow perpindicular to row from top of module to bottom of module
 	double Lh = (verticalHeight / tan(solarElevationRadians)) * cos(surfaceAzimuthAngleRadians - solarAzimuthRadians);
 
-	///  Horizontal length of shadow perpindicular to row from top of module to ground level
+	//  Horizontal length of shadow perpindicular to row from top of module to ground level
 	double Lhc = ((clearanceGround + verticalHeight) / tan(solarElevationRadians)) * cos(surfaceAzimuthAngleRadians - solarAzimuthRadians);
 
-	/// Horizontal length of shadow perpindicular to row from bottom of module to ground level
+	// Horizontal length of shadow perpindicular to row from bottom of module to ground level
 	double Lc = (clearanceGround / tan(solarElevationRadians)) * cos(surfaceAzimuthAngleRadians - solarAzimuthRadians);
 
 	// Front side of PV module partially shaded, back completely shaded, ground completely shaded
@@ -2121,11 +2010,7 @@ static void sun_unit( double sazm, double szen, double sun[3] )
 }
 
 
-
-//Pass a PV system, sun zenith, sun azimuth
-//Return fraction shaded [0...1] if system is shaded
-//False otherwise
-double shade_fraction_1x( double solazi, double solzen, 
+double shadeFraction1x( double solazi, double solzen,
 						 double axis_tilt, double axis_azimuth, 
 						 double gcr, double rotation )
 {
@@ -2246,7 +2131,7 @@ double backtrack( double solazi, double solzen,
 	//Now do backtracking.
 	//This is very straightforward - decrease the rotation as long as we are in shade.
 	int iter = 0;
-	while( shade_fraction_1x( solazi, solzen, axis_tilt, axis_azimuth, gcr, rotation) > 0 && ++iter < 100)
+	while(shadeFraction1x( solazi, solzen, axis_tilt, axis_azimuth, gcr, rotation) > 0 && ++iter < 100)
 	{
 		//Move closer to flat.
 		if (rotation > 0)
@@ -2559,30 +2444,6 @@ double cm[6][6][7][5] =
 
 double ModifiedDISC(const double g[3], const double z[3], double td, double alt, int doy, double &dn) // aka DIRINT model
 {
-    // Calculates direct normal (beam) radiation from global horizontal radiation.
-    // Arguments passed to function:
-    // g[3] - global irradiance array (watts / sq. meter)
-    // z[3] - solar zenith angle array (radians)
-    // td - dew point temperature (degrees c)
-    // doy - julian day of year
-    // alt - altitude of site (meters)
-    // Returns:      dn - beam irradiance (watts / sq. meter)  (returned through the input dn)
-	//				 Ktp - Kt prime
-    // Notes:  This function uses a disc beam model to calculate the beam irradiance returned. 
-    // The argument g is an array of 3 values. The values are the global irradiance of the 
-    // previous reading, the current reading ,and the next reading in that order. The argument
-    // z uses the same format, except the values are the respective solar zenith angles. If any 
-    // of the g or z values are not available or the previous or next readings did not occur 
-    // within 1.5 hours of the current reading then the appropriate value or values should be 
-    // replaced with a -999.0. If the argument td is missing then the value -999.0 should be 
-    // used in place of the missing argument. The current global irradiance (g[1]) must have a
-    // value. If the dew point temperature (td) is missing then td is not used to find an index 
-    // into the correction matrix (cm), instead a special column in the matrix is used. If the 
-    // previous global irradiance (g[0]) or solar zenith angle (z[0]) and the next global 
-    // irradiance (g[2]) or solar zenith angle (z[2]) are missing then delta kt' (dkt1) is not 
-    // used to find an index into the correction matrix (cm), instead a special column in the 
-    // matrix is used.
-    //
     // Modification history:
 	// 25/10/2015 Converted to C++ for use in SAM by David Severin Ryberg
     // 4/14/2015 Corrected error in incrementing i,j, and k array indices 
@@ -2694,100 +2555,89 @@ double ModifiedDISC(const double g[3], const double z[3], double td, double alt,
 
 
 
-void ModifiedDISC(const double kt[3], const double kt1[3], const double g[3], const double z[3], double td, double /*alt*/ , int doy, double &dn) // aka DIRINT model
+void ModifiedDISC(const double kt[3], const double kt1[3], const double g[3], const double z[3], double td, double /*alt*/, int doy, double &dn) // aka DIRINT model
 {
-    // Calculates direct normal (beam) radiation from global horizontal radiation.
-    // Arguments passed to function:
-    // g[3] - global irradiance array (watts / sq. meter)
-    // z[3] - solar zenith angle array (radians)
-    // td - dew point temperature (degrees c)
-    // doy - julian day of year
-    // alt - altitude of site (meters)
-    // Returns:      dn - beam irradiance (watts / sq. meter)  (returned through the input dn)
-	//				 Ktp - Kt prime
-	// Notes: This is a modification to the orininally provided Modified-DISC model which takes
-	// as input the four bin variables and GHI and returns the resulting DNI
+	// Calculates direct normal (beam) radiation from global horizontal radiation.
+	double cz[3], zenith[3], am[3];
+	double ktbin[5] = { 0.24, 0.4, 0.56, 0.7, 0.8 };
+	double zbin[5] = { 25.0, 40.0, 55.0, 70.0, 80.0 };
+	double dktbin[5] = { 0.015, 0.035, 0.07, 0.15, 0.3 };
+	double wbin[3] = { 1.0, 2.0, 3.0 };
+	double rtod = 57.295779513082316;
+	double a, b, c, w, knc, bmax, dkt1, io;
 
-    double cz[3], zenith[3], am[3];
-    double ktbin[5] = { 0.24, 0.4, 0.56, 0.7, 0.8 };
-    double zbin[5] = { 25.0, 40.0, 55.0, 70.0, 80.0 };
-    double dktbin[5] = { 0.015, 0.035, 0.07, 0.15, 0.3 };
-    double wbin[3] = { 1.0, 2.0, 3.0 };
-    double rtod = 57.295779513082316;
-    double a, b, c, w, knc, bmax, dkt1, io;
-
-    //double dn = 0.0;
-    if (g[1] >= 1.0 && cos(z[1]) > 0.0)
-    {   // Model only if present global >= 1 and present zenith < 90 deg
+	//double dn = 0.0;
+	if (g[1] >= 1.0 && cos(z[1]) > 0.0)
+	{   // Model only if present global >= 1 and present zenith < 90 deg
 
 		//std::cout << "yes!\n";
 
-        io = 1367.0 * (1.0 + 0.033 * cos(0.0172142 * doy));    // Extraterrestrial dn
-        int j = 0, k = 2, i = 0, l = 0;
+		io = 1367.0 * (1.0 + 0.033 * cos(0.0172142 * doy));    // Extraterrestrial dn
+		int j = 0, k = 2, i = 0, l = 0;
 
 		for (i = j; i <= k; i++)
-        {   // For each of the 3 hours that have data, find kt prime
-            cz[i] = cos(z[i]); // Cosine of zenith angle
-            zenith[i] = z[i] * rtod;
-            am[i] = Min(15.25, 1.0 / (cz[i] + 0.15 * (pow(93.9 - zenith[i], -1.253))));
-        }
-        if (kt[1] <= 0.6)
-        {
-            a = 0.512 - 1.56 * kt[1] + 2.286 * pow(kt[1], 2.0) - 2.22 * pow(kt[1], 3.0);
-            b = 0.37 + 0.962 * kt[1];
-            c = -0.28 + 0.932 * kt[1] - 2.048 * pow(kt[1], 2.0);
-        }
-        else
-        {
-            a = -5.743 + 21.77 * kt[1] - 27.49 * pow(kt[1], 2.0) + 11.56 * pow(kt[1], 3.0);
-            b = 41.40 - 118.5 * kt[1] + 66.05 * pow(kt[1], 2.0) + 31.9 * pow(kt[1], 3.0);
-            c = -47.01 + 184.2 * kt[1] - 222.0 * pow(kt[1], 2.0) + 73.81 * pow(kt[1], 3.0);
-        }
-        knc = 0.866 - 0.122 * am[1] + 0.0121 * pow(am[1], 2.0) - 0.000653 * pow(am[1], 3.0) + 0.000014 * pow(am[1], 4.0);
-        bmax = io * (knc - (a + b * exp(c * am[1])));
+		{   // For each of the 3 hours that have data, find kt prime
+			cz[i] = cos(z[i]); // Cosine of zenith angle
+			zenith[i] = z[i] * rtod;
+			am[i] = Min(15.25, 1.0 / (cz[i] + 0.15 * (pow(93.9 - zenith[i], -1.253))));
+		}
+		if (kt[1] <= 0.6)
+		{
+			a = 0.512 - 1.56 * kt[1] + 2.286 * pow(kt[1], 2.0) - 2.22 * pow(kt[1], 3.0);
+			b = 0.37 + 0.962 * kt[1];
+			c = -0.28 + 0.932 * kt[1] - 2.048 * pow(kt[1], 2.0);
+		}
+		else
+		{
+			a = -5.743 + 21.77 * kt[1] - 27.49 * pow(kt[1], 2.0) + 11.56 * pow(kt[1], 3.0);
+			b = 41.40 - 118.5 * kt[1] + 66.05 * pow(kt[1], 2.0) + 31.9 * pow(kt[1], 3.0);
+			c = -47.01 + 184.2 * kt[1] - 222.0 * pow(kt[1], 2.0) + 73.81 * pow(kt[1], 3.0);
+		}
+		knc = 0.866 - 0.122 * am[1] + 0.0121 * pow(am[1], 2.0) - 0.000653 * pow(am[1], 3.0) + 0.000014 * pow(am[1], 4.0);
+		bmax = io * (knc - (a + b * exp(c * am[1])));
 		//std::cout << "Kt: " << kt[1] << std::endl;
 		//std::cout << io << " " << knc << " " << a << " " << b << " " << c << " " << am[1] << std::endl;
-    
-		
+
+
 		if (kt1[0] < -998.0 && kt1[2] < -998.0)
-            k = 6;
-        else
-        {
-            if (kt1[0] < -998.0 || zenith[0] >= 85.0)
-                dkt1 = fabs(kt1[2] - kt1[1]);
-            else if (kt1[2] < -998.0 || zenith[2] >= 85.0)
-                dkt1 = fabs(kt1[1] - kt1[0]);
-            else
-                dkt1 = 0.5 * (fabs(kt1[1] - kt1[0]) + fabs(kt1[2] - kt1[1]));
-            
-            k = 0;
-            //while (k < 4 && dkt1 >= dktbin[k]) 
-            while (k < 5 && dkt1 >= dktbin[k])      // Error fix 4/14/2015
-                k++;
-        }
-        i = 0;
-        //while (i < 4 && kt1[1] >= ktbin[i]) 
-        while (i < 5 && kt1[1] >= ktbin[i])         // Error fix 4/14/2015
-            i++;
-        j = 0;
-        //while (j < 4 && zenith[1] >= zbin[j]) 
-        while (j < 5 && zenith[1] >= zbin[j])       // Error fix 4/14/2015
-            j++;
-        if (td < -998.0)
-            l = 4;  // l = letter "l'
-        else
-        {
-            w = exp(-0.075 + 0.07 * td);
-            l = 0;
-            while (l < 3 && w >= wbin[l])
-                l++;
-        }
+			k = 6;
+		else
+		{
+			if (kt1[0] < -998.0 || zenith[0] >= 85.0)
+				dkt1 = fabs(kt1[2] - kt1[1]);
+			else if (kt1[2] < -998.0 || zenith[2] >= 85.0)
+				dkt1 = fabs(kt1[1] - kt1[0]);
+			else
+				dkt1 = 0.5 * (fabs(kt1[1] - kt1[0]) + fabs(kt1[2] - kt1[1]));
+
+			k = 0;
+			//while (k < 4 && dkt1 >= dktbin[k]) 
+			while (k < 5 && dkt1 >= dktbin[k])      // Error fix 4/14/2015
+				k++;
+		}
+		i = 0;
+		//while (i < 4 && kt1[1] >= ktbin[i]) 
+		while (i < 5 && kt1[1] >= ktbin[i])         // Error fix 4/14/2015
+			i++;
+		j = 0;
+		//while (j < 4 && zenith[1] >= zbin[j]) 
+		while (j < 5 && zenith[1] >= zbin[j])       // Error fix 4/14/2015
+			j++;
+		if (td < -998.0)
+			l = 4;  // l = letter "l'
+		else
+		{
+			w = exp(-0.075 + 0.07 * td);
+			l = 0;
+			while (l < 3 && w >= wbin[l])
+				l++;
+		}
 
 
-        dn = Max( 0.0, bmax * cm[i][j][k][l]);
+		dn = Max(0.0, bmax * cm[i][j][k][l]);
 		//std::cout << dn << " " << bmax << " " << cm[i][j][k][l] << std::endl;
-    }   // End of if present global >= 1
-	else 
-		dn=0;
-    return;
+	}   // End of if present global >= 1
+	else
+		dn = 0;
+	return;
 }   // End of ModifiedDISC
