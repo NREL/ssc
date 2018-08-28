@@ -484,6 +484,7 @@ TestInfo physTroughPPASingleDefaultInfo[] = {
     {"sgs_diams",                           ARR,                sgs_diams,              1},
     {"sgs_wallthicks",                      ARR,                sgs_wallthicks,         1},
     {"sgs_lengths",                         ARR,                sgs_lengths,            11},
+    {"DP_SGS",                              NUM,                "0",                    },
 	{"pb_fixed_par",                        NUM,                "0.0054999999701976776" },
 	{"bop_array",                           ARR,                bop_array,              5},
 	{"aux_array",                           ARR,                aux_array,              5},
