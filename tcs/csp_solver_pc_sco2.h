@@ -60,7 +60,6 @@ class C_pc_sco2 : public C_csp_power_cycle
 
 private:
 
-	C_sco2_recomp_csp *mpc_sco2_recomp;
 	C_sco2_recomp_csp mc_sco2_recomp;
 
 	HTFProperties mc_pc_htfProps;
