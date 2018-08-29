@@ -1580,7 +1580,7 @@ int C_comp_multi_stage::C_MEQ_phi_od__P_out::operator()(double phi_od /*-*/, dou
 
 	double T_out = std::numeric_limits<double>::quiet_NaN();
 	error_code = 0;
-	mpc_multi_stage->off_design_given_N(m_T_in, m_P_in, m_dot_basis, N_rpm, error_code, T_out, *P_comp_out);
+	mpc_multi_stage->off_design_given_N(m_T_in, m_P_in, m_m_dot_cycle, N_rpm, error_code, T_out, *P_comp_out);
 
 	if (error_code != 0)
 	{
