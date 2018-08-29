@@ -4134,7 +4134,9 @@ lab_keep_guess:
 		//Calculate specific heat in kJ/kg
 		c_1ave = cp_1/1000.;
  
-		q_heatloss = q_34tot + q_cond_bracket + q_5solabs;   //[W/m]
+        // 10.6.2016 twn: q_5solabs is already reported as an optical loss, so don't report as a thermal loss...
+		//q_heatloss = q_34tot + q_cond_bracket + q_5solabs;   //[W/m]
+        q_heatloss = q_34tot + q_cond_bracket;   //[W/m]
 
 		//Save temperatures
 		T_save[1] = T_2;
