@@ -83,7 +83,7 @@ C_sco2_recomp_csp::C_sco2_recomp_csp()
 	mp_mf_update = 0;			// NULL
 }
 
-void C_sco2_recomp_csp::design(C_sco2_rc_csp_template::S_des_par des_par)
+void C_sco2_recomp_csp::design(S_des_par des_par)
 {
 	ms_des_par = des_par;
 
@@ -264,54 +264,7 @@ void C_sco2_recomp_csp::design_core()
 	return;
 }
 
-C_sco2_recomp_csp_10MWe_scale::C_sco2_recomp_csp_10MWe_scale()
-{
-	m_r_W_scale = std::numeric_limits<double>::quiet_NaN();
-}
-
-void C_sco2_recomp_csp_10MWe_scale::design(C_sco2_rc_csp_template::S_des_par des_par)
-{
-	// Check if callback info has changed. If so, pass to member sco2 10MWe cycle
-	mc_rc_csp_10MWe.mf_callback_update = mf_callback_update;
-	mc_rc_csp_10MWe.mp_mf_update = mp_mf_update;
-	// **************************************************
-
-	// First, set Variable Size member design parameters structure
-	ms_des_par = des_par;
-
-	// Calculate scaling ratio
-	m_r_W_scale = ms_des_par.m_W_dot_net / 10.E3;	//[-] Variable (kWe) / 10,000 (kWe)
-
-	// Copy Variable Size member design parameter to new structure
-	C_sco2_rc_csp_template::S_des_par s_10MWe_des_par;
-	s_10MWe_des_par = ms_des_par;
-	
-	// Update size dependent parameters:
-		// Net power
-	s_10MWe_des_par.m_W_dot_net = 10.E3;		//[kWe]
-		// Total recuperator conductance
-	s_10MWe_des_par.m_UA_recup_tot_des = ms_des_par.m_UA_recup_tot_des / m_r_W_scale;	//[-]
-
-	mc_rc_csp_10MWe.design(s_10MWe_des_par);
-
-	return;
-}
-
-int C_sco2_recomp_csp_10MWe_scale::optimize_off_design(C_sco2_rc_csp_template::S_od_par od_par, int off_design_strategy, double od_opt_tol)
-{
-	// Check if callback info has changed. If so, pass to member sco2 10MWe cycle
-	mc_rc_csp_10MWe.mf_callback_update = mf_callback_update;
-	mc_rc_csp_10MWe.mp_mf_update = mp_mf_update;
-	// **************************************************
-	
-	// Scale od_par
-	C_sco2_rc_csp_template::S_od_par s_10MWe_od_par = od_par;
-	s_10MWe_od_par.m_m_dot_htf /= m_r_W_scale;
-
-	return mc_rc_csp_10MWe.optimize_off_design(s_10MWe_od_par, off_design_strategy);
-}
-
-int C_sco2_recomp_csp::off_design_fix_P_mc_in(C_sco2_rc_csp_template::S_od_par od_par, double P_mc_in /*MPa*/, int off_design_strategy, double od_opt_tol)
+int C_sco2_recomp_csp::off_design_fix_P_mc_in(S_od_par od_par, double P_mc_in /*MPa*/, int off_design_strategy, double od_opt_tol)
 {
 	setup_off_design_info(od_par, off_design_strategy, od_opt_tol);
 	
@@ -324,123 +277,6 @@ int C_sco2_recomp_csp::off_design_fix_P_mc_in(C_sco2_rc_csp_template::S_od_par o
 	ms_od_solved.ms_phx_od_solved = mc_phx.ms_od_solved;
 
 	return od_core_error_code;
-}
-
-int C_sco2_recomp_csp_10MWe_scale::off_design_fix_P_mc_in(C_sco2_rc_csp_template::S_od_par od_par, double P_mc_in /*MPa*/, int off_design_strategy, double od_opt_tol)
-{
-	// Check if callback info has changed. If so, pass to member sco2 10MWe cycle
-	mc_rc_csp_10MWe.mf_callback_update = mf_callback_update;
-	mc_rc_csp_10MWe.mp_mf_update = mp_mf_update;
-	// **************************************************
-
-	// Scale od_par
-	C_sco2_rc_csp_template::S_od_par s_10MWe_od_par = od_par;
-	s_10MWe_od_par.m_m_dot_htf /= m_r_W_scale;
-
-	return mc_rc_csp_10MWe.off_design_fix_P_mc_in(s_10MWe_od_par, P_mc_in, off_design_strategy);
-}
-
-const C_sco2_recomp_csp_10MWe_scale::S_des_par * C_sco2_recomp_csp_10MWe_scale::get_design_par()
-{
-	// Don't to scale anything here, because ms_des_par is not modified by C_sco2_recomp_csp
-
-	return &ms_des_par;
-}
-
-const C_sco2_recomp_csp_10MWe_scale::S_des_solved * C_sco2_recomp_csp_10MWe_scale::get_design_solved()
-{
-	//double abc = 1;
-	//double *p_abc = &abc;
-	//double def = *p_abc;
-	
-	ms_des_solved = *mc_rc_csp_10MWe.get_design_solved();
-
-		// Scale PHX solution
-	ms_des_solved.ms_phx_des_solved.m_Q_dot_design *= m_r_W_scale;
-	ms_des_solved.ms_phx_des_solved.m_UA_design_total *= m_r_W_scale;
-		// Scale Cycle Common Solution
-	ms_des_solved.ms_rc_cycle_solved.m_W_dot_net *= m_r_W_scale;
-	ms_des_solved.ms_rc_cycle_solved.m_m_dot_mc *= m_r_W_scale;
-	ms_des_solved.ms_rc_cycle_solved.m_m_dot_rc *= m_r_W_scale;
-	ms_des_solved.ms_rc_cycle_solved.m_m_dot_pc *= m_r_W_scale;
-	ms_des_solved.ms_rc_cycle_solved.m_m_dot_t *= m_r_W_scale;
-	ms_des_solved.ms_rc_cycle_solved.m_UA_LTR *= m_r_W_scale;
-	ms_des_solved.ms_rc_cycle_solved.m_UA_HTR *= m_r_W_scale;
-	ms_des_solved.ms_rc_cycle_solved.m_W_dot_mc *= m_r_W_scale;
-	ms_des_solved.ms_rc_cycle_solved.m_W_dot_rc *= m_r_W_scale;
-	ms_des_solved.ms_rc_cycle_solved.m_W_dot_pc *= m_r_W_scale;
-	ms_des_solved.ms_rc_cycle_solved.m_W_dot_t *= m_r_W_scale;
-		// Scale Cycle Component Solution
-	ms_des_solved.ms_rc_cycle_solved.ms_mc_ms_des_solved.m_m_dot *= m_r_W_scale;
-	ms_des_solved.ms_rc_cycle_solved.ms_rc_ms_des_solved.m_m_dot *= m_r_W_scale;
-	ms_des_solved.ms_rc_cycle_solved.ms_pc_ms_des_solved.m_m_dot *= m_r_W_scale;
-		// Nothing for turbine?
-	//ms_des_solved.ms_rc_cycle_solved.ms_t_des_solved.
-			// Low temperature recuperator
-	ms_des_solved.ms_rc_cycle_solved.ms_LTR_des_solved.m_Q_dot_design *= m_r_W_scale;
-	ms_des_solved.ms_rc_cycle_solved.ms_LTR_des_solved.m_UA_design_total *= m_r_W_scale;
-			// High temperature recuperator
-	ms_des_solved.ms_rc_cycle_solved.ms_HTR_des_solved.m_Q_dot_design *= m_r_W_scale;
-	ms_des_solved.ms_rc_cycle_solved.ms_HTR_des_solved.m_UA_design_total *= m_r_W_scale;
-
-	return &ms_des_solved;
-}
-
-const C_HX_counterflow::S_des_calc_UA_par * C_sco2_recomp_csp_10MWe_scale::get_phx_des_par()
-{
-	ms_phx_des_par = *mc_rc_csp_10MWe.get_phx_des_par();
-
-	// Scale PHX design parameters
-	ms_phx_des_par.m_m_dot_hot_des *= m_r_W_scale;
-	ms_phx_des_par.m_m_dot_cold_des *= m_r_W_scale;
-
-	return &ms_phx_des_par;
-}
-
-const C_sco2_recomp_csp_10MWe_scale::S_od_solved * C_sco2_recomp_csp_10MWe_scale::get_od_solved()
-{
-	ms_od_solved = *mc_rc_csp_10MWe.get_od_solved();
-
-	// Scale Cycle Common Solution
-	ms_od_solved.ms_rc_cycle_od_solved.m_W_dot_net *= m_r_W_scale;	//[kWe]
-	ms_od_solved.ms_rc_cycle_od_solved.m_Q_dot *= m_r_W_scale;		//[kWt]
-	ms_od_solved.ms_rc_cycle_od_solved.m_m_dot_mc *= m_r_W_scale;	//[kg/s]
-	ms_od_solved.ms_rc_cycle_od_solved.m_m_dot_rc *= m_r_W_scale;	//[kg/s]
-	ms_od_solved.ms_rc_cycle_od_solved.m_m_dot_pc *= m_r_W_scale;	//[kg/s]
-	ms_od_solved.ms_rc_cycle_od_solved.m_m_dot_t *= m_r_W_scale;	//[kg/s]
-
-	// Scale Cycle Components
-		// Main Compressor
-	ms_od_solved.ms_rc_cycle_od_solved.ms_mc_ms_od_solved.m_W_dot_in *= m_r_W_scale;	//[kWe]
-		// Recompressor
-	ms_od_solved.ms_rc_cycle_od_solved.ms_rc_ms_od_solved.m_W_dot_in *= m_r_W_scale;	//[kWe]
-		// Precompressor
-	ms_od_solved.ms_rc_cycle_od_solved.ms_pc_ms_od_solved.m_W_dot_in *= m_r_W_scale;	//[kWe]
-		// Turbine
-	ms_od_solved.ms_rc_cycle_od_solved.ms_t_od_solved.m_W_dot_out *= m_r_W_scale;	//[kWe]
-		// Low Temp Recuperator
-	ms_od_solved.ms_rc_cycle_od_solved.ms_LT_recup_od_solved.m_q_dot *= m_r_W_scale;	//[kWt]
-	ms_od_solved.ms_rc_cycle_od_solved.ms_LT_recup_od_solved.m_UA_total *= m_r_W_scale;	//[kWt/K]
-		// High Temp Recuperator
-	ms_od_solved.ms_rc_cycle_od_solved.ms_HT_recup_od_solved.m_q_dot *= m_r_W_scale;	//[kWt]
-	ms_od_solved.ms_rc_cycle_od_solved.ms_HT_recup_od_solved.m_UA_total *= m_r_W_scale;	//[kWt/K]
-
-	// Scale PHX
-	ms_od_solved.ms_phx_od_solved.m_q_dot *= m_r_W_scale;		//[kWt]
-	ms_od_solved.ms_phx_od_solved.m_UA_total *= m_r_W_scale;	//[kWt]
-
-	return &ms_od_solved;
-}
-
-int C_sco2_recomp_csp_10MWe_scale::generate_ud_pc_tables(double T_htf_low /*C*/, double T_htf_high /*C*/, int n_T_htf /*-*/,
-	double T_amb_low /*C*/, double T_amb_high /*C*/, int n_T_amb /*-*/,
-	double m_dot_htf_ND_low /*-*/, double m_dot_htf_ND_high /*-*/, int n_m_dot_htf_ND,
-	util::matrix_t<double> & T_htf_ind, util::matrix_t<double> & T_amb_ind, util::matrix_t<double> & m_dot_htf_ND_ind)
-{
-	return mc_rc_csp_10MWe.generate_ud_pc_tables(T_htf_low, T_htf_high, n_T_htf,
-		T_amb_low, T_amb_high, n_T_amb,
-		m_dot_htf_ND_low, m_dot_htf_ND_high, n_m_dot_htf_ND,
-		T_htf_ind, T_amb_ind, m_dot_htf_ND_ind);
 }
 
 void C_sco2_recomp_csp::setup_off_design_info(C_sco2_recomp_csp::S_od_par od_par, int off_design_strategy, double od_opt_tol)

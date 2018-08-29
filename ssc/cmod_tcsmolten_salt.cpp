@@ -1098,7 +1098,7 @@ public:
 				// ****************************************
 				// C_sco2_recomp_csp::S_des_par  User Defined Parameters
 				// ****************************************
-				C_sco2_rc_csp_template::S_des_par sco2_rc_csp_par;
+				C_sco2_recomp_csp::S_des_par sco2_rc_csp_par;
 				// System Design Parameters
 				sco2_rc_csp_par.m_hot_fl_code = as_integer("rec_htf");					//[-]
 				sco2_rc_csp_par.mc_hot_fl_props = as_matrix("field_fl_props");			//[-]
@@ -1176,19 +1176,8 @@ public:
 					update("Calculating sCO2 design point...", 0.0);
 
 					// Construction class and design system
-					C_sco2_rc_csp_template *p_sco2_recomp_csp;
-
-					C_sco2_recomp_csp sco2_recomp_csp_direct;
-					C_sco2_recomp_csp_10MWe_scale sco2_recomp_csp_scale;
-
-					if (false)
-					{
-						p_sco2_recomp_csp = &sco2_recomp_csp_direct;
-					}
-					else
-					{
-						p_sco2_recomp_csp = &sco2_recomp_csp_scale;
-					}
+					C_sco2_recomp_csp c_sco2_recomp_csp;
+					C_sco2_recomp_csp *p_sco2_recomp_csp = &c_sco2_recomp_csp;
 
 					// Pass through callback function and pointer
 					p_sco2_recomp_csp->mf_callback_update = ssc_cmod_update;

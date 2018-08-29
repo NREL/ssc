@@ -360,7 +360,7 @@ public:
 
 	void exec() throw(general_error)
 	{
-		C_sco2_rc_csp_template::S_des_par sco2_rc_des_par;
+		C_sco2_recomp_csp::S_des_par sco2_rc_des_par;
 			// System design parameters
 		sco2_rc_des_par.m_hot_fl_code = as_integer("htf");							//[-] Integer code for HTF
 		sco2_rc_des_par.mc_hot_fl_props = as_matrix("htf_props");					//[-] Custom HTF properties
@@ -477,19 +477,8 @@ public:
 		std::string out_msg = "";
 
 		// Construction class and design system
-		C_sco2_rc_csp_template *p_sco2_recomp_csp;
-
-		C_sco2_recomp_csp sco2_recomp_csp_direct;
-		C_sco2_recomp_csp_10MWe_scale sco2_recomp_csp_scale;
-
-		if (true)
-		{
-			p_sco2_recomp_csp = &sco2_recomp_csp_direct;
-		}
-		else
-		{
-			p_sco2_recomp_csp = &sco2_recomp_csp_scale;
-		}
+		C_sco2_recomp_csp c_sco2_recomp_csp;
+		C_sco2_recomp_csp *p_sco2_recomp_csp = &c_sco2_recomp_csp;
 
 		// Pass through callback function and pointer
 		p_sco2_recomp_csp->mf_callback_update = ssc_cmod_update;
@@ -934,7 +923,7 @@ public:
 		
 		int n_od_runs = (int)od_cases.nrows();
 		allocate_ssc_outputs(n_od_runs, n_mc_stages, n_rc_stages, n_pc_stages);
-		C_sco2_rc_csp_template::S_od_par sco2_rc_od_par;
+		C_sco2_recomp_csp::S_od_par sco2_rc_od_par;
 
 		for(int n_run = 0; n_run < n_od_runs; n_run++)
 		{			
@@ -961,12 +950,12 @@ public:
 					// 2D optimization
 					//off_design_code = sco2_recomp_csp.off_design_opt(sco2_rc_od_par, od_strategy);
 						// Nested optimization
-					od_strategy = C_sco2_rc_csp_template::E_TARGET_POWER_ETA_MAX;
+					od_strategy = C_sco2_recomp_csp::E_TARGET_POWER_ETA_MAX;
 					off_design_code = p_sco2_recomp_csp->optimize_off_design(sco2_rc_od_par, od_strategy);
 				}
 				else if (is_P_mc_in_od_sweep_assigned)
 				{
-					od_strategy = C_sco2_rc_csp_template::E_TARGET_POWER_ETA_MAX;
+					od_strategy = C_sco2_recomp_csp::E_TARGET_POWER_ETA_MAX;
 					off_design_code = p_sco2_recomp_csp->off_design_fix_P_mc_in(sco2_rc_od_par, od_cases(n_run, 5), od_strategy);
 				}
 			}

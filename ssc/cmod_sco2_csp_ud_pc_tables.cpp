@@ -162,7 +162,7 @@ public:
 
 	void exec() throw(general_error)
 	{
-		C_sco2_rc_csp_template::S_des_par sco2_rc_des_par;
+		C_sco2_recomp_csp::S_des_par sco2_rc_des_par;
 			// System design parameters
 		sco2_rc_des_par.m_hot_fl_code = as_integer("htf");							//[-] Integer code for HTF
 		sco2_rc_des_par.mc_hot_fl_props = as_matrix("htf_props");					//[-] Custom HTF properties
@@ -273,19 +273,8 @@ public:
 		std::string out_msg = "";
 
 		// Construction class and design system
-		C_sco2_rc_csp_template *p_sco2_recomp_csp;
-
-		C_sco2_recomp_csp sco2_recomp_csp_direct;
-		C_sco2_recomp_csp_10MWe_scale sco2_recomp_csp_scale;
-
-		if (false)
-		{
-			p_sco2_recomp_csp = &sco2_recomp_csp_direct;
-		}
-		else
-		{
-			p_sco2_recomp_csp = &sco2_recomp_csp_scale;
-		}
+		C_sco2_recomp_csp c_sco2_recomp_csp;
+		C_sco2_recomp_csp *p_sco2_recomp_csp = &c_sco2_recomp_csp;
 
 		// Pass through callback function (with update percent) and pointer
 		p_sco2_recomp_csp->mf_callback_update = ssc_cmod_update;

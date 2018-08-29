@@ -80,14 +80,7 @@ C_pc_sco2::C_pc_sco2()
 
 void C_pc_sco2::init(C_csp_power_cycle::S_solved_params &solved_params)
 {
-	if (false)
-	{
-		mpc_sco2_recomp = &mc_sco2_recomp_csp_direct;
-	}
-	else
-	{
-		mpc_sco2_recomp = &mc_sco2_recomp_csp_scale;
-	}
+	mpc_sco2_recomp = &mc_sco2_recomp;
 
 	// Call the sCO2 Recompression Cycle class to design the cycle
 	mpc_sco2_recomp->design(ms_params.ms_mc_sco2_recomp_params);
@@ -336,12 +329,12 @@ void C_pc_sco2::call(const C_csp_weatherreader::S_outputs &weather,
 
 	case ON:
 		{
-			C_sco2_rc_csp_template::S_od_par sco2_rc_od_par;
+			C_sco2_recomp_csp::S_od_par sco2_rc_od_par;
 			sco2_rc_od_par.m_T_htf_hot = T_htf_hot;				//[K]
 			sco2_rc_od_par.m_m_dot_htf = m_dot_htf/3600.0;		//[kg/s]
 			sco2_rc_od_par.m_T_amb = weather.m_tdry+273.15;		//[K]
 
-			int od_strategy = C_sco2_rc_csp_template::E_TARGET_POWER_ETA_MAX;
+			int od_strategy = C_sco2_recomp_csp::E_TARGET_POWER_ETA_MAX;
 
 			int off_design_code = 0;
 			try
