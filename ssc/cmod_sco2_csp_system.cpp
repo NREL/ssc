@@ -482,7 +482,7 @@ public:
 		C_sco2_recomp_csp sco2_recomp_csp_direct;
 		C_sco2_recomp_csp_10MWe_scale sco2_recomp_csp_scale;
 
-		if (false)
+		if (true)
 		{
 			p_sco2_recomp_csp = &sco2_recomp_csp_direct;
 		}

@@ -130,6 +130,9 @@ public:
 class C_turbine
 {
 public:
+	
+	double m_r_W_dot_scale;		//[-] W_dot_cycle / W_dot_comp_basis (10 MWe)
+
 	struct S_design_parameters
 	{
 		double m_N_design;					//[rpm] turbine shaft speed
@@ -144,7 +147,7 @@ public:
 		double m_P_out;						//[kPa]
 		double m_h_out;						//[kJ/kg]
 		// Mass flow rate
-		double m_m_dot;						//[kg/s]
+		double m_m_dot;						//[kg/s] (cycle, not basis)
 
 		S_design_parameters()
 		{
@@ -176,7 +179,7 @@ public:
 		double m_w_tip_ratio;				//[-] ratio of the tip speed to the local (turbine inlet) speed of sound
 		double m_N;							//[rpm] off-design turbine shaft speed
 
-		double m_W_dot_out;			//[kW] Turbine power output, expected to be positive
+		double m_W_dot_out;			//[kW] Turbine power output, expected to be positive (cycle, not basis)
 
 		S_od_solved()
 		{
@@ -193,7 +196,10 @@ private:
 public:
 	~C_turbine(){};
 
-	C_turbine(){};
+	C_turbine()
+	{
+		m_r_W_dot_scale = 1.0;
+	};
 
 	static const double m_nu_design;
 
@@ -328,6 +334,8 @@ public:
 
 	std::vector<C_comp_single_stage> mv_stages;
 
+	double m_r_W_dot_scale;		//[-] W_dot_cycle / W_dot_comp_basis (10 MWe)
+
 	struct S_des_solved
 	{
 		// Compressor inlet conditions
@@ -342,7 +350,7 @@ public:
 		double m_h_out;			//[kJ/kg]
 		double m_D_out;			//[kg/m^3]
 		// Mass flow
-		double m_m_dot;			//[kg/s]
+		double m_m_dot;			//[kg/s] (cycle not basis)
 
 		// Stage Metrics
 		int m_n_stages;			//[-] Number of stages
@@ -376,12 +384,14 @@ public:
 		double m_P_out;			//[kPa] Outlet pressure
 		double m_T_out;			//[K] Outlet temperature
 
+		double m_m_dot;			//[kg/s] (cycle not basis)
+
 		bool m_surge;			//[-]
 		double m_eta;			//[-]
 		double m_phi_min;		//[-] Min phi over all stages
 		double m_tip_ratio_max;	//[-] Max tip ratio over all stages
 
-		double m_N;			//[rpm]
+		double m_N;				//[rpm]
 
 		double m_W_dot_in;		//[KWe] Power required by compressor, positive value expected
 		double m_surge_safety;	//[-] Flow coefficient / min flow coefficient
@@ -394,7 +404,8 @@ public:
 		S_od_solved()
 		{
 			m_P_in = m_T_in =
-				m_P_out = m_T_out = std::numeric_limits<double>::quiet_NaN();
+				m_P_out = m_T_out =
+				m_m_dot = std::numeric_limits<double>::quiet_NaN();
 
 			m_surge = false;
 			m_eta = m_phi_min = m_tip_ratio_max = m_N =
@@ -407,7 +418,10 @@ public:
 
 	~C_comp_multi_stage(){};
 
-	C_comp_multi_stage(){};
+	C_comp_multi_stage()
+	{
+		m_r_W_dot_scale = 1.0;
+	};
 
 	const S_des_solved * get_design_solved()
 	{
@@ -426,17 +440,17 @@ public:
 		double m_T_in;	//[K]
 		double m_P_in;	//[kPa]
 		double m_P_out;	//[kPa]
-		double m_m_dot;	//[kg/s]
+		double m_m_dot_basis;	//[kg/s]
 
 	public:
 		C_MEQ_eta_isen__h_out(C_comp_multi_stage *pc_multi_stage,
-			double T_in /*K*/, double P_in /*kPa*/, double P_out /*kPa*/, double m_dot /*kg/s*/)
+			double T_in /*K*/, double P_in /*kPa*/, double P_out /*kPa*/, double m_dot_basis /*kg/s*/)
 		{
 			mpc_multi_stage = pc_multi_stage;
 			m_T_in = T_in;
 			m_P_in = P_in;
 			m_P_out = P_out;
-			m_m_dot = m_dot;
+			m_m_dot_basis = m_dot_basis;
 		}
 
 		virtual int operator()(double eta_isen /*-*/, double *h_comp_out /*kJ/kg*/);
@@ -448,17 +462,17 @@ public:
 		C_comp_multi_stage *mpc_multi_stage;
 		double m_T_in;	//[K]
 		double m_P_in;	//[kPa]
-		double m_m_dot;	//[kg/s]
+		double m_m_dot_basis;	//[kg/s]
 		double m_eta_isen;	//[-]
 
 	public:
 		C_MEQ_N_rpm__P_out(C_comp_multi_stage *pc_multi_stage,
-			double T_in /*K*/, double P_in /*kPa*/, double m_dot /*kg/s*/, double eta_isen /*-*/)
+			double T_in /*K*/, double P_in /*kPa*/, double m_dot_basis /*kg/s*/, double eta_isen /*-*/)
 		{
 			mpc_multi_stage = pc_multi_stage;
 			m_T_in = T_in;	//[K]
 			m_P_in = P_in;	//[kPa]
-			m_m_dot = m_dot;	//[kg/s]
+			m_m_dot_basis = m_dot_basis;	//[kg/s]
 			m_eta_isen = eta_isen;	//[-]
 		}
 
@@ -471,16 +485,16 @@ public:
 		C_comp_multi_stage *mpc_multi_stage;
 		double m_T_in;	//[K]
 		double m_P_in;	//[kPa]
-		double m_m_dot;	//[kg/s]
+		double m_m_dot_cycle;	//[kg/s]
 
 	public:
 		C_MEQ_phi_od__P_out(C_comp_multi_stage *pc_multi_stage,
-			double T_in /*K*/, double P_in /*kPa*/, double m_dot /*kg/s*/)
+			double T_in /*K*/, double P_in /*kPa*/, double m_dot_cycle /*kg/s*/)
 		{
 			mpc_multi_stage = pc_multi_stage;
 			m_T_in = T_in;		//[K]
 			m_P_in = P_in;		//[kPa]
-			m_m_dot = m_dot;	//[kg/s]
+			m_m_dot_cycle = m_dot_cycle;	//[kg/s]
 		}
 
 		virtual int operator()(double phi_od /*-*/, double *P_comp_out /*kPa*/);
@@ -489,16 +503,16 @@ public:
 	int design_given_outlet_state(double T_in /*K*/, double P_in /*kPa*/, double m_dot /*kg/s*/,
 		double T_out /*K*/, double P_out /*K*/);
 
-	void off_design_given_N(double T_in /*K*/, double P_in /*kPa*/, double m_dot /*kg/s*/, double N_rpm /*rpm*/,
+	void off_design_given_N(double T_in /*K*/, double P_in /*kPa*/, double m_dot_cycle /*kg/s*/, double N_rpm /*rpm*/,
 		int & error_code, double & T_out /*K*/, double & P_out /*kPa*/);
 
-	void off_design_at_N_des(double T_in /*K*/, double P_in /*kPa*/, double m_dot /*kg/s*/,
+	void off_design_at_N_des(double T_in /*K*/, double P_in /*kPa*/, double m_dot_cycle /*kg/s*/,
 		int & error_code, double & T_out /*K*/, double & P_out /*kPa*/);
 
-	void off_design_given_P_out(double T_in /*K*/, double P_in /*kPa*/, double m_dot /*kg/s*/,
+	void off_design_given_P_out(double T_in /*K*/, double P_in /*kPa*/, double m_dot_cycle /*kg/s*/,
 		double P_out /*kPa*/, int & error_code, double & T_out /*K*/);
 
-	int calc_m_dot__N_des__phi_des_first_stage(double T_in /*K*/, double P_in /*kPa*/, double & m_dot /*kg/s*/);
+	int calc_m_dot__N_des__phi_des_first_stage(double T_in /*K*/, double P_in /*kPa*/, double & m_dot_cycle /*kg/s*/);
 };
 
 

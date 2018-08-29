@@ -866,14 +866,14 @@ void C_turbine::turbine_sizing(const S_design_parameters & des_par_in, int & err
 	double C_s = sqrt(2.0*w_i*1000.0);					//[m/s] Spouting velocity
 	double U_tip = ms_des_solved.m_nu_design*C_s;		//[m/s] Tip speed
 	ms_des_solved.m_D_rotor = U_tip / (0.5*ms_des_solved.m_N_design*0.104719755);	//[m]
-	ms_des_solved.m_A_nozzle = ms_des_par.m_m_dot / (C_s*ms_des_par.m_D_in);		//[m^2]
+	ms_des_solved.m_A_nozzle = (ms_des_par.m_m_dot / m_r_W_dot_scale) / (C_s*ms_des_par.m_D_in);		//[m^2]
 
 	// Set other turbine variables
 	ms_des_solved.m_w_tip_ratio = U_tip / ssnd_in;				//[-]
 	ms_des_solved.m_eta = (ms_des_par.m_h_in - ms_des_par.m_h_out) / w_i;	//[-] Isentropic efficiency
 }
 
-void C_turbine::off_design_turbine(double T_in, double P_in, double P_out, double N, int & error_code, double & m_dot, double & T_out)
+void C_turbine::off_design_turbine(double T_in, double P_in, double P_out, double N, int & error_code, double & m_dot_cycle, double & T_out)
 {
 	/* 9.4.14: code from John Dyreby, converted to C++ by Ty Neises
 	! Solve for the outlet state of 'turb' given its inlet conditions, outlet pressure, and shaft speed.
@@ -935,17 +935,18 @@ void C_turbine::off_design_turbine(double T_in, double P_in, double P_out, doubl
 	}
 	T_out = co2_props.temp;
 
-	m_dot = C_s*ms_des_solved.m_A_nozzle*D_in;			//[kg/s] Mass flow rate through turbine
+	double m_dot_basis = C_s*ms_des_solved.m_A_nozzle*D_in;			//[kg/s] Mass flow rate through turbine
 	ms_od_solved.m_w_tip_ratio = U_tip / ssnd_in;		//[-] Ratio of the tip speed to the local (turbine inlet) speed of sound
 	ms_od_solved.m_N = N;
-	ms_od_solved.m_W_dot_out = m_dot*(h_in - h_out);		//[kW] Turbine power output
+	m_dot_cycle = m_dot_basis * m_r_W_dot_scale;				//[kg/s]
+	ms_od_solved.m_W_dot_out = m_dot_cycle*(h_in - h_out);		//[kW] Turbine power output
 }
 
-void C_turbine::od_turbine_at_N_des(double T_in, double P_in, double P_out, int & error_code, double & m_dot, double & T_out)
+void C_turbine::od_turbine_at_N_des(double T_in, double P_in, double P_out, int & error_code, double & m_dot_cycle, double & T_out)
 {
 	double N = ms_des_solved.m_N_design;		//[rpm]
 
-	off_design_turbine(T_in, P_in, P_out, N, error_code, m_dot, T_out);
+	off_design_turbine(T_in, P_in, P_out, N, error_code, m_dot_cycle, T_out);
 
 	return;
 }
@@ -1241,7 +1242,7 @@ int C_comp_single_stage::calc_N_from_phi(double T_in /*K*/, double P_in /*kPa*/,
 
 int C_comp_multi_stage::C_MEQ_eta_isen__h_out::operator()(double eta_isen /*-*/, double *h_comp_out /*kJ/kg*/)
 {
-	C_MEQ_N_rpm__P_out c_stages(mpc_multi_stage, m_T_in, m_P_in, m_m_dot, eta_isen);
+	C_MEQ_N_rpm__P_out c_stages(mpc_multi_stage, m_T_in, m_P_in, m_m_dot_basis, eta_isen);
 	C_monotonic_eq_solver c_solver(c_stages);
 
 	// Set lowr bound
@@ -1303,7 +1304,7 @@ int C_comp_multi_stage::C_MEQ_N_rpm__P_out::operator()(double N_rpm /*rpm*/, dou
 			P_in = P_out;	//[kPa]
 		}
 
-		mpc_multi_stage->mv_stages[i].design_given_shaft_speed(T_in, P_in, m_m_dot, N_rpm, m_eta_isen, P_out, T_out, tip_ratio);
+		mpc_multi_stage->mv_stages[i].design_given_shaft_speed(T_in, P_in, m_m_dot_basis, N_rpm, m_eta_isen, P_out, T_out, tip_ratio);
 	}
 
 	*P_comp_out = P_out;	//[kPa]
@@ -1311,11 +1312,13 @@ int C_comp_multi_stage::C_MEQ_N_rpm__P_out::operator()(double N_rpm /*rpm*/, dou
 	return 0;
 }
 
-int C_comp_multi_stage::design_given_outlet_state(double T_in /*K*/, double P_in /*kPa*/, double m_dot /*kg/s*/,
+int C_comp_multi_stage::design_given_outlet_state(double T_in /*K*/, double P_in /*kPa*/, double m_dot_cycle /*kg/s*/,
 	double T_out /*K*/, double P_out /*K*/)
 {
+	double m_dot_basis = m_dot_cycle / m_r_W_dot_scale;		//[kg/s]
+
 	mv_stages.resize(1);
-	mv_stages[0].design_single_stage_comp(T_in, P_in, m_dot, T_out, P_out);
+	mv_stages[0].design_single_stage_comp(T_in, P_in, m_dot_basis, T_out, P_out);
 
 	double max_calc_tip_speed = mv_stages[0].ms_des_solved.m_tip_ratio;
 
@@ -1350,7 +1353,7 @@ int C_comp_multi_stage::design_given_outlet_state(double T_in /*K*/, double P_in
 
 			mv_stages.resize(n_stages);
 
-			C_MEQ_eta_isen__h_out c_stages(this, T_in, P_in, P_out, m_dot);
+			C_MEQ_eta_isen__h_out c_stages(this, T_in, P_in, P_out, m_dot_basis);
 			C_monotonic_eq_solver c_solver(c_stages);
 
 			// Set bounds on isentropic efficiency
@@ -1418,7 +1421,7 @@ int C_comp_multi_stage::design_given_outlet_state(double T_in /*K*/, double P_in
 	ms_des_solved.m_h_out = mv_stages[n_stages - 1].ms_des_solved.m_h_out;	//[kJ/kg]
 	ms_des_solved.m_D_out = mv_stages[n_stages - 1].ms_des_solved.m_D_out;	//[kg/m^3]
 
-	ms_des_solved.m_m_dot = m_dot;					//[kg/s]
+	ms_des_solved.m_m_dot = m_dot_cycle;					//[kg/s]
 
 	ms_des_solved.m_N_design = mv_stages[n_stages - 1].ms_des_solved.m_N_design;		//[rpm]
 	ms_des_solved.m_phi_des = mv_stages[0].ms_des_solved.m_phi_des;		//[-]
@@ -1426,9 +1429,9 @@ int C_comp_multi_stage::design_given_outlet_state(double T_in /*K*/, double P_in
 	ms_des_solved.m_n_stages = n_stages;								//[-]
 	ms_des_solved.m_phi_surge = mv_stages[0].m_snl_phi_min;				//[-]
 
-	ms_des_solved.mv_D.resize(n_stages);
-	ms_des_solved.mv_tip_speed_ratio.resize(n_stages);
-	ms_des_solved.mv_eta_stages.resize(n_stages);
+	ms_des_solved.mv_D.resize(n_stages);					//[m]
+	ms_des_solved.mv_tip_speed_ratio.resize(n_stages);		//[-]
+	ms_des_solved.mv_eta_stages.resize(n_stages);			//[-]
 	for (int i = 0; i < n_stages; i++)
 	{
 		ms_des_solved.mv_D[i] = mv_stages[i].ms_des_solved.m_D_rotor;	//[m]
@@ -1444,24 +1447,32 @@ int C_comp_multi_stage::design_given_outlet_state(double T_in /*K*/, double P_in
 	return 0;
 }
 
-void C_comp_multi_stage::off_design_at_N_des(double T_in /*K*/, double P_in /*kPa*/, double m_dot /*kg/s*/,
+void C_comp_multi_stage::off_design_at_N_des(double T_in /*K*/, double P_in /*kPa*/, double m_dot_cycle /*kg/s*/,
 	int & error_code, double & T_out /*K*/, double & P_out /*kPa*/)
 {
 	double N = ms_des_solved.m_N_design;	//[rpm]
 
-	off_design_given_N(T_in, P_in, m_dot, N, error_code, T_out, P_out);
+	// passing m_dot cycle not m_dot basis
+	off_design_given_N(T_in, P_in, m_dot_cycle, N, error_code, T_out, P_out);
 }
 
-int C_comp_multi_stage::calc_m_dot__N_des__phi_des_first_stage(double T_in /*K*/, double P_in /*kPa*/, double & m_dot /*kg/s*/)
+int C_comp_multi_stage::calc_m_dot__N_des__phi_des_first_stage(double T_in /*K*/, double P_in /*kPa*/, double & m_dot_cycle /*kg/s*/)
 {
 	double N_des = mv_stages[0].ms_des_solved.m_N_design;		//[rpm]
 
-	return mv_stages[0].calc_m_dot__phi_des(T_in, P_in, N_des, m_dot);
+	double m_dot_basis = std::numeric_limits<double>::quiet_NaN();
+	int stage_err_code = mv_stages[0].calc_m_dot__phi_des(T_in, P_in, N_des, m_dot_basis);
+
+	m_dot_cycle = m_dot_basis * m_r_W_dot_scale;		//[kg/s]
+
+	return stage_err_code;
 }
 
-void C_comp_multi_stage::off_design_given_N(double T_in /*K*/, double P_in /*kPa*/, double m_dot /*kg/s*/, double N_rpm /*rpm*/,
+void C_comp_multi_stage::off_design_given_N(double T_in /*K*/, double P_in /*kPa*/, double m_dot_in /*kg/s*/, double N_rpm /*rpm*/,
 	int & error_code, double & T_out /*K*/, double & P_out /*kPa*/)
 {
+	double m_dot = m_dot_in / m_r_W_dot_scale;		//[kg/s]
+
 	int n_stages = mv_stages.size();
 
 	double T_stage_in = T_in;	//[K]
@@ -1530,6 +1541,8 @@ void C_comp_multi_stage::off_design_given_N(double T_in /*K*/, double P_in /*kPa
 	ms_od_solved.m_P_out = P_out;
 	ms_od_solved.m_T_out = T_out;
 
+	ms_od_solved.m_m_dot = m_dot_in;		//[kg/s] (cycle, not basis)
+
 	ms_od_solved.m_surge = is_surge;
 	ms_od_solved.m_eta = (h_out_isen - h_in) / (h_out - h_in);		//[-] Overall compressor efficiency
 	
@@ -1540,7 +1553,7 @@ void C_comp_multi_stage::off_design_given_N(double T_in /*K*/, double P_in /*kPa
 
 	ms_od_solved.m_N = N_rpm;
 
-	ms_od_solved.m_W_dot_in = m_dot*(h_out - h_in);
+	ms_od_solved.m_W_dot_in = m_dot_in*(h_out - h_in);	//[kg/s] (scaled to cycle, not basis)
 	ms_od_solved.m_surge_safety = surge_safety_min;
 
 	for (int i = 0; i < n_stages; i++)
@@ -1554,9 +1567,11 @@ void C_comp_multi_stage::off_design_given_N(double T_in /*K*/, double P_in /*kPa
 
 int C_comp_multi_stage::C_MEQ_phi_od__P_out::operator()(double phi_od /*-*/, double *P_comp_out /*kPa*/)
 {
+	double m_dot_basis = m_m_dot_cycle / mpc_multi_stage->m_r_W_dot_scale;	//[kg/s]
+
 	int error_code = 0;
 	double N_rpm = std::numeric_limits<double>::quiet_NaN();
-	error_code = mpc_multi_stage->mv_stages[0].calc_N_from_phi(m_T_in, m_P_in, m_m_dot, phi_od, N_rpm);
+	error_code = mpc_multi_stage->mv_stages[0].calc_N_from_phi(m_T_in, m_P_in, m_dot_basis, phi_od, N_rpm);
 	if (error_code != 0)
 	{
 		*P_comp_out = std::numeric_limits<double>::quiet_NaN();
@@ -1565,7 +1580,7 @@ int C_comp_multi_stage::C_MEQ_phi_od__P_out::operator()(double phi_od /*-*/, dou
 
 	double T_out = std::numeric_limits<double>::quiet_NaN();
 	error_code = 0;
-	mpc_multi_stage->off_design_given_N(m_T_in, m_P_in, m_m_dot, N_rpm, error_code, T_out, *P_comp_out);
+	mpc_multi_stage->off_design_given_N(m_T_in, m_P_in, m_dot_basis, N_rpm, error_code, T_out, *P_comp_out);
 
 	if (error_code != 0)
 	{
@@ -1576,11 +1591,11 @@ int C_comp_multi_stage::C_MEQ_phi_od__P_out::operator()(double phi_od /*-*/, dou
 	return 0;
 }
 
-void C_comp_multi_stage::off_design_given_P_out(double T_in /*K*/, double P_in /*kPa*/, double m_dot /*kg/s*/,
+void C_comp_multi_stage::off_design_given_P_out(double T_in /*K*/, double P_in /*kPa*/, double m_dot_cycle /*kg/s*/,
 	double P_out /*kPa*/, int & error_code, double & T_out /*K*/)
 {
 	// Apply 1 var solver to find the phi that results in a converged recompressor
-	C_MEQ_phi_od__P_out c_rc_od(this, T_in, P_in, m_dot);
+	C_MEQ_phi_od__P_out c_rc_od(this, T_in, P_in, m_dot_cycle);
 	C_monotonic_eq_solver c_rd_od_solver(c_rc_od);
 
 	// Set upper and lower bounds

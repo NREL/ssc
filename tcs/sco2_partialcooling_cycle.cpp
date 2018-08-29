@@ -64,6 +64,12 @@ int C_PartialCooling_Cycle::design(S_des_params & des_par_in)
 
 int C_PartialCooling_Cycle::design_core()
 {
+	// Apply scaling to the turbomachinery here
+	mc_mc.m_r_W_dot_scale = ms_des_par.m_W_dot_net / 10.E3;	//[-]
+	mc_rc.m_r_W_dot_scale = mc_mc.m_r_W_dot_scale;			//[-]
+	mc_pc.m_r_W_dot_scale = mc_mc.m_r_W_dot_scale;			//[-]
+	mc_t.m_r_W_dot_scale = mc_mc.m_r_W_dot_scale;			//[-]
+
 	// Check that the recompression fraction is not too close to 0
 	if (ms_des_par.m_recomp_frac < 0.01)
 	{

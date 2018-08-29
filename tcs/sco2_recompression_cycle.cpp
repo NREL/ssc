@@ -1848,6 +1848,11 @@ using namespace std;
 
 void C_RecompCycle::design_core_standard(int & error_code)
 {
+	// Apply scaling to the turbomachinery here
+	m_mc_ms.m_r_W_dot_scale = ms_des_par.m_W_dot_net / 10.E3;	//[-]
+	m_rc_ms.m_r_W_dot_scale = m_mc_ms.m_r_W_dot_scale;			//[-]
+	m_t.m_r_W_dot_scale = m_mc_ms.m_r_W_dot_scale;				//[-]
+
 	// twn 1.4.17: put reasonable lower bound on *modeled* recompression fraction
 	if( ms_des_par.m_recomp_frac < 0.01 )
 	{
