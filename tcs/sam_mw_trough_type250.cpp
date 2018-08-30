@@ -784,7 +784,7 @@ private:
 		is_fieldgeom_init;	//Flag to indicate whether the field geometry has been initialized
 	double T_cold_in_1, c_hdr_cold, start_time, dt, SolarAlt, costh, theta, shift,
 		q_SCA_tot, m_dot_htfX, Header_hl_cold, Header_hl_cold_tot, Runner_hl_cold, Runner_hl_cold_tot, Pipe_hl_cold, T_loop_in,
-		T_loop_outX, Runner_hl_hot, Runner_hl_hot_tot, Header_hl_hot, Header_hl_hot_tot, Pipe_hl_hot, c_hdr_hot, time_hr, dt_hr;
+		T_loop_outX, Runner_hl_hot, Runner_hl_hot_tot, Header_hl_hot, Header_hl_hot_tot, Pipe_hl_hot, Intc_hl, c_hdr_hot, time_hr, dt_hr;
 	int day_of_year, SolveMode, dfcount;
 
 	double ncall_track;
@@ -2277,12 +2277,15 @@ overtemp_iter_flag: //10 continue     //Return loop for over-temp conditions
 
             //---------------------
             double P_intc_in = P_field_in;
+            Intc_hl = 0.;
 
             T_loop[0] = T_loop_in;
             intc_state = interconnects[0].State(m_dot_htf * 2, T_loop[0], T_db, P_intc_in);
             T_loop[1] = intc_state.temp_out;
+            Intc_hl += intc_state.heat_loss;            // W, riser
             intc_state = interconnects[1].State(m_dot_htf, T_loop[1], T_db, intc_state.pressure_out);
             T_htf_in[0] = intc_state.temp_out; 
+            Intc_hl += intc_state.heat_loss;            // W, interconnect before first SCA
 
             for (int i = 0; i < nSCA; i++)
             {
@@ -2388,6 +2391,7 @@ overtemp_iter_flag: //10 continue     //Return loop for over-temp conditions
                     IntcOutputs intc_state = interconnects[i + 2].State(m_dot_htf, T_htf_out[i], T_db, P_intc_in);
                     P_intc_in -= intc_state.pressure_drop;  // pressure drops in HCAs only accounted for later
                     T_htf_in[i + 1] = intc_state.temp_out;
+                    Intc_hl += intc_state.heat_loss;            // W
                     //mjw 1.18.2011 Add the internal energy of the crossover piping and interconnects between the current SCA and the next one
                     E_int_loop[i] += intc_state.internal_energy;
                 }
@@ -2396,11 +2400,13 @@ overtemp_iter_flag: //10 continue     //Return loop for over-temp conditions
 
             intc_state = interconnects[interconnects.size() - 2].State(m_dot_htf, T_htf_out[nSCA - 1], T_db, P_intc_in);
             T_loop[2*nSCA + 2] = intc_state.temp_out;
+            Intc_hl += intc_state.heat_loss;            // W, interconnect after last SCA
             P_intc_in -= intc_state.pressure_drop;  // pressure drops in HCAs only accounted for later
 
 			//Set the loop outlet temperature
             intc_state = interconnects[interconnects.size() - 1].State(m_dot_htf * 2, T_loop[2*nSCA + 2], T_db, P_intc_in);
             T_loop_outX = intc_state.temp_out;
+            Intc_hl += intc_state.heat_loss;            // W, downcomer
 
             //Fill in rest of T_loop using the SCA inlet and outlet temps
             loop_i = 2; sca_i = 0;
@@ -2536,7 +2542,7 @@ freeze_prot_flag: //7   continue
 
 				E_field_loss_tot *= 1.e-6 * dt;
 
-				double E_field_pipe_hl = 2*Runner_hl_hot_tot + float(nfsec)*Header_hl_hot_tot + 2*Runner_hl_cold_tot + float(nfsec)*Header_hl_cold_tot;
+				double E_field_pipe_hl = 2*Runner_hl_hot_tot + float(nfsec)*Header_hl_hot_tot + 2*Runner_hl_cold_tot + float(nfsec)*Header_hl_cold_tot + Intc_hl;
 
 				E_field_pipe_hl *= dt;		//[J]
 
@@ -3229,7 +3235,7 @@ calc_final_metrics_goto:
 			Pipe_hl_hot = 2*Runner_hl_hot_tot + float(nfsec)*Header_hl_hot_tot;
 			Pipe_hl_cold = 2*Runner_hl_cold_tot + float(nfsec)*Header_hl_cold_tot;
 
-			Pipe_hl = Pipe_hl_hot + Pipe_hl_cold;
+			Pipe_hl = Pipe_hl_hot + Pipe_hl_cold + Intc_hl;
 
 			if( !is_using_input_gen )
 				E_avail_tot = max(E_avail_tot - Pipe_hl*dt, 0.0);    //[J] 11/1/11 TN: Include hot and cold piping losses in available energy calculation
