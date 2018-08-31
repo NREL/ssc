@@ -139,12 +139,13 @@ void SharedInverter::calculateTempDerate(double V, double T, double& pAC, double
 void SharedInverter::calculateACPower(const double powerDC_Watts, const double DCStringVoltage, double T)
 {
 	double P_par, P_lr;
+	bool negativePower = powerDC_Watts < 0 ? true : false;
 
 	// Power quantities go in and come out in units of W
 	if (m_inverterType == SANDIA_INVERTER || m_inverterType == DATASHEET_INVERTER || m_inverterType == COEFFICIENT_GENERATOR)
-		m_sandiaInverter->acpower(powerDC_Watts / m_numInverters, DCStringVoltage, &powerAC_kW, &P_par, &P_lr, &efficiencyAC, &powerClipLoss_kW, &powerConsumptionLoss_kW, &powerNightLoss_kW);
+		m_sandiaInverter->acpower(std::fabs(powerDC_Watts) / m_numInverters, DCStringVoltage, &powerAC_kW, &P_par, &P_lr, &efficiencyAC, &powerClipLoss_kW, &powerConsumptionLoss_kW, &powerNightLoss_kW);
 	else if (m_inverterType == PARTLOAD_INVERTER)
-		m_partloadInverter->acpower(powerDC_Watts / m_numInverters, &powerAC_kW, &P_lr, &P_par, &efficiencyAC, &powerClipLoss_kW, &powerNightLoss_kW);
+		m_partloadInverter->acpower(std::fabs(powerDC_Watts) / m_numInverters, &powerAC_kW, &P_lr, &P_par, &efficiencyAC, &powerClipLoss_kW, &powerNightLoss_kW);
 
 	double tempLoss = 0.0;
 	if (m_tempEnabled){
@@ -159,14 +160,29 @@ void SharedInverter::calculateACPower(const double powerDC_Watts, const double D
 	powerNightLoss_kW *= m_numInverters * util::watt_to_kilowatt;
 	powerTempLoss_kW = tempLoss * m_numInverters * util::watt_to_kilowatt;
 	efficiencyAC *= 100;
+
+	// In event shared inverter is charging a battery only, need to re-convert to negative power
+	if (negativePower) {
+		powerAC_kW *= -1.0;
+	}
 }
 
 double SharedInverter::getInverterDCNominalVoltage()
 {
-	if (m_inverterType == SANDIA_INVERTER)
+	if (m_inverterType == SANDIA_INVERTER || m_inverterType == DATASHEET_INVERTER || m_inverterType == COEFFICIENT_GENERATOR)
 		return m_sandiaInverter->Vdco;
 	else if (m_inverterType == PARTLOAD_INVERTER)
 		return m_partloadInverter->Vdco;
 	else
 		return 0.;
+}
+
+double SharedInverter::getMaxPowerEfficiency()
+{
+	if (m_inverterType == SANDIA_INVERTER || m_inverterType == DATASHEET_INVERTER || m_inverterType == COEFFICIENT_GENERATOR)
+		calculateACPower(m_sandiaInverter->Paco, m_sandiaInverter->Vdco, 0.0);
+	else if (m_inverterType == PARTLOAD_INVERTER)
+		calculateACPower(m_partloadInverter->Paco, m_partloadInverter->Vdco, 0.0);
+	
+	return efficiencyAC;
 }
