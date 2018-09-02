@@ -900,6 +900,8 @@ C_HX_counterflow::C_HX_counterflow()
 {
 	m_is_HX_initialized = false;
 	m_is_HX_designed = false;
+
+	m_cost_model = -1;
 }
 
 void C_HX_counterflow::initialize(const S_init_par & init_par_in)
@@ -1017,6 +1019,21 @@ double C_HX_counterflow::calc_max_q_dot_enth(double h_h_in /*kJ/kg*/, double P_h
 			h_c_in, P_c_in, P_c_out, m_dot_c);
 }
 
+double C_HX_counterflow::calculate_cost(double UA /*kWt/K*/,
+	double T_hot_in /*K*/, double P_hot_in /*kPa*/, double m_dot_hot /*kg/s*/,
+	double T_cold_in /*K*/, double P_cold_in /*kPa*/, double m_dot_cold /*kg/s*/)
+{
+	switch (m_cost_model)
+	{
+	case C_HX_counterflow::E_CARLSON_17_RECUP:
+		return 1.25*1.E-3*UA;		//[M$] needs UA in kWt/K
+	case C_HX_counterflow::E_CARLSON_17_PHX:
+		return 3.5*1.E-3*UA;		//[M$] needs UA in kWt/K
+	default:
+		return std::numeric_limits<double>::quiet_NaN();
+	}
+}
+
 void C_HX_counterflow::design_calc_UA(C_HX_counterflow::S_des_calc_UA_par des_par,
 	double q_dot_design /*kWt*/, C_HX_counterflow::S_des_solved &des_solved)
 {
@@ -1056,12 +1073,16 @@ void C_HX_counterflow::design_calc_UA(C_HX_counterflow::S_des_calc_UA_par des_pa
 	}
 
 	ms_des_solved.m_Q_dot_design = q_dot_design;	//[kWt]
-	ms_des_solved.m_UA_design_total = UA_calc;
+	ms_des_solved.m_UA_design_total = UA_calc;		//[kWt/K]
 	ms_des_solved.m_min_DT_design = min_DT_calc;
 	ms_des_solved.m_eff_design = eff_calc;
 	ms_des_solved.m_NTU_design = NTU_calc;
 	ms_des_solved.m_T_h_out = T_h_out_calc;
 	ms_des_solved.m_T_c_out = T_c_out_calc;
+
+	ms_des_solved.m_cost = calculate_cost(ms_des_solved.m_UA_design_total,
+		ms_des_calc_UA_par.m_T_h_in, ms_des_calc_UA_par.m_P_h_in, ms_des_calc_UA_par.m_m_dot_hot_des,
+		ms_des_calc_UA_par.m_T_c_in, ms_des_calc_UA_par.m_P_c_in, ms_des_calc_UA_par.m_m_dot_cold_des);
 
 	// Specify that method solved successfully
 	m_is_HX_designed = true;
@@ -1122,6 +1143,10 @@ void C_HX_counterflow::design_fix_UA_calc_outlet(double UA_target /*kW/K*/, doub
 	ms_des_solved.m_T_c_out = T_c_out;				//[K]
 	ms_des_solved.m_DP_cold_des = P_c_in - P_c_out;		//[kPa]
 	ms_des_solved.m_DP_hot_des = P_h_in - P_h_out;		//[kPa]
+
+	ms_des_solved.m_cost = calculate_cost(ms_des_solved.m_UA_design_total,
+		T_h_in, P_h_in, m_dot_h,
+		T_c_in, P_c_in, m_dot_c);
 }
 
 void C_HX_counterflow::off_design_solution(double T_c_in /*K*/, double P_c_in /*kPa*/, double m_dot_c /*kg/s*/, double P_c_out /*kPa*/,

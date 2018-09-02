@@ -185,6 +185,17 @@ protected:
 
 public:
 
+	int m_cost_model;		//[-]
+
+	enum
+	{
+		// Techno-Economic Comparison of Solar-Driven SCO2 Brayton Cycles Using 
+		// Component Cost Models Baselined with Vendor Data and Estimates
+		// ASME ES 2017		
+		E_CARLSON_17_RECUP,		// CO2 - CO2 PCHE
+		E_CARLSON_17_PHX		// Salt - CO2 PCHE high temperature
+	};
+
 	struct S_init_par
 	{
 		int m_N_sub_hx;				//[-] Number of sub-heat exchangers used in the model
@@ -235,11 +246,14 @@ public:
 		double m_DP_cold_des;			//[kPa] cold fluid design pressure drop
 		double m_DP_hot_des;			//[kPa] hot fluid design pressure drop
 
+		double m_cost;				//[M$]
+
 		S_des_solved()
 		{
 			m_Q_dot_design = m_UA_design_total = m_min_DT_design = m_eff_design = m_NTU_design =
 				m_T_h_out = m_T_c_out =
-				m_DP_cold_des = m_DP_hot_des = std::numeric_limits<double>::quiet_NaN();
+				m_DP_cold_des = m_DP_hot_des =
+				m_cost = std::numeric_limits<double>::quiet_NaN();
 		}
 	};
 
@@ -331,6 +345,10 @@ public:
 
 	double od_UA(double m_dot_c /*kg/s*/, double m_dot_h /*kg/s*/); 
 
+	double calculate_cost(double UA /*kWt/K*/,
+		double T_hot_in /*K*/, double P_hot_in /*kPa*/, double m_dot_hot /*kg/s*/,
+		double T_cold_in /*K*/, double P_cold_in /*kPa*/, double m_dot_cold /*kg/s*/);
+
 	virtual void initialize(const S_init_par & init_par);
 
 };
@@ -343,6 +361,11 @@ private:
 
 
 public:
+
+	C_HX_co2_to_htf()
+	{
+		m_cost_model = C_HX_counterflow::E_CARLSON_17_PHX;
+	}
 
 	//// This method calculates the HTF mass flow rate (m_m_dot_hot_des) that results in CR = 1
 	//void design_with_m_dot(C_HX_counterflow::S_des_par &des_par, double T_htf_cold, C_HX_counterflow::S_des_solved &des_solved);
@@ -361,6 +384,11 @@ class C_HX_co2_to_co2 : public C_HX_counterflow
 {
 
 public:
+
+	C_HX_co2_to_co2()
+	{
+		m_cost_model = C_HX_counterflow::E_CARLSON_17_RECUP;
+	}
 
 	virtual void initialize(int N_sub_hx);
 

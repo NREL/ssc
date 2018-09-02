@@ -133,6 +133,16 @@ public:
 	
 	double m_r_W_dot_scale;		//[-] W_dot_cycle / W_dot_comp_basis (10 MWe)
 
+	int m_cost_model;		//[-]
+
+	enum
+	{
+		// Techno-Economic Comparison of Solar-Driven SCO2 Brayton Cycles Using 
+		// Component Cost Models Baselined with Vendor Data and Estimates
+		// ASME ES 2017
+		E_CARLSON_17
+	};
+
 	struct S_design_parameters
 	{
 		double m_N_design;					//[rpm] turbine shaft speed
@@ -166,9 +176,15 @@ public:
 		double m_eta;						//[-] 
 		double m_N_design;					//[rpm] shaft speed
 
+		double m_W_dot;				//[kWe] Turbine power
+
+		double m_cost;				//[M$]
+
 		S_design_solved()
 		{
-			m_nu_design = m_D_rotor = m_A_nozzle = m_w_tip_ratio = m_eta = m_N_design = std::numeric_limits<double>::quiet_NaN();
+			m_nu_design = m_D_rotor = m_A_nozzle = m_w_tip_ratio = 
+				m_eta = m_N_design =
+				m_W_dot = m_cost = std::numeric_limits<double>::quiet_NaN();
 		}
 	};
 
@@ -199,6 +215,8 @@ public:
 	C_turbine()
 	{
 		m_r_W_dot_scale = 1.0;
+
+		m_cost_model = E_CARLSON_17;
 	};
 
 	static const double m_nu_design;
@@ -212,6 +230,9 @@ public:
 	{
 		return &ms_od_solved;
 	}
+
+	double calculate_cost(double T_in /*K*/, double P_in /*kPa*/, double m_dot /*kg/s*/,
+		double T_out /*K*/, double P_out /*kPa*/, double W_dot /*kWe*/);
 
 	void turbine_sizing(const S_design_parameters & des_par_in, int & error_code);
 
@@ -336,6 +357,16 @@ public:
 
 	double m_r_W_dot_scale;		//[-] W_dot_cycle / W_dot_comp_basis (10 MWe)
 
+	int m_cost_model;		//[-]
+
+	enum
+	{
+		// Techno-Economic Comparison of Solar-Driven SCO2 Brayton Cycles Using 
+		// Component Cost Models Baselined with Vendor Data and Estimates
+		// ASME ES 2017
+		E_CARLSON_17			
+	};
+
 	struct S_des_solved
 	{
 		// Compressor inlet conditions
@@ -349,8 +380,12 @@ public:
 		double m_P_out;			//[kPa]
 		double m_h_out;			//[kJ/kg]
 		double m_D_out;			//[kg/m^3]
-		// Mass flow
+		
 		double m_m_dot;			//[kg/s] (cycle not basis)
+		double m_W_dot;			//[kWe] power required by compressor
+
+		// Cost		
+		double m_cost;			//[M$]
 
 		// Stage Metrics
 		int m_n_stages;			//[-] Number of stages
@@ -366,11 +401,12 @@ public:
 
 		S_des_solved()
 		{
-			m_n_stages = -1;
+			m_n_stages = -1;			
 
 			m_T_in = m_P_in = m_D_in = m_h_in = m_s_in =
 				m_T_out = m_P_out = m_h_out = m_D_out =
-				m_m_dot =
+				m_m_dot = m_W_dot =
+				m_cost =
 				m_tip_ratio_max = 
 				m_N_design = m_phi_des = m_phi_surge = std::numeric_limits<double>::quiet_NaN();
 		}
@@ -421,6 +457,7 @@ public:
 	C_comp_multi_stage()
 	{
 		m_r_W_dot_scale = 1.0;
+		m_cost_model = E_CARLSON_17;
 	};
 
 	const S_des_solved * get_design_solved()
@@ -499,6 +536,9 @@ public:
 
 		virtual int operator()(double phi_od /*-*/, double *P_comp_out /*kPa*/);
 	};
+
+	double calculate_cost(double T_in /*K*/, double P_in /*kPa*/, double m_dot /*kg/s*/,
+		double T_out /*K*/, double P_out /*kPa*/, double W_dot /*kWe*/);
 
 	int design_given_outlet_state(double T_in /*K*/, double P_in /*kPa*/, double m_dot /*kg/s*/,
 		double T_out /*K*/, double P_out /*K*/);
