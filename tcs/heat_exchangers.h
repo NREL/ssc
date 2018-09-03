@@ -459,8 +459,16 @@ public:
 		}
 	};
 
-	struct S_hx_design_solved
+	struct S_des_solved
 	{
+		// Design thermodynamic conditions
+		double m_m_dot_co2;	//[kg/s] Total CO2 flow rate
+		double m_T_in_co2;	//[K] Hot CO2 inlet temperature
+		double m_P_in_co2;	//[kPa] Hot CO2 inlet pressure
+		double m_T_out_co2;	//[K] Cold CO2 outlet temperature
+		double m_P_out_co2;	//[kPa] Cold CO2 outlet pressure
+		double m_q_dot;		//[Wt] Heat exchanger duty
+
 		// Design Ambient Conditions
 		double m_P_amb_des;		//[Pa]
 
@@ -480,11 +488,12 @@ public:
 		double m_L_node;	//[m] Tube length of one node
 		double m_V_node;	//[m3] Volume of one node
 
-		S_hx_design_solved()
+		S_des_solved()
 		{
 			m_N_passes = -1;
 
-			m_P_amb_des = m_d_out = m_d_in = m_Depth = m_W_par = m_N_par =
+			m_m_dot_co2 = m_T_in_co2 = m_P_in_co2 = m_T_out_co2 = m_P_out_co2 = m_q_dot =
+				m_P_amb_des = m_d_out = m_d_in = m_Depth = m_W_par = m_N_par =
 				m_N_tubes = m_L_tube = m_UA_total = 
 				m_V_material_total = m_V_total =
 				m_L_node = m_V_node = std::numeric_limits<double>::quiet_NaN();
@@ -542,7 +551,7 @@ private:
 	S_des_par_ind ms_des_par_ind;
 	S_des_par_cycle_dep ms_des_par_cycle_dep;
 		// Out
-	S_hx_design_solved ms_hx_des_sol;
+	S_des_solved ms_hx_des_sol;
 
 public:
 
@@ -569,7 +578,7 @@ public:
 		return ms_hx_des_sol.m_V_material_total;
 	}
 
-	const C_CO2_to_air_cooler::S_hx_design_solved * get_design_solved()
+	const C_CO2_to_air_cooler::S_des_solved * get_design_solved()
 	{
 		return &ms_hx_des_sol;
 	}

@@ -106,6 +106,12 @@ public:
 		double m_tol;						//[-] Convergence tolerance
 		double m_N_turbine;					//[rpm] Turbine shaft speed (negative values link turbine to compressor)
 
+			// Air cooler parameters
+		double m_frac_fan_power;		//[-] Fraction of total cycle power 'S_des_par_cycle_dep.m_W_dot_fan_des' consumed by air fan
+		double m_deltaP_cooler_frac;	//[-] Fraction of high side (of cycle, i.e. comp outlet) pressure that is allowed as pressure drop to design the ACC
+		double m_T_amb_des;				//[K] Design point ambient temperature
+		double m_elevation;				//[m] Elevation (used to calculate ambient pressure)
+
 		int m_des_objective_type;		//[2] = min phx deltat then max eta, [else] max eta
 		double m_min_phx_deltaT;		//[C]
 
@@ -113,7 +119,8 @@ public:
 		{
 			m_W_dot_net = m_T_mc_in = m_T_pc_in = m_T_t_in = 
 				m_P_pc_in = m_P_mc_in = m_P_mc_out = m_UA_LTR = m_UA_HTR = m_LTR_eff_max = m_HTR_eff_max = m_recomp_frac =
-				m_eta_mc = m_eta_rc = m_eta_pc = m_eta_t = m_P_high_limit = m_tol = m_N_turbine = std::numeric_limits<double>::quiet_NaN();
+				m_eta_mc = m_eta_rc = m_eta_pc = m_eta_t = m_P_high_limit = m_tol = m_N_turbine =
+				m_frac_fan_power = m_deltaP_cooler_frac = m_T_amb_des = m_elevation = std::numeric_limits<double>::quiet_NaN();
 			m_N_sub_hxrs = -1;
 
 			// Default to standard optimization to maximize cycle efficiency
@@ -157,6 +164,12 @@ public:
 		double m_opt_tol;					//[-] Optimization tolerance
 		double m_N_turbine;					//[rpm] Turbine shaft speed (negative values link turbine to compressor)
 
+			// Air cooler parameters
+		double m_frac_fan_power;		//[-] Fraction of total cycle power 'S_des_par_cycle_dep.m_W_dot_fan_des' consumed by air fan
+		double m_deltaP_cooler_frac;	//[-] Fraction of high side (of cycle, i.e. comp outlet) pressure that is allowed as pressure drop to design the ACC
+		double m_T_amb_des;				//[K] Design point ambient temperature
+		double m_elevation;				//[m] Elevation (used to calculate ambient pressure)
+
 		int m_des_objective_type;		//[2] = min phx deltat then max eta, [else] max eta
 		double m_min_phx_deltaT;		//[C]
 
@@ -180,6 +193,7 @@ public:
 			m_W_dot_net = m_T_mc_in = m_T_pc_in = m_T_t_in =
 				m_UA_rec_total = m_LTR_eff_max = m_HTR_eff_max = 
 				m_eta_mc = m_eta_rc = m_eta_pc = m_eta_t = m_P_high_limit = m_tol = m_N_turbine = 
+				m_frac_fan_power = m_deltaP_cooler_frac = m_T_amb_des = m_elevation =
 				m_P_mc_out_guess = m_PR_total_guess = m_f_PR_mc_guess = 
 				m_recomp_frac_guess = m_LTR_frac_guess = std::numeric_limits<double>::quiet_NaN();
 			m_N_sub_hxrs = -1;
@@ -208,6 +222,9 @@ private:
 	C_comp_multi_stage mc_mc, mc_rc, mc_pc;
 	C_HX_co2_to_co2 mc_LTR, mc_HTR;
 	C_HeatExchanger mc_PHX, mc_cooler_pc, mc_cooler_mc;	
+
+	C_CO2_to_air_cooler mc_LP_air_cooler;
+	C_CO2_to_air_cooler mc_IP_air_cooler;
 
 	S_des_params ms_des_par;
 	S_opt_des_params ms_opt_des_par;

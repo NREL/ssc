@@ -555,6 +555,54 @@ int C_PartialCooling_Cycle::finalize_design()
 		return 74;
 	}
 
+	// Design air coolers
+	// Low Pressure
+		// Structure for design parameters that are dependent on cycle design solution
+	C_CO2_to_air_cooler::S_des_par_cycle_dep s_LP_air_cooler_des_par_dep;
+		// Set air cooler design parameters that are dependent on the cycle design solution
+	s_LP_air_cooler_des_par_dep.m_T_hot_in_des = m_temp_last[C_sco2_cycle_core::LTR_LP_OUT];		//[K]
+	s_LP_air_cooler_des_par_dep.m_P_hot_in_des = m_pres_last[C_sco2_cycle_core::LTR_LP_OUT];		//[kPa]
+	s_LP_air_cooler_des_par_dep.m_m_dot_total = m_m_dot_pc;		//[kg/s]
+		// This pressure drop is currently uncoupled from the cycle design
+	s_LP_air_cooler_des_par_dep.m_delta_P_des = ms_des_par.m_deltaP_cooler_frac*m_pres_last[C_sco2_cycle_core::MC_OUT];	//[kPa]
+	s_LP_air_cooler_des_par_dep.m_T_hot_out_des = m_temp_last[C_sco2_cycle_core::PC_IN];			//[K]
+		// Use half the rated fan power on each cooler fan
+	s_LP_air_cooler_des_par_dep.m_W_dot_fan_des = ms_des_par.m_frac_fan_power*0.5*ms_des_par.m_W_dot_net / 1000.0;		//[MWe]
+		// Structure for design parameters that are independent of cycle design solution
+	C_CO2_to_air_cooler::S_des_par_ind s_LP_air_cooler_des_par_ind;
+	s_LP_air_cooler_des_par_ind.m_T_amb_des = ms_des_par.m_T_amb_des;		//[K]
+	s_LP_air_cooler_des_par_ind.m_elev = ms_des_par.m_elevation;			//[m]
+
+	if (std::isfinite(ms_des_par.m_deltaP_cooler_frac) && std::isfinite(ms_des_par.m_frac_fan_power)
+		&& std::isfinite(ms_des_par.m_T_amb_des) && std::isfinite(ms_des_par.m_elevation))
+	{
+		mc_LP_air_cooler.design_hx(s_LP_air_cooler_des_par_ind, s_LP_air_cooler_des_par_dep);
+	}
+
+	// High Pressure
+		// Structure for design parameters that are dependent on cycle design solution
+	C_CO2_to_air_cooler::S_des_par_cycle_dep s_IP_air_cooler_des_par_dep;
+		// Set air cooler design parameters that are dependent on the cycle design solution
+	s_IP_air_cooler_des_par_dep.m_T_hot_in_des = m_temp_last[C_sco2_cycle_core::PC_OUT];		//[K]
+	s_IP_air_cooler_des_par_dep.m_P_hot_in_des = m_pres_last[C_sco2_cycle_core::PC_OUT];		//[kPa]
+	s_IP_air_cooler_des_par_dep.m_m_dot_total = m_m_dot_mc;		//[kg/s]
+		// This pressure drop is currently uncoupled from the cycle design
+	s_IP_air_cooler_des_par_dep.m_delta_P_des = ms_des_par.m_deltaP_cooler_frac*m_pres_last[C_sco2_cycle_core::MC_OUT];	//[kPa]
+	s_IP_air_cooler_des_par_dep.m_T_hot_out_des = m_temp_last[C_sco2_cycle_core::MC_IN];			//[K]
+		// Use half the rated fan power on each cooler fan
+	s_IP_air_cooler_des_par_dep.m_W_dot_fan_des = ms_des_par.m_frac_fan_power*0.5*ms_des_par.m_W_dot_net / 1000.0;		//[MWe]
+		// Structure for design parameters that are independent of cycle design solution
+	C_CO2_to_air_cooler::S_des_par_ind s_IP_air_cooler_des_par_ind;
+	s_IP_air_cooler_des_par_ind.m_T_amb_des = ms_des_par.m_T_amb_des;		//[K]
+	s_IP_air_cooler_des_par_ind.m_elev = ms_des_par.m_elevation;			//[m]
+
+	if (std::isfinite(ms_des_par.m_deltaP_cooler_frac) && std::isfinite(ms_des_par.m_frac_fan_power)
+		&& std::isfinite(ms_des_par.m_T_amb_des) && std::isfinite(ms_des_par.m_elevation))
+	{
+		mc_IP_air_cooler.design_hx(s_IP_air_cooler_des_par_ind, s_IP_air_cooler_des_par_dep);
+	}
+
+
 	// Get 'design_solved' structures from component classes
 	ms_des_solved.ms_mc_ms_des_solved = *mc_mc.get_design_solved();
 	ms_des_solved.ms_rc_ms_des_solved = *mc_rc.get_design_solved();
@@ -562,6 +610,8 @@ int C_PartialCooling_Cycle::finalize_design()
 	ms_des_solved.ms_t_des_solved = *mc_t.get_design_solved();
 	ms_des_solved.ms_LTR_des_solved = mc_LTR.ms_des_solved;
 	ms_des_solved.ms_HTR_des_solved = mc_HTR.ms_des_solved;
+	ms_des_solved.ms_LP_air_cooler = *mc_LP_air_cooler.get_design_solved();
+	ms_des_solved.ms_IP_air_cooler = *mc_IP_air_cooler.get_design_solved();
 
 	// Set solved design point metrics
 	ms_des_solved.m_temp = m_temp_last;
@@ -712,6 +762,12 @@ int C_PartialCooling_Cycle::opt_design_core()
 	ms_des_par.m_P_high_limit = ms_opt_des_par.m_P_high_limit;	//[kPa]
 	ms_des_par.m_tol = ms_opt_des_par.m_tol;				//[-]
 	ms_des_par.m_N_turbine = ms_opt_des_par.m_N_turbine;	//[rpm]
+
+	ms_des_par.m_frac_fan_power = ms_opt_des_par.m_frac_fan_power;			//[-]
+	ms_des_par.m_deltaP_cooler_frac = ms_opt_des_par.m_deltaP_cooler_frac;	//[-]
+	ms_des_par.m_T_amb_des = ms_opt_des_par.m_T_amb_des;					//[K]
+	ms_des_par.m_elevation = ms_opt_des_par.m_elevation;					//[m]
+
 	ms_des_par.m_des_objective_type = ms_opt_des_par.m_des_objective_type;	//[-]
 	ms_des_par.m_min_phx_deltaT = ms_opt_des_par.m_min_phx_deltaT;			//[K]
 
@@ -854,6 +910,11 @@ int C_PartialCooling_Cycle::auto_opt_design_core()
 	ms_opt_des_par.m_tol = ms_auto_opt_des_par.m_tol;						//[-]
 	ms_opt_des_par.m_opt_tol = ms_auto_opt_des_par.m_opt_tol;				//[-]
 	ms_opt_des_par.m_N_turbine = ms_auto_opt_des_par.m_N_turbine;			//[rpm] Turbine shaft speed (negative values link turbine to compressor)
+
+	ms_opt_des_par.m_frac_fan_power = ms_auto_opt_des_par.m_frac_fan_power;			//[-]
+	ms_opt_des_par.m_deltaP_cooler_frac = ms_auto_opt_des_par.m_deltaP_cooler_frac;	//[-]
+	ms_opt_des_par.m_T_amb_des = ms_auto_opt_des_par.m_T_amb_des;					//[K]
+	ms_opt_des_par.m_elevation = ms_auto_opt_des_par.m_elevation;					//[m]
 
 	ms_opt_des_par.m_des_objective_type = ms_auto_opt_des_par.m_des_objective_type;	//[-]
 	ms_opt_des_par.m_min_phx_deltaT = ms_auto_opt_des_par.m_min_phx_deltaT;			//[C]

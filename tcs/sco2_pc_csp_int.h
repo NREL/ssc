@@ -226,13 +226,10 @@ private:
 
 	C_RecompCycle mc_rc_cycle;
 	C_HX_co2_to_htf mc_phx;
-	C_CO2_to_air_cooler mc_air_cooler;
 	C_PartialCooling_Cycle mc_partialcooling_cycle;
 
 	S_des_par ms_des_par;
 	C_sco2_cycle_core::S_auto_opt_design_hit_eta_parameters ms_cycle_des_par;
-	C_CO2_to_air_cooler::S_des_par_ind ms_air_cooler_des_par_ind;
-	C_CO2_to_air_cooler::S_des_par_cycle_dep ms_air_cooler_des_par_dep;
 	C_HX_counterflow::S_des_calc_UA_par ms_phx_des_par;
 		
 	S_des_solved ms_des_solved;

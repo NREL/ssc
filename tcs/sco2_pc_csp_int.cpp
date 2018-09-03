@@ -142,6 +142,11 @@ void C_sco2_recomp_csp::design_core()
 		ms_cycle_des_par.m_N_turbine = ms_des_par.m_N_turbine;
 		ms_cycle_des_par.m_is_recomp_ok = ms_des_par.m_is_recomp_ok;
 
+		ms_cycle_des_par.m_frac_fan_power = ms_des_par.m_frac_fan_power;			//[-]
+		ms_cycle_des_par.m_deltaP_cooler_frac = ms_des_par.m_deltaP_cooler_frac;	//[-]
+		ms_cycle_des_par.m_T_amb_des = ms_des_par.m_T_amb_des;						//[K]
+		ms_cycle_des_par.m_elevation = ms_des_par.m_elevation;						//[m]
+
 		ms_cycle_des_par.m_des_objective_type = ms_des_par.m_des_objective_type;		//[-]
 		ms_cycle_des_par.m_min_phx_deltaT = ms_des_par.m_min_phx_deltaT;				//[C]
 
@@ -187,6 +192,11 @@ void C_sco2_recomp_csp::design_core()
 		des_params.m_opt_tol = ms_des_par.m_opt_tol;
 		des_params.m_N_turbine = ms_des_par.m_N_turbine;
 
+		des_params.m_frac_fan_power = ms_des_par.m_frac_fan_power;			//[-]
+		des_params.m_deltaP_cooler_frac = ms_des_par.m_deltaP_cooler_frac;	//[-]
+		des_params.m_T_amb_des = ms_des_par.m_T_amb_des;					//[K]
+		des_params.m_elevation = ms_des_par.m_elevation;					//[m]
+
 		des_params.m_des_objective_type = ms_des_par.m_des_objective_type;		//[-]
 		des_params.m_min_phx_deltaT = ms_des_par.m_min_phx_deltaT;				//[C]
 
@@ -219,15 +229,6 @@ void C_sco2_recomp_csp::design_core()
 
 	ms_des_solved.ms_rc_cycle_solved = *mpc_sco2_cycle->get_design_solved();
 
-	// Set air cooler design parameters that are dependent on the cycle design solution
-	ms_air_cooler_des_par_dep.m_T_hot_in_des = ms_des_solved.ms_rc_cycle_solved.m_temp[C_sco2_cycle_core::LTR_LP_OUT];
-	ms_air_cooler_des_par_dep.m_P_hot_in_des = ms_des_solved.ms_rc_cycle_solved.m_pres[C_sco2_cycle_core::LTR_LP_OUT];
-	ms_air_cooler_des_par_dep.m_m_dot_total = ms_des_solved.ms_rc_cycle_solved.m_m_dot_mc;		//[kg/s]
-		// This pressure drop is currently uncoupled from the cycle design
-	ms_air_cooler_des_par_dep.m_delta_P_des = ms_des_par.m_deltaP_cooler_frac*ms_des_solved.ms_rc_cycle_solved.m_pres[C_sco2_cycle_core::MC_OUT];
-	ms_air_cooler_des_par_dep.m_T_hot_out_des = ms_des_solved.ms_rc_cycle_solved.m_temp[C_sco2_cycle_core::MC_IN];
-	ms_air_cooler_des_par_dep.m_W_dot_fan_des = ms_des_par.m_frac_fan_power*ms_des_par.m_W_dot_net/1000.0;		//[MWe]
-
 	// Initialize the PHX
 	mc_phx.initialize(ms_des_par.m_hot_fl_code, ms_des_par.mc_hot_fl_props);
 
@@ -250,14 +251,6 @@ void C_sco2_recomp_csp::design_core()
 	
 	mc_phx.design_and_calc_m_dot_htf(ms_phx_des_par, q_dot_des_phx, ms_des_par.m_phx_dt_cold_approach, ms_des_solved.ms_phx_des_solved);
 
-	// Design the air cooler
-		// Define Independent Air Cooler Design Parameters
-	ms_air_cooler_des_par_ind.m_T_amb_des = ms_des_par.m_T_amb_des;		//[K]
-	ms_air_cooler_des_par_ind.m_elev = ms_des_par.m_elevation;			//[m]
-		// Add checks from Type 424 to the air cooler design code?
-
-	mc_air_cooler.design_hx(ms_air_cooler_des_par_ind, ms_air_cooler_des_par_dep);
-	
 	//*************************************************************************************
 	//*************************************************************************************
 

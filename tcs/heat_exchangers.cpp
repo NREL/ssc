@@ -1535,6 +1535,13 @@ bool C_CO2_to_air_cooler::design_hx(S_des_par_ind des_par_ind, S_des_par_cycle_d
 	ms_hx_des_sol.m_L_node = ms_hx_des_sol.m_L_tube / (double)m_N_nodes;	//[m] Length of one node
 	ms_hx_des_sol.m_V_node = ms_hx_des_sol.m_L_node*m_s_v*m_s_h;	//[m^3] Volume of one node
 
+	ms_hx_des_sol.m_m_dot_co2 = ms_des_par_cycle_dep.m_m_dot_total;		//[kg/s] Total CO2 flow rate
+	ms_hx_des_sol.m_T_in_co2 = ms_des_par_cycle_dep.m_T_hot_in_des;		//[K] Hot CO2 inlet temperature
+	ms_hx_des_sol.m_P_in_co2 = ms_des_par_cycle_dep.m_P_hot_in_des;		//[kPa] Hot CO2 inlet pressure
+	ms_hx_des_sol.m_T_out_co2 = ms_des_par_cycle_dep.m_T_hot_out_des;	//[K] Cold CO2 outlet temperature
+	ms_hx_des_sol.m_P_out_co2 = m_P_hot_out_des;			//[K] Cold CO2 outlet pressure
+	ms_hx_des_sol.m_q_dot = m_Q_dot_des;					//[Wt] Heat exchanger duty
+
 	return true;
 };
 

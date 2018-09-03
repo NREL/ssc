@@ -67,6 +67,9 @@ public:
 		C_HX_counterflow::S_des_solved ms_LTR_des_solved;
 		C_HX_counterflow::S_des_solved ms_HTR_des_solved;
 
+		C_CO2_to_air_cooler::S_des_solved ms_LP_air_cooler;
+		C_CO2_to_air_cooler::S_des_solved ms_IP_air_cooler;
+
 		S_design_solved()
 		{
 			m_eta_thermal = m_W_dot_net = m_m_dot_mc = m_m_dot_rc = m_m_dot_t = m_recomp_frac =
@@ -101,6 +104,12 @@ public:
 		double m_opt_tol;					//[-] Optimization tolerance
 		double m_N_turbine;					//[rpm] Turbine shaft speed (negative values link turbine to compressor)
 		
+		// Air cooler parameters
+		double m_frac_fan_power;		//[-] Fraction of total cycle power 'S_des_par_cycle_dep.m_W_dot_fan_des' consumed by air fan
+		double m_deltaP_cooler_frac;	//[-] Fraction of high side (of cycle, i.e. comp outlet) pressure that is allowed as pressure drop to design the ACC
+		double m_T_amb_des;				//[K] Design point ambient temperature
+		double m_elevation;				//[m] Elevation (used to calculate ambient pressure)
+
 		int m_is_recomp_ok;					//[-] 1 = yes, 0 = no, other = invalid
 
 		int m_des_objective_type;			//[2] = min phx deltat then max eta, [else] max eta
@@ -118,6 +127,7 @@ public:
 			m_W_dot_net = m_T_mc_in = m_T_pc_in = m_T_t_in = m_LTR_eff_max = m_HTR_eff_max =
 				m_eta_mc = m_eta_rc = m_eta_pc = m_eta_t = m_P_high_limit =
 				m_tol = m_opt_tol = m_N_turbine =
+				m_frac_fan_power = m_deltaP_cooler_frac = m_T_amb_des = m_elevation =
 				m_PR_mc_guess = std::numeric_limits<double>::quiet_NaN();
 
 			m_N_sub_hxrs = -1;
@@ -170,6 +180,12 @@ public:
 		double m_opt_tol;					//[-] Optimization tolerance
 		double m_N_turbine;					//[rpm] Turbine shaft speed (negative values link turbine to compressor)
 		
+		// Air cooler parameters
+		double m_frac_fan_power;		//[-] Fraction of total cycle power 'S_des_par_cycle_dep.m_W_dot_fan_des' consumed by air fan
+		double m_deltaP_cooler_frac;	//[-] Fraction of high side (of cycle, i.e. comp outlet) pressure that is allowed as pressure drop to design the ACC
+		double m_T_amb_des;				//[K] Design point ambient temperature
+		double m_elevation;				//[m] Elevation (used to calculate ambient pressure)
+
 		int m_is_recomp_ok;					//[-] 1 = yes, 0 = no, other = invalid
 
 		double m_PR_mc_guess;				//[-] Initial guess for ratio of P_mc_out to P_mc_in
@@ -188,6 +204,7 @@ public:
 			m_W_dot_net = m_T_mc_in = m_T_pc_in = m_T_t_in =
 				m_UA_rec_total = m_LTR_eff_max = m_HTR_eff_max =
 				m_eta_mc = m_eta_rc = m_eta_pc = m_eta_t = m_P_high_limit = m_tol = m_N_turbine = 
+				m_frac_fan_power = m_deltaP_cooler_frac = m_T_amb_des = m_elevation =
 				m_fixed_PR_mc = std::numeric_limits<double>::quiet_NaN();
 			m_N_sub_hxrs = -1;
 
