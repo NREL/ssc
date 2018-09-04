@@ -418,6 +418,16 @@ class C_CO2_to_air_cooler
 
 public:
 	
+	int m_cost_model;		//[-]
+
+	enum
+	{
+		// Techno-Economic Comparison of Solar-Driven SCO2 Brayton Cycles Using 
+		// Component Cost Models Baselined with Vendor Data and Estimates
+		// ASME ES 2017		
+		E_CARLSON_17		//[-]
+	};
+
 	// Class to save messages for up stream classes
 	C_csp_messages mc_messages;
 
@@ -488,6 +498,8 @@ public:
 		double m_L_node;	//[m] Tube length of one node
 		double m_V_node;	//[m3] Volume of one node
 
+		double m_cost;		//[M$] Cost
+
 		S_des_solved()
 		{
 			m_N_passes = -1;
@@ -496,7 +508,8 @@ public:
 				m_P_amb_des = m_d_out = m_d_in = m_Depth = m_W_par = m_N_par =
 				m_N_tubes = m_L_tube = m_UA_total = 
 				m_V_material_total = m_V_total =
-				m_L_node = m_V_node = std::numeric_limits<double>::quiet_NaN();
+				m_L_node = m_V_node =
+				m_cost = std::numeric_limits<double>::quiet_NaN();
 		}
 	};
 
@@ -801,6 +814,9 @@ public:
 	void calc_air_props(double T_amb /*K*/, double P_amb /*Pa*/,
 		double & mu_air /*kg/m-s*/, double & v_air /*1/m3*/, double & cp_air /*J/kg-K*/,
 		double & k_air /*W/m-K*/, double & Pr_air);
+
+	double calculate_cost(double UA /*kWt/K*/, double V_material /*m^3*/,
+		double T_hot_in /*K*/, double P_hot_in /*kPa*/, double m_dot_hot /*kg/s*/);
 };
 
 

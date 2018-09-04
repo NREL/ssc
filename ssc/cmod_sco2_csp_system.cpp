@@ -178,13 +178,15 @@ static var_info _cm_vtab_sco2_csp_system[] = {
 	{ SSC_OUTPUT, SSC_NUMBER,  "LP_cooler_P_in",       "Low pressure cross flow cooler inlet pressure",          "MPa",        "",    "",      "*",     "",       "" },
 	{ SSC_OUTPUT, SSC_NUMBER,  "LP_cooler_m_dot_co2",  "Low pressure cross flow cooler CO2 mass flow rate",      "kg/s",       "",    "",      "*",     "",       "" },	
 	{ SSC_OUTPUT, SSC_NUMBER,  "LP_cooler_UA",         "Low pressure cross flow cooler conductance",             "MW/K",       "",    "",      "*",     "",       "" },
-	{ SSC_OUTPUT, SSC_NUMBER,  "LP_q_dot",             "Low pressure cooler heat transfer",                      "MWt",        "",    "",      "*",     "",       "" },
+	{ SSC_OUTPUT, SSC_NUMBER,  "LP_cooler_q_dot",      "Low pressure cooler heat transfer",                      "MWt",        "",    "",      "*",     "",       "" },
+	{ SSC_OUTPUT, SSC_NUMBER,  "LP_cooler_cost",       "Low pressure cooler cost",                               "M$",         "",    "",      "*",     "",       "" },
 		// Intermediate Pressure Cooler
 	{ SSC_OUTPUT, SSC_NUMBER,  "IP_cooler_T_in",       "Intermediate pressure cross flow cooler inlet temperature",       "C",          "",    "",      "*",     "",       "" },
 	{ SSC_OUTPUT, SSC_NUMBER,  "IP_cooler_P_in",       "Intermediate pressure cross flow cooler inlet pressure",          "MPa",        "",    "",      "*",     "",       "" },
 	{ SSC_OUTPUT, SSC_NUMBER,  "IP_cooler_m_dot_co2",  "Intermediate pressure cross flow cooler CO2 mass flow rate",      "kg/s",       "",    "",      "*",     "",       "" },
 	{ SSC_OUTPUT, SSC_NUMBER,  "IP_cooler_UA",         "Intermediate pressure cross flow cooler conductance",             "MW/K",       "",    "",      "*",     "",       "" },
-	{ SSC_OUTPUT, SSC_NUMBER,  "IP_q_dot",             "Intermediate pressure cooler heat transfer",                      "MWt",        "",    "",      "*",     "",       "" },
+	{ SSC_OUTPUT, SSC_NUMBER,  "IP_cooler_q_dot",      "Intermediate pressure cooler heat transfer",                      "MWt",        "",    "",      "*",     "",       "" },
+	{ SSC_OUTPUT, SSC_NUMBER,  "IP_cooler_cost",       "Intermediate pressure cooler cost",                               "M$",         "",    "",      "*",     "",       "" },
 		// State Points
 	{ SSC_OUTPUT, SSC_ARRAY,  "T_state_points",       "Cycle temperature state points",      "C",	      "",   "",   "*",   "",   "" },
 	{ SSC_OUTPUT, SSC_ARRAY,  "P_state_points",       "Cycle pressure state points",         "MPa",       "",   "",   "*",   "",   "" },
@@ -852,7 +854,8 @@ public:
 		assign("LP_cooler_P_in", (ssc_number_t)(c_sco2_recomp_csp.get_design_solved()->ms_rc_cycle_solved.ms_LP_air_cooler.m_P_in_co2 / 1.E3));		//[MPa]
 		assign("LP_cooler_m_dot_co2", (ssc_number_t)c_sco2_recomp_csp.get_design_solved()->ms_rc_cycle_solved.ms_LP_air_cooler.m_m_dot_co2);		//[kg/s]
 		assign("LP_cooler_UA", (ssc_number_t)(c_sco2_recomp_csp.get_design_solved()->ms_rc_cycle_solved.ms_LP_air_cooler.m_UA_total*1.E-6));		//[MW/K] convert from W/K
-		assign("LP_q_dot", (ssc_number_t)(c_sco2_recomp_csp.get_design_solved()->ms_rc_cycle_solved.ms_LP_air_cooler.m_q_dot*1.E-6));				//[MWt] convert from W
+		assign("LP_cooler_q_dot", (ssc_number_t)(c_sco2_recomp_csp.get_design_solved()->ms_rc_cycle_solved.ms_LP_air_cooler.m_q_dot*1.E-6));		//[MWt] convert from W
+		assign("LP_cooler_cost", (ssc_number_t)c_sco2_recomp_csp.get_design_solved()->ms_rc_cycle_solved.ms_LP_air_cooler.m_cost);					//[M$]
 			// Intermediate Pressure Cooler
 		if (sco2_rc_des_par.m_cycle_config == 2)
 		{
@@ -860,7 +863,8 @@ public:
 			assign("IP_cooler_P_in", (ssc_number_t)(c_sco2_recomp_csp.get_design_solved()->ms_rc_cycle_solved.ms_IP_air_cooler.m_P_in_co2 / 1.E3));		//[MPa]
 			assign("IP_cooler_m_dot_co2", (ssc_number_t)c_sco2_recomp_csp.get_design_solved()->ms_rc_cycle_solved.ms_IP_air_cooler.m_m_dot_co2);		//[kg/s]
 			assign("IP_cooler_UA", (ssc_number_t)(c_sco2_recomp_csp.get_design_solved()->ms_rc_cycle_solved.ms_IP_air_cooler.m_UA_total*1.E-6));		//[MW/K] convert from W/K
-			assign("IP_q_dot", (ssc_number_t)(c_sco2_recomp_csp.get_design_solved()->ms_rc_cycle_solved.ms_IP_air_cooler.m_q_dot*1.E-6));				//[MWt] convert from W
+			assign("IP_cooler_q_dot", (ssc_number_t)(c_sco2_recomp_csp.get_design_solved()->ms_rc_cycle_solved.ms_IP_air_cooler.m_q_dot*1.E-6));		//[MWt] convert from W
+			assign("IP_cooler_cost", (ssc_number_t)c_sco2_recomp_csp.get_design_solved()->ms_rc_cycle_solved.ms_IP_air_cooler.m_cost);					//[M$]
 		}
 		else
 		{
@@ -870,6 +874,7 @@ public:
 			assign("IP_cooler_m_dot_co2", ssc_nan);	//[kg/s]
 			assign("IP_cooler_UA", ssc_nan);		//[MW/K] convert from W/K
 			assign("IP_q_dot", ssc_nan);			//[MWt] convert from W
+			assign("IP_cooler_cost", ssc_nan);		//[M$]
 		}
 			// State Points
 		ssc_number_t *p_T_state_points = allocate("T_state_points", C_sco2_cycle_core::END_SCO2_STATES);

@@ -1373,6 +1373,8 @@ C_CO2_to_air_cooler::C_CO2_to_air_cooler()
 	m_T_co2_hot_max = 700.0 + 273.15;	//[K]
 
 	mc_air.SetFluid(mc_air.Air);
+
+	m_cost_model = C_CO2_to_air_cooler::E_CARLSON_17;		//[-]
 }
 
 bool C_CO2_to_air_cooler::design_hx(S_des_par_ind des_par_ind, S_des_par_cycle_dep des_par_cycle_dep)
@@ -1541,6 +1543,9 @@ bool C_CO2_to_air_cooler::design_hx(S_des_par_ind des_par_ind, S_des_par_cycle_d
 	ms_hx_des_sol.m_T_out_co2 = ms_des_par_cycle_dep.m_T_hot_out_des;	//[K] Cold CO2 outlet temperature
 	ms_hx_des_sol.m_P_out_co2 = m_P_hot_out_des;			//[K] Cold CO2 outlet pressure
 	ms_hx_des_sol.m_q_dot = m_Q_dot_des;					//[Wt] Heat exchanger duty
+
+	ms_hx_des_sol.m_cost = calculate_cost(ms_hx_des_sol.m_UA_total*1.E-3, ms_hx_des_sol.m_V_total,
+		ms_hx_des_sol.m_T_in_co2, ms_hx_des_sol.m_P_in_co2, ms_hx_des_sol.m_m_dot_co2);		//[M$]
 
 	return true;
 };
@@ -1979,6 +1984,18 @@ int C_CO2_to_air_cooler::C_MEQ_target_T_hot__width_parallel::operator()(double W
 	*T_co2_hot = c_eq.m_T_co2_in_calc;	//[K]
 
 	return 0;
+}
+
+double C_CO2_to_air_cooler::calculate_cost(double UA /*kWt/K*/, double V_material /*m^3*/,
+	double T_hot_in /*K*/, double P_hot_in /*kPa*/, double m_dot_hot /*kg/s*/)
+{
+	switch (m_cost_model)
+	{
+	case C_CO2_to_air_cooler::E_CARLSON_17:
+		return 2.3*1.E-3*UA;		//[M$] needs UA in kWt/K
+	default:
+		return std::numeric_limits<double>::quiet_NaN();
+	}
 }
 
 void C_CO2_to_air_cooler::calc_air_props(double T_amb /*K*/, double P_amb /*Pa*/,
