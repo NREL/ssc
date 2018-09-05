@@ -73,7 +73,7 @@
   <PropertyGroup Label="Globals">
     <ProjectGuid>{B8621771-3ACE-4339-92D6-80461D033DEB}</ProjectGuid>
     <ProjectName>solarpilot</ProjectName>
-    <WindowsTargetPlatformVersion>10.0.16299.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
