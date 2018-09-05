@@ -1203,9 +1203,12 @@ int irrad::calc_rear_side(double transmissionFactor, double bifaciality, double 
 	if (timeStepSunPosition[2] > 0)
 	{
 
-		// Update ground clearance height for HSAT
 		double tiltRadian = surfaceAnglesRadians[1];		// The tracked angle in radians
-		groundClearanceHeight = groundClearanceHeight - (0.5 * slopeLength) * sin(fabs(tiltRadian));
+
+		// Update ground clearance height for HSAT
+		if (this->trackingMode == 1) {
+			groundClearanceHeight = groundClearanceHeight - (0.5 * slopeLength) * sin(fabs(tiltRadian));
+		}
 
 		// System geometry
 		double rowToRow = slopeLength / this->groundCoverageRatio;		// Row to row spacing between the front of one row to the front of the next row
