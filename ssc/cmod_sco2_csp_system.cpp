@@ -887,7 +887,7 @@ public:
 			assign("IP_cooler_P_in", ssc_nan);		//[MPa]
 			assign("IP_cooler_m_dot_co2", ssc_nan);	//[kg/s]
 			assign("IP_cooler_UA", ssc_nan);		//[MW/K] convert from W/K
-			assign("IP_q_dot", ssc_nan);			//[MWt] convert from W
+			assign("IP_cooler_q_dot", ssc_nan);			//[MWt] convert from W
 			assign("IP_cooler_cost", ssc_nan);		//[M$]
 		}
 
