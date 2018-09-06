@@ -419,12 +419,13 @@ public:
 
 		sco2_rc_des_par.m_is_recomp_ok = as_integer("is_recomp_ok");
 
+		sco2_rc_des_par.m_P_high_limit = as_double("P_high_limit")*1000.0;		//[kPa], convert from MPa		
 		double mc_PR_in = as_double("is_PR_fixed");		//[-]
 		if (mc_PR_in != 0.0)
 		{
 			if (mc_PR_in < 0.0)
 			{
-				sco2_rc_des_par.m_PR_mc_guess = mc_PR_in*1.E3;		//[kPa] convert from MPa
+				sco2_rc_des_par.m_PR_mc_guess = sco2_rc_des_par.m_P_high_limit / (-mc_PR_in*1.E3);		//[kPa] convert from MPa
 			}
 			else
 			{
@@ -478,7 +479,6 @@ public:
 		sco2_rc_des_par.m_eta_rc = as_double("eta_isen_rc");
 		sco2_rc_des_par.m_eta_pc = as_double("eta_isen_pc");
 		sco2_rc_des_par.m_eta_t = as_double("eta_isen_t");
-		sco2_rc_des_par.m_P_high_limit = as_double("P_high_limit")*1000.0;		//[kPa], convert from MPa		
 			
 			// PHX design parameters
 		sco2_rc_des_par.m_des_objective_type = as_integer("des_objective");		//[-] 

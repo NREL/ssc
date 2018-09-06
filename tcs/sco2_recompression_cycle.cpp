@@ -2495,7 +2495,9 @@ void C_RecompCycle::opt_design_core(int & error_code)
 		ms_des_par.m_UA_LT = ms_opt_des_par.m_UA_rec_total*ms_opt_des_par.m_LT_frac_guess;
 		ms_des_par.m_UA_HT = ms_opt_des_par.m_UA_rec_total*(1.0 - ms_opt_des_par.m_LT_frac_guess);
 		
-		design_core(no_opt_error_code);
+		// Ensure thermal efficiency is initialized to 0
+		m_objective_metric_opt = 0.0;
+		double eta_local = design_cycle_return_objective_metric(x);
 
 		ms_des_par_optimal = ms_des_par;
 	}
@@ -2648,10 +2650,13 @@ void C_RecompCycle::auto_opt_design_core(int & error_code)
 	// Outer optimization loop
 	m_objective_metric_auto_opt = 0.0;
 
-	double P_low_limit = std::min(ms_auto_opt_des_par.m_P_high_limit, std::max(10.E3, ms_auto_opt_des_par.m_P_high_limit*0.2));		//[kPa]
-	double best_P_high = fminbr(
-		P_low_limit, ms_auto_opt_des_par.m_P_high_limit, &fmin_cb_opt_des_fixed_P_high, this, 1.0);
-
+	double best_P_high = ms_auto_opt_des_par.m_P_high_limit;		//[kPa]
+	if (!ms_opt_des_par.m_fixed_PR_mc)
+	{
+		double P_low_limit = std::min(ms_auto_opt_des_par.m_P_high_limit, std::max(10.E3, ms_auto_opt_des_par.m_P_high_limit*0.2));		//[kPa]
+		best_P_high = fminbr(
+			P_low_limit, ms_auto_opt_des_par.m_P_high_limit, &fmin_cb_opt_des_fixed_P_high, this, 1.0);
+	}
 	// These should be set:
 	// ms_des_par_optimal;
 	// m_eta_thermal_opt;
