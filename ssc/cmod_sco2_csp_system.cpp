@@ -844,14 +844,26 @@ public:
 		assign("NTU_LTR", (ssc_number_t)c_sco2_recomp_csp.get_design_solved()->ms_rc_cycle_solved.ms_LTR_des_solved.m_NTU_design);		//[-]
 		assign("q_dot_LTR", (ssc_number_t)(c_sco2_recomp_csp.get_design_solved()->ms_rc_cycle_solved.ms_LTR_des_solved.m_Q_dot_design*1.E-3));	//[MWt] convert from kWt
 		assign("LTR_cost", (ssc_number_t)c_sco2_recomp_csp.get_design_solved()->ms_rc_cycle_solved.ms_LTR_des_solved.m_cost);			//[M$]
-				// High-temp
 		cost_sum += c_sco2_recomp_csp.get_design_solved()->ms_rc_cycle_solved.ms_LTR_des_solved.m_cost;		//[M$]
-		assign("UA_HTR", (ssc_number_t)UA_HTR);				//[MW/K]
-		assign("eff_HTR", (ssc_number_t)c_sco2_recomp_csp.get_design_solved()->ms_rc_cycle_solved.ms_HTR_des_solved.m_eff_design);		//[-]
-		assign("NTU_HTR", (ssc_number_t)c_sco2_recomp_csp.get_design_solved()->ms_rc_cycle_solved.ms_HTR_des_solved.m_NTU_design);		//[-]
-		assign("q_dot_HTR", (ssc_number_t)(c_sco2_recomp_csp.get_design_solved()->ms_rc_cycle_solved.ms_HTR_des_solved.m_Q_dot_design*1.E-3));	//[MWt] convert from kWt
-		assign("HTR_cost", (ssc_number_t)c_sco2_recomp_csp.get_design_solved()->ms_rc_cycle_solved.ms_HTR_des_solved.m_cost);			//[M$]
-		cost_sum += c_sco2_recomp_csp.get_design_solved()->ms_rc_cycle_solved.ms_HTR_des_solved.m_cost;			//[M$]
+			// High-temp
+		if (is_rc)
+		{
+			assign("UA_HTR", (ssc_number_t)UA_HTR);				//[MW/K]
+			assign("eff_HTR", (ssc_number_t)c_sco2_recomp_csp.get_design_solved()->ms_rc_cycle_solved.ms_HTR_des_solved.m_eff_design);		//[-]
+			assign("NTU_HTR", (ssc_number_t)c_sco2_recomp_csp.get_design_solved()->ms_rc_cycle_solved.ms_HTR_des_solved.m_NTU_design);		//[-]
+			assign("q_dot_HTR", (ssc_number_t)(c_sco2_recomp_csp.get_design_solved()->ms_rc_cycle_solved.ms_HTR_des_solved.m_Q_dot_design*1.E-3));	//[MWt] convert from kWt
+			assign("HTR_cost", (ssc_number_t)c_sco2_recomp_csp.get_design_solved()->ms_rc_cycle_solved.ms_HTR_des_solved.m_cost);			//[M$]
+			cost_sum += c_sco2_recomp_csp.get_design_solved()->ms_rc_cycle_solved.ms_HTR_des_solved.m_cost;			//[M$]
+		}
+		else
+		{
+			double ssc_nan = std::numeric_limits<ssc_number_t>::quiet_NaN();
+			assign("UA_HTR", ssc_nan);		//[MW/K]
+			assign("eff_HTR", ssc_nan);		//[-]
+			assign("NTU_HTR", ssc_nan);		//[-]
+			assign("q_dot_HTR", ssc_nan);	//[MWt] convert from kWt
+			assign("HTR_cost", ssc_nan);	//[M$]
+		}
 			// PHX
 		assign("UA_PHX", (ssc_number_t)(c_sco2_recomp_csp.get_design_solved()->ms_phx_des_solved.m_UA_design_total*1.E-3));	//[MW/K] convert from kW/K
 		assign("eff_PHX", (ssc_number_t)c_sco2_recomp_csp.get_design_solved()->ms_phx_des_solved.m_eff_design);				//[-]
