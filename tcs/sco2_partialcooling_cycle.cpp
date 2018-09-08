@@ -919,12 +919,19 @@ int C_PartialCooling_Cycle::auto_opt_design_core()
 	ms_opt_des_par.m_des_objective_type = ms_auto_opt_des_par.m_des_objective_type;	//[-]
 	ms_opt_des_par.m_min_phx_deltaT = ms_auto_opt_des_par.m_min_phx_deltaT;			//[C]
 
+	ms_opt_des_par.m_fixed_P_mc_out = ms_auto_opt_des_par.m_fixed_P_mc_out;		//[-]
+	ms_opt_des_par.m_fixed_PR_total = ms_auto_opt_des_par.m_fixed_PR_mc;		//[-]
+
 	// Outer optimization loop
 	m_objective_metric_auto_opt = 0.0;
 
-	double P_low_limit = std::min(ms_auto_opt_des_par.m_P_high_limit, std::max(10.E3, ms_auto_opt_des_par.m_P_high_limit*0.2));		//[kPa]
-	double best_P_high = fminbr(
-		P_low_limit, ms_auto_opt_des_par.m_P_high_limit, &fmin_cb_opt_partialcooling_des_fixed_P_high, this, 1.0);
+	double best_P_high = ms_auto_opt_des_par.m_P_high_limit;
+	if (!ms_opt_des_par.m_fixed_P_mc_out)
+	{
+		double P_low_limit = std::min(ms_auto_opt_des_par.m_P_high_limit, std::max(10.E3, ms_auto_opt_des_par.m_P_high_limit*0.2));		//[kPa]
+		best_P_high = fminbr(
+			P_low_limit, ms_auto_opt_des_par.m_P_high_limit, &fmin_cb_opt_partialcooling_des_fixed_P_high, this, 1.0);
+	}
 
 	// fminb_cb_opt_partialcooling_des_fixed_P_high should calculate:
 		// ms_des_par_optimal;
@@ -934,8 +941,14 @@ int C_PartialCooling_Cycle::auto_opt_design_core()
 	ms_opt_des_par.m_P_mc_out_guess = ms_auto_opt_des_par.m_P_high_limit;	//[kPa]
 	ms_opt_des_par.m_fixed_P_mc_out = true;
 
-	ms_opt_des_par.m_fixed_PR_total = false;
-	ms_opt_des_par.m_PR_total_guess = 25. / 6.5;	//[-] Guess could be improved...
+	if (ms_opt_des_par.m_fixed_PR_total)
+	{
+		ms_opt_des_par.m_PR_total_guess = ms_auto_opt_des_par.m_PR_mc_guess;	//[-]
+	}
+	else
+	{
+		ms_opt_des_par.m_PR_total_guess = 25. / 6.5;	//[-] Guess could be improved...
+	}
 
 	ms_opt_des_par.m_fixed_f_PR_mc = false;
 	ms_opt_des_par.m_f_PR_mc_guess = (25. - 8.5) / (25. - 6.5);		//[-] Guess could be improved...

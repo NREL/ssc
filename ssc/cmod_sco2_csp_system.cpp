@@ -72,6 +72,7 @@ static var_info _cm_vtab_sco2_csp_system[] = {
 	{ SSC_INPUT,  SSC_NUMBER,  "UA_recup_tot_des",     "Total recuperator conductance",                          "kW/K",       "",    "",      "?=-1.0","",       "" },
 	{ SSC_INPUT,  SSC_NUMBER,  "cycle_config",         "1 = recompression, 2 = partial cooling",                 "",           "",    "",      "?=1",   "",       "" },
 	{ SSC_INPUT,  SSC_NUMBER,  "is_recomp_ok",         "1 = Yes, 0 = simple cycle only",                         "",           "",    "",      "?=1",   "",       "" },
+	{ SSC_INPUT,  SSC_NUMBER,  "is_P_high_fixed",      "1 = Yes, 0 = No, optimized (default)",                   "",           "",    "",      "?=0",   "",       "" },	
 	{ SSC_INPUT,  SSC_NUMBER,  "is_PR_fixed",          "0 = No, >0 = fixed pressure ratio",                      "",           "",    "",      "?=0",   "",       "" },
 	{ SSC_INPUT,  SSC_NUMBER,  "des_objective",        "[2] = hit min phx deltat then max eta, [else] max eta",  "",           "",    "",      "?=0",   "",       "" },
 	{ SSC_INPUT,  SSC_NUMBER,  "min_phx_deltaT",       "Minimum design temperature difference across PHX",       "C",          "",    "",      "?=0",   "",       "" },	
@@ -419,7 +420,8 @@ public:
 
 		sco2_rc_des_par.m_is_recomp_ok = as_integer("is_recomp_ok");
 
-		sco2_rc_des_par.m_P_high_limit = as_double("P_high_limit")*1000.0;		//[kPa], convert from MPa		
+		sco2_rc_des_par.m_P_high_limit = as_double("P_high_limit")*1000.0;		//[kPa], convert from MPa
+		sco2_rc_des_par.m_fixed_P_mc_out = as_integer("is_P_high_fixed");		//[-]
 		double mc_PR_in = as_double("is_PR_fixed");		//[-]
 		if (mc_PR_in != 0.0)
 		{

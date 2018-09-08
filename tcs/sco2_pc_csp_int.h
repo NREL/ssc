@@ -106,6 +106,8 @@ public:
 		int m_des_objective_type;			//[2] = min phx deltat then max eta, [else] max eta
 		double m_min_phx_deltaT;			//[C]
 	
+		bool m_fixed_P_mc_out;			//[-] if true, P_mc_out is fixed at 'm_P_high_limit'
+		
 		double m_PR_mc_guess;				//[-] Initial guess for ratio of P_mc_out to P_mc_in
 		bool m_fixed_PR_mc;					//[-] if true, ratio of P_mc_out to P_mc_in is fixed at PR_mc_guess
 	
@@ -142,6 +144,7 @@ public:
 				std::numeric_limits<double>::quiet_NaN();
 	
 			m_fixed_PR_mc = false;		//[-] If false, then should default to optimizing this parameter
+			m_fixed_P_mc_out = false;	//[-] If fasle, then should default to optimizing this parameter
 		}
 	};
 

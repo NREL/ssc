@@ -2647,22 +2647,26 @@ void C_RecompCycle::auto_opt_design_core(int & error_code)
 	ms_opt_des_par.m_des_objective_type = ms_auto_opt_des_par.m_des_objective_type;	//[-]
 	ms_opt_des_par.m_min_phx_deltaT = ms_auto_opt_des_par.m_min_phx_deltaT;			//[C]
 
+	ms_opt_des_par.m_fixed_P_mc_out = ms_auto_opt_des_par.m_fixed_P_mc_out;		//[-]
+	ms_opt_des_par.m_fixed_PR_mc = ms_auto_opt_des_par.m_fixed_PR_mc;			//[-]
+
 	// Outer optimization loop
 	m_objective_metric_auto_opt = 0.0;
 
 	double best_P_high = ms_auto_opt_des_par.m_P_high_limit;		//[kPa]
-	if (!ms_opt_des_par.m_fixed_PR_mc)
+	double PR_mc_guess = 2.5;				//[-]
+	if (!ms_opt_des_par.m_fixed_P_mc_out)
 	{
 		double P_low_limit = std::min(ms_auto_opt_des_par.m_P_high_limit, std::max(10.E3, ms_auto_opt_des_par.m_P_high_limit*0.2));		//[kPa]
 		best_P_high = fminbr(
 			P_low_limit, ms_auto_opt_des_par.m_P_high_limit, &fmin_cb_opt_des_fixed_P_high, this, 1.0);
-	}
-	// These should be set:
-	// ms_des_par_optimal;
-	// m_eta_thermal_opt;
 
-	// Check model with P_mc_out set at P_high_limit for a recompression and simple cycle and use the better configuration
-	double PR_mc_guess = ms_des_par_auto_opt.m_P_mc_out / ms_des_par_auto_opt.m_P_mc_in;
+		// If this runs, it should set:
+			// ms_des_par_auto_opt
+			// m_objective_metric_auto_opt
+		// So we can update pressure ratio guess
+		PR_mc_guess = ms_des_par_auto_opt.m_P_mc_out / ms_des_par_auto_opt.m_P_mc_in;
+	}
 
 	if( ms_auto_opt_des_par.m_is_recomp_ok )
 	{
@@ -2670,9 +2674,6 @@ void C_RecompCycle::auto_opt_design_core(int & error_code)
 		ms_opt_des_par.m_P_mc_out_guess = ms_auto_opt_des_par.m_P_high_limit;
 		ms_opt_des_par.m_fixed_P_mc_out = true;
 		
-		//ms_opt_des_par.m_PR_mc_guess = PR_mc_guess;
-		//ms_opt_des_par.m_fixed_PR_mc = false;
-		ms_opt_des_par.m_fixed_PR_mc = ms_auto_opt_des_par.m_fixed_PR_mc;	//[-]
 		if (ms_opt_des_par.m_fixed_PR_mc)
 		{
 			ms_opt_des_par.m_PR_mc_guess = ms_auto_opt_des_par.m_PR_mc_guess;	//[-]
@@ -2701,10 +2702,7 @@ void C_RecompCycle::auto_opt_design_core(int & error_code)
 	// Complete 'ms_opt_des_par' for simple cycle
 	ms_opt_des_par.m_P_mc_out_guess = ms_auto_opt_des_par.m_P_high_limit;
 	ms_opt_des_par.m_fixed_P_mc_out = true;
-	
-	//ms_opt_des_par.m_PR_mc_guess = PR_mc_guess;
-	//ms_opt_des_par.m_fixed_PR_mc = false;
-	ms_opt_des_par.m_fixed_PR_mc = ms_auto_opt_des_par.m_fixed_PR_mc;	//[-]
+
 	if (ms_opt_des_par.m_fixed_PR_mc)
 	{
 		ms_opt_des_par.m_PR_mc_guess = ms_auto_opt_des_par.m_PR_mc_guess;	//[-]
@@ -2777,6 +2775,8 @@ int C_RecompCycle::auto_opt_design_hit_eta(S_auto_opt_design_hit_eta_parameters 
 
 	ms_auto_opt_des_par.mf_callback_log = auto_opt_des_hit_eta_in.mf_callback_log;
 	ms_auto_opt_des_par.mp_mf_active = auto_opt_des_hit_eta_in.mp_mf_active;
+
+	ms_auto_opt_des_par.m_fixed_P_mc_out = auto_opt_des_hit_eta_in.m_fixed_P_mc_out;	//[-]
 
 	ms_auto_opt_des_par.m_PR_mc_guess = auto_opt_des_hit_eta_in.m_PR_mc_guess;			//[-] Initial guess for ratio of P_mc_out to P_mc_in
 	ms_auto_opt_des_par.m_fixed_PR_mc = auto_opt_des_hit_eta_in.m_fixed_PR_mc;			//[-] if true, ratio of P_mc_out to P_mc_in is fixed at PR_mc_guess		
