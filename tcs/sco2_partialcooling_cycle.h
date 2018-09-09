@@ -419,6 +419,24 @@ public:
 		virtual int operator()(double T_LTR_LP_out /*K*/, double *diff_T_LTR_LP_out /*K*/);
 	};
 
+	class C_MEQ_sco2_design_hit_eta__UA_total : public C_monotonic_equation
+	{
+	private:
+		C_PartialCooling_Cycle * mpc_pc_cycle;
+		std::string msg_log;
+		std::string msg_progress;
+
+	public:
+		C_MEQ_sco2_design_hit_eta__UA_total(C_PartialCooling_Cycle *pc_pc_cycle)
+		{
+			mpc_pc_cycle = pc_pc_cycle;
+
+			msg_log = "Log message ";
+			msg_progress = "Designing cycle...";
+		}
+
+		virtual int operator()(double UA_recup_total /*kW/K*/, double *eta /*-*/);
+	};
 
 	int design(S_des_params & des_par_in);
 

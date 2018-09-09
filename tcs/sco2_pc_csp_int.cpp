@@ -110,10 +110,7 @@ void C_sco2_recomp_csp::design_core()
 	
 	if (ms_des_par.m_design_method == 1)
 	{
-		if(ms_des_par.m_cycle_config == 2)
-			throw(C_csp_exception("sCO2 partial cooling cycle and CSP integration design, design method can only be 1 (specify UA) for now"));
-
-		// Design the recompression cycle to hit a specified efficiency
+		// Design the cycle to hit a specified efficiency
 		// Define sCO2 cycle design parameter structure
 		ms_cycle_des_par.m_W_dot_net = ms_des_par.m_W_dot_net;		//[kWe]
 		ms_cycle_des_par.m_eta_thermal = ms_des_par.m_eta_thermal;	//[-]
@@ -125,15 +122,18 @@ void C_sco2_recomp_csp::design_core()
 				ms_cycle_des_par.m_T_mc_in - 273.15,
 				m_T_mc_in_min - 273.15);
 		}
+		ms_cycle_des_par.m_T_pc_in = ms_cycle_des_par.m_T_mc_in;		//[K]
 		ms_cycle_des_par.m_T_t_in = ms_des_par.m_T_htf_hot_in - ms_des_par.m_phx_dt_hot_approach;	//[K]
 		ms_cycle_des_par.m_DP_LT = ms_des_par.m_DP_LT;
 		ms_cycle_des_par.m_DP_HT = ms_des_par.m_DP_HT;
+		ms_cycle_des_par.m_DP_PC_pre = ms_des_par.m_DP_PC;
 		ms_cycle_des_par.m_DP_PC_main = ms_des_par.m_DP_PC;
 		ms_cycle_des_par.m_DP_PHX = ms_des_par.m_DP_PHX;
 		ms_cycle_des_par.m_LTR_eff_max = ms_des_par.m_LT_eff_max;
 		ms_cycle_des_par.m_HTR_eff_max = ms_des_par.m_HT_eff_max;
 		ms_cycle_des_par.m_eta_mc = ms_des_par.m_eta_mc;
 		ms_cycle_des_par.m_eta_rc = ms_des_par.m_eta_rc;
+		ms_cycle_des_par.m_eta_pc = ms_des_par.m_eta_pc;
 		ms_cycle_des_par.m_eta_t = ms_des_par.m_eta_t;
 		ms_cycle_des_par.m_N_sub_hxrs = ms_des_par.m_N_sub_hxrs;
 		ms_cycle_des_par.m_P_high_limit = ms_des_par.m_P_high_limit;
