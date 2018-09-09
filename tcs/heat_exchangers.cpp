@@ -1135,7 +1135,8 @@ void C_HX_counterflow::design_fix_UA_calc_outlet(double UA_target /*kW/K*/, doub
 	ms_des_calc_UA_par.m_eff_max = eff_target;		//[-]
 
 	ms_des_solved.m_Q_dot_design = q_dot;			//[kWt]
-	ms_des_solved.m_UA_design_total = UA_calc;		//[kW/K]
+	ms_des_solved.m_UA_design_total = UA_target;	//[kW/K]
+	ms_des_solved.m_UA_calc_at_eff_max = UA_calc;	//[kW/K]
 	ms_des_solved.m_min_DT_design = min_DT;			//[K]
 	ms_des_solved.m_eff_design = eff_calc;			//[-]
 	ms_des_solved.m_NTU_design = NTU;				//[-]

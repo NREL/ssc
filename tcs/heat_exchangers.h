@@ -237,7 +237,9 @@ public:
 	struct S_des_solved
 	{
 		double m_Q_dot_design;		//[kWt] Design-point heat transfer
-		double m_UA_design_total;		//[kW/K] Design-point conductance
+		double m_UA_design_total;		//[kW/K] Allocated design-point conductance
+										//  .... off-design model scales 'm_UA_design_total'
+		double m_UA_calc_at_eff_max;	//[kW/K] May be less than design total if eff_max < 1
 		double m_min_DT_design;			//[K] Minimum temperature difference in heat exchanger
 		double m_eff_design;			//[-] Effectiveness at design
 		double m_NTU_design;			//[-] NTU at design
@@ -250,7 +252,8 @@ public:
 
 		S_des_solved()
 		{
-			m_Q_dot_design = m_UA_design_total = m_min_DT_design = m_eff_design = m_NTU_design =
+			m_Q_dot_design = m_UA_design_total = m_UA_calc_at_eff_max =
+				m_min_DT_design = m_eff_design = m_NTU_design =
 				m_T_h_out = m_T_c_out =
 				m_DP_cold_des = m_DP_hot_des =
 				m_cost = std::numeric_limits<double>::quiet_NaN();

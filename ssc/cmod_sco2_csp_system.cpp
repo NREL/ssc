@@ -837,8 +837,8 @@ public:
 		assign("t_cost", (ssc_number_t)c_sco2_recomp_csp.get_design_solved()->ms_rc_cycle_solved.ms_t_des_solved.m_cost);			//[M$]
 		cost_sum += c_sco2_recomp_csp.get_design_solved()->ms_rc_cycle_solved.ms_t_des_solved.m_cost;			//[M$]
 			// Recuperator
-		double UA_LTR = c_sco2_recomp_csp.get_design_solved()->ms_rc_cycle_solved.m_UA_LTR*1.E-3;	//[MW/K] convert from kW/K
-		double UA_HTR = c_sco2_recomp_csp.get_design_solved()->ms_rc_cycle_solved.m_UA_HTR*1.E-3;	//[MW/K] convert from kW/K
+		double UA_LTR = c_sco2_recomp_csp.get_design_solved()->ms_rc_cycle_solved.ms_LTR_des_solved.m_UA_design_total*1.E-3;	//[MW/K] convert from kW/K
+		double UA_HTR = c_sco2_recomp_csp.get_design_solved()->ms_rc_cycle_solved.ms_HTR_des_solved.m_UA_design_total*1.E-3;	//[MW/K] convert from kW/K
 		assign("UA_recup_total", (ssc_number_t)(UA_LTR + UA_HTR));	//[MW/K]
 				// Low-temp
 		assign("UA_LTR", (ssc_number_t)UA_LTR);				//[MW/K]
@@ -847,7 +847,7 @@ public:
 		assign("q_dot_LTR", (ssc_number_t)(c_sco2_recomp_csp.get_design_solved()->ms_rc_cycle_solved.ms_LTR_des_solved.m_Q_dot_design*1.E-3));	//[MWt] convert from kWt
 		assign("LTR_cost", (ssc_number_t)c_sco2_recomp_csp.get_design_solved()->ms_rc_cycle_solved.ms_LTR_des_solved.m_cost);			//[M$]
 		cost_sum += c_sco2_recomp_csp.get_design_solved()->ms_rc_cycle_solved.ms_LTR_des_solved.m_cost;		//[M$]
-			// High-temp
+				// High-temp
 		if (is_rc)
 		{
 			assign("UA_HTR", (ssc_number_t)UA_HTR);				//[MW/K]
