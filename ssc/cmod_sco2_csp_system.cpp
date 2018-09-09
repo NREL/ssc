@@ -158,6 +158,7 @@ static var_info _cm_vtab_sco2_csp_system[] = {
 	{ SSC_OUTPUT, SSC_NUMBER,  "t_cost",               "Tubine cost",                                            "M$",         "",    "",      "*",     "",       "" },
 		// Recuperators																				 
 	{ SSC_OUTPUT, SSC_NUMBER,  "UA_recup_total",       "Total recuperator UA",                                   "MW/K",       "",    "",      "*",     "",       "" },
+	{ SSC_OUTPUT, SSC_NUMBER,  "recup_total_cost",     "Total recuperator cost",                                 "M$",         "",    "",      "*",     "",       "" },
 	{ SSC_OUTPUT, SSC_NUMBER,  "UA_LTR",               "Low temp recuperator UA",                                "MW/K",       "",    "",      "*",     "",       "" },
 	{ SSC_OUTPUT, SSC_NUMBER,  "eff_LTR",              "Low temp recuperator effectiveness",                     "",           "",    "",      "*",     "",       "" },
 	{ SSC_OUTPUT, SSC_NUMBER,  "NTU_LTR",              "Low temp recuperator NTU",                               "",           "",    "",      "*",     "",       "" },
@@ -837,11 +838,10 @@ public:
 		assign("t_cost", (ssc_number_t)c_sco2_recomp_csp.get_design_solved()->ms_rc_cycle_solved.ms_t_des_solved.m_cost);			//[M$]
 		cost_sum += c_sco2_recomp_csp.get_design_solved()->ms_rc_cycle_solved.ms_t_des_solved.m_cost;			//[M$]
 			// Recuperator
-		double UA_LTR = c_sco2_recomp_csp.get_design_solved()->ms_rc_cycle_solved.ms_LTR_des_solved.m_UA_design_total*1.E-3;	//[MW/K] convert from kW/K
-		double UA_HTR = c_sco2_recomp_csp.get_design_solved()->ms_rc_cycle_solved.ms_HTR_des_solved.m_UA_design_total*1.E-3;	//[MW/K] convert from kW/K
-		assign("UA_recup_total", (ssc_number_t)(UA_LTR + UA_HTR));	//[MW/K]
+		double UA_recup_total = c_sco2_recomp_csp.get_design_solved()->ms_rc_cycle_solved.ms_LTR_des_solved.m_UA_design_total*1.E-3;	//[MW/K] convert from kW/K
+		double recup_total_cost = c_sco2_recomp_csp.get_design_solved()->ms_rc_cycle_solved.ms_LTR_des_solved.m_cost;					//[M$]
 				// Low-temp
-		assign("UA_LTR", (ssc_number_t)UA_LTR);				//[MW/K]
+		assign("UA_LTR", (ssc_number_t)(c_sco2_recomp_csp.get_design_solved()->ms_rc_cycle_solved.ms_LTR_des_solved.m_UA_design_total*1.E-3));	//[MW/K] convert from kW/K
 		assign("eff_LTR", (ssc_number_t)c_sco2_recomp_csp.get_design_solved()->ms_rc_cycle_solved.ms_LTR_des_solved.m_eff_design);		//[-]
 		assign("NTU_LTR", (ssc_number_t)c_sco2_recomp_csp.get_design_solved()->ms_rc_cycle_solved.ms_LTR_des_solved.m_NTU_design);		//[-]
 		assign("q_dot_LTR", (ssc_number_t)(c_sco2_recomp_csp.get_design_solved()->ms_rc_cycle_solved.ms_LTR_des_solved.m_Q_dot_design*1.E-3));	//[MWt] convert from kWt
@@ -850,12 +850,14 @@ public:
 				// High-temp
 		if (is_rc)
 		{
-			assign("UA_HTR", (ssc_number_t)UA_HTR);				//[MW/K]
+			UA_recup_total += c_sco2_recomp_csp.get_design_solved()->ms_rc_cycle_solved.ms_HTR_des_solved.m_UA_design_total*1.E-3;	//[MW/K] convert from kW/K
+			assign("UA_HTR", (ssc_number_t)(c_sco2_recomp_csp.get_design_solved()->ms_rc_cycle_solved.ms_HTR_des_solved.m_UA_design_total*1.E-3));	//[MW/K] convert from kW/K
 			assign("eff_HTR", (ssc_number_t)c_sco2_recomp_csp.get_design_solved()->ms_rc_cycle_solved.ms_HTR_des_solved.m_eff_design);		//[-]
 			assign("NTU_HTR", (ssc_number_t)c_sco2_recomp_csp.get_design_solved()->ms_rc_cycle_solved.ms_HTR_des_solved.m_NTU_design);		//[-]
 			assign("q_dot_HTR", (ssc_number_t)(c_sco2_recomp_csp.get_design_solved()->ms_rc_cycle_solved.ms_HTR_des_solved.m_Q_dot_design*1.E-3));	//[MWt] convert from kWt
 			assign("HTR_cost", (ssc_number_t)c_sco2_recomp_csp.get_design_solved()->ms_rc_cycle_solved.ms_HTR_des_solved.m_cost);			//[M$]
 			cost_sum += c_sco2_recomp_csp.get_design_solved()->ms_rc_cycle_solved.ms_HTR_des_solved.m_cost;			//[M$]
+			recup_total_cost += c_sco2_recomp_csp.get_design_solved()->ms_rc_cycle_solved.ms_HTR_des_solved.m_cost;			//[M$]
 		}
 		else
 		{
@@ -866,6 +868,8 @@ public:
 			assign("q_dot_HTR", ssc_nan);	//[MWt] convert from kWt
 			assign("HTR_cost", ssc_nan);	//[M$]
 		}
+		assign("UA_recup_total", (ssc_number_t)(UA_recup_total));		//[MW/K]
+		assign("recup_total_cost", (ssc_number_t)(recup_total_cost));	//[MW/K]
 			// PHX
 		assign("UA_PHX", (ssc_number_t)(c_sco2_recomp_csp.get_design_solved()->ms_phx_des_solved.m_UA_design_total*1.E-3));	//[MW/K] convert from kW/K
 		assign("eff_PHX", (ssc_number_t)c_sco2_recomp_csp.get_design_solved()->ms_phx_des_solved.m_eff_design);				//[-]
