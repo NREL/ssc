@@ -416,7 +416,7 @@ PVSystem_IO::PVSystem_IO(compute_module* cm, std::string cmName, Simulation_IO *
 
 		if (dc_degrad.size() == 1)
 		{
-			for (size_t i = 1; i < Simulation->numberOfYears + 1; i++)
+			for (size_t i = 1; i < Simulation->numberOfYears ; i++)
 				p_dcDegradationFactor[i + 1] = (ssc_number_t)pow((1.0 - dc_degrad[0] / 100.0), i);
 		}
 		else if (dc_degrad.size() > 0)
