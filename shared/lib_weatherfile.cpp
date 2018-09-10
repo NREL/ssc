@@ -103,13 +103,25 @@ static std::vector<std::string> split(const std::string &buf, char delim = ',')
 
 static float col_or_zero(const std::string &s)
 {
-	if (!s.empty() && 
-		std::any_of(s.begin(), s.end(), ::isdigit)) 
+	if (!s.empty() &&
+		std::any_of(s.begin(), s.end(), ::isdigit))
 	{
 		return (float)stof(s);
 	}
 	else
 		return 0.0f;
+}
+
+
+static float col_or_nan(const std::string &s)
+{
+	if (!s.empty() &&
+		std::any_of(s.begin(), s.end(), ::isdigit))
+	{
+		return (float)stof(s);
+	}
+	else
+		return std::numeric_limits<float>::quiet_NaN();;
 }
 
 static double conv_deg_min_sec(double degrees,
@@ -1206,21 +1218,21 @@ bool weatherfile::open(const std::string &file, bool header_only)
 								m_columns[ALB].data[i] = (float)stof(cols[61]);
 								m_columns[AOD].data[i] = -999; // no AOD in TMY3
 				*/
-				m_columns[GHI].data[i] = col_or_zero(cols[4]);
-				m_columns[DNI].data[i] = col_or_zero(cols[7]);
-				m_columns[DHI].data[i] = col_or_zero(cols[10]);
+				m_columns[GHI].data[i] = col_or_nan(cols[4]);
+				m_columns[DNI].data[i] = col_or_nan(cols[7]);
+				m_columns[DHI].data[i] = col_or_nan(cols[10]);
 				m_columns[POA].data[i] = (float)(-999);       /* No POA in TMY3 */
 
-				m_columns[TDRY].data[i] = col_or_zero(cols[31]);
-				m_columns[TDEW].data[i] = col_or_zero(cols[34]);
+				m_columns[TDRY].data[i] = col_or_nan(cols[31]);
+				m_columns[TDEW].data[i] = col_or_nan(cols[34]);
 
-				m_columns[WSPD].data[i] = col_or_zero(cols[46]);
-				m_columns[WDIR].data[i] = col_or_zero(cols[43]);
+				m_columns[WSPD].data[i] = col_or_nan(cols[46]);
+				m_columns[WDIR].data[i] = col_or_nan(cols[43]);
 
-				m_columns[RH].data[i] = col_or_zero(cols[37]);
-				m_columns[PRES].data[i] = col_or_zero(cols[40]);
+				m_columns[RH].data[i] = col_or_nan(cols[37]);
+				m_columns[PRES].data[i] = col_or_nan(cols[40]);
 				m_columns[SNOW].data[i] = -999.0; // no snowfall in TMY3
-				m_columns[ALB].data[i] = col_or_zero(cols[61]);
+				m_columns[ALB].data[i] = col_or_nan(cols[61]);
 				m_columns[AOD].data[i] = -999; /* no AOD in TMY3 */
 
 				m_columns[TWET].data[i]

@@ -779,7 +779,6 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_OUTPUT,        SSC_NUMBER,     "nameplate_dc_rating",                        "System nameplate DC rating", "kW",     "",  "Miscellaneous",       "*",                    "",                              "" },
 
 
-
 // test outputs
 #ifdef SHADE_DB_OUTPUTS
 	// ShadeDB validation
