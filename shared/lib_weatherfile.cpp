@@ -100,7 +100,7 @@ static std::vector<std::string> split(const std::string &buf, char delim = ',')
 	return tokens;
 }
 
-
+/*
 static float col_or_zero(const std::string &s)
 {
 	if (!s.empty() &&
@@ -111,7 +111,7 @@ static float col_or_zero(const std::string &s)
 	else
 		return 0.0f;
 }
-
+*/
 
 static float col_or_nan(const std::string &s)
 {
