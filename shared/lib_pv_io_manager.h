@@ -346,7 +346,6 @@ public:
 	bool enable;						/// Enable the subarray
 	size_t nStrings;					/// Number of strings in the subarray
 	std::vector<double> monthlySoiling; /// The soiling loss by month [%]
-	double dcLoss;						/// The DC loss due to mismatch, diodes, wiring, tracking, optimizers [%]
 	double groundCoverageRatio;			/// The ground coverage ratio [0 - 1]
 	double tiltDegrees;					/// The surface tilt [degrees]						
 	double azimuthDegrees;				/// The surface azimuth [degrees]
@@ -357,6 +356,17 @@ public:
 	bool backtrackingEnabled;			/// Backtracking enabled or not
 	double moduleAspectRatio;			/// The aspect ratio of the models used in the subarray
 	bool usePOAFromWeatherFile;		
+
+	// Loss inputs
+	double rearIrradianceLossPercent;
+	double dcOptimizerLossPercent;
+	double mismatchLossPercent;
+	double diodesLossPercent;
+	double dcWiringLossPercent;
+	double trackingLossPercent;
+	double nameplateLossPercent;
+	double dcLossTotalPercent;			/// The DC loss due to mismatch, diodes, wiring, tracking, optimizers [%]
+
 
 	// Shading and snow
 	bool enableShowModel;				

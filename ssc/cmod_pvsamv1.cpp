@@ -108,24 +108,28 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_INPUT,        SSC_ARRAY,       "subarray1_soiling",                           "Sub-array 1 Monthly soiling loss",                      "%",       "",                              "pvsamv1",              "*",                        "LENGTH=12",                      "" },
 
 	// loss diagram outputs, also used to calculate total dc derate
+	{ SSC_INPUT, SSC_NUMBER, "subarray1_rear_irradiance_loss", "Sub-array 1 rear irradiance loss", "%", "", "pvsamv1", "*", "MIN=0,MAX=100", "" },
 	{ SSC_INPUT, SSC_NUMBER, "subarray1_mismatch_loss", "Sub-array 1 DC mismatch loss", "%", "", "pvsamv1", "*", "MIN=0,MAX=100", "" },
 	{ SSC_INPUT, SSC_NUMBER, "subarray1_diodeconn_loss", "Sub-array 1 DC diodes and connections loss", "%", "", "pvsamv1", "*", "MIN=0,MAX=100", "" },
 	{ SSC_INPUT, SSC_NUMBER, "subarray1_dcwiring_loss", "Sub-array 1 DC wiring loss", "%", "", "pvsamv1", "*", "MIN=0,MAX=100", "" },
 	{ SSC_INPUT, SSC_NUMBER, "subarray1_tracking_loss", "Sub-array 1 DC tracking error loss", "%", "", "pvsamv1", "*", "MIN=0,MAX=100", "" },
 	{ SSC_INPUT, SSC_NUMBER, "subarray1_nameplate_loss", "Sub-array 1 DC nameplate loss", "%", "", "pvsamv1", "*", "MIN=-5,MAX=100", "" },
 
+	{ SSC_INPUT, SSC_NUMBER, "subarray2_rear_irradiance_loss", "Sub-array 2 rear irradiance loss", "%", "", "pvsamv1", "*", "MIN=0,MAX=100", "" },
 	{ SSC_INPUT, SSC_NUMBER, "subarray2_mismatch_loss", "Sub-array 2 DC mismatch loss", "%", "", "pvsamv1", "?", "MIN=0,MAX=100", "" },
 	{ SSC_INPUT, SSC_NUMBER, "subarray2_diodeconn_loss", "Sub-array 2 DC diodes and connections loss", "%", "", "pvsamv1", "?", "MIN=0,MAX=100", "" },
 	{ SSC_INPUT, SSC_NUMBER, "subarray2_dcwiring_loss", "Sub-array 2 DC wiring loss", "%", "", "pvsamv1", "?", "MIN=0,MAX=100", "" },
 	{ SSC_INPUT, SSC_NUMBER, "subarray2_tracking_loss", "Sub-array 2 DC tracking error loss", "%", "", "pvsamv1", "?", "MIN=0,MAX=100", "" },
 	{ SSC_INPUT, SSC_NUMBER, "subarray2_nameplate_loss", "Sub-array 2 DC nameplate loss", "%", "", "pvsamv1", "?", "MIN=-5,MAX=100", "" },
 
+	{ SSC_INPUT, SSC_NUMBER, "subarray3_rear_irradiance_loss", "Sub-array 3 rear irradiance loss", "%", "", "pvsamv1", "*", "MIN=0,MAX=100", "" },
 	{ SSC_INPUT, SSC_NUMBER, "subarray3_mismatch_loss", "Sub-array 3 DC mismatch loss", "%", "", "pvsamv1", "?", "MIN=0,MAX=100", "" },
 	{ SSC_INPUT, SSC_NUMBER, "subarray3_diodeconn_loss", "Sub-array 3 DC diodes and connections loss", "%", "", "pvsamv1", "?", "MIN=0,MAX=100", "" },
 	{ SSC_INPUT, SSC_NUMBER, "subarray3_dcwiring_loss", "Sub-array 3 DC wiring loss", "%", "", "pvsamv1", "?", "MIN=0,MAX=100", "" },
 	{ SSC_INPUT, SSC_NUMBER, "subarray3_tracking_loss", "Sub-array 3 DC tracking error loss", "%", "", "pvsamv1", "?", "MIN=0,MAX=100", "" },
 	{ SSC_INPUT, SSC_NUMBER, "subarray3_nameplate_loss", "Sub-array 3 DC nameplate loss", "%", "", "pvsamv1", "?", "MIN=-5,MAX=100", "" },
 
+	{ SSC_INPUT, SSC_NUMBER, "subarray4_rear_irradiance_loss", "Sub-array 4 rear irradiance loss", "%", "", "pvsamv1", "*", "MIN=0,MAX=100", "" },
 	{ SSC_INPUT, SSC_NUMBER, "subarray4_mismatch_loss", "Sub-array 4 DC mismatch loss", "%", "", "pvsamv1", "?", "MIN=0,MAX=100", "" },
 	{ SSC_INPUT, SSC_NUMBER, "subarray4_diodeconn_loss", "Sub-array 4 DC diodes and connections loss", "%", "?", "pvsamv1", "?", "MIN=0,MAX=100", "" },
 	{ SSC_INPUT, SSC_NUMBER, "subarray4_dcwiring_loss", "Sub-array 4 DC wiring loss", "%", "", "pvsamv1", "?", "MIN=0,MAX=100", "" },
@@ -775,7 +779,6 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_OUTPUT,        SSC_NUMBER,     "nameplate_dc_rating",                        "System nameplate DC rating", "kW",     "",  "Miscellaneous",       "*",                    "",                              "" },
 
 
-
 // test outputs
 #ifdef SHADE_DB_OUTPUTS
 	// ShadeDB validation
@@ -1146,12 +1149,13 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 				double ts_accum_poa_front_shaded_soiled = 0.0;
 				double ts_accum_poa_front_total = 0.0;
 				double ts_accum_poa_rear = 0.0;
+				double ts_accum_poa_rear_after_losses = 0.0;
 				double ts_accum_poa_total_eff = 0.0;
 				double ts_accum_poa_front_beam_eff = 0.0;
 
 				// calculate incident irradiance on each subarray
-				double ipoa_rear, ipoa_front, ipoa, alb;
-				ipoa_rear = ipoa_front = ipoa = alb = 0;
+				double ipoa_rear, ipoa_rear_after_losses, ipoa_front, ipoa, alb;
+				ipoa_rear = ipoa_rear_after_losses = ipoa_front = ipoa = alb = 0;
 
 				for (int nn = 0; nn < num_subarrays; nn++)
 				{
@@ -1482,8 +1486,10 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 						}
 						irr.calc_rear_side(Subarrays[0]->Module->bifacialTransmissionFactor, Subarrays[0]->Module->bifaciality, Subarrays[0]->Module->groundClearanceHeight, slopeLength);
 						ipoa_rear = irr.get_poa_rear();
+						ipoa_rear_after_losses = ipoa_rear * (1 - Subarrays[nn]->rearIrradianceLossPercent);
 					}
 					ts_accum_poa_rear += ipoa_rear * ref_area_m2 * modules_per_string * Subarrays[nn]->nStrings;
+					ts_accum_poa_rear_after_losses = ts_accum_poa_rear * (1 - Subarrays[nn]->rearIrradianceLossPercent);
 
 					if (iyear == 0) 
 					{
@@ -1492,7 +1498,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 						PVSystem->p_poaShadedSoiledFront[nn][idx] = (ssc_number_t)ipoa_front;
 						PVSystem->p_poaBeamFront[nn][idx] = (ssc_number_t)ibeam;
 						PVSystem->p_poaDiffuseFront[nn][idx] = (ssc_number_t)(iskydiff + ignddiff);
-						PVSystem->p_poaRear[nn][idx] = (ssc_number_t)(ipoa_rear);
+						PVSystem->p_poaRear[nn][idx] = (ssc_number_t)(ipoa_rear_after_losses);
 						PVSystem->p_beamShadingFactor[nn][idx] = (ssc_number_t)beam_shading_factor;
 						PVSystem->p_axisRotation[nn][idx] = (ssc_number_t)rot;
 						PVSystem->p_idealRotation[nn][idx] = (ssc_number_t)(rot - btd);
@@ -1509,8 +1515,8 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 					Subarrays[nn]->poa.poaBeamFront = ibeam;
 					Subarrays[nn]->poa.poaDiffuseFront = iskydiff;
 					Subarrays[nn]->poa.poaGroundFront = ignddiff;
-					Subarrays[nn]->poa.poaRear = ipoa_rear;
-					Subarrays[nn]->poa.poaTotal = (radmode == Irradiance_IO::POA_R) ? ipoa :(ipoa_front + ipoa_rear);
+					Subarrays[nn]->poa.poaRear = ipoa_rear_after_losses;
+					Subarrays[nn]->poa.poaTotal = (radmode == Irradiance_IO::POA_R) ? ipoa :(ipoa_front + ipoa_rear_after_losses);
 					Subarrays[nn]->poa.angleOfIncidenceDegrees = aoi;
 					Subarrays[nn]->poa.sunUp = sunup;
 					Subarrays[nn]->poa.surfaceTiltDegrees = stilt;
@@ -1655,10 +1661,10 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 					{
 						ipoa_front *= out.AOIModifier;
 						PVSystem->p_poaFront[nn][idx] = (radmode == Irradiance_IO::POA_R) ? (ssc_number_t)ipoa : (ssc_number_t)(ipoa_front);
-						PVSystem->p_poaTotal[nn][idx] = (radmode == Irradiance_IO::POA_R) ? (ssc_number_t)ipoa : (ssc_number_t)(ipoa_front + ipoa_rear);
+						PVSystem->p_poaTotal[nn][idx] = (radmode == Irradiance_IO::POA_R) ? (ssc_number_t)ipoa : (ssc_number_t)(ipoa_front + ipoa_rear_after_losses);
 
 						ts_accum_poa_front_total += ipoa_front * ref_area_m2 * modules_per_string * Subarrays[nn]->nStrings;
-						ts_accum_poa_total_eff += ((radmode == Irradiance_IO::POA_R) ? ipoa : (ipoa_front + ipoa_rear)) * ref_area_m2 * modules_per_string * Subarrays[nn]->nStrings;
+						ts_accum_poa_total_eff += ((radmode == Irradiance_IO::POA_R) ? ipoa : (ipoa_front + ipoa_rear_after_losses)) * ref_area_m2 * modules_per_string * Subarrays[nn]->nStrings;
 					}
 
 					voltage_sum += out.Voltage;
@@ -1732,7 +1738,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 					Subarrays[nn]->module.dcPowerW *= Subarrays[nn]->shadeCalculator.dc_shade_factor();
 
 
-					dcpwr_net += Subarrays[nn]->module.dcPowerW *  Subarrays[nn]->dcLoss;
+					dcpwr_net += Subarrays[nn]->module.dcPowerW *  (1 - Subarrays[nn]->dcLossTotalPercent);
 
 				}
 				// bug fix jmf 12/13/16- losses that apply to ALL subarrays need to be applied OUTSIDE of the subarray summing loop
@@ -1777,7 +1783,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 					PVSystem->p_poaFrontShadedTotal[idx] = (ssc_number_t)(ts_accum_poa_front_shaded * util::watt_to_kilowatt); 
 					PVSystem->p_poaFrontShadedSoiledTotal[idx] = (ssc_number_t)(ts_accum_poa_front_shaded_soiled * util::watt_to_kilowatt);
 					PVSystem->p_poaFrontTotal[idx] = (ssc_number_t)(ts_accum_poa_front_total * util::watt_to_kilowatt);
-					PVSystem->p_poaRearTotal[idx] = (ssc_number_t)(ts_accum_poa_rear * util::watt_to_kilowatt);
+					PVSystem->p_poaRearTotal[idx] = (ssc_number_t)(ts_accum_poa_rear_after_losses * util::watt_to_kilowatt);
 					PVSystem->p_poaTotalAllSubarrays[idx] = (ssc_number_t)(ts_accum_poa_total_eff * util::watt_to_kilowatt); 
 					PVSystem->p_poaFrontBeamTotal[idx] = (ssc_number_t)(ts_accum_poa_front_beam_eff * util::watt_to_kilowatt);
 					PVSystem->p_inverterMPPTLoss[idx] = (ssc_number_t)(mppt_clip_window * util::watt_to_kilowatt);
@@ -2079,33 +2085,27 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 	double annual_mismatch_loss = 0, annual_diode_loss = 0, annual_wiring_loss = 0, annual_tracking_loss = 0, annual_nameplate_loss = 0, annual_dcopt_loss = 0;
 	double annual_dc_gross = 0;
 		
-	//dc optimizer losses are the same for all four subarrays, assign outside of subarray loop but calculate inside loop
-	double dc_opt = as_double("dcoptimizer_loss");
 	// loop over subarrays
 	for (size_t nn = 0; nn < num_subarrays; nn++)
 	{
 		if ( Subarrays[nn]->enable )
 		{
-			std::string prefix = "subarray" + util::to_string((int)(nn + 1)) + "_";
-			double mismatch = as_double(prefix + "mismatch_loss");
-			double diodes = as_double(prefix + "diodeconn_loss");
-			double wiring = as_double(prefix + "dcwiring_loss");
-			double tracking = as_double(prefix + "tracking_loss");
-			double nameplate = as_double(prefix + "nameplate_loss");
-			double total_percent = mismatch + diodes + wiring + tracking + nameplate + dc_opt;
+			std::string prefix = "subarray" + util::to_string(static_cast<int>(nn+1)) + "_";
 
 			double mismatch_loss = 0,diode_loss = 0,wiring_loss = 0,tracking_loss = 0, nameplate_loss = 0, dcopt_loss = 0;
 			// dc derate for each sub array
-			double dc_loss = dc_gross[nn] * (1.0 - Subarrays[nn]->dcLoss);
+			double dc_loss = dc_gross[nn] * Subarrays[nn]->dcLossTotalPercent;
 			annual_dc_gross += dc_gross[nn];
-			if (total_percent != 0)
+			
+			if (Subarrays[nn]->dcLossTotalPercent != 0)
 			{
-				mismatch_loss = mismatch / total_percent * dc_loss;
-				diode_loss = diodes / total_percent * dc_loss;
-				wiring_loss = wiring / total_percent * dc_loss;
-				tracking_loss = tracking / total_percent * dc_loss;
-				nameplate_loss = nameplate / total_percent * dc_loss;
-				dcopt_loss = dc_opt / total_percent * dc_loss;
+				double total_percent = Subarrays[nn]->dcLossTotalPercent;
+				mismatch_loss = Subarrays[nn]->mismatchLossPercent / total_percent * dc_loss;
+				diode_loss = Subarrays[nn]->diodesLossPercent / total_percent * dc_loss;
+				wiring_loss = Subarrays[nn]->dcWiringLossPercent / total_percent * dc_loss;
+				tracking_loss = Subarrays[nn]->trackingLossPercent / total_percent * dc_loss;
+				nameplate_loss = Subarrays[nn]->nameplateLossPercent / total_percent * dc_loss;
+				dcopt_loss = Subarrays[nn]->dcOptimizerLossPercent / total_percent * dc_loss;
 			}
 			annual_mismatch_loss += mismatch_loss;
 			annual_diode_loss += diode_loss;

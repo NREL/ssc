@@ -34,7 +34,7 @@
   <PropertyGroup Label="Globals">
     <ProjectName>tcsconsole</ProjectName>
     <ProjectGuid>{CC86C00E-6BA9-47E1-8CEB-4702FD5CF5F7}</ProjectGuid>
-    <WindowsTargetPlatformVersion>10.0.16299.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
