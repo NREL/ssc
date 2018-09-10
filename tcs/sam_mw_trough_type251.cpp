@@ -804,7 +804,7 @@ public:
         sgs_wallthicks = value(P_sgs_wallthicks, &l_sgs_wallthicks);    //[m]
         sgs_lengths_in = value(P_sgs_lengths, &l_sgs_lengths);             //[m]
         SGS_lengths.assign(sgs_lengths_in, l_sgs_lengths);
-        DP_SGS = value(P_dp_sgs);                           //[bar]
+        DP_SGS = value(P_dp_sgs) * 1.e5;                    // bar to Pa;
 
 		pb_fixed_par	= value(P_pb_fixed_par);			//[-]
 	
@@ -2495,7 +2495,7 @@ public:
     int sgs_pressure_drops(double m_dot_sf, double m_dot_pb, util::matrix_t<double> v_dot_rel,
         double T_sf_in, double T_sf_out, double T_pb_in, double T_pb_out,
         util::matrix_t<double> L, util::matrix_t<double> D, double pipe_rough,
-        double DP_SGS, util::matrix_t<double> k_coeffs, bool tanks_in_parallel, bool recirculating,
+        double DP_SGS_nom, util::matrix_t<double> k_coeffs, bool tanks_in_parallel, bool recirculating,
         double &P_drop_col, double &P_drop_gen)
     {
         const std::size_t num_sections = 11;          // total number of col. + gen. sections
@@ -2509,8 +2509,10 @@ public:
         double k;                                     // effective minor loss coefficient
         double Re, ff;
         double v_dot_ref;
+        double DP_SGS;
         std::vector<double> P_drops(num_sections, 0.0);
 
+        m_dot_pb > 0 ? DP_SGS = DP_SGS_nom : DP_SGS = 0.;
         v_dot_sf = m_dot_sf / field_htfProps.dens((T_sf_in + T_sf_out) / 2, (P_hi + P_lo) / 2);
         v_dot_pb = m_dot_pb / field_htfProps.dens((T_pb_in + T_pb_out) / 2, P_lo);
 
