@@ -120,6 +120,24 @@ namespace CSP
 				  double T_db_K, double T_wb_K, double P_amb_Pa, double q_reject, double& m_dot_water, double& W_dot_acfan, 
 				  double& W_dot_wctot, double& W_dot_tot, double& P_cond, double& T_cond, double& f_hrsys);
 
+    // Pipe sizing
+    double pipe_sched(double De, bool selectLarger = true);
+
+    // Pipe wall thickness
+    double WallThickness(double d_in);
+
+    // Minor pressure drop
+    double MinorPressureDrop(double vel, double rho, double k);
+
+    // Major pressure drop
+    double MajorPressureDrop(double vel, double rho, double ff, double l, double d);
+
+    // Friction factor
+    double FrictionFactor(double rel_rough, double Re);
+
+    // Friction factor (iterative, helper function)
+    double FricFactor_Iter(double rel_rough, double Re);
+    
 };
 
 // Set up class for Pmax function so we can save maximum pressure for various CSP types
