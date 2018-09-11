@@ -1099,6 +1099,15 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 	/* *********************************************************************************************
 	PV DC calculation
 	*********************************************************************************************** */
+	std::vector<double> dcPowerNetPerMppt; //Net DC power in W for each MPPT input on the system
+	std::vector<double> dcPowerNetPerSubarray; //Net DC power in W for each subarray
+	std::vector<double> dcVoltagePerMppt; //Voltage in V at each MPPT input on the system
+	double dcPowerNetTotalSystem = 0; //Net DC power in W for the entire system (sum of all subarrays)
+	for (int mpptInput = 0; mpptInput < PVSystem->Inverter->nMpptInputs; mpptInput++)
+	{
+		dcPowerNetPerMppt.push_back(0);
+		dcVoltagePerMppt.push_back(0);
+	}
 	for (size_t iyear = 0; iyear < nyears; iyear++)
 	{
 		for (hour = 0; hour < 8760; hour++)
@@ -1155,7 +1164,6 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 				
 				double solazi = 0, solzen = 0, solalt = 0;
 				int sunup = 0;
-				double dcpwr_net = 0.0;
 
 				// accumulators for radiation power (W) over this 
 				// timestep from each subarray
@@ -1539,10 +1547,10 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 				std::vector<double> mpptVoltageClipping; //a vector to store power that is clipped due to the inverter MPPT low & high voltage limits for each subarray
 
 				//Calculate power of each MPPT input
-				for (int mppt_input = 0; mppt_input < PVSystem->Inverter->nMpptInputs; mppt_input++) //remember that actual named mppt inputs are 1-indexed, and these are 0-indexed
+				for (int mpptInput = 0; mpptInput < PVSystem->Inverter->nMpptInputs; mpptInput++) //remember that actual named mppt inputs are 1-indexed, and these are 0-indexed
 				{
-					int nSubarraysOnMpptInput = PVSystem->mpptMapping[mppt_input].size(); //number of subarrays attached to this MPPT input
-					std::vector<int> SubarraysOnMpptInput = PVSystem->mpptMapping[mppt_input]; //vector of which subarrays are attached to this MPPT input
+					int nSubarraysOnMpptInput = PVSystem->mpptMapping[mpptInput].size(); //number of subarrays attached to this MPPT input
+					std::vector<int> SubarraysOnMpptInput = PVSystem->mpptMapping[mpptInput]; //vector of which subarrays are attached to this MPPT input
 
 					//string voltage value from which module voltage will be calculated
 					//initialize it as -1 and check for that later
@@ -1705,7 +1713,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 					//if only one subarray, the voltage at the MPPT input is the same as the string voltage of that subarray (the first and only subarray on the MPPT input)
 					//alternatively, if mismatch was enabled, the string voltage is the same for all subarrays, so the voltage at the MPPT input is the same as the string voltage of any subarray
 					if (SubarraysOnMpptInput.size() == 1 || PVSystem->enableMismatchVoltageCalc)
-						PVSystem->p_mpptVoltage[mppt_input][idx] = (ssc_number_t)PVSystem->p_dcStringVoltage[SubarraysOnMpptInput[0]][idx];
+						PVSystem->p_mpptVoltage[mpptInput][idx] = (ssc_number_t)PVSystem->p_dcStringVoltage[SubarraysOnMpptInput[0]][idx];
 					//if mismatch wasn't enabled and there are more than one subarray on this MPPT input, we assume the MPPT input voltage is a weighted average of the string voltages
 					else
 					{
@@ -1718,11 +1726,12 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 							nStrings += Subarrays[nn]->nStrings;
 							totalVoltage += PVSystem->p_dcStringVoltage[nn][idx] * Subarrays[nn]->nStrings;
 						}
-						PVSystem->p_mpptVoltage[mppt_input][idx] = (ssc_number_t)totalVoltage / nStrings;
+						PVSystem->p_mpptVoltage[mpptInput][idx] = (ssc_number_t)totalVoltage / nStrings;
 					}
 				}
 
 				// sum up all DC power from the whole array
+				PVSystem->p_systemDCPower[idx] = 0;
 				for (int nn = 0; nn < num_subarrays; nn++)
 				{
 					// DC derates for snow and shading must be applied first
@@ -1760,11 +1769,11 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 						if (iyear == 0) mpptVoltageClipping[nn] *= (1 - smLoss);
 					}
 
-					// scale power and mppt voltage clipping to array dimensions
+					// scale power and mppt voltage clipping to subarray dimensions
 					Subarrays[nn]->dcPowerSubarray = Subarrays[nn]->Module->dcPowerW * Subarrays[nn]->nModulesPerString * Subarrays[nn]->nStrings;
 					if (iyear == 0) mpptVoltageClipping[nn] *= Subarrays[nn]->nModulesPerString* Subarrays[nn]->nStrings;
 
-					//assign gross outputs at this point
+					//assign gross outputs per subarray at this point
 					if (iyear == 0)
 					{
 						//Gross DC power
@@ -1781,31 +1790,35 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 
 					}
 					
+					//calculate net power for each subarray
+
 					// apply pre-inverter power derate
-					dcpwr_net += Subarrays[nn]->dcPowerSubarray * Subarrays[nn]->dcLoss;
+					dcPowerNetPerSubarray[nn] = Subarrays[nn]->dcPowerSubarray * Subarrays[nn]->dcLoss;
 
-				}
-				// bug fix jmf 12/13/16- losses that apply to ALL subarrays need to be applied OUTSIDE of the subarray summing loop
-				// if they're applied WITHIN the loop, as they had been, then the power from subarrays 1-3 get the SAME derate/degradation applied nn-1 times, instead of just once!!
+					//module degradation and lifetime DC losses apply to all subarrays
+					if (system_use_lifetime_output == 1)
+						dcPowerNetPerSubarray[nn] *= PVSystem->p_dcDegradationFactor[iyear + 1];
 
-				//module degradation and lifetime DC losses apply to all subarrays
-				if (system_use_lifetime_output == 1)
-					dcpwr_net *= PVSystem->p_dcDegradationFactor[iyear + 1];
+					//dc adjustment factors apply to all subarrays
+					if (iyear == 0) annual_dc_adjust_loss += dcPowerNetPerSubarray[nn] * (1 - dc_haf(hour)) * util::watt_to_kilowatt * ts_hour; //only keep track of this loss for year 0, convert from power W to energy kWh
+					dcPowerNetPerSubarray[nn] *= dc_haf(hour);
 
-				//dc adjustment factors apply to all subarrays
-				if (iyear == 0) annual_dc_adjust_loss += dcpwr_net * (1 - dc_haf(hour)) * util::watt_to_kilowatt * ts_hour; //only keep track of this loss for year 0, convert from power W to energy kWh
-				dcpwr_net *= dc_haf(hour);
+					//lifetime daily DC losses apply to all subarrays and should be applied last. Only applied if they are enabled.
+					if (system_use_lifetime_output == 1 && PVSystem->enableDCLifetimeLosses)
+					{
+						//current index of the lifetime daily DC losses is the number of years that have passed (iyear, because it is 0-indexed) * the number of days + the number of complete days that have passed
+						int dc_loss_index = (int)iyear * 365 + (int)floor(hour / 24); //in units of days
+						if (iyear == 0) annual_dc_lifetime_loss += dcPowerNetPerSubarray[nn] * (PVSystem->p_dcLifetimeLosses[dc_loss_index] / 100) * util::watt_to_kilowatt * ts_hour; //this loss is still in percent, only keep track of it for year 0, convert from power W to energy kWh
+						dcPowerNetPerSubarray[nn] *= (100 - PVSystem->p_dcLifetimeLosses[dc_loss_index]) / 100;
+					}
 
-				//lifetime daily DC losses apply to all subarrays and should be applied last. Only applied if they are enabled.
-				if (system_use_lifetime_output == 1 && PVSystem->enableDCLifetimeLosses)
-				{
-					//current index of the lifetime daily DC losses is the number of years that have passed (iyear, because it is 0-indexed) * the number of days + the number of complete days that have passed
-					int dc_loss_index = (int)iyear * 365 + (int)floor(hour / 24); //in units of days
-					if (iyear == 0) annual_dc_lifetime_loss += dcpwr_net * (PVSystem->p_dcLifetimeLosses[dc_loss_index] / 100) * util::watt_to_kilowatt * ts_hour; //this loss is still in percent, only keep track of it for year 0, convert from power W to energy kWh
-					dcpwr_net *= (100 - PVSystem->p_dcLifetimeLosses[dc_loss_index]) / 100;
-				}
+					//assign net DC power output
+					PVSystem->p_systemDCPower[idx] += (ssc_number_t)(dcPowerNetPerSubarray[nn] * util::watt_to_kilowatt);
 
-				PVSystem->p_systemDCPower[idx] = (ssc_number_t)(dcpwr_net * util::watt_to_kilowatt);
+					//add this subarray's net DC power to the appropriate MPPT input and to the total system DC power
+					dcPowerNetPerMppt[Subarrays[nn]->mpptInput] += dcPowerNetPerSubarray[nn];
+					dcPowerNetTotalSystem += dcPowerNetPerSubarray[nn];	
+				}								
 
 				// save other array-level environmental and irradiance outputs	- year 1 only outputs
 				if (iyear == 0)
@@ -1848,7 +1861,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 					}
 					p_pv_dc_use.push_back(static_cast<ssc_number_t>(dcpwr));
 
-					sharedInverter->calculateACPower(dcpwr * util::kilowatt_to_watt, PVSystem->p_mpptVoltage[0][idx], 0.0); //multiple MPPT arrays are disabled with DC battery, so first MPPT input will be only MPPT input
+					sharedInverter->acpower(dcPowerNetTotalSystem, dcVoltagePerMppt[0], 0.0); //DC batteries not allowed with multiple MPPT, so can just use MPPT 1's voltage
 
 					if (p_pv_clipping_forecast.size() > 1 && p_pv_clipping_forecast.size() > idx % (8760 * step_per_hour)) {
 						cliploss = p_pv_clipping_forecast[idx % (8760 * step_per_hour)] * util::kilowatt_to_watt;
@@ -1898,61 +1911,41 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 					batt.check_replacement_schedule();
 				}
 
-				double dcpwr_net = 0, acpwr_gross = 0, ac_wiringloss = 0, transmissionloss = 0;
+				double acpwr_gross = 0, ac_wiringloss = 0, transmissionloss = 0;
 				cur_load = p_load_full[idx];
-				dcpwr_net = util::kilowatt_to_watt * PVSystem->p_systemDCPower[idx];
 				wdprov->read(&Irradiance->weatherRecord);
 				weather_record wf = Irradiance->weatherRecord;
 
-				for (int mppt_input = 0; mppt_input < PVSystem->Inverter->nMpptInputs; mppt_input++)
+				//set DC voltages for use in AC power calculation
+				for (int m = 0; m < PVSystem->Inverter->nMpptInputs; m++)
+					dcVoltagePerMppt[m] = PVSystem->p_mpptVoltage[m][idx];
+
+				// DC-connected battery
+				if (en_batt && (batt_topology == ChargeController::DC_CONNECTED))
 				{
-					// DC Connected Battery- multiple MPPT arrays are disabled with DC battery, so first MPPT input will be only MPPT input
-					if (en_batt && (batt_topology == ChargeController::DC_CONNECTED))
-					{
-						// Compute PV clipping before adding battery
-						sharedInverter->calculateACPower(dcpwr_net, PVSystem->p_mpptVoltage[mppt_input][idx], wf.tdry); 
+					// Compute PV clipping before adding battery
+					sharedInverter->acpower(dcPowerNetTotalSystem, dcVoltagePerMppt[0], wf.tdry); //DC batteries not allowed with multiple MPPT, so can just use MPPT 1's voltage
 
-						// Run PV plus battery through sharedInverter, returns AC power
-						batt.advance(*this, dcpwr_net*util::watt_to_kilowatt, PVSystem->p_mpptVoltage[0][idx], cur_load, sharedInverter->powerClipLoss_kW);
-						acpwr_gross = batt.outGenPower[idx];
-					}
-					else
-					{
-						// inverter: runs at all hours of the day, even if no DC power.  important
-						// for capturing tare losses
-						sharedInverter->calculateACPower(dcpwr_net, PVSystem->p_mpptVoltage[mppt_input][idx], wf.tdry);
-						acpwr_gross = sharedInverter->powerAC_kW;
-					}
-
-					if (iyear == 0)
-					{
-						PVSystem->p_inverterEfficiency[mppt_input][idx] = (ssc_number_t)(sharedInverter->efficiencyAC);
-
-
-
-
-
-
-
-
-
-
-		
+					// Run PV plus battery through sharedInverter, returns AC power
+					batt.advance(*this, dcPowerNetTotalSystem*util::watt_to_kilowatt, dcVoltagePerMppt[0], cur_load, sharedInverter->powerClipLoss_kW); 
+					acpwr_gross = batt.outGenPower[idx];
+				}
+				else
+				{
+					// inverter: runs at all hours of the day, even if no DC power.  important
+					// for capturing tare losses
+					sharedInverter->acpower(dcPowerNetPerMppt, dcVoltagePerMppt, wf.tdry);
+					acpwr_gross = sharedInverter->powerAC_kW;
+				}		
 				
 				ac_wiringloss = fabs(acpwr_gross) * PVSystem->acLossPercent * 0.01;
 				transmissionloss = fabs(acpwr_gross) * PVSystem->transmissionLossPercent * 0.01;
-
-
-
-
-
-
 
 				// accumulate first year annual energy
 				if (iyear == 0)
 				{ 
 					annual_ac_gross += acpwr_gross * ts_hour;
-					
+					PVSystem->p_inverterEfficiency[idx] = (ssc_number_t)(sharedInverter->efficiencyAC);
 					PVSystem->p_inverterClipLoss[idx] = (ssc_number_t)(sharedInverter->powerClipLoss_kW);
 					PVSystem->p_inverterPowerConsumptionLoss[idx] = (ssc_number_t)(sharedInverter->powerConsumptionLoss_kW);
 					PVSystem->p_inverterNightTimeLoss[idx] = (ssc_number_t)(sharedInverter->powerNightLoss_kW);
@@ -2076,7 +2069,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 	//   have the same number of bad values
 	//  *Also accumulate monthly and annual loss values 
 
-	if (Subarrays[0]->enableSnowModel){
+	if (PVSystem->enableSnowModel){
 		if (Subarrays[0]->snowModel.badValues > 0){
 			log(util::format("The snow model has detected %d bad snow depth values (less than 0 or greater than 610 cm). These values have been set to zero.", Subarrays[0]->snowModel.badValues), SSC_WARNING);
 		}

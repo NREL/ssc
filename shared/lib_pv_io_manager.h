@@ -285,7 +285,7 @@ struct PVSystem_IO
 
 	ssc_number_t *p_snowLossTotal;
 
-	std::vector<ssc_number_t *>p_inverterEfficiency;
+	ssc_number_t *p_inverterEfficiency;
 	ssc_number_t *p_inverterClipLoss;
 	ssc_number_t *p_inverterMPPTLoss;
 
@@ -310,9 +310,9 @@ struct poaDecompReq {
 	char stepScale; // indicates whether time steps are hours (h) or minutes (m)
 	double* POA; // Pointer to entire POA array (will have size 8760 if time step is 1 hour)
 	double* inc; // Pointer to angle of incident array (same size as POA)
-	double* tilt; // Pointer to angle of incident array (same size as POA)
-	double* zen; // Pointer to angle of incident array (same size as POA)
-	double* exTer; // Pointer to angle of incident array (same size as POA)
+	double* tilt; 
+	double* zen; 
+	double* exTer;
 	double tDew;
 	int doy;
 	double elev;
@@ -344,41 +344,41 @@ public:
 	enum self_shading {NO_SHADING, NON_LINEAR_SHADING, LINEAR_SHADING};
 
 	// Managed by Subarray
-	std::unique_ptr<Module_IO> Module;/// The PV module for this subarray
+	std::unique_ptr<Module_IO> Module; // The PV module for this subarray
 
 	// Inputs
-	bool enable;						/// Whether or not the subarray is enabled
+	bool enable;						// Whether or not the subarray is enabled
 
 	// Electrical characteristics
-	size_t nStrings;					/// Number of strings in the subarray
-	int nModulesPerString;				/// The number of modules per string
-	int mpptInput;						/// Which inverter MPPT input this subarray is connected to
+	size_t nStrings;					// Number of strings in the subarray
+	int nModulesPerString;				// The number of modules per string
+	int mpptInput;						// Which inverter MPPT input this subarray is connected to
 
 	// Physical characteristics
-	double groundCoverageRatio;			/// The ground coverage ratio [0 - 1]
-	double tiltDegrees;					/// The surface tilt [degrees]						
-	double azimuthDegrees;				/// The surface azimuth [degrees]
-	int trackMode;						/// The tracking mode [0 = fixed, 1 = single-axis tracking, 2 = two-axis tracking, 3 = azimuth-axis tracking, 4 = seasonal-tilt
-	double trackerRotationLimitDegrees; /// The rotational limit of the tracker [degrees]
-	bool tiltEqualLatitude;				/// Set the tilt equal to the latitude
-	std::vector<double> monthlyTiltDegrees; /// The seasonal tilt [degrees]
-	bool backtrackingEnabled;			/// Backtracking enabled or not
-	double moduleAspectRatio;			/// The aspect ratio of the models used in the subarray
-	int nStringsBottom;					/// Number of strings along bottom from self-shading
+	double groundCoverageRatio;			// The ground coverage ratio [0 - 1]
+	double tiltDegrees;					// The surface tilt [degrees]						
+	double azimuthDegrees;				// The surface azimuth [degrees]
+	int trackMode;						// The tracking mode [0 = fixed, 1 = single-axis tracking, 2 = two-axis tracking, 3 = azimuth-axis tracking, 4 = seasonal-tilt
+	double trackerRotationLimitDegrees; // The rotational limit of the tracker [degrees]
+	bool tiltEqualLatitude;				// Set the tilt equal to the latitude
+	std::vector<double> monthlyTiltDegrees; // The seasonal tilt [degrees]
+	bool backtrackingEnabled;			// Backtracking enabled or not
+	double moduleAspectRatio;			// The aspect ratio of the models used in the subarray
+	int nStringsBottom;					// Number of strings along bottom from self-shading
 
 	// Subarray-specific losses
-	std::vector<double> monthlySoiling; /// The soiling loss by month [%]
-	double dcLoss;						/// The DC loss due to mismatch, diodes, wiring, tracking, optimizers [%]
+	std::vector<double> monthlySoiling; // The soiling loss by month [%]
+	double dcLoss;						// The DC loss due to mismatch, diodes, wiring, tracking, optimizers [%]
 
 	// Shading and snow	
-	bool enableSelfShadingOutputs;			/// Choose whether additional self-shading outputs are displayed
-	int shadeMode;						/// The shading mode of the subarray [0 = none, 1 = standard (non-linear), 2 = thin film (linear)]
-	bool usePOAFromWeatherFile;			/// Flag for whether or not a shading model has been selected that means POA can't be used directly for that subarray
-	ssinputs selfShadingInputs;			/// Inputs and calculation methods for self-shading of the subarray
-	ssoutputs selfShadingOutputs;		/// Outputs for the self-shading of the subarray
-	shading_factor_calculator shadeCalculator; /// The shading calculator model for self-shading
-	bool subarrayEnableSnow;
-	pvsnowmodel snowModel;				/// A structure to store the geometry inputs for the snow model for this subarray- even though the snow model is system wide, its effect is subarray-dependent
+	bool enableSelfShadingOutputs;			// Choose whether additional self-shading outputs are displayed
+	int shadeMode;						// The shading mode of the subarray [0 = none, 1 = standard (non-linear), 2 = thin film (linear)]
+	bool usePOAFromWeatherFile;			// Flag for whether or not a shading model has been selected that means POA can't be used directly for that subarray
+	ssinputs selfShadingInputs;			// Inputs and calculation methods for self-shading of the subarray
+	ssoutputs selfShadingOutputs;		// Outputs for the self-shading of the subarray
+	shading_factor_calculator shadeCalculator; // The shading calculator model for self-shading
+	bool subarrayEnableSnow; //a copy of the enableSnowModel flag has to exist in each subarray for setting up snow model inputs specific to each subarray
+	pvsnowmodel snowModel;				// A structure to store the geometry inputs for the snow model for this subarray- even though the snow model is system wide, its effect is subarray-dependent
 
 	/// Calculated plane-of-array (POA) irradiace for the subarray and related geometry
 	struct {

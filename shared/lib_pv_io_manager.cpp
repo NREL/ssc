@@ -553,7 +553,6 @@ void PVSystem_IO::AllocateOutputs(compute_module* cm)
 	for (int mppt_input = 0; mppt_input < Inverter->nMpptInputs; mppt_input++)
 	{
 		p_mpptVoltage.push_back(cm->allocate("inverterMppt" + std::to_string(mppt_input + 1) + "_DCVoltage", numberOfLifetimeRecords));
-		p_inverterEfficiency.push_back(cm->allocate("InverterMppt" + std::to_string(mppt_input + 1) + "_Efficiency", numberOfWeatherFileRecords));
 	}
 
 	p_transformerNoLoadLoss = cm->allocate("xfmr_nll_ts", numberOfWeatherFileRecords);
@@ -571,7 +570,7 @@ void PVSystem_IO::AllocateOutputs(compute_module* cm)
 
 	p_snowLossTotal = cm->allocate("dc_snow_loss", numberOfWeatherFileRecords);
 
-	
+	p_inverterEfficiency = cm->allocate("inv_eff", numberOfWeatherFileRecords);
 	p_inverterClipLoss = cm->allocate("inv_cliploss", numberOfWeatherFileRecords);
 	p_inverterMPPTLoss = cm->allocate("dc_invmppt_loss", numberOfWeatherFileRecords);
 
@@ -1072,6 +1071,6 @@ void Inverter_IO::setupSharedInverter(compute_module* cm, SharedInverter * a_sha
 	}
 	int err = sharedInverter->setTempDerateCurves(thermalDerateCurves);
 	if ( err > 1) {
-		//throw compute_module::exec_error("pvsamv1", "Inverter temperature derate curve " + util::to_string((int)( -err - 1)) + " is invalid.");
+		throw compute_module::exec_error("pvsamv1", "Inverter temperature derate curve " + util::to_string((int)( -err - 1)) + " is invalid.");
 	}
 }
