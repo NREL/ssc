@@ -201,7 +201,9 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "h_tank_min",           "Minimum allowable HTF height in storage tank",                      "m",            "",            "TES",      "*",              "",                      "" },	
 	{ SSC_INPUT,        SSC_NUMBER,      "hot_tank_Thtr",        "Minimum allowable hot tank HTF temp",                               "C",            "",            "TES",      "*",              "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "hot_tank_max_heat",    "Rated heater capacity for hot tank heating",                        "MW",           "",            "TES",      "*",              "",                      "" },
-					     																	         
+	{ SSC_INPUT,        SSC_NUMBER,      "hot_tank_Tinit",		 "Initial hot tank temperature",									  "C",            "",            "TES",            "?=-1",                       "",                      "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "cold_tank_Tinit",		 "Initial cold tank temperature",									  "C",            "",            "TES",            "?=-1",                       "",                      "" },
+
     					     																	  
     // Power Cycle Inputs
 	{ SSC_INPUT,        SSC_NUMBER,      "pc_config",            "0: Steam Rankine (224), 1: user defined, 2: sCO2 Recompression (424)", "-",         "",            "powerblock",     "?=0",                     "INTEGER",               "" },    
@@ -1561,8 +1563,19 @@ public:
 		tes->m_dt_hot = 0.0;								// MSPT assumes direct storage, so no user input here: hardcode = 0.0
 		tes->m_T_field_in_des = as_double("T_htf_cold_des");
 		tes->m_T_field_out_des = as_double("T_htf_hot_des");
-		tes->m_T_tank_hot_ini = as_double("T_htf_hot_des");
-		tes->m_T_tank_cold_ini = as_double("T_htf_cold_des");
+		
+		double thot_ini = as_double("hot_tank_Tinit");
+		if (thot_ini < 0.0)
+			tes->m_T_tank_hot_ini = as_double("T_htf_hot_des");
+		else
+			tes->m_T_tank_hot_ini = thot_ini;
+
+		double tcold_ini = as_double("cold_tank_Tinit");
+		if (tcold_ini < 0.0)
+			tes->m_T_tank_cold_ini = as_double("T_htf_cold_des");
+		else
+			tes->m_T_tank_cold_ini = tcold_ini;
+
 		tes->m_h_tank_min = as_double("h_tank_min");
 		tes->m_f_V_hot_ini = as_double("csp.pt.tes.init_hot_htf_percent");
 		tes->m_htf_pump_coef = as_double("pb_pump_coef");
