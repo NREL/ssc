@@ -30,11 +30,11 @@ public:
 
 	/// Given the combined PV plus battery DC power (W), voltage and ambient T, compute the AC power (kW)
 	//function that calculates AC power and inverter losses for a single inverter with one MPPT input
-	void acpower(const double powerDC, const double DCStringVoltage, double ambientT);
+	void calculateACPower(const double powerDC, const double DCStringVoltage, double ambientT);
 	
 	/// Given the combined PV plus battery DC power (W), voltage and ambient T, compute the AC power (kW)
 	//function that calculates AC power and inverter losses for a single inverter with multiple MPPT inputs
-	void acpower(const std::vector<double> powerDC, const std::vector<double> DCStringVoltage, double ambientT);
+	void calculateACPower(const std::vector<double> powerDC, const std::vector<double> DCStringVoltage, double ambientT);
 
 	/// Return the nominal DC voltage input
 	double getInverterDCNominalVoltage();

@@ -137,7 +137,7 @@ void SharedInverter::calculateTempDerate(double V, double T, double& pAC, double
 }
 
 //function that calculates AC power and inverter losses for a single inverter with one MPPT input
-void SharedInverter::acpower(const double powerDC_Watts, const double DCStringVoltage, double T)
+void SharedInverter::calculateACPower(const double powerDC_Watts, const double DCStringVoltage, double T)
 {
 	double P_par, P_lr;
 	bool negativePower = powerDC_Watts < 0 ? true : false;
@@ -159,11 +159,12 @@ void SharedInverter::acpower(const double powerDC_Watts, const double DCStringVo
 }
 
 /* This function takes input inverter DC power (W) per MPPT input for a SINGLE multi-mppt inverter, DC voltage (V) per input, and ambient temperature (deg C), and calculates output for the total number of inverters in the system */
-void SharedInverter::acpower(const std::vector<double> powerDC_Watts, const std::vector<double> DCStringVoltage, double T)
+void SharedInverter::calculateACPower(const std::vector<double> powerDC_Watts, const std::vector<double> DCStringVoltage, double T)
 {
 	double P_par, P_lr;
 
 	// Power quantities go in and come out in units of W
+	//Don't need to divide by number of inverters for acpower functions here, because pvsamv1 is constrained to only have ONE multi-mppt inverter in a system
 	if (m_inverterType == SANDIA_INVERTER || m_inverterType == DATASHEET_INVERTER || m_inverterType == COEFFICIENT_GENERATOR)
 		m_sandiaInverter->acpower(powerDC_Watts, DCStringVoltage, &powerAC_kW, &P_par, &P_lr, &efficiencyAC, &powerClipLoss_kW, &powerConsumptionLoss_kW, &powerNightLoss_kW);
 	else if (m_inverterType == PARTLOAD_INVERTER)

@@ -241,7 +241,10 @@ TEST_F(CMPvsamv1PowerIntegration, NoFinancialModelSystemDesign)
 	// Specify modules and inverters with tracking options
 	// Tracking options: Fixed, 1-axis, 2-axis, Azimuth Axis, Seasonal Tilt
 	std::map<std::string, double> pairs;
-	pairs["modules_per_string"] = 6;
+	pairs["subarray1_modules_per_string"] = 6;
+	pairs["subarray2_modules_per_string"] = 6;
+	pairs["subarray3_modules_per_string"] = 6;
+	pairs["subarray4_modules_per_string"] = 6;
 	pairs["subarray1_nstrings"] = 49;
 	pairs["inverter_count"] = 22;
 	pairs["subarray1_track_mode"] = 0;
@@ -351,7 +354,10 @@ TEST_F(CMPvsamv1PowerIntegration, NoFinancialModelShading)
 	std::map<std::string, double> pairs;
 
 	// 2 subarrays, one pointing east, one west
-	pairs["modules_per_string"] = 6;
+	pairs["subarray1_modules_per_string"] = 6;
+	pairs["subarray2_modules_per_string"] = 6;
+	pairs["subarray3_modules_per_string"] = 6;
+	pairs["subarray4_modules_per_string"] = 6;
 	pairs["inverter_count"] = 2;
 	pairs["subarray1_nstrings"] = 2;
 	pairs["subarray1_azimuth"] = 90;

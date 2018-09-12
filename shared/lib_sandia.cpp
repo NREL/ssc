@@ -429,8 +429,11 @@ bool sandia_inverter_t::acpower(
 	std::vector<double> PacNoPso_each;
 
 	//loop through each MPPT input
-	for (int m = 0; m < Vdc.size(); m++) 
+	for (int m = 0; m < Pdc.size(); m++) 
 	{
+		Pac_each.push_back(0);
+		PacNoPso_each.push_back(0);
+
 		double A = Pdco * (1.0 + C1 * (Vdc[m] - Vdco));
 		double B = Pso * (1.0 + C2 * (Vdc[m] - Vdco));
 		double C = C0 * (1.0 + C3 * (Vdc[m] - Vdco));

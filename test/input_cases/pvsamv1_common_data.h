@@ -383,10 +383,11 @@ void pvsamv1_with_residential_default(ssc_data_t &data)
 	ssc_data_set_array(data, "albedo", p_albedo, 12);
 	ssc_data_set_number(data, "irrad_mode", 0);
 	ssc_data_set_number(data, "sky_model", 2);
-	ssc_data_set_number(data, "modules_per_string", 7);
 	ssc_data_set_number(data, "inverter_count", 1);
 	ssc_data_set_number(data, "enable_mismatch_vmax_calc", 0);
 	ssc_data_set_number(data, "subarray1_nstrings", 2);
+	ssc_data_set_number(data, "subarray1_modules_per_string", 7);
+	ssc_data_set_number(data, "subarray1_mppt_input", 1);
 	ssc_data_set_number(data, "subarray1_tilt", 20);
 	ssc_data_set_number(data, "subarray1_tilt_eq_lat", 0);
 	ssc_data_set_number(data, "subarray1_azimuth", 180);
@@ -427,6 +428,8 @@ void pvsamv1_with_residential_default(ssc_data_t &data)
 	ssc_data_set_number(data, "subarray1_backtrack", 0);
 	ssc_data_set_number(data, "subarray2_enable", 0);
 	ssc_data_set_number(data, "subarray2_nstrings", 0);
+	ssc_data_set_number(data, "subarray2_modules_per_string", 7);
+	ssc_data_set_number(data, "subarray2_mppt_input", 1);
 	ssc_data_set_number(data, "subarray2_tilt", 20);
 	ssc_data_set_number(data, "subarray2_tilt_eq_lat", 0);
 	ssc_data_set_number(data, "subarray2_azimuth", 180);
@@ -444,6 +447,8 @@ void pvsamv1_with_residential_default(ssc_data_t &data)
 	ssc_data_set_number(data, "subarray2_backtrack", 0);
 	ssc_data_set_number(data, "subarray3_enable", 0);
 	ssc_data_set_number(data, "subarray3_nstrings", 0);
+	ssc_data_set_number(data, "subarray3_modules_per_string", 7);
+	ssc_data_set_number(data, "subarray3_mppt_input", 1);
 	ssc_data_set_number(data, "subarray3_tilt", 20);
 	ssc_data_set_number(data, "subarray3_tilt_eq_lat", 0);
 	ssc_data_set_number(data, "subarray3_azimuth", 180);
@@ -461,6 +466,8 @@ void pvsamv1_with_residential_default(ssc_data_t &data)
 	ssc_data_set_number(data, "subarray3_backtrack", 0);
 	ssc_data_set_number(data, "subarray4_enable", 0);
 	ssc_data_set_number(data, "subarray4_nstrings", 0);
+	ssc_data_set_number(data, "subarray4_modules_per_string", 7);
+	ssc_data_set_number(data, "subarray4_mppt_input", 1);
 	ssc_data_set_number(data, "subarray4_tilt", 20);
 	ssc_data_set_number(data, "subarray4_tilt_eq_lat", 0);
 	ssc_data_set_number(data, "subarray4_azimuth", 180);
@@ -622,6 +629,7 @@ void pvsamv1_with_residential_default(ssc_data_t &data)
 	ssc_data_set_number(data, "inverter_model", 0);
 	ssc_data_set_number(data, "mppt_low_inverter", 250);
 	ssc_data_set_number(data, "mppt_hi_inverter", 480);
+	ssc_data_set_number(data, "inv_num_mppt", 1);
 	ssc_data_set_number(data, "inv_snl_c0", -3.1800000215298496e-06);
 	ssc_data_set_number(data, "inv_snl_c1", -5.1200000598328188e-05);
 	ssc_data_set_number(data, "inv_snl_c2", 0.00098400004208087921);

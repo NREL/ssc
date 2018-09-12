@@ -250,7 +250,7 @@ void BatteryPowerFlow::calculateDCConnected()
 		double P_gen_dc_inverter = P_pv_dc - P_pv_to_batt_dc - P_grid_to_batt_dc;
 
 		// convert the DC power to AC
-		m_BatteryPower->sharedInverter->acpower(P_gen_dc_inverter * util::kilowatt_to_watt, voltage, 0.0);
+		m_BatteryPower->sharedInverter->calculateACPower(P_gen_dc_inverter * util::kilowatt_to_watt, voltage, 0.0);
 
 		// if all PV going to battery could have 0% efficiency of inverter
 		double efficiencyDCAC = m_BatteryPower->sharedInverter->efficiencyAC * 0.01;
@@ -285,7 +285,7 @@ void BatteryPowerFlow::calculateDCConnected()
 	else
 	{
 		// convert the DC power to AC
-		m_BatteryPower->sharedInverter->acpower(P_gen_dc * util::kilowatt_to_watt, voltage, 0.0);
+		m_BatteryPower->sharedInverter->calculateACPower(P_gen_dc * util::kilowatt_to_watt, voltage, 0.0);
 		P_gen_ac = m_BatteryPower->sharedInverter->powerAC_kW;
 		double efficiencyDCAC = m_BatteryPower->sharedInverter->efficiencyAC * 0.01;
 

@@ -1861,7 +1861,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 					}
 					p_pv_dc_use.push_back(static_cast<ssc_number_t>(dcpwr));
 
-					sharedInverter->acpower(dcPowerNetTotalSystem, dcVoltagePerMppt[0], 0.0); //DC batteries not allowed with multiple MPPT, so can just use MPPT 1's voltage
+					sharedInverter->calculateACPower(dcPowerNetTotalSystem, dcVoltagePerMppt[0], 0.0); //DC batteries not allowed with multiple MPPT, so can just use MPPT 1's voltage
 
 					if (p_pv_clipping_forecast.size() > 1 && p_pv_clipping_forecast.size() > idx % (8760 * step_per_hour)) {
 						cliploss = p_pv_clipping_forecast[idx % (8760 * step_per_hour)] * util::kilowatt_to_watt;
@@ -1924,7 +1924,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 				if (en_batt && (batt_topology == ChargeController::DC_CONNECTED))
 				{
 					// Compute PV clipping before adding battery
-					sharedInverter->acpower(dcPowerNetTotalSystem, dcVoltagePerMppt[0], wf.tdry); //DC batteries not allowed with multiple MPPT, so can just use MPPT 1's voltage
+					sharedInverter->calculateACPower(dcPowerNetTotalSystem, dcVoltagePerMppt[0], wf.tdry); //DC batteries not allowed with multiple MPPT, so can just use MPPT 1's voltage
 
 					// Run PV plus battery through sharedInverter, returns AC power
 					batt.advance(*this, dcPowerNetTotalSystem*util::watt_to_kilowatt, dcVoltagePerMppt[0], cur_load, sharedInverter->powerClipLoss_kW); 
@@ -1934,7 +1934,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 				{
 					// inverter: runs at all hours of the day, even if no DC power.  important
 					// for capturing tare losses
-					sharedInverter->acpower(dcPowerNetPerMppt, dcVoltagePerMppt, wf.tdry);
+					sharedInverter->calculateACPower(dcPowerNetPerMppt, dcVoltagePerMppt, wf.tdry);
 					acpwr_gross = sharedInverter->powerAC_kW;
 				}		
 				

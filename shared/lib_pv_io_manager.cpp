@@ -471,7 +471,7 @@ PVSystem_IO::PVSystem_IO(compute_module* cm, std::string cmName, Simulation_IO *
 	{
 		std::vector<int> mppt_n; //create a temporary vector to hold which subarrays are on this mppt input
 		//find all subarrays on this mppt input
-		for (int n_subarray = 0; n_subarray < 4; n_subarray++) //jmf update this so that all subarray markers are consistent, get rid of "enable" check
+		for (int n_subarray = 0; n_subarray < Subarrays.size(); n_subarray++) //jmf update this so that all subarray markers are consistent, get rid of "enable" check
 			if (Subarrays[n_subarray]->enable)
 				if (Subarrays[n_subarray]->mpptInput == mppt)
 					mppt_n.push_back(n_subarray);
@@ -479,6 +479,10 @@ PVSystem_IO::PVSystem_IO(compute_module* cm, std::string cmName, Simulation_IO *
 			throw compute_module::exec_error(cmName, "At least one subarray must be assigned to each inverter MPPT input.");
 		mpptMapping.push_back(mppt_n); //add the subarrays on this input to the total mppt mapping vector
 	}
+
+	// Only one multi-MPPT inverter is allowed at the moment
+	if (Inverter->nMpptInputs > 1 && numberOfInverters > 1)
+		throw compute_module::exec_error(cmName, "At this time, only one multiple-MPPT-input inverter may be modeled per system. See help for details.");
 
 	//Subarray mismatch calculations
 	enableMismatchVoltageCalc = cm->as_boolean("enable_mismatch_vmax_calc");
