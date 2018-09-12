@@ -234,12 +234,12 @@ public:
 		bool is_rc = c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_is_rc;
 
 		int n_mc_stages = c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.ms_mc_ms_des_solved.m_n_stages;
-		int n_rc_stages = 0;
+		int n_rc_stages = 1;
 		if(is_rc)
 			n_rc_stages = c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.ms_rc_ms_des_solved.m_n_stages;		//[-]
 		
 		int cycle_config = c_sco2_cycle.get_design_par()->m_cycle_config;
-		int n_pc_stages = 0;
+		int n_pc_stages = 1;
 		if(cycle_config == 2)
 			n_pc_stages = c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.ms_pc_ms_des_solved.m_n_stages;		//[-]
 

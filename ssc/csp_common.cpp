@@ -1122,9 +1122,6 @@ int sco2_design_cmod_common(compute_module *cm, C_sco2_recomp_csp & c_sco2_cycle
 		p_rc_eta_stages_des[0] = ssc_nan;
 		cm->assign("rc_phi_surge", ssc_nan);
 		cm->assign("rc_cost", ssc_nan);
-
-		// Set number of RC stages = 1 so nan array allocations work
-		n_rc_stages = 1;
 	}
 
 	// Precompressor		
@@ -1175,8 +1172,6 @@ int sco2_design_cmod_common(compute_module *cm, C_sco2_recomp_csp & c_sco2_cycle
 
 		cm->assign("pc_phi_surge", ssc_nan);
 		cm->assign("pc_cost", ssc_nan);
-
-		n_pc_stages = 1;
 	}
 	// Turbine
 	cm->assign("t_W_dot", (ssc_number_t)(c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_W_dot_t*1.E-3));	//[MWe] convert from kWe
