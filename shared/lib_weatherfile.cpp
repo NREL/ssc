@@ -118,7 +118,18 @@ static float col_or_nan(const std::string &s)
 	if (!s.empty() &&
 		std::any_of(s.begin(), s.end(), ::isdigit))
 	{
-		return (float)stof(s);
+		if (::isdigit(s[0]))
+		{
+			return (float)stof(s);
+		}
+		else
+		{
+			std::string x = s.substr(1, s.length() - 1);
+			if (s[0] == '-')
+				return (float)(0.0-stof(x));
+			else
+				return (float)stof(x);
+		}
 	}
 	else
 		return std::numeric_limits<float>::quiet_NaN();;
@@ -504,7 +515,7 @@ void weatherfile::handle_missing_field(size_t index, int col) {
 
 	// single missing value: take average
 	if (!is_missing(m_columns[col].data[prev]) && !is_missing(m_columns[col].data[next])) {
-		m_columns[col].data[index] = (m_columns[col].data[prev] + m_columns[col].data[next]) / 2.;
+		m_columns[col].data[index] = (m_columns[col].data[prev] + m_columns[col].data[next]) / 2.0f;
 		return;
 	}
 
@@ -628,10 +639,10 @@ bool weatherfile::open(const std::string &file, bool header_only)
 		m_hdr.location = cols[0];
 		m_hdr.city = cols[1];
 		m_hdr.state = cols[2];
-		m_hdr.tz = stof(cols[3]);
-		m_hdr.lat = stof(cols[4]);
-		m_hdr.lon = stof(cols[5]);
-		m_hdr.elev = stof(cols[6]);
+		m_hdr.tz = col_or_nan(cols[3]);
+		m_hdr.lat = col_or_nan(cols[4]);
+		m_hdr.lon = col_or_nan(cols[5]);
+		m_hdr.elev = col_or_nan(cols[6]);
 
 		m_startSec = 1800;
 		m_stepSec = 3600;
@@ -659,10 +670,10 @@ bool weatherfile::open(const std::string &file, bool header_only)
 		m_hdr.country = cols[3];
 		m_hdr.source = cols[4];
 		m_hdr.location = cols[5];
-		m_hdr.lat = stof(cols[6]);
-		m_hdr.lon = stof(cols[7]);
-		m_hdr.tz = stof(cols[8]);
-		m_hdr.elev = stof(cols[9]);
+		m_hdr.lat = col_or_nan(cols[6]);
+		m_hdr.lon = col_or_nan(cols[7]);
+		m_hdr.tz = col_or_nan(cols[8]);
+		m_hdr.elev = col_or_nan(cols[9]);
 
 		/* skip over excess header lines */
 
@@ -695,12 +706,12 @@ bool weatherfile::open(const std::string &file, bool header_only)
 		m_hdr.city = cols[1];
 		m_hdr.state = cols[2];
 
-		m_hdr.tz = stof(cols[3]);
-		m_hdr.lat = stof(cols[4]);
-		m_hdr.lon = stof(cols[5]);
-		m_hdr.elev = stof(cols[6]);
-		m_stepSec = (size_t)stof(cols[7]); // time step in seconds
-		m_startYear = stoi(cols[8]);
+		m_hdr.tz = col_or_nan(cols[3]);
+		m_hdr.lat = col_or_nan(cols[4]);
+		m_hdr.lon = col_or_nan(cols[5]);
+		m_hdr.elev = col_or_nan(cols[6]);
+		m_stepSec = (size_t)col_or_nan(cols[7]); // time step in seconds
+		m_startYear = (int)col_or_nan(cols[8]);
 		char *p = const_cast<char *>(cols[9].c_str());
 
 		double start_hour = 0;
@@ -765,23 +776,23 @@ bool weatherfile::open(const std::string &file, bool header_only)
 
 			if (name == "lat" || name == "latitude")
 			{
-				m_hdr.lat = stof(value);
+				m_hdr.lat = col_or_nan(value);
 			}
 			else if (name == "lon" || name == "long" || name == "longitude" || name == "lng")
 			{
-				m_hdr.lon = stof(value);
+				m_hdr.lon = col_or_nan(value);
 			}
 			else if (name == "tz" || name == "timezone" || name == "time zone")
 			{
-				m_hdr.tz = stof(value);
+				m_hdr.tz = col_or_nan(value);
 			}
 			else if (name == "el" || name == "elev" || name == "elevation" || name == "site elevation" || name == "altitude")
 			{
-				m_hdr.elev = stof(value);
+				m_hdr.elev = col_or_nan(value);
 			}
 			else if (name == "year")
 			{
-				m_startYear = stoi(value);
+				m_startYear = (int)col_or_nan(value);
 			}
 			else if (name == "id" || name == "location" || name == "location id" || name == "station" || name == "station id" || name == "wban" || name == "wban#" || name == "site")
 			{
