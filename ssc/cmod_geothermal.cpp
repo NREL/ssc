@@ -6,6 +6,7 @@
 *  The Government retains for itself and others acting on its behalf a nonexclusive, paid-up,
 *  irrevocable worldwide license in the software to reproduce, prepare derivative works, distribute
 *  copies to the public, perform publicly and display publicly, and to permit others to do so.
+*  copies to the public, perform publicly and display publicly, and to permit others to do so.
 *
 *  Redistribution and use in source and binary forms, with or without modification, are permitted
 *  provided that the following conditions are met:
@@ -53,6 +54,8 @@
 #include "lib_geothermal.h"
 // for adjustment factors
 #include "common.h"
+
+
 
 static var_info _cm_vtab_geothermal[] = {
 //   VARTYPE           DATATYPE         NAME                                   LABEL                                           UNITS             META            GROUP              REQUIRED_IF                 CONSTRAINTS      UI_HINTS
@@ -155,7 +158,7 @@ static var_info _cm_vtab_geothermal[] = {
 	// This first batch of outputs is for calculating UI values																																		             
     { SSC_OUTPUT,       SSC_NUMBER,      "num_wells_getem_output",             "Number of wells calculated by GETEM",                 "",        "",             "GeoHourly",        "ui_calculations_only=1",   "",                "" },
     { SSC_OUTPUT,       SSC_NUMBER,      "plant_brine_eff",                    "Plant Brine Efficiency",                              "",        "",             "GeoHourly",        "ui_calculations_only=1",   "",                "" },
-    { SSC_OUTPUT,       SSC_NUMBER,      "gross_output",                       "Gross output from GETEM",                             "",        "",             "GeoHourly",        "ui_calculations_only=1",   "",                "" },
+    { SSC_OUTPUT,       SSC_NUMBER,      "gross_output",                       "Gross output from GETEM",                             "",        "",             "GeoHourly",        "ui_calculations_only=0",   "",                "" },
     { SSC_OUTPUT,       SSC_NUMBER,      "pump_depth_ft",                      "Pump depth calculated by GETEM",                      "ft",      "",             "GeoHourly",        "ui_calculations_only=1",   "",                "" },
     { SSC_OUTPUT,       SSC_NUMBER,      "pump_hp",                            "Pump hp calculated by GETEM",                         "hp",      "",             "GeoHourly",        "ui_calculations_only=1",   "",                "" },
     { SSC_OUTPUT,       SSC_NUMBER,      "reservoir_pressure",                 "Reservoir pres calculated by GETEM",                  "",        "",             "GeoHourly",        "ui_calculations_only=1",   "",                "" },
@@ -184,14 +187,15 @@ static var_info _cm_vtab_geothermal[] = {
     { SSC_OUTPUT,       SSC_ARRAY,       "timestep_wet_bulb",                  "Wet bulb temperature in each time step",              "C",       "",             "GeoHourly",        "ui_calculations_only=0",   "",                "" },
 																																																	             
     { SSC_OUTPUT,       SSC_NUMBER,      "lifetime_output",                    "Lifetime Output",                                     "kWh",     "",             "GeoHourly",        "ui_calculations_only=0",   "",                "" },
-	{ SSC_OUTPUT, SSC_NUMBER, "first_year_output", "First Year Output", "kWh", "", "GeoHourly", "ui_calculations_only=0", "", "" },
-	{ SSC_OUTPUT, SSC_NUMBER, "annual_energy", "Annual Energy", "kWh", "", "GeoHourly", "ui_calculations_only=0", "", "" },
+	{ SSC_OUTPUT,		SSC_NUMBER,		 "first_year_output",					 "First Year Output",								 "kWh",		"",				 "GeoHourly",		 "ui_calculations_only=0",	 "",				"" },
+	{ SSC_OUTPUT,		SSC_NUMBER,		"annual_energy",						"Annual Energy",									"kWh",		"",				"GeoHourly",		 "ui_calculations_only=0",	"",					"" },
 
 
-	{ SSC_OUTPUT, SSC_NUMBER, "capacity_factor", "Capacity factor", "", "", "", "*", "", "" },
-	{ SSC_OUTPUT, SSC_NUMBER, "kwh_per_kw", "First year kWh/kW", "", "", "", "*", "", "" },
-
-
+	{ SSC_OUTPUT,		SSC_NUMBER,		"capacity_factor",						 "Capacity factor",										"",		"",					 "",			"*",						"",					"" },
+	{ SSC_OUTPUT,		SSC_NUMBER,		 "kwh_per_kw",							"First year kWh/kW",									 "",	"",					 "",			 "*",						"",					"" },
+	//
+	{ SSC_OUTPUT,        SSC_NUMBER,      "eff_secondlaw",                        "Second Law Efficiency",               "C",              "",             "GeoHourly",        "",                        "",                "" },
+	
 
 var_info_invalid };
 
@@ -277,6 +281,8 @@ public:
 		geo_inputs.md_TemperatureResourceC = as_double("resource_temp");
 		geo_inputs.me_dc = TEMPERATURE;
 		geo_inputs.md_TemperaturePlantDesignC = as_double("design_temp");
+		
+		
 
 		//reservoir properties
 		geo_inputs.md_TemperatureEGSAmbientC = 15.0;
@@ -337,6 +343,8 @@ public:
 			
 			assign("capacity_factor", var_data((ssc_number_t)(0)));
 			assign("kwh_per_kw", var_data((ssc_number_t)0));
+			//assign("reservoir_avg_temp", var_data(ssc_number_t)physics::FarenheitToCelsius(geo_outputs.md_AverageReservoirTemperatureF));
+			//double nameplate = geo_outputs.md_GrossPlantOutputMW * 1000; // in kW
 		}
 		else {
 			// running the model, we need to specify other inputs
@@ -444,6 +452,13 @@ public:
 			if (RunGeothermalAnalysis(my_update_function, this, err_msg, pbp, pbInputs, geo_inputs, geo_outputs) != 0)
 				throw exec_error("geothermal", "error from geothermal hourly model: " + err_msg + ".");
 
+
+			//Assigning 2nd Law efficiency:
+			//double eff_secondlaw = var_data(static_cast<ssc_number_t>(geo_outputs.eff_secondlaw));
+			double eff_secondlaw = geo_outputs.eff_secondlaw;
+			assign("eff_secondlaw", eff_secondlaw);
+			
+
 			// Summary calculations
 			ssc_number_t total_energy = 0;
 			for (size_t i = 0; i < 12 * geo_inputs.mi_ProjectLifeYears; ++i) {
@@ -468,6 +483,8 @@ public:
 			}
 			if (nameplate > 0) kWhperkW = annual_energy / nameplate;
 			if (geo_inputs.mi_ProjectLifeYears > 0) kWhperkW = kWhperkW / geo_inputs.mi_ProjectLifeYears;
+
+			assign("gross_output", var_data((ssc_number_t)geo_outputs.md_GrossPlantOutputMW));
 			assign("capacity_factor", var_data((ssc_number_t)(kWhperkW / 87.6)));
 			assign("kwh_per_kw", var_data((ssc_number_t)kWhperkW));
 			// 5/28/15 average provided for FCR market

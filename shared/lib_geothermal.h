@@ -139,7 +139,7 @@ struct SGeothermal_Inputs
 	double md_EGSFractureAngle;								// default 15 degrees
 	double md_RatioInjectionToProduction;					// used in non-cost equation, so it needs to be an input
 	double md_AdditionalPressure;							// manually enter additional psi for injection pumps
-
+	
 
 	const char * mc_WeatherFileName;
 	int * mia_tou;											// time of use array
@@ -156,11 +156,14 @@ struct SGeothermal_Outputs
 		maf_timestep_power = maf_timestep_test_values = maf_timestep_pressure = maf_timestep_dry_bulb = maf_timestep_wet_bulb = NULL;
 		mb_BrineEffectivenessCalculated = mb_FlashPressuresCalculated = false;
 		maf_hourly_power = NULL;
+
 	}
 
 	// single values used in calculations, some also used in UI
 	double md_NumberOfWells;
 	double md_PumpWorkKW;
+	double eff_secondlaw;
+	
 
 	bool mb_BrineEffectivenessCalculated;
 	double md_FlashBrineEffectiveness;

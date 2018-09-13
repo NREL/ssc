@@ -447,10 +447,12 @@ public:
 	CGeothermalAnalyzer(const SGeothermal_Inputs& gti, SGeothermal_Outputs& gto);
 	CGeothermalAnalyzer(const SPowerBlockParameters& pbp, SPowerBlockInputs& pbi, const SGeothermal_Inputs& gti, SGeothermal_Outputs& gto);
 	~CGeothermalAnalyzer();
+	
 
 	bool RunAnalysis( bool (*update_function)(float, void*), void *user_data );
 	bool InterfaceOutputsFilled(void);
 	std::string error() { return ms_ErrorString; }
+	
 
 private:
 	// objects
@@ -474,8 +476,8 @@ private:
 	double md_WorkingTemperatureC; // current working temp of the fluid coming out of the ground
 	double md_LastProductionTemperatureC; // store the last temperature before calculating new one
 	double md_TimeOfLastReservoirReplacement; // for EGS calcs
-
-
+	
+	
 	// functions
 	void init(void); // code common to both constructors
 	bool IsHourly(void);
@@ -484,6 +486,7 @@ private:
 	double FractionOfMaxEfficiency(void);
 	bool CanReplaceReservoir(double dTimePassedInYears);
 	void CalculateNewTemperature(double dElapsedTimeInYears);
+	
 
 	double GetPumpWorkKW(void);
 	double NumberOfReservoirs(void);
@@ -756,6 +759,7 @@ double CGeothermalAnalyzer::MaxSecondLawEfficiency()
 	// which leads to actual plant output(after pumping losses) > design output (before pump losses) ??
 	// which leads to relative revenue > 1 ??
 	double dGetemAEForSecondLaw = (geothermal::IMITATE_GETEM) ? GetAEBinary() : GetAE(); // GETEM uses the correct ambient temperature, but it always uses Binary constants, even if flash is chosen as the conversion technology
+	mp_geo_out->eff_secondlaw = GetPlantBrineEffectiveness() / dGetemAEForSecondLaw;
 	return  GetPlantBrineEffectiveness() / dGetemAEForSecondLaw;
 }
 
@@ -986,6 +990,8 @@ double CGeothermalAnalyzer::InjectionTemperatureC() // calculate injection tempe
 	double b = (-0.00244 * GetTemperaturePlantDesignC()) - 0.0567;
 	double dPlantBrineEffectiveness = (geothermal::IMITATE_GETEM) ? 10.35 : GetPlantBrineEffectiveness();
 	double eff = dPlantBrineEffectiveness / GetAEBinary(); //available energy based on resource temp
+	
+
 	double tr = a * exp(b*eff);
 	double t1 = physics::KelvinToCelcius(physics::CelciusToKelvin(GetTemperaturePlantDesignC()) * tr);
 	double t2 = GetAmbientTemperatureC() + 27;
@@ -998,6 +1004,9 @@ double CGeothermalAnalyzer::InjectionTemperatureC() // calculate injection tempe
 
 	return ( (t3>y) ? t3 : y );
 }
+
+
+
 
 double CGeothermalAnalyzer::InjectionTemperatureF(void)
 {
