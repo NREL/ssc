@@ -658,6 +658,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
     */
 
     double disp_time_last = -9999.;
+	int opt_duration = -1;
 
     //values to report later on the dispatch algorithm
     double disp_qsf_expect = 0.;
@@ -870,36 +871,51 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
         bool opt_complete = false;
 
         //Run dispatch optimization?
+		// assume dispatch optimization frequency, horizon and horizon update frequency are defined relative to the start of the year, regardless of the simulation start time
+		// if simulation is started at an arbitrary point in time (i.e. mid-day), the first optimization will include only the "rest" of that horizon and all subsequent optimizations will follow the original frequency/horizon schedule
         if(mc_tou.mc_dispatch_params.m_dispatch_optimize && !skip_day)
         {
 
-            //time to reoptimize
-            int opt_horizon = mc_tou.mc_dispatch_params.m_optimize_horizon;
+			double hour_now = mc_kernel.mc_sim_info.ms_ts.m_time / 3600.;
+			int opt_horizon = mc_tou.mc_dispatch_params.m_optimize_horizon;  			
+			bool is_reoptimize = false;
 
-            double hour_now = mc_kernel.mc_sim_info.ms_ts.m_time/3600.;
+			// optimize at time steps which are a multiple of the optimization frequency
+			if ((int)mc_kernel.mc_sim_info.ms_ts.m_time % (int)(3600.*mc_tou.mc_dispatch_params.m_optimize_frequency) == baseline_step && disp_time_last != mc_kernel.mc_sim_info.ms_ts.m_time)  
+				is_reoptimize = true;
+			
+			// optimize at the first time point in the simulation, regardless of time of year
+			if (disp_time_last < 0)  
+				is_reoptimize = true; 
 
-            //reoptimize when the time is equal to multiples of the first time step
-			if( (int)mc_kernel.mc_sim_info.ms_ts.m_time % (int)(3600.*mc_tou.mc_dispatch_params.m_optimize_frequency) == baseline_step
-				&& disp_time_last != mc_kernel.mc_sim_info.ms_ts.m_time
-                )
+
+            //reoptimize 
+			if( is_reoptimize )
             {
 				
-				// updated optimization time horizon
+				// update the optimization duration and full time horizon
 				double time_start = mc_kernel.mc_sim_info.ms_ts.m_time - baseline_step;
-				if (mc_tou.mc_dispatch_params.m_horizon_update_frequency != mc_tou.mc_dispatch_params.m_optimize_frequency)
+						
+				if (mc_tou.mc_dispatch_params.m_horizon_update_frequency != mc_tou.mc_dispatch_params.m_optimize_frequency || disp_time_last < 0)
 					opt_horizon = mc_tou.mc_dispatch_params.m_optimize_horizon - (int)(((int)time_start % (3600 * mc_tou.mc_dispatch_params.m_horizon_update_frequency)) / 3600.);
+
+				opt_duration = mc_tou.mc_dispatch_params.m_optimize_frequency;  // number of hours for which this optimized solution is applied		
+				if (disp_time_last < 0) // first optimization may have non-standard horizon
+					opt_duration -= (int)(time_start / 3600.) % mc_tou.mc_dispatch_params.m_optimize_frequency;
+
 
 
                 //if this is the last day of the year, update the optimization horizon to be no more than the last 24 hours. 
-				
                 if( hour_now >= (8760 - opt_horizon) )
                     opt_horizon = (int)std::min((double)opt_horizon, (double)(8761-hour_now));
+
+
 
                 //message
                 std::stringstream ss;
                 ss << "Optimizing thermal energy dispatch profile for time window " 
 					<< (int)(mc_kernel.mc_sim_info.ms_ts.m_time / 3600.) << " - "
-					<< (int)(mc_kernel.mc_sim_info.ms_ts.m_time / 3600.) + mc_tou.mc_dispatch_params.m_optimize_frequency;
+					<< (int)(mc_kernel.mc_sim_info.ms_ts.m_time / 3600.) + opt_duration;
                 
                 mc_csp_messages.add_message(C_csp_messages::NOTICE, ss.str());
 
@@ -983,8 +999,10 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 
 
 						// find location in full scenario input arrays
-						int opt_period = (int)(time_start / 3600. / mc_tou.mc_dispatch_params.m_optimize_frequency);
-						int update_period = (int)floor(time_start / 3600. / mc_tou.mc_dispatch_params.m_horizon_update_frequency);
+						// assume that scenario input arrays are provided for full year, regardless of start time for simulation
+
+						int opt_period = (int)((time_start / 3600. + opt_duration) / mc_tou.mc_dispatch_params.m_optimize_frequency) - 1;  // optimization period in scenario array
+						int update_period = (int)floor(time_start / 3600. / mc_tou.mc_dispatch_params.m_horizon_update_frequency); 
 
 						int n_opt_per_update = mc_tou.mc_dispatch_params.m_horizon_update_frequency / mc_tou.mc_dispatch_params.m_optimize_frequency;	// optimizations per horizon update 
 						int n_hour_per_update = (n_opt_per_update * mc_tou.mc_dispatch_params.m_optimize_horizon) - mc_tou.mc_dispatch_params.m_optimize_frequency * (n_opt_per_update*(n_opt_per_update - 1) / 2);
@@ -993,9 +1011,11 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 						int sc_start = update_period * nstep_per_update;  // first point in scenario arrays for this optimization
 						int p = opt_period - update_period * n_opt_per_update;
 						if (p > 0)
-							sc_start += mc_tou.mc_dispatch_params.m_disp_steps_per_hour * (mc_tou.mc_dispatch_params.m_optimize_horizon*p - mc_tou.mc_dispatch_params.m_optimize_frequency * (p*(p - 1) / 2)); 
-
-
+							sc_start += mc_tou.mc_dispatch_params.m_disp_steps_per_hour * (mc_tou.mc_dispatch_params.m_optimize_horizon*p - mc_tou.mc_dispatch_params.m_optimize_frequency * (p*(p - 1) / 2));
+		
+						if (disp_time_last < 0 && stepstart >0) // First optimization starts in the middle of this optimization period
+							sc_start += (mc_tou.mc_dispatch_params.m_optimize_frequency - opt_duration) * mc_tou.mc_dispatch_params.m_disp_steps_per_hour;
+						 
 
                         //assign the data
                         for( int tt=0; tt<nstepopt; tt++)
@@ -1064,8 +1084,12 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
                 //read in other values
 
                 //calculate the current read step, account for number of dispatch steps per hour and the simulation time step
-                dispatch.m_current_read_step = (int)(mc_kernel.mc_sim_info.ms_ts.m_time * mc_tou.mc_dispatch_params.m_disp_steps_per_hour / 3600. - .001) 
-                    % (mc_tou.mc_dispatch_params.m_optimize_frequency * mc_tou.mc_dispatch_params.m_disp_steps_per_hour ); 
+				dispatch.m_current_read_step = (int)(mc_kernel.mc_sim_info.ms_ts.m_time * mc_tou.mc_dispatch_params.m_disp_steps_per_hour / 3600. - .001)
+					% (mc_tou.mc_dispatch_params.m_optimize_frequency * mc_tou.mc_dispatch_params.m_disp_steps_per_hour);
+
+				if (opt_duration != mc_tou.mc_dispatch_params.m_optimize_frequency)   // Non-standard optimization period (can only occur at first optimization)
+					dispatch.m_current_read_step -= (mc_tou.mc_dispatch_params.m_optimize_frequency - opt_duration) * mc_tou.mc_dispatch_params.m_disp_steps_per_hour;
+
 
                 is_rec_su_allowed = dispatch.outputs.rec_operation.at( dispatch.m_current_read_step );
                 is_pc_sb_allowed = dispatch.outputs.pb_standby.at( dispatch.m_current_read_step );
@@ -1170,8 +1194,10 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
                 //if( is_sim_timestep_complete ) // disp_time_last != mc_kernel.mc_sim_info.ms_ts.ms_ts.m_time)
                 //    dispatch.m_current_read_step++;
 
-                if(dispatch.m_current_read_step > mc_tou.mc_dispatch_params.m_optimize_frequency * mc_tou.mc_dispatch_params.m_disp_steps_per_hour)
+                if(dispatch.m_current_read_step > mc_tou.mc_dispatch_params.m_optimize_frequency * mc_tou.mc_dispatch_params.m_disp_steps_per_hour 
+					|| dispatch.m_current_read_step > opt_duration * mc_tou.mc_dispatch_params.m_disp_steps_per_hour)
                     throw C_csp_exception("Counter synchronization error in dispatch optimization routine.", "dispatch");
+
             }
             
             disp_time_last = mc_kernel.mc_sim_info.ms_ts.m_time;
