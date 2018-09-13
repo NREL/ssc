@@ -734,7 +734,7 @@ void NS_HX_counterflow_eqs::solve_q_dot_for_fixed_UA_enth(int hot_fl_code /*-*/,
 
 	// Use design point effectiveness to generate 2 guess values
 	double q_dot_mult = max(0.99, min(0.95, eff_limit) / eff_limit);
-	if (eff_guess == eff_guess)
+	if ( std::isfinite(eff_guess) )
 	{
 		q_dot_mult = max(0.99, min(0.1, eff_guess));
 	}
@@ -806,6 +806,22 @@ void NS_HX_counterflow_eqs::solve_q_dot_for_fixed_UA(int hot_fl_code /*-*/, HTFP
 	double & q_dot /*kWt*/, double & T_c_out /*K*/, double & T_h_out /*K*/,
 	double & eff_calc /*-*/, double & min_DT /*K*/, double & NTU /*-*/, double & UA_calc)
 {
+	// Need to check if hot stream is actually hotter than the cold stream
+	// If not, just return the input temperatures for each stream
+	// Should maybe improve code to handle this case (i.e. check which input is hotter)...
+	if (T_h_in - T_c_in < 0.01)
+	{
+		q_dot = 0.0;
+		T_c_out = T_c_in;
+		T_h_out = T_h_in;
+		eff_calc = 0.0;
+		min_DT = std::abs(T_h_in - T_c_in);
+		NTU = 0.0;
+		UA_calc = UA_target;
+		return;
+	}
+
+
 	// Calculate inlet enthalpies from known state points
 	double h_c_in = std::numeric_limits<double>::quiet_NaN();
 	double h_h_in = std::numeric_limits<double>::quiet_NaN();
@@ -1039,6 +1055,7 @@ void C_HX_counterflow::design_calc_UA(C_HX_counterflow::S_des_calc_UA_par des_pa
 			"Calculated design effectiveness, %lg [-] is greater than the specified maximum effectiveness, %lg [-]."));
 	}
 
+	ms_des_solved.m_Q_dot_design = q_dot_design;	//[kWt]
 	ms_des_solved.m_UA_design_total = UA_calc;
 	ms_des_solved.m_min_DT_design = min_DT_calc;
 	ms_des_solved.m_eff_design = eff_calc;

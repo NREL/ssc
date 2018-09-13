@@ -208,6 +208,31 @@ TEST_F(CMPvsamv1PowerIntegration, NoFinancialModelModuleAndInverterModels)
 	}
 }
 
+/// Test PVSAMv1 with default no-financial model and combinations of module thermal, spectral, and reflection models
+//This test can be expanded when we allow different combinations of thermal, spectral, and reflection models with different module models 
+TEST_F(CMPvsamv1PowerIntegration, NoFinancialModelModuleThermalSpectralReflection)
+{
+	std::vector<double> annual_energy_expected = { 8714, 8749 };
+	std::map<std::string, double> pairs;
+	size_t count = 0;
+
+	// Module thermal models: NOCT, Heat Transfer Method
+	for (int cec_temp_corr_mode = 0; cec_temp_corr_mode < 1; cec_temp_corr_mode++)
+	{
+		pairs["cec_temp_corr_mode"] = cec_temp_corr_mode;
+		int pvsam_errors = modify_ssc_data_and_run_module(data, "pvsamv1", pairs);
+		EXPECT_FALSE(pvsam_errors);
+
+		if (!pvsam_errors)
+		{
+			ssc_number_t annual_energy;
+			ssc_data_get_number(data, "annual_energy", &annual_energy);
+			EXPECT_NEAR(annual_energy, annual_energy_expected[count], m_error_tolerance_hi) << "Annual energy.";
+		}
+		count++;
+	}	
+}
+
 /// Test PVSAMv1 with default no-financial model and sytem design page changes
 TEST_F(CMPvsamv1PowerIntegration, NoFinancialModelSystemDesign)
 {
@@ -218,7 +243,6 @@ TEST_F(CMPvsamv1PowerIntegration, NoFinancialModelSystemDesign)
 	std::map<std::string, double> pairs;
 	pairs["modules_per_string"] = 6;
 	pairs["subarray1_nstrings"] = 49;
-	pairs["strings_in_parallel"] = 49;
 	pairs["inverter_count"] = 22;
 	pairs["subarray1_track_mode"] = 0;
 
@@ -328,7 +352,6 @@ TEST_F(CMPvsamv1PowerIntegration, NoFinancialModelShading)
 
 	// 2 subarrays, one pointing east, one west
 	pairs["modules_per_string"] = 6;
-	pairs["strings_in_parallel"] = 4;
 	pairs["inverter_count"] = 2;
 	pairs["subarray1_nstrings"] = 2;
 	pairs["subarray1_azimuth"] = 90;
@@ -435,29 +458,35 @@ TEST_F(CMPvsamv1PowerIntegration, NoFinancialModelLosses)
 	}
 }
 
-/// Test inverter temperature derate 
-TEST_F(CMPvsamv1PowerIntegration, DISABLED_InvTempDerate) {
+/// Change half of all temperatures so that inv eff is derated by ~50% for half the year
+/// DC production & inverter efficiency both decrease as result
+TEST_F(CMPvsamv1PowerIntegration, InvTempDerate) {
 	var_data* weatherData = create_weatherdata_array(1);
 	ssc_data_unassign(data, "solar_resource_file");
-
-	// change half of all temperatures so that inv is derated by ~50% for half the year
+	var_table *vt = static_cast<var_table*>(data);
+	
 	float temp[8760];
+	for (size_t i = 0; i < 8760; i++) {
+		temp[i] = 26.f;
+	}
 	for (size_t i = 0; i < 4380; i++) {
 		temp[i] = 76.6f;
 	}
-	for (size_t i = 4380; i < 8760; i++) {
-		temp[i] = 26.f;
-	}
+	
 	var_data tdry_vd = var_data(temp, 8760);
+	tdry_vd = var_data(temp, 8760);
 	weatherData->table.assign("tdry", tdry_vd);
-	var_table *vt = static_cast<var_table*>(data);
 	vt->assign("solar_resource_data", *weatherData);
 
 	EXPECT_FALSE(run_module(data, "pvsamv1"));
 
-	ssc_number_t annual_energy, percent_loss, monthly_energy;
+	ssc_number_t annual_energy, loss, percent_loss, monthly_energy;
+
 	ssc_data_get_number(data, "annual_energy", &annual_energy);
 	EXPECT_NEAR(annual_energy, 3540, 10) << "Annual energy reduced";
+
+	ssc_data_get_number(data, "annual_inv_tdcloss", &loss);
+	EXPECT_NEAR(loss, 992, 10) << "Annual loss";
 
 	ssc_data_get_number(data, "annual_ac_inv_tdc_loss_percent", &percent_loss);
 	EXPECT_NEAR(percent_loss, 20, 2);

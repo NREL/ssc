@@ -159,8 +159,8 @@ bool spe_module_t::operator() ( pvinput_t &input, double TcellC, double , pvoutp
 	// Sev 2015-09-14: Changed to allow POA data directly
 	double dceff, dcpwr;
 	if( input.radmode != 3  || !input.usePOAFromWF){
-		dceff = eff_interpolate( input.Ibeam + idiff, Rad, Eff );
-		dcpwr = dceff*(input.Ibeam+idiff)*Area;	
+		dceff = eff_interpolate( input.Ibeam + idiff + input.Irear, Rad, Eff );
+		dcpwr = dceff*(input.Ibeam+idiff + input.Irear)*Area;	
 	}
 	else{
 		dceff = eff_interpolate( input.poaIrr, Rad, Eff );
@@ -177,11 +177,9 @@ bool spe_module_t::operator() ( pvinput_t &input, double TcellC, double , pvoutp
 	output.Current = output.Power / output.Voltage;
 	output.Isc_oper = IscRef();
 	output.Voc_oper = VocRef();
+	output.AOIModifier = 1.0; // No model for cover effects in simple efficiency model 
 	return true;
 }
-
-
-
 
 /******** BEGIN GOLDEN METHOD CODE FROM NR3 *********/
 

@@ -261,6 +261,12 @@ battstor::battstor(compute_module &cm, bool setup_model, size_t nrec, double dt_
 {
 	make_vars = false;
 
+	// time quantities
+	nyears = 1;
+	_dt_hour = dt_hr;
+	step_per_hour = static_cast<size_t>(1. / _dt_hour);
+	initialize_time(0, 0, 0);
+
 	// battery variables
 	if (batt_vars_in == 0)
 	{
@@ -271,10 +277,13 @@ battstor::battstor(compute_module &cm, bool setup_model, size_t nrec, double dt_
 		{
 			// Financial Parameters
 			batt_vars->analysis_period = cm.as_integer("analysis_period");
-			batt_vars->batt_meter_position = cm.as_integer("batt_meter_position");
 
 			// Lifetime simulation
 			batt_vars->system_use_lifetime_output = cm.as_boolean("system_use_lifetime_output");
+
+			if (batt_vars->system_use_lifetime_output) {
+				nyears = batt_vars->analysis_period;
+			}
 
 			// Chemistry
 			batt_vars->batt_chem = cm.as_integer("batt_chem");
@@ -341,6 +350,7 @@ battstor::battstor(compute_module &cm, bool setup_model, size_t nrec, double dt_
 
 			// Storage dispatch controllers
 			batt_vars->batt_dispatch = cm.as_integer("batt_dispatch_choice");
+			batt_vars->batt_meter_position = cm.as_integer("batt_meter_position");
 
 			// Front of meter
 			if (batt_vars->batt_meter_position == dispatch_t::FRONT)
@@ -392,6 +402,37 @@ battstor::battstor(compute_module &cm, bool setup_model, size_t nrec, double dt_
 					batt_vars->batt_target_choice = cm.as_integer("batt_target_choice");
 					batt_vars->target_power_monthly = cm.as_vector_double("batt_target_power_monthly");
 					batt_vars->target_power = cm.as_vector_double("batt_target_power");
+
+					if (batt_vars->batt_target_choice == dispatch_automatic_behind_the_meter_t::TARGET_SINGLE_MONTHLY)
+					{
+						target_power_monthly = batt_vars->target_power_monthly;
+						target_power.clear();
+						target_power.reserve(8760 * step_per_hour);
+						for (size_t month = 0; month != 12; month++)
+						{
+							double target = target_power_monthly[month];
+							for (size_t h = 0; h != util::hours_in_month(month + 1); h++)
+							{
+									for (size_t s = 0; s != step_per_hour; s++)
+										target_power.push_back(target);
+							}
+						}
+						
+					}
+					else
+						target_power = batt_vars->target_power;
+
+					if (target_power.size() != nrec)
+						throw compute_module::exec_error("battery", "invalid number of target powers, must be equal to number of records in weather file");
+
+					// extend target power to lifetime internally
+					for (size_t y = 1; y < nyears; y++){
+						for (size_t i = 0; i < nrec; i++) {
+							target_power.push_back(target_power[i]);
+						}
+					}
+					batt_vars->target_power = target_power;
+					
 				}
 				else if (batt_vars->batt_dispatch == dispatch_t::CUSTOM_DISPATCH)
 				{
@@ -550,51 +591,13 @@ battstor::battstor(compute_module &cm, bool setup_model, size_t nrec, double dt_
 	en = setup_model;
 	if (!en) return;
 
-	// time quantities
-	nyears = 1;
-	_dt_hour = dt_hr;
-	step_per_hour = static_cast<size_t>(1. / _dt_hour);
-	initialize_time(0, 0, 0);
-	if (batt_vars->system_use_lifetime_output)
-		nyears = batt_vars->analysis_period;
-	else
-	{
+	if (!batt_vars->system_use_lifetime_output){
 		if (batt_vars->batt_replacement_option > 0)
 			cm.log("Replacements are enabled without running lifetime simulation, please run over lifetime to consider battery replacements", SSC_WARNING);
 	}
 	total_steps = nyears * 8760 * step_per_hour;
 	chem = batt_vars->batt_chem;
 
-	if (input_target)
-	{
-		int target_dispatch = batt_vars->batt_target_choice;
-		if (target_dispatch == 0)
-		{
-			target_power_monthly = batt_vars->target_power_monthly;
-			target_power.clear();
-			target_power.reserve(8760 * step_per_hour);
-			for (int month = 0; month != 12; month++)
-			{
-				double target = target_power_monthly[month];
-				for (int h = 0; h != util::hours_in_month(month + 1); h++)
-				{
-					for (size_t s = 0; s != step_per_hour; s++)
-						target_power.push_back(target);
-				}
-			}
-		}
-		else
-			target_power = batt_vars->target_power;
-
-		if (target_power.size() != nrec)
-			throw compute_module::exec_error("battery", "invalid number of target powers, must be equal to number of records in weather file");
-
-		// update for entire analysis period per user support issue 4/25/17
-		for (size_t iy = 1; iy < nyears; iy++)
-			for (size_t ir = 0; ir < nrec; ir++)
-				target_power.push_back(target_power[ir]);
-	}
-	
 	util::matrix_t<double>  batt_voltage_matrix = batt_vars->batt_voltage_matrix;
 	if (batt_vars->batt_voltage_choice == voltage_t::VOLTAGE_TABLE)
 	{
@@ -703,7 +706,6 @@ battstor::battstor(compute_module &cm, bool setup_model, size_t nrec, double dt_
 	if (cap_vs_temp.nrows() < 2 || cap_vs_temp.ncols() != 2)
 		throw compute_module::exec_error("battery", "capacity vs temperature matrix must have two columns and at least two rows");
 
-	// thermal_outputs = new thermal_outputs_t();
 	thermal_model = new thermal_t(
 		batt_vars->batt_mass, // [kg]
 		batt_vars->batt_length, // [m]
@@ -909,8 +911,6 @@ void battstor::parse_configuration()
 	if (dynamic_cast<dispatch_automatic_t*>(dispatch_model))
 	{
 		prediction_index = 0;
-
-
 		if (batt_meter_position == dispatch_t::BEHIND)
 		{
 			if (batt_dispatch == dispatch_t::LOOK_AHEAD || batt_dispatch == dispatch_t::MAINTAIN_TARGET)

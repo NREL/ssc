@@ -885,7 +885,8 @@ bool iec61853_module_t::operator() ( pvinput_t &input, double TcellC, double opv
 	/* initialize output first */
 	out.Power = out.Voltage = out.Current = out.Efficiency = out.Voc_oper = out.Isc_oper = 0.0;
 	
-	double poa, tpoa;
+	double poa, tpoa, iamf;
+	iamf = 1;
 
 	if( input.radmode != 3 ){ // Skip module cover effects if using POA reference cell data 
 		// plane of array irradiance, W/m2
@@ -893,9 +894,10 @@ bool iec61853_module_t::operator() ( pvinput_t &input, double TcellC, double opv
 
 		// transmitted poa through module cover
 		tpoa = poa;
+
 		if ( input.IncAng > AOI_MIN && input.IncAng < AOI_MAX )
 		{
-			double iamf = iam( input.IncAng, GlassAR );
+			iamf = iam( input.IncAng, GlassAR );
 			tpoa = poa - ( 1.0 - iamf )*input.Ibeam*cos(input.IncAng*3.1415926/180.0);
 			if( tpoa < 0.0 ) tpoa = 0.0;
 			if( tpoa > poa ) tpoa = poa;
@@ -958,6 +960,7 @@ bool iec61853_module_t::operator() ( pvinput_t &input, double TcellC, double opv
 		out.Voc_oper = V_oc;
 		out.Isc_oper = I_sc;
 		out.CellTemp = Tc - 273.15;
+		out.AOIModifier = iamf;
 	}
 
 	return out.Power >= 0;
