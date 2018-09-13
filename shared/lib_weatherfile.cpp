@@ -1510,7 +1510,7 @@ bool weatherfile::open(const std::string &file, bool header_only)
 	}
 	else {
 		if (m_nRecords != 8760) {
-			m_message = "Hourly weather file detected but %d records found.", m_nRecords;
+			m_message = util::format("Hourly weather file detected but %d records found.", m_nRecords);
 			return false;
 		}
 	}
