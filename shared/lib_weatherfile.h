@@ -256,7 +256,7 @@ public:
 	void handle_missing_field(size_t index, int col);
 
 	/// Check timestep of weatherfile and leap year, returns true if success
-	bool timeStepAndLeapYear(int hdr_step_sec = -1);
+	bool timeStepChecks(int hdr_step_sec = -1);
 
 	bool open( const std::string &file, bool header_only = false );
 

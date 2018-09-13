@@ -542,7 +542,7 @@ void weatherfile::handle_missing_field(size_t index, int col) {
 	}
 }
 
-bool weatherfile::timeStepAndLeapYear(int hdr_step_sec) {
+bool weatherfile::timeStepChecks(int hdr_step_sec) {
 	int nmult = (int)m_nRecords / 8760;
 
 	if (hdr_step_sec > 0)
@@ -572,6 +572,7 @@ bool weatherfile::timeStepAndLeapYear(int hdr_step_sec) {
 		m_ok = false;
 		return false;
 	}
+
 	return true;
 }
 
@@ -693,7 +694,7 @@ bool weatherfile::open(const std::string &file, bool header_only)
 		ifs.clear();
 		ifs.seekg(0);
 
-		if (!timeStepAndLeapYear()) return false; 
+		if (!timeStepChecks()) return false;
 
 		/*  LOCATION,Cairo Intl Airport,Al Qahirah,EGY,ETMY,623660,30.13,31.40,2.0,74.0 */
 		/*  LOCATION,Alice Springs Airport,NT,AUS,RMY,943260,-23.80,133.88,9.5,547.0 */
@@ -907,7 +908,7 @@ bool weatherfile::open(const std::string &file, bool header_only)
 			getline(ifs, buf);  // header names
 			getline(ifs, buf);  // header values
 
-			if (!timeStepAndLeapYear(hdr_step_sec)) return false;
+			if (!timeStepChecks(hdr_step_sec)) return false;
 		}
 
 	}
@@ -1481,20 +1482,36 @@ bool weatherfile::open(const std::string &file, bool header_only)
 		}
 	}
 
-	// final checks over data
-	if (m_hasLeapYear && (n_leap_data_removed < 1)) {
-		m_message = "Weather data identified as containing leap year but 2/29 entry not found.";
-		return false;
-	}
-
+	// special handling for missing values for various fields
 	if (m_type == EPW) {
-		// special handling for missing values for various fields
 		for (size_t i = 0; i < m_nRecords; i++) {
 			for (int j = 5; j < 19; j++) {
 				if (j == 8 || j == 17 || j == 18 || j == 10) continue;	// EPW format does not contain 
 				if (my_isnan(m_columns[j].data[i])) handle_missing_field(i, j);
 			}
 			if (m_columns[TWET].data[i] == -999.) m_columns[TWET].data[i] = (float)calc_twet((double)m_columns[TDRY].data[i], (double)m_columns[RH].data[i], (double)m_columns[PRES].data[i]);
+		}
+	}
+
+	// final checks over data
+	if (m_hasLeapYear && (n_leap_data_removed < 1)) {
+		m_message = "Weather data identified as containing leap year but 2/29 entry not found.";
+		return false;
+	}
+
+	// make sure data is single-year
+	if (m_columns[MINUTE].index != -1) {
+		int minDiff = abs(m_columns[MINUTE].data[1] - m_columns[MINUTE].data[0]);
+		if (minDiff == 0) minDiff = 60;
+		if (minDiff * 60 != m_stepSec) {
+			m_message = util::format("Weather file timestep per hour (%f) does not correspond to 8760/nRecords", minDiff / 60.);
+			return false;
+		}
+	}
+	else {
+		if (m_nRecords != 8760) {
+			m_message = "Hourly weather file detected but %d records found.", m_nRecords;
+			return false;
 		}
 	}
 
