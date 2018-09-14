@@ -3331,12 +3331,12 @@ set_outputs_and_return:
 		t_loop_outlet = T_loop_outX - 273.15;
 		
 		double
-			E_loop_accum_out = E_loop_accum * 3.6e-9,
-			E_hdr_accum_out = E_hdr_accum * 3.6e-9;
+			E_loop_accum_out = E_loop_accum / 3.6e9,
+			E_hdr_accum_out = E_hdr_accum / 3.6e9;
 		
 		E_tot_accum = E_loop_accum_out + E_hdr_accum_out;
 		
-		double E_field_out = E_field*3.6e-9;
+		double E_field_out = E_field / 3.6e9;
 
         if (calc_design_pipe_vals) {
             T_rnr_des_out.resize(2 * nrunsec);
