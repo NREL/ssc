@@ -1503,7 +1503,7 @@ bool weatherfile::open(const std::string &file, bool header_only)
 	if (m_columns[MINUTE].index != -1) {
 		int minDiff = abs(m_columns[MINUTE].data[1] - m_columns[MINUTE].data[0]);
 		if (minDiff == 0) minDiff = 60;
-		if (minDiff * 60 != m_stepSec) {
+		if (minDiff * 60 != (size_t)m_stepSec) {
 			m_message = util::format("Weather file timestep per hour (%f) does not correspond to 8760/nRecords", minDiff / 60.);
 			return false;
 		}
