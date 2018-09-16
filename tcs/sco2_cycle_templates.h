@@ -4,6 +4,7 @@
 #include "sco2_cycle_components.h"
 #include "heat_exchangers.h"
 #include <string>
+#include "math.h"
 
 class C_sco2_cycle_core
 {
