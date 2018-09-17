@@ -597,7 +597,7 @@ var_info vtab_sco2_design[] = {
 		// Cycle Design
 	{ SSC_INPUT,  SSC_NUMBER,  "eta_isen_mc",          "Design main compressor isentropic efficiency",           "-",          "",    "",      "*",     "",       "" },
 	{ SSC_INPUT,  SSC_NUMBER,  "eta_isen_rc",          "Design re-compressor isentropic efficiency",             "-",          "",    "",      "*",     "",       "" },
-	{ SSC_INPUT,  SSC_NUMBER,  "eta_isen_pc",          "Design precompressor isentropic efficiency",             "-",          "",    "",      "*",     "",       "" },
+	{ SSC_INPUT,  SSC_NUMBER,  "eta_isen_pc",          "Design precompressor isentropic efficiency",             "-",          "",    "",      "cycle_config=2",     "",       "" },
 	{ SSC_INPUT,  SSC_NUMBER,  "eta_isen_t",           "Design turbine isentropic efficiency",                   "-",          "",    "",      "*",     "",       "" },
 	{ SSC_INPUT,  SSC_NUMBER,  "LT_recup_eff_max",     "Maximum allowable effectiveness in LT recuperator",      "-",          "",    "",      "*",     "",       "" },
 	{ SSC_INPUT,  SSC_NUMBER,  "HT_recup_eff_max",     "Maximum allowable effectiveness in LT recuperator",      "-",          "",    "",      "*",     "",       "" },
@@ -835,7 +835,10 @@ int sco2_design_cmod_common(compute_module *cm, C_sco2_recomp_csp & c_sco2_cycle
 	sco2_rc_des_par.m_HT_eff_max = cm->as_double("HT_recup_eff_max");  //[-]
 	sco2_rc_des_par.m_eta_mc = cm->as_double("eta_isen_mc");		   //[-]
 	sco2_rc_des_par.m_eta_rc = cm->as_double("eta_isen_rc");		   //[-]
-	sco2_rc_des_par.m_eta_pc = cm->as_double("eta_isen_pc");		   //[-]
+	if (sco2_rc_des_par.m_cycle_config == 2)
+		sco2_rc_des_par.m_eta_pc = cm->as_double("eta_isen_pc");		   //[-]
+	else
+		sco2_rc_des_par.m_eta_pc = sco2_rc_des_par.m_eta_mc;
 	sco2_rc_des_par.m_eta_t = cm->as_double("eta_isen_t");			   //[-]
 
 	// PHX design parameters
