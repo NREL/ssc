@@ -41,6 +41,28 @@ void BatteryPower::setSharedInverter(SharedInverter * a_sharedInverter) {
 	sharedInverter = a_sharedInverter;
 }
 
+void BatteryPower::reset()
+{
+	powerBattery = 0;
+	powerBatteryTarget = 0;
+	powerBatteryToGrid = 0;
+	powerBatteryToLoad = 0;
+	powerClippedToBattery = 0;
+	powerConversionLoss = 0;
+	powerGeneratedBySystem = 0;
+	powerGrid = 0;
+	powerGridToBattery = 0;
+	powerGridToLoad = 0;
+	powerLoad = 0;
+	powerPV = 0;
+	powerPVClipped = 0;
+	powerPVInverterDraw = 0;
+	powerPVToBattery = 0;
+	powerPVToGrid = 0;
+	powerPVToLoad = 0;
+	voltageSystem = 0;
+}
+
 BatteryPowerFlow::BatteryPowerFlow(double dtHour)
 {
 	std::unique_ptr<BatteryPower> tmp(new BatteryPower(dtHour));
@@ -86,6 +108,11 @@ void BatteryPowerFlow::initialize(double stateOfCharge)
 			m_BatteryPower->powerBattery = -m_BatteryPower->powerBatteryChargeMax;
 		}
 	}
+}
+
+void BatteryPowerFlow::reset()
+{
+	m_BatteryPower->reset();
 }
 
 
