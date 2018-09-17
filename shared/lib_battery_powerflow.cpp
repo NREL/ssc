@@ -284,10 +284,16 @@ void BatteryPowerFlow::calculateDCConnected()
 
 		// convert the DC power to AC
 		m_BatteryPower->sharedInverter->calculateACPower(P_gen_dc_inverter * util::kilowatt_to_watt, voltage, 0.0);
+		efficiencyDCAC = m_BatteryPower->sharedInverter->efficiencyAC * 0.01;
+
 
 		// For now, treat the AC/DC conversion as a single point efficiency until gain clarification on real behavior.
 		if (efficiencyDCAC <= 0.05 && P_grid_to_batt_dc > 0) {
  			efficiencyDCAC = m_BatteryPower->sharedInverter->getMaxPowerEfficiency() * 0.01;
+			m_BatteryPower->sharedInverter->powerAC_kW = P_gen_dc_inverter * efficiencyDCAC;
+		}
+		else if (efficiencyDCAC <= 0.05 && P_pv_to_inverter_dc > 0) {
+			efficiencyDCAC = 0.05;
 			m_BatteryPower->sharedInverter->powerAC_kW = P_gen_dc_inverter * efficiencyDCAC;
 		}
 
@@ -314,7 +320,9 @@ void BatteryPowerFlow::calculateDCConnected()
 	{
 		// convert the DC power to AC
 		m_BatteryPower->sharedInverter->calculateACPower(P_gen_dc * util::kilowatt_to_watt, voltage, 0.0);
+		efficiencyDCAC = m_BatteryPower->sharedInverter->efficiencyAC * 0.01;
 		P_gen_ac = m_BatteryPower->sharedInverter->powerAC_kW;
+
 		P_battery_ac = P_battery_dc * efficiencyDCAC;
 		P_pv_ac = P_pv_dc * efficiencyDCAC;
 

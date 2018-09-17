@@ -49,6 +49,7 @@ public:
 	double powerConsumptionLoss_kW;
 	double powerNightLoss_kW;
 	double powerTempLoss_kW;
+	double powerLossTotal_kW;
 
 protected:
 

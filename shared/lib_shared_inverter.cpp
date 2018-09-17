@@ -159,6 +159,7 @@ void SharedInverter::calculateACPower(const double powerDC_Watts, const double D
 	powerConsumptionLoss_kW *= m_numInverters * util::watt_to_kilowatt;
 	powerNightLoss_kW *= m_numInverters * util::watt_to_kilowatt;
 	powerTempLoss_kW = tempLoss * m_numInverters * util::watt_to_kilowatt;
+	powerLossTotal_kW = powerDC_kW - powerAC_kW;
 	efficiencyAC *= 100;
 
 	// In event shared inverter is charging a battery only, need to re-convert to negative power
