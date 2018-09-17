@@ -95,14 +95,17 @@ void C_sco2_recomp_csp::design_core()
 	// using -> C_RecompCycle::S_auto_opt_design_hit_eta_parameters
 	std::string error_msg;
 	int auto_err_code = 0;
+	std::string s_cycle_config = "";
 
 	if (ms_des_par.m_cycle_config == 2)
 	{
 		mpc_sco2_cycle = &mc_partialcooling_cycle;
+		s_cycle_config = "partial cooling";
 	}
 	else
 	{
 		mpc_sco2_cycle = &mc_rc_cycle;
+		s_cycle_config = "recompression";
 	}
 
 	// Set min temp
@@ -164,7 +167,8 @@ void C_sco2_recomp_csp::design_core()
 	{
 		if (ms_des_par.m_UA_recup_tot_des < 0.0)
 		{
-			throw(C_csp_exception("sCO2 recompression cycle and CSP integration design, design method 2, conductance must be > 0"));
+			std::string ex_msg = "The " + s_cycle_config + " cycle and CSP integration design, design method 2, conductance must be > 0";
+			throw(C_csp_exception(ex_msg.c_str()));
 		}
 		
 		C_sco2_cycle_core::S_auto_opt_design_parameters des_params;
@@ -216,7 +220,8 @@ void C_sco2_recomp_csp::design_core()
 	}
 	else
 	{
-		throw(C_csp_exception("sCO2 partial cooling cycle and CSP integration design, design method can only be 1 (specify UA) for now"));
+		std::string ex_msg = "The " + s_cycle_config + "cycle and CSP integration design, design method can only be 1 (specify UA) for now";
+		throw(C_csp_exception(ex_msg.c_str()));
 	}
 
 	if (auto_err_code != 0)
@@ -226,11 +231,11 @@ void C_sco2_recomp_csp::design_core()
 
 	if (error_msg.empty())
 	{
-		mc_messages.add_notice("The partial cooling cycle design optimization was successful");
+		mc_messages.add_notice("The " + s_cycle_config + " cycle design optimization was successful");
 	}
 	else
 	{
-		string out_msg = "The sCO2 partial cooling cycle design optimization solved with the following warning(s):\n" + error_msg;
+		string out_msg = "The sCO2 " + s_cycle_config + " cycle design optimization solved with the following warning(s):\n" + error_msg;
 		mc_messages.add_notice(out_msg);
 	}
 
