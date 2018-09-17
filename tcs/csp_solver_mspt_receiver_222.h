@@ -148,6 +148,8 @@ public:
 	double m_m_dot_htf_max_frac;	//[-]
 	double m_A_sf;					//[m2]
 
+	int m_mode_initial;
+
 	// 8.10.2015 twn: add tower piping thermal losses to receiver performance
 	double m_pipe_loss_per_m;		//[Wt/m]
 	double m_pipe_length_add;		//[m]

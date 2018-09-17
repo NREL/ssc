@@ -363,9 +363,17 @@ void C_pc_Rankine_indirect_224::init(C_csp_power_cycle::S_solved_params &solved_
 	m_startup_energy_required = ms_params.m_startup_frac * ms_params.m_P_ref / ms_params.m_eta_ref; // [kWt-hr]
 	
 	// Finally, set member model-timestep-tracking variables
-	m_standby_control_prev = OFF;			// Assume power cycle is off when simulation begins
-	m_startup_energy_remain_prev = m_startup_energy_required;	//[kW-hr]
-	m_startup_time_remain_prev = ms_params.m_startup_time;		//[hr]
+	m_standby_control_prev = ms_params.m_mode_initial;			// Set initial power cycle state
+	if (m_standby_control_prev == C_csp_power_cycle::OFF)
+	{
+		m_startup_energy_remain_prev = m_startup_energy_required;	//[kW-hr]
+		m_startup_time_remain_prev = ms_params.m_startup_time;		//[hr]
+	}
+	else
+	{
+		m_startup_energy_remain_prev = 0.0;
+		m_startup_time_remain_prev = 0.0;
+	}
 
 	m_ncall = -1;
 

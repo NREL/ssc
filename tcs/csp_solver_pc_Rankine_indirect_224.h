@@ -156,6 +156,8 @@ public:
 		double m_startup_frac;		//[-] fraction of design thermal power needed for startup
 		double m_htf_pump_coef;		//[kW/kg/s] Pumping power to move 1 kg/s of HTF through power cycle
 
+		int m_mode_initial;			//Operating mode at start of simulation
+
 		int m_pc_fl;				//[-] integer flag identifying Heat Transfer Fluid (HTF) in power block {1-27}
 		util::matrix_t<double> m_pc_fl_props;
 

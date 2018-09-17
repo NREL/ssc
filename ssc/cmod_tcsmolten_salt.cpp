@@ -330,6 +330,11 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
 	{ SSC_INPUT,		SSC_NUMBER,		 "allow_controller_exceptions",   "Allow controller exceptions? (1 = true)",				  "-",		      "",			 "sys_ctrl",		 "?=1",						 "",					  "" },
 	{ SSC_INPUT,		SSC_ARRAY,		 "select_simulation_days",   "Selected subset of simulation days",							  "-",		      "",			 "sys_ctrl",		 "?=0",						 "",					  "" },
     
+	{ SSC_INPUT,		SSC_NUMBER,		 "is_rec_on_initial",	 "Is receiver initially on?",										  "-",		      "",			 "sys_ctrl",		 "?=0",						 "",					  "" },
+	{ SSC_INPUT,		SSC_NUMBER,		 "is_pc_on_initial",	 "Is power cycle initially on?",									  "-",		      "",			 "sys_ctrl",		 "?=0",						 "",					  "" },
+	{ SSC_INPUT,		SSC_NUMBER,		 "is_pc_standby_initial", "Is power cycle initially in standby?",							  "-",		      "",			 "sys_ctrl",		 "?=0",						 "",					  "" },
+
+
 
 	// Financial inputs
 	{ SSC_INPUT,        SSC_MATRIX,      "dispatch_sched_weekday", "12x24 PPA pricing Weekday schedule",                              "",             "",            "tou",            "*",                       "",                      "" }, 
@@ -897,6 +902,18 @@ public:
 			pc->m_pc_fl = as_integer("rec_htf");							// power cycle HTF is same as receiver HTF
 			pc->m_pc_fl_props = as_matrix("field_fl_props");		
 
+			pc->m_mode_initial = C_csp_power_cycle::OFF; 
+			if (as_boolean("is_pc_on_initial"))
+			{
+				pc->m_mode_initial = C_csp_power_cycle::ON;
+				if (as_boolean("is_pc_standby_initial"))
+					throw exec_error("tcsmolten_salt", "Both 'is_pc_on_initial' and 'is_pc_standby_initial' were set to true.");
+			}
+			else if (as_boolean("is_pc_standby_initial"))
+				pc->m_mode_initial = C_csp_power_cycle::STANDBY;
+
+
+
 			if (pb_tech_type == 0)
 			{
 				pc->m_dT_cw_ref = as_double("dT_cw_ref");
@@ -956,6 +973,9 @@ public:
 		else if (pb_tech_type == 2)
 		{
 			int is_sco2_preprocess = as_integer("is_sco2_preprocess");
+
+			if (as_boolean("is_pc_on_initial")||as_boolean("is_pc_standby_initial"))
+				throw exec_error("tcsmolten_salt", "User-defined cycle initial state not currently enabled for sCO2 cycle.");
 
 			if (is_sco2_preprocess == 1)
 			{
@@ -1509,6 +1529,11 @@ public:
 		receiver.m_night_recirc = 0;					// 8.15.15 twn: this is hardcoded for now - need to check that it is functioning correctly and reporting correct parasitics
 		receiver.m_hel_stow_deploy = as_double("hel_stow_deploy");
 
+		receiver.m_mode_initial = C_csp_collector_receiver::OFF;
+		if (as_boolean("is_rec_on_initial"))
+			receiver.m_mode_initial = C_csp_collector_receiver::ON;
+
+
 		// Set parameters that were set with TCS defaults
 		receiver.m_is_iscc = false;
 
@@ -1565,13 +1590,13 @@ public:
 		tes->m_T_field_out_des = as_double("T_htf_hot_des");
 		
 		double thot_ini = as_double("hot_tank_Tinit");
-		if (thot_ini < 0.0)
+		if (thot_ini < 0.1)
 			tes->m_T_tank_hot_ini = as_double("T_htf_hot_des");
 		else
 			tes->m_T_tank_hot_ini = thot_ini;
 
 		double tcold_ini = as_double("cold_tank_Tinit");
-		if (tcold_ini < 0.0)
+		if (tcold_ini < 0.1)
 			tes->m_T_tank_cold_ini = as_double("T_htf_cold_des");
 		else
 			tes->m_T_tank_cold_ini = tcold_ini;
