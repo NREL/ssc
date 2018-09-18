@@ -261,6 +261,12 @@ battstor::battstor(compute_module &cm, bool setup_model, size_t nrec, double dt_
 {
 	make_vars = false;
 
+	// time quantities
+	nyears = 1;
+	_dt_hour = dt_hr;
+	step_per_hour = static_cast<size_t>(1. / _dt_hour);
+	initialize_time(0, 0, 0);
+
 	// battery variables
 	if (batt_vars_in == 0)
 	{
@@ -274,6 +280,10 @@ battstor::battstor(compute_module &cm, bool setup_model, size_t nrec, double dt_
 
 			// Lifetime simulation
 			batt_vars->system_use_lifetime_output = cm.as_boolean("system_use_lifetime_output");
+
+			if (batt_vars->system_use_lifetime_output) {
+				nyears = batt_vars->analysis_period;
+			}
 
 			// Chemistry
 			batt_vars->batt_chem = cm.as_integer("batt_chem");
@@ -581,15 +591,7 @@ battstor::battstor(compute_module &cm, bool setup_model, size_t nrec, double dt_
 	en = setup_model;
 	if (!en) return;
 
-	// time quantities
-	nyears = 1;
-	_dt_hour = dt_hr;
-	step_per_hour = static_cast<size_t>(1. / _dt_hour);
-	initialize_time(0, 0, 0);
-	if (batt_vars->system_use_lifetime_output)
-		nyears = batt_vars->analysis_period;
-	else
-	{
+	if (!batt_vars->system_use_lifetime_output){
 		if (batt_vars->batt_replacement_option > 0)
 			cm.log("Replacements are enabled without running lifetime simulation, please run over lifetime to consider battery replacements", SSC_WARNING);
 	}

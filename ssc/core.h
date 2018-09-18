@@ -247,6 +247,10 @@ protected:
 	void build_info_map();
 	bool has_info_map() { return m_infomap!=NULL; }
 	
+	/* can be called in exec if determine shouldn't run module */
+	void remove_var_info(var_info vi[]);
+
+
 public:
 	/* for working with input/output/inout variables during 'compute'*/
 	const var_info &info( const std::string &name ) throw( general_error );

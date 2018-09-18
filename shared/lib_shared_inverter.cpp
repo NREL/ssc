@@ -146,7 +146,7 @@ void SharedInverter::calculateACPower(const double powerDC_Watts, const double D
 	if (m_inverterType == SANDIA_INVERTER || m_inverterType == DATASHEET_INVERTER || m_inverterType == COEFFICIENT_GENERATOR)
 		m_sandiaInverter->acpower(std::fabs(powerDC_Watts) / m_numInverters, DCStringVoltage, &powerAC_kW, &P_par, &P_lr, &efficiencyAC, &powerClipLoss_kW, &powerConsumptionLoss_kW, &powerNightLoss_kW);
 	else if (m_inverterType == PARTLOAD_INVERTER)
-		m_partloadInverter->acpower(powerDC_Watts / m_numInverters, &powerAC_kW, &P_lr, &P_par, &efficiencyAC, &powerClipLoss_kW, &powerNightLoss_kW);
+		m_partloadInverter->acpower(std::fabs(powerDC_Watts) / m_numInverters, &powerAC_kW, &P_lr, &P_par, &efficiencyAC, &powerClipLoss_kW, &powerNightLoss_kW);
 
 	double tempLoss = 0.0;
 	if (m_tempEnabled) {
@@ -156,6 +156,11 @@ void SharedInverter::calculateACPower(const double powerDC_Watts, const double D
 	// Convert units to kW and scale to total system size
 	powerDC_kW = powerDC_Watts * util::watt_to_kilowatt;
 	convertOutputsToKWandScale(tempLoss);
+
+	// In event shared inverter is charging a battery only, need to re-convert to negative power
+	if (negativePower) {
+		powerAC_kW *= -1.0;
+	}
 }
 
 /* This function takes input inverter DC power (W) per MPPT input for a SINGLE multi-mppt inverter, DC voltage (V) per input, and ambient temperature (deg C), and calculates output for the total number of inverters in the system */
@@ -192,7 +197,7 @@ void SharedInverter::calculateACPower(const std::vector<double> powerDC_Watts, c
 
 double SharedInverter::getInverterDCNominalVoltage()
 {
-	if (m_inverterType == SANDIA_INVERTER)
+	if (m_inverterType == SANDIA_INVERTER || m_inverterType == DATASHEET_INVERTER || m_inverterType == COEFFICIENT_GENERATOR)
 		return m_sandiaInverter->Vdco;
 	else if (m_inverterType == PARTLOAD_INVERTER)
 		return m_partloadInverter->Vdco;
@@ -209,3 +214,14 @@ void SharedInverter::convertOutputsToKWandScale(double tempLoss)
 	powerTempLoss_kW = tempLoss * m_numInverters * util::watt_to_kilowatt;
 	efficiencyAC *= 100;
 }
+
+double SharedInverter::getMaxPowerEfficiency()
+{
+	if (m_inverterType == SANDIA_INVERTER || m_inverterType == DATASHEET_INVERTER || m_inverterType == COEFFICIENT_GENERATOR)
+		calculateACPower(m_sandiaInverter->Paco, m_sandiaInverter->Vdco, 0.0);
+	else if (m_inverterType == PARTLOAD_INVERTER)
+		calculateACPower(m_partloadInverter->Paco, m_partloadInverter->Vdco, 0.0);
+	
+	return efficiencyAC;
+}
+

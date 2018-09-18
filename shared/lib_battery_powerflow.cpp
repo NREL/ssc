@@ -225,10 +225,16 @@ void BatteryPowerFlow::calculateDCConnected()
 
 	double P_gen_dc = P_pv_dc + P_battery_dc;
 
-	// in the event that PV system isn't operating, assume battery BMS converts battery voltage to nominal inverter input
+	// in the event that PV system isn't operating, assume battery BMS converts battery voltage to nominal inverter input at the weighted efficiency
 	double voltage = m_BatteryPower->voltageSystem;
-	if (voltage <= 0)
+	double efficiencyDCAC = m_BatteryPower->sharedInverter->efficiencyAC * 0.01;
+	if (voltage <= 0) {
 		voltage = m_BatteryPower->sharedInverter->getInverterDCNominalVoltage();
+	}
+	if (std::isnan(efficiencyDCAC) || m_BatteryPower->sharedInverter->efficiencyAC <= 0) {
+		efficiencyDCAC = m_BatteryPower->sharedInverter->getMaxPowerEfficiency() * 0.01;
+	}
+
 
 	// charging 
 	if (P_battery_dc < 0)
@@ -252,14 +258,9 @@ void BatteryPowerFlow::calculateDCConnected()
 		// convert the DC power to AC
 		m_BatteryPower->sharedInverter->calculateACPower(P_gen_dc_inverter * util::kilowatt_to_watt, voltage, 0.0);
 
-		// if all PV going to battery could have 0% efficiency of inverter
-		double efficiencyDCAC = m_BatteryPower->sharedInverter->efficiencyAC * 0.01;
-		if (efficiencyDCAC == 0)
-			efficiencyDCAC = 1;
 		// For now, treat the AC/DC conversion as a single point efficiency until gain clarification on real behavior.
-		else if (efficiencyDCAC <= 0.05 && P_grid_to_batt_dc > 0) {
- 			efficiencyDCAC = 0.96;
-			m_BatteryPower->sharedInverter->efficiencyAC = efficiencyDCAC * 100;
+		if (efficiencyDCAC <= 0.05 && P_grid_to_batt_dc > 0) {
+ 			efficiencyDCAC = m_BatteryPower->sharedInverter->getMaxPowerEfficiency() * 0.01;
 			m_BatteryPower->sharedInverter->powerAC_kW = P_gen_dc_inverter * efficiencyDCAC;
 		}
 
@@ -287,8 +288,6 @@ void BatteryPowerFlow::calculateDCConnected()
 		// convert the DC power to AC
 		m_BatteryPower->sharedInverter->calculateACPower(P_gen_dc * util::kilowatt_to_watt, voltage, 0.0);
 		P_gen_ac = m_BatteryPower->sharedInverter->powerAC_kW;
-		double efficiencyDCAC = m_BatteryPower->sharedInverter->efficiencyAC * 0.01;
-
 		P_battery_ac = P_battery_dc * efficiencyDCAC;
 		P_pv_ac = P_pv_dc * efficiencyDCAC;
 

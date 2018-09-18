@@ -251,6 +251,9 @@ public:
 	int type();
 	std::string filename();
 
+	/// Check field for missing values & return interpolant as necessary
+	void handle_missing_field(size_t index, int col);
+
 	bool open( const std::string &file, bool header_only = false );
 
 	bool read( weather_record *r ); 

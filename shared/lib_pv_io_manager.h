@@ -247,7 +247,8 @@ struct PVSystem_IO
 	std::vector<ssc_number_t *> p_shadeDBShadeFraction; 
 
 	// MPPT level outputs
-	std::vector<ssc_number_t *> p_mpptVoltage; /// A vector containing input DC voltage to that MPPT input
+	std::vector<ssc_number_t *> p_mpptVoltage; /// An output vector containing input DC voltage in V to each mppt input
+	std::vector<ssc_number_t *> p_dcPowerNetPerMppt; /// An output vector containing Net DC Power in W for each mppt input 
 
 	// Snow Model outputs
 	std::vector<ssc_number_t *> p_snowLoss; /// The angle of incidence of the subarray [degrees]
@@ -368,7 +369,14 @@ public:
 
 	// Subarray-specific losses
 	std::vector<double> monthlySoiling; // The soiling loss by month [%]
-	double dcLoss;						// The DC loss due to mismatch, diodes, wiring, tracking, optimizers [%]
+	double rearIrradianceLossPercent;
+	double dcOptimizerLossPercent;
+	double mismatchLossPercent;
+	double diodesLossPercent;
+	double dcWiringLossPercent;
+	double trackingLossPercent;
+	double nameplateLossPercent;
+	double dcLossTotalPercent;			/// The DC loss due to mismatch, diodes, wiring, tracking, optimizers [%]
 
 	// Shading and snow	
 	bool enableSelfShadingOutputs;			// Choose whether additional self-shading outputs are displayed

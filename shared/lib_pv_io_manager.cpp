@@ -274,12 +274,23 @@ Subarray_IO::Subarray_IO(compute_module* cm, std::string cmName, size_t subarray
 		backtrackingEnabled = cm->as_boolean(prefix + "backtrack");
 		moduleAspectRatio = cm->as_double("module_aspect_ratio");
 		usePOAFromWeatherFile = false;
-		dcLoss = (1 - cm->as_double(prefix + "mismatch_loss") / 100) *
-			(1 - cm->as_double(prefix + "diodeconn_loss") / 100) *
-			(1 - cm->as_double(prefix + "dcwiring_loss") / 100) *
-			(1 - cm->as_double(prefix + "tracking_loss") / 100) *
-			(1 - cm->as_double(prefix + "nameplate_loss") / 100) *
-			(1 - cm->as_double("dcoptimizer_loss") / 100);
+
+		// losses
+		rearIrradianceLossPercent = cm->as_double(prefix + "rear_irradiance_loss") / 100;
+		dcOptimizerLossPercent = cm->as_double("dcoptimizer_loss")/100;
+		mismatchLossPercent = cm->as_double(prefix + "mismatch_loss") / 100;
+		diodesLossPercent = cm->as_double(prefix + "diodeconn_loss") / 100;
+		dcWiringLossPercent = cm->as_double(prefix + "dcwiring_loss") / 100;
+		trackingLossPercent = cm->as_double(prefix + "tracking_loss") / 100;
+		nameplateLossPercent = cm->as_double(prefix + "nameplate_loss") / 100;
+
+		dcLossTotalPercent = 1 - (
+			(1 - dcOptimizerLossPercent) * 
+			(1 - mismatchLossPercent) * 
+			(1 - diodesLossPercent) * 
+			(1 - dcWiringLossPercent) * 
+			(1 - trackingLossPercent) * 
+			(1 - nameplateLossPercent));
 
 		if (groundCoverageRatio < 0.01)
 			throw compute_module::exec_error(cmName, "array ground coverage ratio must obey 0.01 < gcr");
@@ -300,7 +311,6 @@ Subarray_IO::Subarray_IO(compute_module* cm, std::string cmName, size_t subarray
 		
 		shadeMode = cm->as_integer(prefix + "shade_mode");
 		
-
 		selfShadingInputs.mod_orient = cm->as_integer(prefix + "mod_orient");
 		selfShadingInputs.nmody = cm->as_integer(prefix + "nmody");
 		selfShadingInputs.nmodx = cm->as_integer(prefix + "nmodx");
@@ -349,7 +359,7 @@ Subarray_IO::Subarray_IO(compute_module* cm, std::string cmName, size_t subarray
 		}
 
 		// Initialize module model
-		std::unique_ptr<Module_IO> tmp(new Module_IO(cm, cmName, dcLoss));
+		std::unique_ptr<Module_IO> tmp(new Module_IO(cm, cmName, 1- dcLossTotalPercent));
 		Module = std::move(tmp);
 
 	}
@@ -357,7 +367,7 @@ Subarray_IO::Subarray_IO(compute_module* cm, std::string cmName, size_t subarray
 void Subarray_IO::AssignOutputs(compute_module* cm)
 {
 	//assign output dc loss
-	double tmp = (1 - dcLoss) * 100;
+	double tmp = dcLossTotalPercent * 100;
 	cm->assign(prefix + "dcloss", var_data((ssc_number_t)tmp));
 
 	Module->AssignOutputs(cm);
@@ -411,7 +421,7 @@ PVSystem_IO::PVSystem_IO(compute_module* cm, std::string cmName, Simulation_IO *
 
 		if (dc_degrad.size() == 1)
 		{
-			for (size_t i = 1; i < Simulation->numberOfYears + 1; i++)
+			for (size_t i = 1; i < Simulation->numberOfYears ; i++)
 				p_dcDegradationFactor[i + 1] = (ssc_number_t)pow((1.0 - dc_degrad[0] / 100.0), i);
 		}
 		else if (dc_degrad.size() > 0)
@@ -492,7 +502,7 @@ PVSystem_IO::PVSystem_IO(compute_module* cm, std::string cmName, Simulation_IO *
 		Subarrays[0]->Module->modulePowerModel != MODULE_IEC61853) {
 		throw compute_module::exec_error(cmName, "String level subarray mismatch can only be calculated using a single-diode based module model.");
 	}
-	if (numberOfSubarrays <= 1)
+	if (enableMismatchVoltageCalc && numberOfSubarrays <= 1)
 		throw compute_module::exec_error(cmName, "Subarray voltage mismatch calculation requires more than one subarray. Please check your inputs.");
 }
 
@@ -557,6 +567,7 @@ void PVSystem_IO::AllocateOutputs(compute_module* cm)
 	for (int mppt_input = 0; mppt_input < Inverter->nMpptInputs; mppt_input++)
 	{
 		p_mpptVoltage.push_back(cm->allocate("inverterMppt" + std::to_string(mppt_input + 1) + "_DCVoltage", numberOfLifetimeRecords));
+		p_dcPowerNetPerMppt.push_back(cm->allocate("inverterMppt" + std::to_string(mppt_input + 1) + "_NetDCPower", numberOfLifetimeRecords));
 	}
 
 	p_transformerNoLoadLoss = cm->allocate("xfmr_nll_ts", numberOfWeatherFileRecords);

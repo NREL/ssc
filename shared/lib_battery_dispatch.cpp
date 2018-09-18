@@ -695,6 +695,8 @@ bool dispatch_automatic_t::check_constraints(double &I, size_t count)
 		{
 			// Difference between the dispatch and the desired dispatch
 			double dP = P_battery - m_batteryPower->powerBatteryTarget;
+			double dQ = dP * _dt_hour * util::kilowatt_to_watt / _Battery->battery_voltage();
+			double dSOC = 100 * dQ / _Battery->battery_charge_maximum();
 			double SOC = _Battery->battery_soc();
 
 			// But only if it's possible to meet without break grid-charge contraint
@@ -702,9 +704,22 @@ bool dispatch_automatic_t::check_constraints(double &I, size_t count)
 				(m_batteryPower->powerBatteryTarget > 0))
 			{
 				// Also don't violate SOC contraints, current limits
-				if ((m_batteryPower->powerBatteryTarget > 0 && SOC > m_batteryPower->stateOfChargeMin + tolerance && I < m_batteryPower->currentDischargeMax) ||
-					(m_batteryPower->powerBatteryTarget < 0 && SOC < m_batteryPower->stateOfChargeMax - tolerance && I > m_batteryPower->currentChargeMax)) {
-					I -= dP * util::kilowatt_to_watt / _Battery->battery_voltage();
+				if ((m_batteryPower->powerBatteryTarget > 0 && SOC > m_batteryPower->stateOfChargeMin + 2.0 && I < m_batteryPower->currentDischargeMax) ||
+					(m_batteryPower->powerBatteryTarget < 0 && SOC < m_batteryPower->stateOfChargeMax - 2.0 && I > m_batteryPower->currentChargeMax)) {
+
+					double dI = dP * util::kilowatt_to_watt / _Battery->battery_voltage();
+					if (SOC + dSOC > m_batteryPower->stateOfChargeMax + tolerance) {
+						double dSOC_use = (m_batteryPower->stateOfChargeMax - SOC);
+						double dQ_use = dSOC_use * 0.01 * _Battery->battery_charge_maximum();
+						dI = dQ_use / _dt_hour;
+					}
+					else if ( SOC + dSOC < m_batteryPower->stateOfChargeMin -tolerance) {
+						double dSOC_use = (m_batteryPower->stateOfChargeMin - SOC) ;
+						double dQ_use = dSOC_use * 0.01 * _Battery->battery_charge_maximum();
+						dI = dQ_use / _dt_hour;
+					}
+					I -= dI;
+					
 				}
 				else {
 					iterate = false;
