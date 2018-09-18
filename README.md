@@ -1,4 +1,4 @@
-# SSC-MST (SAM Simulation Core) for Molten Salt Trough
+# SSC (SAM Simulation Core)
 
 Travis-CI status
 
