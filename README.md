@@ -1,8 +1,8 @@
-# SSC-MST (SAM Simulation Core) for Molten Salt Trough
+# SSC (SAM Simulation Core)
 
 Travis-CI status
 
-[![Build Status](https://travis-ci.com/mjwagner2/ssc.svg?branch=develop)](https://travis-ci.com/mjwagner2/ssc)
+[![Build Status](https://travis-ci.org/NREL/ssc.svg?branch=develop)](https://travis-ci.org/NREL/ssc)
 
 The SSC Open Source Project repository contains the source code for the technology and financial models contained within the National Renewable Energy Laboratory's System Advisor Model (SAM). For more details about SAM's capabilities, see the SAM website at [https://sam.nrel.gov/](https://sam.nrel.gov).
 
