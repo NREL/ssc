@@ -182,6 +182,7 @@ namespace geothermal
 		// Based VBA code in Xnumbers.xla v 5.6
 		// by Foxes Team, 2007
 		// E -mail: leovlp@libero.it
+		// Web:    http://digilander.libero.it/foxes
 		// 10.11.2006
 
 
