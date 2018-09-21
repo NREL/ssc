@@ -672,6 +672,7 @@ var_info vtab_sco2_design[] = {
 		// Recuperators																				 
 	{ SSC_OUTPUT, SSC_NUMBER,  "UA_recup_total",       "Total recuperator UA",                                   "MW/K",       "",    "",      "*",     "",       "" },
 	{ SSC_OUTPUT, SSC_NUMBER,  "recup_total_cost",     "Total recuperator cost",                                 "M$",         "",    "",      "*",     "",       "" },
+	{ SSC_OUTPUT, SSC_NUMBER,  "recup_LTR_UA_frac",    "Fraction of total conductance to LTR",                   "",           "",    "",      "*",     "",       "" },
 	{ SSC_OUTPUT, SSC_NUMBER,  "UA_LTR",               "Low temp recuperator UA",                                "MW/K",       "",    "",      "*",     "",       "" },
 	{ SSC_OUTPUT, SSC_NUMBER,  "eff_LTR",              "Low temp recuperator effectiveness",                     "",           "",    "",      "*",     "",       "" },
 	{ SSC_OUTPUT, SSC_NUMBER,  "NTU_LTR",              "Low temp recuperator NTU",                               "",           "",    "",      "*",     "",       "" },
@@ -705,7 +706,8 @@ var_info vtab_sco2_design[] = {
 	{ SSC_OUTPUT, SSC_NUMBER,  "IP_cooler_q_dot",      "Intermediate pressure cooler heat transfer",                      "MWt",        "",    "",      "*",     "",       "" },
 	{ SSC_OUTPUT, SSC_NUMBER,  "IP_cooler_cost",       "Intermediate pressure cooler cost",                               "M$",         "",    "",      "*",     "",       "" },
 		// Cooler Totals
-	{ SSC_OUTPUT, SSC_NUMBER,  "cooler_tot_cost",      "Total cooler cost",                                               "M$",         "",    "",      "*",     "",       "" },
+	{ SSC_OUTPUT, SSC_NUMBER,  "cooler_tot_cost",      "Total cooler cost",                  "M$",        "",   "",   "*",   "",   "" },
+	{ SSC_OUTPUT, SSC_NUMBER,  "cooler_tot_UA",        "Total cooler conductance",           "MW/K",      "",   "",   "*",   "",   "" },
 		// State Points
 	{ SSC_OUTPUT, SSC_ARRAY,  "T_state_points",       "Cycle temperature state points",      "C",	      "",   "",   "*",   "",   "" },
 	{ SSC_OUTPUT, SSC_ARRAY,  "P_state_points",       "Cycle pressure state points",         "MPa",       "",   "",   "*",   "",   "" },
@@ -1224,6 +1226,7 @@ int sco2_design_cmod_common(compute_module *cm, C_sco2_recomp_csp & c_sco2_cycle
 		cm->assign("HTR_cost", (ssc_number_t)c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.ms_HTR_des_solved.m_cost);			//[M$]
 		cost_sum += c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.ms_HTR_des_solved.m_cost;			//[M$]
 		recup_total_cost += c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.ms_HTR_des_solved.m_cost;			//[M$]
+		cm->assign("recup_LTR_UA_frac", (ssc_number_t((c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.ms_LTR_des_solved.m_UA_design_total*1.E-3) / UA_recup_total)));	//[-]
 	}
 	else
 	{
@@ -1233,6 +1236,7 @@ int sco2_design_cmod_common(compute_module *cm, C_sco2_recomp_csp & c_sco2_cycle
 		cm->assign("NTU_HTR", ssc_nan);		//[-]
 		cm->assign("q_dot_HTR", ssc_nan);	//[MWt] convert from kWt
 		cm->assign("HTR_cost", ssc_nan);	//[M$]
+		cm->assign("recup_LTR_UA_frac", ssc_nan);	//[-]
 	}
 	cm->assign("UA_recup_total", (ssc_number_t)(UA_recup_total));		//[MW/K]
 	cm->assign("recup_total_cost", (ssc_number_t)(recup_total_cost));	//[MW/K]
@@ -1253,7 +1257,8 @@ int sco2_design_cmod_common(compute_module *cm, C_sco2_recomp_csp & c_sco2_cycle
 	cm->assign("LP_cooler_q_dot", (ssc_number_t)(c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.ms_LP_air_cooler.m_q_dot*1.E-6));		//[MWt] convert from W
 	cm->assign("LP_cooler_cost", (ssc_number_t)c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.ms_LP_air_cooler.m_cost);					//[M$]
 	cost_sum += c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.ms_LP_air_cooler.m_cost;					//[M$]
-	double cooler_tot_cost = c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.ms_LP_air_cooler.m_cost;					//[M$]
+	double cooler_tot_cost = c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.ms_LP_air_cooler.m_cost;		//[M$]
+	double cooler_tot_UA = c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.ms_LP_air_cooler.m_UA_total*1.E-6;	//[MW/K]
 		// Intermediate Pressure Cooler
 	if (sco2_rc_des_par.m_cycle_config == 2)
 	{
@@ -1264,7 +1269,8 @@ int sco2_design_cmod_common(compute_module *cm, C_sco2_recomp_csp & c_sco2_cycle
 		cm->assign("IP_cooler_q_dot", (ssc_number_t)(c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.ms_IP_air_cooler.m_q_dot*1.E-6));		//[MWt] convert from W
 		cm->assign("IP_cooler_cost", (ssc_number_t)c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.ms_IP_air_cooler.m_cost);					//[M$]
 		cost_sum += c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.ms_IP_air_cooler.m_cost;					//[M$]
-		cooler_tot_cost += c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.ms_IP_air_cooler.m_cost;					//[M$]
+		cooler_tot_cost += c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.ms_IP_air_cooler.m_cost;			//[M$]
+		cooler_tot_UA += c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.ms_IP_air_cooler.m_UA_total*1.E-6;	//[MW/K]
 	}
 	else
 	{
@@ -1276,7 +1282,8 @@ int sco2_design_cmod_common(compute_module *cm, C_sco2_recomp_csp & c_sco2_cycle
 		cm->assign("IP_cooler_q_dot", ssc_nan);		//[MWt] convert from W
 		cm->assign("IP_cooler_cost", ssc_nan);		//[M$]
 	}
-	cm->assign("cooler_tot_cost", cooler_tot_cost);	//[M$]
+	cm->assign("cooler_tot_cost", (ssc_number_t)cooler_tot_cost);	//[M$]
+	cm->assign("cooler_tot_UA", (ssc_number_t)cooler_tot_UA);		//[MW/K]
 
 	cm->assign("cycle_cost", (ssc_number_t)cost_sum);		//[M$]
 	cm->assign("cycle_spec_cost", (ssc_number_t)(cost_sum*1.E6 / sco2_rc_des_par.m_W_dot_net));	//[$/kWe]
