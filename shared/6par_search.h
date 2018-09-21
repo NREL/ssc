@@ -47,6 +47,11 @@
 *  THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *******************************************************************************************************/
 
+#ifndef __6_PAR_SEARCH_H__
+#define __6_PAR_SEARCH_H__
+
+#include <limits>
+
 template< typename Real > Real mymax(Real a, Real b) { return a > b ? a : b; }
 
 template< typename Real, typename F, int n >
@@ -152,3 +157,4 @@ bool search( Real xold[n], const Real fold, Real g[n], Real p[n],
 	return true;
 }
 
+#endif

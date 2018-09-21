@@ -1093,6 +1093,123 @@ double CSP::eta_pl(double mf)
 	return 1.0 - (0.191 - 0.409*mf + 0.218*pow(mf,2.0));	// This number should be multiplied by the design-point isen. eff to get the final.
 }
 
+double CSP::pipe_sched(double De, bool selectLarger)
+{
+    /***************************************************************************************************
+    This function takes a piping diameter "De" [m] and locates the appropriate pipe schedule
+    from a list of common pipe sizes. The function always returns the pipe schedule equal to or
+    immediately larger than the ideal diameter De.
+    The pipe sizes are selected based on the assumption of a maximum hoop stress of 105 MPa and a total
+    solar field pressure drop of 20 Bar. The sizes correspond to the pipe schedule with a wall thickness
+    sufficient to match these conditions. For very large pipe diameters (above 42in), no suitable schedule
+    was found, so the largest available schedule is applied.
+    Data and stress calculations were obtained from Kelly & Kearney piping model, rev. 1/2011.
+    */
+
+    //D_inch = (/2.50, 3.0, 4.0, 6.0, 8.0, 10.0, 12.0, 14.0, 16.0, 18.0, 20.0, 22.0, 24.0, 26.0, &
+    //           28.0, 30.0, 32.0, 34.0, 36.0, 42.0, 48.0, 54.0, 60.0, 66.0, 72.0/)
+
+    double D_m[] = { 0.06880860, 0.08468360, 0.1082040, 0.16146780, 0.2063750, 0.260350, 0.311150, 0.33975040,
+        0.39055040, 0.438150, 0.488950, 0.53340, 0.58420, 0.6350, 0.679450, 0.730250, 0.781050,
+        0.82864960, 0.87630, 1.02870, 1.16840, 1.32080, 1.47320, 1.62560, 1.7780 };
+    int np = sizeof(D_m) / sizeof(D_m[0]);
+
+    if (selectLarger) {
+        //Select the smallest real pipe diameter greater than the design diameter provided
+        for (int i = 0; i < np; i++) {
+            if (D_m[i] >= De) return D_m[i];
+        }
+    }
+    if (!selectLarger) {
+        //Select the smallest real pipe diameter less than the design diameter provided
+        for (int i = np - 1; i >= 0; i--) {
+            if (D_m[i] <= De) return D_m[i];
+        }
+    }
+
+    //Nothing was found, so return an error
+    double mtoinch = 39.3700787;
+    char buffer[256];
+    sprintf(buffer, "No suitable pipe schedule found for this plant design. Looking for a schedule above %.2f in ID. "
+        "Maximum schedule is %.2f in ID. Using the exact pipe diameter instead."
+        "Consider increasing the header design velocity range or the number of field subsections.",
+        De*mtoinch, D_m[np - 1] * mtoinch);
+    throw std::invalid_argument(buffer);
+    return De;  //mjw 10/10/2014 - NO! ---> std::numeric_limits<double>::quiet_NaN();
+}
+
+double CSP::WallThickness(double d_in) {
+    // regression of Wagner-2011 Table 9 values with an R^2=1.000
+    return 0.0194*d_in;
+}
+
+double CSP::MinorPressureDrop(double vel, double rho, double k) {
+    return k * (vel * vel) * rho / 2;
+}
+
+double CSP::MajorPressureDrop(double vel, double rho, double ff, double l, double d) {
+    // Darcy Weisbach pressure drop for an incompressible fluid using a Darcy friction factor
+    if (d <= 0) throw std::invalid_argument("The inner diameter must be greater than 0.");
+    if (vel == 0) return 0;      // handles cases where ff = inf because vel and thus Re = 0
+
+    return ff * (vel * vel) * l * rho / (2 * d);
+}
+
+double CSP::FrictionFactor(double rel_rough, double Re) {
+    if (Re < 2100) {  // laminar flow
+        return 64 / Re;
+    }
+    else if (Re < 4000) {  // transitional flow
+                           // see Cheng, N.S. 2008 "Formulas for friction factors in transitional regions" for non-iterative solution
+        return CSP::FricFactor_Iter(rel_rough, Re);
+    }
+    else {  // turbulent flow
+            // Calculates according to Zigrang, Sylvester 1982 for Re = 4e3 to 1e8 and e/D = 4e-5 to 5e-2
+        return pow(-2.0*log10(rel_rough / 3.7 - 5.02 / Re * log10(rel_rough / 3.7 - 5.02 / Re *
+            log10(rel_rough / 3.7 + 13.0 / Re))), -2);
+    }
+}
+
+double CSP::FricFactor_Iter(double rel_rough, double Re) {
+    // Uses an iterative method to solve the implicit Colebrook friction factor function.
+    // Taken from Piping loss model
+
+    double Test, TestOld, X, Xold, Slope;
+    double Acc = .01; //0.0001
+    int NumTries;
+
+    if (Re < 2750.) {
+        return 64. / std::max(Re, 1.0);
+    }
+
+    X = 33.33333;  //1. / 0.03
+    TestOld = X + 2. * log10(rel_rough / 3.7 + 2.51 * X / Re);
+    Xold = X;
+    X = 28.5714;  //1. / (0.03 + 0.005)
+    NumTries = 0;
+
+    while (NumTries < 21) {
+        NumTries++;
+        Test = X + 2 * log10(rel_rough / 3.7 + 2.51 * X / Re);
+        if (fabs(Test - TestOld) <= Acc) {
+            return 1. / (X * X);
+        }
+
+        Slope = (Test - TestOld) / (X - Xold);
+        Xold = X;
+        TestOld = Test;
+        X = std::max((Slope * X - Test) / Slope, 1.e-5);
+    }
+
+    //call Messages(-1," Could not find friction factor solution",'Warning',0,250) 
+    return 0;
+}
+
+//double CSP::Re(double rho, double vel, double d, double mu) {
+//// Reynold's Number
+//    return rho * vel * d / mu;
+//}
+
 
 void P_max_check::set_P_max( double P_max_set )
 {

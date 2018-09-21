@@ -81,105 +81,6 @@
 //#define SHADE_DB_OUTPUTS
 
 /**
-*  Structure to represent a PV subarray
-*/
-struct subarray
-{
-	subarray()
-	{
-		enable = false;
-		nstrings = 0;
-		tilt_eq_lat = false;
-		tilt = azimuth = 0;
-		track_mode = 0;
-		rotlim = 0;
-		shade_mode = 0; // 0=none
-		backtrack = 0;
-
-		gcr = 0.3;
-
-		derate = 1.0;
-		
-		for (size_t i=0;i<12;i++)
-			soiling[i] = 1.0;
-		
-		poa.ibeam = 0;
-		poa.iskydiff = 0;
-		poa.ignddiff = 0;
-		poa.ipoa = 0;
-		poa.sunup = 0;
-		poa.aoi = 0;
-		poa.stilt = 0;
-		poa.sazi = 0;
-		poa.nonlinear_dc_shading_derate = 1.0;
-		poa.usePOAFromWF = false;
-		poa.poaShadWarningCount = 0;
-
-		module.dcpwr = 0;
-		module.dcv = 0;
-		module.dceff = 0;
-		module.tcell = 0;
-		module.voc = 0;
-		module.isc = 0;
-
-
-	}
-
-	bool enable;
-	int nstrings;
-	double tilt;
-	bool tilt_eq_lat;
-	ssc_number_t *monthly_tilt;
-	double azimuth;
-	int track_mode;
-	double rotlim;
-	double soiling[12];
-	double derate;
-	
-	int shade_mode;
-	bool backtrack;
-	double gcr;
-
-	ssinputs sscalc;
-	ssoutputs ssout;
-	
-	shading_factor_calculator shad;
-
-	pvsnowmodel sm;
-
-	/**
-	*  Structure to represent the plane of array calculations returned by irradiance processor
-	*/
-	struct {
-		double ibeam;
-		double iskydiff;
-		double ignddiff;
-		double ipoa;
-		int sunup;
-		double aoi;
-		double stilt;
-		double sazi;
-		double nonlinear_dc_shading_derate;
-		bool usePOAFromWF;
-		int poaShadWarningCount;
-		poaDecompReq poaAll;
-	} poa;
-
-	/**
-	* Structure to represent module level information, calculated by module model
-	*/ 
-	struct {
-		double dcpwr;
-		double dcv;
-		double voc;
-		double isc;
-		double dceff;
-		double tcell;
-	} module;
-		
-};
-
-/**
 * Detailed photovoltaic model in SAM, version 1
 * Contains calculations to process a weather file, parse the irradiance, and evaluate PV subarray power production with AC or DC connected batteries
 */
@@ -190,9 +91,6 @@ public:
 	//! PV model class constructor
 	cm_pvsamv1();
 
-	//! Setup the Nominal Operating Cell Temperature (NOCT) model
-	void setup_noct_model(const std::string &prefix, noct_celltemp_t &noct_tc);
-	
 	//! Run the PV model
 	void exec() throw (compute_module::general_error);
 	

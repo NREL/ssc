@@ -51,31 +51,31 @@
 #define __SCO2_PARTIAL_COOLING_
 
 #include "sco2_cycle_components.h"
+#include "sco2_cycle_templates.h"
+
 #include "heat_exchangers.h"
 #include "CO2_properties.h"
 
+#include <string>
 #include <vector>
 #include <math.h>
 #include <limits>
 
-class C_PartialCooling_Cycle
+class C_PartialCooling_Cycle : public C_sco2_cycle_core
 {
 public:
 
-	enum E_cycle_state_points
+	struct S_design_limits
 	{
-		MC_IN = 0,
-		MC_OUT,
-		LTR_HP_OUT,
-		MIXER_OUT,
-		HTR_HP_OUT,
-		TURB_IN,
-		TURB_OUT,
-		HTR_LP_OUT,
-		LTR_LP_OUT,
-		PC_IN,
-		PC_OUT,
-		RC_OUT
+		double m_UA_net_power_ratio_max;		//[-/K]
+		double m_UA_net_power_ratio_min;		//[-/K]
+
+		double m_T_mc_in_min;					//[K]
+
+		S_design_limits()
+		{
+			m_UA_net_power_ratio_max = m_UA_net_power_ratio_min = std::numeric_limits<double>::quiet_NaN();
+		}
 	};
 
 	struct S_des_params
@@ -106,6 +106,12 @@ public:
 		double m_tol;						//[-] Convergence tolerance
 		double m_N_turbine;					//[rpm] Turbine shaft speed (negative values link turbine to compressor)
 
+			// Air cooler parameters
+		double m_frac_fan_power;		//[-] Fraction of total cycle power 'S_des_par_cycle_dep.m_W_dot_fan_des' consumed by air fan
+		double m_deltaP_cooler_frac;	//[-] Fraction of high side (of cycle, i.e. comp outlet) pressure that is allowed as pressure drop to design the ACC
+		double m_T_amb_des;				//[K] Design point ambient temperature
+		double m_elevation;				//[m] Elevation (used to calculate ambient pressure)
+
 		int m_des_objective_type;		//[2] = min phx deltat then max eta, [else] max eta
 		double m_min_phx_deltaT;		//[C]
 
@@ -113,7 +119,8 @@ public:
 		{
 			m_W_dot_net = m_T_mc_in = m_T_pc_in = m_T_t_in = 
 				m_P_pc_in = m_P_mc_in = m_P_mc_out = m_UA_LTR = m_UA_HTR = m_LTR_eff_max = m_HTR_eff_max = m_recomp_frac =
-				m_eta_mc = m_eta_rc = m_eta_pc = m_eta_t = m_P_high_limit = m_tol = m_N_turbine = std::numeric_limits<double>::quiet_NaN();
+				m_eta_mc = m_eta_rc = m_eta_pc = m_eta_t = m_P_high_limit = m_tol = m_N_turbine =
+				m_frac_fan_power = m_deltaP_cooler_frac = m_T_amb_des = m_elevation = std::numeric_limits<double>::quiet_NaN();
 			m_N_sub_hxrs = -1;
 
 			// Default to standard optimization to maximize cycle efficiency
@@ -157,6 +164,12 @@ public:
 		double m_opt_tol;					//[-] Optimization tolerance
 		double m_N_turbine;					//[rpm] Turbine shaft speed (negative values link turbine to compressor)
 
+			// Air cooler parameters
+		double m_frac_fan_power;		//[-] Fraction of total cycle power 'S_des_par_cycle_dep.m_W_dot_fan_des' consumed by air fan
+		double m_deltaP_cooler_frac;	//[-] Fraction of high side (of cycle, i.e. comp outlet) pressure that is allowed as pressure drop to design the ACC
+		double m_T_amb_des;				//[K] Design point ambient temperature
+		double m_elevation;				//[m] Elevation (used to calculate ambient pressure)
+
 		int m_des_objective_type;		//[2] = min phx deltat then max eta, [else] max eta
 		double m_min_phx_deltaT;		//[C]
 
@@ -180,6 +193,7 @@ public:
 			m_W_dot_net = m_T_mc_in = m_T_pc_in = m_T_t_in =
 				m_UA_rec_total = m_LTR_eff_max = m_HTR_eff_max = 
 				m_eta_mc = m_eta_rc = m_eta_pc = m_eta_t = m_P_high_limit = m_tol = m_N_turbine = 
+				m_frac_fan_power = m_deltaP_cooler_frac = m_T_amb_des = m_elevation =
 				m_P_mc_out_guess = m_PR_total_guess = m_f_PR_mc_guess = 
 				m_recomp_frac_guess = m_LTR_frac_guess = std::numeric_limits<double>::quiet_NaN();
 			m_N_sub_hxrs = -1;
@@ -201,47 +215,18 @@ public:
 		}
 	};
 
-	struct S_des_solved
-	{
-		std::vector<double> m_temp, m_pres, m_enth, m_entr, m_dens;		// thermodynamic states (K, kPa, kJ/kg, kJ/kg-K, kg/m3)
-		double m_eta_thermal;	//[-]
-		double m_W_dot_net;		//[kWe]
-		double m_m_dot_mc;		//[kg/s]
-		double m_m_dot_rc;		//[kg/s]
-		double m_m_dot_pc;		//[kg/s]
-		double m_m_dot_t;		//[kg/s]
-		double m_recomp_frac;	//[-]
-		double m_UA_LTR;		//[kW/K]
-		double m_UA_HTR;		//[kW/K]
-
-		bool m_is_rc;
-
-		C_comp_multi_stage::S_des_solved ms_mc_ms_des_solved;
-		C_comp_multi_stage::S_des_solved ms_rc_ms_des_solved;
-		C_comp_multi_stage::S_des_solved ms_pc_ms_des_solved;
-		C_turbine::S_design_solved ms_t_des_solved;
-		C_HX_counterflow::S_des_solved ms_LTR_des_solved;
-		C_HX_counterflow::S_des_solved ms_HTR_des_solved;
-
-		S_des_solved()
-		{
-			m_eta_thermal = m_W_dot_net = m_m_dot_mc = m_m_dot_rc = m_m_dot_pc = m_m_dot_t = 
-				m_recomp_frac = m_UA_LTR = m_UA_HTR = std::numeric_limits<double>::quiet_NaN();
-
-			m_is_rc = true;
-		}
-	};
-
 private:
 
 	// Cycle component classes
 	C_turbine mc_t;
 	C_comp_multi_stage mc_mc, mc_rc, mc_pc;
 	C_HX_co2_to_co2 mc_LTR, mc_HTR;
-	C_HeatExchanger mc_PHX, mc_PC_full, mc_PC_partial;	
+	C_HeatExchanger mc_PHX, mc_cooler_pc, mc_cooler_mc;	
+
+	C_CO2_to_air_cooler mc_LP_air_cooler;
+	C_CO2_to_air_cooler mc_IP_air_cooler;
 
 	S_des_params ms_des_par;
-	S_des_solved ms_des_solved;
 	S_opt_des_params ms_opt_des_par;
 
 	CO2_state mc_co2_props;
@@ -259,17 +244,31 @@ private:
 	S_des_params ms_des_par_optimal;
 	double m_objective_metric_opt;
 
+		// Structures and data for auto-optimization
+	double m_objective_metric_auto_opt;
+	S_des_params ms_des_par_auto_opt;
+
+	// Results from last off-design solution
+	std::vector<double> mv_temp_od, mv_pres_od, mv_enth_od, mv_entr_od, mv_dens_od;
+	double m_eta_thermal_od;
+	double m_W_dot_net_od;
+	double m_Q_dot_PHX_od;
+
 	int design_core();
+
+	int auto_opt_design_core();
 
 	int finalize_design();
 
 	int opt_design_core();
 
+	int off_design_fix_shaft_speeds_core();
+
 public:
 
 	C_PartialCooling_Cycle()
 	{
-		m_temp_last.resize(RC_OUT + 1);
+		m_temp_last.resize(END_SCO2_STATES);
 		std::fill(m_temp_last.begin(), m_temp_last.end(), std::numeric_limits<double>::quiet_NaN());
 
 		m_pres_last = m_enth_last = m_entr_last = m_dens_last = m_temp_last;
@@ -277,8 +276,112 @@ public:
 		m_m_dot_mc = m_m_dot_pc = m_m_dot_rc = m_m_dot_t = std::numeric_limits<double>::quiet_NaN();
 		m_W_dot_mc = m_W_dot_pc = m_W_dot_rc = m_W_dot_t = std::numeric_limits<double>::quiet_NaN();
 		m_eta_thermal_calc_last = m_W_dot_net_last = m_energy_bal_last =
-		m_objective_metric_last = m_objective_metric_opt = std::numeric_limits<double>::quiet_NaN();
+		m_objective_metric_last = m_objective_metric_opt = m_objective_metric_auto_opt = std::numeric_limits<double>::quiet_NaN();
+
+		mv_temp_od = mv_pres_od = mv_enth_od = mv_entr_od = mv_dens_od = m_temp_last;
+		m_eta_thermal_od = m_W_dot_net_od = m_Q_dot_PHX_od = std::numeric_limits<double>::quiet_NaN();
 	}
+
+	class C_MEQ__f_recomp__y_N_rc : public C_monotonic_equation
+	{
+	private:
+		C_PartialCooling_Cycle * mpc_pc_cycle;
+
+		double m_T_pc_in;		//[K] Pre-compressor inlet temperature
+		double m_P_pc_in;		//[kPa] Pre-compressor inlet pressure
+		double m_T_mc_in;		//[K] Main compressor inlet temperature
+		double m_T_t_in;		//[K] Turbine inlet temperature
+
+		double m_f_mc_pc_bypass;	//[-] Fraction of main and pre compressors bypassed to respective coolers
+
+	public:
+
+		double m_m_dot_t;		//[kg/s]
+		double m_m_dot_pc;		//[kg/s]
+		double m_m_dot_rc;		//[kg/s]
+		double m_m_dot_mc;		//[kg/s]
+		double m_m_dot_LTR_HP;	//[kg/s]
+
+		C_MEQ__f_recomp__y_N_rc(C_PartialCooling_Cycle *pc_pc_cycle,
+			double T_pc_in /*K*/, double P_pc_in /*kPa*/, 
+			double T_mc_in /*K*/, double T_t_in /*K*/,
+			double f_mc_pc_bypass /*-*/)
+		{
+			mpc_pc_cycle = pc_pc_cycle;
+			m_T_pc_in = T_pc_in;		//[K]
+			m_P_pc_in = P_pc_in;		//[kPa]
+			m_T_mc_in = T_mc_in;		//[K]
+			m_T_t_in = T_t_in;			//[K]
+			m_f_mc_pc_bypass = f_mc_pc_bypass;	//[-]
+			
+			m_m_dot_t = m_m_dot_pc = m_m_dot_rc = 
+				m_m_dot_mc = m_m_dot_LTR_HP = std::numeric_limits<double>::quiet_NaN();
+		}
+
+		virtual int operator()(double f_recomp /*-*/, double *diff_N_rc /*-*/);
+	};
+
+	class C_MEQ__t_m_dot__bal_turbomachinery : public C_monotonic_equation
+	{
+	private:
+		C_PartialCooling_Cycle * mpc_pc_cycle;
+
+		double m_T_pc_in;		//[K] Pre-compressor inlet temperature
+		double m_P_pc_in;		//[kPa] Pre-compressor inlet pressure
+		double m_T_mc_in;		//[K] Main compressor inlet temperature
+		double m_f_recomp;		//[-] Recompression fraction
+		double m_T_t_in;		//[K] Turbine inlet temperature
+
+		double m_f_mc_pc_bypass;	//[-] Fraction of main and pre compressors bypassed to respective coolers
+
+	public:
+		C_MEQ__t_m_dot__bal_turbomachinery(C_PartialCooling_Cycle *pc_pc_cycle,
+			double T_pc_in /*K*/, double P_pc_in /*kPa*/, double T_mc_in /*K*/,
+			double f_recomp /*-*/, double T_t_in /*K*/,
+			double f_mc_pc_bypass /*-*/)
+		{
+			mpc_pc_cycle = pc_pc_cycle;
+			m_T_pc_in = T_pc_in;		//[K]
+			m_P_pc_in = P_pc_in;		//[kPa]
+			m_T_mc_in = T_mc_in;		//[K]
+			m_f_recomp = f_recomp;		//[-]
+			m_T_t_in = T_t_in;			//[K]
+			m_f_mc_pc_bypass = f_mc_pc_bypass;	//[-]
+
+			m_m_dot_mc = m_m_dot_pc = m_m_dot_LTR_HP = std::numeric_limits<double>::quiet_NaN();
+		}
+
+		double m_m_dot_mc;		//[kg/s]
+		double m_m_dot_pc;		//[kg/s]
+		double m_m_dot_LTR_HP;	//[kg/s]
+
+		virtual int operator()(double m_dot_t /*kg/s*/, double *diff_m_dot_t /*-*/);
+	};
+
+	class C_MEQ_recup_od : public C_monotonic_equation
+	{
+	private:
+		C_PartialCooling_Cycle * mpc_pc_cycle;
+
+		double m_m_dot_LTR_HP;		//[kg/s]
+		double m_m_dot_t;			//[kg/s]
+		double m_m_dot_rc;			//[kg/s]
+
+	public:
+		C_MEQ_recup_od(C_PartialCooling_Cycle *pc_pc_cycle,
+			double m_dot_LTR_HP /*kg/s*/,
+			double m_dot_t /*kg/s*/,
+			double m_dot_rc /*kg/s*/)
+		{
+			mpc_pc_cycle = pc_pc_cycle;
+
+			m_m_dot_LTR_HP = m_dot_LTR_HP;
+			m_m_dot_t = m_dot_t;
+			m_m_dot_rc = m_dot_rc;
+		}
+
+		virtual int operator()(double T_HTR_LP_out_guess /*K*/, double *diff_T_HTR_LP_out /*K*/);
+	};
 
 	class C_MEQ_HTR_des : public C_monotonic_equation
 	{
@@ -308,6 +411,7 @@ public:
 		C_MEQ_LTR_des(C_PartialCooling_Cycle *pc_pc_cycle)
 		{
 			mpc_pc_cycle = pc_pc_cycle;
+			double m_Q_dot_LTR = std::numeric_limits<double>::quiet_NaN();
 		}
 
 		double m_Q_dot_LTR;		//[kWt]
@@ -315,17 +419,50 @@ public:
 		virtual int operator()(double T_LTR_LP_out /*K*/, double *diff_T_LTR_LP_out /*K*/);
 	};
 
+	class C_MEQ_sco2_design_hit_eta__UA_total : public C_monotonic_equation
+	{
+	private:
+		C_PartialCooling_Cycle * mpc_pc_cycle;
+		std::string msg_log;
+		std::string msg_progress;
+
+	public:
+		C_MEQ_sco2_design_hit_eta__UA_total(C_PartialCooling_Cycle *pc_pc_cycle)
+		{
+			mpc_pc_cycle = pc_pc_cycle;
+
+			msg_log = "Log message ";
+			msg_progress = "Designing cycle...";
+		}
+
+		virtual int operator()(double UA_recup_total /*kW/K*/, double *eta /*-*/);
+	};
 
 	int design(S_des_params & des_par_in);
 
 	int opt_design(S_opt_des_params & opt_des_par_in);
+
+	int auto_opt_design(S_auto_opt_design_parameters & auto_opt_des_par_in);
 	
+	int auto_opt_design_hit_eta(S_auto_opt_design_hit_eta_parameters & auto_opt_des_hit_eta_in, std::string & error_msg);
+
+	int off_design_fix_shaft_speeds(S_od_par & od_phi_par_in);
+
 	// Called by 'nlopt_callback_opt_des_1', so needs to be public
 	double design_cycle_return_objective_metric(const std::vector<double> &x);
+
+	// Called by 'fmin_callback_opt_eta', so needs to be public
+	double opt_eta_fixed_P_high(double P_high_opt /*kPa*/);
+
+	const C_comp_multi_stage::S_od_solved * get_rc_od_solved()
+	{
+		return mc_rc.get_od_solved();
+	}
 
 };
 
 double nlopt_cb_opt_partialcooling_des(const std::vector<double> &x, std::vector<double> &grad, void *data);
 
+double fmin_cb_opt_partialcooling_des_fixed_P_high(double P_high /*kPa*/, void *data);
 
 #endif

@@ -9,9 +9,6 @@ os:
 compiler:
   - gcc
 
-before_install:
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then pip install --user cpp-coveralls; fi
-
 before_script:
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then wget -q https://github.com/wxWidgets/wxWidgets/releases/download/v3.1.1/wxWidgets-3.1.1.tar.bz2; fi
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then tar jxf wxWidgets-3.1.1.tar.bz2; fi
@@ -37,13 +34,12 @@ before_script:
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then git clone https://github.com/$user/wex $WEXDIR; fi
 
 script:
- # - ./configure --enable-gcov && make && make_check
   - export PATH=$PATH:$HOME/wx-3.1.1/bin
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then make -C $GTEST/make; fi
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then make -j4 -C $LKDIR/build_linux; fi
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then make -j4 -C $WEXDIR/build_linux; fi
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then make -j4 -C $SSCDIR/build_linux; fi
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then (cd $SSCDIR/build_linux/ && ./Test); fi
+#  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then (cd $SSCDIR/build_linux/ && ./Test); fi
 #  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then make -j4 -C $LKDIR/build_osx; fi
 #  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then make -j4 -C $WEXDIR/build_osx; fi
 #  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then make -j4 -C $SSCDIR/build_osx; fi
@@ -58,12 +54,10 @@ install:
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get install -y libgtk2.0-dev libgl1-mesa-dev mesa-common-dev freeglut3-dev libcurl4-openssl-dev libc6; fi
   #- if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install ccache; fi
   #- if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then export PATH="/usr/local/opt/ccache/libexec:$PATH"; fi 
-
-after_sucess:
-   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then coveralls --exclude lib --exclude tests --gcov-options '\-lp'; fi
-   
+  
 branches:
   only:
   - master
-  - develop 
-  - bifacial
+  - develop
+  - PVYield
+  - mppt
