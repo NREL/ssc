@@ -618,10 +618,11 @@ bool ST_System::CreateSTSystem(SolarField &SF, Hvector &helios, Vect &sunvect){
 	int sun_type = V->amb.sun_type.mapval(); 
 	double sigma = V->amb.sun_rad_limit.val; 
 	char shape = 'i';	//invalid
-	if(sun_type == 2){ shape = 'p'; }	//Pillbox sun
-	else if(sun_type == 0){ shape = 'g'; }	 //Point sun -- doesn't matter just use something here. it is disabled later.
-	else if(sun_type == 4){	shape = 'g'; }		//Gaussian sun
-	else if(sun_type == 1){	//Limb-darkened sun
+	if(sun_type == var_ambient::SUN_TYPE::PILLBOX_SUN){ shape = 'p'; }	//Pillbox sun
+	else if(sun_type == var_ambient::SUN_TYPE::POINT_SUN){ shape = 'g'; }	 //Point sun -- doesn't matter just use something here. it is disabled later.
+	else if(sun_type == var_ambient::SUN_TYPE::GAUSSIAN_SUN){	shape = 'g'; }		//Gaussian sun
+	else if(sun_type == var_ambient::SUN_TYPE::LIMBDARKENED_SUN)
+    {	//Limb-darkened sun
 		/* Create a table based on the limb-darkened profile and set as a user sun */
 		shape = 'd';
 		int np = 26;
@@ -648,7 +649,8 @@ bool ST_System::CreateSTSystem(SolarField &SF, Hvector &helios, Vect &sunvect){
 		delete [] angle;
 		delete [] intens;
 	}
-	else if(sun_type == 5){		//Buie sun
+	else if(sun_type == var_ambient::SUN_TYPE::BUIE_CSR )
+    {		//Buie sun
 		shape = 'd';
 		double
 			kappa, gamma, theta, chi;

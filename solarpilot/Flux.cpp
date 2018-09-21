@@ -448,7 +448,7 @@ void Flux::hermiteSunCoefs(var_map &V, matrix_t<double> &mSun) {
             //User provides array of angle (radians) and intensity
 		matrix_t<double> *user_sun;
 		matrix_t<double> temp_sun;
-		if(suntype == 4){	//Create a gaussian distribution
+		if(suntype == var_ambient::SUN_TYPE::GAUSSIAN_SUN){	//Create a gaussian distribution
 			int npt = 50;
 			temp_sun.resize(npt,2);
 			double ffact = 1./sqrt(2.*pi*sun_rad_limit);
@@ -459,7 +459,8 @@ void Flux::hermiteSunCoefs(var_map &V, matrix_t<double> &mSun) {
 			}
 			user_sun = &temp_sun;		//Assign
 		}
-		else if(suntype == 5){	//Create the Buie (2003) sun shape based on CSR
+		else if(suntype == var_ambient::SUN_TYPE::BUIE_CSR )
+        {	//Create the Buie (2003) sun shape based on CSR
 			//[1] Buie, D., Dey, C., & Bosi, S. (2003). The effective size of the solar cone for solar concentrating systems. Solar energy, 74(2003), 417–427. 
 			//[2] Buie, D., Monger, A., & Dey, C. (2003). Sunshape distributions for terrestrial solar simulations. Solar Energy, 74(March 2003), 113–122. 
 
