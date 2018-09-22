@@ -62,6 +62,8 @@ enum class CpntType {
     FINAL_ENTRY,
 };
 
+double FrictionFactor_FlexHose(double Re, double D);
+
 struct IntcOutputs
 {
     double heat_loss;
@@ -75,7 +77,6 @@ struct IntcOutputs
 
     IntcOutputs();
 };
-
 
 class intc_cpnt
 {
