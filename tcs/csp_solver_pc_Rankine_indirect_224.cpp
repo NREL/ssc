@@ -972,7 +972,7 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 						{
 							if (m_dot_warm_avail > (m_dot_radfield - m_dot_condenser))				//warm tank has sufficient for net flow also
 							{
-								mc_radiator.night_cool(T_db, T_warm_prev_K, u, T_s_K, mc_radiator.ms_params.m_dot_panel, T_rad_out,W_radpump);	//Call radiator to calculate temperature. Single series set of panels.
+								mc_radiator.night_cool(T_db, T_warm_prev_K, u, T_s_K, mc_radiator.ms_params.m_dot_panel,mc_radiator.ms_params.Np,m_dot_radfield, T_rad_out,W_radpump);	//Call radiator to calculate temperature. Single series set of panels.
 								mc_two_tank_ctes.charge_discharge(step_sec, T_db, m_dot_condenser, T_cond_out + 273.15, m_dot_radfield, T_rad_out, mc_two_tank_ctes_outputs);
 								radcool_cntrl = 21;
 							}
@@ -985,7 +985,7 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 						}
 						else																		//rarely would cold not be sufficient because the net flow in charge-discharge is typically into cold
 						{
-							mc_radiator.night_cool(T_db, T_warm_prev_K, u, T_s_K, mc_radiator.ms_params.m_dot_panel, T_rad_out,W_radpump);
+							mc_radiator.night_cool(T_db, T_warm_prev_K, u, T_s_K, mc_radiator.ms_params.m_dot_panel, mc_radiator.ms_params.Np, m_dot_radfield, T_rad_out,W_radpump);
 
 							//mc_cold_storage.idle(step_sec, T_db, mc_cold_storage_outputs);				//Idle tank if not enough mass during day (should not happen if tank sized well)
 
@@ -1009,7 +1009,7 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 					} 
 					else //night
 					{
-						mc_radiator.night_cool(T_db, T_warm_prev_K, u, T_s_K, mc_radiator.ms_params.m_dot_panel, T_rad_out,W_radpumptest);	//Call radiator to calculate temperature. Single series set of panels.
+						mc_radiator.night_cool(T_db, T_warm_prev_K, u, T_s_K, mc_radiator.ms_params.m_dot_panel, mc_radiator.ms_params.Np, m_dot_radfield, T_rad_out,W_radpumptest);	//Call radiator to calculate temperature. Single series set of panels.
 						if (T_rad_out < 273.15)
 						{
 							m_dot_radact = 0.0;	//If the radiator would get water to freezing, just circulate; do not cool tanks.
@@ -1199,13 +1199,13 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 				{
 					if (m_dot_warm_avail < m_dot_radfield)						//If dark & warm empty, recirculate.
 					{
-						mc_radiator.night_cool(T_db, T_cold_prev_K, u, T_s_K, mc_radiator.ms_params.m_dot_panel, T_rad_out,W_radpump);			//Call radiator to calculate temperature.
+						mc_radiator.night_cool(T_db, T_cold_prev_K, u, T_s_K, mc_radiator.ms_params.m_dot_panel, mc_radiator.ms_params.Np, m_dot_radfield, T_rad_out,W_radpump);			//Call radiator to calculate temperature.
 						mc_two_tank_ctes.recirculation(step_sec, T_db, m_dot_radfield, T_rad_out, mc_two_tank_ctes_outputs);
 						radcool_cntrl = 40;
 					}
 					else														//If dark & warm not empty, discharge (cooling)
 					{
-						mc_radiator.night_cool(T_db, T_warm_prev_K, u, T_s_K, mc_radiator.ms_params.m_dot_panel, T_rad_out,W_radpump);
+						mc_radiator.night_cool(T_db, T_warm_prev_K, u, T_s_K, mc_radiator.ms_params.m_dot_panel, mc_radiator.ms_params.Np, m_dot_radfield, T_rad_out,W_radpump);
 						mc_two_tank_ctes.discharge(step_sec, T_db, m_dot_radfield, T_rad_out, T_rad_in, mc_two_tank_ctes_outputs);
 						radcool_cntrl = 41;
 					}
@@ -1235,7 +1235,7 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 				}
 				else //night
 				{
-					mc_radiator.night_cool(T_db, T_warm_prev_K, u, T_s_K, mc_radiator.ms_params.m_dot_panel, T_rad_out,W_radpumptest);	//Call radiator to calculate temperature. Single series set of panels.
+					mc_radiator.night_cool(T_db, T_warm_prev_K, u, T_s_K, mc_radiator.ms_params.m_dot_panel, mc_radiator.ms_params.Np, m_dot_radfield, T_rad_out,W_radpumptest);	//Call radiator to calculate temperature. Single series set of panels.
 					if (T_rad_out < 273.15)
 					{
 						m_dot_radact = 0.0;	//If the radiator would get water to freezing, just circulate; do not cool tanks.

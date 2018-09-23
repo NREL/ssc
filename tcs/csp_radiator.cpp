@@ -35,7 +35,7 @@ void C_csp_radiator::init()
 	
 }
 
-void C_csp_radiator::night_cool(double T_db /*K*/, double T_rad_in /*K*/, double u /*m/s*/, double T_s /*K*/, double m_dot_rad /*K*/,
+void C_csp_radiator::night_cool(double T_db /*K*/, double T_rad_in /*K*/, double u /*m/s*/, double T_s /*K*/, double m_dot_rad /*K*/, double Np, double m_dot_coldstorage /*kg/sec*/,
 	//outputs
 	double &T_rad_out /*K*/, double &W_radpump /*MW*/)
 {
@@ -59,7 +59,7 @@ void C_csp_radiator::night_cool(double T_db /*K*/, double T_rad_in /*K*/, double
 	{
 		while (error_Tp > tol)		//Iterate on the plate temperature.
 		{
-			analytical_panel_calc_HX(T_db /*K*/, T_rad_in /*K*/, Tp_est /*K*/, u /*m/s*/, T_s /*K*/, m_dot_rad /*K*/,
+			analytical_panel_calc_HX(T_db /*K*/, T_rad_in /*K*/, Tp_est /*K*/, u /*m/s*/, T_s /*K*/, m_dot_rad /*K*/, Np, m_dot_coldstorage/*kg/sec*/,
 				//outputs
 				T_rad_out /*K*/, Tp /*K*/, W_radpump /*MW*/);
 			error_Tp = abs(Tp_est - Tp);	//Update error
@@ -235,7 +235,7 @@ void C_csp_radiator::analytical_panel_calc(double T_db /*K*/, double Tin /*K*/, 
 		W_radpump = (ms_params.radfield_dp*ms_params.m_dot_panel*ms_params.Np) / (rho_water*0.75*0.85)/1000;	//MWe pumping power when radiator field is operating. Isentropic eff = 0.75 and Mechanical pump eff = 0.85.
 }// adiabatic calc
 
-void C_csp_radiator::analytical_panel_calc_HX(double T_db /*K*/, double Tin /*K*/, double Tp_est /*K*/, double u /*m/s*/, double T_s /*K*/, double m_dot /*K*/,
+void C_csp_radiator::analytical_panel_calc_HX(double T_db /*K*/, double Tin /*K*/, double Tp_est /*K*/, double u /*m/s*/, double T_s /*K*/, double m_dot /*K*/, double Np, double m_dot_water /*kg/sec*/,
 	//outputs
 	double &T_rad_out /*K*/, double &Tp /*K*/, double &W_radpump /*MW*/)
 {
@@ -278,7 +278,7 @@ void C_csp_radiator::analytical_panel_calc_HX(double T_db /*K*/, double Tin /*K*
 	% Emissivity of ground : epsilong[-]
 	% Length of series - connected sections of panels(if single panel, set equal
 	%to L) : Lsec[m]
-
+	
 	% SAMPLE CALL in matlab
 	%[Tout, Qu, Tp] = rad_cool(319.3, 319.3, 2.25, 50, 0.2, 100, 10, 299.3, 299.3, 3.1, 280.9, .002, .02, 235, .95, .07, .9, 100)
 	%function[Tout, Qu, Tp, F, FR, h_w, h_forc_t, h_g, ULad, Fprime, Tad, hfi] = rad_cool(Tin, Tp_est, m_dot, n, W, L, Lc, Tdb, Tg, u, Ts, th, D, k, epsilon, epsilonb, epsilong, Lsec)
@@ -424,18 +424,18 @@ void C_csp_radiator::analytical_panel_calc_HX(double T_db /*K*/, double Tin /*K*
 	double FR = (m_dot*cp) / (A_c*ULad)*(1 - exp(-(A_c*ULad*Fprime) / (m_dot*cp)));								//Flow direction collector heat removal factor.
 	double CMIN= std::numeric_limits<double>::quiet_NaN();
 
-	if((m_dot*cp) < (m_dot*cp_water))																				//Determine minimum capacitance rate of HX
+	if((Np*m_dot*cp) < (m_dot_water*cp_water))	//Use the full flow rates at HX to compare																			//Determine minimum capacitance rate of HX
 	{
-		CMIN = m_dot * cp;
+		CMIN = Np*m_dot * cp;
 	}
 	else
 	{
-		CMIN = m_dot * cp_water;
+		CMIN = m_dot_water * cp_water;
 	}
-	double FRprime = FR / (1 + (A_c*FR*ULad) / (m_dot*cp)*((m_dot*cp) / (epsilon_HX*CMIN) - 1));
+	double FRprime = FR / (1 + (A_c*FR*ULad) / (m_dot*cp)*((Np*m_dot*cp) / (epsilon_HX*CMIN) - 1));
 	double Qu = FRprime * A_c*ULad*(Tin - Tad);																	//Heat
 	//double T_panel_out = Tin - Qu /(epsilon_HX*CMIN);															//Outlet temperature from radiator panel (glycol)
-	T_rad_out = Tin - Qu / (m_dot*cp_water);															//Outlet temperature of water side of HX
+	T_rad_out = Tin - Qu*Np / (m_dot_water*cp_water);															//Outlet temperature of water side of HX. Because this flow rate is full for all panels through HX, need to multiply Qu by Np.
 	Tp = Qu / (ULad*A_c) + Tad;																					//Plate temperature
 	double Tpa = 0.5*(Tp + T_db);																				//Updated value for average of plate & ambient temperature.
 	//Pumping

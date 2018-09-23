@@ -73,15 +73,15 @@ public:
 
 	void init();
 
-	void night_cool(double T_db /*K*/, double T_rad_in /*K*/, double u /*m/s*/, double T_s /*K*/, double m_dot_rad /*K*/,
+	void night_cool(double T_db /*K*/, double T_rad_in /*K*/, double u /*m/s*/, double T_s /*K*/, double m_dot_rad /*K*/, double Np, double m_dot_water /*kg/sec*/,
 		//outputs
 		double &T_rad_out /*K*/,double &W_radpump /*MW*/);
 
-	void analytical_panel_calc(double T_db /*K*/, double T_rad_in /*K*/, double Tp_est /*K*/, double u /*m/s*/, double T_s /*K*/, double m_dot_rad /*K*/,
+	void analytical_panel_calc(double T_db /*K*/, double T_rad_in /*K*/, double Tp_est /*K*/, double u /*m/s*/, double T_s /*K*/, double m_dot_rad /*kg/sec*/, 
 		//outputs
 		double &T_rad_out /*K*/,double &T_p /*K*/, double &W_radpump /*MW*/);
 
-	void analytical_panel_calc_HX(double T_db /*K*/, double T_rad_in /*K*/, double Tp_est /*K*/, double u /*m/s*/, double T_s /*K*/, double m_dot_rad /*K*/,
+	void analytical_panel_calc_HX(double T_db /*K*/, double T_rad_in /*K*/, double Tp_est /*K*/, double u /*m/s*/, double T_s /*K*/, double m_dot_rad /*kg/sec*/, double Np, double m_dot_water /*kg/sec*/,
 		//outputs
 		double &T_rad_out /*K*/, double &T_p /*K*/, double &W_radpump /*MW*/);
 
