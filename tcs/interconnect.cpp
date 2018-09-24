@@ -65,7 +65,7 @@ double FrictionFactor_FlexHose(double Re, double D) {
 	//		R. Gropp, Pforzheim, 1974. Flow resistance of flexible metallic lines
 	//		Excel spreadsheet Flex_hose_interpolation_test.xlsx
 
-	assert(Re > 4000);
+	assert(Re > 6000);
     double ff;
 	double d_in_mm = D * 1.e3;					// convert diameter from m to mm for use in the models
 
@@ -328,7 +328,7 @@ double intc_cpnt::PressureDrop(HTFProperties *fluidProps, double m_dot, double T
             return CSP::MajorPressureDrop(vel, rho, ff, l_, d_in_);
         case CpntType::Flex_Hose:
             Re = fluidProps->Re(T_htf_ave, P_htf_ave, vel, d_in_);
-			if (Re < 4000) {
+			if (Re < 6000) {
 				ff = CSP::FrictionFactor(rough_ / d_in_, Re);  // call standard pipe friction factor function
 			}
 			else {
