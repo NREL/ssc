@@ -334,6 +334,13 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
 	{ SSC_INPUT,		SSC_NUMBER,		 "is_pc_on_initial",	 "Is power cycle initially on?",									  "-",		      "",			 "sys_ctrl",		 "?=0",						 "",					  "" },
 	{ SSC_INPUT,		SSC_NUMBER,		 "is_pc_standby_initial", "Is power cycle initially in standby?",							  "-",		      "",			 "sys_ctrl",		 "?=0",						 "",					  "" },
 
+	{ SSC_INPUT,		SSC_NUMBER,		 "is_dispatch_targets",	 "Run solution from user-specified dispatch targets?",				  "-",		      "",			 "sys_ctrl",		 "?=0",						 "",					  "" },
+	{ SSC_INPUT,		SSC_ARRAY,		 "q_pc_target_in",		 "User-provided target thermal power to PC",						  "MWt",		  "",			 "sys_ctrl",		 "is_dispatch_targets=1",	 "",					  "" },
+	{ SSC_INPUT,		SSC_ARRAY,		 "q_pc_max_in",			 "User-provided max thermal power to PC",							  "MWt",		  "",			 "sys_ctrl",		 "is_dispatch_targets=1",	 "",					  "" },
+	{ SSC_INPUT,		SSC_ARRAY,		 "is_rec_su_allowed_in", "User-provided is receiver startup allowed?",						  "",			  "",			 "sys_ctrl",		 "is_dispatch_targets=1",	 "",					  "" },
+	{ SSC_INPUT,		SSC_ARRAY,		 "is_pc_su_allowed_in",  "User-provided is power cycle startup allowed?",					  "",			  "",			 "sys_ctrl",		 "is_dispatch_targets=1",	 "",					  "" },
+	{ SSC_INPUT,		SSC_ARRAY,		 "is_pc_sb_allowed_in",  "User-provided is power cycle standby allowed?",					  "",			  "",			 "sys_ctrl",		 "is_dispatch_targets=1",	 "",					  "" },
+
 
 
 	// Financial inputs
@@ -1742,6 +1749,60 @@ public:
 			for (int i = 0; i < 365; i++)
 				tou.mc_dispatch_params.m_select_days.at(i) = (bool)select_simulation_days[i];
 		}
+
+
+		// User-specified dispatch targets
+		bool is_dispatch_targets = as_boolean("is_dispatch_targets");
+		if (is_dispatch_targets && tou.mc_dispatch_params.m_dispatch_optimize)
+		{
+			log("Both 'is_dispatch' and 'is_dispatch_targets' were set to true. Plant dispatch will be optimized and all user-specified dispatch target arrays will be ignored", SSC_WARNING);
+			is_dispatch_targets = false;
+		}
+
+		tou.mc_dispatch_params.m_is_dispatch_targets = is_dispatch_targets;
+
+		if (tou.mc_dispatch_params.m_is_dispatch_targets)
+		{
+			int n_expect = (int)ceil((sim_setup.m_sim_time_end - sim_setup.m_sim_time_start) / 3600. * steps_per_hour);
+
+			size_t n = 0;
+			ssc_number_t* q_pb_target = as_array("q_pc_target_in", &n);
+
+			size_t n_max = 0;
+			ssc_number_t* q_pb_max = as_array("q_pc_max_in", &n_max);
+
+			size_t n_recsu = 0;
+			ssc_number_t* is_rec_su_allowed_in = as_array("is_rec_su_allowed_in", &n_recsu);
+
+			size_t n_pbsu = 0;
+			ssc_number_t* is_pc_su_allowed_in = as_array("is_pc_su_allowed_in", &n_pbsu);
+
+			size_t n_pbsb = 0;
+			ssc_number_t* is_pc_sb_allowed_in = as_array("is_pc_sb_allowed_in", &n_pbsb);
+
+			if (n != n_expect || n_max != n_expect || n_recsu != n_expect || n_pbsu != n_expect || n_pbsb != n_expect)
+				throw exec_error("tcsmolten_salt", "The number of points in the user-specified arrays of dispatch targets does not match the value expected from the specified simulation start and end times");
+			else
+			{
+				tou.mc_dispatch_params.m_q_pc_target_in.resize(n);
+				tou.mc_dispatch_params.m_q_pc_max_in.resize(n);
+				tou.mc_dispatch_params.m_is_rec_su_allowed_in.resize(n);
+				tou.mc_dispatch_params.m_is_pc_su_allowed_in.resize(n);
+				tou.mc_dispatch_params.m_is_pc_sb_allowed_in.resize(n);
+
+				for (int i = 0; i < n; i++)
+				{
+					tou.mc_dispatch_params.m_q_pc_target_in.at(i) = q_pb_target[i];
+					tou.mc_dispatch_params.m_q_pc_max_in.at(i) = q_pb_max[i];
+					tou.mc_dispatch_params.m_is_rec_su_allowed_in.at(i) = (bool)is_rec_su_allowed_in[i];
+					tou.mc_dispatch_params.m_is_pc_su_allowed_in.at(i) = (bool)is_pc_su_allowed_in[i];
+					tou.mc_dispatch_params.m_is_pc_sb_allowed_in.at(i) = (bool)is_pc_sb_allowed_in[i];
+				}
+
+			}
+				
+		}
+
 
 
         size_t n_f_turbine = 0;
