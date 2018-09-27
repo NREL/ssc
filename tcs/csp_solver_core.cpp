@@ -952,6 +952,44 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 				}
 
 
+				// get the capacity and efficiency constraints (assumed to be provided at the weather file time resolution beginning at the simulation start time)
+				dispatch.cap_frac.clear();
+				dispatch.eff_frac.clear();
+				dispatch.cap_frac.resize(opt_horizon*mc_tou.mc_dispatch_params.m_disp_steps_per_hour, 1.0);
+				dispatch.eff_frac.resize(opt_horizon*mc_tou.mc_dispatch_params.m_disp_steps_per_hour, 1.0);
+				if (mc_tou.mc_dispatch_params.m_is_disp_constr)
+				{
+					int p = (int)ceil((mc_kernel.mc_sim_info.ms_ts.m_time - sim_setup.m_sim_time_start) / baseline_step) - 1;
+					int n_per_disp_step = (int)(3600. / baseline_step) / mc_tou.mc_dispatch_params.m_disp_steps_per_hour; // number of time-series steps per dispatch step
+					for (int d = 0; d < opt_horizon * mc_tou.mc_dispatch_params.m_disp_steps_per_hour; d++)
+					{
+						dispatch.cap_frac.at(d) = 0.0;
+						dispatch.eff_frac.at(d) = 0.0;
+
+						for (int i = 0; i < n_per_disp_step; i++)
+						{
+							int t = p + d * n_per_disp_step + i;
+							double cap_frac, eff_frac;
+							if (t < (int)mc_tou.mc_dispatch_params.m_disp_cap_constr.size())
+							{
+								cap_frac = mc_tou.mc_dispatch_params.m_disp_cap_constr.at(t);
+								eff_frac = mc_tou.mc_dispatch_params.m_disp_eff_constr.at(t);
+							}
+							else  // provided arrays may not cover full look-ahead period -> use last value
+							{
+								cap_frac = mc_tou.mc_dispatch_params.m_disp_cap_constr.back();
+								eff_frac = mc_tou.mc_dispatch_params.m_disp_eff_constr.back();
+							}
+						
+							dispatch.cap_frac.at(d) += cap_frac / (double)n_per_disp_step;
+							dispatch.eff_frac.at(d) += eff_frac / (double)n_per_disp_step;
+						}
+					}
+				}
+				
+
+
+
                 //note the states of the power cycle and receiver
                 dispatch.params.is_pb_operating0 = mc_power_cycle.get_operating_state() == 1;
                 dispatch.params.is_pb_standby0 = mc_power_cycle.get_operating_state() == 2;
@@ -965,6 +1003,15 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
                 if(dispatch.params.w_pb0 != dispatch.params.w_pb0 )
                     dispatch.params.w_pb0 = 0.;
             
+				if (!dispatch.params.is_pb_operating0)
+				{
+					dispatch.params.w_pb0 = 0.0;
+					if (!dispatch.params.is_pb_standby0)
+						dispatch.params.q_pb0 = 0.0;
+				}
+
+
+
                 //time
                 dispatch.params.info_time = mc_kernel.mc_sim_info.ms_ts.m_time; //s
 
@@ -1099,6 +1146,9 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
                  //  + dispatch.outputs.q_pb_startup.at( dispatch.m_current_read_step ) )
                   // / 1000. ;
 				
+				
+				q_pc_max *= dispatch.cap_frac.at(dispatch.m_current_read_step); // Enforce capacity constraints
+
 
 				int t = dispatch.m_current_read_step;
 				if (dispatch.outputs.q_pb_startup.at(t) > 0.0 && dispatch.outputs.q_pb_target.at(t) > 0.0)  // Power block is both starting up and operating
@@ -1200,6 +1250,24 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 
             }
             
+
+			if (!dispatch.m_last_opt_successful && mc_tou.mc_dispatch_params.m_is_disp_constr)  // dispatch optimization run was not successful -> enforce user-defined capacity constraints from cycle failures
+			{
+				int p = (int)ceil((mc_kernel.mc_sim_info.ms_ts.m_time - sim_setup.m_sim_time_start) / baseline_step) - 1;
+				if (p < (int)mc_tou.mc_dispatch_params.m_disp_cap_constr.size())
+				{
+					q_pc_max = m_cycle_q_dot_des * mc_tou.mc_dispatch_params.m_disp_cap_constr.at(p);
+					q_pc_target = q_pc_max;
+
+					if (q_pc_max < q_pc_min)
+						is_pc_su_allowed = false;
+					if (q_pc_max < q_pc_sb)
+						is_pc_sb_allowed = false;
+
+				}
+			}
+			
+
             disp_time_last = mc_kernel.mc_sim_info.ms_ts.m_time;
                         
         }

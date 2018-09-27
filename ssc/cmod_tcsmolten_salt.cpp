@@ -337,10 +337,13 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
 	{ SSC_INPUT,		SSC_NUMBER,		 "is_dispatch_targets",	 "Run solution from user-specified dispatch targets?",				  "-",		      "",			 "sys_ctrl",		 "?=0",						 "",					  "" },
 	{ SSC_INPUT,		SSC_ARRAY,		 "q_pc_target_in",		 "User-provided target thermal power to PC",						  "MWt",		  "",			 "sys_ctrl",		 "is_dispatch_targets=1",	 "",					  "" },
 	{ SSC_INPUT,		SSC_ARRAY,		 "q_pc_max_in",			 "User-provided max thermal power to PC",							  "MWt",		  "",			 "sys_ctrl",		 "is_dispatch_targets=1",	 "",					  "" },
-	{ SSC_INPUT,		SSC_ARRAY,		 "is_rec_su_allowed_in", "User-provided is receiver startup allowed?",						  "",			  "",			 "sys_ctrl",		 "is_dispatch_targets=1",	 "",					  "" },
-	{ SSC_INPUT,		SSC_ARRAY,		 "is_pc_su_allowed_in",  "User-provided is power cycle startup allowed?",					  "",			  "",			 "sys_ctrl",		 "is_dispatch_targets=1",	 "",					  "" },
-	{ SSC_INPUT,		SSC_ARRAY,		 "is_pc_sb_allowed_in",  "User-provided is power cycle standby allowed?",					  "",			  "",			 "sys_ctrl",		 "is_dispatch_targets=1",	 "",					  "" },
+	{ SSC_INPUT,		SSC_ARRAY,		 "is_rec_su_allowed_in", "User-provided is receiver startup allowed?",						  "-",			  "",			 "sys_ctrl",		 "is_dispatch_targets=1",	 "",					  "" },
+	{ SSC_INPUT,		SSC_ARRAY,		 "is_pc_su_allowed_in",  "User-provided is power cycle startup allowed?",					  "-",			  "",			 "sys_ctrl",		 "is_dispatch_targets=1",	 "",					  "" },
+	{ SSC_INPUT,		SSC_ARRAY,		 "is_pc_sb_allowed_in",  "User-provided is power cycle standby allowed?",					  "-",			  "",			 "sys_ctrl",		 "is_dispatch_targets=1",	 "",					  "" },
 
+	{ SSC_INPUT,		SSC_NUMBER,		 "is_dispatch_constr",	 "Use dispatch capacity/efficiency constraints?",					  "-",		      "",			 "sys_ctrl",		 "?=0",						 "",					  "" },
+	{ SSC_INPUT,		SSC_ARRAY,		 "disp_cap_constr",		 "Fraction of turbine capacity available",							  "-",			  "",			 "sys_ctrl",		 "is_dispatch_constr=1",	 "",					  "" },
+	{ SSC_INPUT,		SSC_ARRAY,		 "disp_eff_constr",		 "Fraction of design point turbine efficiency available",			  "-",			  "",			 "sys_ctrl",		 "is_dispatch_constr=1",	 "",					  "" },
 
 
 	// Financial inputs
@@ -1781,7 +1784,7 @@ public:
 			ssc_number_t* is_pc_sb_allowed_in = as_array("is_pc_sb_allowed_in", &n_pbsb);
 
 			if (n != n_expect || n_max != n_expect || n_recsu != n_expect || n_pbsu != n_expect || n_pbsb != n_expect)
-				throw exec_error("tcsmolten_salt", "The number of points in the user-specified arrays of dispatch targets does not match the value expected from the specified simulation start and end times");
+				throw exec_error("tcsmolten_salt", "The number of points in the user-specified arrays of dispatch targets does not match the value expected from the simulation start time, end time, and time steps per hour");
 			else
 			{
 				tou.mc_dispatch_params.m_q_pc_target_in.resize(n);
@@ -1801,6 +1804,40 @@ public:
 
 			}
 				
+		}
+
+		// Dispatch optimization capacity/efficiency constraints
+		tou.mc_dispatch_params.m_is_disp_constr = as_boolean("is_dispatch_constr");
+		if (tou.mc_dispatch_params.m_is_disp_constr)
+		{
+			if (!tou.mc_dispatch_params.m_dispatch_optimize)
+			{
+				log("Dispatch optimization is not enabled. The provided dispatch capacity and efficiency constraints will be ignored.", SSC_WARNING);
+				is_dispatch_targets = false;
+			}
+			else
+			{
+				int n_expect = (int)ceil((sim_setup.m_sim_time_end - sim_setup.m_sim_time_start) / 3600. * steps_per_hour);
+
+				size_t n_cap = 0;
+				ssc_number_t* disp_cap_constr = as_array("disp_cap_constr", &n_cap);
+
+				size_t n_eff = 0;
+				ssc_number_t* disp_eff_constr = as_array("disp_eff_constr", &n_eff);
+
+				if (n_cap != n_expect || n_eff != n_expect)
+					throw exec_error("tcsmolten_salt", "The number of points in the user-specified arrays of dispatch capacity/efficiency constraints does not match the value expected from the simulation start time, end time, and time steps per hour");
+				else
+				{
+					tou.mc_dispatch_params.m_disp_cap_constr.resize(n_expect);
+					tou.mc_dispatch_params.m_disp_eff_constr.resize(n_expect);
+					for (int i = 0; i < n_expect; i++)
+					{
+						tou.mc_dispatch_params.m_disp_cap_constr.at(i) = disp_cap_constr[i];
+						tou.mc_dispatch_params.m_disp_eff_constr.at(i) = disp_eff_constr[i];
+					}
+				}
+			}
 		}
 
 

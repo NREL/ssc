@@ -75,6 +75,8 @@ public:
     bool m_last_opt_successful;   //last optimization run was successful?
     int m_current_read_step;        //current step to read from optimization results
 	std::vector<double> w_lim;			//[kWe] Limit on net electricity production
+	std::vector<double> cap_frac;		// Fraction of gross capacity available
+	std::vector<double> eff_frac;		// Fraction of thermal efficiency available
     C_csp_weatherreader *m_weather;       //Local copy of weather reader object
 
 

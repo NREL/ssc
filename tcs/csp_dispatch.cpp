@@ -817,10 +817,10 @@ bool csp_dispatch_opt::optimize()
                 row[i  ] = 1.;
                 col[i++] = O.column("wdot", t);
 
-                row[i  ] = -P["etap"]*outputs.eta_pb_expected.at(t,0)/params.eta_cycle_ref;
+                row[i  ] = -P["etap"]*outputs.eta_pb_expected.at(t,0) * eff_frac.at(t)/params.eta_cycle_ref;
                 col[i++] = O.column("x", t);
 
-                row[i  ] = -(P["Wdotu"] - P["etap"]*P["Qu"])*outputs.eta_pb_expected.at(t,0)/params.eta_cycle_ref;
+                row[i  ] = -(P["Wdotu"] - P["etap"]*P["Qu"])*outputs.eta_pb_expected.at(t,0)* eff_frac.at(t) /params.eta_cycle_ref;
                 col[i++] = O.column("y", t);
 
                 //row[i  ] = -outputs.eta_pb_expected.at(t);
@@ -1116,7 +1116,7 @@ bool csp_dispatch_opt::optimize()
                 row[i  ] = P["Qc"];
                 col[i++] = O.column("ycsu", t);
                 
-                row[i  ] = -P["Qu"];
+                row[i  ] = -P["Qu"] * cap_frac.at(t);
                 col[i++] = O.column("y", t);
 
                 add_constraintex(lp, i, row, col, LE, 0.);
@@ -1125,7 +1125,7 @@ bool csp_dispatch_opt::optimize()
                 row[0] = 1.;
                 col[0] = O.column("x", t);
 
-                row[1] = -P["Qu"];
+                row[1] = -P["Qu"] * cap_frac.at(t);
                 col[1] = O.column("y", t);
 
                 add_constraintex(lp, 2, row, col, LE, 0.);
@@ -1139,6 +1139,13 @@ bool csp_dispatch_opt::optimize()
                 col[i++] = O.column("y", t);
 
                 add_constraintex(lp, i, row, col, GE, 0);
+
+
+				// Cycle standby not allowed if constrained capacity less than standby requirement
+				row[0] = P["Qb"];
+				col[0] = O.column("ycsb", t);
+				add_constraintex(lp, 1, row, col, LE, P["Qu"] * cap_frac.at(t));
+
 
                 //cycle startup can't be enabled after a time step where the cycle was operating
                 if(t>0)
@@ -1953,6 +1960,9 @@ std::string csp_dispatch_opt::write_ampl()
             write_ampl_variable_array( fout, outputs.wnet_lim_min, "wnet_lim_min" ); //cycle net production lower limit
             write_ampl_variable_array( fout, outputs.delta_rs, "delta_rs" ); //receiver expected startup timestep fraction
         }
+
+		write_ampl_variable_array(fout, cap_frac, "cap_frac");
+		write_ampl_variable_array(fout, eff_frac, "eff_frac");
 
         fout.close();
     }

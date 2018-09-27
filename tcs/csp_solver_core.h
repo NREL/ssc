@@ -325,6 +325,10 @@ public:
 		std::vector<bool> m_is_pc_su_allowed_in;
 		std::vector<bool> m_is_pc_sb_allowed_in;
 
+		bool m_is_disp_constr;
+		std::vector<double> m_disp_cap_constr;
+		std::vector<double> m_disp_eff_constr;
+
         S_csp_tou_params()
         {
             m_isleapyear = false;
@@ -384,7 +388,7 @@ public:
 			m_select_days.assign(365, 1);
 
 			m_is_dispatch_targets = false;
-
+			m_is_disp_constr = false;
         };
 
     } mc_dispatch_params;
