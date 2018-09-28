@@ -938,7 +938,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 	p_invcliploss_full.reserve(nlifetime);
 
 	// Multiple MPPT inverters not enabled with DC-connected batteries
-	if (PVSystem->Inverter->nMpptInputs > 1 && batt_topology == ChargeController::DC_CONNECTED)
+	if (PVSystem->Inverter->nMpptInputs > 1 && en_batt && batt_topology == ChargeController::DC_CONNECTED)
 		throw exec_error("pvsamv1", "A DC-connected battery cannot be modeled with multiple MPPT inverters at this time.");
 
 	std::vector<ssc_number_t> p_pv_clipping_forecast;

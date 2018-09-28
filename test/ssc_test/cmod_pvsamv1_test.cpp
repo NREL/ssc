@@ -503,3 +503,32 @@ TEST_F(CMPvsamv1PowerIntegration, InvTempDerate) {
 	monthly_energy = ssc_data_get_array(data, "monthly_energy", nullptr)[11];
 	EXPECT_NEAR(monthly_energy, 740, 10) << "Month energy of December not reduced";
 }
+
+/// Test PVSAMv1 multiple MPPT inverter, otherwise using default no financial model inputs
+TEST_F(CMPvsamv1PowerIntegration, NoFinancialModelMultipleMPPT)
+{
+	std::vector<double> annual_energy_expected = { 7633 };
+	std::map<std::string, double> pairs;
+
+	pairs["inv_num_mppt"] = 2;
+	pairs["subarray1_nstrings"] = 1;
+	pairs["subarray1_modules_per_string"] = 7;
+	pairs["subarray1_inv_mppt"] = 1;
+	pairs["subarray1_tilt"] = 20;
+	pairs["subarray2_enable"] = 1;
+	pairs["subarray2_nstrings"] = 1;
+	pairs["subarray2_modules_per_string"] = 6;
+	pairs["subarray2_tilt"] = 0;
+	pairs["subarray2_inv_mppt"] = 2;
+
+	int pvsam_errors = modify_ssc_data_and_run_module(data, "pvsamv1", pairs);
+	EXPECT_FALSE(pvsam_errors);
+
+	if (!pvsam_errors)
+	{
+		ssc_number_t annual_energy;
+		ssc_data_get_number(data, "annual_energy", &annual_energy);
+		EXPECT_NEAR(annual_energy, annual_energy_expected[0], m_error_tolerance_hi) << "Annual energy.";
+	}
+
+}

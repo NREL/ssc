@@ -153,7 +153,7 @@ void SharedInverter::calculateACPower(const double powerDC_Watts, const double D
 		calculateTempDerate(DCStringVoltage, T, powerAC_kW, efficiencyAC, tempLoss);
 	}
 
-	// Convert units to kW and scale to total system size
+	// Convert units to kW- no need to scale to system size because passed in as power to total number of inverters
 	powerDC_kW = powerDC_Watts * util::watt_to_kilowatt;
 	convertOutputsToKWandScale(tempLoss);
 
@@ -168,12 +168,16 @@ void SharedInverter::calculateACPower(const std::vector<double> powerDC_Watts, c
 {
 	double P_par, P_lr;
 
+	//need to divide power by m_num_inverters
+	std::vector<double> powerDC_Watts_one_inv;
+	for (int i = 0; i < powerDC_Watts.size(); i++)
+		powerDC_Watts_one_inv.push_back(powerDC_Watts[i] / m_numInverters);
+
 	// Power quantities go in and come out in units of W
-	//Don't need to divide by number of inverters for acpower functions here, because pvsamv1 is constrained to only have ONE multi-mppt inverter in a system
 	if (m_inverterType == SANDIA_INVERTER || m_inverterType == DATASHEET_INVERTER || m_inverterType == COEFFICIENT_GENERATOR)
-		m_sandiaInverter->acpower(powerDC_Watts, DCStringVoltage, &powerAC_kW, &P_par, &P_lr, &efficiencyAC, &powerClipLoss_kW, &powerConsumptionLoss_kW, &powerNightLoss_kW);
+		m_sandiaInverter->acpower(powerDC_Watts_one_inv, DCStringVoltage, &powerAC_kW, &P_par, &P_lr, &efficiencyAC, &powerClipLoss_kW, &powerConsumptionLoss_kW, &powerNightLoss_kW);
 	else if (m_inverterType == PARTLOAD_INVERTER)
-		m_partloadInverter->acpower(powerDC_Watts, &powerAC_kW, &P_lr, &P_par, &efficiencyAC, &powerClipLoss_kW, &powerNightLoss_kW);
+		m_partloadInverter->acpower(powerDC_Watts_one_inv, &powerAC_kW, &P_lr, &P_par, &efficiencyAC, &powerClipLoss_kW, &powerNightLoss_kW);
 
 	double tempLoss = 0.0;
 	if (m_tempEnabled){
@@ -185,11 +189,11 @@ void SharedInverter::calculateACPower(const std::vector<double> powerDC_Watts, c
 		calculateTempDerate(avgDCVoltage, T, powerAC_kW, efficiencyAC, tempLoss);
 	}
 
-	// Convert units to kW and scale to total system size for DC power
+	// Convert units to kW and scale to total system size
+	// Do not need to scale back up by m_numInverters because scaling them down was a separate vector, powerDC_Watts_one_inv
 	powerDC_kW = 0;
 	for (int i = 0; i < powerDC_Watts.size(); i++)
 		powerDC_kW += powerDC_Watts[i] * util::watt_to_kilowatt;
-	powerDC_kW *= m_numInverters;
 
 	//Convert units to kW and scale to total array for all other outputs
 	convertOutputsToKWandScale(tempLoss);
