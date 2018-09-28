@@ -900,6 +900,8 @@ C_HX_counterflow::C_HX_counterflow()
 {
 	m_is_HX_initialized = false;
 	m_is_HX_designed = false;
+
+	m_cost_model = -1;
 }
 
 void C_HX_counterflow::initialize(const S_init_par & init_par_in)
@@ -1017,6 +1019,21 @@ double C_HX_counterflow::calc_max_q_dot_enth(double h_h_in /*kJ/kg*/, double P_h
 			h_c_in, P_c_in, P_c_out, m_dot_c);
 }
 
+double C_HX_counterflow::calculate_cost(double UA /*kWt/K*/,
+	double T_hot_in /*K*/, double P_hot_in /*kPa*/, double m_dot_hot /*kg/s*/,
+	double T_cold_in /*K*/, double P_cold_in /*kPa*/, double m_dot_cold /*kg/s*/)
+{
+	switch (m_cost_model)
+	{
+	case C_HX_counterflow::E_CARLSON_17_RECUP:
+		return 1.25*1.E-3*UA;		//[M$] needs UA in kWt/K
+	case C_HX_counterflow::E_CARLSON_17_PHX:
+		return 3.5*1.E-3*UA;		//[M$] needs UA in kWt/K
+	default:
+		return std::numeric_limits<double>::quiet_NaN();
+	}
+}
+
 void C_HX_counterflow::design_calc_UA(C_HX_counterflow::S_des_calc_UA_par des_par,
 	double q_dot_design /*kWt*/, C_HX_counterflow::S_des_solved &des_solved)
 {
@@ -1056,12 +1073,16 @@ void C_HX_counterflow::design_calc_UA(C_HX_counterflow::S_des_calc_UA_par des_pa
 	}
 
 	ms_des_solved.m_Q_dot_design = q_dot_design;	//[kWt]
-	ms_des_solved.m_UA_design_total = UA_calc;
+	ms_des_solved.m_UA_design_total = UA_calc;		//[kWt/K]
 	ms_des_solved.m_min_DT_design = min_DT_calc;
 	ms_des_solved.m_eff_design = eff_calc;
 	ms_des_solved.m_NTU_design = NTU_calc;
 	ms_des_solved.m_T_h_out = T_h_out_calc;
 	ms_des_solved.m_T_c_out = T_c_out_calc;
+
+	ms_des_solved.m_cost = calculate_cost(ms_des_solved.m_UA_design_total,
+		ms_des_calc_UA_par.m_T_h_in, ms_des_calc_UA_par.m_P_h_in, ms_des_calc_UA_par.m_m_dot_hot_des,
+		ms_des_calc_UA_par.m_T_c_in, ms_des_calc_UA_par.m_P_c_in, ms_des_calc_UA_par.m_m_dot_cold_des);
 
 	// Specify that method solved successfully
 	m_is_HX_designed = true;
@@ -1114,7 +1135,8 @@ void C_HX_counterflow::design_fix_UA_calc_outlet(double UA_target /*kW/K*/, doub
 	ms_des_calc_UA_par.m_eff_max = eff_target;		//[-]
 
 	ms_des_solved.m_Q_dot_design = q_dot;			//[kWt]
-	ms_des_solved.m_UA_design_total = UA_calc;		//[kW/K]
+	ms_des_solved.m_UA_design_total = UA_target;	//[kW/K]
+	ms_des_solved.m_UA_calc_at_eff_max = UA_calc;	//[kW/K]
 	ms_des_solved.m_min_DT_design = min_DT;			//[K]
 	ms_des_solved.m_eff_design = eff_calc;			//[-]
 	ms_des_solved.m_NTU_design = NTU;				//[-]
@@ -1122,6 +1144,10 @@ void C_HX_counterflow::design_fix_UA_calc_outlet(double UA_target /*kW/K*/, doub
 	ms_des_solved.m_T_c_out = T_c_out;				//[K]
 	ms_des_solved.m_DP_cold_des = P_c_in - P_c_out;		//[kPa]
 	ms_des_solved.m_DP_hot_des = P_h_in - P_h_out;		//[kPa]
+
+	ms_des_solved.m_cost = calculate_cost(ms_des_solved.m_UA_design_total,
+		T_h_in, P_h_in, m_dot_h,
+		T_c_in, P_c_in, m_dot_c);
 }
 
 void C_HX_counterflow::off_design_solution(double T_c_in /*K*/, double P_c_in /*kPa*/, double m_dot_c /*kg/s*/, double P_c_out /*kPa*/,
@@ -1348,6 +1374,8 @@ C_CO2_to_air_cooler::C_CO2_to_air_cooler()
 	m_T_co2_hot_max = 700.0 + 273.15;	//[K]
 
 	mc_air.SetFluid(mc_air.Air);
+
+	m_cost_model = C_CO2_to_air_cooler::E_CARLSON_17;		//[-]
 }
 
 bool C_CO2_to_air_cooler::design_hx(S_des_par_ind des_par_ind, S_des_par_cycle_dep des_par_cycle_dep)
@@ -1509,6 +1537,16 @@ bool C_CO2_to_air_cooler::design_hx(S_des_par_ind des_par_ind, S_des_par_cycle_d
 
 	ms_hx_des_sol.m_L_node = ms_hx_des_sol.m_L_tube / (double)m_N_nodes;	//[m] Length of one node
 	ms_hx_des_sol.m_V_node = ms_hx_des_sol.m_L_node*m_s_v*m_s_h;	//[m^3] Volume of one node
+
+	ms_hx_des_sol.m_m_dot_co2 = ms_des_par_cycle_dep.m_m_dot_total;		//[kg/s] Total CO2 flow rate
+	ms_hx_des_sol.m_T_in_co2 = ms_des_par_cycle_dep.m_T_hot_in_des;		//[K] Hot CO2 inlet temperature
+	ms_hx_des_sol.m_P_in_co2 = ms_des_par_cycle_dep.m_P_hot_in_des;		//[kPa] Hot CO2 inlet pressure
+	ms_hx_des_sol.m_T_out_co2 = ms_des_par_cycle_dep.m_T_hot_out_des;	//[K] Cold CO2 outlet temperature
+	ms_hx_des_sol.m_P_out_co2 = m_P_hot_out_des;			//[K] Cold CO2 outlet pressure
+	ms_hx_des_sol.m_q_dot = m_Q_dot_des;					//[Wt] Heat exchanger duty
+
+	ms_hx_des_sol.m_cost = calculate_cost(ms_hx_des_sol.m_UA_total*1.E-3, ms_hx_des_sol.m_V_total,
+		ms_hx_des_sol.m_T_in_co2, ms_hx_des_sol.m_P_in_co2, ms_hx_des_sol.m_m_dot_co2);		//[M$]
 
 	return true;
 };
@@ -1947,6 +1985,18 @@ int C_CO2_to_air_cooler::C_MEQ_target_T_hot__width_parallel::operator()(double W
 	*T_co2_hot = c_eq.m_T_co2_in_calc;	//[K]
 
 	return 0;
+}
+
+double C_CO2_to_air_cooler::calculate_cost(double UA /*kWt/K*/, double V_material /*m^3*/,
+	double T_hot_in /*K*/, double P_hot_in /*kPa*/, double m_dot_hot /*kg/s*/)
+{
+	switch (m_cost_model)
+	{
+	case C_CO2_to_air_cooler::E_CARLSON_17:
+		return 2.3*1.E-3*UA;		//[M$] needs UA in kWt/K
+	default:
+		return std::numeric_limits<double>::quiet_NaN();
+	}
 }
 
 void C_CO2_to_air_cooler::calc_air_props(double T_amb /*K*/, double P_amb /*Pa*/,

@@ -487,22 +487,14 @@ std::string weatherfile::filename()
 	return m_file;
 }
 
-bool check_missing(float& v, double missing = -999.) {
-	if (std::abs(v - missing) <= 0.01) {
-		v = -999.f;
-		return true;
-	}
-	else return false;
-}
-
-bool is_missing(double v, double missing = -999.) {
-	if (std::abs(v - missing) <= 0.01) return true;
+bool is_missing(double v) {
+	if (my_isnan(v)) return true;
 	else return false;
 }
 
 float check_missing(double v, double missing = -999.) {
 	if (std::abs(v - missing) <= 0.01) {
-		return -999.f;
+		return std::numeric_limits<float>::quiet_NaN();
 	}
 	else return (float)v;
 }
@@ -524,13 +516,20 @@ void weatherfile::handle_missing_field(size_t index, int col) {
 	while (is_missing(m_columns[col].data[prev])) {
 		prev = (prev == 0) ? m_nRecords - 1 : prev - 1;
 		count++;
-		if (count > m_nRecords) return;
+		if (count > m_nRecords) break;
+	}
+	if (count > m_nRecords / 2) {
+		// entire or most of column is missing data so fill with -999
+		for (size_t r = 0; r < m_nRecords; r++) {
+			m_columns[col].data[r] = -999;
+		}
+		return;
 	}
 	count = 0;
 	while (is_missing(m_columns[col].data[next])) {
 		next = (next == m_nRecords - 1) ? 0 : next + 1;
 		count++;
-		if (count > m_nRecords) return;
+		if (count > m_nRecords) break;
 	}
 
 	int diffTimeSteps = std::abs((int)(next - prev));
@@ -541,6 +540,40 @@ void weatherfile::handle_missing_field(size_t index, int col) {
 		m_columns[col].data[current] = m_columns[col].data[prev] + slope * (float)i;
 		current = (current == m_nRecords + 1) ? 0 : current + 1;
 	}
+}
+
+bool weatherfile::timeStepChecks(int hdr_step_sec) {
+	int nmult = (int)m_nRecords / 8760;
+
+	if (hdr_step_sec > 0)
+	{  // if explicitly specified in header?
+		m_stepSec = hdr_step_sec;
+		m_startSec = m_stepSec / 2;
+	}
+	else if (nmult * 8760 == (int)m_nRecords)
+	{
+		// multiple of 8760 records: assume 1 year of data
+		m_stepSec = 3600 / nmult;
+		m_startSec = m_stepSec / 2;
+	}
+	else if (m_nRecords % 8784 == 0)
+	{
+		// Check if the weather file contains a leap day
+		// if so, correct the number of nrecords 
+		m_nRecords = m_nRecords / 8784 * 8760;
+		nmult = (int)m_nRecords / 8760;
+		m_stepSec = 3600 / nmult;
+		m_startSec = m_stepSec / 2;
+		m_hasLeapYear = true;
+	}
+	else
+	{
+		m_message = "could not determine timestep in weather file";
+		m_ok = false;
+		return false;
+	}
+
+	return true;
 }
 
 bool weatherfile::open(const std::string &file, bool header_only)
@@ -652,9 +685,19 @@ bool weatherfile::open(const std::string &file, bool header_only)
 	}
 	else if (m_type == EPW)
 	{
+		m_nRecords = 0; 
+
+		while (getline(ifs, buf) && buf.length() > 0)
+			m_nRecords++;
+
+		m_nRecords -= 8;	// remove header lines
+		ifs.clear();
+		ifs.seekg(0);
+
+		if (!timeStepChecks()) return false;
+
 		/*  LOCATION,Cairo Intl Airport,Al Qahirah,EGY,ETMY,623660,30.13,31.40,2.0,74.0 */
 		/*  LOCATION,Alice Springs Airport,NT,AUS,RMY,943260,-23.80,133.88,9.5,547.0 */
-
 		getline(ifs, buf);
 		auto cols = split(buf);
 
@@ -684,10 +727,6 @@ bool weatherfile::open(const std::string &file, bool header_only)
 		getline(ifs, buf);  // COMMENTS 1
 		getline(ifs, buf);  // COMMENTS 2
 		getline(ifs, buf);  // DATA PERIODS
-
-		m_startSec = 1800;
-		m_stepSec = 3600;
-		m_nRecords = 8760;
 
 	}
 	else if (m_type == SMW)
@@ -858,8 +897,10 @@ bool weatherfile::open(const std::string &file, bool header_only)
 				getline(ifs, buf);  // col units
 
 			m_nRecords = 0; // figure out how many records there are
+
 			while (getline(ifs, buf) && buf.length() > 0)
 				m_nRecords++;
+
 
 			// reposition to where we were
 			ifs.clear();
@@ -867,44 +908,7 @@ bool weatherfile::open(const std::string &file, bool header_only)
 			getline(ifs, buf);  // header names
 			getline(ifs, buf);  // header values
 
-			// now determine timestep as best as possible
-			int nmult = (int)m_nRecords / 8760;
-			// divide by zero error 2/20/19
-			if (nmult <= 0)
-			{
-				m_message = "could not determine number of records in CSV weather file";
-				m_ok = false;
-				return false;
-			}
-
-
-
-			if (hdr_step_sec > 0)
-			{  // if explicitly specified in header?
-				m_stepSec = hdr_step_sec;
-				m_startSec = m_stepSec / 2;
-			}
-			else if (nmult * 8760 == (int)m_nRecords)
-			{
-				// multiple of 8760 records: assume 1 year of data
-				m_stepSec = 3600 / nmult;
-				m_startSec = m_stepSec / 2;
-			}
-			else if (m_nRecords % 8784 == 0)
-			{
-				// Check if the weather file contains a leap day
-				// if so, correct the number of nrecords 
-				m_nRecords = m_nRecords / 8784 * 8760;
-				nmult = (int)m_nRecords / 8760;
-				m_stepSec = 3600 / nmult;
-				m_startSec = m_stepSec / 2;
-			}
-			else
-			{
-				m_message = "could not determine timestep in CSV weather file";
-				m_ok = false;
-				return false;
-			}
+			if (!timeStepChecks(hdr_step_sec)) return false;
 		}
 
 	}
@@ -1031,6 +1035,7 @@ bool weatherfile::open(const std::string &file, bool header_only)
 			= m_columns[MONTH].index
 			= m_columns[DAY].index
 			= m_columns[HOUR].index
+			= m_columns[MINUTE].index
 			= m_columns[GHI].index
 			= m_columns[DNI].index
 			= m_columns[DHI].index
@@ -1287,7 +1292,7 @@ bool weatherfile::open(const std::string &file, bool header_only)
 				m_columns[MONTH].data[i] = (float)stoi(cols[1]);
 				m_columns[DAY].data[i] = (float)stoi(cols[2]);
 				m_columns[HOUR].data[i] = (float)stoi(cols[3]) - 1;  // hour goes 0-23, not 1-24;
-				m_columns[MINUTE].data[i] = 30;
+				m_columns[MINUTE].data[i] = (float)stoi(cols[4]);
 
 				m_columns[GHI].data[i] = check_missing(stof(cols[13]), 9999.);
 				m_columns[DNI].data[i] = check_missing(stof(cols[14]), 9999.);
@@ -1477,14 +1482,36 @@ bool weatherfile::open(const std::string &file, bool header_only)
 		}
 	}
 
+	// special handling for missing values for various fields
 	if (m_type == EPW) {
-		// special handling for missing values for various fields
 		for (size_t i = 0; i < m_nRecords; i++) {
 			for (int j = 5; j < 19; j++) {
 				if (j == 8 || j == 17 || j == 18 || j == 10) continue;	// EPW format does not contain 
-				if (m_columns[j].data[i] == -999.) handle_missing_field(i, j);
+				if (my_isnan(m_columns[j].data[i])) handle_missing_field(i, j);
 			}
 			if (m_columns[TWET].data[i] == -999.) m_columns[TWET].data[i] = (float)calc_twet((double)m_columns[TDRY].data[i], (double)m_columns[RH].data[i], (double)m_columns[PRES].data[i]);
+		}
+	}
+
+	// final checks over data
+	if (m_hasLeapYear && (n_leap_data_removed < 1)) {
+		m_message = "Weather data identified as containing leap year but 2/29 entry not found.";
+		return false;
+	}
+
+	// make sure data is single-year
+	if (m_columns[MINUTE].index != -1) {
+		int minDiff = (int)abs(m_columns[MINUTE].data[1] - m_columns[MINUTE].data[0]);
+		if (minDiff == 0) minDiff = 60;
+		if (minDiff * 60 != (int)m_stepSec) {
+			m_message = util::format("Weather file timestep per hour (%f) does not correspond to 8760/nRecords", minDiff / 60.);
+			return false;
+		}
+	}
+	else {
+		if (m_nRecords != 8760) {
+			m_message = util::format("Hourly weather file detected but %d records found.", m_nRecords);
+			return false;
 		}
 	}
 

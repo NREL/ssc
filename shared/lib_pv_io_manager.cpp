@@ -125,8 +125,10 @@ Irradiance_IO::Irradiance_IO(compute_module* cm, std::string cmName)
 	stepsPerHour = numberOfWeatherFileRecords / 8760;
 	dtHour = 1.0 / stepsPerHour;
 
-	if (stepsPerHour < 1 || stepsPerHour > 60 || stepsPerHour * 8760 != numberOfWeatherFileRecords)
+	if ( numberOfWeatherFileRecords % 8760 != 0 )
 		throw compute_module::exec_error(cmName, util::format("invalid number of data records (%zu): must be an integer multiple of 8760", numberOfWeatherFileRecords));
+	if (stepsPerHour < 1 || stepsPerHour > 60)
+		throw compute_module::exec_error(cmName, util::format("%d timesteps per hour found. Weather data should be single year.", stepsPerHour));
 
 	useWeatherFileAlbedo = cm->as_boolean("use_wf_albedo");
 	userSpecifiedMonthlyAlbedo = cm->as_vector_double("albedo");
@@ -592,6 +594,7 @@ void PVSystem_IO::AllocateOutputs(compute_module* cm)
 	p_inverterPowerConsumptionLoss = cm->allocate("inv_psoloss", numberOfWeatherFileRecords);
 	p_inverterNightTimeLoss = cm->allocate("inv_pntloss", numberOfWeatherFileRecords);
 	p_inverterThermalLoss = cm->allocate("inv_tdcloss", numberOfWeatherFileRecords);
+	p_inverterTotalLoss = cm->allocate("inv_total_loss", numberOfWeatherFileRecords);
 
 	p_acWiringLoss = cm->allocate("ac_wiring_loss", numberOfWeatherFileRecords);
 	p_transmissionLoss = cm->allocate("ac_transmission_loss", numberOfWeatherFileRecords);

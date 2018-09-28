@@ -172,6 +172,7 @@ protected:
 	size_t m_stepSec;
 	size_t m_nRecords;
 	size_t m_index;
+	bool m_hasLeapYear = false;
 	
 	weather_header m_hdr;
 	bool m_hdrInitialized;
@@ -253,6 +254,9 @@ public:
 
 	/// Check field for missing values & return interpolant as necessary
 	void handle_missing_field(size_t index, int col);
+
+	/// Check timestep of weatherfile and leap year, returns true if success
+	bool timeStepChecks(int hdr_step_sec = -1);
 
 	bool open( const std::string &file, bool header_only = false );
 

@@ -134,7 +134,7 @@ public:
 		}
 
 		// Write outputs
-		const C_CO2_to_air_cooler::S_hx_design_solved *p_hx_des_sol;
+		const C_CO2_to_air_cooler::S_des_solved *p_hx_des_sol;
 		p_hx_des_sol = c_air_cooler.get_design_solved();
 
 		assign("d_tube_out", (ssc_number_t)(p_hx_des_sol->m_d_out*1.E2));		//[cm] convert from m

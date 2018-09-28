@@ -127,10 +127,14 @@ TEST_F(CSVCase_WeatherfileTest, readTest){
 	EXPECT_EQ(wf.get_counter_value(), 1);
 }
 
-TEST_F(weatherfileTest, EPWMissingValsTest) {
-	std::string file = "C:/Users/dguittet/Desktop/test.epw";
-	wf.open(file);
+TEST_F(weatherfileTest, EPWTest) {
+	char filepath[150];
+	int n1 = sprintf(filepath, "%s/test/input_docs/weather_30m.epw", std::getenv("SSCDIR"));
+	file = std::string(filepath);
+	EXPECT_TRUE(wf.open(file));
 	std::string msg = wf.message();
+	EXPECT_TRUE(msg.length() == 0);
+	EXPECT_TRUE(wf.nrecords() == 8760 * 2);
 }
 
 /**

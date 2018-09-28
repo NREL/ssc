@@ -89,8 +89,8 @@ public:
 		double m_P_mc_out;					//[kPa] Compressor outlet pressure
 		std::vector<double> m_DP_LTR;		//(cold, hot) positive values are absolute [kPa], negative values are relative (-)
 		std::vector<double> m_DP_HTR;		//(cold, hot) positive values are absolute [kPa], negative values are relative (-)
-		std::vector<double> m_DP_PC_full;   //(cold, hot) positive values are absolute [kPa], negative values are relative (-)
-		std::vector<double> m_DP_PC_partial; //(cold, hot) positive values are absolute [kPa], negative values are relative (-)
+		std::vector<double> m_DP_PC_LP;     //(cold, hot) positive values are absolute [kPa], negative values are relative (-)
+		std::vector<double> m_DP_PC_IP;		//(cold, hot) positive values are absolute [kPa], negative values are relative (-)
 		std::vector<double> m_DP_PHX;		//(cold, hot) positive values are absolute [kPa], negative values are relative (-)
 		double m_UA_LTR;					//[kW/K] UA in LTR
 		double m_UA_HTR;					//[kW/K] UA in HTR
@@ -106,6 +106,12 @@ public:
 		double m_tol;						//[-] Convergence tolerance
 		double m_N_turbine;					//[rpm] Turbine shaft speed (negative values link turbine to compressor)
 
+			// Air cooler parameters
+		double m_frac_fan_power;		//[-] Fraction of total cycle power 'S_des_par_cycle_dep.m_W_dot_fan_des' consumed by air fan
+		double m_deltaP_cooler_frac;	//[-] Fraction of high side (of cycle, i.e. comp outlet) pressure that is allowed as pressure drop to design the ACC
+		double m_T_amb_des;				//[K] Design point ambient temperature
+		double m_elevation;				//[m] Elevation (used to calculate ambient pressure)
+
 		int m_des_objective_type;		//[2] = min phx deltat then max eta, [else] max eta
 		double m_min_phx_deltaT;		//[C]
 
@@ -113,7 +119,8 @@ public:
 		{
 			m_W_dot_net = m_T_mc_in = m_T_pc_in = m_T_t_in = 
 				m_P_pc_in = m_P_mc_in = m_P_mc_out = m_UA_LTR = m_UA_HTR = m_LTR_eff_max = m_HTR_eff_max = m_recomp_frac =
-				m_eta_mc = m_eta_rc = m_eta_pc = m_eta_t = m_P_high_limit = m_tol = m_N_turbine = std::numeric_limits<double>::quiet_NaN();
+				m_eta_mc = m_eta_rc = m_eta_pc = m_eta_t = m_P_high_limit = m_tol = m_N_turbine =
+				m_frac_fan_power = m_deltaP_cooler_frac = m_T_amb_des = m_elevation = std::numeric_limits<double>::quiet_NaN();
 			m_N_sub_hxrs = -1;
 
 			// Default to standard optimization to maximize cycle efficiency
@@ -124,10 +131,10 @@ public:
 			std::fill(m_DP_LTR.begin(), m_DP_LTR.end(), std::numeric_limits<double>::quiet_NaN());
 			m_DP_HTR.resize(2);
 			std::fill(m_DP_HTR.begin(), m_DP_HTR.end(), std::numeric_limits<double>::quiet_NaN());
-			m_DP_PC_full.resize(2);
-			std::fill(m_DP_PC_full.begin(), m_DP_PC_full.end(), std::numeric_limits<double>::quiet_NaN());
-			m_DP_PC_partial.resize(2);
-			std::fill(m_DP_PC_partial.begin(), m_DP_PC_partial.end(), std::numeric_limits<double>::quiet_NaN());
+			m_DP_PC_LP.resize(2);
+			std::fill(m_DP_PC_LP.begin(), m_DP_PC_LP.end(), std::numeric_limits<double>::quiet_NaN());
+			m_DP_PC_IP.resize(2);
+			std::fill(m_DP_PC_IP.begin(), m_DP_PC_IP.end(), std::numeric_limits<double>::quiet_NaN());
 			m_DP_PHX.resize(2);
 			std::fill(m_DP_PHX.begin(), m_DP_PHX.end(), std::numeric_limits<double>::quiet_NaN());
 		}
@@ -141,8 +148,8 @@ public:
 		double m_T_t_in;					//[K] Turbine inlet temperature
 		std::vector<double> m_DP_LTR;		//(cold, hot) positive values are absolute [kPa], negative values are relative (-)
 		std::vector<double> m_DP_HTR;		//(cold, hot) positive values are absolute [kPa], negative values are relative (-)
-		std::vector<double> m_DP_PC_full;   //(cold, hot) positive values are absolute [kPa], negative values are relative (-)
-		std::vector<double> m_DP_PC_partial; //(cold, hot) positive values are absolute [kPa], negative values are relative (-)
+		std::vector<double> m_DP_PC_LP;     //(cold, hot) positive values are absolute [kPa], negative values are relative (-)
+		std::vector<double> m_DP_PC_IP;     //(cold, hot) positive values are absolute [kPa], negative values are relative (-)
 		std::vector<double> m_DP_PHX;		//(cold, hot) positive values are absolute [kPa], negative values are relative (-)
 		double m_UA_rec_total;				//[kW/K] Total design-point recuperator UA
 		double m_LTR_eff_max;				//[-] Maximum allowable effectiveness in LT recuperator
@@ -156,6 +163,12 @@ public:
 		double m_tol;						//[-] Convergence tolerance
 		double m_opt_tol;					//[-] Optimization tolerance
 		double m_N_turbine;					//[rpm] Turbine shaft speed (negative values link turbine to compressor)
+
+			// Air cooler parameters
+		double m_frac_fan_power;		//[-] Fraction of total cycle power 'S_des_par_cycle_dep.m_W_dot_fan_des' consumed by air fan
+		double m_deltaP_cooler_frac;	//[-] Fraction of high side (of cycle, i.e. comp outlet) pressure that is allowed as pressure drop to design the ACC
+		double m_T_amb_des;				//[K] Design point ambient temperature
+		double m_elevation;				//[m] Elevation (used to calculate ambient pressure)
 
 		int m_des_objective_type;		//[2] = min phx deltat then max eta, [else] max eta
 		double m_min_phx_deltaT;		//[C]
@@ -180,6 +193,7 @@ public:
 			m_W_dot_net = m_T_mc_in = m_T_pc_in = m_T_t_in =
 				m_UA_rec_total = m_LTR_eff_max = m_HTR_eff_max = 
 				m_eta_mc = m_eta_rc = m_eta_pc = m_eta_t = m_P_high_limit = m_tol = m_N_turbine = 
+				m_frac_fan_power = m_deltaP_cooler_frac = m_T_amb_des = m_elevation =
 				m_P_mc_out_guess = m_PR_total_guess = m_f_PR_mc_guess = 
 				m_recomp_frac_guess = m_LTR_frac_guess = std::numeric_limits<double>::quiet_NaN();
 			m_N_sub_hxrs = -1;
@@ -192,10 +206,10 @@ public:
 			std::fill(m_DP_LTR.begin(), m_DP_LTR.end(), std::numeric_limits<double>::quiet_NaN());
 			m_DP_HTR.resize(2);
 			std::fill(m_DP_HTR.begin(), m_DP_HTR.end(), std::numeric_limits<double>::quiet_NaN());
-			m_DP_PC_full.resize(2);
-			std::fill(m_DP_PC_full.begin(), m_DP_PC_full.end(), std::numeric_limits<double>::quiet_NaN());
-			m_DP_PC_partial.resize(2);
-			std::fill(m_DP_PC_partial.begin(), m_DP_PC_partial.end(), std::numeric_limits<double>::quiet_NaN());
+			m_DP_PC_LP.resize(2);
+			std::fill(m_DP_PC_LP.begin(), m_DP_PC_LP.end(), std::numeric_limits<double>::quiet_NaN());
+			m_DP_PC_IP.resize(2);
+			std::fill(m_DP_PC_IP.begin(), m_DP_PC_IP.end(), std::numeric_limits<double>::quiet_NaN());
 			m_DP_PHX.resize(2);
 			std::fill(m_DP_PHX.begin(), m_DP_PHX.end(), std::numeric_limits<double>::quiet_NaN());
 		}
@@ -208,6 +222,9 @@ private:
 	C_comp_multi_stage mc_mc, mc_rc, mc_pc;
 	C_HX_co2_to_co2 mc_LTR, mc_HTR;
 	C_HeatExchanger mc_PHX, mc_cooler_pc, mc_cooler_mc;	
+
+	C_CO2_to_air_cooler mc_LP_air_cooler;
+	C_CO2_to_air_cooler mc_IP_air_cooler;
 
 	S_des_params ms_des_par;
 	S_opt_des_params ms_opt_des_par;
@@ -402,6 +419,24 @@ public:
 		virtual int operator()(double T_LTR_LP_out /*K*/, double *diff_T_LTR_LP_out /*K*/);
 	};
 
+	class C_MEQ_sco2_design_hit_eta__UA_total : public C_monotonic_equation
+	{
+	private:
+		C_PartialCooling_Cycle * mpc_pc_cycle;
+		std::string msg_log;
+		std::string msg_progress;
+
+	public:
+		C_MEQ_sco2_design_hit_eta__UA_total(C_PartialCooling_Cycle *pc_pc_cycle)
+		{
+			mpc_pc_cycle = pc_pc_cycle;
+
+			msg_log = "Log message ";
+			msg_progress = "Designing cycle...";
+		}
+
+		virtual int operator()(double UA_recup_total /*kW/K*/, double *eta /*-*/);
+	};
 
 	int design(S_des_params & des_par_in);
 

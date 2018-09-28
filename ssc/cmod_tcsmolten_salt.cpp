@@ -242,6 +242,7 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
 	{ SSC_INPUT,        SSC_MATRIX,      "ud_m_dot_htf_ind_od",  "Off design table of user-defined power cycle performance formed from parametric on m_dot_htf [ND]","", "", "user_defined_PC", "pc_config=1",    "",                      "" }, 
 																     																	  
 		// sCO2 Powerblock (type 424) inputs
+	{ SSC_INPUT,        SSC_NUMBER,      "sco2_cycle_config",    "1 = recompression, 2 = partial cooling",                            "",             "",            "sco2_pc",     "pc_config=2",                "",                      "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "eta_c",                "Isentropic efficiency of compressor(s)",                            "none",         "",            "sco2_pc",     "pc_config=2",                "",                      "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "eta_t",                "Isentropic efficiency of turbine",							      "none",         "",            "sco2_pc",     "pc_config=2",                "",                      "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "recup_eff_max",        "Maximum recuperator effectiveness",                                 "none",         "",            "sco2_pc",     "pc_config=2",                "",                      "" },
@@ -1102,31 +1103,26 @@ public:
 				// System Design Parameters
 				sco2_rc_csp_par.m_hot_fl_code = as_integer("rec_htf");					//[-]
 				sco2_rc_csp_par.mc_hot_fl_props = as_matrix("field_fl_props");			//[-]
-				sco2_rc_csp_par.m_T_htf_hot_in = as_double("T_htf_hot_des") + 273.15;		//[K] Design HTF hot temp to power cycle
-				sco2_rc_csp_par.m_phx_dt_hot_approach = as_double("deltaT_PHX");			//[K/C]
+				sco2_rc_csp_par.m_T_htf_hot_in = as_double("T_htf_hot_des") + 273.15;	//[K] Design HTF hot temp to power cycle
+				sco2_rc_csp_par.m_phx_dt_hot_approach = as_double("deltaT_PHX");		//[K/C]
 				sco2_rc_csp_par.m_T_amb_des = as_double("sco2_T_amb_des") + 273.15;		//[K] Design ambient temp, convert from C
-				sco2_rc_csp_par.m_dt_mc_approach = as_double("sco2_T_approach");			//[K/C]
+				sco2_rc_csp_par.m_dt_mc_approach = as_double("sco2_T_approach");		//[K/C]
 				sco2_rc_csp_par.m_elevation = site_elevation;							//[m]
 				sco2_rc_csp_par.m_W_dot_net = as_double("P_ref")*1.E3;					//[kWe]
 
+				sco2_rc_csp_par.m_cycle_config = as_integer("sco2_cycle_config");		//[-] 1 = recompression, 2 = partial cooling
+
 				// Hardcode for now that design method iterates on UA_recup_total to hit target etas
 				sco2_rc_csp_par.m_design_method = 1;
+				sco2_rc_csp_par.m_eta_thermal = as_double("design_eff");				//[-]
+				
 				// Hardcode that recompression cycle is ok
 				sco2_rc_csp_par.m_is_recomp_ok = 1;
-				// Hardcode don't fix pressure ratio
-				sco2_rc_csp_par.m_fixed_PR_mc = false;
 
-				sco2_rc_csp_par.m_eta_thermal = as_double("design_eff");					//[-]
-				sco2_rc_csp_par.m_is_recomp_ok = 1;
-				// Cycle Design Parameters
-				sco2_rc_csp_par.m_LT_eff_max = as_double("recup_eff_max");		//[-]
-				sco2_rc_csp_par.m_HT_eff_max = as_double("recup_eff_max");		//[-]
-				sco2_rc_csp_par.m_eta_mc = as_double("eta_c");					//[-]
-				sco2_rc_csp_par.m_eta_rc = as_double("eta_c");					//[-]
-				sco2_rc_csp_par.m_eta_t = as_double("eta_t");					//[-]
 				sco2_rc_csp_par.m_P_high_limit = as_double("P_high_limit")*1.E3;	//[kPa]
-				// Air cooler parameters
-				sco2_rc_csp_par.m_frac_fan_power = as_double("fan_power_perc_net") / 100.0;	//[-]
+				sco2_rc_csp_par.m_fixed_P_mc_out = false;
+				// Hardcode don't fix pressure ratio
+				sco2_rc_csp_par.m_fixed_PR_mc = false;				
 
 				// ****************************************
 				// ****************************************
@@ -1154,12 +1150,29 @@ public:
 				sco2_rc_csp_par.m_DP_PC = DP_PC;
 				sco2_rc_csp_par.m_DP_PHX = DP_PHX;
 				sco2_rc_csp_par.m_N_sub_hxrs = 10;
+
+				sco2_rc_csp_par.m_N_turbine = 3000.0;
+
 				sco2_rc_csp_par.m_tol = 1.E-3;
 				sco2_rc_csp_par.m_opt_tol = 1.E-3;
-				sco2_rc_csp_par.m_N_turbine = 3600.0;
+				
+				// Cycle Design Parameters
+				sco2_rc_csp_par.m_LT_eff_max = as_double("recup_eff_max");		//[-]
+				sco2_rc_csp_par.m_HT_eff_max = as_double("recup_eff_max");		//[-]
+				sco2_rc_csp_par.m_eta_mc = as_double("eta_c");					//[-]
+				sco2_rc_csp_par.m_eta_rc = as_double("eta_c");					//[-]
+				if (sco2_rc_csp_par.m_cycle_config == 2)
+					sco2_rc_csp_par.m_eta_pc = as_double("eta_c");		   //[-]
+				else
+					sco2_rc_csp_par.m_eta_pc = sco2_rc_csp_par.m_eta_mc;
+				sco2_rc_csp_par.m_eta_t = as_double("eta_t");					//[-]
+
 				// PHX design parameters
+				sco2_rc_csp_par.m_des_objective_type = 1;		//[-] Optimize design to maximize efficiency
 				sco2_rc_csp_par.m_phx_dt_cold_approach = sco2_rc_csp_par.m_phx_dt_hot_approach;	//[K/C]
+
 				// Air cooler parameters
+				sco2_rc_csp_par.m_frac_fan_power = as_double("fan_power_perc_net") / 100.0;	//[-]
 				sco2_rc_csp_par.m_deltaP_cooler_frac = 0.002;		//[-]
 
 				sco2_pc.ms_params.ms_mc_sco2_recomp_params = sco2_rc_csp_par;

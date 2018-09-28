@@ -116,15 +116,15 @@ int C_PartialCooling_Cycle::design_core()
 	else
 		m_pres_last[TURB_IN] = m_pres_last[HTR_HP_OUT] - ms_des_par.m_DP_PHX[0];	//[kPa]
 
-	if (ms_des_par.m_DP_PC_partial[1] < 0.0)
-		m_pres_last[PC_OUT] = m_pres_last[MC_IN] / (1.0 - fabs(ms_des_par.m_DP_PC_partial[1]));	//[kPa]
+	if (ms_des_par.m_DP_PC_IP[1] < 0.0)
+		m_pres_last[PC_OUT] = m_pres_last[MC_IN] / (1.0 - fabs(ms_des_par.m_DP_PC_IP[1]));	//[kPa]
 	else
-		m_pres_last[PC_OUT] = m_pres_last[MC_IN] + ms_des_par.m_DP_PC_partial[1];	//[kPa]
+		m_pres_last[PC_OUT] = m_pres_last[MC_IN] + ms_des_par.m_DP_PC_IP[1];	//[kPa]
 
-	if (ms_des_par.m_DP_PC_full[1] < 0.0)
-		m_pres_last[LTR_LP_OUT] = m_pres_last[PC_IN] / (1.0 - fabs(ms_des_par.m_DP_PC_partial[1]));	//[kPa]
+	if (ms_des_par.m_DP_PC_LP[1] < 0.0)
+		m_pres_last[LTR_LP_OUT] = m_pres_last[PC_IN] / (1.0 - fabs(ms_des_par.m_DP_PC_LP[1]));	//[kPa]
 	else
-		m_pres_last[LTR_LP_OUT] = m_pres_last[PC_IN] + ms_des_par.m_DP_PC_partial[1];	//[kPa]
+		m_pres_last[LTR_LP_OUT] = m_pres_last[PC_IN] + ms_des_par.m_DP_PC_LP[1];	//[kPa]
 
 	if (ms_des_par.m_DP_LTR[1] < 0.0)
 		m_pres_last[HTR_LP_OUT] = m_pres_last[LTR_LP_OUT] / (1.0 - fabs(ms_des_par.m_DP_LTR[1]));	//[kPa]
@@ -555,6 +555,54 @@ int C_PartialCooling_Cycle::finalize_design()
 		return 74;
 	}
 
+	// Design air coolers
+	// Low Pressure
+		// Structure for design parameters that are dependent on cycle design solution
+	C_CO2_to_air_cooler::S_des_par_cycle_dep s_LP_air_cooler_des_par_dep;
+		// Set air cooler design parameters that are dependent on the cycle design solution
+	s_LP_air_cooler_des_par_dep.m_T_hot_in_des = m_temp_last[C_sco2_cycle_core::LTR_LP_OUT];		//[K]
+	s_LP_air_cooler_des_par_dep.m_P_hot_in_des = m_pres_last[C_sco2_cycle_core::LTR_LP_OUT];		//[kPa]
+	s_LP_air_cooler_des_par_dep.m_m_dot_total = m_m_dot_pc;		//[kg/s]
+		// This pressure drop is currently uncoupled from the cycle design
+	s_LP_air_cooler_des_par_dep.m_delta_P_des = ms_des_par.m_deltaP_cooler_frac*m_pres_last[C_sco2_cycle_core::MC_OUT];	//[kPa]
+	s_LP_air_cooler_des_par_dep.m_T_hot_out_des = m_temp_last[C_sco2_cycle_core::PC_IN];			//[K]
+		// Use half the rated fan power on each cooler fan
+	s_LP_air_cooler_des_par_dep.m_W_dot_fan_des = ms_des_par.m_frac_fan_power*0.5*ms_des_par.m_W_dot_net / 1000.0;		//[MWe]
+		// Structure for design parameters that are independent of cycle design solution
+	C_CO2_to_air_cooler::S_des_par_ind s_LP_air_cooler_des_par_ind;
+	s_LP_air_cooler_des_par_ind.m_T_amb_des = ms_des_par.m_T_amb_des;		//[K]
+	s_LP_air_cooler_des_par_ind.m_elev = ms_des_par.m_elevation;			//[m]
+
+	if (std::isfinite(ms_des_par.m_deltaP_cooler_frac) && std::isfinite(ms_des_par.m_frac_fan_power)
+		&& std::isfinite(ms_des_par.m_T_amb_des) && std::isfinite(ms_des_par.m_elevation))
+	{
+		mc_LP_air_cooler.design_hx(s_LP_air_cooler_des_par_ind, s_LP_air_cooler_des_par_dep);
+	}
+
+	// High Pressure
+		// Structure for design parameters that are dependent on cycle design solution
+	C_CO2_to_air_cooler::S_des_par_cycle_dep s_IP_air_cooler_des_par_dep;
+		// Set air cooler design parameters that are dependent on the cycle design solution
+	s_IP_air_cooler_des_par_dep.m_T_hot_in_des = m_temp_last[C_sco2_cycle_core::PC_OUT];		//[K]
+	s_IP_air_cooler_des_par_dep.m_P_hot_in_des = m_pres_last[C_sco2_cycle_core::PC_OUT];		//[kPa]
+	s_IP_air_cooler_des_par_dep.m_m_dot_total = m_m_dot_mc;		//[kg/s]
+		// This pressure drop is currently uncoupled from the cycle design
+	s_IP_air_cooler_des_par_dep.m_delta_P_des = ms_des_par.m_deltaP_cooler_frac*m_pres_last[C_sco2_cycle_core::MC_OUT];	//[kPa]
+	s_IP_air_cooler_des_par_dep.m_T_hot_out_des = m_temp_last[C_sco2_cycle_core::MC_IN];			//[K]
+		// Use half the rated fan power on each cooler fan
+	s_IP_air_cooler_des_par_dep.m_W_dot_fan_des = ms_des_par.m_frac_fan_power*0.5*ms_des_par.m_W_dot_net / 1000.0;		//[MWe]
+		// Structure for design parameters that are independent of cycle design solution
+	C_CO2_to_air_cooler::S_des_par_ind s_IP_air_cooler_des_par_ind;
+	s_IP_air_cooler_des_par_ind.m_T_amb_des = ms_des_par.m_T_amb_des;		//[K]
+	s_IP_air_cooler_des_par_ind.m_elev = ms_des_par.m_elevation;			//[m]
+
+	if (std::isfinite(ms_des_par.m_deltaP_cooler_frac) && std::isfinite(ms_des_par.m_frac_fan_power)
+		&& std::isfinite(ms_des_par.m_T_amb_des) && std::isfinite(ms_des_par.m_elevation))
+	{
+		mc_IP_air_cooler.design_hx(s_IP_air_cooler_des_par_ind, s_IP_air_cooler_des_par_dep);
+	}
+
+
 	// Get 'design_solved' structures from component classes
 	ms_des_solved.ms_mc_ms_des_solved = *mc_mc.get_design_solved();
 	ms_des_solved.ms_rc_ms_des_solved = *mc_rc.get_design_solved();
@@ -562,6 +610,8 @@ int C_PartialCooling_Cycle::finalize_design()
 	ms_des_solved.ms_t_des_solved = *mc_t.get_design_solved();
 	ms_des_solved.ms_LTR_des_solved = mc_LTR.ms_des_solved;
 	ms_des_solved.ms_HTR_des_solved = mc_HTR.ms_des_solved;
+	ms_des_solved.ms_LP_air_cooler = *mc_LP_air_cooler.get_design_solved();
+	ms_des_solved.ms_IP_air_cooler = *mc_IP_air_cooler.get_design_solved();
 
 	// Set solved design point metrics
 	ms_des_solved.m_temp = m_temp_last;
@@ -699,8 +749,8 @@ int C_PartialCooling_Cycle::opt_design_core()
 	ms_des_par.m_T_t_in = ms_opt_des_par.m_T_t_in;			//[K]
 	ms_des_par.m_DP_LTR = ms_opt_des_par.m_DP_LTR;			//
 	ms_des_par.m_DP_HTR = ms_opt_des_par.m_DP_HTR;			//
-	ms_des_par.m_DP_PC_full = ms_opt_des_par.m_DP_PC_full;	//
-	ms_des_par.m_DP_PC_partial = ms_opt_des_par.m_DP_PC_partial;	//
+	ms_des_par.m_DP_PC_LP = ms_opt_des_par.m_DP_PC_LP;	//
+	ms_des_par.m_DP_PC_IP = ms_opt_des_par.m_DP_PC_IP;	//
 	ms_des_par.m_DP_PHX = ms_opt_des_par.m_DP_PHX;			//
 	ms_des_par.m_LTR_eff_max = ms_opt_des_par.m_LTR_eff_max;	//[-]
 	ms_des_par.m_HTR_eff_max = ms_opt_des_par.m_HTR_eff_max;	//[-]
@@ -712,6 +762,12 @@ int C_PartialCooling_Cycle::opt_design_core()
 	ms_des_par.m_P_high_limit = ms_opt_des_par.m_P_high_limit;	//[kPa]
 	ms_des_par.m_tol = ms_opt_des_par.m_tol;				//[-]
 	ms_des_par.m_N_turbine = ms_opt_des_par.m_N_turbine;	//[rpm]
+
+	ms_des_par.m_frac_fan_power = ms_opt_des_par.m_frac_fan_power;			//[-]
+	ms_des_par.m_deltaP_cooler_frac = ms_opt_des_par.m_deltaP_cooler_frac;	//[-]
+	ms_des_par.m_T_amb_des = ms_opt_des_par.m_T_amb_des;					//[K]
+	ms_des_par.m_elevation = ms_opt_des_par.m_elevation;					//[m]
+
 	ms_des_par.m_des_objective_type = ms_opt_des_par.m_des_objective_type;	//[-]
 	ms_des_par.m_min_phx_deltaT = ms_opt_des_par.m_min_phx_deltaT;			//[K]
 
@@ -839,8 +895,8 @@ int C_PartialCooling_Cycle::auto_opt_design_core()
 	ms_opt_des_par.m_T_t_in = ms_auto_opt_des_par.m_T_t_in;			//[K]
 	ms_opt_des_par.m_DP_LTR = ms_auto_opt_des_par.m_DP_LTR;			        //(cold, hot) positive values are absolute [kPa], negative values are relative (-)
 	ms_opt_des_par.m_DP_HTR = ms_auto_opt_des_par.m_DP_HTR;				    //(cold, hot) positive values are absolute [kPa], negative values are relative (-)
-	ms_opt_des_par.m_DP_PC_full = ms_auto_opt_des_par.m_DP_PC_pre;		    //(cold, hot) positive values are absolute [kPa], negative values are relative (-)
-	ms_opt_des_par.m_DP_PC_partial = ms_auto_opt_des_par.m_DP_PC_main;   //(cold, hot) positive values are absolute [kPa], negative values are relative (-)
+	ms_opt_des_par.m_DP_PC_LP = ms_auto_opt_des_par.m_DP_PC_pre;		    //(cold, hot) positive values are absolute [kPa], negative values are relative (-)
+	ms_opt_des_par.m_DP_PC_IP = ms_auto_opt_des_par.m_DP_PC_main;   //(cold, hot) positive values are absolute [kPa], negative values are relative (-)
 	ms_opt_des_par.m_DP_PHX = ms_auto_opt_des_par.m_DP_PHX;				    //(cold, hot) positive values are absolute [kPa], negative values are relative (-)
 	ms_opt_des_par.m_UA_rec_total = ms_auto_opt_des_par.m_UA_rec_total;		//[kW/K]
 	ms_opt_des_par.m_LTR_eff_max = ms_auto_opt_des_par.m_LTR_eff_max;		//[-]
@@ -855,15 +911,28 @@ int C_PartialCooling_Cycle::auto_opt_design_core()
 	ms_opt_des_par.m_opt_tol = ms_auto_opt_des_par.m_opt_tol;				//[-]
 	ms_opt_des_par.m_N_turbine = ms_auto_opt_des_par.m_N_turbine;			//[rpm] Turbine shaft speed (negative values link turbine to compressor)
 
+	ms_opt_des_par.m_frac_fan_power = ms_auto_opt_des_par.m_frac_fan_power;			//[-]
+	ms_opt_des_par.m_deltaP_cooler_frac = ms_auto_opt_des_par.m_deltaP_cooler_frac;	//[-]
+	ms_opt_des_par.m_T_amb_des = ms_auto_opt_des_par.m_T_amb_des;					//[K]
+	ms_opt_des_par.m_elevation = ms_auto_opt_des_par.m_elevation;					//[m]
+
 	ms_opt_des_par.m_des_objective_type = ms_auto_opt_des_par.m_des_objective_type;	//[-]
 	ms_opt_des_par.m_min_phx_deltaT = ms_auto_opt_des_par.m_min_phx_deltaT;			//[C]
+
+	ms_opt_des_par.m_fixed_P_mc_out = ms_auto_opt_des_par.m_fixed_P_mc_out;		//[-]
+	
+	ms_opt_des_par.m_fixed_PR_total = ms_auto_opt_des_par.m_fixed_PR_mc;		//[-]
 
 	// Outer optimization loop
 	m_objective_metric_auto_opt = 0.0;
 
-	double P_low_limit = std::min(ms_auto_opt_des_par.m_P_high_limit, std::max(10.E3, ms_auto_opt_des_par.m_P_high_limit*0.2));		//[kPa]
-	double best_P_high = fminbr(
-		P_low_limit, ms_auto_opt_des_par.m_P_high_limit, &fmin_cb_opt_partialcooling_des_fixed_P_high, this, 1.0);
+	double best_P_high = ms_auto_opt_des_par.m_P_high_limit;
+	if (!ms_opt_des_par.m_fixed_P_mc_out)
+	{
+		double P_low_limit = std::min(ms_auto_opt_des_par.m_P_high_limit, std::max(10.E3, ms_auto_opt_des_par.m_P_high_limit*0.2));		//[kPa]
+		best_P_high = fminbr(
+			P_low_limit, ms_auto_opt_des_par.m_P_high_limit, &fmin_cb_opt_partialcooling_des_fixed_P_high, this, 1.0);
+	}
 
 	// fminb_cb_opt_partialcooling_des_fixed_P_high should calculate:
 		// ms_des_par_optimal;
@@ -873,8 +942,14 @@ int C_PartialCooling_Cycle::auto_opt_design_core()
 	ms_opt_des_par.m_P_mc_out_guess = ms_auto_opt_des_par.m_P_high_limit;	//[kPa]
 	ms_opt_des_par.m_fixed_P_mc_out = true;
 
-	ms_opt_des_par.m_fixed_PR_total = false;
-	ms_opt_des_par.m_PR_total_guess = 25. / 6.5;	//[-] Guess could be improved...
+	if (ms_opt_des_par.m_fixed_PR_total)
+	{
+		ms_opt_des_par.m_PR_total_guess = ms_auto_opt_des_par.m_PR_mc_guess;	//[-]
+	}
+	else
+	{
+		ms_opt_des_par.m_PR_total_guess = 25. / 6.5;	//[-] Guess could be improved...
+	}
 
 	ms_opt_des_par.m_fixed_f_PR_mc = false;
 	ms_opt_des_par.m_f_PR_mc_guess = (25. - 8.5) / (25. - 6.5);		//[-] Guess could be improved...
@@ -909,9 +984,344 @@ int C_PartialCooling_Cycle::auto_opt_design_core()
 
 int C_PartialCooling_Cycle::auto_opt_design_hit_eta(S_auto_opt_design_hit_eta_parameters & auto_opt_des_hit_eta_in, std::string & error_msg)
 {
-	throw(C_csp_exception("C_PartialCooling_Cycle::auto_opt_design_hit_eta does not yet exist"));
+	ms_auto_opt_des_par.m_W_dot_net = auto_opt_des_hit_eta_in.m_W_dot_net;	//[kWe]
+	ms_auto_opt_des_par.m_T_mc_in = auto_opt_des_hit_eta_in.m_T_mc_in;		//[K]
+	ms_auto_opt_des_par.m_T_pc_in = auto_opt_des_hit_eta_in.m_T_pc_in;		//[K]
+	ms_auto_opt_des_par.m_T_t_in = auto_opt_des_hit_eta_in.m_T_t_in;			//[K]
+	ms_auto_opt_des_par.m_DP_LTR = auto_opt_des_hit_eta_in.m_DP_LT;			        //(cold, hot) positive values are absolute [kPa], negative values are relative (-)
+	ms_auto_opt_des_par.m_DP_HTR = auto_opt_des_hit_eta_in.m_DP_HT;				    //(cold, hot) positive values are absolute [kPa], negative values are relative (-)
+	ms_auto_opt_des_par.m_DP_PC_pre = auto_opt_des_hit_eta_in.m_DP_PC_pre;		    //(cold, hot) positive values are absolute [kPa], negative values are relative (-)
+	ms_auto_opt_des_par.m_DP_PC_main = auto_opt_des_hit_eta_in.m_DP_PC_main;   //(cold, hot) positive values are absolute [kPa], negative values are relative (-)
+	ms_auto_opt_des_par.m_DP_PHX = auto_opt_des_hit_eta_in.m_DP_PHX;				    //(cold, hot) positive values are absolute [kPa], negative values are relative (-)
+	ms_auto_opt_des_par.m_UA_rec_total = std::numeric_limits<double>::quiet_NaN();		//[kW/K]  ***** This method finds the UA required to hit the input efficiency! *****
+	ms_auto_opt_des_par.m_LTR_eff_max = auto_opt_des_hit_eta_in.m_LTR_eff_max;		//[-]
+	ms_auto_opt_des_par.m_HTR_eff_max = auto_opt_des_hit_eta_in.m_HTR_eff_max;		//[-]
+	ms_auto_opt_des_par.m_eta_mc = auto_opt_des_hit_eta_in.m_eta_mc;					//[-]
+	ms_auto_opt_des_par.m_eta_rc = auto_opt_des_hit_eta_in.m_eta_rc;					//[-]
+	ms_auto_opt_des_par.m_eta_pc = auto_opt_des_hit_eta_in.m_eta_pc;					//[-]
+	ms_auto_opt_des_par.m_eta_t = auto_opt_des_hit_eta_in.m_eta_t;					//[-]
+	ms_auto_opt_des_par.m_N_sub_hxrs = auto_opt_des_hit_eta_in.m_N_sub_hxrs;			//[-]
+	ms_auto_opt_des_par.m_P_high_limit = auto_opt_des_hit_eta_in.m_P_high_limit;		//[kPa]
+	ms_auto_opt_des_par.m_tol = auto_opt_des_hit_eta_in.m_tol;						//[-]
+	ms_auto_opt_des_par.m_opt_tol = auto_opt_des_hit_eta_in.m_opt_tol;				//[-]
+	ms_auto_opt_des_par.m_N_turbine = auto_opt_des_hit_eta_in.m_N_turbine;			//[rpm] Turbine shaft speed (negative values link turbine to compressor)
+	ms_auto_opt_des_par.m_is_recomp_ok = auto_opt_des_hit_eta_in.m_is_recomp_ok;		//[-] 1 = yes, 0 = no, other = invalid
 
-	return -1;
+	ms_auto_opt_des_par.m_frac_fan_power = auto_opt_des_hit_eta_in.m_frac_fan_power;			//[-]
+	ms_auto_opt_des_par.m_deltaP_cooler_frac = auto_opt_des_hit_eta_in.m_deltaP_cooler_frac;	//[-]
+	ms_auto_opt_des_par.m_T_amb_des = auto_opt_des_hit_eta_in.m_T_amb_des;					//[K]
+	ms_auto_opt_des_par.m_elevation = auto_opt_des_hit_eta_in.m_elevation;					//[m]
+
+	ms_auto_opt_des_par.m_des_objective_type = auto_opt_des_hit_eta_in.m_des_objective_type;	//[-]
+	ms_auto_opt_des_par.m_min_phx_deltaT = auto_opt_des_hit_eta_in.m_min_phx_deltaT;			//[C]
+
+	ms_auto_opt_des_par.mf_callback_log = auto_opt_des_hit_eta_in.mf_callback_log;
+	ms_auto_opt_des_par.mp_mf_active = auto_opt_des_hit_eta_in.mp_mf_active;
+
+	ms_auto_opt_des_par.m_fixed_P_mc_out = auto_opt_des_hit_eta_in.m_fixed_P_mc_out;		//[-]
+	
+	ms_auto_opt_des_par.m_fixed_PR_mc = auto_opt_des_hit_eta_in.m_fixed_PR_mc;			//[-]
+	ms_auto_opt_des_par.m_PR_mc_guess = auto_opt_des_hit_eta_in.m_fixed_PR_mc;		//[-]
+
+	// At this point, 'auto_opt_des_hit_eta_in' should only be used to access the targer thermal efficiency: 'm_eta_thermal'
+
+	double Q_dot_rec_des = ms_auto_opt_des_par.m_W_dot_net / auto_opt_des_hit_eta_in.m_eta_thermal;		//[kWt] Receiver thermal input at design
+
+	error_msg = "";
+
+	// Check cycle parameter values are reasonable
+	if (ms_auto_opt_des_par.m_is_recomp_ok != 1)
+	{
+		throw(C_csp_exception("C_PartialCooling_Cyclee::auto_opt_design_core(...) requires that ms_auto_opt_des_par.m_is_recomp_ok"
+			"is either 1 so that the cycle contains a recompressor\n"));
+	}
+	// Can't operate compressore in 2-phase region
+	if (ms_auto_opt_des_par.m_T_mc_in <= N_co2_props::T_crit)
+	{
+		error_msg.append(util::format("Only single phase cycle operation is allowed in this model."
+			"The compressor inlet temperature (%lg [C]) must be great than the critical temperature: %lg [C]",
+			ms_auto_opt_des_par.m_T_mc_in - 273.15, ((N_co2_props::T_crit) - 273.15)));
+
+		return -1;
+	}
+
+	// "Reasonable" ceiling on main compressor inlet temp
+	double T_mc_in_max = 70.0 + 273.15;		//[K] Arbitrary value for max compressor inlet temperature
+	if (ms_auto_opt_des_par.m_T_mc_in > T_mc_in_max)
+	{
+		error_msg.append(util::format("Them main compressor inlet temperature input was %lg [C]. This value was reset internally to the max allowable inlet temperature: %lg [C]\n",
+			ms_auto_opt_des_par.m_T_mc_in - 273.15, T_mc_in_max - 273.15));
+
+		ms_auto_opt_des_par.m_T_mc_in = T_mc_in_max;
+	}
+
+	// "Reasonable" ceiling on main compressor inlet temp
+	double T_pc_in_max = 70.0 + 273.15;		//[K] Arbitrary value for max compressor inlet temperature
+	if (ms_auto_opt_des_par.m_T_pc_in > T_pc_in_max)
+	{
+		error_msg.append(util::format("The pre compressor inlet temperature input was %lg [C]. This value was reset internally to the max allowable inlet temperature: %lg [C]\n",
+			ms_auto_opt_des_par.m_T_pc_in - 273.15, T_pc_in_max - 273.15));
+
+		ms_auto_opt_des_par.m_T_pc_in = T_pc_in_max;
+	}
+
+	// "Reasonable" floor on turbine inlet temp
+	double T_t_in_min = 300.0 + 273.15;		//[K] Arbitrary value for min turbine inlet temperature
+	if (ms_auto_opt_des_par.m_T_t_in < T_t_in_min)
+	{
+		error_msg.append(util::format("The turbine inlet temperature input was %lg [C]. This value was reset internally to the min allowable inlet temperature: %lg [C]\n",
+			ms_auto_opt_des_par.m_T_t_in - 273.15, T_t_in_min - 273.15));
+
+		ms_auto_opt_des_par.m_T_t_in = T_t_in_min;
+	}
+
+	// Turbine inlet temperature must be hotter than main compressor outlet temperature
+	if (ms_auto_opt_des_par.m_T_t_in <= ms_auto_opt_des_par.m_T_mc_in)
+	{
+		error_msg.append(util::format("The turbine inlet temperature, %lg [C], is colder than the specified main compressor inlet temperature %lg [C]",
+			ms_auto_opt_des_par.m_T_t_in - 273.15, ms_auto_opt_des_par.m_T_mc_in - 273.15));
+
+		return -1;
+	}
+
+	// Turbine inlet temperature must be hotter than pre compressor outlet temperature
+	if (ms_auto_opt_des_par.m_T_t_in <= ms_auto_opt_des_par.m_T_pc_in)
+	{
+		error_msg.append(util::format("The turbine inlet temperature, %lg [C], is colder than the specified pre compressor inlet temperature %lg [C]",
+			ms_auto_opt_des_par.m_T_t_in - 273.15, ms_auto_opt_des_par.m_T_pc_in - 273.15));
+
+		return -1;
+	}
+
+	// Turbine inlet temperature must be colder than property limits
+	if (ms_auto_opt_des_par.m_T_t_in >= N_co2_props::T_upper_limit)
+	{
+		error_msg.append(util::format("The turbine inlet temperature, %lg [C], is hotter than the maximum allow temperature in the CO2 property code %lg [C]",
+			ms_auto_opt_des_par.m_T_t_in - 273.15, N_co2_props::T_upper_limit - 273.15));
+
+		return -1;
+	}
+
+	// Check for realistic isentropic efficiencies
+	if (ms_auto_opt_des_par.m_eta_mc > 1.0)
+	{
+		error_msg.append(util::format("The main compressor isentropic efficiency, %lg, was reset to theoretical maximum 1.0\n",
+			ms_auto_opt_des_par.m_eta_mc));
+
+		ms_auto_opt_des_par.m_eta_mc = 1.0;
+	}
+	if (ms_auto_opt_des_par.m_eta_rc > 1.0)
+	{
+		error_msg.append(util::format("The re-compressor isentropic efficiency, %lg, was reset to theoretical maximum 1.0\n",
+			ms_auto_opt_des_par.m_eta_rc));
+
+		ms_auto_opt_des_par.m_eta_rc = 1.0;
+	}
+	if (ms_auto_opt_des_par.m_eta_pc > 1.0)
+	{
+		error_msg.append(util::format("The pre-compressor isentropic efficiency, %lg, was reset to theoretical maximum 1.0\n",
+			ms_auto_opt_des_par.m_eta_pc));
+
+		ms_auto_opt_des_par.m_eta_pc = 1.0;
+	}
+	if (ms_auto_opt_des_par.m_eta_t > 1.0)
+	{
+		error_msg.append(util::format("The turbine isentropic efficiency, %lg, was reset to theoretical maximum 1.0\n",
+			ms_auto_opt_des_par.m_eta_t));
+
+		ms_auto_opt_des_par.m_eta_t = 1.0;
+	}
+	if (ms_auto_opt_des_par.m_eta_mc < 0.1)
+	{
+		error_msg.append(util::format("The main compressor isentropic efficiency, %lg, was increased to the internal limit of 0.1 to improve solution stability\n",
+			ms_auto_opt_des_par.m_eta_mc));
+
+		ms_auto_opt_des_par.m_eta_mc = 0.1;
+	}
+	if (ms_auto_opt_des_par.m_eta_rc < 0.1)
+	{
+		error_msg.append(util::format("The re-compressor isentropic efficiency, %lg, was increased to the internal limit of 0.1 to improve solution stability\n",
+			ms_auto_opt_des_par.m_eta_rc));
+
+		ms_auto_opt_des_par.m_eta_rc = 0.1;
+	}
+	if (ms_auto_opt_des_par.m_eta_pc < 0.1)
+	{
+		error_msg.append(util::format("The pre-compressor isentropic efficiency, %lg, was increased to the internal limit of 0.1 to improve solution stability\n",
+			ms_auto_opt_des_par.m_eta_pc));
+
+		ms_auto_opt_des_par.m_eta_pc = 0.1;
+	}
+	if (ms_auto_opt_des_par.m_eta_t < 0.1)
+	{
+		error_msg.append(util::format("The turbine isentropic efficiency, %lg, was increased to the internal limit of 0.1 to improve solution stability\n",
+			ms_auto_opt_des_par.m_eta_t));
+
+		ms_auto_opt_des_par.m_eta_t = 0.1;
+	}
+
+	if (ms_auto_opt_des_par.m_LTR_eff_max > 1.0)
+	{
+		error_msg.append(util::format("The LT recuperator max effectiveness, %lg, was decreased to the limit of 1.0\n", ms_auto_opt_des_par.m_LTR_eff_max));
+
+		ms_auto_opt_des_par.m_LTR_eff_max = 1.0;
+	}
+
+	if (ms_auto_opt_des_par.m_LTR_eff_max < 0.70)
+	{
+		error_msg.append(util::format("The LT recuperator max effectiveness, %lg, was increased to the internal limit of 0.70 improve convergence\n", ms_auto_opt_des_par.m_LTR_eff_max));
+
+		ms_auto_opt_des_par.m_LTR_eff_max = 0.7;
+	}
+
+	if (ms_auto_opt_des_par.m_HTR_eff_max > 1.0)
+	{
+		error_msg.append(util::format("The HT recuperator max effectiveness, %lg, was decreased to the limit of 1.0\n", ms_auto_opt_des_par.m_HTR_eff_max));
+
+		ms_auto_opt_des_par.m_HTR_eff_max = 1.0;
+	}
+
+	if (ms_auto_opt_des_par.m_HTR_eff_max < 0.70)
+	{
+		error_msg.append(util::format("The LT recuperator max effectiveness, %lg, was increased to the internal limit of 0.70 improve convergence\n", ms_auto_opt_des_par.m_HTR_eff_max));
+
+		ms_auto_opt_des_par.m_HTR_eff_max = 0.7;
+	}
+	// Limits on high pressure limit
+	if (ms_auto_opt_des_par.m_P_high_limit >= N_co2_props::P_upper_limit)
+	{
+		error_msg.append(util::format("The upper pressure limit, %lg [MPa], was set to the internal limit in the CO2 properties code %lg [MPa]\n",
+			ms_auto_opt_des_par.m_P_high_limit, N_co2_props::P_upper_limit));
+
+		ms_auto_opt_des_par.m_P_high_limit = N_co2_props::P_upper_limit;
+	}
+	double P_high_limit_min = 10.0*1.E3;	//[kPa]
+	if (ms_auto_opt_des_par.m_P_high_limit <= P_high_limit_min)
+	{
+		error_msg.append(util::format("The upper pressure limit, %lg [MPa], must be greater than %lg [MPa] to ensure solution stability",
+			ms_auto_opt_des_par.m_P_high_limit, P_high_limit_min));
+
+		return -1;
+	}
+	// Finally, check thermal efficiency
+	if (auto_opt_des_hit_eta_in.m_eta_thermal <= 0.0)
+	{
+		error_msg.append(util::format("The design cycle thermal efficiency, %lg, must be at least greater than 0 ",
+			auto_opt_des_hit_eta_in.m_eta_thermal));
+
+		return -1;
+	}
+	double eta_carnot = 1.0 - ms_auto_opt_des_par.m_T_mc_in / ms_auto_opt_des_par.m_T_t_in;
+	if (auto_opt_des_hit_eta_in.m_eta_thermal >= eta_carnot)
+	{
+		error_msg.append(util::format("To solve the cycle within the allowable recuperator conductance, the design cycle thermal efficiency, %lg, must be at least less than the Carnot efficiency: %lg ",
+			auto_opt_des_hit_eta_in.m_eta_thermal, eta_carnot));
+
+		return -1;
+	}
+	// Send log update upstream
+	if (ms_auto_opt_des_par.mf_callback_log && ms_auto_opt_des_par.mp_mf_active)
+	{
+		std::string msg_log = util::format("Iterate on total recuperator conductance to hit target cycle efficiency: %lg [-]", auto_opt_des_hit_eta_in.m_eta_thermal);
+		std::string msg_progress = "Designing cycle...";
+		if (!ms_auto_opt_des_par.mf_callback_log(msg_log, msg_progress, ms_auto_opt_des_par.mp_mf_active, 0.0, 2))
+		{
+			std::string error_msg = "User terminated simulation...";
+			std::string loc_msg = "C_MEQ_sco2_design_hit_eta__UA_total";
+			throw(C_csp_exception(error_msg, loc_msg, 1));
+		}
+	}
+
+	// Set up monotonic equation solver to find the total recuperator UA that results in the target efficiency
+	C_MEQ_sco2_design_hit_eta__UA_total c_eq(this);
+	C_monotonic_eq_solver c_solver(c_eq);
+
+	// Generate min and max values
+	double UA_recup_total_max = ms_des_limits.m_UA_net_power_ratio_max*ms_auto_opt_des_par.m_W_dot_net;		//[kW/K]
+	double UA_recup_total_min = ms_des_limits.m_UA_net_power_ratio_min*ms_auto_opt_des_par.m_W_dot_net;		//[kW/K]
+																											// Set solver settings
+	c_solver.settings(ms_auto_opt_des_par.m_tol, 50, UA_recup_total_min, UA_recup_total_max, true);
+
+	// Generate guess values
+	double UA_recups_guess = 0.1*ms_auto_opt_des_par.m_W_dot_net;
+
+	double UA_recup_total_solved, tol_solved;
+	UA_recup_total_solved = tol_solved = std::numeric_limits<double>::quiet_NaN();
+	int iter_solved = -1;
+
+	int solver_code = 0;
+	try
+	{
+		solver_code = c_solver.solve(UA_recups_guess, 1.1*UA_recups_guess, auto_opt_des_hit_eta_in.m_eta_thermal,
+			UA_recup_total_solved, tol_solved, iter_solved);
+	}
+	catch (C_csp_exception &csp_except)
+	{
+		if (csp_except.m_error_code == 1)
+		{
+			throw(C_csp_exception(csp_except));
+		}
+		else
+		{
+			throw(C_csp_exception("PartialCooling_Cycle::C_MEQ_sco2_design_hit_eta__UA_total received an exception from the solver"));
+		}
+	}
+
+	if (solver_code != C_monotonic_eq_solver::CONVERGED)
+	{
+		if (solver_code < C_monotonic_eq_solver::CONVERGED)
+		{
+			error_msg.append("Can't find a value of total recuperator conductance that achieves"
+				" the target cycle efficiency. Check design parameters.");
+		}
+		else if (!c_solver.did_solver_find_negative_error(solver_code))
+		{
+			error_msg.append("Can't find a value of total recuperator conductance that results"
+				" in an efficiency smaller than the target efficiency.");
+		}
+		else if (!c_solver.did_solver_find_positive_error(solver_code))
+		{
+			error_msg.append("Can't find a value of total recuperator conductance that results"
+				" in an efficiency larger than the target efficiency.");
+		}
+		else
+		{
+			error_msg.append("Can't find a value of total recuperator conductance that achieves"
+				" the target cycle efficiency. Check design parameters.");
+		}
+
+		return -1;
+	}
+
+	return 0;
+}
+
+int C_PartialCooling_Cycle::C_MEQ_sco2_design_hit_eta__UA_total::operator()(double UA_recup_total /*kW/K*/, double *eta /*-*/)
+{
+	mpc_pc_cycle->ms_auto_opt_des_par.m_UA_rec_total = UA_recup_total;	//[kW/K]
+
+	int error_code = mpc_pc_cycle->auto_opt_design_core();
+	if (error_code != 0)
+	{
+		*eta = std::numeric_limits<double>::quiet_NaN();
+		return -1;
+	}
+
+	*eta = mpc_pc_cycle->get_design_solved()->m_eta_thermal;	//[-]
+
+	if (mpc_pc_cycle->ms_auto_opt_des_par.mf_callback_log && mpc_pc_cycle->ms_auto_opt_des_par.mp_mf_active)
+	{
+		msg_log = util::format(" Total recuperator conductance = %lg [kW/K per MWe]. Optimized cycle efficiency = %lg [-].  ",
+			UA_recup_total / (mpc_pc_cycle->ms_auto_opt_des_par.m_W_dot_net * 1.E-3), *eta);
+		if (!mpc_pc_cycle->ms_auto_opt_des_par.mf_callback_log(msg_log, msg_progress, mpc_pc_cycle->ms_auto_opt_des_par.mp_mf_active, 0.0, 2))
+		{
+			std::string error_msg = "User terminated simulation...";
+			std::string loc_msg = "C_MEQ_sco2_design_hit_eta__UA_total";
+			throw(C_csp_exception(error_msg, loc_msg, 1));
+		}
+	}
+
+	return 0;
 }
 
 int C_PartialCooling_Cycle::off_design_fix_shaft_speeds_core()

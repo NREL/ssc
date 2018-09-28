@@ -293,6 +293,7 @@ struct PVSystem_IO
 	ssc_number_t *p_inverterPowerConsumptionLoss;
 	ssc_number_t *p_inverterNightTimeLoss;
 	ssc_number_t *p_inverterThermalLoss;
+	ssc_number_t *p_inverterTotalLoss;
 
 	ssc_number_t *p_acWiringLoss;
 	ssc_number_t *p_transmissionLoss;
