@@ -48,23 +48,17 @@
 *******************************************************************************************************/
 
 #include "lib_pvshade.h"
+#include "lib_util.h"
+
 #include <math.h>
 #include <limits>
 #include <sstream>
 #include <vector>
 
-#ifndef M_PI
-#define M_PI 3.14159265358979323846264338327
-#endif
+
 #ifndef M_EPS
 #define M_EPS 0.00001
 #endif
-
-#define sind(x) sin( (M_PI/180.0)*(x) )
-#define cosd(x) cos( (M_PI/180.0)*(x) )
-#define tand(x) tan( (M_PI/180.8)*(x) )
-#define max(a,b) (((a) > (b))?(a):(b))
-#define min(a,b) (((a) < (b))?(a):(b))
 
 // SUPPORTING MATH AND INTEGRATION FUNCTIONS
 /*
@@ -229,7 +223,7 @@ void diffuse_reduce(
 	// ground reflected reduction 
 	double F1 = alb * pow(sind(stilt / 2.0), 2);
 	double Y1 = R - B * sind(180.0 - solalt - stilt) / sind(solalt);
-	Y1 = max(0.00001, Y1); // constraint per Chris 4/23/12
+	Y1 = fmax(0.00001, Y1); // constraint per Chris 4/23/12
 	double F2 = 0.5 * alb * (1.0 + Y1 / B - sqrt(pow(Y1, 2) / pow(B, 2) - 2 * Y1 / B * cosd(180 - stilt) + 1.0));
 	double F3 = 0.5 * alb * (1.0 + R / B - sqrt(pow(R, 2) / pow(B, 2) - 2 * R / B * cosd(180 - stilt) + 1.0));
 
@@ -244,12 +238,12 @@ void diffuse_reduce(
 
 double selfshade_dc_derate(double X, double S, double FF0, double dbh_ratio, double m_d, double Vmp)
 {
-	double Xtemp = min(X, 0.65);  // X is limited to 0.65 for c2 calculation
+	double Xtemp = fmin(X, 0.65);  // X is limited to 0.65 for c2 calculation
 
 	double c1 = (109 * FF0 - 54.3) * exp(-4.5 * X); // new c1 on 1/18/13
 	double c2 = -6 * pow(Xtemp, 2) + 5 * Xtemp + 0.28; // new c2 on 1/18/13
 	double c3_0 = (-0.05 * dbh_ratio - 0.01) * X + (0.85 * FF0 - 0.7) * dbh_ratio - 0.085 * FF0 + 0.05;  //new c3_0 on 1/18/13
-	double c3 = max(c3_0, (dbh_ratio)-1.0);
+	double c3 = fmax(c3_0, (dbh_ratio)-1.0);
 	double eqn5 = 1.0 - c1 * pow(S, 2) - c2 * S;  // new eqn5 on 1/18/13
 	double eqn9 = 0;
 
@@ -257,8 +251,8 @@ double selfshade_dc_derate(double X, double S, double FF0, double dbh_ratio, dou
 
 	double eqn10 = c3 * (S - 1.0) + (dbh_ratio);
 
-	double reduc = max(eqn5, eqn9);
-	reduc = max(reduc, eqn10);
+	double reduc = fmax(eqn5, eqn9);
+	reduc = fmax(reduc, eqn10);
 	reduc = X * reduc + (1.0 - X);
 
 	// check limits
@@ -441,8 +435,8 @@ bool ss_exec(
 		g = m_R * px / py;
 
 	// Additional constraints from Chris 4/11/12
-	g = max(g, 0); //fabs(g);	//g must be positive
-	g = min(g, m_row_length);	//g can't be greater than the length of the row
+	g = fmax(g, 0); //fabs(g);	//g must be positive
+	g = fmin(g, m_row_length);	//g can't be greater than the length of the row
 
 	// if number of modules across bottom > number in string and horizontal wiring then g=0
 	// Chris Deline email 4/19/12
@@ -464,8 +458,8 @@ bool ss_exec(
 	}
 
 	// Additional constraints from Chris 4/11/12
-	Hs = max( Hs, 0.0);	// Hs must be positive
-	Hs = min( Hs, m_B);	// Hs cannot be greater than the height of the row
+	Hs = fmax( Hs, 0.0);	// Hs must be positive
+	Hs = fmin( Hs, m_B);	// Hs cannot be greater than the height of the row
 
 	if (linear)
 	{

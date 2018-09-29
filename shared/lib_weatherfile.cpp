@@ -49,6 +49,7 @@
 
 #include <stdio.h>
 #include <cmath>
+#include <algorithm>
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
@@ -97,6 +98,41 @@ static std::vector<std::string> split(const std::string &buf, char delim = ',')
 	while (std::getline(tokenStream, token, delim))
 		tokens.push_back(token);
 	return tokens;
+}
+
+/*
+static float col_or_zero(const std::string &s)
+{
+	if (!s.empty() &&
+		std::any_of(s.begin(), s.end(), ::isdigit))
+	{
+		return (float)stof(s);
+	}
+	else
+		return 0.0f;
+}
+*/
+
+static float col_or_nan(const std::string &s)
+{
+	if (!s.empty() &&
+		std::any_of(s.begin(), s.end(), ::isdigit))
+	{
+		if (::isdigit(s[0]))
+		{
+			return (float)stof(s);
+		}
+		else
+		{
+			std::string x = s.substr(1, s.length() - 1);
+			if (s[0] == '-')
+				return (float)(0.0-stof(x));
+			else
+				return (float)stof(x);
+		}
+	}
+	else
+		return std::numeric_limits<float>::quiet_NaN();;
 }
 
 static double conv_deg_min_sec(double degrees,
@@ -319,6 +355,8 @@ double calc_twet(double T, double RH, double P)
 	This subroutine has been returning wet bulb temperatures much too high. This could adversely affect any
 	model that calls the method and whose performance is sensitive to the wet bulb temperature.
 	*/
+	if (T == -999. || RH == -999. || P == -999.) return -999.;
+
 	volatile double Pkpa = P / 10.;	//Correct for units problem
 
 	//volatile double Twet = T*0.7;// initial guess
@@ -449,6 +487,95 @@ std::string weatherfile::filename()
 	return m_file;
 }
 
+bool is_missing(double v) {
+	if (my_isnan(v)) return true;
+	else return false;
+}
+
+float check_missing(double v, double missing = -999.) {
+	if (std::abs(v - missing) <= 0.01) {
+		return std::numeric_limits<float>::quiet_NaN();
+	}
+	else return (float)v;
+}
+
+void weatherfile::handle_missing_field(size_t index, int col) {
+	size_t prev = index - 1;
+	size_t next = index + 1;
+	if (index == 0) prev = m_nRecords - 1;
+	else if (index == m_nRecords - 1) next = 0;
+
+	// single missing value: take average
+	if (!is_missing(m_columns[col].data[prev]) && !is_missing(m_columns[col].data[next])) {
+		m_columns[col].data[index] = (m_columns[col].data[prev] + m_columns[col].data[next]) / 2.0f;
+		return;
+	}
+
+	// consecutive missing values: interpolate between first two non-missing values
+	size_t count = 0;
+	while (is_missing(m_columns[col].data[prev])) {
+		prev = (prev == 0) ? m_nRecords - 1 : prev - 1;
+		count++;
+		if (count > m_nRecords) break;
+	}
+	if (count > m_nRecords / 2) {
+		// entire or most of column is missing data so fill with -999
+		for (size_t r = 0; r < m_nRecords; r++) {
+			m_columns[col].data[r] = -999;
+		}
+		return;
+	}
+	count = 0;
+	while (is_missing(m_columns[col].data[next])) {
+		next = (next == m_nRecords - 1) ? 0 : next + 1;
+		count++;
+		if (count > m_nRecords) break;
+	}
+
+	int diffTimeSteps = std::abs((int)(next - prev));
+	float slope = ((m_columns[col].data[next] - m_columns[col].data[prev]) / (float)(diffTimeSteps));
+
+	size_t current = (prev == m_nRecords + 1) ? 0 : prev + 1;
+	for (int i = 1; i < diffTimeSteps; i++) {
+		m_columns[col].data[current] = m_columns[col].data[prev] + slope * (float)i;
+		current = (current == m_nRecords + 1) ? 0 : current + 1;
+	}
+}
+
+bool weatherfile::timeStepChecks(int hdr_step_sec) {
+	int nmult = (int)m_nRecords / 8760;
+
+	if (hdr_step_sec > 0)
+	{  // if explicitly specified in header?
+		m_stepSec = hdr_step_sec;
+		m_startSec = m_stepSec / 2;
+	}
+	else if (nmult * 8760 == (int)m_nRecords)
+	{
+		// multiple of 8760 records: assume 1 year of data
+		m_stepSec = 3600 / nmult;
+		m_startSec = m_stepSec / 2;
+	}
+	else if (m_nRecords % 8784 == 0)
+	{
+		// Check if the weather file contains a leap day
+		// if so, correct the number of nrecords 
+		m_nRecords = m_nRecords / 8784 * 8760;
+		nmult = (int)m_nRecords / 8760;
+		m_stepSec = 3600 / nmult;
+		m_startSec = m_stepSec / 2;
+		m_hasLeapYear = true;
+	}
+	else
+	{
+		m_message = "could not determine timestep in weather file";
+		m_ok = false;
+		return false;
+	}
+
+	return true;
+}
+
 bool weatherfile::open(const std::string &file, bool header_only)
 {
 	if (file.empty())
@@ -476,7 +603,7 @@ bool weatherfile::open(const std::string &file, bool header_only)
 	std::string buf, buf1;
 	std::ifstream ifs(file);
 
-	if ( !ifs.is_open() )
+	if (!ifs.is_open())
 	{
 		m_message = "could not open file for reading: " + file;
 		m_type = INVALID;
@@ -489,8 +616,8 @@ bool weatherfile::open(const std::string &file, bool header_only)
 		// try to autodetect a TMY3
 		getline(ifs, buf);
 		getline(ifs, buf1);
-		int ncols = split(buf).size();
-		int ncols1 = split(buf1).size();
+		int ncols = (int)split(buf).size();
+		int ncols1 = (int)split(buf1).size();
 
 		if (ncols == 7 && (ncols1 == 68 || ncols1 == 71))
 			m_type = TMY3;
@@ -513,7 +640,7 @@ bool weatherfile::open(const std::string &file, bool header_only)
 
 		getline(ifs, buf);
 		sscanf(buf.c_str(),
-		       "%s %s %s %lg %s %d %d %s %d %d %d",
+			"%s %s %s %lg %s %d %d %s %d %d %d",
 			pl, pc, ps,
 			&m_hdr.tz,
 			slat, &dlat, &mlat,
@@ -527,13 +654,13 @@ bool weatherfile::open(const std::string &file, bool header_only)
 		m_hdr.state = ps;
 		m_hdr.elev = ielv;
 		m_startSec = 1800;
-		m_stepSec  = 3600;
+		m_stepSec = 3600;
 		m_nRecords = 8760;
 	}
 	else if (m_type == TMY3)
 	{
 		/*  724699,"BROOMFIELD/JEFFCO [BOULDER - SURFRAD]",CO,-7.0,40.130,-105.240,1689 */
-	  	getline(ifs, buf);
+		getline(ifs, buf);
 		auto cols = split(buf);
 		if (cols.size() != 7)
 		{
@@ -545,23 +672,33 @@ bool weatherfile::open(const std::string &file, bool header_only)
 		m_hdr.location = cols[0];
 		m_hdr.city = cols[1];
 		m_hdr.state = cols[2];
-		m_hdr.tz = stof(cols[3]);
-		m_hdr.lat = stof(cols[4]);
-		m_hdr.lon = stof(cols[5]);
-		m_hdr.elev = stof(cols[6]);
-		
+		m_hdr.tz = col_or_nan(cols[3]);
+		m_hdr.lat = col_or_nan(cols[4]);
+		m_hdr.lon = col_or_nan(cols[5]);
+		m_hdr.elev = col_or_nan(cols[6]);
+
 		m_startSec = 1800;
-		m_stepSec  = 3600;
+		m_stepSec = 3600;
 		m_nRecords = 8760;
 
 		getline(ifs, buf); // skip over labels line
 	}
 	else if (m_type == EPW)
 	{
+		m_nRecords = 0; 
+
+		while (getline(ifs, buf) && buf.length() > 0)
+			m_nRecords++;
+
+		m_nRecords -= 8;	// remove header lines
+		ifs.clear();
+		ifs.seekg(0);
+
+		if (!timeStepChecks()) return false;
+
 		/*  LOCATION,Cairo Intl Airport,Al Qahirah,EGY,ETMY,623660,30.13,31.40,2.0,74.0 */
 		/*  LOCATION,Alice Springs Airport,NT,AUS,RMY,943260,-23.80,133.88,9.5,547.0 */
-
-	  	getline(ifs, buf);
+		getline(ifs, buf);
 		auto cols = split(buf);
 
 		if (cols.size() != 10)
@@ -576,10 +713,10 @@ bool weatherfile::open(const std::string &file, bool header_only)
 		m_hdr.country = cols[3];
 		m_hdr.source = cols[4];
 		m_hdr.location = cols[5];
-		m_hdr.lat = stof(cols[6]);
-		m_hdr.lon = stof(cols[7]);
-		m_hdr.tz = stof(cols[8]);
-		m_hdr.elev = stof(cols[9]);
+		m_hdr.lat = col_or_nan(cols[6]);
+		m_hdr.lon = col_or_nan(cols[7]);
+		m_hdr.tz = col_or_nan(cols[8]);
+		m_hdr.elev = col_or_nan(cols[9]);
 
 		/* skip over excess header lines */
 
@@ -590,15 +727,11 @@ bool weatherfile::open(const std::string &file, bool header_only)
 		getline(ifs, buf);  // COMMENTS 1
 		getline(ifs, buf);  // COMMENTS 2
 		getline(ifs, buf);  // DATA PERIODS
-		
-		m_startSec = 1800;
-		m_stepSec  = 3600;
-		m_nRecords = 8760;
 
 	}
 	else if (m_type == SMW)
 	{
-	  	getline(ifs, buf);
+		getline(ifs, buf);
 		auto cols = split(buf);
 
 		if (cols.size() != 10)
@@ -612,14 +745,14 @@ bool weatherfile::open(const std::string &file, bool header_only)
 		m_hdr.city = cols[1];
 		m_hdr.state = cols[2];
 
-		m_hdr.tz = stof(cols[3]);
-		m_hdr.lat = stof(cols[4]);
-		m_hdr.lon = stof(cols[5]);
-		m_hdr.elev = stof(cols[6]);
-		m_stepSec = (size_t)stof(cols[7]); // time step in seconds
-		m_startYear = stoi(cols[8]);
+		m_hdr.tz = col_or_nan(cols[3]);
+		m_hdr.lat = col_or_nan(cols[4]);
+		m_hdr.lon = col_or_nan(cols[5]);
+		m_hdr.elev = col_or_nan(cols[6]);
+		m_stepSec = (size_t)col_or_nan(cols[7]); // time step in seconds
+		m_startYear = (int)col_or_nan(cols[8]);
 		char *p = const_cast<char *>(cols[9].c_str());
-		
+
 		double start_hour = 0;
 		double start_min = 30;
 		double start_sec = 0;
@@ -647,8 +780,8 @@ bool weatherfile::open(const std::string &file, bool header_only)
 			ifs.clear();
 			ifs.seekg(0);
 			getline(ifs, buf);
-			
-			if ( m_nRecords%8784==0 )
+
+			if (m_nRecords % 8784 == 0)
 			{
 				// Check if the weather file contains a leap day
 				// if so, exit out with an error 
@@ -660,12 +793,12 @@ bool weatherfile::open(const std::string &file, bool header_only)
 	}
 	else if (m_type == WFCSV)
 	{
-	  	getline(ifs, buf);
+		getline(ifs, buf);
 		auto cols = split(buf);
-		int ncols = cols.size();
-	  	getline(ifs, buf1);
+		int ncols = (int)cols.size();
+		getline(ifs, buf1);
 		auto cols1 = split(buf1);
-		int ncols1 = split(buf1).size();
+		int ncols1 = (int)split(buf1).size();
 
 		int hdr_step_sec = -1;
 
@@ -675,32 +808,32 @@ bool weatherfile::open(const std::string &file, bool header_only)
 			return false;
 		}
 
-		for (size_t i = 0; (int)i<ncols; i++)
+		for (size_t i = 0; (int)i < ncols; i++)
 		{
-		  	const std::string name = util::lower_case(trimboth(cols[i]));
+			const std::string name = util::lower_case(trimboth(cols[i]));
 			const std::string value = trimboth(cols1[i]);
 
 			if (name == "lat" || name == "latitude")
 			{
-				m_hdr.lat = stof(value);
+				m_hdr.lat = col_or_nan(value);
 			}
 			else if (name == "lon" || name == "long" || name == "longitude" || name == "lng")
 			{
-				m_hdr.lon = stof(value);
+				m_hdr.lon = col_or_nan(value);
 			}
 			else if (name == "tz" || name == "timezone" || name == "time zone")
 			{
-				m_hdr.tz = stof(value);
+				m_hdr.tz = col_or_nan(value);
 			}
-			else if (name == "el" || name == "elev" || name == "elevation" || name == "site elevation" || name == "altitude" )
+			else if (name == "el" || name == "elev" || name == "elevation" || name == "site elevation" || name == "altitude")
 			{
-				m_hdr.elev = stof(value);
+				m_hdr.elev = col_or_nan(value);
 			}
 			else if (name == "year")
 			{
-			  	m_startYear = stoi(value);
+				m_startYear = (int)col_or_nan(value);
 			}
-			else if (name == "id" || name == "location" || name == "location id" || name == "station" || name == "station id" || name == "wban" || name == "wban#" || name == "site" )
+			else if (name == "id" || name == "location" || name == "location id" || name == "station" || name == "station id" || name == "wban" || name == "wban#" || name == "site")
 			{
 				m_hdr.location = value;
 			}
@@ -716,7 +849,7 @@ bool weatherfile::open(const std::string &file, bool header_only)
 			{
 				m_hdr.country = value;
 			}
-			else if (name == "source" || name == "src" || name == "data source" )
+			else if (name == "source" || name == "src" || name == "data source")
 			{
 				m_hdr.source = value;
 			}
@@ -730,15 +863,15 @@ bool weatherfile::open(const std::string &file, bool header_only)
 			}
 			else if (name == "hasunits" || name == "units")
 			{
-			  	m_hdr.hasunits = (util::lower_case(value) == "yes" || stoi(value) != 0);
+				m_hdr.hasunits = (util::lower_case(value) == "yes" || stoi(value) != 0);
 			}
 			else if (name == "step")
 			{
-			  	hdr_step_sec = stoi(value);
+				hdr_step_sec = stoi(value);
 			}
 		}
 
-		if ( !std::isfinite(m_hdr.lat) || !std::isfinite(m_hdr.lon) )
+		if (!std::isfinite(m_hdr.lat) || !std::isfinite(m_hdr.lon))
 		{
 			m_message = "latitude and longitude required but not specified";
 			return false;
@@ -761,11 +894,13 @@ bool weatherfile::open(const std::string &file, bool header_only)
 
 			getline(ifs, buf);  // col names
 			if (m_hdr.hasunits)
-			  	getline(ifs, buf);  // col units
+				getline(ifs, buf);  // col units
 
 			m_nRecords = 0; // figure out how many records there are
+
 			while (getline(ifs, buf) && buf.length() > 0)
 				m_nRecords++;
+
 
 			// reposition to where we were
 			ifs.clear();
@@ -773,44 +908,7 @@ bool weatherfile::open(const std::string &file, bool header_only)
 			getline(ifs, buf);  // header names
 			getline(ifs, buf);  // header values
 
-			// now determine timestep as best as possible
-			int nmult = (int)m_nRecords / 8760;
-			// divide by zero error 2/20/19
-			if (nmult <= 0)
-			{
-				m_message = "could not determine number of records in CSV weather file";
-				m_ok = false;
-				return false;
-			}
-
-
-
-			if (hdr_step_sec > 0)
-			{  // if explicitly specified in header?
-				m_stepSec = hdr_step_sec;
-				m_startSec = m_stepSec / 2;
-			}
-			else if (nmult * 8760 == (int)m_nRecords)
-			{
-				// multiple of 8760 records: assume 1 year of data
-				m_stepSec = 3600 / nmult;
-				m_startSec = m_stepSec / 2;
-			}
-			else if ( m_nRecords%8784==0 )
-			{ 
-				// Check if the weather file contains a leap day
-				// if so, correct the number of nrecords 
-				m_nRecords = m_nRecords/8784*8760;
-				nmult = (int)m_nRecords/8760;
-				m_stepSec = 3600 / nmult;
-				m_startSec = m_stepSec / 2;
-			}
-			else
-			{
-				m_message = "could not determine timestep in CSV weather file";
-				m_ok = false;
-				return false;
-			}
+			if (!timeStepChecks(hdr_step_sec)) return false;
 		}
 
 	}
@@ -826,7 +924,7 @@ bool weatherfile::open(const std::string &file, bool header_only)
 	}
 
 	// preallocate memory for data
-	for (size_t i = 0; i<_MAXCOL_; i++)
+	for (size_t i = 0; i < _MAXCOL_; i++)
 	{
 		m_columns[i].index = -1;
 		m_columns[i].data.resize(m_nRecords, std::numeric_limits<float>::quiet_NaN());
@@ -835,7 +933,7 @@ bool weatherfile::open(const std::string &file, bool header_only)
 	if (m_type == WFCSV)
 	{
 		// if it's a WFCSV format file, we need to determine which columns of data exist
-	  	getline(ifs, buf);  // read column names
+		getline(ifs, buf);  // read column names
 		if (ifs.eof())
 		{
 			m_message = "could not read column names";
@@ -843,18 +941,18 @@ bool weatherfile::open(const std::string &file, bool header_only)
 		}
 
 		auto cols = split(buf);
-		int ncols = cols.size();
+		int ncols = (int)cols.size();
 
 		if (m_hdr.hasunits)
 		{
-		  	getline(ifs, buf);  // read column units
+			getline(ifs, buf);  // read column units
 			if (ifs.eof())
 			{
 				m_message = "could not read column units";
 				return false;
 			}
 			auto cols1 = split(buf1);
-			int ncols1 = cols1.size();
+			int ncols1 = (int)cols1.size();
 
 			if (ncols != ncols1) {
 				m_message = "column names and units must have the same number of fields";
@@ -863,12 +961,12 @@ bool weatherfile::open(const std::string &file, bool header_only)
 		}
 
 		// determine columns
-		for (int i = 0; i<ncols; i++)
+		for (int i = 0; i < ncols; i++)
 		{
-		    	const std::string name = trimboth(cols[i]);
+			const std::string name = trimboth(cols[i]);
 			if (name.length() > 0)
 			{
-			  	std::string lowname = util::lower_case(name);
+				std::string lowname = util::lower_case(name);
 
 				if (lowname == "yr" || lowname == "year") m_columns[YEAR].index = i;
 				else if (lowname == "mo" || lowname == "month") m_columns[MONTH].index = i;
@@ -876,14 +974,14 @@ bool weatherfile::open(const std::string &file, bool header_only)
 				else if (lowname == "hour" || lowname == "hr") m_columns[HOUR].index = i;
 				else if (lowname == "min" || lowname == "minute") m_columns[MINUTE].index = i;
 				else if (lowname == "ghi" || lowname == "gh" || lowname == "global" || lowname == "global horizontal" || lowname == "global horizontal irradiance") m_columns[GHI].index = i;
-				else if (lowname == "dni" || lowname == "dn" || lowname == "beam" || lowname == "direct normal" || lowname == "direct normal irradiance" || lowname == "direct (beam) normal irradiance" ) m_columns[DNI].index = i;
+				else if (lowname == "dni" || lowname == "dn" || lowname == "beam" || lowname == "direct normal" || lowname == "direct normal irradiance" || lowname == "direct (beam) normal irradiance") m_columns[DNI].index = i;
 				else if (lowname == "dhi" || lowname == "df" || lowname == "diffuse" || lowname == "diffuse horizontal" || lowname == "diffuse horizontal irradiance") m_columns[DHI].index = i;
 				else if (lowname == "poa" || lowname == "pa" || lowname == "plane" || lowname == "plane of array" || lowname == "plane of array irradiance") m_columns[POA].index = i;
-				else if (lowname == "tdry" || lowname == "dry bulb" || lowname == "dry bulb temp" || lowname == "dry bulb temperature" || lowname == "temperature" || lowname == "ambient" || lowname == "ambient temp" || lowname == "tamb" ) m_columns[TDRY].index = i;
+				else if (lowname == "tdry" || lowname == "dry bulb" || lowname == "dry bulb temp" || lowname == "dry bulb temperature" || lowname == "temperature" || lowname == "ambient" || lowname == "ambient temp" || lowname == "tamb") m_columns[TDRY].index = i;
 				else if (lowname == "twet" || lowname == "wet bulb" || lowname == "wet bulb temperature") m_columns[TWET].index = i;
 				else if (lowname == "tdew" || lowname == "dew point" || lowname == "dew point temperature") m_columns[TDEW].index = i;
-				else if (lowname == "wspd" || lowname == "wind speed" || lowname == "windspeed" || lowname == "ws" || lowname == "windvel" ) m_columns[WSPD].index = i;
-				else if (lowname == "wdir" || lowname == "wind direction" || lowname == "wd" ) m_columns[WDIR].index = i;
+				else if (lowname == "wspd" || lowname == "wind speed" || lowname == "windspeed" || lowname == "ws" || lowname == "windvel") m_columns[WSPD].index = i;
+				else if (lowname == "wdir" || lowname == "wind direction" || lowname == "wd") m_columns[WDIR].index = i;
 				else if (lowname == "rh" || lowname == "rhum" || lowname == "relative humidity" || lowname == "humidity") m_columns[RH].index = i;
 				else if (lowname == "pres" || lowname == "pressure" || lowname == "air pressure") m_columns[PRES].index = i;
 				else if (lowname == "snow" || lowname == "snow cover" || lowname == "snow depth") m_columns[SNOW].index = i;
@@ -892,10 +990,10 @@ bool weatherfile::open(const std::string &file, bool header_only)
 			}
 		}
 	}
-	else if ( m_type == TMY2 )
+	else if (m_type == TMY2)
 	{
 		// indicate which columns are available in TMY2 files
-		m_columns[YEAR].index 
+		m_columns[YEAR].index
 			= m_columns[MONTH].index
 			= m_columns[DAY].index
 			= m_columns[HOUR].index
@@ -911,10 +1009,10 @@ bool weatherfile::open(const std::string &file, bool header_only)
 			= m_columns[SNOW].index
 			= 1;
 	}
-	else if ( m_type == TMY3 )
+	else if (m_type == TMY3)
 	{
 		// indicate which columns are available in TMY3 files
-		m_columns[YEAR].index 
+		m_columns[YEAR].index
 			= m_columns[MONTH].index
 			= m_columns[DAY].index
 			= m_columns[HOUR].index
@@ -930,13 +1028,14 @@ bool weatherfile::open(const std::string &file, bool header_only)
 			= m_columns[ALB].index
 			= 1;
 	}
-	else if ( m_type == EPW )
+	else if (m_type == EPW)
 	{
 		// indicate which columns are available in EPW files
-		m_columns[YEAR].index 
+		m_columns[YEAR].index
 			= m_columns[MONTH].index
 			= m_columns[DAY].index
 			= m_columns[HOUR].index
+			= m_columns[MINUTE].index
 			= m_columns[GHI].index
 			= m_columns[DNI].index
 			= m_columns[DHI].index
@@ -949,10 +1048,10 @@ bool weatherfile::open(const std::string &file, bool header_only)
 			= m_columns[SNOW].index
 			= 1;
 	}
-	else if ( m_type == SMW )
-	{				
+	else if (m_type == SMW)
+	{
 		// indicate which columns are available in SMW files
-		m_columns[YEAR].index 
+		m_columns[YEAR].index
 			= m_columns[MONTH].index
 			= m_columns[DAY].index
 			= m_columns[HOUR].index
@@ -974,12 +1073,12 @@ bool weatherfile::open(const std::string &file, bool header_only)
 	// from 1-24 standard to 0-23
 	int tmy3_hour_shift = 1;
 	int n_leap_data_removed = 0;
-	
-	for (int i = 0; i<(int)m_nRecords; i++)
+
+	for (int i = 0; i < (int)m_nRecords; i++)
 	{
 		if (m_type == TMY2)
 		{
-			
+
 			int yr, mn, dy, hr, ethor, etdn;
 			int d1, d2, d3, d4, d5, d6, d7, d8, d9, d10, d11, d12, d13, d14, d15, d16, d17, d18, d19, d20, d21;      /* which of these are used? d3, d10, d15 & d20 */
 			int u1, u2, u3, u4, u5, u6, u7, u8, u9, u10, u11, u12, u13, u14, u15, u16, u17, u18, u19, u20, u21;  /* are any of these ever used?? */
@@ -988,9 +1087,9 @@ bool weatherfile::open(const std::string &file, bool header_only)
 
 			int nread = 0;
 
-			for(;;)
+			for (;;)
 			{
-			  	getline(ifs, buf);
+				getline(ifs, buf);
 				nread = sscanf(buf.c_str(),
 					"%2d%2d%2d%2d"
 					"%4d%4d"
@@ -1023,7 +1122,7 @@ bool weatherfile::open(const std::string &file, bool header_only)
 					&d20, f20, &u20, // snow depth 0-150 cm
 					&d21, f21, &u21); // days since last snowfall 0-88
 
-				if ( mn == 2 && dy == 29 )
+				if (mn == 2 && dy == 29)
 				{
 					// skip data lines for february 29th if they exist in the file
 					n_leap_data_removed++;
@@ -1048,17 +1147,17 @@ bool weatherfile::open(const std::string &file, bool header_only)
 				m_columns[SNOW].data[i] = (float)d20;
 				m_columns[ALB].data[i] = -999; /* no albedo in TMY2 */
 				m_columns[AOD].data[i] = -999; /* no AOD in TMY2 */
-				m_columns[TWET].data[i] 
-					= (float)calc_twet( 
+				m_columns[TWET].data[i]
+					= (float)calc_twet(
 					(double)m_columns[TDRY].data[i],
-					(double)m_columns[RH].data[i],
-					(double)m_columns[PRES].data[i] ); /* must calculate wet bulb */
+						(double)m_columns[RH].data[i],
+						(double)m_columns[PRES].data[i]); /* must calculate wet bulb */
 
 				break;
 			}
 
 
-			if ( nread != 79 || ifs.eof() )
+			if (nread != 79 || ifs.eof())
 			{
 				m_message = "TMY2: data line does not have at exactly 79 characters at record " + util::to_string(i);
 				return false;
@@ -1067,15 +1166,15 @@ bool weatherfile::open(const std::string &file, bool header_only)
 		}
 		else if (m_type == TMY3)
 		{
-			for(;;)
+			for (;;)
 			{
 				getline(ifs, buf);
 				auto cols = split(buf);
-				if (cols.size() < 68)
-				{
-					m_message = "TMY3: data line does not have at least 68 fields at record " + util::to_string(i);
-					return false;
-				}
+				//				if (cols.size() < 68)
+				//				{
+				//					m_message = "TMY3: data line does not have at least 68 fields at record " + util::to_string(i);
+				//					return false;
+				//				}
 
 				const char *p = cols[0].c_str();
 
@@ -1106,7 +1205,7 @@ bool weatherfile::open(const std::string &file, bool header_only)
 					hour = 0;
 				}
 
-				if ( month == 2 && day == 29 )
+				if (month == 2 && day == 29)
 				{
 					n_leap_data_removed++;
 					continue;
@@ -1117,34 +1216,51 @@ bool weatherfile::open(const std::string &file, bool header_only)
 				m_columns[DAY].data[i] = (float)day;
 				m_columns[HOUR].data[i] = (float)hour;
 				m_columns[MINUTE].data[i] = 30;
+				/*
+								m_columns[GHI].data[i] = (float)stof(cols[4]);
+								m_columns[DNI].data[i] = (float)stof(cols[7]);
+								m_columns[DHI].data[i] = (float)stof(cols[10]);
+								m_columns[POA].data[i] = (float)(-999);       //No POA in TMY3
 
-				m_columns[GHI].data[i] = (float)stof(cols[4]);
-				m_columns[DNI].data[i] = (float)stof(cols[7]);
-				m_columns[DHI].data[i] = (float)stof(cols[10]);
+								m_columns[TDRY].data[i] = (float)stof(cols[31]);
+								m_columns[TDEW].data[i] = (float)stof(cols[34]);
+
+								m_columns[WSPD].data[i] = (float)stof(cols[46]);
+								m_columns[WDIR].data[i] = (float)stof(cols[43]);
+
+								m_columns[RH].data[i] = (float)stof(cols[37]);
+								m_columns[PRES].data[i] = (float)stof(cols[40]);
+								m_columns[SNOW].data[i] = -999.0; // no snowfall in TMY3
+								m_columns[ALB].data[i] = (float)stof(cols[61]);
+								m_columns[AOD].data[i] = -999; // no AOD in TMY3
+				*/
+				m_columns[GHI].data[i] = col_or_nan(cols[4]);
+				m_columns[DNI].data[i] = col_or_nan(cols[7]);
+				m_columns[DHI].data[i] = col_or_nan(cols[10]);
 				m_columns[POA].data[i] = (float)(-999);       /* No POA in TMY3 */
 
-				m_columns[TDRY].data[i] = (float)stof(cols[31]);
-				m_columns[TDEW].data[i] = (float)stof(cols[34]);
-				
-				m_columns[WSPD].data[i] = (float)stof(cols[46]);
-				m_columns[WDIR].data[i] = (float)stof(cols[43]);
+				m_columns[TDRY].data[i] = col_or_nan(cols[31]);
+				m_columns[TDEW].data[i] = col_or_nan(cols[34]);
 
-				m_columns[RH].data[i] = (float)stof(cols[37]);
-				m_columns[PRES].data[i] = (float)stof(cols[40]);
+				m_columns[WSPD].data[i] = col_or_nan(cols[46]);
+				m_columns[WDIR].data[i] = col_or_nan(cols[43]);
+
+				m_columns[RH].data[i] = col_or_nan(cols[37]);
+				m_columns[PRES].data[i] = col_or_nan(cols[40]);
 				m_columns[SNOW].data[i] = -999.0; // no snowfall in TMY3
-				m_columns[ALB].data[i] = (float)stof(cols[61]);
+				m_columns[ALB].data[i] = col_or_nan(cols[61]);
 				m_columns[AOD].data[i] = -999; /* no AOD in TMY3 */
 
-				m_columns[TWET].data[i] 
-					= (float)calc_twet( 
+				m_columns[TWET].data[i]
+					= (float)calc_twet(
 					(double)m_columns[TDRY].data[i],
-					(double)m_columns[RH].data[i],
-					(double)m_columns[PRES].data[i]); /* must calculate wet bulb */
+						(double)m_columns[RH].data[i],
+						(double)m_columns[PRES].data[i]); /* must calculate wet bulb */
 
 				break;
 			}
 
-			if (ifs.eof())
+			if (ifs.eof() && i < ((int)m_nRecords - 1))
 			{
 				m_message = "TMY3: data line formatting error at record " + util::to_string(i);
 				return false;
@@ -1152,9 +1268,9 @@ bool weatherfile::open(const std::string &file, bool header_only)
 		}
 		else if (m_type == EPW)
 		{
-			for(;;)
+			for (;;)
 			{
-			  	getline(ifs, buf);
+				getline(ifs, buf);
 				auto cols = split(buf);
 
 				if (cols.size() < 32)
@@ -1164,9 +1280,9 @@ bool weatherfile::open(const std::string &file, bool header_only)
 				}
 
 				int month = stoi(cols[1]);
-				int day = stoi(cols[2] );
+				int day = stoi(cols[2]);
 
-				if ( month == 2 && day == 29 )
+				if (month == 2 && day == 29)
 				{
 					n_leap_data_removed++;
 					continue;
@@ -1176,26 +1292,27 @@ bool weatherfile::open(const std::string &file, bool header_only)
 				m_columns[MONTH].data[i] = (float)stoi(cols[1]);
 				m_columns[DAY].data[i] = (float)stoi(cols[2]);
 				m_columns[HOUR].data[i] = (float)stoi(cols[3]) - 1;  // hour goes 0-23, not 1-24;
-				m_columns[MINUTE].data[i] = 30;
+				m_columns[MINUTE].data[i] = (float)stoi(cols[4]);
 
-				m_columns[GHI].data[i] = (float)stof(cols[13]);
-				m_columns[DNI].data[i] = (float)stof(cols[14]);
-				m_columns[DHI].data[i] = (float)stof(cols[15]);
+				m_columns[GHI].data[i] = check_missing(stof(cols[13]), 9999.);
+				m_columns[DNI].data[i] = check_missing(stof(cols[14]), 9999.);
+				m_columns[DHI].data[i] = check_missing(stof(cols[15]), 9999.);
 				m_columns[POA].data[i] = (float)(-999);       /* No POA in EPW */
 
-				m_columns[WSPD].data[i] = (float)stof(cols[21]);
-				m_columns[WDIR].data[i] = (float)stof(cols[20]);
+				m_columns[WSPD].data[i] = check_missing(stof(cols[21]), 999.);
+				m_columns[WDIR].data[i] = check_missing(stof(cols[20]), 999.);
 
-				m_columns[TDRY].data[i] = (float)stof(cols[6]);
-				m_columns[TWET].data[i] = (float)stof(cols[7]);
+				m_columns[TDRY].data[i] = check_missing(stof(cols[6]), 99.9);
 
-				m_columns[RH].data[i] = (float)stof(cols[8]);
-				m_columns[PRES].data[i] = (float)(stof(cols[9]) * 0.01); /* convert Pa in to mbar */
-				m_columns[SNOW].data[i] = (float)stof(cols[30]); // snowfall
+				m_columns[TDEW].data[i] = check_missing(stof(cols[7]), 99.9);
+
+				m_columns[RH].data[i] = check_missing(stof(cols[8]), 999.);
+				m_columns[PRES].data[i] = check_missing(stof(cols[6]) * 0.01, 999999.*0.01);
+				m_columns[SNOW].data[i] = check_missing(stof(cols[30]), 999.); // snowfall
 				m_columns[ALB].data[i] = -999; /* no albedo in EPW file */
 				m_columns[AOD].data[i] = -999; /* no AOD in EPW */
 
-				m_columns[TDEW].data[i] = (float)wiki_dew_calc(m_columns[TDRY].data[i], m_columns[RH].data[i]);
+				m_columns[TWET].data[i] = -999; /* calculated later during handling of missing data */
 
 				break;
 			}
@@ -1252,11 +1369,11 @@ bool weatherfile::open(const std::string &file, bool header_only)
 			}
 		}
 		else if (m_type == WFCSV)
-		{	
+		{
 
-			for(;;)
+			for (;;)
 			{
-			  	getline(ifs, buf);
+				getline(ifs, buf);
 				buf = trimboth(buf);
 				if (buf.length() == 0)
 				{
@@ -1265,18 +1382,18 @@ bool weatherfile::open(const std::string &file, bool header_only)
 				}
 
 				auto cols = split(buf);
-				int ncols = cols.size();
+				int ncols = (int)cols.size();
 				for (size_t k = 0; k < _MAXCOL_; k++)
 				{
 					if (m_columns[k].index >= 0
 						&& m_columns[k].index < ncols)
 					{
 						m_columns[k].data[i] = (float)stof(trimboth(cols[m_columns[k].index]));
-					} 
+					}
 				}
 
-				if ( m_columns[MONTH].data[i] == 2
-					&& m_columns[DAY].data[i] == 29 )
+				if (m_columns[MONTH].data[i] == 2
+					&& m_columns[DAY].data[i] == 29)
 				{
 					n_leap_data_removed++;
 					continue;
@@ -1290,8 +1407,8 @@ bool weatherfile::open(const std::string &file, bool header_only)
 
 	}
 
-//	if( n_leap_data_removed > 0 )
-//		m_message = util::format("Skipped %d data lines for February 29th (leap day).", n_leap_data_removed );
+	//	if( n_leap_data_removed > 0 )
+	//		m_message = util::format("Skipped %d data lines for February 29th (leap day).", n_leap_data_removed );
 
 	if (m_type == WFCSV)
 	{
@@ -1303,7 +1420,7 @@ bool weatherfile::open(const std::string &file, bool header_only)
 			&& m_columns[PRES].index >= 0
 			&& m_columns[RH].index >= 0)
 		{
-			for (size_t i = 0; i<m_nRecords; i++)
+			for (size_t i = 0; i < m_nRecords; i++)
 				m_columns[TWET].data[i] = (float)calc_twet(m_columns[TDRY].data[i], m_columns[RH].data[i], m_columns[PRES].data[i]);
 		}
 
@@ -1311,27 +1428,27 @@ bool weatherfile::open(const std::string &file, bool header_only)
 			&& m_columns[TDRY].index >= 0
 			&& m_columns[RH].index >= 0)
 		{
-			for (size_t i = 0; i<m_nRecords; i++)
+			for (size_t i = 0; i < m_nRecords; i++)
 				m_columns[TDEW].data[i] = (float)wiki_dew_calc(m_columns[TDRY].data[i], m_columns[RH].data[i]);
 		}
 
 		if (m_columns[YEAR].index < 0)
 		{
-			for (size_t i = 0; i<m_nRecords; i++)
+			for (size_t i = 0; i < m_nRecords; i++)
 				m_columns[YEAR].data[i] = (float)m_startYear;
 		}
 
 		if (m_columns[MONTH].index < 0
 			&& m_stepSec == 3600 && m_nRecords == 8760)
 		{
-			for (size_t i = 0; i<m_nRecords; i++)
+			for (size_t i = 0; i < m_nRecords; i++)
 				m_columns[MONTH].data[i] = (float)util::month_of((double)i);
 		}
 
 		if (m_columns[DAY].index < 0
 			&& m_stepSec == 3600 && m_nRecords == 8760)
 		{
-			for (size_t i = 0; i<m_nRecords; i++)
+			for (size_t i = 0; i < m_nRecords; i++)
 			{
 				int month = util::month_of((double)i);
 				m_columns[DAY].data[i] = (float)util::day_of_month(month, (double)i);
@@ -1341,7 +1458,7 @@ bool weatherfile::open(const std::string &file, bool header_only)
 		if (m_columns[HOUR].index < 0
 			&& m_stepSec == 3600 && m_nRecords == 8760)
 		{
-			for (size_t i = 0; i<m_nRecords; i++)
+			for (size_t i = 0; i < m_nRecords; i++)
 			{
 				size_t day = i / 24;
 				size_t start_of_day = day * 24;
@@ -1351,18 +1468,51 @@ bool weatherfile::open(const std::string &file, bool header_only)
 
 		if (m_columns[MINUTE].index < 0 && (int)m_columns[HOUR].data[1] == m_columns[HOUR].data[1])
 		{
-			for (size_t i = 0; i<m_nRecords; i++)
+			for (size_t i = 0; i < m_nRecords; i++)
 				m_columns[MINUTE].data[i] = (float)((m_stepSec / 2) / 60);
 		}
-        else if( m_columns[MINUTE].index < 0 )  //implies fractional hours are provided
-        {
-            for (size_t i = 0; i<m_nRecords; i++)
-            {
-                float hr = m_columns[HOUR].data[i];
-                m_columns[MINUTE].data[i] = (float)((hr - (int)hr)*60.);
-                m_columns[HOUR].data[i] = (float)(int)hr;
-            }
-        }
+		else if (m_columns[MINUTE].index < 0)  //implies fractional hours are provided
+		{
+			for (size_t i = 0; i < m_nRecords; i++)
+			{
+				float hr = m_columns[HOUR].data[i];
+				m_columns[MINUTE].data[i] = (float)((hr - (int)hr)*60.);
+				m_columns[HOUR].data[i] = (float)(int)hr;
+			}
+		}
+	}
+
+	// special handling for missing values for various fields
+	if (m_type == EPW) {
+		for (size_t i = 0; i < m_nRecords; i++) {
+			for (int j = 5; j < 19; j++) {
+				if (j == 8 || j == 17 || j == 18 || j == 10) continue;	// EPW format does not contain 
+				if (my_isnan(m_columns[j].data[i])) handle_missing_field(i, j);
+			}
+			if (m_columns[TWET].data[i] == -999.) m_columns[TWET].data[i] = (float)calc_twet((double)m_columns[TDRY].data[i], (double)m_columns[RH].data[i], (double)m_columns[PRES].data[i]);
+		}
+	}
+
+	// final checks over data
+	if (m_hasLeapYear && (n_leap_data_removed < 1)) {
+		m_message = "Weather data identified as containing leap year but 2/29 entry not found.";
+		return false;
+	}
+
+	// make sure data is single-year
+	if (m_columns[MINUTE].index != -1) {
+		int minDiff = (int)abs(m_columns[MINUTE].data[1] - m_columns[MINUTE].data[0]);
+		if (minDiff == 0) minDiff = 60;
+		if (minDiff * 60 != (int)m_stepSec) {
+			m_message = util::format("Weather file timestep per hour (%f) does not correspond to 8760/nRecords", minDiff / 60.);
+			return false;
+		}
+	}
+	else {
+		if (m_nRecords != 8760) {
+			m_message = util::format("Hourly weather file detected but %d records found.", m_nRecords);
+			return false;
+		}
 	}
 
 	return true;

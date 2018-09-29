@@ -2,7 +2,7 @@
 #define __LIB_BATTERY_POWERFLOW_TEST_H__
 
 #include <gtest/gtest.h>
-#include <lib_battery_powerflow.h>
+#include "../shared/lib_battery_powerflow.h"
 #include <lib_power_electronics.h>
 
 

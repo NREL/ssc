@@ -58,17 +58,7 @@
 #include "lib_pvwatts.h"
 #include "lib_pvshade.h"
 #include "lib_pvmodel.h"
-
-#ifndef DTOR
-#define DTOR 0.0174532925
-#endif
-#ifndef M_PI
-#define M_PI 3.14159265358979323846264338327
-#endif
-#define sind(x) sin( (M_PI/180.0)*(x) )
-#define cosd(x) cos( (M_PI/180.0)*(x) )
-#define tand(x) tan( (M_PI/180.0)*(x) )
-#define asind(x) (180/M_PI*asin(x))
+#include "lib_pv_incidence_modifier.h"
 
 static var_info _cm_vtab_pvwattsv5_part1[] = {
 /*   VARTYPE           DATATYPE          NAME                         LABEL                                               UNITS        META                      GROUP          REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
@@ -276,7 +266,7 @@ public:
 			if ( sunup > 0 && track_mode == 1
 				&& shade_mode_1x == 0 ) // selfshaded mode
 			{	
-				double shad1xf = shade_fraction_1x( solazi, solzen, tilt, azimuth, gcr, rot );					
+				double shad1xf = shadeFraction1x( solazi, solzen, tilt, azimuth, gcr, rot );
 				shad_beam *= (ssc_number_t)(1-shad1xf);
 
 				if ( shade_mode_1x == 0 && iskydiff > 0 )

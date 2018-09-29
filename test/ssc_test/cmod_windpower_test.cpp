@@ -1,8 +1,8 @@
 #include <gtest/gtest.h>
 
-#include "core.h"
-#include "vartab.h"
-#include "common.h"
+#include "../ssc/core.h"
+#include "../ssc/vartab.h"
+#include "../ssc/common.h"
 #include "cmod_windpower.h"
 #include "cmod_windpower_test.h"
 

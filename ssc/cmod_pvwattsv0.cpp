@@ -53,6 +53,7 @@
 #include "lib_irradproc.h"
 #include "lib_pvwatts.h"
 #include "lib_pvshade.h"
+#include "lib_util.h"
 
 
 /**********************************************************************************
@@ -188,8 +189,8 @@ static double transpoa( double poa,double dn,double inc )
 		polynomial coefficients for glass from 2nd World Conference Paper,
 		July 6-10, 1998.                         Bill Marion 12/8/1998 */
 
-	double b0=1.0,b1=-2.438e-3,b2=3.103e-4,b3=-1.246e-5,b4=2.112e-7,
-			b5=-1.359e-9,x,DTOR=0.017453293;
+	double b0 = 1.0, b1 = -2.438e-3, b2 = 3.103e-4, b3 = -1.246e-5, b4 = 2.112e-7,
+		b5 = -1.359e-9, x;
 
 	inc = inc/DTOR;
 	if( inc > 50.0 && inc < 90.0 ) /* Adjust for relection between 50 and 90 degrees */
@@ -555,7 +556,7 @@ static void solarpos_v0(int year,int month,int day,int hour,double minute,double
 	sunn[7] = tst = true solar time (hrs)                */
 
 	int jday,delta,leap;                           /* Local variables */
-	double pi=3.1415927,DTOR=0.017453293,zulu,jd,time,mnlong,mnanom,
+	double zulu,jd,time,mnlong,mnanom,
 			eclong,oblqec,num,den,ra,dec,gmst,lmst,ha,elv,azm,refrac,
 			E,ws,sunrise,sunset,Eo,tst;
 	double arg;
@@ -599,9 +600,9 @@ static void solarpos_v0(int year,int month,int day,int hour,double minute,double
 	den = cos(eclong);
 	ra  = atan(num/den);                         /* Right ascension in radians */
 	if( den < 0.0 )
-		ra = ra + pi;
+		ra = ra + M_PI;
 	else if( num < 0.0 )
-		ra = ra + 2.0*pi;
+		ra = ra + 2.0*M_PI;
 
 	dec = asin( sin(oblqec)*sin(eclong) );       /* Declination in radians */
 
@@ -617,24 +618,24 @@ static void solarpos_v0(int year,int month,int day,int hour,double minute,double
 	lmst = lmst*15.0*DTOR;         /* Local mean sidereal time in radians */
 
 	ha = lmst - ra;
-	if( ha < -pi )
-		ha = ha + 2*pi;
-	else if( ha > pi )
-		ha = ha - 2*pi;             /* Hour angle in radians between -pi and pi */
+	if( ha < -M_PI)
+		ha = ha + 2* M_PI;
+	else if( ha > M_PI)
+		ha = ha - 2* M_PI;             /* Hour angle in radians between -pi and pi */
 
 	lat = lat*DTOR;                /* Change latitude to radians */
 
 	arg = sin(dec)*sin(lat) + cos(dec)*cos(lat)*cos(ha);  /* For elevation in radians */
 	if( arg > 1.0 )
-		elv = pi/2.0;
+		elv = M_PI /2.0;
 	else if( arg < -1.0 )
-		elv = -pi/2.0;
+		elv = -M_PI /2.0;
 	else
 		elv = asin(arg);
 
 	if( cos(elv) == 0.0 )
 		{
-		azm = pi;         /* Assign azimuth = 180 deg if elv = 90 or -90 */
+		azm = M_PI;         /* Assign azimuth = 180 deg if elv = 90 or -90 */
 		}
 	else
 		{                 /* For solar azimuth in radians per Iqbal */
@@ -642,14 +643,14 @@ static void solarpos_v0(int year,int month,int day,int hour,double minute,double
 		if( arg > 1.0 )
 			azm = 0.0;              /* Azimuth(radians)*/
 		else if( arg < -1.0 )
-			azm = pi;
+			azm = M_PI;
 		else
 			azm = acos(arg);
 
-		if( ( ha <= 0.0 && ha >= -pi) || ha >= pi )
-			azm = pi - azm;
+		if( ( ha <= 0.0 && ha >= -M_PI) || ha >= M_PI)
+			azm = M_PI - azm;
 		else
-			azm = pi + azm;
+			azm = M_PI + azm;
 		}
 
 	elv = elv/DTOR;          /* Change to degrees for atmospheric correction */
@@ -672,7 +673,7 @@ static void solarpos_v0(int year,int month,int day,int hour,double minute,double
 	if( arg >= 1.0 )
 		ws = 0.0;                         /* No sunrise, continuous nights */
 	else if( arg <= -1.0 )
-		ws = pi;                          /* No sunset, continuous days */
+		ws = M_PI;                          /* No sunset, continuous days */
 	else
 		ws = acos(arg);                   /* Sunrise hour angle in radians */
 
@@ -686,7 +687,7 @@ static void solarpos_v0(int year,int month,int day,int hour,double minute,double
 	tst = hour + minute/60.0 + (lng/15.0 - tz) + E;  /* True solar time (hr) */
 
 	sunn[0] = azm;                        /* Variables returned in array sunn[] */
-	sunn[1] = 0.5*pi - elv;               /*  Zenith */
+	sunn[1] = 0.5*M_PI - elv;               /*  Zenith */
 	sunn[2] = elv;
 	sunn[3] = dec;
 	sunn[4] = sunrise;
@@ -727,7 +728,7 @@ static void incident2(int mode,double tilt,double sazm,double rlim,double zen,do
 	counter clockwise the angle is negative. Range is -180 to +180 degrees.
 	When xsazm = azm : rot = 0, tilt = xtilt, and sazm = xsazm = azm  */
 
-	double arg,pi=3.1415927,DTOR=0.017453293,inc=0,xsazm,xtilt,rot;
+	double arg,inc=0,xsazm,xtilt,rot;
 
 	switch ( mode )
 		{
@@ -736,7 +737,7 @@ static void incident2(int mode,double tilt,double sazm,double rlim,double zen,do
 			sazm = sazm*DTOR;
 			arg = sin(zen)*cos(azm-sazm)*sin(tilt) + cos(zen)*cos(tilt);
 			if( arg < -1.0 )
-				inc = pi;
+				inc = M_PI;
 			else if( arg > 1.0  )
 				inc = 0.0;
 			else
@@ -749,19 +750,19 @@ static void incident2(int mode,double tilt,double sazm,double rlim,double zen,do
 									/* Find rotation angle of axis for peak tracking */
 			if( fabs( cos(xtilt) ) < 0.001745 )    /* 89.9 to 90.1 degrees */
 				{          /* For vertical axis only */
-				if( xsazm <= pi )
+				if( xsazm <= M_PI)
 					{
-					if( azm <= xsazm + pi )
+					if( azm <= xsazm + M_PI)
 						rot = azm - xsazm;
 					else
-						rot = azm - xsazm - 2.0*pi;
+						rot = azm - xsazm - 2.0*M_PI;
 					}
 				else        /* For xsazm > pi */
 					{
-					if( azm >= xsazm - pi )
+					if( azm >= xsazm - M_PI)
 						rot = azm - xsazm;
 					else
-						rot = azm - xsazm + 2.0*pi;
+						rot = azm - xsazm + 2.0*M_PI;
 					}
 				}
 			else          /* For other than vertical axis */
@@ -769,36 +770,36 @@ static void incident2(int mode,double tilt,double sazm,double rlim,double zen,do
 				arg = sin(zen)*sin(azm-xsazm)/
 						( sin(zen)*cos(azm-xsazm)*sin(xtilt) + cos(zen)*cos(xtilt) );
 				if( arg < -99999.9 )
-					rot = -pi/2.0;
+					rot = -M_PI /2.0;
 				else if( arg > 99999.9 )
-					rot = pi/2.0;
+					rot = M_PI /2.0;
 				else
 					rot = atan(arg);
 								/* Put rot in II or III quadrant if needed */
-				if( xsazm <= pi )
+				if( xsazm <= M_PI)
 					{
-					if( azm > xsazm && azm <= xsazm + pi )
+					if( azm > xsazm && azm <= xsazm + M_PI)
 						{     /* Ensure positive rotation */
 						if( rot < 0.0 )
-							rot = pi + rot;   /* Put in II quadrant: 90 to 180 deg */
+							rot = M_PI + rot;   /* Put in II quadrant: 90 to 180 deg */
 						}
 					else
 						{     /* Ensure negative rotation  */
 						if( rot > 0.0 )
-							rot = rot - pi;   /* Put in III quadrant: -90 to -180 deg */
+							rot = rot - M_PI;   /* Put in III quadrant: -90 to -180 deg */
 						}
 					}
 				else        /* For xsazm > pi */
 					{
-					if( azm < xsazm && azm >= xsazm - pi )
+					if( azm < xsazm && azm >= xsazm - M_PI)
 						{     /* Ensure negative rotation  */
 						if( rot > 0.0 )
-							rot = rot - pi;   /* Put in III quadrant: -90 to -180 deg */
+							rot = rot - M_PI;   /* Put in III quadrant: -90 to -180 deg */
 						}
 					else
 						{     /* Ensure positive rotation */
 						if( rot < 0.0 )
-							rot = pi + rot;   /* Put in II quadrant: 90 to 180 deg */
+							rot = M_PI + rot;   /* Put in II quadrant: 90 to 180 deg */
 						}
 					}
 				}
@@ -812,37 +813,37 @@ static void incident2(int mode,double tilt,double sazm,double rlim,double zen,do
 									/* Find tilt angle for the tracking surface */
 			arg = cos(xtilt)*cos(rot);
 			if( arg < -1.0 )
-				tilt = pi;
+				tilt = M_PI;
 			else if( arg > 1.0  )
 				tilt = 0.0;
 			else
 				tilt = acos(arg);
 									/* Find surface azimuth for the tracking surface */
 			if( tilt == 0.0 )
-				sazm = pi;     /* Assign any value if tilt is zero */
+				sazm = M_PI;     /* Assign any value if tilt is zero */
 			else
 				{
 				arg = sin(rot)/sin(tilt);
 				if( arg < -1.0 )
-					sazm = 1.5*pi + xsazm;
+					sazm = 1.5*M_PI + xsazm;
 				else if( arg > 1.0  )
-					sazm = 0.5*pi + xsazm;
-				else if( rot < -0.5*pi )
-					sazm = xsazm - pi - asin(arg);
-				else if( rot > 0.5*pi )
-					sazm = xsazm + pi - asin(arg);
+					sazm = 0.5*M_PI + xsazm;
+				else if( rot < -0.5*M_PI)
+					sazm = xsazm - M_PI - asin(arg);
+				else if( rot > 0.5*M_PI)
+					sazm = xsazm + M_PI - asin(arg);
 				else
 					sazm = asin(arg) + xsazm;
-				if( sazm > 2.0*pi )       /* Keep between 0 and 2pi */
-					sazm = sazm - 2.0*pi;
+				if( sazm > 2.0*M_PI)       /* Keep between 0 and 2pi */
+					sazm = sazm - 2.0*M_PI;
 				else if( sazm < 0.0 )
-					sazm = sazm + 2.0*pi;
+					sazm = sazm + 2.0*M_PI;
 				}
 		/* printf("zen=%6.1f azm-sazm=%6.1f tilt=%6.1f arg=%7.4f<BR>",zen/DTOR,(azm-sazm)/DTOR,tilt/DTOR,arg); */
 									/* Find incident angle */
 			arg = sin(zen)*cos(azm-sazm)*sin(tilt) + cos(zen)*cos(tilt);
 			if( arg < -1.0 )
-				inc = pi;
+				inc = M_PI;
 			else if( arg > 1.0  )
 				inc = 0.0;
 			else
@@ -898,7 +899,7 @@ static double perez( double dn,double df,double alb,double inc,double tilt,doubl
 	double F23R[8] = { -0.0220216, -0.0288748, -0.0260542, -0.0139754,
 							 0.0012448, 0.0558651, 0.1310694, 0.2506212 };
 	double EPSBINS[7] = { 1.065, 1.23, 1.5, 1.95, 2.8, 4.5, 6.2 };
-	double B2=0.000005534,DTOR=0.01745329,EPS,T,D,DELTA,A,B,C,ZH,F1,F2,
+	double B2=0.000005534,EPS,T,D,DELTA,A,B,C,ZH,F1,F2,
 			COSINC,poa,x;
 	double CZ,ZC,ZENITH,AIRMASS;
 	int i;
@@ -1025,7 +1026,7 @@ public:
 		int cur_hour;
 
 		double lat,lng,tz,minute,sunn[8],angle[3],sunrise,sunset;
-		double dn[24],df[24],alb,DTOR=0.01745329;
+		double dn[24], df[24], alb;
 		double poa[24],ambt[24],wind[24],pvt[24],dc[24],ac[24],tpoa[24];
 		double reftem,refpwr,pwrdgr,tmloss,pcrate,efffp;
 		double rlim = 45.0;     // mod. 2007-04-20 (see Mods list)

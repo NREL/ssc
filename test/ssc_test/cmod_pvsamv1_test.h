@@ -4,8 +4,8 @@
 #ifndef _CMOD_PVSAMV1_TEST_H_
 #define _CMOD_PVSAMV1_TEST_H_
 
-#include "vartab.h"
-#include "common.h"
+#include "../ssc/vartab.h"
+#include "../ssc/common.h"
 #include "../input_cases/pvsamv1_cases.h"
 
 /**

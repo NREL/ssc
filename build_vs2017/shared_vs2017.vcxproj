@@ -32,6 +32,8 @@
     <ClInclude Include="..\shared\lib_financial.h" />
     <ClInclude Include="..\shared\lib_geothermal.h" />
     <ClInclude Include="..\shared\lib_iec61853.h" />
+    <ClInclude Include="..\shared\lib_pv_incidence_modifier.h" />
+    <ClInclude Include="..\shared\lib_pv_io_manager.h" />
     <ClInclude Include="..\shared\lib_irradproc.h" />
     <ClInclude Include="..\shared\lib_miniz.h" />
     <ClInclude Include="..\shared\lib_physics.h" />
@@ -72,6 +74,8 @@
     <ClCompile Include="..\shared\lib_pvmodel.cpp" />
     <ClCompile Include="..\shared\lib_pvshade.cpp" />
     <ClCompile Include="..\shared\lib_pvwatts.cpp" />
+    <ClCompile Include="..\shared\lib_pv_incidence_modifier.cpp" />
+    <ClCompile Include="..\shared\lib_pv_io_manager.cpp" />
     <ClCompile Include="..\shared\lib_pv_shade_loss_mpp.cpp" />
     <ClCompile Include="..\shared\lib_sandia.cpp" />
     <ClCompile Include="..\shared\lib_shared_inverter.cpp" />
@@ -90,7 +94,7 @@
     <ProjectGuid>{794A2685-B70E-4504-9402-AC376D4EB459}</ProjectGuid>
     <RootNamespace>relib</RootNamespace>
     <ProjectName>shared</ProjectName>
-    <WindowsTargetPlatformVersion>10.0.16299.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -160,6 +164,7 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>_MBCS;%(PreprocessorDefinitions); _CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <AdditionalIncludeDirectories>$(SolutionDir)\..\ssc</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -170,6 +175,7 @@
       <WarningLevel>Level4</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>_MBCS;%(PreprocessorDefinitions); _CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(SolutionDir)\..\ssc</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -182,6 +188,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>_MBCS;%(PreprocessorDefinitions); _CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(SolutionDir)\..\ssc</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -196,6 +203,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>_MBCS;%(PreprocessorDefinitions); _CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(SolutionDir)\..\ssc</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>

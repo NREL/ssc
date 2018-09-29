@@ -158,7 +158,62 @@ const char* SCAInfoArray = "1, 1,  "
                            "1, 1,  "
                            "1, 1";
 const char* SCADefocusArray = "8, 7, 6, 5, 4, 3, 2, 1";
+
+const char* K_cpnt = "0.89999997615814209, 0, 0.18999999761581421, 0, 0.89999997615814209, -1, -1, -1, -1, -1, -1,  "
+                     "0, 0.60000002384185791, 0.05000000074505806, 0, 0.60000002384185791, 0, 0.60000002384185791, 0, 0.41999998688697815, 0, 0.15000000596046448,  "
+                     "0.05000000074505806, 0, 0.41999998688697815, 0, 0.60000002384185791, 0, 0.60000002384185791, 0, 0.41999998688697815, 0, 0.15000000596046448,  "
+                     "0.05000000074505806, 0, 0.41999998688697815, 0, 0.60000002384185791, 0, 0.60000002384185791, 0, 0.41999998688697815, 0, 0.15000000596046448,  "
+                     "0.05000000074505806, 0, 0.41999998688697815, 0, 0.60000002384185791, 0, 0.60000002384185791, 0, 0.41999998688697815, 0, 0.15000000596046448,  "
+                     "0.05000000074505806, 0, 0.41999998688697815, 0, 0.60000002384185791, 0, 0.60000002384185791, 0, 0.41999998688697815, 0, 0.15000000596046448,  "
+                     "0.05000000074505806, 0, 0.41999998688697815, 0, 0.60000002384185791, 0, 0.60000002384185791, 0, 0.41999998688697815, 0, 0.15000000596046448,  "
+                     "0.05000000074505806, 0, 0.41999998688697815, 0, 0.60000002384185791, 0, 0.60000002384185791, 0, 0.41999998688697815, 0, 0.15000000596046448,  "
+                     "0.05000000074505806, 0, 0.41999998688697815, 0, 0.60000002384185791, 0, 0.60000002384185791, 0, 0.41999998688697815, 0, 0.15000000596046448,  "
+                     "0.05000000074505806, 0, 0.41999998688697815, 0, 0.60000002384185791, 0, 0.60000002384185791, 0, 0.15000000596046448, 0.60000002384185791, 0,  "
+                     "0.89999997615814209, 0, 0.18999999761581421, 0, 0.89999997615814209, -1, -1, -1, -1, -1, -1";
+const char* D_cpnt = "0.085000000894069672, 0.063500002026557922, 0.085000000894069672, 0.063500002026557922, 0.085000000894069672, -1, -1, -1, -1, -1, -1,  "
+                     "0.085000000894069672, 0.085000000894069672, 0.085000000894069672, 0.063500002026557922, 0.063500002026557922, 0.063500002026557922, 0.063500002026557922, 0.063500002026557922, 0.063500002026557922, 0.063500002026557922, 0.085000000894069672,  "
+                     "0.085000000894069672, 0.063500002026557922, 0.063500002026557922, 0.063500002026557922, 0.063500002026557922, 0.063500002026557922, 0.063500002026557922, 0.063500002026557922, 0.063500002026557922, 0.063500002026557922, 0.085000000894069672,  "
+                     "0.085000000894069672, 0.063500002026557922, 0.063500002026557922, 0.063500002026557922, 0.063500002026557922, 0.063500002026557922, 0.063500002026557922, 0.063500002026557922, 0.063500002026557922, 0.063500002026557922, 0.085000000894069672,  "
+                     "0.085000000894069672, 0.063500002026557922, 0.063500002026557922, 0.063500002026557922, 0.063500002026557922, 0.063500002026557922, 0.063500002026557922, 0.063500002026557922, 0.063500002026557922, 0.063500002026557922, 0.085000000894069672,  "
+                     "0.085000000894069672, 0.063500002026557922, 0.063500002026557922, 0.063500002026557922, 0.063500002026557922, 0.063500002026557922, 0.063500002026557922, 0.063500002026557922, 0.063500002026557922, 0.063500002026557922, 0.085000000894069672,  "
+                     "0.085000000894069672, 0.063500002026557922, 0.063500002026557922, 0.063500002026557922, 0.063500002026557922, 0.063500002026557922, 0.063500002026557922, 0.063500002026557922, 0.063500002026557922, 0.063500002026557922, 0.085000000894069672,  "
+                     "0.085000000894069672, 0.063500002026557922, 0.063500002026557922, 0.063500002026557922, 0.063500002026557922, 0.063500002026557922, 0.063500002026557922, 0.063500002026557922, 0.063500002026557922, 0.063500002026557922, 0.085000000894069672,  "
+                     "0.085000000894069672, 0.063500002026557922, 0.063500002026557922, 0.063500002026557922, 0.063500002026557922, 0.063500002026557922, 0.063500002026557922, 0.063500002026557922, 0.063500002026557922, 0.063500002026557922, 0.085000000894069672,  "
+                     "0.085000000894069672, 0.063500002026557922, 0.063500002026557922, 0.063500002026557922, 0.063500002026557922, 0.063500002026557922, 0.063500002026557922, 0.063500002026557922, 0.085000000894069672, 0.085000000894069672, 0.085000000894069672,  "
+                     "0.085000000894069672, 0.063500002026557922, 0.085000000894069672, 0.063500002026557922, 0.085000000894069672, -1, -1, -1, -1, -1, -1";
+const char* L_cpnt = "0, 0, 0, 0, 0, -1, -1, -1, -1, -1, -1,  "
+                     "0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0,  "
+                     "0, 1, 0, 1, 0, 0, 0, 1, 0, 1, 0,  "
+                     "0, 1, 0, 1, 0, 0, 0, 1, 0, 1, 0,  "
+                     "0, 1, 0, 1, 0, 0, 0, 1, 0, 1, 0,  "
+                     "0, 1, 0, 1, 0, 0, 0, 1, 0, 1, 0,  "
+                     "0, 1, 0, 1, 0, 0, 0, 1, 0, 1, 0,  "
+                     "0, 1, 0, 1, 0, 0, 0, 1, 0, 1, 0,  "
+                     "0, 1, 0, 1, 0, 0, 0, 1, 0, 1, 0,  "
+                     "0, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0,  "
+                     "0, 0, 0, 0, 0, -1, -1, -1, -1, -1, -1";
+const char* Type_cpnt = "0, 1, 0, 1, 0, -1, -1, -1, -1, -1, -1,  "
+                        "1, 0, 0, 2, 0, 1, 0, 2, 0, 2, 0,  "
+                        "0, 2, 0, 2, 0, 1, 0, 2, 0, 2, 0,  "
+                        "0, 2, 0, 2, 0, 1, 0, 2, 0, 2, 0,  "
+                        "0, 2, 0, 2, 0, 1, 0, 2, 0, 2, 0,  "
+                        "0, 2, 0, 2, 0, 1, 0, 2, 0, 2, 0,  "
+                        "0, 2, 0, 2, 0, 1, 0, 2, 0, 2, 0,  "
+                        "0, 2, 0, 2, 0, 1, 0, 2, 0, 2, 0,  "
+                        "0, 2, 0, 2, 0, 1, 0, 2, 0, 2, 0,  "
+                        "0, 2, 0, 2, 0, 1, 0, 2, 0, 0, 1,  "
+                        "0, 1, 0, 1, 0, -1, -1, -1, -1, -1, -1";
+const char* sf_rnr_diams = "-1";
+const char* sf_rnr_wallthicks = "-1";
+const char* sf_rnr_lengths = "-1";
+const char* sf_hdr_diams = "-1";
+const char* sf_hdr_wallthicks = "-1";
+const char* sf_hdr_lengths = "-1";
 const char* bop_array = "0, 1, 0.4830000102519989, 0.51700001955032349, 0";
+const char* k_tes_loss_coeffs = "0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0";
+const char* sgs_diams = "-1";
+const char* sgs_wallthicks = "-1";
+const char* sgs_lengths = "0, 90, 100, 120, 0, 0, 0, 0, 80, 120, 80";
 const char* aux_array = "0.02273000031709671, 1, 0.4830000102519989, 0.51700001955032349, 0";
 const char* tslogic_a = "0, 0, 0, 0, 0, 0, 0, 0, 0";
 const char* tslogic_b = "0, 0, 0, 0, 0, 0, 0, 0, 0";
@@ -304,8 +359,20 @@ TestInfo physTroughPPASingleDefaultInfo[] = {
 	{"Fluid",                               NUM,                "21"                    },
 	{"T_fp",                                NUM,                "150"                   },
 	{"I_bn_des",                            NUM,                "950"                   },
-	{"V_hdr_max",                           NUM,                "3"                     },
-	{"V_hdr_min",                           NUM,                "2"                     },
+    {"calc_design_pipe_vals",               NUM,                "1"                     },
+	{"V_hdr_cold_max",                      NUM,                "3"                     },
+	{"V_hdr_cold_min",                      NUM,                "2"                     },
+    {"V_hdr_hot_max",                       NUM,                "3"                     },
+    {"V_hdr_hot_min",                       NUM,                "2"                     },
+    {"N_max_hdr_diams",                     NUM,                "10"                    },
+    {"L_rnr_pb",                            NUM,                "25"                    },
+    {"L_rnr_per_xpan",                      NUM,                "70"                    },
+    {"L_xpan_hdr",                          NUM,                "20"                    },
+    {"L_xpan_rnr",                          NUM,                "20"                    },
+    {"Min_rnr_xpans",                       NUM,                "1"                     },
+    {"northsouth_field_sep",                NUM,                "20"                    },
+    {"N_hdr_per_xpan",                      NUM,                "2"                     },
+    {"offset_xpan_hdr",                     NUM,                "1"                     },
 	{"Pipe_hl_coef",                        NUM,                "0.44999998807907104"   },
 	{"SCA_drives_elec",                     NUM,                "125"                   },
 	{"fthrok",                              NUM,                "1"                     },
@@ -370,6 +437,17 @@ TestInfo physTroughPPASingleDefaultInfo[] = {
 	{"Design_loss",                         MAT,                Design_loss,            4,4},
 	{"SCAInfoArray",                        MAT,                SCAInfoArray,           8,2},
 	{"SCADefocusArray",                     ARR,                SCADefocusArray,        8},
+    {"K_cpnt",                              MAT,                K_cpnt,                 11,11},
+    {"D_cpnt",                              MAT,                D_cpnt,                 11,11},
+    {"L_cpnt",                              MAT,                L_cpnt,                 11,11},
+    {"Type_cpnt",                           MAT,                Type_cpnt,              11,11},
+    {"custom_sf_pipe_sizes",                NUM,                "0"                     },
+    {"sf_rnr_diams",                        ARR,                sf_rnr_diams,           1},
+    {"sf_rnr_wallthicks",                   ARR,                sf_rnr_wallthicks,      1},
+    {"sf_rnr_lengths",                      ARR,                sf_rnr_lengths,         1},
+    {"sf_hdr_diams",                        ARR,                sf_hdr_diams,           1},
+    {"sf_hdr_wallthicks",                   ARR,                sf_hdr_wallthicks,      1},
+    {"sf_hdr_lengths",                      ARR,                sf_hdr_lengths,         1},
 	{"field_fl_props",                      MAT,                "0",                    1,1},
 	{"store_fl_props",                      MAT,                "1",                    1,1},
 	{"store_fluid",                         NUM,                "18"                    },
@@ -390,12 +468,23 @@ TestInfo physTroughPPASingleDefaultInfo[] = {
 	{"cold_tank_Thtr",                      NUM,                "250"                   },
 	{"hot_tank_Thtr",                       NUM,                "365"                   },
 	{"tank_max_heat",                       NUM,                "25"                    },
+    {"tanks_in_parallel",                   NUM,                "1"                     },
+    {"has_hot_tank_bypass",                 NUM,                "0"                     },
+    {"T_tank_hot_inlet_min",                NUM,                "400"                   },
 	{"q_pb_design",                         NUM,                "311.79776000976563"    },
 	{"W_pb_design",                         NUM,                "111"                   },
 	{"cycle_max_frac",                      NUM,                "1.0499999523162842"    },
 	{"cycle_cutoff_frac",                   NUM,                "0.20000000298023224"   },
 	{"pb_pump_coef",                        NUM,                "0.55000001192092896"   },
 	{"tes_pump_coef",                       NUM,                "0.15000000596046448"   },
+    {"V_tes_des",                           NUM,                "1.85"                  },
+    {"custom_tes_p_loss",                   NUM,                "0"                     },
+    {"k_tes_loss_coeffs",                   ARR,                k_tes_loss_coeffs,      11},
+    {"custom_sgs_pipe_sizes",               NUM,                "0"                     },
+    {"sgs_diams",                           ARR,                sgs_diams,              1},
+    {"sgs_wallthicks",                      ARR,                sgs_wallthicks,         1},
+    {"sgs_lengths",                         ARR,                sgs_lengths,            11},
+    {"DP_SGS",                              NUM,                "0",                    },
 	{"pb_fixed_par",                        NUM,                "0.0054999999701976776" },
 	{"bop_array",                           ARR,                bop_array,              5},
 	{"aux_array",                           ARR,                aux_array,              5},
@@ -668,21 +757,21 @@ TestInfo physTroughPPASingleDefaultInfo[] = {
 // test_types: equal (EQ), near(approx equal) (NR), greater than (GT), less than (LT), bool (TF), cmod error (ERR)
 TestResult physTroughPPASingleDefaultResult[] = {
 /*  SSC Var Name                            Test Type           Test Result             Error Bound % */
-    { "annual_energy",                      NR,                 354225632.,             0.1 },  // Annual Energy [kWh]
+    { "annual_energy",                      NR,                 355030080.,             0.1 },  // Annual Energy [kWh]
     { "annual_fuel_usage",                  NR,                 0.,                     0.1 },  // Annual fuel usage [kWht]
-    { "capacity_factor",                    NR,                 40.4772,                0.1 },  // Capacity factor [%]
-    { "annual_q_dump",                      NR,                 48108.,                 0.1 },  // Dumped thermal energy [MWht]
-    { "annual_W_cycle_gross",               NR,                 405422.,                0.1 },  // Electrical source - Power cycle gross output [MWhe]
-    { "kwh_per_kw",                         NR,                 3545.8,                 0.1 },  // First year kWh/kW [kWh/kW]
-    { "conversion_factor",                  NR,                 91.0154,                0.1 },  // Gross to Net Conversion Factor [%]
+    { "capacity_factor",                    NR,                 40.5691,                0.1 },  // Capacity factor [%]
+    { "annual_q_dump",                      NR,                 48441.5,                0.1 },  // Dumped thermal energy [MWht]
+    { "annual_W_cycle_gross",               NR,                 405653.,                0.1 },  // Electrical source - Power cycle gross output [MWhe]
+    { "kwh_per_kw",                         NR,                 3553.85,                0.1 },  // First year kWh/kW [kWh/kW]
+    { "conversion_factor",                  NR,                 91.17,                  0.1 },  // Gross to Net Conversion Factor [%]
     { "system_heat_rate",                   NR,                 3.413,                  0.1 },  // System heat rate [MMBtu/MWh]
-    { "annual_q_to_tes",                    NR,                 7441.4,                 0.1 },  // Thermal energy into storage [MWht]
-    { "annual_q_pb",                        NR,                 1.1232e06,              0.1 },  // Thermal energy to the power block [MWht]
-    { "annual_q_avail",                     NR,                 1.12836e06,             0.1 },  // Thermal power produced by the field [MWht]
-    { "annual_total_water_use",             NR,                 80976.6,                0.1 },  // Total Annual Water Usage: cycle + mirror washing [m3]
-    { "annual_q_abs_tot",                   NR,                 1.1694e06,              0.1 },  // Total absorbed energy [MWht]
+    { "annual_q_to_tes",                    NR,                 7383.12,                0.1 },  // Thermal energy into storage [MWht]
+    { "annual_q_pb",                        NR,                 1.12348e06,             0.1 },  // Thermal energy to the power block [MWht]
+    { "annual_q_avail",                     NR,                 1.12864e06,             0.1 },  // Thermal power produced by the field [MWht]
+    { "annual_total_water_use",             NR,                 80988.9,                0.1 },  // Total Annual Water Usage: cycle + mirror washing [m3]
+    { "annual_q_abs_tot",                   NR,                 1.17421e06,             0.1 },  // Total absorbed energy [MWht]
     { "annual_q_aux",                       NR,                 0.,                     0.1 },  // Total fossil fuel usage by all plant subsystems [MMBTU]
-    { "annual_q_inc_sf_tot",                NR,                 2.50421e06,             0.1 }   // Total power incident on the field [MWht]
+    { "annual_q_inc_sf_tot",                NR,                 2.50511e06,             0.1 }   // Total power incident on the field [MWht]
 };
 
 testDeclaration defaultTest1(physTroughTesting, "default", &physTroughPPASingleDefaultInfo[0], 383, &physTroughPPASingleDefaultResult[0], 15);

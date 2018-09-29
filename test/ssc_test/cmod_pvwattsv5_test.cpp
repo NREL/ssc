@@ -1,8 +1,8 @@
 #include <gtest/gtest.h>
 
-#include "core.h"
-#include "vartab.h"
-#include "common.h"
+#include "../ssc/core.h"
+#include "../ssc/vartab.h"
+#include "../ssc/common.h"
 #include "cmod_pvwattsv5_test.h"
 
 ///Default PVWattsV5, but with TMY2 instead of TMY3

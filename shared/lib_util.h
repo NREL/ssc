@@ -79,15 +79,33 @@ Define _DEBUG if compile with debugging
 
 #define RCINDEX(arr, ncols, r, c) arr[ncols*r+c]
 
-
 #ifndef M_PI
 #define M_PI 3.14159265358979323846264338327
 #endif
-#define sind(x) sin( (M_PI/180.0)*(x) )
-#define cosd(x) cos( (M_PI/180.0)*(x) )
+
+#ifndef DTOR
+#define DTOR 0.017453292519943295769236907684886
+#endif
+
+#ifndef RTOD
+#define RTOD 57.295779513082320876798154814105
+#endif
+
+
+#define MAX(a,b) ( (a)>(b) ? (a) : (b) )
+#define MIN(a,b) ( (a)<(b) ? (a) : (b) )
+
+#define sind(x) sin( DTOR*(x) )
+#define cosd(x) cos( DTOR*(x) )
+#define tand(x) tan( DTOR*(x) )
+#define asind(x) (RTOD *asin(x))
+#define acosd(x) (RTOD *acos(x))
+#define atand(x) (RTOD*atan(x))
 
 namespace util
 {
+	const double percent_to_fraction = 0.01;
+	const double fraction_to_percent = 100;
 	const double watt_to_kilowatt = 1. / 1000;
 	const double kilowatt_to_watt = 1000;
 	const double hour_to_min = 60.;
@@ -743,7 +761,7 @@ namespace util
 	#endif
 			return t_array[i];
 		}
-				
+		
 		inline size_t nrows() const
 		{
 			return n_rows;
