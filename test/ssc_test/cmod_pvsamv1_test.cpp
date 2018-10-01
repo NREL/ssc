@@ -513,13 +513,13 @@ TEST_F(CMPvsamv1PowerIntegration, NoFinancialModelMultipleMPPT)
 	pairs["inv_num_mppt"] = 2;
 	pairs["subarray1_nstrings"] = 1;
 	pairs["subarray1_modules_per_string"] = 7;
-	pairs["subarray1_inv_mppt"] = 1;
+	pairs["subarray1_mppt_input"] = 1;
 	pairs["subarray1_tilt"] = 20;
 	pairs["subarray2_enable"] = 1;
 	pairs["subarray2_nstrings"] = 1;
 	pairs["subarray2_modules_per_string"] = 6;
 	pairs["subarray2_tilt"] = 0;
-	pairs["subarray2_inv_mppt"] = 2;
+	pairs["subarray2_mppt_input"] = 2;
 
 	int pvsam_errors = modify_ssc_data_and_run_module(data, "pvsamv1", pairs);
 	EXPECT_FALSE(pvsam_errors);
