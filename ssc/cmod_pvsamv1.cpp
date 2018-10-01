@@ -229,7 +229,7 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray4_nmody",                             "Sub-array 4 no. of modules along side for self-shading",  "",       "",                              "pvsamv1",              "subarray4_shade_mode>0", "INTEGER,POSITIVE",              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray4_backtrack",                         "Sub-array 4 Backtracking enabled",                        "",       "0=no backtracking,1=backtrack", "pvsamv1",              "subarray4_track_mode=1",   "BOOLEAN",                       "" },
 
-	{ SSC_INPUT,        SSC_NUMBER,      "module_model",                                "Photovoltaic module model specifier",                     "",       "0=spe,1=cec,2=6par_user,3=snl,4=sd11-iec61853", "pvsamv1",              "*",                        "INTEGER,MIN=0,MAX=4",           "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "module_model",                                "Photovoltaic module model specifier",                     "",       "0=spe,1=cec,2=6par_user,3=snl,4=sd11-iec61853,5=PVYield", "pvsamv1",              "*",                        "INTEGER,MIN=0,MAX=5",           "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "module_aspect_ratio",                         "Module aspect ratio",                                     "",       "",                              "pvsamv1",              "?=1.7",                    "",                              "POSITIVE" },
 	{ SSC_INPUT,        SSC_NUMBER,      "spe_area",                                    "Module area",                                             "m2",     "",                              "pvsamv1",              "module_model=0",           "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "spe_rad0",                                    "Irradiance level 0",                                      "W/m2",   "",                              "pvsamv1",              "module_model=0",           "",                              "" },
@@ -382,9 +382,62 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "sd11par_c1",                                  "Rsh fit parameter 1",                                     "",       "",                                                                  "pvsamv1",       "module_model=4",                           "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "sd11par_c2",                                  "Rsh fit parameter 2",                                     "",       "",                                                                  "pvsamv1",       "module_model=4",                           "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "sd11par_c3",                                  "Rsh fit parameter 3",                                     "",       "",                                                                  "pvsamv1",       "module_model=4",                           "",                              "" },
+	
+
+	{ SSC_INPUT,        SSC_NUMBER,      "mlm_N_series",                                "Number of cells in series",                               "-",       "",                                                                  "pvsamv1",       "module_model=5",                           "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "mlm_N_parallel",                              "Number of cells in parallel",						       "-",       "",                                                                  "pvsamv1",       "module_model=5",                           "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "mlm_N_diodes",                                "Number of diodes",									       "-",       "",                                                                  "pvsamv1",       "module_model=5",                           "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "mlm_Width",                                   "Module width (short side)",						       "m",       "",                                                                  "pvsamv1",       "module_model=5",                           "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "mlm_Length",                                  "Module length (long side)",							   "m",       "",                                                                  "pvsamv1",       "module_model=5",                           "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "mlm_V_mp_ref",                                "V_mp at STC",                                             "V",       "",                                                                  "pvsamv1",       "module_model=5",                           "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "mlm_I_mp_ref",                                "I_mp at STC",                                             "A",       "",                                                                  "pvsamv1",       "module_model=5",                           "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "mlm_V_oc_ref",                                "V_oc at STC",                                             "V",       "",                                                                  "pvsamv1",       "module_model=5",                           "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "mlm_I_sc_ref",                                "I_sc at STC",                                             "A",       "",                                                                  "pvsamv1",       "module_model=5",                           "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "mlm_S_ref",                                   "Reference irradiance (Typically 1000W/m²)",               "W/m²",    "",                                                                  "pvsamv1",       "module_model=5",                           "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "mlm_T_ref",                                   "Reference temperature (Typically 25°C)",                  "°C",      "",                                                                  "pvsamv1",       "module_model=5",                           "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "mlm_R_shref",                                 "Reference shunt resistance",                              "V/A",     "",                                                                  "pvsamv1",       "module_model=5",                           "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "mlm_R_sh0",                                   "Rsh,0",                                                   "V/A",     "",                                                                  "pvsamv1",       "module_model=5",                           "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "mlm_R_shexp",                                 "Rsh exponential coefficient",                             "-",       "",                                                                  "pvsamv1",       "module_model=5",                           "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "mlm_R_s",                                     "Series resistance",                                       "V/A",     "",                                                                  "pvsamv1",       "module_model=5",                           "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "mlm_alpha_isc",                               "Temperature coefficient for I_sc",                        "A/K",     "",                                                                  "pvsamv1",       "module_model=5",                           "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "mlm_beta_voc_spec",                           "Temperature coefficient for V_oc",                        "V/K",     "",                                                                  "pvsamv1",       "module_model=5",                           "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "mlm_E_g",                                     "Reference bandgap energy",                                "eV",      "",                                                                  "pvsamv1",       "module_model=5",                           "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "mlm_n_0",                                     "Gamma",                                                   "-",       "",                                                                  "pvsamv1",       "module_model=5",                           "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "mlm_mu_n",                                    "Temperature coefficient of gamma",                        "1/K",     "",                                                                  "pvsamv1",       "module_model=5",                           "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "mlm_D2MuTau",                                 "Coefficient for recombination losses",                    "V",       "",                                                                  "pvsamv1",       "module_model=5",                           "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "mlm_T_mode",                                  "Cell temperature model mode",                             "-",       "1: NOCT",                                                           "pvsamv1",       "module_model=5",                           "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "mlm_T_c_no_tnoct",                            "NOCT cell temperature",                                   "°C",      "",                                                                  "pvsamv1",       "module_model=5",                           "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "mlm_T_c_no_mounting",                         "NOCT Array mounting height",                              "-",       "0=one story,1=two story",                                           "pvsamv1",       "module_model=5",                           "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "mlm_T_c_no_standoff",                         "NOCT standoff mode",                                      "-",       "0=bipv,1=>3.5in,2=2.5-3.5in,3=1.5-2.5in,4=0.5-1.5in,5=<0.5in,6=ground/rack",  "pvsamv1",       "module_model=5",                           "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "mlm_T_c_fa_alpha",                            "Extended Faiman model absorptivity",                      "-",       "",                                                                  "pvsamv1",       "module_model=5",                           "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "mlm_T_c_fa_U0",                               "Extended Faiman model U_0",                               "W/m²K",   "",                                                                  "pvsamv1",       "module_model=5",                           "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "mlm_T_c_fa_U1",                               "Extended Faiman model U_1",                               "W/m³sK",  "",                                                                  "pvsamv1",       "module_model=5",                           "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "mlm_AM_mode",                                 "Air-mass modifier mode",                                  "-",       "1: Do not consider AM effects, 2: Use Sandia polynomial [corr=f(AM)], 3: Use standard coefficients from DeSoto model [corr=f(AM)], 4: Use First Solar polynomial [corr=f(AM, p_wat)]",                                                                  "pvsamv1",       "module_model=5",                           "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "mlm_AM_c_sa0",                                "Coefficient 0 for Sandia Air Mass Modifier",              "-",       "",                                                                  "pvsamv1",       "module_model=5",                           "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "mlm_AM_c_sa1",                                "Coefficient 1 for Sandia Air Mass Modifier",              "-",       "",                                                                  "pvsamv1",       "module_model=5",                           "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "mlm_AM_c_sa2",                                "Coefficient 2 for Sandia Air Mass Modifier",              "-",       "",                                                                  "pvsamv1",       "module_model=5",                           "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "mlm_AM_c_sa3",                                "Coefficient 3 for Sandia Air Mass Modifier",              "-",       "",                                                                  "pvsamv1",       "module_model=5",                           "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "mlm_AM_c_sa4",                                "Coefficient 4 for Sandia Air Mass Modifier",              "-",       "",                                                                  "pvsamv1",       "module_model=5",                           "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "mlm_AM_c_lp0",                                "Coefficient 0 for Lee/Panchula Air Mass Modifier",        "-",       "",                                                                  "pvsamv1",       "module_model=5",                           "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "mlm_AM_c_lp1",                                "Coefficient 1 for Lee/Panchula Air Mass Modifier",        "-",       "",                                                                  "pvsamv1",       "module_model=5",                           "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "mlm_AM_c_lp2",                                "Coefficient 2 for Lee/Panchula Air Mass Modifier",        "-",       "",                                                                  "pvsamv1",       "module_model=5",                           "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "mlm_AM_c_lp3",                                "Coefficient 3 for Lee/Panchula Air Mass Modifier",        "-",       "",                                                                  "pvsamv1",       "module_model=5",                           "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "mlm_AM_c_lp4",                                "Coefficient 4 for Lee/Panchula Air Mass Modifier",        "-",       "",                                                                  "pvsamv1",       "module_model=5",                           "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "mlm_AM_c_lp5",                                "Coefficient 5 for Lee/Panchula Air Mass Modifier",        "-",       "",                                                                  "pvsamv1",       "module_model=5",                           "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "mlm_IAM_mode",                                "Incidence Angle Modifier mode",                           "-",       "1: Use ASHRAE formula, 2: Use Sandia polynomial, 3: Use cubic spline with user-supplied data",                                                                  "pvsamv1",       "module_model=5",                           "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "mlm_IAM_c_as",                                "ASHRAE incidence modifier coefficient b_0",               "-",       "",                                                                  "pvsamv1",       "module_model=5",                           "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "mlm_IAM_c_sa0",                               "Sandia IAM coefficient 0",                                "-",       "",                                                                  "pvsamv1",       "module_model=5",                           "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "mlm_IAM_c_sa1",                               "Sandia IAM coefficient 1",                                "-",       "",                                                                  "pvsamv1",       "module_model=5",                           "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "mlm_IAM_c_sa2",                               "Sandia IAM coefficient 2",                                "-",       "",                                                                  "pvsamv1",       "module_model=5",                           "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "mlm_IAM_c_sa3",                               "Sandia IAM coefficient 3",                                "-",       "",                                                                  "pvsamv1",       "module_model=5",                           "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "mlm_IAM_c_sa4",                               "Sandia IAM coefficient 4",                                "-",       "",                                                                  "pvsamv1",       "module_model=5",                           "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "mlm_IAM_c_sa5",                               "Sandia IAM coefficient 5",                                "-",       "",                                                                  "pvsamv1",       "module_model=5",                           "",                              "" },
+	{ SSC_INPUT,        SSC_ARRAY,       "mlm_IAM_c_cs_incAngle",                       "Spline IAM - Incidence angles",                           "deg",     "",                                                                  "pvsamv1",       "module_model=5",                           "",                              "" },
+	{ SSC_INPUT,        SSC_ARRAY,       "mlm_IAM_c_cs_iamValue",                       "Spline IAM - IAM values",                                 "-",       "",                                                                  "pvsamv1",       "module_model=5",                           "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "mlm_groundRelfectionFraction",                "Ground reflection fraction",                              "-",       "",                                                                  "pvsamv1",       "module_model=5",                           "",                              "" },
 
 // inverter model
-	{ SSC_INPUT,        SSC_NUMBER,      "inverter_model",                              "Inverter model specifier",                                "",        "0=cec,1=datasheet,2=partload,3=coefficientgenerator",   "pvsamv1",   "*",      "INTEGER,MIN=0,MAX=3",           "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "inverter_model",                              "Inverter model specifier",                                "",        "0=cec,1=datasheet,2=partload,3=coefficientgenerator,4=PVYield",        "pvsamv1",               "*",                         "INTEGER,MIN=0,MAX=4",           "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "mppt_low_inverter",                           "Minimum inverter MPPT voltage window",                    "Vdc",     "",                     "pvsamv1",       "?=0",                                 "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "mppt_hi_inverter",                            "Maximum inverter MPPT voltage window",                    "Vdc",     "",                     "pvsamv1",       "?=0",                                 "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "inv_num_mppt",                                "Number of MPPT inputs",                                   "",        "",                     "pvsamv1",       "?=1",                                 "INTEGER,MIN=0,MAX=4",           "" },
@@ -426,6 +479,44 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "inv_pd_vdco",                                 "DC input voltage for the rated AC power rating",          "Vdc",     "",                     "pvsamv1",       "inverter_model=2",                    "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "inv_pd_vdcmax",                               "Maximum DC input operating voltage",                      "Vdc",     "",                     "pvsamv1",       "inverter_model=2",                    "",                              "" },
 
+	{ SSC_INPUT, SSC_NUMBER, "ond_PNomConv", "", "W", "", "pvsamv1", "inverter_model=4", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "ond_PMaxOUT", "", "W", "", "pvsamv1", "inverter_model=4", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "ond_VOutConv", "", "W", "", "pvsamv1", "inverter_model=4", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "ond_VMppMin", "", "V", "", "pvsamv1", "inverter_model=4", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "ond_VMPPMax", "", "V", "", "pvsamv1", "inverter_model=4", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "ond_VAbsMax", "", "V", "", "pvsamv1", "inverter_model=4", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "ond_PSeuil", "", "W", "", "pvsamv1", "inverter_model=4", "", "" },
+	{ SSC_INPUT, SSC_STRING, "ond_ModeOper", "", "-", "", "pvsamv1", "inverter_model=4", "", "" },
+	{ SSC_INPUT, SSC_STRING, "ond_CompPMax", "", "-", "", "pvsamv1", "inverter_model=4", "", "" },
+	{ SSC_INPUT, SSC_STRING, "ond_CompVMax", "", "-", "", "pvsamv1", "inverter_model=4", "", "" },
+	{ SSC_INPUT, SSC_STRING, "ond_ModeAffEnum", "", "-", "", "pvsamv1", "inverter_model=4", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "ond_PNomDC", "", "W", "", "pvsamv1", "inverter_model=4", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "ond_PMaxDC", "", "W", "", "pvsamv1", "inverter_model=4", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "ond_IMaxDC", "", "A", "", "pvsamv1", "inverter_model=4", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "ond_INomDC", "", "A", "", "pvsamv1", "inverter_model=4", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "ond_INomAC", "", "A", "", "pvsamv1", "inverter_model=4", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "ond_IMaxAC", "", "A", "", "pvsamv1", "inverter_model=4", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "ond_TPNom", "", "°C", "", "pvsamv1", "inverter_model=4", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "ond_TPMax", "", "°C", "", "pvsamv1", "inverter_model=4", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "ond_TPLim1", "", "°C", "", "pvsamv1", "inverter_model=4", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "ond_TPLimAbs", "", "°C", "", "pvsamv1", "inverter_model=4", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "ond_PLim1", "", "W", "", "pvsamv1", "inverter_model=4", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "ond_PLimAbs", "", "W", "", "pvsamv1", "inverter_model=4", "", "" },
+	{ SSC_INPUT, SSC_ARRAY,  "ond_VNomEff", "", "V", "", "pvsamv1", "inverter_model=4", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "ond_NbInputs", "", "-", "", "pvsamv1", "inverter_model=4", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "ond_NbMPPT", "", "-", "", "pvsamv1", "inverter_model=4", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "ond_Aux_Loss", "", "W", "", "pvsamv1", "inverter_model=4", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "ond_Night_Loss", "", "W", "", "pvsamv1", "inverter_model=4", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "ond_lossRDc", "", "V/A", "", "pvsamv1", "inverter_model=4", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "ond_lossRAc", "", "A", "", "pvsamv1", "inverter_model=4", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "ond_effCurve_elements", "", "-", "", "pvsamv1", "inverter_model=4", "", "" },
+	{ SSC_INPUT, SSC_MATRIX, "ond_effCurve_Pdc", "", "W", "", "pvsamv1", "inverter_model=4", "", "" },
+	{ SSC_INPUT, SSC_MATRIX, "ond_effCurve_Pac", "", "W", "", "pvsamv1", "inverter_model=4", "", "" },
+	{ SSC_INPUT, SSC_MATRIX, "ond_effCurve_eta", "", "-", "", "pvsamv1", "inverter_model=4", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "ond_Aux_Loss", "", "W", "", "pvsamv1", "inverter_model=4", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "ond_Aux_Loss", "", "W", "", "pvsamv1", "inverter_model=4", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "ond_doAllowOverpower", "", "-", "", "pvsamv1", "inverter_model=4", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "ond_doUseTemperatureLimit", "", "-", "", "pvsamv1", "inverter_model=4", "", "" },
 	{ SSC_INPUT,		SSC_MATRIX,		 "inv_tdc_cec_db",							   "Temperature derate curves for CEC Database",			   "Vdc",	  "",					  "pvsamv1",	   "inverter_model=0",					  "",							   "" },
 	{ SSC_INPUT,		SSC_MATRIX,		 "inv_tdc_cec_cg",							   "Temperature derate curves for CEC Coef Gen",			   "Vdc",	  "",					  "pvsamv1",	   "inverter_model=3",					  "",							   "" },
 	{ SSC_INPUT,		SSC_MATRIX,		 "inv_tdc_ds",								   "Temperature derate curves for Inv Datasheet",			   "Vdc",	  "",					  "pvsamv1",	   "inverter_model=1",					  "",							   "" },
@@ -666,6 +757,9 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_OUTPUT,        SSC_NUMBER,     "annual_dc_net",                               "Annual DC energy",                                   "kWh/yr",    "",                      "Annual (Year 1)",       "*",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "annual_ac_gross",                             "Annual AC energy gross",                               "kWh/yr",    "",                      "Annual (Year 1)",       "*",                    "",                              "" },
 
+	// OND inverter model AC and DC loss reporting
+	{ SSC_OUTPUT,        SSC_NUMBER,     "annual_dc_loss_ond",                          "Annual DC loss OND model",                           "kWh/yr",    "",                      "Annual (Year 1)",       "*",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "annual_ac_loss_ond",                          "Annual AC loss OND model",                           "kWh/yr",    "",                      "Annual (Year 1)",       "*",                    "",                              "" },
 
 	//SEV: total dc snow loss monthy array and annual value (not a required output) 
 	{ SSC_OUTPUT,        SSC_ARRAY,      "monthly_snow_loss",                    "Snow DC energy loss",					       "kWh/mo",    "",                       "Monthly",       "",                    "",                              "" },
@@ -941,6 +1035,10 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 	// Multiple MPPT inverters not enabled with DC-connected batteries
 	if (PVSystem->Inverter->nMpptInputs > 1 && en_batt && batt_topology == ChargeController::DC_CONNECTED)
 		throw exec_error("pvsamv1", "A DC-connected battery cannot be modeled with multiple MPPT inverters at this time.");
+
+	// Multiple MPPT inverters not enabled with PVyield inverter model
+	if (PVSystem->Inverter->nMpptInputs > 1 && PVSystem->Inverter->inverterType == INVERTER_PVYIELD)
+		throw exec_error("pvsamv1", "The PVYield inverter model does not currently accept multiple MPPT inputs.");
 
 	std::vector<ssc_number_t> p_pv_clipping_forecast;
 	std::vector<ssc_number_t> p_pv_dc_forecast;
@@ -1901,6 +1999,11 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 	idx = 0; ireport = 0; ireplast = 0; percent_baseline = percent_complete;
 	double annual_battery_loss = 0;
 	wdprov->rewind();
+
+	double annual_dc_loss_ond = 0, annual_ac_loss_ond = 0; // (TR)
+	double dc_loss_ond = 0, ac_loss_ond = 0; // (TR)
+
+
 	for (size_t iyear = 0; iyear < nyears; iyear++)
 	{
 		for (hour = 0; hour < 8760; hour++)
@@ -1937,8 +2040,8 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 					dcPowerNetPerMppt[m] = PVSystem->p_dcPowerNetPerMppt[m][idx];
 				}
 
-				// DC-connected battery
-				if (en_batt && (batt_topology == ChargeController::DC_CONNECTED))
+				//run AC power calculation
+				if (en_batt && (batt_topology == ChargeController::DC_CONNECTED)) // DC-connected battery
 				{
 					// Compute PV clipping before adding battery
 					sharedInverter->calculateACPower(dcPowerNetTotalSystem, dcVoltagePerMppt[0], wf.tdry); //DC batteries not allowed with multiple MPPT, so can just use MPPT 1's voltage
@@ -1946,6 +2049,11 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 					// Run PV plus battery through sharedInverter, returns AC power
 					batt.advance(*this, dcPowerNetTotalSystem*util::watt_to_kilowatt, dcVoltagePerMppt[0], cur_load, sharedInverter->powerClipLoss_kW); 
 					acpwr_gross = batt.outGenPower[idx];
+				}
+				else if (PVSystem->Inverter->inverterType == INVERTER_PVYIELD) //PVyield inverter model not currently enabled for multiple MPPT
+				{
+					sharedInverter->calculateACPower(dcPowerNetTotalSystem, dcVoltagePerMppt[0], wf.tdry);
+					acpwr_gross = sharedInverter->powerAC_kW;
 				}
 				else
 				{
@@ -1962,6 +2070,10 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 				if (iyear == 0)
 				{ 
 					annual_ac_gross += acpwr_gross * ts_hour;
+
+					annual_dc_loss_ond += sharedInverter->dcWiringLoss_ond_kW * ts_hour; // (TR)
+					annual_ac_loss_ond += sharedInverter->dcWiringLoss_ond_kW *  ts_hour; // (TR)
+
 					PVSystem->p_inverterEfficiency[idx] = (ssc_number_t)(sharedInverter->efficiencyAC);
 					PVSystem->p_inverterClipLoss[idx] = (ssc_number_t)(sharedInverter->powerClipLoss_kW);
 					PVSystem->p_inverterPowerConsumptionLoss[idx] = (ssc_number_t)(sharedInverter->powerConsumptionLoss_kW);
@@ -1972,7 +2084,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 					PVSystem->p_inverterTotalLoss[idx] = (ssc_number_t)(sharedInverter->powerLossTotal_kW);
 				}
 				PVSystem->p_systemDCPower[idx] = (ssc_number_t)(sharedInverter->powerDC_kW);
-					
+
 				//ac losses should always be subtracted, this means you can't just multiply by the derate because at nighttime it will add power
 				PVSystem->p_systemACPower[idx] = (ssc_number_t)(acpwr_gross - ac_wiringloss);
 
@@ -2205,6 +2317,10 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 
 	assign("annual_dc_gross", var_data((ssc_number_t)annual_dc_gross));
 	assign("annual_ac_gross", var_data((ssc_number_t)annual_ac_gross));
+
+	// AC/DC loss reporting OND model
+	assign("annual_dc_loss_ond", var_data((ssc_number_t)annual_dc_loss_ond));
+	assign("annual_ac_loss_ond", var_data((ssc_number_t)annual_ac_loss_ond));
 
 	assign("xfmr_nll_year1", (ssc_number_t)annual_xfmr_nll);
 	assign("xfmr_ll_year1", (ssc_number_t)annual_xfmr_ll);
@@ -2529,6 +2645,9 @@ void cm_pvsamv1::inverter_vdcmax_check()
 		case 3: // coefficient generator
 			vdcmax = as_double("inv_cec_cg_vdcmax");
 			break;
+		case 4: // ondInverter (PVYield)
+			vdcmax = as_double("ond_VAbsMax");
+			break;
 		default:
 			// message
 			return;
@@ -2598,6 +2717,10 @@ void cm_pvsamv1::inverter_size_check()
 		case 3: // coefficient generator
 			ratedACOutput = as_double("inv_cec_cg_paco");
 			ratedDCOutput = as_double("inv_cec_cg_pdco");
+			break;
+		case 4: // ond inverter (PVYield) 
+			ratedACOutput = as_double("ond_PMaxOUT");
+			ratedDCOutput = as_double("ond_PMaxDC");
 			break;
 		default:
 			// message

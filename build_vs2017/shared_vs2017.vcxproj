@@ -36,6 +36,8 @@
     <ClInclude Include="..\shared\lib_pv_io_manager.h" />
     <ClInclude Include="..\shared\lib_irradproc.h" />
     <ClInclude Include="..\shared\lib_miniz.h" />
+    <ClInclude Include="..\shared\lib_mlmodel.h" />
+    <ClInclude Include="..\shared\lib_ondinv.h" />
     <ClInclude Include="..\shared\lib_physics.h" />
     <ClInclude Include="..\shared\lib_powerblock.h" />
     <ClInclude Include="..\shared\lib_power_electronics.h" />
@@ -56,6 +58,7 @@
     <ClInclude Include="..\shared\lib_wind_obos.h" />
     <ClInclude Include="..\shared\lib_wind_obos_cable_vessel.h" />
     <ClInclude Include="..\shared\lsqfit.h" />
+    <ClInclude Include="..\shared\mlm_spline.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\shared\lib_battery.cpp" />
@@ -67,6 +70,8 @@
     <ClCompile Include="..\shared\lib_iec61853.cpp" />
     <ClCompile Include="..\shared\lib_irradproc.cpp" />
     <ClCompile Include="..\shared\lib_miniz.cpp" />
+    <ClCompile Include="..\shared\lib_mlmodel.cpp" />
+    <ClCompile Include="..\shared\lib_ondinv.cpp" />
     <ClCompile Include="..\shared\lib_physics.cpp" />
     <ClCompile Include="..\shared\lib_powerblock.cpp" />
     <ClCompile Include="..\shared\lib_power_electronics.cpp" />
@@ -89,6 +94,7 @@
     <ClCompile Include="..\shared\lib_wind_obos.cpp" />
     <ClCompile Include="..\shared\lib_wind_obos_cable_vessel.cpp" />
     <ClCompile Include="..\shared\lsqfit.cpp" />
+    <ClCompile Include="..\shared\mlm_spline.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{794A2685-B70E-4504-9402-AC376D4EB459}</ProjectGuid>

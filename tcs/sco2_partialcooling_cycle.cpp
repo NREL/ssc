@@ -563,8 +563,13 @@ int C_PartialCooling_Cycle::finalize_design()
 	s_LP_air_cooler_des_par_dep.m_T_hot_in_des = m_temp_last[C_sco2_cycle_core::LTR_LP_OUT];		//[K]
 	s_LP_air_cooler_des_par_dep.m_P_hot_in_des = m_pres_last[C_sco2_cycle_core::LTR_LP_OUT];		//[kPa]
 	s_LP_air_cooler_des_par_dep.m_m_dot_total = m_m_dot_pc;		//[kg/s]
-		// This pressure drop is currently uncoupled from the cycle design
-	s_LP_air_cooler_des_par_dep.m_delta_P_des = ms_des_par.m_deltaP_cooler_frac*m_pres_last[C_sco2_cycle_core::MC_OUT];	//[kPa]
+
+	double LP_cooler_deltaP = m_pres_last[C_sco2_cycle_core::LTR_LP_OUT] - m_pres_last[C_sco2_cycle_core::PC_IN];		//[kPa]
+	if (LP_cooler_deltaP == 0.0)
+		s_LP_air_cooler_des_par_dep.m_delta_P_des = ms_des_par.m_deltaP_cooler_frac*m_pres_last[C_sco2_cycle_core::LTR_LP_OUT];	//[kPa]
+	else
+		s_LP_air_cooler_des_par_dep.m_delta_P_des = LP_cooler_deltaP;		//[kPa]
+
 	s_LP_air_cooler_des_par_dep.m_T_hot_out_des = m_temp_last[C_sco2_cycle_core::PC_IN];			//[K]
 		// Use half the rated fan power on each cooler fan
 	s_LP_air_cooler_des_par_dep.m_W_dot_fan_des = ms_des_par.m_frac_fan_power*0.5*ms_des_par.m_W_dot_net / 1000.0;		//[MWe]
@@ -586,8 +591,13 @@ int C_PartialCooling_Cycle::finalize_design()
 	s_IP_air_cooler_des_par_dep.m_T_hot_in_des = m_temp_last[C_sco2_cycle_core::PC_OUT];		//[K]
 	s_IP_air_cooler_des_par_dep.m_P_hot_in_des = m_pres_last[C_sco2_cycle_core::PC_OUT];		//[kPa]
 	s_IP_air_cooler_des_par_dep.m_m_dot_total = m_m_dot_mc;		//[kg/s]
-		// This pressure drop is currently uncoupled from the cycle design
-	s_IP_air_cooler_des_par_dep.m_delta_P_des = ms_des_par.m_deltaP_cooler_frac*m_pres_last[C_sco2_cycle_core::MC_OUT];	//[kPa]
+		
+	double HP_cooler_deltaP = m_pres_last[C_sco2_cycle_core::PC_OUT] - m_pres_last[C_sco2_cycle_core::MC_IN];	//[kPa]
+	if (HP_cooler_deltaP == 0.0)
+		s_IP_air_cooler_des_par_dep.m_delta_P_des = ms_des_par.m_deltaP_cooler_frac*m_pres_last[C_sco2_cycle_core::PC_OUT];	//[kPa]
+	else
+		s_IP_air_cooler_des_par_dep.m_delta_P_des = HP_cooler_deltaP;		//[kPa]
+
 	s_IP_air_cooler_des_par_dep.m_T_hot_out_des = m_temp_last[C_sco2_cycle_core::MC_IN];			//[K]
 		// Use half the rated fan power on each cooler fan
 	s_IP_air_cooler_des_par_dep.m_W_dot_fan_des = ms_des_par.m_frac_fan_power*0.5*ms_des_par.m_W_dot_net / 1000.0;		//[MWe]

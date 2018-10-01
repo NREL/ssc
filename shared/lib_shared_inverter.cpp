@@ -3,12 +3,13 @@
 #include <algorithm>
 
 SharedInverter::SharedInverter(int inverterType, size_t numberOfInverters,
-	sandia_inverter_t * sandiaInverter, partload_inverter_t * partloadInverter)
+	sandia_inverter_t * sandiaInverter, partload_inverter_t * partloadInverter, ond_inverter * ondInverter)
 {
 	m_inverterType = inverterType;
 	m_numInverters = numberOfInverters;
 	m_sandiaInverter = sandiaInverter;
 	m_partloadInverter = partloadInverter;
+	m_ondInverter = ondInverter;
 	m_tempEnabled = false;
 }
 
@@ -142,11 +143,18 @@ void SharedInverter::calculateACPower(const double powerDC_Watts, const double D
 	double P_par, P_lr;
 	bool negativePower = powerDC_Watts < 0 ? true : false;
 
+
+	dcWiringLoss_ond_kW = 0.0;
+	acWiringLoss_ond_kW = 0.0;
+
 	// Power quantities go in and come out in units of W
 	if (m_inverterType == SANDIA_INVERTER || m_inverterType == DATASHEET_INVERTER || m_inverterType == COEFFICIENT_GENERATOR)
 		m_sandiaInverter->acpower(std::fabs(powerDC_Watts) / m_numInverters, DCStringVoltage, &powerAC_kW, &P_par, &P_lr, &efficiencyAC, &powerClipLoss_kW, &powerConsumptionLoss_kW, &powerNightLoss_kW);
 	else if (m_inverterType == PARTLOAD_INVERTER)
 		m_partloadInverter->acpower(std::fabs(powerDC_Watts) / m_numInverters, &powerAC_kW, &P_lr, &P_par, &efficiencyAC, &powerClipLoss_kW, &powerNightLoss_kW);
+	else if (m_inverterType == OND_INVERTER)
+		m_ondInverter->acpower(std::fabs(powerDC_Watts) / m_numInverters,DCStringVoltage, T, &powerAC_kW, &P_par, &P_lr, &efficiencyAC, &powerClipLoss_kW, &powerConsumptionLoss_kW, &powerNightLoss_kW, &dcWiringLoss_ond_kW, &acWiringLoss_ond_kW);
+
 
 	double tempLoss = 0.0;
 	if (m_tempEnabled) {
@@ -205,6 +213,8 @@ double SharedInverter::getInverterDCNominalVoltage()
 		return m_sandiaInverter->Vdco;
 	else if (m_inverterType == PARTLOAD_INVERTER)
 		return m_partloadInverter->Vdco;
+	else if (m_inverterType == OND_INVERTER)
+		return m_ondInverter->VNomEff[1];
 	else
 		return 0.;
 }
@@ -218,6 +228,8 @@ void SharedInverter::convertOutputsToKWandScale(double tempLoss)
 	powerTempLoss_kW = tempLoss * m_numInverters * util::watt_to_kilowatt;
 	powerLossTotal_kW = powerDC_kW - powerAC_kW;
 	efficiencyAC *= 100;
+	dcWiringLoss_ond_kW *= m_numInverters * util::watt_to_kilowatt;
+	acWiringLoss_ond_kW *= m_numInverters * util::watt_to_kilowatt;
 }
 
 double SharedInverter::getMaxPowerEfficiency()
@@ -226,7 +238,9 @@ double SharedInverter::getMaxPowerEfficiency()
 		calculateACPower(m_sandiaInverter->Paco, m_sandiaInverter->Vdco, 0.0);
 	else if (m_inverterType == PARTLOAD_INVERTER)
 		calculateACPower(m_partloadInverter->Paco, m_partloadInverter->Vdco, 0.0);
-	
+	else if (m_inverterType == OND_INVERTER)
+		calculateACPower(m_ondInverter->PMaxOUT, m_ondInverter->VAbsMax, 0.0);
+
 	return efficiencyAC;
 }
 

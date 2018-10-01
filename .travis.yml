@@ -57,7 +57,7 @@ install:
   
 branches:
   only:
-  - master
-  - develop
   - PVYield
   - mppt
+  - master
+  - develop

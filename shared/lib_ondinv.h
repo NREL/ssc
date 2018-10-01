@@ -47,66 +47,103 @@
 *  THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *******************************************************************************************************/
 
-#ifndef _CMOD_PVAMV1_H_
-#define _CMOD_PVAMV1_H_
-
 #include <string>
-#include <cmath>
-#include <limits>
 #include <vector>
-#include <memory>
+#include "mlm_spline.h" // spline interpolator for efficiency curves
+using namespace std;
 
-#include "core.h"
-#include "common.h"
-#include "cmod_battery.h"
-#include "lib_power_electronics.h"
-#include "lib_weatherfile.h"
-#include "lib_irradproc.h"
-#include "lib_cec6par.h"
-#include "lib_sandia.h"
-#include "lib_mlmodel.h"
-#include "lib_ondinv.h"
-#include "lib_pvinv.h"
-#include "6par_jacobian.h"
-#include "6par_lu.h"
-#include "6par_search.h"
-#include "6par_newton.h"
-#include "6par_gamma.h"
-#include "6par_solve.h"
-#include "lib_pvshade.h"
-#include "lib_snowmodel.h"
-#include "lib_iec61853.h"
-#include "lib_util.h"
-#include "lib_pv_shade_loss_mpp.h"
+#ifndef __lib_ondinv_h
+#define __lib_ondinv_h
 
-// comment following define if do not want shading database validation outputs
-//#define SHADE_DB_OUTPUTS
-
-/**
-* Detailed photovoltaic model in SAM, version 1
-* Contains calculations to process a weather file, parse the irradiance, and evaluate PV subarray power production with AC or DC connected batteries
-*/
-class cm_pvsamv1 : public compute_module
+class ond_inverter
 {
 public:
-	
-	//! PV model class constructor
-	cm_pvsamv1();
+	ond_inverter();
 
-	//! Setup the Nominal Operating Cell Temperature (NOCT) model
-	void setup_noct_model(const std::string &prefix, noct_celltemp_t &noct_tc);
-	
-	//! Run the PV model
-	void exec() throw (compute_module::general_error);
-	
-	//! Return the module efficiency
-	double module_eff(int mod_type);
+	double PNomConv; // [W]
+	double PMaxOUT; // [W]
+	double VOutConv; // [W]
+	double VMppMin; // [V]
+	double VMPPMax; // [V]
+	double VAbsMax; // [V]
+	double PSeuil; // [W]
+	string ModeOper; // [-]
+	string CompPMax; // [-]
+	string CompVMax; // [-]
+	string ModeAffEnum; // [-]
+	double PNomDC; // [W]
+	double PMaxDC; // [W]
+	double IMaxDC; // [A]
+	double INomDC; // [A]
+	double INomAC; // [A]
+	double IMaxAC; // [A]
+	double TPNom; // [°C]
+	double TPMax; // [°C]
+	double TPLim1; // [°C]
+	double TPLimAbs; // [°C]
+	double PLim1; // [kW]
+	double PLimAbs; // [kW]
+	double VNomEff[3]; // [V]
+	int NbInputs; // [-]
+	int NbMPPT; // [-]
+	double Aux_Loss; // [W]
+	double Night_Loss; // [W]
+	double lossRDc; // [V/A]
+	double lossRAc; // [A]
+	int effCurve_elements; // [-]
+	double effCurve_Pdc[3][100]; // [W]
+	double effCurve_Pac[3][100]; // [W]
+	double effCurve_eta[3][100]; // [-]
+	int doAllowOverpower; // [-] // ADDED TO CONSIDER MAX POWER USAGE [2018-06-23, TR]
+	int doUseTemperatureLimit; // [-] // ADDED TO CONSIDER TEMPERATURE LIMIT USAGE [2018-06-23, TR]
 
-	//! Check the max inverter DC voltage
-	void inverter_vdcmax_check();
+	bool acpower(	
+		/* inputs */
+		double Pdc,			/* Input power to inverter (Wdc) */
+		double Vdc,			/* Voltage input to inverter (Vdc) */
+		double Tamb,		/* Ambient temperature (°C) */
 
-	//! Check the inverter size and the associated clipping
-	void inverter_size_check();
+		/* outputs */
+		double *Pac,		/* AC output power (Wac) */
+		double *Ppar,		/* AC parasitic power consumption (Wac) */
+		double *Plr,		/* Part load ratio (Pdc_in/Pdc_rated, 0..1) */
+		double *Eff,		/* Conversion efficiency (0..1) */
+		double *Pcliploss,	/* Power loss due to clipping loss (Wac) */
+		double *Psoloss,	/* Power loss due to operating power consumption (Wdc) */
+		double *Pntloss,	/* Power loss due to night time tare loss (Wac) */
+		double *dcloss,		/* DC power loss (Wdc) */
+		double *acloss		/* AC power loss (Wac) */
+	);
+	double calcEfficiency(
+		double Pdc,
+		int index_eta
+	);
+	double tempDerateAC(
+		double arrayT[],
+		double arrayPAC[],
+		double T
+	);
+	virtual void initializeManual();
+
+private:
+	bool ondIsInitialized;
+
+	int noOfEfficiencyCurves;
+	tk::spline effSpline[2][3];
+	double x_lim[3];
+	double Pdc_threshold;
+	double a[3];
+	double b[3];
+
+	double PNomDC_eff;
+	double PMaxDC_eff;
+	double INomDC_eff;
+	double IMaxDC_eff;
+	double T_array[6];
+	double PAC_array[6];
+
+
+
 };
 
-#endif // !_CMOD_PVAMV1_H_
+#endif

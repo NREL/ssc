@@ -1384,6 +1384,12 @@ bool C_CO2_to_air_cooler::design_hx(S_des_par_ind des_par_ind, S_des_par_cycle_d
 	ms_des_par_ind = des_par_ind;
 	ms_des_par_cycle_dep = des_par_cycle_dep;
 
+	// Check pressure drop is "reasonable"
+	if (ms_des_par_cycle_dep.m_delta_P_des / ms_des_par_cycle_dep.m_P_hot_in_des < 0.001)
+	{
+		ms_des_par_cycle_dep.m_delta_P_des = 0.001 * ms_des_par_cycle_dep.m_P_hot_in_des;	//[kPa]
+	}
+
 	// Calculate ambient pressure
 	ms_hx_des_sol.m_P_amb_des = 101325.0*pow(1 - 2.25577E-5*ms_des_par_ind.m_elev, 5.25588);	//[Pa] http://www.engineeringtoolbox.com/air-altitude-pressure-d_462.html	
 	
@@ -1486,17 +1492,72 @@ bool C_CO2_to_air_cooler::design_hx(S_des_par_ind des_par_ind, S_des_par_cycle_d
 
 	C_monotonic_eq_solver c_solver(c_eq);
 
+	C_monotonic_eq_solver::S_xy_pair xy1;
+	double T_hot_in_calc = std::numeric_limits<double>::quiet_NaN();
+	
+	int solver_code = -1;
+	int i_W_par = -1;
+
+	while(solver_code != 0)
+	{
+		i_W_par++;
+
+		if (i_W_par > 0)
+			W_par_guess *= 1.5;
+
+		if(i_W_par > 10)
+			throw(C_csp_exception("Air cooler iteration on the parallel width received exception from mono equation solver"));
+
+		solver_code = c_solver.test_member_function(W_par_guess, &T_hot_in_calc);		
+	}
+
+	xy1.x = W_par_guess;	//[m]
+	xy1.y = T_hot_in_calc;	//[K]
+
+	double W_par_mult = 2.0;
+	if (T_hot_in_calc > ms_des_par_cycle_dep.m_T_hot_in_des)
+	{
+		W_par_mult = 0.5;
+	}
+
+	C_monotonic_eq_solver::S_xy_pair xy2;
+	double T_hot_in_calc_2 = std::numeric_limits<double>::quiet_NaN();
+	double W_par_guess_2 = W_par_guess * W_par_mult;
+	solver_code = -1;
+	i_W_par = -1;
+
+	while (solver_code != 0 || fabs(T_hot_in_calc_2 - T_hot_in_calc) / T_hot_in_calc < 0.01)
+	{
+		i_W_par++;
+
+		if (i_W_par > 0)
+		{
+			W_par_guess_2 *= W_par_mult;
+		}
+
+		if (i_W_par > 10)
+			throw(C_csp_exception("Air cooler iteration on the parallel width received exception from mono equation solver"));
+
+		solver_code = c_solver.test_member_function(W_par_guess_2, &T_hot_in_calc_2);
+	}
+
+	xy2.x = W_par_guess_2;		//[m]
+	xy2.y = T_hot_in_calc_2;	//[K]
+
 	c_solver.settings(tol, 50, 0.01, std::numeric_limits<double>::quiet_NaN(), true);
 
 	double W_par_solved, tol_solved;
 	W_par_solved = tol_solved = std::numeric_limits<double>::quiet_NaN();
 	int iter_solved = -1;
 
-	int solver_code = 0;
+	solver_code = 0;
 	try
 	{
-		solver_code = c_solver.solve(W_par_guess, W_par_guess*2.0, ms_des_par_cycle_dep.m_T_hot_in_des,
+		solver_code = c_solver.solve(xy1, xy2, ms_des_par_cycle_dep.m_T_hot_in_des,
 			W_par_solved, tol_solved, iter_solved);
+			
+			//c_solver.solve(W_par_guess, W_par_guess*2.0, ms_des_par_cycle_dep.m_T_hot_in_des,
+			//W_par_solved, tol_solved, iter_solved);
 	}
 	catch (C_csp_exception)
 	{
@@ -1925,7 +1986,7 @@ int C_CO2_to_air_cooler::C_MEQ_target_T_hot__width_parallel::operator()(double W
 	double Nusselt_co2_g = -999.9;
 	double f_co2_g = -999.9;
 
-	double tol_L_tube = m_tol / 5.0;
+	double tol_L_tube = m_tol / 2.0;
 
 	// Specifying the length over diameter = 1000 sets the problem as Fully Developed Flow
 	CSP::PipeFlow(Re_co2_g, Pr_co2, 1000.0, mpc_ac->m_relRough, Nusselt_co2_g, f_co2_g);
@@ -1943,7 +2004,7 @@ int C_CO2_to_air_cooler::C_MEQ_target_T_hot__width_parallel::operator()(double W
 
 	C_monotonic_eq_solver c_solver(c_eq);
 
-	c_solver.settings(1.E-3, 50, 0.01, std::numeric_limits<double>::quiet_NaN(), true);
+	c_solver.settings(tol_L_tube, 50, 0.001, std::numeric_limits<double>::quiet_NaN(), true);
 
 	double L_tube_solved, tol_solved;
 	L_tube_solved = tol_solved = std::numeric_limits<double>::quiet_NaN();
