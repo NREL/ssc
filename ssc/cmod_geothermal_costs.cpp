@@ -51,21 +51,49 @@
 #include <stdio.h>
 #include <math.h>
 #include "lib_geothermal.h"
+#include "common.h"
+
+
 
 
 
 static var_info _cm_vtab_geothermal_costs[] = {
-/*   VARTYPE           DATATYPE         NAME                              LABEL                                                       UNITS     META                      GROUP                   REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
-																	      								                             
-	// Inputs		
-	{ SSC_INPUT,       SSC_NUMBER,      "gross_output",                   "Gross output from GETEM",							       "kW",        "",				    "GeoHourly",				"*",					  "",								"" },
-	{ SSC_INPUT,       SSC_NUMBER,		 "design_temp",                    "Power block design temperature",					      "C",       "",					 "GeoHourly",			   "*",                        "",						         "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "eff_secondlaw",				   "Second Law Efficiency",									  "%",        "",				     "GeoHourly",			   "*",                        "",							     "" },
-
+/*   VARTYPE			DATATYPE         NAME                              LABEL                                                       UNITS		META                      GROUP                   REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
+	
+	{ SSC_INPUT,        SSC_NUMBER,     "conversion_type",					"Conversion Type",											"",			"",						"GeoHourly",			    "*",                        "INTEGER",					    "" },
+	// Binary Plant Type Inputs:		
+	{ SSC_INPUT,		SSC_NUMBER,     "gross_output",						"Gross output from GETEM",									"kW",		"",						"GeoHourly",				"*",						"",								"" },
+	{ SSC_INPUT,		SSC_NUMBER,		"design_temp",						"Power block design temperature",							"C",        "",						"GeoHourly",				"*",						"",								"" },
+	{ SSC_INPUT,        SSC_NUMBER,     "eff_secondlaw",					"Second Law Efficiency",									"%",		"",						"GeoHourly",				"*",						"",								"" },
+	// Flash Plant Type Inputs:
+	{ SSC_INPUT,		SSC_NUMBER,		"qRejectTotal",						"Total Rejected Heat",										"btu/h",			"",				"GeoHourly",				"conversion_type=1",						"",								""},
+	{ SSC_INPUT,		SSC_NUMBER,		"qCondenser",						"Condenser Heat Rejected",									"btu/h",	"",						"GeoHourly",				"conversion_type=1",						"",								"" },
+	{ SSC_INPUT,		SSC_NUMBER,		"v_stage_1",						"Vacumm Pump Stage 1",										"kW",		"",						"GeoHourly",				"conversion_type=1",						"",								"" },
+	{ SSC_INPUT,		SSC_NUMBER,		"v_stage_2",						"Vacumm Pump Stage 2",										"kW",		"",						"GeoHourly",				"conversion_type=1",						"",								"" },
+	{ SSC_INPUT,		SSC_NUMBER,		"v_stage_3",						"Vacumm Pump Stage 3",										"kW",		"",						"GeoHourly",				"conversion_type=1",						"",								"" },
+	{ SSC_INPUT,		SSC_NUMBER,		"GF_flowrate",						"GF Flow Rate",												"lb/h",		"",						"GeoHourly",				"conversion_type=1",						"",								"" },
+	{ SSC_INPUT,		SSC_NUMBER,		"qRejectByStage_1",					"Heat Rejected by NCG Condenser Stage 1",					"BTU/hr",	"",						"GeoHourly",				"conversion_type=1",						"",								"" },
+	{ SSC_INPUT,		SSC_NUMBER,		"qRejectByStage_2",					"Heat Rejected by NCG Condenser Stage 2",					"BTU/hr",	"",						"GeoHourly",				"conversion_type=1",						"",								"" },
+	{ SSC_INPUT,		SSC_NUMBER,		"qRejectByStage_3",					"Heat Rejected by NCG Condenser Stage 3",					"BTU/hr",	"",						"GeoHourly",				"conversion_type=1",						"",								"" },
+	{ SSC_INPUT,		SSC_NUMBER,		"ncg_condensate_pump",				"Condensate Pump Work",										"kW",		"",						"GeoHourly",				"conversion_type=1",						"",								"" },
+	{ SSC_INPUT,		SSC_NUMBER,		"cw_pump_work",						"CW Pump Work",												"kW",		"",						"GeoHourly",				"conversion_type=1",						"",								"" },
+	{ SSC_INPUT,		SSC_NUMBER,		"pressure_ratio_1",					"Suction Steam Ratio 1",									"",			"",						"GeoHourly",				 "conversion_type=1",						"",								"" },
+	{ SSC_INPUT,		SSC_NUMBER,		"pressure_ratio_2",					"Suction Steam Ratio 2",									"",			"",						"GeoHourly",				 "conversion_type=1",						"",								"" },
+	{ SSC_INPUT,		SSC_NUMBER,		"pressure_ratio_3",					"Suction Steam Ratio 3",									"",			"",						"GeoHourly",				 "conversion_type=1",						"",								"" },
+	{ SSC_INPUT,		SSC_NUMBER,		"condensate_pump_power",			"hp",														"",			"",						"GeoHourly",				 "conversion_type=1",						"",								"" },
+	{ SSC_INPUT,		SSC_NUMBER,		"cwflow",							"Cooling Water Flow",										"lb/h",		"",						"GeoHourly",				 "conversion_type=1",						"",								"" },
+	{ SSC_INPUT,		SSC_NUMBER,		"cw_pump_head",						"Cooling Water Pump Head",									"lb/h",		"",						"GeoHourly",				 "conversion_type=1",						"",								"" },
+	{ SSC_INPUT,		SSC_NUMBER,		"spec_vol",							"Specific Volume",											"cft/lb",	"",						"GeoHourly",				 "conversion_type=1",						"",								"" },
+	{ SSC_INPUT,		SSC_NUMBER,		"spec_vol_lp",						"LP Specific Volume",										"cft/lb",	"",						"GeoHourly",				 "conversion_type=1",						"",								"" },
+	{ SSC_INPUT,		SSC_NUMBER,		"x_hp",								"HP Mass Fraction",											"%",		"",						"GeoHourly",				 "conversion_type=1",						"",								"" },
+	{ SSC_INPUT,		SSC_NUMBER,		"x_lp",								"LP Mass Fraction",											"%",		"",						"GeoHourly",				 "conversion_type=1",						 "",							"" },
+	{ SSC_INPUT,		SSC_NUMBER,		"hp_flash_pressure",				"HP Flash Pressure",										"psia",		"",						"GeoHourly",				 "conversion_type=1",						"",								"" },
+	{ SSC_INPUT,		SSC_NUMBER,		"lp_flash_pressure",				"LP Flash Pressure",										"psia",		"",						"GeoHourly",				 "conversion_type=1",						"",								"" },
+	{ SSC_INPUT,		SSC_NUMBER,		"flash_count",						"Flash Count",												"(1 -2)",	"",						"GeoHourly",				 "conversion_type=1",						"",								"" },
 	// Outputs	
 	
-	{ SSC_OUTPUT,       SSC_NUMBER,      "corrected_equip_cost",			"Total Equipment Cost",									  "$s",		 "",                      "GeoHourly",			   "*",                         "",                              "" },
-var_info_invalid };
+	{ SSC_OUTPUT,       SSC_NUMBER,     "baseline_cost",					"Baseline Cost",											"$/kW",		"",                     "GeoHourly",				"?",                         "",                            "" },
+	var_info_invalid };
 
 
 
@@ -73,13 +101,14 @@ class cm_geothermal_costs : public compute_module
 {
 private:
 
-	//Inputs
+	//Inputs for Binary Type Plant (Note: Some variables might be common to both plant types - Binary and Flash)
 	std::vector< double> hx_ppi{ 0.89055793991,0.91950405341,0.93872198379,0.95674773486,0.96361468765,0.97229375298,0.98316642823,1.00000000000,0.99842632332,1.06628516929,1.22651406772,1.33285646161,1.37768240343,1.43814973772,1.41473533619,1.42336671435,1.46399618503,1.51297091082,1.53476394850,1.55479256080,1.60551437118,1.00000000000};		//HX Cost Index Normalized to 2001, 2002, 2007, 2010 and 2012; Beginning Year = 1995; Final Year = 2016;
 	std::vector<double> steel_ppi{ 1.12931979250,	1.10309052385,	1.10871630014,	1.07408489808,	0.99985387594,	1.02228391905,	0.96156937240,	1.00000000000,	1.06517133046,	1.42390589611,	1.50047490319,	1.63534740995,	1.76276758968,	2.16044421714,	1.61320961496,	1.95981588369,	2.22020895740,	2.11039672682,	1.98494922189,	2.03492365018,	1.73196862318,	1.00000000000};	//Steel Cost Index Normalized to 2001, 2002, 2007, 2010 and 2012; Beginning Year = 1995; Final Year = 2016;
 	std::vector<double> process_equip_ppi{ 0.88401892893,	0.90747040252,	0.92618126403,	0.94251808176,	0.95685145806,	0.96782339552,	0.98539534756,	1.00000000000,	1.01482944280,	1.07777492841,	1.15529549518,	1.22276690058,	1.30481820223,	1.38289340612,	1.40355926043,	1.41145093486,	1.45554814437,	1.50964978430,	1.53375704823,	1.63903161719,	1.65644438516,	1.00000000000}; //Process Equipment Cost Index Normalized to 2001, 2002, 2007, 2010 and 2012; Beginning Year = 1995; Final Year = 2016;
 	std::vector<double> engineering_ppi{ 0.77985529049,	0.81069560857,	0.85901568880,	0.88856651623,	0.91331757289,	0.95404398596,	0.97585786947,	1.00000000000,	1.04810516513,	1.08163192206,	1.10233541085,	1.13582634859,	1.20943477326,	1.27498388137,	1.32975141486,	1.39193351959,	1.36234687299,	1.36474675836,	1.38835160112,	1.43348377391,	1.48482894711,	1.00000000000}; // Engineering Cost Index Normalized to 2001, 2002, 2007, 2010 and 2012; Beginning Year = 1995; Final Year = 2016;
 	std::vector<double> pump_ppi{ 0.853374524715,	0.872338403042,	0.899382129278,	0.924049429658,	0.936264258555,	0.950332699620,	0.975903041825,	1.000000000000,	1.010646387833,	1.039876425856,	1.093203422053,	1.141682509506,	1.212975285171,	1.277851711027,	1.314115969582,	1.324192015209,	1.324572243346,	1.348716730038,	1.339163498099,	1.366539923954,	1.391168337366,	1.000000000000}; //Pump Cost Index Normalized to 2001, 2002, 2007, 2010 and 2012; Beginning Year = 1995; Final Year = 2016;
 	std::vector<double> turbine_ppi{ 0.882749597424,	0.895883655395,	0.917874396135,	0.934581320451,	0.960396537842,	0.969303542673,	0.980072463768,	1.000000000000,	1.013285024155,	1.018820450886,	1.017562399356,	1.050221417069,	1.106682769726,	1.245118760064,	1.350392512077,	1.340328099839,	1.359752415459,	1.349889291465,	1.376811594203,	1.411835748792,	1.395147123408,	1.000000000000}; //Turbine-Generator Cost Index Normalized to 2001, 2002, 2007, 2010 and 2012; Beginning Year = 1995; Final Year = 2016;
+	std::vector<double> construction_ppi{ 0.78858998,	0.81456401,	0.84095547,	0.87064007,	0.90760668,	0.93256030,	0.95686456,	1.00000000,	1.03845083,	1.06628015,	1.08682746,	1.12838590,	1.16822820,	1.22240260,	1.27871058,	1.31985158,	1.35737477,	1.36215213,	1.37699443,	1.42931354,	1.47394164,	1.00000000 };
 	double user_adjust = 1;
 	double size_ratio ;
 	//double scaling_factor ;	//for the GF HX
@@ -92,6 +121,8 @@ private:
 	double hx_gf_c;	//ref gf hx cost
 	double sales_tax = 0.05; //Always 5% ? 
 	double freight = 0.05;	//Also always 5% ?
+	//freight hydrothermal_binary = 0.05;
+	//freight hydrothermal_flash = 
 	double total_material_cost_multiplier = 1.7;
 	double steel = 0.22;
 	double current_cost_ref_hx;
@@ -192,7 +223,74 @@ private:
 	double tg_cost;
 	double current_cost_ref_tg;
 
-	double plant_equip_cost;
+	double plant_equip_cost, baseline_cost;
+
+
+
+	//Inputs for Flash Plant Type:
+	int tg_sets_num = 1 ; //Number of T-G Sets
+	double cooling_tower_cost;
+	double condenser_cost_flash;
+	double lmtd; 
+	double condenser_pinch_pt = 7.50; //As seen in GETEM, this value is always 7.50
+	double dtCooling_water = 25.0; 
+	double condenser_u = 350.00 ; //As seen in GETEM, this value is always 350.00
+	double area;
+	double qCondenser;
+	double hp_total_cost; 
+	//double hp_flash_pressure;
+	double a_cross_section;
+	//double flash_vessels_cost = 552981.85;
+	double vacuum_pump_1;	//stage 1 cost of vacuum pump
+	double vacuum_pump_2;	//stage 2 cost of vacuum pump
+	double vacuum_pump_3;	//stage 3 cost of vacuum pump
+	double vacuum_pump;		//vacuum pump cost (sum of all 3 stages)
+	int U =350;				//Heat Transfer Coefficient
+	double cond_area_1;
+	double cond_area_2;
+	double cond_area_3;
+	double condenser_ncg;
+	double ncg_pump_work;
+	double ncg_water_pump;
+	double pump_ncg;
+	double ejector_ncg;
+	double cw_pump_power;
+	double condensate;
+	double condensate_pump;
+	double cooling_water;
+	double pump_cost;
+	double h2s_level = 20; //ppm
+	double h2s_flow;
+	double h2s_cost;
+	double flash_vessel_cost;
+	double equip_cost_flash;
+	double ncg_cost;
+	double current_tg_cost;
+	double current_vessel_cost;
+	double current_tower_cost;
+	double current_condenser_cost;
+	double current_pump_cost;
+	double current_ncg_cost;
+	double current_h2s_cost;
+
+	//HP Flash Vessel Cost Inputs:
+	double current_cost_flash; 
+	double m_stm, m_stm_lp;
+	double hp_steam_flow;
+	double max_drop_size = 200; //(microns)
+	double v_terminal;
+	double num_vessels; //number of hp flash vessels
+	double area_xsection_hp;
+	double hp_flash_volume; 
+	double A, D, H, A_lp, D_lp, H_lp;
+	double hp_flash_cost;
+
+	//LP Flash Vessel Cost Calculation:
+	double num_vessels_lp, a_xsection_lp, v_terminal_lp, lp_steam_flow, lp_flash_volume, lp_flash_cost, 
+		direct_multiplier_2002, tax, labor_multiplier, construction_multiplier, freight_flash, material_multiplier, escalation_ppi,
+		direct_plant_cost;
+
+
 
 public:
 	//double hx_cost();
@@ -206,93 +304,238 @@ public:
 
 	void exec() 
 	{
-		// for inputs, to get use as_integer, as_double, etc, e.g.
-		//double unit_plant = as_double("nameplate");		//Gross plant size
-		double design_temp = as_double("design_temp");	
-		double eff = as_double("eff_secondlaw");	// w-h/lb
-		double unit_plant = as_double("gross_output");
+		SGeothermal_Inputs geo_inputs;
+		int conversion_type = as_integer("conversion_type");
 
-		//GF HX Equipment Cost Calculations:				
-		size_ratio = unit_plant / ref_plant_size;
-		sf_hx = (sf_3 * pow(design_temp,3)) + (sf_2 * pow(design_temp, 2)) + (sf_1 * design_temp) + sf_0 ;
-		hx_gf_c1 = hx_c10 + (hx_c11 * pow(design_temp, hx_c12));
-		hx_gf_c2 = hx_c20 + (hx_c21 * design_temp) + (hx_c22 * pow(design_temp, 2)) + (hx_c23 * pow(design_temp, 3));
-		hx_gf_c = hx_gf_c1 * exp(hx_gf_c2 * eff);
-		current_cost_ref_hx = hx_gf_c * hx_ppi[20] ;
+		if (conversion_type == 0) {
+			//geo_inputs.me_ct = BINARY;
 
-		hx_cost = user_adjust * pow(size_ratio, sf_hx)*((ref_plant_size*hx_gf_c*hx_ppi[20]) / unit_plant);
+			// for inputs, to get use as_integer, as_double, etc, e.g.
+			//double unit_plant = as_double("nameplate");		//Gross plant size
+			double design_temp = as_double("design_temp");
+			double eff = as_double("eff_secondlaw");	// w-h/lb
+			double unit_plant = as_double("gross_output") ; 
 
+			//GF HX Equipment Cost Calculations:				
+			size_ratio = unit_plant / ref_plant_size;
+			sf_hx = (sf_3 * pow(design_temp, 3)) + (sf_2 * pow(design_temp, 2)) + (sf_1 * design_temp) + sf_0;
+			hx_gf_c1 = hx_c10 + (hx_c11 * pow(design_temp, hx_c12));
+			hx_gf_c2 = hx_c20 + (hx_c21 * design_temp) + (hx_c22 * pow(design_temp, 2)) + (hx_c23 * pow(design_temp, 3));
+			hx_gf_c = hx_gf_c1 * exp(hx_gf_c2 * eff);
+			current_cost_ref_hx = hx_gf_c * hx_ppi[20];
 
-		//Air Cooled Condenser Cost Calculations:
-		sf_condenser = 1;
-		accc_0 = (acc_c1 * pow(design_temp, acc_c2)) + acc_c0;
-		accc_1 = exp((acc_c13*pow(design_temp, 3)) + (acc_c12*pow(design_temp, 2)) + (acc_c11*design_temp) + acc_c10);
-		accc_2 = exp((acc_c23*pow(design_temp, 3)) + (acc_c22*pow(design_temp, 2)) + (acc_c21*design_temp) + acc_c20);
-		acc_c = accc_1 * pow(eff, accc_2) + accc_0;
-		//acc_c = 183.65;
-		current_cost_ref_acc = acc_c * hx_ppi[20];
-		condenser_cost = user_adjust * pow(size_ratio, sf_condenser)*((ref_plant_size * acc_c * hx_ppi[20])/ unit_plant);
-		
+			hx_cost = user_adjust * pow(size_ratio, sf_hx)*((ref_plant_size*hx_gf_c*hx_ppi[20]) / unit_plant);
 
 
-		//WF Pumps Cost Calculation:
-		sf_wf = (wf_sf_c3*pow(design_temp,3)) + (wf_sf_c2*pow(design_temp, 2)) + (wf_sf_c1*design_temp) + wf_sf_c0;
-		pcc_1 = (wf_c12 * pow(design_temp, 2)) + (wf_c11 * design_temp) + wf_c10;
-		pcc_2 = (wf_c22 * pow(design_temp, 2)) + (wf_c21 * design_temp) + wf_c20;
-		pcc_c = pcc_1 * exp(pcc_2*eff);
-		current_cost_ref_pcc = pcc_c * pump_ppi[20] ;
-		wf_pump_cost = user_adjust * pow(size_ratio, sf_wf)*((ref_plant_size * pcc_c * pump_ppi[20])/ unit_plant);
+			//Air Cooled Condenser Cost Calculations:
+			sf_condenser = 1;
+			accc_0 = (acc_c1 * pow(design_temp, acc_c2)) + acc_c0;
+			accc_1 = exp((acc_c13*pow(design_temp, 3)) + (acc_c12*pow(design_temp, 2)) + (acc_c11*design_temp) + acc_c10);
+			accc_2 = exp((acc_c23*pow(design_temp, 3)) + (acc_c22*pow(design_temp, 2)) + (acc_c21*design_temp) + acc_c20);
+			acc_c = accc_1 * pow(eff, accc_2) + accc_0;
+			//acc_c = 183.65;
+			current_cost_ref_acc = acc_c * hx_ppi[20];
+			condenser_cost = user_adjust * pow(size_ratio, sf_condenser)*((ref_plant_size * acc_c * hx_ppi[20]) / unit_plant);
 
 
-		//Turbine Cost Calculation:
-		if (unit_plant < ref_plant_size)
-			sf_turbine = (turbine_sf_c2*pow(design_temp, 2)) + (turbine_sf_c1*design_temp) + turbine_sf_c0;
-		else
-			sf_turbine = 1;
 
-		ppc_0 = turbine_c0 + (turbine_c1*design_temp) + (turbine_c2*pow(design_temp, 2)) + (turbine_c3*pow(design_temp, 3));
-		ppc_1 = turbine_c10 + (turbine_c11*design_temp) + (turbine_c12*pow(design_temp, 2)) + (turbine_c13*pow(design_temp, 3));
-		parasitic = (ppc_0 * exp(ppc_1 * eff))*ref_plant_size;
-		tg_size = ref_plant_size + parasitic;
-		tg_sets = tg_size / max_turbine_size ;
-
-		if (tg_sets > 1)
-			turbine_c = 7400 * pow(max_turbine_size, 0.6);		//Total $ of reference turbine
-		else
-			turbine_c = 7400 * pow(tg_size, 0.6);				//Total $ of reference turbine
-
-		if (tg_sets < 1)
-			ref_turbine_cost = turbine_c / ref_plant_size;		//Cost of turbine per kW ($/kW)
-		else
-			ref_turbine_cost = (turbine_c * tg_sets) / ref_plant_size;
-
-		generator_c = ((1800 * pow(tg_size, 0.67)))/ref_plant_size;
-		tg_cost = ref_turbine_cost + generator_c;
-		current_cost_ref_tg = tg_cost * turbine_ppi[20];
-		turbine_cost = user_adjust * pow(size_ratio, sf_turbine)*((ref_plant_size * tg_cost * turbine_ppi[20])/ unit_plant);
-		
-
-		//Calculating Direct Construction Cost Multiplier
-		escalation_equip_cost =(current_cost_ref_acc + current_cost_ref_hx + current_cost_ref_pcc + current_cost_ref_tg)/(hx_gf_c + acc_c + pcc_c + tg_cost) ;
-		corrected_labor = ((labor_cost_multiplier*engineering_ppi[20])/escalation_equip_cost)*(1+ labor_fringe_benefits );
-		corrected_construct_malts = (const_matls_rentals * process_equip_ppi[20]) / escalation_equip_cost;
-		corrected_total_material_mult = ((steel*steel_ppi[20]) + ((total_material_cost_multiplier - 1 - steel)*process_equip_ppi[20]))*(1 / escalation_equip_cost) + 1;
-		multiplier_input_year = corrected_total_material_mult + corrected_labor + corrected_construct_malts ;
-		plant_size_adjustment = 1.02875*pow((unit_plant / 1000), -0.01226);
-		direct_installation_multiplier = plant_size_adjustment * multiplier_input_year;
-		dc_cost_multiplier = (sales_tax + freight)*((corrected_total_material_mult + corrected_construct_malts)*plant_size_adjustment) + direct_installation_multiplier;
-
-		
-
-		//Total Plant Cost: 
-		plant_equip_cost = hx_cost + condenser_cost + wf_pump_cost + turbine_cost;
-		corrected_equip_cost = dc_cost_multiplier * plant_equip_cost;
+			//WF Pumps Cost Calculation:
+			sf_wf = (wf_sf_c3*pow(design_temp, 3)) + (wf_sf_c2*pow(design_temp, 2)) + (wf_sf_c1*design_temp) + wf_sf_c0;
+			pcc_1 = (wf_c12 * pow(design_temp, 2)) + (wf_c11 * design_temp) + wf_c10;
+			pcc_2 = (wf_c22 * pow(design_temp, 2)) + (wf_c21 * design_temp) + wf_c20;
+			pcc_c = pcc_1 * exp(pcc_2*eff);
+			current_cost_ref_pcc = pcc_c * pump_ppi[20];
+			wf_pump_cost = user_adjust * pow(size_ratio, sf_wf)*((ref_plant_size * pcc_c * pump_ppi[20]) / unit_plant);
 
 
-		// for outputs, to assign, use:
-		//assign("dc_cost_multiplier", var_data(static_cast<ssc_number_t>(dc_cost_multiplier)));
-		assign("corrected_equip_cost", var_data(static_cast<ssc_number_t>(corrected_equip_cost)));
+			//Turbine Cost Calculation:
+			if (unit_plant < ref_plant_size)
+				sf_turbine = (turbine_sf_c2*pow(design_temp, 2)) + (turbine_sf_c1*design_temp) + turbine_sf_c0;
+			else
+				sf_turbine = 1;
 
+			ppc_0 = turbine_c0 + (turbine_c1*design_temp) + (turbine_c2*pow(design_temp, 2)) + (turbine_c3*pow(design_temp, 3));
+			ppc_1 = turbine_c10 + (turbine_c11*design_temp) + (turbine_c12*pow(design_temp, 2)) + (turbine_c13*pow(design_temp, 3));
+			parasitic = (ppc_0 * exp(ppc_1 * eff))*ref_plant_size;
+			tg_size = ref_plant_size + parasitic;
+			tg_sets = tg_size / max_turbine_size;
+
+			if (tg_sets > 1)
+				turbine_c = 7400 * pow(max_turbine_size, 0.6);		//Total $ of reference turbine
+			else
+				turbine_c = 7400 * pow(tg_size, 0.6);				//Total $ of reference turbine
+
+			if (tg_sets < 1)
+				ref_turbine_cost = turbine_c / ref_plant_size;		//Cost of turbine per kW ($/kW)
+			else
+				ref_turbine_cost = (turbine_c * tg_sets) / ref_plant_size;
+
+			generator_c = ((1800 * pow(tg_size, 0.67))) / ref_plant_size;
+			tg_cost = ref_turbine_cost + generator_c;
+			current_cost_ref_tg = tg_cost * turbine_ppi[20];
+			turbine_cost = user_adjust * pow(size_ratio, sf_turbine)*((ref_plant_size * tg_cost * turbine_ppi[20]) / unit_plant);
+
+
+			//Calculating Direct Construction Cost Multiplier
+			escalation_equip_cost = (current_cost_ref_acc + current_cost_ref_hx + current_cost_ref_pcc + current_cost_ref_tg) / (hx_gf_c + acc_c + pcc_c + tg_cost);
+			corrected_labor = ((labor_cost_multiplier*engineering_ppi[20]) / escalation_equip_cost)*(1 + labor_fringe_benefits);
+			corrected_construct_malts = (const_matls_rentals * process_equip_ppi[20]) / escalation_equip_cost;
+			corrected_total_material_mult = ((steel*steel_ppi[20]) + ((total_material_cost_multiplier - 1 - steel)*process_equip_ppi[20]))*(1 / escalation_equip_cost) + 1;
+			multiplier_input_year = corrected_total_material_mult + corrected_labor + corrected_construct_malts;
+			plant_size_adjustment = 1.02875*pow((unit_plant / 1000), -0.01226);
+			direct_installation_multiplier = plant_size_adjustment * multiplier_input_year;
+			dc_cost_multiplier = (sales_tax + freight)*((corrected_total_material_mult + corrected_construct_malts)*plant_size_adjustment) + direct_installation_multiplier;
+
+
+			//Total Plant Cost: 
+			plant_equip_cost = hx_cost + condenser_cost + wf_pump_cost + turbine_cost;
+			corrected_equip_cost = dc_cost_multiplier * plant_equip_cost;
+			
+
+			// for outputs, to assign, use:
+			//assign("dc_cost_multiplier", var_data(static_cast<ssc_number_t>(dc_cost_multiplier)));
+			assign("baseline_cost", var_data(static_cast<ssc_number_t>(corrected_equip_cost)));
+		}
+
+		else if (conversion_type == 1) {
+			//geo_inputs.me_ct = FLASH;
+			double unit_plant = as_double("gross_output");			
+			double qRejectTotal = as_double("qRejectTotal") / 1000000 ;		// Converting from btu/h to MMBTU/h
+			double qCondenser = as_double("qCondenser") / 1000000;			// Converting from btu/h to MMBTU/h
+			//double hp_flash_pressure = as_double("hp_flash_pressure");
+			double v_stage_1 = as_double("v_stage_1");
+			double v_stage_2 = as_double("v_stage_2");
+			double v_stage_3 = as_double("v_stage_3");
+			double GF_flowrate = as_double("GF_flowrate");
+			double qRejectByStage_1 = as_double("qRejectByStage_1");
+			double qRejectByStage_2 = as_double("qRejectByStage_2");
+			double qRejectByStage_3 = as_double("qRejectByStage_3");
+			double ncg_condensate_pump = as_double("ncg_condensate_pump");
+			double cw_pump_work = as_double("cw_pump_work");
+			double pressure_ratio_1 = 1 / as_double("pressure_ratio_1");
+			double pressure_ratio_2 = 1 / as_double("pressure_ratio_2");
+			double pressure_ratio_3 = 1 / as_double("pressure_ratio_3");
+			int ncg_level = 2000;	//units: ppm
+			double ncg_flow = GF_flowrate * ncg_level / 1000000; //units: lb/h
+			double cwflow = as_double("cwflow");
+			//double total_head = as_double("total_head");
+			double condensate_pump_power = as_double("condensate_pump_power");
+			double cw_pump_head = as_double("cw_pump_head");
+			double spec_vol = as_double("spec_vol");
+			double spec_vol_lp = as_double("spec_vol_lp");
+			double x_hp = as_double("x_hp") / 100;		// %
+			double x_lp = as_double("x_lp") / 100;	// %
+			double hp_flash_pressure = as_double("hp_flash_pressure");
+			double lp_flash_pressure = as_double("lp_flash_pressure");
+			double flash_count = as_double("flash_count");
+			double design_temp = as_double("design_temp");
+
+			//T-G Cost:
+			tg_cost = (tg_sets_num * (2830 * (pow((unit_plant / tg_sets_num), 0.745)))) + (3685 * (pow((unit_plant / tg_sets_num), 0.617)));	//Reference Equipment Cost
+			current_tg_cost = tg_cost * turbine_ppi[20];
+
+			
+			//Cooling Tower Cost:
+			cooling_tower_cost = 7200 * (pow(qRejectTotal, 0.8));		//Reference Equipment Cost
+			current_tower_cost = cooling_tower_cost * process_equip_ppi[20];
+
+			//Condenser Cost: 
+			lmtd = (condenser_pinch_pt - (condenser_pinch_pt + dtCooling_water)) / (std::log(condenser_pinch_pt/(condenser_pinch_pt + dtCooling_water)));
+			area = qCondenser * 1000000 / (lmtd*condenser_u);
+			condenser_cost_flash = 102 * pow(area, 0.85);		//Reference Equipment Cost
+			current_condenser_cost = condenser_cost_flash * hx_ppi[20];
+					   			 		  		  					   			 
+			//Flash Vessel Calculation:
+			//HP Flash Cost Calculation:
+			m_stm = x_hp * 1000; // (lb / h)
+			hp_steam_flow = ((GF_flowrate/1000)* m_stm ) * spec_vol / 60;	// units: cfm
+			v_terminal = (-0.0009414 * pow(max_drop_size, 2) * std::log(hp_flash_pressure)) + (0.01096 * pow(max_drop_size, 2)); 
+			area_xsection_hp = hp_steam_flow / v_terminal; 
+			num_vessels = ceil(area_xsection_hp / 300); 
+			A = area_xsection_hp / num_vessels;
+			D = pow((A * 4 / M_PI), 0.5);
+			H = D * 3;
+			hp_flash_volume = A * H * 7.4805;
+			hp_flash_cost = num_vessels * ( (hp_flash_pressure < 75) ? 166.5 * pow(hp_flash_volume, 0.625) : 110 * pow(hp_flash_volume, 0.68) );
+
+			//LP Flash Cost Calculation: 
+			m_stm_lp = (flash_count == 2) ? (x_lp * 1000 * (1 - x_hp)) : 0;
+			lp_steam_flow = ((GF_flowrate / 1000)*m_stm_lp) * spec_vol_lp  / 60;	// (lb/h)
+			v_terminal_lp = (flash_count == 1)? 0 : ((-0.0009414 * pow(max_drop_size, 2) * std::log(lp_flash_pressure)) + (0.01096 * pow(max_drop_size , 2)));
+			a_xsection_lp = (flash_count == 1)? 0 : (lp_steam_flow / v_terminal_lp) ;
+			num_vessels_lp = ceil(a_xsection_lp / 300);
+			A_lp = (flash_count == 1) ? 0 : (a_xsection_lp / num_vessels_lp); 
+			D_lp = pow(( A_lp * 4 / M_PI), 0.5) ;
+			H_lp = D_lp * 3;
+			lp_flash_volume = A_lp * H_lp * 7.4805;
+			lp_flash_cost = (flash_count == 1) ? 0 : (num_vessels_lp * ((lp_flash_pressure < 75) ? (166.5 * pow(lp_flash_volume, 0.625)) : (110 * pow(lp_flash_volume, 0.68))));
+			
+			//Total Flash Vessel Cost:
+			flash_vessel_cost = hp_flash_cost + lp_flash_cost;		//Reference Equipment Cost
+			current_vessel_cost = flash_vessel_cost * process_equip_ppi[20];
+
+					   			 		  		  		 
+			//NCG Removal System Cost: //Reference Equipment Cost
+			//Vacuum Pump Cost breakdown:
+			vacuum_pump_1 = (v_stage_1 < 5000) ?  70000 * pow(v_stage_1, 0.34) : 7400 * pow( v_stage_1, 0.6);
+			vacuum_pump_2 = (v_stage_2 < 5000) ?  70000 * pow(v_stage_2, 0.34) : 7400 * pow(v_stage_2, 0.6);
+			vacuum_pump_3 = (v_stage_3 < 5000) ?  70000 * pow(v_stage_3, 0.34) : 7400 * pow(v_stage_3, 0.6);
+			vacuum_pump = vacuum_pump_1 + vacuum_pump_2 + vacuum_pump_3;
+			
+			//(NCG) Condensers Cost Breakdown:	//Reference Equipment Cost
+			cond_area_1 = (GF_flowrate / 1000) * (qRejectByStage_1 / (lmtd * 0.9 * U));
+			cond_area_2 = (GF_flowrate / 1000) * (qRejectByStage_2 / (lmtd * 0.9 * U));
+			cond_area_3 = (GF_flowrate / 1000) * (qRejectByStage_3 / (lmtd * 0.9 * U));
+			condenser_ncg = 322 * (pow(cond_area_1, 0.72) + pow(cond_area_2, 0.72) + pow(cond_area_3, 0.72));
+
+			//(NCG) Pumps Cost Calculation:	//Reference Equipment Cost
+			ncg_pump_work = (ncg_condensate_pump * GF_flowrate / 1000) / 0.7457;
+			ncg_water_pump = (cw_pump_work * GF_flowrate / 1000) / 0.7457;
+			pump_ncg = 2.35 * 1185 * (pow(ncg_pump_work, 0.767) + pow(ncg_water_pump,0.767));
+
+			//(NCG) Ejector Cost Calculation: (Note: According to lib_geothermal.cpp, ncg removal type is alwasy JET)	//Reference Equipment Cost
+			ejector_ncg = (76 * pow(pressure_ratio_1, (-0.45)) + 43 * pow(pressure_ratio_2, (-0.63)) + 43 * pow(pressure_ratio_3, (-0.63))) * ncg_flow ;
+			
+			//NCG total cost:	
+			ncg_cost = vacuum_pump + condenser_ncg + pump_ncg + ejector_ncg;		//Reference Equipment Cost
+			current_ncg_cost = ncg_cost * process_equip_ppi[20];
+
+			//Pump Cost Calculation:
+			condensate_pump = (GF_flowrate / 1000) * (condensate_pump_power * 1.34102);		//condensate_pump_power * 1.34102 is conversion from kW to hp
+			condensate = 2.35 * 1185 * pow(condensate_pump, 0.767);
+			cw_pump_power = (GF_flowrate / 1000) * ((((cwflow/60)*(cw_pump_head))/33000)/0.7);
+			cooling_water = 2.35 * 1185 * pow(cw_pump_power, 0.767);
+			pump_cost = condensate + cooling_water;		//Reference Equipment Cost
+			current_pump_cost = pump_cost * pump_ppi[20]; 
+
+
+			//H2S Removal System Cost Calculation:
+			h2s_flow = h2s_level * GF_flowrate / 1000000;
+			h2s_cost = 115000 * pow(h2s_flow, 0.58);		//Reference Equipment Cost
+			current_h2s_cost = h2s_cost * process_equip_ppi[20] ; 
+
+			//Total Equipment Cost: 
+			equip_cost_flash = tg_cost + cooling_tower_cost + condenser_cost_flash + flash_vessel_cost + ncg_cost + pump_cost + h2s_cost;
+			current_cost_flash = current_tg_cost + current_tower_cost + current_condenser_cost + current_vessel_cost + current_ncg_cost + current_pump_cost + current_h2s_cost; 
+			escalation_ppi = current_cost_flash / equip_cost_flash;
+
+			//Calculating Direct Cost Multiplier:
+			material_multiplier = 1 + ((8.65* pow(design_temp, -0.297)) - 1) * (process_equip_ppi[20] / escalation_ppi);
+			labor_multiplier = ((42.65 * pow(design_temp, -0.923)) * 1.45) * construction_ppi[20] / escalation_ppi; 
+			construction_multiplier = (16.177*pow(design_temp, -0.827)) * process_equip_ppi[20] / escalation_ppi;
+			direct_multiplier_2002 = material_multiplier + labor_multiplier + construction_multiplier ;
+			tax = ( material_multiplier + construction_multiplier) * sales_tax  ;
+			freight_flash = (material_multiplier + construction_multiplier) * freight ;
+			dc_cost_multiplier = direct_multiplier_2002 + tax + freight_flash;
+
+
+			//Direct Plant Construction Cost: 
+			direct_plant_cost = current_cost_flash * dc_cost_multiplier;	
+			baseline_cost = direct_plant_cost / unit_plant;		// ($/kW)
+
+			assign("baseline_cost", var_data(static_cast<ssc_number_t>(baseline_cost)));
+					  
+		}
 	};
 
 };
