@@ -10,6 +10,7 @@ protected:
 	SharedInverter* inv;
 	sandia_inverter_t sinv;
 	partload_inverter_t plinv;
+	ond_inverter ondinv;
 	double pAC = 100.;
 	double eff = 0.;
 	double loss = 0.;
@@ -21,7 +22,7 @@ public:
 		loss = 0.;
 	}
 	void SetUp() {
-		inv = new SharedInverter(0, 1, &sinv, &plinv);
+		inv = new SharedInverter(0, 1, &sinv, &plinv, &ondinv);
 	}
 	void TearDown() {
 		if (inv) delete inv;
