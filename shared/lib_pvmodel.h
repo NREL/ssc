@@ -159,9 +159,15 @@ public:
 	virtual bool operator() ( pvinput_t &input, double TcellC, double opvoltage, pvoutput_t &output);
 };
 
+#define AOI_MIN 0.5
+#define AOI_MAX 89.5
+
 double current_5par( double V, double IMR, double A, double IL, double IO, double RS, double RSH );
+double current_5par_rec(double V, double IMR, double A, double IL, double IO, double RS, double RSH, double D2MuTau, double Vbi);
 double openvoltage_5par( double Voc0, double a, double IL, double IO, double Rsh );
-double maxpower_5par( double Voc_ubound, double a, double Il, double Io, double Rs, double Rsh, double *Vmp=0, double *Imp=0 );
+double openvoltage_5par_rec(double Voc0, double a, double IL, double IO, double Rsh, double D2MuTau, double Vbi);
+double maxpower_5par( double Voc_ubound, double a, double Il, double Io, double Rs, double Rsh, double *Vmp=0, double *Imp=0);
+double maxpower_5par_rec(double Voc_ubound, double a, double Il, double Io, double Rs, double Rsh, double D2MuTau, double Vbi, double *__Vmp=0, double *__Imp=0);
 double air_mass_modifier( double Zenith_deg, double Elev_m, double a[5] );
 
 

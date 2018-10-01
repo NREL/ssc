@@ -95,14 +95,17 @@ void C_sco2_recomp_csp::design_core()
 	// using -> C_RecompCycle::S_auto_opt_design_hit_eta_parameters
 	std::string error_msg;
 	int auto_err_code = 0;
+	std::string s_cycle_config = "";
 
 	if (ms_des_par.m_cycle_config == 2)
 	{
 		mpc_sco2_cycle = &mc_partialcooling_cycle;
+		s_cycle_config = "partial cooling";
 	}
 	else
 	{
 		mpc_sco2_cycle = &mc_rc_cycle;
+		s_cycle_config = "recompression";
 	}
 
 	// Set min temp
@@ -110,10 +113,7 @@ void C_sco2_recomp_csp::design_core()
 	
 	if (ms_des_par.m_design_method == 1)
 	{
-		if(ms_des_par.m_cycle_config == 2)
-			throw(C_csp_exception("sCO2 partial cooling cycle and CSP integration design, design method can only be 1 (specify UA) for now"));
-
-		// Design the recompression cycle to hit a specified efficiency
+		// Design the cycle to hit a specified efficiency
 		// Define sCO2 cycle design parameter structure
 		ms_cycle_des_par.m_W_dot_net = ms_des_par.m_W_dot_net;		//[kWe]
 		ms_cycle_des_par.m_eta_thermal = ms_des_par.m_eta_thermal;	//[-]
@@ -125,15 +125,18 @@ void C_sco2_recomp_csp::design_core()
 				ms_cycle_des_par.m_T_mc_in - 273.15,
 				m_T_mc_in_min - 273.15);
 		}
+		ms_cycle_des_par.m_T_pc_in = ms_cycle_des_par.m_T_mc_in;		//[K]
 		ms_cycle_des_par.m_T_t_in = ms_des_par.m_T_htf_hot_in - ms_des_par.m_phx_dt_hot_approach;	//[K]
 		ms_cycle_des_par.m_DP_LT = ms_des_par.m_DP_LT;
 		ms_cycle_des_par.m_DP_HT = ms_des_par.m_DP_HT;
+		ms_cycle_des_par.m_DP_PC_pre = ms_des_par.m_DP_PC;
 		ms_cycle_des_par.m_DP_PC_main = ms_des_par.m_DP_PC;
 		ms_cycle_des_par.m_DP_PHX = ms_des_par.m_DP_PHX;
 		ms_cycle_des_par.m_LTR_eff_max = ms_des_par.m_LT_eff_max;
 		ms_cycle_des_par.m_HTR_eff_max = ms_des_par.m_HT_eff_max;
 		ms_cycle_des_par.m_eta_mc = ms_des_par.m_eta_mc;
 		ms_cycle_des_par.m_eta_rc = ms_des_par.m_eta_rc;
+		ms_cycle_des_par.m_eta_pc = ms_des_par.m_eta_pc;
 		ms_cycle_des_par.m_eta_t = ms_des_par.m_eta_t;
 		ms_cycle_des_par.m_N_sub_hxrs = ms_des_par.m_N_sub_hxrs;
 		ms_cycle_des_par.m_P_high_limit = ms_des_par.m_P_high_limit;
@@ -142,8 +145,18 @@ void C_sco2_recomp_csp::design_core()
 		ms_cycle_des_par.m_N_turbine = ms_des_par.m_N_turbine;
 		ms_cycle_des_par.m_is_recomp_ok = ms_des_par.m_is_recomp_ok;
 
+		ms_cycle_des_par.m_frac_fan_power = ms_des_par.m_frac_fan_power;			//[-]
+		ms_cycle_des_par.m_deltaP_cooler_frac = ms_des_par.m_deltaP_cooler_frac;	//[-]
+		ms_cycle_des_par.m_T_amb_des = ms_des_par.m_T_amb_des;						//[K]
+		ms_cycle_des_par.m_elevation = ms_des_par.m_elevation;						//[m]
+
 		ms_cycle_des_par.m_des_objective_type = ms_des_par.m_des_objective_type;		//[-]
 		ms_cycle_des_par.m_min_phx_deltaT = ms_des_par.m_min_phx_deltaT;				//[C]
+
+		ms_cycle_des_par.m_fixed_P_mc_out = ms_des_par.m_fixed_P_mc_out;	//[-]
+
+		ms_cycle_des_par.m_PR_mc_guess = ms_des_par.m_PR_mc_guess;		//[-]
+		ms_cycle_des_par.m_fixed_PR_mc = ms_des_par.m_fixed_PR_mc;		//[-]
 
 		ms_cycle_des_par.mf_callback_log = mf_callback_update;
 		ms_cycle_des_par.mp_mf_active = mp_mf_update;
@@ -154,7 +167,8 @@ void C_sco2_recomp_csp::design_core()
 	{
 		if (ms_des_par.m_UA_recup_tot_des < 0.0)
 		{
-			throw(C_csp_exception("sCO2 recompression cycle and CSP integration design, design method 2, conductance must be > 0"));
+			std::string ex_msg = "The " + s_cycle_config + " cycle and CSP integration design, design method 2, conductance must be > 0";
+			throw(C_csp_exception(ex_msg.c_str()));
 		}
 		
 		C_sco2_cycle_core::S_auto_opt_design_parameters des_params;
@@ -187,8 +201,15 @@ void C_sco2_recomp_csp::design_core()
 		des_params.m_opt_tol = ms_des_par.m_opt_tol;
 		des_params.m_N_turbine = ms_des_par.m_N_turbine;
 
+		des_params.m_frac_fan_power = ms_des_par.m_frac_fan_power;			//[-]
+		des_params.m_deltaP_cooler_frac = ms_des_par.m_deltaP_cooler_frac;	//[-]
+		des_params.m_T_amb_des = ms_des_par.m_T_amb_des;					//[K]
+		des_params.m_elevation = ms_des_par.m_elevation;					//[m]
+
 		des_params.m_des_objective_type = ms_des_par.m_des_objective_type;		//[-]
 		des_params.m_min_phx_deltaT = ms_des_par.m_min_phx_deltaT;				//[C]
+
+		des_params.m_fixed_P_mc_out = ms_des_par.m_fixed_P_mc_out;	//[-]
 
 		des_params.m_PR_mc_guess = ms_des_par.m_PR_mc_guess;		//[-]
 		des_params.m_fixed_PR_mc = ms_des_par.m_fixed_PR_mc;		//[-]
@@ -199,7 +220,8 @@ void C_sco2_recomp_csp::design_core()
 	}
 	else
 	{
-		throw(C_csp_exception("sCO2 partial cooling cycle and CSP integration design, design method can only be 1 (specify UA) for now"));
+		std::string ex_msg = "The " + s_cycle_config + "cycle and CSP integration design, design method can only be 1 (specify UA) for now";
+		throw(C_csp_exception(ex_msg.c_str()));
 	}
 
 	if (auto_err_code != 0)
@@ -209,24 +231,15 @@ void C_sco2_recomp_csp::design_core()
 
 	if (error_msg.empty())
 	{
-		mc_messages.add_notice("The partial cooling cycle design optimization was successful");
+		mc_messages.add_notice("The " + s_cycle_config + " cycle design optimization was successful");
 	}
 	else
 	{
-		string out_msg = "The sCO2 partial cooling cycle design optimization solved with the following warning(s):\n" + error_msg;
+		string out_msg = "The sCO2 " + s_cycle_config + " cycle design optimization solved with the following warning(s):\n" + error_msg;
 		mc_messages.add_notice(out_msg);
 	}
 
 	ms_des_solved.ms_rc_cycle_solved = *mpc_sco2_cycle->get_design_solved();
-
-	// Set air cooler design parameters that are dependent on the cycle design solution
-	ms_air_cooler_des_par_dep.m_T_hot_in_des = ms_des_solved.ms_rc_cycle_solved.m_temp[C_sco2_cycle_core::LTR_LP_OUT];
-	ms_air_cooler_des_par_dep.m_P_hot_in_des = ms_des_solved.ms_rc_cycle_solved.m_pres[C_sco2_cycle_core::LTR_LP_OUT];
-	ms_air_cooler_des_par_dep.m_m_dot_total = ms_des_solved.ms_rc_cycle_solved.m_m_dot_mc;		//[kg/s]
-		// This pressure drop is currently uncoupled from the cycle design
-	ms_air_cooler_des_par_dep.m_delta_P_des = ms_des_par.m_deltaP_cooler_frac*ms_des_solved.ms_rc_cycle_solved.m_pres[C_sco2_cycle_core::MC_OUT];
-	ms_air_cooler_des_par_dep.m_T_hot_out_des = ms_des_solved.ms_rc_cycle_solved.m_temp[C_sco2_cycle_core::MC_IN];
-	ms_air_cooler_des_par_dep.m_W_dot_fan_des = ms_des_par.m_frac_fan_power*ms_des_par.m_W_dot_net/1000.0;		//[MWe]
 
 	// Initialize the PHX
 	mc_phx.initialize(ms_des_par.m_hot_fl_code, ms_des_par.mc_hot_fl_props);
@@ -250,14 +263,6 @@ void C_sco2_recomp_csp::design_core()
 	
 	mc_phx.design_and_calc_m_dot_htf(ms_phx_des_par, q_dot_des_phx, ms_des_par.m_phx_dt_cold_approach, ms_des_solved.ms_phx_des_solved);
 
-	// Design the air cooler
-		// Define Independent Air Cooler Design Parameters
-	ms_air_cooler_des_par_ind.m_T_amb_des = ms_des_par.m_T_amb_des;		//[K]
-	ms_air_cooler_des_par_ind.m_elev = ms_des_par.m_elevation;			//[m]
-		// Add checks from Type 424 to the air cooler design code?
-
-	mc_air_cooler.design_hx(ms_air_cooler_des_par_ind, ms_air_cooler_des_par_dep);
-	
 	//*************************************************************************************
 	//*************************************************************************************
 

@@ -185,6 +185,17 @@ protected:
 
 public:
 
+	int m_cost_model;		//[-]
+
+	enum
+	{
+		// Techno-Economic Comparison of Solar-Driven SCO2 Brayton Cycles Using 
+		// Component Cost Models Baselined with Vendor Data and Estimates
+		// ASME ES 2017		
+		E_CARLSON_17_RECUP,		// CO2 - CO2 PCHE
+		E_CARLSON_17_PHX		// Salt - CO2 PCHE high temperature
+	};
+
 	struct S_init_par
 	{
 		int m_N_sub_hx;				//[-] Number of sub-heat exchangers used in the model
@@ -226,7 +237,9 @@ public:
 	struct S_des_solved
 	{
 		double m_Q_dot_design;		//[kWt] Design-point heat transfer
-		double m_UA_design_total;		//[kW/K] Design-point conductance
+		double m_UA_design_total;		//[kW/K] Allocated design-point conductance
+										//  .... off-design model scales 'm_UA_design_total'
+		double m_UA_calc_at_eff_max;	//[kW/K] May be less than design total if eff_max < 1
 		double m_min_DT_design;			//[K] Minimum temperature difference in heat exchanger
 		double m_eff_design;			//[-] Effectiveness at design
 		double m_NTU_design;			//[-] NTU at design
@@ -235,11 +248,15 @@ public:
 		double m_DP_cold_des;			//[kPa] cold fluid design pressure drop
 		double m_DP_hot_des;			//[kPa] hot fluid design pressure drop
 
+		double m_cost;				//[M$]
+
 		S_des_solved()
 		{
-			m_Q_dot_design = m_UA_design_total = m_min_DT_design = m_eff_design = m_NTU_design =
+			m_Q_dot_design = m_UA_design_total = m_UA_calc_at_eff_max =
+				m_min_DT_design = m_eff_design = m_NTU_design =
 				m_T_h_out = m_T_c_out =
-				m_DP_cold_des = m_DP_hot_des = std::numeric_limits<double>::quiet_NaN();
+				m_DP_cold_des = m_DP_hot_des =
+				m_cost = std::numeric_limits<double>::quiet_NaN();
 		}
 	};
 
@@ -331,6 +348,10 @@ public:
 
 	double od_UA(double m_dot_c /*kg/s*/, double m_dot_h /*kg/s*/); 
 
+	double calculate_cost(double UA /*kWt/K*/,
+		double T_hot_in /*K*/, double P_hot_in /*kPa*/, double m_dot_hot /*kg/s*/,
+		double T_cold_in /*K*/, double P_cold_in /*kPa*/, double m_dot_cold /*kg/s*/);
+
 	virtual void initialize(const S_init_par & init_par);
 
 };
@@ -343,6 +364,11 @@ private:
 
 
 public:
+
+	C_HX_co2_to_htf()
+	{
+		m_cost_model = C_HX_counterflow::E_CARLSON_17_PHX;
+	}
 
 	//// This method calculates the HTF mass flow rate (m_m_dot_hot_des) that results in CR = 1
 	//void design_with_m_dot(C_HX_counterflow::S_des_par &des_par, double T_htf_cold, C_HX_counterflow::S_des_solved &des_solved);
@@ -361,6 +387,11 @@ class C_HX_co2_to_co2 : public C_HX_counterflow
 {
 
 public:
+
+	C_HX_co2_to_co2()
+	{
+		m_cost_model = C_HX_counterflow::E_CARLSON_17_RECUP;
+	}
 
 	virtual void initialize(int N_sub_hx);
 
@@ -390,6 +421,16 @@ class C_CO2_to_air_cooler
 
 public:
 	
+	int m_cost_model;		//[-]
+
+	enum
+	{
+		// Techno-Economic Comparison of Solar-Driven SCO2 Brayton Cycles Using 
+		// Component Cost Models Baselined with Vendor Data and Estimates
+		// ASME ES 2017		
+		E_CARLSON_17		//[-]
+	};
+
 	// Class to save messages for up stream classes
 	C_csp_messages mc_messages;
 
@@ -431,8 +472,16 @@ public:
 		}
 	};
 
-	struct S_hx_design_solved
+	struct S_des_solved
 	{
+		// Design thermodynamic conditions
+		double m_m_dot_co2;	//[kg/s] Total CO2 flow rate
+		double m_T_in_co2;	//[K] Hot CO2 inlet temperature
+		double m_P_in_co2;	//[kPa] Hot CO2 inlet pressure
+		double m_T_out_co2;	//[K] Cold CO2 outlet temperature
+		double m_P_out_co2;	//[kPa] Cold CO2 outlet pressure
+		double m_q_dot;		//[Wt] Heat exchanger duty
+
 		// Design Ambient Conditions
 		double m_P_amb_des;		//[Pa]
 
@@ -452,14 +501,18 @@ public:
 		double m_L_node;	//[m] Tube length of one node
 		double m_V_node;	//[m3] Volume of one node
 
-		S_hx_design_solved()
+		double m_cost;		//[M$] Cost
+
+		S_des_solved()
 		{
 			m_N_passes = -1;
 
-			m_P_amb_des = m_d_out = m_d_in = m_Depth = m_W_par = m_N_par =
+			m_m_dot_co2 = m_T_in_co2 = m_P_in_co2 = m_T_out_co2 = m_P_out_co2 = m_q_dot =
+				m_P_amb_des = m_d_out = m_d_in = m_Depth = m_W_par = m_N_par =
 				m_N_tubes = m_L_tube = m_UA_total = 
 				m_V_material_total = m_V_total =
-				m_L_node = m_V_node = std::numeric_limits<double>::quiet_NaN();
+				m_L_node = m_V_node =
+				m_cost = std::numeric_limits<double>::quiet_NaN();
 		}
 	};
 
@@ -514,7 +567,7 @@ private:
 	S_des_par_ind ms_des_par_ind;
 	S_des_par_cycle_dep ms_des_par_cycle_dep;
 		// Out
-	S_hx_design_solved ms_hx_des_sol;
+	S_des_solved ms_hx_des_sol;
 
 public:
 
@@ -541,7 +594,7 @@ public:
 		return ms_hx_des_sol.m_V_material_total;
 	}
 
-	const C_CO2_to_air_cooler::S_hx_design_solved * get_design_solved()
+	const C_CO2_to_air_cooler::S_des_solved * get_design_solved()
 	{
 		return &ms_hx_des_sol;
 	}
@@ -764,6 +817,9 @@ public:
 	void calc_air_props(double T_amb /*K*/, double P_amb /*Pa*/,
 		double & mu_air /*kg/m-s*/, double & v_air /*1/m3*/, double & cp_air /*J/kg-K*/,
 		double & k_air /*W/m-K*/, double & Pr_air);
+
+	double calculate_cost(double UA /*kWt/K*/, double V_material /*m^3*/,
+		double T_hot_in /*K*/, double P_hot_in /*kPa*/, double m_dot_hot /*kg/s*/);
 };
 
 

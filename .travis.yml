@@ -57,7 +57,7 @@ install:
   
 branches:
   only:
+  - PVYield
+  - mppt
   - master
   - develop
-#  - weather_forecast
-  

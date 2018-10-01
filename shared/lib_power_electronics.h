@@ -54,6 +54,7 @@
 #include "lib_battery_powerflow.h"
 #include "lib_sandia.h"
 #include "lib_pvinv.h"
+#include "lib_ondinv.h"
 #include "lib_shared_inverter.h"
 
 

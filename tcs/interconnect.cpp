@@ -57,6 +57,71 @@ double pi = acos(-1.);
 double T_ref_K = 298.150;
 int NA_cpnt = -1;
 
+double FrictionFactor_FlexHose(double Re, double D) {
+	// Returns the friction factor for corrugated flex hose, model Witzenmann RS 330 / 331
+	//  (this model hose has average characteristics for the hoses with available data)
+	// see:
+	//		Witzenmann Metal Hose Manual
+	//		R. Gropp, Pforzheim, 1974. Flow resistance of flexible metallic lines
+	//		Excel spreadsheet Flex_hose_interpolation_test.xlsx
+
+	assert(Re > 6000);
+    double ff;
+	double d_in_mm = D * 1.e3;					// convert diameter from m to mm for use in the models
+
+	// Boundaries for the turbulent transition region, set by low and high Reynold's numbers for each hose diameter
+	const double D_lo_mm = 6.;				// low diameter, mm
+	const double Re_lo_D_lo = 3.46e4;       // Re at low transition point for low diameter
+	const double ff_lo_D_lo = 9.92e-2;      // ff at low transition point for low diameter
+	const double Re_hi_D_lo = 1.24e5;       // Re at high transition point for low diameter
+	const double ff_hi_D_lo = 2.21e-1;      // ff at high transition point for low diameter
+	const double D_hi_mm = 150.;			// high diameter, mm
+	const double Re_lo_D_hi = 1.37e5;       // Re at low transition point for high diameter
+    const double ff_lo_D_hi = 5.48e-2;      // ff at low transition point for high diameter
+    const double Re_hi_D_hi = 4.97e5;       // Re at high transition point for high diameter
+    const double ff_hi_D_hi = 9.86e-2;      // ff at high transition point for high diameter
+
+	// Reynold's number turbulent transition points as function of diameter [mm]
+	double Re_lo_D_in;								// Low Re transition point
+	const double m_Re_lo = 3.00e4;					// scale term in model
+	const double b_incpt_Re_lo = -1.10e4;			// intercept
+	Re_lo_D_in = m_Re_lo * log(d_in_mm) + b_incpt_Re_lo;		// log is natural log
+
+	double Re_hi_D_in;								// High Re transition point
+	const double m_Re_hi = 1.12e5;					// scale term in model
+	const double b_incpt_Re_hi = -6.40e4;			// intercept
+	Re_hi_D_in = m_Re_hi * log(d_in_mm) + b_incpt_Re_hi;		// log is natural log
+
+
+	// Friction factor at turbulent transition points as function of Re transition point and diameter [mm]
+	double m_ff_vs_Re_lo;							// slope of Re loci vs. ff at low transition point
+	double ff_lo_D_in;								// friction factor at low transition point
+	m_ff_vs_Re_lo = (log10(ff_lo_D_hi) - log10(ff_lo_D_lo)) / (log10(Re_lo_D_hi) - log10(Re_lo_D_lo));
+	ff_lo_D_in = pow(10, log10(ff_lo_D_lo) + m_ff_vs_Re_lo * (log10(Re_lo_D_in) - log10(Re_lo_D_lo)));
+
+	double m_ff_vs_Re_hi;							// slope of Re loci vs. ff at high transition point
+	double ff_hi_D_in;								// friction factor at high transition point
+	m_ff_vs_Re_hi = (log10(ff_hi_D_hi) - log10(ff_hi_D_lo)) / (log10(Re_hi_D_hi) - log10(Re_hi_D_lo));
+	ff_hi_D_in = pow(10, log10(ff_hi_D_lo) + m_ff_vs_Re_hi * (log10(Re_hi_D_in) - log10(Re_hi_D_lo)));
+
+
+	// Friction factor on transition line as function of Re and D [mm]
+	//   values are constant beyond transition line
+    double slope;                                   // slope of transition line for input diameter
+    slope = (log10(ff_hi_D_in) - log10(ff_lo_D_in)) / (log10(Re_hi_D_in) - log10(Re_lo_D_in));
+    if (Re < Re_lo_D_in) {
+        ff = ff_lo_D_in;
+    }
+    else if (Re > Re_hi_D_in) {
+        ff = ff_hi_D_in;
+    }
+    else {
+        ff = pow(10, log10(ff_lo_D_in) + slope * (log10(Re) - log10(Re_lo_D_in)));
+    }
+
+	return ff;
+}
+
 IntcOutputs::IntcOutputs() {
     heat_loss = 0;
     temp_drop = 0;
@@ -262,9 +327,14 @@ double intc_cpnt::PressureDrop(HTFProperties *fluidProps, double m_dot, double T
             ff = CSP::FrictionFactor(rough_ / d_in_, Re);
             return CSP::MajorPressureDrop(vel, rho, ff, l_, d_in_);
         case CpntType::Flex_Hose:
-            // TODO : Differentiate this pressure drop relation for flex hoses
             Re = fluidProps->Re(T_htf_ave, P_htf_ave, vel, d_in_);
-            ff = CSP::FrictionFactor(rough_ / d_in_, Re);
+			if (Re < 6000) {
+				ff = CSP::FrictionFactor(rough_ / d_in_, Re);  // call standard pipe friction factor function
+			}
+			else {
+				ff = FrictionFactor_FlexHose(Re, d_in_);
+                // TODO : Implement resistance coefficient for a curved installation
+			}
             return CSP::MajorPressureDrop(vel, rho, ff, l_, d_in_);
         default:
             throw std::invalid_argument("This component type has no pressure drop calculation.");

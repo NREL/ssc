@@ -401,7 +401,7 @@ PVSystem_IO::PVSystem_IO(compute_module* cm, std::string cmName, Simulation_IO *
 	enableACLifetimeLosses = cm->as_boolean("en_ac_lifetime_losses");
 
 	// The shared inverter of the PV array and a tightly-coupled DC connected battery
-	std::unique_ptr<SharedInverter> tmpSharedInverter(new SharedInverter(Inverter->inverterType, numberOfInverters, &Inverter->sandiaInverter, &Inverter->partloadInverter));
+	std::unique_ptr<SharedInverter> tmpSharedInverter(new SharedInverter(Inverter->inverterType, numberOfInverters, &Inverter->sandiaInverter, &Inverter->partloadInverter, &Inverter->ondInverter));
 	m_sharedInverter = std::move(tmpSharedInverter);
 	
 	// Register shared inverter with inverter_IO
@@ -447,8 +447,18 @@ PVSystem_IO::PVSystem_IO(compute_module* cm, std::string cmName, Simulation_IO *
 	transformerNoLoadLossFraction = cm->as_number("transformer_no_load_loss") *(ssc_number_t)(util::percent_to_fraction);
 
 	// MPPT
-	voltageMpptLow1Module = cm->as_double("mppt_low_inverter") / modulesPerString;
-	voltageMpptHi1Module = cm->as_double("mppt_hi_inverter") / modulesPerString;
+	int inverterType = cm->as_integer("inverter_model");
+	if (inverterType == 4)
+	{
+		voltageMpptLow1Module = cm->as_double("ond_VMppMin") / modulesPerString;
+		voltageMpptHi1Module = cm->as_double("ond_VMppMax") / modulesPerString;
+	}
+	else 
+	{
+		voltageMpptLow1Module = cm->as_double("mppt_low_inverter") / modulesPerString;
+		voltageMpptHi1Module = cm->as_double("mppt_hi_inverter") / modulesPerString;
+	}
+
 	clipMpptWindow = false;
 
 	if (voltageMpptLow1Module > 0 && voltageMpptHi1Module > voltageMpptLow1Module)
@@ -456,7 +466,8 @@ PVSystem_IO::PVSystem_IO(compute_module* cm, std::string cmName, Simulation_IO *
 		int moduleType = Subarrays[0]->Module->moduleType;
 		if (moduleType == 1     // cec with database
 			|| moduleType == 2   // cec with user specs
-			|| moduleType == 4) // iec61853 single diode
+			|| moduleType == 4 // iec61853 single diode
+			|| moduleType == 5) // PVYield single diode
 		{
 			clipMpptWindow = true;
 		}
@@ -551,6 +562,7 @@ void PVSystem_IO::AllocateOutputs(compute_module* cm)
 	p_inverterPowerConsumptionLoss = cm->allocate("inv_psoloss", numberOfWeatherFileRecords);
 	p_inverterNightTimeLoss = cm->allocate("inv_pntloss", numberOfWeatherFileRecords);
 	p_inverterThermalLoss = cm->allocate("inv_tdcloss", numberOfWeatherFileRecords);
+	p_inverterTotalLoss = cm->allocate("inv_total_loss", numberOfWeatherFileRecords);
 
 	p_acWiringLoss = cm->allocate("ac_wiring_loss", numberOfWeatherFileRecords);
 	p_transmissionLoss = cm->allocate("ac_transmission_loss", numberOfWeatherFileRecords);
@@ -919,6 +931,101 @@ Module_IO::Module_IO(compute_module* cm, std::string cmName, double dcLoss)
 		selfShadingFillFactor = elevenParamSingleDiodeModel.Vmp0 * elevenParamSingleDiodeModel.Imp0 / elevenParamSingleDiodeModel.Voc0 / elevenParamSingleDiodeModel.Isc0;
 		voltageMaxPower = elevenParamSingleDiodeModel.Vmp0;
 	}
+	else if (moduleType == MODULE_PVYIELD)
+	{
+		// Mermoud/Lejeune single-diode model
+		size_t elementCount1 = 0;
+		size_t elementCount2 = 0;
+		ssc_number_t *arrayIncAngle = 0;
+		ssc_number_t *arrayIamValue = 0;
+
+		mlModuleModel.N_series = cm->as_integer("mlm_N_series");
+		mlModuleModel.N_parallel = cm->as_integer("mlm_N_parallel");
+		mlModuleModel.N_diodes = cm->as_integer("mlm_N_diodes");
+		mlModuleModel.Width = cm->as_double("mlm_Width");
+		mlModuleModel.Length = cm->as_double("mlm_Length");
+		mlModuleModel.V_mp_ref = cm->as_double("mlm_V_mp_ref");
+		mlModuleModel.I_mp_ref = cm->as_double("mlm_I_mp_ref");
+		mlModuleModel.V_oc_ref = cm->as_double("mlm_V_oc_ref");
+		mlModuleModel.I_sc_ref = cm->as_double("mlm_I_sc_ref");
+		mlModuleModel.S_ref = cm->as_double("mlm_S_ref");
+		mlModuleModel.T_ref = cm->as_double("mlm_T_ref");
+		mlModuleModel.R_shref = cm->as_double("mlm_R_shref");
+		mlModuleModel.R_sh0 = cm->as_double("mlm_R_sh0");
+		mlModuleModel.R_shexp = cm->as_double("mlm_R_shexp");
+		mlModuleModel.R_s = cm->as_double("mlm_R_s");
+		mlModuleModel.alpha_isc = cm->as_double("mlm_alpha_isc");
+		mlModuleModel.beta_voc_spec = cm->as_double("mlm_beta_voc_spec");
+		mlModuleModel.E_g = cm->as_double("mlm_E_g");
+		mlModuleModel.n_0 = cm->as_double("mlm_n_0");
+		mlModuleModel.mu_n = cm->as_double("mlm_mu_n");
+		mlModuleModel.D2MuTau = cm->as_double("mlm_D2MuTau");
+		mlModuleModel.T_mode = cm->as_integer("mlm_T_mode");
+		mlModuleModel.T_c_no_tnoct = cm->as_double("mlm_T_c_no_tnoct");
+		mlModuleModel.T_c_no_mounting = cm->as_integer("mlm_T_c_no_mounting");
+		mlModuleModel.T_c_no_standoff = cm->as_integer("mlm_T_c_no_standoff");
+		mlModuleModel.T_c_fa_alpha = cm->as_double("mlm_T_c_fa_alpha");
+		mlModuleModel.T_c_fa_U0 = cm->as_double("mlm_T_c_fa_U0");
+		mlModuleModel.T_c_fa_U1 = cm->as_double("mlm_T_c_fa_U1");
+		mlModuleModel.AM_mode = cm->as_integer("mlm_AM_mode");
+		mlModuleModel.AM_c_sa[0] = cm->as_double("mlm_AM_c_sa0");
+		mlModuleModel.AM_c_sa[1] = cm->as_double("mlm_AM_c_sa1");
+		mlModuleModel.AM_c_sa[2] = cm->as_double("mlm_AM_c_sa2");
+		mlModuleModel.AM_c_sa[3] = cm->as_double("mlm_AM_c_sa3");
+		mlModuleModel.AM_c_sa[4] = cm->as_double("mlm_AM_c_sa4");
+		mlModuleModel.AM_c_lp[0] = cm->as_double("mlm_AM_c_lp0");
+		mlModuleModel.AM_c_lp[1] = cm->as_double("mlm_AM_c_lp0");
+		mlModuleModel.AM_c_lp[2] = cm->as_double("mlm_AM_c_lp0");
+		mlModuleModel.AM_c_lp[3] = cm->as_double("mlm_AM_c_lp0");
+		mlModuleModel.AM_c_lp[4] = cm->as_double("mlm_AM_c_lp0");
+		mlModuleModel.AM_c_lp[5] = cm->as_double("mlm_AM_c_lp0");
+		mlModuleModel.IAM_mode = cm->as_integer("mlm_IAM_mode");
+		mlModuleModel.IAM_c_as = cm->as_double("mlm_IAM_c_as");
+		mlModuleModel.IAM_c_sa[0] = cm->as_double("mlm_IAM_c_sa0");
+		mlModuleModel.IAM_c_sa[1] = cm->as_double("mlm_IAM_c_sa1");
+		mlModuleModel.IAM_c_sa[2] = cm->as_double("mlm_IAM_c_sa2");
+		mlModuleModel.IAM_c_sa[3] = cm->as_double("mlm_IAM_c_sa3");
+		mlModuleModel.IAM_c_sa[4] = cm->as_double("mlm_IAM_c_sa4");
+		mlModuleModel.IAM_c_sa[5] = cm->as_double("mlm_IAM_c_sa5");
+		mlModuleModel.groundRelfectionFraction = cm->as_double("mlm_groundRelfectionFraction");
+
+		arrayIncAngle = cm->as_array("mlm_IAM_c_cs_incAngle", &elementCount1);
+		arrayIamValue = cm->as_array("mlm_IAM_c_cs_iamValue", &elementCount2);
+		mlModuleModel.IAM_c_cs_elements = (int)elementCount1; // as_integer("mlm_IAM_c_cs_elements");
+
+		if (mlModuleModel.IAM_mode == 3)
+		{
+			if (elementCount1 != elementCount2)
+			{
+				throw compute_module::exec_error(cmName, "Spline IAM: Number of entries for incidence angle and IAM value different.");
+			}
+			for (int i = 0; i <= mlModuleModel.IAM_c_cs_elements - 1; i = i + 1) {
+				mlModuleModel.IAM_c_cs_incAngle[i] = arrayIncAngle[i];
+				mlModuleModel.IAM_c_cs_iamValue[i] = arrayIamValue[i];
+			}
+		}
+		if (mlModuleModel.T_mode == 1) {
+			setupNOCTModel(cm,"mlm_T_c_no");
+			cellTempModel = &nominalOperatingCellTemp;
+		}
+		else if (mlModuleModel.T_mode == 2) {
+			cellTempModel = &mockCellTemp;
+		}
+		else {
+			throw compute_module::exec_error(cmName, "invalid temperature model type");
+		}
+
+		mlModuleModel.initializeManual();
+
+
+		moduleModel = &mlModuleModel;
+		moduleWattsSTC = mlModuleModel.V_oc_ref * mlModuleModel.I_mp_ref;
+		referenceArea = mlModuleModel.Width * mlModuleModel.Length;
+		selfShadingFillFactor = mlModuleModel.V_mp_ref * mlModuleModel.I_mp_ref / mlModuleModel.V_oc_ref / mlModuleModel.I_sc_ref;
+		voltageMaxPower = mlModuleModel.V_mp_ref;
+
+
+	}
 	else
 		throw compute_module::exec_error(cmName, "invalid pv module model type");
 }
@@ -1009,6 +1116,68 @@ Inverter_IO::Inverter_IO(compute_module *cm, std::string cmName)
 		sandiaInverter.C2 = cm->as_double("inv_cec_cg_c2");
 		sandiaInverter.C3 = cm->as_double("inv_cec_cg_c3");
 		ratedACOutput = sandiaInverter.Paco;
+	}
+	else if (inverterType == 4) // PVYield (ondInverter)
+	{
+		size_t elementCount = 0;
+		size_t rows = 0;
+		size_t cols = 0;
+		ssc_number_t *VNomEffArray;
+		ssc_number_t *effCurve_PdcArray;
+		ssc_number_t *effCurve_PacArray;
+		ssc_number_t *effCurve_etaArray;
+
+		ondInverter.PNomConv = cm->as_double("ond_PNomConv");
+		ondInverter.PMaxOUT = cm->as_double("ond_PMaxOUT");
+		ondInverter.VOutConv = cm->as_double("ond_VOutConv");
+		ondInverter.VMppMin = cm->as_double("ond_VMppMin");
+		ondInverter.VMPPMax = cm->as_double("ond_VMPPMax");
+		ondInverter.VAbsMax = cm->as_double("ond_VAbsMax");
+		ondInverter.PSeuil = cm->as_double("ond_PSeuil");
+		ondInverter.ModeOper = cm->as_string("ond_ModeOper");
+		ondInverter.CompPMax = cm->as_string("ond_CompPMax");
+		ondInverter.CompVMax = cm->as_string("ond_CompVMax");
+		ondInverter.ModeAffEnum = cm->as_string("ond_ModeAffEnum");
+		ondInverter.PNomDC = cm->as_double("ond_PNomDC");
+		ondInverter.PMaxDC = cm->as_double("ond_PMaxDC");
+		ondInverter.IMaxDC = cm->as_double("ond_IMaxDC");
+		ondInverter.INomDC = cm->as_double("ond_INomDC");
+		ondInverter.INomAC = cm->as_double("ond_INomAC");
+		ondInverter.IMaxAC = cm->as_double("ond_IMaxAC");
+		ondInverter.TPNom = cm->as_double("ond_TPNom");
+		ondInverter.TPMax = cm->as_double("ond_TPMax");
+		ondInverter.TPLim1 = cm->as_double("ond_TPLim1");
+		ondInverter.TPLimAbs = cm->as_double("ond_TPLimAbs");
+		ondInverter.PLim1 = cm->as_double("ond_PLim1");
+		ondInverter.PLimAbs = cm->as_double("ond_PLimAbs");
+		VNomEffArray = cm->as_array("ond_VNomEff", &elementCount);
+		ondInverter.NbInputs = cm->as_integer("ond_NbInputs");
+		ondInverter.NbMPPT = cm->as_integer("ond_NbMPPT");
+		ondInverter.Aux_Loss = cm->as_double("ond_Aux_Loss");
+		ondInverter.Night_Loss = cm->as_double("ond_Night_Loss");
+		ondInverter.lossRDc = cm->as_double("ond_lossRDc");
+		ondInverter.lossRAc = cm->as_double("ond_lossRAc");
+		ondInverter.effCurve_elements = cm->as_integer("ond_effCurve_elements");
+		effCurve_PdcArray = cm->as_matrix("ond_effCurve_Pdc", &rows, &cols);
+		effCurve_PacArray = cm->as_matrix("ond_effCurve_Pac", &rows, &cols);
+		effCurve_etaArray = cm->as_matrix("ond_effCurve_eta", &rows, &cols);
+		ondInverter.doAllowOverpower = cm->as_integer("ond_doAllowOverpower");
+		ondInverter.doUseTemperatureLimit = cm->as_integer("ond_doUseTemperatureLimit");
+		int matrixIndex;
+		const int MAX_ELEMENTS = 100;
+		for (int i = 0; i <= 2; i = i + 1) {
+			ondInverter.VNomEff[i] = VNomEffArray[i];
+			for (int j = 0; j <= MAX_ELEMENTS - 1; j = j + 1) {
+				matrixIndex = i * MAX_ELEMENTS + j;
+				ondInverter.effCurve_Pdc[i][j] = effCurve_PdcArray[matrixIndex];
+				ondInverter.effCurve_Pac[i][j] = effCurve_PacArray[matrixIndex];
+				ondInverter.effCurve_eta[i][j] = effCurve_etaArray[matrixIndex];
+			}
+		}
+
+		ondInverter.initializeManual();
+		ratedACOutput = ondInverter.PNomConv;
+
 	}
 	else
 	{
