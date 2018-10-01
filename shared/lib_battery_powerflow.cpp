@@ -348,7 +348,7 @@ void BatteryPowerFlow::calculateDCConnected()
 	}
 
 	// compute losses
-	P_conversion_loss_ac = P_gen_dc * util::watt_to_kilowatt - P_gen_ac + P_battery_dc_pre_bms - P_battery_dc;
+	P_conversion_loss_ac = P_gen_dc - P_gen_ac + P_battery_dc_pre_bms - P_battery_dc;
 	
 	// Compute total system output and grid power flow, inverter draw is built into P_pv_ac
 	P_grid_to_load_ac = P_load_ac - P_pv_to_load_ac - P_batt_to_load_ac;
