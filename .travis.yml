@@ -56,7 +56,6 @@ install:
   #- if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then export PATH="/usr/local/opt/ccache/libexec:$PATH"; fi 
   
 branches:
-  only:
   - master
   - develop
   - PVYield
