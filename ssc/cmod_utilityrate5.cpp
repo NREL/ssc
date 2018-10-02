@@ -258,8 +258,8 @@ static var_info vtab_utility_rate5[] = {
 
 	// added for monthly bill balancing per 12/14/16 meeting
 	{ SSC_OUTPUT, SSC_MATRIX, "charge_w_sys_ec_gross_ym", "Energy charge with system before credits", "$", "", "Charges by Month", "*", "", "COL_LABEL=MONTHS,FORMAT_SPEC=CURRENCY,GROUP=UR_AM" },
-	{ SSC_OUTPUT, SSC_MATRIX, "excess_kwhs_applied_ym", "Excess generation $ credit applied", "$", "", "Charges by Month", "*", "", "COL_LABEL=MONTHS,FORMAT_SPEC=CURRENCY,GROUP=UR_AM" },
-	{ SSC_OUTPUT, SSC_MATRIX, "excess_kwhs_earned_ym", "Excess generation $ credit earned", "$", "", "Charges by Month", "*", "", "COL_LABEL=MONTHS,FORMAT_SPEC=CURRENCY,GROUP=UR_AM" },
+	{ SSC_OUTPUT, SSC_MATRIX, "excess_dollars_applied_ym", "Excess generation $ credit applied", "$", "", "Charges by Month", "*", "", "COL_LABEL=MONTHS,FORMAT_SPEC=CURRENCY,GROUP=UR_AM" },
+	{ SSC_OUTPUT, SSC_MATRIX, "excess_dollars_earned_ym", "Excess generation $ credit earned", "$", "", "Charges by Month", "*", "", "COL_LABEL=MONTHS,FORMAT_SPEC=CURRENCY,GROUP=UR_AM" },
 	{ SSC_OUTPUT, SSC_MATRIX, "excess_kwhs_applied_ym", "Excess generation kWh credit applied", "kWh", "", "Charges by Month", "*", "", "COL_LABEL=MONTHS,FORMAT_SPEC=CURRENCY,GROUP=UR_AM" },
 	{ SSC_OUTPUT, SSC_MATRIX, "excess_kwhs_earned_ym", "Excess generation kWh credit earned", "kWh", "", "Charges by Month", "*", "", "COL_LABEL=MONTHS,FORMAT_SPEC=CURRENCY,GROUP=UR_AM" },
 
@@ -914,7 +914,7 @@ public:
 								if (ndx > -1 && ndx < (int)m_month[irow - 1].dc_tou_peak.size())
 									monthly_tou_demand_peak_wo_sys.at(irow, icol) = m_month[irow - 1].dc_tou_peak[ndx];
 								if (ndx > -1 && ndx < (int)m_month[irow - 1].dc_tou_charge.size())
-									monthly_tou_demand_charge_wo_sys.at(irow, icol) = m_month[irow - 1].dc_tou_charge[ndx];
+									monthly_tou_demand_charge_wo_sys.at(irow, icol) = (float)m_month[irow - 1].dc_tou_charge[ndx];
 							}
 						}
 					}
@@ -1175,7 +1175,7 @@ public:
 								if (ndx > -1 && ndx < (int)m_month[irow - 1].dc_tou_peak.size())
 									monthly_tou_demand_peak_w_sys.at(irow, icol) = m_month[irow - 1].dc_tou_peak[ndx];
 								if (ndx > -1 && ndx < (int)m_month[irow - 1].dc_tou_charge.size())
-									monthly_tou_demand_charge_w_sys.at(irow, icol) = m_month[irow - 1].dc_tou_charge[ndx];
+									monthly_tou_demand_charge_w_sys.at(irow, icol) = (float)m_month[irow - 1].dc_tou_charge[ndx];
 							}
 						}
 					}
@@ -1306,7 +1306,7 @@ public:
 				excess_dollars_applied_ym[(i + 1) * 12 + j] = monthly_excess_dollars_applied[j];
 				excess_dollars_earned_ym[(i + 1) * 12 + j] = monthly_excess_dollars_earned[j];
 				excess_kwhs_applied_ym[(i + 1) * 12 + j] = monthly_excess_kwhs_applied[j];
-				excess_kwhs_earned_ym[(i + 1) * 12 + j] = monthly_excess_dollars_earned[j];
+				excess_kwhs_earned_ym[(i + 1) * 12 + j] = monthly_excess_kwhs_earned[j];
 
 				ch_w_sys_fixed_ym[(i + 1) * 12 + j] = monthly_fixed_charges[j];
 				ch_w_sys_minimum_ym[(i + 1) * 12 + j] = monthly_minimum_charges[j];
