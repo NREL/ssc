@@ -40,7 +40,6 @@ void pvsamv_nofinancial_default(ssc_data_t &data)
 	ssc_data_set_number(data, "irrad_mode", 0);
 	ssc_data_set_number(data, "sky_model", 2);
 	ssc_data_set_number(data, "subarray1_modules_per_string", 7);
-	ssc_data_set_number(data, "subarray1_mppt_input", 1);
 	ssc_data_set_number(data, "subarray2_modules_per_string", 7);
 	ssc_data_set_number(data, "subarray3_modules_per_string", 7);
 	ssc_data_set_number(data, "subarray4_modules_per_string", 7);

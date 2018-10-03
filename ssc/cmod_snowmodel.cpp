@@ -145,7 +145,7 @@ public:
 		float loss; 
 
 		for (int i = 0; i < 8760; i++){
-			if (!snowModule.getLoss(poa[i], tilt[i], wSpd[i], tAmb[i], sDep[i], (int)sunup[i], 1.0, &loss)){
+			if (!snowModule.getLoss(poa[i], tilt[i], wSpd[i], tAmb[i], sDep[i], (int)sunup[i], 1.0, loss)){
 				if (snowModule.good) log(snowModule.msg, SSC_WARNING);
 				else{
 					log(snowModule.msg, SSC_ERROR);

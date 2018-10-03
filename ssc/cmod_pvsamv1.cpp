@@ -585,7 +585,6 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray1_dc_voltage",                 "Subarray 1 Operating voltage",                                         "V",      "", "Time Series (Subarray 1)",       "*",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray1_voc",                        "Subarray 1 Open circuit voltage",                                      "V",      "", "Time Series (Subarray 1)",       "",                     "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray1_isc",                        "Subarray 1 Short circuit current",                                     "A",      "", "Time Series (Subarray 1)",       "",                     "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray1_dc_gross",                   "Subarray 1 DC Power Gross",                                            "kW",      "", "Time Series (Subarray 1)",       "",                     "",                              "" },
 
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray2_surf_tilt",                  "Subarray 2 Surface tilt",                                              "deg",    "", "Time Series (Subarray 2)",       "",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray2_surf_azi",                   "Subarray 2 Surface azimuth",                                           "deg",    "", "Time Series (Subarray 2)",       "",                    "",                              "" },
@@ -615,7 +614,6 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray2_dc_voltage",                 "Subarray 2 Operating voltage",                                         "V",      "", "Time Series (Subarray 2)",       "",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray2_voc",                        "Subarray 2 Open circuit voltage",                                      "V",      "", "Time Series (Subarray 2)",       "",                     "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray2_isc",                        "Subarray 2 Short circuit current",                                     "A",      "", "Time Series (Subarray 2)",       "",                     "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray2_dc_gross",                   "Subarray 2 DC Power Gross",                                            "kW",     "", "Time Series (Subarray 2)",       "",                     "",                              "" },
 
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray3_surf_tilt",                  "Subarray 3 Surface tilt",                                              "deg",    "", "Time Series (Subarray 3)",       "",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray3_surf_azi",                   "Subarray 3 Surface azimuth",                                           "deg",    "", "Time Series (Subarray 3)",       "",                    "",                              "" },
@@ -645,7 +643,6 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray3_dc_voltage",                 "Subarray 3 Operating voltage",                                         "V",      "", "Time Series (Subarray 3)",       "",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray3_voc",                        "Subarray 3 Open circuit voltage",                                      "V",      "", "Time Series (Subarray 3)",       "",                     "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray3_isc",                        "Subarray 3 Short circuit current",                                     "A",      "", "Time Series (Subarray 3)",       "",                     "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray3_dc_gross",                   "Subarray 3 DC Power Gross",                                            "kW",     "", "Time Series (Subarray 3)",       "",                     "",                              "" },
 
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray4_surf_tilt",                  "Subarray 4 Surface tilt",                                              "deg",    "", "Time Series (Subarray 4)",       "",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray4_surf_azi",                   "Subarray 4 Surface azimuth",                                           "deg",    "", "Time Series (Subarray 4)",       "",                    "",                              "" },
@@ -675,8 +672,6 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray4_dc_voltage",                 "Subarray 4 Operating voltage",                                         "V",      "", "Time Series (Subarray 4)",       "",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray4_voc",                        "Subarray 4 Open circuit voltage",                                      "V",      "", "Time Series (Subarray 4)",       "",                     "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray4_isc",                        "Subarray 4 Short circuit current",                                     "A",      "", "Time Series (Subarray 4)",       "",                     "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray4_dc_gross",                   "Subarray 4 DC Power Gross",                                            "kW",     "", "Time Series (Subarray 4)",       "",                     "",                              "" },
-
 
 /* aggregate array level outputs */
 	{ SSC_OUTPUT,        SSC_ARRAY,      "poa_nom",                              "Array POA front-side total radiation nominal",                    "kW",   "",  "Time Series (Array)",       "*",                    "",                              "" },
@@ -1445,7 +1440,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 						double shadedb_str_vmp_stc = Subarrays[nn]->nModulesPerString * Subarrays[nn]->Module->voltageMaxPower;
 						double shadedb_mppt_lo = PVSystem->Inverter->mpptLowVoltage;
 						double shadedb_mppt_hi = PVSystem->Inverter->mpptHiVoltage;
-
+						 
 						/// shading database if necessary
 						smart_ptr<ShadeDB8_mpp>::ptr  p_shade_db;
 						if (!Subarrays[nn]->shadeCalculator.fbeam_shade_db(p_shade_db, hour, solalt, solazi, jj, step_per_hour, shadedb_gpoa, shadedb_dpoa, tcell, Subarrays[nn]->nModulesPerString, shadedb_str_vmp_stc, shadedb_mppt_lo, shadedb_mppt_hi))
@@ -1664,7 +1659,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 				//Calculate power of each MPPT input
 				for (int mpptInput = 0; mpptInput < PVSystem->Inverter->nMpptInputs; mpptInput++) //remember that actual named mppt inputs are 1-indexed, and these are 0-indexed
 				{
-					int nSubarraysOnMpptInput = PVSystem->mpptMapping[mpptInput].size(); //number of subarrays attached to this MPPT input
+					int nSubarraysOnMpptInput = (int)(PVSystem->mpptMapping[mpptInput].size()); //number of subarrays attached to this MPPT input
 					std::vector<int> SubarraysOnMpptInput = PVSystem->mpptMapping[mpptInput]; //vector of which subarrays are attached to this MPPT input
 
 					//string voltage value from which module voltage will be calculated
@@ -1674,7 +1669,6 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 					//string voltage for this MPPT input- if 1 subarray, this will be the string voltage. if >1 subarray and mismatch enabled, this
 					//will be the string voltage found by the mismatch calculation. if >1 subarray and mismatch not enabled, this will be the average
 					//voltage of the strings from all the subarrays on this mppt input.
-					double mpptInputVoltage = 0.0;
 
 					//mismatch calculations assume that the inverter MPPT operates all strings on that MPPT input at the same voltage.
 					//this algorithm sweeps across a range of string voltages, calculating total power for all strings on this MPPT input at each voltage.
@@ -1834,7 +1828,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 					else
 					{
 						//create temporary values to calculate the weighted average string voltage
-						int nStrings = 0;
+						size_t nStrings = 0;
 						double totalVoltage = 0;						
 						for (int nSubarray = 0; nSubarray < nSubarraysOnMpptInput; nSubarray++)
 						{
@@ -1842,7 +1836,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 							nStrings += Subarrays[nn]->nStrings;
 							totalVoltage += PVSystem->p_dcStringVoltage[nn][idx] * Subarrays[nn]->nStrings;
 						}
-						PVSystem->p_mpptVoltage[mpptInput][idx] = (ssc_number_t)totalVoltage / nStrings;
+						PVSystem->p_mpptVoltage[mpptInput][idx] = (ssc_number_t)(totalVoltage / nStrings);
 					}
 				}
 
@@ -1867,7 +1861,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 						float smLoss = 0.0f;
 
 						if (Subarrays[nn]->snowModel.getLoss((float)(Subarrays[nn]->poa.poaBeamFront + Subarrays[nn]->poa.poaDiffuseFront + Subarrays[nn]->poa.poaGroundFront),
-							(float)Subarrays[nn]->poa.surfaceTiltDegrees, (float)wf.wspd, (float)wf.tdry, (float)wf.snow, sunup, 1.0f / step_per_hour, &smLoss))
+							(float)Subarrays[nn]->poa.surfaceTiltDegrees, (float)wf.wspd, (float)wf.tdry, (float)wf.snow, sunup, 1.0f / step_per_hour, smLoss))
 						{
 							if (!Subarrays[nn]->snowModel.good)
 								throw exec_error("pvsamv1", Subarrays[nn]->snowModel.msg);
@@ -1963,7 +1957,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 					PVSystem->p_poaFrontBeamTotal[idx] = (ssc_number_t)(ts_accum_poa_front_beam_eff * util::watt_to_kilowatt);
 					PVSystem->p_inverterMPPTLoss[idx] = 0;
 					for (int nn = 0; nn < num_subarrays; nn++)
-						PVSystem->p_inverterMPPTLoss[idx] == (ssc_number_t)(mpptVoltageClipping[nn] * util::watt_to_kilowatt);
+						PVSystem->p_inverterMPPTLoss[idx] = (ssc_number_t)(mpptVoltageClipping[nn] * util::watt_to_kilowatt);
 				}
 
 				// Predict clipping for DC battery controller
@@ -2005,7 +1999,6 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 	wdprov->rewind();
 
 	double annual_dc_loss_ond = 0, annual_ac_loss_ond = 0; // (TR)
-	double dc_loss_ond = 0, ac_loss_ond = 0; // (TR)
 
 
 	for (size_t iyear = 0; iyear < nyears; iyear++)

@@ -405,6 +405,20 @@ TEST_F(CMPvsamv1PowerIntegration, NoFinancialModelShading)
 
 	// 3. Add Snow losses to all shading
 	pairs["en_snow_model"] = 1;
+	
+	/*  These settings currently fail with exception 
+	pairs["subarray1_shading:string_option"] = 0;
+	pairs["subarray2_shading:string_option"] = 0;
+	pairs["subarray3_shading:string_option"] = 0;
+	pairs["subarray4_shading:string_option"] = 0;
+	*/
+	/*
+	pairs["subarray1_shading:string_option"] = 1;
+	pairs["subarray2_shading:string_option"] = 1;
+	pairs["subarray3_shading:string_option"] = 1;
+	pairs["subarray4_shading:string_option"] = 1;
+	*/
+
 	pvsam_errors = modify_ssc_data_and_run_module(data, "pvsamv1", pairs);
 	EXPECT_FALSE(pvsam_errors);
 	if (!pvsam_errors) {
