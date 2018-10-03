@@ -450,7 +450,7 @@ TEST_F(SunsetCaseIrradProc, CalcTestRadMode0_lib_irradproc){
 /**
 *   Test Sky Configuration factors.  These factors do not change with time, just system geometry
 */
-TEST_F(BifacialIrradTest, DISABLED_TestSkyConfigFactors)
+TEST_F(BifacialIrradTest, TestSkyConfigFactors)
 {
 	// Determine the factors for points on the ground from the leading edge of one row of PV panels to the edge of the next row of panels behind
 	std::vector<double> rearSkyConfigFactors, frontSkyConfigFactors;
@@ -466,7 +466,7 @@ TEST_F(BifacialIrradTest, DISABLED_TestSkyConfigFactors)
 /**
 *   Test Ground Shade factors.  These factors do not change with time, just system geometry
 */
-TEST_F(BifacialIrradTest, DISABLED_TestGroundShadeFactors)
+TEST_F(BifacialIrradTest, TestGroundShadeFactors)
 {
 	for (size_t s = 0; s < numberOfSamples; s++)
 	{
@@ -496,7 +496,7 @@ TEST_F(BifacialIrradTest, DISABLED_TestGroundShadeFactors)
 /**
 *   Test calculation of ground GHI.  This changes with sun position and system geometry
 */
-TEST_F(BifacialIrradTest, DISABLED_TestGroundGHI)
+TEST_F(BifacialIrradTest, TestGroundGHI)
 {
 	for (size_t s = 0; s < numberOfSamples; s++)
 	{
@@ -523,7 +523,7 @@ TEST_F(BifacialIrradTest, DISABLED_TestGroundGHI)
 /**
 *   Test calculation of front surface irradiances.  This changes with sun position and system geometry
 */
-TEST_F(BifacialIrradTest, DISABLED_TestFrontSurfaceIrradiance)
+TEST_F(BifacialIrradTest, TestFrontSurfaceIrradiance)
 {
 	for (size_t s = 0; s < numberOfSamples; s++)
 	{
@@ -551,7 +551,7 @@ TEST_F(BifacialIrradTest, DISABLED_TestFrontSurfaceIrradiance)
 /**
 *   Test calculation of rear surface irradiances.  This changes with sun position and system geometry
 */
-TEST_F(BifacialIrradTest, DISABLED_TestRearSurfaceIrradiance)
+TEST_F(BifacialIrradTest, TestRearSurfaceIrradiance)
 {
 	for (size_t s = 0; s < numberOfSamples; s++)
 	{

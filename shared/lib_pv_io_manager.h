@@ -25,7 +25,6 @@
 enum modulePowerModelList { MODULE_SIMPLE_EFFICIENCY, MODULE_CEC_DATABASE, MODULE_CEC_USER_INPUT, MODULE_SANDIA, MODULE_IEC61853, MODULE_PVYIELD };
 enum inverterTypeList { INVERTER_CEC_DATABASE, INVERTER_DATASHEET, INVERTER_PARTLOAD, INVERTER_COEFFICIENT_GEN, INVERTER_PVYIELD };
 
-
 /// Structure containing data relevent at the SimulationManager level
 struct Simulation_IO;
 
@@ -213,6 +212,7 @@ struct PVSystem_IO
 	std::vector<std::vector<int> > mpptMapping;	///vector to hold the mapping between subarrays and mppt inputs
 	bool enableMismatchVoltageCalc;		/// Whether or not to compute mismatch between multiple subarrays attached to the same mppt input
 
+
 	double acDerate;
 	double acLossPercent;
 	double transmissionDerate;
@@ -289,7 +289,6 @@ struct PVSystem_IO
 
 
 	ssc_number_t *p_snowLossTotal;
-
 	ssc_number_t *p_inverterEfficiency;
 	ssc_number_t *p_inverterClipLoss;
 	ssc_number_t *p_inverterMPPTLoss;
@@ -437,6 +436,7 @@ public:
 	enum mountingSpecificConfigurationList {NONE, RACK_MOUNTING, FLUSH_MOUNTING, INTEGRATED_MOUNTING, GAP_MOUNTING};
 
 	int modulePowerModel;						/// The PV module model selected
+
 	double referenceArea;				/// The module area [m2]
 	double moduleWattsSTC;				/// The module energy output at STC [W]
 	double voltageMaxPower;				/// The voltage at max power [V]
@@ -492,6 +492,7 @@ public:
 
 	/// Assign outputs from member data after the PV Model has run 
 	void AssignOutputs(compute_module* cm);
+
 
 	int inverterType;		/// From inverterTypeList
 	int nMpptInputs;        /// Number of maximum power point tracking (MPPT) inputs on one inverter
