@@ -1205,6 +1205,39 @@ double CSP::FricFactor_Iter(double rel_rough, double Re) {
     return 0;
 }
 
+//template <typename T, typename A>
+//T mode(std::vector<T,A> const& v) {
+double mode(std::vector<double> v) {
+    if (v.size() == 0) { throw C_csp_exception("Vector size cannot be 0 for mode calculation."); }
+    if (v.size() == 1) { return v[0]; }
+
+    std::sort(v.begin(), v.end());
+    //T mode = v[0];
+    double mode = v[0];
+    std::size_t new_count = 1;   // starting at second element so counting first element here
+    std::size_t mode_count = 0;
+    //for (std::vector<T>::iterator it = v.begin() + 1; it != v.end(); ++it) {
+    for (std::vector<double>::iterator it = v.begin() + 1; it != v.end(); ++it) {
+        if (*it == *(it - 1)) {
+            new_count++;
+        }
+        else {  // next unique value seen
+            if (new_count > mode_count) {
+                mode = *(it - 1);
+                mode_count = new_count;
+            }
+            new_count = 1;
+        }
+    }
+    // handle last value
+    if (new_count > mode_count) {
+        mode = *(v.end());
+        mode_count = new_count;
+    }
+
+    return mode;
+}
+
 //double CSP::Re(double rho, double vel, double d, double mu) {
 //// Reynold's Number
 //    return rho * vel * d / mu;

@@ -281,9 +281,10 @@ static var_info _cm_vtab_tcstrough_physical[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "ud_T_amb_high",        "High level ambient temperature for HTF mass flow rate parametric",               "C",		"",                            "user_defined_PC", "pc_config=1",            "",                      "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "ud_m_dot_htf_low",     "Low level normalized HTF mass flow rate for T_HTF parametric",                   "-",	    "",                            "user_defined_PC", "pc_config=1",            "",                      "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "ud_m_dot_htf_high",    "High level normalized HTF mass flow rate for T_HTF parametric",                  "-",	    "",                            "user_defined_PC", "pc_config=1",            "",                      "" },
-	{ SSC_INPUT,        SSC_MATRIX,      "ud_T_htf_ind_od",      "Off design table of user-defined power cycle performance formed from parametric on T_htf_hot [C]", "", "",               "user_defined_PC", "pc_config=1",            "",                      "" },
-	{ SSC_INPUT,        SSC_MATRIX,      "ud_T_amb_ind_od",      "Off design table of user-defined power cycle performance formed from parametric on T_amb [C]",	 "", "",               "user_defined_PC", "pc_config=1",            "",                      "" }, 
-	{ SSC_INPUT,        SSC_MATRIX,      "ud_m_dot_htf_ind_od",  "Off design table of user-defined power cycle performance formed from parametric on m_dot_htf [ND]","", "",               "user_defined_PC", "pc_config=1",            "",                      "" }, 
+	//{ SSC_INPUT,        SSC_MATRIX,      "ud_T_htf_ind_od",      "Off design table of user-defined power cycle performance formed from parametric on T_htf_hot [C]", "", "",               "user_defined_PC", "pc_config=1",            "",                      "" },
+	//{ SSC_INPUT,        SSC_MATRIX,      "ud_T_amb_ind_od",      "Off design table of user-defined power cycle performance formed from parametric on T_amb [C]",	 "", "",               "user_defined_PC", "pc_config=1",            "",                      "" }, 
+	//{ SSC_INPUT,        SSC_MATRIX,      "ud_m_dot_htf_ind_od",  "Off design table of user-defined power cycle performance formed from parametric on m_dot_htf [ND]","", "",               "user_defined_PC", "pc_config=1",            "",                      "" }, 
+    { SSC_INPUT,        SSC_MATRIX,      "ud_ind_od",            "Off design user-defined power cycle performance as function of T_htf, m_dot_htf [ND], and T_amb", "", "", "user_defined_PC", "pc_config=1",     "",                      "" },
 		
 	// Financial inputs
 	// { SSC_INPUT,        SSC_MATRIX,      "dispatch_sched_weekday", "12x24 PPA pricing Weekday schedule",                              "",             "",            "tou",            "*",                       "",                      "" }, 
@@ -845,9 +846,10 @@ public:
 			set_unit_value_ssc_double(type224_powerblock, "ud_m_dot_htf_low");
 			set_unit_value_ssc_double(type224_powerblock, "ud_m_dot_htf_high");
 			
-			set_unit_value_ssc_matrix(type224_powerblock, "ud_T_htf_ind_od");
-			set_unit_value_ssc_matrix(type224_powerblock, "ud_T_amb_ind_od");
-			set_unit_value_ssc_matrix(type224_powerblock, "ud_m_dot_htf_ind_od");
+			//set_unit_value_ssc_matrix(type224_powerblock, "ud_T_htf_ind_od");
+			//set_unit_value_ssc_matrix(type224_powerblock, "ud_T_amb_ind_od");
+			//set_unit_value_ssc_matrix(type224_powerblock, "ud_m_dot_htf_ind_od");
+            set_unit_value_ssc_matrix(type224_powerblock, "ud_ind_od");
 		}
 		else
 		{

@@ -54,6 +54,8 @@
 #include "water_properties.h"
 #include "lib_util.h"
 #include "sam_csp_util.h"
+#include <algorithm>
+#include <set>
 
 static C_csp_reported_outputs::S_output_info S_output_info[] =
 {
@@ -325,6 +327,8 @@ void C_pc_Rankine_indirect_224::init(C_csp_power_cycle::S_solved_params &solved_
 	}
 	else
 	{	// Initialization calculations for User Defined power cycle model
+
+        split_ind_tbl(ms_params.mc_combined_ind, ms_params.mc_T_htf_ind, ms_params.mc_m_dot_htf_ind, ms_params.mc_T_amb_ind);  // split the one table into three
 
 		// Load tables into user defined power cycle member class
 			// .init method will throw an error if initialization fails, so catch upstream
@@ -1455,3 +1459,293 @@ double C_pc_Rankine_indirect_224::Interpolate(int YT, int XT, double X)
 
 	return m_db.at(YI, lbi) + ind * (m_db.at(YI, ubi) - m_db.at(YI, lbi));
 } // Interpolate
+
+int C_pc_Rankine_indirect_224::split_ind_tbl(util::matrix_t<double> &cmbd_ind, util::matrix_t<double> &T_htf_ind,
+    util::matrix_t<double> &m_dot_ind, util::matrix_t<double> &T_amb_ind) {
+
+    const int col_T_htf = 0;
+    const int col_m_dot = 1;
+    const int col_T_amb = 2;
+    const int col_W_cyl = 3;
+    const int col_Q_cyl = 4;
+    const int col_W_h2o = 5;
+    const int col_m_h2o = 6;
+
+    // check for minimum length
+    if (cmbd_ind.nrows() < 2) return 1;
+    
+    // get min, max, mode and unique indep. values (assuming the mode is the design value, which is usually safe even with a few errant duplicates)
+    // TODO - this can be relaxed so values like 1.1 and 1.101 are maybe not each considered unique
+    // TODO - could min and max be outliers? Should it be ensured that there are duplicates of these?
+    util::matrix_t<double> T_htf_col, m_dot_col, T_amb_col;
+    T_htf_col = cmbd_ind.col(0);
+    m_dot_col = cmbd_ind.col(1);
+    T_amb_col = cmbd_ind.col(2);
+    std::vector<double> T_htf_vec(T_htf_col.data(), T_htf_col.data() + T_htf_col.ncells());
+    std::vector<double> m_dot_vec(m_dot_col.data(), m_dot_col.data() + m_dot_col.ncells());
+    std::vector<double> T_amb_vec(T_amb_col.data(), T_amb_col.data() + T_amb_col.ncells());
+    // min\max
+    double T_htf_low, T_htf_high, m_dot_low, m_dot_high, T_amb_low, T_amb_high;
+    T_htf_low = *std::min_element(T_htf_vec.begin(), T_htf_vec.end());
+    T_htf_high = *std::max_element(T_htf_vec.begin(), T_htf_vec.end());
+    m_dot_low = *std::min_element(m_dot_vec.begin(), m_dot_vec.end());
+    m_dot_high = *std::max_element(m_dot_vec.begin(), m_dot_vec.end());
+    T_amb_low = *std::min_element(T_amb_vec.begin(), T_amb_vec.end());
+    T_amb_high = *std::max_element(T_amb_vec.begin(), T_amb_vec.end());
+    // mode
+    double T_htf_des = mode(T_htf_vec);
+    double m_dot_des = mode(m_dot_vec);
+    double T_amb_des = mode(T_amb_vec);
+    // unique values (no duplicates)
+    set<double, std::less<double>> T_htf_unique( T_htf_col.data(), T_htf_col.data() + T_htf_col.ncells() );
+    set<double, std::less<double>> m_dot_unique( m_dot_col.data(), m_dot_col.data() + m_dot_col.ncells() );
+    set<double, std::less<double>> T_amb_unique( T_amb_col.data(), T_amb_col.data() + T_amb_col.ncells() );
+    std::size_t n_T_htf_unique = T_htf_unique.size();
+    std::size_t n_m_dot_unique = m_dot_unique.size();
+    std::size_t n_T_amb_unique = T_amb_unique.size();
+
+    // convert combined matrix_t to a vector of vectors
+    std::vector<std::vector<double>> cmbd_tbl;
+    double *row_start = cmbd_ind.data();
+    double *row_end;
+    for (std::size_t i = 0; i < cmbd_ind.nrows(); i++) {
+        row_end = row_start + cmbd_ind.ncols();  // = one past last value
+        std::vector<double> mat_row(row_start, row_end);
+        row_start = row_end;
+        cmbd_tbl.push_back(mat_row);
+    }
+
+    // sort vector of vectors and remove duplicate sets
+    std::vector<int> cols{ col_T_htf, col_m_dot, col_T_amb };
+    std::vector<bool> asc{ true, true, true };
+    std::sort(cmbd_tbl.begin(), cmbd_tbl.end(), sort_vecOfvec(cols, asc));
+    cmbd_tbl.erase(unique(cmbd_tbl.begin(), cmbd_tbl.end(),
+        [](const vector<double> &a, const vector<double> &b) {return a[0] == b[0] && a[1] == b[1] && a[2] == b[2]; }),
+        cmbd_tbl.end());    // use lamba function as predicate function to disregard response values when testing for uniqueness
+
+    // start generating three tables
+    // TODO - what if the design value happens to be in the generated low-to-high range?
+    const int ncols = 13;
+    T_htf_ind.resize(n_T_htf_unique - 1, ncols);  // subtract 1 for design value
+    m_dot_ind.resize(n_m_dot_unique - 1, ncols);  // subtract 1 for design value
+    T_amb_ind.resize(n_T_amb_unique - 1, ncols);  // subtract 1 for design value
+
+    // sort m_dot low to high and secondarily sort T_htf low to high.
+    // EXTRACT the first n_T_htf rows excluding the three that correspond to the design T_htf and the three T_amb levels.
+    // These are the 'low' columns in Table 1.
+    std::sort(cmbd_tbl.begin(), cmbd_tbl.end(), sort_vecOfvec(std::vector<int> {col_m_dot, col_T_htf}, std::vector<bool> {true, true}));
+    int vec_row = 0;
+    int mat_row = 0;
+    for (std::vector<double>::size_type i = 0; i != n_T_htf_unique + 3; i++) {
+        if (!(cmbd_tbl.at(vec_row).at(col_T_htf) == T_htf_des &&
+            (cmbd_tbl.at(vec_row).at(col_T_amb) == T_amb_low ||
+             cmbd_tbl.at(vec_row).at(col_T_amb) == T_amb_des ||
+             cmbd_tbl.at(vec_row).at(col_T_amb) == T_amb_high))) {
+            T_htf_ind.set_value(cmbd_tbl.at(vec_row).at(col_T_htf), mat_row, 0);
+            T_htf_ind.set_value(cmbd_tbl.at(vec_row).at(col_W_cyl), mat_row, 1);
+            T_htf_ind.set_value(cmbd_tbl.at(vec_row).at(col_Q_cyl), mat_row, 4);
+            T_htf_ind.set_value(cmbd_tbl.at(vec_row).at(col_W_h2o), mat_row, 7);
+            T_htf_ind.set_value(cmbd_tbl.at(vec_row).at(col_m_h2o), mat_row, 10);
+            mat_row++;
+            cmbd_tbl.erase(cmbd_tbl.begin() + vec_row);
+        }
+        else {
+            vec_row++;
+        }
+    }
+
+    // sort m_dot high to low and secondarily sort T_htf low to high.
+    // Extract the first n_T_htf rows excluding the three that correspond to the design T_htf and the three T_amb levels.
+    // These are the 'high' columns in Table 1.
+    std::sort(cmbd_tbl.begin(), cmbd_tbl.end(), sort_vecOfvec(std::vector<int> {col_m_dot, col_T_htf}, std::vector<bool> {false, true}));
+    vec_row = 0;
+    mat_row = 0;
+    for (std::vector<double>::size_type i = 0; i != n_T_htf_unique + 3; i++) {
+        if (!(cmbd_tbl.at(vec_row).at(col_T_htf) == T_htf_des &&
+            (cmbd_tbl.at(vec_row).at(col_T_amb) == T_amb_low ||
+             cmbd_tbl.at(vec_row).at(col_T_amb) == T_amb_des ||
+             cmbd_tbl.at(vec_row).at(col_T_amb) == T_amb_high))) {
+            T_htf_ind.set_value(cmbd_tbl.at(vec_row).at(col_T_htf), mat_row, 0);  // redundant
+            T_htf_ind.set_value(cmbd_tbl.at(vec_row).at(col_W_cyl), mat_row, 3);
+            T_htf_ind.set_value(cmbd_tbl.at(vec_row).at(col_Q_cyl), mat_row, 6);
+            T_htf_ind.set_value(cmbd_tbl.at(vec_row).at(col_W_h2o), mat_row, 9);
+            T_htf_ind.set_value(cmbd_tbl.at(vec_row).at(col_m_h2o), mat_row, 12);
+            mat_row++;
+            cmbd_tbl.erase(cmbd_tbl.begin() + vec_row);
+        }
+        else {
+            vec_row++;
+        }
+    }
+
+    // sort T_amb low to high and secondarily sort m_dot low to high.
+    // Extract the first n_m_dot rows excluding the three that correspond to the design m_dot and the three T_htf levels.
+    // These are the 'low' columns in Table 2.
+    std::sort(cmbd_tbl.begin(), cmbd_tbl.end(), sort_vecOfvec(std::vector<int> {col_T_amb, col_m_dot}, std::vector<bool> {true, true}));
+    vec_row = 0;
+    mat_row = 0;
+    for (std::vector<double>::size_type i = 0; i != n_m_dot_unique + 3; i++) {
+        if (!(cmbd_tbl.at(vec_row).at(col_m_dot) == m_dot_des &&
+            (cmbd_tbl.at(vec_row).at(col_T_htf) == T_htf_low ||
+             cmbd_tbl.at(vec_row).at(col_T_htf) == T_htf_des ||
+             cmbd_tbl.at(vec_row).at(col_T_htf) == T_htf_high))) {
+            m_dot_ind.set_value(cmbd_tbl.at(vec_row).at(col_T_htf), mat_row, 0);
+            m_dot_ind.set_value(cmbd_tbl.at(vec_row).at(col_W_cyl), mat_row, 1);
+            m_dot_ind.set_value(cmbd_tbl.at(vec_row).at(col_Q_cyl), mat_row, 4);
+            m_dot_ind.set_value(cmbd_tbl.at(vec_row).at(col_W_h2o), mat_row, 7);
+            m_dot_ind.set_value(cmbd_tbl.at(vec_row).at(col_m_h2o), mat_row, 10);
+            mat_row++;
+            cmbd_tbl.erase(cmbd_tbl.begin() + vec_row);
+        }
+        else {
+            vec_row++;
+        }
+    }
+
+    // sort T_amb high to low and secondarily sort m_dot low to high.
+    // Extract the first n_m_dot rows excluding the three that correspond to the design m_dot and the three T_htf levels.
+    // These are the 'high' columns in Table 2.
+    std::sort(cmbd_tbl.begin(), cmbd_tbl.end(), sort_vecOfvec(std::vector<int> {col_T_amb, col_m_dot}, std::vector<bool> {false, true}));
+    vec_row = 0;
+    mat_row = 0;
+    for (std::vector<double>::size_type i = 0; i != n_m_dot_unique + 3; i++) {
+        if (!(cmbd_tbl.at(vec_row).at(col_m_dot) == m_dot_des &&
+            (cmbd_tbl.at(vec_row).at(col_T_htf) == T_htf_low ||
+                cmbd_tbl.at(vec_row).at(col_T_htf) == T_htf_des ||
+                cmbd_tbl.at(vec_row).at(col_T_htf) == T_htf_high))) {
+            m_dot_ind.set_value(cmbd_tbl.at(vec_row).at(col_T_htf), mat_row, 0);  // redundant
+            m_dot_ind.set_value(cmbd_tbl.at(vec_row).at(col_W_cyl), mat_row, 3);
+            m_dot_ind.set_value(cmbd_tbl.at(vec_row).at(col_Q_cyl), mat_row, 6);
+            m_dot_ind.set_value(cmbd_tbl.at(vec_row).at(col_W_h2o), mat_row, 9);
+            m_dot_ind.set_value(cmbd_tbl.at(vec_row).at(col_m_h2o), mat_row, 12);
+            mat_row++;
+            cmbd_tbl.erase(cmbd_tbl.begin() + vec_row);
+        }
+        else {
+            vec_row++;
+        }
+    }
+
+    // sort T_htf low to high and secondarily sort T_amb low to high.
+    // Extract the first n_T_amb rows excluding the one that corresponds to the design T_amb and the design m_dot.
+    // These are the 'low' columns in Table 3.
+    std::sort(cmbd_tbl.begin(), cmbd_tbl.end(), sort_vecOfvec(std::vector<int> {col_T_htf, col_T_amb}, std::vector<bool> {true, true}));
+    vec_row = 0;
+    mat_row = 0;
+    for (std::vector<double>::size_type i = 0; i != n_T_amb_unique + 1; i++) {
+        if (!(cmbd_tbl.at(vec_row).at(col_T_amb) == T_amb_des &&
+            cmbd_tbl.at(vec_row).at(col_m_dot) == m_dot_des)) {
+            T_amb_ind.set_value(cmbd_tbl.at(vec_row).at(col_T_htf), mat_row, 0);
+            T_amb_ind.set_value(cmbd_tbl.at(vec_row).at(col_W_cyl), mat_row, 1);
+            T_amb_ind.set_value(cmbd_tbl.at(vec_row).at(col_Q_cyl), mat_row, 4);
+            T_amb_ind.set_value(cmbd_tbl.at(vec_row).at(col_W_h2o), mat_row, 7);
+            T_amb_ind.set_value(cmbd_tbl.at(vec_row).at(col_m_h2o), mat_row, 10);
+            mat_row++;
+            cmbd_tbl.erase(cmbd_tbl.begin() + vec_row);
+        }
+        else {
+            vec_row++;
+        }
+    }
+
+    // sort T_htf high to low and secondarily sort T_amb low to high.
+    // Extract the first n_T_amb rows.
+    // These are the 'high' columns in Table 3.
+    std::sort(cmbd_tbl.begin(), cmbd_tbl.end(), sort_vecOfvec(std::vector<int> {col_T_htf, col_T_amb}, std::vector<bool> {false, true}));
+    vec_row = 0;
+    mat_row = 0;
+    for (std::vector<double>::size_type i = 0; i != n_T_amb_unique + 1; i++) {
+        T_amb_ind.set_value(cmbd_tbl.at(vec_row).at(col_T_htf), mat_row, 0);
+        T_amb_ind.set_value(cmbd_tbl.at(vec_row).at(col_W_cyl), mat_row, 3);
+        T_amb_ind.set_value(cmbd_tbl.at(vec_row).at(col_Q_cyl), mat_row, 6);
+        T_amb_ind.set_value(cmbd_tbl.at(vec_row).at(col_W_h2o), mat_row, 9);
+        T_amb_ind.set_value(cmbd_tbl.at(vec_row).at(col_m_h2o), mat_row, 12);
+        mat_row++;
+        cmbd_tbl.erase(cmbd_tbl.begin() + vec_row);
+    }
+
+    // sort T_htf low to high.
+    // Extract the first and last rows that have both T_amb and m_dot at their design conditions.
+    // These are the 'design' columns in Table 1.
+    std::sort(cmbd_tbl.begin(), cmbd_tbl.end(), sort_vecOfvec(std::vector<int> {col_T_htf}, std::vector<bool> {false}));
+    vec_row = 0;
+    mat_row = 0;
+    for (std::vector<double>::size_type i = 0; i != cmbd_tbl.size(); i++) {
+        if (cmbd_tbl.at(vec_row).at(col_T_amb) == T_amb_des &&
+            cmbd_tbl.at(vec_row).at(col_m_dot) == m_dot_des) {
+            T_htf_ind.set_value(cmbd_tbl.at(vec_row).at(col_T_htf), mat_row, 0);
+            T_htf_ind.set_value(cmbd_tbl.at(vec_row).at(col_W_cyl), mat_row, 2);
+            T_htf_ind.set_value(cmbd_tbl.at(vec_row).at(col_Q_cyl), mat_row, 5);
+            T_htf_ind.set_value(cmbd_tbl.at(vec_row).at(col_W_h2o), mat_row, 8);
+            T_htf_ind.set_value(cmbd_tbl.at(vec_row).at(col_m_h2o), mat_row, 11);
+            mat_row++;
+            cmbd_tbl.erase(cmbd_tbl.begin() + vec_row);
+        }
+        else {
+            vec_row++;
+        }
+    }
+    //while (cmbd_tbl.at(vec_row).at(col_T_amb) == T_amb_des &&
+    //    cmbd_tbl.at(vec_row).at(col_m_dot) == m_dot_des) {
+    //    T_htf_ind.set_value(cmbd_tbl.at(vec_row).at(col_T_htf), mat_row, 0);
+    //    T_htf_ind.set_value(cmbd_tbl.at(vec_row).at(col_W_cyl), mat_row, 2);
+    //    T_htf_ind.set_value(cmbd_tbl.at(vec_row).at(col_Q_cyl), mat_row, 5);
+    //    T_htf_ind.set_value(cmbd_tbl.at(vec_row).at(col_W_h2o), mat_row, 8);
+    //    T_htf_ind.set_value(cmbd_tbl.at(vec_row).at(col_m_h2o), mat_row, 11);
+    //    mat_row++;
+    //    cmbd_tbl.erase(cmbd_tbl.begin() + vec_row);
+    //}
+    //vec_row = cmbd_tbl.size() - 1;
+
+    // THESE WON'T BE IN ORDER IF GRABBED LIKE THIS
+    //while (cmbd_tbl.at(vec_row).at(col_T_amb) == T_amb_des &&
+    //    cmbd_tbl.at(vec_row).at(col_m_dot) == m_dot_des) {
+    //    T_htf_ind.set_value(cmbd_tbl.at(vec_row).at(col_T_htf), mat_row, 0);
+    //    T_htf_ind.set_value(cmbd_tbl.at(vec_row).at(col_W_cyl), mat_row, 2);
+    //    T_htf_ind.set_value(cmbd_tbl.at(vec_row).at(col_Q_cyl), mat_row, 5);
+    //    T_htf_ind.set_value(cmbd_tbl.at(vec_row).at(col_W_h2o), mat_row, 8);
+    //    T_htf_ind.set_value(cmbd_tbl.at(vec_row).at(col_m_h2o), mat_row, 11);
+    //    mat_row++;
+    //    cmbd_tbl.erase(cmbd_tbl.begin() + vec_row);
+    //    vec_row--;
+    //}
+
+    // sort m_dot low to high.
+    // Extract the first and last rows that have both T_htf and T_amb at their design conditions.
+    // These are the 'design' columns in Table 2.
+    std::sort(cmbd_tbl.begin(), cmbd_tbl.end(), sort_vecOfvec(std::vector<int> {col_m_dot}, std::vector<bool> {true}));
+    vec_row = 0;
+    mat_row = 0;
+    for (std::vector<double>::size_type i = 0; i != cmbd_tbl.size(); i++) {
+        if (cmbd_tbl.at(vec_row).at(col_T_htf) == T_htf_des &&
+            cmbd_tbl.at(vec_row).at(col_T_amb) == T_amb_des) {
+            m_dot_ind.set_value(cmbd_tbl.at(vec_row).at(col_T_htf), mat_row, 0);
+            m_dot_ind.set_value(cmbd_tbl.at(vec_row).at(col_W_cyl), mat_row, 2);
+            m_dot_ind.set_value(cmbd_tbl.at(vec_row).at(col_Q_cyl), mat_row, 5);
+            m_dot_ind.set_value(cmbd_tbl.at(vec_row).at(col_W_h2o), mat_row, 8);
+            m_dot_ind.set_value(cmbd_tbl.at(vec_row).at(col_m_h2o), mat_row, 11);
+            mat_row++;
+            cmbd_tbl.erase(cmbd_tbl.begin() + vec_row);
+        }
+        else {
+            vec_row++;
+        }
+    }
+
+    // sort T_amb low to high.
+    // Extract the rest. These are the 'design' columns in Table 3.
+    std::sort(cmbd_tbl.begin(), cmbd_tbl.end(), sort_vecOfvec(std::vector<int> {col_T_amb}, std::vector<bool> {true}));
+    vec_row = 0;
+    mat_row = 0;
+    for (std::vector<double>::size_type i = 0; i != cmbd_tbl.size(); i++) {
+        T_amb_ind.set_value(cmbd_tbl.at(vec_row).at(col_T_htf), mat_row, 0);
+        T_amb_ind.set_value(cmbd_tbl.at(vec_row).at(col_W_cyl), mat_row, 2);
+        T_amb_ind.set_value(cmbd_tbl.at(vec_row).at(col_Q_cyl), mat_row, 5);
+        T_amb_ind.set_value(cmbd_tbl.at(vec_row).at(col_W_h2o), mat_row, 8);
+        T_amb_ind.set_value(cmbd_tbl.at(vec_row).at(col_m_h2o), mat_row, 11);
+        mat_row++;
+        cmbd_tbl.erase(cmbd_tbl.begin() + vec_row);
+    }
+
+    return 0;
+}
