@@ -68,7 +68,9 @@ static var_info _cm_vtab_generic_system[] = {
 
 // To set enet record length to handle subhourly loads
 
-	{ SSC_INPUT, SSC_ARRAY, "load", "Electricity load (year 1)", "kW", "", "Time Series", "?", "", "" },
+	// battery storage and dispatch
+	{ SSC_INPUT,        SSC_NUMBER,      "en_batt",                                    "Enable battery storage model",                             "0/1",     "",                     "generic_system",       "?=0",                                 "",                              "" },
+	{ SSC_INPUT,        SSC_ARRAY,       "load",                                       "Electricity load (year 1)",                                "kW", "", "generic_system", "?", "", "" },
 
 //
 	// optional for lifetime analysis
@@ -104,6 +106,7 @@ public:
 	{
 		add_var_info( _cm_vtab_generic_system );
 		// performance adjustment factors
+		add_var_info(vtab_dc_adjustment_factors);
 		add_var_info(vtab_adjustment_factors);
 		add_var_info(vtab_technology_outputs);
 		add_var_info(vtab_battery_inputs);
@@ -127,9 +130,10 @@ public:
 
 
 		ssc_number_t *enet;
+		ssc_number_t *load;
 		size_t nrec_load = 8760;
 		if (is_assigned("load"))
- 			ssc_number_t *load = as_array("load", &nrec_load);
+ 			load = as_array("load", &nrec_load);
 		size_t steps_per_hour_load = nrec_load / 8760;
 		ssc_number_t ts_hour_load = 1.0f / steps_per_hour_load;
 
@@ -164,6 +168,8 @@ public:
 
 		size_t idx = 0;
 
+
+
 		if (spec_mode == 0)
 		{
 			double output = (double)as_number("system_capacity")
@@ -182,6 +188,10 @@ public:
 						// TODO - yearly degradation 
 						enet[idx] = (ssc_number_t)(output*haf(ihour)); // kW
 						idx++;
+						if (is_assigned("load"))
+							p_load_full.push_back(load[ihour*steps_per_hour_gen + ihourstep]);
+						else
+							p_load_full.push_back(0);
 					}
 				}
 			}
@@ -212,6 +222,11 @@ public:
 //						enet[ihour* steps_per_hour_gen + ihourstep] = enet_in[ihour* steps_per_hour_gen + ihourstep] * (ssc_number_t)(derate* haf(ihour));
 						// TODO - yearly degradation 
 						enet[idx] = enet_in[ihour* steps_per_hour_gen + ihourstep] * (ssc_number_t)(derate* haf(ihour));
+						if (is_assigned("load"))
+							p_load_full.push_back(load[ihour*steps_per_hour_gen + ihourstep]);
+						else
+							p_load_full.push_back(0);
+
 						idx++;
 					}
 				}
