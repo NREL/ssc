@@ -76,7 +76,7 @@ static var_info _cm_vtab_generic_system[] = {
 	// optional for lifetime analysis
 	{ SSC_INPUT,        SSC_NUMBER,      "system_use_lifetime_output",                  "Generic lifetime simulation",                               "0/1",      "",                              "generic_system",             "?=0",                        "INTEGER,MIN=0,MAX=1",          "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "analysis_period",                             "Lifetime analysis period",                             "years",    "",                              "generic_system",             "system_use_lifetime_output=1",   "",                             "" },
-	{ SSC_INPUT,        SSC_ARRAY,       "dc_degradation",                              "Annual module degradation",                            "%/year",   "",                              "generic_system",             "system_use_lifetime_output=1",   "",                             "" },
+	{ SSC_INPUT,        SSC_ARRAY,       "generic_degradation",                              "Annual module degradation",                            "%/year",   "",                              "generic_system",             "system_use_lifetime_output=1",   "",                             "" },
 
 
 
@@ -137,8 +137,6 @@ public:
 		size_t steps_per_hour_load = nrec_load / 8760;
 		ssc_number_t ts_hour_load = 1.0f / steps_per_hour_load;
 
-		// TODO - pload_full for analysis period with degradation
-
 
 		size_t nrec_gen = nrec_load;
 		size_t steps_per_hour_gen = steps_per_hour_load;
@@ -152,6 +150,7 @@ public:
 
 		// lifetime outputs
 		std::vector<ssc_number_t> p_load_full; p_load_full.reserve(nlifetime);
+		std::vector<ssc_number_t> sys_degradation; sys_degradation.reserve(nyears);
 
 
 		double derate = (1 - (double)as_number("derate") / 100);
@@ -160,6 +159,28 @@ public:
 		adjustment_factors haf(this, "adjust");
 		if (!haf.setup())
 			throw exec_error("generic system", "failed to setup adjustment factors: " + haf.error());
+
+
+
+		if (system_use_lifetime_output)
+		{
+			// setup system degradation
+			size_t i, count_degrad = 0;
+			ssc_number_t *degrad = 0;
+			degrad = as_array("generic_degradation", &count_degrad);
+
+			if (count_degrad == 1)
+			{
+				for (i = 0; i < nyears; i++)
+					sys_degradation.push_back((ssc_number_t)pow((1.0 - (double)degrad[0] / 100.0), i));
+			}
+			else if (count_degrad > 0)
+			{
+				for (i = 0; i < nyears && i < (int)count_degrad; i++) sys_degradation.push_back((ssc_number_t)(1.0 - (double)degrad[i] / 100.0));
+			}
+		}
+		else
+			sys_degradation.push_back(1); // single year mode - degradation handled in financial models.
 
 
 		// setup battery model
@@ -177,7 +198,7 @@ public:
 				* derate; // kW
 
 			annual_output = 8760 * output; // kWh
-			enet = allocate("gen", nrec_gen);
+			enet = allocate("gen", nlifetime);
 			for (size_t iyear = 0; iyear < nyears; iyear++)
 			{
 				for (size_t ihour = 0; ihour < 8760; ihour++)
@@ -186,12 +207,12 @@ public:
 					{
 //						enet[ihour* steps_per_hour_gen + ihourstep] = (ssc_number_t)(output*haf(ihour)); // kW
 						// TODO - yearly degradation 
-						enet[idx] = (ssc_number_t)(output*haf(ihour)); // kW
-						idx++;
+						enet[idx] = (ssc_number_t)(output*haf(ihour)) * sys_degradation[iyear]; // kW
 						if (is_assigned("load"))
 							p_load_full.push_back(load[ihour*steps_per_hour_gen + ihourstep]);
 						else
 							p_load_full.push_back(0);
+						idx++;
 					}
 				}
 			}
@@ -211,7 +232,7 @@ public:
 			if (nrec_gen < nrec_load)
 				throw exec_error("generic", util::format("energy_output_array %d must be greater than or equal to load array %d", nrec_gen, nrec_load));
 
-			enet = allocate("gen", nrec_gen);
+			enet = allocate("gen", nlifetime);
 
 			for (size_t iyear = 0; iyear < nyears; iyear++)
 			{
@@ -221,7 +242,7 @@ public:
 					{
 //						enet[ihour* steps_per_hour_gen + ihourstep] = enet_in[ihour* steps_per_hour_gen + ihourstep] * (ssc_number_t)(derate* haf(ihour));
 						// TODO - yearly degradation 
-						enet[idx] = enet_in[ihour* steps_per_hour_gen + ihourstep] * (ssc_number_t)(derate* haf(ihour));
+						enet[idx] = enet_in[ihour* steps_per_hour_gen + ihourstep] * (ssc_number_t)(derate* haf(ihour))* sys_degradation[iyear];
 						if (is_assigned("load"))
 							p_load_full.push_back(load[ihour*steps_per_hour_gen + ihourstep]);
 						else
@@ -235,6 +256,10 @@ public:
 
 		// AC battery 
 		int batt_topology = ChargeController::AC_CONNECTED;
+
+		// Initialize AC connected battery predictive control
+		if (en_batt && batt_topology == ChargeController::AC_CONNECTED)
+			batt.initialize_automated_dispatch(util::array_to_vector<ssc_number_t>(enet, nlifetime), p_load_full);
 
 		double annual_ac_pre_avail = 0, annual_energy = 0;
 		idx = 0;
@@ -279,8 +304,8 @@ public:
 
 
 
-		accumulate_monthly("gen", "monthly_energy", ts_hour_gen);
-		annual_output = accumulate_annual("gen", "annual_energy", ts_hour_gen);
+		accumulate_monthly_for_year("gen", "monthly_energy", ts_hour_gen, steps_per_hour_gen);
+		annual_output = accumulate_annual_for_year("gen", "annual_energy", ts_hour_gen, steps_per_hour_gen);
 
 		// if conversion efficiency is zero then set fuel usage to zero per email from Paul 5/17/12
 		double fuel_usage = 0.0;
