@@ -261,6 +261,9 @@ public:
 		C_HX_counterflow::S_od_solved ms_LT_recup_od_solved;
 		C_HX_counterflow::S_od_solved ms_HT_recup_od_solved;
 
+		C_CO2_to_air_cooler::S_od_solved ms_LP_air_cooler_od_solved;
+		C_CO2_to_air_cooler::S_od_solved ms_IP_air_cooler_od_solved;
+
 		S_od_solved()
 		{
 			m_eta_thermal = m_W_dot_net = m_Q_dot = m_m_dot_mc = m_m_dot_rc = m_m_dot_pc =
@@ -339,6 +342,8 @@ public:
 	}
 
 	virtual int off_design_fix_shaft_speeds(S_od_par & od_phi_par_in) = 0;
+
+	virtual int calculate_off_design_fan_power(double T_amb /*K*/, double & W_dot_fan /*MWe*/) = 0;
 
 	virtual const C_comp_multi_stage::S_od_solved * get_rc_od_solved() = 0;
 

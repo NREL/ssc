@@ -130,8 +130,12 @@ static var_info _cm_vtab_sco2_csp_system[] = {
 	{ SSC_OUTPUT, SSC_ARRAY,   "T_co2_PHX_out_od",     "Off-design PHX co2 outlet temperature",                  "C",          "",    "",      "",     "",       "" },
 	{ SSC_OUTPUT, SSC_ARRAY,   "deltaT_HTF_PHX_od",    "Off-design HTF temp difference across PHX",              "C",          "",    "",      "",     "",       "" },
 	{ SSC_OUTPUT, SSC_ARRAY,   "phx_eff_od",           "Off-design PHX effectiveness",                           "-",          "",    "",      "",     "",       "" },
-		// Cooler
-	{ SSC_OUTPUT, SSC_ARRAY,   "T_cooler_in_od",       "Off-design cooler inlet temperature",                    "C",          "",    "",      "",     "",       "" },
+		// Low Pressure Cooler
+	{ SSC_OUTPUT, SSC_ARRAY,   "LP_cooler_W_dot_fan_od","Low pressure cooler fan power",                         "MWe",        "",    "",      "",     "",       "" },
+		// Intermediate Pressure Cooler
+	{ SSC_OUTPUT, SSC_ARRAY,   "IP_cooler_W_dot_fan_od","Intermediate pressure cooler fan power",                "MWe",        "",    "",      "",     "",       "" },
+		// Cooler Totals
+	{ SSC_OUTPUT, SSC_ARRAY,   "cooler_tot_W_dot_fan_od","Intermediate pressure cooler fan power",               "MWe",        "",    "",      "",     "",       "" },
 		// Solver Metrics
 	{ SSC_OUTPUT, SSC_ARRAY,   "od_code",              "Diagnostic info",                                        "-",          ""     "",      "",     "",       "" },
 
@@ -209,8 +213,12 @@ public:
 	ssc_number_t *p_T_co2_PHX_out_od;
 	ssc_number_t *p_deltaT_HTF_PHX_od;
 	ssc_number_t *p_phx_eff_od;
-	// Cooler
-	ssc_number_t *p_T_cooler_in_od;
+	// Low Pressure Cooler
+	ssc_number_t *p_LP_cooler_W_dot_fan_od;
+	// Intermediate Pressure Cooler
+	ssc_number_t *p_IP_cooler_W_dot_fan_od;
+	// Coolerl Totals
+	ssc_number_t *p_cooler_tot_W_dot_fan_od;
 	// Solver Metrics
 	ssc_number_t *p_od_code;
 
@@ -492,8 +500,20 @@ public:
 				p_T_co2_PHX_out_od[n_run] = (ssc_number_t)(c_sco2_cycle.get_od_solved()->ms_rc_cycle_od_solved.m_temp[C_sco2_cycle_core::TURB_IN] - 273.15);		//[C]
 				p_deltaT_HTF_PHX_od[n_run] = p_T_htf_hot_od[n_run] - p_T_htf_cold_od[n_run];	//[C]
 				p_phx_eff_od[n_run] = (ssc_number_t)c_sco2_cycle.get_od_solved()->ms_phx_od_solved.m_eff;		//[-]
-					// Cooler
-				p_T_cooler_in_od[n_run] = (ssc_number_t)(c_sco2_cycle.get_od_solved()->ms_rc_cycle_od_solved.m_temp[C_sco2_cycle_core::LTR_LP_OUT] - 273.15);		//[C]
+					// Low Pressure Cooler
+				p_LP_cooler_W_dot_fan_od[n_run] = (ssc_number_t)c_sco2_cycle.get_od_solved()->ms_rc_cycle_od_solved.ms_LP_air_cooler_od_solved.m_W_dot_fan;	//[MWe]
+				double cooler_W_dot_total = c_sco2_cycle.get_od_solved()->ms_rc_cycle_od_solved.ms_LP_air_cooler_od_solved.m_W_dot_fan;	//[MWe]
+					// Intermediate Pressure Cooler
+				if (cycle_config == 2)
+				{
+					p_IP_cooler_W_dot_fan_od[n_run] = (ssc_number_t)c_sco2_cycle.get_od_solved()->ms_rc_cycle_od_solved.ms_IP_air_cooler_od_solved.m_W_dot_fan;	//[MWe]
+					cooler_W_dot_total += p_IP_cooler_W_dot_fan_od[n_run];	//[MWe]
+				}
+				else
+				{
+					p_IP_cooler_W_dot_fan_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
+				}
+				p_cooler_tot_W_dot_fan_od[n_run] = cooler_W_dot_total;	//[MWe]
 			}
 			else
 			{	// Off-design call failed, write NaN outptus
@@ -566,8 +586,12 @@ public:
 				p_T_co2_PHX_out_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
 				p_deltaT_HTF_PHX_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
 				p_phx_eff_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
-					// Cooler
-				p_T_cooler_in_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
+					// Low Pressure Cooler
+				p_LP_cooler_W_dot_fan_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
+					// Intermediate Pressure Cooler
+				p_IP_cooler_W_dot_fan_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
+					// Coolerl Totals
+				p_cooler_tot_W_dot_fan_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
 			}
 
 
@@ -650,8 +674,12 @@ public:
 		p_T_co2_PHX_out_od = allocate("T_co2_PHX_out_od", n_od_runs);
 		p_deltaT_HTF_PHX_od = allocate("deltaT_HTF_PHX_od", n_od_runs);
 		p_phx_eff_od = allocate("phx_eff_od", n_od_runs);
-		// Cooler
-		p_T_cooler_in_od = allocate("T_cooler_in_od", n_od_runs);
+		// Low Pressure Cooler
+		p_LP_cooler_W_dot_fan_od = allocate("LP_cooler_W_dot_fan_od", n_od_runs);
+		// Intermediate Pressure Cooler
+		p_IP_cooler_W_dot_fan_od = allocate("IP_cooler_W_dot_fan_od", n_od_runs);
+		// Coolerl Totals
+		p_cooler_tot_W_dot_fan_od = allocate("cooler_tot_W_dot_fan_od", n_od_runs);
 		// Solver Metrics
 		p_od_code = allocate("od_code", n_od_runs);
 

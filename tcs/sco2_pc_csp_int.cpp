@@ -278,6 +278,14 @@ int C_sco2_recomp_csp::off_design_fix_P_mc_in(S_od_par od_par, double P_mc_in /*
 	double eta_od_solved = std::numeric_limits<double>::quiet_NaN();
 	int od_core_error_code = off_design_core(eta_od_solved);
 	
+	double W_dot_fan = std::numeric_limits<double>::quiet_NaN();
+	int air_cooler_err_code = mpc_sco2_cycle->calculate_off_design_fan_power(ms_od_par.m_T_amb, W_dot_fan);
+
+	if (air_cooler_err_code != 0)
+	{
+		throw(C_csp_exception("Off design air cooler model failed"));
+	}
+
 	ms_od_solved.ms_rc_cycle_od_solved = *mpc_sco2_cycle->get_od_solved();
 	ms_od_solved.ms_phx_od_solved = mc_phx.ms_od_solved;
 
@@ -449,18 +457,23 @@ int C_sco2_recomp_csp::optimize_off_design(C_sco2_recomp_csp::S_od_par od_par, i
 			{
 				throw(C_csp_exception("C_sco2_recomp_csp::optimize_off_design to maximize efficiency failed"));
 			}
-
-			ms_od_solved.ms_rc_cycle_od_solved = *mpc_sco2_cycle->get_od_solved();
-			ms_od_solved.ms_phx_od_solved = mc_phx.ms_od_solved;
-		}
-
+		}		
 	}
 	else
 	{
 		throw(C_csp_exception("Off design turbomachinery operation strategy not recognized"));
 	}
 
-	
+	double W_dot_fan = std::numeric_limits<double>::quiet_NaN();
+	int air_cooler_err_code = mpc_sco2_cycle->calculate_off_design_fan_power(ms_od_par.m_T_amb, W_dot_fan);
+
+	if (air_cooler_err_code != 0)
+	{
+		throw(C_csp_exception("Off design air cooler model failed"));
+	}
+
+	ms_od_solved.ms_rc_cycle_od_solved = *mpc_sco2_cycle->get_od_solved();
+	ms_od_solved.ms_phx_od_solved = mc_phx.ms_od_solved;
 
 	return 0;
 }
