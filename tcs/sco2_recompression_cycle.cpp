@@ -3279,6 +3279,8 @@ void C_RecompCycle::finalize_design(int & error_code)
 	ms_des_solved.m_W_dot_t = m_W_dot_t;		//[kWe]
 	ms_des_solved.m_W_dot_mc = m_W_dot_mc;		//[kWe]
 	ms_des_solved.m_W_dot_rc = m_W_dot_rc;		//[kWe]
+
+	ms_des_solved.m_W_dot_cooler_tot = mc_air_cooler.get_design_solved()->m_W_dot_fan*1.E3;	//[kWe] convert from MWe
 }
 
 //void C_RecompCycle::off_design(S_od_parameters & od_par_in, int & error_code)
@@ -4189,6 +4191,18 @@ int C_RecompCycle::C_mono_eq_x_f_recomp_y_N_rc::operator()(double f_recomp /*-*/
 	*diff_N_rc = (N_rc - N_rc_des) / N_rc_des;
 
 	return 0;
+}
+
+int C_RecompCycle::calculate_off_design_fan_power(double T_amb /*K*/, double & W_dot_fan /*MWe*/)
+{
+	int ac_err_code = mc_air_cooler.off_design_given_T_out(T_amb, m_temp_od[LTR_LP_OUT], m_pres_od[LTR_LP_OUT],
+		ms_od_solved.m_m_dot_mc, m_temp_od[MC_IN], W_dot_fan);
+
+	ms_od_solved.m_W_dot_cooler_tot = W_dot_fan * 1.E3;	//[kWe] convert from MWe
+
+	ms_od_solved.ms_LP_air_cooler_od_solved = mc_air_cooler.get_od_solved();
+
+	return ac_err_code;
 }
 
 void C_RecompCycle::off_design_fix_shaft_speeds_core(int & error_code)
