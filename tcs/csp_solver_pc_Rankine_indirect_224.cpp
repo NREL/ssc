@@ -56,6 +56,7 @@
 #include "sam_csp_util.h"
 #include <algorithm>
 #include <set>
+#include <fstream>
 
 static C_csp_reported_outputs::S_output_info S_output_info[] =
 {
@@ -1463,6 +1464,9 @@ double C_pc_Rankine_indirect_224::Interpolate(int YT, int XT, double X)
 int C_pc_Rankine_indirect_224::split_ind_tbl(util::matrix_t<double> &cmbd_ind, util::matrix_t<double> &T_htf_ind,
     util::matrix_t<double> &m_dot_ind, util::matrix_t<double> &T_amb_ind) {
 
+    const bool ASC = true;
+    const bool DESC = false;
+
     const int col_T_htf = 0;
     const int col_m_dot = 1;
     const int col_T_amb = 2;
@@ -1472,11 +1476,10 @@ int C_pc_Rankine_indirect_224::split_ind_tbl(util::matrix_t<double> &cmbd_ind, u
     const int col_m_h2o = 6;
 
     // check for minimum length
-    if (cmbd_ind.nrows() < 2) return 1;
+    if (cmbd_ind.nrows() < 2) throw(C_csp_exception("Not enough UDPC table rows", "UDPC Table Importation"));
     
     // get min, max, mode and unique indep. values (assuming the mode is the design value, which is usually safe even with a few errant duplicates)
     // TODO - this can be relaxed so values like 1.1 and 1.101 are maybe not each considered unique
-    // TODO - could min and max be outliers? Should it be ensured that there are duplicates of these?
     util::matrix_t<double> T_htf_col, m_dot_col, T_amb_col;
     T_htf_col = cmbd_ind.col(0);
     m_dot_col = cmbd_ind.col(1);
@@ -1492,6 +1495,16 @@ int C_pc_Rankine_indirect_224::split_ind_tbl(util::matrix_t<double> &cmbd_ind, u
     m_dot_high = *std::max_element(m_dot_vec.begin(), m_dot_vec.end());
     T_amb_low = *std::min_element(T_amb_vec.begin(), T_amb_vec.end());
     T_amb_high = *std::max_element(T_amb_vec.begin(), T_amb_vec.end());
+    int n_min_lowhigh = 2;
+    if (std::count(T_htf_vec.begin(), T_htf_vec.end(), T_htf_low) < n_min_lowhigh ||
+        std::count(T_htf_vec.begin(), T_htf_vec.end(), T_htf_high) < n_min_lowhigh ||
+        std::count(m_dot_vec.begin(), m_dot_vec.end(), m_dot_low) < n_min_lowhigh ||
+        std::count(m_dot_vec.begin(), m_dot_vec.end(), m_dot_high) < n_min_lowhigh ||
+        std::count(T_amb_vec.begin(), T_amb_vec.end(), T_amb_low) < n_min_lowhigh ||
+        std::count(T_amb_vec.begin(), T_amb_vec.end(), T_amb_high) < n_min_lowhigh) {
+        // not true levels, possible outliers
+        throw(C_csp_exception("Incorrect number of values at high and low levels", "UDPC Table Importation"));
+    }
     // mode
     double T_htf_des = mode(T_htf_vec);
     double m_dot_des = mode(m_dot_vec);
@@ -1516,9 +1529,7 @@ int C_pc_Rankine_indirect_224::split_ind_tbl(util::matrix_t<double> &cmbd_ind, u
     }
 
     // sort vector of vectors and remove duplicate sets
-    std::vector<int> cols{ col_T_htf, col_m_dot, col_T_amb };
-    std::vector<bool> asc{ true, true, true };
-    std::sort(cmbd_tbl.begin(), cmbd_tbl.end(), sort_vecOfvec(cols, asc));
+    std::sort(cmbd_tbl.begin(), cmbd_tbl.end(), sort_vecOfvec({ col_T_htf, col_m_dot, col_T_amb }, { ASC, ASC, ASC }));
 
     // TODO - do a smarter removal of duplicates that excludes combinations of the low, design, and high values
     //  These duplicates should be kept as they can occur when the range includes the design value.
@@ -1527,29 +1538,24 @@ int C_pc_Rankine_indirect_224::split_ind_tbl(util::matrix_t<double> &cmbd_ind, u
     //    cmbd_tbl.end());    // use lamba function as predicate function to disregard response values when testing for uniqueness
 
     // start generating three tables
-    // TODO - what if the design value happens to be in the generated low-to-high range?
     const int ncols = 13;
-    T_htf_ind.resize(n_T_htf_unique - 1, ncols);  // subtract 1 for design value
-    m_dot_ind.resize(n_m_dot_unique - 1, ncols);  // subtract 1 for design value
-    T_amb_ind.resize(n_T_amb_unique - 1, ncols);  // subtract 1 for design value
+    T_htf_ind.resize_fill(n_T_htf_unique - 1, ncols, 0.);  // subtract 1 for design value
+    m_dot_ind.resize_fill(n_m_dot_unique - 1, ncols, 0.);  // subtract 1 for design value
+    T_amb_ind.resize_fill(n_T_amb_unique - 1, ncols, 0.);  // subtract 1 for design value
 
     // sort m_dot low to high and secondarily sort T_htf low to high.
     // EXTRACT the first n_T_htf rows excluding the three that correspond to the design T_htf and the three T_amb levels.
     // These are the 'low' columns in Table 1.
-    std::sort(cmbd_tbl.begin(), cmbd_tbl.end(), sort_vecOfvec(std::vector<int> {col_m_dot, col_T_htf}, std::vector<bool> {true, true}));
+    std::sort(cmbd_tbl.begin(), cmbd_tbl.end(), sort_vecOfvec({col_m_dot, col_T_htf}, {ASC, ASC}));
     int vec_row = 0;
     int mat_row = 0;
     std::vector<std::vector<double>> exclude_dsns = { {T_htf_des, T_amb_low}, {T_htf_des, T_amb_des}, {T_htf_des, T_amb_high} };
     std::vector<std::vector<double>>::iterator it;
-    for (std::vector<double>::size_type i = 0; i != n_T_htf_unique + 3; i++) {
+    for (std::vector<double>::size_type i = 0; i != n_T_htf_unique + 2; i++) {   // the design value is included in n_T_htf_unique, so only add 2
         // Check if next value is in set to exclude
         it = std::find(exclude_dsns.begin(), exclude_dsns.end(),
             std::vector<double> { cmbd_tbl.at(vec_row).at(col_T_htf), cmbd_tbl.at(vec_row).at(col_T_amb) });
         if (it == exclude_dsns.end()) {   // if not in the set to exclude
-        //if (!(cmbd_tbl.at(vec_row).at(col_T_htf) == T_htf_des &&
-        //    (cmbd_tbl.at(vec_row).at(col_T_amb) == T_amb_low ||
-        //     cmbd_tbl.at(vec_row).at(col_T_amb) == T_amb_des ||
-        //     cmbd_tbl.at(vec_row).at(col_T_amb) == T_amb_high))) {
             T_htf_ind.set_value(cmbd_tbl.at(vec_row).at(col_T_htf), mat_row, 0);
             T_htf_ind.set_value(cmbd_tbl.at(vec_row).at(col_W_cyl), mat_row, 1);
             T_htf_ind.set_value(cmbd_tbl.at(vec_row).at(col_Q_cyl), mat_row, 4);
@@ -1567,18 +1573,14 @@ int C_pc_Rankine_indirect_224::split_ind_tbl(util::matrix_t<double> &cmbd_ind, u
     // sort m_dot high to low and secondarily sort T_htf low to high.
     // Extract the first n_T_htf rows excluding the three that correspond to the design T_htf and the three T_amb levels.
     // These are the 'high' columns in Table 1.
-    std::sort(cmbd_tbl.begin(), cmbd_tbl.end(), sort_vecOfvec(std::vector<int> {col_m_dot, col_T_htf}, std::vector<bool> {false, true}));
+    std::sort(cmbd_tbl.begin(), cmbd_tbl.end(), sort_vecOfvec({col_m_dot, col_T_htf}, {DESC, ASC}));
     vec_row = 0;
     mat_row = 0;
     exclude_dsns = { {T_htf_des, T_amb_low}, {T_htf_des, T_amb_des}, {T_htf_des, T_amb_high} };
-    for (std::vector<double>::size_type i = 0; i != n_T_htf_unique + 3; i++) {
+    for (std::vector<double>::size_type i = 0; i != n_T_htf_unique + 2; i++) {
         it = std::find(exclude_dsns.begin(), exclude_dsns.end(),
             std::vector<double> { cmbd_tbl.at(vec_row).at(col_T_htf), cmbd_tbl.at(vec_row).at(col_T_amb) });
         if (it == exclude_dsns.end()) {
-        //if (!(cmbd_tbl.at(vec_row).at(col_T_htf) == T_htf_des &&
-        //    (cmbd_tbl.at(vec_row).at(col_T_amb) == T_amb_low ||
-        //     cmbd_tbl.at(vec_row).at(col_T_amb) == T_amb_des ||
-        //     cmbd_tbl.at(vec_row).at(col_T_amb) == T_amb_high))) {
             T_htf_ind.set_value(cmbd_tbl.at(vec_row).at(col_T_htf), mat_row, 0);  // redundant
             T_htf_ind.set_value(cmbd_tbl.at(vec_row).at(col_W_cyl), mat_row, 3);
             T_htf_ind.set_value(cmbd_tbl.at(vec_row).at(col_Q_cyl), mat_row, 6);
@@ -1596,19 +1598,15 @@ int C_pc_Rankine_indirect_224::split_ind_tbl(util::matrix_t<double> &cmbd_ind, u
     // sort T_amb low to high and secondarily sort m_dot low to high.
     // Extract the first n_m_dot rows excluding the three that correspond to the design m_dot and the three T_htf levels.
     // These are the 'low' columns in Table 2.
-    std::sort(cmbd_tbl.begin(), cmbd_tbl.end(), sort_vecOfvec(std::vector<int> {col_T_amb, col_m_dot}, std::vector<bool> {true, true}));
+    std::sort(cmbd_tbl.begin(), cmbd_tbl.end(), sort_vecOfvec({col_T_amb, col_m_dot}, {ASC, ASC}));
     vec_row = 0;
     mat_row = 0;
     exclude_dsns = { {m_dot_des, T_htf_low}, {m_dot_des, T_htf_des}, {m_dot_des, T_htf_high} };
-    for (std::vector<double>::size_type i = 0; i != n_m_dot_unique + 3; i++) {
+    for (std::vector<double>::size_type i = 0; i != n_m_dot_unique + 2; i++) {
         it = std::find(exclude_dsns.begin(), exclude_dsns.end(),
             std::vector<double> { cmbd_tbl.at(vec_row).at(col_m_dot), cmbd_tbl.at(vec_row).at(col_T_htf) });
         if (it == exclude_dsns.end()) {
-        //if (!(cmbd_tbl.at(vec_row).at(col_m_dot) == m_dot_des &&
-        //    (cmbd_tbl.at(vec_row).at(col_T_htf) == T_htf_low ||
-        //     cmbd_tbl.at(vec_row).at(col_T_htf) == T_htf_des ||
-        //     cmbd_tbl.at(vec_row).at(col_T_htf) == T_htf_high))) {
-            m_dot_ind.set_value(cmbd_tbl.at(vec_row).at(col_T_htf), mat_row, 0);
+            m_dot_ind.set_value(cmbd_tbl.at(vec_row).at(col_m_dot), mat_row, 0);
             m_dot_ind.set_value(cmbd_tbl.at(vec_row).at(col_W_cyl), mat_row, 1);
             m_dot_ind.set_value(cmbd_tbl.at(vec_row).at(col_Q_cyl), mat_row, 4);
             m_dot_ind.set_value(cmbd_tbl.at(vec_row).at(col_W_h2o), mat_row, 7);
@@ -1625,19 +1623,15 @@ int C_pc_Rankine_indirect_224::split_ind_tbl(util::matrix_t<double> &cmbd_ind, u
     // sort T_amb high to low and secondarily sort m_dot low to high.
     // Extract the first n_m_dot rows excluding the three that correspond to the design m_dot and the three T_htf levels.
     // These are the 'high' columns in Table 2.
-    std::sort(cmbd_tbl.begin(), cmbd_tbl.end(), sort_vecOfvec(std::vector<int> {col_T_amb, col_m_dot}, std::vector<bool> {false, true}));
+    std::sort(cmbd_tbl.begin(), cmbd_tbl.end(), sort_vecOfvec({col_T_amb, col_m_dot}, {DESC, ASC}));
     vec_row = 0;
     mat_row = 0;
     exclude_dsns = { {m_dot_des, T_htf_low}, {m_dot_des, T_htf_des}, {m_dot_des, T_htf_high} };
-    for (std::vector<double>::size_type i = 0; i != n_m_dot_unique + 3; i++) {
+    for (std::vector<double>::size_type i = 0; i != n_m_dot_unique + 2; i++) {
         it = std::find(exclude_dsns.begin(), exclude_dsns.end(),
             std::vector<double> { cmbd_tbl.at(vec_row).at(col_m_dot), cmbd_tbl.at(vec_row).at(col_T_htf) });
         if (it == exclude_dsns.end()) {
-        //if (!(cmbd_tbl.at(vec_row).at(col_m_dot) == m_dot_des &&
-        //    (cmbd_tbl.at(vec_row).at(col_T_htf) == T_htf_low ||
-        //        cmbd_tbl.at(vec_row).at(col_T_htf) == T_htf_des ||
-        //        cmbd_tbl.at(vec_row).at(col_T_htf) == T_htf_high))) {
-            m_dot_ind.set_value(cmbd_tbl.at(vec_row).at(col_T_htf), mat_row, 0);  // redundant
+            m_dot_ind.set_value(cmbd_tbl.at(vec_row).at(col_m_dot), mat_row, 0);  // redundant
             m_dot_ind.set_value(cmbd_tbl.at(vec_row).at(col_W_cyl), mat_row, 3);
             m_dot_ind.set_value(cmbd_tbl.at(vec_row).at(col_Q_cyl), mat_row, 6);
             m_dot_ind.set_value(cmbd_tbl.at(vec_row).at(col_W_h2o), mat_row, 9);
@@ -1654,17 +1648,15 @@ int C_pc_Rankine_indirect_224::split_ind_tbl(util::matrix_t<double> &cmbd_ind, u
     // sort T_htf low to high and secondarily sort T_amb low to high.
     // Extract the first n_T_amb rows excluding the one that corresponds to the design T_amb and the design m_dot.
     // These are the 'low' columns in Table 3.
-    std::sort(cmbd_tbl.begin(), cmbd_tbl.end(), sort_vecOfvec(std::vector<int> {col_T_htf, col_T_amb}, std::vector<bool> {true, true}));
+    std::sort(cmbd_tbl.begin(), cmbd_tbl.end(), sort_vecOfvec({col_T_htf, col_T_amb}, {ASC, ASC}));
     vec_row = 0;
     mat_row = 0;
     exclude_dsns = { {T_amb_des, m_dot_des} };
-    for (std::vector<double>::size_type i = 0; i != n_T_amb_unique + 1; i++) {
+    for (std::vector<double>::size_type i = 0; i != n_T_amb_unique; i++) {   // the design value is included in n_T_amb_unique
         it = std::find(exclude_dsns.begin(), exclude_dsns.end(),
             std::vector<double> { cmbd_tbl.at(vec_row).at(col_T_amb), cmbd_tbl.at(vec_row).at(col_m_dot) });
         if (it == exclude_dsns.end()) {
-        //if (!(cmbd_tbl.at(vec_row).at(col_T_amb) == T_amb_des &&
-        //    cmbd_tbl.at(vec_row).at(col_m_dot) == m_dot_des)) {
-            T_amb_ind.set_value(cmbd_tbl.at(vec_row).at(col_T_htf), mat_row, 0);
+            T_amb_ind.set_value(cmbd_tbl.at(vec_row).at(col_T_amb), mat_row, 0);
             T_amb_ind.set_value(cmbd_tbl.at(vec_row).at(col_W_cyl), mat_row, 1);
             T_amb_ind.set_value(cmbd_tbl.at(vec_row).at(col_Q_cyl), mat_row, 4);
             T_amb_ind.set_value(cmbd_tbl.at(vec_row).at(col_W_h2o), mat_row, 7);
@@ -1679,28 +1671,46 @@ int C_pc_Rankine_indirect_224::split_ind_tbl(util::matrix_t<double> &cmbd_ind, u
     }
 
     // sort T_htf high to low and secondarily sort T_amb low to high.
-    // Extract the first n_T_amb rows.
+    // Extract the first n_T_amb rows excluding the one that corresponds to the design T_amb and the design m_dot
     // These are the 'high' columns in Table 3.
-    std::sort(cmbd_tbl.begin(), cmbd_tbl.end(), sort_vecOfvec(std::vector<int> {col_T_htf, col_T_amb}, std::vector<bool> {false, true}));
+    std::sort(cmbd_tbl.begin(), cmbd_tbl.end(), sort_vecOfvec({col_T_htf, col_T_amb}, {DESC, ASC}));
     vec_row = 0;
     mat_row = 0;
-    for (std::vector<double>::size_type i = 0; i != n_T_amb_unique + 1; i++) {
-        T_amb_ind.set_value(cmbd_tbl.at(vec_row).at(col_T_htf), mat_row, 0);
-        T_amb_ind.set_value(cmbd_tbl.at(vec_row).at(col_W_cyl), mat_row, 3);
-        T_amb_ind.set_value(cmbd_tbl.at(vec_row).at(col_Q_cyl), mat_row, 6);
-        T_amb_ind.set_value(cmbd_tbl.at(vec_row).at(col_W_h2o), mat_row, 9);
-        T_amb_ind.set_value(cmbd_tbl.at(vec_row).at(col_m_h2o), mat_row, 12);
-        mat_row++;
-        cmbd_tbl.erase(cmbd_tbl.begin() + vec_row);
+    exclude_dsns = { {T_amb_des, m_dot_des} };
+    double T_htf_test, m_dot_test, T_amb_test;
+    for (std::vector<double>::size_type i = 0; i != n_T_amb_unique; i++) {    // the design value is included in n_T_amb_unique
+        it = std::find(exclude_dsns.begin(), exclude_dsns.end(),
+            std::vector<double> { cmbd_tbl.at(vec_row).at(col_T_amb), cmbd_tbl.at(vec_row).at(col_m_dot) });
+        T_htf_test = cmbd_tbl.at(vec_row).at(col_T_htf);
+        m_dot_test = cmbd_tbl.at(vec_row).at(col_m_dot);
+        T_amb_test = cmbd_tbl.at(vec_row).at(col_T_amb);
+        if (it == exclude_dsns.end()) {
+            T_amb_ind.set_value(cmbd_tbl.at(vec_row).at(col_T_amb), mat_row, 0);  // redundant
+            T_amb_ind.set_value(cmbd_tbl.at(vec_row).at(col_W_cyl), mat_row, 3);
+            T_amb_ind.set_value(cmbd_tbl.at(vec_row).at(col_Q_cyl), mat_row, 6);
+            T_amb_ind.set_value(cmbd_tbl.at(vec_row).at(col_W_h2o), mat_row, 9);
+            T_amb_ind.set_value(cmbd_tbl.at(vec_row).at(col_m_h2o), mat_row, 12);
+            mat_row++;
+            cmbd_tbl.erase(cmbd_tbl.begin() + vec_row);
+        }
+        else {
+            exclude_dsns.erase(it);
+            vec_row++;
+        }
     }
 
     // sort T_htf low to high.
     // Extract the rows that have both T_amb and m_dot at their design conditions.
     // These are the 'design' columns in Table 1.
-    std::sort(cmbd_tbl.begin(), cmbd_tbl.end(), sort_vecOfvec(std::vector<int> {col_T_htf}, std::vector<bool> {false}));
+    std::sort(cmbd_tbl.begin(), cmbd_tbl.end(), sort_vecOfvec({col_T_htf}, {ASC}));
     vec_row = 0;
     mat_row = 0;
-    for (std::vector<double>::size_type i = 0; i != cmbd_tbl.size(); i++) {
+    int tbl_size = cmbd_tbl.size();
+    T_htf_test, m_dot_test, T_amb_test;
+    for (std::vector<double>::size_type i = 0; i != tbl_size; i++) {
+        T_htf_test = cmbd_tbl.at(vec_row).at(col_T_htf);
+        m_dot_test = cmbd_tbl.at(vec_row).at(col_m_dot);
+        T_amb_test = cmbd_tbl.at(vec_row).at(col_T_amb);
         if (cmbd_tbl.at(vec_row).at(col_T_amb) == T_amb_des &&
             cmbd_tbl.at(vec_row).at(col_m_dot) == m_dot_des) {
             T_htf_ind.set_value(cmbd_tbl.at(vec_row).at(col_T_htf), mat_row, 0);
@@ -1715,41 +1725,18 @@ int C_pc_Rankine_indirect_224::split_ind_tbl(util::matrix_t<double> &cmbd_ind, u
             vec_row++;
         }
     }
-    //while (cmbd_tbl.at(vec_row).at(col_T_amb) == T_amb_des &&
-    //    cmbd_tbl.at(vec_row).at(col_m_dot) == m_dot_des) {
-    //    T_htf_ind.set_value(cmbd_tbl.at(vec_row).at(col_T_htf), mat_row, 0);
-    //    T_htf_ind.set_value(cmbd_tbl.at(vec_row).at(col_W_cyl), mat_row, 2);
-    //    T_htf_ind.set_value(cmbd_tbl.at(vec_row).at(col_Q_cyl), mat_row, 5);
-    //    T_htf_ind.set_value(cmbd_tbl.at(vec_row).at(col_W_h2o), mat_row, 8);
-    //    T_htf_ind.set_value(cmbd_tbl.at(vec_row).at(col_m_h2o), mat_row, 11);
-    //    mat_row++;
-    //    cmbd_tbl.erase(cmbd_tbl.begin() + vec_row);
-    //}
-    //vec_row = cmbd_tbl.size() - 1;
-
-    // THESE WON'T BE IN ORDER IF GRABBED LIKE THIS
-    //while (cmbd_tbl.at(vec_row).at(col_T_amb) == T_amb_des &&
-    //    cmbd_tbl.at(vec_row).at(col_m_dot) == m_dot_des) {
-    //    T_htf_ind.set_value(cmbd_tbl.at(vec_row).at(col_T_htf), mat_row, 0);
-    //    T_htf_ind.set_value(cmbd_tbl.at(vec_row).at(col_W_cyl), mat_row, 2);
-    //    T_htf_ind.set_value(cmbd_tbl.at(vec_row).at(col_Q_cyl), mat_row, 5);
-    //    T_htf_ind.set_value(cmbd_tbl.at(vec_row).at(col_W_h2o), mat_row, 8);
-    //    T_htf_ind.set_value(cmbd_tbl.at(vec_row).at(col_m_h2o), mat_row, 11);
-    //    mat_row++;
-    //    cmbd_tbl.erase(cmbd_tbl.begin() + vec_row);
-    //    vec_row--;
-    //}
 
     // sort m_dot low to high.
     // Extract the rows that have both T_htf and T_amb at their design conditions.
     // These are the 'design' columns in Table 2.
-    std::sort(cmbd_tbl.begin(), cmbd_tbl.end(), sort_vecOfvec(std::vector<int> {col_m_dot}, std::vector<bool> {true}));
+    std::sort(cmbd_tbl.begin(), cmbd_tbl.end(), sort_vecOfvec({col_m_dot}, {ASC}));
     vec_row = 0;
     mat_row = 0;
-    for (std::vector<double>::size_type i = 0; i != cmbd_tbl.size(); i++) {
+    tbl_size = cmbd_tbl.size();
+    for (std::vector<double>::size_type i = 0; i != tbl_size; i++) {
         if (cmbd_tbl.at(vec_row).at(col_T_htf) == T_htf_des &&
             cmbd_tbl.at(vec_row).at(col_T_amb) == T_amb_des) {
-            m_dot_ind.set_value(cmbd_tbl.at(vec_row).at(col_T_htf), mat_row, 0);
+            m_dot_ind.set_value(cmbd_tbl.at(vec_row).at(col_m_dot), mat_row, 0);
             m_dot_ind.set_value(cmbd_tbl.at(vec_row).at(col_W_cyl), mat_row, 2);
             m_dot_ind.set_value(cmbd_tbl.at(vec_row).at(col_Q_cyl), mat_row, 5);
             m_dot_ind.set_value(cmbd_tbl.at(vec_row).at(col_W_h2o), mat_row, 8);
@@ -1764,11 +1751,12 @@ int C_pc_Rankine_indirect_224::split_ind_tbl(util::matrix_t<double> &cmbd_ind, u
 
     // sort T_amb low to high.
     // Extract the rest. These are the 'design' columns in Table 3.
-    std::sort(cmbd_tbl.begin(), cmbd_tbl.end(), sort_vecOfvec(std::vector<int> {col_T_amb}, std::vector<bool> {true}));
+    std::sort(cmbd_tbl.begin(), cmbd_tbl.end(), sort_vecOfvec({col_T_amb}, {ASC}));
     vec_row = 0;
     mat_row = 0;
-    for (std::vector<double>::size_type i = 0; i != cmbd_tbl.size(); i++) {
-        T_amb_ind.set_value(cmbd_tbl.at(vec_row).at(col_T_htf), mat_row, 0);
+    tbl_size = cmbd_tbl.size();
+    for (std::vector<double>::size_type i = 0; i != tbl_size; i++) {
+        T_amb_ind.set_value(cmbd_tbl.at(vec_row).at(col_T_amb), mat_row, 0);
         T_amb_ind.set_value(cmbd_tbl.at(vec_row).at(col_W_cyl), mat_row, 2);
         T_amb_ind.set_value(cmbd_tbl.at(vec_row).at(col_Q_cyl), mat_row, 5);
         T_amb_ind.set_value(cmbd_tbl.at(vec_row).at(col_W_h2o), mat_row, 8);
@@ -1776,6 +1764,72 @@ int C_pc_Rankine_indirect_224::split_ind_tbl(util::matrix_t<double> &cmbd_ind, u
         mat_row++;
         cmbd_tbl.erase(cmbd_tbl.begin() + vec_row);
     }
+
+    /*
+    // Output tables to a text file for verification
+    std::ofstream T_htf_file;
+    T_htf_file.open("T_htf_file.dat");
+    T_htf_file << "T_htf"
+        << "\t" << "W_cycle_low" << "\t" << "W_cycle_design" << "\t" << "W_cycle_high"
+        << "\t" << "Heat_in_low" << "\t" << "Heat_in_design" << "\t" << "Heat_in_high"
+        << "\t" << "W_cooling_low" << "\t" << "W_cooling_design" << "\t" << "W_cooling_high"
+        << "\t" << "m_water_low" << "\t" << "m_water_design" << "\t" << "m_water_high"
+        << "\n";
+    for (int i = 0; i < T_htf_ind.nrows(); i++) {
+        for (int j = 0; j < T_htf_ind.ncols(); j++) {
+            T_htf_file << T_htf_ind.at(i, j);
+            if (j == T_htf_ind.ncols() - 1) {
+                T_htf_file << "\n";
+            }
+            else {
+                T_htf_file << "\t";
+            }
+        }
+    }
+    T_htf_file.close();
+
+    std::ofstream m_dot_file;
+    m_dot_file.open("m_dot_file.dat");
+    m_dot_file << "m_dot"
+        << "\t" << "W_cycle_low" << "\t" << "W_cycle_design" << "\t" << "W_cycle_high"
+        << "\t" << "Heat_in_low" << "\t" << "Heat_in_design" << "\t" << "Heat_in_high"
+        << "\t" << "W_cooling_low" << "\t" << "W_cooling_design" << "\t" << "W_cooling_high"
+        << "\t" << "m_water_low" << "\t" << "m_water_design" << "\t" << "m_water_high"
+        << "\n";
+    for (int i = 0; i < m_dot_ind.nrows(); i++) {
+        for (int j = 0; j < m_dot_ind.ncols(); j++) {
+            m_dot_file << m_dot_ind.at(i, j);
+            if (j == m_dot_ind.ncols() - 1) {
+                m_dot_file << "\n";
+            }
+            else {
+                m_dot_file << "\t";
+            }
+        }
+    }
+    m_dot_file.close();
+
+    std::ofstream T_amb_file;
+    T_amb_file.open("T_amb_file.dat");
+    T_amb_file << "T_amb"
+        << "\t" << "W_cycle_low" << "\t" << "W_cycle_design" << "\t" << "W_cycle_high"
+        << "\t" << "Heat_in_low" << "\t" << "Heat_in_design" << "\t" << "Heat_in_high"
+        << "\t" << "W_cooling_low" << "\t" << "W_cooling_design" << "\t" << "W_cooling_high"
+        << "\t" << "m_water_low" << "\t" << "m_water_design" << "\t" << "m_water_high"
+        << "\n";
+    for (int i = 0; i < T_amb_ind.nrows(); i++) {
+        for (int j = 0; j < T_amb_ind.ncols(); j++) {
+            T_amb_file << T_amb_ind.at(i, j);
+            if (j == T_amb_ind.ncols() - 1) {
+                T_amb_file << "\n";
+            }
+            else {
+                T_amb_file << "\t";
+            }
+        }
+    }
+    T_amb_file.close();
+    */
 
     return 0;
 }

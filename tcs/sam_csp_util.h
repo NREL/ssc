@@ -607,19 +607,22 @@ public:
     }
 
     bool operator () (const vector<double> &a, const vector<double> &b) const {
+        int col;
+        col = 0;
         for (int col_idx = 0; col_idx < columns.size(); col_idx++) {
-            if (a[col_idx] == b[col_idx]) {
+            col = columns[col_idx];
+            if (a[col] == b[col]) {
                 continue;
             }
-            else if ( (a[col_idx] < b[col_idx] && ascending[col_idx] ) ||
-                ( !(a[col_idx] < b[col_idx]) && !ascending[col_idx] )) {
+            else if ( (a[col] < b[col] && ascending[col_idx] ) ||
+                ( !(a[col] < b[col]) && !ascending[col_idx] )) {
                 return true;
             }
             else {
                 return false;
             }
         }
-        return true;  // all sorting values are equal
+        return false;  // all sorting values are equal, must return false to adhere to 'strict weak ordering'
     }
 };
 #endif
