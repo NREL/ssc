@@ -1118,12 +1118,19 @@ int C_sco2_recomp_csp::C_sco2_csp_od::operator()(S_f_inputs inputs, S_f_outputs 
 
 	int off_design_code = -1;	//[-]
 
-	off_design_code = mpc_sco2_rc->optimize_off_design(sco2_od_par, od_strategy);
-
+	try
+	{
+		off_design_code = mpc_sco2_rc->optimize_off_design(sco2_od_par, od_strategy);
+	}
+	catch (C_csp_exception &)
+	{
+		return -1;
+	}
 	// Cycle off-design may want to operate below this value, so ND value could be < 1 everywhere
 	double W_dot_gross_design = mpc_sco2_rc->get_design_solved()->ms_rc_cycle_solved.m_W_dot_net;	//[kWe]
 	double Q_dot_in_design = mpc_sco2_rc->get_design_solved()->ms_rc_cycle_solved.m_W_dot_net
 								/ mpc_sco2_rc->get_design_solved()->ms_rc_cycle_solved.m_eta_thermal;	//[kWt]
+	double W_dot_cooler_tot_design = mpc_sco2_rc->get_design_solved()->ms_rc_cycle_solved.m_W_dot_cooler_tot;	//[kWe]
 
 	outputs.m_W_dot_gross_ND = mpc_sco2_rc->get_od_solved()->ms_rc_cycle_od_solved.m_W_dot_net
 								/ W_dot_gross_design;
@@ -1131,7 +1138,10 @@ int C_sco2_recomp_csp::C_sco2_csp_od::operator()(S_f_inputs inputs, S_f_outputs 
 	outputs.m_Q_dot_in_ND = mpc_sco2_rc->get_od_solved()->ms_rc_cycle_od_solved.m_Q_dot
 								/ Q_dot_in_design;
 
-	outputs.m_W_dot_cooling_ND = outputs.m_W_dot_gross_ND;
+	outputs.m_W_dot_cooling_ND = mpc_sco2_rc->get_od_solved()->ms_rc_cycle_od_solved.m_W_dot_cooler_tot
+								/ W_dot_cooler_tot_design;	
+	
+	//outputs.m_W_dot_cooling_ND = outputs.m_W_dot_gross_ND;
 
 	outputs.m_m_dot_water_ND = 1.0;	
 

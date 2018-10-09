@@ -190,7 +190,7 @@ private:
 	std::string m_log_msg;
 	std::string m_progress_msg;	
 
-	void send_callback(int run_number, int n_runs_total,
+	void send_callback(bool is_od_model_error, int run_number, int n_runs_total,
 		double T_htf_hot, double m_dot_htf_ND, double T_amb,
 		double W_dot_gross_ND, double Q_dot_in_ND,
 		double W_dot_cooling_ND, double m_dot_water_ND);

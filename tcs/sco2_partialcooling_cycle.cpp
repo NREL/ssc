@@ -646,6 +646,8 @@ int C_PartialCooling_Cycle::finalize_design()
 	ms_des_solved.m_W_dot_rc = m_W_dot_rc;	 //[kWe]
 	ms_des_solved.m_W_dot_pc = m_W_dot_pc;	 //[kWe]
 
+	ms_des_solved.m_W_dot_cooler_tot = (mc_IP_air_cooler.get_design_solved()->m_W_dot_fan
+		+ mc_LP_air_cooler.get_design_solved()->m_W_dot_fan) * 1.E3;	//[kWe] convert from MWe
 	return 0;
 }
 
@@ -1613,6 +1615,8 @@ int C_PartialCooling_Cycle::calculate_off_design_fan_power(double T_amb /*K*/, d
 		ms_od_solved.m_m_dot_mc, mv_temp_od[MC_IN], W_dot_IP_cooler);
 
 	W_dot_fan = W_dot_LP_cooler + W_dot_IP_cooler;	//[MWe]
+
+	ms_od_solved.m_W_dot_cooler_tot = W_dot_fan * 1.E3;	//[kWe] convert from MWe
 
 	ms_od_solved.ms_IP_air_cooler_od_solved = mc_IP_air_cooler.get_od_solved();
 
