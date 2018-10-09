@@ -56,6 +56,8 @@
 #include <cmath>
 #include <limits>
 #include <vector>
+#include <stdexcept>
+
 #include "lib_ondinv.h"
 
 const int TEMP_DERATE_ARRAY_LENGTH = 6;

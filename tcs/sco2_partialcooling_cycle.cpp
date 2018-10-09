@@ -646,6 +646,8 @@ int C_PartialCooling_Cycle::finalize_design()
 	ms_des_solved.m_W_dot_rc = m_W_dot_rc;	 //[kWe]
 	ms_des_solved.m_W_dot_pc = m_W_dot_pc;	 //[kWe]
 
+	ms_des_solved.m_W_dot_cooler_tot = (mc_IP_air_cooler.get_design_solved()->m_W_dot_fan
+		+ mc_LP_air_cooler.get_design_solved()->m_W_dot_fan) * 1.E3;	//[kWe] convert from MWe
 	return 0;
 }
 
@@ -1594,6 +1596,31 @@ int C_PartialCooling_Cycle::off_design_fix_shaft_speeds_core()
 	ms_od_solved.m_dens = mv_dens_od;
 
 	return 0;
+}
+
+int C_PartialCooling_Cycle::calculate_off_design_fan_power(double T_amb /*K*/, double & W_dot_fan /*MWe*/)
+{
+	double W_dot_LP_cooler = std::numeric_limits<double>::quiet_NaN();
+	double W_dot_IP_cooler = std::numeric_limits<double>::quiet_NaN();
+
+	int LP_err_code = mc_LP_air_cooler.off_design_given_T_out(T_amb, mv_temp_od[LTR_LP_OUT], mv_pres_od[LTR_LP_OUT],
+		ms_od_solved.m_m_dot_pc, mv_temp_od[PC_IN], W_dot_LP_cooler);
+
+	if (LP_err_code != 0)
+		return LP_err_code;
+
+	ms_od_solved.ms_LP_air_cooler_od_solved = mc_LP_air_cooler.get_od_solved();
+
+	int IP_err_code = mc_IP_air_cooler.off_design_given_T_out(T_amb, mv_temp_od[PC_OUT], mv_pres_od[PC_OUT],
+		ms_od_solved.m_m_dot_mc, mv_temp_od[MC_IN], W_dot_IP_cooler);
+
+	W_dot_fan = W_dot_LP_cooler + W_dot_IP_cooler;	//[MWe]
+
+	ms_od_solved.m_W_dot_cooler_tot = W_dot_fan * 1.E3;	//[kWe] convert from MWe
+
+	ms_od_solved.ms_IP_air_cooler_od_solved = mc_IP_air_cooler.get_od_solved();
+
+	return IP_err_code;
 }
 
 int C_PartialCooling_Cycle::C_MEQ_recup_od::operator()(double T_HTR_LP_out_guess /*K*/, double *diff_T_HTR_LP_out /*K*/)

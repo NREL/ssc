@@ -1391,7 +1391,7 @@ bool C_CO2_to_air_cooler::design_hx(S_des_par_ind des_par_ind, S_des_par_cycle_d
 	}
 
 	// Calculate ambient pressure
-	ms_hx_des_sol.m_P_amb_des = 101325.0*pow(1 - 2.25577E-5*ms_des_par_ind.m_elev, 5.25588);	//[Pa] http://www.engineeringtoolbox.com/air-altitude-pressure-d_462.html	
+	ms_hx_des_sol.m_P_amb_des = air_pressure(ms_des_par_ind.m_elev);	//[Pa]
 	
 	//m_enum_compact_hx_config = fc_tubes_s80_38T;
 	m_enum_compact_hx_config = N_compact_hx::fc_tubes_sCF_88_10Jb;
@@ -1605,6 +1605,8 @@ bool C_CO2_to_air_cooler::design_hx(S_des_par_ind des_par_ind, S_des_par_cycle_d
 	ms_hx_des_sol.m_T_out_co2 = ms_des_par_cycle_dep.m_T_hot_out_des;	//[K] Cold CO2 outlet temperature
 	ms_hx_des_sol.m_P_out_co2 = m_P_hot_out_des;			//[K] Cold CO2 outlet pressure
 	ms_hx_des_sol.m_q_dot = m_Q_dot_des;					//[Wt] Heat exchanger duty
+
+	ms_hx_des_sol.m_W_dot_fan = ms_des_par_cycle_dep.m_W_dot_fan_des;	//[MWe]
 
 	ms_hx_des_sol.m_cost = calculate_cost(ms_hx_des_sol.m_UA_total*1.E-3, ms_hx_des_sol.m_V_total,
 		ms_hx_des_sol.m_T_in_co2, ms_hx_des_sol.m_P_in_co2, ms_hx_des_sol.m_m_dot_co2);		//[M$]
@@ -2231,8 +2233,7 @@ int outlet_given_geom_and_air_m_dot(double T_co2_out /*K*/, double m_dot_co2_tub
 	return 0;
 }
 
-int C_CO2_to_air_cooler::off_design_given_T_out(double T_amb /*K*/, double P_amb /*Pa*/, double 
-	T_hot_in /*K*/, double P_hot_in /*kPa*/,
+int C_CO2_to_air_cooler::off_design_given_T_out(double T_amb /*K*/, double T_hot_in /*K*/, double P_hot_in /*kPa*/,
 	double m_dot_hot /*kg/s*/, double T_hot_out /*K*/, double & W_dot_fan /*MWe*/)
 {
 	// Want to iterate over *air* mass flow rate until T_co2_out is = T_hot_out
@@ -2240,6 +2241,8 @@ int C_CO2_to_air_cooler::off_design_given_T_out(double T_amb /*K*/, double P_amb
 	{
 		return -1;
 	}
+
+	double P_amb = air_pressure(ms_des_par_ind.m_elev);
 
 	// Assume air props don't change significantly in air cooler
 	double mu_air = std::numeric_limits<double>::quiet_NaN();      //[kg/m-s] dynamic viscosity
@@ -2254,7 +2257,7 @@ int C_CO2_to_air_cooler::off_design_given_T_out(double T_amb /*K*/, double P_amb
 	// Set up solver to find the air mass flow rate that achieves the target hot outlet temperature
 	double deltaP_co2_od = ms_des_par_cycle_dep.m_delta_P_des;		//[kPa]
 	double m_dot_hot_tube = m_dot_hot / ms_hx_des_sol.m_N_par;		//[kg/s]
-	double tol_m_dot = 1.E-3;		//[-]
+	double tol_m_dot = 1.E-4;		//[-]
 
 	C_MEQ_od_air_mdot__T_co2_out c_m_dot_od(this, m_dot_hot_tube, T_hot_out,
 		deltaP_co2_od, P_hot_in, P_hot_in, T_amb, tol_m_dot,
@@ -2296,6 +2299,7 @@ int C_CO2_to_air_cooler::off_design_given_T_out(double T_amb /*K*/, double P_amb
 	}
 
 	W_dot_fan = c_m_dot_od.m_W_dot_fan;		//[MWe]
+	ms_od_solved.m_W_dot_fan = W_dot_fan;	//[MWe]
 
 	return 0;
 }
@@ -2599,4 +2603,10 @@ void C_CO2_to_air_cooler::off_design_hx(double T_amb_K, double P_amb_Pa, double 
 	W_dot_fan_MW = W_dot_fan;
 	error_code = 0;
 	return;
+}
+
+double C_CO2_to_air_cooler::air_pressure(double elevation /*m*/)
+{
+	// http://www.engineeringtoolbox.com/air-altitude-pressure-d_462.html	
+	return 101325.0*pow(1 - 2.25577E-5*elevation, 5.25588);	//[Pa] 
 }

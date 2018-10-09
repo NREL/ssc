@@ -139,7 +139,7 @@ struct SGeothermal_Inputs
 	double md_EGSFractureAngle;								// default 15 degrees
 	double md_RatioInjectionToProduction;					// used in non-cost equation, so it needs to be an input
 	double md_AdditionalPressure;							// manually enter additional psi for injection pumps
-
+	
 
 	const char * mc_WeatherFileName;
 	int * mia_tou;											// time of use array
@@ -156,12 +156,37 @@ struct SGeothermal_Outputs
 		maf_timestep_power = maf_timestep_test_values = maf_timestep_pressure = maf_timestep_dry_bulb = maf_timestep_wet_bulb = NULL;
 		mb_BrineEffectivenessCalculated = mb_FlashPressuresCalculated = false;
 		maf_hourly_power = NULL;
+
 	}
 
-	// single values used in calculations, some also used in UI
+	//Following list of variables used as inputs in cmod_geothermal_costs.cpp for calculating direct geothermal plant cost:
 	double md_NumberOfWells;
 	double md_PumpWorkKW;
+	double eff_secondlaw;				//Overall Plant 2nd Law Efficiency 
+	double qRejectedTotal;				//Used in calculating Cooling Tower Cost - Flash Plant Type
+	double condenser_q;					//Condenser heat rejected - used in calculating Surface type condenser cost in cmod_geothermal_costs
+	double v_stage_1;					//Vacuum Stage 1 Pump Power
+	double v_stage_2;	
+	double v_stage_3;
+	double GF_flowrate;					//GF Flow Rate Total
+	double qRejectByStage_1;			//Used in NCG Condenser Cost Calculation 
+	double qRejectByStage_2;
+	double qRejectByStage_3;
+	double ncg_condensate_pump;			//For calculating ncg pump cost
+	double cw_pump_work;				//For calculating ncg pump cost
+	double pressure_ratio_1;			//Suction steam ratio used in calculation of NCG Ejector Cost
+	double pressure_ratio_2;
+	double pressure_ratio_3;
+	double condensate_pump_power;		//kW
+	double cwflow;						// lb/h
+	double cw_pump_head;				//ft
+	double flash_temperature;			//Storing Value of HP Flash Temperature for Calculating Flash Vessel in cmod_geothermal_costs
+	double flash_temperature_lp;		//Storing Value of LP Flash Temperature for Calculating Flash Vessel in cmod_geothermal_costs
+	double spec_vol, spec_vol_lp;		//HP Specific Volume & LP Specific Volume used in Flash Vessel Cost Calculation
+	double getX_hp, getX_lp;
+	double flash_count;
 
+	// single values used in calculations, some also used in UI
 	bool mb_BrineEffectivenessCalculated;
 	double md_FlashBrineEffectiveness;
 
