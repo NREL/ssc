@@ -328,8 +328,21 @@ void C_pc_Rankine_indirect_224::init(C_csp_power_cycle::S_solved_params &solved_
 	}
 	else
 	{	// Initialization calculations for User Defined power cycle model
-
-        split_ind_tbl(ms_params.mc_combined_ind, ms_params.mc_T_htf_ind, ms_params.mc_m_dot_htf_ind, ms_params.mc_T_amb_ind);  // split the one table into three
+        
+        // If any of the three original UDPC tables are not initialized, try importing the newer single combined table
+        if ( ms_params.mc_T_htf_ind.is_single() || ms_params.mc_T_amb_ind.is_single() || ms_params.mc_m_dot_htf_ind.is_single() ) {
+            if (!ms_params.mc_combined_ind.is_single()) {
+                try {
+                    split_ind_tbl(ms_params.mc_combined_ind, ms_params.mc_T_htf_ind, ms_params.mc_m_dot_htf_ind, ms_params.mc_T_amb_ind);
+                }
+                catch (...) {
+                    throw(C_csp_exception("Cannot import UDPC table", "UDPC Table Importation"));
+                }
+            }
+            else {
+                throw(C_csp_exception("UDPC tables are not set", "UDPC Table Importation"));
+            }
+        }
 
 		// Load tables into user defined power cycle member class
 			// .init method will throw an error if initialization fails, so catch upstream

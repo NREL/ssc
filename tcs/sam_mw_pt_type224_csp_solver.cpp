@@ -96,9 +96,9 @@ enum{
 	P_UD_T_AMB_HIGH,
 	P_UD_M_DOT_HTF_LOW,
 	P_UD_M_DOT_HTF_HIGH,
-	//P_UD_T_HTF_IND_OD,
-	//P_UD_T_AMB_IND_OD,
-	//P_UD_M_DOT_HTF_IND_OD,
+	P_UD_T_HTF_IND_OD,
+	P_UD_T_AMB_IND_OD,
+	P_UD_M_DOT_HTF_IND_OD,
     P_UD_IND_OD,
 
 	I_MODE,
@@ -167,9 +167,9 @@ tcsvarinfo sam_mw_pt_type224_variables[] = {
 	{ TCS_PARAM,        TCS_NUMBER,      P_UD_T_AMB_HIGH,           "ud_T_amb_high",           "High level ambient temperature for HTF mass flow rate parametric",                                  "C",	 "",            "",            ""  },
 	{ TCS_PARAM,        TCS_NUMBER,      P_UD_M_DOT_HTF_LOW,        "ud_m_dot_htf_low",        "Low level normalized HTF mass flow rate for T_HTF parametric",                                      "-",	 "",            "",            ""  },
 	{ TCS_PARAM,        TCS_NUMBER,      P_UD_M_DOT_HTF_HIGH,       "ud_m_dot_htf_high",       "High level normalized HTF mass flow rate for T_HTF parametric",                                     "-",	 "",            "",            ""  },
-	//{ TCS_PARAM,        TCS_MATRIX,      P_UD_T_HTF_IND_OD,         "ud_T_htf_ind_od",         "Off design table of user-defined power cycle performance formed from parametric on T_htf_hot [C]",  "",      "",            "",            ""  }, 
-	//{ TCS_PARAM,        TCS_MATRIX,      P_UD_T_AMB_IND_OD,         "ud_T_amb_ind_od",         "Off design table of user-defined power cycle performance formed from parametric on T_amb [C]",	    "",      "",            "",            ""  }, 
-	//{ TCS_PARAM,        TCS_MATRIX,      P_UD_M_DOT_HTF_IND_OD,     "ud_m_dot_htf_ind_od",     "Off design table of user-defined power cycle performance formed from parametric on m_dot_htf [ND]", "",      "",            "",            ""  }, 
+	{ TCS_PARAM,        TCS_MATRIX,      P_UD_T_HTF_IND_OD,         "ud_T_htf_ind_od",         "Off design table of user-defined power cycle performance formed from parametric on T_htf_hot [C]",  "",      "",            "",            ""  }, 
+	{ TCS_PARAM,        TCS_MATRIX,      P_UD_T_AMB_IND_OD,         "ud_T_amb_ind_od",         "Off design table of user-defined power cycle performance formed from parametric on T_amb [C]",	    "",      "",            "",            ""  }, 
+	{ TCS_PARAM,        TCS_MATRIX,      P_UD_M_DOT_HTF_IND_OD,     "ud_m_dot_htf_ind_od",     "Off design table of user-defined power cycle performance formed from parametric on m_dot_htf [ND]", "",      "",            "",            ""  }, 
     { TCS_PARAM,        TCS_MATRIX,      P_UD_IND_OD,               "ud_ind_od",               "Off design user-defined power cycle performance as function of T_htf, m_dot_htf [ND], and T_amb",    "",     "",            "",            ""  },
 		
 
@@ -298,26 +298,26 @@ public:
 			p_params->m_m_dot_htf_low = value(P_UD_M_DOT_HTF_LOW);	//[-]
 			p_params->m_m_dot_htf_high = value(P_UD_M_DOT_HTF_HIGH);//[-]
 
-			//n_rows = n_cols = -1;
-			//double *p_T_htf_ind = value(P_UD_T_HTF_IND_OD, &n_rows, &n_cols);
-			//p_params->mc_T_htf_ind.resize(n_rows, n_cols);
-			//for( int r = 0; r < n_rows; r++ )
-			//	for( int c = 0; c < n_cols; c++ )
-			//		p_params->mc_T_htf_ind(r,c) = TCS_MATRIX_INDEX(var(P_UD_T_HTF_IND_OD),r,c);
+			n_rows = n_cols = -1;
+			double *p_T_htf_ind = value(P_UD_T_HTF_IND_OD, &n_rows, &n_cols);
+			p_params->mc_T_htf_ind.resize(n_rows, n_cols);
+			for( int r = 0; r < n_rows; r++ )
+				for( int c = 0; c < n_cols; c++ )
+					p_params->mc_T_htf_ind(r,c) = TCS_MATRIX_INDEX(var(P_UD_T_HTF_IND_OD),r,c);
 
-			//n_rows = n_cols = -1;
-			//double *p_T_amb_ind = value(P_UD_T_AMB_IND_OD, &n_rows, &n_cols);
-			//p_params->mc_T_amb_ind.resize(n_rows, n_cols);
-			//for( int r = 0; r < n_rows; r++ )
-			//	for( int c = 0; c < n_cols; c++ )
-			//		p_params->mc_T_amb_ind(r,c) = TCS_MATRIX_INDEX(var(P_UD_T_AMB_IND_OD),r,c);
+			n_rows = n_cols = -1;
+			double *p_T_amb_ind = value(P_UD_T_AMB_IND_OD, &n_rows, &n_cols);
+			p_params->mc_T_amb_ind.resize(n_rows, n_cols);
+			for( int r = 0; r < n_rows; r++ )
+				for( int c = 0; c < n_cols; c++ )
+					p_params->mc_T_amb_ind(r,c) = TCS_MATRIX_INDEX(var(P_UD_T_AMB_IND_OD),r,c);
 
-			//n_rows = n_cols = -1;
-			//double *p_m_dot_htf_ind = value(P_UD_M_DOT_HTF_IND_OD, &n_rows, &n_cols);
-			//p_params->mc_m_dot_htf_ind.resize(n_rows, n_cols);
-			//for( int r = 0; r < n_rows; r++ )
-			//	for( int c = 0; c < n_cols; c++ )
-			//		p_params->mc_m_dot_htf_ind(r,c) = TCS_MATRIX_INDEX(var(P_UD_M_DOT_HTF_IND_OD),r,c);
+			n_rows = n_cols = -1;
+			double *p_m_dot_htf_ind = value(P_UD_M_DOT_HTF_IND_OD, &n_rows, &n_cols);
+			p_params->mc_m_dot_htf_ind.resize(n_rows, n_cols);
+			for( int r = 0; r < n_rows; r++ )
+				for( int c = 0; c < n_cols; c++ )
+					p_params->mc_m_dot_htf_ind(r,c) = TCS_MATRIX_INDEX(var(P_UD_M_DOT_HTF_IND_OD),r,c);
 
             n_rows = n_cols = -1;
             double *p_ind = value(P_UD_IND_OD, &n_rows, &n_cols);
