@@ -960,6 +960,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 	Irradiance_IO * Irradiance = IOManager->getIrradianceIO();
 	std::vector<Subarray_IO *> Subarrays = IOManager->getSubarrays();
 	PVSystem_IO * PVSystem = IOManager->getPVSystemIO();
+	ShadeDB8_mpp * shadeDatabase = IOManager->getShadeDatabase();
 	
 	size_t nrec = Simulation->numberOfWeatherFileRecords;
 	size_t nlifetime = Simulation->numberOfSteps;
@@ -1442,8 +1443,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 						double shadedb_mppt_hi = PVSystem->Inverter->mpptHiVoltage;
 						 
 						/// shading database if necessary
-						smart_ptr<ShadeDB8_mpp>::ptr  p_shade_db;
-						if (!Subarrays[nn]->shadeCalculator.fbeam_shade_db(p_shade_db, hour, solalt, solazi, jj, step_per_hour, shadedb_gpoa, shadedb_dpoa, tcell, Subarrays[nn]->nModulesPerString, shadedb_str_vmp_stc, shadedb_mppt_lo, shadedb_mppt_hi))
+						if (!Subarrays[nn]->shadeCalculator.fbeam_shade_db(shadeDatabase, hour, solalt, solazi, jj, step_per_hour, shadedb_gpoa, shadedb_dpoa, tcell, Subarrays[nn]->nModulesPerString, shadedb_str_vmp_stc, shadedb_mppt_lo, shadedb_mppt_hi))
 						{
 							throw exec_error("pvsamv1", util::format("Error calculating shading factor for subarray %d", nn));
 						}
@@ -2558,6 +2558,10 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 	Irradiance->AssignOutputs(this);
 	Subarrays[0]->AssignOutputs(this);
 	PVSystem->AssignOutputs(this);
+	
+	_CrtDumpMemoryLeaks();
+	_CrtSetReportMode(_CRT_ERROR, _CRTDBG_MODE_DEBUG);
+
 }
 	
 double cm_pvsamv1::module_eff(int mod_type)

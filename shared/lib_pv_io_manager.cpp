@@ -44,6 +44,7 @@ PVIOManager::PVIOManager(compute_module*  cm, std::string cmName)
 Irradiance_IO * PVIOManager::getIrradianceIO()  { return m_IrradianceIO.get(); }
 compute_module * PVIOManager::getComputeModule()  { return m_computeModule; }
 Subarray_IO * PVIOManager::getSubarrayIO(size_t subarrayNumber)  { return m_SubarraysIO[subarrayNumber].get(); }
+ShadeDB8_mpp * PVIOManager::getShadeDatabase() { return m_shadeDatabase.get(); }
 
 std::vector<Subarray_IO *> PVIOManager::getSubarrays() 
 {

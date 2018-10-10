@@ -77,6 +77,9 @@ public:
 	/// Get PVSystem as one object
 	PVSystem_IO * getPVSystemIO();
 
+	/// Get Shade Database
+	ShadeDB8_mpp * getShadeDatabase();
+
 
 public:
 
