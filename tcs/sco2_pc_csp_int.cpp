@@ -278,6 +278,14 @@ int C_sco2_recomp_csp::off_design_fix_P_mc_in(S_od_par od_par, double P_mc_in /*
 	double eta_od_solved = std::numeric_limits<double>::quiet_NaN();
 	int od_core_error_code = off_design_core(eta_od_solved);
 	
+	double W_dot_fan = std::numeric_limits<double>::quiet_NaN();
+	int air_cooler_err_code = mpc_sco2_cycle->calculate_off_design_fan_power(ms_od_par.m_T_amb, W_dot_fan);
+
+	if (air_cooler_err_code != 0)
+	{
+		throw(C_csp_exception("Off design air cooler model failed"));
+	}
+
 	ms_od_solved.ms_rc_cycle_od_solved = *mpc_sco2_cycle->get_od_solved();
 	ms_od_solved.ms_phx_od_solved = mc_phx.ms_od_solved;
 
@@ -449,18 +457,23 @@ int C_sco2_recomp_csp::optimize_off_design(C_sco2_recomp_csp::S_od_par od_par, i
 			{
 				throw(C_csp_exception("C_sco2_recomp_csp::optimize_off_design to maximize efficiency failed"));
 			}
-
-			ms_od_solved.ms_rc_cycle_od_solved = *mpc_sco2_cycle->get_od_solved();
-			ms_od_solved.ms_phx_od_solved = mc_phx.ms_od_solved;
-		}
-
+		}		
 	}
 	else
 	{
 		throw(C_csp_exception("Off design turbomachinery operation strategy not recognized"));
 	}
 
-	
+	double W_dot_fan = std::numeric_limits<double>::quiet_NaN();
+	int air_cooler_err_code = mpc_sco2_cycle->calculate_off_design_fan_power(ms_od_par.m_T_amb, W_dot_fan);
+
+	if (air_cooler_err_code != 0)
+	{
+		throw(C_csp_exception("Off design air cooler model failed"));
+	}
+
+	ms_od_solved.ms_rc_cycle_od_solved = *mpc_sco2_cycle->get_od_solved();
+	ms_od_solved.ms_phx_od_solved = mc_phx.ms_od_solved;
 
 	return 0;
 }
@@ -1105,12 +1118,19 @@ int C_sco2_recomp_csp::C_sco2_csp_od::operator()(S_f_inputs inputs, S_f_outputs 
 
 	int off_design_code = -1;	//[-]
 
-	off_design_code = mpc_sco2_rc->optimize_off_design(sco2_od_par, od_strategy);
-
+	try
+	{
+		off_design_code = mpc_sco2_rc->optimize_off_design(sco2_od_par, od_strategy);
+	}
+	catch (C_csp_exception &)
+	{
+		return -1;
+	}
 	// Cycle off-design may want to operate below this value, so ND value could be < 1 everywhere
 	double W_dot_gross_design = mpc_sco2_rc->get_design_solved()->ms_rc_cycle_solved.m_W_dot_net;	//[kWe]
 	double Q_dot_in_design = mpc_sco2_rc->get_design_solved()->ms_rc_cycle_solved.m_W_dot_net
 								/ mpc_sco2_rc->get_design_solved()->ms_rc_cycle_solved.m_eta_thermal;	//[kWt]
+	double W_dot_cooler_tot_design = mpc_sco2_rc->get_design_solved()->ms_rc_cycle_solved.m_W_dot_cooler_tot;	//[kWe]
 
 	outputs.m_W_dot_gross_ND = mpc_sco2_rc->get_od_solved()->ms_rc_cycle_od_solved.m_W_dot_net
 								/ W_dot_gross_design;
@@ -1118,7 +1138,10 @@ int C_sco2_recomp_csp::C_sco2_csp_od::operator()(S_f_inputs inputs, S_f_outputs 
 	outputs.m_Q_dot_in_ND = mpc_sco2_rc->get_od_solved()->ms_rc_cycle_od_solved.m_Q_dot
 								/ Q_dot_in_design;
 
-	outputs.m_W_dot_cooling_ND = outputs.m_W_dot_gross_ND;
+	outputs.m_W_dot_cooling_ND = mpc_sco2_rc->get_od_solved()->ms_rc_cycle_od_solved.m_W_dot_cooler_tot
+								/ W_dot_cooler_tot_design;	
+	
+	//outputs.m_W_dot_cooling_ND = outputs.m_W_dot_gross_ND;
 
 	outputs.m_m_dot_water_ND = 1.0;	
 

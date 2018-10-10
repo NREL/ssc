@@ -109,7 +109,7 @@ bool pvsnowmodel::setup(int nmody_in, float baseTilt_in){
 }
 
 
-bool pvsnowmodel::getLoss(float poa, float tilt, float , float tdry, float snowDepth, int sunup, float dt, float *returnLoss){
+bool pvsnowmodel::getLoss(float poa, float tilt, float , float tdry, float snowDepth, int sunup, float dt, float &returnLoss){
 
 	bool isGood = true;
 
@@ -169,27 +169,16 @@ bool pvsnowmodel::getLoss(float poa, float tilt, float , float tdry, float snowD
 	if (tdry - poa / mSlope > 0){
 		coverage -= (float)(0.1 * sSlope * sin(tilt * M_PI / 180) * dt);
 	}
-			// Coverage Override #2
+
+	// Coverage Override #2
 	//  This override prevents the snow coverage from going below 0
 	if (coverage < 0) coverage = 0;
-			/////////////////////////////
-	// Step 5
 
-	*returnLoss = ((float)ceil(coverage*nmody))/nmody;
+	returnLoss = 0;
+	if (nmody > 0) {
+		returnLoss = ((float)ceil(coverage*nmody)) / nmody;
+	}
 	
-	/////////////////////////////
-	// Step 6 & 7
-	//
-	// Calculating Energy output is done outside this function
-
-	/////////////////////////////
-	// Step 8
-
-	// These values are reported to SAM after this function completes
-
-	/////////////////////////////
-	// Step 9
-
 	//  Current snow depth and previous snow depth are set to the correct values once
 	// this function is run again
 

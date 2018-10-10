@@ -58,7 +58,7 @@ public:
 	pvsnowmodel();
 	bool setup(int, float);
 
-	bool getLoss(float poa, float tilt, float wspd, float tdry, float snowDepth, int sunup, float dt, float *returnLoss);
+	bool getLoss(float poa, float tilt, float wspd, float tdry, float snowDepth, int sunup, float dt, float &returnLoss);
 
 	float	tilt,		// Surface tilt, degrees
 		baseTilt,		// The default tilt for 1-axis tracking systems

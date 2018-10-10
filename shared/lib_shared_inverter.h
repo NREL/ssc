@@ -30,7 +30,12 @@ public:
 	void calculateTempDerate(double V, double T, double& pAC, double& eff, double& loss);
 
 	/// Given the combined PV plus battery DC power (W), voltage and ambient T, compute the AC power (kW)
+	//function that calculates AC power and inverter losses for a single inverter with one MPPT input
 	void calculateACPower(const double powerDC, const double DCStringVoltage, double ambientT);
+	
+	/// Given the combined PV plus battery DC power (W), voltage and ambient T, compute the AC power (kW)
+	//function that calculates AC power and inverter losses for a single inverter with multiple MPPT inputs
+	void calculateACPower(const std::vector<double> powerDC, const std::vector<double> DCStringVoltage, double ambientT);
 
 	/// Return the nominal DC voltage input
 	double getInverterDCNominalVoltage();
@@ -69,6 +74,11 @@ protected:
 	sandia_inverter_t * m_sandiaInverter;
 	partload_inverter_t * m_partloadInverter;
 	ond_inverter * m_ondInverter;
+
+private:
+
+	void convertOutputsToKWandScale(double tempLoss);
+
 };
 
 
