@@ -236,7 +236,7 @@ private:
 	double dtCooling_water = 25.0; 
 	double condenser_u = 350.00 ; //As seen in GETEM, this value is always 350.00
 	double area;
-	double qCondenser;
+	//double qCondenser;
 	double hp_total_cost; 
 	//double hp_flash_pressure;
 	double a_cross_section;
@@ -286,9 +286,9 @@ private:
 	double hp_flash_cost;
 
 	//LP Flash Vessel Cost Calculation:
-	double num_vessels_lp, a_xsection_lp, v_terminal_lp, lp_steam_flow, lp_flash_volume, lp_flash_cost, 
+	double num_vessels_lp, a_xsection_lp, v_terminal_lp, lp_steam_flow, lp_flash_volume, lp_flash_cost,
 		direct_multiplier_2002, tax, labor_multiplier, construction_multiplier, freight_flash, material_multiplier, escalation_ppi,
-		direct_plant_cost;
+		direct_plant_cost, condenser_heat_rejected, vStage_3;
 
 
 
@@ -400,8 +400,8 @@ public:
 		else if (conversion_type == 1) {
 			//geo_inputs.me_ct = FLASH;
 			double unit_plant = as_double("gross_output");			
-			double qRejectTotal = as_double("qRejectTotal") / 1000000 ;		// Converting from btu/h to MMBTU/h
-			double qCondenser = as_double("qCondenser") / 1000000;			// Converting from btu/h to MMBTU/h
+			double qRejectTotal = as_double("qRejectTotal") / 1000000;		// Converting from btu/h to MMBTU/h
+			double q_Condenser = as_double("qCondenser") / 1000000;			// Converting from btu/h to MMBTU/h
 			//double hp_flash_pressure = as_double("hp_flash_pressure");
 			double v_stage_1 = as_double("v_stage_1");
 			double v_stage_2 = as_double("v_stage_2");
@@ -423,8 +423,8 @@ public:
 			double cw_pump_head = as_double("cw_pump_head");
 			double spec_vol = as_double("spec_vol");
 			double spec_vol_lp = as_double("spec_vol_lp");
-			double x_hp = as_double("x_hp") / 100;		// %
-			double x_lp = as_double("x_lp") / 100;	// %
+			double x_hp = as_double("x_hp") ;		// %
+			double x_lp = as_double("x_lp") ;	// %
 			double hp_flash_pressure = as_double("hp_flash_pressure");
 			double lp_flash_pressure = as_double("lp_flash_pressure");
 			double flash_count = as_double("flash_count");
@@ -436,12 +436,13 @@ public:
 
 			
 			//Cooling Tower Cost:
-			cooling_tower_cost = 7200 * (pow(qRejectTotal, 0.8));		//Reference Equipment Cost
+			condenser_heat_rejected = GF_flowrate * qRejectTotal / 1000;
+			cooling_tower_cost = 7200 * (pow(condenser_heat_rejected, 0.8));		//Reference Equipment Cost
 			current_tower_cost = cooling_tower_cost * process_equip_ppi[20];
 
 			//Condenser Cost: 
 			lmtd = (condenser_pinch_pt - (condenser_pinch_pt + dtCooling_water)) / (std::log(condenser_pinch_pt/(condenser_pinch_pt + dtCooling_water)));
-			area = qCondenser * 1000000 / (lmtd*condenser_u);
+			area = (q_Condenser*GF_flowrate/1000) * 1000000 / (lmtd*condenser_u);
 			condenser_cost_flash = 102 * pow(area, 0.85);		//Reference Equipment Cost
 			current_condenser_cost = condenser_cost_flash * hx_ppi[20];
 					   			 		  		  					   			 
@@ -479,7 +480,8 @@ public:
 			//Vacuum Pump Cost breakdown:
 			vacuum_pump_1 = (v_stage_1 < 5000) ?  70000 * pow(v_stage_1, 0.34) : 7400 * pow( v_stage_1, 0.6);
 			vacuum_pump_2 = (v_stage_2 < 5000) ?  70000 * pow(v_stage_2, 0.34) : 7400 * pow(v_stage_2, 0.6);
-			vacuum_pump_3 = (v_stage_3 < 5000) ?  70000 * pow(v_stage_3, 0.34) : 7400 * pow(v_stage_3, 0.6);
+			vStage_3 =  v_stage_3 * (GF_flowrate / 1000);
+			vacuum_pump_3 = (vStage_3 < 5000) ?  70000 * pow(vStage_3, 0.34) : 7400 * pow(vStage_3, 0.6);
 			vacuum_pump = vacuum_pump_1 + vacuum_pump_2 + vacuum_pump_3;
 			
 			//(NCG) Condensers Cost Breakdown:	//Reference Equipment Cost
@@ -494,10 +496,10 @@ public:
 			pump_ncg = 2.35 * 1185 * (pow(ncg_pump_work, 0.767) + pow(ncg_water_pump,0.767));
 
 			//(NCG) Ejector Cost Calculation: (Note: According to lib_geothermal.cpp, ncg removal type is alwasy JET)	//Reference Equipment Cost
-			ejector_ncg = (76 * pow(pressure_ratio_1, (-0.45)) + 43 * pow(pressure_ratio_2, (-0.63)) + 43 * pow(pressure_ratio_3, (-0.63))) * ncg_flow ;
+			ejector_ncg = (76 * pow(pressure_ratio_1, (-0.45)) + 43 * pow(pressure_ratio_2, (-0.63))) * ncg_flow ;
 			
 			//NCG total cost:	
-			ncg_cost = vacuum_pump + condenser_ncg + pump_ncg + ejector_ncg;		//Reference Equipment Cost
+			ncg_cost =  vacuum_pump + condenser_ncg + pump_ncg + ejector_ncg;		//Reference Equipment Cost
 			current_ncg_cost = ncg_cost * process_equip_ppi[20];
 
 			//Pump Cost Calculation:

@@ -481,7 +481,7 @@ public:
 			assign("eff_secondlaw", eff_secondlaw);
 
 			//Assigning Rejected Total Heat from Flash Plant:
-			double qRejectTotal = geo_outputs.qRejectedTotal;
+			double qRejectTotal = geo_outputs.qRejectedTotal;	//total heat rejected 
 			assign("qRejectTotal", qRejectTotal);
 
 			//Assign qCondenser (Flash Plant Type):
