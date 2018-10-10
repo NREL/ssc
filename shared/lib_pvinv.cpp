@@ -50,6 +50,7 @@
 #include <math.h>
 #include <cmath>
 #include <limits>
+#include <stddef.h>
 #include "lib_pvinv.h"
 
 
