@@ -99,6 +99,7 @@ enum{
 	P_UD_T_HTF_IND_OD,
 	P_UD_T_AMB_IND_OD,
 	P_UD_M_DOT_HTF_IND_OD,
+    P_UD_IND_OD,
 
 	I_MODE,
 	I_T_HTF_HOT,
@@ -169,6 +170,7 @@ tcsvarinfo sam_mw_pt_type224_variables[] = {
 	{ TCS_PARAM,        TCS_MATRIX,      P_UD_T_HTF_IND_OD,         "ud_T_htf_ind_od",         "Off design table of user-defined power cycle performance formed from parametric on T_htf_hot [C]",  "",      "",            "",            ""  }, 
 	{ TCS_PARAM,        TCS_MATRIX,      P_UD_T_AMB_IND_OD,         "ud_T_amb_ind_od",         "Off design table of user-defined power cycle performance formed from parametric on T_amb [C]",	    "",      "",            "",            ""  }, 
 	{ TCS_PARAM,        TCS_MATRIX,      P_UD_M_DOT_HTF_IND_OD,     "ud_m_dot_htf_ind_od",     "Off design table of user-defined power cycle performance formed from parametric on m_dot_htf [ND]", "",      "",            "",            ""  }, 
+    { TCS_PARAM,        TCS_MATRIX,      P_UD_IND_OD,               "ud_ind_od",               "Off design user-defined power cycle performance as function of T_htf, m_dot_htf [ND], and T_amb",    "",     "",            "",            ""  },
 		
 
 	{ TCS_INPUT,          TCS_NUMBER,              I_MODE,                   "mode",                                          "Cycle part load control, from plant controller",         "none",             "",             "",             "" },
@@ -316,6 +318,13 @@ public:
 			for( int r = 0; r < n_rows; r++ )
 				for( int c = 0; c < n_cols; c++ )
 					p_params->mc_m_dot_htf_ind(r,c) = TCS_MATRIX_INDEX(var(P_UD_M_DOT_HTF_IND_OD),r,c);
+
+            n_rows = n_cols = -1;
+            double *p_ind = value(P_UD_IND_OD, &n_rows, &n_cols);
+            p_params->mc_combined_ind.resize(n_rows, n_cols);
+            for (int r = 0; r < n_rows; r++)
+                for (int c = 0; c < n_cols; c++)
+                    p_params->mc_combined_ind(r, c) = TCS_MATRIX_INDEX(var(P_UD_IND_OD), r, c);
 
 		}
 

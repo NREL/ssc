@@ -120,6 +120,9 @@ private:
 		return 284.482349 + 20.8848464*P - 1.5898147*P*P + 0.0655241456*P*P*P - 0.0010168822*P*P*P*P; /*return value in Kelvin*/
 	}
 
+    int split_ind_tbl(util::matrix_t<double> &combined, util::matrix_t<double> &T_htf_ind,
+        util::matrix_t<double> &m_dot_ind, util::matrix_t<double> &T_amb_ind);
+
 public:
 	
 	enum
@@ -191,6 +194,8 @@ public:
 		util::matrix_t<double> mc_m_dot_htf_ind;	// At T_amb levels (-, 0, +)
 		double m_m_dot_htf_low;		//[-] Low level of m_dot_htf corresponding to T_HTF parametric (also must be included within range of independent T_htf values)
 		double m_m_dot_htf_high;	//[-] High level of m_dot_htf corresponding to T_HTF parametric (also must be included within range of independent T_htf_values)
+            // Lookup table that is the combination of the three above T_htf_hot, T_amb, and m_dot_htf tables (this is the newer table format)
+        util::matrix_t<double> mc_combined_ind;
 
 		double m_W_dot_cooling_des;		//[MW] Cooling parasitic at design conditions
 		double m_m_dot_water_des;		//[kg/s] Power cycle water use at design conditions
