@@ -302,7 +302,8 @@ public:
 	
 	
 
-	void cm_geothermal_costs::exec() throw (compute_module::general_error)
+
+	void exec() throw(general_error)
 	{
 		SGeothermal_Inputs geo_inputs;
 		int conversion_type = as_integer("conversion_type");
