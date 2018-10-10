@@ -95,7 +95,7 @@ bool partload_inverter_t::acpower(
 	)
 {
 	double Pdc_total = 0;
-	for (int m = 0; m < Pdc.size(); m++)
+	for (size_t m = 0; m < Pdc.size(); m++)
 		Pdc_total += Pdc[m];
 	if ( Pdco <= 0 ) return false;
 

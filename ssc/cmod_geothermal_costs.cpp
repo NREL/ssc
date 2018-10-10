@@ -302,7 +302,8 @@ public:
 	
 	
 
-	void exec() 
+
+	void exec() throw(general_error)
 	{
 		SGeothermal_Inputs geo_inputs;
 		int conversion_type = as_integer("conversion_type");
@@ -401,7 +402,7 @@ public:
 			//geo_inputs.me_ct = FLASH;
 			double unit_plant = as_double("gross_output");			
 			double qRejectTotal = as_double("qRejectTotal") / 1000000 ;		// Converting from btu/h to MMBTU/h
-			double qCondenser = as_double("qCondenser") / 1000000;			// Converting from btu/h to MMBTU/h
+			qCondenser = as_double("qCondenser") / 1000000;			// Converting from btu/h to MMBTU/h
 			//double hp_flash_pressure = as_double("hp_flash_pressure");
 			double v_stage_1 = as_double("v_stage_1");
 			double v_stage_2 = as_double("v_stage_2");

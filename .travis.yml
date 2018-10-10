@@ -57,6 +57,6 @@ install:
   
 branches:
   only:
-  - master
+  - release
   - develop
   
