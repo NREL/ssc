@@ -1325,7 +1325,7 @@ void dispatch_automatic_front_of_meter_t::update_dispatch(size_t hour_of_year, s
 			/* Booleans to assist decisions */
 			bool highValuePeriod = ppa_cost == *max_ppa_cost;
 			bool excessAcCapacity = _inverter_paco > m_batteryPower->powerPVThroughSharedInverter;
-			bool batteryHasCapacity = _Battery->battery_soc() >= m_batteryPower->stateOfChargeMin + 1.0;
+			bool batteryHasDischargeCapacity = _Battery->battery_soc() >= m_batteryPower->stateOfChargeMin + 1.0;
 
 			// Always Charge if PV is clipping 
 			if (m_batteryPower->canClipCharge && m_batteryPower->powerPVClipped > 0 && benefitToClipCharge > m_cycleCost && m_batteryPower->powerPVClipped > 0)
@@ -1373,7 +1373,7 @@ void dispatch_automatic_front_of_meter_t::update_dispatch(size_t hour_of_year, s
 			}
 
 			// Discharge if we are in a high-price period and have battery and inverter capacity
-			if (highValuePeriod && excessAcCapacity && batteryHasCapacity) {
+			if (highValuePeriod && excessAcCapacity && batteryHasDischargeCapacity) {
 				powerBattery = _inverter_paco - m_batteryPower->powerPV;
 			}
 		}

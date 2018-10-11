@@ -1201,14 +1201,14 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 	/* *********************************************************************************************
 	PV DC calculation
 	*********************************************************************************************** */
-	std::vector<double> dcPowerNetPerMppt; //Vector of Net DC power in W for each MPPT input on the system for THIS TIMESTEP ONLY
+	std::vector<double> dcPowerNetPerMppt_kW; //Vector of Net DC power in kW for each MPPT input on the system for THIS TIMESTEP ONLY
 	std::vector<double> dcPowerNetPerSubarray; //Net DC power in W for each subarray for THIS TIMESTEP ONLY
 	std::vector<double> dcVoltagePerMppt; //Voltage in V at each MPPT input on the system for THIS TIMESTEP ONLY				
 	double dcPowerNetTotalSystem = 0; //Net DC power in W for the entire system (sum of all subarrays)
 
 	for (int mpptInput = 0; mpptInput < PVSystem->Inverter->nMpptInputs; mpptInput++)
 	{
-		dcPowerNetPerMppt.push_back(0);
+		dcPowerNetPerMppt_kW.push_back(0);
 		dcVoltagePerMppt.push_back(0);
 		PVSystem->p_dcPowerNetPerMppt[mpptInput][idx] = 0;		
 	}
@@ -1968,19 +1968,19 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 				if (en_batt)
 				{
 					double cliploss = 0;
-					double dcpwr = PVSystem->p_systemDCPower[idx];
+					double dcpwr_kw = PVSystem->p_systemDCPower[idx];
 
 					if (p_pv_dc_forecast.size() > 1 && p_pv_dc_forecast.size() > idx % (8760 * step_per_hour)) {
-						dcpwr = p_pv_dc_forecast[idx % (8760 * step_per_hour)];
+						dcpwr_kw = p_pv_dc_forecast[idx % (8760 * step_per_hour)];
 					}
-					p_pv_dc_use.push_back(static_cast<ssc_number_t>(dcpwr));
+					p_pv_dc_use.push_back(static_cast<ssc_number_t>(dcpwr_kw));
 
 					if (p_pv_clipping_forecast.size() > 1 && p_pv_clipping_forecast.size() > idx % (8760 * step_per_hour)) {
 						cliploss = p_pv_clipping_forecast[idx % (8760 * step_per_hour)] * util::kilowatt_to_watt;
 					}
 					else {
 						//DC batteries not allowed with multiple MPPT, so can just use MPPT 1's voltage
-						sharedInverter->calculateACPower(dcpwr, dcVoltagePerMppt[0], 0.0);
+						sharedInverter->calculateACPower(dcpwr_kw, PVSystem->p_mpptVoltage[0][idx], 0.0);
 						cliploss = sharedInverter->powerClipLoss_kW;
 					}
 
@@ -2042,7 +2042,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 				for (int m = 0; m < PVSystem->Inverter->nMpptInputs; m++)
 				{
 					dcVoltagePerMppt[m] = PVSystem->p_mpptVoltage[m][idx];
-					dcPowerNetPerMppt[m] = PVSystem->p_dcPowerNetPerMppt[m][idx];
+					dcPowerNetPerMppt_kW[m] = PVSystem->p_dcPowerNetPerMppt[m][idx] * util::watt_to_kilowatt;
 				}
 
 				//run AC power calculation
@@ -2064,7 +2064,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 				{
 					// inverter: runs at all hours of the day, even if no DC power.  important
 					// for capturing tare losses
-					sharedInverter->calculateACPower(dcPowerNetPerMppt, dcVoltagePerMppt, wf.tdry);
+					sharedInverter->calculateACPower(dcPowerNetPerMppt_kW, dcVoltagePerMppt, wf.tdry);
 					acpwr_gross = sharedInverter->powerAC_kW;
 				}		
 				
