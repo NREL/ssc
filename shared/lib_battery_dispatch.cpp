@@ -1278,6 +1278,7 @@ void dispatch_automatic_front_of_meter_t::update_dispatch(size_t hour_of_year, s
 	m_batteryPower->powerBattery = 0;
 	m_batteryPower->powerBatteryTarget = 0;
 
+
 	if (_mode != dispatch_t::FOM_CUSTOM_DISPATCH)
 	{
 
@@ -1323,7 +1324,7 @@ void dispatch_automatic_front_of_meter_t::update_dispatch(size_t hour_of_year, s
 
 			/* Booleans to assist decisions */
 			bool highValuePeriod = ppa_cost == *max_ppa_cost;
-			bool excessAcCapacity = _inverter_paco > m_batteryPower->powerPV;
+			bool excessAcCapacity = _inverter_paco > m_batteryPower->powerPVThroughSharedInverter;
 			bool batteryHasCapacity = _Battery->battery_soc() >= m_batteryPower->stateOfChargeMin + 1.0;
 
 			// Always Charge if PV is clipping 

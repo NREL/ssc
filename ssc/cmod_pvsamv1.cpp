@@ -1203,16 +1203,18 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 	*********************************************************************************************** */
 	std::vector<double> dcPowerNetPerMppt; //Vector of Net DC power in W for each MPPT input on the system for THIS TIMESTEP ONLY
 	std::vector<double> dcPowerNetPerSubarray; //Net DC power in W for each subarray for THIS TIMESTEP ONLY
-	std::vector<double> dcVoltagePerMppt; //Voltage in V at each MPPT input on the system for THIS TIMESTEP ONLY
+	std::vector<double> dcVoltagePerMppt; //Voltage in V at each MPPT input on the system for THIS TIMESTEP ONLY				
 	double dcPowerNetTotalSystem = 0; //Net DC power in W for the entire system (sum of all subarrays)
+
 	for (int mpptInput = 0; mpptInput < PVSystem->Inverter->nMpptInputs; mpptInput++)
 	{
 		dcPowerNetPerMppt.push_back(0);
 		dcVoltagePerMppt.push_back(0);
 		PVSystem->p_dcPowerNetPerMppt[mpptInput][idx] = 0;		
 	}
-	for (int nn = 0; nn < PVSystem->numberOfSubarrays; nn++)
+	for (int nn = 0; nn < PVSystem->numberOfSubarrays; nn++) {
 		dcPowerNetPerSubarray.push_back(0);
+	}
 	for (size_t iyear = 0; iyear < nyears; iyear++)
 	{
 		for (hour = 0; hour < 8760; hour++)
@@ -1235,6 +1237,9 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 
 			for (size_t jj = 0; jj < step_per_hour; jj++)
 			{
+				// Reset dcPower calculation for new timestep
+				dcPowerNetTotalSystem = 0; 
+
 				// electric load is subhourly
 				// if no load profile supplied, load = 0
 				if (nload == nrec)
@@ -1265,7 +1270,6 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 
 					}
 				}
-				
 				
 				double solazi = 0, solzen = 0, solalt = 0;
 				int sunup = 0;
@@ -1461,7 +1465,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 #endif
 							// fraction shaded for comparison
 							PVSystem->p_shadeDBShadeFraction[nn][idx] = (ssc_number_t)(Subarrays[nn]->shadeCalculator.dc_shade_factor());
-						}
+						} 
 					}
 					else
 					{
@@ -1926,7 +1930,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 					PVSystem->p_systemDCPower[idx] += (ssc_number_t)(dcPowerNetPerSubarray[nn] * util::watt_to_kilowatt);
 
 					//add this subarray's net DC power to the appropriate MPPT input and to the total system DC power
-					PVSystem->p_dcPowerNetPerMppt[Subarrays[nn]->mpptInput - 1][idx] += dcPowerNetPerSubarray[nn]; //need to subtract 1 from mppt input number because those are 1-indexed
+					PVSystem->p_dcPowerNetPerMppt[Subarrays[nn]->mpptInput - 1][idx] += (ssc_number_t)(dcPowerNetPerSubarray[nn]); //need to subtract 1 from mppt input number because those are 1-indexed
 					dcPowerNetTotalSystem += dcPowerNetPerSubarray[nn];	
 				}								
 
@@ -1971,13 +1975,16 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 					}
 					p_pv_dc_use.push_back(static_cast<ssc_number_t>(dcpwr));
 
-					sharedInverter->calculateACPower(dcPowerNetTotalSystem, dcVoltagePerMppt[0], 0.0); //DC batteries not allowed with multiple MPPT, so can just use MPPT 1's voltage
-
 					if (p_pv_clipping_forecast.size() > 1 && p_pv_clipping_forecast.size() > idx % (8760 * step_per_hour)) {
 						cliploss = p_pv_clipping_forecast[idx % (8760 * step_per_hour)] * util::kilowatt_to_watt;
 					}
+					else {
+						//DC batteries not allowed with multiple MPPT, so can just use MPPT 1's voltage
+						sharedInverter->calculateACPower(dcpwr, dcVoltagePerMppt[0], 0.0);
+						cliploss = sharedInverter->powerClipLoss_kW;
+					}
 
-					p_invcliploss_full.push_back(static_cast<ssc_number_t>(sharedInverter->powerClipLoss_kW));
+					p_invcliploss_full.push_back(static_cast<ssc_number_t>(cliploss));
 				}
 
 				idx++;
@@ -2017,6 +2024,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 
 			for (size_t jj = 0; jj < step_per_hour; jj++)
 			{
+				double dcPower_kW = PVSystem->p_systemDCPower[idx];
 
 				// Battery replacement
 				if (en_batt && (batt_topology == ChargeController::DC_CONNECTED))
@@ -2041,15 +2049,15 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 				if (en_batt && (batt_topology == ChargeController::DC_CONNECTED)) // DC-connected battery
 				{
 					// Compute PV clipping before adding battery
-					sharedInverter->calculateACPower(dcPowerNetTotalSystem, dcVoltagePerMppt[0], wf.tdry); //DC batteries not allowed with multiple MPPT, so can just use MPPT 1's voltage
+					sharedInverter->calculateACPower(dcPower_kW, dcVoltagePerMppt[0], wf.tdry); //DC batteries not allowed with multiple MPPT, so can just use MPPT 1's voltage
 
 					// Run PV plus battery through sharedInverter, returns AC power
-					batt.advance(*this, dcPowerNetTotalSystem*util::watt_to_kilowatt, dcVoltagePerMppt[0], cur_load, sharedInverter->powerClipLoss_kW); 
+					batt.advance(*this, dcPower_kW, dcVoltagePerMppt[0], cur_load, sharedInverter->powerClipLoss_kW);
 					acpwr_gross = batt.outGenPower[idx];
 				}
 				else if (PVSystem->Inverter->inverterType == INVERTER_PVYIELD) //PVyield inverter model not currently enabled for multiple MPPT
 				{
-					sharedInverter->calculateACPower(dcPowerNetTotalSystem, dcVoltagePerMppt[0], wf.tdry);
+					sharedInverter->calculateACPower(dcPower_kW, dcVoltagePerMppt[0], wf.tdry);
 					acpwr_gross = sharedInverter->powerAC_kW;
 				}
 				else

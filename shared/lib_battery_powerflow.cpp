@@ -4,6 +4,7 @@
 BatteryPower::BatteryPower(double dtHour) :
 		dtHour(dtHour),
 		powerPV(0),
+		powerPVThroughSharedInverter(0),
 		powerLoad(0),
 		powerBattery(0),
 		powerBatteryTarget(0),
@@ -55,6 +56,7 @@ void BatteryPower::reset()
 	powerGridToLoad = 0;
 	powerLoad = 0;
 	powerPV = 0;
+	powerPVThroughSharedInverter = 0;
 	powerPVClipped = 0;
 	powerPVInverterDraw = 0;
 	powerPVToBattery = 0;
