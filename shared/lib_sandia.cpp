@@ -429,7 +429,7 @@ bool sandia_inverter_t::acpower(
 	std::vector<double> PacNoPso_each;
 
 	//loop through each MPPT input
-	for (int m = 0; m < Pdc.size(); m++) 
+	for (size_t m = 0; m < Pdc.size(); m++) 
 	{
 		Pac_each.push_back(0);
 		PacNoPso_each.push_back(0);
@@ -458,7 +458,7 @@ bool sandia_inverter_t::acpower(
 	}
 	// day time: calculate total Pac; power loss is the Pso loss, use values calculated above
 	else
-		for (int m = 0; m < Vdc.size(); m++)
+		for (size_t m = 0; m < Vdc.size(); m++)
 		{
 			*Psoloss += PacNoPso_each[m] - Pac_each[m];
 			*Pac += Pac_each[m];

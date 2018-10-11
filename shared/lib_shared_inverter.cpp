@@ -178,7 +178,7 @@ void SharedInverter::calculateACPower(const std::vector<double> powerDC_Watts, c
 
 	//need to divide power by m_num_inverters
 	std::vector<double> powerDC_Watts_one_inv;
-	for (int i = 0; i < powerDC_Watts.size(); i++)
+	for (size_t i = 0; i < powerDC_Watts.size(); i++)
 		powerDC_Watts_one_inv.push_back(powerDC_Watts[i] / m_numInverters);
 
 	// Power quantities go in and come out in units of W
@@ -191,7 +191,7 @@ void SharedInverter::calculateACPower(const std::vector<double> powerDC_Watts, c
 	if (m_tempEnabled){
 		//use average of the DC voltages to pick which temp curve to use- a weighted average might be better but we don't have that information here
 		double avgDCVoltage = 0;
-		for (int i = 0; i < DCStringVoltage.size(); i++)
+		for (size_t i = 0; i < DCStringVoltage.size(); i++)
 			avgDCVoltage += DCStringVoltage[i];
 		avgDCVoltage /= DCStringVoltage.size();
 		calculateTempDerate(avgDCVoltage, T, powerAC_kW, efficiencyAC, tempLoss);
@@ -200,7 +200,7 @@ void SharedInverter::calculateACPower(const std::vector<double> powerDC_Watts, c
 	// Convert units to kW and scale to total system size
 	// Do not need to scale back up by m_numInverters because scaling them down was a separate vector, powerDC_Watts_one_inv
 	powerDC_kW = 0;
-	for (int i = 0; i < powerDC_Watts.size(); i++)
+	for (size_t i = 0; i < powerDC_Watts.size(); i++)
 		powerDC_kW += powerDC_Watts[i] * util::watt_to_kilowatt;
 
 	//Convert units to kW and scale to total array for all other outputs

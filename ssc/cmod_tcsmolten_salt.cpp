@@ -240,6 +240,7 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
 	{ SSC_INPUT,        SSC_MATRIX,      "ud_T_htf_ind_od",      "Off design table of user-defined power cycle performance formed from parametric on T_htf_hot [C]", "", "", "user_defined_PC", "pc_config=1",    "",                      "" },
 	{ SSC_INPUT,        SSC_MATRIX,      "ud_T_amb_ind_od",      "Off design table of user-defined power cycle performance formed from parametric on T_amb [C]",	 "", "", "user_defined_PC", "pc_config=1",    "",                      "" }, 
 	{ SSC_INPUT,        SSC_MATRIX,      "ud_m_dot_htf_ind_od",  "Off design table of user-defined power cycle performance formed from parametric on m_dot_htf [ND]","", "", "user_defined_PC", "pc_config=1",    "",                      "" }, 
+    { SSC_INPUT,        SSC_MATRIX,      "ud_ind_od",            "Off design user-defined power cycle performance as function of T_htf, m_dot_htf [ND], and T_amb", "", "", "user_defined_PC", "pc_config=1",     "",                      "" },
 																     																	  
 		// sCO2 Powerblock (type 424) inputs
 	{ SSC_INPUT,        SSC_NUMBER,      "sco2_cycle_config",    "1 = recompression, 2 = partial cooling",                            "",             "",            "sco2_pc",     "pc_config=2",                "",                      "" },
@@ -932,6 +933,7 @@ public:
 				pc->mc_T_htf_ind = as_matrix("ud_T_htf_ind_od");
 				pc->mc_T_amb_ind = as_matrix("ud_T_amb_ind_od");
 				pc->mc_m_dot_htf_ind = as_matrix("ud_m_dot_htf_ind_od");
+                pc->mc_combined_ind = as_matrix("ud_ind_od");
 			}
 
 			// Set pointer to parent class
