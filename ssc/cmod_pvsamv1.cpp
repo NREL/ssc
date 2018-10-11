@@ -1442,8 +1442,8 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 						double shadedb_mppt_hi = PVSystem->Inverter->mpptHiVoltage;
 						 
 						/// shading database if necessary
-						smart_ptr<ShadeDB8_mpp>::ptr  p_shade_db;
-						if (!Subarrays[nn]->shadeCalculator.fbeam_shade_db(p_shade_db, hour, solalt, solazi, jj, step_per_hour, shadedb_gpoa, shadedb_dpoa, tcell, Subarrays[nn]->nModulesPerString, shadedb_str_vmp_stc, shadedb_mppt_lo, shadedb_mppt_hi))
+						//smart_ptr<ShadeDB8_mpp>::ptr  p_shade_db;
+						if (!Subarrays[nn]->shadeCalculator.fbeam_shade_db(IOManager->m_shadeDatabase, hour, solalt, solazi, jj, step_per_hour, shadedb_gpoa, shadedb_dpoa, tcell, Subarrays[nn]->nModulesPerString, shadedb_str_vmp_stc, shadedb_mppt_lo, shadedb_mppt_hi))
 						{
 							throw exec_error("pvsamv1", util::format("Error calculating shading factor for subarray %d", nn));
 						}
@@ -1457,7 +1457,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 							p_shadedb_str_vmp_stc[nn][idx] = (ssc_number_t)shadedb_str_vmp_stc;
 							p_shadedb_mppt_lo[nn][idx] = (ssc_number_t)shadedb_mppt_lo;
 							p_shadedb_mppt_hi[nn][idx] = (ssc_number_t)shadedb_mppt_hi;
-							log("shade db hour " + util::to_string((int)hour) +"\n" + p_shade_db->get_warning());
+							log("shade db hour " + util::to_string((int)hour) +"\n" + IOManager->m_shadeDatabase->get_warning());
 #endif
 							// fraction shaded for comparison
 							PVSystem->p_shadeDBShadeFraction[nn][idx] = (ssc_number_t)(Subarrays[nn]->shadeCalculator.dc_shade_factor());
