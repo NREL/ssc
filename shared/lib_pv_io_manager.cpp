@@ -44,6 +44,7 @@ PVIOManager::PVIOManager(compute_module*  cm, std::string cmName)
 Irradiance_IO * PVIOManager::getIrradianceIO()  { return m_IrradianceIO.get(); }
 compute_module * PVIOManager::getComputeModule()  { return m_computeModule; }
 Subarray_IO * PVIOManager::getSubarrayIO(size_t subarrayNumber)  { return m_SubarraysIO[subarrayNumber].get(); }
+ShadeDB8_mpp * PVIOManager::getShadeDatabase() { return m_shadeDatabase.get(); }
 
 std::vector<Subarray_IO *> PVIOManager::getSubarrays() 
 {
@@ -349,7 +350,8 @@ Subarray_IO::Subarray_IO(compute_module* cm, std::string cmName, size_t subarray
 		{
 			if (trackMode == SEASONAL_TILT)
 				throw compute_module::exec_error(cmName, "Time-series tilt input may not be used with the snow model at this time: subarray " + util::to_string((int)(subarrayNumber)));
-			if (snowModel.setup(selfShadingInputs.nmody, (float)tiltDegrees)) {
+			// if tracking mode is 1-axis tracking, don't need to limit tilt angles
+			if (snowModel.setup(selfShadingInputs.nmody, (float)tiltDegrees), !(trackMode == FIXED_TILT)) {
 				if (!snowModel.good) {
 					cm->log(snowModel.msg, SSC_ERROR);
 				}
@@ -476,17 +478,17 @@ PVSystem_IO::PVSystem_IO(compute_module* cm, std::string cmName, Simulation_IO *
 	}
 
 	// Check that system MPPT inputs align correctly
-	for (int n_subarray = 0; n_subarray < numberOfSubarrays; n_subarray++)
+	for (size_t n_subarray = 0; n_subarray < numberOfSubarrays; n_subarray++)
 		if (Subarrays[n_subarray]->enable)
 			if (Subarrays[n_subarray]->mpptInput > Inverter->nMpptInputs)
-				throw compute_module::exec_error(cmName, "Subarray " + util::to_string(n_subarray) + " MPPT input is greater than the number of inverter MPPT inputs.");
-	for (int mppt = 1; mppt <= Inverter->nMpptInputs; mppt++) //indexed at 1 to match mppt input numbering convention
+				throw compute_module::exec_error(cmName, "Subarray " + util::to_string((int)n_subarray) + " MPPT input is greater than the number of inverter MPPT inputs.");
+	for (size_t mppt = 1; mppt <= (size_t)Inverter->nMpptInputs; mppt++) //indexed at 1 to match mppt input numbering convention
 	{
 		std::vector<int> mppt_n; //create a temporary vector to hold which subarrays are on this mppt input
 		//find all subarrays on this mppt input
-		for (int n_subarray = 0; n_subarray < Subarrays.size(); n_subarray++) //jmf update this so that all subarray markers are consistent, get rid of "enable" check
+		for (size_t n_subarray = 0; n_subarray < Subarrays.size(); n_subarray++) //jmf update this so that all subarray markers are consistent, get rid of "enable" check
 			if (Subarrays[n_subarray]->enable)
-				if (Subarrays[n_subarray]->mpptInput == mppt)
+				if (Subarrays[n_subarray]->mpptInput == (int)mppt)
 					mppt_n.push_back(n_subarray);
 		if (mppt_n.size() < 1)
 			throw compute_module::exec_error(cmName, "At least one subarray must be assigned to each inverter MPPT input.");

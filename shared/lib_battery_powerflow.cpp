@@ -4,6 +4,7 @@
 BatteryPower::BatteryPower(double dtHour) :
 		dtHour(dtHour),
 		powerPV(0),
+		powerPVThroughSharedInverter(0),
 		powerLoad(0),
 		powerBattery(0),
 		powerBatteryTarget(0),
@@ -55,6 +56,7 @@ void BatteryPower::reset()
 	powerGridToLoad = 0;
 	powerLoad = 0;
 	powerPV = 0;
+	powerPVThroughSharedInverter = 0;
 	powerPVClipped = 0;
 	powerPVInverterDraw = 0;
 	powerPVToBattery = 0;
@@ -268,7 +270,7 @@ void BatteryPowerFlow::calculateDCConnected()
 	{
 		// First check whether battery charging came from PV.  
 		// Assumes that if battery is charging and can charge from PV, that it will charge from PV before the using the grid
-		if (m_BatteryPower->canPVCharge) {
+		if (m_BatteryPower->canPVCharge || m_BatteryPower->canClipCharge) {
 			P_pv_to_batt_dc = fabs(P_battery_dc);
 			if (P_pv_to_batt_dc > P_pv_dc) {
 				P_pv_to_batt_dc = P_pv_dc;
@@ -283,7 +285,7 @@ void BatteryPowerFlow::calculateDCConnected()
 		double P_gen_dc_inverter = P_pv_dc - P_pv_to_batt_dc - P_grid_to_batt_dc;
 
 		// convert the DC power to AC
-		m_BatteryPower->sharedInverter->calculateACPower(P_gen_dc_inverter * util::kilowatt_to_watt, voltage, 0.0);
+		m_BatteryPower->sharedInverter->calculateACPower(P_gen_dc_inverter, voltage, 0.0);
 		efficiencyDCAC = m_BatteryPower->sharedInverter->efficiencyAC * 0.01;
 
 
@@ -319,7 +321,7 @@ void BatteryPowerFlow::calculateDCConnected()
 	else
 	{
 		// convert the DC power to AC
-		m_BatteryPower->sharedInverter->calculateACPower(P_gen_dc * util::kilowatt_to_watt, voltage, 0.0);
+		m_BatteryPower->sharedInverter->calculateACPower(P_gen_dc, voltage, 0.0);
 		efficiencyDCAC = m_BatteryPower->sharedInverter->efficiencyAC * 0.01;
 		P_gen_ac = m_BatteryPower->sharedInverter->powerAC_kW;
 
