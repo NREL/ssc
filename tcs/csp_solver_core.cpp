@@ -1925,6 +1925,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 					{
 						// Next operating_mode = CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
 						m_is_CR_DF__PC_MAX__TES_OFF__AUX_OFF_avail = false;
+						is_rec_su_allowed = false;   // Only allowable operating mode left is CR_OFF__PC_OFF__TES_OFF -> Allow controller to try logic branch with just CR_OFF instead
 					}
 					
 					are_models_converged = false;
@@ -1959,6 +1960,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 						{
 							// Next operating_mode = CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
 							m_is_CR_DF__PC_MAX__TES_OFF__AUX_OFF_avail = false;
+							is_rec_su_allowed = false;   // Only allowable operating mode left is CR_OFF__PC_OFF__TES_OFF -> Allow controller to try logic branch with just CR_OFF instead
 						}
 						are_models_converged = false;
 						break;
@@ -4599,7 +4601,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 				{
 					// Weird that controller chose Defocus operating mode, so report message and shut down CR and PC
 					error_msg = util::format("At time = %lg the controller chose %s operating mode, but the code"
-						" failed to solve at defocus = 1. Controller will shut-down CR and PC",
+						" failed to solve at defocus = 1. Controller will shut-down CR",
 						mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, op_mode_str.c_str());
 					mc_csp_messages.add_message(C_csp_messages::NOTICE, error_msg);
 
@@ -4610,6 +4612,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 					else
 					{
 						m_is_CR_DF__PC_MAX__TES_FULL__AUX_OFF_avail = false;
+						is_rec_su_allowed = false;   // Only allowable operating mode left is CR_OFF__PC_OFF__TES_OFF -> Allow controller to try logic branch with just CR_OFF instead
 					}
 
 					are_models_converged = false;
@@ -4633,7 +4636,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 					{
 						// Weird that controller chose Defocus operating mode, so report message and shut down CR and PC
 						error_msg = util::format("At time = %lg the controller chose %s operating mode, but the code"
-							" failed to solve at defocus = %lg. Controller will shut-down CR and PC",
+							" failed to solve at defocus = %lg. Controller will shut-down CR",
 							mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, op_mode_str.c_str(), xy2.x);
 						mc_csp_messages.add_message(C_csp_messages::NOTICE, error_msg);
 
@@ -4644,8 +4647,9 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 						else
 						{
 							m_is_CR_DF__PC_MAX__TES_FULL__AUX_OFF_avail = false;
+							is_rec_su_allowed = false;   // Only allowable operating mode left is CR_OFF__PC_OFF__TES_OFF -> Allow controller to try logic branch with just CR_OFF instead
 						}
-
+						
 						are_models_converged = false;
 
 						break;
@@ -4708,6 +4712,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 							else
 							{
 								m_is_CR_DF__PC_MAX__TES_FULL__AUX_OFF_avail = false;
+								is_rec_su_allowed = false;   // Only allowable operating mode left is CR_OFF__PC_OFF__TES_OFF -> Allow controller to try logic branch with just CR_OFF instead
 							}
 
 							are_models_converged = false;
