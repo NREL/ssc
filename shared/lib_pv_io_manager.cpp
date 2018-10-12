@@ -345,7 +345,7 @@ Subarray_IO::Subarray_IO(compute_module* cm, std::string cmName, size_t subarray
 		}
 
 		// Snow model
-
+		subarrayEnableSnow = cm->as_boolean("en_snow_model");
 		if (subarrayEnableSnow)
 		{
 			if (trackMode == SEASONAL_TILT)
@@ -390,8 +390,7 @@ PVSystem_IO::PVSystem_IO(compute_module* cm, std::string cmName, Simulation_IO *
 	for (size_t s = 0; s < numberOfSubarrays; s++) {
 		stringsInParallel += static_cast<int>(Subarrays[s]->nStrings);
 	}
-	AllocateOutputs(cm);
-
+	
 	numberOfInverters = cm->as_integer("inverter_count");
 	ratedACOutput = Inverter->ratedACOutput * numberOfInverters;
 	acDerate = 1 - cm->as_double("acwiring_loss") / 100;	
@@ -402,11 +401,7 @@ PVSystem_IO::PVSystem_IO(compute_module* cm, std::string cmName, Simulation_IO *
 	enableDCLifetimeLosses = cm->as_boolean("en_dc_lifetime_losses");
 	enableACLifetimeLosses = cm->as_boolean("en_ac_lifetime_losses");
 	enableSnowModel = cm->as_boolean("en_snow_model");
-	for (size_t s = 0; s < numberOfSubarrays; s++)
-	{
-		Subarrays[s]->subarrayEnableSnow = enableSnowModel;
-	}
-
+	
 	// The shared inverter of the PV array and a tightly-coupled DC connected battery
 	std::unique_ptr<SharedInverter> tmpSharedInverter(new SharedInverter(Inverter->inverterType, numberOfInverters, &Inverter->sandiaInverter, &Inverter->partloadInverter, &Inverter->ondInverter));
 	m_sharedInverter = std::move(tmpSharedInverter);
@@ -509,6 +504,9 @@ PVSystem_IO::PVSystem_IO(compute_module* cm, std::string cmName, Simulation_IO *
 	}
 	if (enableMismatchVoltageCalc && numberOfSubarrays <= 1)
 		throw compute_module::exec_error(cmName, "Subarray voltage mismatch calculation requires more than one subarray. Please check your inputs.");
+
+	// Always perform at the end!
+	AllocateOutputs(cm);
 }
 
 void PVSystem_IO::AllocateOutputs(compute_module* cm)
