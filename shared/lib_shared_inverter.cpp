@@ -149,22 +149,23 @@ void SharedInverter::calculateACPower(const double powerDC_kW_in, const double D
 
 	// Power quantities go in and come out in units of W
 	double powerDC_Watts = powerDC_kW_in * util::kilowatt_to_watt;
-	if (m_inverterType == SANDIA_INVERTER || m_inverterType == DATASHEET_INVERTER || m_inverterType == COEFFICIENT_GENERATOR)
-		m_sandiaInverter->acpower(std::fabs(powerDC_Watts) / m_numInverters, DCStringVoltage, &powerAC_kW, &P_par, &P_lr, &efficiencyAC, &powerClipLoss_kW, &powerConsumptionLoss_kW, &powerNightLoss_kW);
-	else if (m_inverterType == PARTLOAD_INVERTER)
-		m_partloadInverter->acpower(std::fabs(powerDC_Watts) / m_numInverters, &powerAC_kW, &P_lr, &P_par, &efficiencyAC, &powerClipLoss_kW, &powerNightLoss_kW);
-	else if (m_inverterType == OND_INVERTER)
-		m_ondInverter->acpower(std::fabs(powerDC_Watts) / m_numInverters,DCStringVoltage, T, &powerAC_kW, &P_par, &P_lr, &efficiencyAC, &powerClipLoss_kW, &powerConsumptionLoss_kW, &powerNightLoss_kW, &dcWiringLoss_ond_kW, &acWiringLoss_ond_kW);
+	double powerAC_Watts = 0.0;
 
+	if (m_inverterType == SANDIA_INVERTER || m_inverterType == DATASHEET_INVERTER || m_inverterType == COEFFICIENT_GENERATOR)
+		m_sandiaInverter->acpower(std::fabs(powerDC_Watts) / m_numInverters, DCStringVoltage, &powerAC_Watts, &P_par, &P_lr, &efficiencyAC, &powerClipLoss_kW, &powerConsumptionLoss_kW, &powerNightLoss_kW);
+	else if (m_inverterType == PARTLOAD_INVERTER)
+		m_partloadInverter->acpower(std::fabs(powerDC_Watts) / m_numInverters, &powerAC_Watts, &P_lr, &P_par, &efficiencyAC, &powerClipLoss_kW, &powerNightLoss_kW);
+	else if (m_inverterType == OND_INVERTER)
+		m_ondInverter->acpower(std::fabs(powerDC_Watts) / m_numInverters,DCStringVoltage, T, &powerAC_Watts, &P_par, &P_lr, &efficiencyAC, &powerClipLoss_kW, &powerConsumptionLoss_kW, &powerNightLoss_kW, &dcWiringLoss_ond_kW, &acWiringLoss_ond_kW);
 
 	double tempLoss = 0.0;
 	if (m_tempEnabled) {
-		calculateTempDerate(DCStringVoltage, T, powerAC_kW, efficiencyAC, tempLoss);
+		calculateTempDerate(DCStringVoltage, T, powerAC_Watts, efficiencyAC, tempLoss);
 	}
 
 	// Convert units to kW- no need to scale to system size because passed in as power to total number of inverters
 	powerDC_kW = powerDC_Watts * util::watt_to_kilowatt;
-	convertOutputsToKWandScale(tempLoss);
+	convertOutputsToKWandScale(tempLoss, powerAC_Watts);
 
 	// In event shared inverter is charging a battery only, need to re-convert to negative power
 	if (negativePower) {
@@ -183,10 +184,11 @@ void SharedInverter::calculateACPower(const std::vector<double> powerDC_kW_in, c
 		powerDC_Watts_one_inv.push_back(powerDC_kW_in[i] * util::kilowatt_to_watt/ m_numInverters);
 
 	// Power quantities go in and come out in units of W
+	double powerAC_Watts = 0;
 	if (m_inverterType == SANDIA_INVERTER || m_inverterType == DATASHEET_INVERTER || m_inverterType == COEFFICIENT_GENERATOR)
-		m_sandiaInverter->acpower(powerDC_Watts_one_inv, DCStringVoltage, &powerAC_kW, &P_par, &P_lr, &efficiencyAC, &powerClipLoss_kW, &powerConsumptionLoss_kW, &powerNightLoss_kW);
+		m_sandiaInverter->acpower(powerDC_Watts_one_inv, DCStringVoltage, &powerAC_Watts, &P_par, &P_lr, &efficiencyAC, &powerClipLoss_kW, &powerConsumptionLoss_kW, &powerNightLoss_kW);
 	else if (m_inverterType == PARTLOAD_INVERTER)
-		m_partloadInverter->acpower(powerDC_Watts_one_inv, &powerAC_kW, &P_lr, &P_par, &efficiencyAC, &powerClipLoss_kW, &powerNightLoss_kW);
+		m_partloadInverter->acpower(powerDC_Watts_one_inv, &powerAC_Watts, &P_lr, &P_par, &efficiencyAC, &powerClipLoss_kW, &powerNightLoss_kW);
 
 	double tempLoss = 0.0;
 	if (m_tempEnabled){
@@ -195,17 +197,17 @@ void SharedInverter::calculateACPower(const std::vector<double> powerDC_kW_in, c
 		for (size_t i = 0; i < DCStringVoltage.size(); i++)
 			avgDCVoltage += DCStringVoltage[i];
 		avgDCVoltage /= DCStringVoltage.size();
-		calculateTempDerate(avgDCVoltage, T, powerAC_kW, efficiencyAC, tempLoss);
+		calculateTempDerate(avgDCVoltage, T, powerAC_Watts, efficiencyAC, tempLoss);
 	}
 
-	// Convert units to kW and scale to total system size
+	// Scale to total system size
 	// Do not need to scale back up by m_numInverters because scaling them down was a separate vector, powerDC_Watts_one_inv
 	powerDC_kW = 0;
 	for (size_t i = 0; i < powerDC_kW_in.size(); i++)
-		powerDC_kW += powerDC_kW_in[i] * util::watt_to_kilowatt;
+		powerDC_kW += powerDC_kW_in[i];
 
 	//Convert units to kW and scale to total array for all other outputs
-	convertOutputsToKWandScale(tempLoss);
+	convertOutputsToKWandScale(tempLoss, powerAC_Watts);
 }
 
 double SharedInverter::getInverterDCNominalVoltage()
@@ -220,9 +222,9 @@ double SharedInverter::getInverterDCNominalVoltage()
 		return 0.;
 }
 
-void SharedInverter::convertOutputsToKWandScale(double tempLoss)
+void SharedInverter::convertOutputsToKWandScale(double tempLoss, double powerAC_watts)
 {
-	powerAC_kW *= m_numInverters * util::watt_to_kilowatt;
+	powerAC_kW = powerAC_watts * m_numInverters * util::watt_to_kilowatt;
 	powerClipLoss_kW *= m_numInverters * util::watt_to_kilowatt;
 	powerConsumptionLoss_kW *= m_numInverters * util::watt_to_kilowatt;
 	powerNightLoss_kW *= m_numInverters * util::watt_to_kilowatt;

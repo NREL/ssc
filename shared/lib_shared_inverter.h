@@ -75,7 +75,7 @@ protected:
 
 private:
 
-	void convertOutputsToKWandScale(double tempLoss);
+	void convertOutputsToKWandScale(double tempLoss, double powerAC_watts);
 
 };
 
