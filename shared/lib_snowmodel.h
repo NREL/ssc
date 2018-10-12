@@ -56,7 +56,9 @@ class pvsnowmodel
 {
 public:
 	pvsnowmodel();
-	bool setup(int, float);
+
+	// limitTilt requires tilt to be between 10 and 45 degrees
+	bool setup(int, float, bool limitTilt = true);
 
 	bool getLoss(float poa, float tilt, float wspd, float tdry, float snowDepth, int sunup, float dt, float &returnLoss);
 
