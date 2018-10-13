@@ -2567,8 +2567,8 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 	Subarrays[0]->AssignOutputs(this);
 	PVSystem->AssignOutputs(this);
 	
-	_CrtDumpMemoryLeaks();
-	_CrtSetReportMode(_CRT_ERROR, _CRTDBG_MODE_DEBUG);
+//	_CrtDumpMemoryLeaks();
+//	_CrtSetReportMode(_CRT_ERROR, _CRTDBG_MODE_DEBUG);
 
 }
 	
