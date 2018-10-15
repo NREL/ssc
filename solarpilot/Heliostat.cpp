@@ -88,6 +88,8 @@ double Heliostat::getEfficiencyCloudiness(){return eff_data.eta_cloud;}
 double Heliostat::getPowerToReceiver(){return eff_data.power_to_rec;}
 double Heliostat::getPowerValue(){return eff_data.power_value;}
 double Heliostat::getRankingMetricValue(){return eff_data.rank_metric;}
+double Heliostat::getAnnualPower() { return eff_data.power_annual; }
+double Heliostat::getAnnualEfficiency() { return eff_data.eta_annual; }
 double Heliostat::getAzimuthTrack(){return _azimuth;}
 double Heliostat::getZenithTrack(){return _zenith;}
 double Heliostat::getCollisionRadius(){return _r_collision;}
@@ -126,6 +128,8 @@ void Heliostat::setEfficiencyShading(double eta_shadow){eff_data.eta_shadow = et
 void Heliostat::setEfficiencyCloudiness(double eta_cloud){eff_data.eta_cloud = eta_cloud;}
 void Heliostat::setEfficiencyTotal(double eta_tot){eff_data.eta_tot = eta_tot;}
 void Heliostat::setRankingMetricValue(double rval){eff_data.rank_metric = rval;}
+void Heliostat::setAnnualPower(double rval) { eff_data.power_annual = rval; }
+void Heliostat::setAnnualEfficiency(double rval) { eff_data.eta_annual = rval; }
 void Heliostat::setAimPointFluxPlane(sp_point &Aim){_aim_fluxplane.Set( Aim.x, Aim.y, Aim.z );}
 void Heliostat::setAimPointFluxPlane(double x, double y, double z){ _aim_fluxplane.Set(x, y, z); }
 void Heliostat::setTrackVector(Vect &tr){ _track = tr; }	//Set the tracking vector

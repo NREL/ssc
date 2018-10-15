@@ -841,6 +841,7 @@ void sim_result::initialize(){
 	eff_reflect.initialize();
 	eff_intercept.initialize();
 	eff_absorption.initialize();
+    eff_annual.initialize();
     eff_cloud.initialize();
 	flux_density.initialize();
 
@@ -915,6 +916,8 @@ void sim_result::process_field_stats(){
         helio_perf_data::PERF_VALUES::ETA_BLOCK,
         helio_perf_data::PERF_VALUES::ETA_ATT,
         helio_perf_data::PERF_VALUES::ETA_INT,
+        helio_perf_data::PERF_VALUES::ANNUAL_EFFICIENCY,
+        helio_perf_data::PERF_VALUES::ANNUAL_POWER,
         helio_perf_data::PERF_VALUES::REC_ABSORPTANCE
     };
     int nh = (int)data_by_helio.size();
@@ -993,6 +996,13 @@ void sim_result::process_field_stats(){
         stdevs[helio_perf_data::PERF_VALUES::REC_ABSORPTANCE],
         sums[helio_perf_data::PERF_VALUES::REC_ABSORPTANCE],
         wtmean[helio_perf_data::PERF_VALUES::REC_ABSORPTANCE]);
+    eff_annual.set(
+        mins[helio_perf_data::PERF_VALUES::ANNUAL_EFFICIENCY],
+        maxs[helio_perf_data::PERF_VALUES::ANNUAL_EFFICIENCY],
+        aves[helio_perf_data::PERF_VALUES::ANNUAL_EFFICIENCY],
+        stdevs[helio_perf_data::PERF_VALUES::ANNUAL_EFFICIENCY],
+        sums[helio_perf_data::PERF_VALUES::ANNUAL_EFFICIENCY],
+        wtmean[helio_perf_data::PERF_VALUES::ANNUAL_EFFICIENCY]);
     eff_cloud.set(
         mins[helio_perf_data::PERF_VALUES::ETA_CLOUD],
         maxs[helio_perf_data::PERF_VALUES::ETA_CLOUD],

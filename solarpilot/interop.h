@@ -257,6 +257,7 @@ public:
 		eff_reflect,
 		eff_intercept,
 		eff_absorption,
+        eff_annual,
 		flux_density,
 		eff_cloud;
 	int

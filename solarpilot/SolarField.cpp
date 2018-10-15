@@ -1534,8 +1534,15 @@ void SolarField::ProcessLayoutResults( sim_results *results, int nsim_total){
         for(int i=0; i<Npos; i++){
 		    int hid = _heliostats.at(i)->getId();	//use the heliostat ID from the first result to collect all of the other results
 		    rmet = 0.;      //ranking metric
-		    for(int j=0; j<nresults; j++)
-                rmet += results->at(j).data_by_helio[ hid ].getDataByIndex( rid );      //accumulate ranking metric as specified in rid
+            double eta_ann = 0.;
+            for (int j = 0; j < nresults; j++)
+            {
+                helio_perf_data* hpd = &results->at(j).data_by_helio[hid];
+                rmet += hpd->getDataByIndex(rid);      //accumulate ranking metric as specified in rid
+                eta_ann += hpd->eta_tot;
+            }
+            eta_ann /= (double)nresults;
+            _helio_by_id[hid]->setAnnualEfficiency( eta_ann );
 
             //normalize for available heliostat power if applicable
             double afact = 1.;

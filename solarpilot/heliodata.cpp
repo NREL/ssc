@@ -121,6 +121,12 @@ double helio_perf_data::getDataByIndex(const int id){
 		case helio_perf_data::PERF_VALUES::ETA_CLOUD:
 			rval = eta_cloud;
 			break;
+        case helio_perf_data::PERF_VALUES::ANNUAL_POWER:
+            rval = power_annual;
+            break;
+        case helio_perf_data::PERF_VALUES::ANNUAL_EFFICIENCY:
+            rval = eta_annual;
+            break;
 		default:
 			rval = 0.;
 	}	
@@ -170,6 +176,12 @@ void helio_perf_data::setDataByIndex(const int id, double value){
 		case helio_perf_data::PERF_VALUES::ETA_CLOUD:
 			eta_cloud = value;
 			break;
+        case helio_perf_data::PERF_VALUES::ANNUAL_POWER:
+            power_annual = value;
+            break;
+        case helio_perf_data::PERF_VALUES::ANNUAL_EFFICIENCY:
+            eta_annual = value;
+            break;
 	}	
 }
 
@@ -184,6 +196,8 @@ void helio_perf_data::resetMetrics(){
 	power_to_rec = 0.;
 	power_value = 0.;
 	rank_metric = 0.;
+    power_annual = 0.;
+    eta_annual = 0.;
 }
 
 double helio_perf_data::calcTotalEfficiency(){
