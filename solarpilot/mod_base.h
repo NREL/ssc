@@ -752,7 +752,7 @@ public:
     std::string	Name() { return name; };	    //Formal variable name
     std::string Units() { return units; };	    //units for the variable
     std::string Ctype() { return ctype; };	    //Control type
-    std::string Dattype() { return dattype; };    //data type DATTYPE enum
+    SP_DATTYPE Dattype() { return dattype; };    //data type DATTYPE enum
     std::string Short_desc() { return short_desc; }; //Short description
     std::string Long_desc() { return long_desc; };	//Long description
     bool Is_param() { return is_param; };	//Is this variable parameterizable?
