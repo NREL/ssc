@@ -56,6 +56,9 @@
     <ClCompile Include="..\test\shared_test\lib_shared_inverter_test.cpp">
       <Filter>shared_test</Filter>
     </ClCompile>
+    <ClCompile Include="..\test\ssc_test\cmod_pvyield_test.cpp">
+      <Filter>ssc_test</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="shared_test">
@@ -116,6 +119,15 @@
     </ClInclude>
     <ClInclude Include="..\test\shared_test\lib_irradproc_test.h">
       <Filter>shared_test</Filter>
+    </ClInclude>
+    <ClInclude Include="..\test\input_cases\pvyield_cases.h">
+      <Filter>input_cases</Filter>
+    </ClInclude>
+    <ClInclude Include="..\test\ssc_test\cmod_pvyield_test.h">
+      <Filter>ssc_test</Filter>
+    </ClInclude>
+    <ClInclude Include="..\test\input_cases\pvyield_common_data.h">
+      <Filter>input_cases</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
