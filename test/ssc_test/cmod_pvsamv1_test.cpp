@@ -350,7 +350,7 @@ TEST_F(CMPvsamv1PowerIntegration, NoFinancialModelSystemDesign)
 TEST_F(CMPvsamv1PowerIntegration, NoFinancialModelShading)
 {
 	// 0: No Shading, 1: 3D Shading, 2: 3D shading with self shading (non-linear), 3: Snow
-	std::vector<double> annual_energy_expected = { 12911, 10607, 10579, 10644};
+	std::vector<double> annual_energy_expected = { 12911, 10607, 10579, 10377};
 	std::map<std::string, double> pairs;
 
 	// 2 subarrays, one pointing east, one west
@@ -404,19 +404,14 @@ TEST_F(CMPvsamv1PowerIntegration, NoFinancialModelShading)
 	}
 
 	// 3. Add Snow losses to all shading
-	ssc_data_t data_snow = ssc_data_create();
-	snow_data_case_bug_resolution_test(data_snow);
+	pairs["en_snow_model"] = 1;
 
-	pvsam_errors = run_module(data_snow, "pvsamv1");
+	pvsam_errors = modify_ssc_data_and_run_module(data, "pvsamv1", pairs);
 	EXPECT_FALSE(pvsam_errors);
 	if (!pvsam_errors) {
 		SetCalculated("annual_energy");
 		EXPECT_NEAR(calculated_value, annual_energy_expected[3], m_error_tolerance_hi);
 	}
-	if (data_snow) {
-		ssc_data_clear(data_snow);
-	}
-
 }
 
 /// Test PVSAMv1 with default no-financial model and different loss options
