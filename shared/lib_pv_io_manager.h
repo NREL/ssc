@@ -59,6 +59,9 @@ public:
 	/// Create a PVIOManager object by parsing the compute model
 	PVIOManager(compute_module* cm, std::string cmName);
 
+	/// Allocate Outputs
+	void allocateOutputs(compute_module*  cm);
+
 	/// Return pointer to compute module
 	compute_module * getComputeModule();
 
@@ -79,7 +82,6 @@ public:
 
 	/// Get Shade Database
 	ShadeDB8_mpp * getShadeDatabase();
-
 
 public:
 
@@ -209,13 +211,13 @@ struct PVSystem_IO
 	bool enableSnowModel;	
 
 	int stringsInParallel;
-	double ratedACOutput;  /// AC Power rating for whole system (all inverters)
+	double ratedACOutput;  ///< AC Power rating for whole system (all inverters)
 
 	bool clipMpptWindow;
-	std::vector<std::vector<int> > mpptMapping;	///vector to hold the mapping between subarrays and mppt inputs
-	bool enableMismatchVoltageCalc;		/// Whether or not to compute mismatch between multiple subarrays attached to the same mppt input
+	std::vector<std::vector<int> > mpptMapping;	///< vector to hold the mapping between subarrays and mppt inputs
+	bool enableMismatchVoltageCalc;		///< Whether or not to compute mismatch between multiple subarrays attached to the same mppt input
 
-
+	std::vector<double> dcDegradationFactor; 
 	double acDerate;
 	double acLossPercent;
 	double transmissionDerate;
