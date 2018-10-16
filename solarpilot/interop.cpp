@@ -1028,7 +1028,7 @@ void sim_result::process_flux_stats(SolarField &SF){
 	flux_density.ave = fave;
 }
 
-void sim_result::process_analytical_simulation(SolarField &SF, int nsim_type, double sun_az_zen[2], Hvector &helios){
+void sim_result::process_analytical_simulation(SolarField &SF, sim_params &P, int nsim_type, double sun_az_zen[2], Hvector &helios){
 	is_soltrace = false;
 	sim_type = nsim_type;
 
@@ -1049,8 +1049,8 @@ void sim_result::process_analytical_simulation(SolarField &SF, int nsim_type, do
 		}
 		eff_total_sf.ave = effsum / (double)helios.size() ;
 		total_receiver_area = V->sf.rec_area.Val(); //SF.calcReceiverTotalArea();
-		dni = V->sf.dni_des.val/1000.; // SF.getDesignPointDNI()/1000.;
-		power_on_field = total_heliostat_area * dni;	//[kW]
+		dni = P.dni; //W/m2
+		power_on_field = total_heliostat_area * dni;	//[W]
 		power_absorbed = power_on_field * eff_total_sf.ave;
 
         power_thermal_loss = SF.getReceiverTotalHeatLoss();
@@ -1097,11 +1097,11 @@ void sim_result::process_analytical_simulation(SolarField &SF, int nsim_type, do
 
 }
 
-void sim_result::process_analytical_simulation(SolarField &SF, int sim_type, double sun_az_zen[2]){  /*0=Layout, 1=Optimize, 2=Flux sim, 3=Parametric */
-	process_analytical_simulation(SF, sim_type, sun_az_zen, *SF.getHeliostats());
+void sim_result::process_analytical_simulation(SolarField &SF, sim_params &P, int sim_type, double sun_az_zen[2]){  /*0=Layout, 1=Optimize, 2=Flux sim, 3=Parametric */
+	process_analytical_simulation(SF, P, sim_type, sun_az_zen, *SF.getHeliostats());
 };
 
-void sim_result::process_raytrace_simulation(SolarField &SF, int nsim_type, double sun_az_zen[2], Hvector &helios, double qray, int *emap, int *smap, int *rnum, int ntot, double *boxinfo){
+void sim_result::process_raytrace_simulation(SolarField &SF, sim_params &P, int nsim_type, double sun_az_zen[2], Hvector &helios, double qray, int *emap, int *smap, int *rnum, int ntot, double *boxinfo){
 	
 
 	is_soltrace = true;
@@ -1114,7 +1114,7 @@ void sim_result::process_raytrace_simulation(SolarField &SF, int nsim_type, doub
 		for(int i=0; i<num_heliostats_used; i++){
 			total_heliostat_area += helios.at(i)->getArea();
 		}
-		double dni = SF.getVarMap()->sf.dni_des.val/1000.; // SF.getDesignPointDNI()/1000.;
+        double dni = P.dni; //W/m2
 
 
 		//Process the ray data

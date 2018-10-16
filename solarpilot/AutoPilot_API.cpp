@@ -2121,7 +2121,7 @@ bool AutoPilot_S::CalculateOpticalEfficiencyTable(sp_optical_table &opttab)
 			if(! _cancel_simulation)
 				_SF->Simulate(azzen[0], azzen[1], P);
 			if(! _cancel_simulation)
-				results.at(k++).process_analytical_simulation(*_SF, 0, azzen);	
+				results.at(k++).process_analytical_simulation(*_SF, P, 0, azzen);	
 
 
 			if(_cancel_simulation)
@@ -2220,7 +2220,7 @@ bool AutoPilot_S::CalculateFluxMaps(sp_flux_table &fluxtab, int flux_res_x, int 
 			
 		sim_result result;
 		if(! _cancel_simulation){
-			result.process_analytical_simulation(*_SF, 2, azzen);	
+			result.process_analytical_simulation(*_SF, P, 2, azzen);	
 			fluxtab.efficiency.push_back( result.eff_total_sf.ave );
 		}
 						

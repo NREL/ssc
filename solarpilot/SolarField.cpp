@@ -1475,7 +1475,7 @@ bool SolarField::DoLayout( SolarField *SF, sim_results *results, WeatherData *wd
 		//store the results
 		results->push_back( sim_result() );
         double azzen[] = {az,zen};
-		results->back().process_analytical_simulation( *SF, 0, azzen); //2);
+		results->back().process_analytical_simulation( *SF, P, 0, azzen); //2);
 
 		if(SF->CheckCancelStatus()) return false;	//check for cancelled simulation				
 	}
