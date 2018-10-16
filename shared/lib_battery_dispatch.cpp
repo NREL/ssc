@@ -142,6 +142,16 @@ dispatch_t::~dispatch_t()
 	_Battery_initial->delete_clone();
 	delete _Battery_initial;
 }
+void dispatch_t::finalize(size_t idx, double &I)
+{
+	_Battery->copy(_Battery_initial);
+	m_batteryPower->powerBattery = 0;
+	m_batteryPower->powerGridToBattery = 0;
+	m_batteryPower->powerBatteryToGrid = 0;
+	m_batteryPower->powerPVToGrid = 0;
+	_Battery->run(idx, I);
+}
+
 bool dispatch_t::check_constraints(double &I, size_t count)
 {
 	bool iterate = true;
@@ -168,9 +178,10 @@ bool dispatch_t::check_constraints(double &I, size_t count)
 			I += (m_batteryPower->powerGridToBattery / fabs(m_batteryPower->powerBattery)) *fabs(I);
 	}
 	// Don't allow battery to discharge if it gets wasted due to inverter efficiency limitations
-	else if (m_batteryPower->connectionMode == dispatch_t::DC_CONNECTED && m_batteryPower->sharedInverter->efficiencyAC < 90)
+	// Typically, this would be due to low power flow, so just cut off battery.
+	else if (m_batteryPower->connectionMode == dispatch_t::DC_CONNECTED && m_batteryPower->sharedInverter->efficiencyAC < 70)
 	{
-		I *= m_batteryPower->sharedInverter->efficiencyAC*0.01;
+		I = 0;
 	}
 	else
 		iterate = false;
@@ -347,6 +358,11 @@ void dispatch_t::runDispatch(size_t year, size_t hour_of_year, size_t step)
 		// Update power flow calculations and check the constraints
 		m_batteryPowerFlow->calculate();
 		iterate = check_constraints(I, count);
+
+		// If current changed during last iteration of constraints checker, recalculate internal battery state
+		if (!iterate) {
+			finalize(idx, I);
+		}
 
 		// Recalculate the DC battery power
 		m_batteryPower->powerBattery = I * _Battery->battery_voltage() * util::watt_to_kilowatt;
