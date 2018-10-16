@@ -76,7 +76,7 @@ static var_info _cm_vtab_pvsamv1[] = {
 
 	//SEV: Activating the snow model
 	{ SSC_INPUT,        SSC_NUMBER,      "en_snow_model",                               "Toggle snow loss estimation",                          "0/1",      "",                              "snowmodel",            "?=0",                       "BOOLEAN",                      "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "system_capacity",                             "Nameplate capacity",                                   "kW",       "",                              "pvsamv1",              "*",                         "",                             "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "system_capacity",                             "DC Nameplate capacity",                                "kWdc",       "",                            "pvsamv1",              "*",                         "",                             "" },
 
 	{ SSC_INPUT,        SSC_NUMBER,      "use_wf_albedo",                               "Use albedo in weather file if provided",               "0/1",      "",                              "pvsamv1",              "?=1",                      "BOOLEAN",                       "" },
 	{ SSC_INPUT,        SSC_ARRAY,       "albedo",                                      "User specified ground albedo",                         "0..1",     "",                              "pvsamv1",              "*",						  "LENGTH=12",					  "" },
@@ -714,7 +714,7 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_OUTPUT,        SSC_NUMBER,     "ac_loss",                              "AC wiring loss",                                       "%",   "",    "Annual (Year 1)",              "*",                        "",                   "" },
 	// monthly and annual outputs
 
-	{ SSC_OUTPUT,		 SSC_NUMBER,     "annual_energy",						 "Annual energy", "kWh", "", "Annual (Year 1)", "*", "", "" },
+	{ SSC_OUTPUT,		 SSC_NUMBER,     "annual_energy",						 "Annual AC energy",                                       "kWh",       "",                      "Annual (Year 1)", "*", "", "" },
 
 	{ SSC_OUTPUT,        SSC_NUMBER,     "annual_dc_invmppt_loss",               "Inverter clipping loss DC MPPT voltage limits",          "kWh/yr",    "",                      "Annual (Year 1)",       "*",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "annual_inv_cliploss",                  "Inverter clipping loss AC power limit",                  "kWh/yr",    "",                      "Annual (Year 1)",       "*",                    "",                              "" },
@@ -879,7 +879,8 @@ static var_info _cm_vtab_pvsamv1[] = {
 
 	{ SSC_OUTPUT,        SSC_NUMBER,     "performance_ratio",                           "Performance ratio",         "",       "",  "Annual (Year 1)",       "*",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "capacity_factor",                             "Capacity factor",           "%",      "",  "Annual (Year 1)", "*", "", "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "kwh_per_kw",                                  "First year kWh/kW",         "kWh/kW", "",	"Annual (Year 1)", "*", "", "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "capacity_factor_ac",                          "Capacity factor based on AC system capacity",           "%",      "",  "Annual (Year 1)", "*", "", "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "kwh_per_kw",                                  "First year kWh(AC)/kW(DC)", "kWh/kW", "",	"Annual (Year 1)", "*", "", "" },
 
 	//miscellaneous outputs
 	{ SSC_OUTPUT,        SSC_NUMBER,     "ts_shift_hours",                            "Sun position time offset",   "hours",  "",  "Miscellaneous", "*",                       "",                          "" },
@@ -2550,12 +2551,22 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 #endif
 
 
-	// end of losses
-	double kWhperkW = 0.0;
-	double nameplate = as_double("system_capacity");
-	if (nameplate > 0) kWhperkW = annual_energy / nameplate;
-	assign("capacity_factor", var_data((ssc_number_t)(kWhperkW / 87.6)));
-	assign("kwh_per_kw", var_data((ssc_number_t)kWhperkW));
+	// DC Capacity Factor
+	double kWhACperkWDC = 0.0;
+	double nameplate_dc = as_double("system_capacity");
+	if (nameplate_dc > 0) {
+		kWhACperkWDC = annual_energy / nameplate_dc;
+	}
+	assign("capacity_factor", var_data((ssc_number_t)(kWhACperkWDC / 87.6)));
+	assign("kwh_per_kw", var_data((ssc_number_t)kWhACperkWDC));
+
+	// AC Capacity Factor
+	double kWhACperkWAC = 0.0;
+	double nameplate_ac = sharedInverter->getACNameplateCapacity();
+	if (nameplate_ac > 0) {
+		kWhACperkWAC = annual_energy / nameplate_ac;
+	}
+	assign("capacity_factor_ac", var_data((ssc_number_t)(kWhACperkWAC / 87.6)));
 
 	if (is_assigned("load"))
 	{

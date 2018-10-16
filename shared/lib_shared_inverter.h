@@ -41,6 +41,9 @@ public:
 	/// Return the efficiency at max power (Paco, Vdco);
 	double getMaxPowerEfficiency();
 
+	/// Return the nameplate AC capacity
+	double getACNameplateCapacity();
+
 	enum { SANDIA_INVERTER, DATASHEET_INVERTER, PARTLOAD_INVERTER, COEFFICIENT_GENERATOR, OND_INVERTER, NONE };
 
 public:
@@ -59,8 +62,9 @@ public:
 
 protected:
 
-	int m_inverterType;  /// The inverter type
-	size_t m_numInverters;  /// The number of inverters in the system
+	int m_inverterType;  ///< The inverter type
+	size_t m_numInverters;  ///< The number of inverters in the system
+	double m_nameplateAC_kW; ///< The total nameplate AC capacity for all inverters in kW
 
 	/// Temperate Derating: each curve contains DC voltage and pairs of start-derate temp [C] and slope [efficiency% lost per C]
 	bool m_tempEnabled;

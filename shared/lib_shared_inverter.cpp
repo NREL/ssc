@@ -11,6 +11,11 @@ SharedInverter::SharedInverter(int inverterType, size_t numberOfInverters,
 	m_partloadInverter = partloadInverter;
 	m_ondInverter = ondInverter;
 	m_tempEnabled = false;
+
+	if (m_inverterType == SANDIA_INVERTER || m_inverterType == DATASHEET_INVERTER || m_inverterType == COEFFICIENT_GENERATOR)
+		m_nameplateAC_kW = m_numInverters * m_sandiaInverter->Paco * util::watt_to_kilowatt;
+	else if (m_inverterType == PARTLOAD_INVERTER)
+		m_nameplateAC_kW = m_numInverters * m_partloadInverter->Paco * util::watt_to_kilowatt;
 }
 
 bool sortByVoltage(std::vector<double> i, std::vector<double> j)
@@ -247,3 +252,7 @@ double SharedInverter::getMaxPowerEfficiency()
 	return efficiencyAC;
 }
 
+double SharedInverter::getACNameplateCapacity()
+{
+	return m_nameplateAC_kW;
+}
