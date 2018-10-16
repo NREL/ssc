@@ -545,6 +545,6 @@ TEST_F(CMPvsamv1PowerIntegration, SnowModel)
 
 	ssc_number_t annual_energy;
 	ssc_data_get_number(data, "annual_energy", &annual_energy);
-	EXPECT_NEAR(annual_energy, 11492.39, m_error_tolerance_hi) << "Annual energy.";
+	EXPECT_NEAR(annual_energy, 11354.7, m_error_tolerance_hi) << "Annual energy.";
 
 }
