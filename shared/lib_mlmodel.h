@@ -1,4 +1,6 @@
 /*******************************************************************************************************
+*
+*  Copyright 2017 - pvyield GmbH / Timo Richert
 *  Copyright 2017 Alliance for Sustainable Energy, LLC
 *
 *  NOTICE: This software was developed at least in part by Alliance for Sustainable Energy, LLC
@@ -46,50 +48,86 @@
 *  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
 *  THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *******************************************************************************************************/
+#ifndef __mlmodel_h
+#define __mlmodel_h
 
-#ifndef _HELIODATA_
-#define _HELIODATA_ 1
 
-#include <vector>
+#include "lib_pvmodel.h"
+#include "mlm_spline.h"
 
-struct helio_perf_data
+class mlmodel_module_t : public pvmodule_t
 {
-private:
-	std::vector<double*> _dvars;
 public:
-	//Power to receiver=0;Total efficiency=1;Cosine efficiency=2;Attenuation efficiency=3;Intercept efficiency=4;Blocking efficiency=5;Shadowing efficiency=6;TOU-weighted power=7
-	
-	//This enumeration is order specific based on the indices specified in the gui variable "solarfield.0.hsort_method"
-	struct PERF_VALUES { enum A {
-		POWER_TO_REC=0, ETA_TOT, ETA_COS, ETA_ATT, ETA_INT, ETA_BLOCK, ETA_SHADOW, POWER_VALUE, /* after this, order not significant */
-        REFLECTIVITY, SOILING, REC_ABSORPTANCE, RANK_METRIC, ETA_CLOUD, ANNUAL_POWER, ENERGY_VALUE, ANNUAL_EFFICIENCY, _LAST };
-	};
-	helio_perf_data();
+	int N_series;
+	int N_parallel;
+	int N_diodes;
 
-	void resetMetrics();
-	double calcTotalEfficiency();
+	double Width;
+	double Length;
+
+	double V_mp_ref;
+	double I_mp_ref;
+	double V_oc_ref;
+	double I_sc_ref;
+
+	double S_ref;
+	double T_ref;
+
+	double R_shref;
+	double R_sh0;
+	double R_shexp;
+	double R_s;
+	double alpha_isc;
+	double beta_voc_spec;
+	double E_g;
+	double n_0;
+	double mu_n;
+	double D2MuTau;
 	
-	double getDataByIndex( const int id );
-	void setDataByIndex( const int id, double value);
-	int n_metric;
-    double
-        eta_cos,	//[-] Heliostat cosine efficiency
-        eta_att,	//[-] Atmospheric attenuation efficiency
-        eta_int,	//[-] Intercept efficiency
-        eta_block,  //[-] Blocking efficiency
-        eta_shadow, //[-] Shadowing efficiency
-        eta_tot,	//[-] Total heliostat intercept
-        reflectivity,
-        soiling,
-        rec_absorptance,	//Absorptance of the receiver this heliostat is aiming at
-        power_to_rec,	//[W] delivered power
-        power_value,
-        rank_metric,	//Power weighted by the payment allocation factor, if applicable
-        eta_cloud,	//[-] Loss due to cloudiness (performance simulation only)
-        energy_value, //[Wh] energy delivered over the simulation time period
-        energy_annual, //[Wh] estimated total annual energy for the heliostat
-        eta_annual; //[-] estimated annual total efficiency
-		
+	int T_mode;
+	double T_c_no_tnoct;
+	int T_c_no_mounting;
+	int T_c_no_standoff;
+	double T_c_fa_alpha;
+	double T_c_fa_U0;
+	double T_c_fa_U1;
+
+	int AM_mode;
+	double AM_c_sa[5];
+	double AM_c_lp[6];
+
+	int IAM_mode;
+	double IAM_c_as;
+	double IAM_c_sa[6];
+	int IAM_c_cs_elements;
+	double IAM_c_cs_incAngle[100];
+	double IAM_c_cs_iamValue[100];
+
+	double groundRelfectionFraction;
+
+	mlmodel_module_t();
+
+	virtual double AreaRef() { return (Width * Length); }
+	virtual double VmpRef() { return V_mp_ref; }
+	virtual double ImpRef() { return I_mp_ref; }
+	virtual double VocRef() { return V_oc_ref; }
+	virtual double IscRef() { return I_sc_ref; }
+	virtual bool operator() (pvinput_t &input, double TcellC, double opvoltage, pvoutput_t &output);
+	virtual void initializeManual();
+
+private:
+	bool isInitialized;
+	double nVT;
+	double I_0ref;
+	double I_Lref;
+	double Vbi;
+	tk::spline iamSpline;
+};
+
+class mock_celltemp_t : public pvcelltemp_t
+{
+public:
+	virtual bool operator() (pvinput_t &input, pvmodule_t &module, double opvoltage, double &Tcell);
 };
 
 #endif

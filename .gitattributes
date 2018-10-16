@@ -8,3 +8,19 @@ nlopt/* linguist-vendored=true
 examples/* linguist-vendored=true
 
 build_*/* linguist_generated=true
+
+# Autodetect text files
+* text=auto
+
+# ...Unless the name matches the following
+# overriding patterns
+
+# Definitively text files 
+*.txt text
+*.c text
+*.cpp text
+*.h text
+
+# Ensure those won't be messed up with
+*.jpg binary
+*.data binary

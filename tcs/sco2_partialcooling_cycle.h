@@ -89,8 +89,8 @@ public:
 		double m_P_mc_out;					//[kPa] Compressor outlet pressure
 		std::vector<double> m_DP_LTR;		//(cold, hot) positive values are absolute [kPa], negative values are relative (-)
 		std::vector<double> m_DP_HTR;		//(cold, hot) positive values are absolute [kPa], negative values are relative (-)
-		std::vector<double> m_DP_PC_full;   //(cold, hot) positive values are absolute [kPa], negative values are relative (-)
-		std::vector<double> m_DP_PC_partial; //(cold, hot) positive values are absolute [kPa], negative values are relative (-)
+		std::vector<double> m_DP_PC_LP;     //(cold, hot) positive values are absolute [kPa], negative values are relative (-)
+		std::vector<double> m_DP_PC_IP;		//(cold, hot) positive values are absolute [kPa], negative values are relative (-)
 		std::vector<double> m_DP_PHX;		//(cold, hot) positive values are absolute [kPa], negative values are relative (-)
 		double m_UA_LTR;					//[kW/K] UA in LTR
 		double m_UA_HTR;					//[kW/K] UA in HTR
@@ -131,10 +131,10 @@ public:
 			std::fill(m_DP_LTR.begin(), m_DP_LTR.end(), std::numeric_limits<double>::quiet_NaN());
 			m_DP_HTR.resize(2);
 			std::fill(m_DP_HTR.begin(), m_DP_HTR.end(), std::numeric_limits<double>::quiet_NaN());
-			m_DP_PC_full.resize(2);
-			std::fill(m_DP_PC_full.begin(), m_DP_PC_full.end(), std::numeric_limits<double>::quiet_NaN());
-			m_DP_PC_partial.resize(2);
-			std::fill(m_DP_PC_partial.begin(), m_DP_PC_partial.end(), std::numeric_limits<double>::quiet_NaN());
+			m_DP_PC_LP.resize(2);
+			std::fill(m_DP_PC_LP.begin(), m_DP_PC_LP.end(), std::numeric_limits<double>::quiet_NaN());
+			m_DP_PC_IP.resize(2);
+			std::fill(m_DP_PC_IP.begin(), m_DP_PC_IP.end(), std::numeric_limits<double>::quiet_NaN());
 			m_DP_PHX.resize(2);
 			std::fill(m_DP_PHX.begin(), m_DP_PHX.end(), std::numeric_limits<double>::quiet_NaN());
 		}
@@ -148,8 +148,8 @@ public:
 		double m_T_t_in;					//[K] Turbine inlet temperature
 		std::vector<double> m_DP_LTR;		//(cold, hot) positive values are absolute [kPa], negative values are relative (-)
 		std::vector<double> m_DP_HTR;		//(cold, hot) positive values are absolute [kPa], negative values are relative (-)
-		std::vector<double> m_DP_PC_full;   //(cold, hot) positive values are absolute [kPa], negative values are relative (-)
-		std::vector<double> m_DP_PC_partial; //(cold, hot) positive values are absolute [kPa], negative values are relative (-)
+		std::vector<double> m_DP_PC_LP;     //(cold, hot) positive values are absolute [kPa], negative values are relative (-)
+		std::vector<double> m_DP_PC_IP;     //(cold, hot) positive values are absolute [kPa], negative values are relative (-)
 		std::vector<double> m_DP_PHX;		//(cold, hot) positive values are absolute [kPa], negative values are relative (-)
 		double m_UA_rec_total;				//[kW/K] Total design-point recuperator UA
 		double m_LTR_eff_max;				//[-] Maximum allowable effectiveness in LT recuperator
@@ -206,10 +206,10 @@ public:
 			std::fill(m_DP_LTR.begin(), m_DP_LTR.end(), std::numeric_limits<double>::quiet_NaN());
 			m_DP_HTR.resize(2);
 			std::fill(m_DP_HTR.begin(), m_DP_HTR.end(), std::numeric_limits<double>::quiet_NaN());
-			m_DP_PC_full.resize(2);
-			std::fill(m_DP_PC_full.begin(), m_DP_PC_full.end(), std::numeric_limits<double>::quiet_NaN());
-			m_DP_PC_partial.resize(2);
-			std::fill(m_DP_PC_partial.begin(), m_DP_PC_partial.end(), std::numeric_limits<double>::quiet_NaN());
+			m_DP_PC_LP.resize(2);
+			std::fill(m_DP_PC_LP.begin(), m_DP_PC_LP.end(), std::numeric_limits<double>::quiet_NaN());
+			m_DP_PC_IP.resize(2);
+			std::fill(m_DP_PC_IP.begin(), m_DP_PC_IP.end(), std::numeric_limits<double>::quiet_NaN());
 			m_DP_PHX.resize(2);
 			std::fill(m_DP_PHX.begin(), m_DP_PHX.end(), std::numeric_limits<double>::quiet_NaN());
 		}

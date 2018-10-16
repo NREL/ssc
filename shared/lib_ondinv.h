@@ -47,49 +47,103 @@
 *  THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *******************************************************************************************************/
 
-#ifndef _HELIODATA_
-#define _HELIODATA_ 1
-
+#include <string>
 #include <vector>
+#include "mlm_spline.h" // spline interpolator for efficiency curves
+using namespace std;
 
-struct helio_perf_data
+#ifndef __lib_ondinv_h
+#define __lib_ondinv_h
+
+class ond_inverter
 {
-private:
-	std::vector<double*> _dvars;
 public:
-	//Power to receiver=0;Total efficiency=1;Cosine efficiency=2;Attenuation efficiency=3;Intercept efficiency=4;Blocking efficiency=5;Shadowing efficiency=6;TOU-weighted power=7
-	
-	//This enumeration is order specific based on the indices specified in the gui variable "solarfield.0.hsort_method"
-	struct PERF_VALUES { enum A {
-		POWER_TO_REC=0, ETA_TOT, ETA_COS, ETA_ATT, ETA_INT, ETA_BLOCK, ETA_SHADOW, POWER_VALUE, /* after this, order not significant */
-        REFLECTIVITY, SOILING, REC_ABSORPTANCE, RANK_METRIC, ETA_CLOUD, ANNUAL_POWER, ENERGY_VALUE, ANNUAL_EFFICIENCY, _LAST };
-	};
-	helio_perf_data();
+	ond_inverter();
 
-	void resetMetrics();
-	double calcTotalEfficiency();
-	
-	double getDataByIndex( const int id );
-	void setDataByIndex( const int id, double value);
-	int n_metric;
-    double
-        eta_cos,	//[-] Heliostat cosine efficiency
-        eta_att,	//[-] Atmospheric attenuation efficiency
-        eta_int,	//[-] Intercept efficiency
-        eta_block,  //[-] Blocking efficiency
-        eta_shadow, //[-] Shadowing efficiency
-        eta_tot,	//[-] Total heliostat intercept
-        reflectivity,
-        soiling,
-        rec_absorptance,	//Absorptance of the receiver this heliostat is aiming at
-        power_to_rec,	//[W] delivered power
-        power_value,
-        rank_metric,	//Power weighted by the payment allocation factor, if applicable
-        eta_cloud,	//[-] Loss due to cloudiness (performance simulation only)
-        energy_value, //[Wh] energy delivered over the simulation time period
-        energy_annual, //[Wh] estimated total annual energy for the heliostat
-        eta_annual; //[-] estimated annual total efficiency
-		
+	double PNomConv; // [W]
+	double PMaxOUT; // [W]
+	double VOutConv; // [W]
+	double VMppMin; // [V]
+	double VMPPMax; // [V]
+	double VAbsMax; // [V]
+	double PSeuil; // [W]
+	string ModeOper; // [-]
+	string CompPMax; // [-]
+	string CompVMax; // [-]
+	string ModeAffEnum; // [-]
+	double PNomDC; // [W]
+	double PMaxDC; // [W]
+	double IMaxDC; // [A]
+	double INomDC; // [A]
+	double INomAC; // [A]
+	double IMaxAC; // [A]
+	double TPNom; // [°C]
+	double TPMax; // [°C]
+	double TPLim1; // [°C]
+	double TPLimAbs; // [°C]
+	double PLim1; // [kW]
+	double PLimAbs; // [kW]
+	double VNomEff[3]; // [V]
+	int NbInputs; // [-]
+	int NbMPPT; // [-]
+	double Aux_Loss; // [W]
+	double Night_Loss; // [W]
+	double lossRDc; // [V/A]
+	double lossRAc; // [A]
+	int effCurve_elements; // [-]
+	double effCurve_Pdc[3][100]; // [W]
+	double effCurve_Pac[3][100]; // [W]
+	double effCurve_eta[3][100]; // [-]
+	int doAllowOverpower; // [-] // ADDED TO CONSIDER MAX POWER USAGE [2018-06-23, TR]
+	int doUseTemperatureLimit; // [-] // ADDED TO CONSIDER TEMPERATURE LIMIT USAGE [2018-06-23, TR]
+
+	bool acpower(	
+		/* inputs */
+		double Pdc,			/* Input power to inverter (Wdc) */
+		double Vdc,			/* Voltage input to inverter (Vdc) */
+		double Tamb,		/* Ambient temperature (°C) */
+
+		/* outputs */
+		double *Pac,		/* AC output power (Wac) */
+		double *Ppar,		/* AC parasitic power consumption (Wac) */
+		double *Plr,		/* Part load ratio (Pdc_in/Pdc_rated, 0..1) */
+		double *Eff,		/* Conversion efficiency (0..1) */
+		double *Pcliploss,	/* Power loss due to clipping loss (Wac) */
+		double *Psoloss,	/* Power loss due to operating power consumption (Wdc) */
+		double *Pntloss,	/* Power loss due to night time tare loss (Wac) */
+		double *dcloss,		/* DC power loss (Wdc) */
+		double *acloss		/* AC power loss (Wac) */
+	);
+	double calcEfficiency(
+		double Pdc,
+		int index_eta
+	);
+	double tempDerateAC(
+		double arrayT[],
+		double arrayPAC[],
+		double T
+	);
+	virtual void initializeManual();
+
+private:
+	bool ondIsInitialized;
+
+	int noOfEfficiencyCurves;
+	tk::spline effSpline[2][3];
+	double x_lim[3];
+	double Pdc_threshold;
+	double a[3];
+	double b[3];
+
+	double PNomDC_eff;
+	double PMaxDC_eff;
+	double INomDC_eff;
+	double IMaxDC_eff;
+	double T_array[6];
+	double PAC_array[6];
+
+
+
 };
 
 #endif

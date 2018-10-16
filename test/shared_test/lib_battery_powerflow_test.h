@@ -14,6 +14,7 @@ protected:
 	SharedInverter * m_sharedInverter;
 	sandia_inverter_t * sandia;
 	partload_inverter_t * partload;
+	ond_inverter *ond;
 	double error;
 
 public:
@@ -38,6 +39,7 @@ public:
 		int numberOfInverters = 100;
 		sandia = new sandia_inverter_t();
 		partload = new partload_inverter_t();
+		ond = new ond_inverter();
 		sandia->C0 = -3.18e-6;
 		sandia->C1 = -5.12e-5;
 		sandia->C2 = 0.000984;
@@ -47,7 +49,7 @@ public:
 		sandia->Vdco = 398.497;
 		sandia->Pso = 19.4516;
 		sandia->Pntare = 0.99;
-		m_sharedInverter = new SharedInverter(SharedInverter::SANDIA_INVERTER, numberOfInverters, sandia, partload);
+		m_sharedInverter = new SharedInverter(SharedInverter::SANDIA_INVERTER, numberOfInverters, sandia, partload, ond);
 		m_batteryPower->setSharedInverter(m_sharedInverter);
 	}
 	void TearDown()
@@ -60,6 +62,8 @@ public:
 			delete sandia;
 		if (partload)
 			delete partload;
+		if (ond)
+			delete ond;
 	}
 
 };

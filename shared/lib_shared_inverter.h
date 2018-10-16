@@ -3,6 +3,7 @@
 
 #include "lib_sandia.h"
 #include "lib_pvinv.h"
+#include "lib_ondinv.h"
 #include <vector>
 
 /**
@@ -18,7 +19,7 @@ public:
 
 	/// Construct a shared inverter by registering the previously constructed inverter
 	SharedInverter(int inverterType, size_t numberOfInverters,
-		sandia_inverter_t * sandiaInverter, partload_inverter_t * partloadInverter);
+		sandia_inverter_t * sandiaInverter, partload_inverter_t * partloadInverter, ond_inverter * ondInverter);
 
 	/// Setup efficiency vs ambient T curves for temp derating, returns which curve has error if fails, 0 success
 	int setTempDerateCurves(std::vector<std::vector<double>> tempDerateCurves);
@@ -37,7 +38,7 @@ public:
 	/// Return the efficiency at max power (Paco, Vdco);
 	double getMaxPowerEfficiency();
 
-	enum { SANDIA_INVERTER, DATASHEET_INVERTER, PARTLOAD_INVERTER, COEFFICIENT_GENERATOR, NONE };
+	enum { SANDIA_INVERTER, DATASHEET_INVERTER, PARTLOAD_INVERTER, COEFFICIENT_GENERATOR, OND_INVERTER, NONE };
 
 public:
 
@@ -50,6 +51,8 @@ public:
 	double powerNightLoss_kW;
 	double powerTempLoss_kW;
 	double powerLossTotal_kW;
+	double dcWiringLoss_ond_kW;
+	double acWiringLoss_ond_kW;
 
 protected:
 
@@ -65,6 +68,7 @@ protected:
 	// Memory managed elsewehre
 	sandia_inverter_t * m_sandiaInverter;
 	partload_inverter_t * m_partloadInverter;
+	ond_inverter * m_ondInverter;
 };
 
 

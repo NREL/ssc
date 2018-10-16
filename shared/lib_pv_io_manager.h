@@ -9,6 +9,8 @@
 #include "6par_solve.h"
 #include "lib_cec6par.h"
 #include "lib_iec61853.h"
+#include "lib_mlmodel.h"
+#include "lib_ondinv.h"
 #include "lib_pvinv.h"
 #include "lib_pv_incidence_modifier.h"
 #include "lib_pvshade.h"
@@ -428,7 +430,7 @@ public:
 	/// Assign outputs from member data after the PV Model has run 
 	void AssignOutputs(compute_module* cm);
 
-	enum moduleTypeList {MODULE_SIMPLE_EFFICIENCY, MODULE_CEC_DATABASE, MODULE_CEC_USER_INPUT, MODULE_SANDIA, MODULE_IEC61853};
+	enum moduleTypeList {MODULE_SIMPLE_EFFICIENCY, MODULE_CEC_DATABASE, MODULE_CEC_USER_INPUT, MODULE_SANDIA, MODULE_IEC61853, MODULE_PVYIELD};
 	enum mountingSpecificConfigurationList {NONE, RACK_MOUNTING, FLUSH_MOUNTING, INTEGRATED_MOUNTING, GAP_MOUNTING};
 
 	int moduleType;						/// The PV module model selected
@@ -450,9 +452,11 @@ public:
 	cec6par_module_t cecModel;
 	noct_celltemp_t nominalOperatingCellTemp;
 	mcsp_celltemp_t mountingSpecificCellTemp;
+	mock_celltemp_t mockCellTemp;
 	sandia_module_t sandiaModel;
 	sandia_celltemp_t sandiaCellTemp;
 	iec61853_module_t elevenParamSingleDiodeModel; 
+	mlmodel_module_t mlModuleModel;
 	pvcelltemp_t *cellTempModel;
 	pvmodule_t *moduleModel;
 };
@@ -484,6 +488,7 @@ public:
 
 	::sandia_inverter_t sandiaInverter;
 	::partload_inverter_t partloadInverter;
+	::ond_inverter ondInverter;
 
 	SharedInverter * sharedInverter;
 };
