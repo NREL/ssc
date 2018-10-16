@@ -532,3 +532,19 @@ TEST_F(CMPvsamv1PowerIntegration, NoFinancialModelMultipleMPPT)
 	}
 
 }
+
+/// Test PVSAMv1 with Snow Model enabled and set to 1-axis Tracking
+TEST_F(CMPvsamv1PowerIntegration, SnowModel)
+{
+	std::map<std::string, double> pairs;
+
+	pairs["en_snow_model"] = 1;
+	pairs["subarray1_track_mode"] = 1;
+	int pvsam_errors = modify_ssc_data_and_run_module(data, "pvsamv1", pairs);
+	EXPECT_FALSE(pvsam_errors);
+
+	ssc_number_t annual_energy;
+	ssc_data_get_number(data, "annual_energy", &annual_energy);
+	EXPECT_NEAR(annual_energy, 11492.39, m_error_tolerance_hi) << "Annual energy.";
+
+}
