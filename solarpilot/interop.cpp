@@ -117,6 +117,28 @@ void interop::GenerateSimulationWeatherData(var_map &V, int design_method, Array
 	
 	WeatherData *wdatvar = &V.sf.sim_step_data.Val(); 
 
+    //convert ArrayString wf_entries to matrix_t<double>
+    matrix_t<double> wf_entries_d;
+    {
+        int nr, nc;
+        nr = (int)wf_entries.size();
+        nc = split(wf_entries.at(0), ",").size();
+
+        wf_entries_d.resize(nr, nc);
+
+        for (int i = 0; i < nr; i++)
+        {
+            std::vector<std::string> row = split(wf_entries.at(i), ",");
+
+            for (int j = 0; j < nc; j++)
+            {
+                double val;
+                to_double(row.at(j), &val);
+                wf_entries_d.at(i, j) = val;
+            }
+        }
+    }
+
 	switch (design_method)
 	{
     case var_solarfield::DES_SIM_DETAIL::SUBSET_OF_DAYSHOURS:
@@ -143,7 +165,12 @@ void interop::GenerateSimulationWeatherData(var_map &V, int design_method, Array
         to_double(vdata.at(4), &P.Tamb);
         to_double(vdata.at(5), &P.Patm);
         to_double(vdata.at(6), &P.Vwind);
-        to_double(vdata.at(7), &P.Simweight);
+
+        //calculate total annual DNI energy
+        P.Simweight = 0.;
+        for (int i = 0; i < wf_entries_d.nrows(); i++)
+            P.Simweight += wf_entries_d.at(i, 3);
+
         wdatvar->resizeAll(1);
         wdatvar->setStep(0, dom, hour, month, P.dni, P.Tamb, P.Patm, P.Vwind, P.Simweight);
 		break;
@@ -194,9 +221,6 @@ void interop::GenerateSimulationWeatherData(var_map &V, int design_method, Array
 				hoy = double( doy ) * 24.;
 				dt.hours_to_date( hoy, month, dom );	//midnight on the month/day
 								
-				/*char ts[150];
-				std::sprintf(ts,"[P]%d,%f,%d,%f,%f,%f,%f,%f", dom, hod, month, dni_des, 25., 1., 1., 1.);
-				wdatvar->append(ts);*/
                 wdatvar->append(dom, hod, month, dni_des, 25., 1., 1., 1.0);
 			}
 		}
@@ -248,8 +272,8 @@ void interop::GenerateSimulationWeatherData(var_map &V, int design_method, Array
 		quicksort(simdays, 0, nday-1);
 
 		//Calculate the month and day for each item
-		vector<string> tsdat;
-		for(int i=0; i<nday; i++){
+		for(int i=0; i<nday; i++)
+        {
 			int month, dom;
 			double hoy;
 			int doy = simdays.at(i);	//because of the doy calcluation used before, this is actually [0..364]
@@ -275,7 +299,6 @@ void interop::GenerateSimulationWeatherData(var_map &V, int design_method, Array
 
 			//make sure the start and end hours are symmetric about solar noon
 			double nmidspan = (double)nhrs/2.;
-			//double nmidspan = (double)nskip*floor(nhrs/(2.*(double)nskip));
 			double hr_st = hrmid - nmidspan; 
 			double hr_end = hrmid + nmidspan;
 				
@@ -285,35 +308,20 @@ void interop::GenerateSimulationWeatherData(var_map &V, int design_method, Array
 				
                 //weighting fractions for DNI
 				double fthis = fmin(0.5, hr_st - floor(hr_st)) + fmin(0.5, ceil(hr_st) - hr_st);
-				//double fthis = all_time.front() - floor(all_time.front());
 				double fcomp = 1.-fthis;
 
 				//for integration, which way should we go?
 				int iind = (hr_st - floor(hr_st)) < 0.5 ? -1 : 1;
-				//int iind = fthis < 0.5 ? -1 : 1;
-
-
-
                 
                 //preprocess the day's weather
-				/*vector<double>
-					all_time, all_dni, all_tdry, all_pres, all_wind, all_weights;*/
 				double jd = hr_st;
 				while(jd<hr_end+.001){	//include hr_end
 					//index associated with time jd
 					int jind = (int)floor(jd);	//the (j-1) originally may have been an error
-					tsdat = split(wf_entries.at(jind), ",");
-
-					to_double(tsdat.at(3), &dni);
-					to_double(tsdat.at(4), &tdry);
-					to_double(tsdat.at(5), &pres);
-					to_double(tsdat.at(6), &wind);
-
-					/*all_time.push_back(jd);
-					all_dni.push_back(dni);
-					all_tdry.push_back(tdry);
-					all_pres.push_back(pres);
-					all_wind.push_back(wind);*/
+                    dni = wf_entries_d.at(jind, 3);
+                    tdry = wf_entries_d.at(jind, 4);
+                    pres = wf_entries_d.at(jind, 5);
+                    wind = wf_entries_d.at(jind, 6);
 
 					//Calculate weighting factor for this hour
 					double hod = fmod(jd,24.);
@@ -328,34 +336,16 @@ void interop::GenerateSimulationWeatherData(var_map &V, int design_method, Array
 						step_weight = hrs[1] - hod + nskip/2.;
 					}
 					step_weight *= Toolbox::round(delta_day);
-					//all_weights.push_back( step_weight );
-
-					//jd += (double)nskip;	
-				//}
-
-				//int ndatpt = (int)all_time.size();
-
-				
-				
-				//for(int i=0; i<ndatpt; i++){
 
 					//calculate the adjusted DNI based on the time surrounding the simulation position
 					double dnimod, dnicomp;
 					if(iind > 0)
-					    tsdat = split(wf_entries.at(min(8759,jind+1)), ",");
-						//dnicomp = i < ndatpt - 1 ? all_dni.at(i+1) : 0.;
+                        dnicomp = wf_entries_d.at(min(8759, jind + 1));
 					else
-					    tsdat = split(wf_entries.at(max(0,jind-1)), ",");
-						//dnicomp = i > 0 ? all_dni.at(i-1) : 0.;
-					to_double(tsdat.at(3), &dnicomp);
+                        dnicomp = wf_entries_d.at(max(0,jind-1));
 
-					//dnimod = all_dni.at(i)*fthis + dnicomp * fcomp;
 					dnimod = dni*fthis + dnicomp * fcomp;
 
-					//double hod = fmod(jd,24.);
-
-					//char ts[150];
-					//std::sprintf(ts,"[P]%d,%f,%d,%f,%f,%f,%f,%f", int(dom), hod, int(month), dnimod, tdry, pres, wind, step_weight );
 					wdatvar->append(int(dom), hod, int(month), dnimod, tdry, pres, wind, step_weight);
 					
                     jd += (double)nskip;	
@@ -395,11 +385,6 @@ void interop::GenerateSimulationWeatherData(var_map &V, int design_method, Array
 				int nwf = (int)wf_entries.size();
 				double dnicomp;
 				double jd=hr_st;
-				/*double hr_end_choose;
-				if( design_method == LAYOUT_DETAIL::FOR_OPTIMIZATION )
-					hr_end_choose = hrmid;
-				else
-					hr_end_choose = hr_end;*/
 
 				while(jd < hr_end + 0.001){
 					double tdry_per = 0., pres_per = 0., wind_per = 0., dni_per = 0., dni_per2 = 0.;
@@ -408,45 +393,18 @@ void interop::GenerateSimulationWeatherData(var_map &V, int design_method, Array
 						if(ind < 0) ind += 8760;
 						if(ind > 8759) ind += -8760;
 
-						tsdat = split(wf_entries.at(ind), ",");
-						to_double(tsdat.at(3), &dni);
-						to_double(tsdat.at(4), &tdry);
-						to_double(tsdat.at(5), &pres);
-						to_double(tsdat.at(6), &wind);
+                        dni = wf_entries_d.at(ind, 3);
+                        tdry = wf_entries_d.at(ind, 4);
+                        pres = wf_entries_d.at(ind, 5);
+                        wind = wf_entries_d.at(ind, 6);
 
 						//get the complement dni data
-						tsdat = split(wf_entries.at( min( max(ind+iind, 0), nwf-1) ), ",");
-						to_double(tsdat.at(3), &dnicomp);
+                        dnicomp = wf_entries_d.at(min(max(ind + iind, 0), nwf - 1), 3);
 
-
-						//
 						dni_per += dni * fthis + dnicomp * fcomp;
 						tdry_per += tdry;
 						pres_per += pres;
 						wind_per += wind;
-
-						//if it's for optimization, also add the symmetric afternoon hour
-						//if(design_method == LAYOUT_DETAIL::FOR_OPTIMIZATION){
-						//	double jdhi = hrmid + hrmid - jd;
-						//	int indhi = (int)floor(jdhi)+k*24;
-						//	if(indhi < 0) indhi += 8760;
-						//	if(indhi > 8759) indhi += -8760;
-
-						//	if(indhi == ind)
-						//		continue;
-
-						//	tsdat = split(wf_entries.at(indhi), ",");
-						//	to_double(tsdat.at(3), &dni);
-
-						//	//get the complement dni data
-						//	tsdat = split(wf_entries.at( min( max(ind+iind, 0), nwf-1) ), ",");
-						//	to_double(tsdat.at(3), &dnicomp);
-
-
-						//	//
-						//	dni_per2 += dni * fthis + dnicomp * fcomp;							
-						//}
-
 					}
 
 					dni_per = (dni_per + dni_per2)/(double)range;
@@ -473,8 +431,6 @@ void interop::GenerateSimulationWeatherData(var_map &V, int design_method, Array
 					}
 					step_weight *= (double)range;
 
-					//char ts[150];
-					//std::sprintf(ts, "[P]%d,%f,%d,%f,%f,%f,%f,%f", int(dom), hod, int(month), dni_per, tdry_per, pres_per, wind_per, step_weight);
 					wdatvar->append(int(dom), hod, int(month), dni_per, tdry_per, pres_per, wind_per, step_weight);
 
 					dayind++;

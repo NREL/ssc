@@ -54,29 +54,8 @@ using namespace std;
 //helio data
 helio_perf_data::helio_perf_data(){
 	resetMetrics();
-	n_metric = 13;
+	n_metric = PERF_VALUES::_LAST;
 }
-
-//vector<double*> *helio_perf_data::getDataVars(){
-//	//Reset the pointer values
-//	_dvars.clear();
-//	_dvars.reserve(n_metric);
-//	//POWER_TO_REC=0, ETA_TOT, ETA_COS, ETA_ATT, ETA_INT, ETA_BLOCK, ETA_SHADOW, POWER_VALUE, /* after this, order not significant */
-//	//REFLECTIVITY, SOILING, REC_ABSORPTANCE, RANK_METRIC
-//	_dvars.push_back(&power_to_rec);	//[W] delivered power
-//	_dvars.push_back(&eta_tot);	//[-] Total heliostat intercept
-//	_dvars.push_back(&eta_cos);	//[-] Heliostat cosine efficiency
-//	_dvars.push_back(&eta_att);	//[-] Atmospheric attenuation efficiency
-//	_dvars.push_back(&eta_int);	//[-] Intercept efficiency
-//	_dvars.push_back(&eta_block);  //[-] Blocking efficiency
-//	_dvars.push_back(&eta_shadow); //[-] Shadowing efficiency
-//	_dvars.push_back(&power_value);	//Power weighted by the payment allocation factor if applicable
-//	_dvars.push_back(&reflectivity);
-//	_dvars.push_back(&soiling);
-//	_dvars.push_back(&rec_absorptance);
-//	_dvars.push_back(&rank_metric);
-//	return &_dvars;
-//}
 
 double helio_perf_data::getDataByIndex(const int id){
 	double rval;
