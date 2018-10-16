@@ -1,11 +1,12 @@
 VPATH = ../shared
 CC = gcc -mmacosx-version-min=10.9
 CXX = g++ -mmacosx-version-min=10.9
-CFLAGS = -Wall -g -O3  -DWX_PRECOMP -O2 -arch x86_64  -fno-common
+CFLAGS = -I../ssc -Wall -g -O3  -DWX_PRECOMP -O2 -arch x86_64  -fno-common
 CXXFLAGS = $(CFLAGS) -std=gnu++11
 
 OBJECTS = \
 	lsqfit.o \
+	mlm_spline.o \
 	lib_battery.o \
 	lib_battery_dispatch.o \
 	lib_battery_powerflow.o \
@@ -19,6 +20,8 @@ OBJECTS = \
 	lib_powerblock.o \
 	lib_power_electronics.o \
 	lib_pvinv.o \
+	lib_pv_incidence_modifier.o \
+	lib_pv_io_manager.o \
 	lib_pvmodel.o \
 	lib_pvshade.o \
 	lib_pv_shade_loss_mpp.o \
@@ -33,7 +36,9 @@ OBJECTS = \
 	lib_wind_obos.o \
 	lib_wind_obos_cable_vessel.o \
 	lib_windwakemodel.o \
-	lib_windwatts.o 
+	lib_windwatts.o \
+	lib_mlmodel.o \
+	lib_ondinv.o
 
 
 TARGET=shared.a

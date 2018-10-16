@@ -55,6 +55,7 @@ ACBatteryController::ACBatteryController(dispatch_t * dispatch, battery_metrics_
 void ACBatteryController::run(size_t year, size_t hour_of_year, size_t step_of_hour, size_t, 
 	double P_pv, double V_pv, double P_load, double P_clipped)
 {
+	m_batteryPower->reset();
 	if (P_pv < 0)
 	{
 		m_batteryPower->powerPVInverterDraw = P_pv;
@@ -85,6 +86,7 @@ void DCBatteryController::setSharedInverter(SharedInverter * sharedInverter)
 void DCBatteryController::run(size_t year, size_t hour_of_year, size_t step_of_hour, size_t, 
 	double P_pv, double V_pv, double P_load, double P_clipped)
 {
+	m_batteryPower->reset();
 	if (P_pv < 0)
 	{
 		m_batteryPower->powerPV = 0;

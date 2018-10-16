@@ -49,7 +49,7 @@
   <PropertyGroup Label="Globals">
     <ProjectName>sdktool</ProjectName>
     <ProjectGuid>{C6E66359-1F22-4C8F-AF47-0E7DB16EE825}</ProjectGuid>
-    <WindowsTargetPlatformVersion>10.0.16299.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">

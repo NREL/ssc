@@ -38,6 +38,9 @@ public:
 	/// Initialize the power flow for the battery system.  Only needs to be called for manual dispatch control
 	void initialize(double stateOfCharge);
 
+	/// Reset the power flow for a new time step
+	void reset();
+
 	/// Calculate the power flow for the battery system
 	void calculate();
 
@@ -90,6 +93,10 @@ public:
 
 	/// Register the shared inverter which has previously been defined
 	void setSharedInverter(SharedInverter * sharedInverter);
+
+
+	/// Reset the time-step power quantities to 0
+	void reset();
 
 
 	double dtHour;	   /// The timestep in hours, used for accumulated power losses

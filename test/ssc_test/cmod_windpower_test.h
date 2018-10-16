@@ -3,9 +3,9 @@
 
 #include <gtest/gtest.h>
 
-#include "core.h"
-#include "vartab.h"
-#include "common.h"
+#include "../ssc/core.h"
+#include "../ssc/vartab.h"
+#include "../ssc/common.h"
 #include "../input_cases/weather_inputs.h"
 #include "../input_cases/windpower_cases.h"
 

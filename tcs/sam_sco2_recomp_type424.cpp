@@ -276,7 +276,7 @@ private:
 	// RecompCycle * rc_cycle;
 		// New sco2 cycle code
 	C_RecompCycle ms_rc_cycle;
-	C_RecompCycle::S_auto_opt_design_hit_eta_parameters ms_rc_autodes_hit_eta_par;
+	C_sco2_cycle_core::S_auto_opt_design_hit_eta_parameters ms_rc_autodes_hit_eta_par;
 	//C_RecompCycle::S_auto_opt_design_parameters ms_rc_autodes_par;
 	//C_RecompCycle::S_opt_target_od_parameters ms_rc_opt_od_par;
 	//C_RecompCycle::S_opt_target_od_parameters ms_rc_max_opt_od_par;
@@ -472,7 +472,7 @@ public:
 		ms_rc_autodes_hit_eta_par.m_T_t_in = m_T_t_in_des;				//[K]
 		ms_rc_autodes_hit_eta_par.m_DP_LT = m_DP_LT;
 		ms_rc_autodes_hit_eta_par.m_DP_HT = m_DP_HT;
-		ms_rc_autodes_hit_eta_par.m_DP_PC = m_DP_PC;
+		ms_rc_autodes_hit_eta_par.m_DP_PC_main = m_DP_PC;
 		ms_rc_autodes_hit_eta_par.m_DP_PHX = m_DP_PHX;
 		ms_rc_autodes_hit_eta_par.m_eta_mc = m_eta_c;
 		ms_rc_autodes_hit_eta_par.m_eta_rc = m_eta_c;
@@ -484,7 +484,7 @@ public:
 		ms_rc_autodes_hit_eta_par.m_N_turbine = m_N_t_des;
 		ms_rc_autodes_hit_eta_par.m_is_recomp_ok = 1;
 
-		ms_rc_cycle.auto_opt_design_hit_eta(ms_rc_autodes_hit_eta_par, auto_err_code, error_msg);
+		auto_err_code = ms_rc_cycle.auto_opt_design_hit_eta(ms_rc_autodes_hit_eta_par, error_msg);
 
 		if(auto_err_code != 0)
 		{

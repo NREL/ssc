@@ -164,6 +164,9 @@ public:
 	double getPowerToReceiver();
 	double getPowerValue();
 	double getRankingMetricValue();
+    double getEnergyValue();
+    double getAnnualEnergy();
+    double getAnnualEfficiency();
 	double getAzimuthTrack();
 	double getZenithTrack();
     double getArea();
@@ -202,7 +205,9 @@ public:
 	void setEfficiencyCloudiness(double eta_cloud);
 	void setEfficiencyTotal(double eta_tot);
 	void setRankingMetricValue(double rval);
-	void setLocation(double x, double y, double z);
+    void setAnnualEfficiency(double eta_annual);
+    void setAnnualEnergy(double p_annual);
+    void setLocation(double x, double y, double z);
 	void setAimPoint(double x, double y, double z);
 	void setAimPoint(sp_point &Aim);
 	void setAimPointFluxPlane(sp_point &Aim);
@@ -221,6 +226,7 @@ public:
 	void setWhichReceiver(Receiver *rec);
 	void setPowerToReceiver(double P);
 	void setPowerValue(double P);
+    void setEnergyValue(double E);
 	void setImageSize(double sigx_n, double sigy_n);
 	void setMasterTemplate(Heliostat *htemp);
 
