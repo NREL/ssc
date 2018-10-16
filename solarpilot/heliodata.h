@@ -62,7 +62,7 @@ public:
 	//This enumeration is order specific based on the indices specified in the gui variable "solarfield.0.hsort_method"
 	struct PERF_VALUES { enum A {
 		POWER_TO_REC=0, ETA_TOT, ETA_COS, ETA_ATT, ETA_INT, ETA_BLOCK, ETA_SHADOW, POWER_VALUE, /* after this, order not significant */
-        REFLECTIVITY, SOILING, REC_ABSORPTANCE, RANK_METRIC, ETA_CLOUD, ANNUAL_POWER, ANNUAL_EFFICIENCY };
+        REFLECTIVITY, SOILING, REC_ABSORPTANCE, RANK_METRIC, ETA_CLOUD, ANNUAL_POWER, ENERGY_VALUE, ANNUAL_EFFICIENCY, _LAST };
 	};
 	helio_perf_data();
 
@@ -86,7 +86,8 @@ public:
         power_value,
         rank_metric,	//Power weighted by the payment allocation factor, if applicable
         eta_cloud,	//[-] Loss due to cloudiness (performance simulation only)
-        power_annual, //[Wh] estimated power delivered over the entire year
+        energy_value, //[Wh] energy delivered over the simulation time period
+        energy_annual, //[Wh] estimated total annual energy for the heliostat
         eta_annual; //[-] estimated annual total efficiency
 		
 };
