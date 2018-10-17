@@ -75,12 +75,8 @@ public:
 
 	/// safe bool conversion operator
 	operator bool_type() const {
-		return init ? &flag::safeBool : &flag::checkInit;
-	}
-
-	operator int() const {
 		checkInit();
-		return value;
+		return value ? &flag::safeBool : 0;
 	}
 
 	bool operator ==(const int testValue) {
@@ -419,7 +415,7 @@ public:
 	double groundCoverageRatio;			// The ground coverage ratio [0 - 1]
 	double tiltDegrees;					// The surface tilt [degrees]						
 	double azimuthDegrees;				// The surface azimuth [degrees]
-	flag trackMode;						// The tracking mode [0 = fixed, 1 = single-axis tracking, 2 = two-axis tracking, 3 = azimuth-axis tracking, 4 = seasonal-tilt
+	int trackMode;						// The tracking mode [0 = fixed, 1 = single-axis tracking, 2 = two-axis tracking, 3 = azimuth-axis tracking, 4 = seasonal-tilt
 	double trackerRotationLimitDegrees; // The rotational limit of the tracker [degrees]
 	flag tiltEqualLatitude;				// Set the tilt equal to the latitude
 	std::vector<double> monthlyTiltDegrees; // The seasonal tilt [degrees]
@@ -440,7 +436,7 @@ public:
 
 	// Shading and snow	
 	flag enableSelfShadingOutputs;		// Choose whether additional self-shading outputs are displayed
-	flag shadeMode;						// The shading mode of the subarray [0 = none, 1 = standard (non-linear), 2 = thin film (linear)]
+	int shadeMode;						// The shading mode of the subarray [0 = none, 1 = standard (non-linear), 2 = thin film (linear)]
 	flag usePOAFromWeatherFile;			// Flag for whether or not a shading model has been selected that means POA can't be used directly for that subarray
 	ssinputs selfShadingInputs;			// Inputs and calculation methods for self-shading of the subarray
 	ssoutputs selfShadingOutputs;		// Outputs for the self-shading of the subarray
