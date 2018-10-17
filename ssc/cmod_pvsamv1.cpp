@@ -1912,7 +1912,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 
 					//module degradation and lifetime DC losses apply to all subarrays
 					if (system_use_lifetime_output == 1)
-						dcPowerNetPerSubarray[nn] *= PVSystem->p_dcDegradationFactor[iyear + 1];
+						dcPowerNetPerSubarray[nn] *= PVSystem->dcDegradationFactor[iyear + 1];
 
 					//dc adjustment factors apply to all subarrays
 					if (iyear == 0) annual_dc_adjust_loss += dcPowerNetPerSubarray[nn] * (1 - dc_haf(hour)) * util::watt_to_kilowatt * ts_hour; //only keep track of this loss for year 0, convert from power W to energy kWh
@@ -1993,6 +1993,11 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 		}
 		// using single weather file initially - so rewind to use for next year
 		wdprov->rewind();
+
+		// Assign annual lifetime DC outputs
+		if (system_use_lifetime_output) {
+			PVSystem->p_dcDegradationFactor[iyear] = PVSystem->dcDegradationFactor[iyear];
+		}
 	}
 
 	// Initialize DC battery predictive controller
@@ -2128,11 +2133,13 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 		if (iyear == 0)
 		{
 			int year_idx = 0;
-			if (system_use_lifetime_output)
+			if (system_use_lifetime_output) {
 				year_idx = 1;
+			}
 			// accumulate DC power after the battery
-			if (en_batt && (batt_topology == ChargeController::DC_CONNECTED))
+			if (en_batt && (batt_topology == ChargeController::DC_CONNECTED)) {
 				annual_battery_loss = batt.outAnnualEnergyLoss[year_idx];
+			}
 		}
 	}
 
@@ -2181,7 +2188,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 				PVSystem->p_systemACPower[idx] *= haf(hour);
 
 				//apply lifetime daily AC losses only if they are enabled
-				if (system_use_lifetime_output == 1 && PVSystem->enableACLifetimeLosses)
+				if (system_use_lifetime_output && PVSystem->enableACLifetimeLosses)
 				{
 					//current index of the lifetime daily AC losses is the number of years that have passed (iyear, because it is 0-indexed) * days in a year + the number of complete days that have passed
 					int ac_loss_index = (int)iyear * 365 + (int)floor(hour / 24); //in units of days

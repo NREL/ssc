@@ -37,8 +37,17 @@ PVIOManager::PVIOManager(compute_module*  cm, std::string cmName)
 	std::unique_ptr<PVSystem_IO> pvSystem(new PVSystem_IO(cm, cmName, m_SimulationIO.get(), m_IrradianceIO.get(), getSubarrays(), m_InverterIO.get()));
 	m_PVSystemIO = std::move(pvSystem);
 
+	// Allocate outputs, moved to here due to previous difficult to debug crashes due to misallocation
+	allocateOutputs(cm);
+
 	m_computeModule = cm;
 	m_computeModuleName = cmName;
+}
+
+void PVIOManager::allocateOutputs(compute_module* cm)
+{
+	m_IrradianceIO->AllocateOutputs(cm);
+	m_PVSystemIO->AllocateOutputs(cm);
 }
 
 Irradiance_IO * PVIOManager::getIrradianceIO()  { return m_IrradianceIO.get(); }
@@ -135,7 +144,6 @@ Irradiance_IO::Irradiance_IO(compute_module* cm, std::string cmName)
 	userSpecifiedMonthlyAlbedo = cm->as_vector_double("albedo");
 	
 	checkWeatherFile(cm, cmName);
-	AllocateOutputs(cm);
 }
 
 void Irradiance_IO::checkWeatherFile(compute_module * cm, std::string cmName)
@@ -409,24 +417,24 @@ PVSystem_IO::PVSystem_IO(compute_module* cm, std::string cmName, Simulation_IO *
 	// Register shared inverter with inverter_IO
 	InverterIO->setupSharedInverter(cm, m_sharedInverter.get());
 
-	// PV Degradation
+	// PV Degradation, place into intermediate variable since pointer outputs are not allocated yet
 	if (Simulation->useLifetimeOutput)
 	{
 		std::vector<double> dc_degrad = cm->as_vector_double("dc_degradation");
 
 		// degradation assumed to start at year 2
-		p_dcDegradationFactor[0] = 1.0;
-		p_dcDegradationFactor[1] = 1.0;
+		dcDegradationFactor.push_back(1.0);
+		dcDegradationFactor.push_back(1.0);
 
 		if (dc_degrad.size() == 1)
 		{
 			for (size_t i = 1; i < Simulation->numberOfYears ; i++)
-				p_dcDegradationFactor[i + 1] = (ssc_number_t)pow((1.0 - dc_degrad[0] / 100.0), i);
+				dcDegradationFactor.push_back(pow((1.0 - dc_degrad[0] / 100.0), i));
 		}
 		else if (dc_degrad.size() > 0)
 		{
 			for (size_t i = 1; i < Simulation->numberOfYears && i < dc_degrad.size(); i++)
-				p_dcDegradationFactor[i + 1] = (ssc_number_t)(1.0 - dc_degrad[i] / 100.0);
+				dcDegradationFactor.push_back(1.0 - dc_degrad[i] / 100.0);
 		}
 
 		//read in optional DC and AC lifetime daily losses, error check length of arrays
@@ -504,9 +512,6 @@ PVSystem_IO::PVSystem_IO(compute_module* cm, std::string cmName, Simulation_IO *
 	}
 	if (enableMismatchVoltageCalc && numberOfSubarrays <= 1)
 		throw compute_module::exec_error(cmName, "Subarray voltage mismatch calculation requires more than one subarray. Please check your inputs.");
-
-	// Always perform at the end!
-	AllocateOutputs(cm);
 }
 
 void PVSystem_IO::AllocateOutputs(compute_module* cm)
