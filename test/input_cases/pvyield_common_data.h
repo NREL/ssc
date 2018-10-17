@@ -71,7 +71,7 @@ void pvyield_no_financial_meteo(ssc_data_t &data)
 	ssc_data_set_number(data, "dcoptimizer_loss", 0);
 	ssc_data_set_number(data, "acwiring_loss", 0);
 	ssc_data_set_number(data, "transmission_loss", 0);
-	ssc_data_set_number(data, "subarray1_mod_orient", 0);
+	ssc_data_set_number(data, "subarray1_mod_orient", 1);
 	ssc_data_set_number(data, "subarray1_nmodx", 18);
 	ssc_data_set_number(data, "subarray1_nmody", 1);
 	ssc_data_set_number(data, "subarray1_backtrack", 0);
@@ -433,7 +433,7 @@ void pvyield_no_financial_meteo(ssc_data_t &data)
 
 	// shading inputs from Timo
 	ssc_data_set_number(data, "subarray1_shading:string_option",-1);
-//	ssc_data_set_number(data, "subarray1_shading:diff",	(ssc_number_t)std::numeric_limits<float>::quiet_NaN);
+	ssc_data_set_number(data, "subarray1_shading:diff",	0);
 
 
 
