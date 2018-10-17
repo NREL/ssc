@@ -59,6 +59,9 @@
     <ClCompile Include="..\test\ssc_test\cmod_pvyield_test.cpp">
       <Filter>ssc_test</Filter>
     </ClCompile>
+    <ClCompile Include="..\test\shared_test\lib_fuel_cell_test.cpp">
+      <Filter>shared_test</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="shared_test">
@@ -128,6 +131,9 @@
     </ClInclude>
     <ClInclude Include="..\test\input_cases\pvyield_common_data.h">
       <Filter>input_cases</Filter>
+    </ClInclude>
+    <ClInclude Include="..\test\shared_test\lib_fuel_cell_test.h">
+      <Filter>shared_test</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

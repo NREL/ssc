@@ -37,7 +37,7 @@ protected:
 	}
 };
 
-TEST_F(LithiumIonBattery, LithiumIonCapacityUnitTest_lib_battery)
+TEST_F(LithiumIonBattery, CapacityTest)
 {
 	// Check that initial capacity is equal to max
 	EXPECT_EQ(capacity_model->SOC(), SOC_max);
@@ -120,7 +120,7 @@ protected:
 	}
 };
 
-TEST_F(LeadAcidBattery, LeadAcidCapacityUnitTest_lib_battery)
+TEST_F(LeadAcidBattery, CapacityTest)
 {
 	// Check that initial capacity is equal to max
 	EXPECT_EQ(capacity_model->SOC(), SOC_max);
