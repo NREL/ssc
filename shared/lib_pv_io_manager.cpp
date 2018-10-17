@@ -37,8 +37,17 @@ PVIOManager::PVIOManager(compute_module*  cm, std::string cmName)
 	std::unique_ptr<PVSystem_IO> pvSystem(new PVSystem_IO(cm, cmName, m_SimulationIO.get(), m_IrradianceIO.get(), getSubarrays(), m_InverterIO.get()));
 	m_PVSystemIO = std::move(pvSystem);
 
+	// Allocate outputs, moved to here due to previous difficult to debug crashes due to misallocation
+	allocateOutputs(cm);
+
 	m_computeModule = cm;
 	m_computeModuleName = cmName;
+}
+
+void PVIOManager::allocateOutputs(compute_module* cm)
+{
+	m_IrradianceIO->AllocateOutputs(cm);
+	m_PVSystemIO->AllocateOutputs(cm);
 }
 
 Irradiance_IO * PVIOManager::getIrradianceIO()  { return m_IrradianceIO.get(); }
@@ -135,7 +144,6 @@ Irradiance_IO::Irradiance_IO(compute_module* cm, std::string cmName)
 	userSpecifiedMonthlyAlbedo = cm->as_vector_double("albedo");
 	
 	checkWeatherFile(cm, cmName);
-	AllocateOutputs(cm);
 }
 
 void Irradiance_IO::checkWeatherFile(compute_module * cm, std::string cmName)
@@ -345,13 +353,13 @@ Subarray_IO::Subarray_IO(compute_module* cm, std::string cmName, size_t subarray
 		}
 
 		// Snow model
-
+		subarrayEnableSnow = cm->as_boolean("en_snow_model");
 		if (subarrayEnableSnow)
 		{
 			if (trackMode == SEASONAL_TILT)
 				throw compute_module::exec_error(cmName, "Time-series tilt input may not be used with the snow model at this time: subarray " + util::to_string((int)(subarrayNumber)));
 			// if tracking mode is 1-axis tracking, don't need to limit tilt angles
-			if (snowModel.setup(selfShadingInputs.nmody, (float)tiltDegrees), !(trackMode == FIXED_TILT)) {
+			if (snowModel.setup(selfShadingInputs.nmody, (float)tiltDegrees, (trackMode != SINGLE_AXIS))) {
 				if (!snowModel.good) {
 					cm->log(snowModel.msg, SSC_ERROR);
 				}
@@ -390,8 +398,7 @@ PVSystem_IO::PVSystem_IO(compute_module* cm, std::string cmName, Simulation_IO *
 	for (size_t s = 0; s < numberOfSubarrays; s++) {
 		stringsInParallel += static_cast<int>(Subarrays[s]->nStrings);
 	}
-	AllocateOutputs(cm);
-
+	
 	numberOfInverters = cm->as_integer("inverter_count");
 	ratedACOutput = Inverter->ratedACOutput * numberOfInverters;
 	acDerate = 1 - cm->as_double("acwiring_loss") / 100;	
@@ -402,11 +409,7 @@ PVSystem_IO::PVSystem_IO(compute_module* cm, std::string cmName, Simulation_IO *
 	enableDCLifetimeLosses = cm->as_boolean("en_dc_lifetime_losses");
 	enableACLifetimeLosses = cm->as_boolean("en_ac_lifetime_losses");
 	enableSnowModel = cm->as_boolean("en_snow_model");
-	for (size_t s = 0; s < numberOfSubarrays; s++)
-	{
-		Subarrays[s]->subarrayEnableSnow = enableSnowModel;
-	}
-
+	
 	// The shared inverter of the PV array and a tightly-coupled DC connected battery
 	std::unique_ptr<SharedInverter> tmpSharedInverter(new SharedInverter(Inverter->inverterType, numberOfInverters, &Inverter->sandiaInverter, &Inverter->partloadInverter, &Inverter->ondInverter));
 	m_sharedInverter = std::move(tmpSharedInverter);
@@ -414,24 +417,24 @@ PVSystem_IO::PVSystem_IO(compute_module* cm, std::string cmName, Simulation_IO *
 	// Register shared inverter with inverter_IO
 	InverterIO->setupSharedInverter(cm, m_sharedInverter.get());
 
-	// PV Degradation
+	// PV Degradation, place into intermediate variable since pointer outputs are not allocated yet
 	if (Simulation->useLifetimeOutput)
 	{
 		std::vector<double> dc_degrad = cm->as_vector_double("dc_degradation");
 
 		// degradation assumed to start at year 2
-		p_dcDegradationFactor[0] = 1.0;
-		p_dcDegradationFactor[1] = 1.0;
+		dcDegradationFactor.push_back(1.0);
+		dcDegradationFactor.push_back(1.0);
 
 		if (dc_degrad.size() == 1)
 		{
 			for (size_t i = 1; i < Simulation->numberOfYears ; i++)
-				p_dcDegradationFactor[i + 1] = (ssc_number_t)pow((1.0 - dc_degrad[0] / 100.0), i);
+				dcDegradationFactor.push_back(pow((1.0 - dc_degrad[0] / 100.0), i));
 		}
 		else if (dc_degrad.size() > 0)
 		{
 			for (size_t i = 1; i < Simulation->numberOfYears && i < dc_degrad.size(); i++)
-				p_dcDegradationFactor[i + 1] = (ssc_number_t)(1.0 - dc_degrad[i] / 100.0);
+				dcDegradationFactor.push_back(1.0 - dc_degrad[i] / 100.0);
 		}
 
 		//read in optional DC and AC lifetime daily losses, error check length of arrays
