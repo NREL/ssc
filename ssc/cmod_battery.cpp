@@ -175,6 +175,7 @@ var_info vtab_battery_inputs[] = {
 	{ SSC_INPUT,        SSC_NUMBER,     "batt_cycle_cost",                             "Input battery cycle costs",                               "$/cycle-kWh","",                  "Battery",       "",                           "",                             "" },
 
 	// Utility rate inputs
+	{ SSC_INPUT,        SSC_NUMBER,     "en_electricity_rates",                        "Enable Electricity Rates",                                "",        "0/1",                    "",              "",                         "",                             "" },
 	{ SSC_INPUT,        SSC_MATRIX,     "ur_ec_sched_weekday",                         "Energy charge weekday schedule",                          "",        "12 x 24 matrix",         "",              "en_batt=1&batt_meter_position=1&batt_dispatch_choice=2",  "",          "" },
 	{ SSC_INPUT,        SSC_MATRIX,     "ur_ec_sched_weekend",                         "Energy charge weekend schedule",                          "",        "12 x 24 matrix",         "",              "en_batt=1&batt_meter_position=1&batt_dispatch_choice=2",  "",          "" },
 	{ SSC_INPUT,        SSC_MATRIX,     "ur_ec_tou_mat",                               "Energy rates table",                                      "",        "",                       "",              "en_batt=1&batt_meter_position=1&batt_dispatch_choice=2",  "",          "" },
@@ -301,6 +302,7 @@ battstor::battstor(compute_module &cm, bool setup_model, size_t nrec, double dt_
 			batt_vars->batt_computed_series = cm.as_integer("batt_computed_series");
 			batt_vars->batt_computed_strings = cm.as_integer("batt_computed_strings");
 			batt_vars->batt_kwh = cm.as_double("batt_computed_bank_capacity");
+			batt_vars->batt_kw = cm.as_double("batt_power_discharge_max");
 
 			// Voltage properties
 			batt_vars->batt_voltage_choice = cm.as_integer("batt_voltage_choice");
@@ -355,6 +357,7 @@ battstor::battstor(compute_module &cm, bool setup_model, size_t nrec, double dt_
 			// Front of meter
 			if (batt_vars->batt_meter_position == dispatch_t::FRONT)
 			{
+
 				batt_vars->pv_clipping_forecast = cm.as_vector_double("batt_pv_clipping_forecast");
 				batt_vars->pv_dc_power_forecast = cm.as_vector_double("batt_pv_dc_forecast");
 				double ppa_price = cm.as_double("ppa_price_input");
@@ -366,7 +369,7 @@ battstor::battstor(compute_module &cm, bool setup_model, size_t nrec, double dt_
 
 				// For automated front of meter with electricity rates
 				batt_vars->ec_rate_defined = false;
-				if (cm.is_assigned("ur_ec_tou_mat"))
+				if (cm.as_integer("en_electricity_rates"))
 				{
 					batt_vars->ec_weekday_schedule = cm.as_matrix_unsigned_long("ur_ec_sched_weekday");
 					batt_vars->ec_weekend_schedule = cm.as_matrix_unsigned_long("ur_ec_sched_weekend");
@@ -497,7 +500,7 @@ battstor::battstor(compute_module &cm, bool setup_model, size_t nrec, double dt_
 			batt_vars->T_room = cm.as_double("T_room");
 
 			// Inverter settings
-			if (cm.is_assigned("inverter_model"))
+			if (cm.is_assigned("inverter_model") && batt_vars->batt_topology == dispatch_t::DC_CONNECTED)
 			{
 				batt_vars->inverter_model = cm.as_integer("inverter_model");
 				batt_vars->inverter_count = cm.as_integer("inverter_count");
@@ -954,7 +957,6 @@ void battstor::initialize_automated_dispatch(std::vector<ssc_number_t> pv, std::
 		size_t nrec = nyears * 8760 * step_per_hour;
 		if (!input_custom_dispatch)
 		{
-
 			// look ahead
 			if (look_ahead)
 			{

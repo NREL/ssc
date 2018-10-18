@@ -29,19 +29,20 @@ public:
 	/// Modifies pAc, eff, and loss by calculating derate, using curves interpolated by input V
 	void calculateTempDerate(double V, double T, double& pAC, double& eff, double& loss);
 
-	/// Given the combined PV plus battery DC power (W), voltage and ambient T, compute the AC power (kW)
-	//function that calculates AC power and inverter losses for a single inverter with one MPPT input
-	void calculateACPower(const double powerDC, const double DCStringVoltage, double ambientT);
+	/// Given the combined PV plus battery DC power (kW), voltage and ambient T, compute the AC power (kW) for a single inverter with one MPPT input
+	void calculateACPower(const double powerDC_kW, const double DCStringVoltage, double ambientT);
 	
-	/// Given the combined PV plus battery DC power (W), voltage and ambient T, compute the AC power (kW)
-	//function that calculates AC power and inverter losses for a single inverter with multiple MPPT inputs
-	void calculateACPower(const std::vector<double> powerDC, const std::vector<double> DCStringVoltage, double ambientT);
+	/// Given the combined PV plus battery DC power (kW), voltage and ambient T, compute the AC power (kW) for a single inverter with multiple MPPT inputs
+	void calculateACPower(const std::vector<double> powerDC_kW, const std::vector<double> DCStringVoltage, double ambientT);
 
 	/// Return the nominal DC voltage input
 	double getInverterDCNominalVoltage();
 
 	/// Return the efficiency at max power (Paco, Vdco);
 	double getMaxPowerEfficiency();
+
+	/// Return the nameplate AC capacity
+	double getACNameplateCapacity();
 
 	enum { SANDIA_INVERTER, DATASHEET_INVERTER, PARTLOAD_INVERTER, COEFFICIENT_GENERATOR, OND_INVERTER, NONE };
 
@@ -61,8 +62,9 @@ public:
 
 protected:
 
-	int m_inverterType;  /// The inverter type
-	size_t m_numInverters;  /// The number of inverters in the system
+	int m_inverterType;  ///< The inverter type
+	size_t m_numInverters;  ///< The number of inverters in the system
+	double m_nameplateAC_kW; ///< The total nameplate AC capacity for all inverters in kW
 
 	/// Temperate Derating: each curve contains DC voltage and pairs of start-derate temp [C] and slope [efficiency% lost per C]
 	bool m_tempEnabled;
@@ -77,7 +79,7 @@ protected:
 
 private:
 
-	void convertOutputsToKWandScale(double tempLoss);
+	void convertOutputsToKWandScale(double tempLoss, double powerAC_watts);
 
 };
 

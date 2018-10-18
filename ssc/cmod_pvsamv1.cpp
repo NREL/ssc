@@ -76,7 +76,7 @@ static var_info _cm_vtab_pvsamv1[] = {
 
 	//SEV: Activating the snow model
 	{ SSC_INPUT,        SSC_NUMBER,      "en_snow_model",                               "Toggle snow loss estimation",                          "0/1",      "",                              "snowmodel",            "?=0",                       "BOOLEAN",                      "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "system_capacity",                             "Nameplate capacity",                                   "kW",       "",                              "pvsamv1",              "*",                         "",                             "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "system_capacity",                             "DC Nameplate capacity",                                "kWdc",       "",                            "pvsamv1",              "*",                         "",                             "" },
 
 	{ SSC_INPUT,        SSC_NUMBER,      "use_wf_albedo",                               "Use albedo in weather file if provided",               "0/1",      "",                              "pvsamv1",              "?=1",                      "BOOLEAN",                       "" },
 	{ SSC_INPUT,        SSC_ARRAY,       "albedo",                                      "User specified ground albedo",                         "0..1",     "",                              "pvsamv1",              "*",						  "LENGTH=12",					  "" },
@@ -714,7 +714,7 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_OUTPUT,        SSC_NUMBER,     "ac_loss",                              "AC wiring loss",                                       "%",   "",    "Annual (Year 1)",              "*",                        "",                   "" },
 	// monthly and annual outputs
 
-	{ SSC_OUTPUT,		 SSC_NUMBER,     "annual_energy",						 "Annual energy", "kWh", "", "Annual (Year 1)", "*", "", "" },
+	{ SSC_OUTPUT,		 SSC_NUMBER,     "annual_energy",						 "Annual AC energy",                                       "kWh",       "",                      "Annual (Year 1)", "*", "", "" },
 
 	{ SSC_OUTPUT,        SSC_NUMBER,     "annual_dc_invmppt_loss",               "Inverter clipping loss DC MPPT voltage limits",          "kWh/yr",    "",                      "Annual (Year 1)",       "*",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "annual_inv_cliploss",                  "Inverter clipping loss AC power limit",                  "kWh/yr",    "",                      "Annual (Year 1)",       "*",                    "",                              "" },
@@ -879,7 +879,8 @@ static var_info _cm_vtab_pvsamv1[] = {
 
 	{ SSC_OUTPUT,        SSC_NUMBER,     "performance_ratio",                           "Performance ratio",         "",       "",  "Annual (Year 1)",       "*",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "capacity_factor",                             "Capacity factor",           "%",      "",  "Annual (Year 1)", "*", "", "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "kwh_per_kw",                                  "First year kWh/kW",         "kWh/kW", "",	"Annual (Year 1)", "*", "", "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "capacity_factor_ac",                          "Capacity factor based on AC system capacity",           "%",      "",  "Annual (Year 1)", "*", "", "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "kwh_per_kw",                                  "First year kWh(AC)/kW(DC)", "kWh/kW", "",	"Annual (Year 1)", "*", "", "" },
 
 	//miscellaneous outputs
 	{ SSC_OUTPUT,        SSC_NUMBER,     "ts_shift_hours",                            "Sun position time offset",   "hours",  "",  "Miscellaneous", "*",                       "",                          "" },
@@ -960,6 +961,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 	Irradiance_IO * Irradiance = IOManager->getIrradianceIO();
 	std::vector<Subarray_IO *> Subarrays = IOManager->getSubarrays();
 	PVSystem_IO * PVSystem = IOManager->getPVSystemIO();
+	ShadeDB8_mpp * shadeDatabase = IOManager->getShadeDatabase();
 	
 	size_t nrec = Simulation->numberOfWeatherFileRecords;
 	size_t nlifetime = Simulation->numberOfSteps;
@@ -1200,18 +1202,20 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 	/* *********************************************************************************************
 	PV DC calculation
 	*********************************************************************************************** */
-	std::vector<double> dcPowerNetPerMppt; //Vector of Net DC power in W for each MPPT input on the system for THIS TIMESTEP ONLY
+	std::vector<double> dcPowerNetPerMppt_kW; //Vector of Net DC power in kW for each MPPT input on the system for THIS TIMESTEP ONLY
 	std::vector<double> dcPowerNetPerSubarray; //Net DC power in W for each subarray for THIS TIMESTEP ONLY
-	std::vector<double> dcVoltagePerMppt; //Voltage in V at each MPPT input on the system for THIS TIMESTEP ONLY
+	std::vector<double> dcVoltagePerMppt; //Voltage in V at each MPPT input on the system for THIS TIMESTEP ONLY				
 	double dcPowerNetTotalSystem = 0; //Net DC power in W for the entire system (sum of all subarrays)
+
 	for (int mpptInput = 0; mpptInput < PVSystem->Inverter->nMpptInputs; mpptInput++)
 	{
-		dcPowerNetPerMppt.push_back(0);
+		dcPowerNetPerMppt_kW.push_back(0);
 		dcVoltagePerMppt.push_back(0);
 		PVSystem->p_dcPowerNetPerMppt[mpptInput][idx] = 0;		
 	}
-	for (int nn = 0; nn < PVSystem->numberOfSubarrays; nn++)
+	for (int nn = 0; nn < PVSystem->numberOfSubarrays; nn++) {
 		dcPowerNetPerSubarray.push_back(0);
+	}
 	for (size_t iyear = 0; iyear < nyears; iyear++)
 	{
 		for (hour = 0; hour < 8760; hour++)
@@ -1234,6 +1238,9 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 
 			for (size_t jj = 0; jj < step_per_hour; jj++)
 			{
+				// Reset dcPower calculation for new timestep
+				dcPowerNetTotalSystem = 0; 
+
 				// electric load is subhourly
 				// if no load profile supplied, load = 0
 				if (nload == nrec)
@@ -1264,7 +1271,6 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 
 					}
 				}
-				
 				
 				double solazi = 0, solzen = 0, solalt = 0;
 				int sunup = 0;
@@ -1442,8 +1448,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 						double shadedb_mppt_hi = PVSystem->Inverter->mpptHiVoltage;
 						 
 						/// shading database if necessary
-						smart_ptr<ShadeDB8_mpp>::ptr  p_shade_db;
-						if (!Subarrays[nn]->shadeCalculator.fbeam_shade_db(p_shade_db, hour, solalt, solazi, jj, step_per_hour, shadedb_gpoa, shadedb_dpoa, tcell, Subarrays[nn]->nModulesPerString, shadedb_str_vmp_stc, shadedb_mppt_lo, shadedb_mppt_hi))
+						if (!Subarrays[nn]->shadeCalculator.fbeam_shade_db(shadeDatabase, hour, solalt, solazi, jj, step_per_hour, shadedb_gpoa, shadedb_dpoa, tcell, Subarrays[nn]->nModulesPerString, shadedb_str_vmp_stc, shadedb_mppt_lo, shadedb_mppt_hi))
 						{
 							throw exec_error("pvsamv1", util::format("Error calculating shading factor for subarray %d", nn));
 						}
@@ -1457,11 +1462,11 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 							p_shadedb_str_vmp_stc[nn][idx] = (ssc_number_t)shadedb_str_vmp_stc;
 							p_shadedb_mppt_lo[nn][idx] = (ssc_number_t)shadedb_mppt_lo;
 							p_shadedb_mppt_hi[nn][idx] = (ssc_number_t)shadedb_mppt_hi;
-							log("shade db hour " + util::to_string((int)hour) +"\n" + p_shade_db->get_warning());
+							log("shade db hour " + util::to_string((int)hour) +"\n" + shadeCalculator->get_warning());
 #endif
 							// fraction shaded for comparison
 							PVSystem->p_shadeDBShadeFraction[nn][idx] = (ssc_number_t)(Subarrays[nn]->shadeCalculator.dc_shade_factor());
-						}
+						} 
 					}
 					else
 					{
@@ -1907,7 +1912,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 
 					//module degradation and lifetime DC losses apply to all subarrays
 					if (system_use_lifetime_output == 1)
-						dcPowerNetPerSubarray[nn] *= PVSystem->p_dcDegradationFactor[iyear + 1];
+						dcPowerNetPerSubarray[nn] *= PVSystem->dcDegradationFactor[iyear + 1];
 
 					//dc adjustment factors apply to all subarrays
 					if (iyear == 0) annual_dc_adjust_loss += dcPowerNetPerSubarray[nn] * (1 - dc_haf(hour)) * util::watt_to_kilowatt * ts_hour; //only keep track of this loss for year 0, convert from power W to energy kWh
@@ -1926,7 +1931,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 					PVSystem->p_systemDCPower[idx] += (ssc_number_t)(dcPowerNetPerSubarray[nn] * util::watt_to_kilowatt);
 
 					//add this subarray's net DC power to the appropriate MPPT input and to the total system DC power
-					PVSystem->p_dcPowerNetPerMppt[Subarrays[nn]->mpptInput - 1][idx] += dcPowerNetPerSubarray[nn]; //need to subtract 1 from mppt input number because those are 1-indexed
+					PVSystem->p_dcPowerNetPerMppt[Subarrays[nn]->mpptInput - 1][idx] += (ssc_number_t)(dcPowerNetPerSubarray[nn]); //need to subtract 1 from mppt input number because those are 1-indexed
 					dcPowerNetTotalSystem += dcPowerNetPerSubarray[nn];	
 				}								
 
@@ -1964,20 +1969,23 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 				if (en_batt)
 				{
 					double cliploss = 0;
-					double dcpwr = PVSystem->p_systemDCPower[idx];
+					double dcpwr_kw = PVSystem->p_systemDCPower[idx];
 
 					if (p_pv_dc_forecast.size() > 1 && p_pv_dc_forecast.size() > idx % (8760 * step_per_hour)) {
-						dcpwr = p_pv_dc_forecast[idx % (8760 * step_per_hour)];
+						dcpwr_kw = p_pv_dc_forecast[idx % (8760 * step_per_hour)];
 					}
-					p_pv_dc_use.push_back(static_cast<ssc_number_t>(dcpwr));
-
-					sharedInverter->calculateACPower(dcPowerNetTotalSystem, dcVoltagePerMppt[0], 0.0); //DC batteries not allowed with multiple MPPT, so can just use MPPT 1's voltage
+					p_pv_dc_use.push_back(static_cast<ssc_number_t>(dcpwr_kw));
 
 					if (p_pv_clipping_forecast.size() > 1 && p_pv_clipping_forecast.size() > idx % (8760 * step_per_hour)) {
 						cliploss = p_pv_clipping_forecast[idx % (8760 * step_per_hour)] * util::kilowatt_to_watt;
 					}
+					else {
+						//DC batteries not allowed with multiple MPPT, so can just use MPPT 1's voltage
+						sharedInverter->calculateACPower(dcpwr_kw, PVSystem->p_mpptVoltage[0][idx], 0.0);
+						cliploss = sharedInverter->powerClipLoss_kW;
+					}
 
-					p_invcliploss_full.push_back(static_cast<ssc_number_t>(sharedInverter->powerClipLoss_kW));
+					p_invcliploss_full.push_back(static_cast<ssc_number_t>(cliploss));
 				}
 
 				idx++;
@@ -1985,6 +1993,11 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 		}
 		// using single weather file initially - so rewind to use for next year
 		wdprov->rewind();
+
+		// Assign annual lifetime DC outputs
+		if (system_use_lifetime_output) {
+			PVSystem->p_dcDegradationFactor[iyear] = PVSystem->dcDegradationFactor[iyear];
+		}
 	}
 
 	// Initialize DC battery predictive controller
@@ -2017,6 +2030,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 
 			for (size_t jj = 0; jj < step_per_hour; jj++)
 			{
+				double dcPower_kW = PVSystem->p_systemDCPower[idx];
 
 				// Battery replacement
 				if (en_batt && (batt_topology == ChargeController::DC_CONNECTED))
@@ -2034,29 +2048,29 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 				for (int m = 0; m < PVSystem->Inverter->nMpptInputs; m++)
 				{
 					dcVoltagePerMppt[m] = PVSystem->p_mpptVoltage[m][idx];
-					dcPowerNetPerMppt[m] = PVSystem->p_dcPowerNetPerMppt[m][idx];
+					dcPowerNetPerMppt_kW[m] = PVSystem->p_dcPowerNetPerMppt[m][idx] * util::watt_to_kilowatt;
 				}
 
 				//run AC power calculation
 				if (en_batt && (batt_topology == ChargeController::DC_CONNECTED)) // DC-connected battery
 				{
 					// Compute PV clipping before adding battery
-					sharedInverter->calculateACPower(dcPowerNetTotalSystem, dcVoltagePerMppt[0], wf.tdry); //DC batteries not allowed with multiple MPPT, so can just use MPPT 1's voltage
+					sharedInverter->calculateACPower(dcPower_kW, dcVoltagePerMppt[0], wf.tdry); //DC batteries not allowed with multiple MPPT, so can just use MPPT 1's voltage
 
 					// Run PV plus battery through sharedInverter, returns AC power
-					batt.advance(*this, dcPowerNetTotalSystem*util::watt_to_kilowatt, dcVoltagePerMppt[0], cur_load, sharedInverter->powerClipLoss_kW); 
+					batt.advance(*this, dcPower_kW, dcVoltagePerMppt[0], cur_load, sharedInverter->powerClipLoss_kW);
 					acpwr_gross = batt.outGenPower[idx];
 				}
 				else if (PVSystem->Inverter->inverterType == INVERTER_PVYIELD) //PVyield inverter model not currently enabled for multiple MPPT
 				{
-					sharedInverter->calculateACPower(dcPowerNetTotalSystem, dcVoltagePerMppt[0], wf.tdry);
+					sharedInverter->calculateACPower(dcPower_kW, dcVoltagePerMppt[0], wf.tdry);
 					acpwr_gross = sharedInverter->powerAC_kW;
 				}
 				else
 				{
 					// inverter: runs at all hours of the day, even if no DC power.  important
 					// for capturing tare losses
-					sharedInverter->calculateACPower(dcPowerNetPerMppt, dcVoltagePerMppt, wf.tdry);
+					sharedInverter->calculateACPower(dcPowerNetPerMppt_kW, dcVoltagePerMppt, wf.tdry);
 					acpwr_gross = sharedInverter->powerAC_kW;
 				}		
 				
@@ -2119,11 +2133,13 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 		if (iyear == 0)
 		{
 			int year_idx = 0;
-			if (system_use_lifetime_output)
+			if (system_use_lifetime_output) {
 				year_idx = 1;
+			}
 			// accumulate DC power after the battery
-			if (en_batt && (batt_topology == ChargeController::DC_CONNECTED))
+			if (en_batt && (batt_topology == ChargeController::DC_CONNECTED)) {
 				annual_battery_loss = batt.outAnnualEnergyLoss[year_idx];
+			}
 		}
 	}
 
@@ -2172,7 +2188,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 				PVSystem->p_systemACPower[idx] *= haf(hour);
 
 				//apply lifetime daily AC losses only if they are enabled
-				if (system_use_lifetime_output == 1 && PVSystem->enableACLifetimeLosses)
+				if (system_use_lifetime_output && PVSystem->enableACLifetimeLosses)
 				{
 					//current index of the lifetime daily AC losses is the number of years that have passed (iyear, because it is 0-indexed) * days in a year + the number of complete days that have passed
 					int ac_loss_index = (int)iyear * 365 + (int)floor(hour / 24); //in units of days
@@ -2542,12 +2558,22 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 #endif
 
 
-	// end of losses
-	double kWhperkW = 0.0;
-	double nameplate = as_double("system_capacity");
-	if (nameplate > 0) kWhperkW = annual_energy / nameplate;
-	assign("capacity_factor", var_data((ssc_number_t)(kWhperkW / 87.6)));
-	assign("kwh_per_kw", var_data((ssc_number_t)kWhperkW));
+	// DC Capacity Factor
+	double kWhACperkWDC = 0.0;
+	double nameplate_dc = as_double("system_capacity");
+	if (nameplate_dc > 0) {
+		kWhACperkWDC = annual_energy / nameplate_dc;
+	}
+	assign("capacity_factor", var_data((ssc_number_t)(kWhACperkWDC / 87.6)));
+	assign("kwh_per_kw", var_data((ssc_number_t)kWhACperkWDC));
+
+	// AC Capacity Factor
+	double kWhACperkWAC = 0.0;
+	double nameplate_ac = sharedInverter->getACNameplateCapacity();
+	if (nameplate_ac > 0) {
+		kWhACperkWAC = annual_energy / nameplate_ac;
+	}
+	assign("capacity_factor_ac", var_data((ssc_number_t)(kWhACperkWAC / 87.6)));
 
 	if (is_assigned("load"))
 	{
@@ -2558,6 +2584,10 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 	Irradiance->AssignOutputs(this);
 	Subarrays[0]->AssignOutputs(this);
 	PVSystem->AssignOutputs(this);
+	
+//	_CrtDumpMemoryLeaks();
+//	_CrtSetReportMode(_CRT_ERROR, _CRTDBG_MODE_DEBUG);
+
 }
 	
 double cm_pvsamv1::module_eff(int mod_type)

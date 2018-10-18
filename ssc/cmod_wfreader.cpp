@@ -106,6 +106,7 @@ static var_info _cm_vtab_wfreader[] = {
 	{ SSC_OUTPUT, SSC_NUMBER, "annual_wspd", "Average wind speed", "m/s", "", "Weather Reader", "header_only=0", "", "" },
 
 	{ SSC_OUTPUT, SSC_NUMBER, "annual_snow", "Maximum snow depth", "cm", "", "Weather Reader", "header_only=0", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_albedo", "Average albedo", "", "", "Weather Reader", "header_only=0", "", "" },
 
 var_info_invalid };
 
@@ -188,7 +189,7 @@ public:
 		ssc_number_t *p_albedo = allocate( "albedo", records );
 
 		double gh_sum = 0.0, dn_sum = 0.0, df_sum = 0.0;
-		double temp_sum = 0.0, wind_sum = 0.0;
+		double temp_sum = 0.0, wind_sum = 0.0, albedo_sum = 0.0;
 		double snow_max = -1;
 
 		double ts_hour = wfile.step_sec() / 3600.0;
@@ -226,6 +227,7 @@ public:
 			df_sum += wf.df * ts_hour;
 			temp_sum += wf.tdry;
 			wind_sum += wf.wspd; 
+			albedo_sum += wf.alb;
 			if (!std::isnan(wf.snow) && (wf.snow > snow_max))
 				snow_max = wf.snow;
 		}
@@ -240,6 +242,8 @@ public:
 		assign("annual_tdry", var_data((ssc_number_t)(temp_sum / records)));
 		assign("annual_wspd", var_data((ssc_number_t)(wind_sum / records)));
 		assign("annual_snow", var_data((ssc_number_t)snow_max));
+		assign("annual_albedo", var_data((ssc_number_t)(albedo_sum / records)));
+
 	}
 };
 

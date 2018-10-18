@@ -93,12 +93,12 @@ pvsnowmodel::pvsnowmodel()
 
 }
 
-bool pvsnowmodel::setup(int nmody_in, float baseTilt_in){
+bool pvsnowmodel::setup(int nmody_in, float baseTilt_in, bool limitTilt){
 
 	nmody = nmody_in;
 	baseTilt = baseTilt_in;
 
-	if(baseTilt>45 || baseTilt < 10){
+	if(limitTilt && (baseTilt>45 || baseTilt < 10)){
 		good = true;
 		msg = util::format("The snow model is designed to work for PV arrays with a tilt angle between 10 and 45 degrees, but will generate results for tilt angles outside this range. The system you are modeling includes a subarray tilt angle of %f degrees.", baseTilt);
 		return false;

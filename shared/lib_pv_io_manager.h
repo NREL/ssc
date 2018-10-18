@@ -44,6 +44,53 @@ struct Inverter_IO;
 struct PVSystem_IO;
 
 /**
+* \class flag
+*
+* This class implements error checking for bool or enum flags, such as checking for initialization
+* before use in comparisons. Allows only == and !=  operations with integral types and with other flags.
+*
+*/
+class flag
+{
+	typedef void (flag::*bool_type)() const;
+	void safeBool() const {}
+
+public:
+	bool init = false;
+	int value;				//< for enum or boolean values
+
+	/// set enum or implicit bool value
+	void operator =(int setValue) {
+		if (setValue <= -1)
+			return;
+		init = true;
+		value = setValue;
+	}
+
+	void checkInit() const {
+		if (!init)
+			throw compute_module::exec_error("PV IO Manager", 
+				"Flag used without initialization.");
+	}
+
+	/// safe bool conversion operator
+	operator bool_type() const {
+		checkInit();
+		return value ? &flag::safeBool : 0;
+	}
+
+	bool operator ==(const int testValue) {
+		checkInit();
+		return (value == testValue);
+	}
+	bool operator !=(const int testValue) {
+		checkInit();
+		return (value != testValue);
+	}
+};
+
+
+/**
 * \class PVIOManager
 *
 * This class contains the input and output data needed by all of the submodels in the detailed PV model
@@ -58,6 +105,9 @@ class PVIOManager
 public:
 	/// Create a PVIOManager object by parsing the compute model
 	PVIOManager(compute_module* cm, std::string cmName);
+
+	/// Allocate Outputs
+	void allocateOutputs(compute_module*  cm);
 
 	/// Return pointer to compute module
 	compute_module * getComputeModule();
@@ -77,6 +127,8 @@ public:
 	/// Get PVSystem as one object
 	PVSystem_IO * getPVSystemIO();
 
+	/// Get Shade Database
+	ShadeDB8_mpp * getShadeDatabase();
 
 public:
 
@@ -137,14 +189,14 @@ struct Irradiance_IO
 	weather_record weatherRecord;								  /// Describes the weather data
 	weather_header weatherHeader;								  /// Describes the weather data header
 	double tsShiftHours;										  /// Sun position time offset
-	bool instantaneous;											  /// Describes whether the weather data is instantaneous (or not)
+	flag instantaneous;											  /// Describes whether the weather data is instantaneous (or not)
 	size_t numberOfWeatherFileRecords;							  /// The number of records in the weather file
 	size_t stepsPerHour;										  /// The number of steps per hour
 	size_t numberOfSubarrays;									  /// The number of subarrays (needed if reading POA data from weather file)
 	double dtHour;											      /// The timestep in hours
 	int radiationMode;											  /// Specify which components of radiance should be used: 0=B&D, 1=G&B, 2=G&D, 3=POA-Ref, 4=POA-Pyra
 	int skyModel;												  /// Specify which sky diffuse model should be used: 0=isotropic, 1=hdkr, 2=perez
-	bool useWeatherFileAlbedo;									  /// Specify whether to use the weather file albedo
+	flag useWeatherFileAlbedo;									  /// Specify whether to use the weather file albedo
 	std::vector<double> userSpecifiedMonthlyAlbedo;				  /// User can provide monthly ground albedo values (0-1)
 	
 	// Irradiance data Outputs (p_ is just a convention to organize all pointer outputs)
@@ -174,7 +226,7 @@ struct Simulation_IO
 	size_t numberOfSteps;
 	size_t stepsPerHour;
 	double dtHour;
-	bool useLifetimeOutput = 0;
+	flag useLifetimeOutput = { true, false};
 };
 
 /***
@@ -201,18 +253,18 @@ struct PVSystem_IO
 	std::unique_ptr<SharedInverter> m_sharedInverter;
 
 	// Inputs assumed to apply to all subarrays
-	bool enableDCLifetimeLosses;
-	bool enableACLifetimeLosses;
-	bool enableSnowModel;	
+	flag enableDCLifetimeLosses;
+	flag enableACLifetimeLosses;
+	flag enableSnowModel;
 
 	int stringsInParallel;
-	double ratedACOutput;  /// AC Power rating for whole system (all inverters)
+	double ratedACOutput;  ///< AC Power rating for whole system (all inverters)
 
-	bool clipMpptWindow;
-	std::vector<std::vector<int> > mpptMapping;	///vector to hold the mapping between subarrays and mppt inputs
-	bool enableMismatchVoltageCalc;		/// Whether or not to compute mismatch between multiple subarrays attached to the same mppt input
+	flag clipMpptWindow;
+	std::vector<std::vector<int> > mpptMapping;	///< vector to hold the mapping between subarrays and mppt inputs
+	flag enableMismatchVoltageCalc;		///< Whether or not to compute mismatch between multiple subarrays attached to the same mppt input
 
-
+	std::vector<double> dcDegradationFactor; 
 	double acDerate;
 	double acLossPercent;
 	double transmissionDerate;
@@ -352,7 +404,7 @@ public:
 	std::unique_ptr<Module_IO> Module; // The PV module for this subarray
 
 	// Inputs
-	bool enable;						// Whether or not the subarray is enabled
+	flag enable;						// Whether or not the subarray is enabled
 
 	// Electrical characteristics
 	size_t nStrings;					// Number of strings in the subarray
@@ -365,9 +417,9 @@ public:
 	double azimuthDegrees;				// The surface azimuth [degrees]
 	int trackMode;						// The tracking mode [0 = fixed, 1 = single-axis tracking, 2 = two-axis tracking, 3 = azimuth-axis tracking, 4 = seasonal-tilt
 	double trackerRotationLimitDegrees; // The rotational limit of the tracker [degrees]
-	bool tiltEqualLatitude;				// Set the tilt equal to the latitude
+	flag tiltEqualLatitude;				// Set the tilt equal to the latitude
 	std::vector<double> monthlyTiltDegrees; // The seasonal tilt [degrees]
-	bool backtrackingEnabled;			// Backtracking enabled or not
+	flag backtrackingEnabled;			// Backtracking enabled or not
 	double moduleAspectRatio;			// The aspect ratio of the models used in the subarray
 	int nStringsBottom;					// Number of strings along bottom from self-shading
 
@@ -383,13 +435,13 @@ public:
 	double dcLossTotalPercent;			/// The DC loss due to mismatch, diodes, wiring, tracking, optimizers [%]
 
 	// Shading and snow	
-	bool enableSelfShadingOutputs;			// Choose whether additional self-shading outputs are displayed
+	flag enableSelfShadingOutputs;		// Choose whether additional self-shading outputs are displayed
 	int shadeMode;						// The shading mode of the subarray [0 = none, 1 = standard (non-linear), 2 = thin film (linear)]
-	bool usePOAFromWeatherFile;			// Flag for whether or not a shading model has been selected that means POA can't be used directly for that subarray
+	flag usePOAFromWeatherFile;			// Flag for whether or not a shading model has been selected that means POA can't be used directly for that subarray
 	ssinputs selfShadingInputs;			// Inputs and calculation methods for self-shading of the subarray
 	ssoutputs selfShadingOutputs;		// Outputs for the self-shading of the subarray
 	shading_factor_calculator shadeCalculator; // The shading calculator model for self-shading
-	bool subarrayEnableSnow; //a copy of the enableSnowModel flag has to exist in each subarray for setting up snow model inputs specific to each subarray
+	flag subarrayEnableSnow;            //a copy of the enableSnowModel flag has to exist in each subarray for setting up snow model inputs specific to each subarray
 	pvsnowmodel snowModel;				// A structure to store the geometry inputs for the snow model for this subarray- even though the snow model is system wide, its effect is subarray-dependent
 
 	/// Calculated plane-of-array (POA) irradiace for the subarray and related geometry
@@ -441,14 +493,14 @@ public:
 	double moduleWattsSTC;				/// The module energy output at STC [W]
 	double voltageMaxPower;				/// The voltage at max power [V]
 	double selfShadingFillFactor;		/// Self shading fill factor
-	bool isConcentratingPV;				/// If the sandia model is being used for CPV
-	bool isBifacial;					/// If the model is bifacial
+	flag isConcentratingPV;				/// If the sandia model is being used for CPV
+	flag isBifacial;					/// If the model is bifacial
 	double bifaciality;					/// The relative efficiency of the rearside to the front side
 	double bifacialTransmissionFactor;  /// Factor describing how much light can travel through the module
 	double groundClearanceHeight;		/// The ground clearance of a module [m]
 
-	bool simpleEfficiencyForceNoPOA;	/// Flag to avoid calling as_integer(...) repeatedly later on
-	bool mountingSpecificCellTemperatureForceNoPOA;
+	flag simpleEfficiencyForceNoPOA;	/// Flag to avoid calling as_integer(...) repeatedly later on
+	flag mountingSpecificCellTemperatureForceNoPOA;
 
 	spe_module_t simpleEfficiencyModel;
 	cec6par_module_t cecModel;

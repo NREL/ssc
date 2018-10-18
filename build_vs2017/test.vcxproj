@@ -33,6 +33,7 @@
     <ClCompile Include="..\test\shared_test\lib_windwakemodel_test.cpp" />
     <ClCompile Include="..\test\shared_test\lib_windwatts_test.cpp" />
     <ClCompile Include="..\test\ssc_test\cmod_pvwattsv5_test.cpp" />
+    <ClCompile Include="..\test\ssc_test\cmod_pvyield_test.cpp" />
     <ClCompile Include="..\test\ssc_test\cmod_tcstrough_physical_test.cpp" />
     <ClCompile Include="..\test\ssc_test\cmod_windpower_test.cpp" />
     <ClCompile Include="..\test\ssc_test\cmod_windpower_test2.cpp" />
@@ -44,6 +45,8 @@
     <ClInclude Include="..\test\input_cases\pvsamv1_cases.h" />
     <ClInclude Include="..\test\input_cases\pvsamv1_common_data.h" />
     <ClInclude Include="..\test\input_cases\pvwattsv5_cases.h" />
+    <ClInclude Include="..\test\input_cases\pvyield_cases.h" />
+    <ClInclude Include="..\test\input_cases\pvyield_common_data.h" />
     <ClInclude Include="..\test\input_cases\tcs_trough_physical_input.h" />
     <ClInclude Include="..\test\input_cases\weather_inputs.h" />
     <ClInclude Include="..\test\input_cases\windpower_cases.h" />
@@ -52,6 +55,7 @@
     <ClInclude Include="..\test\shared_test\lib_windwakemodel_test.h" />
     <ClInclude Include="..\test\ssc_test\cmod_pvsamv1_test.h" />
     <ClInclude Include="..\test\ssc_test\cmod_pvwattsv5_test.h" />
+    <ClInclude Include="..\test\ssc_test\cmod_pvyield_test.h" />
     <ClInclude Include="..\test\ssc_test\cmod_windpower_test.h" />
     <ClInclude Include="..\test\ssc_test\computeModuleTest.h" />
     <ClInclude Include="..\test\ssc_test\simulation_test_info.h" />
