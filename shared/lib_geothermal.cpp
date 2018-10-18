@@ -1364,8 +1364,8 @@ double CGeothermalAnalyzer::totalVentFlow(int st) { return ncgFlowLbsPerHour() +
 double CGeothermalAnalyzer::moleWeightVent(int st) { return totalVentFlow(st) /(ncgFlowMolesPerHour() + h2oMolesPerHour(st)); }											
 double CGeothermalAnalyzer::suctionSteamRatio(int st) { 
 	mp_geo_out -> pressure_ratio_1 = pSuction(1) / mp_geo_out->md_PressureHPFlashPSI;
-	mp_geo_out-> pressure_ratio_2 = pSuction(2) / mp_geo_out->md_PressureHPFlashPSI;
-	mp_geo_out-> pressure_ratio_3 = pSuction(3) / mp_geo_out->md_PressureHPFlashPSI;
+	//mp_geo_out-> pressure_ratio_2 = pSuction(2) / mp_geo_out->md_PressureHPFlashPSI;
+	//mp_geo_out-> pressure_ratio_3 = pSuction(3) / mp_geo_out->md_PressureHPFlashPSI;
 	return pSuction(st) / mp_geo_out->md_PressureHPFlashPSI; }																	
 double CGeothermalAnalyzer::AR(int stage) { return ((3.5879 * pow(prJet(stage),-2.1168)) + 0.1) * pow(suctionSteamRatio(stage),(-1.155 * pow(prJet(stage),-0.0453))); }
 double CGeothermalAnalyzer::ERd(int stage) { return (1.0035 * AR(stage) + 8.9374)* pow(suctionSteamRatio(stage),(2.9594* pow(AR(stage),-0.8458) + 0.99)); }
@@ -1523,6 +1523,8 @@ double CGeothermalAnalyzer:: vacuumPumpingKW(void) {
 	mp_geo_out-> v_stage_1 = vacuumPumpWorkByStage(1);
 	mp_geo_out-> v_stage_2 = vacuumPumpWorkByStage(2);
 	mp_geo_out-> v_stage_3 = vacuumPumpWorkByStage(3);
+	mp_geo_out->pressure_ratio_2 = pInter(1) / mp_geo_out->md_PressureHPFlashPSI;				//pressure ratios used in ncg ejector cost calculation
+	mp_geo_out->pressure_ratio_3 = pInter(2) / mp_geo_out->md_PressureHPFlashPSI;
 	return vacuumPumpWorkByStage(1) + vacuumPumpWorkByStage(2) + vacuumPumpWorkByStage(3); }	// D311, I108
 
 // Condenser Injection Pump Power
