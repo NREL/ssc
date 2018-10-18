@@ -3158,6 +3158,88 @@ void Flux::keepExistingAimPoint(Heliostat &H, SolarField &SF, double[] /*args*/)
 
 }
 
+static double s_projected_area_htor(Heliostat *H, Receiver *R, double tht, Vect *rec_to_hel_vect=0)
+{
+    /*
+    Calculate the apparent projected area of the receiver 'R' from the viewpoint 
+    of a heliostat 'H' knowing also the tower height 'tht'. 
+    
+    Returns (double) projected area
+    
+    Optionally, calculate and update (Vect) 'rec_to_hel_vect' unit vector pointing from receiver to heliostat
+    */
+
+    sp_point *hpos = H->getLocation();
+
+    //Calculate a rough receiver-to-heliostat vector
+    double slant = sqrt(pow(tht - hpos->z, 2) + hpos->x*hpos->x + hpos->y*hpos->y); // A very approximate slant range
+
+    Vect r_to_h;
+    r_to_h.i = hpos->x / slant;
+    r_to_h.j = hpos->y / slant;
+    r_to_h.k = (hpos->z - tht) / slant;
+    if (rec_to_hel_vect != 0)
+        (*rec_to_hel_vect) = r_to_h;    //copy
+
+    //Calculate the receiver projected area before accounting for heliostat view
+    double width;
+    if (R->getGeometryType() == Receiver::REC_GEOM_TYPE::POLYGON_CLOSED)
+        width = R->CalculateApparentDiameter(*H->getLocation());
+    else
+        width = Receiver::getReceiverWidth(*R->getVarMap());
+    double Arec = R->getVarMap()->rec_height.val * width;
+    
+    PointVect NV;
+    R->CalculateNormalVector(*hpos, NV);	//Get the receiver normal vector
+    
+    return dotprod(*NV.vect(), r_to_h) * Arec;	//Calculate the dotproduct of the receiver normal and the receiver to heliostat vector. 
+}
+
+struct s_sort_couple
+{
+    Heliostat* h;
+    double val;
+    void set(Heliostat* _h, double _val)
+    {
+        h = _h;
+        val = _val;
+    };
+};
+
+void Flux::calcReceiverTargetOrder(SolarField &SF)
+{
+    /* 
+    
+    */
+
+    std::vector< Receiver* > active_receivers;
+    for (int i = 0; i < SF.getReceivers()->size(); i++)
+        if (SF.getReceivers()->at(i)->isReceiverEnabled())
+            active_receivers.push_back(SF.getReceivers()->at(i));
+
+    double tht = SF.getVarMap()->sf.tht.val;
+
+    for (std::vector<Receiver*>::iterator rec = active_receivers.begin(); rec != active_receivers.end(); rec++)
+    {
+        std::vector< s_sort_couple > helio_ranks(SF.getHeliostats()->size());
+
+        //calculate the projected area of the receiver with respect to each heliostat. This will serve as the metric.
+        int i = 0;
+        for (Hvector::iterator h = SF.getHeliostats()->begin(); h != SF.getHeliostats()->end(); h++)
+            helio_ranks.at(i++).set(*h, s_projected_area_htor(*h, *rec, tht));
+
+        //sort based on the metric
+        std::sort(helio_ranks.begin(), helio_ranks.end(), [](s_sort_couple &a, s_sort_couple &b) { return a.val < b.val; });
+
+        std::vector<Heliostat*> *preflist = (*rec)->getHeliostatPreferenceList();
+        preflist->clear();
+        preflist->reserve(helio_ranks.size());
+        for (size_t i = 0; i < helio_ranks.size(); i++)
+            preflist->push_back(helio_ranks.at(i).h);
+    }
+
+}
+
 void Flux::calcBestReceiverTarget(Heliostat *H, vector<Receiver*> *Recs, double tht, int &rec_index, Vect *rtoh){
 	/* 
 	Take an existing heliostat 'H' and all possible receivers "Recs" and determine which receiver 'rec_index'
@@ -3166,46 +3248,30 @@ void Flux::calcBestReceiverTarget(Heliostat *H, vector<Receiver*> *Recs, double 
 	Optional argument 'rtoh' is a vector from the receiver to the heliostat that is calculated within this algorithm
 	*/
 	int i, isave, Nrec;
-	PointVect NV;	//Normal vector from the receiver
 	Vect r_to_h;	//receiver to heliostat vector
 	vector<double> projarea(Recs->size(),0.0);	//Vector of stored "normality" efficiencies for each receiver
-	double Arec, projarea_max;	//Receiver effective area
+	double projarea_max;	//Receiver effective area
 
 	Nrec = (int)Recs->size();	//The number of receivers to choose from
-	double slant;
-	sp_point *hpos = H->getLocation();
 
 	//If we only have 1 receiver, don't bother
 	if(Nrec==1){
+	    sp_point *hpos = H->getLocation();
 		isave = 0;
-		slant = sqrt(tht*tht + hpos->x*hpos->x + hpos->y*hpos->y); // A very approximate slant range
+	    double slant = sqrt(tht*tht + hpos->x*hpos->x + hpos->y*hpos->y); // A very approximate slant range
 		r_to_h.i = hpos->x/slant;
 		r_to_h.j = hpos->y/slant;
 		r_to_h.k = (hpos->z - tht)/slant;
+	    
+        PointVect NV;	//Normal vector from the receiver
 		Recs->at(0)->CalculateNormalVector(*hpos, NV);	//Get the receiver normal vector
-			
 	}
 	else{
 		//Determine the projected area for each receiver
 		isave = 0; projarea_max = -9.e99;
 		for(i=0; i<Nrec; i++){
 			//Calculate a rough receiver-to-heliostat vector
-			slant = sqrt(pow(tht-hpos->z,2) + hpos->x*hpos->x + hpos->y*hpos->y); // A very approximate slant range
-			r_to_h.i = hpos->x/slant;
-			r_to_h.j = hpos->y/slant;
-			r_to_h.k = (hpos->z - tht)/slant;
-
-			//Calculate the receiver projected area before accounting for heliostat view
-			double width;
-			if( Recs->at(i)->getGeometryType() == Receiver::REC_GEOM_TYPE::POLYGON_CLOSED )
-				width = Recs->at(i)->CalculateApparentDiameter(*H->getLocation());
-			else
-				width = Receiver::getReceiverWidth( *Recs->at(i)->getVarMap() );
-			Arec = Recs->at(i)->getVarMap()->rec_height.val * width;
-
-			Recs->at(i)->CalculateNormalVector(*hpos, NV);	//Get the receiver normal vector
-			projarea.at(i) = dotprod(*NV.vect(), r_to_h) * Arec;	//Calculate the dotproduct of the receiver normal and the receiver to heliostat vector. 
-														//This determines how well the heliostat can see the receiver.
+			projarea.at(i) = s_projected_area_htor(H, Recs->at(i), tht, &r_to_h);
 			//Is this the best one?
 			if(projarea.at(i) > projarea_max){ 
 				projarea_max = projarea.at(i);
@@ -3219,7 +3285,6 @@ void Flux::calcBestReceiverTarget(Heliostat *H, vector<Receiver*> *Recs, double 
 		rtoh->j = r_to_h.j;
 		rtoh->k = r_to_h.k;
 	}
-
 
 	//For the selected receiver, determine the aim point
 	rec_index = isave;

@@ -572,6 +572,11 @@ FluxSurfaces *Receiver::getFluxSurfaces(){ return &_surfaces; }
 
 var_receiver* Receiver::getVarMap(){return _var_receiver;}
 
+std::vector< Heliostat* > *Receiver::getHeliostatPreferenceList()
+{
+    return &_heliostat_preference_list;
+}
+
 bool Receiver::isReceiverEnabled()
 {
     return _is_enabled;

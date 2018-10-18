@@ -223,7 +223,8 @@ void Heliostat::updateCalculatedParameters(var_map &Vm, int htnum)
 	err_reflect_y = V->err_reflect_y.val;
 	double err_tot = sqrt( pow(2.*err_elevation, 2) + pow(2.*err_azimuth, 2) + pow(2.*err_surface_x, 2) + 
 		pow(2.*err_surface_y, 2) + pow(err_reflect_x, 2) + pow(err_reflect_y, 2));
-    
+    err_tot *= 0.7071;  //1/sqrt(2) accounts for translation from 2 dimensions to 1
+
     V->err_total.Setval( err_tot );
 
     //Calculate the total optical reflectivity to report back
