@@ -5,14 +5,15 @@
 #include "weather_inputs.h"
 
 var_data* create_winddata_array(int intervalsPerHour, int nMeasurementHeights){
-	float* year_data = new float[35040 * intervalsPerHour * nMeasurementHeights];
-	for (int i = 0; i < 8760 * intervalsPerHour; i++){
+	size_t timeLength = 8760 * intervalsPerHour;
+	float* year_data = new float[4 * timeLength * nMeasurementHeights];
+	for (int i = 0; i < timeLength; i++){
 		for (int j = 0; j < nMeasurementHeights; j++){
 			int index = i * 4 * nMeasurementHeights + j * 4;
-			year_data[index] = (float)(15 + 5 * j);					// temp
-			year_data[index + 1] = (float)(0.95 + 0.05 * j);	// pres
-			year_data[index + 2] = (float)(5 + 5 * j);					// spd
-			year_data[index + 3] = (float)(180 + 20 * j);				// dir
+			year_data[index] = (float)(50 + 5 * j);											// temp
+			year_data[index + 1] = (float)(0.95 + 0.05 * j);								// pres
+			year_data[index + 2] = (float)(5*((float)i / (float)timeLength) + 5 * j);		// spd
+			year_data[index + 3] = (float)(180 + 20 * j);									// dir
 		}
 	}
 
@@ -24,7 +25,7 @@ var_data* create_winddata_array(int intervalsPerHour, int nMeasurementHeights){
 			fields[i * 4 + j] = (float)j+1;
 		}
 	}
-	var_data data_vd = var_data(year_data, 8760 * intervalsPerHour, 4 * nMeasurementHeights);
+	var_data data_vd = var_data(year_data, (int)timeLength, 4 * nMeasurementHeights);
 	var_data height_vd = var_data(height, 4 * nMeasurementHeights);
 	var_data fields_vd = var_data(fields, 4 * nMeasurementHeights);
 

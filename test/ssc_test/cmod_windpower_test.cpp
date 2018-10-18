@@ -100,7 +100,7 @@ TEST_F(CMWindPowerIntegration, DISABLED_WakeModelsUsingFile_cmod_windpower){
 
 
 /// Using Wind Resource Data
-TEST_F(CMWindPowerIntegration, DISABLED_UsingDataArray_cmod_windpower){
+TEST_F(CMWindPowerIntegration, UsingDataArray_cmod_windpower){
 	// using hourly data
 	ssc_data_unassign(data, "wind_resource_filename");
 	var_data* windresourcedata = create_winddata_array(1,1);
@@ -108,39 +108,42 @@ TEST_F(CMWindPowerIntegration, DISABLED_UsingDataArray_cmod_windpower){
 	vt->assign("wind_resource_data", *windresourcedata);
 
 	compute();
+	double expectedAnnualEnergy = 4219481;
+	double relErr = expectedAnnualEnergy * .001;
+
 
 	ssc_number_t annual_energy;
 	ssc_data_get_number(data, "annual_energy", &annual_energy);
-	EXPECT_NEAR(annual_energy, 33224154, e);
+	EXPECT_NEAR(annual_energy, expectedAnnualEnergy, relErr);
 
 	ssc_number_t monthly_energy = ssc_data_get_array(data, "monthly_energy", nullptr)[0];
-	EXPECT_NEAR(monthly_energy, 2.8218e6, e);
+	EXPECT_NEAR(monthly_energy, 0, relErr/10.);
 
 	monthly_energy = ssc_data_get_array(data, "monthly_energy", nullptr)[11];
-	EXPECT_NEAR(monthly_energy, 2.8218e6, e);
+	EXPECT_NEAR(monthly_energy, 1972735, relErr/10.);
 
 	free_winddata_array(windresourcedata);
 
-	// 30 min data
+	// 15 min data
 	ssc_data_unassign(data, "wind_resource_data");
-	windresourcedata = create_winddata_array(2,1);
+	windresourcedata = create_winddata_array(4,1);
 	vt->assign("wind_resource_data", *windresourcedata);
 
 	compute();
 
 	annual_energy;
 	ssc_data_get_number(data, "annual_energy", &annual_energy);
-	EXPECT_NEAR(annual_energy, 33224154, e);
+	EXPECT_NEAR(annual_energy, expectedAnnualEnergy, relErr);
 
 	monthly_energy = ssc_data_get_array(data, "monthly_energy", nullptr)[0];
-	EXPECT_NEAR(monthly_energy, 2.8218e6, e);
+	EXPECT_NEAR(monthly_energy, 0, relErr / 10.);
 
 	monthly_energy = ssc_data_get_array(data, "monthly_energy", nullptr)[11];
-	EXPECT_NEAR(monthly_energy, 2.8218e6, e);
+	EXPECT_NEAR(monthly_energy, 1972735, relErr / 10.);
 
 	int gen_length = 0;
 	ssc_data_get_array(data, "gen", &gen_length);
-	EXPECT_EQ(gen_length, 8760 * 2);
+	EXPECT_EQ(gen_length, 8760 * 4);
 
 	free_winddata_array(windresourcedata);
 }
