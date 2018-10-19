@@ -115,7 +115,9 @@ bool Heliostat::IsUserCant(){return _is_user_canted;} //Fetch
 void Heliostat::IsUserCant(bool setting){_is_user_canted = setting;} //Set
 bool Heliostat::IsEnabled(){return _is_enabled;}
 bool Heliostat::IsInLayout(){return _in_layout;}
+bool Heliostat::IsMultiReceiverAssigned() { return _has_multi_rec_assignment; }
 void Heliostat::IsEnabled(bool enable){_is_enabled = enable;}
+void Heliostat::IsMultiReceiverAssigned(bool assigned) { _has_multi_rec_assignment = assigned; }
 
 void Heliostat::setId(int id){_id = id;}
 void Heliostat::setGroupId(int row, int col){_group[0] = row; _group[1] = col;}
@@ -166,6 +168,8 @@ void Heliostat::resetMetrics(){
 
 void Heliostat::Create(var_map &V, int htnum)
 {
+    _has_multi_rec_assignment = false;  //initialize
+
     _var_helio = &V.hels.at(htnum);
 	//set some defaults for local values
     _helio_name = _var_helio->helio_name.val;

@@ -2401,12 +2401,20 @@ void Flux::simpleAimPoint(sp_point *Aim, sp_point *AimF, Heliostat &H, SolarFiel
 	int isave;
 	Vect rtoh;	//receiver to heliostat vector
 
-	calcBestReceiverTarget(&H, Recs, tht, isave, &rtoh);
+    Receiver *rec;
 
-	//For the selected receiver, determine the aim point
-	Receiver *rec = Recs->at(isave);
-	//Associate the receiver with the heliostat
-	H.setWhichReceiver(rec);
+    if( !H.IsMultiReceiverAssigned() )
+    {
+	    //For the selected receiver, determine the aim point
+        calcBestReceiverTarget(&H, Recs, tht, isave, &rtoh);
+	    rec = Recs->at(isave);
+	    //Associate the receiver with the heliostat
+	    H.setWhichReceiver(rec);
+    }
+    else
+    {
+        rec = H.getWhichReceiver();
+    }
 
     var_receiver *Rv = rec->getVarMap();
 	double
@@ -3197,19 +3205,39 @@ static double s_projected_area_htor(Heliostat *H, Receiver *R, double tht, Vect 
 
 struct s_sort_couple
 {
-    Heliostat* h;
-    double val;
-    void set(Heliostat* _h, double _val)
+    void* obj;       //object pointer
+    double val;         //value on which sorting occurs
+
+    s_sort_couple() {};
+    s_sort_couple(void* _obj, double _val) { set(_obj, _val); }
+
+    void set(void* _obj, double _val)
     {
-        h = _h;
+        obj = _obj;
         val = _val;
     };
+};
+
+struct s_rank_helper
+{
+    Heliostat *h;                   //heliostat
+    std::vector< Hvector* > plist;     //List of receiver heliostat preference lists, sorted by view factor from 'h' to the receiver
 };
 
 void Flux::calcReceiverTargetOrder(SolarField &SF)
 {
     /* 
-    
+    Determines receiver preference for all heliostats using the following procedure:
+    -------
+    1. for each heliostat, calculate the view factor to each heliostat
+    2. for each heliostat, sort the view factor by greatest to smallest
+    3. take the ratio of the most preferred (greatest view factor) receiver to the second most preferred
+    4. the calculated ratio is the favoritism score
+    5. sort all heliostats by their favoritism score, greatest to smallest
+    6. allow heliostats to choose their receiver in order of favoritism score
+    7. repeat choosing for each receiver in the sorted list. the result is that each receiver's preference list 
+       will be of length equal to the number of active heliostats. Each heliostat will appear in each receivers list, 
+       but in a different order.
     */
 
     std::vector< Receiver* > active_receivers;
@@ -3219,25 +3247,48 @@ void Flux::calcReceiverTargetOrder(SolarField &SF)
 
     double tht = SF.getVarMap()->sf.tht.val;
 
-    for (std::vector<Receiver*>::iterator rec = active_receivers.begin(); rec != active_receivers.end(); rec++)
+    std::vector< s_sort_couple > helio_ranks;
+    helio_ranks.reserve( SF.getHeliostatObjects()->size() );
+
+    std::vector< s_rank_helper > rank_helpers;
+    rank_helpers.reserve(SF.getHeliostatObjects()->size());
+
+    for (std::vector<Heliostat>::iterator hit = SF.getHeliostatObjects()->begin(); hit != SF.getHeliostatObjects()->end(); hit++)
     {
-        std::vector< s_sort_couple > helio_ranks(SF.getHeliostats()->size());
 
-        //calculate the projected area of the receiver with respect to each heliostat. This will serve as the metric.
+        //if (!(*hit)->IsInLayout() || !(*hit)->IsEnabled())
+        //    continue;
+
+        std::vector<s_sort_couple> areas(active_receivers.size());
         int i = 0;
-        for (Hvector::iterator h = SF.getHeliostats()->begin(); h != SF.getHeliostats()->end(); h++)
-            helio_ranks.at(i++).set(*h, s_projected_area_htor(*h, *rec, tht));
+        for (std::vector<Receiver*>::iterator rec = active_receivers.begin(); rec != active_receivers.end(); rec++)
+            areas.at(i++).set((void*)(*rec)->getHeliostatPreferenceList(), s_projected_area_htor(&*hit, *rec, tht) );
 
-        //sort based on the metric
-        std::sort(helio_ranks.begin(), helio_ranks.end(), [](s_sort_couple &a, s_sort_couple &b) { return a.val < b.val; });
+        //now sort by area
+        std::sort(areas.begin(), areas.end(), [](s_sort_couple &a, s_sort_couple &b) { return a.val > b.val; });
+        //add to the helio ranks the heliostat object and the preference metric
+        double pref_metric = areas.at(0).val / (areas.at(1).val > 0. ? areas.at(1).val : 1.e-6);
 
-        std::vector<Heliostat*> *preflist = (*rec)->getHeliostatPreferenceList();
-        preflist->clear();
-        preflist->reserve(helio_ranks.size());
-        for (size_t i = 0; i < helio_ranks.size(); i++)
-            preflist->push_back(helio_ranks.at(i).h);
+        rank_helpers.push_back( s_rank_helper() );
+        rank_helpers.back().h = &*hit;
+        for (size_t i = 0; i < areas.size(); i++)
+            rank_helpers.back().plist.push_back( static_cast<Hvector*>( areas.at(i).obj ) );
+        
+        helio_ranks.push_back( s_sort_couple((void*)&rank_helpers.back(), pref_metric) );
     }
 
+    //sort all heliostats by strength of preference
+    std::sort(helio_ranks.begin(), helio_ranks.end(), [](s_sort_couple &a, s_sort_couple &b) {return a.val > b.val; });
+
+    //add heliostats to each receiver's preference list
+    for (int i = 0; i < (int)active_receivers.size(); i++)
+    {
+        for (std::vector<s_sort_couple>::iterator sobj = helio_ranks.begin(); sobj != helio_ranks.end(); sobj++)
+        {
+            s_rank_helper* srh = static_cast<s_rank_helper*>((*sobj).obj);
+            srh->plist.at(i)->push_back(srh->h);
+        }
+    }
 }
 
 void Flux::calcBestReceiverTarget(Heliostat *H, vector<Receiver*> *Recs, double tht, int &rec_index, Vect *rtoh){

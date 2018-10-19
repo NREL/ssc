@@ -1165,8 +1165,17 @@ bool SolarField::PrepareFieldLayout(SolarField &SF, WeatherData *wdata, bool ref
 		if(hpx > xmax){xmax = hpx;}
 		if(hpy < ymin){ymin = hpy;}
 		if(hpy > ymax){ymax = hpy;}		//Track the min/max field extents
+        
+        if (SF.CheckCancelStatus()) return false;	//check for cancelled simulation
+    //}
 
-		//Quickly determine the aim point for initial calculations
+    ////if we have multiple receivers, calculate the preferred order of heliostat additions for each
+    //if( SF.getActiveReceiverCount() > 1 )
+    //    SF.getFluxObject()->calcReceiverTargetOrder( SF );
+
+	//Quickly determine the aim point for initial calculations
+    //for(int i=0; i<Npos; i++)
+    //{
 		if(layout_method == var_solarfield::LAYOUT_METHOD::USERDEFINED || refresh_only){
 			//For user defined layouts...
 			if(layout->at(i).is_user_aim){	//Check to see if the aim point is also supplied.
@@ -1239,7 +1248,10 @@ bool SolarField::PrepareFieldLayout(SolarField &SF, WeatherData *wdata, bool ref
 		//_sim_info.setSimulationProgress(double(i)/double(Npos));
 		if(SF.CheckCancelStatus()) return false;	//check for cancelled simulation
 	}
-	
+    //if we have multiple receivers, calculate the preferred order of heliostat additions for each
+    if( SF.getActiveReceiverCount() > 1 )
+        SF.getFluxObject()->calcReceiverTargetOrder( SF );
+
 	//----Determine nearest neighbors---
 	//First go through and put each heliostat into a regional group. The groups are in a cartesian mesh.
 	//Save the heliostat field extents [xmax, xmin, ymax, ymin]
@@ -3061,12 +3073,12 @@ void SolarField::Simulate(double azimuth, double zenith, sim_params &P)
     //tracking
     bool psave = P.is_layout;
     P.is_layout = true; //override for simple right now
-    calcAllAimPoints(Sun, P); //true, true);  //update with simple aim points first to get consistent tracking vectors
+    calcAllAimPoints(Sun, P); //update with simple aim points first to get consistent tracking vectors
 	updateAllTrackVectors(Sun);
     
     //Calculate aim points
     P.is_layout = psave;
-    calcAllAimPoints(Sun, P); //.is_layout, P.is_layout);  // , simple? , quiet?
+    calcAllAimPoints(Sun, P); 
     
     //Update the heliostat neighbors to include possible shadowers
 	UpdateNeighborList(_helio_extents, P.is_layout ? 0. : zenith);		//don't include shadowing effects in layout (zenith = 0.)
@@ -3517,6 +3529,124 @@ void SolarField::calcAllAimPoints(Vect &Sun, sim_params &P) //bool force_simple,
 
 	int nh = (int)_heliostats.size();
 
+    /*
+    Multiple receiver aiming method ------------------------------------------
+    */
+    int active_rec_count = getActiveReceiverCount();
+    if (active_rec_count > 1)
+    {
+        std::vector< double > rec_cumulative_power(active_rec_count, 0.);
+
+        //calculate the x,y,z centroid of the receivers as an approximate aim point
+        sp_point aim;
+        for (int i = 0; i < active_rec_count; i++)
+        {
+            var_receiver* rmap = _active_receivers.at(i)->getVarMap();
+            aim.x += rmap->rec_offset_x.val;
+            aim.y += rmap->rec_offset_y.val;
+            aim.z += rmap->rec_offset_z.val;
+        }
+        aim.x /= (double)active_rec_count;
+        aim.y /= (double)active_rec_count;
+        aim.z /= (double)active_rec_count + _var_map->sf.tht.val;
+
+        //reset all of the heliostat receiver associations
+        for (int i = 0; i < nh; i++)
+        {
+            _helio_objects.at(i).IsMultiReceiverAssigned(false);   
+            //update the rough aiming vector
+            _helio_objects.at(i).setAimPoint( aim );
+            //manually update the tracking vector
+            _helio_objects.at(i).updateTrackVector(Sun);
+        }
+        
+        std::vector< int > rec_helio_pick_index(active_rec_count, 0);
+
+        //unitize the power fractions
+        std::vector< double > power_fractions;
+        if (_var_map->sf.is_multirec_powfrac.val)
+        {
+            double frac_total_base = 0.;
+            for (int i = 0; i < active_rec_count; i++)
+            {
+                power_fractions.push_back( _active_receivers.at(i)->getVarMap()->power_fraction.val );
+                frac_total_base += power_fractions.back();
+            }
+            for (int i = 0; i < active_rec_count; i++)
+                power_fractions.at(i) /= frac_total_base;
+        }
+        else
+        {
+            //don't limit the power
+            for (int i = 0; i < active_rec_count; i++)
+                power_fractions.push_back( std::numeric_limits<double>::max() );
+        }
+
+        double accumulated_frac = 0.;
+
+        //run through all heliostats
+        for (int i = 0; i < nh; i++)
+        {
+            //which receiver's turn is it to pick the next heliostat?
+            int rec_next_pick=0;
+            if( i > active_rec_count*3 ) //make 3 passes through with alternating assignment before considering the distribution
+            {
+                double current_short_stick = std::numeric_limits<double>::max();
+                for (int j = 0; j < active_rec_count; j++)
+                {
+                    double proportion = power_fractions.at(j) / accumulated_frac > 0. ? accumulated_frac : 1.;
+                    if (proportion < current_short_stick)
+                    {
+                        current_short_stick = proportion;
+                        rec_next_pick = j;
+                    }
+                }
+            }
+            else
+            {
+                rec_next_pick = i % active_rec_count;
+            }
+            //-----
+
+            //check whether the current receiver is at it's power budget
+            if (rec_cumulative_power.at(rec_next_pick) >= power_fractions.at(rec_next_pick))
+                continue;   //go on to the next receiver
+
+            //loop until we find the next unassigned heliostat on the receiver's list
+            while (true)
+            {
+                if (rec_helio_pick_index.at(rec_next_pick) > nh - 1)
+                    break;
+
+                Heliostat* h = _active_receivers.at(rec_next_pick)->getHeliostatPreferenceList()->at(rec_helio_pick_index.at(rec_next_pick)); 
+                if (h->IsMultiReceiverAssigned())
+                {
+                    //the receiver has already been assigned for this heliostat
+                    rec_helio_pick_index.at(rec_next_pick)++;
+                    continue;
+                }
+                else
+                {
+                    //manually assign the receiver here
+                    h->setWhichReceiver( _active_receivers.at(rec_next_pick) );
+                    h->IsMultiReceiverAssigned(true);
+
+
+                    //get an estimate of performance
+                    SimulateHeliostatEfficiency(this, Sun, h, P);
+                    //calculate the power to the receiver
+                    double newfrac = P.dni * 1.e-6 * h->getArea() * h->getEfficiencyTotal() / _var_map->sf.q_des.val;
+
+                    rec_cumulative_power.at(rec_next_pick) += newfrac;
+
+                    accumulated_frac += newfrac;
+                    break;
+                }
+            }
+        }
+    }   // ---------------------------- end of multiple reciever method
+
+
     int method = _var_map->flux.aim_method.mapval();
     if(P.is_layout && method != var_fluxsim::AIM_METHOD::KEEP_EXISTING)
         method = var_fluxsim::AIM_METHOD::SIMPLE_AIM_POINTS;
@@ -3525,17 +3655,13 @@ void SolarField::calcAllAimPoints(Vect &Sun, sim_params &P) //bool force_simple,
     double args[] = {0., 0., 0., 0.};
     switch (method)
     {
-    //case FluxSimData::AIM_STRATEGY::EXISTING:
-    //case FluxSimData::AIM_STRATEGY::SIMPLE:
     case var_fluxsim::AIM_METHOD::KEEP_EXISTING:
     case var_fluxsim::AIM_METHOD::SIMPLE_AIM_POINTS:
         break;
-    //case FluxSimData::AIM_STRATEGY::SIGMA:
     case var_fluxsim::AIM_METHOD::SIGMA_AIMING:
 		args[0] = _var_map->flux.sigma_limit_y.val;
         args[1] = 1.;
         break;
-    //case FluxSimData::AIM_STRATEGY::PROBABILITY:
     case var_fluxsim::AIM_METHOD::PROBABILITY_SHIFT:
         if(_var_map->flux.flux_dist.mapval() == var_fluxsim::FLUX_DIST::NORMAL){
 			//Normal dist, get the standard dev of the sampling distribution
@@ -3544,12 +3670,10 @@ void SolarField::calcAllAimPoints(Vect &Sun, sim_params &P) //bool force_simple,
 		args[0] = _var_map->flux.sigma_limit_y.val;
 		args[1] = _var_map->flux.flux_dist.mapval();	//the distribution type
         break;
-    //case FluxSimData::AIM_STRATEGY::IMAGE_SIZE:
     case var_fluxsim::AIM_METHOD::IMAGE_SIZE_PRIORITY:
         args[0] = _var_map->flux.sigma_limit_y.val;
         args[1] = _var_map->flux.sigma_limit_x.val;
         break;
-    //case FluxSimData::AIM_STRATEGY::FREEZE:
     case var_fluxsim::AIM_METHOD::FREEZE_TRACKING:
         args[0] = Sun.i;
         args[1] = Sun.j;
@@ -3566,9 +3690,6 @@ void SolarField::calcAllAimPoints(Vect &Sun, sim_params &P) //bool force_simple,
     int imsize_last_enabled=0;
 	if(method == var_fluxsim::AIM_METHOD::IMAGE_SIZE_PRIORITY)
     {
-        //update images
-        //RefactorHeliostatImages(Sun);
-
 		//Create a list of heliostats sorted by their Y image size
 		int nh = (int)_heliostats.size();
 		for(int i=0; i<nh; i++)

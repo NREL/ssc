@@ -94,7 +94,8 @@ class Heliostat : public mod_base
 	bool
 		_in_layout, // Is the heliostat included in the final layout?
 		_is_user_canted,	//Are the panels canted according to user-specified values?
-		_is_enabled;		//Is template enabled?
+		_is_enabled,		//Is template enabled?
+        _has_multi_rec_assignment;  //in multi-receiver mode, has this heliostat yet been assigned a final receiver target?
 
 
 	int 
@@ -137,6 +138,7 @@ public:
 	int getId();
 	int *getGroupId();		//(row,col) nodes
 	bool IsInLayout();
+    bool IsMultiReceiverAssigned();
 	double getFocalX();
 	double getFocalY();
 	double getSlantRange();
@@ -192,6 +194,7 @@ public:
 	void IsUserCant(bool setting);	//Set
     bool IsEnabled(); //fetch
     void IsEnabled(bool enable); //set
+    void IsMultiReceiverAssigned(bool assigned); //set
 
 	void setId(int id);
 	void setGroupId(int row, int col);
