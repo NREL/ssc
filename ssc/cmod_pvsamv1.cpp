@@ -1701,7 +1701,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 							for (int nSubarray = 0; nSubarray < nSubarraysOnMpptInput; nSubarray++) //sweep across all subarrays connected to this MPPT input
 							{
 								int nn = SubarraysOnMpptInput[nSubarray]; //get the index of the subarray we're checking here
-								double V = stringV / Subarrays[nn]->nModulesPerString; //voltage of an individual module on a string on this subarray
+								double V = stringV / (double)Subarrays[nn]->nModulesPerString; //voltage of an individual module on a string on this subarray
 
 								//initalize pvinput and pvoutput structures for the model
 								pvinput_t in(Subarrays[nn]->poa.poaBeamFront, Subarrays[nn]->poa.poaDiffuseFront, Subarrays[nn]->poa.poaGroundFront, Subarrays[nn]->poa.poaRear, Subarrays[nn]->poa.poaTotal,
@@ -1722,7 +1722,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 									(*Subarrays[nn]->Module->moduleModel)(in, tcell, V, out);
 								}
 								//add the power from this subarray to the total power
-								P += V * out.Current * Subarrays[nn]->nModulesPerString * Subarrays[nn]->nStrings;
+								P += V * out.Current * (double)Subarrays[nn]->nModulesPerString * (double)Subarrays[nn]->nStrings;
 							}
 
 							//check if the total power at this voltage is higher than the power values we've calculated before, if so, set it as the new max
@@ -1757,7 +1757,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 							//if -1 is passed in, power will be calculated at max power point. 
 							//if a voltage value is passed in, power will be calculated at the specified voltage for all single-diode module models
 							double module_voltage = -1;
-							if (stringVoltage != -1) module_voltage = stringVoltage / Subarrays[nn]->nModulesPerString;
+							if (stringVoltage != -1) module_voltage = stringVoltage / (double)Subarrays[nn]->nModulesPerString;
 							// calculate cell temperature using selected temperature model
 							// calculate module power output using conversion model previously specified
 							(*Subarrays[nn]->Module->cellTempModel)(in, *Subarrays[nn]->Module->moduleModel, module_voltage, tcell);
@@ -1770,8 +1770,8 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 							// if the module voltage is outside the inverter range, recalculate module power using the inverter voltage limit
 							if (!PVSystem->enableMismatchVoltageCalc && PVSystem->clipMpptWindow)
 							{
-								double voltageMpptLow1Module = PVSystem->Inverter->mpptLowVoltage / Subarrays[nn]->nModulesPerString;
-								double voltageMpptHi1Module = PVSystem->Inverter->mpptHiVoltage / Subarrays[nn]->nModulesPerString;
+								double voltageMpptLow1Module = PVSystem->Inverter->mpptLowVoltage / (double)Subarrays[nn]->nModulesPerString;
+								double voltageMpptHi1Module = PVSystem->Inverter->mpptHiVoltage / (double)Subarrays[nn]->nModulesPerString;
 								if (out.Voltage < voltageMpptLow1Module)
 								{
 									module_voltage = voltageMpptLow1Module;
@@ -1906,7 +1906,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 						// save to SSC output arrays
 						PVSystem->p_temperatureCell[nn][idx] = (ssc_number_t)Subarrays[nn]->Module->temperatureCellCelcius;
 						PVSystem->p_moduleEfficiency[nn][idx] = (ssc_number_t)Subarrays[nn]->Module->dcEfficiency;					
-						PVSystem->p_voltageOpenCircuit[nn][idx] = (ssc_number_t)Subarrays[nn]->Module->voltageOpenCircuit * Subarrays[nn]->nModulesPerString;
+						PVSystem->p_voltageOpenCircuit[nn][idx] = (ssc_number_t)(Subarrays[nn]->Module->voltageOpenCircuit * (double)Subarrays[nn]->nModulesPerString);
 						PVSystem->p_currentShortCircuit[nn][idx] = (ssc_number_t)Subarrays[nn]->Module->currentShortCircuit;
 						PVSystem->p_angleOfIncidenceModifier[nn][idx] = (ssc_number_t)(Subarrays[nn]->Module->angleOfIncidenceModifier);
 
