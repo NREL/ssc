@@ -204,6 +204,18 @@ static var_info _cm_vtab_tcsmslf[] = {
     { SSC_INPUT,    SSC_NUMBER,         "t_ch_out_max",           "Label",                                                                                 "",              "",  "controller",            "*",        "",              ""},
     { SSC_INPUT,    SSC_NUMBER,         "nodes",                  "Label",                                                                                 "",              "",  "controller",            "*",        "",              ""},
     { SSC_INPUT,    SSC_NUMBER,         "f_tc_cold",              "Label",                                                                                 "",              "",  "controller",            "*",        "",              ""},
+    { SSC_INPUT,    SSC_NUMBER,         "V_tes_des",              "Design-point velocity to size the TES pipe diameters",                               "m/s",              "",  "controller",            "*",        "",              ""},
+    { SSC_INPUT,    SSC_NUMBER,         "custom_tes_p_loss",      "TES pipe losses are based on custom lengths and coeffs",                               "-",              "",  "controller",            "*",        "",              ""},
+    { SSC_INPUT,    SSC_ARRAY,          "k_tes_loss_coeffs",      "Minor loss coeffs for the coll, gen, and bypass loops",                                "-",              "",  "controller",            "*",        "",              ""},
+    { SSC_INPUT,    SSC_NUMBER,         "custom_sgs_pipe_sizes",  "Use custom SGS pipe diams, wallthks, and lengths",                                     "-",              "",  "controller",            "*",        "",              ""},
+    { SSC_INPUT,    SSC_ARRAY,          "sgs_diams",              "Custom SGS diameters",                                                                 "m",              "",  "controller",            "*",        "",              ""},
+    { SSC_INPUT,    SSC_ARRAY,          "sgs_wallthicks",         "Custom SGS wall thicknesses",                                                          "m",              "",  "controller",            "*",        "",              ""},
+    { SSC_INPUT,    SSC_ARRAY,          "sgs_lengths",            "Custom SGS lengths",                                                                   "m",              "",  "controller",            "*",        "",              ""},
+    { SSC_INPUT,    SSC_NUMBER,         "DP_SGS",                 "Pressure drop within the steam generator",                                           "bar",              "",  "controller",            "*",        "",              ""},
+    { SSC_INPUT,    SSC_NUMBER,         "tanks_in_parallel",      "Tanks are in parallel, not in series, with solar field",                               "-",              "",  "controller",            "*",        "",              ""},
+    { SSC_INPUT,    SSC_NUMBER,         "has_hot_tank_bypass",    "Bypass valve connects field outlet to cold tank",                                      "-",              "",  "controller",            "*",        "",              ""},
+    { SSC_INPUT,    SSC_NUMBER,         "T_tank_hot_inlet_min",   "Minimum hot tank htf inlet temperature",                                               "C",              "",  "controller",            "*",        "",              ""},
+    { SSC_INPUT,    SSC_NUMBER,         "calc_design_pipe_vals",  "Calculate temps and pressures at design conditions for runners and headers",           "-",              "",  "controller",            "*",        "",              ""},
 
 
     //VARTYPE      DATATYPE           NAME                      LABEL                                                                          UNITS           META     GROUP                   REQUIRED_IF  CONSTRAINTS      UI_HINTS
@@ -612,6 +624,18 @@ public:
 		set_unit_value_ssc_double(controller, "t_ch_out_max" ); // 500);
 		set_unit_value_ssc_double(controller, "nodes" ); // 2000);
 		set_unit_value_ssc_double(controller, "f_tc_cold" ); // 2);
+        set_unit_value_ssc_double(controller, "V_tes_des"); // , 1.85);
+        set_unit_value_ssc_double(controller, "custom_tes_p_loss"); // , false);
+        set_unit_value_ssc_array(controller, "k_tes_loss_coeffs"); // , []);
+        set_unit_value_ssc_double(controller, "custom_sgs_pipe_sizes"); // , []);
+        set_unit_value_ssc_array(controller, "sgs_diams"); // , []);
+        set_unit_value_ssc_array(controller, "sgs_wallthicks"); // , []);
+        set_unit_value_ssc_array(controller, "sgs_lengths"); // , []);
+        set_unit_value_ssc_double(controller, "DP_SGS"); // , []);
+        set_unit_value_ssc_double(controller, "tanks_in_parallel"); // , 1 = true);
+        set_unit_value_ssc_double(controller, "has_hot_tank_bypass"); // , 0 = false);
+        set_unit_value_ssc_double(controller, "T_tank_hot_inlet_min"); // , 400);
+        set_unit_value_ssc_double(controller, "calc_design_pipe_vals"); // , 1 = true);
 
 
 
