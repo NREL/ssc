@@ -7,7 +7,7 @@
 #include "cmod_windpower_test.h"
 
 /// Measurement heights are different from the turbine's hub height
-TEST_F(CMWindPowerIntegration, DISABLED_HubHeightInterpolation_cmod_windpower) {
+TEST_F(CMWindPowerIntegration, HubHeightInterpolation_cmod_windpower) {
 	// Case 1: hubheight is 200, error
 	ssc_data_unassign(data, "wind_resource_filename");
 	var_data* windresourcedata = create_winddata_array(1,1);
@@ -31,7 +31,7 @@ TEST_F(CMWindPowerIntegration, DISABLED_HubHeightInterpolation_cmod_windpower) {
 }
 
 /// Using Wind Resource File with various Wake Models
-TEST_F(CMWindPowerIntegration, DISABLED_WakeModelsUsingFile_cmod_windpower){
+TEST_F(CMWindPowerIntegration, WakeModelsUsingFile_cmod_windpower){
 	// Simple Wake Model
 	compute();
 
@@ -149,7 +149,7 @@ TEST_F(CMWindPowerIntegration, UsingDataArray_cmod_windpower){
 }
 
 /// Using Weibull Distribution
-TEST_F(CMWindPowerIntegration, DISABLED_Weibull_cmod_windpower) {
+TEST_F(CMWindPowerIntegration, Weibull_cmod_windpower) {
 	ssc_data_set_number(data, "wind_resource_model_choice", 1);
 	compute();
 
@@ -166,7 +166,7 @@ TEST_F(CMWindPowerIntegration, DISABLED_Weibull_cmod_windpower) {
 
 
 /// Icing and Low Temp Cutoff, with Wind Resource Data
-TEST_F(CMWindPowerIntegration, DISABLED_IcingAndLowTempCutoff_cmod_windpower) {
+TEST_F(CMWindPowerIntegration, IcingAndLowTempCutoff_cmod_windpower) {
 	//modify test inputs
 	ssc_data_unassign(data, "wind_resource_filename");
 	var_data* windresourcedata = create_winddata_array(1,1);
