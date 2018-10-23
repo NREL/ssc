@@ -14,6 +14,8 @@ build_*/* linguist_generated=true
 
 # ...Unless the name matches the following
 # overriding patterns
+*.vcxproj text eol=crlf
+*.sln text eol=crlf
 
 # Definitively text files 
 *.txt text
