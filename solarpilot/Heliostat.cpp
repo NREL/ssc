@@ -110,6 +110,17 @@ void Heliostat::getImageSize(double &sigx_n, double &sigy_n){ sigx_n = _image_si
 string *Heliostat::getHeliostatName(){return &_helio_name;}
 Heliostat* Heliostat::getMasterTemplate(){return _master_template;}
 var_heliostat* Heliostat::getVarMap(){return _var_helio;}
+double Heliostat::getReceiverProjectedArea(Receiver* which)
+{
+    /*
+    Return the projected area of the receiver 'which' (default 0 for 1 receiver) from the perspective
+    of the current heliostat.
+    */
+    if (_recs_projected_area.find(which) == _recs_projected_area.end())
+        return std::numeric_limits<double>::quiet_NaN();
+
+    return _recs_projected_area[which];
+}
 
 bool Heliostat::IsUserCant(){return _is_user_canted;} //Fetch
 void Heliostat::IsUserCant(bool setting){_is_user_canted = setting;} //Set
@@ -161,6 +172,7 @@ void Heliostat::setPowerToReceiver(double P){eff_data.power_to_rec = P;}
 void Heliostat::setPowerValue(double P){eff_data.power_value = P;}
 void Heliostat::setImageSize(double sigx_n, double sigy_n){ _image_size_xy[0] = sigx_n; _image_size_xy[1] = sigy_n;}
 void Heliostat::setMasterTemplate(Heliostat *htemp){_master_template = htemp;}
+void Heliostat::setReceiverProjectedArea(double area, Receiver* which){ _recs_projected_area[which] = area; }
 
 void Heliostat::resetMetrics(){
 	eff_data.resetMetrics();

@@ -81,6 +81,7 @@ class Heliostat : public mod_base
 		_corners,	//Position in global coordinates of the heliostat corners (used for blocking and shadowing)
 		_shadow;	//Position in global coordinates of the heliostat shadow
 	Heliostat* _master_template;	//Pointer to the template used to create this heliostat
+    unordered_map<Receiver*, double> _recs_projected_area;  //the projected aperture area of each receiver from this heliostat
 		
 	matrix_t<double>
 		_mu_MN,		//Normalized mirror shape hermite expansion coefficients (n_terms x n_terms)
@@ -173,6 +174,7 @@ public:
 	double getZenithTrack();
     double getArea();
     double getCollisionRadius();
+    double getReceiverProjectedArea(Receiver* which_rec = 0);
 	std::vector<Heliostat*> *getNeighborList();
 	std::vector<sp_point> *getCornerCoords();
 	std::vector<sp_point> *getShadowCoords();
@@ -232,6 +234,7 @@ public:
     void setEnergyValue(double E);
 	void setImageSize(double sigx_n, double sigy_n);
 	void setMasterTemplate(Heliostat *htemp);
+    void setReceiverProjectedArea(double area, Receiver* which_rec = 0);
 
  } ;
 

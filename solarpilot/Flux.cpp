@@ -3262,12 +3262,27 @@ void Flux::calcReceiverTargetOrder(SolarField &SF)
         std::vector<s_sort_couple> areas(active_receivers.size());
         int i = 0;
         for (std::vector<Receiver*>::iterator rec = active_receivers.begin(); rec != active_receivers.end(); rec++)
-            areas.at(i++).set((void*)(*rec)->getHeliostatPreferenceList(), s_projected_area_htor(&*hit, *rec, tht) );
+        {
+            areas.at(i++).set( (void*)(*rec)->getHeliostatPreferenceList(), s_projected_area_htor(&*hit, *rec, tht));
+            hit->setReceiverProjectedArea(areas.back().val, *rec);  //hold onto projected area for other calculations
+        }
 
         //now sort by area
         std::sort(areas.begin(), areas.end(), [](s_sort_couple &a, s_sort_couple &b) { return a.val > b.val; });
+        
         //add to the helio ranks the heliostat object and the preference metric
-        double pref_metric = areas.at(0).val / (areas.at(1).val > 0. ? areas.at(1).val : 1.e-6);
+        double
+            a0 = areas.at(0).val,
+            a1 = areas.at(1).val;
+
+        double pref_metric;
+
+        if (a0 < 0. && a1 < 0.)
+            pref_metric = 1.e-6 * a0;
+        else if (a1 < 0.)
+            pref_metric = a0 / 1.e-6;
+        else
+            pref_metric = a0 / a1;
 
         rank_helpers.push_back( s_rank_helper() );
         rank_helpers.back().h = &*hit;
@@ -3317,18 +3332,35 @@ void Flux::calcBestReceiverTarget(Heliostat *H, vector<Receiver*> *Recs, double 
         PointVect NV;	//Normal vector from the receiver
 		Recs->at(0)->CalculateNormalVector(*hpos, NV);	//Get the receiver normal vector
 	}
-	else{
-		//Determine the projected area for each receiver
-		isave = 0; projarea_max = -9.e99;
-		for(i=0; i<Nrec; i++){
-			//Calculate a rough receiver-to-heliostat vector
-			projarea.at(i) = s_projected_area_htor(H, Recs->at(i), tht, &r_to_h);
-			//Is this the best one?
-			if(projarea.at(i) > projarea_max){ 
-				projarea_max = projarea.at(i);
-				isave = i;
-			}
-		}
+	else
+    {
+        if (H->IsMultiReceiverAssigned())
+        {
+            isave = 0.;
+            for (i = 0; i < Nrec; i++)
+            {
+                if (Recs->at(i) == H->getWhichReceiver())
+                {
+                    isave = i;
+                    break;
+                }
+            }
+            s_projected_area_htor(H, Recs->at(i), tht, &r_to_h); //updates r_to_h
+        }
+        else
+        {
+		    //Determine the projected area for each receiver
+		    isave = 0; projarea_max = -9.e99;
+		    for(i=0; i<Nrec; i++){
+			    //Calculate a rough receiver-to-heliostat vector
+			    projarea.at(i) = s_projected_area_htor(H, Recs->at(i), tht, &r_to_h);
+			    //Is this the best one?
+			    if(projarea.at(i) > projarea_max){ 
+				    projarea_max = projarea.at(i);
+				    isave = i;
+			    }
+		    }
+        }
 	}
 	
 	if(rtoh != 0){
