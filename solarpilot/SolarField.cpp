@@ -3137,8 +3137,11 @@ void SolarField::Simulate(double azimuth, double zenith, sim_params &P)
 	updateAllTrackVectors(Sun);
     
     //Calculate aim points
-    P.is_layout = psave;
-    calcAllAimPoints(Sun, P); 
+    if (!psave)     //if this actually was a layout call, no need to redo aimpoints
+    {
+        P.is_layout = psave;
+        calcAllAimPoints(Sun, P);
+    }
     
     //Update the heliostat neighbors to include possible shadowers
 	UpdateNeighborList(_helio_extents, P.is_layout ? 0. : zenith);		//don't include shadowing effects in layout (zenith = 0.)
@@ -3253,8 +3256,23 @@ void SolarField::SimulateHeliostatEfficiency(SolarField *SF, Vect &Sun, Heliosta
 	double eta_total = helios->calcTotalEfficiency();
 	double power = eta_total * P.dni * helios->getArea() * eta_rec_abs;
 	helios->setPowerToReceiver( power );
-	helios->setPowerValue( power * P.Simweight*P.TOUweight * Rec->getThermalEfficiency() );
+    double power_value = power * P.Simweight*P.TOUweight * Rec->getThermalEfficiency();
+	helios->setPowerValue( power_value );
     helios->setEnergyValue(power * P.Simweight * Rec->getThermalEfficiency()); //W-hr -- P.Simweight has units [hr] here
+
+    if (P.is_layout && SF->getActiveReceiverCount() > 1)
+    {
+        try
+        {
+            helios->getReceiverPowerAlloc().at(helios->getWhichReceiver()) += power_value;  //must use at() to catch exception
+        }
+        catch (std::out_of_range &oor)
+        {
+            //no key, so initialize
+            helios->getReceiverPowerAlloc()[helios->getWhichReceiver()] = 0.;
+        }
+
+    }
 
 	return;
 	

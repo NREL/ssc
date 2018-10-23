@@ -3264,7 +3264,6 @@ void Flux::calcReceiverTargetOrder(SolarField &SF)
         for (std::vector<Receiver*>::iterator rec = active_receivers.begin(); rec != active_receivers.end(); rec++)
         {
             areas.at(i++).set( (void*)(*rec)->getHeliostatPreferenceList(), s_projected_area_htor(&*hit, *rec, tht));
-            hit->setReceiverProjectedArea(areas.back().val, *rec);  //hold onto projected area for other calculations
         }
 
         //now sort by area
