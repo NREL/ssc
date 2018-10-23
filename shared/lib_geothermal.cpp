@@ -90,24 +90,24 @@ namespace geothermal
 	const double WATER_LOSS_PERCENT = 0.02;							// 2%
 	const double EGS_TIME_INPUT = 3.076;							// years, not really explained - user is supposed to vary input until a calculated value equals plant design temp [7C.EGS Subsrfce HX].D42 (fTimeStar)
 	const double FRACTURE_LENGTH_ADJUSTMENT = 2;					// used for one instance of where the EGS fracture length is used.  All others use the original fracture length
-	const double DELTA_PRESSURE_HP_FLASH_PSI = 2.2;
+	const double DELTA_PRESSURE_HP_FLASH_PSI = 1.0;					//Was 2.2 -> now changed to 1.0 (as seen in GETEM on 10/09/18)
 	const double DELTA_PRESSURE_LP_FLASH_PSI = 1.0;
-	const double DELTA_TEMPERATURE_CWF = 30.0;						// degrees F
-	const double TEMPERATURE_PINCH_PT_CONDENSER_F = 10.0;
-	const double TEMPERATURE_PINCH_PT_COOLING_TOWER_F = 15;
-	const double PRESSURE_CONDENSER_NCG_PARTIAL_INHG = 0.5;			// inches of Mercury
+	const double DELTA_TEMPERATURE_CWF = 25.0;						// (degrees F) Was 30.0 -> now changed to 25.0 (as seen in GETEM on 10/09/18)
+	const double TEMPERATURE_PINCH_PT_CONDENSER_F = 7.5;			//Was 10.0 -> now changed to 7.5 (as seen in GETEM on 10/09/18)
+	const double TEMPERATURE_PINCH_PT_COOLING_TOWER_F = 5;			//Was 15 -> now changed to 5.0 (as seen in GETEM on 10/09/18)
+	const double PRESSURE_CONDENSER_NCG_PARTIAL_INHG = 0.32;			// (inches of Mercury) was 0.5 -> now changed to 0.32 (as seen in GETEM on 10/09/18)
 	const double GEOTHERMAL_FLUID_FOR_FLASH = 1000;					// D67 in "5C.Flash-Steam Plant Perf" [was an integer, not sure why]
-	const double EFFICIENCY_TURBINE = 0.825;
+	const double EFFICIENCY_TURBINE = 0.80;							//Was 0.825 -> now changed to 0.80 (as seen in GETEM on 10/09/18)
 	const double EFFICIENCY_GENERATOR = 0.98;
 	const double EFFICIENCY_PUMP_FLASH = 0.7;
-	const ncgRemovalTypes NCG_REMOVAL_TYPE = JET;
+	const ncgRemovalTypes NCG_REMOVAL_TYPE = HYBRID ;					//Always type JET??
 	const int NUMBER_OF_COOLING_STAGES = 3;							// 1,2, or 3
-	const double NCG_LEVEL_PPM = 100;
+	const double NCG_LEVEL_PPM = 2000;								//Was 100 -> now changed to 2000 (as seen in GETEM on 10/09/18)
 	const double MOLE_WEIGHT_NCG = 44.0;
 	const double MOLE_WEIGHT_H2O = 18.0;
-	const double BASE_CW_PUMP_HEAD_FT = 60.0;			
+	const double BASE_CW_PUMP_HEAD_FT = 65.0;						//Was 60.0 -> now changed to 65.0 (as seen in GETEM on 10/09/18)		
 	const condenserTypes CONDENSER_TYPE = SURFACE;
-	const double INJECTION_PUMPING_CYCLES = 6.0;
+	const double INJECTION_PUMPING_CYCLES = 5.0;					//Was  6.0 -> now changed to 5.0 (as seen in GETEM on 10/09/18) - cell #D133
 	const double ADDITIONAL_CW_PUMP_HEAD_SURFACE = 10 * 144 / physics::WATER_DENSITY;
 	//const double MAX_TEMPERATURE_DECLINE_C = 30;
 	const double FINAL_YEARS_WITH_NO_REPLACEMENT = 5;
@@ -618,7 +618,7 @@ private:
 	int FlashCount(void);
 	double calculateDH(double pressureIn);
 	double TemperatureWetBulbF(void);
-	double temperatureCondF(void); // D71 - deg F
+	double temperatureCondF(void); // D72 - deg F
 	double pressureSaturation(void); // D72 - psi
 	double pressureCondenser(void); // D74 - psi
 
@@ -1364,8 +1364,8 @@ double CGeothermalAnalyzer::totalVentFlow(int st) { return ncgFlowLbsPerHour() +
 double CGeothermalAnalyzer::moleWeightVent(int st) { return totalVentFlow(st) /(ncgFlowMolesPerHour() + h2oMolesPerHour(st)); }											
 double CGeothermalAnalyzer::suctionSteamRatio(int st) { 
 	mp_geo_out -> pressure_ratio_1 = pSuction(1) / mp_geo_out->md_PressureHPFlashPSI;
-	mp_geo_out-> pressure_ratio_2 = pSuction(2) / mp_geo_out->md_PressureHPFlashPSI;
-	mp_geo_out-> pressure_ratio_3 = pSuction(3) / mp_geo_out->md_PressureHPFlashPSI;
+	//mp_geo_out-> pressure_ratio_2 = pSuction(2) / mp_geo_out->md_PressureHPFlashPSI;
+	//mp_geo_out-> pressure_ratio_3 = pSuction(3) / mp_geo_out->md_PressureHPFlashPSI;
 	return pSuction(st) / mp_geo_out->md_PressureHPFlashPSI; }																	
 double CGeothermalAnalyzer::AR(int stage) { return ((3.5879 * pow(prJet(stage),-2.1168)) + 0.1) * pow(suctionSteamRatio(stage),(-1.155 * pow(prJet(stage),-0.0453))); }
 double CGeothermalAnalyzer::ERd(int stage) { return (1.0035 * AR(stage) + 8.9374)* pow(suctionSteamRatio(stage),(2.9594* pow(AR(stage),-0.8458) + 0.99)); }
@@ -1387,7 +1387,7 @@ double CGeothermalAnalyzer::calculateDH(double pressureIn)
 double CGeothermalAnalyzer::TemperatureWetBulbF(void) { return physics::CelciusToFarenheit( mo_geo_in.md_TemperatureWetBulbC); }
 double CGeothermalAnalyzer::temperatureCondF(void)
 {	// D71 - deg F
-	return TemperatureWetBulbF() + geothermal::DELTA_TEMPERATURE_CWF + geothermal::TEMPERATURE_PINCH_PT_CONDENSER_F + geothermal::TEMPERATURE_PINCH_PT_COOLING_TOWER_F;
+	return (TemperatureWetBulbF() + geothermal::DELTA_TEMPERATURE_CWF + geothermal::TEMPERATURE_PINCH_PT_CONDENSER_F + geothermal::TEMPERATURE_PINCH_PT_COOLING_TOWER_F);
 }
 double CGeothermalAnalyzer::pressureSaturation(void) { return geothermal::oPSatConstants.evaluate(temperatureCondF()); }// D72 - psi
 double CGeothermalAnalyzer::pressureCondenser(void)
@@ -1474,10 +1474,10 @@ double CGeothermalAnalyzer::pumpWorkFromSteamFlow(double flow)
 	double pumpHead = geothermal::BASE_CW_PUMP_HEAD_FT + geothermal::ADDITIONAL_CW_PUMP_HEAD_SURFACE;
 	return CalculatePumpWorkInKW(cwFlow, pumpHead);
 }
-double CGeothermalAnalyzer::cwPumpWorkKWByStage(int st) { return pumpWorkFromSteamFlow(condensedSteamLbPerHour(st)); } // D199 - kW
+double CGeothermalAnalyzer::cwPumpWorkKWByStage(int st) { return pumpWorkFromSteamFlow(condensedSteamLbPerHour(st)); } // D203- kW
 double CGeothermalAnalyzer::cwPumpWorkKW(void) { 
 	mp_geo_out -> cw_pump_work = cwPumpWorkKWByStage(1) + cwPumpWorkKWByStage(2) + cwPumpWorkKWByStage(3);
-	return cwPumpWorkKWByStage(1) + cwPumpWorkKWByStage(2) + cwPumpWorkKWByStage(3); } // D305 - kW, part of I116
+	return cwPumpWorkKWByStage(1) + cwPumpWorkKWByStage(2) + cwPumpWorkKWByStage(3); } // D305 - kW, part of L105
 
 
 // Condensate Pump Power
@@ -1488,10 +1488,10 @@ double CGeothermalAnalyzer::condensatePumpPowerKW(void) {
 	return CalculatePumpWorkInKW(overAllSteam(), condensatePumpHead()); } // D126->kw, part of I106
 //double CGeothermalAnalyzer::condensatePumpHeadByStage(int st) { return geothermal::PSItoFTB(geothermal::PRESSURE_AMBIENT_PSI + 1 - pInter(st)); } // D201, D249, D297
 double CGeothermalAnalyzer::condensatePumpHeadByStage(int st) { return geothermal::PSItoFTB(mo_geo_in.md_PressureAmbientPSI + 1 - pInter(st)); } // D201, D249, D297
-double CGeothermalAnalyzer::condensatePumpWorkByStage(int st) { return CalculatePumpWorkInKW(condensedSteamLbPerHour(st), condensatePumpHeadByStage(st)); } // D203, ... kW
+double CGeothermalAnalyzer::condensatePumpWorkByStage(int st) { return CalculatePumpWorkInKW(condensedSteamLbPerHour(st), condensatePumpHeadByStage(st)); } // D207, ... kW
 double CGeothermalAnalyzer::totalCondensatePumpWorkKW(void) { 
-	mp_geo_out ->ncg_condensate_pump = condensatePumpWorkByStage(1) + condensatePumpWorkByStage(2) + condensatePumpWorkByStage(3);
-	return condensatePumpWorkByStage(1) + condensatePumpWorkByStage(2) + condensatePumpWorkByStage(3); } // D306 - kW
+	mp_geo_out ->ncg_condensate_pump = condensatePumpWorkByStage(1) + condensatePumpWorkByStage(2) + condensatePumpWorkByStage(3); //D310
+	return condensatePumpWorkByStage(1) + condensatePumpWorkByStage(2) + condensatePumpWorkByStage(3); } // D310 - kW
 double CGeothermalAnalyzer::condensatePumpingKW(void) { return condensatePumpPowerKW() + totalCondensatePumpWorkKW(); } // I106 - kW
 
 // Fan Power
@@ -1501,9 +1501,11 @@ double CGeothermalAnalyzer::qRejectTotal(void) {
 	mp_geo_out->qRejectByStage_2 = qRejectByStage(2);
 	mp_geo_out->qRejectByStage_3 = qRejectByStage(3);
 
-	mp_geo_out->qRejectedTotal = qRejectByStage(1) + qRejectByStage(2) + qRejectByStage(3);
+	//mp_geo_out->qRejectedTotal = qRejectByStage(1) + qRejectByStage(2) + qRejectByStage(3);
 	return qRejectByStage(1) + qRejectByStage(2) + qRejectByStage(3); } // D303
-double CGeothermalAnalyzer::qRejectedTower(void) { return qCondenser() + qRejectTotal(); } // D102
+double CGeothermalAnalyzer::qRejectedTower(void) { 
+	mp_geo_out->qRejectedTotal = qCondenser() + qRejectTotal();
+	return qCondenser() + qRejectTotal(); } // D102
 double CGeothermalAnalyzer::fanPowerCoeffA(void) { return -2.0814 * log(geothermal::DELTA_TEMPERATURE_CWF) + 10.6013; } // O95
 double CGeothermalAnalyzer::fanPowerCoeffB(void) { return -0.0188 * pow(geothermal::DELTA_TEMPERATURE_CWF,0.0232); } // P95
 double CGeothermalAnalyzer::fanPower(void) { return fanPowerCoeffA() * exp(this->TemperatureWetBulbF() * fanPowerCoeffB()); } // D103 - hp per MMBtu/hr
@@ -1514,14 +1516,16 @@ double CGeothermalAnalyzer:: deltaPressureByStage(int st) { return pInter(st) - 
 double CGeothermalAnalyzer:: densityForVacuumPump(int st) { return pSuction(st) * moleWeightVent(st) /((temperatureCondF() + 460)*10.7316); }// D166, D215, D263 - lb/ft^3
 double CGeothermalAnalyzer:: vaccumPumpHead(int st) { return deltaPressureByStage(st) * 144 / densityForVacuumPump(st); }	// D175, D224, D272 - ft
 double CGeothermalAnalyzer:: vacuumPumpWorkByStage(int st)
-{ // D178, D227, D275 - kW
+{ // D182, D231, D279 - kW
 	return (geothermal::NCG_REMOVAL_TYPE == VAC_PUMP || (st == 3 && geothermal::NCG_REMOVAL_TYPE == HYBRID)) ? CalculatePumpWorkInKW(totalVentFlow(st),  vaccumPumpHead(st)) : 0; 
 }
 double CGeothermalAnalyzer:: vacuumPumpingKW(void) { 
 	mp_geo_out-> v_stage_1 = vacuumPumpWorkByStage(1);
 	mp_geo_out-> v_stage_2 = vacuumPumpWorkByStage(2);
 	mp_geo_out-> v_stage_3 = vacuumPumpWorkByStage(3);
-	return vacuumPumpWorkByStage(1) + vacuumPumpWorkByStage(2) + vacuumPumpWorkByStage(3); }	// D307, I119
+	mp_geo_out->pressure_ratio_2 = pInter(1) / mp_geo_out->md_PressureHPFlashPSI;				//pressure ratios used in ncg ejector cost calculation
+	mp_geo_out->pressure_ratio_3 = pInter(2) / mp_geo_out->md_PressureHPFlashPSI;
+	return vacuumPumpWorkByStage(1) + vacuumPumpWorkByStage(2) + vacuumPumpWorkByStage(3); }	// D311, I108
 
 // Condenser Injection Pump Power
 double CGeothermalAnalyzer:: injectionDeltaP(void)
