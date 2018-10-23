@@ -59,4 +59,5 @@ branches:
   only:
   - release
   - develop
+  - master
   
