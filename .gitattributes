@@ -22,6 +22,8 @@ build_*/* linguist_generated=true
 *.c text
 *.cpp text
 *.h text
+*.csv text
+*.lk text
 
 # Ensure those won't be messed up with
 *.jpg binary
