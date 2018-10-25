@@ -113,7 +113,8 @@ struct sim_params
     double TOUweight;   //- weighting factor due to time of delivery
     double Simweight;   //- weighting factor due to simulation setup
     bool is_layout;     //Run simulation in layout mode
-    
+    Receiver* force_receiver;   //Require simulation using the specified receiver. 0 if false, receiver pointer if true
+
     sim_params();
 };
 

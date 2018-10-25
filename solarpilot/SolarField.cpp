@@ -65,6 +65,7 @@
 #include "heliodata.h"
 
 #include "OpticalMesh.h"
+#include "MultiRecOptimize.h"
 
 using namespace std;
 
@@ -78,6 +79,7 @@ sim_params::sim_params()
     TOUweight = 1.; //-
     Simweight = 1.;
     is_layout = false;
+    force_receiver = 0;     //null
 }
 
 //-------Access functions
@@ -1520,6 +1522,7 @@ void SolarField::ProcessLayoutResultsNoSim()
     ProcessLayoutResults(0,0);
 }
 
+
 static std::string s_power_error_message(double qrec, double qdes, std::string rec_name = "the receiver")
 {
     string units;
@@ -1640,7 +1643,25 @@ void SolarField::ProcessLayoutResults( sim_results *results, int nsim_total){
     }
     else
     {
-        Simulate(az_des*D2R, zen_des*D2R, P);
+        if (getActiveReceiverCount() > 1)
+        {
+            /*
+            if multiple receivers, we need to simulate heliostat performance for each one to determine
+            the breakdown of how power could be distributed to each receiver
+            */
+            for (std::vector<Receiver*>::iterator rec = _active_receivers.begin(); rec != _active_receivers.end(); rec++)
+            {
+                P.force_receiver = *rec;
+                Simulate(az_des*D2R, zen_des*D2R, P);
+
+                //process the results for each heliostat
+                for (Hvector::iterator h = _heliostats.begin(); h != _heliostats.end(); h++)
+                    (*h)->getReceiverPowerAlloc()[ *rec ] = (*h)->getPowerToReceiver();
+            }
+            P.force_receiver = 0;
+        }
+        else
+            Simulate(az_des*D2R, zen_des*D2R, P);
     }
 	
     //Calculate the required incident power before thermal losses
@@ -1660,58 +1681,78 @@ void SolarField::ProcessLayoutResults( sim_results *results, int nsim_total){
     unordered_map<Receiver*, Hvector > aim_list;
     if (getActiveReceiverCount() > 1)
     {
-        //initialize
-        for (int i = 0; i < getActiveReceiverCount(); i++)
-            aim_list[_active_receivers.at(i)] = Hvector();
+        ////initialize
+        //for (int i = 0; i < getActiveReceiverCount(); i++)
+        //    aim_list[_active_receivers.at(i)] = Hvector();
 
-        for (int i = 0; i < Npos; i++)
-            aim_list[_heliostats.at(i)->getWhichReceiver()].push_back(_heliostats.at(i));
+        //for (int i = 0; i < Npos; i++)
+        //    aim_list[_heliostats.at(i)->getWhichReceiver()].push_back(_heliostats.at(i));
 
-        double rec_frac_total = 0.;
-        for (int i = 0; i < getActiveReceiverCount(); i++)
-            rec_frac_total += _active_receivers.at(i)->getVarMap()->power_fraction.val;
+        //double rec_frac_total = 0.;
+        //for (int i = 0; i < getActiveReceiverCount(); i++)
+        //    rec_frac_total += _active_receivers.at(i)->getVarMap()->power_fraction.val;
 
-        //create a list of heliostats that are needed by any receiver to meet power requirements
-        std::set<Heliostat*> collated_list;
+        ////create a list of heliostats that are needed by any receiver to meet power requirements
+        //std::set<Heliostat*> collated_list;
 
-        for (int i = 0; i < getActiveReceiverCount(); i++)
+        //for (int i = 0; i < getActiveReceiverCount(); i++)
+        //{
+        //    if (needs_processing)
+        //    {
+        //        Receiver* rec = _active_receivers.at(i);
+        //        Hvector* list = &aim_list[rec];
+        //        std::vector<double> compare;
+        //        for (int j = 0; j < (int)list->size(); j++)
+        //            compare.push_back(list->at(j)->getRankingMetricValue());
+        //    
+        //        //re-sort for each receiver specifically
+        //        quicksort(compare, aim_list[rec]);
+
+        //        //add heliostats from best to worst until the power threshold for the receiver is met
+        //        double qtot = 0.;
+        //        double qlim = rec->getVarMap()->power_fraction.val / rec_frac_total * q_inc_des * 1e6;
+        //        int listsize = (int)list->size();
+        //        for (int j = 0; j < listsize; j++)
+        //        {
+        //            Heliostat *hh = list->at(listsize - 1 - j); //sorted worst to best here, so go backwards
+        //            qtot += hh->getPowerToReceiver();
+        //            //add the needed heliostats to the master set until we're above the power threshold
+        //            collated_list.insert(hh);
+        //            if (qtot > qlim)
+        //                break;
+        //        }
+
+        //        _q_to_rec += qtot;
+
+        //        if (qtot < qlim)
+        //            _sim_error.addSimulationError(s_power_error_message(qtot, qlim, rec->getVarMap()->rec_name.val));
+
+        //        _heliostats.clear();
+        //        _heliostats.reserve(collated_list.size());
+        //        for (std::set<Heliostat*>::iterator hit = collated_list.begin(); hit != collated_list.end(); hit++)
+        //            _heliostats.push_back(*hit);
+        //    }
+        //}
+        multi_rec_opt_helper mroh;
+        mroh.timeout_sec = 60.;
+        mroh.run(this);
+        
+        if (mroh.result_status == multi_rec_opt_helper::RS_INFEASIBLE)
+            _sim_error.addSimulationError("The field can't provide enough power to meet receiver input power requirements.");
+        else if (mroh.result_status == multi_rec_opt_helper::RS_OPTIMAL || mroh.result_status == multi_rec_opt_helper::RS_SUBOPTIMAL)
+            void;
+        else
         {
-            if (needs_processing)
-            {
-                Receiver* rec = _active_receivers.at(i);
-                Hvector* list = &aim_list[rec];
-                std::vector<double> compare;
-                for (int j = 0; j < (int)list->size(); j++)
-                    compare.push_back(list->at(j)->getRankingMetricValue());
-            
-                //re-sort for each receiver specifically
-                quicksort(compare, aim_list[rec]);
-
-                //add heliostats from best to worst until the power threshold for the receiver is met
-                double qtot = 0.;
-                double qlim = rec->getVarMap()->power_fraction.val / rec_frac_total * q_inc_des * 1e6;
-                int listsize = (int)list->size();
-                for (int j = 0; j < listsize; j++)
-                {
-                    Heliostat *hh = list->at(listsize - 1 - j); //sorted worst to best here, so go backwards
-                    qtot += hh->getPowerToReceiver();
-                    //add the needed heliostats to the master set until we're above the power threshold
-                    collated_list.insert(hh);
-                    if (qtot > qlim)
-                        break;
-                }
-
-                _q_to_rec += qtot;
-
-                if (qtot < qlim)
-                    _sim_error.addSimulationError(s_power_error_message(qtot, qlim, rec->getVarMap()->rec_name.val));
-
-                _heliostats.clear();
-                _heliostats.reserve(collated_list.size());
-                for (std::set<Heliostat*>::iterator hit = collated_list.begin(); hit != collated_list.end(); hit++)
-                    _heliostats.push_back(*hit);
-            }
+            _sim_error.addSimulationError("Multiple-receiver heliostat selection optimization failed with an unknown error.");
         }
+        
+        _heliostats.clear();
+        _q_to_rec = 0.;
+        for (Hvector::iterator hit = mroh.included_heliostats.begin(); hit != mroh.included_heliostats.end(); hit++)
+        {
+            _heliostats.push_back(*hit);
+        }
+
     }
     else
     {
@@ -3168,7 +3209,7 @@ void SolarField::Simulate(double azimuth, double zenith, sim_params &P)
     //For each heliostat, assess the losses
 	//for layout calculations, we can speed things up by only calculating the intercept factor for representative heliostats. (similar to DELSOL).
 	int nh = (int)_heliostats.size();
-	if(P.is_layout && _var_map->sf.is_opt_zoning.val && getActiveReceiverCount()==1)
+	if(P.is_layout && _var_map->sf.is_opt_zoning.val && (getActiveReceiverCount()==1 || P.force_receiver))
     {
 		//The intercept factor is the most time consuming calculation. Simulate just a single heliostat in the 
 		//neighboring group and apply it to all the rest.
@@ -3279,19 +3320,19 @@ void SolarField::SimulateHeliostatEfficiency(SolarField *SF, Vect &Sun, Heliosta
 	helios->setPowerValue( power_value );
     helios->setEnergyValue(power * P.Simweight * Rec->getThermalEfficiency()); //W-hr -- P.Simweight has units [hr] here
 
-    if (P.is_layout && SF->getActiveReceiverCount() > 1)
-    {
-        try
-        {
-            helios->getReceiverPowerAlloc().at(helios->getWhichReceiver()) += power_value;  //must use at() to catch exception
-        }
-        catch (std::out_of_range &oor)
-        {
-            //no key, so initialize
-            helios->getReceiverPowerAlloc()[helios->getWhichReceiver()] = 0.;
-        }
+    //if (P.is_layout && SF->getActiveReceiverCount() > 1)
+    //{
+    //    try
+    //    {
+    //        helios->getReceiverPowerAlloc().at(helios->getWhichReceiver()) += power_value;  //must use at() to catch exception
+    //    }
+    //    catch (std::out_of_range &oor)
+    //    {
+    //        //no key, so initialize
+    //        helios->getReceiverPowerAlloc()[helios->getWhichReceiver()] = 0.;
+    //    }
 
-    }
+    //}
 
 	return;
 	
@@ -3631,7 +3672,8 @@ void SolarField::calcAllAimPoints(Vect &Sun, sim_params &P) //bool force_simple,
     Multiple receiver aiming method ------------------------------------------
     */
     int active_rec_count = getActiveReceiverCount();
-    if (active_rec_count > 1)
+
+    if (active_rec_count > 1 && !P.force_receiver )
     {
         std::vector< double > rec_cumulative_power(active_rec_count, 0.);
 
@@ -3749,6 +3791,15 @@ void SolarField::calcAllAimPoints(Vect &Sun, sim_params &P) //bool force_simple,
             }
         }
     }   // ---------------------------- end of multiple reciever method
+    else if (active_rec_count > 1 && P.force_receiver)
+    {
+        //this is normally a multi-receiver case, but we are now forcing aim points at a particular receiver
+        for (int i = 0; i < _heliostats.size(); i++)
+        {
+            _heliostats.at(i)->setWhichReceiver( P.force_receiver );
+            _heliostats.at(i)->IsMultiReceiverAssigned(true);
+        }
+    }
 
 
     int method = _var_map->flux.aim_method.mapval();
