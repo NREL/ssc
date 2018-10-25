@@ -51,8 +51,8 @@
 #include "csp_solver_util.h"
 #include "sam_csp_util.h"
 
-#include <shared/lib_weatherfile.h>
-#include <shared/lib_irradproc.h>
+#include "lib_weatherfile.h"
+#include "lib_irradproc.h"
 
 C_csp_weatherreader::C_csp_weatherreader()
 {

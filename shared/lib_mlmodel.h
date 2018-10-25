@@ -53,7 +53,11 @@
 
 
 #include "lib_pvmodel.h"
-#include "mlm_spline.h"
+//#include "mlm_spline.h"
+#include "bspline.h"
+
+using namespace SPLINTER;
+
 
 class mlmodel_module_t : public pvmodule_t
 {
@@ -121,7 +125,9 @@ private:
 	double I_0ref;
 	double I_Lref;
 	double Vbi;
-	tk::spline iamSpline;
+//	tk::spline iamSpline;
+	BSpline m_bspline3;
+
 };
 
 class mock_celltemp_t : public pvcelltemp_t
