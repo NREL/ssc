@@ -267,12 +267,31 @@ SolarField::SolarField( const SolarField &sf )
 		//Recreate the active receivers list
 		if(rec->getVarMap()->is_enabled.val)
 			_active_receivers.push_back( rec );
-	}
+        //update the receiver preferred heliostat list
+        Hvector *hpref = rec->getHeliostatPreferenceList();
+        for (int j = 0; j < (int)hpref->size(); j++)
+            hpref->at(j) = hp_map[hpref->at(j)];
 
+	}
 
 	//Assign the correct receiver to each heliostat
 	for(int i=0; i<npos; i++){
-		_heliostats.at(i)->setWhichReceiver( r_map[ _heliostats.at(i)->getWhichReceiver() ] );
+        Heliostat* h = _heliostats.at(i);
+		h->setWhichReceiver( r_map[ h->getWhichReceiver() ] );
+
+        std::vector<double> rpa_d;
+        std::vector<Receiver*> rpa_r;
+
+        unordered_map<Receiver*, double> rpa = h->getReceiverPowerAlloc();
+        
+        for (unordered_map<Receiver*, double>::iterator rpit = rpa.begin(); rpit != rpa.end(); rpit++)
+        {
+            rpa_r.push_back(rpit->first);
+            rpa_d.push_back(rpit->second);
+        }
+        rpa.clear();
+        for(int j=0; j<(int)rpa_r.size(); j++)
+            rpa[ r_map[ rpa_r[j] ] ] = rpa_d[j];
 	}
 
 	//Flux
