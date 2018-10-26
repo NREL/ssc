@@ -50,6 +50,7 @@
 #include "core.h"
 #include "tckernel.h"
 #include "common.h"
+#include <algorithm>
 
 static var_info _cm_vtab_tcsmslf[] = {
 //    VARTYPE           DATATYPE          NAME                 LABEL                                                                                 UNITS            META            GROUP            REQUIRED_IF                 CONSTRAINTS             UI_HINTS
@@ -356,6 +357,12 @@ static var_info _cm_vtab_tcsmslf[] = {
     { SSC_OUTPUT,       SSC_ARRAY,       "q_pb",              "Cycle thermal power input",                                      "MWt",          "",            "Type251",        "*",                       "LENGTH=8760",           "" },
     //{ SSC_OUTPUT,       SSC_ARRAY,       "P_cond",            "Condenser pressure",                                             "Pa",           "",            "Type250",        "*",                       "LENGTH=8760",           "" },
     //{ SSC_OUTPUT,       SSC_ARRAY,       "f_bays",            "Condenser fraction of operating bays",                           "",         "",            "Type250",        "*",                       "LENGTH=8760",           "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "pipe_sgs_diams",    "Pipe diameters in SGS",                                          "m",            "",            "Type251",        "*",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "pipe_sgs_wallthk",  "Pipe wall thickness in SGS",                                     "m",            "",            "Type251",        "*",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "pipe_sgs_mdot_dsn", "Mass flow SGS pipes at design conditions",                       "kg/s",         "",            "Type251",        "*",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "pipe_sgs_vel_dsn",  "Velocity in SGS pipes at design conditions",                     "m/s",          "",            "Type251",        "*",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "pipe_sgs_T_dsn",    "Temperature in SGS pipes at design conditions",                  "C",            "",            "Type251",        "*",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "pipe_sgs_P_dsn",    "Pressure in SGS pipes at design conditions",                     "bar",          "",            "Type251",        "*",                       "",                      "" },
 
     //fossil backup
     //{ SSC_OUTPUT,       SSC_ARRAY,       "Fuel_usage",        "Fossil fuel usage (all subsystems)",                             "MMBTU",        "",            "SumCalc",        "*",                       "LENGTH=8760",           "" },
@@ -636,7 +643,8 @@ public:
         set_unit_value_ssc_double(controller, "has_hot_tank_bypass"); // , 0 = false);
         set_unit_value_ssc_double(controller, "T_tank_hot_inlet_min"); // , 400);
         set_unit_value_ssc_double(controller, "calc_design_pipe_vals"); // , 1 = true);
-
+        set_unit_value_ssc_double(controller, "eta_pump"); // , 0.85);
+        set_unit_value_ssc_double(controller, "HDR_rough"); // , 4.57E-05);
 
 
 		set_unit_value_ssc_matrix(tou_translator, "weekday_schedule");
@@ -645,7 +653,7 @@ public:
 
 		set_unit_value(controller, "T_field_out", as_double("T_loop_out"));
 		set_unit_value(controller, "T_pb_out", as_double("T_loop_in_des"));
-		set_unit_value_ssc_double(controller, "m_pb_demand", 0.0);
+		//set_unit_value_ssc_double(controller, "m_pb_demand", 0.0);
 
 
 		// Set Common Type 224 Power Cycle Parameters
@@ -712,8 +720,8 @@ public:
 
 
 		//Set initial values
-		set_unit_value_ssc_double(powerblock, "T_db" ); // 15.);
-		set_unit_value_ssc_double(powerblock, "P_amb" ); // 1.);
+		set_unit_value_ssc_double(powerblock, "T_db", 0.0); // 15.);
+		set_unit_value_ssc_double(powerblock, "P_amb", 1.0); // 1.);
 //		set_unit_value_ssc_double(powerblock, "T_htf_hot" ); // T_hot_des);
 //		set_unit_value(controller, "T_htf_hot", as_double("T_loop_out"));
 //		set_unit_value_ssc_double(powerblock, "m_dot_htf_init"); // 0.);
@@ -750,7 +758,7 @@ public:
 		//Connect weather reader to controller
 		bConnected &= connect(weather, "beam", controller, "I_bn");
 		bConnected &= connect(weather, "tdry", controller, "T_amb");
-		bConnected &= connect(solarfield, "m_dot_avail", controller, "m_dot_field");
+		bConnected &= connect(solarfield, "m_dot_field_htf", controller, "m_dot_field");
 		bConnected &= connect(powerblock, "m_dot_htf_ref", controller, "m_dot_htf_ref");
 		bConnected &= connect(solarfield, "T_sys_h", controller, "T_field_out");
 		bConnected &= connect(powerblock, "T_htf_cold", controller, "T_pb_out");
@@ -804,6 +812,27 @@ public:
 		// get the outputs
 		if (!set_all_output_arrays() )
 			throw exec_error( "tcsmslf", util::format("there was a problem returning the results from the simulation.") );
+        
+        // design parameters
+        int nv;
+        double *sgs_diams = get_unit_value(controller, "SGS_diams", &nv);
+        ssc_number_t *sgs_diams_cm = allocate("pipe_sgs_diams", nv);
+        std::copy(sgs_diams, sgs_diams + nv, sgs_diams_cm);
+        double *sgs_wallthk = get_unit_value(controller, "SGS_wall_thk", &nv);
+        ssc_number_t *sgs_wallthk_cm = allocate("pipe_sgs_wallthk", nv);
+        std::copy(sgs_wallthk, sgs_wallthk + nv, sgs_wallthk_cm);
+        double *sgs_mdot_dsn = get_unit_value(controller, "SGS_m_dot_des", &nv);
+        ssc_number_t *sgs_mdot_dsn_cm = allocate("pipe_sgs_mdot_dsn", nv);
+        std::copy(sgs_mdot_dsn, sgs_mdot_dsn + nv, sgs_mdot_dsn_cm);
+        double *sgs_vel_dsn = get_unit_value(controller, "SGS_vel_des", &nv);
+        ssc_number_t *sgs_vel_dsn_cm = allocate("pipe_sgs_vel_dsn", nv);
+        std::copy(sgs_vel_dsn, sgs_vel_dsn + nv, sgs_vel_dsn_cm);
+        double *sgs_T_dsn = get_unit_value(controller, "SGS_T_des", &nv);
+        ssc_number_t *sgs_T_dsn_cm = allocate("pipe_sgs_T_dsn", nv);
+        std::copy(sgs_T_dsn, sgs_T_dsn + nv, sgs_T_dsn_cm);
+        double *sgs_P_dsn = get_unit_value(controller, "SGS_P_des", &nv);
+        ssc_number_t *sgs_P_dsn_cm = allocate("pipe_sgs_P_dsn", nv);
+        std::copy(sgs_P_dsn, sgs_P_dsn + nv, sgs_P_dsn_cm);
 
 		// performance adjustement factors
 		adjustment_factors haf(this, "adjust");
