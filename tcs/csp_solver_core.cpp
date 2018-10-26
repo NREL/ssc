@@ -679,6 +679,8 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 	// Block dispatch saved variables
 	bool is_q_dot_pc_target_overwrite = false;
 
+	double m_cycle_max_frac_base = m_cycle_max_frac;
+
 	//mf_callback(m_cdata, 0.0, 0, 0.0);
 
     double start_time = mc_kernel.get_sim_setup()->m_sim_time_start;
@@ -712,6 +714,9 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 				mc_tes.reset_storage_to_initial_state();
 		}
 		
+		if (mc_tou.mc_dispatch_params.m_is_disp_constr)  
+			mc_power_cycle.reset_cycle_max_frac(m_cycle_max_frac_base);  // reset cycle max frac back to original value
+
 		// Get tou for timestep
 		mc_tou.call(mc_kernel.mc_sim_info.ms_ts.m_time, mc_tou_outputs);
 		size_t tou_period = mc_tou_outputs.m_csp_op_tou;	//[-]
@@ -869,12 +874,14 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 
 
         bool opt_complete = false;
+		
 
         //Run dispatch optimization?
 		// assume dispatch optimization frequency, horizon and horizon update frequency are defined relative to the start of the year, regardless of the simulation start time
 		// if simulation is started at an arbitrary point in time (i.e. mid-day), the first optimization will include only the "rest" of that horizon and all subsequent optimizations will follow the original frequency/horizon schedule
         if(mc_tou.mc_dispatch_params.m_dispatch_optimize && !skip_day)
         {
+			
 
 			double hour_now = mc_kernel.mc_sim_info.ms_ts.m_time / 3600.;
 			int opt_horizon = mc_tou.mc_dispatch_params.m_optimize_horizon;  			
@@ -1146,12 +1153,22 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
                  //  + dispatch.outputs.q_pb_startup.at( dispatch.m_current_read_step ) )
                   // / 1000. ;
 				
-				
-				q_pc_max *= dispatch.cap_frac.at(dispatch.m_current_read_step); // Enforce capacity constraints
 
+				// Enforce capacity constraints
+				if (mc_tou.mc_dispatch_params.m_is_disp_constr)
+				{
+					q_pc_max *= dispatch.cap_frac.at(dispatch.m_current_read_step);
+					q_dot_pc_su_max = fmin(q_dot_pc_su_max, q_pc_max);
 
+					double cycle_max_frac = m_cycle_max_frac_base;
+					if (dispatch.cap_frac.at(dispatch.m_current_read_step) < 1.0)
+						cycle_max_frac = dispatch.cap_frac.at(dispatch.m_current_read_step);
+					mc_power_cycle.reset_cycle_max_frac(cycle_max_frac);
+				}
+
+				// Set q_pc_target and q_pc_max
 				int t = dispatch.m_current_read_step;
-				if (dispatch.outputs.q_pb_startup.at(t) > 0.0 && dispatch.outputs.q_pb_target.at(t) > 0.0)  // Power block is both starting up and operating
+				if (dispatch.outputs.q_pb_startup.at(t) > 1.e-6 && dispatch.outputs.q_pb_target.at(t) > 1.e-6)  // Power block is both starting up and operating
 				{
 
 					double time_acc = 0.0;
@@ -1169,14 +1186,15 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 					else
 						avail_storage = dispatch.params.e_tes_init / dispatch.params.dt;
 
-					double q_dot_pc_su_dispatch = fmin(dispatch.params.q_pb_max, avail_storage + dispatch.outputs.q_sf_expected.at(t));  // Max thermal power available to start up
+					double qmax = dispatch.cap_frac.at(t)*dispatch.params.q_pb_max;
+					double q_dot_pc_su_dispatch = fmin(qmax, avail_storage + dispatch.outputs.q_sf_expected.at(t));  // Max thermal power available to start up
 					double fstart = fmin(dispatch.outputs.q_pb_startup.at(t) / q_dot_pc_su_dispatch, 0.9999);    // Fraction of time step needed to complete startup at max thermal power
 					fstart = fmax(fstart, fstart_time);
 
 					if (pc_operating_state == C_csp_power_cycle::OFF || pc_operating_state == C_csp_power_cycle::STARTUP)  // Cycle currently off or starting up
-						q_pc_target = fmin(dispatch.params.q_pb_max / 1000., dispatch.outputs.q_pb_startup.at(t) / fstart / 1000.);
+						q_pc_target = fmin(qmax / 1000., dispatch.outputs.q_pb_startup.at(t) / fstart / 1000.);
 					else
-						q_pc_target = fmin(dispatch.params.q_pb_max/1000., dispatch.outputs.q_pb_target.at(t) / (1. - fstart) / 1000.);   // Cycle on or in standby
+						q_pc_target = fmin(qmax/1000., dispatch.outputs.q_pb_target.at(t) / (1. - fstart) / 1000.);   // Cycle on or in standby
 				}
 				else   
 					q_pc_target = (dispatch.outputs.q_pb_target.at(t) + dispatch.outputs.q_pb_startup.at(t)) / 1000.;
@@ -1251,26 +1269,35 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
             }
             
 
-			if (!dispatch.m_last_opt_successful && mc_tou.mc_dispatch_params.m_is_disp_constr)  // dispatch optimization run was not successful -> enforce user-defined capacity constraints from cycle failures
-			{
-				int p = (int)ceil((mc_kernel.mc_sim_info.ms_ts.m_time - sim_setup.m_sim_time_start) / baseline_step) - 1;
-				if (p < (int)mc_tou.mc_dispatch_params.m_disp_cap_constr.size())
-				{
-					q_pc_max = m_cycle_q_dot_des * mc_tou.mc_dispatch_params.m_disp_cap_constr.at(p);
-					q_pc_target = q_pc_max;
-
-					if (q_pc_max < q_pc_min)
-						is_pc_su_allowed = false;
-					if (q_pc_max < q_pc_sb)
-						is_pc_sb_allowed = false;
-
-				}
-			}
-			
-
             disp_time_last = mc_kernel.mc_sim_info.ms_ts.m_time;
                         
         }
+
+
+		// enforce user-defined available capacity constraints from cycle failures (if specified) for non-optimized solution
+		if (mc_tou.mc_dispatch_params.m_is_disp_constr && (!mc_tou.mc_dispatch_params.m_dispatch_optimize || !dispatch.m_last_opt_successful))
+		{
+			int p = (int)ceil((mc_kernel.mc_sim_info.ms_ts.m_time - sim_setup.m_sim_time_start) / baseline_step) - 1;
+			if (p < (int)mc_tou.mc_dispatch_params.m_disp_cap_constr.size())
+			{
+				double cap_frac = mc_tou.mc_dispatch_params.m_disp_cap_constr.at(p);
+				double cycle_max_frac = m_cycle_max_frac_base;
+				if (cap_frac < 1.0)
+					cycle_max_frac = cap_frac;
+
+				q_pc_max = m_cycle_q_dot_des * cap_frac;
+				q_pc_target = q_pc_max;
+				q_dot_pc_su_max = fmin(q_dot_pc_su_max, q_pc_max);
+				mc_power_cycle.reset_cycle_max_frac(cycle_max_frac);
+
+				if (q_pc_max < q_pc_min)
+					is_pc_su_allowed = false;
+				if (q_pc_max < q_pc_sb)
+					is_pc_sb_allowed = false;
+			}
+		}
+
+
 
 
 		//Run from user-provided dispatch target arrays?  
@@ -1280,6 +1307,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 
 			q_pc_target = mc_tou.mc_dispatch_params.m_q_pc_target_in.at(p);
 			q_pc_max = mc_tou.mc_dispatch_params.m_q_pc_max_in.at(p);
+			q_dot_pc_su_max = fmin(q_dot_pc_su_max, q_pc_max);
 			is_rec_su_allowed = mc_tou.mc_dispatch_params.m_is_rec_su_allowed_in.at(p);
 			is_pc_su_allowed = mc_tou.mc_dispatch_params.m_is_pc_su_allowed_in.at(p);
 			is_pc_sb_allowed = mc_tou.mc_dispatch_params.m_is_pc_sb_allowed_in.at(p);

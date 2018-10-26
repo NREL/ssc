@@ -125,6 +125,7 @@ public:
 	virtual double get_efficiency_at_TPH(double T_degC, double P_atm, double relhum_pct, double *w_dot_condenser=0);
 	virtual double get_efficiency_at_load(double load_frac, double *w_dot_condenser=0);
 	virtual double get_htf_pumping_parasitic_coef();		//[kWe/kWt]
+	virtual void reset_cycle_max_frac(double max_frac);
 
 	// This can vary between timesteps for Type224, depending on remaining startup energy and time
 	virtual double get_max_q_pc_startup();		//[MWt]

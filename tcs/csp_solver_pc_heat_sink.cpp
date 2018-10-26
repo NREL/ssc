@@ -235,6 +235,11 @@ double C_pc_heat_sink::get_htf_pumping_parasitic_coef()
 	return ms_params.m_htf_pump_coef* (m_m_dot_htf_des) / (ms_params.m_q_dot_des*1000.0);	// kWe/kWt
 }
 
+void C_pc_heat_sink::reset_cycle_max_frac(double max_frac)
+{
+	throw(C_csp_exception("C_pc_heat_sink::reset_cycle_max_frac() is not defined"));
+}
+
 void C_pc_heat_sink::call(const C_csp_weatherreader::S_outputs &weather,
 	C_csp_solver_htf_1state &htf_state_in,
 	const C_csp_power_cycle::S_control_inputs &inputs,
