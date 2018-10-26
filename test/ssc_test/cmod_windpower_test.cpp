@@ -25,7 +25,7 @@ TEST_F(CMWindPowerIntegration, HubHeightInterpolation_cmod_windpower) {
 	compute();
 	ssc_number_t annual_energy;
 	ssc_data_get_number(data, "annual_energy", &annual_energy);
-	EXPECT_GT(annual_energy, 33224154) << "Annual energy should be higher than height at 90";
+	EXPECT_GT(annual_energy, 4e06) << "Annual energy should be higher than height at 90";
 
 	free_winddata_array(windresourcedata);
 }
@@ -181,21 +181,21 @@ TEST_F(CMWindPowerIntegration, IcingAndLowTempCutoff_cmod_windpower) {
 	vt->assign("wind_resource_data", *windresourcedata);
 	vt->assign("en_low_temp_cutoff", 1);
 	vt->assign("en_icing_cutoff", 1);
-	vt->assign("low_temp_cutoff", -10.f);
-	vt->assign("icing_cutoff_temp", 20.f);
+	vt->assign("low_temp_cutoff", 40.f);
+	vt->assign("icing_cutoff_temp", 55.f);
 	vt->assign("icing_cutoff_rh", 0.70f);
 
 	compute();
 
 	ssc_number_t annual_energy;
 	ssc_data_get_number(data, "annual_energy", &annual_energy);
-	EXPECT_NEAR(annual_energy, 33224154 / 2, e) << "Reduced annual energy";
+	EXPECT_NEAR(annual_energy, 2108935, e) << "Reduced annual energy";
 
 	ssc_number_t monthly_energy = ssc_data_get_array(data, "monthly_energy", nullptr)[0];
-	EXPECT_NEAR(monthly_energy, 2.8218e6 / 2, e);
+	EXPECT_NEAR(monthly_energy, 0, e);
 
 	monthly_energy = ssc_data_get_array(data, "monthly_energy", nullptr)[11];
-	EXPECT_NEAR(monthly_energy, 2.8218e6 / 2, e);
+	EXPECT_NEAR(monthly_energy, 986114, e);
 
 	ssc_number_t losses_percent;
 	ssc_data_get_number(data, "cutoff_losses", &losses_percent);

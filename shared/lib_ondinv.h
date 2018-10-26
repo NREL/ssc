@@ -46,14 +46,15 @@
 *  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
 *  THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *******************************************************************************************************/
+#ifndef __lib_ondinv_h
+#define __lib_ondinv_h
 
 #include <string>
 #include <vector>
-#include "mlm_spline.h" // spline interpolator for efficiency curves
+//#include "mlm_spline.h" // spline interpolator for efficiency curves
+#include "bspline.h"
 using namespace std;
-
-#ifndef __lib_ondinv_h
-#define __lib_ondinv_h
+using namespace SPLINTER;
 
 class ond_inverter
 {
@@ -129,7 +130,10 @@ private:
 	bool ondIsInitialized;
 
 	int noOfEfficiencyCurves;
-	tk::spline effSpline[2][3];
+//	tk::spline effSpline[2][3];
+//	BSpline m_bspline3[2][3];
+	BSpline m_bspline3[3];
+	double x_max[3];
 	double x_lim[3];
 	double Pdc_threshold;
 	double a[3];

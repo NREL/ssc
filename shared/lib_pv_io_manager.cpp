@@ -75,6 +75,7 @@ Simulation_IO::Simulation_IO(compute_module* cm, Irradiance_IO & IrradianceIO)
 	stepsPerHour = IrradianceIO.stepsPerHour;
 	dtHour = IrradianceIO.dtHour;
 
+	useLifetimeOutput = false;
 	if (cm->is_assigned("system_use_lifetime_output")) useLifetimeOutput = cm->as_integer("system_use_lifetime_output");
 	numberOfYears = 1;
 	if (useLifetimeOutput) {
