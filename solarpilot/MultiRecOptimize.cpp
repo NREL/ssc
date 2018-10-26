@@ -96,8 +96,21 @@ int multi_rec_opt_helper::run(SolarField *SF)
     /*
 
     */
+    Hvector *helio_candidates = SF->getHeliostats();
 
-    Hvector *helios = SF->getHeliostats();
+    Hvector helios;
+    for (int i = 0; i < helio_candidates->size(); i++)
+    {
+        unordered_map<Receiver*, double> rmap = helio_candidates->at(i)->getReceiverPowerAlloc();
+        bool any = false;
+        for (unordered_map<Receiver*, double>::iterator p = rmap.begin(); p != rmap.end(); p++)
+            if (p->second > 0.)
+                any = true;
+
+        if (any)
+            helios.push_back(helio_candidates->at(i));
+    }
+
     std::vector<Receiver*> *recs = SF->getReceivers();
     int Nrec = recs->size();
 
@@ -114,7 +127,7 @@ int multi_rec_opt_helper::run(SolarField *SF)
     for (int i = 0; i < Nrec; i++)
         rec_design_power[i] *= SF->getVarMap()->sf.q_des.val * 1.e6 / rec_frac_total;
 
-    int Nh = helios->size();
+    int Nh = helios.size();
 
     //heliostat to receiver power fractions
     unordered_map<int, std::vector<double> > power_allocs;
@@ -123,11 +136,11 @@ int multi_rec_opt_helper::run(SolarField *SF)
 
     for (int i = 0; i < Nh; i++)
     {
-        int id = helios->at(i)->getId();
+        int id = helios.at(i)->getId();
 
-        double rank_metric = helios->at(i)->getRankingMetricValue();
+        double rank_metric = helios.at(i)->getRankingMetricValue();
 
-        unordered_map<Receiver*, double> rpa = helios->at(i)->getReceiverPowerAlloc();
+        unordered_map<Receiver*, double> rpa = helios.at(i)->getReceiverPowerAlloc();
 
         power_allocs[id] = std::vector<double>();
         costs[id] = std::vector<double>();
@@ -159,12 +172,27 @@ int multi_rec_opt_helper::run(SolarField *SF)
     //set up objective
     int *col = new int[Nh*Nrec];
     REAL *row = new REAL[Nh*Nrec];
-    for (int j = 0; j < Nrec; j++)
-    {
-        for (int i = 0; i < Nh; i++)
+
+    if (is_performance)
+    {   //performance objective
+        for (int j = 0; j < Nrec; j++)
         {
-            col[j*Nh + i] = O.column("x", i, j);
-            row[j*Nh + i] = costs[helios->at(i)->getId()][j];  //cost of energy proxy for each heliostat
+            for (int i = 0; i < Nh; i++)
+            {
+                col[j*Nh + i] = O.column("x", i, j);
+                row[j*Nh + i] = power_allocs[helios.at(i)->getId()].at(j);
+            }
+        }
+    }
+    else
+    {   //design objective
+        for (int j = 0; j < Nrec; j++)
+        {
+            for (int i = 0; i < Nh; i++)
+            {
+                col[j*Nh + i] = O.column("x", i, j);
+                row[j*Nh + i] = costs[helios.at(i)->getId()][j];  //cost of energy proxy for each heliostat
+            }
         }
     }
 
@@ -186,7 +214,7 @@ int multi_rec_opt_helper::run(SolarField *SF)
 
             //set column name
             char s[40];
-            sprintf(s, "%d:%d", helios->at(i)->getId(), j);
+            sprintf(s, "%d:%d", helios.at(i)->getId(), j);
             set_col_name(lp, O.column("x", i, j), s);
         }
     }
@@ -197,15 +225,42 @@ int multi_rec_opt_helper::run(SolarField *SF)
     --------------------------------------------------------------------------------
     */
     //each receiver must meet a minimum power requirement
-    for (int j = 0; j < Nrec; j++)
+    if (is_performance)
     {
-        for (int i = 0; i < Nh; i++)
+        //performance constraint - maintain desired power fractions
+        for (int i = 0; i < Nh*Nrec; i++)
+            row[i] = 0.;
+
+        for (int j = 0; j < Nrec; j++)
         {
-            int id = helios->at(i)->getId();
-            col[i] = O.column("x", i, j);
-            row[i] = power_allocs[id].at(j);
+            double gamma_r = SF->getVarMap()->recs.at(j).power_fraction.val / rec_frac_total;
+
+            for (int i = 0; i < Nh; i++)
+            {
+                int id = helios.at(i)->getId();
+                col[j*Nh + i] = O.column("x", i, j);
+                row[j*Nh + i] += power_allocs.at(id).at(j);
+
+                for (int jprime = 0; jprime < Nrec; jprime++)
+                {
+                    row[jprime*Nh + i] -= gamma_r * power_allocs.at(id).at(jprime);
+                }
+            }
+            add_constraintex(lp, Nh*Nrec, row, col, EQ, 0.);
         }
-        add_constraintex(lp, Nh, row, col, GE, rec_design_power.at(j));
+    }
+    else
+    {   //design constraint - achieve receiver design powers
+        for (int j = 0; j < Nrec; j++)
+        {
+            for (int i = 0; i < Nh; i++)
+            {
+                int id = helios.at(i)->getId();
+                col[i] = O.column("x", i, j);
+                row[i] = power_allocs[id].at(j);
+            }
+            add_constraintex(lp, Nh, row, col, GE, rec_design_power.at(j));
+        }
     }
 
     //total allocation can't exceed 1
@@ -223,7 +278,10 @@ int multi_rec_opt_helper::run(SolarField *SF)
     delete[] col;
 
     //Set problem to maximize
-    set_minim(lp);
+    if (is_performance)
+        set_maxim(lp);
+    else
+        set_minim(lp);
 
     //reset the row mode
     set_add_rowmode(lp, FALSE);
@@ -235,9 +293,11 @@ int multi_rec_opt_helper::run(SolarField *SF)
     put_abortfunc(lp, opt_abortfunction, (void*)(this));
     put_logfunc(lp, opt_logfunction, (void*)(this));
     set_verbose(lp, 1); //http://web.mit.edu/lpsolve/doc/set_verbose.htm
-    set_presolve(lp, PRESOLVE_ROWS | PRESOLVE_COLS | PRESOLVE_LINDEP, get_presolveloops(lp));   //independent optimization
+    //set_presolve(lp, PRESOLVE_ROWS | PRESOLVE_COLS | PRESOLVE_LINDEP, get_presolveloops(lp));   //independent optimization
+    set_presolve(lp, PRESOLVE_ROWS | PRESOLVE_COLS | PRESOLVE_MERGEROWS | PRESOLVE_COLDOMINATE, get_presolveloops(lp));
     set_timeout(lp, timeout_sec);  //max solution time
-    set_scaling(lp, SCALE_CURTISREID | SCALE_LINEAR | SCALE_EQUILIBRATE);
+    //set_scaling(lp, SCALE_CURTISREID | SCALE_LINEAR | SCALE_EQUILIBRATE);
+    set_scaling(lp, SCALE_GEOMETRIC | SCALE_DYNUPDATE);
 
     int ret = solve(lp);
 
@@ -290,34 +350,57 @@ int multi_rec_opt_helper::run(SolarField *SF)
         results[id][rec] = vars[i];
     }
 
-    unordered_map<int, Heliostat*>* hmap = SF->getHeliostatsByID();
+    //create a pointer map
+    unordered_map<int, Heliostat*> hmap;
+    std::vector<Heliostat>* hobjs = SF->getHeliostatObjects();
+    for (int i = 0; i < hobjs->size(); i++)
+        hmap[hobjs->at(i).getId()] = &hobjs->at(i);
+
     std::set<Heliostat*> heliostat_set;
 
     for (unordered_map<int, unordered_map<int, double> >::iterator hres = results.begin(); hres != results.end(); hres++)
     {
+        Heliostat* h = hmap.at(hres->first);
+        h->setPowerToReceiver(0.);
+
+        int best_rec = 0;
+        double most_rec_power = -1.;
+
         for (int j = 0; j < Nrec; j++)
         {
             if (hres->second.find(j) != hres->second.end())
             {
-                Heliostat* h = hmap->at(hres->first);
-                h->setPowerToReceiver(0.);
-                double prec = hres->second[j];
+                double prec = hres->second[j] * power_allocs.at(hres->first).at(j);
+
                 if (prec > 0.)
                 {
-                    h->setPowerToReceiver(h->getPowerToReceiver() + prec * power_allocs[hres->first][hres->second[j]]);
+                    h->setPowerToReceiver(h->getPowerToReceiver() + prec);
                     heliostat_set.insert(h);
+
+                    if (prec > most_rec_power)
+                    {
+                        most_rec_power = prec;
+                        best_rec = j;
+                    }
                 }
             }
         }
+
+        h->setWhichReceiver( recs->at(best_rec) );
     }
 
-    included_heliostats.clear();
-    included_heliostats.reserve(heliostat_set.size());
-    for (std::set<Heliostat*>::iterator h = heliostat_set.begin(); h != heliostat_set.end(); h++)
-        included_heliostats.push_back(*h);
+    if (!is_performance)
+    {
+        included_heliostats.clear();
+        included_heliostats.reserve(heliostat_set.size());
+        for (std::set<Heliostat*>::iterator h = heliostat_set.begin(); h != heliostat_set.end(); h++)
+            included_heliostats.push_back(*h);
+    }
 
     return result_status;
 }
+
+
 
 
 //----------------------------------------------------------------------------------
