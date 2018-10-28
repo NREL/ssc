@@ -13,7 +13,7 @@
 #include "definitions.h"
 #if defined(__GNUC__) && !defined(__clang__)
 #pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wignored-attributes"
+// fails CentOS 7 #pragma GCC diagnostic ignored "-Wignored-attributes"
 #endif
 #include "IterativeLinearSolvers"
 #include "SparseQR"
