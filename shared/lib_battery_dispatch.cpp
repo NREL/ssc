@@ -1343,54 +1343,56 @@ void dispatch_automatic_front_of_meter_t::update_dispatch(size_t hour_of_year, s
 			bool excessAcCapacity = _inverter_paco > m_batteryPower->powerPVThroughSharedInverter;
 			bool batteryHasDischargeCapacity = _Battery->battery_soc() >= m_batteryPower->stateOfChargeMin + 1.0;
 
-			// Always Charge if PV is clipping 
-			if (m_batteryPower->canClipCharge && m_batteryPower->powerPVClipped > 0 && benefitToClipCharge > m_cycleCost && m_batteryPower->powerPVClipped > 0)
-			{
-				powerBattery = -m_batteryPower->powerPVClipped;
-			}
-
-			// Increase charge from PV if it is more valuable later than selling now
-			if (m_batteryPower->canPVCharge && benefitToPVCharge > m_cycleCost && benefitToPVCharge > 0 && m_batteryPower->powerPV > 0)
-			{
-				// leave EnergyToStoreClipped capacity in battery
-				if (m_batteryPower->canClipCharge)
-				{
-					if (energyToStoreClipped < energyNeededToFillBattery)
-					{
-						double energyCanCharge = (energyNeededToFillBattery - energyToStoreClipped);
-						if (energyCanCharge <= m_batteryPower->powerPV * _dt_hour)
-							powerBattery = -std::fmax(energyCanCharge / _dt_hour, m_batteryPower->powerPVClipped);
-						else
-							powerBattery = -std::fmax(m_batteryPower->powerPV, m_batteryPower->powerPVClipped);
-
-						energyNeededToFillBattery = std::fmax(0, energyNeededToFillBattery + (powerBattery * _dt_hour));
-					}
-
-				}
-				// otherwise, don't reserve capacity for clipping
-				else
-					powerBattery = -m_batteryPower->powerPV;
-			}
-
-			// Also charge from grid if it is valuable to do so, still leaving EnergyToStoreClipped capacity in battery
-			if (m_batteryPower->canGridCharge && benefitToGridCharge > m_cycleCost && benefitToGridCharge > 0 && energyNeededToFillBattery > 0)
-			{
-				// leave EnergyToStoreClipped capacity in battery
-				if (m_batteryPower->canClipCharge)
-				{
-					if (energyToStoreClipped < energyNeededToFillBattery)
-					{
-						double energyCanCharge = (energyNeededToFillBattery - energyToStoreClipped);
-						powerBattery -= energyCanCharge / _dt_hour;
-					}
-				}
-				else
-					powerBattery = -energyNeededToFillBattery / _dt_hour;
-			}
-
 			// Discharge if we are in a high-price period and have battery and inverter capacity
 			if (highValuePeriod && excessAcCapacity && batteryHasDischargeCapacity) {
 				powerBattery = _inverter_paco - m_batteryPower->powerPV;
+			}
+			else
+			{
+				// Always Charge if PV is clipping 
+				if (m_batteryPower->canClipCharge && m_batteryPower->powerPVClipped > 0 && benefitToClipCharge > m_cycleCost && m_batteryPower->powerPVClipped > 0)
+				{
+					powerBattery = -m_batteryPower->powerPVClipped;
+				}
+
+				// Increase charge from PV if it is more valuable later than selling now
+				if (m_batteryPower->canPVCharge && benefitToPVCharge > m_cycleCost && benefitToPVCharge > 0 && m_batteryPower->powerPV > 0)
+				{
+					// leave EnergyToStoreClipped capacity in battery
+					if (m_batteryPower->canClipCharge)
+					{
+						if (energyToStoreClipped < energyNeededToFillBattery)
+						{
+							double energyCanCharge = (energyNeededToFillBattery - energyToStoreClipped);
+							if (energyCanCharge <= m_batteryPower->powerPV * _dt_hour)
+								powerBattery = -std::fmax(energyCanCharge / _dt_hour, m_batteryPower->powerPVClipped);
+							else
+								powerBattery = -std::fmax(m_batteryPower->powerPV, m_batteryPower->powerPVClipped);
+
+							energyNeededToFillBattery = std::fmax(0, energyNeededToFillBattery + (powerBattery * _dt_hour));
+						}
+
+					}
+					// otherwise, don't reserve capacity for clipping
+					else
+						powerBattery = -m_batteryPower->powerPV;
+				}
+
+				// Also charge from grid if it is valuable to do so, still leaving EnergyToStoreClipped capacity in battery
+				if (m_batteryPower->canGridCharge && benefitToGridCharge > m_cycleCost && benefitToGridCharge > 0 && energyNeededToFillBattery > 0)
+				{
+					// leave EnergyToStoreClipped capacity in battery
+					if (m_batteryPower->canClipCharge)
+					{
+						if (energyToStoreClipped < energyNeededToFillBattery)
+						{
+							double energyCanCharge = (energyNeededToFillBattery - energyToStoreClipped);
+							powerBattery -= energyCanCharge / _dt_hour;
+						}
+					}
+					else
+						powerBattery = -energyNeededToFillBattery / _dt_hour;
+				}
 			}
 		}
 		// save for extraction
