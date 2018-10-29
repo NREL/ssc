@@ -3623,7 +3623,7 @@ void SolarField::calcAllAimPoints(Vect &Sun, sim_params &P) //bool force_simple,
     */
     int active_rec_count = getActiveReceiverCount();
 
-    if (active_rec_count > 1 && !P.force_receiver )
+    if (active_rec_count > 1 && !P.force_receiver && !P.is_layout )
     {
 
         //calculate performance for each heliostat aiming at each receiver

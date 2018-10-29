@@ -18,14 +18,28 @@ int __WINAPI opt_abortfunction(lprec *, void *userhandle)
 void __WINAPI opt_iter_function(lprec *lp, void *userhandle, int msg)
 {
     multi_rec_opt_helper* par = static_cast<multi_rec_opt_helper*>(userhandle);
+    
+    if( time_elapsed(lp) > get_timeout(lp) )
+        par->is_abort_flag = true;
 
-    /*if( get_timeout(lp) > 0 )
-        par->is_abort_flag = true;*/
-
-    if (msg == MSG_LPBETTER)
+    switch (msg)
     {
-        par->objective = get_working_objective(lp);
+    case MSG_ITERATION:
+        break;
+    case MSG_LPBETTER:
+        par->simlog << "Improved objective: " << get_working_objective(lp) << "\n";
+        break;
+    case MSG_LPFEASIBLE:
+        par->simlog << "Identified feasible aimpoint strategy... still optimizing\n";
+        break;
+    case MSG_LPOPTIMAL:
+        par->simlog << "Optimal aiming strategy identified!\n";
+        break;
+    default:
+        par->simlog << msg;
+        break;
     }
+
 }
 
 //----------------------------------------------------------------------------------
@@ -227,26 +241,29 @@ int multi_rec_opt_helper::run(SolarField *SF)
     //each receiver must meet a minimum power requirement
     if (is_performance)
     {
-        //performance constraint - maintain desired power fractions
-        for (int i = 0; i < Nh*Nrec; i++)
-            row[i] = 0.;
-
-        for (int j = 0; j < Nrec; j++)
+        /* 
+        performance constraint - maintain desired power fractions by setting fractional power
+        for all receivers equal to the first receiver
+        */
+        for (int j = 1; j < Nrec; j++)
         {
+            double gamma_0 = SF->getVarMap()->recs.front().power_fraction.val / rec_frac_total;
+            for (int i = 0; i < Nh; i++)
+            {
+                int id = helios.at(i)->getId();
+                col[i] = O.column("x", i, 0);
+                row[i] = power_allocs.at(id).at(0) / gamma_0;
+            }
+
             double gamma_r = SF->getVarMap()->recs.at(j).power_fraction.val / rec_frac_total;
 
             for (int i = 0; i < Nh; i++)
             {
                 int id = helios.at(i)->getId();
-                col[j*Nh + i] = O.column("x", i, j);
-                row[j*Nh + i] += power_allocs.at(id).at(j);
-
-                for (int jprime = 0; jprime < Nrec; jprime++)
-                {
-                    row[jprime*Nh + i] -= gamma_r * power_allocs.at(id).at(jprime);
-                }
+                col[Nh + i] = O.column("x", i, j);
+                row[Nh + i] = -power_allocs.at(id).at(j) / gamma_r;
             }
-            add_constraintex(lp, Nh*Nrec, row, col, EQ, 0.);
+            add_constraintex(lp, Nh*2, row, col, EQ, 0.);
         }
     }
     else
