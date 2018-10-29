@@ -676,6 +676,8 @@ public:
 
 			assign("calc_fluxmaps", 1);
 
+			spi.run(weather_reader.m_weather_data_provider);
+
 			if (is_optimize)
 			{
 				//Optimization iteration history
