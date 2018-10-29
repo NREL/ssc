@@ -1071,7 +1071,7 @@ int sco2_design_cmod_common(compute_module *cm, C_sco2_recomp_csp & c_sco2_cycle
 	cm->assign("T_comp_in", (ssc_number_t)(c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_temp[C_sco2_cycle_core::MC_IN] - 273.15));		//[C] convert from K
 	cm->assign("P_comp_in", (ssc_number_t)(c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_pres[C_sco2_cycle_core::MC_IN] / 1000.0));		//[MPa] convert from kPa
 	cm->assign("P_comp_out", (ssc_number_t)(c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_pres[C_sco2_cycle_core::MC_OUT] / 1000.0));		//[MPa] convert from kPa
-	cm->assign("mc_W_dot", (ssc_number_t)(c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_W_dot_mc*1.E-3));	//[MWe] convert kWe
+	cm->assign("mc_W_dot", (ssc_number_t)(-c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_W_dot_mc*1.E-3));	//[MWe] convert kWe
 	cm->assign("mc_m_dot_des", (ssc_number_t)c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_m_dot_t*(1.0 - c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_recomp_frac));	//[kg/s]
 	cm->assign("mc_phi_des", (ssc_number_t)c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.ms_mc_ms_des_solved.m_phi_des);
 	cm->assign("mc_tip_ratio_des", (ssc_number_t)c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.ms_mc_ms_des_solved.m_tip_ratio_max);		//[-]
@@ -1097,10 +1097,10 @@ int sco2_design_cmod_common(compute_module *cm, C_sco2_recomp_csp & c_sco2_cycle
 	cm->assign("mc_cost", (ssc_number_t)c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.ms_mc_ms_des_solved.m_cost);		//[M$]
 	cost_sum += c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.ms_mc_ms_des_solved.m_cost;		//[M$]
 	comp_cost_sum += c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.ms_mc_ms_des_solved.m_cost;	//[M$]
-	comp_power_sum += c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_W_dot_mc*1.E-3;			//[MWe]
+	comp_power_sum += -c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_W_dot_mc*1.E-3;			//[MWe]
 
 	// Recompressor
-	cm->assign("rc_W_dot", (ssc_number_t)(c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_W_dot_rc*1.E-3));	//[MWe] convert from kWe
+	cm->assign("rc_W_dot", (ssc_number_t)(-c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_W_dot_rc*1.E-3));	//[MWe] convert from kWe
 	cm->assign("rc_m_dot_des", (ssc_number_t)c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_m_dot_t*c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_recomp_frac);	//[kg/s]
 	int n_rc_stages = 0;
 	if (is_rc)
@@ -1128,7 +1128,7 @@ int sco2_design_cmod_common(compute_module *cm, C_sco2_recomp_csp & c_sco2_cycle
 		cm->assign("rc_cost", (ssc_number_t)c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.ms_rc_ms_des_solved.m_cost);	//[M$]
 		cost_sum += c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.ms_rc_ms_des_solved.m_cost;	//[M$]
 		comp_cost_sum += c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.ms_rc_ms_des_solved.m_cost;	//[M$]
-		comp_power_sum += c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_W_dot_rc*1.E-3;		//[MWe]
+		comp_power_sum += -c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_W_dot_rc*1.E-3;		//[MWe]
 	}
 	else
 	{
@@ -1148,7 +1148,7 @@ int sco2_design_cmod_common(compute_module *cm, C_sco2_recomp_csp & c_sco2_cycle
 	}
 
 	// Precompressor		
-	cm->assign("pc_W_dot", (ssc_number_t)(c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_W_dot_pc*1.E-3));	//[MWe] convert from kWe
+	cm->assign("pc_W_dot", (ssc_number_t)(-c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_W_dot_pc*1.E-3));	//[MWe] convert from kWe
 	cm->assign("pc_m_dot_des", (ssc_number_t)(c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_m_dot_pc));		//[kg/s]
 	int n_pc_stages = 0;
 	if (sco2_rc_des_par.m_cycle_config == 2)
@@ -1177,7 +1177,7 @@ int sco2_design_cmod_common(compute_module *cm, C_sco2_recomp_csp & c_sco2_cycle
 		cm->assign("pc_cost", (ssc_number_t)c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.ms_pc_ms_des_solved.m_cost);	//[M$]
 		cost_sum += c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.ms_pc_ms_des_solved.m_cost;	//[M$]
 		comp_cost_sum += c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.ms_pc_ms_des_solved.m_cost;	//[M$]
-		comp_power_sum += c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_W_dot_pc*1.E-3;		//[MWe]
+		comp_power_sum += -c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_W_dot_pc*1.E-3;		//[MWe]
 	}
 	else
 	{

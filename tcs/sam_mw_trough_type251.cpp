@@ -2008,15 +2008,18 @@ public:
                     if (tanks_in_parallel) {
                         if (recirculating) {
                             if (has_hot_tank_bypass) {
-                                T_tank_cold_in = T_field_out;
-                                m_tank_cold_in = m_dot_field;
-                                m_tank_cold_out = m_dot_field;
+                                T_tank_cold_in = (m_dot_field * T_field_out + m_dot_pb * T_pb_out) / (m_dot_field + m_dot_pb);
+                                m_tank_cold_in = ms_disch;    // = m_dot_field + m_dot_pb;
+                                m_tank_cold_out = ms_charge;   // = m_dot_field;
                                 m_tank_hot_in = 0.;
-                                m_tank_hot_out = 0.;
+                                m_tank_hot_out = ms_disch;    // = m_dot_pb;
                             }
                             else {  // both tanks bypassed
                                 T_tank_cold_in = T_pb_out;
-                                m_tank_cold_in = m_tank_cold_out = m_tank_hot_in = m_tank_hot_out = 0.;
+                                m_tank_cold_in = ms_disch;    // = m_dot_pb;
+                                m_tank_cold_out = 0.;
+                                m_tank_hot_in = 0.;
+                                m_tank_hot_out = ms_disch;    // = m_dot_pb;
                             }
                         }
                         else {

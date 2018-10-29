@@ -1,0 +1,27 @@
+VPATH = ../splinter
+CC = gcc
+CXX = g++
+WARNINGS = -Wall -Werror -Wno-strict-aliasing
+CFLAGS =-I../ssc $(WARNINGS) -g -O3 -D__64BIT__ -fPIC
+CXXFLAGS=-std=c++0x $(CFLAGS)
+
+OBJECTS = \
+	bspline.o \
+	bsplinebasis.o \
+	bsplinebasis1d.o \
+	bsplinebuilder.o \
+	datapoint.o \
+	datatable.o \
+	function.o \
+	knots.o \
+	mykroneckerproduct.o \
+	serializer.o \
+	utilities.o
+
+TARGET=splinter.a
+
+$(TARGET):$(OBJECTS)
+	ar rs $(TARGET) $(OBJECTS)
+
+clean:
+	rm -rf $(TARGET) $(OBJECTS)

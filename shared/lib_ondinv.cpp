@@ -303,7 +303,7 @@ void ond_inverter::initializeManual()
 
 double ond_inverter::calcEfficiency(double Pdc, int index_eta) {
 	double eta;
-	int splineIndex;
+//	int splineIndex;
 	DenseVector x(1);
 //	if (Pdc > (Pdc_threshold * PNomDC_eff)) {
 //		splineIndex = 1;
