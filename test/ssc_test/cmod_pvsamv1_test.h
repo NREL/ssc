@@ -19,6 +19,7 @@ public:
 
 	ssc_data_t data;
 	ssc_number_t calculated_value;
+	ssc_number_t * calculated_array;
 	double m_error_tolerance_hi = 1.0;
 	double m_error_tolerance_lo = 0.1;
 
@@ -26,15 +27,24 @@ public:
 	{
 		data = ssc_data_create();
 		pvsamv_nofinancial_default(data);
+		calculated_array = new ssc_number_t[8760];
 	}
 	void TearDown() {
 		if (data) {
 			ssc_data_clear(data);
 		}
+		if (calculated_array) {
+			delete[] calculated_array;
+		}
 	}
 	void SetCalculated(std::string name)
 	{
 		ssc_data_get_number(data, const_cast<char *>(name.c_str()), &calculated_value);
+	}
+	void SetCalculatedArray(std::string name)
+	{
+		int n;
+		calculated_array = ssc_data_get_array(data, const_cast<char *>(name.c_str()), &n);
 	}
 };
 

@@ -373,7 +373,24 @@ TEST_F(CMPvsamv1PowerIntegration, NoFinancialModelShading)
 		EXPECT_NEAR(calculated_value, annual_energy_expected[0], m_error_tolerance_hi);
 	}
 
+	// 4. Face both in same direction, ensure poa is calculated the same 
+	pairs["subarray1_azimuth"] = 180;
+	pairs["subarray2_azimuth"] = 180;
+	pvsam_errors = modify_ssc_data_and_run_module(data, "pvsamv1", pairs);
+	EXPECT_FALSE(pvsam_errors);
+	if (!pvsam_errors) {
+		int n1, n2;
+		ssc_number_t * subarray1_poa_front = ssc_data_get_array(data, "subarray1_poa_front", &n1);
+		ssc_number_t * subarray2_poa_front = ssc_data_get_array(data, "subarray2_poa_front", &n2);
+		EXPECT_EQ(n1, n2);
+		for (int i = 0; i < n1; i++) {
+			EXPECT_EQ(subarray1_poa_front[i], subarray2_poa_front[i]);
+		}
+	}
+
 	// 1. Add 3D Shading
+	pairs["subarray1_azimuth"] = 90;
+	pairs["subarray2_azimuth"] = 270;
 	set_matrix(data, "subarray1_shading:timestep", subarray1_shading, 8760, 2);
 	set_matrix(data, "subarray2_shading:timestep", subarray2_shading, 8760, 2);
 	pairs["subarray1_shading:diff"] =  10.010875701904297;

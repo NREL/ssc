@@ -468,8 +468,8 @@ void cm_windpower::exec() throw(general_error)
 			air_pres[i] = (ssc_number_t)pres;
 
 			// accumulate monthly and annual energy
-			monthly[imonth] += farmpwr[i] / steps_per_hour;
-			annual += farmpwr[i] / steps_per_hour;
+			monthly[imonth] += farmpwr[i] / (ssc_number_t)steps_per_hour;
+			annual += farmpwr[i] / (ssc_number_t)steps_per_hour;
 
 			i++;
 		} // end steps_per_hour loop

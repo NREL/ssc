@@ -1,12 +1,13 @@
 VPATH = ../test
 
 SSCLIB = ./ssc.so
+GTEST=../../googletest/googletest
 GTDIR = $(GTEST)
 GTLIB = $(GTDIR)/make/gtest_main.a
 
 CC = gcc
 CXX = g++
-CCFLAGS = -g -O2  -I. -I./input_cases -I./shared_test -I./ssc_test -I./tcs_test -I$(GTDIR)/include -I../ssc -I../tcs -I../solarpilot -I../shared -DLK_USE_WXWIDGETS `wx-config-3 --cflags` -DWX_PRECOMP -O2  -fno-common
+CCFLAGS = -g -O2  -I. -I./input_cases -I./shared_test -I./ssc_test -I./tcs_test -I$(GTDIR)/include -I../ssc -I../tcs -I../solarpilot -I../shared -I../splinter -DLK_USE_WXWIDGETS `wx-config-3 --cflags` -DWX_PRECOMP -O2  -fno-common
 CXXFLAGS = $(CCFLAGS) -std=c++0x
 LDFLAGS = -std=c++0x `wx-config-3 --libs` `wx-config-3 --libs aui` `wx-config-3 --libs stc` `wx-config-3 --libs` -lm $(GTLIB) $(SSCLIB) -Wl,--no-as-needed -ldl
 

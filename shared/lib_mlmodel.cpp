@@ -64,6 +64,8 @@
 
 #include "lib_mlmodel.h"
 // #include "mlm_spline.h"
+#include "bsplinebuilder.h"
+#include "datatable.h"
 
 static const double k = 1.38064852e-23; // Boltzmann constant [J/K]
 static const double q = 1.60217662e-19; // Elemenatry charge [C]
@@ -88,7 +90,8 @@ static const int AM_MODE_DESOTO = 3;
 static const int AM_MODE_LEE_PANCHULA = 4;
 
 mlmodel_module_t::mlmodel_module_t()
-{
+          {
+	m_bspline3 = BSpline(1);
 	Width = Length = V_mp_ref = I_mp_ref = V_oc_ref = I_sc_ref = S_ref = T_ref
 		= R_shref = R_sh0 = R_shexp = R_s
 		= alpha_isc = beta_voc_spec = E_g = n_0 = mu_n = D2MuTau = T_c_no_tnoct
@@ -99,7 +102,6 @@ mlmodel_module_t::mlmodel_module_t()
 	N_series = N_parallel = N_diodes = 0;
 
 	isInitialized = false;
-
 }
 
 // IAM functions
@@ -120,12 +122,12 @@ void mlmodel_module_t::initializeManual()
 		Vbi = 0.9 * N_series;
 		// Calculate values of constant reference values.
 		double R_sh_STC = R_shref + (R_sh0 - R_shref) * exp(-R_shexp * (S_ref / S_ref));
-		
+
 		nVT = N_series * n_0 * k * (T_ref + T_0) / q;
 
 		I_0ref = (I_sc_ref + (I_sc_ref * R_s - V_oc_ref) / R_sh_STC) / ((exp(V_oc_ref / nVT) - 1) - (exp((I_sc_ref * R_s) / nVT) - 1));
 		I_Lref = I_0ref * (exp(V_oc_ref / nVT) - 1) + V_oc_ref / R_sh_STC;
-				
+
 		//double I_sc_ref_string = I_sc_ref; // / N_parallel;
 		//I_0ref = (I_sc_ref_string + (I_sc_ref_string * R_s - V_oc_ref) / R_sh_STC) / ((exp(V_oc_ref / nVT) - 1) - (exp((I_sc_ref_string * R_s) / nVT) - 1));
 		//I_Lref = I_0ref * (exp(V_oc_ref / nVT) - 1) + V_oc_ref / R_sh_STC;
@@ -133,6 +135,7 @@ void mlmodel_module_t::initializeManual()
 		// set up IAM spline
 		if (IAM_mode == IAM_MODE_SPLINE)
 		{
+			/*
 			std::vector<double> X;
 			std::vector<double> Y;
 			X.clear();
@@ -142,9 +145,15 @@ void mlmodel_module_t::initializeManual()
 				Y.push_back(IAM_c_cs_iamValue[i]);
 			}
 			iamSpline.set_points(X, Y);
-		}
+			*/
+			DataTable samples;
+			for (int i = 0; i <= IAM_c_cs_elements - 1; i = i + 1) {
+				samples.addSample(IAM_c_cs_incAngle[i], IAM_c_cs_iamValue[i]);
+				m_bspline3 = BSpline::Builder(samples).degree(3).build();
+			}
 
-		isInitialized = true;
+			isInitialized = true;
+		}
 	}
 }
 
@@ -173,9 +182,16 @@ bool mlmodel_module_t::operator() (pvinput_t &input, double T_C, double opvoltag
 			f_IAM_gnd = IAMvalue_SANDIA(IAM_c_sa, theta_gnd / 180 * PI);
 			break;
 		case IAM_MODE_SPLINE:
-			f_IAM_beam = std::min(iamSpline(theta_beam), 1.0);
-			f_IAM_diff = std::min(iamSpline(theta_diff), 1.0);
-			f_IAM_gnd = std::min(iamSpline(theta_gnd), 1.0);
+//			f_IAM_beam = std::min(iamSpline(theta_beam), 1.0);
+//			f_IAM_diff = std::min(iamSpline(theta_diff), 1.0);
+//			f_IAM_gnd = std::min(iamSpline(theta_gnd), 1.0);
+			DenseVector x(1);
+			x(0) = theta_beam;
+			f_IAM_beam = std::min(m_bspline3.eval(x), 1.0);
+			x(0) = theta_diff;
+			f_IAM_diff = std::min(m_bspline3.eval(x), 1.0);
+			x(0) = theta_gnd;
+			f_IAM_gnd = std::min(m_bspline3.eval(x), 1.0);
 			break;
 	}
 

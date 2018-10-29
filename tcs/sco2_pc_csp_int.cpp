@@ -695,6 +695,7 @@ int C_sco2_recomp_csp::opt_P_LP_comp_in__fixed_N_turbo()
 			// Set up instance of nlopt class and set optimization parameters
 			//nlopt::opt  nlopt_P_mc_in_opt_max_of(nlopt::LN_NELDERMEAD, 1);
 				nlopt::opt  nlopt_P_mc_in_opt_max_of(nlopt::LN_SBPLX, 1);
+				//nlopt::opt  nlopt_P_mc_in_opt_max_of(nlopt::LN_BOBYQA, 1);
 
 				nlopt_P_mc_in_opt_max_of.set_lower_bounds(lb);
 				nlopt_P_mc_in_opt_max_of.set_upper_bounds(ub);
@@ -771,6 +772,72 @@ int C_sco2_recomp_csp::opt_P_LP_comp_in__fixed_N_turbo()
 
 					od_core_error_code = off_design_core(eta_od_core_1st);
 				}
+
+				break;
+			}
+			else
+			{
+				// We know that the code solved without error at 'P_mc_in_guess', and the solution is probably close to escaping constraints
+				// So move slowly back towards guess until we get a solution with no error
+				if (P_mc_in_opt > P_mc_in_guess)
+				{
+					int i_P_mc_in_guess = 0;
+					while (i_P_mc_in_guess < 20 && P_mc_in_opt > P_mc_in_guess && od_core_error_code != 0)
+					{
+						i_P_mc_in_guess++;
+
+						P_mc_in_opt *= 0.998;
+
+						ms_cycle_od_par.m_P_LP_comp_in = P_mc_in_opt;		//[kPa]
+
+						od_core_error_code = off_design_core(eta_od_core_1st);
+					}
+
+					if(od_core_error_code != 0)
+					{
+						ms_cycle_od_par.m_P_LP_comp_in = P_mc_in_guess;
+
+						od_core_error_code = off_design_core(eta_od_core_1st);
+					}
+
+					if (od_core_error_code != 0)
+					{
+						throw(C_csp_exception("Off-design optimization on compressor inlet pressure failed",
+							"C_sco2_recomp_csp::opt_P_mc_in_nest_f_recomp_max_eta_core"));
+					}
+
+					break;
+				}
+				else
+				{
+					int i_P_mc_in_guess = 0;
+					while (i_P_mc_in_guess < 20 && P_mc_in_opt > P_mc_in_guess && od_core_error_code != 0)
+					{
+						i_P_mc_in_guess++;
+
+						P_mc_in_opt *= 1.002;
+
+						ms_cycle_od_par.m_P_LP_comp_in = P_mc_in_opt;		//[kPa]
+
+						od_core_error_code = off_design_core(eta_od_core_1st);
+					}
+
+					if (od_core_error_code != 0)
+					{
+						ms_cycle_od_par.m_P_LP_comp_in = P_mc_in_guess;
+
+						od_core_error_code = off_design_core(eta_od_core_1st);
+					}
+
+					if (od_core_error_code != 0)
+					{
+						throw(C_csp_exception("Off-design optimization on compressor inlet pressure failed",
+							"C_sco2_recomp_csp::opt_P_mc_in_nest_f_recomp_max_eta_core"));
+					}
+
+					break;
+				}
+
 			}
 
 			if (od_core_error_code != 0)
@@ -1008,7 +1075,7 @@ int C_sco2_recomp_csp::off_design_core(double & eta_solved)
 		//	eta_solved = (1.0 - W_dot_nd + mpc_sco2_cycle->get_od_solved()->m_eta_thermal*1.E-3)*scale_product;
 		//}
 		//eta_solved = eta_solved*1.E3;
-		eta_solved = (1.0 - W_dot_nd)*scale_product*1.E3;
+		eta_solved = (1.0 - fmin(0.99,std::pow(W_dot_nd,0.5)))*scale_product*1.E3;
 	}
 		break;
 
@@ -1204,7 +1271,18 @@ double C_sco2_recomp_csp::opt_P_LP_in__fixed_N_turbo__return_f_obj(double P_mc_i
 
 	if( m_off_design_turbo_operation == E_FIXED_MC_FIXED_RC_FIXED_T )
 	{
-		off_design_core(f_obj_max);
+		try
+		{
+			off_design_core(f_obj_max);
+		}
+		catch (C_csp_exception &)
+		{
+			return 0.0;
+		}
+		catch (...)
+		{
+			return 0.0;
+		}
 	}
 	else 
 	{

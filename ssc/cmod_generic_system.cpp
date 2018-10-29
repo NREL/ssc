@@ -78,7 +78,7 @@ static var_info _cm_vtab_generic_system[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "analysis_period",                             "Lifetime analysis period",                             "years",    "",                              "generic_system",             "system_use_lifetime_output=1",   "",                             "" },
 	{ SSC_INPUT,        SSC_ARRAY,       "generic_degradation",                              "Annual module degradation",                            "%/year",   "",                              "generic_system",             "system_use_lifetime_output=1",   "",                             "" },
 
-
+	 
 
 
 //    OUTPUTS ----------------------------------------------------------------------------								      														   
@@ -139,9 +139,10 @@ public:
 		size_t steps_per_hour_gen = steps_per_hour_load;
 		ssc_number_t ts_hour_gen = ts_hour_load;
 
-
-		size_t nyears = as_integer("analysis_period");
-		if (!system_use_lifetime_output) nyears = 1;
+		size_t nyears = 1;
+		if (system_use_lifetime_output) {
+			size_t nyears = as_integer("analysis_period");
+		}
 		size_t nlifetime = nrec_load * nyears;
 
 

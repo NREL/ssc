@@ -50,6 +50,7 @@
 #include "core.h"
 #include "tckernel.h"
 #include "common.h"
+#include <algorithm>
 
 static var_info _cm_vtab_tcsmslf[] = {
 //    VARTYPE           DATATYPE          NAME                 LABEL                                                                                 UNITS            META            GROUP            REQUIRED_IF                 CONSTRAINTS             UI_HINTS
@@ -204,6 +205,18 @@ static var_info _cm_vtab_tcsmslf[] = {
     { SSC_INPUT,    SSC_NUMBER,         "t_ch_out_max",           "Label",                                                                                 "",              "",  "controller",            "*",        "",              ""},
     { SSC_INPUT,    SSC_NUMBER,         "nodes",                  "Label",                                                                                 "",              "",  "controller",            "*",        "",              ""},
     { SSC_INPUT,    SSC_NUMBER,         "f_tc_cold",              "Label",                                                                                 "",              "",  "controller",            "*",        "",              ""},
+    { SSC_INPUT,    SSC_NUMBER,         "V_tes_des",              "Design-point velocity to size the TES pipe diameters",                               "m/s",              "",  "controller",            "*",        "",              ""},
+    { SSC_INPUT,    SSC_NUMBER,         "custom_tes_p_loss",      "TES pipe losses are based on custom lengths and coeffs",                               "-",              "",  "controller",            "*",        "",              ""},
+    { SSC_INPUT,    SSC_ARRAY,          "k_tes_loss_coeffs",      "Minor loss coeffs for the coll, gen, and bypass loops",                                "-",              "",  "controller",            "*",        "",              ""},
+    { SSC_INPUT,    SSC_NUMBER,         "custom_sgs_pipe_sizes",  "Use custom SGS pipe diams, wallthks, and lengths",                                     "-",              "",  "controller",            "*",        "",              ""},
+    { SSC_INPUT,    SSC_ARRAY,          "sgs_diams",              "Custom SGS diameters",                                                                 "m",              "",  "controller",            "*",        "",              ""},
+    { SSC_INPUT,    SSC_ARRAY,          "sgs_wallthicks",         "Custom SGS wall thicknesses",                                                          "m",              "",  "controller",            "*",        "",              ""},
+    { SSC_INPUT,    SSC_ARRAY,          "sgs_lengths",            "Custom SGS lengths",                                                                   "m",              "",  "controller",            "*",        "",              ""},
+    { SSC_INPUT,    SSC_NUMBER,         "DP_SGS",                 "Pressure drop within the steam generator",                                           "bar",              "",  "controller",            "*",        "",              ""},
+    { SSC_INPUT,    SSC_NUMBER,         "tanks_in_parallel",      "Tanks are in parallel, not in series, with solar field",                               "-",              "",  "controller",            "*",        "",              ""},
+    { SSC_INPUT,    SSC_NUMBER,         "has_hot_tank_bypass",    "Bypass valve connects field outlet to cold tank",                                      "-",              "",  "controller",            "*",        "",              ""},
+    { SSC_INPUT,    SSC_NUMBER,         "T_tank_hot_inlet_min",   "Minimum hot tank htf inlet temperature",                                               "C",              "",  "controller",            "*",        "",              ""},
+    { SSC_INPUT,    SSC_NUMBER,         "calc_design_pipe_vals",  "Calculate temps and pressures at design conditions for runners and headers",           "-",              "",  "controller",            "*",        "",              ""},
 
 
     //VARTYPE      DATATYPE           NAME                      LABEL                                                                          UNITS           META     GROUP                   REQUIRED_IF  CONSTRAINTS      UI_HINTS
@@ -344,6 +357,12 @@ static var_info _cm_vtab_tcsmslf[] = {
     { SSC_OUTPUT,       SSC_ARRAY,       "q_pb",              "Cycle thermal power input",                                      "MWt",          "",            "Type251",        "*",                       "LENGTH=8760",           "" },
     //{ SSC_OUTPUT,       SSC_ARRAY,       "P_cond",            "Condenser pressure",                                             "Pa",           "",            "Type250",        "*",                       "LENGTH=8760",           "" },
     //{ SSC_OUTPUT,       SSC_ARRAY,       "f_bays",            "Condenser fraction of operating bays",                           "",         "",            "Type250",        "*",                       "LENGTH=8760",           "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "pipe_sgs_diams",    "Pipe diameters in SGS",                                          "m",            "",            "Type251",        "*",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "pipe_sgs_wallthk",  "Pipe wall thickness in SGS",                                     "m",            "",            "Type251",        "*",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "pipe_sgs_mdot_dsn", "Mass flow SGS pipes at design conditions",                       "kg/s",         "",            "Type251",        "*",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "pipe_sgs_vel_dsn",  "Velocity in SGS pipes at design conditions",                     "m/s",          "",            "Type251",        "*",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "pipe_sgs_T_dsn",    "Temperature in SGS pipes at design conditions",                  "C",            "",            "Type251",        "*",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "pipe_sgs_P_dsn",    "Pressure in SGS pipes at design conditions",                     "bar",          "",            "Type251",        "*",                       "",                      "" },
 
     //fossil backup
     //{ SSC_OUTPUT,       SSC_ARRAY,       "Fuel_usage",        "Fossil fuel usage (all subsystems)",                             "MMBTU",        "",            "SumCalc",        "*",                       "LENGTH=8760",           "" },
@@ -612,7 +631,20 @@ public:
 		set_unit_value_ssc_double(controller, "t_ch_out_max" ); // 500);
 		set_unit_value_ssc_double(controller, "nodes" ); // 2000);
 		set_unit_value_ssc_double(controller, "f_tc_cold" ); // 2);
-
+        set_unit_value_ssc_double(controller, "V_tes_des"); // , 1.85);
+        set_unit_value_ssc_double(controller, "custom_tes_p_loss"); // , false);
+        set_unit_value_ssc_array(controller, "k_tes_loss_coeffs"); // , []);
+        set_unit_value_ssc_double(controller, "custom_sgs_pipe_sizes"); // , []);
+        set_unit_value_ssc_array(controller, "sgs_diams"); // , []);
+        set_unit_value_ssc_array(controller, "sgs_wallthicks"); // , []);
+        set_unit_value_ssc_array(controller, "sgs_lengths"); // , []);
+        set_unit_value_ssc_double(controller, "DP_SGS"); // , []);
+        set_unit_value_ssc_double(controller, "tanks_in_parallel"); // , 1 = true);
+        set_unit_value_ssc_double(controller, "has_hot_tank_bypass"); // , 0 = false);
+        set_unit_value_ssc_double(controller, "T_tank_hot_inlet_min"); // , 400);
+        set_unit_value_ssc_double(controller, "calc_design_pipe_vals"); // , 1 = true);
+        set_unit_value_ssc_double(controller, "eta_pump"); // , 0.85);
+        set_unit_value_ssc_double(controller, "HDR_rough"); // , 4.57E-05);
 
 
 		set_unit_value_ssc_matrix(tou_translator, "weekday_schedule");
@@ -621,7 +653,7 @@ public:
 
 		set_unit_value(controller, "T_field_out", as_double("T_loop_out"));
 		set_unit_value(controller, "T_pb_out", as_double("T_loop_in_des"));
-		set_unit_value_ssc_double(controller, "m_pb_demand", 0.0);
+		//set_unit_value_ssc_double(controller, "m_pb_demand", 0.0);
 
 
 		// Set Common Type 224 Power Cycle Parameters
@@ -688,8 +720,8 @@ public:
 
 
 		//Set initial values
-		set_unit_value_ssc_double(powerblock, "T_db" ); // 15.);
-		set_unit_value_ssc_double(powerblock, "P_amb" ); // 1.);
+		set_unit_value_ssc_double(powerblock, "T_db", 0.0); // 15.);
+		set_unit_value_ssc_double(powerblock, "P_amb", 1.0); // 1.);
 //		set_unit_value_ssc_double(powerblock, "T_htf_hot" ); // T_hot_des);
 //		set_unit_value(controller, "T_htf_hot", as_double("T_loop_out"));
 //		set_unit_value_ssc_double(powerblock, "m_dot_htf_init"); // 0.);
@@ -726,7 +758,7 @@ public:
 		//Connect weather reader to controller
 		bConnected &= connect(weather, "beam", controller, "I_bn");
 		bConnected &= connect(weather, "tdry", controller, "T_amb");
-		bConnected &= connect(solarfield, "m_dot_avail", controller, "m_dot_field");
+		bConnected &= connect(solarfield, "m_dot_field_htf", controller, "m_dot_field");
 		bConnected &= connect(powerblock, "m_dot_htf_ref", controller, "m_dot_htf_ref");
 		bConnected &= connect(solarfield, "T_sys_h", controller, "T_field_out");
 		bConnected &= connect(powerblock, "T_htf_cold", controller, "T_pb_out");
@@ -780,6 +812,27 @@ public:
 		// get the outputs
 		if (!set_all_output_arrays() )
 			throw exec_error( "tcsmslf", util::format("there was a problem returning the results from the simulation.") );
+        
+        // design parameters
+        int nv;
+        double *sgs_diams = get_unit_value(controller, "SGS_diams", &nv);
+        ssc_number_t *sgs_diams_cm = allocate("pipe_sgs_diams", nv);
+        std::copy(sgs_diams, sgs_diams + nv, sgs_diams_cm);
+        double *sgs_wallthk = get_unit_value(controller, "SGS_wall_thk", &nv);
+        ssc_number_t *sgs_wallthk_cm = allocate("pipe_sgs_wallthk", nv);
+        std::copy(sgs_wallthk, sgs_wallthk + nv, sgs_wallthk_cm);
+        double *sgs_mdot_dsn = get_unit_value(controller, "SGS_m_dot_des", &nv);
+        ssc_number_t *sgs_mdot_dsn_cm = allocate("pipe_sgs_mdot_dsn", nv);
+        std::copy(sgs_mdot_dsn, sgs_mdot_dsn + nv, sgs_mdot_dsn_cm);
+        double *sgs_vel_dsn = get_unit_value(controller, "SGS_vel_des", &nv);
+        ssc_number_t *sgs_vel_dsn_cm = allocate("pipe_sgs_vel_dsn", nv);
+        std::copy(sgs_vel_dsn, sgs_vel_dsn + nv, sgs_vel_dsn_cm);
+        double *sgs_T_dsn = get_unit_value(controller, "SGS_T_des", &nv);
+        ssc_number_t *sgs_T_dsn_cm = allocate("pipe_sgs_T_dsn", nv);
+        std::copy(sgs_T_dsn, sgs_T_dsn + nv, sgs_T_dsn_cm);
+        double *sgs_P_dsn = get_unit_value(controller, "SGS_P_des", &nv);
+        ssc_number_t *sgs_P_dsn_cm = allocate("pipe_sgs_P_dsn", nv);
+        std::copy(sgs_P_dsn, sgs_P_dsn + nv, sgs_P_dsn_cm);
 
 		// performance adjustement factors
 		adjustment_factors haf(this, "adjust");

@@ -2,13 +2,12 @@ VPATH = ../shared
 CC = gcc
 CXX = g++
 WARNINGS = -Wall -Werror -Wno-strict-aliasing
-CFLAGS =-I../ssc -I../shared $(WARNINGS) -g -O3 -D__64BIT__ -fPIC
+CFLAGS =-I../ssc -I../shared -I../splinter $(WARNINGS) -g -O3 -D__64BIT__ -fPIC
 CXXFLAGS=-std=c++0x $(CFLAGS)
 
 
 OBJECTS = \
 	lsqfit.o \
-	mlm_spline.o \
 	lib_battery.o \
 	lib_battery_dispatch.o \
 	lib_battery_powerflow.o \

@@ -2,7 +2,7 @@ VPATH = ../tcs
 CC = gcc
 CXX = g++
 WARNINGS = -Wall -Wno-unknown-pragmas
-CFLAGS = -fPIC $(WARNINGS) -g -O3 -I../ -D__64BIT__ -I../nlopt -I../shared -I../lpsolve -I../solarpilot
+CFLAGS = -fPIC $(WARNINGS) -g -O3 -I../ -D__64BIT__ -I../nlopt -I../shared -I../lpsolve -I../solarpilot -I../splinter
 CXXFLAGS=-std=c++0x $(CFLAGS)
 
 OBJECTS = tcskernel.o \
