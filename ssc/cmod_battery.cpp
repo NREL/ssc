@@ -174,7 +174,7 @@ var_info vtab_battery_inputs[] = {
 	{ SSC_INPUT,        SSC_NUMBER,     "batt_cycle_cost",                             "Input battery cycle costs",                               "$/cycle-kWh","",                  "Battery",       "",                           "",                             "" },
 
 	// Utility rate inputs
-	{ SSC_INPUT,        SSC_NUMBER,     "en_electricity_rates",                        "Enable Electricity Rates",                                "",        "0/1",                    "0=EnableElectricityRates,1=NoRates", "en_batt=1&batt_meter_position=1",                         "",                             "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "en_electricity_rates",                        "Enable Electricity Rates",                                "",        "0/1",                    "0=EnableElectricityRates,1=NoRates", "",                                   "",                             "" },
 	{ SSC_INPUT,        SSC_MATRIX,     "ur_ec_sched_weekday",                         "Energy charge weekday schedule",                          "",        "12 x 24 matrix",         "",              "en_batt=1&batt_meter_position=1&batt_dispatch_choice=2",  "",          "" },
 	{ SSC_INPUT,        SSC_MATRIX,     "ur_ec_sched_weekend",                         "Energy charge weekend schedule",                          "",        "12 x 24 matrix",         "",              "en_batt=1&batt_meter_position=1&batt_dispatch_choice=2",  "",          "" },
 	{ SSC_INPUT,        SSC_MATRIX,     "ur_ec_tou_mat",                               "Energy rates table",                                      "",        "",                       "",              "en_batt=1&batt_meter_position=1&batt_dispatch_choice=2",  "",          "" },
@@ -368,12 +368,14 @@ battstor::battstor(compute_module &cm, bool setup_model, size_t nrec, double dt_
 
 				// For automated front of meter with electricity rates
 				batt_vars->ec_rate_defined = false;
-				if (cm.as_integer("en_electricity_rates"))
-				{
-					batt_vars->ec_weekday_schedule = cm.as_matrix_unsigned_long("ur_ec_sched_weekday");
-					batt_vars->ec_weekend_schedule = cm.as_matrix_unsigned_long("ur_ec_sched_weekend");
-					batt_vars->ec_tou_matrix = cm.as_matrix("ur_ec_tou_mat");
-					batt_vars->ec_rate_defined = true;
+				if (cm.is_assigned("en_electricity_rates")) {
+					if (cm.as_integer("en_electricity_rates"))
+					{
+						batt_vars->ec_weekday_schedule = cm.as_matrix_unsigned_long("ur_ec_sched_weekday");
+						batt_vars->ec_weekend_schedule = cm.as_matrix_unsigned_long("ur_ec_sched_weekend");
+						batt_vars->ec_tou_matrix = cm.as_matrix("ur_ec_tou_mat");
+						batt_vars->ec_rate_defined = true;
+					}
 				}
 			
 	
