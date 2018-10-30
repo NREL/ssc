@@ -988,11 +988,11 @@ void sim_result::process_field_stats(){
 	delete [] maxs;
 }
 
-void sim_result::process_flux_stats(SolarField &SF){
+void sim_result::process_flux_stats(Rvector *recs)
+{
 	//Determine the flux info
 	double fave=0., fave2=0., fmax = -9.e9, fmin = 9.e9;
 	int nf = 0;
-	vector<Receiver*> *recs = SF.getReceivers();
 	for( int i=0; i<(int)recs->size(); i++){
 		FluxSurfaces *fs = recs->at(i)->getFluxSurfaces();
 		for(int j=0; j<(int)fs->size(); j++){
@@ -1026,11 +1026,21 @@ void sim_result::process_flux_stats(SolarField &SF){
 	flux_density.ave = fave;
 }
 
-void sim_result::process_analytical_simulation(SolarField &SF, sim_params &P, int nsim_type, double sun_az_zen[2], Hvector &helios){
+void sim_result::process_analytical_simulation(SolarField &SF, sim_params &P, int nsim_type, double sun_az_zen[2], Hvector* helios, Rvector* receivers)
+{
 	is_soltrace = false;
 	sim_type = nsim_type;
 
     var_map *V = SF.getVarMap();
+
+    if (!helios)
+        helios = SF.getHeliostats();
+    if (!receivers)
+        receivers = SF.getReceivers();
+
+    receiver_names.clear();
+    for(size_t i=0; i<receivers->size(); i++)
+        receiver_names.push_back( receivers->at(i)->getVarMap()->rec_name.val );
 
 	switch (sim_type)
 	{
@@ -1041,41 +1051,62 @@ void sim_result::process_analytical_simulation(SolarField &SF, sim_params &P, in
 		//process only the ranking metric for each heliostat and the field avg. eff
 		initialize();
 		double effsum = 0.;
-		for(unsigned int i=0; i<helios.size(); i++){
-			effsum += helios.at(i)->getEfficiencyTotal();
-			add_heliostat(*helios.at(i));
+		for(unsigned int i=0; i<helios->size(); i++)
+        {
+			effsum += helios->at(i)->getEfficiencyTotal();
+			add_heliostat(*helios->at(i));
 		}
-		eff_total_sf.ave = effsum / (double)helios.size() ;
-		total_receiver_area = V->sf.rec_area.Val(); //SF.calcReceiverTotalArea();
-		dni = P.dni; //W/m2
+		
+        eff_total_sf.ave = effsum / (double)helios->size() ;
+		
+        dni = P.dni; //W/m2
 		power_on_field = total_heliostat_area * dni;	//[W]
 		power_absorbed = power_on_field * eff_total_sf.ave;
+        
+        total_receiver_area = 0.;
+        power_thermal_loss = 0.;
+        power_piping_loss = 0.;
+        
+        for (Rvector::iterator rec = receivers->begin(); rec != receivers->end(); rec++)
+        {
+            total_receiver_area += (*rec)->getVarMap()->absorber_area.Val();
+            power_thermal_loss += (*rec)->getReceiverThermalLoss();
+            power_piping_loss += (*rec)->getReceiverPipingLoss();
+        }
 
-        power_thermal_loss = SF.getReceiverTotalHeatLoss();
-        power_piping_loss = SF.getReceiverPipingHeatLoss();
         power_to_htf = power_absorbed - (power_thermal_loss + power_piping_loss);
 
 		solar_az = sun_az_zen[0];
 		solar_zen = sun_az_zen[1];
-
 
 		break;
 	}
 	case sim_result::SIM_TYPE::FLUX_SIMULATION:
 	{
 		initialize();
-		for (unsigned int i = 0; i < helios.size(); i++)
+        for (unsigned int i = 0; i < helios->size(); i++)
 		{
-			if( helios.at(i)->IsInLayout() && helios.at(i)->IsEnabled() )
-				add_heliostat(*helios.at(i));
+            if (helios->at(i)->IsInLayout() && helios->at(i)->IsEnabled())
+            {
+				add_heliostat(*helios->at(i));
+            }
 		}
 		process_field_stats();
-		total_receiver_area = SF.calcReceiverTotalArea();
 		dni =  SF.getVarMap()->flux.flux_dni.val/1000.;
 		power_on_field = total_heliostat_area * dni;	//[kW]
 		power_absorbed = power_on_field * eff_total_sf.ave;
-        power_thermal_loss = SF.getReceiverTotalHeatLoss();
-        power_piping_loss = SF.getReceiverPipingHeatLoss();
+
+        total_receiver_area = 0.;
+        power_thermal_loss = 0.;
+        power_piping_loss = 0.; 
+
+        for (Rvector::iterator rec = receivers->begin(); rec != receivers->end(); rec++)
+        {
+            total_receiver_area += (*rec)->getVarMap()->absorber_area.Val();
+            power_thermal_loss += (*rec)->getReceiverThermalLoss();
+            power_piping_loss += (*rec)->getReceiverPipingLoss();
+        }
+
         power_to_htf = power_absorbed - (power_thermal_loss + power_piping_loss);
 
 		solar_az = sun_az_zen[0];
@@ -1085,7 +1116,7 @@ void sim_result::process_analytical_simulation(SolarField &SF, sim_params &P, in
 		total_installed_cost = V->fin.total_installed_cost.Val(); //SF.getFinancialObject()->getTotalInstalledCost();
 		coe_metric = total_installed_cost/_q_coe;
 		
-		process_flux_stats(SF);
+		process_flux_stats(receivers);
 
 		break;
 	}
@@ -1095,13 +1126,8 @@ void sim_result::process_analytical_simulation(SolarField &SF, sim_params &P, in
 
 }
 
-void sim_result::process_analytical_simulation(SolarField &SF, sim_params &P, int sim_type, double sun_az_zen[2]){  /*0=Layout, 1=Optimize, 2=Flux sim, 3=Parametric */
-	process_analytical_simulation(SF, P, sim_type, sun_az_zen, *SF.getHeliostats());
-};
-
-void sim_result::process_raytrace_simulation(SolarField &SF, sim_params &P, int nsim_type, double sun_az_zen[2], Hvector &helios, double qray, int *emap, int *smap, int *rnum, int ntot, double *boxinfo){
-	
-
+void sim_result::process_raytrace_simulation(SolarField &SF, sim_params &P, int nsim_type, double sun_az_zen[2], Hvector &helios, double qray, int *emap, int *smap, int *rnum, int ntot, double *boxinfo)
+{
 	is_soltrace = true;
 	/* sim_type: 2=flux simulation, 3=parametric */
 	initialize();
@@ -1199,7 +1225,7 @@ void sim_result::process_raytrace_simulation(SolarField &SF, sim_params &P, int 
 		total_installed_cost = SF.getVarMap()->fin.total_installed_cost.Val(); //SF.getFinancialObject()->getTotalInstalledCost();
 		coe_metric = total_installed_cost/power_absorbed;
 
-		process_flux_stats(SF);
+		process_flux_stats(SF.getReceivers());
 
 	}
 	else{

@@ -283,9 +283,7 @@ public:
 
 	void add_heliostat(Heliostat &H);
 
-	void process_analytical_simulation(SolarField &SF, sim_params &P, int nsim_type, double sun_az_zen[2], Hvector &helios);
-
-	void process_analytical_simulation(SolarField &SF, sim_params &P, int sim_type, double sun_az_zen[2]);
+	void process_analytical_simulation(SolarField &SF, sim_params &P, int nsim_type, double sun_az_zen[2], Hvector* helios=0, Rvector* recs=0);
 
 	void process_raytrace_simulation(SolarField &SF, sim_params &P, int nsim_type, double sun_az_zen[2], Hvector &helios, double qray, int *emap, int *smap, int *rnum, int ntot, double *boxinfo);
 
@@ -293,7 +291,7 @@ public:
 	
 	void process_field_stats();
 
-	void process_flux_stats(SolarField &SF);
+	void process_flux_stats(Rvector *recs);
 	
 };
 
