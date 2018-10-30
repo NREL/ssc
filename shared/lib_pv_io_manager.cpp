@@ -274,6 +274,12 @@ Subarray_IO::Subarray_IO(compute_module* cm, std::string cmName, size_t subarray
 	if (enable)
 	{
 		nStrings = cm->as_integer(prefix + "nstrings");
+		if (nStrings <= 0) //subarrays with no strings need to be treated as if they are disabled to avoid divide by zero issues in the subarray setup
+		{
+			enable = false;
+			return;
+		}
+
 		nModulesPerString = cm->as_integer(prefix + "modules_per_string");
 		mpptInput = cm->as_integer(prefix + "mppt_input");
 		trackMode = cm->as_integer(prefix + "track_mode");
