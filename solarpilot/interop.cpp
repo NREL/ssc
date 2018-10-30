@@ -572,7 +572,7 @@ bool interop::PerformanceSimulationPrep(SolarField &SF, Hvector &helios, int /*s
     FluxSimData *fd = SF.getFluxSimObject();
     //make sure simulation data is up to date
     fd->Create(*V);
-	vector<Receiver*> *recs = SF.getReceivers();
+	Rvector *recs = SF.getReceivers();
 	
 	for(unsigned int i=0; i<recs->size(); i++){
 		recs->at(i)->DefineReceiverGeometry(V->flux.x_res.val, V->flux.y_res.val);

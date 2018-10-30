@@ -85,7 +85,7 @@ sim_params::sim_params()
 //-------Access functions
 //"GETS"
 SolarField::clouds *SolarField::getCloudObject(){return &_clouds;}
-vector<Receiver*> *SolarField::getReceivers(){return &_active_receivers;}
+Rvector *SolarField::getReceivers(){return &_active_receivers;}
 Land *SolarField::getLandObject(){return &_land;}
 //Ambient *SolarField::getAmbientObject(){return &_ambient;}
 Flux *SolarField::getFluxObject(){return _flux;}
@@ -282,7 +282,7 @@ SolarField::SolarField( const SolarField &sf )
 		h->setWhichReceiver( r_map[ h->getWhichReceiver() ] );
 
         std::vector<double> rpa_d;
-        std::vector<Receiver*> rpa_r;
+        Rvector rpa_r;
 
         unordered_map<Receiver*, double> rpa = h->getReceiverPowerAlloc();
         
@@ -1649,7 +1649,7 @@ void SolarField::ProcessLayoutResults( sim_results *results, int nsim_total){
             if multiple receivers, we need to simulate heliostat performance for each one to determine
             the breakdown of how power could be distributed to each receiver
             */
-            for (std::vector<Receiver*>::iterator rec = _active_receivers.begin(); rec != _active_receivers.end(); rec++)
+            for (Rvector::iterator rec = _active_receivers.begin(); rec != _active_receivers.end(); rec++)
             {
                 P.force_receiver = *rec;
                 Simulate(az_des*D2R, zen_des*D2R, P);
@@ -3635,7 +3635,7 @@ void SolarField::calcAllAimPoints(Vect &Sun, sim_params &P) //bool force_simple,
         {
 
             //calculate performance for each heliostat aiming at each receiver
-            for (std::vector<Receiver*>::iterator rec = _active_receivers.begin(); rec != _active_receivers.end(); rec++)
+            for (Rvector::iterator rec = _active_receivers.begin(); rec != _active_receivers.end(); rec++)
             {
                 for (std::vector<Heliostat>::iterator h = _helio_objects.begin(); h != _helio_objects.end(); h++)
                 {
@@ -4067,7 +4067,7 @@ void SolarField::CalcDimensionalFluxProfiles(Hvector &helios)
 
     //Determine the total power delivered from the heliostats. This serves as a normalizing basis.
     unordered_map<Receiver*, double> q_to_rec;
-    for (std::vector<Receiver*>::iterator rec = _active_receivers.begin(); rec != _active_receivers.end(); rec++)
+    for (Rvector::iterator rec = _active_receivers.begin(); rec != _active_receivers.end(); rec++)
         q_to_rec[*rec] = 0.;    //initialize
 
 	for(unsigned int i=0; i<helios.size(); i++)
@@ -4078,7 +4078,7 @@ void SolarField::CalcDimensionalFluxProfiles(Hvector &helios)
 
 	//Simulate for each receiver
 	int nrec = (int)_receivers.size();
-	for( std::vector<Receiver*>::iterator rec = _active_receivers.begin(); rec != _active_receivers.end(); rec++)
+	for( Rvector::iterator rec = _active_receivers.begin(); rec != _active_receivers.end(); rec++)
     {
 		FluxSurfaces *surfaces = (*rec)->getFluxSurfaces();
 

@@ -65,11 +65,13 @@
 
 class SolarField;
 class Heliostat;
+class Receiver;
 class FluxSurface;
 struct sim_params;
 struct ST_System;
 typedef std::vector<FluxSurface> FluxSurfaces;
 typedef std::vector<Heliostat*> Hvector;
+typedef std::vector<Receiver*> Rvector;
 
 /* 
 NOTE

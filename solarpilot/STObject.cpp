@@ -1057,7 +1057,7 @@ bool ST_System::CreateSTSystem(SolarField &SF, Hvector &helios, Vect &sunvect){
 	//Name
 	r_stage->Name = "Receiver";
 
-	vector<Receiver*> *recs = SF.getReceivers();
+	Rvector *recs = SF.getReceivers();
 	int nrecs = (int)recs->size();
 	unordered_map<int, Receiver*> rstage_map;	//map between element number and pointer to the receiver
 	

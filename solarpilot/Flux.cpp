@@ -2394,7 +2394,7 @@ void Flux::simpleAimPoint(sp_point *Aim, sp_point *AimF, Heliostat &H, SolarFiel
 
 	*/
 
-	vector<Receiver*> *Recs = SF.getReceivers();
+	Rvector *Recs = SF.getReceivers();
 
 	double tht = SF.getVarMap()->sf.tht.val;
 	
@@ -2493,7 +2493,7 @@ void Flux::sigmaAimPoint(Heliostat &H, SolarField &SF, double args[]){
 	*/
 
 	
-	vector<Receiver*> *Recs = SF.getReceivers();
+	Rvector *Recs = SF.getReceivers();
 
 	sp_point *Aim = H.getAimPoint();
 
@@ -2613,7 +2613,7 @@ void Flux::probabilityShiftAimPoint(Heliostat &H, SolarField &SF, double args[])
 	*/
 
 	
-	vector<Receiver*> *Recs = SF.getReceivers();
+	Rvector *Recs = SF.getReceivers();
 
 	sp_point *Aim = H.getAimPoint();
 
@@ -2719,7 +2719,7 @@ void Flux::imageSizeAimPoint(Heliostat &H, SolarField &SF, double args[], bool i
 	For external receivers, the flux points surveyed will be in the vertical line most normal to the heliostat.
 
 	*/
-	vector<Receiver*> *Recs = SF.getReceivers();
+	Rvector *Recs = SF.getReceivers();
 
 	sp_point *hpos = H.getLocation();	//heliostat position for reference
 	sp_point *Aim = H.getAimPoint();	//Point to object, this will be set below
@@ -3240,7 +3240,7 @@ void Flux::calcReceiverTargetOrder(SolarField &SF)
        but in a different order.
     */
 
-    std::vector< Receiver* > active_receivers;
+    Rvector active_receivers;
     for (int i = 0; i < SF.getReceivers()->size(); i++)
         if (SF.getReceivers()->at(i)->isReceiverEnabled())
             active_receivers.push_back(SF.getReceivers()->at(i));
@@ -3261,7 +3261,7 @@ void Flux::calcReceiverTargetOrder(SolarField &SF)
 
         std::vector<s_sort_couple> areas(active_receivers.size());
         int i = 0;
-        for (std::vector<Receiver*>::iterator rec = active_receivers.begin(); rec != active_receivers.end(); rec++)
+        for (Rvector::iterator rec = active_receivers.begin(); rec != active_receivers.end(); rec++)
         {
             areas.at(i++).set( (void*)(*rec)->getHeliostatPreferenceList(), s_projected_area_htor(&*hit, *rec, tht));
         }
@@ -3305,7 +3305,7 @@ void Flux::calcReceiverTargetOrder(SolarField &SF)
     }
 }
 
-void Flux::calcBestReceiverTarget(Heliostat *H, vector<Receiver*> *Recs, double tht, int &rec_index, Vect *rtoh){
+void Flux::calcBestReceiverTarget(Heliostat *H, Rvector *Recs, double tht, int &rec_index, Vect *rtoh){
 	/* 
 	Take an existing heliostat 'H' and all possible receivers "Recs" and determine which receiver 'rec_index'
 	provides the best view factor between the heliostat and the receiver.

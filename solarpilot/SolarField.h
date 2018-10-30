@@ -76,6 +76,7 @@ class Ambient;
 class Land;
 
 typedef std::vector<Heliostat*> Hvector;
+typedef std::vector<Receiver*> Rvector;
 class sim_result;
 typedef std::vector<sim_result> sim_results;
 
@@ -153,8 +154,8 @@ protected:
 		_helio_groups,	//A 2-D mesh containing vectors that list the heliostats in each field group.
 		_neighbors;	//A 2-D mesh where each node lists the heliostats that neighbor each other
 	std::vector<Hvector> _layout_groups; //a std::vector of heliostat vectors that share flux intercept factor during layout calculations
-	std::vector<Receiver*> _receivers; //A std::vector containing all of the receiver objects
-	std::vector<Receiver*> _active_receivers;	//A std::vector containing only active receivers
+	Rvector _receivers; //A std::vector containing all of the receiver objects
+	Rvector _active_receivers;	//A std::vector containing only active receivers
 	Land _land;
 	Financial _financial;
     FluxSimData _fluxsim;
@@ -190,7 +191,7 @@ public:
 	
 	//-------Access functions
 	//"GETS"
-	std::vector<Receiver*> *getReceivers();
+	Rvector *getReceivers();
 	Land *getLandObject();
 	Flux *getFluxObject();
 	Financial *getFinancialObject();

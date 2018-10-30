@@ -141,7 +141,7 @@ int multi_rec_opt_helper::run(SolarField *SF)
             helios.push_back(helio_candidates->at(i));
     }
 
-    std::vector<Receiver*> *recs = SF->getReceivers();
+    Rvector *recs = SF->getReceivers();
     int Nrec = recs->size();
 
     //calculate receiver design point power values
@@ -178,7 +178,7 @@ int multi_rec_opt_helper::run(SolarField *SF)
         costs[id] = std::vector<double>();
 
         //do the power allocation calculation and save
-        for (std::vector<Receiver*>::iterator r = recs->begin(); r != recs->end(); r++)
+        for (Rvector::iterator r = recs->begin(); r != recs->end(); r++)
         {
             double powalloc = rpa[*r];
             power_allocs[id].push_back(powalloc);
