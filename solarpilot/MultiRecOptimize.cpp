@@ -108,6 +108,22 @@ public:
 int multi_rec_opt_helper::run(SolarField *SF)
 {
     /*
+    During field operation, we must assign each heliostat to aim at one of several receivers at any given time. 
+    The amount of power delivered to each receiver is determined by the receiver operation protocol and the 
+    heliostats must collectively meet minimum power constraints for each receiver. The performance of each 
+    heliostat differs depending on the receiver to which it is assigned.
+
+    Two problems must be addressed: (1) the design problem must choose the optimal set of heliostats to include 
+    in the final field layout given knowledge of receiver constraints and performance of each potential 
+    heliostat with respect to each receiver assignment, (2) once the set of heliostats is determined, each must 
+    be assigned to a receiver in a way that maximizes total field power output while maintaining receiver power 
+    constraints.
+
+    --- 
+
+    This method poses and solves the linear optimization problem of assigning heliostats to recievers in such a 
+    way that the optimal set of heliostats are chosen for design, and the maximum power output from the field is 
+    achieved during optimization.
 
     */
     Hvector *helio_candidates = SF->getHeliostats();
@@ -128,7 +144,7 @@ int multi_rec_opt_helper::run(SolarField *SF)
     std::vector<Receiver*> *recs = SF->getReceivers();
     int Nrec = recs->size();
 
-    //calculate receiver maximum powers
+    //calculate receiver design point power values
     std::vector< double > rec_design_power;
     double rec_frac_total = 0.;
 
@@ -146,72 +162,83 @@ int multi_rec_opt_helper::run(SolarField *SF)
     //heliostat to receiver power fractions
     unordered_map<int, std::vector<double> > power_allocs;
     unordered_map<int, std::vector<double> > costs;
+    //The heliostat "cost of energy" will be scaled by the maximum production from a heliostat "max_rank"
     double max_rank = 0.;
 
     for (int i = 0; i < Nh; i++)
     {
         int id = helios.at(i)->getId();
-
+        
+        //estimate for energy value produced by the heliostat
         double rank_metric = helios.at(i)->getRankingMetricValue();
-
+        //set the power from the heliostat to each receiver in the power allocation structure
         unordered_map<Receiver*, double> rpa = helios.at(i)->getReceiverPowerAlloc();
 
         power_allocs[id] = std::vector<double>();
         costs[id] = std::vector<double>();
 
+        //do the power allocation calculation and save
         for (std::vector<Receiver*>::iterator r = recs->begin(); r != recs->end(); r++)
         {
             double powalloc = rpa[*r];
             power_allocs[id].push_back(powalloc);
             costs[id].push_back(powalloc * rank_metric);
-
+            //track max ranking metric value
             max_rank = std::fmax(powalloc*rank_metric, max_rank);
         }
     }
 
+    //go back and scale all of the heliostat "cost of energy" values by the maximum observed ranking value
     for (unordered_map<int, std::vector<double> >::iterator pair = costs.begin(); pair != costs.end(); pair++)
         for (std::vector<double>::iterator dit = pair->second.begin(); dit != pair->second.end(); dit++)
             *dit = max_rank / (*dit > 0. ? *dit : max_rank * 1e3);
 
-    //---------------------------------------
+    //--------------------------------------------------------------------------
+    //     Formulate the linear optimization problem
+    //--------------------------------------------------------------------------
 
-    optimization_vars O;
-
-
+    optimization_vars O;    //helper class. largely duplicates ssc/tcs/csp_dispatch.* structure
+    
+    //add a new variable 'x' of dimension Nh x Nrec. 
     O.add_var("x", optimization_vars::VAR_TYPE::REAL_T, optimization_vars::VAR_DIM::DIM_NT, Nh, Nrec, 0., 1.);
     O.construct();
-
+    
+    //initialize the lp context
     lprec* lp = make_lp(0, Nh*Nrec);
 
-    //set up objective
+    //reserve space for input arrays
     int *col = new int[Nh*Nrec];
     REAL *row = new REAL[Nh*Nrec];
 
+    //set up objective
     if (is_performance)
-    {   //performance objective
+    {   //performance problem objective function
         for (int j = 0; j < Nrec; j++)
         {
             for (int i = 0; i < Nh; i++)
             {
+                //summation of all power values delivered from heliostat 'i' to receiver 'j'
                 col[j*Nh + i] = O.column("x", i, j);
                 row[j*Nh + i] = power_allocs[helios.at(i)->getId()].at(j);
             }
         }
     }
     else
-    {   //design objective
+    {   //design problem objective function
         for (int j = 0; j < Nrec; j++)
         {
             for (int i = 0; i < Nh; i++)
             {
+                //summation of all heliostat "cost of energy" values delivered from heliostat 'i' to receiver 'j'
                 col[j*Nh + i] = O.column("x", i, j);
                 row[j*Nh + i] = costs[helios.at(i)->getId()][j];  //cost of energy proxy for each heliostat
             }
         }
     }
-
+    
+    //assign objective. Do this before starting to add constraints
     set_obj_fnex(lp, Nh*Nrec, row, col);
-
+    //switch to constraint-adding mode
     set_add_rowmode(lp, TRUE);
 
     /*
@@ -219,11 +246,11 @@ int multi_rec_opt_helper::run(SolarField *SF)
     set up the variable properties
     --------------------------------------------------------------------------------
     */
-    //upper and lower variable bounds
     for (int j = 0; j < Nrec; j++)
     {
         for (int i = 0; i < Nh; i++)
         {
+            //simple variable bounds. Upper bound is set by packing constraint
             set_lowbo(lp, j*Nh + i + 1, 0.);
 
             //set column name
@@ -247,7 +274,9 @@ int multi_rec_opt_helper::run(SolarField *SF)
         */
         for (int j = 1; j < Nrec; j++)
         {
+            //gamma_r is the fraction of power expected to be delivered by receiver 'r'
             double gamma_0 = SF->getVarMap()->recs.front().power_fraction.val / rec_frac_total;
+            //sum all power delivered by receiver 0. do this each time, since row/col values are disturbed when adding constraints
             for (int i = 0; i < Nh; i++)
             {
                 int id = helios.at(i)->getId();
@@ -256,13 +285,14 @@ int multi_rec_opt_helper::run(SolarField *SF)
             }
 
             double gamma_r = SF->getVarMap()->recs.at(j).power_fraction.val / rec_frac_total;
-
+            //sum all power delivered by receiver r (r>=1).
             for (int i = 0; i < Nh; i++)
             {
                 int id = helios.at(i)->getId();
                 col[Nh + i] = O.column("x", i, j);
                 row[Nh + i] = -power_allocs.at(id).at(j) / gamma_r;
             }
+            //the constraint means sum of power from receiver 0 minus sum of power from receiver 'r' equals zero when scaled by their power fractions.
             add_constraintex(lp, Nh*2, row, col, EQ, 0.);
         }
     }
@@ -270,17 +300,19 @@ int multi_rec_opt_helper::run(SolarField *SF)
     {   //design constraint - achieve receiver design powers
         for (int j = 0; j < Nrec; j++)
         {
+            //sum all power delivered to each receiver by all heliostats
             for (int i = 0; i < Nh; i++)
             {
                 int id = helios.at(i)->getId();
                 col[i] = O.column("x", i, j);
                 row[i] = power_allocs[id].at(j);
             }
+            //minimum power must be met. If insufficient power is available for any receiver, the problem fails as infeasible
             add_constraintex(lp, Nh, row, col, GE, rec_design_power.at(j));
         }
     }
 
-    //total allocation can't exceed 1
+    //total allocation of power from each can't exceed 1 times the available power from that heliostat
     for (int i = 0; i < Nh; i++)
     {
         for (int j = 0; j < Nrec; j++)
@@ -294,33 +326,34 @@ int multi_rec_opt_helper::run(SolarField *SF)
     delete[] row;
     delete[] col;
 
-    //Set problem to maximize
     if (is_performance)
+        //Set problem to maximize power output
         set_maxim(lp);
     else
+        //(design) set problem to minimize heliostat cost of energy
         set_minim(lp);
 
     //reset the row mode
     set_add_rowmode(lp, FALSE);
 
     //optimization control parameters
-    is_abort_flag = false;
+    is_abort_flag = false;  //initialize abort flag
 
     put_msgfunc(lp, opt_iter_function, (void*)(this), MSG_ITERATION | MSG_LPBETTER | MSG_LPFEASIBLE | MSG_LPOPTIMAL);
     put_abortfunc(lp, opt_abortfunction, (void*)(this));
     put_logfunc(lp, opt_logfunction, (void*)(this));
     set_verbose(lp, 1); //http://web.mit.edu/lpsolve/doc/set_verbose.htm
-    //set_presolve(lp, PRESOLVE_ROWS | PRESOLVE_COLS | PRESOLVE_LINDEP, get_presolveloops(lp));   //independent optimization
     set_presolve(lp, PRESOLVE_ROWS | PRESOLVE_COLS | PRESOLVE_MERGEROWS | PRESOLVE_COLDOMINATE, get_presolveloops(lp));
     set_timeout(lp, timeout_sec);  //max solution time
-    //set_scaling(lp, SCALE_CURTISREID | SCALE_LINEAR | SCALE_EQUILIBRATE);
     set_scaling(lp, SCALE_GEOMETRIC | SCALE_DYNUPDATE);
 
+    //run the solver
     int ret = solve(lp);
 
     //Collect the dispatch profile and startup flags
     bool return_ok = ret == OPTIMAL || ret == SUBOPTIMAL;
 
+    //translate result to non-LPSOLVE enum values
     switch (ret)
     {
     case OPTIMAL:
@@ -344,11 +377,13 @@ int multi_rec_opt_helper::run(SolarField *SF)
 
     REAL *vars = new REAL[ncols];
     get_variables(lp, vars);
-
+    
+    //process the results
     unordered_map<int, unordered_map<int, double> > results;
 
     for (int i = 0; i < ncols; i++)
     {
+        //which variable is this?
         char *colname = get_col_name(lp, i + 1);
         if (!colname) continue;
         int id, rec;
@@ -363,26 +398,29 @@ int multi_rec_opt_helper::run(SolarField *SF)
         {
             continue;
         }
-
+        //save the result in a sparse map. Not all combinations of id & rec will be filled due to presove reductions
         results[id][rec] = vars[i];
     }
 
-    //create a pointer map
+    //create a pointer map between heliostat ID and heliostat address
     unordered_map<int, Heliostat*> hmap;
     std::vector<Heliostat>* hobjs = SF->getHeliostatObjects();
     for (int i = 0; i < hobjs->size(); i++)
         hmap[hobjs->at(i).getId()] = &hobjs->at(i);
 
+    //set of unique heliostats
     std::set<Heliostat*> heliostat_set;
 
     for (unordered_map<int, unordered_map<int, double> >::iterator hres = results.begin(); hres != results.end(); hres++)
     {
+        //find heliostat address from ID map
         Heliostat* h = hmap.at(hres->first);
         h->setPowerToReceiver(0.);
 
         int best_rec = 0;
         double most_rec_power = -1.;
 
+        //determine which receiver offers the most power opportunity for this heliostat
         for (int j = 0; j < Nrec; j++)
         {
             if (hres->second.find(j) != hres->second.end())
@@ -402,7 +440,7 @@ int multi_rec_opt_helper::run(SolarField *SF)
                 }
             }
         }
-
+        //assign this heliostat to the best receiver
         h->setWhichReceiver( recs->at(best_rec) );
     }
 
