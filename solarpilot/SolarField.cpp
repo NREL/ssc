@@ -3617,188 +3617,79 @@ void SolarField::calcAllAimPoints(Vect &Sun, sim_params &P) //bool force_simple,
 	*/
 
 	int nh = (int)_heliostats.size();
+    int method = _var_map->flux.aim_method.mapval();
 
     /*
     Multiple receiver aiming method ------------------------------------------
     */
     int active_rec_count = getActiveReceiverCount();
 
-    if (active_rec_count > 1 && !P.force_receiver && !P.is_layout )
+    if (active_rec_count > 1)
     {
-
-        //calculate performance for each heliostat aiming at each receiver
-        for (std::vector<Receiver*>::iterator rec = _active_receivers.begin(); rec != _active_receivers.end(); rec++)
+        if (method == var_fluxsim::AIM_METHOD::KEEP_EXISTING)
         {
             for (std::vector<Heliostat>::iterator h = _helio_objects.begin(); h != _helio_objects.end(); h++)
-            {
-                sp_point aim;
-                aim.Set(0., 0., 0.);
-
-                var_receiver* rmap = (*rec)->getVarMap();
-                aim.x += rmap->rec_offset_x.val;
-                aim.y += rmap->rec_offset_y.val;
-                aim.z += rmap->rec_offset_z.val + _var_map->sf.tht.val;
-
-                h->IsMultiReceiverAssigned(false);
-                //update the rough aiming vector
-                h->setAimPoint(aim);
-                //manually update the tracking vector
                 h->updateTrackVector(Sun);
-                
-                //manually assign the receiver here
-                h->setWhichReceiver(*rec);
-                h->IsMultiReceiverAssigned(true);
-            }
-
-            //separate loop to make sure all heliostat tracking vectors are updated
-            for (std::vector<Heliostat>::iterator h = _helio_objects.begin(); h != _helio_objects.end(); h++)
-            {
-                //get an estimate of performance
-                SimulateHeliostatEfficiency(this, Sun, &*h, P);
-
-                //update the power for this receiver
-                h->getReceiverPowerAlloc()[*rec] = h->getPowerToReceiver();
-            }
         }
-
-        //optimize and update receiver selection
-        multi_rec_opt_helper mroh;
-        mroh.is_performance = true;
-        mroh.run(this);
-        
-        for (std::vector<Heliostat>::iterator h = _helio_objects.begin(); h != _helio_objects.end(); h++)
-            h->IsMultiReceiverAssigned(true);
-
-
-        ////xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-        //std::vector< double > rec_cumulative_power(active_rec_count, 0.);
-
-        ////calculate the x,y,z centroid of the receivers as an approximate aim point
-        //sp_point aim;
-        //aim.Set(0., 0., 0.);
-
-        //for (int i = 0; i < active_rec_count; i++)
-        //{
-        //    var_receiver* rmap = _active_receivers.at(i)->getVarMap();
-        //    aim.x += rmap->rec_offset_x.val;
-        //    aim.y += rmap->rec_offset_y.val;
-        //    aim.z += rmap->rec_offset_z.val;
-        //}
-        //aim.x /= (double)active_rec_count;
-        //aim.y /= (double)active_rec_count;
-        //aim.z /= (double)active_rec_count;
-        //aim.z += _var_map->sf.tht.val;
-
-        ////reset all of the heliostat receiver associations
-        //for (int i = 0; i < nh; i++)
-        //{
-        //    _helio_objects.at(i).IsMultiReceiverAssigned(false);   
-        //    //update the rough aiming vector
-        //    _helio_objects.at(i).setAimPoint( aim );
-        //    //manually update the tracking vector
-        //    _helio_objects.at(i).updateTrackVector(Sun);
-        //}
-        //
-        //std::vector< int > rec_helio_pick_index(active_rec_count, 0);
-
-        ////unitize the power fractions
-        //std::vector< double > power_fractions;
-        //if (_var_map->sf.is_multirec_powfrac.val)
-        //{
-        //    double frac_total_base = 0.;
-        //    for (int i = 0; i < active_rec_count; i++)
-        //    {
-        //        power_fractions.push_back( _active_receivers.at(i)->getVarMap()->power_fraction.val );
-        //        frac_total_base += power_fractions.back();
-        //    }
-        //    for (int i = 0; i < active_rec_count; i++)
-        //        power_fractions.at(i) /= frac_total_base;
-        //}
-        //else
-        //{
-        //    //don't limit the power
-        //    for (int i = 0; i < active_rec_count; i++)
-        //        power_fractions.push_back( std::numeric_limits<double>::max() );
-        //}
-
-        //double accumulated_frac = 0.;
-
-        //std::vector<int> rec_assign_count(active_rec_count, 0);
-
-        ////run through all heliostats
-        //for (int i = 0; i < nh; i++)
-        //{
-        //    //which receiver's turn is it to pick the next heliostat?
-        //    int rec_next_pick=0;
-        //    if( i > active_rec_count*3 ) //make 3 passes through with alternating assignment before considering the distribution
-        //    {
-        //        double current_short_stick = std::numeric_limits<double>::max();
-        //        for (int j = 0; j < active_rec_count; j++)
-        //        {
-        //            double proportion = rec_cumulative_power.at(j) / power_fractions.at(j); // / accumulated_frac > 0. ? accumulated_frac : 1.;
-        //            if (proportion < current_short_stick)
-        //            {
-        //                current_short_stick = proportion;
-        //                rec_next_pick = j;
-        //            }
-        //        }
-        //    }
-        //    else
-        //    {
-        //        rec_next_pick = i % active_rec_count;
-        //    }
-        //    //-----
-
-        //    //check whether the current receiver is at it's power budget
-        //    //if (rec_cumulative_power.at(rec_next_pick) >= power_fractions.at(rec_next_pick))
-        //    //    continue;   //go on to the next receiver
-
-        //    //loop until we find the next unassigned heliostat on the receiver's list
-        //    while (true)
-        //    {
-        //        if (rec_helio_pick_index.at(rec_next_pick) > nh - 1)
-        //            break;
-
-        //        Heliostat* h = _active_receivers.at(rec_next_pick)->getHeliostatPreferenceList()->at(rec_helio_pick_index.at(rec_next_pick)); 
-        //        if (h->IsMultiReceiverAssigned())
-        //        {
-        //            //the receiver has already been assigned for this heliostat
-        //            rec_helio_pick_index.at(rec_next_pick)++;
-        //            continue;
-        //        }
-        //        else
-        //        {
-        //            //manually assign the receiver here
-        //            h->setWhichReceiver( _active_receivers.at(rec_next_pick) );
-        //            h->IsMultiReceiverAssigned(true);
-
-        //            rec_assign_count.at(rec_next_pick)++;
-
-        //            //get an estimate of performance
-        //            SimulateHeliostatEfficiency(this, Sun, h, P);
-        //            //calculate the power to the receiver
-        //            double newfrac = P.dni * 1.e-6 * h->getArea() * h->getEfficiencyTotal() / _var_map->sf.q_des.val;
-
-        //            rec_cumulative_power.at(rec_next_pick) += newfrac;
-
-        //            accumulated_frac += newfrac;
-        //            break;
-        //        }
-        //    }
-        //}
-    }   // ---------------------------- end of multiple reciever method
-    else if (active_rec_count > 1 && P.force_receiver)
-    {
-        //this is normally a multi-receiver case, but we are now forcing aim points at a particular receiver
-        for (int i = 0; i < _heliostats.size(); i++)
+        else if (!P.force_receiver && !P.is_layout )
         {
-            _heliostats.at(i)->setWhichReceiver( P.force_receiver );
-            _heliostats.at(i)->IsMultiReceiverAssigned(true);
+
+            //calculate performance for each heliostat aiming at each receiver
+            for (std::vector<Receiver*>::iterator rec = _active_receivers.begin(); rec != _active_receivers.end(); rec++)
+            {
+                for (std::vector<Heliostat>::iterator h = _helio_objects.begin(); h != _helio_objects.end(); h++)
+                {
+                    sp_point aim;
+                    aim.Set(0., 0., 0.);
+
+                    var_receiver* rmap = (*rec)->getVarMap();
+                    aim.x += rmap->rec_offset_x.val;
+                    aim.y += rmap->rec_offset_y.val;
+                    aim.z += rmap->rec_offset_z.val + _var_map->sf.tht.val;
+
+                    h->IsMultiReceiverAssigned(false);
+                    //update the rough aiming vector
+                    h->setAimPoint(aim);
+                    //manually update the tracking vector
+                    h->updateTrackVector(Sun);
+
+                    //manually assign the receiver here
+                    h->setWhichReceiver(*rec);
+                    h->IsMultiReceiverAssigned(true);
+                }
+
+                //separate loop to make sure all heliostat tracking vectors are updated
+                for (std::vector<Heliostat>::iterator h = _helio_objects.begin(); h != _helio_objects.end(); h++)
+                {
+                    //get an estimate of performance
+                    SimulateHeliostatEfficiency(this, Sun, &*h, P);
+
+                    //update the power for this receiver
+                    h->getReceiverPowerAlloc()[*rec] = h->getPowerToReceiver();
+                }
+            }
+
+            //optimize and update receiver selection
+            multi_rec_opt_helper mroh;
+            mroh.is_performance = true;
+            mroh.run(this);
+
+            for (std::vector<Heliostat>::iterator h = _helio_objects.begin(); h != _helio_objects.end(); h++)
+                h->IsMultiReceiverAssigned(true);
+
+        }
+        else if (P.force_receiver)
+        {
+            //this is normally a multi-receiver case, but we are now forcing aim points at a particular receiver
+            for (int i = 0; i < _heliostats.size(); i++)
+            {
+                _heliostats.at(i)->setWhichReceiver(P.force_receiver);
+                _heliostats.at(i)->IsMultiReceiverAssigned(true);
+            }
         }
     }
+    // ---------------------------- end of multiple reciever method
 
-
-    int method = _var_map->flux.aim_method.mapval();
     if(P.is_layout && method != var_fluxsim::AIM_METHOD::KEEP_EXISTING)
         method = var_fluxsim::AIM_METHOD::SIMPLE_AIM_POINTS;
 
@@ -4166,30 +4057,35 @@ void SolarField::AnalyticalFluxSimulation(Hvector &helios)
 
 void SolarField::CalcDimensionalFluxProfiles(Hvector &helios)
 {
-	/* 
-	Take the existing non-dimensional flux profiles in the Receivers::getFluxSurfaces() 
-	and alter the values to indicate total dimensional power on the receiver surfaces
-	*/
+    /*
+    Take the existing non-dimensional flux profiles in the Receivers::getFluxSurfaces()
+    and alter the values to indicate total dimensional power on the receiver surfaces
+    */
 
-	//DNI
-	double dni = _var_map->flux.flux_dni.val*0.001; // _var_map->sf.dni_des.val*0.001;	 //kW/m2
+    //DNI
+    double dni = _var_map->flux.flux_dni.val*0.001; // _var_map->sf.dni_des.val*0.001;	 //kW/m2
 
-	//Determine the total power delivered from the heliostats. This serves as a normalizing basis.
-	double q_to_rec=0.;
-	for(unsigned int i=0; i<helios.size(); i++){
-		q_to_rec += helios.at(i)->getEfficiencyTotal()*helios.at(i)->getArea()*dni;	//[kW]
+    //Determine the total power delivered from the heliostats. This serves as a normalizing basis.
+    unordered_map<Receiver*, double> q_to_rec;
+    for (std::vector<Receiver*>::iterator rec = _active_receivers.begin(); rec != _active_receivers.end(); rec++)
+        q_to_rec[*rec] = 0.;    //initialize
+
+	for(unsigned int i=0; i<helios.size(); i++)
+    {
+        Heliostat* h = helios.at(i);
+		q_to_rec[h->getWhichReceiver()] += h->getEfficiencyTotal()*h->getArea()*dni;	//[kW]
 	}
-	//Receiver surface area
-	double Arec = calcReceiverTotalArea();	//[m2]
-	//Convert to kW/m2
-	//double q_rec_spec = q_to_rec / Arec;
 
 	//Simulate for each receiver
 	int nrec = (int)_receivers.size();
-	for(int n=0; n<nrec; n++){
-		if(! _receivers.at(n)->isReceiverEnabled() ) continue;
-		FluxSurfaces *surfaces = _receivers.at(n)->getFluxSurfaces();
-		for(unsigned int i=0; i<surfaces->size(); i++){
+	for( std::vector<Receiver*>::iterator rec = _active_receivers.begin(); rec != _active_receivers.end(); rec++)
+    {
+		FluxSurfaces *surfaces = (*rec)->getFluxSurfaces();
+
+        double Arec = (*rec)->getAbsorberArea();
+
+		for(unsigned int i=0; i<surfaces->size(); i++)
+        {
 			FluxSurface *fs = &surfaces->at(i);
 					
 			//Take the normalized flux values and multiply to get flux density [kW/m2]
@@ -4207,7 +4103,7 @@ void SolarField::CalcDimensionalFluxProfiles(Hvector &helios)
                     ftot += *pt;
                     if(*pt > maxbin)
                         maxbin = *pt;
-                    *pt *= q_to_rec / anode;
+                    *pt *= q_to_rec[*rec] / anode;
 
 					//*pt *= q_rec_spec*nfynfx;
                     ftot2 += *pt;
