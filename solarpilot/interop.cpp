@@ -872,8 +872,6 @@ void sim_result::process_field_stats(){
         helio_perf_data::PERF_VALUES::ETA_BLOCK,
         helio_perf_data::PERF_VALUES::ETA_ATT,
         helio_perf_data::PERF_VALUES::ETA_INT,
-        helio_perf_data::PERF_VALUES::ANNUAL_EFFICIENCY,
-        helio_perf_data::PERF_VALUES::ANNUAL_POWER,
         helio_perf_data::PERF_VALUES::REC_ABSORPTANCE
     };
     int nh = (int)data_by_helio.size();
