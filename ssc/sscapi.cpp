@@ -55,7 +55,7 @@
 
 SSCEXPORT int ssc_version()
 {
-	return 186;
+	return 194;
 }
 
 SSCEXPORT const char *ssc_build_info()
@@ -104,6 +104,7 @@ extern module_entry_info
 	cm_entry_host_developer,
 	cm_entry_swh,
 	cm_entry_geothermal,
+	cm_entry_geothermal_costs,
 	cm_entry_windpower,
 	cm_entry_poacalib,
 	cm_entry_snowmodel,
@@ -127,6 +128,7 @@ extern module_entry_info
 	cm_entry_wfcheck,
 	cm_entry_windbos,
 	cm_entry_wind_obos,
+	cm_entry_windcsm,
 	cm_entry_biomass,
 	cm_entry_solarpilot,
 	cm_entry_belpe,
@@ -184,6 +186,7 @@ static module_entry_info *module_table[] = {
 	&cm_entry_host_developer,
 	&cm_entry_swh,
 	&cm_entry_geothermal,
+	&cm_entry_geothermal_costs,
 	&cm_entry_windpower,
 	&cm_entry_poacalib,
 	&cm_entry_snowmodel,
@@ -207,6 +210,7 @@ static module_entry_info *module_table[] = {
 	&cm_entry_wfcheck,
 	&cm_entry_windbos,
 	&cm_entry_wind_obos,
+	&cm_entry_windcsm,
 	&cm_entry_biomass,
 	&cm_entry_solarpilot,
 	&cm_entry_belpe,

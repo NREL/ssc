@@ -22,8 +22,10 @@
     <ClCompile Include="..\test\input_cases\tcs_trough_physical_input.cpp" />
     <ClCompile Include="..\test\input_cases\weather_inputs.cpp" />
     <ClCompile Include="..\test\main.cpp" />
+    <ClCompile Include="..\test\shared_test\lib_battery_powerflow_test.cpp" />
     <ClCompile Include="..\test\shared_test\lib_battery_test.cpp" />
     <ClCompile Include="..\test\shared_test\lib_irradproc_test.cpp" />
+    <ClCompile Include="..\test\shared_test\lib_shared_inverter_test.cpp" />
     <ClCompile Include="..\test\shared_test\lib_util_test.cpp" />
     <ClCompile Include="..\test\shared_test\lib_weatherfile_test.cpp" />
     <ClCompile Include="..\test\shared_test\lib_windfile_test.cpp" />
@@ -31,7 +33,10 @@
     <ClCompile Include="..\test\shared_test\lib_windwakemodel_test.cpp" />
     <ClCompile Include="..\test\shared_test\lib_windwatts_test.cpp" />
     <ClCompile Include="..\test\ssc_test\cmod_pvwattsv5_test.cpp" />
+    <ClCompile Include="..\test\ssc_test\cmod_tcstrough_physical_test.cpp" />
     <ClCompile Include="..\test\ssc_test\cmod_windpower_test.cpp" />
+    <ClCompile Include="..\test\ssc_test\cmod_windpower_test2.cpp" />
+    <ClCompile Include="..\test\ssc_test\computeModuleTest.cpp" />
     <ClCompile Include="..\test\tcs_test\csp_solver_core_test.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -42,15 +47,19 @@
     <ClInclude Include="..\test\input_cases\tcs_trough_physical_input.h" />
     <ClInclude Include="..\test\input_cases\weather_inputs.h" />
     <ClInclude Include="..\test\input_cases\windpower_cases.h" />
+    <ClInclude Include="..\test\shared_test\lib_battery_powerflow_test.h" />
+    <ClInclude Include="..\test\shared_test\lib_irradproc_test.h" />
     <ClInclude Include="..\test\shared_test\lib_windwakemodel_test.h" />
     <ClInclude Include="..\test\ssc_test\cmod_pvsamv1_test.h" />
     <ClInclude Include="..\test\ssc_test\cmod_pvwattsv5_test.h" />
     <ClInclude Include="..\test\ssc_test\cmod_windpower_test.h" />
+    <ClInclude Include="..\test\ssc_test\computeModuleTest.h" />
+    <ClInclude Include="..\test\ssc_test\simulation_test_info.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{37B3B5AF-8923-4C67-BA46-9D90EAC49E0E}</ProjectGuid>
     <RootNamespace>test</RootNamespace>
-    <WindowsTargetPlatformVersion>10.0.16299.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -131,7 +140,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
-      <Optimization>MaxSpeed</Optimization>
+      <Optimization>Disabled</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
@@ -148,7 +157,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
-      <Optimization>MaxSpeed</Optimization>
+      <Optimization>Disabled</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>

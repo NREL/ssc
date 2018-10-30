@@ -74,10 +74,12 @@ void C_csp_weatherreader::init()
 	if (m_is_wf_init)
 		return;
 
-	if (m_weather_data_provider->has_message()){
+	if (m_weather_data_provider->has_message() && (m_weather_data_provider->message().find("leap day") == std::string::npos)){
 		m_error_msg = m_weather_data_provider->message();
 		return;
 	}
+
+
 	m_hdr = &m_weather_data_provider->header();
 
 	// Set solved parameters

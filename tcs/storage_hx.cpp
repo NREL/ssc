@@ -280,11 +280,11 @@ bool Storage_HX::hx_performance( bool is_hot_side_mdot, bool is_storage_side,  d
 
 
 	// Subroutine for storage heat exchanger performance
-	// Pass a flag to determine whether mass flow rate is cold side or hot side. Return mass flow rate will be the other
-	// Also pass a flag to determine whether storage or field side mass flow rate is known. Return mass flow rate will be the other
-	// Inputs: hot side mass flow rate [kg/s], hot side inlet temp [K], cold side inlet temp [K]
+	// Pass a flag to specify whether the known mass flow rate is the cold side or hot side. Return mass flow rate will be the other
+	// Also pass a flag to specify whether the known mass flow rate is the storage or field htf.
+	// Inputs: hot or cold side mass flow rate [kg/s], hot side inlet temp [K], cold side inlet temp [K]
 	// Outputs: HX effectiveness [-], hot side outlet temp [K], cold side outlet temp [K], 
-	//				Heat transfer between fluids [MWt], cold side mass flow rate [kg/s]
+	//				Heat transfer between fluids [MWt], cold or hot side mass flow rate [kg/s]
 	
 	double m_dot_hot, m_dot_cold, c_hot, c_cold, c_dot;
 

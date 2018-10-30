@@ -84,6 +84,7 @@ public:
 	virtual double ImpRef() { return Imp; }
 	virtual double VocRef() { return Voc; }
 	virtual double IscRef() { return Isc; }
+
 	virtual bool operator() ( pvinput_t &input, double TcellC, double opvoltage, pvoutput_t &output );
 };
 

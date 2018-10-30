@@ -1122,6 +1122,97 @@ int tcskernel::simulate( double start, double end, double step )
 
 	}
 	
+	for (size_t i = 0; i < m_units.size(); i++)
+	{
+		// check all values of the current unit
+		// for connections to other units to see if their 
+		// inputs need to be updated
+		for (size_t j = 0; j < m_units[i].values.size(); j++)
+		{
+			// reference current output value
+			tcsvalue *val1 = &m_units[i].values[j];
+
+			// go through each connection attached to this output
+			for (size_t k = 0; k < m_units[i].conn[j].size(); k++)
+			{
+				connection &c = m_units[i].conn[j][k];
+				tcsvalue *val2 = &m_units[c.target_unit].values[c.target_index];
+
+				if (val2->type == TCS_NUMBER && val2->data.value == -999)
+				{
+
+					// check that 'val2' and 'val1' are
+					// within tolerances of one another
+
+					if (val1->type == TCS_NUMBER
+						&& val2->type == TCS_NUMBER)
+					{
+						if (!check_tolerance(val1->data.value, val2->data.value, c.ftol))
+						{
+							// mark units for recalculation and propagate new output value to input									
+							val2->data.value = val1->data.value;
+							m_units[c.target_unit].mustcall = true;
+						}
+					}
+					else if (val1->type == TCS_ARRAY
+						&& val2->type == TCS_NUMBER
+						&& c.arridx >= 0 && c.arridx < (int)val1->data.array.length)
+					{
+						if (!check_tolerance(val1->data.array.values[c.arridx], val2->data.value, c.ftol))
+						{
+							val2->data.value = val1->data.array.values[c.arridx];
+							m_units[c.target_unit].mustcall = true;
+						}
+					}
+					else if (val1->type == TCS_ARRAY && val2->type == TCS_ARRAY
+						&& val1->data.array.length == val2->data.array.length)
+					{
+						int len = val1->data.array.length;
+						bool pass = true;
+						for (int m = 0; m < len; m++)
+							pass = pass && check_tolerance(val1->data.array.values[m],
+								val2->data.array.values[m], c.ftol);
+
+						if (!pass)
+						{
+							// propagate values and mark for recalculation
+							for (int m = 0; m < len; m++)
+								val2->data.array.values[m] = val1->data.array.values[m];
+							m_units[c.target_unit].mustcall = true;
+						}
+					}
+					else if (val1->type == TCS_MATRIX && val2->type == TCS_MATRIX
+						&& val1->data.matrix.nrows == val2->data.matrix.nrows
+						&& val1->data.matrix.ncols == val2->data.matrix.ncols)
+					{
+						int len = val1->data.matrix.nrows * val1->data.matrix.ncols;
+						bool pass = true;
+						for (int m = 0; m < len; m++)
+							pass = pass && check_tolerance(val1->data.matrix.values[m],
+								val2->data.matrix.values[m], c.ftol);
+
+						if (!pass)
+						{
+							// propagate values and mark for recalculation
+							for (int m = 0; m < len; m++)
+								val2->data.matrix.values[m] = val1->data.matrix.values[m];
+							m_units[c.target_unit].mustcall = true;
+						}
+					}
+					else
+					{
+						// type mismatch,
+						// dimension mismatch,
+						// or cannot compare strings for convergence
+						message(TCS_ERROR, "kernel could not check connection between [%d,%d] and [%d,%d]: type mismatch, dimension mismatch, or invalid type connection",
+							i, j, c.target_unit, c.target_index);
+						return -3;
+					}
+				}
+			}
+		} // loop over all output connections, checking for output->input propagations
+	}
+
 	for( m_currentTime = m_startTime;
 		m_currentTime <= m_endTime;
 		m_currentTime += m_timeStep )

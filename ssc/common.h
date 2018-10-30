@@ -54,8 +54,9 @@
 #include <vector>
 #include "core.h"
 
-#include "lib_weatherfile.h"
-#include "lib_pv_shade_loss_mpp.h"
+#include "../shared/lib_util.h"
+#include "../shared/lib_weatherfile.h"
+#include "../shared/lib_pv_shade_loss_mpp.h"
 
 extern var_info vtab_standard_financial[];
 extern var_info vtab_standard_loan[];
@@ -106,6 +107,7 @@ class shading_factor_calculator
 	// shading database mods
 	int m_string_option;// 0=shading db, 1=average, 2=max, 3=min
 	//ShadeDB8_mpp *m_db8;
+	//std::unique_ptr<ShadeDB8_mpp> m_db8;
 	double m_beam_shade_factor;
 	double m_dc_shade_factor;
 
@@ -127,7 +129,7 @@ public:
 	// beam and diffuse loss factors (0: full loss, 1: no loss )
 	bool fbeam(size_t hour, double solalt, double solazi, size_t hour_step = 0, size_t steps_per_hour = 1);
 	// shading database instantiated once outside of shading factor calculator
-	bool fbeam_shade_db(smart_ptr<ShadeDB8_mpp>::ptr & p_shadedb, size_t hour, double solalt, double solazi, size_t hour_step = 0, size_t steps_per_hour = 1, double gpoa = 0.0, double dpoa = 0.0, double pv_cell_temp = 0.0, int mods_per_str = 0, double str_vmp_stc = 0.0, double mppt_lo = 0.0, double mppt_hi = 0.0);
+	bool fbeam_shade_db(std::unique_ptr<ShadeDB8_mpp> & p_shadedb, size_t hour, double solalt, double solazi, size_t hour_step = 0, size_t steps_per_hour = 1, double gpoa = 0.0, double dpoa = 0.0, double pv_cell_temp = 0.0, int mods_per_str = 0, double str_vmp_stc = 0.0, double mppt_lo = 0.0, double mppt_hi = 0.0);
 
 	double fdiff();
 
@@ -148,7 +150,7 @@ class weatherdata : public weather_data_provider
 	vec get_vector(var_data *v, const char *name, size_t *len = nullptr);
 	ssc_number_t get_number(var_data *v, const char *name);
 
-	size_t name_to_id(const char *name);
+	int name_to_id(const char *name);
 
 public:
 	/* Detects file format, read header information, detects which data columns are available and at what index

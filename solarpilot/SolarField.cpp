@@ -1475,7 +1475,7 @@ bool SolarField::DoLayout( SolarField *SF, sim_results *results, WeatherData *wd
 		//store the results
 		results->push_back( sim_result() );
         double azzen[] = {az,zen};
-		results->back().process_analytical_simulation( *SF, 0, azzen); //2);
+		results->back().process_analytical_simulation( *SF, P, 0, azzen); //2);
 
 		if(SF->CheckCancelStatus()) return false;	//check for cancelled simulation				
 	}
@@ -1534,8 +1534,18 @@ void SolarField::ProcessLayoutResults( sim_results *results, int nsim_total){
         for(int i=0; i<Npos; i++){
 		    int hid = _heliostats.at(i)->getId();	//use the heliostat ID from the first result to collect all of the other results
 		    rmet = 0.;      //ranking metric
-		    for(int j=0; j<nresults; j++)
-                rmet += results->at(j).data_by_helio[ hid ].getDataByIndex( rid );      //accumulate ranking metric as specified in rid
+            double eta_ann = 0.;
+            double energy_ann = 0.;
+            for (int j = 0; j < nresults; j++)
+            {
+                helio_perf_data* hpd = &results->at(j).data_by_helio[hid];
+                rmet += hpd->getDataByIndex(rid);      //accumulate ranking metric as specified in rid
+                eta_ann += hpd->eta_tot;
+                energy_ann += hpd->energy_value; //W-hr
+            }
+            eta_ann /= (double)nresults;
+            _helio_by_id[hid]->setAnnualEfficiency( eta_ann );
+            _helio_by_id[hid]->setAnnualEnergy( energy_ann ); //Wh
 
             //normalize for available heliostat power if applicable
             double afact = 1.;
@@ -3146,14 +3156,15 @@ void SolarField::SimulateHeliostatEfficiency(SolarField *SF, Vect &Sun, Heliosta
 		shad_tot = 1.,
 		block_tot = 1.;
 		
+    double interaction_limit = V->sf.interaction_limit.val;
 	Hvector *neibs = helios->getNeighborList();
 	int nn = (int)neibs->size();
 	for(int j=0; j<nn; j++){
 		if(helios == neibs->at(j) ) continue;	//Don't calculate blocking or shading for the same heliostat
 		
-        if(!P.is_layout) shad_tot += -SF->calcShadowBlock(helios, neibs->at(j), 0, Sun);	//Don't calculate shadowing for layout simulations. Cascaded shadowing effects can skew the layout.
+        if(!P.is_layout) shad_tot += -SF->calcShadowBlock(helios, neibs->at(j), 0, Sun, interaction_limit);	//Don't calculate shadowing for layout simulations. Cascaded shadowing effects can skew the layout.
 		
-        block_tot += -SF->calcShadowBlock(helios, neibs->at(j), 1, Sun);
+        block_tot += -SF->calcShadowBlock(helios, neibs->at(j), 1, Sun, interaction_limit);
 	}
 		
 	if(shad_tot < 0.) shad_tot = 0.;
@@ -3170,12 +3181,13 @@ void SolarField::SimulateHeliostatEfficiency(SolarField *SF, Vect &Sun, Heliosta
 	double power = eta_total * P.dni * helios->getArea() * eta_rec_abs;
 	helios->setPowerToReceiver( power );
 	helios->setPowerValue( power * P.Simweight*P.TOUweight * Rec->getThermalEfficiency() );
+    helios->setEnergyValue(power * P.Simweight * Rec->getThermalEfficiency()); //W-hr -- P.Simweight has units [hr] here
 
 	return;
 	
 }
 
-double SolarField::calcShadowBlock(Heliostat *H, Heliostat *HI, int mode, Vect &Sun)
+double SolarField::calcShadowBlock(Heliostat *H, Heliostat *HI, int mode, Vect &Sun, double interaction_limit)
 {
 	/*
 	This method takes two heliostats and calculates the interfering or blocking of heliostat 
@@ -3293,7 +3305,7 @@ double SolarField::calcShadowBlock(Heliostat *H, Heliostat *HI, int mode, Vect &
 		//double l_max = (HIloc->z - Hloc->z + HIh*sin(HIzen))/tan(PI/2.-zen) + HIh*cos(HIzen);
 		double tanpi2zen = H_inter->k/sqrt(H_inter->i*H_inter->i + H_inter->j*H_inter->j);
 		double l_max = (HIloc->z - Hloc->z + HIh*sin(HIzen))/tanpi2zen + HIh*HIt->k;
-		l_max = fmin(l_max, 100.*HIh);	//limit to a reasonable number
+		l_max = fmin(l_max, interaction_limit*HIh);	//limit to a reasonable number
 
 		//Create a vector pointing from the heliostat to the interfering neighbor
 		Vect Hnn;

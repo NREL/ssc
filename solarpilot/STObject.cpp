@@ -469,16 +469,7 @@ ST_IntersectionData::ST_IntersectionData()
 
 ST_IntersectionData::~ST_IntersectionData()
 {
-    //delete dynamic arrays if allocated
-    if( hitx != 0 ) delete [] hitx;
-    if( hity != 0 ) delete [] hity;
-    if( hitz != 0 ) delete [] hitz;
-    if( cosx != 0 ) delete [] cosx;
-    if( cosy != 0 ) delete [] cosy;
-    if( cosz != 0 ) delete [] cosz;
-    if( emap != 0 ) delete [] emap;	//corresponding element number
-    if( smap != 0 ) delete [] smap;	//corresponding stage number
-    if( rnum != 0 ) delete [] rnum;	//ray numbers
+    DeallocateArrays();
     return;
 }
 
@@ -505,6 +496,26 @@ void ST_IntersectionData::AllocateArrays(int size)
     return;
 }
 
+void ST_IntersectionData::DeallocateArrays()
+{
+    //delete dynamic arrays if allocated
+    try
+    {
+        if (hitx != 0) delete[] hitx;
+        if (hity != 0) delete[] hity;
+        if (hitz != 0) delete[] hitz;
+        if (cosx != 0) delete[] cosx;
+        if (cosy != 0) delete[] cosy;
+        if (cosz != 0) delete[] cosz;
+        if (emap != 0) delete[] emap;	//corresponding element number
+        if (smap != 0) delete[] smap;	//corresponding stage number
+        if (rnum != 0) delete[] rnum;	//ray numbers
+    }
+    catch (...)
+    {
+        throw spexception("Memory deallocation error encountered when destroying arrays for SolTrace intersection data. Contact support.");
+    }
+}
 
 
 ST_Stage::ST_Stage()
