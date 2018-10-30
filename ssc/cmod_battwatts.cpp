@@ -300,7 +300,9 @@ public:
 			*********************************************************************************************** */
 			std::vector<ssc_number_t> p_ac;
 			std::vector<ssc_number_t> p_load;
-	
+
+			const double voltage = 500;
+
 			p_ac = as_vector_ssc_number_t("ac");
 			util::vector_multiply_scalar<ssc_number_t>(p_ac, static_cast<ssc_number_t>(util::watt_to_kilowatt));
 			p_load = as_vector_ssc_number_t("load");
@@ -322,7 +324,7 @@ public:
 				for (int jj = 0; jj < batt.step_per_hour; jj++)
 				{
 					batt.initialize_time(0, hour, jj);
-					batt.advance(*this, p_ac[count], p_load[count]);
+					batt.advance(*this, p_ac[count], voltage, p_load[count]);
 					p_gen[count] = batt.outGenPower[count];
 					count++;
 				}
