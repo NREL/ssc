@@ -1189,6 +1189,10 @@ lifetime_calendar_t::lifetime_calendar_t(int calendar_choice, util::matrix_t<dou
 			_calendar_capacity.push_back(calendar_matrix.at(i, 1));
 		}
 	}
+	// Ensure don't accidently initialize to 0 if not using model
+	else if (_calendar_choice == NONE) {
+		_q0 = 1.0;
+	}
 }
 lifetime_calendar_t * lifetime_calendar_t::clone(){ return new lifetime_calendar_t(*this); }
 void lifetime_calendar_t::copy(lifetime_calendar_t * lifetime_calendar)

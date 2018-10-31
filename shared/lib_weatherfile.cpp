@@ -1388,7 +1388,16 @@ bool weatherfile::open(const std::string &file, bool header_only)
 					if (m_columns[k].index >= 0
 						&& m_columns[k].index < ncols)
 					{
-						m_columns[k].data[i] = (float)stof(trimboth(cols[m_columns[k].index]));
+						if (k == YEAR) {
+							try {
+								m_columns[k].data[i] = (float)stof(trimboth(cols[m_columns[k].index]));
+							}
+							catch (const std::exception& ) {
+								m_columns[k].data[i] = 1990;
+							}
+						}
+						else
+							m_columns[k].data[i] = (float)stof(trimboth(cols[m_columns[k].index]));
 					}
 				}
 

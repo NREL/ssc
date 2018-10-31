@@ -113,11 +113,9 @@ public:
 
 			// Battery lifetime
 			lifetime_matrix->push_back(20); lifetime_matrix->push_back(0); lifetime_matrix->push_back(100);
-			lifetime_matrix->push_back(20); lifetime_matrix->push_back(650); lifetime_matrix->push_back(96);
-			lifetime_matrix->push_back(80); lifetime_matrix->push_back(1500); lifetime_matrix->push_back(87);
+			lifetime_matrix->push_back(20); lifetime_matrix->push_back(5000); lifetime_matrix->push_back(80);
 			lifetime_matrix->push_back(80); lifetime_matrix->push_back(0); lifetime_matrix->push_back(100);
-			lifetime_matrix->push_back(80); lifetime_matrix->push_back(150); lifetime_matrix->push_back(96);
-			lifetime_matrix->push_back(80); lifetime_matrix->push_back(300); lifetime_matrix->push_back(87);
+			lifetime_matrix->push_back(80); lifetime_matrix->push_back(1000); lifetime_matrix->push_back(80);
 			util::matrix_t<double> batt_lifetime_matrix(6, 3, lifetime_matrix);
 			batt_vars->batt_lifetime_matrix = batt_lifetime_matrix;
 
@@ -255,6 +253,8 @@ public:
 		// Storage dispatch controllers
 		int dispatch = as_integer("batt_simple_dispatch");
 		batt_vars->batt_dispatch = (dispatch == 0 ? dispatch_t::LOOK_AHEAD : dispatch_t::LOOK_BEHIND);
+		batt_vars->batt_dispatch_auto_can_charge = true;
+		batt_vars->batt_dispatch_auto_can_gridcharge = true;
 
 		// Battery bank replacement
 		batt_vars->batt_replacement_capacity = 0.;
@@ -262,6 +262,7 @@ public:
 		// Battery lifetime
 		batt_vars->batt_calendar_choice = lifetime_calendar_t::NONE;
 		batt_vars->batt_calendar_lifetime_matrix = util::matrix_t<double>();
+		batt_vars->batt_calendar_q0 = 1.0;
 
 		// Common Thermal behavior
 		batt_vars->batt_mass = batt_vars->batt_kwh * 1000 / batt_specific_energy_per_mass;
@@ -299,7 +300,9 @@ public:
 			*********************************************************************************************** */
 			std::vector<ssc_number_t> p_ac;
 			std::vector<ssc_number_t> p_load;
-	
+
+			const double voltage = 500;
+
 			p_ac = as_vector_ssc_number_t("ac");
 			util::vector_multiply_scalar<ssc_number_t>(p_ac, static_cast<ssc_number_t>(util::watt_to_kilowatt));
 			p_load = as_vector_ssc_number_t("load");
@@ -321,7 +324,7 @@ public:
 				for (int jj = 0; jj < batt.step_per_hour; jj++)
 				{
 					batt.initialize_time(0, hour, jj);
-					batt.advance(*this, p_ac[count], p_load[count]);
+					batt.advance(*this, p_ac[count], voltage, p_load[count]);
 					p_gen[count] = batt.outGenPower[count];
 					count++;
 				}

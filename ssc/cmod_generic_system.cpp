@@ -126,14 +126,14 @@ public:
 		if (is32BitLifetime)
 		throw exec_error( "generic", "Lifetime simulation of generic systems is only available in the 64 bit version of SAM.");
 
-		ssc_number_t *enet;
-		ssc_number_t *load;
+		ssc_number_t *enet = nullptr;
+		ssc_number_t *load = nullptr;
 		size_t nrec_load = 8760;
-		if (is_assigned("load"))
- 			load = as_array("load", &nrec_load);
+		if (is_assigned("load")) {
+			load = as_array("load", &nrec_load);
+		}
 		size_t steps_per_hour_load = nrec_load / 8760;
 		ssc_number_t ts_hour_load = 1.0f / steps_per_hour_load;
-
 
 		size_t nrec_gen = nrec_load;
 		size_t steps_per_hour_gen = steps_per_hour_load;
@@ -141,7 +141,7 @@ public:
 
 		size_t nyears = 1;
 		if (system_use_lifetime_output) {
-			size_t nyears = as_integer("analysis_period");
+			nyears = as_integer("analysis_period");
 		}
 		size_t nlifetime = nrec_load * nyears;
 
@@ -157,8 +157,6 @@ public:
 		adjustment_factors haf(this, "adjust");
 		if (!haf.setup())
 			throw exec_error("generic system", "failed to setup adjustment factors: " + haf.error());
-
-
 
 		if (system_use_lifetime_output)
 		{
@@ -177,8 +175,9 @@ public:
 				for (i = 0; i < nyears && i < (int)count_degrad; i++) sys_degradation.push_back((ssc_number_t)(1.0 - (double)degrad[i] / 100.0));
 			}
 		}
-		else
+		else {
 			sys_degradation.push_back(1); // single year mode - degradation handled in financial models.
+		}
 
 
 		// setup battery model
@@ -186,9 +185,6 @@ public:
 		battstor batt(*this, en_batt, nrec_load, ts_hour_load);
 
 		size_t idx = 0;
-
-
-
 		if (spec_mode == 0)
 		{
 			double output = (double)as_number("system_capacity")
@@ -256,8 +252,9 @@ public:
 		int batt_topology = ChargeController::AC_CONNECTED;
 
 		// Initialize AC connected battery predictive control
-		if (en_batt && batt_topology == ChargeController::AC_CONNECTED)
+		if (en_batt && batt_topology == ChargeController::AC_CONNECTED) {
 			batt.initialize_automated_dispatch(util::array_to_vector<ssc_number_t>(enet, nlifetime), p_load_full);
+		}
 
 		double annual_ac_pre_avail = 0, annual_energy = 0;
 		idx = 0;
