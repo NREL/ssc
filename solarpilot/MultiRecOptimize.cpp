@@ -1,13 +1,14 @@
 #include <set>
+#include <iomanip>>
 
 #include "SolarField.h"
 #include "MultiRecOptimize.h"
 #include <lp_lib.h>
 
-void __WINAPI opt_logfunction(lprec *, void *handler, char *buf)
-{
-    static_cast<multi_rec_opt_helper*>(handler)->simlog << buf << "\n";
-}
+//void __WINAPI opt_logfunction(lprec *, void *handler, char *buf)
+//{
+//    static_cast<multi_rec_opt_helper*>(handler)->sim_info->addSimulationNotice(buf);;
+//}
 
 int __WINAPI opt_abortfunction(lprec *, void *userhandle)
 {
@@ -15,30 +16,85 @@ int __WINAPI opt_abortfunction(lprec *, void *userhandle)
     return par->is_abort_flag ? TRUE : FALSE;
 }
 
-void __WINAPI opt_iter_function(lprec *lp, void *userhandle, int msg)
+void __WINAPI opt_logfunction(lprec *lp, void *handler, char *buf)
+//void __WINAPI opt_iter_function(lprec *lp, void *userhandle, int msg)
 {
-    multi_rec_opt_helper* par = static_cast<multi_rec_opt_helper*>(userhandle);
+    multi_rec_opt_helper* par = static_cast<multi_rec_opt_helper*>(handler);
     
-    if( time_elapsed(lp) > get_timeout(lp) )
+    if (par->solver_status == PRESOLVED+1)
+        return;
+
+    int stat = get_status(lp);
+    
+    double time_el = time_elapsed(lp);
+
+    if (time_el > get_timeout(lp))
         par->is_abort_flag = true;
 
-    switch (msg)
+    if (stat != par->solver_status || stat > -1 )
     {
-    case MSG_ITERATION:
-        break;
-    case MSG_LPBETTER:
-        par->simlog << "Improved objective: " << get_working_objective(lp) << "\n";
-        break;
-    case MSG_LPFEASIBLE:
-        par->simlog << "Identified feasible aimpoint strategy... still optimizing\n";
-        break;
-    case MSG_LPOPTIMAL:
-        par->simlog << "Optimal aiming strategy identified!\n";
-        break;
-    default:
-        par->simlog << msg;
-        break;
+        std::string stattxt = get_statustext(lp, stat);
+        par->solver_status = stat;
     }
+    if (stat > -1)
+    {
+        std::stringstream logss;
+
+        switch (stat)
+        {
+            /* Solver status values */
+        case UNKNOWNERROR:
+        case DATAIGNORED:
+        case NOBFP:
+        case NOMEMORY:
+        case NOTRUN:
+        case UNBOUNDED:
+        case DEGENERATE:
+        case NUMFAILURE:
+            logss << "Optimization problem failed.";
+            par->solver_status = PRESOLVED + 1; //flag that no more messages will be allowed
+            break;
+        case OPTIMAL:
+            logss << "The optimal solution was identified!";
+            par->solver_status = PRESOLVED + 1; //flag that no more messages will be allowed
+            break;
+        case SUBOPTIMAL:
+            logss << "A solution was identified, but it is suboptimal.";
+            par->solver_status = PRESOLVED + 1; //flag that no more messages will be allowed
+            break;
+        case INFEASIBLE:
+            logss << "The optimization problem is infeasible. There is insufficient power from the heliostat field to meet the receiver power requirements.";
+            par->solver_status = PRESOLVED + 1; //flag that no more messages will be allowed
+            break;
+        case TIMEOUT:
+            logss << "The optimization problem timed out after " << get_timeout(lp) << " seconds without identifying a solution. Try again with a greater solution time limit.";
+            par->solver_status = PRESOLVED + 1; //flag that no more messages will be allowed
+            break;
+        case USERABORT:
+            logss << "The user aborted the program during optimization.";
+            par->solver_status = PRESOLVED + 1; //flag that no more messages will be allowed
+            break;
+        case RUNNING:
+        {
+            if (time_el - par->last_report_time < par->sim_report_step)
+                return;
+
+            par->last_report_time = time_el;
+
+            double obj = get_working_objective(lp);
+            logss << "Time elapsed (sec): " << std::setfill(' ') << std::setw(8) << time_el << "\tObjective: " << std::setfill(' ') << std::setw(10) << obj;
+            break;
+        }
+        case PRESOLVED:
+            logss << "Optimization problem presolve complete.";
+            break;
+        default:
+            break;
+        }
+
+        par->is_abort_flag = ! par->sim_info->addSimulationNotice(logss.str());
+    }
+    return;
 
 }
 
@@ -339,15 +395,29 @@ int multi_rec_opt_helper::run(SolarField *SF)
     //optimization control parameters
     is_abort_flag = false;  //initialize abort flag
 
-    put_msgfunc(lp, opt_iter_function, (void*)(this), MSG_ITERATION | MSG_LPBETTER | MSG_LPFEASIBLE | MSG_LPOPTIMAL);
+    if (sim_info)   //if a simulation info object has been assigned, request messages and logs be directed there
+    {
+        //put_msgfunc(lp, opt_iter_function, (void*)(this), MSG_ITERATION | MSG_LPBETTER | MSG_LPFEASIBLE | MSG_LPOPTIMAL);
+        put_logfunc(lp, opt_logfunction, (void*)(this));
+    }
     put_abortfunc(lp, opt_abortfunction, (void*)(this));
-    put_logfunc(lp, opt_logfunction, (void*)(this));
-    set_verbose(lp, 1); //http://web.mit.edu/lpsolve/doc/set_verbose.htm
-    set_presolve(lp, PRESOLVE_ROWS | PRESOLVE_COLS | PRESOLVE_MERGEROWS | PRESOLVE_COLDOMINATE, get_presolveloops(lp));
+
+#ifdef _DEBUG
+    set_outputfile(lp, "aimpoint_optimization_log.txt");
+#endif
+
+    set_verbose(lp, DETAILED); //http://web.mit.edu/lpsolve/doc/set_verbose.htm
     set_timeout(lp, timeout_sec);  //max solution time
-    set_scaling(lp, SCALE_GEOMETRIC | SCALE_DYNUPDATE);
+    set_presolve(lp, PRESOLVE_NONE, get_presolveloops(lp));
+    set_scaling(lp, SCALE_EXTREME | SCALE_FUTURE2);
 
     //run the solver
+    if( sim_info )
+    {
+        std::stringstream tmpss;
+        tmpss << "Optimizing " << problem_name << " to " << (is_performance ? "maximize heliostat power output." : "minimize heliostat field cost.");
+        sim_info->addSimulationNotice(tmpss.str());
+    }
     int ret = solve(lp);
 
     //Collect the dispatch profile and startup flags
@@ -454,8 +524,6 @@ int multi_rec_opt_helper::run(SolarField *SF)
 
     return result_status;
 }
-
-
 
 
 //----------------------------------------------------------------------------------

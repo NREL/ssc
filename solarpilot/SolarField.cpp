@@ -1685,7 +1685,10 @@ void SolarField::ProcessLayoutResults( sim_results *results, int nsim_total){
         multi_rec_opt_helper mroh;
         mroh.timeout_sec = 60.;
         mroh.is_performance = false;
+        mroh.sim_info = &_sim_info;
+        mroh.problem_name = " heliostat assignments for multiple receivers ";
         mroh.run(this);
+        
         
         if (mroh.result_status == multi_rec_opt_helper::RS_INFEASIBLE)
             _sim_error.addSimulationError("The field can't provide enough power to meet receiver input power requirements.");
@@ -3672,6 +3675,8 @@ void SolarField::calcAllAimPoints(Vect &Sun, sim_params &P) //bool force_simple,
             //optimize and update receiver selection
             multi_rec_opt_helper mroh;
             mroh.is_performance = true;
+            mroh.sim_info = &_sim_info;
+            mroh.problem_name = " multi-receiver aimpoints ";
             mroh.run(this);
 
             for (std::vector<Heliostat>::iterator h = _helio_objects.begin(); h != _helio_objects.end(); h++)
