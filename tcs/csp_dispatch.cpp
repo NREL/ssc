@@ -250,6 +250,7 @@ void csp_dispatch_opt::clear_output_arrays()
 	outputs.w_pb_target.clear();
     outputs.wnet_lim_min.clear();
     outputs.delta_rs.clear();
+	outputs.Qc.clear();
 }
 
 bool csp_dispatch_opt::check_setup(int nstep)
@@ -538,6 +539,11 @@ static void calculate_parameters(csp_dispatch_opt *optinst, unordered_map<std::s
         pars["rsu_cost"] = optinst->params.rsu_cost; //952.;
         pars["csu_cost"] = optinst->params.csu_cost; //10000.;
         pars["pen_delta_w"] = optinst->params.pen_delta_w; //0.1;
+
+		// time-dependent startup energy (only differs between time steps if user-defined fractional available capacity is a function of time)
+		optinst->outputs.Qc.resize(nt);
+		for (int t = 0; t < nt; t++)
+			optinst->outputs.Qc.at(t) = std::fmin(pars["Qc"], optinst->cap_frac.at(t) * optinst->params.q_pb_des);
 };
 
 bool csp_dispatch_opt::optimize()
@@ -688,7 +694,24 @@ bool csp_dispatch_opt::optimize()
                 pmean += forecast_outputs.price_scenarios.at(t,0);
             pmean /= (double)forecast_outputs.price_scenarios.nrows();
             //--
-            
+
+
+			// penalty for using non-physical consecutive startups to dump energy: -consec_su_pen * (ycsu - ycsup). 
+			double consec_su_pen = 0.0;   // No need for a penalty in most cases because constraints force startup/operation to occur in the same time step
+			double Qcmin = outputs.Qc.at(0);
+			double Qcmax = outputs.Qc.at(0);
+			double capfrac_min = cap_frac.at(0);
+			for (int t = 1; t < nt; t++)
+			{
+				Qcmin = std::fmin(Qcmin, outputs.Qc.at(t));
+				Qcmin = std::fmax(Qcmax, outputs.Qc.at(t));
+				capfrac_min = std::fmin(capfrac_min, cap_frac.at(t));
+			}
+			if (P["delta"] * Qcmin > P["Ec"] || Qcmax + P["Ql"] > P["Qu"] * capfrac_min)  // Startup requires >1 time step or cycle cannot startup and operate in the same time step
+				consec_su_pen = std::fmin(0.9*P["csu_cost"], P["delta"] * pmean*P["W_dot_cycle"]) / ceil(P["Ec"] / (P["delta"] * Qcmin));
+
+
+
             for(int t=0; t<nt; t++)
             {
                 i = 0;
@@ -696,7 +719,7 @@ bool csp_dispatch_opt::optimize()
                 row[ t + nt*(i++) ] = P["delta"] * forecast_outputs.price_scenarios.at(t,0)*tadj*(1.-outputs.w_condf_expected.at(t,0));
 
                 col[ t + nt*(i  ) ] = O.column("xr", t);
-                row[ t + nt*(i++) ] = -(P["delta"] * forecast_outputs.price_scenarios.at(t,0) * P["Lr"])+tadj*pmean;  // tadj added to prefer receiver production sooner (i.e. delay dumping)
+                row[ t + nt*(i++) ] = -(P["delta"] * forecast_outputs.price_scenarios.at(t,0) * P["Lr"])+0.1*tadj*pmean;  // tadj added to prefer receiver production sooner (i.e. delay dumping)
 
                 col[ t + nt*(i  ) ] = O.column("xrsu", t);
                 row[ t + nt*(i++) ] = -P["delta"] * forecast_outputs.price_scenarios.at(t,0) * P["Lr"];
@@ -729,13 +752,16 @@ bool csp_dispatch_opt::optimize()
                 //xxrow[ t + nt*(i++) ] = -tadj;
 
                 col[ t + nt*(i  ) ] = O.column("ycsup", t);
-                row[ t + nt*(i++) ] = -P["csu_cost"]*tadj;
+				row[t + nt * (i++)] = -P["csu_cost"] * tadj + consec_su_pen * tadj;
 
                 col[ t + nt*(i  ) ] = O.column("ychsp", t);
                 row[ t + nt*(i++) ] = -P["csu_cost"]*tadj * 0.1;
 
                 col[ t + nt*(i  ) ] = O.column("delta_w", t);
                 row[ t + nt*(i++) ] = -P["pen_delta_w"]*tadj;
+
+				col[t + nt * (i)] = O.column("ycsu", t);
+				row[t + nt * (i++)] = -consec_su_pen *tadj;
 
                 tadj *= P["disp_time_weighting"];
             }
@@ -857,6 +883,7 @@ bool csp_dispatch_opt::optimize()
             REAL row[5];
             int col[5];
 
+
             for(int t=0; t<nt; t++)
             {
 
@@ -969,6 +996,7 @@ bool csp_dispatch_opt::optimize()
 
                 add_constraintex(lp, 1, row, col, LE, std::fmin(P["M"]*outputs.q_sfavail_expected.at(t,0), 1.0) );  //if any measurable energy, y^r can be 1
 
+
                 // --- new constraints ---
 
                 //receiver startup/standby persist
@@ -1055,7 +1083,6 @@ bool csp_dispatch_opt::optimize()
             REAL row[5];
             int col[5];
 
-
             for(int t=0; t<nt; t++)
             {
 
@@ -1064,7 +1091,7 @@ bool csp_dispatch_opt::optimize()
                 row[i  ] = 1.;
                 col[i++] = O.column("ucsu", t);
                 
-                row[i  ] = -P["delta"] * P["Qc"];
+				row[i] = -P["delta"] * outputs.Qc.at(t); // -P["delta"] * P["Qc"];
                 col[i++] = O.column("ycsu", t);
 
                 if(t>0)
@@ -1084,42 +1111,86 @@ bool csp_dispatch_opt::optimize()
 
                 add_constraintex(lp, 2, row, col, LE, 0.);
 
-                //Cycle operation allowed when:
-                i=0;
-                row[i  ] = 1.;
-                col[i++] = O.column("y", t);
-                
-                row[i  ] = -1.0/P["Ec"]; 
-                col[i++] = O.column("ucsu", t);
 
-                if(t>0)
-                {
-                    row[i  ] = -1.;
-                    col[i++] = O.column("y", t-1);
+				// Original constraints: applied whenever cycle startup can be completed in a single time step and at least minimum operation can also occur in that timestep
+				if (P["delta"] * outputs.Qc.at(t) >= 0.999*P["Ec"] && outputs.Qc.at(t) + P["Ql"] < P["Qu"]*cap_frac.at(t))
+				{
+					//Cycle operation allowed when:
+					i = 0;
+					row[i] = 1.;
+					col[i++] = O.column("y", t);
 
-                    row[i  ] = -1.;
-                    col[i++] = O.column("ycsb", t-1);
+					row[i] = -1.0 / P["Ec"];
+					col[i++] = O.column("ucsu", t);
 
-                    add_constraintex(lp, i, row, col, LE, 0.); 
-                }
-                else
-                {
-                    add_constraintex(lp, i, row, col, LE, (params.is_pb_operating0 ? 1. : 0.) + (params.is_pb_standby0 ? 1. : 0.) );
-                }
+					if (t > 0)
+					{
+						row[i] = -1.;
+						col[i++] = O.column("y", t - 1);
 
-                //Cycle consumption limit
-                i=0;
-                row[i  ] = 1.;
-                col[i++] = O.column("x", t);
+						row[i] = -1.;
+						col[i++] = O.column("ycsb", t - 1);
 
-                //mjw 2016.12.2 --> This constraint seems to be problematic in identifying feasible solutions for subhourly runs. Needs attention.
-                row[i  ] = P["Qc"];
-                col[i++] = O.column("ycsu", t);
-                
-                row[i  ] = -P["Qu"] * cap_frac.at(t);
-                col[i++] = O.column("y", t);
+						add_constraintex(lp, i, row, col, LE, 0.);
+					}
+					else
+					{
+						add_constraintex(lp, i, row, col, LE, (params.is_pb_operating0 ? 1. : 0.) + (params.is_pb_standby0 ? 1. : 0.));
+					}
 
-                add_constraintex(lp, i, row, col, LE, 0.);
+
+					//Cycle consumption limit
+					i = 0;
+					row[i] = 1.;
+					col[i++] = O.column("x", t);
+
+					//mjw 2016.12.2 --> This constraint seems to be problematic in identifying feasible solutions for subhourly runs. Needs attention.
+					row[i] = outputs.Qc.at(t);  // P["Qc"];
+					col[i++] = O.column("ycsu", t);
+
+					row[i] = -P["Qu"] * cap_frac.at(t);
+					col[i++] = O.column("y", t);
+
+					add_constraintex(lp, i, row, col, LE, 0.);
+					
+				}
+				
+				// jm 10/2018: Modified constraints applied in cases when cycle startup requires multiple timesteps or full cycle startup and minimum operation can't occur in the same timestep
+				else
+				{
+					//Cycle operation allowed when:
+					i = 0;
+					row[i] = 1.;
+					col[i++] = O.column("y", t);
+					row[i] = -P["delta"] * outputs.Qc.at(t) / P["Ec"]; // -P["delta"] * P["Qc"] / P["Ec"];
+					col[i++] = O.column("ycsu", t);
+					if (t > 0)
+					{
+						row[i] = -1.0 / P["Ec"];
+						col[i++] = O.column("ucsu", t - 1);
+						row[i] = -1.;
+						col[i++] = O.column("y", t - 1);
+						row[i] = -1.;
+						col[i++] = O.column("ycsb", t - 1);
+						add_constraintex(lp, i, row, col, LE, 0.);
+					}
+					else
+					{
+						add_constraintex(lp, i, row, col, LE, (params.is_pb_operating0 ? 1. : 0.) + (params.is_pb_standby0 ? 1. : 0.));
+					}
+
+					//Cycle consumption limit
+					i = 0;
+					row[i] = 1.;
+					col[i++] = O.column("x", t);
+					row[i] = outputs.Qc.at(t);  //P["Qc"];
+					col[i++] = O.column("ycsu", t);
+					add_constraintex(lp, 2, row, col, LE, P["Qu"] * cap_frac.at(t));
+
+				}
+				
+
+
 
                 //cycle operation mode requirement
                 row[0] = 1.;
@@ -1278,7 +1349,7 @@ bool csp_dispatch_opt::optimize()
                 row[i  ] = P["delta"];
                 col[i++] = O.column("xr", t);
                 
-                row[i  ] = -P["delta"]*P["Qc"];
+                row[i  ] = -P["delta"] * outputs.Qc.at(t); //-P["delta"]*P["Qc"];
                 col[i++] = O.column("ycsu", t);
                 
                 row[i  ] = -P["delta"]*P["Qb"]; 
@@ -1698,7 +1769,7 @@ bool csp_dispatch_opt::optimize()
                 {
                     bool su = (fabs(1 - vars[ c-1 ]) < 0.001);
                     outputs.pb_operation.at(t) = outputs.pb_operation.at(t) || su;
-                    outputs.q_pb_startup.at(t) = su ? P["Qc"] : 0.;
+					outputs.q_pb_startup.at(t) = su ? outputs.Qc.at(t) : 0.;   //outputs.q_pb_startup.at(t) = su ? P["Qc"] : 0.;
                 }
                 else if(strcmp(root, "y") == 0)     //Cycle operation
                 {
