@@ -1683,9 +1683,9 @@ void SolarField::ProcessLayoutResults( sim_results *results, int nsim_total){
     {
         
         //make a rough cut of the heliostats that are likely to be included to reduce computational expense
-        std::set<Heliostat*> helio_include;
         unordered_map<Receiver*, double> power_totals, rec_alloc, q_rec_des;
         
+        //calculate receiver power requirements based on the specified fractions
         double frac_tot = 0.;
         for (Rvector::iterator r = _active_receivers.begin(); r != _active_receivers.end(); r++)
         {
@@ -1697,37 +1697,54 @@ void SolarField::ProcessLayoutResults( sim_results *results, int nsim_total){
         for (unordered_map<Receiver*, double>::iterator r = q_rec_des.begin(); r != q_rec_des.end(); r++)
             r->second *= 1e6 / frac_tot;
 
-        //for (Hvector::iterator h = _heliostats.begin(); h != _heliostats.end(); h++)
+        /*
+        iterate over all heliostats in order of best to worst (backwards) and add a sufficient number
+        to provide power for all recievers. 
+        */
+        int nhprev = _heliostats.size();
+
+        Hvector helio_include;
+        helio_include.reserve( nhprev );
+        
         for(int hi=_heliostats.size()-1; hi>-1; hi--)
         {
             Heliostat *h = _heliostats.at(hi);
             rec_alloc = h->getReceiverPowerAlloc();
             for (unordered_map<Receiver*, double>::iterator ra = rec_alloc.begin(); ra != rec_alloc.end(); ra++)
             {
+                //check if power is met by at least 125% (empirical multiplier)
                 if (power_totals[ra->first] > q_rec_des[ra->first]*1.25 || rec_alloc[ ra->first ] < 0.01 )
                     continue;
                 else
                 {
+                    //assume this heliostat will provide power to this receiver
                     power_totals[ ra->first ] += rec_alloc[ ra->first ];
-                    helio_include.insert( h );
+                    //add to the included set
+                    helio_include.push_back( h );
                     break;   //only add each heliostat once
                 }
             }
         }
-        
-        int nhprev = _heliostats.size();
+        //update official heliostat list with the included ones only
         _heliostats.clear();
-        for (std::set<Heliostat*>::iterator hit = helio_include.begin(); hit != helio_include.end(); hit++)
+        for (Hvector::iterator hit = helio_include.begin(); hit != helio_include.end(); hit++)
             _heliostats.push_back(*hit);
-        _sim_info.addSimulationNotice( (std::stringstream() << "Optimization pre-screening reduced candidate heliostats by " << (int)( ( 1. - (double)_heliostats.size()/(double)nhprev )*100. ) << "%"  ).str() );
 
+        //report on prescreen results
+        _sim_info.addSimulationNotice( 
+            (std::stringstream() << "Optimization pre-screening reduced candidate heliostats by " 
+                                 << (int)( ( 1. - (double)_heliostats.size()/(double)nhprev )*100. ) 
+                                 << "%"  
+            ).str() 
+        );
+
+        //create optimization object, tune, and run
         multi_rec_opt_helper mroh;
         mroh.timeout_sec = 60.;
         mroh.is_performance = false;
         mroh.sim_info = &_sim_info;
         mroh.problem_name = " heliostat assignments for multiple receivers ";
-        mroh.run(this);
-        
+        mroh.run(this);         //run the optimization
         
         if (mroh.result_status == multi_rec_opt_helper::RS_INFEASIBLE)
             _sim_error.addSimulationError("The field can't provide enough power to meet receiver input power requirements.");
@@ -1738,13 +1755,14 @@ void SolarField::ProcessLayoutResults( sim_results *results, int nsim_total){
             _sim_error.addSimulationError("Multiple-receiver heliostat selection optimization failed with an unknown error.");
         }
         
+        //once again, update the official heliostat list based on the optimization results.
         _heliostats.clear();
         _q_to_rec = 0.;
         for (Hvector::iterator hit = mroh.included_heliostats.begin(); hit != mroh.included_heliostats.end(); hit++)
         {
             _heliostats.push_back(*hit);
+            _q_to_rec += (*hit)->getPowerToReceiver();
         }
-
     }
     else
     {
