@@ -20,3 +20,6 @@ Please see the contribution guidelines in the main [SAM project readme](https://
 # License
 
 SSC is licensed uder a mixed MIT/GPL V3 [license](LICENSE.md).
+
+
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2FNREL%2Fssc.svg?type=large)](https://app.fossa.io/projects/git%2Bgithub.com%2FNREL%2Fssc?ref=badge_large)
