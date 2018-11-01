@@ -1321,7 +1321,7 @@ bool SolarField::PrepareFieldLayout(SolarField &SF, WeatherData *wdata, bool ref
         to_double(vdata.at(5), &P.Patm);
         to_double(vdata.at(6), &P.Vwind);
         to_double(vdata.at(7), &P.Simweight);
-
+        P.is_layout = true;
         
         DTobj dt;
         dt.setZero();
@@ -1682,6 +1682,45 @@ void SolarField::ProcessLayoutResults( sim_results *results, int nsim_total){
     if (getActiveReceiverCount() > 1)
     {
         
+        //make a rough cut of the heliostats that are likely to be included to reduce computational expense
+        std::set<Heliostat*> helio_include;
+        unordered_map<Receiver*, double> power_totals, rec_alloc, q_rec_des;
+        
+        double frac_tot = 0.;
+        for (Rvector::iterator r = _active_receivers.begin(); r != _active_receivers.end(); r++)
+        {
+            power_totals[*r] = 0.; //initialize
+            double pf = (*r)->getVarMap()->power_fraction.val;
+            frac_tot += pf;
+            q_rec_des[*r] = pf * _q_des_withloss;
+        }
+        for (unordered_map<Receiver*, double>::iterator r = q_rec_des.begin(); r != q_rec_des.end(); r++)
+            r->second *= 1e6 / frac_tot;
+
+        //for (Hvector::iterator h = _heliostats.begin(); h != _heliostats.end(); h++)
+        for(int hi=_heliostats.size()-1; hi>-1; hi--)
+        {
+            Heliostat *h = _heliostats.at(hi);
+            rec_alloc = h->getReceiverPowerAlloc();
+            for (unordered_map<Receiver*, double>::iterator ra = rec_alloc.begin(); ra != rec_alloc.end(); ra++)
+            {
+                if (power_totals[ra->first] > q_rec_des[ra->first]*1.25 || rec_alloc[ ra->first ] < 0.01 )
+                    continue;
+                else
+                {
+                    power_totals[ ra->first ] += rec_alloc[ ra->first ];
+                    helio_include.insert( h );
+                    break;   //only add each heliostat once
+                }
+            }
+        }
+        
+        int nhprev = _heliostats.size();
+        _heliostats.clear();
+        for (std::set<Heliostat*>::iterator hit = helio_include.begin(); hit != helio_include.end(); hit++)
+            _heliostats.push_back(*hit);
+        _sim_info.addSimulationNotice( (std::stringstream() << "Optimization pre-screening reduced candidate heliostats by " << (int)( ( 1. - (double)_heliostats.size()/(double)nhprev )*100. ) << "%"  ).str() );
+
         multi_rec_opt_helper mroh;
         mroh.timeout_sec = 60.;
         mroh.is_performance = false;
