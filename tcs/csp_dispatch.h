@@ -270,6 +270,7 @@ public:
         std::vector<double> q_pb_startup;    //thermal power going to startup
         std::vector<double> q_rec_startup;   //thermal power going to startup
         std::vector<double> w_pb_target;  //optimized electricity generation
+		std::vector<double> Qc; // startup power per period (limited based on fractional available capacity)
         
         util::matrix_t<double> wnet_lim_min; //minimum expected net power at time t before cycle gross falls before limit
         util::matrix_t<double> delta_rs;    //expected proportion of time step used for receiver start up
