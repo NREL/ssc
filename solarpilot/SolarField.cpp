@@ -393,6 +393,22 @@ void SolarField::Create(var_map &V){
 	
 }
 
+void SolarField::updateCalculatedReceiverPower(var_map &V)
+{
+    //receiver power (fraction)
+    double frac_tot = 0.;
+    for (int i = 0; i < (int)V.recs.size(); i++)
+        if (V.recs.at(i).is_enabled.val)
+            frac_tot += V.recs.at(i).power_fraction.val;
+
+    //receiver area
+    for (int i = 0; i < (int)V.recs.size(); i++)
+    {
+        //receiver power [MWt]
+        V.recs.at(i).q_rec_des.Setval(V.sf.q_des.val * V.recs.at(i).power_fraction.val / frac_tot);
+    }
+}
+
 void SolarField::updateCalculatedParameters( var_map &V )
 {
     /* 
@@ -407,11 +423,13 @@ void SolarField::updateCalculatedParameters( var_map &V )
     V.sf.sun_az_des.Setval( azzen[0] );
     V.sf.sun_el_des.Setval( 90.-azzen[1] );
 
+    //receiver power (fraction)
+    updateCalculatedReceiverPower(V);
 
     //receiver area
     double arec = 0.;
-    for(int i=0; i<(int)V.recs.size(); i++)
-        arec += V.recs.at(0).absorber_area.Val();
+    for (int i = 0; i < (int)V.recs.size(); i++)
+        arec += V.recs.at(i).absorber_area.Val();
 
     V.sf.rec_area.Setval( arec );
 
@@ -1683,20 +1701,8 @@ void SolarField::ProcessLayoutResults( sim_results *results, int nsim_total){
     {
         
         //make a rough cut of the heliostats that are likely to be included to reduce computational expense
-        unordered_map<Receiver*, double> power_totals, rec_alloc, q_rec_des;
+        unordered_map<Receiver*, double> power_totals, rec_alloc;
         
-        //calculate receiver power requirements based on the specified fractions
-        double frac_tot = 0.;
-        for (Rvector::iterator r = _active_receivers.begin(); r != _active_receivers.end(); r++)
-        {
-            power_totals[*r] = 0.; //initialize
-            double pf = (*r)->getVarMap()->power_fraction.val;
-            frac_tot += pf;
-            q_rec_des[*r] = pf * _q_des_withloss;
-        }
-        for (unordered_map<Receiver*, double>::iterator r = q_rec_des.begin(); r != q_rec_des.end(); r++)
-            r->second *= 1e6 / frac_tot;
-
         /*
         iterate over all heliostats in order of best to worst (backwards) and add a sufficient number
         to provide power for all recievers. 
@@ -1713,7 +1719,7 @@ void SolarField::ProcessLayoutResults( sim_results *results, int nsim_total){
             for (unordered_map<Receiver*, double>::iterator ra = rec_alloc.begin(); ra != rec_alloc.end(); ra++)
             {
                 //check if power is met by at least 125% (empirical multiplier)
-                if (power_totals[ra->first] > q_rec_des[ra->first]*1.25 || rec_alloc[ ra->first ] < 0.01 )
+                if (power_totals[ra->first] > ra->first->getVarMap()->q_rec_des.Val()*1.25e6 || rec_alloc[ ra->first ] < 0.01 )
                     continue;
                 else
                 {

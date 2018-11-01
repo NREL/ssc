@@ -234,6 +234,7 @@ public:
 	void Create(var_map &V);
     void updateCalculatedParameters(var_map &V);
     void updateAllCalculatedParameters(var_map &V);
+    void updateCalculatedReceiverPower(var_map &V);
 	void Clean();
 	bool ErrCheck();
 	void CancelSimulation();

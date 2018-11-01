@@ -202,16 +202,8 @@ int multi_rec_opt_helper::run(SolarField *SF)
 
     //calculate receiver design point power values
     std::vector< double > rec_design_power;
-    double rec_frac_total = 0.;
-
     for (int i = 0; i < Nrec; i++)
-    {
-        double f = recs->at(i)->getVarMap()->power_fraction.val;
-        rec_frac_total += f;
-        rec_design_power.push_back(recs->at(i)->getVarMap()->power_fraction.val);
-    }
-    for (int i = 0; i < Nrec; i++)
-        rec_design_power[i] *= SF->getVarMap()->sf.q_des.val * 1.e6 / rec_frac_total;
+        rec_design_power.push_back( 1.e6 * recs->at(i)->getVarMap()->q_rec_des.Val() );
 
     int Nh = helios.size();
 
@@ -331,7 +323,7 @@ int multi_rec_opt_helper::run(SolarField *SF)
         for (int j = 1; j < Nrec; j++)
         {
             //gamma_r is the fraction of power expected to be delivered by receiver 'r'
-            double gamma_0 = SF->getVarMap()->recs.front().power_fraction.val / rec_frac_total;
+            double gamma_0 = SF->getVarMap()->recs.front().q_rec_des.Val() / SF->getVarMap()->sf.q_des.val;
             //sum all power delivered by receiver 0. do this each time, since row/col values are disturbed when adding constraints
             for (int i = 0; i < Nh; i++)
             {
@@ -340,7 +332,7 @@ int multi_rec_opt_helper::run(SolarField *SF)
                 row[i] = power_allocs.at(id).at(0) / gamma_0;
             }
 
-            double gamma_r = SF->getVarMap()->recs.at(j).power_fraction.val / rec_frac_total;
+            double gamma_r = SF->getVarMap()->recs.at(j).q_rec_des.Val() / SF->getVarMap()->sf.q_des.val;
             //sum all power delivered by receiver r (r>=1).
             for (int i = 0; i < Nh; i++)
             {
