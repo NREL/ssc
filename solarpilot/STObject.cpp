@@ -1112,8 +1112,8 @@ bool ST_System::CreateSTSystem(SolarField &SF, Hvector &helios, Vect &sunvect){
 
 			ST_Element *element = r_stage->ElementList.at(i);
 			element->Enabled = true;
-			pos.x = rv->rec_offset_x.val; 
-			pos.y = rv->rec_offset_y.val - diam/2.;
+			pos.x = rv->rec_offset_x_global.Val(); 
+			pos.y = rv->rec_offset_y_global.Val() - diam/2.;
 			pos.z = rv->optical_height.Val();    //optical height includes z offset
 			element->Origin[0] = pos.x;
 			element->Origin[1] = pos.y;
@@ -1168,8 +1168,8 @@ bool ST_System::CreateSTSystem(SolarField &SF, Hvector &helios, Vect &sunvect){
             r_stage->ElementList.push_back( new ST_Element() );
             element = r_stage->ElementList.back();
 			element->Enabled = true;
-			pos.x = rv->rec_offset_x.val; 
-			pos.y = rv->rec_offset_y.val;
+			pos.x = rv->rec_offset_x_global.Val(); 
+			pos.y = rv->rec_offset_y_global.Val();
 			pos.z = rv->optical_height.Val() - rv->rec_height.val/2.;    //optical height includes z offset
 			element->Origin[0] = pos.x;
 			element->Origin[1] = pos.y;
@@ -1240,8 +1240,8 @@ bool ST_System::CreateSTSystem(SolarField &SF, Hvector &helios, Vect &sunvect){
 			Vect aim;
 			ST_Element *element = r_stage->ElementList.at(i);
 			element->Enabled = true;
-			pos.x = rv->rec_offset_x.val;
-			pos.y = rv->rec_offset_y.val;
+			pos.x = rv->rec_offset_x_global.Val();
+			pos.y = rv->rec_offset_y_global.Val();
 			pos.z = rv->optical_height.Val();    //optical height includes z offset
 			element->Origin[0] = pos.x;
 			element->Origin[1] = pos.y;

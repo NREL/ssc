@@ -389,9 +389,11 @@ struct var_receiver
 	spvar< double > rec_elevation; 		//[deg] Receiver elevation orientation: 0 deg to the horizon, negative rotating downward
 	spvar< double > rec_height; 		//[m] Height of the absorbing component
 	spvar< std::string > rec_name; 		//[] Receiver template name
-	spvar< double > rec_offset_x; 		//[m] Offset of receiver center in the East(+)/West(-) direction from the tower
-	spvar< double > rec_offset_y; 		//[m] Offset of receiver center in the North(+)/South(-) direction from the tower
-	spvar< double > rec_offset_z; 		//[m] Offset of the receiver center in the vertical direction, positive upwards
+	spvar< std::string > rec_offset_reference; 		//[none] Receiver offset is relative to the position of the selected item. Options include tower or other receivers.
+	struct REC_OFFSET_REFERENCE{ enum EN{TOWER=-1}; };
+	spvar< double > rec_offset_x; 		//[m] Offset of receiver center in the East(+)/West(-) direction from the reference object
+	spvar< double > rec_offset_y; 		//[m] Offset of receiver center in the North(+)/South(-) direction from the reference object
+	spvar< double > rec_offset_z; 		//[m] Offset of the receiver center in the vertical direction from the reference object, positive upwards
 	spvar< std::string > rec_type; 		//[none] Receiver geometrical configuration
 	struct REC_TYPE{ enum EN{EXTERNAL_CYLINDRICAL=0,FLAT_PLATE=2}; };
 	spvar< double > rec_width; 		//[m] Receiver width for cavity or flat receivers
@@ -405,6 +407,9 @@ struct var_receiver
 	spout< double > piping_loss; 		//[MW] Thermal loss from non-absorber receiver piping
 	spout< double > q_rec_des; 		//[MW] Power produced by the receiver at design after thermal losses
 	spout< double > rec_aspect; 		//[none] Ratio of receiver height to width
+	spout< double > rec_offset_x_global; 		//[m] Offset of receiver center in the East(+)/West(-) direction from the tower
+	spout< double > rec_offset_y_global; 		//[m] Offset of receiver center in the North(+)/South(-) direction from the tower
+	spout< double > rec_offset_z_global; 		//[m] Offset of the receiver center in the vertical direction, positive upwards
 	spout< double > therm_eff; 		//[none] Receiver calculated thermal efficiency
 	spout< double > therm_loss; 		//[MW] Receiver thermal loss at design
 

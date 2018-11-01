@@ -422,9 +422,10 @@ void var_map::add_receiver(int id)
 	recs.back().rec_elevation        .set("receiver."+sid+".rec_elevation"   , SP_DATTYPE::SP_DOUBLE    ,                  "0",        "deg",     true,         "",    "",    false,         "Receiver orientation elevation", "Receiver elevation orientation: 0 deg to the horizon, negative rotating downward");
 	recs.back().rec_height           .set("receiver."+sid+".rec_height"      , SP_DATTYPE::SP_DOUBLE    ,               "21.6",          "m",     true,         "",    "",    false,                        "Receiver height", "Height of the absorbing component");
 	recs.back().rec_name             .set("receiver."+sid+".rec_name"        , SP_DATTYPE::SP_STRING    ,         "Receiver 1",           "",    false,         "",    "",    false,                 "Receiver template name", "Receiver template name");
-	recs.back().rec_offset_x         .set("receiver."+sid+".rec_offset_x"    , SP_DATTYPE::SP_DOUBLE    ,                  "0",          "m",     true,         "",    "",    false,   "Receiver positioning offset - X axis", "Offset of receiver center in the East(+)/West(-) direction from the tower");
-	recs.back().rec_offset_y         .set("receiver."+sid+".rec_offset_y"    , SP_DATTYPE::SP_DOUBLE    ,                  "0",          "m",     true,         "",    "",    false,   "Receiver positioning offset - Y axis", "Offset of receiver center in the North(+)/South(-) direction from the tower");
-	recs.back().rec_offset_z         .set("receiver."+sid+".rec_offset_z"    , SP_DATTYPE::SP_DOUBLE    ,                  "0",          "m",     true,         "",    "",    false,   "Receiver positioning offset - Z axis", "Offset of the receiver center in the vertical direction, positive upwards");
+	recs.back().rec_offset_reference .set("receiver."+sid+".rec_offset_reference", SP_DATTYPE::SP_STRING    ,                  "0",       "none",    false,    "combo", "Tower=-1",    false,              "Receiver offset reference", "Receiver offset is relative to the position of the selected item. Options include tower or other receivers.");
+	recs.back().rec_offset_x         .set("receiver."+sid+".rec_offset_x"    , SP_DATTYPE::SP_DOUBLE    ,                  "0",          "m",     true,         "",    "",    false,   "Receiver positioning offset - X axis", "Offset of receiver center in the East(+)/West(-) direction from the reference object");
+	recs.back().rec_offset_y         .set("receiver."+sid+".rec_offset_y"    , SP_DATTYPE::SP_DOUBLE    ,                  "0",          "m",     true,         "",    "",    false,   "Receiver positioning offset - Y axis", "Offset of receiver center in the North(+)/South(-) direction from the reference object");
+	recs.back().rec_offset_z         .set("receiver."+sid+".rec_offset_z"    , SP_DATTYPE::SP_DOUBLE    ,                  "0",          "m",     true,         "",    "",    false,   "Receiver positioning offset - Z axis", "Offset of the receiver center in the vertical direction from the reference object, positive upwards");
 	recs.back().rec_type             .set("receiver."+sid+".rec_type"        , SP_DATTYPE::SP_STRING    ,                  "0",       "none",    false,    "combo", "External cylindrical=0;Flat plate=2",    false,                          "Receiver type", "Receiver geometrical configuration");
 	recs.back().rec_width            .set("receiver."+sid+".rec_width"       , SP_DATTYPE::SP_DOUBLE    ,                 "17",          "m",     true,         "",    "",    false,                         "Receiver width", "Receiver width for cavity or flat receivers");
 	recs.back().span_max             .set("receiver."+sid+".span_max"        , SP_DATTYPE::SP_DOUBLE    ,                "180",        "deg",     true,         "",    "",     true,         "Max. receiver panel span angle", "Maximum (CW) bound of the arc defining the receiver surface");
@@ -437,6 +438,9 @@ void var_map::add_receiver(int id)
 	recs.back().piping_loss          .setup("receiver."+sid+".piping_loss"     , SP_DATTYPE::SP_DOUBLE    ,                               "MW",    false,         "",    "",    false,                   "Receiver piping loss", "Thermal loss from non-absorber receiver piping");
 	recs.back().q_rec_des            .setup("receiver."+sid+".q_rec_des"       , SP_DATTYPE::SP_DOUBLE    ,                               "MW",    false,         "",    "",    false,             "Design-point thermal power", "Power produced by the receiver at design after thermal losses");
 	recs.back().rec_aspect           .setup("receiver."+sid+".rec_aspect"      , SP_DATTYPE::SP_DOUBLE    ,                             "none",     true,         "",    "",    false,            "Receiver aspect ratio (H/W)", "Ratio of receiver height to width");
+	recs.back().rec_offset_x_global  .setup("receiver."+sid+".rec_offset_x_global", SP_DATTYPE::SP_DOUBLE    ,                                "m",    false,         "",    "",    false, "Receiver global positioning offset - X axis", "Offset of receiver center in the East(+)/West(-) direction from the tower");
+	recs.back().rec_offset_y_global  .setup("receiver."+sid+".rec_offset_y_global", SP_DATTYPE::SP_DOUBLE    ,                                "m",    false,         "",    "",    false, "Receiver global positioning offset - Y axis", "Offset of receiver center in the North(+)/South(-) direction from the tower");
+	recs.back().rec_offset_z_global  .setup("receiver."+sid+".rec_offset_z_global", SP_DATTYPE::SP_DOUBLE    ,                                "m",    false,         "",    "",    false, "Receiver global positioning offset - Z axis", "Offset of the receiver center in the vertical direction, positive upwards");
 	recs.back().therm_eff            .setup("receiver."+sid+".therm_eff"       , SP_DATTYPE::SP_DOUBLE    ,                             "none",    false,         "",    "",    false, "Receiver calculated thermal efficiency", "Receiver calculated thermal efficiency");
 	recs.back().therm_loss           .setup("receiver."+sid+".therm_loss"      , SP_DATTYPE::SP_DOUBLE    ,                               "MW",    false,         "",    "",    false,              "Design-point thermal loss", "Receiver thermal loss at design");
 
@@ -715,6 +719,7 @@ void var_receiver::addptrs(unordered_map<std::string, spbase*> &pmap)
 	pmap["receiver."+sid+".rec_elevation"] = &rec_elevation;
 	pmap["receiver."+sid+".rec_height"] = &rec_height;
 	pmap["receiver."+sid+".rec_name"] = &rec_name;
+	pmap["receiver."+sid+".rec_offset_reference"] = &rec_offset_reference;
 	pmap["receiver."+sid+".rec_offset_x"] = &rec_offset_x;
 	pmap["receiver."+sid+".rec_offset_y"] = &rec_offset_y;
 	pmap["receiver."+sid+".rec_offset_z"] = &rec_offset_z;
@@ -730,6 +735,9 @@ void var_receiver::addptrs(unordered_map<std::string, spbase*> &pmap)
 	pmap["receiver."+sid+".piping_loss"] = &piping_loss;
 	pmap["receiver."+sid+".q_rec_des"] = &q_rec_des;
 	pmap["receiver."+sid+".rec_aspect"] = &rec_aspect;
+	pmap["receiver."+sid+".rec_offset_x_global"] = &rec_offset_x_global;
+	pmap["receiver."+sid+".rec_offset_y_global"] = &rec_offset_y_global;
+	pmap["receiver."+sid+".rec_offset_z_global"] = &rec_offset_z_global;
 	pmap["receiver."+sid+".therm_eff"] = &therm_eff;
 	pmap["receiver."+sid+".therm_loss"] = &therm_loss;
 }

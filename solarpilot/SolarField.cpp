@@ -433,6 +433,74 @@ void SolarField::updateCalculatedParameters( var_map &V )
 
     V.sf.rec_area.Setval( arec );
 
+    //receiver relative offset
+    std::vector<var_receiver*> rec_roots;
+    for (int i = 0; i < V.recs.size(); i++)
+    {
+        if (!V.recs[i].is_enabled.val)
+            continue;
+        if (V.recs[i].rec_offset_reference.mapval() == var_receiver::REC_OFFSET_REFERENCE::TOWER)
+            rec_roots.push_back(&V.recs[i]);
+    }
+    if (rec_roots.size() == 0)  //no receiver is specified as referenced to the tower. can't compute.
+    {
+        for (int i = 0; i < V.recs.size(); i++)
+        {
+            V.recs[i].rec_offset_x_global.Setval(std::numeric_limits<double>::quiet_NaN());
+            V.recs[i].rec_offset_y_global.Setval(std::numeric_limits<double>::quiet_NaN());
+            V.recs[i].rec_offset_z_global.Setval(std::numeric_limits<double>::quiet_NaN());
+        }
+    }
+    else
+    {
+        unordered_map<std::string, var_receiver*> ref_map;
+        for (int i = 0; i < (int)V.recs.size(); i++)
+            ref_map[V.recs.at(i).rec_name.val] = &V.recs.at(i);
+
+        //for each receiver, trace back through the reference chain
+        for (int i = 0; i < (int)V.recs.size(); i++)
+        {
+            var_receiver *current_rec = &V.recs.at(i);
+            double og_x = 0.;
+            double og_y = 0.;
+            double og_z = 0.;
+            bool fail = false;
+            for(int j=0; j<(int)V.recs.size(); j++)
+            {
+                og_x += current_rec->rec_offset_x.val;
+                og_y += current_rec->rec_offset_y.val;
+                og_z += current_rec->rec_offset_z.val;
+
+                if (std::find(rec_roots.begin(), rec_roots.end(), current_rec) == rec_roots.end())
+                {
+                    //this receiver isn't a root. go to the next reference
+                    if( j < (int)V.recs.size()-1)
+                        current_rec = ref_map[current_rec->rec_offset_reference.val];
+                    else
+                    {
+                        fail = true;
+                        break;
+                    }
+                }
+                else
+                    //the receiver is a root. end the loop here
+                    break;
+            }
+            if (fail)
+            {
+                V.recs[i].rec_offset_x_global.Setval(std::numeric_limits<double>::quiet_NaN());
+                V.recs[i].rec_offset_y_global.Setval(std::numeric_limits<double>::quiet_NaN());
+                V.recs[i].rec_offset_z_global.Setval(std::numeric_limits<double>::quiet_NaN());
+            }
+            else
+            {
+                V.recs[i].rec_offset_x_global.Setval(og_x);
+                V.recs[i].rec_offset_y_global.Setval(og_y);
+                V.recs[i].rec_offset_z_global.Setval(og_z);
+            }
+        }
+    }
+
     //heliostat area
     V.sf.sf_area.Setval( _sf_area );
 
@@ -1064,9 +1132,9 @@ bool SolarField::PrepareFieldLayout(SolarField &SF, WeatherData *wdata, bool ref
                 //calculate the vector from the receiver to the heliostat
                 sp_point offset;
                 offset.Set(
-                    Rv->rec_offset_x.val,
-                    Rv->rec_offset_y.val,
-                    Rv->rec_offset_z.val);
+                    Rv->rec_offset_x_global.Val(),
+                    Rv->rec_offset_y_global.Val(),
+                    Rv->rec_offset_z_global.Val());
 
                 double tht = SF.getVarMap()->sf.tht.val; 
                 
@@ -3709,9 +3777,9 @@ void SolarField::calcAllAimPoints(Vect &Sun, sim_params &P) //bool force_simple,
                     aim.Set(0., 0., 0.);
 
                     var_receiver* rmap = (*rec)->getVarMap();
-                    aim.x += rmap->rec_offset_x.val;
-                    aim.y += rmap->rec_offset_y.val;
-                    aim.z += rmap->rec_offset_z.val + _var_map->sf.tht.val;
+                    aim.x += rmap->rec_offset_x_global.Val();
+                    aim.y += rmap->rec_offset_y_global.Val();
+                    aim.z += rmap->rec_offset_z_global.Val() + _var_map->sf.tht.val;
 
                     h->IsMultiReceiverAssigned(false);
                     //update the rough aiming vector

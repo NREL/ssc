@@ -2419,8 +2419,8 @@ void Flux::simpleAimPoint(sp_point *Aim, sp_point *AimF, Heliostat &H, SolarFiel
     var_receiver *Rv = rec->getVarMap();
 	double
 		opt_height = Rv->optical_height.Val(), // + rec->getOffsetZ(),       << optical height already includes Z offset
-		y_offset = Rv->rec_offset_y.val,
-		x_offset = Rv->rec_offset_x.val;
+		y_offset = Rv->rec_offset_y_global.Val(),
+		x_offset = Rv->rec_offset_x_global.Val();
 	int recgeom = rec->getGeometryType();
 
     double view_az, w2;
@@ -2511,8 +2511,8 @@ void Flux::sigmaAimPoint(Heliostat &H, SolarField &SF, double args[]){
     var_receiver *Rv = rec->getVarMap();
 	double
 		opt_height = Rv->optical_height.Val(), // + rec->getOffsetZ(),       << optical height already includes Z offset
-		y_offset = Rv->rec_offset_y.val,
-		x_offset = Rv->rec_offset_x.val;
+		y_offset = Rv->rec_offset_y_global.Val(),
+		x_offset = Rv->rec_offset_x_global.Val();
 	int recgeom = rec->getGeometryType();
 
 	double view_az, w2, h2;
@@ -2633,8 +2633,8 @@ void Flux::probabilityShiftAimPoint(Heliostat &H, SolarField &SF, double args[])
 	var_receiver *Rv = rec->getVarMap();
 	double
 		opt_height = Rv->optical_height.Val(), // + rec->getOffsetZ(),       << optical height already includes Z offset
-		y_offset = Rv->rec_offset_y.val,
-		x_offset = Rv->rec_offset_x.val;
+		y_offset = Rv->rec_offset_y_global.Val(),
+		x_offset = Rv->rec_offset_x_global.Val();
 	int recgeom = rec->getGeometryType();
 
     double view_az, w2, h2;
@@ -2967,9 +2967,9 @@ void Flux::imageSizeAimPoint(Heliostat &H, SolarField &SF, double args[], bool i
 				
 		//-- now calculate the aim point position in the flux plane
 		//vector to aim point in globals
-		aimpos.Set(Rv->rec_offset_x.val + FS->getSurfaceOffset()->x - Aim->x, 
-			Rv->rec_offset_y.val + FS->getSurfaceOffset()->y - Aim->y, 
-			Rv->rec_offset_z.val + FS->getSurfaceOffset()->z +tht - Aim->z);
+		aimpos.Set(Rv->rec_offset_x_global.Val() + FS->getSurfaceOffset()->x - Aim->x, 
+			Rv->rec_offset_y_global.Val() + FS->getSurfaceOffset()->y - Aim->y, 
+			Rv->rec_offset_z_global.Val() + FS->getSurfaceOffset()->z +tht - Aim->z);
 		
 		H.calcAndSetAimPointFluxPlane(aimpos, *rec, H);
 		
@@ -3046,7 +3046,7 @@ void Flux::frozenAimPoint(Heliostat &H, double tht, double args[] )
         
         //Set the heliostat aim point in tower coordinates
         sp_point aim_adj( aim_ip );
-        aim_adj.Add( -Rv->rec_offset_x.val, -Rv->rec_offset_y.val, -Rv->rec_offset_z.val - tht );
+        aim_adj.Add( -Rv->rec_offset_x_global.Val(), -Rv->rec_offset_y_global.Val(), -Rv->rec_offset_z_global.Val() - tht );
         H.setAimPoint( aim_adj );
 
         //Move the aim point into receiver coordinates, accounting for any receiver rotation
