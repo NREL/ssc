@@ -1719,7 +1719,7 @@ void SolarField::ProcessLayoutResults( sim_results *results, int nsim_total){
             for (unordered_map<Receiver*, double>::iterator ra = rec_alloc.begin(); ra != rec_alloc.end(); ra++)
             {
                 //check if power is met by at least 125% (empirical multiplier)
-                if (power_totals[ra->first] > ra->first->getVarMap()->q_rec_des.Val()*1.25e6 || rec_alloc[ ra->first ] < 0.01 )
+                if (power_totals[ra->first] > ra->first->getVarMap()->q_rec_des.Val()*1e6*_var_map->opt.multirec_screen_mult.val || rec_alloc[ ra->first ] < 0.01 )
                     continue;
                 else
                 {
@@ -1746,7 +1746,7 @@ void SolarField::ProcessLayoutResults( sim_results *results, int nsim_total){
 
         //create optimization object, tune, and run
         multi_rec_opt_helper mroh;
-        mroh.timeout_sec = 60.;
+        mroh.timeout_sec = _var_map->opt.multirec_opt_timeout.val;
         mroh.is_performance = false;
         mroh.sim_info = &_sim_info;
         mroh.problem_name = " heliostat assignments for multiple receivers ";

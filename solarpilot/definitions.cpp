@@ -235,6 +235,8 @@ void var_map::reset()
 	opt.max_gs_iter                  .set("optimize.0.max_gs_iter"           , SP_DATTYPE::SP_INT       ,                  "5",       "none",    false,         "",    "",     true,             "Max. refinement iterations", "Maximum number of golden section iterations to refine the position of a local minimum");
 	opt.max_iter                     .set("optimize.0.max_iter"              , SP_DATTYPE::SP_INT       ,                "200",       "none",     true,         "",    "",    false,                     "Maximum iterations", "Maximum number of times the optimization can iterate");
 	opt.max_step                     .set("optimize.0.max_step"              , SP_DATTYPE::SP_DOUBLE    ,               "0.06",       "none",     true,         "",    "",    false,                      "Initial step size", "Maximum total relative step size during optimization");
+	opt.multirec_opt_timeout         .set("optimize.0.multirec_opt_timeout"  , SP_DATTYPE::SP_DOUBLE    ,                 "60",        "sec",    false,         "",    "",    false, "Multi-receiver optimization solver time", "Maximum allowable solver time for multiple receiver heliostat position and aimpoint optimization");
+	opt.multirec_screen_mult         .set("optimize.0.multirec_screen_mult"  , SP_DATTYPE::SP_DOUBLE    ,               "1.25",       "none",    false,         "",    "",    false, "Multi-receiver heliostat screen fraction", "The number of heliostats required to meet this value times the design power of each receiver are considered for layout");
 	opt.power_penalty                .set("optimize.0.power_penalty"         , SP_DATTYPE::SP_DOUBLE    ,                  "2",       "none",     true,         "",    "",    false,                 "Power shortage penalty", "Relative weight in the objective function given to power to the receiver below the required minimum");
 	opt.aspect_display               .setup("optimize.0.aspect_display"        , SP_DATTYPE::SP_DOUBLE    ,                             "none",    false,         "",    "",    false,    "Current receiver aspect ratio (H/W)", "Current receiver aspect ratio (H/W)");
 	opt.gs_refine_ratio              .setup("optimize.0.gs_refine_ratio"       , SP_DATTYPE::SP_DOUBLE    ,                             "none",    false,         "",    "",     true,       "Refinement relative bounding box", "The relative step size of the refined area during refinement simulations. More iterations will allow greater refinement");
@@ -656,6 +658,8 @@ void var_optimize::addptrs(unordered_map<std::string, spbase*> &pmap)
 	pmap["optimize.0.max_gs_iter"] = &max_gs_iter;
 	pmap["optimize.0.max_iter"] = &max_iter;
 	pmap["optimize.0.max_step"] = &max_step;
+	pmap["optimize.0.multirec_opt_timeout"] = &multirec_opt_timeout;
+	pmap["optimize.0.multirec_screen_mult"] = &multirec_screen_mult;
 	pmap["optimize.0.power_penalty"] = &power_penalty;
 	pmap["optimize.0.aspect_display"] = &aspect_display;
 	pmap["optimize.0.gs_refine_ratio"] = &gs_refine_ratio;

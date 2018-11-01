@@ -323,6 +323,8 @@ struct var_optimize
 	spvar< int > max_gs_iter; 		//[none] Maximum number of golden section iterations to refine the position of a local minimum
 	spvar< int > max_iter; 		//[none] Maximum number of times the optimization can iterate
 	spvar< double > max_step; 		//[none] Maximum total relative step size during optimization
+	spvar< double > multirec_opt_timeout; 		//[sec] Maximum allowable solver time for multiple receiver heliostat position and aimpoint optimization
+	spvar< double > multirec_screen_mult; 		//[none] The number of heliostats required to meet this value times the design power of each receiver are considered for layout
 	spvar< double > power_penalty; 		//[none] Relative weight in the objective function given to power to the receiver below the required minimum
 	spout< double > aspect_display; 		//[none] Current receiver aspect ratio (H/W)
 	spout< double > gs_refine_ratio; 		//[none] The relative step size of the refined area during refinement simulations. More iterations will allow greater refinement
