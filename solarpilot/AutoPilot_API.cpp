@@ -756,8 +756,7 @@ void AutoPilot::PostProcessLayout(sp_layout &layout)
 		//hp.user_optics = false;
 		layout.heliostat_positions.push_back( hp );
 	}
-
-
+	
     var_map *V = _SF->getVarMap();
     _SF->updateAllCalculatedParameters( *V );
 
@@ -1957,6 +1956,28 @@ sp_optimize *AutoPilot::GetOptimizationObject()
     return _opt;
 }
 
+std::vector<double> AutoPilot::GetSFAnnualEnergy()
+{
+	std::vector<double> ann = {};
+	Hvector *hels = _SF->getHeliostats();
+	for (size_t i = 0; i < hels->size(); i++)
+	{
+		ann.push_back(hels->at(i)->getAnnualEnergy());
+	}
+	return ann;
+}
+
+std::vector<int> AutoPilot::GetHelioIDs()
+{
+	std::vector<int> ann = {};
+	Hvector *hels = _SF->getHeliostats();
+	for (size_t i = 0; i < hels->size(); i++)
+	{
+		ann.push_back(hels->at(i)->getId());
+	}
+	return ann;
+}
+
 void AutoPilot::PostEvaluationUpdate(int iter, vector<double> &pos, /*vector<double> &normalizers, */double &obj, double &flux, double &cost, std::string *note)
 {
 	ostringstream os;
@@ -2415,8 +2436,11 @@ bool AutoPilot_MT::CreateLayout(sp_layout &layout, bool do_post_process)
 						SolarField::AnnualEfficiencySimulation(_SF->getVarMap()->amb.weather_file.val, _SF, results); 
 
 				//Process the results
-				if(! _cancel_simulation)
+				if (!_cancel_simulation)
+				{
 					_SF->ProcessLayoutResults(&results, nsim_req);
+				}
+					
 
 			}
 		}

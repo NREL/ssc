@@ -148,12 +148,15 @@ static var_info _cm_vtab_solarpilot[] = {
 	{ SSC_OUTPUT,       SSC_NUMBER,      "rec_height_opt",            "Optimized receiver height",                  "m",      "",         "SolarPILOT",   "*",                "",                "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,      "rec_aspect_opt",            "Optimized receiver aspect ratio",            "-",      "",         "SolarPILOT",   "*",                "",                "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,      "flux_max_observed",         "Maximum observed flux at design",            "kW/m2",  "",         "SolarPILOT",   "check_max_flux=1", "",                "" },
-
-    { SSC_OUTPUT,       SSC_NUMBER,      "cost_rec_tot",              "Total receiver cost",                        "$",      "",         "SolarPILOT",   "*",                "",                "" },
+	
+	{ SSC_OUTPUT,       SSC_NUMBER,      "cost_rec_tot",              "Total receiver cost",                        "$",      "",         "SolarPILOT",   "*",                "",                "" },
     { SSC_OUTPUT,       SSC_NUMBER,      "cost_sf_tot",               "Total heliostat field cost",                 "$",      "",         "SolarPILOT",   "*",                "",                "" },
     { SSC_OUTPUT,       SSC_NUMBER,      "cost_tower_tot",            "Total tower cost",                           "$",      "",         "SolarPILOT",   "*",                "",                "" },
     { SSC_OUTPUT,       SSC_NUMBER,      "cost_land_tot",             "Total land cost",                            "$",      "",         "SolarPILOT",   "*",                "",                "" },
     { SSC_OUTPUT,       SSC_NUMBER,      "cost_site_tot",             "Total site cost",                            "$",      "",         "SolarPILOT",   "*",                "",                "" },
+
+	{ SSC_OUTPUT,       SSC_ARRAY,       "annual_helio_energy",       "Heliostat annual energy collected",          "MWh",    "",         "SolarPILOT",   "*",                "",                "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "helio_ids",                 "Heliostat identifiers",                      "",       "",         "SolarPILOT",   "*",                "",                "" },
 
 	var_info_invalid };
 
@@ -180,6 +183,9 @@ public:
 		std::shared_ptr<weather_data_provider> wdata = std::make_shared<weatherfile>(as_string("solar_resource_file"));
 		solarpilot_invoke spi( this );
 		spi.run(wdata);
+		
+		std::vector<double> ann_energy = spi.GetSAPI()->GetSFAnnualEnergy();
+		std::vector<int> h_ids = spi.GetSAPI()->GetHelioIDs();
 
 		assign("h_tower_opt", (ssc_number_t)spi.sf.tht.val);
 		assign("rec_height_opt", (ssc_number_t)spi.recs.front().rec_height.val);
@@ -190,12 +196,12 @@ public:
 		assign("cost_land_tot", (ssc_number_t)spi.fin.land_cost.Val());
 		assign("cost_site_tot", (ssc_number_t)spi.fin.site_cost.Val());
 		assign("land_area", (ssc_number_t)spi.land.land_area.Val());
-		assign("area_sf", (ssc_number_t)spi.sf.sf_area.Val());
+		assign("area_sf", (ssc_number_t)(2.*spi.sf.sf_area.Val()));
 
         if( is_assigned("helio_positions_in") )
         {
             util::matrix_t<double> hposin = as_matrix("helio_positions_in");
-			ssc_number_t *hpos = allocate( "heliostat_positions",  hposin.nrows(), 2 );
+			ssc_number_t *hpos = allocate("heliostat_positions", hposin.nrows(), 2);
 			for(size_t i=0; i< hposin.nrows(); i++){
 				hpos[i * 2] = (ssc_number_t)hposin.at(i, 0);
 				hpos[i * 2 + 1] = (ssc_number_t)hposin.at(i, 1);
@@ -209,6 +215,7 @@ public:
 		    if(  spi.layout.heliostat_positions.size() > 0 )
 		    {
 			    ssc_number_t *hpos = allocate( "heliostat_positions",  spi.layout.heliostat_positions.size(), 2 );
+				
 			    for(size_t i=0; i< spi.layout.heliostat_positions.size(); i++){
 				    hpos[ i*2     ] = (float) spi.layout.heliostat_positions.at(i).location.x;
 				    hpos[ i*2 + 1 ] = (float) spi.layout.heliostat_positions.at(i).location.y;
@@ -220,9 +227,15 @@ public:
             //return the number of heliostats
 			assign("number_heliostats", (ssc_number_t)spi.layout.heliostat_positions.size());
         }
-
- 
 		
+		ssc_number_t *hann = allocate("annual_helio_energy", ann_energy.size());
+		ssc_number_t *hids = allocate("helio_ids", ann_energy.size());
+		for (size_t i = 0; i < ann_energy.size(); i++)
+		{
+			hann[i] = (ssc_number_t)ann_energy.at(i);
+			hids[i] = (ssc_number_t)h_ids.at(i);
+		}
+
 		//return the land area
 		assign("base_land_area", (ssc_number_t)spi.land.land_area.Val());
 
