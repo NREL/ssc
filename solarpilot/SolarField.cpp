@@ -474,6 +474,9 @@ void SolarField::updateCalculatedParameters( var_map &V )
         //for each receiver, trace back through the reference chain
         for (int i = 0; i < (int)V.recs.size(); i++)
         {
+            if (!V.recs.at(i).is_enabled.val)
+                continue;
+
             var_receiver *current_rec = &V.recs.at(i);
             double og_x = 0.;
             double og_y = 0.;
