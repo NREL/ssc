@@ -2414,6 +2414,13 @@ void Flux::simpleAimPoint(sp_point *Aim, sp_point *AimF, Heliostat &H, SolarFiel
     else
     {
         rec = H.getWhichReceiver();
+
+        //need to manually update the receiver to heliostat vector here
+        sp_point* hpos = H.getLocation();
+        double slant = sqrt(tht*tht + hpos->x*hpos->x + hpos->y*hpos->y); // A very approximate slant range
+        rtoh.i = hpos->x / slant;
+        rtoh.j = hpos->y / slant;
+        rtoh.k = (hpos->z - tht) / slant;
     }
 
     var_receiver *Rv = rec->getVarMap();
