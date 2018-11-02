@@ -372,6 +372,20 @@ void SolarField::Create(var_map &V){
 		if( V.recs.at(i).is_enabled.val )
 			_active_receivers.push_back(rec);
 	}
+    for (int i = 0; i < (int)_active_receivers.size(); i++)
+    {
+        //update the template map
+        var_receiver* rm = _active_receivers.at(i)->getVarMap();
+        rm->rec_offset_reference.combo_clear();
+        rm->rec_offset_reference.combo_add_choice("Tower", std::to_string(var_receiver::REC_OFFSET_REFERENCE::TOWER));
+        for (int j = 0; j < (int)_active_receivers.size(); j++)
+        {
+            if (i == j)
+                continue;
+            var_receiver* rmj = _active_receivers.at(j)->getVarMap();
+            rm->rec_offset_reference.combo_add_choice(rmj->rec_name.val, rmj->id.as_string());
+        }
+    }
 	
    
 	//Clouds
