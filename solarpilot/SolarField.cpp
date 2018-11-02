@@ -3879,7 +3879,7 @@ void SolarField::calcAllAimPoints(Vect &Sun, sim_params &P) //bool force_simple,
 	//for methods that require sorted heliostats, create the sorted data
 	Hvector hsort;
 	vector<double> ysize;
-    int imsize_last_enabled=0;
+    unordered_map<Receiver*, int> imsize_last_enabled;
 	if(method == var_fluxsim::AIM_METHOD::IMAGE_SIZE_PRIORITY)
     {
 		//Create a list of heliostats sorted by their Y image size
@@ -3895,12 +3895,15 @@ void SolarField::calcAllAimPoints(Vect &Sun, sim_params &P) //bool force_simple,
 		quicksort(ysize,hsort,0,nh-1);	//Sorts in ascending order
 
         //find the first enabled heliostat. This will be the last one called.
-        for(size_t i=0; i<hsort.size(); i++)
+        for( Rvector::iterator rec = _active_receivers.begin(); rec != _active_receivers.end(); rec++)
         {
-            if( hsort.at(i)->IsEnabled() )
+            for(size_t i=0; i<hsort.size(); i++)
             {
-                imsize_last_enabled=nh - 1 - (int)i;
-                break;
+                if( hsort.at(i)->IsEnabled() && hsort.at(i)->getWhichReceiver() == *rec)
+                {
+                    imsize_last_enabled[ *rec ] = nh - 1 - (int)i;
+                    break;
+                }
             }
         }
 	}
@@ -3919,17 +3922,17 @@ void SolarField::calcAllAimPoints(Vect &Sun, sim_params &P) //bool force_simple,
         if( method == var_fluxsim::AIM_METHOD::IMAGE_SIZE_PRIORITY )
         {
 			try{
-                if( hsort.at(nh-i-1)->IsEnabled() )     //is it enabled?
+                Heliostat *hsorti = hsort.at(nh - i - 1);
+                if( hsorti->IsEnabled() )     //is it enabled?
                 {
 				    args[2] = i == 0 ? 1. : 0.;
-				    _flux->imageSizeAimPoint(*hsort.at(nh-i-1), *this, args, i==imsize_last_enabled);	//Send in descending order
+				    _flux->imageSizeAimPoint(*hsorti, *this, args, i==imsize_last_enabled[hsorti->getWhichReceiver()]);	//Send in descending order
                 }
                 else
                 {
-                    _flux->zenithAimPoint(*hsort.at(nh-i-1), Sun);
+                    _flux->zenithAimPoint(*hsorti, Sun);
                     usemethod = -1;
                 }
-
 			}
 			catch(...){
 				return;
