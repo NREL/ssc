@@ -55,21 +55,18 @@
 
 var_info vtab_fuelcell[] = {
 	/*   VARTYPE           DATATYPE         NAME                               LABEL                                    UNITS      META                   GROUP                  REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
-	{ SSC_INPUT,        SSC_NUMBER,      "fuelcell_available_units",          "Fuel cell available units",             "0/1/2",      "",                 "Fuel Cell",                  "",                        "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "fuelcell_degradation",              "Fuel cell degradation per hour",        "kW/h",       "",                 "Fuel Cell",                  "",                        "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "fuelcell_degradation_restart",      "Fuel cell degradation at restart",      "kW",         "",                 "Fuel Cell",                  "",                        "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "fuelcell_dispatch_choice",          "Fuel cell dispatch choice",             "0/1/2",      "",                 "Fuel Cell",                  "",                        "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "fuelcell_fixed_pct",				  "Fuel cell fixed operation percent",     "%",          "",                 "Fuel Cell",                  "",                        "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "fuelcell_dynamic_response",         "Fuel cell response after startup",      "kW/min",     "",                 "Fuel Cell",                  "",                        "",                              "" },
 	{ SSC_INPUT,        SSC_ARRAY,       "fuelcell_efficiency",               "Fuel cell efficiency table ",           "",           "",                 "Fuel Cell",                  "",                        "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "fuelcell_fuel_available",           "Fuel cell available quantity",          "",           "",                 "Fuel Cell",                  "",                        "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "fuelcell_fuel_price",				  "Fuel cell price",                       "",           "",                 "Fuel Cell",                  "",                        "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "fuelcell_fuel_available",           "Fuel cell available fuel quantity",     "kg",          "",                "Fuel Cell",                  "",                        "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "fuelcell_fuel_price",				  "Fuel cell price",                       "$/MCf",      "",                 "Fuel Cell",                  "",                        "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "fuelcell_fuel_type",				  "Fuel cell type",                        "0/1",        "",                 "Fuel Cell",                  "",                        "",                              "" },
-	{ SSC_INPUT,		SSC_NUMBER,	     "fuelcell_lhv_units",			      "Fuel cell lower heating value units",   "",	         "",		         "Fuel Cell",                  "",	                      "",	                           "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "fuelcell_lower_heating_value",      "Fuel cell lower heating value",         "",           "",                 "Fuel Cell",				   "",                        "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "fuelcell_lhv",                      "Fuel cell lower heating value",         "MJ/kg",      "",                 "Fuel Cell",				   "",                        "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "fuelcell_number_of_units",          "Fuel cell number of units",             "",           "",                 "Fuel Cell",                  "",                        "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "fuelcell_operation_options",        "Fuel cell turn off options",            "0/1",        "",                 "Fuel Cell",                  "",                        "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "fuelcell_price_units",			  "Fuel cell price units",                 "0/1/2",      "",                 "Fuel Cell",                  "",                        "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "fuelcell_replacement_percent",      "Fuel cell replace at percentage",       "",           "",                 "Fuel Cell",                  "",                        "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "fuelcell_startup_time",             "Fuel cell startup hours",               "hours",      "",                 "Fuel Cell",                  "",                        "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "fuelcell_type",                     "Fuel cell type",						   "0/1/2",      "",                 "Fuel Cell",                  "",                        "",                              "" },
@@ -79,11 +76,11 @@ var_info vtab_fuelcell[] = {
 
 var_info_invalid };
 
-class cm_battwatts : public compute_module
+class cm_fuelcell : public compute_module
 {
 public:
 
-	cm_battwatts()
+	cm_fuelcell()
 	{
 		add_var_info(vtab_technology_outputs);
 	}
@@ -93,4 +90,4 @@ public:
 	}
 };
 
-DEFINE_MODULE_ENTRY(battwatts, "simple battery model", 1)
+DEFINE_MODULE_ENTRY(fuelcell, "Fuel cell model", 1)

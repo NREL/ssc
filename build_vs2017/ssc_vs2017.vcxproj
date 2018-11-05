@@ -29,6 +29,7 @@
     <ClCompile Include="..\ssc\cmod_cb_construction_financing.cpp" />
     <ClCompile Include="..\ssc\cmod_cb_empirical_hce_heat_loss.cpp" />
     <ClCompile Include="..\ssc\cmod_cb_mspt_system_costs.cpp" />
+    <ClCompile Include="..\ssc\cmod_fuelcell.cpp" />
     <ClCompile Include="..\ssc\cmod_geothermal_costs.cpp" />
     <ClCompile Include="..\ssc\cmod_host_developer.cpp" />
     <ClCompile Include="..\ssc\cmod_inv_cec_cg.cpp" />
