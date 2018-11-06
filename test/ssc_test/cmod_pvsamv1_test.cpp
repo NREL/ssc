@@ -30,6 +30,45 @@ TEST_F(CMPvsamv1PowerIntegration, DefaultNoFinancialModel){
 	}
 }
 
+/// Run PVSAMv1 with all defaults and lifetime mode for no-financial model
+TEST_F(CMPvsamv1PowerIntegration, DefaultLifetimeNoFinancialModel) {
+
+	std::map<std::string, double> pairs;
+	pairs["system_use_lifetime_output"] = 1;
+	pairs["analysis_period"] = 25;
+
+	double dc_degradation[25];
+	for (size_t i = 0; i < 25; i++) {
+		dc_degradation[i] = 0.5;
+	}
+
+	ssc_data_set_array(data, "dc_degradation", (ssc_number_t*)dc_degradation, 25);
+	ssc_data_set_array(data, "ac_degradation", (ssc_number_t*)dc_degradation, 25);
+
+	int pvsam_errors = modify_ssc_data_and_run_module(data, "pvsamv1", pairs); 
+
+	EXPECT_FALSE(pvsam_errors);
+	if (!pvsam_errors)
+	{
+		ssc_number_t annual_energy;
+		ssc_data_get_number(data, "annual_energy", &annual_energy);
+		EXPECT_NEAR(annual_energy, 8714, m_error_tolerance_hi) << "Annual energy.";
+
+		ssc_number_t capacity_factor;
+		ssc_data_get_number(data, "capacity_factor", &capacity_factor);
+		EXPECT_NEAR(capacity_factor, 21.2, m_error_tolerance_lo) << "Capacity factor";
+
+		ssc_number_t kwh_per_kw;
+		ssc_data_get_number(data, "kwh_per_kw", &kwh_per_kw);
+		EXPECT_NEAR(kwh_per_kw, 1857, m_error_tolerance_hi) << "Energy yield";
+
+		ssc_number_t performance_ratio;
+		ssc_data_get_number(data, "performance_ratio", &performance_ratio);
+		EXPECT_NEAR(performance_ratio, 0.79, m_error_tolerance_lo) << "Energy yield";
+	}
+}
+
+
 /// Test PVSAMv1 with all defaults and residential financial model
 TEST_F(CMPvsamv1PowerIntegration, DefaultResidentialModel)
 {

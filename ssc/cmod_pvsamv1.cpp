@@ -1192,7 +1192,8 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 	*********************************************************************************************** */
 	std::vector<double> dcPowerNetPerMppt_kW; //Vector of Net DC power in kW for each MPPT input on the system for THIS TIMESTEP ONLY
 	std::vector<double> dcPowerNetPerSubarray; //Net DC power in W for each subarray for THIS TIMESTEP ONLY
-	std::vector<double> dcVoltagePerMppt; //Voltage in V at each MPPT input on the system for THIS TIMESTEP ONLY				
+	std::vector<double> dcVoltagePerMppt; //Voltage in V at each MPPT input on the system for THIS TIMESTEP ONLY	
+	std::vector<std::vector<double>> dcStringVoltage; // Voltage of string for each subarray
 	double dcPowerNetTotalSystem = 0; //Net DC power in W for the entire system (sum of all subarrays)
 
 	for (int mpptInput = 0; mpptInput < PVSystem->Inverter->nMpptInputs; mpptInput++)
@@ -1203,6 +1204,8 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 	}
 	for (int nn = 0; nn < PVSystem->numberOfSubarrays; nn++) {
 		dcPowerNetPerSubarray.push_back(0);
+		std::vector<double> tmp;
+		dcStringVoltage.push_back(tmp);
 	}
 	for (size_t iyear = 0; iyear < nyears; iyear++)
 	{
@@ -1799,6 +1802,9 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 						Subarrays[nn]->Module->currentShortCircuit = out.Isc_oper;
 						Subarrays[nn]->Module->voltageOpenCircuit = out.Voc_oper;
 						Subarrays[nn]->Module->angleOfIncidenceModifier = out.AOIModifier;
+						
+						// Lifetime dcStringVoltage
+						dcStringVoltage[nn].push_back(Subarrays[nn]->Module->dcVoltage * Subarrays[nn]->nModulesPerString);
 
 						// Output front-side irradiance after the cover- needs to be after the module model for now because cover effects are part of the module model
 						if (iyear == 0)
@@ -1809,21 +1815,18 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 
 							ts_accum_poa_front_total += ipoa_front[nn] * ref_area_m2 * Subarrays[nn]->nModulesPerString * Subarrays[nn]->nStrings;
 							ts_accum_poa_total_eff += ((radmode == Irradiance_IO::POA_R) ? ipoa[nn] : (ipoa_front[nn] + ipoa_rear_after_losses[nn])) * ref_area_m2 * Subarrays[nn]->nModulesPerString * Subarrays[nn]->nStrings;
-						}
 
-						//assign final string voltage output
-						if (iyear == 0)
-						{
+							//assign final string voltage output
 							PVSystem->p_dcStringVoltage[nn][idx] = (ssc_number_t)Subarrays[nn]->Module->dcVoltage * Subarrays[nn]->nModulesPerString;
 						}
-
 					}
 
 					//assign input voltage at this MPPT input
 					//if only one subarray, the voltage at the MPPT input is the same as the string voltage of that subarray (the first and only subarray on the MPPT input)
 					//alternatively, if mismatch was enabled, the string voltage is the same for all subarrays, so the voltage at the MPPT input is the same as the string voltage of any subarray
-					if (SubarraysOnMpptInput.size() == 1 || PVSystem->enableMismatchVoltageCalc)
-						PVSystem->p_mpptVoltage[mpptInput][idx] = (ssc_number_t)PVSystem->p_dcStringVoltage[SubarraysOnMpptInput[0]][idx];
+					if (SubarraysOnMpptInput.size() == 1 || PVSystem->enableMismatchVoltageCalc) {
+						PVSystem->p_mpptVoltage[mpptInput][idx] = (ssc_number_t)dcStringVoltage[SubarraysOnMpptInput[0]][idx];
+					}
 					//if mismatch wasn't enabled and there are more than one subarray on this MPPT input, we assume the MPPT input voltage is a weighted average of the string voltages
 					else
 					{
@@ -1834,7 +1837,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 						{
 							int nn = SubarraysOnMpptInput[nSubarray]; //get the index of the subarray itself
 							nStrings += Subarrays[nn]->nStrings;
-							totalVoltage += PVSystem->p_dcStringVoltage[nn][idx] * Subarrays[nn]->nStrings;
+							totalVoltage += dcStringVoltage[nn][idx] * Subarrays[nn]->nStrings;
 						}
 						PVSystem->p_mpptVoltage[mpptInput][idx] = (ssc_number_t)(totalVoltage / nStrings);
 					}
