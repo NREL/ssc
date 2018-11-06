@@ -154,9 +154,10 @@ protected:
 			canCharge.push_back(1);
 			canDischarge.push_back(1);
 			canGridcharge.push_back(0);
+			percentDischarge[p] = 100;
 		}
 
-		percentDischarge[3] = 15;
+		
 	}
 	void TearDown()
 	{
