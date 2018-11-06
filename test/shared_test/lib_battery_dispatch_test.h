@@ -4,6 +4,8 @@
 #include <gtest/gtest.h>
 #include <lib_util.h>
 #include <lib_battery_dispatch.h>
+#include <lib_battery_powerflow.h>
+#include <lib_power_electronics.h>
 
 // Generic Lithium-ion battery system to be re-used
 class BatteryProperties : public ::testing::Test
@@ -77,9 +79,9 @@ protected:
 	{
 		// capacity
 		q = 1000;
-		SOC_init = 100;
-		SOC_min = 20;
-		SOC_max = 100;
+		SOC_init = 50;
+		SOC_min = 15;
+		SOC_max = 95;
 
 		// voltage
 		n_series = 139;
@@ -150,7 +152,7 @@ protected:
 
 		for (int p = 0; p < 6; p++) {
 			canCharge.push_back(1);
-			canDischarge.push_back(0);
+			canDischarge.push_back(1);
 			canGridcharge.push_back(0);
 		}
 
@@ -175,6 +177,7 @@ class BatteryDispatchTest : public BatteryProperties
 {
 protected:
 	
+
 	capacity_lithium_ion_t * capacityModel;
 	voltage_dynamic_t * voltageModel;
 	thermal_t * thermalModel;
@@ -183,10 +186,16 @@ protected:
 	lifetime_t * lifetimeModel;
 	losses_t * lossModel;
 	battery_t * batteryModel;
+	BatteryPower * batteryPower;
 
 	dispatch_manual_t * dispatchManual;
 	dispatch_automatic_behind_the_meter_t * dispatchAutoBTM;
 	dispatch_automatic_front_of_meter_t * dispatchAutoFOM;
+
+	double P_pv;
+	double V_pv;
+	double P_load;
+	double P_clipped;
 
 public:
 
@@ -202,6 +211,8 @@ public:
 		lossModel = new losses_t(lifetimeModel, thermalModel, capacityModel, lossChoice, monthlyLosses, monthlyLosses, monthlyLosses, monthlyLosses);
 		batteryModel = new battery_t(dtHour, chemistry);
 		batteryModel->initialize(capacityModel, voltageModel, lifetimeModel, thermalModel, lossModel);
+
+		P_pv = P_load = V_pv = P_clipped = 0;		
 	}
 	void TearDown()
 	{

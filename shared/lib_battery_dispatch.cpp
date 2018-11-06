@@ -480,7 +480,7 @@ bool dispatch_manual_t::check_constraints(double &I, size_t count)
 			m_batteryPower->canPVCharge &&					// only do if battery is allowed to charge
 			_Battery->battery_soc() < m_batteryPower->stateOfChargeMax - 1.0 &&		// and battery SOC is less than max
 			fabs(I) < fabs(m_batteryPower->currentChargeMax) &&						// and battery current is less than max charge current
-			fabs(m_batteryPower->powerBattery) < m_batteryPower->powerBatteryChargeMax &&				// and battery power is less than max charge power
+			fabs(m_batteryPower->powerBattery) < (m_batteryPower->powerBatteryChargeMax - 1.0) &&				// and battery power is less than max charge power
 			I <= 0)											// and battery was not discharging
 		{
 			double dI = 0;
