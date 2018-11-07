@@ -1937,7 +1937,7 @@ int C_pc_Rankine_indirect_224::split_ind_tbl(util::matrix_t<double> &cmbd_ind, u
     const int col_T_htf = 0;
     const int col_m_dot = 1;
     const int col_T_amb = 2;
-radiat    const int col_W_cyl = 3;
+	const int col_W_cyl = 3;
     const int col_Q_cyl = 4;
     const int col_W_h2o = 5;
     const int col_m_h2o = 6;
