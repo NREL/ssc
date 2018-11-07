@@ -249,6 +249,9 @@ public:
 		total_installed_cost,
 		coe_metric;
 
+    std::string time_date_stamp;
+    std::string aim_method;
+
 	//whole-field statistics
 	stat_object
 		eff_total_heliostat,

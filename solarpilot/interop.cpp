@@ -50,6 +50,7 @@
 #include <stdio.h>
 #include <algorithm>
 #include <sstream>
+#include <iomanip>
 #include <math.h>
 
 #include "interop.h"
@@ -787,6 +788,8 @@ void sim_result::initialize(){
     num_ray_heliostat = 0;
     num_ray_receiver = 0;
 	_q_coe = 0.;
+    time_date_stamp = "";
+    aim_method = "";
 
 	eff_total_heliostat.initialize();
 	eff_total_sf.initialize();
@@ -1078,7 +1081,8 @@ void sim_result::process_analytical_simulation(SolarField &SF, sim_params &P, in
 
 		solar_az = sun_az_zen[0];
 		solar_zen = sun_az_zen[1];
-
+        time_date_stamp = SF.getVarMap()->sf.des_sim_detail.val + " 12:00";
+        aim_method = "Simple aimpoints";
 		break;
 	}
 	case sim_result::SIM_TYPE::FLUX_SIMULATION:
@@ -1111,6 +1115,12 @@ void sim_result::process_analytical_simulation(SolarField &SF, sim_params &P, in
 
 		solar_az = sun_az_zen[0];
 		solar_zen = sun_az_zen[1];
+        double hour = SF.getVarMap()->flux.flux_hour.val;
+        time_date_stamp = (std::stringstream() << DateTime::GetMonthName(SF.getVarMap()->flux.flux_month.val) 
+                            << " " << SF.getVarMap()->flux.flux_day.val << " | "
+                            << std::setw(2) << std::setfill('0') << (int)hour << ":"
+                            << std::setw(2) << std::setfill('0') << (int)(std::fmod(hour,1.)*60.+.001) ).str();
+        aim_method = SF.getVarMap()->flux.aim_method.val + " aimpoints";
 
 		//SF.getFinancialObject()->calcPlantCapitalCost(*SF.getVarMap());	//Always update the plant cost
 		total_installed_cost = V->fin.total_installed_cost.Val(); //SF.getFinancialObject()->getTotalInstalledCost();
@@ -1219,6 +1229,13 @@ void sim_result::process_raytrace_simulation(SolarField &SF, sim_params &P, int 
 		total_receiver_area = SF.calcReceiverTotalArea();
 		solar_az = sun_az_zen[0];
 		solar_zen = sun_az_zen[1];
+        int month, day_of_month;
+        double hour = SF.getVarMap()->flux.flux_hour.val;
+        DateTime().hours_to_date(SF.getVarMap()->flux.flux_day.val * 24 + hour, month, day_of_month);
+        time_date_stamp = (std::stringstream() << DateTime::GetMonthName(month) << " " << day_of_month
+            << std::setw(2) << std::setfill('0') << (int)hour << ":"
+            << std::setw(2) << std::setfill('0') << (int)(std::fmod(hour, 1.)*60. + .001)).str();
+        aim_method = SF.getVarMap()->flux.aim_method.val + " aimpoints";
 
 		SF.getFinancialObject()->calcPlantCapitalCost(*SF.getVarMap());	//Always update the plant cost
 
