@@ -298,7 +298,7 @@ var_info_invalid };
 var_info vtab_dc_adjustment_factors[] = {
 /*   VARTYPE           DATATYPE         NAME                               LABEL                                       UNITS     META                                     GROUP                 REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
 
-	{ SSC_INPUT,        SSC_NUMBER,      "dc_adjust:constant",            "DC Constant loss adjustment",             "%",    "",                                     "Loss Adjustments",      "*",                     "MAX=100",                     "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "dc_adjust:constant",            "DC Constant loss adjustment",             "%",    "",                                     "Loss Adjustments",      "?=0",                     "MAX=100",                     "" },
 	{ SSC_INPUT,        SSC_ARRAY,       "dc_adjust:hourly",              "DC Hourly loss adjustments",              "%",    "",                                     "Loss Adjustments",      "?",                     "LENGTH=8760",                "" },
 	{ SSC_INPUT,        SSC_MATRIX,      "dc_adjust:periods",             "DC Period-based loss adjustments",        "%",    "n x 3 matrix [ start, end, loss ]",    "Loss Adjustments",      "?",                     "COLS=3",                     "" },
 	
@@ -658,7 +658,7 @@ bool shading_factor_calculator::fbeam(size_t hour, double solalt, double solazi,
 }
 
 
-bool shading_factor_calculator::fbeam_shade_db(std::unique_ptr<ShadeDB8_mpp> & p_shadedb, size_t hour, double solalt, double solazi, size_t hour_step, size_t steps_per_hour, double gpoa, double dpoa, double pv_cell_temp, int mods_per_str, double str_vmp_stc, double mppt_lo, double mppt_hi)
+bool shading_factor_calculator::fbeam_shade_db(ShadeDB8_mpp * p_shadedb, size_t hour, double solalt, double solazi, size_t hour_step, size_t steps_per_hour, double gpoa, double dpoa, double pv_cell_temp, int mods_per_str, double str_vmp_stc, double mppt_lo, double mppt_hi)
 {
 	bool ok = false;
 	double dc_factor = 1.0;

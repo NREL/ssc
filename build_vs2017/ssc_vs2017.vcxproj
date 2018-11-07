@@ -123,7 +123,7 @@
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>ssc</RootNamespace>
     <ProjectName>ssc</ProjectName>
-    <WindowsTargetPlatformVersion>10.0.16299.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -282,7 +282,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>__DLL__;__32BIT__;__WINDOWS__;__VISUALC__;_CRT_SECURE_NO_WARNINGS; _CRT_SECURE_NO_WARNINGS; _CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
       <WholeProgramOptimization>false</WholeProgramOptimization>
-      <AdditionalIncludeDirectories>$(SolutionDir)\..\shared;$(SolutionDir)\..\tcs;$(SolutionDir)\..\solarpilot;$(SolutionDir)\..\ssc\shared;$(SolutionDir)\..\ssc\tcs;$(SolutionDir)\..\ssc\solarpilot;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)\..\shared;$(SolutionDir)\..\tcs;$(SolutionDir)\..\solarpilot;$(SolutionDir)\..\splinter;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -291,15 +291,15 @@
       <OptimizeReferences>true</OptimizeReferences>
       <LinkTimeCodeGeneration>Default</LinkTimeCodeGeneration>
       <AdditionalLibraryDirectories>$(SolutionDir)\..\tcs\$(Platform)\$(Configuration);$(SolutionDir)\$(Platform)\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>lpsolve.lib;solarpilot.lib;nlopt.lib;tcs.lib;shared.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>lpsolve.lib;solarpilot.lib;nlopt.lib;tcs.lib;splinter.lib;shared.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ProgramDatabaseFile>$(OutDir)\$(TargetName).pdb</ProgramDatabaseFile>
     </Link>
     <PostBuildEvent>
-      <Command>robocopy $(WEXDIR)\build_vs2017\libcurl_ssl_$(Platform)\bin $(SSCDIR)\build_vs2017\$(Platform)\$(Configuration)\ /E /XC /XN /XO /XX /NP /NS /NJS /NJH /NC  
+      <Command>robocopy "$(WEXDIR)\build_vs2017\libcurl_ssl_$(Platform)\bin" "$(SSCDIR)\build_vs2017\$(Platform)\$(Configuration)" /E /XC /XN /XO /XX /NP /NS /NJS /NJH /NC  
 
 if NOT "$(SAMNTDIR)" == "" (
-copy $(SSCDIR)\build_vs2017\$(Platform)\$(Configuration)\sscx32.dll $(SAMNTDIR)\deploy\$(Platform)
-copy $(SSCDIR)\build_vs2017\$(Platform)\$(Configuration)\sscx32.pdb $(SAMNTDIR)\deploy\$(Platform)\
+copy "$(SSCDIR)\build_vs2017\$(Platform)\$(Configuration)\sscx32.dll" "$(SAMNTDIR)\deploy\$(Platform)"
+copy "$(SSCDIR)\build_vs2017\$(Platform)\$(Configuration)\sscx32.pdb" "$(SAMNTDIR)\deploy\$(Platform)"
 )
 
 if %ERRORLEVEL% GEQ 8 (
@@ -317,25 +317,25 @@ exit 0
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>__DLL__;__64BIT__;__WINDOWS__;__VISUALC__;; _CRT_SECURE_NO_WARNINGS; _CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(SolutionDir)\..\shared;$(SolutionDir)\..\tcs;$(SolutionDir)\..\solarpilot;$(SolutionDir)\..\ssc\shared;$(SolutionDir)\..\ssc\tcs;$(SolutionDir)\..\ssc\solarpilot;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)\..\shared;$(SolutionDir)\..\tcs;$(SolutionDir)\..\solarpilot;$(SolutionDir)\..\splinter;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>lpsolve.lib;solarpilot.lib;nlopt.lib;tcs.lib;shared.lib;shared.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>lpsolve.lib;solarpilot.lib;nlopt.lib;tcs.lib;splinter.lib;shared.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(SolutionDir)\$(Platform)\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <ProgramDatabaseFile>$(OutDir)\$(TargetName).pdb</ProgramDatabaseFile>
       <StackReserveSize>
       </StackReserveSize>
     </Link>
     <PostBuildEvent>
-      <Command>robocopy $(WEXDIR)\build_vs2017\libcurl_ssl_$(Platform)\bin $(SSCDIR)\build_vs2017\$(Platform)\$(Configuration)\ /E /XC /XN /XO /XX /NP /NS /NJS /NJH /NC  
+      <Command>robocopy "$(WEXDIR)\build_vs2017\libcurl_ssl_$(Platform)\bin" "$(SSCDIR)\build_vs2017\$(Platform)\$(Configuration)" /E /XC /XN /XO /XX /NP /NS /NJS /NJH /NC  
 
 if NOT "$(SAMNTDIR)" == "" (
-copy $(SSCDIR)\build_vs2017\$(Platform)\$(Configuration)\ssc.dll $(SAMNTDIR)\deploy\$(Platform)
-copy $(SSCDIR)\build_vs2017\$(Platform)\$(Configuration)\ssc.pdb $(SAMNTDIR)\deploy\$(Platform)\
+copy "$(SSCDIR)\build_vs2017\$(Platform)\$(Configuration)\ssc.dll" "$(SAMNTDIR)\deploy\$(Platform)"
+copy "$(SSCDIR)\build_vs2017\$(Platform)\$(Configuration)\ssc.pdb" "$(SAMNTDIR)\deploy\$(Platform)"
 )
 
 if %ERRORLEVEL% GEQ 8 (
@@ -348,20 +348,20 @@ exit 0
     <ClCompile>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>__DLL__;__32BIT__;__WINDOWS__;_DEBUG;__VISUALC__;_CRT_SECURE_NO_WARNINGS; _CRT_SECURE_NO_WARNINGS; _CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(SolutionDir)\..\shared;$(SolutionDir)\..\tcs;$(SolutionDir)\..\solarpilot;$(SolutionDir)\..\ssc\shared;$(SolutionDir)\..\ssc\tcs;$(SolutionDir)\..\ssc\solarpilot;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)\..\shared;$(SolutionDir)\..\tcs;$(SolutionDir)\..\solarpilot;$(SolutionDir)\..\splinter;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
     </ClCompile>
     <Link>
       <AdditionalLibraryDirectories>$(SolutionDir)\..\tcs\$(Platform)\$(Configuration);$(SolutionDir)\$(Platform)\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>lpsolve.lib;solarpilot.lib;nlopt.lib;tcs.lib;shared.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>lpsolve.lib;solarpilot.lib;nlopt.lib;tcs.lib;splinter.lib;shared.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ProgramDatabaseFile>$(OutDir)\$(TargetName).pdb</ProgramDatabaseFile>
     </Link>
     <PostBuildEvent>
-      <Command>robocopy $(WEXDIR)\build_vs2017\libcurl_ssl_$(Platform)\bin $(SSCDIR)\build_vs2017\$(Platform)\$(Configuration)\ /E /XC /XN /XO /XX /NP /NS /NJS /NJH /NC  
+      <Command>robocopy "$(WEXDIR)\build_vs2017\libcurl_ssl_$(Platform)\bin" "$(SSCDIR)\build_vs2017\$(Platform)\$(Configuration)" /E /XC /XN /XO /XX /NP /NS /NJS /NJH /NC  
 
 if NOT "$(SAMNTDIR)" == "" (
-copy $(SSCDIR)\build_vs2017\$(Platform)\$(Configuration)\sscdx32.dll $(SAMNTDIR)\deploy\$(Platform)
-copy $(SSCDIR)\build_vs2017\$(Platform)\$(Configuration)\sscdx32.pdb $(SAMNTDIR)\deploy\$(Platform)\
+copy "$(SSCDIR)\build_vs2017\$(Platform)\$(Configuration)\sscdx32.dll" "$(SAMNTDIR)\deploy\$(Platform)"
+copy "$(SSCDIR)\build_vs2017\$(Platform)\$(Configuration)\sscdx32.pdb" "$(SAMNTDIR)\deploy\$(Platform)"
 )
 
 if %ERRORLEVEL% GEQ 8 (
@@ -374,21 +374,21 @@ exit 0
     <ClCompile>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>__DLL__;__64BIT__;__WINDOWS__;_DEBUG;__VISUALC__;_CRT_SECURE_NO_WARNINGS; _CRT_SECURE_NO_WARNINGS; _CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(SolutionDir)\..\shared;$(SolutionDir)\..\tcs;$(SolutionDir)\..\solarpilot;$(SolutionDir)\..\ssc\shared;$(SolutionDir)\..\ssc\tcs;$(SolutionDir)\..\ssc\solarpilot;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)\..\shared;$(SolutionDir)\..\tcs;$(SolutionDir)\..\solarpilot;$(SolutionDir)\..\splinter;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <AdditionalLibraryDirectories>$(SolutionDir)\$(Platform)\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>lpsolve.lib;solarpilot.lib;nlopt.lib;tcs.lib;shared.lib;shared.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>lpsolve.lib;solarpilot.lib;nlopt.lib;tcs.lib;splinter.lib;shared.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ProgramDatabaseFile>$(OutDir)\$(TargetName).pdb</ProgramDatabaseFile>
       <StackReserveSize>
       </StackReserveSize>
     </Link>
     <PostBuildEvent>
-      <Command>robocopy $(WEXDIR)\build_vs2017\libcurl_ssl_$(Platform)\bin $(SSCDIR)\build_vs2017\$(Platform)\$(Configuration)\ /E /XC /XN /XO /XX /NP /NS /NJS /NJH /NC  
+      <Command>robocopy "$(WEXDIR)\build_vs2017\libcurl_ssl_$(Platform)\bin" "$(SSCDIR)\build_vs2017\$(Platform)\$(Configuration)" /E /XC /XN /XO /XX /NP /NS /NJS /NJH /NC  
 
 if NOT "$(SAMNTDIR)" == "" (
-copy $(SSCDIR)\build_vs2017\$(Platform)\$(Configuration)\sscd.dll $(SAMNTDIR)\deploy\$(Platform)
-copy $(SSCDIR)\build_vs2017\$(Platform)\$(Configuration)\sscd.pdb $(SAMNTDIR)\deploy\$(Platform)\
+copy "$(SSCDIR)\build_vs2017\$(Platform)\$(Configuration)\sscd.dll" "$(SAMNTDIR)\deploy\$(Platform)"
+copy "$(SSCDIR)\build_vs2017\$(Platform)\$(Configuration)\sscd.pdb" "$(SAMNTDIR)\deploy\$(Platform)"
 )
 if %ERRORLEVEL% GEQ 8 (
 exit) else (

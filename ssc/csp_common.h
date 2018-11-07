@@ -55,6 +55,8 @@
 #include "AutoPilot_API.h"
 #include "lib_weatherfile.h"
 
+#include "sco2_pc_csp_int.h"
+
 class solarpilot_invoke : public var_map
 {
     compute_module *m_cmod;
@@ -86,5 +88,13 @@ public:
 };
 
 bool ssc_cmod_solarpilot_callback(simulation_info *siminfo, void *data);
+
+extern var_info vtab_sco2_design[];
+
+int sco2_design_cmod_common(compute_module *cm, C_sco2_recomp_csp & c_sco2_cycle);
+
+
+
+
 
 #endif

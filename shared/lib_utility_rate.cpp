@@ -55,13 +55,14 @@ void UtilityRateCalculator::calculateEnergyUsagePerPeriod()
 }
 double UtilityRateCalculator::getEnergyRate(size_t hourOfYear)
 {
-
+	// period is the human readable value from the table (1-based)
 	size_t period = getEnergyPeriod(hourOfYear);
 
 	//size_t idx = m_loadProfile.size() - 1;
 	//double energy = m_energyTiersPerPeriod[period];
 	// add ability to check for tiered usage, for now assume one tier
 
+	// Reduce period to 0-based index
 	return m_ecRatesMatrix(period - 1, 4);
 
 }
@@ -70,11 +71,21 @@ size_t UtilityRateCalculator::getEnergyPeriod(size_t hourOfYear)
 	size_t period, month, hour;
 	util::month_hour(hourOfYear, month, hour);
 
-	if (util::weekday(hourOfYear))
-		period = m_ecWeekday.at(month - 1, hour - 1);
-	else
-		period = m_ecWeekend.at(month - 1, hour - 1);
-	
+	if (util::weekday(hourOfYear)) {
+		if (m_ecWeekday.nrows() == 1 && m_ecWeekday.ncols() == 1) {
+			period = m_ecWeekday.at(0, 0);
+		}
+		else {
+			period = m_ecWeekday.at(month - 1, hour - 1);
+		}
+	}
+	else {
+		if (m_ecWeekend.nrows() == 1 && m_ecWeekend.ncols() == 1) {
+			period = m_ecWeekend.at(0, 0);
+		}
+		else {
+			period = m_ecWeekend.at(month - 1, hour - 1);
+		}
+	}
 	return period;
-
 }

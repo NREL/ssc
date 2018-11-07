@@ -56,9 +56,11 @@ class pvsnowmodel
 {
 public:
 	pvsnowmodel();
-	bool setup(int, float);
 
-	bool getLoss(float poa, float tilt, float wspd, float tdry, float snowDepth, int sunup, float dt, float *returnLoss);
+	// limitTilt requires tilt to be between 10 and 45 degrees
+	bool setup(int, float, bool limitTilt = true);
+
+	bool getLoss(float poa, float tilt, float wspd, float tdry, float snowDepth, int sunup, float dt, float &returnLoss);
 
 	float	tilt,		// Surface tilt, degrees
 		baseTilt,		// The default tilt for 1-axis tracking systems

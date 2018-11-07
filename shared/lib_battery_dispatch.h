@@ -109,7 +109,11 @@ public:
 		double P_system_clipped = 0
 		) = 0;
 
+	/// Method to check any operational constraints and modify the battery current if needed
 	virtual bool check_constraints(double &I, size_t count);
+
+	/// Method to recalculate the battery state based upon the final constrained current
+	virtual void finalize(size_t index, double &I);
 
 	battery_t * battery_model(){ return _Battery; }
 
@@ -488,6 +492,7 @@ public:
 	double power_grid_target(){ return _P_target_current; };
 	double power_batt_target() { return m_batteryPower->powerBattery; };
 
+	enum BTM_TARGET_MODES {TARGET_SINGLE_MONTHLY, TARGET_TIME_SERIES};
 
 protected:
 	

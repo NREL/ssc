@@ -1,7 +1,7 @@
 #ifndef _WEATHERINPUT_
 #define _WEATHERINPUT_
 
-#include "common.h"
+#include "../ssc/common.h"
 
 /**
  * Creates resources as var_data, as opposed to resources from files, for testing use through SDK

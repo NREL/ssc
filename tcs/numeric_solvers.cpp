@@ -404,7 +404,7 @@ int C_monotonic_eq_solver::solver_core(double x_guess_1, double y1, double x_gue
 	m_iter = 0;		// Counter is first line inside loop, so first iteration = 1
 
 	// Start iteration loop
-	while( fabs(m_y_err) > m_tol || m_y_err != m_y_err )
+	while( fabs(m_y_err) > m_tol || !std::isfinite(m_y_err) )
 	{
 		m_iter++;		// First iteration = 1
 
@@ -666,7 +666,15 @@ int C_monotonic_eq_solver::solver_core(double x_guess_1, double y1, double x_gue
 				}
 				else
 				{	// This shouldn't happen, so let's throw an exception
-					throw(C_csp_exception("Numerical solver iteration with a NaN error found an unexpected case"));
+					// throw(C_csp_exception("Numerical solver iteration with a NaN error found an unexpected case"));
+
+					// Have both positive and negative errors, but x value in between is causing an error
+					// Not expected behavior for the function, but try to get around the problem
+					double x_min_abs_err = m_x_pos_err;
+					if (fabs(m_y_err_neg) < fabs(m_y_err_pos))
+						x_min_abs_err = m_x_neg_err;
+
+					m_x_guess = 0.5*(m_x_guess + x_min_abs_err);
 				}
 			}
 			else if( m_y_err > 0.0 )

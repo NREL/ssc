@@ -50,6 +50,7 @@
 #include <sstream>
 #include <fstream>
 #include <cstring>
+#include <algorithm>
 
 #include "core.h"
 
@@ -151,6 +152,17 @@ void compute_module::add_var_info( var_info vi[] )
 		&& vi[i].name != NULL )
 	{
 		m_varlist.push_back( &vi[i] );
+		i++;
+	}
+}
+
+void compute_module::remove_var_info(var_info vi[])
+{
+	int i = 0;
+	while (vi[i].data_type != SSC_INVALID
+		&& vi[i].name != NULL)
+	{
+		m_varlist.erase(std::remove(m_varlist.begin(), m_varlist.end(), &vi[i]), m_varlist.end());
 		i++;
 	}
 }

@@ -2,7 +2,7 @@
 *  Copyright 2017 Alliance for Sustainable Energy, LLC
 *
 *  NOTICE: This software was developed at least in part by Alliance for Sustainable Energy, LLC
-*  (“Alliance”) under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
+*  (â€œAllianceâ€) under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
 *  The Government retains for itself and others acting on its behalf a nonexclusive, paid-up,
 *  irrevocable worldwide license in the software to reproduce, prepare derivative works, distribute
 *  copies to the public, perform publicly and display publicly, and to permit others to do so.
@@ -26,8 +26,8 @@
 *  4. Redistribution of this software, without modification, must refer to the software by the same
 *  designation. Redistribution of a modified version of this software (i) may not refer to the modified
 *  version by the same designation, or by any confusingly similar designation, and (ii) must refer to
-*  the underlying software originally provided by Alliance as “System Advisor Model” or “SAM”. Except
-*  to comply with the foregoing, the terms “System Advisor Model”, “SAM”, or any confusingly similar
+*  the underlying software originally provided by Alliance as â€œSystem Advisor Modelâ€ or â€œSAMâ€. Except
+*  to comply with the foregoing, the terms â€œSystem Advisor Modelâ€, â€œSAMâ€, or any confusingly similar
 *  designation may not be used to refer to any modified version of this software or any modified
 *  version of the underlying software originally provided by Alliance without the prior written consent
 *  of Alliance.
@@ -64,9 +64,9 @@ var_info vtab_battwatts[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "batt_simple_enable",                "Enable Battery",                         "0/1",     "",                 "battwatts",                  "?=0",                        "BOOLEAN",                       "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "batt_simple_kwh",                   "Battery Capacity",                       "kWh",     "",                 "battwatts",                  "?=0",                        "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "batt_simple_kw",                    "Battery Power",                          "kW",      "",                 "battwatts",                  "?=0",                        "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "batt_simple_chemistry",             "Battery Chemistry",                      "0/1/2",   "",                 "battwatts",                  "?=0",                        "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "batt_simple_dispatch",              "Battery Dispatch",                       "0/1",     "",                 "battwatts",                  "?=0",                        "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "batt_simple_meter_position",        "Battery Meter Position",                 "0/1",     "",                 "battwatts",                  "?=0",                        "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "batt_simple_chemistry",             "Battery Chemistry",                      "0=lead acid/1=Li-ion/2",   "",                 "battwatts",                  "?=0",                        "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "batt_simple_dispatch",              "Battery Dispatch",                       "0=peak shaving look ahead/1=peak shaving look behind",     "",                 "battwatts",                  "?=0",                        "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "batt_simple_meter_position",        "Battery Meter Position",                 "0=behind meter/1=front of meter",     "",                 "battwatts",                  "?=0",                        "",                              "" },
 	{ SSC_INPUT,        SSC_ARRAY,       "dc",								  "DC array power",                         "W",       "",                 "",                           "",                           "",                              "" },
 	{ SSC_INPUT,        SSC_ARRAY,       "ac",								  "AC inverter power",                      "W",       "",                 "",                           "",                           "",                              "" },
 	{ SSC_INPUT,		SSC_ARRAY,	     "load",			                  "Electricity load (year 1)",              "kW",	   "",		           "",                           "",	                         "",	                          "" },
@@ -113,11 +113,9 @@ public:
 
 			// Battery lifetime
 			lifetime_matrix->push_back(20); lifetime_matrix->push_back(0); lifetime_matrix->push_back(100);
-			lifetime_matrix->push_back(20); lifetime_matrix->push_back(650); lifetime_matrix->push_back(96);
-			lifetime_matrix->push_back(80); lifetime_matrix->push_back(1500); lifetime_matrix->push_back(87);
+			lifetime_matrix->push_back(20); lifetime_matrix->push_back(5000); lifetime_matrix->push_back(80);
 			lifetime_matrix->push_back(80); lifetime_matrix->push_back(0); lifetime_matrix->push_back(100);
-			lifetime_matrix->push_back(80); lifetime_matrix->push_back(150); lifetime_matrix->push_back(96);
-			lifetime_matrix->push_back(80); lifetime_matrix->push_back(300); lifetime_matrix->push_back(87);
+			lifetime_matrix->push_back(80); lifetime_matrix->push_back(1000); lifetime_matrix->push_back(80);
 			util::matrix_t<double> batt_lifetime_matrix(6, 3, lifetime_matrix);
 			batt_vars->batt_lifetime_matrix = batt_lifetime_matrix;
 
@@ -255,6 +253,8 @@ public:
 		// Storage dispatch controllers
 		int dispatch = as_integer("batt_simple_dispatch");
 		batt_vars->batt_dispatch = (dispatch == 0 ? dispatch_t::LOOK_AHEAD : dispatch_t::LOOK_BEHIND);
+		batt_vars->batt_dispatch_auto_can_charge = true;
+		batt_vars->batt_dispatch_auto_can_gridcharge = true;
 
 		// Battery bank replacement
 		batt_vars->batt_replacement_capacity = 0.;
@@ -262,6 +262,7 @@ public:
 		// Battery lifetime
 		batt_vars->batt_calendar_choice = lifetime_calendar_t::NONE;
 		batt_vars->batt_calendar_lifetime_matrix = util::matrix_t<double>();
+		batt_vars->batt_calendar_q0 = 1.0;
 
 		// Common Thermal behavior
 		batt_vars->batt_mass = batt_vars->batt_kwh * 1000 / batt_specific_energy_per_mass;
@@ -299,7 +300,9 @@ public:
 			*********************************************************************************************** */
 			std::vector<ssc_number_t> p_ac;
 			std::vector<ssc_number_t> p_load;
-	
+
+			const double voltage = 500;
+
 			p_ac = as_vector_ssc_number_t("ac");
 			util::vector_multiply_scalar<ssc_number_t>(p_ac, static_cast<ssc_number_t>(util::watt_to_kilowatt));
 			p_load = as_vector_ssc_number_t("load");
@@ -321,7 +324,7 @@ public:
 				for (int jj = 0; jj < batt.step_per_hour; jj++)
 				{
 					batt.initialize_time(0, hour, jj);
-					batt.advance(*this, p_ac[count], p_load[count]);
+					batt.advance(*this, p_ac[count], voltage, p_load[count]);
 					p_gen[count] = batt.outGenPower[count];
 					count++;
 				}
