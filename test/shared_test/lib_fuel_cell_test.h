@@ -2,6 +2,7 @@
 #define __LIB_BATTERY_POWERFLOW_TEST_H__
 
 #include <gtest/gtest.h>
+#include <lib_fuel_cell.h>
 
 /**
 * \class FuelCellTest
@@ -13,16 +14,19 @@ class FuelCellTest : public ::testing::Test
 {
 protected:
 
+	FuelCell * fuelCell;
 
 public:
 
 	void SetUp()
 	{
-		
+		fuelCell = new FuelCell();
 	}
 	void TearDown()
 	{
-		
+		if (fuelCell) {
+			delete fuelCell;
+		}
 	}
 
 };

@@ -30,6 +30,7 @@
     <ClInclude Include="..\shared\lib_battery_powerflow.h" />
     <ClInclude Include="..\shared\lib_cec6par.h" />
     <ClInclude Include="..\shared\lib_financial.h" />
+    <ClInclude Include="..\shared\lib_fuel_cell.h" />
     <ClInclude Include="..\shared\lib_geothermal.h" />
     <ClInclude Include="..\shared\lib_iec61853.h" />
     <ClInclude Include="..\shared\lib_pv_incidence_modifier.h" />
@@ -58,7 +59,6 @@
     <ClInclude Include="..\shared\lib_wind_obos.h" />
     <ClInclude Include="..\shared\lib_wind_obos_cable_vessel.h" />
     <ClInclude Include="..\shared\lsqfit.h" />
-
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\shared\lib_battery.cpp" />
@@ -66,6 +66,7 @@
     <ClCompile Include="..\shared\lib_battery_powerflow.cpp" />
     <ClCompile Include="..\shared\lib_cec6par.cpp" />
     <ClCompile Include="..\shared\lib_financial.cpp" />
+    <ClCompile Include="..\shared\lib_fuel_cell.cpp" />
     <ClCompile Include="..\shared\lib_geothermal.cpp" />
     <ClCompile Include="..\shared\lib_iec61853.cpp" />
     <ClCompile Include="..\shared\lib_irradproc.cpp" />
@@ -94,7 +95,6 @@
     <ClCompile Include="..\shared\lib_wind_obos.cpp" />
     <ClCompile Include="..\shared\lib_wind_obos_cable_vessel.cpp" />
     <ClCompile Include="..\shared\lsqfit.cpp" />
-
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{794A2685-B70E-4504-9402-AC376D4EB459}</ProjectGuid>
