@@ -650,7 +650,7 @@ public:
 
 	void initialize(capacity_t *, voltage_t *, lifetime_t *, thermal_t *, losses_t *);
 
-	// Run all
+	// Run all for single time step
 	void run(size_t idx, double I);
 
 	// Run a component level model
