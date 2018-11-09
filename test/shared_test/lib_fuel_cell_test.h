@@ -39,12 +39,12 @@ protected:
 		lowerHeatingValue_BtuPerFt3 = 1033;
 		higherHeatingValue_BtuPerFt3 = 1033;
 		availableFuel_Mcf = 10000;
-		shutdownOption = FuelCell::FC_SHUTDOWN_OPTION::SHUTDOWN;
+		shutdownOption = FuelCell::FC_SHUTDOWN_OPTION::IDLE;
 		dispatchOption = FuelCell::FC_DISPATCH_OPTION::FIXED;
 		dt_hour = 1.0;
 		
 		const double tmpValues[33] = { 0,0,50,16,21,50,25,25,50,34,32,50,44,37,50,53,42,50,62,47,49,72,50,48,82,52,47,90,52,46,100,51,45 };
-		efficiencyTable.assign(tmpValues, sizeof(tmpValues) / sizeof(double));
+		efficiencyTable.assign(tmpValues, 11, 3);
 
 	}
 };
@@ -60,11 +60,13 @@ class FuelCellTest : public FuelCellProperties
 protected:
 
 	FuelCell * fuelCell;
+	
 
 public:
 
 	void SetUp()
 	{
+		FuelCellProperties::SetUp();
 		fuelCell = new FuelCell(numberOfUnits, unitPowerMax_kW, unitPowerMin_kW, startup_hours, dynamicResponse_kWperMin, degradation_kWperHour, degradationRestart_kW, 
 			replacement_percent, efficiencyTable, lowerHeatingValue_BtuPerFt3, higherHeatingValue_BtuPerFt3, availableFuel_Mcf, shutdownOption, dispatchOption, dt_hour);
 	}

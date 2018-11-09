@@ -1,7 +1,10 @@
 #ifndef __LIB_FUEL_CELL__
 #define __LIB_FUEL_CELL__
 
+#include <map>
 #include "lib_util.h"
+
+const double BTU_PER_KWH = 3412.14163;
 
 /**
 * \class FuelCell
@@ -27,6 +30,12 @@ public:
 
 	/// Run for single time step
 	void runSingleTimeStep() {};
+
+	/// Return true if operating
+	bool isRunning();
+
+	/// Return fuel consumption at percent load
+	double getFuelConsumptionMCf(double percent);
 
 	/// Option enumerations
 	enum FC_SHUTDOWN_OPTION { SHUTDOWN, IDLE };
@@ -56,8 +65,7 @@ protected:
 	// calculated
 	bool m_startedUp;
 	double m_hoursSinceStart;
-	std::vector<double> m_fuelConsumption;
-	double m_availableFuel_kWh;
+	std::map<double, double> m_fuelConsumption_MCf;
 };
 
 #endif __LIB_FUEL_CELL__
