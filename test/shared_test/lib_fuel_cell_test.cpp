@@ -85,3 +85,27 @@ TEST_F(FuelCellTest, DispatchFixed) {
 	}
 
 }
+
+TEST_F(FuelCellTest, DispatchLoadFollow) {
+
+	fuelCellDispatch->setDispatchOption(FuelCellDispatch::FC_DISPATCH_OPTION::LOAD_FOLLOW);
+
+	// Allow fuel cell to startup
+	for (size_t h = 0; h < (size_t)startup_hours; h++) {
+		fuelCellDispatch->runSingleTimeStep(0, 20);
+		EXPECT_EQ(fuelCell->getPower(), 0);
+	}
+
+	// Dispatch fuel cell for net load of 20 kW
+	fuelCellDispatch->runSingleTimeStep(20, 40);
+	EXPECT_EQ(fuelCell->getPower(), 20);
+
+	// Dispatch fuel cell for net load of 60 kW, dynamic response should limit to 40 kW
+	fuelCellDispatch->runSingleTimeStep(20, 80);
+	EXPECT_EQ(fuelCell->getPower(), 40);
+
+	// Dispatch fuel cell for net load of 60 kW, should be fully ramped by now
+	fuelCellDispatch->runSingleTimeStep(20, 80);
+	EXPECT_EQ(fuelCell->getPower(), 60);
+
+}

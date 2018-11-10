@@ -32,7 +32,7 @@ void FuelCellDispatch::runSingleTimeStep(double powerSystem_kWac, double powerLo
 	// Specified to follow load, fuel cell attempts to make up difference of system - load
 	else if (m_dispatchOption == FuelCellDispatch::FC_DISPATCH_OPTION::LOAD_FOLLOW) {
 		for (size_t fc = 0; fc < m_fuelCellVector.size(); fc++) {
-			double power_kW = powerSystem_kWac - powerLoad_kWac;
+			double power_kW = fmax(0, powerLoad_kWac - powerSystem_kWac);
 			m_fuelCellVector[fc]->runSingleTimeStep(power_kW);
 		}
 	}
@@ -42,6 +42,8 @@ void FuelCellDispatch::runSingleTimeStep(double powerSystem_kWac, double powerLo
 			m_fuelCellVector[fc]->runSingleTimeStep(0);
 		}
 	}
+}
 
-
+void FuelCellDispatch::setDispatchOption(int dispatchOption) {
+	m_dispatchOption = dispatchOption;
 }

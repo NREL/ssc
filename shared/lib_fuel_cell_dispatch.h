@@ -18,6 +18,9 @@ public:
 	/// Run dispatch for single step
 	void runSingleTimeStep(double powerSystem_kWac=0, double powerLoad_kWac=0);
 
+	/// Update dispatch option (for testing)
+	void setDispatchOption(int dispatchOption);
+
 	/// Dispatch option enumerations
 	enum FC_DISPATCH_OPTION { FIXED, LOAD_FOLLOW, MANUAL };
 
