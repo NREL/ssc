@@ -113,6 +113,9 @@ double FuelCell::getPowerResponse(double power_kW) {
 double FuelCell::getPower() {
 	return m_power_kW;
 }
+double FuelCell::getMaxPowerOriginal() {
+	return m_unitPowerMax_kW;
+}
 double FuelCell::getMaxPower() {
 	return m_powerMax_kW;
 }

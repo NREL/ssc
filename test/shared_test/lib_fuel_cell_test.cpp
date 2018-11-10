@@ -68,6 +68,20 @@ TEST_F(FuelCellTest, AvailableFuel) {
 
 TEST_F(FuelCellTest, DispatchFixed) {
 
+	// Allow fuel cell to startup
+	for (size_t h = 0; h < (size_t)startup_hours; h++) {
+		fuelCellDispatch->runSingleTimeStep(0, 0);
+		EXPECT_EQ(fuelCell->getPower(), 0);
+	}
 
+	// Unit will take two hours to fully ramp to 40 kW
+	fuelCellDispatch->runSingleTimeStep(0, 0);
+	EXPECT_EQ(fuelCell->getPower(), 20);
+
+	// Run at fixed output, which will go lower than min turndown
+	for (size_t h = (size_t)startup_hours; h < (size_t)startup_hours + 10; h++) {
+		fuelCellDispatch->runSingleTimeStep(20,10);
+		EXPECT_EQ(fuelCell->getPower(), unitPowerMax_kW * fixed_percent * 0.01);
+	}
 
 }

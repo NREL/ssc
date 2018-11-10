@@ -10,7 +10,7 @@ public:
 	FuelCellDispatch() { /* Nothing to do */ };
 
 	/// Construct with arguments
-	FuelCellDispatch(FuelCell * fuelCell, size_t numberOfUnits, int dispatchOption, int shutdownOption, double dt_hour);
+	FuelCellDispatch(FuelCell * fuelCell, size_t numberOfUnits, int dispatchOption, int shutdownOption, double dt_hour, double fixed_percent);
 
 	/// Destructor
 	~FuelCellDispatch() { /* Nothing to do */ };
@@ -18,12 +18,16 @@ public:
 	/// Run dispatch for single step
 	void runSingleTimeStep(double powerSystem_kWac=0, double powerLoad_kWac=0);
 
+	/// Dispatch option enumerations
+	enum FC_DISPATCH_OPTION { FIXED, LOAD_FOLLOW, MANUAL };
+
 private:
 
 	size_t m_numberOfUnits;
 	int m_dispatchOption;
 	int m_shutdownOption;
 	double dt_hour;
+	double m_fixed_percent;
 	std::vector< FuelCell *> m_fuelCellVector;
 };
 

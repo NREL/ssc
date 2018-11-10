@@ -37,6 +37,9 @@ public:
 	/// Return true if operating
 	bool isRunning();
 
+	// Get original max power kW
+	double getMaxPowerOriginal();
+
 	/// Get fuel cell max power kW
 	double getMaxPower();
 
@@ -55,9 +58,9 @@ public:
 	/// Calculate fuel consumption at percent load
 	double calculateFuelConsumptionMCf(double percent);
 
-	/// Option enumerations
+	/// Shutdown option enumerations
 	enum FC_SHUTDOWN_OPTION { SHUTDOWN, IDLE };
-	enum FC_DISPATCH_OPTION { FIXED, LOAD_FOLLOW, MANUAL };
+
 
 protected:
 
