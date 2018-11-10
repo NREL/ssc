@@ -96,12 +96,15 @@ double FuelCell::getPercentLoad(double power) {
 double FuelCell::getPowerResponse(double power_kW) {
 	double dP = (power_kW - m_powerPrevious_kW) / dt_hour;
 	double dP_max = fmin(fabs(dP), m_dynamicResponse_kWperHour);
-	double sign = dP / fabs(dP);
+	double sign = fabs(dP) > 0 ? dP / fabs(dP) : 1.0;
 
 	return (m_powerPrevious_kW + (dP_max * sign));
 }
 double FuelCell::getPower() {
 	return m_power_kW;
+}
+double FuelCell::getMaxPower() {
+	return m_powerMax_kW;
 }
 void FuelCell::checkMinTurndown() {
 	if (m_power_kW < m_unitPowerMin_kW && m_power_kW > 0) {
@@ -134,9 +137,14 @@ void FuelCell::applyDegradation() {
 		m_powerMax_kW = m_unitPowerMax_kW;
 		m_replacementCount += 1;
 	}
+
+	// Ensure fuel cell power is less than or equal to max 
+	m_power_kW = fmin(m_power_kW, m_powerMax_kW);
 }
 
 void FuelCell::runSingleTimeStep(double power_kW) {
+
+	m_powerPrevious_kW = m_power_kW;
 
 	// Initialize based on dynamic response limits
 	if (isRunning()) {

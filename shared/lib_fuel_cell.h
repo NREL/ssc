@@ -43,6 +43,9 @@ public:
 	/// Get fuel cell power given the requested power signal
 	double getPowerResponse(double power);
 
+	/// Get fuel cell max power
+	double getMaxPower();
+
 	/// Return the final power
 	double getPower();
 

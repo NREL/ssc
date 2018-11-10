@@ -14,7 +14,7 @@ protected:
 	double unitPowerMax_kW;
 	double unitPowerMin_kW;
 	double startup_hours;
-	double dynamicResponse_kWperMin;
+	double dynamicResponse_kWperHour;
 	double degradation_kWperHour;
 	double degradationRestart_kW;
 	double replacement_percent;
@@ -32,7 +32,7 @@ protected:
 		unitPowerMax_kW = 100;
 		unitPowerMin_kW = 20;
 		startup_hours = 8;
-		dynamicResponse_kWperMin = 0.5;
+		dynamicResponse_kWperHour = 20;
 		degradation_kWperHour = 0.01;
 		degradationRestart_kW = 5;
 		replacement_percent = 50;
@@ -67,7 +67,7 @@ public:
 	void SetUp()
 	{
 		FuelCellProperties::SetUp();
-		fuelCell = new FuelCell(numberOfUnits, unitPowerMax_kW, unitPowerMin_kW, startup_hours, dynamicResponse_kWperMin, degradation_kWperHour, degradationRestart_kW, 
+		fuelCell = new FuelCell(numberOfUnits, unitPowerMax_kW, unitPowerMin_kW, startup_hours, dynamicResponse_kWperHour, degradation_kWperHour, degradationRestart_kW,
 			replacement_percent, efficiencyTable, lowerHeatingValue_BtuPerFt3, higherHeatingValue_BtuPerFt3, availableFuel_Mcf, shutdownOption, dispatchOption, dt_hour);
 	}
 	void TearDown()

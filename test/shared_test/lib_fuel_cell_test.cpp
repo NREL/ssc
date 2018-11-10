@@ -29,4 +29,20 @@ TEST_F(FuelCellTest, Startup)
 	// Next hour, it's fully started up
 	fuelCell->runSingleTimeStep(20);
 	EXPECT_EQ(fuelCell->getPower(), 20);
+
+	// Test Min Turndown
+	fuelCell->runSingleTimeStep(unitPowerMin_kW - 10);
+	EXPECT_EQ(fuelCell->getPower(), unitPowerMin_kW);
+
+	// Test dynamic limit
+	fuelCell->runSingleTimeStep(100);
+	EXPECT_EQ(fuelCell->getPower(), unitPowerMin_kW + dynamicResponse_kWperHour);
+	fuelCell->runSingleTimeStep(100);
+	fuelCell->runSingleTimeStep(100);
+	fuelCell->runSingleTimeStep(100);
+	fuelCell->runSingleTimeStep(100);
+
+	// Test Max Limit (is not unitPowerMax_kW due to degradation)
+	fuelCell->runSingleTimeStep(unitPowerMax_kW + 10);
+	EXPECT_EQ(fuelCell->getPower(), fuelCell->getMaxPower());
 }
