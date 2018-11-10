@@ -31,7 +31,7 @@ protected:
 		numberOfUnits = 1;
 		unitPowerMax_kW = 100;
 		unitPowerMin_kW = 20;
-		startup_hours = 24;
+		startup_hours = 8;
 		dynamicResponse_kWperMin = 0.5;
 		degradation_kWperHour = 0.01;
 		degradationRestart_kW = 5;

@@ -34,14 +34,14 @@ FuelCell::FuelCell(size_t numberOfUnits, double unitPowerMax_kW, double unitPowe
 		m_fuelConsumption_MCf[m_efficiencyTable.at(r, FC_EFFICIENCY_COLUMN::PERCENT_MAX)] = (fuelConsumption_Mcf);
 	}
 
-	// Assumption 1: Fuel Cell is not startup up initially
+	// Assumption: Fuel Cell is not startup up initially
 	m_startedUp = false;
 	m_hoursSinceStart = 0.0;
 
 	// Assumption 2: Fuel Cell starts up if allowed to idle at min power
-	if (shutdownOption == FuelCell::FC_SHUTDOWN_OPTION::IDLE) {
-		m_hoursSinceStart += dt_hour;
-	}
+	//if (shutdownOption == FuelCell::FC_SHUTDOWN_OPTION::IDLE) {
+	//	m_hoursSinceStart += dt_hour;
+	//}
 }
 
 FuelCell::~FuelCell(){ /* Nothing to do */}
@@ -141,18 +141,18 @@ void FuelCell::runSingleTimeStep(double power_kW) {
 	// Initialize based on dynamic response limits
 	if (isRunning()) {
 		m_power_kW = getPowerResponse(power_kW);
+
+		checkMinTurndown();
+		checkMaxLimit();
 	}
 	else {
-		if (m_hoursSinceStart > 0){
+		if (power_kW > 0 || m_hoursSinceStart > 0){
 			m_hoursSinceStart += dt_hour;
 			if (m_hoursSinceStart == m_startup_hours) {
 				m_startedUp = true;
-				m_power_kW = getPowerResponse(power_kW);
 			}
 		}
 	}
-	
-	checkMinTurndown();
-	checkMaxLimit();
 	applyDegradation();
+	
 }
