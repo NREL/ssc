@@ -29,13 +29,31 @@ public:
 	~FuelCell();
 
 	/// Run for single time step
-	void runSingleTimeStep() {};
+	void runSingleTimeStep(double power_kW);
 
 	/// Return true if operating
 	bool isRunning();
 
 	/// Return fuel consumption at percent load
 	double getFuelConsumptionMCf(double percent);
+	
+	/// Return percentage based on requested power
+	double getPercentLoad(double power);
+
+	/// Get fuel cell power given the requested power signal
+	double getPowerResponse(double power);
+
+	/// Return the final power
+	double getPower();
+
+	/// Check Min Turndown
+	void checkMinTurndown();
+
+	/// Check Max Limit
+	void checkMaxLimit();
+
+	/// Apply degradation 
+	void applyDegradation();
 
 	/// Option enumerations
 	enum FC_SHUTDOWN_OPTION { SHUTDOWN, IDLE };
@@ -51,7 +69,7 @@ protected:
 	double m_unitPowerMax_kW;
 	double m_unitPowerMin_kW;
 	double m_startup_hours;
-	double m_dynamicResponse_kWperMin;
+	double m_dynamicResponse_kWperHour;
 	double m_degradation_kWperHour;
 	double m_degradationRestart_kW;
 	double m_replacement_percent;
@@ -65,7 +83,11 @@ protected:
 	// calculated
 	bool m_startedUp;
 	double m_hoursSinceStart;
+	double m_powerMax_kW;  // Maximum power after degradation
+	double m_power_kW;
+	double m_powerPrevious_kW;
 	std::map<double, double> m_fuelConsumption_MCf;
+	int m_replacementCount;
 };
 
 #endif __LIB_FUEL_CELL__

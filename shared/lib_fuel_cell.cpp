@@ -3,15 +3,16 @@
 
 FuelCell::FuelCell() { /* Nothing to do */ };
 
-FuelCell::FuelCell(size_t numberOfUnits, double unitPowerMax_kW, double unitPowerMin_kW, double startup_hours, double dynamicResponse_kWperMin,
+FuelCell::FuelCell(size_t numberOfUnits, double unitPowerMax_kW, double unitPowerMin_kW, double startup_hours, double dynamicResponse_kWperHour,
 	double degradation_kWperHour, double degradationRestart_kW, double replacement_percent, util::matrix_t<double> efficiencyTable,
 	double lowerHeatingValue_BtuPerFt3, double higherHeatingValue_BtuPerFt3, double availableFuel_Mcf,
 	int shutdownOption, int dispatchOption, double dt_hour) :
 	m_numberOfUnits(numberOfUnits), m_unitPowerMax_kW(unitPowerMax_kW), m_unitPowerMin_kW(unitPowerMin_kW), m_startup_hours(startup_hours),
-	m_dynamicResponse_kWperMin(dynamicResponse_kWperMin), m_degradation_kWperHour(degradation_kWperHour), m_degradationRestart_kW(degradationRestart_kW),
-	m_replacement_percent(replacement_percent), m_efficiencyTable(efficiencyTable), m_lowerHeatingValue_BtuPerFt3(lowerHeatingValue_BtuPerFt3),
+	m_dynamicResponse_kWperHour(dynamicResponse_kWperHour), m_degradation_kWperHour(degradation_kWperHour), m_degradationRestart_kW(degradationRestart_kW),
+	m_replacement_percent(replacement_percent * 0.01), m_efficiencyTable(efficiencyTable), m_lowerHeatingValue_BtuPerFt3(lowerHeatingValue_BtuPerFt3),
 	m_higherHeatingValue_BtuPerFt3(higherHeatingValue_BtuPerFt3),
-	m_availableFuel_MCf(availableFuel_Mcf), m_shutdownOption(shutdownOption), m_dispatchOption(dispatchOption), dt_hour(dt_hour)
+	m_availableFuel_MCf(availableFuel_Mcf), m_shutdownOption(shutdownOption), m_dispatchOption(dispatchOption), dt_hour(dt_hour),
+	m_powerMax_kW(unitPowerMax_kW), m_power_kW(0), m_powerPrevious_kW(0), m_replacementCount(0)
 {
 	// Calculate fuel consumption based on inputs
 	for (size_t r = 0; r < m_efficiencyTable.nrows(); r++) {
@@ -86,4 +87,72 @@ double FuelCell::getFuelConsumptionMCf(double percent) {
 	}
 
 	return f;
+}
+
+double FuelCell::getPercentLoad(double power) {
+	return power / (m_unitPowerMax_kW * m_numberOfUnits);
+}
+
+double FuelCell::getPowerResponse(double power_kW) {
+	double dP = (power_kW - m_powerPrevious_kW) / dt_hour;
+	double dP_max = fmin(fabs(dP), m_dynamicResponse_kWperHour);
+	double sign = dP / fabs(dP);
+
+	return (m_powerPrevious_kW + (dP_max * sign));
+}
+double FuelCell::getPower() {
+	return m_power_kW;
+}
+void FuelCell::checkMinTurndown() {
+	if (m_power_kW < m_unitPowerMin_kW && m_power_kW > 0) {
+		m_power_kW = m_unitPowerMin_kW;
+	}
+	else if (m_power_kW == 0) {
+		if (m_shutdownOption == FuelCell::FC_SHUTDOWN_OPTION::IDLE) {
+			m_power_kW = m_unitPowerMin_kW;
+		}
+		else {
+			m_startedUp = 0;
+			m_hoursSinceStart = 0;
+		}
+	}
+}
+void FuelCell::checkMaxLimit() {
+	if (m_power_kW > m_unitPowerMax_kW) {
+		m_power_kW = m_unitPowerMax_kW;
+	}
+}
+void FuelCell::applyDegradation() {
+	if (isRunning()) {
+		m_powerMax_kW -= m_degradation_kWperHour * dt_hour;
+	}
+	else if (m_powerPrevious_kW > 0 && m_hoursSinceStart == 0) {
+		m_powerMax_kW -= m_degradationRestart_kW;
+	}
+
+	if (m_powerMax_kW < m_unitPowerMax_kW * m_replacement_percent) {
+		m_powerMax_kW = m_unitPowerMax_kW;
+		m_replacementCount += 1;
+	}
+}
+
+void FuelCell::runSingleTimeStep(double power_kW) {
+
+	// Initialize based on dynamic response limits
+	if (isRunning()) {
+		m_power_kW = getPowerResponse(power_kW);
+	}
+	else {
+		if (m_hoursSinceStart > 0){
+			m_hoursSinceStart += dt_hour;
+			if (m_hoursSinceStart == m_startup_hours) {
+				m_startedUp = true;
+				m_power_kW = getPowerResponse(power_kW);
+			}
+		}
+	}
+	
+	checkMinTurndown();
+	checkMaxLimit();
+	applyDegradation();
 }

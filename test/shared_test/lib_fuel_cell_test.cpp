@@ -14,7 +14,7 @@ TEST_F(FuelCellTest, Initialize)
 
 TEST_F(FuelCellTest, FixedOutput)
 {
-	fuelCell->runSingleTimeStep();
+	fuelCell->runSingleTimeStep(20);
 
 
 }
