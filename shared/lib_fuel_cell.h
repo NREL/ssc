@@ -34,20 +34,29 @@ public:
 	/// Return true if operating
 	bool isRunning();
 
-	/// Return fuel consumption at percent load
-	double getFuelConsumptionMCf(double percent);
-	
-	/// Return percentage based on requested power
-	double getPercentLoad(double power);
-
-	/// Get fuel cell power given the requested power signal
-	double getPowerResponse(double power);
-
-	/// Get fuel cell max power
+	/// Get fuel cell max power kW
 	double getMaxPower();
 
-	/// Return the final power
+	/// Return the final power kW
 	double getPower();
+
+	/// Return the fuel consumption in MCF
+	double getFuelConsumption();
+
+	/// Return the available fuel in MCF
+	double getAvailableFuel();
+
+	/// Apply degradation 
+	void applyDegradation();
+
+	/// Calculate fuel consumption at percent load
+	double calculateFuelConsumptionMCf(double percent);
+
+	/// Option enumerations
+	enum FC_SHUTDOWN_OPTION { SHUTDOWN, IDLE };
+	enum FC_DISPATCH_OPTION { FIXED, LOAD_FOLLOW, MANUAL };
+
+protected:
 
 	/// Check Min Turndown
 	void checkMinTurndown();
@@ -55,14 +64,14 @@ public:
 	/// Check Max Limit
 	void checkMaxLimit();
 
-	/// Apply degradation 
-	void applyDegradation();
+	/// Check Available Fuel
+	void checkAvailableFuel();
 
-	/// Option enumerations
-	enum FC_SHUTDOWN_OPTION { SHUTDOWN, IDLE };
-	enum FC_DISPATCH_OPTION { FIXED, LOAD_FOLLOW, MANUAL };
+	/// Get fuel cell power given the requested power signal
+	double getPowerResponse(double power);
 
-protected:
+	/// Return percentage based on requested power
+	double getPercentLoad();
 
 	enum FC_EFFICIENCY_COLUMN { PERCENT_MAX, PRECENT_ELECTRICAL_EFFICIENCY, PERCENT_HEAT_RECOVERY };
 
@@ -89,7 +98,8 @@ protected:
 	double m_powerMax_kW;  // Maximum power after degradation
 	double m_power_kW;
 	double m_powerPrevious_kW;
-	std::map<double, double> m_fuelConsumption_MCf;
+	std::map<double, double> m_fuelConsumptionMap_MCf;
+	double m_fuelConsumption_MCf;
 	int m_replacementCount;
 };
 

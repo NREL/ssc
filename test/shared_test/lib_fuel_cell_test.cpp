@@ -7,9 +7,9 @@ TEST_F(FuelCellTest, Initialize)
 	EXPECT_EQ(fuelCell->isRunning(), false);
 
 	// Test if fuel consumption curve correctly generated
-	EXPECT_EQ(fuelCell->getFuelConsumptionMCf(0), 0);
-	EXPECT_NEAR(fuelCell->getFuelConsumptionMCf(1), 0.647674, 0.01);
-	EXPECT_NEAR(fuelCell->getFuelConsumptionMCf(2), 0.647674, 0.01);
+	EXPECT_EQ(fuelCell->calculateFuelConsumptionMCf(0), 0);
+	EXPECT_NEAR(fuelCell->calculateFuelConsumptionMCf(1), 0.647674, 0.01);
+	EXPECT_NEAR(fuelCell->calculateFuelConsumptionMCf(2), 0.647674, 0.01);
 }
 
 TEST_F(FuelCellTest, Startup)
@@ -45,4 +45,23 @@ TEST_F(FuelCellTest, Startup)
 	// Test Max Limit (is not unitPowerMax_kW due to degradation)
 	fuelCell->runSingleTimeStep(unitPowerMax_kW + 10);
 	EXPECT_EQ(fuelCell->getPower(), fuelCell->getMaxPower());
+}
+
+TEST_F(FuelCellTest, AvailableFuel) {
+
+	
+	// Run for startup_hours, assume no fuel consumed from available stock during startup
+	for (size_t h = 0; h < (size_t)startup_hours; h++) {
+		fuelCell->runSingleTimeStep(20);
+		EXPECT_EQ(fuelCell->getAvailableFuel(), availableFuel_Mcf);
+	}
+
+	// Available fuel should start decreasing
+	double availableFuelTrack = availableFuel_Mcf;
+	for (size_t h = (size_t)startup_hours; h < (size_t)startup_hours + 10; h++) {
+		fuelCell->runSingleTimeStep(20);
+		EXPECT_EQ(fuelCell->getAvailableFuel(), availableFuelTrack - fuelCell->getFuelConsumption());
+		availableFuelTrack -= fuelCell->getFuelConsumption();
+	}
+
 }

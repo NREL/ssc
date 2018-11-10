@@ -31,7 +31,7 @@ FuelCell::FuelCell(size_t numberOfUnits, double unitPowerMax_kW, double unitPowe
 			fuelConsumption_Mcf = fuelConsumption_Btu / (m_lowerHeatingValue_BtuPerFt3 * 1000);
 		}
 
-		m_fuelConsumption_MCf[m_efficiencyTable.at(r, FC_EFFICIENCY_COLUMN::PERCENT_MAX)] = (fuelConsumption_Mcf);
+		m_fuelConsumptionMap_MCf[m_efficiencyTable.at(r, FC_EFFICIENCY_COLUMN::PERCENT_MAX)] = (fuelConsumption_Mcf);
 	}
 
 	// Assumption: Fuel Cell is not startup up initially
@@ -50,13 +50,13 @@ bool FuelCell::isRunning() {
 	return m_startedUp;
 }
 
-double FuelCell::getFuelConsumptionMCf(double percent) {
+double FuelCell::calculateFuelConsumptionMCf(double percent) {
 	
 	double p1, p2, f1, f2, f, m;
 	p1 = p2 = f1 = f2 = f = m = 0;
-	for (auto fc = m_fuelConsumption_MCf.begin(); fc != m_fuelConsumption_MCf.end(); fc++) {
+	for (auto fc = m_fuelConsumptionMap_MCf.begin(); fc != m_fuelConsumptionMap_MCf.end(); fc++) {
 		auto fc_next = std::next(fc, 1);
-		auto fc_end = m_fuelConsumption_MCf.rbegin();
+		auto fc_end = m_fuelConsumptionMap_MCf.rbegin();
 
 		if (percent == fc->first) {
 			f = fc->second;
@@ -85,12 +85,12 @@ double FuelCell::getFuelConsumptionMCf(double percent) {
 			break;
 		}
 	}
-
-	return f;
+	m_fuelConsumption_MCf = f;
+	return m_fuelConsumption_MCf;
 }
 
-double FuelCell::getPercentLoad(double power) {
-	return power / (m_unitPowerMax_kW * m_numberOfUnits);
+double FuelCell::getPercentLoad() {
+	return m_power_kW / (m_unitPowerMax_kW * m_numberOfUnits);
 }
 
 double FuelCell::getPowerResponse(double power_kW) {
@@ -105,6 +105,12 @@ double FuelCell::getPower() {
 }
 double FuelCell::getMaxPower() {
 	return m_powerMax_kW;
+}
+double FuelCell::getFuelConsumption() {
+	return m_fuelConsumption_MCf;
+}
+double FuelCell::getAvailableFuel() {
+	return m_availableFuel_MCf;
 }
 void FuelCell::checkMinTurndown() {
 	if (m_power_kW < m_unitPowerMin_kW && m_power_kW > 0) {
@@ -125,6 +131,20 @@ void FuelCell::checkMaxLimit() {
 		m_power_kW = m_unitPowerMax_kW;
 	}
 }
+
+void FuelCell::checkAvailableFuel() {
+
+	double percentLoad = getPercentLoad();
+	double fuelConsumption = calculateFuelConsumptionMCf(percentLoad);
+	m_availableFuel_MCf -= fuelConsumption;
+
+	if (m_availableFuel_MCf <= 0) {
+		m_startedUp = false;
+		m_hoursSinceStart = 0;
+	}
+}
+
+
 void FuelCell::applyDegradation() {
 	if (isRunning()) {
 		m_powerMax_kW -= m_degradation_kWperHour * dt_hour;
@@ -152,9 +172,10 @@ void FuelCell::runSingleTimeStep(double power_kW) {
 
 		checkMinTurndown();
 		checkMaxLimit();
+		checkAvailableFuel();
 	}
 	else {
-		if (power_kW > 0 || m_hoursSinceStart > 0){
+		if ((power_kW > 0 || m_hoursSinceStart > 0) && m_availableFuel_MCf > 0){
 			m_hoursSinceStart += dt_hour;
 			if (m_hoursSinceStart == m_startup_hours) {
 				m_startedUp = true;
