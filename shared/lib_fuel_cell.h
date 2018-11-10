@@ -20,13 +20,16 @@ public:
 	FuelCell();
 
 	/// Construct FuelCell with arguments
-	FuelCell(size_t numberOfUnits, double unitPowerMax_kW, double unitPowerMin_kW, double startup_hours, double dynamicResponse_kWperMin,
+	FuelCell(double unitPowerMax_kW, double unitPowerMin_kW, double startup_hours, double dynamicResponse_kWperMin,
 		double degradation_kWperHour, double degradationRestart_kW, double replacement_percent, util::matrix_t<double> efficiencyTable,
 		double lowerHeatingValue_MJperkg, double higherHeatingValue_MJperkg, double availableFuel_MCf,
-		int shutdownOption, int dispatchOption, double dt_hour);
+		int shutdownOption,  double dt_hour);
 
 	/// Default destructor
 	~FuelCell();
+
+	/// Copy Constructor
+	// FuelCell(const FuelCell &fuelCell);
 
 	/// Run for single time step
 	void runSingleTimeStep(double power_kW);
@@ -77,7 +80,6 @@ protected:
 
 	// input values
 	double dt_hour;
-	size_t m_numberOfUnits;
 	double m_unitPowerMax_kW;
 	double m_unitPowerMin_kW;
 	double m_startup_hours;
@@ -90,7 +92,6 @@ protected:
 	double m_higherHeatingValue_BtuPerFt3;
 	double m_availableFuel_MCf;
 	int m_shutdownOption;
-	int m_dispatchOption;
 
 	// calculated
 	bool m_startedUp;

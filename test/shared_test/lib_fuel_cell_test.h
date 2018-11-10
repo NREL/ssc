@@ -3,6 +3,7 @@
 
 #include <gtest/gtest.h>
 #include <lib_fuel_cell.h>
+#include <lib_fuel_cell_dispatch.h>
 #include <lib_util.h>
 
 
@@ -60,6 +61,8 @@ class FuelCellTest : public FuelCellProperties
 protected:
 
 	FuelCell * fuelCell;
+	FuelCellDispatch * fuelCellDispatch;
+	
 	
 
 public:
@@ -67,13 +70,18 @@ public:
 	void SetUp()
 	{
 		FuelCellProperties::SetUp();
-		fuelCell = new FuelCell(numberOfUnits, unitPowerMax_kW, unitPowerMin_kW, startup_hours, dynamicResponse_kWperHour, degradation_kWperHour, degradationRestart_kW,
-			replacement_percent, efficiencyTable, lowerHeatingValue_BtuPerFt3, higherHeatingValue_BtuPerFt3, availableFuel_Mcf, shutdownOption, dispatchOption, dt_hour);
+		fuelCell = new FuelCell(unitPowerMax_kW, unitPowerMin_kW, startup_hours, dynamicResponse_kWperHour, degradation_kWperHour, degradationRestart_kW,
+			replacement_percent, efficiencyTable, lowerHeatingValue_BtuPerFt3, higherHeatingValue_BtuPerFt3, availableFuel_Mcf, shutdownOption, dt_hour);
+		fuelCellDispatch = new FuelCellDispatch(fuelCell, numberOfUnits, dispatchOption, shutdownOption, dt_hour);
+
 	}
 	void TearDown()
 	{
 		if (fuelCell) {
 			delete fuelCell;
+		}
+		if (fuelCellDispatch) {
+			delete fuelCellDispatch;
 		}
 	}
 

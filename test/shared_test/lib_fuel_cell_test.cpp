@@ -65,3 +65,9 @@ TEST_F(FuelCellTest, AvailableFuel) {
 	}
 
 }
+
+TEST_F(FuelCellTest, DispatchFixed) {
+
+
+
+}
