@@ -108,6 +108,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\ssc\cmod_battery.h" />
+    <ClInclude Include="..\ssc\cmod_fuelcell.h" />
     <ClInclude Include="..\ssc\cmod_pvsamv1.h" />
     <ClInclude Include="..\ssc\cmod_windpower.h" />
     <ClInclude Include="..\ssc\common_financial.h" />

@@ -52,15 +52,24 @@
 #include "common.h"
 #include "core.h"
 
+#include "cmod_fuelcell.h"
+
 
 var_info vtab_fuelcell[] = {
 	/*   VARTYPE           DATATYPE         NAME                               LABEL                                    UNITS      META                   GROUP                  REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
+	
+	// simulation inputs
+	{ SSC_INPUT,        SSC_NUMBER,      "system_use_lifetime_output",        "Lifetime simulation",                   "0/1",     "0=SingleYearRepeated,1=RunEveryYear",   "",        "?=0",                   "BOOLEAN",                          "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "analysis_period",                   "Lifetime analysis period",              "years",   "The number of years in the simulation", "",        "system_use_lifetime_output=1","",                           "" },
+
+
+	// fuel cell
 	{ SSC_INPUT,        SSC_NUMBER,      "fuelcell_degradation",              "Fuel cell degradation per hour",        "kW/h",       "",                 "Fuel Cell",                  "",                        "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "fuelcell_degradation_restart",      "Fuel cell degradation at restart",      "kW",         "",                 "Fuel Cell",                  "",                        "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "fuelcell_dispatch_choice",          "Fuel cell dispatch choice",             "0/1/2",      "",                 "Fuel Cell",                  "",                        "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "fuelcell_fixed_pct",				  "Fuel cell fixed operation percent",     "%",          "",                 "Fuel Cell",                  "",                        "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "fuelcell_dynamic_response",         "Fuel cell response after startup",      "kW/h",       "",                 "Fuel Cell",                  "",                        "",                              "" },
-	{ SSC_INPUT,        SSC_ARRAY,       "fuelcell_efficiency",               "Fuel cell efficiency table ",           "",           "",                 "Fuel Cell",                  "",                        "",                              "" },
+	{ SSC_INPUT,        SSC_MATRIX,      "fuelcell_efficiency",               "Fuel cell efficiency table ",           "",           "",                 "Fuel Cell",                  "",                        "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "fuelcell_fuel_available",           "Fuel cell available fuel quantity",     "MCf",        "",                 "Fuel Cell",                  "",                        "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "fuelcell_fuel_price",				  "Fuel cell price",                       "$/MCf",      "",                 "Fuel Cell",                  "",                        "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "fuelcell_fuel_type",				  "Fuel cell type",                        "0/1",        "",                 "Fuel Cell",                  "",                        "",                              "" },
@@ -84,18 +93,37 @@ var_info vtab_fuelcell[] = {
 
 var_info_invalid };
 
-class cm_fuelcell : public compute_module
+cm_fuelcell::cm_fuelcell()
 {
-public:
+	std::unique_ptr<fuelCellVariables> tmp(new fuelCellVariables(*this));
+	fcVars = std::move(tmp);
 
-	cm_fuelcell()
-	{
-		add_var_info(vtab_technology_outputs);
-	}
+	std::unique_ptr<FuelCell> tmp2(new FuelCell(fcVars->unitPowerMax_kW, fcVars->unitPowerMin_kW,
+		fcVars->startup_hours, fcVars->dynamicResponse_kWperHour, fcVars->degradation_kWperHour,
+		fcVars->degradationRestart_kW, fcVars->replacement_percent, fcVars->efficiencyTable,
+		fcVars->lowerHeatingValue_BtuPerFt3, fcVars->higherHeatingValue_BtuPerFt3, fcVars->availableFuel_MCf,
+		fcVars->shutdownOption, fcVars->dt_hour));
+	fuelCell = std::move(tmp2);
 
-	void exec() throw(general_error)
-	{
-	}
-};
+	std::unique_ptr<FuelCellDispatch> tmp3(new FuelCellDispatch(fuelCell.get(), fcVars->numberOfUnits,
+		fcVars->dispatchOption, fcVars->shutdownOption, fcVars->dt_hour, fcVars->fixed_percent,
+		fcVars->canCharge, fcVars->canDischarge, fcVars->discharge_percentByPeriod, fcVars->scheduleWeekday,
+		fcVars->scheduleWeekend));
+	fuelCellDispatch = std::move(tmp3);
+
+	add_var_info(vtab_fuelcell);
+	add_var_info(vtab_technology_outputs);
+}
+
+void cm_fuelcell::exec() 
+{
+
+
+
+}
+cm_fuelcell::~cm_fuelcell(){/* nothing to do */ }
+
+
+
 
 DEFINE_MODULE_ENTRY(fuelcell, "Fuel cell model", 1)
