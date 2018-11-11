@@ -227,7 +227,7 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "epsilon_radgrnd",		 "Emmissivity of ground underneath radiator panel",					"-",			"",            "RADCOOL",      "?=.90",						 "",						"" },
 	{ SSC_INPUT,        SSC_NUMBER,      "L_rad_sections",		 "Length of individual radiator panel",								"m",			"",            "RADCOOL",      "?=0",						 "",						"" },
 	{ SSC_INPUT,        SSC_NUMBER,      "epsilon_radHX",		 "Effectiveness of HX between radiative field and cold storage",	"-",			"",            "RADCOOL",      "?=.8",						 "",						"" },
-	{ SSC_INPUT,        SSC_NUMBER,      "ctes_type",			 "Type of cold storage (2=two tank, 3= three node)",				"-",			"",            "RADCOOL",      "?=2",						 "",						"" },
+	{ SSC_INPUT,        SSC_NUMBER,      "ctes_type",			 "Type of cold storage (2=two tank, 3= three node)",				"-",			"",            "RADCOOL",      "?=0",						 "",						"" },
 	{ SSC_INPUT,        SSC_NUMBER,      "helio_area_tot",		 "Heliostat total reflective area",									"-",			"",            "RADCOOL",      "?=0",						 "",						"" },
 	{ SSC_INPUT,        SSC_NUMBER,      "radiator_unitcost",	 "Cost of radiative panels",										"$/m^2",		"",            "RADCOOL",      "?=0",						 "",						"" },
 	{ SSC_INPUT,        SSC_NUMBER,      "radiator_installcost", "Installation cost of radiative panels",							"$/m^2",		"",            "RADCOOL",      "?=0",						 "",						"" },
