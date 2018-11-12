@@ -66,6 +66,12 @@
     <ClCompile Include="..\test\shared_test\lib_battery_dispatch_test.cpp">
       <Filter>shared_test</Filter>
     </ClCompile>
+    <ClCompile Include="..\test\ssc_test\Source.cpp">
+      <Filter>ssc_test</Filter>
+    </ClCompile>
+    <ClCompile Include="..\test\ssc_test\cmod_fuelcell_test.cpp">
+      <Filter>ssc_test</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="shared_test">
@@ -141,6 +147,12 @@
     </ClInclude>
     <ClInclude Include="..\test\shared_test\lib_battery_dispatch_test.h">
       <Filter>shared_test</Filter>
+    </ClInclude>
+    <ClInclude Include="..\test\ssc_test\cmod_fuelcell_test.h">
+      <Filter>ssc_test</Filter>
+    </ClInclude>
+    <ClInclude Include="..\test\ssc_test\fuelcell_common_data.h">
+      <Filter>input_cases</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

@@ -1,19 +1,22 @@
-#ifndef _CMOD_PVSAMV1_TEST_H_
-#define _CMOD_PVSAMV1_TEST_H_
+#ifndef _CMOD_FUELCELL_TEST_H_
+#define _CMOD_FUELCELL_TEST_H_
 
 #include <gtest/gtest.h>
+
 #include "core.h"
+#include "sscapi.h"
 
 #include "../ssc/vartab.h"
 #include "../ssc/common.h"
-#include "../input_cases/pvsamv1_cases.h"
+#include "../input_cases/code_generator_utilities.h"
+#include "../input_cases/fuelcell_common_data.h"
 
 /**
- * CMPVsamv1PowerIntegration tests the cmod_pvsamv1 using the SAM code generator to generate data
+ * CMFuelCell tests the cmod_fuelcell using the SAM code generator to generate data
  * Eventually a method can be written to write this data to a vartable so that lower-level methods of pvsamv1 can be tested
  * For now, this uses the SSCAPI interfaces to run the compute module and compare results
  */
-class CMPvsamv1PowerIntegration : public ::testing::Test{
+class CMFuelCell : public ::testing::Test {
 
 public:
 
@@ -26,7 +29,7 @@ public:
 	void SetUp()
 	{
 		data = ssc_data_create();
-		pvsamv_nofinancial_default(data);
+		fuelcell_nofinancial_default(data);
 		calculated_array = new ssc_number_t[8760];
 	}
 	void TearDown() {
@@ -48,4 +51,4 @@ public:
 	}
 };
 
-#endif // !_CMOD_PVSAMV1_TEST_H_
+#endif 
