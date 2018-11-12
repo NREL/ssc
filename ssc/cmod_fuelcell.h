@@ -64,7 +64,8 @@ public:
 	fuelCellVariables() {/* nothing to do */ };
 	fuelCellVariables(compute_module & cm) :
 		systemUseLifetimeOutput(cm.as_boolean("system_use_lifetime_output")),
-		systemGeneration_kW(cm.as_vector_double("gen")),
+		systemGeneration_kW(cm.as_vector_double("ac")),
+		electricLoad_kW(cm.as_vector_double("load")),
 		unitPowerMax_kW(cm.as_double("fuelcell_unit_max_power")),
 		unitPowerMin_kW(cm.as_double("fuelcell_unit_min_power")),
 		startup_hours(cm.as_double("fuelcell_startup_time")),
@@ -74,12 +75,12 @@ public:
 		replacement_percent(cm.as_double("fuelcell_replacement_percent")),
 		efficiencyTable(cm.as_matrix("fuelcell_efficiency")),
 		lowerHeatingValue_BtuPerFt3(cm.as_double("fuelcell_lhv")),
-		higherHeatingValue_BtuPerFt3(cm.as_double("fuelcell_hhv")),
+		higherHeatingValue_BtuPerFt3(cm.as_double("fuelcell_lhv")),
 		availableFuel_MCf(cm.as_double("fuelcell_fuel_available")),
-		shutdownOption(cm.as_integer("shutdownOption")),
+		shutdownOption(cm.as_integer("fuelcell_operation_options")),
 		numberOfUnits(cm.as_integer("fuelcell_number_of_units")),
-		dispatchOption(cm.as_integer("dispatchOption")),
-		fixed_percent(cm.as_double("fixed_percent")),
+		dispatchOption(cm.as_integer("fuelcell_dispatch_choice")),
+		fixed_percent(cm.as_double("fuelcell_fixed_pct")),
 		canCharge(cm.as_vector_bool("dispatch_manual_fuelcellcharge")),
 		canDischarge(cm.as_vector_bool("dispatch_manual_fuelcelldischarge")),
 		discharge_percent(cm.as_vector_double("dispatch_manual_percent_fc_discharge")),
@@ -90,19 +91,30 @@ public:
 		if (systemUseLifetimeOutput) {
 			numberOfYears = cm.as_unsigned_long("analysis_period");
 		}
+		numberOfLifetimeRecords = systemGeneration_kW.size();
 		dt_hour = (double)(systemGeneration_kW.size() / (size_t)(numberOfYears * 8760));
+		stepsPerHour = (size_t)(1 / dt_hour);
 
 		for (size_t p = 0; p < discharge_percent.size(); p++) {
 			discharge_percentByPeriod[p] = discharge_percent[p];
+		}
+
+		for (size_t i = 0; i < systemGeneration_kW.size(); i++) {
+			systemGeneration_kW[i] *= util::watt_to_kilowatt;
 		}
 	}
 
 	// simulation inputs
 	bool systemUseLifetimeOutput;
 	size_t numberOfYears;
+	size_t numberOfLifetimeRecords;
+	size_t stepsPerHour;
 
 	// generation input
 	std::vector<double> systemGeneration_kW;
+
+	// electric load input
+	std::vector<double> electricLoad_kW;
 
 	// fuel cell
 	double dt_hour;
@@ -131,6 +143,9 @@ public:
 	util::matrix_t<size_t> scheduleWeekend;
 };
 
+extern var_info vtab_fuelcell_input[];
+extern var_info vtab_fuelcell_output[];
+
 class cm_fuelcell : public compute_module 
 {
 public: 
@@ -141,14 +156,25 @@ public:
 	/// Default destructor
 	~cm_fuelcell();
 
+	/// construct since compute_module framework is fundamentally broken
+	void construct();
+
 	/// Main execution
 	void exec() throw(general_error);
 
+	/// Allocate Outputs
+	void allocateOutputs();
+
 protected:
 
+	// internally allocated
 	std::unique_ptr<fuelCellVariables> fcVars;
 	std::unique_ptr<FuelCell> fuelCell;
 	std::unique_ptr<FuelCellDispatch> fuelCellDispatch;
+
+	// outputs
+	ssc_number_t * p_gen_kW;
+	ssc_number_t * p_fuelCellPower_kW;
 };
 
 #endif

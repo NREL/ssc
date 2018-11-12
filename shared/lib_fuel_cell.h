@@ -22,7 +22,7 @@ public:
 	/// Construct FuelCell with arguments
 	FuelCell(double unitPowerMax_kW, double unitPowerMin_kW, double startup_hours, double dynamicResponse_kWperMin,
 		double degradation_kWperHour, double degradationRestart_kW, double replacement_percent, util::matrix_t<double> efficiencyTable,
-		double lowerHeatingValue_MJperkg, double higherHeatingValue_MJperkg, double availableFuel_MCf,
+		double lowerHeatingValue_BtuPerFt3, double higherHeatingValue_BtuPerFt3, double availableFuel_MCf,
 		int shutdownOption,  double dt_hour);
 
 	/// Default destructor

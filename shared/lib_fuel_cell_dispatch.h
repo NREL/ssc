@@ -28,11 +28,15 @@ public:
 	/// Update dispatch option (for testing)
 	void setDispatchOption(int dispatchOption);
 
+	/// Get the total fuel cell power output kW
+	double getPower();
+
 	/// Dispatch option enumerations
 	enum FC_DISPATCH_OPTION { FIXED, LOAD_FOLLOW, MANUAL };
 
 private:
 
+	double m_powerTotal_kW;
 	size_t m_numberOfUnits;
 	int m_dispatchOption;
 	int m_shutdownOption;

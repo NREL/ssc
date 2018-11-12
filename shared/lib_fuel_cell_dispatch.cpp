@@ -9,7 +9,7 @@ FuelCellDispatch::FuelCellDispatch(FuelCell * fuelCell, size_t numberOfUnits, in
 	util::matrix_t<size_t> scheduleWeekend)
 	: m_numberOfUnits(numberOfUnits), m_dispatchOption(dispatchOption), m_shutdownOption(shutdownOption), dt_hour(dt_hour), m_fixed_percent(fixed_percent * 0.01),
 	m_canCharge(canCharge), m_canDischarge(canDischarge), m_discharge_percent(discharge_percent),
-	m_scheduleWeekday(scheduleWeekday), m_scheduleWeekend(scheduleWeekend)
+	m_scheduleWeekday(scheduleWeekday), m_scheduleWeekend(scheduleWeekend), m_powerTotal_kW(0)
 {
 
 	m_fuelCellVector.push_back(fuelCell);
@@ -29,11 +29,14 @@ FuelCellDispatch::FuelCellDispatch(FuelCell * fuelCell, size_t numberOfUnits, in
 
 void FuelCellDispatch::runSingleTimeStep(size_t hour_of_year, double powerSystem_kWac, double powerLoad_kWac) {
 
+	m_powerTotal_kW = 0;
+
 	// Specified to run at fixed percent of original unit max kW
 	if (m_dispatchOption == FuelCellDispatch::FC_DISPATCH_OPTION::FIXED) {
 		for (size_t fc = 0; fc < m_fuelCellVector.size(); fc++) {
 			double power_kW = m_fuelCellVector[fc]->getMaxPowerOriginal() * m_fixed_percent;
 			m_fuelCellVector[fc]->runSingleTimeStep(power_kW);
+			m_powerTotal_kW += m_fuelCellVector[fc]->getPower();
 		}
 	}
 	// Specified to follow load, fuel cell attempts to make up difference of system - load
@@ -41,6 +44,7 @@ void FuelCellDispatch::runSingleTimeStep(size_t hour_of_year, double powerSystem
 		for (size_t fc = 0; fc < m_fuelCellVector.size(); fc++) {
 			double power_kW = fmax(0, powerLoad_kWac - powerSystem_kWac);
 			m_fuelCellVector[fc]->runSingleTimeStep(power_kW);
+			m_powerTotal_kW += m_fuelCellVector[fc]->getPower();
 		}
 	}
 	// Specified to follow manual dispatch input (add logic)
@@ -62,10 +66,15 @@ void FuelCellDispatch::runSingleTimeStep(size_t hour_of_year, double powerSystem
 			}
 
 			m_fuelCellVector[fc]->runSingleTimeStep(power_kW);
+			m_powerTotal_kW += m_fuelCellVector[fc]->getPower();
 		}
 	}
 }
 
 void FuelCellDispatch::setDispatchOption(int dispatchOption) {
 	m_dispatchOption = dispatchOption;
+}
+
+double FuelCellDispatch::getPower(){
+	return m_powerTotal_kW;
 }

@@ -48,20 +48,23 @@
 *******************************************************************************************************/
 
 #include <math.h>
+#include <memory>
 
 #include "common.h"
 #include "core.h"
 
 #include "cmod_fuelcell.h"
 
-
-var_info vtab_fuelcell[] = {
+var_info vtab_fuelcell_input[] = {
 	/*   VARTYPE           DATATYPE         NAME                               LABEL                                    UNITS      META                   GROUP                  REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
-	
+
 	// simulation inputs
 	{ SSC_INPUT,        SSC_NUMBER,      "system_use_lifetime_output",        "Lifetime simulation",                   "0/1",     "0=SingleYearRepeated,1=RunEveryYear",   "",        "?=0",                   "BOOLEAN",                          "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "analysis_period",                   "Lifetime analysis period",              "years",   "The number of years in the simulation", "",        "system_use_lifetime_output=1","",                           "" },
 
+	// external compute module inputs
+	{ SSC_INPUT,        SSC_ARRAY,       "ac",								  "System AC power generated",             "W",        "",                   "",                           "",                         "",                             "" },
+	{ SSC_INOUT,		SSC_ARRAY,	     "load",			                  "Electricity load (year 1)",             "kW",	   "",				     "",                           "",	                      "",	                           "" },
 
 	// fuel cell
 	{ SSC_INPUT,        SSC_NUMBER,      "fuelcell_degradation",              "Fuel cell degradation per hour",        "kW/h",       "",                 "Fuel Cell",                  "",                        "",                              "" },
@@ -74,7 +77,7 @@ var_info vtab_fuelcell[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "fuelcell_fuel_price",				  "Fuel cell price",                       "$/MCf",      "",                 "Fuel Cell",                  "",                        "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "fuelcell_fuel_type",				  "Fuel cell type",                        "0/1",        "",                 "Fuel Cell",                  "",                        "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "fuelcell_lhv",                      "Fuel cell lower heating value",         "Btu/ft3",    "",                 "Fuel Cell",				   "",                        "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "fuelcell_hhv",                      "Fuel cell higher heating value",        "Btu/ft3",    "",                 "Fuel Cell",				   "",                        "",                              "" },
+	//{ SSC_INPUT,        SSC_NUMBER,      "fuelcell_hhv",                      "Fuel cell higher heating value",        "Btu/ft3",    "",                 "Fuel Cell",				   "",                        "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "fuelcell_number_of_units",          "Fuel cell number of units",             "",           "",                 "Fuel Cell",                  "",                        "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "fuelcell_operation_options",        "Fuel cell turn off options",            "0/1",        "",                 "Fuel Cell",                  "",                        "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "fuelcell_replacement_percent",      "Fuel cell replace at percentage",       "",           "",                 "Fuel Cell",                  "",                        "",                              "" },
@@ -82,18 +85,33 @@ var_info vtab_fuelcell[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "fuelcell_type",                     "Fuel cell type",						   "0/1/2",      "",                 "Fuel Cell",                  "",                        "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "fuelcell_unit_max_power",           "Fuel cell max power per unit",          "kW",         "",                 "Fuel Cell",                  "",                        "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "fuelcell_unit_min_power",           "Fuel cell min power per unit",          "kW",         "",                 "Fuel Cell",                  "",                        "",                              "" },
-	
+
 	// Manual Dispatch
 	{ SSC_INPUT,        SSC_ARRAY,       "dispatch_manual_fuelcellcharge",    "Periods 1-6 charging allowed?",          "",          "",                 "Fuel Cell",                  "",                        "",                              "" },
 	{ SSC_INPUT,        SSC_ARRAY,       "dispatch_manual_fuelcelldischarge", "Periods 1-6 discharging allowed?",       "",          "",                 "Fuel Cell",                  "",                        "",                              "" },
 	{ SSC_INPUT,        SSC_ARRAY,       "dispatch_manual_percent_fc_discharge","Periods 1-6 discharging allowed?",     "",          "",                 "Fuel Cell",                  "",                        "",                              "" },
-	{ SSC_INPUT,        SSC_MATRIX,      "dispatch_manual_sched",             "Dispatch schedule for weekday",          "",          "",                 "Battery",                    "",                        "",                              "" },
-	{ SSC_INPUT,        SSC_MATRIX,      "dispatch_manual_sched_weekend",     "Dispatch schedule for weekend",          "",          "",                 "Battery",                    "",                        "",                              "" },
+	{ SSC_INPUT,        SSC_MATRIX,      "dispatch_manual_sched",             "Dispatch schedule for weekday",          "",          "",                 "Fuel Cell",                  "",                        "",                              "" },
+	{ SSC_INPUT,        SSC_MATRIX,      "dispatch_manual_sched_weekend",     "Dispatch schedule for weekend",          "",          "",                 "Fuel Cell",                  "",                        "",                              "" },
 
+var_info_invalid };
+
+var_info vtab_fuelcell_output[] = {
+
+	{ SSC_OUTPUT,       SSC_ARRAY,       "gen",                                "System power generated",                "kW",        "",                 "Fuel Cell",                  "",                        "",                              "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "fuelcell_power",                     "Power from fuel cell(s)",               "kW",        "",                 "Fuel Cell",                  "",                        "",                              "" },
 
 var_info_invalid };
 
 cm_fuelcell::cm_fuelcell()
+{
+	add_var_info(vtab_fuelcell_input);
+	add_var_info(vtab_fuelcell_output);
+	add_var_info(vtab_technology_outputs);
+}
+
+// Have to add this since compute module isn't actually fully constructed until compute is called with
+// a vartable.
+void cm_fuelcell::construct()
 {
 	std::unique_ptr<fuelCellVariables> tmp(new fuelCellVariables(*this));
 	fcVars = std::move(tmp);
@@ -111,16 +129,34 @@ cm_fuelcell::cm_fuelcell()
 		fcVars->scheduleWeekend));
 	fuelCellDispatch = std::move(tmp3);
 
-	add_var_info(vtab_fuelcell);
-	add_var_info(vtab_technology_outputs);
+	allocateOutputs();
 }
 
-void cm_fuelcell::exec() 
+void cm_fuelcell::exec() throw (general_error)
 {
+	construct();
+	size_t idx = 0;
+	for (size_t y = 0; y < fcVars->numberOfYears; y++) {
+		size_t year_idx = 0;
+		for (size_t h = 0; h < 8760; h++){
+			for (size_t s = 0; s < fcVars->stepsPerHour; s++) {
+				fuelCellDispatch->runSingleTimeStep(h, fcVars->systemGeneration_kW[idx], fcVars->electricLoad_kW[year_idx]);
+				p_fuelCellPower_kW[idx] = (ssc_number_t)fuelCellDispatch->getPower();
+				p_gen_kW[idx] = (ssc_number_t)(fcVars->systemGeneration_kW[idx]) + p_fuelCellPower_kW[idx];
+				idx++;
+				year_idx;
+			}
+		}
+	}
+}
 
-
+void cm_fuelcell::allocateOutputs()
+{
+	p_fuelCellPower_kW = allocate("fuelcell_power", fcVars->numberOfLifetimeRecords);
+	p_gen_kW = allocate("gen", fcVars->numberOfLifetimeRecords);
 
 }
+
 cm_fuelcell::~cm_fuelcell(){/* nothing to do */ }
 
 
