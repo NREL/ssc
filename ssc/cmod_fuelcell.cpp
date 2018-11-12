@@ -98,7 +98,7 @@ var_info_invalid };
 var_info vtab_fuelcell_output[] = {
 
 	{ SSC_OUTPUT,       SSC_ARRAY,       "gen",                                "System power generated",                "kW",        "",                 "Fuel Cell",                  "",                        "",                              "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "fuelcell_power",                     "Power from fuel cell(s)",               "kW",        "",                 "Fuel Cell",                  "",                        "",                              "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "fuelcell_power",                     "Electricity from fuel cell(s)",               "kW",        "",                 "Fuel Cell",                  "",                        "",                              "" },
 
 var_info_invalid };
 
