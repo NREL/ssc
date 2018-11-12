@@ -23,7 +23,6 @@ public:
 	void SetUp()
 	{
 		data = ssc_data_create();
-		pvyield_no_financial_meteo(data);
 	}
 	void TearDown() {
 		if (data) {
