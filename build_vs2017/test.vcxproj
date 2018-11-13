@@ -42,7 +42,6 @@
     <ClCompile Include="..\test\ssc_test\cmod_windpower_test.cpp" />
     <ClCompile Include="..\test\ssc_test\cmod_windpower_test2.cpp" />
     <ClCompile Include="..\test\ssc_test\computeModuleTest.cpp" />
-    <ClCompile Include="..\test\ssc_test\Source.cpp" />
     <ClCompile Include="..\test\tcs_test\csp_solver_core_test.cpp" />
   </ItemGroup>
   <ItemGroup>
