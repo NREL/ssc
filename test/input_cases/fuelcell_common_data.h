@@ -24,7 +24,7 @@ void fuelcell_nofinancial_default(ssc_data_t &data)
 	ssc_data_set_number(data, "fuelcell_degradation", 0.0099999997764825821);
 	ssc_data_set_number(data, "fuelcell_degradation_restart", 1);
 	ssc_data_set_number(data, "fuelcell_dispatch_choice", 0);
-	ssc_data_set_number(data, "fuelcell_fixed_pct", 95);
+	ssc_data_set_number(data, "fuelcell_fixed_pct", 50);
 	ssc_data_set_number(data, "fuelcell_dynamic_response", 20);
 	ssc_number_t p_fuelcell_efficiency[33] = { 0, 0, 50, 16, 21, 50, 25, 25, 50, 34, 32, 50, 44, 37, 50, 53, 42, 50, 62, 47, 49, 72, 50, 48, 82, 52, 47, 90, 52, 46, 100, 51, 45 };
 	ssc_data_set_matrix(data, "fuelcell_efficiency", p_fuelcell_efficiency, 11, 3);

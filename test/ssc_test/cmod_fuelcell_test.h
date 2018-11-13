@@ -2,6 +2,7 @@
 #define _CMOD_FUELCELL_TEST_H_
 
 #include <gtest/gtest.h>
+#include <memory>
 
 #include "core.h"
 #include "sscapi.h"
@@ -30,20 +31,18 @@ public:
 	{
 		data = ssc_data_create();
 		fuelcell_nofinancial_default(data);
-		calculated_array = new ssc_number_t[8760];
+	
 	}
 	void TearDown() {
 		if (data) {
 			ssc_data_clear(data);
-		}
-		if (calculated_array) {
-			delete[] calculated_array;
 		}
 	}
 	void SetCalculated(std::string name)
 	{
 		ssc_data_get_number(data, const_cast<char *>(name.c_str()), &calculated_value);
 	}
+	// apparently memory of the array is managed internally to the sscapi.
 	void SetCalculatedArray(std::string name)
 	{
 		int n;
