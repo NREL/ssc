@@ -46,6 +46,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\test\input_cases\code_generator_utilities.h" />
+	<ClInclude Include="..\test\input_cases\fuelcell_common_data.h" />
     <ClInclude Include="..\test\input_cases\pvsamv1_cases.h" />
     <ClInclude Include="..\test\input_cases\pvsamv1_common_data.h" />
     <ClInclude Include="..\test\input_cases\pvwattsv5_cases.h" />
@@ -65,7 +66,6 @@
     <ClInclude Include="..\test\ssc_test\cmod_pvyield_test.h" />
     <ClInclude Include="..\test\ssc_test\cmod_windpower_test.h" />
     <ClInclude Include="..\test\ssc_test\computeModuleTest.h" />
-    <ClInclude Include="..\test\ssc_test\fuelcell_common_data.h" />
     <ClInclude Include="..\test\ssc_test\simulation_test_info.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

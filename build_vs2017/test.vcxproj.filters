@@ -148,7 +148,7 @@
     <ClInclude Include="..\test\ssc_test\cmod_fuelcell_test.h">
       <Filter>ssc_test</Filter>
     </ClInclude>
-    <ClInclude Include="..\test\ssc_test\fuelcell_common_data.h">
+    <ClInclude Include="..\test\input_cases\fuelcell_common_data.h">
       <Filter>input_cases</Filter>
     </ClInclude>
   </ItemGroup>
