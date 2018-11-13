@@ -1964,8 +1964,6 @@ void optimization_vars::add_var(const string &vname, int var_type /* VAR_TYPE en
     case optimization_vars::VAR_DIM::DIM_2T_TRI:
         mem_size = (var_dim_size+1) * var_dim_size/2;
         break;
-    default:
-        break;
     }
 
     v->ind_end = v->ind_start + mem_size;

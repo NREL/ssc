@@ -62,40 +62,18 @@
 #include "Financial.h"
 #include "Ambient.h"
 #include "Land.h"
-#include "Plant.h"
 #include "Flux.h"
 #include "fluxsim.h"
 #include "OpticalMesh.h"
-
-//
-//struct LAYOUT_DETAIL
-//{
-//	enum A {
-//	//Subset of days/hours=2;Single simulation point=1;Do not filter heliostats=0;Annual simulation=3;Limited annual simulation=4;Representative profiles=5;Map to Annual=6
-//	//Associated with _des_sim_detail
-//	NO_FILTER=0,
-//	SINGLE_POINT,
-//	SUBSET_HOURS,
-//	FULL_ANNUAL,
-//	LIMITED_ANNUAL,
-//	AVG_PROFILES,
-//	MAP_TO_ANNUAL,
-//	FOR_OPTIMIZATION
-//	};
-//};
-
-//using namespace std;
 
 //Declare any referenced classes first
 class Receiver;
 class Heliostat;
 class Flux;
-class Plant;
 class LayoutSimThread;
 
 class Ambient;
 class Land;
-class Plant;
 
 typedef std::vector<Heliostat*> Hvector;
 class sim_result;
@@ -121,7 +99,9 @@ struct layout_obj
 	bool
 		is_user_cant,	//Data provided on canting
 		is_user_aim,	//Data provided on aiming
-		is_user_focus;	//Data provided on focusing
+		is_user_focus,	//Data provided on focusing
+		is_enabled,		//Heliostat is enabled and tracking
+		is_in_layout;	//Heliostat position included in active layout
 };
 
 struct sim_params
@@ -138,7 +118,7 @@ struct sim_params
 };
 
 typedef std::vector<layout_obj> layout_shell;
-typedef map<int, Heliostat*> htemp_map;
+typedef std::map<int, Heliostat*> htemp_map;
 
 /*The SolarField class will serve as the object that binds together all of the aspects of the solar field
 into a single object. Multiple instances of the SolarField will be possible, and this will allow the 
@@ -146,14 +126,12 @@ maintenance and reference to a number of unique layouts and field constructions 
 class SolarField : public mod_base
 {
 protected:
-    //std::string _layout_data;   //string form of layout data
 	double 
 		_q_to_rec,		//[MW] Power to the receiver during performance runs
 		_sim_p_to_rec,	//Simulated power to the receiver. Store for plotting and reference
 		_estimated_annual_power,	//Calculated in ProcessLayoutResults().. Estimate of total annual heliostat power output
 		_q_des_withloss,			//[MW] The design point thermal power that must be met
         _sf_area;       //[m2] total heliostat area in the field
-        //_rec_area;      //[m2] total receiver surface area
 
 	bool
 		_is_aimpoints_updated,	//Are the heliostat field aim points up to date?
@@ -179,7 +157,6 @@ protected:
 	Land _land;
 	Financial _financial;
     FluxSimData _fluxsim;
-	Plant _plant;
 	Flux *_flux;	/*This object is a pointer because it has a recursive relationship to the SolarField object.
 					  See the SolarField constructor for the associated _flux constructor. Also, the object must
 					  be allocated and freed from memory manually.*/
@@ -204,11 +181,6 @@ protected:
 
 public:
 
-    //struct HELIO_SPACING_METHOD { enum A {NO_BLOCK_DENSE=3, DELSOL_EMPIRICAL=1, NO_BLOCKING=2}; };
-    //struct SUNPOS_DESIGN { enum A {SOLSTICE_S, EQUINOX, SOLSTICE_W, ZENITH, USER }; };
-    //struct TEMPLATE_RULE{ enum A {SINGLE=0, SPEC_RANGE=1, EVEN_DIST=2}; };
-
-	//Constructors - destructor
 	SolarField (); //constructor
 
 	SolarField( const SolarField &sf );
@@ -222,7 +194,6 @@ public:
 	Flux *getFluxObject();
 	Financial *getFinancialObject();
     FluxSimData *getFluxSimObject();
-	Plant *getPlantObject();
 	htemp_map *getHeliostatTemplates();
 	Hvector *getHeliostats();
 	layout_shell *getLayoutShellObject();
@@ -234,7 +205,6 @@ public:
 	double calcHeliostatArea();	//[m2] returns the total aperture area of the heliostat field
 	double *getPlotBounds(bool use_land=false);	//Returns a pointer to an [4] array [xmax, xmin, ymax, ymin]
 	
-    std::string* getLayoutData();
     bool getAimpointStatus();
 	double getSimulatedPowerToReceiver();
 	double calcReceiverTotalArea();
@@ -259,7 +229,6 @@ public:
 	void setHeliostatExtents(double xmax, double xmin, double ymax, double ymin);
 	
 	//Scripts
-	void setDefaults();
 	void Create(var_map &V);
     void updateCalculatedParameters(var_map &V);
     void updateAllCalculatedParameters(var_map &V);
@@ -273,6 +242,7 @@ public:
 	static bool DoLayout( SolarField *SF, sim_results *results, WeatherData *wdata, int sim_first=-1, int sim_last=-1);
 	void ProcessLayoutResults(sim_results *results, int nsim_total);	//Call after simulation for multithreaded apps
 	void ProcessLayoutResultsNoSim();	//Call after layout with no simulations to process
+	void UpdateLayoutAfterChange();  //update land, layout object, and solar field calculations after the layout has changed
 	static void AnnualEfficiencySimulation( SolarField &SF, sim_results &results); //, double *azs, double *zens, double *met);
 	static void AnnualEfficiencySimulation( std::string weather_file, SolarField *SF, sim_results &results); //, double *azs, double *zens, double *met);	//overload
 	bool UpdateNeighborList(double lims[4], double zen);
@@ -286,18 +256,15 @@ public:
 	
     void Simulate(double az, double zen, sim_params &P);		//Method to simulate the performance of the field
 	bool SimulateTime(int hour, int day_of_Month, int month, sim_params &P);
-	//bool SimulateTime(const std::string &data);
-	//bool SimulateTime(double sun_elevation, double sun_azimuth, double *args, int nargs);
 	
     static void SimulateHeliostatEfficiency(SolarField *SF, Vect &Sun, Heliostat *helio, sim_params &P);
-	double calcShadowBlock(Heliostat *H, Heliostat *HS, int mode, Vect &Sun);	//Calculate the shadowing or blocking between two heliostats
+	double calcShadowBlock(Heliostat *H, Heliostat *HS, int mode, Vect &Sun, double interaction_limit = 100.);	//Calculate the shadowing or blocking between two heliostats
 	void updateAllTrackVectors(Vect &Sun);	//Macro for calculating corner positions
 	void calcHeliostatShadows(Vect &Sun);	//Macro for calculating heliostat shadows
 	void calcAllAimPoints(Vect &Sun, sim_params &P); //bool force_simple=false, bool quiet=true); 
 	int getActiveReceiverCount();
 	static bool parseHeliostatXYZFile(const std::string &filedat, layout_shell &layout );
 	int calcNumRequiredSimulations();
-	//double calcLandArea();
 	double getReceiverPipingHeatLoss(); //kWt
 	double getReceiverTotalHeatLoss();  //kWt
 	void HermiteFluxSimulation(Hvector &helios, bool keep_existing_profile = false);

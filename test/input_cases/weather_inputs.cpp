@@ -1,11 +1,74 @@
 #include <string>
 #include <vector>
 
-#include "common.h"
+#include "../ssc/common.h"
 #include "weather_inputs.h"
 
+var_data* create_winddata_array(int intervalsPerHour, int nMeasurementHeights){
+	size_t timeLength = 8760 * intervalsPerHour;
+	float* year_data = new float[4 * timeLength * nMeasurementHeights];
+	for (int i = 0; i < timeLength; i++){
+		for (int j = 0; j < nMeasurementHeights; j++){
+			int index = i * 4 * nMeasurementHeights + j * 4;
+			year_data[index] = (float)(50 + 5 * j);											// temp
+			year_data[index + 1] = (float)(0.95 + 0.05 * j);								// pres
+			year_data[index + 2] = (float)(5*((float)i / (float)timeLength) + 5 * j);		// spd
+			year_data[index + 3] = (float)(180 + 20 * j);									// dir
+		}
+	}
 
-var_data* create_weatherdata_array(){
+	float* height = new float[4 * nMeasurementHeights];
+	float* fields = new float[4 * nMeasurementHeights];				// (temp=1,pres=2,speed=3,dir=4)
+	for (int i = 0; i < nMeasurementHeights; i++){
+		for (int j = 0; j < 4; j++){
+			height[i * 4 + j] = (float)(80 + i*10);
+			fields[i * 4 + j] = (float)j+1;
+		}
+	}
+	var_data data_vd = var_data(year_data, (int)timeLength, 4 * nMeasurementHeights);
+	var_data height_vd = var_data(height, 4 * nMeasurementHeights);
+	var_data fields_vd = var_data(fields, 4 * nMeasurementHeights);
+
+	var_table* vt = new var_table;
+	vt->assign("heights", height_vd);
+	vt->assign("data", data_vd);
+	vt->assign("fields", fields_vd);
+
+	var_data* input = new var_data;
+	input->type = SSC_TABLE;
+	input->table = *vt;
+	return input;
+}
+
+void free_winddata_array(var_data* data){
+	data->table.unassign("heights");
+	data->table.unassign("data");
+	data->table.unassign("fields");
+}
+
+void free_weatherdata_array(var_data* data){
+	data->table.unassign("lat");
+	data->table.unassign("lon");
+	data->table.unassign("tz");
+	data->table.unassign("elev");
+	data->table.unassign("year");
+	data->table.unassign("month");
+	data->table.unassign("day");
+	data->table.unassign("hour");
+	data->table.unassign("dn");
+	data->table.unassign("df");
+	data->table.unassign("tdry");
+	data->table.unassign("tdew");
+	data->table.unassign("rhum");
+	data->table.unassign("pres");
+	data->table.unassign("wdir");
+	data->table.unassign("wspd");
+	data->table.unassign("aod");
+	data->table.unassign("pwp");
+	data->table.unassign("alb");
+}
+
+var_data* create_weatherdata_array(int /*not implemented yet: intervalsPerHour*/){
 	float* year = new float[8760];
 	float* month = new float[8760];
 	float* day = new float[8760];

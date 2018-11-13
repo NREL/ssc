@@ -59,8 +59,6 @@ class Financial : public mod_base
  {
      double _tower_cost;
      double _rec_cost;
-     double _plant_cost;
-     double _tes_cost;
      double _site_cost;
      double _heliostat_cost;
      double _wiring_cost;
@@ -70,7 +68,6 @@ class Financial : public mod_base
      double _land_cost;
      double _sales_tax_cost;
      double _total_installed_cost;
-     double _cost_per_capacity;
 
      std::vector< double > _pricing_array;
      std::vector< int > _schedule_array;
@@ -86,7 +83,6 @@ public:
 
     void CreateHourlyTODSchedule(var_map &V);
 	void calcPlantCapitalCost(var_map &V);
-	//void calcSimpleCOE(double *enet /*8760 MWh*/, int nval = 8760); //Calculates _simple_coe and _weighted_coe
 
  } ;
 

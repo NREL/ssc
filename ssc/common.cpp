@@ -298,7 +298,7 @@ var_info_invalid };
 var_info vtab_dc_adjustment_factors[] = {
 /*   VARTYPE           DATATYPE         NAME                               LABEL                                       UNITS     META                                     GROUP                 REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
 
-	{ SSC_INPUT,        SSC_NUMBER,      "dc_adjust:constant",            "DC Constant loss adjustment",             "%",    "",                                     "Loss Adjustments",      "*",                     "MAX=100",                     "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "dc_adjust:constant",            "DC Constant loss adjustment",             "%",    "",                                     "Loss Adjustments",      "?=0",                     "MAX=100",                     "" },
 	{ SSC_INPUT,        SSC_ARRAY,       "dc_adjust:hourly",              "DC Hourly loss adjustments",              "%",    "",                                     "Loss Adjustments",      "?",                     "LENGTH=8760",                "" },
 	{ SSC_INPUT,        SSC_MATRIX,      "dc_adjust:periods",             "DC Period-based loss adjustments",        "%",    "n x 3 matrix [ start, end, loss ]",    "Loss Adjustments",      "?",                     "COLS=3",                     "" },
 	
@@ -640,7 +640,7 @@ bool shading_factor_calculator::fbeam(size_t hour, double solalt, double solazi,
 	bool ok = false;
 	double factor = 1.0;
 	size_t irow = get_row_index_for_input(hour,hour_step,steps_per_hour);
-	if ((irow >= 0) && (irow < m_beamFactors.nrows()))
+	if (irow < m_beamFactors.nrows())
 	{
 		factor = m_beamFactors.at(irow, 0);
 		// apply mxh factor
@@ -658,13 +658,13 @@ bool shading_factor_calculator::fbeam(size_t hour, double solalt, double solazi,
 }
 
 
-bool shading_factor_calculator::fbeam_shade_db(std::auto_ptr<ShadeDB8_mpp> & p_shadedb, size_t hour, double solalt, double solazi, size_t hour_step, size_t steps_per_hour, double gpoa, double dpoa, double pv_cell_temp, int mods_per_str, double str_vmp_stc, double mppt_lo, double mppt_hi)
+bool shading_factor_calculator::fbeam_shade_db(ShadeDB8_mpp * p_shadedb, size_t hour, double solalt, double solazi, size_t hour_step, size_t steps_per_hour, double gpoa, double dpoa, double pv_cell_temp, int mods_per_str, double str_vmp_stc, double mppt_lo, double mppt_hi)
 {
 	bool ok = false;
 	double dc_factor = 1.0;
 	double beam_factor = 1.0;
 	size_t irow = get_row_index_for_input(hour, hour_step, steps_per_hour);
-	if ((irow >= 0) && (irow < m_beamFactors.nrows()))
+	if (irow < m_beamFactors.nrows())
 	{
 		std::vector<double> shad_fracs;
 		for (size_t icol = 0; icol < m_beamFactors.ncols(); icol++)
@@ -887,7 +887,7 @@ weatherdata::~weatherdata()
 }
 
 
-size_t weatherdata::name_to_id( const char *name )
+int weatherdata::name_to_id( const char *name )
 {
 	std::string n( util::lower_case( name ) );
 
@@ -931,7 +931,10 @@ weatherdata::vec weatherdata::get_vector( var_data *v, const char *name, size_t 
 				m_ok = false;
 			}
 			size_t id = name_to_id(name);
-			if ( id >= 0 && !has_data_column( id ) ) m_columns.push_back( id );
+			if ( !has_data_column( id ) )
+			  {
+			    m_columns.push_back( id );
+			  }
 		}
 	}
 
@@ -950,14 +953,14 @@ ssc_number_t weatherdata::get_number( var_data *v, const char *name )
 }
 
 void weatherdata::set_counter_to(size_t cur_index){
-	if (cur_index >= 0 && cur_index < m_data.size()){
+	if (cur_index < m_data.size()) {
 		m_index = cur_index;
 	}
 }
 
 bool weatherdata::read( weather_record *r )
 {
-	if ( m_index >= 0 && m_index < m_data.size() )
+	if (m_index < m_data.size())
 	{
 		*r = *m_data[m_index++];
 		return true;

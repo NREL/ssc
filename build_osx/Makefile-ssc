@@ -2,12 +2,11 @@ VPATH=../ssc
 
 CC = gcc -mmacosx-version-min=10.9
 CXX = g++ -mmacosx-version-min=10.9
-CFLAGS = -I../shared -I../nlopt -I../lpsolve -I../solarpilot -I../tcs -I../ssc -g -D__MACOSX__ -fPIC -Wall -O3  -DWX_PRECOMP -O2 -arch x86_64  -fno-common
+CFLAGS = -I../splinter -I../shared -I../nlopt -I../lpsolve -I../solarpilot -I../tcs -I../ssc  -g -D__MACOSX__ -fPIC -Wall -O3  -DWX_PRECOMP -O2 -arch x86_64  -fno-common
 CXXFLAGS = $(CFLAGS) -std=gnu++11
 # for __ARCHBITS__ in cmod_pvsamv1
 CFLAGS += -D__64BIT__
-LDFLAGS = -arch x86_64 -lm -lstdc++ shared.a solarpilot.a tcs.a lpsolve.a nlopt.a
-
+LDFLAGS = -arch x86_64 -lm -lstdc++ splinter.a shared.a solarpilot.a tcs.a lpsolve.a nlopt.a 
 TARGET = ssc.dylib
 
 
@@ -17,6 +16,7 @@ OBJECTS = \
 	csp_common.o \
 	cmod_lcoefcr.o \
 	cmod_thirdpartyownership.o \
+	cmod_host_developer.o \
 	cmod_snowmodel.o \
 	cmod_iec61853par.o \
 	cmod_layoutarea.o \
@@ -39,6 +39,7 @@ OBJECTS = \
 	cmod_windpower.o \
 	cmod_windbos.o \
 	cmod_wind_obos.o \
+	cmod_windcsm.o \
 	cmod_pv6parmod.o \
 	cmod_pvsandiainv.o \
 	cmod_pvsamv1.o \
@@ -61,6 +62,7 @@ OBJECTS = \
 	cmod_ippppa.o \
 	cmod_swh.o \
 	cmod_geothermal.o \
+	cmod_geothermal_costs.o \
 	cmod_poacalib.o \
 	core.o \
 	vartab.o \

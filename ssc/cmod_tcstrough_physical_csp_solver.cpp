@@ -61,8 +61,6 @@
 #include "csp_solver_tou_block_schedules.h"
 #include "csp_solver_core.h"
 
-static bool ssc_trough_physical_sim_progress(void *data, double percent, C_csp_messages *csp_msg, float time_sec);
-
 static var_info _cm_vtab_trough_physical_csp_solver[] = {
 //   weather reader inputs
 //   VARTYPE            DATATYPE          NAME                        LABEL                                                                               UNITS           META            GROUP             REQUIRED_IF                CONSTRAINTS              UI_HINTS
@@ -258,6 +256,7 @@ static var_info _cm_vtab_trough_physical_csp_solver[] = {
 	{ SSC_INPUT,        SSC_MATRIX,      "ud_T_htf_ind_od",      "Off design table of user-defined power cycle performance formed from parametric on T_htf_hot [C]", "", "",               "user_defined_PC", "pc_config=1",            "",                      "" },
 	{ SSC_INPUT,        SSC_MATRIX,      "ud_T_amb_ind_od",      "Off design table of user-defined power cycle performance formed from parametric on T_amb [C]",	 "", "",               "user_defined_PC", "pc_config=1",            "",                      "" }, 
 	{ SSC_INPUT,        SSC_MATRIX,      "ud_m_dot_htf_ind_od",  "Off design table of user-defined power cycle performance formed from parametric on m_dot_htf [ND]","", "",               "user_defined_PC", "pc_config=1",            "",                      "" }, 
+    { SSC_INPUT,        SSC_MATRIX,      "ud_ind_od",            "Off design user-defined power cycle performance as function of T_htf, m_dot_htf [ND], and T_amb", "", "",                "user_defined_PC", "pc_config=1",            "",                      "" },
 		
 																																												  
  //  enet calculator																																							  
@@ -421,10 +420,11 @@ public:
 		weather_header hdr;
 		wfile->header(&hdr);
 
-		double lat = hdr.lat;	//[deg]
-		double lon = hdr.lon;	//[deg]
 		//double shift = (lon - hdr.tz*15.0);		//[deg]
 		// ******************************************************************************
+
+		//double lat = hdr.lat;	//[deg]		
+		//double lon = hdr.lon;	//[deg]
 
 		// Weather reader
 		C_csp_weatherreader weather_reader;
@@ -432,6 +432,9 @@ public:
 		weather_reader.m_trackmode = 0;
 		weather_reader.m_tilt = 0.0;
 		weather_reader.m_azimuth = 0.0;
+		// Initialize to get weather file info
+		weather_reader.init();
+		if (weather_reader.has_error()) throw exec_error("tcstrough_physical", weather_reader.get_error());
 
 		C_csp_trough_collector_receiver c_trough;
 
@@ -761,6 +764,7 @@ public:
 			pc->mc_T_htf_ind = as_matrix("ud_T_htf_ind_od");
 			pc->mc_T_amb_ind = as_matrix("ud_T_amb_ind_od");
 			pc->mc_m_dot_htf_ind = as_matrix("ud_m_dot_htf_ind_od");
+            pc->mc_m_dot_htf_ind = as_matrix("ud_ind_od");
 		}
 
 		// ********************************
@@ -1004,25 +1008,5 @@ public:
 	}
 
 };
-
-static bool ssc_trough_physical_sim_progress(void *data, double percent, C_csp_messages *csp_msg, float time_sec)
-{
-	cm_trough_physical_csp_solver *cm = static_cast<cm_trough_physical_csp_solver*> (data);
-	if( !cm )
-		false;
-
-	if( csp_msg != 0 )
-	{
-		int out_type;
-		string message;
-		while( csp_msg->get_message(&out_type, &message) )
-		{
-			cm->log(message, out_type == C_csp_messages::WARNING ? SSC_WARNING : SSC_NOTICE, time_sec);
-		}
-	}
-	bool ret = cm->update("", (float)percent);
-
-	return ret;
-}
 
 DEFINE_MODULE_ENTRY(trough_physical_csp_solver, "Physical trough using CSP Solver", 1)

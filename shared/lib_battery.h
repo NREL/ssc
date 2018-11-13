@@ -92,6 +92,8 @@ class voltage_t;
 class capacity_t
 {
 public:
+	
+	capacity_t();
 	capacity_t(double q, double SOC_init, double SOC_max, double SOC_min);
 
 	// deep copy
@@ -104,7 +106,7 @@ public:
 	virtual ~capacity_t(){};
 	
 	// pure virtual functions (abstract) which need to be defined in derived classes
-	virtual void updateCapacity(double I, double dt) = 0;
+	virtual void updateCapacity(double &I, double dt) = 0;
 	virtual void updateCapacityForThermal(double capacity_percent)=0;
 	virtual void updateCapacityForLifetime(double capacity_percent)=0;
 	virtual void replace_battery()=0;
@@ -118,6 +120,7 @@ public:
 
 	// common outputs
 	double SOC();
+	double DOD_max();
 	double DOD();
 	double prev_DOD();
 	double q0();
@@ -138,6 +141,7 @@ protected:
 	double _I;   // [A]  - Current draw during last step
 	double _I_loss; // [A] - Lifetime and thermal losses
 	double _SOC; // [%] - State of Charge
+	double _SOC_init; // [%] - Initial SOC
 	double _SOC_max; // [%] - Maximum SOC
 	double _SOC_min; // [%] - Minimum SOC
 	double _DOD; // [%] - Depth of Discharge
@@ -156,6 +160,7 @@ class capacity_kibam_t : public capacity_t
 public:
 
 	// Public APIs 
+	capacity_kibam_t();
 	capacity_kibam_t(double q20, double t1, double q1, double q10, double SOC_init, double SOC_max, double SOC_min);
 	~capacity_kibam_t(){}
 
@@ -165,7 +170,7 @@ public:
 	// copy from capacity to this
 	void copy(capacity_t *);
 
-	void updateCapacity(double I, double dt);
+	void updateCapacity(double &I, double dt);
 	void updateCapacityForThermal(double capacity_percent);
 	void updateCapacityForLifetime(double capacity_percent);
 	void replace_battery();
@@ -211,6 +216,7 @@ Lithium Ion specific capacity model
 class capacity_lithium_ion_t : public capacity_t
 {
 public:
+	capacity_lithium_ion_t();
 	capacity_lithium_ion_t(double q, double SOC_init, double SOC_max, double SOC_min);
 	~capacity_lithium_ion_t(){};
 
@@ -221,7 +227,7 @@ public:
 	void copy(capacity_t *);
 
 	// override public api
-	void updateCapacity(double I, double dt);
+	void updateCapacity(double &I, double dt);
 	void updateCapacityForThermal(double capacity_percent);
 	void updateCapacityForLifetime(double capacity_percent);
 	void replace_battery();
@@ -268,7 +274,6 @@ protected:
 	double _cell_voltage_nominal; // nominal cell voltage [V]
 	double _R;                    // internal cell resistance (Ohm)
 	double _R_battery;            // internal battery resistance (Ohm)
-
 	util::matrix_t<double> _batt_voltage_matrix;  // voltage vs depth-of-discharge
 };
 
@@ -393,25 +398,23 @@ public:
 	// copy from lifetime_cycle to this
 	void copy(lifetime_cycle_t *);
 
-	// return dq, the accumulated percent damage
+	// return q, the effective capacity percent
 	double runCycleLifetime(double DOD);
 
-	// return dq, the accumulated percent damage
-	double totalCapacityDegraded();
+	// return hypothetical dq for the given DOD at the current cycle count
+	double computeCycleDamageAtDOD(double DOD=0);
 
 	void rainflow(double DOD);
 	void replaceBattery();
 	int cycles_elapsed();
-	int forty_percent_cycles();
-	int hundred_percent_cycles();
 	double cycle_range();
 
 protected:
+	
 	void rainflow_ranges();
 	void rainflow_ranges_circular(int index);
 	int rainflow_compareRanges();
 	double bilinear(double DOD, int cycle_number);
-
 
 	util::matrix_t<double> _cycles_vs_DOD;
 	util::matrix_t<double> _batt_lifetime_matrix;
@@ -453,6 +456,7 @@ public:
 	// copy from lifetime_calendar to this
 	void copy(lifetime_calendar_t *);
 
+	/// Given the index of the simulation, the tempertature and SOC, return the effective capacity percent
 	double runLifetimeCalendarModel(size_t idx, double T, double SOC);
 
 	void replaceBattery();
@@ -460,11 +464,11 @@ public:
 	enum CALENDAR_LOSS_OPTIONS {NONE, LITHIUM_ION_CALENDAR_MODEL, CALENDAR_LOSS_TABLE};
 
 protected:
-	void computeAverages(double T, double SOC);
 	void runLithiumIonModel(double T, double SOC);
 	void runTableModel();
 
 private:
+
 	int _calendar_choice;
 	std::vector<int> _calendar_days;
 	std::vector<double> _calendar_capacity;
@@ -512,6 +516,10 @@ public:
 
 	double capacity_percent();
 
+	// data access
+	lifetime_cycle_t * cycleModel() { return _lifetime_cycle; }
+	lifetime_calendar_t * calendarModel() { return _lifetime_calendar; }
+
 	// replacement methods
 	bool check_replaced();
 	void reset_replacements();
@@ -539,6 +547,7 @@ Thermal classes
 class thermal_t
 {
 public:
+	thermal_t();
 	thermal_t(double mass, double length, double width, double height,
 		double Cp, double h, double T_room,
 		const util::matrix_t<double> &cap_vs_temp);
@@ -578,8 +587,9 @@ protected:
 	double _A;			// [m2] - exposed surface area
 	double _T_battery;   // [K]
 	double _capacity_percent; //[%]
+	double _T_max;		 // [K]
 	message _message;
-	double _T_max;    //(mw) can't initialize here - breaks on gcc 
+
 };
 /*
 Losses Base class
@@ -633,7 +643,7 @@ public:
 	void copy(const battery_t * battery);
 
 	// virtual destructor, does nothing as no memory allocated in constructor
-	virtual ~battery_t(){};
+	virtual ~battery_t();
 
 	// delete the new submodels that have been allocated
 	void delete_clone();
@@ -644,24 +654,28 @@ public:
 	void run(size_t idx, double I);
 
 	// Run a component level model
-	void runCapacityModel(double I);
+	void runCapacityModel(double &I);
 	void runVoltageModel();
 	void runThermalModel(double I);
 	void runLifetimeModel(size_t idx);
 	void runLossesModel(size_t idx);
 
 	capacity_t * capacity_model() const;
+	capacity_t * capacity_initial_model() const;
 	voltage_t * voltage_model() const;
 	lifetime_t * lifetime_model() const;
 	thermal_t * thermal_model() const;
+	thermal_t * thermal_initial_model() const;
 	losses_t * losses_model() const;
 
 	// Get capacity quantities
-	double battery_charge_needed();
+	double battery_charge_needed(double SOC_max);
 	double battery_charge_total();
 	double battery_charge_maximum();
-	double battery_energy_to_fill();
-	double battery_power_to_fill();
+	double battery_charge_maximum_thermal();
+	double battery_energy_nominal();
+	double battery_energy_to_fill(double SOC_max);
+	double battery_power_to_fill(double SOC_max);
 	double battery_soc();
 
 	// Get Voltage
@@ -669,17 +683,17 @@ public:
 	double battery_voltage(); // the actual battery voltage
 	double battery_voltage_nominal(); // the nominal battery voltage
 
-	double timestep_hour();
-
 	enum CHEMS{ LEAD_ACID, LITHIUM_ION, VANADIUM_REDOX, IRON_FLOW};
 	enum REPLACE{ NO_REPLACEMENTS, REPLACE_BY_CAPACITY, REPLACE_BY_SCHEDULE};
 
 
 private:
 	capacity_t * _capacity;
+	capacity_t * _capacity_initial;
+	thermal_t * _thermal;
+	thermal_t * _thermal_initial;
 	lifetime_t * _lifetime;
 	voltage_t * _voltage;
-	thermal_t * _thermal;
 	losses_t * _losses;
 	int _battery_chemistry;
 	double _dt_hour;			// [hr] - timestep

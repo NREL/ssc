@@ -55,7 +55,8 @@
 
 #include "heat_exchangers.h"
 
-#include "sco2_pc_core.h"
+//#include "sco2_pc_core.h"
+#include "sco2_recompression_cycle.h"
 
 #include "nlopt.hpp"
 #include "nlopt_callbacks.h"
@@ -275,7 +276,7 @@ private:
 	// RecompCycle * rc_cycle;
 		// New sco2 cycle code
 	C_RecompCycle ms_rc_cycle;
-	C_RecompCycle::S_auto_opt_design_hit_eta_parameters ms_rc_autodes_hit_eta_par;
+	C_sco2_cycle_core::S_auto_opt_design_hit_eta_parameters ms_rc_autodes_hit_eta_par;
 	//C_RecompCycle::S_auto_opt_design_parameters ms_rc_autodes_par;
 	//C_RecompCycle::S_opt_target_od_parameters ms_rc_opt_od_par;
 	//C_RecompCycle::S_opt_target_od_parameters ms_rc_max_opt_od_par;
@@ -471,7 +472,7 @@ public:
 		ms_rc_autodes_hit_eta_par.m_T_t_in = m_T_t_in_des;				//[K]
 		ms_rc_autodes_hit_eta_par.m_DP_LT = m_DP_LT;
 		ms_rc_autodes_hit_eta_par.m_DP_HT = m_DP_HT;
-		ms_rc_autodes_hit_eta_par.m_DP_PC = m_DP_PC;
+		ms_rc_autodes_hit_eta_par.m_DP_PC_main = m_DP_PC;
 		ms_rc_autodes_hit_eta_par.m_DP_PHX = m_DP_PHX;
 		ms_rc_autodes_hit_eta_par.m_eta_mc = m_eta_c;
 		ms_rc_autodes_hit_eta_par.m_eta_rc = m_eta_c;
@@ -483,7 +484,7 @@ public:
 		ms_rc_autodes_hit_eta_par.m_N_turbine = m_N_t_des;
 		ms_rc_autodes_hit_eta_par.m_is_recomp_ok = 1;
 
-		ms_rc_cycle.auto_opt_design_hit_eta(ms_rc_autodes_hit_eta_par, auto_err_code, error_msg);
+		auto_err_code = ms_rc_cycle.auto_opt_design_hit_eta(ms_rc_autodes_hit_eta_par, error_msg);
 
 		if(auto_err_code != 0)
 		{
@@ -686,19 +687,11 @@ public:
 		ms_phx_od_par.m_UA_PHX_des = m_UA_PHX_des;
 		ms_phx_od_par.m_cp_htf = m_cp_rec;		
 
-		double C_dot_htf_sby = ms_phx_od_par.m_m_dot_htf * ms_phx_od_par.m_cp_htf;
-
-		//ms_rc_cycle.opt_od_eta_for_hx(ms_rc_od_par, ms_phx_od_par, q_sby_error_code);
-
 		if( q_sby_error_code != 0 )
 		{
 			message(TCS_ERROR, "The power cycle model crashes at the specified cutoff fraction, %lg. Try increasing this value", cutoff_frac);
 			return -1;
 		}
-
-		double Q_dot_PHX_sby = ms_rc_cycle.get_od_solved()->m_Q_dot;
-
-		//double T_htf_cold_calc = m_T_htf_hot - Q_dot_PHX_sby / C_dot_htf_sby;
 
 		double m_T_PHX_in_sby = ms_rc_cycle.get_od_solved()->m_temp[5 - 1];
 

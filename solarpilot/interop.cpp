@@ -58,15 +58,8 @@
 #include "solpos00.h"
 #include "sort_method.h"
 
-//using namespace std;
+using namespace std;
 
-
-//template<typename T> static std::string my_to_string( T value )
-//{
-//	std::ostringstream os;
-//	os << value;
-//	return os.str();
-//}
 
 //-------------------  arraystring ----------------
 
@@ -189,7 +182,7 @@ void interop::GenerateSimulationWeatherData(var_map &V, int design_method, Array
 
 		int nflux_sim = 0;
 		for(int i=0; i<(int)utime.size(); i++)
-			nflux_sim += utime.at(i).size();
+			nflux_sim += (int)utime.at(i).size();
 		
 		DateTime dt;
 		double hoy, hod;
@@ -399,7 +392,7 @@ void interop::GenerateSimulationWeatherData(var_map &V, int design_method, Array
 				int iind = (hr_st - floor(hr_st)) < 0.5 ? -1 : 1;
 
 				int dayind=0;
-				int nwf = wf_entries.size();
+				int nwf = (int)wf_entries.size();
 				double dnicomp;
 				double jd=hr_st;
 				/*double hr_end_choose;
@@ -726,7 +719,7 @@ bool interop::SolTraceFluxSimulation_ST(st_context_t cxt, SolarField &SF, Hvecto
 
 void interop::UpdateMapLayoutData(var_map &V, Hvector *heliostats){
 //Fill in the data
-	int npos = heliostats->size();
+	int npos = (int)heliostats->size();
 	Heliostat *H;
 
 	string *var = &V.sf.layout_data.val;
@@ -738,7 +731,6 @@ void interop::UpdateMapLayoutData(var_map &V, Hvector *heliostats){
 
 
 		H = heliostats->at(i);	//shorthand the pointer
-		if(! H->getInLayout()) continue;
 
 		sp_point *loc = H->getLocation();
 		Vect *cant = H->getCantVector();
@@ -763,7 +755,7 @@ void interop::UpdateMapLayoutData(var_map &V, Hvector *heliostats){
 		//sdat4 = string(tchar3);
 
 		char tchar4[300];
-		sprintf(tchar4, "%d,%f,%f,%f,%s,%s,%s\n",H->getVarMap()->type.val, loc->x, loc->y, loc->z, tchar1, tchar2, tchar3);
+		sprintf(tchar4, "%d,%d,%d,%f,%f,%f,%s,%s,%s\n",H->getVarMap()->type.val, H->IsEnabled() ? 1 : 0, H->IsInLayout() ? 1 : 0, loc->x, loc->y, loc->z, tchar1, tchar2, tchar3);
 		sdat = string(tchar4);
 		var->append(sdat);
 
@@ -783,12 +775,14 @@ void stat_object::initialize(){ //int size){
 
 }
 
-void stat_object::set(double _min, double _max, double _ave, double _stdev, double _sum){
+void stat_object::set(double _min, double _max, double _ave, double _stdev, double _sum, double _wtmean)
+{
 	min = _min;
 	max = _max;
 	ave = _ave;
 	stdev = _stdev;
 	sum = _sum;
+    wtmean = _wtmean;
 }
 
 //-----------------------
@@ -873,7 +867,8 @@ void sim_result::process_field_stats(){
 		*aves = new double[nm],
 		*stdevs = new double[nm],
 		*mins = new double[nm],
-		*maxs = new double[nm];
+		*maxs = new double[nm],
+        *wtmean = new double[nm];
 	
 	double *aves2 = new double[nm];		//Temporary array for calculating variance
 
@@ -884,6 +879,7 @@ void sim_result::process_field_stats(){
 		maxs[i] = -9.e9;
 		aves[i] = 0.;
 		aves2[i] = 0.;
+        wtmean[i] = 0.;
 	}
 
 	//Calculate metrics
@@ -909,68 +905,116 @@ void sim_result::process_field_stats(){
 
 	delete [] aves2;
 
+    //calculate weighted average efficiency values
+    std::vector<int> eff_cascade_indices = {
+        helio_perf_data::PERF_VALUES::ETA_CLOUD,
+        helio_perf_data::PERF_VALUES::ETA_SHADOW,
+        helio_perf_data::PERF_VALUES::ETA_COS,
+        helio_perf_data::PERF_VALUES::SOILING,
+        helio_perf_data::PERF_VALUES::REFLECTIVITY,
+        helio_perf_data::PERF_VALUES::ETA_BLOCK,
+        helio_perf_data::PERF_VALUES::ETA_ATT,
+        helio_perf_data::PERF_VALUES::ETA_INT,
+        helio_perf_data::PERF_VALUES::REC_ABSORPTANCE
+    };
+    int nh = (int)data_by_helio.size();
+    double *rowprod = new double[ nh ];
+    for (int i = 0; i < nh; i++)
+        rowprod[i] = 1.;    //initialize
+
+    for (size_t i = 0; i < eff_cascade_indices.size(); i++)
+    {
+        int cascade_index = eff_cascade_indices.at(i); //keep track of current index
+
+        //calculate the running product of losses 'rowprod[j]' for all heliostats j
+        int j = 0;
+        for (unordered_map<int, helio_perf_data>::iterator it = data_by_helio.begin(); it != data_by_helio.end(); it++)
+            rowprod[j++] *= it->second.getDataByIndex(cascade_index);
+
+        //Sum the running product vector and divide by number of heliostats for uncorrected weighted average
+        for (j = 0; j < nh; j++)
+            wtmean[cascade_index] += rowprod[j];
+        wtmean[cascade_index] /= (double)(nh > 0 ? nh : 1);
+
+        //Correct the current efficiency by taking out previous weighted efficiency values
+        for (size_t k = 0; k < i; k++)
+            wtmean[cascade_index] /= wtmean[eff_cascade_indices.at(k)];
+    }
+
+    delete[] rowprod;
+
 	//Assign the named variables
-	eff_total_heliostat.set( 
-		mins[ helio_perf_data::PERF_VALUES::ETA_TOT ], 
-		maxs[ helio_perf_data::PERF_VALUES::ETA_TOT ], 
-		aves[ helio_perf_data::PERF_VALUES::ETA_TOT ], 
-		stdevs[ helio_perf_data::PERF_VALUES::ETA_TOT ], 
-		sums[ helio_perf_data::PERF_VALUES::ETA_TOT ]);
-	eff_cosine.set(
-		mins[ helio_perf_data::PERF_VALUES::ETA_COS ], 
-		maxs[ helio_perf_data::PERF_VALUES::ETA_COS ], 
-		aves[ helio_perf_data::PERF_VALUES::ETA_COS ], 
-		stdevs[ helio_perf_data::PERF_VALUES::ETA_COS ], 
-		sums[ helio_perf_data::PERF_VALUES::ETA_COS ]);
-	eff_attenuation.set(
-		mins[ helio_perf_data::PERF_VALUES::ETA_ATT ], 
-		maxs[ helio_perf_data::PERF_VALUES::ETA_ATT ], 
-		aves[ helio_perf_data::PERF_VALUES::ETA_ATT ], 
-		stdevs[ helio_perf_data::PERF_VALUES::ETA_ATT ], 
-		sums[ helio_perf_data::PERF_VALUES::ETA_ATT ]);
-	eff_blocking.set(
-		mins[ helio_perf_data::PERF_VALUES::ETA_BLOCK ], 
-		maxs[ helio_perf_data::PERF_VALUES::ETA_BLOCK ], 
-		aves[ helio_perf_data::PERF_VALUES::ETA_BLOCK ], 
-		stdevs[ helio_perf_data::PERF_VALUES::ETA_BLOCK ], 
-		sums[ helio_perf_data::PERF_VALUES::ETA_BLOCK ]);
+    eff_total_heliostat.set(
+        mins[helio_perf_data::PERF_VALUES::ETA_TOT],
+        maxs[helio_perf_data::PERF_VALUES::ETA_TOT],
+        aves[helio_perf_data::PERF_VALUES::ETA_TOT],
+        stdevs[helio_perf_data::PERF_VALUES::ETA_TOT],
+        sums[helio_perf_data::PERF_VALUES::ETA_TOT],
+        wtmean[helio_perf_data::PERF_VALUES::ETA_TOT]);
+    eff_cosine.set(
+        mins[helio_perf_data::PERF_VALUES::ETA_COS],
+        maxs[helio_perf_data::PERF_VALUES::ETA_COS],
+        aves[helio_perf_data::PERF_VALUES::ETA_COS],
+        stdevs[helio_perf_data::PERF_VALUES::ETA_COS],
+        sums[helio_perf_data::PERF_VALUES::ETA_COS],
+        wtmean[helio_perf_data::PERF_VALUES::ETA_COS]);
+    eff_attenuation.set(
+        mins[helio_perf_data::PERF_VALUES::ETA_ATT],
+        maxs[helio_perf_data::PERF_VALUES::ETA_ATT],
+        aves[helio_perf_data::PERF_VALUES::ETA_ATT],
+        stdevs[helio_perf_data::PERF_VALUES::ETA_ATT],
+        sums[helio_perf_data::PERF_VALUES::ETA_ATT],
+        wtmean[helio_perf_data::PERF_VALUES::ETA_ATT]);
+    eff_blocking.set(
+        mins[helio_perf_data::PERF_VALUES::ETA_BLOCK],
+        maxs[helio_perf_data::PERF_VALUES::ETA_BLOCK],
+        aves[helio_perf_data::PERF_VALUES::ETA_BLOCK],
+        stdevs[helio_perf_data::PERF_VALUES::ETA_BLOCK],
+        sums[helio_perf_data::PERF_VALUES::ETA_BLOCK],
+        wtmean[helio_perf_data::PERF_VALUES::ETA_BLOCK]);
 	eff_shading.set(
 		mins[ helio_perf_data::PERF_VALUES::ETA_SHADOW ], 
 		maxs[ helio_perf_data::PERF_VALUES::ETA_SHADOW ], 
 		aves[ helio_perf_data::PERF_VALUES::ETA_SHADOW ], 
 		stdevs[ helio_perf_data::PERF_VALUES::ETA_SHADOW ], 
-		sums[ helio_perf_data::PERF_VALUES::ETA_SHADOW ]);
-	eff_intercept.set(
-		mins[ helio_perf_data::PERF_VALUES::ETA_INT ], 
-		maxs[ helio_perf_data::PERF_VALUES::ETA_INT ], 
-		aves[ helio_perf_data::PERF_VALUES::ETA_INT ], 
-		stdevs[ helio_perf_data::PERF_VALUES::ETA_INT ], 
-		sums[ helio_perf_data::PERF_VALUES::ETA_INT ]);
-	eff_absorption.set(
-		mins[ helio_perf_data::PERF_VALUES::REC_ABSORPTANCE ], 
-		maxs[ helio_perf_data::PERF_VALUES::REC_ABSORPTANCE ], 
-		aves[ helio_perf_data::PERF_VALUES::REC_ABSORPTANCE ], 
-		stdevs[ helio_perf_data::PERF_VALUES::REC_ABSORPTANCE ], 
-		sums[ helio_perf_data::PERF_VALUES::REC_ABSORPTANCE ]);
-	eff_cloud.set(
-		mins[ helio_perf_data::PERF_VALUES::ETA_CLOUD ], 
-		maxs[ helio_perf_data::PERF_VALUES::ETA_CLOUD ], 
-		aves[ helio_perf_data::PERF_VALUES::ETA_CLOUD ], 
-		stdevs[ helio_perf_data::PERF_VALUES::ETA_CLOUD ], 
-		sums[ helio_perf_data::PERF_VALUES::ETA_CLOUD ]);
+        sums[helio_perf_data::PERF_VALUES::ETA_SHADOW],
+        wtmean[helio_perf_data::PERF_VALUES::ETA_SHADOW]);
+    eff_intercept.set(
+        mins[helio_perf_data::PERF_VALUES::ETA_INT],
+        maxs[helio_perf_data::PERF_VALUES::ETA_INT],
+        aves[helio_perf_data::PERF_VALUES::ETA_INT],
+        stdevs[helio_perf_data::PERF_VALUES::ETA_INT],
+        sums[helio_perf_data::PERF_VALUES::ETA_INT],
+        wtmean[helio_perf_data::PERF_VALUES::ETA_INT]);
+    eff_absorption.set(
+        mins[helio_perf_data::PERF_VALUES::REC_ABSORPTANCE],
+        maxs[helio_perf_data::PERF_VALUES::REC_ABSORPTANCE],
+        aves[helio_perf_data::PERF_VALUES::REC_ABSORPTANCE],
+        stdevs[helio_perf_data::PERF_VALUES::REC_ABSORPTANCE],
+        sums[helio_perf_data::PERF_VALUES::REC_ABSORPTANCE],
+        wtmean[helio_perf_data::PERF_VALUES::REC_ABSORPTANCE]);
+    eff_cloud.set(
+        mins[helio_perf_data::PERF_VALUES::ETA_CLOUD],
+        maxs[helio_perf_data::PERF_VALUES::ETA_CLOUD],
+        aves[helio_perf_data::PERF_VALUES::ETA_CLOUD],
+        stdevs[helio_perf_data::PERF_VALUES::ETA_CLOUD],
+        sums[helio_perf_data::PERF_VALUES::ETA_CLOUD],
+        wtmean[helio_perf_data::PERF_VALUES::ETA_CLOUD]);
 	eff_reflect.set(
 		mins[ helio_perf_data::PERF_VALUES::REFLECTIVITY ]*mins[ helio_perf_data::PERF_VALUES::SOILING ], 
 		maxs[ helio_perf_data::PERF_VALUES::REFLECTIVITY ]*maxs[ helio_perf_data::PERF_VALUES::SOILING ], 
 		aves[ helio_perf_data::PERF_VALUES::REFLECTIVITY ]*aves[ helio_perf_data::PERF_VALUES::SOILING ], 
 		stdevs[ helio_perf_data::PERF_VALUES::REFLECTIVITY ]*stdevs[ helio_perf_data::PERF_VALUES::SOILING ], 
-		sums[ helio_perf_data::PERF_VALUES::REFLECTIVITY ]*sums[ helio_perf_data::PERF_VALUES::SOILING ]
+		sums[ helio_perf_data::PERF_VALUES::REFLECTIVITY ]*sums[ helio_perf_data::PERF_VALUES::SOILING ],
+        wtmean[helio_perf_data::PERF_VALUES::REFLECTIVITY] * wtmean[helio_perf_data::PERF_VALUES::SOILING]
 	);
 	eff_total_sf.set(
-		mins[ helio_perf_data::PERF_VALUES::ETA_TOT ]*mins[ helio_perf_data::PERF_VALUES::REC_ABSORPTANCE ], 
-		maxs[ helio_perf_data::PERF_VALUES::ETA_TOT ]*maxs[ helio_perf_data::PERF_VALUES::REC_ABSORPTANCE ], 
-		aves[ helio_perf_data::PERF_VALUES::ETA_TOT ]*aves[ helio_perf_data::PERF_VALUES::REC_ABSORPTANCE ], 
-		stdevs[ helio_perf_data::PERF_VALUES::ETA_TOT ]*stdevs[ helio_perf_data::PERF_VALUES::REC_ABSORPTANCE ], 
-		sums[ helio_perf_data::PERF_VALUES::ETA_TOT ]*sums[ helio_perf_data::PERF_VALUES::REC_ABSORPTANCE ]
+		mins[ helio_perf_data::PERF_VALUES::ETA_TOT ]* wtmean[ helio_perf_data::PERF_VALUES::REC_ABSORPTANCE ],
+		maxs[ helio_perf_data::PERF_VALUES::ETA_TOT ]* wtmean[ helio_perf_data::PERF_VALUES::REC_ABSORPTANCE ],
+		aves[ helio_perf_data::PERF_VALUES::ETA_TOT ]* wtmean[ helio_perf_data::PERF_VALUES::REC_ABSORPTANCE ],
+		stdevs[ helio_perf_data::PERF_VALUES::ETA_TOT ]* wtmean[ helio_perf_data::PERF_VALUES::REC_ABSORPTANCE ],
+		sums[ helio_perf_data::PERF_VALUES::ETA_TOT ]* wtmean[ helio_perf_data::PERF_VALUES::REC_ABSORPTANCE ],
+        aves[helio_perf_data::PERF_VALUES::ETA_TOT] * wtmean[helio_perf_data::PERF_VALUES::REC_ABSORPTANCE]
 	);
 	
 	delete [] sums;
@@ -1056,8 +1100,11 @@ void sim_result::process_analytical_simulation(SolarField &SF, int nsim_type, do
 	case sim_result::SIM_TYPE::FLUX_SIMULATION:
 	{
 		initialize();
-		for(unsigned int i=0; i<helios.size(); i++)
-			add_heliostat(*helios.at(i));
+		for (unsigned int i = 0; i < helios.size(); i++)
+		{
+			if( helios.at(i)->IsInLayout() && helios.at(i)->IsEnabled() )
+				add_heliostat(*helios.at(i));
+		}
 		process_field_stats();
 		total_receiver_area = SF.calcReceiverTotalArea();
 		dni =  SF.getVarMap()->flux.flux_dni.val/1000.;
@@ -1097,7 +1144,7 @@ void sim_result::process_raytrace_simulation(SolarField &SF, int nsim_type, doub
 	sim_type = nsim_type;
 	if(sim_type == 2){
 
-		num_heliostats_used = helios.size();
+		num_heliostats_used = (int)helios.size();
 		for(int i=0; i<num_heliostats_used; i++){
 			total_heliostat_area += helios.at(i)->getArea();
 		}
@@ -1105,7 +1152,7 @@ void sim_result::process_raytrace_simulation(SolarField &SF, int nsim_type, doub
 
 
 		//Process the ray data
-		int st, st0=0, ray, ray0=0, el, el0=0;
+		int st, st0=0, ray, ray0=0, el;
 		int nhin=0, nhout=0, nhblock=0, nhabs=0, nrin=0, nrspill=0, nrabs=0;
 
 		for(int i=0; i<ntot; i++){ //for each ray hit
@@ -1126,7 +1173,6 @@ void sim_result::process_raytrace_simulation(SolarField &SF, int nsim_type, doub
 				}
 				ray0 = 0;
 				st0 = 0;
-				el0 = 0;
 			}
 
 			if(el < 0){
@@ -1142,21 +1188,18 @@ void sim_result::process_raytrace_simulation(SolarField &SF, int nsim_type, doub
 					nrin++;
 					nrabs++;
 				}
-				el0 = 0;
 				ray0 = 0;
 				st0 = 0;
 			}
 			else if( el == 0 ){ //Element map is 0 - a ray missed the receiver
 				nrspill++;
 
-				el0 = 0;
 				ray0 = 0;
 				st0 = 0;
 			}
 			else{
 				st0 = st;
 				ray0 = ray;
-				el0 = el;
 			}
 		}
 
@@ -1173,14 +1216,15 @@ void sim_result::process_raytrace_simulation(SolarField &SF, int nsim_type, doub
         power_piping_loss = SF.getReceiverPipingHeatLoss();
         power_to_htf = power_absorbed - (power_thermal_loss + power_piping_loss);
 
-        eff_total_sf.set(0,0, power_absorbed / power_on_field, 0, 0.);
-        eff_cosine.set(0.,0., (double)nhin/(double)nsunrays*Abox/total_heliostat_area, 0., 0.);
-		eff_blocking.set(0.,0., 1.-(double)nhblock/(double)(nhin-nhabs), 0., 0.);
-		eff_attenuation.set(0., 0., 1., 0., 0.);	//Not currently accounted for
-		eff_reflect.set(0., 0., (double)(nhin - nhabs)/(double)nhin, 0., 0.);
-		eff_intercept.set(0., 0., (double)nrin/(double)nhout, 0., 0.);
-		eff_absorption.set(0., 0., (double)nrabs/(double)nrin, 0., 0.);
-		eff_total_heliostat.set(0., 0., (double)nrabs/(double)nhin, 0., 0.);
+        eff_total_sf.set(0,0, 0, 0, 0., power_absorbed / power_on_field);
+        eff_cosine.set(0.,0., 0., 0., 0., (double)nhin / (double)nsunrays*Abox / total_heliostat_area);
+		eff_blocking.set(0.,0., 0., 0., 0., 1. - (double)nhblock / (double)(nhin - nhabs));
+		eff_attenuation.set(0., 0., 0., 0., 0., 1.);	//Not currently accounted for
+		eff_reflect.set(0., 0., 0., 0., 0., (double)(nhin - nhabs) / (double)nhin);
+		eff_intercept.set(0., 0., 0., 0., 0., (double)nrin / (double)nhout);
+		eff_absorption.set(0., 0., 0., 0., 0., (double)nrabs / (double)nrin);
+		eff_total_heliostat.set(0., 0., 0., 0., 0., (double)nrabs / (double)nhin);
+        eff_cloud.set(1., 1., 1., 0., 1., 1.);
 
 		total_receiver_area = SF.calcReceiverTotalArea();
 		solar_az = sun_az_zen[0];
@@ -1204,7 +1248,7 @@ void sim_result::process_raytrace_simulation(SolarField &SF, int nsim_type, doub
 void sim_result::process_flux(SolarField *SF, bool normalize){
 	flux_surfaces.clear();
 	receiver_names.clear();
-	int nr = SF->getReceivers()->size();
+	int nr = (int)SF->getReceivers()->size();
 	Receiver *rec;
 	for(int i=0; i<nr; i++){
 		rec = SF->getReceivers()->at(i);

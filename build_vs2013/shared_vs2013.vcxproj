@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
@@ -49,6 +49,8 @@
     <ClInclude Include="..\shared\lib_windwakemodel.h" />
     <ClInclude Include="..\shared\lib_windwatts.h" />
     <ClInclude Include="..\shared\lib_wind_obos.h" />
+    <ClInclude Include="..\shared\lib_wind_obos_cable_vessel.h" />
+    <ClInclude Include="..\shared\lib_wind_obos_defaults.h" />
     <ClInclude Include="..\shared\lsqfit.h" />
   </ItemGroup>
   <ItemGroup>
@@ -76,6 +78,8 @@
     <ClCompile Include="..\shared\lib_windwakemodel.cpp" />
     <ClCompile Include="..\shared\lib_windwatts.cpp" />
     <ClCompile Include="..\shared\lib_wind_obos.cpp" />
+    <ClCompile Include="..\shared\lib_wind_obos_cable_vessel.cpp" />
+    <ClCompile Include="..\shared\lib_wind_obos_defaults.cpp" />
     <ClCompile Include="..\shared\lsqfit.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

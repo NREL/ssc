@@ -344,7 +344,7 @@ VARIABLE      Mask       Required Variables
  utime      L_GEOM     All date, time, and location inputs
  zenetr     L_ZENETR   declination, latitude, hrang
  zenref     L_REFRAC   elevetr, press, temp
-/*
+*/
 
 
 /*============================================================================

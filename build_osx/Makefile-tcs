@@ -1,7 +1,7 @@
 VPATH = ../tcs
 CC = gcc -mmacosx-version-min=10.9
 CXX = g++ -mmacosx-version-min=10.9
-CFLAGS = -Wall -g -O3 -I../ -I../nlopt -I../shared -I../lpsolve -I../solarpilot  -DWX_PRECOMP -O2 -arch x86_64  -fno-common
+CFLAGS = -Wall -g -O3 -I../ -I../nlopt -I../shared -I../splinter -I../lpsolve -I../solarpilot  -DWX_PRECOMP -O2 -arch x86_64  -fno-common
 CXXFLAGS = $(CFLAGS)  -std=gnu++11
 
 OBJECTS = tcskernel.o \
@@ -16,11 +16,13 @@ OBJECTS = tcskernel.o \
 	sco2_pc_csp_int.o \
 	sco2_rec_util.o \
 	sco2_power_cycle.o \
+	sco2_cycle_components.o \
 	water_properties.o \
 	tc_test_type402.o \
 	sam_sco2_recomp_type424.o \
 	sco2_test_type401.o \
-	sco2_pc_core.o \
+	sco2_recompression_cycle.o \
+	sco2_partialcooling_cycle.o \
     cavity_calcs.o \
 	atmospheric_aod.o \
 	Heliostat_AzElAod.o \
@@ -34,6 +36,7 @@ OBJECTS = tcskernel.o \
     sam_csp_util.o \
     thermocline_tes.o \
     ngcc_powerblock.o \
+	interconnect.o \
     sam_dsg_controller_type265.o \
     sam_lf_st_pt_type232.o \
     sam_mw_csp_SumCalcs.o \
@@ -64,7 +67,6 @@ OBJECTS = tcskernel.o \
 	trnsys_weatherreader.o \
 	typelib.o \
 	waterprop.o \
-	weatherreader.o \
 	weatherreader_csp_solver.o \
 	csp_solver_weatherreader.o \
 	csp_solver_util.o \

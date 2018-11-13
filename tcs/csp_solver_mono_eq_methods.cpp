@@ -49,6 +49,7 @@
 
 #include "csp_solver_core.h"
 #include "numeric_solvers.h"
+#include <cmath>
 #include <math.h>
 #include <algorithm>
 
@@ -368,7 +369,7 @@ int C_csp_solver::C_mono_eq_pc_target_tes_dc__T_cold::operator()(double T_htf_co
 
 	if (m_dot_code != C_monotonic_eq_solver::CONVERGED)
 	{
-		if (m_dot_code > C_monotonic_eq_solver::CONVERGED && abs(tol_solved) < 0.1)
+	  	if (m_dot_code > C_monotonic_eq_solver::CONVERGED && std::abs(tol_solved) < 0.1)
 		{
 			std::string msg = util::format("At time = %lg C_csp_solver::C_mono_eq_pc_target_tes_dc__T_cold "
 				"iteration to find a mass flow rate resulting in the target power cycle heat input only reached a convergence "

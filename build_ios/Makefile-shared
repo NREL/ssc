@@ -40,6 +40,9 @@ OBJECTS = \
 	lib_weatherfile.o \
 	lib_windfile.o \
 	lib_wind_obos.o \
+	lib_wind_obos_cable_vessel.o \
+	lib_wind_obos_defaults.o \
+	lib_windwakemodel.o \
 	lib_windwatts.o \
 	lib_battery.o \
 	lib_battery_dispatch.o \

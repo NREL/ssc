@@ -47,6 +47,13 @@
 *  THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *******************************************************************************************************/
 
+#ifndef __6_PAR_SOLVE_H__
+#define __6_PAR_SOLVE_H__
+
+#include "6par_gamma.h"
+#include "6par_newton.h"
+#include "lib_util.h"
+
 class notification_interface
 {
 public:
@@ -129,7 +136,7 @@ public:
 		
 		f[5] = gamma - gPmp;
 	}
-	
+
 	bool exec(Real &_a, Real &_Il, Real &_Io, Real &_Rs, Real &_Rsh, Real &_Adj, 
 		int max_iter, double tol, notification_interface *nif )
 	{	
@@ -159,13 +166,6 @@ public:
 		return true;
 	}
 };
-
-
-
-
-#ifndef MAX
-#define MAX(a,b)  ((a>b)?a:b)
-#endif
 
 class module6par
 {
@@ -503,7 +503,7 @@ public:
 		int err = solve<Real>( max_iter, tol, nif );
 		
 		
-		if ( err < 0 && Type == Amorphous )
+		if ( err < 0 && (Type == Amorphous || Type == CdTe) )
 		{
 			// attempt decreasing 'a' and solving
 			int downattempt = 0;
@@ -551,3 +551,5 @@ public:
 
 	
 };
+
+#endif

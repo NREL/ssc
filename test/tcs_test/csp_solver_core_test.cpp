@@ -6,13 +6,13 @@
 #include <gtest/gtest.h>
 #include "../input_cases/weather_inputs.h"
 
-#include "common.h"
-#include "csp_solver_core.h"
-#include "csp_solver_mspt_receiver_222.h"
-#include "csp_solver_mspt_collector_receiver.h"
-#include "csp_solver_pc_Rankine_indirect_224.h"
-#include "csp_solver_two_tank_tes.h"
-#include "csp_solver_tou_block_schedules.h"
+#include "../ssc/common.h"
+#include "../tcs/csp_solver_core.h"
+#include "../tcs/csp_solver_mspt_receiver_222.h"
+#include "../tcs/csp_solver_mspt_collector_receiver.h"
+#include "../tcs/csp_solver_pc_Rankine_indirect_224.h"
+#include "../tcs/csp_solver_two_tank_tes.h"
+#include "../tcs/csp_solver_tou_block_schedules.h"
 
 /**
  * This class tests the C_csp_weatherreader's functions and ensures that the interface is the
@@ -40,16 +40,15 @@ class UsingFileCaseWeatherReader : public CspWeatherReaderTest{
 	string file;
 protected:
 	void SetUp(){
-#ifdef _MSC_VER		
-		file = "../../../test/input_docs/weather.csv";
-#else	
-		file = "../test/input_docs/weather.csv";
-#endif	
-		wr.m_filename = file;
+
+		char hourly[150];
+		int a = sprintf(hourly, "%s/test/input_docs/weather.csv", std::getenv("SSCDIR"));
+
+		wr.m_filename = hourly;
 		CspWeatherReaderTest::SetUp();
 		sim_info.ms_ts.m_step = 3600;
 		sim_info.ms_ts.m_time_start = 0;
-		wr.m_weather_data_provider = make_shared<weatherfile>(file);
+		wr.m_weather_data_provider = make_shared<weatherfile>(hourly);
 	}
 };
 
@@ -60,7 +59,7 @@ protected:
 		CspWeatherReaderTest::SetUp();
 		sim_info.ms_ts.m_step = 3600;
 		sim_info.ms_ts.m_time_start = 0;
-		data = create_weatherdata_array(); // allocates memory for weatherdata
+		data = create_weatherdata_array(1); // allocates memory for weatherdata
 		wr.m_weather_data_provider = make_shared<weatherdata>(data);
 	}
 	void TearDown(){

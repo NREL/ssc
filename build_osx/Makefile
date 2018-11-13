@@ -1,14 +1,17 @@
 all:
-	make -f Makefile-shared -j7
-	make -f Makefile-nlopt -j7
-	make -f Makefile-lpsolve -j7
-	make -f Makefile-solarpilot -j7
-	make -f Makefile-tcs -j7
-	make -f Makefile-ssc -j7
-	make -f Makefile-sdktool -j7
-	make -f Makefile-tcsconsole -j7 
+	make -f Makefile-splinter -j4
+	make -f Makefile-shared -j4
+	make -f Makefile-nlopt -j4
+	make -f Makefile-lpsolve -j4
+	make -f Makefile-solarpilot -j4
+	make -f Makefile-tcs -j4
+	make -f Makefile-ssc -j4
+	make -f Makefile-sdktool -j4
+	make -f Makefile-tcsconsole -j4
+#	make -f Makefile-gtest -j 
 
 clean:
+	make -f Makefile-splinter clean
 	make -f Makefile-shared clean
 	make -f Makefile-nlopt clean
 	make -f Makefile-lpsolve clean
@@ -17,3 +20,4 @@ clean:
 	make -f Makefile-ssc clean
 	make -f Makefile-sdktool clean
 	make -f Makefile-tcsconsole clean
+#	make -f Makefile-gtest clean

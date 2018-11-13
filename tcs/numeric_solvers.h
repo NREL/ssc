@@ -51,6 +51,7 @@
 #define __NUMERIC_SOLVERS_
 
 #include <vector>
+#include <limits>
 
 class C_monotonic_equation
 {

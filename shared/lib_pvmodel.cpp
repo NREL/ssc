@@ -68,7 +68,7 @@ pvinput_t::pvinput_t()
 }
 
 
-pvinput_t::pvinput_t( double ib, double id, double ig, double ip,
+pvinput_t::pvinput_t( double ib, double id, double ig, double irear, double ip,
 		double ta, double td, double ws, double wd, double patm,
 		double zen, double inc, 
 		double elv, double tlt, double azi,
@@ -77,6 +77,7 @@ pvinput_t::pvinput_t( double ib, double id, double ig, double ip,
 	Ibeam = ib;
 	Idiff = id;
 	Ignd = ig;
+	Irear = irear;
 	poaIrr = ip;
 	Tdry = ta;
 	Tdew = td;
@@ -107,7 +108,7 @@ pvoutput_t::pvoutput_t()
 
 pvoutput_t::pvoutput_t( double p, double v,
 		double c, double e, 
-		double voc, double isc, double t )
+		double voc, double isc, double t, double aoi_modifier)
 {
 	Power = p;
 	Voltage = v;
@@ -116,6 +117,7 @@ pvoutput_t::pvoutput_t( double p, double v,
 	Voc_oper = voc;
 	Isc_oper = isc;
 	CellTemp = t;
+	AOIModifier = aoi_modifier;
 }
 
 
@@ -161,8 +163,8 @@ bool spe_module_t::operator() ( pvinput_t &input, double TcellC, double , pvoutp
 	// Sev 2015-09-14: Changed to allow POA data directly
 	double dceff, dcpwr;
 	if( input.radmode != 3  || !input.usePOAFromWF){
-		dceff = eff_interpolate( input.Ibeam + idiff, Rad, Eff );
-		dcpwr = dceff*(input.Ibeam+idiff)*Area;	
+		dceff = eff_interpolate( input.Ibeam + idiff + input.Irear, Rad, Eff );
+		dcpwr = dceff*(input.Ibeam+idiff + input.Irear)*Area;	
 	}
 	else{
 		dceff = eff_interpolate( input.poaIrr, Rad, Eff );
@@ -179,11 +181,9 @@ bool spe_module_t::operator() ( pvinput_t &input, double TcellC, double , pvoutp
 	output.Current = output.Power / output.Voltage;
 	output.Isc_oper = IscRef();
 	output.Voc_oper = VocRef();
+	output.AOIModifier = 1.0; // No model for cover effects in simple efficiency model 
 	return true;
 }
-
-
-
 
 /******** BEGIN GOLDEN METHOD CODE FROM NR3 *********/
 
@@ -338,6 +338,41 @@ double current_5par( double V, double IMR, double A, double IL, double IO, doubl
 	return INEW;
 }
 
+double current_5par_rec(double V, double IMR, double A, double IL, double IO, double RS, double RSH, double D2MuTau, double Vbi)
+{
+	/*
+	C     Iterative solution for current as a function of voltage using
+	C     equations from the five-parameter model.  Newton's method is used
+	C     to converge on a value.  Max power at reference conditions is initial
+	C     guess.
+	C     2018-04-15 (TR): Added functionality to consider recombination losses
+	*/
+	double IOLD = 0.0;
+	double V_MODULE = V;
+
+	//C**** first guess is max.power point current
+	double INEW = IMR;
+	const int maxit = 4000;
+	int it = 0;
+
+	while (fabs(INEW - IOLD) > 0.0001)
+	{
+		IOLD = INEW;
+
+		double IREC = IL * D2MuTau / (Vbi - (V_MODULE + IOLD * RS));
+		double IREC_DER = (IL * D2MuTau * RS) / pow((Vbi - (V_MODULE + IOLD * RS)), 2);
+
+		double F = IL - IOLD - IO * (exp((V_MODULE + IOLD * RS) / A) - 1.0) - (V_MODULE + IOLD * RS) / RSH - IREC;
+		double FPRIME = -1.0 - IO * (RS / A)*exp((V_MODULE + IOLD * RS) / A) - (RS / RSH) - IREC_DER;
+
+		INEW = max(0.0, (IOLD - (F / FPRIME)));
+		if (it++ == maxit)
+			return -1.0;
+	}
+
+	return INEW;
+}
+
 double openvoltage_5par( double Voc0, double a, double IL, double IO, double Rsh )
 {
 /*
@@ -363,13 +398,46 @@ double openvoltage_5par( double Voc0, double a, double IL, double IO, double Rsh
 	return Voc;	
 }
 
+double openvoltage_5par_rec(double Voc0, double a, double IL, double IO, double Rsh, double D2MuTau, double Vbi)
+{
+	/*
+	C     Iterative solution for open-circuit voltage.  Explicit algebraic solution
+	C     not possible in 5-parameter model
+	C     2018-04-15 (TR): Added functionality to consider recombination losses
+	*/
+	double VocLow = 0;
+	double VocHigh = Voc0 * 1.5;
+
+	double Voc = Voc0; // initial guess
+
+	int niter = 0;
+	while (fabs(VocHigh - VocLow) > 0.001)
+	{
+		double I = IL - IO * (exp(Voc / a) - 1) - Voc / Rsh - IL * D2MuTau / (Vbi - Voc);
+
+		if (I < 0) VocHigh = Voc;
+		if (I > 0) VocLow = Voc;
+		Voc = (VocHigh + VocLow) / 2;
+
+		if (++niter > 5000)
+			return -1.0;
+	}
+	return Voc;
+}
 
 struct refparm { double a, Il, Io, Rs, Rsh; };
+struct refparm_rec { double a, Il, Io, Rs, Rsh, D2MuTau, Vbi; };
 
 static double powerfunc( double V, void *_d )
 {
 	struct refparm *r = (struct refparm*)_d;
 	return -V*current_5par( V, 0.9*r->Il, r->a, r->Il, r->Io, r->Rs, r->Rsh );
+}
+
+static double powerfunc_rec(double V, void *_d)
+{
+	struct refparm_rec *r = (struct refparm_rec*)_d;
+	return -V * current_5par_rec(V, 0.9*r->Il, r->a, r->Il, r->Io, r->Rs, r->Rsh, r->D2MuTau, r->Vbi);
 }
 
 double maxpower_5par( double Voc_ubound, double a, double Il, double Io, double Rs, double Rsh, double *__Vmp, double *__Imp )
@@ -398,61 +466,31 @@ double maxpower_5par( double Voc_ubound, double a, double Il, double Io, double 
 	return P;
 }
 
-double transmittance( double theta1_deg, /* incidence angle of incoming radiation (deg) */
-		double n_cover,  /* refractive index of cover material, n_glass = 1.586 */
-		double n_incoming, /* refractive index of incoming material, typically n_air = 1.0 */
-		double k,        /* proportionality constant assumed to be 4 (1/m) for derivation of Bouguer's law (set to zero to skip bougeur's law */
-		double l_thick,  /* material thickness (set to zero to skip Bouguer's law */
-		double *_theta2_deg ) /* thickness of cover material (m), usually 2 mm for typical module */
+double maxpower_5par_rec( double Voc_ubound, double a, double Il, double Io, double Rs, double Rsh, double D2MuTau, double Vbi, double *__Vmp, double *__Imp )
 {
-	// reference: duffie & beckman, Ch 5.3
-	
-	double theta1 = theta1_deg * M_PI/180.0;
-	double theta2 = asin( n_incoming / n_cover * sin(theta1 ) ); // snell's law, assuming n_air = 1.0
-	// fresnel's equation for non-reflected unpolarized radiation as an average of perpendicular and parallel components
-	double tr = 1 - 0.5 *
-			( pow( sin(theta2-theta1), 2 )/pow( sin(theta2+theta1), 2)
-			+ pow( tan(theta2-theta1), 2 )/pow( tan(theta2+theta1), 2 ) );
-	
-	if ( _theta2_deg ) *_theta2_deg = theta2 * 180/M_PI;
+	double P, V, I;
+	struct refparm_rec refdata;
+	refdata.a = a;
+	refdata.Il = Il;
+	refdata.Io = Io;
+	refdata.Rs = Rs;
+	refdata.Rsh = Rsh;
+	refdata.D2MuTau = D2MuTau;
+	refdata.Vbi = Vbi;
 
-	return tr * exp( -k * l_thick / cos(theta2) );
-}
-
-double iam( double theta, bool ar_glass )
-{
-	if ( theta < AOI_MIN ) theta = AOI_MIN;
-	if ( theta > AOI_MAX ) theta = AOI_MAX;
-
-	double normal = iam_nonorm( 1, ar_glass );
-	double actual = iam_nonorm( theta, ar_glass );
-	return actual/normal;	
-}
-
-double iam_nonorm( double theta, bool ar_glass )
-{
-	double n_air = 1.0;
-
-	double n_g = 1.526;
-	double k_g = 4;
-	double l_g = 0.002;
-
-	double n_arc = 1.3;
-	double k_arc = 4;
-	double l_arc = l_g*0.01;  // assume 1/100th thickness of glass for AR coating
-
-	if ( theta < AOI_MIN ) theta = AOI_MIN;
-	if ( theta > AOI_MAX ) theta = AOI_MAX;
-
-	if ( ar_glass )
+	int maxiter = 5000;
+				
+	if (golden( 0, Voc_ubound, powerfunc_rec, &refdata, 1e-4, &V, &P, maxiter))
 	{
-		double theta2 = 1;
-		double tau_coating = transmittance( theta, n_arc, n_air, k_arc, l_arc, &theta2 );
-		double tau_glass = transmittance( theta2, n_g, n_arc, k_g, l_g );
-		return tau_coating*tau_glass;
+		P = -P;				
+		I = 0;
+		if (V != 0) I=P/V;
 	}
 	else
-	{
-		return transmittance(theta, n_g, n_air, k_g, l_g );
-	}
+		P = V = I = -999;
+
+	if ( __Vmp ) *__Vmp = V;
+	if ( __Imp ) *__Imp = I;
+	return P;
 }
+

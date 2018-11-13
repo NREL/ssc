@@ -58,12 +58,10 @@
 #include <mutex>
 
 
-using namespace std;
-
 class Heliostat;	//Forward declaration
 class SolarField;
 class WeatherData;
-typedef vector<Heliostat*> Hvector;	//Needs declaring here
+typedef std::vector<Heliostat*> Hvector;	//Needs declaring here
 
 
 class LayoutSimThread 
@@ -79,7 +77,7 @@ class LayoutSimThread
         FinishedWithErrors;
     
 	int Nsim_complete, Nsim_total;
-    string _thread_id;
+    std::string _thread_id;
 
 	SolarField *_SF;
 	int _sim_first, _sim_last, _sort_metric;
@@ -87,10 +85,10 @@ class LayoutSimThread
 	sim_results *_results;
 	matrix_t<double> *_sol_azzen;
 	sim_params _sim_params; 
-    vector<string> _sim_messages;
+    std::vector<std::string> _sim_messages;
 
 	//wxMutex
-	mutex
+	std::mutex
 		StatusLock,
 		CancelLock,
 		FinishedLock,
@@ -98,10 +96,10 @@ class LayoutSimThread
 
 public:
 
-	void Setup(string &tname, SolarField *SF, sim_results *results, WeatherData *wdata, 
+	void Setup(std::string &tname, SolarField *SF, sim_results *results, WeatherData *wdata, 
 		int sim_first, int sim_last, bool is_shadow_detail, bool is_flux_detail);
 
-	void Setup(string &tname, SolarField *SF, sim_results *results, matrix_t<double> *sol_azzen, 
+	void Setup(std::string &tname, SolarField *SF, sim_results *results, matrix_t<double> *sol_azzen, 
 		sim_params &simpars, int sim_first, int sim_last, bool is_shadow_detail, bool is_flux_detail);
 
 	void IsFluxmapNormalized(bool is_normal);	//set whether the fluxmap should be normalized (default TRUE)
@@ -118,12 +116,9 @@ public:
 
 	void GetStatus( int *nsim_complete, int *nsim_total);
 
-    vector<string> *GetSimMessages();    //can be called only after simulation is terminated
+    std::vector<std::string> *GetSimMessages();    //can be called only after simulation is terminated
 
 	void StartThread();
-//private:
-	
-	//void *Entry();
 
 };
 

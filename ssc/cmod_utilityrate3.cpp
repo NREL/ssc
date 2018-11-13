@@ -1698,7 +1698,7 @@ public:
 		4. use (kW)  p_load[i] = max(load) over the hour for each hour i
 		5. After above assignment, proceed as before with same outputs
 		*/
-		ssc_number_t *pload, *pgen;
+		ssc_number_t *pload = NULL, *pgen;
 		size_t nrec_load = 0, nrec_gen = 0, step_per_hour_gen=1, step_per_hour_load=1;
 		bool bload=false;
 		pgen = as_array("gen", &nrec_gen);
@@ -2764,9 +2764,6 @@ public:
 		int m,d,h;
 		ssc_number_t energy_use[12]; // 12 months
 		int c=0;
-//		bool sell_eq_buy = as_boolean("ur_sell_eq_buy");
-		bool enable_nm = as_boolean("ur_enable_net_metering");
-
 
 		for (m=0;m<12;m++)
 		{

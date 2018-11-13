@@ -60,14 +60,31 @@ class partload_inverter_t
 public:
 	partload_inverter_t( );
 
+	double Vdco;    /* Nominal DC voltage inptu (Vdc) */
 	double Paco;    /* Maximum AC power rating, upper limit value  (Wac) */
 	double Pdco;    /* DC power level at which Paco is achieved (Wdc) */
 	double Pntare;  /* AC power consumed by inverter at night as parasitic load (Wac) */
 	std::vector<double> Partload; /* Array of partload values (Pdc/Paco) for linear interpolation */
 	std::vector<double> Efficiency; /* Array of efficiencies corresponding to partload values */
 
-	bool acpower(	/* inputs */
-		double Pdc,     /* Input power to inverter (Wdc) */
+	//function that calculates AC power and inverter losses for a single inverter with one MPPT input
+	bool acpower(
+		/* inputs */
+		double Pdc,     /* Input power to inverter (Wdc), one per MPPT input on the inverter. Note that with several inverters, this is the power to ONE inverter.*/
+
+									 /* outputs */
+		double *Pac,    /* AC output power (Wac) */
+		double *Plr,    /* Part load ratio (Pdc_in/Pdc_rated, 0..1) */
+		double *Ppar,   /* AC parasitic power consumption (Wac) */
+		double *Eff,	    /* Conversion efficiency (0..1) */
+		double *Pcliploss, /* Power loss due to clipping loss (Wac) */
+		double *Pntloss /* Power loss due to night time tare loss (Wac) */
+	);
+
+	//function that calculates AC power and inverter losses for a single inverter with multiple MPPT inputs
+	bool acpower(	
+		/* inputs */
+		std::vector<double> Pdc,     /* Vector of Input power to inverter (Wdc), one per MPPT input on the inverter. Note that with several inverters, this is the power to ONE inverter.*/
 
 		/* outputs */
 		double *Pac,    /* AC output power (Wac) */

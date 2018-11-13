@@ -59,6 +59,18 @@
 #include <cstdarg>
 #include <cmath>
 #include <limits>
+#include <memory>
+
+/* Macros for C++11 support */
+template <typename T>
+struct smart_ptr 
+{
+	#if __cplusplus <= 201103L
+	typedef std::unique_ptr<T> ptr;
+	#else
+	typedef std::auto_ptr<T> ptr;
+	#endif
+};
 
 /* Macros require for building
 	__32BIT__ *or* __64BIT__
@@ -107,7 +119,7 @@
 #define __DEBUG__ 0
 #endif
 
-#include "../shared/lib_util.h"
+//#include "lib_util.h"
 #include "vartab.h"
 #include "sscapi.h"
 
@@ -235,6 +247,10 @@ protected:
 	void build_info_map();
 	bool has_info_map() { return m_infomap!=NULL; }
 	
+	/* can be called in exec if determine shouldn't run module */
+	void remove_var_info(var_info vi[]);
+
+
 public:
 	/* for working with input/output/inout variables during 'compute'*/
 	const var_info &info( const std::string &name ) throw( general_error );
@@ -246,6 +262,7 @@ public:
 	util::matrix_t<ssc_number_t>& allocate_matrix( const std::string &name, size_t nrows, size_t ncols ) throw( general_error );
 	var_data &value( const std::string &name ) throw( general_error );
 	bool is_assigned( const std::string &name ) throw( general_error );
+	size_t as_unsigned_long(const std::string &name) throw(general_error);
 	int as_integer( const std::string &name ) throw( general_error );
 	bool as_boolean( const std::string &name ) throw( general_error );
 	float as_float( const std::string &name ) throw( general_error );
@@ -253,9 +270,15 @@ public:
 	double as_double( const std::string &name ) throw( general_error );
 	const char *as_string( const std::string &name ) throw( general_error );
 	ssc_number_t *as_array( const std::string &name, size_t *count ) throw( general_error );
-	std::vector<double> as_doublevec( const std::string &name ) throw( general_error );
+	std::vector<int> as_vector_integer(const std::string &name) throw(general_error);
+	std::vector<ssc_number_t> as_vector_ssc_number_t(const std::string &name) throw(general_error);
+	std::vector<double> as_vector_double( const std::string &name ) throw( general_error );
+	std::vector<float> as_vector_float(const std::string &name) throw(general_error);
+	std::vector<bool> as_vector_bool(const std::string &name) throw(general_error);
+	std::vector<size_t> as_vector_unsigned_long(const std::string &name) throw(general_error);
 	ssc_number_t *as_matrix( const std::string &name, size_t *rows, size_t *cols ) throw( general_error );
 	util::matrix_t<double> as_matrix(const std::string & name) throw(general_error);
+	util::matrix_t<size_t> as_matrix_unsigned_long(const std::string & name) throw(general_error);
 	util::matrix_t<double> as_matrix_transpose(const std::string & name) throw(general_error);
 	bool get_matrix(const std::string &name, util::matrix_t<ssc_number_t> &mat) throw(general_error);
 

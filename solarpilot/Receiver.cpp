@@ -413,50 +413,17 @@ void FluxSurface::Normalize(){
 
 }
 
-#if 0
-void FluxSurface::Reshape(int nx, int ny)
-{
-	/* 
-	Take the current flux map and shape it into the specified dimension while maintaining total power
-	*/
-	double flux_tot = getTotalFlux();
-	int
-		index_start = 0,
-		index_now = 0,
-		nx_old = _nflux_x,
-		ny_old = _nflux_y;
-	double
-		ifact_x = (float)nx/(float)nx_old,
-		ifact_y = (float)ny/(float)ny_old;
-	//FluxGrid grid_temp(nx,ny);
-
-	//Code Here -- TO DO
-    return;
-}
-#endif
-
-
 //-----------------Receiver----------------
 
 void Receiver::Create(var_receiver &V, double tht)
 {
-	//Unit conversions
-	//_var_receiver->span_min.val*D2R *= D2R;
-	//_var_receiver->span_max.val*D2R *= D2R;
-	//_var_receiver->panel_rotation.val*D2R *= D2R;
-	//_rec_az *= D2R;
-	//_rec_elevation *= D2R;
-	//_accept_ang_x *= D2R;
-	//_accept_ang_y *= D2R;
     _var_receiver = &V;
 
     _is_enabled = V.is_enabled.val;
 	
 	_normal = PointVect(0.,0.,0.,0.,1.,0.); //Unit vector of the normal to the reciever
-	
 
 	DefineReceiverGeometry();
-
 
     updateCalculatedParameters(V, tht);
 
@@ -521,7 +488,6 @@ void Receiver::updateCalculatedParameters(var_receiver &V, double tht)
     {
     case var_receiver::REC_TYPE::EXTERNAL_CYLINDRICAL:
     {
-	//if(V.rec_type.val == Receiver::REC_TYPE::CYLINDRICAL){
 		//External receiver
 		aspect = height/V.rec_diameter.val;
         break;
@@ -531,7 +497,6 @@ void Receiver::updateCalculatedParameters(var_receiver &V, double tht)
 		//aspect = height/V.rec_width.val;
 	//}
     case var_receiver::REC_TYPE::FLAT_PLATE:
-	//else if(V.rec_type.val == Receiver::REC_TYPE::FLAT_PLATE)
     {
 		//flat plate
 		aspect = height/V.rec_width.val;

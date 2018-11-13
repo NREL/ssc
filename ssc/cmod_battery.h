@@ -2,7 +2,7 @@
 *  Copyright 2017 Alliance for Sustainable Energy, LLC
 *
 *  NOTICE: This software was developed at least in part by Alliance for Sustainable Energy, LLC
-*  (“Alliance”) under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
+*  (ï¿½Allianceï¿½) under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
 *  The Government retains for itself and others acting on its behalf a nonexclusive, paid-up,
 *  irrevocable worldwide license in the software to reproduce, prepare derivative works, distribute
 *  copies to the public, perform publicly and display publicly, and to permit others to do so.
@@ -26,8 +26,8 @@
 *  4. Redistribution of this software, without modification, must refer to the software by the same
 *  designation. Redistribution of a modified version of this software (i) may not refer to the modified
 *  version by the same designation, or by any confusingly similar designation, and (ii) must refer to
-*  the underlying software originally provided by Alliance as “System Advisor Model” or “SAM”. Except
-*  to comply with the foregoing, the terms “System Advisor Model”, “SAM”, or any confusingly similar
+*  the underlying software originally provided by Alliance as ï¿½System Advisor Modelï¿½ or ï¿½SAMï¿½. Except
+*  to comply with the foregoing, the terms ï¿½System Advisor Modelï¿½, ï¿½SAMï¿½, or any confusingly similar
 *  designation may not be used to refer to any modified version of this software or any modified
 *  version of the underlying software originally provided by Alliance without the prior written consent
 *  of Alliance.
@@ -54,18 +54,13 @@
 #include "lib_power_electronics.h"
 #include "lib_sandia.h"
 #include "lib_pvinv.h"
-
+#include "lib_utility_rate.h"
 
 extern var_info vtab_battery_inputs[];
 extern var_info vtab_battery_outputs[];
 
 struct batt_variables
 {
-	batt_variables()
-	{
-		pcharge = pdischarge = pdischarge = pgridcharge = pdischarge_percent = pgridcharge_percent = psched = psched_weekend = 0;
-	};
-
 	bool system_use_lifetime_output;
 	bool en_batt;
 	int analysis_period;
@@ -74,34 +69,66 @@ struct batt_variables
 	int batt_voltage_choice;
 	int batt_current_choice;
 	int batt_meter_position;
-	int batt_pv_choice;
 	int batt_target_choice;
 	int batt_loss_choice;
 	int batt_calendar_choice;
 
-	size_t ncharge;
-	size_t ndischarge;
-	size_t ndischarge_percent;
-	size_t ngridcharge_percent;
-	size_t ngridcharge;
-	size_t nsched;
-	size_t msched;
+	ssc_number_t *pcharge = 0;
+	ssc_number_t *pdischarge = 0;
+	ssc_number_t *pdischarge_percent = 0;
+	ssc_number_t *pgridcharge_percent = 0;
+	ssc_number_t *pgridcharge = 0;
+	ssc_number_t *psched = 0;
+	ssc_number_t *psched_weekend = 0;
 
-	ssc_number_t *pcharge;
-	ssc_number_t *pdischarge;
-	ssc_number_t *pdischarge_percent;
-	ssc_number_t *pgridcharge_percent;
-	ssc_number_t *pgridcharge;
-	ssc_number_t *psched;
-	ssc_number_t *psched_weekend;
+	/*! The custom dispatch power input by user (<0 = charging, >0 = discharging) in kW */
+	std::vector<double> batt_custom_dispatch;
 
-	util::matrix_t<float> schedule;
+	/*! Determines if the battery is allowed to charge from the grid using automated control*/
+	bool batt_dispatch_auto_can_gridcharge;
+
+	/*! Determines if the battery is allowed to charge from the RE using automated control*/
+	bool batt_dispatch_auto_can_charge;
+
+	/*! Determines if the battery is allowed to charge from PV clipping using automated control*/
+	bool batt_dispatch_auto_can_clipcharge;
+
+	/*! Vector of periods and if battery can charge from PV*/
+	std::vector<bool> batt_can_charge;
+
+	/*! Vector of periods and if battery can discharge*/
+	std::vector<bool> batt_can_discharge;
+
+	/*! Vector of periods and if battery can charge from the grid*/
+	std::vector<bool> batt_can_gridcharge;
+
+	/*! Vector of percentages that battery is allowed to charge for periods*/
+	std::vector<double> batt_discharge_percent;
+
+	/*! Vector of percentages that battery is allowed to gridcharge for periods*/
+	std::vector<double> batt_gridcharge_percent;
+
+	/*! Schedule of manual discharge for weekday*/
+	util::matrix_t<size_t> batt_discharge_schedule_weekday;
+
+	/*! Schedule of manual discharge for weekend*/
+	util::matrix_t<size_t> batt_discharge_schedule_weekend;
+
+	/*! The number of hours to look-ahead in automated dispatch */
+	size_t batt_look_ahead_hours;
+
+	/*! The frequency to update the look-ahead automated dispatch */
+	double batt_dispatch_update_frequency_hours;
+
 	util::matrix_t<double>  batt_lifetime_matrix;
 	util::matrix_t<double> batt_calendar_lifetime_matrix;
 	util::matrix_t<double> batt_voltage_matrix;
 
 	std::vector<double> target_power_monthly;
 	std::vector<double> target_power;
+	std::vector<double> pv_clipping_forecast;
+	std::vector<double> pv_dc_power_forecast;
+
 
 	std::vector<double> batt_losses_charging;
 	std::vector<double> batt_losses_discharging;
@@ -155,45 +182,90 @@ struct batt_variables
 	double batt_dc_dc_bms_efficiency;
 	double pv_dc_dc_mppt_efficiency;
 
-	int inverter_model;
-	double inv_snl_eff_cec;
-	double inv_cec_cg_eff_cec;
-	double inv_ds_eff;
-	double inv_pd_eff;
+	size_t inverter_model;
 	double inverter_efficiency;
+	double inverter_paco;
+	size_t inverter_count;
 
 	double batt_calendar_q0;
 	double batt_calendar_a;
 	double batt_calendar_b;
 	double batt_calendar_c;
+
+	/*! Battery costs */
+	double batt_cost_per_kwh;
+
+	/*! PPA Time-of-Delivery factors for periods 1-9 */
+	std::vector<double> ppa_factors;
+	util::matrix_t<size_t> ppa_weekday_schedule;
+	util::matrix_t<size_t> ppa_weekend_schedule;
+
+	/*! Energy rates */
+	bool ec_rate_defined;
+	util::matrix_t<size_t> ec_weekday_schedule;
+	util::matrix_t<size_t> ec_weekend_schedule;
+	util::matrix_t<double> ec_tou_matrix;
+
+	/* Battery replacement options */
+	int batt_replacement_option;
+	std::vector<int> batt_replacement_schedule;
+
+	/* Battery cycle costs */
+	int batt_cycle_cost_choice;
+	double batt_cycle_cost;
 };
 
 
 struct battstor
 {
 
-	battstor( compute_module &cm, bool setup_model, int replacement_option, size_t nrec, double dt_hr, batt_variables *batt_vars=0);
-	void initialize_automated_dispatch(ssc_number_t *pv=0, ssc_number_t *load=0);
+	battstor( compute_module &cm, bool setup_model, size_t nrec, double dt_hr, batt_variables *batt_vars=0);
+	void parse_configuration();
+	void initialize_automated_dispatch(std::vector<ssc_number_t> pv= std::vector<ssc_number_t>(), 
+									   std::vector<ssc_number_t> load= std::vector<ssc_number_t>(), 
+									   std::vector<ssc_number_t> cliploss= std::vector<ssc_number_t>());
 	~battstor();
 
 	void initialize_time(size_t year, size_t hour_of_year, size_t step);
-	void advance(compute_module &cm, double P_pv, double P_load);
+
+	/// Run the battery for the current timestep, given the PV power, load, and clipped power
+	void advance(compute_module &cm, double P_pv, double V_pv=0, double P_load=0, double P_pv_clipped=0);
+
+	/// Given a DC connected battery, set the shared PV and battery invertr
+	void setSharedInverter(SharedInverter * sharedInverter);
+
 	void outputs_fixed(compute_module &cm);
 	void outputs_topology_dependent(compute_module &cm);
 	void metrics(compute_module &cm);
-	void update_post_inverted(compute_module &cm, double P_gen_ac);
 	void update_grid_power(compute_module &cm, double P_gen_ac, double P_load_ac, size_t index);
-	bool check_iterate(size_t count);
 	void process_messages(compute_module &cm);
+
+	/*! Manual dispatch*/
+	bool manual_dispatch = false;
+
+	/*! Automated dispatch look ahead*/
+	bool look_ahead = false;
+
+	/*! Automated dispatch look behind*/
+	bool look_behind = false;
+
+	/*! Automated dispatch use custom input forecast (look ahead)*/
+	bool input_forecast = false;
+
+	/*! Automated dispatch override algorithm grid target calculation*/
+	bool input_target = false;
+
+	/*! Use user-input battery dispatch */
+	bool input_custom_dispatch = false;
 
 	// for user schedule
 	void force_replacement();
-	void check_replacement_schedule(int batt_replacement_option, size_t count_batt_replacement, ssc_number_t *batt_replacement);
+	void check_replacement_schedule();
 	void calculate_monthly_and_annual_outputs( compute_module &cm );
-
 
 	// time quantities
 	size_t step_per_hour;
+	size_t step_per_year;
 	size_t nyears;
 	size_t total_steps;
 	double _dt_hour;
@@ -213,32 +285,33 @@ struct battstor
 	capacity_t *capacity_model;
 	battery_t *battery_model;
 	battery_metrics_t *battery_metrics;
-	dispatch_manual_t *dispatch_model;
+	dispatch_t *dispatch_model;
 	losses_t *losses_model;
-	charge_controller *charge_control;
-
+	ChargeController *charge_control;
+	UtilityRate * utilityRate;
+	
 	bool en;
 	int chem;
 
 	batt_variables * batt_vars;
 	bool make_vars;
 	
-	bool dm_charge[6], dm_discharge[6], dm_gridcharge[6]; // manual dispatch
-	std::map<int, double> dm_percent_discharge; // <profile, discharge_percent>
-	std::map<int, double> dm_percent_gridcharge; // <profile, gridcharge_percent>
-	util::matrix_t<float> dm_dynamic_sched;
-	util::matrix_t<float> dm_dynamic_sched_weekend;
+	/*! Map of profile to discharge percent */
+	std::map<size_t, double> dm_percent_discharge; 
+
+	/*! Map of profile to gridcharge percent*/
+	std::map<size_t, double> dm_percent_gridcharge; 
+
 	std::vector<double> target_power;
 	std::vector<double> target_power_monthly;
 	
-	int topology;
-	double dc_dc, ac_dc, dc_ac;
-
 	double e_charge;
 	double e_discharge;
 
+	/*! Variables to store forecast data */
 	std::vector<double> pv_prediction;
 	std::vector<double> load_prediction;
+	std::vector<double> cliploss_prediction;
 	int prediction_index;
 
 	// outputs
@@ -267,6 +340,7 @@ struct battstor
 		*outBatteryToLoad,
 		*outGridToLoad,
 		*outGridPowerTarget,
+		*outBattPowerTarget,
 		*outPVToBatt,
 		*outGridToBatt,
 		*outPVToGrid,
@@ -280,7 +354,8 @@ struct battstor
 		*outAnnualGridImportEnergy,
 		*outAnnualGridExportEnergy,
 		*outAnnualEnergySystemLoss,
-		*outAnnualEnergyLoss;
+		*outAnnualEnergyLoss,
+		*outCostToCycle;
 
 	double outAverageCycleEfficiency;
 	double outAverageRoundtripEfficiency;
