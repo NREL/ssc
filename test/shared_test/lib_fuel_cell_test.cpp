@@ -68,19 +68,21 @@ TEST_F(FuelCellTest, AvailableFuel) {
 
 TEST_F(FuelCellTest, DispatchFixed) {
 
+	size_t sh = (size_t)startup_hours;
+
 	// Allow fuel cell to startup
-	for (size_t h = 0; h < (size_t)startup_hours; h++) {
-		fuelCellDispatch->runSingleTimeStep(h, 0, 0);
+	for (size_t h = 0; h < sh; h++) {
+		fuelCellDispatch->runSingleTimeStep(h, h, 0, 0);
 		EXPECT_EQ(fuelCell->getPower(), 0);
 	}
 
 	// Unit will take two hours to fully ramp to 40 kW
-	fuelCellDispatch->runSingleTimeStep((size_t)startup_hours, 0, 0);
+	fuelCellDispatch->runSingleTimeStep(sh, 0, 0);
 	EXPECT_EQ(fuelCell->getPower(), 20);
 
 	// Run at fixed output, which will go lower than min turndown
-	for (size_t h = (size_t)startup_hours + 1; h < (size_t)startup_hours + 10; h++) {
-		fuelCellDispatch->runSingleTimeStep(h, 20,10);
+	for (size_t h = sh + 1; h < sh + 10; h++) {
+		fuelCellDispatch->runSingleTimeStep(h, h, 20,10);
 		EXPECT_EQ(fuelCell->getPower(), unitPowerMax_kW * fixed_percent * 0.01);
 	}
 
@@ -88,42 +90,74 @@ TEST_F(FuelCellTest, DispatchFixed) {
 
 TEST_F(FuelCellTest, DispatchLoadFollow) {
 
+	size_t sh = (size_t)startup_hours;
+
 	fuelCellDispatch->setDispatchOption(FuelCellDispatch::FC_DISPATCH_OPTION::LOAD_FOLLOW);
 
 	// Allow fuel cell to startup
-	for (size_t h = 0; h < (size_t)startup_hours; h++) {
-		fuelCellDispatch->runSingleTimeStep(h, 0, 20);
+	for (size_t h = 0; h < sh; h++) {
+		fuelCellDispatch->runSingleTimeStep(h, h, 0, 20);
 		EXPECT_EQ(fuelCell->getPower(), 0);
 	}
 
 	// Dispatch fuel cell for net load of 20 kW
-	fuelCellDispatch->runSingleTimeStep((size_t)startup_hours, 20, 40);
+	fuelCellDispatch->runSingleTimeStep(sh, sh, 20, 40);
 	EXPECT_EQ(fuelCell->getPower(), 20);
 
 	// Dispatch fuel cell for net load of 60 kW, dynamic response should limit to 40 kW
-	fuelCellDispatch->runSingleTimeStep((size_t)startup_hours + 1, 20, 80);
+	fuelCellDispatch->runSingleTimeStep(sh + 1, sh + 1, 20, 80);
 	EXPECT_EQ(fuelCell->getPower(), 40);
 
 	// Dispatch fuel cell for net load of 60 kW, should be fully ramped by now
-	fuelCellDispatch->runSingleTimeStep((size_t)startup_hours + 2, 20, 80);
+	fuelCellDispatch->runSingleTimeStep(sh + 2, sh + 2, 20, 80);
 	EXPECT_EQ(fuelCell->getPower(), 60);
 }
 
 TEST_F(FuelCellTest, DispatchManual) {
 
+	size_t sh = (size_t)startup_hours;
+
 	fuelCellDispatch->setDispatchOption(FuelCellDispatch::FC_DISPATCH_OPTION::MANUAL);
 
 	// Allow fuel cell to startup
-	for (size_t h = 0; h < (size_t)startup_hours; h++) {
-		fuelCellDispatch->runSingleTimeStep(h, 0, 20);
+	for (size_t h = 0; h < sh; h++) {
+		fuelCellDispatch->runSingleTimeStep(h, h, 0, 20);
 		EXPECT_EQ(fuelCell->getPower(), 0);
 	}
 
 	// Dispatch fuel cell at 40% of max output (40 kW, limited by dynamic response)
-	fuelCellDispatch->runSingleTimeStep((size_t)startup_hours, 20, 40);
+	fuelCellDispatch->runSingleTimeStep(sh, sh, 20, 40);
 	EXPECT_EQ(fuelCell->getPower(), 20);
 
 	// Dispatch fuel cell at 40% of max output (40 kW)
-	fuelCellDispatch->runSingleTimeStep((size_t)startup_hours + 1, 20, 80);
+	fuelCellDispatch->runSingleTimeStep(sh + 1, sh + 1, 20, 80);
 	EXPECT_EQ(fuelCell->getPower(), 40);
+}
+
+TEST_F(FuelCellTest, DispatchInput) {
+
+	size_t sh = (size_t)startup_hours;
+
+	// Dispatch input is set to constant 50 kW
+	fuelCellDispatch->setDispatchOption(FuelCellDispatch::FC_DISPATCH_OPTION::INPUT);
+
+	// Allow fuel cell to startup
+	for (size_t h = 0; h < sh; h++) {
+		fuelCellDispatch->runSingleTimeStep(h, h, 0, 20);
+		EXPECT_EQ(fuelCell->getPower(), 0);
+	}
+
+	// Dispatch fuel cell at 50% of max output (50 kW, limited by dynamic response)
+	fuelCellDispatch->runSingleTimeStep(sh, sh, 0, 0);
+	EXPECT_EQ(fuelCell->getPower(), 20);
+
+	// Dispatch fuel cell at 50% of max output (50 kW, limited by dynamic response)
+	fuelCellDispatch->runSingleTimeStep(sh + 1, sh + 1, 0, 0);
+	EXPECT_EQ(fuelCell->getPower(), 40);
+
+	// Dispatch fuel cell at 50% of max output (50 kW)
+	for (size_t h = sh + 2; h < 50; h++) {
+		fuelCellDispatch->runSingleTimeStep(h, h, 0, 0);
+		EXPECT_EQ(fuelCell->getPower(), 50);
+	}
 }

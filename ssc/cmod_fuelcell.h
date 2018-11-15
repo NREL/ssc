@@ -80,6 +80,7 @@ public:
 		shutdownOption(cm.as_integer("fuelcell_operation_options")),
 		numberOfUnits(cm.as_integer("fuelcell_number_of_units")),
 		dispatchOption(cm.as_integer("fuelcell_dispatch_choice")),
+		dispatch_kW(cm.as_vector_double("fuelcell_dispatch")),
 		fixed_percent(cm.as_double("fuelcell_fixed_pct")),
 		canCharge(cm.as_vector_bool("dispatch_manual_fuelcellcharge")),
 		canDischarge(cm.as_vector_bool("dispatch_manual_fuelcelldischarge")),
@@ -135,6 +136,7 @@ public:
 	size_t numberOfUnits;
 	int dispatchOption;
 	double fixed_percent;
+	std::vector<double> dispatch_kW;
 	std::vector<bool> canCharge;
 	std::vector<bool> canDischarge;
 	std::vector<double> discharge_percent;

@@ -28,6 +28,7 @@ protected:
 	double dt_hour;
 	double fixed_percent;
 
+	std::vector<double> dispatchInput_kW;
 	std::vector<bool> canCharge;
 	std::vector<bool> canDischarge;
 	std::map<size_t, double> discharge_percent;
@@ -61,6 +62,11 @@ protected:
 		discharge_percent[1] = 40;
 		scheduleWeekday.resize_fill(12, 24, 1);
 		scheduleWeekend.resize_fill(12, 24, 1);
+
+		for (size_t t = 0; t < 8760; t++) {
+			dispatchInput_kW.push_back(50);
+		}
+		
 	}
 };
 
@@ -87,7 +93,7 @@ public:
 		fuelCell = new FuelCell(unitPowerMax_kW, unitPowerMin_kW, startup_hours, dynamicResponse_kWperHour, degradation_kWperHour, degradationRestart_kW,
 			replacement_percent, efficiencyTable, lowerHeatingValue_BtuPerFt3, higherHeatingValue_BtuPerFt3, availableFuel_Mcf, shutdownOption, dt_hour);
 		fuelCellDispatch = new FuelCellDispatch(fuelCell, numberOfUnits, dispatchOption, shutdownOption, dt_hour, fixed_percent,
-			canCharge, canDischarge, discharge_percent, scheduleWeekday, scheduleWeekend);
+			dispatchInput_kW, canCharge, canDischarge, discharge_percent, scheduleWeekday, scheduleWeekend);
 
 	}
 	void TearDown()
