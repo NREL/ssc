@@ -1369,7 +1369,7 @@ public:
 	
 						batt.initialize_time(year, hour, jj);
 						batt.check_replacement_schedule();
-						batt.advance(*this, power_input[year_idx], 0,  power_load[year_idx], 0);
+						batt.advance(*this, power_input[year_idx], 0, power_load[year_idx], 0);
 						p_gen[lifetime_idx] = batt.outGenPower[lifetime_idx];
 						annual_energy += p_gen[lifetime_idx] * batt._dt_hour;
 						lifetime_idx++;
