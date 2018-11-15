@@ -611,7 +611,8 @@ namespace util
 
 		block_t(size_t nr, size_t nc, size_t nl, const T &val)
 		{
-			t_array = NULL;
+            n_rows = n_cols = n_layers = 0;
+            t_array = NULL;
 			if (nr < 1) nr = 1;
 			if (nc < 1) nc = 1;
 			if (nl < 1) nl = 1;
@@ -630,6 +631,7 @@ namespace util
 			//Do not use clear before calling these functions.
 			if (t_array) delete [] t_array;
 			n_layers = n_rows = n_cols = 0;
+            t_array = new T[1];
 		}
 		
 		void copy( const block_t &rhs )
