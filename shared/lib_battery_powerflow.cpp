@@ -155,8 +155,10 @@ void BatteryPowerFlow::calculateACConnected()
 		P_pv_to_load_ac = P_pv_ac;
 		if (P_pv_to_load_ac > P_load_ac) {
 			P_pv_to_load_ac = P_load_ac;
-
 		}
+		// Fuel cell goes to load next
+		P_fuelcell_to_load_ac = std::fmin(P_load_ac - P_pv_to_load_ac, P_fuelcell_ac);
+
 		// Excess PV can go to battery
 		if (m_BatteryPower->canPVCharge){
 			P_pv_to_batt_ac = fabs(P_battery_ac);
@@ -167,7 +169,7 @@ void BatteryPowerFlow::calculateACConnected()
 		}
 		// Fuelcell can also charge battery
 		if (m_BatteryPower->canFuelCellCharge) {
-			P_fuelcell_to_batt_ac = std::fmin(std::fmax(0, fabs(P_battery_ac) - P_pv_to_batt_ac), P_fuelcell_ac);
+			P_fuelcell_to_batt_ac = std::fmin(std::fmax(0, fabs(P_battery_ac) - P_pv_to_batt_ac), P_fuelcell_ac - P_fuelcell_to_load_ac);
 		}
 		// Grid can also charge battery
 		if (m_BatteryPower->canGridCharge){
@@ -175,6 +177,7 @@ void BatteryPowerFlow::calculateACConnected()
 		}
 
 		P_pv_to_grid_ac = P_pv_ac - P_pv_to_batt_ac - P_pv_to_load_ac;
+		P_fuelcell_to_grid_ac = P_fuelcell_ac - P_fuelcell_to_load_ac - P_fuelcell_to_batt_ac;
 
 		// Error checking for battery charging
 		if (P_pv_to_batt_ac + P_grid_to_batt_ac + P_fuelcell_to_batt_ac != fabs(P_battery_ac)) {

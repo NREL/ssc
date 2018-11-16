@@ -2,6 +2,7 @@
 
 #include "lib_fuel_cell.h"
 #include "lib_fuel_cell_dispatch.h"
+#include "lib_power_electronics.h"
 
 
 FuelCellDispatch::FuelCellDispatch(FuelCell * fuelCell, size_t numberOfUnits, int dispatchOption, int shutdownOption, double dt_hour, double fixed_percent, 
@@ -16,6 +17,11 @@ FuelCellDispatch::FuelCellDispatch(FuelCell * fuelCell, size_t numberOfUnits, in
 	for (auto percent = m_discharge_percent.begin(); percent != m_discharge_percent.end(); percent++) {
 		percent->second *= 0.01;
 	}
+
+	std::unique_ptr<BatteryPowerFlow> tmp(new BatteryPowerFlow(dt_hour));
+	m_batteryPowerFlow = std::move(tmp);
+	m_batteryPower = m_batteryPowerFlow->getBatteryPower();
+	m_batteryPower->connectionMode = ChargeController::AC_CONNECTED;
 
 	// figure out for multiple fuel cells 
 	/*
@@ -77,7 +83,10 @@ void FuelCellDispatch::runSingleTimeStep(size_t hour_of_year, size_t year_idx, d
 			m_powerTotal_kW += m_fuelCellVector[fc]->getPower();
 		}
 	}
-	
+	m_batteryPower->powerPV = powerSystem_kWac;
+	m_batteryPower->powerLoad = powerLoad_kWac;
+	m_batteryPower->powerFuelCell = m_powerTotal_kW;
+	m_batteryPowerFlow->calculate();
 }
 
 void FuelCellDispatch::setDispatchOption(int dispatchOption) {

@@ -84,8 +84,11 @@ TEST_F(FuelCellTest, DispatchFixed) {
 	for (size_t h = sh + 1; h < sh + 10; h++) {
 		fuelCellDispatch->runSingleTimeStep(h, h, 20,10);
 		EXPECT_EQ(fuelCell->getPower(), unitPowerMax_kW * fixed_percent * 0.01);
+		EXPECT_EQ(fuelCellDispatch->getBatteryPower()->powerFuelCellToLoad, 0);
+		EXPECT_EQ(fuelCellDispatch->getBatteryPower()->powerFuelCellToGrid, 40);
+		EXPECT_EQ(fuelCellDispatch->getBatteryPower()->powerPVToLoad, 10);
+		EXPECT_EQ(fuelCellDispatch->getBatteryPower()->powerPVToGrid, 10);
 	}
-
 }
 
 TEST_F(FuelCellTest, DispatchLoadFollow) {

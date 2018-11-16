@@ -177,6 +177,8 @@ protected:
 	// outputs
 	ssc_number_t * p_gen_kW;
 	ssc_number_t * p_fuelCellPower_kW;
+	ssc_number_t * p_fuelCellToGrid_kW;
+	ssc_number_t * p_fuelCellToLoad_kW;
 };
 
 #endif

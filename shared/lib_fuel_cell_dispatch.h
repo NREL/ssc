@@ -2,6 +2,7 @@
 #define _LIB_FUEL_CELL_DISPATCH_
 
 #include "lib_fuel_cell.h"
+#include "lib_battery_powerflow.h"
 #include "lib_util.h"
 
 class FuelCellDispatch
@@ -32,10 +33,19 @@ public:
 	/// Get the total fuel cell power output kW
 	double getPower();
 
+	/// Return a pointer to the underlying calculated power quantities
+	BatteryPower * getBatteryPower() { return m_batteryPower; };
+
 	/// Dispatch option enumerations
 	enum FC_DISPATCH_OPTION { FIXED, LOAD_FOLLOW, MANUAL, INPUT };
 
 private:
+
+	// allocated and managed internally
+	std::unique_ptr<BatteryPowerFlow> m_batteryPowerFlow;
+
+	// managed by BatteryPowerFlow
+	BatteryPower * m_batteryPower;
 
 	double m_powerTotal_kW;
 	size_t m_numberOfUnits;

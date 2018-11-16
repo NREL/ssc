@@ -35,7 +35,7 @@
 *  5. The name of the copyright holder, contributors, the United States Government, the United States
 *  Department of Energy, or any of their employees may not be used to endorse or promote products
 *  derived from this software without specific prior written permission.
-*
+* 
 *  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
 *  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
 *  FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER,
@@ -99,7 +99,9 @@ var_info_invalid };
 var_info vtab_fuelcell_output[] = {
 
 	{ SSC_OUTPUT,       SSC_ARRAY,       "gen",                                "System power generated",                "kW",        "",                 "Fuel Cell",                  "",                        "",                              "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "fuelcell_power",                     "Electricity from fuel cell(s)",               "kW",        "",                 "Fuel Cell",                  "",                        "",                              "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "fuelcell_power",                     "Electricity from fuel cell",               "kW",        "",                 "Fuel Cell",                  "",                        "",                              "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "fuelcell_to_load",                   "Electricity to load from fuel cell",               "kW",        "",                 "Fuel Cell",                  "",                        "",                              "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "fuelcell_to_grid",                   "Electricity to grid from fuel cell",               "kW",        "",                 "Fuel Cell",                  "",                        "",                              "" },
 
 var_info_invalid };
 
@@ -143,6 +145,8 @@ void cm_fuelcell::exec() throw (general_error)
 			for (size_t s = 0; s < fcVars->stepsPerHour; s++) {
 				fuelCellDispatch->runSingleTimeStep(h, year_idx, fcVars->systemGeneration_kW[idx], fcVars->electricLoad_kW[year_idx]);
 				p_fuelCellPower_kW[idx] = (ssc_number_t)fuelCellDispatch->getPower();
+				p_fuelCellToGrid_kW[idx] = (ssc_number_t)(fuelCellDispatch->getBatteryPower()->powerFuelCellToGrid);
+				p_fuelCellToLoad_kW[idx] = (ssc_number_t)(fuelCellDispatch->getBatteryPower()->powerFuelCellToLoad);
 				p_gen_kW[idx] = (ssc_number_t)(fcVars->systemGeneration_kW[idx]) + p_fuelCellPower_kW[idx];
 				idx++;
 				year_idx;
@@ -154,6 +158,9 @@ void cm_fuelcell::exec() throw (general_error)
 void cm_fuelcell::allocateOutputs()
 {
 	p_fuelCellPower_kW = allocate("fuelcell_power", fcVars->numberOfLifetimeRecords);
+	p_fuelCellToGrid_kW = allocate("fuelcell_to_grid", fcVars->numberOfLifetimeRecords);
+	p_fuelCellToLoad_kW = allocate("fuelcell_to_load", fcVars->numberOfLifetimeRecords);
+
 	p_gen_kW = allocate("gen", fcVars->numberOfLifetimeRecords);
 
 }

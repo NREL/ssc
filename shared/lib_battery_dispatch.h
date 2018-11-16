@@ -187,7 +187,7 @@ protected:
 	// allocated and managed internally
 	std::unique_ptr<BatteryPowerFlow> m_batteryPowerFlow;
 	
-	// managed elsewhere
+	// managed by BatteryPowerFlow
 	BatteryPower * m_batteryPower;
 
 	// Charge & current limits controllers
