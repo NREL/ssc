@@ -36,6 +36,7 @@ FuelCellDispatch::FuelCellDispatch(FuelCell * fuelCell, size_t numberOfUnits, in
 void FuelCellDispatch::runSingleTimeStep(size_t hour_of_year, size_t year_idx, double powerSystem_kWac, double powerLoad_kWac) {
 
 	m_powerTotal_kW = 0;
+	m_fuelConsumedTotal_MCf = 0;
 
 	// Specified to run at fixed percent of original unit max kW
 	if (m_dispatchOption == FuelCellDispatch::FC_DISPATCH_OPTION::FIXED) {
@@ -43,6 +44,7 @@ void FuelCellDispatch::runSingleTimeStep(size_t hour_of_year, size_t year_idx, d
 			double power_kW = m_fuelCellVector[fc]->getMaxPowerOriginal() * m_fixed_percent;
 			m_fuelCellVector[fc]->runSingleTimeStep(power_kW);
 			m_powerTotal_kW += m_fuelCellVector[fc]->getPower();
+			m_fuelConsumedTotal_MCf += m_fuelCellVector[fc]->getFuelConsumption();
 		}
 	}
 	// Specified to follow load, fuel cell attempts to make up difference of system - load
@@ -51,6 +53,7 @@ void FuelCellDispatch::runSingleTimeStep(size_t hour_of_year, size_t year_idx, d
 			double power_kW = fmax(0, powerLoad_kWac - powerSystem_kWac);
 			m_fuelCellVector[fc]->runSingleTimeStep(power_kW);
 			m_powerTotal_kW += m_fuelCellVector[fc]->getPower();
+			m_fuelConsumedTotal_MCf += m_fuelCellVector[fc]->getFuelConsumption();
 		}
 	}
 	// Specified to follow manual dispatch input (add logic)
@@ -72,6 +75,7 @@ void FuelCellDispatch::runSingleTimeStep(size_t hour_of_year, size_t year_idx, d
 			}
 
 			m_fuelCellVector[fc]->runSingleTimeStep(power_kW);
+			m_fuelConsumedTotal_MCf += m_fuelCellVector[fc]->getFuelConsumption();
 			m_powerTotal_kW += m_fuelCellVector[fc]->getPower();
 		}
 	}
@@ -80,6 +84,7 @@ void FuelCellDispatch::runSingleTimeStep(size_t hour_of_year, size_t year_idx, d
 		for (size_t fc = 0; fc < m_fuelCellVector.size(); fc++) {
 			double power_kW = m_dispatchInput_kW[year_idx];
 			m_fuelCellVector[fc]->runSingleTimeStep(power_kW);
+			m_fuelConsumedTotal_MCf += m_fuelCellVector[fc]->getFuelConsumption();
 			m_powerTotal_kW += m_fuelCellVector[fc]->getPower();
 		}
 	}
@@ -95,4 +100,7 @@ void FuelCellDispatch::setDispatchOption(int dispatchOption) {
 
 double FuelCellDispatch::getPower(){
 	return m_powerTotal_kW;
+}
+double FuelCellDispatch::getFuelConsumption() {
+	return m_fuelConsumedTotal_MCf;
 }

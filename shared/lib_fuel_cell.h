@@ -94,6 +94,7 @@ protected:
 	double m_lowerHeatingValue_BtuPerFt3;
 	double m_higherHeatingValue_BtuPerFt3;
 	double m_availableFuel_MCf;
+	double m_fuelConsumed_MCf;
 	int m_shutdownOption;
 
 	// calculated

@@ -148,8 +148,8 @@ void FuelCell::checkMaxLimit() {
 void FuelCell::checkAvailableFuel() {
 
 	double percentLoad = getPercentLoad();
-	double fuelConsumption = calculateFuelConsumptionMCf(percentLoad);
-	m_availableFuel_MCf -= fuelConsumption;
+	double fuelConsumed = calculateFuelConsumptionMCf(percentLoad);
+	m_availableFuel_MCf -= fuelConsumed;
 
 	if (m_availableFuel_MCf <= 0) {
 		m_startedUp = false;

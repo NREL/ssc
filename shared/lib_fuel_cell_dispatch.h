@@ -33,6 +33,9 @@ public:
 	/// Get the total fuel cell power output kW
 	double getPower();
 
+	/// Get the fuel consumed during this time step MCf
+	double getFuelConsumption();
+
 	/// Return a pointer to the underlying calculated power quantities
 	BatteryPower * getBatteryPower() { return m_batteryPower; };
 
@@ -48,6 +51,8 @@ private:
 	BatteryPower * m_batteryPower;
 
 	double m_powerTotal_kW;
+	double m_fuelConsumedTotal_MCf;
+
 	size_t m_numberOfUnits;
 	int m_dispatchOption;
 	int m_shutdownOption;
