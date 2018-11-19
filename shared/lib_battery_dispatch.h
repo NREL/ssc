@@ -145,11 +145,6 @@ public:
 		return m_batteryPower;
 	};
 
-	/// Return a pointer to the object which calculates the battery power flow
-	BatteryPowerFlow * getBatteryPowerFlow() {
-		return m_batteryPowerFlow.get();
-	};
-
 protected:
 
 	/// Helper function to run common dispatch tasks.  Requires that m_batteryPower->powerBattery is previously defined
@@ -184,9 +179,6 @@ protected:
 	*/
 	int _mode; 
 
-	// allocated and managed internally
-	std::unique_ptr<BatteryPowerFlow> m_batteryPowerFlow;
-	
 	// managed by BatteryPowerFlow
 	BatteryPower * m_batteryPower;
 

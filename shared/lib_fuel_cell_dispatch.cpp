@@ -18,9 +18,7 @@ FuelCellDispatch::FuelCellDispatch(FuelCell * fuelCell, size_t numberOfUnits, in
 		percent->second *= 0.01;
 	}
 
-	std::unique_ptr<BatteryPowerFlow> tmp(new BatteryPowerFlow(dt_hour));
-	m_batteryPowerFlow = std::move(tmp);
-	m_batteryPower = m_batteryPowerFlow->getBatteryPower();
+	m_batteryPower = BatteryPowerFlow::Instance(dt_hour).getBatteryPower();
 	m_batteryPower->connectionMode = ChargeController::AC_CONNECTED;
 
 	// figure out for multiple fuel cells 
@@ -86,7 +84,7 @@ void FuelCellDispatch::runSingleTimeStep(size_t hour_of_year, size_t year_idx, d
 	m_batteryPower->powerPV = powerSystem_kWac;
 	m_batteryPower->powerLoad = powerLoad_kWac;
 	m_batteryPower->powerFuelCell = m_powerTotal_kW;
-	m_batteryPowerFlow->calculate();
+	BatteryPowerFlow::Instance(dt_hour).calculate();
 }
 
 void FuelCellDispatch::setDispatchOption(int dispatchOption) {

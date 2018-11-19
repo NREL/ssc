@@ -9,7 +9,6 @@
 class BatteryPowerFlowTest : public ::testing::Test
 {
 protected:
-	BatteryPowerFlow * m_batteryPowerFlow;
 	BatteryPower * m_batteryPower;
 	SharedInverter * m_sharedInverter;
 	sandia_inverter_t * sandia;
@@ -23,8 +22,8 @@ public:
 	{
 		error = 0.02;
 		double dtHour = 1.0;
-		m_batteryPowerFlow = new BatteryPowerFlow(dtHour);
-		m_batteryPower = m_batteryPowerFlow->getBatteryPower();
+		BatteryPowerFlow::Instance(dtHour).reset();
+		m_batteryPower = BatteryPowerFlow::Instance(dtHour).getBatteryPower();
 		m_batteryPower->canDischarge = false;
 		m_batteryPower->canPVCharge = false;
 		m_batteryPower->canGridCharge = false;
@@ -54,8 +53,6 @@ public:
 	}
 	void TearDown()
 	{
-		if (m_batteryPowerFlow)
-			delete m_batteryPowerFlow;
 		if (m_sharedInverter)
 			delete m_sharedInverter;
 		if (sandia)

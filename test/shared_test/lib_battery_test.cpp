@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 #include <lib_battery.h>
 
-class BatteryProperties : public ::testing::Test
+class GenericBatteryProperties : public ::testing::Test
 {
 protected:
 	
@@ -20,20 +20,22 @@ protected:
 	}
 };
 
-class LithiumIonBattery : public BatteryProperties
+class LithiumIonBattery : public GenericBatteryProperties
 {
 protected:
 	capacity_lithium_ion_t * capacity_model; 
 
 	void SetUp()
 	{
-		BatteryProperties::SetUp();
+		GenericBatteryProperties::SetUp();
 		capacity_model = new capacity_lithium_ion_t(q, SOC_init, SOC_max, SOC_min);
 	}
 	void TearDown()
 	{
-		if (capacity_model)
+		if (capacity_model) {
 			delete capacity_model;
+			capacity_model = nullptr;
+		}
 	}
 };
 
@@ -84,7 +86,7 @@ TEST_F(LithiumIonBattery, CapacityTest)
 	EXPECT_EQ(capacity_model->SOC(), SOC_min);
 }
 
-class LeadAcidDC4006 : public BatteryProperties
+class LeadAcidDC4006 : public GenericBatteryProperties
 {
 protected:
 	double q20;
@@ -94,7 +96,7 @@ protected:
 
 	void SetUp()
 	{
-		BatteryProperties::SetUp();
+		GenericBatteryProperties::SetUp();
 
 		q20 = 415;
 		q10 = 374;
