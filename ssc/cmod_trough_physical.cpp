@@ -94,8 +94,11 @@ static var_info _cm_vtab_trough_physical[] = {
     { SSC_INPUT,        SSC_NUMBER,      "m_dot_htfmin",              "Minimum loop HTF flow rate",                                                       "kg/s",         "",               "solar_field",    "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "m_dot_htfmax",              "Maximum loop HTF flow rate",                                                       "kg/s",         "",               "solar_field",    "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "Fluid",                     "Field HTF fluid ID number",                                                        "none",         "",               "solar_field",    "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "wind_stow_speed",           "Trough wind stow speed",                                                           "m/s",          "",               "solar_field",    "?=50",                    "",                      "" },
     { SSC_INPUT,        SSC_MATRIX,      "field_fl_props",            "User defined field fluid property data",                                           "-",            "",               "controller",     "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "store_fluid",               "Material number for storage fluid",                              "-",            "",             "controller",     "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_MATRIX,      "store_fl_props",            "User defined storage fluid property data",                       "-",            "",             "controller",     "*",                       "",                      "" },
+
+    { SSC_INPUT,        SSC_NUMBER,      "wind_stow_speed",           "Trough wind stow speed",                                                           "m/s",          "",               "solar_field",    "?=50",                    "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "T_fp",                      "Freeze protection temperature (heat trace activation temperature)",                "none",         "",               "solar_field",    "*",                       "",                      "" },
     //{ SSC_INPUT,        SSC_NUMBER,      "V_hdr_max",                 "Maximum HTF velocity in the header at design",                                     "W/m2",         "",               "solar_field",    "*",                       "",                      "" },
     //{ SSC_INPUT,        SSC_NUMBER,      "V_hdr_min",                 "Minimum HTF velocity in the header at design",                                     "m/s",          "",               "solar_field",    "*",                       "",                      "" },
@@ -259,6 +262,10 @@ static var_info _cm_vtab_trough_physical[] = {
     { SSC_INPUT,        SSC_NUMBER,      "T_htf_cold_des",            "Cold HTF inlet temperature at design conditions",                                  "C",            "",               "system_design",   "*",                      "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "T_htf_hot_des",             "Hot HTF outlet temperature at design conditions",                                  "C",            "",               "system_design",   "*",                      "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "rec_htf",                   "17: Salt (60% NaNO3, 40% KNO3) 10: Salt (46.5% LiF 11.5% NaF 42% KF) 50: Lookup tables", "",       "",               "receiver",        "*",                      "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "is_hx",                     "Heat exchanger (HX) exists (1=yes, 0=no)" ,                      "-",            "",             "controller",     "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "dt_hot",                    "Hot side HX approach temp",                                      "C",            "",             "controller",     "*",                       "",                      "" },
+    //{ SSC_INPUT,        SSC_NUMBER,      "dt_cold",                   "Cold side HX approach temp",                                     "C",            "",             "controller",     "*",                       "",                      "" },
+    //{ SSC_INPUT,        SSC_NUMBER,      "T_tank_cold_ini",           "Initial cold tank fluid tmeperature",                            "C",            "",             "controller",     "*",                       "",                      "" },
 
     // *************************************************************************************************
     //    OUTPUTS
@@ -745,33 +752,31 @@ public:
         // ********************************
         C_csp_two_tank_tes storage;
         C_csp_two_tank_tes::S_params *tes = &storage.ms_params;
-            // Hardcode NO TES for now
-        tes->m_field_fl = c_trough.m_Fluid; //[-]
-        tes->m_field_fl_props = c_trough.m_field_fl_props;  //[-]
-        tes->m_tes_fl = tes->m_field_fl;    //[-]
-        tes->m_tes_fl_props = c_trough.m_field_fl_props;    //[-]
-        tes->m_is_hx = false;       //[-]
-        //tes->m_W_dot_pc_design = c_heat_sink.ms_params.m_q_dot_des; //[MWt]
-        tes->m_eta_pc = 1.0;
-        tes->m_solarm = as_double("solar_mult");    //[-]
-
-        tes->m_ts_hours = as_double("tshours");     //[hr]
-    
-        tes->m_h_tank = as_double("h_tank");        //[m]
-        tes->m_u_tank = as_double("u_tank");        //[W/m^2-K]
-        tes->m_tank_pairs = as_integer("tank_pairs");       //[-]
-        tes->m_hot_tank_Thtr = as_double("hot_tank_Thtr");  //[C]
-        tes->m_hot_tank_max_heat = as_double("hot_tank_max_heat");      //[MWt]
-        tes->m_cold_tank_Thtr = as_double("cold_tank_Thtr");    //[C]
+        tes->m_field_fl           = c_trough.m_Fluid;                       //[-]
+        tes->m_field_fl_props     = c_trough.m_field_fl_props;              //[-]
+        tes->m_tes_fl             = as_integer("store_fluid");              //[-]
+        tes->m_tes_fl_props       = as_matrix("store_fl_props");            //[-]
+        tes->m_is_hx              = as_boolean("is_hx");                    //[-]
+        tes->m_W_dot_pc_design    = as_double("P_ref");                     //[MWt]
+        tes->m_eta_pc             = as_double("design_eff");                //[-]
+        tes->m_solarm             = as_double("solar_mult");                //[-]
+        tes->m_ts_hours           = as_double("tshours");                   //[hr]
+        tes->m_h_tank             = as_double("h_tank");                    //[m]
+        tes->m_u_tank             = as_double("u_tank");                    //[W/m^2-K]
+        tes->m_tank_pairs         = as_integer("tank_pairs");               //[-]
+        tes->m_hot_tank_Thtr      = as_double("hot_tank_Thtr");             //[C]
+        tes->m_hot_tank_max_heat  = as_double("hot_tank_max_heat");         //[MWt]
+        tes->m_cold_tank_Thtr     = as_double("cold_tank_Thtr");            //[C]
         tes->m_cold_tank_max_heat = as_double("cold_tank_max_heat");        //[MWt]
-        tes->m_dt_hot = 0.0;                                // MSPT assumes direct storage, so no user input here: hardcode = 0.0
-        tes->m_T_field_in_des = T_loop_in_des;      //[C]
-        tes->m_T_field_out_des = T_loop_out_des;    //[C]
-        tes->m_T_tank_hot_ini = T_loop_out_des;     //[C]
-        tes->m_T_tank_cold_ini = T_loop_in_des;     //[C]
-        tes->m_h_tank_min = as_double("h_tank_min");        //[m]
-        tes->m_f_V_hot_ini = as_double("init_hot_htf_percent");     //[-]
-        tes->m_htf_pump_coef = as_double("pb_pump_coef");       //[kWe/kg/s]
+        tes->m_dt_hot             = as_double("dt_hot");                    //[C]
+        //tes->m_dt_cold            = as_double("dt_cold");                   //[C]
+        tes->m_T_field_in_des     = T_loop_in_des;                          //[C]
+        tes->m_T_field_out_des    = T_loop_out_des;                         //[C]
+        tes->m_T_tank_hot_ini     = T_loop_out_des;                         //[C]
+        tes->m_T_tank_cold_ini    = T_loop_in_des;                          //[C]
+        tes->m_h_tank_min         = as_double("h_tank_min");                //[m]
+        tes->m_f_V_hot_ini        = as_double("init_hot_htf_percent");      //[-]
+        tes->m_htf_pump_coef      = as_double("pb_pump_coef");              //[kWe/kg/s]
 
 
         // ********************************
