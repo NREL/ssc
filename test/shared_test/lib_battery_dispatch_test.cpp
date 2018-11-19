@@ -14,13 +14,13 @@ TEST_F(BatteryDispatchTest, ManualDispatch)
 	batteryPower->connectionMode = ChargeController::AC_CONNECTED;
 
 	// Test max charge power constraint
-	P_pv = 1000; V_pv = 600; 
-	dispatchManual->dispatch(year, hour_of_year, step_of_hour, P_pv, V_pv, P_load, P_clipped);
+	batteryPower->powerPV = 1000; batteryPower->voltageSystem = 600;
+	dispatchManual->dispatch(year, hour_of_year, step_of_hour);
 	EXPECT_NEAR(batteryPower->powerBattery, -powerChargeMax, 2.0);
 
 	// Test max discharge power constraint
-	P_pv = 0; V_pv = 600; P_load = 1000;
-	dispatchManual->dispatch(year, hour_of_year, step_of_hour, P_pv, V_pv, P_load, P_clipped);
+	batteryPower->powerPV = 0; batteryPower->voltageSystem = 600; batteryPower->powerLoad = 1000;
+	dispatchManual->dispatch(year, hour_of_year, step_of_hour);
 	EXPECT_NEAR(batteryPower->powerBattery, powerDischargeMax, 2.0);
 
 }

@@ -25,6 +25,7 @@ public:
 		double dtHour = 1.0;
 		m_batteryPowerFlow = new BatteryPowerFlow(dtHour);
 		m_batteryPower = m_batteryPowerFlow->getBatteryPower();
+		m_batteryPower->reset();
 		m_batteryPower->canDischarge = false;
 		m_batteryPower->canPVCharge = false;
 		m_batteryPower->canGridCharge = false;

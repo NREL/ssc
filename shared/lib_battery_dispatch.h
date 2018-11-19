@@ -102,12 +102,7 @@ public:
 	/// Public API to run the battery dispatch model for the current timestep, given the system power, and optionally the electric load and amount of system clipping
 	virtual void dispatch(size_t year,
 		size_t hour_of_year,
-		size_t step,
-		double P_system,
-		double V_system,
-		double P_load_ac=0,
-		double P_system_clipped = 0
-		) = 0;
+		size_t step) = 0;
 
 	/// Method to check any operational constraints and modify the battery current if needed
 	virtual bool check_constraints(double &I, size_t count);
@@ -154,9 +149,6 @@ protected:
 
 	/// Helper function to run common dispatch tasks.  Requires that m_batteryPower->powerBattery is previously defined
 	virtual void runDispatch(size_t year, size_t hour, size_t step);
-
-	/// Helper function to internally set up the dispatch model
-	virtual void prepareDispatch(size_t hour_of_year, size_t step, double P_system, double V_system, double P_load_ac = 0, double P_pv_dc_clipped = 0);
 
 	// Initialization help
 	void init(battery_t * Battery,
@@ -243,17 +235,12 @@ public:
 	/// Public API to run the battery dispatch model for the current timestep, given the system power, and optionally the electric load, amount of system clipping, or specified battery power
 	virtual void dispatch(size_t year,
 		size_t hour_of_year,
-		size_t step,
-		double P_system,
-		double V_system = 0,
-		double P_load_ac = 0,
-		double P_system_clipped = 0
-	);
+		size_t step);
 
 protected:
 
 	/// Helper function to internally set up the dispatch model
-	virtual void prepareDispatch(size_t hour_of_year, size_t step, double P_system, double V_system, double P_load_ac = 0, double P_pv_dc_clipped = 0);
+	virtual void prepareDispatch(size_t hour_of_year, size_t step);
 
 	// Initialization help
 	void init(util::matrix_t<float> dm_dynamic_sched,
@@ -358,11 +345,7 @@ public:
 	/// Public API to run the battery dispatch model for the current timestep, given the system power, and optionally the electric load, amount of system clipping, or specified battery power
 	virtual void dispatch(size_t year,
 		size_t hour_of_year,
-		size_t step,
-		double P_system,
-		double V_system,
-		double P_load_ac = 0,
-		double P_system_clipped = 0);
+		size_t step);
 
 	/*! Compute the updated power to send to the battery over the next N hours */
 	virtual void update_dispatch(size_t hour_of_year, size_t step, size_t idx)=0;
@@ -473,11 +456,7 @@ public:
 	/// Public API to run the battery dispatch model for the current timestep, given the system power, and optionally the electric load, amount of system clipping, or specified battery power
 	virtual void dispatch(size_t year,
 		size_t hour_of_year,
-		size_t step,
-		double P_system,
-		double V_system,
-		double P_load_ac = 0,
-		double P_system_clipped = 0);
+		size_t step);
 
 	/*! Compute the updated power to send to the battery over the next N hours */
 	void update_dispatch(size_t hour_of_year, size_t step, size_t idx);
@@ -584,11 +563,7 @@ public:
 	/// Public API to run the battery dispatch model for the current timestep, given the system power, and optionally the electric load, amount of system clipping, or specified battery power
 	virtual void dispatch(size_t year,
 		size_t hour_of_year,
-		size_t step,
-		double P_system,
-		double V_system,
-		double P_load_ac = 0,
-		double P_system_clipped = 0);
+		size_t step);
 
 	/*! Compute the updated power to send to the battery over the next N hours */
 	void update_dispatch(size_t hour_of_year, size_t step, size_t idx);

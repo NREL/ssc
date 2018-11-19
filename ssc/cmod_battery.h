@@ -314,6 +314,9 @@ struct battstor
 	std::vector<double> cliploss_prediction;
 	int prediction_index;
 
+	/*! If fuel cell is attached */
+	std::vector<double> fuelcellPower;
+
 	// outputs
 	ssc_number_t
 		*outTotalCharge,

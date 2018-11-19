@@ -1,39 +1,26 @@
 #include <gtest/gtest.h>
 #include <lib_battery.h>
 
-class BatteryProperties : public ::testing::Test
-{
-protected:
-	
-	// general capacity
-	double q;
-	double SOC_min;
-	double SOC_max;
-	double SOC_init;
 
-	void SetUp()
-	{
-		q = 100;
-		SOC_init = 100;
-		SOC_min = 20;
-		SOC_max = 100;
-	}
-};
 
-class LithiumIonBattery : public BatteryProperties
+class LithiumIonBattery : public ::testing::Test
 {
 protected:
 	capacity_lithium_ion_t * capacity_model; 
+	double q = 100;
+	double SOC_init = 100;
+	double SOC_min = 20;
+	double SOC_max = 100;
 
 	void SetUp()
 	{
-		BatteryProperties::SetUp();
 		capacity_model = new capacity_lithium_ion_t(q, SOC_init, SOC_max, SOC_min);
 	}
-	void TearDown()
-	{
-		if (capacity_model)
+	void TearDown(){
+		if (capacity_model) {
 			delete capacity_model;
+			capacity_model = nullptr;
+		}
 	}
 };
 
@@ -84,18 +71,24 @@ TEST_F(LithiumIonBattery, CapacityTest)
 	EXPECT_EQ(capacity_model->SOC(), SOC_min);
 }
 
-class LeadAcidDC4006 : public BatteryProperties
+class LeadAcidDC4006 : public ::testing::Test
 {
 protected:
 	double q20;
 	double t1;
 	double q1;
 	double q10;
-
+	double q ;
+	double SOC_init ;
+	double SOC_min;
+	double SOC_max;
 	void SetUp()
 	{
-		BatteryProperties::SetUp();
-
+	
+		q = 100;
+		SOC_init = 100;
+		SOC_min = 20;
+		SOC_max = 100;
 		q20 = 415;
 		q10 = 374;
 		q1 = 340;

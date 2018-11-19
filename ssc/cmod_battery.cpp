@@ -185,6 +185,10 @@ var_info vtab_battery_inputs[] = {
 	{ SSC_INPUT,        SSC_MATRIX,     "dispatch_sched_weekday",                       "Diurnal weekday TOD periods",                              "1..9",  "12 x 24 matrix",    "Time of Delivery", "en_batt=1&batt_meter_position=1&batt_dispatch_choice=2",  "",          "" },
 	{ SSC_INPUT,        SSC_MATRIX,     "dispatch_sched_weekend",                       "Diurnal weekend TOD periods",                              "1..9",  "12 x 24 matrix",    "Time of Delivery", "en_batt=1&batt_meter_position=1&batt_dispatch_choice=2",  "",          "" },
 
+	// Powerflow calculation inputs
+	{ SSC_INPUT,       SSC_ARRAY,       "fuelcell_power",                               "Electricity from fuel cell",                            "kW",       "",                     "Fuel Cell",     "",                           "",                         "" },
+
+
 	var_info_invalid
 };
 
@@ -267,6 +271,10 @@ battstor::battstor(compute_module &cm, bool setup_model, size_t nrec, double dt_
 	_dt_hour = dt_hr;
 	step_per_hour = static_cast<size_t>(1. / _dt_hour);
 	initialize_time(0, 0, 0);
+
+	if (cm.is_assigned("fuelcell_power")) {
+		fuelcellPower = cm.as_vector_double("fuelcell_power");
+	}
 
 	// battery variables
 	if (batt_vars_in == 0)
@@ -1119,9 +1127,22 @@ void battstor::initialize_time(size_t year_in, size_t hour_of_year, size_t step_
 	year_index = (hour * step_per_hour) + step; 
 	step_per_year = 8760 * step_per_hour;
 }
-void battstor::advance(compute_module &cm, double P_pv, double V_pv, double P_load, double P_pv_clipped )
+void battstor::advance(compute_module &cm, double P_gen, double V_gen, double P_load, double P_gen_clipped )
 {
-	charge_control->run(year, hour, step, year_index, P_pv, V_pv, P_load, P_pv_clipped);
+	BatteryPower * powerflow = dispatch_model->getBatteryPower();
+	powerflow->reset();
+
+	if (index < fuelcellPower.size()) {
+		powerflow->powerFuelCell = fuelcellPower[index];
+	}
+
+	powerflow->powerGeneratedBySystem = P_gen;
+	powerflow->powerPV = P_gen - powerflow->powerFuelCell;
+	powerflow->powerLoad = P_load;
+	powerflow->voltageSystem = V_gen;
+	powerflow->powerPVClipped = P_gen_clipped;
+
+	charge_control->run(year, hour, step, year_index);
 	outputs_fixed(cm);
 	outputs_topology_dependent(cm);
 	metrics(cm);
@@ -1163,7 +1184,7 @@ void battstor::outputs_fixed(compute_module &cm)
 	outDOD[index] = (ssc_number_t)(lifetime_cycle_model->cycle_range());
 	outCapacityPercent[index] = (ssc_number_t)(lifetime_model->capacity_percent());
 }
-
+ 
 void battstor::outputs_topology_dependent(compute_module &)
 {
 	// Power output (all Powers in kWac)
@@ -1286,7 +1307,7 @@ void battstor::process_messages(compute_module &cm)
 static var_info _cm_vtab_battery[] = {
 	/*   VARTYPE           DATATYPE         NAME                                            LABEL                                                   UNITS      META                           GROUP                  REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
 	{ SSC_INPUT,        SSC_NUMBER,      "en_batt",                                    "Enable battery storage model",                            "0/1",        "",                     "Battery",                      "?=0",                    "",                               "" },
-	{ SSC_INPUT,        SSC_ARRAY,       "gen",										   "System power generated",                                  "kW",         "",                     "",                             "",                       "",                               "" },
+	{ SSC_INOUT,        SSC_ARRAY,       "gen",										   "System power generated",                                  "kW",         "",                     "",                             "",                       "",                               "" },
 	{ SSC_INPUT,		SSC_ARRAY,	     "load",			                           "Electricity load (year 1)",                               "kW",	        "",				        "",                             "",	                      "",	                            "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "batt_replacement_option",                    "Enable battery replacement?",                              "0=none,1=capacity based,2=user schedule", "", "Battery",             "?=0",                    "INTEGER,MIN=0,MAX=2",           "" },
 	{ SSC_INOUT,        SSC_NUMBER,      "capacity_factor",                            "Capacity factor",                                         "%",          "",                     "",                             "?=0",                    "",                               "" },
@@ -1372,6 +1393,7 @@ public:
 						batt.check_replacement_schedule();
 						batt.advance(*this, power_input[year_idx], 0, power_load[year_idx], 0);
 						p_gen[lifetime_idx] = batt.outGenPower[lifetime_idx];
+						double gen = batt.outGenPower[lifetime_idx];
 						annual_energy += p_gen[lifetime_idx] * batt._dt_hour;
 						lifetime_idx++;
 						year_idx++;
