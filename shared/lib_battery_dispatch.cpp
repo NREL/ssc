@@ -57,8 +57,9 @@ dispatch_t::dispatch_t(battery_t * Battery, double dt_hour, double SOC_min, doub
 	double t_min, int mode, int battMeterPosition)
 {
 	// initialize battery power flow 
-	
-	m_batteryPower = BatteryPowerFlow::Instance(dt_hour).getBatteryPower();
+	std::unique_ptr<BatteryPowerFlow> tmp(new BatteryPowerFlow(dt_hour));
+	m_batteryPowerFlow = std::move(tmp);
+	m_batteryPower = m_batteryPowerFlow->getBatteryPower();
 	m_batteryPower->currentChargeMax = Ic_max;
 	m_batteryPower->currentDischargeMax = Id_max;
 	m_batteryPower->stateOfChargeMax = SOC_max;
@@ -108,7 +109,9 @@ void dispatch_t::prepareDispatch(size_t, size_t, double P_system, double V_syste
 // deep copy
 dispatch_t::dispatch_t(const dispatch_t& dispatch)
 {
-	m_batteryPower = BatteryPowerFlow::Instance(_dt_hour).getBatteryPower();
+	std::unique_ptr<BatteryPowerFlow> tmp(new BatteryPowerFlow(*dispatch.m_batteryPowerFlow));
+	m_batteryPowerFlow = std::move(tmp);
+	m_batteryPower = m_batteryPowerFlow->getBatteryPower();
 
 	_Battery = new battery_t(*dispatch._Battery);
 	_Battery_initial = new battery_t(*dispatch._Battery_initial);
@@ -123,7 +126,9 @@ void dispatch_t::copy(const dispatch_t * dispatch)
 	init(_Battery, dispatch->_dt_hour,  dispatch->_current_choice, dispatch->_t_min, dispatch->_mode);
 
 	// can't create shallow copy of unique ptr
-	m_batteryPower = BatteryPowerFlow::Instance(_dt_hour).getBatteryPower();
+	std::unique_ptr<BatteryPowerFlow> tmp(new BatteryPowerFlow(*dispatch->m_batteryPowerFlow));
+	m_batteryPowerFlow = std::move(tmp);
+	m_batteryPower = m_batteryPowerFlow->getBatteryPower();
 }
 void dispatch_t::delete_clone()
 {
@@ -351,7 +356,7 @@ void dispatch_t::runDispatch(size_t year, size_t hour_of_year, size_t step)
 		m_batteryPower->powerBattery = I * battery_voltage_new * util::watt_to_kilowatt;
 
 		// Update power flow calculations and check the constraints
-		BatteryPowerFlow::Instance(_dt_hour).calculate();
+		m_batteryPowerFlow->calculate();
 		iterate = check_constraints(I, count);
 
 		// If current changed during last iteration of constraints checker, recalculate internal battery state
@@ -366,7 +371,7 @@ void dispatch_t::runDispatch(size_t year, size_t hour_of_year, size_t step)
 	} while (iterate);
 
 	// finalize AC power flow calculation and update for next step
-	BatteryPowerFlow::Instance(_dt_hour).calculate();
+	m_batteryPowerFlow->calculate();
 	_prev_charging = _charging;
 }
 
@@ -453,7 +458,7 @@ void dispatch_manual_t::dispatch(size_t year,
 	prepareDispatch(hour_of_year, step, P_system, V_system, P_load_ac, P_system_clipping_dc);
 														
 	// Initialize power flow model by calculating the battery power to dispatch
-	BatteryPowerFlow::Instance(_dt_hour).initialize(_Battery->capacity_model()->SOC());
+	m_batteryPowerFlow->initialize(_Battery->capacity_model()->SOC());
 
 	// Run the dispatch
 	runDispatch(year, hour_of_year, step);

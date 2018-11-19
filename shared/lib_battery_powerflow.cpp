@@ -79,13 +79,11 @@ BatteryPowerFlow::BatteryPowerFlow(double dtHour)
 	std::unique_ptr<BatteryPower> tmp(new BatteryPower(dtHour));
 	m_BatteryPower = std::move(tmp);
 }
-/*
 BatteryPowerFlow::BatteryPowerFlow(const BatteryPowerFlow& powerFlow)
 {
 	std::unique_ptr<BatteryPower> tmp(new BatteryPower(*powerFlow.m_BatteryPower));
 	m_BatteryPower = std::move(tmp);
 }
-*/
 BatteryPower * BatteryPowerFlow::getBatteryPower()
 {
 	return m_BatteryPower.get();

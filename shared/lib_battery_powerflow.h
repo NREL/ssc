@@ -29,15 +29,11 @@ struct BatteryPower;
 class BatteryPowerFlow
 {
 public:
-	
-	// https ://stackoverflow.com/questions/1008019/c-singleton-design-pattern
-	static BatteryPowerFlow& Instance(double dtHour) {
-		static BatteryPowerFlow instance(dtHour);
-		return instance;
-	}
+	/// Create a BatteryPowerFlow object
+	BatteryPowerFlow(double dtHour);
 
-	BatteryPowerFlow(BatteryPowerFlow const &) = delete;
-	void operator=(BatteryPowerFlow const&) = delete;
+	/// Perform a deep copy of a BatteryFlow object
+	BatteryPowerFlow(const BatteryPowerFlow& powerFlow);
 
 	/// Initialize the power flow for the battery system.  Only needs to be called for manual dispatch control
 	void initialize(double stateOfCharge);
@@ -52,15 +48,6 @@ public:
 	BatteryPower * getBatteryPower();
 
 private:
-
-	// Stop public construction or deletion
-	BatteryPowerFlow() {};
-
-	~BatteryPowerFlow() {
-	};
-
-	/// Create a BatteryPowerFlow object
-	BatteryPowerFlow(double dtHour);
 
 	/**
 	* \function calculateACConnected
@@ -82,8 +69,7 @@ private:
 	/// Calculate the power flow for an DC connected battery system
 	void calculateDCConnected();
 
-	/// A structure containing the AC power flow components 
-	std::unique_ptr<BatteryPower> m_BatteryPower;   
+	std::unique_ptr<BatteryPower> m_BatteryPower;   /// A structure containing the AC power flow components 
 };
 
 /**

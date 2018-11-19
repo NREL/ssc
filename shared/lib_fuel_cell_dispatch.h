@@ -41,6 +41,9 @@ public:
 
 private:
 
+	// allocated and managed internally
+	std::unique_ptr<BatteryPowerFlow> m_batteryPowerFlow;
+
 	// managed by BatteryPowerFlow
 	BatteryPower * m_batteryPower;
 
