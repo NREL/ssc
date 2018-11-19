@@ -255,8 +255,10 @@ static var_info _cm_vtab_trough_physical[] = {
     { SSC_INPUT,        SSC_MATRIX,      "ud_T_amb_ind_od",           "Off design table of user-defined power cycle performance formed from parametric on T_amb [C]",      "", "",          "user_defined_PC", "pc_config=1",            "",                      "" },
     { SSC_INPUT,        SSC_MATRIX,      "ud_m_dot_htf_ind_od",       "Off design table of user-defined power cycle performance formed from parametric on m_dot_htf [ND]", "", "",          "user_defined_PC", "pc_config=1",            "",                      "" },
     { SSC_INPUT,        SSC_MATRIX,      "ud_ind_od",                 "Off design user-defined power cycle performance as function of T_htf, m_dot_htf [ND], and T_amb",   "", "",          "user_defined_PC", "pc_config=1",            "",                      "" },
-
-
+    { SSC_INPUT,        SSC_NUMBER,      "design_eff",                "Power cycle efficiency at design",                                                 "none",         "",               "system_design",   "*",                      "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "T_htf_cold_des",            "Cold HTF inlet temperature at design conditions",                                  "C",            "",               "system_design",   "*",                      "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "T_htf_hot_des",             "Hot HTF outlet temperature at design conditions",                                  "C",            "",               "system_design",   "*",                      "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "rec_htf",                   "17: Salt (60% NaNO3, 40% KNO3) 10: Salt (46.5% LiF 11.5% NaF 42% KF) 50: Lookup tables", "",       "",               "receiver",        "*",                      "",                      "" },
 
     // *************************************************************************************************
     //    OUTPUTS
@@ -309,6 +311,15 @@ static var_info _cm_vtab_trough_physical[] = {
     { SSC_OUTPUT,       SSC_ARRAY,       "W_dot_field_pump",          "Field htf pumping power",                                                          "MWe",          "",               "solar_field",    "*",                       "",                      "" },
     
     // Power Block
+    { SSC_OUTPUT,       SSC_ARRAY,       "eta",                       "PC efficiency: gross",                                                             "",             "",               "PC",             "*",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "q_pb",		              "PC input energy",                                                                  "MWt",          "",               "PC",             "*",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "m_dot_pc",                  "PC HTF mass flow rate",                                                            "kg/s",         "",               "PC",             "*",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "q_pc_startup",              "PC startup thermal energy",                                                        "MWht",         "",               "PC",             "*",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "q_dot_pc_startup",          "PC startup thermal power",                                                         "MWt",          "",               "PC",             "*",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "P_cycle",                   "PC electrical power output: gross",                                                "MWe",          "",               "PC",             "*",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "T_pc_in",                   "PC HTF inlet temperature",                                                         "C",            "",               "PC",             "*",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "T_pc_out",                  "PC HTF outlet temperature",                                                        "C",            "",               "PC",             "*",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "m_dot_water_pc",            "PC water consumption: makeup + cooling",                                           "kg/s",         "",               "PC",             "*",                       "",                      "" },
 
     // TES
     { SSC_OUTPUT,       SSC_ARRAY,       "tank_losses",               "TES thermal losses",                                                               "MWt",          "",               "TES",            "*",                       "",                      "" },
@@ -634,8 +645,97 @@ public:
         // Power cycle
         // ********************************
         // ********************************
-    
-        // <copy over the section around lines 856 from cmod_tcsmolten_salt.cpp>
+        C_csp_power_cycle * p_csp_power_cycle;
+        // Steam Rankine and User Defined power cycle classes
+        C_pc_Rankine_indirect_224 rankine_pc;
+
+        int pb_tech_type = as_integer("pc_config");
+        if ( !(pb_tech_type == 0 || pb_tech_type == 1) )  // 0 = Rankine, 1 = UDPC
+        {
+            throw exec_error("trough_physical", "unsupported power cycle");
+        }
+        else
+        {
+            C_pc_Rankine_indirect_224::S_params *pc = &rankine_pc.ms_params;
+            pc->m_P_ref = as_double("P_ref");
+            pc->m_eta_ref = as_double("design_eff");
+            pc->m_T_htf_hot_ref = as_double("T_htf_hot_des");
+            pc->m_T_htf_cold_ref = as_double("T_htf_cold_des");
+            pc->m_cycle_max_frac = as_double("cycle_max_frac");
+            pc->m_cycle_cutoff_frac = as_double("cycle_cutoff_frac");
+            pc->m_q_sby_frac = as_double("q_sby_frac");
+            pc->m_startup_time = as_double("startup_time");
+            pc->m_startup_frac = as_double("startup_frac");
+            pc->m_htf_pump_coef = as_double("pb_pump_coef");
+            pc->m_pc_fl = as_integer("rec_htf");							// power cycle HTF is same as receiver HTF
+            pc->m_pc_fl_props = as_matrix("field_fl_props");
+
+            if (pb_tech_type == 0)
+            {
+                pc->m_dT_cw_ref = as_double("dT_cw_ref");
+                pc->m_T_amb_des = as_double("T_amb_des");
+                pc->m_P_boil = as_double("P_boil");
+                pc->m_CT = as_integer("CT");					// cooling tech type: 1=evaporative, 2=air, 3=hybrid	
+                pc->m_tech_type = as_integer("tech_type");		// turbine inlet pressure: 1: Fixed, 3: Sliding
+                if (!(pc->m_tech_type == 1 || pc->m_tech_type == 3))
+                {
+                    std::string tech_msg = util::format("tech_type must be either 1 (fixed pressure) or 3 (sliding). Input was %d."
+                        " Simulation proceeded with fixed pressure", pc->m_tech_type);
+                    pc->m_tech_type = 1;
+                }
+                pc->m_T_approach = as_double("T_approach");
+                pc->m_T_ITD_des = as_double("T_ITD_des");
+                pc->m_P_cond_ratio = as_double("P_cond_ratio");
+                pc->m_pb_bd_frac = as_double("pb_bd_frac");
+                pc->m_P_cond_min = as_double("P_cond_min");
+                pc->m_n_pl_inc = as_integer("n_pl_inc");
+
+                size_t n_F_wc = 0;
+                ssc_number_t *p_F_wc = as_array("F_wc", &n_F_wc);
+                pc->m_F_wc.resize(n_F_wc, 0.0);
+                for (size_t i = 0; i < n_F_wc; i++)
+                    pc->m_F_wc[i] = (double)p_F_wc[i];
+
+                pc->m_is_user_defined_pc = false;
+                pc->m_W_dot_cooling_des = std::numeric_limits<double>::quiet_NaN();
+            }
+            else if (pb_tech_type == 1)
+            {
+                pc->m_is_user_defined_pc = true;
+
+                // User-Defined Cycle Parameters
+                pc->m_T_amb_des = as_double("ud_T_amb_des");	//[C]
+                pc->m_W_dot_cooling_des = as_double("ud_f_W_dot_cool_des") / 100.0*as_double("P_ref");	//[MWe]
+                pc->m_m_dot_water_des = as_double("ud_m_dot_water_cool_des");		//[kg/s]
+
+                // Also need lower and upper levels for the 3 independent variables...
+                pc->m_T_htf_low = as_double("ud_T_htf_low");			//[C]
+                pc->m_T_htf_high = as_double("ud_T_htf_high");			//[C]
+                pc->m_T_amb_low = as_double("ud_T_amb_low");			//[C]
+                pc->m_T_amb_high = as_double("ud_T_amb_high");			//[C]
+                pc->m_m_dot_htf_low = as_double("ud_m_dot_htf_low");	//[-]
+                pc->m_m_dot_htf_high = as_double("ud_m_dot_htf_high");	//[-]
+
+                // User-Defined Cycle Off-Design Tables 
+                pc->mc_T_htf_ind = as_matrix("ud_T_htf_ind_od");
+                pc->mc_T_amb_ind = as_matrix("ud_T_amb_ind_od");
+                pc->mc_m_dot_htf_ind = as_matrix("ud_m_dot_htf_ind_od");
+                pc->mc_combined_ind = as_matrix("ud_ind_od");
+            }
+
+            // Set pointer to parent class
+            p_csp_power_cycle = &rankine_pc;
+
+            // Set power cycle outputs common to all power cycle technologies
+            p_csp_power_cycle->assign(C_pc_Rankine_indirect_224::E_ETA_THERMAL, allocate("eta", n_steps_fixed), n_steps_fixed);
+            p_csp_power_cycle->assign(C_pc_Rankine_indirect_224::E_Q_DOT_HTF, allocate("q_pb", n_steps_fixed), n_steps_fixed);
+            p_csp_power_cycle->assign(C_pc_Rankine_indirect_224::E_M_DOT_HTF, allocate("m_dot_pc", n_steps_fixed), n_steps_fixed);
+            p_csp_power_cycle->assign(C_pc_Rankine_indirect_224::E_Q_DOT_STARTUP, allocate("q_dot_pc_startup", n_steps_fixed), n_steps_fixed);
+            p_csp_power_cycle->assign(C_pc_Rankine_indirect_224::E_W_DOT, allocate("P_cycle", n_steps_fixed), n_steps_fixed);
+            p_csp_power_cycle->assign(C_pc_Rankine_indirect_224::E_T_HTF_IN, allocate("T_pc_in", n_steps_fixed), n_steps_fixed);
+            p_csp_power_cycle->assign(C_pc_Rankine_indirect_224::E_T_HTF_OUT, allocate("T_pc_out", n_steps_fixed), n_steps_fixed);
+            p_csp_power_cycle->assign(C_pc_Rankine_indirect_224::E_M_DOT_WATER, allocate("m_dot_water_pc", n_steps_fixed), n_steps_fixed);
+        }
 
 
         // ********************************
@@ -695,7 +795,7 @@ public:
         // Instantiate Solver
         C_csp_solver csp_solver(weather_reader, 
                                 c_trough,
-                                //c_heat_sink, 
+                                *p_csp_power_cycle,
                                 storage, 
                                 tou, 
                                 system,
