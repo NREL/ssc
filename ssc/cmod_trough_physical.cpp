@@ -95,8 +95,8 @@ static var_info _cm_vtab_trough_physical[] = {
     { SSC_INPUT,        SSC_NUMBER,      "m_dot_htfmax",              "Maximum loop HTF flow rate",                                                       "kg/s",         "",               "solar_field",    "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "Fluid",                     "Field HTF fluid ID number",                                                        "none",         "",               "solar_field",    "*",                       "",                      "" },
     { SSC_INPUT,        SSC_MATRIX,      "field_fl_props",            "User defined field fluid property data",                                           "-",            "",               "controller",     "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "store_fluid",               "Material number for storage fluid",                              "-",            "",             "controller",     "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_MATRIX,      "store_fl_props",            "User defined storage fluid property data",                       "-",            "",             "controller",     "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "store_fluid",               "Material number for storage fluid",                                                "-",            "",               "controller",     "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_MATRIX,      "store_fl_props",            "User defined storage fluid property data",                                         "-",            "",               "controller",     "*",                       "",                      "" },
 
     { SSC_INPUT,        SSC_NUMBER,      "wind_stow_speed",           "Trough wind stow speed",                                                           "m/s",          "",               "solar_field",    "?=50",                    "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "T_fp",                      "Freeze protection temperature (heat trace activation temperature)",                "none",         "",               "solar_field",    "*",                       "",                      "" },
@@ -262,10 +262,57 @@ static var_info _cm_vtab_trough_physical[] = {
     { SSC_INPUT,        SSC_NUMBER,      "T_htf_cold_des",            "Cold HTF inlet temperature at design conditions",                                  "C",            "",               "system_design",   "*",                      "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "T_htf_hot_des",             "Hot HTF outlet temperature at design conditions",                                  "C",            "",               "system_design",   "*",                      "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "rec_htf",                   "17: Salt (60% NaNO3, 40% KNO3) 10: Salt (46.5% LiF 11.5% NaF 42% KF) 50: Lookup tables", "",       "",               "receiver",        "*",                      "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "is_hx",                     "Heat exchanger (HX) exists (1=yes, 0=no)" ,                      "-",            "",             "controller",     "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "dt_hot",                    "Hot side HX approach temp",                                      "C",            "",             "controller",     "*",                       "",                      "" },
-    //{ SSC_INPUT,        SSC_NUMBER,      "dt_cold",                   "Cold side HX approach temp",                                     "C",            "",             "controller",     "*",                       "",                      "" },
-    //{ SSC_INPUT,        SSC_NUMBER,      "T_tank_cold_ini",           "Initial cold tank fluid tmeperature",                            "C",            "",             "controller",     "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "is_hx",                     "Heat exchanger (HX) exists (1=yes, 0=no)" ,                                        "-",            "",               "controller",      "*",                      "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "dt_hot",                    "Hot side HX approach temp",                                                        "C",            "",               "controller",      "*",                      "",                      "" },
+    //{ SSC_INPUT,        SSC_NUMBER,      "dt_cold",                   "Cold side HX approach temp",                                                       "C",            "",               "controller",      "*",                      "",                      "" },
+    //{ SSC_INPUT,        SSC_NUMBER,      "T_tank_cold_ini",           "Initial cold tank fluid tmeperature",                                              "C",            "",               "controller",      "*",                      "",                      "" },
+    { SSC_INPUT,        SSC_MATRIX,      "weekday_schedule",          "12x24 CSP operation Time-of-Use Weekday schedule",                                 "-",            "",               "sys_ctrl",          "*",                    "",                      "" },
+    { SSC_INPUT,        SSC_MATRIX,      "weekend_schedule",          "12x24 CSP operation Time-of-Use Weekend schedule",                                 "-",            "",               "sys_ctrl",          "*",                    "",                      "" },
+    { SSC_INPUT,        SSC_MATRIX,      "dispatch_sched_weekday",    "12x24 PPA pricing Weekday schedule",                                               "",             "",               "tou",             "*",                      "",                      "" },
+    { SSC_INPUT,        SSC_MATRIX,      "dispatch_sched_weekend",    "12x24 PPA pricing Weekend schedule",                                               "",             "",               "tou",             "*",                      "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "is_dispatch",               "Allow dispatch optimization?",  /*TRUE=1*/                                         "-",            "",               "sys_ctrl_disp_opt", "?=0",                  "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "is_write_ampl_dat",         "Write AMPL data files for dispatch run",                                           "-",            "",               "sys_ctrl_disp_opt", "?=0",                  "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "is_ampl_engine",            "Run dispatch optimization with external AMPL engine",                              "-",            "",               "sys_ctrl_disp_opt", "?=0",                  "",                      "" },
+    { SSC_INPUT,        SSC_STRING,      "ampl_data_dir",             "AMPL data file directory",                                                         "-",            "",               "sys_ctrl_disp_opt", "?=''",                 "",                      "" },
+    { SSC_INPUT,        SSC_STRING,      "ampl_exec_call",            "System command to run AMPL code",                                                  "-",            "",               "sys_ctrl_disp_opt", "?='ampl sdk_solution.run'", "",                 "" },
+    { SSC_INPUT,        SSC_NUMBER,      "disp_frequency",            "Frequency for dispatch optimization calculations",                                 "hour",         "",               "sys_ctrl_disp_opt", "is_dispatch=1",        "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "disp_steps_per_hour",       "Time steps per hour for dispatch optimization calculations",                       "-",            "",               "sys_ctrl_disp_opt", "?=1",                  "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "disp_horizon",              "Time horizon for dispatch optimization",                                           "hour",         "",               "sys_ctrl_disp_opt", "is_dispatch=1",        "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "disp_max_iter",             "Max. no. dispatch optimization iterations",                                        "-",            "",               "sys_ctrl_disp_opt", "is_dispatch=1",        "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "disp_timeout",              "Max. dispatch optimization solve duration",                                        "s",            "",               "sys_ctrl_disp_opt", "is_dispatch=1",        "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "disp_mip_gap",              "Dispatch optimization solution tolerance",                                         "-",            "",               "sys_ctrl_disp_opt", "is_dispatch=1",        "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "disp_spec_presolve",        "Dispatch optimization presolve heuristic",                                         "-",            "",               "sys_ctrl_disp_opt", "?=-1",                 "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "disp_spec_bb",              "Dispatch optimization B&B heuristic",                                              "-",            "",               "sys_ctrl_disp_opt", "?=-1",                 "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "disp_reporting",            "Dispatch optimization reporting level",                                            "-",            "",               "sys_ctrl_disp_opt", "?=-1",                 "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "disp_spec_scaling",         "Dispatch optimization scaling heuristic",                                          "-",            "",               "sys_ctrl_disp_opt", "?=-1",                 "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "disp_time_weighting",       "Dispatch optimization future time discounting factor",                             "-",            "",               "sys_ctrl_disp_opt", "?=0.99",               "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "disp_rsu_cost",             "Receiver startup cost",                                                            "$",            "",               "sys_ctrl_disp_opt", "is_dispatch=1",        "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "disp_csu_cost",             "Cycle startup cost",                                                               "$",            "",               "sys_ctrl_disp_opt", "is_dispatch=1",        "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "disp_pen_delta_w",          "Dispatch cycle production change penalty",                                         "$/kWe-change", "",               "sys_ctrl_disp_opt", "is_dispatch=1",        "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "q_rec_standby",             "Receiver standby energy consumption",                                              "kWt",          "",               "sys_ctrl_disp_opt", "?=9e99",               "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "q_rec_heattrace",           "Receiver heat trace energy consumption during startup",                            "kWe-hr",       "",               "sys_ctrl_disp_opt", "?=0.0",                "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "is_wlim_series",            "Use time-series net electricity generation limits",                                "",             "",               "sys_ctrl_disp_opt", "?=0",                  "",                      "" },
+    { SSC_INPUT,        SSC_ARRAY,       "wlim_series",               "Time series net electicity generation limits",                                     "kWe",          "",               "sys_ctrl_disp_opt", "is_wlim_series=1",     "",                      "" },
+    { SSC_INPUT,        SSC_ARRAY,       "f_turb_tou_periods",        "Dispatch logic for turbine load fraction",                                          "-",           "",               "sys_ctrl",          "*",                    "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "ppa_multiplier_model",      "PPA multiplier model",                                                             "0/1",          "0=diurnal,1=timestep","Time of Delivery","?=0",               "INTEGER,MIN=0",         "" },
+    { SSC_INPUT,        SSC_ARRAY,       "dispatch_factors_ts",       "Dispatch payment factor array",                                                    "",             "",               "Time of Delivery","ppa_multiplier_model=1", "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "dispatch_factor1",          "Dispatch payment factor 1",                                                        "",             "",               "tou",            "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "dispatch_factor2",          "Dispatch payment factor 2",                                                        "",             "",               "tou",            "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "dispatch_factor3",          "Dispatch payment factor 3",                                                        "",             "",               "tou",            "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "dispatch_factor4",          "Dispatch payment factor 4",                                                        "",             "",               "tou",            "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "dispatch_factor5",          "Dispatch payment factor 5",                                                        "",             "",               "tou",            "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "dispatch_factor6",          "Dispatch payment factor 6",                                                        "",             "",               "tou",            "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "dispatch_factor7",          "Dispatch payment factor 7",                                                        "",             "",               "tou",            "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "dispatch_factor8",          "Dispatch payment factor 8",                                                        "",             "",               "tou",            "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "dispatch_factor9",          "Dispatch payment factor 9",                                                        "",             "",               "tou",            "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "pb_fixed_par",              "Fixed parasitic load - runs at all times",                                         "MWe/MWcap",    "",               "sys_ctrl",       "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "bop_par",                   "Balance of plant parasitic power fraction",                                        "MWe/MWcap",    "",               "sys_ctrl",       "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "bop_par_f",                 "Balance of plant parasitic power fraction - mult frac",                            "none",         "",               "sys_ctrl",       "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "bop_par_0",                 "Balance of plant parasitic power fraction - const coeff",                          "none",         "",               "sys_ctrl",       "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "bop_par_1",                 "Balance of plant parasitic power fraction - linear coeff",                         "none",         "",               "sys_ctrl",       "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "bop_par_2",                 "Balance of plant parasitic power fraction - quadratic coeff",                      "none",         "",               "sys_ctrl",       "*",                       "",                      "" },
+
+
 
     // *************************************************************************************************
     //    OUTPUTS
@@ -319,7 +366,7 @@ static var_info _cm_vtab_trough_physical[] = {
     
     // Power Block
     { SSC_OUTPUT,       SSC_ARRAY,       "eta",                       "PC efficiency: gross",                                                             "",             "",               "PC",             "*",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "q_pb",		              "PC input energy",                                                                  "MWt",          "",               "PC",             "*",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "q_pb",                      "PC input energy",                                                                  "MWt",          "",               "PC",             "*",                       "",                      "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "m_dot_pc",                  "PC HTF mass flow rate",                                                            "kg/s",         "",               "PC",             "*",                       "",                      "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "q_pc_startup",              "PC startup thermal energy",                                                        "MWht",         "",               "PC",             "*",                       "",                      "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "q_dot_pc_startup",          "PC startup thermal power",                                                         "MWt",          "",               "PC",             "*",                       "",                      "" },
@@ -674,7 +721,7 @@ public:
             pc->m_startup_time = as_double("startup_time");
             pc->m_startup_frac = as_double("startup_frac");
             pc->m_htf_pump_coef = as_double("pb_pump_coef");
-            pc->m_pc_fl = as_integer("rec_htf");							// power cycle HTF is same as receiver HTF
+            pc->m_pc_fl = as_integer("rec_htf");                            // power cycle HTF is same as receiver HTF
             pc->m_pc_fl_props = as_matrix("field_fl_props");
 
             if (pb_tech_type == 0)
@@ -682,8 +729,8 @@ public:
                 pc->m_dT_cw_ref = as_double("dT_cw_ref");
                 pc->m_T_amb_des = as_double("T_amb_des");
                 pc->m_P_boil = as_double("P_boil");
-                pc->m_CT = as_integer("CT");					// cooling tech type: 1=evaporative, 2=air, 3=hybrid	
-                pc->m_tech_type = as_integer("tech_type");		// turbine inlet pressure: 1: Fixed, 3: Sliding
+                pc->m_CT = as_integer("CT");                    // cooling tech type: 1=evaporative, 2=air, 3=hybrid    
+                pc->m_tech_type = as_integer("tech_type");      // turbine inlet pressure: 1: Fixed, 3: Sliding
                 if (!(pc->m_tech_type == 1 || pc->m_tech_type == 3))
                 {
                     std::string tech_msg = util::format("tech_type must be either 1 (fixed pressure) or 3 (sliding). Input was %d."
@@ -711,17 +758,17 @@ public:
                 pc->m_is_user_defined_pc = true;
 
                 // User-Defined Cycle Parameters
-                pc->m_T_amb_des = as_double("ud_T_amb_des");	//[C]
-                pc->m_W_dot_cooling_des = as_double("ud_f_W_dot_cool_des") / 100.0*as_double("P_ref");	//[MWe]
-                pc->m_m_dot_water_des = as_double("ud_m_dot_water_cool_des");		//[kg/s]
+                pc->m_T_amb_des = as_double("ud_T_amb_des");    //[C]
+                pc->m_W_dot_cooling_des = as_double("ud_f_W_dot_cool_des") / 100.0*as_double("P_ref");  //[MWe]
+                pc->m_m_dot_water_des = as_double("ud_m_dot_water_cool_des");       //[kg/s]
 
                 // Also need lower and upper levels for the 3 independent variables...
-                pc->m_T_htf_low = as_double("ud_T_htf_low");			//[C]
-                pc->m_T_htf_high = as_double("ud_T_htf_high");			//[C]
-                pc->m_T_amb_low = as_double("ud_T_amb_low");			//[C]
-                pc->m_T_amb_high = as_double("ud_T_amb_high");			//[C]
-                pc->m_m_dot_htf_low = as_double("ud_m_dot_htf_low");	//[-]
-                pc->m_m_dot_htf_high = as_double("ud_m_dot_htf_high");	//[-]
+                pc->m_T_htf_low = as_double("ud_T_htf_low");            //[C]
+                pc->m_T_htf_high = as_double("ud_T_htf_high");          //[C]
+                pc->m_T_amb_low = as_double("ud_T_amb_low");            //[C]
+                pc->m_T_amb_high = as_double("ud_T_amb_high");          //[C]
+                pc->m_m_dot_htf_low = as_double("ud_m_dot_htf_low");    //[-]
+                pc->m_m_dot_htf_high = as_double("ud_m_dot_htf_high");  //[-]
 
                 // User-Defined Cycle Off-Design Tables 
                 pc->mc_T_htf_ind = as_matrix("ud_T_htf_ind_od");
@@ -785,17 +832,94 @@ public:
         // ********************************
         // ********************************
         C_csp_tou_block_schedules tou;
-        tou.setup_block_uniform_tod();
-        tou.mc_dispatch_params.m_dispatch_optimize = false;
+        C_csp_tou_block_schedules::S_params *tou_params = &tou.ms_params;
+        tou_params->mc_csp_ops.mc_weekdays         = as_matrix("weekday_schedule");
+        tou_params->mc_csp_ops.mc_weekends         = as_matrix("weekend_schedule");
+        tou_params->mc_pricing.mc_weekdays         = as_matrix("dispatch_sched_weekday");
+        tou_params->mc_pricing.mc_weekends         = as_matrix("dispatch_sched_weekend");
+        tou.mc_dispatch_params.m_dispatch_optimize = as_boolean("is_dispatch");
+        tou.mc_dispatch_params.m_is_write_ampl_dat = as_boolean("is_write_ampl_dat");
+        tou.mc_dispatch_params.m_is_ampl_engine    = as_boolean("is_ampl_engine");
+        tou.mc_dispatch_params.m_ampl_data_dir     = as_string("ampl_data_dir");
+        tou.mc_dispatch_params.m_ampl_exec_call    = as_string("ampl_exec_call");
+        if (tou.mc_dispatch_params.m_dispatch_optimize)
+        {
+            tou.mc_dispatch_params.m_optimize_frequency  = as_integer("disp_frequency");
+            tou.mc_dispatch_params.m_disp_steps_per_hour = as_integer("disp_steps_per_hour");
+            tou.mc_dispatch_params.m_optimize_horizon    = as_integer("disp_horizon");
+            tou.mc_dispatch_params.m_max_iterations      = as_integer("disp_max_iter");
+            tou.mc_dispatch_params.m_solver_timeout      = as_double("disp_timeout");
+            tou.mc_dispatch_params.m_mip_gap             = as_double("disp_mip_gap");
+            tou.mc_dispatch_params.m_presolve_type       = as_integer("disp_spec_presolve");
+            tou.mc_dispatch_params.m_bb_type             = as_integer("disp_spec_bb");
+            tou.mc_dispatch_params.m_disp_reporting      = as_integer("disp_reporting");
+            tou.mc_dispatch_params.m_scaling_type        = as_integer("disp_spec_scaling");
+            tou.mc_dispatch_params.m_disp_time_weighting = as_double("disp_time_weighting");
+            tou.mc_dispatch_params.m_rsu_cost            = as_double("disp_rsu_cost");
+            tou.mc_dispatch_params.m_csu_cost            = as_double("disp_csu_cost");
+            tou.mc_dispatch_params.m_pen_delta_w         = as_double("disp_pen_delta_w");
+            tou.mc_dispatch_params.m_q_rec_standby       = as_double("q_rec_standby");
+            tou.mc_dispatch_params.m_w_rec_ht            = as_double("q_rec_heattrace");
+
+
+            if (as_boolean("is_wlim_series"))
+            {
+                size_t n_wlim_series = 0;
+                ssc_number_t* wlim_series = as_array("wlim_series", &n_wlim_series);
+                if (n_wlim_series != n_wf_records)
+                    throw exec_error("trough_physical", "Invalid net electricity generation limit series dimension. Matrix must have " + util::to_string(n_wf_records) + " rows.");
+                for (int i = 0; i < n_wf_records; i++)
+                    tou.mc_dispatch_params.m_w_lim_full.at(i) = (double)wlim_series[i];
+            }
+
+
+        }
+        tou.mc_dispatch_params.m_is_block_dispatch    = !tou.mc_dispatch_params.m_dispatch_optimize;      //mw
+        tou.mc_dispatch_params.m_use_rule_1           = true;
+        tou.mc_dispatch_params.m_standby_off_buffer   = 2.0;
+        tou.mc_dispatch_params.m_use_rule_2           = false;
+        tou.mc_dispatch_params.m_q_dot_rec_des_mult   = -1.23;
+        tou.mc_dispatch_params.m_f_q_dot_pc_overwrite = -1.23;
+
+        size_t n_f_turbine = 0;
+        ssc_number_t *p_f_turbine = as_array("f_turb_tou_periods", &n_f_turbine);
+        tou_params->mc_csp_ops.mvv_tou_arrays[C_block_schedule_csp_ops::TURB_FRAC].resize(n_f_turbine, 0.0);
+        //tou_params->mv_t_frac.resize(n_f_turbine, 0.0);
+        for (size_t i = 0; i < n_f_turbine; i++)
+            tou_params->mc_csp_ops.mvv_tou_arrays[C_block_schedule_csp_ops::TURB_FRAC][i] = (double)p_f_turbine[i];
+
+        bool is_timestep_input = (as_integer("ppa_multiplier_model") == 1);
+        tou_params->mc_pricing.mv_is_diurnal = !(is_timestep_input);
+        if (is_timestep_input)
+        {
+            size_t nmultipliers;
+            ssc_number_t *multipliers = as_array("dispatch_factors_ts", &nmultipliers);
+            tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE].resize(nmultipliers, 0.0);
+            for (size_t ii = 0; ii < nmultipliers; ii++)
+                tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE][ii] = multipliers[ii];
+        }
+        else // standard diuranal input
+        {
+            tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE].resize(9, 0.0);
+            tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE][0] = as_double("dispatch_factor1");
+            tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE][1] = as_double("dispatch_factor2");
+            tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE][2] = as_double("dispatch_factor3");
+            tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE][3] = as_double("dispatch_factor4");
+            tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE][4] = as_double("dispatch_factor5");
+            tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE][5] = as_double("dispatch_factor6");
+            tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE][6] = as_double("dispatch_factor7");
+            tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE][7] = as_double("dispatch_factor8");
+            tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE][8] = as_double("dispatch_factor9");
+        }
         
         // System parameters
         C_csp_solver::S_csp_system_params system;
-        system.m_pb_fixed_par = 0.0;
-        system.m_bop_par = 0.0;
-        system.m_bop_par_f = 0.0;
-        system.m_bop_par_0 = 0.0;
-        system.m_bop_par_1 = 0.0;
-        system.m_bop_par_2 = 0.0;
+        system.m_pb_fixed_par = as_double("pb_fixed_par");
+        system.m_bop_par      = as_double("bop_par");
+        system.m_bop_par_f    = as_double("bop_par_f");
+        system.m_bop_par_0    = as_double("bop_par_0");
+        system.m_bop_par_1    = as_double("bop_par_1");
+        system.m_bop_par_2    = as_double("bop_par_2");
 
         // Instantiate Solver
         C_csp_solver csp_solver(weather_reader, 
