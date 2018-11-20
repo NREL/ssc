@@ -83,9 +83,12 @@ protected:
 	FuelCell * fuelCell;
 	FuelCellDispatch * fuelCellDispatch;
 	FuelCellDispatch * fuelCellDispatchMultiple;
+	size_t n_multipleFuelCells = 4;
 	
+	double dt_subHourly = 0.25;
+	FuelCell * fuelCellSubHourly;
+	FuelCellDispatch * fuelCellDispatchSubhourly;
 	
-
 public:
 
 	void SetUp()
@@ -95,7 +98,12 @@ public:
 			replacement_percent, efficiencyTable, lowerHeatingValue_BtuPerFt3, higherHeatingValue_BtuPerFt3, availableFuel_Mcf, shutdownOption, dt_hour);
 		fuelCellDispatch = new FuelCellDispatch(fuelCell, numberOfUnits, dispatchOption, shutdownOption, dt_hour, fixed_percent,
 			dispatchInput_kW, canCharge, canDischarge, discharge_percent, scheduleWeekday, scheduleWeekend);
-		fuelCellDispatchMultiple = new FuelCellDispatch(fuelCell, 4, dispatchOption, shutdownOption, dt_hour, fixed_percent,
+		fuelCellDispatchMultiple = new FuelCellDispatch(fuelCell, n_multipleFuelCells, dispatchOption, shutdownOption, dt_hour, fixed_percent,
+			dispatchInput_kW, canCharge, canDischarge, discharge_percent, scheduleWeekday, scheduleWeekend);
+
+		fuelCellSubHourly = new FuelCell(unitPowerMax_kW, unitPowerMin_kW, startup_hours, dynamicResponse_kWperHour, degradation_kWperHour, degradationRestart_kW,
+			replacement_percent, efficiencyTable, lowerHeatingValue_BtuPerFt3, higherHeatingValue_BtuPerFt3, availableFuel_Mcf, shutdownOption, dt_subHourly);
+		fuelCellDispatchSubhourly = new FuelCellDispatch(fuelCellSubHourly, numberOfUnits, dispatchOption, shutdownOption, dt_subHourly, fixed_percent,
 			dispatchInput_kW, canCharge, canDischarge, discharge_percent, scheduleWeekday, scheduleWeekend);
 
 	}
@@ -103,9 +111,15 @@ public:
 	{
 		if (fuelCell) {
 			delete fuelCell;
+			fuelCell = nullptr;
 		}
 		if (fuelCellDispatch) {
 			delete fuelCellDispatch;
+			fuelCellDispatch = nullptr;
+		}
+		if (fuelCellDispatchMultiple) {
+			delete fuelCellDispatchMultiple;
+			fuelCellDispatchMultiple = nullptr;
 		}
 	}
 

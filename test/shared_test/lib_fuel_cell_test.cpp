@@ -69,7 +69,6 @@ TEST_F(FuelCellTest, AvailableFuel) {
 TEST_F(FuelCellTest, DispatchFixed) {
 
 	size_t sh = (size_t)startup_hours;
-	size_t n_fuelCells = 4;
 
 	// Allow fuel cell to startup
 	for (size_t h = 0; h < sh; h++) {
@@ -86,7 +85,7 @@ TEST_F(FuelCellTest, DispatchFixed) {
 		fuelCellDispatchMultiple->runSingleTimeStep(h, h, 20,10);
 		EXPECT_EQ(fuelCell->getPower(), unitPowerMax_kW * fixed_percent * 0.01);
 		EXPECT_EQ(fuelCellDispatchMultiple->getBatteryPower()->powerFuelCellToLoad, 0);
-		EXPECT_EQ(fuelCellDispatchMultiple->getBatteryPower()->powerFuelCellToGrid, n_fuelCells * 40);
+		EXPECT_EQ(fuelCellDispatchMultiple->getBatteryPower()->powerFuelCellToGrid, n_multipleFuelCells * 40);
 		EXPECT_EQ(fuelCellDispatchMultiple->getBatteryPower()->powerPVToLoad,  10);
 		EXPECT_EQ(fuelCellDispatchMultiple->getBatteryPower()->powerPVToGrid,  10);
 	}
@@ -120,22 +119,33 @@ TEST_F(FuelCellTest, DispatchLoadFollow) {
 TEST_F(FuelCellTest, DispatchManual) {
 
 	size_t sh = (size_t)startup_hours;
+	size_t stepsPerHour = (size_t)(1 / dt_subHourly);
 
-	fuelCellDispatch->setDispatchOption(FuelCellDispatch::FC_DISPATCH_OPTION::MANUAL);
+	fuelCellDispatchSubhourly->setDispatchOption(FuelCellDispatch::FC_DISPATCH_OPTION::MANUAL);
 
 	// Allow fuel cell to startup
+	size_t year_idx = 0;
 	for (size_t h = 0; h < sh; h++) {
-		fuelCellDispatch->runSingleTimeStep(h, h, 0, 20);
-		EXPECT_EQ(fuelCell->getPower(), 0);
+		for (size_t s = 0; s < stepsPerHour; s++) {
+			fuelCellDispatchSubhourly->runSingleTimeStep(h, year_idx, 0, 20);
+			year_idx++;
+		}
+		EXPECT_EQ(fuelCellSubHourly->getPower(), 0);
 	}
 
-	// Dispatch fuel cell at 40% of max output (40 kW, limited by dynamic response)
-	fuelCellDispatch->runSingleTimeStep(sh, sh, 20, 40);
-	EXPECT_EQ(fuelCell->getPower(), 20);
+	// Dispatch fuel cell at 40% of max output (40 kW, limited by dynamic response, and min turndown)
+	for (size_t s = 0; s < stepsPerHour; s++) {
+		fuelCellDispatchSubhourly->runSingleTimeStep(sh, year_idx, 20, 40);
+		year_idx++;
+	}
+	EXPECT_EQ(fuelCellSubHourly->getPower(), 35);
 
 	// Dispatch fuel cell at 40% of max output (40 kW)
-	fuelCellDispatch->runSingleTimeStep(sh + 1, sh + 1, 20, 80);
-	EXPECT_EQ(fuelCell->getPower(), 40);
+	for (size_t s = 0; s < stepsPerHour; s++) {
+		fuelCellDispatchSubhourly->runSingleTimeStep(sh + 1, year_idx, 20, 80);
+		EXPECT_EQ(fuelCellSubHourly->getPower(), 40);
+		year_idx++;
+	}
 }
 
 TEST_F(FuelCellTest, DispatchInput) {

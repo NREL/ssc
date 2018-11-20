@@ -118,7 +118,7 @@ double FuelCell::getPercentLoad() {
 
 double FuelCell::getPowerResponse(double power_kW) {
 	double dP = (power_kW - m_powerPrevious_kW) / dt_hour;
-	double dP_max = fmin(fabs(dP), m_dynamicResponse_kWperHour);
+	double dP_max = fmin(fabs(dP), m_dynamicResponse_kWperHour * dt_hour);
 	double sign = fabs(dP) > 0 ? dP / fabs(dP) : 1.0;
 
 	return (m_powerPrevious_kW + (dP_max * sign));
@@ -138,6 +138,8 @@ double FuelCell::getFuelConsumption() {
 double FuelCell::getAvailableFuel() {
 	return m_availableFuel_MCf;
 }
+// Assume that min turndown trumps dynamic response, i.e, that fuel cell
+// can go from 0 to min turndown instantaneously.
 void FuelCell::checkMinTurndown() {
 	if (m_power_kW < m_unitPowerMin_kW && m_power_kW > 0) {
 		m_power_kW = m_unitPowerMin_kW;
