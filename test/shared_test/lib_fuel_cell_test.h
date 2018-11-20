@@ -82,6 +82,7 @@ protected:
 
 	FuelCell * fuelCell;
 	FuelCellDispatch * fuelCellDispatch;
+	FuelCellDispatch * fuelCellDispatchMultiple;
 	
 	
 
@@ -93,6 +94,8 @@ public:
 		fuelCell = new FuelCell(unitPowerMax_kW, unitPowerMin_kW, startup_hours, dynamicResponse_kWperHour, degradation_kWperHour, degradationRestart_kW,
 			replacement_percent, efficiencyTable, lowerHeatingValue_BtuPerFt3, higherHeatingValue_BtuPerFt3, availableFuel_Mcf, shutdownOption, dt_hour);
 		fuelCellDispatch = new FuelCellDispatch(fuelCell, numberOfUnits, dispatchOption, shutdownOption, dt_hour, fixed_percent,
+			dispatchInput_kW, canCharge, canDischarge, discharge_percent, scheduleWeekday, scheduleWeekend);
+		fuelCellDispatchMultiple = new FuelCellDispatch(fuelCell, 4, dispatchOption, shutdownOption, dt_hour, fixed_percent,
 			dispatchInput_kW, canCharge, canDischarge, discharge_percent, scheduleWeekday, scheduleWeekend);
 
 	}

@@ -22,7 +22,7 @@ public:
 		util::matrix_t<size_t> scheduleWeekend);
 
 	/// Destructor
-	~FuelCellDispatch() { /* Nothing to do */ };
+	~FuelCellDispatch();
 
 	/// Run dispatch for single step
 	void runSingleTimeStep(size_t hour_of_year, size_t year_idx, double powerSystem_kWac=0, double powerLoad_kWac=0);

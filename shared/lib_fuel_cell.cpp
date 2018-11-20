@@ -35,26 +35,39 @@ FuelCell::FuelCell(double unitPowerMax_kW, double unitPowerMin_kW, double startu
 	}
 
 	// Assumption: Fuel Cell is not startup up initially
-	m_startedUp = false;
-	m_hoursSinceStart = 0.0;
-
-	// Assumption 2: Fuel Cell starts up if allowed to idle at min power
-	//if (shutdownOption == FuelCell::FC_SHUTDOWN_OPTION::IDLE) {
-	//	m_hoursSinceStart += dt_hour;
-	//}
+	init();
 }
 
 FuelCell::~FuelCell(){ /* Nothing to do */}
 
-/*
-FuelCell::FuelCell(const FuelCell &fuelCell) : m_dynamicResponse_kWperHour(dynamicResponse_kWperHour);m_degradation_kWperHour(degradation_kWperHour), m_degradationRestart_kW(degradationRestart_kW),
-		m_replacement_percent(replacement_percent * 0.01), m_efficiencyTable(efficiencyTable), m_lowerHeatingValue_BtuPerFt3(lowerHeatingValue_BtuPerFt3),
-		m_higherHeatingValue_BtuPerFt3(higherHeatingValue_BtuPerFt3),
-		m_availableFuel_MCf(availableFuel_Mcf), m_shutdownOption(shutdownOption), dt_hour(dt_hour),
-		m_powerMax_kW(unitPowerMax_kW), m_power_kW(0), m_powerPrevious_kW(0), m_replacementCount(0)
-}
-*/
 
+FuelCell::FuelCell(const FuelCell &fuelCell) : 
+	m_dynamicResponse_kWperHour(fuelCell.m_dynamicResponse_kWperHour),
+	m_degradation_kWperHour(fuelCell.m_degradation_kWperHour), 
+	m_degradationRestart_kW(fuelCell.m_degradationRestart_kW),
+	m_replacement_percent(fuelCell.m_replacement_percent * 0.01), 
+	m_efficiencyTable(fuelCell.m_efficiencyTable), 
+	m_lowerHeatingValue_BtuPerFt3(fuelCell.m_lowerHeatingValue_BtuPerFt3),
+	m_higherHeatingValue_BtuPerFt3(fuelCell.m_higherHeatingValue_BtuPerFt3),
+	m_availableFuel_MCf(fuelCell.m_availableFuel_MCf), 
+	m_shutdownOption(fuelCell.m_shutdownOption), 
+	m_startup_hours(fuelCell.m_startup_hours),
+	dt_hour(fuelCell.dt_hour),
+	m_unitPowerMin_kW(fuelCell.m_unitPowerMin_kW),
+	m_unitPowerMax_kW(fuelCell.m_unitPowerMax_kW)
+{
+	init();
+}
+
+void FuelCell::init() {
+	m_startedUp = 0;
+	m_hoursSinceStart = 0;
+	m_powerMax_kW = m_unitPowerMax_kW;
+	m_power_kW = 0;
+	m_powerPrevious_kW = 0;
+	m_fuelConsumption_MCf = 0;
+	m_replacementCount = 0;
+}
 
 bool FuelCell::isRunning() {
 	return m_startedUp;

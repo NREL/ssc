@@ -18,19 +18,23 @@ FuelCellDispatch::FuelCellDispatch(FuelCell * fuelCell, size_t numberOfUnits, in
 		percent->second *= 0.01;
 	}
 
+	for (size_t fc = 1; fc < numberOfUnits; fc++) {
+		m_fuelCellVector.push_back(new FuelCell(*fuelCell));
+	}
+
+	// Set up battery power flow
 	std::unique_ptr<BatteryPowerFlow> tmp(new BatteryPowerFlow(dt_hour));
 	m_batteryPowerFlow = std::move(tmp);
 	m_batteryPower = m_batteryPowerFlow->getBatteryPower();
 	m_batteryPower->connectionMode = ChargeController::AC_CONNECTED;
-
-	// figure out for multiple fuel cells 
-	/*
-	for (size_t fc = 1; fc < numberOfUnits; fc++) {
-		std::unique_ptr<FuelCell> fuelCelltmp(new FuelCell());
-		fuelCelltmp.get() = fuelCell;
+}
+FuelCellDispatch::~FuelCellDispatch() {
+	for (size_t fc = 1; fc < m_numberOfUnits; fc++) {
+		if (m_fuelCellVector[fc]) {
+			delete m_fuelCellVector[fc];
+			m_fuelCellVector[fc] = nullptr;
+		}
 	}
-	*/
-
 }
 
 void FuelCellDispatch::runSingleTimeStep(size_t hour_of_year, size_t year_idx, double powerSystem_kWac, double powerLoad_kWac) {

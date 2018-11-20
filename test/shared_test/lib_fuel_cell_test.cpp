@@ -65,29 +65,30 @@ TEST_F(FuelCellTest, AvailableFuel) {
 	}
 
 }
-
+// Also check multiple fuel cells
 TEST_F(FuelCellTest, DispatchFixed) {
 
 	size_t sh = (size_t)startup_hours;
+	size_t n_fuelCells = 4;
 
 	// Allow fuel cell to startup
 	for (size_t h = 0; h < sh; h++) {
-		fuelCellDispatch->runSingleTimeStep(h, h, 0, 0);
+		fuelCellDispatchMultiple->runSingleTimeStep(h, h, 0, 0);
 		EXPECT_EQ(fuelCell->getPower(), 0);
 	}
 
 	// Unit will take two hours to fully ramp to 40 kW
-	fuelCellDispatch->runSingleTimeStep(sh, 0, 0);
+	fuelCellDispatchMultiple->runSingleTimeStep(sh, 0, 0);
 	EXPECT_EQ(fuelCell->getPower(), 20);
 
 	// Run at fixed output, which will go lower than min turndown
 	for (size_t h = sh + 1; h < sh + 10; h++) {
-		fuelCellDispatch->runSingleTimeStep(h, h, 20,10);
+		fuelCellDispatchMultiple->runSingleTimeStep(h, h, 20,10);
 		EXPECT_EQ(fuelCell->getPower(), unitPowerMax_kW * fixed_percent * 0.01);
-		EXPECT_EQ(fuelCellDispatch->getBatteryPower()->powerFuelCellToLoad, 0);
-		EXPECT_EQ(fuelCellDispatch->getBatteryPower()->powerFuelCellToGrid, 40);
-		EXPECT_EQ(fuelCellDispatch->getBatteryPower()->powerPVToLoad, 10);
-		EXPECT_EQ(fuelCellDispatch->getBatteryPower()->powerPVToGrid, 10);
+		EXPECT_EQ(fuelCellDispatchMultiple->getBatteryPower()->powerFuelCellToLoad, 0);
+		EXPECT_EQ(fuelCellDispatchMultiple->getBatteryPower()->powerFuelCellToGrid, n_fuelCells * 40);
+		EXPECT_EQ(fuelCellDispatchMultiple->getBatteryPower()->powerPVToLoad,  10);
+		EXPECT_EQ(fuelCellDispatchMultiple->getBatteryPower()->powerPVToGrid,  10);
 	}
 }
 

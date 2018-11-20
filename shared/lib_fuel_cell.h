@@ -29,7 +29,7 @@ public:
 	~FuelCell();
 
 	/// Copy Constructor
-	// FuelCell(const FuelCell &fuelCell);
+	FuelCell(const FuelCell &fuelCell);
 
 	/// Run for single time step
 	void runSingleTimeStep(double power_kW);
@@ -78,6 +78,9 @@ protected:
 
 	/// Return percentage based on requested power
 	double getPercentLoad();
+
+	// Initialize calculated
+	void init();
 
 	enum FC_EFFICIENCY_COLUMN { PERCENT_MAX, PRECENT_ELECTRICAL_EFFICIENCY, PERCENT_HEAT_RECOVERY };
 
