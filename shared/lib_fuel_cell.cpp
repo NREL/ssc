@@ -81,7 +81,7 @@ double FuelCell::calculateFuelConsumptionMCf(double percent) {
 			p1 = fc->first;
 			p2 = fc_next->first;
 			f1 = fc->second;
-			p2 = fc_next->second;
+			f2 = fc_next->second;
 
 			if (fabs(p2 - p1) > 0) {
 				m = (f2 - f1) / (p2 - p1);
