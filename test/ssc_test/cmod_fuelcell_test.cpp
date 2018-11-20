@@ -30,3 +30,30 @@ TEST_F(CMFuelCell, NoFinancialModelFixed) {
 		}
 	}
 }
+/// Test PVSAMv1 with all defaults and no-financial model
+TEST_F(CMFuelCell, NoFinancialModelFixedLifetime) {
+
+	// Run with fixed output
+	ssc_number_t n_years;
+	ssc_data_get_number(data, "analysis_period", &n_years);
+	size_t n_lifetime = (size_t)(n_years) * 8760;
+
+	set_array(data, "ac", fuelcelltest::ac_watt_lifetime_output_path, (int)n_lifetime);
+	ssc_data_set_number(data, "system_use_lifetime_output", 1);
+
+	int errors = run_module(data, "fuelcell");
+	EXPECT_FALSE(errors);
+	
+	if (!errors)
+	{
+		ssc_number_t startup_hours, fixed_pct, dynamic_response;
+		ssc_data_get_number(data, "fuelcell_startup_time", &startup_hours);
+		ssc_data_get_number(data, "fuelcell_fixed_pct", &fixed_pct);
+		ssc_data_get_number(data, "fuelcell_dynamic_response", &dynamic_response);
+		
+		int n;
+		calculated_array = ssc_data_get_array(data, "fuelcell_power", &n);
+		EXPECT_EQ(n_lifetime, (size_t)n);
+		
+	}
+}
