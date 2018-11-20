@@ -33,6 +33,9 @@ public:
 	/// Get the total fuel cell power output kW
 	double getPower();
 
+	/// Get the total fuel cell heat output kW
+	double getPowerThermal();
+
 	/// Get the fuel consumed during this time step MCf
 	double getFuelConsumption();
 
@@ -51,6 +54,7 @@ private:
 	BatteryPower * m_batteryPower;
 
 	double m_powerTotal_kW;
+	double m_powerThermalTotal_kW;
 	double m_fuelConsumedTotal_MCf;
 
 	size_t m_numberOfUnits;

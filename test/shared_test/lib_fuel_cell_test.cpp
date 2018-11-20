@@ -1,15 +1,16 @@
 #include "lib_fuel_cell_test.h"
 
+TEST_F(FuelCellTest, EfficiencyCurve)
+{
+	fuelCell->calculateEfficiencyCurve(.16);
+	EXPECT_EQ(fuelCell->getElectricalEfficiency(), 0.21);
+	EXPECT_EQ(fuelCell->getHeatRecoveryEfficiency(), .50);
+}
 
 TEST_F(FuelCellTest, Initialize)
 {
 	// Test if started up
 	EXPECT_EQ(fuelCell->isRunning(), false);
-
-	// Test if fuel consumption curve correctly generated
-	EXPECT_EQ(fuelCell->calculateFuelConsumptionMCf(0), 0);
-	EXPECT_NEAR(fuelCell->calculateFuelConsumptionMCf(1), 0.647674, 0.01);
-	EXPECT_NEAR(fuelCell->calculateFuelConsumptionMCf(2), 0.647674, 0.01);
 }
 
 TEST_F(FuelCellTest, Startup)

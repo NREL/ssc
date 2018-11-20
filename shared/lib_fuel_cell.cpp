@@ -32,6 +32,8 @@ FuelCell::FuelCell(double unitPowerMax_kW, double unitPowerMin_kW, double startu
 		}
 
 		m_fuelConsumptionMap_MCf[m_efficiencyTable.at(r, FC_EFFICIENCY_COLUMN::PERCENT_MAX)] = (fuelConsumption_Mcf);
+		m_efficiencyMap[m_efficiencyTable.at(r, FC_EFFICIENCY_COLUMN::PERCENT_MAX)] = m_efficiencyTable.at(r, FC_EFFICIENCY_COLUMN::PRECENT_ELECTRICAL_EFFICIENCY);
+		m_heatRecoveryMap[m_efficiencyTable.at(r, FC_EFFICIENCY_COLUMN::PERCENT_MAX)] = m_efficiencyTable.at(r, FC_EFFICIENCY_COLUMN::PERCENT_HEAT_RECOVERY);
 	}
 
 	// Assumption: Fuel Cell is not startup up initially
@@ -65,32 +67,32 @@ void FuelCell::init() {
 	m_powerMax_kW = m_unitPowerMax_kW;
 	m_power_kW = 0;
 	m_powerPrevious_kW = 0;
-	m_fuelConsumption_MCf = 0;
+	m_fuelConsumed_MCf = 0;
 	m_replacementCount = 0;
 }
 
 bool FuelCell::isRunning() {
 	return m_startedUp;
 }
-
-double FuelCell::calculateFuelConsumptionMCf(double percent) {
+double FuelCell::interpolateMap(double key, std::map<double, double> mapDouble) {
 	
 	double p1, p2, f1, f2, f, m;
 	p1 = p2 = f1 = f2 = f = m = 0;
-	for (auto fc = m_fuelConsumptionMap_MCf.begin(); fc != m_fuelConsumptionMap_MCf.end(); fc++) {
-		auto fc_next = std::next(fc, 1);
-		auto fc_end = m_fuelConsumptionMap_MCf.rbegin();
 
-		if (percent == fc->first) {
+	for (auto fc = mapDouble.begin(); fc != mapDouble.end(); fc++) {
+		auto fc_next = std::next(fc, 1);
+		auto fc_end = mapDouble.rbegin();
+
+		if (key == fc->first) {
 			f = fc->second;
 			break;
 		}
-		else if (percent == fc_next->first) {
+		else if (key == fc_next->first) {
 			f = fc_next->second;
 			break;
 		}
 		// interpolate to get the fuel consumption
-		else if (percent > fc->first && percent < fc_next->first) {
+		else if (key > fc->first && key < fc_next->first) {
 			p1 = fc->first;
 			p2 = fc_next->first;
 			f1 = fc->second;
@@ -98,18 +100,25 @@ double FuelCell::calculateFuelConsumptionMCf(double percent) {
 
 			if (fabs(p2 - p1) > 0) {
 				m = (f2 - f1) / (p2 - p1);
-				f = f1 + m * percent;
+				f = f1 + m * key;
 			}
 			break;
 		}
 		// if percent is higher than the max key, return the max fuel consumption
-		else if (percent > fc_end->first) {
+		else if (key > fc_end->first) {
 			f = fc_end->second;
 			break;
 		}
 	}
-	m_fuelConsumption_MCf = f;
-	return m_fuelConsumption_MCf;
+	return f;
+}
+
+
+void FuelCell::calculateEfficiencyCurve(double percent) {
+	
+	m_fuelConsumed_MCf = interpolateMap(percent, m_fuelConsumptionMap_MCf);
+	m_efficiency_percent = interpolateMap(percent, m_efficiencyMap);
+	m_heatRecovery_percent = interpolateMap(percent, m_heatRecoveryMap);
 }
 
 double FuelCell::getPercentLoad() {
@@ -126,6 +135,9 @@ double FuelCell::getPowerResponse(double power_kW) {
 double FuelCell::getPower() {
 	return m_power_kW;
 }
+double FuelCell::getPowerThermal() {
+	return m_powerThermal_kW;
+}
 double FuelCell::getMaxPowerOriginal() {
 	return m_unitPowerMax_kW;
 }
@@ -133,11 +145,19 @@ double FuelCell::getMaxPower() {
 	return m_powerMax_kW;
 }
 double FuelCell::getFuelConsumption() {
-	return m_fuelConsumption_MCf;
+	return m_fuelConsumed_MCf;
 }
 double FuelCell::getAvailableFuel() {
 	return m_availableFuel_MCf;
 }
+double FuelCell::getElectricalEfficiency() {
+	return m_efficiency_percent;
+}
+double FuelCell::getHeatRecoveryEfficiency() {
+	return m_heatRecovery_percent;
+}
+
+
 // Assume that min turndown trumps dynamic response, i.e, that fuel cell
 // can go from 0 to min turndown instantaneously.
 void FuelCell::checkMinTurndown() {
@@ -161,10 +181,7 @@ void FuelCell::checkMaxLimit() {
 }
 
 void FuelCell::checkAvailableFuel() {
-
-	double percentLoad = getPercentLoad();
-	double fuelConsumed = calculateFuelConsumptionMCf(percentLoad);
-	m_availableFuel_MCf -= fuelConsumed;
+	m_availableFuel_MCf -= m_fuelConsumed_MCf;
 
 	if (m_availableFuel_MCf <= 0) {
 		m_startedUp = false;
@@ -189,6 +206,12 @@ void FuelCell::applyDegradation() {
 	m_power_kW = fmin(m_power_kW, m_powerMax_kW);
 }
 
+void FuelCell::applyEfficiency() {
+	calculateEfficiencyCurve(getPercentLoad());
+	m_powerThermal_kW = m_power_kW;
+	m_powerThermal_kW *= m_heatRecovery_percent;
+}
+
 void FuelCell::runSingleTimeStep(double power_kW) {
 
 	m_powerPrevious_kW = m_power_kW;
@@ -196,9 +219,9 @@ void FuelCell::runSingleTimeStep(double power_kW) {
 	// Initialize based on dynamic response limits
 	if (isRunning()) {
 		m_power_kW = getPowerResponse(power_kW);
-
 		checkMinTurndown();
 		checkMaxLimit();
+		applyEfficiency();
 		checkAvailableFuel();
 	}
 	else {

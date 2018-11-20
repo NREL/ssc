@@ -40,6 +40,7 @@ FuelCellDispatch::~FuelCellDispatch() {
 void FuelCellDispatch::runSingleTimeStep(size_t hour_of_year, size_t year_idx, double powerSystem_kWac, double powerLoad_kWac) {
 
 	m_powerTotal_kW = 0;
+	m_powerThermalTotal_kW = 0;
 	m_fuelConsumedTotal_MCf = 0;
 
 	// Specified to run at fixed percent of original unit max kW
@@ -48,6 +49,7 @@ void FuelCellDispatch::runSingleTimeStep(size_t hour_of_year, size_t year_idx, d
 			double power_kW = m_fuelCellVector[fc]->getMaxPowerOriginal() * m_fixed_percent;
 			m_fuelCellVector[fc]->runSingleTimeStep(power_kW);
 			m_powerTotal_kW += m_fuelCellVector[fc]->getPower();
+			m_powerThermalTotal_kW += m_fuelCellVector[fc]->getPowerThermal();
 			m_fuelConsumedTotal_MCf += m_fuelCellVector[fc]->getFuelConsumption();
 		}
 	}
@@ -57,6 +59,7 @@ void FuelCellDispatch::runSingleTimeStep(size_t hour_of_year, size_t year_idx, d
 			double power_kW = fmax(0, powerLoad_kWac - powerSystem_kWac);
 			m_fuelCellVector[fc]->runSingleTimeStep(power_kW);
 			m_powerTotal_kW += m_fuelCellVector[fc]->getPower();
+			m_powerThermalTotal_kW += m_fuelCellVector[fc]->getPowerThermal();
 			m_fuelConsumedTotal_MCf += m_fuelCellVector[fc]->getFuelConsumption();
 		}
 	}
@@ -90,6 +93,7 @@ void FuelCellDispatch::runSingleTimeStep(size_t hour_of_year, size_t year_idx, d
 			m_fuelCellVector[fc]->runSingleTimeStep(power_kW);
 			m_fuelConsumedTotal_MCf += m_fuelCellVector[fc]->getFuelConsumption();
 			m_powerTotal_kW += m_fuelCellVector[fc]->getPower();
+			m_powerThermalTotal_kW += m_fuelCellVector[fc]->getPowerThermal();
 		}
 	}
 	m_batteryPower->powerPV = powerSystem_kWac;
@@ -105,6 +109,11 @@ void FuelCellDispatch::setDispatchOption(int dispatchOption) {
 double FuelCellDispatch::getPower(){
 	return m_powerTotal_kW;
 }
+
+double FuelCellDispatch::getPowerThermal() {
+	return m_powerThermalTotal_kW;
+}
+
 double FuelCellDispatch::getFuelConsumption() {
 	return m_fuelConsumedTotal_MCf;
 }

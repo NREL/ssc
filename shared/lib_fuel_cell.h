@@ -37,7 +37,7 @@ public:
 	/// Return true if operating
 	bool isRunning();
 
-	// Get original max power kW
+	/// Get original max power kW
 	double getMaxPowerOriginal();
 
 	/// Get fuel cell max power kW
@@ -46,23 +46,40 @@ public:
 	/// Return the final power kW
 	double getPower();
 
+	/// Return the final heat kW
+	double getPowerThermal();
+
 	/// Return the fuel consumption in MCF
 	double getFuelConsumption();
+
+	/// Get efficiency percent
+	double getElectricalEfficiency();
+
+	/// Get heat recovery percent
+	double getHeatRecoveryEfficiency();
+
 
 	/// Return the available fuel in MCF
 	double getAvailableFuel();
 
-	/// Apply degradation 
-	void applyDegradation();
-
 	/// Calculate fuel consumption at percent load
-	double calculateFuelConsumptionMCf(double percent);
+	void calculateEfficiencyCurve(double percent);
 
 	/// Shutdown option enumerations
 	enum FC_SHUTDOWN_OPTION { SHUTDOWN, IDLE };
 
 
 protected:
+
+	/// Apply degradation 
+	void applyDegradation();
+
+	/// Apply degradation 
+	void applyEfficiency();
+
+
+	/// interpolate map
+	double interpolateMap(double key, std::map<double, double>);
 
 	/// Check Min Turndown
 	void checkMinTurndown();
@@ -97,18 +114,23 @@ protected:
 	double m_lowerHeatingValue_BtuPerFt3;
 	double m_higherHeatingValue_BtuPerFt3;
 	double m_availableFuel_MCf;
-	double m_fuelConsumed_MCf;
 	int m_shutdownOption;
 
 	// calculated
 	bool m_startedUp;
 	double m_hoursSinceStart;
 	double m_powerMax_kW;  // Maximum power after degradation
+	double m_powerThermal_kW;
 	double m_power_kW;
 	double m_powerPrevious_kW;
-	std::map<double, double> m_fuelConsumptionMap_MCf;
-	double m_fuelConsumption_MCf;
+	double m_fuelConsumed_MCf;
+	double m_efficiency_percent;
+	double m_heatRecovery_percent;
 	int m_replacementCount;
+	std::map<double, double> m_fuelConsumptionMap_MCf;
+	std::map<double, double> m_efficiencyMap;
+	std::map<double, double> m_heatRecoveryMap;
+
 };
 
 #endif __LIB_FUEL_CELL__

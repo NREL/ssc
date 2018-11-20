@@ -147,7 +147,7 @@ void cm_fuelcell::exec() throw (general_error)
 			for (size_t s = 0; s < fcVars->stepsPerHour; s++) {
 				fuelCellDispatch->runSingleTimeStep(h, year_idx, fcVars->systemGeneration_kW[idx], fcVars->electricLoad_kW[year_idx]);
 				p_fuelCellPower_kW[idx] = (ssc_number_t)fuelCellDispatch->getPower();
-				p_fuelCellPowerThermal_kW[idx] = (ssc_number_t)(0);
+				p_fuelCellPowerThermal_kW[idx] = (ssc_number_t)fuelCellDispatch->getPowerThermal();
 				p_fuelCellConsumption_MCf[idx] = (ssc_number_t)fuelCellDispatch->getFuelConsumption();
 				p_fuelCellToGrid_kW[idx] = (ssc_number_t)(fuelCellDispatch->getBatteryPower()->powerFuelCellToGrid);
 				p_fuelCellToLoad_kW[idx] = (ssc_number_t)(fuelCellDispatch->getBatteryPower()->powerFuelCellToLoad);
