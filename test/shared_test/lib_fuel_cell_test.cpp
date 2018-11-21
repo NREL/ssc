@@ -66,6 +66,25 @@ TEST_F(FuelCellTest, AvailableFuel) {
 	}
 
 }
+
+TEST_F(FuelCellTest, HeatCalculation) {
+
+
+	// Run for startup_hours, assume no available heat
+	for (size_t h = 0; h < (size_t)startup_hours; h++) {
+		fuelCell->runSingleTimeStep(20);
+		EXPECT_EQ(fuelCell->getPowerThermal(), 0);
+	}
+
+	// Heat should start be generated
+	for (size_t h = (size_t)startup_hours; h < (size_t)startup_hours + 10; h++) {
+		fuelCell->runSingleTimeStep(20);
+		EXPECT_EQ(fuelCell->getPowerThermal(), 20 * fuelCell->getHeatRecoveryEfficiency());
+	}
+
+}
+
+
 // Also check multiple fuel cells
 TEST_F(FuelCellTest, DispatchFixed) {
 
