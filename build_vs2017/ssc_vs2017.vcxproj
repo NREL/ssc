@@ -78,6 +78,7 @@
     <ClCompile Include="..\ssc\cmod_tcstrough_empirical.cpp" />
     <ClCompile Include="..\ssc\cmod_tcstrough_physical.cpp" />
     <ClCompile Include="..\ssc\cmod_tcstrough_physical_csp_solver.cpp" />
+    <ClCompile Include="..\ssc\cmod_thermalrate.cpp" />
     <ClCompile Include="..\ssc\cmod_thirdpartyownership.cpp" />
     <ClCompile Include="..\ssc\cmod_timeseq.cpp" />
     <ClCompile Include="..\ssc\cmod_trough_physical_iph.cpp" />

@@ -150,7 +150,8 @@ extern module_entry_info
 	cm_entry_fuelcell,
    	cm_entry_lcoefcr,
 	cm_entry_pv_get_shade_loss_mpp,
-	cm_entry_inv_cec_cg;
+	cm_entry_inv_cec_cg,
+	cm_entry_thermalrate;
 
 /* official module table */
 static module_entry_info *module_table[] = {
@@ -234,6 +235,7 @@ static module_entry_info *module_table[] = {
 	&cm_entry_lcoefcr,
 	&cm_entry_pv_get_shade_loss_mpp,
 	&cm_entry_inv_cec_cg,
+	&cm_entry_thermalrate,
 	0 };
 
 SSCEXPORT ssc_module_t ssc_module_create( const char *name )
