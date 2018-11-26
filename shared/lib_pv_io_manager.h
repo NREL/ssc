@@ -9,6 +9,7 @@
 #include "6par_solve.h"
 #include "lib_cec6par.h"
 #include "lib_iec61853.h"
+#include "lib_irradproc.h"
 #include "lib_mlmodel.h"
 #include "lib_ondinv.h"
 #include "lib_pvinv.h"
@@ -178,11 +179,10 @@ struct Irradiance_IO
 	void AssignOutputs(compute_module* cm);
 
 	// Constants
-	static const int irradiationMax = 1500;						  /// The maximum irradiation (W/m2) allowed
+
 	static const int irradprocNoInterpolateSunriseSunset = -1;    /// Interpolate the sunrise/sunset
 
-	enum RADMODE { DN_DF, DN_GH, GH_DF, POA_R, POA_P };
-	enum SKYMODEL { ISOTROPIC, HDKR, PEREZ };
+
 
 	// Irradiance Data Inputs
 	std::unique_ptr<weather_data_provider> weatherDataProvider;   /// A class which encapsulates the weather data regardless of input method
@@ -241,6 +241,7 @@ struct PVSystem_IO
 
 	void AllocateOutputs(compute_module *cm);
 	void AssignOutputs(compute_module *cm);
+	void SetupPOAInput();
 
 	size_t numberOfSubarrays;
 	size_t numberOfInverters;
@@ -357,24 +358,6 @@ struct PVSystem_IO
 	ssc_number_t *p_systemACPower;
 };
 
-
-// allow for the poa decomp model to take all daily POA measurements into consideration
-struct poaDecompReq {
-	poaDecompReq() : i(0), dayStart(0), stepSize(1), stepScale('h'), doy(-1) {}
-	size_t i; // Current time index
-	size_t dayStart; // time index corresponding to the start of the current day
-	double stepSize;
-	char stepScale; // indicates whether time steps are hours (h) or minutes (m)
-	double* POA; // Pointer to entire POA array (will have size 8760 if time step is 1 hour)
-	double* inc; // Pointer to angle of incident array (same size as POA)
-	double* tilt; 
-	double* zen; 
-	double* exTer;
-	double tDew;
-	int doy;
-	double elev;
-};
-
 /**
 * \struct Subarray_IO
 *
@@ -397,7 +380,6 @@ public:
 
 	std::string prefix;					/// Prefix for extracting variable names
 
-	enum tracking { FIXED_TILT, SINGLE_AXIS, TWO_AXIS, AZIMUTH_AXIS, SEASONAL_TILT};
 	enum self_shading {NO_SHADING, NON_LINEAR_SHADING, LINEAR_SHADING};
 
 	// Managed by Subarray
@@ -458,7 +440,7 @@ public:
 		double nonlinearDCShadingDerate; /// The DC loss due to non-linear shading [%]
 		bool usePOAFromWF;     /// Flag indicating whether or not to use POA input from the weatherfile
 		int poaShadWarningCount; /// A counter to track warnings related to POA
-		poaDecompReq poaAll;	/// A structure containing POA decompositions into the three irrradiance components from input POA
+		std::unique_ptr<poaDecompReq> poaAll; /// A structure containing POA decompositions into the three irrradiance components from input POA
 	} poa;
 
 	//calculated- subarray power
