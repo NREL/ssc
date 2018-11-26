@@ -85,8 +85,16 @@ static var_info vtab_thermal_rate[] = {
 	{ SSC_INPUT, SSC_NUMBER, "thermal_sell_rate_flat",     "Thermal sell rate flat",  "$/kW-t", "",                      "",             "?=0",                       "",                              "" },
 
 	//  output as kWh - same as load (kW) for hourly simulations
-	{ SSC_OUTPUT, SSC_ARRAY, "thermal_bill_load", "Thermal bill load (year 1)", "kWh-t", "", "Time Series", "*", "", "" },
-	{ SSC_OUTPUT, SSC_ARRAY, "thermal_value", "Value of thermal generation", "$", "", "Time Series", "*", "", "" },
+//	{ SSC_OUTPUT, SSC_ARRAY, "thermal_bill_load", "Thermal bill load (year 1)", "kWh-t", "", "Time Series", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "thermal_revenue_with_system", "Thermal revenue with system", "$", "", "Time Series", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "thermal_revenue_without_system", "Thermal revenue without system", "$", "", "Time Series", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "thermal_load_year1", "Thermal load (year 1)", "$", "", "", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "thermal_savings_year1", "Thermal savings (year 1)", "$", "", "", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "thermal_cost_with_system_year1", "Thermal cost with sytem (year 1)", "$", "", "", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "thermal_cost_without_system_year1", "Thermal cost without system (year 1)", "$", "", "", "*", "", "" },
+
+
+
 
 	var_info_invalid };
 
@@ -328,7 +336,7 @@ public:
 			}
 		}
 
-		assign("year1_thermal_load", year1_thermal_load* ts_hour_gen);
+		assign("thermal_load_year1", year1_thermal_load* ts_hour_gen);
 
 		
 		/* allocate intermediate data arrays */
@@ -456,8 +464,8 @@ public:
 						}
 					}
 				}
-				assign("year1_hourly_salespurchases_without_system", var_data(&salespurchases[0], (int)m_num_rec_yearly));
-				assign("year1_monthly_thermal_bill_wo_sys", var_data(&monthly_bill[0], 12));
+				assign("thermal_revenue_without_system", var_data(&revenue_wo_sys[0], (int)m_num_rec_yearly));
+				assign("year1_monthly_thermal_bill_wo_sys", var_data(&monthly_salespurchases[0], 12));
 			}
 			
 // with system
@@ -468,7 +476,7 @@ public:
 			{
 				assign("year1_hourly_charge_with_system", var_data(&thermal_charge_w_sys[0], (int)m_num_rec_yearly));
 
-				assign("year1_hourly_salespurchases_with_system", var_data(&salespurchases[0], (int)m_num_rec_yearly));
+				assign("thermal_revenue_with_system", var_data(&revenue_w_sys[0], (int)m_num_rec_yearly));
 				assign("year1_monthly_load", var_data(&monthly_load[0], 12));
 				assign("year1_monthly_system_generation", var_data(&monthly_system_generation[0], 12));
 				assign("year1_monthly_thermal_bill_w_sys", var_data(&monthly_bill[0], 12));
@@ -511,7 +519,7 @@ public:
 			annual_revenue_w_sys[i + 1] = 0.0;
 			annual_revenue_wo_sys[i + 1] = 0.0;
 
-			for (j = 0; j<m_num_rec_yearly; j++)
+			for (j = 0; j<m_num_rec_yearly; j++) 
 			{
 				thermal_net[i + 1] +=  e_sys_cy[j];
 				annual_net_revenue[i + 1] += revenue_w_sys[j] - revenue_wo_sys[j];
@@ -520,7 +528,6 @@ public:
 				annual_revenue_wo_sys[i + 1] += revenue_wo_sys[j];
 			}
 
-			//Outputs from Paul, Nate and Sean 9/9/13
 			annual_thermal_cost_w_sys[i + 1] = -annual_revenue_w_sys[i+1];
 			annual_thermal_cost_wo_sys[i + 1] = -annual_revenue_wo_sys[i+1];
 
@@ -529,7 +536,7 @@ public:
 
 		assign("thermal_cost_with_system_year1", annual_thermal_cost_w_sys[1]);
 		assign("thermal_cost_without_system_year1", annual_thermal_cost_wo_sys[1]);
-		assign("savings_year1", annual_thermal_cost_wo_sys[1] - annual_thermal_cost_w_sys[1]);
+		assign("thermal_savings_year1", annual_thermal_cost_wo_sys[1] - annual_thermal_cost_w_sys[1]);
 	}
 
 	void monthly_outputs(ssc_number_t *e_load, ssc_number_t *e_sys, ssc_number_t *e_grid, ssc_number_t *salespurchases, ssc_number_t monthly_load[12], ssc_number_t monthly_generation[12], ssc_number_t monthly_thermal_to_grid[12], ssc_number_t monthly_thermal_needed_from_grid[12], ssc_number_t monthly_salespurchases[12])
@@ -634,30 +641,28 @@ public:
 				{
 					for (s = 0; s < (int)steps_per_hour && c < (int)m_num_rec_yearly; s++)
 					{
-						{
 
-							if (e_in[c] >= 0.0)
-							{ // calculate income or credit
+						if (e_in[c] >= 0.0)
+						{ // calculate income or credit
 
-								// cumulative energy used to determine tier for credit of entire surplus amount
-								ssc_number_t credit_amt = 0;
-								ssc_number_t thermal_surplus = e_in[c];
-								ssc_number_t sr = 0; // TODO: pull timestep rate setup above
-								credit_amt = thermal_surplus * sr * rate_esc;
-								// accumulate monthly charge and therms
-							}
-							else
-							{ // calculate payment or charge
-								ssc_number_t charge_amt = 0;
-								ssc_number_t thermal_deficit = -e_in[c];
-								ssc_number_t br = 0; // TODO: pull timestep rate setup above
-								charge_amt = thermal_deficit * br * rate_esc;
-								// accumulate monthly charge and therms
-
-							}
+							// cumulative energy used to determine tier for credit of entire surplus amount
+							ssc_number_t credit_amt = 0;
+							ssc_number_t thermal_surplus = e_in[c];
+							credit_amt = thermal_surplus * sr_in[c] * rate_esc;
+							// accumulate monthly charge and therms
+							income[c] = (ssc_number_t)credit_amt;
 						}
-						// end of energy charge
+						else
+						{ // calculate payment or charge
+							ssc_number_t charge_amt = 0;
+							ssc_number_t thermal_deficit = -e_in[c];
+							charge_amt = thermal_deficit * br_in[c] * rate_esc;
+							// accumulate monthly charge and therms
+							payment[c] = (ssc_number_t)charge_amt;
+							//monthly_charges[m] += (ssc_number_t)charge_amt;
 
+						}
+						revenue[c] = income[c] - payment[c];
 
 						c++;
 					} // steps per hour loop
@@ -665,6 +670,7 @@ public:
 			} // d loop
 
 			// Calculate monthly bill 
+
 		} // end of month m (m loop)
 
 
