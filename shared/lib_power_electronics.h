@@ -50,14 +50,8 @@
 #ifndef _power_electronics_h_
 #define _power_electronics_h_
 
+// Required due to need for complete type in std::unique_ptr<>
 #include "lib_battery_dispatch.h"
-#include "lib_battery_powerflow.h"
-#include "lib_sandia.h"
-#include "lib_pvinv.h"
-#include "lib_ondinv.h"
-#include "lib_shared_inverter.h"
-
-
 
 class BatteryBidirectionalInverter
 {
@@ -159,7 +153,7 @@ protected:
 	// memory managed elsewhere
 	BatteryPower * m_batteryPower;
 	battery_metrics_t *m_batteryMetrics;    /// An object that tracks battery metrics for later analysis
-        dispatch_t * m_dispatch;		/// An object containing the framework to run a battery and check operational constraints
+    dispatch_t * m_dispatch;		/// An object containing the framework to run a battery and check operational constraints
 };
 
 /**

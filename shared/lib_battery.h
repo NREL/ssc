@@ -51,7 +51,6 @@
 #define battery_h
 
 #include "lib_util.h"
-#include "lsqfit.h"
 
 #include <vector>
 #include <map>
@@ -59,11 +58,10 @@
 #include <stdio.h>
 #include <algorithm>
 
+// Forward declarations to reduce imports
+
 const double low_tolerance = 0.01;
 const double tolerance = 0.001;
-
-typedef std::vector<double> double_vec;
-typedef std::vector<int> int_vec;
 
 // Messages
 class message

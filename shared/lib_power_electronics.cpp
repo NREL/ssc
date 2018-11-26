@@ -1,3 +1,5 @@
+#include "lib_battery_dispatch.h"
+#include "lib_battery_powerflow.h"
 #include "lib_power_electronics.h"
 
 double BatteryBidirectionalInverter::convert_to_dc(double P_ac, double * P_dc)

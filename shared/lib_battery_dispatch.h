@@ -49,12 +49,17 @@
 
 #include <memory>
 
-#include "lib_battery_powerflow.h"
 #include "lib_battery.h"
-#include "lib_utility_rate.h"
+
 
 #ifndef __LIB_BATTERY_DISPATCH_H__
 #define __LIB_BATTERY_DISPATCH_H__
+
+// Forward declarations to speed up build
+struct BatteryPower;
+class BatteryPowerFlow;
+class UtilityRate;
+class UtilityRateCalculator;
 
 namespace battery_dispatch
 {
@@ -113,37 +118,33 @@ public:
 	battery_t * battery_model(){ return _Battery; }
 
 	// ac outputs
-	double power_tofrom_battery() { return m_batteryPower->powerBattery; }
-	double power_tofrom_grid() { return m_batteryPower->powerGrid; }
-	double power_gen() { return m_batteryPower->powerGeneratedBySystem; }
-	double power_pv_to_load() { return m_batteryPower->powerPVToLoad; }
-	double power_battery_to_load() { return m_batteryPower->powerBatteryToLoad; }
-	double power_grid_to_load() { return m_batteryPower->powerGridToLoad; }
-	double power_pv_to_batt() { return m_batteryPower->powerPVToBattery; }
-	double power_grid_to_batt() { return m_batteryPower->powerGridToBattery; }
-	double power_pv_to_grid() { return m_batteryPower->powerPVToGrid; }
-	double power_battery_to_grid() { return m_batteryPower->powerBatteryToGrid; }
-	double power_conversion_loss() { return m_batteryPower->powerConversionLoss; }
-	double power_system_loss() { return m_batteryPower->powerSystemLoss; }
+	double power_tofrom_battery();
+	double power_tofrom_grid();
+	double power_gen();
+	double power_pv_to_load();
+	double power_battery_to_load();
+	double power_grid_to_load();
+	double power_pv_to_batt();
+	double power_grid_to_batt();
+	double power_pv_to_grid();
+	double power_battery_to_grid();
+	double power_conversion_loss();
+	double power_system_loss();
 
 	virtual double power_grid_target(){	return 0;}
 	virtual double power_batt_target(){ return 0.;}
 	virtual double cost_to_cycle() { return 0.;}
 
 	// control settings
-	double battery_power_to_fill(){ return _Battery->battery_power_to_fill(m_batteryPower->stateOfChargeMax); }
+	double battery_power_to_fill();
 
 	message get_messages();
 
 	/// Return a pointer to the underlying calculated power quantities
-	BatteryPower * getBatteryPower() {
-		return m_batteryPower;
-	};
+	BatteryPower * getBatteryPower();
 
 	/// Return a pointer to the object which calculates the battery power flow
-	BatteryPowerFlow * getBatteryPowerFlow() {
-		return m_batteryPowerFlow.get();
-	};
+	BatteryPowerFlow * getBatteryPowerFlow();
 
 protected:
 
@@ -468,8 +469,8 @@ public:
 	void set_target_power(std::vector<double> P_target);
 
 	/*! Target power outputs */
-	double power_grid_target(){ return _P_target_current; };
-	double power_batt_target() { return m_batteryPower->powerBattery; };
+	double power_grid_target();
+	double power_batt_target();
 
 	enum BTM_TARGET_MODES {TARGET_SINGLE_MONTHLY, TARGET_TIME_SERIES};
 

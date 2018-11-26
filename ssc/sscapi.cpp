@@ -49,6 +49,7 @@
 
 #include <stdio.h>
 #include <cstring>
+#include <iostream>
 
 #include "core.h"
 #include "sscapi.h"

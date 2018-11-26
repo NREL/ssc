@@ -45,6 +45,9 @@
 *******************************************************************************************************/
 
 #include "lib_battery_dispatch.h"
+#include "lib_battery_powerflow.h"
+#include "lib_shared_inverter.h"
+#include "lib_utility_rate.h"
 
 #include <math.h>
 #include <algorithm>
@@ -366,6 +369,21 @@ void dispatch_t::runDispatch(size_t year, size_t hour_of_year, size_t step)
 	_prev_charging = _charging;
 }
 
+double dispatch_t::power_tofrom_battery() { return m_batteryPower->powerBattery; }
+double dispatch_t::power_tofrom_grid() { return m_batteryPower->powerGrid; }
+double dispatch_t::power_gen() { return m_batteryPower->powerGeneratedBySystem; }
+double dispatch_t::power_pv_to_load() { return m_batteryPower->powerPVToLoad; }
+double dispatch_t::power_battery_to_load() { return m_batteryPower->powerBatteryToLoad; }
+double dispatch_t::power_grid_to_load() { return m_batteryPower->powerGridToLoad; }
+double dispatch_t::power_pv_to_batt() { return m_batteryPower->powerPVToBattery; }
+double dispatch_t::power_grid_to_batt() { return m_batteryPower->powerGridToBattery; }
+double dispatch_t::power_pv_to_grid() { return m_batteryPower->powerPVToGrid; }
+double dispatch_t::power_battery_to_grid() { return m_batteryPower->powerBatteryToGrid; }
+double dispatch_t::power_conversion_loss() { return m_batteryPower->powerConversionLoss; }
+double dispatch_t::power_system_loss() { return m_batteryPower->powerSystemLoss; }
+double dispatch_t::battery_power_to_fill() { return _Battery->battery_power_to_fill(m_batteryPower->stateOfChargeMax); }
+BatteryPowerFlow * dispatch_t::getBatteryPowerFlow() { return m_batteryPowerFlow.get(); }
+BatteryPower * dispatch_t::getBatteryPower() { return m_batteryPower; }
 /*
 Manual Dispatch
 */
@@ -663,7 +681,6 @@ void dispatch_automatic_t::dispatch(size_t year,
 	runDispatch(year, hour_of_year, step);
 }
 
-
 bool dispatch_automatic_t::check_constraints(double &I, size_t count)
 {
 	// check common constraints before checking manual dispatch specific ones
@@ -859,6 +876,8 @@ void dispatch_automatic_behind_the_meter_t::dispatch(size_t year,
 
 void dispatch_automatic_behind_the_meter_t::update_load_data(std::vector<double> P_load_dc){ _P_load_dc = P_load_dc; }
 void dispatch_automatic_behind_the_meter_t::set_target_power(std::vector<double> P_target){ _P_target_input = P_target; }
+double dispatch_automatic_behind_the_meter_t::power_grid_target() { return _P_target_current; };
+double dispatch_automatic_behind_the_meter_t::power_batt_target() { return m_batteryPower->powerBattery; };
 void dispatch_automatic_behind_the_meter_t::update_dispatch(size_t hour_of_year, size_t step, size_t idx)
 {
 	bool debug = false;

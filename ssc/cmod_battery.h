@@ -50,11 +50,27 @@
 #ifndef _CMOD_BATTERY_COMMON_
 #define _CMOD_BATTERY_COMMON_ 1
 
+#include <map>
+
 #include "core.h"
-#include "lib_power_electronics.h"
-#include "lib_sandia.h"
-#include "lib_pvinv.h"
-#include "lib_utility_rate.h"
+//#include "lib_sandia.h"
+//#include "lib_pvinv.h"
+//#include "lib_utility_rate.h"
+
+// forward declarations to speed up build
+class SharedInverter;
+class voltage_t;
+class lifetime_t;
+class lifetime_cycle_t;
+class lifetime_calendar_t;
+class thermal_t;
+class capacity_t;
+class battery_t;
+class battery_metrics_t;
+class dispatch_t;
+class losses_t;
+class ChargeController;
+class UtilityRate;
 
 extern var_info vtab_battery_inputs[];
 extern var_info vtab_battery_outputs[];

@@ -102,6 +102,9 @@ Define _DEBUG if compile with debugging
 #define acosd(x) (RTOD *acos(x))
 #define atand(x) (RTOD*atan(x))
 
+typedef std::vector<double> double_vec;
+typedef std::vector<int> int_vec;
+
 namespace util
 {
 	const double percent_to_fraction = 0.01;

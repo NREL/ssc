@@ -1,5 +1,7 @@
+#include "lib_battery_dispatch.h"
 #include "lib_battery_powerflow.h"
 #include "lib_power_electronics.h"
+#include "lib_shared_inverter.h"
 
 BatteryPower::BatteryPower(double dtHour) :
 	dtHour(dtHour),

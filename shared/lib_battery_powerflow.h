@@ -2,7 +2,9 @@
 #define _LIB_BATTERY_POWERFLOW_H_
 
 #include <memory>
-#include "lib_shared_inverter.h"
+
+// Forward declarations
+class SharedInverter;
 
 struct BatteryPower;
 
