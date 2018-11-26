@@ -642,16 +642,14 @@ public:
 								// cumulative energy used to determine tier for credit of entire surplus amount
 								ssc_number_t credit_amt = 0;
 								ssc_number_t thermal_surplus = e_in[c];
-								ssc_number_t sr = 0; // TODO: pull timestep rate setup above
-								credit_amt = thermal_surplus * sr * rate_esc;
+								credit_amt = thermal_surplus * sr_in[c] * rate_esc;
 								// accumulate monthly charge and therms
 							}
 							else
 							{ // calculate payment or charge
 								ssc_number_t charge_amt = 0;
 								ssc_number_t thermal_deficit = -e_in[c];
-								ssc_number_t br = 0; // TODO: pull timestep rate setup above
-								charge_amt = thermal_deficit * br * rate_esc;
+								charge_amt = thermal_deficit * br_in[c] * rate_esc;
 								// accumulate monthly charge and therms
 
 							}
@@ -665,6 +663,7 @@ public:
 			} // d loop
 
 			// Calculate monthly bill 
+
 		} // end of month m (m loop)
 
 
