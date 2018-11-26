@@ -93,7 +93,7 @@ public:
 			numberOfYears = cm.as_unsigned_long("analysis_period");
 		}
 		numberOfLifetimeRecords = systemGeneration_kW.size();
-		dt_hour = (double)(systemGeneration_kW.size() / (size_t)(numberOfYears * 8760));
+		dt_hour = (double)(numberOfYears * (size_t)(8760)) / (double)(systemGeneration_kW.size());
 		stepsPerHour = (size_t)(1 / dt_hour);
 
 		for (size_t p = 0; p < discharge_percent.size(); p++) {

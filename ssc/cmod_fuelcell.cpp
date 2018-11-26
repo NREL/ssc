@@ -153,7 +153,7 @@ void cm_fuelcell::exec() throw (general_error)
 				p_fuelCellToLoad_kW[idx] = (ssc_number_t)(fuelCellDispatch->getBatteryPower()->powerFuelCellToLoad);
 				p_gen_kW[idx] = (ssc_number_t)(fcVars->systemGeneration_kW[idx]) + p_fuelCellPower_kW[idx];
 				idx++;
-				year_idx;
+				year_idx++;
 			}
 		}
 	}
