@@ -50,7 +50,11 @@
 #ifndef __irradproc_h
 #define __irradproc_h
 
-#include "lib_pv_io_manager.h"
+#include <memory>
+
+#include "lib_weatherfile.h"
+
+struct poaDecompReq;
 
 /**
 * \file
@@ -283,9 +287,7 @@ class irrad
 protected:
 
 	poaDecompReq * poaAll;			/// Data required to decompose input plane-of-array irradiance
-	Irradiance_IO * irradiance;		/// All irradiance data from the weather file and user inputs
-	Subarray_IO * subarray;			/// All subarray orientation data for the current subarray
-
+	
 	// Time inputs
 	int year, month, day, hour;
 	double minute, delt;
@@ -333,11 +335,19 @@ public:
 	/// Directive to indicate that if delt_hr is less than zero, do not interpolate sunrise and sunset hours
 #define IRRADPROC_NO_INTERPOLATE_SUNRISE_SUNSET (-1.0)
 
+	/// Maximum irradiance allowed (W/m2)
+	static const int irradiationMax = 1500;	
+
 	/// Default class constructor, calls setup()
-	irrad();
+	irrad(weather_record wr, weather_header wh,
+		int skyModel, int radiationModeIn, int trackModeIn,
+		bool useWeatherFileAlbedo, bool instantaneousWeather, bool backtrackingEnabled,
+		double dtHour, double tiltDegrees, double azimuthDegrees, double trackerRotationLimitDegrees, double groundCoverageRatio,
+		std::vector<double> monthlyTiltDegrees, std::vector<double> userSpecifiedAlbedo,
+		poaDecompReq * poaAllIn);
 
 	/// Construct the irrad class with an Irradiance_IO() object and Subarray_IO() object
-	irrad(Irradiance_IO * , Subarray_IO *);
+	irrad();
 
 	/// Initialize irrad member data
 	void setup();
@@ -433,6 +443,28 @@ public:
 
 	/// Return the front surface irradiances, used by \link calc_rear_side()
 	void getFrontSurfaceIrradiances(double pvBackShadeFraction, double rowToRow, double verticalHeight, double clearanceGround, double distanceBetweenRows, double horizontalLength, std::vector<double> frontGroundGHI, std::vector<double> & frontIrradiance, double & frontAverageIrradiance, std::vector<double> & frontReflected);
+
+	enum RADMODE { DN_DF, DN_GH, GH_DF, POA_R, POA_P };
+	enum SKYMODEL { ISOTROPIC, HDKR, PEREZ };
+	enum TRACKING { FIXED_TILT, SINGLE_AXIS, TWO_AXIS, AZIMUTH_AXIS, SEASONAL_TILT };
+
+};
+
+// allow for the poa decomp model to take all daily POA measurements into consideration
+struct poaDecompReq {
+	poaDecompReq() : i(0), dayStart(0), stepSize(1), stepScale('h'), doy(-1) {}
+	size_t i; // Current time index
+	size_t dayStart; // time index corresponding to the start of the current day
+	double stepSize;
+	char stepScale; // indicates whether time steps are hours (h) or minutes (m)
+	std::vector<double> POA; // Pointer to entire POA array (will have size 8760 if time step is 1 hour)
+	std::vector<double> inc; // Pointer to angle of incident array (same size as POA)
+	std::vector<double> tilt;
+	std::vector<double> zen;
+	std::vector<double> exTer;
+	double tDew;
+	int doy;
+	double elev;
 };
 
 #endif
