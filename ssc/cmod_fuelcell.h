@@ -65,7 +65,6 @@ public:
 	fuelCellVariables(compute_module & cm) :
 		systemUseLifetimeOutput(cm.as_boolean("system_use_lifetime_output")),
 		systemGeneration_kW(cm.as_vector_double("ac")),
-		electricLoad_kW(cm.as_vector_double("load")),
 		unitPowerMax_kW(cm.as_double("fuelcell_unit_max_power")),
 		unitPowerMin_kW(cm.as_double("fuelcell_unit_min_power")),
 		startup_hours(cm.as_double("fuelcell_startup_time")),
@@ -103,6 +102,21 @@ public:
 		for (size_t i = 0; i < systemGeneration_kW.size(); i++) {
 			systemGeneration_kW[i] *= util::watt_to_kilowatt;
 		}
+
+		if (cm.is_assigned("load"))
+			electricLoad_kW = cm.as_vector_double("load");
+		else
+		{
+			/* Fix this - load for single owner does not exist
+			Need to check that load matches generation size... */
+			electricLoad_kW.clear();
+			for (size_t y = 0; y < systemGeneration_kW.size(); y++) {
+				electricLoad_kW.push_back(0);
+			}
+		}
+
+
+
 	}
 
 	// simulation inputs
