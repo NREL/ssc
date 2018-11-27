@@ -57,7 +57,6 @@
 
 var_info vtab_fuelcell_input[] = {
 	/*   VARTYPE           DATATYPE         NAME                               LABEL                                    UNITS      META                   GROUP                  REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
-
 	// simulation inputs
 	{ SSC_INPUT,        SSC_NUMBER,      "system_use_lifetime_output",        "Lifetime simulation",                   "0/1",     "0=SingleYearRepeated,1=RunEveryYear",   "",        "?=0",                   "BOOLEAN",                          "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "analysis_period",                   "Lifetime analysis period",              "years",   "The number of years in the simulation", "",        "system_use_lifetime_output=1","",                           "" },
@@ -140,9 +139,11 @@ void cm_fuelcell::construct()
 void cm_fuelcell::exec() throw (general_error)
 {
 	construct();
+
+
 	size_t idx = 0;
 	for (size_t y = 0; y < fcVars->numberOfYears; y++) {
-		size_t year_idx = 0;
+	size_t year_idx = 0;
 		for (size_t h = 0; h < 8760; h++){
 			for (size_t s = 0; s < fcVars->stepsPerHour; s++) {
 				fuelCellDispatch->runSingleTimeStep(h, year_idx, fcVars->systemGeneration_kW[idx], fcVars->electricLoad_kW[year_idx]);
