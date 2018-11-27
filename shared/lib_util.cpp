@@ -1034,7 +1034,7 @@ bool util::translate_schedule(int tod[8760], const matrix_t<float> &wkday, const
 		return false;
 	}
 
-	size_t wday = 5; // start on Monday
+	int wday = 5; // start on Monday
 	bool is_weekday = true;
 	for (size_t m = 0; m<12; m++)
 	{
