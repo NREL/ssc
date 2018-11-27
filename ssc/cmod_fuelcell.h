@@ -60,7 +60,7 @@
 struct fuelCellVariables
 {
 public:
-
+	
 	fuelCellVariables() {/* nothing to do */ };
 	fuelCellVariables(compute_module & cm) :
 		systemUseLifetimeOutput(cm.as_boolean("system_use_lifetime_output")),
@@ -71,7 +71,9 @@ public:
 		dynamicResponse_kWperHour(cm.as_double("fuelcell_dynamic_response")),
 		degradation_kWperHour(cm.as_double("fuelcell_degradation")),
 		degradationRestart_kW(cm.as_double("fuelcell_degradation_restart")),
+		replacementOption(cm.as_unsigned_long("fuelcell_replacement_option")),
 		replacement_percent(cm.as_double("fuelcell_replacement_percent")),
+		replacementSchedule(cm.as_vector_unsigned_long("fuelcell_replacement_schedule")),
 		efficiencyTable(cm.as_matrix("fuelcell_efficiency")),
 		lowerHeatingValue_BtuPerFt3(cm.as_double("fuelcell_lhv")),
 		higherHeatingValue_BtuPerFt3(cm.as_double("fuelcell_lhv")),
@@ -91,9 +93,10 @@ public:
 		if (systemUseLifetimeOutput) {
 			numberOfYears = cm.as_unsigned_long("analysis_period");
 		}
-		numberOfLifetimeRecords = systemGeneration_kW.size();
-		dt_hour = (double)(numberOfYears * (size_t)(8760)) / (double)(systemGeneration_kW.size());
+		// need to fix for SDK, currently assumes that PV watts only runs for one year 
+		dt_hour = (double)(8760) / (double)(systemGeneration_kW.size());
 		stepsPerHour = (size_t)(1 / dt_hour);
+		numberOfLifetimeRecords = stepsPerHour * numberOfYears * 8760;
 
 		for (size_t p = 0; p < discharge_percent.size(); p++) {
 			discharge_percentByPeriod[p] = discharge_percent[p];
@@ -114,9 +117,6 @@ public:
 				electricLoad_kW.push_back(0);
 			}
 		}
-
-
-
 	}
 
 	// simulation inputs
@@ -139,7 +139,9 @@ public:
 	double dynamicResponse_kWperHour;
 	double degradation_kWperHour;
 	double degradationRestart_kW;
+	size_t replacementOption;
 	double replacement_percent;
+	std::vector<size_t> replacementSchedule;
 	util::matrix_t<double> efficiencyTable;
 	double lowerHeatingValue_BtuPerFt3;
 	double higherHeatingValue_BtuPerFt3;

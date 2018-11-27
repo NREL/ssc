@@ -21,7 +21,9 @@ public:
 
 	/// Construct FuelCell with arguments
 	FuelCell(double unitPowerMax_kW, double unitPowerMin_kW, double startup_hours, double dynamicResponse_kWperMin,
-		double degradation_kWperHour, double degradationRestart_kW, double replacement_percent, util::matrix_t<double> efficiencyTable,
+		double degradation_kWperHour, double degradationRestart_kW, 
+		size_t replacement_option, double replacement_percent, std::vector<size_t> replacementSchedule,
+		util::matrix_t<double> efficiencyTable,
 		double lowerHeatingValue_BtuPerFt3, double higherHeatingValue_BtuPerFt3, double availableFuel_MCf,
 		int shutdownOption,  double dt_hour);
 
@@ -71,6 +73,9 @@ public:
 
 protected:
 
+	/// Calculate time
+	void calculateTime();
+
 	/// Apply degradation 
 	void applyDegradation();
 
@@ -100,6 +105,7 @@ protected:
 	void init();
 
 	enum FC_EFFICIENCY_COLUMN { PERCENT_MAX, PRECENT_ELECTRICAL_EFFICIENCY, PERCENT_HEAT_RECOVERY };
+	enum FC_REPLACEMENT_OPTION {NONE, REPLACE_AT_CAPACITY, REPLACE_ON_SCHEDULE};
 
 	// input values
 	double dt_hour;
@@ -109,7 +115,9 @@ protected:
 	double m_dynamicResponse_kWperHour;
 	double m_degradation_kWperHour;
 	double m_degradationRestart_kW;
+	size_t m_replacementOption;
 	double m_replacement_percent;
+	std::vector<size_t> m_replacementSchedule;
 	util::matrix_t<double> m_efficiencyTable;
 	double m_lowerHeatingValue_BtuPerFt3;
 	double m_higherHeatingValue_BtuPerFt3;
@@ -130,6 +138,8 @@ protected:
 	std::map<double, double> m_fuelConsumptionMap_MCf;
 	std::map<double, double> m_efficiencyMap;
 	std::map<double, double> m_heatRecoveryMap;
+	double m_hour;
+	size_t m_year;
 
 };
 

@@ -77,8 +77,10 @@ var_info vtab_fuelcell_input[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "fuelcell_lhv",                      "Fuel cell lower heating value",         "Btu/ft3",    "",                 "Fuel Cell",				   "",                        "",                              "" },
 	//{ SSC_INPUT,        SSC_NUMBER,      "fuelcell_hhv",                      "Fuel cell higher heating value",        "Btu/ft3",    "",                 "Fuel Cell",				   "",                        "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "fuelcell_number_of_units",          "Fuel cell number of units",             "",           "",                 "Fuel Cell",                  "",                        "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "fuelcell_operation_options",        "Fuel cell turn off options",            "0/1",        "",                 "Fuel Cell",                  "",                        "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "fuelcell_operation_options",         "Fuel cell turn off options",            "0/1",        "",                 "Fuel Cell",                  "",                        "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "fuelcell_replacement_option",       "Fuel cell replacement option",          "0/1/2",      "",                 "Fuel Cell",                  "",                        "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "fuelcell_replacement_percent",      "Fuel cell replace at percentage",       "",           "",                 "Fuel Cell",                  "",                        "",                              "" },
+	{ SSC_INPUT,        SSC_ARRAY,       "fuelcell_replacement_schedule",     "Fuel cell replace on schedule",         "",           "",                 "Fuel Cell",                  "",                        "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "fuelcell_startup_time",             "Fuel cell startup hours",               "hours",      "",                 "Fuel Cell",                  "",                        "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "fuelcell_type",                     "Fuel cell type",						   "0/1/2",      "",                 "Fuel Cell",                  "",                        "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "fuelcell_unit_max_power",           "Fuel cell max power per unit",          "kW",         "",                 "Fuel Cell",                  "",                        "",                              "" },
@@ -122,7 +124,9 @@ void cm_fuelcell::construct()
 
 	std::unique_ptr<FuelCell> tmp2(new FuelCell(fcVars->unitPowerMax_kW, fcVars->unitPowerMin_kW,
 		fcVars->startup_hours, fcVars->dynamicResponse_kWperHour, fcVars->degradation_kWperHour,
-		fcVars->degradationRestart_kW, fcVars->replacement_percent, fcVars->efficiencyTable,
+		fcVars->degradationRestart_kW, 
+		fcVars->replacementOption, fcVars->replacement_percent, fcVars->replacementSchedule,
+		fcVars->efficiencyTable,
 		fcVars->lowerHeatingValue_BtuPerFt3, fcVars->higherHeatingValue_BtuPerFt3, fcVars->availableFuel_MCf,
 		fcVars->shutdownOption, fcVars->dt_hour));
 	fuelCell = std::move(tmp2);
@@ -146,7 +150,7 @@ void cm_fuelcell::exec() throw (general_error)
 	size_t year_idx = 0;
 		for (size_t h = 0; h < 8760; h++){
 			for (size_t s = 0; s < fcVars->stepsPerHour; s++) {
-				fuelCellDispatch->runSingleTimeStep(h, year_idx, fcVars->systemGeneration_kW[idx], fcVars->electricLoad_kW[year_idx]);
+				fuelCellDispatch->runSingleTimeStep(h, year_idx, fcVars->systemGeneration_kW[year_idx], fcVars->electricLoad_kW[year_idx]);
 				p_fuelCellPower_kW[idx] = (ssc_number_t)fuelCellDispatch->getPower();
 				p_fuelCellPowerThermal_kW[idx] = (ssc_number_t)fuelCellDispatch->getPowerThermal();
 				p_fuelCellConsumption_MCf[idx] = (ssc_number_t)fuelCellDispatch->getFuelConsumption();
