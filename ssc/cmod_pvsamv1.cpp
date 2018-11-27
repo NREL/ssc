@@ -1067,126 +1067,6 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 	// variables used to calculate loss diagram
 	double annual_energy = 0, annual_ac_gross = 0, annual_ac_pre_avail = 0, dc_gross[4] = { 0, 0, 0, 0 }, annualMpptVoltageClipping = 0, annual_dc_adjust_loss = 0, annual_dc_lifetime_loss = 0, annual_ac_lifetime_loss = 0, annual_ac_battery_loss = 0, annual_xfmr_nll = 0, annual_xfmr_ll = 0, annual_xfmr_loss = 0;
 
-	// Check if a POA model is used, if so load all POA data into the poaData struct
-	if (radmode == Irradiance_IO::POA_R || radmode == Irradiance_IO::POA_P ){
-		for (int nn = 0; nn < num_subarrays; nn++){
-			if (!Subarrays[nn]->enable) continue;
-				
-			Subarrays[nn]->poa.poaAll.elev = hdr.elev;
-
-			if( step_per_hour > 1) {
-				Subarrays[nn]->poa.poaAll.stepScale = 'm';
-				Subarrays[nn]->poa.poaAll.stepSize = 60.0 / step_per_hour;
-			}
-
-			Subarrays[nn]->poa.poaAll.POA = new double[ 8760*step_per_hour ];
-			Subarrays[nn]->poa.poaAll.inc = new double[ 8760*step_per_hour ];
-			Subarrays[nn]->poa.poaAll.tilt = new double[ 8760*step_per_hour ];
-			Subarrays[nn]->poa.poaAll.zen = new double[ 8760*step_per_hour ];
-			Subarrays[nn]->poa.poaAll.exTer = new double[ 8760*step_per_hour ];
-					
-			for (size_t h=0; h<8760; h++){
-				for	(size_t m=0; m < step_per_hour; m++){
-					size_t ii = h * step_per_hour + m;
-					
-					if (!wdprov->read(&Irradiance->weatherRecord)) {
-						throw exec_error("pvsamv1", "could not read data line " + util::to_string((int)(idx + 1)) + " in weather file while loading POA data");
-					}
-					weather_record wf = Irradiance->weatherRecord;
-					int month_idx = wf.month - 1;
-
-					if (Subarrays[nn]->trackMode == Subarray_IO::SEASONAL_TILT)
-						Subarrays[nn]->tiltDegrees = Subarrays[nn]->monthlyTiltDegrees[month_idx]; //overwrite the tilt input with the current tilt to be used in calculations
-						
-					// save POA data
-					if(wf.poa > 0)
-						Subarrays[nn]->poa.poaAll.POA[ii] = wf.poa;
-					else
-						Subarrays[nn]->poa.poaAll.POA[ii] = -999;
-						
-					// Calculate incident angle
-					double t_cur = wf.hour + wf.minute/60;
-
-					// Calculate sunrise and sunset hours in local standard time for the current day
-					double sun[9], angle[5];
-					int tms[3];
-
-					solarpos( wf.year, wf.month, wf.day, 12, 0.0, hdr.lat, hdr.lon, hdr.tz, sun );
-
-					double t_sunrise = sun[4];
-					double t_sunset = sun[5];
-
-					if ( t_cur >= t_sunrise - ts_hour/2.0
-						&& t_cur < t_sunrise + ts_hour/2.0 )
-					{
-						// time step encompasses the sunrise
-						double t_calc = (t_sunrise + (t_cur+ts_hour/2.0))/2.0; // midpoint of sunrise and end of timestep
-						int hr_calc = (int)t_calc;
-						double min_calc = (t_calc-hr_calc)*60.0;
-
-						tms[0] = hr_calc;
-						tms[1] = (int)min_calc;
-
-						solarpos( wf.year, wf.month, wf.day, hr_calc, min_calc, hdr.lat, hdr.lon, hdr.tz, sun );
-
-						tms[2] = 2;
-					}
-					else if (t_cur > t_sunset - ts_hour/2.0
-						&& t_cur <= t_sunset + ts_hour/2.0 )
-					{
-						// timestep encompasses the sunset
-						double t_calc = ( (t_cur-ts_hour/2.0) + t_sunset )/2.0; // midpoint of beginning of timestep and sunset
-						int hr_calc = (int)t_calc;
-						double min_calc = (t_calc-hr_calc)*60.0;
-
-						tms[0] = hr_calc;
-						tms[1] = (int)min_calc;
-
-						solarpos( wf.year, wf.month, wf.day, hr_calc, min_calc, hdr.lat, hdr.lon, hdr.tz, sun );
-
-						tms[2] = 3;
-					}
-					else if (t_cur >= t_sunrise && t_cur <= t_sunset)
-					{
-						// timestep is not sunrise nor sunset, but sun is up  (calculate position at provided t_cur)
-						tms[0] = wf.hour;
-						tms[1] = (int)wf.minute;
-						solarpos( wf.year, wf.month, wf.day, wf.hour, wf.minute, hdr.lat, hdr.lon, hdr.tz, sun );
-						tms[2] = 1;
-					}
-					else
-					{
-						// sun is down, assign sundown values
-						sun[0] = -999; //avoid returning a junk azimuth angle
-						sun[1] = -999; //avoid returning a junk zenith angle
-						sun[2] = -999; //avoid returning a junk elevation angle
-						tms[0] = -1;
-						tms[1] = -1;
-						tms[2] = 0;
-					}
-
-
-					if( tms[2] > 0){
-						incidence(Subarrays[nn]->trackMode, Subarrays[nn]->tiltDegrees, Subarrays[nn]->azimuthDegrees, Subarrays[nn]->trackerRotationLimitDegrees, sun[1], sun[0], Subarrays[nn]->backtrackingEnabled, Subarrays[nn]->groundCoverageRatio, angle );
-					} else {
-						angle[0] = -999;
-						angle[1] = -999;
-						angle[2] = -999;
-						angle[3] = -999;
-						angle[4] = -999;	
-					}
-
-					Subarrays[nn]->poa.poaAll.inc[ii] = angle[ 0 ];
-					Subarrays[nn]->poa.poaAll.tilt[ii] = angle[ 1 ];
-					Subarrays[nn]->poa.poaAll.zen[ii] = sun[ 1 ];
-					Subarrays[nn]->poa.poaAll.exTer[ii] = sun[ 8 ];
-
-				}
-			}
-			wdprov->rewind();
-		}
-	}
-
 	/* *********************************************************************************************
 	PV DC calculation
 	*********************************************************************************************** */
@@ -1249,15 +1129,15 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 				weather_record wf = Irradiance->weatherRecord;
 
 				//update POA data structure indicies if radmode is POA model is enabled
-				if (radmode == Irradiance_IO::POA_R || radmode == Irradiance_IO::POA_P){
+				if (radmode == irrad::POA_R || radmode == irrad::POA_P){
 					for (size_t nn = 0; nn < num_subarrays; nn++){
 						if (!Subarrays[nn]->enable) continue;
 
-						Subarrays[nn]->poa.poaAll.tDew = wf.tdew;
-						Subarrays[nn]->poa.poaAll.i = idx;
+						Subarrays[nn]->poa.poaAll->tDew = wf.tdew;
+						Subarrays[nn]->poa.poaAll->i = idx;
 						if (jj == 0 && wf.hour == 0) {
-							Subarrays[nn]->poa.poaAll.dayStart = idx;
-							Subarrays[nn]->poa.poaAll.doy += 1;
+							Subarrays[nn]->poa.poaAll->dayStart = idx;
+							Subarrays[nn]->poa.poaAll->doy += 1;
 						}
 
 					}
@@ -1294,8 +1174,13 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 						|| Subarrays[nn]->nStrings < 1)
 						continue; // skip disabled subarrays
 
-					irrad irr(Irradiance, Subarrays[nn]);
-					
+					irrad irr(Irradiance->weatherRecord, Irradiance->weatherHeader,
+						Irradiance->skyModel, Irradiance->radiationMode, Subarrays[nn]->trackMode,
+						Irradiance->useWeatherFileAlbedo, Irradiance->instantaneous, Subarrays[nn]->backtrackingEnabled,
+						Irradiance->dtHour, Subarrays[nn]->tiltDegrees, Subarrays[nn]->azimuthDegrees, Subarrays[nn]->trackerRotationLimitDegrees, Subarrays[nn]->groundCoverageRatio,
+						Subarrays[nn]->monthlyTiltDegrees, Irradiance->userSpecifiedMonthlyAlbedo,
+						Subarrays[nn]->poa.poaAll.get());
+											
 					int code = irr.calc();
 
 					if (code != 0)
@@ -1306,7 +1191,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 					// p_irrad_calc is only weather file records long...
 					if (iyear == 0)
 					{
-						if (radmode == Irradiance_IO::POA_R || radmode == Irradiance_IO::POA_P) {
+						if (radmode == irrad::POA_R || radmode == irrad::POA_P) {
 							double gh_temp, df_temp, dn_temp;
 							gh_temp = df_temp = dn_temp = 0;
 							irr.get_irrad(&gh_temp, &dn_temp, &df_temp);
@@ -1322,21 +1207,21 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 					//  This will later get forced to false if any shading has been applied (in any scenario)
 					//  also this will also be forced to false if using the cec mcsp thermal model OR if using the spe module model with a diffuse util. factor < 1.0
 					Subarrays[nn]->poa.usePOAFromWF = false;
-					if (radmode == Irradiance_IO::POA_R){
+					if (radmode == irrad::POA_R){
 						ipoa[nn] = wf.poa;
 						Subarrays[nn]->poa.usePOAFromWF = true;
 					}
-					else if (radmode == Irradiance_IO::POA_P){
+					else if (radmode == irrad::POA_P){
 						ipoa[nn] = wf.poa;
 					}
 
-					if (Subarrays[nn]->Module->simpleEfficiencyForceNoPOA && (radmode == Irradiance_IO::POA_R || radmode == Irradiance_IO::POA_P)){  // only will be true if using a poa model AND spe module model AND spe_fp is < 1
+					if (Subarrays[nn]->Module->simpleEfficiencyForceNoPOA && (radmode == irrad::POA_R || radmode == irrad::POA_P)){  // only will be true if using a poa model AND spe module model AND spe_fp is < 1
 						Subarrays[nn]->poa.usePOAFromWF = false;
 						if (idx == 0)
 							log("The combination of POA irradiance as in input, single point efficiency module model, and module diffuse utilization factor less than one means that SAM must use a POA decomposition model to calculate the incident diffuse irradiance", SSC_WARNING);
 					}
 
-					if (Subarrays[nn]->Module->mountingSpecificCellTemperatureForceNoPOA && (radmode == Irradiance_IO::POA_R || radmode == Irradiance_IO::POA_P)){
+					if (Subarrays[nn]->Module->mountingSpecificCellTemperatureForceNoPOA && (radmode == irrad::POA_R || radmode == irrad::POA_P)){
 						Subarrays[nn]->poa.usePOAFromWF = false;
 						if (idx == 0)
 							log("The combination of POA irradiance as input and heat transfer method for cell temperature means that SAM must use a POA decomposition model to calculate the beam irradiance required by the cell temperature model", SSC_WARNING);
@@ -1365,7 +1250,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 						Irradiance->p_weatherFileDHI[idx] = (ssc_number_t)(wf.df);
 
 						// calculate beam if global & diffuse are selected as inputs
-						if (radmode == Irradiance_IO::GH_DF)
+						if (radmode == irrad::GH_DF)
 						{
 							Irradiance->p_IrradianceCalculated[2][idx] = (ssc_number_t)((wf.gh - wf.df) / cos(solzen*3.1415926 / 180));
 							if (Irradiance->p_IrradianceCalculated[2][idx] < -1)
@@ -1377,7 +1262,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 						}
 
 						// calculate global if beam & diffuse are selected as inputs
-						if (radmode == Irradiance_IO::DN_DF)
+						if (radmode == irrad::DN_DF)
 						{
 							Irradiance->p_IrradianceCalculated[0][idx] = (ssc_number_t)(wf.df + wf.dn * cos(solzen*3.1415926 / 180));
 							if (Irradiance->p_IrradianceCalculated[0][idx] < -1)
@@ -1389,7 +1274,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 						}
 
 						// calculate diffuse if total & beam are selected as inputs
-						if (radmode == Irradiance_IO::DN_GH)
+						if (radmode == irrad::DN_GH)
 						{
 							Irradiance->p_IrradianceCalculated[1][idx] = (ssc_number_t)(wf.gh - wf.dn * cos(solzen*3.1415926 / 180));
 							if (Irradiance->p_IrradianceCalculated[1][idx] < -1)
@@ -1404,7 +1289,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 					// record sub-array plane of array output before computing shading and soiling
 					if (iyear == 0)
 					{
-						if (radmode != Irradiance_IO::POA_R)
+						if (radmode != irrad::POA_R)
 							PVSystem->p_poaNominalFront[nn][idx] = (ssc_number_t)((ibeam + iskydiff + ignddiff));
 						else
 							PVSystem->p_poaNominalFront[nn][idx] = (ssc_number_t)((ipoa[nn]));
@@ -1412,7 +1297,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 
 
 					// record sub-array contribution to total POA power for this time step  (W)
-					if (radmode != Irradiance_IO::POA_R)
+					if (radmode != irrad::POA_R)
 						ts_accum_poa_front_nom += (ibeam + iskydiff + ignddiff) * ref_area_m2 * Subarrays[nn]->nModulesPerString * Subarrays[nn]->nStrings;
 					else
 						ts_accum_poa_front_nom += (ipoa[nn])* ref_area_m2 * Subarrays[nn]->nModulesPerString * Subarrays[nn]->nStrings;
@@ -1480,7 +1365,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 						// Sara 1/25/16 - shading database derate applied to dc only
 						// shading loss applied to beam if not from shading database
 						ibeam *= Subarrays[nn]->shadeCalculator.beam_shade_factor();
-						if (radmode == Irradiance_IO::POA_R || radmode == Irradiance_IO::POA_P){
+						if (radmode == irrad::POA_R || radmode == irrad::POA_P){
 							Subarrays[nn]->poa.usePOAFromWF = false;
 							if (Subarrays[nn]->poa.poaShadWarningCount == 0){
 								log(util::format("Combining POA irradiance as input with the beam shading losses at time [y:%d m:%d d:%d h:%d] forces SAM to use a POA decomposition model to calculate incident beam irradiance",
@@ -1497,7 +1382,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 					// apply sky diffuse shading factor (specified as constant, nominally 1.0 if disabled in UI)
 					if (Subarrays[nn]->shadeCalculator.fdiff() < 1.0){
 						iskydiff *= Subarrays[nn]->shadeCalculator.fdiff();
-						if (radmode == Irradiance_IO::POA_R || radmode == Irradiance_IO::POA_P){
+						if (radmode == irrad::POA_R || radmode == irrad::POA_P){
 							if (idx == 0)
 								log("Combining POA irradiance as input with the diffuse shading losses forces SAM to use a POA decomposition model to calculate incident diffuse irradiance", SSC_WARNING);
 							Subarrays[nn]->poa.usePOAFromWF = false;
@@ -1511,7 +1396,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 						|| (Subarrays[nn]->trackMode == 1 && (Subarrays[nn]->shadeMode == 1 || Subarrays[nn]->shadeMode == 2) && Subarrays[nn]->backtrackingEnabled == 0)) //one-axis tracking, self-shading, not backtracking
 					{
 
-						if (radmode == Irradiance_IO::POA_R || radmode == Irradiance_IO::POA_P){
+						if (radmode == irrad::POA_R || radmode == irrad::POA_P){
 							if (idx == 0)
 								log("Combining POA irradiance as input with self shading forces SAM to employ a POA decomposition model to calculate incident beam irradiance", SSC_WARNING);
 							Subarrays[nn]->poa.usePOAFromWF = false;
@@ -1530,7 +1415,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 
 						//execute self-shading calculations
 						ssc_number_t beam_to_use; //some self-shading calculations require DNI, NOT ibeam (beam in POA). Need to know whether to use DNI from wf or calculated, depending on radmode
-						if (radmode == Irradiance_IO::DN_DF || radmode == Irradiance_IO::DN_GH) beam_to_use = (ssc_number_t)wf.dn;
+						if (radmode == irrad::DN_DF || radmode == irrad::DN_GH) beam_to_use = (ssc_number_t)wf.dn;
 						else beam_to_use = Irradiance->p_IrradianceCalculated[2][hour * step_per_hour]; // top of hour in first year
 
 						if (linear && trackbool) //one-axis linear
@@ -1581,7 +1466,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 							throw exec_error("pvsamv1", util::format("Self-shading calculation failed at %d", (int)idx));
 					}
 
-					double poashad = (radmode == Irradiance_IO::POA_R) ? ipoa[nn] : (ibeam + iskydiff + ignddiff);
+					double poashad = (radmode == irrad::POA_R) ? ipoa[nn] : (ibeam + iskydiff + ignddiff);
 
 					// determine sub-array contribution to total shaded plane of array for this hour
 					ts_accum_poa_front_shaded += poashad * ref_area_m2 * Subarrays[nn]->nModulesPerString * Subarrays[nn]->nStrings;
@@ -1595,7 +1480,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 						ibeam *= soiling_factor;
 						iskydiff *= soiling_factor;
 						ignddiff *= soiling_factor;
-						if (radmode == Irradiance_IO::POA_R || radmode == Irradiance_IO::POA_P){
+						if (radmode == irrad::POA_R || radmode == irrad::POA_P){
 							ipoa[nn] *= soiling_factor;
 							if (soiling_factor < 1 && idx == 0)
 								log("Soiling may already be accounted for in the input POA data. Please confirm that the input data does not contain soiling effects, or remove the additional losses on the Losses page.", SSC_WARNING);
@@ -1647,7 +1532,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 					Subarrays[nn]->poa.poaDiffuseFront = iskydiff;
 					Subarrays[nn]->poa.poaGroundFront = ignddiff;
 					Subarrays[nn]->poa.poaRear = ipoa_rear_after_losses[nn];
-					Subarrays[nn]->poa.poaTotal = (radmode == Irradiance_IO::POA_R) ? ipoa[nn] :(ipoa_front[nn] + ipoa_rear_after_losses[nn]);
+					Subarrays[nn]->poa.poaTotal = (radmode == irrad::POA_R) ? ipoa[nn] :(ipoa_front[nn] + ipoa_rear_after_losses[nn]);
 					Subarrays[nn]->poa.angleOfIncidenceDegrees = aoi;
 					Subarrays[nn]->poa.sunUp = sunup;
 					Subarrays[nn]->poa.surfaceTiltDegrees = stilt;
@@ -1810,11 +1695,11 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 						if (iyear == 0)
 						{
 							ipoa_front[nn] *= out.AOIModifier;
-							PVSystem->p_poaFront[nn][idx] = (radmode == Irradiance_IO::POA_R) ? (ssc_number_t)ipoa[nn] : (ssc_number_t)(ipoa_front[nn]);
-							PVSystem->p_poaTotal[nn][idx] = (radmode == Irradiance_IO::POA_R) ? (ssc_number_t)ipoa[nn] : (ssc_number_t)(ipoa_front[nn] + ipoa_rear[nn]);
+							PVSystem->p_poaFront[nn][idx] = (radmode == irrad::POA_R) ? (ssc_number_t)ipoa[nn] : (ssc_number_t)(ipoa_front[nn]);
+							PVSystem->p_poaTotal[nn][idx] = (radmode == irrad::POA_R) ? (ssc_number_t)ipoa[nn] : (ssc_number_t)(ipoa_front[nn] + ipoa_rear[nn]);
 
 							ts_accum_poa_front_total += ipoa_front[nn] * ref_area_m2 * Subarrays[nn]->nModulesPerString * Subarrays[nn]->nStrings;
-							ts_accum_poa_total_eff += ((radmode == Irradiance_IO::POA_R) ? ipoa[nn] : (ipoa_front[nn] + ipoa_rear_after_losses[nn])) * ref_area_m2 * Subarrays[nn]->nModulesPerString * Subarrays[nn]->nStrings;
+							ts_accum_poa_total_eff += ((radmode == irrad::POA_R) ? ipoa[nn] : (ipoa_front[nn] + ipoa_rear_after_losses[nn])) * ref_area_m2 * Subarrays[nn]->nModulesPerString * Subarrays[nn]->nStrings;
 
 							//assign final string voltage output
 							PVSystem->p_dcStringVoltage[nn][idx] = (ssc_number_t)Subarrays[nn]->Module->dcVoltage * Subarrays[nn]->nModulesPerString;

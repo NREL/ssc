@@ -59,6 +59,7 @@
 #include "lib_irradproc.h"
 #include "lib_pv_incidence_modifier.h"
 #include "lib_util.h"
+#include "lib_weatherfile.h"
 
 static const int __nday[12] = {31,28,31,30,31,30,31,31,30,31,30,31};
 
@@ -590,8 +591,8 @@ void poaDecomp( double , double angle[], double sun[], double alb, poaDecompReq 
 
 	if ( angle[0] < r90 ){  // Check if incident angle if greater than 90 degrees
 		
-		double gti[] = {pA->POA[ pA->i-1 ], pA->POA[ pA->i ], pA->POA[ pA->i+1 ]};
-		double inc[] = {pA->inc[ pA->i-1 ], pA->inc[ pA->i ], pA->inc[ pA->i+1 ]};
+		double gti[] = { pA->POA[ pA->i-1 ], pA->POA[ pA->i ],pA->POA[ pA->i+1 ]};
+		double inc[] = { pA->inc[ pA->i-1 ], pA->inc[ pA->i ], pA->inc[ pA->i+1 ]};
 
 		GTI_DIRINT( gti, inc, sun[1], angle[1], sun[8], alb, pA->doy, pA->tDew, pA->elev, dn, df, gh, poa );
 
@@ -623,8 +624,8 @@ void poaDecomp( double , double angle[], double sun[], double alb, poaDecompReq 
 
 			if( (pA->inc[j] < r80) && (pA->inc[j] > r65) ){
 				count++;
-				double gti[] = {pA->POA[ j-1 ], pA->POA[ j ], pA->POA[ j+1 ]};
-				double inc[] = {pA->inc[ j-1 ], pA->inc[ j ], pA->inc[ j+1 ]};
+				double gti[] = { pA->POA[ j-1 ], pA->POA[ j ], pA->POA[ j+1 ]};
+				double inc[] = { pA->inc[ j-1 ], pA->inc[ j ], pA->inc[ j+1 ]};
 
 				double dnTmp, dfTmp, ghTmp, poaTmp[3];
 				avgKtp += GTI_DIRINT( gti, inc, pA->zen[j], pA->tilt[j], pA->exTer[j], alb, pA->doy, pA->tDew, pA->elev, dnTmp, dfTmp, ghTmp, poaTmp );
@@ -648,7 +649,7 @@ void poaDecomp( double , double angle[], double sun[], double alb, poaDecompReq 
 		
 		// Calculate DHI and GHI
 		double ct = cos(angle[1]);
-		df = (2*pA->POA[pA->i] - dn*cos(sun[1])*alb*(1-ct)) / (1 + ct + alb*(1-ct)) ;
+		df = (2* pA->POA[pA->i] - dn*cos(sun[1])*alb*(1-ct)) / (1 + ct + alb*(1-ct)) ;
 		gh = dn * cos( angle[0] ) + df;
 
 		//Check for bad values
@@ -837,16 +838,15 @@ void irrad::setup()
 {
 	year = month = day = hour = -999;
 	minute = delt = latitudeDegrees = longitudeDegrees = timezone = -999;
-	radiationMode = skyModel = trackingMode = -1;
-	globalHorizontal = directNormal = diffuseHorizontal = albedo = tiltDegrees = surfaceAzimuthDegrees = rotationLimitDegrees = -999;
+	globalHorizontal = directNormal = diffuseHorizontal = -999;
 
-	for (int i = 0; i<9; i++) sunAnglesRadians[i] = std::numeric_limits<double>::quiet_NaN();
+	for (int i = 0; i < 9; i++) {
+		sunAnglesRadians[i] = std::numeric_limits<double>::quiet_NaN();
+	}
 	surfaceAnglesRadians[0] = surfaceAnglesRadians[1] = surfaceAnglesRadians[2] = surfaceAnglesRadians[3] = surfaceAnglesRadians[4] = std::numeric_limits<double>::quiet_NaN();
 	planeOfArrayIrradianceFront[0] = planeOfArrayIrradianceFront[1] = planeOfArrayIrradianceFront[2] = diffuseIrradianceFront[0] = diffuseIrradianceFront[1] = diffuseIrradianceFront[2] = std::numeric_limits<double>::quiet_NaN();
 	planeOfArrayIrradianceRear[0] = planeOfArrayIrradianceRear[1] = planeOfArrayIrradianceRear[2] = diffuseIrradianceRear[0] = diffuseIrradianceRear[1] = diffuseIrradianceRear[2] = std::numeric_limits<double>::quiet_NaN();
 	timeStepSunPosition[0] = timeStepSunPosition[1] = timeStepSunPosition[2] = -999;
-	groundCoverageRatio = std::numeric_limits<double>::quiet_NaN();
-	enableBacktrack = false;
 	planeOfArrayIrradianceRearAverage = 0;
 
 	calculatedDirectNormal = directNormal;
@@ -856,59 +856,55 @@ irrad::irrad()
 {
 	setup();
 }
-irrad::irrad(Irradiance_IO * irradianceIO, Subarray_IO * subarrayIO)
+irrad::irrad(weather_record wf, weather_header hdr, 
+	int skyModelIn, int radiationModeIn, int trackModeIn,
+	bool useWeatherFileAlbedo, bool instantaneousWeather, bool backtrackingEnabled,
+	double dtHour, double tiltDegreesIn, double azimuthDegreesIn, double trackerRotationLimitDegreesIn, double groundCoverageRatioIn,
+	std::vector<double> monthlyTiltDegrees, std::vector<double> userSpecifiedAlbedo, 
+	poaDecompReq * poaAllIn) : 
+	skyModel(skyModelIn), radiationMode(radiationModeIn), trackingMode(trackModeIn), enableBacktrack(backtrackingEnabled),
+	delt(dtHour), tiltDegrees(tiltDegreesIn), surfaceAzimuthDegrees(azimuthDegreesIn), rotationLimitDegrees(trackerRotationLimitDegreesIn),
+	groundCoverageRatio(groundCoverageRatioIn), poaAll(poaAllIn)
 {
 	setup();
-	irradiance = irradianceIO;
-	subarray = subarrayIO;
-
-	weather_record wf = irradiance->weatherRecord;
-	weather_header hdr = irradiance->weatherHeader;
-
 	int month_idx = wf.month - 1;
-	if (irradiance->useWeatherFileAlbedo && std::isfinite(wf.alb) && wf.alb > 0 && wf.alb < 1) {
+	if (useWeatherFileAlbedo && std::isfinite(wf.alb) && wf.alb > 0 && wf.alb < 1) {
 		albedo = wf.alb;
 	}
 	else if (month_idx >= 0 && month_idx < 12) {
-		albedo = irradiance->userSpecifiedMonthlyAlbedo[month_idx];
+		albedo = userSpecifiedAlbedo[month_idx];
 	}
 	
 	set_time(wf.year, wf.month, wf.day, wf.hour, wf.minute,
-		irradiance->instantaneous ? IRRADPROC_NO_INTERPOLATE_SUNRISE_SUNSET : irradiance->dtHour);
+		instantaneousWeather ? IRRADPROC_NO_INTERPOLATE_SUNRISE_SUNSET : dtHour);
 	set_location(hdr.lat, hdr.lon, hdr.tz);
-	set_sky_model(irradiance->skyModel, albedo);
+	set_sky_model(skyModel, albedo);
 
-	radiationMode = irradiance->radiationMode;
-	if (radiationMode == Irradiance_IO::DN_DF) set_beam_diffuse(wf.dn, wf.df);
-	else if (radiationMode == Irradiance_IO::DN_GH) set_global_beam(wf.gh, wf.dn);
-	else if (radiationMode == Irradiance_IO::GH_DF) set_global_diffuse(wf.gh, wf.df);
-	else if (radiationMode == Irradiance_IO::POA_R) set_poa_reference(wf.poa, &(subarray->poa.poaAll));
-	else if (radiationMode == Irradiance_IO::POA_P) set_poa_pyranometer(wf.poa, &subarray->poa.poaAll);
+	if (radiationMode == irrad::DN_DF) set_beam_diffuse(wf.dn, wf.df);
+	else if (radiationMode == irrad::DN_GH) set_global_beam(wf.gh, wf.dn);
+	else if (radiationMode == irrad::GH_DF) set_global_diffuse(wf.gh, wf.df);
+	else if (radiationMode == irrad::POA_R) set_poa_reference(wf.poa, poaAllIn);
+	else if (radiationMode == irrad::POA_P) set_poa_pyranometer(wf.poa, poaAllIn);
 
-	if (subarray->trackMode == Subarray_IO::SEASONAL_TILT) 
-		subarray->tiltDegrees = subarray->monthlyTiltDegrees[month_idx];
-
-	set_surface(subarray->trackMode,
-		subarray->tiltDegrees,
-		subarray->azimuthDegrees,
-		subarray->trackerRotationLimitDegrees,
-		subarray->backtrackingEnabled,
-		subarray->groundCoverageRatio);	
+	if (trackingMode == TRACKING::SEASONAL_TILT) {
+		tiltDegrees = monthlyTiltDegrees[month_idx];
+		trackingMode = TRACKING::FIXED_TILT;
+	}
 }
 
 int irrad::check()
 {
 	if (year < 0 || month < 0 || day < 0 || hour < 0 || minute < 0 || delt > 1) return -1;
 	if ( latitudeDegrees < -90 || latitudeDegrees > 90 || longitudeDegrees < -180 || longitudeDegrees > 180 || timezone < -15 || timezone > 15 ) return -2;
-	if ( radiationMode < Irradiance_IO::DN_DF || radiationMode > Irradiance_IO::POA_P || skyModel < 0 || skyModel > 2 ) return -3;
+	if ( radiationMode < irrad::DN_DF || radiationMode > irrad::POA_P || skyModel < 0 || skyModel > 2 ) return -3;
 	if ( trackingMode < 0 || trackingMode > 4 ) return -4;
-	if ( radiationMode == Irradiance_IO::DN_DF && (directNormal < 0 || directNormal > Irradiance_IO::irradiationMax || diffuseHorizontal < 0 || diffuseHorizontal > 1500)) return -5;
-	if ( radiationMode == Irradiance_IO::DN_GH && (globalHorizontal < 0 || globalHorizontal > 1500 || directNormal < 0 || directNormal > 1500)) return -6;
+	if ( radiationMode == irrad::DN_DF && (directNormal < 0 || directNormal > irrad::irradiationMax || diffuseHorizontal < 0 || diffuseHorizontal > 1500)) return -5;
+	if ( radiationMode == irrad::DN_GH && (globalHorizontal < 0 || globalHorizontal > 1500 || directNormal < 0 || directNormal > 1500)) return -6;
 	if ( albedo < 0 || albedo > 1 ) return -7;
 	if ( tiltDegrees < 0 || tiltDegrees > 90 ) return -8;
 	if ( surfaceAzimuthDegrees < 0 || surfaceAzimuthDegrees >= 360 ) return -9;
 	if ( rotationLimitDegrees < -90 || rotationLimitDegrees > 90 ) return -10;
-	if ( radiationMode == Irradiance_IO::GH_DF && (globalHorizontal < 0 || globalHorizontal > 1500 || diffuseHorizontal < 0 || diffuseHorizontal > 1500)) return -11;
+	if ( radiationMode == irrad::GH_DF && (globalHorizontal < 0 || globalHorizontal > 1500 || diffuseHorizontal < 0 || diffuseHorizontal > 1500)) return -11;
 	return 0;
 }
 
@@ -1019,31 +1015,31 @@ void irrad::set_beam_diffuse( double beam, double diffuse )
 {
 	this->directNormal = beam;
 	this->diffuseHorizontal = diffuse;
-	this->radiationMode = Irradiance_IO::DN_DF;
+	this->radiationMode = irrad::DN_DF;
 }
 
 void irrad::set_global_beam( double global, double beam )
 {
 	this->globalHorizontal = global;
 	this->directNormal = beam;
-	this->radiationMode = Irradiance_IO::DN_GH;
+	this->radiationMode = irrad::DN_GH;
 }
 
 void irrad::set_global_diffuse(double global, double diffuse)
 {
 	this->globalHorizontal = global;
 	this->diffuseHorizontal = diffuse;
-	this->radiationMode = Irradiance_IO::GH_DF;
+	this->radiationMode = irrad::GH_DF;
 }
 
 void irrad::set_poa_reference( double planeOfArrayIrradianceFront, poaDecompReq* pA){
 	this->weatherFilePOA = planeOfArrayIrradianceFront;
-	this->radiationMode = Irradiance_IO::POA_R;
+	this->radiationMode = irrad::POA_R;
 	this->poaAll = pA;
 }
 void irrad::set_poa_pyranometer( double planeOfArrayIrradianceFront, poaDecompReq* pA ){
 	this->weatherFilePOA = planeOfArrayIrradianceFront;
-	this->radiationMode = Irradiance_IO::POA_P;
+	this->radiationMode = irrad::POA_P;
 	this->poaAll = pA;
 }
 void irrad::set_sun_component(size_t index, double value)
@@ -1140,7 +1136,7 @@ int irrad::calc()
 		// compute incidence angles onto fixed or tracking surface
 		incidence( trackingMode, tiltDegrees, surfaceAzimuthDegrees, rotationLimitDegrees, sunAnglesRadians[1], sunAnglesRadians[0], enableBacktrack, groundCoverageRatio, surfaceAnglesRadians );
 
-		if(radiationMode < Irradiance_IO::POA_R){  
+		if(radiationMode < irrad::POA_R){
 			double hextra = sunAnglesRadians[8];
 			double hbeam = directNormal*cos( sunAnglesRadians[1] ); // calculated beam on horizontal surface: sunAnglesRadians[1]=zenith
 				
@@ -1152,22 +1148,22 @@ int irrad::calc()
 			}
 
 			// compute beam and diffuse inputs on horizontal based on irradiance inputs mode
-			if (radiationMode == Irradiance_IO::DN_DF)  // Beam+Diffuse
+			if (radiationMode == irrad::DN_DF)  // Beam+Diffuse
 			{
 				calculatedDiffuseHorizontal = diffuseHorizontal;
 				calculatedDirectNormal = directNormal;
 			}
-			else if (radiationMode == Irradiance_IO::DN_GH) // Total+Beam
+			else if (radiationMode == irrad::DN_GH) // Total+Beam
 			{
 				calculatedDiffuseHorizontal = globalHorizontal - hbeam;
 				if (calculatedDiffuseHorizontal < 0) calculatedDiffuseHorizontal = 0;
 				calculatedDirectNormal = directNormal;
 			}
-			else if (radiationMode == Irradiance_IO::GH_DF) //Total+Diffuse
+			else if (radiationMode == irrad::GH_DF) //Total+Diffuse
 			{
 				calculatedDiffuseHorizontal = diffuseHorizontal;
 				calculatedDirectNormal = (globalHorizontal - diffuseHorizontal) / cos(sunAnglesRadians[1]); //compute beam from total, diffuse, and zenith angle
-				if (calculatedDirectNormal > Irradiance_IO::irradiationMax) calculatedDirectNormal = Irradiance_IO::irradiationMax;
+				if (calculatedDirectNormal > irrad::irradiationMax) calculatedDirectNormal = irrad::irradiationMax;
 				if (calculatedDirectNormal < 0) calculatedDirectNormal = 0;
 			}
 			else
@@ -1190,6 +1186,8 @@ int irrad::calc()
 		} 
 		else { // Sev 2015/09/11 - perform a POA decomp.
 			poaDecomp( weatherFilePOA, surfaceAnglesRadians, sunAnglesRadians, albedo, poaAll, directNormal, diffuseHorizontal, globalHorizontal, planeOfArrayIrradianceFront, diffuseIrradianceFront);
+			calculatedDirectNormal = directNormal;
+			calculatedDiffuseHorizontal = diffuseHorizontal;
 		}
 	} else { globalHorizontal=0; directNormal=0; diffuseHorizontal=0;}
 
