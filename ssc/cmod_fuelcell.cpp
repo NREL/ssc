@@ -62,8 +62,8 @@ var_info vtab_fuelcell_input[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "analysis_period",                   "Lifetime analysis period",              "years",   "The number of years in the simulation", "",        "system_use_lifetime_output=1","",                           "" },
 
 	// external compute module inputs
-	{ SSC_INOUT,        SSC_ARRAY,       "gen",								  "System power generated",                "kW",        "Lifetime system generation", "",       "",                        "",                              "" },
-	{ SSC_INOUT,		SSC_ARRAY,	     "load",			                  "Electricity load (year 1)",             "kW",	    "",                  "",	                       "",	                      "",	                           "" },
+	{ SSC_INOUT,        SSC_ARRAY,       "gen",								  "System power generated",                "kW",        "Lifetime system generation", "",                  "",                        "",                              "" },
+	{ SSC_INPUT,		SSC_ARRAY,	     "load",			                  "Electricity load (year 1)",             "kW",	    "",                  "",	                       "",	                      "",	                           "" },
 
 	// fuel cell
 	{ SSC_INPUT,        SSC_NUMBER,      "fuelcell_degradation",              "Fuel cell degradation per hour",        "kW/h",       "",                 "Fuel Cell",                  "",                        "",                              "" },
