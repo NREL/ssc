@@ -71,6 +71,7 @@ void FuelCell::init() {
 	m_hoursSinceStart = 0;
 	m_powerMax_kW = m_unitPowerMax_kW;
 	m_power_kW = 0;
+	m_powerThermal_kW = 0;
 	m_powerPrevious_kW = 0;
 	m_fuelConsumed_MCf = 0;
 	m_replacementCount = 0;
