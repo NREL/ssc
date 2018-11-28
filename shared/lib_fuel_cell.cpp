@@ -198,9 +198,13 @@ void FuelCell::checkAvailableFuel() {
 void FuelCell::applyDegradation() {
 	if (isRunning()) {
 		m_powerMax_kW -= m_degradation_kWperHour * dt_hour;
+		m_power_kW = fmin(m_power_kW, m_powerMax_kW);
 	}
 	else if (m_powerPrevious_kW > 0 && m_hoursSinceStart == 0) {
 		m_powerMax_kW -= m_degradationRestart_kW;
+		if (m_powerMax_kW < 0) {
+			m_powerMax_kW = 0;
+		}
 	}
 
 	if (m_replacementOption == FC_REPLACEMENT_OPTION::REPLACE_AT_CAPACITY) {
@@ -214,11 +218,13 @@ void FuelCell::applyDegradation() {
 		if (hour % 8760 == 0 && m_replacementSchedule[m_year] > 0) {
 			m_powerMax_kW = m_unitPowerMax_kW;
 			m_replacementCount += 1;
-		}
+		} 
 	}
-
-	// Ensure fuel cell power is less than or equal to max 
-	m_power_kW = fmin(m_power_kW, m_powerMax_kW);
+	if (m_powerMax_kW <= m_unitPowerMin_kW) {
+		m_power_kW = 0;
+		m_startedUp = 0;
+		m_hoursSinceStart = 0;
+	}
 }
 
 void FuelCell::applyEfficiency() {
@@ -250,7 +256,7 @@ void FuelCell::runSingleTimeStep(double power_kW) {
 		checkAvailableFuel();
 	}
 	else {
-		if ((power_kW > 0 || m_hoursSinceStart > 0) && m_availableFuel_MCf > 0){
+		if ((power_kW > 0 || m_hoursSinceStart > 0) && m_availableFuel_MCf > 0 && m_powerMax_kW > m_unitPowerMin_kW){
 			m_hoursSinceStart += dt_hour;
 			if (m_hoursSinceStart == m_startup_hours) {
 				m_startedUp = true;

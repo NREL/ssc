@@ -37,8 +37,6 @@ TEST_F(CMFuelCell, NoFinancialModelFixedLifetime) {
 	ssc_number_t n_years;
 	ssc_data_get_number(data, "analysis_period", &n_years);
 	size_t n_lifetime = (size_t)(n_years) * 8760;
-
-	set_array(data, "ac", fuelcelltest::ac_watt_lifetime_output_path, (int)n_lifetime);
 	ssc_data_set_number(data, "system_use_lifetime_output", 1);
 
 	int errors = run_module(data, "fuelcell");

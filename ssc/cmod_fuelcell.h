@@ -64,7 +64,6 @@ public:
 	fuelCellVariables() {/* nothing to do */ };
 	fuelCellVariables(compute_module & cm) :
 		systemUseLifetimeOutput(cm.as_boolean("system_use_lifetime_output")),
-		systemGeneration_kW(cm.as_vector_double("ac")),
 		unitPowerMax_kW(cm.as_double("fuelcell_unit_max_power")),
 		unitPowerMin_kW(cm.as_double("fuelcell_unit_min_power")),
 		startup_hours(cm.as_double("fuelcell_startup_time")),
@@ -93,35 +92,62 @@ public:
 		if (systemUseLifetimeOutput) {
 			numberOfYears = cm.as_unsigned_long("analysis_period");
 		}
-		// need to fix for SDK, currently assumes that PV watts only runs for one year 
-		dt_hour = (double)(8760) / (double)(systemGeneration_kW.size());
-		stepsPerHour = (size_t)(1 / dt_hour);
-		numberOfLifetimeRecords = stepsPerHour * numberOfYears * 8760;
+
+		// Load is always a non-lifetime input
+		if (cm.is_assigned("load")) {
+			electricLoad_kW = cm.as_vector_double("load");
+		}
+		
+		// Choose between gen and ac, user should only put in one, but will prefer 'gen' if input
+		if (cm.is_assigned("gen")) {
+			systemGeneration_kW = cm.as_vector_double("gen");
+			numberOfRecordsPerYear = systemGeneration_kW.size() / numberOfYears;
+		}
+		// It's okay if there is no input generation or load, initialize to zero
+		else {
+			numberOfRecordsPerYear = (size_t)std::fmax(electricLoad_kW.size(), 8760);
+			systemGeneration_kW.reserve(numberOfRecordsPerYear * numberOfYears);
+			for (size_t j = 0; j < numberOfRecordsPerYear * numberOfYears; j++) {
+				systemGeneration_kW.push_back(0.0);
+			}
+		}
+
+		// Timesteps
+		numberOfLifetimeRecords = numberOfRecordsPerYear * numberOfYears;
+		stepsPerHour = numberOfRecordsPerYear / (size_t)8760;
+		dt_hour = (double)(1 / stepsPerHour);
+
+		// Ensure load matches generation size
+		std::vector<double> load = electricLoad_kW;
+		electricLoad_kW.clear();
+		electricLoad_kW.reserve(numberOfLifetimeRecords);
+
+		if (load.size() == 0) {
+			for (size_t k = 0; k < numberOfLifetimeRecords; k++) {
+				electricLoad_kW.push_back(0.0);
+			}
+		}
+		else if (load.size() == numberOfRecordsPerYear) {
+			for (size_t y = 0; y < numberOfYears; y++) {
+				for (size_t i = 0; i < numberOfRecordsPerYear; i++) {
+					electricLoad_kW.push_back(load[i]);
+				}
+			}
+		}
+		else {
+			throw compute_module::exec_error("fuelcell", "Electric load time steps must equal generation time step");
+		}
 
 		for (size_t p = 0; p < discharge_percent.size(); p++) {
 			discharge_percentByPeriod[p] = discharge_percent[p];
 		}
 
-		for (size_t i = 0; i < systemGeneration_kW.size(); i++) {
-			systemGeneration_kW[i] *= util::watt_to_kilowatt;
-		}
-
-		if (cm.is_assigned("load"))
-			electricLoad_kW = cm.as_vector_double("load");
-		else
-		{
-			/* Fix this - load for single owner does not exist
-			Need to check that load matches generation size... */
-			electricLoad_kW.clear();
-			for (size_t y = 0; y < systemGeneration_kW.size(); y++) {
-				electricLoad_kW.push_back(0);
-			}
-		}
 	}
 
 	// simulation inputs
 	bool systemUseLifetimeOutput;
 	size_t numberOfYears;
+	size_t numberOfRecordsPerYear;
 	size_t numberOfLifetimeRecords;
 	size_t stepsPerHour;
 

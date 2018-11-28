@@ -1313,6 +1313,8 @@ void battstor::process_messages(compute_module &cm)
 ///////////////////////////////////////////////////
 static var_info _cm_vtab_battery[] = {
 	/*   VARTYPE           DATATYPE         NAME                                            LABEL                                                   UNITS      META                           GROUP                  REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
+	{ SSC_INPUT,        SSC_NUMBER,      "system_use_lifetime_output",                 "Lifetime simulation",                                     "0/1",       "0=SingleYearRepeated,1=RunEveryYear",   "",        "?=0",                   "BOOLEAN",                          "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "analysis_period",                            "Lifetime analysis period",                                "years",     "The number of years in the simulation", "",        "system_use_lifetime_output=1","",                           "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "en_batt",                                    "Enable battery storage model",                            "0/1",        "",                     "Battery",                      "?=0",                    "",                               "" },
 	{ SSC_INOUT,        SSC_ARRAY,       "gen",										   "System power generated",                                  "kW",         "",                     "",                             "",                       "",                               "" },
 	{ SSC_INPUT,		SSC_ARRAY,	     "load",			                           "Electricity load (year 1)",                               "kW",	        "",				        "",                             "",	                      "",	                            "" },
@@ -1338,10 +1340,18 @@ public:
 	{
 		if (as_boolean("en_batt"))
 		{
-			// Parse "Gen input"
 			std::vector<ssc_number_t> power_input = as_vector_ssc_number_t("gen");
+
+			// Setup time
 			size_t nrec = power_input.size();
-			battstor batt(*this, true, nrec, static_cast<double>(8760. / nrec));
+			size_t nyears = 1;
+			if (as_boolean("system_use_lifetime_output")) {
+				nyears = as_unsigned_long("analysis_period");
+			}
+			size_t nrec_per_year = nrec / nyears;
+
+
+			battstor batt(*this, true, nrec, static_cast<double>(8760. / nrec_per_year));
 			ssc_number_t * p_gen = allocate("gen", nrec * batt.nyears);
 
 			// Parse "Load input"
@@ -1369,11 +1379,11 @@ public:
 			}
 	
 			// Error checking
-			if (power_input.size() != power_load.size())
+			if (power_input.size() != power_load.size() * nyears)
 				throw exec_error("battery", "Load and PV power do not match weatherfile length");
 
 			
-			if (batt.step_per_hour > 60 || batt.total_steps != power_input.size() * batt.nyears)
+			if (batt.step_per_hour > 60 || batt.total_steps != power_input.size())
 				throw exec_error("battery", util::format("invalid number of data records (%u): must be an integer multiple of 8760", batt.total_steps));
 
 			// Battery cannot be run in DC-connected mode for generic system.  
@@ -1398,9 +1408,8 @@ public:
 	
 						batt.initialize_time(year, hour, jj);
 						batt.check_replacement_schedule();
-						batt.advance(*this, power_input[year_idx], 0, power_load[year_idx], 0);
+						batt.advance(*this, power_input[lifetime_idx], 0, power_load[year_idx], 0);
 						p_gen[lifetime_idx] = batt.outGenPower[lifetime_idx];
-						double gen = batt.outGenPower[lifetime_idx];
 						annual_energy += p_gen[lifetime_idx] * batt._dt_hour;
 						lifetime_idx++;
 						year_idx++;

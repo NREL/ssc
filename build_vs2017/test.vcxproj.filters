@@ -14,9 +14,6 @@
     <ClCompile Include="..\test\tcs_test\csp_solver_core_test.cpp">
       <Filter>tcs_test</Filter>
     </ClCompile>
-    <ClCompile Include="..\test\input_cases\tcs_trough_physical_input.cpp">
-      <Filter>input_cases</Filter>
-    </ClCompile>
     <ClCompile Include="..\test\input_cases\weather_inputs.cpp">
       <Filter>input_cases</Filter>
     </ClCompile>
@@ -72,7 +69,7 @@
     <ClCompile Include="..\test\ssc_test\cmod_fuelcell_test.cpp">
       <Filter>ssc_test</Filter>
     </ClCompile>
-<ClCompile Include="..\test\ssc_test\cmod_tcsmolten_salt_test.cpp">
+    <ClCompile Include="..\test\ssc_test\cmod_tcsmolten_salt_test.cpp">
       <Filter>ssc_test</Filter>
     </ClCompile>
   </ItemGroup>
@@ -91,9 +88,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\test\input_cases\tcs_trough_physical_input.h">
-      <Filter>input_cases</Filter>
-    </ClInclude>
     <ClInclude Include="..\test\input_cases\weather_inputs.h">
       <Filter>input_cases</Filter>
     </ClInclude>
@@ -143,6 +137,36 @@
       <Filter>ssc_test</Filter>
     </ClInclude>
     <ClInclude Include="..\test\input_cases\pvyield_common_data.h">
+      <Filter>input_cases</Filter>
+    </ClInclude>
+    <ClInclude Include="..\test\ssc_test\cmod_fuelcell_test.h">
+      <Filter>ssc_test</Filter>
+    </ClInclude>
+    <ClInclude Include="..\test\ssc_test\cmod_tcsmolten_salt_test.h">
+      <Filter>ssc_test</Filter>
+    </ClInclude>
+    <ClInclude Include="..\test\ssc_test\cmod_trough_physical_iph_test.h">
+      <Filter>ssc_test</Filter>
+    </ClInclude>
+    <ClInclude Include="..\test\shared_test\lib_battery_dispatch_test.h">
+      <Filter>shared_test</Filter>
+    </ClInclude>
+    <ClInclude Include="..\test\shared_test\lib_fuel_cell_test.h">
+      <Filter>shared_test</Filter>
+    </ClInclude>
+    <ClInclude Include="..\test\input_cases\tcsmolten_salt_cases.h">
+      <Filter>tcs_test</Filter>
+    </ClInclude>
+    <ClInclude Include="..\test\input_cases\tcsmolten_salt_common_data.h">
+      <Filter>tcs_test</Filter>
+    </ClInclude>
+    <ClInclude Include="..\test\input_cases\trough_physical_iph_cases.h">
+      <Filter>tcs_test</Filter>
+    </ClInclude>
+    <ClInclude Include="..\test\input_cases\trough_physical_iph_common_data.h">
+      <Filter>tcs_test</Filter>
+    </ClInclude>
+    <ClInclude Include="..\test\input_cases\fuelcell_common_data.h">
       <Filter>input_cases</Filter>
     </ClInclude>
   </ItemGroup>

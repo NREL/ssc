@@ -62,8 +62,8 @@ var_info vtab_fuelcell_input[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "analysis_period",                   "Lifetime analysis period",              "years",   "The number of years in the simulation", "",        "system_use_lifetime_output=1","",                           "" },
 
 	// external compute module inputs
-	{ SSC_INPUT,        SSC_ARRAY,       "ac",								  "System AC power generated",             "W",        "",                   "",                           "",                         "",                             "" },
-	{ SSC_INOUT,		SSC_ARRAY,	     "load",			                  "Electricity load (year 1)",             "kW",	   "",				     "",                           "",	                      "",	                           "" },
+	{ SSC_INOUT,        SSC_ARRAY,       "gen",								  "System power generated",                "kW",        "Lifetime system generation", "",       "",                        "",                              "" },
+	{ SSC_INOUT,		SSC_ARRAY,	     "load",			                  "Electricity load (year 1)",             "kW",	    "",                  "",	                       "",	                      "",	                           "" },
 
 	// fuel cell
 	{ SSC_INPUT,        SSC_NUMBER,      "fuelcell_degradation",              "Fuel cell degradation per hour",        "kW/h",       "",                 "Fuel Cell",                  "",                        "",                              "" },
@@ -99,7 +99,7 @@ var_info_invalid };
 
 var_info vtab_fuelcell_output[] = {
 
-	{ SSC_OUTPUT,       SSC_ARRAY,       "gen",                                "System power generated",                "kW",        "",                 "Fuel Cell",                  "",                        "",                              "" },
+	//{ SSC_OUTPUT,       SSC_ARRAY,       "gen",                                "System power generated",                "kW",        "",                 "Fuel Cell",                  "",                        "",                              "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "fuelcell_power",                     "Electricity from fuel cell",            "kW",        "",                 "Fuel Cell",                  "",                        "",                              "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "fuelcell_power_thermal",             "Heat from fuel cell",                   "kWt",        "",                 "Fuel Cell",                  "",                        "",                              "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "fuelcell_fuel_consumption_mcf",      "Fuel consumption of fuel cell",         "MCf",        "",                 "Fuel Cell",                  "",                        "",                              "" },
@@ -143,14 +143,12 @@ void cm_fuelcell::construct()
 void cm_fuelcell::exec() throw (general_error)
 {
 	construct();
-
-
 	size_t idx = 0;
-	for (size_t y = 0; y < fcVars->numberOfYears; y++) {
-	size_t year_idx = 0;
+ 	for (size_t y = 0; y < fcVars->numberOfYears; y++) {
+		size_t idx_year = 0;
 		for (size_t h = 0; h < 8760; h++){
 			for (size_t s = 0; s < fcVars->stepsPerHour; s++) {
-				fuelCellDispatch->runSingleTimeStep(h, year_idx, fcVars->systemGeneration_kW[year_idx], fcVars->electricLoad_kW[year_idx]);
+				fuelCellDispatch->runSingleTimeStep(h, idx_year, fcVars->systemGeneration_kW[idx], fcVars->electricLoad_kW[idx]);
 				p_fuelCellPower_kW[idx] = (ssc_number_t)fuelCellDispatch->getPower();
 				p_fuelCellPowerThermal_kW[idx] = (ssc_number_t)fuelCellDispatch->getPowerThermal();
 				p_fuelCellConsumption_MCf[idx] = (ssc_number_t)fuelCellDispatch->getFuelConsumption();
@@ -158,7 +156,7 @@ void cm_fuelcell::exec() throw (general_error)
 				p_fuelCellToLoad_kW[idx] = (ssc_number_t)(fuelCellDispatch->getBatteryPower()->powerFuelCellToLoad);
 				p_gen_kW[idx] = (ssc_number_t)(fcVars->systemGeneration_kW[idx]) + p_fuelCellPower_kW[idx];
 				idx++;
-				year_idx++;
+				idx_year++;
 			}
 		}
 	}
