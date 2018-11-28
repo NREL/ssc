@@ -127,6 +127,20 @@ var_info vtab_oandm[] = {
 	{ SSC_INPUT,        SSC_ARRAY,		 "om_opt_fuel_2_cost",                 "Coal feedstock cost",          "$/unit", "",                  "O&M",            "?=0.0",                 "",                                         "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "om_opt_fuel_2_cost_escal",           "Coal feedstock cost escalation","%/year",  "",                  "O&M",            "?=0.0",                 "",                                         "" },
 
+	// optional additional base o and m types
+
+	{ SSC_INPUT,        SSC_NUMBER,      "om_num_types",           "Number of O and M types","",  "",                  "O&M",            "?=1",                 "INTEGER,MIN=1,MAX=3",                                         "" },
+	{ SSC_INPUT,        SSC_STRING,      "om_name_types",           "Names of O and M types","",  "",                  "O&M",            "?=''",                 "INTEGER,MIN=1,MAX=3",                                         "" },
+
+	{ SSC_INPUT,        SSC_ARRAY,       "om_fixed1",                     "Fixed O&M annual amount",           "$/year",  "",                  "O&M",            "?=0.0",                 "",                                         "" },
+	{ SSC_INPUT,        SSC_ARRAY,       "om_production1",                "Production-based O&M amount",       "$/MWh",   "",                  "O&M",            "?=0.0",                 "",                                         "" },
+	{ SSC_INPUT,        SSC_ARRAY,       "om_capacity1",                  "Capacity-based O&M amount",         "$/kWcap", "",                  "O&M",            "?=0.0",                 "",                                         "" },
+	{ SSC_INPUT,        SSC_ARRAY,       "om_fixed2",                     "Fixed O&M annual amount",           "$/year",  "",                  "O&M",            "?=0.0",                 "",                                         "" },
+	{ SSC_INPUT,        SSC_ARRAY,       "om_production2",                "Production-based O&M amount",       "$/MWh",   "",                  "O&M",            "?=0.0",                 "",                                         "" },
+	{ SSC_INPUT,        SSC_ARRAY,       "om_capacity2",                  "Capacity-based O&M amount",         "$/kWcap", "",                  "O&M",            "?=0.0",                 "",                                         "" },
+
+
+
 
 var_info_invalid };
 
