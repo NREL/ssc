@@ -1343,15 +1343,15 @@ public:
 			std::vector<ssc_number_t> power_input = as_vector_ssc_number_t("gen");
 
 			// Setup time
-			size_t nrec = power_input.size();
 			size_t nyears = 1;
 			if (as_boolean("system_use_lifetime_output")) {
 				nyears = as_unsigned_long("analysis_period");
 			}
-			size_t nrec_per_year = nrec / nyears;
+			size_t nrec = power_input.size() / nyears;
+			size_t nrec_lifetime = nrec * nyears;
 
 
-			battstor batt(*this, true, nrec, static_cast<double>(8760. / nrec_per_year));
+			battstor batt(*this, true, nrec, static_cast<double>(8760. / nrec));
 			ssc_number_t * p_gen = allocate("gen", nrec * batt.nyears);
 
 			// Parse "Load input"
@@ -1379,7 +1379,7 @@ public:
 			}
 	
 			// Error checking
-			if (power_input.size() != power_load.size() * nyears)
+			if (power_input.size() != nrec_lifetime)
 				throw exec_error("battery", "Load and PV power do not match weatherfile length");
 
 			
