@@ -1735,7 +1735,10 @@ public:
 				if (tou.mc_dispatch_params.m_is_price_scenarios && tou.mc_dispatch_params.m_fc_price_scenarios.nrows() != nstep)
 					scenarios_ok = false;
 				if (!scenarios_ok)
-					throw exec_error("tcsmolten_salt", "The number of time points in at least one of the provided scenarios does not match the number calculated from 'disp_steps_per_hour', 'disp_frequency, 'disp_horizon', and 'disp_horizon_update'");
+				{
+					log("The number of time points in at least one of the provided scenarios does not match the number calculated from 'disp_steps_per_hour', 'disp_frequency, 'disp_horizon', and 'disp_horizon_update'", SSC_WARNING);
+					//throw exec_error("tcsmolten_salt", "The number of time points in at least one of the provided scenarios does not match the number calculated from 'disp_steps_per_hour', 'disp_frequency, 'disp_horizon', and 'disp_horizon_update'");
+				}
 				
             }
 
