@@ -46,11 +46,13 @@
 *  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
 *  THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *******************************************************************************************************/
+#include <sstream>
+#include <vector>
 
 #include "core.h"
 #include "lib_financial.h"
+#include "lib_util.h"
 #include "common_financial.h"
-#include <sstream>
 using namespace libfin;
 
 static var_info vtab_cashloan[] = {
@@ -97,6 +99,16 @@ static var_info vtab_cashloan[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_om_fixed_expense",      "O&M fixed expense",                  "$",            "",                      "Cash Flow",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_om_production_expense", "O&M production-based expense",       "$",            "",                      "Cash Flow",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_om_capacity_expense",   "O&M capacity-based expense",         "$",            "",                      "Cash Flow",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_om_fixed1_expense",      "O&M fixed 1 expense",                  "$",            "",                      "Cash Flow",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_om_production1_expense", "O&M production-based 1 expense",       "$",            "",                      "Cash Flow",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_om_capacity1_expense",   "O&M capacity-based 1 expense",         "$",            "",                      "Cash Flow",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_om_fixed2_expense",      "O&M fixed 2 expense",                  "$",            "",                      "Cash Flow",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_om_production2_expense", "O&M production-based 2 expense",       "$",            "",                      "Cash Flow",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_om_capacity2_expense",   "O&M capacity-based 2 expense",         "$",            "",                      "Cash Flow",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+
+
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_om_fuel_expense",       "O&M fuel expense",                   "$",            "",                      "Cash Flow",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_om_opt_fuel_1_expense",       "O&M biomass feedstock expense",                   "$",            "",                      "Cash Flow",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
@@ -211,6 +223,12 @@ enum {
 	CF_om_fixed_expense,
 	CF_om_production_expense,
 	CF_om_capacity_expense,
+	CF_om_fixed1_expense,
+	CF_om_production1_expense,
+	CF_om_capacity1_expense,
+	CF_om_fixed2_expense,
+	CF_om_production2_expense,
+	CF_om_capacity2_expense,
 	CF_om_fuel_expense,
 
 	CF_om_opt_fuel_2_expense,
@@ -468,6 +486,45 @@ public:
 		escal_or_annual( CF_om_capacity_expense, nyears, "om_capacity", inflation_rate, 1.0, false, as_double("om_capacity_escal")*0.01 );  
 		escal_or_annual( CF_om_fuel_expense, nyears, "om_fuel_cost", inflation_rate, as_double("system_heat_rate")*0.001, false, as_double("om_fuel_cost_escal")*0.01 );
 
+		// additional o and m sub types (e.g. batteries and fuel cells)
+		int add_om_num_types = as_integer("add_om_num_types");
+		ssc_number_t nameplate1 = 0;
+		ssc_number_t nameplate2 = 0;
+
+		if (add_om_num_types > 0)
+		{
+			escal_or_annual(CF_om_fixed1_expense, nyears, "om_fixed1", inflation_rate, 1.0, false, as_double("om_fixed_escal")*0.01);
+			escal_or_annual(CF_om_production1_expense, nyears, "om_production1", inflation_rate, 0.001, false, as_double("om_production_escal")*0.01);
+			escal_or_annual(CF_om_capacity1_expense, nyears, "om_capacity1", inflation_rate, 1.0, false, as_double("om_capacity_escal")*0.01);
+			nameplate1 = as_number("om_capacity1_nameplate");
+		}
+		if (add_om_num_types > 1)
+		{
+			escal_or_annual(CF_om_fixed2_expense, nyears, "om_fixed2", inflation_rate, 1.0, false, as_double("om_fixed_escal")*0.01);
+			escal_or_annual(CF_om_production2_expense, nyears, "om_production2", inflation_rate, 0.001, false, as_double("om_production_escal")*0.01);
+			escal_or_annual(CF_om_capacity2_expense, nyears, "om_capacity2", inflation_rate, 1.0, false, as_double("om_capacity_escal")*0.01);
+			nameplate2 = as_number("om_capacity2_nameplate");
+		}
+		/* Not at runtime
+		std::string str = as_string("add_om_capacity_names");
+		ssc_number_t nameplate1 = 0;
+		ssc_number_t nameplate2 = 0;
+		if (str != "n/a")
+		{
+			std::vector<std::string> add_om_capacity_names = util::split(str, ";");
+			if (add_om_capacity_names.size() > 0)
+				nameplate1 = as_number(add_om_capacity_names[0]);
+			if (add_om_capacity_names.size() > 1)
+				nameplate2 = as_number(add_om_capacity_names[1]);
+		}
+		str = as_string("add_om_production_names");
+		if (str != "n/a")
+		{
+			std::vector<std::string> add_om_production_names = util::split(str, ";");
+			// TODO - setup array of production values
+		}
+		*/
+
 		// battery cost - replacement from lifetime analysis
 		if ((as_integer("en_batt") == 1) && (as_integer("batt_replacement_option") > 0))
 		{
@@ -670,6 +727,12 @@ public:
 			// compute expenses
 			cf.at(CF_om_production_expense,i) *= cf.at(CF_energy_net,i);
 			cf.at(CF_om_capacity_expense,i) *= nameplate;
+
+			cf.at(CF_om_capacity1_expense, i) *= nameplate1;
+			cf.at(CF_om_capacity2_expense, i) *= nameplate2;
+			// TODO additional production o and m here
+
+
 			cf.at(CF_om_fuel_expense,i) *= year1_fuel_use;
 			cf.at(CF_om_opt_fuel_1_expense,i) *= om_opt_fuel_1_usage;
 			cf.at(CF_om_opt_fuel_2_expense,i) *= om_opt_fuel_2_usage;
@@ -684,9 +747,15 @@ public:
 				cf.at(CF_net_salvage_value,i) = total_cost * salvage_frac;
 
 			cf.at(CF_operating_expenses,i) = 
-				+ cf.at(CF_om_fixed_expense,i)
-				+ cf.at(CF_om_production_expense,i)
-				+ cf.at(CF_om_capacity_expense,i)
+				+cf.at(CF_om_fixed_expense, i)
+				+ cf.at(CF_om_production_expense, i)
+				+ cf.at(CF_om_capacity_expense, i)
+				+ cf.at(CF_om_fixed1_expense, i)
+				+ cf.at(CF_om_production1_expense, i)
+				+ cf.at(CF_om_capacity1_expense, i)
+				+ cf.at(CF_om_fixed2_expense, i)
+				+ cf.at(CF_om_production2_expense, i)
+				+ cf.at(CF_om_capacity2_expense, i)
 				+ cf.at(CF_om_fuel_expense,i)
 				+ cf.at(CF_om_opt_fuel_1_expense,i)
 				+ cf.at(CF_om_opt_fuel_2_expense,i)
@@ -1029,9 +1098,15 @@ public:
 		save_cf(CF_effective_tax_frac, nyears, "cf_effective_tax_frac");
 
 
-		save_cf( CF_om_fixed_expense, nyears, "cf_om_fixed_expense" );
-		save_cf( CF_om_production_expense, nyears, "cf_om_production_expense" );
-		save_cf( CF_om_capacity_expense, nyears, "cf_om_capacity_expense" );
+		save_cf(CF_om_fixed_expense, nyears, "cf_om_fixed_expense");
+		save_cf(CF_om_production_expense, nyears, "cf_om_production_expense");
+		save_cf(CF_om_capacity_expense, nyears, "cf_om_capacity_expense");
+		save_cf(CF_om_fixed1_expense, nyears, "cf_om_fixed1_expense");
+		save_cf(CF_om_production1_expense, nyears, "cf_om_production1_expense");
+		save_cf(CF_om_capacity1_expense, nyears, "cf_om_capacity1_expense");
+		save_cf(CF_om_fixed2_expense, nyears, "cf_om_fixed2_expense");
+		save_cf(CF_om_production2_expense, nyears, "cf_om_production2_expense");
+		save_cf(CF_om_capacity2_expense, nyears, "cf_om_capacity2_expense");
 		save_cf( CF_om_fuel_expense, nyears, "cf_om_fuel_expense" );
 		save_cf( CF_om_opt_fuel_1_expense, nyears, "cf_om_opt_fuel_1_expense" );
 		save_cf( CF_om_opt_fuel_2_expense, nyears, "cf_om_opt_fuel_2_expense" );

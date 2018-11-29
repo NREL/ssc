@@ -106,6 +106,10 @@ var_info vtab_fuelcell_output[] = {
 	{ SSC_OUTPUT,       SSC_ARRAY,       "fuelcell_to_load",                   "Electricity to load from fuel cell",    "kW",        "",                 "Fuel Cell",                  "",                        "",                              "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "fuelcell_to_grid",                   "Electricity to grid from fuel cell",    "kW",        "",                 "Fuel Cell",                  "",                        "",                              "" },
 
+	{ SSC_OUTPUT,       SSC_NUMBER,      "system_heat_rate",                     "Heat rate conversion factor (MMBTUs/MWhe)",  "MMBTUs/MWhe",   "",      "Fuel Cell",           "*",               "",                    "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "annual_fuel_usage",             "Annual Fuel Usage",                          "kWht",          "",      "Fuel Cell",           "*",               "",                    "" },
+
+
 var_info_invalid };
 
 cm_fuelcell::cm_fuelcell()
@@ -160,6 +164,16 @@ void cm_fuelcell::exec() throw (general_error)
 			}
 		}
 	}
+	// post calculations for financial models
+	ssc_number_t annual_fuel_usage = 0.0;
+	for (idx = 0; idx < fcVars->numberOfLifetimeRecords; idx++)
+		annual_fuel_usage += p_fuelCellConsumption_MCf[idx];
+	// modify heat rate to use here (MMBTU/MWhe)
+	assign("system_heat_rate", var_data((ssc_number_t)3.4123)); 
+	annual_fuel_usage *= 0.29; // 1cu ft = 0.29 kWh
+	assign("annual_fuel_usage", annual_fuel_usage);
+
+
 }
 
 void cm_fuelcell::allocateOutputs()

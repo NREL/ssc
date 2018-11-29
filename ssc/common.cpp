@@ -129,12 +129,26 @@ var_info vtab_oandm[] = {
 
 	// optional additional base o and m types
 
-	{ SSC_INPUT,        SSC_NUMBER,      "om_num_types",           "Number of O and M types","",  "",                  "O&M",            "?=1",                 "INTEGER,MIN=1,MAX=3",                                         "" },
-	//{ SSC_INPUT,        SSC_STRING,      "om_name_types",           "Names of O and M types","",  "",                  "O&M",            "?=''",                 "INTEGER,MIN=1,MAX=3",                                         "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "add_om_num_types",           "Number of O and M types","",  "",                  "O&M",            "?=0",                 "INTEGER,MIN=0,MAX=2",                                         "" },
+	/*
+	// capacity variable names for capacity o and m calculations (semicolon delimited)
+	{ SSC_INPUT,        SSC_STRING,      "add_om_capacity_names",           "Names of O and M types","",  "",                  "O&M",            "?=n/a",                 "",                                         "" },
+	// production variable names for variable o and m calculations (semicolon delimited)
+	{ SSC_INPUT,        SSC_STRING,      "add_om_production_names",           "Names of O and M types","",  "",                  "O&M",            "?=n/a",                 "",                                         "" },
+	*/ 
 
-	{ SSC_INPUT,        SSC_ARRAY,       "om_fixed1",                     "Fixed O&M annual amount",           "$/year",  "",                  "O&M",            "?=0.0",                 "",                                         "" },
-	{ SSC_INPUT,        SSC_ARRAY,       "om_production1",                "Production-based O&M amount",       "$/MWh",   "",                  "O&M",            "?=0.0",                 "",                                         "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "om_capacity1_nameplate",           "Nameplate for capacity 1 O&M values","kW",  "",                  "O&M",            "?=0",                 "",                                         "" },
+	{ SSC_INPUT,        SSC_ARRAY,      "om_production1_values",           "Outputs for production 1 O&M values","kWh",  "",                  "O&M",            "?=0",                 "",                                         "" },
+
+
+	{ SSC_INPUT,        SSC_ARRAY,       "om_fixed1",                     "Fixed 1 O&M annual amount",           "$/year",  "",                  "O&M",            "?=0.0",                 "",                                         "" },
+	{ SSC_INPUT,        SSC_ARRAY,       "om_production1",                "Production-based 1 O&M amount",       "$/MWh",   "",                  "O&M",            "?=0.0",                 "",                                         "" },
 	{ SSC_INPUT,        SSC_ARRAY,       "om_capacity1",                  "Capacity-based O&M amount",         "$/kWcap", "",                  "O&M",            "?=0.0",                 "",                                         "" },
+
+	{ SSC_INPUT,        SSC_NUMBER,      "om_capacity2_nameplate",           "Nameplate for capacity 2 O&M values","kW",  "",                  "O&M",            "?=0",                 "",                                         "" },
+	{ SSC_INPUT,        SSC_ARRAY,      "om_production2_values",           "Outputs for production 2 O&M values","kWh",  "",                  "O&M",            "?=0",                 "",                                         "" },
+
+
 	{ SSC_INPUT,        SSC_ARRAY,       "om_fixed2",                     "Fixed O&M annual amount",           "$/year",  "",                  "O&M",            "?=0.0",                 "",                                         "" },
 	{ SSC_INPUT,        SSC_ARRAY,       "om_production2",                "Production-based O&M amount",       "$/MWh",   "",                  "O&M",            "?=0.0",                 "",                                         "" },
 	{ SSC_INPUT,        SSC_ARRAY,       "om_capacity2",                  "Capacity-based O&M amount",         "$/kWcap", "",                  "O&M",            "?=0.0",                 "",                                         "" },
