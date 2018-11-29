@@ -166,11 +166,12 @@ void cm_fuelcell::exec() throw (general_error)
 	}
 	// post calculations for financial models
 	ssc_number_t annual_fuel_usage = 0.0;
-	for (idx = 0; idx < fcVars->numberOfLifetimeRecords; idx++)
+	for (idx = 0; idx < fcVars->numberOfLifetimeRecords; idx++) {
 		annual_fuel_usage += p_fuelCellConsumption_MCf[idx];
+	}
 	// modify heat rate to use here (MMBTU/MWhe)
 	assign("system_heat_rate", var_data((ssc_number_t)3.4123)); 
-	annual_fuel_usage *= 0.29; // 1cu ft = 0.29 kWh
+	annual_fuel_usage *= (ssc_number_t)0.29; // 1cu ft = 0.29 kWh
 	assign("annual_fuel_usage", annual_fuel_usage);
 
 
