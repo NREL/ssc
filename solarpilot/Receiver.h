@@ -198,6 +198,7 @@ public:
 	
 	void Create(var_receiver &V, double tht);	//create from variable map
     void updateCalculatedParameters(var_receiver &V, double tht);
+    static void updateUserFluxNormalization(var_receiver &V);
 	
 	/* Define an enumeration structure for receiver geometry types */
 	struct REC_GEOM_TYPE { 

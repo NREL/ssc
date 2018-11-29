@@ -2877,6 +2877,7 @@ void Flux::imageSizeAimPoint(Heliostat &H, SolarField &SF, double args[], bool i
 		//Get the receiver that this heliostat is aiming at
 		FS = &rec->getFluxSurfaces()->at(0);	//Should be only one flux surface for this type of receiver
 		FG = FS->getFluxMap();
+        double totflux = FS->getTotalFlux();
 
 		//Get the image size
 		H.getImageSize(sigx, sigy);
@@ -2956,15 +2957,37 @@ void Flux::imageSizeAimPoint(Heliostat &H, SolarField &SF, double args[], bool i
 			istart = 0;
 			iend = 1;
 		}
+        
+        matrix_t<double> *ufp = &rec->getVarMap()->user_flux_profile.val;
+        int nuserflux_x = ufp->ncols();
+        int nuserflux_y = ufp->nrows();
+        double iuserflux_s = (double)nuserflux_x / (double)nfx;
+        double juserflux_s = (double)nuserflux_y / (double)nfy;
+        bool is_user_flux_profile = rec->getVarMap()->flux_profile_type.mapval() == var_receiver::FLUX_PROFILE_TYPE::USER;
+
 		fsave = 9.e9;
-		for(int i=istart; i<iend; i++){
-			for(int j=jstart; j<jend; j++){
-				if(FG->at(i).at(j).flux < fsave){
-					fsave = FG->at(i).at(j).flux;
+		for(int i=istart; i<iend; i++)
+        {
+            int iuserflux = (int)(i*iuserflux_s);
+
+			for(int j=jstart; j<jend; j++)
+            {
+                int juserflux = nuserflux_y - (int)(j*juserflux_s) - 1;
+
+                double fdiff = FG->at(i).at(j).flux;
+                if (is_user_flux_profile)
+                {
+                    double fdiff_denom = totflux * ufp->at(juserflux, iuserflux);
+                    if (fdiff_denom > 0.)
+                        fdiff /= fdiff_denom;
+                }
+
+				if(fdiff < fsave)
+                {
+					fsave = fdiff;
 					isave = i; 
 					jsave = j;
 				}
-
 			}
 		}
 

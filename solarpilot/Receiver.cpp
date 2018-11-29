@@ -525,7 +525,28 @@ void Receiver::updateCalculatedParameters(var_receiver &V, double tht)
 
 	//Piping loss
 	V.piping_loss.Setval( (V.piping_loss_coef.val * tht + V.piping_loss_const.val)/1.e3 );
-		
+
+    updateUserFluxNormalization(V);
+}
+
+void Receiver::updateUserFluxNormalization(var_receiver &V)
+{
+    //user flux profile normalization
+    if (V.flux_profile_type.mapval() == var_receiver::FLUX_PROFILE_TYPE::USER)
+    {
+        matrix_t<double> temp;
+        double tot = 0.;
+        for (size_t i = 0; i < V.user_flux_profile.val.nrows(); i++)
+            for (size_t j = 0; j < V.user_flux_profile.val.ncols(); j++)
+                tot += V.user_flux_profile.val.at(i, j);
+
+        tot = 1. / tot;
+        for (size_t i = 0; i < V.user_flux_profile.val.nrows(); i++)
+            for (size_t j = 0; j < V.user_flux_profile.val.ncols(); j++)
+                V.user_flux_profile.val.at(i, j) *= tot;
+        
+        V.n_user_flux_profile.Setval(temp);
+    }
 }
 
 

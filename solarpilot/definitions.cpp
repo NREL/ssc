@@ -436,6 +436,7 @@ void var_map::add_receiver(int id)
 	recs.back().therm_loss_wind      .set("receiver."+sid+".therm_loss_wind" , SP_DATTYPE::SP_MATRIX_T  ,            "1,0,0,0",       "none",    false,         "",    "",    false,     "Wind-based thermal loss adjustment", "Wind speed-dependant thermal loss");
 	recs.back().user_flux_profile    .set("receiver."+sid+".user_flux_profile", SP_DATTYPE::SP_MATRIX_T  , "1,1,1,1,1;1,1,1,1,1;1,1,1,1,1;1,1,1,1,1;1,1,1,1,1",       "none",    false,         "",    "",    false,                 "User flux profile data", "User flux profile data");
 	recs.back().absorber_area        .setup("receiver."+sid+".absorber_area"   , SP_DATTYPE::SP_DOUBLE    ,                               "m2",    false,         "",    "",    false,                 "Receiver absorber area", "Effective area of the receiver absorber panels");
+	recs.back().n_user_flux_profile  .setup("receiver."+sid+".n_user_flux_profile", SP_DATTYPE::SP_MATRIX_T  ,                             "none",    false,         "",    "",    false,           "Normalized user flux profile", "Normalized user flux profile");
 	recs.back().optical_height       .setup("receiver."+sid+".optical_height"  , SP_DATTYPE::SP_DOUBLE    ,                                "m",    false,         "",    "",    false,                "Receiver optical height", "Calculated height of the centerline of the receiver above the plane of the heliostats");
 	recs.back().piping_loss          .setup("receiver."+sid+".piping_loss"     , SP_DATTYPE::SP_DOUBLE    ,                               "MW",    false,         "",    "",    false,                   "Receiver piping loss", "Thermal loss from non-absorber receiver piping");
 	recs.back().q_rec_des            .setup("receiver."+sid+".q_rec_des"       , SP_DATTYPE::SP_DOUBLE    ,                               "MW",    false,         "",    "",    false,             "Design-point thermal power", "Power produced by the receiver at design after thermal losses");
@@ -735,6 +736,7 @@ void var_receiver::addptrs(unordered_map<std::string, spbase*> &pmap)
 	pmap["receiver."+sid+".therm_loss_wind"] = &therm_loss_wind;
 	pmap["receiver."+sid+".user_flux_profile"] = &user_flux_profile;
 	pmap["receiver."+sid+".absorber_area"] = &absorber_area;
+	pmap["receiver."+sid+".n_user_flux_profile"] = &n_user_flux_profile;
 	pmap["receiver."+sid+".optical_height"] = &optical_height;
 	pmap["receiver."+sid+".piping_loss"] = &piping_loss;
 	pmap["receiver."+sid+".q_rec_des"] = &q_rec_des;

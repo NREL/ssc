@@ -406,6 +406,7 @@ struct var_receiver
 	spvar< matrix_t<double> > therm_loss_wind; 		//[none] Wind speed-dependant thermal loss
 	spvar< matrix_t<double> > user_flux_profile; 		//[none] User flux profile data
 	spout< double > absorber_area; 		//[m2] Effective area of the receiver absorber panels
+	spout< matrix_t<double> > n_user_flux_profile; 		//[none] Normalized user flux profile
 	spout< double > optical_height; 		//[m] Calculated height of the centerline of the receiver above the plane of the heliostats
 	spout< double > piping_loss; 		//[MW] Thermal loss from non-absorber receiver piping
 	spout< double > q_rec_des; 		//[MW] Power produced by the receiver at design after thermal losses
