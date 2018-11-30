@@ -110,12 +110,15 @@ void Heliostat::getImageSize(double &sigx_n, double &sigy_n){ sigx_n = _image_si
 string *Heliostat::getHeliostatName(){return &_helio_name;}
 Heliostat* Heliostat::getMasterTemplate(){return _master_template;}
 var_heliostat* Heliostat::getVarMap(){return _var_helio;}
+unordered_map<Receiver*, double>& Heliostat::getReceiverPowerAlloc() { return _rec_power_alloc; }
 
 bool Heliostat::IsUserCant(){return _is_user_canted;} //Fetch
 void Heliostat::IsUserCant(bool setting){_is_user_canted = setting;} //Set
 bool Heliostat::IsEnabled(){return _is_enabled;}
 bool Heliostat::IsInLayout(){return _in_layout;}
+bool Heliostat::IsMultiReceiverAssigned() { return _has_multi_rec_assignment; }
 void Heliostat::IsEnabled(bool enable){_is_enabled = enable;}
+void Heliostat::IsMultiReceiverAssigned(bool assigned) { _has_multi_rec_assignment = assigned; }
 
 void Heliostat::setId(int id){_id = id;}
 void Heliostat::setGroupId(int row, int col){_group[0] = row; _group[1] = col;}
@@ -166,6 +169,8 @@ void Heliostat::resetMetrics(){
 
 void Heliostat::Create(var_map &V, int htnum)
 {
+    _has_multi_rec_assignment = false;  //initialize
+
     _var_helio = &V.hels.at(htnum);
 	//set some defaults for local values
     _helio_name = _var_helio->helio_name.val;
@@ -223,7 +228,8 @@ void Heliostat::updateCalculatedParameters(var_map &Vm, int htnum)
 	err_reflect_y = V->err_reflect_y.val;
 	double err_tot = sqrt( pow(2.*err_elevation, 2) + pow(2.*err_azimuth, 2) + pow(2.*err_surface_x, 2) + 
 		pow(2.*err_surface_y, 2) + pow(err_reflect_x, 2) + pow(err_reflect_y, 2));
-    
+    err_tot *= 0.7071;  //1/sqrt(2) accounts for translation from 2 dimensions to 1
+
     V->err_total.Setval( err_tot );
 
     //Calculate the total optical reflectivity to report back
