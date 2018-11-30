@@ -1709,8 +1709,6 @@ public:
 					throw exec_error("tcsmolten_salt", "Unequal number of scenarios provided for stochastic dispatch");
 
 				// check for mismatch between dispatch time step and scenario time steps
-				scenarios_ok = true;
-
 				int opt_freq = tou.mc_dispatch_params.m_optimize_frequency;
 				int opt_horizon = tou.mc_dispatch_params.m_optimize_horizon;
 				int horizon_update = tou.mc_dispatch_params.m_horizon_update_frequency;
@@ -1729,16 +1727,11 @@ public:
 				}
 
 				if (tou.mc_dispatch_params.m_is_dni_scenarios && tou.mc_dispatch_params.m_fc_dni_scenarios.nrows() != nstep)
-					scenarios_ok = false;
+					throw exec_error("tcsmolten_salt", "The number of time points in 'fc_dni_scenarios' does not match the number expected from 'disp_steps_per_hour', 'disp_frequency, 'disp_horizon', and 'disp_horizon_update'");
 				if (tou.mc_dispatch_params.m_is_tdry_scenarios && tou.mc_dispatch_params.m_fc_tdry_scenarios.nrows() != nstep)
-					scenarios_ok = false;
+					throw exec_error("tcsmolten_salt", "The number of time points in 'fc_tdry_scenarios' does not match the number expected from 'disp_steps_per_hour', 'disp_frequency, 'disp_horizon', and 'disp_horizon_update'");
 				if (tou.mc_dispatch_params.m_is_price_scenarios && tou.mc_dispatch_params.m_fc_price_scenarios.nrows() != nstep)
-					scenarios_ok = false;
-				if (!scenarios_ok)
-				{
-					log("The number of time points in at least one of the provided scenarios does not match the number calculated from 'disp_steps_per_hour', 'disp_frequency, 'disp_horizon', and 'disp_horizon_update'", SSC_WARNING);
-					//throw exec_error("tcsmolten_salt", "The number of time points in at least one of the provided scenarios does not match the number calculated from 'disp_steps_per_hour', 'disp_frequency, 'disp_horizon', and 'disp_horizon_update'");
-				}
+					throw exec_error("tcsmolten_salt", "The number of time points in 'fc_price_scenarios' does not match the number expected from 'disp_steps_per_hour', 'disp_frequency, 'disp_horizon', and 'disp_horizon_update'");
 				
             }
 
