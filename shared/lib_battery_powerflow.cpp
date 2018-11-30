@@ -1,5 +1,6 @@
 #include "lib_battery_powerflow.h"
 #include "lib_power_electronics.h"
+#include <math.h>
 
 BatteryPower::BatteryPower(double dtHour) :
 		dtHour(dtHour),

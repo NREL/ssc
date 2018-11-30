@@ -1,7 +1,7 @@
 VPATH = ../shared
 CC = gcc
 CXX = g++
-WARNINGS = -Wall -Werror -Wno-strict-aliasing
+WARNINGS = -Wno-strict-aliasing  -Wno-ignored-attributes -Wno-deprecated-declarations -Wno-deprecated
 CFLAGS =-I../ssc -I../shared $(WARNINGS) -g -O3 -D__64BIT__ -fPIC
 CXXFLAGS=-std=c++0x $(CFLAGS)
 

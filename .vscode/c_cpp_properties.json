@@ -17,9 +17,10 @@
                 "${workspaceRoot}/../lk/include",
                 "${workspaceRoot}/../ssc/solarpilot",
                 "${workspaceRoot}/../wex/include"
-
             ],
-            "defines": ["LK_USE_WXWIDGETS"],
+            "defines": [
+                "LK_USE_WXWIDGETS"
+            ],
             "intelliSenseMode": "clang-x64",
             "browse": {
                 "path": [
@@ -43,5 +44,5 @@
             }
         }
     ],
-    "version": 3
+    "version": 4
 }

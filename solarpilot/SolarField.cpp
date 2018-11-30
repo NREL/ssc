@@ -1822,12 +1822,11 @@ void SolarField::ProcessLayoutResults( sim_results *results, int nsim_total){
             _heliostats.push_back(*hit);
 
         //report on prescreen results
-        _sim_info.addSimulationNotice( 
-            (std::stringstream() << "Optimization pre-screening reduced candidate heliostats by " 
+        std::stringstream ss;
+        ss << "Optimization pre-screening reduced candidate heliostats by " 
                                  << (int)( ( 1. - (double)_heliostats.size()/(double)nhprev )*100. ) 
-                                 << "%"  
-            ).str() 
-        );
+                                 << "%";
+        _sim_info.addSimulationNotice( ss.str() );
 
         //create optimization object, tune, and run
         multi_rec_opt_helper mroh;
@@ -1840,7 +1839,7 @@ void SolarField::ProcessLayoutResults( sim_results *results, int nsim_total){
         if (mroh.result_status == multi_rec_opt_helper::RS_INFEASIBLE)
             _sim_error.addSimulationError("The field can't provide enough power to meet receiver input power requirements.");
         else if (mroh.result_status == multi_rec_opt_helper::RS_OPTIMAL || mroh.result_status == multi_rec_opt_helper::RS_SUBOPTIMAL)
-            void;
+            (void*)0;
         else
         {
             _sim_error.addSimulationError("Multiple-receiver heliostat selection optimization failed with an unknown error.");

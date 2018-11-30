@@ -1,22 +1,22 @@
 #include <set>
-#include <iomanip>>
+#include <iomanip>
 
 #include "SolarField.h"
 #include "MultiRecOptimize.h"
 #include <lp_lib.h>
 
-//void __WINAPI opt_logfunction(lprec *, void *handler, char *buf)
+//void __WINAPI mrec_opt_logfunction(lprec *, void *handler, char *buf)
 //{
 //    static_cast<multi_rec_opt_helper*>(handler)->sim_info->addSimulationNotice(buf);;
 //}
 
-int __WINAPI opt_abortfunction(lprec *, void *userhandle)
+int __WINAPI mrec_opt_abortfunction(lprec *, void *userhandle)
 {
     multi_rec_opt_helper* par = static_cast<multi_rec_opt_helper*>(userhandle);
     return par->is_abort_flag ? TRUE : FALSE;
 }
 
-void __WINAPI opt_logfunction(lprec *lp, void *handler, char *buf)
+void __WINAPI mrec_opt_logfunction(lprec *lp, void *handler, char *buf)
 //void __WINAPI opt_iter_function(lprec *lp, void *userhandle, int msg)
 {
     multi_rec_opt_helper* par = static_cast<multi_rec_opt_helper*>(handler);
@@ -101,7 +101,7 @@ void __WINAPI opt_logfunction(lprec *lp, void *handler, char *buf)
 //----------------------------------------------------------------------------------
 //----------------------------------------------------------------------------------
 
-class optimization_vars
+class mrec_optimization_vars
 {
     int current_mem_pos;
     int alloc_mem_size;
@@ -129,8 +129,8 @@ public:
     struct VAR_TYPE { enum A { REAL_T, INT_T, BINARY_T }; };
     struct VAR_DIM { enum A { DIM_T, DIM_NT, DIM_T2, DIM_2T_TRI }; };
 
-    optimization_vars();
-    //~optimization_vars();
+    mrec_optimization_vars();
+    //~mrec_optimization_vars();
 
     void add_var(const std::string &vname, int var_type /* VAR_TYPE enum */, int var_dim /* VAR_DIM enum */, int var_dim_size, REAL lowbo = -DEF_INFINITE, REAL upbo = DEF_INFINITE);
     void add_var(const std::string &vname, int var_type /* VAR_TYPE enum */, int var_dim /* VAR_DIM enum */, int var_dim_size, int var_dim_size2, REAL lowbo = -DEF_INFINITE, REAL upbo = DEF_INFINITE);
@@ -245,10 +245,10 @@ int multi_rec_opt_helper::run(SolarField *SF)
     //     Formulate the linear optimization problem
     //--------------------------------------------------------------------------
 
-    optimization_vars O;    //helper class. largely duplicates ssc/tcs/csp_dispatch.* structure
+    mrec_optimization_vars O;    //helper class. largely duplicates ssc/tcs/csp_dispatch.* structure
     
     //add a new variable 'x' of dimension Nh x Nrec. 
-    O.add_var("x", optimization_vars::VAR_TYPE::REAL_T, optimization_vars::VAR_DIM::DIM_NT, Nh, Nrec, 0., 1.);
+    O.add_var("x", mrec_optimization_vars::VAR_TYPE::REAL_T, mrec_optimization_vars::VAR_DIM::DIM_NT, Nh, Nrec, 0., 1.);
     O.construct();
     
     //initialize the lp context
@@ -390,9 +390,9 @@ int multi_rec_opt_helper::run(SolarField *SF)
     if (sim_info)   //if a simulation info object has been assigned, request messages and logs be directed there
     {
         //put_msgfunc(lp, opt_iter_function, (void*)(this), MSG_ITERATION | MSG_LPBETTER | MSG_LPFEASIBLE | MSG_LPOPTIMAL);
-        put_logfunc(lp, opt_logfunction, (void*)(this));
+        put_logfunc(lp, mrec_opt_logfunction, (void*)(this));
     }
-    put_abortfunc(lp, opt_abortfunction, (void*)(this));
+    put_abortfunc(lp, mrec_opt_abortfunction, (void*)(this));
 
 #ifdef _DEBUG
     set_outputfile(lp, "aimpoint_optimization_log.txt");
@@ -522,12 +522,12 @@ int multi_rec_opt_helper::run(SolarField *SF)
 //----------------------------------------------------------------------------------
 
 
-optimization_vars::optimization_vars()
+mrec_optimization_vars::mrec_optimization_vars()
 {
     current_mem_pos = 0;
     alloc_mem_size = 0;
 }
-void optimization_vars::add_var(const std::string &vname, int var_type /* VAR_TYPE enum */, int var_dim /* VAR_DIM enum */, int var_dim_size, REAL lobo, REAL upbo)
+void mrec_optimization_vars::add_var(const std::string &vname, int var_type /* VAR_TYPE enum */, int var_dim /* VAR_DIM enum */, int var_dim_size, REAL lobo, REAL upbo)
 {
     if (var_dim == VAR_DIM::DIM_T2)
         add_var(vname, var_type, VAR_DIM::DIM_NT, var_dim_size, var_dim_size, lobo, upbo);
@@ -536,17 +536,17 @@ void optimization_vars::add_var(const std::string &vname, int var_type /* VAR_TY
 
 }
 
-void optimization_vars::add_var(const std::string &vname, int var_type /* VAR_TYPE enum */, int var_dim /* VAR_DIM enum */, int var_dim_size, int var_dim_size2, REAL lobo, REAL upbo)
+void mrec_optimization_vars::add_var(const std::string &vname, int var_type /* VAR_TYPE enum */, int var_dim /* VAR_DIM enum */, int var_dim_size, int var_dim_size2, REAL lobo, REAL upbo)
 {
-    var_objects.push_back(optimization_vars::opt_var());
-    optimization_vars::opt_var *v = &var_objects.back();
+    var_objects.push_back(mrec_optimization_vars::opt_var());
+    mrec_optimization_vars::opt_var *v = &var_objects.back();
     v->name = vname;
     v->ind_start = current_mem_pos;
     v->var_type = var_type;
     v->var_dim = var_dim;
     v->var_dim_size = var_dim_size;
     v->var_dim_size2 = var_dim_size2;
-    if (v->var_type == optimization_vars::VAR_TYPE::BINARY_T)
+    if (v->var_type == mrec_optimization_vars::VAR_TYPE::BINARY_T)
     {
         v->upper_bound = 1.;
         v->lower_bound = 0.;
@@ -561,15 +561,15 @@ void optimization_vars::add_var(const std::string &vname, int var_type /* VAR_TY
     int mem_size;
     switch (var_dim)
     {
-    case optimization_vars::VAR_DIM::DIM_T:
+    case mrec_optimization_vars::VAR_DIM::DIM_T:
         mem_size = var_dim_size;
         break;
-    case optimization_vars::VAR_DIM::DIM_NT:
+    case mrec_optimization_vars::VAR_DIM::DIM_NT:
         mem_size = var_dim_size * var_dim_size2;
         break;
-    case optimization_vars::VAR_DIM::DIM_T2:
+    case mrec_optimization_vars::VAR_DIM::DIM_T2:
         throw std::runtime_error("invalid var dimension in add_var");
-    case optimization_vars::VAR_DIM::DIM_2T_TRI:
+    case mrec_optimization_vars::VAR_DIM::DIM_2T_TRI:
         mem_size = (var_dim_size + 1) * var_dim_size / 2;
         break;
     }
@@ -581,7 +581,7 @@ void optimization_vars::add_var(const std::string &vname, int var_type /* VAR_TY
 
 }
 
-bool optimization_vars::construct()
+bool mrec_optimization_vars::construct()
 {
     if (current_mem_pos < 0 || current_mem_pos > 1000000)
         throw std::runtime_error("Bad memory allocation when constructing variable table for dispatch optimization.");
@@ -596,35 +596,35 @@ bool optimization_vars::construct()
     return true;
 }
 
-REAL &optimization_vars::operator()(char *varname, int ind)    //Access for 1D var
+REAL &mrec_optimization_vars::operator()(char *varname, int ind)    //Access for 1D var
 {
     return data[var_by_name[varname]->ind_start + ind];
 
 }
 
-REAL &optimization_vars::operator()(char *varname, int ind1, int)     //Access for 2D var
+REAL &mrec_optimization_vars::operator()(char *varname, int ind1, int)     //Access for 2D var
 {
     return data[column(varname, ind1, ind1) - 1];
 }
 
-REAL &optimization_vars::operator()(int varind, int ind)    //Access for 1D var
+REAL &mrec_optimization_vars::operator()(int varind, int ind)    //Access for 1D var
 {
     return data[var_objects.at(varind).ind_start + ind];
 
 }
 
-REAL &optimization_vars::operator()(int varind, int ind1, int ind2)     //Access for 2D var
+REAL &mrec_optimization_vars::operator()(int varind, int ind1, int ind2)     //Access for 2D var
 {
     return data[column(varind, ind1, ind2) - 1];
 }
 
 
-int optimization_vars::column(const std::string &varname, int ind)
+int mrec_optimization_vars::column(const std::string &varname, int ind)
 {
     return var_by_name[varname]->ind_start + ind + 1;
 }
 
-int optimization_vars::column(const std::string &varname, int ind1, int ind2)
+int mrec_optimization_vars::column(const std::string &varname, int ind1, int ind2)
 {
     opt_var *v = var_by_name[std::string(varname)];
     switch (v->var_dim)
@@ -642,12 +642,12 @@ int optimization_vars::column(const std::string &varname, int ind1, int ind2)
     }
 }
 
-int optimization_vars::column(int varindex, int ind)
+int mrec_optimization_vars::column(int varindex, int ind)
 {
     return var_objects[varindex].ind_start + ind + 1;
 }
 
-int optimization_vars::column(int varindex, int ind1, int ind2)
+int mrec_optimization_vars::column(int varindex, int ind1, int ind2)
 {
     opt_var *v = &var_objects[varindex];
     switch (v->var_dim)
@@ -664,27 +664,27 @@ int optimization_vars::column(int varindex, int ind1, int ind2)
     }
 }
 
-int optimization_vars::get_num_varobjs()
+int mrec_optimization_vars::get_num_varobjs()
 {
     return (int)var_objects.size();
 }
 
-int optimization_vars::get_total_var_count()
+int mrec_optimization_vars::get_total_var_count()
 {
     return alloc_mem_size;
 }
 
-REAL *optimization_vars::get_variable_array()
+REAL *mrec_optimization_vars::get_variable_array()
 {
     return data;
 }
 
-optimization_vars::opt_var *optimization_vars::get_var(const std::string &varname)
+mrec_optimization_vars::opt_var *mrec_optimization_vars::get_var(const std::string &varname)
 {
     return var_by_name[varname];
 }
 
-optimization_vars::opt_var *optimization_vars::get_var(int varindex)
+mrec_optimization_vars::opt_var *mrec_optimization_vars::get_var(int varindex)
 {
     return &var_objects[varindex];
 }

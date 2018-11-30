@@ -1,6 +1,7 @@
 #include "lib_shared_inverter.h"
 #include "lib_util.h"
 #include <algorithm>
+#include <math.h>
 
 SharedInverter::SharedInverter(int inverterType, size_t numberOfInverters,
 	sandia_inverter_t * sandiaInverter, partload_inverter_t * partloadInverter, ond_inverter * ondInverter)

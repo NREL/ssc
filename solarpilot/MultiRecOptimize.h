@@ -1,7 +1,9 @@
 #ifndef _MULTI_REC_
 #define _MULTI_REC_
 
-#define LPWINAPP
+#ifdef _WINDOWS
+	#define LPWINAPP
+#endif 
 #include <vector>
 #include <string>
 #include <sstream>
