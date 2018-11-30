@@ -3254,6 +3254,11 @@ struct s_rank_helper
     std::vector< Hvector* > plist;     //List of receiver heliostat preference lists, sorted by view factor from 'h' to the receiver
 };
 
+bool f_sort_helper(s_sort_couple &a, s_sort_couple &b) 
+{
+    return a.val > b.val; 
+}
+
 void Flux::calcReceiverTargetOrder(SolarField &SF)
 {
     /* 
@@ -3297,7 +3302,7 @@ void Flux::calcReceiverTargetOrder(SolarField &SF)
         }
 
         //now sort by area
-        std::sort(areas.begin(), areas.end(), [](s_sort_couple &a, s_sort_couple &b) -> bool { return a.val > b.val; });
+        std::sort(areas.begin(), areas.end(), f_sort_helper);
         
         //add to the helio ranks the heliostat object and the preference metric
         double
