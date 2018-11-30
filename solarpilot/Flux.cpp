@@ -3297,7 +3297,7 @@ void Flux::calcReceiverTargetOrder(SolarField &SF)
         }
 
         //now sort by area
-        std::sort(areas.begin(), areas.end(), [](s_sort_couple &a, s_sort_couple &b) { return a.val > b.val; });
+        std::sort(areas.begin(), areas.end(), [](s_sort_couple &a, s_sort_couple &b) -> bool { return a.val > b.val; });
         
         //add to the helio ranks the heliostat object and the preference metric
         double
