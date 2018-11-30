@@ -1183,11 +1183,21 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 											
 					int code = irr.calc();
 
-					if (code != 0)
+					if (code < 0) //jmf updated 11/30/18 so that negative numbers are errors, positive numbers are warnings, 0 is everything correct. implemented in patch for POA model only, will be added to develop for other irrad models as well
 						throw exec_error("pvsamv1",
 						util::format("failed to calculate irradiance incident on surface (POA) %d (code: %d) [y:%d m:%d d:%d h:%d]",
 						nn + 1, code, wf.year, wf.month, wf.day, wf.hour));
 
+					if (code == 40)
+						log(util::format("SAM calculated negative direct normal irradiance in the POA decomposition algorithm at time [y:%d m:%d d:%d h:%d], set to zero.",
+							wf.year, wf.month, wf.day, wf.hour), SSC_WARNING, (float)idx);
+					else if (code == 41)
+						log(util::format("SAM calculated negative diffuse horizontal irradiance in the POA decomposition algorithm at time [y:%d m:%d d:%d h:%d], set to zero.",
+							wf.year, wf.month, wf.day, wf.hour), SSC_WARNING, (float)idx);
+					else if (code == 42)
+						log(util::format("SAM calculated negative global horizontal irradiance in the POA decomposition algorithm at time [y:%d m:%d d:%d h:%d], set to zero.",
+							wf.year, wf.month, wf.day, wf.hour), SSC_WARNING, (float)idx);
+									   					 
 					// p_irrad_calc is only weather file records long...
 					if (iyear == 0)
 					{
