@@ -3327,7 +3327,7 @@ void Flux::calcReceiverTargetOrder(SolarField &SF)
     }
 
     //sort all heliostats by strength of preference
-    std::sort(helio_ranks.begin(), helio_ranks.end(), [](s_sort_couple &a, s_sort_couple &b) {return a.val > b.val; });
+    std::sort(helio_ranks.begin(), helio_ranks.end(), f_sort_helper);
 
     //add heliostats to each receiver's preference list
     for (int i = 0; i < (int)active_receivers.size(); i++)
