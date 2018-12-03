@@ -3254,7 +3254,7 @@ struct s_rank_helper
     std::vector< Hvector* > plist;     //List of receiver heliostat preference lists, sorted by view factor from 'h' to the receiver
 };
 
-bool f_sort_helper(s_sort_couple &a, s_sort_couple &b) 
+bool f_sort_helper(const s_sort_couple a, const s_sort_couple b) 
 {
     return a.val > b.val; 
 }
