@@ -77,7 +77,7 @@ namespace geothermal
 	const double MAX_TEMP_RATIO = 1.134324;  // max valid value for (resource temp)/(plant design temp) where both are measured in Kelvin
 	const double DEFAULT_AMBIENT_TEMPC_BINARY = 10.0;			// degrees C
 	//const double WET_BULB_TEMPERATURE_FOR_FLASH_CALCS = 15.0;	// degrees C, used in Flash calcs brine effectiveness calcs an flash injection temperature calcs
-	const bool ADDITIONAL_PRESSURE_REQUIRED = false;
+	const bool ADDITIONAL_PRESSURE_REQUIRED = true;
 	//const double EFFICIENCY_PUMP_GF = 0.6;
 	const double EGS_THERMAL_CONDUCTIVITY = 3*3600*24;				// J/m-day-C
 	//const double PRESSURE_CHANGE_ACROSS_SURFACE_EQUIPMENT_PSI = 25;	// 25 psi [2B.Resource&Well Input].D146, H146
@@ -760,7 +760,7 @@ double CGeothermalAnalyzer::PlantGrossPowerkW(void)
 	switch (me_makeup)
 	{
 		case MA_BINARY:
-			dPlantBrineEfficiency = MaxSecondLawEfficiency() * FractionOfMaxEfficiency() * GetAEBinaryAtTemp(md_WorkingTemperatureC);
+			dPlantBrineEfficiency = MaxSecondLawEfficiency() * mo_geo_in.md_PlantEfficiency * ((geothermal::IMITATE_GETEM) ? GetAEBinary() : GetAE());				//MaxSecondLawEfficiency() * FractionOfMaxEfficiency() * GetAEBinaryAtTemp(md_WorkingTemperatureC);
 			break;
 
 		case MA_FLASH:
@@ -773,7 +773,7 @@ double CGeothermalAnalyzer::PlantGrossPowerkW(void)
 
 		default: ms_ErrorString = ("Invalid make up technology in CGeothermalAnalyzer::PlantGrossPowerkW"); return 0;
 	}
-
+	mp_geo_out->test = dPlantBrineEfficiency;
 	return dPlantBrineEfficiency * flowRateTotal() / 1000.0;
 }
 
@@ -785,8 +785,11 @@ double CGeothermalAnalyzer::MaxSecondLawEfficiency()
 	// which leads to actual plant output(after pumping losses) > design output (before pump losses) ??
 	// which leads to relative revenue > 1 ??
 	double dGetemAEForSecondLaw = (geothermal::IMITATE_GETEM) ? GetAEBinary() : GetAE(); // GETEM uses the correct ambient temperature, but it always uses Binary constants, even if flash is chosen as the conversion technology
-	mp_geo_out->eff_secondlaw = GetPlantBrineEffectiveness() / dGetemAEForSecondLaw;
-	return  GetPlantBrineEffectiveness() / dGetemAEForSecondLaw;
+	mp_geo_out->eff_secondlaw = GetPlantBrineEffectiveness() / dGetemAEForSecondLaw;	//2nd law efficiency used in direct plant cost calculations. This is NOT the same as the MAX 2nd law efficiency.
+	if (me_makeup == MA_BINARY)
+		return (mp_geo_out->max_secondlaw); 
+	else 
+		return (GetPlantBrineEffectiveness() / dGetemAEForSecondLaw);
 }
 
 
@@ -903,23 +906,26 @@ double CGeothermalAnalyzer::GetPumpWorkWattHrPerLb(void)
 		}
 
 		// Calculate injection pump items, on [7A.GF Pumps] unless otherwise noted
-		double dInjectionPressure = mo_geo_in.md_AdditionalPressure;
+		double dInjectionPressure = mo_geo_in.md_AdditionalPressure + geothermal::BarToPsi(mo_geo_in.md_ExcessPressureBar) + GetPressureChangeAcrossReservoir();
 		if (mo_geo_in.md_AdditionalPressure < 0)
 		{
 //			double injectionPressurePSI = 150 - (pressureInjectionWellBottomHolePSI() - pressureHydrostaticPSI() );
 //			double dInjectionPressure = (injectionPressurePSI < 0) ? 0 : injectionPressurePSI; // G40,  If it's less than zero, use zero.
 		}
 		double dInjectionPumpHeadFt = dInjectionPressure * 144 / InjectionDensity(); // G129
-
+		
 		//dInjectionPumpPower = geothermal::pumpWorkInWattHr(dWaterLoss, dInjectionPumpHeadFt, geothermal::EFFICIENCY_PUMP_GF, ms_ErrorString) * dFractionOfInletGFInjected; // ft-lbs/hr
 		dInjectionPumpPower = geothermal::pumpWorkInWattHr(dWaterLoss, dInjectionPumpHeadFt, mo_geo_in.md_GFPumpEfficiency, ms_ErrorString) * dFractionOfInletGFInjected; // ft-lbs/hr
+		
 	}
-	double retVal = dProductionPumpPower + dInjectionPumpPower; // watt-hr per lb of flow
+	double retVal = dProductionPumpPower +  dInjectionPumpPower; // watt-hr per lb of flow
+	
 	if (retVal < 0)
 	{
 		ms_ErrorString = ("CGeothermalAnalyzer::GetPumpWorkWattHrPerLb calculated a value < 0"); 
 		return 0; 
 	}
+	
 	return retVal;
 }
 
@@ -956,6 +962,7 @@ double CGeothermalAnalyzer::pumpHeadFt() // ft
 	double frictionHeadLossCasing = (geothermal::FrictionFactor(dReCasing) * GetCalculatedPumpDepthInFeet() / dDiameterPumpCasingFt)* pow(velocityCasing,2)/(2 * physics::GRAVITY_FTS2); //feet
 
 	// Add (friction head loss) and (pump Set depth) to Get total pump head.
+	
 	return frictionHeadLossCasing + GetCalculatedPumpDepthInFeet();
 }
 
@@ -1027,7 +1034,7 @@ double CGeothermalAnalyzer::InjectionTemperatureC() // calculate injection tempe
 
 	double t3 = physics::FarenheitToCelcius(physics::CelciusToFarenheit(x1)+1);
 	double y = (t1>t2) ? t1 : t2;
-
+	
 	return ( (t3>y) ? t3 : y );
 }
 
@@ -1038,6 +1045,7 @@ double CGeothermalAnalyzer::InjectionTemperatureC() // calculate injection tempe
 double CGeothermalAnalyzer::InjectionTemperatureF(void)
 {
 	double dInjectionTempForResource = (mo_geo_in.me_rt == EGS) ? geothermal::TEMPERATURE_EGS_INJECTIONC : InjectionTemperatureC();	// D15 - degrees C
+	
 	return physics::CelciusToFarenheit(dInjectionTempForResource);	// G15 - degrees F
 }
 
@@ -1226,7 +1234,7 @@ double CGeothermalAnalyzer::productionFlowRate(void) { return (flowRatePerWell()
 double CGeothermalAnalyzer::productionViscosity(void) { return 0.115631 * pow(productionTempF(),-1.199532); } // seems like this is resource temp in spreadsheet!
 double CGeothermalAnalyzer::flowRatePerWell(void) { return (60 * 60 * geothermal::KgToLb(mo_geo_in.md_ProductionFlowRateKgPerS)); } // lbs per hour, one well
 double CGeothermalAnalyzer::flowRateTotal(void) { 
-	mp_geo_out-> GF_flowrate = (flowRatePerWell() * GetNumberOfWells());
+	mp_geo_out->GF_flowrate = (flowRatePerWell() * GetNumberOfWells());
 	return (flowRatePerWell() * GetNumberOfWells()); }								// lbs per hour, all wells
 
 double CGeothermalAnalyzer::GetNumberOfWells(void)
@@ -1237,6 +1245,7 @@ double CGeothermalAnalyzer::GetNumberOfWells(void)
 	{
 		double netBrineEffectiveness = GetPlantBrineEffectiveness() - GetPumpWorkWattHrPerLb();
 		double netCapacityPerWell = flowRatePerWell() * netBrineEffectiveness / 1000.0;			// after pumping losses
+		
 		if (netCapacityPerWell == 0)
 		{
 			ms_ErrorString = "The well capacity was calculated to be zero.  Could not continue analysis.";
@@ -1244,20 +1253,31 @@ double CGeothermalAnalyzer::GetNumberOfWells(void)
 		}
 		mp_geo_out->md_NumberOfWells = mo_geo_in.md_DesiredSalesCapacityKW / netCapacityPerWell;
 	}
+	
 	return mp_geo_out->md_NumberOfWells;
 }
 
 double CGeothermalAnalyzer::GetPlantBrineEffectiveness(void)
 {
+	/*
 	double dTemperaturePlantDesignF = physics::CelciusToFarenheit(GetTemperaturePlantDesignC());
 	double exitTempLowF = (0.8229 * dTemperaturePlantDesignF ) - 127.71;
 	double exitTempHighF = (0.00035129 * pow(dTemperaturePlantDesignF,2)) + (0.69792956 * dTemperaturePlantDesignF) - 159.598;
-	double dTemperatureGFExitF = (GetTemperaturePlantDesignC() < 180) ? exitTempLowF : exitTempHighF;  // degrees farenheit - exit temperature for geothermal fluid
-	double dTemperatureGFExitC = physics::FarenheitToCelcius(dTemperatureGFExitF);
+	double dTemperatureGFExitF = 109.31;// (GetTemperaturePlantDesignC() < 180) ? exitTempLowF : exitTempHighF;  // degrees farenheit - exit temperature for geothermal fluid
+	double dTemperatureGFExitC = physics::FarenheitToCelcius(dTemperatureGFExitF);	//physics::FarenheitToCelcius();
 	double dAE_At_Exit = GetAEAtTemp(dTemperatureGFExitC); // watt-hr/lb - Calculate available energy using binary constants and plant design temp (short cut)
+	*/
+	double TSiO2 = -(0.0000001334837*pow(GetTemperaturePlantDesignC() , 4)) + (0.0000706584462*pow(GetTemperaturePlantDesignC() , 3)) - (0.0036294799613*pow(GetTemperaturePlantDesignC() , 2 )) + (0.3672417729236*GetTemperaturePlantDesignC()) + 4.205944351495;
+	double TamphSiO2 = (0.0000000000249634* pow(TSiO2 , 4)) - (0.00000000425191 * pow(TSiO2, 3)) - (0.000119669*pow(TSiO2 , 2)) + (0.307616*TSiO2) - 0.294394;
+	double dTemperatureGFExitF = physics::CelciusToFarenheit(TamphSiO2); //109.31
+	double dAE_At_Exit = GetAEAtTemp(TamphSiO2);
+
+
 	// GETEM's "optimizer" seems to pick the max possible brine effectiveness for the default binary plant, so use this as a proxy for now
-	double dAEMaxPossible = (geothermal::IMITATE_GETEM) ? GetAEBinary() -  GetAEBinaryAtTemp(dTemperatureGFExitC) : GetAE() - dAE_At_Exit; // watt-hr/lb - [10B.GeoFluid].H54 "maximum possible available energy accounting for the available energy lost due to a silica constraint on outlet temperature"
-	double dMaxBinaryBrineEffectiveness = dAEMaxPossible * ((GetTemperaturePlantDesignC() < 150) ? 0.14425 * exp(0.008806 * GetTemperaturePlantDesignC()) : 0.57);
+	double dAEMaxPossible = (geothermal::IMITATE_GETEM) ? GetAEBinary() -  GetAEBinaryAtTemp(TamphSiO2) : GetAE() - dAE_At_Exit; // watt-hr/lb - [10B.GeoFluid].H54 "maximum possible available energy accounting for the available energy lost due to a silica constraint on outlet temperature"
+	mp_geo_out->max_secondlaw = (1 - ((geothermal::IMITATE_GETEM) ? GetAEBinaryAtTemp(TamphSiO2) / GetAEBinary() : dAE_At_Exit / GetAE()) - 0.375);
+	double dMaxBinaryBrineEffectiveness = ((geothermal::IMITATE_GETEM) ? GetAEBinary() : GetAE()) * ((GetTemperaturePlantDesignC() < 150) ? 0.14425 * exp(0.008806 * GetTemperaturePlantDesignC()) : mp_geo_out->max_secondlaw );
+	
 	return (mo_geo_in.me_ct == FLASH) ? FlashBrineEffectiveness() : dMaxBinaryBrineEffectiveness * mo_geo_in.md_PlantEfficiency;
 }
 
@@ -1927,7 +1947,7 @@ bool CGeothermalAnalyzer::InterfaceOutputsFilled(void)
 	mp_geo_out->md_PlantBrineEffectiveness = GetPlantBrineEffectiveness();
     ReplaceReservoir(0.0); // set the working temp so the further calculations are correct
 	mp_geo_out->md_GrossPlantOutputMW = PlantGrossPowerkW()/1000;
-
+	
 	mp_geo_out->md_PumpWorkKW = GetPumpWorkKW();
 	mp_geo_out->md_PumpDepthFt = GetCalculatedPumpDepthInFeet();
 	// mp_geo_out->md_BottomHolePressure  is calculated in GetCalculatedPumpDepthInFeet()
