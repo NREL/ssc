@@ -756,8 +756,7 @@ void AutoPilot::PostProcessLayout(sp_layout &layout)
 		//hp.user_optics = false;
 		layout.heliostat_positions.push_back( hp );
 	}
-
-
+	
     var_map *V = _SF->getVarMap();
     _SF->updateAllCalculatedParameters( *V );
 
@@ -1957,6 +1956,28 @@ sp_optimize *AutoPilot::GetOptimizationObject()
     return _opt;
 }
 
+std::vector<double> AutoPilot::GetSFAnnualEnergy()
+{
+	std::vector<double> ann = {};
+	Hvector *hels = _SF->getHeliostats();
+	for (size_t i = 0; i < hels->size(); i++)
+	{
+		ann.push_back(hels->at(i)->getAnnualEnergy());
+	}
+	return ann;
+}
+
+std::vector<int> AutoPilot::GetHelioIDs()
+{
+	std::vector<int> ann = {};
+	Hvector *hels = _SF->getHeliostats();
+	for (size_t i = 0; i < hels->size(); i++)
+	{
+		ann.push_back(hels->at(i)->getId());
+	}
+	return ann;
+}
+
 void AutoPilot::PostEvaluationUpdate(int iter, vector<double> &pos, /*vector<double> &normalizers, */double &obj, double &flux, double &cost, std::string *note)
 {
 	ostringstream os;
@@ -2121,7 +2142,7 @@ bool AutoPilot_S::CalculateOpticalEfficiencyTable(sp_optical_table &opttab)
 			if(! _cancel_simulation)
 				_SF->Simulate(azzen[0], azzen[1], P);
 			if(! _cancel_simulation)
-				results.at(k++).process_analytical_simulation(*_SF, 0, azzen);	
+				results.at(k++).process_analytical_simulation(*_SF, P, 0, azzen);	
 
 
 			if(_cancel_simulation)
@@ -2220,7 +2241,7 @@ bool AutoPilot_S::CalculateFluxMaps(sp_flux_table &fluxtab, int flux_res_x, int 
 			
 		sim_result result;
 		if(! _cancel_simulation){
-			result.process_analytical_simulation(*_SF, 2, azzen);	
+			result.process_analytical_simulation(*_SF, P, 2, azzen);	
 			fluxtab.efficiency.push_back( result.eff_total_sf.ave );
 		}
 						
@@ -2415,8 +2436,11 @@ bool AutoPilot_MT::CreateLayout(sp_layout &layout, bool do_post_process)
 						SolarField::AnnualEfficiencySimulation(_SF->getVarMap()->amb.weather_file.val, _SF, results); 
 
 				//Process the results
-				if(! _cancel_simulation)
+				if (!_cancel_simulation)
+				{
 					_SF->ProcessLayoutResults(&results, nsim_req);
+				}
+					
 
 			}
 		}

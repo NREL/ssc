@@ -43,12 +43,14 @@ TEST_F(LithiumIonBattery, LithiumIonCapacityUnitTest_lib_battery)
 	EXPECT_EQ(capacity_model->SOC(), SOC_max);
 
 	// Check that discharge of battery results in correct capacity
-	capacity_model->updateCapacity(10, 1);
+	double I = 10;
+	capacity_model->updateCapacity(I, 1);
 	EXPECT_EQ(capacity_model->SOC(), 90);
 	EXPECT_EQ(capacity_model->q0(), 90);
 
 	// check that charge of battery results in correct capacity
-	capacity_model->updateCapacity(-10, 1);
+	I = -10;
+	capacity_model->updateCapacity(I, 1);
 	EXPECT_EQ(capacity_model->SOC(), 100);
 	EXPECT_EQ(capacity_model->q0(), 100);
 
@@ -72,10 +74,12 @@ TEST_F(LithiumIonBattery, LithiumIonCapacityUnitTest_lib_battery)
 	EXPECT_EQ(capacity_model->qmax(), 100);
 
 	// check that model correctly detects overcharge, undercharge
-	capacity_model->updateCapacity(-10, 1);
+	capacity_model->updateCapacity(I, 1);
 	EXPECT_EQ(capacity_model->q0(), 100);
 	EXPECT_EQ(capacity_model->SOC(), SOC_max);
-	capacity_model->updateCapacity(110, 1);
+
+	I = 110;
+	capacity_model->updateCapacity(I, 1);
 	EXPECT_EQ(capacity_model->q0(), 20);
 	EXPECT_EQ(capacity_model->SOC(), SOC_min);
 }

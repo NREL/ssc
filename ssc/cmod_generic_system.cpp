@@ -67,6 +67,14 @@ static var_info _cm_vtab_generic_system[] = {
 
 	{ SSC_INPUT, SSC_ARRAY, "load", "Electricity load (year 1)", "kW", "", "Time Series", "?", "", "" },
 
+//
+	// optional for lifetime analysis
+	{ SSC_INPUT,        SSC_NUMBER,      "system_use_lifetime_output",                  "Generic lifetime simulation",                               "0/1",      "",                              "generic_system",             "?=0",                        "INTEGER,MIN=0,MAX=1",          "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "analysis_period",                             "Lifetime analysis period",                             "years",    "",                              "generic_system",             "system_use_lifetime_output=1",   "",                             "" },
+	{ SSC_INPUT,        SSC_ARRAY,       "dc_degradation",                              "Annual module degradation",                            "%/year",   "",                              "generic_system",             "system_use_lifetime_output=1",   "",                             "" },
+
+
+
 
 //    OUTPUTS ----------------------------------------------------------------------------								      														   
 //	  VARTYPE           DATATYPE         NAME                          LABEL                                   UNITS           META     GROUP                 REQUIRED_IF        CONSTRAINTS           UI_HINTS
@@ -81,7 +89,6 @@ static var_info _cm_vtab_generic_system[] = {
 	{ SSC_OUTPUT, SSC_NUMBER, "capacity_factor", "Capacity factor", "%", "", "Annual", "*", "", "" },
 	{ SSC_OUTPUT, SSC_NUMBER, "kwh_per_kw", "First year kWh/kW", "kWh/kW", "", "Annual", "*", "", "" },
 
-	{ SSC_OUTPUT,       SSC_NUMBER,      "system_use_lifetime_output",     "Use lifetime output",                         "0/1", "",                        "Miscellaneous", "*",                       "INTEGER",                   "" },
 
 var_info_invalid };
 
@@ -102,17 +109,37 @@ public:
 	{
 		int spec_mode = as_integer("spec_mode");
 
+
+		bool system_use_lifetime_output = (as_integer("system_use_lifetime_output") == 1);
+
+
+		// Warning workaround
+		static bool is32BitLifetime = (__ARCHBITS__ == 32 &&	system_use_lifetime_output);
+		if (is32BitLifetime)
+		throw exec_error( "generic", "Lifetime simulation of generic systems is only available in the 64 bit version of SAM.");
+
+
+
+
 		ssc_number_t *enet;
 		size_t nrec_load = 8760;
 		if (is_assigned("load"))
 			ssc_number_t *load = as_array("load", &nrec_load);
-//		ssc_number_t *p_gen = allocate("gen", 8760);
 		size_t steps_per_hour_load = nrec_load / 8760;
 		ssc_number_t ts_hour_load = 1.0f / steps_per_hour_load;
 
 		size_t nrec_gen = nrec_load;
 		size_t steps_per_hour_gen = steps_per_hour_load;
 		ssc_number_t ts_hour_gen = ts_hour_load;
+
+
+		size_t nyears = as_integer("analysis_period");
+		size_t nlifetime = nrec_load * nyears;
+
+
+		// lifetime outputs
+		std::vector<ssc_number_t> p_load_full; p_load_full.reserve(nlifetime);
+
 
 		double derate = (1 - (double)as_number("derate") / 100);
 		double annual_output = 0; 
@@ -192,7 +219,7 @@ public:
 		assign("capacity_factor", var_data((ssc_number_t)(kWhperkW / 87.6)));
 		assign("kwh_per_kw", var_data((ssc_number_t)kWhperkW));
 
-		assign("system_use_lifetime_output", 0);
+//		assign("system_use_lifetime_output", 0);
 
 	} // exec
 };

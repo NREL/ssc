@@ -58,17 +58,7 @@
 #include "lib_pvwatts.h"
 #include "lib_pvshade.h"
 #include "lib_pvmodel.h"
-
-#ifndef DTOR
-#define DTOR 0.0174532925
-#endif
-#ifndef M_PI
-#define M_PI 3.14159265358979323846264338327
-#endif
-#define sind(x) sin( (M_PI/180.0)*(x) )
-#define cosd(x) cos( (M_PI/180.0)*(x) )
-#define tand(x) tan( (M_PI/180.0)*(x) )
-#define asind(x) (180/M_PI*asin(x))
+#include "lib_pv_incidence_modifier.h"
 
 static var_info _cm_vtab_pvwattsv5_part1[] = {
 /*   VARTYPE           DATATYPE          NAME                         LABEL                                               UNITS        META                      GROUP          REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
@@ -276,7 +266,7 @@ public:
 			if ( sunup > 0 && track_mode == 1
 				&& shade_mode_1x == 0 ) // selfshaded mode
 			{	
-				double shad1xf = shade_fraction_1x( solazi, solzen, tilt, azimuth, gcr, rot );					
+				double shad1xf = shadeFraction1x( solazi, solzen, tilt, azimuth, gcr, rot );
 				shad_beam *= (ssc_number_t)(1-shad1xf);
 
 				if ( shade_mode_1x == 0 && iskydiff > 0 )
@@ -392,12 +382,12 @@ public:
 		if (!as_boolean("batt_simple_enable"))
 			add_var_info(vtab_technology_outputs);
 
-		smart_ptr<weather_data_provider>::ptr wdprov;
+		std::unique_ptr<weather_data_provider> wdprov;
 
 		if ( is_assigned( "solar_resource_file" ) )
 		{
 			const char *file = as_string("solar_resource_file");
-			wdprov = smart_ptr<weather_data_provider>::ptr( new weatherfile( file ) );
+			wdprov = std::unique_ptr<weather_data_provider>( new weatherfile( file ) );
 
 			weatherfile *wfile = dynamic_cast<weatherfile*>(wdprov.get());
 			if (!wfile->ok()) throw exec_error("pvwattsv5", wfile->message());
@@ -405,7 +395,7 @@ public:
 		}
 		else if ( is_assigned( "solar_resource_data" ) )
 		{
-			wdprov = smart_ptr<weather_data_provider>::ptr( new weatherdata( lookup("solar_resource_data") ) );
+			wdprov = std::unique_ptr<weather_data_provider>( new weatherdata( lookup("solar_resource_data") ) );
 		}
 		else
 			throw exec_error("pvwattsv5", "no weather data supplied");

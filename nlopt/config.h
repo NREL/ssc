@@ -99,7 +99,7 @@
 #ifdef __WXMSW__
 #define THREADLOCAL
 #else
-#define THREADLOCAL __thread	#define THREADLOCAL __thread
+#define THREADLOCAL __thread
 #endif
 
 /* Define to 1 if you can safely include both <sys/time.h> and <time.h>. */

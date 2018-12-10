@@ -29,6 +29,7 @@
     <ClCompile Include="..\ssc\cmod_cb_construction_financing.cpp" />
     <ClCompile Include="..\ssc\cmod_cb_empirical_hce_heat_loss.cpp" />
     <ClCompile Include="..\ssc\cmod_cb_mspt_system_costs.cpp" />
+    <ClCompile Include="..\ssc\cmod_geothermal_costs.cpp" />
     <ClCompile Include="..\ssc\cmod_host_developer.cpp" />
     <ClCompile Include="..\ssc\cmod_inv_cec_cg.cpp" />
     <ClCompile Include="..\ssc\cmod_dsg_flux_preprocess.cpp" />
@@ -122,7 +123,7 @@
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>ssc</RootNamespace>
     <ProjectName>ssc</ProjectName>
-    <WindowsTargetPlatformVersion>10.0.16299.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -294,11 +295,11 @@
       <ProgramDatabaseFile>$(OutDir)\$(TargetName).pdb</ProgramDatabaseFile>
     </Link>
     <PostBuildEvent>
-      <Command>robocopy $(WEXDIR)\build_vs2017\libcurl_ssl_$(Platform)\bin $(SSCDIR)\build_vs2017\$(Platform)\$(Configuration)\ /E /XC /XN /XO /XX /NP /NS /NJS /NJH /NC  
+      <Command>robocopy "$(WEXDIR)\build_vs2017\libcurl_ssl_$(Platform)\bin" "$(SSCDIR)\build_vs2017\$(Platform)\$(Configuration)" /E /XC /XN /XO /XX /NP /NS /NJS /NJH /NC  
 
 if NOT "$(SAMNTDIR)" == "" (
-copy $(SSCDIR)\build_vs2017\$(Platform)\$(Configuration)\sscx32.dll $(SAMNTDIR)\deploy\$(Platform)
-copy $(SSCDIR)\build_vs2017\$(Platform)\$(Configuration)\sscx32.pdb $(SAMNTDIR)\deploy\$(Platform)\
+copy "$(SSCDIR)\build_vs2017\$(Platform)\$(Configuration)\sscx32.dll" "$(SAMNTDIR)\deploy\$(Platform)"
+copy "$(SSCDIR)\build_vs2017\$(Platform)\$(Configuration)\sscx32.pdb" "$(SAMNTDIR)\deploy\$(Platform)"
 )
 
 if %ERRORLEVEL% GEQ 8 (
@@ -330,11 +331,11 @@ exit 0
       </StackReserveSize>
     </Link>
     <PostBuildEvent>
-      <Command>robocopy $(WEXDIR)\build_vs2017\libcurl_ssl_$(Platform)\bin $(SSCDIR)\build_vs2017\$(Platform)\$(Configuration)\ /E /XC /XN /XO /XX /NP /NS /NJS /NJH /NC  
+      <Command>robocopy "$(WEXDIR)\build_vs2017\libcurl_ssl_$(Platform)\bin" "$(SSCDIR)\build_vs2017\$(Platform)\$(Configuration)" /E /XC /XN /XO /XX /NP /NS /NJS /NJH /NC  
 
 if NOT "$(SAMNTDIR)" == "" (
-copy $(SSCDIR)\build_vs2017\$(Platform)\$(Configuration)\ssc.dll $(SAMNTDIR)\deploy\$(Platform)
-copy $(SSCDIR)\build_vs2017\$(Platform)\$(Configuration)\ssc.pdb $(SAMNTDIR)\deploy\$(Platform)\
+copy "$(SSCDIR)\build_vs2017\$(Platform)\$(Configuration)\ssc.dll" "$(SAMNTDIR)\deploy\$(Platform)"
+copy "$(SSCDIR)\build_vs2017\$(Platform)\$(Configuration)\ssc.pdb" "$(SAMNTDIR)\deploy\$(Platform)"
 )
 
 if %ERRORLEVEL% GEQ 8 (
@@ -356,11 +357,11 @@ exit 0
       <ProgramDatabaseFile>$(OutDir)\$(TargetName).pdb</ProgramDatabaseFile>
     </Link>
     <PostBuildEvent>
-      <Command>robocopy $(WEXDIR)\build_vs2017\libcurl_ssl_$(Platform)\bin $(SSCDIR)\build_vs2017\$(Platform)\$(Configuration)\ /E /XC /XN /XO /XX /NP /NS /NJS /NJH /NC  
+      <Command>robocopy "$(WEXDIR)\build_vs2017\libcurl_ssl_$(Platform)\bin" "$(SSCDIR)\build_vs2017\$(Platform)\$(Configuration)" /E /XC /XN /XO /XX /NP /NS /NJS /NJH /NC  
 
 if NOT "$(SAMNTDIR)" == "" (
-copy $(SSCDIR)\build_vs2017\$(Platform)\$(Configuration)\sscdx32.dll $(SAMNTDIR)\deploy\$(Platform)
-copy $(SSCDIR)\build_vs2017\$(Platform)\$(Configuration)\sscdx32.pdb $(SAMNTDIR)\deploy\$(Platform)\
+copy "$(SSCDIR)\build_vs2017\$(Platform)\$(Configuration)\sscdx32.dll" "$(SAMNTDIR)\deploy\$(Platform)"
+copy "$(SSCDIR)\build_vs2017\$(Platform)\$(Configuration)\sscdx32.pdb" "$(SAMNTDIR)\deploy\$(Platform)"
 )
 
 if %ERRORLEVEL% GEQ 8 (
@@ -383,11 +384,11 @@ exit 0
       </StackReserveSize>
     </Link>
     <PostBuildEvent>
-      <Command>robocopy $(WEXDIR)\build_vs2017\libcurl_ssl_$(Platform)\bin $(SSCDIR)\build_vs2017\$(Platform)\$(Configuration)\ /E /XC /XN /XO /XX /NP /NS /NJS /NJH /NC  
+      <Command>robocopy "$(WEXDIR)\build_vs2017\libcurl_ssl_$(Platform)\bin" "$(SSCDIR)\build_vs2017\$(Platform)\$(Configuration)" /E /XC /XN /XO /XX /NP /NS /NJS /NJH /NC  
 
 if NOT "$(SAMNTDIR)" == "" (
-copy $(SSCDIR)\build_vs2017\$(Platform)\$(Configuration)\sscd.dll $(SAMNTDIR)\deploy\$(Platform)
-copy $(SSCDIR)\build_vs2017\$(Platform)\$(Configuration)\sscd.pdb $(SAMNTDIR)\deploy\$(Platform)\
+copy "$(SSCDIR)\build_vs2017\$(Platform)\$(Configuration)\sscd.dll" "$(SAMNTDIR)\deploy\$(Platform)"
+copy "$(SSCDIR)\build_vs2017\$(Platform)\$(Configuration)\sscd.pdb" "$(SAMNTDIR)\deploy\$(Platform)"
 )
 if %ERRORLEVEL% GEQ 8 (
 exit) else (

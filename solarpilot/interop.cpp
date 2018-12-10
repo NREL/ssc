@@ -117,6 +117,28 @@ void interop::GenerateSimulationWeatherData(var_map &V, int design_method, Array
 	
 	WeatherData *wdatvar = &V.sf.sim_step_data.Val(); 
 
+    //convert ArrayString wf_entries to matrix_t<double>
+    matrix_t<double> wf_entries_d;
+    {
+        int nr, nc;
+        nr = (int)wf_entries.size();
+        nc = split(wf_entries.at(0), ",").size();
+
+        wf_entries_d.resize(nr, nc);
+
+        for (int i = 0; i < nr; i++)
+        {
+            std::vector<std::string> row = split(wf_entries.at(i), ",");
+
+            for (int j = 0; j < nc; j++)
+            {
+                double val;
+                to_double(row.at(j), &val);
+                wf_entries_d.at(i, j) = val;
+            }
+        }
+    }
+
 	switch (design_method)
 	{
     case var_solarfield::DES_SIM_DETAIL::SUBSET_OF_DAYSHOURS:
@@ -143,7 +165,12 @@ void interop::GenerateSimulationWeatherData(var_map &V, int design_method, Array
         to_double(vdata.at(4), &P.Tamb);
         to_double(vdata.at(5), &P.Patm);
         to_double(vdata.at(6), &P.Vwind);
-        to_double(vdata.at(7), &P.Simweight);
+
+        //calculate total annual DNI energy
+        P.Simweight = 0.;
+        for (int i = 0; i < wf_entries_d.nrows(); i++)
+            P.Simweight += wf_entries_d.at(i, 3);
+
         wdatvar->resizeAll(1);
         wdatvar->setStep(0, dom, hour, month, P.dni, P.Tamb, P.Patm, P.Vwind, P.Simweight);
 		break;
@@ -194,9 +221,6 @@ void interop::GenerateSimulationWeatherData(var_map &V, int design_method, Array
 				hoy = double( doy ) * 24.;
 				dt.hours_to_date( hoy, month, dom );	//midnight on the month/day
 								
-				/*char ts[150];
-				std::sprintf(ts,"[P]%d,%f,%d,%f,%f,%f,%f,%f", dom, hod, month, dni_des, 25., 1., 1., 1.);
-				wdatvar->append(ts);*/
                 wdatvar->append(dom, hod, month, dni_des, 25., 1., 1., 1.0);
 			}
 		}
@@ -248,8 +272,8 @@ void interop::GenerateSimulationWeatherData(var_map &V, int design_method, Array
 		quicksort(simdays, 0, nday-1);
 
 		//Calculate the month and day for each item
-		vector<string> tsdat;
-		for(int i=0; i<nday; i++){
+		for(int i=0; i<nday; i++)
+        {
 			int month, dom;
 			double hoy;
 			int doy = simdays.at(i);	//because of the doy calcluation used before, this is actually [0..364]
@@ -275,7 +299,6 @@ void interop::GenerateSimulationWeatherData(var_map &V, int design_method, Array
 
 			//make sure the start and end hours are symmetric about solar noon
 			double nmidspan = (double)nhrs/2.;
-			//double nmidspan = (double)nskip*floor(nhrs/(2.*(double)nskip));
 			double hr_st = hrmid - nmidspan; 
 			double hr_end = hrmid + nmidspan;
 				
@@ -285,35 +308,20 @@ void interop::GenerateSimulationWeatherData(var_map &V, int design_method, Array
 				
                 //weighting fractions for DNI
 				double fthis = fmin(0.5, hr_st - floor(hr_st)) + fmin(0.5, ceil(hr_st) - hr_st);
-				//double fthis = all_time.front() - floor(all_time.front());
 				double fcomp = 1.-fthis;
 
 				//for integration, which way should we go?
 				int iind = (hr_st - floor(hr_st)) < 0.5 ? -1 : 1;
-				//int iind = fthis < 0.5 ? -1 : 1;
-
-
-
                 
                 //preprocess the day's weather
-				/*vector<double>
-					all_time, all_dni, all_tdry, all_pres, all_wind, all_weights;*/
 				double jd = hr_st;
 				while(jd<hr_end+.001){	//include hr_end
 					//index associated with time jd
 					int jind = (int)floor(jd);	//the (j-1) originally may have been an error
-					tsdat = split(wf_entries.at(jind), ",");
-
-					to_double(tsdat.at(3), &dni);
-					to_double(tsdat.at(4), &tdry);
-					to_double(tsdat.at(5), &pres);
-					to_double(tsdat.at(6), &wind);
-
-					/*all_time.push_back(jd);
-					all_dni.push_back(dni);
-					all_tdry.push_back(tdry);
-					all_pres.push_back(pres);
-					all_wind.push_back(wind);*/
+                    dni = wf_entries_d.at(jind, 3);
+                    tdry = wf_entries_d.at(jind, 4);
+                    pres = wf_entries_d.at(jind, 5);
+                    wind = wf_entries_d.at(jind, 6);
 
 					//Calculate weighting factor for this hour
 					double hod = fmod(jd,24.);
@@ -328,34 +336,16 @@ void interop::GenerateSimulationWeatherData(var_map &V, int design_method, Array
 						step_weight = hrs[1] - hod + nskip/2.;
 					}
 					step_weight *= Toolbox::round(delta_day);
-					//all_weights.push_back( step_weight );
-
-					//jd += (double)nskip;	
-				//}
-
-				//int ndatpt = (int)all_time.size();
-
-				
-				
-				//for(int i=0; i<ndatpt; i++){
 
 					//calculate the adjusted DNI based on the time surrounding the simulation position
 					double dnimod, dnicomp;
 					if(iind > 0)
-					    tsdat = split(wf_entries.at(min(8759,jind+1)), ",");
-						//dnicomp = i < ndatpt - 1 ? all_dni.at(i+1) : 0.;
+                        dnicomp = wf_entries_d.at(min(8759, jind + 1));
 					else
-					    tsdat = split(wf_entries.at(max(0,jind-1)), ",");
-						//dnicomp = i > 0 ? all_dni.at(i-1) : 0.;
-					to_double(tsdat.at(3), &dnicomp);
+                        dnicomp = wf_entries_d.at(max(0,jind-1));
 
-					//dnimod = all_dni.at(i)*fthis + dnicomp * fcomp;
 					dnimod = dni*fthis + dnicomp * fcomp;
 
-					//double hod = fmod(jd,24.);
-
-					//char ts[150];
-					//std::sprintf(ts,"[P]%d,%f,%d,%f,%f,%f,%f,%f", int(dom), hod, int(month), dnimod, tdry, pres, wind, step_weight );
 					wdatvar->append(int(dom), hod, int(month), dnimod, tdry, pres, wind, step_weight);
 					
                     jd += (double)nskip;	
@@ -395,11 +385,6 @@ void interop::GenerateSimulationWeatherData(var_map &V, int design_method, Array
 				int nwf = (int)wf_entries.size();
 				double dnicomp;
 				double jd=hr_st;
-				/*double hr_end_choose;
-				if( design_method == LAYOUT_DETAIL::FOR_OPTIMIZATION )
-					hr_end_choose = hrmid;
-				else
-					hr_end_choose = hr_end;*/
 
 				while(jd < hr_end + 0.001){
 					double tdry_per = 0., pres_per = 0., wind_per = 0., dni_per = 0., dni_per2 = 0.;
@@ -408,45 +393,18 @@ void interop::GenerateSimulationWeatherData(var_map &V, int design_method, Array
 						if(ind < 0) ind += 8760;
 						if(ind > 8759) ind += -8760;
 
-						tsdat = split(wf_entries.at(ind), ",");
-						to_double(tsdat.at(3), &dni);
-						to_double(tsdat.at(4), &tdry);
-						to_double(tsdat.at(5), &pres);
-						to_double(tsdat.at(6), &wind);
+                        dni = wf_entries_d.at(ind, 3);
+                        tdry = wf_entries_d.at(ind, 4);
+                        pres = wf_entries_d.at(ind, 5);
+                        wind = wf_entries_d.at(ind, 6);
 
 						//get the complement dni data
-						tsdat = split(wf_entries.at( min( max(ind+iind, 0), nwf-1) ), ",");
-						to_double(tsdat.at(3), &dnicomp);
+                        dnicomp = wf_entries_d.at(min(max(ind + iind, 0), nwf - 1), 3);
 
-
-						//
 						dni_per += dni * fthis + dnicomp * fcomp;
 						tdry_per += tdry;
 						pres_per += pres;
 						wind_per += wind;
-
-						//if it's for optimization, also add the symmetric afternoon hour
-						//if(design_method == LAYOUT_DETAIL::FOR_OPTIMIZATION){
-						//	double jdhi = hrmid + hrmid - jd;
-						//	int indhi = (int)floor(jdhi)+k*24;
-						//	if(indhi < 0) indhi += 8760;
-						//	if(indhi > 8759) indhi += -8760;
-
-						//	if(indhi == ind)
-						//		continue;
-
-						//	tsdat = split(wf_entries.at(indhi), ",");
-						//	to_double(tsdat.at(3), &dni);
-
-						//	//get the complement dni data
-						//	tsdat = split(wf_entries.at( min( max(ind+iind, 0), nwf-1) ), ",");
-						//	to_double(tsdat.at(3), &dnicomp);
-
-
-						//	//
-						//	dni_per2 += dni * fthis + dnicomp * fcomp;							
-						//}
-
 					}
 
 					dni_per = (dni_per + dni_per2)/(double)range;
@@ -473,8 +431,6 @@ void interop::GenerateSimulationWeatherData(var_map &V, int design_method, Array
 					}
 					step_weight *= (double)range;
 
-					//char ts[150];
-					//std::sprintf(ts, "[P]%d,%f,%d,%f,%f,%f,%f,%f", int(dom), hod, int(month), dni_per, tdry_per, pres_per, wind_per, step_weight);
 					wdatvar->append(int(dom), hod, int(month), dni_per, tdry_per, pres_per, wind_per, step_weight);
 
 					dayind++;
@@ -775,12 +731,14 @@ void stat_object::initialize(){ //int size){
 
 }
 
-void stat_object::set(double _min, double _max, double _ave, double _stdev, double _sum){
+void stat_object::set(double _min, double _max, double _ave, double _stdev, double _sum, double _wtmean)
+{
 	min = _min;
 	max = _max;
 	ave = _ave;
 	stdev = _stdev;
 	sum = _sum;
+    wtmean = _wtmean;
 }
 
 //-----------------------
@@ -839,6 +797,7 @@ void sim_result::initialize(){
 	eff_reflect.initialize();
 	eff_intercept.initialize();
 	eff_absorption.initialize();
+    eff_annual.initialize();
     eff_cloud.initialize();
 	flux_density.initialize();
 
@@ -865,7 +824,8 @@ void sim_result::process_field_stats(){
 		*aves = new double[nm],
 		*stdevs = new double[nm],
 		*mins = new double[nm],
-		*maxs = new double[nm];
+		*maxs = new double[nm],
+        *wtmean = new double[nm];
 	
 	double *aves2 = new double[nm];		//Temporary array for calculating variance
 
@@ -876,6 +836,7 @@ void sim_result::process_field_stats(){
 		maxs[i] = -9.e9;
 		aves[i] = 0.;
 		aves2[i] = 0.;
+        wtmean[i] = 0.;
 	}
 
 	//Calculate metrics
@@ -901,68 +862,125 @@ void sim_result::process_field_stats(){
 
 	delete [] aves2;
 
+    //calculate weighted average efficiency values
+    std::vector<int> eff_cascade_indices = {
+        helio_perf_data::PERF_VALUES::ETA_CLOUD,
+        helio_perf_data::PERF_VALUES::ETA_SHADOW,
+        helio_perf_data::PERF_VALUES::ETA_COS,
+        helio_perf_data::PERF_VALUES::SOILING,
+        helio_perf_data::PERF_VALUES::REFLECTIVITY,
+        helio_perf_data::PERF_VALUES::ETA_BLOCK,
+        helio_perf_data::PERF_VALUES::ETA_ATT,
+        helio_perf_data::PERF_VALUES::ETA_INT,
+        helio_perf_data::PERF_VALUES::ANNUAL_EFFICIENCY,
+        helio_perf_data::PERF_VALUES::ANNUAL_POWER,
+        helio_perf_data::PERF_VALUES::REC_ABSORPTANCE
+    };
+    int nh = (int)data_by_helio.size();
+    double *rowprod = new double[ nh ];
+    for (int i = 0; i < nh; i++)
+        rowprod[i] = 1.;    //initialize
+
+    for (size_t i = 0; i < eff_cascade_indices.size(); i++)
+    {
+        int cascade_index = eff_cascade_indices.at(i); //keep track of current index
+
+        //calculate the running product of losses 'rowprod[j]' for all heliostats j
+        int j = 0;
+        for (unordered_map<int, helio_perf_data>::iterator it = data_by_helio.begin(); it != data_by_helio.end(); it++)
+            rowprod[j++] *= it->second.getDataByIndex(cascade_index);
+
+        //Sum the running product vector and divide by number of heliostats for uncorrected weighted average
+        for (j = 0; j < nh; j++)
+            wtmean[cascade_index] += rowprod[j];
+        wtmean[cascade_index] /= (double)(nh > 0 ? nh : 1);
+
+        //Correct the current efficiency by taking out previous weighted efficiency values
+        for (size_t k = 0; k < i; k++)
+            wtmean[cascade_index] /= wtmean[eff_cascade_indices.at(k)];
+    }
+
+    delete[] rowprod;
+
 	//Assign the named variables
-	eff_total_heliostat.set( 
-		mins[ helio_perf_data::PERF_VALUES::ETA_TOT ], 
-		maxs[ helio_perf_data::PERF_VALUES::ETA_TOT ], 
-		aves[ helio_perf_data::PERF_VALUES::ETA_TOT ], 
-		stdevs[ helio_perf_data::PERF_VALUES::ETA_TOT ], 
-		sums[ helio_perf_data::PERF_VALUES::ETA_TOT ]);
-	eff_cosine.set(
-		mins[ helio_perf_data::PERF_VALUES::ETA_COS ], 
-		maxs[ helio_perf_data::PERF_VALUES::ETA_COS ], 
-		aves[ helio_perf_data::PERF_VALUES::ETA_COS ], 
-		stdevs[ helio_perf_data::PERF_VALUES::ETA_COS ], 
-		sums[ helio_perf_data::PERF_VALUES::ETA_COS ]);
-	eff_attenuation.set(
-		mins[ helio_perf_data::PERF_VALUES::ETA_ATT ], 
-		maxs[ helio_perf_data::PERF_VALUES::ETA_ATT ], 
-		aves[ helio_perf_data::PERF_VALUES::ETA_ATT ], 
-		stdevs[ helio_perf_data::PERF_VALUES::ETA_ATT ], 
-		sums[ helio_perf_data::PERF_VALUES::ETA_ATT ]);
-	eff_blocking.set(
-		mins[ helio_perf_data::PERF_VALUES::ETA_BLOCK ], 
-		maxs[ helio_perf_data::PERF_VALUES::ETA_BLOCK ], 
-		aves[ helio_perf_data::PERF_VALUES::ETA_BLOCK ], 
-		stdevs[ helio_perf_data::PERF_VALUES::ETA_BLOCK ], 
-		sums[ helio_perf_data::PERF_VALUES::ETA_BLOCK ]);
+    eff_total_heliostat.set(
+        mins[helio_perf_data::PERF_VALUES::ETA_TOT],
+        maxs[helio_perf_data::PERF_VALUES::ETA_TOT],
+        aves[helio_perf_data::PERF_VALUES::ETA_TOT],
+        stdevs[helio_perf_data::PERF_VALUES::ETA_TOT],
+        sums[helio_perf_data::PERF_VALUES::ETA_TOT],
+        wtmean[helio_perf_data::PERF_VALUES::ETA_TOT]);
+    eff_cosine.set(
+        mins[helio_perf_data::PERF_VALUES::ETA_COS],
+        maxs[helio_perf_data::PERF_VALUES::ETA_COS],
+        aves[helio_perf_data::PERF_VALUES::ETA_COS],
+        stdevs[helio_perf_data::PERF_VALUES::ETA_COS],
+        sums[helio_perf_data::PERF_VALUES::ETA_COS],
+        wtmean[helio_perf_data::PERF_VALUES::ETA_COS]);
+    eff_attenuation.set(
+        mins[helio_perf_data::PERF_VALUES::ETA_ATT],
+        maxs[helio_perf_data::PERF_VALUES::ETA_ATT],
+        aves[helio_perf_data::PERF_VALUES::ETA_ATT],
+        stdevs[helio_perf_data::PERF_VALUES::ETA_ATT],
+        sums[helio_perf_data::PERF_VALUES::ETA_ATT],
+        wtmean[helio_perf_data::PERF_VALUES::ETA_ATT]);
+    eff_blocking.set(
+        mins[helio_perf_data::PERF_VALUES::ETA_BLOCK],
+        maxs[helio_perf_data::PERF_VALUES::ETA_BLOCK],
+        aves[helio_perf_data::PERF_VALUES::ETA_BLOCK],
+        stdevs[helio_perf_data::PERF_VALUES::ETA_BLOCK],
+        sums[helio_perf_data::PERF_VALUES::ETA_BLOCK],
+        wtmean[helio_perf_data::PERF_VALUES::ETA_BLOCK]);
 	eff_shading.set(
 		mins[ helio_perf_data::PERF_VALUES::ETA_SHADOW ], 
 		maxs[ helio_perf_data::PERF_VALUES::ETA_SHADOW ], 
 		aves[ helio_perf_data::PERF_VALUES::ETA_SHADOW ], 
 		stdevs[ helio_perf_data::PERF_VALUES::ETA_SHADOW ], 
-		sums[ helio_perf_data::PERF_VALUES::ETA_SHADOW ]);
-	eff_intercept.set(
-		mins[ helio_perf_data::PERF_VALUES::ETA_INT ], 
-		maxs[ helio_perf_data::PERF_VALUES::ETA_INT ], 
-		aves[ helio_perf_data::PERF_VALUES::ETA_INT ], 
-		stdevs[ helio_perf_data::PERF_VALUES::ETA_INT ], 
-		sums[ helio_perf_data::PERF_VALUES::ETA_INT ]);
-	eff_absorption.set(
-		mins[ helio_perf_data::PERF_VALUES::REC_ABSORPTANCE ], 
-		maxs[ helio_perf_data::PERF_VALUES::REC_ABSORPTANCE ], 
-		aves[ helio_perf_data::PERF_VALUES::REC_ABSORPTANCE ], 
-		stdevs[ helio_perf_data::PERF_VALUES::REC_ABSORPTANCE ], 
-		sums[ helio_perf_data::PERF_VALUES::REC_ABSORPTANCE ]);
-	eff_cloud.set(
-		mins[ helio_perf_data::PERF_VALUES::ETA_CLOUD ], 
-		maxs[ helio_perf_data::PERF_VALUES::ETA_CLOUD ], 
-		aves[ helio_perf_data::PERF_VALUES::ETA_CLOUD ], 
-		stdevs[ helio_perf_data::PERF_VALUES::ETA_CLOUD ], 
-		sums[ helio_perf_data::PERF_VALUES::ETA_CLOUD ]);
+        sums[helio_perf_data::PERF_VALUES::ETA_SHADOW],
+        wtmean[helio_perf_data::PERF_VALUES::ETA_SHADOW]);
+    eff_intercept.set(
+        mins[helio_perf_data::PERF_VALUES::ETA_INT],
+        maxs[helio_perf_data::PERF_VALUES::ETA_INT],
+        aves[helio_perf_data::PERF_VALUES::ETA_INT],
+        stdevs[helio_perf_data::PERF_VALUES::ETA_INT],
+        sums[helio_perf_data::PERF_VALUES::ETA_INT],
+        wtmean[helio_perf_data::PERF_VALUES::ETA_INT]);
+    eff_absorption.set(
+        mins[helio_perf_data::PERF_VALUES::REC_ABSORPTANCE],
+        maxs[helio_perf_data::PERF_VALUES::REC_ABSORPTANCE],
+        aves[helio_perf_data::PERF_VALUES::REC_ABSORPTANCE],
+        stdevs[helio_perf_data::PERF_VALUES::REC_ABSORPTANCE],
+        sums[helio_perf_data::PERF_VALUES::REC_ABSORPTANCE],
+        wtmean[helio_perf_data::PERF_VALUES::REC_ABSORPTANCE]);
+    eff_annual.set(
+        mins[helio_perf_data::PERF_VALUES::ANNUAL_EFFICIENCY],
+        maxs[helio_perf_data::PERF_VALUES::ANNUAL_EFFICIENCY],
+        aves[helio_perf_data::PERF_VALUES::ANNUAL_EFFICIENCY],
+        stdevs[helio_perf_data::PERF_VALUES::ANNUAL_EFFICIENCY],
+        sums[helio_perf_data::PERF_VALUES::ANNUAL_EFFICIENCY],
+        wtmean[helio_perf_data::PERF_VALUES::ANNUAL_EFFICIENCY]);
+    eff_cloud.set(
+        mins[helio_perf_data::PERF_VALUES::ETA_CLOUD],
+        maxs[helio_perf_data::PERF_VALUES::ETA_CLOUD],
+        aves[helio_perf_data::PERF_VALUES::ETA_CLOUD],
+        stdevs[helio_perf_data::PERF_VALUES::ETA_CLOUD],
+        sums[helio_perf_data::PERF_VALUES::ETA_CLOUD],
+        wtmean[helio_perf_data::PERF_VALUES::ETA_CLOUD]);
 	eff_reflect.set(
 		mins[ helio_perf_data::PERF_VALUES::REFLECTIVITY ]*mins[ helio_perf_data::PERF_VALUES::SOILING ], 
 		maxs[ helio_perf_data::PERF_VALUES::REFLECTIVITY ]*maxs[ helio_perf_data::PERF_VALUES::SOILING ], 
 		aves[ helio_perf_data::PERF_VALUES::REFLECTIVITY ]*aves[ helio_perf_data::PERF_VALUES::SOILING ], 
 		stdevs[ helio_perf_data::PERF_VALUES::REFLECTIVITY ]*stdevs[ helio_perf_data::PERF_VALUES::SOILING ], 
-		sums[ helio_perf_data::PERF_VALUES::REFLECTIVITY ]*sums[ helio_perf_data::PERF_VALUES::SOILING ]
+		sums[ helio_perf_data::PERF_VALUES::REFLECTIVITY ]*sums[ helio_perf_data::PERF_VALUES::SOILING ],
+        wtmean[helio_perf_data::PERF_VALUES::REFLECTIVITY] * wtmean[helio_perf_data::PERF_VALUES::SOILING]
 	);
 	eff_total_sf.set(
-		mins[ helio_perf_data::PERF_VALUES::ETA_TOT ]*mins[ helio_perf_data::PERF_VALUES::REC_ABSORPTANCE ], 
-		maxs[ helio_perf_data::PERF_VALUES::ETA_TOT ]*maxs[ helio_perf_data::PERF_VALUES::REC_ABSORPTANCE ], 
-		aves[ helio_perf_data::PERF_VALUES::ETA_TOT ]*aves[ helio_perf_data::PERF_VALUES::REC_ABSORPTANCE ], 
-		stdevs[ helio_perf_data::PERF_VALUES::ETA_TOT ]*stdevs[ helio_perf_data::PERF_VALUES::REC_ABSORPTANCE ], 
-		sums[ helio_perf_data::PERF_VALUES::ETA_TOT ]*sums[ helio_perf_data::PERF_VALUES::REC_ABSORPTANCE ]
+		mins[ helio_perf_data::PERF_VALUES::ETA_TOT ]* wtmean[ helio_perf_data::PERF_VALUES::REC_ABSORPTANCE ],
+		maxs[ helio_perf_data::PERF_VALUES::ETA_TOT ]* wtmean[ helio_perf_data::PERF_VALUES::REC_ABSORPTANCE ],
+		aves[ helio_perf_data::PERF_VALUES::ETA_TOT ]* wtmean[ helio_perf_data::PERF_VALUES::REC_ABSORPTANCE ],
+		stdevs[ helio_perf_data::PERF_VALUES::ETA_TOT ]* wtmean[ helio_perf_data::PERF_VALUES::REC_ABSORPTANCE ],
+		sums[ helio_perf_data::PERF_VALUES::ETA_TOT ]* wtmean[ helio_perf_data::PERF_VALUES::REC_ABSORPTANCE ],
+        aves[helio_perf_data::PERF_VALUES::ETA_TOT] * wtmean[helio_perf_data::PERF_VALUES::REC_ABSORPTANCE]
 	);
 	
 	delete [] sums;
@@ -1010,7 +1028,7 @@ void sim_result::process_flux_stats(SolarField &SF){
 	flux_density.ave = fave;
 }
 
-void sim_result::process_analytical_simulation(SolarField &SF, int nsim_type, double sun_az_zen[2], Hvector &helios){
+void sim_result::process_analytical_simulation(SolarField &SF, sim_params &P, int nsim_type, double sun_az_zen[2], Hvector &helios){
 	is_soltrace = false;
 	sim_type = nsim_type;
 
@@ -1031,8 +1049,8 @@ void sim_result::process_analytical_simulation(SolarField &SF, int nsim_type, do
 		}
 		eff_total_sf.ave = effsum / (double)helios.size() ;
 		total_receiver_area = V->sf.rec_area.Val(); //SF.calcReceiverTotalArea();
-		dni = V->sf.dni_des.val/1000.; // SF.getDesignPointDNI()/1000.;
-		power_on_field = total_heliostat_area * dni;	//[kW]
+		dni = P.dni; //W/m2
+		power_on_field = total_heliostat_area * dni;	//[W]
 		power_absorbed = power_on_field * eff_total_sf.ave;
 
         power_thermal_loss = SF.getReceiverTotalHeatLoss();
@@ -1079,11 +1097,11 @@ void sim_result::process_analytical_simulation(SolarField &SF, int nsim_type, do
 
 }
 
-void sim_result::process_analytical_simulation(SolarField &SF, int sim_type, double sun_az_zen[2]){  /*0=Layout, 1=Optimize, 2=Flux sim, 3=Parametric */
-	process_analytical_simulation(SF, sim_type, sun_az_zen, *SF.getHeliostats());
+void sim_result::process_analytical_simulation(SolarField &SF, sim_params &P, int sim_type, double sun_az_zen[2]){  /*0=Layout, 1=Optimize, 2=Flux sim, 3=Parametric */
+	process_analytical_simulation(SF, P, sim_type, sun_az_zen, *SF.getHeliostats());
 };
 
-void sim_result::process_raytrace_simulation(SolarField &SF, int nsim_type, double sun_az_zen[2], Hvector &helios, double qray, int *emap, int *smap, int *rnum, int ntot, double *boxinfo){
+void sim_result::process_raytrace_simulation(SolarField &SF, sim_params &P, int nsim_type, double sun_az_zen[2], Hvector &helios, double qray, int *emap, int *smap, int *rnum, int ntot, double *boxinfo){
 	
 
 	is_soltrace = true;
@@ -1096,7 +1114,7 @@ void sim_result::process_raytrace_simulation(SolarField &SF, int nsim_type, doub
 		for(int i=0; i<num_heliostats_used; i++){
 			total_heliostat_area += helios.at(i)->getArea();
 		}
-		double dni = SF.getVarMap()->sf.dni_des.val/1000.; // SF.getDesignPointDNI()/1000.;
+        double dni = P.dni; //W/m2
 
 
 		//Process the ray data
@@ -1164,14 +1182,15 @@ void sim_result::process_raytrace_simulation(SolarField &SF, int nsim_type, doub
         power_piping_loss = SF.getReceiverPipingHeatLoss();
         power_to_htf = power_absorbed - (power_thermal_loss + power_piping_loss);
 
-        eff_total_sf.set(0,0, power_absorbed / power_on_field, 0, 0.);
-        eff_cosine.set(0.,0., (double)nhin/(double)nsunrays*Abox/total_heliostat_area, 0., 0.);
-		eff_blocking.set(0.,0., 1.-(double)nhblock/(double)(nhin-nhabs), 0., 0.);
-		eff_attenuation.set(0., 0., 1., 0., 0.);	//Not currently accounted for
-		eff_reflect.set(0., 0., (double)(nhin - nhabs)/(double)nhin, 0., 0.);
-		eff_intercept.set(0., 0., (double)nrin/(double)nhout, 0., 0.);
-		eff_absorption.set(0., 0., (double)nrabs/(double)nrin, 0., 0.);
-		eff_total_heliostat.set(0., 0., (double)nrabs/(double)nhin, 0., 0.);
+        eff_total_sf.set(0,0, 0, 0, 0., power_absorbed / power_on_field);
+        eff_cosine.set(0.,0., 0., 0., 0., (double)nhin / (double)nsunrays*Abox / total_heliostat_area);
+		eff_blocking.set(0.,0., 0., 0., 0., 1. - (double)nhblock / (double)(nhin - nhabs));
+		eff_attenuation.set(0., 0., 0., 0., 0., 1.);	//Not currently accounted for
+		eff_reflect.set(0., 0., 0., 0., 0., (double)(nhin - nhabs) / (double)nhin);
+		eff_intercept.set(0., 0., 0., 0., 0., (double)nrin / (double)nhout);
+		eff_absorption.set(0., 0., 0., 0., 0., (double)nrabs / (double)nrin);
+		eff_total_heliostat.set(0., 0., 0., 0., 0., (double)nrabs / (double)nhin);
+        eff_cloud.set(1., 1., 1., 0., 1., 1.);
 
 		total_receiver_area = SF.calcReceiverTotalArea();
 		solar_az = sun_az_zen[0];

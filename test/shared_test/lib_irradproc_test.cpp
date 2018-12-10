@@ -1,140 +1,8 @@
 #include <stdlib.h>
-#include <gtest/gtest.h>
 
-#include "lib_irradproc.h"
+#include "lib_irradproc_test.h"
 
-using namespace std;
-
-/**
- * \class IrradTest
- *
- * Month: 1-12, Hour: 0-23, Minute: 0-59.
- *
- */
-
-class IrradTest : public ::testing::Test{
-protected:
-	double lat, lon, tz, alb, tilt, azim, rotlim, gcr;
-	int year, month, day, skymodel, tracking;
-	bool backtrack_on;
-	double calc_sunrise, calc_sunset;
-	double e;
-
-	void SetUp(){
-		// parameters
-		lat = 31.6340;
-		lon = 74.8723;
-		tz = 5.5;
-		year = 2017;
-		month = 7;
-		day = 19;
-		skymodel = 2;
-		alb = 0.2;
-		tracking = 0;
-		tilt = 10;
-		azim = 180;
-		rotlim = 0;
-		backtrack_on = false;
-		gcr = 0;
-		e = 0.0001;
-
-		// correct sunrise and sunset times
-		calc_sunrise = 5.70924; // 5:43 am
-		calc_sunset = 19.5179;  // 7:31 pm
-	}
-};
-
-class NightCaseIrradProc : public IrradTest{
-protected:
-	// Test time: 1:30 am
-	irrad irr_hourly_night;
-	// Test time: 1:15 am
-	irrad irr_15m_night;
-
-	void SetUp(){
-		IrradTest::SetUp();
-		int night_hr(1);
-		irr_hourly_night.set_time(year, month, day, night_hr, 30, 1);
-		irr_hourly_night.set_location(lat, lon, tz);
-		irr_hourly_night.set_sky_model(skymodel, alb);
-		irr_hourly_night.set_beam_diffuse(0, 0);
-		irr_hourly_night.set_surface(tracking, tilt, azim, rotlim, backtrack_on, gcr);
-		irr_15m_night.set_time(year, month, day, night_hr, 15, -1);
-		irr_15m_night.set_location(lat, lon, tz);
-		irr_15m_night.set_sky_model(skymodel, alb);
-		irr_15m_night.set_beam_diffuse(0, 0);
-		irr_15m_night.set_surface(tracking, tilt, azim, rotlim, backtrack_on, gcr);
-	}
-};
-
-class SunriseCaseIrradProc : public IrradTest{
-protected:
-	// Test time: 5:30 am
-	irrad irr_hourly_sunrise;
-	// Test time: 5:30 am
-	irrad irr_15m_sunrise;
-
-	void SetUp(){
-		IrradTest::SetUp();
-		int sr_hr(5);
-		irr_hourly_sunrise.set_time(year, month, day, sr_hr, 30, 1);
-		irr_hourly_sunrise.set_location(lat, lon, tz);
-		irr_hourly_sunrise.set_sky_model(skymodel, alb);
-		irr_hourly_sunrise.set_beam_diffuse(0, 1);
-		irr_hourly_sunrise.set_surface(tracking, tilt, azim, rotlim, backtrack_on, gcr);
-		irr_15m_sunrise.set_time(year, month, day, sr_hr, 30, 1);
-		irr_15m_sunrise.set_location(lat, lon, tz);
-		irr_15m_sunrise.set_sky_model(skymodel, alb);
-		irr_15m_sunrise.set_beam_diffuse(0, 1);
-		irr_15m_sunrise.set_surface(tracking, tilt, azim, rotlim, backtrack_on, gcr);
-	}
-};
-
-class DayCaseIrradProc : public IrradTest{
-protected:
-	// Test time: 12:30 pm
-	irrad irr_hourly_day;
-	// Test time: 12:45 pm
-	irrad irr_15m_day;
-	
-	void SetUp(){
-		IrradTest::SetUp();
-		int day_hr(12);
-		irr_hourly_day.set_time(year, month, day, day_hr, 30, 1);
-		irr_hourly_day.set_location(lat, lon, tz);
-		irr_hourly_day.set_sky_model(skymodel, alb);
-		irr_hourly_day.set_beam_diffuse(2, 2);
-		irr_hourly_day.set_surface(tracking, tilt, azim, rotlim, backtrack_on, gcr);
-		irr_15m_day.set_time(year, month, day, day_hr, 45, 1);
-		irr_15m_day.set_location(lat, lon, tz);
-		irr_15m_day.set_sky_model(skymodel, alb);
-		irr_15m_day.set_beam_diffuse(2, 2);
-		irr_15m_day.set_surface(tracking, tilt, azim, rotlim, backtrack_on, gcr);
-	}
-};
-
-class SunsetCaseIrradProc : public IrradTest{
-protected:
-	// Test time: 7:30 pm
-	irrad irr_hourly_sunset;
-	// Test time: 7:30 pm
-	irrad irr_15m_sunset;
-	
-	virtual void SetUp(){
-		IrradTest::SetUp();
-		int ss_hr(19);
-		irr_hourly_sunset.set_time(year, month, day, ss_hr, 30, 1);
-		irr_hourly_sunset.set_location(lat, lon, tz);
-		irr_hourly_sunset.set_sky_model(skymodel, alb);
-		irr_hourly_sunset.set_beam_diffuse(0, 1);
-		irr_hourly_sunset.set_surface(tracking, tilt, azim, rotlim, backtrack_on, gcr);
-		irr_15m_sunset.set_time(year, month, day, ss_hr, 30, 1);
-		irr_15m_sunset.set_location(lat, lon, tz);
-		irr_15m_sunset.set_sky_model(skymodel, alb);
-		irr_15m_sunset.set_beam_diffuse(0, 1);
-		irr_15m_sunset.set_surface(tracking, tilt, azim, rotlim, backtrack_on, gcr);
-	}
-};
+using std::vector;
 
 /**
  * Solar Position Function Tests
@@ -577,4 +445,134 @@ TEST_F(SunsetCaseIrradProc, CalcTestRadMode0_lib_irradproc){
 	printf("poa: %f, %f, %f, %f, %f, %f \n", poa_p[0], poa_p[1], poa_p[2], poa_p[3], poa_p[4], poa_p[5]);
 	printf("irrad: %f, %f, %f \n", &rad_p[0], &rad_p[1], &rad_p[2]);
 	*/
+}
+
+/**
+*   Test Sky Configuration factors.  These factors do not change with time, just system geometry
+*/
+TEST_F(BifacialIrradTest, TestSkyConfigFactors)
+{
+	// Determine the factors for points on the ground from the leading edge of one row of PV panels to the edge of the next row of panels behind
+	std::vector<double> rearSkyConfigFactors, frontSkyConfigFactors;
+	irr->getSkyConfigurationFactors(rowToRow, verticalHeight, clearanceGround, distanceBetweenRows, horizontalLength, rearSkyConfigFactors, frontSkyConfigFactors);
+	
+	ASSERT_EQ(rearSkyConfigFactors.size(), expectedRearSkyConfigFactors.size());
+
+	for (size_t i = 0; i != rearSkyConfigFactors.size(); i++){
+		ASSERT_NEAR(rearSkyConfigFactors[i], expectedRearSkyConfigFactors[i], e);
+		ASSERT_NEAR(frontSkyConfigFactors[i], expectedFrontSkyConfigFactors[i], e);
+	}
+}
+/**
+*   Test Ground Shade factors.  These factors do not change with time, just system geometry
+*/
+TEST_F(BifacialIrradTest, TestGroundShadeFactors)
+{
+	for (size_t s = 0; s < numberOfSamples; s++)
+	{
+		size_t t = samples[s];
+		runIrradCalc(t);
+
+		readLineFromTextFile(frontGroundShadeFile, t, expectedFrontGroundShade);
+		readLineFromTextFile(rearGroundShadeFile, t, expectedRearGroundShade);
+
+		// Determine if ground is shading from direct beam radio for points on the ground from leading edge of PV panels to leading edge of next row behind
+		double maxShadow, pvBackShadeFraction, pvFrontShadeFraction;
+		maxShadow = pvBackShadeFraction = pvFrontShadeFraction = 0;
+		std::vector<int> rearGroundShade, frontGroundShade;
+		irr->getGroundShadeFactors(rowToRow, verticalHeight, clearanceGround, distanceBetweenRows, horizontalLength, irr->get_sun_component(0), irr->get_sun_component(2), rearGroundShade, frontGroundShade, maxShadow, pvBackShadeFraction, pvFrontShadeFraction);
+
+		ASSERT_EQ(rearGroundShade.size(), expectedRearGroundShade.size()) << "Failed at t = " << t;
+		ASSERT_EQ(frontGroundShade.size(), expectedFrontGroundShade.size()) << "Failed at t = " << t;;
+		ASSERT_NEAR(pvFrontShadeFraction, expectedPVFrontShadeFraction[t], e) << "Failed at t = " << t;;
+		ASSERT_NEAR(pvBackShadeFraction, expectedPVRearShadeFraction[t], e) << "Failed at t = " << t;;
+
+		for (size_t i = 0; i != rearGroundShade.size(); i++) {
+			ASSERT_NEAR(rearGroundShade[i], expectedRearGroundShade[i], e) << "Failed at t = " << t << " i = " << i;;
+			ASSERT_NEAR(frontGroundShade[i], expectedFrontGroundShade[i], e) << "Failed at t = " << t << " i = " << i;;
+		}
+	}
+} 
+/**
+*   Test calculation of ground GHI.  This changes with sun position and system geometry
+*/
+TEST_F(BifacialIrradTest, TestGroundGHI)
+{
+	for (size_t s = 0; s < numberOfSamples; s++)
+	{
+		size_t t = samples[s];
+		runIrradCalc(t);
+		readLineFromTextFile(frontGroundShadeFile, t, expectedFrontGroundShade);
+		readLineFromTextFile(rearGroundShadeFile, t, expectedRearGroundShade);
+		readLineFromTextFile(frontGroundGHIFile, t, expectedFrontGroundGHI);
+		readLineFromTextFile(rearGroundGHIFile, t, expectedRearGroundGHI);
+
+		std::vector<double> rearGroundGHI, frontGroundGHI;
+		irr->getGroundGHI(transmissionFactor, expectedRearSkyConfigFactors, expectedFrontSkyConfigFactors, expectedRearGroundShade, expectedFrontGroundShade, rearGroundGHI, frontGroundGHI);
+
+		ASSERT_EQ(rearGroundGHI.size(), expectedRearGroundGHI.size()) << "Failed at t = " << t;
+		ASSERT_EQ(frontGroundGHI.size(), expectedFrontGroundGHI.size()) << "Failed at t = " << t;
+
+		for (size_t i = 0; i != rearGroundGHI.size(); i++) {
+			ASSERT_NEAR(rearGroundGHI[i], expectedRearGroundGHI[i], e) << "Failed at t = " << t << " i = " << i;
+			ASSERT_NEAR(frontGroundGHI[i], expectedFrontGroundGHI[i], e) << "Failed at t = " << t << " i = " << i;
+		}
+	}
+}
+
+/**
+*   Test calculation of front surface irradiances.  This changes with sun position and system geometry
+*/
+TEST_F(BifacialIrradTest, TestFrontSurfaceIrradiance)
+{
+	for (size_t s = 0; s < numberOfSamples; s++)
+	{
+		size_t t = samples[s];
+		runIrradCalc(t);
+		readLineFromTextFile<double>(frontGroundGHIFile, t, expectedFrontGroundGHI);
+		readLineFromTextFile<double>(averageIrradianceFile, t, expectedAverageIrradiance);
+		readLineFromTextFile<double>(frontIrradianceFile, t, expectedFrontIrradiance);
+		readLineFromTextFile<double>(frontReflectedFile, t, expectedFrontReflected);
+
+		std::vector<double> frontIrradiance, frontReflected;
+		double frontAverageIrradiance = 0;
+		irr->getFrontSurfaceIrradiances(expectedPVFrontShadeFraction[t], rowToRow, verticalHeight, clearanceGround, distanceBetweenRows, horizontalLength, expectedFrontGroundGHI, frontIrradiance, frontAverageIrradiance, frontReflected);
+
+		ASSERT_EQ(frontIrradiance.size(), expectedFrontIrradiance.size()) << "Failed at t = " << t;
+		ASSERT_NEAR(frontAverageIrradiance, expectedAverageIrradiance[0], e) << "Failed at t = " << t;
+
+		for (size_t i = 0; i != frontIrradiance.size(); i++) {
+			ASSERT_NEAR(frontIrradiance[i], expectedFrontIrradiance[i], e) << "Failed at t = " << t << " i = " << i;
+			ASSERT_NEAR(frontReflected[i], expectedFrontReflected[i], e) << "Failed at t = " << t << " i = " << i;
+		}
+	}
+}
+
+/**
+*   Test calculation of rear surface irradiances.  This changes with sun position and system geometry
+*/
+TEST_F(BifacialIrradTest, TestRearSurfaceIrradiance)
+{
+	for (size_t s = 0; s < numberOfSamples; s++)
+	{
+		size_t t = samples[s];
+		runIrradCalc(t);
+
+		readLineFromTextFile<double>(frontGroundGHIFile, t, expectedFrontGroundGHI);
+		readLineFromTextFile<double>(rearGroundGHIFile, t, expectedRearGroundGHI);
+		readLineFromTextFile<double>(frontReflectedFile, t, expectedFrontReflected);
+		readLineFromTextFile<double>(rearIrradianceFile, t, expectedRearIrradiance);
+		readLineFromTextFile<double>(averageIrradianceFile, t, expectedAverageIrradiance);
+
+		std::vector<double> rearIrradiance;
+		double rearAverageIrradiance = 0;
+		irr->getBackSurfaceIrradiances(expectedPVRearShadeFraction[t], rowToRow, verticalHeight, clearanceGround, distanceBetweenRows, horizontalLength, expectedRearGroundGHI, expectedFrontGroundGHI, expectedFrontReflected, rearIrradiance, rearAverageIrradiance);
+
+		ASSERT_EQ(rearIrradiance.size(), expectedRearIrradiance.size()) << "Failed at t = " << t;
+		ASSERT_NEAR(rearAverageIrradiance, expectedAverageIrradiance[1], e) << "Failed at t = " << t;
+
+		for (size_t i = 0; i != rearIrradiance.size(); i++) {
+			ASSERT_NEAR(rearIrradiance[i], expectedRearIrradiance[i], e) << "Failed at t = " << t << " i = " << i;
+		}
+	}
 }
