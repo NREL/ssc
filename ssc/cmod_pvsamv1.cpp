@@ -1183,11 +1183,21 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 											
 					int code = irr.calc();
 
-					if (code != 0)
+					if (code < 0) //jmf updated 11/30/18 so that negative numbers are errors, positive numbers are warnings, 0 is everything correct. implemented in patch for POA model only, will be added to develop for other irrad models as well
 						throw exec_error("pvsamv1",
 						util::format("failed to calculate irradiance incident on surface (POA) %d (code: %d) [y:%d m:%d d:%d h:%d]",
 						nn + 1, code, wf.year, wf.month, wf.day, wf.hour));
 
+					if (code == 40)
+						log(util::format("SAM calculated negative direct normal irradiance in the POA decomposition algorithm at time [y:%d m:%d d:%d h:%d], set to zero.",
+							wf.year, wf.month, wf.day, wf.hour), SSC_WARNING, (float)idx);
+					else if (code == 41)
+						log(util::format("SAM calculated negative diffuse horizontal irradiance in the POA decomposition algorithm at time [y:%d m:%d d:%d h:%d], set to zero.",
+							wf.year, wf.month, wf.day, wf.hour), SSC_WARNING, (float)idx);
+					else if (code == 42)
+						log(util::format("SAM calculated negative global horizontal irradiance in the POA decomposition algorithm at time [y:%d m:%d d:%d h:%d], set to zero.",
+							wf.year, wf.month, wf.day, wf.hour), SSC_WARNING, (float)idx);
+									   					 
 					// p_irrad_calc is only weather file records long...
 					if (iyear == 0)
 					{
@@ -1550,13 +1560,11 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 					int nSubarraysOnMpptInput = (int)(PVSystem->mpptMapping[mpptInput].size()); //number of subarrays attached to this MPPT input
 					std::vector<int> SubarraysOnMpptInput = PVSystem->mpptMapping[mpptInput]; //vector of which subarrays are attached to this MPPT input
 
-					//string voltage value from which module voltage will be calculated
-					//initialize it as -1 and check for that later
-					double stringVoltage = -1;
-
 					//string voltage for this MPPT input- if 1 subarray, this will be the string voltage. if >1 subarray and mismatch enabled, this
 					//will be the string voltage found by the mismatch calculation. if >1 subarray and mismatch not enabled, this will be the average
 					//voltage of the strings from all the subarrays on this mppt input.
+					//initialize it as -1 and check for that later
+					double stringVoltage = -1;
 
 					//mismatch calculations assume that the inverter MPPT operates all strings on that MPPT input at the same voltage.
 					//this algorithm sweeps across a range of string voltages, calculating total power for all strings on this MPPT input at each voltage.
@@ -1611,22 +1619,24 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 
 					} //now we have the string voltage at which the MPPT input will produce max power, to be used in subsequent calcs
 
-
-
 					//now calculate power for each subarray on this mppt input. stringVoltage will still be -1 if mismatch calcs aren't enabled, or the value decided by mismatch calcs if they are enabled
+					std::vector<pvinput_t> in{ num_subarrays }; //create arrays for the pv input and output structures because we have to deal with them in multiple loops to check for MPPT clipping
+					std::vector<pvoutput_t> out{ num_subarrays };
+					double tcell = wf.tdry;
 					for (int nSubarray = 0; nSubarray < nSubarraysOnMpptInput; nSubarray++) //sweep across all subarrays connected to this MPPT input
 					{
 						int nn = SubarraysOnMpptInput[nSubarray]; //get the index of the subarray we're checking here
 						//initalize pvinput and pvoutput structures for the model
-						pvinput_t in(Subarrays[nn]->poa.poaBeamFront, Subarrays[nn]->poa.poaDiffuseFront, Subarrays[nn]->poa.poaGroundFront, Subarrays[nn]->poa.poaRear, Subarrays[nn]->poa.poaTotal,
+						pvinput_t in_temp(Subarrays[nn]->poa.poaBeamFront, Subarrays[nn]->poa.poaDiffuseFront, Subarrays[nn]->poa.poaGroundFront, Subarrays[nn]->poa.poaRear, Subarrays[nn]->poa.poaTotal,
 							wf.tdry, wf.tdew, wf.wspd, wf.wdir, wf.pres,
 							solzen, Subarrays[nn]->poa.angleOfIncidenceDegrees, hdr.elev,
 							Subarrays[nn]->poa.surfaceTiltDegrees, Subarrays[nn]->poa.surfaceAzimuthDegrees,
 							((double)wf.hour) + wf.minute / 60.0,
 							radmode, Subarrays[nn]->poa.usePOAFromWF);
-						pvoutput_t out(0, 0, 0, 0, 0, 0, 0, 0);
-
-						double tcell = wf.tdry;
+						pvoutput_t out_temp(0, 0, 0, 0, 0, 0, 0, 0);
+						in[nn] = in_temp;
+						out[nn] = out_temp;					
+						
 						if (Subarrays[nn]->poa.sunUp)
 						{
 							//module voltage value to be passed into module power function. 
@@ -1636,57 +1646,96 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 							if (stringVoltage != -1) module_voltage = stringVoltage / (double)Subarrays[nn]->nModulesPerString;
 							// calculate cell temperature using selected temperature model
 							// calculate module power output using conversion model previously specified
-							(*Subarrays[nn]->Module->cellTempModel)(in, *Subarrays[nn]->Module->moduleModel, module_voltage, tcell);
-							(*Subarrays[nn]->Module->moduleModel)(in, tcell, module_voltage, out);
+							(*Subarrays[nn]->Module->cellTempModel)(in[nn], *Subarrays[nn]->Module->moduleModel, module_voltage, tcell);
+							(*Subarrays[nn]->Module->moduleModel)(in[nn], tcell, module_voltage, out[nn]);
+						}
+					}
 
-							if (iyear == 0) mpptVoltageClipping[nn] = out.Power; //initialize the voltage clipping loss with the power at module MPP, subtract from this later for the actual MPPT clipping loss
+					//assign input voltage at this MPPT input
+					//if mismatch was enabled, the voltage already was clipped to the inverter MPPT range as needed and  
+					//the string voltage is the same for all subarrays, so the voltage at the MPPT input is the same as the string voltage of any subarray
+					if (PVSystem->enableMismatchVoltageCalc) {
+						PVSystem->p_mpptVoltage[mpptInput][idx] = (ssc_number_t)out[SubarraysOnMpptInput[0]].Voltage * Subarrays[SubarraysOnMpptInput[0]]->nModulesPerString;
+					}
+					//if mismatch wasn't enabled, we assume the MPPT input voltage is a weighted average of the string voltages on this MPPT input,
+					//and still need to check that average against the inverter MPPT bounds
+					else
+					{
+						//create temporary values to calculate the weighted average string voltage
+						double nStrings = 0;
+						double avgVoltage = 0;
+						for (int nSubarray = 0; nSubarray < nSubarraysOnMpptInput; nSubarray++)
+						{
+							int nn = SubarraysOnMpptInput[nSubarray]; //get the index of the subarray itself
+							nStrings += Subarrays[nn]->nStrings;
+							avgVoltage += out[nn].Voltage * Subarrays[nn]->nModulesPerString * Subarrays[nn]->nStrings;
+						}
+						avgVoltage /= nStrings;
+						PVSystem->p_mpptVoltage[mpptInput][idx] = (ssc_number_t)avgVoltage;
 
-							// if mismatch is enabled, the voltage already was clipped to the inverter MPPT range as needed
-							// if mismatch isn't enabled, need to check the voltage at the module's MPP against the inverter MPPT voltage range
-							// if the module voltage is outside the inverter range, recalculate module power using the inverter voltage limit
-							if (!PVSystem->enableMismatchVoltageCalc && PVSystem->clipMpptWindow)
+						//check the weighted average string voltage against the inverter MPPT bounds
+						bool recalculatePower = false;
+						if (PVSystem->clipMpptWindow)
+						{
+							if (avgVoltage < PVSystem->Inverter->mpptLowVoltage)
 							{
-								double voltageMpptLow1Module = PVSystem->Inverter->mpptLowVoltage / (double)Subarrays[nn]->nModulesPerString;
-								double voltageMpptHi1Module = PVSystem->Inverter->mpptHiVoltage / (double)Subarrays[nn]->nModulesPerString;
-								if (out.Voltage < voltageMpptLow1Module)
+								avgVoltage = PVSystem->Inverter->mpptLowVoltage;
+								recalculatePower = true;
+							}
+							else if (avgVoltage > PVSystem->Inverter->mpptHiVoltage)
+							{
+								avgVoltage = PVSystem->Inverter->mpptHiVoltage;
+								recalculatePower = true;
+							}
+							
+							//if MPPT clipping occurs, we need to recalculate the module power for each subarray
+							if (recalculatePower)
+							{
+								for (int nSubarray = 0; nSubarray < nSubarraysOnMpptInput; nSubarray++) //sweep across all subarrays connected to this MPPT input
 								{
-									module_voltage = voltageMpptLow1Module;
-									(*Subarrays[nn]->Module->cellTempModel)(in, *Subarrays[nn]->Module->moduleModel, module_voltage, tcell);
-									(*Subarrays[nn]->Module->moduleModel)(in, tcell, module_voltage, out);
-								}
-								else if (out.Voltage > voltageMpptHi1Module)
-								{
-									module_voltage = voltageMpptHi1Module;
-									(*Subarrays[nn]->Module->cellTempModel)(in, *Subarrays[nn]->Module->moduleModel, module_voltage, tcell);
-									(*Subarrays[nn]->Module->moduleModel)(in, tcell, module_voltage, out);
+									int nn = SubarraysOnMpptInput[nSubarray]; //get the index of the subarray we're checking here
+
+									if (iyear == 0) mpptVoltageClipping[nn] = out[nn].Power; //initialize the voltage clipping loss with the power at module MPP, subtract from this later for the actual MPPT clipping loss
+
+									//recalculate power at the correct voltage
+									double module_voltage = avgVoltage / (double)Subarrays[nn]->nModulesPerString;
+									(*Subarrays[nn]->Module->cellTempModel)(in[nn], *Subarrays[nn]->Module->moduleModel, module_voltage, tcell);
+									(*Subarrays[nn]->Module->moduleModel)(in[nn], tcell, module_voltage, out[nn]);
+
+									if (iyear == 0)	mpptVoltageClipping[nn] -= out[nn].Power; //subtract the power that remains after voltage clipping in order to get the total loss. if no power was lost, all the power will be subtracted away again.
 								}
 							}
-							if (iyear == 0)	mpptVoltageClipping[nn] -= out.Power; //subtract the power that remains after voltage clipping in order to get the total loss. if no power was lost, all the power will be subtracted away again.
 						}
+					}
+
+					//now that we have the correct power for all subarrays, subject to inverter MPPT clipping, save outputs 
+					for (int nSubarray = 0; nSubarray < nSubarraysOnMpptInput; nSubarray++) //sweep across all subarrays connected to this MPPT input
+					{
+						int nn = SubarraysOnMpptInput[nSubarray]; //get the index of the subarray we're checking here
 
 						//check for weird results
-						if (out.Voltage > Subarrays[nn]->Module->moduleModel->VocRef()*1.3)
-							log(util::format("Module voltage is unrealistically high (exceeds 1.3*VocRef) at [mdhm: %d %d %d %lg]: %lg V\n", wf.month, wf.day, wf.hour, wf.minute, out.Voltage), SSC_NOTICE);
-						if (!std::isfinite(out.Power))
+						if (out[nn].Voltage > Subarrays[nn]->Module->moduleModel->VocRef()*1.3)
+							log(util::format("Module voltage is unrealistically high (exceeds 1.3*VocRef) at [mdhm: %d %d %d %lg]: %lg V\n", wf.month, wf.day, wf.hour, wf.minute, out[nn].Voltage), SSC_NOTICE);
+						if (!std::isfinite(out[nn].Power))
 						{
-							out.Power = 0;
-							out.Voltage = 0;
-							out.Current = 0;
-							out.Efficiency = 0;
-							out.CellTemp = tcell;
+							out[nn].Power = 0;
+							out[nn].Voltage = 0;
+							out[nn].Current = 0;
+							out[nn].Efficiency = 0;
+							out[nn].CellTemp = tcell;
 							log(util::format("Non-finite power output calculated at [mdhm: %d %d %d %lg], set to zero.\n"
 								"could be due to anomolous equation behavior at very low irradiances (poa: %lg W/m2)",
 								wf.month, wf.day, wf.hour, wf.minute, Subarrays[nn]->poa.poaTotal), SSC_NOTICE);
 						}
 
 						// save DC module outputs for this subarray
-						Subarrays[nn]->Module->dcPowerW = out.Power;
-						Subarrays[nn]->Module->dcEfficiency = out.Efficiency * 100;
-						Subarrays[nn]->Module->dcVoltage = out.Voltage;
-						Subarrays[nn]->Module->temperatureCellCelcius = out.CellTemp;
-						Subarrays[nn]->Module->currentShortCircuit = out.Isc_oper;
-						Subarrays[nn]->Module->voltageOpenCircuit = out.Voc_oper;
-						Subarrays[nn]->Module->angleOfIncidenceModifier = out.AOIModifier;
+						Subarrays[nn]->Module->dcPowerW = out[nn].Power;
+						Subarrays[nn]->Module->dcEfficiency = out[nn].Efficiency * 100;
+						Subarrays[nn]->Module->dcVoltage = out[nn].Voltage;
+						Subarrays[nn]->Module->temperatureCellCelcius = out[nn].CellTemp;
+						Subarrays[nn]->Module->currentShortCircuit = out[nn].Isc_oper;
+						Subarrays[nn]->Module->voltageOpenCircuit = out[nn].Voc_oper;
+						Subarrays[nn]->Module->angleOfIncidenceModifier = out[nn].AOIModifier;
 						
 						// Lifetime dcStringVoltage
 						dcStringVoltage[nn].push_back(Subarrays[nn]->Module->dcVoltage * Subarrays[nn]->nModulesPerString);
@@ -1694,7 +1743,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 						// Output front-side irradiance after the cover- needs to be after the module model for now because cover effects are part of the module model
 						if (iyear == 0)
 						{
-							ipoa_front[nn] *= out.AOIModifier;
+							ipoa_front[nn] *= out[nn].AOIModifier;
 							PVSystem->p_poaFront[nn][idx] = (radmode == irrad::POA_R) ? (ssc_number_t)ipoa[nn] : (ssc_number_t)(ipoa_front[nn]);
 							PVSystem->p_poaTotal[nn][idx] = (radmode == irrad::POA_R) ? (ssc_number_t)ipoa[nn] : (ssc_number_t)(ipoa_front[nn] + ipoa_rear[nn]);
 
@@ -1704,27 +1753,6 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 							//assign final string voltage output
 							PVSystem->p_dcStringVoltage[nn][idx] = (ssc_number_t)Subarrays[nn]->Module->dcVoltage * Subarrays[nn]->nModulesPerString;
 						}
-					}
-
-					//assign input voltage at this MPPT input
-					//if only one subarray, the voltage at the MPPT input is the same as the string voltage of that subarray (the first and only subarray on the MPPT input)
-					//alternatively, if mismatch was enabled, the string voltage is the same for all subarrays, so the voltage at the MPPT input is the same as the string voltage of any subarray
-					if (SubarraysOnMpptInput.size() == 1 || PVSystem->enableMismatchVoltageCalc) {
-						PVSystem->p_mpptVoltage[mpptInput][idx] = (ssc_number_t)dcStringVoltage[SubarraysOnMpptInput[0]][idx];
-					}
-					//if mismatch wasn't enabled and there are more than one subarray on this MPPT input, we assume the MPPT input voltage is a weighted average of the string voltages
-					else
-					{
-						//create temporary values to calculate the weighted average string voltage
-						size_t nStrings = 0;
-						double totalVoltage = 0;						
-						for (int nSubarray = 0; nSubarray < nSubarraysOnMpptInput; nSubarray++)
-						{
-							int nn = SubarraysOnMpptInput[nSubarray]; //get the index of the subarray itself
-							nStrings += Subarrays[nn]->nStrings;
-							totalVoltage += dcStringVoltage[nn][idx] * Subarrays[nn]->nStrings;
-						}
-						PVSystem->p_mpptVoltage[mpptInput][idx] = (ssc_number_t)(totalVoltage / nStrings);
 					}
 				}
 
