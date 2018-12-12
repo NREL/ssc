@@ -86,7 +86,7 @@ struct SGeothermal_Inputs
 		md_EGSRockDensity = md_ReservoirDeltaPressure = md_ReservoirWidthM = md_ReservoirHeightM = md_ReservoirPermeability = md_DistanceBetweenProductionInjectionWellsM = 0.0;
 		md_WaterLossPercent = md_EGSFractureAperature = md_EGSNumberOfFractures = md_EGSFractureWidthM = md_EGSFractureAngle = 0.0;
 		md_TemperatureEGSAmbientC = md_RatioInjectionToProduction = 0.0;
-		md_AdditionalPressure = -1.0;
+		md_AdditionalPressure = 1.0;
 	}
 
 	calculationBasis me_cb;									// { NO_CALCULATION_BASIS, POWER_SALES, NUMBER_OF_WELLS };
@@ -185,6 +185,8 @@ struct SGeothermal_Outputs
 	double spec_vol, spec_vol_lp;		//HP Specific Volume & LP Specific Volume used in Flash Vessel Cost Calculation
 	double getX_hp, getX_lp;
 	double flash_count;
+	double max_secondlaw;				//Max 2nd Law efficiency
+	double test;						//DELETE
 
 	// single values used in calculations, some also used in UI
 	bool mb_BrineEffectivenessCalculated;
