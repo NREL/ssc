@@ -5,7 +5,7 @@
 #include "../input_cases/weather_inputs.h"
 
 /// Test tcsmolten_salt with all defaults and the single owner financial model
-TEST_F(CMTcsMoltenSalt, DefaultSingleOwnerFinancialModel) {
+TEST_F(CMTcsMoltenSalt, DISABLED_DefaultSingleOwnerFinancialModel) {
 
     ssc_data_t data = ssc_data_create();
     int test_errors = tcsmolten_salt_daggett(data);
