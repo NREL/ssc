@@ -79,11 +79,11 @@ static var_info vtab_thirdpartyownership[] = {
 
 
 	/* financial outputs */
-	{ SSC_OUTPUT,        SSC_NUMBER,     "cf_length",                "Number of periods in cash flow",      "",             "",                      "Cash Flow",      "*",                       "INTEGER",                                  "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "cf_length",                "Agreement period",      "",             "",                      "Financial Metrics",      "*",                       "INTEGER",                                  "" },
 
 	//{ SSC_OUTPUT,        SSC_NUMBER,     "lcoe_real",                "Real LCOE",                          "cents/kWh",    "",                      "Cash Flow",      "*",                       "",                                         "" },
 	//{ SSC_OUTPUT,        SSC_NUMBER,     "lcoe_nom",                 "Nominal LCOE",                       "cents/kWh",    "",                      "Cash Flow",      "*",                       "",                                         "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "npv",                      "Net present value",				   "$",            "",                      "Cash Flow",      "*",                       "",                                         "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "npv",                      "Net present value",				   "$",            "",                      "Financial Metrics",      "*",                       "",                                         "" },
 
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_energy_net",      "Energy",                  "kWh",            "",                      "Cash Flow",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 //	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_energy_value",      "Value of electricity savings",                  "$",            "",                      "Cash Flow",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
@@ -97,12 +97,12 @@ static var_info vtab_thirdpartyownership[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_cumulative_payback_with_expenses",      "Cumulative simple payback with expenses",         "$",            "",                      "Cash Flow",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	
 // NTE additions 8/10/17
-	{ SSC_INPUT,        SSC_ARRAY,       "elec_cost_with_system",             "Energy value",                       "$",            "",                      "thirdpartyownership",      "*",                       "",                                         "" },
-	{ SSC_INPUT,        SSC_ARRAY,       "elec_cost_without_system",             "Energy value",                       "$",            "",                      "thirdpartyownership",      "*",                       "",                                         "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_nte",      "Not to exceed (NTE)",         "cents/kWh",            "",                      "Cash Flow",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "year1_nte",                "Year 1 NTE",                          "cents/kWh",    "",                      "Cash Flow",      "*",                       "",                                         "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "lnte_real",                "Real LNTE",                          "cents/kWh",    "",                      "Cash Flow",      "*",                       "",                                         "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "lnte_nom",                 "Nominal LNTE",                       "cents/kWh",    "",                      "Cash Flow",      "*",                       "",                                         "" },
+	{ SSC_INPUT,        SSC_ARRAY,       "elec_cost_with_system",             "Energy value",                       "$",            "",                      "Electricity Cost",      "*",                       "",                                         "" },
+	{ SSC_INPUT,        SSC_ARRAY,       "elec_cost_without_system",             "Energy value",                       "$",            "",                      "Electricity Cost",      "*",                       "",                                         "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_nte",      "Host indifference point by year",         "cents/kWh",            "",                      "Cash Flow",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "year1_nte",                "Host indifference point in Year 1",                          "cents/kWh",    "",                      "Financial Metrics",      "*",                       "",                                         "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "lnte_real",                "Host indifference point nominal levelized value",                          "cents/kWh",    "",                      "Financial Metrics",      "*",                       "",                                         "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "lnte_nom",                 "Host indifference point real levelized value",                       "cents/kWh",    "",                      "Financial Metrics",      "*",                       "",                                         "" },
 
 
 
