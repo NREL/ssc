@@ -31,6 +31,7 @@
     <ClCompile Include="..\test\shared_test\lib_weatherfile_test.cpp" />
     <ClCompile Include="..\test\shared_test\lib_windfile_test.cpp" />
     <ClCompile Include="..\test\splinter_test\splinter_test.cpp" />
+    <ClCompile Include="..\test\ssc_test\cmod_battery_test.cpp" />
     <ClCompile Include="..\test\ssc_test\cmod_fuelcell_test.cpp" />
     <ClCompile Include="..\test\ssc_test\cmod_pvsamv1_test.cpp" />
     <ClCompile Include="..\test\shared_test\lib_windwakemodel_test.cpp" />
@@ -46,6 +47,7 @@
     <ClCompile Include="..\test\tcs_test\csp_solver_core_test.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\test\input_cases\battery_common_data.h" />
     <ClInclude Include="..\test\input_cases\code_generator_utilities.h" />
     <ClInclude Include="..\test\input_cases\fuelcell_common_data.h" />
     <ClInclude Include="..\test\input_cases\pvsamv1_cases.h" />
@@ -64,6 +66,7 @@
     <ClInclude Include="..\test\shared_test\lib_fuel_cell_test.h" />
     <ClInclude Include="..\test\shared_test\lib_irradproc_test.h" />
     <ClInclude Include="..\test\shared_test\lib_windwakemodel_test.h" />
+    <ClInclude Include="..\test\ssc_test\cmod_battery_test.h" />
     <ClInclude Include="..\test\ssc_test\cmod_fuelcell_test.h" />
     <ClInclude Include="..\test\ssc_test\cmod_pvsamv1_test.h" />
     <ClInclude Include="..\test\ssc_test\cmod_pvwattsv5_test.h" />

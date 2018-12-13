@@ -1340,25 +1340,38 @@ public:
 	{
 		if (as_boolean("en_batt"))
 		{
+			// Power from generation sources feeding into battery
 			std::vector<ssc_number_t> power_input = as_vector_ssc_number_t("gen");
 
-			// Setup time
+			// Set up time
 			size_t nyears = 1;
 			if (as_boolean("system_use_lifetime_output")) {
 				nyears = as_unsigned_long("analysis_period");
 			}
 			size_t nrec = power_input.size() / nyears;
 			size_t nrec_lifetime = nrec * nyears;
+			double dtHour = static_cast<double>(8760. / nrec);
 
+			// Setup battery model
+			battstor batt(*this, true, nrec, dtHour);
 
-			battstor batt(*this, true, nrec, static_cast<double>(8760. / nrec));
+			// Allocate outputs
 			ssc_number_t * p_gen = allocate("gen", nrec * batt.nyears);
 
-			// Parse "Load input"
+
+			// Parse "Load input", which comes in as a single year
+			std::vector<ssc_number_t> power_load_single_year;
 			std::vector<ssc_number_t> power_load;
+
 			if (batt.batt_vars->batt_meter_position == dispatch_t::BEHIND)
 			{
-				power_load = as_vector_ssc_number_t("load");
+				power_load_single_year = as_vector_ssc_number_t("load");
+				power_load.reserve(nrec_lifetime);
+				for (size_t y = 0; y < nyears; y++) {
+					for (size_t t = 0; t < nrec; t++) {
+						power_load.push_back(power_load_single_year[t]);
+					}
+				}
 				batt.initialize_automated_dispatch(power_input, power_load);
 			}
 			else
