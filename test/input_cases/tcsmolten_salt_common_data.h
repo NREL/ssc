@@ -15,10 +15,10 @@ namespace tcsmoltentest {
 	char helio_positions_path[100];
 	char solar_resource_path[100];
 
-	int nmspt1 = sprintf(dispatch_factors_path, "%s/../sdktool_debug/MSPT/C code/dispatch_factors_ts.csv", tcsmoltentest::SSCDIR);
-	int nmspt2 = sprintf(ud_ind_od_path, "%s/../sdktool_debug/MSPT/C code/ud_ind_od.csv", tcsmoltentest::SSCDIR);
-	int nmspt3 = sprintf(wlim_series_path, "%s/../sdktool_debug/MSPT/C code/wlim_series.csv", tcsmoltentest::SSCDIR);
-	int nmspt4 = sprintf(helio_positions_path, "%s/../sdktool_debug/MSPT/C code/helio_positions.csv", tcsmoltentest::SSCDIR);
+	int nmspt1 = sprintf(dispatch_factors_path, "%s/test/input_cases/tcs_data/dispatch_factors_ts.csv", tcsmoltentest::SSCDIR);
+	int nmspt2 = sprintf(ud_ind_od_path, "%s/test/input_cases/tcs_data/ud_ind_od.csv", tcsmoltentest::SSCDIR);
+	int nmspt3 = sprintf(wlim_series_path, "%%s/test/input_cases/tcs_data/wlim_series.csv", tcsmoltentest::SSCDIR);
+	int nmspt4 = sprintf(helio_positions_path, "%s/test/input_cases/tcs_data/helio_positions.csv", tcsmoltentest::SSCDIR);
 	int nsolar = sprintf(solar_resource_path, "%s/test/input_cases/general_data/daggett_ca_34.865371_-116.783023_psmv3_60_tmy.csv", tcsmoltentest::SSCDIR);
 }
 
