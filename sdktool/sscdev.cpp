@@ -780,8 +780,6 @@ void SCFrame::Copy( ssc_module_t p_mod, ssc_data_t p_data, var_table *vt, bool c
 	if (clear_first)
 		::ssc_data_clear( p_data );
 
-//	const char *name = vt->first();
-//	while( name )
 	int pidx = 0;
 	while (const ssc_info_t p_inf = ssc_module_var_info(p_mod, pidx++))
 	{
@@ -806,12 +804,6 @@ void SCFrame::Copy( ssc_module_t p_mod, ssc_data_t p_data, var_table *vt, bool c
 				{
 					::ssc_data_set_number(p_data, name, (ssc_number_t)v->num);
 					wxString nm(name);
-					if (nm == "rec_height")
-					{
-						wxString s = wxString::Format("\nvt rec_height=%g, clear=%d", (ssc_number_t)vt->lookup(name)->num, clear_first);
-						s += wxString::Format("pdata rec_height=%g, clear=%d", (ssc_number_t)v->num, clear_first);
-						wxMessageBox(s);
-					}
 				}
 				break;
 				case SSC_ARRAY:
@@ -852,15 +844,6 @@ void SCFrame::Copy( var_table *vt,  ssc_data_t p_data, bool clear_first )
 				if ( ::ssc_data_get_number( p_data, name, &val ) )
 					vt->assign( name, var_data( val ) );
 				wxString nm(name);
-				if (nm == "rec_height")
-				{
-					m_varTable->unassign(name);
-					m_varTable->assign(name, var_data(val));
-					wxString s = wxString::Format("pdata rec_height=%g, clear=%d", val, clear_first);
-					s += wxString::Format("\nvt rec_height=%g, clear=%d", (ssc_number_t)vt->lookup(name)->num, clear_first);
-					s += wxString::Format("\nm_varTable rec_height=%g, clear=%d", (ssc_number_t)m_varTable->lookup(name)->num, clear_first);
-					wxMessageBox(s);
-				}
 			}
 			break;
 		case SSC_ARRAY:
@@ -911,13 +894,7 @@ std::vector<bool> SCFrame::Start()
 		return ok;
 	}
 
-	wxMessageBox(wxString::Format("compute module %s", cm.c_str()));
 	try {
-
-//		ssc_data_t p_data = ::ssc_data_create();
-
-//		Copy( p_data, m_varTable, true );
-				
 		ssc_module_t p_mod = ::ssc_module_create( (const char*) cm.c_str() );
 			
 		if (p_mod != 0)
@@ -943,11 +920,8 @@ std::vector<bool> SCFrame::Start()
 		else			
 			Log("CREATE_FAIL: " + cm );
 
-//		Copy(m_varTable, p_data, false);
-		m_dataView->SetDataObject(m_varTable);
 		m_dataView->UpdateView();
 
-//		::ssc_data_free( p_data );
 	 
 	} catch(sscdll_error &e) {
 		wxMessageBox("Library error: " + wxString(e.func.c_str()) + ": " + wxString(e.text.c_str()) );
