@@ -5871,7 +5871,9 @@ void C_csp_solver::solver_cr_to_pc_to_cr(int pc_mode, double field_control_in, d
 	}
 	catch (C_csp_exception)
 	{
-		throw(C_csp_exception("solver_cr_to_pc_to_cr received exception from mono equation solver"));
+		//throw(C_csp_exception("solver_cr_to_pc_to_cr received exception from mono equation solver"));
+        exit_mode = C_csp_solver::CSP_NO_SOLUTION;
+        return;
 	}
 
 	if (solver_code != C_monotonic_eq_solver::CONVERGED)

@@ -182,7 +182,8 @@ public:
 	{
 		std::shared_ptr<weather_data_provider> wdata = std::make_shared<weatherfile>(as_string("solar_resource_file"));
 		solarpilot_invoke spi( this );
-		spi.run(wdata);
+        if (!spi.run(wdata))
+            return;
 		
 		std::vector<double> ann_energy = spi.GetSAPI()->GetSFAnnualEnergy();
 		std::vector<int> h_ids = spi.GetSAPI()->GetHelioIDs();
@@ -196,7 +197,7 @@ public:
 		assign("cost_land_tot", (ssc_number_t)spi.fin.land_cost.Val());
 		assign("cost_site_tot", (ssc_number_t)spi.fin.site_cost.Val());
 		assign("land_area", (ssc_number_t)spi.land.land_area.Val());
-		assign("area_sf", (ssc_number_t)(2.*spi.sf.sf_area.Val()));
+		assign("area_sf", (ssc_number_t)(spi.sf.sf_area.Val()));
 
         if( is_assigned("helio_positions_in") )
         {

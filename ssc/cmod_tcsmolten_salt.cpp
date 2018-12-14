@@ -170,7 +170,7 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     { SSC_INPUT,        SSC_NUMBER,      "solarm",               "Solar Multiple",                                                    "-",            "",            "system_design",  "*",                       "",                      "" },
 
 	// Receiver (type 222) parameters						     																	  
-    { SSC_INPUT,        SSC_NUMBER,      "N_panels",             "Number of individual panels on the receiver",                       "",             "",            "receiver",       "*",                       "INTEGER",               "" },
+    { SSC_INPUT,        SSC_NUMBER,      "N_panel_pairs",        "Number of panel pairs on the receiver",                             "",             "",            "receiver",       "*",                       "INTEGER",               "" },
     { SSC_INPUT,        SSC_NUMBER,      "d_tube_out",           "The outer diameter of an individual receiver tube",                 "mm",           "",            "receiver",       "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "th_tube",              "The wall thickness of a single receiver tube",                      "mm",           "",            "receiver",       "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "mat_tube",             "2: Stainless AISI316",                                              "",             "",            "receiver",       "*",                       "",                      "" },
@@ -639,6 +639,7 @@ public:
 				break;
         }
 
+        assign("N_panels", as_integer("N_panel_pairs") * 2);
 		assign("q_design", as_number("P_ref") / as_number("design_eff") * as_number("solarm"));
 
 		// Set up "cmod_solarpilot.cpp" conversions as necessary
