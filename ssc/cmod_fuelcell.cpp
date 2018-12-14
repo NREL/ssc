@@ -58,6 +58,7 @@
 var_info vtab_fuelcell_input[] = {
 	/*   VARTYPE           DATATYPE         NAME                               LABEL                                    UNITS      META                   GROUP                  REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
 	// simulation inputs
+	{ SSC_INOUT,        SSC_NUMBER,      "percent_complete",                  "Estimated simulation status",           "%",       "",                                      "",        "",                      "",                                 "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "system_use_lifetime_output",        "Lifetime simulation",                   "0/1",     "0=SingleYearRepeated,1=RunEveryYear",   "",        "?=0",                   "BOOLEAN",                          "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "analysis_period",                   "Lifetime analysis period",              "years",   "The number of years in the simulation", "",        "system_use_lifetime_output=1","",                           "" },
 
@@ -150,12 +151,31 @@ void cm_fuelcell::construct()
 void cm_fuelcell::exec() throw (general_error)
 {
 	double annual_energy = 0.0;
+	float percent_complete = 0.0;
+	float percent = 0.0;
+	size_t nStatusUpdates = 50;
+
+	if (is_assigned("percent_complete")) {
+		percent_complete = as_float("percent_complete");
+	}
 
 	construct();
 	size_t idx = 0;
  	for (size_t y = 0; y < fcVars->numberOfYears; y++) {
 		size_t idx_year = 0;
 		for (size_t h = 0; h < 8760; h++){
+
+			// status bar
+			if (h % (8760 / nStatusUpdates) == 0)
+			{
+				// assume that anyone using this module is chaining with two techs
+				float techs = 3;  
+				percent = percent_complete + 100.0f * ((float)idx + 1) / ((float)fcVars->numberOfLifetimeRecords) / techs;
+				if (!update("", percent, (float)h)) {
+					throw exec_error("fuelcell", "simulation canceled at hour " + util::to_string(h + 1.0));
+				}
+			}
+
 			for (size_t s = 0; s < fcVars->stepsPerHour; s++) {
 				fuelCellDispatch->runSingleTimeStep(h, idx_year, fcVars->systemGeneration_kW[idx], fcVars->electricLoad_kW[idx]);
 				p_fuelCellPower_kW[idx] = (ssc_number_t)fuelCellDispatch->getPower();
@@ -188,6 +208,7 @@ void cm_fuelcell::exec() throw (general_error)
 	double nameplate = nameplate_in + (fcVars->unitPowerMax_kW * fcVars->numberOfUnits);
 	assign("capacity_factor", var_data(static_cast<ssc_number_t>(annual_energy * util::fraction_to_percent / (nameplate * 8760.))));
 	assign("annual_energy", var_data(static_cast<ssc_number_t>(annual_energy)));
+	assign("percent_complete", var_data((ssc_number_t)percent));
 
 	// post calculations for financial models
 	ssc_number_t annual_fuel_usage = 0.0;

@@ -133,9 +133,10 @@ static var_info _cm_vtab_pvwattsv5_part2[] = {
 	{ SSC_OUTPUT,       SSC_NUMBER,      "lon",                            "Longitude",                                   "deg", "",                        "Location",      "*",                       "",                          "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,      "tz",                             "Time zone",                                   "hr",  "",                        "Location",      "*",                       "",                          "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,      "elev",                           "Site elevation",                              "m",   "",                        "Location",      "*",                       "",                          "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,      "inverter_model",                 "Inverter model specifier",                     "",                               "0=cec,1=datasheet,2=partload,3=coefficientgenerator,4=generic", "", "", "INTEGER,MIN=0,MAX=4", "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,      "inverter_efficiency",            "Inverter efficiency at rated power",          "%",         "",                   "PVWatts",      "?=96",                        "MIN=90,MAX=99.5",                              "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,      "ts_shift_hours",                 "Time offset for interpreting time series outputs",  "hours", "",                 "Miscellaneous", "*",                       "",                          "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "inverter_model",                 "Inverter model specifier",                     "",                              "0=cec,1=datasheet,2=partload,3=coefficientgenerator,4=generic", "", "", "INTEGER,MIN=0,MAX=4", "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "inverter_efficiency",            "Inverter efficiency at rated power",          "%",         "",                  "PVWatts",      "?=96",                        "MIN=90,MAX=99.5",                              "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "ts_shift_hours",                 "Time offset for interpreting time series outputs",  "hours", "",                "Miscellaneous", "*",                       "",                          "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "percent_complete",               "Estimated percent of total comleted simulation", "%", "",                       "Miscellaneous", "",                        "",                          "" },
 
 
 	var_info_invalid };
@@ -468,10 +469,6 @@ public:
 			degradationFactor.push_back(1.0);
 		}
 
-		
-
-
-
 		size_t nrec = wdprov->nrecords();
 		size_t nlifetime = nrec * nyears;
 		size_t step_per_hour = nrec /8760;
@@ -503,6 +500,7 @@ public:
 		double annual_kwh = 0; 
 		
 		size_t idx_life = 0;
+		float percent = 0;
 		for (size_t y = 0; y < nyears; y++)
 		{
 			size_t idx = 0;
@@ -512,7 +510,8 @@ public:
 #define NSTATUS_UPDATES 50  // set this to the number of times a progress update should be issued for the simulation
 				if (hour % (8760 / NSTATUS_UPDATES) == 0)
 				{
-					float percent = 100.0f * ((float)idx_life + 1) / ((float)nlifetime);
+					float techs = 3;  // assume that anyone using this module is chaining with fuel cell and battery
+					percent = 100.0f * ((float)idx_life + 1) / ((float)nlifetime) / techs;
 					if (!update("", percent, (float)hour))
 						throw exec_error("pvwattsv5", "simulation canceled at hour " + util::to_string(hour + 1.0));
 				}
@@ -606,6 +605,7 @@ public:
 		assign( "lon", var_data( (ssc_number_t)hdr.lon ) );
 		assign( "tz", var_data( (ssc_number_t)hdr.tz ) );
 		assign( "elev", var_data( (ssc_number_t)hdr.elev ) );
+		assign("percent_complete", var_data((ssc_number_t)percent));
 
 		// for battery model, force inverter model
 		assign("inverter_model", var_data((ssc_number_t)4) );
@@ -613,8 +613,6 @@ public:
 
 		// metric outputs moved to technology
 		double kWhperkW = util::kilowatt_to_watt*annual_kwh / dc_nameplate;
-		
-		// adjustment for timestep values
 		assign("capacity_factor", var_data((ssc_number_t)(kWhperkW / 87.6)));
 		assign("kwh_per_kw", var_data((ssc_number_t)kWhperkW));
 	}
