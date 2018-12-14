@@ -65,7 +65,7 @@ protected:
 
 		canCharge.push_back(1);
 		canDischarge.push_back(1);
-		discharge_percent[1] = 40;
+		discharge_percent[0] = 40;
 		scheduleWeekday.resize_fill(12, 24, 1);
 		scheduleWeekend.resize_fill(12, 24, 1);
 
