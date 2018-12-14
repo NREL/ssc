@@ -139,8 +139,12 @@ public:
 			throw compute_module::exec_error("fuelcell", "Electric load time steps must equal generation time step");
 		}
 
-		for (size_t p = 0; p < discharge_percent.size(); p++) {
-			discharge_percentByPeriod[p] = discharge_percent[p];
+		size_t count = 0;
+		for (size_t p = 0; p < canDischarge.size(); p++) {
+			if (canDischarge[p]) {
+				discharge_percentByPeriod[p] = discharge_percent[count];
+				count++;
+			}
 		}
 
 	}

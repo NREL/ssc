@@ -1907,7 +1907,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 
 		// Assign annual lifetime DC outputs
 		if (system_use_lifetime_output) {
-			PVSystem->p_dcDegradationFactor[iyear] = PVSystem->dcDegradationFactor[iyear];
+			PVSystem->p_dcDegradationFactor[iyear] = (ssc_number_t)(PVSystem->dcDegradationFactor[iyear]);
 		}
 	}
 

@@ -9,7 +9,7 @@ size_t step_of_hour = 0;
 TEST_F(BatteryDispatchTest, ManualDispatch)
 {
 	dispatchManual = new dispatch_manual_t(batteryModel, dtHour, SOC_min, SOC_max, currentChoice, currentChargeMax, currentDischargeMax, powerChargeMax, powerDischargeMax, minimumModeTime,
-		dispatchChoice, meterPosition, scheduleWeekday, scheduleWeekend, canCharge, canDischarge, canGridcharge, percentDischarge, percentGridcharge);
+		dispatchChoice, meterPosition, scheduleWeekday, scheduleWeekend, canCharge, canDischarge, canGridcharge, canGridcharge, percentDischarge, percentGridcharge);
 	batteryPower = dispatchManual->getBatteryPower();
 	batteryPower->connectionMode = ChargeController::AC_CONNECTED;
 

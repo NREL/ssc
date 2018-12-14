@@ -155,7 +155,8 @@ var_info vtab_battery_inputs[] = {
 	{ SSC_INPUT,        SSC_MATRIX,     "cap_vs_temp",                                 "Effective capacity as function of temperature",          "C,%",      "",                     "Battery",       "",                           "",                             "" },
 
 	// storage dispatch
-	{ SSC_INPUT,        SSC_ARRAY,      "dispatch_manual_charge",                      "Periods 1-6 charging allowed?",                          "",         "",                     "Battery",       "en_batt=1&batt_dispatch_choice=4",                           "",                             "" },
+	{ SSC_INPUT,        SSC_ARRAY,      "dispatch_manual_charge",                      "Periods 1-6 charging from system allowed?",              "",         "",                     "Battery",       "en_batt=1&batt_dispatch_choice=4",                           "",                             "" },
+	{ SSC_INPUT,        SSC_ARRAY,      "dispatch_manual_fuelcellcharge",			   "Periods 1-6 charging from fuel cell allowed?",           "",         "",                     "Fuel Cell",     "",                        "",                              "" },
 	{ SSC_INPUT,        SSC_ARRAY,      "dispatch_manual_discharge",                   "Periods 1-6 discharging allowed?",                       "",         "",                     "Battery",       "en_batt=1&batt_dispatch_choice=4",                           "",                             "" },
 	{ SSC_INPUT,        SSC_ARRAY,      "dispatch_manual_gridcharge",                  "Periods 1-6 grid charging allowed?",                     "",         "",                     "Battery",       "en_batt=1&batt_dispatch_choice=4",                           "",                             "" },
 	{ SSC_INPUT,        SSC_ARRAY,      "dispatch_manual_percent_discharge",           "Periods 1-6 discharge percent",                          "%",        "",                     "Battery",       "en_batt=1&batt_dispatch_choice=4",                           "",                             "" },
@@ -227,7 +228,7 @@ var_info vtab_battery_outputs[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "batt_to_load",                               "Electricity to load from battery",                      "kW",      "",                       "Battery",       "",                           "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "grid_to_load",                               "Electricity to load from grid",                         "kW",      "",                       "Battery",       "",                           "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "pv_to_batt",                                 "Electricity to battery from PV",                        "kW",      "",                       "Battery",       "",                           "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "fuelcell_to_batt",                           "Electricity to battery from Fuel Cell",                 "kW",      "",                       "Battery",       "",                           "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "fuelcell_to_batt",                           "Electricity to battery from fuel cell",                 "kW",      "",                       "Battery",       "",                           "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "grid_to_batt",                               "Electricity to battery from grid",                      "kW",      "",                       "Battery",       "",                           "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "pv_to_grid",                                 "Electricity to grid from PV",                           "kW",      "",                       "Battery",       "",                           "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "batt_to_grid",                               "Electricity to grid from battery",                      "kW",      "",                       "Battery",       "",                           "",                              "" },
@@ -288,6 +289,15 @@ battstor::battstor(compute_module &cm, bool setup_model, size_t nrec, double dt_
 	{
 		make_vars = true;
 		batt_vars = new batt_variables();
+		
+
+		// fuel cell variables
+		batt_vars->en_fuelcell = false;
+		if (cm.is_assigned("fuelcell_power")) {
+			batt_vars->en_fuelcell = true;
+			batt_vars->batt_can_fuelcellcharge = cm.as_vector_bool("dispatch_manual_fuelcellcharge");
+		}
+
 		batt_vars->en_batt = cm.as_boolean("en_batt");
 		if (batt_vars->en_batt)
 		{
@@ -591,11 +601,14 @@ battstor::battstor(compute_module &cm, bool setup_model, size_t nrec, double dt_
 	outPVToLoad = 0;
 	outBatteryToLoad = 0;
 	outGridToLoad = 0;
+	outFuelCellToLoad = 0;
 	outGridPowerTarget = 0;
 	outPVToBatt = 0;
 	outGridToBatt = 0;
+	outFuelCellToBatt = 0;
 	outPVToGrid = 0;
 	outBatteryToGrid = 0;
+	outFuelCellToGrid = 0;
 	outBatteryConversionPowerLoss = 0;
 	outBatterySystemLoss = 0;
 	outAverageCycleEfficiency = 0;
@@ -684,6 +697,14 @@ battstor::battstor(compute_module &cm, bool setup_model, size_t nrec, double dt_
 	}
 	outPVToBatt = cm.allocate("pv_to_batt", nrec*nyears);
 	outGridToBatt = cm.allocate("grid_to_batt", nrec*nyears);
+
+	if (batt_vars->en_fuelcell) {
+		outFuelCellToBatt = cm.allocate("fuelcell_to_batt", nrec*nyears);
+		outFuelCellToGrid = cm.allocate("fuelcell_to_grid", nrec*nyears);
+		outFuelCellToLoad = cm.allocate("fuelcell_to_load", nrec*nyears);
+
+	}
+
 	outBatteryConversionPowerLoss = cm.allocate("batt_conversion_loss", nrec*nyears);
 	outBatterySystemLoss = cm.allocate("batt_system_loss", nrec*nyears);
 
@@ -825,13 +846,19 @@ battstor::battstor(compute_module &cm, bool setup_model, size_t nrec, double dt_
 	{
 		/*! Generic manual dispatch model inputs */
 		if (batt_vars->batt_can_charge.size() != 6 || batt_vars->batt_can_discharge.size() != 6 || batt_vars->batt_can_gridcharge.size() != 6)
-			throw compute_module::exec_error("battery", "invalid manual dispatch control vector lengths");
+			throw compute_module::exec_error("battery", "invalid manual dispatch control vector lengths, must be length 6");
 
 		if (batt_vars->batt_discharge_schedule_weekday.nrows() != 12 || batt_vars->batt_discharge_schedule_weekday.ncols() != 24)
 			throw compute_module::exec_error("battery", "invalid manual dispatch schedule matrix dimensions, must be 12 x 24");
 
 		if (batt_vars->batt_discharge_schedule_weekend.nrows() != 12 || batt_vars->batt_discharge_schedule_weekend.ncols() != 24)
 			throw compute_module::exec_error("battery", "invalid weekend manual dispatch schedule matrix dimensions, must be 12 x 24");
+
+		if (batt_vars->en_fuelcell) {
+			if (batt_vars->batt_can_fuelcellcharge.size() != 6)
+				throw compute_module::exec_error("fuelcell", "invalid manual dispatch control vector lengths, must be length 6");
+		}
+
 
 		size_t discharge_index = 0;
 		size_t gridcharge_index = 0;
@@ -854,7 +881,8 @@ battstor::battstor(compute_module &cm, bool setup_model, size_t nrec, double dt_
 				batt_vars->batt_minimum_modetime,
 				batt_vars->batt_dispatch, batt_vars->batt_meter_position,
 				batt_vars->batt_discharge_schedule_weekday, batt_vars->batt_discharge_schedule_weekend,
-				batt_vars->batt_can_charge, batt_vars->batt_can_discharge, batt_vars->batt_can_gridcharge, dm_percent_discharge, dm_percent_gridcharge);
+				batt_vars->batt_can_charge, batt_vars->batt_can_discharge, batt_vars->batt_can_gridcharge, batt_vars->batt_can_fuelcellcharge, 
+				dm_percent_discharge, dm_percent_gridcharge);
 		}
 	}
 	/*! Front of meter automated DC-connected dispatch */
@@ -1200,6 +1228,13 @@ void battstor::outputs_topology_dependent(compute_module &)
 	outGenPower[index] = (ssc_number_t)(dispatch_model->power_gen());
 	outPVToBatt[index] = (ssc_number_t)(dispatch_model->power_pv_to_batt());
 	outGridToBatt[index] = (ssc_number_t)(dispatch_model->power_grid_to_batt());
+
+	// Fuel cell updates
+	if (batt_vars->en_fuelcell) {
+		outFuelCellToLoad[index] = (ssc_number_t)(dispatch_model->power_fuelcell_to_load());
+		outFuelCellToBatt[index] = (ssc_number_t)(dispatch_model->power_fuelcell_to_batt());
+		outFuelCellToGrid[index] = (ssc_number_t)(dispatch_model->power_fuelcell_to_grid());
+	}
 	outBatteryConversionPowerLoss[index] = (ssc_number_t)(dispatch_model->power_conversion_loss());
 	outBatterySystemLoss[index] = (ssc_number_t)(dispatch_model->power_system_loss());
 	outPVToGrid[index] = (ssc_number_t)(dispatch_model->power_pv_to_grid());

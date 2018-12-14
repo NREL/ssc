@@ -74,10 +74,10 @@ void FuelCellDispatch::runSingleTimeStep(size_t hour_of_year, size_t year_idx, d
 			}
 
 			bool canDischarge = m_canDischarge[period - 1];
-			double discharge_percent = m_discharge_percent[period];
-
 			double power_kW = 0;
+
 			if (canDischarge) {
+				double discharge_percent = m_discharge_percent[period - 1];
 				power_kW = discharge_percent * m_fuelCellVector[fc]->getMaxPowerOriginal();
 			}
 

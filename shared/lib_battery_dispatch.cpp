@@ -375,10 +375,13 @@ double dispatch_t::power_gen() { return m_batteryPower->powerGeneratedBySystem; 
 double dispatch_t::power_pv_to_load() { return m_batteryPower->powerPVToLoad; }
 double dispatch_t::power_battery_to_load() { return m_batteryPower->powerBatteryToLoad; }
 double dispatch_t::power_grid_to_load() { return m_batteryPower->powerGridToLoad; }
+double dispatch_t::power_fuelcell_to_load() { return m_batteryPower->powerFuelCellToLoad; }
 double dispatch_t::power_pv_to_batt() { return m_batteryPower->powerPVToBattery; }
 double dispatch_t::power_grid_to_batt() { return m_batteryPower->powerGridToBattery; }
+double dispatch_t::power_fuelcell_to_batt() { return m_batteryPower->powerFuelCellToBattery; }
 double dispatch_t::power_pv_to_grid() { return m_batteryPower->powerPVToGrid; }
 double dispatch_t::power_battery_to_grid() { return m_batteryPower->powerBatteryToGrid; }
+double dispatch_t::power_fuelcell_to_grid() {return m_batteryPower->powerFuelCellToGrid;}
 double dispatch_t::power_conversion_loss() { return m_batteryPower->powerConversionLoss; }
 double dispatch_t::power_system_loss() { return m_batteryPower->powerSystemLoss; }
 double dispatch_t::battery_power_to_fill() { return _Battery->battery_power_to_fill(m_batteryPower->stateOfChargeMax); }
@@ -390,11 +393,12 @@ Manual Dispatch
 dispatch_manual_t::dispatch_manual_t(battery_t * Battery, double dt, double SOC_min, double SOC_max, int current_choice, double Ic_max, double Id_max, double Pc_max, double Pd_max,
 	double t_min, int mode, int battMeterPosition,
 	util::matrix_t<size_t> dm_dynamic_sched, util::matrix_t<size_t> dm_dynamic_sched_weekend,
-	std::vector<bool> dm_charge, std::vector<bool> dm_discharge, std::vector<bool> dm_gridcharge, std::map<size_t, double>  dm_percent_discharge, std::map<size_t, double>  dm_percent_gridcharge)
+	std::vector<bool> dm_charge, std::vector<bool> dm_discharge, std::vector<bool> dm_gridcharge, std::vector<bool> dm_fuelcellcharge,
+	std::map<size_t, double>  dm_percent_discharge, std::map<size_t, double>  dm_percent_gridcharge)
 	: dispatch_t(Battery, dt, SOC_min, SOC_max, current_choice, Ic_max, Id_max,Pc_max, Pd_max,
 	t_min, mode, battMeterPosition)
 {
-	init_with_vects(dm_dynamic_sched, dm_dynamic_sched_weekend, dm_charge, dm_discharge, dm_gridcharge, dm_percent_discharge, dm_percent_gridcharge);
+	init_with_vects(dm_dynamic_sched, dm_dynamic_sched_weekend, dm_charge, dm_discharge, dm_gridcharge, dm_fuelcellcharge, dm_percent_discharge, dm_percent_gridcharge);
 }
 
 void dispatch_manual_t::init_with_vects(
@@ -403,6 +407,7 @@ void dispatch_manual_t::init_with_vects(
 	std::vector<bool> dm_charge,
 	std::vector<bool> dm_discharge,
 	std::vector<bool> dm_gridcharge,
+	std::vector<bool> dm_fuelcellcharge,
 	std::map<size_t, double> dm_percent_discharge,
 	std::map<size_t, double> dm_percent_gridcharge)
 {
@@ -411,6 +416,7 @@ void dispatch_manual_t::init_with_vects(
 	_charge_array = dm_charge;
 	_discharge_array = dm_discharge;
 	_gridcharge_array = dm_gridcharge;
+	_fuelcellcharge_array = dm_fuelcellcharge;
 	_percent_discharge_array = dm_percent_discharge;
 	_percent_charge_array = dm_percent_gridcharge;
 }
@@ -420,7 +426,9 @@ dispatch_manual_t::dispatch_manual_t(const dispatch_t & dispatch) :
 dispatch_t(dispatch)
 {
 	const dispatch_manual_t * tmp = dynamic_cast<const dispatch_manual_t *>(&dispatch);
-	init_with_vects(tmp->_sched, tmp->_sched_weekend, tmp->_charge_array, tmp->_discharge_array, tmp->_gridcharge_array, tmp->_percent_discharge_array, tmp->_percent_charge_array);
+	init_with_vects(tmp->_sched, tmp->_sched_weekend, 
+		tmp->_charge_array, tmp->_discharge_array, tmp->_gridcharge_array, tmp->_fuelcellcharge_array,
+		tmp->_percent_discharge_array, tmp->_percent_charge_array);
 }
 
 // shallow copy from dispatch to this
@@ -428,10 +436,12 @@ void dispatch_manual_t::copy(const dispatch_t * dispatch)
 {
 	dispatch_t::copy(dispatch);
 	const dispatch_manual_t * tmp = dynamic_cast<const dispatch_manual_t *>(dispatch);
-	init_with_vects(tmp->_sched, tmp->_sched_weekend, tmp->_charge_array, tmp->_discharge_array, tmp->_gridcharge_array, tmp->_percent_discharge_array, tmp->_percent_charge_array);
+	init_with_vects(tmp->_sched, tmp->_sched_weekend, 
+		tmp->_charge_array, tmp->_discharge_array, tmp->_gridcharge_array, tmp->_fuelcellcharge_array,
+		tmp->_percent_discharge_array, tmp->_percent_charge_array);
 }
 
-void dispatch_manual_t::prepareDispatch(size_t hour_of_year, size_t step)
+void dispatch_manual_t::prepareDispatch(size_t hour_of_year, size_t )
 {
 	size_t m, h;
 	util::month_hour(hour_of_year, m, h);
@@ -447,11 +457,13 @@ void dispatch_manual_t::prepareDispatch(size_t hour_of_year, size_t step)
 	m_batteryPower->canPVCharge = _charge_array[iprofile - 1];
 	m_batteryPower->canDischarge = _discharge_array[iprofile - 1];
 	m_batteryPower->canGridCharge = _gridcharge_array[iprofile - 1];
+	m_batteryPower->canFuelCellCharge = _fuelcellcharge_array[iprofile - 1];
+
 	_percent_discharge = 0.;
 	_percent_charge = 0.;
 
 	if (m_batteryPower->canDischarge){ _percent_discharge = _percent_discharge_array[iprofile]; }
-	if (m_batteryPower->canPVCharge){ _percent_charge = 100.; }
+	if (m_batteryPower->canPVCharge || m_batteryPower->canFuelCellCharge){ _percent_charge = 100.; }
 	if (m_batteryPower->canGridCharge){ _percent_charge = _percent_charge_array[iprofile]; }
 }
 void dispatch_manual_t::dispatch(size_t year,
@@ -1086,7 +1098,7 @@ void dispatch_automatic_behind_the_meter_t::target_power(FILE*p, bool debug, dou
 				P_target = sorted_grid[ii + 1].Grid();
 
 			if (debug)
-				fprintf(p, "%lu\t %.3f\t", ii, P_target);
+				fprintf(p, "%zu\t %.3f\t", ii, P_target);
 
 			// implies a repeated power
 			if (sorted_grid_diff[ii] == 0)
@@ -1110,7 +1122,7 @@ void dispatch_automatic_behind_the_meter_t::target_power(FILE*p, bool debug, dou
 				P_target += (sum - E_charge_vec[ii]) / ((ii + 1)*_dt_hour);
 				sum = E_charge_vec[ii];
 				if (debug)
-					fprintf(p, "%lu\t %.3f\t%.3f\t%.3f\n", ii, P_target, sum, E_charge_vec[ii]);
+					fprintf(p, "%zu\t %.3f\t%.3f\t%.3f\n", ii, P_target, sum, E_charge_vec[ii]);
 				break;
 			}
 			// only allow one cycle per day
@@ -1119,7 +1131,7 @@ void dispatch_automatic_behind_the_meter_t::target_power(FILE*p, bool debug, dou
 				P_target += (sum - E_useful) / ((ii + 1)*_dt_hour);
 				sum = E_useful;
 				if (debug)
-					fprintf(p, "%lu\t %.3f\t%.3f\t%.3f\n", ii, P_target, sum, E_charge_vec[ii]);
+					fprintf(p, "%zu\t %.3f\t%.3f\t%.3f\n", ii, P_target, sum, E_charge_vec[ii]);
 				break;
 			}
 		}

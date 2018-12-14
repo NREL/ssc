@@ -124,10 +124,13 @@ public:
 	double power_pv_to_load();
 	double power_battery_to_load();
 	double power_grid_to_load();
+	double power_fuelcell_to_load();
 	double power_pv_to_batt();
 	double power_grid_to_batt();
+	double power_fuelcell_to_batt();
 	double power_pv_to_grid();
 	double power_battery_to_grid();
+	double power_fuelcell_to_grid();
 	double power_conversion_loss();
 	double power_system_loss();
 
@@ -222,6 +225,7 @@ public:
 		std::vector<bool> can_charge,
 		std::vector<bool> can_discharge,
 		std::vector<bool> can_gridcharge,
+		std::vector<bool> can_fuelcellcharge,
 		std::map<size_t, double> dm_percent_discharge,
 		std::map<size_t, double> dm_percent_gridcharge);
 
@@ -255,6 +259,7 @@ protected:
 		std::vector<bool>,
 		std::vector<bool>,
 		std::vector<bool>,
+		std::vector<bool>,
 		std::map<size_t, double> dm_percent_discharge,
 		std::map<size_t, double> dm_percent_gridcharge);
 
@@ -267,6 +272,7 @@ protected:
 	std::vector<bool> _charge_array;
 	std::vector<bool> _discharge_array;
 	std::vector<bool> _gridcharge_array;
+	std::vector<bool> _fuelcellcharge_array;
 
 	double _percent_discharge;
 	double _percent_charge;
@@ -283,16 +289,16 @@ class grid_point
 	grid_point = [grid_power, hour, step]
 	*/
 public:
-	grid_point(double grid = 0., int hour = 0, int step = 0) :
+	grid_point(double grid = 0., size_t hour = 0, size_t step = 0) :
 		_grid(grid), _hour(hour), _step(step){}
 	double Grid() const { return _grid; }
-	int Hour() const { return _hour; }
-	int Step() const { return _step; }
+	size_t Hour() const { return _hour; }
+	size_t Step() const { return _step; }
 
 private:
 	double _grid;
-	int _hour;
-	int _step;
+	size_t _hour;
+	size_t _step;
 };
 
 struct byGrid

@@ -53,9 +53,6 @@
 #include <map>
 
 #include "core.h"
-//#include "lib_sandia.h"
-//#include "lib_pvinv.h"
-//#include "lib_utility_rate.h"
 
 // forward declarations to speed up build
 class SharedInverter;
@@ -79,6 +76,7 @@ struct batt_variables
 {
 	bool system_use_lifetime_output;
 	bool en_batt;
+	bool en_fuelcell;
 	int analysis_period;
 	int batt_chem;
 	int batt_dispatch;
@@ -111,6 +109,9 @@ struct batt_variables
 
 	/*! Vector of periods and if battery can charge from PV*/
 	std::vector<bool> batt_can_charge;
+
+	/*! Vector of periods if battery can charge from Fuel Cell*/
+	std::vector<bool> batt_can_fuelcellcharge;
 
 	/*! Vector of periods and if battery can discharge*/
 	std::vector<bool> batt_can_discharge;
@@ -358,12 +359,15 @@ struct battstor
 		*outPVToLoad,
 		*outBatteryToLoad,
 		*outGridToLoad,
+		*outFuelCellToLoad,
 		*outGridPowerTarget,
 		*outBattPowerTarget,
 		*outPVToBatt,
 		*outGridToBatt,
+		*outFuelCellToBatt,
 		*outPVToGrid,
 		*outBatteryToGrid,
+		*outFuelCellToGrid,
 		*outBatteryConversionPowerLoss,
 		*outBatterySystemLoss,
 		*outAnnualPVChargeEnergy,
