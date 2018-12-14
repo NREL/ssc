@@ -176,6 +176,21 @@ double FuelCell::getElectricalEfficiency() {
 double FuelCell::getHeatRecoveryEfficiency() {
 	return m_heatRecovery_percent;
 }
+int FuelCell::getTotalReplacements() {
+	return m_replacementCount;
+}
+void FuelCell::setReplacementOption(size_t replacementOption) {
+	m_replacementOption = replacementOption;
+}
+void FuelCell::setReplacementCapacity(double replacement_percent) {
+	m_replacement_percent = replacement_percent * 0.01;
+}
+void FuelCell::setDegradationkWPerHour(double degradation_kWPerHour) {
+	m_degradation_kWperHour = degradation_kWPerHour;
+}
+void FuelCell::setStartupHours(double startup_hours) {
+	m_startup_hours = startup_hours;
+}
 
 // Assume that min turndown trumps dynamic response, i.e, that fuel cell
 // can go from 0 to min turndown instantaneously.
@@ -209,7 +224,7 @@ void FuelCell::checkAvailableFuel() {
 }
 
 void FuelCell::applyDegradation() {
-	if (isRunning()) {
+	if (isRunning() && m_power_kW > 0) {
 		m_powerMax_kW -= m_degradation_kWperHour * dt_hour;
 		m_power_kW = fmin(m_power_kW, m_powerMax_kW);
 	}

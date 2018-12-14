@@ -64,14 +64,31 @@ public:
 	/// Return the available fuel in MCF
 	double getAvailableFuel();
 
+	/// Return the number of replacements
+	int getTotalReplacements();
+
+	/// Update replacement options (for testing)
+	void setReplacementOption(size_t replacementOption);
+	void setReplacementCapacity(double replacement_percent);
+
+	/// Update degradation (for testing)
+	void setDegradationkWPerHour(double degradation_kWPerHour);
+
+	/// Set startup hours
+	void setStartupHours(double startup_hours);
+
 	/// Calculate fuel consumption at percent load
 	void calculateEfficiencyCurve(double percent);
 
 	/// Shutdown option enumerations
 	enum FC_SHUTDOWN_OPTION { SHUTDOWN, IDLE };
 
+	/// Fuel cell replacement options
+	enum FC_REPLACEMENT_OPTION { NONE, REPLACE_AT_CAPACITY, REPLACE_ON_SCHEDULE };
 
 protected:
+
+	enum FC_EFFICIENCY_COLUMN { PERCENT_MAX, PRECENT_ELECTRICAL_EFFICIENCY, PERCENT_HEAT_RECOVERY };
 
 	/// Calculate time
 	void calculateTime();
@@ -102,9 +119,6 @@ protected:
 
 	// Initialize calculated
 	void init();
-
-	enum FC_EFFICIENCY_COLUMN { PERCENT_MAX, PRECENT_ELECTRICAL_EFFICIENCY, PERCENT_HEAT_RECOVERY };
-	enum FC_REPLACEMENT_OPTION {NONE, REPLACE_AT_CAPACITY, REPLACE_ON_SCHEDULE};
 
 	// input values
 	double dt_hour;
