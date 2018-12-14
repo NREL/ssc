@@ -20,7 +20,8 @@ public:
 	FuelCell();
 
 	/// Construct FuelCell with arguments
-	FuelCell(double unitPowerMax_kW, double unitPowerMin_kW, double startup_hours, double dynamicResponse_kWperMin,
+	FuelCell(double unitPowerMax_kW, double unitPowerMin_kW, double startup_hours, 
+		double dynamicResponseUp_kWperMin, double dynamicResponseDown_kWperMin,
 		double degradation_kWperHour, double degradationRestart_kW, 
 		size_t replacement_option, double replacement_percent, std::vector<size_t> replacementSchedule,
 		util::matrix_t<double> efficiencyTable,
@@ -60,7 +61,6 @@ public:
 	/// Get heat recovery percent
 	double getHeatRecoveryEfficiency();
 
-
 	/// Return the available fuel in MCF
 	double getAvailableFuel();
 
@@ -81,7 +81,6 @@ protected:
 
 	/// Apply degradation 
 	void applyEfficiency();
-
 
 	/// interpolate map
 	double interpolateMap(double key, std::map<double, double>);
@@ -112,7 +111,8 @@ protected:
 	double m_unitPowerMax_kW;
 	double m_unitPowerMin_kW;
 	double m_startup_hours;
-	double m_dynamicResponse_kWperHour;
+	double m_dynamicResponseUp_kWperHour;
+	double m_dynamicResponseDown_kWperHour;
 	double m_degradation_kWperHour;
 	double m_degradationRestart_kW;
 	size_t m_replacementOption;

@@ -67,7 +67,8 @@ public:
 		unitPowerMax_kW(cm.as_double("fuelcell_unit_max_power")),
 		unitPowerMin_kW(cm.as_double("fuelcell_unit_min_power")),
 		startup_hours(cm.as_double("fuelcell_startup_time")),
-		dynamicResponse_kWperHour(cm.as_double("fuelcell_dynamic_response")),
+		dynamicResponseUp_kWperHour(cm.as_double("fuelcell_dynamic_response_up")),
+		dynamicResponseDown_kWperHour(cm.as_double("fuelcell_dynamic_response_down")),
 		degradation_kWperHour(cm.as_double("fuelcell_degradation")),
 		degradationRestart_kW(cm.as_double("fuelcell_degradation_restart")),
 		replacementOption(cm.as_unsigned_long("fuelcell_replacement_option")),
@@ -162,7 +163,8 @@ public:
 	double unitPowerMax_kW;
 	double unitPowerMin_kW;
 	double startup_hours;
-	double dynamicResponse_kWperHour;
+	double dynamicResponseUp_kWperHour;
+	double dynamicResponseDown_kWperHour;
 	double degradation_kWperHour;
 	double degradationRestart_kW;
 	size_t replacementOption;

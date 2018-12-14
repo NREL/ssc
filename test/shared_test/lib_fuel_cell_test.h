@@ -15,7 +15,8 @@ protected:
 	double unitPowerMax_kW;
 	double unitPowerMin_kW;
 	double startup_hours;
-	double dynamicResponse_kWperHour;
+	double dynamicResponseUp_kWperHour;
+	double dynamicResponseDown_kWperHour;
 	double degradation_kWperHour;
 	double degradationRestart_kW;
 	size_t replacementOption;
@@ -44,7 +45,8 @@ protected:
 		unitPowerMax_kW = 100;
 		unitPowerMin_kW = 20;
 		startup_hours = 8;
-		dynamicResponse_kWperHour = 20;
+		dynamicResponseUp_kWperHour = 20;
+		dynamicResponseDown_kWperHour = 10;
 		degradation_kWperHour = 0.01;
 		degradationRestart_kW = 5;
 		replacementOption = 0;
@@ -98,14 +100,17 @@ public:
 	void SetUp()
 	{
 		FuelCellProperties::SetUp();
-		fuelCell = new FuelCell(unitPowerMax_kW, unitPowerMin_kW, startup_hours, dynamicResponse_kWperHour, degradation_kWperHour, degradationRestart_kW,
+		fuelCell = new FuelCell(unitPowerMax_kW, unitPowerMin_kW, startup_hours, 
+			dynamicResponseUp_kWperHour, dynamicResponseDown_kWperHour,
+			degradation_kWperHour, degradationRestart_kW,
 			replacementOption, replacement_percent, replacementSchedule, efficiencyTable, lowerHeatingValue_BtuPerFt3, higherHeatingValue_BtuPerFt3, availableFuel_Mcf, shutdownOption, dt_hour);
 		fuelCellDispatch = new FuelCellDispatch(fuelCell, numberOfUnits, dispatchOption, shutdownOption, dt_hour, fixed_percent,
 			dispatchInput_kW, canCharge, canDischarge, discharge_percent, scheduleWeekday, scheduleWeekend);
 		fuelCellDispatchMultiple = new FuelCellDispatch(fuelCell, n_multipleFuelCells, dispatchOption, shutdownOption, dt_hour, fixed_percent,
 			dispatchInput_kW, canCharge, canDischarge, discharge_percent, scheduleWeekday, scheduleWeekend);
 
-		fuelCellSubHourly = new FuelCell(unitPowerMax_kW, unitPowerMin_kW, startup_hours, dynamicResponse_kWperHour, degradation_kWperHour, degradationRestart_kW,
+		fuelCellSubHourly = new FuelCell(unitPowerMax_kW, unitPowerMin_kW, startup_hours, dynamicResponseUp_kWperHour, dynamicResponseDown_kWperHour, 
+			degradation_kWperHour, degradationRestart_kW,
 			replacementOption, replacement_percent, replacementSchedule, efficiencyTable, lowerHeatingValue_BtuPerFt3, higherHeatingValue_BtuPerFt3, availableFuel_Mcf, shutdownOption, dt_subHourly);
 		fuelCellDispatchSubhourly = new FuelCellDispatch(fuelCellSubHourly, numberOfUnits, dispatchOption, shutdownOption, dt_subHourly, fixed_percent,
 			dispatchInput_kW, canCharge, canDischarge, discharge_percent, scheduleWeekday, scheduleWeekend);

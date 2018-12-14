@@ -5,14 +5,16 @@
 
 FuelCell::FuelCell() { /* Nothing to do */ };
 
-FuelCell::FuelCell(double unitPowerMax_kW, double unitPowerMin_kW, double startup_hours, double dynamicResponse_kWperHour,
+FuelCell::FuelCell(double unitPowerMax_kW, double unitPowerMin_kW, double startup_hours, 
+	double dynamicResponseUp_kWperHour, double dynamicResponseDown_kWperHour,
 	double degradation_kWperHour, double degradationRestart_kW,
 	size_t replacementOption, double replacement_percent, std::vector<size_t> replacementSchedule,
 	util::matrix_t<double> efficiencyTable,
 	double lowerHeatingValue_BtuPerFt3, double higherHeatingValue_BtuPerFt3, double availableFuel_Mcf,
 	int shutdownOption, double dt_hour) :
 	m_unitPowerMax_kW(unitPowerMax_kW), m_unitPowerMin_kW(unitPowerMin_kW), m_startup_hours(startup_hours),
-	m_dynamicResponse_kWperHour(dynamicResponse_kWperHour), m_degradation_kWperHour(degradation_kWperHour), m_degradationRestart_kW(degradationRestart_kW),
+	m_dynamicResponseUp_kWperHour(dynamicResponseUp_kWperHour), m_dynamicResponseDown_kWperHour(dynamicResponseDown_kWperHour),
+	m_degradation_kWperHour(degradation_kWperHour), m_degradationRestart_kW(degradationRestart_kW),
 	m_replacementOption(replacementOption), m_replacement_percent(replacement_percent * 0.01), m_replacementSchedule(replacementSchedule),
 	m_efficiencyTable(efficiencyTable), m_lowerHeatingValue_BtuPerFt3(lowerHeatingValue_BtuPerFt3),
 	m_higherHeatingValue_BtuPerFt3(higherHeatingValue_BtuPerFt3),
@@ -49,7 +51,8 @@ FuelCell::~FuelCell(){ /* Nothing to do */}
 
 
 FuelCell::FuelCell(const FuelCell &fuelCell) : 
-	m_dynamicResponse_kWperHour(fuelCell.m_dynamicResponse_kWperHour),
+	m_dynamicResponseUp_kWperHour(fuelCell.m_dynamicResponseUp_kWperHour),
+	m_dynamicResponseDown_kWperHour(fuelCell.m_dynamicResponseDown_kWperHour),
 	m_degradation_kWperHour(fuelCell.m_degradation_kWperHour), 
 	m_degradationRestart_kW(fuelCell.m_degradationRestart_kW),
 	m_replacement_percent(fuelCell.m_replacement_percent * 0.01), 
@@ -134,10 +137,19 @@ double FuelCell::getPercentLoad() {
 }
 
 double FuelCell::getPowerResponse(double power_kW) {
+	
 	double dP = (power_kW - m_powerPrevious_kW) / dt_hour;
-	double dP_max = fmin(fabs(dP), m_dynamicResponse_kWperHour * dt_hour);
-	double sign = fabs(dP) > 0 ? dP / fabs(dP) : 1.0;
+	double dP_max = 0.0;
 
+	// ramp up
+	if (dP > 0) {
+		dP_max = fmin(fabs(dP), m_dynamicResponseUp_kWperHour * dt_hour);
+	}
+	// ramp down
+	else {
+		dP_max = fmin(fabs(dP), m_dynamicResponseDown_kWperHour * dt_hour);
+	}
+	double sign = fabs(dP) > 0 ? dP / fabs(dP) : 1.0;
 	return (m_powerPrevious_kW + (dP_max * sign));
 }
 double FuelCell::getPower() {

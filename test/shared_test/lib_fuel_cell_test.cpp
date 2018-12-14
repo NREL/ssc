@@ -35,9 +35,9 @@ TEST_F(FuelCellTest, Startup)
 	fuelCell->runSingleTimeStep(unitPowerMin_kW - 10);
 	EXPECT_EQ(fuelCell->getPower(), unitPowerMin_kW);
 
-	// Test dynamic limit
+	// Test ramp up limit
 	fuelCell->runSingleTimeStep(100);
-	EXPECT_EQ(fuelCell->getPower(), unitPowerMin_kW + dynamicResponse_kWperHour);
+	EXPECT_EQ(fuelCell->getPower(), unitPowerMin_kW + dynamicResponseUp_kWperHour);
 	fuelCell->runSingleTimeStep(100);
 	fuelCell->runSingleTimeStep(100);
 	fuelCell->runSingleTimeStep(100);
@@ -46,6 +46,10 @@ TEST_F(FuelCellTest, Startup)
 	// Test Max Limit (is not unitPowerMax_kW due to degradation)
 	fuelCell->runSingleTimeStep(unitPowerMax_kW + 10);
 	EXPECT_EQ(fuelCell->getPower(), fuelCell->getMaxPower());
+
+	// Test ramp down limit
+	fuelCell->runSingleTimeStep(0);
+	EXPECT_NEAR(fuelCell->getPower(), fuelCell->getMaxPower() - dynamicResponseDown_kWperHour, 0.1);
 }
 
 TEST_F(FuelCellTest, AvailableFuel) {

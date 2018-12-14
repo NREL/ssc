@@ -13,7 +13,7 @@ TEST_F(CMFuelCell, NoFinancialModelFixed) {
 		ssc_number_t startup_hours, fixed_pct, dynamic_response;
 		ssc_data_get_number(data, "fuelcell_startup_time", &startup_hours);
 		ssc_data_get_number(data, "fuelcell_fixed_pct", &fixed_pct);
-		ssc_data_get_number(data, "fuelcell_dynamic_response", &dynamic_response);
+		ssc_data_get_number(data, "fuelcell_dynamic_response_up", &dynamic_response);
 
 		SetCalculatedArray("fuelcell_power");
 		
