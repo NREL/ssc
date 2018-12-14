@@ -1388,7 +1388,7 @@ public:
 			if (is_assigned("capacity_factor") && is_assigned("annual_energy")) {
 				capacity_factor_in = as_double("capacity_factor");
 				annual_energy_in = as_double("annual_energy");
-				nameplate_in = (annual_energy_in / (capacity_factor_in * 0.01)) / 8760.;
+				nameplate_in = (annual_energy_in / (capacity_factor_in * util::percent_to_fraction)) / 8760.;
 			}
 	
 			// Error checking
@@ -1423,7 +1423,11 @@ public:
 						batt.check_replacement_schedule();
 						batt.advance(*this, power_input[lifetime_idx], 0, power_load[year_idx], 0);
 						p_gen[lifetime_idx] = batt.outGenPower[lifetime_idx];
-						annual_energy += p_gen[lifetime_idx] * batt._dt_hour;
+
+						if (year == 0) {
+							annual_energy += p_gen[lifetime_idx] * batt._dt_hour;
+						}
+
 						lifetime_idx++;
 						year_idx++;
 					}

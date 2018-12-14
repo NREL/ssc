@@ -567,9 +567,11 @@ public:
 						p_tcell[idx] = (ssc_number_t)pvt;
 						p_dc[idx] = (ssc_number_t)dc; // power, Watts
 						p_ac[idx] = (ssc_number_t)ac; // power, Watts
-
-						// accumulate hourly energy (kWh) (was initialized to zero when allocated)
 						p_gen[idx_life] = (ssc_number_t)(ac * haf(hour) * util::watt_to_kilowatt * degradationFactor[y]);
+
+						if (y == 0) {
+							annual_kwh += p_gen[idx] / step_per_hour;
+						}
 					}
 					idx++;
 					idx_life++;
@@ -610,9 +612,9 @@ public:
 		assign("inverter_efficiency", var_data((ssc_number_t)(as_double("inv_eff"))));
 
 		// metric outputs moved to technology
-		double kWhperkW = 1000.0*annual_kwh / dc_nameplate;
+		double kWhperkW = util::kilowatt_to_watt*annual_kwh / dc_nameplate;
+		
 		// adjustment for timestep values
-		kWhperkW *= ts_hour;
 		assign("capacity_factor", var_data((ssc_number_t)(kWhperkW / 87.6)));
 		assign("kwh_per_kw", var_data((ssc_number_t)kWhperkW));
 	}

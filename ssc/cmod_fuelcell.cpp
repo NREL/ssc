@@ -95,6 +95,9 @@ var_info vtab_fuelcell_input[] = {
 	{ SSC_INPUT,        SSC_MATRIX,      "dispatch_manual_sched",             "Dispatch schedule for weekday",          "",          "",                 "Fuel Cell",                  "",                        "",                              "" },
 	{ SSC_INPUT,        SSC_MATRIX,      "dispatch_manual_sched_weekend",     "Dispatch schedule for weekend",          "",          "",                 "Fuel Cell",                  "",                        "",                              "" },
 
+	{ SSC_INOUT,        SSC_NUMBER,      "capacity_factor",                   "Capacity factor",                        "%",          "",                "",                           "?=0",                     "",                              "" },
+	{ SSC_INOUT,        SSC_NUMBER,      "annual_energy",                     "Annual Energy",                          "kWh",        "",                "",                           "?=0",                     "",                              "" },
+
 var_info_invalid };
 
 var_info vtab_fuelcell_output[] = {
@@ -146,6 +149,8 @@ void cm_fuelcell::construct()
 
 void cm_fuelcell::exec() throw (general_error)
 {
+	double annual_energy = 0.0;
+
 	construct();
 	size_t idx = 0;
  	for (size_t y = 0; y < fcVars->numberOfYears; y++) {
@@ -159,11 +164,31 @@ void cm_fuelcell::exec() throw (general_error)
 				p_fuelCellToGrid_kW[idx] = (ssc_number_t)(fuelCellDispatch->getBatteryPower()->powerFuelCellToGrid);
 				p_fuelCellToLoad_kW[idx] = (ssc_number_t)(fuelCellDispatch->getBatteryPower()->powerFuelCellToLoad);
 				p_gen_kW[idx] = (ssc_number_t)(fcVars->systemGeneration_kW[idx]) + p_fuelCellPower_kW[idx];
+
+				if (y == 0) {
+					annual_energy += p_gen_kW[idx] * fcVars->dt_hour;
+				}
+
 				idx++;
 				idx_year++;
 			}
 		}
 	}
+	 
+	
+	// capacity factor update
+	double capacity_factor_in, annual_energy_in, nameplate_in;
+	capacity_factor_in = annual_energy_in = nameplate_in = 0;
+
+	if (is_assigned("capacity_factor") && is_assigned("annual_energy")) {
+		capacity_factor_in = as_double("capacity_factor");
+		annual_energy_in = as_double("annual_energy");
+		nameplate_in = (annual_energy_in / (capacity_factor_in * util::percent_to_fraction)) / 8760.;
+	}
+	double nameplate = nameplate_in + (fcVars->unitPowerMax_kW * fcVars->numberOfUnits);
+	assign("capacity_factor", var_data(static_cast<ssc_number_t>(annual_energy * util::fraction_to_percent / (nameplate * 8760.))));
+	assign("annual_energy", var_data(static_cast<ssc_number_t>(annual_energy)));
+
 	// post calculations for financial models
 	ssc_number_t annual_fuel_usage = 0.0;
 	for (idx = 0; idx < fcVars->numberOfLifetimeRecords; idx++) {
