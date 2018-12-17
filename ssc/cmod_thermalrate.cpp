@@ -86,6 +86,7 @@ static var_info vtab_thermal_rate[] = {
 
 	//  output as kWh - same as load (kW) for hourly simulations
 //	{ SSC_OUTPUT, SSC_ARRAY, "thermal_bill_load", "Thermal bill load (year 1)", "kWh-t", "", "Time Series", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "annual_thermal_value", "Thermal value with system", "$", "", "Time Series", "*", "", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "thermal_revenue_with_system", "Thermal revenue with system", "$", "", "Time Series", "*", "", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "thermal_revenue_without_system", "Thermal revenue without system", "$", "", "Time Series", "*", "", "" },
 	{ SSC_OUTPUT, SSC_NUMBER, "thermal_load_year1", "Thermal load (year 1)", "$", "", "", "*", "", "" },
@@ -365,7 +366,7 @@ public:
 
 
 		// annual sums
-		ssc_number_t *utility_bill_w_sys = allocate("thermal_bill_w_sys", nyears + 1);
+		ssc_number_t *thermal_bill_w_sys = allocate("thermal_bill_w_sys", nyears + 1);
 		ssc_number_t *utility_bill_wo_sys = allocate("thermal_bill_wo_sys", nyears + 1);
 
 
