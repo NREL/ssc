@@ -321,9 +321,10 @@ void cm_windpower::exec() throw(general_error)
         throw exec_error("windpower", wdprov->error());
       }
 		nstep = wdprov->nrecords();
-		if (icingCutoff)
+		if (icingCutoff) {
 			if (wdprov->relativeHumidity().size() != nstep)
 				throw exec_error("windpower", "Icing cutoff enabled but error in rh (relative humidity) data.");
+		}
 	}
 	else
 		throw exec_error("windpower", "no wind resource data supplied");
