@@ -104,6 +104,39 @@ TEST_F(FuelCellTest, Replacements) {
 	EXPECT_EQ(fuelCell->getTotalReplacements(), 1);
 }
 
+// Verify that scheduled restarts are being handled
+TEST_F(FuelCellTest, ScheduleRestarts) {
+
+	util::matrix_t<size_t> shutdowns;
+	shutdowns.resize_fill(1, 2, 4);
+
+	fuelCell->setStartupHours(1);
+	fuelCell->setDegradationkWPerHour(0);
+	fuelCell->setDegradationRestartkW(1);
+	fuelCell->setScheduledShutdowns(shutdowns);
+
+	// Run for 4 hours (1 to startup)
+	for (size_t h = 0; h < (size_t)4; h++) {
+		fuelCell->runSingleTimeStep(20);
+	}
+	// Next 4 hours should be shutdown
+	for (size_t h = 0; h < (size_t)4; h++) {
+		fuelCell->runSingleTimeStep(20);
+		EXPECT_EQ(fuelCell->getPower(), 0);
+	}
+	EXPECT_EQ(fuelCell->getMaxPower(), fuelCell->getMaxPowerOriginal() - 1);
+
+	// Run for startup hours
+	for (size_t h = 0; h < (size_t)1; h++) {
+		fuelCell->runSingleTimeStep(20);
+		EXPECT_EQ(fuelCell->getPower(), 0);
+	}
+	// Next hours should be running
+	for (size_t h = 0; h < (size_t)4; h++) {
+		fuelCell->runSingleTimeStep(20);
+		EXPECT_GT(fuelCell->getPower(), 0);
+	}
+}
 
 
 // Also check multiple fuel cells

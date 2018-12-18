@@ -67,8 +67,11 @@ var_info vtab_fuelcell_input[] = {
 	{ SSC_INPUT,		SSC_ARRAY,	     "load",			                  "Electricity load (year 1)",             "kW",	    "",                  "",	                       "",	                      "",	                           "" },
 
 	// fuel cell
+	{ SSC_INPUT,        SSC_MATRIX,      "fuelcell_availability_schedule",    "Fuel cell availability schedule ",      "Column 1: Hour of year start shutdown/Column 2: Hours duration of shutdown ", "",   "Fuel Cell","", "",                    "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "fuelcell_degradation",              "Fuel cell degradation per hour",        "kW/h",       "",                 "Fuel Cell",                  "",                        "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "fuelcell_degradation_restart",      "Fuel cell degradation at restart",      "kW",         "",                 "Fuel Cell",                  "",                        "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "fuelcell_degradation_restart_schedule","Fuel cell enable scheduled restarts",  "0/1",      "",                 "Fuel Cell",                  "",                        "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "fuelcell_degradation_restarts_per_year","Fuel cell scheduled restarts per year","",         "",                "Fuel Cell",                  "",                        "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "fuelcell_fixed_pct",				  "Fuel cell fixed operation percent",     "%",          "",                 "Fuel Cell",                  "",                        "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "fuelcell_dynamic_response_up",      "Fuel cell ramp rate limit up",          "kW/h",       "",                 "Fuel Cell",                  "",                        "",                              "" },		
 	{ SSC_INPUT,        SSC_NUMBER,      "fuelcell_dynamic_response_down",    "Fuel cell ramp rate limit down",        "kW/h",       "",                 "Fuel Cell",                  "",                        "",                              "" },
@@ -134,7 +137,7 @@ void cm_fuelcell::construct()
 		fcVars->startup_hours, fcVars->dynamicResponseUp_kWperHour, fcVars->dynamicResponseDown_kWperHour, 
 		fcVars->degradation_kWperHour, fcVars->degradationRestart_kW, 
 		fcVars->replacementOption, fcVars->replacement_percent, fcVars->replacementSchedule,
-		fcVars->efficiencyTable,
+		fcVars->shutdownTable, fcVars->efficiencyTable,
 		fcVars->lowerHeatingValue_BtuPerFt3, fcVars->higherHeatingValue_BtuPerFt3, fcVars->availableFuel_MCf,
 		fcVars->shutdownOption, fcVars->dt_hour));
 	fuelCell = std::move(tmp2);

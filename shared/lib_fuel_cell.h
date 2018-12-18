@@ -24,6 +24,7 @@ public:
 		double dynamicResponseUp_kWperMin, double dynamicResponseDown_kWperMin,
 		double degradation_kWperHour, double degradationRestart_kW, 
 		size_t replacement_option, double replacement_percent, std::vector<size_t> replacementSchedule,
+		util::matrix_t<size_t> shutdownTable,
 		util::matrix_t<double> efficiencyTable,
 		double lowerHeatingValue_BtuPerFt3, double higherHeatingValue_BtuPerFt3, double availableFuel_MCf,
 		int shutdownOption,  double dt_hour);
@@ -71,8 +72,14 @@ public:
 	void setReplacementOption(size_t replacementOption);
 	void setReplacementCapacity(double replacement_percent);
 
+	/// Update restart degradation
+	void setDegradationRestartkW(double);
+
 	/// Update degradation (for testing)
 	void setDegradationkWPerHour(double degradation_kWPerHour);
+
+	/// Update restart degradation
+	void setScheduledShutdowns(util::matrix_t<size_t> shutdowns);
 
 	/// Set startup hours
 	void setStartupHours(double startup_hours);
@@ -89,6 +96,7 @@ public:
 protected:
 
 	enum FC_EFFICIENCY_COLUMN { PERCENT_MAX, PRECENT_ELECTRICAL_EFFICIENCY, PERCENT_HEAT_RECOVERY };
+	enum FC_SHUTDOWN_COLUMN {HOUR, DURATION};
 
 	/// Calculate time
 	void calculateTime();
@@ -101,6 +109,9 @@ protected:
 
 	/// interpolate map
 	double interpolateMap(double key, std::map<double, double>);
+
+	/// Check shutdown
+	bool checkShutdown();
 
 	/// Check Min Turndown
 	void checkMinTurndown();
@@ -125,10 +136,14 @@ protected:
 	double m_unitPowerMax_kW;
 	double m_unitPowerMin_kW;
 	double m_startup_hours;
+
 	double m_dynamicResponseUp_kWperHour;
 	double m_dynamicResponseDown_kWperHour;
+	
 	double m_degradation_kWperHour;
 	double m_degradationRestart_kW;
+	util::matrix_t<size_t> m_scheduledShutdowns;
+
 	size_t m_replacementOption;
 	double m_replacement_percent;
 	std::vector<size_t> m_replacementSchedule;

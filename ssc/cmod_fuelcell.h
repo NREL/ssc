@@ -75,6 +75,7 @@ public:
 		replacement_percent(cm.as_double("fuelcell_replacement_percent")),
 		replacementSchedule(cm.as_vector_unsigned_long("fuelcell_replacement_schedule")),
 		efficiencyTable(cm.as_matrix("fuelcell_efficiency")),
+		shutdownTable(cm.as_matrix_unsigned_long("fuelcell_availability_schedule")),
 		lowerHeatingValue_BtuPerFt3(cm.as_double("fuelcell_lhv")),
 		higherHeatingValue_BtuPerFt3(cm.as_double("fuelcell_lhv")),
 		availableFuel_MCf(cm.as_double("fuelcell_fuel_available")),
@@ -175,6 +176,7 @@ public:
 	double replacement_percent;
 	std::vector<size_t> replacementSchedule;
 	util::matrix_t<double> efficiencyTable;
+	util::matrix_t<size_t> shutdownTable;
 	double lowerHeatingValue_BtuPerFt3;
 	double higherHeatingValue_BtuPerFt3;
 	double availableFuel_MCf;
