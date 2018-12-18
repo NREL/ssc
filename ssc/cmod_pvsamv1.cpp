@@ -2027,9 +2027,9 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 				PVSystem->p_systemACPower[idx] -= xfmr_loss;
 
 				// transmission loss if AC power is produced
-				if (PVSystem->p_systemACPower[idx] > 0) 
+				if (PVSystem->p_systemACPower[idx] > 0){
 					PVSystem->p_systemACPower[idx] -= (ssc_number_t)(transmissionloss);
-
+				}
 
 				// accumulate first year annual energy
 				if (iyear == 0)
