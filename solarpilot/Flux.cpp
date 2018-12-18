@@ -2997,9 +2997,9 @@ void Flux::imageSizeAimPoint(Heliostat &H, SolarField &SF, double args[], bool i
 				
 		//-- now calculate the aim point position in the flux plane
 		//vector to aim point in globals
-		aimpos.Set(Rv->rec_offset_x_global.Val() + FS->getSurfaceOffset()->x - Aim->x, 
-			Rv->rec_offset_y_global.Val() + FS->getSurfaceOffset()->y - Aim->y, 
-			Rv->rec_offset_z_global.Val() + FS->getSurfaceOffset()->z +tht - Aim->z);
+		aimpos.Set(/*Rv->rec_offset_x_global.Val() + */FS->getSurfaceOffset()->x - Aim->x, 
+			/*Rv->rec_offset_y_global.Val() + */FS->getSurfaceOffset()->y - Aim->y, 
+			/*Rv->rec_offset_z_global.Val() + */FS->getSurfaceOffset()->z +tht - Aim->z);
 		
 		H.calcAndSetAimPointFluxPlane(aimpos, *rec, H);
 		
