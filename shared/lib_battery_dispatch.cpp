@@ -457,7 +457,10 @@ void dispatch_manual_t::prepareDispatch(size_t hour_of_year, size_t )
 	m_batteryPower->canPVCharge = _charge_array[iprofile - 1];
 	m_batteryPower->canDischarge = _discharge_array[iprofile - 1];
 	m_batteryPower->canGridCharge = _gridcharge_array[iprofile - 1];
-	m_batteryPower->canFuelCellCharge = _fuelcellcharge_array[iprofile - 1];
+
+	if (iprofile < _fuelcellcharge_array.size()) {
+		m_batteryPower->canFuelCellCharge = _fuelcellcharge_array[iprofile - 1];
+	}
 
 	_percent_discharge = 0.;
 	_percent_charge = 0.;
