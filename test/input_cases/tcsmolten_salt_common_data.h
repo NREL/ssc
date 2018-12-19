@@ -14,18 +14,20 @@ char wlim_series_path[100];
 char helio_positions_path[100];
 
 
-int nmspt1 = sprintf(dispatch_factors_path, "%s/../sdktool_debug/MSPT/C code/dispatch_factors_ts.csv", std::getenv("SSCDIR"));
-int nmspt2 = sprintf(ud_ind_od_path, "%s/../sdktool_debug/MSPT/C code/ud_ind_od.csv", std::getenv("SSCDIR"));
-int nmspt3 = sprintf(wlim_series_path, "%s/../sdktool_debug/MSPT/C code/wlim_series.csv", std::getenv("SSCDIR"));
-int nmspt4 = sprintf(helio_positions_path, "%s/../sdktool_debug/MSPT/C code/helio_positions.csv", std::getenv("SSCDIR"));
-
+int nmspt1 = sprintf(dispatch_factors_path, "%s/test/input_cases/moltensalt_data/dispatch_factors_ts.csv", std::getenv("SSCDIR"));
+int nmspt2 = sprintf(ud_ind_od_path, "%s/test/input_cases/moltensalt_data/ud_ind_od.csv", std::getenv("SSCDIR"));
+int nmspt3 = sprintf(wlim_series_path, "%s/test/input_cases/moltensalt_data/wlim_series.csv", std::getenv("SSCDIR"));
+int nmspt4 = sprintf(helio_positions_path, "%s/test/input_cases/moltensalt_data/helio_positions.csv", std::getenv("SSCDIR"));
 
 /**
 *  Default data for tcsmolten_salt run that can be further modified
 */
 void tcsmolten_salt_default(ssc_data_t &data)
 {
-    ssc_data_set_string(data, "solar_resource_file", "C:/SAM/2018.11.11/solar_resource/daggett_ca_34.865371_-116.783023_psmv3_60_tmy.csv");
+	char solar_resource_path[100];
+	int n1 = sprintf(solar_resource_path, "%s/test/input_cases/moltensalt_data/daggett_ca_34.865371_-116.783023_psmv3_60_tmy.csv", std::getenv("SSCDIR"));
+
+    ssc_data_set_string(data, "solar_resource_file", solar_resource_path);
     ssc_data_set_number(data, "ppa_multiplier_model", 0);
     set_array(data, "dispatch_factors_ts", dispatch_factors_path, 8760);
     ssc_data_set_number(data, "field_model_type", 2);

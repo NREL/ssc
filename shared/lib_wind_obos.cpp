@@ -1573,7 +1573,7 @@ double wobos::calculate_substation_cost() {
   
   // calculate the rating in megavolt amperes of a single MPT
   //if the remainder of '((nTurb*turbR*1.15)/nMPT)/10' is greater than 5 round up, else round down
-  double mptRating = roundf(((nTurb*turbR*1.15) / nMPT) / 10.0) * 10.0;
+  double mptRating = (double)(roundf(float((nTurb*turbR*1.15) / nMPT / 10.0)) * 10.0);
 
   //calculate the total cost for all MPTs in dollars
   double mptCost = mptRating * nMPT * mptCR;
@@ -1892,9 +1892,9 @@ void wobos::ElectricalInstCost() {
 // Quick helper function for repeated activities in mobilization-demobilizastion function
 double my_mobilization_cost(vessel myvessel, set<int> *myset) {
   double cost = 0.0;
-  if (myset->find(myvessel.identifier) == myset->end()) {
+  if (myset->find((int)myvessel.identifier) == myset->end()) {
     cost = myvessel.get_mobilization_cost();
-    myset->insert(myvessel.identifier);
+    myset->insert((int)myvessel.identifier);
   }
   return cost;
 }

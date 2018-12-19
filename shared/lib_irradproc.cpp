@@ -990,30 +990,30 @@ void irrad::get_irrad (double *ghi, double *dni, double *dhi){
 	*dhi = diffuseHorizontal;
 }
 
-void irrad::set_time( int year, int month, int day, int hour, double minute, double delt_hr )
+void irrad::set_time( int y, int m, int d, int h, double min, double delt_hr )
 {
-	this->year = year;
-	this->month = month;
-	this->day = day;
-	this->hour = hour;
-	this->minute = minute;
+	this->year = y;
+	this->month = m;
+	this->day = d;
+	this->hour = h;
+	this->minute = min;
 	this->delt = delt_hr;
 }
 
-void irrad::set_location( double latitudeDegrees, double longitudeDegrees, double timezone )
+void irrad::set_location( double latDegrees, double longDegrees, double tz )
 {
-	this->latitudeDegrees = latitudeDegrees;
-	this->longitudeDegrees = longitudeDegrees;
-	this->timezone = timezone;
+	this->latitudeDegrees = latDegrees;
+	this->longitudeDegrees = longDegrees;
+	this->timezone = tz;
 }
 
-void irrad::set_sky_model( int skyModel, double albedo )
+void irrad::set_sky_model( int sm, double alb )
 {
-	this->skyModel = skyModel;
-	this->albedo = albedo;
+	this->skyModel = sm;
+	this->albedo = alb;
 }
 
-void irrad::set_surface( int tracking, double tilt_deg, double azimuth_deg, double rotlim_deg, bool enableBacktrack, double groundCoverageRatio )
+void irrad::set_surface( int tracking, double tilt_deg, double azimuth_deg, double rotlim_deg, bool enBacktrack, double gcr )
 {
 	this->trackingMode = tracking;
 	if (tracking == 4)
@@ -1021,8 +1021,8 @@ void irrad::set_surface( int tracking, double tilt_deg, double azimuth_deg, doub
 	this->tiltDegrees = tilt_deg;
 	this->surfaceAzimuthDegrees = azimuth_deg;
 	this->rotationLimitDegrees = rotlim_deg;
-	this->enableBacktrack = enableBacktrack;
-	this->groundCoverageRatio = groundCoverageRatio;
+	this->enableBacktrack = enBacktrack;
+	this->groundCoverageRatio = gcr;
 }
 	
 void irrad::set_beam_diffuse( double beam, double diffuse )
@@ -1046,13 +1046,13 @@ void irrad::set_global_diffuse(double global, double diffuse)
 	this->radiationMode = irrad::GH_DF;
 }
 
-void irrad::set_poa_reference( double planeOfArrayIrradianceFront, poaDecompReq* pA){
-	this->weatherFilePOA = planeOfArrayIrradianceFront;
+void irrad::set_poa_reference( double poaIrradianceFront, poaDecompReq* pA){
+	this->weatherFilePOA = poaIrradianceFront;
 	this->radiationMode = irrad::POA_R;
 	this->poaAll = pA;
 }
-void irrad::set_poa_pyranometer( double planeOfArrayIrradianceFront, poaDecompReq* pA ){
-	this->weatherFilePOA = planeOfArrayIrradianceFront;
+void irrad::set_poa_pyranometer( double poaIrradianceFront, poaDecompReq* pA ){
+	this->weatherFilePOA = poaIrradianceFront;
 	this->radiationMode = irrad::POA_P;
 	this->poaAll = pA;
 }
@@ -1640,7 +1640,7 @@ void irrad::getFrontSurfaceIrradiances(double pvFrontShadeFraction, double rowTo
 	}
 }
 
-void irrad::getBackSurfaceIrradiances(double pvBackShadeFraction, double rowToRow, double verticalHeight, double clearanceGround, double distanceBetweenRows, double horizontalLength, std::vector<double> rearGroundGHI, std::vector<double> frontGroundGHI, std::vector<double> frontReflected, std::vector<double> & rearIrradiance, double & rearAverageIrradiance)
+void irrad::getBackSurfaceIrradiances(double pvBackShadeFraction, double rowToRow, double verticalHeight, double clearanceGround, double , double horizontalLength, std::vector<double> rearGroundGHI, std::vector<double> frontGroundGHI, std::vector<double> frontReflected, std::vector<double> & rearIrradiance, double & rearAverageIrradiance)
 {
 	// front surface assumed to be glass
 	double n2 = 1.526;
@@ -1772,8 +1772,8 @@ void irrad::getBackSurfaceIrradiances(double pvBackShadeFraction, double rowToRo
 					projectedX1 += intervals;
 					projectedX2 += intervals;
 				}
-				int index1 = static_cast<int>(projectedX1 + intervals) - intervals;
-				int index2 = static_cast<int>(projectedX2 + intervals) - intervals;
+				int index1 = static_cast<int>(projectedX1 + intervals) - (int)intervals;
+				int index2 = static_cast<int>(projectedX2 + intervals) - (int)intervals;
 
 				if (index1 == index2)
 				{
