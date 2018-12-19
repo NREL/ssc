@@ -155,22 +155,22 @@ void Irradiance_IO::checkWeatherFile(compute_module * cm, std::string cmName)
 			throw compute_module::exec_error(cmName, "could not read data line " + util::to_string((int)(idx + 1)) + " in weather file");
 
 		// Check for missing data
-		if ((weatherRecord.gh != weatherRecord.gh) && (radiationMode == DN_GH || radiationMode == GH_DF)) {
+		if ((weatherRecord.gh != weatherRecord.gh) && (radiationMode == irrad::DN_GH || radiationMode == irrad::GH_DF)) {
 			cm->log(util::format("missing global irradiance %lg W/m2 at time [y:%d m:%d d:%d h:%d], exiting",
 				weatherRecord.gh, weatherRecord.year, weatherRecord.month, weatherRecord.day, weatherRecord.hour), SSC_ERROR, (float)idx);
 			return;
 		}
-		if ((weatherRecord.dn != weatherRecord.dn) && (radiationMode == DN_DF || radiationMode == DN_GH)) {
+		if ((weatherRecord.dn != weatherRecord.dn) && (radiationMode == irrad::DN_DF || radiationMode == irrad::DN_GH)) {
 			cm->log(util::format("missing beam irradiance %lg W/m2 at time [y:%d m:%d d:%d h:%d], exiting",
 				weatherRecord.dn, weatherRecord.year, weatherRecord.month, weatherRecord.day, weatherRecord.hour), SSC_ERROR, (float)idx);
 			return;
 		}
-		if ((weatherRecord.df != weatherRecord.df) && (radiationMode == DN_DF || radiationMode == GH_DF)) {
+		if ((weatherRecord.df != weatherRecord.df) && (radiationMode == irrad::DN_DF || radiationMode == irrad::GH_DF)) {
 			cm->log(util::format("missing diffuse irradiance %lg W/m2 at time [y:%d m:%d d:%d h:%d], exiting",
 				weatherRecord.df, weatherRecord.year, weatherRecord.month, weatherRecord.day, weatherRecord.hour), SSC_ERROR, (float)idx);
 			return;
 		}
-		if ((weatherRecord.poa != weatherRecord.poa) && (radiationMode == POA_R || radiationMode == POA_P)) {
+		if ((weatherRecord.poa != weatherRecord.poa) && (radiationMode == irrad::POA_R || radiationMode == irrad::POA_P)) {
 			cm->log(util::format("missing POA irradiance %lg W/m2 at time [y:%d m:%d d:%d h:%d], exiting",
 				weatherRecord.poa, weatherRecord.year, weatherRecord.month, weatherRecord.day, weatherRecord.hour), SSC_ERROR, (float)idx);
 			return;
@@ -187,25 +187,25 @@ void Irradiance_IO::checkWeatherFile(compute_module * cm, std::string cmName)
 		}
 
 		// Check for bad data
-		if ((weatherRecord.gh < 0 || weatherRecord.gh > irradiationMax) && (radiationMode == DN_GH || radiationMode == GH_DF))
+		if ((weatherRecord.gh < 0 || weatherRecord.gh >  irrad::irradiationMax) && (radiationMode == irrad::DN_GH || radiationMode == irrad::GH_DF))
 		{
 			cm->log(util::format("out of range global irradiance %lg W/m2 at time [y:%d m:%d d:%d h:%d], set to zero",
 				weatherRecord.gh, weatherRecord.year, weatherRecord.month, weatherRecord.day, weatherRecord.hour), SSC_WARNING, (float)idx);
 			weatherRecord.gh = 0;
 		}
-		if ((weatherRecord.dn < 0 || weatherRecord.dn > irradiationMax) && (radiationMode == DN_DF || radiationMode == DN_GH))
+		if ((weatherRecord.dn < 0 || weatherRecord.dn >  irrad::irradiationMax) && (radiationMode == irrad::DN_DF || radiationMode == irrad::DN_GH))
 		{
 			cm->log(util::format("out of range beam irradiance %lg W/m2 at time [y:%d m:%d d:%d h:%d], set to zero",
 				weatherRecord.dn, weatherRecord.year, weatherRecord.month, weatherRecord.day, weatherRecord.hour), SSC_WARNING, (float)idx);
 			weatherRecord.dn = 0;
 		}
-		if ((weatherRecord.df < 0 || weatherRecord.df > irradiationMax) && (radiationMode == DN_DF || radiationMode == GH_DF))
+		if ((weatherRecord.df < 0 || weatherRecord.df >  irrad::irradiationMax) && (radiationMode == irrad::DN_DF || radiationMode == irrad::GH_DF))
 		{
 			cm->log(util::format("out of range diffuse irradiance %lg W/m2 at time [y:%d m:%d d:%d h:%d], set to zero",
 				weatherRecord.df, weatherRecord.year, weatherRecord.month, weatherRecord.day, weatherRecord.hour), SSC_WARNING, (float)idx);
 			weatherRecord.df = 0;
 		}
-		if ((weatherRecord.poa < 0 || weatherRecord.poa > irradiationMax) && (radiationMode == POA_R || radiationMode == POA_P))
+		if ((weatherRecord.poa < 0 || weatherRecord.poa >  irrad::irradiationMax) && (radiationMode == irrad::POA_R || radiationMode == irrad::POA_P))
 		{
 			cm->log(util::format("out of range POA irradiance %lg W/m2 at time [y:%d m:%d d:%d h:%d], set to zero",
 				weatherRecord.poa, weatherRecord.year, weatherRecord.month, weatherRecord.day, weatherRecord.hour), SSC_WARNING, (float)idx);
@@ -246,9 +246,9 @@ void Irradiance_IO::AllocateOutputs(compute_module* cm)
 
 	//set up the calculated components of irradiance such that they aren't reported if they aren't assigned
 	//three possible calculated irradiance: gh, df, dn
-	if (radiationMode == DN_DF) p_IrradianceCalculated[0] = cm->allocate("gh_calc", numberOfWeatherFileRecords); //don't calculate global for POA models
-	if (radiationMode == DN_GH || radiationMode == POA_R || radiationMode == POA_P) p_IrradianceCalculated[1] = cm->allocate("df_calc", numberOfWeatherFileRecords);
-	if (radiationMode == GH_DF || radiationMode == POA_R || radiationMode == POA_P) p_IrradianceCalculated[2] = cm->allocate("dn_calc", numberOfWeatherFileRecords);
+	if (radiationMode == irrad::DN_DF) p_IrradianceCalculated[0] = cm->allocate("gh_calc", numberOfWeatherFileRecords); //don't calculate global for POA models
+	if (radiationMode == irrad::DN_GH || radiationMode == irrad::POA_R || radiationMode == irrad::POA_P) p_IrradianceCalculated[1] = cm->allocate("df_calc", numberOfWeatherFileRecords);
+	if (radiationMode == irrad::GH_DF || radiationMode == irrad::POA_R || radiationMode == irrad::POA_P) p_IrradianceCalculated[2] = cm->allocate("dn_calc", numberOfWeatherFileRecords);
 
 	//output arrays for solar position calculations- same for all four subarrays
 	p_sunZenithAngle = cm->allocate("sol_zen", numberOfWeatherFileRecords);
@@ -288,17 +288,17 @@ Subarray_IO::Subarray_IO(compute_module* cm, std::string cmName, size_t subarray
 
 		//tilt required for fixed tilt, single axis, and azimuth axis- can't check for this in variable table so check here
 		tiltDegrees = std::numeric_limits<double>::quiet_NaN();
-		if (trackMode == FIXED_TILT || trackMode == SINGLE_AXIS || trackMode == AZIMUTH_AXIS)
+		if (trackMode == irrad::FIXED_TILT || trackMode == irrad::SINGLE_AXIS || trackMode == irrad::AZIMUTH_AXIS)
 			if (!tiltEqualLatitude && !cm->is_assigned(prefix + "tilt"))
 				throw compute_module::exec_error(cmName, "Subarray " + util::to_string((int)subarrayNumber) + " tilt required but not assigned.");
 		if (cm->is_assigned(prefix + "tilt")) tiltDegrees = fabs(cm->as_double(prefix + "tilt"));
 		//monthly tilt required if seasonal tracking mode selected- can't check for this in variable table so check here
-		if (trackMode == SEASONAL_TILT && !cm->is_assigned(prefix + "monthly_tilt"))
+		if (trackMode == irrad::SEASONAL_TILT && !cm->is_assigned(prefix + "monthly_tilt"))
 			throw compute_module::exec_error(cmName, "Subarray " + util::to_string((int)subarrayNumber) + " monthly tilt required but not assigned.");
 		if (cm->is_assigned(prefix + "monthly_tilt")) monthlyTiltDegrees = cm->as_vector_double(prefix + "monthly_tilt");
 		//azimuth required for fixed tilt, single axis, and seasonal tilt- can't check for this in variable table so check here
 		azimuthDegrees = std::numeric_limits<double>::quiet_NaN();
-		if (trackMode == FIXED_TILT || trackMode == SINGLE_AXIS || trackMode == SEASONAL_TILT)
+		if (trackMode == irrad::FIXED_TILT || trackMode == irrad::SINGLE_AXIS || trackMode == irrad::SEASONAL_TILT)
 			if (!cm->is_assigned(prefix + "azimuth"))
 				throw compute_module::exec_error(cmName, "Subarray " + util::to_string((int)subarrayNumber) + " azimuth required but not assigned.");
 		if (cm->is_assigned(prefix + "azimuth")) azimuthDegrees = cm->as_double(prefix + "azimuth");
@@ -308,7 +308,7 @@ Subarray_IO::Subarray_IO(compute_module* cm, std::string cmName, size_t subarray
 
 		//check that backtracking input is assigned here because cannot check in the variable table
 		backtrackingEnabled = 0;
-		if (trackMode == SINGLE_AXIS)
+		if (trackMode == irrad::SINGLE_AXIS)
 			if (!cm->is_assigned(prefix + "backtrack"))
 				throw compute_module::exec_error(cmName, "Subarray " + util::to_string((int)subarrayNumber) + " backtrack required but not assigned.");
 		if (cm->is_assigned(prefix + "backtrack")) backtrackingEnabled = cm->as_boolean(prefix + "backtrack");
@@ -356,7 +356,7 @@ Subarray_IO::Subarray_IO(compute_module* cm, std::string cmName, size_t subarray
 		selfShadingInputs.nstrx = selfShadingInputs.nmodx / nModulesPerString;
 		poa.nonlinearDCShadingDerate = 1;
 
-		if (trackMode == FIXED_TILT || trackMode == SEASONAL_TILT || (trackMode == SINGLE_AXIS && !backtrackingEnabled))
+		if (trackMode == irrad::FIXED_TILT || trackMode == irrad::SEASONAL_TILT || (trackMode == irrad::SINGLE_AXIS && !backtrackingEnabled))
 		{
 			if (shadeMode != NO_SHADING)
 			{
@@ -384,10 +384,10 @@ Subarray_IO::Subarray_IO(compute_module* cm, std::string cmName, size_t subarray
 		subarrayEnableSnow = cm->as_boolean("en_snow_model");
 		if (subarrayEnableSnow)
 		{
-			if (trackMode == SEASONAL_TILT)
+			if (trackMode == irrad::SEASONAL_TILT)
 				throw compute_module::exec_error(cmName, "Time-series tilt input may not be used with the snow model at this time: subarray " + util::to_string((int)(subarrayNumber)));
 			// if tracking mode is 1-axis tracking, don't need to limit tilt angles
-			if (snowModel.setup(selfShadingInputs.nmody, (float)tiltDegrees, (trackMode != SINGLE_AXIS))) {
+			if (snowModel.setup(selfShadingInputs.nmody, (float)tiltDegrees, (trackMode !=  irrad::SINGLE_AXIS))) {
 				if (!snowModel.good) {
 					cm->log(snowModel.msg, SSC_ERROR);
 				}
@@ -411,6 +411,147 @@ void Subarray_IO::AssignOutputs(compute_module* cm)
 	cm->assign(prefix + "dcloss", var_data((ssc_number_t)tmp));
 
 	Module->AssignOutputs(cm);
+}
+
+void PVSystem_IO::SetupPOAInput()
+{
+
+	// Check if a POA model is used, if so load all POA data into the poaData struct
+	if (Irradiance->radiationMode == irrad::POA_R || Irradiance->radiationMode == irrad::POA_P) {
+		for (size_t nn = 0; nn < Subarrays.size(); nn++) {
+			if (!Subarrays[nn]->enable) continue;
+
+			std::unique_ptr<poaDecompReq> tmp(new poaDecompReq);
+			Subarrays[nn]->poa.poaAll = std::move(tmp);
+			Subarrays[nn]->poa.poaAll->elev = Irradiance->weatherHeader.elev;
+
+			if (Irradiance->stepsPerHour > 1) {
+				Subarrays[nn]->poa.poaAll->stepScale = 'm';
+				Subarrays[nn]->poa.poaAll->stepSize = 60.0 / Irradiance->stepsPerHour;
+			}
+
+			Subarrays[nn]->poa.poaAll->POA.reserve(8760 * Irradiance->stepsPerHour);
+			Subarrays[nn]->poa.poaAll->inc.reserve(8760 * Irradiance->stepsPerHour);
+			Subarrays[nn]->poa.poaAll->tilt.reserve(8760 * Irradiance->stepsPerHour);
+			Subarrays[nn]->poa.poaAll->zen.reserve(8760 * Irradiance->stepsPerHour);
+			Subarrays[nn]->poa.poaAll->exTer.reserve(8760 * Irradiance->stepsPerHour);
+
+			for (size_t i = 0; i < 8760 * Irradiance->stepsPerHour; i++) {
+				Subarrays[nn]->poa.poaAll->POA.push_back(0);
+				Subarrays[nn]->poa.poaAll->inc.push_back(0);
+				Subarrays[nn]->poa.poaAll->tilt.push_back(0);
+				Subarrays[nn]->poa.poaAll->zen.push_back(0);
+				Subarrays[nn]->poa.poaAll->exTer.push_back(0);
+			}
+
+
+			double ts_hour = Simulation->dtHour;
+			weather_header hdr = Irradiance->weatherHeader;
+			weather_data_provider * wdprov = Irradiance->weatherDataProvider.get();
+			weather_record wf = Irradiance->weatherRecord;
+			wdprov->rewind();
+
+			for (size_t h = 0; h < 8760; h++) {
+				for (size_t m = 0; m < Irradiance->stepsPerHour; m++) {
+					size_t ii = h * Irradiance->stepsPerHour + m;
+
+					if (!wdprov->read(&wf)) {
+						throw compute_module::exec_error("pvsamv1", "could not read data line " + util::to_string((int)(ii + 1)) + " in weather file while loading POA data");
+					}
+					int month_idx = wf.month - 1;
+
+					if (Subarrays[nn]->trackMode == irrad::SEASONAL_TILT)
+						Subarrays[nn]->tiltDegrees = Subarrays[nn]->monthlyTiltDegrees[month_idx]; //overwrite the tilt input with the current tilt to be used in calculations
+
+					// save POA data
+					if (wf.poa > 0)
+						Subarrays[nn]->poa.poaAll->POA[ii] = wf.poa;
+					else
+						Subarrays[nn]->poa.poaAll->POA[ii] = -999;
+
+					// Calculate incident angle
+					double t_cur = wf.hour + wf.minute / 60;
+
+					// Calculate sunrise and sunset hours in local standard time for the current day
+					double sun[9], angle[5];
+					int tms[3];
+
+					solarpos(wf.year, wf.month, wf.day, 12, 0.0, hdr.lat, hdr.lon, hdr.tz, sun);
+
+					double t_sunrise = sun[4];
+					double t_sunset = sun[5];
+
+					if (t_cur >= t_sunrise - ts_hour / 2.0
+						&& t_cur < t_sunrise + ts_hour / 2.0)
+					{
+						// time step encompasses the sunrise
+						double t_calc = (t_sunrise + (t_cur + ts_hour / 2.0)) / 2.0; // midpoint of sunrise and end of timestep
+						int hr_calc = (int)t_calc;
+						double min_calc = (t_calc - hr_calc)*60.0;
+
+						tms[0] = hr_calc;
+						tms[1] = (int)min_calc;
+
+						solarpos(wf.year, wf.month, wf.day, hr_calc, min_calc, hdr.lat, hdr.lon, hdr.tz, sun);
+
+						tms[2] = 2;
+					}
+					else if (t_cur > t_sunset - ts_hour / 2.0
+						&& t_cur <= t_sunset + ts_hour / 2.0)
+					{
+						// timestep encompasses the sunset
+						double t_calc = ((t_cur - ts_hour / 2.0) + t_sunset) / 2.0; // midpoint of beginning of timestep and sunset
+						int hr_calc = (int)t_calc;
+						double min_calc = (t_calc - hr_calc)*60.0;
+
+						tms[0] = hr_calc;
+						tms[1] = (int)min_calc;
+
+						solarpos(wf.year, wf.month, wf.day, hr_calc, min_calc, hdr.lat, hdr.lon, hdr.tz, sun);
+
+						tms[2] = 3;
+					}
+					else if (t_cur >= t_sunrise && t_cur <= t_sunset)
+					{
+						// timestep is not sunrise nor sunset, but sun is up  (calculate position at provided t_cur)
+						tms[0] = wf.hour;
+						tms[1] = (int)wf.minute;
+						solarpos(wf.year, wf.month, wf.day, wf.hour, wf.minute, hdr.lat, hdr.lon, hdr.tz, sun);
+						tms[2] = 1;
+					}
+					else
+					{
+						// sun is down, assign sundown values
+						sun[0] = -999; //avoid returning a junk azimuth angle
+						sun[1] = -999; //avoid returning a junk zenith angle
+						sun[2] = -999; //avoid returning a junk elevation angle
+						tms[0] = -1;
+						tms[1] = -1;
+						tms[2] = 0;
+					}
+
+
+					if (tms[2] > 0) {
+						incidence(Subarrays[nn]->trackMode, Subarrays[nn]->tiltDegrees, Subarrays[nn]->azimuthDegrees, Subarrays[nn]->trackerRotationLimitDegrees, sun[1], sun[0], Subarrays[nn]->backtrackingEnabled, Subarrays[nn]->groundCoverageRatio, angle);
+					}
+					else {
+						angle[0] = -999;
+						angle[1] = -999;
+						angle[2] = -999;
+						angle[3] = -999;
+						angle[4] = -999;
+					}
+
+					Subarrays[nn]->poa.poaAll->inc[ii] = angle[0];
+					Subarrays[nn]->poa.poaAll->tilt[ii] = angle[1];
+					Subarrays[nn]->poa.poaAll->zen[ii] = sun[1];
+					Subarrays[nn]->poa.poaAll->exTer[ii] = sun[8];
+
+				}
+			}
+			wdprov->rewind();
+		}
+	}
 }
 
 
@@ -540,6 +681,9 @@ PVSystem_IO::PVSystem_IO(compute_module* cm, std::string cmName, Simulation_IO *
 	}
 	if (enableMismatchVoltageCalc && numberOfSubarrays <= 1)
 		throw compute_module::exec_error(cmName, "Subarray voltage mismatch calculation requires more than one subarray. Please check your inputs.");
+
+	// Setup POA inputs if needed 
+	SetupPOAInput();
 }
 
 void PVSystem_IO::AllocateOutputs(compute_module* cm)
@@ -643,7 +787,7 @@ void PVSystem_IO::AllocateOutputs(compute_module* cm)
 }
 void PVSystem_IO::AssignOutputs(compute_module* cm)
 {
-	cm->assign("ac_loss", var_data((ssc_number_t)acLossPercent));
+	cm->assign("ac_loss", (var_data((ssc_number_t)acLossPercent + transmissionLossPercent)));
 }
 
 Module_IO::Module_IO(compute_module* cm, std::string cmName, double dcLoss)

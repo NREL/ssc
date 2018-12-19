@@ -351,7 +351,7 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "sd11par_AMa2",                                "Air mass modifier coeff 2",                               "",       "",                                                                  "pvsamv1",       "module_model=4",                           "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "sd11par_AMa3",                                "Air mass modifier coeff 3",                               "",       "",                                                                  "pvsamv1",       "module_model=4",                           "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "sd11par_AMa4",                                "Air mass modifier coeff 4",                               "",       "",                                                                  "pvsamv1",       "module_model=4",                           "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "sd11par_glass",                               "Cover glass type",                                        "",       "0=normal,1=AR glass",                                               "pvsamv1",       "module_model=4",                           "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "sd11par_glass",                               "Module cover glass type",                                        "",       "0=normal,1=AR glass",                                               "pvsamv1",       "module_model=4",                           "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "sd11par_tnoct",                               "Nominal operating cell temperature",                      "C",      "",                                                                  "pvsamv1",       "module_model=4",                           "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "sd11par_standoff",                            "Standoff mode",                                           "",       "0=bipv,1=>3.5in,2=2.5-3.5in,3=1.5-2.5in,4=0.5-1.5in,5=<0.5in,6=ground/rack",  "pvsamv1",       "module_model=4",                 "INTEGER,MIN=0,MAX=6",           "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "sd11par_mounting",                            "Array mounting height",                                   "",       "0=one story,1=two story",                                           "pvsamv1",       "module_model=4",                           "INTEGER,MIN=0,MAX=1",           "" },
@@ -556,9 +556,9 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray1_poa_nom",                    "Subarray 1 POA total front irradiance nominal",                        "W/m2",   "", "Time Series (Subarray 1)",       "*",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray1_poa_shaded",                 "Subarray 1 POA total front irradiance after shading only",             "W/m2",   "", "Time Series (Subarray 1)",       "*",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray1_poa_shaded_soiled",          "Subarray 1 POA total front irradiance after shading and soiling",      "W/m2",   "", "Time Series (Subarray 1)",       "*",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray1_poa_front",                  "Subarray 1 POA total front irradiance after module cover",              "W/m2",   "", "Time Series (Subarray 1)",       "*",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray1_poa_rear",                   "Subarray 1 POA total rear irradiance after module cover",              "W/m2",   "", "Time Series (Subarray 1)",       "*",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray1_poa_eff",                    "Subarray 1 POA total irradiance after module cover",                   "W/m2",   "", "Time Series (Subarray 1)",       "*",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray1_poa_front",                  "Subarray 1 POA total front irradiance after reflection (IAM)",              "W/m2",   "", "Time Series (Subarray 1)",       "*",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray1_poa_rear",                   "Subarray 1 POA total rear irradiance after reflection (IAM)",              "W/m2",   "", "Time Series (Subarray 1)",       "*",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray1_poa_eff",                    "Subarray 1 POA total irradiance after reflection (IAM)",                   "W/m2",   "", "Time Series (Subarray 1)",       "*",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray1_soiling_derate",             "Subarray 1 Soiling beam irradiance factor",                            "frac",   "", "Time Series (Subarray 1)",       "*",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray1_beam_shading_factor",        "Subarray 1 External shading and soiling beam irradiance factor",       "frac",   "", "Time Series (Subarray 1)",       "*",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray1_linear_derate",              "Subarray 1 Self-shading linear beam irradiance factor",                "frac",   "", "Time Series (Subarray 1)",       "*",                    "",                              "" },
@@ -585,9 +585,9 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray2_poa_nom",                    "Subarray 2 POA total front irradiance nominal",                        "W/m2",   "", "Time Series (Subarray 2)",       "",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray2_poa_shaded",                 "Subarray 2 POA total front irradiance after shading only",             "W/m2",   "", "Time Series (Subarray 2)",       "",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray2_poa_shaded_soiled",          "Subarray 2 POA total front irradiance after shading and soiling",      "W/m2",   "", "Time Series (Subarray 2)",       "",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray2_poa_front",                  "Subarray 2 POA total front irradiance after cover",                     "W/m2",   "", "Time Series (Subarray 2)",       "",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray2_poa_rear",                   "Subarray 2 POA rear irradiance after cover",                            "W/m2",   "", "Time Series (Subarray 2)",       "",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray2_poa_eff",                    "Subarray 2 POA total irradiance after module cover",                   "W/m2",   "", "Time Series (Subarray 2)",       "",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray2_poa_front",                  "Subarray 2 POA total front irradiance after reflection (IAM)",                     "W/m2",   "", "Time Series (Subarray 2)",       "",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray2_poa_rear",                   "Subarray 2 POA rear irradiance after reflection (IAM)",                            "W/m2",   "", "Time Series (Subarray 2)",       "",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray2_poa_eff",                    "Subarray 2 POA total irradiance after module reflection (IAM)",                   "W/m2",   "", "Time Series (Subarray 2)",       "",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray2_soiling_derate",             "Subarray 2 Soiling beam irradiance factor",                            "frac",   "", "Time Series (Subarray 2)",       "",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray2_beam_shading_factor",        "Subarray 2 External shading and soiling beam irradiance factor",       "frac",   "", "Time Series (Subarray 2)",       "",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray2_linear_derate",              "Subarray 2 Self-shading linear beam irradiance factor",                "frac",   "", "Time Series (Subarray 2)",       "",                    "",                              "" },
@@ -614,9 +614,9 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray3_poa_nom",                    "Subarray 3 POA total front irradiance nominal",                        "W/m2",   "", "Time Series (Subarray 3)",       "",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray3_poa_shaded",                 "Subarray 3 POA total front irradiance after shading only",             "W/m2",   "", "Time Series (Subarray 3)",       "",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray3_poa_shaded_soiled",          "Subarray 3 POA total front irradiance after shading and soiling",      "W/m2",   "", "Time Series (Subarray 3)",       "",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray3_poa_front",                  "Subarray 3 POA total front irradiance after cover",					 "W/m2",   "", "Time Series (Subarray 3)",       "",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray3_poa_rear",                   "Subarray 3 POA rear irradiance after cover",                            "W/m2",   "", "Time Series (Subarray 3)",       "",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray3_poa_eff",                    "Subarray 3 POA total irradiance after cover",                          "W/m2",   "", "Time Series (Subarray 3)",       "",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray3_poa_front",                  "Subarray 3 POA total front irradiance after reflection (IAM)",					 "W/m2",   "", "Time Series (Subarray 3)",       "",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray3_poa_rear",                   "Subarray 3 POA rear irradiance after reflection (IAM)",                            "W/m2",   "", "Time Series (Subarray 3)",       "",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray3_poa_eff",                    "Subarray 3 POA total irradiance after reflection (IAM)",                          "W/m2",   "", "Time Series (Subarray 3)",       "",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray3_soiling_derate",             "Subarray 3 Soiling beam irradiance factor",                            "frac",   "", "Time Series (Subarray 3)",       "",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray3_beam_shading_factor",        "Subarray 3 External shading and soiling beam irradiance factor",       "frac",   "", "Time Series (Subarray 3)",       "",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray3_linear_derate",              "Subarray 3 Self-shading linear beam irradiance factor",                "frac",   "", "Time Series (Subarray 3)",       "",                    "",                              "" },
@@ -643,9 +643,9 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray4_poa_nom",                    "Subarray 4 POA total front irradiance nominal",                        "W/m2",   "", "Time Series (Subarray 4)",       "",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray4_poa_shaded",                 "Subarray 4 POA total front irradiance after shading only",             "W/m2",   "", "Time Series (Subarray 4)",       "",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray4_poa_shaded_soiled",          "Subarray 4 POA total front irradiance after shading and soiling",      "W/m2",   "", "Time Series (Subarray 4)",       "",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray4_poa_front",                  "Subarray 4 POA total front irradiance after cover",                     "W/m2",   "", "Time Series (Subarray 4)",       "",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray4_poa_rear",                   "Subarray 4 POA rear irradiance after cover",                            "W/m2",   "", "Time Series (Subarray 4)",       "",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray4_poa_eff",                    "Subarray 4 POA total irradiance after cover",                          "W/m2",   "", "Time Series (Subarray 4)",       "",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray4_poa_front",                  "Subarray 4 POA total front irradiance after reflection (IAM)",                     "W/m2",   "", "Time Series (Subarray 4)",       "",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray4_poa_rear",                   "Subarray 4 POA rear irradiance after reflection (IAM)",                            "W/m2",   "", "Time Series (Subarray 4)",       "",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray4_poa_eff",                    "Subarray 4 POA total irradiance after reflection (IAM)",                          "W/m2",   "", "Time Series (Subarray 4)",       "",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray4_soiling_derate",             "Subarray 4 Soiling beam irradiance factor",                            "frac",   "", "Time Series (Subarray 4)",       "",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray4_beam_shading_factor",        "Subarray 4 External shading and soiling beam irradiance factor",       "frac",   "", "Time Series (Subarray 4)",       "",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray4_linear_derate",              "Subarray 4 Self-shading linear beam irradiance factor",                "frac",   "", "Time Series (Subarray 4)",       "",                    "",                              "" },
@@ -667,9 +667,9 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "poa_beam_eff",                         "Array POA beam radiation after shading and soiling",              "kW",   "",  "Time Series (Array)",       "*",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "poa_shaded",                           "Array POA front-side total radiation after shading only",         "kW",   "",  "Time Series (Array)",       "*",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "poa_shaded_soiled",                    "Array POA front-side total radiation after shading and soiling",  "kW",   "",  "Time Series (Array)",       "*",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "poa_front",                            "Array POA front-side total radiation after cover",                "kW",   "",  "Time Series (Array)",       "*",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "poa_rear",                             "Array POA rear-side total radiation after cover",                 "kW",   "",  "Time Series (Array)",       "*",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "poa_eff",                              "Array POA radiation total after cover",                           "kW",   "",  "Time Series (Array)",       "*",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "poa_front",                            "Array POA front-side total radiation after reflection (IAM)",                "kW",   "",  "Time Series (Array)",       "*",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "poa_rear",                             "Array POA rear-side total radiation after reflection (IAM)",                 "kW",   "",  "Time Series (Array)",       "*",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "poa_eff",                              "Array POA radiation total after reflection (IAM)",                           "kW",   "",  "Time Series (Array)",       "*",                    "",                              "" },
 
 	//SEV: total dc snow loss time series (not a required output) 
 	{ SSC_OUTPUT,        SSC_ARRAY,      "dc_snow_loss",                         "Array DC power loss due to snow",						 "kW",   "",   "Time Series (Array)",       "",                    "",                              "" },
@@ -734,9 +734,9 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_OUTPUT,        SSC_NUMBER,     "annual_poa_beam_nom",                         "POA front-side irradiance beam nominal",                        "kWh/yr",    "",                      "Annual (Year 1)",       "*",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "annual_poa_shaded",                           "POA front-side irradiance total after shading",                 "kWh/yr",    "",                      "Annual (Year 1)",       "*",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "annual_poa_shaded_soiled",                    "POA front-side irradiance total after shading and soiling",     "kWh/yr",    "",                      "Annual (Year 1)",       "*",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "annual_poa_front",                            "POA front-side irradiance total after cover",                   "kWh/yr",    "",                      "Annual (Year 1)",       "*",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "annual_poa_rear",                             "POA rear-side irradiance total after cover",                    "kWh/yr",    "",                      "Annual (Year 1)",       "*",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "annual_poa_eff",                              "POA irradiance total after cover",                              "kWh/yr",    "",                      "Annual (Year 1)",       "*",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "annual_poa_front",                            "POA front-side irradiance total after reflection (IAM)",                   "kWh/yr",    "",                      "Annual (Year 1)",       "*",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "annual_poa_rear",                             "POA rear-side irradiance total after reflection (IAM)",                    "kWh/yr",    "",                      "Annual (Year 1)",       "*",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "annual_poa_eff",                              "POA irradiance total after reflection (IAM)",                              "kWh/yr",    "",                      "Annual (Year 1)",       "*",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "annual_poa_beam_eff",                         "POA front-side irradiance beam after shading and soiling",      "kWh/yr",    "",                      "Annual (Year 1)",       "*",                    "",                              "" },
 
 	{ SSC_OUTPUT,        SSC_NUMBER,     "annual_dc_nominal",                           "Annual DC energy nominal",                           "kWh/yr",    "",                      "Annual (Year 1)",       "*",                    "",                              "" },
@@ -794,7 +794,7 @@ static var_info _cm_vtab_pvsamv1[] = {
 	// annual_poa_nom
 	{ SSC_OUTPUT, SSC_NUMBER, "annual_poa_shading_loss_percent", "POA front-side shading loss", "%", "", "Loss", "*", "", "" },
 	{ SSC_OUTPUT, SSC_NUMBER, "annual_poa_soiling_loss_percent", "POA front-side soiling loss", "%", "", "Loss", "*", "", "" },
-	{ SSC_OUTPUT, SSC_NUMBER, "annual_poa_cover_loss_percent",   "POA front-side cover loss",   "%", "", "Loss", "*", "", "" }, 
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_poa_cover_loss_percent",   "POA front-side reflection (IAM) loss",   "%", "", "Loss", "*", "", "" }, 
 	{ SSC_OUTPUT, SSC_NUMBER, "annual_poa_rear_gain_percent",    "POA rear-side bifacial gain", "%", "", "Loss", "*", "", "" },
 
 	// annual_dc_nominal
@@ -1067,126 +1067,6 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 	// variables used to calculate loss diagram
 	double annual_energy = 0, annual_ac_gross = 0, annual_ac_pre_avail = 0, dc_gross[4] = { 0, 0, 0, 0 }, annualMpptVoltageClipping = 0, annual_dc_adjust_loss = 0, annual_dc_lifetime_loss = 0, annual_ac_lifetime_loss = 0, annual_ac_battery_loss = 0, annual_xfmr_nll = 0, annual_xfmr_ll = 0, annual_xfmr_loss = 0;
 
-	// Check if a POA model is used, if so load all POA data into the poaData struct
-	if (radmode == Irradiance_IO::POA_R || radmode == Irradiance_IO::POA_P ){
-		for (int nn = 0; nn < num_subarrays; nn++){
-			if (!Subarrays[nn]->enable) continue;
-				
-			Subarrays[nn]->poa.poaAll.elev = hdr.elev;
-
-			if( step_per_hour > 1) {
-				Subarrays[nn]->poa.poaAll.stepScale = 'm';
-				Subarrays[nn]->poa.poaAll.stepSize = 60.0 / step_per_hour;
-			}
-
-			Subarrays[nn]->poa.poaAll.POA = new double[ 8760*step_per_hour ];
-			Subarrays[nn]->poa.poaAll.inc = new double[ 8760*step_per_hour ];
-			Subarrays[nn]->poa.poaAll.tilt = new double[ 8760*step_per_hour ];
-			Subarrays[nn]->poa.poaAll.zen = new double[ 8760*step_per_hour ];
-			Subarrays[nn]->poa.poaAll.exTer = new double[ 8760*step_per_hour ];
-					
-			for (size_t h=0; h<8760; h++){
-				for	(size_t m=0; m < step_per_hour; m++){
-					size_t ii = h * step_per_hour + m;
-					
-					if (!wdprov->read(&Irradiance->weatherRecord)) {
-						throw exec_error("pvsamv1", "could not read data line " + util::to_string((int)(idx + 1)) + " in weather file while loading POA data");
-					}
-					weather_record wf = Irradiance->weatherRecord;
-					int month_idx = wf.month - 1;
-
-					if (Subarrays[nn]->trackMode == Subarray_IO::SEASONAL_TILT)
-						Subarrays[nn]->tiltDegrees = Subarrays[nn]->monthlyTiltDegrees[month_idx]; //overwrite the tilt input with the current tilt to be used in calculations
-						
-					// save POA data
-					if(wf.poa > 0)
-						Subarrays[nn]->poa.poaAll.POA[ii] = wf.poa;
-					else
-						Subarrays[nn]->poa.poaAll.POA[ii] = -999;
-						
-					// Calculate incident angle
-					double t_cur = wf.hour + wf.minute/60;
-
-					// Calculate sunrise and sunset hours in local standard time for the current day
-					double sun[9], angle[5];
-					int tms[3];
-
-					solarpos( wf.year, wf.month, wf.day, 12, 0.0, hdr.lat, hdr.lon, hdr.tz, sun );
-
-					double t_sunrise = sun[4];
-					double t_sunset = sun[5];
-
-					if ( t_cur >= t_sunrise - ts_hour/2.0
-						&& t_cur < t_sunrise + ts_hour/2.0 )
-					{
-						// time step encompasses the sunrise
-						double t_calc = (t_sunrise + (t_cur+ts_hour/2.0))/2.0; // midpoint of sunrise and end of timestep
-						int hr_calc = (int)t_calc;
-						double min_calc = (t_calc-hr_calc)*60.0;
-
-						tms[0] = hr_calc;
-						tms[1] = (int)min_calc;
-
-						solarpos( wf.year, wf.month, wf.day, hr_calc, min_calc, hdr.lat, hdr.lon, hdr.tz, sun );
-
-						tms[2] = 2;
-					}
-					else if (t_cur > t_sunset - ts_hour/2.0
-						&& t_cur <= t_sunset + ts_hour/2.0 )
-					{
-						// timestep encompasses the sunset
-						double t_calc = ( (t_cur-ts_hour/2.0) + t_sunset )/2.0; // midpoint of beginning of timestep and sunset
-						int hr_calc = (int)t_calc;
-						double min_calc = (t_calc-hr_calc)*60.0;
-
-						tms[0] = hr_calc;
-						tms[1] = (int)min_calc;
-
-						solarpos( wf.year, wf.month, wf.day, hr_calc, min_calc, hdr.lat, hdr.lon, hdr.tz, sun );
-
-						tms[2] = 3;
-					}
-					else if (t_cur >= t_sunrise && t_cur <= t_sunset)
-					{
-						// timestep is not sunrise nor sunset, but sun is up  (calculate position at provided t_cur)
-						tms[0] = wf.hour;
-						tms[1] = (int)wf.minute;
-						solarpos( wf.year, wf.month, wf.day, wf.hour, wf.minute, hdr.lat, hdr.lon, hdr.tz, sun );
-						tms[2] = 1;
-					}
-					else
-					{
-						// sun is down, assign sundown values
-						sun[0] = -999; //avoid returning a junk azimuth angle
-						sun[1] = -999; //avoid returning a junk zenith angle
-						sun[2] = -999; //avoid returning a junk elevation angle
-						tms[0] = -1;
-						tms[1] = -1;
-						tms[2] = 0;
-					}
-
-
-					if( tms[2] > 0){
-						incidence(Subarrays[nn]->trackMode, Subarrays[nn]->tiltDegrees, Subarrays[nn]->azimuthDegrees, Subarrays[nn]->trackerRotationLimitDegrees, sun[1], sun[0], Subarrays[nn]->backtrackingEnabled, Subarrays[nn]->groundCoverageRatio, angle );
-					} else {
-						angle[0] = -999;
-						angle[1] = -999;
-						angle[2] = -999;
-						angle[3] = -999;
-						angle[4] = -999;	
-					}
-
-					Subarrays[nn]->poa.poaAll.inc[ii] = angle[ 0 ];
-					Subarrays[nn]->poa.poaAll.tilt[ii] = angle[ 1 ];
-					Subarrays[nn]->poa.poaAll.zen[ii] = sun[ 1 ];
-					Subarrays[nn]->poa.poaAll.exTer[ii] = sun[ 8 ];
-
-				}
-			}
-			wdprov->rewind();
-		}
-	}
-
 	/* *********************************************************************************************
 	PV DC calculation
 	*********************************************************************************************** */
@@ -1249,15 +1129,15 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 				weather_record wf = Irradiance->weatherRecord;
 
 				//update POA data structure indicies if radmode is POA model is enabled
-				if (radmode == Irradiance_IO::POA_R || radmode == Irradiance_IO::POA_P){
+				if (radmode == irrad::POA_R || radmode == irrad::POA_P){
 					for (size_t nn = 0; nn < num_subarrays; nn++){
 						if (!Subarrays[nn]->enable) continue;
 
-						Subarrays[nn]->poa.poaAll.tDew = wf.tdew;
-						Subarrays[nn]->poa.poaAll.i = idx;
+						Subarrays[nn]->poa.poaAll->tDew = wf.tdew;
+						Subarrays[nn]->poa.poaAll->i = idx;
 						if (jj == 0 && wf.hour == 0) {
-							Subarrays[nn]->poa.poaAll.dayStart = idx;
-							Subarrays[nn]->poa.poaAll.doy += 1;
+							Subarrays[nn]->poa.poaAll->dayStart = idx;
+							Subarrays[nn]->poa.poaAll->doy += 1;
 						}
 
 					}
@@ -1294,19 +1174,34 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 						|| Subarrays[nn]->nStrings < 1)
 						continue; // skip disabled subarrays
 
-					irrad irr(Irradiance, Subarrays[nn]);
-					
+					irrad irr(Irradiance->weatherRecord, Irradiance->weatherHeader,
+						Irradiance->skyModel, Irradiance->radiationMode, Subarrays[nn]->trackMode,
+						Irradiance->useWeatherFileAlbedo, Irradiance->instantaneous, Subarrays[nn]->backtrackingEnabled,
+						Irradiance->dtHour, Subarrays[nn]->tiltDegrees, Subarrays[nn]->azimuthDegrees, Subarrays[nn]->trackerRotationLimitDegrees, Subarrays[nn]->groundCoverageRatio,
+						Subarrays[nn]->monthlyTiltDegrees, Irradiance->userSpecifiedMonthlyAlbedo,
+						Subarrays[nn]->poa.poaAll.get());
+											
 					int code = irr.calc();
 
-					if (code != 0)
+					if (code < 0) //jmf updated 11/30/18 so that negative numbers are errors, positive numbers are warnings, 0 is everything correct. implemented in patch for POA model only, will be added to develop for other irrad models as well
 						throw exec_error("pvsamv1",
 						util::format("failed to calculate irradiance incident on surface (POA) %d (code: %d) [y:%d m:%d d:%d h:%d]",
 						nn + 1, code, wf.year, wf.month, wf.day, wf.hour));
 
+					if (code == 40)
+						log(util::format("SAM calculated negative direct normal irradiance in the POA decomposition algorithm at time [y:%d m:%d d:%d h:%d], set to zero.",
+							wf.year, wf.month, wf.day, wf.hour), SSC_WARNING, (float)idx);
+					else if (code == 41)
+						log(util::format("SAM calculated negative diffuse horizontal irradiance in the POA decomposition algorithm at time [y:%d m:%d d:%d h:%d], set to zero.",
+							wf.year, wf.month, wf.day, wf.hour), SSC_WARNING, (float)idx);
+					else if (code == 42)
+						log(util::format("SAM calculated negative global horizontal irradiance in the POA decomposition algorithm at time [y:%d m:%d d:%d h:%d], set to zero.",
+							wf.year, wf.month, wf.day, wf.hour), SSC_WARNING, (float)idx);
+									   					 
 					// p_irrad_calc is only weather file records long...
 					if (iyear == 0)
 					{
-						if (radmode == Irradiance_IO::POA_R || radmode == Irradiance_IO::POA_P) {
+						if (radmode == irrad::POA_R || radmode == irrad::POA_P) {
 							double gh_temp, df_temp, dn_temp;
 							gh_temp = df_temp = dn_temp = 0;
 							irr.get_irrad(&gh_temp, &dn_temp, &df_temp);
@@ -1322,21 +1217,21 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 					//  This will later get forced to false if any shading has been applied (in any scenario)
 					//  also this will also be forced to false if using the cec mcsp thermal model OR if using the spe module model with a diffuse util. factor < 1.0
 					Subarrays[nn]->poa.usePOAFromWF = false;
-					if (radmode == Irradiance_IO::POA_R){
+					if (radmode == irrad::POA_R){
 						ipoa[nn] = wf.poa;
 						Subarrays[nn]->poa.usePOAFromWF = true;
 					}
-					else if (radmode == Irradiance_IO::POA_P){
+					else if (radmode == irrad::POA_P){
 						ipoa[nn] = wf.poa;
 					}
 
-					if (Subarrays[nn]->Module->simpleEfficiencyForceNoPOA && (radmode == Irradiance_IO::POA_R || radmode == Irradiance_IO::POA_P)){  // only will be true if using a poa model AND spe module model AND spe_fp is < 1
+					if (Subarrays[nn]->Module->simpleEfficiencyForceNoPOA && (radmode == irrad::POA_R || radmode == irrad::POA_P)){  // only will be true if using a poa model AND spe module model AND spe_fp is < 1
 						Subarrays[nn]->poa.usePOAFromWF = false;
 						if (idx == 0)
 							log("The combination of POA irradiance as in input, single point efficiency module model, and module diffuse utilization factor less than one means that SAM must use a POA decomposition model to calculate the incident diffuse irradiance", SSC_WARNING);
 					}
 
-					if (Subarrays[nn]->Module->mountingSpecificCellTemperatureForceNoPOA && (radmode == Irradiance_IO::POA_R || radmode == Irradiance_IO::POA_P)){
+					if (Subarrays[nn]->Module->mountingSpecificCellTemperatureForceNoPOA && (radmode == irrad::POA_R || radmode == irrad::POA_P)){
 						Subarrays[nn]->poa.usePOAFromWF = false;
 						if (idx == 0)
 							log("The combination of POA irradiance as input and heat transfer method for cell temperature means that SAM must use a POA decomposition model to calculate the beam irradiance required by the cell temperature model", SSC_WARNING);
@@ -1365,7 +1260,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 						Irradiance->p_weatherFileDHI[idx] = (ssc_number_t)(wf.df);
 
 						// calculate beam if global & diffuse are selected as inputs
-						if (radmode == Irradiance_IO::GH_DF)
+						if (radmode == irrad::GH_DF)
 						{
 							Irradiance->p_IrradianceCalculated[2][idx] = (ssc_number_t)((wf.gh - wf.df) / cos(solzen*3.1415926 / 180));
 							if (Irradiance->p_IrradianceCalculated[2][idx] < -1)
@@ -1377,7 +1272,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 						}
 
 						// calculate global if beam & diffuse are selected as inputs
-						if (radmode == Irradiance_IO::DN_DF)
+						if (radmode == irrad::DN_DF)
 						{
 							Irradiance->p_IrradianceCalculated[0][idx] = (ssc_number_t)(wf.df + wf.dn * cos(solzen*3.1415926 / 180));
 							if (Irradiance->p_IrradianceCalculated[0][idx] < -1)
@@ -1389,7 +1284,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 						}
 
 						// calculate diffuse if total & beam are selected as inputs
-						if (radmode == Irradiance_IO::DN_GH)
+						if (radmode == irrad::DN_GH)
 						{
 							Irradiance->p_IrradianceCalculated[1][idx] = (ssc_number_t)(wf.gh - wf.dn * cos(solzen*3.1415926 / 180));
 							if (Irradiance->p_IrradianceCalculated[1][idx] < -1)
@@ -1404,7 +1299,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 					// record sub-array plane of array output before computing shading and soiling
 					if (iyear == 0)
 					{
-						if (radmode != Irradiance_IO::POA_R)
+						if (radmode != irrad::POA_R)
 							PVSystem->p_poaNominalFront[nn][idx] = (ssc_number_t)((ibeam + iskydiff + ignddiff));
 						else
 							PVSystem->p_poaNominalFront[nn][idx] = (ssc_number_t)((ipoa[nn]));
@@ -1412,7 +1307,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 
 
 					// record sub-array contribution to total POA power for this time step  (W)
-					if (radmode != Irradiance_IO::POA_R)
+					if (radmode != irrad::POA_R)
 						ts_accum_poa_front_nom += (ibeam + iskydiff + ignddiff) * ref_area_m2 * Subarrays[nn]->nModulesPerString * Subarrays[nn]->nStrings;
 					else
 						ts_accum_poa_front_nom += (ipoa[nn])* ref_area_m2 * Subarrays[nn]->nModulesPerString * Subarrays[nn]->nStrings;
@@ -1480,7 +1375,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 						// Sara 1/25/16 - shading database derate applied to dc only
 						// shading loss applied to beam if not from shading database
 						ibeam *= Subarrays[nn]->shadeCalculator.beam_shade_factor();
-						if (radmode == Irradiance_IO::POA_R || radmode == Irradiance_IO::POA_P){
+						if (radmode == irrad::POA_R || radmode == irrad::POA_P){
 							Subarrays[nn]->poa.usePOAFromWF = false;
 							if (Subarrays[nn]->poa.poaShadWarningCount == 0){
 								log(util::format("Combining POA irradiance as input with the beam shading losses at time [y:%d m:%d d:%d h:%d] forces SAM to use a POA decomposition model to calculate incident beam irradiance",
@@ -1497,7 +1392,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 					// apply sky diffuse shading factor (specified as constant, nominally 1.0 if disabled in UI)
 					if (Subarrays[nn]->shadeCalculator.fdiff() < 1.0){
 						iskydiff *= Subarrays[nn]->shadeCalculator.fdiff();
-						if (radmode == Irradiance_IO::POA_R || radmode == Irradiance_IO::POA_P){
+						if (radmode == irrad::POA_R || radmode == irrad::POA_P){
 							if (idx == 0)
 								log("Combining POA irradiance as input with the diffuse shading losses forces SAM to use a POA decomposition model to calculate incident diffuse irradiance", SSC_WARNING);
 							Subarrays[nn]->poa.usePOAFromWF = false;
@@ -1511,7 +1406,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 						|| (Subarrays[nn]->trackMode == 1 && (Subarrays[nn]->shadeMode == 1 || Subarrays[nn]->shadeMode == 2) && Subarrays[nn]->backtrackingEnabled == 0)) //one-axis tracking, self-shading, not backtracking
 					{
 
-						if (radmode == Irradiance_IO::POA_R || radmode == Irradiance_IO::POA_P){
+						if (radmode == irrad::POA_R || radmode == irrad::POA_P){
 							if (idx == 0)
 								log("Combining POA irradiance as input with self shading forces SAM to employ a POA decomposition model to calculate incident beam irradiance", SSC_WARNING);
 							Subarrays[nn]->poa.usePOAFromWF = false;
@@ -1530,7 +1425,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 
 						//execute self-shading calculations
 						ssc_number_t beam_to_use; //some self-shading calculations require DNI, NOT ibeam (beam in POA). Need to know whether to use DNI from wf or calculated, depending on radmode
-						if (radmode == Irradiance_IO::DN_DF || radmode == Irradiance_IO::DN_GH) beam_to_use = (ssc_number_t)wf.dn;
+						if (radmode == irrad::DN_DF || radmode == irrad::DN_GH) beam_to_use = (ssc_number_t)wf.dn;
 						else beam_to_use = Irradiance->p_IrradianceCalculated[2][hour * step_per_hour]; // top of hour in first year
 
 						if (linear && trackbool) //one-axis linear
@@ -1581,7 +1476,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 							throw exec_error("pvsamv1", util::format("Self-shading calculation failed at %d", (int)idx));
 					}
 
-					double poashad = (radmode == Irradiance_IO::POA_R) ? ipoa[nn] : (ibeam + iskydiff + ignddiff);
+					double poashad = (radmode == irrad::POA_R) ? ipoa[nn] : (ibeam + iskydiff + ignddiff);
 
 					// determine sub-array contribution to total shaded plane of array for this hour
 					ts_accum_poa_front_shaded += poashad * ref_area_m2 * Subarrays[nn]->nModulesPerString * Subarrays[nn]->nStrings;
@@ -1595,7 +1490,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 						ibeam *= soiling_factor;
 						iskydiff *= soiling_factor;
 						ignddiff *= soiling_factor;
-						if (radmode == Irradiance_IO::POA_R || radmode == Irradiance_IO::POA_P){
+						if (radmode == irrad::POA_R || radmode == irrad::POA_P){
 							ipoa[nn] *= soiling_factor;
 							if (soiling_factor < 1 && idx == 0)
 								log("Soiling may already be accounted for in the input POA data. Please confirm that the input data does not contain soiling effects, or remove the additional losses on the Losses page.", SSC_WARNING);
@@ -1647,7 +1542,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 					Subarrays[nn]->poa.poaDiffuseFront = iskydiff;
 					Subarrays[nn]->poa.poaGroundFront = ignddiff;
 					Subarrays[nn]->poa.poaRear = ipoa_rear_after_losses[nn];
-					Subarrays[nn]->poa.poaTotal = (radmode == Irradiance_IO::POA_R) ? ipoa[nn] :(ipoa_front[nn] + ipoa_rear_after_losses[nn]);
+					Subarrays[nn]->poa.poaTotal = (radmode == irrad::POA_R) ? ipoa[nn] :(ipoa_front[nn] + ipoa_rear_after_losses[nn]);
 					Subarrays[nn]->poa.angleOfIncidenceDegrees = aoi;
 					Subarrays[nn]->poa.sunUp = sunup;
 					Subarrays[nn]->poa.surfaceTiltDegrees = stilt;
@@ -1665,13 +1560,11 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 					int nSubarraysOnMpptInput = (int)(PVSystem->mpptMapping[mpptInput].size()); //number of subarrays attached to this MPPT input
 					std::vector<int> SubarraysOnMpptInput = PVSystem->mpptMapping[mpptInput]; //vector of which subarrays are attached to this MPPT input
 
-					//string voltage value from which module voltage will be calculated
-					//initialize it as -1 and check for that later
-					double stringVoltage = -1;
-
 					//string voltage for this MPPT input- if 1 subarray, this will be the string voltage. if >1 subarray and mismatch enabled, this
 					//will be the string voltage found by the mismatch calculation. if >1 subarray and mismatch not enabled, this will be the average
 					//voltage of the strings from all the subarrays on this mppt input.
+					//initialize it as -1 and check for that later
+					double stringVoltage = -1;
 
 					//mismatch calculations assume that the inverter MPPT operates all strings on that MPPT input at the same voltage.
 					//this algorithm sweeps across a range of string voltages, calculating total power for all strings on this MPPT input at each voltage.
@@ -1726,22 +1619,24 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 
 					} //now we have the string voltage at which the MPPT input will produce max power, to be used in subsequent calcs
 
-
-
 					//now calculate power for each subarray on this mppt input. stringVoltage will still be -1 if mismatch calcs aren't enabled, or the value decided by mismatch calcs if they are enabled
+					std::vector<pvinput_t> in{ num_subarrays }; //create arrays for the pv input and output structures because we have to deal with them in multiple loops to check for MPPT clipping
+					std::vector<pvoutput_t> out{ num_subarrays };
+					double tcell = wf.tdry;
 					for (int nSubarray = 0; nSubarray < nSubarraysOnMpptInput; nSubarray++) //sweep across all subarrays connected to this MPPT input
 					{
 						int nn = SubarraysOnMpptInput[nSubarray]; //get the index of the subarray we're checking here
 						//initalize pvinput and pvoutput structures for the model
-						pvinput_t in(Subarrays[nn]->poa.poaBeamFront, Subarrays[nn]->poa.poaDiffuseFront, Subarrays[nn]->poa.poaGroundFront, Subarrays[nn]->poa.poaRear, Subarrays[nn]->poa.poaTotal,
+						pvinput_t in_temp(Subarrays[nn]->poa.poaBeamFront, Subarrays[nn]->poa.poaDiffuseFront, Subarrays[nn]->poa.poaGroundFront, Subarrays[nn]->poa.poaRear, Subarrays[nn]->poa.poaTotal,
 							wf.tdry, wf.tdew, wf.wspd, wf.wdir, wf.pres,
 							solzen, Subarrays[nn]->poa.angleOfIncidenceDegrees, hdr.elev,
 							Subarrays[nn]->poa.surfaceTiltDegrees, Subarrays[nn]->poa.surfaceAzimuthDegrees,
 							((double)wf.hour) + wf.minute / 60.0,
 							radmode, Subarrays[nn]->poa.usePOAFromWF);
-						pvoutput_t out(0, 0, 0, 0, 0, 0, 0, 0);
-
-						double tcell = wf.tdry;
+						pvoutput_t out_temp(0, 0, 0, 0, 0, 0, 0, 0);
+						in[nn] = in_temp;
+						out[nn] = out_temp;					
+						
 						if (Subarrays[nn]->poa.sunUp)
 						{
 							//module voltage value to be passed into module power function. 
@@ -1751,95 +1646,113 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 							if (stringVoltage != -1) module_voltage = stringVoltage / (double)Subarrays[nn]->nModulesPerString;
 							// calculate cell temperature using selected temperature model
 							// calculate module power output using conversion model previously specified
-							(*Subarrays[nn]->Module->cellTempModel)(in, *Subarrays[nn]->Module->moduleModel, module_voltage, tcell);
-							(*Subarrays[nn]->Module->moduleModel)(in, tcell, module_voltage, out);
+							(*Subarrays[nn]->Module->cellTempModel)(in[nn], *Subarrays[nn]->Module->moduleModel, module_voltage, tcell);
+							(*Subarrays[nn]->Module->moduleModel)(in[nn], tcell, module_voltage, out[nn]);
+						}
+					}
 
-							if (iyear == 0) mpptVoltageClipping[nn] = out.Power; //initialize the voltage clipping loss with the power at module MPP, subtract from this later for the actual MPPT clipping loss
+					//assign input voltage at this MPPT input
+					//if mismatch was enabled, the voltage already was clipped to the inverter MPPT range as needed and  
+					//the string voltage is the same for all subarrays, so the voltage at the MPPT input is the same as the string voltage of any subarray
+					if (PVSystem->enableMismatchVoltageCalc) {
+						PVSystem->p_mpptVoltage[mpptInput][idx] = (ssc_number_t)out[SubarraysOnMpptInput[0]].Voltage * Subarrays[SubarraysOnMpptInput[0]]->nModulesPerString;
+					}
+					//if mismatch wasn't enabled, we assume the MPPT input voltage is a weighted average of the string voltages on this MPPT input,
+					//and still need to check that average against the inverter MPPT bounds
+					else
+					{
+						//create temporary values to calculate the weighted average string voltage
+						double nStrings = 0;
+						double avgVoltage = 0;
+						for (int nSubarray = 0; nSubarray < nSubarraysOnMpptInput; nSubarray++)
+						{
+							int nn = SubarraysOnMpptInput[nSubarray]; //get the index of the subarray itself
+							nStrings += Subarrays[nn]->nStrings;
+							avgVoltage += out[nn].Voltage * Subarrays[nn]->nModulesPerString * Subarrays[nn]->nStrings;
+						}
+						avgVoltage /= nStrings;
+						PVSystem->p_mpptVoltage[mpptInput][idx] = (ssc_number_t)avgVoltage;
 
-							// if mismatch is enabled, the voltage already was clipped to the inverter MPPT range as needed
-							// if mismatch isn't enabled, need to check the voltage at the module's MPP against the inverter MPPT voltage range
-							// if the module voltage is outside the inverter range, recalculate module power using the inverter voltage limit
-							if (!PVSystem->enableMismatchVoltageCalc && PVSystem->clipMpptWindow)
+						//check the weighted average string voltage against the inverter MPPT bounds
+						bool recalculatePower = false;
+						if (PVSystem->clipMpptWindow)
+						{
+							if (avgVoltage < PVSystem->Inverter->mpptLowVoltage)
 							{
-								double voltageMpptLow1Module = PVSystem->Inverter->mpptLowVoltage / (double)Subarrays[nn]->nModulesPerString;
-								double voltageMpptHi1Module = PVSystem->Inverter->mpptHiVoltage / (double)Subarrays[nn]->nModulesPerString;
-								if (out.Voltage < voltageMpptLow1Module)
+								avgVoltage = PVSystem->Inverter->mpptLowVoltage;
+								recalculatePower = true;
+							}
+							else if (avgVoltage > PVSystem->Inverter->mpptHiVoltage)
+							{
+								avgVoltage = PVSystem->Inverter->mpptHiVoltage;
+								recalculatePower = true;
+							}
+							
+							//if MPPT clipping occurs, we need to recalculate the module power for each subarray
+							if (recalculatePower)
+							{
+								for (int nSubarray = 0; nSubarray < nSubarraysOnMpptInput; nSubarray++) //sweep across all subarrays connected to this MPPT input
 								{
-									module_voltage = voltageMpptLow1Module;
-									(*Subarrays[nn]->Module->cellTempModel)(in, *Subarrays[nn]->Module->moduleModel, module_voltage, tcell);
-									(*Subarrays[nn]->Module->moduleModel)(in, tcell, module_voltage, out);
-								}
-								else if (out.Voltage > voltageMpptHi1Module)
-								{
-									module_voltage = voltageMpptHi1Module;
-									(*Subarrays[nn]->Module->cellTempModel)(in, *Subarrays[nn]->Module->moduleModel, module_voltage, tcell);
-									(*Subarrays[nn]->Module->moduleModel)(in, tcell, module_voltage, out);
+									int nn = SubarraysOnMpptInput[nSubarray]; //get the index of the subarray we're checking here
+
+									if (iyear == 0) mpptVoltageClipping[nn] = out[nn].Power; //initialize the voltage clipping loss with the power at module MPP, subtract from this later for the actual MPPT clipping loss
+
+									//recalculate power at the correct voltage
+									double module_voltage = avgVoltage / (double)Subarrays[nn]->nModulesPerString;
+									(*Subarrays[nn]->Module->cellTempModel)(in[nn], *Subarrays[nn]->Module->moduleModel, module_voltage, tcell);
+									(*Subarrays[nn]->Module->moduleModel)(in[nn], tcell, module_voltage, out[nn]);
+
+									if (iyear == 0)	mpptVoltageClipping[nn] -= out[nn].Power; //subtract the power that remains after voltage clipping in order to get the total loss. if no power was lost, all the power will be subtracted away again.
 								}
 							}
-							if (iyear == 0)	mpptVoltageClipping[nn] -= out.Power; //subtract the power that remains after voltage clipping in order to get the total loss. if no power was lost, all the power will be subtracted away again.
 						}
+					}
+
+					//now that we have the correct power for all subarrays, subject to inverter MPPT clipping, save outputs 
+					for (int nSubarray = 0; nSubarray < nSubarraysOnMpptInput; nSubarray++) //sweep across all subarrays connected to this MPPT input
+					{
+						int nn = SubarraysOnMpptInput[nSubarray]; //get the index of the subarray we're checking here
 
 						//check for weird results
-						if (out.Voltage > Subarrays[nn]->Module->moduleModel->VocRef()*1.3)
-							log(util::format("Module voltage is unrealistically high (exceeds 1.3*VocRef) at [mdhm: %d %d %d %lg]: %lg V\n", wf.month, wf.day, wf.hour, wf.minute, out.Voltage), SSC_NOTICE);
-						if (!std::isfinite(out.Power))
+						if (out[nn].Voltage > Subarrays[nn]->Module->moduleModel->VocRef()*1.3)
+							log(util::format("Module voltage is unrealistically high (exceeds 1.3*VocRef) at [mdhm: %d %d %d %lg]: %lg V\n", wf.month, wf.day, wf.hour, wf.minute, out[nn].Voltage), SSC_NOTICE);
+						if (!std::isfinite(out[nn].Power))
 						{
-							out.Power = 0;
-							out.Voltage = 0;
-							out.Current = 0;
-							out.Efficiency = 0;
-							out.CellTemp = tcell;
+							out[nn].Power = 0;
+							out[nn].Voltage = 0;
+							out[nn].Current = 0;
+							out[nn].Efficiency = 0;
+							out[nn].CellTemp = tcell;
 							log(util::format("Non-finite power output calculated at [mdhm: %d %d %d %lg], set to zero.\n"
 								"could be due to anomolous equation behavior at very low irradiances (poa: %lg W/m2)",
 								wf.month, wf.day, wf.hour, wf.minute, Subarrays[nn]->poa.poaTotal), SSC_NOTICE);
 						}
 
 						// save DC module outputs for this subarray
-						Subarrays[nn]->Module->dcPowerW = out.Power;
-						Subarrays[nn]->Module->dcEfficiency = out.Efficiency * 100;
-						Subarrays[nn]->Module->dcVoltage = out.Voltage;
-						Subarrays[nn]->Module->temperatureCellCelcius = out.CellTemp;
-						Subarrays[nn]->Module->currentShortCircuit = out.Isc_oper;
-						Subarrays[nn]->Module->voltageOpenCircuit = out.Voc_oper;
-						Subarrays[nn]->Module->angleOfIncidenceModifier = out.AOIModifier;
+						Subarrays[nn]->Module->dcPowerW = out[nn].Power;
+						Subarrays[nn]->Module->dcEfficiency = out[nn].Efficiency * 100;
+						Subarrays[nn]->Module->dcVoltage = out[nn].Voltage;
+						Subarrays[nn]->Module->temperatureCellCelcius = out[nn].CellTemp;
+						Subarrays[nn]->Module->currentShortCircuit = out[nn].Isc_oper;
+						Subarrays[nn]->Module->voltageOpenCircuit = out[nn].Voc_oper;
+						Subarrays[nn]->Module->angleOfIncidenceModifier = out[nn].AOIModifier;
 						
 						// Lifetime dcStringVoltage
 						dcStringVoltage[nn].push_back(Subarrays[nn]->Module->dcVoltage * Subarrays[nn]->nModulesPerString);
 
-						// Output front-side irradiance after the cover- needs to be after the module model for now because cover effects are part of the module model
+						// Output front-side irradiance after the reflection (IAM) loss - needs to be after the module model for now because reflection effects are part of the module model
 						if (iyear == 0)
 						{
-							ipoa_front[nn] *= out.AOIModifier;
-							PVSystem->p_poaFront[nn][idx] = (radmode == Irradiance_IO::POA_R) ? (ssc_number_t)ipoa[nn] : (ssc_number_t)(ipoa_front[nn]);
-							PVSystem->p_poaTotal[nn][idx] = (radmode == Irradiance_IO::POA_R) ? (ssc_number_t)ipoa[nn] : (ssc_number_t)(ipoa_front[nn] + ipoa_rear[nn]);
+							ipoa_front[nn] *= out[nn].AOIModifier;
+							PVSystem->p_poaFront[nn][idx] = (radmode == irrad::POA_R) ? (ssc_number_t)ipoa[nn] : (ssc_number_t)(ipoa_front[nn]);
+							PVSystem->p_poaTotal[nn][idx] = (radmode == irrad::POA_R) ? (ssc_number_t)ipoa[nn] : (ssc_number_t)(ipoa_front[nn] + ipoa_rear[nn]);
 
 							ts_accum_poa_front_total += ipoa_front[nn] * ref_area_m2 * Subarrays[nn]->nModulesPerString * Subarrays[nn]->nStrings;
-							ts_accum_poa_total_eff += ((radmode == Irradiance_IO::POA_R) ? ipoa[nn] : (ipoa_front[nn] + ipoa_rear_after_losses[nn])) * ref_area_m2 * Subarrays[nn]->nModulesPerString * Subarrays[nn]->nStrings;
+							ts_accum_poa_total_eff += ((radmode == irrad::POA_R) ? ipoa[nn] : (ipoa_front[nn] + ipoa_rear_after_losses[nn])) * ref_area_m2 * Subarrays[nn]->nModulesPerString * Subarrays[nn]->nStrings;
 
 							//assign final string voltage output
 							PVSystem->p_dcStringVoltage[nn][idx] = (ssc_number_t)Subarrays[nn]->Module->dcVoltage * Subarrays[nn]->nModulesPerString;
 						}
-					}
-
-					//assign input voltage at this MPPT input
-					//if only one subarray, the voltage at the MPPT input is the same as the string voltage of that subarray (the first and only subarray on the MPPT input)
-					//alternatively, if mismatch was enabled, the string voltage is the same for all subarrays, so the voltage at the MPPT input is the same as the string voltage of any subarray
-					if (SubarraysOnMpptInput.size() == 1 || PVSystem->enableMismatchVoltageCalc) {
-						PVSystem->p_mpptVoltage[mpptInput][idx] = (ssc_number_t)dcStringVoltage[SubarraysOnMpptInput[0]][idx];
-					}
-					//if mismatch wasn't enabled and there are more than one subarray on this MPPT input, we assume the MPPT input voltage is a weighted average of the string voltages
-					else
-					{
-						//create temporary values to calculate the weighted average string voltage
-						size_t nStrings = 0;
-						double totalVoltage = 0;						
-						for (int nSubarray = 0; nSubarray < nSubarraysOnMpptInput; nSubarray++)
-						{
-							int nn = SubarraysOnMpptInput[nSubarray]; //get the index of the subarray itself
-							nStrings += Subarrays[nn]->nStrings;
-							totalVoltage += dcStringVoltage[nn][idx] * Subarrays[nn]->nStrings;
-						}
-						PVSystem->p_mpptVoltage[mpptInput][idx] = (ssc_number_t)(totalVoltage / nStrings);
 					}
 				}
 
@@ -2112,6 +2025,11 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 				// total load loss
 				ssc_number_t xfmr_loss = xfmr_ll + xfmr_nll;
 				PVSystem->p_systemACPower[idx] -= xfmr_loss;
+
+				// transmission loss if AC power is produced
+				if (PVSystem->p_systemACPower[idx] > 0){
+					PVSystem->p_systemACPower[idx] -= (ssc_number_t)(transmissionloss);
+				}
 
 				// accumulate first year annual energy
 				if (iyear == 0)

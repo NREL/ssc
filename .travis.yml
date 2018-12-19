@@ -60,4 +60,5 @@ branches:
   only:
   - release
   - develop
+  - patch
   

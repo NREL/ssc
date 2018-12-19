@@ -137,6 +137,16 @@ TEST_F(weatherfileTest, EPWTest) {
 	EXPECT_TRUE(wf.nrecords() == 8760 * 2);
 }
 
+TEST_F(weatherfileTest, EPWNoLineEndingsTest) {
+	char filepath[150];
+	int n1 = sprintf(filepath, "%s/test/input_docs/weather_noLineEnding.epw", std::getenv("SSCDIR"));
+	file = std::string(filepath);
+	EXPECT_TRUE(wf.open(file));
+	std::string msg = wf.message();
+	EXPECT_TRUE(msg.length() == 0);
+	EXPECT_TRUE(wf.nrecords() == 8760 );
+}
+
 /**
 * \class weatherdataTest
 *

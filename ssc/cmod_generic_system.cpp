@@ -199,8 +199,6 @@ public:
 				{
 					for (size_t ihourstep = 0; ihourstep < steps_per_hour_gen; ihourstep++)
 					{
-//						enet[ihour* steps_per_hour_gen + ihourstep] = (ssc_number_t)(output*haf(ihour)); // kW
-						// TODO - yearly degradation 
 						enet[idx] = (ssc_number_t)(output*haf(ihour)) * sys_degradation[iyear]; // kW
 						if (is_assigned("load"))
 							p_load_full.push_back(load[ihour*steps_per_hour_gen + ihourstep]);
@@ -225,6 +223,8 @@ public:
 
 			if (nrec_gen < nrec_load)
 				throw exec_error("generic", util::format("energy_output_array %d must be greater than or equal to load array %d", nrec_gen, nrec_load));
+			else
+				nlifetime = nrec_gen * nyears;
 
 			enet = allocate("gen", nlifetime);
 
@@ -234,8 +234,6 @@ public:
 				{
 					for (size_t ihourstep = 0; ihourstep < steps_per_hour_gen; ihourstep++)
 					{
-//						enet[ihour* steps_per_hour_gen + ihourstep] = enet_in[ihour* steps_per_hour_gen + ihourstep] * (ssc_number_t)(derate* haf(ihour));
-						// TODO - yearly degradation 
 						enet[idx] = enet_in[ihour* steps_per_hour_gen + ihourstep] * (ssc_number_t)(derate* haf(ihour))* sys_degradation[iyear];
 						if (is_assigned("load"))
 							p_load_full.push_back(load[ihour*steps_per_hour_gen + ihourstep]);
