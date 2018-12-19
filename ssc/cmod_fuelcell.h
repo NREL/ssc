@@ -231,6 +231,7 @@ protected:
 	ssc_number_t * p_fuelCellConsumption_MCf;
 	ssc_number_t * p_fuelCellToGrid_kW;
 	ssc_number_t * p_fuelCellToLoad_kW;
+	ssc_number_t * p_fuelCellReplacements;
 };
 
 #endif

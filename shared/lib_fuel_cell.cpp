@@ -181,6 +181,9 @@ double FuelCell::getHeatRecoveryEfficiency() {
 int FuelCell::getTotalReplacements() {
 	return m_replacementCount;
 }
+void FuelCell::resetReplacements() {
+	m_replacementCount = 0;
+}
 void FuelCell::setReplacementOption(size_t replacementOption) {
 	m_replacementOption = replacementOption;
 }

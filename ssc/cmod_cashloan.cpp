@@ -554,13 +554,9 @@ public:
 			else // user specified
 				batt_rep = as_array("batt_replacement_schedule", &count); // replacements per year user-defined
 			double batt_cap = as_double("batt_computed_bank_capacity");
+			
 			// updated 10/17/15 per 10/14/15 meeting
-//			escal_or_annual(CF_battery_replacement_cost_schedule, nyears, "batt_replacement_cost", inflation_rate, batt_cap, false, as_double("batt_replacement_cost_escal")*0.01);
-			double batt_repl_cost = as_double("batt_replacement_cost");
-			double batt_repl_cost_escal = as_double("batt_replacement_cost_escal")*0.01;
-
-			for (int i = 0; i<nyears; i++)
-				cf.at(CF_battery_replacement_cost_schedule, i + 1) = batt_repl_cost * batt_cap * pow(1 + batt_repl_cost_escal + inflation_rate, i);
+			escal_or_annual(CF_battery_replacement_cost_schedule, nyears, "om_replacement_cost1", inflation_rate, batt_cap, false, as_double("om_replacement_cost_escal")*0.01);
 
 			for (int i = 0; i < nyears && i<(int)count; i++)
 				cf.at(CF_battery_replacement_cost, i + 1) = batt_rep[i] * 
@@ -577,16 +573,12 @@ public:
 				fuelcell_rep = as_array("fuelcell_replacement_schedule", &count); // replacements per year user-defined
 			double fuelcell_cap = as_double("fuelcell_computed_bank_capacity");
 			// updated 10/17/15 per 10/14/15 meeting
-//			escal_or_annual(CF_fuelcellery_replacement_cost_schedule, nyears, "fuelcell_replacement_cost", inflation_rate, fuelcell_cap, false, as_double("fuelcell_replacement_cost_escal")*0.01);
-			double fuelcell_repl_cost = as_double("fuelcell_replacement_cost");
-			double fuelcell_repl_cost_escal = as_double("fuelcell_replacement_cost_escal")*0.01;
-
-			for (int i = 0; i < nyears; i++)
-				cf.at(CF_fuelcell_replacement_cost_schedule, i + 1) = fuelcell_repl_cost * fuelcell_cap * pow(1 + fuelcell_repl_cost_escal + inflation_rate, i);
-
-			for (int i = 0; i < nyears && i < (int)count; i++)
+			escal_or_annual(CF_fuelcell_replacement_cost_schedule, nyears, "om_replacement_cost2", inflation_rate, fuelcell_cap, false, as_double("om_replacement_cost_escal")*0.01);
+			
+			for (int i = 0; i < nyears && i < (int)count; i++) {
 				cf.at(CF_fuelcell_replacement_cost, i + 1) = fuelcell_rep[i] *
-				cf.at(CF_fuelcell_replacement_cost_schedule, i + 1);
+					cf.at(CF_fuelcell_replacement_cost_schedule, i + 1);
+			}
 		}
 
 
@@ -1161,6 +1153,8 @@ public:
 		save_cf( CF_net_salvage_value, nyears, "cf_net_salvage_value" );
 		save_cf(CF_battery_replacement_cost, nyears, "cf_battery_replacement_cost");
 		save_cf(CF_battery_replacement_cost_schedule, nyears, "cf_battery_replacement_cost_schedule");
+		save_cf(CF_fuelcell_replacement_cost, nyears, "cf_fuelcell_replacement_cost");
+		save_cf(CF_fuelcell_replacement_cost_schedule, nyears, "cf_fuelcell_replacement_cost_schedule");
 		save_cf(CF_operating_expenses, nyears, "cf_operating_expenses");
 
 		save_cf( CF_deductible_expenses, nyears, "cf_deductible_expenses");

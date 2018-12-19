@@ -68,6 +68,9 @@ public:
 	/// Return the number of replacements
 	int getTotalReplacements();
 
+	/// Reset the number of replacements
+	void resetReplacements();
+
 	/// Update replacement options (for testing)
 	void setReplacementOption(size_t replacementOption);
 	void setReplacementCapacity(double replacement_percent);

@@ -89,8 +89,6 @@ var_info vtab_battery_replacement_cost[] = {
 		{ SSC_INPUT, SSC_NUMBER, "batt_computed_bank_capacity", "Battery bank capacity", "kWh", "", "Battery", "?=0.0", "", "" },
 		// changed 10/17/15 per 10/14/15 meeting.
 //		{ SSC_INPUT, SSC_ARRAY, "batt_replacement_cost", "Battery bank replacement cost", "$/kWh", "", "Battery", "?=0.0", "", "" },
-		{ SSC_INPUT, SSC_NUMBER, "batt_replacement_cost", "Battery bank replacement cost", "$/kWh", "", "Battery", "?=0.0", "", "" },
-		{ SSC_INPUT, SSC_NUMBER, "batt_replacement_cost_escal", "Battery bank replacement cost escalation", "%/year", "", "Battery", "?=0.0", "", "" },
 		{ SSC_OUTPUT, SSC_ARRAY, "cf_battery_replacement_cost", "Battery replacement cost", "$", "", "Cash Flow", "*", "", "" },
 		{ SSC_OUTPUT, SSC_ARRAY, "cf_battery_replacement_cost_schedule", "Battery replacement cost schedule", "$/kWh", "", "Cash Flow", "*", "", "" },
 
@@ -108,10 +106,8 @@ var_info vtab_fuelcell_replacement_cost[] = {
 		{ SSC_INPUT, SSC_NUMBER, "fuelcell_computed_bank_capacity", "fuelcell bank capacity", "kWh", "", "fuelcell", "?=0.0", "", "" },
 		// changed 10/17/15 per 10/14/15 meeting.
 //		{ SSC_INPUT, SSC_ARRAY, "fuelcell_replacement_cost", "fuelcell bank replacement cost", "$/kWh", "", "fuelcell", "?=0.0", "", "" },
-		{ SSC_INPUT, SSC_NUMBER, "fuelcell_replacement_cost", "fuelcell bank replacement cost", "$/kWh", "", "fuelcell", "?=0.0", "", "" },
-		{ SSC_INPUT, SSC_NUMBER, "fuelcell_replacement_cost_escal", "fuelcell bank replacement cost escalation", "%/year", "", "fuelcell", "?=0.0", "", "" },
 		{ SSC_OUTPUT, SSC_ARRAY, "cf_fuelcell_replacement_cost", "fuelcell replacement cost", "$", "", "Cash Flow", "*", "", "" },
-		{ SSC_OUTPUT, SSC_ARRAY, "cf_fuelcell_replacement_cost_schedule", "fuelcell replacement cost schedule", "$/kWh", "", "Cash Flow", "*", "", "" },
+		{ SSC_OUTPUT, SSC_ARRAY, "cf_fuelcell_replacement_cost_schedule", "fuelcell replacement cost schedule", "$/kW", "", "Cash Flow", "*", "", "" },
 
 		var_info_invalid };
 
@@ -136,6 +132,12 @@ var_info vtab_oandm[] = {
 	{ SSC_INPUT,        SSC_ARRAY,		 "om_fuel_cost",                 "Fuel cost",                         "$/MMBtu", "",                  "O&M",            "?=0.0",                 "",                                         "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "om_fuel_cost_escal",           "Fuel cost escalation",              "%/year",  "",                  "O&M",            "?=0.0",                 "",                                         "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "annual_fuel_usage",        "Fuel usage",                         "kWht",         "",                      "O&M",      "?=0",                     "MIN=0",                                         "" },
+
+	// replacements
+	{ SSC_INPUT,        SSC_ARRAY,		 "om_replacement_cost1",           "Repacement cost 1",                "$/kWh", "",                  "O&M",            "?=0.0",                 "",                                         "" },
+	{ SSC_INPUT,        SSC_ARRAY,		 "om_replacement_cost2",           "Repacement cost 2",                "$/kW",  "",                  "O&M",            "?=0.0",                 "",                                         "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "om_replacement_cost_escal",      "Replacement cost escalation",      "%/year",  "",                "O&M",            "?=0.0",                 "",                                         "" },
+
 
 	// optional fuel o and m for Biopower - usage can be in any unit and cost is in $ per usage unit
 	{ SSC_INPUT,        SSC_NUMBER,      "om_opt_fuel_1_usage",           "Biomass feedstock usage",              "unit",  "",                  "O&M",            "?=0.0",                 "",                                         "" },

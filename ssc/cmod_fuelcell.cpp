@@ -113,8 +113,9 @@ var_info vtab_fuelcell_output[] = {
 	{ SSC_OUTPUT,       SSC_ARRAY,       "fuelcell_to_load",                   "Electricity to load from fuel cell",    "kW",        "",                 "Fuel Cell",                  "",                        "",                              "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "fuelcell_to_grid",                   "Electricity to grid from fuel cell",    "kW",        "",                 "Fuel Cell",                  "",                        "",                              "" },
 
-	{ SSC_OUTPUT,       SSC_NUMBER,      "system_heat_rate",                     "Heat rate conversion factor (MMBTUs/MWhe)",  "MMBTUs/MWhe",   "",      "Fuel Cell",           "*",               "",                    "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,      "annual_fuel_usage",             "Annual Fuel Usage",                          "kWht",          "",      "Fuel Cell",           "*",               "",                    "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "fuelcell_replacement",                "Fuel cell replacements per year",      "number/year", "",              "Fuel Cell",           "",                           "",                              "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "system_heat_rate",                    "Heat rate conversion factor (MMBTUs/MWhe)",  "MMBTUs/MWhe",   "",      "Fuel Cell",           "*",               "",                    "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "annual_fuel_usage",                   "Annual Fuel Usage",                          "kWht",          "",      "Fuel Cell",           "*",               "",                    "" },
 
 
 var_info_invalid };
@@ -196,9 +197,13 @@ void cm_fuelcell::exec() throw (general_error)
 				idx_year++;
 			}
 		}
+		// tabulate replacements
+		size_t annual_index;
+		fcVars->numberOfYears > 1 ? annual_index = y + 1 : annual_index = 0;
+		p_fuelCellReplacements[annual_index] = (ssc_number_t)(fuelCell->getTotalReplacements());
+		fuelCell->resetReplacements();
 	}
 	 
-	
 	// capacity factor update
 	double capacity_factor_in, annual_energy_in, nameplate_in;
 	capacity_factor_in = annual_energy_in = nameplate_in = 0;
@@ -222,8 +227,6 @@ void cm_fuelcell::exec() throw (general_error)
 	assign("system_heat_rate", var_data((ssc_number_t)3.4123)); 
 	annual_fuel_usage *= (ssc_number_t)0.29; // 1cu ft = 0.29 kWh
 	assign("annual_fuel_usage", annual_fuel_usage);
-
-
 }
 
 void cm_fuelcell::allocateOutputs()
@@ -234,13 +237,16 @@ void cm_fuelcell::allocateOutputs()
 	p_fuelCellToGrid_kW = allocate("fuelcell_to_grid", fcVars->numberOfLifetimeRecords);
 	p_fuelCellToLoad_kW = allocate("fuelcell_to_load", fcVars->numberOfLifetimeRecords);
 
+	// annual outputs
+	size_t annual_size = fcVars->numberOfYears + 1;
+	if (fcVars->numberOfYears == 1) { annual_size = 1; };
+
+	p_fuelCellReplacements = allocate("fuelcell_replacement", annual_size);
+	p_fuelCellReplacements[0] = 0;
+
 	p_gen_kW = allocate("gen", fcVars->numberOfLifetimeRecords);
 
 }
 
 cm_fuelcell::~cm_fuelcell(){/* nothing to do */ }
-
-
-
-
 DEFINE_MODULE_ENTRY(fuelcell, "Fuel cell model", 1)
