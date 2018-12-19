@@ -1175,12 +1175,12 @@ public:
 			double batt_repl_cost = as_double("batt_replacement_cost");
 			double batt_repl_cost_escal = as_double("batt_replacement_cost_escal")*0.01;
 
-			for (int i = 0; i<nyears; i++)
-				cf.at(CF_battery_replacement_cost_schedule, i + 1) = batt_repl_cost * batt_cap * pow(1 + batt_repl_cost_escal + inflation_rate, i);
+			for (int y = 0; y<nyears; y++)
+				cf.at(CF_battery_replacement_cost_schedule, y + 1) = batt_repl_cost * batt_cap * pow(1 + batt_repl_cost_escal + inflation_rate, y);
 
-			for (int i = 0; i < nyears && i<(int)count; i++)
-				cf.at(CF_battery_replacement_cost, i + 1) = batt_rep[i] * 
-					cf.at(CF_battery_replacement_cost_schedule, i + 1);
+			for (int y = 0; y < nyears && y<(int)count; y++)
+				cf.at(CF_battery_replacement_cost, y + 1) = batt_rep[y] * 
+					cf.at(CF_battery_replacement_cost_schedule, y + 1);
 		}
 		
 

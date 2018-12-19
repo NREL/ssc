@@ -201,17 +201,17 @@ public:
 		
 		//8760 arrays of month, day, and hour neeeded for lots of calcs, initialize those here
 		int month[8760], day[8760], hour[8760];
-		int i = 0;
+		int ind = 0;
 		for (int m = 0; m < 12; m++)
 		{
 			for (int d = 0; d < util::nday[m]; d++)
 			{
 				for (int h = 0; h <= 23; h++)
 				{
-					month[i] = m;
-					day[i] = d;
-					hour[i] = h;
-					i++;
+					month[ind] = m;
+					day[ind] = d;
+					hour[ind] = h;
+					ind++;
 				}
 			}
 		}
