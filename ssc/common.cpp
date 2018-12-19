@@ -97,6 +97,24 @@ var_info vtab_battery_replacement_cost[] = {
 		var_info_invalid };
 
 
+var_info vtab_fuelcell_replacement_cost[] = {
+
+	/*   VARTYPE           DATATYPE         NAME                            LABEL                              UNITS     META                      GROUP          REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
+		{ SSC_INPUT, SSC_ARRAY, "fuelcell_bank_replacement", "fuelcell bank replacements per year", "number/year", "", "fuelcell", "", "", "" },
+		{ SSC_INPUT, SSC_ARRAY, "fuelcell_replacement_schedule", "fuelcell bank replacements per year (user specified)", "number/year", "", "fuelcell", "", "", "" },
+		{ SSC_INPUT, SSC_NUMBER, "en_fuelcell", "Enable fuelcell storage model", "0/1", "", "fuelcell", "?=0", "", "" },
+		{ SSC_INPUT, SSC_NUMBER, "fuelcell_replacement_option", "Enable fuelcell replacement?", "0=none,1=capacity based,2=user schedule", "", "fuelcell", "?=0", "INTEGER,MIN=0,MAX=2", "" },
+		{ SSC_INPUT, SSC_NUMBER, "fuelcell_per_kWh", "fuelcell cost", "$/kWh", "", "fuelcell", "?=0.0", "", "" },
+		{ SSC_INPUT, SSC_NUMBER, "fuelcell_computed_bank_capacity", "fuelcell bank capacity", "kWh", "", "fuelcell", "?=0.0", "", "" },
+		// changed 10/17/15 per 10/14/15 meeting.
+//		{ SSC_INPUT, SSC_ARRAY, "fuelcell_replacement_cost", "fuelcell bank replacement cost", "$/kWh", "", "fuelcell", "?=0.0", "", "" },
+		{ SSC_INPUT, SSC_NUMBER, "fuelcell_replacement_cost", "fuelcell bank replacement cost", "$/kWh", "", "fuelcell", "?=0.0", "", "" },
+		{ SSC_INPUT, SSC_NUMBER, "fuelcell_replacement_cost_escal", "fuelcell bank replacement cost escalation", "%/year", "", "fuelcell", "?=0.0", "", "" },
+		{ SSC_OUTPUT, SSC_ARRAY, "cf_fuelcell_replacement_cost", "fuelcell replacement cost", "$", "", "Cash Flow", "*", "", "" },
+		{ SSC_OUTPUT, SSC_ARRAY, "cf_fuelcell_replacement_cost_schedule", "fuelcell replacement cost schedule", "$/kWh", "", "Cash Flow", "*", "", "" },
+
+		var_info_invalid };
+
 
 var_info vtab_standard_loan[] = {
 

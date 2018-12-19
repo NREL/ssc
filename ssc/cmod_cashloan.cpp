@@ -213,6 +213,7 @@ extern var_info
 	vtab_oandm[],
 	vtab_depreciation[],
 	vtab_battery_replacement_cost[],
+	vtab_fuelcell_replacement_cost[],
 	vtab_tax_credits[],
 	vtab_payment_incentives[];
 
@@ -297,6 +298,9 @@ enum {
 	CF_battery_replacement_cost_schedule,
 	CF_battery_replacement_cost,
 
+	CF_fuelcell_replacement_cost_schedule,
+	CF_fuelcell_replacement_cost,
+
 	CF_nte,
 
 	CF_max };
@@ -334,6 +338,7 @@ public:
 		add_var_info( vtab_tax_credits );
 		add_var_info( vtab_payment_incentives );
 		add_var_info(vtab_battery_replacement_cost);
+		add_var_info(vtab_fuelcell_replacement_cost);
 		add_var_info(vtab_cashloan);
 	}
 
@@ -560,6 +565,28 @@ public:
 			for (int i = 0; i < nyears && i<(int)count; i++)
 				cf.at(CF_battery_replacement_cost, i + 1) = batt_rep[i] * 
 					cf.at(CF_battery_replacement_cost_schedule, i + 1);
+		}
+
+		// fuelcell cost - replacement from lifetime analysis
+		if (is_assigned("fuelcell_replacement_option") && (as_integer("fuelcell_replacement_option") > 0))
+		{
+			ssc_number_t *fuelcell_rep = 0;
+			if (as_integer("fuelcell_replacement_option") == 1)
+				fuelcell_rep = as_array("fuelcell_bank_replacement", &count); // replacements per year calculated
+			else // user specified
+				fuelcell_rep = as_array("fuelcell_replacement_schedule", &count); // replacements per year user-defined
+			double fuelcell_cap = as_double("fuelcell_computed_bank_capacity");
+			// updated 10/17/15 per 10/14/15 meeting
+//			escal_or_annual(CF_fuelcellery_replacement_cost_schedule, nyears, "fuelcell_replacement_cost", inflation_rate, fuelcell_cap, false, as_double("fuelcell_replacement_cost_escal")*0.01);
+			double fuelcell_repl_cost = as_double("fuelcell_replacement_cost");
+			double fuelcell_repl_cost_escal = as_double("fuelcell_replacement_cost_escal")*0.01;
+
+			for (int i = 0; i < nyears; i++)
+				cf.at(CF_fuelcell_replacement_cost_schedule, i + 1) = fuelcell_repl_cost * fuelcell_cap * pow(1 + fuelcell_repl_cost_escal + inflation_rate, i);
+
+			for (int i = 0; i < nyears && i < (int)count; i++)
+				cf.at(CF_fuelcell_replacement_cost, i + 1) = fuelcell_rep[i] *
+				cf.at(CF_fuelcell_replacement_cost_schedule, i + 1);
 		}
 
 
