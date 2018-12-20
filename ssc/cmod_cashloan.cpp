@@ -102,13 +102,13 @@ static var_info vtab_cashloan[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_om_production_expense", "O&M production-based expense",       "$",            "",                      "Cash Flow",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_om_capacity_expense",   "O&M capacity-based expense",         "$",            "",                      "Cash Flow",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_om_fixed1_expense",      "O&M fixed 1 expense",                  "$",            "",                      "Cash Flow",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_om_production1_expense", "O&M production-based 1 expense",       "$",            "",                      "Cash Flow",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_om_capacity1_expense",   "O&M capacity-based 1 expense",         "$",            "",                      "Cash Flow",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_om_fixed1_expense",      "Battery fixed expense",                  "$",            "",                      "Cash Flow",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_om_production1_expense", "Battery production-based expense",       "$",            "",                      "Cash Flow",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_om_capacity1_expense",   "Battery capacity-based expense",         "$",            "",                      "Cash Flow",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_om_fixed2_expense",      "O&M fixed 2 expense",                  "$",            "",                      "Cash Flow",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_om_production2_expense", "O&M production-based 2 expense",       "$",            "",                      "Cash Flow",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_om_capacity2_expense",   "O&M capacity-based 2 expense",         "$",            "",                      "Cash Flow",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_om_fixed2_expense",      "Fuel cell fixed expense",                  "$",            "",                      "Cash Flow",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_om_production2_expense", "Fuel cell production-based expense",       "$",            "",                      "Cash Flow",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_om_capacity2_expense",   "Fuel cell capacity-based expense",         "$",            "",                      "Cash Flow",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 
 
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_om_fuel_expense",       "O&M fuel expense",                   "$",            "",                      "Cash Flow",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
@@ -424,7 +424,7 @@ public:
 			i = 0;
 			while (i < nyears && i < (int)count)
 			{
-				cf.at(CF_thermal_value, i + 1) = (double)arrp[i + 1];
+				cf.at(CF_thermal_value, i + 1) = (double)arrp[i +1];
 				i++;
 			}
 		}
@@ -525,25 +525,6 @@ public:
 			escal_or_annual(CF_om_capacity2_expense, nyears, "om_capacity2", inflation_rate, 1.0, false, as_double("om_capacity_escal")*0.01);
 			nameplate2 = as_number("om_capacity2_nameplate");
 		}
-		/* Not at runtime
-		std::string str = as_string("add_om_capacity_names");
-		ssc_number_t nameplate1 = 0;
-		ssc_number_t nameplate2 = 0;
-		if (str != "n/a")
-		{
-			std::vector<std::string> add_om_capacity_names = util::split(str, ";");
-			if (add_om_capacity_names.size() > 0)
-				nameplate1 = as_number(add_om_capacity_names[0]);
-			if (add_om_capacity_names.size() > 1)
-				nameplate2 = as_number(add_om_capacity_names[1]);
-		}
-		str = as_string("add_om_production_names");
-		if (str != "n/a")
-		{
-			std::vector<std::string> add_om_production_names = util::split(str, ";");
-			// TODO - setup array of production values
-		}
-		*/
 
 		// battery cost - replacement from lifetime analysis
 		if ((as_integer("en_batt") == 1) && (as_integer("batt_replacement_option") > 0))
@@ -554,8 +535,6 @@ public:
 			else // user specified
 				batt_rep = as_array("batt_replacement_schedule", &count); // replacements per year user-defined
 			double batt_cap = as_double("batt_computed_bank_capacity");
-			
-			// updated 10/17/15 per 10/14/15 meeting
 			escal_or_annual(CF_battery_replacement_cost_schedule, nyears, "om_replacement_cost1", inflation_rate, batt_cap, false, as_double("om_replacement_cost_escal")*0.01);
 
 			for (int i = 0; i < nyears && i<(int)count; i++)
@@ -568,12 +547,10 @@ public:
 		{
 			ssc_number_t *fuelcell_rep = 0;
 			if (as_integer("fuelcell_replacement_option") == 1)
-				fuelcell_rep = as_array("fuelcell_bank_replacement", &count); // replacements per year calculated
+				fuelcell_rep = as_array("fuelcell_replacement", &count); // replacements per year calculated
 			else // user specified
 				fuelcell_rep = as_array("fuelcell_replacement_schedule", &count); // replacements per year user-defined
-			double fuelcell_cap = as_double("fuelcell_computed_bank_capacity");
-			// updated 10/17/15 per 10/14/15 meeting
-			escal_or_annual(CF_fuelcell_replacement_cost_schedule, nyears, "om_replacement_cost2", inflation_rate, fuelcell_cap, false, as_double("om_replacement_cost_escal")*0.01);
+			escal_or_annual(CF_fuelcell_replacement_cost_schedule, nyears, "om_replacement_cost2", inflation_rate, nameplate2, false, as_double("om_replacement_cost_escal")*0.01);
 			
 			for (int i = 0; i < nyears && i < (int)count; i++) {
 				cf.at(CF_fuelcell_replacement_cost, i + 1) = fuelcell_rep[i] *
@@ -795,7 +772,8 @@ public:
 				+ cf.at(CF_om_opt_fuel_2_expense,i)
 				+ cf.at(CF_property_tax_expense,i)
 				+ cf.at(CF_insurance_expense,i)
-				+ cf.at(CF_battery_replacement_cost,i)
+				+ cf.at(CF_battery_replacement_cost, i)
+				+ cf.at(CF_fuelcell_replacement_cost, i)
 				- cf.at(CF_net_salvage_value,i);
 
 			

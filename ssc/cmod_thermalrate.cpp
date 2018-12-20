@@ -68,7 +68,7 @@ static var_info vtab_thermal_rate[] = {
 	{ SSC_INPUT, SSC_ARRAY, "fuelcell_power_thermal", "Fuel cell power generated", "kW-t", "", "Time Series", "*", "", "" },
 	 
 	// input from user as kW-t and output as kW-t
-	{ SSC_INOUT, SSC_ARRAY, "thermal_load", "thermal load (year 1)", "kW-t", "", "Time Series", "", "", "" },
+	{ SSC_INOUT, SSC_ARRAY, "thermal_load", "Thermal load (year 1)", "kW-t", "", "Time Series", "", "", "" },
 
 	{ SSC_INPUT, SSC_NUMBER, "inflation_rate", "Inflation rate", "%", "", "Financials", "*", "MIN=-99", "" },
 
@@ -86,7 +86,9 @@ static var_info vtab_thermal_rate[] = {
 
 	//  output as kWh - same as load (kW) for hourly simulations
 //	{ SSC_OUTPUT, SSC_ARRAY, "thermal_bill_load", "Thermal bill load (year 1)", "kWh-t", "", "Time Series", "*", "", "" },
-	{ SSC_OUTPUT, SSC_ARRAY, "annual_thermal_value", "Thermal value with system", "$", "", "Time Series", "*", "", "" },
+//	{ SSC_OUTPUT, SSC_ARRAY, "annual_thermal_value", "Thermal value", "$", "", "Annual", "*", "", "" },
+//	{ SSC_OUTPUT, SSC_ARRAY, "annual_thermal_revenue_with_system", "Thermal value with system", "$", "", "Annual", "*", "", "" },
+//	{ SSC_OUTPUT, SSC_ARRAY, "annual_thermal_revenue_without_system", "Thermal value without system", "$", "", "Annual", "*", "", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "thermal_revenue_with_system", "Thermal revenue with system", "$", "", "Time Series", "*", "", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "thermal_revenue_without_system", "Thermal revenue without system", "$", "", "Time Series", "*", "", "" },
 	{ SSC_OUTPUT, SSC_NUMBER, "thermal_load_year1", "Thermal load (year 1)", "$", "", "", "*", "", "" },
@@ -355,10 +357,11 @@ public:
 		ssc_number_t *annual_net_revenue = allocate("annual_thermal_value", nyears+1);
 		ssc_number_t *annual_thermal_load = allocate("annual_thermal_load", nyears+1);
 		ssc_number_t *thermal_net = allocate("scaled_annual_thermal_energy", nyears+1);
-		ssc_number_t *annual_revenue_w_sys = allocate("thermal_revenue_with_system", nyears+1);
-		ssc_number_t *annual_revenue_wo_sys = allocate("thermal_revenue_without_system", nyears+1);
+		ssc_number_t *annual_revenue_w_sys = allocate("annual_thermal_revenue_with_system", nyears+1);
+		ssc_number_t *annual_revenue_wo_sys = allocate("annual_thermal_revenue_without_system", nyears+1);
 		ssc_number_t *annual_thermal_cost_w_sys = allocate("thermal_cost_with_system", nyears+1);
 		ssc_number_t *annual_thermal_cost_wo_sys = allocate("thermal_cost_without_system", nyears+1);
+
 
 		// matrices
 		ssc_number_t *thermal_bill_w_sys_ym = allocate("thermal_bill_w_sys_ym", nyears + 1, 12);
@@ -512,7 +515,7 @@ public:
 
 			}
 			
-			// determine net-revenue benefit due to solar for year 'i'
+			// determine net-revenue benefit due to thermal for year 'i'
 			
 			annual_net_revenue[i+1] = 0.0;
 			annual_thermal_load[i + 1] = 0.0;
@@ -523,7 +526,7 @@ public:
 			for (j = 0; j<m_num_rec_yearly; j++) 
 			{
 				thermal_net[i + 1] +=  e_sys_cy[j];
-				annual_net_revenue[i + 1] += revenue_w_sys[j] - revenue_wo_sys[j];
+//				annual_net_revenue[i + 1] += revenue_w_sys[j] - revenue_wo_sys[j];
 				annual_thermal_load[i + 1] += -e_load_cy[j];
 				annual_revenue_w_sys[i + 1] += revenue_w_sys[j];
 				annual_revenue_wo_sys[i + 1] += revenue_wo_sys[j];
@@ -531,7 +534,7 @@ public:
 
 			annual_thermal_cost_w_sys[i + 1] = -annual_revenue_w_sys[i+1];
 			annual_thermal_cost_wo_sys[i + 1] = -annual_revenue_wo_sys[i+1];
-
+			annual_net_revenue[i + 1] = annual_thermal_cost_wo_sys[i + 1] - annual_thermal_cost_w_sys[i + 1];
 
 		}
 
