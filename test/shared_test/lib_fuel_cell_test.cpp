@@ -52,6 +52,38 @@ TEST_F(FuelCellTest, Startup)
 	EXPECT_NEAR(fuelCell->getPower(), fuelCell->getMaxPower() - dynamicResponseDown_kWperHour, 0.1);
 }
 
+
+TEST_F(FuelCellTest, Shutdown)
+{
+	fuelCell->setShutdownOption(FuelCell::FC_SHUTDOWN_OPTION::SHUTDOWN);
+
+	// Run for startup_hours
+	for (size_t h = 0; h < (size_t)startup_hours; h++) {
+		fuelCell->runSingleTimeStep(20);
+	}
+
+	// Run for a few hours started up
+	for (size_t h = (size_t)startup_hours; h < (size_t)(startup_hours + 5); h++) {
+		fuelCell->runSingleTimeStep(20);
+		EXPECT_TRUE(fuelCell->isRunning());
+	}
+
+	// Initiate shutdown.  Should produce heat but no electricity for shutdown hours
+	for (size_t h = 0; h < (size_t)shutdown_hours; h++) {
+		fuelCell->runSingleTimeStep(0);
+		EXPECT_EQ(fuelCell->getPower(), 0);
+		EXPECT_GT(fuelCell->getPowerThermal(), 0);
+		EXPECT_FALSE(fuelCell->isRunning());
+	}
+
+	// After one more hour it will be fully shut down
+	fuelCell->runSingleTimeStep(0);
+	EXPECT_EQ(fuelCell->getPower(), 0);
+	EXPECT_EQ(fuelCell->getPowerThermal(), 0);
+	EXPECT_FALSE(fuelCell->isRunning());
+
+}
+
 TEST_F(FuelCellTest, AvailableFuel) {
 
 	
@@ -119,12 +151,13 @@ TEST_F(FuelCellTest, ScheduleRestarts) {
 	for (size_t h = 0; h < (size_t)4; h++) {
 		fuelCell->runSingleTimeStep(20);
 	}
-	// Next 4 hours should be shutdown
-	for (size_t h = 0; h < (size_t)4; h++) {
+	// Next 4 hours should be shutdown by schedule, but takes 8 hours to shutdown
+	for (size_t h = 0; h < (size_t)shutdown_hours; h++) {
 		fuelCell->runSingleTimeStep(20);
 		EXPECT_EQ(fuelCell->getPower(), 0);
 	}
-	EXPECT_EQ(fuelCell->getMaxPower(), fuelCell->getMaxPowerOriginal() - 1);
+	// Ensure restart degradation applied
+	EXPECT_EQ(fuelCell->getMaxPower(), fuelCell->getMaxPowerOriginal() - 1.0);
 
 	// Run for startup hours
 	for (size_t h = 0; h < (size_t)1; h++) {

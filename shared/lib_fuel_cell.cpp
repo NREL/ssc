@@ -5,7 +5,7 @@
 
 FuelCell::FuelCell() { /* Nothing to do */ };
 
-FuelCell::FuelCell(double unitPowerMax_kW, double unitPowerMin_kW, double startup_hours, 
+FuelCell::FuelCell(double unitPowerMax_kW, double unitPowerMin_kW, double startup_hours, double shutdown_hours,
 	double dynamicResponseUp_kWperHour, double dynamicResponseDown_kWperHour,
 	double degradation_kWperHour, double degradationRestart_kW,
 	size_t replacementOption, double replacement_percent, std::vector<size_t> replacementSchedule,
@@ -13,7 +13,7 @@ FuelCell::FuelCell(double unitPowerMax_kW, double unitPowerMin_kW, double startu
 	util::matrix_t<double> efficiencyTable,
 	double lowerHeatingValue_BtuPerFt3, double higherHeatingValue_BtuPerFt3, double availableFuel_Mcf,
 	int shutdownOption, double dt_hour) :
-	m_unitPowerMax_kW(unitPowerMax_kW), m_unitPowerMin_kW(unitPowerMin_kW), m_startup_hours(startup_hours),
+	m_unitPowerMax_kW(unitPowerMax_kW), m_unitPowerMin_kW(unitPowerMin_kW), m_startup_hours(startup_hours), m_shutdown_hours(shutdown_hours),
 	m_dynamicResponseUp_kWperHour(dynamicResponseUp_kWperHour), m_dynamicResponseDown_kWperHour(dynamicResponseDown_kWperHour),
 	m_degradation_kWperHour(degradation_kWperHour), m_degradationRestart_kW(degradationRestart_kW),
 	m_replacementOption(replacementOption), m_replacement_percent(replacement_percent * 0.01), m_replacementSchedule(replacementSchedule),
@@ -65,6 +65,7 @@ FuelCell::FuelCell(const FuelCell &fuelCell) :
 	m_availableFuel_MCf(fuelCell.m_availableFuel_MCf), 
 	m_shutdownOption(fuelCell.m_shutdownOption), 
 	m_startup_hours(fuelCell.m_startup_hours),
+	m_shutdown_hours(fuelCell.m_shutdown_hours),
 	dt_hour(fuelCell.dt_hour),
 	m_unitPowerMin_kW(fuelCell.m_unitPowerMin_kW),
 	m_unitPowerMax_kW(fuelCell.m_unitPowerMax_kW)
@@ -73,8 +74,11 @@ FuelCell::FuelCell(const FuelCell &fuelCell) :
 }
 
 void FuelCell::init() {
-	m_startedUp = 0;
+	m_startedUp = false;
 	m_hoursSinceStart = 0;
+	m_shutDown = false;
+	m_shuttingDown = false;
+	m_hoursSinceStop = 0;
 	m_powerMax_kW = m_unitPowerMax_kW;
 	m_power_kW = 0;
 	m_powerThermal_kW = 0;
@@ -88,6 +92,15 @@ void FuelCell::init() {
 bool FuelCell::isRunning() {
 	return m_startedUp;
 }
+
+bool FuelCell::isShutDown() {
+	return m_shutDown;
+}
+
+bool FuelCell::isShuttingDown() {
+	return m_shuttingDown;
+}
+
 double FuelCell::interpolateMap(double key, std::map<double, double> mapDouble) {
 	
 	double p1, p2, f1, f2, f, m;
@@ -202,12 +215,19 @@ void FuelCell::setScheduledShutdowns(util::matrix_t<size_t> shutdowns) {
 void FuelCell::setStartupHours(double startup_hours) {
 	m_startup_hours = startup_hours;
 }
+void FuelCell::setShutdownOption(int shutdownOption) {
+	m_shutdownOption = shutdownOption;
+}
 
-bool FuelCell::checkShutdown() {
+void FuelCell::checkShutdown() {
 
-	bool shutdown = false;
-
-	if (m_scheduledShutdowns.length() > 0) {
+	// Could be initiated due to min turndown operation options
+	if (m_shuttingDown) {
+		m_power_kW = 0;
+		m_hoursSinceStop += dt_hour;
+	}
+	// Scheduled shutdowns
+	else if (m_scheduledShutdowns.length() > 0 && !m_shutDown) {
 
 		// Turn off the fuel cell if the hour is one of the scheduled restart hours
 		for (size_t r = 0; r < m_scheduledShutdowns.nrows(); r++) {
@@ -215,17 +235,27 @@ bool FuelCell::checkShutdown() {
 			double duration_hours = (double)m_scheduledShutdowns.at(r, FuelCell::FC_SHUTDOWN_COLUMN::DURATION);
 
 			if (duration_hours > 0) {
+
+				if (m_hour == shutdown_hourOfYear) {
+					m_shuttingDown = true;
+					m_startedUp = false;
+					m_hoursSinceStart = 0;
+					m_hoursSinceStop = 0;
+				}
+
 				if (m_hour >= shutdown_hourOfYear && m_hour < shutdown_hourOfYear + duration_hours) {
 					m_power_kW = 0;
-					m_startedUp = 0;
-					m_hoursSinceStart = 0;
-					shutdown = true;
+					m_hoursSinceStop += dt_hour;
 					break;
 				}
 			}
 		}
 	}
-	return shutdown;
+	
+	if (m_hoursSinceStop > m_shutdown_hours) {
+		m_shuttingDown = false;
+		m_shutDown = true;
+	}
 }
 
 // Assume that min turndown trumps dynamic response, i.e, that fuel cell
@@ -234,17 +264,16 @@ void FuelCell::checkMinTurndown() {
 	
 	// Set to min turndown if less than min turndown
 	if (m_power_kW < m_unitPowerMin_kW && m_power_kW > 0) {
-		m_power_kW = m_unitPowerMin_kW;
-	}
-	// Otherwise check shutdown options
-	else if (m_power_kW == 0 && m_startedUp) 
-	{
+		
 		if (m_shutdownOption == FuelCell::FC_SHUTDOWN_OPTION::IDLE) {
 			m_power_kW = m_unitPowerMin_kW;
 		}
 		else {
-			m_startedUp = 0;
+			m_startedUp = false;
+			m_shuttingDown = true;
+			m_hoursSinceStop += dt_hour;
 			m_hoursSinceStart = 0;
+			m_power_kW = 0;
 		}
 	}
 }
@@ -315,7 +344,7 @@ void FuelCell::calculateTime() {
 void FuelCell::runSingleTimeStep(double power_kW) {
 
 	m_powerPrevious_kW = m_power_kW;
-	bool shutdown = checkShutdown();
+	checkShutdown();
 
 	// Initialize based on dynamic response limits
 	if (isRunning()) {
@@ -325,13 +354,24 @@ void FuelCell::runSingleTimeStep(double power_kW) {
 		applyEfficiency();
 		checkAvailableFuel();
 	}
-	else if (!shutdown) {
+	else if (!isShuttingDown()) {
 		if ((power_kW > 0 || m_hoursSinceStart > 0) && m_availableFuel_MCf > 0 && m_powerMax_kW > m_unitPowerMin_kW){
 			m_hoursSinceStart += dt_hour;
 			if (m_hoursSinceStart == m_startup_hours) {
 				m_startedUp = true;
 			}
 		}
+	}
+	
+	// Shutting down generates heat but no electricity
+	if (isShuttingDown()) {
+		calculateEfficiencyCurve(0.0);
+		m_powerThermal_kW = m_powerMax_kW * m_heatRecovery_percent;
+	}
+	// When completely shut down, no heat, no electricity
+	if (isShutDown()) {
+		m_powerThermal_kW = 0.0;
+
 	}
 	calculateTime();
 	applyDegradation();

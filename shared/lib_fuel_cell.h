@@ -20,7 +20,8 @@ public:
 	FuelCell();
 
 	/// Construct FuelCell with arguments
-	FuelCell(double unitPowerMax_kW, double unitPowerMin_kW, double startup_hours, 
+	FuelCell(double unitPowerMax_kW, double unitPowerMin_kW, 
+		double startup_hours, double shutdown_hours,
 		double dynamicResponseUp_kWperMin, double dynamicResponseDown_kWperMin,
 		double degradation_kWperHour, double degradationRestart_kW, 
 		size_t replacement_option, double replacement_percent, std::vector<size_t> replacementSchedule,
@@ -40,6 +41,12 @@ public:
 
 	/// Return true if operating
 	bool isRunning();
+
+	/// Return true if shutting down
+	bool isShuttingDown();
+
+	/// Return true if totally shut down
+	bool isShutDown();
 
 	/// Get original max power kW
 	double getMaxPowerOriginal();
@@ -81,6 +88,9 @@ public:
 	/// Update degradation (for testing)
 	void setDegradationkWPerHour(double degradation_kWPerHour);
 
+	/// Set shutdown option
+	void setShutdownOption(int option);
+
 	/// Update restart degradation
 	void setScheduledShutdowns(util::matrix_t<size_t> shutdowns);
 
@@ -114,7 +124,7 @@ protected:
 	double interpolateMap(double key, std::map<double, double>);
 
 	/// Check shutdown
-	bool checkShutdown();
+	void checkShutdown();
 
 	/// Check Min Turndown
 	void checkMinTurndown();
@@ -139,6 +149,7 @@ protected:
 	double m_unitPowerMax_kW;
 	double m_unitPowerMin_kW;
 	double m_startup_hours;
+	double m_shutdown_hours;
 
 	double m_dynamicResponseUp_kWperHour;
 	double m_dynamicResponseDown_kWperHour;
@@ -159,6 +170,11 @@ protected:
 	// calculated
 	bool m_startedUp;
 	double m_hoursSinceStart;
+
+	bool m_shuttingDown;
+	bool m_shutDown;
+	double m_hoursSinceStop;
+
 	double m_powerMax_kW;  // Maximum power after degradation
 	double m_powerThermal_kW;
 	double m_power_kW;

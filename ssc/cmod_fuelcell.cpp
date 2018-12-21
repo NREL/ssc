@@ -85,6 +85,7 @@ var_info vtab_fuelcell_input[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "fuelcell_replacement_option",       "Fuel cell replacement option",          "0/1/2",      "",                 "Fuel Cell",                  "",                        "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "fuelcell_replacement_percent",      "Fuel cell replace at percentage",       "",           "",                 "Fuel Cell",                  "",                        "",                              "" },
 	{ SSC_INPUT,        SSC_ARRAY,       "fuelcell_replacement_schedule",     "Fuel cell replace on schedule",         "",           "",                 "Fuel Cell",                  "",                        "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "fuelcell_shutdown_time",            "Fuel cell shutdown hours",              "hours",      "",                 "Fuel Cell",                  "",                        "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "fuelcell_startup_time",             "Fuel cell startup hours",               "hours",      "",                 "Fuel Cell",                  "",                        "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "fuelcell_type",                     "Fuel cell type",						   "0/1/2",      "",                 "Fuel Cell",                  "",                        "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "fuelcell_unit_max_power",           "Fuel cell max power per unit",          "kW",         "",                 "Fuel Cell",                  "",                        "",                              "" },
@@ -135,7 +136,8 @@ void cm_fuelcell::construct()
 	fcVars = std::move(tmp);
 
 	std::unique_ptr<FuelCell> tmp2(new FuelCell(fcVars->unitPowerMax_kW, fcVars->unitPowerMin_kW,
-		fcVars->startup_hours, fcVars->dynamicResponseUp_kWperHour, fcVars->dynamicResponseDown_kWperHour, 
+		fcVars->startup_hours, fcVars->shutdown_hours,
+		fcVars->dynamicResponseUp_kWperHour, fcVars->dynamicResponseDown_kWperHour, 
 		fcVars->degradation_kWperHour, fcVars->degradationRestart_kW, 
 		fcVars->replacementOption, fcVars->replacement_percent, fcVars->replacementSchedule,
 		fcVars->shutdownTable, fcVars->efficiencyTable,

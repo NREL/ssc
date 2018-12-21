@@ -15,6 +15,7 @@ protected:
 	double unitPowerMax_kW;
 	double unitPowerMin_kW;
 	double startup_hours;
+	double shutdown_hours;
 	double dynamicResponseUp_kWperHour;
 	double dynamicResponseDown_kWperHour;
 	double degradation_kWperHour;
@@ -47,6 +48,7 @@ protected:
 		unitPowerMax_kW = 100;
 		unitPowerMin_kW = 20;
 		startup_hours = 8;
+		shutdown_hours = 8;
 		dynamicResponseUp_kWperHour = 20;
 		dynamicResponseDown_kWperHour = 10;
 		degradation_kWperHour = 0.01;
@@ -104,7 +106,7 @@ public:
 	void SetUp()
 	{
 		FuelCellProperties::SetUp();
-		fuelCell = new FuelCell(unitPowerMax_kW, unitPowerMin_kW, startup_hours, 
+		fuelCell = new FuelCell(unitPowerMax_kW, unitPowerMin_kW, startup_hours, shutdown_hours,
 			dynamicResponseUp_kWperHour, dynamicResponseDown_kWperHour,
 			degradation_kWperHour, degradationRestart_kW,
 			replacementOption, replacement_percent, replacementSchedule, 
@@ -115,7 +117,8 @@ public:
 		fuelCellDispatchMultiple = new FuelCellDispatch(fuelCell, n_multipleFuelCells, dispatchOption, shutdownOption, dt_hour, fixed_percent,
 			dispatchInput_kW, canCharge, canDischarge, discharge_percent, scheduleWeekday, scheduleWeekend);
 
-		fuelCellSubHourly = new FuelCell(unitPowerMax_kW, unitPowerMin_kW, startup_hours, dynamicResponseUp_kWperHour, dynamicResponseDown_kWperHour, 
+		fuelCellSubHourly = new FuelCell(unitPowerMax_kW, unitPowerMin_kW, startup_hours, shutdown_hours,
+			dynamicResponseUp_kWperHour, dynamicResponseDown_kWperHour, 
 			degradation_kWperHour, degradationRestart_kW,
 			replacementOption, replacement_percent, replacementSchedule, shutdownTable, efficiencyTable, lowerHeatingValue_BtuPerFt3, higherHeatingValue_BtuPerFt3, availableFuel_Mcf, shutdownOption, dt_subHourly);
 		fuelCellDispatchSubhourly = new FuelCellDispatch(fuelCellSubHourly, numberOfUnits, dispatchOption, shutdownOption, dt_subHourly, fixed_percent,

@@ -66,6 +66,7 @@ public:
 		systemUseLifetimeOutput(cm.as_boolean("system_use_lifetime_output")),
 		unitPowerMax_kW(cm.as_double("fuelcell_unit_max_power")),
 		unitPowerMin_kW(cm.as_double("fuelcell_unit_min_power")),
+		shutdown_hours(cm.as_double("fuelcell_shutdown_time")),
 		startup_hours(cm.as_double("fuelcell_startup_time")),
 		dynamicResponseUp_kWperHour(cm.as_double("fuelcell_dynamic_response_up")),
 		dynamicResponseDown_kWperHour(cm.as_double("fuelcell_dynamic_response_down")),
@@ -167,6 +168,7 @@ public:
 	double dt_hour;
 	double unitPowerMax_kW;
 	double unitPowerMin_kW;
+	double shutdown_hours;
 	double startup_hours;
 	double dynamicResponseUp_kWperHour;
 	double dynamicResponseDown_kWperHour;
