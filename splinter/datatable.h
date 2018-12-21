@@ -47,7 +47,7 @@ public:
     std::multiset<DataPoint>::const_iterator cend() const;
 
     unsigned int getNumVariables() const {return numVariables;}
-    unsigned int getNumSamples() const {return samples.size();}
+    unsigned int getNumSamples() const {return (unsigned int)samples.size();}
     const std::multiset<DataPoint>& getSamples() const {return samples;}
 
     std::vector<std::set<double>> getGrid() const { return grid; }

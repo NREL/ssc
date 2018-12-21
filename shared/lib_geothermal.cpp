@@ -1269,12 +1269,12 @@ double CGeothermalAnalyzer::GetPlantBrineEffectiveness(void)
 	*/
 	double TSiO2 = -(0.0000001334837*pow(GetTemperaturePlantDesignC() , 4)) + (0.0000706584462*pow(GetTemperaturePlantDesignC() , 3)) - (0.0036294799613*pow(GetTemperaturePlantDesignC() , 2 )) + (0.3672417729236*GetTemperaturePlantDesignC()) + 4.205944351495;
 	double TamphSiO2 = (0.0000000000249634* pow(TSiO2 , 4)) - (0.00000000425191 * pow(TSiO2, 3)) - (0.000119669*pow(TSiO2 , 2)) + (0.307616*TSiO2) - 0.294394;
-	double dTemperatureGFExitF = physics::CelciusToFarenheit(TamphSiO2); //109.31
+	// double dTemperatureGFExitF = physics::CelciusToFarenheit(TamphSiO2); //109.31
 	double dAE_At_Exit = GetAEAtTemp(TamphSiO2);
 
 
 	// GETEM's "optimizer" seems to pick the max possible brine effectiveness for the default binary plant, so use this as a proxy for now
-	double dAEMaxPossible = (geothermal::IMITATE_GETEM) ? GetAEBinary() -  GetAEBinaryAtTemp(TamphSiO2) : GetAE() - dAE_At_Exit; // watt-hr/lb - [10B.GeoFluid].H54 "maximum possible available energy accounting for the available energy lost due to a silica constraint on outlet temperature"
+	// double dAEMaxPossible = (geothermal::IMITATE_GETEM) ? GetAEBinary() -  GetAEBinaryAtTemp(TamphSiO2) : GetAE() - dAE_At_Exit; // watt-hr/lb - [10B.GeoFluid].H54 "maximum possible available energy accounting for the available energy lost due to a silica constraint on outlet temperature"
 	mp_geo_out->max_secondlaw = (1 - ((geothermal::IMITATE_GETEM) ? GetAEBinaryAtTemp(TamphSiO2) / GetAEBinary() : dAE_At_Exit / GetAE()) - 0.375);
 	double dMaxBinaryBrineEffectiveness = ((geothermal::IMITATE_GETEM) ? GetAEBinary() : GetAE()) * ((GetTemperaturePlantDesignC() < 150) ? 0.14425 * exp(0.008806 * GetTemperaturePlantDesignC()) : mp_geo_out->max_secondlaw );
 	
@@ -1650,7 +1650,7 @@ bool CGeothermalAnalyzer::ReadWeatherForTimeStep(bool bHourly, unsigned int time
 
 	// Not an hourly analysis, so calculate the monthly weather info
 	int month = (timeStep % 12) + 1;
-	double hours = util::hours_in_month(month);
+	size_t hours = util::hours_in_month(month);
 	if (hours==0)
 	{
 		ms_ErrorString = "util::hours_in_month returned zero for month =  " + util::to_string(month) + ".";
@@ -1658,7 +1658,7 @@ bool CGeothermalAnalyzer::ReadWeatherForTimeStep(bool bHourly, unsigned int time
 	}
 
 	double pressure=0, wetbulb=0, drybulb=0, rel_humidity=0;
-	for (int i = 0; i<hours; i++)
+	for (size_t i = 0; i<hours; i++)
 	{
 		ReadNextLineInWeatherFile();
 		pressure += m_wf.pres;
@@ -1894,7 +1894,7 @@ bool CGeothermalAnalyzer::RunAnalysis( bool (*update_function)(float, void*), vo
 			}//hours
 
 			mp_geo_out->maf_monthly_resource_temp[iElapsedMonths] = (float)md_WorkingTemperatureC;	// resource temperature for this month
-			iEvaluationsInMonth = (IsHourly()) ? util::hours_in_month(month) : 1;
+			iEvaluationsInMonth = (IsHourly()) ? (unsigned int)util::hours_in_month(month) : 1;
 			mp_geo_out->maf_monthly_power[iElapsedMonths] = fMonthlyPowerTotal/iEvaluationsInMonth;		// avg monthly power
 			mp_geo_out->maf_monthly_energy[iElapsedMonths] = fMonthlyPowerTotal*util::hours_in_month(month)/iEvaluationsInMonth;		// energy output in month (kWh)
 

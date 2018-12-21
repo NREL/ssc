@@ -369,8 +369,8 @@ public:
 		if (as_integer("system_use_lifetime_output")==0)
 		{
 			double first_year_energy = 0.0;
-			for (int i = 0; i < 8760; i++) 
-				first_year_energy += hourly_energy_calcs.hourly_energy()[i];
+			for (int h = 0; h < 8760; h++) 
+				first_year_energy += hourly_energy_calcs.hourly_energy()[h];
 			for (int y = 1; y <= nyears; y++)
 				cf.at(CF_energy_net, y) = first_year_energy * cf.at(CF_degradation, y);
 		}
@@ -379,14 +379,14 @@ public:
 			for (int y = 1; y <= nyears; y++)
 			{
 				cf.at(CF_energy_net, y) = 0;
-				int i = 0;
+				int ind = 0;
 				for (int m = 0; m<12; m++)
 					for (int d = 0; d<util::nday[m]; d++)
 						for (int h = 0; h<24; h++)
-							if (i<8760)
+							if (ind<8760)
 							{
-					cf.at(CF_energy_net, y) += hourly_energy_calcs.hourly_energy()[(y - 1) * 8760 + i] * cf.at(CF_degradation, y);
-								i++;
+					cf.at(CF_energy_net, y) += hourly_energy_calcs.hourly_energy()[(y - 1) * 8760 + ind] * cf.at(CF_degradation, y);
+								ind++;
 							}
 			}
 
@@ -482,12 +482,12 @@ public:
 			double batt_repl_cost = as_double("batt_replacement_cost");
 			double batt_repl_cost_escal = as_double("batt_replacement_cost_escal")*0.01;
 
-			for (int i = 0; i<nyears; i++)
-				cf.at(CF_battery_replacement_cost_schedule, i + 1) = batt_repl_cost * batt_cap * pow(1 + batt_repl_cost_escal + inflation_rate, i);
+			for (int y = 0; y<nyears; y++)
+				cf.at(CF_battery_replacement_cost_schedule, y + 1) = batt_repl_cost * batt_cap * pow(1 + batt_repl_cost_escal + inflation_rate, y);
 
-			for (int i = 0; i < nyears && i<(int)count; i++)
-				cf.at(CF_battery_replacement_cost, i + 1) = batt_rep[i] * 
-					cf.at(CF_battery_replacement_cost_schedule, i + 1);
+			for (int y = 0; i < nyears && y<(int)count; y++)
+				cf.at(CF_battery_replacement_cost, y + 1) = batt_rep[y] * 
+					cf.at(CF_battery_replacement_cost_schedule, y + 1);
 		}
 
 
@@ -1013,14 +1013,14 @@ public:
 
 
 // real estate value added 6/24/13
-		for (int i=1;i<nyears+1;i++)
+		for (int y=1;y<nyears+1;y++)
 		{
 			double rr = 1.0;
 			if (nom_discount_rate != -1.0) rr = 1.0/(1.0+nom_discount_rate);
 			double result = 0;
-			for (int j=nyears;j>=i;j--) 
+			for (int j=nyears;j>=y;j--) 
 			result = rr * result + cf.at(CF_energy_value,j);
-			cf.at(CF_value_added,i) = result*rr + cf.at(CF_net_salvage_value,i);
+			cf.at(CF_value_added,y) = result*rr + cf.at(CF_net_salvage_value,y);
 		}
 		save_cf( CF_value_added, nyears, "cf_value_added" );
 

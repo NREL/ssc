@@ -927,14 +927,14 @@ static int nday[12] = {31,28,31,30,31,30,31,31,30,31,30,31};
 			{
 				for (int h=0;h<24;h++)
 				{
-					ssc_number_t val = 0.0;
+					ssc_number_t v = 0.0;
 					for (j=0;j<multiple;j++)
-						val += pvals[i*multiple+j];
+						v += pvals[i*multiple+j];
 
 
-					if (val < mmin[m]) mmin[m] = val;
-					if (val > mmax[m]) mmax[m] = val;
-					msum[m] += val;
+					if (v < mmin[m]) mmin[m] = v;
+					if (v > mmax[m]) mmax[m] = v;
+					msum[m] += v;
 
 					i++;
 				}

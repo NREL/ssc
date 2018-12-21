@@ -75,12 +75,12 @@ public:
 
     unsigned int getNumCoefficients() const
     {
-        return coefficients.size();
+        return (unsigned int)coefficients.size();
     }
 
     unsigned int getNumControlPoints() const
     {
-        return coefficients.size();
+        return (unsigned int)coefficients.size();
     }
 
     std::vector<unsigned int> getNumBasisFunctionsPerVariable() const;

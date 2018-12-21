@@ -29,6 +29,8 @@
     <ClCompile Include="..\ssc\cmod_cb_construction_financing.cpp" />
     <ClCompile Include="..\ssc\cmod_cb_empirical_hce_heat_loss.cpp" />
     <ClCompile Include="..\ssc\cmod_cb_mspt_system_costs.cpp" />
+    <ClCompile Include="..\ssc\cmod_geothermal_costs.cpp" />
+    <ClCompile Include="..\ssc\cmod_host_developer.cpp" />
     <ClCompile Include="..\ssc\cmod_inv_cec_cg.cpp" />
     <ClCompile Include="..\ssc\cmod_dsg_flux_preprocess.cpp" />
     <ClCompile Include="..\ssc\cmod_equpartflip.cpp" />
@@ -37,6 +39,7 @@
     <ClCompile Include="..\ssc\cmod_geothermal.cpp" />
     <ClCompile Include="..\ssc\cmod_hcpv.cpp" />
     <ClCompile Include="..\ssc\cmod_iec61853par.cpp" />
+    <ClCompile Include="..\ssc\cmod_iph_linear_fresnel_dsg.cpp" />
     <ClCompile Include="..\ssc\cmod_iph_to_lcoefcr.cpp" />
     <ClCompile Include="..\ssc\cmod_ippppa.cpp" />
     <ClCompile Include="..\ssc\cmod_irradproc.cpp" />
@@ -60,21 +63,26 @@
     <ClCompile Include="..\ssc\cmod_sco2_csp_ud_pc_tables.cpp" />
     <ClCompile Include="..\ssc\cmod_sco2_design_cycle.cpp" />
     <ClCompile Include="..\ssc\cmod_sco2_design_point.cpp" />
+    <ClCompile Include="..\ssc\cmod_sco2_offdesign.cpp" />
     <ClCompile Include="..\ssc\cmod_singlediode.cpp" />
     <ClCompile Include="..\ssc\cmod_singleowner.cpp" />
     <ClCompile Include="..\ssc\cmod_snowmodel.cpp" />
     <ClCompile Include="..\ssc\cmod_solarpilot.cpp" />
+    <ClCompile Include="..\ssc\cmod_sp_ty.cpp" />
     <ClCompile Include="..\ssc\cmod_swh.cpp" />
     <ClCompile Include="..\ssc\cmod_tcsdirect_steam.cpp" />
     <ClCompile Include="..\ssc\cmod_tcsdish.cpp" />
     <ClCompile Include="..\ssc\cmod_tcsgeneric_solar.cpp" />
     <ClCompile Include="..\ssc\cmod_tcsiscc.cpp" />
     <ClCompile Include="..\ssc\cmod_tcslinear_fresnel.cpp" />
+    <ClCompile Include="..\ssc\cmod_tcslinear_fresnel_dsg_csp_solver.cpp" />
     <ClCompile Include="..\ssc\cmod_tcsmolten_salt.cpp" />
+    <ClCompile Include="..\ssc\cmod_tcsmolten_salt_tcs_solver.cpp" />
     <ClCompile Include="..\ssc\cmod_tcsmslf.cpp" />
     <ClCompile Include="..\ssc\cmod_tcstrough_empirical.cpp" />
     <ClCompile Include="..\ssc\cmod_tcstrough_physical.cpp" />
     <ClCompile Include="..\ssc\cmod_tcstrough_physical_csp_solver.cpp" />
+    <ClCompile Include="..\ssc\cmod_test_ud_power_cycle.cpp" />
     <ClCompile Include="..\ssc\cmod_thirdpartyownership.cpp" />
     <ClCompile Include="..\ssc\cmod_timeseq.cpp" />
     <ClCompile Include="..\ssc\cmod_trough_physical_iph.cpp" />
@@ -89,6 +97,7 @@
     <ClCompile Include="..\ssc\cmod_wfcsv.cpp" />
     <ClCompile Include="..\ssc\cmod_wfreader.cpp" />
     <ClCompile Include="..\ssc\cmod_windbos.cpp" />
+    <ClCompile Include="..\ssc\cmod_windcsm.cpp" />
     <ClCompile Include="..\ssc\cmod_windfile.cpp" />
     <ClCompile Include="..\ssc\cmod_windpower.cpp" />
     <ClCompile Include="..\ssc\cmod_lcoefcr.cpp" />
@@ -96,6 +105,7 @@
     <ClCompile Include="..\ssc\common_financial.cpp" />
     <ClCompile Include="..\ssc\core.cpp" />
     <ClCompile Include="..\ssc\csp_common.cpp" />
+    <ClCompile Include="..\ssc\sscapi - sp_ty.cpp" />
     <ClCompile Include="..\ssc\sscapi.cpp" />
     <ClCompile Include="..\ssc\tckernel.cpp" />
     <ClCompile Include="..\ssc\vartab.cpp" />
@@ -104,6 +114,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\ssc\cmod_battery.h" />
+    <ClInclude Include="..\ssc\cmod_pvsamv1.h" />
     <ClInclude Include="..\ssc\cmod_windpower.h" />
     <ClInclude Include="..\ssc\common_financial.h" />
     <ClInclude Include="..\ssc\core.h" />
@@ -113,6 +124,14 @@
     <ClInclude Include="..\ssc\tckernel.h" />
     <ClInclude Include="..\ssc\vartab.h" />
     <ClInclude Include="..\ssc\vbapi.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\ssc\make-sdk-common.bat" />
+    <None Include="..\ssc\make-sdk-linux.sh" />
+    <None Include="..\ssc\make-sdk-osx.sh" />
+    <None Include="..\ssc\make-sdk-win.bat" />
+    <None Include="..\ssc\releasenotes.html" />
+    <None Include="..\ssc\ssc.def" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{46D1EE84-840B-4325-910A-BC205A0D4C08}</ProjectGuid>
