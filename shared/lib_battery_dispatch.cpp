@@ -992,7 +992,7 @@ void dispatch_automatic_behind_the_meter_t::sort_grid(FILE *p, bool debug, size_
 	{
 		for (size_t step = 0; step != _steps_per_hour; step++)
 		{
-			grid[count] = grid_point(_P_load_dc[idx] - _P_pv_dc[idx], hour, step);
+			grid[count] = grid_point(_P_load_dc[idx] - _P_pv_dc[idx], (int)hour, (int)step);
 			sorted_grid[count] = grid[count];
 
 			if (debug)
@@ -1091,7 +1091,7 @@ void dispatch_automatic_behind_the_meter_t::target_power(FILE*p, bool debug, dou
 				P_target = sorted_grid[ii + 1].Grid();
 
 			if (debug)
-				fprintf(p, "%lu\t %.3f\t", ii, P_target);
+				fprintf(p, "%lu\t %.3f\t", (unsigned long)ii, P_target);
 
 			// implies a repeated power
 			if (sorted_grid_diff[ii] == 0)
@@ -1115,7 +1115,7 @@ void dispatch_automatic_behind_the_meter_t::target_power(FILE*p, bool debug, dou
 				P_target += (sum - E_charge_vec[ii]) / ((ii + 1)*_dt_hour);
 				sum = E_charge_vec[ii];
 				if (debug)
-					fprintf(p, "%lu\t %.3f\t%.3f\t%.3f\n", ii, P_target, sum, E_charge_vec[ii]);
+					fprintf(p, "%lu\t %.3f\t%.3f\t%.3f\n", (unsigned long)ii, P_target, sum, E_charge_vec[ii]);
 				break;
 			}
 			// only allow one cycle per day
@@ -1124,7 +1124,7 @@ void dispatch_automatic_behind_the_meter_t::target_power(FILE*p, bool debug, dou
 				P_target += (sum - E_useful) / ((ii + 1)*_dt_hour);
 				sum = E_useful;
 				if (debug)
-					fprintf(p, "%lu\t %.3f\t%.3f\t%.3f\n", ii, P_target, sum, E_charge_vec[ii]);
+					fprintf(p, "%lu\t %.3f\t%.3f\t%.3f\n", (unsigned long)ii, P_target, sum, E_charge_vec[ii]);
 				break;
 			}
 		}

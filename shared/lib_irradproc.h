@@ -204,7 +204,7 @@ void hdkr( double hextra, double dn, double df, double alb, double inc, double t
 * \param[out] diffc diffuse components (isotropic, circumsolar, horizon) (W/m2)
 * 
 */
-void poaDecomp( double wfPOA, double angle[], double sun[], double alb, poaDecompReq* pA, double &dn, double &df, double &gh, double poa[3], double diffc[3]);
+int poaDecomp( double wfPOA, double angle[], double sun[], double alb, poaDecompReq* pA, double &dn, double &df, double &gh, double poa[3], double diffc[3]);
 
 /**
 * ModifiedDISC calculates direct normal (beam) radiation from global horizontal radiation.

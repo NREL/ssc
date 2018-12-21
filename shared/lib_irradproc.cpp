@@ -539,16 +539,13 @@ double GTI_DIRINT( const double poa[3], const double inc[3], double zen, double 
 		// Calculate Kt using GTI and Eq. 2
 //		double Kt_inc = GTI[1] / (Io * Max(0.065, cos(inc[1])));
 
-		//Calculate GNI using Kt and DIRINT Eq.s
+		//Calculate DNI using Kt and DIRINT Eq.s
 		double dn_tmp;
 		double Ktp_tmp = ModifiedDISC( GTI, inc, tDew, elev, doy, dn_tmp);
 
 		//Calculate DHI using Eq. 3
 		double df_tmp = GTI[1] * Max( 0.065, cz) / Max(0.065, cos(inc[1])) - dn_tmp*cz;
-
-		//Check for bad values
-		if( dn_tmp < 0 ) dn_tmp = 0;
-		if( df_tmp < 0 ) df_tmp = 0;
+		// if( df_tmp < 0 ) df_tmp = 0; //jmf removed 11/30/18 to allow error to be reported by poaDecomp if calculated dn is negative
 
 		//Model POA using Perez model and find diff from GTI (Model - GTI)
 		perez( ext, dn_tmp, df_tmp, alb, inc[1], tilt, zen, poa_tmp, diffc_tmp );
@@ -584,7 +581,10 @@ double GTI_DIRINT( const double poa[3], const double inc[3], double zen, double 
 	return Ktp;
 }
 
-void poaDecomp( double , double angle[], double sun[], double alb, poaDecompReq *pA, double &dn, double &df, double &gh, double poa[3], double diffc[3]){
+int poaDecomp( double , double angle[], double sun[], double alb, poaDecompReq *pA, double &dn, double &df, double &gh, double poa[3], double diffc[3]){
+
+	int errorcode = 0; //code to return whether the decomposition method succeeded or failed
+
 	/* Decomposes POA into direct normal and diffuse irradiances */
 
 	double r90(M_PI/2), r80( 80.0/180*M_PI ), r65(65.0/180*M_PI);
@@ -652,15 +652,29 @@ void poaDecomp( double , double angle[], double sun[], double alb, poaDecompReq 
 		df = (2* pA->POA[pA->i] - dn*cos(sun[1])*alb*(1-ct)) / (1 + ct + alb*(1-ct)) ;
 		gh = dn * cos( angle[0] ) + df;
 
-		//Check for bad values
-		if(dn<0) dn = 0;
-		if(df<0) df = 0;
-		if(gh<0) gh = 0;
-
 		// Get component poa from Perez
 		perez( sun[8], dn, df, alb, angle[0], angle[1], sun[1], poa, diffc );
-	
+
 	}
+
+	//Check for bad values and return an error code as applicable
+	if (gh < 0)
+	{
+		gh = 0;
+		errorcode = 42;
+	}
+	if (df < 0) //check for df before gh because gh is only calculated using dn and df, so is least likely to be the actual culprit
+	{
+		df = 0;
+		errorcode = 41;
+	}
+	if (dn < 0) //check for dn last because it is the most likely culprit of the problem
+	{
+		dn = 0;
+		errorcode = 40;
+	}
+
+	return errorcode;
 }
 
 void isotropic( double , double dn, double df, double alb, double inc, double tilt, double zen, double poa[3], double diffc[3] )
@@ -976,30 +990,30 @@ void irrad::get_irrad (double *ghi, double *dni, double *dhi){
 	*dhi = diffuseHorizontal;
 }
 
-void irrad::set_time( int year, int month, int day, int hour, double minute, double delt_hr )
+void irrad::set_time( int y, int m, int d, int h, double min, double delt_hr )
 {
-	this->year = year;
-	this->month = month;
-	this->day = day;
-	this->hour = hour;
-	this->minute = minute;
+	this->year = y;
+	this->month = m;
+	this->day = d;
+	this->hour = h;
+	this->minute = min;
 	this->delt = delt_hr;
 }
 
-void irrad::set_location( double latitudeDegrees, double longitudeDegrees, double timezone )
+void irrad::set_location( double latDegrees, double longDegrees, double tz )
 {
-	this->latitudeDegrees = latitudeDegrees;
-	this->longitudeDegrees = longitudeDegrees;
-	this->timezone = timezone;
+	this->latitudeDegrees = latDegrees;
+	this->longitudeDegrees = longDegrees;
+	this->timezone = tz;
 }
 
-void irrad::set_sky_model( int skyModel, double albedo )
+void irrad::set_sky_model( int sm, double alb )
 {
-	this->skyModel = skyModel;
-	this->albedo = albedo;
+	this->skyModel = sm;
+	this->albedo = alb;
 }
 
-void irrad::set_surface( int tracking, double tilt_deg, double azimuth_deg, double rotlim_deg, bool enableBacktrack, double groundCoverageRatio )
+void irrad::set_surface( int tracking, double tilt_deg, double azimuth_deg, double rotlim_deg, bool enBacktrack, double gcr )
 {
 	this->trackingMode = tracking;
 	if (tracking == 4)
@@ -1007,8 +1021,8 @@ void irrad::set_surface( int tracking, double tilt_deg, double azimuth_deg, doub
 	this->tiltDegrees = tilt_deg;
 	this->surfaceAzimuthDegrees = azimuth_deg;
 	this->rotationLimitDegrees = rotlim_deg;
-	this->enableBacktrack = enableBacktrack;
-	this->groundCoverageRatio = groundCoverageRatio;
+	this->enableBacktrack = enBacktrack;
+	this->groundCoverageRatio = gcr;
 }
 	
 void irrad::set_beam_diffuse( double beam, double diffuse )
@@ -1032,13 +1046,13 @@ void irrad::set_global_diffuse(double global, double diffuse)
 	this->radiationMode = irrad::GH_DF;
 }
 
-void irrad::set_poa_reference( double planeOfArrayIrradianceFront, poaDecompReq* pA){
-	this->weatherFilePOA = planeOfArrayIrradianceFront;
+void irrad::set_poa_reference( double poaIrradianceFront, poaDecompReq* pA){
+	this->weatherFilePOA = poaIrradianceFront;
 	this->radiationMode = irrad::POA_R;
 	this->poaAll = pA;
 }
-void irrad::set_poa_pyranometer( double planeOfArrayIrradianceFront, poaDecompReq* pA ){
-	this->weatherFilePOA = planeOfArrayIrradianceFront;
+void irrad::set_poa_pyranometer( double poaIrradianceFront, poaDecompReq* pA ){
+	this->weatherFilePOA = poaIrradianceFront;
 	this->radiationMode = irrad::POA_P;
 	this->poaAll = pA;
 }
@@ -1185,11 +1199,13 @@ int irrad::calc()
 			} 
 		} 
 		else { // Sev 2015/09/11 - perform a POA decomp.
-			poaDecomp( weatherFilePOA, surfaceAnglesRadians, sunAnglesRadians, albedo, poaAll, directNormal, diffuseHorizontal, globalHorizontal, planeOfArrayIrradianceFront, diffuseIrradianceFront);
+			int errorcode = poaDecomp( weatherFilePOA, surfaceAnglesRadians, sunAnglesRadians, albedo, poaAll, directNormal, diffuseHorizontal, globalHorizontal, planeOfArrayIrradianceFront, diffuseIrradianceFront);
 			calculatedDirectNormal = directNormal;
 			calculatedDiffuseHorizontal = diffuseHorizontal;
+			return errorcode; //this will return 0 if successful, otherwise 40, 41, or 42 if calculated decomposed dni, dhi, or ghi are negative
 		}
-	} else { globalHorizontal=0; directNormal=0; diffuseHorizontal=0;}
+	} 
+	else { globalHorizontal=0; directNormal=0; diffuseHorizontal=0;} //sun is below horizon
 
 	return 0;
 
@@ -1624,7 +1640,7 @@ void irrad::getFrontSurfaceIrradiances(double pvFrontShadeFraction, double rowTo
 	}
 }
 
-void irrad::getBackSurfaceIrradiances(double pvBackShadeFraction, double rowToRow, double verticalHeight, double clearanceGround, double distanceBetweenRows, double horizontalLength, std::vector<double> rearGroundGHI, std::vector<double> frontGroundGHI, std::vector<double> frontReflected, std::vector<double> & rearIrradiance, double & rearAverageIrradiance)
+void irrad::getBackSurfaceIrradiances(double pvBackShadeFraction, double rowToRow, double verticalHeight, double clearanceGround, double , double horizontalLength, std::vector<double> rearGroundGHI, std::vector<double> frontGroundGHI, std::vector<double> frontReflected, std::vector<double> & rearIrradiance, double & rearAverageIrradiance)
 {
 	// front surface assumed to be glass
 	double n2 = 1.526;
@@ -1756,8 +1772,8 @@ void irrad::getBackSurfaceIrradiances(double pvBackShadeFraction, double rowToRo
 					projectedX1 += intervals;
 					projectedX2 += intervals;
 				}
-				int index1 = static_cast<int>(projectedX1 + intervals) - intervals;
-				int index2 = static_cast<int>(projectedX2 + intervals) - intervals;
+				int index1 = static_cast<int>(projectedX1 + intervals) - (int)intervals;
+				int index2 = static_cast<int>(projectedX2 + intervals) - (int)intervals;
 
 				if (index1 == index2)
 				{
@@ -2548,7 +2564,7 @@ double ModifiedDISC(const double g[3], const double z[3], double td, double alt,
                 l++;
         }
         dn = bmax * cm[i][j][k][l];
-        dn = Max(0.0, dn);
+        // dn = Max(0.0, dn); //jmf removed 11/30/18 to allow error to be reported by poaDecomp if calculated dn is negative
     }   // End of if present global >= 1
 
     return kt1[1];
@@ -2634,8 +2650,8 @@ void ModifiedDISC(const double kt[3], const double kt1[3], const double g[3], co
 				l++;
 		}
 
-
-		dn = Max(0.0, bmax * cm[i][j][k][l]);
+		dn = bmax * cm[i][j][k][l];
+		// dn = Max(0.0, bmax * cm[i][j][k][l]); //jmf removed 11/30/18 to allow error to be reported by poaDecomp if calculated dn is negative
 		//std::cout << dn << " " << bmax << " " << cm[i][j][k][l] << std::endl;
 	}   // End of if present global >= 1
 	else

@@ -58,7 +58,6 @@
     <ClInclude Include="..\shared\lib_wind_obos.h" />
     <ClInclude Include="..\shared\lib_wind_obos_cable_vessel.h" />
     <ClInclude Include="..\shared\lsqfit.h" />
-
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\shared\lib_battery.cpp" />
@@ -94,7 +93,6 @@
     <ClCompile Include="..\shared\lib_wind_obos.cpp" />
     <ClCompile Include="..\shared\lib_wind_obos_cable_vessel.cpp" />
     <ClCompile Include="..\shared\lsqfit.cpp" />
-
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{794A2685-B70E-4504-9402-AC376D4EB459}</ProjectGuid>
@@ -171,6 +169,7 @@
       <PreprocessorDefinitions>_MBCS;%(PreprocessorDefinitions); _CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <AdditionalIncludeDirectories>$(SolutionDir)\..\splinter</AdditionalIncludeDirectories>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -182,6 +181,7 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>_MBCS;%(PreprocessorDefinitions); _CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(SolutionDir)\..\splinter</AdditionalIncludeDirectories>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -195,6 +195,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>_MBCS;%(PreprocessorDefinitions); _CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(SolutionDir)\..\splinter</AdditionalIncludeDirectories>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -210,6 +211,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>_MBCS;%(PreprocessorDefinitions); _CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(SolutionDir)\..\splinter</AdditionalIncludeDirectories>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
