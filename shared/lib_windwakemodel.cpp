@@ -96,8 +96,9 @@ void windTurbine::turbinePower(double windVelocity, double airDensity, double *t
 
 	//first, correct wind speeds in power curve for site air density. Using method 2 described in https://www.scribd.com/document/38818683/PO310-EWEC2010-Presentation
 	std::vector <double> temp_ws;
+	double correction = pow((physics::AIR_DENSITY_SEA_LEVEL / airDensity), (1.0 / 3.0));
 	for (size_t i = 0; i < densityCorrectedWS.size(); i++)
-		densityCorrectedWS[i] = powerCurveWS[i] * pow((physics::AIR_DENSITY_SEA_LEVEL / airDensity), (1.0 / 3.0));
+		densityCorrectedWS[i] = powerCurveWS[i] * correction;
 	int i = 0;
 	while (powerCurveKW[i] == 0)
 		i++; //find the index of the first non-zero power output in the power curve
