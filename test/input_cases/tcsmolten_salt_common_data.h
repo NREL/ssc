@@ -13,7 +13,7 @@ namespace tcsmoltentest {
 	char ud_ind_od_path[100];
 	char wlim_series_path[100];
 	char helio_positions_path[100];
-	char solar_resource_path[100];
+	char solar_resource_path[200];
 
 	int nmspt1 = sprintf(dispatch_factors_path, "%s/test/input_cases/tcs_data/dispatch_factors_ts.csv", tcsmoltentest::SSCDIR);
 	int nmspt2 = sprintf(ud_ind_od_path, "%s/test/input_cases/tcs_data/ud_ind_od.csv", tcsmoltentest::SSCDIR);
