@@ -338,3 +338,5 @@ nlopt/config\.h
 
 doc/html/*
 doc/latex/*
+
+build_linux/linux_errors

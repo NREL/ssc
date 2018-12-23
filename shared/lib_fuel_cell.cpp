@@ -13,15 +13,28 @@ FuelCell::FuelCell(double unitPowerMax_kW, double unitPowerMin_kW, double startu
 	util::matrix_t<double> efficiencyTable,
 	double lowerHeatingValue_BtuPerFt3, double higherHeatingValue_BtuPerFt3, double availableFuel_Mcf,
 	int shutdownOption, double dt_hour) :
-	m_unitPowerMax_kW(unitPowerMax_kW), m_unitPowerMin_kW(unitPowerMin_kW), m_startup_hours(startup_hours), m_shutdown_hours(shutdown_hours),
-	m_dynamicResponseUp_kWperHour(dynamicResponseUp_kWperHour), m_dynamicResponseDown_kWperHour(dynamicResponseDown_kWperHour),
-	m_degradation_kWperHour(degradation_kWperHour), m_degradationRestart_kW(degradationRestart_kW),
-	m_replacementOption(replacementOption), m_replacement_percent(replacement_percent * 0.01), m_replacementSchedule(replacementSchedule),
+	dt_hour(dt_hour),
+	m_unitPowerMax_kW(unitPowerMax_kW), 
+	m_unitPowerMin_kW(unitPowerMin_kW), 
+	m_startup_hours(startup_hours), 
+	m_shutdown_hours(shutdown_hours),
+	m_dynamicResponseUp_kWperHour(dynamicResponseUp_kWperHour), 
+	m_dynamicResponseDown_kWperHour(dynamicResponseDown_kWperHour),
+	m_degradation_kWperHour(degradation_kWperHour), 
+	m_degradationRestart_kW(degradationRestart_kW),
 	m_scheduledShutdowns(shutdownTable),
-	m_efficiencyTable(efficiencyTable), m_lowerHeatingValue_BtuPerFt3(lowerHeatingValue_BtuPerFt3),
+	m_replacementOption(replacementOption), 
+	m_replacement_percent(replacement_percent * 0.01), 
+	m_replacementSchedule(replacementSchedule),
+	m_efficiencyTable(efficiencyTable), 
+	m_lowerHeatingValue_BtuPerFt3(lowerHeatingValue_BtuPerFt3),
 	m_higherHeatingValue_BtuPerFt3(higherHeatingValue_BtuPerFt3),
-	m_availableFuel_MCf(availableFuel_Mcf), m_shutdownOption(shutdownOption), dt_hour(dt_hour),
-	m_powerMax_kW(unitPowerMax_kW), m_power_kW(0), m_powerPrevious_kW(0), m_replacementCount(0)
+	m_availableFuel_MCf(availableFuel_Mcf), 
+	m_shutdownOption(shutdownOption), 
+	m_powerMax_kW(unitPowerMax_kW), 
+	m_power_kW(0), 
+	m_powerPrevious_kW(0), 
+	m_replacementCount(0)
 {
 	// Calculate fuel consumption based on inputs
 	for (size_t r = 0; r < m_efficiencyTable.nrows(); r++) {
@@ -53,22 +66,22 @@ FuelCell::~FuelCell(){ /* Nothing to do */}
 
 
 FuelCell::FuelCell(const FuelCell &fuelCell) : 
+	dt_hour(fuelCell.dt_hour),
+	m_unitPowerMax_kW(fuelCell.m_unitPowerMax_kW),
+	m_unitPowerMin_kW(fuelCell.m_unitPowerMin_kW),
+	m_startup_hours(fuelCell.m_startup_hours),
+	m_shutdown_hours(fuelCell.m_shutdown_hours),
 	m_dynamicResponseUp_kWperHour(fuelCell.m_dynamicResponseUp_kWperHour),
 	m_dynamicResponseDown_kWperHour(fuelCell.m_dynamicResponseDown_kWperHour),
 	m_degradation_kWperHour(fuelCell.m_degradation_kWperHour), 
 	m_degradationRestart_kW(fuelCell.m_degradationRestart_kW),
+	m_scheduledShutdowns(fuelCell.m_scheduledShutdowns),
 	m_replacement_percent(fuelCell.m_replacement_percent * 0.01), 
 	m_efficiencyTable(fuelCell.m_efficiencyTable), 
-	m_scheduledShutdowns(fuelCell.m_scheduledShutdowns),
 	m_lowerHeatingValue_BtuPerFt3(fuelCell.m_lowerHeatingValue_BtuPerFt3),
 	m_higherHeatingValue_BtuPerFt3(fuelCell.m_higherHeatingValue_BtuPerFt3),
 	m_availableFuel_MCf(fuelCell.m_availableFuel_MCf), 
-	m_shutdownOption(fuelCell.m_shutdownOption), 
-	m_startup_hours(fuelCell.m_startup_hours),
-	m_shutdown_hours(fuelCell.m_shutdown_hours),
-	dt_hour(fuelCell.dt_hour),
-	m_unitPowerMin_kW(fuelCell.m_unitPowerMin_kW),
-	m_unitPowerMax_kW(fuelCell.m_unitPowerMax_kW)
+	m_shutdownOption(fuelCell.m_shutdownOption) 
 {
 	init();
 }

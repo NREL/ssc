@@ -784,7 +784,7 @@ void SCFrame::Copy( ssc_module_t p_mod, ssc_data_t p_data, var_table *vt, bool c
 	while (const ssc_info_t p_inf = ssc_module_var_info(p_mod, pidx++))
 	{
 		int var_type = ssc_info_var_type(p_inf);   // SSC_INPUT, SSC_OUTPUT, SSC_INOUT
-		int data_type = ssc_info_data_type(p_inf); // SSC_STRING, SSC_NUMBER, SSC_ARRAY, SSC_MATRIX		
+//		int data_type = ssc_info_data_type(p_inf); // SSC_STRING, SSC_NUMBER, SSC_ARRAY, SSC_MATRIX		
 		const char *name = (ssc_info_name(p_inf)); // assumed to be non-null
 		wxString reqd(ssc_info_required(p_inf));
 

@@ -8,10 +8,10 @@
 FuelCellDispatch::FuelCellDispatch(FuelCell * fuelCell, size_t numberOfUnits, int dispatchOption, int shutdownOption, double dt_hour, double fixed_percent, 
 	std::vector<double> dispatchInput_kW, std::vector<bool> canCharge, std::vector<bool> canDischarge, 
 	std::map<size_t, double> discharge_percent, util::matrix_t<size_t> scheduleWeekday, util::matrix_t<size_t> scheduleWeekend)
-	: m_numberOfUnits(numberOfUnits), m_dispatchOption(dispatchOption), m_shutdownOption(shutdownOption), dt_hour(dt_hour), m_fixed_percent(fixed_percent * 0.01), 
+	: m_powerTotal_kW(0), m_numberOfUnits(numberOfUnits), m_dispatchOption(dispatchOption), m_shutdownOption(shutdownOption), dt_hour(dt_hour), m_fixed_percent(fixed_percent * 0.01), 
 	m_dispatchInput_kW(dispatchInput_kW), m_canCharge(canCharge), m_canDischarge(canDischarge), 
 	m_discharge_percent(discharge_percent),
-	m_scheduleWeekday(scheduleWeekday), m_scheduleWeekend(scheduleWeekend), m_powerTotal_kW(0)
+	m_scheduleWeekday(scheduleWeekday), m_scheduleWeekend(scheduleWeekend)
 {
 	m_fuelCellVector.push_back(fuelCell);
 	for (auto percent = m_discharge_percent.begin(); percent != m_discharge_percent.end(); percent++) {
@@ -66,7 +66,7 @@ void FuelCellDispatch::runSingleTimeStep(size_t hour_of_year, size_t year_idx, d
 	// Specified to follow manual dispatch input (add logic)
 	else if (m_dispatchOption == FuelCellDispatch::FC_DISPATCH_OPTION::MANUAL) {
 		for (size_t fc = 0; fc < m_fuelCellVector.size(); fc++) {
-			size_t month, hour = NULL;
+			size_t month, hour = 0;
 			util::month_hour(hour_of_year, month, hour);
 			size_t period = m_scheduleWeekday(month - 1, hour - 1);
 			if (!util::weekday(hour_of_year)) {
