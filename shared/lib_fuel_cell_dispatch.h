@@ -18,6 +18,7 @@ public:
 		std::vector<bool> canCharge,
 		std::vector<bool> canDischarge,
 		std::map<size_t, double> discharge_percent, 
+		std::map<size_t, size_t> discharge_units,
 		util::matrix_t<size_t> scheduleWeekday,
 		util::matrix_t<size_t> scheduleWeekend);
 
@@ -29,6 +30,9 @@ public:
 
 	/// Update dispatch option (for testing)
 	void setDispatchOption(int dispatchOption);
+
+	/// Update dispatch units (for testing)
+	void setManualDispatchUnits(std::map<size_t, size_t> unitsByPeriod);
 
 	/// Get the total fuel cell power output kW
 	double getPower();
@@ -68,6 +72,7 @@ private:
 	std::vector<bool> m_canCharge;
 	std::vector<bool> m_canDischarge;
 	std::map<size_t, double> m_discharge_percent;
+	std::map<size_t, size_t> m_discharge_units;
 	util::matrix_t<size_t> m_scheduleWeekday;
 	util::matrix_t<size_t> m_scheduleWeekend;
 };

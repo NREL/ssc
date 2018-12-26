@@ -96,7 +96,8 @@ var_info vtab_fuelcell_input[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "fuelcell_dispatch_choice",          "Fuel cell dispatch choice",             "0/1/2",      "",                 "Fuel Cell",                  "",                        "",                              "" },
 	{ SSC_INPUT,        SSC_ARRAY,       "dispatch_manual_fuelcellcharge",    "Periods 1-6 charging allowed?",          "",          "",                 "Fuel Cell",                  "",                        "",                              "" },
 	{ SSC_INPUT,        SSC_ARRAY,       "dispatch_manual_fuelcelldischarge", "Periods 1-6 discharging allowed?",       "",          "",                 "Fuel Cell",                  "",                        "",                              "" },
-	{ SSC_INPUT,        SSC_ARRAY,       "dispatch_manual_percent_fc_discharge","Periods 1-6 discharging allowed?",     "",          "",                 "Fuel Cell",                  "",                        "",                              "" },
+	{ SSC_INPUT,        SSC_ARRAY,       "dispatch_manual_percent_fc_discharge","Periods 1-6 percent of max fuelcell output", "",    "",                 "Fuel Cell",                  "",                        "",                              "" },
+	{ SSC_INPUT,        SSC_ARRAY,       "dispatch_manual_units_fc_discharge","Periods 1-6 number of fuel cell units?", "",          "",                 "Fuel Cell",                  "",                        "",                              "" },
 	{ SSC_INPUT,        SSC_MATRIX,      "dispatch_manual_sched",             "Dispatch schedule for weekday",          "",          "",                 "Fuel Cell",                  "",                        "",                              "" },
 	{ SSC_INPUT,        SSC_MATRIX,      "dispatch_manual_sched_weekend",     "Dispatch schedule for weekend",          "",          "",                 "Fuel Cell",                  "",                        "",                              "" },
 
@@ -147,8 +148,8 @@ void cm_fuelcell::construct()
 
 	std::unique_ptr<FuelCellDispatch> tmp3(new FuelCellDispatch(fuelCell.get(), fcVars->numberOfUnits,
 		fcVars->dispatchOption, fcVars->shutdownOption, fcVars->dt_hour, fcVars->fixed_percent, fcVars->dispatch_kW,
-		fcVars->canCharge, fcVars->canDischarge, fcVars->discharge_percentByPeriod, fcVars->scheduleWeekday,
-		fcVars->scheduleWeekend));
+		fcVars->canCharge, fcVars->canDischarge, fcVars->discharge_percentByPeriod, fcVars->discharge_unitsByPeriod, 
+		fcVars->scheduleWeekday,fcVars->scheduleWeekend));
 	fuelCellDispatch = std::move(tmp3);
 
 	allocateOutputs();

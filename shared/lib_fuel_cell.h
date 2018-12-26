@@ -39,6 +39,9 @@ public:
 	/// Run for single time step
 	void runSingleTimeStep(double power_kW);
 
+	/// Return true if starting up but not fully running
+	bool isStarting();
+
 	/// Return true if operating
 	bool isRunning();
 
@@ -123,8 +126,8 @@ protected:
 	/// interpolate map
 	double interpolateMap(double key, std::map<double, double>);
 
-	/// Check shutdown
-	void checkShutdown();
+	/// Check status of fuel cell
+	void checkStatus(double power_kW);
 
 	/// Check Min Turndown
 	void checkMinTurndown();
@@ -168,12 +171,15 @@ protected:
 	int m_shutdownOption;
 
 	// calculated
+	bool m_startingUp;
 	bool m_startedUp;
-	double m_hoursSinceStart;
 
 	bool m_shuttingDown;
 	bool m_shutDown;
+
+	double m_hoursSinceStart;
 	double m_hoursSinceStop;
+	double m_hoursRampUp;
 
 	double m_powerMax_kW;  // Maximum power after degradation
 	double m_powerThermal_kW;

@@ -15,17 +15,12 @@ TEST_F(FuelCellTest, Initialize)
 
 TEST_F(FuelCellTest, Startup)
 {
-	// Run for startup_hours - 1
-	for (size_t h = 0; h < startup_hours - 1; h++) {
+	// Run for startup_hours 
+	for (size_t h = 0; h < startup_hours; h++) {
 		fuelCell->runSingleTimeStep(20);
 		EXPECT_EQ(fuelCell->getPower(), 0);
 		EXPECT_FALSE(fuelCell->isRunning());
 	}
-
-	// After one more hour it will be started, but won't deliver power during that time step
-	fuelCell->runSingleTimeStep(20);
-	EXPECT_EQ(fuelCell->getPower(), 0);
-	EXPECT_TRUE(fuelCell->isRunning());
 
 	// Next hour, it's fully started up
 	fuelCell->runSingleTimeStep(20);
@@ -152,7 +147,7 @@ TEST_F(FuelCellTest, ScheduleRestarts) {
 		fuelCell->runSingleTimeStep(20);
 	}
 	// Next 4 hours should be shutdown by schedule, but takes 8 hours to shutdown
-	for (size_t h = 0; h < (size_t)shutdown_hours; h++) {
+	for (size_t h = 0; h <= (size_t)shutdown_hours; h++) {
 		fuelCell->runSingleTimeStep(20);
 		EXPECT_EQ(fuelCell->getPower(), 0);
 	}
@@ -254,6 +249,29 @@ TEST_F(FuelCellTest, DispatchManual) {
 		year_idx++;
 	}
 }
+
+/// Test dispatching different units per period
+TEST_F(FuelCellTest, DispatchManualUnits) {
+
+	size_t sh = (size_t)startup_hours;
+	discharge_units[0] = 3;
+
+	fuelCellDispatchMultiple->setDispatchOption(FuelCellDispatch::FC_DISPATCH_OPTION::MANUAL);
+	fuelCellDispatchMultiple->setManualDispatchUnits(discharge_units);
+	
+	// Allow fuel cell to startup
+	for (size_t h = 0; h < sh; h++) {
+		fuelCellDispatchMultiple->runSingleTimeStep(h, h, 0, 20);
+	}
+	EXPECT_EQ(fuelCellDispatchMultiple->getPower(), 0);
+	
+
+	// Dispatch fuel cells at 40% of max output (40 kW per unit, limited by dynamic response, and min turndown)
+	fuelCellDispatchMultiple->runSingleTimeStep(sh, sh);
+	fuelCellDispatchMultiple->runSingleTimeStep(sh, sh);
+	EXPECT_EQ(fuelCellDispatchMultiple->getPower(), 3 * 40);
+}
+
 
 TEST_F(FuelCellTest, DispatchInput) {
 

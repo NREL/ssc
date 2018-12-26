@@ -87,11 +87,13 @@ FuelCell::FuelCell(const FuelCell &fuelCell) :
 }
 
 void FuelCell::init() {
+	m_startingUp = false;
 	m_startedUp = false;
 	m_hoursSinceStart = 0;
 	m_shutDown = false;
 	m_shuttingDown = false;
 	m_hoursSinceStop = 0;
+	m_hoursRampUp = std::ceilf((float)(m_unitPowerMin_kW / m_dynamicResponseUp_kWperHour));
 	m_powerMax_kW = m_unitPowerMax_kW;
 	m_power_kW = 0;
 	m_powerThermal_kW = 0;
@@ -100,6 +102,11 @@ void FuelCell::init() {
 	m_replacementCount = 0;
 	m_hour = 0;
 	m_year = 0;
+	
+}
+
+bool FuelCell::isStarting() {
+	return m_startingUp;
 }
 
 bool FuelCell::isRunning() {
@@ -154,10 +161,11 @@ double FuelCell::interpolateMap(double key, std::map<double, double> mapDouble) 
 }
 
 void FuelCell::calculateEfficiencyCurve(double percent) {
-	
-	m_fuelConsumed_MCf = interpolateMap(percent, m_fuelConsumptionMap_MCf);
-	m_efficiency_percent = interpolateMap(percent, m_efficiencyMap);
-	m_heatRecovery_percent = interpolateMap(percent, m_heatRecoveryMap);
+	if (!isShutDown()) {
+		m_fuelConsumed_MCf = interpolateMap(percent, m_fuelConsumptionMap_MCf);
+		m_efficiency_percent = interpolateMap(percent, m_efficiencyMap);
+		m_heatRecovery_percent = interpolateMap(percent, m_heatRecoveryMap);
+	}
 }
 
 double FuelCell::getPercentLoad() {
@@ -232,10 +240,35 @@ void FuelCell::setShutdownOption(int shutdownOption) {
 	m_shutdownOption = shutdownOption;
 }
 
-void FuelCell::checkShutdown() {
+void FuelCell::checkStatus(double power_kW) {
 
-	// Could be initiated due to min turndown operation options
-	if (m_shuttingDown) {
+	// Check if starting up
+	if (!isShuttingDown() && !isRunning() &&
+		(power_kW > 0 || isStarting()) && m_availableFuel_MCf > 0 && m_powerMax_kW > m_unitPowerMin_kW) {
+		m_hoursSinceStart += dt_hour;
+
+		// Fully started once past the startup hour criteria
+		if (m_hoursSinceStart > m_startup_hours) {
+			m_startedUp = true;
+			m_startingUp = false;
+			m_power_kW = power_kW;
+		}
+		else if (m_hoursSinceStart <= m_startup_hours) {
+			m_startingUp = true;
+			m_shuttingDown = false;
+			m_shutDown = false;
+			m_hoursSinceStop = 0;
+		}
+	}  
+	// Initialize power
+	else if (isRunning()) {
+		m_hoursSinceStart += dt_hour;
+		m_power_kW = power_kW;
+	}
+
+	// Check if is shutting down
+	checkMinTurndown();	
+	if (isShuttingDown()) {
 		m_power_kW = 0;
 		m_hoursSinceStop += dt_hour;
 	}
@@ -251,6 +284,7 @@ void FuelCell::checkShutdown() {
 
 				if (m_hour == shutdown_hourOfYear) {
 					m_shuttingDown = true;
+					m_startingUp = false;
 					m_startedUp = false;
 					m_hoursSinceStart = 0;
 					m_hoursSinceStop = 0;
@@ -275,25 +309,29 @@ void FuelCell::checkShutdown() {
 // can go from 0 to min turndown instantaneously.
 void FuelCell::checkMinTurndown() {
 	
-	// Set to min turndown if less than min turndown
-	if (m_power_kW < m_unitPowerMin_kW && m_power_kW > 0) {
-		
+	if (isStarting() || isShutDown()) {
+		m_power_kW = 0;
+	}
+	// Conditions for shutting down if going below min turndown
+	else if (m_power_kW < m_unitPowerMin_kW && m_hoursSinceStart > m_startup_hours + m_hoursRampUp) {
+
 		if (m_shutdownOption == FuelCell::FC_SHUTDOWN_OPTION::IDLE) {
 			m_power_kW = m_unitPowerMin_kW;
 		}
 		else {
 			m_startedUp = false;
 			m_shuttingDown = true;
-			m_hoursSinceStop += dt_hour;
 			m_hoursSinceStart = 0;
 			m_power_kW = 0;
 		}
+		
+	}
+	else if (isRunning()) {
+		m_power_kW = fmax(m_power_kW, m_unitPowerMin_kW);
 	}
 }
 void FuelCell::checkMaxLimit() {
-	if (m_power_kW > m_unitPowerMax_kW) {
-		m_power_kW = m_unitPowerMax_kW;
-	}
+	m_power_kW = fmin(m_power_kW, m_unitPowerMax_kW);
 }
 
 void FuelCell::checkAvailableFuel() {
@@ -301,7 +339,11 @@ void FuelCell::checkAvailableFuel() {
 
 	if (m_availableFuel_MCf <= 0) {
 		m_startedUp = false;
+		m_shutDown = true;
+		m_shuttingDown = false;
+		m_startingUp = false;
 		m_hoursSinceStart = 0;
+		m_hoursSinceStop = 0;
 	}
 }
 
@@ -311,7 +353,7 @@ void FuelCell::applyDegradation() {
 		m_powerMax_kW -= m_degradation_kWperHour * dt_hour;
 		m_power_kW = fmin(m_power_kW, m_powerMax_kW);
 	}
-	else if (m_powerPrevious_kW > 0 && m_hoursSinceStart == 0) {
+	else if (isShuttingDown() && m_powerPrevious_kW > 0) {
 		m_powerMax_kW -= m_degradationRestart_kW;
 		if (m_powerMax_kW < 0) {
 			m_powerMax_kW = 0;
@@ -331,20 +373,38 @@ void FuelCell::applyDegradation() {
 			m_replacementCount += 1;
 		} 
 	}
+	// If stack degrades below minimum turndown, shutdown
 	if (m_powerMax_kW <= m_unitPowerMin_kW) {
 		m_power_kW = 0;
-		m_startedUp = 0;
+		m_startedUp = false;
+		m_shutDown = true;
+		m_shuttingDown = false;
 		m_hoursSinceStart = 0;
+		m_hoursSinceStop = 0;
 	}
 }
 
 void FuelCell::applyEfficiency() {
-	calculateEfficiencyCurve(getPercentLoad());
-	m_powerThermal_kW = m_power_kW;
-	m_powerThermal_kW *= m_heatRecovery_percent;
+
+	// Shutting down generates heat but no electricity
+	if (isShuttingDown()) {
+		calculateEfficiencyCurve(0.0);
+		m_powerThermal_kW = m_powerMax_kW * m_heatRecovery_percent;
+	}
+	// When completely shut down, no heat, no electricity
+	else if (isShutDown()) {
+		m_powerThermal_kW = 0.0;
+		m_fuelConsumed_MCf = 0;
+	}
+	else {
+		calculateEfficiencyCurve(getPercentLoad());
+		m_powerThermal_kW = m_power_kW;
+		m_powerThermal_kW *= m_heatRecovery_percent;
+	}
 }
 
 void FuelCell::calculateTime() {
+	
 	m_hour += dt_hour;
 	int hour = (int)std::floor(m_hour);
 
@@ -357,36 +417,28 @@ void FuelCell::calculateTime() {
 void FuelCell::runSingleTimeStep(double power_kW) {
 
 	m_powerPrevious_kW = m_power_kW;
-	checkShutdown();
+
+	checkStatus(power_kW);
 
 	// Initialize based on dynamic response limits
 	if (isRunning()) {
 		m_power_kW = getPowerResponse(power_kW);
-		checkMinTurndown();
-		checkMaxLimit();
-		applyEfficiency();
-		checkAvailableFuel();
 	}
-	else if (!isShuttingDown()) {
-		if ((power_kW > 0 || m_hoursSinceStart > 0) && m_availableFuel_MCf > 0 && m_powerMax_kW > m_unitPowerMin_kW){
-			m_hoursSinceStart += dt_hour;
-			if (m_hoursSinceStart == m_startup_hours) {
-				m_startedUp = true;
-			}
-		}
-	}
-	
-	// Shutting down generates heat but no electricity
-	if (isShuttingDown()) {
-		calculateEfficiencyCurve(0.0);
-		m_powerThermal_kW = m_powerMax_kW * m_heatRecovery_percent;
-	}
-	// When completely shut down, no heat, no electricity
-	if (isShutDown()) {
-		m_powerThermal_kW = 0.0;
 
-	}
+	// Check minimum power, maximum power
+	checkMinTurndown();
+	checkMaxLimit();
+
+	// Calculate electrical and thermal efficiency
+	applyEfficiency();
+
+	// Ensure there is adequate fuel to generate this time step
+	checkAvailableFuel();
+	
+	// Update internal clock
 	calculateTime();
+
+
 	applyDegradation();
 	
 }

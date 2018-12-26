@@ -88,6 +88,7 @@ public:
 		canCharge(cm.as_vector_bool("dispatch_manual_fuelcellcharge")),
 		canDischarge(cm.as_vector_bool("dispatch_manual_fuelcelldischarge")),
 		discharge_percent(cm.as_vector_double("dispatch_manual_percent_fc_discharge")),
+		discharge_units(cm.as_vector_unsigned_long("dispatch_manual_units_fc_discharge")),
 		scheduleWeekday(cm.as_matrix_unsigned_long("dispatch_manual_sched")),
 		scheduleWeekend(cm.as_matrix_unsigned_long("dispatch_manual_sched_weekend"))
 	{
@@ -145,10 +146,10 @@ public:
 		for (size_t p = 0; p < canDischarge.size(); p++) {
 			if (canDischarge[p]) {
 				discharge_percentByPeriod[p] = discharge_percent[count];
+				discharge_unitsByPeriod[p] = discharge_units[count];
 				count++;
 			}
 		}
-
 	}
 
 	// simulation inputs
@@ -192,7 +193,9 @@ public:
 	std::vector<bool> canCharge;
 	std::vector<bool> canDischarge;
 	std::vector<double> discharge_percent;
+	std::vector<size_t> discharge_units;
 	std::map<size_t, double> discharge_percentByPeriod;
+	std::map<size_t, size_t> discharge_unitsByPeriod;
 	util::matrix_t<size_t> scheduleWeekday;
 	util::matrix_t<size_t> scheduleWeekend;
 };
