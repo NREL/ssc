@@ -103,10 +103,10 @@ TEST_F(CMWindPowerIntegration, UsingInterpolatedSubhourly_cmod_windpower){
 
 	ssc_number_t check_annual_energy;
 	ssc_data_get_number(data, "annual_energy", &check_annual_energy);
-	EXPECT_NEAR(check_annual_energy, hourly_annual_energy, e);
+	EXPECT_NEAR(check_annual_energy, hourly_annual_energy, 0.005*check_annual_energy);
 
 	ssc_number_t check_january_energy = ssc_data_get_array(data, "monthly_energy", nullptr)[0];
-	EXPECT_NEAR(check_january_energy, hourly_january_energy, e);
+	EXPECT_NEAR(check_january_energy, hourly_january_energy, 0.005*check_january_energy);
 
 	size_t nEntries = static_cast<var_table*>(data)->lookup("gen")->num.ncols();
 	EXPECT_EQ(nEntries, 8760 * 4);
@@ -122,10 +122,10 @@ TEST_F(CMWindPowerIntegration, UsingInterpolatedSubhourly_cmod_windpower){
 
 	check_annual_energy;
 	ssc_data_get_number(data, "annual_energy", &check_annual_energy);
-	EXPECT_NEAR(check_annual_energy, hourly_annual_energy, e);
+	EXPECT_NEAR(check_annual_energy, hourly_annual_energy, 0.005*check_annual_energy);
 
 	check_january_energy = ssc_data_get_array(data, "monthly_energy", nullptr)[0];
-	EXPECT_NEAR(check_january_energy, hourly_january_energy, e);
+	EXPECT_NEAR(check_january_energy, hourly_january_energy, 0.005*check_january_energy);
 
 	nEntries = static_cast<var_table*>(data)->lookup("gen")->num.ncols();
 	EXPECT_EQ(nEntries, 8760 * 12);
