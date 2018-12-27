@@ -119,7 +119,7 @@ public:
 		// Timesteps
 		numberOfLifetimeRecords = numberOfRecordsPerYear * numberOfYears;
 		stepsPerHour = numberOfRecordsPerYear / (size_t)8760;
-		dt_hour = (double)(1 / stepsPerHour);
+		dt_hour = (double)(1.0 / (double)stepsPerHour);
 
 		// Ensure load matches generation size
 		std::vector<double> load = electricLoad_kW;

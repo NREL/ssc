@@ -122,6 +122,10 @@ void FuelCellDispatch::setDispatchOption(int dispatchOption) {
 	m_dispatchOption = dispatchOption;
 }
 
+void FuelCellDispatch::setFixedDischargePercentage(double discharge_percent) {
+	m_fixed_percent = discharge_percent * 0.01;
+}
+
 void FuelCellDispatch::setManualDispatchUnits(std::map<size_t, size_t> unitsByPeriod) {
 	if (unitsByPeriod.size() == m_discharge_units.size()) {
 		m_discharge_units = unitsByPeriod;

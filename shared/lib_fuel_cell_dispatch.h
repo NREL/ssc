@@ -31,6 +31,9 @@ public:
 	/// Update dispatch option (for testing)
 	void setDispatchOption(int dispatchOption);
 
+	/// Update the fixed percentage to dispatch
+	void setFixedDischargePercentage(double discharge_percent);
+
 	/// Update dispatch units (for testing)
 	void setManualDispatchUnits(std::map<size_t, size_t> unitsByPeriod);
 

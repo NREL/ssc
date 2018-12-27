@@ -81,6 +81,10 @@ public:
 	/// Reset the number of replacements
 	void resetReplacements();
 
+	/// Update system properties (for testing)
+	void setSystemProperties(double nameplate_kW, double min_kW, double startup_hours, double shutdown_hours,
+		double dynamicResponseUp_kWperHour, double dynamicResponseDown_kWperHour);
+
 	/// Update replacement options (for testing)
 	void setReplacementOption(size_t replacementOption);
 	void setReplacementCapacity(double replacement_percent);
@@ -138,8 +142,8 @@ protected:
 	/// Check Available Fuel
 	void checkAvailableFuel();
 
-	/// Get fuel cell power given the requested power signal
-	double getPowerResponse(double power);
+	/// Check fuel cell power response conforms to dynamic limits
+	void checkPowerResponse();
 
 	/// Return percentage based on requested power
 	double getPercentLoad();

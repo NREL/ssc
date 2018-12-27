@@ -166,9 +166,43 @@ TEST_F(FuelCellTest, ScheduleRestarts) {
 	}
 }
 
+/// Test subhourly dispatch
+TEST_F(FuelCellTest, DispatchFixedSubhourly) 
+{
+	size_t sh = 1;
+	size_t stepsPerHour = (size_t)(1 / dt_subHourly);
+
+	// Set to SOFC properties
+	fuelCellSubHourly->setSystemProperties(200, 60, 1, 24, 500, 500);
+	fuelCellDispatchSubhourly->setDispatchOption(FuelCellDispatch::FC_DISPATCH_OPTION::FIXED);
+	fuelCellDispatchSubhourly->setFixedDischargePercentage(95);
+
+	// Allow fuel cell to startup
+	size_t year_idx, h;
+	year_idx = h = 0;
+	for (size_t hour = 0; hour < sh; hour++) {
+		for (size_t s = 0; s < stepsPerHour; s++) {
+			fuelCellDispatchSubhourly->runSingleTimeStep(h, year_idx);
+			year_idx++;
+			h++;
+		}
+		EXPECT_EQ(fuelCellSubHourly->getPower(), 0);
+	}
+
+	// Dynamic response limits (500 / 4 = 125)
+	fuelCellDispatchSubhourly->runSingleTimeStep(h++, year_idx++);
+	EXPECT_EQ(fuelCellSubHourly->getPower(), 125);
+
+	// Next step should reach fixed output (200 * 0.95 = 190)
+	fuelCellDispatchSubhourly->runSingleTimeStep(h++, year_idx++);
+	EXPECT_EQ(fuelCellSubHourly->getPower(), 190);
+
+
+}
+
 
 // Also check multiple fuel cells
-TEST_F(FuelCellTest, DispatchFixed) {
+TEST_F(FuelCellTest, DispatchFixedMultiple) {
 
 	size_t sh = (size_t)startup_hours;
 

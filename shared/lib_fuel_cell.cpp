@@ -172,21 +172,30 @@ double FuelCell::getPercentLoad() {
 	return m_power_kW / (m_unitPowerMax_kW);
 }
 
-double FuelCell::getPowerResponse(double power_kW) {
+void FuelCell::checkPowerResponse() {
 	
-	double dP = (power_kW - m_powerPrevious_kW) / dt_hour;
+	// Calculate ramp rate (kW/hr)
+	double dP = (m_power_kW - m_powerPrevious_kW) / dt_hour;
 	double dP_max = 0.0;
 
-	// ramp up
+	// Calculate maximum ramp rate up (kW/hr)
 	if (dP > 0) {
-		dP_max = fmin(fabs(dP), m_dynamicResponseUp_kWperHour * dt_hour);
+		dP_max = fmin(fabs(dP), m_dynamicResponseUp_kWperHour);
 	}
-	// ramp down
+	// Calculate mmaximum ramp rate down (kW/hr)
 	else {
-		dP_max = fmin(fabs(dP), m_dynamicResponseDown_kWperHour * dt_hour);
+		dP_max = fmin(fabs(dP), m_dynamicResponseDown_kWperHour);
 	}
 	double sign = fabs(dP) > 0 ? dP / fabs(dP) : 1.0;
-	return (m_powerPrevious_kW + (dP_max * sign));
+
+	// Limit output to the minimum of the power requested and ramp rate limit
+	if (sign > 0) {
+		m_power_kW = fmin(m_power_kW, (m_powerPrevious_kW + (dP_max * dt_hour * sign)));
+	}
+	// Limit output to the maximum of the power requested and ramp rate limit
+	else {
+		m_power_kW = fmax(m_power_kW, (m_powerPrevious_kW + (dP_max * dt_hour * sign)));
+	}
 }
 double FuelCell::getPower() {
 	return m_power_kW;
@@ -217,6 +226,19 @@ int FuelCell::getTotalReplacements() {
 }
 void FuelCell::resetReplacements() {
 	m_replacementCount = 0;
+}
+
+void FuelCell::setSystemProperties(double nameplate_kW, double min_kW, double startup_hours, double shutdown_hours,
+	double dynamicResponseUp_kWperHour, double dynamicResponseDown_kWperHour) {
+
+	m_unitPowerMax_kW = nameplate_kW;
+	m_unitPowerMin_kW = min_kW;
+	m_startup_hours = startup_hours;
+	m_shutdown_hours = shutdown_hours;
+	m_dynamicResponseUp_kWperHour = dynamicResponseUp_kWperHour;
+	m_dynamicResponseDown_kWperHour = dynamicResponseDown_kWperHour;
+	m_powerMax_kW = m_unitPowerMax_kW;
+
 }
 void FuelCell::setReplacementOption(size_t replacementOption) {
 	m_replacementOption = replacementOption;
@@ -420,9 +442,9 @@ void FuelCell::runSingleTimeStep(double power_kW) {
 
 	checkStatus(power_kW);
 
-	// Initialize based on dynamic response limits
+	// Check dynamic response limits
 	if (isRunning()) {
-		m_power_kW = getPowerResponse(power_kW);
+		checkPowerResponse();
 	}
 
 	// Check minimum power, maximum power
