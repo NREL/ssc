@@ -59,7 +59,7 @@ void FuelCellDispatch::runSingleTimeStep(size_t hour_of_year, size_t year_idx, d
 	else if (m_dispatchOption == FuelCellDispatch::FC_DISPATCH_OPTION::LOAD_FOLLOW) {
 		for (size_t fc = 0; fc < m_fuelCellVector.size(); fc++) {
 			double power_kW = fmax(0, powerLoad_kWac - powerSystem_kWac);
-			m_fuelCellVector[fc]->runSingleTimeStep(power_kW);
+			m_fuelCellVector[fc]->runSingleTimeStep(power_kW / m_fuelCellVector.size());
 			m_powerTotal_kW += m_fuelCellVector[fc]->getPower();
 			m_powerThermalTotal_kW += m_fuelCellVector[fc]->getPowerThermal();
 			m_fuelConsumedTotal_MCf += m_fuelCellVector[fc]->getFuelConsumption();
