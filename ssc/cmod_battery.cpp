@@ -1394,7 +1394,6 @@ public:
 			// Allocate outputs
 			ssc_number_t * p_gen = allocate("gen", nrec * batt.nyears);
 
-
 			// Parse "Load input", which comes in as a single year
 			std::vector<ssc_number_t> power_load_single_year;
 			std::vector<ssc_number_t> power_load;
@@ -1402,10 +1401,28 @@ public:
 			if (batt.batt_vars->batt_meter_position == dispatch_t::BEHIND)
 			{
 				power_load_single_year = as_vector_ssc_number_t("load");
+				size_t nload = power_load_single_year.size();
+
+				if (nload != nrec && nload != 8760) {
+					throw exec_error("battery", "electric load profile must have same number of values as weather file, or 8760");
+				}
+
 				power_load.reserve(nrec_lifetime);
 				for (size_t y = 0; y < nyears; y++) {
-					for (size_t t = 0; t < nrec; t++) {
-						power_load.push_back(power_load_single_year[t]);
+					// Load = generation size
+					if (nload == nrec) {
+						for (size_t t = 0; t < nrec; t++) {
+							power_load.push_back(power_load_single_year[t]);
+						}
+					}
+					// Assume load is constant across hour
+					else {
+						for (size_t h = 0; h < 8760; h++) {
+							ssc_number_t loadHour = power_load_single_year[h];
+							for (size_t s = 0; s < batt.step_per_hour; s++) {
+								power_load.push_back(loadHour);
+							}
+						}
 					}
 				}
 				batt.initialize_automated_dispatch(power_input, power_load);

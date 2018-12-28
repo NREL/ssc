@@ -126,11 +126,13 @@ public:
 		electricLoad_kW.clear();
 		electricLoad_kW.reserve(numberOfLifetimeRecords);
 
+		// Front of meter
 		if (load.size() == 0) {
 			for (size_t k = 0; k < numberOfLifetimeRecords; k++) {
 				electricLoad_kW.push_back(0.0);
 			}
 		}
+		// Behind the meter, load = gen size
 		else if (load.size() == numberOfRecordsPerYear) {
 			for (size_t y = 0; y < numberOfYears; y++) {
 				for (size_t i = 0; i < numberOfRecordsPerYear; i++) {
@@ -138,8 +140,19 @@ public:
 				}
 			}
 		}
+		// Behind the meter, hourly load assumed constant 
+		else if (load.size() == 8760) {
+			for (size_t y = 0; y < numberOfYears; y++) {
+				for (size_t h = 0; h < 8760; h++) {
+					double loadHour = load[h];
+					for (size_t s = 0; s < stepsPerHour; s++) {
+						electricLoad_kW.push_back(loadHour);
+					}
+				}
+			}
+		}
 		else {
-			throw compute_module::exec_error("fuelcell", "Electric load time steps must equal generation time step");
+			throw compute_module::exec_error("fuelcell", "Electric load time steps must equal generation time step or 8760");
 		}
 
 		size_t count = 0;
