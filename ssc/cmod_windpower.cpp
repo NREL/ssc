@@ -311,7 +311,7 @@ void cm_windpower::exec() throw(general_error)
 		windfile *wp = new windfile(file);
 		nstep = wp->nrecords();
 		wdprov = smart_ptr<winddata_provider>::ptr(wp);
-		if (!wp->ok())
+		if (!wp->ok() || (nstep == 0))
 			throw exec_error("windpower", "failed to read local weather file: " + std::string(file) + " " + wp->error());
 	}
 	else if (is_assigned("wind_resource_data"))
