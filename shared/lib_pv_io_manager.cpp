@@ -211,11 +211,19 @@ void Irradiance_IO::checkWeatherFile(compute_module * cm, std::string cmName)
 				weatherRecord.poa, weatherRecord.year, weatherRecord.month, weatherRecord.day, weatherRecord.hour), SSC_WARNING, (float)idx);
 			weatherRecord.poa = 0;
 		}
+		//albedo is allowed to be missing in the weather file- only throw an error if there's a value that isn't reasonable
+		int month_idx = weatherRecord.month - 1;
+		bool albedoError = false;
+		if (useWeatherFileAlbedo && !(weatherRecord.alb != weatherRecord.alb)) {
+			if (!std::isfinite(weatherRecord.alb) || weatherRecord.alb < 0 || weatherRecord.alb > 1) {
+				albedoError = true;
+			}
+		}/*
 		int month_idx = weatherRecord.month - 1;
 		bool albedoError = false;
 		if (useWeatherFileAlbedo && (!std::isfinite(weatherRecord.alb) || weatherRecord.alb < 0 || weatherRecord.alb > 1)) {
 			albedoError = true;
-		}
+		}*/
 		else if ((month_idx >= 0 && month_idx < 12) && (userSpecifiedMonthlyAlbedo[month_idx] < 0 || userSpecifiedMonthlyAlbedo[month_idx] > 1)) {
 			albedoError = true;
 		}
