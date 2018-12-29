@@ -193,8 +193,18 @@ public:
 		double m_T_tank_cold_ini;	//[C] Initial temperature in cold storage cold
 		double m_h_tank_min;		//[m] Minimum allowable HTF height in storage tank
 		double m_f_V_hot_ini;       //[%] Initial fraction of available volume that is hot
-
 		double m_htf_pump_coef;		//[kW/kg/s] Pumping power to move 1 kg/s of HTF through power cycle
+        bool tanks_in_parallel;     //[-] Whether the tanks are in series or parallel with the solar field. Series means field htf must go through storage tanks.
+        bool has_hot_tank_bypass;   //[-] True if the bypass valve causes the field htf to bypass just the hot tank and enter the cold tank before flowing back to the field.
+        double T_tank_hot_inlet_min; //[C] Minimum field htf temperature that may enter the hot tank
+        double V_tes_des;           //[m/s] Design-point velocity for sizing the diameters of the TES piping
+        bool custom_tes_p_loss;     //[-] True if the TES piping losses should be calculated using the TES pipe lengths and minor loss coeffs, false if using the pumping loss parameters
+        util::matrix_t<double> k_tes_loss_coeffs; //[-] Combined minor loss coefficients of the fittings and valves in the collection (including bypass) and generation loops in the TES 
+        bool custom_sgs_pipe_sizes;               //[-] True if the SGS diameters and wall thicknesses parameters should be used instead of calculating them
+        util::matrix_t<double> sgs_diams;         //[m] Imported inner diameters for the SGS piping as read from the modified output files
+        util::matrix_t<double> sgs_wallthicks;    //[m] Imported wall thicknesses for the SGS piping as read from the modified output files
+        util::matrix_t<double> sgs_lengths;       //[m] Imported lengths for the SGS piping as read from the modified output files
+
 
 		S_params()
 		{

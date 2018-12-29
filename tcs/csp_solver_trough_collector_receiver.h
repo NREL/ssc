@@ -351,8 +351,12 @@ public:
 	
 	double m_T_fp;			//[C] Freeze protection temperature (heat trace activation temperature), convert to K in init
 	double m_I_bn_des;		//[W/m^2] Solar irradiation at design
-	double m_V_hdr_max;		//[m/s] Maximum HTF velocity in the header at design
-	double m_V_hdr_min;		//[m/s] Minimum HTF velocity in the header at design
+    double m_V_hdr_cold_max;    //[m/s] Maximum HTF velocity in the cold header at design
+    double m_V_hdr_cold_min;    //[m/s] Minimum HTF velocity in the cold header at design
+    double m_V_hdr_hot_max;     //[m/s] Maximum HTF velocity in the hot header at design
+    double m_V_hdr_hot_min;     //[m/s] Minimum HTF velocity in the hot header at design
+    //double m_V_hdr_max;		//[m/s] Maximum HTF velocity in the header at design
+	//double m_V_hdr_min;		//[m/s] Minimum HTF velocity in the header at design
 	double m_Pipe_hl_coef;	//[W/m2-K] Loss coefficient from the header, runner pipe, and non-HCE piping
 	double m_SCA_drives_elec;	//[W/SCA] Tracking power, in Watts per SCA drive
 	int m_fthrok;			//[-] Flag to allow partial defocusing of the collectors
@@ -419,6 +423,27 @@ public:
 	util::matrix_t<double> m_IAM_matrix;		//[-] IAM coefficients, matrix for 4 collectors
 	
 	util::matrix_t<bool> m_GlazingIntact;		//[-] Glazing intact (broken glass) flag {1=true, else=false}
+
+    bool calc_design_pipe_vals;                 //[-] Should the HTF state be calculated at design conditions
+    double L_rnr_pb;                            //[m] Length of hot or cold runner pipe around the power block
+    double N_max_hdr_diams;                     //[-] Maximum number of allowed diameters in each of the hot and cold headers
+    double L_rnr_per_xpan;                      //[m] Threshold length of straight runner pipe without an expansion loop
+    double L_xpan_hdr;                          //[m] Combined length in meters of the two perpendicular segments of a header expansion loop
+    double L_xpan_rnr;                          //[m] Combined length in meters of the two perpendicular segments of a runner expansion loop
+    double Min_rnr_xpans;                       //[-] Minimum number of expansion loops per single-diameter runner section
+    double northsouth_field_sep;                //[m] Shortest north/south distance between SCAs in different subfields
+    double N_hdr_per_xpan;                      //[-] Number of collector loops per header expansion loops. 1 = expansion loop between every collector loop
+    util::matrix_t<double> K_cpnt;              //[-] Minor loss coefficients of the components in each loop interconnect
+    util::matrix_t<double> D_cpnt;              //[m] Inner diameters of the components in each loop interconnect
+    util::matrix_t<double> L_cpnt;              //[m] Lengths of the components in each loop interconnect
+    util::matrix_t<double> Type_cpnt;           //[-] Type of component in each loop interconnect [0=fitting | 1=pipe | 2=flex_hose]
+    bool custom_sf_pipe_sizes;                  //[-] Should the field pipe diameters, wall thickness and lengths be imported instead of calculated
+    util::matrix_t<double> sf_rnr_diams;        //[m] Imported runner diameters, used if custom_sf_pipe_sizes is true
+    util::matrix_t<double> sf_rnr_wallthicks;   //[m] Imported runner wall thicknesses, used if custom_sf_pipe_sizes is true
+    util::matrix_t<double> sf_rnr_lengths;      //[m] Imported runner lengths, used if custom_sf_pipe_sizes is true
+    util::matrix_t<double> sf_hdr_diams;        //[m] Imported header diameters, used if custom_sf_pipe_sizes is true
+    util::matrix_t<double> sf_hdr_wallthicks;   //[m] Imported header wall thicknesses, used if custom_sf_pipe_sizes is true
+    util::matrix_t<double> sf_hdr_lengths;      //[m] Imported header lengths, used if custom_sf_pipe_sizes is true
 
 	// **************************************************************************
 	// **************************************************************************
