@@ -355,8 +355,8 @@ public:
     double m_V_hdr_cold_min;    //[m/s] Minimum HTF velocity in the cold header at design
     double m_V_hdr_hot_max;     //[m/s] Maximum HTF velocity in the hot header at design
     double m_V_hdr_hot_min;     //[m/s] Minimum HTF velocity in the hot header at design
-    //double m_V_hdr_max;		//[m/s] Maximum HTF velocity in the header at design
-	//double m_V_hdr_min;		//[m/s] Minimum HTF velocity in the header at design
+    double m_V_hdr_max;		//[m/s] Maximum HTF velocity in the header at design
+	double m_V_hdr_min;		//[m/s] Minimum HTF velocity in the header at design
 	double m_Pipe_hl_coef;	//[W/m2-K] Loss coefficient from the header, runner pipe, and non-HCE piping
 	double m_SCA_drives_elec;	//[W/SCA] Tracking power, in Watts per SCA drive
 	int m_fthrok;			//[-] Flag to allow partial defocusing of the collectors

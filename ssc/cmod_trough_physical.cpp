@@ -291,23 +291,23 @@ static var_info _cm_vtab_trough_physical[] = {
     { SSC_INPUT,        SSC_MATRIX,      "L_cpnt",                    "Interconnect component lengths, row=intc, col=cpnt",                               "none",         "",               "solar_field",    "*",                       "",                      "" },
     { SSC_INPUT,        SSC_MATRIX,      "Type_cpnt",                 "Interconnect component type, row=intc, col=cpnt",                                  "none",         "",               "solar_field",    "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "custom_sf_pipe_sizes",      "Use custom solar field pipe diams, wallthks, and lengths",                         "none",         "",               "solar_field",    "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_ARRAY,       "sf_rnr_diams",              "Custom runner diameters",                                                          "m",            "",               "solar_field",    "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_ARRAY,       "sf_rnr_wallthicks",         "Custom runner wall thicknesses",                                                   "m",            "",               "solar_field",    "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_ARRAY,       "sf_rnr_lengths",            "Custom runner lengths",                                                            "m",            "",               "solar_field",    "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_ARRAY,       "sf_hdr_diams",              "Custom header diameters",                                                          "m",            "",               "solar_field",    "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_ARRAY,       "sf_hdr_wallthicks",         "Custom header wall thicknesses",                                                   "m",            "",               "solar_field",    "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_ARRAY,       "sf_hdr_lengths",            "Custom header lengths",                                                            "m",            "",               "solar_field",    "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_MATRIX,      "sf_rnr_diams",              "Custom runner diameters",                                                          "m",            "",               "solar_field",    "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_MATRIX,      "sf_rnr_wallthicks",         "Custom runner wall thicknesses",                                                   "m",            "",               "solar_field",    "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_MATRIX,      "sf_rnr_lengths",            "Custom runner lengths",                                                            "m",            "",               "solar_field",    "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_MATRIX,      "sf_hdr_diams",              "Custom header diameters",                                                          "m",            "",               "solar_field",    "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_MATRIX,      "sf_hdr_wallthicks",         "Custom header wall thicknesses",                                                   "m",            "",               "solar_field",    "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_MATRIX,      "sf_hdr_lengths",            "Custom header lengths",                                                            "m",            "",               "solar_field",    "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "tanks_in_parallel",         "Tanks are in parallel, not in series, with solar field",                           "-",            "",               "controller",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "has_hot_tank_bypass",       "Bypass valve connects field outlet to cold tank",                                  "-",            "",               "controller",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "T_tank_hot_inlet_min",      "Minimum hot tank htf inlet temperature",                                           "C",            "",               "controller",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "tes_pump_coef",             "Pumping power to move 1kg of HTF through tes loop",                                "kW/(kg/s)",    "",               "controller",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "V_tes_des",                 "Design-point velocity to size the TES pipe diameters",                             "m/s",          "",               "controller",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "custom_tes_p_loss",         "TES pipe losses are based on custom lengths and coeffs",                           "-",            "",               "controller",     "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_ARRAY,       "k_tes_loss_coeffs",         "Minor loss coeffs for the coll, gen, and bypass loops",                            "-",            "",               "controller",     "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_MATRIX,      "k_tes_loss_coeffs",         "Minor loss coeffs for the coll, gen, and bypass loops",                            "-",            "",               "controller",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "custom_sgs_pipe_sizes",     "Use custom SGS pipe diams, wallthks, and lengths",                                 "-",            "",               "controller",     "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_ARRAY,       "sgs_diams",                 "Custom SGS diameters",                                                             "m",            "",               "controller",     "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_ARRAY,       "sgs_wallthicks",            "Custom SGS wall thicknesses",                                                      "m",            "",               "controller",     "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_ARRAY,       "sgs_lengths",               "Custom SGS lengths",                                                               "m",            "",               "controller",     "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_MATRIX,      "sgs_diams",                 "Custom SGS diameters",                                                             "m",            "",               "controller",     "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_MATRIX,      "sgs_wallthicks",            "Custom SGS wall thicknesses",                                                      "m",            "",               "controller",     "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_MATRIX,      "sgs_lengths",               "Custom SGS lengths",                                                               "m",            "",               "controller",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "DP_SGS",                    "Pressure drop within the steam generator",                                         "bar",          "",               "controller",     "*",                       "",                      "" },
 
 
@@ -330,7 +330,7 @@ static var_info _cm_vtab_trough_physical[] = {
     { SSC_OUTPUT,       SSC_ARRAY,       "wspd",                      "Resource Wind Speed",                                                              "m/s",          "",               "weather",        "*",                       "",                      "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "pres",                      "Resource Pressure",                                                                "mbar",         "",               "weather",        "*",                       "",                      "" },
    
-    { SSC_OUTPUT,       SSC_ARRAY,       "defocus",                   "Defocus amount",                                                                   "",             "",               "weather",        "*",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "defocus",                   "Field optical focus fraction",                                                     "",             "",               "weather",        "*",                       "",                      "" },
 
     // Solar Field                                                                                                                                                                                                                   
     { SSC_OUTPUT,       SSC_ARRAY,       "Theta_ave",                 "Field collector solar incidence angle",                                            "deg",          "",               "solar_field",    "*",                       "",                      "" },
@@ -387,7 +387,7 @@ static var_info _cm_vtab_trough_physical[] = {
     { SSC_OUTPUT,       SSC_ARRAY,       "m_dot_tes_ch",              "TES charge mass flow rate",                                                        "kg/s",         "",               "TES",            "*",                       "",                      "" },
     
     // SYSTEM
-    { SSC_OUTPUT,       SSC_ARRAY,       "W_dot_parasitic_tot",       "System total electrical parasitic",                                                "MWe",          "",               "system",         "*",                       "",                      "" },
+    //{ SSC_OUTPUT,       SSC_ARRAY,       "W_dot_parasitic_tot",       "System total electrical parasitic",                                                "MWe",          "",               "system",         "*",                       "",                      "" },
                                                                                                                                                                                                             
     // Controller                                                                                                                                                                                           
     { SSC_OUTPUT,       SSC_ARRAY,       "op_mode_1",                 "1st operating mode",                                                               "",             "",               "solver",         "*",                       "",                      "" },
@@ -400,7 +400,7 @@ static var_info _cm_vtab_trough_physical[] = {
     { SSC_OUTPUT,       SSC_NUMBER,      "annual_energy",                   "Annual Net Thermal Energy Production w/ avail derate",                       "kWt-hr",       "",               "Post-process",   "*",                       "",                      "" },
     { SSC_OUTPUT,       SSC_NUMBER,      "annual_gross_energy",             "Annual Gross Thermal Energy Production w/ avail derate",                     "kWt-hr",       "",               "Post-process",   "*",                       "",                      "" },
     { SSC_OUTPUT,       SSC_NUMBER,      "annual_thermal_consumption",      "Annual thermal freeze protection required",                                  "kWt-hr",       "",               "Post-process",   "*",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_NUMBER,      "annual_electricity_consumption",  "Annual electricity consumptoin w/ avail derate",                             "kWe-hr",       "",               "Post-process",   "*",                       "",                      "" },
+    //{ SSC_OUTPUT,       SSC_NUMBER,      "annual_electricity_consumption",  "Annual electricity consumptoin w/ avail derate",                             "kWe-hr",       "",               "Post-process",   "*",                       "",                      "" },
     { SSC_OUTPUT,       SSC_NUMBER,      "annual_total_water_use",          "Total Annual Water Usage",                                                   "m^3",          "",               "Post-process",   "*",                       "",                      "" },
     { SSC_OUTPUT,       SSC_NUMBER,      "annual_field_freeze_protection",  "Annual thermal power for field freeze protection",                           "kWt-hr",       "",               "Post-process",   "*",                       "",                      "" },
     { SSC_OUTPUT,       SSC_NUMBER,      "annual_tes_freeze_protection",    "Annual thermal power for TES freeze protection",                             "kWt-hr",       "",               "Post-process",   "*",                       "",                      "" },
@@ -454,35 +454,36 @@ static var_info _cm_vtab_trough_physical[] = {
     { SSC_OUTPUT,       SSC_NUMBER,      "conversion_factor",         "Gross to Net Conversion Factor",                                                   "%",            "",               "system",         "*",                       "",                      "" },
     { SSC_OUTPUT,       SSC_NUMBER,      "capacity_factor",           "Capacity factor",                                                                  "%",            "",               "system",         "*",                       "",                      "" },
     { SSC_OUTPUT,       SSC_NUMBER,      "kwh_per_kw",                "First year kWh/kW",                                                                "kWh/kW",       "",               "system",         "*",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_NUMBER,      "W_dot_par_tot_haf",         "Adjusted parasitic power",                                                         "kWe",          "",               "system",         "*",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_NUMBER,      "q_dot_defocus_est",         "Thermal energy intentionally lost by defocusing",                                  "MWt",          "",               "system",         "*",                       "",                      "" },
+    //{ SSC_OUTPUT,       SSC_NUMBER,      "W_dot_par_tot_haf",         "Adjusted parasitic power",                                                         "kWe",          "",               "system",         "*",                       "",                      "" },
+    //{ SSC_OUTPUT,       SSC_NUMBER,      "q_dot_defocus_est",         "Thermal energy intentionally lost by defocusing",                                  "MWt",          "",               "system",         "*",                       "",                      "" },
 
-    { SSC_OUTPUT,       SSC_ARRAY,       "recirculating",             "Field recirculating (bypass valve open)",                                          "-",            "",               "solar_field",    "*",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "pipe_header_diams",         "Field piping header diameters",                                                    "m",            "",               "solar_field",    "*",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "pipe_header_wallthk",       "Field piping header wall thicknesses",                                             "m",            "",               "solar_field",    "*",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "pipe_header_lengths",       "Field piping header lengths",                                                      "m",            "",               "solar_field",    "*",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "pipe_header_expansions",    "Number of field piping header expansions",                                         "-",            "",               "solar_field",    "*",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "pipe_header_mdot_dsn",      "Field piping header mass flow at design",                                          "kg/s",         "",               "solar_field",    "*",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "pipe_header_vel_dsn",       "Field piping header velocity at design",                                           "m/s",          "",               "solar_field",    "*",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "pipe_header_T_dsn",         "Field piping header temperature at design",                                        "C",            "",               "solar_field",    "*",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "pipe_header_P_dsn",         "Field piping header pressure at design",                                           "bar",          "",               "solar_field",    "*",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "pipe_runner_diams",         "Field piping runner diameters",                                                    "m",            "",               "solar_field",    "*",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "pipe_runner_wallthk",       "Field piping runner wall thicknesses",                                             "m",            "",               "solar_field",    "*",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "pipe_runner_lengths",       "Field piping runner lengths",                                                      "m",            "",               "solar_field",    "*",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "pipe_runner_expansions",    "Number of field piping runner expansions",                                         "-",            "",               "solar_field",    "*",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "pipe_runner_mdot_dsn",      "Field piping runner mass flow at design",                                          "kg/s",         "",               "solar_field",    "*",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "pipe_runner_vel_dsn",       "Field piping runner velocity at design",                                           "m/s",          "",               "solar_field",    "*",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "pipe_runner_T_dsn",         "Field piping runner temperature at design",                                        "C",            "",               "solar_field",    "*",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "pipe_runner_P_dsn",         "Field piping runner pressure at design",                                           "bar",          "",               "solar_field",    "*",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "pipe_loop_T_dsn",           "Field piping loop temperature at design",                                          "C",            "",               "solar_field",    "*",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "pipe_loop_P_dsn",           "Field piping loop pressure at design",                                             "bar",          "",               "solar_field",    "*",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "pipe_sgs_diams",            "Pipe diameters in SGS",                                                            "m",            "",               "TES",            "*",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "pipe_sgs_wallthk",          "Pipe wall thickness in SGS",                                                       "m",            "",               "TES",            "*",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "pipe_sgs_mdot_dsn",         "Mass flow SGS pipes at design conditions",                                         "kg/s",         "",               "TES",            "*",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "pipe_sgs_vel_dsn",          "Velocity in SGS pipes at design conditions",                                       "m/s",          "",               "TES",            "*",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "pipe_sgs_T_dsn",            "Temperature in SGS pipes at design conditions",                                    "C",            "",               "TES",            "*",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "pipe_sgs_P_dsn",            "Pressure in SGS pipes at design conditions",                                       "bar",          "",               "TES",            "*",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "defocus",                   "Field optical focus fraction",                                                     "",             "",               "solver",         "*",                       "",                      "" },
+    //{ SSC_OUTPUT,       SSC_ARRAY,       "recirculating",             "Field recirculating (bypass valve open)",                                          "-",            "",               "solar_field",    "*",                       "",                      "" },
+    //{ SSC_OUTPUT,       SSC_ARRAY,       "pipe_header_diams",         "Field piping header diameters",                                                    "m",            "",               "solar_field",    "*",                       "",                      "" },
+    //{ SSC_OUTPUT,       SSC_ARRAY,       "pipe_header_wallthk",       "Field piping header wall thicknesses",                                             "m",            "",               "solar_field",    "*",                       "",                      "" },
+    //{ SSC_OUTPUT,       SSC_ARRAY,       "pipe_header_lengths",       "Field piping header lengths",                                                      "m",            "",               "solar_field",    "*",                       "",                      "" },
+    //{ SSC_OUTPUT,       SSC_ARRAY,       "pipe_header_expansions",    "Number of field piping header expansions",                                         "-",            "",               "solar_field",    "*",                       "",                      "" },
+    //{ SSC_OUTPUT,       SSC_ARRAY,       "pipe_header_mdot_dsn",      "Field piping header mass flow at design",                                          "kg/s",         "",               "solar_field",    "*",                       "",                      "" },
+    //{ SSC_OUTPUT,       SSC_ARRAY,       "pipe_header_vel_dsn",       "Field piping header velocity at design",                                           "m/s",          "",               "solar_field",    "*",                       "",                      "" },
+    //{ SSC_OUTPUT,       SSC_ARRAY,       "pipe_header_T_dsn",         "Field piping header temperature at design",                                        "C",            "",               "solar_field",    "*",                       "",                      "" },
+    //{ SSC_OUTPUT,       SSC_ARRAY,       "pipe_header_P_dsn",         "Field piping header pressure at design",                                           "bar",          "",               "solar_field",    "*",                       "",                      "" },
+    //{ SSC_OUTPUT,       SSC_ARRAY,       "pipe_runner_diams",         "Field piping runner diameters",                                                    "m",            "",               "solar_field",    "*",                       "",                      "" },
+    //{ SSC_OUTPUT,       SSC_ARRAY,       "pipe_runner_wallthk",       "Field piping runner wall thicknesses",                                             "m",            "",               "solar_field",    "*",                       "",                      "" },
+    //{ SSC_OUTPUT,       SSC_ARRAY,       "pipe_runner_lengths",       "Field piping runner lengths",                                                      "m",            "",               "solar_field",    "*",                       "",                      "" },
+    //{ SSC_OUTPUT,       SSC_ARRAY,       "pipe_runner_expansions",    "Number of field piping runner expansions",                                         "-",            "",               "solar_field",    "*",                       "",                      "" },
+    //{ SSC_OUTPUT,       SSC_ARRAY,       "pipe_runner_mdot_dsn",      "Field piping runner mass flow at design",                                          "kg/s",         "",               "solar_field",    "*",                       "",                      "" },
+    //{ SSC_OUTPUT,       SSC_ARRAY,       "pipe_runner_vel_dsn",       "Field piping runner velocity at design",                                           "m/s",          "",               "solar_field",    "*",                       "",                      "" },
+    //{ SSC_OUTPUT,       SSC_ARRAY,       "pipe_runner_T_dsn",         "Field piping runner temperature at design",                                        "C",            "",               "solar_field",    "*",                       "",                      "" },
+    //{ SSC_OUTPUT,       SSC_ARRAY,       "pipe_runner_P_dsn",         "Field piping runner pressure at design",                                           "bar",          "",               "solar_field",    "*",                       "",                      "" },
+    //{ SSC_OUTPUT,       SSC_ARRAY,       "pipe_loop_T_dsn",           "Field piping loop temperature at design",                                          "C",            "",               "solar_field",    "*",                       "",                      "" },
+    //{ SSC_OUTPUT,       SSC_ARRAY,       "pipe_loop_P_dsn",           "Field piping loop pressure at design",                                             "bar",          "",               "solar_field",    "*",                       "",                      "" },
+    //{ SSC_OUTPUT,       SSC_ARRAY,       "pipe_sgs_diams",            "Pipe diameters in SGS",                                                            "m",            "",               "TES",            "*",                       "",                      "" },
+    //{ SSC_OUTPUT,       SSC_ARRAY,       "pipe_sgs_wallthk",          "Pipe wall thickness in SGS",                                                       "m",            "",               "TES",            "*",                       "",                      "" },
+    //{ SSC_OUTPUT,       SSC_ARRAY,       "pipe_sgs_mdot_dsn",         "Mass flow SGS pipes at design conditions",                                         "kg/s",         "",               "TES",            "*",                       "",                      "" },
+    //{ SSC_OUTPUT,       SSC_ARRAY,       "pipe_sgs_vel_dsn",          "Velocity in SGS pipes at design conditions",                                       "m/s",          "",               "TES",            "*",                       "",                      "" },
+    //{ SSC_OUTPUT,       SSC_ARRAY,       "pipe_sgs_T_dsn",            "Temperature in SGS pipes at design conditions",                                    "C",            "",               "TES",            "*",                       "",                      "" },
+    //{ SSC_OUTPUT,       SSC_ARRAY,       "pipe_sgs_P_dsn",            "Pressure in SGS pipes at design conditions",                                       "bar",          "",               "TES",            "*",                       "",                      "" },
+
+    //{ SSC_OUTPUT,       SSC_ARRAY,       "defocus",                   "Field optical focus fraction",                                                     "",             "",               "solver",         "*",                       "",                      "" },
 
     var_info_invalid };
     
@@ -569,6 +570,8 @@ public:
         c_trough.m_V_hdr_cold_min = as_double("V_hdr_cold_min");    //[m/s] Minimum HTF velocity in the cold header at design
         c_trough.m_V_hdr_hot_max = as_double("V_hdr_hot_max");      //[m/s] Maximum HTF velocity in the hot header at design
         c_trough.m_V_hdr_hot_min = as_double("V_hdr_hot_min");      //[m/s] Minimum HTF velocity in the hot header at design
+        c_trough.m_V_hdr_max = std::min(c_trough.m_V_hdr_cold_max, c_trough.m_V_hdr_hot_max);  // for backwards compatibility, marked for removal
+        c_trough.m_V_hdr_min = std::max(c_trough.m_V_hdr_cold_min, c_trough.m_V_hdr_hot_min);  // for backwards compatibility, marked for removal
         //c_trough.m_V_hdr_max = as_double("V_hdr_max");              //[m/s] Maximum HTF velocity in the header at design
         //c_trough.m_V_hdr_min = as_double("V_hdr_min");              //[m/s] Minimum HTF velocity in the header at design
         c_trough.m_Pipe_hl_coef = as_double("Pipe_hl_coef");        //[W/m2-K] Loss coefficient from the header, runner pipe, and non-HCE piping
@@ -802,6 +805,7 @@ public:
             pc->m_htf_pump_coef = as_double("pb_pump_coef");
             //pc->m_pc_fl = as_integer("rec_htf");                            // power cycle HTF is same as receiver HTF
             pc->m_pc_fl_props = as_matrix("field_fl_props");
+            pc->DP_SGS = as_double("DP_SGS");
 
             if (pb_tech_type == 0)
             {
@@ -904,15 +908,15 @@ public:
         tes->m_f_V_hot_ini        = as_double("init_hot_htf_percent");      //[-]
         tes->m_htf_pump_coef      = as_double("tes_pump_coef");             //[kWe/kg/s]
         tes->tanks_in_parallel    = as_boolean("tanks_in_parallel");        //[-]
-        tes->has_hot_tank_bypass  = as_boolean("tanks_in_parallel");        //[-]
-        tes->T_tank_hot_inlet_min = as_double("tanks_in_parallel");         //[C]
-        tes->V_tes_des            = as_double("tanks_in_parallel");         //[m/s]
-        tes->custom_tes_p_loss    = as_boolean("tanks_in_parallel");        //[-]
-        tes->k_tes_loss_coeffs    = as_matrix("tanks_in_parallel");         //[-]
-        tes->custom_sgs_pipe_sizes = as_boolean("tanks_in_parallel");       //[-]
-        tes->sgs_diams            = as_matrix("tanks_in_parallel");         //[m]
-        tes->sgs_wallthicks       = as_matrix("tanks_in_parallel");         //[m]
-        tes->sgs_lengths          = as_matrix("tanks_in_parallel");         //[m]
+        tes->has_hot_tank_bypass  = as_boolean("has_hot_tank_bypass");      //[-]
+        tes->T_tank_hot_inlet_min = as_double("T_tank_hot_inlet_min");      //[C]
+        tes->V_tes_des            = as_double("V_tes_des");                 //[m/s]
+        tes->custom_tes_p_loss    = as_boolean("custom_tes_p_loss");        //[-]
+        tes->k_tes_loss_coeffs    = as_matrix("k_tes_loss_coeffs");         //[-]
+        tes->custom_sgs_pipe_sizes = as_boolean("custom_sgs_pipe_sizes");   //[-]
+        tes->sgs_diams            = as_matrix("sgs_diams");                 //[m]
+        tes->sgs_wallthicks       = as_matrix("sgs_wallthicks");            //[m]
+        tes->sgs_lengths          = as_matrix("sgs_lengths");               //[m]
 
 
         // ********************************
@@ -1047,7 +1051,12 @@ public:
         csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::TES_M_DOT_DC, allocate("m_dot_tes_dc", n_steps_fixed), n_steps_fixed);
         csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::TES_M_DOT_CH, allocate("m_dot_tes_ch", n_steps_fixed), n_steps_fixed);
         // System
-        csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::W_DOT_NET, allocate("W_dot_parasitic_tot", n_steps_fixed), n_steps_fixed);
+        csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::COL_W_DOT_TRACK, allocate("pparasi", n_steps_fixed), n_steps_fixed);
+        csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::SYS_W_DOT_PUMP, allocate("htf_pump_power", n_steps_fixed), n_steps_fixed);
+        csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::PC_W_DOT_COOLING, allocate("P_cooling_tower_tot", n_steps_fixed), n_steps_fixed);
+        csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::SYS_W_DOT_FIXED, allocate("P_fixed", n_steps_fixed), n_steps_fixed);
+        csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::SYS_W_DOT_BOP, allocate("P_plant_balance_tot", n_steps_fixed), n_steps_fixed);
+        csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::W_DOT_NET, allocate("P_out_net", n_steps_fixed), n_steps_fixed);
         // Controller
         csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::OP_MODE_1, allocate("op_mode_1", n_steps_fixed), n_steps_fixed);
         csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::OP_MODE_2, allocate("op_mode_2", n_steps_fixed), n_steps_fixed);
@@ -1091,12 +1100,6 @@ public:
         csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::DISPATCH_PRES_NCONSTR, allocate("disp_presolve_nconstr", n_steps_fixed), n_steps_fixed);
         csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::DISPATCH_PRES_NVAR, allocate("disp_presolve_nvar", n_steps_fixed), n_steps_fixed);
         csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::DISPATCH_SOLVE_TIME, allocate("disp_solve_time", n_steps_fixed), n_steps_fixed);
-
-        csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::SYS_W_DOT_PUMP, allocate("htf_pump_power", n_steps_fixed), n_steps_fixed);
-        csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::PC_W_DOT_COOLING, allocate("P_cooling_tower_tot", n_steps_fixed), n_steps_fixed);
-        csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::SYS_W_DOT_FIXED, allocate("P_fixed", n_steps_fixed), n_steps_fixed);
-        csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::SYS_W_DOT_BOP, allocate("P_plant_balance_tot", n_steps_fixed), n_steps_fixed);
-
 
 
         update("Initialize physical trough model...", 0.0);
@@ -1188,14 +1191,14 @@ public:
         }
 
         // Convert mass flow rates from [kg/hr] to [kg/s]
-        size_t count_m_dot_pc, count_m_dot_rec, count_m_dot_water_pc, count_m_dot_tes_dc, count_m_dot_tes_ch;
-        count_m_dot_pc = count_m_dot_rec = count_m_dot_water_pc = count_m_dot_tes_dc = count_m_dot_tes_ch = 0;
+        size_t count_m_dot_pc, count_m_dot_water_pc; //count_m_dot_rec, count_m_dot_tes_dc, count_m_dot_tes_ch;
+        count_m_dot_pc = count_m_dot_water_pc = 0; //count_m_dot_rec = count_m_dot_tes_dc = count_m_dot_tes_ch = 0;
         ssc_number_t *p_m_dot_pc = as_array("m_dot_pc", &count_m_dot_pc);
         ssc_number_t *p_m_dot_water_pc = as_array("m_dot_water_pc", &count_m_dot_water_pc);
-        ssc_number_t *p_m_dot_tes_dc = as_array("m_dot_tes_dc", &count_m_dot_tes_dc);
-        ssc_number_t *p_m_dot_tes_ch = as_array("m_dot_tes_ch", &count_m_dot_tes_ch);
-        if (count_m_dot_rec != n_steps_fixed || count_m_dot_pc != n_steps_fixed || count_m_dot_water_pc != n_steps_fixed
-            || count_m_dot_tes_dc != n_steps_fixed || count_m_dot_tes_ch != n_steps_fixed)
+        //ssc_number_t *p_m_dot_tes_dc = as_array("m_dot_tes_dc", &count_m_dot_tes_dc);
+        //ssc_number_t *p_m_dot_tes_ch = as_array("m_dot_tes_ch", &count_m_dot_tes_ch);
+        if (count_m_dot_pc != n_steps_fixed || count_m_dot_water_pc != n_steps_fixed)
+            //|| count_m_dot_rec != n_steps_fixed || count_m_dot_tes_dc != n_steps_fixed || count_m_dot_tes_ch != n_steps_fixed)
         {
             log("At least one m_dot array is a different length than 'n_steps_fixed'.", SSC_WARNING);
             return;
@@ -1205,8 +1208,8 @@ public:
             //p_m_dot_rec[i] = (ssc_number_t)(p_m_dot_rec[i] / 3600.0); //[kg/s] convert from kg/hr
             p_m_dot_pc[i] = (ssc_number_t)(p_m_dot_pc[i] / 3600.0);     //[kg/s] convert from kg/hr
             p_m_dot_water_pc[i] = (ssc_number_t)(p_m_dot_water_pc[i] / 3600.0); //[kg/s] convert from kg/hr
-            p_m_dot_tes_dc[i] = (ssc_number_t)(p_m_dot_tes_dc[i] / 3600.0);     //[kg/s] convert from kg/hr
-            p_m_dot_tes_ch[i] = (ssc_number_t)(p_m_dot_tes_ch[i] / 3600.0);     //[kg/s] convert from kg/hr
+            //p_m_dot_tes_dc[i] = (ssc_number_t)(p_m_dot_tes_dc[i] / 3600.0);     //[kg/s] convert from kg/hr
+            //p_m_dot_tes_ch[i] = (ssc_number_t)(p_m_dot_tes_ch[i] / 3600.0);     //[kg/s] convert from kg/hr
         }
 
 
@@ -1222,12 +1225,12 @@ public:
             throw exec_error("trough_physical", "failed to setup adjustment factors: " + haf.error());
 
         ssc_number_t *p_gen = allocate("gen", n_steps_fixed);
-        ssc_number_t *p_W_dot_par_tot_haf = allocate("W_dot_par_tot_haf", n_steps_fixed);
+        //ssc_number_t *p_W_dot_par_tot_haf = allocate("W_dot_par_tot_haf", n_steps_fixed);
         ssc_number_t *p_q_dot_defocus_est = allocate("q_dot_defocus_est", n_steps_fixed);
 
-        ssc_number_t *p_W_dot_parasitic_tot = as_array("W_dot_parasitic_tot", &count);
-        if (count != n_steps_fixed)
-            throw exec_error("trough_physical", "The number of fixed steps does not match the length of output data arrays1");
+        //ssc_number_t *p_W_dot_parasitic_tot = as_array("W_dot_parasitic_tot", &count);
+        //if (count != n_steps_fixed)
+        //    throw exec_error("trough_physical", "The number of fixed steps does not match the length of output data arrays1");
         
         ssc_number_t *p_SCAs_def = as_array("SCAs_def", &count);
         if (count != n_steps_fixed)
@@ -1249,8 +1252,8 @@ public:
         {
             size_t hour = (size_t)ceil(p_time_final_hr[i]);
             p_gen[i] = (ssc_number_t)(p_W_dot_net[i] * haf(hour) * 1.E3);     //[kWe]
-            p_W_dot_parasitic_tot[i] *= -1.0;           //[kWe] Label is total parasitics, so change to a positive value
-            p_W_dot_par_tot_haf[i] = (ssc_number_t)(p_W_dot_parasitic_tot[i] * haf(hour) * 1.E3);       //[kWe]
+            //p_W_dot_parasitic_tot[i] *= -1.0;           //[kWe] Label is total parasitics, so change to a positive value
+            //p_W_dot_par_tot_haf[i] = (ssc_number_t)(p_W_dot_parasitic_tot[i] * haf(hour) * 1.E3);       //[kWe]
             p_q_dot_defocus_est[i] = (ssc_number_t)(1.0 - p_SCAs_def[i])*p_q_dot_htf_sf_out[i]; //[MWt]
             p_m_dot_tes_dc[i] = (ssc_number_t)(p_m_dot_tes_dc[i] / 3600.0);     //[kg/s] convert from kg/hr
             p_m_dot_tes_ch[i] = (ssc_number_t)(p_m_dot_tes_ch[i] / 3600.0);     //[kg/s] convert from kg/hr
@@ -1261,9 +1264,9 @@ public:
 
 
         // Annual outputs
-        accumulate_annual_for_year("gen", "annual_gross_energy", sim_setup.m_report_step / 3600.0, steps_per_hour); //[kWt-hr]
-        accumulate_annual_for_year("P_cycle", "annual_W_cycle_gross", 1000.0*sim_setup.m_report_step / 3600.0, steps_per_hour, 1, n_steps_fixed / steps_per_hour);      //[kWe-hr]
-        accumulate_annual_for_year("W_dot_par_tot_haf", "annual_electricity_consumption", sim_setup.m_report_step/3600.0, steps_per_hour);  //[kWe-hr]
+        accumulate_annual_for_year("gen", "annual_gross_energy", sim_setup.m_report_step / 3600.0, steps_per_hour, 1, n_steps_fixed / steps_per_hour);
+        accumulate_annual_for_year("P_cycle", "annual_W_cycle_gross", 1000.0*sim_setup.m_report_step / 3600.0, steps_per_hour, 1, n_steps_fixed / steps_per_hour);		//[kWe-hr]
+        //accumulate_annual_for_year("W_dot_par_tot_haf", "annual_electricity_consumption", sim_setup.m_report_step/3600.0, steps_per_hour);  //[kWe-hr]
         accumulate_annual_for_year("disp_objective", "disp_objective_ann", 1000.0*sim_setup.m_report_step / 3600.0, steps_per_hour, 1, n_steps_fixed / steps_per_hour);
         accumulate_annual_for_year("disp_solve_iter", "disp_iter_ann", 1000.0*sim_setup.m_report_step / 3600.0, steps_per_hour, 1, n_steps_fixed / steps_per_hour);
         accumulate_annual_for_year("disp_presolve_nconstr", "disp_presolve_nconstr_ann", sim_setup.m_report_step / 3600.0 / as_double("disp_frequency"), steps_per_hour, 1, n_steps_fixed / steps_per_hour);
