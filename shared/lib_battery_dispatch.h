@@ -366,6 +366,9 @@ public:
 	/* Check constraints and re-dispatch if needed */
 	virtual bool check_constraints(double &I, size_t count);
 
+	/// Return the battery power target set by the controller
+	double power_batt_target();
+
 protected:
 
 	/*! Initialize with a pointer*/
@@ -474,9 +477,8 @@ public:
 	/*! Pass in the grid power target vector */
 	void set_target_power(std::vector<double> P_target);
 
-	/*! Target power outputs */
+	/*! Grid target power */
 	double power_grid_target();
-	double power_batt_target();
 
 	enum BTM_TARGET_MODES {TARGET_SINGLE_MONTHLY, TARGET_TIME_SERIES};
 

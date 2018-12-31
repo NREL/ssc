@@ -688,6 +688,7 @@ void dispatch_automatic_t::copy(const dispatch_t * dispatch)
 void dispatch_automatic_t::update_pv_data(std::vector<double> P_pv_dc){ _P_pv_dc = P_pv_dc;}
 void dispatch_automatic_t::set_custom_dispatch(std::vector<double> P_batt_dc) { _P_battery_use = P_batt_dc; }
 int dispatch_automatic_t::get_mode(){ return _mode; }
+double dispatch_automatic_t::power_batt_target() { return m_batteryPower->powerBattery; };
 
 void dispatch_automatic_t::dispatch(size_t year,
 	size_t hour_of_year,
@@ -892,7 +893,6 @@ void dispatch_automatic_behind_the_meter_t::dispatch(size_t year,
 void dispatch_automatic_behind_the_meter_t::update_load_data(std::vector<double> P_load_dc){ _P_load_dc = P_load_dc; }
 void dispatch_automatic_behind_the_meter_t::set_target_power(std::vector<double> P_target){ _P_target_input = P_target; }
 double dispatch_automatic_behind_the_meter_t::power_grid_target() { return _P_target_current; };
-double dispatch_automatic_behind_the_meter_t::power_batt_target() { return m_batteryPower->powerBattery; };
 void dispatch_automatic_behind_the_meter_t::update_dispatch(size_t hour_of_year, size_t step, size_t idx)
 {
 	bool debug = false;
