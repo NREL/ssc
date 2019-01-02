@@ -337,12 +337,12 @@ void dispatch_t::runDispatch(size_t year, size_t hour_of_year, size_t step)
 	_Battery_initial->copy(_Battery);
 	bool iterate = true;
 	size_t count = 0;
-	size_t idx = util::index_year_hour_step(year, hour_of_year, step, static_cast<size_t>(1 / _dt_hour));
+	size_t lifetimeIndex = util::lifetimeIndex(year, hour_of_year, step, static_cast<size_t>(1 / _dt_hour));
 
 	do {
 
 		// Run Battery Model to update charge based on charge/discharge
-		_Battery->run(idx, I);
+		_Battery->run(lifetimeIndex, I);
 
 		// Update how much power was actually used to/from battery
 		I = _Battery->capacity_model()->I();
@@ -355,7 +355,7 @@ void dispatch_t::runDispatch(size_t year, size_t hour_of_year, size_t step)
 
 		// If current changed during last iteration of constraints checker, recalculate internal battery state
 		if (!iterate) {
-			finalize(idx, I);
+			finalize(lifetimeIndex, I);
 		}
 
 		// Recalculate the DC battery power
@@ -884,9 +884,9 @@ void dispatch_automatic_behind_the_meter_t::dispatch(size_t year,
 	size_t step)
 {
 	size_t step_per_hour = (size_t)(1 / _dt_hour);
-	size_t idx = util::index_year_hour_step(year, hour_of_year, step, step_per_hour);
+	size_t lifetimeIndex = util::lifetimeIndex(year, hour_of_year, step, step_per_hour);
 
-	update_dispatch(hour_of_year, step, idx);
+	update_dispatch(hour_of_year, step, lifetimeIndex);
 	dispatch_automatic_t::dispatch(year, hour_of_year, step);
 }
 
@@ -1286,9 +1286,9 @@ void dispatch_automatic_front_of_meter_t::dispatch(size_t year,
 	size_t step)
 {
 	size_t step_per_hour = (size_t)(1 / _dt_hour);
-	size_t idx = util::index_year_hour_step(year, hour_of_year, step, step_per_hour);
+	size_t lifetimeIndex = util::lifetimeIndex(year, hour_of_year, step, step_per_hour);
 
-	update_dispatch(hour_of_year, step, idx);
+	update_dispatch(hour_of_year, step, lifetimeIndex);
 	dispatch_automatic_t::dispatch(year, hour_of_year, step);
 }
 

@@ -1151,7 +1151,7 @@ double util::linterp_col( const util::matrix_t<double> &mat, size_t ixcol, doubl
 			xval );
 }
 
-size_t util::index_year_hour_step(size_t year, size_t hour_of_year, size_t step_of_hour, size_t step_per_hour)
+size_t util::lifetimeIndex(size_t year, size_t hour_of_year, size_t step_of_hour, size_t step_per_hour)
 {
 	return (year * util::hours_per_year + hour_of_year)*step_per_hour + step_of_hour;
 }

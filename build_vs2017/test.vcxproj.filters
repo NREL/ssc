@@ -178,5 +178,11 @@
     <ClInclude Include="..\test\ssc_test\cmod_battery_test.h">
       <Filter>ssc_test</Filter>
     </ClInclude>
+    <ClInclude Include="..\test\shared_test\lib_battery_test.h">
+      <Filter>shared_test</Filter>
+    </ClInclude>
+    <ClInclude Include="..\test\shared_test\lib_battery_properties.h">
+      <Filter>shared_test</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

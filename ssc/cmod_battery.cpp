@@ -787,57 +787,22 @@ battstor::battstor(compute_module &cm, bool setup_model, size_t nrec, double dt_
 			batt_vars->batt_Qfull_flow, batt_vars->batt_initial_SOC, batt_vars->batt_maximum_SOC, batt_vars->batt_minimum_SOC);
 	}
 
-	// accumulate monthly losses
-	double_vec batt_charging_losses;
-	double_vec batt_discharging_losses;
-	double_vec batt_idle_losses;
-	double_vec batt_system_losses;
-
-	if (batt_vars->batt_loss_choice == losses_t::MONTHLY)
-	{
-		double_vec charging_loss = batt_vars->batt_losses_charging;
-		double_vec discharging_loss = batt_vars->batt_losses_discharging;
-		double_vec idling_loss = batt_vars->batt_losses_idle;
-
-		double charge_loss = charging_loss[0];
-		double discharge_loss = discharging_loss[0];
-		double idle_loss = idling_loss[0];
-
-
-		for (int m = 0; m != 12; m++)
-		{
-			if (charging_loss.size() > 1)
-				charge_loss = charging_loss[m];
-			if (discharging_loss.size() > 1)
-				discharge_loss = discharging_loss[m];
-			if (idling_loss.size() > 1)
-				idle_loss = idling_loss[m];
-
-			for (int d = 0; d != util::days_in_month((int)m); d++)
-			{
-				for (int h = 0; h != 24; h++)
-				{
-					for (size_t s = 0; s != step_per_hour; s++)
-					{
-						batt_charging_losses.push_back(charge_loss);
-						batt_discharging_losses.push_back(discharge_loss);
-						batt_idle_losses.push_back(idle_loss);
-						batt_system_losses.push_back(0.);
-					}
-				}
-			}
-		}
+	// Check loss inputs
+	if (batt_vars->batt_loss_choice == losses_t::MONTHLY && !(batt_vars->batt_losses_charging.size() == 1 || batt_vars->batt_losses_charging.size() == 12)) {
+		throw compute_module::exec_error("battery", "charging loss length must be 1 or 12 for monthly input mode");
+	}
+	if (batt_vars->batt_loss_choice == losses_t::MONTHLY && !(batt_vars->batt_losses_discharging.size() == 1 || batt_vars->batt_losses_discharging.size() == 12)) {
+		throw compute_module::exec_error("battery", "discharging loss length must be 1 or 12 for monthly input mode");
+	}
+	if (batt_vars->batt_loss_choice == losses_t::MONTHLY && !(batt_vars->batt_losses_idle.size() == 1 || batt_vars->batt_losses_idle.size() == 12)) {
+		throw compute_module::exec_error("battery", "discharging loss length must be 1 or 12 for monthly input mode");
+	}
+	if (batt_vars->batt_loss_choice == losses_t::TIMESERIES && !(batt_vars->batt_losses.size() == 1 || batt_vars->batt_losses.size() == nrec)) {
+		throw compute_module::exec_error("battery", "system loss input length must be 1 or equal to weather file length for time series input mode");
 	}
 
-	losses_model = new losses_t(
-		lifetime_model,
-		thermal_model,
-		capacity_model,
-		batt_vars->batt_loss_choice,
-		batt_charging_losses,
-		batt_discharging_losses,
-		batt_idle_losses,
-		batt_system_losses);
+	losses_model = new losses_t(dt_hr, lifetime_model, thermal_model, capacity_model, batt_vars->batt_loss_choice,
+		batt_vars->batt_losses_charging,batt_vars->batt_losses_discharging, batt_vars->batt_losses_idle, batt_vars->batt_losses);
 
 	battery_model->initialize(capacity_model, voltage_model, lifetime_model, thermal_model, losses_model);
 	battery_metrics = new battery_metrics_t(dt_hr);
