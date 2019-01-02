@@ -146,7 +146,7 @@ public:
 		lossModelFOM = new losses_t(dtHourFOM, lifetimeModel, thermalModel, capacityModel, lossChoice, monthlyLosses, monthlyLosses, monthlyLosses, fullLossesMinute);
 		batteryModelFOM = new battery_t(dtHourFOM, chemistry);
 		batteryModelFOM->initialize(capacityModelFOM, voltageModelFOM, lifetimeModel, thermalModel, lossModelFOM);
-		dispatchAutoFOM = new dispatch_automatic_front_of_meter_t(batteryModelFOM, dtHourFOM, 15, 95, 1, 999, 999, 500, 500, 1, 3, 0, 1, 24, 1, true, true, false, 0, 0, 0, 0, ppaFactors, ppaWeekday, ppaWeekend, ur, 98, 98, 98);
+		dispatchAutoFOM = new dispatch_automatic_front_of_meter_t(batteryModelFOM, dtHourFOM, 15, 95, 1, 999, 999, 500, 500, 1, 3, 0, 1, 24, 1, true, true, false, true, 0, 0, 0, 0, ppaFactors, ppaWeekday, ppaWeekend, ur, 98, 98, 98);
 
 		P_pv = P_load = V_pv = P_clipped = 0;		
 	}

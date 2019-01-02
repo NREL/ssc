@@ -338,7 +338,8 @@ public:
 		double dispatch_update_frequency_hours,
 		bool can_charge,
 		bool can_clipcharge,
-		bool can_grid_charge
+		bool can_grid_charge,
+		bool can_fuelcell_charge
 		);
 
 	virtual ~dispatch_automatic_t(){};
@@ -452,7 +453,8 @@ public:
 		double dispatch_update_frequency_hours,
 		bool can_charge,
 		bool can_clipcharge,
-		bool can_grid_charge
+		bool can_grid_charge,
+		bool can_fuelcell_charge
 		);
 
 	virtual ~dispatch_automatic_behind_the_meter_t(){};
@@ -548,6 +550,7 @@ public:
 		bool can_charge,
 		bool can_clipcharge,
 		bool can_grid_charge,
+		bool can_fuelcell_charge,
 		double inverter_paco,
 		double battReplacementCostPerkWh,
 		int battCycleCostChoice,
