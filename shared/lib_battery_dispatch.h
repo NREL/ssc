@@ -574,8 +574,8 @@ public:
 		size_t hour_of_year,
 		size_t step);
 
-	/*! Compute the updated power to send to the battery over the next N hours */
-	void update_dispatch(size_t hour_of_year, size_t step, size_t idx);
+	/// Compute the updated power to send to the battery over the next N hours
+	void update_dispatch(size_t hour_of_year, size_t step, size_t lifetimeIndex);
 
 	/// Update cliploss data
 	void update_cliploss_data(double_vec P_cliploss);

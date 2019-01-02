@@ -1292,7 +1292,7 @@ void dispatch_automatic_front_of_meter_t::dispatch(size_t year,
 	dispatch_automatic_t::dispatch(year, hour_of_year, step);
 }
 
-void dispatch_automatic_front_of_meter_t::update_dispatch(size_t hour_of_year, size_t , size_t idx)
+void dispatch_automatic_front_of_meter_t::update_dispatch(size_t hour_of_year, size_t , size_t lifetimeIndex)
 {
 	// Initialize
 	m_batteryPower->powerBattery = 0;
@@ -1404,7 +1404,8 @@ void dispatch_automatic_front_of_meter_t::update_dispatch(size_t hour_of_year, s
 	}
 	else
 	{
-		m_batteryPower->powerBatteryTarget = _P_battery_use[idx % (8760 * _steps_per_hour)];
+		// extract input power by modifying lifetime index to year 1
+		m_batteryPower->powerBatteryTarget = _P_battery_use[lifetimeIndex % (8760 * _steps_per_hour)];
 	}
 
 	m_batteryPower->powerBattery = m_batteryPower->powerBatteryTarget;
