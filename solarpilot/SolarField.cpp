@@ -1155,8 +1155,6 @@ bool SolarField::PrepareFieldLayout(SolarField &SF, WeatherData *wdata, bool ref
 
     //receiver diameter - delete heliostats that fall within the diameter of the receiver
     //solar field span angles - delete heliostats that are outside of the allowable angular range
-    if(SF.getReceivers()->size() == 1 
-        && SF.getReceivers()->front()->getVarMap()->rec_type.mapval() == var_receiver::REC_TYPE::EXTERNAL_CYLINDRICAL)
     {
         double azmin = SF.getVarMap()->sf.accept_min.val*D2R;
         double azmax = SF.getVarMap()->sf.accept_max.val*D2R;
@@ -1167,19 +1165,21 @@ bool SolarField::PrepareFieldLayout(SolarField &SF, WeatherData *wdata, bool ref
             double y = HelPos.at(j).y;
 
             //radial position check
-            double h_rad = sqrt(x*x + y*y);
-
-            if( h_rad < SF._var_map->recs.front().rec_diameter.val/2.)
+            if (SF.getReceivers()->front()->getVarMap()->rec_type.mapval() == var_receiver::REC_TYPE::EXTERNAL_CYLINDRICAL)
             {
-                dels.push_back((int)j);
-                continue; //can't delete twice
+                double h_rad = sqrt(x*x + y * y);
+
+                if (h_rad < SF._var_map->recs.front().rec_diameter.val / 2.)
+                {
+                    dels.push_back((int)j);
+                    continue; //can't delete twice
+                }
             }
 
             //azimuthal position check
             double az = atan2(x,y);
             if( (az > azmax) || (az < azmin) )
                 dels.push_back((int)j);
-
         }
         //Delete in reverse order
 		int nd = (int)dels.size();
