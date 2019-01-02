@@ -198,14 +198,14 @@ int multi_rec_opt_helper::run(SolarField *SF)
     }
 
     Rvector *recs = SF->getReceivers();
-    int Nrec = recs->size();
+    int Nrec = (int)recs->size();
 
     //calculate receiver design point power values
     std::vector< double > rec_design_power;
     for (int i = 0; i < Nrec; i++)
         rec_design_power.push_back( 1.e6 * recs->at(i)->getVarMap()->q_rec_des.Val() );
 
-    int Nh = helios.size();
+    int Nh = (int)helios.size();
 
     //heliostat to receiver power fractions
     unordered_map<int, std::vector<double> > power_allocs;
