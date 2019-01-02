@@ -526,6 +526,10 @@ void Receiver::updateCalculatedParameters(var_receiver &V, double tht)
 	//Piping loss
 	V.piping_loss.Setval( (V.piping_loss_coef.val * tht + V.piping_loss_const.val)/1.e3 );
 
+    //thermal efficiency
+    double qdesplus = V.q_rec_des.Val() + V.piping_loss.Val() + V.therm_loss.Val();
+    V.therm_eff.Setval(V.q_rec_des.Val() / qdesplus);
+
     updateUserFluxNormalization(V);
 }
 

@@ -1072,12 +1072,14 @@ void sim_result::process_analytical_simulation(SolarField &SF, sim_params &P, in
         
         for (Rvector::iterator rec = receivers->begin(); rec != receivers->end(); rec++)
         {
+            if (!(*rec)->isReceiverEnabled())
+                continue;
             total_receiver_area += (*rec)->getVarMap()->absorber_area.Val();
             power_thermal_loss += (*rec)->getReceiverThermalLoss();
             power_piping_loss += (*rec)->getReceiverPipingLoss();
         }
 
-        power_to_htf = power_absorbed - (power_thermal_loss + power_piping_loss);
+        power_to_htf = power_absorbed - (power_thermal_loss + power_piping_loss)*1.e6;
 
 		solar_az = sun_az_zen[0];
 		solar_zen = sun_az_zen[1];
@@ -1106,9 +1108,11 @@ void sim_result::process_analytical_simulation(SolarField &SF, sim_params &P, in
 
         for (Rvector::iterator rec = receivers->begin(); rec != receivers->end(); rec++)
         {
+            if (!(*rec)->isReceiverEnabled())
+                continue;
             total_receiver_area += (*rec)->getVarMap()->absorber_area.Val();
-            power_thermal_loss += (*rec)->getReceiverThermalLoss();
-            power_piping_loss += (*rec)->getReceiverPipingLoss();
+            power_thermal_loss += (*rec)->getReceiverThermalLoss()*1000.;
+            power_piping_loss += (*rec)->getReceiverPipingLoss()*1000.;
         }
 
         power_to_htf = power_absorbed - (power_thermal_loss + power_piping_loss);

@@ -202,8 +202,9 @@ int multi_rec_opt_helper::run(SolarField *SF)
 
     //calculate receiver design point power values
     std::vector< double > rec_design_power;
+    
     for (int i = 0; i < Nrec; i++)
-        rec_design_power.push_back( 1.e6 * recs->at(i)->getVarMap()->q_rec_des.Val() );
+        rec_design_power.push_back( 1.e6 * recs->at(i)->getVarMap()->q_rec_des.Val() / recs->at(i)->getVarMap()->therm_eff.Val() );
 
     int Nh = (int)helios.size();
 

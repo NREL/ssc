@@ -1779,7 +1779,10 @@ void SolarField::ProcessLayoutResults( sim_results *results, int nsim_total){
 	
     //Calculate the required incident power before thermal losses
     double q_loss_tot = 0.;
-    for (int i = 0; i < (int)_receivers.size(); i++) {
+    for (int i = 0; i < (int)_receivers.size(); i++) 
+    {
+        if (!_receivers.at(i)->isReceiverEnabled())
+            continue;
         _receivers.at(i)->CalculateThermalLoss(1., 0.);
         double
             ql = _receivers.at(i)->getReceiverThermalLoss(),
@@ -1787,7 +1790,7 @@ void SolarField::ProcessLayoutResults( sim_results *results, int nsim_total){
         q_loss_tot += ql + qp;
     }
 
-    double q_inc_des = _var_map->sf.q_des.val + q_loss_tot;
+    double q_inc_des = _var_map->sf.q_des.val + q_loss_tot;     //MW
     _q_des_withloss = q_inc_des; //save this
 
     //--- get lists of all heliostats pointing at each receiver
@@ -4181,7 +4184,9 @@ double SolarField::getReceiverTotalHeatLoss()
 
     for(int i=0; i<(int)_receivers.size(); i++)
     {
-        qloss = _receivers.at(i)->getReceiverThermalLoss()*1000.;   //kWt
+        if (!_receivers.at(i)->isReceiverEnabled())
+            continue;
+        qloss += _receivers.at(i)->getReceiverThermalLoss()*1000.;   //kWt
     }
 
     return qloss;
@@ -4193,7 +4198,9 @@ double SolarField::getReceiverPipingHeatLoss()
 
     for(int i=0; i<(int)_receivers.size(); i++)
     {
-        qloss = _receivers.at(i)->getReceiverPipingLoss()*1000.;   //kWt
+        if (!_receivers.at(i)->isReceiverEnabled())
+            continue;
+        qloss += _receivers.at(i)->getReceiverPipingLoss()*1000.;   //kWt
     }
 
     return qloss;
