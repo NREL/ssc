@@ -123,7 +123,7 @@ void interop::GenerateSimulationWeatherData(var_map &V, int design_method, Array
     {
         int nr, nc;
         nr = (int)wf_entries.size();
-        nc = split(wf_entries.at(0), ",").size();
+        nc = (int)split(wf_entries.at(0), ",").size();
 
         wf_entries_d.resize(nr, nc);
 

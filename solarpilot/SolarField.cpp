@@ -969,6 +969,62 @@ bool SolarField::FieldLayout(){
 
 }
 
+inline bool SolarField::CheckReceiverAcceptance(Receiver* Rec, sp_point *hpos, double tht)
+{
+    //receiver acceptance angle
+    var_receiver *Rv = Rec->getVarMap();
+
+    int rectype = Rv->rec_type.mapval();
+
+    PointVect rnv;
+    Rec->CalculateNormalVector(rnv);
+
+    //calculate the vector from the receiver to the heliostat
+    sp_point offset;
+    offset.Set(
+        Rv->rec_offset_x_global.Val(),
+        Rv->rec_offset_y_global.Val(),
+        Rv->rec_offset_z_global.Val());
+
+    Vect hv_r;
+    hv_r.i = hpos->x - offset.x;
+    hv_r.j = hpos->y - offset.y;
+    hv_r.k = hpos->z - tht;
+    Toolbox::unitvect(hv_r);
+
+    //Rotate into receiver aperture coordinates
+    double raz = Rv->rec_azimuth.val*D2R;
+    double rel = 0.;
+    if (rectype == var_receiver::REC_TYPE::FLAT_PLATE)
+        rel = Rv->rec_elevation.val*D2R;
+
+    Toolbox::rotation(PI - raz, 2, hv_r);
+    Toolbox::rotation(PI - rel, 0, hv_r);
+
+    double theta_x = atan2(hv_r.i, hv_r.j);
+    double theta_y = atan2(hv_r.k, sqrt(hv_r.i*hv_r.i + hv_r.j*hv_r.j));
+
+    //check whether the angles are within the allowable range
+    double
+        acc_x = Rv->accept_ang_x.val*D2R,
+        acc_y = Rv->accept_ang_y.val*D2R;
+    acc_x *= 0.5;
+    acc_y *= 0.5;
+    if (Rv->accept_ang_type.mapval() == var_receiver::ACCEPT_ANG_TYPE::RECTANGULAR  //Rectangular
+        || rectype == var_receiver::REC_TYPE::EXTERNAL_CYLINDRICAL) //or, if this is a cylindrical receiver (no elliptical view from cylinder)
+    {
+        if (fabs(theta_x) < acc_x && fabs(theta_y) < acc_y)
+            return true;
+    }
+    else {	//Elliptical
+        if ((theta_x*theta_x / (acc_x * acc_x) + theta_y * theta_y / (acc_y * acc_y)) <= 1.)
+            return true;
+    }
+
+    return false;   //not in window
+}
+
+
 bool SolarField::PrepareFieldLayout(SolarField &SF, WeatherData *wdata, bool refresh_only){
 	/*
 	This algorithm is used to prepare the solar field object for layout simulations.
@@ -1099,8 +1155,6 @@ bool SolarField::PrepareFieldLayout(SolarField &SF, WeatherData *wdata, bool ref
 
     //receiver diameter - delete heliostats that fall within the diameter of the receiver
     //solar field span angles - delete heliostats that are outside of the allowable angular range
-    if(SF.getReceivers()->size() == 1 
-        && SF.getReceivers()->front()->getVarMap()->rec_type.mapval() == var_receiver::REC_TYPE::EXTERNAL_CYLINDRICAL)
     {
         double azmin = SF.getVarMap()->sf.accept_min.val*D2R;
         double azmax = SF.getVarMap()->sf.accept_max.val*D2R;
@@ -1111,19 +1165,21 @@ bool SolarField::PrepareFieldLayout(SolarField &SF, WeatherData *wdata, bool ref
             double y = HelPos.at(j).y;
 
             //radial position check
-            double h_rad = sqrt(x*x + y*y);
-
-            if( h_rad < SF._var_map->recs.front().rec_diameter.val/2.)
+            if (SF.getReceivers()->front()->getVarMap()->rec_type.mapval() == var_receiver::REC_TYPE::EXTERNAL_CYLINDRICAL)
             {
-                dels.push_back((int)j);
-                continue; //can't delete twice
+                double h_rad = sqrt(x*x + y * y);
+
+                if (h_rad < SF._var_map->recs.front().rec_diameter.val / 2.)
+                {
+                    dels.push_back((int)j);
+                    continue; //can't delete twice
+                }
             }
 
             //azimuthal position check
             double az = atan2(x,y);
             if( (az > azmax) || (az < azmin) )
                 dels.push_back((int)j);
-
         }
         //Delete in reverse order
 		int nd = (int)dels.size();
@@ -1132,68 +1188,22 @@ bool SolarField::PrepareFieldLayout(SolarField &SF, WeatherData *wdata, bool ref
 		}
     }
     //Receiver span angles
-    if(SF.getReceivers()->size() == 1){
-        vector<int> dels;
-        //receiver acceptance angle
-        Receiver *Rec = SF.getReceivers()->front();
-        var_receiver *Rv = Rec->getVarMap();
+    std::vector<sp_point> rs_positions;     //vector of all points contained within some receivers acceptance angles
+    double tht = SF.getVarMap()->sf.tht.val;
 
-        int rectype = Rv->rec_type.mapval();
-        int j=0;
-        for(vector<sp_point>::iterator hpos = HelPos.begin(); hpos != HelPos.end(); hpos++){
-
-            if(rectype == var_receiver::REC_TYPE::FLAT_PLATE){ // Receiver::REC_TYPE::FLAT_PLATE || rectype == Receiver::REC_TYPE::CAVITY){
-		        PointVect rnv;
-		        Rec->CalculateNormalVector(rnv);
-
-                //calculate the vector from the receiver to the heliostat
-                sp_point offset;
-                offset.Set(
-                    Rv->rec_offset_x_global.Val(),
-                    Rv->rec_offset_y_global.Val(),
-                    Rv->rec_offset_z_global.Val());
-
-                double tht = SF.getVarMap()->sf.tht.val; 
-                
-                Vect hv_r;
-                hv_r.i = hpos->x - offset.x;
-                hv_r.j = hpos->y - offset.y;
-                hv_r.k = hpos->z - tht;
-                Toolbox::unitvect(hv_r);
-
-                //Rotate into receiver aperture coordinates
-		        double raz = Rv->rec_azimuth.val*R2D;
-		        double rel = Rv->rec_elevation.val*R2D;
-		        
-                Toolbox::rotation(PI - raz, 2, hv_r);
-		        Toolbox::rotation(PI - rel, 0, hv_r);
-
-		        double theta_x = atan2(hv_r.i, hv_r.j);
-		        double theta_y = atan2(hv_r.k, sqrt(hv_r.i*hv_r.i + hv_r.j*hv_r.j));
-
-		        //check whether the angles are within the allowable range
-		        double 
-                    acc_x = Rv->accept_ang_x.val*R2D,
-                    acc_y = Rv->accept_ang_y.val*R2D;
-		        acc_x *= 0.5;
-		        acc_y *= 0.5;
-		        if(Rv->accept_ang_type.mapval() == var_receiver::ACCEPT_ANG_TYPE::RECTANGULAR){ //Rectangular
-			        if(! (fabs(theta_x) < acc_x && fabs(theta_y) < acc_y))
-				        dels.push_back(j);
-		        }
-		        else{	//Elliptical
-			        if( (theta_x*theta_x / (acc_x * acc_x) + theta_y*theta_y / (acc_y * acc_y)) > 1. )
-				        dels.push_back(j);
-		        }
-	        }
-            j++;
+    for(vector<sp_point>::iterator hpos = HelPos.begin(); hpos != HelPos.end(); hpos++)
+    {
+        for(Rvector::iterator rit=SF.getReceivers()->begin(); rit!=SF.getReceivers()->end(); rit++)
+        {
+            //receiver acceptance angle
+            if( SolarField::CheckReceiverAcceptance(*rit, &*hpos, tht) )
+            {
+                    rs_positions.push_back(*hpos);
+                    break;  //go to next heliostat
+            }
         }
-        //Delete in reverse order
-		int nd = (int)dels.size();
-		for(int i=0; i<nd; i++){
-			HelPos.erase( HelPos.begin()+ dels.at(nd-1-i) );
-		}
     }
+    HelPos = rs_positions;      //reassign heliostat positions to included vector
 
     //--------------------
 
@@ -1792,12 +1802,12 @@ void SolarField::ProcessLayoutResults( sim_results *results, int nsim_total){
         iterate over all heliostats in order of best to worst (backwards) and add a sufficient number
         to provide power for all recievers. 
         */
-        int nhprev = _heliostats.size();
+        int nhprev = (int)_heliostats.size();
 
         Hvector helio_include;
         helio_include.reserve( nhprev );
         
-        for(int hi=_heliostats.size()-1; hi>-1; hi--)
+        for(int hi= (int)_heliostats.size()-1; hi>-1; hi--)
         {
             Heliostat *h = _heliostats.at(hi);
             rec_alloc = h->getReceiverPowerAlloc();
@@ -3351,8 +3361,11 @@ void SolarField::SimulateHeliostatEfficiency(SolarField *SF, Vect &Sun, Heliosta
 	Simulate the heliostats in the specified range
 	*/
 	
-    //if a heliostat has been disabled, handle here and return
-    if( ! helios->IsEnabled() )
+    Receiver *Rec = helios->getWhichReceiver();
+
+    if( ! helios->IsEnabled()   //if a heliostat has been disabled, handle here and return
+        || !CheckReceiverAcceptance(Rec, helios->getLocation(), SF->getVarMap()->sf.tht.val) //if a heliostat is not within the receivers acceptance window, zero performance
+      )
     {
         helios->setEfficiencyCosine( 0. );
         helios->setEfficiencyAtmAtten( 0. );
@@ -3375,8 +3388,6 @@ void SolarField::SimulateHeliostatEfficiency(SolarField *SF, Vect &Sun, Heliosta
 	double slant = helios->getSlantRange(),
 	att = Ambient::calcAttenuation(*V, slant );
 	helios->setEfficiencyAtmAtten( att );
-	
-	Receiver *Rec = helios->getWhichReceiver();
 
 	//Intercept
 	if(! (P.is_layout && V->sf.is_opt_zoning.val && SF->getActiveReceiverCount() == 1) ){	//For layout simulations, the simulation method that calls this method handles image intercept

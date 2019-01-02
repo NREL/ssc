@@ -256,6 +256,7 @@ public:
 	Heliostat *whichTemplate(int method, sp_point &pos);		//Function returning a pointer to the template to use
 	void TemplateRange(int pos_order, int method, double *rrange, double *azrange);
 	void RefactorHeliostatImages(Vect &Sun);
+    inline static bool CheckReceiverAcceptance(Receiver* rec, sp_point *hpos, double towerheight);
 	
     void Simulate(double az, double zen, sim_params &P);		//Method to simulate the performance of the field
 	bool SimulateTime(int hour, int day_of_Month, int month, sim_params &P);

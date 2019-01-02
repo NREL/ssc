@@ -2959,8 +2959,8 @@ void Flux::imageSizeAimPoint(Heliostat &H, SolarField &SF, double args[], bool i
 		}
         
         matrix_t<double> *ufp = &rec->getVarMap()->user_flux_profile.val;
-        int nuserflux_x = ufp->ncols();
-        int nuserflux_y = ufp->nrows();
+        int nuserflux_x = (int)ufp->ncols();
+        int nuserflux_y = (int)ufp->nrows();
         double iuserflux_s = (double)nuserflux_x / (double)nfx;
         double juserflux_s = (double)nuserflux_y / (double)nfy;
         bool is_user_flux_profile = rec->getVarMap()->flux_profile_type.mapval() == var_receiver::FLUX_PROFILE_TYPE::USER;
@@ -3353,7 +3353,7 @@ void Flux::calcBestReceiverTarget(Heliostat *H, Rvector *Recs, double tht, int &
 	double projarea_max;	//Receiver effective area
 
 	Nrec = (int)Recs->size();	//The number of receivers to choose from
-
+    
 	//If we only have 1 receiver, don't bother
 	if(Nrec==1){
 	    sp_point *hpos = H->getLocation();
@@ -3370,7 +3370,7 @@ void Flux::calcBestReceiverTarget(Heliostat *H, Rvector *Recs, double tht, int &
     {
         if (H->IsMultiReceiverAssigned())
         {
-            isave = 0.;
+            isave = 0;
             for (i = 0; i < Nrec; i++)
             {
                 if (Recs->at(i) == H->getWhichReceiver())
@@ -3385,7 +3385,15 @@ void Flux::calcBestReceiverTarget(Heliostat *H, Rvector *Recs, double tht, int &
         {
 		    //Determine the projected area for each receiver
 		    isave = 0; projarea_max = -9.e99;
-		    for(i=0; i<Nrec; i++){
+		    for(i=0; i<Nrec; i++)
+            {
+                //first, is the heliostat within this receiver's allowable acceptance window?
+                if (!SolarField::CheckReceiverAcceptance(Recs->at(i), H->getLocation(), tht))
+                {
+                    projarea.at(i) = 0.;
+                    continue;
+                }
+
 			    //Calculate a rough receiver-to-heliostat vector
 			    projarea.at(i) = s_projected_area_htor(H, Recs->at(i), tht, &r_to_h);
 			    //Is this the best one?
