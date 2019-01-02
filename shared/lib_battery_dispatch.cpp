@@ -688,7 +688,7 @@ void dispatch_automatic_t::copy(const dispatch_t * dispatch)
 void dispatch_automatic_t::update_pv_data(std::vector<double> P_pv_dc){ _P_pv_dc = P_pv_dc;}
 void dispatch_automatic_t::set_custom_dispatch(std::vector<double> P_batt_dc) { _P_battery_use = P_batt_dc; }
 int dispatch_automatic_t::get_mode(){ return _mode; }
-double dispatch_automatic_t::power_batt_target() { return m_batteryPower->powerBattery; };
+double dispatch_automatic_t::power_batt_target() { return m_batteryPower->powerBatteryTarget; };
 
 void dispatch_automatic_t::dispatch(size_t year,
 	size_t hour_of_year,
@@ -1305,9 +1305,9 @@ void dispatch_automatic_front_of_meter_t::update_dispatch(size_t hour_of_year, s
 		// Power to charge (<0) or discharge (>0)
 		double powerBattery = 0;
 
-		if (idx == _index_last_updated + _d_index_update || idx == 0)
+		if (lifetimeIndex == _index_last_updated + _d_index_update || lifetimeIndex == 0)
 		{
-			if (idx > 0) {
+			if (lifetimeIndex > 0) {
 				_index_last_updated += _d_index_update;
 			}
 
@@ -1326,8 +1326,8 @@ void dispatch_automatic_front_of_meter_t::update_dispatch(size_t hour_of_year, s
 
 			// Compute forecast variables which potentially do change from year to year
 			double energyToStoreClipped = 0;
-			if (_P_cliploss_dc.size() > idx + _look_ahead_hours) {
-				energyToStoreClipped = std::accumulate(_P_cliploss_dc.begin() + idx, _P_cliploss_dc.begin() + idx + _look_ahead_hours * _steps_per_hour, 0.0f) * _dt_hour;
+			if (_P_cliploss_dc.size() > lifetimeIndex + _look_ahead_hours) {
+				energyToStoreClipped = std::accumulate(_P_cliploss_dc.begin() + lifetimeIndex, _P_cliploss_dc.begin() + lifetimeIndex + _look_ahead_hours * _steps_per_hour, 0.0f) * _dt_hour;
 			}
 
 			/*! Economic benefit of charging from the grid in current time step to discharge sometime in next X hours ($/kWh)*/
