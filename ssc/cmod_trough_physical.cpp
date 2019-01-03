@@ -75,6 +75,8 @@ static var_info _cm_vtab_trough_physical[] = {
     { SSC_INPUT,        SSC_NUMBER,      "nHCEVar",                   "Number of HCE variants per type",                                                  "none",         "",               "solar_field",    "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "nLoops",                    "Number of loops in the field",                                                     "none",         "",               "solar_field",    "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "FieldConfig",               "Number of subfield headers",                                                       "none",         "",               "solar_field",    "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "is_model_power_block_piping", "Should model consider piping through power block?",                              "none",         "",               "solar_field",    "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "L_power_block_piping",      "Length of piping (full mass flow) through heat sink (if applicable)",              "none",         "",               "solar_field",    "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "eta_pump",                  "HTF pump efficiency",                                                              "none",         "",               "solar_field",    "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "Fluid",                     "Field HTF fluid ID number",                                                        "none",         "",               "solar_field",    "*",                       "",                      "" },
     //{ SSC_INPUT,        SSC_NUMBER,      "fthrok",                    "Flag to allow partial defocusing of the collectors",                               "W/SCA",        "",               "solar_field",    "*",                       "INTEGER",               "" },
@@ -544,6 +546,8 @@ public:
         c_trough.m_nHCEVar = as_integer("nHCEVar");                 //[-] Number of HCE variants per t
         c_trough.m_nLoops = as_integer("nLoops");                   //[-] Number of loops in the field
         c_trough.m_FieldConfig = as_integer("FieldConfig");         //[-] Number of subfield headers
+        c_trough.m_L_power_block_piping = as_double("L_power_block_piping");                        //[m] Length of piping (full mass flow) through power block (if applicable)
+        c_trough.m_include_fixed_power_block_runner = as_boolean("is_model_power_block_piping");	//[-] Should model consider piping through power block?
         c_trough.m_eta_pump = as_double("eta_pump");                //[-] HTF pump efficiency
         c_trough.m_Fluid = as_integer("Fluid");                     //[-] Field HTF fluid number
         //c_trough.m_fthrok = as_integer("fthrok");                 //[-] Flag to allow partial defocusing of the collectors
