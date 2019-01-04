@@ -3,7 +3,7 @@ VPATH = ../test
 SSCLIB = ./ssc.so
 GTEST=../../googletest/googletest
 GTDIR = $(GTEST)
-GTLIB = $(GTDIR)/make/gtest_main.a
+GTLIB = $(GTDIR)/make/libgtest_main.a
 
 CC = gcc
 CXX = g++
