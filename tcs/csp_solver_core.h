@@ -296,6 +296,7 @@ public:
         double m_q_rec_standby;
         double m_pen_delta_w;
 		double m_w_rec_ht;
+        double m_fc_gamma;
 		std::vector<double> m_w_lim_full;
         util::matrix_t<double> m_fc_dni_scenarios;
         util::matrix_t<double> m_fc_price_scenarios;
@@ -349,6 +350,7 @@ public:
             m_presolve_type = -1;
             m_scaling_type = -1;
             m_fc_steps = -1;
+            m_fc_gamma = 0.;
 
             m_disp_time_weighting = 0.99;
             m_rsu_cost = 952.;

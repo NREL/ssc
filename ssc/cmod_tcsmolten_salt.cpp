@@ -327,6 +327,7 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     { SSC_INPUT,		SSC_MATRIX,		 "fc_price_scenarios",	 "Forecast price scenarios",					                      "-",		      "",			 "sys_ctrl_disp_opt", "",						 "",					  "" },
     { SSC_INPUT,		SSC_MATRIX,		 "fc_tdry_scenarios",	 "Forecast dry bulb temperature scenarios",                           "C",		      "",			 "sys_ctrl_disp_opt", "",						 "",					  "" },
     //{ SSC_INPUT,		SSC_NUMBER,		 "fc_steps",	         "Number of time steps per forecast block",                           "-",		      "",			 "sys_ctrl_disp_opt", "",						 "",					  "" },
+    { SSC_INPUT,        SSC_NUMBER,      "fc_gamma",             "Forecast uncertainty TES hedging factor"                            "-",            "",            "sys_ctrl_disp_opt","?=0",                      "",                      "" },
 
 	{ SSC_INPUT,		SSC_NUMBER,		 "allow_controller_exceptions",   "Allow controller exceptions? (1 = true)",				  "-",		      "",			 "sys_ctrl",		 "?=1",						 "",					  "" },
 	{ SSC_INPUT,		SSC_ARRAY,		 "select_simulation_days",   "Selected subset of simulation days",							  "-",		      "",			 "sys_ctrl",		 "?=0",						 "",					  "" },
@@ -1632,6 +1633,7 @@ public:
         tou.mc_dispatch_params.m_ampl_data_dir = as_string("ampl_data_dir");
         tou.mc_dispatch_params.m_ampl_exec_call = as_string("ampl_exec_call");
         tou.mc_dispatch_params.m_ampl_thread_id = as_string("ampl_thread_id");
+        tou.mc_dispatch_params.m_fc_gamma = as_number("fc_gamma");
 		if( tou.mc_dispatch_params.m_dispatch_optimize )
 		{
 			tou.mc_dispatch_params.m_optimize_frequency = as_integer("disp_frequency");
@@ -1677,9 +1679,9 @@ public:
 					throw exec_error("tcsmolten_salt", "The specified dispatch horizon update frequency ('disp_horizon_update') cannot be longer than the specified optimization horizon ('disp_horizon').");
 			}
 
-
             if( tou.mc_dispatch_params.m_is_stochastic_dispatch )
             {
+
                 if(! tou.mc_dispatch_params.m_is_ampl_engine )
                     throw exec_error("tcsmolten_salt", "Stochastic dispatch is only available using the AMPL engine linkage. Ensure AMPL settings are correct.");
 

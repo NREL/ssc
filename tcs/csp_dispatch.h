@@ -292,22 +292,25 @@ public:
     {
         int n_scenarios;            //number of forecast scenarios
         int n_steps;                //number of time steps in the forecast
+        int n_to_update;            //number of time steps used before the next update
         double step;                //[sec] step duration
         bool is_stochastic;         //apply stochastic dispatch
         bool is_dni_scenarios;
         bool is_price_scenarios;
         bool is_tdry_scenarios; 
+        double fc_gamma;            //Factor indicating storage inventory incentive for forecast uncertainty. 1-maximize storage, 0-maximize revenue
 
         s_forecast_params()
         {
             n_scenarios = -1;   
             n_steps = -1;
+            n_to_update = -1;
             step = std::numeric_limits<double>::quiet_NaN();
             is_stochastic = false;
             is_dni_scenarios = false;
             is_price_scenarios = false;
             is_tdry_scenarios = false;
-
+            fc_gamma = 0.;
         };
     
     } forecast_params;

@@ -505,6 +505,10 @@ static void calculate_parameters(csp_dispatch_opt *optinst, unordered_map<std::s
         pars["Wdotu"] = (pars["Qu"] - limit1) * pars["etap"];
         pars["Wdotl"] = (pars["Ql"] - limit1) * pars["etap"];
 
+        // TES weighting (gamma) and complement (gammac)
+        pars["gamma"] = optinst->forecast_params.fc_gamma;
+        pars["gammac"] = 1. - pars["gamma"];
+
         // Adjust wlim if specified value is too low to permit cycle operation
         int ns = optinst->forecast_params.n_scenarios;
         optinst->outputs.wnet_lim_min.resize(nt, ns);
@@ -683,8 +687,8 @@ bool csp_dispatch_opt::optimize()
         --------------------------------------------------------------------------------
         */
 		{
-            int *col = new int[12 * nt];
-            REAL *row = new REAL[12 * nt];
+            int *col = new int[13 * nt];
+            REAL *row = new REAL[13 * nt];
             double tadj = P["disp_time_weighting"];
             int i = 0;
 
@@ -695,8 +699,7 @@ bool csp_dispatch_opt::optimize()
             pmean /= (double)forecast_outputs.price_scenarios.nrows();
             //--
 
-
-			// penalty for using non-physical consecutive startups to dump energy: -consec_su_pen * (ycsu - ycsup). 
+            // penalty for using non-physical consecutive startups to dump energy: -consec_su_pen * (ycsu - ycsup). 
 			double consec_su_pen = 0.0;   // No need for a penalty in most cases because constraints force startup/operation to occur in the same time step
 			double Qcmin = outputs.Qc.at(0);
 			double Qcmax = outputs.Qc.at(0);
@@ -716,25 +719,25 @@ bool csp_dispatch_opt::optimize()
             {
                 i = 0;
                 col[ t + nt*(i  ) ] = O.column("wdot", t);
-                row[ t + nt*(i++) ] = P["delta"] * forecast_outputs.price_scenarios.at(t,0)*tadj*(1.-outputs.w_condf_expected.at(t,0));
+                row[ t + nt*(i++) ] = P["gammac"] * P["delta"] * forecast_outputs.price_scenarios.at(t,0)*tadj*(1.-outputs.w_condf_expected.at(t,0));
 
                 col[ t + nt*(i  ) ] = O.column("xr", t);
-                row[ t + nt*(i++) ] = -(P["delta"] * forecast_outputs.price_scenarios.at(t,0) * P["Lr"])+0.1*tadj*pmean;  // tadj added to prefer receiver production sooner (i.e. delay dumping)
+                row[ t + nt*(i++) ] = P["gammac"] * (-(P["delta"] * forecast_outputs.price_scenarios.at(t,0) * P["Lr"])+0.1*tadj*pmean);  // tadj added to prefer receiver production sooner (i.e. delay dumping)
 
                 col[ t + nt*(i  ) ] = O.column("xrsu", t);
-                row[ t + nt*(i++) ] = -P["delta"] * forecast_outputs.price_scenarios.at(t,0) * P["Lr"];
+                row[ t + nt*(i++) ] = P["gammac"] * (-P["delta"] * forecast_outputs.price_scenarios.at(t,0) * P["Lr"]);
 
                 col[ t + nt*(i  ) ] = O.column("yrsu", t);
-                row[ t + nt*(i++) ] = -forecast_outputs.price_scenarios.at(t,0) * (params.w_rec_ht + params.w_stow);
+                row[ t + nt*(i++) ] = -P["gammac"] * forecast_outputs.price_scenarios.at(t,0) * (params.w_rec_ht + params.w_stow);
 
                 col[ t + nt*(i  ) ] = O.column("yr", t);
-                row[ t + nt*(i++) ] = -(P["delta"] * forecast_outputs.price_scenarios.at(t,0) * params.w_track) + tadj;	// tadj added to prefer receiver operation in nearer term to longer term
+                row[ t + nt*(i++) ] = P["gammac"] * (-(P["delta"] * forecast_outputs.price_scenarios.at(t,0) * params.w_track) + tadj);	// tadj added to prefer receiver operation in nearer term to longer term
 
                 col[ t + nt*(i  ) ] = O.column("x", t);
-                row[ t + nt*(i++) ] = -P["delta"] * forecast_outputs.price_scenarios.at(t,0) * params.w_cycle_pump;
+                row[ t + nt*(i++) ] = -P["gammac"] * P["delta"] * forecast_outputs.price_scenarios.at(t,0) * params.w_cycle_pump;
 
                 col[ t + nt*(i  ) ] = O.column("ycsb", t);
-                row[ t + nt*(i++) ] = -P["delta"] * forecast_outputs.price_scenarios.at(t,0) * params.w_cycle_standby;
+                row[ t + nt*(i++) ] = -P["gammac"] * P["delta"] * forecast_outputs.price_scenarios.at(t,0) * params.w_cycle_standby;
 
                 //xxcol[ t + nt*(i   ] = O.column("yrsb", t);
                 //xxrow[ t + nt*(i++) ] = -delta * forecast_outputs.price_scenarios.at(t,0) * (Lr * Qrl + (params.w_stow / delta));
@@ -746,22 +749,25 @@ bool csp_dispatch_opt::optimize()
                 //xxrow[ t + nt*(i++) ] = -0.5;
 
                 col[ t + nt*(i  ) ] = O.column("yrsup", t);
-                row[ t + nt*(i++) ] = -P["rsu_cost"]*tadj;
+                row[ t + nt*(i++) ] = -P["gammac"] * P["rsu_cost"]*tadj;
 
                 //xxcol[ t + nt*(i   ] = O.column("yrhsp", t);
                 //xxrow[ t + nt*(i++) ] = -tadj;
 
                 col[ t + nt*(i  ) ] = O.column("ycsup", t);
-				row[t + nt * (i++)] = -P["csu_cost"] * tadj + consec_su_pen * tadj;
+				row[t + nt * (i++)] = P["gammac"] * (-P["csu_cost"] * tadj + consec_su_pen * tadj);
 
                 col[ t + nt*(i  ) ] = O.column("ychsp", t);
-                row[ t + nt*(i++) ] = -P["csu_cost"]*tadj * 0.1;
+                row[ t + nt*(i++) ] = P["gammac"] * (-P["csu_cost"]*tadj * 0.1);
 
                 col[ t + nt*(i  ) ] = O.column("delta_w", t);
-                row[ t + nt*(i++) ] = -P["pen_delta_w"]*tadj;
+                row[ t + nt*(i++) ] = -P["gammac"] * P["pen_delta_w"]*tadj;
 
 				col[t + nt * (i)] = O.column("ycsu", t);
-				row[t + nt * (i++)] = -consec_su_pen *tadj;
+				row[t + nt * (i++)] = -P["gammac"] * consec_su_pen *tadj;
+
+                col[t + nt * (i)] = O.column("s", t);
+                row[t + nt * (i++)] = t == forecast_params.n_to_update ? P["gamma"] * tadj : 0.;
 
                 tadj *= P["disp_time_weighting"];
             }

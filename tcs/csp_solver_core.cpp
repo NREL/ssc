@@ -628,6 +628,8 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
     dispatch.solver_params.ampl_thread_id = mc_tou.mc_dispatch_params.m_ampl_thread_id;
     
     dispatch.forecast_params.is_stochastic = false;
+    dispatch.forecast_params.fc_gamma = mc_tou.mc_dispatch_params.m_fc_gamma;
+    dispatch.forecast_params.n_to_update = mc_tou.mc_dispatch_params.m_horizon_update_frequency;
     //-------------------------------
 
 
