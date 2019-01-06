@@ -1216,24 +1216,6 @@ bool weatherfile::open(const std::string &file, bool header_only)
 				m_columns[DAY].data[i] = (float)day;
 				m_columns[HOUR].data[i] = (float)hour;
 				m_columns[MINUTE].data[i] = 30;
-				/*
-								m_columns[GHI].data[i] = (float)stof(cols[4]);
-								m_columns[DNI].data[i] = (float)stof(cols[7]);
-								m_columns[DHI].data[i] = (float)stof(cols[10]);
-								m_columns[POA].data[i] = (float)(-999);       //No POA in TMY3
-
-								m_columns[TDRY].data[i] = (float)stof(cols[31]);
-								m_columns[TDEW].data[i] = (float)stof(cols[34]);
-
-								m_columns[WSPD].data[i] = (float)stof(cols[46]);
-								m_columns[WDIR].data[i] = (float)stof(cols[43]);
-
-								m_columns[RH].data[i] = (float)stof(cols[37]);
-								m_columns[PRES].data[i] = (float)stof(cols[40]);
-								m_columns[SNOW].data[i] = -999.0; // no snowfall in TMY3
-								m_columns[ALB].data[i] = (float)stof(cols[61]);
-								m_columns[AOD].data[i] = -999; // no AOD in TMY3
-				*/
 				m_columns[GHI].data[i] = col_or_nan(cols[4]);
 				m_columns[DNI].data[i] = col_or_nan(cols[7]);
 				m_columns[DHI].data[i] = col_or_nan(cols[10]);
@@ -1294,21 +1276,21 @@ bool weatherfile::open(const std::string &file, bool header_only)
 				m_columns[HOUR].data[i] = (float)stoi(cols[3]) - 1;  // hour goes 0-23, not 1-24;
 				m_columns[MINUTE].data[i] = (float)stoi(cols[4]);
 
-				m_columns[GHI].data[i] = check_missing(stof(cols[13]), 9999.);
-				m_columns[DNI].data[i] = check_missing(stof(cols[14]), 9999.);
-				m_columns[DHI].data[i] = check_missing(stof(cols[15]), 9999.);
+				m_columns[GHI].data[i] = check_missing(col_or_nan(cols[13]), 9999.);
+				m_columns[DNI].data[i] = check_missing(col_or_nan(cols[14]), 9999.);
+				m_columns[DHI].data[i] = check_missing(col_or_nan(cols[15]), 9999.);
 				m_columns[POA].data[i] = (float)(-999);       /* No POA in EPW */
 
-				m_columns[WSPD].data[i] = check_missing(stof(cols[21]), 999.);
-				m_columns[WDIR].data[i] = check_missing(stof(cols[20]), 999.);
+				m_columns[WSPD].data[i] = check_missing(col_or_nan(cols[21]), 999.);
+				m_columns[WDIR].data[i] = check_missing(col_or_nan(cols[20]), 999.);
 
-				m_columns[TDRY].data[i] = check_missing(stof(cols[6]), 99.9);
+				m_columns[TDRY].data[i] = check_missing(col_or_nan(cols[6]), 99.9);
 
-				m_columns[TDEW].data[i] = check_missing(stof(cols[7]), 99.9);
+				m_columns[TDEW].data[i] = check_missing(col_or_nan(cols[7]), 99.9);
 
-				m_columns[RH].data[i] = check_missing(stof(cols[8]), 999.);
-				m_columns[PRES].data[i] = check_missing(stof(cols[6]) * 0.01, 999999.*0.01);
-				m_columns[SNOW].data[i] = check_missing(stof(cols[30]), 999.); // snowfall
+				m_columns[RH].data[i] = check_missing(col_or_nan(cols[8]), 999.);
+				m_columns[PRES].data[i] = check_missing(col_or_nan(cols[6]) * 0.01, 999999.*0.01);
+				m_columns[SNOW].data[i] = check_missing(col_or_nan(cols[30]), 999.); // snowfall
 				m_columns[ALB].data[i] = -999; /* no albedo in EPW file */
 				m_columns[AOD].data[i] = -999; /* no AOD in EPW */
 
@@ -1344,22 +1326,22 @@ bool weatherfile::open(const std::string &file, bool header_only)
 
 			m_time += m_stepSec; // increment by step
 
-			m_columns[GHI].data[i] = (float)stof(cols[7]);
-			m_columns[DNI].data[i] = (float)stof(cols[8]);
-			m_columns[DHI].data[i] = (float)stof(cols[9]);
+			m_columns[GHI].data[i] = col_or_nan(cols[7]);
+			m_columns[DNI].data[i] = col_or_nan(cols[8]);
+			m_columns[DHI].data[i] = col_or_nan(cols[9]);
 			m_columns[POA].data[i] = (double)(-999);       /* No POA in SMW */
 
-			m_columns[WSPD].data[i] = (float)stof(cols[4]);
-			m_columns[WDIR].data[i] = (float)stof(cols[5]);
+			m_columns[WSPD].data[i] = col_or_nan(cols[4]);
+			m_columns[WDIR].data[i] = col_or_nan(cols[5]);
 
-			m_columns[TDRY].data[i] = (float)stof(cols[0]);
-			m_columns[TDEW].data[i] = (float)stof(cols[1]);
-			m_columns[TWET].data[i] = (float)stof(cols[2]);
+			m_columns[TDRY].data[i] = col_or_nan(cols[0]);
+			m_columns[TDEW].data[i] = col_or_nan(cols[1]);
+			m_columns[TWET].data[i] = col_or_nan(cols[2]);
 
-			m_columns[RH].data[i] = (float)stof(cols[3]);
-			m_columns[PRES].data[i] = (float)stof(cols[6]);
-			m_columns[SNOW].data[i] = (float)stof(cols[11]);
-			m_columns[ALB].data[i] = (float)stof(cols[10]);
+			m_columns[RH].data[i] = col_or_nan(cols[3]);
+			m_columns[PRES].data[i] = col_or_nan(cols[6]);
+			m_columns[SNOW].data[i] = col_or_nan(cols[11]);
+			m_columns[ALB].data[i] = col_or_nan(cols[10]);
 			m_columns[AOD].data[i] = -999; /* no AOD in SMW */
 
 			if (ifs.eof())
@@ -1390,14 +1372,14 @@ bool weatherfile::open(const std::string &file, bool header_only)
 					{
 						if (k == YEAR) {
 							try {
-								m_columns[k].data[i] = (float)stof(trimboth(cols[m_columns[k].index]));
+								m_columns[k].data[i] = col_or_nan(trimboth(cols[m_columns[k].index]));
 							}
 							catch (const std::exception& ) {
 								m_columns[k].data[i] = 1990;
 							}
 						}
 						else
-							m_columns[k].data[i] = (float)stof(trimboth(cols[m_columns[k].index]));
+							m_columns[k].data[i] = col_or_nan(trimboth(cols[m_columns[k].index]));
 					}
 				}
 
