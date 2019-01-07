@@ -812,10 +812,22 @@ void AutoPilot::PrepareFluxSimulation(sp_flux_table &fluxtab, int flux_res_x, in
 
 	    Ambient::calcSpacedDaysHours(V->amb.latitude.val, V->amb.longitude.val, V->amb.time_zone.val, 
 		    fluxtab.n_flux_days, fluxtab.delta_flux_hrs, utime, uday);
-	 
+
 	    nflux_sim = 0;
 	    for(int i=0; i<(int)utime.size(); i++)
 		    nflux_sim += (int)utime.at(i).size();
+
+        //if limiting the simulations to a subgroup, figure out start/end sim counts
+        int start_sim = 0;
+        int end_sim = nflux_sim;
+        if (fluxtab.user_spacing_groupcount > 0 && fluxtab.user_spacing_subgroup > -1 && fluxtab.user_spacing_subgroup < fluxtab.user_spacing_groupcount)
+        {
+            int grpsize = nflux_sim / fluxtab.user_spacing_groupcount + (int)(nflux_sim % fluxtab.user_spacing_groupcount > 0);
+            start_sim = fluxtab.user_spacing_subgroup*grpsize;
+            end_sim = start_sim + grpsize;
+            end_sim = end_sim > nflux_sim ? nflux_sim : end_sim;
+            nflux_sim = end_sim - start_sim;
+        }
 
 	    //Arrays to keep track of input values
 	    fluxtab.azimuths.clear();
@@ -823,10 +835,17 @@ void AutoPilot::PrepareFluxSimulation(sp_flux_table &fluxtab, int flux_res_x, in
 
         DateTime DT;
         int nday = (int)uday.size();
+        int simct = 0;
         for(int i=0; i<nday; i++){
 	        int nhour_day = (int)utime.at(i).size();
-	        for(int j=0; j<nhour_day; j++){
-			
+	        for(int j=0; j<nhour_day; j++)
+            {
+                if (simct < start_sim || simct >= end_sim)
+                {
+                    simct++;
+                    continue;
+                }
+
                 Ambient::setDateTime(DT, utime.at(i).at(j)+12, uday[i]);
                 double az,zen;
                 Ambient::calcSunPosition(*V, DT, &az, &zen);
@@ -834,6 +853,8 @@ void AutoPilot::PrepareFluxSimulation(sp_flux_table &fluxtab, int flux_res_x, in
 		        //--- keep track of input values
 		        fluxtab.azimuths.push_back(az*D2R);
 		        fluxtab.zeniths.push_back(zen*D2R);
+                
+                simct++;
 	        }
         }
     }

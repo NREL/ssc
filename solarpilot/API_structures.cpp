@@ -78,6 +78,8 @@ void sp_optimize::setOptimizationSimulationHistory(vector<vector<double> > &sim_
 sp_flux_table::sp_flux_table()
 {
 	is_user_spacing = false;
+    user_spacing_groupcount = -1;
+    user_spacing_subgroup = -1;
 }
 
 // ----------------- optical table --------------------

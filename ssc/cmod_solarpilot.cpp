@@ -104,7 +104,9 @@ static var_info _cm_vtab_solarpilot[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "focus_type",                "Heliostat focus method",                     "",       "",         "SolarPILOT",   "*",                "",                "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "cant_type",                 "Heliostat cant method",                      "",       "",         "SolarPILOT",   "*",                "",                "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "n_flux_days",               "No. days in flux map lookup",                "",       "",         "SolarPILOT",   "?=8",              "",                "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "delta_flux_hrs",            "Hourly frequency in flux map lookup",        "",       "",         "SolarPILOT",   "?=1",              "",                "" },
+    { SSC_INPUT,        SSC_NUMBER,      "delta_flux_hrs",            "Hourly frequency in flux map lookup",        "",       "",         "SolarPILOT",   "?=1",              "",                "" },
+    { SSC_INPUT,        SSC_NUMBER,      "thread_id",                 "Thread ID",                                  "",       "",         "SolarPILOT",   "?=-1",             "",                "" },
+    { SSC_INPUT,        SSC_NUMBER,      "thread_ct",                 "Thread count",                               "",       "",         "SolarPILOT",   "?=-1",             "",                "" },
 
 	{ SSC_INPUT,        SSC_NUMBER,      "calc_fluxmaps",             "Include fluxmap calculations",               "",       "",         "SolarPILOT",   "?=0",              "",                "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "n_flux_x",                  "Flux map X resolution",                      "",       "",         "SolarPILOT",   "?=12",             "",                "" },

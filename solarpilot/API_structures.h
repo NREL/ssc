@@ -123,6 +123,8 @@ struct sp_flux_table : sp_flux_map
 	bool is_user_spacing;	//user will specify data in 'n_flux_days' and 'delta_flux_hours'
 	int n_flux_days;		//How many days are used to calculate flux maps? (default = 8)
 	double delta_flux_hrs;		//How much time (hrs) between each flux map? (default = 1)
+    int user_spacing_subgroup;  //allow specification of a subgroup of n_flux_days/delta_flux_hrs to be calculated (-1 if all)
+    int user_spacing_groupcount;    //number of discretized groups for subgroup calcs (-1 if all)
 	//-- data calculated by the algorithm:
 	
 	std::vector<double> azimuths;

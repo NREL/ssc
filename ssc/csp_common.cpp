@@ -348,6 +348,18 @@ bool solarpilot_invoke::run(std::shared_ptr<weather_data_provider> wdata)
 
 		int nflux_x = m_cmod->as_integer("n_flux_x");
 		int nflux_y = m_cmod->as_integer("n_flux_y");
+
+        if (m_cmod->is_assigned("thread_id"))
+        {
+            int thread_id = m_cmod->as_integer("thread_id");
+            int thread_ct = m_cmod->as_integer("thread_ct");
+            if (thread_id > -1 && thread_ct > 0 && thread_id < thread_ct)
+            {
+                fluxtab.user_spacing_groupcount = thread_ct;
+                fluxtab.user_spacing_subgroup = thread_id;
+            }
+        }
+
 		//int nflux_x = 12, nflux_y = 1;
 		if(! m_sapi->CalculateFluxMaps(fluxtab, nflux_x, nflux_y, true) )
         {
