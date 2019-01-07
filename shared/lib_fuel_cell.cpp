@@ -95,13 +95,18 @@ void FuelCell::init() {
 	m_hoursSinceStop = 0;
 	m_hoursRampUp = std::ceilf((float)(m_unitPowerMin_kW / m_dynamicResponseUp_kWperHour));
 	m_powerMax_kW = m_unitPowerMax_kW;
-	m_power_kW = 0;
 	m_powerThermal_kW = 0;
 	m_powerPrevious_kW = 0;
 	m_fuelConsumed_MCf = 0;
 	m_replacementCount = 0;
 	m_hour = 0;
 	m_year = 0;
+
+	// In event of 0 startup hours, assume fuel cell is running at idle
+	if (m_startup_hours == 0) {
+		m_power_kW = m_unitPowerMin_kW;
+	}
+
 	
 }
 
@@ -257,6 +262,10 @@ void FuelCell::setScheduledShutdowns(util::matrix_t<size_t> shutdowns) {
 }
 void FuelCell::setStartupHours(double startup_hours) {
 	m_startup_hours = startup_hours;
+	// Assume that this function is only called at the beginning of a simulation and implies that fuel cell already running
+	if (startup_hours == 0) {
+		m_power_kW = m_unitPowerMin_kW;
+	}
 }
 void FuelCell::setShutdownOption(int shutdownOption) {
 	m_shutdownOption = shutdownOption;

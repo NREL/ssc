@@ -47,6 +47,16 @@ TEST_F(FuelCellTest, Startup)
 	EXPECT_NEAR(fuelCell->getPower(), fuelCell->getMaxPower() - dynamicResponseDown_kWperHour, 0.1);
 }
 
+/// Test case for when fuel cell is already started at beginning of year
+TEST_F(FuelCellTest, StartedUp)
+{
+	fuelCell->setStartupHours(0);
+	
+	// First hour is fully started up
+	fuelCell->runSingleTimeStep(dynamicResponseUp_kWperHour * 2);
+	EXPECT_EQ(fuelCell->getPower(), dynamicResponseUp_kWperHour * 2);
+}
+
 
 TEST_F(FuelCellTest, Shutdown)
 {
