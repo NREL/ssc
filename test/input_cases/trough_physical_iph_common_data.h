@@ -5,22 +5,22 @@
 
 #include "code_generator_utilities.h"
 
-//const char * SSCDIR = std::getenv("SSCDIR");
-
-//char solar_resource_path[100];
-//char load_profile_path[100];
-
-
-//int n1 = sprintf(solar_resource_path, "%s/test/input_cases/pvsamv1_data/USA AZ Phoenix (TMY2).csv", SSCDIR);
-//int n2 = sprintf(load_profile_path, "%s/test/input_cases/pvsamv1_data/pvsamv1_residential_load.csv", SSCDIR);
-
 
 /**
 *  Default data for trough_physical_process_heat run that can be further modified
 */
 void trough_physical_iph_default(ssc_data_t &data)
 {
-    ssc_data_set_string(data, "file_name", "C:/SAM/2018.11.11/solar_resource/tucson_az_32.116521_-110.933042_psmv3_60_tmy.csv");
+	const char * SSCDIR = std::getenv("SSCDIR");
+
+	char solar_resource_path[200];
+	//char load_profile_path[100];
+
+
+	int n1 = sprintf(solar_resource_path, "%s/test/input_cases/tcstrough_data/tucson_az_32.116521_-110.933042_psmv3_60_tmy.csv", SSCDIR);
+	//int n2 = sprintf(load_profile_path, "%s/test/input_cases/pvsamv1_data/pvsamv1_residential_load.csv", SSCDIR);
+
+    ssc_data_set_string(data, "file_name", solar_resource_path);
     ssc_data_set_number(data, "track_mode", 1);
     ssc_data_set_number(data, "tilt", 0);
     ssc_data_set_number(data, "azimuth", 0);

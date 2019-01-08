@@ -1231,7 +1231,7 @@ double mode(std::vector<double> v) {
     }
     // handle last value
     if (new_count > mode_count) {
-        mode = *(v.end());
+        mode = *(v.end() - 1);
         mode_count = new_count;
     }
 
