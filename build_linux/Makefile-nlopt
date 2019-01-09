@@ -1,7 +1,7 @@
 VPATH = ../nlopt ../nlopt/direct ../nlopt/cdirect ../nlopt/praxis ../nlopt/luksan ../nlopt/crs
 CC = gcc
 CXX = g++
-WARNINGS = -Wno-deprecated-declarations
+WARNINGS = -Wno-deprecated-declarations -Wno-ignored-attributes -Wno-deprecated
 CFLAGS = -fPIC -g $(WARNINGS) -O3 -I../ -D__64BIT__ -I../nlopt/api -I../nlopt/util -I../nlopt
 CXXFLAGS=-std=c++0x $(CFLAGS)
 CONFIG_H=../nlopt/config.h

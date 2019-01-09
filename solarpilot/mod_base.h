@@ -551,7 +551,7 @@ public:
         return rv;
     };
     
-    void combo_add_choice(std::string &choicename, std::string &mval)
+    void combo_add_choice(std::string choicename, std::string mval)
     {
         int mapint;
         to_integer(mval, &mapint);

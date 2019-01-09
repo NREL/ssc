@@ -65,11 +65,13 @@
 
 class SolarField;
 class Heliostat;
+class Receiver;
 class FluxSurface;
 struct sim_params;
 struct ST_System;
 typedef std::vector<FluxSurface> FluxSurfaces;
 typedef std::vector<Heliostat*> Hvector;
+typedef std::vector<Receiver*> Rvector;
 
 /* 
 NOTE
@@ -247,6 +249,9 @@ public:
 		total_installed_cost,
 		coe_metric;
 
+    std::string time_date_stamp;
+    std::string aim_method;
+
 	//whole-field statistics
 	stat_object
 		eff_total_heliostat,
@@ -281,9 +286,7 @@ public:
 
 	void add_heliostat(Heliostat &H);
 
-	void process_analytical_simulation(SolarField &SF, sim_params &P, int nsim_type, double sun_az_zen[2], Hvector &helios);
-
-	void process_analytical_simulation(SolarField &SF, sim_params &P, int sim_type, double sun_az_zen[2]);
+	void process_analytical_simulation(SolarField &SF, sim_params &P, int nsim_type, double sun_az_zen[2], Hvector* helios=0, Rvector* recs=0);
 
 	void process_raytrace_simulation(SolarField &SF, sim_params &P, int nsim_type, double sun_az_zen[2], Hvector &helios, double qray, int *emap, int *smap, int *rnum, int ntot, double *boxinfo);
 
@@ -291,7 +294,7 @@ public:
 	
 	void process_field_stats();
 
-	void process_flux_stats(SolarField &SF);
+	void process_flux_stats(Rvector *recs);
 	
 };
 

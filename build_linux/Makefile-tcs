@@ -1,7 +1,7 @@
 VPATH = ../tcs
 CC = gcc
 CXX = g++
-WARNINGS = -Wall -Wno-unknown-pragmas
+WARNINGS = -Wno-deprecated-declarations -Wno-unknown-pragmas -Wno-ignored-attributes -Wno-deprecated
 CFLAGS = -fPIC $(WARNINGS) -g -O3 -I../ -D__64BIT__ -I../nlopt -I../shared -I../lpsolve -I../solarpilot
 CXXFLAGS=-std=c++0x $(CFLAGS)
 

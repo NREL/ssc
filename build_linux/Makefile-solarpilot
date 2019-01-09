@@ -1,8 +1,8 @@
 VPATH = ../solarpilot
 CC = gcc
 CXX = g++
-WARNINGS = -Wall
-CFLAGS = -fPIC $(WARNINGS) -g -O3 -I../ -D__64BIT__ -I../nlopt
+WARNINGS = -Wno-deprecated-declarations  -Wno-ignored-attributes -Wno-deprecated
+CFLAGS = -fPIC $(WARNINGS) -g -O3 -I../ -D__64BIT__ -D__UNIX__ -I../nlopt -I../lpsolve
 CXXFLAGS=-std=c++0x $(CFLAGS)
 
 OBJECTS = \
@@ -26,6 +26,7 @@ OBJECTS = \
 	heliodata.o \
 	interop.o \
 	mod_base.o \
+        MultiRecOptimize.o\
 	optimize.o \
 	solpos.o \
 	string_util.o 

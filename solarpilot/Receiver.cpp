@@ -511,7 +511,7 @@ void Receiver::updateCalculatedParameters(var_receiver &V, double tht)
 	V.absorber_area.Setval( _absorber_area );   //calculated by CalculateAbsorberArea
 
 	//receiver optical height
-	double zoff = V.rec_offset_z.val;
+	double zoff = V.rec_offset_z_global.Val();
 	V.optical_height.Setval( tht + zoff );
 
 
@@ -525,7 +525,32 @@ void Receiver::updateCalculatedParameters(var_receiver &V, double tht)
 
 	//Piping loss
 	V.piping_loss.Setval( (V.piping_loss_coef.val * tht + V.piping_loss_const.val)/1.e3 );
-		
+
+    //thermal efficiency
+    double qdesplus = V.q_rec_des.Val() + V.piping_loss.Val() + V.therm_loss.Val();
+    V.therm_eff.Setval(V.q_rec_des.Val() / qdesplus);
+
+    updateUserFluxNormalization(V);
+}
+
+void Receiver::updateUserFluxNormalization(var_receiver &V)
+{
+    //user flux profile normalization
+    if (V.flux_profile_type.mapval() == var_receiver::FLUX_PROFILE_TYPE::USER)
+    {
+        matrix_t<double> temp;
+        double tot = 0.;
+        for (size_t i = 0; i < V.user_flux_profile.val.nrows(); i++)
+            for (size_t j = 0; j < V.user_flux_profile.val.ncols(); j++)
+                tot += V.user_flux_profile.val.at(i, j);
+
+        tot = 1. / tot;
+        for (size_t i = 0; i < V.user_flux_profile.val.nrows(); i++)
+            for (size_t j = 0; j < V.user_flux_profile.val.ncols(); j++)
+                V.user_flux_profile.val.at(i, j) *= tot;
+        
+        V.n_user_flux_profile.Setval(temp);
+    }
 }
 
 
@@ -571,6 +596,11 @@ int Receiver::getGeometryType()
 FluxSurfaces *Receiver::getFluxSurfaces(){ return &_surfaces; }
 
 var_receiver* Receiver::getVarMap(){return _var_receiver;}
+
+std::vector< Heliostat* > *Receiver::getHeliostatPreferenceList()
+{
+    return &_heliostat_preference_list;
+}
 
 bool Receiver::isReceiverEnabled()
 {
@@ -619,8 +649,8 @@ void Receiver::CalculateNormalVector(sp_point &Hloc, PointVect &NV){
 		
 		//What is the approximate aim point for the surface?
 		NV.z = _var_receiver->optical_height.Val();
-		NV.x = _var_receiver->rec_diameter.val/2. * sin(vaz) + _var_receiver->rec_offset_x.val;		//[m] x-location of surface at angle vaz, given radius _var_receiver->rec_diameter.val/2
-		NV.y = _var_receiver->rec_diameter.val/2. * cos(vaz) + _var_receiver->rec_offset_y.val;		//[m] y-location "" "" ""
+		NV.x = _var_receiver->rec_diameter.val/2. * sin(vaz) + _var_receiver->rec_offset_x_global.Val();		//[m] x-location of surface at angle vaz, given radius _var_receiver->rec_diameter.val/2
+		NV.y = _var_receiver->rec_diameter.val/2. * cos(vaz) + _var_receiver->rec_offset_y_global.Val();		//[m] y-location "" "" ""
 
 		//calculate the normal vector
         NV.i = sin(vaz)*cos(rec_elevation);
@@ -633,8 +663,8 @@ void Receiver::CalculateNormalVector(sp_point &Hloc, PointVect &NV){
 	case Receiver::REC_GEOM_TYPE::PLANE_ELLIPSE:
 		//All other types should be simply equal to the user-specified az/zen
 		//The approximate aim point is:
-		NV.x = _var_receiver->rec_offset_x.val;
-		NV.y = _var_receiver->rec_offset_y.val;
+		NV.x = _var_receiver->rec_offset_x_global.Val();
+		NV.y = _var_receiver->rec_offset_y_global.Val();
 		NV.z = _var_receiver->optical_height.Val();
 		//Calculate the unit vector
 		NV.i = sin(rec_az)*cos(rec_elevation);
@@ -689,7 +719,7 @@ void Receiver::DefineReceiverGeometry(int nflux_x, int nflux_y) {
 
 		//Do setup
 		sp_point loc;
-        loc.Set(_var_receiver->rec_offset_x.val, _var_receiver->rec_offset_y.val, _var_receiver->rec_offset_z.val);
+        loc.Set(_var_receiver->rec_offset_x_global.Val(), _var_receiver->rec_offset_y_global.Val(), _var_receiver->rec_offset_z_global.Val());
 		S->setSurfaceGeometry( _var_receiver->rec_height.val, 0., _var_receiver->rec_diameter.val/2. );
 		S->setSurfaceOffset( loc );
 		//For continuous cylindrical surfaces, the normal vector will define the azimuth and zenith of the receiver surface.
@@ -899,7 +929,7 @@ void Receiver::DefineReceiverGeometry(int nflux_x, int nflux_y) {
 		//3) Calculate and set the normal vector for each surface (if not curved surfaces) with setNormalVector(Vect).
 
 		sp_point loc;
-        loc.Set( _var_receiver->rec_offset_x.val, _var_receiver->rec_offset_y.val, _var_receiver->rec_offset_z.val );
+        loc.Set( _var_receiver->rec_offset_x_global.Val(), _var_receiver->rec_offset_y_global.Val(), _var_receiver->rec_offset_z_global.Val() );
 		S->setSurfaceGeometry( _var_receiver->rec_height.val, _var_receiver->rec_width.val, 0. );
 		S->setSurfaceOffset( loc );
 		//For continuous cylindrical surfaces, the normal vector will define the azimuth and zenith of the receiver surface.

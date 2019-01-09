@@ -71,6 +71,7 @@ class SolarField;
 class Ambient;
 
 typedef std::vector<Heliostat*> Hvector;
+typedef std::vector<Receiver*> Rvector;
 
 class Random
 {
@@ -173,7 +174,8 @@ class Flux
 
 	//-------------End DELSOL3 methods--------------------
 
-	void calcBestReceiverTarget(Heliostat *H, std::vector<Receiver*> *Recs, double tht, int &rec_index, Vect *rtoh=0);
+	void calcBestReceiverTarget(Heliostat *H, Rvector *Recs, double tht, int &rec_index, Vect *rtoh=0);
+    void calcReceiverTargetOrder(SolarField &SF);
 
 	void simpleAimPoint(sp_point *Aim, sp_point *AimF, Heliostat &H, SolarField &SF);
 	void simpleAimPoint(Heliostat &H, SolarField &SF);	//Method for quick calculation of the aim point to maximize intercept

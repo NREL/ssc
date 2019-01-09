@@ -785,7 +785,7 @@ void AutoPilot::PrepareFluxSimulation(sp_flux_table &fluxtab, int flux_res_x, in
     V->amb.sim_time_step.Setval(0.);    //sest the simulation time step for flux
 
     //simulate flux maps for all of the receivers
-	vector<Receiver*> rec_to_sim = *_SF->getReceivers();
+	Rvector rec_to_sim = *_SF->getReceivers();
 	//Get flags and settings
 	
 	if(flux_res_y > 1)
@@ -882,7 +882,7 @@ void AutoPilot::PostProcessFlux(sim_result &result, sp_flux_map &fluxmap, int fl
 	if(! _cancel_simulation){
 				
 		int itot=0;
-		vector<Receiver*> *Recs = _SF->getReceivers();
+		Rvector *Recs = _SF->getReceivers();
 		int nrec = (int)Recs->size();
 		for(int irec = 0; irec<nrec; irec++){
 			//how many surfaces on this receiver?
