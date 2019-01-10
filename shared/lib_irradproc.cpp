@@ -961,7 +961,14 @@ void irrad::get_angles( double *aoi,
 	double *axisrot,
 	double *btdiff )
 {
-	if ( aoi != 0 ) *aoi = surfaceAnglesRadians[0] * (180/M_PI);
+	if (aoi != 0)
+	{
+		*aoi = surfaceAnglesRadians[0] * (180 / M_PI);
+		// check values
+		if (*aoi < 0.0) *aoi = 0.0 - *aoi;
+		if (*aoi > 90.0) *aoi = *aoi - 90.0;
+	}
+
 	if ( surftilt != 0 ) *surftilt = surfaceAnglesRadians[1] * (180/M_PI);
 	if ( surfazi != 0 ) *surfazi = surfaceAnglesRadians[2] * (180/M_PI);
 	if ( axisrot != 0 ) *axisrot = surfaceAnglesRadians[3] * (180/M_PI);

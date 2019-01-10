@@ -149,8 +149,8 @@ void mlmodel_module_t::initializeManual()
 			DataTable samples;
 			for (int i = 0; i <= IAM_c_cs_elements - 1; i = i + 1) {
 				samples.addSample(IAM_c_cs_incAngle[i], IAM_c_cs_iamValue[i]);
-				m_bspline3 = BSpline::Builder(samples).degree(3).build();
 			}
+			m_bspline3 = BSpline::Builder(samples).degree(3).build();
 
 			isInitialized = true;
 		}

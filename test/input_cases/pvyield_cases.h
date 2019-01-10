@@ -18,4 +18,12 @@ int pvyield_test(ssc_data_t &data)
 	return status;
 }
 
+int pvyield_test_user_support_80603(ssc_data_t &data)
+{
+	pvyield_user_support_80603(data);
+	int status = run_module(data, "pvsamv1");
+
+	return status;
+}
+
 #endif

@@ -10,8 +10,10 @@ GTEST_API_ int main(int argc, char **argv) {
 
 	printf("Running main() from gtest_main.cc\n");
 	testing::InitGoogleTest(&argc, argv);
-//	  ::testing::GTEST_FLAG(filter) = "CMPvYieldTimo.NoFinancialModelSystemDesign";
+//	  ::testing::GTEST_FLAG(filter) = "CMPvYieldTimo.TimoModel80603";
 //	  ::testing::GTEST_FLAG(filter) = "splinterTests*";
+//	  ::testing::GTEST_FLAG(filter) = "SunsetCaseIrradProc*";
+
 	int status = RUN_ALL_TESTS();
 
 	if (!status)
