@@ -13,7 +13,10 @@ FuelCellDispatch::FuelCellDispatch(FuelCell * fuelCell, size_t numberOfUnits, in
 	m_discharge_percent(discharge_percent), m_discharge_units(discharge_units),
 	m_scheduleWeekday(scheduleWeekday), m_scheduleWeekend(scheduleWeekend)
 {
-	m_fuelCellVector.push_back(fuelCell);
+	// Could have no units
+	if (numberOfUnits > 0) {
+		m_fuelCellVector.push_back(fuelCell);
+	}
 	
 	// Convert percentages to fractions
 	for (auto percent = m_discharge_percent.begin(); percent != m_discharge_percent.end(); percent++) {
