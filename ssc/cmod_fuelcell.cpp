@@ -221,15 +221,14 @@ void cm_fuelcell::exec() throw (general_error)
 	assign("annual_energy", var_data(static_cast<ssc_number_t>(annual_energy)));
 	assign("percent_complete", var_data((ssc_number_t)percent));
 
-	// post calculations for financial models
-	ssc_number_t annual_fuel_usage = 0.0;
+	// post calculations for financial models, convert to kWh from MCF
+	ssc_number_t annual_fuel_usage_kwh = 0.0;
 	for (idx = 0; idx < fcVars->numberOfLifetimeRecords; idx++) {
-		annual_fuel_usage += p_fuelCellConsumption_MCf[idx];
+		annual_fuel_usage_kwh += (ssc_number_t) MCF_TO_KWH(p_fuelCellConsumption_MCf[idx], fcVars->lowerHeatingValue_BtuPerFt3);
 	}
-	// modify heat rate to use here (MMBTU/MWhe)
-	assign("system_heat_rate", var_data((ssc_number_t)3.4123)); 
-	annual_fuel_usage *= (ssc_number_t)0.29; // 1cu ft = 0.29 kWh
-	assign("annual_fuel_usage", annual_fuel_usage);
+	// Ratio of MMBtu to MWh to get cash flow calculation correct (fuel costs in $/MMBtu)
+	assign("system_heat_rate", var_data((ssc_number_t)BTU_PER_KWH / 1000));
+	assign("annual_fuel_usage", annual_fuel_usage_kwh);
 }
 
 void cm_fuelcell::allocateOutputs()

@@ -1,5 +1,14 @@
 #include "lib_fuel_cell_test.h"
 
+TEST_F(FuelCellTest, UnitConversions)
+{
+	// Test macros defined for unit conversions
+	double lhv_btu_per_ft3 = 983;
+	EXPECT_NEAR(BTU_TO_MCF(1000000, lhv_btu_per_ft3), 1.017, 0.001);
+	EXPECT_NEAR(MCF_TO_BTU(1, lhv_btu_per_ft3), 983000, 0.01 );
+	EXPECT_NEAR(MCF_TO_KWH(1, lhv_btu_per_ft3), 288.088, 0.01);
+}
+
 TEST_F(FuelCellTest, EfficiencyCurve)
 {
 	fuelCell->calculateEfficiencyCurve(.16);

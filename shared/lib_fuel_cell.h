@@ -5,6 +5,22 @@
 #include "lib_util.h"
 
 const double BTU_PER_KWH = 3412.14163;
+const double MMBTU_PER_BTU = 1000000;
+const double BTU_PER_MMBTU = 1.0 / MMBTU_PER_BTU;
+const double FT3_PER_MCF = 1000;
+
+#ifndef BTU_TO_MCF
+#define BTU_TO_MCF(BTU, LHV_BTU_PER_FT3) (BTU / (LHV_BTU_PER_FT3 * FT3_PER_MCF))
+#endif
+
+#ifndef MCF_TO_BTU
+#define MCF_TO_BTU(MCF, LHV_BTU_PER_FT3) (MCF * LHV_BTU_PER_FT3 * FT3_PER_MCF)
+#endif
+
+#ifndef MCF_TO_KWH
+#define MCF_TO_KWH(MCF, LHV_BTU_PER_FT3) (MCF_TO_BTU(MCF, LHV_BTU_PER_FT3) / BTU_PER_KWH)
+#endif
+
 
 /**
 * \class FuelCell
