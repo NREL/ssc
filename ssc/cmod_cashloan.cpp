@@ -53,6 +53,7 @@
 #include "lib_financial.h"
 #include "lib_util.h"
 #include "common_financial.h"
+#include <sstream>
 using namespace libfin;
 
 static var_info vtab_cashloan[] = {
@@ -395,8 +396,8 @@ public:
 		if (as_integer("system_use_lifetime_output")==0)
 		{
 			double first_year_energy = 0.0;
-			for (int i = 0; i < 8760; i++) 
-				first_year_energy += hourly_energy_calcs.hourly_energy()[i];
+			for (int h = 0; h < 8760; h++) 
+				first_year_energy += hourly_energy_calcs.hourly_energy()[h];
 			for (int y = 1; y <= nyears; y++)
 				cf.at(CF_energy_net, y) = first_year_energy * cf.at(CF_degradation, y);
 		}
@@ -405,14 +406,14 @@ public:
 			for (int y = 1; y <= nyears; y++)
 			{
 				cf.at(CF_energy_net, y) = 0;
-				int i = 0;
+				int ind = 0;
 				for (int m = 0; m<12; m++)
 					for (int d = 0; d<util::nday[m]; d++)
 						for (int h = 0; h<24; h++)
-							if (i<8760)
+							if (ind<8760)
 							{
-					cf.at(CF_energy_net, y) += hourly_energy_calcs.hourly_energy()[(y - 1) * 8760 + i] * cf.at(CF_degradation, y);
-								i++;
+					cf.at(CF_energy_net, y) += hourly_energy_calcs.hourly_energy()[(y - 1) * 8760 + ind] * cf.at(CF_degradation, y);
+								ind++;
 							}
 			}
 

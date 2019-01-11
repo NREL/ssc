@@ -211,13 +211,18 @@ void Irradiance_IO::checkWeatherFile(compute_module * cm, std::string cmName)
 				weatherRecord.poa, weatherRecord.year, weatherRecord.month, weatherRecord.day, weatherRecord.hour), SSC_WARNING, (float)idx);
 			weatherRecord.poa = 0;
 		}
+		//albedo is allowed to be missing in the weather file- will be filled in from user-entered monthly array.
+		//only throw an error if there's a value that isn't reasonable somewhere
 		int month_idx = weatherRecord.month - 1;
-		bool albedoError = false;
-		if (useWeatherFileAlbedo && (!std::isfinite(weatherRecord.alb) || weatherRecord.alb < 0 || weatherRecord.alb > 1)) {
-			albedoError = true;
+		bool albedoError = true;
+		if (useWeatherFileAlbedo && std::isfinite(weatherRecord.alb) && weatherRecord.alb > 0 && weatherRecord.alb < 1) {
+			albedoError = false;
 		}
-		else if ((month_idx >= 0 && month_idx < 12) && (userSpecifiedMonthlyAlbedo[month_idx] < 0 || userSpecifiedMonthlyAlbedo[month_idx] > 1)) {
-			albedoError = true;
+		else if (month_idx >= 0 && month_idx < 12) {
+			if (userSpecifiedMonthlyAlbedo[month_idx] > 0 && userSpecifiedMonthlyAlbedo[month_idx] < 1) {
+				albedoError = false;
+				weatherRecord.alb = userSpecifiedMonthlyAlbedo[month_idx];
+			}
 		}
 		if (albedoError) {
 			throw compute_module::exec_error(cmName,
@@ -661,7 +666,7 @@ PVSystem_IO::PVSystem_IO(compute_module* cm, std::string cmName, Simulation_IO *
 		for (size_t n_subarray = 0; n_subarray < Subarrays.size(); n_subarray++) //jmf update this so that all subarray markers are consistent, get rid of "enable" check
 			if (Subarrays[n_subarray]->enable)
 				if (Subarrays[n_subarray]->mpptInput == (int)mppt)
-					mppt_n.push_back(n_subarray);
+					mppt_n.push_back((int)n_subarray);
 		if (mppt_n.size() < 1)
 			throw compute_module::exec_error(cmName, "At least one subarray must be assigned to each inverter MPPT input.");
 		mpptMapping.push_back(mppt_n); //add the subarrays on this input to the total mppt mapping vector

@@ -593,7 +593,21 @@ public:
 		c_trough.m_Tau_envelope = as_matrix("Tau_envelope");             //[-] Envelope transmittance
 		c_trough.m_EPSILON_4 = as_matrix("EPSILON_4");                   //[-] Inner glass envelope emissivities
 		c_trough.m_EPSILON_5 = as_matrix("EPSILON_5");                   //[-] Outer glass envelope emissivities
-		c_trough.m_GlazingIntact = (as_matrix("GlazingIntactIn")> 0);         //[-] Glazing intact (broken glass) flag {1=true, else=false}
+
+//		c_trough.m_GlazingIntact = (as_matrix("GlazingIntactIn") > 0);         //[-] Glazing intact (broken glass) flag {1=true, else=false}
+
+		util::matrix_t<double> glazing_intact_double = as_matrix("GlazingIntactIn"); //[-] Is the glazing intact?
+		int n_gl_row = (int)glazing_intact_double.nrows();
+		int n_gl_col = (int)glazing_intact_double.ncols();
+		c_trough.m_GlazingIntact.resize(n_gl_row, n_gl_col);
+		for (int i = 0; i < n_gl_row; i++)
+		{
+			for (int j = 0; j < n_gl_col; j++)
+			{
+				c_trough.m_GlazingIntact(i, j) = (glazing_intact_double(i, j) > 0);
+			}
+		}
+
 		c_trough.m_P_a = as_matrix("P_a");		                         //[torr] Annulus gas pressure				 
 		c_trough.m_AnnulusGas = as_matrix("AnnulusGas");		         //[-] Annulus gas type (1=air, 26=Ar, 27=H2)
 		c_trough.m_AbsorberMaterial = as_matrix("AbsorberMaterial");	 //[-] Absorber material type

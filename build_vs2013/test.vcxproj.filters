@@ -35,6 +35,30 @@
     <ClCompile Include="..\test\shared_test\lib_windfile_test.cpp">
       <Filter>input_cases</Filter>
     </ClCompile>
+    <ClCompile Include="..\test\shared_test\lib_battery_powerflow_test.cpp">
+      <Filter>shared_test</Filter>
+    </ClCompile>
+    <ClCompile Include="..\test\shared_test\lib_shared_inverter_test.cpp">
+      <Filter>shared_test</Filter>
+    </ClCompile>
+    <ClCompile Include="..\test\shared_test\lib_util_test.cpp">
+      <Filter>shared_test</Filter>
+    </ClCompile>
+    <ClCompile Include="..\test\ssc_test\cmod_pvwattsv5_test.cpp">
+      <Filter>ssc_test</Filter>
+    </ClCompile>
+    <ClCompile Include="..\test\ssc_test\cmod_pvyield_test.cpp">
+      <Filter>ssc_test</Filter>
+    </ClCompile>
+    <ClCompile Include="..\test\ssc_test\cmod_tcstrough_physical_test.cpp">
+      <Filter>ssc_test</Filter>
+    </ClCompile>
+    <ClCompile Include="..\test\ssc_test\cmod_windpower_test2.cpp">
+      <Filter>ssc_test</Filter>
+    </ClCompile>
+    <ClCompile Include="..\test\ssc_test\computeModuleTest.cpp">
+      <Filter>ssc_test</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="shared_test">
@@ -74,6 +98,36 @@
     </ClInclude>
     <ClInclude Include="..\test\input_cases\windpower_cases.h">
       <Filter>input_cases</Filter>
+    </ClInclude>
+    <ClInclude Include="..\test\input_cases\pvsamv1_common_data.h">
+      <Filter>input_cases</Filter>
+    </ClInclude>
+    <ClInclude Include="..\test\input_cases\pvwattsv5_cases.h">
+      <Filter>input_cases</Filter>
+    </ClInclude>
+    <ClInclude Include="..\test\input_cases\pvyield_cases.h">
+      <Filter>input_cases</Filter>
+    </ClInclude>
+    <ClInclude Include="..\test\input_cases\pvyield_common_data.h">
+      <Filter>input_cases</Filter>
+    </ClInclude>
+    <ClInclude Include="..\test\shared_test\lib_battery_powerflow_test.h">
+      <Filter>shared_test</Filter>
+    </ClInclude>
+    <ClInclude Include="..\test\shared_test\lib_irradproc_test.h">
+      <Filter>shared_test</Filter>
+    </ClInclude>
+    <ClInclude Include="..\test\ssc_test\cmod_pvwattsv5_test.h">
+      <Filter>ssc_test</Filter>
+    </ClInclude>
+    <ClInclude Include="..\test\ssc_test\cmod_pvyield_test.h">
+      <Filter>ssc_test</Filter>
+    </ClInclude>
+    <ClInclude Include="..\test\ssc_test\computeModuleTest.h">
+      <Filter>ssc_test</Filter>
+    </ClInclude>
+    <ClInclude Include="..\test\ssc_test\simulation_test_info.h">
+      <Filter>ssc_test</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

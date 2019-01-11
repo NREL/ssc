@@ -5,31 +5,31 @@
 
 #include "code_generator_utilities.h"
 
-namespace tcsmoltentest {
+//const char * SSCDIR = std::getenv("SSCDIR");
+//const char * SAMNTDIR = std::getenv("SAMNTDIR");
 
-	const char * SSCDIR = std::getenv("SSCDIR");
+char dispatch_factors_path[200];
+char ud_ind_od_path[200];
+char wlim_series_path[200];
+char helio_positions_path[200];
 
-	char dispatch_factors_path[100];
-	char ud_ind_od_path[100];
-	char wlim_series_path[100];
-	char helio_positions_path[100];
-	char solar_resource_path[200];
 
-	int nmspt1 = sprintf(dispatch_factors_path, "%s/test/input_cases/tcs_data/dispatch_factors_ts.csv", tcsmoltentest::SSCDIR);
-	int nmspt2 = sprintf(ud_ind_od_path, "%s/test/input_cases/tcs_data/ud_ind_od.csv", tcsmoltentest::SSCDIR);
-	int nmspt3 = sprintf(wlim_series_path, "%%s/test/input_cases/tcs_data/wlim_series.csv", tcsmoltentest::SSCDIR);
-	int nmspt4 = sprintf(helio_positions_path, "%s/test/input_cases/tcs_data/helio_positions.csv", tcsmoltentest::SSCDIR);
-	int nsolar = sprintf(solar_resource_path, "%s/test/input_cases/general_data/daggett_ca_34.865371_-116.783023_psmv3_60_tmy.csv", tcsmoltentest::SSCDIR);
-}
+int nmspt1 = sprintf(dispatch_factors_path, "%s/test/input_cases/moltensalt_data/dispatch_factors_ts.csv", std::getenv("SSCDIR"));
+int nmspt2 = sprintf(ud_ind_od_path, "%s/test/input_cases/moltensalt_data/ud_ind_od.csv", std::getenv("SSCDIR"));
+int nmspt3 = sprintf(wlim_series_path, "%s/test/input_cases/moltensalt_data/wlim_series.csv", std::getenv("SSCDIR"));
+int nmspt4 = sprintf(helio_positions_path, "%s/test/input_cases/moltensalt_data/helio_positions.csv", std::getenv("SSCDIR"));
 
 /**
 *  Default data for tcsmolten_salt run that can be further modified
 */
 void tcsmolten_salt_default(ssc_data_t &data)
 {
-    ssc_data_set_string(data, "solar_resource_file", tcsmoltentest::solar_resource_path);
+	char solar_resource_path[200];
+	int n1 = sprintf(solar_resource_path, "%s/test/input_cases/moltensalt_data/daggett_ca_34.865371_-116.783023_psmv3_60_tmy.csv", std::getenv("SSCDIR"));
+
+    ssc_data_set_string(data, "solar_resource_file", solar_resource_path);
     ssc_data_set_number(data, "ppa_multiplier_model", 0);
-    set_array(data, "dispatch_factors_ts", tcsmoltentest::dispatch_factors_path, 8760);
+    set_array(data, "dispatch_factors_ts", dispatch_factors_path, 8760);
     ssc_data_set_number(data, "field_model_type", 2);
     ssc_data_set_number(data, "gross_net_conversion_factor", 0.89999997615814209);
     ssc_data_set_number(data, "helio_width", 12.199999809265137);
@@ -235,7 +235,7 @@ void tcsmolten_salt_default(ssc_data_t &data)
         1.1526299715042114, 1.1526299715042114, 1.1526299715042114, 1, 1, 1, 1, 1, 1, 1.2000000476837158, 1.2465000152587891,
         1.1223000288009644, 1.089169979095459, 1.2000000476837158, 1.2000000476837158, 1.2000000476837158, 1, 1, 1, 1, 1, 1 };
     ssc_data_set_matrix(data, "ud_m_dot_htf_ind_od", p_ud_m_dot_htf_ind_od, 20, 13);
-    set_matrix(data, "ud_ind_od", tcsmoltentest::ud_ind_od_path, 180, 7);
+    set_matrix(data, "ud_ind_od", ud_ind_od_path, 180, 7);
     ssc_data_set_number(data, "sco2_cycle_config", 1);
     ssc_data_set_number(data, "eta_c", 0.88999998569488525);
     ssc_data_set_number(data, "eta_t", 0.89999997615814209);
@@ -313,7 +313,7 @@ void tcsmolten_salt_default(ssc_data_t &data)
     ssc_data_set_number(data, "disp_csu_cost", 10000);
     ssc_data_set_number(data, "disp_pen_delta_w", 0.10000000149011612);
     ssc_data_set_number(data, "is_wlim_series", 0);
-    set_array(data, "wlim_series", tcsmoltentest::wlim_series_path, 8760);
+    set_array(data, "wlim_series", wlim_series_path, 8760);
     ssc_number_t p_dispatch_sched_weekday[288] = { 6, 6, 6, 6, 6, 6, 5, 5, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 5, 5, 5, 6, 6, 6, 6,
         6, 6, 5, 5, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 5, 5, 5, 6, 6, 6, 6, 6, 6, 5, 5, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 5,
         5, 5, 6, 6, 6, 6, 6, 6, 5, 5, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 5, 5, 5, 6, 6, 6, 6, 6, 6, 5, 5, 4, 4, 4, 4, 4, 4, 4, 4,
@@ -347,7 +347,7 @@ void tcsmolten_salt_default(ssc_data_t &data)
     ssc_data_set_number(data, "rec_height", 21.602899551391602);
     ssc_data_set_number(data, "D_rec", 17.649999618530273);
     ssc_data_set_number(data, "h_tower", 193.45799255371094);
-    set_matrix(data, "helio_positions", tcsmoltentest::helio_positions_path, 8790, 2);
+    set_matrix(data, "helio_positions", helio_positions_path, 8790, 2);
     ssc_data_set_number(data, "land_area_base", 1847.0400390625);
     ssc_data_set_number(data, "const_per_interest_rate1", 4);
     ssc_data_set_number(data, "const_per_interest_rate2", 0);
