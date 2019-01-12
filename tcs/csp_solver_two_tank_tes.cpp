@@ -55,10 +55,13 @@ C_heat_exchanger::C_heat_exchanger()
 	m_m_dot_des_ave = m_eff_des = m_UA_des = std::numeric_limits<double>::quiet_NaN();
 }
 
-void C_heat_exchanger::init(HTFProperties &fluid_field, HTFProperties &fluid_store, double q_transfer_des /*W*/,
+void C_heat_exchanger::init(const HTFProperties &fluid_field, const HTFProperties &fluid_store, double q_transfer_des /*W*/,
 	double dt_des, double T_h_in_des /*K*/, double T_h_out_des /*K*/)
 {
 	// Counter flow heat exchanger
+
+    mc_field_htfProps = fluid_field;
+    mc_store_htfProps = fluid_store;
 
 		// Design should provide field/pc side design temperatures
 	double T_ave = (T_h_in_des + T_h_out_des) / 2.0;		//[K] Average hot side temperature
@@ -710,7 +713,7 @@ bool C_csp_two_tank_tes::discharge(double timestep /*s*/, double T_amb /*K*/, do
 	
 	else 
 	{	// Iterate between field htf - hx - and storage	
-
+        // TODO - complete TES discharge calculations for a HX system
 	}
 
 	outputs.m_q_heater = q_heater_cold + q_heater_hot;			//[MWt]

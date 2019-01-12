@@ -820,7 +820,7 @@ public:
             pc->m_startup_time = as_double("startup_time");
             pc->m_startup_frac = as_double("startup_frac");
             pc->m_htf_pump_coef = as_double("pb_pump_coef");
-            //pc->m_pc_fl = as_integer("rec_htf");                            // power cycle HTF is same as receiver HTF
+            pc->m_pc_fl = as_integer("Fluid");                            // power cycle HTF is same as receiver HTF
             pc->m_pc_fl_props = as_matrix("field_fl_props");
             pc->DP_SGS = as_double("DP_SGS");
 

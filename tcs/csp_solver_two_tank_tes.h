@@ -72,7 +72,7 @@ public:
 
 	C_heat_exchanger();
 
-	void init(HTFProperties &fluid_field, HTFProperties &fluid_store, double q_transfer_des,
+	void init(const HTFProperties &fluid_field, const HTFProperties &fluid_store, double q_transfer_des,
 		double dt_des, double T_h_in_des, double T_h_out_des);
 
 	void hx_charge_mdot_tes(double T_cold_tes, double m_dot_tes, double T_hot_field, 
