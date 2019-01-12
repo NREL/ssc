@@ -1107,6 +1107,8 @@ public:
 		CR_DF__PC_SU__TES_OFF__AUX_OFF
 	};
 
+    static std::string tech_operating_modes_str[];
+    
 	C_csp_solver(C_csp_weatherreader &weather,
 		C_csp_collector_receiver &collector_receiver,
 		C_csp_power_cycle &power_cycle,

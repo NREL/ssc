@@ -57,6 +57,66 @@
 
 #include <sstream>
 
+std::string C_csp_solver::tech_operating_modes_str[] =
+{
+    "ENTRY_MODE",  // = 0
+
+    "CR_OFF__PC_OFF__TES_OFF__AUX_OFF",
+    "CR_SU__PC_OFF__TES_OFF__AUX_OFF",
+    "CR_ON__PC_SU__TES_OFF__AUX_OFF",
+    "CR_ON__PC_SB__TES_OFF__AUX_OFF",
+
+    "CR_ON__PC_RM_HI__TES_OFF__AUX_OFF",
+    "CR_ON__PC_RM_LO__TES_OFF__AUX_OFF",
+
+    "CR_DF__PC_MAX__TES_OFF__AUX_OFF",
+
+    "CR_OFF__PC_SU__TES_DC__AUX_OFF",
+    "CR_ON__PC_OFF__TES_CH__AUX_OFF",
+
+    "SKIP_10",
+
+    "CR_ON__PC_TARGET__TES_CH__AUX_OFF",
+    "CR_ON__PC_TARGET__TES_DC__AUX_OFF",
+
+    "CR_ON__PC_RM_LO__TES_EMPTY__AUX_OFF",
+
+    "CR_DF__PC_OFF__TES_FULL__AUX_OFF",
+
+    "CR_OFF__PC_SB__TES_DC__AUX_OFF",
+    "CR_OFF__PC_MIN__TES_EMPTY__AUX_OFF",
+    "CR_OFF__PC_RM_LO__TES_EMPTY__AUX_OFF",
+
+    "CR_ON__PC_SB__TES_CH__AUX_OFF",
+    "CR_SU__PC_MIN__TES_EMPTY__AUX_OFF",
+
+    "SKIP_20",
+
+    "CR_SU__PC_SB__TES_DC__AUX_OFF",
+    "CR_ON__PC_SB__TES_DC__AUX_OFF",
+    "CR_OFF__PC_TARGET__TES_DC__AUX_OFF",
+    "CR_SU__PC_TARGET__TES_DC__AUX_OFF",
+    "CR_ON__PC_RM_HI__TES_FULL__AUX_OFF",
+
+    "CR_ON__PC_MIN__TES_EMPTY__AUX_OFF",
+
+    "CR_SU__PC_RM_LO__TES_EMPTY__AUX_OFF",
+
+    "CR_DF__PC_MAX__TES_FULL__AUX_OFF",
+
+    "CR_ON__PC_SB__TES_FULL__AUX_OFF",
+
+    "SKIP_30",
+
+    "CR_SU__PC_SU__TES_DC__AUX_OFF",
+
+    "CR_ON__PC_SU__TES_CH__AUX_OFF",
+
+    "CR_DF__PC_SU__TES_FULL__AUX_OFF",
+
+    "CR_DF__PC_SU__TES_OFF__AUX_OFF"
+};
+
 void C_timestep_fixed::init(double time_start /*s*/, double step /*s*/)
 {
 	ms_timestep.m_time_start = time_start;	//[s]
@@ -1632,6 +1692,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 			// Store operating mode
 			m_op_mode_tracking.push_back(operating_mode);
 
+            std::string op_mode_str = "";
 
 			switch( operating_mode )
 			{
@@ -1648,7 +1709,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 					throw(C_csp_exception(err_msg, "CSP Solver"));
 				}
 
-				std::string op_mode_str = "";
+				//std::string op_mode_str = "";
 				int pc_mode = -1;
 				if (operating_mode == CR_DF__PC_SU__TES_OFF__AUX_OFF)
 				{
@@ -2597,7 +2658,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 				int power_cycle_mode = -1;
 				double q_dot_pc_fixed = std::numeric_limits<double>::quiet_NaN();	//[MWt]
 
-				std::string op_mode_str = "";
+				//std::string op_mode_str = "";
 				if (operating_mode == CR_ON__PC_TARGET__TES_CH__AUX_OFF)
 				{
 					power_cycle_mode = C_csp_power_cycle::ON;
@@ -3715,7 +3776,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 				int power_cycle_mode = -1;
 				double q_dot_pc_fixed = std::numeric_limits<double>::quiet_NaN();	//[MWt]
 
-				std::string op_mode_str = "";
+				//std::string op_mode_str = "";
 				if (operating_mode == CR_OFF__PC_TARGET__TES_DC__AUX_OFF)
 				{
 					power_cycle_mode = C_csp_power_cycle::ON; 
@@ -4130,7 +4191,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 					throw(C_csp_exception(err_msg, "CSP Solver"));
 				}
 
-				std::string op_mode_str = "";
+				//std::string op_mode_str = "";
 				int pc_mode = -1;
 				if (operating_mode == CR_DF__PC_SU__TES_FULL__AUX_OFF)
 				{
