@@ -36,6 +36,67 @@ TEST_F(CMPvYieldTimo, DefaultTimoModel)
 	}
 }
 
+/// Test PVSAMv1 with inputs from PVYield and user support 80603 with ,eteo weather file
+TEST_F(CMPvYieldTimo, TimoModel80603_meteo)
+{
+	// first set of results for Phoenix and second set for meteo weather file.
+	pvyield_user_support_80603_meteo(data);
+
+	int pvsam_errors = pvyield_test_user_support_80603_meteo(data);
+	EXPECT_FALSE(pvsam_errors);
+	printf("ssc version %d build information %s", ssc_version(), ssc_build_info());
+
+	if (!pvsam_errors)
+	{
+		ssc_number_t annual_energy;
+		ssc_data_get_number(data, "annual_energy", &annual_energy);
+		EXPECT_NEAR(annual_energy, 7473811, 7473811e-4) << "Annual energy.";
+
+		ssc_number_t capacity_factor;
+		ssc_data_get_number(data, "capacity_factor", &capacity_factor);
+		EXPECT_NEAR(capacity_factor, 20.399, m_error_tolerance_lo) << "Capacity factor";
+
+		ssc_number_t kwh_per_kw;
+		ssc_data_get_number(data, "kwh_per_kw", &kwh_per_kw);
+		EXPECT_NEAR(kwh_per_kw, 1786.99, m_error_tolerance_hi) << "Energy yield";
+
+		ssc_number_t performance_ratio;
+		ssc_data_get_number(data, "performance_ratio", &performance_ratio);
+		EXPECT_NEAR(performance_ratio, -14.6145, m_error_tolerance_lo) << "Energy yield";
+	}
+}
+
+/// Test PVSAMv1 with inputs from PVYield and user support 80603 AZ weather file
+TEST_F(CMPvYieldTimo, TimoModel80603_AZ)
+{
+	// first set of results for Phoenix and second set for meteo weather file.
+	pvyield_user_support_80603_AZ(data);
+
+	int pvsam_errors = pvyield_test_user_support_80603_AZ(data);
+	EXPECT_FALSE(pvsam_errors);
+	printf("ssc version %d build information %s", ssc_version(), ssc_build_info());
+
+	if (!pvsam_errors)
+	{
+		ssc_number_t annual_energy;
+		ssc_data_get_number(data, "annual_energy", &annual_energy);
+		EXPECT_NEAR(annual_energy, 8227336.5, 8227336.5e-4) << "Annual energy.";
+
+		ssc_number_t capacity_factor;
+		ssc_data_get_number(data, "capacity_factor", &capacity_factor);
+		EXPECT_NEAR(capacity_factor, 22.456, m_error_tolerance_lo) << "Capacity factor";
+
+		ssc_number_t kwh_per_kw;
+		ssc_data_get_number(data, "kwh_per_kw", &kwh_per_kw);
+		EXPECT_NEAR(kwh_per_kw, 1967.15, m_error_tolerance_hi) << "Energy yield";
+
+		ssc_number_t performance_ratio;
+		ssc_data_get_number(data, "performance_ratio", &performance_ratio);
+		EXPECT_NEAR(performance_ratio, -14.105, m_error_tolerance_lo) << "Energy yield";
+	}
+}
+
+
 /// Test PVSAMv1 with default no-financial model and sytem design page changes
 TEST_F(CMPvYieldTimo, NoFinancialModelSystemDesign)
 {
