@@ -381,7 +381,7 @@ bool adjustment_factors::setup(int nsteps)
 	{
 		size_t n;
 		ssc_number_t *p = m_cm->as_array( m_prefix + ":hourly", &n );
-		if ( p != 0 && n == nsteps )
+		if ( p != 0 && n == (size_t)nsteps )
 		{
 			for( int i=0;i<nsteps;i++ )
 				m_factors[i] *= (1 - p[i]/100); //convert from percentages to factors
@@ -438,12 +438,12 @@ bool sf_adjustment_factors::setup(int nsteps)
 	{
 		size_t n;
 		ssc_number_t *p = m_cm->as_array("sf_adjust:hourly", &n);
-		if (p != 0 && n == nsteps)
+		if (p != 0 && n == (size_t)nsteps)
 		{
 			for (int i = 0; i < nsteps; i++)
 				m_factors[i] *= (1 - p[i] / 100); //convert from percentages to factors
 		}
-		if (n!=nsteps)
+		if (n!=(size_t)nsteps)
 			m_error = util::format("array length (%d) must match number of yearly simulation time steps (%d).", n, nsteps);
 	}
 
@@ -614,10 +614,11 @@ bool shading_factor_calculator::setup( compute_module *cm, const std::string &pr
 		{
 			int c = 0;
 			for (int m = 0; m < 12; m++)
-				for (int d = 0; d < util::nday[m]; d++)
+				for (size_t d = 0; d < util::nday[m]; d++)
 					for (int h = 0; h < 24; h++)
 						for (int jj = 0; jj < m_steps_per_hour; jj++)
 							m_mxhFactors.at(c++, 0) = 1 - mat[m*ncols + h] / 100;
+							
 		}
 		m_enMxH = true;
 	}
@@ -858,7 +859,7 @@ weatherdata::weatherdata( var_data *data_table )
 	if ( nrec > 0 && nmult >= 1 )
 	{
 		m_data.resize( nrec );
-		for( int i=0;i<nrec;i++ )
+		for( size_t i=0;i<nrec;i++ )
 		{
 			weather_record *r = new weather_record;
 

@@ -408,7 +408,7 @@ public:
 				cf.at(CF_energy_net, y) = 0;
 				int ind = 0;
 				for (int m = 0; m<12; m++)
-					for (int d = 0; d<util::nday[m]; d++)
+					for (size_t d = 0; d<util::nday[m]; d++)
 						for (int h = 0; h<24; h++)
 							if (ind<8760)
 							{
@@ -1040,11 +1040,11 @@ public:
 		// NTE
 		ssc_number_t *ub_w_sys = 0;
 		ub_w_sys = as_array("elec_cost_with_system", &count);
-		if (count != nyears+1)
+		if (count != (size_t)(nyears+1))
 			throw exec_error("third party ownership", util::format("utility bill with system input wrong length (%d) should be (%d)",count, nyears+1));
 		ssc_number_t *ub_wo_sys = 0;
 		ub_wo_sys = as_array("elec_cost_without_system", &count);
-		if (count != nyears+1)
+		if (count != (size_t)(nyears+1))
 			throw exec_error("third party ownership", util::format("utility bill without system input wrong length (%d) should be (%d)",count, nyears+1));
 
 		for (i = 0; i < (int)count; i++)

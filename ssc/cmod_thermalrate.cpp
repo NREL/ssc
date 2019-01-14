@@ -364,13 +364,13 @@ public:
 
 
 		// matrices
-		ssc_number_t *thermal_bill_w_sys_ym = allocate("thermal_bill_w_sys_ym", nyears + 1, 12);
-		ssc_number_t *thermal_bill_wo_sys_ym = allocate("thermal_bill_wo_sys_ym", nyears + 1, 12);
+		//ssc_number_t *thermal_bill_w_sys_ym = allocate("thermal_bill_w_sys_ym", nyears + 1, 12);
+		//ssc_number_t *thermal_bill_wo_sys_ym = allocate("thermal_bill_wo_sys_ym", nyears + 1, 12);
 
 
 		// annual sums
-		ssc_number_t *thermal_bill_w_sys = allocate("thermal_bill_w_sys", nyears + 1);
-		ssc_number_t *utility_bill_wo_sys = allocate("thermal_bill_wo_sys", nyears + 1);
+		//ssc_number_t *thermal_bill_w_sys = allocate("thermal_bill_w_sys", nyears + 1);
+		//ssc_number_t *utility_bill_wo_sys = allocate("thermal_bill_wo_sys", nyears + 1);
 
 
 		// lifetime hourly load
@@ -456,7 +456,7 @@ public:
 				for (int m=0;m<12;m++)
 				{
 					monthly_salespurchases[m] = 0;
-					for (int d=0;d<util::nday[m];d++)
+					for (size_t d=0;d<util::nday[m];d++)
 					{
 						for(int h=0;h<24;h++)
 						{
@@ -558,7 +558,7 @@ public:
 			monthly_generation[m] = 0;
 			monthly_thermal_to_grid[m] = 0;
 			monthly_salespurchases[m] = 0;
-			for (d=0;d<util::nday[m];d++)
+			for (d=0;d<(int)util::nday[m];d++)
 			{
 				for(h=0;h<24;h++)
 				{
@@ -602,7 +602,7 @@ public:
 
 
 		// calculate the monthly net energy and monthly hours
-		int m, d, h, s, period, tier;
+		int m, d, h, s;
 		size_t c = 0;
 		for (m = 0; m < (int)m_month.size(); m++)
 		{
@@ -610,11 +610,11 @@ public:
 			m_month[m].hours_per_month = 0;
 			m_month[m].thermal_peak = 0;
 			m_month[m].thermal_peak_hour = 0;
-			for (d = 0; d < util::nday[m]; d++)
+			for (d = 0; d < (int)util::nday[m]; d++)
 			{
 				for (h = 0; h < 24; h++)
 				{
-					for (s = 0; s < (int)steps_per_hour && c < (int)m_num_rec_yearly; s++)
+					for (s = 0; s < (int)steps_per_hour && (int)c < (int)m_num_rec_yearly; s++)
 					{
 						// net energy use per month
 						m_month[m].thermal_net += e_in[c]; // -load and +gen
@@ -638,12 +638,12 @@ public:
 		// process one timestep at a time
 		for (m = 0; m < 12; m++)
 		{
-			for (d = 0; d<util::nday[m]; d++)
+			for (d = 0; d<(int)util::nday[m]; d++)
 			{
 				//daily_net_energy = 0;
 				for (h = 0; h<24; h++)
 				{
-					for (s = 0; s < (int)steps_per_hour && c < (int)m_num_rec_yearly; s++)
+					for (s = 0; s < (int)steps_per_hour && (int)c < (int)m_num_rec_yearly; s++)
 					{
 
 						if (e_in[c] >= 0.0)

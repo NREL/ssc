@@ -164,7 +164,7 @@ public:
 		for (int i = 0; i < 12; i++) //each month
 		{
 			monthly[i] = 0;
-			for (int d = 0; d<util::nday[i]; d++) // for each day in each month
+			for (size_t d = 0; d<util::nday[i]; d++) // for each day in each month
 				for (int h = 0; h < 24; h++) // for each hour in each day
 					monthly[i] += hourly[c++];
 		}
@@ -204,7 +204,7 @@ public:
 		int index = 0;
 		for (int m = 0; m < 12; m++)
 		{
-			for (int d = 0; d < util::nday[m]; d++)
+			for (int d = 0; d < (int)util::nday[m]; d++)
 			{
 				for (int h = 0; h <= 23; h++)
 				{

@@ -1253,7 +1253,7 @@ public:
 			size_t ub_count;
 			ssc_number_t* ub_arr;
 			ub_arr = as_array("utility_bill_w_sys", &ub_count);
-			if (ub_count != (nyears+1))
+			if (ub_count != (size_t)(nyears+1))
 				throw exec_error("singleowner", util::format("utility bill years (%d) not equal to analysis period years (%d).", (int)ub_count, nyears));
 
 			for ( i = 0; i <= nyears; i++)
