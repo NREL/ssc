@@ -93,7 +93,7 @@ void FuelCell::init() {
 	m_shutDown = false;
 	m_shuttingDown = false;
 	m_hoursSinceStop = 0;
-	m_hoursRampUp = std::ceilf((float)(m_unitPowerMin_kW / m_dynamicResponseUp_kWperHour));
+	m_hoursRampUp = ceilf((float)(m_unitPowerMin_kW / m_dynamicResponseUp_kWperHour));
 	m_powerMax_kW = m_unitPowerMax_kW;
 	m_powerThermal_kW = 0;
 	m_powerPrevious_kW = 0;
