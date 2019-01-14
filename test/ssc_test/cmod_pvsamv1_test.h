@@ -1,8 +1,8 @@
-#include <gtest/gtest.h>
-
-#include "core.h"
 #ifndef _CMOD_PVSAMV1_TEST_H_
 #define _CMOD_PVSAMV1_TEST_H_
+
+#include <gtest/gtest.h>
+#include "core.h"
 
 #include "../ssc/vartab.h"
 #include "../ssc/common.h"

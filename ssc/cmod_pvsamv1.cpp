@@ -1082,7 +1082,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 		dcVoltagePerMppt.push_back(0);
 		PVSystem->p_dcPowerNetPerMppt[mpptInput][idx] = 0;		
 	}
-	for (int nn = 0; nn < PVSystem->numberOfSubarrays; nn++) {
+	for (size_t nn = 0; nn < PVSystem->numberOfSubarrays; nn++) {
 		dcPowerNetPerSubarray.push_back(0);
 		std::vector<double> tmp;
 		dcStringVoltage.push_back(tmp);
@@ -1163,7 +1163,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 				double alb;
 				alb = 0;
 
-				for (int nn = 0; nn < num_subarrays; nn++)
+				for (size_t nn = 0; nn < num_subarrays; nn++)
 				{
 					ipoa_rear.push_back(0);
 					ipoa_rear_after_losses.push_back(0);
@@ -1550,7 +1550,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 				}
 
 				std::vector<double> mpptVoltageClipping; //a vector to store power that is clipped due to the inverter MPPT low & high voltage limits for each subarray
-				for (int nn = 0; nn < PVSystem->numberOfSubarrays; nn++) {
+				for (size_t nn = 0; nn < PVSystem->numberOfSubarrays; nn++) {
 					mpptVoltageClipping.push_back(0.0);
 				}
 
@@ -1758,7 +1758,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 
 				// sum up all DC power from the whole array
 				PVSystem->p_systemDCPower[idx] = 0;
-				for (int nn = 0; nn < num_subarrays; nn++)
+				for (size_t nn = 0; nn < num_subarrays; nn++)
 				{
 					// DC derates for snow and shading must be applied first
 					// these can't be applied before the power calculation because they are POWER derates
@@ -1872,8 +1872,9 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 					PVSystem->p_poaTotalAllSubarrays[idx] = (ssc_number_t)(ts_accum_poa_total_eff * util::watt_to_kilowatt); 
 					PVSystem->p_poaFrontBeamTotal[idx] = (ssc_number_t)(ts_accum_poa_front_beam_eff * util::watt_to_kilowatt);
 					PVSystem->p_inverterMPPTLoss[idx] = 0;
-					for (int nn = 0; nn < num_subarrays; nn++)
+					for (size_t nn = 0; nn < num_subarrays; nn++) {
 						PVSystem->p_inverterMPPTLoss[idx] = (ssc_number_t)(mpptVoltageClipping[nn] * util::watt_to_kilowatt);
+					}
 				}
 
 				// Predict clipping for DC battery controller
@@ -1907,7 +1908,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 
 		// Assign annual lifetime DC outputs
 		if (system_use_lifetime_output) {
-			PVSystem->p_dcDegradationFactor[iyear] = PVSystem->dcDegradationFactor[iyear];
+			PVSystem->p_dcDegradationFactor[iyear] = (ssc_number_t)(PVSystem->dcDegradationFactor[iyear]);
 		}
 	}
 

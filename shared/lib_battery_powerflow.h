@@ -2,7 +2,9 @@
 #define _LIB_BATTERY_POWERFLOW_H_
 
 #include <memory>
-#include "lib_shared_inverter.h"
+
+// Forward declarations
+class SharedInverter;
 
 struct BatteryPower;
 
@@ -117,6 +119,10 @@ public:
 	double powerGridToLoad;        ///< The power from the grid to the electric load (kW)
 	double powerBatteryToLoad;     ///< The power from the battery to the electric load (kW)
 	double powerBatteryToGrid;     ///< The power from the battery to the grid (kW)
+	double powerFuelCell;          ///< The power from the fuelcell (kW)
+	double powerFuelCellToGrid;    ///< The power from the fuelcell to the grid (kW)
+	double powerFuelCellToLoad;    ///< The power from the fuelcell to the load (kW)
+	double powerFuelCellToBattery; ///< The power from the fuelcell to the battery (kW)
 	double powerPVInverterDraw;	   ///< The power draw from the PV inverter (kW)
 	double powerBatteryChargeMax;  ///< The maximum sustained power the battery can charge (kW)
 	double powerBatteryDischargeMax;///< The maximum sustained power the battery can discharge (kW)
@@ -138,6 +144,7 @@ public:
 	bool canClipCharge;	///< A boolean specifying whether the battery is allowed to charge from otherwise clipped PV in the timestep
 	bool canGridCharge; ///< A boolean specifying whether the battery is allowed to charge from the Grid in the timestep
 	bool canDischarge;  ///< A boolean specifying whether the battery is allowed to discharge in the timestep
+	bool canFuelCellCharge; ///< A boolean specifying whether the battery is allowed to charge from the fuel cell
 
 	double stateOfChargeMax;   ///< The maximum state of charge (0-100)
 	double stateOfChargeMin;   ///< The minimum state of charge (0-100)

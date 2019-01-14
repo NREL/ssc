@@ -87,15 +87,25 @@ var_info vtab_battery_replacement_cost[] = {
 		{ SSC_INPUT, SSC_NUMBER, "batt_replacement_option", "Enable battery replacement?", "0=none,1=capacity based,2=user schedule", "", "Battery", "?=0", "INTEGER,MIN=0,MAX=2", "" },
 		{ SSC_INPUT, SSC_NUMBER, "battery_per_kWh", "Battery cost", "$/kWh", "", "Battery", "?=0.0", "", "" },
 		{ SSC_INPUT, SSC_NUMBER, "batt_computed_bank_capacity", "Battery bank capacity", "kWh", "", "Battery", "?=0.0", "", "" },
-		// changed 10/17/15 per 10/14/15 meeting.
-//		{ SSC_INPUT, SSC_ARRAY, "batt_replacement_cost", "Battery bank replacement cost", "$/kWh", "", "Battery", "?=0.0", "", "" },
-		{ SSC_INPUT, SSC_NUMBER, "batt_replacement_cost", "Battery bank replacement cost", "$/kWh", "", "Battery", "?=0.0", "", "" },
-		{ SSC_INPUT, SSC_NUMBER, "batt_replacement_cost_escal", "Battery bank replacement cost escalation", "%/year", "", "Battery", "?=0.0", "", "" },
 		{ SSC_OUTPUT, SSC_ARRAY, "cf_battery_replacement_cost", "Battery replacement cost", "$", "", "Cash Flow", "*", "", "" },
 		{ SSC_OUTPUT, SSC_ARRAY, "cf_battery_replacement_cost_schedule", "Battery replacement cost schedule", "$/kWh", "", "Cash Flow", "*", "", "" },
 
 		var_info_invalid };
 
+
+var_info vtab_fuelcell_replacement_cost[] = {
+
+	/*   VARTYPE           DATATYPE         NAME                            LABEL                              UNITS     META                      GROUP          REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
+		{ SSC_INPUT, SSC_ARRAY, "fuelcell_replacement", "Fuel cell replacements per year", "number/year", "", "fuelcell", "", "", "" },
+		{ SSC_INPUT, SSC_ARRAY, "fuelcell_replacement_schedule", "Fuel cell replacements per year (user specified)", "number/year", "", "fuelcell", "", "", "" },
+		{ SSC_INPUT, SSC_NUMBER, "en_fuelcell", "Enable fuel cell storage model", "0/1", "", "fuelcell", "?=0", "", "" },
+		{ SSC_INPUT, SSC_NUMBER, "fuelcell_replacement_option", "Enable fuel cell replacement?", "0=none,1=capacity based,2=user schedule", "", "fuelcell", "?=0", "INTEGER,MIN=0,MAX=2", "" },
+		{ SSC_INPUT, SSC_NUMBER, "fuelcell_per_kWh", "Fuel cell cost", "$/kWh", "", "fuelcell", "?=0.0", "", "" },
+		{ SSC_INPUT, SSC_NUMBER, "fuelcell_computed_bank_capacity", "Fuel cell capacity", "kWh", "", "fuelcell", "?=0.0", "", "" },
+		{ SSC_OUTPUT, SSC_ARRAY, "cf_fuelcell_replacement_cost", "Fuel cell replacement cost", "$", "", "Cash Flow", "*", "", "" },
+		{ SSC_OUTPUT, SSC_ARRAY, "cf_fuelcell_replacement_cost_schedule", "Fuel cell replacement cost schedule", "$/kW", "", "Cash Flow", "*", "", "" },
+
+		var_info_invalid };
 
 
 var_info vtab_standard_loan[] = {
@@ -119,6 +129,12 @@ var_info vtab_oandm[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "om_fuel_cost_escal",           "Fuel cost escalation",              "%/year",  "",                  "O&M",            "?=0.0",                 "",                                         "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "annual_fuel_usage",        "Fuel usage",                         "kWht",         "",                      "O&M",      "?=0",                     "MIN=0",                                         "" },
 
+	// replacements
+	{ SSC_INPUT,        SSC_ARRAY,		 "om_replacement_cost1",           "Repacement cost 1",                "$/kWh", "",                  "O&M",            "?=0.0",                 "",                                         "" },
+	{ SSC_INPUT,        SSC_ARRAY,		 "om_replacement_cost2",           "Repacement cost 2",                "$/kW",  "",                  "O&M",            "?=0.0",                 "",                                         "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "om_replacement_cost_escal",      "Replacement cost escalation",      "%/year",  "",                "O&M",            "?=0.0",                 "",                                         "" },
+
+
 	// optional fuel o and m for Biopower - usage can be in any unit and cost is in $ per usage unit
 	{ SSC_INPUT,        SSC_NUMBER,      "om_opt_fuel_1_usage",           "Biomass feedstock usage",              "unit",  "",                  "O&M",            "?=0.0",                 "",                                         "" },
 	{ SSC_INPUT,        SSC_ARRAY,		 "om_opt_fuel_1_cost",                 "Biomass feedstock cost",          "$/unit", "",                  "O&M",            "?=0.0",                 "",                                         "" },
@@ -126,6 +142,34 @@ var_info vtab_oandm[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "om_opt_fuel_2_usage",           "Coal feedstock usage",              "unit",  "",                  "O&M",            "?=0.0",                 "",                                         "" },
 	{ SSC_INPUT,        SSC_ARRAY,		 "om_opt_fuel_2_cost",                 "Coal feedstock cost",          "$/unit", "",                  "O&M",            "?=0.0",                 "",                                         "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "om_opt_fuel_2_cost_escal",           "Coal feedstock cost escalation","%/year",  "",                  "O&M",            "?=0.0",                 "",                                         "" },
+
+	// optional additional base o and m types
+
+	{ SSC_INPUT,        SSC_NUMBER,      "add_om_num_types",           "Number of O and M types","",  "",                  "O&M",            "?=0",                 "INTEGER,MIN=0,MAX=2",                                         "" },
+	/*
+	// capacity variable names for capacity o and m calculations (semicolon delimited)
+	{ SSC_INPUT,        SSC_STRING,      "add_om_capacity_names",           "Names of O and M types","",  "",                  "O&M",            "?=n/a",                 "",                                         "" },
+	// production variable names for variable o and m calculations (semicolon delimited)
+	{ SSC_INPUT,        SSC_STRING,      "add_om_production_names",           "Names of O and M types","",  "",                  "O&M",            "?=n/a",                 "",                                         "" },
+	*/ 
+
+	{ SSC_INPUT,        SSC_NUMBER,      "om_capacity1_nameplate",           "Battery capacity for O&M values","kW",  "",                  "O&M",            "?=0",                 "",                                         "" },
+	{ SSC_INPUT,        SSC_ARRAY,      "om_production1_values",           "Battery production for O&M values","kWh",  "",                  "O&M",            "?=0",                 "",                                         "" },
+
+
+	{ SSC_INPUT,        SSC_ARRAY,       "om_fixed1",                     "Battery fixed O&M annual amount",           "$/year",  "",                  "O&M",            "?=0.0",                 "",                                         "" },
+	{ SSC_INPUT,        SSC_ARRAY,       "om_production1",                "Battery production-based O&M amount",       "$/MWh",   "",                  "O&M",            "?=0.0",                 "",                                         "" },
+	{ SSC_INPUT,        SSC_ARRAY,       "om_capacity1",                  "Battery capacity-based O&M amount",         "$/kWcap", "",                  "O&M",            "?=0.0",                 "",                                         "" },
+
+	{ SSC_INPUT,        SSC_NUMBER,      "om_capacity2_nameplate",           "Fuel cell capacity for O&M values","kW",  "",                  "O&M",            "?=0",                 "",                                         "" },
+	{ SSC_INPUT,        SSC_ARRAY,      "om_production2_values",           "Fuel cell production for O&M values","kWh",  "",                  "O&M",            "?=0",                 "",                                         "" },
+
+
+	{ SSC_INPUT,        SSC_ARRAY,       "om_fixed2",                     "Fuel cell fixed O&M annual amount",           "$/year",  "",                  "O&M",            "?=0.0",                 "",                                         "" },
+	{ SSC_INPUT,        SSC_ARRAY,       "om_production2",                "Fuel cell production-based O&M amount",       "$/MWh",   "",                  "O&M",            "?=0.0",                 "",                                         "" },
+	{ SSC_INPUT,        SSC_ARRAY,       "om_capacity2",                  "Fuel cell capacity-based O&M amount",         "$/kWcap", "",                  "O&M",            "?=0.0",                 "",                                         "" },
+
+
 
 
 var_info_invalid };
@@ -337,7 +381,7 @@ bool adjustment_factors::setup(int nsteps)
 	{
 		size_t n;
 		ssc_number_t *p = m_cm->as_array( m_prefix + ":hourly", &n );
-		if ( p != 0 && n == nsteps )
+		if ( p != 0 && n == (size_t)nsteps )
 		{
 			for( int i=0;i<nsteps;i++ )
 				m_factors[i] *= (1 - p[i]/100); //convert from percentages to factors
@@ -394,12 +438,12 @@ bool sf_adjustment_factors::setup(int nsteps)
 	{
 		size_t n;
 		ssc_number_t *p = m_cm->as_array("sf_adjust:hourly", &n);
-		if (p != 0 && n == nsteps)
+		if (p != 0 && n == (size_t)nsteps)
 		{
 			for (int i = 0; i < nsteps; i++)
 				m_factors[i] *= (1 - p[i] / 100); //convert from percentages to factors
 		}
-		if (n!=nsteps)
+		if (n!=(size_t)nsteps)
 			m_error = util::format("array length (%d) must match number of yearly simulation time steps (%d).", n, nsteps);
 	}
 
@@ -570,10 +614,11 @@ bool shading_factor_calculator::setup( compute_module *cm, const std::string &pr
 		{
 			int c = 0;
 			for (int m = 0; m < 12; m++)
-				for (int d = 0; d < util::nday[m]; d++)
+				for (size_t d = 0; d < util::nday[m]; d++)
 					for (int h = 0; h < 24; h++)
 						for (int jj = 0; jj < m_steps_per_hour; jj++)
 							m_mxhFactors.at(c++, 0) = 1 - mat[m*ncols + h] / 100;
+							
 		}
 		m_enMxH = true;
 	}
@@ -814,7 +859,7 @@ weatherdata::weatherdata( var_data *data_table )
 	if ( nrec > 0 && nmult >= 1 )
 	{
 		m_data.resize( nrec );
-		for( int i=0;i<nrec;i++ )
+		for( size_t i=0;i<nrec;i++ )
 		{
 			weather_record *r = new weather_record;
 

@@ -62,8 +62,7 @@
 
 #include "ud_power_cycle.h"
 
-#include <iostream>
-#include <fstream>
+#include <iosfwd>
 
 class C_sco2_recomp_csp
 {

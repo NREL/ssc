@@ -51,7 +51,6 @@
 #define battery_h
 
 #include "lib_util.h"
-#include "lsqfit.h"
 
 #include <vector>
 #include <map>
@@ -59,11 +58,10 @@
 #include <stdio.h>
 #include <algorithm>
 
+// Forward declarations to reduce imports
+
 const double low_tolerance = 0.01;
 const double tolerance = 0.001;
-
-typedef std::vector<double> double_vec;
-typedef std::vector<int> int_vec;
 
 // Messages
 class message
@@ -591,31 +589,66 @@ protected:
 	message _message;
 
 };
-/*
-Losses Base class
+/**
+* \class losses_t
+*
+* \brief
+*
+*  The Battery losses class takes generic losses which occur during charging, discharge, or idle operation modes:
+*  The model also accepts a time-series vector of losses defined for every time step of the first year of simulation
+*  which may be used in lieu of the losses for operational mode.  
 */
 class losses_t
 {
 public:
-	losses_t(lifetime_t *, thermal_t *, capacity_t*, int loss_mode, double_vec batt_loss_charge, double_vec batt_loss_discharge, double_vec batt_loss_idle, double_vec batt_loss);
 
-	// deep copy
+	/**
+	* \function losses_t
+	*
+	* Construct the losses object
+	*
+	* \param[in] lifetime_t * pointer to lifetime class
+	* \param[in] thermal_t * pointer to thermal class (currently unused)
+	* \param[in] capacity_t * pointer to capacity class
+	* \param[in] loss_mode 0 for monthy input, 1 for input time series
+	* \param[in] batt_loss_charge_kw vector (size 1 for annual or 12 for monthly) containing battery system losses when charging (kW)
+	* \param[in] batt_loss_discharge_kw vector (size 1 for annual or 12 for monthly) containing battery system losses when discharge (kW)
+	* \param[in] batt_loss_idle_kw vector (size 1 for annual or 12 for monthly) containing battery system losses when idle (kW)
+	* \param[in] batt_loss_kw vector (size 1 for annual or 12 for monthly) containing battery system losses when idle (kW)
+	*/
+	losses_t(double dtHour,
+			lifetime_t *, 
+			thermal_t *, 
+			capacity_t*, 
+			const int loss_mode, 
+			const double_vec batt_loss_charge_kw = std::vector<double>(0), 
+			const double_vec batt_loss_discharge_kw = std::vector<double>(0), 
+			const double_vec batt_loss_idle_kw = std::vector<double>(0), 
+			const double_vec batt_loss_kw=std::vector<double>(0));
+
+	/// Deep copy of losses object
 	losses_t * clone();
 
-	// copy losses to this
+	/// Copy input losses to this object
 	void copy(losses_t *);
 
-	// main APIs
-	void run_losses(double dt_hour, size_t index);
-	void replace_battery();
-	double battery_system_loss(int index){ return (_full_loss)[index]; }
+	/// Run the losses model at the present simulation index (for year 1 only)
+	void run_losses(size_t lifetimeIndex);
 
+	/// Replace the battery
+	void replace_battery();
+
+	/// Get the loss at the specified simulation index (year 1)
+	double getLoss(size_t indexFirstYear);
+
+	/// Options for the loss inputs to use
 	enum { MONTHLY, TIMESERIES};
 
 protected:
 	
 	int _loss_mode;
 	int _nCycle;
+	double _dtHour;
 	
 	lifetime_t * _lifetime;
 	thermal_t * _thermal;
@@ -650,7 +683,7 @@ public:
 
 	void initialize(capacity_t *, voltage_t *, lifetime_t *, thermal_t *, losses_t *);
 
-	// Run all
+	// Run all for single time step
 	void run(size_t idx, double I);
 
 	// Run a component level model

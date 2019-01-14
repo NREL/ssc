@@ -49,20 +49,21 @@
 
 #include <stdio.h>
 #include <cstring>
+#include <iostream>
 
 #include "core.h"
 #include "sscapi.h"
 
 SSCEXPORT int ssc_version()
 {
-	return 202;
+	return 204;
 }
 
 SSCEXPORT const char *ssc_build_info()
 {
 	static const char *_bi = __PLATFORM__ " " __ARCH__ " " __COMPILER__ " " __DATE__ " " __TIME__;
 	return _bi;
-}
+} 
 
 /* to add new computation modules, 
 	specify an extern module entry,
@@ -82,6 +83,7 @@ extern module_entry_info
 	cm_entry_pvwattsv1_1ts,
 	cm_entry_pvwattsv1_poa,
 	cm_entry_pvwattsv5,
+	cm_entry_pvwattsv5_lifetime,
 	cm_entry_pvwattsv5_1ts,
 	cm_entry_pv6parmod,
 	cm_entry_pvsandiainv,
@@ -147,9 +149,11 @@ extern module_entry_info
 	cm_entry_iscc_design_point,
 	cm_entry_battery,
 	cm_entry_battwatts,
+	cm_entry_fuelcell,
    	cm_entry_lcoefcr,
 	cm_entry_pv_get_shade_loss_mpp,
-	cm_entry_inv_cec_cg;
+	cm_entry_inv_cec_cg,
+	cm_entry_thermalrate;
 
 /* official module table */
 static module_entry_info *module_table[] = {
@@ -165,6 +169,7 @@ static module_entry_info *module_table[] = {
 	&cm_entry_pvwattsv1_1ts,
 	&cm_entry_pvwattsv1_poa,
 	&cm_entry_pvwattsv5,
+	&cm_entry_pvwattsv5_lifetime,
 	&cm_entry_pvwattsv5_1ts,
 	&cm_entry_pvsandiainv,
 	&cm_entry_wfreader,
@@ -229,9 +234,11 @@ static module_entry_info *module_table[] = {
 	&cm_entry_iscc_design_point,
 	&cm_entry_battery,
 	&cm_entry_battwatts,
+	&cm_entry_fuelcell,
 	&cm_entry_lcoefcr,
 	&cm_entry_pv_get_shade_loss_mpp,
 	&cm_entry_inv_cec_cg,
+	&cm_entry_thermalrate,
 	0 };
 
 SSCEXPORT ssc_module_t ssc_module_create( const char *name )

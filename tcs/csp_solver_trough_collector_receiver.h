@@ -60,7 +60,7 @@
 
 #include "numeric_solvers.h"
 
-#include <iostream>
+#include <iosfwd>
 #include <fstream>
 
 class C_csp_trough_collector_receiver : public C_csp_collector_receiver

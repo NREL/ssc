@@ -1266,7 +1266,7 @@ void Module_IO::AssignOutputs(compute_module* cm)
 Inverter_IO::Inverter_IO(compute_module *cm, std::string cmName)
 {
 	inverterType =  cm->as_integer("inverter_model");
-	nMpptInputs = cm->as_integer("inv_num_mppt");
+	nMpptInputs = cm->as_unsigned_long("inv_num_mppt");
 
 	if (inverterType == 4)
 	{
