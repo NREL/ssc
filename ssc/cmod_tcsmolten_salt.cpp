@@ -653,10 +653,10 @@ public:
 				vector<vector<double> > steps;
 				vector<double> obj, flux;
 				spi.getOptimizationSimulationHistory(steps, obj, flux);
-				int nr = steps.size();
+				size_t nr = steps.size();
 				if (nr > 0)
 				{
-					int nc = steps.front().size() + 2;
+					size_t nc = steps.front().size() + 2;
 					ssc_number_t *ssc_hist = allocate("opt_history", nr, nc);
 					for (int i = 0; i<nr; i++){
 
@@ -743,7 +743,7 @@ public:
 		{
 			// only calculates a flux map, so need to "assign" 'helio_positions_in'
 			util::matrix_t<double> helio_pos_temp = as_matrix("helio_positions");
-			int n_h_rows = helio_pos_temp.nrows();
+			size_t n_h_rows = helio_pos_temp.nrows();
 			ssc_number_t *p_helio_positions_in = allocate("helio_positions_in", n_h_rows, 2);
 			for (int i = 0; i < n_h_rows; i++)
 			{
@@ -1276,7 +1276,7 @@ public:
 						throw exec_error("sco2_csp_system", csp_exception.m_error_message);
 					}
 
-					int ncols = T_htf_parametrics.ncols();
+					size_t ncols = T_htf_parametrics.ncols();
 
 					util::matrix_t<float> &p_udpc_T_htf_hot = allocate_matrix("ud_T_htf_ind_od_out", n_T_htf_hot_in, ncols);
 					for (int i = 0; i < n_T_htf_hot_in; i++)
@@ -1982,10 +1982,10 @@ public:
 		}		
 
 		// Set output data from heliostat class
-		int n_rows_eta_map = heliostatfield.ms_params.m_eta_map.nrows();
+		size_t n_rows_eta_map = heliostatfield.ms_params.m_eta_map.nrows();
 		ssc_number_t *eta_map_out = allocate("eta_map_out", n_rows_eta_map, 3);
-		int n_rows_flux_maps = heliostatfield.ms_params.m_flux_maps.nrows();
-		int n_cols_flux_maps = heliostatfield.ms_params.m_flux_maps.ncols() + 2;
+		size_t n_rows_flux_maps = heliostatfield.ms_params.m_flux_maps.nrows();
+		size_t n_cols_flux_maps = heliostatfield.ms_params.m_flux_maps.ncols() + 2;
 		ssc_number_t *flux_maps_out = allocate("flux_maps_out", n_rows_eta_map, n_cols_flux_maps);
 
 		if(n_rows_eta_map != n_rows_flux_maps)

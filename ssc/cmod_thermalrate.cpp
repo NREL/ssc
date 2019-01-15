@@ -589,7 +589,7 @@ public:
 	void tr_calc_timestep(ssc_number_t *e_in, ssc_number_t *p_in, ssc_number_t *br_in, ssc_number_t *sr_in,
 		ssc_number_t *revenue, ssc_number_t *payment, ssc_number_t *income,
 		ssc_number_t *thermal_charge,
-		ssc_number_t rate_esc, bool include_fixed = true, bool include_min = true, bool gen_only = false)
+		ssc_number_t rate_esc, bool = true, bool = true, bool = false)
 		throw(general_error)
 	{
 		int i;

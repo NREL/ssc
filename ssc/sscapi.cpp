@@ -585,6 +585,7 @@ static char p_internal_buf[256];
 		const char *text;
 		int type;
 		int i=0;
+#pragma warning (disable : 4706 )
 		while( (text = ssc_module_log( p_mod, i, &type, 0 )) )
 		{
 			if (type == SSC_ERROR)

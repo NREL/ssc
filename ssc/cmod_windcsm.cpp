@@ -159,26 +159,26 @@ public:
 		}
 		double blade_mass = 0.5 * pow((0.5*turbine_rotor_diameter), exponent);
 		double blade_mass_cost_coeff = 14.6; // line 27
-		double blade_mass_cost_coeff_2015 = 13.08; // line 152
+		//double blade_mass_cost_coeff_2015 = 13.08; // line 152
 		double blade_cost_2015 = blade_mass_cost_coeff * blade_mass;
 
 		// hub mass
 		double hub_mass = 2.3 * blade_mass + 1320.0;
 		double hub_mass_cost_coeff = 3.9; // line 45
-		double hub_mass_cost_coeff_2015 = 3.8; // line 154
+		//double hub_mass_cost_coeff_2015 = 3.8; // line 154
 		double hub_cost_2015 = hub_mass_cost_coeff * hub_mass;
 
 		// pitch mass
 		double pitch_bearing_mass = 0.1295 * blade_mass * blades + 491.31;
 		double pitch_mass = pitch_bearing_mass * (1.0 + 0.3280) + 555.0;
 		double pitch_mass_cost_coeff = 22.1; // line 63
-		double pitch_mass_cost_coeff_2015 = 22.91; // line 156
+		//double pitch_mass_cost_coeff_2015 = 22.91; // line 156
 		double pitch_cost_2015 = pitch_mass_cost_coeff * pitch_mass;
 
 		// spinner mass
 		double spinner_mass = 15.5 * turbine_rotor_diameter - 980.0;
 		double spinner_mass_cost_coeff = 11.1; // line 81
-		double spinner_mass_cost_coeff_2015 = 15.59; // line 158
+		//double spinner_mass_cost_coeff_2015 = 15.59; // line 158
 		double spinner_cost_2015 = spinner_mass_cost_coeff * spinner_mass;
 
 
@@ -272,8 +272,8 @@ public:
 		// bedplate cost is input and crane cost is hard coded at line 429
 		// Note that bedplate cost only used in base hardware cost which is commented out 
 		// turbine_costsse_2015.py line 450.
-		double base_hardware_cost_coeff = 0.7;
-		double base_hardware_cost = base_hardware_cost_coeff * bedplate_cost;
+		//double base_hardware_cost_coeff = 0.7;
+		//double base_hardware_cost = base_hardware_cost_coeff * bedplate_cost;
 
 		double mainframe_cost = nacelle_platforms_cost + crane_cost;
 

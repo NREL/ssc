@@ -493,7 +493,7 @@ static void dctoac(double pcrate,double efffp,double dc[24],double ac[24])
 
 static int julian(int yr,int month,int day)    /* Calculates julian day of year */
 {
-	int i=1,jday=0,k,nday[12] = {31,28,31,30,31,30,31,31,30,31,30,31};
+	int i = 1, jday = 0, k;
 
 	if( yr%4 == 0 )                      /* For leap years */
 		k = 1;
