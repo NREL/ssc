@@ -127,7 +127,7 @@ namespace util
 	bool to_integer(const std::string &str, int *x);
 	bool to_float(const std::string &str, float *x);
 	bool to_double(const std::string &str, double *x);
-		
+
 	std::string to_string( int x, const char *fmt="%d" );
 	std::string to_string( double x, const char *fmt="%lg" );
 

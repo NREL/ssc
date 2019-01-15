@@ -920,7 +920,7 @@ int sco2_design_cmod_common(compute_module *cm, C_sco2_recomp_csp & c_sco2_cycle
 	if (ph_err_code != 0)
 		throw compute_module::exec_error("sco2_csp_system", "cycle plot data routine failed");
 
-	int n_v = P_t.size();
+	size_t n_v = P_t.size();
 	ssc_number_t *p_P_t_data = cm->allocate("P_t_data", n_v);
 	ssc_number_t *p_h_t_data = cm->allocate("h_t_data", n_v);
 	for (int i = 0; i < n_v; i++)

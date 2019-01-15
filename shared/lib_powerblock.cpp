@@ -54,6 +54,9 @@
 
 #include "lib_util.h"
 
+// responsibility of developers of this file to fix these warnings
+#pragma warning (disable : 4458 ) // https://docs.microsoft.com/en-us/cpp/error-messages/compiler-warnings/compiler-warning-level-4-c4458?view=vs-2017
+
 CPowerBlock_Type224::CPowerBlock_Type224()
 {	// inputs
 	m_pbi.demand_var = 0;

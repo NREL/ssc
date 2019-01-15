@@ -325,8 +325,8 @@ public:
 			vector<vector<double> > steps;
 			vector<double> obj, flux;
 			spi.getOptimizationSimulationHistory(steps, obj, flux);
-			int nr = steps.size();
-			int nc = steps.front().size() + 2;
+			size_t nr = steps.size();
+			size_t nc = steps.front().size() + 2;
 			ssc_number_t *ssc_hist = allocate("opt_history", nr, nc);
 			for( int i = 0; i<nr; i++ ){
 

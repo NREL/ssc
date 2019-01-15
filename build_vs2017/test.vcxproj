@@ -171,6 +171,7 @@
       <SDLCheck>true</SDLCheck>
       <AdditionalIncludeDirectories>$(SSCDIR)\test;$(GTEST)\include;$(SSCDIR);$(SSCDIR)\lpsolve;$(SSCDIR)\shared;$(SSCDIR)\splinter;$(SSCDIR)\tcs;$(SSCDIR)\solarpilot;$(SSCDIR)\ssc</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <DisableSpecificWarnings>4305</DisableSpecificWarnings>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -189,6 +190,7 @@
       <SDLCheck>true</SDLCheck>
       <AdditionalIncludeDirectories>$(SSCDIR)\test;$(GTEST)\include;$(SSCDIR);$(SSCDIR)\lpsolve;$(SSCDIR)\shared;$(SSCDIR)\splinter;$(SSCDIR)\tcs;$(SSCDIR)\solarpilot;$(SSCDIR)\ssc</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <DisableSpecificWarnings>4305</DisableSpecificWarnings>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
