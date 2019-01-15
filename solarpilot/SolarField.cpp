@@ -508,12 +508,14 @@ void SolarField::updateCalculatedParameters( var_map &V )
                 V.recs[i].rec_offset_x_global.Setval(std::numeric_limits<double>::quiet_NaN());
                 V.recs[i].rec_offset_y_global.Setval(std::numeric_limits<double>::quiet_NaN());
                 V.recs[i].rec_offset_z_global.Setval(std::numeric_limits<double>::quiet_NaN());
+                V.recs[i].optical_height.Setval(std::numeric_limits<double>::quiet_NaN());
             }
             else
             {
                 V.recs[i].rec_offset_x_global.Setval(og_x);
                 V.recs[i].rec_offset_y_global.Setval(og_y);
                 V.recs[i].rec_offset_z_global.Setval(og_z);
+                V.recs[i].optical_height.Setval(V.sf.tht.val + og_z);
             }
         }
     }
@@ -556,7 +558,7 @@ void SolarField::updateAllCalculatedParameters(var_map &V)
 
     _land.updateCalculatedParameters(V);
 
-    for( int i=0; i<(int)_receivers.size(); i++)
+    for( int i=0; i<(int)V.recs.size(); i++)
         _receivers.at(i)->updateCalculatedParameters(V.recs.at(i), V.sf.tht.val );
 
     _fluxsim.updateCalculatedParameters(V);
