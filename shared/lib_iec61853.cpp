@@ -279,8 +279,8 @@ bool iec61853_module_t::solve( double Voc, double Isc, double Vmp, double Imp, d
 			double *p_Il, double *p_Io, double *p_Rs, double *p_Rsh )
 {
 	// initial guesses must be passed in
-	double Il = *p_Il;
-	double Io = *p_Io;
+	Il = *p_Il;
+	Io = *p_Io;
 	double Rs = *p_Rs;
 	double Rsh = *p_Rsh;
 
@@ -602,9 +602,9 @@ bool iec61853_module_t::calculate( util::matrix_t<double> &input, int nseries, i
 		
 		// make a guess at the parameters
 		double a =  nseries*nfac[i]*k*TcK/q;
-		double Il = 0.95*Isc;
+		Il = 0.95*Isc;
 		double Rsh = Rsh_ref0 * 1000.0/Irr;
-		double Io = ( Il - Voc/Rsh )/( exp(Voc/a) - 1 );
+		Io = ( Il - Voc/Rsh )/( exp(Voc/a) - 1 );
 		double Rs = Rs_ref0;		
 		
 		if ( verbose )
