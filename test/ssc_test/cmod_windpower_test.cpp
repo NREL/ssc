@@ -73,31 +73,63 @@ TEST_F(CMWindPowerIntegration, WakeModelsUsingFile_cmod_windpower){
 	monthly_energy = ssc_data_get_array(data, "monthly_energy", nullptr)[11];
 	EXPECT_NEAR(monthly_energy, 2.6398e6, e);
 
-	// Simple Wake Model using 30 min File
-	ssc_data_set_number(data, "wind_farm_wake_model", 0);
-#ifdef _MSC_VER	
-	std::string file = "../../../test/input_docs/wind_30m.srw";
-#else	
-	std::string file = "../test/input_docs/wind_30m.srw";
-#endif
-	ssc_data_set_string(data, "wind_resource_filename", file.c_str());
-
-	compute();
-
-	annual_energy;
-	ssc_data_get_number(data, "annual_energy", &annual_energy);
-	EXPECT_NEAR(annual_energy, 33224154, e);
-
-	monthly_energy = ssc_data_get_array(data, "monthly_energy", nullptr)[0];
-	EXPECT_NEAR(monthly_energy, 2.8218e6, e);
-
-	monthly_energy = ssc_data_get_array(data, "monthly_energy", nullptr)[11];
-	EXPECT_NEAR(monthly_energy, 2.8218e6, e);
-
-	size_t nEntries = static_cast<var_table*>(data)->lookup("gen")->num.ncols();
-	EXPECT_EQ(nEntries, 8760 * 2);
 }
 
+/// Using Interpolated Subhourly Wind Data
+TEST_F(CMWindPowerIntegration, UsingInterpolatedSubhourly_cmod_windpower){
+	// Using AR Northwestern-Flat Lands
+#ifdef _MSC_VER	
+	std::string file = "../../../test/input_docs/AR Northwestern-Flat Lands.srw";
+#else	
+	std::string file = "../test/input_docs/AR Northwestern-Flat Lands.srw";
+#endif
+	ssc_data_set_string(data, "wind_resource_filename", file.c_str());
+	compute();
+
+	ssc_number_t hourly_annual_energy;
+	ssc_data_get_number(data, "annual_energy", &hourly_annual_energy);
+
+	ssc_number_t hourly_january_energy = ssc_data_get_array(data, "monthly_energy", nullptr)[0];
+
+
+	// Using 15 min File
+#ifdef _MSC_VER	
+	file = "../../../test/input_docs/AR Northwestern-Flat Lands-15min.srw";
+#else	
+	file = "../test/input_docs/AR Northwestern-Flat Lands-15min.srw";
+#endif
+	ssc_data_set_string(data, "wind_resource_filename", file.c_str());
+	compute();
+
+	ssc_number_t check_annual_energy;
+	ssc_data_get_number(data, "annual_energy", &check_annual_energy);
+	EXPECT_NEAR(check_annual_energy, hourly_annual_energy, 0.005*check_annual_energy);
+
+	ssc_number_t check_january_energy = ssc_data_get_array(data, "monthly_energy", nullptr)[0];
+	EXPECT_NEAR(check_january_energy, hourly_january_energy, 0.005*check_january_energy);
+
+	size_t nEntries = static_cast<var_table*>(data)->lookup("gen")->num.ncols();
+	EXPECT_EQ(nEntries, 8760 * 4);
+
+	// Using 5 min File
+#ifdef _MSC_VER	
+	file = "../../../test/input_docs/AR Northwestern-Flat Lands-5min.srw";
+#else	
+	file = "../test/input_docs/AR Northwestern-Flat Lands-5min.srw";
+#endif
+	ssc_data_set_string(data, "wind_resource_filename", file.c_str());
+	compute();
+
+	check_annual_energy;
+	ssc_data_get_number(data, "annual_energy", &check_annual_energy);
+	EXPECT_NEAR(check_annual_energy, hourly_annual_energy, 0.005*check_annual_energy);
+
+	check_january_energy = ssc_data_get_array(data, "monthly_energy", nullptr)[0];
+	EXPECT_NEAR(check_january_energy, hourly_january_energy, 0.005*check_january_energy);
+
+	nEntries = static_cast<var_table*>(data)->lookup("gen")->num.ncols();
+	EXPECT_EQ(nEntries, 8760 * 12);
+}
 
 /// Using Wind Resource Data
 TEST_F(CMWindPowerIntegration, UsingDataArray_cmod_windpower){
