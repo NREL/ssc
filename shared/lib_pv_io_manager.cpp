@@ -793,12 +793,6 @@ void PVSystem_IO::AllocateOutputs(compute_module* cm)
 void PVSystem_IO::AssignOutputs(compute_module* cm)
 {
 
-
-
-
-
-
-
 	cm->assign("ac_loss", var_data((ssc_number_t)(acLossPercent + transmissionDerate)));
 
 }

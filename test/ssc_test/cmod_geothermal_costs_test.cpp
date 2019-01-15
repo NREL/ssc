@@ -12,7 +12,7 @@ TEST_F(CMGeothermal, SingleOwnerDefault) {
 	int singleowner_errors = run_module(data, "singleowner");
 	EXPECT_EQ(singleowner_errors, 0);
 
-	if (!geothermal_errors)
+	if (!geothermal_errors)	//if geothermal_errors != 0, there were no errors in the compute module. 
 	{
 		ssc_number_t annual_energy;
 		ssc_data_get_number(data, "annual_energy", &annual_energy);		
