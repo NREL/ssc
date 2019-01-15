@@ -795,8 +795,12 @@ void PVSystem_IO::AssignOutputs(compute_module* cm)
 
 
 
+
+
+
+
 	cm->assign("ac_loss", var_data((ssc_number_t)(acLossPercent + transmissionDerate)));
->>>>>>> patch
+
 }
 
 Module_IO::Module_IO(compute_module* cm, std::string cmName, double dcLoss)
