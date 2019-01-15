@@ -751,7 +751,7 @@ void PVSystem_IO::AllocateOutputs(compute_module* cm)
 		}
 	}
 
-	for (int mppt_input = 0; mppt_input < Inverter->nMpptInputs; mppt_input++)
+	for (size_t mppt_input = 0; mppt_input < Inverter->nMpptInputs; mppt_input++)
 	{
 		p_mpptVoltage.push_back(cm->allocate("inverterMppt" + std::to_string(mppt_input + 1) + "_DCVoltage", numberOfLifetimeRecords));
 		p_dcPowerNetPerMppt.push_back(cm->allocate("inverterMppt" + std::to_string(mppt_input + 1) + "_NetDCPower", numberOfLifetimeRecords));
