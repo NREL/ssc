@@ -96,6 +96,7 @@ void FuelCell::init() {
 	m_hoursRampUp = ceilf((float)(m_unitPowerMin_kW / m_dynamicResponseUp_kWperHour));
 	m_powerMax_kW = m_unitPowerMax_kW;
 	m_powerThermal_kW = 0;
+	m_power_kW = 0;
 	m_powerPrevious_kW = 0;
 	m_fuelConsumed_MCf = 0;
 	m_replacementCount = 0;
