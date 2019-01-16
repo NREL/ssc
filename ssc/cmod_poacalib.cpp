@@ -116,7 +116,7 @@ public:
 		int idx = 0;
 		for (int m=1;m<=12;m++ ) //index across months
 		{
-			for( int d=1;d<=util::nday[m-1];d++ ) //index across days of month
+			for( size_t d=1;d<=util::nday[m-1];d++ ) //index across days of month
 			{
 				for( int h=0;h<24;h++ ) //index across hours
 				{

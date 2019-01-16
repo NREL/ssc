@@ -1100,8 +1100,8 @@ void battstor::check_replacement_schedule()
 		bool replace = false;
 		if (year < batt_vars->batt_replacement_schedule.size())
 		{
-			int num_repl = batt_vars->batt_replacement_schedule[year];
-			for (int j_repl = 0; j_repl < num_repl; j_repl++)
+			size_t num_repl = (size_t)batt_vars->batt_replacement_schedule[year];
+			for (size_t j_repl = 0; j_repl < num_repl; j_repl++)
 			{
 				if ((hour == (j_repl * 8760 / num_repl)) && step == 0)
 				{
@@ -1398,7 +1398,7 @@ public:
 			}
 			else
 			{
-				for (int i = 0; i != power_input.size(); i++)
+				for (size_t i = 0; i != power_input.size(); i++)
 					power_load.push_back(0);
 			}
 

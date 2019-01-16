@@ -677,7 +677,8 @@ public:
 
 	void process_monthly_charge( ssc_number_t payment[8760], ssc_number_t charges[12] )
 	{
-		int m,d,h,c;
+		int m,h,c;
+		size_t d;
 
 		ssc_number_t fixed = as_number("ur_monthly_fixed_charge");
 		c=0;
@@ -746,7 +747,8 @@ public:
 			ssc_number_t dc_fixed[12],
 			ssc_number_t dc_tou[12] )
 	{
-		int i,m,d,h,c;
+		int i,m,h,c;
+		size_t d;
 
 
 		// compute fixed monthly demand charges
@@ -831,7 +833,8 @@ public:
 			ssc_number_t tr_charge[12],
 			ssc_number_t tr_rate[12] )
 	{
-		int i,m,d,h,c;
+		int i,m,h,c;
+		size_t d;
 
 		ssc_number_t energy_ub[6];
 		ssc_number_t rates[6];
