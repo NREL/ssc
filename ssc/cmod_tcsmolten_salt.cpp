@@ -1417,7 +1417,7 @@ public:
         //Load the solar field adjustment factors
         sf_adjustment_factors sf_haf(this);
 		size_t n_steps_full = weather_reader.m_weather_data_provider->nrecords(); //steps_per_hour * 8760;
-		if (!sf_haf.setup(n_steps_full))
+		if (!sf_haf.setup((int)n_steps_full))
 			throw exec_error("tcsmolten_salt", "failed to setup sf adjustment factors: " + sf_haf.error());
         //allocate array to pass to tcs
         heliostatfield.ms_params.m_sf_adjust.resize( sf_haf.size() );
@@ -1773,11 +1773,11 @@ public:
                 delete [] tou_params->mc_pricing.m_hr_tou;
             tou_params->mc_pricing.m_hr_tou = new double[n_steps_fixed];
             //set the tou period as unique for each time step
-            for(int i=0; i<n_steps_fixed; i++)
+            for(size_t i=0; i<n_steps_fixed; i++)
                 tou_params->mc_pricing.m_hr_tou[i] = i+1;
             //allocate reported arrays
             tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE].resize(n_steps_fixed);
-            for( int i=0; i<n_steps_fixed; i++)
+            for( size_t i=0; i<n_steps_fixed; i++)
                 tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE][i] = dispatch_series[i];
         }
 
@@ -1953,7 +1953,7 @@ public:
 			log("q_dot_pc_startup array is a different length than 'n_steps_fixed'.", SSC_WARNING);
 			return;
 		}
-		for( int i = 0; i < n_steps_fixed; i++ )
+		for( size_t i = 0; i < n_steps_fixed; i++ )
 		{
 			p_q_pc_startup[i] = (float)(p_q_dot_pc_startup[i] * (sim_setup.m_report_step / 3600.0));	//[MWh]
 		}
@@ -1972,7 +1972,7 @@ public:
 			log("At least one m_dot array is a different length than 'n_steps_fixed'.", SSC_WARNING);
 			return;
 		}
-		for (int i = 0; i < n_steps_fixed; i++)
+		for (size_t i = 0; i < n_steps_fixed; i++)
 		{
 			p_m_dot_rec[i] = (ssc_number_t)(p_m_dot_rec[i] / 3600.0);	//[kg/s] convert from kg/hr
 			p_m_dot_pc[i] = (ssc_number_t)(p_m_dot_pc[i] / 3600.0);		//[kg/s] convert from kg/hr
