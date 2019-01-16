@@ -117,6 +117,12 @@ public:
 
 	double calc_mass_at_prev();
 
+    double calc_cp_at_prev();
+
+    double calc_enth_at_prev();
+
+    double get_m_UA();
+
 	double get_m_T_prev();
 
 	double get_m_T_calc();
@@ -150,8 +156,8 @@ private:
 	std::string error_msg;
 
 	// Timestep data
-	double m_m_dot_tes_dc_max;
-	double m_m_dot_tes_ch_max;
+	double m_m_dot_tes_dc_max;  //[kg/s] TES discharge available from the SYSTEM (field side of HX if there is one)
+	double m_m_dot_tes_ch_max;  //[kg/s] TES charge that can be sent to the SYSTEM (field side of HX if there is one)
 
 	// Member data
 	bool m_is_tes;
@@ -159,6 +165,30 @@ private:
 	double m_V_tank_active;		//[m^3] available volume (considering h_min) of *one temperature*
 	double m_q_pb_design;		//[Wt] thermal power to power cycle at design
 	double m_V_tank_hot_ini;	//[m^3] Initial volume in hot storage tank
+
+    // Monotonic equation solver
+    class C_MEQ_indirect_tes_discharge : public C_monotonic_equation
+    {
+    private:
+        C_csp_two_tank_tes *mpc_csp_two_tank_tes;
+        double m_timestep;
+        double m_T_amb;
+        double m_T_cold_field;
+        double m_m_dot_field;
+
+    public:
+        C_MEQ_indirect_tes_discharge(C_csp_two_tank_tes *pc_csp_two_tank_tes, double timestep, double T_amb,
+            double T_cold_field, double m_dot_field)
+        {
+            mpc_csp_two_tank_tes = pc_csp_two_tank_tes;
+            m_timestep = timestep;
+            m_T_amb = T_amb;
+            m_T_cold_field = T_cold_field;
+            m_m_dot_field = m_dot_field;
+        }
+
+        virtual int operator()(double m_dot_tank /*kg/s*/, double *m_dot_bal /*-*/);
+    };
 
 public:
 
@@ -194,6 +224,7 @@ public:
 		double m_h_tank_min;		//[m] Minimum allowable HTF height in storage tank
 		double m_f_V_hot_ini;       //[%] Initial fraction of available volume that is hot
 		double m_htf_pump_coef;		//[kW/kg/s] Pumping power to move 1 kg/s of HTF through power cycle
+        double m_tes_pump_coef;		//[kW/kg/s] Pumping power to move 1 kg/s of HTF through tes loop
         bool tanks_in_parallel;     //[-] Whether the tanks are in series or parallel with the solar field. Series means field htf must go through storage tanks.
         bool has_hot_tank_bypass;   //[-] True if the bypass valve causes the field htf to bypass just the hot tank and enter the cold tank before flowing back to the field.
         double T_tank_hot_inlet_min; //[C] Minimum field htf temperature that may enter the hot tank

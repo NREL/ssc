@@ -685,20 +685,21 @@ public:
 
 	struct S_csp_tes_outputs
 	{
-		double m_q_heater;			//[MWe] Heating power required to keep tanks at a minimum temperature
-		double m_W_dot_rhtf_pump;	//[MWe] Pumping power for Receiver HTF thru storage
-		double m_q_dot_loss;		//[MWt] Storage thermal losses
-		double m_q_dot_dc_to_htf;	//[MWt] Thermal power to the HTF from storage
-		double m_q_dot_ch_from_htf;	//[MWt] Thermal power from the HTF to storage
-		double m_T_hot_ave;		//[K] Average hot tank temperature over timestep
-		double m_T_cold_ave;	//[K] Average cold tank temperature over timestep
-		double m_T_hot_final;	//[K] Hot temperature at end of timestep
-		double m_T_cold_final;	//[K] Cold temperature at end of timestep
+		double m_q_heater;			//[MWe]  Heating power required to keep tanks at a minimum temperature
+        double m_m_dot;             //[kg/s] Hot tank mass flow rate, valid for direct and indirect systems
+		double m_W_dot_rhtf_pump;	//[MWe]  Pumping power for Receiver HTF thru storage
+		double m_q_dot_loss;		//[MWt]  Storage thermal losses
+		double m_q_dot_dc_to_htf;	//[MWt]  Thermal power to the HTF from storage
+		double m_q_dot_ch_from_htf;	//[MWt]  Thermal power from the HTF to storage
+		double m_T_hot_ave;		    //[K]    Average hot tank temperature over timestep
+		double m_T_cold_ave;	    //[K]    Average cold tank temperature over timestep
+		double m_T_hot_final;	    //[K]    Hot tank temperature at end of timestep
+		double m_T_cold_final;	    //[K]    Cold tank temperature at end of timestep
 	
 		S_csp_tes_outputs()
 		{
-			m_q_heater = m_W_dot_rhtf_pump = m_q_dot_loss = m_q_dot_dc_to_htf = m_q_dot_ch_from_htf = m_T_hot_ave = 
-			m_T_cold_ave = m_T_hot_final = m_T_cold_final = std::numeric_limits<double>::quiet_NaN();
+			m_q_heater = m_m_dot = m_W_dot_rhtf_pump = m_q_dot_loss = m_q_dot_dc_to_htf = m_q_dot_ch_from_htf = 
+            m_T_hot_ave = m_T_cold_ave = m_T_hot_final = m_T_cold_final = std::numeric_limits<double>::quiet_NaN();
 		}
 	};
 
