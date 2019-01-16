@@ -550,7 +550,7 @@ public:
 		ssc_number_t *p_gen = allocate("gen", n_steps_fixed);
 		ssc_number_t *p_W_dot_par_tot_haf = allocate("W_dot_par_tot_haf", n_steps_fixed);
 		ssc_number_t *p_W_dot_parasitic_tot = as_array("W_dot_parasitic_tot", &count);
-		for( int i = 0; i < n_steps_fixed; i++ )
+		for( size_t i = 0; i < n_steps_fixed; i++ )
 		{
 			size_t hour = (size_t)ceil(p_time_final_hr[i]);
 			p_gen[i] = p_q_dot_heat_sink[i] * (ssc_number_t)(haf(hour) * 1.E3);		//[kWt]

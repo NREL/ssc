@@ -343,10 +343,10 @@ public:
 
 /* These functions can be placed in common financial library with matrix and constants passed? */
 
-	void save_cf(int cf_line, int nyears, const std::string &name)
+	void save_cf(int cf_line, size_t nyears, const std::string &name)
 	{
 		ssc_number_t *arrp = allocate( name, nyears+1 );
-		for (int i=0;i<=nyears;i++)
+		for (size_t i=0;i<=nyears;i++)
 			arrp[i] = (ssc_number_t)cf.at(cf_line, i);
 	}
 
