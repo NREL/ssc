@@ -166,7 +166,7 @@ private:
 	double m_q_pb_design;		//[Wt] thermal power to power cycle at design
 	double m_V_tank_hot_ini;	//[m^3] Initial volume in hot storage tank
 
-    // Monotonic equation solver
+    // Monotonic equation solvers
     class C_MEQ_indirect_tes_discharge : public C_monotonic_equation
     {
     private:
@@ -184,6 +184,29 @@ private:
             m_timestep = timestep;
             m_T_amb = T_amb;
             m_T_cold_field = T_cold_field;
+            m_m_dot_field = m_dot_field;
+        }
+
+        virtual int operator()(double m_dot_tank /*kg/s*/, double *m_dot_bal /*-*/);
+    };
+
+    class C_MEQ_indirect_tes_charge : public C_monotonic_equation
+    {
+    private:
+        C_csp_two_tank_tes *mpc_csp_two_tank_tes;
+        double m_timestep;
+        double m_T_amb;
+        double m_T_hot_field;
+        double m_m_dot_field;
+
+    public:
+        C_MEQ_indirect_tes_charge(C_csp_two_tank_tes *pc_csp_two_tank_tes, double timestep, double T_amb,
+            double T_hot_field, double m_dot_field)
+        {
+            mpc_csp_two_tank_tes = pc_csp_two_tank_tes;
+            m_timestep = timestep;
+            m_T_amb = T_amb;
+            m_T_hot_field = T_hot_field;
             m_m_dot_field = m_dot_field;
         }
 
