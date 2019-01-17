@@ -249,10 +249,11 @@ public:
 
 		//====================================================================================================================================================================
 		//SGeothermal_Outputs geoBinary_outputs;
+		
+		//geoBinary_outputs.maf_ReplacementsByYear = new float[geoBinary_inputs.mi_ProjectLifeYears];
 
-		geoBinary_outputs.maf_ReplacementsByYear = geoBinary_inputs.mi_ProjectLifeYears;
 		//ssc_number_t *annual_replacements = allocate( "annual_replacements", geoBinary_inputs.mi_ProjectLifeYears);
-
+		/*
 		// allocate lifetime monthly arrays (one element per month, over lifetime of project)
 		geoBinary_outputs.maf_monthly_resource_temp = 12 * geoBinary_inputs.mi_ProjectLifeYears;
 		geoBinary_outputs.maf_monthly_power = 12 * geoBinary_inputs.mi_ProjectLifeYears;
@@ -263,23 +264,34 @@ public:
 		geoBinary_inputs.mi_MakeupCalculationsPerYear = (geoBinary_inputs.mi_ModelChoice == 2) ? 8760 : 12;
 		geoBinary_inputs.mi_TotalMakeupCalculations = geoBinary_inputs.mi_ProjectLifeYears * geoBinary_inputs.mi_MakeupCalculationsPerYear;
 
-		geoBinary_outputs.maf_timestep_resource_temp = geoBinary_inputs.mi_TotalMakeupCalculations;
+		geoBinary_outputs.maf_timestep_resource_temp = new float((float)geoBinary_inputs.mi_TotalMakeupCalculations);
+		
 		geoBinary_outputs.maf_timestep_power = geoBinary_inputs.mi_TotalMakeupCalculations;
 		geoBinary_outputs.maf_timestep_test_values = geoBinary_inputs.mi_TotalMakeupCalculations;
 
 		geoBinary_outputs.maf_timestep_pressure = geoBinary_inputs.mi_TotalMakeupCalculations;
 		geoBinary_outputs.maf_timestep_dry_bulb = geoBinary_inputs.mi_TotalMakeupCalculations;
 		geoBinary_outputs.maf_timestep_wet_bulb = geoBinary_inputs.mi_TotalMakeupCalculations;
-
-		geoBinary_outputs.maf_hourly_power = geoBinary_inputs.mi_ProjectLifeYears * 8760;
-
+		*/
+		geoBinary_outputs.maf_hourly_power = new float[geoBinary_inputs.mi_ProjectLifeYears * 8760];
+		
 		//====================================================================================================================================================================
 		
 		binaryDefault = new CGeothermalAnalyzer(SPBP, PBInputs, geoBinary_inputs, geoBinary_outputs);
 	}
 
 	void TearDown() {
-		delete binaryDefault;
+		
+		if (binaryDefault != nullptr) {
+			delete binaryDefault;
+			binaryDefault = nullptr;
+		}
+		if (geoBinary_outputs.maf_hourly_power != nullptr) {
+			delete geoBinary_outputs.maf_hourly_power;
+			geoBinary_outputs.maf_hourly_power = nullptr;
+		}
+		
+
 	}
 
 };
