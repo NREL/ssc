@@ -608,7 +608,7 @@ void C_csp_two_tank_tes::discharge_avail_est(double T_cold_K, double step_s, dou
 		T_hot_field_est = T_hot_ini;
 	}
 
-	m_m_dot_tes_dc_max = m_dot_field_est*step_s;		//[kg/s]
+	m_m_dot_tes_dc_max = m_dot_field_est;		//[kg/s]
 }
 
 void C_csp_two_tank_tes::charge_avail_est(double T_hot_K, double step_s, double &q_dot_ch_est, double &m_dot_field_est, double &T_cold_field_est)
@@ -638,7 +638,7 @@ void C_csp_two_tank_tes::charge_avail_est(double T_hot_K, double step_s, double 
 		T_cold_field_est = T_cold_ini;
 	}
 
-	m_m_dot_tes_ch_max = m_dot_field_est*step_s;		//[kg/s]
+	m_m_dot_tes_ch_max = m_dot_field_est;		//[kg/s]
 }
 
 void C_csp_two_tank_tes::discharge_full(double timestep /*s*/, double T_amb /*K*/, double T_htf_cold_in /*K*/, double & T_htf_hot_out /*K*/, double & m_dot_htf_out /*kg/s*/, C_csp_tes::S_csp_tes_outputs &outputs)
@@ -650,7 +650,7 @@ void C_csp_two_tank_tes::discharge_full(double timestep /*s*/, double T_amb /*K*
 	// 1) Temperature of HTF into TES system. If no heat exchanger, this temperature
 	//	   is of the HTF directly entering the cold tank 
 
-    m_dot_htf_out = m_m_dot_tes_dc_max / timestep;		//[kg/s]
+    m_dot_htf_out = m_m_dot_tes_dc_max;		//[kg/s]
 
     discharge(timestep, T_amb, m_dot_htf_out, T_htf_cold_in, T_htf_hot_out, outputs);
 }
@@ -740,7 +740,7 @@ bool C_csp_two_tank_tes::discharge(double timestep /*s*/, double T_amb /*K*/, do
         mc_cold_tank.energy_balance(timestep, m_dot_tank, 0.0, T_cold_tank_in, T_amb, T_cold_ave, q_heater_cold, q_dot_loss_cold);
 	}
 
-    if (m_dot_tank > m_m_dot_tes_dc_max / timestep)
+    if (m_dot_tank > m_m_dot_tes_dc_max)
     {
         outputs.m_q_heater = std::numeric_limits<double>::quiet_NaN();
         outputs.m_m_dot = std::numeric_limits<double>::quiet_NaN();
@@ -801,7 +801,7 @@ bool C_csp_two_tank_tes::charge(double timestep /*s*/, double T_amb /*K*/, doubl
 	// If no heat exchanger, no iteration is required between the heat exchanger and storage tank models
 	if( !ms_params.m_is_hx )
 	{
-		if( m_dot_htf_in > m_m_dot_tes_ch_max / timestep )
+		if( m_dot_htf_in > m_m_dot_tes_ch_max )
 		{
 			outputs.m_q_dot_loss = std::numeric_limits<double>::quiet_NaN();
 			outputs.m_q_heater = std::numeric_limits<double>::quiet_NaN();
@@ -862,7 +862,7 @@ void C_csp_two_tank_tes::charge_full(double timestep /*s*/, double T_amb /*K*/, 
 	// If no heat exchanger, no iteration is required between the heat exchanger and storage tank models
 	if( !ms_params.m_is_hx )
 	{
-		m_dot_htf_out = m_m_dot_tes_ch_max / timestep;		//[kg/s]
+		m_dot_htf_out = m_m_dot_tes_ch_max;		//[kg/s]
 
 		// Call energy balance on hot tank charge to track tank mass and temperature
 		mc_hot_tank.energy_balance(timestep, m_dot_htf_out, 0.0, T_htf_hot_in, T_amb, T_hot_ave, q_heater_hot, q_dot_loss_hot);
