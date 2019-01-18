@@ -140,6 +140,18 @@ void C_heat_exchanger::hx_performance(bool is_hot_side_mdot, bool is_storage_sid
 	// Outputs: HX effectiveness [-], hot side outlet temp [K], cold side outlet temp [K], 
 	//				Heat transfer between fluids [MWt], cold side mass flow rate [kg/s]
 
+    if (m_dot_known < 0) {
+        //throw(C_csp_exception("HX provided a negative mass flow", ""));
+        eff = T_hot_out = T_cold_out = q_trans = m_dot_solved = std::numeric_limits<double>::quiet_NaN();
+    }
+    else if (m_dot_known == 0) {
+        eff = 0.;
+        T_hot_out = std::numeric_limits<double>::quiet_NaN();
+        T_cold_out = std::numeric_limits<double>::quiet_NaN();
+        q_trans = 0.;
+        m_dot_solved = 0.;
+    }
+
 	double m_dot_hot, m_dot_cold, c_hot, c_cold, c_dot;
 
 	double T_ave = (T_hot_in + T_cold_in) / 2.0;		//[K]
@@ -586,6 +598,13 @@ void C_csp_two_tank_tes::discharge_avail_est(double T_cold_K, double step_s, dou
 	double f_storage = 0.0;		// for now, hardcode such that storage always completely discharges
 
 	double m_dot_tank_disch_avail = mc_hot_tank.m_dot_available(f_storage, step_s);	//[kg/s]
+
+    if (m_dot_tank_disch_avail == 0) {
+        q_dot_dc_est = 0.;
+        m_dot_field_est = 0.;
+        T_hot_field_est = std::numeric_limits<double>::quiet_NaN();
+        return;
+    }
 
 	double T_hot_ini = mc_hot_tank.get_m_T_prev();		//[K]
 
