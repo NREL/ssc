@@ -1269,12 +1269,12 @@ double CGeothermalAnalyzer::GetPlantBrineEffectiveness(void)
 	*/
 	double TSiO2 = -(0.0000001334837*pow(GetTemperaturePlantDesignC() , 4)) + (0.0000706584462*pow(GetTemperaturePlantDesignC() , 3)) - (0.0036294799613*pow(GetTemperaturePlantDesignC() , 2 )) + (0.3672417729236*GetTemperaturePlantDesignC()) + 4.205944351495;
 	double TamphSiO2 = (0.0000000000249634* pow(TSiO2 , 4)) - (0.00000000425191 * pow(TSiO2, 3)) - (0.000119669*pow(TSiO2 , 2)) + (0.307616*TSiO2) - 0.294394;
-	double dTemperatureGFExitF = physics::CelciusToFarenheit(TamphSiO2); //109.31
+//	double dTemperatureGFExitF = physics::CelciusToFarenheit(TamphSiO2); //109.31
 	double dAE_At_Exit = GetAEAtTemp(TamphSiO2);
 
 
 	// GETEM's "optimizer" seems to pick the max possible brine effectiveness for the default binary plant, so use this as a proxy for now
-	double dAEMaxPossible = (geothermal::IMITATE_GETEM) ? GetAEBinary() -  GetAEBinaryAtTemp(TamphSiO2) : GetAE() - dAE_At_Exit; // watt-hr/lb - [10B.GeoFluid].H54 "maximum possible available energy accounting for the available energy lost due to a silica constraint on outlet temperature"
+//	double dAEMaxPossible = (geothermal::IMITATE_GETEM) ? GetAEBinary() -  GetAEBinaryAtTemp(TamphSiO2) : GetAE() - dAE_At_Exit; // watt-hr/lb - [10B.GeoFluid].H54 "maximum possible available energy accounting for the available energy lost due to a silica constraint on outlet temperature"
 	mp_geo_out->max_secondlaw = (1 - ((geothermal::IMITATE_GETEM) ? GetAEBinaryAtTemp(TamphSiO2) / GetAEBinary() : dAE_At_Exit / GetAE()) - 0.375);
 	double dMaxBinaryBrineEffectiveness = ((geothermal::IMITATE_GETEM) ? GetAEBinary() : GetAE()) * ((GetTemperaturePlantDesignC() < 150) ? 0.14425 * exp(0.008806 * GetTemperaturePlantDesignC()) : mp_geo_out->max_secondlaw );
 	
