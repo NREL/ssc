@@ -928,15 +928,37 @@ bool AutoPilot::Optimize(vector<double*> &optvars, vector<double> &upper_range, 
     
     //Add a formatted simulation notice
     ostringstream os;
-    os << "\n\nBeginning Simulation\nIter ";
-    for(int i=0; i<(int)optvars.size(); i++)
-        os << setw(9) << (names==0 ? "Var "+my_to_string(i+1) : names->at(i)) << "|";
+    int width = 9;
+    os << "\n\nBeginning Simulation\nIt | ";
+
+
+    for (int j = 0; ; j++)
+    {
+        bool all_written = true;    //initialize
+        for (int i = 0; i < (int)optvars.size(); i++)
+        {
+            size_t nch = names->at(i).size();
+
+            std::string word = "";
+            if (j*width < nch)
+                word = names->at(i).substr(j*width, std::min((j + 1)*width, (int)nch));
+
+            all_written = all_written && (j + 1)*width > nch;
+
+            os << setw(width) << std::left << (names==0 ? "Var "+my_to_string(i+1) : word) << "|";
+        }
+        if (!all_written)
+            os << "\n   | ";  //start a new line
+
+        else if (all_written)
+            break;
+    }
     os << "| Obj.    | Flux    | Plant cost";
 
     string hmsg = os.str();
-
+    
     string ol;
-    for(int i=0; i<(int)hmsg.size(); i++)
+    for(int i=0; i<(int)hmsg.find("|\n")+5; i++)
         ol.append("-");
 
     _summary_siminfo->addSimulationNotice( os.str() );
@@ -954,7 +976,7 @@ bool AutoPilot::Optimize(vector<double*> &optvars, vector<double> &upper_range, 
         ostringstream oo;
         oo << "Algorithm converged:\n";
         for(int i=0; i<(int)optvars.size(); i++)
-            oo << (names == 0 ? "" : names->at(i) + "=" ) << setw(8) << AO.m_all_points.at(iopt).at(i) /** AO.m_normalizers.at(i)*/ << "   ";
+            oo << (names == 0 ? "" : names->at(i) + "=" ) << setw(8) << AO.m_all_points.at(iopt).at(i) << "   ";
         oo << "\nObjective: " << AO.m_objective.back(); //objbest;
         _summary_siminfo->addSimulationNotice(oo.str() );
     }
