@@ -132,10 +132,7 @@ public:
 	virtual bool CalculateFluxMaps(sp_flux_table &fluxtab, int flux_res_x = 12, int flux_res_y = 10, bool is_normalized = true)=0;
 	virtual bool CalculateFluxMaps(std::vector<std::vector<double> > &sunpos, std::vector<std::vector<double> > &fluxtab, std::vector<double> &efficiency, 
 		int flux_res_x = 12, int flux_res_y = 10, bool is_normalized = true)=0;
-	bool Optimize(int method, std::vector<double*> &optvars, std::vector<double> &upper_range, std::vector<double> &lower_range, std::vector<double> &stepsize, std::vector<std::string> *names=0);
-	bool OptimizeRSGS(std::vector<double*> &optvars, std::vector<double> &upper_range, std::vector<double> &lower_range, std::vector<bool> &is_range_constr, std::vector<std::string> *names=0);
-    bool OptimizeAuto(std::vector<double*> &optvars, std::vector<double> &upper_range, std::vector<double> &lower_range, std::vector<double> &stepsize, std::vector<std::string> *names=0);
-    bool OptimizeSemiAuto(std::vector<double*> &optvars, std::vector<double> &upper_range, std::vector<double> &lower_range, std::vector<bool> &is_range_constr, std::vector<std::string> *names=0);
+	bool Optimize(std::vector<double*> &optvars, std::vector<double> &upper_range, std::vector<double> &lower_range, std::vector<double> &stepsize, std::vector<std::string> *names=0);
 	//cancellation methods
 	void CancelSimulation();
 	bool IsSimulationCancelled();
