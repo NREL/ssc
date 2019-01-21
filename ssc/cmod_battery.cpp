@@ -151,7 +151,7 @@ var_info vtab_battery_inputs[] = {
 	{ SSC_INPUT,        SSC_NUMBER,     "batt_height",                                 "Battery height",                                         "m",        "",                     "Battery",       "",                           "",                             "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "batt_Cp",                                     "Battery specific heat capacity",                         "J/KgK",    "",                     "Battery",       "",                           "",                             "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "batt_h_to_ambient",                           "Heat transfer between battery and environment",          "W/m2K",    "",                     "Battery",       "",                           "",                             "" },
-	{ SSC_INPUT,        SSC_NUMBER,     "T_room",                                      "Temperature of storage room",                            "C",        "",                     "Battery",       "",                           "",                             "" },
+	{ SSC_INPUT,        SSC_ARRAY,      "batt_room_temperature_celsius",               "Temperature of storage room",                            "C",        "",                     "Battery",       "",                           "",                             "" },
 	{ SSC_INPUT,        SSC_MATRIX,     "cap_vs_temp",                                 "Effective capacity as function of temperature",          "C,%",      "",                     "Battery",       "",                           "",                             "" },
 
 	// storage dispatch
@@ -404,12 +404,12 @@ battstor::battstor(compute_module &cm, bool setup_model, size_t nrec, double dt_
 						batt_vars->ec_rate_defined = true;
 					}
 				}
-			
+
 				batt_vars->batt_cycle_cost_choice = cm.as_integer("batt_cycle_cost_choice");
 				batt_vars->batt_cycle_cost = cm.as_double("batt_cycle_cost");
 
-				if (batt_vars->batt_dispatch == dispatch_t::FOM_LOOK_AHEAD || 
-					batt_vars->batt_dispatch == dispatch_t::FOM_FORECAST || 
+				if (batt_vars->batt_dispatch == dispatch_t::FOM_LOOK_AHEAD ||
+					batt_vars->batt_dispatch == dispatch_t::FOM_FORECAST ||
 					batt_vars->batt_dispatch == dispatch_t::FOM_LOOK_BEHIND)
 				{
 					batt_vars->batt_look_ahead_hours = cm.as_unsigned_long("batt_look_ahead_hours");
@@ -439,11 +439,11 @@ battstor::battstor(compute_module &cm, bool setup_model, size_t nrec, double dt_
 							double target = target_power_monthly[month];
 							for (size_t h = 0; h != util::hours_in_month(month + 1); h++)
 							{
-									for (size_t s = 0; s != step_per_hour; s++)
-										target_power.push_back(target);
+								for (size_t s = 0; s != step_per_hour; s++)
+									target_power.push_back(target);
 							}
 						}
-						
+
 					}
 					else
 						target_power = batt_vars->target_power;
@@ -452,13 +452,13 @@ battstor::battstor(compute_module &cm, bool setup_model, size_t nrec, double dt_
 						throw compute_module::exec_error("battery", "invalid number of target powers, must be equal to number of records in weather file");
 
 					// extend target power to lifetime internally
-					for (size_t y = 1; y < nyears; y++){
+					for (size_t y = 1; y < nyears; y++) {
 						for (size_t i = 0; i < nrec; i++) {
 							target_power.push_back(target_power[i]);
 						}
 					}
 					batt_vars->target_power = target_power;
-					
+
 				}
 				else if (batt_vars->batt_dispatch == dispatch_t::CUSTOM_DISPATCH)
 				{
@@ -467,7 +467,7 @@ battstor::battstor(compute_module &cm, bool setup_model, size_t nrec, double dt_
 			}
 
 			// Manual dispatch
-			if ((batt_vars->batt_meter_position == dispatch_t::FRONT && batt_vars->batt_dispatch == dispatch_t::FOM_MANUAL ) ||
+			if ((batt_vars->batt_meter_position == dispatch_t::FRONT && batt_vars->batt_dispatch == dispatch_t::FOM_MANUAL) ||
 				(batt_vars->batt_meter_position == dispatch_t::BEHIND && batt_vars->batt_dispatch == dispatch_t::MANUAL))
 			{
 				batt_vars->batt_can_charge = cm.as_vector_bool("dispatch_manual_charge");
@@ -502,7 +502,7 @@ battstor::battstor(compute_module &cm, bool setup_model, size_t nrec, double dt_
 			batt_vars->batt_cost_per_kwh = cm.as_vector_double("om_replacement_cost1")[0];
 			batt_vars->batt_replacement_option = cm.as_integer("batt_replacement_option");
 			batt_vars->batt_replacement_capacity = cm.as_double("batt_replacement_capacity");
-			
+
 			if (batt_vars->batt_replacement_option == battery_t::REPLACE_BY_SCHEDULE)
 				batt_vars->batt_replacement_schedule = cm.as_vector_integer("batt_replacement_schedule");
 
@@ -524,8 +524,12 @@ battstor::battstor(compute_module &cm, bool setup_model, size_t nrec, double dt_
 			batt_vars->batt_height = cm.as_double("batt_height");
 			batt_vars->batt_Cp = cm.as_double("batt_Cp");
 			batt_vars->batt_h_to_ambient = cm.as_double("batt_h_to_ambient");
-			batt_vars->T_room = cm.as_double("T_room");
+			batt_vars->T_room = cm.as_vector_double("batt_room_temperature_celsius");
 
+			for (size_t T = 0; T < batt_vars->T_room.size(); T++) {
+				batt_vars->T_room[T] += 273.15; // convert C to K
+			}
+			
 			// Inverter settings
 			if (cm.is_assigned("inverter_model") && batt_vars->batt_topology == dispatch_t::DC_CONNECTED)
 			{
@@ -745,19 +749,24 @@ battstor::battstor(compute_module &cm, bool setup_model, size_t nrec, double dt_
 		(float)batt_vars->batt_calendar_q0, (float)batt_vars->batt_calendar_a, (float)batt_vars->batt_calendar_b, (float)batt_vars->batt_calendar_c);
 	lifetime_model = new lifetime_t(lifetime_cycle_model, lifetime_calendar_model, batt_vars->batt_replacement_option, batt_vars->batt_replacement_capacity);
 
-	util::matrix_t<double> cap_vs_temp = batt_vars->cap_vs_temp;
-	if (cap_vs_temp.nrows() < 2 || cap_vs_temp.ncols() != 2)
+	if (batt_vars->cap_vs_temp.nrows() < 2 || batt_vars->cap_vs_temp.ncols() != 2) {
 		throw compute_module::exec_error("battery", "capacity vs temperature matrix must have two columns and at least two rows");
+	}
+
+	if (batt_vars->T_room.size() != nrec) {
+		throw compute_module::exec_error("battery", "Environment temperature input length must equal number of weather file records");
+	}
 
 	thermal_model = new thermal_t(
+		dt_hr,
 		batt_vars->batt_mass, // [kg]
 		batt_vars->batt_length, // [m]
 		batt_vars->batt_width, // [m]
 		batt_vars->batt_height, // [m]
 		batt_vars->batt_Cp, // [J/kgK]
 		batt_vars->batt_h_to_ambient, // W/m2K
-		273.15 + batt_vars->T_room, // K
-		cap_vs_temp);
+		batt_vars->T_room, // K
+		batt_vars->cap_vs_temp);
 
 
 	battery_model = new battery_t(

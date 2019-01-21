@@ -133,7 +133,9 @@ public:
 			batt_vars->cap_vs_temp = batt_capacity_vs_temperature;
 			batt_vars->batt_Cp = 1004;
 			batt_vars->batt_h_to_ambient = 500;
-			batt_vars->T_room = 20;
+			for (size_t i = 0; i < n_recs; i++) {
+				batt_vars->T_room.push_back(20);
+			}
 			batt_specific_energy_per_mass = 197.33;  // Wh/kg
 			batt_specific_energy_per_volume = 501.25; // Wh/L
 		}
@@ -185,8 +187,9 @@ public:
 
 			batt_vars->batt_Cp = 600;
 			batt_vars->batt_h_to_ambient = 500;
-			batt_vars->T_room = 20;
-
+			for (size_t i = 0; i < n_recs; i++) {
+				batt_vars->T_room.push_back(20);
+			}
 			batt_specific_energy_per_mass = 30;  // Wh/kg
 			batt_specific_energy_per_volume = 30; // Wh/L
 		}
