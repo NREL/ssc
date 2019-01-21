@@ -62,6 +62,7 @@ static var_info _cm_vtab_sco2_csp_system[] = {
 	// ** Off-design Inputs **
 	{ SSC_INPUT,  SSC_MATRIX,  "od_cases",             "Columns: T_htf_C, m_dot_htf_ND, T_amb_C, od_opt_obj (1: MAX_ETA, 2: MAX_POWER), Rows: cases",   "",           "",    "",      "",      "",       "" },
 	{ SSC_INPUT,  SSC_ARRAY,   "od_P_mc_in_sweep",     "Columns: T_htf_C, m_dot_htf_ND, T_amb_C, od_opt_obj (1: MAX_ETA, 2: MAX_POWER)", "", "", "", "",  "",       "" },
+	{ SSC_INPUT,  SSC_MATRIX,  "od_set_control",       "Columns: T_htf_C, m_dot_htf_ND, T_amb_C, P_LP_in, Rows: cases", "", "", "", "", "", "" },
 	{ SSC_INPUT,  SSC_NUMBER,  "is_gen_od_polynomials","Generate off-design polynomials for Generic CSP models? 1 = Yes, 0 = No", "", "", "",  "?=0",     "",       "" },
 
 	// ** Off-Design Outputs **
@@ -259,18 +260,43 @@ public:
 		// Check if 'od_cases' is assigned
 		bool is_od_cases_assigned = is_assigned("od_cases");
 		bool is_P_mc_in_od_sweep_assigned = is_assigned("od_P_mc_in_sweep");
+		bool is_od_set_control = is_assigned("od_set_control");
 		if (is_od_cases_assigned && is_P_mc_in_od_sweep_assigned)
 		{
 			log("Both off design cases and main compressor inlet sweep assigned. Only modeling off design cases");
 			is_P_mc_in_od_sweep_assigned = false;
 		}
-		if (!is_od_cases_assigned && !is_P_mc_in_od_sweep_assigned)
+		if (is_od_cases_assigned && is_od_set_control)
+		{
+			log("Both off design cases and od set control assigned. Only modeling off design cases");
+			is_od_set_control = false;
+		}
+		if (is_P_mc_in_od_sweep_assigned && is_od_set_control)
+		{
+			log("Both main compressor inlet sweep and od set control assigned. Only modeling off design cases");
+			is_od_set_control = false;
+		}
+		if (!is_od_cases_assigned && !is_P_mc_in_od_sweep_assigned && !is_od_set_control)
 		{
 			log("No off-design cases or main compressor inlet sweep specified");
 			return;
 		}
 		
 		// Set up off-design analysis
+		double P_LP_comp_in_des = std::numeric_limits<double>::quiet_NaN();		//[MPa]
+		double delta_P = std::numeric_limits<double>::quiet_NaN();
+
+		if (cycle_config == 1)
+		{
+			P_LP_comp_in_des = c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_pres[C_sco2_cycle_core::MC_IN] / 1000.0;		//[MPa] convert from kPa
+			delta_P = 10.0;
+		}
+		else
+		{
+			P_LP_comp_in_des = c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_pres[C_sco2_cycle_core::PC_IN] / 1000.0;		//[MPa] convert from kPa
+			delta_P = 6.0;
+		}
+
 		util::matrix_t<double> od_cases;
 		if (is_od_cases_assigned)
 		{
@@ -292,7 +318,7 @@ public:
 				throw exec_error("sco2_csp_system", err_msg);
 			}
 		}
-		else
+		else if(is_P_mc_in_od_sweep_assigned)
 		{
 			std::vector<double> od_case = as_vector_double("od_P_mc_in_sweep");
 			int n_od = od_case.size();
@@ -301,28 +327,14 @@ public:
 				std::string err_msg = util::format("The matrix of off design cases requires 5 columns. The entered matrix has %d columns", n_od);
 				throw exec_error("sco2_csp_system", err_msg);
 			}
-
-			double P_LP_comp_in = std::numeric_limits<double>::quiet_NaN();
-			double delta_P = std::numeric_limits<double>::quiet_NaN();
-
-			if (cycle_config == 1)
-			{
-				P_LP_comp_in = c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_pres[C_sco2_cycle_core::MC_IN] / 1000.0;		//[MPa] convert from kPa
-				delta_P = 10.0;
-			}
-			else
-			{
-				P_LP_comp_in = c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_pres[C_sco2_cycle_core::PC_IN] / 1000.0;		//[MPa] convert from kPa
-				delta_P = 6.0;
-			}
+			
 			int n_P_mc_in = 101;
 
-			double P_mc_in_low = P_LP_comp_in - delta_P / 2.0;	//[MPa]
+			double P_mc_in_low = P_LP_comp_in_des - delta_P / 2.0;	//[MPa]
 
 			double delta_P_i = delta_P / (n_P_mc_in - 1);	//[MPa]
 
 			od_cases.resize(n_P_mc_in, 6);
-
 			for (int i = 0; i < n_P_mc_in; i++)
 			{
 				od_cases(i, 0) = od_case[0];
@@ -331,6 +343,26 @@ public:
 				od_cases(i, 3) = od_case[3];
 				od_cases(i, 4) = od_case[4];
 				od_cases(i, 5) = P_mc_in_low + delta_P_i * i;	//[MPa]
+			}
+		}
+		else
+		{
+			od_cases = as_matrix("od_set_control");
+
+			// Check if off cases exist and correctly formatted
+			int n_od_cols_loc = (int)od_cases.ncols();
+			int n_od_runs_loc = (int)od_cases.nrows();
+
+			if (n_od_cols_loc != 4 && n_od_runs_loc == 1)
+			{
+				// No off-design cases specified
+				log("No off-design cases specified");
+				return;
+			}
+			if (n_od_cols_loc != 4 && n_od_runs_loc > 1)
+			{
+				std::string err_msg = util::format("The matrix of od set control requires 4 columns. The entered matrix has %d columns", n_od_cols_loc);
+				throw exec_error("sco2_csp_system", err_msg);
 			}
 		}
 		
@@ -349,13 +381,13 @@ public:
 			p_T_htf_hot_od[n_run] = (ssc_number_t)od_cases(n_run, 0);			//[C]
 			p_m_dot_htf_fracs[n_run] = (ssc_number_t)od_cases(n_run, 1);		//[-]
 			p_T_amb_od[n_run] = (ssc_number_t)od_cases(n_run, 2);				//[C]
-			p_od_opt_obj_code[n_run] = (ssc_number_t)od_cases(n_run, 3);		//[-]
-			p_od_opt_conv_tol[n_run] = (ssc_number_t)od_cases(n_run, 4);		//[-]
+			//p_od_opt_obj_code[n_run] = (ssc_number_t)od_cases(n_run, 3);		//[-]
+			//p_od_opt_conv_tol[n_run] = (ssc_number_t)od_cases(n_run, 4);		//[-]
 				// Set input structure
 			sco2_rc_od_par.m_T_htf_hot = p_T_htf_hot_od[n_run] + 273.15;	//[K]
 			sco2_rc_od_par.m_m_dot_htf = m_dot_htf_design*p_m_dot_htf_fracs[n_run];	//[kg/s]
 			sco2_rc_od_par.m_T_amb = p_T_amb_od[n_run] + 273.15;				//[K]
-			int od_strategy = (int)p_od_opt_obj_code[n_run];		//[-]
+			//int od_strategy = (int)p_od_opt_obj_code[n_run];		//[-]
 			//double od_opt_tol = p_od_opt_conv_tol[n_run];			//[-]
 
 			int off_design_code = 0;
@@ -367,13 +399,23 @@ public:
 					// 2D optimization
 					//off_design_code = sco2_recomp_csp.off_design_opt(sco2_rc_od_par, od_strategy);
 						// Nested optimization
-					od_strategy = C_sco2_recomp_csp::E_TARGET_POWER_ETA_MAX;
+					int od_strategy = C_sco2_recomp_csp::E_TARGET_POWER_ETA_MAX;
 					off_design_code = c_sco2_cycle.optimize_off_design(sco2_rc_od_par, od_strategy);
 				}
 				else if (is_P_mc_in_od_sweep_assigned)
 				{
-					od_strategy = C_sco2_recomp_csp::E_TARGET_POWER_ETA_MAX;
+					int od_strategy = C_sco2_recomp_csp::E_TARGET_POWER_ETA_MAX;
 					off_design_code = c_sco2_cycle.off_design_fix_P_mc_in(sco2_rc_od_par, od_cases(n_run, 5), od_strategy);
+				}
+				else if (is_od_set_control)
+				{
+					int od_strategy = C_sco2_recomp_csp::E_TARGET_POWER_ETA_MAX;
+					double P_LP_comp_in = od_cases(n_run, 3);
+					if (od_cases(n_run, 3) < 0.0)
+					{
+						P_LP_comp_in = P_LP_comp_in_des / fabs(P_LP_comp_in);
+					}
+					off_design_code = c_sco2_cycle.off_design_fix_P_mc_in(sco2_rc_od_par, P_LP_comp_in, od_strategy);
 				}
 			}
 			catch( C_csp_exception &csp_exception )
