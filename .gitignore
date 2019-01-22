@@ -306,7 +306,6 @@ __pycache__/
 *.mod
 
 # Specific SAM build ignores
-doc/html/*
 doc/latex/*
 
 SDKtool
