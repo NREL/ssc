@@ -306,6 +306,8 @@ __pycache__/
 *.mod
 
 # Specific SAM build ignores
+doc/latex/*
+
 SDKtool
 TCSConsole
 dltest
