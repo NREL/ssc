@@ -1264,7 +1264,7 @@ int C_comp_multi_stage::C_MEQ_eta_isen__h_out::operator()(double eta_isen /*-*/,
 	C_monotonic_eq_solver c_solver(c_stages);
 
 	// Set lowr bound
-	double N_rpm_lower = 0.0;
+	double N_rpm_lower = 1.E-4;
 	double N_rpm_upper = std::numeric_limits<double>::quiet_NaN();
 
 	// Generate guess values
@@ -1314,6 +1314,8 @@ int C_comp_multi_stage::C_MEQ_N_rpm__P_out::operator()(double N_rpm /*rpm*/, dou
 	double T_out = std::numeric_limits<double>::quiet_NaN();
 	double tip_ratio = std::numeric_limits<double>::quiet_NaN();
 
+	int comp_err_code = 0;
+
 	for (int i = 0; i < n_stages; i++)
 	{
 		if (i > 0)
@@ -1322,7 +1324,13 @@ int C_comp_multi_stage::C_MEQ_N_rpm__P_out::operator()(double N_rpm /*rpm*/, dou
 			P_in = P_out;	//[kPa]
 		}
 
-		mpc_multi_stage->mv_stages[i].design_given_shaft_speed(T_in, P_in, m_m_dot_basis, N_rpm, m_eta_isen, P_out, T_out, tip_ratio);
+		comp_err_code = mpc_multi_stage->mv_stages[i].design_given_shaft_speed(T_in, P_in, m_m_dot_basis, N_rpm, m_eta_isen, P_out, T_out, tip_ratio);
+
+		if (comp_err_code != 0)
+		{
+			*P_comp_out = std::numeric_limits<double>::quiet_NaN();
+			return -1;
+		}
 	}
 
 	*P_comp_out = P_out;	//[kPa]

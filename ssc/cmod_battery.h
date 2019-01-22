@@ -107,6 +107,9 @@ struct batt_variables
 	/*! Determines if the battery is allowed to charge from PV clipping using automated control*/
 	bool batt_dispatch_auto_can_clipcharge;
 
+	/*! Determines if the battery is allowed to charge from fuel cell using automated control*/
+	bool batt_dispatch_auto_can_fuelcellcharge;
+
 	/*! Vector of periods and if battery can charge from PV*/
 	std::vector<bool> batt_can_charge;
 

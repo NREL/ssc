@@ -338,7 +338,8 @@ public:
 		double dispatch_update_frequency_hours,
 		bool can_charge,
 		bool can_clipcharge,
-		bool can_grid_charge
+		bool can_grid_charge,
+		bool can_fuelcell_charge
 		);
 
 	virtual ~dispatch_automatic_t(){};
@@ -365,6 +366,9 @@ public:
 
 	/* Check constraints and re-dispatch if needed */
 	virtual bool check_constraints(double &I, size_t count);
+
+	/// Return the battery power target set by the controller
+	double power_batt_target();
 
 protected:
 
@@ -449,7 +453,8 @@ public:
 		double dispatch_update_frequency_hours,
 		bool can_charge,
 		bool can_clipcharge,
-		bool can_grid_charge
+		bool can_grid_charge,
+		bool can_fuelcell_charge
 		);
 
 	virtual ~dispatch_automatic_behind_the_meter_t(){};
@@ -474,9 +479,8 @@ public:
 	/*! Pass in the grid power target vector */
 	void set_target_power(std::vector<double> P_target);
 
-	/*! Target power outputs */
+	/*! Grid target power */
 	double power_grid_target();
-	double power_batt_target();
 
 	enum BTM_TARGET_MODES {TARGET_SINGLE_MONTHLY, TARGET_TIME_SERIES};
 
@@ -546,6 +550,7 @@ public:
 		bool can_charge,
 		bool can_clipcharge,
 		bool can_grid_charge,
+		bool can_fuelcell_charge,
 		double inverter_paco,
 		double battReplacementCostPerkWh,
 		int battCycleCostChoice,
@@ -572,8 +577,8 @@ public:
 		size_t hour_of_year,
 		size_t step);
 
-	/*! Compute the updated power to send to the battery over the next N hours */
-	void update_dispatch(size_t hour_of_year, size_t step, size_t idx);
+	/// Compute the updated power to send to the battery over the next N hours
+	void update_dispatch(size_t hour_of_year, size_t step, size_t lifetimeIndex);
 
 	/// Update cliploss data
 	void update_cliploss_data(double_vec P_cliploss);

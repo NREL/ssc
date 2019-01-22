@@ -3,7 +3,12 @@
 
 #include <gtest/gtest.h>
 #include "../shared/lib_battery_powerflow.h"
+
+#include <lib_ondinv.h>
 #include <lib_power_electronics.h>
+#include <lib_pvinv.h>
+#include <lib_sandia.h>
+#include <lib_shared_inverter.h>
 
 // forward declarations
 class sandia_inverter_t;
@@ -27,16 +32,26 @@ public:
 	
 	void TearDown()
 	{
-		if (m_batteryPowerFlow)
+		if (m_batteryPowerFlow) {
 			delete m_batteryPowerFlow;
-		if (m_sharedInverter)
+			m_batteryPowerFlow = nullptr;
+		}
+		if (m_sharedInverter) {
 			delete m_sharedInverter;
-		if (sandia)
+			m_sharedInverter = nullptr;
+		}
+		if (sandia) {
 			delete sandia;
-		if (partload)
+			sandia = nullptr;
+		}
+		if (partload) {
 			delete partload;
-		if (ond)
+			partload = nullptr;
+		}
+		if (ond) {
 			delete ond;
+			ond = nullptr;
+		}
 	}
 
 };

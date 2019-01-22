@@ -68,7 +68,7 @@ static var_info vtab_thermal_rate[] = {
 	{ SSC_INPUT, SSC_ARRAY, "fuelcell_power_thermal", "Fuel cell power generated", "kW-t", "", "Time Series", "*", "", "" },
 	 
 	// input from user as kW-t and output as kW-t
-	{ SSC_INOUT, SSC_ARRAY, "thermal_load", "thermal load (year 1)", "kW-t", "", "Time Series", "", "", "" },
+	{ SSC_INOUT, SSC_ARRAY, "thermal_load", "Thermal load (year 1)", "kW-t", "", "Time Series", "", "", "" },
 
 	{ SSC_INPUT, SSC_NUMBER, "inflation_rate", "Inflation rate", "%", "", "Financials", "*", "MIN=-99", "" },
 
@@ -86,7 +86,9 @@ static var_info vtab_thermal_rate[] = {
 
 	//  output as kWh - same as load (kW) for hourly simulations
 //	{ SSC_OUTPUT, SSC_ARRAY, "thermal_bill_load", "Thermal bill load (year 1)", "kWh-t", "", "Time Series", "*", "", "" },
-	{ SSC_OUTPUT, SSC_ARRAY, "annual_thermal_value", "Thermal value with system", "$", "", "Time Series", "*", "", "" },
+//	{ SSC_OUTPUT, SSC_ARRAY, "annual_thermal_value", "Thermal value", "$", "", "Annual", "*", "", "" },
+//	{ SSC_OUTPUT, SSC_ARRAY, "annual_thermal_revenue_with_system", "Thermal value with system", "$", "", "Annual", "*", "", "" },
+//	{ SSC_OUTPUT, SSC_ARRAY, "annual_thermal_revenue_without_system", "Thermal value without system", "$", "", "Annual", "*", "", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "thermal_revenue_with_system", "Thermal revenue with system", "$", "", "Time Series", "*", "", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "thermal_revenue_without_system", "Thermal revenue without system", "$", "", "Time Series", "*", "", "" },
 	{ SSC_OUTPUT, SSC_NUMBER, "thermal_load_year1", "Thermal load (year 1)", "$", "", "", "*", "", "" },
@@ -355,19 +357,20 @@ public:
 		ssc_number_t *annual_net_revenue = allocate("annual_thermal_value", nyears+1);
 		ssc_number_t *annual_thermal_load = allocate("annual_thermal_load", nyears+1);
 		ssc_number_t *thermal_net = allocate("scaled_annual_thermal_energy", nyears+1);
-		ssc_number_t *annual_revenue_w_sys = allocate("thermal_revenue_with_system", nyears+1);
-		ssc_number_t *annual_revenue_wo_sys = allocate("thermal_revenue_without_system", nyears+1);
+		ssc_number_t *annual_revenue_w_sys = allocate("annual_thermal_revenue_with_system", nyears+1);
+		ssc_number_t *annual_revenue_wo_sys = allocate("annual_thermal_revenue_without_system", nyears+1);
 		ssc_number_t *annual_thermal_cost_w_sys = allocate("thermal_cost_with_system", nyears+1);
 		ssc_number_t *annual_thermal_cost_wo_sys = allocate("thermal_cost_without_system", nyears+1);
 
+
 		// matrices
-		ssc_number_t *thermal_bill_w_sys_ym = allocate("thermal_bill_w_sys_ym", nyears + 1, 12);
-		ssc_number_t *thermal_bill_wo_sys_ym = allocate("thermal_bill_wo_sys_ym", nyears + 1, 12);
+		//ssc_number_t *thermal_bill_w_sys_ym = allocate("thermal_bill_w_sys_ym", nyears + 1, 12);
+		//ssc_number_t *thermal_bill_wo_sys_ym = allocate("thermal_bill_wo_sys_ym", nyears + 1, 12);
 
 
 		// annual sums
-		ssc_number_t *thermal_bill_w_sys = allocate("thermal_bill_w_sys", nyears + 1);
-		ssc_number_t *utility_bill_wo_sys = allocate("thermal_bill_wo_sys", nyears + 1);
+		//ssc_number_t *thermal_bill_w_sys = allocate("thermal_bill_w_sys", nyears + 1);
+		//ssc_number_t *utility_bill_wo_sys = allocate("thermal_bill_wo_sys", nyears + 1);
 
 
 		// lifetime hourly load
@@ -453,7 +456,7 @@ public:
 				for (int m=0;m<12;m++)
 				{
 					monthly_salespurchases[m] = 0;
-					for (int d=0;d<util::nday[m];d++)
+					for (size_t d=0;d<util::nday[m];d++)
 					{
 						for(int h=0;h<24;h++)
 						{
@@ -512,7 +515,7 @@ public:
 
 			}
 			
-			// determine net-revenue benefit due to solar for year 'i'
+			// determine net-revenue benefit due to thermal for year 'i'
 			
 			annual_net_revenue[i+1] = 0.0;
 			annual_thermal_load[i + 1] = 0.0;
@@ -523,7 +526,7 @@ public:
 			for (j = 0; j<m_num_rec_yearly; j++) 
 			{
 				thermal_net[i + 1] +=  e_sys_cy[j];
-				annual_net_revenue[i + 1] += revenue_w_sys[j] - revenue_wo_sys[j];
+//				annual_net_revenue[i + 1] += revenue_w_sys[j] - revenue_wo_sys[j];
 				annual_thermal_load[i + 1] += -e_load_cy[j];
 				annual_revenue_w_sys[i + 1] += revenue_w_sys[j];
 				annual_revenue_wo_sys[i + 1] += revenue_wo_sys[j];
@@ -531,7 +534,7 @@ public:
 
 			annual_thermal_cost_w_sys[i + 1] = -annual_revenue_w_sys[i+1];
 			annual_thermal_cost_wo_sys[i + 1] = -annual_revenue_wo_sys[i+1];
-
+			annual_net_revenue[i + 1] = annual_thermal_cost_wo_sys[i + 1] - annual_thermal_cost_w_sys[i + 1];
 
 		}
 
@@ -555,7 +558,7 @@ public:
 			monthly_generation[m] = 0;
 			monthly_thermal_to_grid[m] = 0;
 			monthly_salespurchases[m] = 0;
-			for (d=0;d<util::nday[m];d++)
+			for (d=0;d<(int)util::nday[m];d++)
 			{
 				for(h=0;h<24;h++)
 				{
@@ -599,7 +602,7 @@ public:
 
 
 		// calculate the monthly net energy and monthly hours
-		int m, d, h, s, period, tier;
+		int m, d, h, s;
 		size_t c = 0;
 		for (m = 0; m < (int)m_month.size(); m++)
 		{
@@ -607,11 +610,11 @@ public:
 			m_month[m].hours_per_month = 0;
 			m_month[m].thermal_peak = 0;
 			m_month[m].thermal_peak_hour = 0;
-			for (d = 0; d < util::nday[m]; d++)
+			for (d = 0; d < (int)util::nday[m]; d++)
 			{
 				for (h = 0; h < 24; h++)
 				{
-					for (s = 0; s < (int)steps_per_hour && c < (int)m_num_rec_yearly; s++)
+					for (s = 0; s < (int)steps_per_hour && (int)c < (int)m_num_rec_yearly; s++)
 					{
 						// net energy use per month
 						m_month[m].thermal_net += e_in[c]; // -load and +gen
@@ -635,12 +638,12 @@ public:
 		// process one timestep at a time
 		for (m = 0; m < 12; m++)
 		{
-			for (d = 0; d<util::nday[m]; d++)
+			for (d = 0; d<(int)util::nday[m]; d++)
 			{
 				//daily_net_energy = 0;
 				for (h = 0; h<24; h++)
 				{
-					for (s = 0; s < (int)steps_per_hour && c < (int)m_num_rec_yearly; s++)
+					for (s = 0; s < (int)steps_per_hour && (int)c < (int)m_num_rec_yearly; s++)
 					{
 
 						if (e_in[c] >= 0.0)

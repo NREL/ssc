@@ -6,6 +6,8 @@ CXXFLAGS = $(CFLAGS) -std=gnu++11
 
 OBJECTS = \
 	lsqfit.o \
+	lib_fuel_cell.o \
+	lib_fuel_cell_dispatch.o \
 	lib_battery.o \
 	lib_battery_dispatch.o \
 	lib_battery_powerflow.o \

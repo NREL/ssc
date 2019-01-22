@@ -420,7 +420,7 @@ public:
 			double cw_pump_work = as_double("cw_pump_work");
 			double pressure_ratio_1 = 1 / as_double("pressure_ratio_1");
 			double pressure_ratio_2 = 1 / as_double("pressure_ratio_2");
-			double pressure_ratio_3 = 1 / as_double("pressure_ratio_3");
+			//double pressure_ratio_3 = 1 / as_double("pressure_ratio_3");
 			int ncg_level = 2000;	//units: ppm
 			double ncg_flow = GF_flowrate * ncg_level / 1000000; //units: lb/h
 			double cwflow = as_double("cwflow");

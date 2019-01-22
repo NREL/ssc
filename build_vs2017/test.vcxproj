@@ -66,6 +66,8 @@
     <ClInclude Include="..\test\input_cases\windpower_cases.h" />
     <ClInclude Include="..\test\shared_test\lib_battery_dispatch_test.h" />
     <ClInclude Include="..\test\shared_test\lib_battery_powerflow_test.h" />
+    <ClInclude Include="..\test\shared_test\lib_battery_properties.h" />
+    <ClInclude Include="..\test\shared_test\lib_battery_test.h" />
     <ClInclude Include="..\test\shared_test\lib_fuel_cell_test.h" />
     <ClInclude Include="..\test\shared_test\lib_geothermal_test.h" />
     <ClInclude Include="..\test\shared_test\lib_irradproc_test.h" />

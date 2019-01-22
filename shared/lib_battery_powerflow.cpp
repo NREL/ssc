@@ -37,8 +37,8 @@ BatteryPower::BatteryPower(double dtHour) :
 	canPVCharge(false),
 	canClipCharge(false),
 	canGridCharge(false),
-	canFuelCellCharge(false),
 	canDischarge(false),
+	canFuelCellCharge(false),
 	stateOfChargeMax(1),
 	stateOfChargeMin(0),
 	tolerance(0.001){}

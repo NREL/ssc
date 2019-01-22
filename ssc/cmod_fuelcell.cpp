@@ -85,6 +85,7 @@ var_info vtab_fuelcell_input[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "fuelcell_replacement_option",       "Fuel cell replacement option",          "0/1/2",      "",                 "Fuel Cell",                  "",                        "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "fuelcell_replacement_percent",      "Fuel cell replace at percentage",       "",           "",                 "Fuel Cell",                  "",                        "",                              "" },
 	{ SSC_INPUT,        SSC_ARRAY,       "fuelcell_replacement_schedule",     "Fuel cell replace on schedule",         "",           "",                 "Fuel Cell",                  "",                        "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "fuelcell_shutdown_time",            "Fuel cell shutdown hours",              "hours",      "",                 "Fuel Cell",                  "",                        "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "fuelcell_startup_time",             "Fuel cell startup hours",               "hours",      "",                 "Fuel Cell",                  "",                        "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "fuelcell_type",                     "Fuel cell type",						   "0/1/2",      "",                 "Fuel Cell",                  "",                        "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "fuelcell_unit_max_power",           "Fuel cell max power per unit",          "kW",         "",                 "Fuel Cell",                  "",                        "",                              "" },
@@ -95,7 +96,8 @@ var_info vtab_fuelcell_input[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "fuelcell_dispatch_choice",          "Fuel cell dispatch choice",             "0/1/2",      "",                 "Fuel Cell",                  "",                        "",                              "" },
 	{ SSC_INPUT,        SSC_ARRAY,       "dispatch_manual_fuelcellcharge",    "Periods 1-6 charging allowed?",          "",          "",                 "Fuel Cell",                  "",                        "",                              "" },
 	{ SSC_INPUT,        SSC_ARRAY,       "dispatch_manual_fuelcelldischarge", "Periods 1-6 discharging allowed?",       "",          "",                 "Fuel Cell",                  "",                        "",                              "" },
-	{ SSC_INPUT,        SSC_ARRAY,       "dispatch_manual_percent_fc_discharge","Periods 1-6 discharging allowed?",     "",          "",                 "Fuel Cell",                  "",                        "",                              "" },
+	{ SSC_INPUT,        SSC_ARRAY,       "dispatch_manual_percent_fc_discharge","Periods 1-6 percent of max fuelcell output", "",    "",                 "Fuel Cell",                  "",                        "",                              "" },
+	{ SSC_INPUT,        SSC_ARRAY,       "dispatch_manual_units_fc_discharge","Periods 1-6 number of fuel cell units?", "",          "",                 "Fuel Cell",                  "",                        "",                              "" },
 	{ SSC_INPUT,        SSC_MATRIX,      "dispatch_manual_sched",             "Dispatch schedule for weekday",          "",          "",                 "Fuel Cell",                  "",                        "",                              "" },
 	{ SSC_INPUT,        SSC_MATRIX,      "dispatch_manual_sched_weekend",     "Dispatch schedule for weekend",          "",          "",                 "Fuel Cell",                  "",                        "",                              "" },
 
@@ -113,8 +115,9 @@ var_info vtab_fuelcell_output[] = {
 	{ SSC_OUTPUT,       SSC_ARRAY,       "fuelcell_to_load",                   "Electricity to load from fuel cell",    "kW",        "",                 "Fuel Cell",                  "",                        "",                              "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "fuelcell_to_grid",                   "Electricity to grid from fuel cell",    "kW",        "",                 "Fuel Cell",                  "",                        "",                              "" },
 
-	{ SSC_OUTPUT,       SSC_NUMBER,      "system_heat_rate",                     "Heat rate conversion factor (MMBTUs/MWhe)",  "MMBTUs/MWhe",   "",      "Fuel Cell",           "*",               "",                    "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,      "annual_fuel_usage",             "Annual Fuel Usage",                          "kWht",          "",      "Fuel Cell",           "*",               "",                    "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "fuelcell_replacement",                "Fuel cell replacements per year",      "number/year", "",              "Fuel Cell",           "",                           "",                              "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "system_heat_rate",                    "Heat rate conversion factor (MMBTUs/MWhe)",  "MMBTUs/MWhe",   "",      "Fuel Cell",           "*",               "",                    "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "annual_fuel_usage",                   "Annual Fuel Usage",                          "kWht",          "",      "Fuel Cell",           "*",               "",                    "" },
 
 
 var_info_invalid };
@@ -134,7 +137,8 @@ void cm_fuelcell::construct()
 	fcVars = std::move(tmp);
 
 	std::unique_ptr<FuelCell> tmp2(new FuelCell(fcVars->unitPowerMax_kW, fcVars->unitPowerMin_kW,
-		fcVars->startup_hours, fcVars->dynamicResponseUp_kWperHour, fcVars->dynamicResponseDown_kWperHour, 
+		fcVars->startup_hours, fcVars->shutdown_hours,
+		fcVars->dynamicResponseUp_kWperHour, fcVars->dynamicResponseDown_kWperHour, 
 		fcVars->degradation_kWperHour, fcVars->degradationRestart_kW, 
 		fcVars->replacementOption, fcVars->replacement_percent, fcVars->replacementSchedule,
 		fcVars->shutdownTable, fcVars->efficiencyTable,
@@ -144,8 +148,8 @@ void cm_fuelcell::construct()
 
 	std::unique_ptr<FuelCellDispatch> tmp3(new FuelCellDispatch(fuelCell.get(), fcVars->numberOfUnits,
 		fcVars->dispatchOption, fcVars->shutdownOption, fcVars->dt_hour, fcVars->fixed_percent, fcVars->dispatch_kW,
-		fcVars->canCharge, fcVars->canDischarge, fcVars->discharge_percentByPeriod, fcVars->scheduleWeekday,
-		fcVars->scheduleWeekend));
+		fcVars->canCharge, fcVars->canDischarge, fcVars->discharge_percentByPeriod, fcVars->discharge_unitsByPeriod, 
+		fcVars->scheduleWeekday,fcVars->scheduleWeekend));
 	fuelCellDispatch = std::move(tmp3);
 
 	allocateOutputs();
@@ -196,9 +200,13 @@ void cm_fuelcell::exec() throw (general_error)
 				idx_year++;
 			}
 		}
+		// tabulate replacements
+		size_t annual_index;
+		fcVars->numberOfYears > 1 ? annual_index = y + 1 : annual_index = 0;
+		p_fuelCellReplacements[annual_index] = (ssc_number_t)(fuelCell->getTotalReplacements());
+		fuelCell->resetReplacements();
 	}
 	 
-	
 	// capacity factor update
 	double capacity_factor_in, annual_energy_in, nameplate_in;
 	capacity_factor_in = annual_energy_in = nameplate_in = 0;
@@ -213,17 +221,14 @@ void cm_fuelcell::exec() throw (general_error)
 	assign("annual_energy", var_data(static_cast<ssc_number_t>(annual_energy)));
 	assign("percent_complete", var_data((ssc_number_t)percent));
 
-	// post calculations for financial models
-	ssc_number_t annual_fuel_usage = 0.0;
+	// post calculations for financial models, convert to kWh from MCF
+	ssc_number_t annual_fuel_usage_kwh = 0.0;
 	for (idx = 0; idx < fcVars->numberOfLifetimeRecords; idx++) {
-		annual_fuel_usage += p_fuelCellConsumption_MCf[idx];
+		annual_fuel_usage_kwh += (ssc_number_t) MCF_TO_KWH(p_fuelCellConsumption_MCf[idx], fcVars->lowerHeatingValue_BtuPerFt3);
 	}
-	// modify heat rate to use here (MMBTU/MWhe)
-	assign("system_heat_rate", var_data((ssc_number_t)3.4123)); 
-	annual_fuel_usage *= (ssc_number_t)0.29; // 1cu ft = 0.29 kWh
-	assign("annual_fuel_usage", annual_fuel_usage);
-
-
+	// Ratio of MMBtu to MWh to get cash flow calculation correct (fuel costs in $/MMBtu)
+	assign("system_heat_rate", var_data((ssc_number_t)BTU_PER_KWH / 1000));
+	assign("annual_fuel_usage", annual_fuel_usage_kwh);
 }
 
 void cm_fuelcell::allocateOutputs()
@@ -234,13 +239,16 @@ void cm_fuelcell::allocateOutputs()
 	p_fuelCellToGrid_kW = allocate("fuelcell_to_grid", fcVars->numberOfLifetimeRecords);
 	p_fuelCellToLoad_kW = allocate("fuelcell_to_load", fcVars->numberOfLifetimeRecords);
 
+	// annual outputs
+	size_t annual_size = fcVars->numberOfYears + 1;
+	if (fcVars->numberOfYears == 1) { annual_size = 1; };
+
+	p_fuelCellReplacements = allocate("fuelcell_replacement", annual_size);
+	p_fuelCellReplacements[0] = 0;
+
 	p_gen_kW = allocate("gen", fcVars->numberOfLifetimeRecords);
 
 }
 
 cm_fuelcell::~cm_fuelcell(){/* nothing to do */ }
-
-
-
-
 DEFINE_MODULE_ENTRY(fuelcell, "Fuel cell model", 1)

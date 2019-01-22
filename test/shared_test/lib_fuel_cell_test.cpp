@@ -1,5 +1,14 @@
 #include "lib_fuel_cell_test.h"
 
+TEST_F(FuelCellTest, UnitConversions)
+{
+	// Test macros defined for unit conversions
+	double lhv_btu_per_ft3 = 983;
+	EXPECT_NEAR(BTU_TO_MCF(1000000, lhv_btu_per_ft3), 1.017, 0.001);
+	EXPECT_NEAR(MCF_TO_BTU(1, lhv_btu_per_ft3), 983000, 0.01 );
+	EXPECT_NEAR(MCF_TO_KWH(1, lhv_btu_per_ft3), 288.088, 0.01);
+}
+
 TEST_F(FuelCellTest, EfficiencyCurve)
 {
 	fuelCell->calculateEfficiencyCurve(.16);
@@ -15,17 +24,12 @@ TEST_F(FuelCellTest, Initialize)
 
 TEST_F(FuelCellTest, Startup)
 {
-	// Run for startup_hours - 1
-	for (size_t h = 0; h < startup_hours - 1; h++) {
+	// Run for startup_hours 
+	for (size_t h = 0; h < startup_hours; h++) {
 		fuelCell->runSingleTimeStep(20);
 		EXPECT_EQ(fuelCell->getPower(), 0);
 		EXPECT_FALSE(fuelCell->isRunning());
 	}
-
-	// After one more hour it will be started, but won't deliver power during that time step
-	fuelCell->runSingleTimeStep(20);
-	EXPECT_EQ(fuelCell->getPower(), 0);
-	EXPECT_TRUE(fuelCell->isRunning());
 
 	// Next hour, it's fully started up
 	fuelCell->runSingleTimeStep(20);
@@ -50,6 +54,48 @@ TEST_F(FuelCellTest, Startup)
 	// Test ramp down limit
 	fuelCell->runSingleTimeStep(0);
 	EXPECT_NEAR(fuelCell->getPower(), fuelCell->getMaxPower() - dynamicResponseDown_kWperHour, 0.1);
+}
+
+/// Test case for when fuel cell is already started at beginning of year
+TEST_F(FuelCellTest, StartedUp)
+{
+	fuelCell->setStartupHours(0);
+	
+	// First hour is fully started up
+	fuelCell->runSingleTimeStep(dynamicResponseUp_kWperHour * 2);
+	EXPECT_EQ(fuelCell->getPower(), dynamicResponseUp_kWperHour * 2);
+}
+
+
+TEST_F(FuelCellTest, Shutdown)
+{
+	fuelCell->setShutdownOption(FuelCell::FC_SHUTDOWN_OPTION::SHUTDOWN);
+
+	// Run for startup_hours
+	for (size_t h = 0; h < (size_t)startup_hours; h++) {
+		fuelCell->runSingleTimeStep(20);
+	}
+
+	// Run for a few hours started up
+	for (size_t h = (size_t)startup_hours; h < (size_t)(startup_hours + 5); h++) {
+		fuelCell->runSingleTimeStep(20);
+		EXPECT_TRUE(fuelCell->isRunning());
+	}
+
+	// Initiate shutdown.  Should produce heat but no electricity for shutdown hours
+	for (size_t h = 0; h < (size_t)shutdown_hours; h++) {
+		fuelCell->runSingleTimeStep(0);
+		EXPECT_EQ(fuelCell->getPower(), 0);
+		EXPECT_GT(fuelCell->getPowerThermal(), 0);
+		EXPECT_FALSE(fuelCell->isRunning());
+	}
+
+	// After one more hour it will be fully shut down
+	fuelCell->runSingleTimeStep(0);
+	EXPECT_EQ(fuelCell->getPower(), 0);
+	EXPECT_EQ(fuelCell->getPowerThermal(), 0);
+	EXPECT_FALSE(fuelCell->isRunning());
+
 }
 
 TEST_F(FuelCellTest, AvailableFuel) {
@@ -119,12 +165,13 @@ TEST_F(FuelCellTest, ScheduleRestarts) {
 	for (size_t h = 0; h < (size_t)4; h++) {
 		fuelCell->runSingleTimeStep(20);
 	}
-	// Next 4 hours should be shutdown
-	for (size_t h = 0; h < (size_t)4; h++) {
+	// Next 4 hours should be shutdown by schedule, but takes 8 hours to shutdown
+	for (size_t h = 0; h <= (size_t)shutdown_hours; h++) {
 		fuelCell->runSingleTimeStep(20);
 		EXPECT_EQ(fuelCell->getPower(), 0);
 	}
-	EXPECT_EQ(fuelCell->getMaxPower(), fuelCell->getMaxPowerOriginal() - 1);
+	// Ensure restart degradation applied
+	EXPECT_EQ(fuelCell->getMaxPower(), fuelCell->getMaxPowerOriginal() - 1.0);
 
 	// Run for startup hours
 	for (size_t h = 0; h < (size_t)1; h++) {
@@ -138,9 +185,43 @@ TEST_F(FuelCellTest, ScheduleRestarts) {
 	}
 }
 
+/// Test subhourly dispatch
+TEST_F(FuelCellTest, DispatchFixedSubhourly) 
+{
+	size_t sh = 1;
+	size_t stepsPerHour = (size_t)(1 / dt_subHourly);
+
+	// Set to SOFC properties
+	fuelCellSubHourly->setSystemProperties(200, 60, 1, 24, 500, 500);
+	fuelCellDispatchSubhourly->setDispatchOption(FuelCellDispatch::FC_DISPATCH_OPTION::FIXED);
+	fuelCellDispatchSubhourly->setFixedDischargePercentage(95);
+
+	// Allow fuel cell to startup
+	size_t year_idx, h;
+	year_idx = h = 0;
+	for (size_t hour = 0; hour < sh; hour++) {
+		for (size_t s = 0; s < stepsPerHour; s++) {
+			fuelCellDispatchSubhourly->runSingleTimeStep(h, year_idx);
+			year_idx++;
+			h++;
+		}
+		EXPECT_EQ(fuelCellSubHourly->getPower(), 0);
+	}
+
+	// Dynamic response limits (500 / 4 = 125)
+	fuelCellDispatchSubhourly->runSingleTimeStep(h++, year_idx++);
+	EXPECT_EQ(fuelCellSubHourly->getPower(), 125);
+
+	// Next step should reach fixed output (200 * 0.95 = 190)
+	fuelCellDispatchSubhourly->runSingleTimeStep(h++, year_idx++);
+	EXPECT_EQ(fuelCellSubHourly->getPower(), 190);
+
+
+}
+
 
 // Also check multiple fuel cells
-TEST_F(FuelCellTest, DispatchFixed) {
+TEST_F(FuelCellTest, DispatchFixedMultiple) {
 
 	size_t sh = (size_t)startup_hours;
 
@@ -221,6 +302,29 @@ TEST_F(FuelCellTest, DispatchManual) {
 		year_idx++;
 	}
 }
+
+/// Test dispatching different units per period
+TEST_F(FuelCellTest, DispatchManualUnits) {
+
+	size_t sh = (size_t)startup_hours;
+	discharge_units[0] = 3;
+
+	fuelCellDispatchMultiple->setDispatchOption(FuelCellDispatch::FC_DISPATCH_OPTION::MANUAL);
+	fuelCellDispatchMultiple->setManualDispatchUnits(discharge_units);
+	
+	// Allow fuel cell to startup
+	for (size_t h = 0; h < sh; h++) {
+		fuelCellDispatchMultiple->runSingleTimeStep(h, h, 0, 20);
+	}
+	EXPECT_EQ(fuelCellDispatchMultiple->getPower(), 0);
+	
+
+	// Dispatch fuel cells at 40% of max output (40 kW per unit, limited by dynamic response, and min turndown)
+	fuelCellDispatchMultiple->runSingleTimeStep(sh, sh);
+	fuelCellDispatchMultiple->runSingleTimeStep(sh, sh);
+	EXPECT_EQ(fuelCellDispatchMultiple->getPower(), 3 * 40);
+}
+
 
 TEST_F(FuelCellTest, DispatchInput) {
 

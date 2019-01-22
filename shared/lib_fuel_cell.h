@@ -5,6 +5,22 @@
 #include "lib_util.h"
 
 const double BTU_PER_KWH = 3412.14163;
+const double MMBTU_PER_BTU = 1000000;
+const double BTU_PER_MMBTU = 1.0 / MMBTU_PER_BTU;
+const double FT3_PER_MCF = 1000;
+
+#ifndef BTU_TO_MCF
+#define BTU_TO_MCF(BTU, LHV_BTU_PER_FT3) (BTU / (LHV_BTU_PER_FT3 * FT3_PER_MCF))
+#endif
+
+#ifndef MCF_TO_BTU
+#define MCF_TO_BTU(MCF, LHV_BTU_PER_FT3) (MCF * LHV_BTU_PER_FT3 * FT3_PER_MCF)
+#endif
+
+#ifndef MCF_TO_KWH
+#define MCF_TO_KWH(MCF, LHV_BTU_PER_FT3) (MCF_TO_BTU(MCF, LHV_BTU_PER_FT3) / BTU_PER_KWH)
+#endif
+
 
 /**
 * \class FuelCell
@@ -20,7 +36,8 @@ public:
 	FuelCell();
 
 	/// Construct FuelCell with arguments
-	FuelCell(double unitPowerMax_kW, double unitPowerMin_kW, double startup_hours, 
+	FuelCell(double unitPowerMax_kW, double unitPowerMin_kW, 
+		double startup_hours, double shutdown_hours,
 		double dynamicResponseUp_kWperMin, double dynamicResponseDown_kWperMin,
 		double degradation_kWperHour, double degradationRestart_kW, 
 		size_t replacement_option, double replacement_percent, std::vector<size_t> replacementSchedule,
@@ -38,8 +55,17 @@ public:
 	/// Run for single time step
 	void runSingleTimeStep(double power_kW);
 
+	/// Return true if starting up but not fully running
+	bool isStarting();
+
 	/// Return true if operating
 	bool isRunning();
+
+	/// Return true if shutting down
+	bool isShuttingDown();
+
+	/// Return true if totally shut down
+	bool isShutDown();
 
 	/// Get original max power kW
 	double getMaxPowerOriginal();
@@ -68,6 +94,13 @@ public:
 	/// Return the number of replacements
 	int getTotalReplacements();
 
+	/// Reset the number of replacements
+	void resetReplacements();
+
+	/// Update system properties (for testing)
+	void setSystemProperties(double nameplate_kW, double min_kW, double startup_hours, double shutdown_hours,
+		double dynamicResponseUp_kWperHour, double dynamicResponseDown_kWperHour);
+
 	/// Update replacement options (for testing)
 	void setReplacementOption(size_t replacementOption);
 	void setReplacementCapacity(double replacement_percent);
@@ -77,6 +110,9 @@ public:
 
 	/// Update degradation (for testing)
 	void setDegradationkWPerHour(double degradation_kWPerHour);
+
+	/// Set shutdown option
+	void setShutdownOption(int option);
 
 	/// Update restart degradation
 	void setScheduledShutdowns(util::matrix_t<size_t> shutdowns);
@@ -110,8 +146,8 @@ protected:
 	/// interpolate map
 	double interpolateMap(double key, std::map<double, double>);
 
-	/// Check shutdown
-	bool checkShutdown();
+	/// Check status of fuel cell
+	void checkStatus(double power_kW);
 
 	/// Check Min Turndown
 	void checkMinTurndown();
@@ -122,8 +158,8 @@ protected:
 	/// Check Available Fuel
 	void checkAvailableFuel();
 
-	/// Get fuel cell power given the requested power signal
-	double getPowerResponse(double power);
+	/// Check fuel cell power response conforms to dynamic limits
+	void checkPowerResponse();
 
 	/// Return percentage based on requested power
 	double getPercentLoad();
@@ -136,6 +172,7 @@ protected:
 	double m_unitPowerMax_kW;
 	double m_unitPowerMin_kW;
 	double m_startup_hours;
+	double m_shutdown_hours;
 
 	double m_dynamicResponseUp_kWperHour;
 	double m_dynamicResponseDown_kWperHour;
@@ -154,8 +191,16 @@ protected:
 	int m_shutdownOption;
 
 	// calculated
+	bool m_startingUp;
 	bool m_startedUp;
+
+	bool m_shuttingDown;
+	bool m_shutDown;
+
 	double m_hoursSinceStart;
+	double m_hoursSinceStop;
+	double m_hoursRampUp;
+
 	double m_powerMax_kW;  // Maximum power after degradation
 	double m_powerThermal_kW;
 	double m_power_kW;
@@ -172,4 +217,4 @@ protected:
 
 };
 
-#endif __LIB_FUEL_CELL__
+#endif 

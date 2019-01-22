@@ -478,87 +478,87 @@ public:
 			//Assigning 2nd Law efficiency:
 			//double eff_secondlaw = var_data(static_cast<ssc_number_t>(geo_outputs.eff_secondlaw));
 			double eff_secondlaw = geo_outputs.eff_secondlaw;
-			assign("eff_secondlaw", eff_secondlaw);
+			assign("eff_secondlaw", (ssc_number_t)eff_secondlaw);
 
 			//Assigning Rejected Total Heat from Flash Plant:
 			double qRejectTotal = geo_outputs.qRejectedTotal;	//total heat rejected 
-			assign("qRejectTotal", qRejectTotal);
+			assign("qRejectTotal", (ssc_number_t)qRejectTotal);
 
 			//Assign qCondenser (Flash Plant Type):
 			double qCondenser = geo_outputs.condenser_q;
-			assign("qCondenser", qCondenser);
+			assign("qCondenser", (ssc_number_t)qCondenser);
 
 			//Assign HP & LP Flash Pressures: 
 			double hp_flash_pressure = geo_outputs.md_PressureHPFlashPSI;
-			assign("hp_flash_pressure", hp_flash_pressure);
+			assign("hp_flash_pressure", (ssc_number_t)hp_flash_pressure);
 			double lp_flash_pressure = geo_outputs.md_PressureLPFlashPSI;
-			assign("lp_flash_pressure", lp_flash_pressure);
+			assign("lp_flash_pressure", (ssc_number_t)lp_flash_pressure);
 
 			//Assign all 3 stages of vacuum pump powers:
 			double v_stage_1 = geo_outputs.v_stage_1;
-			assign("v_stage_1", v_stage_1);
+			assign("v_stage_1", (ssc_number_t)v_stage_1);
 			double v_stage_2 = geo_outputs.v_stage_2;
-			assign("v_stage_2", v_stage_2);
+			assign("v_stage_2", (ssc_number_t)v_stage_2);
 			double v_stage_3 = geo_outputs.v_stage_3;
-			assign("v_stage_3", v_stage_3);
+			assign("v_stage_3", (ssc_number_t)v_stage_3);
 
 			
 			//DELETE	
-			double test = geo_outputs.test;
+			//double test = geo_outputs.test;
 
 
 			//Assign total GF Flow Rate: 
 			double GF_flowrate = geo_outputs.GF_flowrate;
-			assign("GF_flowrate", GF_flowrate);
+			assign("GF_flowrate", (ssc_number_t)GF_flowrate);
 
 			//Assign NCG Condenser Heat Rejecting Stages:
 			double qRejectByStage_1 = geo_outputs.qRejectByStage_1;
-			assign("qRejectByStage_1", qRejectByStage_1);
+			assign("qRejectByStage_1", (ssc_number_t)qRejectByStage_1);
 			double qRejectByStage_2 = geo_outputs.qRejectByStage_2;
-			assign("qRejectByStage_2", qRejectByStage_2);
+			assign("qRejectByStage_2", (ssc_number_t)qRejectByStage_2);
 			double qRejectByStage_3 = geo_outputs.qRejectByStage_3;
-			assign("qRejectByStage_3", qRejectByStage_3);
+			assign("qRejectByStage_3", (ssc_number_t)qRejectByStage_3);
 
 			//Assign NCG Condensate Pump Work & CW Pump Work Value for Calculating NCG Pump Cost: 
 			double ncg_condensate_pump = geo_outputs.ncg_condensate_pump;
-			assign("ncg_condensate_pump", ncg_condensate_pump);
+			assign("ncg_condensate_pump", (ssc_number_t)ncg_condensate_pump);
 			double cw_pump_work = geo_outputs.cw_pump_work;
-			assign("cw_pump_work", cw_pump_work);
+			assign("cw_pump_work", (ssc_number_t)cw_pump_work);
 
 			//Assign steam suction ratio value for NCG Ejector Cost Calculation
 			double pressure_ratio_1 = geo_outputs.pressure_ratio_1;
-			assign("pressure_ratio_1", pressure_ratio_1);
+			assign("pressure_ratio_1", (ssc_number_t)pressure_ratio_1);
 			double pressure_ratio_2 = geo_outputs.pressure_ratio_2;
-			assign("pressure_ratio_2", pressure_ratio_2);
+			assign("pressure_ratio_2", (ssc_number_t)pressure_ratio_2);
 			double pressure_ratio_3 = geo_outputs.pressure_ratio_3;
-			assign("pressure_ratio_3", pressure_ratio_3);
+			assign("pressure_ratio_3", (ssc_number_t)pressure_ratio_3);
 
 			//Assigning Value of Condensate Pump for Pump Cost Calculation:
 			double condensate_pump_power = geo_outputs.condensate_pump_power;
-			assign("condensate_pump_power", condensate_pump_power);
+			assign("condensate_pump_power", (ssc_number_t)condensate_pump_power);
 
 			//Assign CW Flow and Head for Pump Cost Caclulation:
 			double cwflow = geo_outputs.cwflow;
-			assign("cwflow", cwflow);
+			assign("cwflow", (ssc_number_t)cwflow);
 			double cw_pump_head = geo_outputs.cw_pump_head;
-			assign("cw_pump_head", cw_pump_head);
+			assign("cw_pump_head", (ssc_number_t)cw_pump_head);
 
 			//Assign Specific Volume and Mass Fraction (x) for Flash Vessel Calculations:
 			double spec_vol = geo_outputs.spec_vol;	//HP Specific Volume
-			assign("spec_vol", spec_vol);
+			assign("spec_vol", (ssc_number_t)spec_vol);
 			double x_hp = geo_outputs.getX_hp;
-			assign("x_hp", x_hp);	
+			assign("x_hp", (ssc_number_t)x_hp);
 			double spec_vol_lp = geo_outputs.spec_vol_lp;	//LP Specific Volume
-			assign("spec_vol_lp", spec_vol_lp);
+			assign("spec_vol_lp", (ssc_number_t)spec_vol_lp);
 			double x_lp = geo_outputs.getX_lp;
-			assign("x_lp", x_lp);
+			assign("x_lp", (ssc_number_t)x_lp);
 
 
 			
 
 			//Assign Flash Count: 
 			double flash_count = geo_outputs.flash_count;
-			assign("flash_count", flash_count);
+			assign("flash_count", (ssc_number_t)flash_count);
 
 			// Summary calculations
 			ssc_number_t total_energy = 0;

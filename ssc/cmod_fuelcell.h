@@ -66,6 +66,7 @@ public:
 		systemUseLifetimeOutput(cm.as_boolean("system_use_lifetime_output")),
 		unitPowerMax_kW(cm.as_double("fuelcell_unit_max_power")),
 		unitPowerMin_kW(cm.as_double("fuelcell_unit_min_power")),
+		shutdown_hours(cm.as_double("fuelcell_shutdown_time")),
 		startup_hours(cm.as_double("fuelcell_startup_time")),
 		dynamicResponseUp_kWperHour(cm.as_double("fuelcell_dynamic_response_up")),
 		dynamicResponseDown_kWperHour(cm.as_double("fuelcell_dynamic_response_down")),
@@ -82,11 +83,12 @@ public:
 		shutdownOption(cm.as_integer("fuelcell_operation_options")),
 		numberOfUnits(cm.as_integer("fuelcell_number_of_units")),
 		dispatchOption(cm.as_integer("fuelcell_dispatch_choice")),
-		dispatch_kW(cm.as_vector_double("fuelcell_dispatch")),
 		fixed_percent(cm.as_double("fuelcell_fixed_pct")),
+		dispatch_kW(cm.as_vector_double("fuelcell_dispatch")),
 		canCharge(cm.as_vector_bool("dispatch_manual_fuelcellcharge")),
 		canDischarge(cm.as_vector_bool("dispatch_manual_fuelcelldischarge")),
 		discharge_percent(cm.as_vector_double("dispatch_manual_percent_fc_discharge")),
+		discharge_units(cm.as_vector_unsigned_long("dispatch_manual_units_fc_discharge")),
 		scheduleWeekday(cm.as_matrix_unsigned_long("dispatch_manual_sched")),
 		scheduleWeekend(cm.as_matrix_unsigned_long("dispatch_manual_sched_weekend"))
 	{
@@ -117,18 +119,20 @@ public:
 		// Timesteps
 		numberOfLifetimeRecords = numberOfRecordsPerYear * numberOfYears;
 		stepsPerHour = numberOfRecordsPerYear / (size_t)8760;
-		dt_hour = (double)(1 / stepsPerHour);
+		dt_hour = (double)(1.0 / (double)stepsPerHour);
 
 		// Ensure load matches generation size
 		std::vector<double> load = electricLoad_kW;
 		electricLoad_kW.clear();
 		electricLoad_kW.reserve(numberOfLifetimeRecords);
 
+		// Front of meter
 		if (load.size() == 0) {
 			for (size_t k = 0; k < numberOfLifetimeRecords; k++) {
 				electricLoad_kW.push_back(0.0);
 			}
 		}
+		// Behind the meter, load = gen size
 		else if (load.size() == numberOfRecordsPerYear) {
 			for (size_t y = 0; y < numberOfYears; y++) {
 				for (size_t i = 0; i < numberOfRecordsPerYear; i++) {
@@ -136,18 +140,29 @@ public:
 				}
 			}
 		}
+		// Behind the meter, hourly load assumed constant 
+		else if (load.size() == 8760) {
+			for (size_t y = 0; y < numberOfYears; y++) {
+				for (size_t h = 0; h < 8760; h++) {
+					double loadHour = load[h];
+					for (size_t s = 0; s < stepsPerHour; s++) {
+						electricLoad_kW.push_back(loadHour);
+					}
+				}
+			}
+		}
 		else {
-			throw compute_module::exec_error("fuelcell", "Electric load time steps must equal generation time step");
+			throw compute_module::exec_error("fuelcell", "Electric load time steps must equal generation time step or 8760");
 		}
 
 		size_t count = 0;
 		for (size_t p = 0; p < canDischarge.size(); p++) {
 			if (canDischarge[p]) {
 				discharge_percentByPeriod[p] = discharge_percent[count];
+				discharge_unitsByPeriod[p] = discharge_units[count];
 				count++;
 			}
 		}
-
 	}
 
 	// simulation inputs
@@ -167,6 +182,7 @@ public:
 	double dt_hour;
 	double unitPowerMax_kW;
 	double unitPowerMin_kW;
+	double shutdown_hours;
 	double startup_hours;
 	double dynamicResponseUp_kWperHour;
 	double dynamicResponseDown_kWperHour;
@@ -190,7 +206,9 @@ public:
 	std::vector<bool> canCharge;
 	std::vector<bool> canDischarge;
 	std::vector<double> discharge_percent;
+	std::vector<size_t> discharge_units;
 	std::map<size_t, double> discharge_percentByPeriod;
+	std::map<size_t, size_t> discharge_unitsByPeriod;
 	util::matrix_t<size_t> scheduleWeekday;
 	util::matrix_t<size_t> scheduleWeekend;
 };
@@ -231,6 +249,7 @@ protected:
 	ssc_number_t * p_fuelCellConsumption_MCf;
 	ssc_number_t * p_fuelCellToGrid_kW;
 	ssc_number_t * p_fuelCellToLoad_kW;
+	ssc_number_t * p_fuelCellReplacements;
 };
 
 #endif

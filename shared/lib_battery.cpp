@@ -1407,17 +1407,59 @@ double thermal_t::capacity_percent()
 /*
 Define Losses
 */
-losses_t::losses_t(lifetime_t * lifetime, thermal_t * thermal, capacity_t* capacity, int loss_choice, double_vec charge_loss, double_vec discharge_loss, double_vec idle_loss, double_vec losses)
+losses_t::losses_t(double dtHour, lifetime_t * lifetime, thermal_t * thermal, capacity_t* capacity, int loss_choice, double_vec charge_loss, double_vec discharge_loss, double_vec idle_loss, double_vec losses)
 {
+	_dtHour = dtHour;
 	_lifetime = lifetime;
 	_thermal = thermal;
 	_capacity = capacity;
-	_charge_loss = charge_loss;
-	_discharge_loss = discharge_loss;
-	_idle_loss = idle_loss;
-	_full_loss = losses;
 	_loss_mode = loss_choice;
 	_nCycle = 0;
+
+	// User can input vectors of size 1 or size 12
+	if (loss_choice == losses_t::MONTHLY)
+	{
+		if (charge_loss.size() == 1) {
+			for (size_t m = 0; m < 12; m++) {
+				_charge_loss.push_back(charge_loss[0]);
+			}
+		}
+		else {
+			_charge_loss = charge_loss;
+		}
+		if (discharge_loss.size() == 1) {
+			
+			for (size_t m = 0; m < 12; m++) {
+				_discharge_loss.push_back(discharge_loss[0]);
+			}
+		}
+		else {
+			_discharge_loss = discharge_loss;
+		}
+		if (idle_loss.size() == 1) {
+			for (size_t m = 0; m < 12; m++) {
+				_idle_loss.push_back(idle_loss[0]);
+			}
+		}
+		else {
+			_idle_loss = idle_loss;
+		}
+		for (size_t i = 0; i < (size_t)(8760 / dtHour); i++) {
+			_full_loss.push_back(0);
+		}
+	}
+	// User can input vectors of size 1 or size nrec (first year)
+	else {
+		if (losses.size() == 1) {
+			for (size_t i = 0; i < (size_t)(8760 / dtHour); i++) {
+				_full_loss.push_back(losses[0]);
+			}
+		}
+		else {
+			_full_loss = losses;
+		}
+
+	}
 }
 losses_t * losses_t::clone(){ return new losses_t(*this); }
 void losses_t::copy(losses_t * losses)
@@ -1437,24 +1479,31 @@ void losses_t::copy(losses_t * losses)
 }
 
 void losses_t::replace_battery(){ _nCycle = 0; }
-void losses_t::run_losses(double dt_hour, size_t idx)
+double losses_t::getLoss(size_t indexFirstYear) { return _full_loss[indexFirstYear]; }
+void losses_t::run_losses(size_t lifetimeIndex)
 {	
 	_capacity->updateCapacityForLifetime(_lifetime->capacity_percent());
 
-	size_t stepsPerHour = (size_t)(1 / dt_hour);
-	size_t stepsPerYear = util::hours_per_year * stepsPerHour;
-	size_t index = idx % stepsPerYear;
+	size_t stepsPerHour = (size_t)(1 / _dtHour);
+	size_t stepsPerYear = (size_t)(8760 * stepsPerHour);
+	size_t year = 0;
+	if (lifetimeIndex >= stepsPerYear) {
+		year = (size_t)(std::floor(lifetimeIndex / stepsPerYear));
+	}
+	size_t indexYearOne = lifetimeIndex - (year * stepsPerYear);
+	size_t hourOfYear = (size_t)std::floor(indexYearOne/stepsPerHour);
+	size_t monthIndex = util::month_of((double)(hourOfYear)) - 1;
 
 	// update system losses depending on user input
-	if (_loss_mode == losses_t::MONTHLY)
-	{
+	if (_loss_mode == losses_t::MONTHLY) {
 		if (_capacity->charge_operation() == capacity_t::CHARGE)
-			_full_loss[index] = _charge_loss[index];
+			_full_loss[indexYearOne] = _charge_loss[monthIndex];
 		if (_capacity->charge_operation() == capacity_t::DISCHARGE)
-			_full_loss[index] = _discharge_loss[index];
+			_full_loss[indexYearOne] = _discharge_loss[monthIndex];
 		if (_capacity->charge_operation() == capacity_t::NO_CHARGE)
-			_full_loss[index] = _idle_loss[index];
+			_full_loss[indexYearOne] = _idle_loss[monthIndex];
 	}
+
 }
 /* 
 Define Battery 
@@ -1604,7 +1653,7 @@ void battery_t::runLossesModel(size_t idx)
 {
 	if (idx > _last_idx || idx == 0)
 	{
-		_losses->run_losses(_dt_hour, idx);
+		_losses->run_losses(idx);
 		_last_idx = idx;
 	}
 }

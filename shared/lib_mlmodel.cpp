@@ -219,11 +219,11 @@ bool mlmodel_module_t::operator() (pvinput_t &input, double T_C, double opvoltag
 	// Single diode model acc. to [1]
 	if (S >= 1)
 	{
-		double n, a, I_L, I_0, R_sh, I_sc;
+		double n=0.0, a=0.0, I_L=0.0, I_0=0.0, R_sh=0.0, I_sc=0.0;
 		double V_oc = V_oc_ref; // V_oc_ref as initial guess
-		double P, V, I, eff;
+		double P=0.0, V=0.0, I=0.0, eff=0.0;
 		double T_cell = T_C;
-		int iterations;
+		int iterations=0;
 
 		if (T_mode == T_MODE_FAIMAN) {
 			iterations = 1; // 2; // two iterations, 1st with guessed eff, 2nd with calculated efficiency
@@ -279,7 +279,7 @@ bool mlmodel_module_t::operator() (pvinput_t &input, double T_C, double opvoltag
 
 // mockup cell temperature model
 // to be used in cases when Tcell is calculated within the module model
-bool mock_celltemp_t::operator() (pvinput_t &input, pvmodule_t &module, double, double &Tcell)
+bool mock_celltemp_t::operator() (pvinput_t &, pvmodule_t &, double, double &Tcell)
 {
 	Tcell = -999;
 	return true;

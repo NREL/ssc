@@ -666,7 +666,7 @@ PVSystem_IO::PVSystem_IO(compute_module* cm, std::string cmName, Simulation_IO *
 		for (size_t n_subarray = 0; n_subarray < Subarrays.size(); n_subarray++) //jmf update this so that all subarray markers are consistent, get rid of "enable" check
 			if (Subarrays[n_subarray]->enable)
 				if (Subarrays[n_subarray]->mpptInput == (int)mppt)
-					mppt_n.push_back(n_subarray);
+					mppt_n.push_back((int)n_subarray);
 		if (mppt_n.size() < 1)
 			throw compute_module::exec_error(cmName, "At least one subarray must be assigned to each inverter MPPT input.");
 		mpptMapping.push_back(mppt_n); //add the subarrays on this input to the total mppt mapping vector
@@ -792,7 +792,11 @@ void PVSystem_IO::AllocateOutputs(compute_module* cm)
 }
 void PVSystem_IO::AssignOutputs(compute_module* cm)
 {
-	cm->assign("ac_loss", var_data((ssc_number_t)(acLossPercent + transmissionDerate)));
+
+
+
+	cm->assign("ac_loss", var_data((ssc_number_t)(acLossPercent + transmissionLossPercent)));
+
 }
 
 Module_IO::Module_IO(compute_module* cm, std::string cmName, double dcLoss)
@@ -1265,8 +1269,13 @@ void Module_IO::AssignOutputs(compute_module* cm)
 
 Inverter_IO::Inverter_IO(compute_module *cm, std::string cmName)
 {
+<<<<<<< HEAD
 	inverterType = cm->as_integer("inverter_model");
 	nMpptInputs = cm->as_integer("inv_num_mppt");
+=======
+	inverterType =  cm->as_integer("inverter_model");
+	nMpptInputs = cm->as_unsigned_long("inv_num_mppt");
+>>>>>>> develop
 
 	if (inverterType == 4)
 	{
