@@ -2,16 +2,17 @@
 #define lib_geothermal_test_h_
 #include <gtest/gtest.h>
 #include "lib_geothermal.h"
-#include "lib_weatherfile.h"
-#include "lib_physics.h"
-#include "lib_powerblock.h"
+//#include "lib_weatherfile.h"
+//#include "lib_physics.h"
+//#include "lib_powerblock.h"
 
 
 class CGeothermalAnalyzerBinary : public ::testing::Test
 {	
 protected:
 
-	//Inputs used for calculating values of struct members. These are the current defaults in SAM 2018.11.11:
+	//Inputs used for calculating values of all 4 struct members that are formal parameters for the 
+	//CGeothermalAnalyzer class constructor:
 	int	well_flow_rate;
 	double num_wells_getem;
 	int nameplate;
@@ -35,7 +36,7 @@ protected:
 	int	resource_type;
 	int resource_depth;
 	int resource_temp;
-	int design_temp = 0;
+	int design_temp;
 	int rock_thermal_conductivity;
 	int rock_specific_heat;
 	int rock_density;
@@ -52,59 +53,61 @@ protected:
 	int fracture_angle;
 	int geothermal_analysis_period;
 	int resource_potential;
-	char file_name[300];
+	char file_name[100];
 	int tou[8760];
 			  
-	//Initializing structs to defualt values in SAM 2018.11.11:
+	//Initializing all 4 structs to defualt values in SAM 2018.11.11:
 		SPowerBlockParameters SPBP;
 		SPowerBlockInputs PBInputs;
 		SGeothermal_Inputs geoBinary_inputs;
 		SGeothermal_Outputs geoBinary_outputs;
 	
-	//Constructing CGeothermalAnalyzer class for testing:
+	//Initializing CGeothermalAnalyzer class for testing:
 	CGeothermalAnalyzer* binaryDefault; 
 	
 public:
 	void SetUp() {
-		well_flow_rate = 110,
-		num_wells_getem = 4.31975,
-		nameplate = 15000,
-		analysis_type = 0,
-		conversion_type = BINARY,
-		conversion_subtype = 0,
-		plant_efficiency_input = 80,
-		decline_type = 0,
-		temp_decline_rate = 0.3,
-		temp_decline_max = 30,
-		wet_bulb_temp = 15,
-		ambient_pressure = 14.7,
-		pump_efficiency = 60,
-		delta_pressure_equip = 25,
-		excess_pressure_pump = 50.76,
-		well_diameter = 10,
-		casing_size = 9.625,
-		inj_well_diam = 10,
-		specify_pump_work = 0,
-		specified_pump_work_amount = 0,
-		resource_type = 0,
-		resource_depth = 6000,
-		resource_temp = 200,
-		design_temp = 0,
-		rock_thermal_conductivity = 259200,
-		rock_specific_heat = 950,
-		rock_density = 2600,
-		reservoir_pressure_change = 0.35,
-		reservoir_width = 500,
-		reservoir_pressure_change_type = 0,
-		reservoir_height = 100,
-		reservoir_permeability = 0.05,
-		inj_prod_well_distance = 1500,
-		subsurface_water_loss = 2,
-		fracture_aperature = 0.0004,
-		num_fractures = 6,
-		fracture_width = 175,
-		fracture_angle = 15,
-		geothermal_analysis_period = 30,
+		
+	//Current defaults in SAM 2018.11.11:
+		well_flow_rate = 110;
+		num_wells_getem = 4.31975;
+		nameplate = 15000;
+		analysis_type = 0;
+		conversion_type = BINARY;
+		conversion_subtype = 0;
+		plant_efficiency_input = 80;
+		decline_type = 0;
+		temp_decline_rate = 0.3;
+		temp_decline_max = 30;
+		wet_bulb_temp = 15;
+		ambient_pressure = 14.7;
+		pump_efficiency = 60;
+		delta_pressure_equip = 25;
+		excess_pressure_pump = 50.76;
+		well_diameter = 10;
+		casing_size = 9.625;
+		inj_well_diam = 10;
+		specify_pump_work = 0;
+		specified_pump_work_amount = 0;
+		resource_type = 0;
+		resource_depth = 6000;
+		resource_temp = 200;
+		design_temp = 0;
+		rock_thermal_conductivity = 259200;
+		rock_specific_heat = 950;
+		rock_density = 2600;
+		reservoir_pressure_change = 0.35;
+		reservoir_width = 500;
+		reservoir_pressure_change_type = 0;
+		reservoir_height = 100;
+		reservoir_permeability = 0.05;
+		inj_prod_well_distance = 1500;
+		subsurface_water_loss = 2;
+		fracture_aperature = 0.0004;
+		num_fractures = 6;
+		fracture_width = 175;
+		fracture_angle = 15;
+		geothermal_analysis_period = 30;
 		resource_potential = 210;
 		//file_name = '%s/test/input_cases/general_data/daggett_ca_34.865371_-116.783023_psmv3_60_tmy.csv';
 		
@@ -250,29 +253,30 @@ public:
 		//====================================================================================================================================================================
 		//SGeothermal_Outputs geoBinary_outputs;
 		
-		//geoBinary_outputs.maf_ReplacementsByYear = new float[geoBinary_inputs.mi_ProjectLifeYears];
+		geoBinary_outputs.maf_ReplacementsByYear = new float[geoBinary_inputs.mi_ProjectLifeYears];
 
 		//ssc_number_t *annual_replacements = allocate( "annual_replacements", geoBinary_inputs.mi_ProjectLifeYears);
-		/*
+		
 		// allocate lifetime monthly arrays (one element per month, over lifetime of project)
-		geoBinary_outputs.maf_monthly_resource_temp = 12 * geoBinary_inputs.mi_ProjectLifeYears;
-		geoBinary_outputs.maf_monthly_power = 12 * geoBinary_inputs.mi_ProjectLifeYears;
-		geoBinary_outputs.maf_monthly_energy = 12 * geoBinary_inputs.mi_ProjectLifeYears;
+		geoBinary_outputs.maf_monthly_resource_temp = new float[12 * geoBinary_inputs.mi_ProjectLifeYears];
+		geoBinary_outputs.maf_monthly_power = new float[12 * geoBinary_inputs.mi_ProjectLifeYears];
+		geoBinary_outputs.maf_monthly_energy = new float[12 * geoBinary_inputs.mi_ProjectLifeYears];
 
 		// allocate lifetime timestep arrays (one element per timestep, over lifetime of project)
 		// if this is a monthly analysis, these are redundant with monthly arrays that track same outputs
+		
 		geoBinary_inputs.mi_MakeupCalculationsPerYear = (geoBinary_inputs.mi_ModelChoice == 2) ? 8760 : 12;
 		geoBinary_inputs.mi_TotalMakeupCalculations = geoBinary_inputs.mi_ProjectLifeYears * geoBinary_inputs.mi_MakeupCalculationsPerYear;
 
 		geoBinary_outputs.maf_timestep_resource_temp = new float((float)geoBinary_inputs.mi_TotalMakeupCalculations);
 		
-		geoBinary_outputs.maf_timestep_power = geoBinary_inputs.mi_TotalMakeupCalculations;
-		geoBinary_outputs.maf_timestep_test_values = geoBinary_inputs.mi_TotalMakeupCalculations;
+		geoBinary_outputs.maf_timestep_power = new float[geoBinary_inputs.mi_TotalMakeupCalculations];
+		geoBinary_outputs.maf_timestep_test_values = new float[geoBinary_inputs.mi_TotalMakeupCalculations];
 
-		geoBinary_outputs.maf_timestep_pressure = geoBinary_inputs.mi_TotalMakeupCalculations;
-		geoBinary_outputs.maf_timestep_dry_bulb = geoBinary_inputs.mi_TotalMakeupCalculations;
-		geoBinary_outputs.maf_timestep_wet_bulb = geoBinary_inputs.mi_TotalMakeupCalculations;
-		*/
+		geoBinary_outputs.maf_timestep_pressure = new float[geoBinary_inputs.mi_TotalMakeupCalculations];
+		geoBinary_outputs.maf_timestep_dry_bulb = new float[geoBinary_inputs.mi_TotalMakeupCalculations];
+		geoBinary_outputs.maf_timestep_wet_bulb = new float[geoBinary_inputs.mi_TotalMakeupCalculations];
+		
 		geoBinary_outputs.maf_hourly_power = new float[geoBinary_inputs.mi_ProjectLifeYears * 8760];
 		
 		//====================================================================================================================================================================
@@ -286,12 +290,62 @@ public:
 			delete binaryDefault;
 			binaryDefault = nullptr;
 		}
+		
 		if (geoBinary_outputs.maf_hourly_power != nullptr) {
 			delete geoBinary_outputs.maf_hourly_power;
 			geoBinary_outputs.maf_hourly_power = nullptr;
 		}
 		
-
+		if (geoBinary_outputs.maf_timestep_wet_bulb != nullptr) {
+			delete geoBinary_outputs.maf_timestep_wet_bulb;
+			geoBinary_outputs.maf_timestep_wet_bulb = nullptr;
+		}
+		
+		if (geoBinary_outputs.maf_timestep_dry_bulb != nullptr) {
+			delete geoBinary_outputs.maf_timestep_dry_bulb;
+			geoBinary_outputs.maf_timestep_dry_bulb = nullptr;
+		}
+		
+		if (geoBinary_outputs.maf_timestep_pressure != nullptr) {
+			delete geoBinary_outputs.maf_timestep_pressure;
+			geoBinary_outputs.maf_timestep_pressure = nullptr;
+		}
+		
+		if (geoBinary_outputs.maf_timestep_test_values != nullptr) {
+			delete geoBinary_outputs.maf_timestep_test_values;
+			geoBinary_outputs.maf_timestep_test_values = nullptr;
+		}
+		
+		if (geoBinary_outputs.maf_timestep_power != nullptr) {
+			delete geoBinary_outputs.maf_timestep_power;
+			geoBinary_outputs.maf_timestep_power = nullptr;
+		}
+		
+		if (geoBinary_outputs.maf_timestep_resource_temp != nullptr) {
+			delete geoBinary_outputs.maf_timestep_resource_temp;
+			geoBinary_outputs.maf_timestep_resource_temp = nullptr;
+		}
+		
+		if (geoBinary_outputs.maf_monthly_energy != nullptr) {
+			delete geoBinary_outputs.maf_monthly_energy;
+			geoBinary_outputs.maf_monthly_energy = nullptr;
+		}
+		
+		if (geoBinary_outputs.maf_monthly_power != nullptr) {
+			delete geoBinary_outputs.maf_monthly_power;
+			geoBinary_outputs.maf_monthly_power = nullptr;
+		}
+		
+		if (geoBinary_outputs.maf_monthly_resource_temp != nullptr) {
+			delete geoBinary_outputs.maf_monthly_resource_temp;
+			geoBinary_outputs.maf_monthly_resource_temp = nullptr;
+		}
+		
+		if (geoBinary_outputs.maf_ReplacementsByYear != nullptr) {
+			delete geoBinary_outputs.maf_ReplacementsByYear;
+			geoBinary_outputs.maf_ReplacementsByYear = nullptr;
+		}
+			   		 
 	}
 
 };
