@@ -114,15 +114,15 @@ Public Member Functions</h2></td></tr>
 Class contains methods and data required to automate dispatch for a behind-the-meter battery targeting peak-shaving applications.  <a href="#abde9cbebc6ae0bb96e79fad89c5f5022">More...</a><br /></td></tr>
 <tr class="separator:abde9cbebc6ae0bb96e79fad89c5f5022"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a697b6ec34620453e42d0f6f8c2fd2f69"><td class="memItemLeft" align="right" valign="top"><a id="a697b6ec34620453e42d0f6f8c2fd2f69"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>dispatch_automatic_behind_the_meter_t</b> (const dispatch_t &amp;<a class="el" href="classdispatch__automatic__behind__the__meter__t.html#ab694519b4d38e3d08f3b062377832761">dispatch</a>)</td></tr>
+&#160;</td><td class="memItemRight" valign="bottom"><b>dispatch_automatic_behind_the_meter_t</b> (const dispatch_t &amp;<a class="el" href="classdispatch__automatic__behind__the__meter__t.html#a9644b7699986f2bb8a5b23f667af340b">dispatch</a>)</td></tr>
 <tr class="separator:a697b6ec34620453e42d0f6f8c2fd2f69"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:acba799b6edc9ac1f9abc08e3a436e9d6"><td class="memItemLeft" align="right" valign="top"><a id="acba799b6edc9ac1f9abc08e3a436e9d6"></a>
-virtual void&#160;</td><td class="memItemRight" valign="bottom"><b>copy</b> (const dispatch_t *<a class="el" href="classdispatch__automatic__behind__the__meter__t.html#ab694519b4d38e3d08f3b062377832761">dispatch</a>)</td></tr>
+virtual void&#160;</td><td class="memItemRight" valign="bottom"><b>copy</b> (const dispatch_t *<a class="el" href="classdispatch__automatic__behind__the__meter__t.html#a9644b7699986f2bb8a5b23f667af340b">dispatch</a>)</td></tr>
 <tr class="separator:acba799b6edc9ac1f9abc08e3a436e9d6"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab694519b4d38e3d08f3b062377832761"><td class="memItemLeft" align="right" valign="top"><a id="ab694519b4d38e3d08f3b062377832761"></a>
-virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdispatch__automatic__behind__the__meter__t.html#ab694519b4d38e3d08f3b062377832761">dispatch</a> (size_t year, size_t hour_of_year, size_t step)</td></tr>
-<tr class="memdesc:ab694519b4d38e3d08f3b062377832761"><td class="mdescLeft">&#160;</td><td class="mdescRight">Public API to run the battery dispatch model for the current timestep, given the system power, and optionally the electric load, amount of system clipping, or specified battery power. <br /></td></tr>
-<tr class="separator:ab694519b4d38e3d08f3b062377832761"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9644b7699986f2bb8a5b23f667af340b"><td class="memItemLeft" align="right" valign="top"><a id="a9644b7699986f2bb8a5b23f667af340b"></a>
+virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdispatch__automatic__behind__the__meter__t.html#a9644b7699986f2bb8a5b23f667af340b">dispatch</a> (size_t year, size_t hour_of_year, size_t step, double P_system, double V_system, double P_load_ac=0, double P_system_clipped=0)</td></tr>
+<tr class="memdesc:a9644b7699986f2bb8a5b23f667af340b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Public API to run the battery dispatch model for the current timestep, given the system power, and optionally the electric load, amount of system clipping, or specified battery power. <br /></td></tr>
+<tr class="separator:a9644b7699986f2bb8a5b23f667af340b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab7cdc32143f69ba931521cd626945311"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdispatch__automatic__behind__the__meter__t.html#ab7cdc32143f69ba931521cd626945311">update_dispatch</a> (size_t hour_of_year, size_t step, size_t idx)</td></tr>
 <tr class="separator:ab7cdc32143f69ba931521cd626945311"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a40095c7563d8556c3ae5ac6f7d1a5011"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdispatch__automatic__behind__the__meter__t.html#a40095c7563d8556c3ae5ac6f7d1a5011">update_load_data</a> (std::vector&lt; double &gt; P_load_dc)</td></tr>
@@ -140,7 +140,7 @@ double&#160;</td><td class="memItemRight" valign="bottom"><b>power_batt_target</
 Class contains methods and data common to all automated dispatch strategies in SAM.  <a href="classdispatch__automatic__t.html#acf8cc73062a0c38f55c74dcc4e12a7d1">More...</a><br /></td></tr>
 <tr class="separator:acf8cc73062a0c38f55c74dcc4e12a7d1 inherit pub_methods_classdispatch__automatic__t"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1b56a6d6c4bf100f15afc006da29945f inherit pub_methods_classdispatch__automatic__t"><td class="memItemLeft" align="right" valign="top"><a id="a1b56a6d6c4bf100f15afc006da29945f"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>dispatch_automatic_t</b> (const dispatch_t &amp;<a class="el" href="classdispatch__automatic__t.html#afb5699bb0eb1a32940ff723674ea2b98">dispatch</a>)</td></tr>
+&#160;</td><td class="memItemRight" valign="bottom"><b>dispatch_automatic_t</b> (const dispatch_t &amp;<a class="el" href="classdispatch__automatic__t.html#a5def0552f976d63e42a5c950a8a3db66">dispatch</a>)</td></tr>
 <tr class="separator:a1b56a6d6c4bf100f15afc006da29945f inherit pub_methods_classdispatch__automatic__t"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a3ee254ed526a22b5ddba43affc1793c9 inherit pub_methods_classdispatch__automatic__t"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdispatch__automatic__t.html#a3ee254ed526a22b5ddba43affc1793c9">update_pv_data</a> (std::vector&lt; double &gt; P_pv_dc)</td></tr>
 <tr class="separator:a3ee254ed526a22b5ddba43affc1793c9 inherit pub_methods_classdispatch__automatic__t"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -455,6 +455,9 @@ Class contains methods and data required to automate dispatch for a behind-the-m
 
 <div class="memitem">
 <div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
       <table class="memname">
         <tr>
           <td class="memname">double dispatch_automatic_behind_the_meter_t::power_grid_target </td>
@@ -463,6 +466,11 @@ Class contains methods and data required to automate dispatch for a behind-the-m
           <td></td>
         </tr>
       </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
 </div><div class="memdoc">
 <p>Target power outputs </p>
 

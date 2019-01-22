@@ -4,7 +4,7 @@ var classdispatch__automatic__t =
     [ "~dispatch_automatic_t", "classdispatch__automatic__t.html#a50470bb18a6de761c6ab4f96c632d388", null ],
     [ "dispatch_automatic_t", "classdispatch__automatic__t.html#a1b56a6d6c4bf100f15afc006da29945f", null ],
     [ "copy", "classdispatch__automatic__t.html#ace00f2bdd317cef8680dfd17b6ec682f", null ],
-    [ "dispatch", "classdispatch__automatic__t.html#afb5699bb0eb1a32940ff723674ea2b98", null ],
+    [ "dispatch", "classdispatch__automatic__t.html#a5def0552f976d63e42a5c950a8a3db66", null ],
     [ "update_dispatch", "classdispatch__automatic__t.html#a07935c116cf27da4140065d239e0888c", null ],
     [ "update_pv_data", "classdispatch__automatic__t.html#a3ee254ed526a22b5ddba43affc1793c9", null ],
     [ "set_custom_dispatch", "classdispatch__automatic__t.html#a96044c46fc8051e541d82348e1d0bdfe", null ],

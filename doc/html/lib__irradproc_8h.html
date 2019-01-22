@@ -131,9 +131,9 @@ Functions</h2></td></tr>
 <tr class="memitem:a909a702005581b9f00c51d60bc8ec7f8"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="lib__irradproc_8h.html#a909a702005581b9f00c51d60bc8ec7f8">hdkr</a> (double hextra, double dn, double df, double alb, double inc, double tilt, double zen, double poa[3], double diffc[3])</td></tr>
 <tr class="memdesc:a909a702005581b9f00c51d60bc8ec7f8"><td class="mdescLeft">&#160;</td><td class="mdescRight">HDKR (Hay, Davies, Klutcher, Reindl) model for diffuse irradiance on a tilted surface, see also <a class="el" href="lib__irradproc_8h.html#ad4ff1ad1028f7985f139bd9061a7fd5a" title="Perez function for calculating values of diffuse + direct solar radiation + ground reflected radiatio...">perez()</a>, <a class="el" href="lib__irradproc_8h.html#a755afa315982d15b753b7faf427978de" title="Isotropic sky model for diffuse irradiance on a tilted surface, see also perez(), hdkr()...">isotropic()</a>.  <a href="#a909a702005581b9f00c51d60bc8ec7f8">More...</a><br /></td></tr>
 <tr class="separator:a909a702005581b9f00c51d60bc8ec7f8"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a6ecff2da222570663dcfe0f0a265e461"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="lib__irradproc_8h.html#a6ecff2da222570663dcfe0f0a265e461">poaDecomp</a> (double wfPOA, double angle[], double sun[], double alb, poaDecompReq *pA, double &amp;dn, double &amp;df, double &amp;gh, double poa[3], double diffc[3])</td></tr>
-<tr class="memdesc:a6ecff2da222570663dcfe0f0a265e461"><td class="mdescLeft">&#160;</td><td class="mdescRight">poaDecomp is a function to decompose input plane-of-array irradiance into direct normal, diffuse horizontal, and global horizontal.  <a href="#a6ecff2da222570663dcfe0f0a265e461">More...</a><br /></td></tr>
-<tr class="separator:a6ecff2da222570663dcfe0f0a265e461"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0a0a1f73f11218297f20ccb8bfdf22bb"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="lib__irradproc_8h.html#a0a0a1f73f11218297f20ccb8bfdf22bb">poaDecomp</a> (double wfPOA, double angle[], double sun[], double alb, poaDecompReq *pA, double &amp;dn, double &amp;df, double &amp;gh, double poa[3], double diffc[3])</td></tr>
+<tr class="memdesc:a0a0a1f73f11218297f20ccb8bfdf22bb"><td class="mdescLeft">&#160;</td><td class="mdescRight">poaDecomp is a function to decompose input plane-of-array irradiance into direct normal, diffuse horizontal, and global horizontal.  <a href="#a0a0a1f73f11218297f20ccb8bfdf22bb">More...</a><br /></td></tr>
+<tr class="separator:a0a0a1f73f11218297f20ccb8bfdf22bb"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a929ed81f4422d77117a1d0b0b8d64071"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="lib__irradproc_8h.html#a929ed81f4422d77117a1d0b0b8d64071">ModifiedDISC</a> (const double g[3], const double z[3], double td, double alt, int doy, double &amp;dn)</td></tr>
 <tr class="memdesc:a929ed81f4422d77117a1d0b0b8d64071"><td class="mdescLeft">&#160;</td><td class="mdescRight">ModifiedDISC calculates direct normal (beam) radiation from global horizontal radiation.  <a href="#a929ed81f4422d77117a1d0b0b8d64071">More...</a><br /></td></tr>
 <tr class="separator:a929ed81f4422d77117a1d0b0b8d64071"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -615,14 +615,14 @@ Functions</h2></td></tr>
 
 </div>
 </div>
-<a id="a6ecff2da222570663dcfe0f0a265e461"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a6ecff2da222570663dcfe0f0a265e461">&#9670;&nbsp;</a></span>poaDecomp()</h2>
+<a id="a0a0a1f73f11218297f20ccb8bfdf22bb"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a0a0a1f73f11218297f20ccb8bfdf22bb">&#9670;&nbsp;</a></span>poaDecomp()</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">void poaDecomp </td>
+          <td class="memname">int poaDecomp </td>
           <td>(</td>
           <td class="paramtype">double&#160;</td>
           <td class="paramname"><em>wfPOA</em>, </td>

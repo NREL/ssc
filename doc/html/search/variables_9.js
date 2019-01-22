@@ -1,6 +1,7 @@
 var searchData=
 [
   ['m_5fbattcyclecostchoice',['m_battCycleCostChoice',['../classdispatch__automatic__front__of__meter__t.html#a17fba8af66b0861e0b92eba45a607c6d',1,'dispatch_automatic_front_of_meter_t']]],
+  ['m_5fbatterymetrics',['m_batteryMetrics',['../class_charge_controller.html#ada1ba6af5ef4816f04fc185e81fe6395',1,'ChargeController']]],
   ['m_5fbatterypower',['m_batteryPower',['../class_charge_controller.html#acf28109275824dda7c12899d65142eae',1,'ChargeController']]],
   ['m_5fbattreplacementcostperkwh',['m_battReplacementCostPerKWH',['../classdispatch__automatic__front__of__meter__t.html#a62bd2ade3facc6bfe7386e5c5b8ae620',1,'dispatch_automatic_front_of_meter_t']]],
   ['m_5fdispatch',['m_dispatch',['../class_charge_controller.html#ad1dd738abab28b2dee35569462bddc49',1,'ChargeController']]],

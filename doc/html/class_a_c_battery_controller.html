@@ -110,10 +110,10 @@ Public Member Functions</h2></td></tr>
 &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_a_c_battery_controller.html#afa139f9b4b7e678f7c9be62a41d9afa3">~ACBatteryController</a> ()</td></tr>
 <tr class="memdesc:afa139f9b4b7e678f7c9be62a41d9afa3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Destroy the <a class="el" href="class_a_c_battery_controller.html" title="A ACBatteryController is derived from the ChargeController, and contains information specific to a ba...">ACBatteryController</a>. <br /></td></tr>
 <tr class="separator:afa139f9b4b7e678f7c9be62a41d9afa3"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a7a563b3fd600ae6a81071451310c4444"><td class="memItemLeft" align="right" valign="top"><a id="a7a563b3fd600ae6a81071451310c4444"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_a_c_battery_controller.html#a7a563b3fd600ae6a81071451310c4444">run</a> (size_t year, size_t hour_of_year, size_t step_of_hour, size_t index)</td></tr>
-<tr class="memdesc:a7a563b3fd600ae6a81071451310c4444"><td class="mdescLeft">&#160;</td><td class="mdescRight">Runs the battery dispatch model with the current PV and Load information. <br /></td></tr>
-<tr class="separator:a7a563b3fd600ae6a81071451310c4444"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a96cd768867375f945bcf2dd824b710bb"><td class="memItemLeft" align="right" valign="top"><a id="a96cd768867375f945bcf2dd824b710bb"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_a_c_battery_controller.html#a96cd768867375f945bcf2dd824b710bb">run</a> (size_t year, size_t hour_of_year, size_t step_of_hour, size_t index, double P_pv, double V_pv=0, double P_load=0, double P_clipped=0)</td></tr>
+<tr class="memdesc:a96cd768867375f945bcf2dd824b710bb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Runs the battery dispatch model with the current PV and Load information. <br /></td></tr>
+<tr class="separator:a96cd768867375f945bcf2dd824b710bb"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pub_methods_class_charge_controller"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_class_charge_controller')"><img src="closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="class_charge_controller.html">ChargeController</a></td></tr>
 <tr class="memitem:a4b1405d18f1b7e56de824f8cc4fe0a63 inherit pub_methods_class_charge_controller"><td class="memItemLeft" align="right" valign="top"><a id="a4b1405d18f1b7e56de824f8cc4fe0a63"></a>
 &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_charge_controller.html#a4b1405d18f1b7e56de824f8cc4fe0a63">ChargeController</a> (dispatch_t *dispatch, <a class="el" href="classbattery__metrics__t.html">battery_metrics_t</a> *battery_metrics)</td></tr>
@@ -141,7 +141,8 @@ std::unique_ptr&lt; dispatch_t &gt;&#160;</td><td class="memItemRight" valign="b
 <tr class="memdesc:acf28109275824dda7c12899d65142eae inherit pro_attribs_class_charge_controller"><td class="mdescLeft">&#160;</td><td class="mdescRight">An internally managed copy of the initial dispatch of the timestep. <br /></td></tr>
 <tr class="separator:acf28109275824dda7c12899d65142eae inherit pro_attribs_class_charge_controller"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ada1ba6af5ef4816f04fc185e81fe6395 inherit pro_attribs_class_charge_controller"><td class="memItemLeft" align="right" valign="top"><a id="ada1ba6af5ef4816f04fc185e81fe6395"></a>
-<a class="el" href="classbattery__metrics__t.html">battery_metrics_t</a> *&#160;</td><td class="memItemRight" valign="bottom"><b>m_batteryMetrics</b></td></tr>
+<a class="el" href="classbattery__metrics__t.html">battery_metrics_t</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_charge_controller.html#ada1ba6af5ef4816f04fc185e81fe6395">m_batteryMetrics</a></td></tr>
+<tr class="memdesc:ada1ba6af5ef4816f04fc185e81fe6395 inherit pro_attribs_class_charge_controller"><td class="mdescLeft">&#160;</td><td class="mdescRight">A structure containing all of the components in the battery power flow calculations. <br /></td></tr>
 <tr class="separator:ada1ba6af5ef4816f04fc185e81fe6395 inherit pro_attribs_class_charge_controller"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad1dd738abab28b2dee35569462bddc49 inherit pro_attribs_class_charge_controller"><td class="memItemLeft" align="right" valign="top"><a id="ad1dd738abab28b2dee35569462bddc49"></a>
 dispatch_t *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_charge_controller.html#ad1dd738abab28b2dee35569462bddc49">m_dispatch</a></td></tr>

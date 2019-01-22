@@ -8,7 +8,7 @@ var classdispatch__automatic__behind__the__meter__t =
     [ "~dispatch_automatic_behind_the_meter_t", "classdispatch__automatic__behind__the__meter__t.html#a1aa7736bd36c5683bfe532e64a80ce4b", null ],
     [ "dispatch_automatic_behind_the_meter_t", "classdispatch__automatic__behind__the__meter__t.html#a697b6ec34620453e42d0f6f8c2fd2f69", null ],
     [ "copy", "classdispatch__automatic__behind__the__meter__t.html#acba799b6edc9ac1f9abc08e3a436e9d6", null ],
-    [ "dispatch", "classdispatch__automatic__behind__the__meter__t.html#ab694519b4d38e3d08f3b062377832761", null ],
+    [ "dispatch", "classdispatch__automatic__behind__the__meter__t.html#a9644b7699986f2bb8a5b23f667af340b", null ],
     [ "update_dispatch", "classdispatch__automatic__behind__the__meter__t.html#ab7cdc32143f69ba931521cd626945311", null ],
     [ "update_load_data", "classdispatch__automatic__behind__the__meter__t.html#a40095c7563d8556c3ae5ac6f7d1a5011", null ],
     [ "set_target_power", "classdispatch__automatic__behind__the__meter__t.html#a159ad7350b19eef058378411053a2b8c", null ],

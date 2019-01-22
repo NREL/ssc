@@ -11,7 +11,6 @@ var annotated_dup =
     [ "dispatch_automatic_t", "classdispatch__automatic__t.html", "classdispatch__automatic__t" ],
     [ "eddyViscosityWakeModel", "classeddy_viscosity_wake_model.html", "classeddy_viscosity_wake_model" ],
     [ "flag", "classflag.html", "classflag" ],
-    [ "FuelCell", "class_fuel_cell.html", "class_fuel_cell" ],
     [ "grid_point", "classgrid__point.html", "classgrid__point" ],
     [ "Inverter_IO", "struct_inverter___i_o.html", "struct_inverter___i_o" ],
     [ "irrad", "classirrad.html", "classirrad" ],

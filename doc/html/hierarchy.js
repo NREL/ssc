@@ -12,7 +12,6 @@ var hierarchy =
       [ "dispatch_automatic_front_of_meter_t", "classdispatch__automatic__front__of__meter__t.html", null ]
     ] ],
     [ "flag", "classflag.html", null ],
-    [ "FuelCell", "class_fuel_cell.html", null ],
     [ "grid_point", "classgrid__point.html", null ],
     [ "Inverter_IO", "struct_inverter___i_o.html", null ],
     [ "irrad", "classirrad.html", null ],

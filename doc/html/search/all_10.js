@@ -1,5 +1,6 @@
 var searchData=
 [
+  ['ssc_20_28sam_20simulation_20core_29',['SSC (SAM Simulation Core)',['../index.html',1,'']]],
   ['sandiainverter',['sandiaInverter',['../struct_inverter___i_o.html#a63b7c4017b8803c97f94e38dd16fd635',1,'Inverter_IO']]],
   ['self_5fshading',['self_shading',['../struct_subarray___i_o.html#a1b828c7f9f5eaeb7dd18b8392dbed5bd',1,'Subarray_IO']]],
   ['selfshadingfillfactor',['selfShadingFillFactor',['../struct_module___i_o.html#a6825db1439190d37f657e94cf2daff70',1,'Module_IO']]],
@@ -21,7 +22,7 @@ var searchData=
   ['setupnoctmodel',['setupNOCTModel',['../struct_module___i_o.html#a16e04b065e296b5d279d26e4b7595258',1,'Module_IO']]],
   ['setupsharedinverter',['setupSharedInverter',['../struct_inverter___i_o.html#ac9cc439a00c8b6b30fb2663b3d5cb6b9',1,'Inverter_IO']]],
   ['shadefraction1x',['shadeFraction1x',['../lib__irradproc_8h.html#a65c4d48921094b163ab028ba1e259d3e',1,'lib_irradproc.cpp']]],
-  ['sharedinverter',['SharedInverter',['../class_shared_inverter.html',1,'SharedInverter'],['../struct_battery_power.html#a12ca9e0bf4c803ee752e183a2ca0a08e',1,'BatteryPower::sharedInverter()'],['../class_shared_inverter.html#a98e9779d05f0f392aa7e1c86df616b14',1,'SharedInverter::SharedInverter()']]],
+  ['sharedinverter',['SharedInverter',['../class_shared_inverter.html',1,'SharedInverter'],['../class_shared_inverter.html#a98e9779d05f0f392aa7e1c86df616b14',1,'SharedInverter::SharedInverter()'],['../struct_battery_power.html#a12ca9e0bf4c803ee752e183a2ca0a08e',1,'BatteryPower::sharedInverter()']]],
   ['simpleefficiencyforcenopoa',['simpleEfficiencyForceNoPOA',['../struct_module___i_o.html#a79cef2f50f7159ddb2b92bdd263c0dcc',1,'Module_IO']]],
   ['simplewakemodel',['simpleWakeModel',['../classsimple_wake_model.html',1,'']]],
   ['singlepointefficiencyactodc',['singlePointEfficiencyACToDC',['../struct_battery_power.html#a85039a308de8a755055c0cb731636660',1,'BatteryPower']]],

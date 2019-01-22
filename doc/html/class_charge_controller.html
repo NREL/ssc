@@ -120,10 +120,10 @@ Public Member Functions</h2></td></tr>
 virtual&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_charge_controller.html#aa68d2eb5e9f0a1b9d25fa9d94f3e7fc5">~ChargeController</a> ()</td></tr>
 <tr class="memdesc:aa68d2eb5e9f0a1b9d25fa9d94f3e7fc5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Virtual destructor for <a class="el" href="class_charge_controller.html" title="A ChargeController is a mostly abstract base class which defines the structure of battery charge cont...">ChargeController</a>. <br /></td></tr>
 <tr class="separator:aa68d2eb5e9f0a1b9d25fa9d94f3e7fc5"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae426944ef98acd3649bf8f250cdbd739"><td class="memItemLeft" align="right" valign="top"><a id="ae426944ef98acd3649bf8f250cdbd739"></a>
-virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_charge_controller.html#ae426944ef98acd3649bf8f250cdbd739">run</a> (size_t year, size_t hour_of_year, size_t step_of_hour, size_t index)=0</td></tr>
-<tr class="memdesc:ae426944ef98acd3649bf8f250cdbd739"><td class="mdescLeft">&#160;</td><td class="mdescRight">Virtual method to run the charge controller given the current timestep, PV production, and load. <br /></td></tr>
-<tr class="separator:ae426944ef98acd3649bf8f250cdbd739"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ace46a41c43146481a49388175cbda043"><td class="memItemLeft" align="right" valign="top"><a id="ace46a41c43146481a49388175cbda043"></a>
+virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_charge_controller.html#ace46a41c43146481a49388175cbda043">run</a> (size_t year, size_t hour_of_year, size_t step_of_hour, size_t index, double P_pv, double V_pv, double P_load, double P_clipped)=0</td></tr>
+<tr class="memdesc:ace46a41c43146481a49388175cbda043"><td class="mdescLeft">&#160;</td><td class="mdescRight">Virtual method to run the charge controller given the current timestep, PV production, and load. <br /></td></tr>
+<tr class="separator:ace46a41c43146481a49388175cbda043"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pro-attribs"></a>
 Protected Attributes</h2></td></tr>
@@ -135,7 +135,8 @@ std::unique_ptr&lt; dispatch_t &gt;&#160;</td><td class="memItemRight" valign="b
 <tr class="memdesc:acf28109275824dda7c12899d65142eae"><td class="mdescLeft">&#160;</td><td class="mdescRight">An internally managed copy of the initial dispatch of the timestep. <br /></td></tr>
 <tr class="separator:acf28109275824dda7c12899d65142eae"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ada1ba6af5ef4816f04fc185e81fe6395"><td class="memItemLeft" align="right" valign="top"><a id="ada1ba6af5ef4816f04fc185e81fe6395"></a>
-<a class="el" href="classbattery__metrics__t.html">battery_metrics_t</a> *&#160;</td><td class="memItemRight" valign="bottom"><b>m_batteryMetrics</b></td></tr>
+<a class="el" href="classbattery__metrics__t.html">battery_metrics_t</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_charge_controller.html#ada1ba6af5ef4816f04fc185e81fe6395">m_batteryMetrics</a></td></tr>
+<tr class="memdesc:ada1ba6af5ef4816f04fc185e81fe6395"><td class="mdescLeft">&#160;</td><td class="mdescRight">A structure containing all of the components in the battery power flow calculations. <br /></td></tr>
 <tr class="separator:ada1ba6af5ef4816f04fc185e81fe6395"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad1dd738abab28b2dee35569462bddc49"><td class="memItemLeft" align="right" valign="top"><a id="ad1dd738abab28b2dee35569462bddc49"></a>
 dispatch_t *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_charge_controller.html#ad1dd738abab28b2dee35569462bddc49">m_dispatch</a></td></tr>

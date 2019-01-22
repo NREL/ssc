@@ -12,8 +12,6 @@ var files_dup =
     [ "lib_battery_powerflow.h", "lib__battery__powerflow_8h_source.html", null ],
     [ "lib_cec6par.h", "lib__cec6par_8h_source.html", null ],
     [ "lib_financial.h", "lib__financial_8h_source.html", null ],
-    [ "lib_fuel_cell.h", "lib__fuel__cell_8h_source.html", null ],
-    [ "lib_fuel_cell_dispatch.h", "lib__fuel__cell__dispatch_8h_source.html", null ],
     [ "lib_geothermal.h", "lib__geothermal_8h_source.html", null ],
     [ "lib_iec61853.h", "lib__iec61853_8h_source.html", null ],
     [ "lib_irradproc.h", "lib__irradproc_8h.html", "lib__irradproc_8h" ],

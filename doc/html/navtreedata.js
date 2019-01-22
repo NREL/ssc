@@ -24,6 +24,7 @@ for the JavaScript code in this file
 var NAVTREE =
 [
   [ "SAM Simulation Core (SSC)", "index.html", [
+    [ "SSC (SAM Simulation Core)", "index.html", null ],
     [ "Classes", "annotated.html", [
       [ "Class List", "annotated.html", "annotated_dup" ],
       [ "Class Hierarchy", "hierarchy.html", "hierarchy" ],
@@ -49,9 +50,8 @@ var NAVTREE =
 var NAVTREEINDEX =
 [
 "6par__gamma_8h_source.html",
-"classdispatch__automatic__t.html#a3dec27441c86537555dea81e8c5330ad",
-"sscapi_8h.html#a082e17260ab55ccb945bcabd4509f439",
-"struct_subarray___i_o.html#ae9c920feb883a6244a18c5ddeb56524d"
+"classirrad.html#a54531b8658ba75f3d4f3ec1367b0d755",
+"struct_battery_power.html#a0b9d4103756a45ebb46598b1f95d07cb"
 ];
 
 var SYNCONMSG = 'click to disable panel synchronisation';

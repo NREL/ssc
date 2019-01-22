@@ -4,7 +4,7 @@ var classdispatch__automatic__front__of__meter__t =
     [ "~dispatch_automatic_front_of_meter_t", "classdispatch__automatic__front__of__meter__t.html#a77d982985840bb2191b6c0d5dacfcd85", null ],
     [ "dispatch_automatic_front_of_meter_t", "classdispatch__automatic__front__of__meter__t.html#af044cbc5b9ff92655eb141eceb8f9a07", null ],
     [ "copy", "classdispatch__automatic__front__of__meter__t.html#a471779a84d0da4f9e1e611c9ebc0bd5e", null ],
-    [ "dispatch", "classdispatch__automatic__front__of__meter__t.html#ac2eb5a56a906e254b9960f174517a7c2", null ],
+    [ "dispatch", "classdispatch__automatic__front__of__meter__t.html#a2b598c76419e61af43fe44d04847c61d", null ],
     [ "update_dispatch", "classdispatch__automatic__front__of__meter__t.html#a1b127a10a236d199be4f28ca5ee35bbe", null ],
     [ "update_cliploss_data", "classdispatch__automatic__front__of__meter__t.html#ab60224e3229c765cf85d6202dbbbaa81", null ],
     [ "costToCycle", "classdispatch__automatic__front__of__meter__t.html#a1dc544fb2214811fd5765678251e7cac", null ],

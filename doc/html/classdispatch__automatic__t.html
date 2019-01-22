@@ -108,15 +108,15 @@ Public Member Functions</h2></td></tr>
 Class contains methods and data common to all automated dispatch strategies in SAM.  <a href="#acf8cc73062a0c38f55c74dcc4e12a7d1">More...</a><br /></td></tr>
 <tr class="separator:acf8cc73062a0c38f55c74dcc4e12a7d1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1b56a6d6c4bf100f15afc006da29945f"><td class="memItemLeft" align="right" valign="top"><a id="a1b56a6d6c4bf100f15afc006da29945f"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>dispatch_automatic_t</b> (const dispatch_t &amp;<a class="el" href="classdispatch__automatic__t.html#afb5699bb0eb1a32940ff723674ea2b98">dispatch</a>)</td></tr>
+&#160;</td><td class="memItemRight" valign="bottom"><b>dispatch_automatic_t</b> (const dispatch_t &amp;<a class="el" href="classdispatch__automatic__t.html#a5def0552f976d63e42a5c950a8a3db66">dispatch</a>)</td></tr>
 <tr class="separator:a1b56a6d6c4bf100f15afc006da29945f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ace00f2bdd317cef8680dfd17b6ec682f"><td class="memItemLeft" align="right" valign="top"><a id="ace00f2bdd317cef8680dfd17b6ec682f"></a>
-virtual void&#160;</td><td class="memItemRight" valign="bottom"><b>copy</b> (const dispatch_t *<a class="el" href="classdispatch__automatic__t.html#afb5699bb0eb1a32940ff723674ea2b98">dispatch</a>)</td></tr>
+virtual void&#160;</td><td class="memItemRight" valign="bottom"><b>copy</b> (const dispatch_t *<a class="el" href="classdispatch__automatic__t.html#a5def0552f976d63e42a5c950a8a3db66">dispatch</a>)</td></tr>
 <tr class="separator:ace00f2bdd317cef8680dfd17b6ec682f"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:afb5699bb0eb1a32940ff723674ea2b98"><td class="memItemLeft" align="right" valign="top"><a id="afb5699bb0eb1a32940ff723674ea2b98"></a>
-virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdispatch__automatic__t.html#afb5699bb0eb1a32940ff723674ea2b98">dispatch</a> (size_t year, size_t hour_of_year, size_t step)</td></tr>
-<tr class="memdesc:afb5699bb0eb1a32940ff723674ea2b98"><td class="mdescLeft">&#160;</td><td class="mdescRight">Public API to run the battery dispatch model for the current timestep, given the system power, and optionally the electric load, amount of system clipping, or specified battery power. <br /></td></tr>
-<tr class="separator:afb5699bb0eb1a32940ff723674ea2b98"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5def0552f976d63e42a5c950a8a3db66"><td class="memItemLeft" align="right" valign="top"><a id="a5def0552f976d63e42a5c950a8a3db66"></a>
+virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdispatch__automatic__t.html#a5def0552f976d63e42a5c950a8a3db66">dispatch</a> (size_t year, size_t hour_of_year, size_t step, double P_system, double V_system, double P_load_ac=0, double P_system_clipped=0)</td></tr>
+<tr class="memdesc:a5def0552f976d63e42a5c950a8a3db66"><td class="mdescLeft">&#160;</td><td class="mdescRight">Public API to run the battery dispatch model for the current timestep, given the system power, and optionally the electric load, amount of system clipping, or specified battery power. <br /></td></tr>
+<tr class="separator:a5def0552f976d63e42a5c950a8a3db66"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a07935c116cf27da4140065d239e0888c"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdispatch__automatic__t.html#a07935c116cf27da4140065d239e0888c">update_dispatch</a> (size_t hour_of_year, size_t step, size_t idx)=0</td></tr>
 <tr class="separator:a07935c116cf27da4140065d239e0888c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a3ee254ed526a22b5ddba43affc1793c9"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdispatch__automatic__t.html#a3ee254ed526a22b5ddba43affc1793c9">update_pv_data</a> (std::vector&lt; double &gt; P_pv_dc)</td></tr>
