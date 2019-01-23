@@ -158,9 +158,10 @@ public:
 		double m_startup_time;		//[hr] time needed for power block startup
 		double m_startup_frac;		//[-] fraction of design thermal power needed for startup
 		double m_htf_pump_coef;		//[kW/kg/s] Pumping power to move 1 kg/s of HTF through power cycle
-
 		int m_pc_fl;				//[-] integer flag identifying Heat Transfer Fluid (HTF) in power block {1-27}
 		util::matrix_t<double> m_pc_fl_props;
+        double DP_SGS;              //[bar] pressure drop within the steam generator system
+
 
 		// Steam Rankine or User-Defined
 		bool m_is_user_defined_pc;				//[-] True: user-defined power cycle, False: Built-in Rankine Cycle model
