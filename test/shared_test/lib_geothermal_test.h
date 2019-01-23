@@ -2,10 +2,24 @@
 #define lib_geothermal_test_h_
 #include <gtest/gtest.h>
 #include "lib_geothermal.h"
+#include "core.h"
 //#include "lib_weatherfile.h"
 //#include "lib_physics.h"
 //#include "lib_powerblock.h"
 
+static bool my_update_function(float percent, void *data)
+{
+	if (data != 0)
+		return ((compute_module*)data)->update("working...", percent);
+	else
+		return true;
+}
+
+namespace geotest {
+	const char * SSCDIR = std::getenv("SSCDIR");
+	char filename_path[200];
+	int n1 = sprintf(filename_path, "%s/test/input_cases/general_data/daggett_ca_34.865371_-116.783023_psmv3_60_tmy.csv", geotest::SSCDIR);
+}
 
 class CGeothermalAnalyzerBinary : public ::testing::Test
 {	
@@ -53,7 +67,6 @@ protected:
 	int fracture_angle;
 	int geothermal_analysis_period;
 	int resource_potential;
-	char file_name[100];
 	int tou[8760];
 			  
 	//Initializing all 4 structs to defualt values in SAM 2018.11.11:
@@ -109,7 +122,6 @@ public:
 		fracture_angle = 15;
 		geothermal_analysis_period = 30;
 		resource_potential = 210;
-		//file_name = '%s/test/input_cases/general_data/daggett_ca_34.865371_-116.783023_psmv3_60_tmy.csv';
 		
 
 		//====================================================================================================================================================================
@@ -245,7 +257,7 @@ public:
 		//	throw general_error("invalid analysis period specified in the geothermal hourly model");
 
 		geoBinary_inputs.md_PotentialResourceMW = resource_potential;
-		geoBinary_inputs.mc_WeatherFileName = file_name;
+		geoBinary_inputs.mc_WeatherFileName = geotest::filename_path;
 		geoBinary_inputs.mia_tou = tou;
 		geoBinary_inputs.mi_MakeupCalculationsPerYear = (geoBinary_inputs.mi_ModelChoice == 2) ? 8760 : 12;
 		geoBinary_inputs.mi_TotalMakeupCalculations = geoBinary_inputs.mi_ProjectLifeYears * geoBinary_inputs.mi_MakeupCalculationsPerYear;
@@ -280,9 +292,13 @@ public:
 		geoBinary_outputs.maf_hourly_power = new float[geoBinary_inputs.mi_ProjectLifeYears * 8760];
 		
 		//====================================================================================================================================================================
-		
+		void * user_data = nullptr;
+
 		binaryDefault = new CGeothermalAnalyzer(SPBP, PBInputs, geoBinary_inputs, geoBinary_outputs);
-	}
+		binaryDefault->RunAnalysis(my_update_function, user_data);
+}	
+
+
 
 	void TearDown() {
 		
