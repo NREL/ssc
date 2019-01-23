@@ -111,28 +111,28 @@ void C_heat_exchanger::hx_charge_mdot_tes(double T_cold_tes, double m_dot_tes, d
     double &eff, double &T_hot_tes, double &T_cold_field, double &q_trans, double &m_dot_field)
 {
     hx_performance(false, true, T_hot_field, m_dot_tes, T_cold_tes,
-        eff, T_hot_tes, T_cold_field, q_trans, m_dot_field);
+        eff, T_cold_field, T_hot_tes, q_trans, m_dot_field);
 }
 
 void C_heat_exchanger::hx_discharge_mdot_tes(double T_hot_tes, double m_dot_tes, double T_cold_field,
     double &eff, double &T_cold_tes, double &T_hot_field, double &q_trans, double &m_dot_field)
 {
     hx_performance(true, true, T_hot_tes, m_dot_tes, T_cold_field,
-        eff, T_hot_field, T_cold_tes, q_trans, m_dot_field);
+        eff, T_cold_tes, T_hot_field, q_trans, m_dot_field);
 }
 
 void C_heat_exchanger::hx_charge_mdot_field(double T_hot_field, double m_dot_field, double T_cold_tes,
     double &eff, double &T_cold_field, double &T_hot_tes, double &q_trans, double &m_dot_tes)
 {
     hx_performance(true, false, T_hot_field, m_dot_field, T_cold_tes,
-        eff, T_hot_tes, T_cold_field, q_trans, m_dot_tes);
+        eff, T_cold_field, T_hot_tes, q_trans, m_dot_tes);
 }
 
 void C_heat_exchanger::hx_discharge_mdot_field(double T_cold_field, double m_dot_field, double T_hot_tes,
     double &eff, double &T_hot_field, double &T_cold_tes, double &q_trans, double &m_dot_tes)
 {
     hx_performance(false, false, T_hot_tes, m_dot_field, T_cold_field,
-        eff, T_hot_field, T_cold_tes, q_trans, m_dot_tes);
+        eff, T_cold_tes, T_hot_field, q_trans, m_dot_tes);
 }
 
 void C_heat_exchanger::hx_performance(bool is_hot_side_mdot, bool is_storage_side, double T_hot_in, double m_dot_known, double T_cold_in,
