@@ -1117,6 +1117,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
         */
 
 		int operating_mode = ENTRY_MODE;
+        std::string op_mode_str = "";
 		bool are_models_converged = false;
 		reset_hierarchy_logic();
 		// Reset operating mode tracker		
@@ -1692,9 +1693,9 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 			// Store operating mode
 			m_op_mode_tracking.push_back(operating_mode);
 
-            std::string op_mode_str = "";
-
-			switch( operating_mode )
+            op_mode_str = "";
+            
+            switch( operating_mode )
 			{
 			case CR_DF__PC_SU__TES_OFF__AUX_OFF:
 			case CR_DF__PC_MAX__TES_OFF__AUX_OFF:

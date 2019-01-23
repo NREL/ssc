@@ -61,9 +61,25 @@ private:
 	HTFProperties mc_field_htfProps;
 	HTFProperties mc_store_htfProps;
 
-	double m_m_dot_des_ave;		//[kg/s] Average (field and storage sides) mass flow rate
+	double m_m_dot_des_ave;		    //[kg/s] Average (field and storage sides) mass flow rate
 	double m_eff_des;				//[-] Heat exchanger effectiveness
 	double m_UA_des;				//[W/K] Heat exchanger conductance
+
+    // Stored values from previous timestep
+    double m_T_hot_field_prev;		//[K] Hotter temperature on field side (opposite tank side)
+    double m_T_cold_field_prev;		//[K] Colder temperature on field side (opposite tank side)
+    double m_m_dot_field_prev;      //[kg/s] Mass flow rate on field side (opposite tank side)
+    double m_T_hot_tes_prev;		//[K] Hotter temperature on TES side (tank side)
+    double m_T_cold_tes_prev;       //[K] Colder temperature on TES side (tank side)
+    double m_m_dot_tes_prev;        //[kg/s] Mass flow rate on TES side (tank side)
+
+    // Calculated values for current timestep
+    double m_T_hot_field_calc;		//[K] Hotter temperature on field side (opposite tank side)
+    double m_T_cold_field_calc;		//[K] Colder temperature on field side (opposite tank side)
+    double m_m_dot_field_calc;      //[kg/s] Mass flow rate on field side (opposite tank side)
+    double m_T_hot_tes_calc;		//[K] Hotter temperature on TES side (tank side)
+    double m_T_cold_tes_calc;       //[K] Colder temperature on TES side (tank side)
+    double m_m_dot_tes_calc;        //[kg/s] Mass flow rate on TES side (tank side)
 
 	void hx_performance(bool is_hot_side_mdot, bool is_storage_side, double T_hot_in, double m_dot_known, double T_cold_in,
 		double &eff, double &T_hot_out, double &T_cold_out, double &q_trans, double &m_dot_solved);
@@ -86,6 +102,8 @@ public:
 
 	void hx_discharge_mdot_field(double T_cold_field, double m_dot_field, double T_hot_tes,
 		double &eff, double &T_hot_field, double &T_cold_tes, double &q_trans, double &m_dot_tes);
+
+    void converged();
 };
 
 class C_storage_tank
@@ -102,14 +120,14 @@ private:
 	double m_max_q_htr;			//[MWt] Max tank heater capacity
 
 	// Stored values from end of previous timestep
-	double m_V_prev;		//[m^3] Volume of storage fluid in tank
-	double m_T_prev;		//[K] Temperature of storage fluid in tank
-	double m_m_prev;		//[kg] Mass of storage fluid in tank
+	double m_V_prev;		    //[m^3] Volume of storage fluid in tank
+	double m_T_prev;		    //[K] Temperature of storage fluid in tank
+	double m_m_prev;		    //[kg] Mass of storage fluid in tank
 
 	// Calculated values for current timestep
-	double m_V_calc;		//[m^3] Volume of storage fluid in tank
-	double m_T_calc;		//[K] Temperature of storage fluid in tank
-	double m_m_calc;		//[kg] Mass of storage fluid in tank
+	double m_V_calc;		    //[m^3] Volume of storage fluid in tank
+	double m_T_calc;		    //[K] Temperature of storage fluid in tank
+	double m_m_calc;		    //[kg] Mass of storage fluid in tank
 
 public:
 
@@ -165,6 +183,7 @@ private:
 	double m_V_tank_active;		//[m^3] available volume (considering h_min) of *one temperature*
 	double m_q_pb_design;		//[Wt] thermal power to power cycle at design
 	double m_V_tank_hot_ini;	//[m^3] Initial volume in hot storage tank
+
 
     // Monotonic equation solvers
     class C_MEQ_indirect_tes_discharge : public C_monotonic_equation

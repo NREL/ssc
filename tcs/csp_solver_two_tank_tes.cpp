@@ -98,34 +98,41 @@ void C_heat_exchanger::init(const HTFProperties &fluid_field, const HTFPropertie
 		NTU = m_eff_des / (1. - m_eff_des);
 
 	m_UA_des = NTU * c_dot_min;		//[W/K]
+
+    m_T_hot_field_prev = m_T_hot_field_calc = T_h_in_des;
+    m_T_cold_field_prev = m_T_cold_field_calc = T_h_out_des;
+    m_m_dot_field_prev = m_m_dot_field_calc = m_dot_h;
+    m_T_hot_tes_prev = m_T_hot_tes_calc = T_c_out;
+    m_T_cold_tes_prev = m_T_cold_tes_calc = T_c_in;
+    m_m_dot_tes_prev = m_m_dot_tes_calc = m_dot_c;
 }
 
 void C_heat_exchanger::hx_charge_mdot_tes(double T_cold_tes, double m_dot_tes, double T_hot_field,
-	double &eff, double &T_hot_tes, double &T_cold_field, double &q_trans, double &m_dot_field)
+    double &eff, double &T_hot_tes, double &T_cold_field, double &q_trans, double &m_dot_field)
 {
-	hx_performance(false, true, T_hot_field, m_dot_tes, T_cold_tes,
-		eff, T_hot_tes, T_cold_field, q_trans, m_dot_field);
+    hx_performance(false, true, T_hot_field, m_dot_tes, T_cold_tes,
+        eff, T_hot_tes, T_cold_field, q_trans, m_dot_field);
 }
 
 void C_heat_exchanger::hx_discharge_mdot_tes(double T_hot_tes, double m_dot_tes, double T_cold_field,
-	double &eff, double &T_cold_tes, double &T_hot_field, double &q_trans, double &m_dot_field)
+    double &eff, double &T_cold_tes, double &T_hot_field, double &q_trans, double &m_dot_field)
 {
-	hx_performance(true, true, T_hot_tes, m_dot_tes, T_cold_field,
-		eff, T_hot_field, T_cold_tes, q_trans, m_dot_field);
+    hx_performance(true, true, T_hot_tes, m_dot_tes, T_cold_field,
+        eff, T_hot_field, T_cold_tes, q_trans, m_dot_field);
 }
 
 void C_heat_exchanger::hx_charge_mdot_field(double T_hot_field, double m_dot_field, double T_cold_tes,
-	double &eff, double &T_cold_field, double &T_hot_tes, double &q_trans, double &m_dot_tes)
+    double &eff, double &T_cold_field, double &T_hot_tes, double &q_trans, double &m_dot_tes)
 {
-	hx_performance(true, false, T_hot_field, m_dot_field, T_cold_tes,
-		eff, T_hot_tes, T_cold_field, q_trans, m_dot_tes);
+    hx_performance(true, false, T_hot_field, m_dot_field, T_cold_tes,
+        eff, T_hot_tes, T_cold_field, q_trans, m_dot_tes);
 }
 
 void C_heat_exchanger::hx_discharge_mdot_field(double T_cold_field, double m_dot_field, double T_hot_tes,
-	double &eff, double &T_hot_field, double &T_cold_tes, double &q_trans, double &m_dot_tes)
+    double &eff, double &T_hot_field, double &T_cold_tes, double &q_trans, double &m_dot_tes)
 {
-	hx_performance(false, false, T_hot_tes, m_dot_field, T_cold_field,
-		eff, T_hot_field, T_cold_tes, q_trans, m_dot_tes);
+    hx_performance(false, false, T_hot_tes, m_dot_field, T_cold_field,
+        eff, T_hot_field, T_cold_tes, q_trans, m_dot_tes);
 }
 
 void C_heat_exchanger::hx_performance(bool is_hot_side_mdot, bool is_storage_side, double T_hot_in, double m_dot_known, double T_cold_in,
@@ -153,6 +160,7 @@ void C_heat_exchanger::hx_performance(bool is_hot_side_mdot, bool is_storage_sid
     }
 
 	double m_dot_hot, m_dot_cold, c_hot, c_cold, c_dot;
+    bool m_field_is_hot;     // Is the field side the 'hot' side (e.g., during storage charging)?
 
 	double T_ave = (T_hot_in + T_cold_in) / 2.0;		//[K]
 
@@ -160,11 +168,13 @@ void C_heat_exchanger::hx_performance(bool is_hot_side_mdot, bool is_storage_sid
 	{
 		if( is_storage_side )
 		{
+            m_field_is_hot = false;
 			c_cold = mc_field_htfProps.Cp(T_ave)*1000.0;		//[J/kg-K]
 			c_hot = mc_store_htfProps.Cp(T_ave)*1000.0;			//[J/kg-K]
 		}
 		else
 		{
+            m_field_is_hot = true;
 			c_hot = mc_field_htfProps.Cp(T_ave)*1000.0;			//[J/kg-K]
 			c_cold = mc_store_htfProps.Cp(T_ave)*1000.0;		//[J/kg-K]
 		}
@@ -181,11 +191,13 @@ void C_heat_exchanger::hx_performance(bool is_hot_side_mdot, bool is_storage_sid
 	{
 		if( is_storage_side )
 		{
+            m_field_is_hot = true;
 			c_hot = mc_field_htfProps.Cp(T_ave)*1000.0;		//[J/kg-K]
 			c_cold = mc_store_htfProps.Cp(T_ave)*1000.0;	//[J/kg-K]
 		}
 		else
 		{
+            m_field_is_hot = false;
 			c_cold = mc_field_htfProps.Cp(T_ave)*1000.0;	//[J/kg-K]
 			c_hot = mc_store_htfProps.Cp(T_ave)*1000.0;		//[J/kg-K]
 		}
@@ -207,6 +219,14 @@ void C_heat_exchanger::hx_performance(bool is_hot_side_mdot, bool is_storage_sid
 	double NTU = UA / c_dot;
 	eff = NTU / (1.0 + NTU);
 
+	if( eff <= 0.0 || eff > 1.0 )
+	{
+        eff = T_hot_out = T_cold_out = q_trans = m_dot_solved = 
+        m_T_hot_field_prev = m_T_cold_field_prev = m_T_hot_tes_prev = m_T_cold_tes_prev = 
+        m_m_dot_field_prev = m_m_dot_tes_prev = std::numeric_limits<double>::quiet_NaN();
+		throw(C_csp_exception("Off design heat exchanger failed", ""));
+	}
+
 	// Calculate heat transfer in HX
 	double q_dot_max = c_dot*(T_hot_in - T_cold_in);
 	q_trans = eff*q_dot_max;
@@ -216,10 +236,39 @@ void C_heat_exchanger::hx_performance(bool is_hot_side_mdot, bool is_storage_sid
 
 	q_trans *= 1.E-6;		//[MWt]
 
-	if( eff <= 0.0 || eff > 1.0 )
-	{
-		throw(C_csp_exception("Off design heat exchanger failed", ""));
-	}
+    // Set member variables
+    if (m_field_is_hot == true) {
+        m_T_hot_field_prev = T_hot_in;
+        m_T_cold_field_prev = T_hot_out;
+        m_T_hot_tes_prev = T_cold_out;
+        m_T_cold_tes_prev = T_cold_in;
+    }
+    else {
+        m_T_hot_field_prev = T_cold_out;
+        m_T_cold_field_prev = T_cold_in;
+        m_T_hot_tes_prev = T_hot_in;
+        m_T_cold_tes_prev = T_hot_out;
+    }
+
+    if (is_storage_side) {
+        m_m_dot_field_prev = m_dot_solved;
+        m_m_dot_tes_prev = m_dot_known;
+    }
+    else {
+        m_m_dot_field_prev = m_dot_known;
+        m_m_dot_tes_prev = m_dot_solved;
+    }
+}
+
+void C_heat_exchanger::converged()
+{
+    // Reset 'previous' timestep values to 'calculated' values
+    m_T_hot_field_prev = m_T_hot_field_calc;		//[K]
+    m_T_cold_field_prev = m_T_cold_field_calc;      //[K]
+    m_m_dot_field_prev = m_m_dot_field_calc;        //[kg/s]
+    m_T_hot_tes_prev = m_T_hot_tes_calc;            //[K]
+    m_T_cold_tes_prev = m_T_cold_tes_calc;          //[K]
+    m_m_dot_tes_prev = m_m_dot_tes_calc;            //[kg/s]
 }
 
 C_storage_tank::C_storage_tank()
@@ -975,6 +1024,7 @@ void C_csp_two_tank_tes::converged()
 {
 	mc_cold_tank.converged();
 	mc_hot_tank.converged();
+    mc_hx.converged();
 	
 	// The max charge and discharge flow rates should be set at the beginning of each timestep
 	//   during the q_dot_xx_avail_est calls
