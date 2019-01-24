@@ -184,20 +184,15 @@
     <ClInclude Include="..\test\ssc_test\cmod_battery_test.h">
       <Filter>ssc_test</Filter>
     </ClInclude>
-
-
-
-
-
-
-
-
-
     <ClInclude Include="..\test\shared_test\lib_battery_test.h">
       <Filter>shared_test</Filter>
     </ClInclude>
     <ClInclude Include="..\test\shared_test\lib_battery_properties.h">
-
+      <Filter>shared_test</Filter>
+    </ClInclude>
+    <ClInclude Include="..\test\input_cases\geothermal_common_data.h" />
+    <ClInclude Include="..\test\ssc_test\cmod_geothermal_costs_test.h" />
+    <ClInclude Include="..\test\shared_test\lib_geothermal_test.h">
       <Filter>shared_test</Filter>
     </ClInclude>
   </ItemGroup>
