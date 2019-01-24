@@ -129,24 +129,27 @@ int C_monotonic_eq_solver::solve(double x_guess_1, double x_guess_2, double y_ta
 	x_guess_1 = check_against_limits(x_guess_1);
 	x_guess_2 = check_against_limits(x_guess_2);
 
-	// Check that guesses are different
-	if( x_guess_1 == x_guess_2 )
-	{
-		x_solved = tol_solved = std::numeric_limits<double>::quiet_NaN();
-		iter_solved = 0;
-		return EQUAL_GUESS_VALUES;
-	}
-	
 	// Call function with x guesses
 	double y1, y2;
 	if( call_mono_eq(x_guess_1, &y1) != 0 )
 	{
 		y1 = std::numeric_limits<double>::quiet_NaN();
 	}
-	if( call_mono_eq(x_guess_2, &y2) != 0 )
+	// Check that guesses are different
+	if (x_guess_1 != x_guess_2)
 	{
-		y2 = std::numeric_limits<double>::quiet_NaN();
+		if (call_mono_eq(x_guess_2, &y2) != 0)
+		{
+			y2 = std::numeric_limits<double>::quiet_NaN();
+		}
+		//x_solved = tol_solved = std::numeric_limits<double>::quiet_NaN();
+		//iter_solved = 0;
+		//return EQUAL_GUESS_VALUES;
 	}
+	else
+	{
+		y2 = y1;
+	}	
 	
 	return solver_core(x_guess_1, y1, x_guess_2, y2, y_target, x_solved, tol_solved, iter_solved);
 }
@@ -171,12 +174,12 @@ int C_monotonic_eq_solver::solve(S_xy_pair solved_pair_1, S_xy_pair solved_pair_
 	x_guess_2 = check_against_limits(x_guess_2);
 
 	// Check that guesses are different
-	if( x_guess_1 == x_guess_2 )
-	{
-		x_solved = tol_solved = std::numeric_limits<double>::quiet_NaN();
-		iter_solved = 0;
-		return EQUAL_GUESS_VALUES;
-	}
+	//if( x_guess_1 == x_guess_2 )
+	//{
+	//	x_solved = tol_solved = std::numeric_limits<double>::quiet_NaN();
+	//	iter_solved = 0;
+	//	return EQUAL_GUESS_VALUES;
+	//}
 
 	double y1 = solved_pair_1.y;
 	double y2 = solved_pair_2.y;
@@ -298,6 +301,13 @@ int C_monotonic_eq_solver::solver_core(double x_guess_1, double y1, double x_gue
 
 	// Calculate slope of error vs x
 	double E_slope = (E2 - E1) / (x_guess_2 - x_guess_1);
+
+	if (E_slope == 0.0)
+	{
+		x_solved = tol_solved = std::numeric_limits<double>::quiet_NaN();
+		iter_solved = 0;
+		return EQUAL_GUESS_VALUES;
+	}
 
 	// Now can set some upper and lower bound and error information...
 	if( E1 > 0.0 && E2 > 0.0 )
