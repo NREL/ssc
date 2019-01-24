@@ -969,6 +969,21 @@ bool weatherdata::read( weather_record *r )
 		return false;
 }
 
+bool weatherdata::read_average(weather_record *r, std::vector<int> &cols, size_t &num_timesteps)
+{
+	// finish per bool weatherfile::read_average(weather_record *r, std::vector<int> &cols, size_t &num_timesteps)
+	if (m_index < m_data.size())
+	{
+		*r = *m_data[m_index++];
+		return true;
+	}
+	else
+		return false;
+
+}
+
+
+
 bool weatherdata::has_data_column( size_t id )
 {
 	return std::find( m_columns.begin(), m_columns.end(), id ) != m_columns.end();

@@ -162,6 +162,7 @@ public:
 
 	void set_counter_to(size_t cur_index);
 	bool read(weather_record *r); // reads one more record	
+	bool read_average(weather_record *r, std::vector<int> &cols, size_t &num_timesteps); // reads one more record	
 	bool has_data_column(size_t id);
 };
 
