@@ -335,8 +335,8 @@ public:
 	int m_nHCEVar;			//[-] Number of HCE variants per type
 	int m_nLoops;			//[-] Number of loops in the field
 	int m_FieldConfig;		//[-] Number of subfield headers
-	bool m_include_fixed_heat_sink_runner;	//[-] True: model 50[m] of runner sized for full mass flow rate
-	double m_L_heat_sink_piping;	//[m] Length of piping (full mass flow) through heat sink (if applicable)
+	bool m_include_fixed_power_block_runner;	//[-] True: model 50[m] of runner sized for full mass flow rate
+	double m_L_power_block_piping;	//[m] Length of piping (full mass flow) through heat sink (if applicable)
 	double m_eta_pump;		//[-] HTF pump efficiency
 	double m_HDR_rough;		//[m] Header pipe roughness
 	double m_theta_stow;	//[deg] stow angle
@@ -351,7 +351,11 @@ public:
 	
 	double m_T_fp;			//[C] Freeze protection temperature (heat trace activation temperature), convert to K in init
 	double m_I_bn_des;		//[W/m^2] Solar irradiation at design
-	double m_V_hdr_max;		//[m/s] Maximum HTF velocity in the header at design
+    double m_V_hdr_cold_max;    //[m/s] Maximum HTF velocity in the cold header at design
+    double m_V_hdr_cold_min;    //[m/s] Minimum HTF velocity in the cold header at design
+    double m_V_hdr_hot_max;     //[m/s] Maximum HTF velocity in the hot header at design
+    double m_V_hdr_hot_min;     //[m/s] Minimum HTF velocity in the hot header at design
+    double m_V_hdr_max;		//[m/s] Maximum HTF velocity in the header at design
 	double m_V_hdr_min;		//[m/s] Minimum HTF velocity in the header at design
 	double m_Pipe_hl_coef;	//[W/m2-K] Loss coefficient from the header, runner pipe, and non-HCE piping
 	double m_SCA_drives_elec;	//[W/SCA] Tracking power, in Watts per SCA drive
@@ -419,6 +423,27 @@ public:
 	util::matrix_t<double> m_IAM_matrix;		//[-] IAM coefficients, matrix for 4 collectors
 	
 	util::matrix_t<bool> m_GlazingIntact;		//[-] Glazing intact (broken glass) flag {1=true, else=false}
+
+    bool calc_design_pipe_vals;                 //[-] Should the HTF state be calculated at design conditions
+    double L_rnr_pb;                            //[m] Length of hot or cold runner pipe around the power block
+    double N_max_hdr_diams;                     //[-] Maximum number of allowed diameters in each of the hot and cold headers
+    double L_rnr_per_xpan;                      //[m] Threshold length of straight runner pipe without an expansion loop
+    double L_xpan_hdr;                          //[m] Combined length in meters of the two perpendicular segments of a header expansion loop
+    double L_xpan_rnr;                          //[m] Combined length in meters of the two perpendicular segments of a runner expansion loop
+    double Min_rnr_xpans;                       //[-] Minimum number of expansion loops per single-diameter runner section
+    double northsouth_field_sep;                //[m] Shortest north/south distance between SCAs in different subfields
+    double N_hdr_per_xpan;                      //[-] Number of collector loops per header expansion loops. 1 = expansion loop between every collector loop
+    util::matrix_t<double> K_cpnt;              //[-] Minor loss coefficients of the components in each loop interconnect
+    util::matrix_t<double> D_cpnt;              //[m] Inner diameters of the components in each loop interconnect
+    util::matrix_t<double> L_cpnt;              //[m] Lengths of the components in each loop interconnect
+    util::matrix_t<double> Type_cpnt;           //[-] Type of component in each loop interconnect [0=fitting | 1=pipe | 2=flex_hose]
+    bool custom_sf_pipe_sizes;                  //[-] Should the field pipe diameters, wall thickness and lengths be imported instead of calculated
+    util::matrix_t<double> sf_rnr_diams;        //[m] Imported runner diameters, used if custom_sf_pipe_sizes is true
+    util::matrix_t<double> sf_rnr_wallthicks;   //[m] Imported runner wall thicknesses, used if custom_sf_pipe_sizes is true
+    util::matrix_t<double> sf_rnr_lengths;      //[m] Imported runner lengths, used if custom_sf_pipe_sizes is true
+    util::matrix_t<double> sf_hdr_diams;        //[m] Imported header diameters, used if custom_sf_pipe_sizes is true
+    util::matrix_t<double> sf_hdr_wallthicks;   //[m] Imported header wall thicknesses, used if custom_sf_pipe_sizes is true
+    util::matrix_t<double> sf_hdr_lengths;      //[m] Imported header lengths, used if custom_sf_pipe_sizes is true
 
 	// **************************************************************************
 	// **************************************************************************
@@ -633,7 +658,7 @@ public:
 		double Nexp, double Ncon, double Nels, double Nelm, double Nell, double Ngav, double Nglv,
 		double Nchv, double Nlw, double Nlcv, double Nbja);
 	double FricFactor(double m_Rough, double Reynold);
-	void header_design(unsigned nhsec, int m_nfsec, unsigned m_nrunsec, bool include_fixed_heat_sink_runner,
+	void header_design(unsigned nhsec, int m_nfsec, unsigned m_nrunsec, bool include_fixed_power_block_runner,
 						 double rho, double V_max, double V_min, double m_dot,
 		std::vector<double> &m_D_hdr, std::vector<double> &m_D_runner, std::string *summary = NULL);
 	double pipe_sched(double De);
