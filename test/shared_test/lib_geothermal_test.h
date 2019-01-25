@@ -308,57 +308,57 @@ public:
 		}
 		
 		if (geoBinary_outputs.maf_hourly_power != nullptr) {
-			delete geoBinary_outputs.maf_hourly_power;
+			delete[] geoBinary_outputs.maf_hourly_power;
 			geoBinary_outputs.maf_hourly_power = nullptr;
 		}
 		
 		if (geoBinary_outputs.maf_timestep_wet_bulb != nullptr) {
-			delete geoBinary_outputs.maf_timestep_wet_bulb;
+			delete[] geoBinary_outputs.maf_timestep_wet_bulb;
 			geoBinary_outputs.maf_timestep_wet_bulb = nullptr;
 		}
 		
 		if (geoBinary_outputs.maf_timestep_dry_bulb != nullptr) {
-			delete geoBinary_outputs.maf_timestep_dry_bulb;
+			delete[] geoBinary_outputs.maf_timestep_dry_bulb;
 			geoBinary_outputs.maf_timestep_dry_bulb = nullptr;
 		}
 		
 		if (geoBinary_outputs.maf_timestep_pressure != nullptr) {
-			delete geoBinary_outputs.maf_timestep_pressure;
+			delete[] geoBinary_outputs.maf_timestep_pressure;
 			geoBinary_outputs.maf_timestep_pressure = nullptr;
 		}
 		
 		if (geoBinary_outputs.maf_timestep_test_values != nullptr) {
-			delete geoBinary_outputs.maf_timestep_test_values;
+			delete[] geoBinary_outputs.maf_timestep_test_values;
 			geoBinary_outputs.maf_timestep_test_values = nullptr;
 		}
 		
 		if (geoBinary_outputs.maf_timestep_power != nullptr) {
-			delete geoBinary_outputs.maf_timestep_power;
+			delete[] geoBinary_outputs.maf_timestep_power;
 			geoBinary_outputs.maf_timestep_power = nullptr;
 		}
 		
 		if (geoBinary_outputs.maf_timestep_resource_temp != nullptr) {
-			delete geoBinary_outputs.maf_timestep_resource_temp;
+			delete[] geoBinary_outputs.maf_timestep_resource_temp;
 			geoBinary_outputs.maf_timestep_resource_temp = nullptr;
 		}
 		
 		if (geoBinary_outputs.maf_monthly_energy != nullptr) {
-			delete geoBinary_outputs.maf_monthly_energy;
+			delete[] geoBinary_outputs.maf_monthly_energy;
 			geoBinary_outputs.maf_monthly_energy = nullptr;
 		}
 		
 		if (geoBinary_outputs.maf_monthly_power != nullptr) {
-			delete geoBinary_outputs.maf_monthly_power;
+			delete[] geoBinary_outputs.maf_monthly_power;
 			geoBinary_outputs.maf_monthly_power = nullptr;
 		}
 		
 		if (geoBinary_outputs.maf_monthly_resource_temp != nullptr) {
-			delete geoBinary_outputs.maf_monthly_resource_temp;
+			delete[] geoBinary_outputs.maf_monthly_resource_temp;
 			geoBinary_outputs.maf_monthly_resource_temp = nullptr;
 		}
 		
 		if (geoBinary_outputs.maf_ReplacementsByYear != nullptr) {
-			delete geoBinary_outputs.maf_ReplacementsByYear;
+			delete[] geoBinary_outputs.maf_ReplacementsByYear;
 			geoBinary_outputs.maf_ReplacementsByYear = nullptr;
 		}
 			   		 
