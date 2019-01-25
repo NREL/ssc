@@ -145,6 +145,7 @@ void C_sco2_recomp_csp::design_core()
 		ms_cycle_des_par.m_N_turbine = ms_des_par.m_N_turbine;
 		ms_cycle_des_par.m_is_recomp_ok = ms_des_par.m_is_recomp_ok;
 
+		ms_cycle_des_par.m_is_des_air_cooler = ms_des_par.m_is_des_air_cooler;		//[-]
 		ms_cycle_des_par.m_frac_fan_power = ms_des_par.m_frac_fan_power;			//[-]
 		ms_cycle_des_par.m_deltaP_cooler_frac = ms_des_par.m_deltaP_cooler_frac;	//[-]
 		ms_cycle_des_par.m_T_amb_des = ms_des_par.m_T_amb_des;						//[K]
@@ -201,6 +202,7 @@ void C_sco2_recomp_csp::design_core()
 		des_params.m_opt_tol = ms_des_par.m_opt_tol;
 		des_params.m_N_turbine = ms_des_par.m_N_turbine;
 
+		des_params.m_is_des_air_cooler = ms_des_par.m_is_des_air_cooler;	//[-]
 		des_params.m_frac_fan_power = ms_des_par.m_frac_fan_power;			//[-]
 		des_params.m_deltaP_cooler_frac = ms_des_par.m_deltaP_cooler_frac;	//[-]
 		des_params.m_T_amb_des = ms_des_par.m_T_amb_des;					//[K]
@@ -281,11 +283,15 @@ int C_sco2_recomp_csp::off_design_fix_P_mc_in(S_od_par od_par, double P_mc_in /*
 	if (od_core_error_code == 0)
 	{
 		double W_dot_fan = std::numeric_limits<double>::quiet_NaN();
-		int air_cooler_err_code = mpc_sco2_cycle->calculate_off_design_fan_power(ms_od_par.m_T_amb, W_dot_fan);
-
-		if (air_cooler_err_code != 0)
+		
+		if (std::isfinite(mpc_sco2_cycle->get_design_solved()->ms_LP_air_cooler.m_UA_total))
 		{
-			throw(C_csp_exception("Off design air cooler model failed"));
+			int air_cooler_err_code = mpc_sco2_cycle->calculate_off_design_fan_power(ms_od_par.m_T_amb, W_dot_fan);
+
+			if (air_cooler_err_code != 0)
+			{
+				throw(C_csp_exception("Off design air cooler model failed"));
+			}
 		}
 	}
 

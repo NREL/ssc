@@ -112,8 +112,8 @@ C_csp_trough_collector_receiver::C_csp_trough_collector_receiver()
 	m_nHCEVar = -1;
 	m_nLoops =  -1;
 	m_FieldConfig = -1;
-	m_include_fixed_heat_sink_runner = true;
-	m_L_heat_sink_piping = std::numeric_limits<double>::quiet_NaN();
+	m_include_fixed_power_block_runner = true;
+	m_L_power_block_piping = std::numeric_limits<double>::quiet_NaN();
 	m_eta_pump = std::numeric_limits<double>::quiet_NaN();
 	m_HDR_rough = std::numeric_limits<double>::quiet_NaN();
 	m_theta_stow = std::numeric_limits<double>::quiet_NaN();
@@ -552,7 +552,7 @@ bool C_csp_trough_collector_receiver::init_fieldgeom()
 		double rho_ave = m_htfProps.dens((m_T_loop_out_des + m_T_loop_in_des) / 2.0, 0.0); //kg/m3
 		
 		int n_min_run_secs = 1;
-		if( !m_include_fixed_heat_sink_runner )
+		if( !m_include_fixed_power_block_runner )
 			n_min_run_secs = 0;
 		
 		//Calculate the header design
@@ -588,13 +588,13 @@ bool C_csp_trough_collector_receiver::init_fieldgeom()
 		{
 			// runner pipe needs some length to go from the power block to the headers
 			int n_runner = 0;
-			if( m_include_fixed_heat_sink_runner )
+			if( m_include_fixed_power_block_runner )
 			{
 				m_n_runner_per_index[n_runner] = 1;	//[-]
 				m_f_m_dot[n_runner] = 1.0;				//[-]
 				m_D_runner[n_runner] = pipe_sched(sqrt(4.*m_m_dot_design * m_f_m_dot[n_runner] / (rho_ave*m_V_hdr_max*CSP::pi)));	//[m]
 					// Default m_L_runner for electricity generation trough is 50 m
-				m_L_runner[n_runner] = m_L_heat_sink_piping/2.0;		//[m] Length of piping (full mass flow) through heat sink (if applicable)
+				m_L_runner[n_runner] = m_L_power_block_piping/2.0;		//[m] Length of piping (full mass flow) through heat sink (if applicable)
 
 				n_runner++;
 			}
@@ -5340,7 +5340,7 @@ double C_csp_trough_collector_receiver::FricFactor(double m_Rough, double Reynol
 * summary - Address of string variable on which summary contents will be written.
 ---------------------------------------------------------------------------------			*/
 
-void C_csp_trough_collector_receiver::header_design(unsigned nhsec, int m_nfsec, unsigned m_nrunsec, bool include_fixed_heat_sink_runner,
+void C_csp_trough_collector_receiver::header_design(unsigned nhsec, int m_nfsec, unsigned m_nrunsec, bool include_fixed_power_block_runner,
 	double rho, double V_max, double V_min, double m_dot,
 	std::vector<double> &m_D_hdr, std::vector<double> &m_D_runner, std::string *summary)
 {
@@ -5373,7 +5373,7 @@ void C_csp_trough_collector_receiver::header_design(unsigned nhsec, int m_nfsec,
 	{
 		// runner pipe needs some length to go from the power block to the headers
 		int n_runner = 0;
-		if( include_fixed_heat_sink_runner )
+		if( include_fixed_power_block_runner )
 		{
 			m_D_runner[0] = pipe_sched(sqrt(4.*m_dot/2.0 / (rho*V_max*CSP::pi)));
 			n_runner++;
