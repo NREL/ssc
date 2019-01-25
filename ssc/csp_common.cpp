@@ -606,6 +606,7 @@ var_info vtab_sco2_design[] = {
 		// PHX Design
 	{ SSC_INPUT,  SSC_NUMBER,  "dT_PHX_cold_approach", "Temp diff btw cold HTF and cold CO2",                    "C",          "",    "",      "*",     "",       "" },
 		// Air Cooler Design
+	{ SSC_INPUT,  SSC_NUMBER,  "is_design_air_cooler", "Defaults to True. False will skip air cooler calcs",     "",           "",    "",      "?=1.0", "",       "" },
 	{ SSC_INPUT,  SSC_NUMBER,  "fan_power_frac",       "Fraction of net cycle power consumed by air cooler fan", "",           "",    "",      "*",     "",       "" },
 	{ SSC_INPUT,  SSC_NUMBER,  "deltaP_cooler_frac",   "Fraction of CO2 inlet pressure that is design point cooler CO2 pressure drop", "", "", "", "*","",       "" },
 
@@ -625,6 +626,7 @@ var_info vtab_sco2_design[] = {
 	{ SSC_OUTPUT, SSC_NUMBER,  "P_comp_out",           "Compressor outlet pressure",                             "MPa",        "",    "",      "*",     "",       "" },
 	{ SSC_OUTPUT, SSC_NUMBER,  "mc_W_dot",             "Compressor power",                                       "MWe",        "",    "",      "*",     "",       "" },
 	{ SSC_OUTPUT, SSC_NUMBER,  "mc_m_dot_des",         "Compressor mass flow rate",                              "kg/s",       "",    "",      "*",     "",       "" },
+	{ SSC_OUTPUT, SSC_NUMBER,  "mc_rho_in",            "Compressor inlet density",                               "kg/m3",      "",    "",      "*",     "",       "" },
 	{ SSC_OUTPUT, SSC_NUMBER,  "mc_phi_des",           "Compressor design flow coefficient",					 "",           "",    "",      "*",     "",       "" },
 	{ SSC_OUTPUT, SSC_ARRAY,   "mc_tip_ratio_des",     "Compressor design stage tip speed ratio",                "",           "",    "",      "*",     "",       "" },
 	{ SSC_OUTPUT, SSC_NUMBER,  "mc_n_stages",          "Compressor stages",                                      "",           "",    "",      "*",     "",       "" },
@@ -861,6 +863,7 @@ int sco2_design_cmod_common(compute_module *cm, C_sco2_recomp_csp & c_sco2_cycle
 	sco2_rc_des_par.m_phx_dt_cold_approach = cm->as_double("dT_PHX_cold_approach");  //[C]
 
 	// Air cooler parameters
+	sco2_rc_des_par.m_is_des_air_cooler = cm->as_boolean("is_design_air_cooler");
 	sco2_rc_des_par.m_frac_fan_power = cm->as_double("fan_power_frac");         //[-]
 	sco2_rc_des_par.m_deltaP_cooler_frac = cm->as_double("deltaP_cooler_frac");	//[-]
 
@@ -1072,6 +1075,7 @@ int sco2_design_cmod_common(compute_module *cm, C_sco2_recomp_csp & c_sco2_cycle
 	cm->assign("P_comp_in", (ssc_number_t)(c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_pres[C_sco2_cycle_core::MC_IN] / 1000.0));		//[MPa] convert from kPa
 	cm->assign("P_comp_out", (ssc_number_t)(c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_pres[C_sco2_cycle_core::MC_OUT] / 1000.0));		//[MPa] convert from kPa
 	cm->assign("mc_W_dot", (ssc_number_t)(-c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_W_dot_mc*1.E-3));	//[MWe] convert kWe
+	cm->assign("mc_rho_in", (ssc_number_t)(c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_dens[C_sco2_cycle_core::MC_IN]));	//[kg/m3]
 	cm->assign("mc_m_dot_des", (ssc_number_t)c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_m_dot_t*(1.0 - c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_recomp_frac));	//[kg/s]
 	cm->assign("mc_phi_des", (ssc_number_t)c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.ms_mc_ms_des_solved.m_phi_des);
 	cm->assign("mc_tip_ratio_des", (ssc_number_t)c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.ms_mc_ms_des_solved.m_tip_ratio_max);		//[-]

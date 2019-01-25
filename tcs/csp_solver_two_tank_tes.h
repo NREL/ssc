@@ -61,9 +61,25 @@ private:
 	HTFProperties mc_field_htfProps;
 	HTFProperties mc_store_htfProps;
 
-	double m_m_dot_des_ave;		//[kg/s] Average (field and storage sides) mass flow rate
+	double m_m_dot_des_ave;		    //[kg/s] Average (field and storage sides) mass flow rate
 	double m_eff_des;				//[-] Heat exchanger effectiveness
 	double m_UA_des;				//[W/K] Heat exchanger conductance
+
+    // Stored values from previous timestep
+    double m_T_hot_field_prev;		//[K] Hotter temperature on field side (opposite tank side)
+    double m_T_cold_field_prev;		//[K] Colder temperature on field side (opposite tank side)
+    double m_m_dot_field_prev;      //[kg/s] Mass flow rate on field side (opposite tank side)
+    double m_T_hot_tes_prev;		//[K] Hotter temperature on TES side (tank side)
+    double m_T_cold_tes_prev;       //[K] Colder temperature on TES side (tank side)
+    double m_m_dot_tes_prev;        //[kg/s] Mass flow rate on TES side (tank side)
+
+    // Calculated values for current timestep
+    double m_T_hot_field_calc;		//[K] Hotter temperature on field side (opposite tank side)
+    double m_T_cold_field_calc;		//[K] Colder temperature on field side (opposite tank side)
+    double m_m_dot_field_calc;      //[kg/s] Mass flow rate on field side (opposite tank side)
+    double m_T_hot_tes_calc;		//[K] Hotter temperature on TES side (tank side)
+    double m_T_cold_tes_calc;       //[K] Colder temperature on TES side (tank side)
+    double m_m_dot_tes_calc;        //[kg/s] Mass flow rate on TES side (tank side)
 
 	void hx_performance(bool is_hot_side_mdot, bool is_storage_side, double T_hot_in, double m_dot_known, double T_cold_in,
 		double &eff, double &T_hot_out, double &T_cold_out, double &q_trans, double &m_dot_solved);
@@ -72,7 +88,7 @@ public:
 
 	C_heat_exchanger();
 
-	void init(HTFProperties &fluid_field, HTFProperties &fluid_store, double q_transfer_des,
+	void init(const HTFProperties &fluid_field, const HTFProperties &fluid_store, double q_transfer_des,
 		double dt_des, double T_h_in_des, double T_h_out_des);
 
 	void hx_charge_mdot_tes(double T_cold_tes, double m_dot_tes, double T_hot_field, 
@@ -86,6 +102,8 @@ public:
 
 	void hx_discharge_mdot_field(double T_cold_field, double m_dot_field, double T_hot_tes,
 		double &eff, double &T_hot_field, double &T_cold_tes, double &q_trans, double &m_dot_tes);
+
+    void converged();
 };
 
 class C_storage_tank
@@ -102,20 +120,26 @@ private:
 	double m_max_q_htr;			//[MWt] Max tank heater capacity
 
 	// Stored values from end of previous timestep
-	double m_V_prev;		//[m^3] Volume of storage fluid in tank
-	double m_T_prev;		//[K] Temperature of storage fluid in tank
-	double m_m_prev;		//[kg] Mass of storage fluid in tank
+	double m_V_prev;		    //[m^3] Volume of storage fluid in tank
+	double m_T_prev;		    //[K] Temperature of storage fluid in tank
+	double m_m_prev;		    //[kg] Mass of storage fluid in tank
 
 	// Calculated values for current timestep
-	double m_V_calc;		//[m^3] Volume of storage fluid in tank
-	double m_T_calc;		//[K] Temperature of storage fluid in tank
-	double m_m_calc;		//[kg] Mass of storage fluid in tank
+	double m_V_calc;		    //[m^3] Volume of storage fluid in tank
+	double m_T_calc;		    //[K] Temperature of storage fluid in tank
+	double m_m_calc;		    //[kg] Mass of storage fluid in tank
 
 public:
 
 	C_storage_tank();
 
 	double calc_mass_at_prev();
+
+    double calc_cp_at_prev();
+
+    double calc_enth_at_prev();
+
+    double get_m_UA();
 
 	double get_m_T_prev();
 
@@ -150,8 +174,8 @@ private:
 	std::string error_msg;
 
 	// Timestep data
-	double m_m_dot_tes_dc_max;
-	double m_m_dot_tes_ch_max;
+	double m_m_dot_tes_dc_max;  //[kg/s] TES discharge available from the SYSTEM (field side of HX if there is one)
+	double m_m_dot_tes_ch_max;  //[kg/s] TES charge that can be sent to the SYSTEM (field side of HX if there is one)
 
 	// Member data
 	bool m_is_tes;
@@ -159,6 +183,54 @@ private:
 	double m_V_tank_active;		//[m^3] available volume (considering h_min) of *one temperature*
 	double m_q_pb_design;		//[Wt] thermal power to power cycle at design
 	double m_V_tank_hot_ini;	//[m^3] Initial volume in hot storage tank
+
+
+    // Monotonic equation solvers
+    class C_MEQ_indirect_tes_discharge : public C_monotonic_equation
+    {
+    private:
+        C_csp_two_tank_tes *mpc_csp_two_tank_tes;
+        double m_timestep;
+        double m_T_amb;
+        double m_T_cold_field;
+        double m_m_dot_field;
+
+    public:
+        C_MEQ_indirect_tes_discharge(C_csp_two_tank_tes *pc_csp_two_tank_tes, double timestep, double T_amb,
+            double T_cold_field, double m_dot_field)
+        {
+            mpc_csp_two_tank_tes = pc_csp_two_tank_tes;
+            m_timestep = timestep;
+            m_T_amb = T_amb;
+            m_T_cold_field = T_cold_field;
+            m_m_dot_field = m_dot_field;
+        }
+
+        virtual int operator()(double m_dot_tank /*kg/s*/, double *m_dot_bal /*-*/);
+    };
+
+    class C_MEQ_indirect_tes_charge : public C_monotonic_equation
+    {
+    private:
+        C_csp_two_tank_tes *mpc_csp_two_tank_tes;
+        double m_timestep;
+        double m_T_amb;
+        double m_T_hot_field;
+        double m_m_dot_field;
+
+    public:
+        C_MEQ_indirect_tes_charge(C_csp_two_tank_tes *pc_csp_two_tank_tes, double timestep, double T_amb,
+            double T_hot_field, double m_dot_field)
+        {
+            mpc_csp_two_tank_tes = pc_csp_two_tank_tes;
+            m_timestep = timestep;
+            m_T_amb = T_amb;
+            m_T_hot_field = T_hot_field;
+            m_m_dot_field = m_dot_field;
+        }
+
+        virtual int operator()(double m_dot_tank /*kg/s*/, double *m_dot_bal /*-*/);
+    };
 
 public:
 
@@ -193,8 +265,19 @@ public:
 		double m_T_tank_cold_ini;	//[C] Initial temperature in cold storage cold
 		double m_h_tank_min;		//[m] Minimum allowable HTF height in storage tank
 		double m_f_V_hot_ini;       //[%] Initial fraction of available volume that is hot
-
 		double m_htf_pump_coef;		//[kW/kg/s] Pumping power to move 1 kg/s of HTF through power cycle
+        double m_tes_pump_coef;		//[kW/kg/s] Pumping power to move 1 kg/s of HTF through tes loop
+        bool tanks_in_parallel;     //[-] Whether the tanks are in series or parallel with the solar field. Series means field htf must go through storage tanks.
+        bool has_hot_tank_bypass;   //[-] True if the bypass valve causes the field htf to bypass just the hot tank and enter the cold tank before flowing back to the field.
+        double T_tank_hot_inlet_min; //[C] Minimum field htf temperature that may enter the hot tank
+        double V_tes_des;           //[m/s] Design-point velocity for sizing the diameters of the TES piping
+        bool custom_tes_p_loss;     //[-] True if the TES piping losses should be calculated using the TES pipe lengths and minor loss coeffs, false if using the pumping loss parameters
+        util::matrix_t<double> k_tes_loss_coeffs; //[-] Combined minor loss coefficients of the fittings and valves in the collection (including bypass) and generation loops in the TES 
+        bool custom_sgs_pipe_sizes;               //[-] True if the SGS diameters and wall thicknesses parameters should be used instead of calculating them
+        util::matrix_t<double> sgs_diams;         //[m] Imported inner diameters for the SGS piping as read from the modified output files
+        util::matrix_t<double> sgs_wallthicks;    //[m] Imported wall thicknesses for the SGS piping as read from the modified output files
+        util::matrix_t<double> sgs_lengths;       //[m] Imported lengths for the SGS piping as read from the modified output files
+
 
 		S_params()
 		{
