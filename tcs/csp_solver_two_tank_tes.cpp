@@ -800,6 +800,19 @@ bool C_csp_two_tank_tes::discharge(double timestep /*s*/, double T_amb /*K*/, do
         mc_hx.hx_discharge_mdot_field(T_field_cold_in, m_dot_field, T_tank_guess_2,
             eff_guess, T_hot_field_guess, T_cold_tes_guess, q_trans_guess, m_dot_tank_guess_2);
 
+        // Adjust guesses if needed
+        m_dot_tank_guess_1 = fmax(m_dot_tank_lower, fmin(m_dot_tank_guess_1, m_dot_tank_upper));
+        m_dot_tank_guess_2 = fmax(m_dot_tank_lower, fmin(m_dot_tank_guess_2, m_dot_tank_upper));
+
+        if (m_dot_tank_guess_1 == m_dot_tank_guess_2) {
+            if (m_dot_tank_guess_1 == m_dot_tank_upper) {
+                m_dot_tank_guess_2 -= 0.01*(m_dot_tank_upper - m_dot_tank_lower);
+            }
+            else {
+                m_dot_tank_guess_1 = fmin(m_dot_tank_upper, m_dot_tank_guess_1 + 0.01*(m_dot_tank_upper - m_dot_tank_lower));
+            }
+        }
+
         // Solve for required tank mass flow
         double tol_solved;
         tol_solved = std::numeric_limits<double>::quiet_NaN();
@@ -813,6 +826,10 @@ bool C_csp_two_tank_tes::discharge(double timestep /*s*/, double T_amb /*K*/, do
         catch (C_csp_exception)
         {
             throw(C_csp_exception("Failed to find a solution for the hot tank mass flow"));
+        }
+
+        if (std::isnan(m_dot_tank)) {
+            throw(C_csp_exception("Failed to converge on a valid tank mass flow."));
         }
 
         // The other needed outputs are not all saved in member variables so recalculate here
@@ -928,6 +945,19 @@ bool C_csp_two_tank_tes::charge(double timestep /*s*/, double T_amb /*K*/, doubl
         mc_hx.hx_charge_mdot_field(T_field_hot_in, m_dot_field, T_tank_guess_2,
             eff_guess, T_cold_field_guess, T_hot_tes_guess, q_trans_guess, m_dot_tank_guess_2);
 
+        // Adjust guesses if needed
+        m_dot_tank_guess_1 = fmax(m_dot_tank_lower, fmin(m_dot_tank_guess_1, m_dot_tank_upper));
+        m_dot_tank_guess_2 = fmax(m_dot_tank_lower, fmin(m_dot_tank_guess_2, m_dot_tank_upper));
+
+        if (m_dot_tank_guess_1 == m_dot_tank_guess_2) {
+            if (m_dot_tank_guess_1 == m_dot_tank_upper) {
+                m_dot_tank_guess_2 -= 0.01*(m_dot_tank_upper - m_dot_tank_lower);
+            }
+            else {
+                m_dot_tank_guess_1 = fmin(m_dot_tank_upper, m_dot_tank_guess_1 + 0.01*(m_dot_tank_upper - m_dot_tank_lower));
+            }
+        }
+
         // Solve for required tank mass flow
         double tol_solved;
         tol_solved = std::numeric_limits<double>::quiet_NaN();
@@ -941,6 +971,10 @@ bool C_csp_two_tank_tes::charge(double timestep /*s*/, double T_amb /*K*/, doubl
         catch (C_csp_exception)
         {
             throw(C_csp_exception("Failed to find a solution for the cold tank mass flow"));
+        }
+
+        if (std::isnan(m_dot_tank)) {
+            throw(C_csp_exception("Failed to converge on a valid tank mass flow."));
         }
 
         // The other needed outputs are not all saved in member variables so recalculate here
