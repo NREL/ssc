@@ -45,6 +45,8 @@ FuelCellDispatch::~FuelCellDispatch() {
 void FuelCellDispatch::runSingleTimeStep(size_t hour_of_year, size_t year_idx, double powerSystem_kWac, double powerLoad_kWac) {
 
 	m_powerTotal_kW = 0;
+	m_powerMaxPercentAverage_percent = 0;
+	m_loadAverage_percent = 0;
 	m_powerThermalTotal_kW = 0;
 	m_fuelConsumedTotal_MCf = 0;
 
@@ -54,6 +56,8 @@ void FuelCellDispatch::runSingleTimeStep(size_t hour_of_year, size_t year_idx, d
 			double power_kW = m_fuelCellVector[fc]->getMaxPowerOriginal() * m_fixed_percent;
 			m_fuelCellVector[fc]->runSingleTimeStep(power_kW);
 			m_powerTotal_kW += m_fuelCellVector[fc]->getPower();
+			m_powerMaxPercentAverage_percent += m_fuelCellVector[fc]->getPowerMaxPercent() /m_fuelCellVector.size();
+			m_loadAverage_percent += m_fuelCellVector[fc]->getPercentLoad() / m_fuelCellVector.size();
 			m_powerThermalTotal_kW += m_fuelCellVector[fc]->getPowerThermal();
 			m_fuelConsumedTotal_MCf += m_fuelCellVector[fc]->getFuelConsumption();
 		}
@@ -64,6 +68,8 @@ void FuelCellDispatch::runSingleTimeStep(size_t hour_of_year, size_t year_idx, d
 			double power_kW = fmax(0, powerLoad_kWac - powerSystem_kWac);
 			m_fuelCellVector[fc]->runSingleTimeStep(power_kW / m_fuelCellVector.size());
 			m_powerTotal_kW += m_fuelCellVector[fc]->getPower();
+			m_powerMaxPercentAverage_percent += m_fuelCellVector[fc]->getPowerMaxPercent() / m_fuelCellVector.size();
+			m_loadAverage_percent += m_fuelCellVector[fc]->getPercentLoad() / m_fuelCellVector.size();
 			m_powerThermalTotal_kW += m_fuelCellVector[fc]->getPowerThermal();
 			m_fuelConsumedTotal_MCf += m_fuelCellVector[fc]->getFuelConsumption();
 		}
@@ -103,6 +109,8 @@ void FuelCellDispatch::runSingleTimeStep(size_t hour_of_year, size_t year_idx, d
 			m_fuelCellVector[fc]->runSingleTimeStep(power_kW);
 			m_fuelConsumedTotal_MCf += m_fuelCellVector[fc]->getFuelConsumption();
 			m_powerTotal_kW += m_fuelCellVector[fc]->getPower();
+			m_powerMaxPercentAverage_percent += m_fuelCellVector[fc]->getPowerMaxPercent() / m_fuelCellVector.size();
+			m_loadAverage_percent += m_fuelCellVector[fc]->getPercentLoad() / m_fuelCellVector.size();
 		}
 	}
 	// Input dispatch
@@ -112,6 +120,8 @@ void FuelCellDispatch::runSingleTimeStep(size_t hour_of_year, size_t year_idx, d
 			m_fuelCellVector[fc]->runSingleTimeStep(power_kW);
 			m_fuelConsumedTotal_MCf += m_fuelCellVector[fc]->getFuelConsumption();
 			m_powerTotal_kW += m_fuelCellVector[fc]->getPower();
+			m_powerMaxPercentAverage_percent += m_fuelCellVector[fc]->getPowerMaxPercent() / m_fuelCellVector.size();
+			m_loadAverage_percent += m_fuelCellVector[fc]->getPercentLoad() / m_fuelCellVector.size();
 			m_powerThermalTotal_kW += m_fuelCellVector[fc]->getPowerThermal();
 		}
 	}
@@ -137,6 +147,14 @@ void FuelCellDispatch::setManualDispatchUnits(std::map<size_t, size_t> unitsByPe
 
 double FuelCellDispatch::getPower(){
 	return m_powerTotal_kW;
+}
+
+double FuelCellDispatch::getPowerMaxPercent() {
+	return m_powerMaxPercentAverage_percent;
+}
+
+double FuelCellDispatch::getPercentLoad() {
+	return m_loadAverage_percent;
 }
 
 double FuelCellDispatch::getPowerThermal() {

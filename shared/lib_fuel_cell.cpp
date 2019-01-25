@@ -33,6 +33,8 @@ FuelCell::FuelCell(double unitPowerMax_kW, double unitPowerMin_kW, double startu
 	m_shutdownOption(shutdownOption), 
 	m_powerMax_kW(unitPowerMax_kW), 
 	m_power_kW(0), 
+	m_powerMaxPercentOfOriginal_percent(0),
+	m_powerLoad_percent(0),
 	m_powerPrevious_kW(0), 
 	m_replacementCount(0)
 {
@@ -106,8 +108,6 @@ void FuelCell::init() {
 	if (m_startup_hours == 0) {
 		m_power_kW = m_unitPowerMin_kW;
 	}
-
-	
 }
 
 bool FuelCell::isStarting() {
@@ -165,16 +165,20 @@ double FuelCell::interpolateMap(double key, std::map<double, double> mapDouble) 
 	return f;
 }
 
-void FuelCell::calculateEfficiencyCurve(double percent) {
+void FuelCell::calculateEfficiencyCurve(double fraction) {
 	if (!isShutDown()) {
-		m_fuelConsumed_MCf = interpolateMap(percent, m_fuelConsumptionMap_MCf);
-		m_efficiency_percent = interpolateMap(percent, m_efficiencyMap);
-		m_heatRecovery_percent = interpolateMap(percent, m_heatRecoveryMap);
+		m_fuelConsumed_MCf = interpolateMap(fraction, m_fuelConsumptionMap_MCf);
+		m_efficiency_percent = interpolateMap(fraction, m_efficiencyMap);
+		m_heatRecovery_percent = interpolateMap(fraction, m_heatRecoveryMap);
 	}
 }
 
 double FuelCell::getPercentLoad() {
-	return m_power_kW / (m_unitPowerMax_kW);
+	m_powerLoad_percent = 100 * m_power_kW / (m_unitPowerMax_kW);
+	return m_powerLoad_percent;
+}
+double FuelCell::getLoadFraction() {
+	return getPercentLoad() * 0.01;
 }
 
 void FuelCell::checkPowerResponse() {
@@ -204,6 +208,9 @@ void FuelCell::checkPowerResponse() {
 }
 double FuelCell::getPower() {
 	return m_power_kW;
+}
+double FuelCell::getPowerMaxPercent() {
+	return m_powerMaxPercentOfOriginal_percent;
 }
 double FuelCell::getPowerThermal() {
 	return m_powerThermal_kW;
@@ -413,6 +420,9 @@ void FuelCell::applyDegradation() {
 		m_hoursSinceStart = 0;
 		m_hoursSinceStop = 0;
 	}
+
+	// Calculate the degradation and power load percents
+	m_powerMaxPercentOfOriginal_percent = 100 * m_powerMax_kW / m_unitPowerMax_kW;
 }
 
 void FuelCell::applyEfficiency() {
@@ -428,7 +438,7 @@ void FuelCell::applyEfficiency() {
 		m_fuelConsumed_MCf = 0;
 	}
 	else {
-		calculateEfficiencyCurve(getPercentLoad());
+		calculateEfficiencyCurve(getLoadFraction());
 		m_powerThermal_kW = m_power_kW;
 		m_powerThermal_kW *= m_heatRecovery_percent;
 	}

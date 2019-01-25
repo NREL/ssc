@@ -79,6 +79,15 @@ public:
 	/// Return the final heat kW
 	double getPowerThermal();
 
+	/// Get the maximum power percentage available
+	double getPowerMaxPercent();
+
+	/// Return percentage based on requested power (0-100)
+	double getPercentLoad();
+
+	/// Return the fractional representation of load (0-1)
+	double getLoadFraction();
+
 	/// Return the fuel consumption in MCF
 	double getFuelConsumption();
 
@@ -161,9 +170,6 @@ protected:
 	/// Check fuel cell power response conforms to dynamic limits
 	void checkPowerResponse();
 
-	/// Return percentage based on requested power
-	double getPercentLoad();
-
 	// Initialize calculated
 	void init();
 
@@ -201,9 +207,12 @@ protected:
 	double m_hoursSinceStop;
 	double m_hoursRampUp;
 
-	double m_powerMax_kW;  // Maximum power after degradation
-	double m_powerThermal_kW;
+	double m_powerMax_kW;     ///< Maximum power after degradation
+	double m_powerThermal_kW; 
 	double m_power_kW;
+	double m_powerMaxPercentOfOriginal_percent; ///< The percentage of max power available relative to original
+	double m_powerLoad_percent; ///< The power load relative to the degraded maximum
+
 	double m_powerPrevious_kW;
 	double m_fuelConsumed_MCf;
 	double m_efficiency_percent;
