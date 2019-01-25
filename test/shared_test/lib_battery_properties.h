@@ -95,7 +95,7 @@ public:
 		Cp = 1004;
 		h = 500;
 		for (size_t i = 0; i < 8760; i++) {
-			T_room.push_back(20);
+			T_room.push_back(20 + 273.15);
 		}
 		double vals3[] = { -10, 60, 0, 80, 25, 100, 40, 100 };
 		capacityVsTemperature.assign(vals3, 4, 2);

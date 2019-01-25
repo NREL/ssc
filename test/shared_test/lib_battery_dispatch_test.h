@@ -121,6 +121,11 @@ protected:
 	double P_load;
 	double P_clipped;
 
+	/*! Variables to store forecast data */
+	std::vector<double> pv_prediction;
+	std::vector<double> load_prediction;
+	std::vector<double> cliploss_prediction;
+
 public:
 
 	void SetUp()
@@ -138,6 +143,9 @@ public:
 		batteryModel->initialize(capacityModel, voltageModel, lifetimeModel, thermalModel, lossModel);
 		dispatchManual = new dispatch_manual_t(batteryModel, dtHour, SOC_min, SOC_max, currentChoice, currentChargeMax, currentDischargeMax, powerChargeMax, powerDischargeMax, minimumModeTime,
 			dispatchChoice, meterPosition, scheduleWeekday, scheduleWeekend, canCharge, canDischarge, canGridcharge, canGridcharge, percentDischarge, percentGridcharge);
+
+		dispatchAutoBTM = new dispatch_automatic_behind_the_meter_t(batteryModel, dtHour, SOC_min, SOC_max, currentChoice, currentChargeMax,
+			currentDischargeMax, powerChargeMax, powerDischargeMax, 0, 0, 0, 1, 24, 1, true, true, false, false);
 
 		// For Debugging Input Battery Target front of meter minute time steps
 		double dtHourFOM = 1.0 / 60.0;

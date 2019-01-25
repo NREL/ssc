@@ -8,7 +8,8 @@ BatteryPower::BatteryPower(double dtHour) :
 	powerPV(0),
 	powerPVThroughSharedInverter(0),
 	powerLoad(0),
-	powerBattery(0),
+	powerBatteryDC(0),
+	powerBatteryAC(0),
 	powerBatteryTarget(0),
 	powerGrid(0),
 	powerGeneratedBySystem(0),
@@ -55,7 +56,8 @@ void BatteryPower::reset()
 	powerFuelCellToGrid = 0;
 	powerFuelCellToLoad = 0;
 	powerFuelCellToBattery = 0;
-	powerBattery = 0;
+	powerBatteryDC = 0;
+	powerBatteryAC = 0;
 	powerBatteryTarget = 0;
 	powerBatteryToGrid = 0;
 	powerBatteryToLoad = 0;
@@ -106,7 +108,7 @@ void BatteryPowerFlow::initialize(double stateOfCharge)
 		(m_BatteryPower->powerPV < m_BatteryPower->powerLoad || m_BatteryPower->meterPosition == dispatch_t::FRONT))
 	{
 		// try to discharge full amount.  Will only use what battery can provide
-		m_BatteryPower->powerBattery = m_BatteryPower->powerBatteryDischargeMax;
+		m_BatteryPower->powerBatteryDC = m_BatteryPower->powerBatteryDischargeMax;
 	}
 	// Is there extra power from system
 	else if ((m_BatteryPower->powerPV > m_BatteryPower->powerLoad && m_BatteryPower->canPVCharge) || m_BatteryPower->canGridCharge)
@@ -114,11 +116,11 @@ void BatteryPowerFlow::initialize(double stateOfCharge)
 		if (m_BatteryPower->canPVCharge)
 		{
 			// use all power available, it will only use what it can handle
-			m_BatteryPower->powerBattery = -(m_BatteryPower->powerPV - m_BatteryPower->powerLoad);
+			m_BatteryPower->powerBatteryDC = -(m_BatteryPower->powerPV - m_BatteryPower->powerLoad);
 		}
 		// if we want to charge from grid in addition to, or without array, we can always charge at max power
 		if (m_BatteryPower->canGridCharge) {
-			m_BatteryPower->powerBattery = -m_BatteryPower->powerBatteryChargeMax;
+			m_BatteryPower->powerBatteryDC = -m_BatteryPower->powerBatteryChargeMax;
 		}
 	}
 }
@@ -132,7 +134,7 @@ void BatteryPowerFlow::reset()
 void BatteryPowerFlow::calculateACConnected()
 {
 	// The battery power is initially a DC power, which must be converted to AC for powerflow
-	double P_battery_dc = m_BatteryPower->powerBattery;
+	double P_battery_dc = m_BatteryPower->powerBatteryDC;
 
 	// These quantities are all AC quantities in KW unless otherwise specified
 	double P_pv_ac = m_BatteryPower->powerPV;
@@ -239,7 +241,7 @@ void BatteryPowerFlow::calculateACConnected()
 		P_grid_ac = 0;
 
 	// assign outputs
-	m_BatteryPower->powerBattery = P_battery_ac;
+	m_BatteryPower->powerBatteryAC = P_battery_ac;
 	m_BatteryPower->powerGrid = P_grid_ac;
 	m_BatteryPower->powerGeneratedBySystem = P_gen_ac;
 	m_BatteryPower->powerPVToLoad = P_pv_to_load_ac;
@@ -268,8 +270,8 @@ void BatteryPowerFlow::calculateDCConnected()
 	P_pv_to_batt_dc = P_grid_to_batt_dc = P_pv_to_inverter_dc = 0;
 
 	// The battery power and PV power are initially DC, which must be converted to AC for powerflow
-	double P_battery_dc_pre_bms = m_BatteryPower->powerBattery;
-	double P_battery_dc = m_BatteryPower->powerBattery;
+	double P_battery_dc_pre_bms = m_BatteryPower->powerBatteryDC;
+	double P_battery_dc = m_BatteryPower->powerBatteryDC;
 	double P_pv_dc = m_BatteryPower->powerPV;
 
 	// convert the calculated DC power to DC at the PV system voltage
@@ -398,7 +400,7 @@ void BatteryPowerFlow::calculateDCConnected()
 		P_grid_ac = 0;
 
 	// assign outputs
-	m_BatteryPower->powerBattery = P_battery_ac;
+	m_BatteryPower->powerBatteryAC = P_battery_ac;
 	m_BatteryPower->powerGrid = P_grid_ac;
 	m_BatteryPower->powerGeneratedBySystem = P_gen_ac;
 	m_BatteryPower->powerPVToLoad = P_pv_to_load_ac;
