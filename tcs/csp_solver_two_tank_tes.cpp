@@ -148,15 +148,16 @@ void C_heat_exchanger::hx_performance(bool is_hot_side_mdot, bool is_storage_sid
 	//				Heat transfer between fluids [MWt], cold side mass flow rate [kg/s]
 
     if (m_dot_known < 0) {
-        //throw(C_csp_exception("HX provided a negative mass flow", ""));
         eff = T_hot_out = T_cold_out = q_trans = m_dot_solved = std::numeric_limits<double>::quiet_NaN();
+        throw(C_csp_exception("HX provided a negative mass flow", ""));
     }
     else if (m_dot_known == 0) {
         eff = 0.;
-        T_hot_out = std::numeric_limits<double>::quiet_NaN();
-        T_cold_out = std::numeric_limits<double>::quiet_NaN();
+        T_hot_out = T_hot_in;
+        T_cold_out = T_cold_in;
         q_trans = 0.;
         m_dot_solved = 0.;
+        return;
     }
 
 	double m_dot_hot, m_dot_cold, c_hot, c_cold, c_dot;
@@ -219,7 +220,7 @@ void C_heat_exchanger::hx_performance(bool is_hot_side_mdot, bool is_storage_sid
 	double NTU = UA / c_dot;
 	eff = NTU / (1.0 + NTU);
 
-	if( eff <= 0.0 || eff > 1.0 )
+	if( isnan(eff) || eff <= 0.0 || eff > 1.0)
 	{
         eff = T_hot_out = T_cold_out = q_trans = m_dot_solved = 
         m_T_hot_field_prev = m_T_cold_field_prev = m_T_hot_tes_prev = m_T_cold_tes_prev = 
