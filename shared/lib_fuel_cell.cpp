@@ -152,7 +152,7 @@ double FuelCell::interpolateMap(double key, std::map<double, double> mapDouble) 
 
 			if (fabs(p2 - p1) > 0) {
 				m = (f2 - f1) / (p2 - p1);
-				f = f1 + m * key;
+				f = f1 + m * (key-p1);
 			}
 			break;
 		}
@@ -162,7 +162,7 @@ double FuelCell::interpolateMap(double key, std::map<double, double> mapDouble) 
 			break;
 		}
 	}
-	return f;
+	return f; 
 }
 
 void FuelCell::calculateEfficiencyCurve(double fraction) {

@@ -16,6 +16,32 @@ TEST_F(FuelCellTest, EfficiencyCurve)
 	EXPECT_EQ(fuelCell->getHeatRecoveryEfficiency(), .50);
 }
 
+TEST_F(FuelCellTest, FuelConsumption)
+{
+	fuelCell->calculateEfficiencyCurve(.16);
+	EXPECT_NEAR(fuelCell->getFuelConsumption(), 0.251, 0.01);
+	fuelCell->calculateEfficiencyCurve(.25);
+	EXPECT_NEAR(fuelCell->getFuelConsumption(), 0.330, 0.01);
+	fuelCell->calculateEfficiencyCurve(.30);
+	EXPECT_NEAR(fuelCell->getFuelConsumption(), 0.341, 0.01);
+	fuelCell->calculateEfficiencyCurve(.34);
+	EXPECT_NEAR(fuelCell->getFuelConsumption(), 0.351, 0.01);
+	fuelCell->calculateEfficiencyCurve(.44);
+	EXPECT_NEAR(fuelCell->getFuelConsumption(), 0.393, 0.01);
+	fuelCell->calculateEfficiencyCurve(.53);
+	EXPECT_NEAR(fuelCell->getFuelConsumption(), 0.417, 0.01);
+	fuelCell->calculateEfficiencyCurve(.62);
+	EXPECT_NEAR(fuelCell->getFuelConsumption(), 0.436, 0.01);
+	fuelCell->calculateEfficiencyCurve(.72);
+	EXPECT_NEAR(fuelCell->getFuelConsumption(), 0.476, 0.01);
+	fuelCell->calculateEfficiencyCurve(.82);
+	EXPECT_NEAR(fuelCell->getFuelConsumption(), 0.521, 0.01);
+	fuelCell->calculateEfficiencyCurve(.9);
+	EXPECT_NEAR(fuelCell->getFuelConsumption(), 0.572, 0.01);
+	fuelCell->calculateEfficiencyCurve(1);
+	EXPECT_NEAR(fuelCell->getFuelConsumption(), 0.648, 0.01);
+}
+
 TEST_F(FuelCellTest, Initialize)
 {
 	// Test if started up
