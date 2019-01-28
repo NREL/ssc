@@ -923,10 +923,10 @@ int sco2_design_cmod_common(compute_module *cm, C_sco2_recomp_csp & c_sco2_cycle
 	if (ph_err_code != 0)
 		throw compute_module::exec_error("sco2_csp_system", "cycle plot data routine failed");
 
-	int n_v = P_t.size();
+	size_t n_v = P_t.size();
 	ssc_number_t *p_P_t_data = cm->allocate("P_t_data", n_v);
 	ssc_number_t *p_h_t_data = cm->allocate("h_t_data", n_v);
-	for (int i = 0; i < n_v; i++)
+	for (size_t i = 0; i < n_v; i++)
 	{
 		p_P_t_data[i] = (ssc_number_t)(P_t[i]);		//[MPa]
 		p_h_t_data[i] = (ssc_number_t)(h_t[i]);		//[kJ/kg]
@@ -935,7 +935,7 @@ int sco2_design_cmod_common(compute_module *cm, C_sco2_recomp_csp & c_sco2_cycle
 	n_v = P_mc.size();
 	ssc_number_t *p_P_mc_data = cm->allocate("P_mc_data", n_v);
 	ssc_number_t *p_h_mc_data = cm->allocate("h_mc_data", n_v);
-	for (int i = 0; i < n_v; i++)
+	for (size_t i = 0; i < n_v; i++)
 	{
 		p_P_mc_data[i] = (ssc_number_t)(P_mc[i]);		//[MPa]
 		p_h_mc_data[i] = (ssc_number_t)(h_mc[i]);		//[kJ/kg]
@@ -944,7 +944,7 @@ int sco2_design_cmod_common(compute_module *cm, C_sco2_recomp_csp & c_sco2_cycle
 	n_v = P_rc.size();
 	ssc_number_t *p_P_rc_data = cm->allocate("P_rc_data", n_v);
 	ssc_number_t *p_h_rc_data = cm->allocate("h_rc_data", n_v);
-	for (int i = 0; i < n_v; i++)
+	for (size_t i = 0; i < n_v; i++)
 	{
 		p_P_rc_data[i] = (ssc_number_t)(P_rc[i]);		//[MPa]
 		p_h_rc_data[i] = (ssc_number_t)(h_rc[i]);		//[kJ/kg]
@@ -953,7 +953,7 @@ int sco2_design_cmod_common(compute_module *cm, C_sco2_recomp_csp & c_sco2_cycle
 	n_v = P_pc.size();
 	ssc_number_t *p_P_pc_data = cm->allocate("P_pc_data", n_v);
 	ssc_number_t *p_h_pc_data = cm->allocate("h_pc_data", n_v);
-	for (int i = 0; i < n_v; i++)
+	for (size_t i = 0; i < n_v; i++)
 	{
 		p_P_pc_data[i] = (ssc_number_t)(P_pc[i]);		//[MPa]
 		p_h_pc_data[i] = (ssc_number_t)(h_pc[i]);		//[kJ/kg]
@@ -998,7 +998,7 @@ int sco2_design_cmod_common(compute_module *cm, C_sco2_recomp_csp & c_sco2_cycle
 	n_v = T_LTR_HP.size();
 	ssc_number_t *p_T_LTR_HP_data = cm->allocate("T_LTR_HP_data", n_v);
 	ssc_number_t *p_s_LTR_HP_data = cm->allocate("s_LTR_HP_data", n_v);
-	for (int i = 0; i < n_v; i++)
+	for (size_t i = 0; i < n_v; i++)
 	{
 		p_T_LTR_HP_data[i] = (ssc_number_t)(T_LTR_HP[i]);	//[C]
 		p_s_LTR_HP_data[i] = (ssc_number_t)(s_LTR_HP[i]);	//[kJ/kg-K]
@@ -1007,7 +1007,7 @@ int sco2_design_cmod_common(compute_module *cm, C_sco2_recomp_csp & c_sco2_cycle
 	n_v = T_HTR_HP.size();
 	ssc_number_t *p_T_HTR_HP_data = cm->allocate("T_HTR_HP_data", n_v);
 	ssc_number_t *p_s_HTR_HP_data = cm->allocate("s_HTR_HP_data", n_v);
-	for (int i = 0; i < n_v; i++)
+	for (size_t i = 0; i < n_v; i++)
 	{
 		p_T_HTR_HP_data[i] = (ssc_number_t)(T_HTR_HP[i]);		//[C]
 		p_s_HTR_HP_data[i] = (ssc_number_t)(s_HTR_HP[i]);		//[kJ/kg-K]
@@ -1016,7 +1016,7 @@ int sco2_design_cmod_common(compute_module *cm, C_sco2_recomp_csp & c_sco2_cycle
 	n_v = T_PHX.size();
 	ssc_number_t *p_T_PHX_data = cm->allocate("T_PHX_data", n_v);
 	ssc_number_t *p_s_PHX_data = cm->allocate("s_PHX_data", n_v);
-	for (int i = 0; i < n_v; i++)
+	for (size_t i = 0; i < n_v; i++)
 	{
 		p_T_PHX_data[i] = (ssc_number_t)(T_PHX[i]);			//[C]
 		p_s_PHX_data[i] = (ssc_number_t)(s_PHX[i]);			//[kJ/kg-K]
@@ -1025,7 +1025,7 @@ int sco2_design_cmod_common(compute_module *cm, C_sco2_recomp_csp & c_sco2_cycle
 	n_v = T_HTR_LP.size();
 	ssc_number_t *p_T_HTR_LP_data = cm->allocate("T_HTR_LP_data", n_v);
 	ssc_number_t *p_s_HTR_LP_data = cm->allocate("s_HTR_LP_data", n_v);
-	for (int i = 0; i < n_v; i++)
+	for (size_t i = 0; i < n_v; i++)
 	{
 		p_T_HTR_LP_data[i] = (ssc_number_t)(T_HTR_LP[i]);	//[C]
 		p_s_HTR_LP_data[i] = (ssc_number_t)(s_HTR_LP[i]);	//[kJ/kg-K]
@@ -1034,7 +1034,7 @@ int sco2_design_cmod_common(compute_module *cm, C_sco2_recomp_csp & c_sco2_cycle
 	n_v = T_LTR_LP.size();
 	ssc_number_t *p_T_LTR_LP_data = cm->allocate("T_LTR_LP_data", n_v);
 	ssc_number_t *p_s_LTR_LP_data = cm->allocate("s_LTR_LP_data", n_v);
-	for (int i = 0; i < n_v; i++)
+	for (size_t i = 0; i < n_v; i++)
 	{
 		p_T_LTR_LP_data[i] = (ssc_number_t)(T_LTR_LP[i]);	//[C]
 		p_s_LTR_LP_data[i] = (ssc_number_t)(s_LTR_LP[i]);	//[kJ/kg-K]
@@ -1043,7 +1043,7 @@ int sco2_design_cmod_common(compute_module *cm, C_sco2_recomp_csp & c_sco2_cycle
 	n_v = T_main_cooler.size();
 	ssc_number_t *p_T_main_cooler = cm->allocate("T_main_cooler_data", n_v);
 	ssc_number_t *p_s_main_cooler = cm->allocate("s_main_cooler_data", n_v);
-	for (int i = 0; i < n_v; i++)
+	for (size_t i = 0; i < n_v; i++)
 	{
 		p_T_main_cooler[i] = (ssc_number_t)(T_main_cooler[i]);	//[C]
 		p_s_main_cooler[i] = (ssc_number_t)(s_main_cooler[i]);	//[kJ/kg-K]
@@ -1052,7 +1052,7 @@ int sco2_design_cmod_common(compute_module *cm, C_sco2_recomp_csp & c_sco2_cycle
 	n_v = T_pre_cooler.size();
 	ssc_number_t *p_T_pre_cooler = cm->allocate("T_pre_cooler_data", n_v);
 	ssc_number_t *p_s_pre_cooler = cm->allocate("s_pre_cooler_data", n_v);
-	for (int i = 0; i < n_v; i++)
+	for (size_t i = 0; i < n_v; i++)
 	{
 		p_T_pre_cooler[i] = (ssc_number_t)(T_pre_cooler[i]);	//[C]
 		p_s_pre_cooler[i] = (ssc_number_t)(s_pre_cooler[i]);	//[kJ/kg-K]

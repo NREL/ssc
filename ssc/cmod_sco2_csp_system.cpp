@@ -323,7 +323,7 @@ public:
 		else if(is_P_mc_in_od_sweep_assigned)
 		{
 			std::vector<double> od_case = as_vector_double("od_P_mc_in_sweep");
-			int n_od = od_case.size();
+			size_t n_od = od_case.size();
 			if (n_od != 5)
 			{
 				std::string err_msg = util::format("The matrix of off design cases requires 5 columns. The entered matrix has %d columns", n_od);

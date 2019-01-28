@@ -368,7 +368,7 @@ class ThreadedKernel : public wxThread, public tcskernel
 	wxArrayString m_messages;
 public:
 	ThreadedKernel( tcskernel *setup, tcstypeprovider *prov, int thread_id, 
-		double start, double end, double step, bool store, bool proceed, int maxiter )
+		double start, double end, double step, bool, bool proceed, int maxiter )
 		: wxThread( ::wxTHREAD_JOINABLE ), tcskernel( prov ),
 		m_threadId(thread_id), m_start(start), m_end(end), m_step(step),
 		m_proceedAnyways(proceed), m_maxIter(maxiter), m_simResult(0)

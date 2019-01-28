@@ -33,7 +33,7 @@ struct DispatchProperties
 
 	// Front of meter auto dispatch
 	std::vector<double> ppaFactors;
-	UtilityRate * ur;
+	UtilityRate * ur{nullptr};
 	util::matrix_t<size_t> ppaWeekend;
 	util::matrix_t<size_t> ppaWeekday;
 
@@ -112,9 +112,9 @@ protected:
 	losses_t * lossModelFOM;
 	battery_t *batteryModelFOM;
 
-	dispatch_manual_t * dispatchManual;
-	dispatch_automatic_behind_the_meter_t * dispatchAutoBTM;
-	dispatch_automatic_front_of_meter_t * dispatchAutoFOM;
+	dispatch_manual_t * dispatchManual{nullptr};
+	dispatch_automatic_behind_the_meter_t * dispatchAutoBTM{nullptr};
+	dispatch_automatic_front_of_meter_t * dispatchAutoFOM{nullptr};
 
 	double P_pv;
 	double V_pv;

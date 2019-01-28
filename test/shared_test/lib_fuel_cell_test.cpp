@@ -332,7 +332,7 @@ TEST_F(FuelCellTest, DispatchManual) {
 /// Test dispatching different units per period
 TEST_F(FuelCellTest, DispatchManualUnits) {
 
-	size_t sh = (size_t)startup_hours;
+	size_t sh = (size_t)8;
 	discharge_units[0] = 3;
 
 	fuelCellDispatchMultiple->setDispatchOption(FuelCellDispatch::FC_DISPATCH_OPTION::MANUAL);
@@ -342,7 +342,7 @@ TEST_F(FuelCellTest, DispatchManualUnits) {
 	for (size_t h = 0; h < sh; h++) {
 		fuelCellDispatchMultiple->runSingleTimeStep(h, h, 0, 20);
 	}
-	EXPECT_EQ(fuelCellDispatchMultiple->getPower(), 0);
+	EXPECT_NEAR(fuelCellDispatchMultiple->getPower(), 0, 0.01);
 	
 
 	// Dispatch fuel cells at 40% of max output (40 kW per unit, limited by dynamic response, and min turndown)

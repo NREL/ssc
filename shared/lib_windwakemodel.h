@@ -119,6 +119,7 @@ protected:
 	windTurbine* wTurbine;
 public:
 	wakeModelBase(){}
+	virtual ~wakeModelBase() {};
 	virtual std::string getModelName(){ return ""; };
 	std::string errDetails;
 	virtual int test(int a){ return a + 10; }
@@ -139,7 +140,7 @@ private:
 public:
 	simpleWakeModel(){ nTurbines = 0; }
 	simpleWakeModel(size_t numberOfTurbinesInFarm, windTurbine* wt){ nTurbines = numberOfTurbinesInFarm; wTurbine = wt; }
-
+	virtual ~simpleWakeModel() {};
 	std::string getModelName(){ return "PQ"; }
 
 	void wakeCalculations(
@@ -174,7 +175,7 @@ private:
 public:
 	parkWakeModel(){ nTurbines = 0; }
 	parkWakeModel(size_t numberOfTurbinesInFarm, windTurbine* wt){ nTurbines = numberOfTurbinesInFarm; wTurbine = wt; }
-	
+	virtual ~parkWakeModel() {};
 	std::string getModelName(){ return "Park"; }
 	void setRotorDiameter(double d){ rotorDiameter = d; }
 	void wakeCalculations(
@@ -270,7 +271,7 @@ public:
 		matEVWakeDeficits.resize_fill(nTurbines, (int)(maxRotorDiameters / axialResolution) + 1, 0.0); // each turbine is row, each col is wake deficit for that turbine at dist
 		matEVWakeWidths.resize_fill(nTurbines, (int)(maxRotorDiameters / axialResolution) + 1, 0.0); // each turbine is row, each col is wake deficit for that turbine at dist
 	}
-
+	virtual ~eddyViscosityWakeModel() {};
 	std::string getModelName(){ return "FastEV"; }
 
 	void wakeCalculations(

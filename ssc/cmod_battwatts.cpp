@@ -324,7 +324,7 @@ public:
 
 			for (hour = 0; hour < 8760; hour++)
 			{
-				for (int jj = 0; jj < batt.step_per_hour; jj++)
+				for (size_t jj = 0; jj < batt.step_per_hour; jj++)
 				{
 					batt.initialize_time(0, hour, jj);
 					batt.advance(*this, p_ac[count], voltage, p_load[count]);

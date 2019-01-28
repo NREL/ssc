@@ -54,6 +54,8 @@
 #include "core.h"
 #include "sscapi.h"
 
+#pragma warning (disable : 4706 )
+
 SSCEXPORT int ssc_version()
 {
 	return 205;
