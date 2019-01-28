@@ -61,4 +61,5 @@ branches:
   - release
   - develop
   - patch
+  - fuel_cell
   
