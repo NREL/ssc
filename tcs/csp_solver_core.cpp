@@ -742,6 +742,12 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
     if(end_time != 8760*3600.)
         mc_csp_messages.add_message(C_csp_messages::WARNING, util::format("End time: %f", end_time) );
 
+    int operating_mode = ENTRY_MODE;
+    std::string operating_mode_str = tech_operating_modes_str[operating_mode];
+    std::string operating_mode_str_prev = "";
+    std::string op_mode_str = "";
+    std::string op_mode_str_prev = "";
+
 	while( mc_kernel.mc_sim_info.ms_ts.m_time <= mc_kernel.get_sim_setup()->m_sim_time_end )
 	{
 		// Report simulation progress
@@ -1116,8 +1122,6 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
         ------------ Controller/Solver iteration loop -------------
         */
 
-		int operating_mode = ENTRY_MODE;
-        std::string op_mode_str = "";
 		bool are_models_converged = false;
 		reset_hierarchy_logic();
 		// Reset operating mode tracker		
@@ -1692,6 +1696,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 
 			// Store operating mode
 			m_op_mode_tracking.push_back(operating_mode);
+            operating_mode_str = tech_operating_modes_str[operating_mode];
 
             op_mode_str = "";
             
@@ -5027,7 +5032,8 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 		}
 		mc_reported_outputs.value(C_solver_outputs::CTRL_OP_MODE_SEQ_C, op_mode_key);
 
-
+        operating_mode_str_prev = operating_mode_str;
+        op_mode_str_prev = op_mode_str;
 
 		mc_reported_outputs.set_timestep_outputs();
 
