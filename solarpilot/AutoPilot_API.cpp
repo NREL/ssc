@@ -258,8 +258,8 @@ public:
 struct _aof_inst 
 { 
     double obj; 
-    double flux; 
-	_aof_inst(double o, double f){
+    vector<double> flux; 
+	_aof_inst(double o, vector<double> f){
         obj=o; flux=f; 
     }; 
 	_aof_inst(){};
@@ -271,7 +271,7 @@ struct AutoOptHelper
     AutoPilot *m_autopilot;
     vector<vector<double> > m_all_points;
     vector<double> m_objective;
-    vector<double> m_flux;
+    vector< vector<double> > m_flux;
     vector<double*> m_opt_vars;
     vector<string> m_opt_names;
     nlopt::opt *m_opt_obj;
@@ -289,12 +289,12 @@ struct AutoOptHelper
         };
 
     public:
-        void add_call(std::vector<double> vars, double objective, double flux)
+        void add_call(std::vector<double> vars, double objective, vector<double> flux)
         {
             items[ format(vars) ] = _aof_inst(objective, flux);
         };
 
-        bool check_call(std::vector<double> vars, double* obj, double* flux)
+        bool check_call(std::vector<double> vars, double* obj, vector<double>* flux)
         {
             std::string hash = format(vars);
             if( items.find( hash ) == items.end() )
@@ -354,7 +354,8 @@ struct AutoOptHelper
 
         m_all_points.push_back( current );
 
-        double obj, flux, cost;
+        double obj, cost;
+        std::vector<double> flux;
         
         //Evaluate the objective function value
         if(! 
@@ -445,24 +446,39 @@ double optimize_auto_eval(unsigned n, const double *x, double * /*grad*/, void *
 };
 
 
-double constraint_auto_eval(unsigned n, const double *x, double * /*grad*/, void *data)
+void constraint_auto_eval(unsigned m, double *result, unsigned n, const double* x, double* /*gradient*/, void *data)
 {
+    /* 
+    Evaluate 'm' constraints, filling the vector 'result[0..m]'. There are 'n' dimensions of value 'x[0..n]'. 
+    'gradient' is unused, as no explicit evaluator is present. 'data' contains the void* pointer to the AutoOptHelper class object.
+    */
+
     AutoOptHelper *D = static_cast<AutoOptHelper*>( data );
     
     std::vector<double> vars;
     for(int i=0; i<(int)n; i++)
         vars.push_back( x[i] );
-    double obj, flux;
-    if( D->m_history_map.check_call( vars, &obj, &flux ) )
-    {
-        return flux - D->m_variables->recs.front().peak_flux.val;
-    }
-    else
+    double obj; 
+    std::vector<double> flux;
+
+    if(! D->m_history_map.check_call( vars, &obj, &flux ) )
     {
         std::string comment = " >> Checking flux constraint";
         D->Simulate(x, n, &comment);
-        return D->m_flux.back() - D->m_variables->recs.front().peak_flux.val;
+        flux = D->m_flux.back();
     }
+
+    int rct = 0;
+    for (std::vector<var_receiver>::iterator rit = D->m_variables->recs.begin(); rit != D->m_variables->recs.end(); rit++)
+    {
+        if (!rit->is_enabled.val)
+            continue;
+
+        result[rct++] = flux.at(rct) - rit->peak_flux.val;      //estimate of the violation of the flux contraint 
+
+    }
+    
+    return;
 };
 
 
@@ -786,7 +802,7 @@ void AutoPilot::CancelSimulation()
 
 
 
-bool AutoPilot::EvaluateDesign(double &obj_metric, double &flux_max, double &tot_cost)
+bool AutoPilot::EvaluateDesign(double &obj_metric, std::vector< double > &flux_max, double &tot_cost)
 {
 	/* 
 	Create a layout and evaluate the optimization objective function value with as little 
@@ -812,7 +828,7 @@ bool AutoPilot::EvaluateDesign(double &obj_metric, double &flux_max, double &tot
         {
             CancelSimulation();
             obj_metric = 0.;
-            flux_max = 0.;
+            flux_max.clear();
             return false;
         }
 		if(_SF->ErrCheck()){return false;}
@@ -838,12 +854,17 @@ bool AutoPilot::EvaluateDesign(double &obj_metric, double &flux_max, double &tot
 	tot_cost = V->fin.total_installed_cost.Val();
 	
 	//Get the maximum flux value
-	flux_max=0.;
-	for(int i=0; i<(int)_SF->getReceivers()->size(); i++){
-		for(int j=0; j<(int)_SF->getReceivers()->at(i)->getFluxSurfaces()->size(); j++){
+	flux_max.resize(_SF->getActiveReceiverCount(), 0.);
+	for(int i=0; i<(int)_SF->getReceivers()->size(); i++)
+    {
+        if (!_SF->getReceivers()->at(i)->getVarMap()->is_enabled.val)
+            continue;
+
+		for(int j=0; j<(int)_SF->getReceivers()->at(i)->getFluxSurfaces()->size(); j++)
+        {
 			double ff = _SF->getReceivers()->at(i)->getFluxSurfaces()->at(j).getMaxObservedFlux();
-			if( ff > flux_max )
-				flux_max = ff;
+			if( ff > flux_max.at(i) )
+				flux_max.at(i) = ff;
 		}
 	}
 
@@ -897,8 +918,8 @@ bool AutoPilot::Optimize(vector<double*> &optvars, vector<double> &upper_range, 
     nlobj.set_lower_bounds(lower_range);
     nlobj.set_upper_bounds(upper_range);
     
-    //constraint
-    nlobj.add_inequality_constraint( constraint_auto_eval, &AO, 0. );
+    //flux constraint for each receiver
+    nlobj.add_inequality_mconstraint(constraint_auto_eval, &AO, std::vector<double>(_SF->getActiveReceiverCount(), 0.));
 
     //Number of variables to be optimized
 	int nvars = (int)optvars.size();
@@ -909,30 +930,34 @@ bool AutoPilot::Optimize(vector<double*> &optvars, vector<double> &upper_range, 
         start.at(i) = *optvars.at(i);
 
     //Check feasibility
-    unsigned int iht = (unsigned int)(std::find(names->begin(), names->end(), "receiver.0.rec_height") - names->begin());
-    if( iht < names->size() )
+    int itct = 0;
+    for (std::vector<var_receiver>::iterator rit = _SF->getVarMap()->recs.begin(); rit != _SF->getVarMap()->recs.end(); rit++)
     {
-        double *xtemp = new double[ optvars.size() ]; 
-        for(int i=0; i<(int)optvars.size(); i++)
-            xtemp[i] = 1.;
-        AO.Simulate(xtemp, (int)optvars.size());
-        delete [] xtemp;
-        double feas_mult = 1.;
-        if( AO.m_flux.back() > V->recs.front().peak_flux.val )
+        unsigned int iht = (unsigned int)(std::find(names->begin(), names->end(), rit->rec_height.name) - names->begin());
+        if (iht < names->size())
         {
-            feas_mult += (AO.m_flux.back() / V->recs.front().peak_flux.val - 1. )*3.;
-            start.at(iht) *= feas_mult;
-            _summary_siminfo->addSimulationNotice( "Modifying initial receiver height for feasibility" );
+            double *xtemp = new double[optvars.size()];
+            for (int i = 0; i < (int)optvars.size(); i++)
+                xtemp[i] = 1.;
+            AO.Simulate(xtemp, (int)optvars.size());
+            delete[] xtemp;
+            double feas_mult = 1.;
+            if (AO.m_flux.back().at(itct) > rit->peak_flux.val)
+            {
+                feas_mult += (AO.m_flux.back().at(itct) / rit->peak_flux.val - 1.)*3.;
+                start.at(iht) *= feas_mult;
+                _summary_siminfo->addSimulationNotice("Modifying initial receiver height for feasibility");
+            }
         }
+        itct++;
     }
     
     //Add a formatted simulation notice
     ostringstream os;
     int width = 9;
-    os << "\n\nBeginning Simulation\nIt | ";
+    os << "\n\nBeginning Simulation\nIter | ";
 
-
-    for (int j = 0; ; j++)
+    for (int j = 0; ; j++)      //header line counter
     {
         bool all_written = true;    //initialize
         for (int i = 0; i < (int)optvars.size(); i++)
@@ -948,26 +973,34 @@ bool AutoPilot::Optimize(vector<double*> &optvars, vector<double> &upper_range, 
             os << setw(width) << std::left << (names==0 ? "Var "+my_to_string(i+1) : word) << "|";
         }
         if (!all_written)
-            os << "\n   | ";  //start a new line
+            os << "\n     | ";  //start a new line
 
         else if (all_written)
             break;
     }
-    os << "| Obj.    | Flux    | Plant cost";
+    os << "| Obj.    | Flux    ";
+    for (size_t i = 0; i < _SF->getVarMap()->recs.size(); i++)
+        os << setw(8) << " ";
+    os << "| Plant cost";
 
-    string hmsg = os.str();
+    int maxlinelen = 0;
+    {
+        std::vector<std::string> ols = split(os.str(), "\n");
+        for (size_t k = 0; k < ols.size(); k++)
+            if (ols.at(k).size() > maxlinelen)
+                maxlinelen = ols.at(k).size();
+    }
+    std::stringstream ol;
     
-    string ol;
-    for(int i=0; i<(int)hmsg.find("|\n")+5; i++)
-        ol.append("-");
+    ol << setw(maxlinelen) << setfill('-') << "-";
 
     _summary_siminfo->addSimulationNotice( os.str() );
-    _summary_siminfo->addSimulationNotice( ol.c_str() );
+    _summary_siminfo->addSimulationNotice( ol.str() );
 
     double fmin;
     try{
        nlobj.optimize( start, fmin );
-        _summary_siminfo->addSimulationNotice( ol.c_str() );
+        _summary_siminfo->addSimulationNotice( ol.str() );
         
         //int iopt = 0;
         int iopt = (int)AO.m_objective.size()-1;
@@ -1015,14 +1048,17 @@ sp_optimize *AutoPilot::GetOptimizationObject()
     return _opt;
 }
 
-void AutoPilot::PostEvaluationUpdate(int iter, vector<double> &pos, /*vector<double> &normalizers, */double &obj, double &flux, double &cost, std::string *note)
+void AutoPilot::PostEvaluationUpdate(int iter, vector<double> &pos, /*vector<double> &normalizers, */double &obj, std::vector<double> &flux, double &cost, std::string *note)
 {
 	ostringstream os;
-    os << "[" << setw(2) << iter << "] ";
+    os << "[" << setw(3) << iter << "]  ";
     for(int i=0; i<(int)pos.size(); i++)
         os << setw(8) << pos.at(i) /** normalizers.at(i)*/ << " |";
 
-    os << "|" << setw(8) << obj << " |" << setw(8) << flux << " | $" << setw(8) << cost;
+    os << "|" << setw(8) << obj << " |";
+    for (size_t i = 0; i < flux.size(); i++)
+        os << setw(8) << flux.at(i) << (flux.size()>0 ? "  " : "");
+    os << " | $" << setw(8) << cost;
 
     if( note != 0 )
         os << *note;
