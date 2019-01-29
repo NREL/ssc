@@ -85,6 +85,7 @@ set(SSC_SRC
 	cmod_tcstrough_empirical.cpp
 	cmod_tcstrough_physical.cpp
 	cmod_tcstrough_physical_csp_solver.cpp
+	cmod_trough_physical.cpp
 	cmod_trough_physical_iph.cpp
 	cmod_iph_to_lcoefcr.cpp
 	cmod_linear_fresnel_dsg_iph.cpp
@@ -112,7 +113,9 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 # dltest executable for checking ssc library
 if(UNIX)
 	add_executable(dltest ../build_osx/dltest.c)
-	target_compile_options(dltest PUBLIC -ldl)
+	if (NOT APPLE)
+		target_compile_options(dltest PUBLIC -ldl)
+	endif()
 	if(CMAKE_BUILD_TYPE STREQUAL "Debug")
 		target_link_libraries(dltest sscd)
 	else()
@@ -125,9 +128,13 @@ endif()
 
 # change when making toplevel file
 set(SSC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/..")
-set( SSC_LIBRARIES
+set( DEPENDENCIES
 	splinter
-	shared)
+	shared
+	solarpilot
+	tcs
+	lpsolve
+	nlopt)
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
 	add_library(sscd SHARED ${SSC_SRC})
 	set(SSC_LIB sscd)
@@ -159,41 +166,21 @@ else()
 	set(SSC_LIB ssc)
 	set_property(TARGET ssc PROPERTY PREFIX "")
 
-	message("${SSC_DIR}/splinter")
-	find_library(SPLINTER_LIB
-		NAMES splinter.a splinter.lib
-		PATHS ${SSC_DIR}/splinter ${SSC_DIR}../splinter)
-	find_library(SHARED_LIB
-		NAMES shared.a shared.lib
-		PATHS ${SSC_DIR}/shared ${SSC_DIR}../shared)
-	find_library(SOLARPILOT_LIB
-		NAMES solarpilot.a solarpilot.lib
-		PATHS ${SSC_DIR}/solarpilot ${SSC_DIR}../solarpilot)
-	find_library(TCS_LIB
-		NAMES tcs.a tcs.lib
-		PATHS ${SSC_DIR}/tcs ${SSC_DIR}../tcs)
-	find_library(LPSOLVE_LIB
-		NAMES lpsolve.a lpsolve.lib
-		PATHS ${SSC_DIR}/lpsolve ${SSC_DIR}../lpsolve)
-	find_library(NLOPT_LIB
-		NAMES nlopt.a nlopt.lib
-		PATHS ${SSC_DIR}/nlopt ${SSC_DIR}../nlopt)
+	foreach( name ${DEPENDENCIES} )
+		find_library( ${name}_LIB
+			NAMES ${name}.a ${name}.lib
+			PATHS ${SSC_DIR}/${name} ${SSC_DIR}/../${name})
+	endforeach()
 endif()
 
-target_link_libraries(${SSC_LIB} -lstdc++)
-if (UNIX AND NOT APPLE)
-	target_link_libraries(${SSC_LIB} -lm )
-endif()
-target_link_libraries(${SSC_LIB} 
-	${SPLINTER_LIB}
-	${SHARED_LIB}
-	${SOLARPILOT_LIB}
-	${TCS_LIB}
-	${LPSOLVE_LIB}
-	${NLOPT_LIB})
+target_link_libraries(${SSC_LIB} -lm -lstdc++)
+foreach (name ${DEPENDENCIES})
+	target_link_libraries(${SSC_LIB} ${${name}_LIB})
+endforeach()
+
 
 add_custom_target(dltest_run 
-	COMMAND dltest ${TARGET}
+	COMMAND ../dltest {$SSC_DIR}
 	COMMENT "check ssc shared library works"
 	# DEPENDS ssc
 	WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
