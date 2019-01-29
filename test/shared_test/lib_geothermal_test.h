@@ -21,7 +21,8 @@ namespace geotest {
 	int n1 = sprintf(filename_path, "%s/test/input_cases/general_data/daggett_ca_34.865371_-116.783023_psmv3_60_tmy.csv", geotest::SSCDIR);
 }
 
-class CGeothermalAnalyzerBinary : public ::testing::Test
+//Fixture to test CGeothermalAnalyzer class defined in 'lib_geothermal.h':
+class GeothermalPlantAnalyzer : public ::testing::Test
 {	
 protected:
 
@@ -30,7 +31,7 @@ protected:
 	int	well_flow_rate;
 	double num_wells_getem;
 	int nameplate;
-	int analysis_type;
+	int analysis_type;		
 	int conversion_type;
 	int conversion_subtype;
 	int plant_efficiency_input;
@@ -76,7 +77,7 @@ protected:
 		SGeothermal_Outputs geoBinary_outputs;
 	
 	//Initializing CGeothermalAnalyzer class for testing:
-	CGeothermalAnalyzer* binaryDefault; 
+	CGeothermalAnalyzer* geoTester; 
 	
 public:
 	void SetUp() {
@@ -84,9 +85,9 @@ public:
 	//Current defaults in SAM 2018.11.11:
 		well_flow_rate = 110;
 		num_wells_getem = 4.31975;
-		nameplate = 15000;
+		nameplate = 30000;
 		analysis_type = 0;
-		conversion_type = BINARY;
+		conversion_type = 0;	//Binary = 0 ; Flash = 1
 		conversion_subtype = 0;
 		plant_efficiency_input = 80;
 		decline_type = 0;
@@ -123,188 +124,239 @@ public:
 		geothermal_analysis_period = 30;
 		resource_potential = 210;
 		
+		//Following block intializes all 4 Structs (to default values in SAM 2018.11.11) that are used
+		//as formal parameters in constructing the CGeothermalAnalyzer Class:
+		//====================================================================================================================================================================
+				//SPowerBlockParameters SPBP;
+				SPBP.tech_type = 4;
+				SPBP.T_htf_cold_ref = 90;						// design outlet fluid temp
+				SPBP.T_htf_hot_ref = 175;						// design inlet fluid temp
+				SPBP.HTF = 3;									// heat transfer fluid type - set in interface, but no user input
+				SPBP.P_ref = nameplate / 1000;					// P_ref wants MW, 'nameplate' in kW
+				SPBP.P_boil = 2;
+				SPBP.eta_ref = 0.17;
+				SPBP.q_sby_frac = 0.2;
+				SPBP.startup_frac = 0.2;
+				SPBP.startup_time = 1;
+				SPBP.pb_bd_frac = 0.013;
+				SPBP.T_amb_des = 27;
+				SPBP.CT = 0;
+				SPBP.dT_cw_ref = 10;
+				SPBP.T_approach = 5;
+				SPBP.T_ITD_des = 16;
+				SPBP.P_cond_ratio = 1.0028;
+				SPBP.P_cond_min = 1.25;
+				SPBP.n_pl_inc = 8;
+				SPBP.F_wc[0] = 0;
+				SPBP.F_wc[1] = 0;
+				SPBP.F_wc[2] = 0;
+				SPBP.F_wc[3] = 0;
+				SPBP.F_wc[4] = 0;
+				SPBP.F_wc[5] = 0;
+				SPBP.F_wc[6] = 0;
+				SPBP.F_wc[7] = 0;
+				SPBP.F_wc[8] = 0;
+		
+		//====================================================================================================================================================================
+				//SPowerBlockInputs PBInputs;
+				PBInputs.mode = 2;
+				if (true) // used number of wells as calculated by GETEM
+					PBInputs.m_dot_htf = well_flow_rate * 3600.0 * num_wells_getem;
+				//Ignoring user defined number of wells for now.
+
+				PBInputs.demand_var = PBInputs.m_dot_htf;
+				PBInputs.standby_control = 1;
+				PBInputs.rel_humidity = 0.7;
 
 		//====================================================================================================================================================================
-		//SPowerBlockParameters SPBP;
-		SPBP.tech_type = 4;
-		SPBP.T_htf_cold_ref = 90;						// design outlet fluid temp
-		SPBP.T_htf_hot_ref = 175;						// design inlet fluid temp
-		SPBP.HTF = 3;									// heat transfer fluid type - set in interface, but no user input
-		SPBP.P_ref = nameplate / 1000;					// P_ref wants MW, 'nameplate' in kW
-		SPBP.P_boil = 2;
-		SPBP.eta_ref = 0.17;
-		SPBP.q_sby_frac = 0.2;
-		SPBP.startup_frac = 0.2;
-		SPBP.startup_time = 1;
-		SPBP.pb_bd_frac = 0.013;
-		SPBP.T_amb_des = 27;
-		SPBP.CT = 0;
-		SPBP.dT_cw_ref = 10;
-		SPBP.T_approach = 5;
-		SPBP.T_ITD_des = 16;
-		SPBP.P_cond_ratio = 1.0028;
-		SPBP.P_cond_min = 1.25;
-		SPBP.n_pl_inc = 8;
-		SPBP.F_wc[0] = 0;
-		SPBP.F_wc[1] = 0;
-		SPBP.F_wc[2] = 0;
-		SPBP.F_wc[3] = 0;
-		SPBP.F_wc[4] = 0;
-		SPBP.F_wc[5] = 0;
-		SPBP.F_wc[6] = 0;
-		SPBP.F_wc[7] = 0;
-		SPBP.F_wc[8] = 0;
-		
-		//====================================================================================================================================================================
-		//SPowerBlockInputs PBInputs;
-		PBInputs.mode = 2;
-		if (true) // used number of wells as calculated by GETEM
-			PBInputs.m_dot_htf = well_flow_rate * 3600.0 * num_wells_getem;
-		//Ignoring user defined number of wells for now.
+				//SGeothermal_Inputs geoBinary_inputs;
+				geoBinary_inputs.md_RatioInjectionToProduction = 0.5;
+				geoBinary_inputs.md_DesiredSalesCapacityKW = nameplate;
 
-		PBInputs.demand_var = PBInputs.m_dot_htf;
-		PBInputs.standby_control = 1;
-		PBInputs.rel_humidity = 0.7;
+				//geoBinary_inputs.md_NumberOfWells = as_double("num_wells");
 
-		//====================================================================================================================================================================
-		//SGeothermal_Inputs geoBinary_inputs;
-		geoBinary_inputs.md_RatioInjectionToProduction = 0.5;
-		geoBinary_inputs.md_DesiredSalesCapacityKW = nameplate;
+				if (analysis_type == 0)
+					geoBinary_inputs.me_cb = POWER_SALES;
+				else
+					geoBinary_inputs.me_cb = NUMBER_OF_WELLS;
 
-		//geoBinary_inputs.md_NumberOfWells = as_double("num_wells");
+				if (conversion_type == 0)
+					geoBinary_inputs.me_ct = BINARY;
+				else if (conversion_type == 1)
+					geoBinary_inputs.me_ct = FLASH;
 
-		if (analysis_type == 0)
-			geoBinary_inputs.me_cb = POWER_SALES;
-		else
-			geoBinary_inputs.me_cb = NUMBER_OF_WELLS;
+				switch (conversion_subtype)
+				{
+				case 0:	geoBinary_inputs.me_ft = SINGLE_FLASH_NO_TEMP_CONSTRAINT; break;
+				case 1:	geoBinary_inputs.me_ft = SINGLE_FLASH_WITH_TEMP_CONSTRAINT; break;
+				case 2:	geoBinary_inputs.me_ft = DUAL_FLASH_NO_TEMP_CONSTRAINT; break;
+				case 3:	geoBinary_inputs.me_ft = DUAL_FLASH_WITH_TEMP_CONSTRAINT; break;
+				}
+				geoBinary_inputs.md_PlantEfficiency = plant_efficiency_input / 100;
 
-		if (conversion_type == 0)
-			geoBinary_inputs.me_ct = BINARY;
-		else if (conversion_type == 1)
-			geoBinary_inputs.me_ct = FLASH;
+				// temperature decline
+				if (decline_type == 0)
+					geoBinary_inputs.me_tdm = ENTER_RATE;
+				else if (decline_type == 1)
+					geoBinary_inputs.me_tdm = CALCULATE_RATE;
+				geoBinary_inputs.md_TemperatureDeclineRate = temp_decline_rate / 100;
+				geoBinary_inputs.md_MaxTempDeclineC = temp_decline_max;
 
-		switch (conversion_subtype)
-		{
-		case 0:	geoBinary_inputs.me_ft = SINGLE_FLASH_NO_TEMP_CONSTRAINT; break;
-		case 1:	geoBinary_inputs.me_ft = SINGLE_FLASH_WITH_TEMP_CONSTRAINT; break;
-		case 2:	geoBinary_inputs.me_ft = DUAL_FLASH_NO_TEMP_CONSTRAINT; break;
-		case 3:	geoBinary_inputs.me_ft = DUAL_FLASH_WITH_TEMP_CONSTRAINT; break;
-		}
-		geoBinary_inputs.md_PlantEfficiency = plant_efficiency_input / 100;
+				// flash inputs
+				geoBinary_inputs.md_TemperatureWetBulbC = wet_bulb_temp;
+				geoBinary_inputs.md_PressureAmbientPSI = ambient_pressure;
 
-		// temperature decline
-		if (decline_type == 0)
-			geoBinary_inputs.me_tdm = ENTER_RATE;
-		else if (decline_type == 1)
-			geoBinary_inputs.me_tdm = CALCULATE_RATE;
-		geoBinary_inputs.md_TemperatureDeclineRate = temp_decline_rate / 100;
-		geoBinary_inputs.md_MaxTempDeclineC = temp_decline_max;
+				//pumping parameters
+				geoBinary_inputs.md_ProductionFlowRateKgPerS = well_flow_rate;
+				geoBinary_inputs.md_GFPumpEfficiency = pump_efficiency / 100;
+				geoBinary_inputs.md_PressureChangeAcrossSurfaceEquipmentPSI = delta_pressure_equip;
+				geoBinary_inputs.md_ExcessPressureBar = physics::PsiToBar(excess_pressure_pump);
+				geoBinary_inputs.md_DiameterProductionWellInches = well_diameter;
+				geoBinary_inputs.md_DiameterPumpCasingInches = casing_size;
+				geoBinary_inputs.md_DiameterInjectionWellInches = inj_well_diam;
+				geoBinary_inputs.mb_CalculatePumpWork = (1 != specify_pump_work);
+				geoBinary_inputs.md_UserSpecifiedPumpWorkKW = specified_pump_work_amount * 1000; // entered in MW
 
-		// flash inputs
-		geoBinary_inputs.md_TemperatureWetBulbC = wet_bulb_temp;
-		geoBinary_inputs.md_PressureAmbientPSI = ambient_pressure;
-
-		//pumping parameters
-		geoBinary_inputs.md_ProductionFlowRateKgPerS = well_flow_rate;
-		geoBinary_inputs.md_GFPumpEfficiency = pump_efficiency / 100;
-		geoBinary_inputs.md_PressureChangeAcrossSurfaceEquipmentPSI = delta_pressure_equip;
-		geoBinary_inputs.md_ExcessPressureBar = physics::PsiToBar(excess_pressure_pump);
-		geoBinary_inputs.md_DiameterProductionWellInches = well_diameter;
-		geoBinary_inputs.md_DiameterPumpCasingInches = casing_size;
-		geoBinary_inputs.md_DiameterInjectionWellInches = inj_well_diam;
-		geoBinary_inputs.mb_CalculatePumpWork = (1 != specify_pump_work);
-		geoBinary_inputs.md_UserSpecifiedPumpWorkKW = specified_pump_work_amount * 1000; // entered in MW
-
-		//resource characterization
-		if (resource_type == 0)
-			geoBinary_inputs.me_rt = HYDROTHERMAL;
-		else if (resource_type == 1)
-			geoBinary_inputs.me_rt = EGS;
-		geoBinary_inputs.md_ResourceDepthM = resource_depth;
-		geoBinary_inputs.md_TemperatureResourceC = resource_temp;
-		geoBinary_inputs.me_dc = TEMPERATURE;
-		geoBinary_inputs.md_TemperaturePlantDesignC = design_temp;
+				//resource characterization
+				if (resource_type == 0)
+					geoBinary_inputs.me_rt = HYDROTHERMAL;
+				else if (resource_type == 1)
+					geoBinary_inputs.me_rt = EGS;
+				geoBinary_inputs.md_ResourceDepthM = resource_depth;
+				geoBinary_inputs.md_TemperatureResourceC = resource_temp;
+				geoBinary_inputs.me_dc = TEMPERATURE;
+				geoBinary_inputs.md_TemperaturePlantDesignC = design_temp;
 
 
 
-		//reservoir properties
-		geoBinary_inputs.md_TemperatureEGSAmbientC = 15.0;
-		geoBinary_inputs.md_EGSThermalConductivity = rock_thermal_conductivity;
-		geoBinary_inputs.md_EGSSpecificHeatConstant = rock_specific_heat;
-		geoBinary_inputs.md_EGSRockDensity = rock_density;
-		switch (reservoir_pressure_change_type)
-		{
-		case 0: geoBinary_inputs.me_pc = ENTER_PC; break;				// pressure change entered by user
-		case 1: geoBinary_inputs.me_pc = SIMPLE_FRACTURE; break;		// use fracture flow (EGS only)
-		case 2: geoBinary_inputs.me_pc = K_AREA; break;				// permeability * area
-		}
-		geoBinary_inputs.md_ReservoirDeltaPressure = reservoir_pressure_change;
-		geoBinary_inputs.md_ReservoirWidthM = reservoir_width;
-		geoBinary_inputs.md_ReservoirHeightM = reservoir_height;
-		geoBinary_inputs.md_ReservoirPermeability = reservoir_permeability;
-		geoBinary_inputs.md_DistanceBetweenProductionInjectionWellsM = inj_prod_well_distance;
-		geoBinary_inputs.md_WaterLossPercent = subsurface_water_loss / 100;
-		geoBinary_inputs.md_EGSFractureAperature = fracture_aperature;
-		geoBinary_inputs.md_EGSNumberOfFractures = num_fractures;
-		geoBinary_inputs.md_EGSFractureWidthM = fracture_width;
-		geoBinary_inputs.md_EGSFractureAngle = fracture_angle;
+				//reservoir properties
+				geoBinary_inputs.md_TemperatureEGSAmbientC = 15.0;
+				geoBinary_inputs.md_EGSThermalConductivity = rock_thermal_conductivity;
+				geoBinary_inputs.md_EGSSpecificHeatConstant = rock_specific_heat;
+				geoBinary_inputs.md_EGSRockDensity = rock_density;
+				switch (reservoir_pressure_change_type)
+				{
+				case 0: geoBinary_inputs.me_pc = ENTER_PC; break;				// pressure change entered by user
+				case 1: geoBinary_inputs.me_pc = SIMPLE_FRACTURE; break;		// use fracture flow (EGS only)
+				case 2: geoBinary_inputs.me_pc = K_AREA; break;				// permeability * area
+				}
+				geoBinary_inputs.md_ReservoirDeltaPressure = reservoir_pressure_change;
+				geoBinary_inputs.md_ReservoirWidthM = reservoir_width;
+				geoBinary_inputs.md_ReservoirHeightM = reservoir_height;
+				geoBinary_inputs.md_ReservoirPermeability = reservoir_permeability;
+				geoBinary_inputs.md_DistanceBetweenProductionInjectionWellsM = inj_prod_well_distance;
+				geoBinary_inputs.md_WaterLossPercent = subsurface_water_loss / 100;
+				geoBinary_inputs.md_EGSFractureAperature = fracture_aperature;
+				geoBinary_inputs.md_EGSNumberOfFractures = num_fractures;
+				geoBinary_inputs.md_EGSFractureWidthM = fracture_width;
+				geoBinary_inputs.md_EGSFractureAngle = fracture_angle;
 
-		// calculate output array sizes
-		geoBinary_inputs.mi_ModelChoice = 0;		 // 0=GETEM, 1=Power Block monthly, 2=Power Block hourly
-		// set geothermal inputs RE how analysis is done and for how long
-		geoBinary_inputs.mi_ProjectLifeYears = geothermal_analysis_period;
-		//if (geoBinary_inputs.mi_ProjectLifeYears == 0)
-		//	throw general_error("invalid analysis period specified in the geothermal hourly model");
+				// calculate output array sizes
+				geoBinary_inputs.mi_ModelChoice = 0;		 // 0=GETEM, 1=Power Block monthly, 2=Power Block hourly
+				// set geothermal inputs RE how analysis is done and for how long
+				geoBinary_inputs.mi_ProjectLifeYears = geothermal_analysis_period;
+				//if (geoBinary_inputs.mi_ProjectLifeYears == 0)
+				//	throw general_error("invalid analysis period specified in the geothermal hourly model");
 
-		geoBinary_inputs.md_PotentialResourceMW = resource_potential;
-		geoBinary_inputs.mc_WeatherFileName = geotest::filename_path;
-		geoBinary_inputs.mia_tou = tou;
-		geoBinary_inputs.mi_MakeupCalculationsPerYear = (geoBinary_inputs.mi_ModelChoice == 2) ? 8760 : 12;
-		geoBinary_inputs.mi_TotalMakeupCalculations = geoBinary_inputs.mi_ProjectLifeYears * geoBinary_inputs.mi_MakeupCalculationsPerYear;
+				geoBinary_inputs.md_PotentialResourceMW = resource_potential;
+				geoBinary_inputs.mc_WeatherFileName = geotest::filename_path;
+				geoBinary_inputs.mia_tou = tou;
+				geoBinary_inputs.mi_MakeupCalculationsPerYear = (geoBinary_inputs.mi_ModelChoice == 2) ? 8760 : 12;
+				geoBinary_inputs.mi_TotalMakeupCalculations = geoBinary_inputs.mi_ProjectLifeYears * geoBinary_inputs.mi_MakeupCalculationsPerYear;
 
 		//====================================================================================================================================================================
-		//SGeothermal_Outputs geoBinary_outputs;
+				//SGeothermal_Outputs geoBinary_outputs;
 		
-		geoBinary_outputs.maf_ReplacementsByYear = new float[geoBinary_inputs.mi_ProjectLifeYears];
+				//geoBinary_outputs.md_NumberOfWells;
+				//geoBinary_outputs.md_NumberOfWells;
+				//geoBinary_outputs.md_PumpWorkKW;
+				//geoBinary_outputs.eff_secondlaw;
+				//geoBinary_outputs.qRejectedTotal;
+				//geoBinary_outputs.condenser_q;
+				//geoBinary_outputs.v_stage_1;
+				//geoBinary_outputs.v_stage_2;
+				//geoBinary_outputs.v_stage_3;
+				//geoBinary_outputs.GF_flowrate;
+				//geoBinary_outputs.qRejectByStage_1;
+				//geoBinary_outputs.qRejectByStage_2;
+				//geoBinary_outputs.qRejectByStage_3;
+				//geoBinary_outputs.ncg_condensate_pump;
+				//geoBinary_outputs.cw_pump_work;
+				//geoBinary_outputs.pressure_ratio_1;
+				//geoBinary_outputs.pressure_ratio_2;
+				//geoBinary_outputs.pressure_ratio_3;
+				//geoBinary_outputs.condensate_pump_power;
+				//geoBinary_outputs.cwflow;
+				//geoBinary_outputs.cw_pump_head;
+				//geoBinary_outputs.flash_temperature;
+				//geoBinary_outputs.flash_temperature_lp;
+				//geoBinary_outputs.spec_vol; 
+				//geoBinary_outputs.spec_vol_lp;
+				//geoBinary_outputs.getX_hp; 
+				//geoBinary_outputs.getX_lp;
+				//geoBinary_outputs.flash_count;
+				//geoBinary_outputs.max_secondlaw;
+				//geoBinary_outputs.test;
+				//geoBinary_outputs.mb_BrineEffectivenessCalculated;
+				//geoBinary_outputs.md_FlashBrineEffectiveness;
 
-		//ssc_number_t *annual_replacements = allocate( "annual_replacements", geoBinary_inputs.mi_ProjectLifeYears);
-		
-		// allocate lifetime monthly arrays (one element per month, over lifetime of project)
-		geoBinary_outputs.maf_monthly_resource_temp = new float[12 * geoBinary_inputs.mi_ProjectLifeYears];
-		geoBinary_outputs.maf_monthly_power = new float[12 * geoBinary_inputs.mi_ProjectLifeYears];
-		geoBinary_outputs.maf_monthly_energy = new float[12 * geoBinary_inputs.mi_ProjectLifeYears];
+				//geoBinary_outputs.mb_FlashPressuresCalculated;
+				//geoBinary_outputs.md_PressureHPFlashPSI; // D29, D64
+				//geoBinary_outputs.md_PressureLPFlashPSI; // D30, D65
 
-		// allocate lifetime timestep arrays (one element per timestep, over lifetime of project)
-		// if this is a monthly analysis, these are redundant with monthly arrays that track same outputs
-		
-		geoBinary_inputs.mi_MakeupCalculationsPerYear = (geoBinary_inputs.mi_ModelChoice == 2) ? 8760 : 12;
-		geoBinary_inputs.mi_TotalMakeupCalculations = geoBinary_inputs.mi_ProjectLifeYears * geoBinary_inputs.mi_MakeupCalculationsPerYear;
+				//// only for use in the interface to show 'calculated' values
+				//geoBinary_outputs.md_PlantBrineEffectiveness;
+				//geoBinary_outputs.md_GrossPlantOutputMW;	//double GetGrossPlantOutputMW(void) { return this->PlantOutputKW()/1000; }
+				//geoBinary_outputs.md_PumpDepthFt;
+				//geoBinary_outputs.md_PumpHorsePower;
+				//geoBinary_outputs.md_PressureChangeAcrossReservoir; //double GetPressureChangeAcrossReservoir(void) { return moPPC.GetPressureChangeAcrossReservoir(); }
+				//geoBinary_outputs.md_AverageReservoirTemperatureF; //double GetAverageReservoirTemperatureUsedF(void) { return moPPC.GetReservoirTemperatureF(); }
+				//geoBinary_outputs.md_BottomHolePressure; //double GetBottomHolePressure(void) { return moPPC.GetBottomHolePressure(); }
 
-		geoBinary_outputs.maf_timestep_resource_temp = new float((float)geoBinary_inputs.mi_TotalMakeupCalculations);
-		
-		geoBinary_outputs.maf_timestep_power = new float[geoBinary_inputs.mi_TotalMakeupCalculations];
-		geoBinary_outputs.maf_timestep_test_values = new float[geoBinary_inputs.mi_TotalMakeupCalculations];
 
-		geoBinary_outputs.maf_timestep_pressure = new float[geoBinary_inputs.mi_TotalMakeupCalculations];
-		geoBinary_outputs.maf_timestep_dry_bulb = new float[geoBinary_inputs.mi_TotalMakeupCalculations];
-		geoBinary_outputs.maf_timestep_wet_bulb = new float[geoBinary_inputs.mi_TotalMakeupCalculations];
+
+				geoBinary_outputs.maf_ReplacementsByYear = new float[geoBinary_inputs.mi_ProjectLifeYears];
+
+				//ssc_number_t *annual_replacements = allocate( "annual_replacements", geoBinary_inputs.mi_ProjectLifeYears);
 		
-		geoBinary_outputs.maf_hourly_power = new float[geoBinary_inputs.mi_ProjectLifeYears * 8760];
+				// allocate lifetime monthly arrays (one element per month, over lifetime of project)
+				geoBinary_outputs.maf_monthly_resource_temp = new float[12 * geoBinary_inputs.mi_ProjectLifeYears];
+				geoBinary_outputs.maf_monthly_power = new float[12 * geoBinary_inputs.mi_ProjectLifeYears];
+				geoBinary_outputs.maf_monthly_energy = new float[12 * geoBinary_inputs.mi_ProjectLifeYears];
+
+				// allocate lifetime timestep arrays (one element per timestep, over lifetime of project)
+				// if this is a monthly analysis, these are redundant with monthly arrays that track same outputs
+		
+				geoBinary_inputs.mi_MakeupCalculationsPerYear = (geoBinary_inputs.mi_ModelChoice == 2) ? 8760 : 12;
+				geoBinary_inputs.mi_TotalMakeupCalculations = geoBinary_inputs.mi_ProjectLifeYears * geoBinary_inputs.mi_MakeupCalculationsPerYear;
+
+				geoBinary_outputs.maf_timestep_resource_temp = new float[geoBinary_inputs.mi_TotalMakeupCalculations];
+		
+				geoBinary_outputs.maf_timestep_power = new float[geoBinary_inputs.mi_TotalMakeupCalculations];
+				geoBinary_outputs.maf_timestep_test_values = new float[geoBinary_inputs.mi_TotalMakeupCalculations];
+
+				geoBinary_outputs.maf_timestep_pressure = new float[geoBinary_inputs.mi_TotalMakeupCalculations];
+				geoBinary_outputs.maf_timestep_dry_bulb = new float[geoBinary_inputs.mi_TotalMakeupCalculations];
+				geoBinary_outputs.maf_timestep_wet_bulb = new float[geoBinary_inputs.mi_TotalMakeupCalculations];
+		
+				geoBinary_outputs.maf_hourly_power = new float[geoBinary_inputs.mi_ProjectLifeYears * 8760];
 		
 		//====================================================================================================================================================================
 		void * user_data = nullptr;
 
-		binaryDefault = new CGeothermalAnalyzer(SPBP, PBInputs, geoBinary_inputs, geoBinary_outputs);
-		binaryDefault->RunAnalysis(my_update_function, user_data);
+		//Instantiating CGeothermalAnalyzer class:
+		geoTester = new CGeothermalAnalyzer(SPBP, PBInputs, geoBinary_inputs, geoBinary_outputs);
+		geoTester->RunAnalysis(my_update_function, user_data);
+		geoTester->InterfaceOutputsFilled();
 }	
 
 
 
 	void TearDown() {
 		
-		if (binaryDefault != nullptr) {
-			delete binaryDefault;
-			binaryDefault = nullptr;
+		if (geoTester != nullptr) {
+			delete geoTester;
+			geoTester = nullptr;
 		}
 		
 		if (geoBinary_outputs.maf_hourly_power != nullptr) {
