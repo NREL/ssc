@@ -110,19 +110,6 @@ set(SSC_SRC
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
-# dltest executable for checking ssc library
-if(UNIX)
-	add_executable(dltest ../build_osx/dltest.c)
-	if (NOT APPLE)
-		target_compile_options(dltest PUBLIC -ldl)
-	endif()
-	if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-		target_link_libraries(dltest sscd)
-	else()
-		target_link_libraries(dltest ssc)
-	endif()
-endif()
-
 
 # set build types for shared library
 
@@ -140,51 +127,47 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
 	set(SSC_LIB sscd)
 	set_property(TARGET sscd PROPERTY PREFIX "")
 
-	find_library(SPLINTER_LIB
-		NAMES splinter.a splinter.lib
-		PATHS ${SSC_DIR}/splinter ${SSC_DIR}../splinter)
-	find_library(SHARED_LIB
-		NAMES shared.a shared.lib
-		PATHS ${SSC_DIR}/shared ${SSC_DIR}../shared)
-	find_library(SOLARPILOT_LIB
-		NAMES solarpilot.a solarpilot.lib
-		PATHS ${SSC_DIR}/solarpilot ${SSC_DIR}../solarpilot)
-	find_library(TCS_LIB
-		NAMES tcs.a tcs.lib
-		PATHS ${SSC_DIR}/tcs ${SSC_DIR}../tcs)
-	find_library(LPSOLVE_LIB
-		NAMES lpsolve.a lpsolve.lib
-		PATHS ${SSC_DIR}/lpsolve ${SSC_DIR}../lpsolve)
-	find_library(NLOPT_LIB
-		NAMES nlopt.a nlopt.lib
-		PATHS ${SSC_DIR}/nlopt ${SSC_DIR}../nlopt)
-
 	set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG}")
 	set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}")
 else()
 	add_library(ssc SHARED ${SSC_SRC})
 	set(SSC_LIB ssc)
 	set_property(TARGET ssc PROPERTY PREFIX "")
+endif()
 
-	foreach( name ${DEPENDENCIES} )
+# setup linking dependencies and flags
+foreach( name ${DEPENDENCIES} )
+	# force redefinition of library paths in case build type changes
+	unset(${name}_LIB CACHE)
+	if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+		find_library( ${name}_LIB
+			NAMES ${name}d.a ${name}d.lib
+			PATHS ${SSC_DIR}/${name} ${SSC_DIR}/../${name})
+	else()
 		find_library( ${name}_LIB
 			NAMES ${name}.a ${name}.lib
 			PATHS ${SSC_DIR}/${name} ${SSC_DIR}/../${name})
-	endforeach()
-endif()
-
-target_link_libraries(${SSC_LIB} -lm -lstdc++)
-foreach (name ${DEPENDENCIES})
+	endif()
 	target_link_libraries(${SSC_LIB} ${${name}_LIB})
 endforeach()
+target_link_libraries(${SSC_LIB} -lm -lstdc++)
 
 
-add_custom_target(dltest_run 
-	COMMAND ../dltest {$SSC_DIR}
-	COMMENT "check ssc shared library works"
-	# DEPENDS ssc
-	WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+# dltest executable for checking ssc library
+if(UNIX)
+	add_executable(dltest ../build_osx/dltest.c)
+	if (NOT APPLE)
+		target_compile_options(dltest PUBLIC -ldl)
+	endif()
 
+	add_custom_command(
+		TARGET ${SSC_LIB}
+		COMMENT "Run dltest"
+		DEPENDS ${SSC_LIB}
+		POST_BUILD 
+		COMMAND dltest ${SSC_LIB}.dylib
+	)
+endif()
 
 if(MSVC)
 # need msvc optimization levels & different configs, windows sdk
