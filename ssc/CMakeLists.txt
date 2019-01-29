@@ -3,8 +3,6 @@ set(CMAKE_VERBOSE_MAKEFILE ON)
 cmake_minimum_required(VERSION 3.7)
 
 set(CMAKE_OSX_DEPLOYMENT_TARGET "10.9" CACHE STRING "Minimum OS X deployment version")
-set(CMAKE_C_COMPILER gcc)
-set(CMAKE_CXX_COMPILER g++)
 
 if(MSVC)
 	set(CMAKE_CONFIGURATION_TYPES "Debug;Release" CACHE STRING "Debug and Release Builds Configured" FORCE)
@@ -135,21 +133,14 @@ else()
 endif()
 
 # setup linking dependencies and flags
-# change when making toplevel file
-set(SSC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/..")
 foreach( name ${DEPENDENCIES} )
 	# force redefinition of library paths in case build type changes
 	unset(${name}_LIB CACHE)
 	if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-		find_library( ${name}_LIB
-			NAMES ${name}d.a ${name}d.lib
-			PATHS ${SSC_DIR}/${name} ${SSC_DIR}/../${name})
+		target_link_libraries(${SSC_LIB} ${name}d)
 	else()
-		find_library( ${name}_LIB
-			NAMES ${name}.a ${name}.lib
-			PATHS ${SSC_DIR}/${name} ${SSC_DIR}/../${name})
+		target_link_libraries(${SSC_LIB} ${name})
 	endif()
-	target_link_libraries(${SSC_LIB} ${${name}_LIB})
 endforeach()
 target_link_libraries(${SSC_LIB} -lm -lstdc++)
 

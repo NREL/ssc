@@ -3,8 +3,6 @@ set(CMAKE_VERBOSE_MAKEFILE ON)
 cmake_minimum_required(VERSION 3.7)
 
 set(CMAKE_OSX_DEPLOYMENT_TARGET "10.9" CACHE STRING "Minimum OS X deployment version")
-set(CMAKE_C_COMPILER gcc)
-set(CMAKE_CXX_COMPILER g++)
 
 if(MSVC)
 	set(CMAKE_CONFIGURATION_TYPES "Debug;Release" CACHE STRING "Debug and Release Builds Configured" FORCE)
@@ -15,7 +13,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}")
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}")
 
 set(wxWidgets_CONFIG_EXECUTABLE /usr/local/bin/wx-config-3)
-find_package(wxWidgets REQUIRED xrc webview stc richtext ribbon propgrid aui gl html qa adv core xml net base)
+find_package(wxWidgets REQUIRED stc propgrid aui gl html adv core xml net base)
 include(${wxWidgets_USE_FILE})
 
 include_directories(. $ENV{WEXDIR}/include $ENV{LKDIR}/include ../ssc ../shared ../splinter)
@@ -49,7 +47,7 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
 else()
 	add_executable(SDKtool ${SDKTOOL_SRC})
 	set(SDKTOOL_EXE SDKtool)
-		find_library( WEX_LIB
+	find_library( WEX_LIB
 		NAMES wexosxwx3.a  wexuxwx3.a wex.lib
 		PATHS $ENV{WEXDIR})
 	find_library( LK_LIB
@@ -58,9 +56,9 @@ else()
 endif()
 
 # setup linking dependencies and flags
-target_link_libraries(${SDKTOOL_EXE} ${WEX_LIB} ${LK_LIB}) 
 target_link_libraries(${SDKTOOL_EXE} -lm -lcurl)
-  target_link_libraries(${SDKTOOL_EXE} ${wxWidgets_LIBRARIES})
+target_link_libraries(${SDKTOOL_EXE} ${WEX_LIB} ${LK_LIB}) 
+target_link_libraries(${SDKTOOL_EXE} ${wxWidgets_LIBRARIES})
 
 
 get_target_property(OUT ${SDKTOOL_EXE} LINK_LIBRARIES)
@@ -83,14 +81,14 @@ if(APPLE)
 	add_custom_command(
 		TARGET ${SDKTOOL_EXE}
 		POST_BUILD 
-		COMMAND SetFile -a t ../${SDKTOOL_EXE}
-		COMMAND mkdir -p ../${SDKTOOL_EXE}.app
-		COMMAND mkdir -p ../${SDKTOOL_EXE}.app/Contents
-		COMMAND mkdir -p ../${SDKTOOL_EXE}.app/Contents/MacOS
-		COMMAND mkdir -p ../${SDKTOOL_EXE}.app/Contents/Resources
-		COMMAND cp ../${SDKTOOL_EXE} ../${SDKTOOL_EXE}.app/Contents/MacOS
-		COMMAND cp ../../build_osx/SDKTool.icns ../${SDKTOOL_EXE}.app/Contents/Resources
-		COMMAND cp ../../build_osx/Info-SDKTool.plist ../${SDKTOOL_EXE}.app/Contents/Info.plist
-		COMMAND echo "Software Development Toolkit for System Advisor Model, National Renewable Energy Laboratory" >> ../${SDKTOOL_EXE}.app/Contents/PkgInfo
+		COMMAND SetFile -a t ${CMAKE_CURRENT_SOURCE_DIR}/${SDKTOOL_EXE}
+		COMMAND mkdir -p ${CMAKE_CURRENT_SOURCE_DIR}/${SDKTOOL_EXE}.app
+		COMMAND mkdir -p ${CMAKE_CURRENT_SOURCE_DIR}/${SDKTOOL_EXE}.app/Contents
+		COMMAND mkdir -p ${CMAKE_CURRENT_SOURCE_DIR}/${SDKTOOL_EXE}.app/Contents/MacOS
+		COMMAND mkdir -p ${CMAKE_CURRENT_SOURCE_DIR}/${SDKTOOL_EXE}.app/Contents/Resources
+		COMMAND cp ${CMAKE_CURRENT_SOURCE_DIR}/${SDKTOOL_EXE} ${CMAKE_CURRENT_SOURCE_DIR}/${SDKTOOL_EXE}.app/Contents/MacOS
+		COMMAND cp ${CMAKE_SOURCE_DIR}/build_osx/SDKTool.icns ${CMAKE_CURRENT_SOURCE_DIR}/${SDKTOOL_EXE}.app/Contents/Resources
+		COMMAND cp ${CMAKE_SOURCE_DIR}/build_osx/Info-SDKTool.plist ${CMAKE_CURRENT_SOURCE_DIR}/${SDKTOOL_EXE}.app/Contents/Info.plist
+		COMMAND echo "Software Development Toolkit for System Advisor Model, National Renewable Energy Laboratory" >> ${CMAKE_CURRENT_SOURCE_DIR}/${SDKTOOL_EXE}.app/Contents/PkgInfo
 	)
 endif()

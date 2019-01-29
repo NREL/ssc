@@ -3,8 +3,6 @@ set(CMAKE_VERBOSE_MAKEFILE ON)
 cmake_minimum_required(VERSION 3.7)
 
 set(CMAKE_OSX_DEPLOYMENT_TARGET "10.9" CACHE STRING "Minimum OS X deployment version")
-set(CMAKE_C_COMPILER gcc)
-set(CMAKE_CXX_COMPILER g++)
 
 if(MSVC)
 	set(CMAKE_CONFIGURATION_TYPES "Debug;Release" CACHE STRING "Debug and Release Builds Configured" FORCE)
@@ -62,21 +60,14 @@ else()
 endif()
 
 # setup linking dependencies and flags
-# change when making toplevel file
-set(SSC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/..")
 foreach( name ${DEPENDENCIES} )
 	# force redefinition of library paths in case build type changes
 	unset(${name}_LIB CACHE)
 	if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-		find_library( ${name}_LIB
-			NAMES ${name}d.a ${name}d.lib
-			PATHS ${SSC_DIR}/${name} ${SSC_DIR}/../${name})
+		target_link_libraries(${TCSCONSOLE_EXE} ${name}d)
 	else()
-		find_library( ${name}_LIB
-			NAMES ${name}.a ${name}.lib
-			PATHS ${SSC_DIR}/${name} ${SSC_DIR}/../${name})
+		target_link_libraries(${TCSCONSOLE_EXE} ${name})
 	endif()
-	target_link_libraries(${TCSCONSOLE_EXE} ${${name}_LIB})
 endforeach()
 target_link_libraries(${TCSCONSOLE_EXE} -lm -lcurl)
 target_link_libraries(${TCSCONSOLE_EXE} ${WEX_LIB} ${LK_LIB}) 
@@ -100,17 +91,18 @@ endif(MSVC)
 
 # Setup Application
 if(APPLE)
+	set(TCS_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 	add_custom_command(
 		TARGET ${TCSCONSOLE_EXE}
 		POST_BUILD 
-		COMMAND SetFile -a t ../${TCSCONSOLE_EXE}
-		COMMAND mkdir -p ../${TCSCONSOLE_EXE}.app
-		COMMAND mkdir -p ../${TCSCONSOLE_EXE}.app/Contents
-		COMMAND mkdir -p ../${TCSCONSOLE_EXE}.app/Contents/MacOS
-		COMMAND mkdir -p ../${TCSCONSOLE_EXE}.app/Contents/Resources
-		COMMAND cp ../${TCSCONSOLE_EXE} ../${TCSCONSOLE_EXE}.app/Contents/MacOS
-		COMMAND cp ../../build_osx/TCSConsole.icns ../${TCSCONSOLE_EXE}.app/Contents/Resources
-		COMMAND cp ../../build_osx/Info-TCSConsole.plist ../${TCSCONSOLE_EXE}.app/Contents/Info.plist
-		COMMAND echo "TCSConsole, National Renewable Energy Laboratory" >> ../${TCSCONSOLE_EXE}.app/Contents/PkgInfo
+		COMMAND SetFile -a t ${CMAKE_CURRENT_SOURCE_DIR}/${TCSCONSOLE_EXE}
+		COMMAND mkdir -p ${CMAKE_CURRENT_SOURCE_DIR}/${TCSCONSOLE_EXE}.app
+		COMMAND mkdir -p ${CMAKE_CURRENT_SOURCE_DIR}/${TCSCONSOLE_EXE}.app/Contents
+		COMMAND mkdir -p ${CMAKE_CURRENT_SOURCE_DIR}/${TCSCONSOLE_EXE}.app/Contents/MacOS
+		COMMAND mkdir -p ${CMAKE_CURRENT_SOURCE_DIR}/${TCSCONSOLE_EXE}.app/Contents/Resources
+		COMMAND cp ${CMAKE_CURRENT_SOURCE_DIR}/${TCSCONSOLE_EXE} ${CMAKE_CURRENT_SOURCE_DIR}/${TCSCONSOLE_EXE}.app/Contents/MacOS
+		COMMAND cp ${CMAKE_SOURCE_DIR}/build_osx/TCSConsole.icns ${CMAKE_CURRENT_SOURCE_DIR}/${TCSCONSOLE_EXE}.app/Contents/Resources
+		COMMAND cp ${CMAKE_SOURCE_DIR}/build_osx/Info-TCSConsole.plist ${CMAKE_CURRENT_SOURCE_DIR}/${TCSCONSOLE_EXE}.app/Contents/Info.plist
+		COMMAND echo "TCSConsole, National Renewable Energy Laboratory" >> ${CMAKE_CURRENT_SOURCE_DIR}/${TCSCONSOLE_EXE}.app/Contents/PkgInfo
 	)
 endif()
