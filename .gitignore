@@ -304,12 +304,11 @@ __pycache__/
 *.d
 *.bin
 *.mod
+*.app
 
 # Specific SAM build ignores
 doc/latex/*
 
-SDKtool
-TCSConsole
 dltest
 set_env_*
 ssc/examples/17_04_24_sco2_csp_udpc_tables_Craig.lk

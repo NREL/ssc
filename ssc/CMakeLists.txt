@@ -113,8 +113,7 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 # set build types for shared library
 
-# change when making toplevel file
-set(SSC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/..")
+
 set( DEPENDENCIES
 	splinter
 	shared
@@ -136,6 +135,8 @@ else()
 endif()
 
 # setup linking dependencies and flags
+# change when making toplevel file
+set(SSC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/..")
 foreach( name ${DEPENDENCIES} )
 	# force redefinition of library paths in case build type changes
 	unset(${name}_LIB CACHE)
