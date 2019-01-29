@@ -153,22 +153,6 @@ endforeach()
 target_link_libraries(${SSC_LIB} -lm -lstdc++)
 
 
-# dltest executable for checking ssc library
-if(UNIX)
-	add_executable(dltest ../build_osx/dltest.c)
-	if (NOT APPLE)
-		target_compile_options(dltest PUBLIC -ldl)
-	endif()
-
-	add_custom_command(
-		TARGET ${SSC_LIB}
-		COMMENT "Run dltest"
-		DEPENDS ${SSC_LIB}
-		POST_BUILD 
-		COMMAND dltest ${SSC_LIB}.dylib
-	)
-endif()
-
 if(MSVC)
 # need msvc optimization levels & different configs, windows sdk
 	add_compile_options(/W4 /WX)
@@ -180,3 +164,19 @@ else(MSVC)
 		add_compile_definitions(__MACOSX__)
 	endif()
 endif(MSVC)
+
+
+# dltest executable for checking ssc library
+if(UNIX)
+	add_executable(dltest ../build_osx/dltest.c)
+	if (NOT APPLE)
+		target_compile_options(dltest PUBLIC -ldl)
+	endif()
+
+	add_custom_command(
+		TARGET ${SSC_LIB}
+		COMMENT "Run dltest"
+		POST_BUILD 
+		COMMAND dltest ${SSC_LIB}.dylib
+	)
+endif()
