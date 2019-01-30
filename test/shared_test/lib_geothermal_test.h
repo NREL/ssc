@@ -44,9 +44,9 @@ protected:
 	double pump_efficiency;
 	int delta_pressure_equip;
 	double excess_pressure_pump;
-	int well_diameter;
+	double well_diameter;
 	double casing_size;
-	int inj_well_diam;
+	double inj_well_diam;
 	int specify_pump_work;
 	int specified_pump_work_amount;
 	int	resource_type;
@@ -88,9 +88,10 @@ public:
 		num_wells_getem = 3;
 		nameplate = 30000;
 		analysis_type = 0;
-		conversion_type = 0;	//Binary = 0 ; Flash = 1
+		resource_temp = 200;
+		design_temp = 200;
 		conversion_subtype = 3;
-		plant_efficiency_input = 80;
+		plant_efficiency_input = 61.109;
 		decline_type = 0;
 		temp_decline_rate = 0.3;
 		temp_decline_max = 30;
@@ -105,9 +106,7 @@ public:
 		specify_pump_work = 0;
 		specified_pump_work_amount = 0;
 		resource_type = 0;
-		resource_depth = 2000;
-		resource_temp = 200;
-		design_temp = 200;
+		resource_depth = 2000;																									
 		rock_thermal_conductivity = 259200;
 		rock_specific_heat = 950;
 		rock_density = 2600;
