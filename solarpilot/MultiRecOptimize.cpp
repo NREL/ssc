@@ -259,6 +259,9 @@ int multi_rec_opt_helper::run(SolarField *SF)
     int *col = new int[Nh*Nrec];
     REAL *row = new REAL[Nh*Nrec];
 
+    double rfact = SF->getVarMap()->flux.multi_rec_aim_rand.val;
+    rfact = rfact > 1. ? 1. : rfact < 0. ? 0. : rfact;
+
     //set up objective
     if (is_performance)
     {   //performance problem objective function
@@ -268,7 +271,7 @@ int multi_rec_opt_helper::run(SolarField *SF)
             {
                 //summation of all power values delivered from heliostat 'i' to receiver 'j'
                 col[j*Nh + i] = O.column("x", i, j);
-                row[j*Nh + i] = power_allocs[helios.at(i)->getId()].at(j);
+                row[j*Nh + i] = power_allocs[helios.at(i)->getId()].at(j)* (1. - rfact/2. + rfact*(double)rand()/(double)RAND_MAX);
             }
         }
     }
