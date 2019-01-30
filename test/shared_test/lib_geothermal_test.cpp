@@ -1,9 +1,10 @@
 #include "lib_geothermal_test.h"
 
+
+
 TEST_F(GeothermalPlantAnalyzer, TestBinaryPlant)
 {
-	EXPECT_NE(geoBinary_outputs.maf_hourly_power, nullptr);
-	EXPECT_NE(geoBinary_outputs.max_secondlaw, NULL);
+	EXPECT_NEAR(geoBinary_outputs.max_secondlaw, 0.4, 0.2);
 }
 
 

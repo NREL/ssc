@@ -3,6 +3,7 @@
 #include <gtest/gtest.h>
 #include "lib_geothermal.h"
 #include "core.h"
+#include "lib_physics.h"
 //#include "lib_weatherfile.h"
 //#include "lib_physics.h"
 //#include "lib_powerblock.h"
@@ -34,13 +35,13 @@ protected:
 	int analysis_type;		
 	int conversion_type;
 	int conversion_subtype;
-	int plant_efficiency_input;
+	double plant_efficiency_input;
 	int decline_type;
 	double temp_decline_rate;
 	int temp_decline_max;
 	int	wet_bulb_temp;
 	double ambient_pressure;
-	int pump_efficiency;
+	double pump_efficiency;
 	int delta_pressure_equip;
 	double excess_pressure_pump;
 	int well_diameter;
@@ -84,29 +85,29 @@ public:
 		
 	//Current defaults in SAM 2018.11.11:
 		well_flow_rate = 110;
-		num_wells_getem = 4.31975;
+		num_wells_getem = 3;
 		nameplate = 30000;
 		analysis_type = 0;
 		conversion_type = 0;	//Binary = 0 ; Flash = 1
-		conversion_subtype = 0;
+		conversion_subtype = 3;
 		plant_efficiency_input = 80;
 		decline_type = 0;
 		temp_decline_rate = 0.3;
 		temp_decline_max = 30;
 		wet_bulb_temp = 15;
 		ambient_pressure = 14.7;
-		pump_efficiency = 60;
+		pump_efficiency = 67.5;
 		delta_pressure_equip = 25;
-		excess_pressure_pump = 50.76;
-		well_diameter = 10;
+		excess_pressure_pump = 50;
+		well_diameter = 12.25;
 		casing_size = 9.625;
-		inj_well_diam = 10;
+		inj_well_diam = 12.25;
 		specify_pump_work = 0;
 		specified_pump_work_amount = 0;
 		resource_type = 0;
-		resource_depth = 6000;
+		resource_depth = 2000;
 		resource_temp = 200;
-		design_temp = 0;
+		design_temp = 200;
 		rock_thermal_conductivity = 259200;
 		rock_specific_heat = 950;
 		rock_density = 2600;
@@ -169,7 +170,7 @@ public:
 				PBInputs.rel_humidity = 0.7;
 
 		//====================================================================================================================================================================
-				//SGeothermal_Inputs geoBinary_inputs;
+				//Initializing SGeothermal_Inputs:
 				geoBinary_inputs.md_RatioInjectionToProduction = 0.5;
 				geoBinary_inputs.md_DesiredSalesCapacityKW = nameplate;
 
@@ -265,53 +266,52 @@ public:
 				geoBinary_inputs.mi_TotalMakeupCalculations = geoBinary_inputs.mi_ProjectLifeYears * geoBinary_inputs.mi_MakeupCalculationsPerYear;
 
 		//====================================================================================================================================================================
-				//SGeothermal_Outputs geoBinary_outputs;
+				//Initializing SGeothermal_Outputs:
 		
-				//geoBinary_outputs.md_NumberOfWells;
-				//geoBinary_outputs.md_NumberOfWells;
-				//geoBinary_outputs.md_PumpWorkKW;
-				//geoBinary_outputs.eff_secondlaw;
-				//geoBinary_outputs.qRejectedTotal;
-				//geoBinary_outputs.condenser_q;
-				//geoBinary_outputs.v_stage_1;
-				//geoBinary_outputs.v_stage_2;
-				//geoBinary_outputs.v_stage_3;
-				//geoBinary_outputs.GF_flowrate;
-				//geoBinary_outputs.qRejectByStage_1;
-				//geoBinary_outputs.qRejectByStage_2;
-				//geoBinary_outputs.qRejectByStage_3;
-				//geoBinary_outputs.ncg_condensate_pump;
-				//geoBinary_outputs.cw_pump_work;
-				//geoBinary_outputs.pressure_ratio_1;
-				//geoBinary_outputs.pressure_ratio_2;
-				//geoBinary_outputs.pressure_ratio_3;
-				//geoBinary_outputs.condensate_pump_power;
-				//geoBinary_outputs.cwflow;
-				//geoBinary_outputs.cw_pump_head;
-				//geoBinary_outputs.flash_temperature;
-				//geoBinary_outputs.flash_temperature_lp;
-				//geoBinary_outputs.spec_vol; 
-				//geoBinary_outputs.spec_vol_lp;
-				//geoBinary_outputs.getX_hp; 
-				//geoBinary_outputs.getX_lp;
-				//geoBinary_outputs.flash_count;
-				//geoBinary_outputs.max_secondlaw;
-				//geoBinary_outputs.test;
-				//geoBinary_outputs.mb_BrineEffectivenessCalculated;
-				//geoBinary_outputs.md_FlashBrineEffectiveness;
+				geoBinary_outputs.md_NumberOfWells;
+				geoBinary_outputs.md_PumpWorkKW;
+				geoBinary_outputs.eff_secondlaw;
+				geoBinary_outputs.qRejectedTotal;
+				geoBinary_outputs.condenser_q;
+				geoBinary_outputs.v_stage_1;
+				geoBinary_outputs.v_stage_2;
+				geoBinary_outputs.v_stage_3;
+				geoBinary_outputs.GF_flowrate;
+				geoBinary_outputs.qRejectByStage_1;
+				geoBinary_outputs.qRejectByStage_2;
+				geoBinary_outputs.qRejectByStage_3;
+				geoBinary_outputs.ncg_condensate_pump;
+				geoBinary_outputs.cw_pump_work;
+				geoBinary_outputs.pressure_ratio_1;
+				geoBinary_outputs.pressure_ratio_2;
+				geoBinary_outputs.pressure_ratio_3;
+				geoBinary_outputs.condensate_pump_power;
+				geoBinary_outputs.cwflow;
+				geoBinary_outputs.cw_pump_head;
+				geoBinary_outputs.flash_temperature;
+				geoBinary_outputs.flash_temperature_lp;
+				geoBinary_outputs.spec_vol; 
+				geoBinary_outputs.spec_vol_lp;
+				geoBinary_outputs.getX_hp; 
+				geoBinary_outputs.getX_lp;
+				geoBinary_outputs.flash_count;
+				geoBinary_outputs.max_secondlaw;
+				geoBinary_outputs.test;
+				geoBinary_outputs.mb_BrineEffectivenessCalculated;
+				geoBinary_outputs.md_FlashBrineEffectiveness;
 
-				//geoBinary_outputs.mb_FlashPressuresCalculated;
-				//geoBinary_outputs.md_PressureHPFlashPSI; // D29, D64
-				//geoBinary_outputs.md_PressureLPFlashPSI; // D30, D65
+				geoBinary_outputs.mb_FlashPressuresCalculated;
+				geoBinary_outputs.md_PressureHPFlashPSI; // d29, d64
+				geoBinary_outputs.md_PressureLPFlashPSI; // d30, d65
 
-				//// only for use in the interface to show 'calculated' values
-				//geoBinary_outputs.md_PlantBrineEffectiveness;
-				//geoBinary_outputs.md_GrossPlantOutputMW;	//double GetGrossPlantOutputMW(void) { return this->PlantOutputKW()/1000; }
-				//geoBinary_outputs.md_PumpDepthFt;
-				//geoBinary_outputs.md_PumpHorsePower;
-				//geoBinary_outputs.md_PressureChangeAcrossReservoir; //double GetPressureChangeAcrossReservoir(void) { return moPPC.GetPressureChangeAcrossReservoir(); }
-				//geoBinary_outputs.md_AverageReservoirTemperatureF; //double GetAverageReservoirTemperatureUsedF(void) { return moPPC.GetReservoirTemperatureF(); }
-				//geoBinary_outputs.md_BottomHolePressure; //double GetBottomHolePressure(void) { return moPPC.GetBottomHolePressure(); }
+				// only for use in the interface to show 'calculated' values
+				geoBinary_outputs.md_PlantBrineEffectiveness;
+				geoBinary_outputs.md_GrossPlantOutputMW;	//double getgrossplantoutputmw(void) { return this->plantoutputkw()/1000; }
+				geoBinary_outputs.md_PumpDepthFt;
+				geoBinary_outputs.md_PumpHorsePower;
+				geoBinary_outputs.md_PressureChangeAcrossReservoir; //double getpressurechangeacrossreservoir(void) { return moppc.getpressurechangeacrossreservoir(); }
+				geoBinary_outputs.md_AverageReservoirTemperatureF; //double getaveragereservoirtemperatureusedf(void) { return moppc.getreservoirtemperaturef(); }
+				geoBinary_outputs.md_BottomHolePressure; //double getbottomholepressure(void) { return moppc.getbottomholepressure(); }
 
 
 
@@ -348,6 +348,7 @@ public:
 		geoTester = new CGeothermalAnalyzer(SPBP, PBInputs, geoBinary_inputs, geoBinary_outputs);
 		geoTester->RunAnalysis(my_update_function, user_data);
 		geoTester->InterfaceOutputsFilled();
+		
 }	
 
 
