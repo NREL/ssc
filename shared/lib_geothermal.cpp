@@ -515,7 +515,7 @@ double CGeothermalAnalyzer::PlantGrossPowerkW(void)
 
 		default: ms_ErrorString = ("Invalid make up technology in CGeothermalAnalyzer::PlantGrossPowerkW"); return 0;
 	}
-	mp_geo_out->test = dPlantBrineEfficiency;
+	
 	return dPlantBrineEfficiency * flowRateTotal() / 1000.0;
 }
 

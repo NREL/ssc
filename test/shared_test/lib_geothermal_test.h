@@ -74,8 +74,8 @@ protected:
 	//Initializing all 4 structs to defualt values in SAM 2018.11.11:
 		SPowerBlockParameters SPBP;
 		SPowerBlockInputs PBInputs;
-		SGeothermal_Inputs geoBinary_inputs;
-		SGeothermal_Outputs geoBinary_outputs;
+		SGeothermal_Inputs geoPlant_inputs;
+		SGeothermal_Outputs geoPlant_outputs;
 	
 	//Initializing CGeothermalAnalyzer class for testing:
 	CGeothermalAnalyzer* geoTester; 
@@ -170,181 +170,180 @@ public:
 
 		//====================================================================================================================================================================
 				//Initializing SGeothermal_Inputs:
-				geoBinary_inputs.md_RatioInjectionToProduction = 0.5;
-				geoBinary_inputs.md_DesiredSalesCapacityKW = nameplate;
+				geoPlant_inputs.md_RatioInjectionToProduction = 0.5;
+				geoPlant_inputs.md_DesiredSalesCapacityKW = nameplate;
 
-				//geoBinary_inputs.md_NumberOfWells = as_double("num_wells");
+				//geoPlant_inputs.md_NumberOfWells = as_double("num_wells");
 
 				if (analysis_type == 0)
-					geoBinary_inputs.me_cb = POWER_SALES;
+					geoPlant_inputs.me_cb = POWER_SALES;
 				else
-					geoBinary_inputs.me_cb = NUMBER_OF_WELLS;
+					geoPlant_inputs.me_cb = NUMBER_OF_WELLS;
 
 				if (conversion_type == 0)
-					geoBinary_inputs.me_ct = BINARY;
+					geoPlant_inputs.me_ct = BINARY;
 				else if (conversion_type == 1)
-					geoBinary_inputs.me_ct = FLASH;
+					geoPlant_inputs.me_ct = FLASH;
 
 				switch (conversion_subtype)
 				{
-				case 0:	geoBinary_inputs.me_ft = SINGLE_FLASH_NO_TEMP_CONSTRAINT; break;
-				case 1:	geoBinary_inputs.me_ft = SINGLE_FLASH_WITH_TEMP_CONSTRAINT; break;
-				case 2:	geoBinary_inputs.me_ft = DUAL_FLASH_NO_TEMP_CONSTRAINT; break;
-				case 3:	geoBinary_inputs.me_ft = DUAL_FLASH_WITH_TEMP_CONSTRAINT; break;
+				case 0:	geoPlant_inputs.me_ft = SINGLE_FLASH_NO_TEMP_CONSTRAINT; break;
+				case 1:	geoPlant_inputs.me_ft = SINGLE_FLASH_WITH_TEMP_CONSTRAINT; break;
+				case 2:	geoPlant_inputs.me_ft = DUAL_FLASH_NO_TEMP_CONSTRAINT; break;
+				case 3:	geoPlant_inputs.me_ft = DUAL_FLASH_WITH_TEMP_CONSTRAINT; break;
 				}
-				geoBinary_inputs.md_PlantEfficiency = plant_efficiency_input / 100;
+				geoPlant_inputs.md_PlantEfficiency = plant_efficiency_input / 100;
 
 				// temperature decline
 				if (decline_type == 0)
-					geoBinary_inputs.me_tdm = ENTER_RATE;
+					geoPlant_inputs.me_tdm = ENTER_RATE;
 				else if (decline_type == 1)
-					geoBinary_inputs.me_tdm = CALCULATE_RATE;
-				geoBinary_inputs.md_TemperatureDeclineRate = temp_decline_rate / 100;
-				geoBinary_inputs.md_MaxTempDeclineC = temp_decline_max;
+					geoPlant_inputs.me_tdm = CALCULATE_RATE;
+				geoPlant_inputs.md_TemperatureDeclineRate = temp_decline_rate / 100;
+				geoPlant_inputs.md_MaxTempDeclineC = temp_decline_max;
 
 				// flash inputs
-				geoBinary_inputs.md_TemperatureWetBulbC = wet_bulb_temp;
-				geoBinary_inputs.md_PressureAmbientPSI = ambient_pressure;
+				geoPlant_inputs.md_TemperatureWetBulbC = wet_bulb_temp;
+				geoPlant_inputs.md_PressureAmbientPSI = ambient_pressure;
 
 				//pumping parameters
-				geoBinary_inputs.md_ProductionFlowRateKgPerS = well_flow_rate;
-				geoBinary_inputs.md_GFPumpEfficiency = pump_efficiency / 100;
-				geoBinary_inputs.md_PressureChangeAcrossSurfaceEquipmentPSI = delta_pressure_equip;
-				geoBinary_inputs.md_ExcessPressureBar = physics::PsiToBar(excess_pressure_pump);
-				geoBinary_inputs.md_DiameterProductionWellInches = well_diameter;
-				geoBinary_inputs.md_DiameterPumpCasingInches = casing_size;
-				geoBinary_inputs.md_DiameterInjectionWellInches = inj_well_diam;
-				geoBinary_inputs.mb_CalculatePumpWork = (1 != specify_pump_work);
-				geoBinary_inputs.md_UserSpecifiedPumpWorkKW = specified_pump_work_amount * 1000; // entered in MW
+				geoPlant_inputs.md_ProductionFlowRateKgPerS = well_flow_rate;
+				geoPlant_inputs.md_GFPumpEfficiency = pump_efficiency / 100;
+				geoPlant_inputs.md_PressureChangeAcrossSurfaceEquipmentPSI = delta_pressure_equip;
+				geoPlant_inputs.md_ExcessPressureBar = physics::PsiToBar(excess_pressure_pump);
+				geoPlant_inputs.md_DiameterProductionWellInches = well_diameter;
+				geoPlant_inputs.md_DiameterPumpCasingInches = casing_size;
+				geoPlant_inputs.md_DiameterInjectionWellInches = inj_well_diam;
+				geoPlant_inputs.mb_CalculatePumpWork = (1 != specify_pump_work);
+				geoPlant_inputs.md_UserSpecifiedPumpWorkKW = specified_pump_work_amount * 1000; // entered in MW
 
 				//resource characterization
 				if (resource_type == 0)
-					geoBinary_inputs.me_rt = HYDROTHERMAL;
+					geoPlant_inputs.me_rt = HYDROTHERMAL;
 				else if (resource_type == 1)
-					geoBinary_inputs.me_rt = EGS;
-				geoBinary_inputs.md_ResourceDepthM = resource_depth;
-				geoBinary_inputs.md_TemperatureResourceC = resource_temp;
-				geoBinary_inputs.me_dc = TEMPERATURE;
-				geoBinary_inputs.md_TemperaturePlantDesignC = design_temp;
+					geoPlant_inputs.me_rt = EGS;
+				geoPlant_inputs.md_ResourceDepthM = resource_depth;
+				geoPlant_inputs.md_TemperatureResourceC = resource_temp;
+				geoPlant_inputs.me_dc = TEMPERATURE;
+				geoPlant_inputs.md_TemperaturePlantDesignC = design_temp;
 
 
 
 				//reservoir properties
-				geoBinary_inputs.md_TemperatureEGSAmbientC = 15.0;
-				geoBinary_inputs.md_EGSThermalConductivity = rock_thermal_conductivity;
-				geoBinary_inputs.md_EGSSpecificHeatConstant = rock_specific_heat;
-				geoBinary_inputs.md_EGSRockDensity = rock_density;
+				geoPlant_inputs.md_TemperatureEGSAmbientC = 15.0;
+				geoPlant_inputs.md_EGSThermalConductivity = rock_thermal_conductivity;
+				geoPlant_inputs.md_EGSSpecificHeatConstant = rock_specific_heat;
+				geoPlant_inputs.md_EGSRockDensity = rock_density;
 				switch (reservoir_pressure_change_type)
 				{
-				case 0: geoBinary_inputs.me_pc = ENTER_PC; break;				// pressure change entered by user
-				case 1: geoBinary_inputs.me_pc = SIMPLE_FRACTURE; break;		// use fracture flow (EGS only)
-				case 2: geoBinary_inputs.me_pc = K_AREA; break;				// permeability * area
+				case 0: geoPlant_inputs.me_pc = ENTER_PC; break;				// pressure change entered by user
+				case 1: geoPlant_inputs.me_pc = SIMPLE_FRACTURE; break;		// use fracture flow (EGS only)
+				case 2: geoPlant_inputs.me_pc = K_AREA; break;				// permeability * area
 				}
-				geoBinary_inputs.md_ReservoirDeltaPressure = reservoir_pressure_change;
-				geoBinary_inputs.md_ReservoirWidthM = reservoir_width;
-				geoBinary_inputs.md_ReservoirHeightM = reservoir_height;
-				geoBinary_inputs.md_ReservoirPermeability = reservoir_permeability;
-				geoBinary_inputs.md_DistanceBetweenProductionInjectionWellsM = inj_prod_well_distance;
-				geoBinary_inputs.md_WaterLossPercent = subsurface_water_loss / 100;
-				geoBinary_inputs.md_EGSFractureAperature = fracture_aperature;
-				geoBinary_inputs.md_EGSNumberOfFractures = num_fractures;
-				geoBinary_inputs.md_EGSFractureWidthM = fracture_width;
-				geoBinary_inputs.md_EGSFractureAngle = fracture_angle;
+				geoPlant_inputs.md_ReservoirDeltaPressure = reservoir_pressure_change;
+				geoPlant_inputs.md_ReservoirWidthM = reservoir_width;
+				geoPlant_inputs.md_ReservoirHeightM = reservoir_height;
+				geoPlant_inputs.md_ReservoirPermeability = reservoir_permeability;
+				geoPlant_inputs.md_DistanceBetweenProductionInjectionWellsM = inj_prod_well_distance;
+				geoPlant_inputs.md_WaterLossPercent = subsurface_water_loss / 100;
+				geoPlant_inputs.md_EGSFractureAperature = fracture_aperature;
+				geoPlant_inputs.md_EGSNumberOfFractures = num_fractures;
+				geoPlant_inputs.md_EGSFractureWidthM = fracture_width;
+				geoPlant_inputs.md_EGSFractureAngle = fracture_angle;
 
 				// calculate output array sizes
-				geoBinary_inputs.mi_ModelChoice = 0;		 // 0=GETEM, 1=Power Block monthly, 2=Power Block hourly
+				geoPlant_inputs.mi_ModelChoice = 0;		 // 0=GETEM, 1=Power Block monthly, 2=Power Block hourly
 				// set geothermal inputs RE how analysis is done and for how long
-				geoBinary_inputs.mi_ProjectLifeYears = geothermal_analysis_period;
-				//if (geoBinary_inputs.mi_ProjectLifeYears == 0)
+				geoPlant_inputs.mi_ProjectLifeYears = geothermal_analysis_period;
+				//if (geoPlant_inputs.mi_ProjectLifeYears == 0)
 				//	throw general_error("invalid analysis period specified in the geothermal hourly model");
 
-				geoBinary_inputs.md_PotentialResourceMW = resource_potential;
-				geoBinary_inputs.mc_WeatherFileName = geotest::filename_path;
-				geoBinary_inputs.mia_tou = tou;
-				geoBinary_inputs.mi_MakeupCalculationsPerYear = (geoBinary_inputs.mi_ModelChoice == 2) ? 8760 : 12;
-				geoBinary_inputs.mi_TotalMakeupCalculations = geoBinary_inputs.mi_ProjectLifeYears * geoBinary_inputs.mi_MakeupCalculationsPerYear;
+				geoPlant_inputs.md_PotentialResourceMW = resource_potential;
+				geoPlant_inputs.mc_WeatherFileName = geotest::filename_path;
+				geoPlant_inputs.mia_tou = tou;
+				geoPlant_inputs.mi_MakeupCalculationsPerYear = (geoPlant_inputs.mi_ModelChoice == 2) ? 8760 : 12;
+				geoPlant_inputs.mi_TotalMakeupCalculations = geoPlant_inputs.mi_ProjectLifeYears * geoPlant_inputs.mi_MakeupCalculationsPerYear;
 
 		//====================================================================================================================================================================
 				//Initializing SGeothermal_Outputs:
 		
-				geoBinary_outputs.md_NumberOfWells;
-				geoBinary_outputs.md_PumpWorkKW;
-				geoBinary_outputs.eff_secondlaw;
-				geoBinary_outputs.qRejectedTotal;
-				geoBinary_outputs.condenser_q;
-				geoBinary_outputs.v_stage_1;
-				geoBinary_outputs.v_stage_2;
-				geoBinary_outputs.v_stage_3;
-				geoBinary_outputs.GF_flowrate;
-				geoBinary_outputs.qRejectByStage_1;
-				geoBinary_outputs.qRejectByStage_2;
-				geoBinary_outputs.qRejectByStage_3;
-				geoBinary_outputs.ncg_condensate_pump;
-				geoBinary_outputs.cw_pump_work;
-				geoBinary_outputs.pressure_ratio_1;
-				geoBinary_outputs.pressure_ratio_2;
-				geoBinary_outputs.pressure_ratio_3;
-				geoBinary_outputs.condensate_pump_power;
-				geoBinary_outputs.cwflow;
-				geoBinary_outputs.cw_pump_head;
-				geoBinary_outputs.flash_temperature;
-				geoBinary_outputs.flash_temperature_lp;
-				geoBinary_outputs.spec_vol; 
-				geoBinary_outputs.spec_vol_lp;
-				geoBinary_outputs.getX_hp; 
-				geoBinary_outputs.getX_lp;
-				geoBinary_outputs.flash_count;
-				geoBinary_outputs.max_secondlaw;
-				geoBinary_outputs.test;
-				geoBinary_outputs.mb_BrineEffectivenessCalculated;
-				geoBinary_outputs.md_FlashBrineEffectiveness;
+				geoPlant_outputs.md_NumberOfWells;
+				geoPlant_outputs.md_PumpWorkKW;
+				geoPlant_outputs.eff_secondlaw;
+				geoPlant_outputs.qRejectedTotal;
+				geoPlant_outputs.condenser_q;
+				geoPlant_outputs.v_stage_1;
+				geoPlant_outputs.v_stage_2;
+				geoPlant_outputs.v_stage_3;
+				geoPlant_outputs.GF_flowrate;
+				geoPlant_outputs.qRejectByStage_1;
+				geoPlant_outputs.qRejectByStage_2;
+				geoPlant_outputs.qRejectByStage_3;
+				geoPlant_outputs.ncg_condensate_pump;
+				geoPlant_outputs.cw_pump_work;
+				geoPlant_outputs.pressure_ratio_1;
+				geoPlant_outputs.pressure_ratio_2;
+				geoPlant_outputs.pressure_ratio_3;
+				geoPlant_outputs.condensate_pump_power;
+				geoPlant_outputs.cwflow;
+				geoPlant_outputs.cw_pump_head;
+				geoPlant_outputs.flash_temperature;
+				geoPlant_outputs.flash_temperature_lp;
+				geoPlant_outputs.spec_vol; 
+				geoPlant_outputs.spec_vol_lp;
+				geoPlant_outputs.getX_hp; 
+				geoPlant_outputs.getX_lp;
+				geoPlant_outputs.flash_count;
+				geoPlant_outputs.max_secondlaw;
+				geoPlant_outputs.mb_BrineEffectivenessCalculated;
+				geoPlant_outputs.md_FlashBrineEffectiveness;
 
-				geoBinary_outputs.mb_FlashPressuresCalculated;
-				geoBinary_outputs.md_PressureHPFlashPSI; // d29, d64
-				geoBinary_outputs.md_PressureLPFlashPSI; // d30, d65
+				geoPlant_outputs.mb_FlashPressuresCalculated;
+				geoPlant_outputs.md_PressureHPFlashPSI; // d29, d64
+				geoPlant_outputs.md_PressureLPFlashPSI; // d30, d65
 
 				// only for use in the interface to show 'calculated' values
-				geoBinary_outputs.md_PlantBrineEffectiveness;
-				geoBinary_outputs.md_GrossPlantOutputMW;	//double getgrossplantoutputmw(void) { return this->plantoutputkw()/1000; }
-				geoBinary_outputs.md_PumpDepthFt;
-				geoBinary_outputs.md_PumpHorsePower;
-				geoBinary_outputs.md_PressureChangeAcrossReservoir; //double getpressurechangeacrossreservoir(void) { return moppc.getpressurechangeacrossreservoir(); }
-				geoBinary_outputs.md_AverageReservoirTemperatureF; //double getaveragereservoirtemperatureusedf(void) { return moppc.getreservoirtemperaturef(); }
-				geoBinary_outputs.md_BottomHolePressure; //double getbottomholepressure(void) { return moppc.getbottomholepressure(); }
+				geoPlant_outputs.md_PlantBrineEffectiveness;
+				geoPlant_outputs.md_GrossPlantOutputMW;	//double getgrossplantoutputmw(void) { return this->plantoutputkw()/1000; }
+				geoPlant_outputs.md_PumpDepthFt;
+				geoPlant_outputs.md_PumpHorsePower;
+				geoPlant_outputs.md_PressureChangeAcrossReservoir; //double getpressurechangeacrossreservoir(void) { return moppc.getpressurechangeacrossreservoir(); }
+				geoPlant_outputs.md_AverageReservoirTemperatureF; //double getaveragereservoirtemperatureusedf(void) { return moppc.getreservoirtemperaturef(); }
+				geoPlant_outputs.md_BottomHolePressure; //double getbottomholepressure(void) { return moppc.getbottomholepressure(); }
 
 
 
-				geoBinary_outputs.maf_ReplacementsByYear = new float[geoBinary_inputs.mi_ProjectLifeYears];
+				geoPlant_outputs.maf_ReplacementsByYear = new float[geoPlant_inputs.mi_ProjectLifeYears];
 
-				//ssc_number_t *annual_replacements = allocate( "annual_replacements", geoBinary_inputs.mi_ProjectLifeYears);
+				//ssc_number_t *annual_replacements = allocate( "annual_replacements", geoPlant_inputs.mi_ProjectLifeYears);
 		
 				// allocate lifetime monthly arrays (one element per month, over lifetime of project)
-				geoBinary_outputs.maf_monthly_resource_temp = new float[12 * geoBinary_inputs.mi_ProjectLifeYears];
-				geoBinary_outputs.maf_monthly_power = new float[12 * geoBinary_inputs.mi_ProjectLifeYears];
-				geoBinary_outputs.maf_monthly_energy = new float[12 * geoBinary_inputs.mi_ProjectLifeYears];
+				geoPlant_outputs.maf_monthly_resource_temp = new float[12 * geoPlant_inputs.mi_ProjectLifeYears];
+				geoPlant_outputs.maf_monthly_power = new float[12 * geoPlant_inputs.mi_ProjectLifeYears];
+				geoPlant_outputs.maf_monthly_energy = new float[12 * geoPlant_inputs.mi_ProjectLifeYears];
 
 				// allocate lifetime timestep arrays (one element per timestep, over lifetime of project)
 				// if this is a monthly analysis, these are redundant with monthly arrays that track same outputs
 		
-				geoBinary_inputs.mi_MakeupCalculationsPerYear = (geoBinary_inputs.mi_ModelChoice == 2) ? 8760 : 12;
-				geoBinary_inputs.mi_TotalMakeupCalculations = geoBinary_inputs.mi_ProjectLifeYears * geoBinary_inputs.mi_MakeupCalculationsPerYear;
+				geoPlant_inputs.mi_MakeupCalculationsPerYear = (geoPlant_inputs.mi_ModelChoice == 2) ? 8760 : 12;
+				geoPlant_inputs.mi_TotalMakeupCalculations = geoPlant_inputs.mi_ProjectLifeYears * geoPlant_inputs.mi_MakeupCalculationsPerYear;
 
-				geoBinary_outputs.maf_timestep_resource_temp = new float[geoBinary_inputs.mi_TotalMakeupCalculations];
+				geoPlant_outputs.maf_timestep_resource_temp = new float[geoPlant_inputs.mi_TotalMakeupCalculations];
 		
-				geoBinary_outputs.maf_timestep_power = new float[geoBinary_inputs.mi_TotalMakeupCalculations];
-				geoBinary_outputs.maf_timestep_test_values = new float[geoBinary_inputs.mi_TotalMakeupCalculations];
+				geoPlant_outputs.maf_timestep_power = new float[geoPlant_inputs.mi_TotalMakeupCalculations];
+				geoPlant_outputs.maf_timestep_test_values = new float[geoPlant_inputs.mi_TotalMakeupCalculations];
 
-				geoBinary_outputs.maf_timestep_pressure = new float[geoBinary_inputs.mi_TotalMakeupCalculations];
-				geoBinary_outputs.maf_timestep_dry_bulb = new float[geoBinary_inputs.mi_TotalMakeupCalculations];
-				geoBinary_outputs.maf_timestep_wet_bulb = new float[geoBinary_inputs.mi_TotalMakeupCalculations];
+				geoPlant_outputs.maf_timestep_pressure = new float[geoPlant_inputs.mi_TotalMakeupCalculations];
+				geoPlant_outputs.maf_timestep_dry_bulb = new float[geoPlant_inputs.mi_TotalMakeupCalculations];
+				geoPlant_outputs.maf_timestep_wet_bulb = new float[geoPlant_inputs.mi_TotalMakeupCalculations];
 		
-				geoBinary_outputs.maf_hourly_power = new float[geoBinary_inputs.mi_ProjectLifeYears * 8760];
+				geoPlant_outputs.maf_hourly_power = new float[geoPlant_inputs.mi_ProjectLifeYears * 8760];
 		
 		//====================================================================================================================================================================
 		void * user_data = nullptr;
 
 		//Instantiating CGeothermalAnalyzer class:
-		geoTester = new CGeothermalAnalyzer(SPBP, PBInputs, geoBinary_inputs, geoBinary_outputs);
+		geoTester = new CGeothermalAnalyzer(SPBP, PBInputs, geoPlant_inputs, geoPlant_outputs);
 		geoTester->RunAnalysis(my_update_function, user_data);
 		geoTester->InterfaceOutputsFilled();
 		
@@ -359,59 +358,59 @@ public:
 			geoTester = nullptr;
 		}
 		
-		if (geoBinary_outputs.maf_hourly_power != nullptr) {
-			delete[] geoBinary_outputs.maf_hourly_power;
-			geoBinary_outputs.maf_hourly_power = nullptr;
+		if (geoPlant_outputs.maf_hourly_power != nullptr) {
+			delete[] geoPlant_outputs.maf_hourly_power;
+			geoPlant_outputs.maf_hourly_power = nullptr;
 		}
 		
-		if (geoBinary_outputs.maf_timestep_wet_bulb != nullptr) {
-			delete[] geoBinary_outputs.maf_timestep_wet_bulb;
-			geoBinary_outputs.maf_timestep_wet_bulb = nullptr;
+		if (geoPlant_outputs.maf_timestep_wet_bulb != nullptr) {
+			delete[] geoPlant_outputs.maf_timestep_wet_bulb;
+			geoPlant_outputs.maf_timestep_wet_bulb = nullptr;
 		}
 		
-		if (geoBinary_outputs.maf_timestep_dry_bulb != nullptr) {
-			delete[] geoBinary_outputs.maf_timestep_dry_bulb;
-			geoBinary_outputs.maf_timestep_dry_bulb = nullptr;
+		if (geoPlant_outputs.maf_timestep_dry_bulb != nullptr) {
+			delete[] geoPlant_outputs.maf_timestep_dry_bulb;
+			geoPlant_outputs.maf_timestep_dry_bulb = nullptr;
 		}
 		
-		if (geoBinary_outputs.maf_timestep_pressure != nullptr) {
-			delete[] geoBinary_outputs.maf_timestep_pressure;
-			geoBinary_outputs.maf_timestep_pressure = nullptr;
+		if (geoPlant_outputs.maf_timestep_pressure != nullptr) {
+			delete[] geoPlant_outputs.maf_timestep_pressure;
+			geoPlant_outputs.maf_timestep_pressure = nullptr;
 		}
 		
-		if (geoBinary_outputs.maf_timestep_test_values != nullptr) {
-			delete[] geoBinary_outputs.maf_timestep_test_values;
-			geoBinary_outputs.maf_timestep_test_values = nullptr;
+		if (geoPlant_outputs.maf_timestep_test_values != nullptr) {
+			delete[] geoPlant_outputs.maf_timestep_test_values;
+			geoPlant_outputs.maf_timestep_test_values = nullptr;
 		}
 		
-		if (geoBinary_outputs.maf_timestep_power != nullptr) {
-			delete[] geoBinary_outputs.maf_timestep_power;
-			geoBinary_outputs.maf_timestep_power = nullptr;
+		if (geoPlant_outputs.maf_timestep_power != nullptr) {
+			delete[] geoPlant_outputs.maf_timestep_power;
+			geoPlant_outputs.maf_timestep_power = nullptr;
 		}
 		
-		if (geoBinary_outputs.maf_timestep_resource_temp != nullptr) {
-			delete[] geoBinary_outputs.maf_timestep_resource_temp;
-			geoBinary_outputs.maf_timestep_resource_temp = nullptr;
+		if (geoPlant_outputs.maf_timestep_resource_temp != nullptr) {
+			delete[] geoPlant_outputs.maf_timestep_resource_temp;
+			geoPlant_outputs.maf_timestep_resource_temp = nullptr;
 		}
 		
-		if (geoBinary_outputs.maf_monthly_energy != nullptr) {
-			delete[] geoBinary_outputs.maf_monthly_energy;
-			geoBinary_outputs.maf_monthly_energy = nullptr;
+		if (geoPlant_outputs.maf_monthly_energy != nullptr) {
+			delete[] geoPlant_outputs.maf_monthly_energy;
+			geoPlant_outputs.maf_monthly_energy = nullptr;
 		}
 		
-		if (geoBinary_outputs.maf_monthly_power != nullptr) {
-			delete[] geoBinary_outputs.maf_monthly_power;
-			geoBinary_outputs.maf_monthly_power = nullptr;
+		if (geoPlant_outputs.maf_monthly_power != nullptr) {
+			delete[] geoPlant_outputs.maf_monthly_power;
+			geoPlant_outputs.maf_monthly_power = nullptr;
 		}
 		
-		if (geoBinary_outputs.maf_monthly_resource_temp != nullptr) {
-			delete[] geoBinary_outputs.maf_monthly_resource_temp;
-			geoBinary_outputs.maf_monthly_resource_temp = nullptr;
+		if (geoPlant_outputs.maf_monthly_resource_temp != nullptr) {
+			delete[] geoPlant_outputs.maf_monthly_resource_temp;
+			geoPlant_outputs.maf_monthly_resource_temp = nullptr;
 		}
 		
-		if (geoBinary_outputs.maf_ReplacementsByYear != nullptr) {
-			delete[] geoBinary_outputs.maf_ReplacementsByYear;
-			geoBinary_outputs.maf_ReplacementsByYear = nullptr;
+		if (geoPlant_outputs.maf_ReplacementsByYear != nullptr) {
+			delete[] geoPlant_outputs.maf_ReplacementsByYear;
+			geoPlant_outputs.maf_ReplacementsByYear = nullptr;
 		}
 			   		 
 	}

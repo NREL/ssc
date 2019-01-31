@@ -186,7 +186,7 @@ struct SGeothermal_Outputs
 		double getX_hp, getX_lp;
 		double flash_count;
 		double max_secondlaw;				//Max 2nd Law efficiency
-		double test;						//DELETE
+		
 
 	// single values used in calculations, some also used in UI
 	bool mb_BrineEffectivenessCalculated;

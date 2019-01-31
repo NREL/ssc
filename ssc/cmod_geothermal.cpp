@@ -502,11 +502,6 @@ public:
 			double v_stage_3 = geo_outputs.v_stage_3;
 			assign("v_stage_3", (ssc_number_t)v_stage_3);
 
-			
-			//DELETE	
-			//double test = geo_outputs.test;
-
-
 			//Assign total GF Flow Rate: 
 			double GF_flowrate = geo_outputs.GF_flowrate;
 			assign("GF_flowrate", (ssc_number_t)GF_flowrate);
