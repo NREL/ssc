@@ -10,7 +10,6 @@ endif()
 
 Project(tcsconsole)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}")
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}")
 
 set(wxWidgets_CONFIG_EXECUTABLE /usr/local/bin/wx-config-3)
 find_package(wxWidgets REQUIRED xrc webview stc richtext ribbon propgrid aui gl html qa adv core xml net base)
@@ -26,6 +25,18 @@ set(TCSCONSOLE_SRC
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
+
+# Setup Application
+if (APPLE)
+	set(MACOSX_BUNDLE_ICON_FILE TCSConsole.icns)
+	set(TCSCONSOLE_ICON ${CMAKE_SOURCE_DIR}/build_osx/TCSConsole.icns)
+	set_source_files_properties(${TCSCONSOLE_ICON} PROPERTIES
+		MACOSX_PACKAGE_LOCATION "Resources")
+elseif(WIN32)
+	set(TCSCONSOLE_ICON ${CMAKE_SOURCE_DIR}/build_vs2013/TCSConsole.rc)
+endif()
+
+
 # set build types for archive
 set( DEPENDENCIES
 	splinter
@@ -37,7 +48,11 @@ set( DEPENDENCIES
 unset(WEX_LIB CACHE)
 unset(LK_LIB CACHE)
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-	add_executable(TCSConsoled ${TCSCONSOLE_SRC})
+	add_executable(TCSConsoled 
+		WIN32
+		MACOSX_BUNDLE
+		${TCSCONSOLE_SRC}
+		${TCSCONSOLE_ICON})
 	set(TCSCONSOLE_EXE TCSConsoled)
 	find_library( WEX_LIB
 		NAMES wexosxwx3d.a wexuxwx3d.a wexd.lib
@@ -49,7 +64,11 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
 	set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG}")
 	set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}")
 else()
-	add_executable(TCSConsole ${TCSCONSOLE_SRC})
+	add_executable(TCSConsole
+		WIN32
+		MACOSX_BUNDLE
+		${TCSCONSOLE_SRC}
+		${TCSCONSOLE_ICON})
 	set(TCSCONSOLE_EXE TCSConsole)
 	find_library( WEX_LIB
 		NAMES wexosxwx3.a  wexuxwx3.a wex.lib
@@ -89,20 +108,10 @@ else(MSVC)
 	endif()
 endif(MSVC)
 
-# Setup Application
-if(APPLE)
-	set(TCS_DIR ${CMAKE_CURRENT_SOURCE_DIR})
-	add_custom_command(
-		TARGET ${TCSCONSOLE_EXE}
-		POST_BUILD 
-		COMMAND SetFile -a t ${CMAKE_CURRENT_SOURCE_DIR}/${TCSCONSOLE_EXE}
-		COMMAND mkdir -p ${CMAKE_CURRENT_SOURCE_DIR}/${TCSCONSOLE_EXE}.app
-		COMMAND mkdir -p ${CMAKE_CURRENT_SOURCE_DIR}/${TCSCONSOLE_EXE}.app/Contents
-		COMMAND mkdir -p ${CMAKE_CURRENT_SOURCE_DIR}/${TCSCONSOLE_EXE}.app/Contents/MacOS
-		COMMAND mkdir -p ${CMAKE_CURRENT_SOURCE_DIR}/${TCSCONSOLE_EXE}.app/Contents/Resources
-		COMMAND cp ${CMAKE_CURRENT_SOURCE_DIR}/${TCSCONSOLE_EXE} ${CMAKE_CURRENT_SOURCE_DIR}/${TCSCONSOLE_EXE}.app/Contents/MacOS
-		COMMAND cp ${CMAKE_SOURCE_DIR}/build_osx/TCSConsole.icns ${CMAKE_CURRENT_SOURCE_DIR}/${TCSCONSOLE_EXE}.app/Contents/Resources
-		COMMAND cp ${CMAKE_SOURCE_DIR}/build_osx/Info-TCSConsole.plist ${CMAKE_CURRENT_SOURCE_DIR}/${TCSCONSOLE_EXE}.app/Contents/Info.plist
-		COMMAND echo "TCSConsole, National Renewable Energy Laboratory" >> ${CMAKE_CURRENT_SOURCE_DIR}/${TCSCONSOLE_EXE}.app/Contents/PkgInfo
+
+# create application info for executable
+if (APPLE)
+	set_target_properties(${TCSCONSOLE_EXE} PROPERTIES
+		MACOSX_BUNDLE_INFO_PLIST ${CMAKE_SOURCE_DIR}/build_osx/Info-TCSConsole.plist
 	)
 endif()

@@ -9,12 +9,11 @@ if(MSVC)
 endif()
 
 Project(nlopt)
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}")
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}")
 
 configure_file (
   config.h.in
-  config.h
+  config.h COPYONLY
  )
 
 include_directories(.)
