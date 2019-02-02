@@ -1,6 +1,6 @@
 set(CMAKE_VERBOSE_MAKEFILE ON)
 
-cmake_minimum_required(VERSION 3.7)
+cmake_minimum_required(VERSION 3.13)
 
 set(CMAKE_OSX_DEPLOYMENT_TARGET "10.9" CACHE STRING "Minimum OS X deployment version")
 
@@ -104,7 +104,6 @@ set(SSC_SRC
 	cmod_pv_get_shade_loss_mpp.cpp
 	tckernel.cpp )
 
-set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 
@@ -112,12 +111,13 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 
 set( DEPENDENCIES
-	splinter
-	shared
 	solarpilot
 	tcs
+	nlopt
+	shared
 	lpsolve
-	nlopt)
+	splinter
+	)
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
 	add_library(sscd SHARED ${SSC_SRC})
 	set(SSC_LIB sscd)
@@ -141,7 +141,7 @@ foreach( name ${DEPENDENCIES} )
 		target_link_libraries(${SSC_LIB} ${name})
 	endif()
 endforeach()
-target_link_libraries(${SSC_LIB} -lm -lstdc++)
+target_link_libraries(${SSC_LIB} -lm -ldl -lstdc++)
 
 
 if(MSVC)
@@ -149,11 +149,16 @@ if(MSVC)
 	add_compile_options(/W4 /WX)
 	add_compile_definitions( _CRT_SECURE_NO_WARNINGS _MBCS __WXMSW__)
 else(MSVC)
-	add_compile_options(-Wall -O3 -arch x86_64 -fno-common)
-	add_compile_definitions(WX_PRECOMP __64BIT__)
-	if(APPLE)
-		add_compile_definitions(__MACOSX__)
+	if (APPLE)
+		set(CMAKE_CXX_STANDARD 11)
+		add_compile_options(-arch x86_64 -fno-common)
+		add_compile_definitions(__MACOSX__ WX_PRECOMP)
+	else ()
+    	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
+		add_compile_definitions(__UNIX__)
 	endif()
+	add_compile_options(-Wall -Wno-unknown-pragmas -O3 )
+	add_compile_definitions( __64BIT__)
 endif(MSVC)
 
 
@@ -161,13 +166,15 @@ endif(MSVC)
 if(UNIX)
 	add_executable(dltest ../build_osx/dltest.c)
 	if (NOT APPLE)
-		target_compile_options(dltest PUBLIC -ldl)
+		target_link_libraries(dltest -ldl -Wl,--no-as-needed)
+		add_custom_command(
+			TARGET ${SSC_LIB}
+			POST_BUILD 
+			COMMAND dltest ${CMAKE_CURRENT_SOURCE_DIR}/${SSC_LIB}.so)
+	else ()
+		add_custom_command(
+			TARGET ${SSC_LIB}
+			POST_BUILD 
+			COMMAND dltest ${CMAKE_CURRENT_SOURCE_DIR}/${SSC_LIB}.dylib)
 	endif()
-
-	add_custom_command(
-		TARGET ${SSC_LIB}
-		COMMENT "Run dltest"
-		POST_BUILD 
-		COMMAND dltest ${CMAKE_CURRENT_SOURCE_DIR}/${SSC_LIB}.dylib
-	)
 endif()

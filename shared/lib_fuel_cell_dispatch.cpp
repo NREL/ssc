@@ -1,4 +1,5 @@
 #include <memory>
+#include <math.h>
 
 #include "lib_fuel_cell.h"
 #include "lib_fuel_cell_dispatch.h"

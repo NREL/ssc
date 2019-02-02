@@ -1,6 +1,6 @@
 set(CMAKE_VERBOSE_MAKEFILE ON)
 
-cmake_minimum_required(VERSION 3.7)
+cmake_minimum_required(VERSION 3.13)
 
 set(CMAKE_OSX_DEPLOYMENT_TARGET "10.9" CACHE STRING "Minimum OS X deployment version")
 
@@ -38,7 +38,6 @@ set(SOLARPILOT_SRC
 	solpos.cpp
 	string_util.cpp)
 
-set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 # set build types for archive
@@ -60,6 +59,13 @@ if(MSVC)
   add_compile_options(/W4 /WX)
   add_compile_definitions( _CRT_SECURE_NO_WARNINGS _MBCS __WXMSW__)
 else(MSVC)
-  add_compile_options(-Wall -O3 -arch x86_64 -fno-common)
-  add_compile_definitions(WX_PRECOMP)
+	if (APPLE)
+		set(CMAKE_CXX_STANDARD 11)
+		add_compile_options(-arch x86_64 -fno-common)
+  		add_compile_definitions(WX_PRECOMP)
+	else()
+    	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
+		add_compile_definitions(__64BIT__)
+	endif()
+  add_compile_options(-Wall -O3 )
 endif(MSVC)

@@ -1,6 +1,6 @@
 set(CMAKE_VERBOSE_MAKEFILE ON)
 
-cmake_minimum_required(VERSION 3.7)
+cmake_minimum_required(VERSION 3.13)
 
 set(CMAKE_OSX_DEPLOYMENT_TARGET "10.9" CACHE STRING "Minimum OS X deployment version")
 
@@ -24,8 +24,7 @@ set(SDKTOOL_SRC
 	scripting.cpp
 	sscdev.cpp)
 
-set(CMAKE_CXX_STANDARD 11)
-set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+
 
 
 # Setup Application
@@ -77,6 +76,9 @@ endif()
 target_link_libraries(${SDKTOOL_EXE} -lm -lcurl)
 target_link_libraries(${SDKTOOL_EXE} ${WEX_LIB} ${LK_LIB}) 
 target_link_libraries(${SDKTOOL_EXE} ${wxWidgets_LIBRARIES})
+if (UNIX AND NOT APPLE)
+	target_link_libraries(${SDKTOOL_EXE} -ldl -lfontconfig)
+endif()
 
 
 #get_target_property(OUT ${SDKTOOL_EXE} LINK_LIBRARIES)
@@ -87,11 +89,16 @@ if(MSVC)
 	add_compile_options(/W4 /WX)
 	add_compile_definitions( _CRT_SECURE_NO_WARNINGS _MBCS __WXMSW__)
 else(MSVC)
-	add_compile_options(-Wall -O3 -arch x86_64 -fno-common)
-	add_compile_definitions(LK_USE_WXWIDGETS WX_PRECOMP )
 	if (APPLE)
+		set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+		add_compile_options(-arch x86_64)
 		add_compile_definitions(__WXOSX__)
+	else()
+		add_compile_options(-std=c++0x)
+		add_compile_definitions(__64BIT__)
 	endif()
+	add_compile_options(-Wall -Wno-unknown-pragmas -Werror -O3 -fno-common)
+	add_compile_definitions(LK_USE_WXWIDGETS WX_PRECOMP )
 endif(MSVC)
 
 # create application info for executable

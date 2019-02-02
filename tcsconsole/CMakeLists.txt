@@ -1,6 +1,6 @@
 set(CMAKE_VERBOSE_MAKEFILE ON)
 
-cmake_minimum_required(VERSION 3.7)
+cmake_minimum_required(VERSION 3.13)
 
 set(CMAKE_OSX_DEPLOYMENT_TARGET "10.9" CACHE STRING "Minimum OS X deployment version")
 
@@ -12,7 +12,7 @@ Project(tcsconsole)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}")
 
 set(wxWidgets_CONFIG_EXECUTABLE /usr/local/bin/wx-config-3)
-find_package(wxWidgets REQUIRED xrc webview stc richtext ribbon propgrid aui gl html qa adv core xml net base)
+find_package(wxWidgets REQUIRED xrc stc richtext ribbon propgrid aui gl html qa adv core xml net base)
 include(${wxWidgets_USE_FILE})
 
 include_directories(. $ENV{WEXDIR}/include $ENV{LKDIR}/include ../tcs)
@@ -39,11 +39,11 @@ endif()
 
 # set build types for archive
 set( DEPENDENCIES
-	splinter
-	shared
-	solarpilot
 	tcs
-	nlopt)
+	nlopt
+	solarpilot
+	shared
+	splinter)
 
 unset(WEX_LIB CACHE)
 unset(LK_LIB CACHE)
@@ -91,6 +91,9 @@ endforeach()
 target_link_libraries(${TCSCONSOLE_EXE} -lm -lcurl)
 target_link_libraries(${TCSCONSOLE_EXE} ${WEX_LIB} ${LK_LIB}) 
 target_link_libraries(${TCSCONSOLE_EXE} ${wxWidgets_LIBRARIES})
+if (UNIX AND NOT APPLE)
+	target_link_libraries(${TCSCONSOLE_EXE} -lfontconfig -ldl)
+endif()
 
 
 get_target_property(OUT ${TCSCONSOLE_EXE} LINK_LIBRARIES)
@@ -101,11 +104,14 @@ if(MSVC)
 	add_compile_options(/W4 /WX)
 	add_compile_definitions( _CRT_SECURE_NO_WARNINGS _MBCS __WXMSW__)
 else(MSVC)
-	add_compile_options(-Wall -O3 -arch x86_64 -fno-common)
-	add_compile_definitions(LK_USE_WXWIDGETS WX_PRECOMP )
 	if (APPLE)
+		add_compile_options(-arch x86_64)
 		add_compile_definitions(__WXOSX__)
+	else()
+		add_compile_definitions(__64BIT__)
 	endif()
+	add_compile_options(-Wall -Wno-unknown-pragmas -Werror -O3 -fno-common)
+	add_compile_definitions(LK_USE_WXWIDGETS WX_PRECOMP )
 endif(MSVC)
 
 
