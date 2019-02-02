@@ -22,7 +22,6 @@ set(TCSCONSOLE_SRC
 	tcsmain.cpp
 	tcslayout.cpp)
 
-set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 
@@ -110,7 +109,7 @@ else(MSVC)
 	else()
 		add_compile_definitions(__64BIT__)
 	endif()
-	add_compile_options(-Wall -Wno-unknown-pragmas -Werror -O3 -fno-common)
+	add_compile_options(-Wall -Wno-unknown-pragmas -Werror -O3 -fno-common -std=c++11)
 	add_compile_definitions(LK_USE_WXWIDGETS WX_PRECOMP )
 endif(MSVC)
 
