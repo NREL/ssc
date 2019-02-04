@@ -1,23 +1,17 @@
-#pragma once
-#ifndef _CMOD_GEOTHERMAL_COSTS_TEST_H_
-#define _CMOD_GEOTHERMAL_COSTS_TEST_H_
+#ifndef _CMOD_GEOTHERMAL_TEST_H_
+#define _CMOD_GEOTHERMAL_TEST_H_
 
 #include <gtest/gtest.h>
 #include <memory>
 
 #include "core.h"
 #include "sscapi.h"
-
 #include "../ssc/vartab.h"
 #include "../ssc/common.h"
 #include "../input_cases/code_generator_utilities.h"
 #include "../input_cases/geothermal_common_data.h"
 
-/**
- * CMFuelCell tests the cmod_fuelcell using the SAM code generator to generate data
- * Eventually a method can be written to write this data to a vartable so that lower-level methods of pvsamv1 can be tested
- * For now, this uses the SSCAPI interfaces to run the compute module and compare results
- */
+
 class CMGeothermal : public ::testing::Test {
 
 public:
@@ -30,9 +24,9 @@ public:
 
 	void SetUp()
 	{
-		data = ssc_data_create();
+		data = ssc_data_create(); //Data structure for geothermal singleowner
 		geothermal_singleowner_default(data);
-
+		
 	}
 	void TearDown() {
 		if (data) {
