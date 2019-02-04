@@ -51,6 +51,8 @@
 #include <string.h>
 #include "vbapi.h"
 
+#pragma warning (disable: 4302 4311 4312)
+
 // test without marshalling
 
 SSCEXPORT long VBCALL_CONVENTION sscvb_version()
@@ -299,7 +301,8 @@ SSCEXPORT long VBCALL_CONVENTION sscvb_data_get_table(void *p_data, const char *
 {
 	if (p_data && table)
 	{
-		return (long)ssc_data_get_table(p_data, name);
+		ssc_data_t tmp = ssc_data_get_table(p_data, name); 
+		return (long)tmp;
 	}
 	else
 		return 0;

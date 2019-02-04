@@ -202,7 +202,7 @@ public:
 		}
 
 		for (int m=0;m<12;m++)
-			for (int d=0;d<util::nday[m];d++)
+			for (size_t d=0;d<util::nday[m];d++)
 				for (int h=0;h<24;h++)
 					if (i<8760)
 					{
@@ -255,7 +255,7 @@ public:
 			for (int m=0;m<12;m++)
 			{
 				monthly_energy_to_grid[(y-1)*12+m] = 0;
-				for (int d=0;d<util::nday[m];d++)
+				for (size_t d=0;d<util::nday[m];d++)
 				{
 					for (int h=0;h<24;h++)
 					{

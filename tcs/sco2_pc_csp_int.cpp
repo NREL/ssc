@@ -1141,7 +1141,18 @@ int C_sco2_recomp_csp::C_mono_eq_T_t_in::operator()(double T_t_in /*K*/, double 
 	
 	if( mpc_sco2_rc->m_off_design_turbo_operation == E_FIXED_MC_FIXED_RC_FIXED_T )
 	{
-		rc_od_error_code = mpc_sco2_rc->mpc_sco2_cycle->off_design_fix_shaft_speeds(mpc_sco2_rc->ms_cycle_od_par);
+		try
+		{
+			rc_od_error_code = mpc_sco2_rc->mpc_sco2_cycle->off_design_fix_shaft_speeds(mpc_sco2_rc->ms_cycle_od_par);
+		}
+		catch ( C_csp_exception )
+		{
+			// reset 'diff_T_t_in' to NaN
+			*diff_T_t_in = std::numeric_limits<double>::quiet_NaN();
+
+			return -1;
+		}
+		
 	}
 	else
 	{

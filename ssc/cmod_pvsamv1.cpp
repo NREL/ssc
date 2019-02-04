@@ -1076,7 +1076,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 	std::vector<std::vector<double>> dcStringVoltage; // Voltage of string for each subarray
 	double dcPowerNetTotalSystem = 0; //Net DC power in W for the entire system (sum of all subarrays)
 
-	for (int mpptInput = 0; mpptInput < PVSystem->Inverter->nMpptInputs; mpptInput++)
+	for (size_t mpptInput = 0; mpptInput < PVSystem->Inverter->nMpptInputs; mpptInput++)
 	{
 		dcPowerNetPerMppt_kW.push_back(0);
 		dcVoltagePerMppt.push_back(0);
@@ -1555,7 +1555,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 				}
 
 				//Calculate power of each MPPT input
-				for (int mpptInput = 0; mpptInput < PVSystem->Inverter->nMpptInputs; mpptInput++) //remember that actual named mppt inputs are 1-indexed, and these are 0-indexed
+				for (size_t mpptInput = 0; mpptInput < PVSystem->Inverter->nMpptInputs; mpptInput++) //remember that actual named mppt inputs are 1-indexed, and these are 0-indexed
 				{
 					int nSubarraysOnMpptInput = (int)(PVSystem->mpptMapping[mpptInput].size()); //number of subarrays attached to this MPPT input
 					std::vector<int> SubarraysOnMpptInput = PVSystem->mpptMapping[mpptInput]; //vector of which subarrays are attached to this MPPT input
@@ -1957,7 +1957,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 				weather_record wf = Irradiance->weatherRecord;
 
 				//set DC voltages for use in AC power calculation
-				for (int m = 0; m < PVSystem->Inverter->nMpptInputs; m++)
+				for (size_t m = 0; m < PVSystem->Inverter->nMpptInputs; m++)
 				{
 					dcVoltagePerMppt[m] = PVSystem->p_mpptVoltage[m][idx];
 					dcPowerNetPerMppt_kW[m] = PVSystem->p_dcPowerNetPerMppt[m][idx] * util::watt_to_kilowatt;

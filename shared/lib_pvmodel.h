@@ -113,6 +113,8 @@ public:
 	
 	virtual bool operator() ( pvinput_t &input, pvmodule_t &module, double opvoltage, double &Tcell ) = 0;
 	std::string error();
+
+	virtual ~pvcelltemp_t() {};
 };
 
 class pvmodule_t
@@ -130,6 +132,8 @@ public:
 
 	virtual bool operator() ( pvinput_t &input, double TcellC, double opvoltage, pvoutput_t &output ) = 0;
 	std::string error();
+
+	virtual ~pvmodule_t() {};
 };
 
 
@@ -157,6 +161,8 @@ public:
 	virtual double VocRef() { return VocNominal; }
 	virtual double IscRef() { return ImpRef()*1.3; }
 	virtual bool operator() ( pvinput_t &input, double TcellC, double opvoltage, pvoutput_t &output);
+
+	virtual ~spe_module_t() {};
 };
 
 #define AOI_MIN 0.5

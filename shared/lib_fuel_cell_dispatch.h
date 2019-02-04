@@ -43,6 +43,12 @@ public:
 	/// Get the total fuel cell heat output kW
 	double getPowerThermal();
 
+	/// Get the maximum power percentage available
+	double getPowerMaxPercent();
+
+	/// Get the percent of the current power divided by max power (degraded  not original)
+	double getPercentLoad();
+
 	/// Get the fuel consumed during this time step MCf
 	double getFuelConsumption();
 
@@ -61,6 +67,8 @@ private:
 	BatteryPower * m_batteryPower;
 
 	double m_powerTotal_kW;
+	double m_loadAverage_percent;
+	double m_powerMaxPercentAverage_percent;
 	double m_powerThermalTotal_kW;
 	double m_fuelConsumedTotal_MCf;
 

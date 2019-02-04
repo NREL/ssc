@@ -30,7 +30,7 @@ TEST_F(CMBattery, CommercialLifetimePeakShaving) {
 
 		// test that battery was replaced at some point
 		calculated_array = ssc_data_get_array(data, "batt_bank_replacement", &n);
-		ssc_number_t replacements = std::accumulate(calculated_array, calculated_array + n, 0);
+		int replacements = std::accumulate(calculated_array, calculated_array + n, 0);
 		
 		EXPECT_GT(replacements, 0);
 	}

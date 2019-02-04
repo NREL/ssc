@@ -546,8 +546,9 @@ class thermal_t
 {
 public:
 	thermal_t();
-	thermal_t(double mass, double length, double width, double height,
-		double Cp, double h, double T_room,
+	thermal_t(double dtHour, double mass, double length, double width, double height,
+		double Cp, double h, 
+		std::vector<double> T_room,
 		const util::matrix_t<double> &cap_vs_temp);
 
 	// deep copy
@@ -556,8 +557,8 @@ public:
 	// copy thermal to this
 	void copy(thermal_t *);
 
-	void updateTemperature(double I, double R, double dt);
-	void replace_battery();
+	void updateTemperature(double I, double R, double dt, size_t lifetimeIndex);
+	void replace_battery(size_t lifetimeIndex);
 
 	// outputs
 	double T_battery();
@@ -565,22 +566,23 @@ public:
 	message get_messages(){ return _message; }
 
 protected:
-	double f(double T_battery, double I);
-	double rk4(double I, double dt);
-	double trapezoidal(double I, double dt);
-	double implicit_euler(double I, double dt);
+	double f(double T_battery, double I, size_t lifetimeIndex);
+	double rk4(double I, double dt, size_t lifetimeIndex);
+	double trapezoidal(double I, double dt, size_t lifetimeIndex);
+	double implicit_euler(double I, double dt, size_t lifetimeIndex);
 
 protected:
 
 	util::matrix_t<double> _cap_vs_temp;
 
+	double _dt_hour;    // [hr] - timestep
 	double _mass;		// [kg]
 	double _length;		// [m]
 	double _width;		// [m]
 	double _height;		// [m]
 	double _Cp;			// [J/KgK] - battery specific heat capacity
 	double _h;			// [Wm2K] - general heat transfer coefficient
-	double _T_room;		// [K] - storage room temperature
+	std::vector<double> _T_room; // [K] - storage room temperature
 	double _R;			// [Ohm] - internal resistance
 	double _A;			// [m2] - exposed surface area
 	double _T_battery;   // [K]
@@ -684,14 +686,14 @@ public:
 	void initialize(capacity_t *, voltage_t *, lifetime_t *, thermal_t *, losses_t *);
 
 	// Run all for single time step
-	void run(size_t idx, double I);
+	void run(size_t lifetimeIndex, double I);
 
 	// Run a component level model
 	void runCapacityModel(double &I);
 	void runVoltageModel();
-	void runThermalModel(double I);
-	void runLifetimeModel(size_t idx);
-	void runLossesModel(size_t idx);
+	void runThermalModel(double I, size_t lifetimeIndex);
+	void runLifetimeModel(size_t lifetimeIndex);
+	void runLossesModel(size_t lifetimeIndex);
 
 	capacity_t * capacity_model() const;
 	capacity_t * capacity_initial_model() const;

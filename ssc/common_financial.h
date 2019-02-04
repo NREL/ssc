@@ -103,7 +103,7 @@ private:
 	compute_module *m_cm;
 	std::vector<double> m_hourly_energy;
 	std::string m_error;
-	int m_nyears;
+	size_t m_nyears;
 
 public:
 	bool calculate(compute_module *cm);

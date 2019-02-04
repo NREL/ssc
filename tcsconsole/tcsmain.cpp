@@ -628,7 +628,7 @@ int tcFrame::Simulate( double start, double end, double step, int iter, bool sto
 		}
 
 		wxString text = wxString(d->group.c_str()) + ":  " + wxString(d->name.c_str()) + " (" + wxString(d->units.c_str()) + ")";
-		int idx = m_varSelector->Append( text );
+		idx = m_varSelector->Append( text );
 		if ( selections.Index( text ) >= 0 )
 			m_varSelector->Check( idx, true );
 	}

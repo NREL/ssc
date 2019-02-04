@@ -7,9 +7,11 @@
 namespace batterytest {
 	const char * SSCDIR = std::getenv("SSCDIR");
 	char load_profile_path[100];
+	char temperature_path[100];
 	char gen_path[100];
 	int n1 = sprintf(gen_path, "%s/test/input_cases/battery_data/lifetime_gen.csv", batterytest::SSCDIR);
 	int n2 = sprintf(load_profile_path, "%s/test/input_cases/general_data/commercial_load.csv", batterytest::SSCDIR);
+	int n3 = sprintf(temperature_path, "%s/test/input_cases/battery_data/batt_room_temperature_celsius.csv", batterytest::SSCDIR);
 }
 
 /**
@@ -87,7 +89,7 @@ void battery_commercial_peak_shaving_lifetime(ssc_data_t &data)
 	ssc_data_set_number(data, "batt_height", 1.0689570903778076);
 	ssc_data_set_number(data, "batt_Cp", 1004);
 	ssc_data_set_number(data, "batt_h_to_ambient", 5);
-	ssc_data_set_number(data, "T_room", 20);
+	set_array(data, "batt_room_temperature_celsius", batterytest::temperature_path, 8760);
 	ssc_number_t p_cap_vs_temp[8] = { -10, 60, 0, 80, 25, 100, 40, 100 };
 	ssc_data_set_matrix(data, "cap_vs_temp", p_cap_vs_temp, 4, 2);
 	ssc_number_t p_dispatch_manual_charge[6] = { 1, 1, 1, 0, 0, 0 };

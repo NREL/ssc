@@ -62,6 +62,9 @@
 #include "csp_solver_two_tank_tes.h"
 #include "csp_solver_tou_block_schedules.h"
 
+// signed/unsigned mismatch
+#pragma warning (disable : 4388)
+
 static var_info _cm_vtab_trough_physical[] = {
     /* VARTYPE          DATATYPE         NAME                         LABEL                                                                               UNITS           META              GROUP             REQUIRED_IF                CONSTRAINTS         UI_HINTS*/
     // Weather Reader

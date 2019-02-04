@@ -60,6 +60,8 @@ class ond_inverter
 {
 public:
 	ond_inverter();
+	virtual ~ond_inverter() {};
+
 
 	double PNomConv; // [W]
 	double PMaxOUT; // [W]

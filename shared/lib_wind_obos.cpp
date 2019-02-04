@@ -69,6 +69,11 @@
 #endif
 
 using namespace std;
+
+// responsibility of developers of this file to fix these warnings
+#pragma warning (disable : 4458 ) // https://docs.microsoft.com/en-us/cpp/error-messages/compiler-warnings/compiler-warning-level-4-c4458?view=vs-2017
+
+
 /*
 // For Python wrapping with c_types
 extern "C" {

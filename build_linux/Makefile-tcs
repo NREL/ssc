@@ -1,7 +1,13 @@
 VPATH = ../tcs
 CC = gcc
 CXX = g++
-WARNINGS = -Wall -Wno-unknown-pragmas
+WARNINGS = -Wall -Wno-unknown-pragmas -Wno-sign-compare -Wno-maybe-uninitialized -Wno-unused-but-set-variable -Wno-unused-variable -Wno-uninitialized -Wno-int-to-pointer-cast
+CXXFLAGS=-std=c++0x $(CFLAGS)
+
+OBJECTS = tcskernel.o \
+        fmin_callbacks.o \
+        fmin.o \
+
 CFLAGS = -fPIC $(WARNINGS) -g -O3 -I../ -D__64BIT__ -I../nlopt -I../shared -I../lpsolve -I../solarpilot -I../splinter
 CXXFLAGS=-std=c++0x $(CFLAGS)
 

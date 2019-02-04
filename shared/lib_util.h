@@ -127,7 +127,7 @@ namespace util
 	bool to_integer(const std::string &str, int *x);
 	bool to_float(const std::string &str, float *x);
 	bool to_double(const std::string &str, double *x);
-		
+
 	std::string to_string( int x, const char *fmt="%d" );
 	std::string to_string( double x, const char *fmt="%lg" );
 
@@ -146,6 +146,7 @@ namespace util
 	void month_hour(size_t hour_of_year, size_t & out_month, size_t & out_hour); /*given the hour of year, return the month, and hour of day*/
 	bool weekday(size_t hour_of_year); /* return true if is a weekday, assuming first hour of year is Monday at 12 am*/
 	size_t lifetimeIndex(size_t year, size_t hour_of_year, size_t step_of_hour, size_t steps_per_hour);
+	size_t yearOneIndex(double dtHour, size_t lifetimeIndex);
 
 	int schedule_char_to_int( char c );
 	std::string schedule_int_to_month( int m );
