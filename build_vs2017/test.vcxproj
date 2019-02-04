@@ -24,6 +24,7 @@
     <ClCompile Include="..\test\shared_test\lib_battery_dispatch_test.cpp" />
     <ClCompile Include="..\test\shared_test\lib_battery_powerflow_test.cpp" />
     <ClCompile Include="..\test\shared_test\lib_battery_test.cpp" />
+    <ClCompile Include="..\test\shared_test\lib_csp_test.cpp" />
     <ClCompile Include="..\test\shared_test\lib_fuel_cell_test.cpp" />
     <ClCompile Include="..\test\shared_test\lib_geothermal_test.cpp" />
     <ClCompile Include="..\test\shared_test\lib_irradproc_test.cpp" />
@@ -68,6 +69,7 @@
     <ClInclude Include="..\test\shared_test\lib_battery_powerflow_test.h" />
     <ClInclude Include="..\test\shared_test\lib_battery_properties.h" />
     <ClInclude Include="..\test\shared_test\lib_battery_test.h" />
+    <ClInclude Include="..\test\shared_test\lib_csp_test.h" />
     <ClInclude Include="..\test\shared_test\lib_fuel_cell_test.h" />
     <ClInclude Include="..\test\shared_test\lib_geothermal_test.h" />
     <ClInclude Include="..\test\shared_test\lib_irradproc_test.h" />
