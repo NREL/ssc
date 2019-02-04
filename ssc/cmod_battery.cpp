@@ -663,8 +663,10 @@ battstor::battstor(compute_module &cm, bool setup_model, size_t nrec, double dt_
 	{
 		outBatteryToGrid = cm.allocate("batt_to_grid", nrec*nyears);
 
-		if (batt_vars->batt_dispatch != dispatch_t::FOM_MANUAL)
+		if (batt_vars->batt_dispatch != dispatch_t::FOM_MANUAL) {
 			outCostToCycle = cm.allocate("batt_cost_to_cycle", nrec*nyears);
+			outBattPowerTarget = cm.allocate("batt_power_target", nrec*nyears);
+		}
 	}
 	outPVToBatt = cm.allocate("pv_to_batt", nrec*nyears);
 	outGridToBatt = cm.allocate("grid_to_batt", nrec*nyears);
@@ -1192,8 +1194,10 @@ void battstor::outputs_topology_dependent(compute_module &)
 	{
 		outBatteryToGrid[index] = (ssc_number_t)(dispatch_model->power_battery_to_grid());
 
-		if (batt_vars->batt_dispatch != dispatch_t::FOM_MANUAL)
+		if (batt_vars->batt_dispatch != dispatch_t::FOM_MANUAL) {
 			outCostToCycle[index] = (ssc_number_t)(dispatch_model->cost_to_cycle());
+			outBattPowerTarget[index] = (ssc_number_t)(dispatch_model->power_batt_target());
+		}
 	}
 }
 
