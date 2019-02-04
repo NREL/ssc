@@ -150,6 +150,7 @@
       <SDLCheck>false</SDLCheck>
       <AdditionalIncludeDirectories>$(SolutionDir)\..\lpsolve</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>LPWINAPP;FPUexception;NOFORTIFY;_DEBUG;_CONSOLE;MSDOS;CHECK_SOLUTION;YY_NEVER_INTERACTIVE;PARSER_LP;INVERSE_ACTIVE=INVERSE_LUSOL;RoleIsExternalInvEngine;_CRT_SECURE_NO_DEPRECATE;_CRT_NONSTDC_NO_DEPRECATE;_SCL_SECURE_NO_DEPRECATE;LP_MAXLINELEN=0;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>

@@ -237,6 +237,7 @@
       <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(SolutionDir)\..\tcs\FIT_props;$(SolutionDir)\..\nlopt;$(SolutionDir)\..\shared;$(SolutionDir)\..\solarpilot;$(SolutionDir)\..\lpsolve;$(SolutionDir)\..\splinter</AdditionalIncludeDirectories>
       <AdditionalOptions>/bigobj %(AdditionalOptions)</AdditionalOptions>
       <PreprocessorDefinitions>LPWINAPP;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>

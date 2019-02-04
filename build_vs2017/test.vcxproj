@@ -135,6 +135,7 @@
       <SDLCheck>true</SDLCheck>
       <AdditionalIncludeDirectories>$(SSCDIR)\test;$(GTEST)\include;$(SSCDIR);$(SSCDIR)\lpsolve;$(SSCDIR)\shared;$(SSCDIR)\splinter;$(SSCDIR)\tcs;$(SSCDIR)\solarpilot;$(SSCDIR)\ssc</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>

@@ -59,6 +59,7 @@
     <ClCompile Include="..\test\ssc_test\cmod_pvyield_test.cpp">
       <Filter>ssc_test</Filter>
     </ClCompile>
+    <ClCompile Include="..\test\splinter_test\splinter_test.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="shared_test">
