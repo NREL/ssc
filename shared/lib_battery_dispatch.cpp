@@ -693,6 +693,7 @@ bool dispatch_automatic_t::check_constraints(double &I, size_t count)
 	{
 		double I_initial = I;
 		double P_battery = I * _Battery->battery_voltage() * util::watt_to_kilowatt;
+		double P_target = m_batteryPower->powerBatteryTarget;
 
 		// Comomon to automated behind the meter and front of meter
 		iterate = true;
@@ -707,7 +708,7 @@ bool dispatch_automatic_t::check_constraints(double &I, size_t count)
 		}
 		*/
 		// Try and force controller to meet target or custom dispatch
-		if (P_battery > m_batteryPower->powerBatteryTarget + tolerance || P_battery < m_batteryPower->powerBatteryTarget - tolerance)
+		if (P_battery > P_target + tolerance || P_battery < P_target - tolerance)
 		{
 			// Difference between the dispatch and the desired dispatch
 			double dP = P_battery - m_batteryPower->powerBatteryTarget;
@@ -715,34 +716,49 @@ bool dispatch_automatic_t::check_constraints(double &I, size_t count)
 			double dSOC = 100 * dQ / _Battery->battery_charge_maximum();
 			double SOC = _Battery->battery_soc();
 
-			// But only if it's possible to meet without break grid-charge contraint
-			if ((m_batteryPower->powerBatteryTarget < 0 && m_batteryPower->canGridCharge) ||
-				(m_batteryPower->powerBatteryTarget > 0))
-			{
-				// Also don't violate SOC contraints, current limits
-				if ((m_batteryPower->powerBatteryTarget > 0 && SOC > m_batteryPower->stateOfChargeMin + 2.0 && I < m_batteryPower->currentDischargeMax) ||
-					(m_batteryPower->powerBatteryTarget < 0 && SOC < m_batteryPower->stateOfChargeMax - 2.0 && I > m_batteryPower->currentChargeMax)) {
 
-					double dI = dP * util::kilowatt_to_watt / _Battery->battery_voltage();
-					if (SOC + dSOC > m_batteryPower->stateOfChargeMax + tolerance) {
-						double dSOC_use = (m_batteryPower->stateOfChargeMax - SOC);
-						double dQ_use = dSOC_use * 0.01 * _Battery->battery_charge_maximum();
-						dI = dQ_use / _dt_hour;
-					}
-					else if ( SOC + dSOC < m_batteryPower->stateOfChargeMin -tolerance) {
-						double dSOC_use = (m_batteryPower->stateOfChargeMin - SOC) ;
-						double dQ_use = dSOC_use * 0.01 * _Battery->battery_charge_maximum();
-						dI = dQ_use / _dt_hour;
-					}
-					I -= dI;
-					
+			// Case 1: Charging, need to increase charging to meet target (P_battery < 0, dP > 0)
+			if (P_battery <= 0 && dP > 0) {
+				// Don't charge more if can't grid charge (assumes PV and fuel cell have met max possible)
+				if (!m_batteryPower->canGridCharge) {
+					iterate = false;
 				}
-				else {
+				// Don't charge more if battery is already close to full
+				if (SOC > m_batteryPower->stateOfChargeMax - tolerance) {
+					iterate = false;
+				}
+				// Don't charge more if would violate current or power charge limits
+				if (I > m_batteryPower->currentChargeMax - tolerance || fabs(P_battery) > m_batteryPower->powerBatteryChargeMax - tolerance) {
 					iterate = false;
 				}
 			}
-			else {
-				iterate = false;
+			// Case 2: Discharging, need to increase discharge to meet target (P_battery > 0, dP < 0)
+			else if (P_battery >= 0 && dP < 0) {
+				// Don't discharge more if already near min SOC
+				if (SOC < m_batteryPower->stateOfChargeMin + tolerance) {
+					iterate = false;
+				}
+				// Don't discharge more if would violate current or power discharge limits
+				if (I > m_batteryPower->currentDischargeMax - tolerance || P_battery > m_batteryPower->powerBatteryDischargeMax - tolerance) {
+					iterate = false;
+				}
+			}
+			// Otherwise safe, (decreasing charging, decreasing discharging)
+
+			if (iterate) {
+
+				double dI = dP * util::kilowatt_to_watt / _Battery->battery_voltage();
+				if (SOC + dSOC > m_batteryPower->stateOfChargeMax + tolerance) {
+					double dSOC_use = (m_batteryPower->stateOfChargeMax - SOC);
+					double dQ_use = dSOC_use * 0.01 * _Battery->battery_charge_maximum();
+					dI = dQ_use / _dt_hour;
+				}
+				else if (SOC + dSOC < m_batteryPower->stateOfChargeMin - tolerance) {
+					double dSOC_use = (m_batteryPower->stateOfChargeMin - SOC);
+					double dQ_use = dSOC_use * 0.01 * _Battery->battery_charge_maximum();
+					dI = dQ_use / _dt_hour;
+				}
+				I -= dI;
 			}
 		}
 		// Behind the meter

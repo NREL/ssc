@@ -442,9 +442,6 @@ battstor::battstor(compute_module &cm, bool setup_model, size_t nrec, double dt_
 				{
 					batt_vars->batt_custom_dispatch = cm.as_vector_double("batt_custom_dispatch");
 				}
-
-				batt_vars->batt_dispatch_auto_can_gridcharge = cm.as_boolean("batt_dispatch_auto_can_gridcharge");
-				batt_vars->batt_dispatch_auto_can_charge = cm.as_boolean("batt_dispatch_auto_can_charge");
 			}
 
 			// Manual dispatch
@@ -461,17 +458,20 @@ battstor::battstor(compute_module &cm, bool setup_model, size_t nrec, double dt_
 			}
 
 			// Common to automated methods
-			batt_vars->batt_dispatch_auto_can_gridcharge = cm.as_boolean("batt_dispatch_auto_can_gridcharge");
+			batt_vars->batt_dispatch_auto_can_gridcharge = false;
 			batt_vars->batt_dispatch_auto_can_charge = true;
 			batt_vars->batt_dispatch_auto_can_clipcharge = true;
 
+			if (cm.is_assigned("batt_dispatch_auto_can_gridcharge")) {
+				batt_vars->batt_dispatch_auto_can_gridcharge = cm.as_boolean("batt_dispatch_auto_can_gridcharge");
+			}
 			if (cm.is_assigned("batt_dispatch_auto_can_charge")) {
 				batt_vars->batt_dispatch_auto_can_charge = cm.as_boolean("batt_dispatch_auto_can_charge");
 			}
 			if (cm.is_assigned("batt_dispatch_auto_can_clipcharge")) {
 				batt_vars->batt_dispatch_auto_can_clipcharge = cm.as_boolean("batt_dispatch_auto_can_clipcharge");
 			}
-
+			
 			// Battery bank replacement
 			batt_vars->batt_cost_per_kwh = cm.as_double("batt_replacement_cost");
 			batt_vars->batt_replacement_option = cm.as_integer("batt_replacement_option");
