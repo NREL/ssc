@@ -2149,6 +2149,7 @@ public:
 		for(int i=0; i<nSCA; i++){ q_SCA_tot += q_SCA[i]; } //W/m
 
 		//9-27-12, TWN: This model uses relative defocus. Changed controller to provide absolute defocus, so now convert to relative here
+        if (defocus_old == 0) { defocus_old = 1; }
 		defocus = defocus_new / defocus_old;
 		defocus_old = defocus_new;
 
