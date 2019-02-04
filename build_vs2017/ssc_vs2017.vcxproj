@@ -393,7 +393,7 @@ exit 0
       <AdditionalIncludeDirectories>$(SolutionDir)\..\shared;$(SolutionDir)\..\tcs;$(SolutionDir)\..\solarpilot;$(SolutionDir)\..\splinter;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <AdditionalOptions>/w44191 /w44242  /w44266 /w44302 /w44388 /w44826 /w44905 /w44906 /w44928 %(AdditionalOptions)</AdditionalOptions>
-      <TreatWarningAsError>true</TreatWarningAsError>
+      <TreatWarningAsError>false</TreatWarningAsError>
     </ClCompile>
     <Link>
       <AdditionalLibraryDirectories>$(SolutionDir)\$(Platform)\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
