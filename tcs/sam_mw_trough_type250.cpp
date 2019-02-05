@@ -3221,7 +3221,7 @@ calc_final_metrics_goto:
 			//MJW 12.14.2010 Limit to positive to avoid step-to-step oscillation introduced by using previous step. 
 			//.. This may cause a minor underestimation of annual energy output (<<.5%).
 			E_hdr_accum = (v_hot*rho_hdr_hot*c_hdr_hot + mc_bal_hot)*(T_sys_h - T_sys_h_last) + //Hot half
-				(v_cold*rho_hdr_cold*c_hdr_cold + mc_bal_cold)*(T_sys_c - T_sys_c_last);   //cold half
+				max((v_cold*rho_hdr_cold*c_hdr_cold + mc_bal_cold)*(T_sys_c - T_sys_c_last), 0.0);   //cold half
 			
 			if( !is_using_input_gen )
 				E_bal_startup = max(E_hdr_accum, 0.0); //cold half
