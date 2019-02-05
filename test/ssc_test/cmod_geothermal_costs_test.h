@@ -11,7 +11,14 @@
 #include "../input_cases/code_generator_utilities.h"
 #include "../input_cases/geothermal_common_data.h"
 
-
+/**
+ * CMGeothermalCosts tests the cmod_geothermal_costs. SAM code generator cannot be used to generate data for this module since it is
+ * a derived cmod of cmod_geothermal. This means that all the data required to run this cmod is a subset of data created using SAM
+ * code generator. The geothermal_costs_default() function in "../input_cases/code_generator_utilities.h" is a data container for the 
+ * data used in this particular cmod (which was obatined using the code generator). 
+ * Eventually a method can be written to write this data to a vartable so that lower-level methods of pvsamv1 can be tested
+ * For now, this uses the SSCAPI interfaces to run the compute module and compare results
+ */
 class CMGeothermalCosts : public ::testing::Test {
 
 public:

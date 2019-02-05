@@ -75,18 +75,15 @@
     <ClCompile Include="..\test\ssc_test\cmod_battery_test.cpp">
       <Filter>ssc_test</Filter>
     </ClCompile>
-
     <ClCompile Include="..\test\shared_test\lib_geothermal_test.cpp">
       <Filter>shared_test</Filter>
     </ClCompile>
     <ClCompile Include="..\test\ssc_test\cmod_geothermal_costs_test.cpp">
       <Filter>ssc_test</Filter>
     </ClCompile>
-
     <ClCompile Include="..\test\shared_test\lib_csp_test.cpp">
       <Filter>shared_test</Filter>
     </ClCompile>
-
   </ItemGroup>
   <ItemGroup>
     <Filter Include="shared_test">
@@ -196,7 +193,6 @@
     <ClInclude Include="..\test\shared_test\lib_battery_properties.h">
       <Filter>shared_test</Filter>
     </ClInclude>
-
     <ClInclude Include="..\test\shared_test\lib_geothermal_test.h">
       <Filter>shared_test</Filter>
     </ClInclude>
@@ -206,10 +202,8 @@
     <ClInclude Include="..\test\ssc_test\cmod_geothermal_costs_test.h">
       <Filter>ssc_test</Filter>
     </ClInclude>
-
     <ClInclude Include="..\test\shared_test\lib_csp_test.h">
       <Filter>shared_test</Filter>
     </ClInclude>
-
   </ItemGroup>
 </Project>
