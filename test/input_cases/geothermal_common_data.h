@@ -5,12 +5,12 @@
 #include "code_generator_utilities.h"
 
 namespace geothermaltest {
-	static const char * SSCDIR = std::getenv("SSCDIR");
-	static char weather_path[100];
-	static char dispatch_path[100];
+	const char * SSCDIR = std::getenv("SSCDIR");
+	char weather_path[100];
+	char dispatch_path[100];
 
-	static int n1 = sprintf(weather_path, "%s/test/input_cases/general_data/daggett_ca_34.865371_-116.783023_psmv3_60_tmy.csv", geothermaltest::SSCDIR);
-	static int n2 = sprintf(dispatch_path, "%s/test/input_cases/geothermal_data/dispatch_factors_ts.csv", geothermaltest::SSCDIR);
+	int n1 = sprintf(weather_path, "%s/test/input_cases/general_data/daggett_ca_34.865371_-116.783023_psmv3_60_tmy.csv", geothermaltest::SSCDIR);
+	int n2 = sprintf(dispatch_path, "%s/test/input_cases/geothermal_data/dispatch_factors_ts.csv", geothermaltest::SSCDIR);
 }
 
 /**
