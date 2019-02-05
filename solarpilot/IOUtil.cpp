@@ -430,6 +430,11 @@ void ioutil::parseXMLInputFile(const string &fname,var_map &V, parametric &par_d
 		var_node = var_node->next_sibling("variable");
 	}
 
+    //backwards compatibility for rec_offset_reference
+    if (rec_offset_assignments.size() == 0)
+        for (size_t i = 0; i < V.recs.size(); i++)
+            rec_offset_assignments[V.recs[i].id.val] = "Tower";
+
     //clean up template based parameters that may not have loaded correctly
     for (size_t i = 0; i < V.recs.size(); i++)
     {
