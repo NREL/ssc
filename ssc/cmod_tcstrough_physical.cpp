@@ -701,7 +701,7 @@ public:
 		bConnected &= connect(weather, "solazi", type250_solarfield, "SolarAz", 0);
 		bConnected &= connect(type251_controller, "defocus", type250_solarfield, "defocus" );
 		bConnected &= connect(type251_controller, "T_field_in", type250_solarfield, "T_cold_in" );
-        //bConnected &= connect(type251_controller, "recirculating", type250_solarfield, "recirculating");
+        bConnected &= connect(type251_controller, "recirculating", type250_solarfield, "recirculating");
         set_unit_value_ssc_double(type250_solarfield, "v_sgs", -999);                                       // indicate that this value should be propagated at the simulation start
         bConnected &= connect(type251_controller, "SGS_vol_tot", type250_solarfield, "v_sgs");              // output first param, input second
         bConnected &= connect(type251_controller, "SGS_P_des_1", type250_solarfield, "DP_SGS_1");
