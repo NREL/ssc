@@ -397,7 +397,7 @@ bool Storage_HX::mixed_tank( bool is_hot_tank, double dt, double m_prev, double 
 	// Calculate ending volume levels
 	m_fin = m_prev + dt*(m_dot_in - m_dot_out);	//[kg] Available mass at the end of the timestep
     double m_min, m_dot_out_adj;  // limit m_dot_out so the ending mass is above a given minimum to eliminate erratic behavior
-    double tank_is_empty = false;
+    bool tank_is_empty = false;
     m_min = 0.001;                // minimum tank mass for use in the calculations
     if (m_fin < m_min) {
         m_fin = m_min;
@@ -410,6 +410,18 @@ bool Storage_HX::mixed_tank( bool is_hot_tank, double dt, double m_prev, double 
 	double m_ave	= (m_prev + m_fin)/2.0;	//[kg] Average mass 
 	vol_fin	= m_fin/rho;					//[m3] Available volume at the end of the timestep
 	vol_ave	= m_ave/rho;					//[m3] Average volume
+
+    // Check for continual empty tank
+    if (m_prev <= 1e-4 && tank_is_empty == true) {
+        if (m_dot_in > 0) {
+            T_fin = T_ave = T_in;
+        }
+        else {
+            T_fin = T_ave = T_prev;
+        }
+        vol_ave = q_loss = vol_fin = m_fin = q_heater = 0.;
+        return false;
+    }
 
 	// Check for no flow
 	double B = m_dot_in + m_ua/cp;					//[kg/s] + [W/K]*[kg-K/J]
