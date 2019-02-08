@@ -1941,9 +1941,9 @@ public:
 				T_sky = T_db - 20.0;
 
 			// Always reset the defocus control at the first call of a timestep
-			defocus_new = 1.;
-			defocus_old = 1.;
-			defocus = 1.0;
+			//defocus_new = 1.;
+			//defocus_old = 1.;
+			//defocus = 1.0;
 
 			//Time calculations
 			day_of_year = (int)ceil(time_hr/24.);  //Day of the year
