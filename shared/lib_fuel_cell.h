@@ -55,6 +55,9 @@ public:
 	/// Run for single time step
 	void runSingleTimeStep(double power_kW);
 
+	/// Initialize hour zero
+	void initializeHourZeroPower(double power_kW);
+
 	/// Return true if starting up but not fully running
 	bool isStarting();
 
@@ -66,6 +69,9 @@ public:
 
 	/// Return true if totally shut down
 	bool isShutDown();
+
+	/// Return false if hour zero needs initial power from dispatch
+	bool isInitialized();
 
 	/// Get original max power kW
 	double getMaxPowerOriginal();
@@ -197,6 +203,8 @@ protected:
 	int m_shutdownOption;
 
 	// calculated
+	bool m_initialized;
+
 	bool m_startingUp;
 	bool m_startedUp;
 

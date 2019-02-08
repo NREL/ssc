@@ -104,11 +104,19 @@ void FuelCell::init() {
 	m_replacementCount = 0;
 	m_hour = 0;
 	m_year = 0;
+	m_initialized = true;
 
 	// In event of 0 startup hours, assume fuel cell is running at idle
 	if (m_startup_hours == 0) {
-		m_power_kW = m_unitPowerMin_kW;
+		m_initialized = false;
 	}
+}
+void FuelCell::initializeHourZeroPower(double power_kW) {
+	m_power_kW = power_kW;
+}
+
+bool FuelCell::isInitialized() {
+	return m_initialized;
 }
 
 bool FuelCell::isStarting() {
