@@ -1407,7 +1407,12 @@ void dispatch_automatic_front_of_meter_t::update_dispatch(size_t hour_of_year, s
 
 			// Discharge if we are in a high-price period and have battery and inverter capacity
 			if (highValuePeriod && excessAcCapacity && batteryHasDischargeCapacity) {
-				powerBattery = _inverter_paco - m_batteryPower->powerPV;
+				if (m_batteryPower->connectionMode == BatteryPower::DC_CONNECTED) {
+					powerBattery = _inverter_paco - m_batteryPower->powerPV;
+				}
+				else {
+					powerBattery = _inverter_paco;
+				}
 			}
 		}
 		// save for extraction
