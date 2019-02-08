@@ -263,6 +263,7 @@ enum{
 	O_E_TOT_ACCUM,
 	O_E_FIELD,
 	O_T_C_IN_CALC,
+    O_DEFOCUS,
 
 	//Include N_max
 	N_MAX
@@ -475,6 +476,7 @@ tcsvarinfo sam_mw_trough_type250_variables[] = {
 	{ TCS_OUTPUT,          TCS_NUMBER,       O_E_TOT_ACCUM,            "E_tot_accum",                                           "Total accumulated internal energy change rate",         "MWht",             "",             "",             "" },
 	{ TCS_OUTPUT,          TCS_NUMBER,           O_E_FIELD,                "E_field",                                   "Accumulated internal energy in the entire solar field",         "MWht",             "",             "",             "" },
 	{ TCS_OUTPUT,          TCS_NUMBER,       O_T_C_IN_CALC,            "T_c_in_calc",                                 "Calculated HTF inlet temp (freeze prot. or stand-alone)",            "C",             "",             "",             "" },
+    { TCS_OUTPUT,          TCS_NUMBER,           O_DEFOCUS,            "defocus_rel",                "Relative defocus for passing back to the controller to force convergence",         "none",             "",             "",             "" },
 
 	{ TCS_INVALID,    TCS_INVALID,    N_MAX,                0,                    0,                                                        0,                0,        0,        0 }
 };
@@ -2149,6 +2151,7 @@ public:
 		for(int i=0; i<nSCA; i++){ q_SCA_tot += q_SCA[i]; } //W/m
 
 		//9-27-12, TWN: This model uses relative defocus. Changed controller to provide absolute defocus, so now convert to relative here
+        // defocus_rel = defocus_abs / defocus_abs_prev
         if (defocus_old == 0) { defocus_old = 1; }
 		defocus = defocus_new / defocus_old;
 		defocus_old = defocus_new;
@@ -3441,6 +3444,7 @@ set_outputs_and_return:
 		value(O_E_TOT_ACCUM, E_tot_accum);			//[MWht] Total accumulated internal energy change rate
 		value(O_E_FIELD, E_field_out);				//[MWht] Accumulated internal energy in the entire solar field
 		value(O_T_C_IN_CALC, T_cold_in_1 - 273.15);	//[C] Calculated cold HTF inlet temperature - used in freeze protection and for stand-alone model in recirculation
+        value(O_DEFOCUS, defocus);                  //[-] Relative defocus for passing back to the controller to ensure TCS convergence
 
 		return 0;
 	}
@@ -3453,6 +3457,7 @@ set_outputs_and_return:
 		*/
 
 		ss_init_complete = true;
+        defocus = 1.;
 
 		T_sys_c_last = T_sys_c;   //Get T_sys from the last timestep
 		T_sys_h_last = T_sys_h;
