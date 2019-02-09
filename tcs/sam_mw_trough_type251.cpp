@@ -522,7 +522,9 @@ private:
 	double m_tank_cold_prev;
 	int pb_on_prev;
     double defocus_rel_prev_ncall;
+    double defocus_abs;
 	double defocus_prev_ncall;          // absolute defocus previously output for trough model
+    double defocus_abs_prev;            // absolute defocus from previous timestep
     bool recirc_prev_ncall;
 	double t_standby_prev;
 
@@ -648,7 +650,9 @@ public:
 		m_tank_cold_prev= std::numeric_limits<double>::quiet_NaN();
 		pb_on_prev		= -1;
         defocus_rel_prev_ncall = std::numeric_limits<double>::quiet_NaN();
+        defocus_abs = std::numeric_limits<double>::quiet_NaN();
 		defocus_prev_ncall	= std::numeric_limits<double>::quiet_NaN();
+        defocus_abs_prev = std::numeric_limits<double>::quiet_NaN();
         recirc_prev_ncall = false;
 		t_standby_prev	= std::numeric_limits<double>::quiet_NaN();
 
@@ -1013,7 +1017,9 @@ public:
 		m_tank_cold_prev = V_tank_cold_prev*store_htfProps.dens(T_tank_cold_prev, 1.0);     //[kg]
 		pb_on_prev = 0;								            //[-] power block initially off
         defocus_rel_prev_ncall = 1.;                            //[-] initial relative defocus
+        defocus_abs = 1.;
 		defocus_prev_ncall = 1.;								//[-] initial absolute defocus
+        defocus_abs_prev = 1.;                                  //[-] defocus absolute
         recirc_prev_ncall = false;                              //[-] recirculating bypass valve initally closed (no recirc) 
 		t_standby_prev = t_standby_reset;					    //[s] 
 		//*********************************************************
@@ -1358,12 +1364,16 @@ public:
 			else	{m_dot_aux_avail = 0.;}
 
 			// Recirculate field if needed
-            if ((tanks_in_parallel == true && T_field_out <= T_startup) ||
-                (tanks_in_parallel == false && T_field_out <= T_tank_hot_inlet_min)) {
+            defocus_abs = defocus_prev_ncall * defocus;     // defocus_abs = defocus_abs_prev * defocus_rel
+            if (defocus_abs >= 1 &&
+                ((tanks_in_parallel == true && T_field_out <= T_startup) ||
+                (tanks_in_parallel == false && T_field_out <= T_tank_hot_inlet_min)))
+            {
                 recirculating = true;
                 m_dot_field_avail = 0.;
             }
-            else {
+            else
+            {
                 recirculating = false;
                 m_dot_field_avail = m_dot_field;
             }
@@ -2126,7 +2136,7 @@ public:
 			T_aux_out = q_aux_delivered = q_aux_fuel = 0.0;
 		}
 
-		double defocus_abs = min(defocus_prev_ncall*defocus, 1.0);    // defocus_abs = defocus_abs_prev * defocus_rel
+		defocus_abs = min(defocus_prev_ncall*defocus, 1.0);    // defocus_abs = defocus_abs_prev * defocus_rel
 
 		// Reset mode and defocus
 		mode_prev_ncall = mode;
@@ -2312,6 +2322,7 @@ public:
 		t_standby_prev	= t_standby;		//[s]
         defocus_rel_prev_ncall = 1.;        //[-] previous relative defocus input from trough model (type250)
 		defocus_prev_ncall = 1.;            //[-] previous absolute defocus output for trough model (type250)
+        defocus_abs_prev = defocus_abs;
 
 		//Warn if the heat exchanger performance calculations are having problems at convergence
 		if(hx_err_flag) message(TCS_WARNING,  "Heat exchanger performance calculations failed" );
