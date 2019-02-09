@@ -1246,6 +1246,7 @@ public:
 		do		// Iteration on average storage tank temperatures
 		{
 			iter_tank++;
+            double m_dot_pb_adj, m_dot_field_adj;
 
 			if(has_TES)
 			{
@@ -1961,6 +1962,30 @@ public:
 						}  				
 					}
 				}
+
+                if (err > tol) {
+                    // create adjusted mass flows so they align, and use later to ensure mass balance
+                    if (recirculating == false) {
+                        if (m_dot_pb <= 0) {    // adjust field
+                            m_dot_pb_adj = 0;
+                            m_dot_field_adj = ms_charge + m_dot_pb - ms_disch;
+                        }
+                        else {  // adjust power block
+                            m_dot_pb_adj = m_dot_field_avail - ms_charge + ms_disch;
+                            m_dot_field_adj = m_dot_field;
+                        }
+                    }
+                    else {      // adjust power block
+                        // recirculating == true
+                        m_dot_pb_adj = ms_disch;
+                        m_dot_field_adj = m_dot_field;
+                    }
+                }
+                else {
+                    m_dot_pb_adj = m_dot_pb;
+                    m_dot_field_adj = m_dot_field;
+                }
+
 			} while (iterate_mass_temp);
 
 			if(is_hx)
@@ -2052,34 +2077,34 @@ public:
                         }
                     }
                     else {  // tanks in series
-                        m_tank_hot_out = m_dot_pb;
                         if (recirculating) {
                             m_tank_hot_in = 0.;
                             if (has_hot_tank_bypass) {
                                 T_tank_cold_in = (m_dot_field * T_field_out + m_dot_pb * T_pb_out) / (m_dot_field + m_dot_pb);
                                 if (std::isnan(T_tank_cold_in)) T_tank_cold_in = T_tank_cold_prev;
-                                m_tank_cold_in = m_dot_field + m_dot_pb;
-                                m_tank_cold_out = m_dot_field;
+                                m_tank_cold_in = m_dot_field_adj + m_dot_pb_adj;   // adjusted to account for convergence errors
+                                m_tank_cold_out = m_dot_field_adj;
                             }
                             else {  // both tanks bypassed
                                 T_tank_cold_in = T_pb_out;
-                                m_tank_cold_in = m_dot_pb;
+                                m_tank_cold_in = m_dot_pb_adj;
                                 m_tank_cold_out = 0.;
                             }
                         }
                         else {
                             T_tank_cold_in = T_pb_out;
-                            m_tank_cold_in = m_dot_pb;
-                            m_tank_cold_out = m_dot_field;
-                            m_tank_hot_in = m_dot_field;
+                            m_tank_cold_in = m_dot_pb_adj;
+                            m_tank_cold_out = m_dot_field_adj;
+                            m_tank_hot_in = m_dot_field_adj;
                         }
+                        m_tank_hot_out = m_dot_pb_adj;
                     }
 
 					T_tank_hot_in	= T_field_out;
 					Ts_cold		= T_tank_cold_out;
 					Ts_hot		= T_tank_hot_out;
-					m_tank_charge	= ms_charge;
-					m_tank_disch	= ms_disch;
+					m_tank_charge	= min(ms_charge, ms_charge_avail);
+					m_tank_disch	= min(ms_disch, ms_disch_avail);
 				}
 			}
 
