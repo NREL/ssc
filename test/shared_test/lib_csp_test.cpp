@@ -5,14 +5,6 @@
 void StorageTankTest::SetUp()
 {
     m_storage = new Storage_HX();
-    m_is_hot_tank = false;
-    m_dt = 3600;
-    m_m_prev = 3399727.;
-    m_T_prev = 563.97;
-    m_m_dot_in = 0.;
-    m_m_dot_out = 1239.16;
-    m_T_in = 566.15;
-    m_T_amb = 296.15;
 
     m_field_fluid = 18;
     m_store_fluid = 18;
@@ -45,14 +37,46 @@ void StorageTankTest::SetUp()
 
 TEST_F(StorageTankTest, TestDrainingTank)
 {
+    m_is_hot_tank = false;
+    m_dt = 3600;
+    m_m_prev = 3399727.;
+    m_T_prev = 563.97;
+    m_m_dot_in = 0.;
+    m_m_dot_out = 1239.16;      // this will more than drain the tank
+    m_T_in = 566.15;
+    m_T_amb = 296.15;
+    
     m_storage->mixed_tank(m_is_hot_tank, m_dt, m_m_prev, m_T_prev, m_m_dot_in, m_m_dot_out, m_T_in, m_T_amb,
         m_T_ave, m_vol_ave, m_q_loss, m_T_fin, m_vol_fin, m_m_fin, m_q_heater);
 
-    EXPECT_NEAR(m_T_ave, 677.47, 677.47 * m_error_tolerance_lo);
+    EXPECT_NEAR(m_T_ave, 563.7, 563.7 * m_error_tolerance_lo);
     EXPECT_NEAR(m_vol_ave, 892.30, 892.30 * m_error_tolerance_lo);
-    EXPECT_NEAR(m_q_loss, 0.4714, 0.4714 * m_error_tolerance_lo);
-    EXPECT_NEAR(m_T_fin, 790.97, 790.97 * m_error_tolerance_lo);
-    EXPECT_NEAR(m_vol_fin, 5.25e-7, 5.25e-7 * m_error_tolerance_lo);
-    EXPECT_NEAR(m_m_fin, 0.001, 0.001 * m_error_tolerance_lo);
-    EXPECT_NEAR(m_q_heater, 25., 25. * m_error_tolerance_lo);
+    EXPECT_NEAR(m_q_loss, 0.331, 0.331 * m_error_tolerance_lo);
+    EXPECT_NEAR(m_T_fin, 561.3, 561.3 * m_error_tolerance_lo);
+    EXPECT_NEAR(m_vol_fin, 0., 0. * m_error_tolerance_lo);
+    EXPECT_NEAR(m_m_fin, 0., 0. * m_error_tolerance_lo);
+    EXPECT_NEAR(m_q_heater, 0., 0. * m_error_tolerance_lo);
+}
+
+TEST_F(StorageTankTest, TestDrainedTank)
+{
+    m_is_hot_tank = false;
+    m_dt = 3600;
+    m_m_prev = 0.;
+    m_T_prev = 563.97;
+    m_m_dot_in = 0.;
+    m_m_dot_out = 1239.16;
+    m_T_in = 566.15;
+    m_T_amb = 296.15;
+
+    m_storage->mixed_tank(m_is_hot_tank, m_dt, m_m_prev, m_T_prev, m_m_dot_in, m_m_dot_out, m_T_in, m_T_amb,
+        m_T_ave, m_vol_ave, m_q_loss, m_T_fin, m_vol_fin, m_m_fin, m_q_heater);
+
+    EXPECT_NEAR(m_T_ave, 566.15, 566.15 * m_error_tolerance_lo);
+    EXPECT_NEAR(m_vol_ave, 0., 0. * m_error_tolerance_lo);
+    EXPECT_NEAR(m_q_loss, 0., 0. * m_error_tolerance_lo);
+    EXPECT_NEAR(m_T_fin, 566.15, 566.15 * m_error_tolerance_lo);
+    EXPECT_NEAR(m_vol_fin, 0., 0. * m_error_tolerance_lo);
+    EXPECT_NEAR(m_m_fin, 0., 0. * m_error_tolerance_lo);
+    EXPECT_NEAR(m_q_heater, 0., 0. * m_error_tolerance_lo);
 }
