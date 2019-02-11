@@ -29,18 +29,15 @@ set(SDKTOOL_SRC
 
 # Setup Application
 if (APPLE)
-	set(MACOSX_BUNDLE_ICON_FILE SDKTool.icns)
-	set(SDKTOOL_ICON ${CMAKE_SOURCE_DIR}/build_osx/SDKTool.icns)
+	set(MACOSX_BUNDLE_ICON_FILE ${CMAKE_CURRENT_SOURCE_DIR}/../build_osx/SDKTool.icns)
+	set(SDKTOOL_ICON ${CMAKE_CURRENT_SOURCE_DIR}/../build_osx/SDKTool.icns)
 	set_source_files_properties(${SDKTOOL_ICON} PROPERTIES
 		MACOSX_PACKAGE_LOCATION "Resources")
 elseif(WIN32)
-	set(SDKTOOL_ICON ${CMAKE_SOURCE_DIR}/build_vs2013/SDKTool.rc)
+	set(SDKTOOL_ICON ${CMAKE_CURRENT_SOURCE_DIR}/../build_vs2013/SDKTool.rc)
 endif()
 
-# clear wex library path to re-trigger search given new build
-unset(WEX_LIB CACHE)
-unset(LK_LIB CACHE)
-# set build types for archive
+# set build types
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
 	add_executable(SDKtoold 
 		WIN32
@@ -48,12 +45,6 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
 		${SDKTOOL_SRC}
 		${SDKTOOL_ICON})
 	set(SDKTOOL_EXE SDKtoold)
-	find_library( WEX_LIB
-		NAMES wexosxwx3d.a wexuxwx3d.a wexd.lib
-		PATHS $ENV{WEXDIR})
-	find_library( LK_LIB
-		NAMES lkosxwx3d.a lkuxwx3d.lib
-		PATHS $ENV{LKDIR})
 
 	set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG}")
 	set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}")
@@ -64,18 +55,43 @@ else()
 		${SDKTOOL_SRC}
 		${SDKTOOL_ICON})
 	set(SDKTOOL_EXE SDKtool)
-	find_library( WEX_LIB
-		NAMES wexosxwx3.a  wexuxwx3.a wex.lib
-		PATHS $ENV{WEXDIR})
-	find_library( LK_LIB
-		NAMES lkosxwx3.a lkuxwx3.a lk.lib
-		PATHS $ENV{LKDIR})
 endif()
 
 # setup linking dependencies and flags
-target_link_libraries(${SDKTOOL_EXE} -lm -lcurl)
-target_link_libraries(${SDKTOOL_EXE} ${WEX_LIB} ${LK_LIB}) 
+
+# if running as combined build, make sure to link to projects
+if (${CMAKE_PROJECT_NAME} STREQUAL system_advisor_model)
+	if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+		target_link_libraries(${SDKTOOL_EXE} lkd wexd)
+	else()
+		target_link_libraries(${SDKTOOL_EXE} lk wex)
+	endif()
+# otherwise find compiled library
+else()
+	unset(WEX_LIB CACHE)
+	unset(LK_LIB CACHE)
+	# set build types for archive
+	if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+		find_library( WEX_LIB
+				NAMES wexd.a wexd.lib
+				PATHS $ENV{WEXDIR})
+		find_library( LK_LIB
+				NAMES lkd.a lk.lib
+				PATHS $ENV{LKDIR})
+	else()
+		find_library( WEX_LIB
+				NAMES wex.a wex.lib
+				PATHS $ENV{WEXDIR})
+		find_library( LK_LIB
+				NAMES lk.a lk.lib
+				PATHS $ENV{LKDIR})
+	endif()
+	target_link_libraries(${SDKTOOL_EXE} ${WEX_LIB} ${LK_LIB})
+endif()
+
 target_link_libraries(${SDKTOOL_EXE} ${wxWidgets_LIBRARIES})
+target_link_libraries(${SDKTOOL_EXE} -lm -lcurl)
+
 if (UNIX AND NOT APPLE)
 	target_link_libraries(${SDKTOOL_EXE} -ldl -lfontconfig)
 endif()
@@ -103,7 +119,7 @@ endif(MSVC)
 # create application info for executable
 if (APPLE)
 	set_target_properties(${SDKTOOL_EXE} PROPERTIES
-		MACOSX_BUNDLE_INFO_PLIST ${CMAKE_SOURCE_DIR}/build_osx/Info-SDKTool.plist
+		MACOSX_BUNDLE_INFO_PLIST ${CMAKE_CURRENT_SOURCE_DIR}/../build_osx/Info-SDKTool.plist
 	)
 endif()
 

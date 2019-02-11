@@ -1,6 +1,6 @@
 set(CMAKE_VERBOSE_MAKEFILE ON)
 
-cmake_minimum_required(VERSION 3.13)
+cmake_minimum_required(VERSION 3.12)
 
 set(CMAKE_OSX_DEPLOYMENT_TARGET "10.9" CACHE STRING "Minimum OS X deployment version")
 
@@ -51,7 +51,7 @@ set(SHARED_SRC
 	lib_ondinv.cpp)
 
 set_source_files_properties(${SHARED_SRC} PROPERTIES 
-	COMPILE_FLAGS "-Wall -Werror -Wno-strict-aliasing -Wno-deprecated-declarations -Wno-unknown-pragmas -Wno-reorder -Wno-misleading-indentation -Wno-int-in-bool-context -Wno-ignored-attributes -Wno-deprecated")
+	COMPILE_FLAGS "-Wall -Wno-strict-aliasing -Wno-deprecated-declarations -Wno-unknown-pragmas -Wno-reorder  -Wno-ignored-attributes -Wno-deprecated")
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 # set build types for archive
@@ -76,7 +76,7 @@ if(MSVC)
   add_compile_definitions( _CRT_SECURE_NO_WARNINGS _MBCS __WXMSW__)
 else(MSVC)
 	if (APPLE)
-		add_compile_options(-arch x86_64 -fno-common -Wno-unused-private-field)
+		add_compile_options(-arch x86_64 -fno-common -Wno-unused-private-field -Wunused-private-field)
   		add_compile_definitions(WX_PRECOMP)
 	else()
 		add_compile_options(-Werror -Wno-misleading-indentation -Wno-int-in-bool-context)
