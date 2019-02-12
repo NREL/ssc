@@ -2,7 +2,7 @@
 *  Copyright 2017 Alliance for Sustainable Energy, LLC
 *
 *  NOTICE: This software was developed at least in part by Alliance for Sustainable Energy, LLC
-*  (“Alliance”) under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
+*  (ï¿½Allianceï¿½) under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
 *  The Government retains for itself and others acting on its behalf a nonexclusive, paid-up,
 *  irrevocable worldwide license in the software to reproduce, prepare derivative works, distribute
 *  copies to the public, perform publicly and display publicly, and to permit others to do so.
@@ -26,8 +26,8 @@
 *  4. Redistribution of this software, without modification, must refer to the software by the same
 *  designation. Redistribution of a modified version of this software (i) may not refer to the modified
 *  version by the same designation, or by any confusingly similar designation, and (ii) must refer to
-*  the underlying software originally provided by Alliance as “System Advisor Model” or “SAM”. Except
-*  to comply with the foregoing, the terms “System Advisor Model”, “SAM”, or any confusingly similar
+*  the underlying software originally provided by Alliance as ï¿½System Advisor Modelï¿½ or ï¿½SAMï¿½. Except
+*  to comply with the foregoing, the terms ï¿½System Advisor Modelï¿½, ï¿½SAMï¿½, or any confusingly similar
 *  designation may not be used to refer to any modified version of this software or any modified
 *  version of the underlying software originally provided by Alliance without the prior written consent
 *  of Alliance.
@@ -310,7 +310,7 @@ Chris Deline 4/9/2012 - updated 4/19/2012 - update 4/23/2012
 see SAM shade geometry_v2.docx
 Updated 1/18/13 to match new published coefficients in Solar Energy "A simplified model of uniform shading in large photovoltaic arrays"
 
-Definitions of X and S in SAM for the four layout conditions – portrait, landscape and vertical / horizontal strings.
+Definitions of X and S in SAM for the four layout conditions ï¿½ portrait, landscape and vertical / horizontal strings.
 Definitions:
 S: Fraction of submodules that are shaded in a given parallel string
 X: Fraction of parallel strings in the system that are shaded
@@ -466,6 +466,11 @@ bool ss_exec(
 		//relative shaded area, Applebaum equation A15
 		double relative_shaded_area = Hs * (m_row_length - g) / (m_A * m_row_length); //numerator is shadow area, denom is row area
 		outputs.m_shade_frac_fixed = relative_shaded_area;
+		//determine reduction of diffuse incident on shaded sections due to self-shading (beam is not derated because that shading is taken into account in dc derate)
+	    diffuse_reduce( solzen, tilt, Gb_nor, Gd_poa, m_B/m_R, mask_angle, albedo, m_r,
+		// outputs
+		outputs.m_reduced_diffuse, outputs.m_diffuse_derate, outputs.m_reduced_reflected, outputs.m_reflected_derate );
+
 		return true;
 	}
 

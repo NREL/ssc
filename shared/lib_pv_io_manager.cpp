@@ -363,7 +363,7 @@ Subarray_IO::Subarray_IO(compute_module* cm, std::string cmName, size_t subarray
 		selfShadingInputs.nstrx = selfShadingInputs.nmodx / nModulesPerString;
 		poa.nonlinearDCShadingDerate = 1;
 
-		if (trackMode == irrad::FIXED_TILT || trackMode == irrad::SEASONAL_TILT || (trackMode == irrad::SINGLE_AXIS && !backtrackingEnabled))
+		if (trackMode == irrad::FIXED_TILT || trackMode == irrad::SEASONAL_TILT || (trackMode == irrad::SINGLE_AXIS))
 		{
 			if (shadeMode != NO_SHADING)
 			{
