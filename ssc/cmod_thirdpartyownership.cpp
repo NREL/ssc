@@ -146,10 +146,10 @@ public:
 
 	void exec( ) throw( general_error )
 	{
-		int i;
+		size_t i;
 
 
-		int nyears = as_integer("analysis_period");
+		size_t nyears = as_unsigned_long("analysis_period");
 
 		// initialize cashflow matrix
 		cf.resize_fill( CF_max, nyears+1, 0.0 );
@@ -190,17 +190,17 @@ public:
 			double first_year_energy = 0.0;
 			for (int i = 0; i < 8760; i++)
 				first_year_energy += hourly_energy_calcs.hourly_energy()[i];
-			for (int y = 1; y <= nyears; y++)
+			for (size_t y = 1; y <= nyears; y++)
 				cf.at(CF_energy_net, y) = first_year_energy * cf.at(CF_degradation, y);
 		}
 		else
 		{
-			for (int y = 1; y <= nyears; y++)
+			for (size_t y = 1; y <= nyears; y++)
 			{
 				cf.at(CF_energy_net, y) = 0;
 				int i = 0;
 				for (int m = 0; m<12; m++)
-					for (int d = 0; d<util::nday[m]; d++)
+					for (size_t d = 0; d<util::nday[m]; d++)
 						for (int h = 0; h<24; h++)
 							if (i<8760)
 							{
@@ -233,14 +233,14 @@ public:
 		{
 			annual_price = as_double("lease_price") *12.0;
 			annual_esc = as_double("lease_escalation") / 100.0;
-			for (int i = 1; i<=nyears; i++)
+			for (size_t i = 1; i<=nyears; i++)
 				cf.at(CF_agreement_cost, i) = annual_price * pow(1 + annual_esc, i-1 );
 		}
 		else
 		{
 			annual_price = as_double("ppa_price");
 			annual_esc = as_double("ppa_escalation") / 100.0;
-			for (int i = 1; i<=nyears; i++)
+			for (size_t i = 1; i<=nyears; i++)
 				cf.at(CF_agreement_cost, i) = annual_price * cf.at(CF_energy_net,i) * pow(1 + annual_esc, i-1);
 		}
 
@@ -343,20 +343,20 @@ public:
 
 /* These functions can be placed in common financial library with matrix and constants passed? */
 
-	void save_cf(int cf_line, int nyears, const std::string &name)
+	void save_cf(int cf_line, size_t nyears, const std::string &name)
 	{
 		ssc_number_t *arrp = allocate( name, nyears+1 );
-		for (int i=0;i<=nyears;i++)
+		for (size_t i=0;i<=nyears;i++)
 			arrp[i] = (ssc_number_t)cf.at(cf_line, i);
 	}
 
-	double npv( int cf_line, int nyears, double rate ) throw ( general_error )
+	double npv( size_t cf_line, size_t nyears, double rate ) throw ( general_error )
 	{		
 		if (rate <= -1.0) throw general_error("cannot calculate NPV with discount rate less or equal to -1.0");
 
 		double rr = 1/(1+rate);
 		double result = 0;
-		for (int i=nyears;i>0;i--)
+		for (size_t i=nyears;i>0;i--)
 			result = rr * result + cf.at(cf_line,i);
 
 		return result*rr;

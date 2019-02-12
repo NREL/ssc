@@ -655,10 +655,12 @@ PVSystem_IO::PVSystem_IO(compute_module* cm, std::string cmName, Simulation_IO *
 	}
 
 	// Check that system MPPT inputs align correctly
-	for (size_t n_subarray = 0; n_subarray < numberOfSubarrays; n_subarray++)
-		if (Subarrays[n_subarray]->enable)
-			if (Subarrays[n_subarray]->mpptInput > Inverter->nMpptInputs)
+	for (size_t n_subarray = 0; n_subarray < numberOfSubarrays; n_subarray++) {
+		if (Subarrays[n_subarray]->enable) {
+			if (Subarrays[n_subarray]->mpptInput > (int)Inverter->nMpptInputs)
 				throw compute_module::exec_error(cmName, "Subarray " + util::to_string((int)n_subarray) + " MPPT input is greater than the number of inverter MPPT inputs.");
+		}
+	}
 	for (size_t mppt = 1; mppt <= (size_t)Inverter->nMpptInputs; mppt++) //indexed at 1 to match mppt input numbering convention
 	{
 		std::vector<int> mppt_n; //create a temporary vector to hold which subarrays are on this mppt input
@@ -749,7 +751,7 @@ void PVSystem_IO::AllocateOutputs(compute_module* cm)
 		}
 	}
 
-	for (int mppt_input = 0; mppt_input < Inverter->nMpptInputs; mppt_input++)
+	for (size_t mppt_input = 0; mppt_input < Inverter->nMpptInputs; mppt_input++)
 	{
 		p_mpptVoltage.push_back(cm->allocate("inverterMppt" + std::to_string(mppt_input + 1) + "_DCVoltage", numberOfLifetimeRecords));
 		p_dcPowerNetPerMppt.push_back(cm->allocate("inverterMppt" + std::to_string(mppt_input + 1) + "_NetDCPower", numberOfLifetimeRecords));

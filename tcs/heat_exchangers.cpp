@@ -2278,6 +2278,23 @@ int C_CO2_to_air_cooler::off_design_given_T_out(double T_amb /*K*/, double T_hot
 
 	// Generate guess values
 	double m_dot_air_guess1 = m_dot_hot/ms_des_par_cycle_dep.m_m_dot_total*m_m_dot_air_des;		//[kg/s]
+	
+	double T_hot_in_calc = 1000.0;
+	int i_m_dot_guess = -1;
+
+	while (T_hot_in_calc >= 973.15 || !std::isfinite(T_hot_in_calc))
+	{
+		i_m_dot_guess++;
+
+		if (i_m_dot_guess > 0)
+			m_dot_air_guess1 *= 0.75;
+
+		if (i_m_dot_guess > 10)
+			return -2;
+
+		int solver_code = c_m_dot_od_solver.test_member_function(m_dot_air_guess1, &T_hot_in_calc);
+	}
+	
 	double m_dot_air_guess2 = 0.7*m_dot_air_guess1;	//[kg/s]
 
 	c_m_dot_od_solver.settings(tol_m_dot, 50, m_dot_air_lower, m_dot_air_upper, true);

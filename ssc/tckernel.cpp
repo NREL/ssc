@@ -197,7 +197,7 @@ int tcKernel::simulate( double start, double end, double step, int max_iter )
 			{
 				dataset &d = m_results[ idataset++ ];
 				char buf[32];
-				sprintf(buf, "%ld", i);
+				sprintf(buf, "%d", (int)i);
 				d.u = &m_units[i];
 				d.uidx = (int)i;
 				d.idx = idx;

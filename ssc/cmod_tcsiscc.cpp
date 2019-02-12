@@ -325,10 +325,10 @@ public:
 			vector<vector<double> > steps;
 			vector<double> obj, flux;
 			spi.getOptimizationSimulationHistory(steps, obj, flux);
-			int nr = steps.size();
-			int nc = steps.front().size() + 2;
+			size_t nr = steps.size();
+			size_t nc = steps.front().size() + 2;
 			ssc_number_t *ssc_hist = allocate("opt_history", nr, nc);
-			for( int i = 0; i<nr; i++ ){
+			for( size_t i = 0; i<nr; i++ ){
 
 				for( size_t j = 0; j<steps.front().size(); j++ )
 					ssc_hist[i*nc + j] = (ssc_number_t)steps.at(i).at(j);
@@ -344,7 +344,7 @@ public:
 			//update heliostat position table
 			nr = (int)spi.layout.heliostat_positions.size();
 			ssc_number_t *ssc_hl = allocate("helio_positions", nr, 2);
-			for( int i = 0; i<nr; i++ ){
+			for( size_t i = 0; i<nr; i++ ){
 				ssc_hl[i * 2] = (ssc_number_t)spi.layout.heliostat_positions.at(i).location.x;
 				ssc_hl[i * 2 + 1] = (ssc_number_t)spi.layout.heliostat_positions.at(i).location.y;
 			}

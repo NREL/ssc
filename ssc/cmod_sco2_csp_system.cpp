@@ -87,8 +87,11 @@ static var_info _cm_vtab_sco2_csp_system[] = {
 	{ SSC_OUTPUT, SSC_ARRAY,   "W_dot_net_od",         "Off-design cycle net output (no cooling pars)",          "MWe",        "",    "",      "",     "",       "" },
 	{ SSC_OUTPUT, SSC_ARRAY,   "Q_dot_od",             "Off-design thermal input",                               "MWt",        "",    "",      "",     "",       "" },
 		// Compressor
+	{ SSC_OUTPUT, SSC_ARRAY,   "mc_T_out_od",          "Off-design main compressor outlet temperature",          "C",          "",    "",      "",     "",       "" },
 	{ SSC_OUTPUT, SSC_ARRAY,   "mc_W_dot_od",          "Off-design main compressor power",                       "MWe",        "",    "",      "",     "",       "" },
 	{ SSC_OUTPUT, SSC_ARRAY,   "mc_m_dot_od",          "Off-design main compressor mass flow",                   "kg/s",       "",    "",      "",     "",       "" },
+	{ SSC_OUTPUT, SSC_ARRAY,   "mc_rho_in_od",         "Off-design main compressor inlet density",               "kg/m3",      "",    "",      "",     "",       "" },
+	{ SSC_OUTPUT, SSC_ARRAY,   "mc_ideal_spec_work_od","Off-design main compressor ideal specific work",         "kg/m3",      "",    "",      "",     "",       "" },
 	{ SSC_OUTPUT, SSC_ARRAY,   "mc_N_od",              "Off-design main compressor speed",                       "rpm",        "",    "",      "",     "",       "" },
 	{ SSC_OUTPUT, SSC_ARRAY,   "mc_eta_od",            "Off-design main compressor overall isentropic efficiency", "",         "",    "",      "",     "",       "" },
 	{ SSC_OUTPUT, SSC_MATRIX,  "mc_tip_ratio_od",      "Off-design main compressor tip speed ratio [od run][stage]", "",       "",    "",      "",     "",       "" },
@@ -117,6 +120,7 @@ static var_info _cm_vtab_sco2_csp_system[] = {
 		// Compressor Totals	
 	{ SSC_OUTPUT, SSC_ARRAY,   "c_tot_W_dot_od",       "Compressor total off-design power",                      "MWe",        "",    "",      "",     "",       "" },
 		// Turbine																											   
+	{ SSC_OUTPUT, SSC_ARRAY,   "t_T_out_od",           "Off-design turbine outlet temperature",                  "C",          "",    "",      "",     "",       "" },
 	{ SSC_OUTPUT, SSC_ARRAY,   "t_W_dot_od",           "Off-design turbine power",                               "MWe",        "",    "",      "",     "",       "" },
 	{ SSC_OUTPUT, SSC_ARRAY,   "t_m_dot_od",           "Off-design turbine mass flow rate",                      "kg/s",       "",    "",      "",     "",       "" },
 	{ SSC_OUTPUT, SSC_ARRAY,   "t_nu_od",              "Off-design turbine velocity ratio",	                     "-",	       "",    "",      "",     "",       "" },
@@ -134,6 +138,9 @@ static var_info _cm_vtab_sco2_csp_system[] = {
 	{ SSC_OUTPUT, SSC_ARRAY,   "deltaT_HTF_PHX_od",    "Off-design HTF temp difference across PHX",              "C",          "",    "",      "",     "",       "" },
 	{ SSC_OUTPUT, SSC_ARRAY,   "phx_eff_od",           "Off-design PHX effectiveness",                           "-",          "",    "",      "",     "",       "" },
 		// Low Pressure Cooler
+	{ SSC_OUTPUT, SSC_ARRAY,   "LP_cooler_T_in_od",    "Low pressure cooler inlet temperature",                  "C",          "",    "",      "",     "",       "" },
+	{ SSC_OUTPUT, SSC_ARRAY,   "LP_cooler_rho_in_od",  "Low pressure cooler inlet density",                      "kg/m3",      "",    "",      "",     "",       "" },
+	{ SSC_OUTPUT, SSC_ARRAY,   "LP_cooler_in_isen_deltah_to_P_mc_out_od",  "Low pressure cooler inlet isen enthalpy rise to mc outlet pressure", "kJ/kg", "", "", "", "", "" },
 	{ SSC_OUTPUT, SSC_ARRAY,   "LP_cooler_W_dot_fan_od","Low pressure cooler fan power",                         "MWe",        "",    "",      "",     "",       "" },
 		// Intermediate Pressure Cooler
 	{ SSC_OUTPUT, SSC_ARRAY,   "IP_cooler_W_dot_fan_od","Intermediate pressure cooler fan power",                "MWe",        "",    "",      "",     "",       "" },
@@ -172,8 +179,11 @@ public:
 	ssc_number_t *p_W_dot_net_od;
 	ssc_number_t *p_Q_dot_od;
 	// Compressor
+	ssc_number_t *p_mc_T_out_od;
 	ssc_number_t *p_mc_W_dot_od;
 	ssc_number_t *p_mc_m_dot_od;
+	ssc_number_t *p_mc_rho_in_od;
+	ssc_number_t *p_mc_ideal_spec_work_od;
 	ssc_number_t *p_mc_N_od;
 	ssc_number_t *p_mc_eta_od;
 	ssc_number_t *pm_mc_tip_ratio_od;
@@ -202,6 +212,7 @@ public:
 	// Compressor Totals
 	ssc_number_t *p_c_tot_W_dot_od;
 	// Turbine
+	ssc_number_t *p_t_T_out_od;
 	ssc_number_t *p_t_W_dot_od;
 	ssc_number_t *p_t_m_dot_od;
 	ssc_number_t *p_t_nu_od;
@@ -219,6 +230,9 @@ public:
 	ssc_number_t *p_deltaT_HTF_PHX_od;
 	ssc_number_t *p_phx_eff_od;
 	// Low Pressure Cooler
+	ssc_number_t *p_LP_cooler_T_in_od;
+	ssc_number_t *p_LP_cooler_rho_in_od;
+	ssc_number_t *p_LP_cooler_in_isen_deltah_to_P_mc_out_od;
 	ssc_number_t *p_LP_cooler_W_dot_fan_od;
 	// Intermediate Pressure Cooler
 	ssc_number_t *p_IP_cooler_W_dot_fan_od;
@@ -321,7 +335,7 @@ public:
 		else if(is_P_mc_in_od_sweep_assigned)
 		{
 			std::vector<double> od_case = as_vector_double("od_P_mc_in_sweep");
-			int n_od = od_case.size();
+			size_t n_od = od_case.size();
 			if (n_od != 5)
 			{
 				std::string err_msg = util::format("The matrix of off design cases requires 5 columns. The entered matrix has %d columns", n_od);
@@ -435,7 +449,7 @@ public:
 			double od_opt_duration = (clock_end - clock_start)/(double) CLOCKS_PER_SEC;		//[s]
 
 			p_od_code[n_run] = (ssc_number_t)off_design_code;
-			if(off_design_code == 0 || (is_P_mc_in_od_sweep_assigned && c_sco2_cycle.get_od_solved()->m_is_converged))
+			if(off_design_code == 0 || ((is_P_mc_in_od_sweep_assigned || is_od_set_control) && c_sco2_cycle.get_od_solved()->m_is_converged))
 			{	// Off-design call was successful, so write outputs
 					// Control parameters
 				p_P_comp_in_od[n_run] = (ssc_number_t)(c_sco2_cycle.get_od_solved()->ms_rc_cycle_od_solved.m_pres[C_sco2_cycle_core::MC_IN] / 1000.0);	//[MPa]
@@ -453,9 +467,12 @@ public:
 				p_W_dot_net_od[n_run] = (ssc_number_t)(c_sco2_cycle.get_od_solved()->ms_rc_cycle_od_solved.m_W_dot_net / 1.E3);	//[MWe]
 				p_Q_dot_od[n_run] = p_W_dot_net_od[n_run] / p_eta_thermal_od[n_run];		//[MWt]
 					// Compressor
+				p_mc_T_out_od[n_run] = (ssc_number_t)(c_sco2_cycle.get_od_solved()->ms_rc_cycle_od_solved.m_temp[C_sco2_cycle_core::MC_OUT] - 273.15);	//[C]
 				p_mc_W_dot_od[n_run] = (ssc_number_t)(c_sco2_cycle.get_od_solved()->ms_rc_cycle_od_solved.ms_mc_ms_od_solved.m_W_dot_in*1.E-3);	//[MWe] convert from kWe
 				double comp_W_dot_od_sum = p_mc_W_dot_od[n_run];	//[MWe]
 				p_mc_m_dot_od[n_run] = (ssc_number_t)(c_sco2_cycle.get_od_solved()->ms_rc_cycle_od_solved.m_m_dot_mc);			//[kg/s]
+				p_mc_rho_in_od[n_run] = (ssc_number_t)(c_sco2_cycle.get_od_solved()->ms_rc_cycle_od_solved.m_dens[C_sco2_cycle_core::MC_IN]);	//[kg/m3]
+				p_mc_ideal_spec_work_od[n_run] = (ssc_number_t)(c_sco2_cycle.get_od_solved()->ms_rc_cycle_od_solved.ms_mc_ms_od_solved.m_isen_spec_work);	//[kJ/kg]
 				p_mc_N_od[n_run] = (ssc_number_t)c_sco2_cycle.get_od_solved()->ms_rc_cycle_od_solved.ms_mc_ms_od_solved.m_N;		//[rpm]
 				p_mc_eta_od[n_run] = (ssc_number_t)c_sco2_cycle.get_od_solved()->ms_rc_cycle_od_solved.ms_mc_ms_od_solved.m_eta;	//[-]
 				for (int i_s = 0; i_s < n_mc_stages; i_s++)
@@ -535,6 +552,7 @@ public:
 					// Compressor Totals
 				p_c_tot_W_dot_od[n_run] = comp_W_dot_od_sum;		//[MWe]
 					// Turbine
+				p_t_T_out_od[n_run] = (ssc_number_t)(c_sco2_cycle.get_od_solved()->ms_rc_cycle_od_solved.m_temp[C_sco2_cycle_core::TURB_OUT] - 273.15);	//[C] Convert from K
 				p_t_W_dot_od[n_run] = (ssc_number_t)(c_sco2_cycle.get_od_solved()->ms_rc_cycle_od_solved.ms_t_od_solved.m_W_dot_out*1.E-3);	//[MWe] convert from kWe
 				p_t_m_dot_od[n_run] = (ssc_number_t)(c_sco2_cycle.get_od_solved()->ms_rc_cycle_od_solved.m_m_dot_t);			//[kg/s]
 				p_t_nu_od[n_run] = (ssc_number_t)c_sco2_cycle.get_od_solved()->ms_rc_cycle_od_solved.ms_t_od_solved.m_nu;		//[-]
@@ -552,6 +570,8 @@ public:
 				p_deltaT_HTF_PHX_od[n_run] = p_T_htf_hot_od[n_run] - p_T_htf_cold_od[n_run];	//[C]
 				p_phx_eff_od[n_run] = (ssc_number_t)c_sco2_cycle.get_od_solved()->ms_phx_od_solved.m_eff;		//[-]
 					// Low Pressure Cooler
+				p_LP_cooler_T_in_od[n_run] = (ssc_number_t)(c_sco2_cycle.get_od_solved()->ms_rc_cycle_od_solved.m_temp[C_sco2_cycle_core::LTR_LP_OUT] - 273.15);	//[C] Convert from K
+				p_LP_cooler_rho_in_od[n_run] = (ssc_number_t)(c_sco2_cycle.get_od_solved()->ms_rc_cycle_od_solved.m_dens[C_sco2_cycle_core::LTR_LP_OUT]);	//[kg/m3]
 				p_LP_cooler_W_dot_fan_od[n_run] = (ssc_number_t)c_sco2_cycle.get_od_solved()->ms_rc_cycle_od_solved.ms_LP_air_cooler_od_solved.m_W_dot_fan;	//[MWe]
 				double cooler_W_dot_total = c_sco2_cycle.get_od_solved()->ms_rc_cycle_od_solved.ms_LP_air_cooler_od_solved.m_W_dot_fan;	//[MWe]
 					// Intermediate Pressure Cooler
@@ -565,6 +585,26 @@ public:
 					p_IP_cooler_W_dot_fan_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
 				}
 				p_cooler_tot_W_dot_fan_od[n_run] = cooler_W_dot_total;	//[MWe]
+
+
+				double T_cooler_in_od = c_sco2_cycle.get_od_solved()->ms_rc_cycle_od_solved.m_temp[C_sco2_cycle_core::LTR_LP_OUT];	//[K]
+				double P_cooler_in_od = c_sco2_cycle.get_od_solved()->ms_rc_cycle_od_solved.m_pres[C_sco2_cycle_core::LTR_LP_OUT];	//[K]
+				double P_cooler_out_od = c_sco2_cycle.get_od_solved()->ms_rc_cycle_od_solved.m_pres[C_sco2_cycle_core::MC_OUT];		//[MPa]
+				int isen_enth_check_err = 0;
+				double h_cooler_in_od = std::numeric_limits<double>::quiet_NaN();
+				double s_cooler_in_od = std::numeric_limits<double>::quiet_NaN();
+				double rho_cooler_in_od = std::numeric_limits<double>::quiet_NaN();
+				double T_isen_out_od = std::numeric_limits<double>::quiet_NaN();
+				double h_isen_out_od = std::numeric_limits<double>::quiet_NaN();
+				double s_isen_out_od = std::numeric_limits<double>::quiet_NaN();
+				double rho_isen_out_od = std::numeric_limits<double>::quiet_NaN();
+				double deltah_isen_od = std::numeric_limits<double>::quiet_NaN();
+
+				calculate_turbomachinery_outlet_1(T_cooler_in_od, P_cooler_in_od, P_cooler_out_od, 1.0, true, isen_enth_check_err,
+					h_cooler_in_od, s_cooler_in_od, rho_cooler_in_od, T_isen_out_od,
+					h_isen_out_od, s_isen_out_od, rho_isen_out_od, deltah_isen_od);
+
+				p_LP_cooler_in_isen_deltah_to_P_mc_out_od[n_run] = (ssc_number_t)-deltah_isen_od;		//[kJ/kg]
 			}
 			else
 			{	// Off-design call failed, write NaN outptus
@@ -582,8 +622,11 @@ public:
 				p_W_dot_net_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
 				p_Q_dot_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
 					// Compressor
+				p_mc_T_out_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
 				p_mc_W_dot_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
 				p_mc_m_dot_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
+				p_mc_rho_in_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
+				p_mc_ideal_spec_work_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
 				p_mc_N_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
 				p_mc_eta_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
 				for (int i_s = 0; i_s < n_mc_stages; i_s++)
@@ -623,6 +666,7 @@ public:
 					// Compressor Totals
 				p_c_tot_W_dot_od[n_run] = std::numeric_limits<double>::quiet_NaN();
 					// Turbine
+				p_t_T_out_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
 				p_t_W_dot_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
 				p_t_m_dot_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
 				p_t_nu_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
@@ -640,11 +684,15 @@ public:
 				p_deltaT_HTF_PHX_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
 				p_phx_eff_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
 					// Low Pressure Cooler
+				p_LP_cooler_T_in_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
+				p_LP_cooler_rho_in_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
 				p_LP_cooler_W_dot_fan_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
 					// Intermediate Pressure Cooler
 				p_IP_cooler_W_dot_fan_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
 					// Coolerl Totals
 				p_cooler_tot_W_dot_fan_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
+
+				p_LP_cooler_in_isen_deltah_to_P_mc_out_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
 			}
 
 
@@ -683,8 +731,11 @@ public:
 		p_W_dot_net_od = allocate("W_dot_net_od", n_od_runs);
 		p_Q_dot_od = allocate("Q_dot_od", n_od_runs);
 		// Compressor
+		p_mc_T_out_od = allocate("mc_T_out_od", n_od_runs);
 		p_mc_W_dot_od = allocate("mc_W_dot_od", n_od_runs);
 		p_mc_m_dot_od = allocate("mc_m_dot_od", n_od_runs);
+		p_mc_rho_in_od = allocate("mc_rho_in_od", n_od_runs);
+		p_mc_ideal_spec_work_od = allocate("mc_ideal_spec_work_od", n_od_runs);
 		p_mc_N_od = allocate("mc_N_od", n_od_runs);
 		p_mc_eta_od = allocate("mc_eta_od", n_od_runs);
 		pm_mc_tip_ratio_od = allocate("mc_tip_ratio_od", n_od_runs, n_mc_stages);
@@ -713,6 +764,7 @@ public:
 		// Compressor Totals
 		p_c_tot_W_dot_od = allocate("c_tot_W_dot_od", n_od_runs);
 		// Turbine
+		p_t_T_out_od = allocate("t_T_out_od", n_od_runs);
 		p_t_W_dot_od = allocate("t_W_dot_od", n_od_runs);
 		p_t_m_dot_od = allocate("t_m_dot_od", n_od_runs);
 		p_t_nu_od = allocate("t_nu_od", n_od_runs);
@@ -730,6 +782,9 @@ public:
 		p_deltaT_HTF_PHX_od = allocate("deltaT_HTF_PHX_od", n_od_runs);
 		p_phx_eff_od = allocate("phx_eff_od", n_od_runs);
 		// Low Pressure Cooler
+		p_LP_cooler_T_in_od = allocate("LP_cooler_T_in_od", n_od_runs);
+		p_LP_cooler_rho_in_od = allocate("LP_cooler_rho_in_od", n_od_runs);
+		p_LP_cooler_in_isen_deltah_to_P_mc_out_od = allocate("LP_cooler_in_isen_deltah_to_P_mc_out_od", n_od_runs);
 		p_LP_cooler_W_dot_fan_od = allocate("LP_cooler_W_dot_fan_od", n_od_runs);
 		// Intermediate Pressure Cooler
 		p_IP_cooler_W_dot_fan_od = allocate("IP_cooler_W_dot_fan_od", n_od_runs);

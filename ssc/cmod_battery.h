@@ -180,7 +180,7 @@ struct batt_variables
 	double batt_height;
 	double batt_Cp;
 	double batt_h_to_ambient;
-	double T_room;
+	std::vector<double> T_room;
 
 	double LeadAcid_q20_computed;
 	double LeadAcid_tn;

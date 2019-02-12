@@ -239,12 +239,12 @@ public:
 		sim_setup.m_sim_time_start = 0.0;				//[s] starting first hour of year
 		sim_setup.m_sim_time_end = nhourssim*3600.0;	//[s] full year simulation
 
-		int steps_per_hour = 1;			//[-]
+		size_t steps_per_hour = 1;			//[-]
 
-		int n_wf_records = (int)weather_reader.m_weather_data_provider->nrecords();
+		size_t n_wf_records = weather_reader.m_weather_data_provider->nrecords();
 		steps_per_hour = n_wf_records / 8760;	//[-]
 
-		int n_steps_fixed = steps_per_hour*8760;	//[-]
+		size_t n_steps_fixed = steps_per_hour*8760;	//[-]
 		sim_setup.m_report_step = 3600.0 / (double)steps_per_hour;	//[s]
 		//***************************************************************************
 		//***************************************************************************
@@ -550,7 +550,7 @@ public:
 		ssc_number_t *p_gen = allocate("gen", n_steps_fixed);
 		ssc_number_t *p_W_dot_par_tot_haf = allocate("W_dot_par_tot_haf", n_steps_fixed);
 		ssc_number_t *p_W_dot_parasitic_tot = as_array("W_dot_parasitic_tot", &count);
-		for( int i = 0; i < n_steps_fixed; i++ )
+		for( size_t i = 0; i < n_steps_fixed; i++ )
 		{
 			size_t hour = (size_t)ceil(p_time_final_hr[i]);
 			p_gen[i] = p_q_dot_heat_sink[i] * (ssc_number_t)(haf(hour) * 1.E3);		//[kWt]

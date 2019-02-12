@@ -33,7 +33,7 @@ struct DispatchProperties
 
 	// Front of meter auto dispatch
 	std::vector<double> ppaFactors;
-	UtilityRate * ur;
+	UtilityRate * ur{nullptr};
 	util::matrix_t<size_t> ppaWeekend;
 	util::matrix_t<size_t> ppaWeekday;
 
@@ -112,14 +112,19 @@ protected:
 	losses_t * lossModelFOM;
 	battery_t *batteryModelFOM;
 
-	dispatch_manual_t * dispatchManual;
-	dispatch_automatic_behind_the_meter_t * dispatchAutoBTM;
-	dispatch_automatic_front_of_meter_t * dispatchAutoFOM;
+	dispatch_manual_t * dispatchManual{nullptr};
+	dispatch_automatic_behind_the_meter_t * dispatchAutoBTM{nullptr};
+	dispatch_automatic_front_of_meter_t * dispatchAutoFOM{nullptr};
 
 	double P_pv;
 	double V_pv;
 	double P_load;
 	double P_clipped;
+
+	/*! Variables to store forecast data */
+	std::vector<double> pv_prediction;
+	std::vector<double> load_prediction;
+	std::vector<double> cliploss_prediction;
 
 public:
 
@@ -132,12 +137,15 @@ public:
 		cycleModel = new lifetime_cycle_t(cycleLifeMatrix);
 		calendarModel = new lifetime_calendar_t(calendarChoice, calendarLifeMatrix, dtHour);
 		lifetimeModel = new lifetime_t(cycleModel, calendarModel, replacementOption, replacementCapacity);
-		thermalModel = new thermal_t(mass, length, width, height, Cp, h, T_room, capacityVsTemperature);
+		thermalModel = new thermal_t(1.0, mass, length, width, height, Cp, h, T_room, capacityVsTemperature);
 		lossModel = new losses_t(dtHour, lifetimeModel, thermalModel, capacityModel, lossChoice, monthlyLosses, monthlyLosses, monthlyLosses, fullLosses);
 		batteryModel = new battery_t(dtHour, chemistry);
 		batteryModel->initialize(capacityModel, voltageModel, lifetimeModel, thermalModel, lossModel);
 		dispatchManual = new dispatch_manual_t(batteryModel, dtHour, SOC_min, SOC_max, currentChoice, currentChargeMax, currentDischargeMax, powerChargeMax, powerDischargeMax, minimumModeTime,
 			dispatchChoice, meterPosition, scheduleWeekday, scheduleWeekend, canCharge, canDischarge, canGridcharge, canGridcharge, percentDischarge, percentGridcharge);
+
+		dispatchAutoBTM = new dispatch_automatic_behind_the_meter_t(batteryModel, dtHour, SOC_min, SOC_max, currentChoice, currentChargeMax,
+			currentDischargeMax, powerChargeMax, powerDischargeMax, 0, 0, 0, 1, 24, 1, true, true, false, false);
 
 		// For Debugging Input Battery Target front of meter minute time steps
 		double dtHourFOM = 1.0 / 60.0;

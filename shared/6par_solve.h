@@ -60,8 +60,6 @@ public:
 	virtual bool notify( int iter, double x[], double resid[], const int n ) = 0;
 };
 
-static double to_double(double x) { return x; }
-
 template<typename Real>
 bool solve6par_callback( int iter, Real x[], Real resid[], const int n, void *data)
 {
@@ -74,8 +72,8 @@ bool solve6par_callback( int iter, Real x[], Real resid[], const int n, void *da
 
 		for (int i=0;i<6;i++)
 		{
-			xd[i] = to_double( x[i] );
-			rd[i] = to_double( resid[i] );
+			xd[i] = (double)( x[i] );
+			rd[i] = (double)( resid[i] );
 		}
 
 		return nif->notify( iter, xd, rd, 6 );	
@@ -480,12 +478,12 @@ public:
 
 		bool ok = solver.exec( _a, _Il, _Io, _Rs, _Rsh, _Adj, max_iter, tol, nif );
 		
-		a = to_double(_a);
-		Il = to_double(_Il);
-		Io = to_double(_Io);
-		Rs = to_double(_Rs);
-		Rsh = to_double(_Rsh);
-		Adj = to_double(_Adj);
+		a = (double)(_a);
+		Il = (double)(_Il);
+		Io = (double)(_Io);
+		Rs = (double)(_Rs);
+		Rsh = (double)(_Rsh);
+		Adj = (double)(_Adj);
 
 		int err = sanity();
 

@@ -24,6 +24,7 @@
     <ClCompile Include="..\test\shared_test\lib_battery_dispatch_test.cpp" />
     <ClCompile Include="..\test\shared_test\lib_battery_powerflow_test.cpp" />
     <ClCompile Include="..\test\shared_test\lib_battery_test.cpp" />
+    <ClCompile Include="..\test\shared_test\lib_csp_test.cpp" />
     <ClCompile Include="..\test\shared_test\lib_fuel_cell_test.cpp" />
     <ClCompile Include="..\test\shared_test\lib_irradproc_test.cpp" />
     <ClCompile Include="..\test\shared_test\lib_shared_inverter_test.cpp" />
@@ -65,6 +66,7 @@
     <ClInclude Include="..\test\shared_test\lib_battery_powerflow_test.h" />
     <ClInclude Include="..\test\shared_test\lib_battery_properties.h" />
     <ClInclude Include="..\test\shared_test\lib_battery_test.h" />
+    <ClInclude Include="..\test\shared_test\lib_csp_test.h" />
     <ClInclude Include="..\test\shared_test\lib_fuel_cell_test.h" />
     <ClInclude Include="..\test\shared_test\lib_irradproc_test.h" />
     <ClInclude Include="..\test\shared_test\lib_windwakemodel_test.h" />
@@ -140,6 +142,8 @@
       <SDLCheck>true</SDLCheck>
       <AdditionalIncludeDirectories>$(SSCDIR)\test;$(GTEST)\include;$(SSCDIR);$(SSCDIR)\lpsolve;$(SSCDIR)\shared;$(SSCDIR)\splinter;$(SSCDIR)\tcs;$(SSCDIR)\solarpilot;$(SSCDIR)\ssc</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <AdditionalOptions>/wd4244 %(AdditionalOptions)</AdditionalOptions>
+      <TreatWarningAsError>false</TreatWarningAsError>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -155,6 +159,8 @@
       <AdditionalIncludeDirectories>$(SSCDIR)\test;$(GTEST)\include;$(SSCDIR);$(SSCDIR)\lpsolve;$(SSCDIR)\shared;$(SSCDIR)\splinter;$(SSCDIR)\tcs;$(SSCDIR)\solarpilot;$(SSCDIR)\ssc</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <AdditionalOptions>/wd4244 %(AdditionalOptions)</AdditionalOptions>
+      <TreatWarningAsError>false</TreatWarningAsError>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -171,6 +177,9 @@
       <SDLCheck>true</SDLCheck>
       <AdditionalIncludeDirectories>$(SSCDIR)\test;$(GTEST)\include;$(SSCDIR);$(SSCDIR)\lpsolve;$(SSCDIR)\shared;$(SSCDIR)\splinter;$(SSCDIR)\tcs;$(SSCDIR)\solarpilot;$(SSCDIR)\ssc</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <DisableSpecificWarnings>4305</DisableSpecificWarnings>
+      <AdditionalOptions>/wd4244 %(AdditionalOptions)</AdditionalOptions>
+      <TreatWarningAsError>true</TreatWarningAsError>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -189,6 +198,9 @@
       <SDLCheck>true</SDLCheck>
       <AdditionalIncludeDirectories>$(SSCDIR)\test;$(GTEST)\include;$(SSCDIR);$(SSCDIR)\lpsolve;$(SSCDIR)\shared;$(SSCDIR)\splinter;$(SSCDIR)\tcs;$(SSCDIR)\solarpilot;$(SSCDIR)\ssc</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <DisableSpecificWarnings>4305</DisableSpecificWarnings>
+      <AdditionalOptions>/wd4244 %(AdditionalOptions)</AdditionalOptions>
+      <TreatWarningAsError>true</TreatWarningAsError>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>

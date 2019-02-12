@@ -245,6 +245,8 @@ protected:
 	// outputs
 	ssc_number_t * p_gen_kW;
 	ssc_number_t * p_fuelCellPower_kW;
+	ssc_number_t * p_fuelCellPowerMaxAvailable_percent;
+	ssc_number_t * p_fuelCellLoad_percent;
 	ssc_number_t * p_fuelCellPowerThermal_kW;
 	ssc_number_t * p_fuelCellConsumption_MCf;
 	ssc_number_t * p_fuelCellToGrid_kW;

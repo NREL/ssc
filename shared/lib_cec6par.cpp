@@ -260,7 +260,7 @@ bool noct_celltemp_t::operator() ( pvinput_t &input, pvmodule_t &module, double 
 
 // !*****************************************************************
 static double free_convection_194( double TC, double TA, double SLOPE, double rho_air, 
-	double Pr_air, double mu_air, double Area, double Length, double Width, double k_air)
+	double Area, double Length, double Width)
 {      
 // !Function added by TN (2010)
 // !Solution for free convection coefficienet as presented in Nellis and Klein (2008) and EES
@@ -320,8 +320,8 @@ static double ffd_194( double D_h, double Re_dh )
 	return pow( (-2.*log10(MAX(1.e-6,((2.*e/(7.54*D_h)-5.02/Re_dh*log10(2.*e/(7.54*D_h)+13./Re_dh)))))), -2.0 );
 }
 
-static double channel_free_194( double W_gap, double SLOPE, double TA, double T_cr, double k_air,
-	double rho_air, double cp_air, double mu_air, double Length )
+static double channel_free_194( double W_gap, double SLOPE, double TA, double T_cr,
+	double rho_air, double Length )
 {
 	// !Function added by TN (2010)
 	// !Solution for internal forced convection as presented in Nellis and Klein (2008) an d EES
@@ -363,7 +363,7 @@ bool mcsp_celltemp_t::operator() ( pvinput_t &input, pvmodule_t &module, double 
 	double RefrAng1   = asind(sind(THETA)/n2);
 	double TransSurf1 = 1-0.5*( pow(sind(RefrAng1-THETA),2)/pow(sind(RefrAng1+THETA),2)
 			+ pow(tand(RefrAng1-THETA),2)/pow(tand(RefrAng1+THETA),2) );
-	double TransCoverAbs1 = exp(-k_trans*l_thick/cosd(RefrAng1));
+	double TransCoverAbs1 = exp(-k_glass*l_glass/cosd(RefrAng1));
 	double tau1       = TransCoverAbs1*TransSurf1;
         
 	//!Evaluating transmittance at angle Normal to surface (0), use 1 to avoid probs.
@@ -371,7 +371,7 @@ bool mcsp_celltemp_t::operator() ( pvinput_t &input, pvmodule_t &module, double 
 	double RefrAng2   = asind(sind(THETA2)/n2);
 	double TransSurf2 = 1-0.5*( pow(sind(RefrAng2-1),2)/pow(sind(RefrAng2+1),2)
 		+ pow(tand(RefrAng2-1),2)/pow(tand(RefrAng2+1),2) );
-	double TransCoverAbs2 = exp(-k_trans*l_thick/cosd(RefrAng2));
+	double TransCoverAbs2 = exp(-k_glass*l_glass/cosd(RefrAng2));
 	double tau2       = TransCoverAbs2*TransSurf2;
 
 	//!Evaluating transmittance at equivalent angle for diffuse 
@@ -379,7 +379,7 @@ bool mcsp_celltemp_t::operator() ( pvinput_t &input, pvmodule_t &module, double 
 	double RefrAng3   = asind(sind(THETA3)/n2);
 	double TransSurf3 = 1-.5*( pow(sind(RefrAng3-THETA3),2)/pow(sind(RefrAng3+THETA3),2)
 		+ pow(tand(RefrAng3-THETA3),2)/pow(tand(RefrAng3+THETA3),2) );
-	double TransCoverAbs3 = exp(-k_trans*l_thick/cosd(RefrAng3));
+	double TransCoverAbs3 = exp(-k_glass*l_glass/cosd(RefrAng3));
 	double TransCoverDiff = TransCoverAbs3;
 	double tau3       = TransCoverAbs3*TransSurf3;
 	double TADIR      = tau1/tau2;
@@ -391,7 +391,7 @@ bool mcsp_celltemp_t::operator() ( pvinput_t &input, pvmodule_t &module, double 
 	RefrAng3   = asind(sind(THETA3)/n2);
 	TransSurf3 = 1-.5*( pow(sind(RefrAng3-THETA3),2)/pow(sind(RefrAng3+THETA3),2)
 		+ pow(tand(RefrAng3-THETA3),2)/pow(tand(RefrAng3+THETA3),2) );
-	TransCoverAbs3 = exp(-k_trans*l_thick/cosd(RefrAng3));
+	TransCoverAbs3 = exp(-k_glass*l_glass/cosd(RefrAng3));
 	tau3       = TransCoverAbs3*TransSurf3;
 	double TAGND     = tau3/tau2;
       
@@ -427,12 +427,6 @@ bool mcsp_celltemp_t::operator() ( pvinput_t &input, pvmodule_t &module, double 
 		return true;
 	}
 
-	int Nrows = this->Nrows;
-	int Ncols = this->Ncols;
-
-	double Length = this->Length;
-	double Width = this->Width;
-
 	if (HTD == 1)
 	{
 		Nrows = Ncols = 1;
@@ -451,8 +445,6 @@ bool mcsp_celltemp_t::operator() ( pvinput_t &input, pvmodule_t &module, double 
     // !Define characteristic length
     double L_char     = 4.0 * Length * Width / (2.0 * (Width + Length));
        
-	int MC = this->MC;
-
     // !If gap is less than 1 mm, use flush mounting configuration
     if (Wgap < 0.001 && MC == 4) MC = 2;
     
@@ -526,8 +518,8 @@ bool mcsp_celltemp_t::operator() ( pvinput_t &input, pvmodule_t &module, double 
 				double h_forced   = Nu_forced * k_air / L_char;
 				double h_sky      = (TC*TC+T_sky*T_sky)*(TC+T_sky);
 				double h_ground   = (TC*TC+T_ground*T_ground)*(TC+T_ground);
-				double h_free_c   = free_convection_194(TC,TA,input.Tilt,rho_air,Pr_air,mu_air,Area,Length,Width,k_air) ; //   !Call function to calculate free convection on tilted surface (top)           
-				double h_free_b   = free_convection_194(TC,TA,180.0-input.Tilt,rho_air,Pr_air,mu_air,Area,Length,Width,k_air); // !Call function to calculate free convection on tilted surface (bottom)              
+				double h_free_c   = free_convection_194(TC,TA,input.Tilt,rho_air,Area,Length,Width) ; //   !Call function to calculate free convection on tilted surface (top)           
+				double h_free_b   = free_convection_194(TC,TA,180.0-input.Tilt,rho_air,Area,Length,Width); // !Call function to calculate free convection on tilted surface (bottom)              
 				double h_conv_c   = pow( pow(h_forced,3.) + pow(h_free_c,3.) , 1./3.) ; // !Combine free and forced heat transfer coefficients (top)
 				double h_conv_b   = pow( pow(h_forced,3.) + pow(h_free_b,3.) , 1./3.) ; // !Combine free and forced heat transfer coefficients (bottom)
 			
@@ -559,7 +551,7 @@ bool mcsp_celltemp_t::operator() ( pvinput_t &input, pvmodule_t &module, double 
 				double h_forced   = Nu_forced * k_air / L_char;
 				double h_sky      = (TC*TC+T_sky*T_sky)*(TC+T_sky);
 				double h_ground   = (TC*TC+T_ground*T_ground)*(TC+T_ground);
-				double h_free_c   = free_convection_194(TC,TA,input.Tilt,rho_air,Pr_air,mu_air,Area,Length,Width,k_air);
+				double h_free_c   = free_convection_194(TC,TA,input.Tilt,rho_air,Area,Length,Width);
 				double h_conv_c   = pow((pow(h_forced,3.) + pow(h_free_c,3.)), (1./3.));
 					
 				double TC1 = ((h_conv_c)*TA + (Fcs*EmisC)*sigma*h_sky*T_sky + (Fcg*EmisC)*sigma*h_ground*T_ground
@@ -585,8 +577,8 @@ bool mcsp_celltemp_t::operator() ( pvinput_t &input, pvmodule_t &module, double 
 				double h_sky      = (TC*TC+T_sky*T_sky)*(TC+T_sky);
 				double h_ground   = (TC*TC+T_ground*T_ground)*(TC+T_ground);				   
 				double h_radbk    = (TC*TC+TbackK*TbackK)*(TC+TbackK); // !Using TbackK now instead of TA					
-				double h_free_c   = free_convection_194(TC,TA,input.Tilt,rho_air,Pr_air,mu_air,Area,Length,Width,k_air);				 
-				double h_free_b   = free_convection_194(TC,TbackK,180.-input.Tilt,rho_bk,Pr_air,mu_air,Area,Length,Width,k_air);				 
+				double h_free_c   = free_convection_194(TC,TA,input.Tilt,rho_air,Area,Length,Width);				 
+				double h_free_b   = free_convection_194(TC,TbackK,180.-input.Tilt,rho_bk,Area,Length,Width);				 
 				double h_conv_c   = pow( pow(h_forced,3.) + pow(h_free_c,3.), (1./3.));
 				double h_conv_b   = h_free_b;// !No forced convection on backside
 					
@@ -673,7 +665,7 @@ bool mcsp_celltemp_t::operator() ( pvinput_t &input, pvmodule_t &module, double 
 					double h_forced   = Nu_forced * k_air / L_char;
 					double h_sky      = (TC*TC+T_sky*T_sky)*(TC+T_sky);
 					double h_ground   = (TC*TC+T_ground*T_ground)*(TC+T_ground);
-					double h_free_c   = free_convection_194(TC,TA,input.Tilt,rho_air,Pr_air,mu_air,Area,Length,Width,k_air);
+					double h_free_c   = free_convection_194(TC,TA,input.Tilt,rho_air,Area,Length,Width);
 					double h_conv_c   = pow(pow(h_forced,3.) + pow(h_free_c,3.), 1./3.);
 					
 					// !Reynolds number for channel flow
@@ -698,7 +690,7 @@ bool mcsp_celltemp_t::operator() ( pvinput_t &input, pvmodule_t &module, double 
 						double h_fr = 0;
 							
 						if (MSO == 3) h_fr = 0; //  !If E-W supports then assume no free convection
-						else h_fr = channel_free_194(Wgap,input.Tilt,TA,T_cr,k_air,rho_air,cp_air,mu_air,Length); // !Call function for channel free convection        
+						else h_fr = channel_free_194(Wgap,input.Tilt,TA,T_cr,rho_air,Length); // !Call function for channel free convection        
 				 
 						double m_dot 	   = v_ch*rho_air*A_c ; // !mass flow rate through channel
 						double h_conv_b   = pow( pow(h_ch,3) + pow(h_fr,3) , (1./3.)) ; // !total heat transfer coefficient in channel

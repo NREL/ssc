@@ -1155,3 +1155,15 @@ size_t util::lifetimeIndex(size_t year, size_t hour_of_year, size_t step_of_hour
 {
 	return (year * util::hours_per_year + hour_of_year)*step_per_hour + step_of_hour;
 }
+
+size_t util::yearOneIndex(double dtHour, size_t lifetimeIndex)
+{
+	size_t stepsPerHour = (size_t)(1 / dtHour);
+	size_t stepsPerYear = (size_t)(8760 * stepsPerHour);
+	size_t year = 0;
+	if (lifetimeIndex >= stepsPerYear) {
+		year = (size_t)(std::floor(lifetimeIndex / stepsPerYear));
+	}
+	size_t indexYearOne = lifetimeIndex - (year * stepsPerYear);
+	return indexYearOne;
+}

@@ -1661,9 +1661,9 @@ void irrad::getBackSurfaceIrradiances(double pvBackShadeFraction, double rowToRo
 	double isotropicSkyDiffuse = diffuseIrradianceRear[0];
 
 	// Calculate components for a 90 degree tilt 
-	double surfaceAnglesRadians[5] = { 0,0,0,0,0 };
-	incidence(0, 90.0, 180.0, 45.0, solarZenithRadians, solarAzimuthRadians, this->enableBacktrack, this->groundCoverageRatio, surfaceAnglesRadians);
-	perez(0, calculatedDirectNormal, calculatedDiffuseHorizontal, albedo, surfaceAnglesRadians[0], surfaceAnglesRadians[1], solarZenithRadians, planeOfArrayIrradianceRear, diffuseIrradianceRear);
+	double surfaceAnglesRadians90[5] = { 0,0,0,0,0 };
+	incidence(0, 90.0, 180.0, 45.0, solarZenithRadians, solarAzimuthRadians, this->enableBacktrack, this->groundCoverageRatio, surfaceAnglesRadians90);
+	perez(0, calculatedDirectNormal, calculatedDiffuseHorizontal, albedo, surfaceAnglesRadians90[0], surfaceAnglesRadians90[1], solarZenithRadians, planeOfArrayIrradianceRear, diffuseIrradianceRear);
 	double horizonDiffuse = diffuseIrradianceRear[2];
 
 	// Calculate x,y coordinates of bottom and top edges of PV row in back of desired PV row so that portions of sky and ground viewed by the 
