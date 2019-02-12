@@ -801,36 +801,64 @@ bool C_csp_two_tank_tes::discharge(double timestep /*s*/, double T_amb /*K*/, do
         mc_hx.hx_discharge_mdot_field(T_field_cold_in, m_dot_field, T_tank_guess_2,
             eff_guess, T_hot_field_guess, T_cold_tes_guess, q_trans_guess, m_dot_tank_guess_2);
 
-        // Adjust guesses if needed
+        // Constrain guesses to within limits
         m_dot_tank_guess_1 = fmax(m_dot_tank_lower, fmin(m_dot_tank_guess_1, m_dot_tank_upper));
         m_dot_tank_guess_2 = fmax(m_dot_tank_lower, fmin(m_dot_tank_guess_2, m_dot_tank_upper));
 
+        bool m_dot_solved = false;
         if (m_dot_tank_guess_1 == m_dot_tank_guess_2) {
-            if (m_dot_tank_guess_1 == m_dot_tank_upper) {
-                m_dot_tank_guess_2 -= 0.01*(m_dot_tank_upper - m_dot_tank_lower);
+            // First try if guess solves
+            double m_dot_bal = std::numeric_limits<double>::quiet_NaN();
+            int m_dot_bal_code = c_tes_disch_solver.test_member_function(m_dot_tank_guess_1, &m_dot_bal);
+
+            if (m_dot_bal < 1.E-3) {
+                m_dot_tank = m_dot_tank_guess_1;
+                m_dot_solved = true;
             }
             else {
-                m_dot_tank_guess_1 = fmin(m_dot_tank_upper, m_dot_tank_guess_1 + 0.01*(m_dot_tank_upper - m_dot_tank_lower));
+                // Adjust guesses so they're different
+                if (m_dot_tank_guess_1 == m_dot_tank_upper) {
+                    m_dot_tank_guess_2 -= 0.01*(m_dot_tank_upper - m_dot_tank_lower);
+                }
+                else {
+                    m_dot_tank_guess_1 = fmin(m_dot_tank_upper, m_dot_tank_guess_1 + 0.01*(m_dot_tank_upper - m_dot_tank_lower));
+                }
+            }
+        }
+        else if (m_dot_tank_guess_1 == 0 || m_dot_tank_guess_2 == 0) {
+            // Try a 0 guess
+            double m_dot_bal = std::numeric_limits<double>::quiet_NaN();
+            int m_dot_bal_code = c_tes_disch_solver.test_member_function(0., &m_dot_bal);
+
+            if (m_dot_bal < 1.E-3) {
+                m_dot_tank = 0.;
+                m_dot_solved = true;
+            }
+            else {
+                // Adjust 0 guess to avoid divide by 0 errors
+                m_dot_tank_guess_2 = fmax(m_dot_tank_guess_1, m_dot_tank_guess_2);
+                m_dot_tank_guess_1 = 1.e-3;
             }
         }
 
-        // Solve for required tank mass flow
-        double tol_solved;
-        tol_solved = std::numeric_limits<double>::quiet_NaN();
-        int iter_solved = -1;
+        if (!m_dot_solved) {
+            // Solve for required tank mass flow
+            double tol_solved;
+            tol_solved = std::numeric_limits<double>::quiet_NaN();
+            int iter_solved = -1;
 
-        int m_dot_bal_code = 0;
-        try
-        {
-            m_dot_bal_code = c_tes_disch_solver.solve(m_dot_tank_guess_1, m_dot_tank_guess_2, -1.E-3, m_dot_tank, tol_solved, iter_solved);
-        }
-        catch (C_csp_exception)
-        {
-            throw(C_csp_exception("Failed to find a solution for the hot tank mass flow"));
-        }
+            try
+            {
+                int m_dot_bal_code = c_tes_disch_solver.solve(m_dot_tank_guess_1, m_dot_tank_guess_2, -1.E-3, m_dot_tank, tol_solved, iter_solved);
+            }
+            catch (C_csp_exception)
+            {
+                throw(C_csp_exception("Failed to find a solution for the hot tank mass flow"));
+            }
 
-        if (std::isnan(m_dot_tank)) {
-            throw(C_csp_exception("Failed to converge on a valid tank mass flow."));
+            if (std::isnan(m_dot_tank)) {
+                throw(C_csp_exception("Failed to converge on a valid tank mass flow."));
+            }
         }
 
         // The other needed outputs are not all saved in member variables so recalculate here
@@ -946,36 +974,64 @@ bool C_csp_two_tank_tes::charge(double timestep /*s*/, double T_amb /*K*/, doubl
         mc_hx.hx_charge_mdot_field(T_field_hot_in, m_dot_field, T_tank_guess_2,
             eff_guess, T_cold_field_guess, T_hot_tes_guess, q_trans_guess, m_dot_tank_guess_2);
 
-        // Adjust guesses if needed
+        // Constrain guesses to within limits
         m_dot_tank_guess_1 = fmax(m_dot_tank_lower, fmin(m_dot_tank_guess_1, m_dot_tank_upper));
         m_dot_tank_guess_2 = fmax(m_dot_tank_lower, fmin(m_dot_tank_guess_2, m_dot_tank_upper));
 
+        bool m_dot_solved = false;
         if (m_dot_tank_guess_1 == m_dot_tank_guess_2) {
-            if (m_dot_tank_guess_1 == m_dot_tank_upper) {
-                m_dot_tank_guess_2 -= 0.01*(m_dot_tank_upper - m_dot_tank_lower);
+            // First try if guess solves
+            double m_dot_bal = std::numeric_limits<double>::quiet_NaN();
+            int m_dot_bal_code = c_tes_chrg_solver.test_member_function(m_dot_tank_guess_1, &m_dot_bal);
+
+            if (m_dot_bal < 1.E-3) {
+                m_dot_tank = m_dot_tank_guess_1;
+                m_dot_solved = true;
             }
             else {
-                m_dot_tank_guess_1 = fmin(m_dot_tank_upper, m_dot_tank_guess_1 + 0.01*(m_dot_tank_upper - m_dot_tank_lower));
+                // Adjust guesses so they're different
+                if (m_dot_tank_guess_1 == m_dot_tank_upper) {
+                    m_dot_tank_guess_2 -= 0.01*(m_dot_tank_upper - m_dot_tank_lower);
+                }
+                else {
+                    m_dot_tank_guess_1 = fmin(m_dot_tank_upper, m_dot_tank_guess_1 + 0.01*(m_dot_tank_upper - m_dot_tank_lower));
+                }
+            }
+        }
+        else if (m_dot_tank_guess_1 == 0 || m_dot_tank_guess_2 == 0) {
+            // Try a 0 guess
+            double m_dot_bal = std::numeric_limits<double>::quiet_NaN();
+            int m_dot_bal_code = c_tes_chrg_solver.test_member_function(0., &m_dot_bal);
+
+            if (m_dot_bal < 1.E-3) {
+                m_dot_tank = 0.;
+                m_dot_solved = true;
+            }
+            else {
+                // Adjust 0 guess to avoid divide by 0 errors
+                m_dot_tank_guess_2 = fmax(m_dot_tank_guess_1, m_dot_tank_guess_2);
+                m_dot_tank_guess_1 = 1.e-3;
             }
         }
 
-        // Solve for required tank mass flow
-        double tol_solved;
-        tol_solved = std::numeric_limits<double>::quiet_NaN();
-        int iter_solved = -1;
+        if (!m_dot_solved) {
+            // Solve for required tank mass flow
+            double tol_solved;
+            tol_solved = std::numeric_limits<double>::quiet_NaN();
+            int iter_solved = -1;
 
-        int m_dot_bal_code = 0;
-        try
-        {
-            m_dot_bal_code = c_tes_chrg_solver.solve(m_dot_tank_guess_1, m_dot_tank_guess_2, -1.E-3, m_dot_tank, tol_solved, iter_solved);
-        }
-        catch (C_csp_exception)
-        {
-            throw(C_csp_exception("Failed to find a solution for the cold tank mass flow"));
-        }
+            try
+            {
+                int m_dot_bal_code = c_tes_chrg_solver.solve(m_dot_tank_guess_1, m_dot_tank_guess_2, -1.E-3, m_dot_tank, tol_solved, iter_solved);
+            }
+            catch (C_csp_exception)
+            {
+                throw(C_csp_exception("Failed to find a solution for the cold tank mass flow"));
+            }
 
-        if (std::isnan(m_dot_tank)) {
-            throw(C_csp_exception("Failed to converge on a valid tank mass flow."));
+            if (std::isnan(m_dot_tank)) {
+                throw(C_csp_exception("Failed to converge on a valid tank mass flow."));
+            }
         }
 
         // The other needed outputs are not all saved in member variables so recalculate here
@@ -1106,7 +1162,12 @@ int C_csp_two_tank_tes::C_MEQ_indirect_tes_discharge::operator()(double m_dot_ta
     mpc_csp_two_tank_tes->mc_hx.hx_discharge_mdot_field(m_T_cold_field, m_m_dot_field, T_hot_ave,
         eff, T_hot_field, T_cold_tes, q_trans, m_dot_tank_solved);
 
-    *m_dot_bal = (m_dot_tank_solved - m_dot_tank) / m_dot_tank;			//[-]
+    if (m_dot_tank != 0.) {
+        *m_dot_bal = (m_dot_tank_solved - m_dot_tank) / m_dot_tank;			//[-]
+    }
+    else {
+        *m_dot_bal = m_dot_tank_solved - m_dot_tank;            			//[kg/s]  -return absolute difference if 0
+    }
 
     return 0;
 }
@@ -1124,7 +1185,12 @@ int C_csp_two_tank_tes::C_MEQ_indirect_tes_charge::operator()(double m_dot_tank 
     mpc_csp_two_tank_tes->mc_hx.hx_charge_mdot_field(m_T_hot_field, m_m_dot_field, T_cold_ave,
         eff, T_cold_field, T_hot_tes, q_trans, m_dot_tank_solved);
 
-    *m_dot_bal = (m_dot_tank_solved - m_dot_tank) / m_dot_tank;			//[-]
+    if (m_dot_tank != 0.) {
+        *m_dot_bal = (m_dot_tank_solved - m_dot_tank) / m_dot_tank;			//[-]
+    }
+    else {
+        *m_dot_bal = m_dot_tank_solved - m_dot_tank;            			//[kg/s]  -return absolute difference if 0
+    }
 
     return 0;
 }
