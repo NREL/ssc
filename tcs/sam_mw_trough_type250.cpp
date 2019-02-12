@@ -203,6 +203,7 @@ enum{
 	I_LATITUDE,
 	I_LONGITUDE,
 	I_SHIFT,
+    I_RECIRC,
 
 	O_HEADER_DIAMS,
     O_HEADER_WALLTHK,
@@ -226,7 +227,6 @@ enum{
     O_T_FIELD_OUT_AT_DSN,
     O_P_FIELD_IN_AT_DSN,
 	O_T_SYS_H,
-    O_RECIRC,
 	O_M_DOT_AVAIL,
     O_M_DOT_FIELD_HTF,
 	O_Q_AVAIL,
@@ -263,6 +263,7 @@ enum{
 	O_E_TOT_ACCUM,
 	O_E_FIELD,
 	O_T_C_IN_CALC,
+    O_DEFOCUS,
 
 	//Include N_max
 	N_MAX
@@ -413,6 +414,7 @@ tcsvarinfo sam_mw_trough_type250_variables[] = {
 	{ TCS_INPUT,          TCS_NUMBER,          I_LATITUDE,               "latitude",                                                    "Site latitude read from weather file",          "deg",             "",             "",             "" },
 	{ TCS_INPUT,          TCS_NUMBER,         I_LONGITUDE,              "longitude",                                                   "Site longitude read from weather file",          "deg",             "",             "",             "" },
 	{ TCS_INPUT,          TCS_NUMBER,             I_SHIFT,                  "shift",                                         "shift in longitude from local standard meridian",          "deg",             "",             "",             "" },
+    { TCS_INPUT,          TCS_NUMBER,            I_RECIRC,          "recirculating",                                                 "Field recirculating (bypass valve open)",         "none",             "",             "",             "" },
 
 	{ TCS_OUTPUT,          TCS_ARRAY,      O_HEADER_DIAMS,      "pipe_header_diams",					                                        "Header piping diameter array",            "m",             "",             "",             "" },
     { TCS_OUTPUT,          TCS_ARRAY,    O_HEADER_WALLTHK,    "pipe_header_wallthk",					                                  "Header piping wall thickness array",            "m",             "",             "",             "" },
@@ -437,7 +439,6 @@ tcsvarinfo sam_mw_trough_type250_variables[] = {
     { TCS_OUTPUT,          TCS_NUMBER, O_P_FIELD_IN_AT_DSN,     "P_field_in_at_des",		                                "Field/runner inlet pressure at design conditions",          "bar",             "",             "",             "" },
 
 	{ TCS_OUTPUT,          TCS_NUMBER,           O_T_SYS_H,                "T_sys_h",                                                      "Solar field HTF outlet temperature",            "C",             "",             "",             "" },
-    { TCS_OUTPUT,          TCS_NUMBER,            O_RECIRC,          "recirculating",                                                 "Field recirculating (bypass valve open)",         "none",             "",             "",             "" },
 	{ TCS_OUTPUT,          TCS_NUMBER,       O_M_DOT_AVAIL,            "m_dot_avail",                                                       "HTF mass flow rate from the field",        "kg/hr",             "",             "",             "" },
     { TCS_OUTPUT,          TCS_NUMBER,   O_M_DOT_FIELD_HTF,        "m_dot_field_htf",                         "HTF mass flow rate from the field, including when recirculating",        "kg/hr",             "",             "",             "" },
 	{ TCS_OUTPUT,          TCS_NUMBER,           O_Q_AVAIL,                "q_avail",                                                     "Thermal power produced by the field",          "MWt",             "",             "",             "" },
@@ -475,6 +476,7 @@ tcsvarinfo sam_mw_trough_type250_variables[] = {
 	{ TCS_OUTPUT,          TCS_NUMBER,       O_E_TOT_ACCUM,            "E_tot_accum",                                           "Total accumulated internal energy change rate",         "MWht",             "",             "",             "" },
 	{ TCS_OUTPUT,          TCS_NUMBER,           O_E_FIELD,                "E_field",                                   "Accumulated internal energy in the entire solar field",         "MWht",             "",             "",             "" },
 	{ TCS_OUTPUT,          TCS_NUMBER,       O_T_C_IN_CALC,            "T_c_in_calc",                                 "Calculated HTF inlet temp (freeze prot. or stand-alone)",            "C",             "",             "",             "" },
+    { TCS_OUTPUT,          TCS_NUMBER,           O_DEFOCUS,            "defocus_rel",                "Relative defocus for passing back to the controller to force convergence",         "none",             "",             "",             "" },
 
 	{ TCS_INVALID,    TCS_INVALID,    N_MAX,                0,                    0,                                                        0,                0,        0,        0 }
 };
@@ -1015,6 +1017,7 @@ public:
 		T_cold_in	= std::numeric_limits<double>::quiet_NaN();
 		m_dot_in	= std::numeric_limits<double>::quiet_NaN();
 		defocus	= std::numeric_limits<double>::quiet_NaN();
+        recirculating = false;
 		SolarAz	= std::numeric_limits<double>::quiet_NaN();
 		latitude = std::numeric_limits<double>::quiet_NaN();
 		longitude = std::numeric_limits<double>::quiet_NaN();
@@ -1827,6 +1830,7 @@ public:
             value(I_T_COLD_IN, T_loop_in_des - 273.15); // HTF return temperature, to the field [C]
             value(I_M_DOT_IN, m_dot_design * 3600);     // HTF mass flow rate at the inlet to the field  [kg/hr]
             value(I_DEFOCUS, 1);		        // Defocus control  [none] (1 = no defocus)
+            value(I_RECIRC, 0.);
             value(I_SOLARAZ, ColAz*r2d + 180);	// Solar azimuth angle, 0 = North [deg], before SolarAz is converted so to make them equal
             latitude = value(I_LATITUDE);		// Site latitude read from weather file [deg]
             longitude = value(I_LONGITUDE);		// Site longitude read from weather file [deg]
@@ -1879,6 +1883,7 @@ public:
 		T_cold_in = value(I_T_COLD_IN);		//HTF return temperature [C]
 		m_dot_in = value(I_M_DOT_IN);		//HTF mass flow rate at the inlet  [kg/hr]
 		defocus_new = value(I_DEFOCUS);		//Defocus control  [none]
+        recirculating = value(I_RECIRC);
 		SolarAz = value(I_SOLARAZ);		//Solar azimuth angle reported by the Type15 weather file [deg]
 		latitude = value(I_LATITUDE);		//Site latitude read from weather file [deg]
 		longitude = value(I_LONGITUDE);		//Site longitude read from weather file [deg]
@@ -1939,9 +1944,9 @@ public:
 				T_sky = T_db - 20.0;
 
 			// Always reset the defocus control at the first call of a timestep
-			defocus_new = 1.;
-			defocus_old = 1.;
-			defocus = 1.0;
+			//defocus_new = 1.;
+			//defocus_old = 1.;
+			//defocus = 1.0;
 
 			//Time calculations
 			day_of_year = (int)ceil(time_hr/24.);  //Day of the year
@@ -2149,6 +2154,8 @@ public:
 		for(int i=0; i<nSCA; i++){ q_SCA_tot += q_SCA[i]; } //W/m
 
 		//9-27-12, TWN: This model uses relative defocus. Changed controller to provide absolute defocus, so now convert to relative here
+        // defocus_rel = defocus_abs / defocus_abs_prev
+        if (defocus_old == 0) { defocus_old = 1; }
 		defocus = defocus_new / defocus_old;
 		defocus_old = defocus_new;
 
@@ -3220,7 +3227,7 @@ calc_final_metrics_goto:
 			//MJW 12.14.2010 Limit to positive to avoid step-to-step oscillation introduced by using previous step. 
 			//.. This may cause a minor underestimation of annual energy output (<<.5%).
 			E_hdr_accum = (v_hot*rho_hdr_hot*c_hdr_hot + mc_bal_hot)*(T_sys_h - T_sys_h_last) + //Hot half
-				(v_cold*rho_hdr_cold*c_hdr_cold + mc_bal_cold)*(T_sys_c - T_sys_c_last);   //cold half
+				max((v_cold*rho_hdr_cold*c_hdr_cold + mc_bal_cold)*(T_sys_c - T_sys_c_last), 0.0);   //cold half
 			
 			if( !is_using_input_gen )
 				E_bal_startup = max(E_hdr_accum, 0.0); //cold half
@@ -3257,9 +3264,8 @@ calc_final_metrics_goto:
 			//Calculate the available mass flow of HTF
 			m_dot_avail = max(q_avail*1.e6 / (c_htf_ave*(T_sys_h - T_cold_in_1)), 0.0); //[kg/s]
             m_dot_field_htf = m_dot_avail;
-			if( T_sys_h < T_recirc )   // MJW 12.14.2010 Limit field production to above startup temps. Otherwise we get strange results during startup. Does this affect turbine startup?
+            if (recirculating == true)
 			{
-                recirculating = true;
                 q_avail = 0.0;
 				m_dot_avail = 0.0;
                 m_dot_field_htf = m_dot_htf_tot;
@@ -3403,7 +3409,6 @@ set_outputs_and_return:
 
 		//Set outputs
 		value(O_T_SYS_H, T_sys_h_out);				//[C] Solar field HTF outlet temperature
-        value(O_RECIRC, recirculating);             //[none] field recirculating (bypass valve open)
 		value(O_M_DOT_AVAIL, m_dot_avail_out);		//[kg/hr] HTF mass flow rate from the field
         value(O_M_DOT_FIELD_HTF, m_dot_field_htf_out);  //[kg/hr] HTF mass flow rate from the field, including when recirculating
 		value(O_Q_AVAIL, q_avail);					//[MWt] Thermal power produced by the field
@@ -3440,6 +3445,7 @@ set_outputs_and_return:
 		value(O_E_TOT_ACCUM, E_tot_accum);			//[MWht] Total accumulated internal energy change rate
 		value(O_E_FIELD, E_field_out);				//[MWht] Accumulated internal energy in the entire solar field
 		value(O_T_C_IN_CALC, T_cold_in_1 - 273.15);	//[C] Calculated cold HTF inlet temperature - used in freeze protection and for stand-alone model in recirculation
+        value(O_DEFOCUS, defocus);                  //[-] Relative defocus for passing back to the controller to ensure TCS convergence
 
 		return 0;
 	}
@@ -3452,6 +3458,7 @@ set_outputs_and_return:
 		*/
 
 		ss_init_complete = true;
+        defocus = 1.;
 
 		T_sys_c_last = T_sys_c;   //Get T_sys from the last timestep
 		T_sys_h_last = T_sys_h;

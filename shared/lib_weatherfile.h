@@ -261,6 +261,7 @@ public:
 	bool open( const std::string &file, bool header_only = false );
 
 	bool read( weather_record *r ); 
+	bool read_average(weather_record *r, std::vector<int> &cols, size_t &num_timesteps);
 	bool has_data_column( size_t id );
 	
 	static std::string normalize_city( const std::string &in );

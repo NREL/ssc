@@ -1509,6 +1509,130 @@ bool weatherfile::open(const std::string &file, bool header_only)
 	return true;
 }
 
+bool weatherfile::read_average(weather_record *r, std::vector<int> &cols, size_t &num_timesteps)
+{
+	if (r && m_index < m_nRecords && num_timesteps > 0 && num_timesteps < m_nRecords)
+	{
+		r->year = (int)m_columns[YEAR].data[m_index];
+		r->month = (int)m_columns[MONTH].data[m_index];
+		r->day = (int)m_columns[DAY].data[m_index];
+		r->hour = (int)m_columns[HOUR].data[m_index];
+		r->minute = m_columns[MINUTE].data[m_index];
+		r->gh = m_columns[GHI].data[m_index];
+		r->dn = m_columns[DNI].data[m_index];
+		r->df = m_columns[DHI].data[m_index];
+		r->poa = m_columns[POA].data[m_index];
+		r->wspd = m_columns[WSPD].data[m_index];
+		r->wdir = m_columns[WDIR].data[m_index];
+		r->tdry = m_columns[TDRY].data[m_index];
+		r->twet = m_columns[TWET].data[m_index];
+		r->tdew = m_columns[TDEW].data[m_index];
+		r->rhum = m_columns[RH].data[m_index];
+		r->pres = m_columns[PRES].data[m_index];
+		r->snow = m_columns[SNOW].data[m_index];
+		r->alb = m_columns[ALB].data[m_index];
+		r->aod = m_columns[AOD].data[m_index];
+
+		// average columns requested
+		int start = (int)m_index - (int)num_timesteps / 2;
+		if (start < 0) 
+			start = 0;
+		if ((size_t)start + num_timesteps > m_nRecords)
+			start = (int)m_nRecords - (int)num_timesteps;
+		if (start < 0) 
+			start = 0;
+
+	
+		for (size_t i = 0; i < cols.size(); i++)
+		{
+			double col_val = 0;
+			int n_vals = 0;
+			if (cols[i] >= YEAR && cols[i] < _MAXCOL_)
+			{
+				for (size_t j = (size_t)start; j < num_timesteps && j < m_nRecords; j++)
+				{
+					col_val += m_columns[cols[i]].data[start];
+					n_vals++;
+				}
+				if (n_vals > 0)
+					col_val /= n_vals;
+			}
+			switch (cols[i])
+			{
+			case YEAR:
+				r->year = (int)col_val;
+				break;
+			case MONTH:
+				r->month = (int)col_val;
+				break;
+			case DAY:
+				r->day = (int)col_val;
+				break;
+			case HOUR:
+				r->hour = (int)col_val;
+				break;
+			case MINUTE:
+				r->minute = col_val;
+				break;
+			case GHI:
+				r->gh = col_val;
+				break;
+			case DNI:
+				r->dn = col_val;
+				break;
+			case DHI:
+				r->df = col_val;
+				break;
+			case POA:
+				r->poa = col_val;
+				break;
+			case TDRY:
+				r->tdry = col_val;
+				break;
+			case TWET: 
+				r->twet = col_val;
+				break;
+			case TDEW:
+				r->tdew = col_val;
+				break;
+			case WSPD:
+				r->wspd = col_val;
+				break;
+			case WDIR:
+				r->wdir = col_val;
+				break;
+			case RH:
+				r->rhum = col_val;
+				break;
+			case PRES:
+				r->pres = col_val;
+				break;
+			case SNOW:
+				r->snow = col_val;
+				break;
+			case ALB:
+				r->alb = col_val;
+				break;
+			case AOD:
+				r->aod = col_val;
+				break;
+			default:
+				break;
+			}
+		}
+
+
+		m_index++;
+
+		return true;
+	}
+	else
+		return false;
+
+}
+
+
+
 bool weatherfile::read( weather_record *r )
 {
 	if ( r && m_index < m_nRecords)

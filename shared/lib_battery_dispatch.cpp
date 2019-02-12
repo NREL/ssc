@@ -702,6 +702,7 @@ void dispatch_automatic_t::dispatch(size_t year,
 	runDispatch(year, hour_of_year, step);
 }
 
+
 bool dispatch_automatic_t::check_constraints(double &I, size_t count)
 {
 	// check common constraints before checking manual dispatch specific ones
@@ -1380,8 +1381,7 @@ void dispatch_automatic_front_of_meter_t::update_dispatch(size_t hour_of_year, s
 			else
 			{
 				// Always Charge if PV is clipping 
-				if (m_batteryPower->canClipCharge && m_batteryPower->powerPVClipped > 0 && benefitToClipCharge > m_cycleCost && m_batteryPower->powerPVClipped > 0)
-				{
+				if (m_batteryPower->canClipCharge && m_batteryPower->powerPVClipped > 0 && benefitToClipCharge > m_cycleCost && m_batteryPower->powerPVClipped > 0){
 					powerBattery = -m_batteryPower->powerPVClipped;
 				}
 
@@ -1404,24 +1404,26 @@ void dispatch_automatic_front_of_meter_t::update_dispatch(size_t hour_of_year, s
 
 					}
 					// otherwise, don't reserve capacity for clipping
-					else
+					else {
 						powerBattery = -m_batteryPower->powerPV;
-				}
-
-				// Also charge from grid if it is valuable to do so, still leaving EnergyToStoreClipped capacity in battery
-				if (m_batteryPower->canGridCharge && benefitToGridCharge > m_cycleCost && benefitToGridCharge > 0 && energyNeededToFillBattery > 0)
-				{
-					// leave EnergyToStoreClipped capacity in battery
-					if (m_batteryPower->canClipCharge)
-					{
-						if (energyToStoreClipped < energyNeededToFillBattery)
-						{
-							double energyCanCharge = (energyNeededToFillBattery - energyToStoreClipped);
-							powerBattery -= energyCanCharge / _dt_hour;
-						}
 					}
-					else
-						powerBattery = -energyNeededToFillBattery / _dt_hour;
+				}
+			}
+
+			// Also charge from grid if it is valuable to do so, still leaving EnergyToStoreClipped capacity in battery
+			if (m_batteryPower->canGridCharge && benefitToGridCharge > m_cycleCost && benefitToGridCharge > 0 && energyNeededToFillBattery > 0)
+			{
+				// leave EnergyToStoreClipped capacity in battery
+				if (m_batteryPower->canClipCharge)
+				{
+					if (energyToStoreClipped < energyNeededToFillBattery)
+					{
+						double energyCanCharge = (energyNeededToFillBattery - energyToStoreClipped);
+						powerBattery -= energyCanCharge / _dt_hour;
+					}
+				}
+				else {
+					powerBattery = -energyNeededToFillBattery / _dt_hour;
 				}
 			}
 		}

@@ -381,6 +381,8 @@ public:
 		double m_h_out;			//[kJ/kg]
 		double m_D_out;			//[kg/m^3]
 		
+		double m_isen_spec_work;	//[kJ/kg]
+
 		double m_m_dot;			//[kg/s] (cycle not basis)
 		double m_W_dot;			//[kWe] power required by compressor
 
@@ -405,6 +407,7 @@ public:
 
 			m_T_in = m_P_in = m_D_in = m_h_in = m_s_in =
 				m_T_out = m_P_out = m_h_out = m_D_out =
+				m_isen_spec_work =
 				m_m_dot = m_W_dot =
 				m_cost =
 				m_tip_ratio_max = 
@@ -421,6 +424,8 @@ public:
 		double m_T_out;			//[K] Outlet temperature
 
 		double m_m_dot;			//[kg/s] (cycle not basis)
+
+		double m_isen_spec_work;	//[kJ/kg]
 
 		bool m_surge;			//[-]
 		double m_eta;			//[-]
@@ -441,7 +446,8 @@ public:
 		{
 			m_P_in = m_T_in =
 				m_P_out = m_T_out =
-				m_m_dot = std::numeric_limits<double>::quiet_NaN();
+				m_m_dot =
+				m_isen_spec_work = std::numeric_limits<double>::quiet_NaN();
 
 			m_surge = false;
 			m_eta = m_phi_min = m_tip_ratio_max = m_N =

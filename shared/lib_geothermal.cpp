@@ -704,7 +704,7 @@ private:
 
 	// weather file opening, reading, checking inputs, etc.
 	bool OpenWeatherFile(const char * fn);
-	bool ReadWeatherForTimeStep(const bool bHourly, unsigned int timeStep);
+	bool ReadWeatherForTimeStep(const bool bHourly, size_t timeStep);
 	bool ReadNextLineInWeatherFile(void);
 	bool determineMakeupAlgorithm(void);
 	bool inputErrorsForUICalculations(void);
@@ -1642,7 +1642,7 @@ bool CGeothermalAnalyzer::OpenWeatherFile(const char * fn)
 	return mb_WeatherFileOpen;
 }
 
-bool CGeothermalAnalyzer::ReadWeatherForTimeStep(bool bHourly, unsigned int timeStep)
+bool CGeothermalAnalyzer::ReadWeatherForTimeStep(bool bHourly, size_t timeStep)
 // Read one line in weather file for hourly analysis, or calculate the average values for a month for monthly analysis
 {	
 	// if this is an hourly analysis, just ignore the time step and get the data from the next line in the weather file
@@ -1650,7 +1650,7 @@ bool CGeothermalAnalyzer::ReadWeatherForTimeStep(bool bHourly, unsigned int time
 
 	// Not an hourly analysis, so calculate the monthly weather info
 	int month = (timeStep % 12) + 1;
-	size_t hours = util::hours_in_month(month);
+	double hours = util::hours_in_month(month);
 	if (hours==0)
 	{
 		ms_ErrorString = "util::hours_in_month returned zero for month =  " + util::to_string(month) + ".";
@@ -1658,7 +1658,7 @@ bool CGeothermalAnalyzer::ReadWeatherForTimeStep(bool bHourly, unsigned int time
 	}
 
 	double pressure=0, wetbulb=0, drybulb=0, rel_humidity=0;
-	for (size_t i = 0; i<hours; i++)
+	for (int i = 0; i<hours; i++)
 	{
 		ReadNextLineInWeatherFile();
 		pressure += m_wf.pres;
@@ -1817,12 +1817,12 @@ bool CGeothermalAnalyzer::RunAnalysis( bool (*update_function)(float, void*), vo
 
 	// Go through time step (hours or months) one by one
 //    bool bReDrill = false;
-	unsigned int iElapsedMonths = 0, iElapsedTimeSteps = 0, iEvaluationsInMonth = 0, iElapsedHours=0;
+	size_t iElapsedMonths = 0, iElapsedTimeSteps = 0, iEvaluationsInMonth = 0, iElapsedHours=0;
 	float fMonthlyPowerTotal;
-	for (unsigned int year = 0;  year < mo_geo_in.mi_ProjectLifeYears;  year++)
+	for (size_t year = 0;  year < mo_geo_in.mi_ProjectLifeYears;  year++)
 	{
 		mp_geo_out->maf_ReplacementsByYear[year] = 0;
-		for (unsigned int month=1; month<13; month++)
+		for (size_t month=1; month<13; month++)
 		{
 			fPercentDone = (float)iElapsedMonths/(float)(12*mo_geo_in.mi_ProjectLifeYears) * 100.0f;
 
@@ -1836,7 +1836,7 @@ bool CGeothermalAnalyzer::RunAnalysis( bool (*update_function)(float, void*), vo
 			}
 
 			fMonthlyPowerTotal = 0;
-			for (unsigned int hour=0; hour < (unsigned int)util::hours_in_month(month); hour++)
+			for (size_t hour=0; hour < util::hours_in_month(month); hour++)
 			{
 				if (IsHourly() || (hour == 0))
 				{
@@ -1894,7 +1894,7 @@ bool CGeothermalAnalyzer::RunAnalysis( bool (*update_function)(float, void*), vo
 			}//hours
 
 			mp_geo_out->maf_monthly_resource_temp[iElapsedMonths] = (float)md_WorkingTemperatureC;	// resource temperature for this month
-			iEvaluationsInMonth = (IsHourly()) ? (unsigned int)util::hours_in_month(month) : 1;
+			iEvaluationsInMonth = (IsHourly()) ? util::hours_in_month(month) : 1;
 			mp_geo_out->maf_monthly_power[iElapsedMonths] = fMonthlyPowerTotal/iEvaluationsInMonth;		// avg monthly power
 			mp_geo_out->maf_monthly_energy[iElapsedMonths] = fMonthlyPowerTotal*util::hours_in_month(month)/iEvaluationsInMonth;		// energy output in month (kWh)
 
