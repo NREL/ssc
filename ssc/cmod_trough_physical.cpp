@@ -980,7 +980,7 @@ public:
             {
                 size_t n_wlim_series = 0;
                 ssc_number_t* wlim_series = as_array("wlim_series", &n_wlim_series);
-                if (n_wlim_series != n_wf_records)
+                if ((int)n_wlim_series != n_wf_records)
                     throw exec_error("trough_physical", "Invalid net electricity generation limit series dimension. Matrix must have " + util::to_string(n_wf_records) + " rows.");
                 for (int i = 0; i < n_wf_records; i++)
                     tou.mc_dispatch_params.m_w_lim_full.at(i) = (double)wlim_series[i];
@@ -1201,7 +1201,7 @@ public:
         float *p_q_pc_startup = allocate("q_pc_startup", n_steps_fixed);
         size_t count_pc_su = 0;
         ssc_number_t *p_q_dot_pc_startup = as_array("q_dot_pc_startup", &count_pc_su);
-        if (count_pc_su != n_steps_fixed)
+        if ((int)count_pc_su != n_steps_fixed)
         {
             log("q_dot_pc_startup array is a different length than 'n_steps_fixed'.", SSC_WARNING);
             return;
@@ -1218,7 +1218,7 @@ public:
         ssc_number_t *p_m_dot_water_pc = as_array("m_dot_water_pc", &count_m_dot_water_pc);
         //ssc_number_t *p_m_dot_tes_dc = as_array("m_dot_tes_dc", &count_m_dot_tes_dc);
         //ssc_number_t *p_m_dot_tes_ch = as_array("m_dot_tes_ch", &count_m_dot_tes_ch);
-        if (count_m_dot_pc != n_steps_fixed || count_m_dot_water_pc != n_steps_fixed)
+        if ((int)count_m_dot_pc != n_steps_fixed || (int)count_m_dot_water_pc != n_steps_fixed)
             //|| count_m_dot_rec != n_steps_fixed || count_m_dot_tes_dc != n_steps_fixed || count_m_dot_tes_ch != n_steps_fixed)
         {
             log("At least one m_dot array is a different length than 'n_steps_fixed'.", SSC_WARNING);
@@ -1237,7 +1237,7 @@ public:
         size_t count;
         ssc_number_t *p_W_dot_net = as_array("P_out_net", &count);
         ssc_number_t *p_time_final_hr = as_array("time_hr", &count);
-        if(count != n_steps_fixed)
+        if((int)count != n_steps_fixed)
             throw exec_error("trough_physical", "The number of fixed steps does not match the length of output data arrays");
 
         // 'adjustment_factors' class stores factors in hourly array, so need to index as such
@@ -1254,19 +1254,19 @@ public:
         //    throw exec_error("trough_physical", "The number of fixed steps does not match the length of output data arrays1");
         
         ssc_number_t *p_SCAs_def = as_array("SCAs_def", &count);
-        if (count != n_steps_fixed)
+        if ((int)count != n_steps_fixed)
             throw exec_error("trough_physical", "The number of fixed steps does not match the length of output data arrays2");
 
         ssc_number_t *p_q_dot_htf_sf_out = as_array("q_dot_htf_sf_out", &count);
-        if (count != n_steps_fixed)
+        if ((int)count != n_steps_fixed)
             throw exec_error("trough_physical", "The number of fixed steps does not match the length of output data arrays3");
 
         ssc_number_t *p_m_dot_tes_dc = as_array("m_dot_tes_dc", &count);
-        if (count != n_steps_fixed)
+        if ((int)count != n_steps_fixed)
             throw exec_error("trough_physical", "The number of fixed steps for 'm_dot_tes_dc' does not match the length of output data arrays");
 
         ssc_number_t *p_m_dot_tes_ch = as_array("m_dot_tes_ch", &count);
-        if (count != n_steps_fixed)
+        if ((int)count != n_steps_fixed)
             throw exec_error("trough_physical", "The number of fixed steps for 'm_dot_tes_ch' does not match the length of output data arrays");
         
         for(int i = 0; i < n_steps_fixed; i++)
