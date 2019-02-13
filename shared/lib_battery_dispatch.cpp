@@ -636,7 +636,7 @@ dispatch_automatic_t::dispatch_automatic_t(
 	_dt_hour_update = dispatch_update_frequency_hours;
 	_d_index_update = size_t(std::ceil(_dt_hour_update / _dt_hour));
 
-	_hour_last_updated = (size_t)1e10;
+	_hour_last_updated = SIZE_MAX;
 	_index_last_updated = 0;
 
 	_look_ahead_hours = look_ahead_hours;
