@@ -315,7 +315,7 @@ public:
 			double eff = as_double("eff_secondlaw");	// w-h/lb
 			double unit_plant = as_double("gross_output");
 
-			//GF HX Equipment Cost Calculations:				
+			//Geofluid Heat Exchangers Equipment Cost Calculations:				
 			size_ratio = unit_plant / ref_plant_size;
 			sf_hx = (sf_3 * pow(design_temp, 3)) + (sf_2 * pow(design_temp, 2)) + (sf_1 * design_temp) + sf_0;
 			hx_gf_c1 = hx_c10 + (hx_c11 * pow(design_temp, hx_c12));
@@ -338,7 +338,7 @@ public:
 
 
 
-			//WF Pumps Cost Calculation:
+			//Working Fluid Pumps Cost Calculation:
 			sf_wf = (wf_sf_c3*pow(design_temp, 3)) + (wf_sf_c2*pow(design_temp, 2)) + (wf_sf_c1*design_temp) + wf_sf_c0;
 			pcc_1 = (wf_c12 * pow(design_temp, 2)) + (wf_c11 * design_temp) + wf_c10;
 			pcc_2 = (wf_c22 * pow(design_temp, 2)) + (wf_c21 * design_temp) + wf_c20;
@@ -347,7 +347,7 @@ public:
 			wf_pump_cost = user_adjust * pow(size_ratio, sf_wf)*((ref_plant_size * pcc_c * pump_ppi[20]) / unit_plant);
 
 
-			//Turbine Cost Calculation:
+			//Turbine-Generator (TG) Cost Calculation:
 			if (unit_plant < ref_plant_size)
 				sf_turbine = (turbine_sf_c2*pow(design_temp, 2)) + (turbine_sf_c1*design_temp) + turbine_sf_c0;
 			else
@@ -375,7 +375,7 @@ public:
 			turbine_cost = user_adjust * pow(size_ratio, sf_turbine)*((ref_plant_size * tg_cost * turbine_ppi[20]) / unit_plant);
 
 
-			//Calculating Direct Construction Cost Multiplier
+			//Calculating Direct Construction Cost Multiplier:
 			escalation_equip_cost = (current_cost_ref_acc + current_cost_ref_hx + current_cost_ref_pcc + current_cost_ref_tg) / (hx_gf_c + acc_c + pcc_c + tg_cost);
 			corrected_labor = ((labor_cost_multiplier*engineering_ppi[20]) / escalation_equip_cost)*(1 + labor_fringe_benefits);
 			corrected_construct_malts = (const_matls_rentals * process_equip_ppi[20]) / escalation_equip_cost;
@@ -525,7 +525,7 @@ public:
 			current_cost_flash = current_tg_cost + current_tower_cost + current_condenser_cost + current_vessel_cost + current_ncg_cost + current_pump_cost + current_h2s_cost;
 			escalation_ppi = current_cost_flash / equip_cost_flash;
 
-			//Calculating Direct Cost Multiplier:
+			//Calculating Direct Construction Cost Multiplier:
 			material_multiplier = 1 + ((8.65* pow(design_temp, -0.297)) - 1) * (process_equip_ppi[20] / escalation_ppi);
 			labor_multiplier = ((42.65 * pow(design_temp, -0.923)) * 1.45) * construction_ppi[20] / escalation_ppi;
 			construction_multiplier = (16.177*pow(design_temp, -0.827)) * process_equip_ppi[20] / escalation_ppi;
