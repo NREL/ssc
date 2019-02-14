@@ -154,6 +154,7 @@ enum {
     I_T_field_in_at_des,
     I_T_field_out_at_des,
     I_P_field_in_at_des,
+    I_defocus,
 	I_T_HTF_COLD_DES,
 
 	// I_W_DOT_NET,
@@ -321,6 +322,7 @@ tcsvarinfo sam_mw_trough_type251_variables[] = {
     { TCS_INPUT,    TCS_NUMBER,        I_T_field_in_at_des,  "T_field_in_at_des",    "Field inlet temperature at design conditions",            "C",           "",        "",        ""},
     { TCS_INPUT,    TCS_NUMBER,        I_T_field_out_at_des, "T_field_out_at_des",   "Field outlet temperature at design conditions",           "C",           "",        "",        ""},
     { TCS_INPUT,    TCS_NUMBER,        I_P_field_in_at_des,  "P_field_in_at_des",    "Field inlet pressure at design conditions",               "bar",         "",        "",        ""},
+    { TCS_INPUT,    TCS_NUMBER,        I_defocus,            "defocus_prev",         "Previous relative defocus",                               "-",           "",        "",        ""},
 
 	// sCO2 cycle design parameters from type 424 - only used if "pb_tech_type" = 424
 	{ TCS_OUTPUT, TCS_NUMBER, I_T_HTF_COLD_DES,  "i_T_htf_cold_des",    "Calculated htf cold temperature at design",             "C",     "",  "",  "" },
@@ -356,7 +358,7 @@ tcsvarinfo sam_mw_trough_type251_variables[] = {
     { TCS_OUTPUT,   TCS_ARRAY,         O_t_des_sgs,          "SGS_T_des",            "Temperature in SGS pipes at design conditions",          "C",             "",        "",        ""},
     { TCS_OUTPUT,   TCS_ARRAY,         O_p_des_sgs,          "SGS_P_des",            "Pressure in SGS pipes at design conditions",             "bar",           "",        "",        ""},
     { TCS_OUTPUT,   TCS_NUMBER,        O_p_des_sgs_1,        "SGS_P_des_1",          "Pressure in first SGS pipe section at design conditions", "bar",          "",        "",        ""},
-    { TCS_OUTPUT,   TCS_NUMBER,        O_defocus,            "defocus",              "Absolute defocus",                                        "-",            "",        "",        ""},
+    { TCS_OUTPUT,   TCS_NUMBER,        O_defocus,            "defocus",              "Absolute defocus = defocus_abs_prev * defocus_rel",       "-",            "",        "",        ""},
     { TCS_OUTPUT,   TCS_NUMBER,        O_recirc,             "recirculating",        "Field recirculating bypass valve control",                "-",            "",        "",        ""},
 	{ TCS_OUTPUT,   TCS_NUMBER,	       O_standby,            "standby_control",      "Standby control flag",                                    "-",            "",        "",        ""},
     { TCS_OUTPUT,   TCS_NUMBER,        O_m_dot_pb,           "m_dot_pb",             "Mass flow rate of HTF to PB",                             "kg/hr",        "",        "",        ""},
@@ -519,7 +521,10 @@ private:
 	double m_tank_hot_prev;
 	double m_tank_cold_prev;
 	int pb_on_prev;
-	double defocus_prev_ncall;
+    double defocus_rel_prev_ncall;
+    double defocus_abs;
+	double defocus_prev_ncall;          // absolute defocus previously output for trough model
+    double defocus_abs_prev;            // absolute defocus from previous timestep
     bool recirc_prev_ncall;
 	double t_standby_prev;
 
@@ -540,6 +545,7 @@ private:
 	// double m_deltaT_mc_in;
 	// double m_deltaT_t_in;
 	// double q_sco2_max_input;
+    double err_prev_call, derr_prev_call;
 
 public:
 	
@@ -642,8 +648,11 @@ public:
 		mode_prev_ncall		= -1;
 		m_tank_hot_prev	= std::numeric_limits<double>::quiet_NaN();
 		m_tank_cold_prev= std::numeric_limits<double>::quiet_NaN();
-		pb_on_prev		= -1; 
+		pb_on_prev		= -1;
+        defocus_rel_prev_ncall = std::numeric_limits<double>::quiet_NaN();
+        defocus_abs = std::numeric_limits<double>::quiet_NaN();
 		defocus_prev_ncall	= std::numeric_limits<double>::quiet_NaN();
+        defocus_abs_prev = std::numeric_limits<double>::quiet_NaN();
         recirc_prev_ncall = false;
 		t_standby_prev	= std::numeric_limits<double>::quiet_NaN();
 
@@ -662,6 +671,8 @@ public:
 		// m_deltaT_mc_in = std::numeric_limits<double>::quiet_NaN();
 		// m_deltaT_t_in = std::numeric_limits<double>::quiet_NaN();
 		// q_sco2_max_input = std::numeric_limits<double>::quiet_NaN();
+        err_prev_call = std::numeric_limits<double>::quiet_NaN();
+        derr_prev_call = std::numeric_limits<double>::quiet_NaN();
 	}
 
 	virtual ~sam_mw_trough_type251()
@@ -842,6 +853,8 @@ public:
         calc_design_pipe_vals = (bool) value(P_des_pipe_vals);
 
 		//TOU_schedule = value(P_TOU_schedule, &nTOU_schedule);
+        err_prev_call = -1.;
+        derr_prev_call = -1.;
 
 		//Thermocline Parameters
 		tc_fill		= (int) value(P_tc_fill);			//[-]
@@ -1003,7 +1016,10 @@ public:
 		m_tank_hot_prev = V_tank_hot_prev*store_htfProps.dens(T_tank_hot_prev, 1.0);		//[kg]
 		m_tank_cold_prev = V_tank_cold_prev*store_htfProps.dens(T_tank_cold_prev, 1.0);     //[kg]
 		pb_on_prev = 0;								            //[-] power block initially off
-		defocus_prev_ncall = 1.;								//[-] initial defocus
+        defocus_rel_prev_ncall = 1.;                            //[-] initial relative defocus
+        defocus_abs = 1.;
+		defocus_prev_ncall = 1.;								//[-] initial absolute defocus
+        defocus_abs_prev = 1.;                                  //[-] defocus absolute
         recirc_prev_ncall = false;                              //[-] recirculating bypass valve initally closed (no recirc) 
 		t_standby_prev = t_standby_reset;					    //[s] 
 		//*********************************************************
@@ -1136,6 +1152,7 @@ public:
 			dnifc = value(I_dnifc);				// [W/m2]
 		else
 			dnifc = 0.0;						// [W/m2]
+        double defocus_rel_prev_ncall = value(I_defocus);                 // [-] previous relative defocus passed back from type250 to ensure TCS convergence
 
 		// Calculate maximum thermal input for sCO2 cycle
 		// if( pb_tech_type == 424 && ncall == 0 )
@@ -1205,7 +1222,7 @@ public:
 		double ms_disch=0., ms_charge=0.;       // mass flow in kg/s of field/pb htf through storage HX during storage discharging and charging, respectively
 		double q_aux, m_dot_aux, q_demand_aux;
 		int mode;
-		double defocus = defocus_prev_ncall;
+		double defocus = defocus_rel_prev_ncall;
         bool recirculating = recirc_prev_ncall;
 		int cycle_pl_control, standby_control;
         double m_dot_field_avail;
@@ -1229,6 +1246,7 @@ public:
 		do		// Iteration on average storage tank temperatures
 		{
 			iter_tank++;
+            double m_dot_pb_adj, m_dot_field_adj;
 
 			if(has_TES)
 			{
@@ -1347,12 +1365,16 @@ public:
 			else	{m_dot_aux_avail = 0.;}
 
 			// Recirculate field if needed
-            if ((tanks_in_parallel == true && T_field_out <= T_startup) ||
-                (tanks_in_parallel == false && T_field_out <= T_tank_hot_inlet_min)) {
+            defocus_abs = defocus_prev_ncall * defocus;     // defocus_abs = defocus_abs_prev * defocus_rel
+            if (defocus_abs >= 1 &&
+                ((tanks_in_parallel == true && T_field_out <= T_startup) ||
+                (tanks_in_parallel == false && T_field_out <= T_tank_hot_inlet_min)))
+            {
                 recirculating = true;
                 m_dot_field_avail = 0.;
             }
-            else {
+            else
+            {
                 recirculating = false;
                 m_dot_field_avail = m_dot_field;
             }
@@ -1911,10 +1933,10 @@ public:
 				else
 				{
 					// If the defocus control has changed during the calculations, bypass iteration and recalculate field output.
-					// Otherwise, the iteration will continue until the max # has been reached.			
-					if( (defocus != defocus_prev_iter) ) // && (iter > 1) )  // mjw 1.18.2011 (energy isn't balancing during defocusing with no TES
+					// Otherwise, the iteration will continue until the max # has been reached.
+                    if( abs(defocus - defocus_rel_prev_ncall) > 0.01 )
 					{
-						defocus_prev_iter = defocus;
+                        defocus_prev_iter = defocus;    // Does this do anything? iterate_mass_temp = false exits this loop, and defocus_prev_iter is set to 1 just before this loop
 						T_field_in = T_field_in_guess;	// MJW 12.8.2010
 						iterate_mass_temp = false;
 					}
@@ -1940,6 +1962,30 @@ public:
 						}  				
 					}
 				}
+
+                if (err > tol) {
+                    // create adjusted mass flows so they align, and use later to ensure mass balance
+                    if (recirculating == false) {
+                        if (m_dot_pb <= 0) {    // adjust field
+                            m_dot_pb_adj = 0;
+                            m_dot_field_adj = ms_charge + m_dot_pb - ms_disch;
+                        }
+                        else {  // adjust power block
+                            m_dot_pb_adj = m_dot_field_avail - ms_charge + ms_disch;
+                            m_dot_field_adj = m_dot_field;
+                        }
+                    }
+                    else {      // adjust power block
+                        // recirculating == true
+                        m_dot_pb_adj = ms_disch;
+                        m_dot_field_adj = m_dot_field;
+                    }
+                }
+                else {
+                    m_dot_pb_adj = m_dot_pb;
+                    m_dot_field_adj = m_dot_field;
+                }
+
 			} while (iterate_mass_temp);
 
 			if(is_hx)
@@ -2031,34 +2077,34 @@ public:
                         }
                     }
                     else {  // tanks in series
-                        m_tank_hot_out = m_dot_pb;
                         if (recirculating) {
                             m_tank_hot_in = 0.;
                             if (has_hot_tank_bypass) {
                                 T_tank_cold_in = (m_dot_field * T_field_out + m_dot_pb * T_pb_out) / (m_dot_field + m_dot_pb);
                                 if (std::isnan(T_tank_cold_in)) T_tank_cold_in = T_tank_cold_prev;
-                                m_tank_cold_in = m_dot_field + m_dot_pb;
-                                m_tank_cold_out = m_dot_field;
+                                m_tank_cold_in = m_dot_field_adj + m_dot_pb_adj;   // adjusted to account for convergence errors
+                                m_tank_cold_out = m_dot_field_adj;
                             }
                             else {  // both tanks bypassed
                                 T_tank_cold_in = T_pb_out;
-                                m_tank_cold_in = m_dot_pb;
+                                m_tank_cold_in = m_dot_pb_adj;
                                 m_tank_cold_out = 0.;
                             }
                         }
                         else {
                             T_tank_cold_in = T_pb_out;
-                            m_tank_cold_in = m_dot_pb;
-                            m_tank_cold_out = m_dot_field;
-                            m_tank_hot_in = m_dot_field;
+                            m_tank_cold_in = m_dot_pb_adj;
+                            m_tank_cold_out = m_dot_field_adj;
+                            m_tank_hot_in = m_dot_field_adj;
                         }
+                        m_tank_hot_out = m_dot_pb_adj;
                     }
 
 					T_tank_hot_in	= T_field_out;
 					Ts_cold		= T_tank_cold_out;
 					Ts_hot		= T_tank_hot_out;
-					m_tank_charge	= ms_charge;
-					m_tank_disch	= ms_disch;
+					m_tank_charge	= min(ms_charge, ms_charge_avail);
+					m_tank_disch	= min(ms_disch, ms_disch_avail);
 				}
 			}
 
@@ -2100,6 +2146,8 @@ public:
 		} while( iterate_tank_temp );
 
 		double T_aux_out, q_aux_delivered, q_aux_fuel;
+        err_prev_call = err;
+        derr_prev_call = derr;
 
 		if(q_aux_avail > 0.0)
 		{
@@ -2113,11 +2161,11 @@ public:
 			T_aux_out = q_aux_delivered = q_aux_fuel = 0.0;
 		}
 
-		defocus = min(defocus_prev_ncall*defocus, 1.0);
+		defocus_abs = min(defocus_prev_ncall*defocus, 1.0);    // defocus_abs = defocus_abs_prev * defocus_rel
 
 		// Reset mode and defocus
 		mode_prev_ncall = mode;
-		defocus_prev_ncall = defocus;
+		defocus_prev_ncall = defocus_abs;                      // absolute defocuses
         recirc_prev_ncall = recirculating;
 		
 		// Calculate final output values
@@ -2211,7 +2259,7 @@ public:
 		}
 
 		// Set outputs
-		value( O_defocus, defocus );
+		value( O_defocus, defocus_abs );
         value( O_recirc, recirculating );
 		value( O_standby, standby_control );
 		value( O_m_dot_pb, m_dot_pb*3600.0 );
@@ -2297,7 +2345,9 @@ public:
 		m_tank_cold_prev= m_tank_cold_fin;	//[kg]
 		pb_on_prev		= pb_on;			//[-] power block initially off
 		t_standby_prev	= t_standby;		//[s]
-		defocus_prev_ncall = 1.;
+        defocus_rel_prev_ncall = 1.;        //[-] previous relative defocus input from trough model (type250)
+		defocus_prev_ncall = 1.;            //[-] previous absolute defocus output for trough model (type250)
+        defocus_abs_prev = defocus_abs;
 
 		//Warn if the heat exchanger performance calculations are having problems at convergence
 		if(hx_err_flag) message(TCS_WARNING,  "Heat exchanger performance calculations failed" );

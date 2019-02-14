@@ -395,16 +395,39 @@ bool Storage_HX::mixed_tank( bool is_hot_tank, double dt, double m_prev, double 
 	double cp	= m_store_htfProps.Cp( T_prev )*1000.0;		//[J/kg-K] Specific heat
 
 	// Calculate ending volume levels
-	m_fin = max(0.001, m_prev + dt*(m_dot_in - m_dot_out));	//[kg] Available mass at the end of the timestep, mjw 8.3.11 limit to nonzero positive number
+	m_fin = m_prev + dt*(m_dot_in - m_dot_out);	//[kg] Available mass at the end of the timestep
+    double m_min, m_dot_out_adj;  // limit m_dot_out so the ending mass is above a given minimum to eliminate erratic behavior
+    bool tank_is_empty = false;
+    m_min = 0.001;                // minimum tank mass for use in the calculations
+    if (m_fin < m_min) {
+        m_fin = m_min;
+        tank_is_empty = true;
+        m_dot_out_adj = m_dot_in - (m_min - m_prev) / dt;
+    }
+    else {
+        m_dot_out_adj = m_dot_out;
+    }
 	double m_ave	= (m_prev + m_fin)/2.0;	//[kg] Average mass 
 	vol_fin	= m_fin/rho;					//[m3] Available volume at the end of the timestep
 	vol_ave	= m_ave/rho;					//[m3] Average volume
 
+    // Check for continual empty tank
+    if (m_prev <= 1e-4 && tank_is_empty == true) {
+        if (m_dot_in > 0) {
+            T_fin = T_ave = T_in;
+        }
+        else {
+            T_fin = T_ave = T_prev;
+        }
+        vol_ave = q_loss = vol_fin = m_fin = q_heater = 0.;
+        return false;
+    }
+
 	// Check for no flow
 	double B = m_dot_in + m_ua/cp;					//[kg/s] + [W/K]*[kg-K/J]
 	double D, G, H1, A1, E, C, CC, DD, AA, BB;
-	if( (fabs(m_dot_in-m_dot_out) < B*1.e-5) ||
-	   ( (m_dot_in < 0.001) && (m_dot_out < 0.001) ))
+	if( (fabs(m_dot_in-m_dot_out_adj) < B*1.e-5) ||
+	   ( (m_dot_in < 0.001) && (m_dot_out_adj < 0.001) ))
 	{
 		// Equations for no flow or zero net flow
 		D	= m_dot_in*T_in + (m_ua/cp)*T_amb;
@@ -418,13 +441,13 @@ bool Storage_HX::mixed_tank( bool is_hot_tank, double dt, double m_prev, double 
 	else
 	{
 		// Equations for unbalanced flow
-		C	= m_dot_in - m_dot_out;
+		C	= m_dot_in - m_dot_out_adj;
 		D	= m_dot_in*T_in + m_ua/cp*T_amb;
 		CC	= T_prev - D/B;
 		DD	= pow( max( (1.+(C*dt)/m_prev), 0.0), (-B/C));	// MJW 9.2.2010 :: limit to positive argument
 		T_fin	= CC*DD+D/B;
 		AA	= (T_prev - D/B)/(C-B);
-		BB	= pow( (1.+(C*dt)/m_prev), (1.-B/C) );
+		BB	= pow( max( (1.+(C*dt)/m_prev), 0.0), (1.-B/C) );
 		T_ave	= AA*(m_prev/dt)*(BB-1.0) + D/B;
 	}
 
@@ -446,7 +469,7 @@ bool Storage_HX::mixed_tank( bool is_hot_tank, double dt, double m_prev, double 
 	if( T_fin < htr_set_point)
 	{
 		Q_vol	= cp*vol_fin*rho/dt*(htr_set_point-T_fin)/(1.E6);	// MW  4/30/12 - Fixed unit conversion
-		Q_flow	= cp*m_dot_out*(htr_set_point-T_fin)/(1.E6);		// MW  4/30/12 - Fixed unit conversion
+		Q_flow	= cp*m_dot_out_adj*(htr_set_point-T_fin)/(1.E6);		// MW  4/30/12 - Fixed unit conversion
     
 		q_heater = min(Q_flow+Q_vol, max_q_htr);					// MW
 		T_fin	= T_prev + dt * min(Q_vol*1.e6, max_q_htr*1.e6)/(cp*rho*vol_fin);
@@ -457,6 +480,12 @@ bool Storage_HX::mixed_tank( bool is_hot_tank, double dt, double m_prev, double 
 
 	// Calculate losses
 	q_loss = m_ua*(T_ave - T_amb)/1.e6;		// [MW]
+
+    if (tank_is_empty) {
+        // set to actual values
+        vol_fin = 0.;
+        m_fin = 0.;
+    }
 
 	return false;
 }

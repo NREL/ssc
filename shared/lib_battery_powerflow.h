@@ -96,9 +96,11 @@ public:
 	/// Register the shared inverter which has previously been defined
 	void setSharedInverter(SharedInverter * sharedInverter);
 
-
 	/// Reset the time-step power quantities to 0
 	void reset();
+
+	/// Copy the enumeration for AC/DC connected systems from ChargeController
+	enum CONNECTION { DC_CONNECTED, AC_CONNECTED };
 
 
 	double dtHour;	   /// The timestep in hours, used for accumulated power losses
