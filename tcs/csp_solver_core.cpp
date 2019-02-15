@@ -1793,7 +1793,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
                             break;
                         }
                         x1 = xy2.x;  // for next loop
-                    } while (m_dot_bal2 == m_dot_bal);
+                    } while (abs(m_dot_bal2 - m_dot_bal) < 0.02);
                     if (m_dot_df_code != 0) { break; }
 
 					xy2.y = m_dot_bal2;
@@ -4277,13 +4277,11 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 						    {
 							    m_is_CR_DF__PC_MAX__TES_FULL__AUX_OFF_avail = false;
 						    }
-
 						    are_models_converged = false;
-
 						    break;
 					    }
                         x1 = xy2.x;  // for next loop
-                    } while (m_dot_bal2 == m_dot_bal);
+                    } while (abs(m_dot_bal2 - m_dot_bal) < 0.02);
                     if (m_dot_df_code != 0) { break; }
 
 					xy2.y = m_dot_bal2;
