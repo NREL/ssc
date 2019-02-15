@@ -337,6 +337,8 @@ build_linux/config.status
 linux_test\.txt
 
 nlopt/config\.h
+nlopt/config.h
+build_osx/config.status
 
 doc/html/*
 doc/latex/*
