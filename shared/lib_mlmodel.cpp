@@ -214,7 +214,16 @@ bool mlmodel_module_t::operator() (pvinput_t &input, double T_C, double opvoltag
 	}
 
 	// Total effective irradiance
-	double S = (f_IAM_beam * input.Ibeam + f_IAM_diff * input.Idiff + groundRelfectionFraction * f_IAM_gnd * input.Ignd) * f_AM;
+	double S;
+	if(input.radmode != 3){ // Skip module cover effects if using POA reference cell data
+		S = (f_IAM_beam * input.Ibeam + f_IAM_diff * input.Idiff + groundRelfectionFraction * f_IAM_gnd * input.Ignd) * f_AM;
+    }
+    else if(input.usePOAFromWF){ // Check if decomposed POA is required, if not use weather file POA directly
+		S = input.poaIrr;
+	}
+    else { // Otherwise use decomposed POA
+		S = (f_IAM_beam * input.Ibeam + f_IAM_diff * input.Idiff + groundRelfectionFraction * f_IAM_gnd * input.Ignd) * f_AM;
+	}
 
 	// Single diode model acc. to [1]
 	if (S >= 1)
@@ -262,7 +271,7 @@ bool mlmodel_module_t::operator() (pvinput_t &input, double T_C, double opvoltag
 				else I = current_5par_rec(V, 0.9*I_L, a, I_L, I_0, R_s, R_sh, D2MuTau, Vbi);
 				P = V*I;
 			}
-			eff = P / ((Width * Length) * S);
+			eff = P / ((Width * Length) * (input.Ibeam + input.Idiff + input.Ignd));
 		}
 
 		out.Power = P;
@@ -272,6 +281,7 @@ bool mlmodel_module_t::operator() (pvinput_t &input, double T_C, double opvoltag
 		out.Voc_oper = V_oc;
 		out.Isc_oper = I_sc;
 		out.CellTemp = T_cell;
+		out.AOIModifier = S / (input.Ibeam + input.Idiff + input.Ignd);
 	}
 
 	return out.Power >= 0;
