@@ -2549,7 +2549,7 @@ freeze_prot_flag: //7   continue
 
 				E_field_loss_tot *= 1.e-6 * dt;
 
-				double E_field_pipe_hl = 2*Runner_hl_hot_tot + float(nfsec)*Header_hl_hot_tot + 2*Runner_hl_cold_tot + float(nfsec)*Header_hl_cold_tot + Intc_hl;
+				double E_field_pipe_hl = 2*Runner_hl_hot_tot + float(nfsec)*Header_hl_hot_tot + 2*Runner_hl_cold_tot + float(nfsec)*Header_hl_cold_tot + float(nLoops)*Intc_hl;
 
 				E_field_pipe_hl *= dt;		//[J]
 
@@ -3242,7 +3242,7 @@ calc_final_metrics_goto:
 			Pipe_hl_hot = 2*Runner_hl_hot_tot + float(nfsec)*Header_hl_hot_tot;
 			Pipe_hl_cold = 2*Runner_hl_cold_tot + float(nfsec)*Header_hl_cold_tot;
 
-			Pipe_hl = Pipe_hl_hot + Pipe_hl_cold + Intc_hl;
+			Pipe_hl = Pipe_hl_hot + Pipe_hl_cold + float(nLoops)*Intc_hl;
 
 			if( !is_using_input_gen )
 				E_avail_tot = max(E_avail_tot - Pipe_hl*dt, 0.0);    //[J] 11/1/11 TN: Include hot and cold piping losses in available energy calculation
