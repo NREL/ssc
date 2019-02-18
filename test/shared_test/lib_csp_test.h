@@ -50,8 +50,8 @@ protected:
     double m_T_h_out_des;
 
 public:
-    double m_error_tolerance_lo = 0.1;
-    double m_error_tolerance_hi = 1.0;
+    double m_error_tolerance_lo = 0.001;    // 0.1%
+    double m_error_tolerance_hi = 0.01;     // 1.0%
 
     void SetUp();
 
