@@ -99,6 +99,9 @@ static var_info _cm_vtab_sco2_csp_system[] = {
 	{ SSC_OUTPUT, SSC_ARRAY,   "mc_f_bypass_od",       "Off-design main compressor bypass to cooler inlet",      "-",          "",    "",      "",     "",       "" },
 		// Recompressor
 	{ SSC_OUTPUT, SSC_ARRAY,   "rc_T_in_od",           "Off-design recompressor inlet temperature",              "C",          "",    "",      "",     "",       "" },
+	{ SSC_OUTPUT, SSC_ARRAY,   "rc_P_in_od",           "Off-design recompressor inlet pressure",                 "MPa",        "",    "",      "",     "",       "" },
+	{ SSC_OUTPUT, SSC_ARRAY,   "rc_T_out_od",          "Off-design recompressor outlet temperature",             "C",          "",    "",      "",     "",       "" },
+	{ SSC_OUTPUT, SSC_ARRAY,   "rc_P_out_od",          "Off-design recompressor outlet pressure",                "MPa",        "",    "",      "",     "",       "" },
 	{ SSC_OUTPUT, SSC_ARRAY,   "rc_W_dot_od",          "Off-design recompressor power",                          "MWe",        "",    "",      "",     "",       "" },
 	{ SSC_OUTPUT, SSC_ARRAY,   "rc_m_dot_od",          "Off-design recompressor mass flow",                      "kg/s",       "",    "",      "",     "",       "" },
 	{ SSC_OUTPUT, SSC_ARRAY,   "rc_eta_od",            "Off-design recompressor overal isentropic efficiency",   "",           "",    "",      "",     "",       "" },
@@ -120,7 +123,9 @@ static var_info _cm_vtab_sco2_csp_system[] = {
 		// Compressor Totals	
 	{ SSC_OUTPUT, SSC_ARRAY,   "c_tot_W_dot_od",       "Compressor total off-design power",                      "MWe",        "",    "",      "",     "",       "" },
 		// Turbine																											   
+	{ SSC_OUTPUT, SSC_ARRAY,   "t_P_in_od",            "Off-design turbine inlet pressure",                      "MPa",        "",    "",      "",     "",       "" },
 	{ SSC_OUTPUT, SSC_ARRAY,   "t_T_out_od",           "Off-design turbine outlet temperature",                  "C",          "",    "",      "",     "",       "" },
+	{ SSC_OUTPUT, SSC_ARRAY,   "t_P_out_od",           "Off-design turbine outlet pressure",                     "MPa",        "",    "",      "",     "",       "" },
 	{ SSC_OUTPUT, SSC_ARRAY,   "t_W_dot_od",           "Off-design turbine power",                               "MWe",        "",    "",      "",     "",       "" },
 	{ SSC_OUTPUT, SSC_ARRAY,   "t_m_dot_od",           "Off-design turbine mass flow rate",                      "kg/s",       "",    "",      "",     "",       "" },
 	{ SSC_OUTPUT, SSC_ARRAY,   "t_nu_od",              "Off-design turbine velocity ratio",	                     "-",	       "",    "",      "",     "",       "" },
@@ -128,19 +133,30 @@ static var_info _cm_vtab_sco2_csp_system[] = {
 	{ SSC_OUTPUT, SSC_ARRAY,   "t_tip_ratio_od",       "Off-design turbine tip speed ratio",                     "-",          "",    "",      "",     "",       "" },
 	{ SSC_OUTPUT, SSC_ARRAY,   "t_eta_od",             "Off-design turbine efficiency",                          "-",          "",    "",      "",     "",       "" },
 		// Recuperators
+	{ SSC_OUTPUT, SSC_ARRAY,   "LTR_HP_T_out_od",      "Off-design low temp recup HP outlet temperature",        "C",          "",    "",      "",     "",       "" },
 	{ SSC_OUTPUT, SSC_ARRAY,   "eff_LTR_od",           "Off-design low temp recup effectiveness",                "",           "",    "",      "",     "",       "" },
 	{ SSC_OUTPUT, SSC_ARRAY,   "q_dot_LTR_od",         "Off-design low temp recup heat transfer",                "MWt",        "",    "",      "",     "",       "" },
+	{ SSC_OUTPUT, SSC_ARRAY,   "LTR_LP_deltaP_od",     "Off-design low temp recup low pressure side pressure drop","-",        "",    "",      "",     "",       "" },
+	{ SSC_OUTPUT, SSC_ARRAY,   "LTR_HP_deltaP_od",     "Off-design low temp recup high pressure side pressure drop","-",       "",    "",      "",     "",       "" },
+	{ SSC_OUTPUT, SSC_ARRAY,   "LTR_min_dT_od",        "Off-design low temp recup minimum temperature difference","C",         "",    "",      "",     "",       "" },
+	{ SSC_OUTPUT, SSC_ARRAY,   "HTR_LP_T_out_od",      "Off-design high temp recup LP outlet temperature",       "C",          "",    "",      "",     "",       "" },
+	{ SSC_OUTPUT, SSC_ARRAY,   "HTR_HP_T_in_od",       "Off-design high temp recup HP inlet temperature",        "C",          "",    "",      "",     "",       "" },
 	{ SSC_OUTPUT, SSC_ARRAY,   "eff_HTR_od",           "Off-design high temp recup effectiveness",               "",           "",    "",      "",     "",       "" },
 	{ SSC_OUTPUT, SSC_ARRAY,   "q_dot_HTR_od",         "Off-design high temp recup heat transfer",               "MWt",        "",    "",      "",     "",       "" },
+	{ SSC_OUTPUT, SSC_ARRAY,   "HTR_LP_deltaP_od",     "Off-design high temp recup low pressure side pressure drop","-",       "",    "",      "",     "",       "" },
+	{ SSC_OUTPUT, SSC_ARRAY,   "HTR_HP_deltaP_od",     "Off-design high temp recup high pressure side pressure drop","-",       "",    "",      "",     "",       "" },
+	{ SSC_OUTPUT, SSC_ARRAY,   "HTR_min_dT_od",        "Off-design high temp recup minimum temperature difference","C",         "",    "",      "",     "",       "" },
 		// PHX 
 	{ SSC_OUTPUT, SSC_ARRAY,   "T_co2_PHX_in_od",      "Off-design PHX co2 inlet temperature",                   "C",          "",    "",      "",     "",       "" },
 	{ SSC_OUTPUT, SSC_ARRAY,   "T_co2_PHX_out_od",     "Off-design PHX co2 outlet temperature",                  "C",          "",    "",      "",     "",       "" },
 	{ SSC_OUTPUT, SSC_ARRAY,   "deltaT_HTF_PHX_od",    "Off-design HTF temp difference across PHX",              "C",          "",    "",      "",     "",       "" },
 	{ SSC_OUTPUT, SSC_ARRAY,   "phx_eff_od",           "Off-design PHX effectiveness",                           "-",          "",    "",      "",     "",       "" },
+	{ SSC_OUTPUT, SSC_ARRAY,   "phx_co2_deltaP_od",    "Off-design PHX co2 side pressure drop",                  "-",          "",    "",      "",     "",       "" },
 		// Low Pressure Cooler
 	{ SSC_OUTPUT, SSC_ARRAY,   "LP_cooler_T_in_od",    "Low pressure cooler inlet temperature",                  "C",          "",    "",      "",     "",       "" },
 	{ SSC_OUTPUT, SSC_ARRAY,   "LP_cooler_rho_in_od",  "Low pressure cooler inlet density",                      "kg/m3",      "",    "",      "",     "",       "" },
 	{ SSC_OUTPUT, SSC_ARRAY,   "LP_cooler_in_isen_deltah_to_P_mc_out_od",  "Low pressure cooler inlet isen enthalpy rise to mc outlet pressure", "kJ/kg", "", "", "", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY,   "LP_cooler_co2_deltaP_od", "Off-design low pressure cooler co2 side pressure drop","-",         "",    "",      "",     "",       "" },
 	{ SSC_OUTPUT, SSC_ARRAY,   "LP_cooler_W_dot_fan_od","Low pressure cooler fan power",                         "MWe",        "",    "",      "",     "",       "" },
 		// Intermediate Pressure Cooler
 	{ SSC_OUTPUT, SSC_ARRAY,   "IP_cooler_W_dot_fan_od","Intermediate pressure cooler fan power",                "MWe",        "",    "",      "",     "",       "" },
@@ -191,6 +207,9 @@ public:
 	ssc_number_t *p_mc_f_bypass_od;
 	// Recompressor
 	ssc_number_t *p_rc_T_in_od;
+	ssc_number_t *p_rc_P_in_od;
+	ssc_number_t *p_rc_T_out_od;
+	ssc_number_t *p_rc_P_out_od;
 	ssc_number_t *p_rc_W_dot_od;
 	ssc_number_t *p_rc_m_dot_od;
 	ssc_number_t *p_rc_eta_od;
@@ -212,7 +231,9 @@ public:
 	// Compressor Totals
 	ssc_number_t *p_c_tot_W_dot_od;
 	// Turbine
+	ssc_number_t *p_t_P_in_od;
 	ssc_number_t *p_t_T_out_od;
+	ssc_number_t *p_t_P_out_od;
 	ssc_number_t *p_t_W_dot_od;
 	ssc_number_t *p_t_m_dot_od;
 	ssc_number_t *p_t_nu_od;
@@ -220,19 +241,30 @@ public:
 	ssc_number_t *p_t_tip_ratio_od;
 	ssc_number_t *p_t_eta_od;
 	// Recuperator
+	ssc_number_t *p_LTR_HP_T_out_od;
 	ssc_number_t *p_eff_LTR_od;
 	ssc_number_t *p_q_dot_LTR_od;
+	ssc_number_t *p_LTR_LP_deltaP_od;
+	ssc_number_t *p_LTR_HP_deltaP_od;
+	ssc_number_t *p_LTR_min_dT_od;
+	ssc_number_t *p_HTR_LP_T_out_od;
+	ssc_number_t *p_HTR_HP_T_in_od;
 	ssc_number_t *p_eff_HTR_od;
 	ssc_number_t *p_q_dot_HTR_od;
+	ssc_number_t *p_HTR_LP_deltaP_od;
+	ssc_number_t *p_HTR_HP_deltaP_od;
+	ssc_number_t *p_HTR_min_dT_od;
 	// PHX
 	ssc_number_t *p_T_co2_PHX_in_od;
 	ssc_number_t *p_T_co2_PHX_out_od;
 	ssc_number_t *p_deltaT_HTF_PHX_od;
 	ssc_number_t *p_phx_eff_od;
+	ssc_number_t *p_phx_co2_deltaP_od;
 	// Low Pressure Cooler
 	ssc_number_t *p_LP_cooler_T_in_od;
 	ssc_number_t *p_LP_cooler_rho_in_od;
 	ssc_number_t *p_LP_cooler_in_isen_deltah_to_P_mc_out_od;
+	ssc_number_t *p_LP_cooler_co2_deltaP_od;
 	ssc_number_t *p_LP_cooler_W_dot_fan_od;
 	// Intermediate Pressure Cooler
 	ssc_number_t *p_IP_cooler_W_dot_fan_od;
@@ -485,6 +517,9 @@ public:
 				if (is_rc)
 				{
 					p_rc_T_in_od[n_run] = (ssc_number_t)(c_sco2_cycle.get_od_solved()->ms_rc_cycle_od_solved.ms_rc_ms_od_solved.m_T_in - 273.15);	//[C]
+					p_rc_P_in_od[n_run] = (ssc_number_t)(c_sco2_cycle.get_od_solved()->ms_rc_cycle_od_solved.ms_rc_ms_od_solved.m_P_in*1.E-3);		//[MPa] convert from kPa
+					p_rc_T_out_od[n_run] = (ssc_number_t)(c_sco2_cycle.get_od_solved()->ms_rc_cycle_od_solved.ms_rc_ms_od_solved.m_T_out - 273.15);	//[C] convert from K
+					p_rc_P_out_od[n_run] = (ssc_number_t)(c_sco2_cycle.get_od_solved()->ms_rc_cycle_od_solved.ms_rc_ms_od_solved.m_P_out*1.E-3);	//[MPa] convert from kPa
 					p_rc_W_dot_od[n_run] = (ssc_number_t)(c_sco2_cycle.get_od_solved()->ms_rc_cycle_od_solved.ms_rc_ms_od_solved.m_W_dot_in*1.E-3);	//[MWe] convert from kWe
 					p_rc_m_dot_od[n_run] = (ssc_number_t)(c_sco2_cycle.get_od_solved()->ms_rc_cycle_od_solved.m_m_dot_rc);				//[kg/s]
 					p_rc_eta_od[n_run] = (ssc_number_t)c_sco2_cycle.get_od_solved()->ms_rc_cycle_od_solved.ms_rc_ms_od_solved.m_eta;		//[-]
@@ -501,6 +536,9 @@ public:
 				else
 				{
 					p_rc_T_in_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
+					p_rc_P_in_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
+					p_rc_T_out_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
+					p_rc_P_out_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
 					p_rc_W_dot_od[n_run] = 0.0;
 					p_rc_m_dot_od[n_run] = 0.0;
 					p_rc_eta_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
@@ -552,7 +590,9 @@ public:
 					// Compressor Totals
 				p_c_tot_W_dot_od[n_run] = comp_W_dot_od_sum;		//[MWe]
 					// Turbine
+				p_t_P_in_od[n_run] = (ssc_number_t)(c_sco2_cycle.get_od_solved()->ms_rc_cycle_od_solved.m_pres[C_sco2_cycle_core::TURB_IN]*1.E-3);	//[MPa] convert from kPa
 				p_t_T_out_od[n_run] = (ssc_number_t)(c_sco2_cycle.get_od_solved()->ms_rc_cycle_od_solved.m_temp[C_sco2_cycle_core::TURB_OUT] - 273.15);	//[C] Convert from K
+				p_t_P_out_od[n_run] = (ssc_number_t)(c_sco2_cycle.get_od_solved()->ms_rc_cycle_od_solved.m_pres[C_sco2_cycle_core::TURB_OUT]*1.E-3);//[MPa] convert form kPa
 				p_t_W_dot_od[n_run] = (ssc_number_t)(c_sco2_cycle.get_od_solved()->ms_rc_cycle_od_solved.ms_t_od_solved.m_W_dot_out*1.E-3);	//[MWe] convert from kWe
 				p_t_m_dot_od[n_run] = (ssc_number_t)(c_sco2_cycle.get_od_solved()->ms_rc_cycle_od_solved.m_m_dot_t);			//[kg/s]
 				p_t_nu_od[n_run] = (ssc_number_t)c_sco2_cycle.get_od_solved()->ms_rc_cycle_od_solved.ms_t_od_solved.m_nu;		//[-]
@@ -560,18 +600,42 @@ public:
 				p_t_tip_ratio_od[n_run] = (ssc_number_t)c_sco2_cycle.get_od_solved()->ms_rc_cycle_od_solved.ms_t_od_solved.m_w_tip_ratio;	//[-]
 				p_t_eta_od[n_run] = (ssc_number_t)c_sco2_cycle.get_od_solved()->ms_rc_cycle_od_solved.ms_t_od_solved.m_eta;	//[-]
 					// Recuperator
+				p_LTR_HP_T_out_od[n_run] = (ssc_number_t)(c_sco2_cycle.get_od_solved()->ms_rc_cycle_od_solved.m_temp[C_sco2_cycle_core::LTR_HP_OUT] - 273.15);	//[C] LTR HP outlet temp, convert from K
 				p_eff_LTR_od[n_run] = (ssc_number_t)c_sco2_cycle.get_od_solved()->ms_rc_cycle_od_solved.ms_LT_recup_od_solved.m_eff;	//[-]
 				p_q_dot_LTR_od[n_run] = (ssc_number_t)(c_sco2_cycle.get_od_solved()->ms_rc_cycle_od_solved.ms_LT_recup_od_solved.m_q_dot*1.E-3);	//[MWt] convert from kWt
+				double LTR_LP_deltaP_od = 1.0 - c_sco2_cycle.get_od_solved()->ms_rc_cycle_od_solved.m_pres[C_sco2_cycle_core::LTR_LP_OUT] / 
+											c_sco2_cycle.get_od_solved()->ms_rc_cycle_od_solved.m_pres[C_sco2_cycle_core::HTR_LP_OUT];
+				p_LTR_LP_deltaP_od[n_run] = (ssc_number_t)LTR_LP_deltaP_od;	//[-]
+				double LTR_HP_deltaP_od = 1.0 - c_sco2_cycle.get_od_solved()->ms_rc_cycle_od_solved.m_pres[C_sco2_cycle_core::LTR_HP_OUT] /
+											c_sco2_cycle.get_od_solved()->ms_rc_cycle_od_solved.m_pres[C_sco2_cycle_core::MC_OUT];
+				p_LTR_HP_deltaP_od[n_run] = (ssc_number_t)LTR_HP_deltaP_od;	//[-]
+				p_LTR_min_dT_od[n_run] = (ssc_number_t)(c_sco2_cycle.get_od_solved()->ms_rc_cycle_od_solved.ms_LT_recup_od_solved.m_min_DT);	//[C]
+				
+				p_HTR_LP_T_out_od[n_run] = (ssc_number_t)(c_sco2_cycle.get_od_solved()->ms_rc_cycle_od_solved.m_temp[C_sco2_cycle_core::HTR_LP_OUT] - 273.15);	//[C] HTR LP outlet temp, convert from K
+				p_HTR_HP_T_in_od[n_run] = (ssc_number_t)(c_sco2_cycle.get_od_solved()->ms_rc_cycle_od_solved.m_temp[C_sco2_cycle_core::MIXER_OUT] - 273.15);	//[C] HTR HP inlet temp, convert from K
 				p_eff_HTR_od[n_run] = (ssc_number_t)c_sco2_cycle.get_od_solved()->ms_rc_cycle_od_solved.ms_HT_recup_od_solved.m_eff;	//[-]
 				p_q_dot_HTR_od[n_run] = (ssc_number_t)(c_sco2_cycle.get_od_solved()->ms_rc_cycle_od_solved.ms_HT_recup_od_solved.m_q_dot*1.E-3);	//[MWt] convert from kWt
+				double HTR_LP_deltaP_od = 1.0 - c_sco2_cycle.get_od_solved()->ms_rc_cycle_od_solved.m_pres[C_sco2_cycle_core::HTR_LP_OUT] /
+											c_sco2_cycle.get_od_solved()->ms_rc_cycle_od_solved.m_pres[C_sco2_cycle_core::TURB_OUT];
+				p_HTR_LP_deltaP_od[n_run] = (ssc_number_t)HTR_LP_deltaP_od;
+				double HTR_HP_deltaP_od = 1.0 - c_sco2_cycle.get_od_solved()->ms_rc_cycle_od_solved.m_pres[C_sco2_cycle_core::HTR_HP_OUT] /
+					c_sco2_cycle.get_od_solved()->ms_rc_cycle_od_solved.m_pres[C_sco2_cycle_core::LTR_HP_OUT];
+				p_HTR_HP_deltaP_od[n_run] = (ssc_number_t)HTR_HP_deltaP_od;
+				p_HTR_min_dT_od[n_run] = (ssc_number_t)(c_sco2_cycle.get_od_solved()->ms_rc_cycle_od_solved.ms_HT_recup_od_solved.m_min_DT);	//[C]
 					// PHX
 				p_T_co2_PHX_in_od[n_run] = (ssc_number_t)(c_sco2_cycle.get_od_solved()->ms_rc_cycle_od_solved.m_temp[C_sco2_cycle_core::HTR_HP_OUT] - 273.15);	//[C]
 				p_T_co2_PHX_out_od[n_run] = (ssc_number_t)(c_sco2_cycle.get_od_solved()->ms_rc_cycle_od_solved.m_temp[C_sco2_cycle_core::TURB_IN] - 273.15);		//[C]
 				p_deltaT_HTF_PHX_od[n_run] = p_T_htf_hot_od[n_run] - p_T_htf_cold_od[n_run];	//[C]
 				p_phx_eff_od[n_run] = (ssc_number_t)c_sco2_cycle.get_od_solved()->ms_phx_od_solved.m_eff;		//[-]
+				double phx_co2_deltaP_od = 1.0 - c_sco2_cycle.get_od_solved()->ms_rc_cycle_od_solved.m_pres[C_sco2_cycle_core::TURB_IN] /
+					c_sco2_cycle.get_od_solved()->ms_rc_cycle_od_solved.m_pres[C_sco2_cycle_core::HTR_HP_OUT];
+				p_phx_co2_deltaP_od[n_run] = (ssc_number_t)phx_co2_deltaP_od;
 					// Low Pressure Cooler
 				p_LP_cooler_T_in_od[n_run] = (ssc_number_t)(c_sco2_cycle.get_od_solved()->ms_rc_cycle_od_solved.m_temp[C_sco2_cycle_core::LTR_LP_OUT] - 273.15);	//[C] Convert from K
 				p_LP_cooler_rho_in_od[n_run] = (ssc_number_t)(c_sco2_cycle.get_od_solved()->ms_rc_cycle_od_solved.m_dens[C_sco2_cycle_core::LTR_LP_OUT]);	//[kg/m3]
+				double LP_cooler_co2_deltaP_od = 1.0 - c_sco2_cycle.get_od_solved()->ms_rc_cycle_od_solved.m_pres[C_sco2_cycle_core::MC_IN] /
+					c_sco2_cycle.get_od_solved()->ms_rc_cycle_od_solved.m_pres[C_sco2_cycle_core::LTR_LP_OUT];
+				p_LP_cooler_co2_deltaP_od[n_run] = (ssc_number_t)LP_cooler_co2_deltaP_od;	//[-]
 				p_LP_cooler_W_dot_fan_od[n_run] = (ssc_number_t)c_sco2_cycle.get_od_solved()->ms_rc_cycle_od_solved.ms_LP_air_cooler_od_solved.m_W_dot_fan;	//[MWe]
 				double cooler_W_dot_total = c_sco2_cycle.get_od_solved()->ms_rc_cycle_od_solved.ms_LP_air_cooler_od_solved.m_W_dot_fan;	//[MWe]
 					// Intermediate Pressure Cooler
@@ -637,6 +701,9 @@ public:
 				p_mc_f_bypass_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
 					// Recompressor
 				p_rc_T_in_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
+				p_rc_P_in_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
+				p_rc_T_out_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
+				p_rc_P_out_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
 				p_rc_W_dot_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
 				p_rc_m_dot_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
 				p_rc_eta_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
@@ -666,7 +733,9 @@ public:
 					// Compressor Totals
 				p_c_tot_W_dot_od[n_run] = std::numeric_limits<double>::quiet_NaN();
 					// Turbine
+				p_t_P_in_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
 				p_t_T_out_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
+				p_t_P_out_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
 				p_t_W_dot_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
 				p_t_m_dot_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
 				p_t_nu_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
@@ -674,18 +743,30 @@ public:
 				p_t_tip_ratio_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
 				p_t_eta_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
 					// Recuperator
+				p_LTR_HP_T_out_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
 				p_eff_LTR_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
 				p_q_dot_LTR_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
+				p_LTR_LP_deltaP_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
+				p_LTR_HP_deltaP_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
+				p_LTR_min_dT_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
+
+				p_HTR_LP_T_out_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
+				p_HTR_HP_T_in_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
 				p_eff_HTR_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
 				p_q_dot_HTR_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
+				p_HTR_LP_deltaP_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
+				p_HTR_HP_deltaP_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
+				p_HTR_min_dT_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
 					// PHX
 				p_T_co2_PHX_in_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
 				p_T_co2_PHX_out_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
 				p_deltaT_HTF_PHX_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
 				p_phx_eff_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
+				p_phx_co2_deltaP_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
 					// Low Pressure Cooler
 				p_LP_cooler_T_in_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
 				p_LP_cooler_rho_in_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
+				p_LP_cooler_co2_deltaP_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
 				p_LP_cooler_W_dot_fan_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
 					// Intermediate Pressure Cooler
 				p_IP_cooler_W_dot_fan_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
@@ -743,6 +824,9 @@ public:
 		p_mc_f_bypass_od = allocate("mc_f_bypass_od", n_od_runs);
 		// Recompressor
 		p_rc_T_in_od = allocate("rc_T_in_od", n_od_runs);
+		p_rc_P_in_od = allocate("rc_P_in_od", n_od_runs);
+		p_rc_T_out_od = allocate("rc_T_out_od", n_od_runs);
+		p_rc_P_out_od = allocate("rc_P_out_od", n_od_runs);
 		p_rc_W_dot_od = allocate("rc_W_dot_od", n_od_runs);
 		p_rc_m_dot_od = allocate("rc_m_dot_od", n_od_runs);
 		p_rc_eta_od = allocate("rc_eta_od", n_od_runs);
@@ -764,7 +848,9 @@ public:
 		// Compressor Totals
 		p_c_tot_W_dot_od = allocate("c_tot_W_dot_od", n_od_runs);
 		// Turbine
+		p_t_P_in_od = allocate("t_P_in_od", n_od_runs);
 		p_t_T_out_od = allocate("t_T_out_od", n_od_runs);
+		p_t_P_out_od = allocate("t_P_out_od", n_od_runs);
 		p_t_W_dot_od = allocate("t_W_dot_od", n_od_runs);
 		p_t_m_dot_od = allocate("t_m_dot_od", n_od_runs);
 		p_t_nu_od = allocate("t_nu_od", n_od_runs);
@@ -772,19 +858,31 @@ public:
 		p_t_tip_ratio_od = allocate("t_tip_ratio_od", n_od_runs);
 		p_t_eta_od = allocate("t_eta_od", n_od_runs);
 		// Recuperator
+		p_LTR_HP_T_out_od = allocate("LTR_HP_T_out_od", n_od_runs);
 		p_eff_LTR_od = allocate("eff_LTR_od", n_od_runs);
 		p_q_dot_LTR_od = allocate("q_dot_LTR_od", n_od_runs);
+		p_LTR_LP_deltaP_od = allocate("LTR_LP_deltaP_od", n_od_runs);
+		p_LTR_HP_deltaP_od = allocate("LTR_HP_deltaP_od", n_od_runs);
+		p_LTR_min_dT_od = allocate("LTR_min_dT_od", n_od_runs);
+
+		p_HTR_LP_T_out_od = allocate("HTR_LP_T_out_od", n_od_runs);
+		p_HTR_HP_T_in_od = allocate("HTR_HP_T_in_od", n_od_runs);
 		p_eff_HTR_od = allocate("eff_HTR_od", n_od_runs);
 		p_q_dot_HTR_od = allocate("q_dot_HTR_od", n_od_runs);
+		p_HTR_LP_deltaP_od = allocate("HTR_LP_deltaP_od", n_od_runs);
+		p_HTR_HP_deltaP_od = allocate("HTR_HP_deltaP_od", n_od_runs);
+		p_HTR_min_dT_od = allocate("HTR_min_dT_od", n_od_runs);
 		// PHX
 		p_T_co2_PHX_in_od = allocate("T_co2_PHX_in_od", n_od_runs);
 		p_T_co2_PHX_out_od = allocate("T_co2_PHX_out_od", n_od_runs);
 		p_deltaT_HTF_PHX_od = allocate("deltaT_HTF_PHX_od", n_od_runs);
 		p_phx_eff_od = allocate("phx_eff_od", n_od_runs);
+		p_phx_co2_deltaP_od = allocate("phx_co2_deltaP_od", n_od_runs);
 		// Low Pressure Cooler
 		p_LP_cooler_T_in_od = allocate("LP_cooler_T_in_od", n_od_runs);
 		p_LP_cooler_rho_in_od = allocate("LP_cooler_rho_in_od", n_od_runs);
 		p_LP_cooler_in_isen_deltah_to_P_mc_out_od = allocate("LP_cooler_in_isen_deltah_to_P_mc_out_od", n_od_runs);
+		p_LP_cooler_co2_deltaP_od = allocate("LP_cooler_co2_deltaP_od", n_od_runs);
 		p_LP_cooler_W_dot_fan_od = allocate("LP_cooler_W_dot_fan_od", n_od_runs);
 		// Intermediate Pressure Cooler
 		p_IP_cooler_W_dot_fan_od = allocate("IP_cooler_W_dot_fan_od", n_od_runs);

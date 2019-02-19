@@ -143,7 +143,7 @@ public:
 	virtual void run(size_t year, size_t hour_of_year, size_t step_of_hour, size_t index) = 0;
 
 	/// The supported configurations of a battery system
-	enum { DC_CONNECTED, AC_CONNECTED };
+	enum CONNECTION{ DC_CONNECTED, AC_CONNECTED };
 
 protected:
 
