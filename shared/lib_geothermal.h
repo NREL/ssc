@@ -63,7 +63,7 @@ enum calculationBasis { NO_CALCULATION_BASIS, POWER_SALES, NUMBER_OF_WELLS };
 enum conversionTypes { NO_CONVERSION_TYPE, BINARY, FLASH }; //}
 enum resourceTypes { NO_RESOURCE_TYPE, HYDROTHERMAL, EGS };
 enum flashTypes { NO_FLASH_SUBTYPE, SINGLE_FLASH_NO_TEMP_CONSTRAINT, SINGLE_FLASH_WITH_TEMP_CONSTRAINT, DUAL_FLASH_NO_TEMP_CONSTRAINT, DUAL_FLASH_WITH_TEMP_CONSTRAINT };
-enum tempDeclineMethod {NO_TEMPERATURE_DECLINE_METHOD, ENTER_RATE, CALCULATE_RATE };
+enum tempDeclineMethod { NO_TEMPERATURE_DECLINE_METHOD, ENTER_RATE, CALCULATE_RATE };
 enum makeupAlgorithmType { NO_MAKEUP_ALGORITHM, MA_BINARY, MA_FLASH, MA_EGS }; //}
 enum condenserTypes { NO_CONDENSER_TYPE, SURFACE, DIRECT_CONTACT };
 enum ncgRemovalTypes { NO_NCG_TYPE, JET, VAC_PUMP, HYBRID };
@@ -139,7 +139,7 @@ struct SGeothermal_Inputs
 	double md_EGSFractureAngle;								// default 15 degrees
 	double md_RatioInjectionToProduction;					// used in non-cost equation, so it needs to be an input
 	double md_AdditionalPressure;							// manually enter additional psi for injection pumps
-	
+
 
 	const char * mc_WeatherFileName;
 	int * mia_tou;											// time of use array
@@ -160,35 +160,35 @@ struct SGeothermal_Outputs
 	}
 
 	//Following list of variables used as inputs in cmod_geothermal_costs.cpp for calculating direct geothermal plant cost:
-		double md_NumberOfWells;
-		double md_PumpWorkKW;
-		double eff_secondlaw;				//Overall Plant 2nd Law Efficiency 
-		double qRejectedTotal;				//Used in calculating Cooling Tower Cost - Flash Plant Type
-		double condenser_q;					//Condenser heat rejected - used in calculating Surface type condenser cost in cmod_geothermal_costs
-		double v_stage_1;					//Vacuum Stage 1 Pump Power
-		double v_stage_2;	
-		double v_stage_3;
-		double GF_flowrate;					//GF Flow Rate Total
-		double qRejectByStage_1;			//Used in NCG Condenser Cost Calculation 
-		double qRejectByStage_2;
-		double qRejectByStage_3;
-		double ncg_condensate_pump;			//For calculating ncg pump cost
-		double cw_pump_work;				//For calculating ncg pump cost
-		double pressure_ratio_1;			//Suction steam ratio used in calculation of NCG Ejector Cost
-		double pressure_ratio_2;
-		double pressure_ratio_3;
-		double condensate_pump_power;		//kW
-		double cwflow;						// lb/h
-		double cw_pump_head;				//ft
-		double flash_temperature;			//Storing Value of HP Flash Temperature for Calculating Flash Vessel in cmod_geothermal_costs
-		double flash_temperature_lp;		//Storing Value of LP Flash Temperature for Calculating Flash Vessel in cmod_geothermal_costs
-		double spec_vol, spec_vol_lp;		//HP Specific Volume & LP Specific Volume used in Flash Vessel Cost Calculation
-		double getX_hp, getX_lp;
-		double flash_count;
-		double max_secondlaw;				//Max 2nd Law efficiency
-		
+	double md_NumberOfWells;
+	double md_PumpWorkKW;
+	double eff_secondlaw;				//Overall Plant 2nd Law Efficiency 
+	double qRejectedTotal;				//Used in calculating Cooling Tower Cost - Flash Plant Type
+	double condenser_q;					//Condenser heat rejected - used in calculating Surface type condenser cost in cmod_geothermal_costs
+	double v_stage_1;					//Vacuum Stage 1 Pump Power
+	double v_stage_2;
+	double v_stage_3;
+	double GF_flowrate;					//GF Flow Rate Total
+	double qRejectByStage_1;			//Used in NCG Condenser Cost Calculation 
+	double qRejectByStage_2;
+	double qRejectByStage_3;
+	double ncg_condensate_pump;			//For calculating ncg pump cost
+	double cw_pump_work;				//For calculating ncg pump cost
+	double pressure_ratio_1;			//Suction steam ratio used in calculation of NCG Ejector Cost
+	double pressure_ratio_2;
+	double pressure_ratio_3;
+	double condensate_pump_power;		//kW
+	double cwflow;						// lb/h
+	double cw_pump_head;				//ft
+	double flash_temperature;			//Storing Value of HP Flash Temperature for Calculating Flash Vessel in cmod_geothermal_costs
+	double flash_temperature_lp;		//Storing Value of LP Flash Temperature for Calculating Flash Vessel in cmod_geothermal_costs
+	double spec_vol, spec_vol_lp;		//HP Specific Volume & LP Specific Volume used in Flash Vessel Cost Calculation
+	double getX_hp, getX_lp;
+	double flash_count;
+	double max_secondlaw;				//Max 2nd Law efficiency
 
-	// single values used in calculations, some also used in UI
+
+// single values used in calculations, some also used in UI
 	bool mb_BrineEffectivenessCalculated;
 	double md_FlashBrineEffectiveness;
 
@@ -235,7 +235,7 @@ public:
 	bool RunAnalysis(bool(*update_function)(float, void*), void *user_data);
 	bool InterfaceOutputsFilled(void);
 	std::string error() { return ms_ErrorString; }
-	
+
 
 private:
 	// objects
@@ -475,11 +475,11 @@ private:
 	bool TimeToUpdateInterface(float fPercentDone, float fNotificationIntervalInPercent);
 };
 
-int RunGeothermalAnalysis(bool (*update_function)(float,void*),void*user_data, std::string &err_msg, 
-	 const SPowerBlockParameters &pbp, SPowerBlockInputs &pbInputs, 
-	 const SGeothermal_Inputs &geo_inputs, SGeothermal_Outputs &geo_outputs); 
+int RunGeothermalAnalysis(bool(*update_function)(float, void*), void*user_data, std::string &err_msg,
+	const SPowerBlockParameters &pbp, SPowerBlockInputs &pbInputs,
+	const SGeothermal_Inputs &geo_inputs, SGeothermal_Outputs &geo_outputs);
 
-int FillOutputsForUI( std::string &err_msg, const SGeothermal_Inputs &geo_inputs, SGeothermal_Outputs &geo_outputs);
+int FillOutputsForUI(std::string &err_msg, const SGeothermal_Inputs &geo_inputs, SGeothermal_Outputs &geo_outputs);
 
 
 #endif // __geothermalModelDefinitions__
