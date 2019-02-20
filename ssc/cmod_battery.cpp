@@ -1345,9 +1345,8 @@ public:
 	
 			// Error checking
 			if (power_input.size() != power_load.size())
-				throw exec_error("battery", "Load and PV power do not match weatherfile length");
+				throw exec_error("battery", "Load length does not match system generation length");
 
-			
 			if (batt.step_per_hour > 60 || batt.total_steps != power_input.size() * batt.nyears)
 				throw exec_error("battery", util::format("invalid number of data records (%u): must be an integer multiple of 8760", batt.total_steps));
 
