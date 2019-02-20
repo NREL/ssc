@@ -24,7 +24,7 @@ protected:
 	double replacement_percent;
 	std::vector<size_t> replacementSchedule;
 	util::matrix_t<size_t> shutdownTable;
-
+	size_t efficiencyChoice;
 	util::matrix_t<double> efficiencyTable;
 	double lowerHeatingValue_BtuPerFt3;
 	double higherHeatingValue_BtuPerFt3;
@@ -68,6 +68,7 @@ protected:
 
 		const double tmpValues[33] = { 0,0,50,16,21,50,25,25,50,34,32,50,44,37,50,53,42,50,62,47,49,72,50,48,82,52,47,90,52,46,100,51,45 };
 		efficiencyTable.assign(tmpValues, 11, 3);
+		efficiencyChoice = 1;
 
 		canCharge.push_back(1);
 		canDischarge.push_back(1);
@@ -115,13 +116,13 @@ public:
 			dynamicResponseUp_kWperHour, dynamicResponseDown_kWperHour,
 			degradation_kWperHour, degradationRestart_kW,
 			replacementOption, replacement_percent, replacementSchedule, 
-			shutdownTable, efficiencyTable,
+			shutdownTable, efficiencyChoice, efficiencyTable,
 			lowerHeatingValue_BtuPerFt3, higherHeatingValue_BtuPerFt3, availableFuel_Mcf, shutdownOption, dt_hour);
 	
 		fuelCellSubHourly = new FuelCell(unitPowerMax_kW, unitPowerMin_kW, startup_hours, shutdown_hours,
 			dynamicResponseUp_kWperHour, dynamicResponseDown_kWperHour,
 			degradation_kWperHour, degradationRestart_kW,
-			replacementOption, replacement_percent, replacementSchedule, shutdownTable, efficiencyTable, lowerHeatingValue_BtuPerFt3, higherHeatingValue_BtuPerFt3, availableFuel_Mcf, shutdownOption, dt_subHourly);
+			replacementOption, replacement_percent, replacementSchedule, shutdownTable, efficiencyChoice, efficiencyTable, lowerHeatingValue_BtuPerFt3, higherHeatingValue_BtuPerFt3, availableFuel_Mcf, shutdownOption, dt_subHourly);
 
 		fuelCellDispatch = new FuelCellDispatch(fuelCell, numberOfUnits, dispatchOption, shutdownOption, dt_hour, fixed_percent,
 			dispatchInput_kW, canCharge, canDischarge, discharge_percent, discharge_units, scheduleWeekday, scheduleWeekend);

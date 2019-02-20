@@ -42,7 +42,7 @@ public:
 		double degradation_kWperHour, double degradationRestart_kW, 
 		size_t replacement_option, double replacement_percent, std::vector<size_t> replacementSchedule,
 		util::matrix_t<size_t> shutdownTable,
-		util::matrix_t<double> efficiencyTable,
+		size_t efficiencyChoice, util::matrix_t<double> efficiencyTable,
 		double lowerHeatingValue_BtuPerFt3, double higherHeatingValue_BtuPerFt3, double availableFuel_MCf,
 		int shutdownOption,  double dt_hour);
 
@@ -148,6 +148,7 @@ protected:
 
 	enum FC_EFFICIENCY_COLUMN { PERCENT_MAX, PRECENT_ELECTRICAL_EFFICIENCY, PERCENT_HEAT_RECOVERY };
 	enum FC_SHUTDOWN_COLUMN {HOUR, DURATION};
+	enum FC_EFFICIENCY_CHOICE { ORIGINAL_NAMEPLATE, DEGRADED_MAX};
 
 	/// Calculate time
 	void calculateTime();
@@ -196,6 +197,8 @@ protected:
 	size_t m_replacementOption;
 	double m_replacement_percent;
 	std::vector<size_t> m_replacementSchedule;
+
+	size_t m_efficiencyChoice;
 	util::matrix_t<double> m_efficiencyTable;
 	double m_lowerHeatingValue_BtuPerFt3;
 	double m_higherHeatingValue_BtuPerFt3;
