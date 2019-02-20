@@ -290,7 +290,8 @@ int C_sco2_recomp_csp::off_design_fix_P_mc_in(S_od_par od_par, double P_mc_in /*
 
 			if (air_cooler_err_code != 0)
 			{
-				throw(C_csp_exception("Off design air cooler model failed"));
+				W_dot_fan = std::numeric_limits<double>::quiet_NaN();
+				//throw(C_csp_exception("Off design air cooler model failed"));
 			}
 		}
 	}
