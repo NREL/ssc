@@ -43,6 +43,7 @@
     <ClCompile Include="..\test\tcs_test\csp_solver_core_test.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\test\input_cases\biopower_common.h" />
     <ClInclude Include="..\test\input_cases\code_generator_utilities.h" />
     <ClInclude Include="..\test\input_cases\pvsamv1_cases.h" />
     <ClInclude Include="..\test\input_cases\pvsamv1_common_data.h" />

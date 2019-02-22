@@ -8,6 +8,6 @@ TEST_F(CM_SWH, ResidentialDefault) {
 	
 	ssc_number_t annual_energy;
 	ssc_data_get_number(data, "annual_energy", &annual_energy);
-	EXPECT_NEAR(annual_energy, 2665, 0.1);
+	EXPECT_NEAR(annual_energy, 2407, 0.1);
 
 }

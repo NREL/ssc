@@ -139,5 +139,8 @@
     <ClInclude Include="..\test\input_cases\swh_common.h">
       <Filter>input_cases</Filter>
     </ClInclude>
+    <ClInclude Include="..\test\input_cases\biopower_common.h">
+      <Filter>input_cases</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

@@ -1,5 +1,5 @@
-#ifndef _SWH_RESIDENTIAL_DATA_H_
-#define	_SWH_RESIDENTIAL_DATA_H_
+#ifndef _SWH_COMMON_DATA_H_
+#define	_SWH_COMMON_DATA_H_
 
 #include <stdio.h>
 #include "code_generator_utilities.h"
@@ -13,7 +13,7 @@ namespace swhtest {
 	char load[100];
 	char ur_ts_sell_rate[100];
 
-	int n1 = sprintf(solar_resource_file, "%s/test/input_cases/swh_residential_data/daggett_ca_34.865371_-116.783023_psmv3_60_tmy.csv", swhtest::SSCDIR);
+	int n1 = sprintf(solar_resource_file, "%s/test/input_cases/swh_residential_data/fargo_nd_46.9_-96.8_mts1_60_tmy.csv", swhtest::SSCDIR);
 	int n2 = sprintf(scaled_draw, "%s/test/input_cases/swh_residential_data/scaled_draw.csv", swhtest::SSCDIR);
 	int n3 = sprintf(custom_mains, "%s/test/input_cases/swh_residential_data/custom_mains.csv", swhtest::SSCDIR);
 	int n4 = sprintf(custom_set, "%s/test/input_cases/swh_residential_data/custom_set.csv", swhtest::SSCDIR);
