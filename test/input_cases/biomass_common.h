@@ -1,12 +1,19 @@
-#ifndef _BIOPOWER_COMMON_DATA_H_
-#define _BIOPOWER_COMMON_DATA_H_
+#ifndef _BIOMASS_COMMON_DATA_H_
+#define _BIOMASS_COMMON_DATA_H_
 
 #include <stdio.h>
 #include "code_generator_utilities.h"
 
+namespace biomass_test {
 
-void biopower_commondata(ssc_data_t &data) {
-	ssc_data_set_string(data, "file_name", "%s/test/input_cases/swh_residential_data/fargo_nd_46.9_-96.8_mts1_60_tmy.csv");
+	const char * SSCDIR = std::getenv("SSCDIR");
+	char file_name[100];
+	int n1 = sprintf(file_name, "%s/test/input_cases/swh_residential_data/fargo_nd_46.9_-96.8_mts1_60_tmy.csv", biomass_test::SSCDIR);
+
+}
+
+void biomass_commondata(ssc_data_t &data) {
+	ssc_data_set_string(data, "file_name", biomass_test::file_name);
 	ssc_data_set_number(data, "system_capacity", 48535.58984375);
 	ssc_data_set_number(data, "biopwr.feedstock.total", 320112.59375);
 	ssc_data_set_number(data, "biopwr.feedstock.total_biomass", 320112.59375);
@@ -100,8 +107,8 @@ void biopower_commondata(ssc_data_t &data) {
 	ssc_data_set_number(data, "biopwr.plant.temp_corr_mode", 0);
 	ssc_data_set_number(data, "biopwr.plant.par_percent", 6);
 	ssc_data_set_number(data, "biopwr.plant.tou_option", 0);
-	ssc_number_t p_biopwr.plant.disp.power[9] = { 0.69999998807907104, 1.1000000238418579, 0, 0, 0, 0, 0, 0, 0 };
-	ssc_data_set_array(data, "biopwr.plant.disp.power", p_biopwr.plant.disp.power, 9);
+	ssc_number_t p_biopwr_plant_disp_power[9] = { 0.69999998807907104, 1.1000000238418579, 0, 0, 0, 0, 0, 0, 0 };
+	ssc_data_set_array(data, "biopwr.plant.disp.power", p_biopwr_plant_disp_power, 9);
 	ssc_data_set_number(data, "biopwr.plant.ramp_rate", 0);
 	ssc_data_set_string(data, "biopwr.plant.tou_grid", "111111111112222222222222111111111112222222222222111111111112222222222222111111111112222222222222111111111112222222222222111111111112222222222222111111111112222222222222111111111112222222222222111111111112222222222222111111111112222222222222111111111112222222222222111111111112222222222222");
 	ssc_data_set_number(data, "biopwr.plant.boiler.steam_pressure", 900);

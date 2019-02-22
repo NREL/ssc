@@ -63,6 +63,9 @@
     <ClCompile Include="..\test\ssc_test\cmod_swh_test.cpp">
       <Filter>ssc_test</Filter>
     </ClCompile>
+    <ClCompile Include="..\test\ssc_test\cmod_biomass_test.cpp">
+      <Filter>ssc_test</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="shared_test">
@@ -139,8 +142,11 @@
     <ClInclude Include="..\test\input_cases\swh_common.h">
       <Filter>input_cases</Filter>
     </ClInclude>
-    <ClInclude Include="..\test\input_cases\biopower_common.h">
+    <ClInclude Include="..\test\input_cases\biomass_common.h">
       <Filter>input_cases</Filter>
+    </ClInclude>
+    <ClInclude Include="..\test\ssc_test\cmod_biomass_test.h">
+      <Filter>ssc_test</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

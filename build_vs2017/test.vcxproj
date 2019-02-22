@@ -30,6 +30,7 @@
     <ClCompile Include="..\test\shared_test\lib_weatherfile_test.cpp" />
     <ClCompile Include="..\test\shared_test\lib_windfile_test.cpp" />
     <ClCompile Include="..\test\splinter_test\splinter_test.cpp" />
+    <ClCompile Include="..\test\ssc_test\cmod_biomass_test.cpp" />
     <ClCompile Include="..\test\ssc_test\cmod_pvsamv1_test.cpp" />
     <ClCompile Include="..\test\shared_test\lib_windwakemodel_test.cpp" />
     <ClCompile Include="..\test\shared_test\lib_windwatts_test.cpp" />
@@ -43,7 +44,7 @@
     <ClCompile Include="..\test\tcs_test\csp_solver_core_test.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\test\input_cases\biopower_common.h" />
+    <ClInclude Include="..\test\input_cases\biomass_common.h" />
     <ClInclude Include="..\test\input_cases\code_generator_utilities.h" />
     <ClInclude Include="..\test\input_cases\pvsamv1_cases.h" />
     <ClInclude Include="..\test\input_cases\pvsamv1_common_data.h" />
@@ -57,6 +58,7 @@
     <ClInclude Include="..\test\shared_test\lib_battery_powerflow_test.h" />
     <ClInclude Include="..\test\shared_test\lib_irradproc_test.h" />
     <ClInclude Include="..\test\shared_test\lib_windwakemodel_test.h" />
+    <ClInclude Include="..\test\ssc_test\cmod_biomass_test.h" />
     <ClInclude Include="..\test\ssc_test\cmod_pvsamv1_test.h" />
     <ClInclude Include="..\test\ssc_test\cmod_pvwattsv5_test.h" />
     <ClInclude Include="..\test\ssc_test\cmod_pvyield_test.h" />
