@@ -130,5 +130,8 @@
     <ClInclude Include="..\test\input_cases\pvyield_common_data.h">
       <Filter>input_cases</Filter>
     </ClInclude>
+    <ClInclude Include="..\test\input_cases\swh_residential.h">
+      <Filter>input_cases</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
