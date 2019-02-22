@@ -35,6 +35,7 @@
     <ClCompile Include="..\test\shared_test\lib_windwatts_test.cpp" />
     <ClCompile Include="..\test\ssc_test\cmod_pvwattsv5_test.cpp" />
     <ClCompile Include="..\test\ssc_test\cmod_pvyield_test.cpp" />
+    <ClCompile Include="..\test\ssc_test\cmod_swh_test.cpp" />
     <ClCompile Include="..\test\ssc_test\cmod_tcstrough_physical_test.cpp" />
     <ClCompile Include="..\test\ssc_test\cmod_windpower_test.cpp" />
     <ClCompile Include="..\test\ssc_test\cmod_windpower_test2.cpp" />
@@ -58,6 +59,7 @@
     <ClInclude Include="..\test\ssc_test\cmod_pvsamv1_test.h" />
     <ClInclude Include="..\test\ssc_test\cmod_pvwattsv5_test.h" />
     <ClInclude Include="..\test\ssc_test\cmod_pvyield_test.h" />
+    <ClInclude Include="..\test\ssc_test\cmod_swh_test.h" />
     <ClInclude Include="..\test\ssc_test\cmod_windpower_test.h" />
     <ClInclude Include="..\test\ssc_test\computeModuleTest.h" />
     <ClInclude Include="..\test\ssc_test\simulation_test_info.h" />
