@@ -78,7 +78,7 @@ static var_info _cm_vtab_trough_physical[] = {
     { SSC_INPUT,        SSC_NUMBER,      "nHCEVar",                   "Number of HCE variants per type",                                                  "none",         "",               "solar_field",    "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "nLoops",                    "Number of loops in the field",                                                     "none",         "",               "solar_field",    "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "FieldConfig",               "Number of subfield headers",                                                       "none",         "",               "solar_field",    "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "is_model_power_block_piping", "Should model consider piping through power block?",                              "none",         "",               "solar_field",    "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "include_fixed_power_block_runner", "Should model consider piping through power block?",                         "none",         "",               "solar_field",    "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "L_power_block_piping",      "Length of piping (full mass flow) through heat sink (if applicable)",              "none",         "",               "solar_field",    "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "eta_pump",                  "HTF pump efficiency",                                                              "none",         "",               "solar_field",    "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "Fluid",                     "Field HTF fluid ID number",                                                        "none",         "",               "solar_field",    "*",                       "",                      "" },
@@ -166,9 +166,9 @@ static var_info _cm_vtab_trough_physical[] = {
     //{ SSC_INPUT,        SSC_NUMBER,      "q_pb_design",               "Design heat input to power block",                                                 "MWt",          "",               "controller",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "pc_config",                 "0: Steam Rankine (224), 1: user defined",                                          "-",            "",               "powerblock",     "?=0",                     "INTEGER",               "" },
     { SSC_INPUT,        SSC_NUMBER,      "P_ref",                     "Rated plant capacity",                                                             "MWe",          "",               "powerblock",     "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "design_eff",                "Power cycle efficiency at design",                                                 "none",         "",               "powerblock",     "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "T_htf_hot_des",             "Hot HTF outlet temperature at design conditions",                                  "C",            "",               "powerblock",     "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "T_htf_cold_des",            "Cold HTF inlet temperature at design conditions",                                  "C",            "",               "powerblock",     "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "eta_ref",                   "Power cycle efficiency at design",                                                 "none",         "",               "powerblock",     "*",                       "",                      "" },
+    //{ SSC_INPUT,        SSC_NUMBER,      "T_htf_hot_des",             "Hot HTF outlet temperature at design conditions",                                  "C",            "",               "powerblock",     "*",                       "",                      "" },
+    //{ SSC_INPUT,        SSC_NUMBER,      "T_htf_cold_des",            "Cold HTF inlet temperature at design conditions",                                  "C",            "",               "powerblock",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "cycle_max_frac",            "Maximum turbine over design operation fraction",                                   "-",            "",               "powerblock",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "cycle_cutoff_frac",         "Minimum turbine operation fraction before shutdown",                               "-",            "",               "powerblock",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "q_sby_frac",                "Fraction of thermal power required for standby mode",                              "none",         "",               "powerblock",     "*",                       "",                      "" },
@@ -266,11 +266,12 @@ static var_info _cm_vtab_trough_physical[] = {
 
     // System
     { SSC_INPUT,        SSC_NUMBER,      "pb_fixed_par",              "Fraction of rated gross power constantly consumed",                                "MWe/MWcap",    "",               "system",         "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "bop_par",                   "Balance of plant parasitic power fraction",                                        "MWe/MWcap",    "",               "system",         "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "bop_par_f",                 "Balance of plant parasitic power fraction - mult frac",                            "none",         "",               "system",         "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "bop_par_0",                 "Balance of plant parasitic power fraction - const coeff",                          "none",         "",               "system",         "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "bop_par_1",                 "Balance of plant parasitic power fraction - linear coeff",                         "none",         "",               "system",         "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "bop_par_2",                 "Balance of plant parasitic power fraction - quadratic coeff",                      "none",         "",               "system",         "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_ARRAY,       "bop_array",                 "Balance of plant parasitic power fraction, mult frac and const, linear and quad coeff", "",        "",               "system",         "*",                       "",                      "" },
+    //{ SSC_INPUT,        SSC_NUMBER,      "bop_par",                   "Balance of plant parasitic power fraction",                                        "MWe/MWcap",    "",               "system",         "*",                       "",                      "" },
+    //{ SSC_INPUT,        SSC_NUMBER,      "bop_par_f",                 "Balance of plant parasitic power fraction - mult frac",                            "none",         "",               "system",         "*",                       "",                      "" },
+    //{ SSC_INPUT,        SSC_NUMBER,      "bop_par_0",                 "Balance of plant parasitic power fraction - const coeff",                          "none",         "",               "system",         "*",                       "",                      "" },
+    //{ SSC_INPUT,        SSC_NUMBER,      "bop_par_1",                 "Balance of plant parasitic power fraction - linear coeff",                         "none",         "",               "system",         "*",                       "",                      "" },
+    //{ SSC_INPUT,        SSC_NUMBER,      "bop_par_2",                 "Balance of plant parasitic power fraction - quadratic coeff",                      "none",         "",               "system",         "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "gross_net_conversion_factor", "Estimated gross to net conversion factor",                                       "",             "",               "system",         "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "water_usage_per_wash",      "Water usage per wash",                                                             "L/m2_aper",    "",               "system",         "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "washing_frequency",         "Mirror washing frequency",                                                         "-/year",       "",               "system",         "*",                       "",                      "" },
@@ -549,8 +550,8 @@ public:
         c_trough.m_nHCEVar = as_integer("nHCEVar");                 //[-] Number of HCE variants per t
         c_trough.m_nLoops = as_integer("nLoops");                   //[-] Number of loops in the field
         c_trough.m_FieldConfig = as_integer("FieldConfig");         //[-] Number of subfield headers
-        c_trough.m_L_power_block_piping = as_double("L_power_block_piping");                        //[m] Length of piping (full mass flow) through power block (if applicable)
-        c_trough.m_include_fixed_power_block_runner = as_boolean("is_model_power_block_piping");	//[-] Should model consider piping through power block?
+        c_trough.m_L_power_block_piping = as_double("L_power_block_piping");                           //[m] Length of piping (full mass flow) through power block (if applicable)
+        c_trough.m_include_fixed_power_block_runner = as_boolean("include_fixed_power_block_runner");  //[-] Should model consider piping through power block?
         c_trough.m_eta_pump = as_double("eta_pump");                //[-] HTF pump efficiency
         c_trough.m_Fluid = as_integer("Fluid");                     //[-] Field HTF fluid number
         //c_trough.m_fthrok = as_integer("fthrok");                 //[-] Flag to allow partial defocusing of the collectors
@@ -562,8 +563,8 @@ public:
         c_trough.m_Row_Distance = as_double("Row_Distance");        //[m] Spacing between rows (centerline to centerline)
         
         double T_loop_in_des = as_double("T_loop_in_des");          //[C] Design loop inlet temperature, converted to K in init
-        double T_loop_out_des = as_double("T_loop_out");            //[C] Target loop outlet temperature, converted to K in init
         c_trough.m_T_loop_in_des = T_loop_in_des;                   //[C] Design loop inlet temperature, converted to K in init
+        double T_loop_out_des = as_double("T_loop_out");            //[C] Target loop outlet temperature, converted to K in init
         c_trough.m_T_loop_out_des = T_loop_out_des;                 //[C] Target loop outlet temperature, converted to K in init
         double T_startup = 0.67*T_loop_in_des + 0.33*T_loop_out_des; //[C]
         c_trough.m_T_startup = T_startup;                           //[C] The required temperature (converted to K in init) of the system before the power block can be switched on
@@ -814,9 +815,9 @@ public:
         {
             C_pc_Rankine_indirect_224::S_params *pc = &rankine_pc.ms_params;
             pc->m_P_ref = as_double("P_ref");
-            pc->m_eta_ref = as_double("design_eff");
-            pc->m_T_htf_hot_ref = as_double("T_htf_hot_des");
-            pc->m_T_htf_cold_ref = as_double("T_htf_cold_des");
+            pc->m_eta_ref = as_double("eta_ref");
+            pc->m_T_htf_hot_ref = as_double("T_loop_out");
+            pc->m_T_htf_cold_ref = as_double("T_loop_in_des");
             pc->m_cycle_max_frac = as_double("cycle_max_frac");
             pc->m_cycle_cutoff_frac = as_double("cycle_cutoff_frac");
             pc->m_q_sby_frac = as_double("q_sby_frac");
@@ -908,7 +909,7 @@ public:
         tes->m_tes_fl_props       = as_matrix("store_fl_props");            //[-]
         tes->m_is_hx              = as_boolean("is_hx");                    //[-]
         tes->m_W_dot_pc_design    = as_double("P_ref");                     //[MWt]
-        tes->m_eta_pc             = as_double("design_eff");                //[-]
+        tes->m_eta_pc             = as_double("eta_ref");                   //[-]
         tes->m_solarm             = as_double("solar_mult");                //[-]
         tes->m_ts_hours           = as_double("tshours");                   //[hr]
         tes->m_h_tank             = as_double("h_tank");                    //[m]
@@ -917,7 +918,7 @@ public:
         tes->m_hot_tank_Thtr      = as_double("hot_tank_Thtr");             //[C]
         tes->m_hot_tank_max_heat  = as_double("hot_tank_max_heat");         //[MWt]
         tes->m_cold_tank_Thtr     = as_double("cold_tank_Thtr");            //[C]
-        tes->m_cold_tank_max_heat = as_double("cold_tank_max_heat");        //[MWt]
+        tes->m_cold_tank_max_heat = as_double("hot_tank_max_heat");         //[MWt]   just using the single 'Tank heater capacity' from the UI
         tes->m_dt_hot             = as_double("dt_hot");                    //[C]
         //tes->m_dt_cold            = as_double("dt_cold");                   //[C]
         tes->m_T_field_in_des     = T_loop_in_des;                          //[C]
@@ -1029,11 +1030,14 @@ public:
         // System parameters
         C_csp_solver::S_csp_system_params system;
         system.m_pb_fixed_par = as_double("pb_fixed_par");
-        system.m_bop_par      = as_double("bop_par");
-        system.m_bop_par_f    = as_double("bop_par_f");
-        system.m_bop_par_0    = as_double("bop_par_0");
-        system.m_bop_par_1    = as_double("bop_par_1");
-        system.m_bop_par_2    = as_double("bop_par_2");
+        size_t nval_bop_array = 0;
+        ssc_number_t *bop_array = as_array("bop_array", &nval_bop_array);
+        if (nval_bop_array != 5) throw exec_error("trough_physical", "Should be 5 elements in bop_array, has " + util::to_string((int)nval_bop_array) + ".");
+        system.m_bop_par      = bop_array[0];    //as_double("bop_par");
+        system.m_bop_par_f    = bop_array[1];    //as_double("bop_par_f");
+        system.m_bop_par_0    = bop_array[2];    //as_double("bop_par_0");
+        system.m_bop_par_1    = bop_array[3];    //as_double("bop_par_1");
+        system.m_bop_par_2    = bop_array[4];    //as_double("bop_par_2");
 
         // Instantiate Solver
         C_csp_solver csp_solver(weather_reader, 
