@@ -7,17 +7,26 @@
 namespace swhtest {
 	const char * SSCDIR = std::getenv("SSCDIR");
 	char weather_path[100];
-	char dispatch_path[100];
+	char scaled_draw[100];
+	char custom_mains[100];
+	char custom_set[100];
+	char load[100];
+	char ur_ts_sell_rate[100];
 
 	int n1 = sprintf(weather_path, "%s/test/input_cases/general_data/daggett_ca_34.865371_-116.783023_psmv3_60_tmy.csv", swhtest::SSCDIR);
-	int n2 = sprintf(dispatch_path, "%s/test/input_cases/geothermal_data/dispatch_factors_ts.csv", swhtest::SSCDIR);
+	int n2 = sprintf(scaled_draw, "%s/test/input_cases/swh_residential_data/scaled_draw.csv", swhtest::SSCDIR);
+	int n3 = sprintf(custom_mains, "%s/test/input_cases/swh_residential_data/custom_mains.csv", swhtest::SSCDIR);
+	int n4 = sprintf(custom_set, "%s/test/input_cases/swh_residential_data/custom_set.csv", swhtest::SSCDIR);
+	int n5 = sprintf(load, "%s/test/input_cases/swh_residential_data/load.csv", swhtest::SSCDIR);
+	int n6 = sprintf(ur_ts_sell_rate, "%s/test/input_cases/swh_residential_data/ur_ts_sell_rate", swhtest::SSCDIR);
+
 }
 
 
 void swh_residential(ssc_data_t &data) {
 
-	ssc_data_set_string(data, "solar_resource_file", "C:/SAM/2018.11.11/solar_resource/phoenix_az_33.450495_-111.983688_psmv3_60_tmy.csv");
-	set_array(data, "scaled_draw", "C:/Users/PBHASKAR/Desktop/scaled_draw.csv", 8760);
+	ssc_data_set_string(data, "solar_resource_file", swhtest::weather_path);
+	set_array(data, "scaled_draw", swhtest::scaled_draw, 8760);
 	ssc_data_set_number(data, "system_capacity", 3.4180600643157959);
 	ssc_data_set_number(data, "tilt", 30);
 	ssc_data_set_number(data, "azimuth", 180);
@@ -47,12 +56,12 @@ void swh_residential(ssc_data_t &data) {
 	ssc_data_set_number(data, "pump_power", 45);
 	ssc_data_set_number(data, "pump_eff", 0.85000002384185791);
 	ssc_data_set_number(data, "use_custom_mains", 0);
-	set_array(data, "custom_mains", "C:/Users/PBHASKAR/Desktop/custom_mains.csv", 8760);
+	set_array(data, "custom_mains", swhtest::custom_mains, 8760);
 	ssc_data_set_number(data, "use_custom_set", 0);
-	set_array(data, "custom_set", "C:/Users/PBHASKAR/Desktop/custom_set.csv", 8760);
+	set_array(data, "custom_set", swhtest::custom_set , 8760);
 	ssc_data_set_number(data, "adjust:constant", 0);
 	ssc_data_set_number(data, "en_belpe", 0);
-	set_array(data, "load", "C:/Users/PBHASKAR/Desktop/load.csv", 8760);
+	set_array(data, "load", swhtest::load, 8760);
 	ssc_data_set_number(data, "floor_area", 2000);
 	ssc_data_set_number(data, "Stories", 2);
 	ssc_data_set_number(data, "YrBuilt", 1980);
@@ -92,7 +101,7 @@ void swh_residential(ssc_data_t &data) {
 	ssc_data_set_number(data, "ur_monthly_min_charge", 0);
 	ssc_data_set_number(data, "ur_annual_min_charge", 0);
 	ssc_data_set_number(data, "ur_en_ts_sell_rate", 0);
-	set_array(data, "ur_ts_sell_rate", "C:/Users/PBHASKAR/Desktop/ur_ts_sell_rate.csv", 8760);
+	set_array(data, "ur_ts_sell_rate", swhtest::ur_ts_sell_rate, 8760);
 	ssc_number_t p_ur_ec_sched_weekday[288] = { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 };
 	ssc_data_set_matrix(data, "ur_ec_sched_weekday", p_ur_ec_sched_weekday, 12, 24);
 	ssc_number_t p_ur_ec_sched_weekend[288] = { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 };
