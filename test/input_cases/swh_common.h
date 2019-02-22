@@ -6,14 +6,14 @@
 
 namespace swhtest {
 	const char * SSCDIR = std::getenv("SSCDIR");
-	char weather_path[100];
+	char solar_resource_file[100];
 	char scaled_draw[100];
 	char custom_mains[100];
 	char custom_set[100];
 	char load[100];
 	char ur_ts_sell_rate[100];
 
-	int n1 = sprintf(weather_path, "%s/test/input_cases/general_data/daggett_ca_34.865371_-116.783023_psmv3_60_tmy.csv", swhtest::SSCDIR);
+	int n1 = sprintf(solar_resource_file, "%s/test/input_cases/swh_residential_data/daggett_ca_34.865371_-116.783023_psmv3_60_tmy.csv", swhtest::SSCDIR);
 	int n2 = sprintf(scaled_draw, "%s/test/input_cases/swh_residential_data/scaled_draw.csv", swhtest::SSCDIR);
 	int n3 = sprintf(custom_mains, "%s/test/input_cases/swh_residential_data/custom_mains.csv", swhtest::SSCDIR);
 	int n4 = sprintf(custom_set, "%s/test/input_cases/swh_residential_data/custom_set.csv", swhtest::SSCDIR);
@@ -23,9 +23,9 @@ namespace swhtest {
 }
 
 
-void swh_residential(ssc_data_t &data) {
+void swh_common(ssc_data_t &data) {
 
-	ssc_data_set_string(data, "solar_resource_file", swhtest::weather_path);
+	ssc_data_set_string(data, "solar_resource_file", swhtest::solar_resource_file);
 	set_array(data, "scaled_draw", swhtest::scaled_draw, 8760);
 	ssc_data_set_number(data, "system_capacity", 3.4180600643157959);
 	ssc_data_set_number(data, "tilt", 30);
@@ -261,6 +261,7 @@ void swh_residential(ssc_data_t &data) {
 	ssc_data_set_number(data, "total_installed_cost", 8059.7998046875);
 	ssc_data_set_number(data, "salvage_percentage", 5);
 	
+	/*
 	ssc_number_t annual_energy;
 	ssc_data_get_number(data, "annual_energy", &annual_energy);
 	printf("%s = %.17g\n", "Annual energy saved (year 1)", (double)annual_energy);
@@ -309,6 +310,7 @@ void swh_residential(ssc_data_t &data) {
 	ssc_number_t loan_amount;
 	ssc_data_get_number(data, "loan_amount", &loan_amount);
 	printf("%s = %.17g\n", "Debt", (double)loan_amount);
+	*/
 }
 
 #endif

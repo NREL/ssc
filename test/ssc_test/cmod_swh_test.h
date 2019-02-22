@@ -6,7 +6,7 @@
 #include "sscapi.h"
 #include "../ssc/vartab.h"
 #include "../ssc/common.h"
-#include "../input_cases/swh_residential.h"
+#include "../input_cases/swh_common.h"
 #include "../input_cases/code_generator_utilities.h"
 
 class CM_SWH : public ::testing::Test {
@@ -18,12 +18,12 @@ public:
 
 	void SetUp() {
 		data = ssc_data_create();
-		swh_residential(data);
+		swh_common(data);
 	}
 
 	void TearDown() {
 		if (data)
-			ssc_data_clear();
+			ssc_data_clear(data);
 	}
 
 };
