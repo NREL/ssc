@@ -60,7 +60,10 @@
       <Filter>ssc_test</Filter>
     </ClCompile>
     <ClCompile Include="..\test\splinter_test\splinter_test.cpp" />
-    <ClCompile Include="..\test\ssc_test\cmod_generic_test.cpp">
+    <ClCompile Include="..\test\ssc_test\cmod_swh_test.cpp">
+      <Filter>ssc_test</Filter>
+    </ClCompile>
+    <ClCompile Include="..\test\ssc_test\cmod_biomass_test.cpp">
       <Filter>ssc_test</Filter>
     </ClCompile>
   </ItemGroup>
@@ -133,11 +136,15 @@
     <ClInclude Include="..\test\input_cases\pvyield_common_data.h">
       <Filter>input_cases</Filter>
     </ClInclude>
-    <ClInclude Include="..\test\ssc_test\cmod_generic_test.h">
       <Filter>ssc_test</Filter>
     </ClInclude>
-    <ClInclude Include="..\test\input_cases\generic_common_data.h">
       <Filter>input_cases</Filter>
+    </ClInclude>
+    <ClInclude Include="..\test\input_cases\biomass_common.h">
+      <Filter>input_cases</Filter>
+    </ClInclude>
+    <ClInclude Include="..\test\ssc_test\cmod_biomass_test.h">
+      <Filter>ssc_test</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
