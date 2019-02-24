@@ -239,9 +239,8 @@ public:
 					idx++;
 				}
 			}
-
 		}
-		
+
 		accumulate_monthly_for_year("gen", "monthly_energy", ts_hour, steps_per_hour);
 		annual_output = accumulate_annual_for_year("gen", "annual_energy", ts_hour, steps_per_hour);
 

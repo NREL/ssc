@@ -1289,6 +1289,12 @@ void battstor::process_messages(compute_module &cm)
 static var_info _cm_vtab_battery[] = {
 	/*   VARTYPE           DATATYPE         NAME                                            LABEL                                                   UNITS      META                           GROUP                  REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
 	{ SSC_INPUT,        SSC_NUMBER,      "en_batt",                                    "Enable battery storage model",                            "0/1",        "",                     "Battery",                      "?=0",                    "",                               "" },
+
+	// simulation inputs - required only if lifetime analysis
+	{ SSC_INPUT,        SSC_NUMBER,      "system_use_lifetime_output",                 "PV lifetime simulation",                                  "0/1",     "0=SingleYearRepeated,1=RunEveryYear",                     "",             "?=0",                        "BOOLEAN",                        "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "analysis_period",                            "Lifetime analysis period",                                "years",   "The number of years in the simulation",                   "",             "system_use_lifetime_output=1",   "",                               "" },
+
+
 	{ SSC_INPUT,        SSC_ARRAY,       "gen",										   "System power generated",                                  "kW",         "",                     "",                             "",                       "",                               "" },
 	{ SSC_INPUT,		SSC_ARRAY,	     "load",			                           "Electricity load (year 1)",                               "kW",	        "",				        "",                             "",	                      "",	                            "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "batt_replacement_option",                    "Enable battery replacement?",                              "0=none,1=capacity based,2=user schedule", "", "Battery",             "?=0",                    "INTEGER,MIN=0,MAX=2",           "" },
@@ -1315,15 +1321,53 @@ public:
 		{
 			// Parse "Gen input"
 			std::vector<ssc_number_t> power_input = as_vector_ssc_number_t("gen");
-			size_t nrec = power_input.size();
-			battstor batt(*this, true, nrec, static_cast<double>(8760. / nrec));
+
+			int analysis_period = 1;
+			if (is_assigned("analysis_period"))
+				analysis_period = as_integer("analysis_period");
+			if (analysis_period < 1)
+				analysis_period = 1;
+
+			// Lifetime simulation
+			bool system_use_lifetime_output = false;
+			if (is_assigned("system_use_lifetime_output"))
+				system_use_lifetime_output = as_boolean("system_use_lifetime_output");
+
+
+			size_t nrec = power_input.size()/analysis_period;
+
+			double dt_hour = 1;
+			if (nrec > 0)
+				dt_hour = 8760.0 / (double)nrec;
+
+			battstor batt(*this, true, nrec, dt_hour);
 			ssc_number_t * p_gen = allocate("gen", nrec * batt.nyears);
 
 			// Parse "Load input"
 			std::vector<ssc_number_t> power_load;
 			if (batt.batt_vars->batt_meter_position == dispatch_t::BEHIND)
 			{
-				power_load = as_vector_ssc_number_t("load");
+				// battstor does not handle load recs not equal to power input recs
+				if (is_assigned("load"))
+				{ // hourly or sub hourly loads for single year
+					power_load = as_vector_ssc_number_t("load");
+					if (power_load.size() != power_input.size())
+					{
+						if (power_load.size() != 8760)
+							throw exec_error("battery", "Load length does not match system generation length and is not 8760.");
+						std::vector<ssc_number_t> load_tmp(power_load);
+						power_load.clear();
+						for (size_t iyear = 0; iyear < batt.nyears; iyear++) {
+							for (size_t hour = 0; hour < 8760; hour++) {
+								for (size_t jj = 0; jj < batt.step_per_hour; jj++)
+								{// degradation?
+									power_load.push_back(load_tmp[hour]/(ssc_number_t)batt.step_per_hour);
+								}
+							}
+						}
+					}
+				}
+
 				batt.initialize_automated_dispatch(power_input, power_load);
 			}
 			else
@@ -1347,8 +1391,8 @@ public:
 			if (power_input.size() != power_load.size())
 				throw exec_error("battery", "Load length does not match system generation length");
 
-			if (batt.step_per_hour > 60 || batt.total_steps != power_input.size() * batt.nyears)
-				throw exec_error("battery", util::format("invalid number of data records (%u): must be an integer multiple of 8760", batt.total_steps));
+//			if (batt.step_per_hour > 60 || batt.total_steps != power_input.size() * batt.nyears)
+//				throw exec_error("battery", util::format("invalid number of data records (%u): must be an integer multiple of 8760", batt.total_steps));
 
 			// Battery cannot be run in DC-connected mode for generic system.  
 			// We don't have detailed inverter voltage info or clipping info (if PV)
@@ -1374,7 +1418,7 @@ public:
 						batt.check_replacement_schedule();
 						batt.advance(*this, power_input[year_idx], 0, power_load[year_idx], 0);
 						p_gen[lifetime_idx] = batt.outGenPower[lifetime_idx];
-						annual_energy += p_gen[lifetime_idx] * batt._dt_hour;
+						if (year==0) annual_energy += p_gen[lifetime_idx] * batt._dt_hour;
 						lifetime_idx++;
 						year_idx++;
 					}
