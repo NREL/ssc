@@ -1328,13 +1328,15 @@ public:
 			if (analysis_period < 1)
 				analysis_period = 1;
 
+			size_t nrec = power_input.size();
+
 			// Lifetime simulation
 			bool system_use_lifetime_output = false;
 			if (is_assigned("system_use_lifetime_output"))
 				system_use_lifetime_output = as_boolean("system_use_lifetime_output");
 
-
-			size_t nrec = power_input.size()/analysis_period;
+			if (system_use_lifetime_output)
+				nrec = power_input.size()/analysis_period;
 
 			double dt_hour = 1;
 			if (nrec > 0)
