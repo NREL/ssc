@@ -3,7 +3,7 @@
 
 #include <stdio.h>
 
-#include "code_generator_utilities.h"
+#include "../input_cases/code_generator_utilities.h"
 
 //const char * SSCDIR = std::getenv("SSCDIR");
 //const char * SAMNTDIR = std::getenv("SAMNTDIR");

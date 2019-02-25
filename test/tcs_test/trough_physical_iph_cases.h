@@ -2,7 +2,7 @@
 #define _TROUGH_PHYSICAL_IPH_CASES_H_
 
 #include <map>
-#include "code_generator_utilities.h"
+#include "../input_cases/code_generator_utilities.h"
 #include "trough_physical_iph_common_data.h"
 
 /**

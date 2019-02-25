@@ -81,6 +81,9 @@
     <ClCompile Include="..\test\shared_test\lib_trough_test.cpp">
       <Filter>shared_test</Filter>
     </ClCompile>
+    <ClCompile Include="..\test\ssc_test\cmod_trough_physical_test.cpp">
+      <Filter>ssc_test</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="shared_test">
@@ -163,18 +166,6 @@
     <ClInclude Include="..\test\shared_test\lib_fuel_cell_test.h">
       <Filter>shared_test</Filter>
     </ClInclude>
-    <ClInclude Include="..\test\input_cases\tcsmolten_salt_cases.h">
-      <Filter>tcs_test</Filter>
-    </ClInclude>
-    <ClInclude Include="..\test\input_cases\tcsmolten_salt_common_data.h">
-      <Filter>tcs_test</Filter>
-    </ClInclude>
-    <ClInclude Include="..\test\input_cases\trough_physical_iph_cases.h">
-      <Filter>tcs_test</Filter>
-    </ClInclude>
-    <ClInclude Include="..\test\input_cases\trough_physical_iph_common_data.h">
-      <Filter>tcs_test</Filter>
-    </ClInclude>
     <ClInclude Include="..\test\input_cases\fuelcell_common_data.h">
       <Filter>input_cases</Filter>
     </ClInclude>
@@ -198,6 +189,27 @@
     </ClInclude>
     <ClInclude Include="..\test\shared_test\lib_trough_properties.h">
       <Filter>shared_test</Filter>
+    </ClInclude>
+    <ClInclude Include="..\test\tcs_test\tcsmolten_salt_cases.h">
+      <Filter>tcs_test</Filter>
+    </ClInclude>
+    <ClInclude Include="..\test\tcs_test\tcsmolten_salt_common_data.h">
+      <Filter>tcs_test</Filter>
+    </ClInclude>
+    <ClInclude Include="..\test\tcs_test\trough_physical_iph_cases.h">
+      <Filter>tcs_test</Filter>
+    </ClInclude>
+    <ClInclude Include="..\test\tcs_test\trough_physical_iph_common_data.h">
+      <Filter>tcs_test</Filter>
+    </ClInclude>
+    <ClInclude Include="..\test\tcs_test\trough_physical_cases.h">
+      <Filter>tcs_test</Filter>
+    </ClInclude>
+    <ClInclude Include="..\test\tcs_test\trough_physical_common_data.h">
+      <Filter>tcs_test</Filter>
+    </ClInclude>
+    <ClInclude Include="..\test\ssc_test\cmod_trough_physical_test.h">
+      <Filter>ssc_test</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

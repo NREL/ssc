@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 
 #include "cmod_tcsmolten_salt_test.h"
-#include "../input_cases/tcsmolten_salt_cases.h"
+#include "../tcs_test/tcsmolten_salt_cases.h"
 #include "../input_cases/weather_inputs.h"
 
 /// Test tcsmolten_salt with all defaults and the single owner financial model

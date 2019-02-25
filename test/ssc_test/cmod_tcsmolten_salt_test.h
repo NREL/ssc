@@ -6,7 +6,7 @@
 
 #include "../ssc/vartab.h"
 #include "../ssc/common.h"
-#include "../input_cases/tcsmolten_salt_cases.h"
+#include "../tcs_test/tcsmolten_salt_cases.h"
 
 /**
  * CMtcsMoltenSalt tests the cmod_tcsmolten_salt using the SAM code generator to generate data
@@ -21,8 +21,8 @@ public:
 	ssc_data_t data;
 	ssc_number_t calculated_value;
 	ssc_number_t * calculated_array;
-	double m_error_tolerance_hi = 1.0;
-	double m_error_tolerance_lo = 0.1;
+	double m_error_tolerance_hi = 0.01;     // 1.0%
+    double m_error_tolerance_lo = 0.001;    // 0.1%
 
 	void SetUp()
 	{

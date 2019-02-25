@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 
 #include "cmod_trough_physical_iph_test.h"
-#include "../input_cases/trough_physical_iph_cases.h"
+#include "../tcs_test/trough_physical_iph_cases.h"
 #include "../input_cases/weather_inputs.h"
 
 /// Test trough_physical_iph with all defaults and no-financial model

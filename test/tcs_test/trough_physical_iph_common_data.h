@@ -3,7 +3,7 @@
 
 #include <stdio.h>
 
-#include "code_generator_utilities.h"
+#include "../input_cases/code_generator_utilities.h"
 
 
 /**
@@ -41,8 +41,8 @@ void trough_physical_iph_default(ssc_data_t &data)
     ssc_data_set_number(data, "theta_dep", 10);
     ssc_data_set_number(data, "Row_Distance", 15);
     ssc_data_set_number(data, "FieldConfig", 1);
-    ssc_data_set_number(data, "is_model_power_block_piping", 0);
-    ssc_data_set_number(data, "L_power_block_piping", 50);
+    ssc_data_set_number(data, "is_model_heat_sink_piping", 0);
+    ssc_data_set_number(data, "L_heat_sink_piping", 50);
     ssc_data_set_number(data, "m_dot_htfmin", 1);
     ssc_data_set_number(data, "m_dot_htfmax", 12);
     ssc_data_set_number(data, "Fluid", 31);
