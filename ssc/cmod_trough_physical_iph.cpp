@@ -97,8 +97,8 @@ static var_info _cm_vtab_trough_physical_process_heat[] = {
     { SSC_INPUT,        SSC_NUMBER,      "theta_dep",                 "Deploy angle",                                                                     "deg",          "",               "solar_field",    "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "Row_Distance",              "Spacing between rows (centerline to centerline)",                                  "m",            "",               "solar_field",    "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "FieldConfig",               "Number of subfield headers",                                                       "none",         "",               "solar_field",    "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "is_model_power_block_piping", "Should model consider piping through heat sink?",                                "none",         "",               "solar_field",    "*",                       "",                      "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "L_power_block_piping",      "Length of piping (full mass flow) through heat sink (if applicable)",              "none",         "",               "solar_field",    "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "is_model_heat_sink_piping", "Should model consider piping through heat sink?",                                "none",         "",               "solar_field",    "*",                       "",                      "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "L_heat_sink_piping",        "Length of piping (full mass flow) through heat sink (if applicable)",              "none",         "",               "solar_field",    "*",                       "",                      "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "m_dot_htfmin",              "Minimum loop HTF flow rate",                                                       "kg/s",         "",               "solar_field",    "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "m_dot_htfmax",              "Maximum loop HTF flow rate",                                                       "kg/s",         "",               "solar_field",    "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "Fluid",                     "Field HTF fluid ID number",                                                        "none",         "",               "solar_field",    "*",                       "",                      "" },
@@ -333,8 +333,8 @@ public:
 		c_trough.m_nHCEVar = as_integer("nHCEVar");					//[-] Number of HCE variants per t
 		c_trough.m_nLoops = as_integer("nLoops");					//[-] Number of loops in the field
 		c_trough.m_FieldConfig = as_integer("FieldConfig");			//[-] Number of subfield headers
-		c_trough.m_L_power_block_piping = as_double("L_power_block_piping"); //[m] Length of piping (full mass flow) through heat sink (if applicable)
-		c_trough.m_include_fixed_power_block_runner = as_boolean("is_model_power_block_piping");	//[-] Should model consider piping through heat sink?
+		c_trough.m_L_power_block_piping = as_double("L_heat_sink_piping"); //[m] Length of piping (full mass flow) through heat sink (if applicable)
+		c_trough.m_include_fixed_power_block_runner = as_boolean("is_model_heat_sink_piping");	//[-] Should model consider piping through heat sink?
 		c_trough.m_eta_pump = as_double("eta_pump");				//[-] HTF pump efficiency
 		c_trough.m_Fluid = as_integer("Fluid");						//[-] Field HTF fluid number
 		//c_trough.m_fthrok = as_integer("fthrok");					//[-] Flag to allow partial defocusing of the collectors
