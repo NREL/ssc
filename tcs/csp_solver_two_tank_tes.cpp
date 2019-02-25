@@ -728,10 +728,10 @@ void C_csp_two_tank_tes::discharge_full(double timestep /*s*/, double T_amb /*K*
     mc_hot_tank.energy_balance(timestep, 0.0, m_dot_tank, 0.0, T_amb,       // get average hot tank temperature over timestep
         T_hot_ave, q_heater_hot, q_dot_loss_hot);
 
-    // Get cold tank inlet temperature
     if (!ms_params.m_is_hx)
     {
         T_cold_tank_in = T_htf_cold_in;
+        m_dot_field = m_dot_tank;
     }
     else
     {
@@ -1140,6 +1140,7 @@ void C_csp_two_tank_tes::charge_full(double timestep /*s*/, double T_amb /*K*/, 
     if (!ms_params.m_is_hx)
     {
         T_hot_tank_in = T_htf_hot_in;
+        m_dot_field = m_dot_tank;
     }
     else
     {
