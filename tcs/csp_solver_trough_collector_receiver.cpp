@@ -1029,8 +1029,8 @@ int C_csp_trough_collector_receiver::loop_energy_balance_T_t_end(const C_csp_wea
 
 			//Calculate inlet temperature of the next SCA
 			m_TCS_T_htf_in[i + 1] = m_TCS_T_htf_out[i] - m_Pipe_hl_coef*m_D_3(HT, 0)*CSP::pi*L_int*(m_TCS_T_htf_out[i] - T_db) / (m_dot_htf_loop*c_htf_i);
-			//mjw 1.18.2011 Add the internal energy of the crossover piping
-			m_E_int_loop[i] = m_E_int_loop[i] + L_int*(pow(m_D_3(HT, 0), 2) / 4.*CSP::pi + m_mc_bal_sca / c_htf_i)*(m_TCS_T_htf_out[i] - 298.150);
+			//mjw 1.18.2011 Add the internal energy of the crossover piping and interconnects
+			m_E_int_loop[i] = m_E_int_loop[i] + L_int*(pow(m_D_3(HT, 0), 2) / 4.*CSP::pi * rho_htf_i * c_htf_i + m_mc_bal_sca)*(m_TCS_T_htf_out[i] - 298.150);
 		}
 
 	}
