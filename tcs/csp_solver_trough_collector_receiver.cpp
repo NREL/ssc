@@ -5394,22 +5394,28 @@ void C_csp_trough_collector_receiver::header_design(unsigned nhsec, int m_nfsec,
 	}
 
 	//Calculate each section in the header
-	nst = 0; nend = 0; nd = 0;
+	nst = 0; nend = 0; nd = 1;
 	m_dot_max = m_dot_subsection;
 	for (unsigned i = 0; i<nhsec; i++){
-		if ((i == nst) && (nd <= 10)) {
+		if ((i >= nst) && (nd < 10)) {
 			//If we've reached the point where a diameter adjustment must be made...
 			//Also, limit the number of diameter reductions to 10
 
-			nd++; //keep track of the total number of diameter sections
 			//Calculate header diameter based on max velocity
 			m_D_hdr[i] = pipe_sched(sqrt(4.*m_dot_max / (rho*V_max*CSP::pi)));
+            //Keep track of the total number of diameter sections
+            if (i > 0 && abs(m_D_hdr[i] - m_D_hdr[i - 1]) > 0.001) { nd++; }
 			//Determine the mass flow corresponding to the minimum velocity at design
 			m_dot_min = rho*V_min*CSP::pi*m_D_hdr[i] * m_D_hdr[i] / 4.;
 			//Determine the loop after which the current diameter calculation will no longer apply
 			nend = (int)floor((m_dot_subsection - m_dot_min) / (m_dot_2loops));  //tn 4.12.11 ceiling->floor
 			//The starting loop for the next diameter section starts after the calculated ending loop
-			nst = nend;
+            if (nend > nst) {
+                nst = nend;
+            }
+            else {
+                nst = ++nend;  // in the case where D_hdr couldn't go smaller without violating V_max
+            }
 			//Adjust the maximum required flow rate for the next diameter section based on the previous 
 			//section's outlet conditions
 			m_dot_max = max(m_dot_subsection - m_dot_2loops*float(nend), 0.0);
