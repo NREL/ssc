@@ -148,6 +148,7 @@ static var_info _cm_vtab_sco2_csp_system[] = {
 	{ SSC_OUTPUT, SSC_ARRAY,   "HTR_min_dT_od",        "Off-design high temp recup minimum temperature difference","C",         "",    "",      "",     "",       "" },
 		// PHX 
 	{ SSC_OUTPUT, SSC_ARRAY,   "T_co2_PHX_in_od",      "Off-design PHX co2 inlet temperature",                   "C",          "",    "",      "",     "",       "" },
+	{ SSC_OUTPUT, SSC_ARRAY,   "P_co2_PHX_in_od",      "Off-design PHX co2 inlet pressure",                      "MPa",        "",    "",      "",     "",       "" },
 	{ SSC_OUTPUT, SSC_ARRAY,   "T_co2_PHX_out_od",     "Off-design PHX co2 outlet temperature",                  "C",          "",    "",      "",     "",       "" },
 	{ SSC_OUTPUT, SSC_ARRAY,   "deltaT_HTF_PHX_od",    "Off-design HTF temp difference across PHX",              "C",          "",    "",      "",     "",       "" },
 	{ SSC_OUTPUT, SSC_ARRAY,   "phx_eff_od",           "Off-design PHX effectiveness",                           "-",          "",    "",      "",     "",       "" },
@@ -256,6 +257,7 @@ public:
 	ssc_number_t *p_HTR_min_dT_od;
 	// PHX
 	ssc_number_t *p_T_co2_PHX_in_od;
+	ssc_number_t *p_P_co2_PHX_in_od;
 	ssc_number_t *p_T_co2_PHX_out_od;
 	ssc_number_t *p_deltaT_HTF_PHX_od;
 	ssc_number_t *p_phx_eff_od;
@@ -624,6 +626,7 @@ public:
 				p_HTR_min_dT_od[n_run] = (ssc_number_t)(c_sco2_cycle.get_od_solved()->ms_rc_cycle_od_solved.ms_HT_recup_od_solved.m_min_DT);	//[C]
 					// PHX
 				p_T_co2_PHX_in_od[n_run] = (ssc_number_t)(c_sco2_cycle.get_od_solved()->ms_rc_cycle_od_solved.m_temp[C_sco2_cycle_core::HTR_HP_OUT] - 273.15);	//[C]
+				p_P_co2_PHX_in_od[n_run] = (ssc_number_t)(c_sco2_cycle.get_od_solved()->ms_rc_cycle_od_solved.m_pres[C_sco2_cycle_core::HTR_HP_OUT] * 1.E-3);  //[MPa] convert from kPa
 				p_T_co2_PHX_out_od[n_run] = (ssc_number_t)(c_sco2_cycle.get_od_solved()->ms_rc_cycle_od_solved.m_temp[C_sco2_cycle_core::TURB_IN] - 273.15);		//[C]
 				p_deltaT_HTF_PHX_od[n_run] = p_T_htf_hot_od[n_run] - p_T_htf_cold_od[n_run];	//[C]
 				p_phx_eff_od[n_run] = (ssc_number_t)c_sco2_cycle.get_od_solved()->ms_phx_od_solved.m_eff;		//[-]
@@ -759,6 +762,7 @@ public:
 				p_HTR_min_dT_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
 					// PHX
 				p_T_co2_PHX_in_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
+				p_P_co2_PHX_in_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
 				p_T_co2_PHX_out_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
 				p_deltaT_HTF_PHX_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
 				p_phx_eff_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
@@ -874,6 +878,7 @@ public:
 		p_HTR_min_dT_od = allocate("HTR_min_dT_od", n_od_runs);
 		// PHX
 		p_T_co2_PHX_in_od = allocate("T_co2_PHX_in_od", n_od_runs);
+		p_P_co2_PHX_in_od = allocate("P_co2_PHX_in_od", n_od_runs);
 		p_T_co2_PHX_out_od = allocate("T_co2_PHX_out_od", n_od_runs);
 		p_deltaT_HTF_PHX_od = allocate("deltaT_HTF_PHX_od", n_od_runs);
 		p_phx_eff_od = allocate("phx_eff_od", n_od_runs);
