@@ -660,7 +660,6 @@ public:
 	void header_design(unsigned nhsec, int m_nfsec, unsigned m_nrunsec, bool include_fixed_power_block_runner,
 						 double rho, double V_max, double V_min, double m_dot,
 		std::vector<double> &m_D_hdr, std::vector<double> &m_D_runner, std::string *summary = NULL);
-	double pipe_sched(double De);
 	double Pump_SGS(double rho, double m_dotsf, double sm);
 
 	

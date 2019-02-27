@@ -50,6 +50,7 @@
 #include "csp_solver_trough_collector_receiver.h"
 
 #include "tcstype.h"
+#include "sam_csp_util.h"
 
 using namespace std;
 
@@ -592,7 +593,7 @@ bool C_csp_trough_collector_receiver::init_fieldgeom()
 			{
 				m_n_runner_per_index[n_runner] = 1;	//[-]
 				m_f_m_dot[n_runner] = 1.0;				//[-]
-				m_D_runner[n_runner] = pipe_sched(sqrt(4.*m_m_dot_design * m_f_m_dot[n_runner] / (rho_ave*m_V_hdr_max*CSP::pi)));	//[m]
+				m_D_runner[n_runner] = CSP::pipe_sched(sqrt(4.*m_m_dot_design * m_f_m_dot[n_runner] / (rho_ave*m_V_hdr_max*CSP::pi)));	//[m]
 					// Default m_L_runner for electricity generation trough is 50 m
 				m_L_runner[n_runner] = m_L_power_block_piping/2.0;		//[m] Length of piping (full mass flow) through heat sink (if applicable)
 
@@ -605,7 +606,7 @@ bool C_csp_trough_collector_receiver::init_fieldgeom()
 				{
 					m_n_runner_per_index[n_runner] = 2;
 					m_f_m_dot[n_runner] = (m_nfsec - 2) / m_nfsec / 2.0;
-					m_D_runner[n_runner] = pipe_sched(sqrt(4.*m_m_dot_design*m_f_m_dot[n_runner]/(rho_ave*m_V_hdr_max*CSP::pi)));	//[m]
+					m_D_runner[n_runner] = CSP::pipe_sched(sqrt(4.*m_m_dot_design*m_f_m_dot[n_runner]/(rho_ave*m_V_hdr_max*CSP::pi)));	//[m]
 					int j = (int)m_SCAInfoArray.at(0, 1) - 1;
 					m_L_runner[n_runner] = 2.0*m_Row_Distance + (m_L_SCA[j] + m_Distance_SCA[j])*float(m_nSCA) / 2.0;
 				}
@@ -613,7 +614,7 @@ bool C_csp_trough_collector_receiver::init_fieldgeom()
 				{
 					m_n_runner_per_index[n_runner] = 2;
 					m_f_m_dot[n_runner] = m_nfsec / 2.0;
-					m_D_runner[n_runner] = pipe_sched(sqrt(4.*m_m_dot_design*m_f_m_dot[n_runner] / (rho_ave*m_V_hdr_max*CSP::pi)));	//[m]
+					m_D_runner[n_runner] = CSP::pipe_sched(sqrt(4.*m_m_dot_design*m_f_m_dot[n_runner] / (rho_ave*m_V_hdr_max*CSP::pi)));	//[m]
 					int j = (int)m_SCAInfoArray.at(0, 1) - 1;
 					m_L_runner[n_runner] = 2.0*(2.0*m_Row_Distance + (m_L_SCA[j] + m_Distance_SCA[j])*float(m_nSCA) / 2.0);
 				}
@@ -624,7 +625,7 @@ bool C_csp_trough_collector_receiver::init_fieldgeom()
 			{
 				m_n_runner_per_index[i] = 2;
 				m_f_m_dot[i] = m_f_m_dot[i-1] / 2.0;
-				m_D_runner[i] = pipe_sched(sqrt(4.*m_m_dot_design*m_f_m_dot[i] / (rho_ave*m_V_hdr_max*CSP::pi)));	//[m]
+				m_D_runner[i] = CSP::pipe_sched(sqrt(4.*m_m_dot_design*m_f_m_dot[i] / (rho_ave*m_V_hdr_max*CSP::pi)));	//[m]
 				int j = (int)m_SCAInfoArray.at(0, 1) - 1;
 				m_L_runner[i] = 2.0*(2.0*m_Row_Distance + (m_L_SCA[j] + m_Distance_SCA[j])*float(m_nSCA) / 2.0);
 			}
@@ -653,7 +654,7 @@ bool C_csp_trough_collector_receiver::init_fieldgeom()
 
 				nd++; //keep track of the total number of diameter sections
 				//Calculate header diameter based on max velocity
-				m_D_hdr[i] = pipe_sched(sqrt(4.*m_dot_max / (rho_ave*m_V_hdr_max*CSP::pi)));
+				m_D_hdr[i] = CSP::pipe_sched(sqrt(4.*m_dot_max / (rho_ave*m_V_hdr_max*CSP::pi)));
 				//Determine the mass flow corresponding to the minimum velocity at design
 				double m_dot_min = rho_ave*m_V_hdr_min*CSP::pi*m_D_hdr[i] * m_D_hdr[i] / 4.;
 				//Determine the loop after which the current diameter calculation will no longer apply
@@ -5367,7 +5368,7 @@ void C_csp_trough_collector_receiver::header_design(unsigned nhsec, int m_nfsec,
 		int n_runner = 0;
 		if( include_fixed_power_block_runner )
 		{
-			m_D_runner[0] = pipe_sched(sqrt(4.*m_dot/2.0 / (rho*V_max*CSP::pi)));
+			m_D_runner[0] = CSP::pipe_sched(sqrt(4.*m_dot/2.0 / (rho*V_max*CSP::pi)));
 			n_runner++;
 		}
 		
@@ -5380,7 +5381,7 @@ void C_csp_trough_collector_receiver::header_design(unsigned nhsec, int m_nfsec,
 		
 		for (unsigned i = n_runner; i < m_nrunsec; i++)
 		{
-			m_D_runner[i] = pipe_sched(sqrt(4.*m_dot_runner_split_start / (rho*V_max*CSP::pi)));
+			m_D_runner[i] = CSP::pipe_sched(sqrt(4.*m_dot_runner_split_start / (rho*V_max*CSP::pi)));
 			m_dot_runner_split_start = max(m_dot_runner_split_start - m_dot_subsection*2.0, 0.0);
 		}
 	}
@@ -5394,7 +5395,7 @@ void C_csp_trough_collector_receiver::header_design(unsigned nhsec, int m_nfsec,
 			//Also, limit the number of diameter reductions to 10
 
 			//Calculate header diameter based on max velocity
-			m_D_hdr[i] = pipe_sched(sqrt(4.*m_dot_max / (rho*V_max*CSP::pi)));
+			m_D_hdr[i] = CSP::pipe_sched(sqrt(4.*m_dot_max / (rho*V_max*CSP::pi)));
             //Keep track of the total number of diameter sections
             if (i > 0 && abs(m_D_hdr[i] - m_D_hdr[i - 1]) > 0.001) { nd++; }
 			//Determine the mass flow corresponding to the minimum velocity at design
@@ -5458,47 +5459,6 @@ void C_csp_trough_collector_receiver::header_design(unsigned nhsec, int m_nfsec,
 
 }
 
-/***************************************************************************************************
-This function takes a piping diameter "De" [m] and locates the appropriate pipe schedule
-from a list of common pipe sizes. The function always returns the pipe schedule equal to or
-immediately larger than the ideal diameter De.
-The pipe sizes are selected based on the assumption of a maximum hoop stress of 105 MPa and a total
-solar field pressure drop of 20 Bar. The sizes correspond to the pipe schedule with a wall thickness
-sufficient to match these conditions. For very large pipe diameters (above 42in), no suitable schedule
-was found, so the largest available schedule is applied.
-Data and stress calculations were obtained from Kelly & Kearney piping model, rev. 1/2011.
-*/
-
-double C_csp_trough_collector_receiver::pipe_sched(double De) {
-
-	int np = 32;
-
-	double D_m[] = { 0.01855, 0.02173, 0.03115, 0.0374, 0.04375, 0.0499, 0.0626,
-		0.06880860, 0.08468360, 0.1082040, 0.16146780, 0.2063750, 0.260350, 0.311150, 0.33975040,
-		0.39055040, 0.438150, 0.488950, 0.53340, 0.58420, 0.6350, 0.679450, 0.730250, 0.781050,
-		0.82864960, 0.87630, 1.02870, 1.16840, 1.32080, 1.47320, 1.62560, 1.7780 };
-
-	//Select the smallest pipe schedule above the diameter provided
-	for( int i = 0; i < np; i++ )
-	{
-		if( D_m[i] >= De )
-			return D_m[i];
-	}
-	//Nothing was found, so return an error
-
-	m_error_msg = util::format("No suitable pipe schedule found for this plant design. Looking for a schedule above %.2f in ID. "
-		"Maximum schedule is %.2f in ID. Using the exact pipe diameter instead."
-		"Consider increasing the header design velocity range or the number of field subsections.",
-		De*m_mtoinch, D_m[np - 1] * m_mtoinch);
-	mc_csp_messages.add_message(C_csp_messages::WARNING, m_error_msg);
-
-	//message(TCS_WARNING, "No suitable pipe schedule found for this plant design. Looking for a schedule above %.2f in ID. "
-	//	"Maximum schedule is %.2f in ID. Using the exact pipe diameter instead."
-	//	"Consider increasing the header design velocity range or the number of field subsections.",
-	//	De*m_mtoinch, D_m[np - 1] * m_mtoinch);
-	return De;  //mjw 10/10/2014 - NO! ---> std::numeric_limits<double>::quiet_NaN();
-}
-
 //***************************************************************************************************
 double C_csp_trough_collector_receiver::Pump_SGS(double rho, double m_dotsf, double sm){
 
@@ -5544,7 +5504,7 @@ double C_csp_trough_collector_receiver::Pump_SGS(double rho, double m_dotsf, dou
 	double psum = 0.;
 	for (int i = 0; i<nl; i++){
 		//Calculate the pipe diameter
-		D[i] = pipe_sched(sqrt(4.0*V_dot[i] / (vel_max*CSP::pi)));
+		D[i] = CSP::pipe_sched(sqrt(4.0*V_dot[i] / (vel_max*CSP::pi)));
 		//Calculate the total volume
 		V[i] = pow(D[i], 2) / 4.0*CSP::pi*L_line[i];
 		psum += V[i];
