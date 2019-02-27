@@ -218,6 +218,7 @@ void solarpos(int year,int month,int day,int hour,double minute,double lat,doubl
 	else if( E > 0.33 )
 		E = E - 24.0;
 
+	//sunrise/sunset hour angle, ws, Duffie & Beckman equation 1.6.10 page 17
 	arg = -tan(lat)*tan(dec);
 	if( arg >= 1.0 )
 		ws = 0.0;                         /* No sunrise, continuous nights */
@@ -226,21 +227,29 @@ void solarpos(int year,int month,int day,int hour,double minute,double lat,doubl
 	else
 		ws = acos(arg);                   /* Sunrise hour angle in radians */
 
-	/* Sunrise and sunset in local standard time */
-	sunrise = 12.0 - (ws / DTOR) / 15.0 - (lng / 15.0 - tz) - E; //sunrise in units of hours (e.g. 5.25 = 5:15 am)
-	sunset = 12.0 + (ws / DTOR) / 15.0 - (lng / 15.0 - tz) - E; //sunset in units of hours (e.g. 18.75 = 6:45 pm)
+	/*Need to use Duffie & Beckman conventions for longitude, time zone , and hour angle so that the sunrise/sunset equations work when 
+	latitude is positive and time zone is negative, such as locations near the international dateline. Can't just check for sunrise/sunset
+	outside of 0-24 hours, because in very high latitudes, sometimes sunrise/sunset is legitimately outside of these hours.*/
+	double db_lng = lng; //define a longitude using the Duffie & Beckman longitude convention (degrees WEST of standard meridian, from 0-360)
+	if (lng <= 0) db_lng = lng * -1; //translate from west being negative to west being positive, also covers the zero case
+	else db_lng = 360 - lng; //translate from positive degrees east number of degrees west of meridian
+	double db_tz = tz; //define a time zone using the Duffie & Beckman convention (degrees WEST of standard meridian, 0-24)
+	if (tz <= 0) db_tz = tz * -1; //translate from negative timezones west to positive time zones west, also covers the zero case
+	else db_tz = 24 - tz; //translate positive time zones into the 24 scale
 
-	/* bug fix jmf 1/31/18: the sunrise and sunset algorithms use the common longitude convention (negative longitude is west to -180 deg,
-	positive is east to 180 deg) and time zone convention (positive east, negative west). Duffie & Beckman define the longitude (and therefore
-	time zone) convention as degrees WEST of standard meridian, from 0-360. The algorithms below work fine when both longitude and time zone
-	are positive, or when both are negative. However, there are a few places near the international dateline that have positive time zones (+13)
-	and negative longitudes. There are potentially locations with the reverse. Using these equations as-is cause the sunrise and sunset calculations
-	to be shifted by 24 hours in one direction or the other. Therefore, shift sunrises/sunsets outside of 0 < time < 24 in order for subsequent
-	portions of the code to work correctly. Reference "Solar Engineering of Thermal Processes" Version 3, Duffie & Beckman, pages 17-19*/
-	if (sunrise > 24) sunrise -= 24; //this could be a "while" loop, but hard to figure out when there would be an instance where it was >48, might want it to return a bogus number for error identification
-	if (sunset > 24) sunset -= 24;
-	if (sunrise < 0) sunrise += 24;
-	if (sunset < 0) sunset += 24;
+	/* Sunrise and sunset in local standard time 
+	Reference: Duffie & Beckman "Solar Engineering of Thermal Processes" Version 3
+	Solar time - standard time = 4(Lst - Lloc) + E	(Equation 1.5.2, page 11)
+		where solar time and standard time are in MINUTES
+		Lst is the standard meridian longitude of the time zone in degrees WEST (0 < Lst < 360)
+		Lloc is the location longitude in degrees WEST (0 < Lloc < 360)
+		E = equation of time in minutes
+	We translate the equation into hours
+	AND
+	sunrise = solar noon +- sunrise/sunset hour angle (Example 1.6.3 page 19)
+	*/
+	sunrise = 12.0 - (ws / DTOR) / 15.0 - db_tz + db_lng / 15.0 - E; //sunrise in units of hours (e.g. 5.25 = 5:15 am)
+	sunset = 12.0 + (ws / DTOR) / 15.0 - db_tz + db_lng / 15.0 - E; //sunset in units of hours (e.g. 18.75 = 6:45 pm)
 
 	Eo = 1.00014 - 0.01671*cos(mnanom) - 0.00014*cos(2.0*mnanom);  /* Earth-sun distance (AU) */
 	Eo = 1.0/(Eo*Eo);                    /* Eccentricity correction factor */
