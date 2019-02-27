@@ -121,7 +121,6 @@ private:
 	// Parameters calculated in init()
 	int m_n_c_iam_matrix;	//[-] Number of columns in the IAM matrix
 	int m_n_r_iam_matrix;	//[-] Number of rows in the IAM matrix
-	double m_N_run_mult;	//[-] Multiplier for runner heat loss - see comments in init()
 	double m_v_hot;			//[m^3] Hot piping volume
 	double m_v_cold;		//[m^3] Cold piping volume
 	double m_Ap_tot;		//[m^2] Total field aperture area

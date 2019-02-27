@@ -723,15 +723,6 @@ bool C_csp_trough_collector_receiver::init_fieldgeom()
 			v_tofrom_sgs = v_tofrom_sgs + m_n_runner_per_index[i]*m_L_runner[i] * CSP::pi*pow(m_D_runner[i], 2) / 4.;  // This is the volume of the runner in 1 direction (e.g. cold to field)
 		}
 
-		//6/14/12, TN: Multiplier for runner heat loss. In main section of code, are only calculating loss for one path.
-		//Since there will be two symmetric paths (when m_nrunsec > 1), need to calculate multiplier for heat loss, considering
-		//that the first 50 meters of runner is assumed shared.
-		double lsum = 0.;
-		for (int i = 0; i < m_nrunsec; i++){
-			lsum += m_L_runner[i];
-		}
-		m_N_run_mult = 1.0 + (1.0 - 50.0 / lsum);
-
 		//-------piping from header into and out of the HCE's
 		double v_loop_tot = 0.;
 		for (int j = 0; j < m_nHCEVar; j++)
@@ -2887,7 +2878,7 @@ overtemp_iter_flag: //10 continue     //Return loop for over-temp conditions
 
 			E_field_loss_tot *= 1.e-6*dt;
 
-			double E_field_pipe_hl = m_N_run_mult*m_Runner_hl_hot + float(m_nfsec)*m_Header_hl_hot + m_N_run_mult*m_Runner_hl_cold + float(m_nfsec)*m_Header_hl_cold;
+			double E_field_pipe_hl = 2.*m_Runner_hl_hot + float(m_nfsec)*m_Header_hl_hot + 2.*m_Runner_hl_cold + float(m_nfsec)*m_Header_hl_cold;
 
 			E_field_pipe_hl *= dt;		//[J]
 
@@ -3474,8 +3465,8 @@ calc_final_metrics_goto:
 			(m_v_cold*rho_hdr_cold*m_c_hdr_cold + m_mc_bal_cold)*(m_TCS_T_sys_c - 298.150));   //cold header and piping
 
 		//6/14/12, TN: Redefine pipe heat losses with header and runner components to get total system losses
-		double m_Pipe_hl_hot = m_N_run_mult*m_Runner_hl_hot + float(m_nfsec)*m_Header_hl_hot;
-		double m_Pipe_hl_cold = m_N_run_mult*m_Runner_hl_cold + float(m_nfsec)*m_Header_hl_cold;
+		double m_Pipe_hl_hot = 2.*m_Runner_hl_hot + float(m_nfsec)*m_Header_hl_hot;
+		double m_Pipe_hl_cold = 2.*m_Runner_hl_cold + float(m_nfsec)*m_Header_hl_cold;
 
 		piping_hl_total = m_Pipe_hl_hot + m_Pipe_hl_cold;
 
