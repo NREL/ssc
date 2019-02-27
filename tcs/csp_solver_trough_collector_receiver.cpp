@@ -1719,10 +1719,11 @@ void C_csp_trough_collector_receiver::field_pressure_drop()
 
 	if( m_accept_loc == 1 )
 	{
-		double x3 = (double)m_nrunsec - 1.0;		//[-] Number of contraction/expansions
+		double x3;		//[-] Number of contraction/expansions
 		
 		for(int i = 0; i < m_nrunsec; i++)
 		{
+            (i < m_nrunsec - 1 ? x3 = 1.0 : x3 = 0.0);
 			dP_to_field += PressureDrop(m_m_dot_design*m_f_m_dot[i],
 								m_T_htf_c_rec_in_t_int_fullts, 1.0,
 								m_D_runner[i], m_HDR_rough, m_L_runner[i],
