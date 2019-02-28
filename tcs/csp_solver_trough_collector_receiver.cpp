@@ -132,6 +132,10 @@ C_csp_trough_collector_receiver::C_csp_trough_collector_receiver()
 
 	m_T_fp = std::numeric_limits<double>::quiet_NaN();
 	m_I_bn_des = std::numeric_limits<double>::quiet_NaN();
+    m_V_hdr_cold_max = std::numeric_limits<double>::quiet_NaN();
+    m_V_hdr_cold_min = std::numeric_limits<double>::quiet_NaN();
+    m_V_hdr_hot_max = std::numeric_limits<double>::quiet_NaN();
+    m_V_hdr_hot_min = std::numeric_limits<double>::quiet_NaN();
 	m_V_hdr_max = std::numeric_limits<double>::quiet_NaN();
 	m_V_hdr_min = std::numeric_limits<double>::quiet_NaN();
 	m_Pipe_hl_coef = std::numeric_limits<double>::quiet_NaN();
@@ -161,6 +165,8 @@ C_csp_trough_collector_receiver::C_csp_trough_collector_receiver()
 	m_TCS_T_sys_c = std::numeric_limits<double>::quiet_NaN();
 	m_TCS_T_sys_h_converged = std::numeric_limits<double>::quiet_NaN();
 	m_TCS_T_sys_c_converged = std::numeric_limits<double>::quiet_NaN();
+
+
 	
 	// ************************************************************************
 	// CSP Solver Temperature Tracking
@@ -503,14 +509,11 @@ bool C_csp_trough_collector_receiver::init_fieldgeom()
 		}
 
 		/*
-		The number of header sections per field section is equal to the total number of loops divided
+		The number of header sections (tee-conns.) per field section is equal to the total number of loops divided
 		by the number of distinct headers. Since two loops are connected to the same header section,
 		the total number of header sections is then divided by 2.
 		*/
 		m_nhdrsec = (int)ceil(float(m_nLoops) / float(m_nfsec * 2));
-
-		//Allocate space for the m_D_hdr array
-		m_D_hdr.resize(m_nhdrsec);
 
 		//We need to determine design information about the field for purposes of header sizing ONLY
 		m_c_htf_ave = m_htfProps.Cp((m_T_loop_out_des + m_T_loop_in_des) / 2.0)*1000.;    //[J/kg-K] Specific heat
@@ -551,177 +554,47 @@ bool C_csp_trough_collector_receiver::init_fieldgeom()
 
 		//need to provide fluid density
 		double rho_ave = m_htfProps.dens((m_T_loop_out_des + m_T_loop_in_des) / 2.0, 0.0); //kg/m3
-		
-		int n_min_run_secs = 1;
-		if( !m_include_fixed_power_block_runner )
-			n_min_run_secs = 0;
-		
-		//Calculate the header design
-		m_nrunsec = m_nfsec / 4 + n_min_run_secs;		//[-] The number of unique runner diameters
-		m_D_runner.resize(m_nrunsec);
-		m_L_runner.resize(m_nrunsec);
-		m_n_runner_per_index.resize(m_nrunsec);
-		m_f_m_dot.resize(m_nrunsec);
+        //Calculate the header design
+        m_nrunsec = (int)floor(float(m_nfsec) / 4.0) + 1;  //The number of unique runner diameters
+        m_D_runner.resize(2 * m_nrunsec);
+        m_L_runner.resize(2 * m_nrunsec);
+        m_m_dot_rnr.resize(2 * m_nrunsec);
+        m_V_rnr.resize(2 * m_nrunsec);
+        m_N_rnr_xpans.resize(2 * m_nrunsec);  //calculated number of expansion loops in the runner section
+        m_D_hdr.resize(2 * m_nhdrsec);
+        m_L_hdr.resize(2 * m_nhdrsec);
+        m_N_hdr_xpans.resize(2 * m_nhdrsec);
+        m_m_dot_hdr.resize(2 * m_nhdrsec);
+        m_V_hdr.resize(2 * m_nhdrsec);
 
-		// Runner diameters
+        std::string summary;
+        // Use legacy m_V_hdr_max and/or m_V_hdr_min if you need to
+        if ((std::isnan(m_V_hdr_cold_max) || std::isnan(m_V_hdr_hot_max)) && !std::isnan(m_V_hdr_max)) {
+            m_V_hdr_cold_max = m_V_hdr_hot_max = m_V_hdr_max;
+        }
+        if ((std::isnan(m_V_hdr_cold_min) || std::isnan(m_V_hdr_hot_min)) && !std::isnan(m_V_hdr_min)) {
+            m_V_hdr_cold_min = m_V_hdr_hot_min = m_V_hdr_min;
+        }
+        rnr_and_hdr_design(m_nhdrsec, m_nfsec, m_nrunsec, rho_ave, m_V_hdr_cold_max, m_V_hdr_cold_min,
+            m_V_hdr_hot_max, m_V_hdr_hot_min, m_N_max_hdr_diams, m_m_dot_design, m_D_hdr, m_D_runner,
+            m_m_dot_rnr, m_m_dot_hdr, m_V_rnr, m_V_hdr, &summary, m_custom_sf_pipe_sizes);
 
-		/*
-		Do one-time calculations for system geometry. Calculate all HTF volume, set runner piping length
-		Assume there are two field subsections per span, then if there's an even number of spans in the field,
-		we count the first header section as half-length. I.e., if a field looks like this:
-		(1)        (2)
-		|||||||   |||||||
-		-----------------
-		||||||| : |||||||
-		:
-		[P]
-		:
-		||||||| : |||||||
-		-----------------
-		|||||||   |||||||
-		(3)        (4)
-		Then the field has 4 subfields and two spans. The runner pipe (:) is half the distance between the two spans.
-		If the number of subfields were 6 (3 spans), the two runner pipe segments would both be equal to the full
-		distance between spans.
-		*/
+        // Do one-time calculations for system geometry.
+            // Determine header section lengths, including expansion loops
+        if (size_hdr_lengths(m_Row_Distance, m_nhdrsec, m_offset_xpan_hdr, m_N_hdr_per_xpan, m_L_xpan_hdr, m_L_hdr, m_N_hdr_xpans, m_custom_sf_pipe_sizes)) {
+            throw(C_csp_exception("header length sizing failed", "Trough collector solver"));
+        }
 
-		if( m_nrunsec > 0 )
-		{
-			// runner pipe needs some length to go from the power block to the headers
-			int n_runner = 0;
-			if( m_include_fixed_power_block_runner )
-			{
-				m_n_runner_per_index[n_runner] = 1;	//[-]
-				m_f_m_dot[n_runner] = 1.0;				//[-]
-				m_D_runner[n_runner] = CSP::pipe_sched(sqrt(4.*m_m_dot_design * m_f_m_dot[n_runner] / (rho_ave*m_V_hdr_max*CSP::pi)));	//[m]
-					// Default m_L_runner for electricity generation trough is 50 m
-				m_L_runner[n_runner] = m_L_power_block_piping/2.0;		//[m] Length of piping (full mass flow) through heat sink (if applicable)
-
-				n_runner++;
-			}
-
-			if( n_runner < m_nrunsec )
-			{
-				if( m_nfsec % 4 > 0 && m_nfsec > 4 )
-				{
-					m_n_runner_per_index[n_runner] = 2;
-					m_f_m_dot[n_runner] = (m_nfsec - 2) / m_nfsec / 2.0;
-					m_D_runner[n_runner] = CSP::pipe_sched(sqrt(4.*m_m_dot_design*m_f_m_dot[n_runner]/(rho_ave*m_V_hdr_max*CSP::pi)));	//[m]
-					int j = (int)m_SCAInfoArray.at(0, 1) - 1;
-					m_L_runner[n_runner] = 2.0*m_Row_Distance + (m_L_SCA[j] + m_Distance_SCA[j])*float(m_nSCA) / 2.0;
-				}
-				else
-				{
-					m_n_runner_per_index[n_runner] = 2;
-					m_f_m_dot[n_runner] = m_nfsec / 2.0;
-					m_D_runner[n_runner] = CSP::pipe_sched(sqrt(4.*m_m_dot_design*m_f_m_dot[n_runner] / (rho_ave*m_V_hdr_max*CSP::pi)));	//[m]
-					int j = (int)m_SCAInfoArray.at(0, 1) - 1;
-					m_L_runner[n_runner] = 2.0*(2.0*m_Row_Distance + (m_L_SCA[j] + m_Distance_SCA[j])*float(m_nSCA) / 2.0);
-				}
-				n_runner++;
-			}
-
-			for( int i = n_runner; i < m_nrunsec; i++ )
-			{
-				m_n_runner_per_index[i] = 2;
-				m_f_m_dot[i] = m_f_m_dot[i-1] / 2.0;
-				m_D_runner[i] = CSP::pipe_sched(sqrt(4.*m_m_dot_design*m_f_m_dot[i] / (rho_ave*m_V_hdr_max*CSP::pi)));	//[m]
-				int j = (int)m_SCAInfoArray.at(0, 1) - 1;
-				m_L_runner[i] = 2.0*(2.0*m_Row_Distance + (m_L_SCA[j] + m_Distance_SCA[j])*float(m_nSCA) / 2.0);
-			}
-		}
-
-		for( int i = 0; i < m_nhdrsec; i++ )
-		{
-			m_D_hdr[i] = 0.0;
-		}
-
-		// Mass flow into each field subsection = mass flow rate inlet to subsection header BEFORE loops
-		double m_dot_subsection = m_m_dot_design / (float(m_nfsec));		//[kg/s] 
-
-		// Mass flow into the 2 loops attached to a single header section
-		double m_dot_2loops = m_dot_subsection / float(m_nhdrsec);
-
-		// Calculate each section in the header
-		int nst = 0; int nend = 0; int nd = 0;
-		double m_dot_max = m_dot_subsection;
-		for( int i = 0; i < m_nhdrsec; i++ )
-		{
-			if( (i == nst) && (nd <= 10) )
-			{
-				//If we've reached the point where a diameter adjustment must be made...
-				//Also, limit the number of diameter reductions to 10
-
-				nd++; //keep track of the total number of diameter sections
-				//Calculate header diameter based on max velocity
-				m_D_hdr[i] = CSP::pipe_sched(sqrt(4.*m_dot_max / (rho_ave*m_V_hdr_max*CSP::pi)));
-				//Determine the mass flow corresponding to the minimum velocity at design
-				double m_dot_min = rho_ave*m_V_hdr_min*CSP::pi*m_D_hdr[i] * m_D_hdr[i] / 4.;
-				//Determine the loop after which the current diameter calculation will no longer apply
-				nend = (int)floor((m_dot_subsection - m_dot_min) / (m_dot_2loops));  //tn 4.12.11 ceiling->floor
-				//The starting loop for the next diameter section starts after the calculated ending loop
-				nst = nend;
-				//Adjust the maximum required flow rate for the next diameter section based on the previous 
-				//section's outlet conditions
-				m_dot_max = max(m_dot_subsection - m_dot_2loops*float(nend), 0.0);
-			}
-			else
-			{
-				//If we haven't yet reached the point where the minimum flow condition is acheived, just
-				//set the header diameter for this loop to be equal to the last diameter
-				m_D_hdr[i] = m_D_hdr.at(i - 1);
-			}
-		}
-
-		std::string summary;
-
-#ifdef _MSC_VER
-#define MySnprintf _snprintf
-#else
-#define MySnprintf snprintf
-#endif
-#define TSTRLEN 512
-
-		summary.clear();
-		char tstr[TSTRLEN];
-		
-		// Write runner diam
-		MySnprintf(tstr, TSTRLEN,
-			"Piping geometry file\n\nMaximum fluid velocity: %.2lf\nMinimum fluid velocity: %.2lf\n\n",
-			m_V_hdr_max, m_V_hdr_min );
-		summary.append(tstr);
-
-		if( m_nrunsec > 0 )
-		{
-			for( int i = 0; i < m_nrunsec; i++ )
-			{
-				MySnprintf(tstr, TSTRLEN, "Runner %d inner diameter: %.4lf m (%.2lf in)\n", i + 1, m_D_runner[i], m_D_runner[i] * m_mtoinch);
-				summary.append(tstr);
-			}
-		}
-		else
-		{
-			summary.append("This field design does not include runners.\n\n");
-		}
-
-		//Write header diams
-		summary.append("Loop No. | Inner Diameter [m] | Inner Diameter [in] | Identification\n--------------------------------------------------\n");
-
-		nd = 1;
-		for( int i = 0; i< m_nhdrsec; i++ )
-		{
-			if( i > 1 ) 
-			{
-				if( m_D_hdr[i] != m_D_hdr.at(i - 1) ) nd = nd + 1;
-			}
-			MySnprintf(tstr, TSTRLEN, "  %4d   |    %6.4lf    |    %6.4lf     | %3d\n", i + 1, m_D_hdr[i], m_D_hdr[i] * m_mtoinch, nd);
-			summary.append(tstr);
-		}
+        // Determine runner section lengths, including expansion loops
+        if (size_rnr_lengths(m_nfsec, m_L_rnr_pb, m_nrunsec, m_SCAInfoArray.at(0, 1), m_northsouth_field_sep,
+            m_L_SCA, m_Min_rnr_xpans, m_Distance_SCA, m_nSCA, m_L_rnr_per_xpan, m_L_xpan_rnr, m_L_runner, m_N_rnr_xpans, m_custom_sf_pipe_sizes)) {
+            throw(C_csp_exception("runner length sizing failed", "Trough collector solver"));
+        }
 
 		double v_tofrom_sgs = 0.0;
 		for (int i = 0; i < m_nrunsec; i++)
 		{
-			v_tofrom_sgs = v_tofrom_sgs + m_n_runner_per_index[i]*m_L_runner[i] * CSP::pi*pow(m_D_runner[i], 2) / 4.;  // This is the volume of the runner in 1 direction (e.g. cold to field)
+			v_tofrom_sgs = v_tofrom_sgs + 2.*m_L_runner[i] * CSP::pi*pow(m_D_runner[i], 2) / 4.;  // This is the volume of the runner in 1 flow direction (e.g. cold to field)
 		}
 
 		//-------piping from header into and out of the HCE's
@@ -743,27 +616,36 @@ bool C_csp_trough_collector_receiver::init_fieldgeom()
 
 
 		//-------field header loop
-		double v_header = 0.0;
+		double v_header_cold = 0.0, v_header_hot = 0.0;
 		for (int i = 0; i < m_nhdrsec; i++)
 		{
 			//Also calculate the hot and cold header volume for later use. 4.25 is for header expansion bends
-			v_header += m_D_hdr[i] * m_D_hdr[i] / 4.*CSP::pi*(m_Row_Distance + 4.275)*float(m_nfsec)*2.0;  //tn 4.25.11 The header distance should be multiplied by 2 row spacings
+			v_header_cold += m_D_hdr[i] * m_D_hdr[i] / 4.*CSP::pi*(m_Row_Distance + 4.275)*float(m_nfsec)*2.0;  //tn 4.25.11 The header distance should be multiplied by 2 row spacings
+            v_header_hot += m_D_hdr[i + m_nhdrsec] * m_D_hdr[i + m_nhdrsec] / 4.*CSP::pi*(m_Row_Distance + 4.275)*float(m_nfsec)*2.0;
 		}
 		//Add on inlet/outlet from the header to the loop. Assume header to loop inlet ~= 10 [m] (Kelley/Kearney)
-		v_header = v_header + 20.*m_A_cs(0, 0)*float(m_nLoops);
+        v_header_cold += 20.*m_A_cs(0, 0)*float(m_nLoops);
+        v_header_hot += 20.*m_A_cs(0, 0)*float(m_nLoops);
 
 		//Calculate the HTF volume associated with pumps and the SGS
 		double v_sgs = Pump_SGS(rho_ave, m_m_dot_design, m_solar_mult);
 
 		//Calculate the hot and cold balance-of-plant volumes
-		m_v_hot = v_header + v_tofrom_sgs;
-		m_v_cold = m_v_hot;
+		m_v_hot = v_header_hot + v_tofrom_sgs;
+		m_v_cold = v_header_cold + v_tofrom_sgs;
 
 		//Write the volume totals to the piping diameter file
 		summary.append("\n----------------------------------------------\n"
 			"Plant HTF volume information:\n"
 			"----------------------------------------------\n");
+#ifdef _MSC_VER
+#define MySnprintf _snprintf
+#else
+#define MySnprintf snprintf
+#endif
+#define TSTRLEN 512
 
+        char tstr[TSTRLEN];
 		MySnprintf(tstr, TSTRLEN,
 			"Cold header pipe volume:   %10.4le m3\n"
 			"Hot header pipe volume:    %10.4le m3\n"
@@ -775,7 +657,7 @@ bool C_csp_trough_collector_receiver::init_fieldgeom()
 			"Total plant HTF volume:    %10.4le m3\n",
 
 			m_v_cold, m_v_hot, v_loop_tot / double(m_nLoops), v_loop_tot,
-			(m_v_hot*2. + v_loop_tot), v_sgs, (m_v_hot*2. + v_loop_tot + v_sgs));
+            (m_v_hot + m_v_cold + v_loop_tot), v_sgs, (m_v_hot + m_v_cold + v_loop_tot + v_sgs));
 
 		summary.append(tstr);
 
@@ -895,7 +777,7 @@ int C_csp_trough_collector_receiver::loop_energy_balance_T_t_end(const C_csp_wea
 		//Runner
 		for( int i = 0; i<m_nrunsec; i++ )
 		{
-			m_Runner_hl_cold += m_n_runner_per_index[i] * m_L_runner[i] * CSP::pi*m_D_runner[i] * m_Pipe_hl_coef*(m_TCS_T_sys_c - T_db);  //[W]
+			m_Runner_hl_cold += m_L_runner[i] * CSP::pi*m_D_runner[i] * m_Pipe_hl_coef*(m_TCS_T_sys_c - T_db);  //[W]
 		}
 		double m_Pipe_hl_cold = m_Header_hl_cold + m_Runner_hl_cold;	//[W]
 
@@ -1032,7 +914,7 @@ int C_csp_trough_collector_receiver::loop_energy_balance_T_t_end(const C_csp_wea
 		//Calculation for heat losses from hot header and runner pipe
 		m_Runner_hl_hot = 0.0;
 		m_Header_hl_hot = 0.0;
-		for( int i = 0; i < m_nhdrsec; i++ )
+		for( int i = m_nhdrsec; i < 2*m_nhdrsec; i++ )
 		{
 			m_Header_hl_hot += m_nfsec * m_Row_Distance*m_D_hdr[i] * CSP::pi*m_Pipe_hl_coef*(m_TCS_T_htf_out[m_nSCA - 1] - T_db);	//[W]
 		}
@@ -1040,7 +922,7 @@ int C_csp_trough_collector_receiver::loop_energy_balance_T_t_end(const C_csp_wea
 		//Add the runner length
 		for( int i = 0; i < m_nrunsec; i++ )
 		{
-			m_Runner_hl_hot += m_n_runner_per_index[i] * m_L_runner[i] * CSP::pi*m_D_runner[i] * m_Pipe_hl_coef*(m_TCS_T_htf_out[m_nSCA - 1] - T_db);	//[W]
+			m_Runner_hl_hot += m_L_runner[i] * CSP::pi*m_D_runner[i] * m_Pipe_hl_coef*(m_TCS_T_htf_out[m_nSCA - 1] - T_db);	//[W]
 		}
 
 		double m_Pipe_hl_hot = m_Header_hl_hot + m_Runner_hl_hot;	//[W]
@@ -1119,7 +1001,7 @@ int C_csp_trough_collector_receiver::loop_energy_balance_T_t_int(const C_csp_wea
 			//Runner
 		for( int i = 0; i<m_nrunsec; i++ )
 		{
-			m_Runner_hl_cold += m_n_runner_per_index[i] * m_L_runner[i]*CSP::pi*m_D_runner[i] * m_Pipe_hl_coef*(m_T_sys_c_t_int - T_db);  //[W]
+			m_Runner_hl_cold += m_L_runner[i]*CSP::pi*m_D_runner[i] * m_Pipe_hl_coef*(m_T_sys_c_t_int - T_db);  //[W]
 		}
 		q_dot_loss_HR_cold = m_Header_hl_cold + m_Runner_hl_cold;	//[W]
 		E_HR_cold_losses = q_dot_loss_HR_cold*sim_info.ms_ts.m_step/1.E6;	//[MJ]
@@ -1307,7 +1189,7 @@ int C_csp_trough_collector_receiver::loop_energy_balance_T_t_int(const C_csp_wea
 		//Add the runner length
 		for( int i = 0; i < m_nrunsec; i++ )
 		{
-			m_Runner_hl_hot += m_n_runner_per_index[i] * m_L_runner[i] * CSP::pi*m_D_runner[i] * m_Pipe_hl_coef*(m_T_htf_out_t_int[m_nSCA - 1] - T_db);	//[W]
+			m_Runner_hl_hot += m_L_runner[i] * CSP::pi*m_D_runner[i] * m_Pipe_hl_coef*(m_T_htf_out_t_int[m_nSCA - 1] - T_db);	//[W]
 		}
 		
 		q_dot_loss_HR_hot = m_Header_hl_hot + m_Runner_hl_hot;	//[W]
@@ -1716,12 +1598,12 @@ void C_csp_trough_collector_receiver::field_pressure_drop()
 		for(int i = 0; i < m_nrunsec; i++)
 		{
             (i < m_nrunsec - 1 ? x3 = 1.0 : x3 = 0.0);
-			dP_to_field += PressureDrop(m_m_dot_design*m_f_m_dot[i],
+			dP_to_field += PressureDrop(m_m_dot_rnr[i],
 								m_T_htf_c_rec_in_t_int_fullts, 1.0,
 								m_D_runner[i], m_HDR_rough, m_L_runner[i],
 								0.0, x3, 0.0, 0.0,max(float(CSP::nint(m_L_runner[i]/70.0))*4., 8.), 1.0, 0.0, 1.0, 0.0, 0.0, 0.0);	//[Pa]
 
-			dP_from_field += PressureDrop(m_m_dot_design*m_f_m_dot[i],
+			dP_from_field += PressureDrop(m_m_dot_rnr[i],
 								m_T_htf_h_rec_out_t_int_fullts, 1.0,
 								m_D_runner[i], m_HDR_rough, m_L_runner[i],
 								x3, 0.0, 0.0, 0.0,max(float(CSP::nint(m_L_runner[i]/70.0))*4., 8.), 1.0, 0.0, 0.0, 0.0, 0.0, 0.0);	//[Pa]
@@ -3346,30 +3228,47 @@ calc_final_metrics_goto:
 				m_dot_temp = max(m_dot_temp - 2.*m_m_dot_htf_tot / float(m_nfsec), 0.0);
 		}
 
+        //Calculate pressure drop in cold header
 		m_dot_header_in = m_m_dot_htf_tot / float(m_nfsec);
 		m_dot_header = m_dot_header_in;
+        double x2 = 0.0;
 		DP_hdr_cold = 0.0;
-		DP_hdr_hot = 0.0;
 		for (int i = 0; i<m_nhdrsec; i++)
 		{
-			//Determine whether the particular section has an expansion valve
-			double x2 = 0.0;
+			//Determine whether the particular section has a contraction fitting (at the beginning of the section)
+			x2 = 0.0;
 			if (i>0)
 			{
 				if (m_D_hdr[i] != m_D_hdr[i - 1])
 					x2 = 1.;
 			}
 
-			//Calculate pressure drop in cold header and hot header sections.. both use similar information
-			DP_hdr_cold = DP_hdr_cold + PressureDrop(m_dot_header, m_TCS_T_htf_in[0], 1.0, m_D_hdr[i], m_HDR_rough,
+			DP_hdr_cold += PressureDrop(m_dot_header, m_TCS_T_htf_in[0], 1.0, m_D_hdr[i], m_HDR_rough,
 				(m_Row_Distance + 4.275)*2., 0.0, x2, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0); //*m_dot_header/m_dot_header_in  //mjw/tn 1.25.12 already account for m_dot_header in function call //mjw 5.11.11 scale by mass flow passing though
-			//if(ErrorFound()) return 1
-			DP_hdr_hot = DP_hdr_hot + PressureDrop(m_dot_header, m_TCS_T_htf_out[m_nSCA - 1], 1.0, m_D_hdr[i], m_HDR_rough,
-				(m_Row_Distance + 4.275)*2., x2, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0); //*m_dot_header/m_dot_header_in  //mjw 5.11.11
 			//if(ErrorFound()) return 1
 			//Siphon off header mass flow rate at each loop.  Multiply by 2 because there are 2 loops per hdr section
 			m_dot_header = max(m_dot_header - 2.0*m_dot_htf, 0.0);
 		}
+
+        //Calculate pressure drop in hot header
+        m_dot_header = 2.*m_dot_htf;
+        DP_hdr_hot = 0.0;
+        for (int i = m_nhdrsec; i < 2 * m_nhdrsec; i++)
+        {
+            //Determine whether the particular section has an expansion fitting (at the beginning of the section)
+            x2 = 0.0;
+            if (i > m_nhdrsec)
+            {
+                if (m_D_hdr[i] != m_D_hdr[i - 1])
+                    x2 = 1.;
+            }
+
+            DP_hdr_hot += PressureDrop(m_dot_header, m_TCS_T_htf_out[m_nSCA - 1], 1.0, m_D_hdr[i], m_HDR_rough,
+                (m_Row_Distance + 4.275)*2., x2, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0); //*m_dot_header/m_dot_header_in  //mjw 5.11.11
+            //if(ErrorFound()) return 1
+            //Add to header mass flow rate at each loop.  Multiply by 2 because there are 2 loops per hdr section
+            m_dot_header = m_dot_header + 2.*m_dot_htf;
+        }
 	}
 
 	DP_tot = std::numeric_limits<double>::quiet_NaN();
@@ -5317,148 +5216,6 @@ double C_csp_trough_collector_receiver::FricFactor(double m_Rough, double Reynol
 }
 
 
-/**************************************************************************************************
----------------------------------------------------------------------------------
---Inputs
-* nhsec - [-] number of header sections
-* m_nfsec - [-] number of field section
-* m_nrunsec- [-] number of unique runner diameter sections
-* rho   - [kg/m3] m_Fluid density
-* V_max - [m/s] Maximum fluid velocity at design
-* V_min - [m/s] Minimum fluid velocity at design
-* m_dot - [kg/s] Mass flow rate at design
---Outputs
-* m_D_hdr - [m] An ARRAY containing the header diameter for each loop section
-* m_D_runner - [m] An ARRAY containing the diameter of the runner pipe sections
-* summary - Address of string variable on which summary contents will be written.
----------------------------------------------------------------------------------			*/
-
-void C_csp_trough_collector_receiver::header_design(unsigned nhsec, int m_nfsec, unsigned m_nrunsec, bool include_fixed_power_block_runner,
-	double rho, double V_max, double V_min, double m_dot,
-	std::vector<double> &m_D_hdr, std::vector<double> &m_D_runner, std::string *summary)
-{
-	//resize the header matrices if they are incorrect
-	//real(8),intent(out):: m_D_hdr(nhsec), m_D_runner(m_nrunsec)
-	if (m_D_hdr.size() != nhsec) m_D_hdr.resize(nhsec);
-	if (m_D_runner.size() != m_nrunsec) m_D_runner.resize(m_nrunsec);
-
-	//----
-	int nend, nd;
-	unsigned nst;
-	double m_dot_max, m_dot_min;
-
-	for (unsigned i = 0; i < nhsec; i++)
-	{
-		m_D_hdr[i] = 0.0;
-	}
-
-	// Mass flow into each field subsection = mass flow rate inlet to subsection header BEFORE loops
-	double m_dot_subsection = m_dot / (float(m_nfsec));
-	
-	// Mass flow into the 2 loops attached to a single header section
-	double m_dot_2loops = m_dot_subsection / float(nhsec);
-
-	// Runner diameters
-	// The array of runner diameters is:
-	//   1) (if applicable): half mass flow rate -> piping through heat sink
-	//   2 -> n) (if applicable): mass flow rate in one direction from heat sink
-	if( m_nrunsec > 0 )
-	{
-		// runner pipe needs some length to go from the power block to the headers
-		int n_runner = 0;
-		if( include_fixed_power_block_runner )
-		{
-			m_D_runner[0] = CSP::pipe_sched(sqrt(4.*m_dot/2.0 / (rho*V_max*CSP::pi)));
-			n_runner++;
-		}
-		
-		// diameters of runners in field
-		double m_dot_runner_split_start = m_dot / 2.0;
-		if( m_nfsec % 4 > 0 && m_nfsec > 4 )
-		{
-			m_dot_runner_split_start = (m_dot - 2.0*m_dot_subsection)/2.0;
-		}
-		
-		for (unsigned i = n_runner; i < m_nrunsec; i++)
-		{
-			m_D_runner[i] = CSP::pipe_sched(sqrt(4.*m_dot_runner_split_start / (rho*V_max*CSP::pi)));
-			m_dot_runner_split_start = max(m_dot_runner_split_start - m_dot_subsection*2.0, 0.0);
-		}
-	}
-
-	//Calculate each section in the header
-	nst = 0; nend = 0; nd = 1;
-	m_dot_max = m_dot_subsection;
-	for (unsigned i = 0; i<nhsec; i++){
-		if ((i >= nst) && (nd < 10)) {
-			//If we've reached the point where a diameter adjustment must be made...
-			//Also, limit the number of diameter reductions to 10
-
-			//Calculate header diameter based on max velocity
-			m_D_hdr[i] = CSP::pipe_sched(sqrt(4.*m_dot_max / (rho*V_max*CSP::pi)));
-            //Keep track of the total number of diameter sections
-            if (i > 0 && abs(m_D_hdr[i] - m_D_hdr[i - 1]) > 0.001) { nd++; }
-			//Determine the mass flow corresponding to the minimum velocity at design
-			m_dot_min = rho*V_min*CSP::pi*m_D_hdr[i] * m_D_hdr[i] / 4.;
-			//Determine the loop after which the current diameter calculation will no longer apply
-			nend = (int)floor((m_dot_subsection - m_dot_min) / (m_dot_2loops));  //tn 4.12.11 ceiling->floor
-			//The starting loop for the next diameter section starts after the calculated ending loop
-            if (nend > nst) {
-                nst = nend;
-            }
-            else {
-                nst = ++nend;  // in the case where D_hdr couldn't go smaller without violating V_max
-            }
-			//Adjust the maximum required flow rate for the next diameter section based on the previous 
-			//section's outlet conditions
-			m_dot_max = max(m_dot_subsection - m_dot_2loops*float(nend), 0.0);
-		}
-		else{
-			//If we haven't yet reached the point where the minimum flow condition is acheived, just
-			//set the header diameter for this loop to be equal to the last diameter
-			m_D_hdr[i] = m_D_hdr.at(i - 1);
-		}
-	}
-
-	//Print the results to a string
-	if (summary != NULL)
-	{
-		summary->clear();
-		char tstr[TSTRLEN];
-		//Write runner diam
-		MySnprintf(tstr, TSTRLEN,
-			"Piping geometry file\n\nMaximum fluid velocity: %.2lf\nMinimum fluid velocity: %.2lf\n\n",
-			V_max, V_min);
-		summary->append(tstr);
-
-		if( m_nrunsec > 0 )
-		{
-			for (unsigned i = 0; i < m_nrunsec; i++)
-			{
-				MySnprintf(tstr, TSTRLEN, "Runner %d diameter: %.4lf m (%.2lf in)\n", i + 1, m_D_runner[i], m_D_runner[i] * m_mtoinch);
-				summary->append(tstr);
-			}
-		}
-		else
-		{
-			summary->append("This field design does not include runners.\n");
-		}
-
-		//Write header diams
-		summary->append("Loop No. | Diameter [m] | Diameter [in] | Diam. ID\n--------------------------------------------------\n");
-
-		nd = 1;
-		for (unsigned i = 0; i<nhsec; i++){
-			if (i>1) {
-				if (m_D_hdr[i] != m_D_hdr.at(i - 1)) nd = nd + 1;
-			}
-			MySnprintf(tstr, TSTRLEN, "  %4d   |    %6.4lf    |    %6.4lf     | %3d\n", i + 1, m_D_hdr[i], m_D_hdr[i] * m_mtoinch, nd);
-			summary->append(tstr);
-		}
-	}
-
-}
-
 //***************************************************************************************************
 double C_csp_trough_collector_receiver::Pump_SGS(double rho, double m_dotsf, double sm){
 
@@ -5518,9 +5275,375 @@ double C_csp_trough_collector_receiver::Pump_SGS(double rho, double m_dotsf, dou
 
 }
 
+/**************************************************************************************************
+    ---------------------------------------------------------------------------------
+    --Inputs
+       * nhsec - [-] number of header sections
+       * nfsec - [-] number of field section
+       * nrunsec- [-] number of unique runner diameter sections
+       * rho   - [kg/m3] Fluid density
+       * V_cold_max - [m/s] Maximum cold fluid velocity at design
+       * V_cold_min - [m/s] Minimum cold fluid velocity at design
+       * V_hot_max -  [m/s] Maximum hot fluid velocity at design
+       * V_hot_min -  [m/s] Minimum hot fluid velocity at design
+       * N_max_hdr_diams - [-] Maximum number of diameters in each hot/cold header
+       * m_dot - [kg/s] Mass flow rate at design
+    --Outputs
+       * D_hdr - [m] An ARRAY containing the header diameter for each loop section
+       * m_dot_hdr - [kg/s] Mass flow rate in each header section at design
+       * V_hdr - [m/s] Velocity in each header section at design
+       * D_runner - [m] An ARRAY containing the diameter of the runner pipe sections
+       * m_dot_rnr - [kg/s] Mass flow rate in each runner section at design
+       * V_rnr - [m/s] Velocity in each runner section at design
+       * summary - Address of string variable on which summary contents will be written.
+       * custom_diams - [-] Should the diameters be input instead of calculated?
+    ---------------------------------------------------------------------------------			*/
+
+void C_csp_trough_collector_receiver::rnr_and_hdr_design(unsigned nhsec, int nfsec, unsigned nrunsec, double rho, double V_cold_max, double V_cold_min,
+    double V_hot_max, double V_hot_min, int N_max_hdr_diams, double m_dot, std::vector<double> &D_hdr, std::vector<double> &D_runner,
+    std::vector<double> &m_dot_rnr, std::vector<double> &m_dot_hdr, std::vector<double> &V_rnr, std::vector<double> &V_hdr,
+    std::string *summary, bool custom_diams) {
+
+    //resize the header matrices if they are incorrect
+    //real(8),intent(out):: D_hdr(nhsec), D_runner(nrunsec)
+    if (!custom_diams) {
+        if (D_hdr.size() != 2 * nhsec) D_hdr.resize(2 * nhsec);
+        if (D_runner.size() != 2 * nrunsec) D_runner.resize(2 * nrunsec);
+    }
+    if (m_dot_hdr.size() != 2 * nhsec) m_dot_hdr.resize(2 * nhsec);
+    if (V_hdr.size() != 2 * nhsec) V_hdr.resize(2 * nhsec);
+    if (m_dot_rnr.size() != 2 * nrunsec) m_dot_rnr.resize(2 * nrunsec);
+    if (V_rnr.size() != 2 * nrunsec) V_rnr.resize(2 * nrunsec);
+
+    //----
+    int nend, nd;
+    unsigned nst;
+    double m_dot_hdrs, m_dot_2loops;
+
+    //Mass flow into 1 header
+    m_dot_hdrs = m_dot / float(nfsec);
+    //Mass flow into the 2 loops attached to a single header section
+    m_dot_2loops = m_dot_hdrs / float(nhsec);
+
+    //Runner diameters
+    //runner pipe needs some length to go from the power block to the headers
+    //assume symmetric hot and cold runners
+    m_dot_rnr[0] = m_dot / 2.;   //mass flow through half-length runners is always half of total
+    m_dot_rnr[2 * nrunsec - 1] = m_dot_rnr[0];
+    if (!custom_diams) {
+        D_runner.at(0) = CSP::pipe_sched(sqrt(4.*m_dot_rnr[0] / (rho*V_cold_max*CSP::pi)));
+        D_runner.at(2 * nrunsec - 1) = D_runner.at(0);
+    }
+    V_rnr.at(0) = 4.*m_dot_rnr[0] / (rho*pow(D_runner.at(0), 2)*CSP::pi);
+    V_rnr.at(2 * nrunsec - 1) = V_rnr.at(0);
+    for (unsigned i = 1; i < nrunsec; i++) {
+        if (i == 1) {
+            m_dot_rnr[i] = m_dot_rnr[i - 1] * (1. - float(nfsec % 4) / float(nfsec));  //Adjust mass flow for first full-length runners when nfsec/2==odd
+        }
+        else {
+            m_dot_rnr[i] = max(m_dot_rnr[i - 1] - m_dot_hdrs * 2, 0.0);
+        }
+        m_dot_rnr[2 * nrunsec - i - 1] = m_dot_rnr[i];
+        if (!custom_diams) {
+            D_runner[i] = CSP::pipe_sched(sqrt(4.*m_dot_rnr[i] / (rho*V_cold_max*CSP::pi)));
+            D_runner[2 * nrunsec - i - 1] = D_runner[i];
+        }
+        V_rnr.at(i) = 4.*m_dot_rnr[i] / (rho*pow(D_runner.at(i), 2)*CSP::pi);
+        V_rnr.at(2 * nrunsec - i - 1) = V_rnr.at(i);
+    }
+
+    //Calculate each section in the cold header
+    double m_dot_enter = 0;
+    double V_enter = 0;  // for cold header, V_enter is the velocity in the pipe
+    double D_hdr_next = 0; double V_enter_next = 0;
+    double D_hdr_next2 = 0; double V_enter_next2 = 0;
+    nd = 0;
+    if (custom_diams) {
+        for (std::size_t i = 0; i < nhsec; i++) {
+            if (i == 0) {
+                m_dot_enter = m_dot_hdrs;
+                V_enter = 4.*m_dot_enter / (rho*CSP::pi*D_hdr[i] * D_hdr[i]);
+            }
+            else if (nd < N_max_hdr_diams) {
+                m_dot_enter -= m_dot_2loops;
+                V_enter = 4.*m_dot_enter / (rho*CSP::pi*D_hdr[i - 1] * D_hdr[i - 1]);  // assuming no diameter change
+            }
+            m_dot_hdr[i] = m_dot_enter;
+            V_hdr[i] = V_enter;
+        }
+    }
+    else {
+        for (std::size_t i = 0; i < nhsec; i++) {
+            if (i == 0) {
+                m_dot_enter = m_dot_hdrs;
+                // Size cold header diameter using V_max to allow for mass loss into loops
+                // Select actual pipe that is larger (param=true) than ideal pipe b/c if smaller it will definitely exceed V_max
+                D_hdr[i] = CSP::pipe_sched(sqrt(4.*m_dot_enter / (rho*m_V_hdr_cold_max*CSP::pi)), true);
+                V_enter = 4.*m_dot_enter / (rho*CSP::pi*D_hdr[i] * D_hdr[i]);
+                if (V_enter < m_V_hdr_cold_min) {  // if the entering velocity will be below the minimum (it won't exceed V_max)
+                    D_hdr_next = CSP::pipe_sched(sqrt(4.*m_dot_enter / (rho*m_V_hdr_cold_max*CSP::pi)), false);   // size smaller this time, will definitely exceed V_max
+                    V_enter_next = 4.*m_dot_enter / (rho*CSP::pi*D_hdr_next*D_hdr_next);
+                    // Choose the smaller diameter (faster V) if it's closer to being in range
+                    if (V_enter_next - m_V_hdr_cold_max <= m_V_hdr_cold_min - V_enter) {  // '<=' is so the smaller (faster) pipe is preferred in a tie
+                        D_hdr[i] = D_hdr_next;
+                    }
+                }
+                nd++;
+            }
+            else if (nd < N_max_hdr_diams) {
+                m_dot_enter -= m_dot_2loops;
+                V_enter = 4.*m_dot_enter / (rho*CSP::pi*D_hdr[i - 1] * D_hdr[i - 1]);  // assuming no diameter change
+                if (V_enter < m_V_hdr_cold_min) {   // if the entering velocity will be below the minimum if there is no diameter change
+                    D_hdr_next = CSP::pipe_sched(sqrt(4.*m_dot_enter / (rho*m_V_hdr_cold_max*CSP::pi)), true);  // size larger than optimal so it won't exceed V_max
+                    V_enter_next = 4.*m_dot_enter / (rho*CSP::pi*D_hdr_next*D_hdr_next);
+                    if (V_enter_next < m_V_hdr_cold_min) {  // if the velocity is still below V_min (it won't exceed V_max)
+                        // try smaller than the optimal this time and choose the one with the velocity closest to being in range
+                        D_hdr_next2 = CSP::pipe_sched(sqrt(4.*m_dot_enter / (rho*m_V_hdr_cold_max*CSP::pi)), false);  // size smaller this time (will exceed V_max)
+                        V_enter_next2 = 4.*m_dot_enter / (rho*CSP::pi*D_hdr_next2*D_hdr_next2);
+                        if (m_V_hdr_cold_min - V_enter_next < V_enter_next2 - m_V_hdr_cold_max) {   // '<' is so the smaller (faster) pipe is preferred in a tie
+                            D_hdr[i] = D_hdr_next;
+                        }
+                        else {
+                            D_hdr[i] = D_hdr_next2;
+                        }
+                    }
+                    else {
+                        D_hdr[i] = D_hdr_next;
+                    }
+                    if ((D_hdr[i - 1] - D_hdr[i]) > 0.001) { nd++; }
+                }
+                else {
+                    D_hdr[i] = D_hdr[i - 1];
+                }
+            }
+            else {
+                D_hdr[i] = D_hdr[i - 1];
+            }
+            m_dot_hdr[i] = m_dot_enter;
+            V_hdr[i] = V_enter;
+        }
+    }
+
+
+    //Calculate each section in the hot header
+    double m_dot_leave = 0;
+    double V_leave = 0;  // for hot header, V_leave is the velocity in the pipe
+    D_hdr_next = 0; double V_leave_next = 0;
+    D_hdr_next2 = 0; double V_leave_next2 = 0;
+    nd = 0;
+    if (custom_diams) {
+        for (std::size_t i = nhsec; i < 2 * nhsec; i++) {
+            if (i == nhsec) {
+                m_dot_leave = m_dot_2loops;
+                V_leave = 4.*m_dot_leave / (rho*CSP::pi*D_hdr[i] * D_hdr[i]);
+            }
+            else if (nd < N_max_hdr_diams) {
+                m_dot_leave += m_dot_2loops;
+                V_leave = 4.*m_dot_leave / (rho*CSP::pi*D_hdr[i - 1] * D_hdr[i - 1]);  // assuming no diameter change
+            }
+            m_dot_hdr[i] = m_dot_leave;
+            V_hdr[i] = V_leave;
+        }
+    }
+    else {
+        for (std::size_t i = nhsec; i < 2 * nhsec; i++) {
+            if (i == nhsec) {
+                m_dot_leave = m_dot_2loops;
+                // Size hot header diameter using V_min to allow for mass addition from downstream loops
+                // Select actual pipe that is smaller than ideal pipe b/c if sizing larger it will definitely deceed V_min
+                D_hdr[i] = CSP::pipe_sched(sqrt(4.*m_dot_leave / (rho*m_V_hdr_hot_min*CSP::pi)), false);
+                V_leave = 4.*m_dot_leave / (rho*CSP::pi*D_hdr[i] * D_hdr[i]);
+                if (V_leave > m_V_hdr_hot_max) {   // if the leaving velocity will be above the maximum (it won't deceed V_min)
+                    D_hdr_next = CSP::pipe_sched(sqrt(4.*m_dot_leave / (rho*m_V_hdr_hot_min*CSP::pi)), true);   // size larger this time, will definitely be below V_min
+                    V_leave_next = 4.*m_dot_leave / (rho*CSP::pi*D_hdr_next*D_hdr_next);
+                    // Choose the larger diameter (slower V) if it's closer to being in range
+                    if (m_V_hdr_hot_min - V_leave_next < V_leave - m_V_hdr_hot_max) {  // '<' is so the smaller (cheaper) pipe is preferred in a tie
+                        D_hdr[i] = D_hdr_next;
+                    }
+                }
+                nd++;
+            }
+            else if (nd < N_max_hdr_diams) {
+                m_dot_leave += m_dot_2loops;
+                V_leave = 4.*m_dot_leave / (rho*CSP::pi*D_hdr[i - 1] * D_hdr[i - 1]);  // assuming no diameter change
+                if (V_leave > m_V_hdr_hot_max) {   // if the leaving velocity will be above the maximum if there is no diameter change
+                    D_hdr_next = CSP::pipe_sched(sqrt(4.*m_dot_leave / (rho*m_V_hdr_hot_min*CSP::pi)), false);  // size smaller than optimal so it won't deceed V_min
+                    V_leave_next = 4.*m_dot_leave / (rho*CSP::pi*D_hdr_next*D_hdr_next);
+                    if (V_leave_next > m_V_hdr_hot_max) {  // if the velocity is still above V_max (it won't be below V_min)
+                        // try larger than the optimal this time and choose the one with the velocity closest to being in range
+                        D_hdr_next2 = CSP::pipe_sched(sqrt(4.*m_dot_leave / (rho*m_V_hdr_hot_min*CSP::pi)), true);  // size larger this time (will be below V_min)
+                        V_leave_next2 = 4.*m_dot_leave / (rho*CSP::pi*D_hdr_next2*D_hdr_next2);
+                        if (V_leave_next - m_V_hdr_hot_max <= m_V_hdr_hot_min - V_leave_next2) {   // '<=' is so the smaller (cheaper) pipe is preferred in a tie
+                            D_hdr[i] = D_hdr_next;
+                        }
+                        else {
+                            D_hdr[i] = D_hdr_next2;
+                        }
+                    }
+                    else {
+                        D_hdr[i] = D_hdr_next;
+                    }
+                    if ((D_hdr[i] - D_hdr[i - 1]) > 0.001) { nd++; }
+                }
+                else {
+                    D_hdr[i] = D_hdr[i - 1];
+                }
+            }
+            else {
+                D_hdr[i] = D_hdr[i - 1];
+            }
+            m_dot_hdr[i] = m_dot_leave;
+            V_hdr[i] = V_leave;
+        }
+    }
+
+    //Print the results to a string
+    if (summary != NULL) {
+
+#ifdef _MSC_VER
+#define MySnprintf _snprintf
+#else
+#define MySnprintf snprintf
+#endif
+#define TSTRLEN 512
+
+        double mtoinch = 39.3700787;	//[m] -> [in]
+        summary->clear();
+        char tstr[TSTRLEN];
+        //Write runner diam
+        MySnprintf(tstr, TSTRLEN,
+            "Piping geometry file\n\nMaximum fluid velocity: %.2lf\nMinimum fluid velocity: %.2lf\n\n",
+            max(V_cold_max, V_hot_max), min(V_cold_min, V_hot_min));
+        summary->append(tstr);
+
+        for (unsigned i = 0; i < 2 * nrunsec; i++) {
+            MySnprintf(tstr, TSTRLEN, "To section %d header pipe diameter: %.4lf m (%.2lf in)\n", i + 1, D_runner[i], D_runner[i] * mtoinch);
+            summary->append(tstr);
+        }
+        //Write header diams
+        summary->append("Loop No. | Diameter [m] | Diameter [in] | Diam. ID\n--------------------------------------------------\n");
+
+        nd = 1;
+        for (unsigned i = 0; i < 2 * nhsec; i++) {
+            if (i > 1) {
+                if (D_hdr[i] != D_hdr.at(i - 1)) nd = nd + 1;
+            }
+            MySnprintf(tstr, TSTRLEN, "  %4d   |    %6.4lf    |    %6.4lf     | %3d\n", i + 1, D_hdr[i], D_hdr[i] * mtoinch, nd);
+            summary->append(tstr);
+        }
+        //110 format(2X,I4,3X,"|",4X,F6.4,4X,"|",4X,F6.3,5X,"|",1X,I3)
+    }
+
+}
+
+int C_csp_trough_collector_receiver::size_hdr_lengths(double L_row_sep, int Nhdrsec, int offset_hdr_xpan, int Ncol_loops_per_xpan, double L_hdr_xpan,
+    std::vector<double> &L_hdr, std::vector<int> &N_hdr_xpans, bool custom_lengths) {
+    // Parameters:
+    // L_row_sep			distance between SCA rows, centerline to centerline
+    // Nhdrsec				number of header sections (tee-conns.) per field section			
+    // offset_hdr_xpan		location of first header expansion loop							
+    // Ncol_loops_per_xpan	number of collector loops per expansion loop						
+    // L_hdr_xpan			combined perpendicular lengths of each header expansion loop
+    // custom_lengths       should the lengths be input instead of calculated?
+
+    // Outputs :
+    // &L_hdr				length of the header sections
+    // &N_hdr_xpans			number of expansion loops in the header section
+
+    if (!custom_lengths) L_hdr.assign(L_hdr.size(), 2 * L_row_sep);
+    N_hdr_xpans.assign(N_hdr_xpans.size(), 0);
+    for (int i = 0; i < Nhdrsec; i++)
+    {
+        if ((i - offset_hdr_xpan) % Ncol_loops_per_xpan == 0)
+        {
+            N_hdr_xpans[i]++;                                 // start with cold loop
+            N_hdr_xpans[2 * Nhdrsec - 1 - i]++;               // pair hot loop
+            if (!custom_lengths) {
+                L_hdr[i] += L_hdr_xpan;                       // cold loop
+                L_hdr[2 * Nhdrsec - 1 - i] += L_hdr_xpan;     // pair hot loop
+            }
+        }
+    }
+
+    return 0;
+}
+
+int C_csp_trough_collector_receiver::size_rnr_lengths(int Nfieldsec, double L_rnr_pb, int Nrnrsec, int ColType, double northsouth_field_sep,
+    const std::vector<double> &L_SCA, int min_rnr_xpans, const std::vector<double> &L_gap_sca, double Nsca_loop,
+    double L_rnr_per_xpan, double L_rnr_xpan, std::vector<double> &L_runner, std::vector<int> &N_rnr_xpans,
+    bool custom_lengths) {
+    // Parameters:
+    // Nfieldsec				number of field sections
+    // L_rnr_pb				    length of runner piping in and around the power block
+    // Nrnrsec					the number of unique runner diameters
+    // ColType	                the collector type
+    // northsouth_field_sep	    north-south separation between subfields. 0=SCAs are touching
+    // L_SCA[]					the length of the SCAs
+    // min_rnr_xpans			minimum number of expansion loops per single-diameter runner section
+    // L_gap_sca[]			    gap distance between SCAs in the same row
+    // Nsca_loop				number of SCAs in a loop
+    // L_rnr_per_xpan			threshold length of straight runner pipe without an expansion loop
+    // L_rnr_xpan				combined perpendicular lengths of each runner expansion loop
+    // custom_lengths           should the lengths be input instead of calculated?
+
+    // Outputs :
+    // &L_runner				length of the runner sections
+    // &N_rnr_xpans			    number of expansion loops in the runner section
+
+    // Assume there are two field subsections per span, then if there's an even number of spans in the field,
+    //    we count the first header section as half - length.I.e., if a field looks like this:
+    //     (1)        (2)
+    //    |||||||   |||||||
+    //    ---------------- -
+    //    ||||||| : |||||||
+    //            :
+    //           [P]
+    //            :
+    //    ||||||| : |||||||
+    //    ---------------- -
+    //    |||||||   |||||||
+    //      (3)        (4)
+    // Then the field has 4 subfields and two spans.The runner pipe(:) is half the distance between the two spans.
+    // If the number of subfields were 6 (3 spans), the two runner pipe segments would both be equal to the full
+    // distance between spans.
+
+    double x1;
+    int j;
+    double L_runner_linear;
+
+    if (Nfieldsec / 2 % 2 == 1)
+    {
+        x1 = 2.;     //the first runners are normal
+    }
+    else
+    {
+        x1 = 1.;     //the first runners are short
+    }
+
+    if (!custom_lengths) {
+        L_runner[0] = L_rnr_pb;  // Runner piping in and around the power block
+        L_runner[2 * Nrnrsec - 1] = L_rnr_pb;  // assume symmetric runners
+    }
+    N_rnr_xpans[0] = 0;
+    N_rnr_xpans[2 * Nrnrsec - 1] = N_rnr_xpans[0];
+    if (Nrnrsec > 1)
+    {
+        L_runner_linear = 0;  // Runner length minus expansion loops
+        for (int i = 1; i < Nrnrsec; i++)
+        {
+            j = ColType - 1;
+            L_runner_linear = x1 * (northsouth_field_sep + (L_SCA[j] + L_gap_sca[j])*float(Nsca_loop) / 2.);  // no expansion loops
+            N_rnr_xpans[i] = max(min_rnr_xpans, (int)CSP::nint(L_runner_linear / L_rnr_per_xpan));
+            N_rnr_xpans[2 * Nrnrsec - i - 1] = N_rnr_xpans[i];
+            if (!custom_lengths) {
+                L_runner[i] = L_runner_linear + L_rnr_xpan * N_rnr_xpans[i];
+                L_runner[2 * Nrnrsec - i - 1] = L_runner[i];    // assume symmetric runners
+            }
+            x1 = 2.;   //tn 4.25.11 Default to 2 for subsequent runners
+        }
+    }
+
+    return 0;
+}
+
 //***************************************************************************************************
-
-
-
-
-
