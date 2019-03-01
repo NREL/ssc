@@ -620,8 +620,8 @@ bool C_csp_trough_collector_receiver::init_fieldgeom()
 		for (int i = 0; i < m_nhdrsec; i++)
 		{
 			//Also calculate the hot and cold header volume for later use. 4.25 is for header expansion bends
-			v_header_cold += m_D_hdr[i] * m_D_hdr[i] / 4.*CSP::pi*(m_Row_Distance + 4.275)*float(m_nfsec)*2.0;  //tn 4.25.11 The header distance should be multiplied by 2 row spacings
-            v_header_hot += m_D_hdr[i + m_nhdrsec] * m_D_hdr[i + m_nhdrsec] / 4.*CSP::pi*(m_Row_Distance + 4.275)*float(m_nfsec)*2.0;
+			v_header_cold += CSP::pi*m_D_hdr[i] * m_D_hdr[i] / 4.*m_L_hdr[i]*float(m_nfsec);
+            v_header_hot += CSP::pi*m_D_hdr[i + m_nhdrsec] * m_D_hdr[i + m_nhdrsec] / 4.*m_L_hdr[i + m_nhdrsec]*float(m_nfsec);
 		}
 		//Add on inlet/outlet from the header to the loop. Assume header to loop inlet ~= 10 [m] (Kelley/Kearney)
         v_header_cold += 20.*m_A_cs(0, 0)*float(m_nLoops);
@@ -903,7 +903,7 @@ int C_csp_trough_collector_receiver::loop_energy_balance_T_t_end(const C_csp_wea
 
 			//Calculate inlet temperature of the next SCA
 			m_TCS_T_htf_in[i + 1] = m_TCS_T_htf_out[i] - m_Pipe_hl_coef*m_D_3(HT, 0)*CSP::pi*L_int*(m_TCS_T_htf_out[i] - T_db) / (m_dot_htf_loop*c_htf_i);
-			//mjw 1.18.2011 Add the internal energy of the crossover piping and interconnects
+			//mjw 1.18.2011 Add the internal energy of the crossover piping and interconnects between the current SCA and the next one
 			m_E_int_loop[i] = m_E_int_loop[i] + L_int*(pow(m_D_3(HT, 0), 2) / 4.*CSP::pi * rho_htf_i * c_htf_i + m_mc_bal_sca)*(m_TCS_T_htf_out[i] - 298.150);
 		}
 
@@ -3212,17 +3212,18 @@ calc_final_metrics_goto:
 		}
 
 		x3 = float(m_nrunsec) - 1.0;  //Number of contractions/expansions
+        int elbows_per_xpan = 4;
 		m_dot_temp = m_dot_run_in;
 		DP_toField = 0.0;
 		DP_fromField = 0.0;
 		for (int i = 0; i<m_nrunsec; i++)
 		{
 			DP_toField = DP_toField + PressureDrop(m_dot_temp, m_TCS_T_htf_in[0], 1.0, m_D_runner[i], m_HDR_rough, m_L_runner[i], 0.0, x3, 0.0, 0.0,
-				max(float(CSP::nint(m_L_runner[i] / 70.))*4., 8.), 1.0, 0.0, 1.0, 0.0, 0.0, 0.0);   //*m_dot_temp/m_dot_run_in  //mjw 5.11.11 Correct for less than all mass flow passing through each section
+				m_N_rnr_xpans[i]*elbows_per_xpan, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0);   //*m_dot_temp/m_dot_run_in  //mjw 5.11.11 Correct for less than all mass flow passing through each section
 			//if(ErrorFound()) return 1                  
 			//-------SGS from field section
 			DP_fromField = DP_fromField + PressureDrop(m_dot_temp, m_TCS_T_htf_out[m_nSCA - 1], 1.0, m_D_runner[i], m_HDR_rough, m_L_runner[i], x3, 0.0, 0.0, 0.0,
-				max(float(CSP::nint(m_L_runner[i] / 70.))*4., 8.), 1.0, 0.0, 0.0, 0.0, 0.0, 0.0);   //*m_dot_temp/m_dot_run_in  //mjw 5.11.11 Correct for less than all mass flow passing through each section
+                m_N_rnr_xpans[i]*elbows_per_xpan, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0);   //*m_dot_temp/m_dot_run_in  //mjw 5.11.11 Correct for less than all mass flow passing through each section
 			//if(ErrorFound()) return 1
 			if (i>1)
 				m_dot_temp = max(m_dot_temp - 2.*m_m_dot_htf_tot / float(m_nfsec), 0.0);
@@ -3244,7 +3245,7 @@ calc_final_metrics_goto:
 			}
 
 			DP_hdr_cold += PressureDrop(m_dot_header, m_TCS_T_htf_in[0], 1.0, m_D_hdr[i], m_HDR_rough,
-				(m_Row_Distance + 4.275)*2., 0.0, x2, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0); //*m_dot_header/m_dot_header_in  //mjw/tn 1.25.12 already account for m_dot_header in function call //mjw 5.11.11 scale by mass flow passing though
+				m_L_hdr[i], 0.0, x2, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0); //*m_dot_header/m_dot_header_in  //mjw/tn 1.25.12 already account for m_dot_header in function call //mjw 5.11.11 scale by mass flow passing though
 			//if(ErrorFound()) return 1
 			//Siphon off header mass flow rate at each loop.  Multiply by 2 because there are 2 loops per hdr section
 			m_dot_header = max(m_dot_header - 2.0*m_dot_htf, 0.0);
@@ -3264,7 +3265,7 @@ calc_final_metrics_goto:
             }
 
             DP_hdr_hot += PressureDrop(m_dot_header, m_TCS_T_htf_out[m_nSCA - 1], 1.0, m_D_hdr[i], m_HDR_rough,
-                (m_Row_Distance + 4.275)*2., x2, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0); //*m_dot_header/m_dot_header_in  //mjw 5.11.11
+                m_L_hdr[i], x2, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0); //*m_dot_header/m_dot_header_in  //mjw 5.11.11
             //if(ErrorFound()) return 1
             //Add to header mass flow rate at each loop.  Multiply by 2 because there are 2 loops per hdr section
             m_dot_header = m_dot_header + 2.*m_dot_htf;
