@@ -1367,10 +1367,6 @@ void C_csp_trough_collector_receiver::loop_optical_eta(const C_csp_weatherreader
 		double dt_hr = sim_info.ms_ts.m_step / 3600.;			//[hr]
 		double hour = fmod(time_hr, 24.);				//[hr]
 
-		// Convert other input data as necessary
-		double SolarAz = weather.m_solazi;		//[deg] Solar azimuth angle
-		SolarAz = (SolarAz - 180.0) * m_d2r;	//[rad] convert from [deg]
-
 		//Time calculations
 		int day_of_year = (int)ceil(time_hr / 24.);  //Day of the year
 		// Duffie & Beckman 1.5.3b
@@ -1434,8 +1430,19 @@ void C_csp_trough_collector_receiver::loop_optical_eta(const C_csp_weatherreader
 		double SolarTime = StdTime + ((m_shift)*180.0 / CSP::pi) / 15.0 + EOT / 60.0;
 		// m_hour angle (arc of sun) in radians
 		double omega = (SolarTime - 12.0)*15.0*CSP::pi / 180.0;
-		// B. Stine equation for Solar Altitude angle in radians
-		double SolarAlt = asin(sin(Dec)*sin(m_latitude) + cos(m_latitude)*cos(Dec)*cos(omega));
+		
+        // Convert other input data as necessary
+        double SolarAz = weather.m_solazi;		//[deg] Solar azimuth angle
+        SolarAz = (SolarAz - 180.0) * m_d2r;	//[rad] convert from [deg]
+        double SolarAlt;
+
+        if (m_accept_mode == 1) {
+            SolarAlt = CSP::pi / 2 - weather.m_solzen;      //[deg] Solar altitude angle
+        }
+        else {
+            // B. Stine equation for Solar Altitude angle in radians
+		    SolarAlt = asin(sin(Dec)*sin(m_latitude) + cos(m_latitude)*cos(Dec)*cos(omega));
+        }
 
 		// Calculation of Tracking Angle for Trough. Stine Reference
 		double TrackAngle = atan(cos(SolarAlt) * sin(SolarAz - m_ColAz) /

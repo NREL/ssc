@@ -99,3 +99,75 @@ TEST_F(TroughTest, DefocusTest2)
     EXPECT_NEAR(troughOutputs.m_T_salt_hot, 390.96, 390.96 * m_error_tolerance_lo);
     EXPECT_NEAR(troughOutputs.m_m_dot_salt_tot, 1713283.5, 1713283.5 * m_error_tolerance_lo);
 }
+
+TEST_F(TroughTest, SteadyStateTest)
+{
+    troughModel->m_accept_mode = 1;               // flag so solar zenith from weather is used instead of calc'd
+    troughModel->m_accept_init = false;           // running at steady-state but keeping false to avoid side effects
+    troughModel->m_accept_loc = 1;                // don't just model a single loop
+    troughModel->m_is_using_input_gen = false;    // use parameter values set below instead
+    
+    // at time 1476 (1477 end time listed in output)
+    weatherValues.m_year = 2009;
+    weatherValues.m_month = 6;
+    weatherValues.m_day = 21;
+    weatherValues.m_hour = 12;
+    weatherValues.m_minute = 0;
+    weatherValues.m_beam = troughModel->m_I_bn_des;
+    weatherValues.m_tdry = 30;
+    weatherValues.m_tdew = 30 - 10;
+    weatherValues.m_wspd = 5;
+    weatherValues.m_pres = 1013;
+    weatherValues.m_solazi = troughModel->m_ColAz;
+    weatherValues.m_solzen = troughModel->m_ColTilt;
+
+    //htfInletState.m_m_dot = troughModel->m_m_dot_design;
+    //htfInletState.m_pres = 101.3;
+    //htfInletState.m_qual = 0;
+    htfInletState.m_temp = troughModel->m_T_loop_in_des - 273.15;
+    defocus = 1.0;
+
+    troughInfo.ms_ts.m_time_start = 14817600.;
+    troughInfo.ms_ts.m_step = 5.*60.;               // 5-minute timesteps
+    troughInfo.ms_ts.m_time = troughInfo.ms_ts.m_time_start + troughInfo.ms_ts.m_step;
+    troughInfo.m_tou = 1.;
+
+    troughModel->m_T_sys_c_t_end_converged = htfInletState.m_temp + 273.15;       // this sets m_T_sys_c_t_end_last
+    troughModel->m_T_sys_h_t_end_converged = htfInletState.m_temp + 273.15;       // this sets m_T_sys_h_t_end_last
+    troughModel->m_T_htf_out_t_end_converged.assign(troughModel->m_nSCA, htfInletState.m_temp + 273.15);
+
+    // Values for checking whether steady-state
+    double ss_diff = std::numeric_limits<double>::quiet_NaN();
+    const double tol = 0.05;
+    std::vector<double> T_htf_in_t_int_last = troughModel->m_T_htf_in_t_int;
+    std::vector<double> T_htf_out_t_int_last = troughModel->m_T_htf_out_t_int;
+    double minutes2SS = 0.;
+
+    do
+    {
+        troughModel->on(weatherValues, htfInletState, defocus, troughOutputs, troughInfo);
+
+        // Calculate metric for deciding whether steady-state is reached
+        ss_diff = 0.;
+        for (int i = 0; i < troughModel->m_nSCA; i++) {
+            ss_diff += fabs(troughModel->m_T_htf_in_t_int[i] - T_htf_in_t_int_last[i]) +
+                fabs(troughModel->m_T_htf_out_t_int[i] - T_htf_out_t_int_last[i]);
+        }
+
+        // Set converged values so reset_last_temps() propagates the temps in time
+        troughModel->m_T_sys_c_t_end_converged = troughModel->m_T_sys_c_t_end;
+        troughModel->m_T_sys_h_t_end_converged = troughModel->m_T_sys_h_t_end;
+        // SCA temperatures - these set the values of m_T_htf_out_t_end_last[i]
+        troughModel->m_T_htf_out_t_end_converged = troughModel->m_T_htf_out_t_end;
+
+        // Update 'last' values
+        T_htf_in_t_int_last = troughModel->m_T_htf_in_t_int;
+        T_htf_out_t_int_last = troughModel->m_T_htf_out_t_int;
+
+        minutes2SS += troughInfo.ms_ts.m_step / 60.;
+
+    } while (ss_diff / 200. > tol);
+
+    EXPECT_NEAR(troughModel->m_T_sys_h_t_end, 651.9, 651.9 * m_error_tolerance_lo);
+    EXPECT_NEAR(minutes2SS, 35., 35. * m_error_tolerance_lo);
+}

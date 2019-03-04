@@ -149,7 +149,9 @@ public:
         // init inputs
         troughInitInputs.m_latitude = 32.13000107;
         troughInitInputs.m_longitude = -110.9400024;
+        //troughInitInputs.m_tz = -7;
         troughInitInputs.m_shift = -5.940002441;
+        //troughInitInputs.m_elev = -773;
 
         troughModel->init(troughInitInputs, troughSolvedParams);
 
