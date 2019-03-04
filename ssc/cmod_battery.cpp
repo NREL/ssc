@@ -60,7 +60,6 @@
 #include "lib_util.h"
 #include "lib_utility_rate.h"
 
-
 var_info vtab_battery_inputs[] = {
 	/*   VARTYPE           DATATYPE         NAME                                            LABEL                                                   UNITS      META                   GROUP           REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
 
@@ -1357,52 +1356,54 @@ public:
 			// Power from generation sources feeding into battery
 			std::vector<ssc_number_t> power_input = as_vector_ssc_number_t("gen");
 
-			// Set up time
-			size_t nyears = 1;
-			if (as_boolean("system_use_lifetime_output")) {
-				nyears = as_unsigned_long("analysis_period");
-			}
-			size_t nrec = power_input.size() / nyears;
-			size_t nrec_lifetime = nrec * nyears;
-			double dtHour = static_cast<double>(8760. / nrec);
+			int analysis_period = 1;
+			if (is_assigned("analysis_period"))
+				analysis_period = as_integer("analysis_period");
+			if (analysis_period < 1)
+				analysis_period = 1;
 
-			// Setup battery model
-			battstor batt(*this, true, nrec, dtHour);
+			size_t nrec = power_input.size();
 
-			// Allocate outputs
+			// Lifetime simulation
+			bool system_use_lifetime_output = false;
+			if (is_assigned("system_use_lifetime_output"))
+				system_use_lifetime_output = as_boolean("system_use_lifetime_output");
+
+			if (system_use_lifetime_output)
+				nrec = power_input.size()/analysis_period;
+
+			double dt_hour = 1;
+			if (nrec > 0)
+				dt_hour = 8760.0 / (double)nrec;
+
+			battstor batt(*this, true, nrec, dt_hour);
 			ssc_number_t * p_gen = allocate("gen", nrec * batt.nyears);
 
-			// Parse "Load input", which comes in as a single year
-			std::vector<ssc_number_t> power_load_single_year;
+			// Parse "Load input"
 			std::vector<ssc_number_t> power_load;
-
 			if (batt.batt_vars->batt_meter_position == dispatch_t::BEHIND)
 			{
-				power_load_single_year = as_vector_ssc_number_t("load");
-				size_t nload = power_load_single_year.size();
-
-				if (nload != nrec && nload != 8760) {
-					throw exec_error("battery", "electric load profile must have same number of values as weather file, or 8760");
-				}
-
-				power_load.reserve(nrec_lifetime);
-				for (size_t y = 0; y < nyears; y++) {
-					// Load = generation size
-					if (nload == nrec) {
-						for (size_t t = 0; t < nrec; t++) {
-							power_load.push_back(power_load_single_year[t]);
-						}
-					}
-					// Assume load is constant across hour
-					else {
-						for (size_t h = 0; h < 8760; h++) {
-							ssc_number_t loadHour = power_load_single_year[h];
-							for (size_t s = 0; s < batt.step_per_hour; s++) {
-								power_load.push_back(loadHour);
+				// battstor does not handle load recs not equal to power input recs
+				if (is_assigned("load"))
+				{ // hourly or sub hourly loads for single year
+					power_load = as_vector_ssc_number_t("load");
+					if (power_load.size() != power_input.size())
+					{
+						if (power_load.size() != 8760)
+							throw exec_error("battery", "Load length does not match system generation length and is not 8760.");
+						std::vector<ssc_number_t> load_tmp(power_load);
+						power_load.clear();
+						for (size_t iyear = 0; iyear < batt.nyears; iyear++) {
+							for (size_t hour = 0; hour < 8760; hour++) {
+								for (size_t jj = 0; jj < batt.step_per_hour; jj++)
+								{// degradation?
+									power_load.push_back(load_tmp[hour]/(ssc_number_t)batt.step_per_hour);
+								}
 							}
 						}
 					}
 				}
+
 				batt.initialize_automated_dispatch(power_input, power_load);
 			}
 			else
@@ -1422,8 +1423,8 @@ public:
 			}
 	
 			// Error checking
-			if (power_input.size() != nrec_lifetime)
-				throw exec_error("battery", "Load and PV power do not match weatherfile length");
+			if (power_input.size() != power_load.size())
+				throw exec_error("battery", "Load length does not match system generation length");
 
 			
 			if (batt.step_per_hour > 60 || batt.total_steps != power_input.size())
@@ -1459,7 +1460,7 @@ public:
 					{
 						// assume that anyone using this module is chaining with two techs
 						float techs = 3;
-						percent = percent_complete + 100.0f * ((float)lifetime_idx + 1) / ((float)nrec_lifetime) / techs;
+						percent = percent_complete + 100.0f * ((float)lifetime_idx + 1) / ((float)nrec) / techs;
 						if (!update("", percent, (float)hour)) {
 							throw exec_error("battery", "simulation canceled at hour " + util::to_string(hour + 1.0));
 						}
@@ -1470,7 +1471,7 @@ public:
 	
 						batt.initialize_time(year, hour, jj);
 						batt.check_replacement_schedule();
-						batt.advance(*this, power_input[lifetime_idx], 0, power_load[year_idx], 0);
+						batt.advance(*this, power_input[year_idx], 0, power_load[year_idx], 0);
 						p_gen[lifetime_idx] = batt.outGenPower[lifetime_idx];
 
 						if (year == 0) {

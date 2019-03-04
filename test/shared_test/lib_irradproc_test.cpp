@@ -63,6 +63,33 @@ TEST_F(SunriseCaseIrradProc, solarposTest_lib_irradproc){
 	}
 }
 
+TEST_F(IrradTest, sunriseAndSunsetAtDifferentLocationsTest_lib_irradproc) {
+	/*locations to test:
+	western hemisphere: Golden CO
+	eastern hemisphere: Berlin Germany
+	southern hemisphere: Lima Peru
+	location near Greenwich meridian with negative longitude and positive time zone: Madrid Spain
+	location near the international dateline with positive longitude and negative time zone: Lomaji, Fiji
+	arctic circle: Kotzebue, Alaska
+	*/
+	e = 0.001;
+	vector<double> latitudes = { 39.77, 52.5, -12.03, 40.43, -17.75, 66.9 };
+	vector<double> longitudes = { -105.22, 13.3, -77.06, -3.72, -179.3, -162.6 };
+	vector<double> time_zones = { -7, 1, -5, 1, 12, -9 };
+	vector<double> sunrise_times = { 4.636, 3.849, 6.521, 5.833, 6.513, 0 };
+	vector<double> sunset_times = { 19.455, 20.436, 17.814, 20.723, 17.449, 24 };
+
+	double sun_results[9]; //vector to hold the results of solarpos function
+	for (int i = 0; i < latitudes.size(); i++)
+	{
+		//run the solarpos function and check sunrise and sunset for each location
+		solarpos(2010, 6, 21, 14, 30, latitudes[i], longitudes[i], time_zones[i], sun_results);
+		EXPECT_NEAR((double)sun_results[4], sunrise_times[i], e) << "sunrise time for lat " << latitudes[i] << " long " << longitudes[i] << " failed\n";
+		EXPECT_NEAR((double)sun_results[5], sunset_times[i], e) << "sunset time for lat" << latitudes[i] << " long " << longitudes[i] << "failed\n";
+	}
+}
+
+
 TEST_F(DayCaseIrradProc, solarposTest_lib_irradproc){
 	double sun[9];
 	vector<double> sunrise_times;
