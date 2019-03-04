@@ -218,38 +218,32 @@ void solarpos(int year,int month,int day,int hour,double minute,double lat,doubl
 	else if( E > 0.33 )
 		E = E - 24.0;
 
-	//sunrise/sunset hour angle, ws, Duffie & Beckman equation 1.6.10 page 17
 	arg = -tan(lat)*tan(dec);
-	if( arg >= 1.0 )
-		ws = 0.0;                         /* No sunrise, continuous nights */
-	else if( arg <= -1.0 )
-		ws = M_PI;                          /* No sunset, continuous days */
+	if (arg >= 1.0)  /* No sunrise, continuous nights */
+	{
+		ws = 0.0;                        
+		sunrise = 24;
+		sunset = 0;
+	}
+	else if (arg <= -1.0) /* No sunset, continuous days */
+	{
+		ws = M_PI;                          
+		sunrise = 0;
+		sunset = 24;
+	}
 	else
-		ws = acos(arg);                   /* Sunrise hour angle in radians */
-
-	/*Need to use Duffie & Beckman conventions for longitude, time zone , and hour angle so that the sunrise/sunset equations work when 
-	latitude is positive and time zone is negative, such as locations near the international dateline. Can't just check for sunrise/sunset
-	outside of 0-24 hours, because in very high latitudes, sometimes sunrise/sunset is legitimately outside of these hours.*/
-	double db_lng = lng; //define a longitude using the Duffie & Beckman longitude convention (degrees WEST of standard meridian, from 0-360)
-	if (lng <= 0) db_lng = lng * -1; //translate from west being negative to west being positive, also covers the zero case
-	else db_lng = 360 - lng; //translate from positive degrees east number of degrees west of meridian
-	double db_tz = tz; //define a time zone using the Duffie & Beckman convention (degrees WEST of standard meridian, 0-24)
-	if (tz <= 0) db_tz = tz * -1; //translate from negative timezones west to positive time zones west, also covers the zero case
-	else db_tz = 24 - tz; //translate positive time zones into the 24 scale
-
-	/* Sunrise and sunset in local standard time 
-	Reference: Duffie & Beckman "Solar Engineering of Thermal Processes" Version 3
-	Solar time - standard time = 4(Lst - Lloc) + E	(Equation 1.5.2, page 11)
-		where solar time and standard time are in MINUTES
-		Lst is the standard meridian longitude of the time zone in degrees WEST (0 < Lst < 360)
-		Lloc is the location longitude in degrees WEST (0 < Lloc < 360)
-		E = equation of time in minutes
-	We translate the equation into hours
-	AND
-	sunrise = solar noon +- sunrise/sunset hour angle (Example 1.6.3 page 19)
-	*/
-	sunrise = 12.0 - (ws / DTOR) / 15.0 - db_tz + db_lng / 15.0 - E; //sunrise in units of hours (e.g. 5.25 = 5:15 am)
-	sunset = 12.0 + (ws / DTOR) / 15.0 - db_tz + db_lng / 15.0 - E; //sunset in units of hours (e.g. 18.75 = 6:45 pm)
+	{
+		ws = acos(arg); /* Sunrise hour angle in radians */
+		/* Sunrise and sunset in local standard time */
+		sunrise = 12.0 - (ws / DTOR) / 15.0 - (lng / 15.0 - tz) - E; //sunrise in units of hours (e.g. 5.25 = 5:15 am)
+		sunset = 12.0 + (ws / DTOR) / 15.0 - (lng / 15.0 - tz) - E; //sunset in units of hours (e.g. 18.75 = 6:45 pm)
+		//if time zone and longitude are opposite signs (happens near international dateline and greenwich meridian), then sometimes sunrise/sunset will be off by 24 hrs
+		//add catches to check for that and correct it if so
+		if (sunrise > 24) sunrise -= 24;
+		else if (sunrise < 0) sunrise += 24;
+		if (sunset > 24) sunset -= 24;
+		else if (sunset < 0) sunset += 24;
+	}
 
 	Eo = 1.00014 - 0.01671*cos(mnanom) - 0.00014*cos(2.0*mnanom);  /* Earth-sun distance (AU) */
 	Eo = 1.0/(Eo*Eo);                    /* Eccentricity correction factor */
