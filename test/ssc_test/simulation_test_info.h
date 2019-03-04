@@ -71,7 +71,7 @@ public:
 		nR = first.nR;
 		info = new TestInfo[nI];
 		result = new TestResult[nR];
-		for (size_t i = 0; i < nI; i++) {
+		for (int i = 0; i < nI; i++) {
 			info[i].dataType = first.getInfo()[i].dataType;
 			info[i].length = first.getInfo()[i].length;
 			info[i].sscVarName = first.getInfo()[i].sscVarName;
@@ -79,7 +79,7 @@ public:
 			info[i].width = first.getInfo()[i].width;
 
 		}
-		for (size_t i = 0; i < nR; i++) {
+		for (int i = 0; i < nR; i++) {
 			result[i].errorBound = first.getResult()[i].errorBound;
 			result[i].expectedResult = first.getResult()[i].expectedResult;
 			result[i].sscVarName = first.getResult()[i].sscVarName;
@@ -159,7 +159,7 @@ class testDeclaration {
 public:
 	testDeclaration(computeModuleTestData& testData, const char* testName, TestInfo* I, size_t nInfo, TestResult* R, int nRes) {
 		std::vector<SimulationTestTable*>* allTests = testData.tests;
-		if (allTests->size() > 0 && nInfo < (*allTests)[0]->getNumInfo()) {
+		if (allTests->size() > 0 && (int)nInfo < (*allTests)[0]->getNumInfo()) {
 			test = new SimulationTestTable(*(*allTests)[0]);
 			test->name = testName;
 			bool success = test->modifyTestInfo(*(testData.map), I, nInfo, testName);
