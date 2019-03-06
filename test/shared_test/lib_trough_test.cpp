@@ -139,8 +139,8 @@ TEST_F(TroughTest, SteadyStateTest)
     // Values for checking whether steady-state
     double ss_diff = std::numeric_limits<double>::quiet_NaN();
     const double tol = 0.05;
-    std::vector<double> T_htf_in_t_int_last = troughModel->m_T_htf_in_t_int;
-    std::vector<double> T_htf_out_t_int_last = troughModel->m_T_htf_out_t_int;
+    std::vector<double> T_htf_in_t_int_prev = troughModel->m_T_htf_in_t_int;
+    std::vector<double> T_htf_out_t_int_prev = troughModel->m_T_htf_out_t_int;
     double minutes2SS = 0.;
 
     do
@@ -150,8 +150,8 @@ TEST_F(TroughTest, SteadyStateTest)
         // Calculate metric for deciding whether steady-state is reached
         ss_diff = 0.;
         for (int i = 0; i < troughModel->m_nSCA; i++) {
-            ss_diff += fabs(troughModel->m_T_htf_in_t_int[i] - T_htf_in_t_int_last[i]) +
-                fabs(troughModel->m_T_htf_out_t_int[i] - T_htf_out_t_int_last[i]);
+            ss_diff += fabs(troughModel->m_T_htf_in_t_int[i] - T_htf_in_t_int_prev[i]) +
+                fabs(troughModel->m_T_htf_out_t_int[i] - T_htf_out_t_int_prev[i]);
         }
 
         // Set converged values so reset_last_temps() propagates the temps in time
@@ -161,8 +161,8 @@ TEST_F(TroughTest, SteadyStateTest)
         troughModel->m_T_htf_out_t_end_converged = troughModel->m_T_htf_out_t_end;
 
         // Update 'last' values
-        T_htf_in_t_int_last = troughModel->m_T_htf_in_t_int;
-        T_htf_out_t_int_last = troughModel->m_T_htf_out_t_int;
+        T_htf_in_t_int_prev = troughModel->m_T_htf_in_t_int;
+        T_htf_out_t_int_prev = troughModel->m_T_htf_out_t_int;
 
         minutes2SS += troughInfo.ms_ts.m_step / 60.;
 
