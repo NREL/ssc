@@ -1,20 +1,20 @@
 #include <gtest/gtest.h>
 
 #include "core.h"
-#ifndef _CMOD_TROUGH_PHYSICAL_IPH_TEST_H_
-#define _CMOD_TROUGH_PHYSICAL_IPH_TEST_H_
+#ifndef _CMOD_TROUGH_PHYSICAL_TEST_H_
+#define _CMOD_TROUGH_PHYSICAL_TEST_H_
 
 #include "../ssc/vartab.h"
 #include "../ssc/common.h"
-#include "../tcs_test/trough_physical_iph_cases.h"
+#include "../tcs_test/trough_physical_cases.h"
 
 /**
- * CMTroughPhysicalIPH tests the cmod_trough_physical_iph using the SAM code generator to generate data
+ * CMTroughPhysical tests the cmod_trough_physical using the SAM code generator to generate data
  * Eventually a method can be written to write this data to a vartable so that lower-level methods of
- * trough_physical_process_heat can be tested
+ * trough_physical can be tested
  * For now, this uses the SSCAPI interfaces to run the compute module and compare results
  */
-class CMTroughPhysicalIPH : public ::testing::Test{
+class CMTroughPhysical : public ::testing::Test{
 
 public:
 
@@ -27,7 +27,7 @@ public:
 	void SetUp()
 	{
 		data = ssc_data_create();
-        trough_physical_iph_default(data);
+        trough_physical_default(data);
 		calculated_array = new ssc_number_t[8760];
 	}
 	void TearDown() {
@@ -49,4 +49,4 @@ public:
 	}
 };
 
-#endif // !_CMOD_TROUGH_PHYSICAL_IPH_TEST_H_
+#endif // !_CMOD_TROUGH_PHYSICAL_TEST_H_

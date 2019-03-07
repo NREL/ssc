@@ -6,7 +6,7 @@
 
 #include "../ssc/vartab.h"
 #include "../ssc/common.h"
-#include "../input_cases/tcsmolten_salt_cases.h"
+#include "../tcs_test/tcsmolten_salt_cases.h"
 
 /**
  * CMtcsMoltenSalt tests the cmod_tcsmolten_salt using the SAM code generator to generate data

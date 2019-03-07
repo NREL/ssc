@@ -2,7 +2,7 @@
 #define _TCSMOLTEN_SALT_CASES_H_
 
 #include <map>
-#include "code_generator_utilities.h"
+#include "../input_cases/code_generator_utilities.h"
 #include "tcsmolten_salt_common_data.h"
 
 /**

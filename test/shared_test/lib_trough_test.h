@@ -125,31 +125,33 @@ public:
         troughModel->m_Design_loss = Design_loss;
         troughModel->m_SCAInfoArray = SCAInfoArray;
 
-        troughModel->calc_design_pipe_vals = calc_design_pipe_vals;
-        troughModel->L_rnr_pb = L_rnr_pb;
-        troughModel->N_max_hdr_diams = N_max_hdr_diams;
-        troughModel->L_rnr_per_xpan = L_rnr_per_xpan;
-        troughModel->L_xpan_hdr = L_xpan_hdr;
-        troughModel->L_xpan_rnr = L_xpan_rnr;
-        troughModel->Min_rnr_xpans = Min_rnr_xpans;
-        troughModel->northsouth_field_sep = northsouth_field_sep;
-        troughModel->N_hdr_per_xpan = N_hdr_per_xpan;
-        troughModel->K_cpnt = K_cpnt;
-        troughModel->D_cpnt = D_cpnt;
-        troughModel->L_cpnt = L_cpnt;
-        troughModel->Type_cpnt = Type_cpnt;
-        troughModel->custom_sf_pipe_sizes = custom_sf_pipe_sizes;
-        troughModel->sf_rnr_diams = sf_rnr_diams;
-        troughModel->sf_rnr_wallthicks = sf_rnr_wallthicks;
-        troughModel->sf_rnr_lengths = sf_rnr_lengths;
-        troughModel->sf_hdr_diams = sf_hdr_diams;
-        troughModel->sf_hdr_wallthicks = sf_hdr_wallthicks;
-        troughModel->sf_hdr_lengths = sf_hdr_lengths;
+        troughModel->m_calc_design_pipe_vals = calc_design_pipe_vals;
+        troughModel->m_L_rnr_pb = L_rnr_pb;
+        troughModel->m_N_max_hdr_diams = N_max_hdr_diams;
+        troughModel->m_L_rnr_per_xpan = L_rnr_per_xpan;
+        troughModel->m_L_xpan_hdr = L_xpan_hdr;
+        troughModel->m_L_xpan_rnr = L_xpan_rnr;
+        troughModel->m_Min_rnr_xpans = Min_rnr_xpans;
+        troughModel->m_northsouth_field_sep = northsouth_field_sep;
+        troughModel->m_N_hdr_per_xpan = N_hdr_per_xpan;
+        troughModel->m_K_cpnt = K_cpnt;
+        troughModel->m_D_cpnt = D_cpnt;
+        troughModel->m_L_cpnt = L_cpnt;
+        troughModel->m_Type_cpnt = Type_cpnt;
+        troughModel->m_custom_sf_pipe_sizes = custom_sf_pipe_sizes;
+        troughModel->m_sf_rnr_diams = sf_rnr_diams;
+        troughModel->m_sf_rnr_wallthicks = sf_rnr_wallthicks;
+        troughModel->m_sf_rnr_lengths = sf_rnr_lengths;
+        troughModel->m_sf_hdr_diams = sf_hdr_diams;
+        troughModel->m_sf_hdr_wallthicks = sf_hdr_wallthicks;
+        troughModel->m_sf_hdr_lengths = sf_hdr_lengths;
 
         // init inputs
         troughInitInputs.m_latitude = 32.13000107;
         troughInitInputs.m_longitude = -110.9400024;
+        troughInitInputs.m_tz = -7;
         troughInitInputs.m_shift = -5.940002441;
+        troughInitInputs.m_elev = -773;
 
         troughModel->init(troughInitInputs, troughSolvedParams);
 
