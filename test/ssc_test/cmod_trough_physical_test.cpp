@@ -14,43 +14,43 @@ TEST_F(CMTroughPhysical, DefaultNoFinancialModel){
 	{
         ssc_number_t annual_gross_energy;
         ssc_data_get_number(data, "annual_gross_energy", &annual_gross_energy);
-        EXPECT_NEAR(annual_gross_energy, 3.703e8, 3.703e8 * m_error_tolerance_lo) << "Annual Gross Thermal Energy Production";
+        EXPECT_NEAR(annual_gross_energy, 3.671e8, 3.671e8 * m_error_tolerance_lo) << "Annual Gross Thermal Energy Production";
 
         ssc_number_t annual_energy;
         ssc_data_get_number(data, "annual_energy", &annual_energy);
-        EXPECT_NEAR(annual_energy, 3.697e8, 3.697e8 * m_error_tolerance_lo) << "Annual Net Thermal Energy Production";
+        EXPECT_NEAR(annual_energy, 3.665e8, 3.665e8 * m_error_tolerance_lo) << "Annual Net Thermal Energy Production";
 
         ssc_number_t annual_thermal_consumption;
         ssc_data_get_number(data, "annual_thermal_consumption", &annual_thermal_consumption);
-        EXPECT_NEAR(annual_thermal_consumption, 588152, 588152 * m_error_tolerance_lo) << "Annual Thermal Freeze Protection";
+        EXPECT_NEAR(annual_thermal_consumption, 637831, 637831 * m_error_tolerance_lo) << "Annual Thermal Freeze Protection";
 
         ssc_number_t annual_tes_freeze_protection;
         ssc_data_get_number(data, "annual_tes_freeze_protection", &annual_tes_freeze_protection);
-        EXPECT_NEAR(annual_tes_freeze_protection, 588152, 588152 * m_error_tolerance_lo) << "Annual TES Freeze Protection";
+        EXPECT_NEAR(annual_tes_freeze_protection, 620022, 620022 * m_error_tolerance_lo) << "Annual TES Freeze Protection";
 
         ssc_number_t annual_field_freeze_protection;
         ssc_data_get_number(data, "annual_field_freeze_protection", &annual_field_freeze_protection);
-        EXPECT_NEAR(annual_field_freeze_protection, 0., m_error_tolerance_lo) << "Annual Field Freeze Protection";
+        EXPECT_NEAR(annual_field_freeze_protection, 17809, 17809 * m_error_tolerance_lo) << "Annual Field Freeze Protection";
 
         ssc_number_t capacity_factor;
         ssc_data_get_number(data, "capacity_factor", &capacity_factor);
-        EXPECT_NEAR(capacity_factor, 42.24, 42.24 * m_error_tolerance_lo) << "Capacity factor";
+        EXPECT_NEAR(capacity_factor, 41.89, 41.89 * m_error_tolerance_lo) << "Capacity factor";
 
         ssc_number_t annual_W_cycle_gross;
         ssc_data_get_number(data, "annual_W_cycle_gross", &annual_W_cycle_gross);
-        EXPECT_NEAR(annual_W_cycle_gross, 4.225e8, 4.225e8 * m_error_tolerance_lo) << "Power cycle gross electrical output";
+        EXPECT_NEAR(annual_W_cycle_gross, 4.206e8, 4.206e8 * m_error_tolerance_lo) << "Power cycle gross electrical output";
 
         ssc_number_t kwh_per_kw;
         ssc_data_get_number(data, "kwh_per_kw", &kwh_per_kw);
-        EXPECT_NEAR(kwh_per_kw, 3701., 3701. * m_error_tolerance_lo) << "First year kWh/kW";
+        EXPECT_NEAR(kwh_per_kw, 3669., 3669. * m_error_tolerance_lo) << "First year kWh/kW";
 
         ssc_number_t conversion_factor;
         ssc_data_get_number(data, "conversion_factor", &conversion_factor);
-        EXPECT_NEAR(conversion_factor, 87.51, 87.51 * m_error_tolerance_lo) << "Gross to Net Conversion Factor";
+        EXPECT_NEAR(conversion_factor, 87.13, 87.13 * m_error_tolerance_lo) << "Gross to Net Conversion Factor";
 
         ssc_number_t annual_total_water_use;
         ssc_data_get_number(data, "annual_total_water_use", &annual_total_water_use);
-        EXPECT_NEAR(annual_total_water_use, 81031, 81031 * m_error_tolerance_lo) << "Annual Total Water Use";
+        EXPECT_NEAR(annual_total_water_use, 80864, 80864 * m_error_tolerance_lo) << "Annual Total Water Use";
 
 		//ssc_number_t VARIABLE;
 		//ssc_data_get_number(data, "VARIABLE", &VARIABLE);
