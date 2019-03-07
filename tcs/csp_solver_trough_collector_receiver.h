@@ -450,6 +450,7 @@ public:
     util::matrix_t<double> m_sf_hdr_lengths;      //[m] Imported header lengths, used if custom_sf_pipe_sizes is true
 
     std::vector<double> m_D_runner;	              //[m]    Diameters of runner sections
+    std::vector<double> m_WallThk_runner;	      //[m]    Pipe wall thicknesses of runner sections
     std::vector<double> m_m_dot_rnr_dsn;          //[kg/s] Design mass flow through runner sections
     std::vector<double> m_V_rnr_dsn;              //[m/s]  Design velocity through runner sections
     std::vector<double> m_L_runner;	              //[m]    Lengths of runner sections
@@ -461,10 +462,11 @@ public:
     std::vector<double> m_P_rnr;                  //[Pa ]  Gauge pessure in runner sections
                                                   
     std::vector<double> m_D_hdr;	              //[m]    Diameters of header sections
-    std::vector<double> m_m_dot_hdr_dsn;          //[kg/s] Design mass flow through runner sections
-    std::vector<double> m_V_hdr_dsn;              //[m/s]  Design velocity through runner sections
-    std::vector<double> m_L_hdr;	              //[m]    Lengths of runner sections
-    std::vector<int> m_N_hdr_xpans;               //[-]    Number of expansions in runner sections
+    std::vector<double> m_WallThk_hdr;   	      //[m]    Pipe wall thicknesses of header sections
+    std::vector<double> m_m_dot_hdr_dsn;          //[kg/s] Design mass flow through header sections
+    std::vector<double> m_V_hdr_dsn;              //[m/s]  Design velocity through header sections
+    std::vector<double> m_L_hdr;	              //[m]    Lengths of header sections
+    std::vector<int> m_N_hdr_xpans;               //[-]    Number of expansions in header sections
     std::vector<double> m_DP_hdr;                 //[bar]  Pressure drop in header sections
     std::vector<double> m_T_hdr_dsn;              //[C]    Temperature in header sections at design
     std::vector<double> m_P_hdr_dsn;              //[bar]  Gauge pessure in header sections at design

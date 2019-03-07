@@ -152,6 +152,8 @@ C_csp_trough_collector_receiver::C_csp_trough_collector_receiver()
 	m_accept_loc = -1;
 	m_is_using_input_gen = false;
 
+    m_custom_sf_pipe_sizes = false;
+
 	m_solar_mult = std::numeric_limits<double>::quiet_NaN();
 	m_mc_bal_hot = std::numeric_limits<double>::quiet_NaN();
 	m_mc_bal_cold = std::numeric_limits<double>::quiet_NaN();
@@ -628,7 +630,7 @@ bool C_csp_trough_collector_receiver::init_fieldgeom()
         //Calculate the header design
         m_nrunsec = (int)floor(float(m_nfsec) / 4.0) + 1;  //The number of unique runner diameters
         m_D_runner.resize(2 * m_nrunsec);
-        //m_WallThk_runner.resize(2 * m_nrunsec);
+        m_WallThk_runner.resize(2 * m_nrunsec);
         m_L_runner.resize(2 * m_nrunsec);
         m_m_dot_rnr_dsn.resize(2 * m_nrunsec);
         m_V_rnr_dsn.resize(2 * m_nrunsec);
@@ -639,7 +641,7 @@ bool C_csp_trough_collector_receiver::init_fieldgeom()
         m_P_rnr_dsn = m_P_rnr;
         m_T_rnr_dsn = m_T_rnr;
         m_D_hdr.resize(2 * m_nhdrsec);
-        //m_WallThk_hdr.resize(2 * m_nhdrsec);
+        m_WallThk_hdr.resize(2 * m_nhdrsec);
         m_L_hdr.resize(2 * m_nhdrsec);
         m_N_hdr_xpans.resize(2 * m_nhdrsec);
         m_m_dot_hdr_dsn.resize(2 * m_nhdrsec);
@@ -649,13 +651,26 @@ bool C_csp_trough_collector_receiver::init_fieldgeom()
         m_T_hdr.resize(2 * m_nhdrsec);
         m_P_hdr_dsn = m_P_hdr;
         m_T_hdr_dsn = m_T_hdr;
-        //m_DP_intc.resize(m_nSCA + 3);
-        //m_P_intc.resize(m_nSCA + 3);
         m_DP_loop.resize(2 * m_nSCA + 3);
         m_P_loop.resize(2 * m_nSCA + 3);
         m_T_loop.resize(2 * m_nSCA + 3);
         m_P_loop_dsn = m_P_loop;
         m_T_loop_dsn = m_T_loop;
+
+        if (m_custom_sf_pipe_sizes) {
+            if (m_sf_rnr_diams.ncells() == 2 * m_nrunsec && m_sf_rnr_wallthicks.ncells() == 2 * m_nrunsec && m_sf_rnr_lengths.ncells() == 2 * m_nrunsec &&
+                m_sf_hdr_diams.ncells() == 2 * m_nhdrsec && m_sf_hdr_wallthicks.ncells() == 2 * m_nhdrsec && m_sf_hdr_lengths.ncells() == 2 * m_nhdrsec) {
+                m_D_runner.assign(m_sf_rnr_diams, m_sf_rnr_diams.ncells());
+                m_WallThk_runner.assign(m_sf_rnr_wallthicks, m_sf_rnr_wallthicks.ncells());
+                m_L_runner.assign(m_sf_rnr_lengths, m_sf_rnr_lengths.ncells());
+                m_D_hdr.assign(m_sf_hdr_diams, m_sf_hdr_diams.ncells());
+                m_WallThk_hdr.assign(m_sf_hdr_wallthicks, m_sf_hdr_wallthicks.ncells());
+                m_L_hdr.assign(m_sf_hdr_lengths, m_sf_hdr_lengths.ncells());
+            }
+            else {
+                throw(C_csp_exception("The number of custom solar field pipe sections is not correct.", "Trough collector solver"));
+            }
+        }
 
         std::string summary;
         // Use legacy m_V_hdr_max and/or m_V_hdr_min if you need to
@@ -668,6 +683,16 @@ bool C_csp_trough_collector_receiver::init_fieldgeom()
         rnr_and_hdr_design(m_nhdrsec, m_nfsec, m_nrunsec, rho_ave, m_V_hdr_cold_max, m_V_hdr_cold_min,
             m_V_hdr_hot_max, m_V_hdr_hot_min, m_N_max_hdr_diams, m_m_dot_design, m_D_hdr, m_D_runner,
             m_m_dot_rnr_dsn, m_m_dot_hdr_dsn, m_V_rnr_dsn, m_V_hdr_dsn, &summary, m_custom_sf_pipe_sizes);
+
+        if (!m_custom_sf_pipe_sizes) {
+            // Calculate pipe wall thicknesses
+            for (int i = 0; i < m_D_runner.size(); i++) {
+                m_WallThk_runner[i] = CSP::WallThickness(m_D_runner[i]);
+            }
+            for (int i = 0; i < m_D_hdr.size(); i++) {
+                m_WallThk_hdr[i] = CSP::WallThickness(m_D_hdr[i]);
+            }
+        }
 
         // Do one-time calculations for system geometry.
             // Determine header section lengths, including expansion loops
