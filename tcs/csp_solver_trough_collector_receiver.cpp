@@ -51,6 +51,7 @@
 
 #include "tcstype.h"
 #include "sam_csp_util.h"
+#include "interconnect.h"
 
 using namespace std;
 
@@ -274,6 +275,8 @@ void C_csp_trough_collector_receiver::init(const C_csp_collector_receiver::S_csp
 	m_longitude *= m_d2r;		//[rad] convert from [deg]
 	m_shift *= m_d2r;			//[rad] convert from [deg]
 
+    m_P_field_in = 17 / 1.e-5;                //Assumed inlet htf pressure for property lookups (DP_tot_max = 16 bar + 1 atm) [Pa]
+
 	// Set trough HTF properties
 	if (m_Fluid != HTFProperties::User_defined)
 	{
@@ -405,6 +408,20 @@ void C_csp_trough_collector_receiver::init(const C_csp_collector_receiver::S_csp
 	m_T_htf_in_t_int.resize(m_nSCA);
 	m_T_htf_out_t_end.resize(m_nSCA);
 	m_T_htf_out_t_int.resize(m_nSCA);
+
+    // Initialize interconnects
+    m_interconnects.reserve(m_K_cpnt.nrows());  // m_K_cpnt.nrows() = number of interconnects
+    m_rough_cpnt.resize_fill(m_K_cpnt.nrows(), m_K_cpnt.ncols(), m_HDR_rough);
+    m_u_cpnt.resize_fill(m_K_cpnt.nrows(), m_K_cpnt.ncols(), m_Pipe_hl_coef);
+    m_mc_cpnt.resize(m_K_cpnt.nrows(), m_K_cpnt.ncols());
+    for (std::size_t i = 0; i < m_mc_cpnt.ncells(); i++) {
+        m_mc_cpnt[i] = m_mc_bal_sca * m_L_cpnt[i];
+    }
+    for (std::size_t i = 0; i < m_K_cpnt.nrows(); i++) {
+        m_interconnects.push_back(interconnect(&m_htfProps, m_K_cpnt.row(i).data(), m_D_cpnt.row(i).data(), m_L_cpnt.row(i).data(),
+            m_rough_cpnt.row(i).data(), m_u_cpnt.row(i).data(), m_mc_cpnt.row(i).data(), m_Type_cpnt.row(i).data(), m_K_cpnt.ncols()));
+    }
+
 	// **************************************
 
 	//Set up annulus gas and absorber property matrices
@@ -437,6 +454,60 @@ void C_csp_trough_collector_receiver::init(const C_csp_collector_receiver::S_csp
 	solved_params.m_T_htf_cold_des = m_T_loop_in_des;	//[K]
 	solved_params.m_q_dot_rec_des = m_q_design/1.E6;	//[MWt]
 	solved_params.m_A_aper_total = m_Ap_tot;			//[m^2]
+
+    // Calculate other design parameters
+    if (m_calc_design_pipe_vals == true) {
+        // Save original settings
+        int accept_mode_orig = m_accept_mode;
+        bool accept_init_orig = m_accept_init;
+        int accept_loc_orig = m_accept_loc;
+        bool is_using_input_gen_orig = m_is_using_input_gen;
+
+        m_accept_mode = 1;                              // flag so solar zenith from weather is used instead of calc'd
+        m_accept_init = false;                          // running at steady-state but keeping false to avoid side effects
+        m_accept_loc = 1;                               // don't just model a single loop
+        m_is_using_input_gen = false;                   // use parameter values set below instead
+
+        C_csp_weatherreader::S_outputs weatherValues;
+        weatherValues.m_lat = init_inputs.m_latitude;
+        weatherValues.m_lon = init_inputs.m_longitude;
+        weatherValues.m_tz = init_inputs.m_tz;
+        weatherValues.m_shift = init_inputs.m_shift;
+        weatherValues.m_elev = init_inputs.m_elev;
+        weatherValues.m_year = 2009;
+        weatherValues.m_month = 6;
+        weatherValues.m_day = 21;
+        weatherValues.m_hour = 12;
+        weatherValues.m_minute = 0;
+        weatherValues.m_beam = m_I_bn_des;
+        weatherValues.m_tdry = 30;
+        weatherValues.m_tdew = 30 - 10;
+        weatherValues.m_wspd = 5;
+        weatherValues.m_pres = 1013;
+        weatherValues.m_solazi = m_ColAz;
+        weatherValues.m_solzen = m_ColTilt;
+
+        C_csp_solver_htf_1state htfInletState;
+        //htfInletState.m_m_dot = m_m_dot_design;
+        //htfInletState.m_pres = 101.3;
+        //htfInletState.m_qual = 0;
+        htfInletState.m_temp = m_T_loop_in_des - 273.15;
+        double defocus = 1;
+        C_csp_solver_sim_info troughInfo;
+        troughInfo.ms_ts.m_time_start = 14817600.;
+        troughInfo.ms_ts.m_step = 5.*60.;               // 5-minute timesteps
+        troughInfo.ms_ts.m_time = troughInfo.ms_ts.m_time_start + troughInfo.ms_ts.m_step;
+        troughInfo.m_tou = 1.;
+        C_csp_collector_receiver::S_csp_cr_out_solver troughOutputs;
+
+        steady_state(weatherValues, htfInletState, defocus, troughOutputs, troughInfo);
+
+        // Restore original settings
+        m_accept_mode = accept_mode_orig;
+        m_accept_init = accept_init_orig;
+        m_accept_loc = accept_loc_orig;
+        m_is_using_input_gen = is_using_input_gen_orig;
+    }
 
 	// Set previous operating mode
 	m_operating_mode_converged = C_csp_collector_receiver::OFF;					//[-] 0 = requires startup, 1 = starting up, 2 = running
@@ -557,15 +628,34 @@ bool C_csp_trough_collector_receiver::init_fieldgeom()
         //Calculate the header design
         m_nrunsec = (int)floor(float(m_nfsec) / 4.0) + 1;  //The number of unique runner diameters
         m_D_runner.resize(2 * m_nrunsec);
+        //m_WallThk_runner.resize(2 * m_nrunsec);
         m_L_runner.resize(2 * m_nrunsec);
-        m_m_dot_rnr.resize(2 * m_nrunsec);
-        m_V_rnr.resize(2 * m_nrunsec);
+        m_m_dot_rnr_dsn.resize(2 * m_nrunsec);
+        m_V_rnr_dsn.resize(2 * m_nrunsec);
         m_N_rnr_xpans.resize(2 * m_nrunsec);  //calculated number of expansion loops in the runner section
+        m_DP_rnr.resize(2 * m_nrunsec);
+        m_P_rnr.resize(2 * m_nrunsec);
+        m_T_rnr.resize(2 * m_nrunsec);
+        m_P_rnr_dsn = m_P_rnr;
+        m_T_rnr_dsn = m_T_rnr;
         m_D_hdr.resize(2 * m_nhdrsec);
+        //m_WallThk_hdr.resize(2 * m_nhdrsec);
         m_L_hdr.resize(2 * m_nhdrsec);
         m_N_hdr_xpans.resize(2 * m_nhdrsec);
-        m_m_dot_hdr.resize(2 * m_nhdrsec);
-        m_V_hdr.resize(2 * m_nhdrsec);
+        m_m_dot_hdr_dsn.resize(2 * m_nhdrsec);
+        m_V_hdr_dsn.resize(2 * m_nhdrsec);
+        m_DP_hdr.resize(2 * m_nhdrsec);
+        m_P_hdr.resize(2 * m_nhdrsec);
+        m_T_hdr.resize(2 * m_nhdrsec);
+        m_P_hdr_dsn = m_P_hdr;
+        m_T_hdr_dsn = m_T_hdr;
+        //m_DP_intc.resize(m_nSCA + 3);
+        //m_P_intc.resize(m_nSCA + 3);
+        m_DP_loop.resize(2 * m_nSCA + 3);
+        m_P_loop.resize(2 * m_nSCA + 3);
+        m_T_loop.resize(2 * m_nSCA + 3);
+        m_P_loop_dsn = m_P_loop;
+        m_T_loop_dsn = m_T_loop;
 
         std::string summary;
         // Use legacy m_V_hdr_max and/or m_V_hdr_min if you need to
@@ -577,7 +667,7 @@ bool C_csp_trough_collector_receiver::init_fieldgeom()
         }
         rnr_and_hdr_design(m_nhdrsec, m_nfsec, m_nrunsec, rho_ave, m_V_hdr_cold_max, m_V_hdr_cold_min,
             m_V_hdr_hot_max, m_V_hdr_hot_min, m_N_max_hdr_diams, m_m_dot_design, m_D_hdr, m_D_runner,
-            m_m_dot_rnr, m_m_dot_hdr, m_V_rnr, m_V_hdr, &summary, m_custom_sf_pipe_sizes);
+            m_m_dot_rnr_dsn, m_m_dot_hdr_dsn, m_V_rnr_dsn, m_V_hdr_dsn, &summary, m_custom_sf_pipe_sizes);
 
         // Do one-time calculations for system geometry.
             // Determine header section lengths, including expansion loops
@@ -591,10 +681,11 @@ bool C_csp_trough_collector_receiver::init_fieldgeom()
             throw(C_csp_exception("runner length sizing failed", "Trough collector solver"));
         }
 
-		double v_tofrom_sgs = 0.0;
+        double v_from_sgs = 0.0; double v_to_sgs = 0.0;
 		for (int i = 0; i < m_nrunsec; i++)
 		{
-			v_tofrom_sgs = v_tofrom_sgs + 2.*m_L_runner[i] * CSP::pi*pow(m_D_runner[i], 2) / 4.;  // This is the volume of the runner in 1 flow direction (e.g. cold to field)
+            v_from_sgs = v_from_sgs + 2.*m_L_runner[i] * CSP::pi*pow(m_D_runner[i], 2) / 4.;  // volume of the runner going away from sgs
+            v_to_sgs = v_to_sgs + 2.*m_L_runner[2 * m_nrunsec - i - 1] * CSP::pi*pow(m_D_runner[2 * m_nrunsec - i - 1], 2) / 4.;  // ...and going to the sgs
 		}
 
 		//-------piping from header into and out of the HCE's
@@ -631,8 +722,8 @@ bool C_csp_trough_collector_receiver::init_fieldgeom()
 		double v_sgs = Pump_SGS(rho_ave, m_m_dot_design, m_solar_mult);
 
 		//Calculate the hot and cold balance-of-plant volumes
-		m_v_hot = v_header_hot + v_tofrom_sgs;
-		m_v_cold = v_header_cold + v_tofrom_sgs;
+		m_v_hot = v_header_hot + v_to_sgs;
+		m_v_cold = v_header_cold + v_from_sgs;
 
 		//Write the volume totals to the piping diameter file
 		summary.append("\n----------------------------------------------\n"
@@ -762,32 +853,51 @@ int C_csp_trough_collector_receiver::loop_energy_balance_T_t_end(const C_csp_wea
 	else
 		T_sky = T_db - 20.0;
 
+    double Intc_hl = 0.0;
+
 	if( m_accept_loc == E_piping_config::FIELD )
 	{
 		m_TCS_T_sys_c = (m_TCS_T_sys_c_last - T_htf_cold_in)*exp(-(m_dot_htf_loop*float(m_nLoops)) / (m_v_cold*rho_hdr_cold + m_mc_bal_cold / c_hdr_cold_last)*sim_info.ms_ts.m_step) + T_htf_cold_in;
-		m_c_hdr_cold = m_htfProps.Cp(m_TCS_T_sys_c)*1000.0; //mjw 1.6.2011 Adding mc_bal to the cold header inertia
 		//Consider heat loss from cold piping
-		m_Header_hl_cold = 0.0;
-		m_Runner_hl_cold = 0.0;
-		//Header
-		for( int i = 0; i<m_nhdrsec; i++ )
-		{
-			m_Header_hl_cold += m_nfsec * m_Row_Distance*m_D_hdr[i] * CSP::pi*m_Pipe_hl_coef*(m_TCS_T_sys_c - T_db);  //[W]
-		}
 		//Runner
-		for( int i = 0; i<m_nrunsec; i++ )
+		m_Runner_hl_cold = 0.0;
+        m_Runner_hl_cold_tot = 0.0;
+        m_T_rnr[0] = m_TCS_T_sys_c;
+		m_c_hdr_cold = m_htfProps.Cp(m_TCS_T_sys_c)*1000.0; //mjw 1.6.2011 Adding mc_bal to the cold header inertia
+		for( int i = 0; i < m_nrunsec; i++ )
 		{
-			m_Runner_hl_cold += m_L_runner[i] * CSP::pi*m_D_runner[i] * m_Pipe_hl_coef*(m_TCS_T_sys_c - T_db);  //[W]
+            if (i != 0) {
+                m_T_rnr[i] = m_T_rnr[i - 1] - m_Runner_hl_cold / (m_dot_runner(m_m_dot_htf_tot, m_nfsec, i - 1)*m_c_hdr_cold);
+            }
+            m_Runner_hl_cold = m_L_runner[i] * CSP::pi*m_D_runner[i] * m_Pipe_hl_coef*(m_T_rnr[i] - T_db);  //[W]
+            m_Runner_hl_cold_tot += 2.*m_Runner_hl_cold;
 		}
-		double m_Pipe_hl_cold = m_Header_hl_cold + m_Runner_hl_cold;	//[W]
+		//Header
+		m_Header_hl_cold = 0.0;
+        m_Header_hl_cold_tot = 0.0;
+        m_T_hdr[0] = m_T_rnr[m_nrunsec - 1] - m_Runner_hl_cold / (m_dot_runner(m_m_dot_htf_tot, m_nfsec, m_nrunsec - 1)*m_c_hdr_cold);  // T's for farthest headers
+		for( int i = 0; i < m_nhdrsec; i++ )
+		{
+            if (i != 0) {
+                m_T_hdr[i] = m_T_hdr[i - 1] - m_Header_hl_cold / (m_dot_header(m_m_dot_htf_tot, m_nfsec, m_nLoops, i - 1)*m_c_hdr_cold);
+            }
+			m_Header_hl_cold = m_Row_Distance * m_D_hdr[i] * CSP::pi*m_Pipe_hl_coef*(m_T_hdr[i] - T_db);  //[W]
+            m_Header_hl_cold_tot += m_nfsec * m_Header_hl_cold;
+		}
 
-		m_TCS_T_htf_in[0] = m_TCS_T_sys_c - m_Pipe_hl_cold / (m_dot_htf_loop*float(m_nLoops)*m_c_hdr_cold);	//[C]
+        m_T_loop_in = m_T_hdr[m_nhdrsec - 1] - m_Header_hl_cold / (m_dot_header(m_m_dot_htf_tot, m_nfsec, m_nLoops, m_nhdrsec - 1)*m_c_hdr_cold);
 	}
 	else		// m_accept_loc == 2, only modeling loop
 	{
 		m_TCS_T_htf_in[0] = T_htf_cold_in;		//[C]
 		m_TCS_T_sys_c = m_TCS_T_htf_in[0];			//[C]
 	}
+    double P_intc_in = m_P_field_in;
+    m_T_loop[0] = m_T_loop_in;
+    IntcOutputs intc_state = m_interconnects[0].State(m_dot_htf_loop * 2, m_T_loop[0], T_db, P_intc_in);
+    m_T_loop[1] = intc_state.temp_out;
+    intc_state = m_interconnects[1].State(m_dot_htf_loop, m_T_loop[1], T_db, intc_state.pressure_out);
+    m_TCS_T_htf_in[0] = intc_state.temp_out;
 
 	// Reset vectors that are populated in following for(i..nSCA) loop
 	m_q_abs_SCAtot.assign(m_q_abs_SCAtot.size(), 0.0);
@@ -888,49 +998,70 @@ int C_csp_trough_collector_receiver::loop_energy_balance_T_t_end(const C_csp_wea
 
 		//Set the inlet temperature of the next SCA equal to the outlet temperature of the current SCA
 		//minus the heat losses in intermediate piping
-		if( i < m_nSCA - 1 )
-		{
-			//Determine the length between SCA's to use.  if halfway down the loop, use the row distance.
-			double L_int;
-			if( i == m_nSCA / 2 - 1 )
-			{
-				L_int = 2. + m_Row_Distance;
-			}
-			else
-			{
-				L_int = m_Distance_SCA[CT];
-			}
-
-			//Calculate inlet temperature of the next SCA
-			m_TCS_T_htf_in[i + 1] = m_TCS_T_htf_out[i] - m_Pipe_hl_coef*m_D_3(HT, 0)*CSP::pi*L_int*(m_TCS_T_htf_out[i] - T_db) / (m_dot_htf_loop*c_htf_i);
-			//mjw 1.18.2011 Add the internal energy of the crossover piping and interconnects between the current SCA and the next one
-			m_E_int_loop[i] = m_E_int_loop[i] + L_int*(pow(m_D_3(HT, 0), 2) / 4.*CSP::pi * rho_htf_i * c_htf_i + m_mc_bal_sca)*(m_TCS_T_htf_out[i] - 298.150);
-		}
-
+        if (i < m_nSCA - 1)
+        {
+            //Calculate inlet temperature of the next SCA
+            IntcOutputs intc_state = m_interconnects[i + 2].State(m_dot_htf_loop, m_TCS_T_htf_out[i], T_db, P_intc_in);
+            P_intc_in -= intc_state.pressure_drop;  // pressure drops in HCAs only accounted for later
+            m_TCS_T_htf_in[i + 1] = intc_state.temp_out;
+            Intc_hl += intc_state.heat_loss;            // W
+            //mjw 1.18.2011 Add the internal energy of the crossover piping and interconnects between the current SCA and the next one
+            m_E_int_loop[i] += intc_state.internal_energy;
+        }
 	}
+
+    intc_state = m_interconnects[m_interconnects.size() - 2].State(m_m_dot_htf_tot / (double)m_nLoops, m_TCS_T_htf_out[m_nSCA - 1], T_db, P_intc_in);
+    m_T_loop[2 * m_nSCA + 2] = intc_state.temp_out;
+    Intc_hl += intc_state.heat_loss;            // W, interconnect after last SCA
+    P_intc_in -= intc_state.pressure_drop;  // pressure drops in HCAs only accounted for later
+
+    //Set the loop outlet temperature
+    intc_state = m_interconnects[m_interconnects.size() - 1].State(m_m_dot_htf_tot / (double)m_nLoops * 2, m_T_loop[2 * m_nSCA + 2], T_db, P_intc_in);
+    double T_loop_outX = intc_state.temp_out;    // = T_loop_outX from old model
+    Intc_hl += intc_state.heat_loss;            // W, downcomer
+
+    //Fill in rest of T_loop using the SCA inlet and outlet temps
+    int loop_i = 2; int sca_i = 0;
+    while (loop_i < 2 * m_nSCA + 2) {
+        m_T_loop[loop_i] = m_TCS_T_htf_in[sca_i];
+        m_T_loop[loop_i + 1] = m_TCS_T_htf_out[sca_i];
+        loop_i = loop_i + 2; sca_i++;
+    }
 
 	if( m_accept_loc == 1 )
 	{
-		//Calculation for heat losses from hot header and runner pipe
-		m_Runner_hl_hot = 0.0;
-		m_Header_hl_hot = 0.0;
+		//Calculation for heat losses from hot piping
+        //Header
+        m_Header_hl_hot = 0.0;                 // per piping section in one field subsection
+        m_Header_hl_hot_tot = 0.0;             // total in entire field
+        m_T_hdr[m_nhdrsec] = T_loop_outX;    // loop outlet temp.
+        m_c_hdr_hot = m_htfProps.Cp(T_loop_outX)* 1000.;		//[kJ/kg-K]
 		for( int i = m_nhdrsec; i < 2*m_nhdrsec; i++ )
 		{
-			m_Header_hl_hot += m_nfsec * m_Row_Distance*m_D_hdr[i] * CSP::pi*m_Pipe_hl_coef*(m_TCS_T_htf_out[m_nSCA - 1] - T_db);	//[W]
+            if (i != m_nhdrsec) {
+                m_T_hdr[i] = m_T_hdr[i - 1] - m_Header_hl_hot / (m_dot_header(m_m_dot_htf_tot, m_nfsec, m_nLoops, i - 1)*m_c_hdr_hot);
+            }
+            m_Header_hl_hot = m_Row_Distance * m_D_hdr[i] * CSP::pi*m_Pipe_hl_coef*(m_T_hdr[i] - T_db);
+            m_Header_hl_hot_tot += m_nfsec * m_Header_hl_hot;
 		}
 
-		//Add the runner length
-		for( int i = 0; i < m_nrunsec; i++ )
-		{
-			m_Runner_hl_hot += m_L_runner[i] * CSP::pi*m_D_runner[i] * m_Pipe_hl_coef*(m_TCS_T_htf_out[m_nSCA - 1] - T_db);	//[W]
-		}
+		//Runner
+        m_Runner_hl_hot = 0.0;              // per piping section in half the field
+        m_Runner_hl_hot_tot = 0.0;          // total in entire field
+        m_T_rnr[m_nrunsec] = m_T_hdr[2 * m_nhdrsec - 1] - m_Header_hl_hot / (m_dot_header(m_m_dot_htf_tot, m_nfsec, m_nLoops, 2 * m_nhdrsec - 1)*m_c_hdr_hot);
+        for (int i = m_nrunsec; i < 2 * m_nrunsec; i++)
+        {
+            if (i != m_nrunsec) {
+                m_T_rnr[i] = m_T_rnr[i - 1] - m_Runner_hl_hot / (m_dot_runner(m_m_dot_htf_tot, m_nfsec, i - 1)*m_c_hdr_hot);
+            }
+            m_Runner_hl_hot = m_L_runner[i] * CSP::pi*m_D_runner[i] * m_Pipe_hl_coef*(m_T_rnr[i] - T_db);  //Wt
+            m_Runner_hl_hot_tot += 2.*m_Runner_hl_hot;
+        }
 
 		double m_Pipe_hl_hot = m_Header_hl_hot + m_Runner_hl_hot;	//[W]
 
-		m_c_hdr_hot = m_htfProps.Cp(m_TCS_T_htf_out[m_nSCA - 1])* 1000.;		//[kJ/kg-K]
-
 		//Adjust the loop outlet temperature to account for thermal losses incurred in the hot header and the runner pipe
-		m_TCS_T_sys_h = m_TCS_T_htf_out[m_nSCA - 1] - m_Pipe_hl_hot / (m_dot_htf_loop*float(m_nLoops)*m_c_hdr_hot);	//[C]
+		m_TCS_T_sys_h = T_loop_outX - m_Pipe_hl_hot / (m_dot_htf_loop*float(m_nLoops)*m_c_hdr_hot);	//[C]
 
 		//Calculate the system temperature of the hot portion of the collector field. 
 		//This will serve as the fluid outlet temperature
@@ -974,6 +1105,7 @@ int C_csp_trough_collector_receiver::loop_energy_balance_T_t_int(const C_csp_wea
 	double E_HR_cold_htf = 0.0;				//[MJ]
 	double E_HR_cold_losses = 0.0;			//[MJ]
 	double E_HR_cold_bal = 0.0;				//[MJ]
+    double Intc_hl = 0.0;
 	if( m_accept_loc ==  E_piping_config::FIELD )
 	{
 		// This values is the Bulk Temperature at the *end* of the timestep
@@ -989,24 +1121,35 @@ int C_csp_trough_collector_receiver::loop_energy_balance_T_t_int(const C_csp_wea
 		double E_bal_T_t_ave = -m_dot_htf_loop*float(m_nLoops)*c_hdr_cold_last*(m_T_sys_c_t_int - T_htf_cold_in)*sim_info.ms_ts.m_step - 
 					(m_v_cold*rho_hdr_cold*c_hdr_cold_last + m_mc_bal_cold)*(m_T_sys_c_t_end - m_T_sys_c_t_end_last);	//[J]
 
-		double m_cp_sys_c_t_int = m_htfProps.Cp(m_T_sys_c_t_int)*1000.0; //mjw 1.6.2011 Adding mc_bal to the cold header inertia
-			//Consider heat loss from cold piping
-		m_Header_hl_cold = 0.0;
+		//Consider heat loss from cold piping
+		//Runner
 		m_Runner_hl_cold = 0.0;
-			//Header
-		for( int i = 0; i<m_nhdrsec; i++ )
+        m_Runner_hl_cold_tot = 0.0;
+        m_T_rnr[0] = m_T_sys_c_t_int;
+		double m_cp_sys_c_t_int = m_htfProps.Cp(m_T_sys_c_t_int)*1000.0; //mjw 1.6.2011 Adding mc_bal to the cold header inertia
+		for( int i = 0; i < m_nrunsec; i++ )
 		{
-			m_Header_hl_cold += m_nfsec * m_Row_Distance*m_D_hdr[i]*CSP::pi*m_Pipe_hl_coef*(m_T_sys_c_t_int - T_db);  //[W]
+            if (i != 0) {
+                m_T_rnr[i] = m_T_rnr[i - 1] - m_Runner_hl_cold / (m_dot_runner(m_m_dot_htf_tot, m_nfsec, i - 1)*m_cp_sys_c_t_int);
+            }
+            m_Runner_hl_cold = m_L_runner[i] * CSP::pi*m_D_runner[i] * m_Pipe_hl_coef*(m_T_rnr[i] - T_db);  //[W]
+            m_Runner_hl_cold_tot += 2.*m_Runner_hl_cold;
 		}
-			//Runner
-		for( int i = 0; i<m_nrunsec; i++ )
+		//Header
+		m_Header_hl_cold = 0.0;
+        m_Header_hl_cold_tot = 0.0;
+        m_T_hdr[0] = m_T_rnr[m_nrunsec - 1] - m_Runner_hl_cold / (m_dot_runner(m_m_dot_htf_tot, m_nfsec, m_nrunsec - 1)*m_cp_sys_c_t_int);  // T's for farthest headers
+		for( int i = 0; i < m_nhdrsec; i++ )
 		{
-			m_Runner_hl_cold += m_L_runner[i]*CSP::pi*m_D_runner[i] * m_Pipe_hl_coef*(m_T_sys_c_t_int - T_db);  //[W]
+            if (i != 0) {
+                m_T_hdr[i] = m_T_hdr[i - 1] - m_Header_hl_cold / (m_dot_header(m_m_dot_htf_tot, m_nfsec, m_nLoops, i - 1)*m_cp_sys_c_t_int);
+            }
+			m_Header_hl_cold = m_Row_Distance * m_D_hdr[i] * CSP::pi*m_Pipe_hl_coef*(m_T_hdr[i] - T_db);  //[W]
+            m_Header_hl_cold_tot += m_nfsec*m_Header_hl_cold;
 		}
 		q_dot_loss_HR_cold = m_Header_hl_cold + m_Runner_hl_cold;	//[W]
 		E_HR_cold_losses = q_dot_loss_HR_cold*sim_info.ms_ts.m_step/1.E6;	//[MJ]
-
-		m_T_htf_in_t_int[0] = m_T_sys_c_t_int - q_dot_loss_HR_cold / (m_dot_htf_loop*float(m_nLoops)*m_cp_sys_c_t_int);		//[K]
+        m_T_loop_in = m_T_hdr[m_nhdrsec - 1] - m_Header_hl_cold / (m_dot_header(m_m_dot_htf_tot, m_nfsec, m_nLoops, m_nhdrsec - 1)*m_cp_sys_c_t_int);
 
 		// Internal energy change in cold runners/headers. Positive means it has gained energy (temperature)
 		E_HR_cold = (m_v_cold*rho_hdr_cold*m_cp_sys_c_t_int + m_mc_bal_cold)*(m_T_sys_c_t_end - m_T_sys_c_t_end_last)*1.E-6;		//[MJ]
@@ -1019,6 +1162,12 @@ int C_csp_trough_collector_receiver::loop_energy_balance_T_t_int(const C_csp_wea
 		m_T_sys_c_t_int = m_T_htf_in_t_int[0];		//[K]
 		m_T_sys_c_t_end = m_T_htf_in_t_int[0];		//[K]
 	}
+    double P_intc_in = m_P_field_in;
+    m_T_loop[0] = m_T_loop_in;
+    IntcOutputs intc_state = m_interconnects[0].State(m_dot_htf_loop * 2, m_T_loop[0], T_db, P_intc_in);
+    m_T_loop[1] = intc_state.temp_out;
+    intc_state = m_interconnects[1].State(m_dot_htf_loop, m_T_loop[1], T_db, intc_state.pressure_out);
+    m_T_htf_in_t_int[0] = intc_state.temp_out;
 
 	// Reset vectors that are populated in following for(i..nSCA) loop
 	m_q_abs_SCAtot.assign(m_q_abs_SCAtot.size(), 0.0);
@@ -1145,23 +1294,14 @@ int C_csp_trough_collector_receiver::loop_energy_balance_T_t_int(const C_csp_wea
 		//minus the heat losses in intermediate piping
 		if( i < m_nSCA - 1 )
 		{
-			//Determine the length between SCA's to use.  if halfway down the loop, use the row distance.
-			double L_int;
-			if( i == m_nSCA / 2 - 1 )
-			{
-				L_int = 2. + m_Row_Distance;
-			}
-			else
-			{
-				L_int = m_Distance_SCA[CT];
-			}
-
-			q_dot_loss_xover[i] = m_Pipe_hl_coef*m_D_3(HT,0)*CSP::pi*L_int*(m_T_htf_out_t_int[i]-T_db);	//[W] Heat loss from cross-over/connecting piping
-
-			//Calculate inlet temperature of the next SCA
-			m_T_htf_in_t_int[i + 1] = m_T_htf_out_t_int[i] - q_dot_loss_xover[i] / (m_dot_htf_loop*c_htf_i);
-			//mjw 1.18.2011 Add the internal energy of the crossover piping
-			m_E_int_loop[i] = m_E_int_loop[i] + L_int*(pow(m_D_3(HT, 0), 2) / 4.*CSP::pi + m_mc_bal_sca / c_htf_i)*(m_T_htf_out_t_end[i] - 298.150);
+            //Calculate inlet temperature of the next SCA
+            IntcOutputs intc_state = m_interconnects[i + 2].State(m_dot_htf_loop, m_T_htf_out_t_int[i], T_db, P_intc_in);
+            P_intc_in -= intc_state.pressure_drop;  // pressure drops in HCAs only accounted for later
+            m_T_htf_in_t_int[i + 1] = intc_state.temp_out;
+            Intc_hl += intc_state.heat_loss;            // W
+            q_dot_loss_xover[i] = intc_state.heat_loss;
+            //mjw 1.18.2011 Add the internal energy of the crossover piping and interconnects between the current SCA and the next one
+            m_E_int_loop[i] += intc_state.internal_energy;
 
 			E_xover[i] = 0.0;		//[MJ]
 			E_xover_abs[i] = -q_dot_loss_xover[i]*sim_info.ms_ts.m_step/1.E6;		//[MJ]
@@ -1169,6 +1309,24 @@ int C_csp_trough_collector_receiver::loop_energy_balance_T_t_int(const C_csp_wea
 			E_xover_bal[i] = E_xover_abs[i] - E_xover_htf[i] - E_xover[i];			//[MJ]
 		}
 	}
+
+    intc_state = m_interconnects[m_interconnects.size() - 2].State(m_m_dot_htf_tot / (double)m_nLoops, m_T_htf_out_t_int[m_nSCA - 1], T_db, P_intc_in);
+    m_T_loop[2 * m_nSCA + 2] = intc_state.temp_out;
+    Intc_hl += intc_state.heat_loss;            // W, interconnect after last SCA
+    P_intc_in -= intc_state.pressure_drop;  // pressure drops in HCAs only accounted for later
+
+    //Set the loop outlet temperature
+    intc_state = m_interconnects[m_interconnects.size() - 1].State(m_m_dot_htf_tot / (double)m_nLoops * 2, m_T_loop[2 * m_nSCA + 2], T_db, P_intc_in);
+    double T_loop_outX = intc_state.temp_out;    // = T_loop_outX from old model
+    Intc_hl += intc_state.heat_loss;            // W, downcomer
+
+    //Fill in rest of T_loop using the SCA inlet and outlet temps
+    int loop_i = 2; int sca_i = 0;
+    while (loop_i < 2 * m_nSCA + 2) {
+        m_T_loop[loop_i] = m_T_htf_in_t_int[sca_i];
+        m_T_loop[loop_i + 1] = m_T_htf_out_t_int[sca_i];
+        loop_i = loop_i + 2; sca_i++;
+    }
 
 	double q_dot_loss_HR_hot = 0.0;		//[W] 
 	double E_HR_hot = 0.0;				//[MJ]
@@ -1178,27 +1336,40 @@ int C_csp_trough_collector_receiver::loop_energy_balance_T_t_int(const C_csp_wea
 
 	if( m_accept_loc == 1 )
 	{
-		//Calculation for heat losses from hot header and runner pipe
-		m_Runner_hl_hot = 0.0;  
-		m_Header_hl_hot = 0.0;  
-		for( int i = 0; i < m_nhdrsec; i++ )
-		{
-			m_Header_hl_hot += m_nfsec * m_Row_Distance*m_D_hdr[i] * CSP::pi*m_Pipe_hl_coef*(m_T_htf_out_t_int[m_nSCA - 1] - T_db);	//[W]
-		}
+		//Calculation for heat losses from hot piping
+        //Header
+		m_Header_hl_hot = 0.0;              // per piping section in one field subsection
+        m_Header_hl_hot_tot = 0.0;          // total in entire field
+        m_T_hdr[m_nhdrsec] = T_loop_outX;    // loop outlet temp.
+		m_c_hdr_hot = m_htfProps.Cp(T_loop_outX)* 1000.;		//[kJ/kg-K]
+        for (int i = m_nhdrsec; i < 2*m_nhdrsec; i++)
+        {
+            if (i != m_nhdrsec) {
+                m_T_hdr[i] = m_T_hdr[i - 1] - m_Header_hl_hot / (m_dot_header(m_m_dot_htf_tot, m_nfsec, m_nLoops, i - 1)*m_c_hdr_hot);
+            }
+            m_Header_hl_hot = m_Row_Distance * m_D_hdr[i] * CSP::pi*m_Pipe_hl_coef*(m_T_hdr[i] - T_db);
+            m_Header_hl_hot_tot += m_nfsec*m_Header_hl_hot;
+        }
 
-		//Add the runner length
-		for( int i = 0; i < m_nrunsec; i++ )
-		{
-			m_Runner_hl_hot += m_L_runner[i] * CSP::pi*m_D_runner[i] * m_Pipe_hl_coef*(m_T_htf_out_t_int[m_nSCA - 1] - T_db);	//[W]
-		}
+		//Runner
+		m_Runner_hl_hot = 0.0;              // per piping section in half the field
+        m_Runner_hl_hot_tot = 0.0;          // total in entire field
+        m_T_rnr[m_nrunsec] = m_T_hdr[2 * m_nhdrsec - 1] - m_Header_hl_hot / (m_dot_header(m_m_dot_htf_tot, m_nfsec, m_nLoops, 2 * m_nhdrsec - 1)*m_c_hdr_hot);
+        for (int i = m_nrunsec; i < 2*m_nrunsec; i++)
+        {
+            if (i != m_nrunsec) {
+                m_T_rnr[i] = m_T_rnr[i - 1] - m_Runner_hl_hot / (m_dot_runner(m_m_dot_htf_tot, m_nfsec, i - 1)*m_c_hdr_hot);
+            }
+            m_Runner_hl_hot = m_L_runner[i] * CSP::pi*m_D_runner[i] * m_Pipe_hl_coef*(m_T_rnr[i] - T_db);  //Wt
+            m_Runner_hl_hot_tot += 2.*m_Runner_hl_hot;
+        }
 		
-		q_dot_loss_HR_hot = m_Header_hl_hot + m_Runner_hl_hot;	//[W]
+		q_dot_loss_HR_hot = m_Header_hl_hot_tot + m_Runner_hl_hot_tot;	//[W]   // aka m_Pipe_hl_hot
 		E_HR_hot_losses = q_dot_loss_HR_hot*sim_info.ms_ts.m_step/1.E6;		//[MJ]
 
-		m_c_hdr_hot = m_htfProps.Cp(m_T_htf_out_t_int[m_nSCA - 1])* 1000.;		//[kJ/kg-K]
 
 		// Adjust the loop outlet temperature to account for thermal losses incurred in the hot header and the runner pipe
-		double T_sys_h_in = m_T_htf_out_t_int[m_nSCA - 1] - q_dot_loss_HR_hot / (m_dot_htf_loop*float(m_nLoops)*m_c_hdr_hot);	//[C]
+		double T_sys_h_in = T_loop_outX - q_dot_loss_HR_hot / (m_dot_htf_loop*float(m_nLoops)*m_c_hdr_hot);	//[C]
 
 		// Calculate the hot field/system/runner/header outlet temperature at the end of the timestep
 		m_T_sys_h_t_end = (m_T_sys_h_t_end_last - T_sys_h_in)*exp(-m_dot_htf_loop*float(m_nLoops) / (m_v_hot*rho_hdr_hot + m_mc_bal_hot / m_c_hdr_hot)*sim_info.ms_ts.m_step) + T_sys_h_in;	//[C]
@@ -1212,7 +1383,7 @@ int C_csp_trough_collector_receiver::loop_energy_balance_T_t_int(const C_csp_wea
 		double E_bal_T_h_t_ave = -(m_dot_htf_loop*float(m_nLoops)*m_c_hdr_hot*(m_T_sys_h_t_int - T_sys_h_in)*sim_info.ms_ts.m_step +
 			(m_v_hot*rho_hdr_hot*m_c_hdr_hot + m_mc_bal_hot)*(m_T_sys_h_t_end - m_T_sys_h_t_end_last) );	//[J]
 
-		E_HR_hot_htf = m_dot_htf_loop*float(m_nLoops)*m_c_hdr_hot*(m_T_sys_h_t_int - m_T_htf_out_t_int[m_nSCA - 1])*sim_info.ms_ts.m_step/1.E6;	//[MJ]
+		E_HR_hot_htf = m_dot_htf_loop*float(m_nLoops)*m_c_hdr_hot*(m_T_sys_h_t_int - T_loop_outX)*sim_info.ms_ts.m_step/1.E6;	//[MJ]
 
 		E_HR_hot = (m_v_hot*rho_hdr_hot*m_c_hdr_hot + m_mc_bal_hot)*(m_T_sys_h_t_end - m_T_sys_h_t_end_last)*1.E-6;		//[MJ]
 
@@ -1430,17 +1601,17 @@ void C_csp_trough_collector_receiver::loop_optical_eta(const C_csp_weatherreader
 		double SolarTime = StdTime + ((m_shift)*180.0 / CSP::pi) / 15.0 + EOT / 60.0;
 		// m_hour angle (arc of sun) in radians
 		double omega = (SolarTime - 12.0)*15.0*CSP::pi / 180.0;
-		
+
         // Convert other input data as necessary
         double SolarAz = weather.m_solazi;		//[deg] Solar azimuth angle
         SolarAz = (SolarAz - 180.0) * m_d2r;	//[rad] convert from [deg]
         double SolarAlt;
 
         if (m_accept_mode == 1) {
-            SolarAlt = CSP::pi / 2 - weather.m_solzen;      //[deg] Solar altitude angle
+            SolarAlt = CSP::pi/2 - weather.m_solzen;		//[deg] Solar altitude angle
         }
         else {
-            // B. Stine equation for Solar Altitude angle in radians
+		    // B. Stine equation for Solar Altitude angle in radians
 		    SolarAlt = asin(sin(Dec)*sin(m_latitude) + cos(m_latitude)*cos(Dec)*cos(omega));
         }
 
@@ -1553,105 +1724,209 @@ void C_csp_trough_collector_receiver::loop_optical_eta(const C_csp_weatherreader
 	}
 }
 
-void C_csp_trough_collector_receiver::field_pressure_drop()
+void C_csp_trough_collector_receiver::field_pressure_drop(double T_db)
 {
-	double dP_IOCOP = PressureDrop(m_m_dot_htf_tot/(double)m_nLoops,
-							(m_T_htf_c_rec_in_t_int_fullts+m_T_htf_h_rec_out_t_int_fullts)/2.0, 1.0, 
-							m_D_h((int)m_SCAInfoArray(0,0),0), m_HDR_rough, 40.0+m_Row_Distance,
-							0.0, 0.0, 2.0, 0.0, 0.0, 2.0, 0.0, 0.0, 2.0, 1.0, 0.0);		//[Pa]
+    std::vector<double> DP_intc(m_nSCA + 3, 0.);
+    std::vector<double> DP_tube(m_nSCA, 0.);
+    IntcOutputs inlet_state, /*crossover_state,*/ outlet_state, intc_state;
+    double DP_IOCOP, DP_loop_tot, DP_toField, DP_fromField, DP_hdr_cold, DP_hdr_hot;
+    double m_dot_hdr_in, m_dot_hdr, m_dot_temp;
+    double rho_hdr_cold;
 
-	std::vector<double> dP_rec(m_nSCA);
+    double m_dot_htf = m_m_dot_htf_tot / (double)m_nLoops;
+    double T_loop_in = m_T_htf_c_rec_in_t_int_fullts;
+    double T_loop_out = m_T_htf_h_rec_out_t_int_fullts;
+    
+    //------Inlet and Outlet
+    inlet_state = m_interconnects[0].State(m_dot_htf * 2, T_loop_in, T_db, m_P_field_in);
+    outlet_state = m_interconnects[m_interconnects.size() - 1].State(m_dot_htf * 2, T_loop_out, T_db, 1.e5);  // assumption for press.
+    DP_intc[0] = inlet_state.pressure_drop;
+    DP_intc[m_interconnects.size() - 1] = outlet_state.pressure_drop;
 
-	for(int i = 0; i < m_nSCA; i++)
-	{
-		int CT = (int)m_SCAInfoArray(i,1)-1;	//[-] Collector Type
-		int HT = (int)m_SCAInfoArray(i,0)-1;	//[-] HCE Type
+    //-------HCE's (no interconnects)
+    for (int j = 0; j < m_nHCEVar; j++)
+    {
+        for (int i = 0; i < m_nSCA; i++)
+        {
+            int CT = (int)m_SCAInfoArray(i, 1) - 1;    //Collector type    
+            int HT = (int)m_SCAInfoArray(i, 0) - 1;    //HCE type
 
-		// Account for extra fittings on the first HCE
-		double x1 = std::numeric_limits<double>::quiet_NaN();
-		double x2 = std::numeric_limits<double>::quiet_NaN();
-		if( i == 0 )
-		{
-			x1 = 10.0;
-			x2 = 3.0;
-		}
-		else
-		{
-			x1 = 0.0;
-			x2 = 1.0;
-		}
+            double T_htf_ave = (m_T_htf_in_t_int[i] + m_T_htf_out_t_int[i]) / 2.;
+            DP_tube[i] = DP_tube[i] + PressureDrop(m_dot_htf, T_htf_ave, m_P_field_in - i * m_P_field_in / m_nSCA, m_D_h(HT, j), (m_Rough(HT, j)*m_D_h(HT, j)),
+                m_L_SCA[CT], 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)*m_HCE_FieldFrac(HT, j);
 
-		// Not averaging subtimesteps for the temperature
-		// So for OFF and STARTUP, we're using the final subtimestep temperature
-		dP_rec[i] = PressureDrop(m_m_dot_htf_tot/(double)m_nLoops,
-								m_T_htf_out_t_int[i], 1.0,
-								m_D_h((int)m_SCAInfoArray(0,0),0), m_Rough(HT,0)*m_D_h(HT,0), m_L_SCA[CT]+m_Distance_SCA[CT],
-								0.0, 0.0, x1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, x2);
-	}
+        }
+    }
 
-	double dP_loop = 0.0;
-	for(int i = 0; i < m_nSCA; i++)
-		dP_loop += dP_rec[i];
+    //-------Interconnect's (no HCEs, no inlet nor outlet)
+    intc_state = m_interconnects[1].State(m_dot_htf, inlet_state.temp_out, T_db, inlet_state.pressure_out);
+    DP_intc[1] = intc_state.pressure_drop;  // just before first SCA
+    for (int i = 2; i < m_interconnects.size() - 1; i++)
+    {
+        intc_state = m_interconnects[i].State(m_dot_htf, m_T_htf_out_t_int[i - 2], T_db, intc_state.pressure_out - DP_tube[i - 2]);
+        DP_intc[i] = intc_state.pressure_drop;
+    }
 
-	double dP_to_field = 0.0;			//[Pa]
-	double dP_from_field = 0.0;			//[Pa]
-	double dP_hdr_cold = 0.0;			//[Pa]
-	double dP_hdr_hot = 0.0;			//[Pa]
+    //-------IOCOP, HCE's and all other Interconnects
+    m_DP_loop[0] = DP_intc[0];  // inlet
+    m_DP_loop[1] = DP_intc[1];  // before first SCA
+    int loop_i = 2; int sca_i = 0; int intc_i = 2;
+    while (loop_i < m_nSCA + m_interconnects.size() - 1) {
+        m_DP_loop[loop_i++] = DP_tube[sca_i++];
+        m_DP_loop[loop_i++] = DP_intc[intc_i++];
+    }
+    m_DP_loop[loop_i] = DP_intc[intc_i];  // outlet
 
-	if( m_accept_loc == 1 )
-	{
-		double x3;		//[-] Number of contraction/expansions
-		
-		for(int i = 0; i < m_nrunsec; i++)
-		{
-            (i < m_nrunsec - 1 ? x3 = 1.0 : x3 = 0.0);
-			dP_to_field += PressureDrop(m_m_dot_rnr[i],
-								m_T_htf_c_rec_in_t_int_fullts, 1.0,
-								m_D_runner[i], m_HDR_rough, m_L_runner[i],
-								0.0, x3, 0.0, 0.0,max(float(CSP::nint(m_L_runner[i]/70.0))*4., 8.), 1.0, 0.0, 1.0, 0.0, 0.0, 0.0);	//[Pa]
 
-			dP_from_field += PressureDrop(m_m_dot_rnr[i],
-								m_T_htf_h_rec_out_t_int_fullts, 1.0,
-								m_D_runner[i], m_HDR_rough, m_L_runner[i],
-								x3, 0.0, 0.0, 0.0,max(float(CSP::nint(m_L_runner[i]/70.0))*4., 8.), 1.0, 0.0, 0.0, 0.0, 0.0, 0.0);	//[Pa]
-		}
+    if (m_accept_loc == 1)
+        m_m_dot_htf_tot = m_dot_htf * float(m_nLoops);
+    else
+        m_m_dot_htf_tot = m_dot_htf;
 
-		double m_dot_header_in = m_m_dot_htf_tot / (double)m_nfsec;		//[kg/s]
-		double m_dot_header = m_dot_header_in;		//[kg/s]
-		
-		for(int i = 0; i < m_nhdrsec; i++)
-		{
-			// Determine whether the particular section has an expansion valve
-			double x2 = 0.0;
-			if( i > 0 )
-			{
-				if( m_D_hdr[i] != m_D_hdr[i-1] )
-					x2 = 1.0;
-			}
 
-			// Calculate pressure drop in cold header and hot header sections
-			dP_hdr_cold += PressureDrop(m_dot_header,
-								m_T_htf_c_rec_in_t_int_fullts, 1.0,
-								m_D_hdr[i], m_HDR_rough, (m_Row_Distance + 4.275)*2.0,
-								0.0, x2, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);		//[Pa]
+    if (m_accept_loc == 1)
+    {
+        double m_dot_run_in = std::numeric_limits<double>::quiet_NaN();
 
-			dP_hdr_hot += PressureDrop(m_dot_header,
-								m_T_htf_h_rec_out_t_int_fullts, 1.0,
-								m_D_hdr[i], m_HDR_rough, (m_Row_Distance + 4.275)*2.0,
-								x2, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);		//[Pa]
+        if (m_nfsec > 2)  //mjw 5.4.11 Correct the mass flow for situations where nfsec/2==odd
+        {
+            m_dot_run_in = m_m_dot_htf_tot / 2.0 * (1. - float(m_nfsec % 4) / float(m_nfsec));
+        }
+        else
+        {
+            m_dot_run_in = m_m_dot_htf_tot / 2.0;
+        }
 
-			// 10.13.16 twn: is there really a unique header section for each loop connection?
-			m_dot_header = max(m_dot_header - 2.0*m_m_dot_htf_tot/(double)m_nLoops, 0.0);	//[kg/s]
-		}
-	}
+        double x3;
+        int elbows_per_xpan = 4;
+        m_dot_temp = m_dot_run_in;
+        DP_toField = 0.0;
+        DP_fromField = 0.0;
+        for (int i = 0; i < m_nrunsec; i++)
+        {
+            (i < m_nrunsec - 1 ? x3 = 1.0 : x3 = 0.0);  // contractions/expansions
+            m_DP_rnr[i] = PressureDrop(m_dot_temp, T_loop_in, m_P_field_in, m_D_runner[i], m_HDR_rough,
+                m_L_runner[i], 0.0, x3, 0.0, 0.0, m_N_rnr_xpans[i] * elbows_per_xpan, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0);
+            m_DP_rnr[2 * m_nrunsec - i - 1] = PressureDrop(m_dot_temp, T_loop_out, 1.e5, m_D_runner[2 * m_nrunsec - i - 1], m_HDR_rough,
+                m_L_runner[2 * m_nrunsec - i - 1], x3, 0.0, 0.0, 0.0, m_N_rnr_xpans[2 * m_nrunsec - i - 1] * elbows_per_xpan, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0);
 
-	m_dP_total = dP_loop + dP_hdr_cold + dP_hdr_hot + dP_from_field + dP_to_field + dP_IOCOP;	//[Pa]
+            if (i > 1)
+                m_dot_temp = fmax(m_dot_temp - 2.*m_m_dot_htf_tot / float(m_nfsec), 0.0);
+        }
 
-	double rho_hdr_cold = m_htfProps.dens(m_T_sys_c_t_int_fullts, 1.0);		//[kg/m^3]
-	
-	m_W_dot_pump = m_dP_total*m_m_dot_htf_tot/(rho_hdr_cold*m_eta_pump)/1.E6;	//[MWe]
-	m_dP_total *= 1.E-5;		//[bar], convert from Pa
+        //Calculate pressure drop in cold header
+        m_dot_hdr_in = m_m_dot_htf_tot / float(m_nfsec);
+        m_dot_hdr = m_dot_hdr_in;
+        double x2 = 0.0;
+        for (int i = 0; i < m_nhdrsec; i++)
+        {
+            //Determine whether the particular section has a contraction fitting (at the beginning of the section)
+            x2 = 0.0;
+            if (i > 0)
+            {
+                if (m_D_hdr[i] != m_D_hdr[i - 1])
+                    x2 = 1.;
+            }
 
+            m_DP_hdr[i] = PressureDrop(m_dot_hdr, T_loop_in, m_P_field_in, m_D_hdr[i], m_HDR_rough,
+                m_L_hdr[i], 0.0, x2, 0.0, 0.0, m_N_hdr_xpans[i] * 4, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
+            //if(ErrorFound()) return 1
+            //Siphon off header mass flow rate at each loop.  Multiply by 2 because there are 2 loops per hdr section
+            m_dot_hdr = fmax(m_dot_hdr - 2.*m_dot_htf, 0.0);
+        }
+
+        //Calculate pressure drop in hot header
+        m_dot_hdr = 2.*m_dot_htf;
+        for (int i = m_nhdrsec; i < 2 * m_nhdrsec; i++)
+        {
+            //Determine whether the particular section has an expansion fitting (at the beginning of the section)
+            x2 = 0.0;
+            if (i > m_nhdrsec)
+            {
+                if (m_D_hdr[i] != m_D_hdr[i - 1])
+                    x2 = 1.;
+            }
+
+            m_DP_hdr[i] = PressureDrop(m_dot_hdr, T_loop_out, 1.e5, m_D_hdr[i], m_HDR_rough,
+                m_L_hdr[i], x2, 0.0, 0.0, 0.0, m_N_hdr_xpans[i] * 4, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
+            //if(ErrorFound()) return 1
+            //Add to header mass flow rate at each loop.  Multiply by 2 because there are 2 loops per hdr section
+            m_dot_hdr = m_dot_hdr + 2.*m_dot_htf;
+        }
+
+    }
+
+    // Aggregate pressures
+    DP_IOCOP = DP_intc[0] + DP_intc[(DP_intc.size() - 1) / 2] + DP_intc[DP_intc.size() - 1];
+    DP_loop_tot = accumulate(DP_tube.data(), DP_tube.data() + DP_tube.size(), 0.0) +
+        accumulate(DP_intc.data(), DP_intc.data() + DP_intc.size(), 0.0) -
+        DP_IOCOP;
+    DP_hdr_cold = accumulate(m_DP_hdr.data(), m_DP_hdr.data() + m_DP_hdr.size() / 2, 0.0);
+    DP_hdr_hot = accumulate(m_DP_hdr.data() + m_DP_hdr.size() / 2, m_DP_hdr.data() + m_DP_hdr.size(), 0.0);
+    DP_toField = accumulate(m_DP_rnr.data(), m_DP_rnr.data() + m_DP_rnr.size() / 2, 0.0);
+    DP_fromField = accumulate(m_DP_rnr.data() + m_DP_rnr.size() / 2, m_DP_rnr.data() + m_DP_rnr.size(), 0.0);
+
+    if (m_accept_loc == 1)
+    {
+        // The total pressure drop in all of the piping
+        m_dP_total = (DP_loop_tot + DP_hdr_cold + DP_hdr_hot + DP_fromField + DP_toField + DP_IOCOP);
+
+        // Convert pressure drops to gauge pressures
+        m_P_rnr[0] = m_dP_total;
+        for (int i = 1; i < 2 * m_nrunsec; i++) {
+            m_P_rnr[i] = m_P_rnr[i - 1] - m_DP_rnr[i - 1];
+            if (i == m_nrunsec) { m_P_rnr[i] -= (DP_hdr_cold + DP_loop_tot + DP_IOCOP + DP_hdr_hot); }
+        }
+        m_P_hdr[0] = m_P_rnr[m_nrunsec - 1] - m_DP_rnr[m_nrunsec - 1];    // report pressures for farthest subfield
+        for (int i = 1; i < 2 * m_nhdrsec; i++) {
+            m_P_hdr[i] = m_P_hdr[i - 1] - m_DP_hdr[i - 1];
+            if (i == m_nhdrsec) { m_P_hdr[i] -= (DP_loop_tot + DP_IOCOP); }
+        }
+        m_P_loop[0] = m_P_hdr[m_nhdrsec - 1] - m_DP_hdr[m_nhdrsec - 1];   // report pressures for farthest loop
+        for (int i = 1; i < m_nSCA + m_interconnects.size(); i++) {
+            m_P_loop[i] = m_P_loop[i - 1] - m_DP_loop[i - 1];
+        }
+
+        // The total pumping power consumption
+        rho_hdr_cold = m_htfProps.dens(m_T_sys_c_t_int_fullts, m_P_field_in);
+        m_W_dot_pump = m_dP_total * m_m_dot_htf_tot / (rho_hdr_cold*m_eta_pump) / 1.e6;  //[MW]
+
+        ////The parasitic power consumed by electronics and SCA drives
+        //if (m_EqOpteff > 0.0)
+        //{
+        //    SCA_par_tot = SCA_drives_elec * SCAs_def*float(m_nSCA*m_nLoops);
+        //}
+        //else
+        //{
+        //    SCA_par_tot = 0.0;
+        //}
+    }
+    else
+    {
+        // The total pressure drop in all of the piping
+        m_dP_total = (DP_loop_tot + DP_IOCOP);
+
+        // Convert pressure drops to gauge pressures
+        m_P_loop[0] = m_dP_total;
+        for (int i = 1; i < m_nSCA + m_interconnects.size(); i++) {
+            m_P_loop[i] = m_P_loop[i - 1] - m_DP_loop[i - 1];
+        }
+
+        // The total pumping power consumption
+        m_W_dot_pump = m_dP_total * m_dot_htf / (rho_hdr_cold*m_eta_pump) / 1.e6;  //[MW]
+
+        ////The parasitic power consumed by electronics and SCA drives 
+        //if (m_EqOpteff > 0.0)
+        //{
+        //    SCA_par_tot = SCA_drives_elec * SCAs_def*float(m_nSCA);
+        //}
+        //else
+        //{
+        //    SCA_par_tot = 0.0;
+        //}
+    }
+
+    m_dP_total *= 1.E-5;		//[bar], convert from Pa
 }
 
 void C_csp_trough_collector_receiver::set_output_value()
@@ -1824,7 +2099,7 @@ void C_csp_trough_collector_receiver::off(const C_csp_weatherreader::S_outputs &
 	//	m_E_dot_HR_cold_fullts - m_E_dot_HR_hot_fullts - m_q_dot_htf_to_sink_fullts;	//[MWt]
 
 	// Solve for pressure drop and pumping power
-	field_pressure_drop();
+	field_pressure_drop(weather.m_tdry);
 
 	// Are any of these required by the solver for system-level iteration?
 	cr_out_solver.m_q_startup = 0.0;						//[MWt-hr] Receiver thermal output used to warm up the receiver
@@ -1995,7 +2270,7 @@ void C_csp_trough_collector_receiver::startup(const C_csp_weatherreader::S_outpu
 	}
 
 	// Solve for pressure drop and pumping power
-	field_pressure_drop();
+	field_pressure_drop(weather.m_tdry);
 
 	// These outputs need some more thought
 		// For now, just set this > 0.0 so that the controller knows that startup was successful
@@ -2256,7 +2531,7 @@ void C_csp_trough_collector_receiver::on(const C_csp_weatherreader::S_outputs &w
 			m_E_dot_HR_cold_fullts - m_E_dot_HR_hot_fullts - m_q_dot_htf_to_sink_fullts;	//[MWt]
 
 		// Solve for pressure drop and pumping power
-		field_pressure_drop();
+		field_pressure_drop(weather.m_tdry);
 
 		// Set solver outputs & return
 		// Receiver is already on, so the controller is not looking for this value
@@ -2311,6 +2586,68 @@ void C_csp_trough_collector_receiver::on(const C_csp_weatherreader::S_outputs &w
 	set_output_value();
 
 	return;
+}
+
+void C_csp_trough_collector_receiver::steady_state(const C_csp_weatherreader::S_outputs &weather,
+    const C_csp_solver_htf_1state &htf_state_in,
+    double field_control,
+    C_csp_collector_receiver::S_csp_cr_out_solver &cr_out_solver,
+    const C_csp_solver_sim_info &sim_info)
+{
+    // Original converged values to reset back to
+    double T_sys_c_t_end_converged_orig = m_T_sys_c_t_end_converged;
+    double T_sys_h_t_end_converged_orig = m_T_sys_h_t_end_converged;
+    std::vector<double> T_htf_out_t_end_converged_orig = m_T_htf_out_t_end_converged;
+
+    m_T_sys_c_t_end_converged = htf_state_in.m_temp + 273.15;       // this sets m_T_sys_c_t_end_last
+    m_T_sys_h_t_end_converged = htf_state_in.m_temp + 273.15;       // this sets m_T_sys_h_t_end_last
+    m_T_htf_out_t_end_converged.assign(m_nSCA, htf_state_in.m_temp + 273.15);
+
+    // Values for checking whether steady-state
+    double ss_diff = std::numeric_limits<double>::quiet_NaN();
+    const double tol = 0.05;
+    std::vector<double> T_htf_in_t_int_last = m_T_htf_in_t_int;
+    std::vector<double> T_htf_out_t_int_last = m_T_htf_out_t_int;
+    double minutes2SS = 0.;
+
+    do
+    {
+        this->on(weather, htf_state_in, field_control, cr_out_solver, sim_info);
+
+        // Calculate metric for deciding whether steady-state is reached
+        ss_diff = 0.;
+        for (int i = 0; i < m_nSCA; i++) {
+            ss_diff += fabs(m_T_htf_in_t_int[i] - T_htf_in_t_int_last[i]) +
+                fabs(m_T_htf_out_t_int[i] - T_htf_out_t_int_last[i]);
+        }
+
+        // Set converged values so reset_last_temps() propagates the temps in time
+        m_T_sys_c_t_end_converged = m_T_sys_c_t_end;
+        m_T_sys_h_t_end_converged = m_T_sys_h_t_end;
+        m_T_htf_out_t_end_converged = m_T_htf_out_t_end;
+        
+        // Update 'last' values
+        T_htf_in_t_int_last = m_T_htf_in_t_int;
+        T_htf_out_t_int_last = m_T_htf_out_t_int;
+
+        minutes2SS += sim_info.ms_ts.m_step / 60.;
+
+    } while (ss_diff / 200. > tol);
+    
+    // Set steady-state outputs
+    transform(m_T_rnr.begin(), m_T_rnr.end(), m_T_rnr_dsn.begin(), [](double x) {return x - 273.15;});        // K to C
+    transform(m_P_rnr.begin(), m_P_rnr.end(), m_P_rnr_dsn.begin(), [](double x) {return x / 1.e5;});          // Pa to bar
+    transform(m_T_hdr.begin(), m_T_hdr.end(), m_T_hdr_dsn.begin(), [](double x) {return x - 273.15;});        // K to C
+    transform(m_P_hdr.begin(), m_P_hdr.end(), m_P_hdr_dsn.begin(), [](double x) {return x / 1.e5;});          // Pa to bar
+    transform(m_T_loop.begin(), m_T_loop.end(), m_T_loop_dsn.begin(), [](double x) {return x - 273.15;});     // K to C
+    transform(m_P_loop.begin(), m_P_loop.end(), m_P_loop_dsn.begin(), [](double x) {return x / 1.e5;});       // Pa to bar
+
+    // After steady-state is calculated, reset back to original converged values
+    m_T_sys_c_t_end_converged = T_sys_c_t_end_converged_orig;
+    m_T_sys_h_t_end_converged = T_sys_h_t_end_converged_orig;
+    m_T_htf_out_t_end_converged = T_htf_out_t_end_converged_orig;
+
+    return;
 }
 
 int C_csp_trough_collector_receiver::C_mono_eq_defocus::operator()(double defocus /*-*/, double *T_htf_loop_out /*K*/)
@@ -2509,7 +2846,7 @@ void C_csp_trough_collector_receiver::call(const C_csp_weatherreader::S_outputs 
 	P_amb *= 100.0;				//[mbar] -> Pa
 	T_cold_in += 273.15;		//[K] convert from C
 	m_dot_in *= 1 / 3600.;		//[kg/s] convert from kg/hr
-	SolarAz = (SolarAz - 180.0) * m_d2r;	//[rad] convert from [deg]
+	SolarAz = (SolarAz - 180.0) * m_d2r;	//[rad] convert from [deg] North=0 to South=0
 
 	double rho_hdr_cold, rho_hdr_hot;
 	double c_hdr_cold_last, m_dot_lower, m_dot_upper;
@@ -2768,7 +3105,7 @@ overtemp_iter_flag: //10 continue     //Return loop for over-temp conditions
 
 			E_field_loss_tot *= 1.e-6*dt;
 
-			double E_field_pipe_hl = 2.*m_Runner_hl_hot + float(m_nfsec)*m_Header_hl_hot + 2.*m_Runner_hl_cold + float(m_nfsec)*m_Header_hl_cold;
+			double E_field_pipe_hl = m_Runner_hl_hot_tot + m_Header_hl_hot_tot + m_Runner_hl_cold_tot + m_Header_hl_cold_tot;
 
 			E_field_pipe_hl *= dt;		//[J]
 
@@ -3373,8 +3710,8 @@ calc_final_metrics_goto:
 			(m_v_cold*rho_hdr_cold*m_c_hdr_cold + m_mc_bal_cold)*(m_TCS_T_sys_c - 298.150));   //cold header and piping
 
 		//6/14/12, TN: Redefine pipe heat losses with header and runner components to get total system losses
-		double m_Pipe_hl_hot = 2.*m_Runner_hl_hot + float(m_nfsec)*m_Header_hl_hot;
-		double m_Pipe_hl_cold = 2.*m_Runner_hl_cold + float(m_nfsec)*m_Header_hl_cold;
+		double m_Pipe_hl_hot = m_Runner_hl_hot_tot + m_Header_hl_hot_tot;
+		double m_Pipe_hl_cold = m_Runner_hl_cold_tot + m_Header_hl_cold_tot;
 
 		piping_hl_total = m_Pipe_hl_hot + m_Pipe_hl_cold;
 
@@ -5652,6 +5989,60 @@ int C_csp_trough_collector_receiver::size_rnr_lengths(int Nfieldsec, double L_rn
     }
 
     return 0;
+}
+
+// Returns runner mass flow for a given runner index
+double C_csp_trough_collector_receiver::m_dot_runner(double m_dot_field, int nfieldsec, int irnr) {
+    int nrnrsec = (int)floor(float(nfieldsec) / 4.0) + 1;
+
+    if (irnr < 0 || irnr > 2 * nrnrsec - 1) { throw std::invalid_argument("Invalid runner index"); }
+
+    int irnr_onedir;
+    double m_dot_rnr;
+    double m_dot_rnr_0;
+    double m_dot_rnr_1;
+
+    // convert index to a mass flow equivalent cold runner index
+    if (irnr > nrnrsec - 1) {
+        irnr_onedir = 2 * nrnrsec - irnr - 1;
+    }
+    else {
+        irnr_onedir = irnr;
+    }
+
+    m_dot_rnr_0 = m_dot_field / 2.;
+    m_dot_rnr_1 = m_dot_rnr_0 * (1. - float(nfieldsec % 4) / float(nfieldsec));
+
+    switch (irnr_onedir) {
+    case 0:
+        m_dot_rnr = m_dot_rnr_0;
+    case 1:
+        m_dot_rnr = m_dot_rnr_1;
+    default:
+        m_dot_rnr = m_dot_rnr_1 - (irnr_onedir - 1)*m_dot_field / float(nfieldsec) * 2;
+    }
+
+    return max(m_dot_rnr, 0.0);
+}
+
+// Returns header mass flow for a given header index
+double C_csp_trough_collector_receiver::m_dot_header(double m_dot_field, int nfieldsec, int nLoopsField, int ihdr) {
+    int nhdrsec = (int)ceil(float(nLoopsField) / float(nfieldsec * 2));  // in the cold or hot headers
+
+    if (ihdr < 0 || ihdr > 2 * nhdrsec - 1) { throw std::invalid_argument("Invalid header index"); }
+
+    int ihdr_onedir;
+
+    // convert index to a mass flow equivalent cold header index
+    if (ihdr > nhdrsec - 1) {
+        ihdr_onedir = 2 * nhdrsec - ihdr - 1;
+    }
+    else {
+        ihdr_onedir = ihdr;
+    }
+
+    double m_dot_oneloop = m_dot_field / float(nLoopsField);
+    return m_dot_field / float(nfieldsec) - ihdr_onedir * 2 * m_dot_oneloop;
 }
 
 //***************************************************************************************************

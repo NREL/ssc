@@ -490,7 +490,9 @@ void C_csp_solver::init()
 	C_csp_collector_receiver::S_csp_cr_init_inputs init_inputs;
 	init_inputs.m_latitude = mc_weather.ms_solved_params.m_lat;		//[deg]
 	init_inputs.m_longitude = mc_weather.ms_solved_params.m_lon;	//[deg]
+    init_inputs.m_tz = mc_weather.ms_solved_params.m_tz;	    	//[hr]
 	init_inputs.m_shift = mc_weather.ms_solved_params.m_shift;		//[deg]
+    init_inputs.m_elev = mc_weather.ms_solved_params.m_elev;		//[m]
 	C_csp_collector_receiver::S_csp_cr_solved_params cr_solved_params;
 	
 	mc_collector_receiver.init(init_inputs, cr_solved_params);

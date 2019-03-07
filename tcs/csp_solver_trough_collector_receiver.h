@@ -57,6 +57,7 @@
 #include "lib_weatherfile.h"
 #include <cmath>
 #include "sam_csp_util.h"
+#include "interconnect.h"
 
 #include "numeric_solvers.h"
 
@@ -197,16 +198,23 @@ private:
 	double m_q_dot_inc_sf_tot;	//[MWt] Total incident radiation on solar field
 
 	double m_Header_hl_cold;	//[W] Total heat loss from the cold headers *in one field section*
+    double m_Header_hl_cold_tot;
 	double m_Runner_hl_cold;	//[W] Total heat loss from the cold runners *in one field section*
+    double m_Runner_hl_cold_tot;
 
 	double m_Header_hl_hot;		//[W] Total heat loss from the hot headers *in one field section*
+    double m_Header_hl_hot_tot;
 	double m_Runner_hl_hot;		//[W] Total heat loss from the hot runners *in one field section*
+    double m_Runner_hl_hot_tot;
 
 	double m_c_hdr_cold;		//[J/kg-K] Specific heat of fluid at m_T_sys_c
 	double m_c_hdr_hot;			//[J/kg-K] Specific heat of fluid at outlet temperature of last SCA (not necessarily return temperature if modeling runners and headers)
 
 	double m_mc_bal_hot;		//[J/K] The heat capacity of the balance of plant on the hot side
 	double m_mc_bal_cold;		//[J/K] The heat capacity of the balance of plant on the cold side
+
+    double m_T_loop_in;
+    double m_P_field_in;
 
 	// Classes that are defined as member data so are re-declared each time performance function is called
 	std::vector<double> m_DP_tube;	//[Pa] Pressure drops in each receiver
@@ -311,7 +319,7 @@ private:
 					double & T_cold_in /*K*/, double m_dot_loop /*kg/s*/, 
 					const C_csp_solver_sim_info &sim_info, double & Q_fp /*MJ*/);
 
-	void field_pressure_drop();
+	void field_pressure_drop(double T_db);
 
 	void set_output_value();
 
@@ -430,6 +438,9 @@ public:
     util::matrix_t<double> m_D_cpnt;              //[m] Inner diameters of the components in each loop interconnect
     util::matrix_t<double> m_L_cpnt;              //[m] Lengths of the components in each loop interconnect
     util::matrix_t<double> m_Type_cpnt;           //[-] Type of component in each loop interconnect [0=fitting | 1=pipe | 2=flex_hose]
+    util::matrix_t<double> m_rough_cpnt;
+    util::matrix_t<double> m_u_cpnt;
+    util::matrix_t<double> m_mc_cpnt;
     bool m_custom_sf_pipe_sizes;                  //[-] Should the field pipe diameters, wall thickness and lengths be imported instead of calculated
     util::matrix_t<double> m_sf_rnr_diams;        //[m] Imported runner diameters, used if custom_sf_pipe_sizes is true
     util::matrix_t<double> m_sf_rnr_wallthicks;   //[m] Imported runner wall thicknesses, used if custom_sf_pipe_sizes is true
@@ -438,17 +449,35 @@ public:
     util::matrix_t<double> m_sf_hdr_wallthicks;   //[m] Imported header wall thicknesses, used if custom_sf_pipe_sizes is true
     util::matrix_t<double> m_sf_hdr_lengths;      //[m] Imported header lengths, used if custom_sf_pipe_sizes is true
 
-    std::vector<double> m_D_runner;	 //[m]    Diameters of runner sections
-    std::vector<double> m_m_dot_rnr; //[kg/s] Design mass flow through runner sections
-    std::vector<double> m_V_rnr;     //[m/s]  Design velocity through runner sections
-    std::vector<double> m_L_runner;	 //[m]    Lengths of runner sections
-    std::vector<int> m_N_rnr_xpans;  //[-]    Number of expansions in runner sections
+    std::vector<double> m_D_runner;	              //[m]    Diameters of runner sections
+    std::vector<double> m_m_dot_rnr_dsn;          //[kg/s] Design mass flow through runner sections
+    std::vector<double> m_V_rnr_dsn;              //[m/s]  Design velocity through runner sections
+    std::vector<double> m_L_runner;	              //[m]    Lengths of runner sections
+    std::vector<int> m_N_rnr_xpans;               //[-]    Number of expansions in runner sections
+    std::vector<double> m_DP_rnr;                 //[bar]  Pressure drop in runner sections
+    std::vector<double> m_T_rnr_dsn;              //[C]    Temperature in runner sections at design
+    std::vector<double> m_P_rnr_dsn;              //[bar]  Gauge pessure in runner sections at design
+    std::vector<double> m_T_rnr;                  //[K]    Temperature in runner sections
+    std::vector<double> m_P_rnr;                  //[Pa ]  Gauge pessure in runner sections
+                                                  
+    std::vector<double> m_D_hdr;	              //[m]    Diameters of header sections
+    std::vector<double> m_m_dot_hdr_dsn;          //[kg/s] Design mass flow through runner sections
+    std::vector<double> m_V_hdr_dsn;              //[m/s]  Design velocity through runner sections
+    std::vector<double> m_L_hdr;	              //[m]    Lengths of runner sections
+    std::vector<int> m_N_hdr_xpans;               //[-]    Number of expansions in runner sections
+    std::vector<double> m_DP_hdr;                 //[bar]  Pressure drop in header sections
+    std::vector<double> m_T_hdr_dsn;              //[C]    Temperature in header sections at design
+    std::vector<double> m_P_hdr_dsn;              //[bar]  Gauge pessure in header sections at design
+    std::vector<double> m_T_hdr;                  //[K]    Temperature in header sections
+    std::vector<double> m_P_hdr;                  //[Pa]   Gauge pessure in header sections
+                                                  
+    std::vector<double> m_DP_loop;                //[bar]  Pressure drop in loop sections
+    std::vector<double> m_T_loop_dsn;             //[C]    Temperature in loop sections at design
+    std::vector<double> m_P_loop_dsn;             //[bar]  Gauge pessure in loop sections at design
+    std::vector<double> m_T_loop;                 //[K]    Temperature in loop sections
+    std::vector<double> m_P_loop;                 //[Pa]   Gauge pessure in loop sections
 
-    std::vector<double> m_D_hdr;	 //[m]    Diameters of header sections
-    std::vector<double> m_m_dot_hdr; //[kg/s] Design mass flow through runner sections
-    std::vector<double> m_V_hdr;     //[m/s]  Design velocity through runner sections
-    std::vector<double> m_L_hdr;	 //[m]    Lengths of runner sections
-    std::vector<int> m_N_hdr_xpans;  //[-]    Number of expansions in runner sections
+    vector<interconnect> m_interconnects;
 
 	// **************************************************************************
 	// **************************************************************************
@@ -498,6 +527,12 @@ public:
 		double field_control,
 		C_csp_collector_receiver::S_csp_cr_out_solver &cr_out_solver,
 		const C_csp_solver_sim_info &sim_info);
+
+    virtual void steady_state(const C_csp_weatherreader::S_outputs &weather,
+        const C_csp_solver_htf_1state &htf_state_in,
+        double field_control,
+        C_csp_collector_receiver::S_csp_cr_out_solver &cr_out_solver,
+        const C_csp_solver_sim_info &sim_info);
 
 	virtual void estimates(const C_csp_weatherreader::S_outputs &weather,
 		const C_csp_solver_htf_1state &htf_state_in,
@@ -674,6 +709,8 @@ public:
         const std::vector<double> &L_SCA, int min_rnr_xpans, const std::vector<double> &L_gap_sca, double Nsca_loop,
         double L_rnr_per_xpan, double L_rnr_xpan, std::vector<double> &L_runner, std::vector<int> &N_rnr_xpans,
         bool custom_lengths = false);
+    double C_csp_trough_collector_receiver::m_dot_runner(double m_dot_field, int nfieldsec, int irnr);
+    double C_csp_trough_collector_receiver::m_dot_header(double m_dot_field, int nfieldsec, int nLoopsField, int ihdr);
 };
 
 
