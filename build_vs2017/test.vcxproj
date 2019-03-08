@@ -26,6 +26,7 @@
     <ClCompile Include="..\test\shared_test\lib_battery_test.cpp" />
     <ClCompile Include="..\test\shared_test\lib_irradproc_test.cpp" />
     <ClCompile Include="..\test\shared_test\lib_shared_inverter_test.cpp" />
+    <ClCompile Include="..\test\shared_test\lib_time_test.cpp" />
     <ClCompile Include="..\test\shared_test\lib_util_test.cpp" />
     <ClCompile Include="..\test\shared_test\lib_weatherfile_test.cpp" />
     <ClCompile Include="..\test\shared_test\lib_windfile_test.cpp" />
@@ -65,8 +66,8 @@
     <ClInclude Include="..\test\input_cases\windpower_cases.h" />
     <ClInclude Include="..\test\shared_test\lib_battery_powerflow_test.h" />
     <ClInclude Include="..\test\shared_test\lib_battery_properties.h" />
-    <ClInclude Include="..\test\shared_test\lib_battery_test.h" />
     <ClInclude Include="..\test\shared_test\lib_irradproc_test.h" />
+    <ClInclude Include="..\test\shared_test\lib_time_test.h" />
     <ClInclude Include="..\test\shared_test\lib_trough_properties.h" />
     <ClInclude Include="..\test\shared_test\lib_windwakemodel_test.h" />
     <ClInclude Include="..\test\ssc_test\cmod_biomass_test.h" />

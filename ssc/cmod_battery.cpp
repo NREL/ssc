@@ -51,6 +51,7 @@
 
 #include "common.h"
 #include "core.h"
+#include "lib_time.h"
 #include "lib_util.h"
 #include "cmod_battery.h"
 
@@ -1320,112 +1321,71 @@ public:
 		if (as_boolean("en_batt"))
 		{
 			// System generation output, which is lifetime (if system_lifetime_output == true);
-			std::vector<ssc_number_t> power_input = as_vector_ssc_number_t("gen");
-
-			int analysis_period = 1;
-			if (is_assigned("analysis_period")) {
-				analysis_period = as_integer("analysis_period");
-			}
-			if (analysis_period < 1) {
-				analysis_period = 1;
-			}
-
-			// Single year generation length
-			size_t nrec = power_input.size();
-
-			// Lifetime simulation
-			bool system_use_lifetime_output = false;
-			if (is_assigned("system_use_lifetime_output")) {
-				system_use_lifetime_output = as_boolean("system_use_lifetime_output");
-			}
-			if (system_use_lifetime_output) {
-				nrec = power_input.size() / analysis_period;
-			}
-			double dt_hour = 1;
-			if (nrec > 0) {
-				dt_hour = 8760.0 / (double)nrec;
-			}
-			battstor batt(*this, true, nrec, dt_hour);
-			ssc_number_t * p_gen = allocate("gen", nrec * batt.nyears);
-
-			// Parse "load input"
-			std::vector<ssc_number_t> power_load;
-			if (batt.batt_vars->batt_meter_position == dispatch_t::BEHIND)
-			{
-				if (is_assigned("load"))
-				{ 
-					// hourly or sub hourly loads for single year
-					power_load = as_vector_ssc_number_t("load");
-
-					// battstor does not handle load recs not equal to power input recs
-					if (power_load.size() != power_input.size())
-					{
-						std::vector<ssc_number_t> load_tmp(power_load);
-						power_load.clear();
-
-						// Interpolate load and resize for multi-year
-						for (size_t iyear = 0; iyear < batt.nyears; iyear++) {
-							for (size_t hour = 0; hour < 8760; hour++) {
-								for (size_t jj = 0; jj < batt.step_per_hour; jj++){
-									power_load.push_back(load_tmp[hour]/(ssc_number_t)batt.step_per_hour);
-								}
-							}
-						}
-					}
-				}
-
-				batt.initialize_automated_dispatch(power_input, power_load);
-			}
-			else
-			{
-				for (size_t i = 0; i != power_input.size(); i++) {
-					power_load.push_back(0);
-				}
+			std::vector<ssc_number_t> power_input_lifetime = as_vector_ssc_number_t("gen");
+			std::vector<ssc_number_t> load_lifetime, load_year_one;
+			size_t n_rec_lifetime;
+			size_t n_rec_single_year;
+			double dt_hour_gen;
+			if (is_assigned("load")) {
+				load_year_one = as_vector_ssc_number_t("load");
 			}
 
-			// Prepare annual outputs
-			double capacity_factor_in = 0.;
-			double annual_energy_in = 0.;
-			double nameplate_in = 0.;
+			 single_year_to_lifetime_interpolated<ssc_number_t>(
+				(bool)as_integer("system_use_lifetime_output"),
+				(size_t)as_integer("analysis_period"),
+				power_input_lifetime, 
+				load_year_one,
+				load_lifetime,
+				n_rec_lifetime, 
+				n_rec_single_year,
+				dt_hour_gen);
 
-			if (is_assigned("capacity_factor") && is_assigned("annual_energy")) {
-				capacity_factor_in = as_double("capacity_factor");
-				annual_energy_in = as_double("annual_energy");
-				nameplate_in = (annual_energy_in / (capacity_factor_in * 0.01)) / 8760.;
+			// Create battery structure and initialize
+			battstor batt(*this, true, n_rec_single_year, dt_hour_gen);
+
+			if (batt.batt_vars->batt_meter_position == dispatch_t::BEHIND){
+				batt.initialize_automated_dispatch(power_input_lifetime, load_lifetime);
 			}
-	
-			// Error checking
-			if (power_input.size() != power_load.size())
+
+			if (load_lifetime.size() != n_rec_lifetime) {
 				throw exec_error("battery", "Load length does not match system generation length");
-
-//			if (batt.step_per_hour > 60 || batt.total_steps != power_input.size() * batt.nyears)
-//				throw exec_error("battery", util::format("invalid number of data records (%u): must be an integer multiple of 8760", batt.total_steps));
-
-			// Battery cannot be run in DC-connected mode for generic system.  
-			// We don't have detailed inverter voltage info or clipping info (if PV)
+			}
 			if (batt.batt_vars->batt_topology == ChargeController::DC_CONNECTED) {
 				batt.batt_vars->batt_topology = ChargeController::AC_CONNECTED;
 				throw exec_error("battery", "Generic System must be AC connected to battery");
 			}
+			
+			// Prepare outputs
+			ssc_number_t * p_gen = allocate("gen", n_rec_lifetime);
+			double capacity_factor_in, annual_energy_in, nameplate_in;
+			capacity_factor_in = annual_energy_in = nameplate_in = 0;
 
+			if (is_assigned("capacity_factor") && is_assigned("annual_energy")) {
+				capacity_factor_in = as_double("capacity_factor");
+				annual_energy_in = as_double("annual_energy");
+				nameplate_in = (annual_energy_in / (capacity_factor_in * 0.01)) / util::hours_per_year;
+			}
+	
+			
 			/* *********************************************************************************************
 			Run Simulation
 			*********************************************************************************************** */
 			double annual_energy = 0;
-			int lifetime_idx = 0;
+			size_t lifetime_idx = 0;
 			for (size_t year = 0; year != batt.nyears; year++)
 			{
-				int year_idx = 0; 
+				size_t year_idx = 0; 
 				for (size_t hour = 0; hour < 8760; hour++)
 				{
 					for (size_t jj = 0; jj < batt.step_per_hour; jj++)
 					{
-	
 						batt.initialize_time(year, hour, jj);
 						batt.check_replacement_schedule();
-						batt.advance(*this, power_input[year_idx], 0, power_load[year_idx], 0);
+						batt.advance(*this, power_input_lifetime[year_idx], 0, load_lifetime[year_idx], 0);
 						p_gen[lifetime_idx] = batt.outGenPower[lifetime_idx];
-						if (year==0) annual_energy += p_gen[lifetime_idx] * batt._dt_hour;
+						if (year == 0) {
+							annual_energy += p_gen[lifetime_idx] * batt._dt_hour;
+						}
 						lifetime_idx++;
 						year_idx++;
 					}
@@ -1434,7 +1394,7 @@ public:
 			batt.calculate_monthly_and_annual_outputs(*this);
 
 			// update capacity factor and annual energy
-			assign("capacity_factor", var_data(static_cast<ssc_number_t>(annual_energy * 100.0 / (nameplate_in * 8760.))));
+			assign("capacity_factor", var_data(static_cast<ssc_number_t>(annual_energy * 100.0 / (nameplate_in * util::hours_per_year))));
 			assign("annual_energy", var_data(static_cast<ssc_number_t>(annual_energy)));
 		}
 		else
