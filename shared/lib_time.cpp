@@ -29,15 +29,11 @@ void single_year_to_lifetime_interpolated(
 
 	if (singleyear_vector.size() > 0)
 	{
-		double dt_hour_singleyear = (double)util::hours_per_year / (double)singleyear_vector.size();
-		if (dt_hour_singleyear != dt_hour || is_lifetime)
-		{
-			// Interpolate singleyear and resize for multi-year
-			for (size_t iyear = 0; iyear < n_years; iyear++) {
-				for (size_t hour = 0; hour < util::hours_per_year; hour++) {
-					for (size_t jj = 0; jj < step_per_hour; jj++) {
-						lifetime_from_singleyear_vector.push_back(singleyear_vector[hour] / (T)step_per_hour);
-					}
+		// Interpolate singleyear and resize for multi-year
+		for (size_t iyear = 0; iyear < n_years; iyear++) {
+			for (size_t hour = 0; hour < util::hours_per_year; hour++) {
+				for (size_t jj = 0; jj < step_per_hour; jj++) {
+					lifetime_from_singleyear_vector.push_back(singleyear_vector[hour] / (T)step_per_hour);
 				}
 			}
 		}

@@ -81,7 +81,7 @@ TEST_F(CMGeneric, CommercialWithBattery) {
 	for (size_t l = 0; l < 2; l++) {
 		ssc_data_set_number(data, "system_use_lifetime_output", l);
 		EXPECT_FALSE(run_module(data, "generic_system"));
-		EXPECT_TRUE(run_module(data, "battery"));
+		EXPECT_FALSE(run_module(data, "battery"));
 	}
 }
 
