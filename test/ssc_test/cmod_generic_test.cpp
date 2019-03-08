@@ -95,7 +95,7 @@ TEST_F(CMGeneric, CommericalWithBatteryWrongSizes)
 {
 	// Test with hourly gen, subhourly load, should fail everywhere
 	generic_commerical_battery_60min(data);
-	set_array(data, "load", generictest::load_profile_path_1min, 60 * 8760);
+	set_array(data, "load", generictest::load_profile_path_30min, 2 * 8760);
 
 	EXPECT_TRUE(run_module(data, "generic_system"));
 	EXPECT_TRUE(run_module(data, "battery"));
