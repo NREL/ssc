@@ -683,6 +683,7 @@ bool C_csp_trough_collector_receiver::init_fieldgeom()
         rnr_and_hdr_design(m_nhdrsec, m_nfsec, m_nrunsec, rho_ave, m_V_hdr_cold_max, m_V_hdr_cold_min,
             m_V_hdr_hot_max, m_V_hdr_hot_min, m_N_max_hdr_diams, m_m_dot_design, m_D_hdr, m_D_runner,
             m_m_dot_rnr_dsn, m_m_dot_hdr_dsn, m_V_rnr_dsn, m_V_hdr_dsn, &summary, m_custom_sf_pipe_sizes);
+        mc_csp_messages.add_message(C_csp_messages::NOTICE, summary);
 
         if (!m_custom_sf_pipe_sizes) {
             // Calculate pipe wall thicknesses
@@ -751,6 +752,7 @@ bool C_csp_trough_collector_receiver::init_fieldgeom()
 		m_v_cold = v_header_cold + v_from_sgs;
 
 		//Write the volume totals to the piping diameter file
+        summary.clear();
 		summary.append("\n----------------------------------------------\n"
 			"Plant HTF volume information:\n"
 			"----------------------------------------------\n");
