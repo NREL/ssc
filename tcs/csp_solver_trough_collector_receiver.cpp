@@ -5877,7 +5877,7 @@ void C_csp_trough_collector_receiver::rnr_and_hdr_design(unsigned nhsec, int nfs
 #else
 #define MySnprintf snprintf
 #endif
-#define TSTRLEN 512
+#define TSTRLEN 16384
 
         double mtoinch = 39.3700787;	//[m] -> [in]
         summary->clear();
