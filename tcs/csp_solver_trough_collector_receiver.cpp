@@ -5877,19 +5877,19 @@ void C_csp_trough_collector_receiver::rnr_and_hdr_design(unsigned nhsec, int nfs
 #else
 #define MySnprintf snprintf
 #endif
-#define TSTRLEN 16384
+#define TSTRLEN2 16384
 
         double mtoinch = 39.3700787;	//[m] -> [in]
         summary->clear();
-        char tstr[TSTRLEN];
+        char tstr[TSTRLEN2];
         //Write runner diam
-        MySnprintf(tstr, TSTRLEN,
+        MySnprintf(tstr, TSTRLEN2,
             "Piping geometry file\n\nMaximum fluid velocity: %.2lf\nMinimum fluid velocity: %.2lf\n\n",
             max(V_cold_max, V_hot_max), min(V_cold_min, V_hot_min));
         summary->append(tstr);
 
         for (unsigned i = 0; i < 2 * nrunsec; i++) {
-            MySnprintf(tstr, TSTRLEN, "To section %d header pipe diameter: %.4lf m (%.2lf in)\n", i + 1, D_runner[i], D_runner[i] * mtoinch);
+            MySnprintf(tstr, TSTRLEN2, "To section %d header pipe diameter: %.4lf m (%.2lf in)\n", i + 1, D_runner[i], D_runner[i] * mtoinch);
             summary->append(tstr);
         }
         //Write header diams
@@ -5900,7 +5900,7 @@ void C_csp_trough_collector_receiver::rnr_and_hdr_design(unsigned nhsec, int nfs
             if (i > 1) {
                 if (D_hdr[i] != D_hdr.at(i - 1)) nd = nd + 1;
             }
-            MySnprintf(tstr, TSTRLEN, "  %4d   |    %6.4lf    |    %6.4lf     | %3d\n", i + 1, D_hdr[i], D_hdr[i] * mtoinch, nd);
+            MySnprintf(tstr, TSTRLEN2, "  %4d   |    %6.4lf    |    %6.4lf     | %3d\n", i + 1, D_hdr[i], D_hdr[i] * mtoinch, nd);
             summary->append(tstr);
         }
         //110 format(2X,I4,3X,"|",4X,F6.4,4X,"|",4X,F6.3,5X,"|",1X,I3)
