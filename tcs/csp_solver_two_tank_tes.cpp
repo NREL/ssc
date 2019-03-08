@@ -220,7 +220,7 @@ void C_heat_exchanger::hx_performance(bool is_hot_side_mdot, bool is_storage_sid
 	double NTU = UA / c_dot;
 	eff = NTU / (1.0 + NTU);
 
-	if( isnan(eff) || eff <= 0.0 || eff > 1.0)
+	if( std::isnan(eff) || eff <= 0.0 || eff > 1.0)
 	{
         eff = T_hot_out = T_cold_out = q_trans = m_dot_solved = 
         m_T_hot_field_prev = m_T_cold_field_prev = m_T_hot_tes_prev = m_T_cold_tes_prev = 
