@@ -711,8 +711,8 @@ public:
         const std::vector<double> &L_SCA, int min_rnr_xpans, const std::vector<double> &L_gap_sca, double Nsca_loop,
         double L_rnr_per_xpan, double L_rnr_xpan, std::vector<double> &L_runner, std::vector<int> &N_rnr_xpans,
         bool custom_lengths = false);
-    double C_csp_trough_collector_receiver::m_dot_runner(double m_dot_field, int nfieldsec, int irnr);
-    double C_csp_trough_collector_receiver::m_dot_header(double m_dot_field, int nfieldsec, int nLoopsField, int ihdr);
+    double m_dot_runner(double m_dot_field, int nfieldsec, int irnr);
+    double m_dot_header(double m_dot_field, int nfieldsec, int nLoopsField, int ihdr);
 };
 
 
