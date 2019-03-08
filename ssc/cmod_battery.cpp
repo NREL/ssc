@@ -1091,8 +1091,8 @@ void battstor::check_replacement_schedule()
 		bool replace = false;
 		if (year < batt_vars->batt_replacement_schedule.size())
 		{
-			int num_repl = batt_vars->batt_replacement_schedule[year];
-			for (int j_repl = 0; j_repl < num_repl; j_repl++)
+			size_t num_repl = batt_vars->batt_replacement_schedule[year];
+			for (size_t j_repl = 0; j_repl < num_repl; j_repl++)
 			{
 				if ((hour == (j_repl * 8760 / num_repl)) && step == 0)
 				{
@@ -1295,7 +1295,7 @@ static var_info _cm_vtab_battery[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "analysis_period",                            "Lifetime analysis period",                                "years",   "The number of years in the simulation",                   "",             "system_use_lifetime_output=1",   "",                               "" },
 
 
-	{ SSC_INPUT,        SSC_ARRAY,       "gen",										   "System power generated",                                  "kW",         "",                     "",                             "",                       "",                               "" },
+	{ SSC_INPUT,        SSC_ARRAY,       "gen",										   "System power generated (lifetime)",                         "kW",         "",                     "",                             "",                       "",                               "" },
 	{ SSC_INPUT,		SSC_ARRAY,	     "load",			                           "Electricity load (year 1)",                               "kW",	        "",				        "",                             "",	                      "",	                            "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "batt_replacement_option",                    "Enable battery replacement?",                              "0=none,1=capacity based,2=user schedule", "", "Battery",             "?=0",                    "INTEGER,MIN=0,MAX=2",           "" },
 	{ SSC_INOUT,        SSC_NUMBER,      "capacity_factor",                            "Capacity factor",                                         "%",          "",                     "",                             "?=0",                    "",                               "" },
@@ -1319,50 +1319,54 @@ public:
 	{
 		if (as_boolean("en_batt"))
 		{
-			// Parse "Gen input"
+			// System generation output, which is lifetime (if system_lifetime_output == true);
 			std::vector<ssc_number_t> power_input = as_vector_ssc_number_t("gen");
 
 			int analysis_period = 1;
-			if (is_assigned("analysis_period"))
+			if (is_assigned("analysis_period")) {
 				analysis_period = as_integer("analysis_period");
-			if (analysis_period < 1)
+			}
+			if (analysis_period < 1) {
 				analysis_period = 1;
+			}
 
+			// Single year generation length
 			size_t nrec = power_input.size();
 
 			// Lifetime simulation
 			bool system_use_lifetime_output = false;
-			if (is_assigned("system_use_lifetime_output"))
+			if (is_assigned("system_use_lifetime_output")) {
 				system_use_lifetime_output = as_boolean("system_use_lifetime_output");
-
-			if (system_use_lifetime_output)
-				nrec = power_input.size()/analysis_period;
-
+			}
+			if (system_use_lifetime_output) {
+				nrec = power_input.size() / analysis_period;
+			}
 			double dt_hour = 1;
-			if (nrec > 0)
+			if (nrec > 0) {
 				dt_hour = 8760.0 / (double)nrec;
-
+			}
 			battstor batt(*this, true, nrec, dt_hour);
 			ssc_number_t * p_gen = allocate("gen", nrec * batt.nyears);
 
-			// Parse "Load input"
+			// Parse "load input"
 			std::vector<ssc_number_t> power_load;
 			if (batt.batt_vars->batt_meter_position == dispatch_t::BEHIND)
 			{
-				// battstor does not handle load recs not equal to power input recs
 				if (is_assigned("load"))
-				{ // hourly or sub hourly loads for single year
+				{ 
+					// hourly or sub hourly loads for single year
 					power_load = as_vector_ssc_number_t("load");
+
+					// battstor does not handle load recs not equal to power input recs
 					if (power_load.size() != power_input.size())
 					{
-						if (power_load.size() != 8760)
-							throw exec_error("battery", "Load length does not match system generation length and is not 8760.");
 						std::vector<ssc_number_t> load_tmp(power_load);
 						power_load.clear();
+
+						// Interpolate load and resize for multi-year
 						for (size_t iyear = 0; iyear < batt.nyears; iyear++) {
 							for (size_t hour = 0; hour < 8760; hour++) {
-								for (size_t jj = 0; jj < batt.step_per_hour; jj++)
-								{// degradation?
+								for (size_t jj = 0; jj < batt.step_per_hour; jj++){
 									power_load.push_back(load_tmp[hour]/(ssc_number_t)batt.step_per_hour);
 								}
 							}
@@ -1374,8 +1378,9 @@ public:
 			}
 			else
 			{
-				for (int i = 0; i != power_input.size(); i++)
+				for (size_t i = 0; i != power_input.size(); i++) {
 					power_load.push_back(0);
+				}
 			}
 
 			// Prepare annual outputs

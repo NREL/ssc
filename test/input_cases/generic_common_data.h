@@ -7,19 +7,19 @@
 namespace generictest {
 	const char * SSCDIR = std::getenv("SSCDIR");
 	char load_profile_path_60min[100];
-	char load_profile_path_1min[100];
+	char load_profile_path_30min[100];
 	char gen_path_60min[100];
-	char gen_path_1min[100];
-	char batt_dispatch_path_1min[100];
+	char gen_path_30min[100];
+	char batt_dispatch_path_30min[100];
 	char batt_dispatch_path_60min[100];
 	char dispatch_factors_unused[100];
 	char sell_rate_unused[100];
 
 	int n1 = sprintf(load_profile_path_60min, "%s/test/input_cases/generic_system_data/load_60min.csv", generictest::SSCDIR);
-	int n2 = sprintf(load_profile_path_1min, "%s/test/input_cases/generic_system_data/load_1min.csv", generictest::SSCDIR);
+	int n2 = sprintf(load_profile_path_30min, "%s/test/input_cases/generic_system_data/load_30min.csv", generictest::SSCDIR);
 	int n3 = sprintf(gen_path_60min, "%s/test/input_cases/generic_system_data/energy_output_array_60min.csv", generictest::SSCDIR);
-	int n4 = sprintf(gen_path_1min, "%s/test/input_cases/generic_system_data/energy_output_array_1min.csv", generictest::SSCDIR);
-	int n5 = sprintf(batt_dispatch_path_1min, "%s/test/input_cases/generic_system_data/batt_custom_dispatch_1min.csv", generictest::SSCDIR);
+	int n4 = sprintf(gen_path_30min, "%s/test/input_cases/generic_system_data/energy_output_array_30min.csv", generictest::SSCDIR);
+	int n5 = sprintf(batt_dispatch_path_30min, "%s/test/input_cases/generic_system_data/batt_custom_dispatch_30min.csv", generictest::SSCDIR);
 	int n6 = sprintf(batt_dispatch_path_60min, "%s/test/input_cases/generic_system_data/batt_custom_dispatch_60min.csv", generictest::SSCDIR);
 	int n7 = sprintf(dispatch_factors_unused, "%s/test/input_cases/generic_system_data/dispatch_factors_ts.csv", generictest::SSCDIR);
 	int n8 = sprintf(sell_rate_unused, "%s/test/input_cases/generic_system_data/ur_ts_sell_rate.csv", generictest::SSCDIR);

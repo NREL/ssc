@@ -56,7 +56,21 @@
     <ClCompile Include="..\test\ssc_test\cmod_pvyield_test.cpp">
       <Filter>ssc_test</Filter>
     </ClCompile>
-    <ClCompile Include="..\test\splinter_test\splinter_test.cpp" />
+    <ClCompile Include="..\test\ssc_test\cmod_biomass_test.cpp">
+      <Filter>ssc_test</Filter>
+    </ClCompile>
+    <ClCompile Include="..\test\ssc_test\cmod_generic_test.cpp">
+      <Filter>ssc_test</Filter>
+    </ClCompile>
+    <ClCompile Include="..\test\ssc_test\cmod_swh_test.cpp">
+      <Filter>ssc_test</Filter>
+    </ClCompile>
+    <ClCompile Include="..\test\splinter_test\splinter_test.cpp">
+      <Filter>splinter</Filter>
+    </ClCompile>
+    <ClCompile Include="..\test\input_cases\tcs_trough_physical_input.cpp">
+      <Filter>input_cases</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="shared_test">
@@ -70,6 +84,9 @@
     </Filter>
     <Filter Include="ssc_test">
       <UniqueIdentifier>{a72ae90f-81f5-484b-95a8-e25e2bff9289}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="splinter">
+      <UniqueIdentifier>{e47bb906-2dcc-4b0b-8436-0937d4b2a7db}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -150,6 +167,27 @@
     </ClInclude>
     <ClInclude Include="..\test\shared_test\lib_trough_properties.h">
       <Filter>shared_test</Filter>
+    </ClInclude>
+    <ClInclude Include="..\test\ssc_test\cmod_biomass_test.h">
+      <Filter>ssc_test</Filter>
+    </ClInclude>
+    <ClInclude Include="..\test\ssc_test\cmod_generic_test.h">
+      <Filter>ssc_test</Filter>
+    </ClInclude>
+    <ClInclude Include="..\test\ssc_test\cmod_swh_test.h">
+      <Filter>ssc_test</Filter>
+    </ClInclude>
+    <ClInclude Include="..\test\input_cases\biomass_common.h">
+      <Filter>input_cases</Filter>
+    </ClInclude>
+    <ClInclude Include="..\test\input_cases\generic_common_data.h">
+      <Filter>input_cases</Filter>
+    </ClInclude>
+    <ClInclude Include="..\test\input_cases\swh_common.h">
+      <Filter>input_cases</Filter>
+    </ClInclude>
+    <ClInclude Include="..\test\input_cases\tcs_trough_physical_input.h">
+      <Filter>input_cases</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
