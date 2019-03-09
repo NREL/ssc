@@ -6,9 +6,9 @@
 
 namespace fuelcelltest {
 	const char * SSCDIR = std::getenv("SSCDIR");
-	char load_profile_path[100];
-	char ac_watt_output_path[100];
-	char ac_watt_lifetime_output_path[100];
+	char load_profile_path[256];
+	char ac_watt_output_path[256];
+	char ac_watt_lifetime_output_path[256];
 	int n1 = sprintf(ac_watt_output_path, "%s/test/input_cases/general_data/ac.csv", fuelcelltest::SSCDIR);
 	int n2 = sprintf(load_profile_path, "%s/test/input_cases/general_data/commercial_load.csv", fuelcelltest::SSCDIR);
 	int n3 = sprintf(ac_watt_lifetime_output_path, "%s/test/input_cases/general_data/ac_lifetime.csv", fuelcelltest::SSCDIR);

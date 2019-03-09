@@ -6,8 +6,8 @@
 #include "code_generator_utilities.h"
 
 
-char pvy_solar_resource_path[120];
-char pvy_solar_resource_path2[120];
+char pvy_solar_resource_path[256];
+char pvy_solar_resource_path2[256];
 
 int npvy1 = sprintf(pvy_solar_resource_path, "%s/test/input_cases/pvsamv1_data/meteo_36.8416_-2.4746__BNC_60_2012.csv", std::getenv("SSCDIR"));
 int npvy2 = sprintf(pvy_solar_resource_path2, "%s/test/input_cases/pvsamv1_data/USA AZ Phoenix (TMY2).csv", std::getenv("SSCDIR"));

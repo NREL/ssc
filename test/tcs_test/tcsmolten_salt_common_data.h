@@ -8,10 +8,10 @@
 //const char * SSCDIR = std::getenv("SSCDIR");
 //const char * SAMNTDIR = std::getenv("SAMNTDIR");
 
-char dispatch_factors_path[200];
-char ud_ind_od_path[200];
-char wlim_series_path[200];
-char helio_positions_path[200];
+char dispatch_factors_path[256];
+char ud_ind_od_path[256];
+char wlim_series_path[256];
+char helio_positions_path[256];
 
 
 int nmspt1 = sprintf(dispatch_factors_path, "%s/test/input_cases/moltensalt_data/dispatch_factors_ts.csv", std::getenv("SSCDIR"));
@@ -24,7 +24,7 @@ int nmspt4 = sprintf(helio_positions_path, "%s/test/input_cases/moltensalt_data/
 */
 void tcsmolten_salt_default(ssc_data_t &data)
 {
-	char solar_resource_path[200];
+	char solar_resource_path[256];
 	int n1 = sprintf(solar_resource_path, "%s/test/input_cases/moltensalt_data/daggett_ca_34.865371_-116.783023_psmv3_60_tmy.csv", std::getenv("SSCDIR"));
 
     ssc_data_set_string(data, "solar_resource_file", solar_resource_path);
