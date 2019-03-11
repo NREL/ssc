@@ -39,6 +39,7 @@ OBJECTS = \
 	lib_windwakemodel.o \
 	lib_windwatts.o \
 	lib_mlmodel.o \
+	lib_time.o \
 	lib_ondinv.o
 
 

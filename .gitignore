@@ -336,3 +336,6 @@ linux_test\.txt
 
 nlopt/config.h
 build_osx/config.status
+build_sdk/sdk-release/linux64/dependencies\.txt
+
+build_sdk/sdk-release/linux64/filetypes\.txt

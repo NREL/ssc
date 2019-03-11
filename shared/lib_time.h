@@ -2,7 +2,7 @@
 #define __LIB_TIME_H__
 
 #include <vector>
-
+#include <cstddef>
 /**
 Function takes lifetime (multi-year) vector and single year vector of possibly lower time resolution
 and returns the single year vector scaled to lifetime at the time resolution of the lifetime input vector
