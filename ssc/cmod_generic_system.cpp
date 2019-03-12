@@ -50,6 +50,7 @@
 #include "core.h"
 #include "lib_windfile.h"
 #include "lib_windwatts.h"
+
 // for adjustment factors
 #include "common.h"
 
@@ -57,15 +58,16 @@ static var_info _cm_vtab_generic_system[] = {
 //	  VARTYPE           DATATYPE         NAME                           LABEL                                 UNITS           META     GROUP                REQUIRED_IF        CONSTRAINTS           UI_HINTS
 	{ SSC_INPUT,        SSC_NUMBER,      "spec_mode",                  "Spec mode: 0=constant CF,1=profile",  "",             "",      "generic_system",      "*",               "",                    "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "derate",                     "Derate",                              "%",            "",      "generic_system",      "*",               "",                    "" },
-	{ SSC_INOUT,        SSC_NUMBER,      "system_capacity",         "Nameplace Capcity",                   "kW",           "",      "generic_system",      "*",               "",                    "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "user_capacity_factor",            "Capacity Factor",                     "%",            "",      "generic_system",      "*",               "",                    "" },
+	{ SSC_INOUT,        SSC_NUMBER,      "system_capacity",            "Nameplace Capcity",                   "kW",           "",      "generic_system",      "*",               "",                    "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "user_capacity_factor",       "Capacity Factor",                     "%",            "",      "generic_system",      "*",               "",                    "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "heat_rate",                  "Heat Rate",                           "MMBTUs/MWhe",  "",      "generic_system",      "*",               "",                    "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "conv_eff",                   "Conversion Efficiency",               "%",            "",      "generic_system",      "*",               "",                    "" },
-	{ SSC_INPUT,        SSC_ARRAY,       "energy_output_array",        "Array of Energy Output Profile",      "kW",          "",      "generic_system",      "*",               "",                    "" }, 
+	{ SSC_INPUT,        SSC_ARRAY,       "energy_output_array",        "Array of Energy Output Profile",      "kW",           "",      "generic_system",      "*",               "",                    "" }, 
 
-// To set enet record length to handle subhourly loads
-
-	{ SSC_INPUT, SSC_ARRAY, "load", "Electricity load (year 1)", "kW", "", "Time Series", "?", "", "" },
+	// optional for lifetime analysis
+	{ SSC_INPUT,        SSC_NUMBER,      "system_use_lifetime_output",                  "Generic lifetime simulation",                               "0/1",      "",                              "generic_system",             "?=0",                        "INTEGER,MIN=0,MAX=1",          "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "analysis_period",                             "Lifetime analysis period",                             "years",    "",                              "generic_system",             "system_use_lifetime_output=1",   "",                             "" },
+	{ SSC_INPUT,        SSC_ARRAY,       "generic_degradation",                              "Annual module degradation",                            "%/year",   "",                              "generic_system",             "system_use_lifetime_output=1",   "",                             "" },
 
 
 //    OUTPUTS ----------------------------------------------------------------------------								      														   
@@ -74,14 +76,13 @@ static var_info _cm_vtab_generic_system[] = {
 	{ SSC_OUTPUT,       SSC_ARRAY,       "monthly_energy",             "Monthly Energy",                       "kWh",          "",      "Monthly",      "*",               "LENGTH=12",           "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,      "annual_energy",              "Annual Energy",                        "kWh",          "",      "Annual",      "*",               "",                    "" },
 
-	{ SSC_OUTPUT,       SSC_NUMBER,      "annual_fuel_usage",                 "Annual Fuel Usage",                    "kWht",         "",      "Annual",      "*",               "",                    "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "annual_fuel_usage",           "Annual Fuel Usage",                    "kWht",         "",      "Annual",      "*",               "",                    "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,      "water_usage",                "Annual Water Usage",                   "",             "",      "Annual",      "*",               "",                    "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,      "system_heat_rate",           "Heat Rate Conversion Factor",          "MMBTUs/MWhe",  "",      "Annual",      "*",               "",                    "" },
 
 	{ SSC_OUTPUT, SSC_NUMBER, "capacity_factor", "Capacity factor", "%", "", "Annual", "*", "", "" },
 	{ SSC_OUTPUT, SSC_NUMBER, "kwh_per_kw", "First year kWh/kW", "kWh/kW", "", "Annual", "*", "", "" },
 
-	{ SSC_OUTPUT,       SSC_NUMBER,      "system_use_lifetime_output",     "Use lifetime output",                         "0/1", "",                        "Miscellaneous", "*",                       "INTEGER",                   "" },
 
 var_info_invalid };
 
@@ -93,7 +94,9 @@ public:
 	cm_generic_system()
 	{
 		add_var_info( _cm_vtab_generic_system );
+
 		// performance adjustment factors
+		add_var_info(vtab_dc_adjustment_factors);
 		add_var_info(vtab_adjustment_factors);
 		add_var_info(vtab_technology_outputs);
 	}
@@ -101,26 +104,66 @@ public:
 	void exec( ) throw( general_error )
 	{
 		int spec_mode = as_integer("spec_mode");
+		bool system_use_lifetime_output = (as_integer("system_use_lifetime_output") == 1);
 
-		ssc_number_t *enet;
+		// Warning workaround
+		static bool is32BitLifetime = (__ARCHBITS__ == 32 &&	system_use_lifetime_output);
+		if (is32BitLifetime)
+		throw exec_error( "generic", "Lifetime simulation of generic systems is only available in the 64 bit version of SAM.");
+
+		// Lifetime setup
+		ssc_number_t *enet = nullptr;
+		size_t nyears = 1;
+		if (system_use_lifetime_output) {
+			nyears = as_integer("analysis_period");
+		}
+
+		// Load parsing
+		std::vector<double> load;
 		size_t nrec_load = 8760;
-		if (is_assigned("load"))
-			ssc_number_t *load = as_array("load", &nrec_load);
-//		ssc_number_t *p_gen = allocate("gen", 8760);
-		size_t steps_per_hour_load = nrec_load / 8760;
-		ssc_number_t ts_hour_load = 1.0f / steps_per_hour_load;
 
-		size_t nrec_gen = nrec_load;
-		size_t steps_per_hour_gen = steps_per_hour_load;
-		ssc_number_t ts_hour_gen = ts_hour_load;
+		if (is_assigned("load")) {
+			load = as_vector_double("load");
+			nrec_load = load.size();
+		}
+		size_t nlifetime = nrec_load * nyears;
+		size_t steps_per_hour = nrec_load / 8760;
+		double ts_hour = 1 / (double)(steps_per_hour);
 
+		// Degradation and adjustments
+		std::vector<ssc_number_t> sys_degradation;
+	    sys_degradation.reserve(nyears);
 		double derate = (1 - (double)as_number("derate") / 100);
-		double annual_output = 0; 
 
 		adjustment_factors haf(this, "adjust");
 		if (!haf.setup())
 			throw exec_error("generic system", "failed to setup adjustment factors: " + haf.error());
 
+		if (system_use_lifetime_output)
+		{
+			// setup system degradation
+			size_t i, count_degrad = 0;
+			ssc_number_t *degrad = 0;
+			degrad = as_array("generic_degradation", &count_degrad);
+
+			if (count_degrad == 1)
+			{
+				for (i = 0; i < nyears; i++)
+					sys_degradation.push_back((ssc_number_t)pow((1.0 - (double)degrad[0] / 100.0), i));
+			}
+			else if (count_degrad > 0)
+			{
+				for (i = 0; i < nyears && i < (int)count_degrad; i++) sys_degradation.push_back((ssc_number_t)(1.0 - (double)degrad[i] / 100.0));
+			}
+		}
+		else {
+			sys_degradation.push_back(1); // single year mode - degradation handled in financial models.
+		}
+
+		size_t idx = 0;
+		double annual_output = 0;
+
+		// Constant generation profile
 		if (spec_mode == 0)
 		{
 			double output = (double)as_number("system_capacity")
@@ -128,44 +171,78 @@ public:
 				* derate; // kW
 
 			annual_output = 8760 * output; // kWh
-			enet = allocate("gen", nrec_gen);
-
-			for (int i = 0; i < 8760; i++)
+			enet = allocate("gen", nlifetime);
+			for (size_t iyear = 0; iyear < nyears; iyear++)
 			{
-				for (size_t j = 0; j < steps_per_hour_gen; j++)
+				for (size_t ihour = 0; ihour < 8760; ihour++)
 				{
-					enet[i* steps_per_hour_gen + j] = (ssc_number_t)(output*haf(i)); // kW
+					for (size_t ihourstep = 0; ihourstep < steps_per_hour; ihourstep++)
+					{
+						enet[idx] = (ssc_number_t)(output*haf(ihour)) * sys_degradation[iyear]; // kW
+						idx++;
+					}
 				}
 			}
 		}
+		// Input generation profile
 		else
 		{
+			size_t nrec_gen = 0;
 			ssc_number_t *enet_in = as_array("energy_output_array", &nrec_gen); // kW
+			size_t steps_per_hour_gen = nrec_gen / 8760;
 
-			if (!enet_in)
+			if (!enet_in) {
 				throw exec_error("generic", util::format("energy_output_array variable had no values."));
+			}
 
-			steps_per_hour_gen = nrec_gen / 8760;
-			ts_hour_gen = 1.0f / steps_per_hour_gen;
-			if (steps_per_hour_gen * 8760 != nrec_gen)
-				throw exec_error("generic", util::format("energy_output_array not a multiple of 8760: len=%d.", nrec_gen));
-
-			if (nrec_gen < nrec_load)
+			if (nrec_gen < nrec_load) {
 				throw exec_error("generic", util::format("energy_output_array %d must be greater than or equal to load array %d", nrec_gen, nrec_load));
+			}
+			else {
+				nlifetime = nrec_gen * nyears;
+				steps_per_hour = steps_per_hour_gen;
+				ts_hour = 1 / (double)(steps_per_hour);
+			}
 
-			enet = allocate("gen", nrec_gen);
+			enet = allocate("gen", nlifetime);
+			for (size_t iyear = 0; iyear < nyears; iyear++){
+				for (size_t ihour = 0; ihour < 8760; ihour++){
+					for (size_t ihourstep = 0; ihourstep < steps_per_hour_gen; ihourstep++)
+					{
+						enet[idx] = enet_in[ihour* steps_per_hour_gen + ihourstep] * (ssc_number_t)(derate* haf(ihour))* sys_degradation[iyear];
+						idx++;
+					}
+				}
+			}
+		}
+		double annual_ac_pre_avail = 0, annual_energy = 0;
+		idx = 0;
 
-			for (int i = 0; i < 8760; i++)
-			{
-				for (size_t j = 0; j < steps_per_hour_gen; j++)
+		// Run generic system
+		for (size_t iyear = 0; iyear < nyears; iyear++){
+			for (size_t hour = 0; hour < 8760; hour++){
+				for (size_t jj = 0; jj < steps_per_hour; jj++)
 				{
-					enet[i* steps_per_hour_gen + j] = enet_in[i* steps_per_hour_gen + j] * (ssc_number_t)(derate* haf(i));
+					
+					// accumulate system generation before curtailment and availability
+					if (iyear == 0) {
+						annual_ac_pre_avail += enet[idx] * ts_hour;
+					}
+
+					//apply availability and curtailment
+					enet[idx] *= haf(hour);
+
+					if (iyear == 0) {
+						annual_energy += (ssc_number_t)(enet[idx] * ts_hour);
+					}
+
+					idx++;
 				}
 			}
 		}
 
-		accumulate_monthly("gen", "monthly_energy", ts_hour_gen);
-		annual_output = accumulate_annual("gen", "annual_energy", ts_hour_gen);
+		accumulate_monthly_for_year("gen", "monthly_energy", ts_hour, steps_per_hour);
+		annual_output = accumulate_annual_for_year("gen", "annual_energy", ts_hour, steps_per_hour);
 
 		// if conversion efficiency is zero then set fuel usage to zero per email from Paul 5/17/12
 		double fuel_usage = 0.0;
@@ -179,21 +256,18 @@ public:
 		// metric outputs moved to technology
 		double kWhperkW = 0.0;
 		double nameplate = as_double("system_capacity");
-		if (nameplate <= 0) // calculate
-		{
+
+
+		if (nameplate <= 0) {
 			nameplate = annual_output / (8760 * (double)(as_number("user_capacity_factor") / 100) * derate);
 		}
 		assign("system_capacity", (var_data)((ssc_number_t)nameplate));
-//		double annual_energy = 0.0;
-//		for (int i = 0; i < nrec_gen; i++)
-//			annual_energy += enet[i];
-//		if (nameplate > 0) kWhperkW = annual_energy / nameplate;
-		if (nameplate > 0) kWhperkW = annual_output / nameplate;
+
+		if (nameplate > 0) {
+			kWhperkW = annual_output / nameplate;
+		}
 		assign("capacity_factor", var_data((ssc_number_t)(kWhperkW / 87.6)));
 		assign("kwh_per_kw", var_data((ssc_number_t)kWhperkW));
-
-		assign("system_use_lifetime_output", 0);
-
 	} // exec
 };
 

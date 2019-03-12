@@ -31,14 +31,17 @@
     <ClCompile Include="..\solarpilot\interop.cpp" />
     <ClCompile Include="..\solarpilot\IOUtil.cpp" />
     <ClCompile Include="..\solarpilot\Land.cpp" />
+    <ClCompile Include="..\solarpilot\LayoutSimulateThread.cpp" />
     <ClCompile Include="..\solarpilot\mod_base.cpp" />
     <ClCompile Include="..\solarpilot\OpticalMesh.cpp" />
     <ClCompile Include="..\solarpilot\optimize.cpp" />
+    <ClCompile Include="..\solarpilot\Plant.cpp" />
     <ClCompile Include="..\solarpilot\Receiver.cpp" />
     <ClCompile Include="..\solarpilot\SolarField.cpp" />
     <ClCompile Include="..\solarpilot\solpos.cpp" />
     <ClCompile Include="..\solarpilot\STObject.cpp" />
     <ClCompile Include="..\solarpilot\string_util.cpp" />
+    <ClCompile Include="..\solarpilot\STSimulateThread.cpp" />
     <ClCompile Include="..\solarpilot\Toolbox.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -55,9 +58,11 @@
     <ClInclude Include="..\solarpilot\interop.h" />
     <ClInclude Include="..\solarpilot\IOUtil.h" />
     <ClInclude Include="..\solarpilot\Land.h" />
+    <ClInclude Include="..\solarpilot\LayoutSimulateThread.h" />
     <ClInclude Include="..\solarpilot\mod_base.h" />
     <ClInclude Include="..\solarpilot\OpticalMesh.h" />
     <ClInclude Include="..\solarpilot\optimize.h" />
+    <ClInclude Include="..\solarpilot\Plant.h" />
     <ClInclude Include="..\solarpilot\rapidxml.hpp" />
     <ClInclude Include="..\solarpilot\rapidxml_iterators.hpp" />
     <ClInclude Include="..\solarpilot\rapidxml_print.hpp" />
@@ -68,6 +73,7 @@
     <ClInclude Include="..\solarpilot\sort_method.h" />
     <ClInclude Include="..\solarpilot\STObject.h" />
     <ClInclude Include="..\solarpilot\string_util.h" />
+    <ClInclude Include="..\solarpilot\STSimulateThread.h" />
     <ClInclude Include="..\solarpilot\Toolbox.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

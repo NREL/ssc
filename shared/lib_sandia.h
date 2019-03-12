@@ -51,6 +51,7 @@
 #define __lib_sandia_h
 
 #include "lib_pvmodel.h"
+#include <vector>
 
 
 /*
@@ -123,8 +124,10 @@ public:
 	double C2;      /* (1/V, empirical, default 0) Parameter allowing Pso to vary linearly with dc voltage input */
 	double C3;      /* (1/V, empirical, default 0) Parameter allowing C0 to vary linearly with dc voltage input */
 
-	bool acpower(	/* inputs */
-		double Pdc,     /* Input power to inverter (Wdc) */
+	//function that calculates AC power and inverter losses for a single inverter with one MPPT input
+	bool acpower(	
+		/* inputs */
+		double Pdc,     /* Input power to a SINGLE inverter (Wdc). Note that with several inverters, this is the power to ONE inverter.*/
 		double Vdc,     /* Voltage input to inverter (Vdc) */
 
 		/* outputs */
@@ -136,6 +139,22 @@ public:
 		double *Psoloss, /* Power loss due to operating power consumption (Wdc) */
 		double *Pntloss /* Power loss due to night time tare loss (Wac) */
 		);
+
+	//function that calculates AC power and inverter losses for a single inverter with multiple MPPT inputs
+	bool acpower(
+		/* inputs */
+		std::vector<double> Pdc,     /* Vector of Input power to inverter (Wdc), one per MPPT input on the inverter. Note that with several inverters, this is the power to ONE inverter.*/
+		std::vector<double> Vdc,     /* Vector of voltage inputs to inverter (Vdc), one per MPPT input on the inverter */
+
+		/* outputs */
+		double *Pac,    /* AC output power (Wac) */
+		double *Ppar,   /* AC parasitic power consumption (Wac) */
+		double *Plr,    /* Part load ratio (Pdc_in/Pdc_rated, 0..1) */
+		double *Eff,	    /* Conversion efficiency (0..1) */
+		double *Pcliploss, /* Power loss due to clipping loss (Wac) */
+		double *Psoloss, /* Power loss due to operating power consumption (Wdc) */
+		double *Pntloss /* Power loss due to night time tare loss (Wac) */
+	);
 
 } ;
 

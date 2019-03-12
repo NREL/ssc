@@ -60,10 +60,7 @@ class C_pc_sco2 : public C_csp_power_cycle
 
 private:
 
-	C_sco2_rc_csp_template *mpc_sco2_recomp;
-
-	C_sco2_recomp_csp mc_sco2_recomp_csp_direct;
-	C_sco2_recomp_csp_10MWe_scale mc_sco2_recomp_csp_scale;
+	C_sco2_recomp_csp mc_sco2_recomp;
 
 	HTFProperties mc_pc_htfProps;
 
@@ -160,7 +157,7 @@ public:
 	virtual void write_output_intervals(double report_time_start,
 		const std::vector<double> & v_temp_ts_time_end, double report_time_end);
 
-	virtual void assign(int index, float *p_reporting_ts_array, int n_reporting_ts_array);
+	virtual void assign(int index, float *p_reporting_ts_array, size_t n_reporting_ts_array);
 };
 
 

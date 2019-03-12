@@ -116,7 +116,7 @@ public:
 		int idx = 0;
 		for (int m=1;m<=12;m++ ) //index across months
 		{
-			for( int d=1;d<=util::nday[m-1];d++ ) //index across days of month
+			for( size_t d=1;d<=util::nday[m-1];d++ ) //index across days of month
 			{
 				for( int h=0;h<24;h++ ) //index across hours
 				{
@@ -138,7 +138,7 @@ public:
 					// call irradiance class for needed variables and assign variables
 					irrad x;
 					x.set_location(lat, lon, timezone);
-					x.set_time( year, m, d, h, 30, 1.0  );
+					x.set_time( year, m, (int)d, h, 30, 1.0  );
 					x.set_surface(0, tilt, az, 0, 0, 0);
 					x.set_sky_model(2, alb);
 					x.set_beam_diffuse(B, D);

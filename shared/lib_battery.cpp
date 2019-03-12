@@ -101,7 +101,7 @@ std::string message::construct_log_count_string(int index)
 /* 
 Define Capacity Model 
 */
-
+capacity_t::capacity_t() { /* nothing to do */ }
 capacity_t::capacity_t(double q, double SOC_init, double SOC_max, double SOC_min)
 {
 	_q0 = 0.01*SOC_init*q;
@@ -114,6 +114,7 @@ capacity_t::capacity_t(double q, double SOC_init, double SOC_max, double SOC_min
 
 	// Initialize SOC, DOD
 	_SOC = SOC_init;
+	_SOC_init = SOC_init;
 	_SOC_max = SOC_max;
 	_SOC_min = SOC_min;
 	_DOD = 0;
@@ -128,16 +129,20 @@ void capacity_t::copy(capacity_t * capacity)
 {
 	_q0 = capacity->_q0;
 	_qmax = capacity->_qmax;
+	_qmax_thermal = capacity->_qmax_thermal;
 	_qmax0 = capacity->_qmax0;
 	_I = capacity->_I;
 	_I_loss = capacity->_I_loss;
-	_dt_hour = capacity->_dt_hour;
 	_SOC = capacity->_SOC;
+	_SOC_init = capacity->_SOC_init;
+	_SOC_min = capacity->_SOC_min;
 	_SOC_max = capacity->_SOC_max;
 	_DOD = capacity->_DOD;
 	_DOD_prev = capacity->_DOD_prev;
-	_prev_charge = capacity->_prev_charge;
+	_dt_hour = capacity->_dt_hour;
 	_chargeChange = capacity->_chargeChange;
+	_prev_charge = capacity->_prev_charge;
+	_charge = capacity->_charge;
 }
 void capacity_t::check_charge_change()
 {
@@ -165,8 +170,8 @@ void capacity_t::check_SOC()
 	double I_orig = _I;
 
 	// set capacity to upper thermal limit
-	if (q_upper > _qmax_thermal)
-		q_upper = _qmax_thermal;
+	if (q_upper > _qmax_thermal * _SOC_max * 0.01)
+		q_upper = _qmax_thermal * _SOC_max * 0.01;
 		
 	// check if overcharged
 	if (_q0 > q_upper )
@@ -210,6 +215,7 @@ void capacity_t::update_SOC()
 bool capacity_t::chargeChanged(){return _chargeChange;}
 double capacity_t::SOC(){ return _SOC; }
 double capacity_t::DOD(){ return _DOD; }
+double capacity_t::DOD_max(){ return _SOC_max - _SOC_min; }
 double capacity_t::prev_DOD(){ return _DOD_prev; }
 double capacity_t::q0(){ return _q0;}
 double capacity_t::qmax(){ return _qmax; }
@@ -220,6 +226,7 @@ double capacity_t::I_loss() { return _I_loss; }
 /*
 Define KiBam Capacity Model
 */
+capacity_kibam_t::capacity_kibam_t(){ /* nothing to do */}
 capacity_kibam_t::capacity_kibam_t(double q20, double t1, double q1, double q10, double SOC_init, double SOC_max, double SOC_min) :
 capacity_t(q20, SOC_init, SOC_max, SOC_min)
 {
@@ -253,6 +260,7 @@ void capacity_kibam_t::copy(capacity_t * capacity)
 	_q1 = tmp->_q1;
 	_q2 = tmp->_q2;
 	_F1 = tmp->_F1;
+	_F2 = tmp->_F2;
 	_c = tmp->_c;
 	_k = tmp->_k;
 	_q1_0 = tmp->_q1_0;
@@ -265,10 +273,11 @@ void capacity_kibam_t::copy(capacity_t * capacity)
 void capacity_kibam_t::replace_battery()
 {
 	// Assume initial charge is max capacity
-	_q0 = _qmax0*_SOC_max*0.01;
+	_q0 = _qmax0*_SOC_init*0.01;
 	_q1_0 = _q0*_c;
 	_q2_0 = _q0 - _q1_0;
 	_qmax = _qmax0;
+	_SOC = _SOC_init;
 }
 
 double capacity_kibam_t::c_compute(double F, double t1, double t2, double k_guess)
@@ -342,7 +351,7 @@ void capacity_kibam_t::parameter_compute()
 	_qmax = qmax_compute();
 }
 
-void capacity_kibam_t::updateCapacity(double I, double dt_hour)
+void capacity_kibam_t::updateCapacity(double &I, double dt_hour)
 {
 	if (fabs(I) < low_tolerance)
 		I = 0;
@@ -394,6 +403,9 @@ void capacity_kibam_t::updateCapacity(double I, double dt_hour)
 
 	update_SOC();
 	check_charge_change(); 
+
+	// Pass current out 
+	I = _I;
 }
 void capacity_kibam_t::updateCapacityForThermal(double capacity_percent)
 {
@@ -428,18 +440,19 @@ double capacity_kibam_t::q20(){return _q20;}
 /*
 Define Lithium Ion capacity model
 */
+capacity_lithium_ion_t::capacity_lithium_ion_t() { /* nothing to do */ }
 capacity_lithium_ion_t::capacity_lithium_ion_t(double q, double SOC_init, double SOC_max, double SOC_min) :capacity_t(q, SOC_init, SOC_max, SOC_min){};
 capacity_lithium_ion_t * capacity_lithium_ion_t::clone(){ return new capacity_lithium_ion_t(*this); }
 void capacity_lithium_ion_t::copy(capacity_t * capacity){ capacity_t::copy(capacity);}
 
 void capacity_lithium_ion_t::replace_battery()
 {
-	_q0 = _qmax0;
+	_q0 = _qmax0 * _SOC_init * 0.01;
 	_qmax = _qmax0;
 	_qmax_thermal = _qmax0;
-	_SOC = _SOC_max;
+	_SOC = _SOC_init;
 }
-void capacity_lithium_ion_t::updateCapacity(double I, double dt)
+void capacity_lithium_ion_t::updateCapacity(double &I, double dt)
 {
 	_DOD_prev = _DOD;
 	_I_loss = 0.;
@@ -455,6 +468,9 @@ void capacity_lithium_ion_t::updateCapacity(double I, double dt)
 	// update SOC, DOD
 	update_SOC();
 	check_charge_change();
+
+	// Pass current out 
+	I = _I;
 }
 void capacity_lithium_ion_t::updateCapacityForThermal(double capacity_percent)
 {
@@ -499,9 +515,12 @@ void voltage_t::copy(voltage_t * voltage)
 	_num_cells_series = voltage->_num_cells_series;
 	_num_strings = voltage->_num_strings;
 	_cell_voltage = voltage->_cell_voltage;
+	_cell_voltage_nominal = voltage->_cell_voltage_nominal;
 	_R = voltage->_R;
 	_R_battery = voltage->_R_battery;
-	_batt_voltage_matrix = voltage->_batt_voltage_matrix;
+
+	// doesn't change;
+	//_batt_voltage_matrix = voltage->_batt_voltage_matrix;
 }
 double voltage_t::battery_voltage(){ return _num_cells_series*_cell_voltage; }
 double voltage_t::battery_voltage_nominal(){ return _num_cells_series * _cell_voltage_nominal; }
@@ -524,9 +543,12 @@ voltage_table_t * voltage_table_t::clone(){ return new voltage_table_t(*this); }
 void voltage_table_t::copy(voltage_t * voltage)
 {
 	voltage_t::copy(voltage);
-	voltage_table_t * tmp = dynamic_cast<voltage_table_t*>(voltage);
 
+	// doesn't change and may be slow to copy
+	/*
+	voltage_table_t * tmp = dynamic_cast<voltage_table_t*>(voltage);
 	_voltage_table = tmp->_voltage_table;
+	*/
 }
 
 
@@ -620,6 +642,7 @@ void voltage_dynamic_t::copy(voltage_t * voltage)
 
 	_Vfull = tmp->_Vfull;
 	_Vexp = tmp->_Vexp;
+	_Vnom = tmp->_Vnom;
 	_Qfull = tmp->_Qfull;
 	_Qexp = tmp->_Qexp;
 	_Qnom = tmp->_Qnom;
@@ -693,6 +716,10 @@ void voltage_vanadium_redox_t::copy(voltage_t * voltage)
 
 	_V_ref_50 = tmp->_V_ref_50;
 	_R = tmp->_R;
+	_I = tmp->_I;
+	_R_molar = tmp->_R_molar;
+	_F = tmp->_F;
+	_C0 = tmp->_C0;
 }
 void voltage_vanadium_redox_t::updateVoltage(capacity_t * capacity, thermal_t * thermal, double )
 {
@@ -767,28 +794,31 @@ void lifetime_t::copy(lifetime_t * lifetime)
 {
 	_lifetime_cycle->copy(lifetime->_lifetime_cycle);
 	_lifetime_calendar->copy(lifetime->_lifetime_calendar);
+
 	_replacement_option = lifetime->_replacement_option;
 	_replacement_capacity = lifetime->_replacement_capacity;
 	_replacements = lifetime->_replacements;
 	_replacement_scheduled = lifetime->_replacement_scheduled;
+	_q = lifetime->_q;
 }
 double lifetime_t::capacity_percent(){ return _q; }
 void lifetime_t::runLifetimeModels(size_t idx, capacity_t * capacity, double T_battery)
 {
-	double dq_cycle = _lifetime_cycle->totalCapacityDegraded();
 	double q_last = _q;
+	double q_cycle = _q;
+	double q_calendar = _q;
 
 	if (_q > 0) 
 	{
 		if (capacity->chargeChanged())
-			dq_cycle = _lifetime_cycle->runCycleLifetime((capacity->prev_DOD()));
+			q_cycle = _lifetime_cycle->runCycleLifetime((capacity->prev_DOD()));
 		else if (idx==0)
-			dq_cycle = _lifetime_cycle->runCycleLifetime((capacity->DOD()));
+			q_cycle = _lifetime_cycle->runCycleLifetime((capacity->DOD()));
 		
-		double dq_calendar = _lifetime_calendar->runLifetimeCalendarModel(idx, T_battery, capacity->SOC()*0.01);
+		q_calendar = _lifetime_calendar->runLifetimeCalendarModel(idx, T_battery, capacity->SOC()*0.01);
 
-		// total capacity is linear combination of cycle and calendar degradation effects
-		_q = 100. - dq_cycle - dq_calendar;
+		// total capacity is min of cycle (Q_neg) and calendar (Q_li) capacity
+		_q = fmin(q_cycle, q_calendar);
 	}
 	if (_q < 0)
 		_q = 0;
@@ -842,7 +872,17 @@ lifetime_cycle_t::~lifetime_cycle_t(){}
 lifetime_cycle_t * lifetime_cycle_t::clone(){ return new lifetime_cycle_t(*this); }
 void lifetime_cycle_t::copy(lifetime_cycle_t * lifetime_cycle)
 {
+	// doesn't change (and potentially slow) 
+	/*
+	_cycles_vs_DOD = lifetime_cycle->_cycles_vs_DOD;
+	_batt_lifetime_matrix = lifetime_cycle->_batt_lifetime_matrix;
+	_DOD_vect = lifetime_cycle->_DOD_vect;
+	_cycles_vect = lifetime_cycle->_cycles_vect;
+	_capacities_vect = lifetime_cycle->_capacities_vect;
+	*/
+
 	_nCycles = lifetime_cycle->_nCycles;
+	_q = lifetime_cycle->_q;
 	_Dlt = lifetime_cycle->_Dlt;
 	_jlt = lifetime_cycle->_jlt;
 	_Xlt = lifetime_cycle->_Xlt;
@@ -851,14 +891,18 @@ void lifetime_cycle_t::copy(lifetime_cycle_t * lifetime_cycle)
 	_Range = lifetime_cycle->_Range;
 	_average_range = lifetime_cycle->_average_range;
 }
-double lifetime_cycle_t::totalCapacityDegraded()
+double lifetime_cycle_t::computeCycleDamageAtDOD(double DOD)
 {
-	return 100. - _q;
+	if (DOD == 0)
+		DOD = _average_range;
+	return(_q - bilinear(DOD, _nCycles + 1));
 }
 double lifetime_cycle_t::runCycleLifetime(double DOD)
 {
 	rainflow(DOD);
-	return totalCapacityDegraded();
+
+	// return the effective capacity (Q_neg)
+	return _q;
 }
 
 void lifetime_cycle_t::rainflow(double DOD)
@@ -1145,37 +1189,49 @@ lifetime_calendar_t::lifetime_calendar_t(int calendar_choice, util::matrix_t<dou
 			_calendar_capacity.push_back(calendar_matrix.at(i, 1));
 		}
 	}
+	// Ensure don't accidently initialize to 0 if not using model
+	else if (_calendar_choice == NONE) {
+		_q0 = 1.0;
+	}
 }
 lifetime_calendar_t * lifetime_calendar_t::clone(){ return new lifetime_calendar_t(*this); }
 void lifetime_calendar_t::copy(lifetime_calendar_t * lifetime_calendar)
 {
+	_calendar_choice = lifetime_calendar->_calendar_choice;
+	_calendar_days = lifetime_calendar->_calendar_days;
+	_calendar_capacity = lifetime_calendar->_calendar_capacity;
+	_day_age_of_battery = lifetime_calendar->_day_age_of_battery;
+	_dt_hour = lifetime_calendar->_dt_hour;
+	_dt_day = lifetime_calendar->_dt_day;
+	_last_idx = lifetime_calendar->_last_idx;
 	_q = lifetime_calendar->_q;
 	_dq_old = lifetime_calendar->_dq_old;
 	_dq_new = lifetime_calendar->_dq_new;
+	_q0 = lifetime_calendar->_q0;
+	_a = lifetime_calendar->_a;
+	_b = lifetime_calendar->_b;
+	_c = lifetime_calendar->_c;
 }
 double lifetime_calendar_t::runLifetimeCalendarModel(size_t idx, double T, double SOC)
 {
-	// only run once per iteration (need to make the last iteration)
-	if (idx > _last_idx)
+	if (_calendar_choice != lifetime_calendar_t::NONE)
 	{
+		// only run once per iteration (need to make the last iteration)
+		if (idx > _last_idx)
+		{
 
-		if (idx % util::hours_per_day / _dt_hour == 0)
-			_day_age_of_battery++;
+			if (idx % util::hours_per_day / _dt_hour == 0)
+				_day_age_of_battery++;
 
-		if (_calendar_choice == lifetime_calendar_t::LITHIUM_ION_CALENDAR_MODEL)
-			runLithiumIonModel(T, SOC);
-		else if (_calendar_choice == lifetime_calendar_t::CALENDAR_LOSS_TABLE)
-			runTableModel();
-		
-		_last_idx = idx;
+			if (_calendar_choice == lifetime_calendar_t::LITHIUM_ION_CALENDAR_MODEL)
+				runLithiumIonModel(T, SOC);
+			else if (_calendar_choice == lifetime_calendar_t::CALENDAR_LOSS_TABLE)
+				runTableModel();
+
+			_last_idx = idx;
+		}
 	}
-	
-	// initial fit is 102%
-	double dq = 100 - _q;
-	if (dq < 0)
-		dq = 0;
-
-	return dq;
+	return _q;
 }
 void lifetime_calendar_t::runLithiumIonModel(double T, double SOC)
 {
@@ -1235,18 +1291,12 @@ void lifetime_calendar_t::replaceBattery()
 /*
 Define Thermal Model
 */
-thermal_t::thermal_t(double mass, double length, double width, double height, 
-	double Cp,  double h, double T_room, 
-	const util::matrix_t<double> &c_vs_t )
+thermal_t::thermal_t() { /* nothing to do */ }
+thermal_t::thermal_t(double dt_hour, double mass, double length, double width, double height, 
+	double Cp,  double h, std::vector<double> T_room, 
+	const util::matrix_t<double> &c_vs_t ) : _dt_hour(dt_hour), _mass(mass), _length(length), _width(width), _height(height),
+	_Cp(Cp), _h(h), _T_room(T_room), _cap_vs_temp(c_vs_t)
 {
-	_cap_vs_temp = c_vs_t;
-	_mass = mass;
-	_length = length;
-	_width = width;
-	_height = height;
-	_Cp = Cp;
-	_h = h;
-	_T_room = T_room;
 	_R = 0.004;
 	_capacity_percent = 100;
 
@@ -1254,7 +1304,7 @@ thermal_t::thermal_t(double mass, double length, double width, double height,
 	_A = 2 * (length*width + length*height + width*height);
 
 	// initialize to room temperature
-	_T_battery = T_room;
+	_T_battery = T_room[0];
 
 	//initialize maximum temperature
 	_T_max = 400.;
@@ -1282,85 +1332,125 @@ void thermal_t::copy(thermal_t * thermal)
 	_capacity_percent = thermal->_capacity_percent;
 	_T_max = thermal->_T_max;
 }
-void thermal_t::replace_battery()
+void thermal_t::replace_battery(size_t lifetimeIndex)
 { 
-	_T_battery = _T_room; 
+	_T_battery = _T_room[util::yearOneIndex(_dt_hour, lifetimeIndex)];
 	_capacity_percent = 100.;
 }
 
 #define HR2SEC 3600.0
-
-
-void thermal_t::updateTemperature(double I, double R, double dt)
+void thermal_t::updateTemperature(double I, double R, double dt, size_t lifetimeIndex)
 {
 	_R = R;
-	if (trapezoidal(I, dt*HR2SEC) < _T_max && trapezoidal(I, dt*HR2SEC) > 0)
-		_T_battery = trapezoidal(I, dt*HR2SEC);
-	else if (rk4(I, dt*HR2SEC) < _T_max && rk4(I, dt*HR2SEC) > 0)
-		_T_battery = rk4(I, dt*HR2SEC);
-	else if (implicit_euler(I, dt*HR2SEC) < _T_max && implicit_euler(I, dt*HR2SEC) > 0)
-		_T_battery = implicit_euler(I, dt*HR2SEC);
+	if (trapezoidal(I, dt*HR2SEC, lifetimeIndex) < _T_max && trapezoidal(I, dt*HR2SEC, lifetimeIndex) > 0)
+		_T_battery = trapezoidal(I, dt*HR2SEC, lifetimeIndex);
+	else if (rk4(I, dt*HR2SEC, lifetimeIndex) < _T_max && rk4(I, dt*HR2SEC, lifetimeIndex) > 0)
+		_T_battery = rk4(I, dt*HR2SEC, lifetimeIndex);
+	else if (implicit_euler(I, dt*HR2SEC, lifetimeIndex) < _T_max && implicit_euler(I, dt*HR2SEC, lifetimeIndex) > 0)
+		_T_battery = implicit_euler(I, dt*HR2SEC, lifetimeIndex);
 	else
 		_message.add("Computed battery temperature below zero or greater than max allowed, consider reducing C-rate");
 }
 
-double thermal_t::f(double T_battery, double I)
+double thermal_t::f(double T_battery, double I, size_t lifetimeindex)
 {
-	return (1 / (_mass*_Cp)) * ((_h*(_T_room - T_battery)*_A) + pow(I, 2)*_R);
+	return (1 / (_mass*_Cp)) * ((_h*(_T_room[util::yearOneIndex(_dt_hour, lifetimeindex)]  - T_battery)*_A) + pow(I, 2)*_R);
 }
-double thermal_t::rk4( double I, double dt)
+double thermal_t::rk4( double I, double dt, size_t lifetimeindex)
 {
-	double k1 = dt*f(_T_battery, I);
-	double k2 = dt*f(_T_battery + k1 / 2, I);
-	double k3 = dt*f(_T_battery + k2 / 2, I);
-	double k4 = dt*f(_T_battery + k3, I);
+	double k1 = dt*f(_T_battery, I, lifetimeindex);
+	double k2 = dt*f(_T_battery + k1 / 2, I, lifetimeindex);
+	double k3 = dt*f(_T_battery + k2 / 2, I, lifetimeindex);
+	double k4 = dt*f(_T_battery + k3, I, lifetimeindex);
 	return (_T_battery + (1. / 6)*(k1 + k4) + (1. / 3.)*(k2 + k3));
 }
-double thermal_t::trapezoidal(double I, double dt)
+double thermal_t::trapezoidal(double I, double dt, size_t lifetimeindex)
 {
 	double B = 1 / (_mass*_Cp); // [K/J]
 	double C = _h*_A;			// [W/K]
 	double D = pow(I, 2)*_R;	// [Ohm A*A]
-	double T_prime = f(_T_battery, I);	// [K]
+	double T_prime = f(_T_battery, I, lifetimeindex);	// [K]
 
-	return (_T_battery + 0.5*dt*(T_prime + B*(C*_T_room + D))) / (1 + 0.5*dt*B*C);
+	return (_T_battery + 0.5*dt*(T_prime + B*(C*_T_room[util::yearOneIndex(_dt_hour, lifetimeindex)] + D))) / (1 + 0.5*dt*B*C);
 } 
-double thermal_t::implicit_euler(double I, double dt)
+double thermal_t::implicit_euler(double I, double dt, size_t lifetimeIndex)
 {
 	double B = 1 / (_mass*_Cp); // [K/J]
 	double C = _h*_A;			// [W/K]
 	double D = pow(I, 2)*_R;	// [Ohm A*A]
 //	double T_prime = f(_T_battery, I);	// [K]
 
-	return (_T_battery + dt*(B*C*_T_room + D)) / (1 + dt*B*C);
+	return (_T_battery + dt*(B*C*_T_room[util::yearOneIndex(_dt_hour, lifetimeIndex)] + D)) / (1 + dt*B*C);
 }
 double thermal_t::T_battery(){ return _T_battery; }
 double thermal_t::capacity_percent()
 { 
 	double percent = util::linterp_col(_cap_vs_temp, 0, _T_battery, 1); 
-
+	
 	if (percent < 0 || percent > 100)
 	{
 		percent = 100;
 		_message.add("Unable to determine capacity adjustment for temperature, ignoring");
 	}
-
-	return percent;
+	_capacity_percent = percent;
+	return _capacity_percent;
 }
 /*
 Define Losses
 */
-losses_t::losses_t(lifetime_t * lifetime, thermal_t * thermal, capacity_t* capacity, int loss_choice, double_vec charge_loss, double_vec discharge_loss, double_vec idle_loss, double_vec losses)
+losses_t::losses_t(double dtHour, lifetime_t * lifetime, thermal_t * thermal, capacity_t* capacity, int loss_choice, double_vec charge_loss, double_vec discharge_loss, double_vec idle_loss, double_vec losses)
 {
+	_dtHour = dtHour;
 	_lifetime = lifetime;
 	_thermal = thermal;
 	_capacity = capacity;
-	_charge_loss = charge_loss;
-	_discharge_loss = discharge_loss;
-	_idle_loss = idle_loss;
-	_full_loss = losses;
 	_loss_mode = loss_choice;
 	_nCycle = 0;
+
+	// User can input vectors of size 1 or size 12
+	if (loss_choice == losses_t::MONTHLY)
+	{
+		if (charge_loss.size() == 1) {
+			for (size_t m = 0; m < 12; m++) {
+				_charge_loss.push_back(charge_loss[0]);
+			}
+		}
+		else {
+			_charge_loss = charge_loss;
+		}
+		if (discharge_loss.size() == 1) {
+			
+			for (size_t m = 0; m < 12; m++) {
+				_discharge_loss.push_back(discharge_loss[0]);
+			}
+		}
+		else {
+			_discharge_loss = discharge_loss;
+		}
+		if (idle_loss.size() == 1) {
+			for (size_t m = 0; m < 12; m++) {
+				_idle_loss.push_back(idle_loss[0]);
+			}
+		}
+		else {
+			_idle_loss = idle_loss;
+		}
+		for (size_t i = 0; i < (size_t)(8760 / dtHour); i++) {
+			_full_loss.push_back(0);
+		}
+	}
+	// User can input vectors of size 1 or size nrec (first year)
+	else {
+		if (losses.size() == 1) {
+			for (size_t i = 0; i < (size_t)(8760 / dtHour); i++) {
+				_full_loss.push_back(losses[0]);
+			}
+		}
+		else {
+			_full_loss = losses;
+		}
+
+	}
 }
 losses_t * losses_t::clone(){ return new losses_t(*this); }
 void losses_t::copy(losses_t * losses)
@@ -1380,24 +1470,25 @@ void losses_t::copy(losses_t * losses)
 }
 
 void losses_t::replace_battery(){ _nCycle = 0; }
-void losses_t::run_losses(double dt_hour, size_t idx)
+double losses_t::getLoss(size_t indexFirstYear) { return _full_loss[indexFirstYear]; }
+void losses_t::run_losses(size_t lifetimeIndex)
 {	
 	_capacity->updateCapacityForLifetime(_lifetime->capacity_percent());
 
-	size_t stepsPerHour = (size_t)(1 / dt_hour);
-	size_t stepsPerYear = util::hours_per_year * stepsPerHour;
-	size_t index = idx % stepsPerYear;
+	size_t indexYearOne = util::yearOneIndex(_dtHour, lifetimeIndex);
+	size_t hourOfYear = (size_t)std::floor(indexYearOne * _dtHour);
+	size_t monthIndex = util::month_of((double)(hourOfYear)) - 1;
 
 	// update system losses depending on user input
-	if (_loss_mode == losses_t::MONTHLY)
-	{
+	if (_loss_mode == losses_t::MONTHLY) {
 		if (_capacity->charge_operation() == capacity_t::CHARGE)
-			_full_loss[index] = _charge_loss[index];
+			_full_loss[indexYearOne] = _charge_loss[monthIndex];
 		if (_capacity->charge_operation() == capacity_t::DISCHARGE)
-			_full_loss[index] = _discharge_loss[index];
+			_full_loss[indexYearOne] = _discharge_loss[monthIndex];
 		if (_capacity->charge_operation() == capacity_t::NO_CHARGE)
-			_full_loss[index] = _idle_loss[index];
+			_full_loss[indexYearOne] = _idle_loss[monthIndex];
 	}
+
 }
 /* 
 Define Battery 
@@ -1409,13 +1500,23 @@ battery_t::battery_t(double dt_hour, int battery_chemistry)
 	_dt_min = dt_hour * 60;
 	_battery_chemistry = battery_chemistry;
 	_last_idx = 0;
+
+	if (battery_chemistry != battery_t::LEAD_ACID) {
+		_capacity_initial = new capacity_lithium_ion_t();
+	}
+	else {
+		_capacity_initial = new capacity_kibam_t();
+	}
+	_thermal_initial = new thermal_t();
 }
 
 battery_t::battery_t(const battery_t& battery)
 {
 	_capacity = battery.capacity_model()->clone();
+	_capacity_initial = battery.capacity_initial_model()->clone();
 	_voltage = battery.voltage_model()->clone();
 	_thermal = battery.thermal_model()->clone();
+	_thermal_initial = battery.thermal_initial_model()->clone();
 	_lifetime = battery.lifetime_model()->clone();
 	_losses = battery.losses_model()->clone();
 	_battery_chemistry = battery._battery_chemistry;
@@ -1423,13 +1524,24 @@ battery_t::battery_t(const battery_t& battery)
 	_dt_min = battery._dt_min;
 	_last_idx = battery._last_idx;
 }
+
+battery_t::~battery_t()
+{
+	if (_capacity_initial)
+		delete _capacity_initial;
+	if (_thermal_initial)
+		delete _thermal_initial;
+}
+
 // copy from battery to this
 void battery_t::copy(const battery_t * battery)
 {
 	_capacity->copy(battery->capacity_model());
-	_voltage->copy(battery->voltage_model());
+	_capacity_initial->copy(battery->capacity_initial_model());
 	_thermal->copy(battery->thermal_model());
+	_thermal_initial->copy(battery->thermal_initial_model());
 	_lifetime->copy(battery->lifetime_model());
+	_voltage->copy(battery->voltage_model());
 	_losses->copy(battery->losses_model());
 
 	_battery_chemistry = battery->_battery_chemistry;
@@ -1457,26 +1569,53 @@ void battery_t::initialize(capacity_t *capacity, voltage_t * voltage, lifetime_t
 	_voltage = voltage;
 	_thermal = thermal;
 	_losses = losses;
+
+	_capacity_initial->copy(_capacity);
+	_thermal_initial->copy(_thermal);
 }
 
-void battery_t::run(size_t idx, double I)
+void battery_t::run(size_t lifetimeIndex, double I)
 {	
-	// Compute temperature at end of timestep
-	runThermalModel(I);
-	runCapacityModel(I);
+
+	// Temperature affects capacity, but capacity model can reduce current, which reduces temperature, need to iterate
+	double I_initial = I;
+	size_t iterate_count = 0;
+	_capacity_initial->copy(_capacity);
+	_thermal_initial->copy(_thermal);
+
+	while (iterate_count < 5)
+	{
+		runThermalModel(I, lifetimeIndex);
+		runCapacityModel(I);
+
+		if (fabs(I - I_initial)/fabs(I_initial) > tolerance)
+		{
+			_thermal->copy(_thermal_initial);
+			_capacity->copy(_capacity_initial);
+			I_initial = I;
+			iterate_count++;
+		} 
+		else {
+			break;
+		}
+		
+	}
 	runVoltageModel();
-	runLifetimeModel(idx);
-	runLossesModel(idx);
+	runLifetimeModel(lifetimeIndex);
+	runLossesModel(lifetimeIndex);
 }
-void battery_t::runThermalModel(double I)
+void battery_t::runThermalModel(double I, size_t lifetimeIndex)
 {
-	_thermal->updateTemperature(I, _voltage->R_battery(), _dt_hour);
+	_thermal->updateTemperature(I, _voltage->R_battery(), _dt_hour, lifetimeIndex);
 }
 
-void battery_t::runCapacityModel(double I)
+void battery_t::runCapacityModel(double &I)
 {
-	// Need to first update capacity model to ensure temperature accounted for
-	_capacity->updateCapacityForThermal(_thermal->capacity_percent());
+	// Don't update max capacity if the battery is idle
+	if (fabs(I) > tolerance) {
+		// Need to first update capacity model to ensure temperature accounted for
+		_capacity->updateCapacityForThermal(_thermal->capacity_percent());
+	}
 	_capacity->updateCapacity(I, _dt_hour );
 }
 
@@ -1485,13 +1624,13 @@ void battery_t::runVoltageModel()
 	_voltage->updateVoltage(_capacity, _thermal, _dt_hour);
 }
 
-void battery_t::runLifetimeModel(size_t idx)
+void battery_t::runLifetimeModel(size_t lifetimeIndex)
 {
-	_lifetime->runLifetimeModels(idx, capacity_model(), thermal_model()->T_battery());
+	_lifetime->runLifetimeModels(lifetimeIndex, capacity_model(), thermal_model()->T_battery());
 	if (_lifetime->check_replaced())
 	{
 		_capacity->replace_battery();
-		_thermal->replace_battery();
+		_thermal->replace_battery(lifetimeIndex);
 		_losses->replace_battery();
 	}
 }
@@ -1499,39 +1638,45 @@ void battery_t::runLossesModel(size_t idx)
 {
 	if (idx > _last_idx || idx == 0)
 	{
-		_losses->run_losses(_dt_hour, idx);
+		_losses->run_losses(idx);
 		_last_idx = idx;
 	}
 }
 capacity_t * battery_t::capacity_model() const { return _capacity; }
+capacity_t * battery_t::capacity_initial_model() const { return _capacity_initial; }
 voltage_t * battery_t::voltage_model() const { return _voltage; }
 lifetime_t * battery_t::lifetime_model() const { return _lifetime; }
 thermal_t * battery_t::thermal_model() const { return _thermal; }
+thermal_t * battery_t::thermal_initial_model() const { return _thermal_initial; }
 losses_t * battery_t::losses_model() const { return _losses; }
 
-double battery_t::battery_charge_needed()
+double battery_t::battery_charge_needed(double SOC_max)
 {
-	double charge_needed = _capacity->qmax() - _capacity->q0();
+	double charge_needed = _capacity->qmax_thermal() * SOC_max * 0.01 - _capacity->q0();
 	if (charge_needed > 0)
 		return charge_needed;
 	else
 		return 0.;
 }
-double battery_t::battery_energy_to_fill()
+double battery_t::battery_energy_to_fill(double SOC_max)
 {
 	double battery_voltage = this->battery_voltage(); // [V] 
-	double charge_needed_to_fill = this->battery_charge_needed(); // [Ah] - qmax - q0
-	double energy_needed_to_fill = (charge_needed_to_fill * battery_voltage)*util::watt_to_kilowatt;  // [kWh]
-	return energy_needed_to_fill;
+	double charge_needed_to_fill = this->battery_charge_needed(SOC_max); // [Ah] - qmax - q0
+	return (charge_needed_to_fill * battery_voltage)*util::watt_to_kilowatt;  // [kWh]
 }
-double battery_t::battery_power_to_fill()
+double battery_t::battery_energy_nominal()
+{
+	return battery_voltage_nominal() * _capacity->qmax() * util::watt_to_kilowatt;
+}
+double battery_t::battery_power_to_fill(double SOC_max)
 {
 	// in one time step
-	return (this->battery_energy_to_fill() / _dt_hour);
+	return (this->battery_energy_to_fill(SOC_max) / _dt_hour);
 }
 
 double battery_t::battery_charge_total(){return _capacity->q0();}
 double battery_t::battery_charge_maximum(){ return _capacity->qmax(); }
+double battery_t::battery_charge_maximum_thermal() { return _capacity->qmax_thermal(); }
 double battery_t::cell_voltage(){ return _voltage->cell_voltage();}
 double battery_t::battery_voltage(){ return _voltage->battery_voltage();}
 double battery_t::battery_voltage_nominal(){ return _voltage->battery_voltage_nominal(); }

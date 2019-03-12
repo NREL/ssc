@@ -259,8 +259,10 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
 	{ SSC_INPUT,        SSC_MATRIX,      "ud_T_htf_ind_od",      "Off design table of user-defined power cycle performance formed from parametric on T_htf_hot [C]", "", "", "user_defined_PC", "pc_config=1",    "",                      "" },
 	{ SSC_INPUT,        SSC_MATRIX,      "ud_T_amb_ind_od",      "Off design table of user-defined power cycle performance formed from parametric on T_amb [C]",	 "", "", "user_defined_PC", "pc_config=1",    "",                      "" }, 
 	{ SSC_INPUT,        SSC_MATRIX,      "ud_m_dot_htf_ind_od",  "Off design table of user-defined power cycle performance formed from parametric on m_dot_htf [ND]","", "", "user_defined_PC", "pc_config=1",    "",                      "" }, 
+    { SSC_INPUT,        SSC_MATRIX,      "ud_ind_od",            "Off design user-defined power cycle performance as function of T_htf, m_dot_htf [ND], and T_amb", "", "", "user_defined_PC", "pc_config=1",     "",                      "" },
 																     																	  
 		// sCO2 Powerblock (type 424) inputs
+	{ SSC_INPUT,        SSC_NUMBER,      "sco2_cycle_config",    "1 = recompression, 2 = partial cooling",                            "",             "",            "sco2_pc",     "pc_config=2",                "",                      "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "eta_c",                "Isentropic efficiency of compressor(s)",                            "none",         "",            "sco2_pc",     "pc_config=2",                "",                      "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "eta_t",                "Isentropic efficiency of turbine",							      "none",         "",            "sco2_pc",     "pc_config=2",                "",                      "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "recup_eff_max",        "Maximum recuperator effectiveness",                                 "none",         "",            "sco2_pc",     "pc_config=2",                "",                      "" },
@@ -681,12 +683,12 @@ public:
 				vector<vector<double> > steps;
 				vector<double> obj, flux;
 				spi.getOptimizationSimulationHistory(steps, obj, flux);
-				int nr = steps.size();
+				size_t nr = steps.size();
 				if (nr > 0)
 				{
-					int nc = steps.front().size() + 2;
+					size_t nc = steps.front().size() + 2;
 					ssc_number_t *ssc_hist = allocate("opt_history", nr, nc);
-					for (int i = 0; i<nr; i++){
+					for (size_t i = 0; i<nr; i++){
 
 						for (size_t j = 0; j<steps.front().size(); j++)
 							ssc_hist[i*nc + j] = (ssc_number_t)steps.at(i).at(j);
@@ -771,9 +773,9 @@ public:
 		{
 			// only calculates a flux map, so need to "assign" 'helio_positions_in'
 			util::matrix_t<double> helio_pos_temp = as_matrix("helio_positions");
-			int n_h_rows = helio_pos_temp.nrows();
+			size_t n_h_rows = helio_pos_temp.nrows();
 			ssc_number_t *p_helio_positions_in = allocate("helio_positions_in", n_h_rows, 2);
-			for (int i = 0; i < n_h_rows; i++)
+			for (size_t i = 0; i < n_h_rows; i++)
 			{
 				p_helio_positions_in[i * 2] = (ssc_number_t)helio_pos_temp(i, 0);
 				p_helio_positions_in[i * 2 + 1] = (ssc_number_t)helio_pos_temp(i, 1);
@@ -869,10 +871,10 @@ public:
                 throw spexception("The time step duration must be evenly divisible within an hour.");
         }
 
-        int n_steps_fixed = steps_per_hour * 8760;	//[-]
+        size_t n_steps_fixed = (size_t)steps_per_hour * 8760;	//[-]
         if( as_boolean("vacuum_arrays") )
         {
-            n_steps_fixed = steps_per_hour * (int)( (sim_setup.m_sim_time_end - sim_setup.m_sim_time_start)/3600. );
+            n_steps_fixed = steps_per_hour * (size_t)( (sim_setup.m_sim_time_end - sim_setup.m_sim_time_start)/3600. );
         }
         //int n_steps_fixed = (int)( (sim_setup.m_sim_time_end - sim_setup.m_sim_time_start) * steps_per_hour / 3600. ) ; 
 		sim_setup.m_report_step = 3600.0 / (double)steps_per_hour;	//[s]
@@ -960,6 +962,7 @@ public:
 				pc->mc_T_htf_ind = as_matrix("ud_T_htf_ind_od");
 				pc->mc_T_amb_ind = as_matrix("ud_T_amb_ind_od");
 				pc->mc_m_dot_htf_ind = as_matrix("ud_m_dot_htf_ind_od");
+                pc->mc_combined_ind = as_matrix("ud_ind_od");
 			}
 
 			// Set pointer to parent class
@@ -1127,35 +1130,30 @@ public:
 				// ****************************************
 				// C_sco2_recomp_csp::S_des_par  User Defined Parameters
 				// ****************************************
-				C_sco2_rc_csp_template::S_des_par sco2_rc_csp_par;
+				C_sco2_recomp_csp::S_des_par sco2_rc_csp_par;
 				// System Design Parameters
 				sco2_rc_csp_par.m_hot_fl_code = as_integer("rec_htf");					//[-]
 				sco2_rc_csp_par.mc_hot_fl_props = as_matrix("field_fl_props");			//[-]
-				sco2_rc_csp_par.m_T_htf_hot_in = as_double("T_htf_hot_des") + 273.15;		//[K] Design HTF hot temp to power cycle
-				sco2_rc_csp_par.m_phx_dt_hot_approach = as_double("deltaT_PHX");			//[K/C]
+				sco2_rc_csp_par.m_T_htf_hot_in = as_double("T_htf_hot_des") + 273.15;	//[K] Design HTF hot temp to power cycle
+				sco2_rc_csp_par.m_phx_dt_hot_approach = as_double("deltaT_PHX");		//[K/C]
 				sco2_rc_csp_par.m_T_amb_des = as_double("sco2_T_amb_des") + 273.15;		//[K] Design ambient temp, convert from C
-				sco2_rc_csp_par.m_dt_mc_approach = as_double("sco2_T_approach");			//[K/C]
+				sco2_rc_csp_par.m_dt_mc_approach = as_double("sco2_T_approach");		//[K/C]
 				sco2_rc_csp_par.m_elevation = site_elevation;							//[m]
 				sco2_rc_csp_par.m_W_dot_net = as_double("P_ref")*1.E3;					//[kWe]
 
+				sco2_rc_csp_par.m_cycle_config = as_integer("sco2_cycle_config");		//[-] 1 = recompression, 2 = partial cooling
+
 				// Hardcode for now that design method iterates on UA_recup_total to hit target etas
 				sco2_rc_csp_par.m_design_method = 1;
+				sco2_rc_csp_par.m_eta_thermal = as_double("design_eff");				//[-]
+				
 				// Hardcode that recompression cycle is ok
 				sco2_rc_csp_par.m_is_recomp_ok = 1;
-				// Hardcode don't fix pressure ratio
-				sco2_rc_csp_par.m_fixed_PR_mc = false;
 
-				sco2_rc_csp_par.m_eta_thermal = as_double("design_eff");					//[-]
-				sco2_rc_csp_par.m_is_recomp_ok = 1;
-				// Cycle Design Parameters
-				sco2_rc_csp_par.m_LT_eff_max = as_double("recup_eff_max");		//[-]
-				sco2_rc_csp_par.m_HT_eff_max = as_double("recup_eff_max");		//[-]
-				sco2_rc_csp_par.m_eta_mc = as_double("eta_c");					//[-]
-				sco2_rc_csp_par.m_eta_rc = as_double("eta_c");					//[-]
-				sco2_rc_csp_par.m_eta_t = as_double("eta_t");					//[-]
 				sco2_rc_csp_par.m_P_high_limit = as_double("P_high_limit")*1.E3;	//[kPa]
-				// Air cooler parameters
-				sco2_rc_csp_par.m_frac_fan_power = as_double("fan_power_perc_net") / 100.0;	//[-]
+				sco2_rc_csp_par.m_fixed_P_mc_out = false;
+				// Hardcode don't fix pressure ratio
+				sco2_rc_csp_par.m_fixed_PR_mc = false;				
 
 				// ****************************************
 				// ****************************************
@@ -1183,12 +1181,29 @@ public:
 				sco2_rc_csp_par.m_DP_PC = DP_PC;
 				sco2_rc_csp_par.m_DP_PHX = DP_PHX;
 				sco2_rc_csp_par.m_N_sub_hxrs = 10;
+
+				sco2_rc_csp_par.m_N_turbine = 3000.0;
+
 				sco2_rc_csp_par.m_tol = 1.E-3;
 				sco2_rc_csp_par.m_opt_tol = 1.E-3;
-				sco2_rc_csp_par.m_N_turbine = 3600.0;
+				
+				// Cycle Design Parameters
+				sco2_rc_csp_par.m_LT_eff_max = as_double("recup_eff_max");		//[-]
+				sco2_rc_csp_par.m_HT_eff_max = as_double("recup_eff_max");		//[-]
+				sco2_rc_csp_par.m_eta_mc = as_double("eta_c");					//[-]
+				sco2_rc_csp_par.m_eta_rc = as_double("eta_c");					//[-]
+				if (sco2_rc_csp_par.m_cycle_config == 2)
+					sco2_rc_csp_par.m_eta_pc = as_double("eta_c");		   //[-]
+				else
+					sco2_rc_csp_par.m_eta_pc = sco2_rc_csp_par.m_eta_mc;
+				sco2_rc_csp_par.m_eta_t = as_double("eta_t");					//[-]
+
 				// PHX design parameters
+				sco2_rc_csp_par.m_des_objective_type = 1;		//[-] Optimize design to maximize efficiency
 				sco2_rc_csp_par.m_phx_dt_cold_approach = sco2_rc_csp_par.m_phx_dt_hot_approach;	//[K/C]
+
 				// Air cooler parameters
+				sco2_rc_csp_par.m_frac_fan_power = as_double("fan_power_perc_net") / 100.0;	//[-]
 				sco2_rc_csp_par.m_deltaP_cooler_frac = 0.002;		//[-]
 
 				sco2_pc.ms_params.ms_mc_sco2_recomp_params = sco2_rc_csp_par;
@@ -1205,32 +1220,20 @@ public:
 					update("Calculating sCO2 design point...", 0.0);
 
 					// Construction class and design system
-					C_sco2_rc_csp_template *p_sco2_recomp_csp;
-
-					C_sco2_recomp_csp sco2_recomp_csp_direct;
-					C_sco2_recomp_csp_10MWe_scale sco2_recomp_csp_scale;
-
-					if (false)
-					{
-						p_sco2_recomp_csp = &sco2_recomp_csp_direct;
-					}
-					else
-					{
-						p_sco2_recomp_csp = &sco2_recomp_csp_scale;
-					}
+					C_sco2_recomp_csp c_sco2_recomp_csp;
 
 					// Pass through callback function and pointer
-					p_sco2_recomp_csp->mf_callback_update = ssc_cmod_update;
-					p_sco2_recomp_csp->mp_mf_update = (void*)(this);
+					c_sco2_recomp_csp.mf_callback_update = ssc_cmod_update;
+					c_sco2_recomp_csp.mp_mf_update = (void*)(this);
 
 					try
 					{
-						p_sco2_recomp_csp->design(sco2_rc_csp_par);
+						c_sco2_recomp_csp.design(sco2_rc_csp_par);
 					}
 					catch (C_csp_exception &csp_exception)
 					{
 						// Report warning before exiting with error
-						while (p_sco2_recomp_csp->mc_messages.get_message(&out_type, &out_msg))
+						while (c_sco2_recomp_csp.mc_messages.get_message(&out_type, &out_msg))
 						{
 							log(out_msg + "\n");
 							log("\n");
@@ -1240,7 +1243,7 @@ public:
 					}
 
 					// Get sCO2 design outputs
-					double T_htf_cold_calc = p_sco2_recomp_csp->get_design_solved()->ms_phx_des_solved.m_T_h_out;		//[K]
+					double T_htf_cold_calc = c_sco2_recomp_csp.get_design_solved()->ms_phx_des_solved.m_T_h_out;		//[K]
 					log("sCO2 design point calculations complete.", SSC_WARNING);
 					double T_rec_htf_cold = as_double("T_htf_cold_des");			//[C]
 					assign("T_htf_cold_des", T_htf_cold_calc - 273.15);				//[C]
@@ -1250,8 +1253,8 @@ public:
 
 					// Get user-defined power cycle parameters
 					// HTF temperature parametric
-					double T_htf_hot_low = p_sco2_recomp_csp->get_design_par()->m_T_htf_hot_in - 273.15 - 20.0;	//[C]
-					double T_htf_hot_high = p_sco2_recomp_csp->get_design_par()->m_T_htf_hot_in - 273.15 + 15.0;	//[C]
+					double T_htf_hot_low = c_sco2_recomp_csp.get_design_par()->m_T_htf_hot_in - 273.15 - 20.0;	//[C]
+					double T_htf_hot_high = c_sco2_recomp_csp.get_design_par()->m_T_htf_hot_in - 273.15 + 15.0;	//[C]
 					int n_T_htf_hot_in = 5;				//[-]
 
 					// Ambient temperature parametric
@@ -1261,7 +1264,7 @@ public:
 
 					// HTF mass flow rate parametric
 					double cycle_f_min = as_double("cycle_cutoff_frac");		//[-]
-					bool is_des_rc = p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.m_is_rc;	//[-]
+					bool is_des_rc = c_sco2_recomp_csp.get_design_solved()->ms_rc_cycle_solved.m_is_rc;	//[-]
 					double sco2_f_min = 0.5;
 					std::string cycle_type = "recompression";
 					if (!is_des_rc)
@@ -1286,7 +1289,7 @@ public:
 
 					try
 					{
-						p_sco2_recomp_csp->generate_ud_pc_tables(T_htf_hot_low, T_htf_hot_high, n_T_htf_hot_in,
+						c_sco2_recomp_csp.generate_ud_pc_tables(T_htf_hot_low, T_htf_hot_high, n_T_htf_hot_in,
 							T_amb_low, T_amb_high, n_T_amb_in,
 							m_dot_htf_ND_low, m_dot_htf_ND_high, n_m_dot_htf_ND_in,
 							T_htf_parametrics, T_amb_parametrics, m_dot_htf_ND_parametrics);
@@ -1294,7 +1297,7 @@ public:
 					catch (C_csp_exception &csp_exception)
 					{
 						// Report warning before exiting with error
-						while (p_sco2_recomp_csp->mc_messages.get_message(&out_type, &out_msg))
+						while (c_sco2_recomp_csp.mc_messages.get_message(&out_type, &out_msg))
 						{
 							log(out_msg);
 						}
@@ -1302,12 +1305,12 @@ public:
 						throw exec_error("sco2_csp_system", csp_exception.m_error_message);
 					}
 
-					int ncols = T_htf_parametrics.ncols();
+					size_t ncols = T_htf_parametrics.ncols();
 
 					util::matrix_t<float> &p_udpc_T_htf_hot = allocate_matrix("ud_T_htf_ind_od_out", n_T_htf_hot_in, ncols);
 					for (int i = 0; i < n_T_htf_hot_in; i++)
 					{
-						for (int j = 0; j < ncols; j++)
+						for (size_t j = 0; j < ncols; j++)
 						{
 							p_udpc_T_htf_hot(i, j) = (float)T_htf_parametrics(i, j);
 						}
@@ -1316,7 +1319,7 @@ public:
 					util::matrix_t<float> &p_udpc_T_amb = allocate_matrix("ud_T_amb_ind_od_out", n_T_amb_in, ncols);
 					for (int i = 0; i < n_T_amb_in; i++)
 					{
-						for (int j = 0; j < ncols; j++)
+						for (size_t j = 0; j < ncols; j++)
 						{
 							p_udpc_T_amb(i, j) = (float)T_amb_parametrics(i, j);
 						}
@@ -1325,7 +1328,7 @@ public:
 					util::matrix_t<float> &p_udpc_m_dot_htf = allocate_matrix("ud_m_dot_htf_ind_od_out", n_m_dot_htf_ND_in, ncols);
 					for (int i = 0; i < n_m_dot_htf_ND_in; i++)
 					{
-						for (int j = 0; j < ncols; j++)
+						for (size_t j = 0; j < ncols; j++)
 						{
 							p_udpc_m_dot_htf(i, j) = (float)m_dot_htf_ND_parametrics(i, j);
 						}
@@ -1342,7 +1345,7 @@ public:
 					pc->m_P_ref = as_double("P_ref");
 					pc->m_eta_ref = as_double("design_eff");
 					pc->m_T_htf_hot_ref = as_double("T_htf_hot_des");
-					pc->m_T_htf_cold_ref = p_sco2_recomp_csp->get_design_solved()->ms_phx_des_solved.m_T_h_out - 273.15;
+					pc->m_T_htf_cold_ref = c_sco2_recomp_csp.get_design_solved()->ms_phx_des_solved.m_T_h_out - 273.15;
 					pc->m_cycle_max_frac = as_double("cycle_max_frac");
 					pc->m_cycle_cutoff_frac = as_double("cycle_cutoff_frac");
 					pc->m_q_sby_frac = as_double("q_sby_frac");
@@ -1355,7 +1358,7 @@ public:
 					// User-Defined Cycle Parameters
 					pc->m_is_user_defined_pc = true;
 
-					pc->m_T_amb_des = p_sco2_recomp_csp->get_design_par()->m_T_amb_des - 273.15;	//[C]
+					pc->m_T_amb_des = c_sco2_recomp_csp.get_design_par()->m_T_amb_des - 273.15;	//[C]
 					pc->m_W_dot_cooling_des = as_double("fan_power_perc_net") / 100.0*as_double("P_ref");	//[MWe]
 					pc->m_m_dot_water_des = 0.0;		//[kg/s]
 
@@ -1442,8 +1445,8 @@ public:
 
         //Load the solar field adjustment factors
         sf_adjustment_factors sf_haf(this);
-		int n_steps_full = (int)weather_reader.m_weather_data_provider->nrecords(); //steps_per_hour * 8760;
-		if (!sf_haf.setup(n_steps_full))
+		size_t n_steps_full = weather_reader.m_weather_data_provider->nrecords(); //steps_per_hour * 8760;
+		if (!sf_haf.setup((int)n_steps_full))
 			throw exec_error("tcsmolten_salt", "failed to setup sf adjustment factors: " + sf_haf.error());
         //allocate array to pass to tcs
         heliostatfield.ms_params.m_sf_adjust.resize( sf_haf.size() );
@@ -1654,8 +1657,8 @@ public:
 				size_t n_wlim_series = 0;
 				ssc_number_t* wlim_series = as_array("wlim_series", &n_wlim_series);
 				if (n_wlim_series != n_steps_full)
-					throw exec_error("tcsmolten_salt", "Invalid net electricity generation limit series dimension. Matrix must have "+util::to_string(n_steps_full)+" rows.");
-				for (int i = 0; i < n_steps_full; i++)
+					throw exec_error("tcsmolten_salt", "Invalid net electricity generation limit series dimension. Matrix must have "+util::to_string((int)n_steps_full)+" rows.");
+				for (size_t i = 0; i < n_steps_full; i++)
 					tou.mc_dispatch_params.m_w_lim_full.at(i) = (double)wlim_series[i];
 			}
 
@@ -1836,11 +1839,11 @@ public:
                 delete [] tou_params->mc_pricing.m_hr_tou;
             tou_params->mc_pricing.m_hr_tou = new double[n_steps_fixed];
             //set the tou period as unique for each time step
-            for(int i=0; i<n_steps_fixed; i++)
+            for(size_t i=0; i<n_steps_fixed; i++)
                 tou_params->mc_pricing.m_hr_tou[i] = i+1;
             //allocate reported arrays
             tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE].resize(n_steps_fixed);
-            for( int i=0; i<n_steps_fixed; i++)
+            for( size_t i=0; i<n_steps_fixed; i++)
                 tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE][i] = dispatch_series[i];
         }
 
@@ -2016,7 +2019,7 @@ public:
 			log("q_dot_pc_startup array is a different length than 'n_steps_fixed'.", SSC_WARNING);
 			return;
 		}
-		for( int i = 0; i < n_steps_fixed; i++ )
+		for( size_t i = 0; i < n_steps_fixed; i++ )
 		{
 			p_q_pc_startup[i] = (float)(p_q_dot_pc_startup[i] * (sim_setup.m_report_step / 3600.0));	//[MWh]
 		}
@@ -2035,7 +2038,7 @@ public:
 			log("At least one m_dot array is a different length than 'n_steps_fixed'.", SSC_WARNING);
 			return;
 		}
-		for (int i = 0; i < n_steps_fixed; i++)
+		for (size_t i = 0; i < n_steps_fixed; i++)
 		{
 			p_m_dot_rec[i] = (ssc_number_t)(p_m_dot_rec[i] / 3600.0);	//[kg/s] convert from kg/hr
 			p_m_dot_pc[i] = (ssc_number_t)(p_m_dot_pc[i] / 3600.0);		//[kg/s] convert from kg/hr
@@ -2045,10 +2048,10 @@ public:
 		}		
 
 		// Set output data from heliostat class
-		int n_rows_eta_map = heliostatfield.ms_params.m_eta_map.nrows();
+		size_t n_rows_eta_map = heliostatfield.ms_params.m_eta_map.nrows();
 		ssc_number_t *eta_map_out = allocate("eta_map_out", n_rows_eta_map, 3);
-		int n_rows_flux_maps = heliostatfield.ms_params.m_flux_maps.nrows();
-		int n_cols_flux_maps = heliostatfield.ms_params.m_flux_maps.ncols() + 2;
+		size_t n_rows_flux_maps = heliostatfield.ms_params.m_flux_maps.nrows();
+		size_t n_cols_flux_maps = heliostatfield.ms_params.m_flux_maps.ncols() + 2;
 		ssc_number_t *flux_maps_out = allocate("flux_maps_out", n_rows_eta_map, n_cols_flux_maps);
 
 		if(n_rows_eta_map != n_rows_flux_maps)
@@ -2061,12 +2064,12 @@ public:
 			H_rec / rec_aspect /
 			double(heliostatfield.ms_params.m_n_flux_x));
 
-		for( int i = 0; i < n_rows_eta_map; i++ )
+		for( size_t i = 0; i < n_rows_eta_map; i++ )
 		{
 			flux_maps_out[n_cols_flux_maps*i] = eta_map_out[3 * i] = (ssc_number_t)heliostatfield.ms_params.m_eta_map(i, 0);		//[deg] Solar azimuth angle
 			flux_maps_out[n_cols_flux_maps*i + 1] = eta_map_out[3 * i + 1] = (ssc_number_t)heliostatfield.ms_params.m_eta_map(i, 1);	//[deg] Solar zenith angle
 			eta_map_out[3 * i + 2] = (ssc_number_t)heliostatfield.ms_params.m_eta_map(i, 2);							//[deg] Solar field optical efficiency
-			for( int j = 2; j < n_cols_flux_maps; j++ )
+			for( size_t j = 2; j < n_cols_flux_maps; j++ )
 			{
 				flux_maps_out[n_cols_flux_maps*i + j] = (ssc_number_t)(heliostatfield.ms_params.m_flux_maps(i, j - 2)*heliostatfield.ms_params.m_eta_map(i, 2)*flux_scaling_mult);		//[kW/m^2]
 			}

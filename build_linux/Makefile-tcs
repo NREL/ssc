@@ -1,8 +1,14 @@
 VPATH = ../tcs
 CC = gcc
 CXX = g++
-WARNINGS = -Wall -Wno-unknown-pragmas
-CFLAGS = -fPIC $(WARNINGS) -g -O3 -I../ -D__64BIT__ -I../nlopt -I../shared -I../lpsolve -I../solarpilot
+WARNINGS = -Wall -Wno-unknown-pragmas -Wno-sign-compare -Wno-maybe-uninitialized -Wno-unused-but-set-variable -Wno-unused-variable -Wno-uninitialized -Wno-int-to-pointer-cast
+CXXFLAGS=-std=c++0x $(CFLAGS)
+
+OBJECTS = tcskernel.o \
+        fmin_callbacks.o \
+        fmin.o \
+
+CFLAGS = -fPIC $(WARNINGS) -g -O3 -I../ -D__64BIT__ -I../nlopt -I../shared -I../lpsolve -I../solarpilot -I../splinter
 CXXFLAGS=-std=c++0x $(CFLAGS)
 
 OBJECTS = tcskernel.o \
@@ -37,6 +43,7 @@ OBJECTS = tcskernel.o \
     sam_csp_util.o \
     thermocline_tes.o \
     ngcc_powerblock.o \
+	interconnect.o \
     sam_dsg_controller_type265.o \
     sam_lf_st_pt_type232.o \
     sam_mw_csp_SumCalcs.o \
@@ -67,7 +74,6 @@ OBJECTS = tcskernel.o \
 	trnsys_weatherreader.o \
 	typelib.o \
 	waterprop.o \
-	weatherreader.o \
 	weatherreader_csp_solver.o \
 	csp_solver_weatherreader.o \
 	csp_solver_util.o \

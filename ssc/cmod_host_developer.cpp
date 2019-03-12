@@ -69,8 +69,8 @@ static var_info _cm_vtab_host_developer[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_agreement_cost",      "Host agreement cost",                  "$",            "",                      "Cash Flow",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_after_tax_net_equity_cost_flow",        "Host after-tax annual costs",           "$",            "",                      "Cash Flow",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_after_tax_cash_flow",                   "Host after-tax cash flow",                      "$",            "",                      "Cash Flow",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_payback_with_expenses",                 "Host payback with expenses",                    "$",            "",                      "Cash Flow",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_cumulative_payback_with_expenses",      "Host cumulative payback with expenses",         "$",            "",                      "Cash Flow",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_payback_with_expenses",                 "Host simple payback with expenses",                    "$",            "",                      "Cash Flow",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_cumulative_payback_with_expenses",      "Host cumulative simple payback with expenses",         "$",            "",                      "Cash Flow",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "npv",                      "Host net present value",				   "$",            "",                      "Cash Flow",      "*",                       "",                                         "" },
 
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_nte",      "Host indifference point by year",         "cents/kWh",            "",                      "Cash Flow",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
@@ -1178,16 +1178,13 @@ public:
 				batt_rep = as_array("batt_replacement_schedule", &count); // replacements per year user-defined
 			double batt_cap = as_double("batt_computed_bank_capacity");
 			// updated 10/17/15 per 10/14/15 meeting
-//			escal_or_annual(CF_battery_replacement_cost_schedule, nyears, "batt_replacement_cost", inflation_rate, batt_cap, false, as_double("batt_replacement_cost_escal")*0.01);
-			double batt_repl_cost = as_double("batt_replacement_cost");
-			double batt_repl_cost_escal = as_double("batt_replacement_cost_escal")*0.01;
+//						// updated 10/17/15 per 10/14/15 meeting
+			escal_or_annual(CF_battery_replacement_cost_schedule, nyears, "om_replacement_cost1", inflation_rate, batt_cap, false, as_double("om_replacement_cost_escal")*0.01);
 
-			for (i = 0; i<nyears; i++)
-				cf.at(CF_battery_replacement_cost_schedule, i + 1) = batt_repl_cost * batt_cap * pow(1 + batt_repl_cost_escal + inflation_rate, i);
-
-			for (i = 0; i < nyears && i<(int)count; i++)
-				cf.at(CF_battery_replacement_cost, i + 1) = batt_rep[i] * 
+			for (int i = 0; i < nyears && i < (int)count; i++) {
+				cf.at(CF_battery_replacement_cost, i + 1) = batt_rep[i] *
 					cf.at(CF_battery_replacement_cost_schedule, i + 1);
+			}
 		}
 		
 		// initialize energy and revenue

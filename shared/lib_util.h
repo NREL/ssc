@@ -79,15 +79,36 @@ Define _DEBUG if compile with debugging
 
 #define RCINDEX(arr, ncols, r, c) arr[ncols*r+c]
 
-
 #ifndef M_PI
 #define M_PI 3.14159265358979323846264338327
 #endif
-#define sind(x) sin( (M_PI/180.0)*(x) )
-#define cosd(x) cos( (M_PI/180.0)*(x) )
+
+#ifndef DTOR
+#define DTOR 0.017453292519943295769236907684886
+#endif
+
+#ifndef RTOD
+#define RTOD 57.295779513082320876798154814105
+#endif
+
+
+#define MAX(a,b) ( (a)>(b) ? (a) : (b) )
+#define MIN(a,b) ( (a)<(b) ? (a) : (b) )
+
+#define sind(x) sin( DTOR*(x) )
+#define cosd(x) cos( DTOR*(x) )
+#define tand(x) tan( DTOR*(x) )
+#define asind(x) (RTOD *asin(x))
+#define acosd(x) (RTOD *acos(x))
+#define atand(x) (RTOD*atan(x))
+
+typedef std::vector<double> double_vec;
+typedef std::vector<int> int_vec;
 
 namespace util
 {
+	const double percent_to_fraction = 0.01;
+	const double fraction_to_percent = 100;
 	const double watt_to_kilowatt = 1. / 1000;
 	const double kilowatt_to_watt = 1000;
 	const double hour_to_min = 60.;
@@ -95,18 +116,17 @@ namespace util
 	const size_t hours_per_day = 24;
 	const size_t hours_per_year = 8760;
 
-	static const int nday[12] = { 31,28,31,30,31,30,31,31,30,31,30,31 };
+	static const size_t nday[12] = { 31,28,31,30,31,30,31,31,30,31,30,31 };
 
 	std::vector< std::string > split( const std::string &str, const std::string &delim, bool ret_empty=false, bool ret_delim=false );
 	std::string join( const std::vector< std::string > &list, const std::string &delim );
 
 	size_t replace( std::string &s, const std::string &old_text, const std::string &new_text);
 
-		
 	bool to_integer(const std::string &str, int *x);
 	bool to_float(const std::string &str, float *x);
 	bool to_double(const std::string &str, double *x);
-		
+
 	std::string to_string( int x, const char *fmt="%d" );
 	std::string to_string( double x, const char *fmt="%lg" );
 
@@ -116,15 +136,16 @@ namespace util
 	std::string read_file( const std::string &file );
 	bool read_line( FILE *fp, std::string &text, int prealloc = 256 );
 	
-	int hours_in_month(int month); /* returns the number of hours in a month, as used in month_of() */
-	int hour_of_day(int hour_of_year); /* return the hour of day (0 - 23) given the hour of year (0 - 8759) */
+	size_t hours_in_month(size_t month); /* returns the number of hours in a month, as used in month_of() */
+	size_t hour_of_day(size_t hour_of_year); /* return the hour of day (0 - 23) given the hour of year (0 - 8759) */
 	double percent_of_year(int month, int hours); /* returns the fraction of a year, based on months and hours */
 	int month_of(double time); /* hour: 0 = jan 1st 12am-1am, returns 1-12 */
 	int day_of_month(int month, double time); /* month: 1-12 time: hours, starting 0=jan 1st 12am, returns 1-nday*/
 	int days_in_month(int month); /*month: 0-11, return 0-30, depending on the month*/
-	void month_hour(int hour_of_year, int & out_month, int & out_hour); /*given the hour of year, return the month, and hour of day*/
-	bool weekday(int hour_of_year); /* return true if is a weekday, assuming first hour of year is Monday at 12 am*/
-	size_t index_year_hour_step(int year, int hour_of_year, int step_of_hour, int steps_per_hour);
+	void month_hour(size_t hour_of_year, size_t & out_month, size_t & out_hour); /*given the hour of year, return the month, and hour of day*/
+	bool weekday(size_t hour_of_year); /* return true if is a weekday, assuming first hour of year is Monday at 12 am*/
+	size_t lifetimeIndex(size_t year, size_t hour_of_year, size_t step_of_hour, size_t steps_per_hour);
+	size_t yearOneIndex(double dtHour, size_t lifetimeIndex);
 
 	int schedule_char_to_int( char c );
 	std::string schedule_int_to_month( int m );
@@ -141,6 +162,27 @@ namespace util
 	std::string get_cwd();
 	bool set_cwd( const std::string &path );
 	
+	template <class T>
+	std::vector<T> array_to_vector(T * array_in, size_t n)
+	{
+		if (array_in != 0)
+		{
+			std::vector<T> vector_out(array_in, array_in + n);
+			return vector_out;
+		}
+		else {
+			std::vector<T> vector_out;
+			return vector_out;
+		}
+	}
+
+	template <class T>
+	void vector_multiply_scalar(std::vector<T> &v, T scalar)
+	{
+		for (size_t i = 0; i != v.size(); i++)
+			v[i] *= scalar;
+	}
+
 	class sync_piped_process
 	{
 	public:
@@ -422,7 +464,7 @@ namespace util
 		inline T &at(size_t i)
 		{
 	#ifdef _DEBUG
-			VEC_ASSERT( i >= 0 && i < n_cols );
+			VEC_ASSERT( i >= 0 && i < n_rows*n_cols );
 	#endif
 			return t_array[i];
 		}
@@ -430,7 +472,7 @@ namespace util
 		inline const T&at(size_t i) const
 		{
 	#ifdef _DEBUG
-			VEC_ASSERT( i >= 0 && i < n_cols );
+			VEC_ASSERT( i >= 0 && i < n_rows*n_cols );
 	#endif
 			return t_array[i];
 		}
@@ -470,7 +512,7 @@ namespace util
 		T operator[] (size_t i) const
 		{
 	#ifdef _DEBUG
-			VEC_ASSERT( i >= 0 && i < n_cols );
+			VEC_ASSERT( i >= 0 && i < n_rows*n_cols );
 	#endif
 			return t_array[i];
 		}
@@ -478,11 +520,33 @@ namespace util
 		T &operator[] (size_t i)
 		{
 	#ifdef _DEBUG
-			VEC_ASSERT( i >= 0 && i < n_cols );
+			VEC_ASSERT( i >= 0 && i < n_rows*n_cols );
 	#endif
 			return t_array[i];
 		}
-				
+		
+        matrix_t row(const size_t r) const
+        {
+    #ifdef _DEBUG
+            VEC_ASSERT(r >= 0 && r < n_rows);
+    #endif
+            matrix_t<T> array(n_cols);
+            for (size_t i = 0; i < n_cols; i++)
+                array[i] = t_array[i + r*n_cols];
+            return array;
+        }
+
+        matrix_t col(const size_t c) const
+        {
+    #ifdef _DEBUG
+            VEC_ASSERT(c >= 0 && c < n_cols);
+    #endif
+            matrix_t<T> array(n_rows);
+            for (size_t i = 0; i < n_rows; i++)
+                array[i] = t_array[i*n_cols + c];
+            return array;
+        }
+
 		inline size_t nrows() const
 		{
 			return n_rows;
@@ -550,7 +614,8 @@ namespace util
 
 		block_t(size_t nr, size_t nc, size_t nl, const T &val)
 		{
-			t_array = NULL;
+            n_rows = n_cols = n_layers = 0;
+            t_array = NULL;
 			if (nr < 1) nr = 1;
 			if (nc < 1) nc = 1;
 			if (nl < 1) nl = 1;
@@ -569,6 +634,7 @@ namespace util
 			//Do not use clear before calling these functions.
 			if (t_array) delete [] t_array;
 			n_layers = n_rows = n_cols = 0;
+            t_array = new T[1];
 		}
 		
 		void copy( const block_t &rhs )
@@ -700,7 +766,7 @@ namespace util
 	#endif
 			return t_array[i];
 		}
-				
+		
 		inline size_t nrows() const
 		{
 			return n_rows;

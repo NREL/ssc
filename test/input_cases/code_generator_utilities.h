@@ -5,6 +5,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include "sscapi.h"
+#include "../ssc/core.h"
 #include <string>
 #include <type_traits>
 
@@ -106,13 +107,29 @@ static int run_module(ssc_data_t & data, std::string module_name)
 		ssc_data_free(data);
 		return -1;
 	}
-	if (ssc_module_exec(module, data) == 0)
-	{
-		printf("error during simulation.");
-		ssc_module_free(module);
-		ssc_data_free(data);
+
+	// C++ exception handling
+	try {
+
+		if (ssc_module_exec(module, data) == 0)
+		{
+			printf("error during simulation.");
+			int i = 0;
+			compute_module *cm = static_cast<compute_module*>(module);
+			while (cm->log(i) != nullptr) {
+				printf("%s\n", cm->log(i)->text.c_str());
+				i++;
+			}
+			ssc_module_free(module);
+			ssc_data_free(data);
+			return -1;
+		}
+	}
+	catch (std::exception& e) {
+		printf("Exception: %s", e.what());
 		return -1;
 	}
+	
 	ssc_module_free(module);
 	return 0;
 }

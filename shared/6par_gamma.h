@@ -46,6 +46,10 @@
 *  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
 *  THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *******************************************************************************************************/
+#ifndef _LIB_6PAR_GAMMA_H_
+#define _LIB_6PAR_GAMMA_H_
+
+#include "6par_newton.h"
 
 template< typename Real >
 class __PTnonlinear
@@ -146,3 +150,4 @@ bool mod6par_gamma_approx( Real *result,
 			
 	return ( nsum > 2 && nfail/ntotal < 0.3f ); // accept 1/3 of solutions fail over course of Tc iterations
 }
+#endif

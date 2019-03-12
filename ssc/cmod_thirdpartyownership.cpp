@@ -79,11 +79,11 @@ static var_info vtab_thirdpartyownership[] = {
 
 
 	/* financial outputs */
-	{ SSC_OUTPUT,        SSC_NUMBER,     "cf_length",                "Number of periods in cash flow",      "",             "",                      "Cash Flow",      "*",                       "INTEGER",                                  "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "cf_length",                "Agreement period",      "",             "",                      "Financial Metrics",      "*",                       "INTEGER",                                  "" },
 
 	//{ SSC_OUTPUT,        SSC_NUMBER,     "lcoe_real",                "Real LCOE",                          "cents/kWh",    "",                      "Cash Flow",      "*",                       "",                                         "" },
 	//{ SSC_OUTPUT,        SSC_NUMBER,     "lcoe_nom",                 "Nominal LCOE",                       "cents/kWh",    "",                      "Cash Flow",      "*",                       "",                                         "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "npv",                      "Net present value",				   "$",            "",                      "Cash Flow",      "*",                       "",                                         "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "npv",                      "Net present value",				   "$",            "",                      "Financial Metrics",      "*",                       "",                                         "" },
 
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_energy_net",      "Energy",                  "kWh",            "",                      "Cash Flow",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 //	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_energy_value",      "Value of electricity savings",                  "$",            "",                      "Cash Flow",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
@@ -93,16 +93,16 @@ static var_info vtab_thirdpartyownership[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_after_tax_net_equity_cost_flow",        "After-tax annual costs",           "$",            "",                      "Cash Flow",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_after_tax_cash_flow",                   "After-tax cash flow",                      "$",            "",                      "Cash Flow",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_payback_with_expenses",                 "Payback with expenses",                    "$",            "",                      "Cash Flow",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_cumulative_payback_with_expenses",      "Cumulative payback with expenses",         "$",            "",                      "Cash Flow",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_payback_with_expenses",                 "Simple payback with expenses",                    "$",            "",                      "Cash Flow",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_cumulative_payback_with_expenses",      "Cumulative simple payback with expenses",         "$",            "",                      "Cash Flow",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	
 // NTE additions 8/10/17
-	{ SSC_INPUT,        SSC_ARRAY,       "elec_cost_with_system",             "Energy value",                       "$",            "",                      "thirdpartyownership",      "*",                       "",                                         "" },
-	{ SSC_INPUT,        SSC_ARRAY,       "elec_cost_without_system",             "Energy value",                       "$",            "",                      "thirdpartyownership",      "*",                       "",                                         "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_nte",      "Not to exceed (NTE)",         "cents/kWh",            "",                      "Cash Flow",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "year1_nte",                "Year 1 NTE",                          "cents/kWh",    "",                      "Cash Flow",      "*",                       "",                                         "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "lnte_real",                "Real LNTE",                          "cents/kWh",    "",                      "Cash Flow",      "*",                       "",                                         "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "lnte_nom",                 "Nominal LNTE",                       "cents/kWh",    "",                      "Cash Flow",      "*",                       "",                                         "" },
+	{ SSC_INPUT,        SSC_ARRAY,       "elec_cost_with_system",             "Energy value",                       "$",            "",                      "Electricity Cost",      "*",                       "",                                         "" },
+	{ SSC_INPUT,        SSC_ARRAY,       "elec_cost_without_system",             "Energy value",                       "$",            "",                      "Electricity Cost",      "*",                       "",                                         "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_nte",      "Host indifference point by year",         "cents/kWh",            "",                      "Cash Flow",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "year1_nte",                "Host indifference point in Year 1",                          "cents/kWh",    "",                      "Financial Metrics",      "*",                       "",                                         "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "lnte_real",                "Host indifference point nominal levelized value",                          "cents/kWh",    "",                      "Financial Metrics",      "*",                       "",                                         "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "lnte_nom",                 "Host indifference point real levelized value",                       "cents/kWh",    "",                      "Financial Metrics",      "*",                       "",                                         "" },
 
 
 
@@ -146,10 +146,10 @@ public:
 
 	void exec( ) throw( general_error )
 	{
-		int i;
+		size_t i;
 
 
-		int nyears = as_integer("analysis_period");
+		size_t nyears = as_unsigned_long("analysis_period");
 
 		// initialize cashflow matrix
 		cf.resize_fill( CF_max, nyears+1, 0.0 );
@@ -190,17 +190,17 @@ public:
 			double first_year_energy = 0.0;
 			for (int i = 0; i < 8760; i++)
 				first_year_energy += hourly_energy_calcs.hourly_energy()[i];
-			for (int y = 1; y <= nyears; y++)
+			for (size_t y = 1; y <= nyears; y++)
 				cf.at(CF_energy_net, y) = first_year_energy * cf.at(CF_degradation, y);
 		}
 		else
 		{
-			for (int y = 1; y <= nyears; y++)
+			for (size_t y = 1; y <= nyears; y++)
 			{
 				cf.at(CF_energy_net, y) = 0;
 				int i = 0;
 				for (int m = 0; m<12; m++)
-					for (int d = 0; d<util::nday[m]; d++)
+					for (size_t d = 0; d<util::nday[m]; d++)
 						for (int h = 0; h<24; h++)
 							if (i<8760)
 							{
@@ -233,14 +233,14 @@ public:
 		{
 			annual_price = as_double("lease_price") *12.0;
 			annual_esc = as_double("lease_escalation") / 100.0;
-			for (int i = 1; i<=nyears; i++)
+			for (size_t i = 1; i<=nyears; i++)
 				cf.at(CF_agreement_cost, i) = annual_price * pow(1 + annual_esc, i-1 );
 		}
 		else
 		{
 			annual_price = as_double("ppa_price");
 			annual_esc = as_double("ppa_escalation") / 100.0;
-			for (int i = 1; i<=nyears; i++)
+			for (size_t i = 1; i<=nyears; i++)
 				cf.at(CF_agreement_cost, i) = annual_price * cf.at(CF_energy_net,i) * pow(1 + annual_esc, i-1);
 		}
 
@@ -343,20 +343,20 @@ public:
 
 /* These functions can be placed in common financial library with matrix and constants passed? */
 
-	void save_cf(int cf_line, int nyears, const std::string &name)
+	void save_cf(int cf_line, size_t nyears, const std::string &name)
 	{
 		ssc_number_t *arrp = allocate( name, nyears+1 );
-		for (int i=0;i<=nyears;i++)
+		for (size_t i=0;i<=nyears;i++)
 			arrp[i] = (ssc_number_t)cf.at(cf_line, i);
 	}
 
-	double npv( int cf_line, int nyears, double rate ) throw ( general_error )
+	double npv( size_t cf_line, size_t nyears, double rate ) throw ( general_error )
 	{		
 		if (rate <= -1.0) throw general_error("cannot calculate NPV with discount rate less or equal to -1.0");
 
 		double rr = 1/(1+rate);
 		double result = 0;
-		for (int i=nyears;i>0;i--)
+		for (size_t i=nyears;i>0;i--)
 			result = rr * result + cf.at(cf_line,i);
 
 		return result*rr;

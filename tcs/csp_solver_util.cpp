@@ -65,7 +65,7 @@ C_csp_reported_outputs::C_output::C_output()
 	m_n_reporting_ts_array = -1;
 }
 
-void C_csp_reported_outputs::C_output::assign(float *p_reporting_ts_array, int n_reporting_ts_array)
+void C_csp_reported_outputs::C_output::assign(float *p_reporting_ts_array, size_t n_reporting_ts_array)
 {
 	mp_reporting_ts_array = p_reporting_ts_array;
 	mv_temp_outputs.reserve(10);
@@ -224,7 +224,7 @@ void C_csp_reported_outputs::construct(const S_output_info *output_info)
 	m_n_reporting_ts_array = -1;
 }
 
-bool C_csp_reported_outputs::assign(int index, float *p_reporting_ts_array, int n_reporting_ts_array)
+bool C_csp_reported_outputs::assign(int index, float *p_reporting_ts_array, size_t n_reporting_ts_array)
 {
 	if(index < 0 || index >= m_n_outputs)
 		return false;

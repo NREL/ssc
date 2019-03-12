@@ -50,6 +50,7 @@
 #include <math.h>
 #include <cmath>
 #include <limits>
+#include <stddef.h>
 #include "lib_pvinv.h"
 
 
@@ -61,7 +62,29 @@ partload_inverter_t::partload_inverter_t( )
 
 bool partload_inverter_t::acpower(
 	/* inputs */
-	double Pdc,     /* Input power to inverter (Wdc) */
+	double Pdc,     /* Input power to inverter (Wdc), one per MPPT input on the inverter. Note that with several inverters, this is the power to ONE inverter.*/
+
+								 /* outputs */
+	double *Pac,    /* AC output power (Wac) */
+	double *Ppar,   /* AC parasitic power consumption (Wac) */
+	double *Plr,    /* Part load ratio (Pdc_in/Pdc_rated, 0..1) */
+	double *Eff,	    /* Conversion efficiency (0..1) */
+	double *Pcliploss, /* Power loss due to clipping loss (Wac) */
+	double *Pntloss /* Power loss due to night time tare loss (Wac) */
+)
+{
+	//pass through inputs to the multiple MPPT function as an array with only one entry
+	std::vector<double> Pdc_vec;
+	Pdc_vec.push_back(Pdc);
+	if (!acpower(Pdc_vec, Pac, Ppar, Plr, Eff, Pcliploss, Pntloss))
+		return false;
+
+	return true;
+}
+
+bool partload_inverter_t::acpower(
+	/* inputs */
+	std::vector<double> Pdc,     /* Vector of Input power to inverter (Wdc), one per MPPT input on the inverter. Note that with several inverters, this is the power to ONE inverter.*/
 
 	/* outputs */
 	double *Pac,    /* AC output power (Wac) */
@@ -72,7 +95,9 @@ bool partload_inverter_t::acpower(
 	double *Pntloss /* Power loss due to night time tare loss (Wac) */
 	)
 {
-
+	double Pdc_total = 0;
+	for (size_t m = 0; m < Pdc.size(); m++)
+		Pdc_total += Pdc[m];
 	if ( Pdco <= 0 ) return false;
 
 	// handle limits - can send error back or record out of range values
@@ -80,7 +105,7 @@ bool partload_inverter_t::acpower(
 //	if ( Pdc > Pdco ) Pdc = Pdco;
 
 	// linear interpolation based on Pdc/Pdco and *Partload and *Efficiency arrays
-	double x = 100.0 * Pdc / Pdco; // percentages in partload ratio
+	double x = 100.0 * Pdc_total / Pdco; // percentages in partload ratio
 
 	int n = (int)Partload.size();
 
@@ -122,12 +147,12 @@ bool partload_inverter_t::acpower(
 
 	*Eff /= 100.0; // user data in percentages
 
-	*Pac = *Eff * Pdc;
+	*Pac = *Eff * Pdc_total;
 	*Ppar = 0.0;
 
 	// night time power loss Wac
 	*Pntloss = 0.0;
-	if (Pdc <= 0.0)
+	if (Pdc_total <= 0.0)
 	{
 		*Pac = -Pntare;
 		*Ppar = Pntare;
@@ -143,7 +168,7 @@ bool partload_inverter_t::acpower(
 		*Pcliploss = PacNoClip - *Pac;
 	}
 
-	*Plr = Pdc / Pdco;
+	*Plr = Pdc_total / Pdco;
 
 	return true;
 }

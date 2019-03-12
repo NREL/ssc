@@ -211,9 +211,10 @@ public:
 		max,
 		ave,
 		stdev,
-		sum;
+		sum,
+        wtmean;
 
-	void set(double _min, double _max, double _ave, double _stdev, double _sum);
+	void set(double _min, double _max, double _ave, double _stdev, double _sum, double _wtmean);
 	void initialize();
 
 };

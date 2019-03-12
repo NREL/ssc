@@ -58,17 +58,9 @@
 #include "lib_pvwatts.h"
 #include "lib_pvshade.h"
 #include "lib_pvmodel.h"
+#include "lib_pv_incidence_modifier.h"
 
-#ifndef DTOR
-#define DTOR 0.0174532925
-#endif
-#ifndef M_PI
-#define M_PI 3.14159265358979323846264338327
-#endif
-#define sind(x) sin( (M_PI/180.0)*(x) )
-#define cosd(x) cos( (M_PI/180.0)*(x) )
-#define tand(x) tan( (M_PI/180.0)*(x) )
-#define asind(x) (180/M_PI*asin(x))
+enum pvwatts_tracking_input { FIXED_OPEN_RACK, FIXED_ROOF_MOUNT, ONE_AXIS_SELF_SHADED, ONE_AXIS_BACKTRACKED, TWO_AXIS, AZIMUTH_AXIS };
 
 static var_info _cm_vtab_pvwattsv5_part1[] = {
 /*   VARTYPE           DATATYPE          NAME                         LABEL                                               UNITS        META                      GROUP          REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
@@ -84,8 +76,8 @@ static var_info _cm_vtab_pvwattsv5_common[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "inv_eff",                        "Inverter efficiency at rated power",          "%",         "",                           "PVWatts",      "?=96",                        "MIN=90,MAX=99.5",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "losses",                         "System losses",                               "%",         "Total system losses",                               "PVWatts",      "*",                       "MIN=-5,MAX=99",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "array_type",                     "Array type",                                  "0/1/2/3/4", "Fixed OR,Fixed Roof,1Axis,Backtracked,2Axis",  "PVWatts",      "*",                       "MIN=0,MAX=4,INTEGER",                      "" }, 
-	{ SSC_INPUT,        SSC_NUMBER,      "tilt",                           "Tilt angle",                                  "deg",       "H=0,V=90",                                     "PVWatts",      "*",                       "MIN=0,MAX=90",                             "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "azimuth",                        "Azimuth angle",                               "deg",       "E=90,S=180,W=270",                             "PVWatts",      "*",                       "MIN=0,MAX=360",                            "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "tilt",                           "Tilt angle",                                  "deg",       "H=0,V=90",                                     "PVWatts",      "array_type<4",                       "MIN=0,MAX=90",                             "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "azimuth",                        "Azimuth angle",                               "deg",       "E=90,S=180,W=270",                             "PVWatts",      "array_type<4",                       "MIN=0,MAX=360",                            "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "gcr",                            "Ground coverage ratio",                       "0..1",      "",                                             "PVWatts",      "?=0.4",                   "MIN=0,MAX=3",               "" },
 	
 	var_info_invalid };
@@ -195,8 +187,8 @@ public:
 		inv_eff_percent = as_double("inv_eff");
 		
 		loss_percent = as_double("losses");        
-		tilt = as_double("tilt");
-		azimuth = as_double("azimuth");
+		if(is_assigned("tilt")) tilt = as_double("tilt");
+		if (is_assigned("azimuth")) azimuth = as_double("azimuth");
 
 		gamma = 0;
 		use_ar_glass = false;
@@ -219,17 +211,17 @@ public:
 		array_type = as_integer("array_type"); // 0, 1, 2, 3, 4		
 		switch( array_type )
 		{
-		case 0: // fixed open rack
+		case FIXED_OPEN_RACK: // fixed open rack
 			track_mode = 0; inoct = 45; shade_mode_1x = 0; break;
-		case 1: // fixed roof mount
+		case FIXED_ROOF_MOUNT: // fixed roof mount
 			track_mode = 0; inoct = 49; shade_mode_1x = 0; break;
-		case 2: // 1 axis self-shaded
+		case ONE_AXIS_SELF_SHADED: // 1 axis self-shaded
 			track_mode = 1; inoct = 45; shade_mode_1x = 0; break;
-		case 3: // 1 axis backtracked
+		case ONE_AXIS_BACKTRACKED: // 1 axis backtracked
 			track_mode = 1; inoct = 45; shade_mode_1x = 1; break;
-		case 4: // 2 axis
+		case TWO_AXIS: // 2 axis
 			track_mode = 2; inoct = 45; shade_mode_1x = 0; break;
-		case 5: // azimuth axis
+		case AZIMUTH_AXIS: // azimuth axis
 			track_mode = 3; inoct = 45; shade_mode_1x = 0; break;
 		}
 
@@ -276,7 +268,7 @@ public:
 			if ( sunup > 0 && track_mode == 1
 				&& shade_mode_1x == 0 ) // selfshaded mode
 			{	
-				double shad1xf = shade_fraction_1x( solazi, solzen, tilt, azimuth, gcr, rot );					
+				double shad1xf = shadeFraction1x( solazi, solzen, tilt, azimuth, gcr, rot );
 				shad_beam *= (ssc_number_t)(1-shad1xf);
 
 				if ( shade_mode_1x == 0 && iskydiff > 0 )
@@ -392,12 +384,12 @@ public:
 		if (!as_boolean("batt_simple_enable"))
 			add_var_info(vtab_technology_outputs);
 
-		smart_ptr<weather_data_provider>::ptr wdprov;
+		std::unique_ptr<weather_data_provider> wdprov;
 
 		if ( is_assigned( "solar_resource_file" ) )
 		{
 			const char *file = as_string("solar_resource_file");
-			wdprov = smart_ptr<weather_data_provider>::ptr( new weatherfile( file ) );
+			wdprov = std::unique_ptr<weather_data_provider>( new weatherfile( file ) );
 
 			weatherfile *wfile = dynamic_cast<weatherfile*>(wdprov.get());
 			if (!wfile->ok()) throw exec_error("pvwattsv5", wfile->message());
@@ -405,7 +397,7 @@ public:
 		}
 		else if ( is_assigned( "solar_resource_data" ) )
 		{
-			wdprov = smart_ptr<weather_data_provider>::ptr( new weatherdata( lookup("solar_resource_data") ) );
+			wdprov = std::unique_ptr<weather_data_provider>( new weatherdata( lookup("solar_resource_data") ) );
 		}
 		else
 			throw exec_error("pvwattsv5", "no weather data supplied");

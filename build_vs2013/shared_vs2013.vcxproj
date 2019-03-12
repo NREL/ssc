@@ -25,14 +25,19 @@
     <ClInclude Include="..\shared\6par_newton.h" />
     <ClInclude Include="..\shared\6par_search.h" />
     <ClInclude Include="..\shared\6par_solve.h" />
+    <ClInclude Include="..\shared\DB8_vmpp_impp_uint8_bin.h" />
+    <ClInclude Include="..\shared\lib_aoi.h" />
     <ClInclude Include="..\shared\lib_battery.h" />
     <ClInclude Include="..\shared\lib_battery_dispatch.h" />
+    <ClInclude Include="..\shared\lib_battery_powerflow.h" />
     <ClInclude Include="..\shared\lib_cec6par.h" />
     <ClInclude Include="..\shared\lib_financial.h" />
     <ClInclude Include="..\shared\lib_geothermal.h" />
     <ClInclude Include="..\shared\lib_iec61853.h" />
     <ClInclude Include="..\shared\lib_irradproc.h" />
     <ClInclude Include="..\shared\lib_miniz.h" />
+    <ClInclude Include="..\shared\lib_mlmodel.h" />
+    <ClInclude Include="..\shared\lib_ondinv.h" />
     <ClInclude Include="..\shared\lib_physics.h" />
     <ClInclude Include="..\shared\lib_powerblock.h" />
     <ClInclude Include="..\shared\lib_power_electronics.h" />
@@ -40,26 +45,35 @@
     <ClInclude Include="..\shared\lib_pvmodel.h" />
     <ClInclude Include="..\shared\lib_pvshade.h" />
     <ClInclude Include="..\shared\lib_pvwatts.h" />
+    <ClInclude Include="..\shared\lib_pv_incidence_modifier.h" />
+    <ClInclude Include="..\shared\lib_pv_io_manager.h" />
     <ClInclude Include="..\shared\lib_pv_shade_loss_mpp.h" />
     <ClInclude Include="..\shared\lib_sandia.h" />
+    <ClInclude Include="..\shared\lib_shared_inverter.h" />
     <ClInclude Include="..\shared\lib_snowmodel.h" />
     <ClInclude Include="..\shared\lib_util.h" />
+    <ClInclude Include="..\shared\lib_utility_rate.h" />
     <ClInclude Include="..\shared\lib_weatherfile.h" />
     <ClInclude Include="..\shared\lib_windfile.h" />
     <ClInclude Include="..\shared\lib_windwakemodel.h" />
     <ClInclude Include="..\shared\lib_windwatts.h" />
     <ClInclude Include="..\shared\lib_wind_obos.h" />
+    <ClInclude Include="..\shared\lib_wind_obos_cable_vessel.h" />
+    <ClInclude Include="..\shared\lib_wind_obos_defaults.h" />
     <ClInclude Include="..\shared\lsqfit.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\shared\lib_battery.cpp" />
     <ClCompile Include="..\shared\lib_battery_dispatch.cpp" />
+    <ClCompile Include="..\shared\lib_battery_powerflow.cpp" />
     <ClCompile Include="..\shared\lib_cec6par.cpp" />
     <ClCompile Include="..\shared\lib_financial.cpp" />
     <ClCompile Include="..\shared\lib_geothermal.cpp" />
     <ClCompile Include="..\shared\lib_iec61853.cpp" />
     <ClCompile Include="..\shared\lib_irradproc.cpp" />
     <ClCompile Include="..\shared\lib_miniz.cpp" />
+    <ClCompile Include="..\shared\lib_mlmodel.cpp" />
+    <ClCompile Include="..\shared\lib_ondinv.cpp" />
     <ClCompile Include="..\shared\lib_physics.cpp" />
     <ClCompile Include="..\shared\lib_powerblock.cpp" />
     <ClCompile Include="..\shared\lib_power_electronics.cpp" />
@@ -67,16 +81,25 @@
     <ClCompile Include="..\shared\lib_pvmodel.cpp" />
     <ClCompile Include="..\shared\lib_pvshade.cpp" />
     <ClCompile Include="..\shared\lib_pvwatts.cpp" />
+    <ClCompile Include="..\shared\lib_pv_incidence_modifier.cpp" />
+    <ClCompile Include="..\shared\lib_pv_io_manager.cpp" />
     <ClCompile Include="..\shared\lib_pv_shade_loss_mpp.cpp" />
     <ClCompile Include="..\shared\lib_sandia.cpp" />
+    <ClCompile Include="..\shared\lib_shared_inverter.cpp" />
     <ClCompile Include="..\shared\lib_snowmodel.cpp" />
     <ClCompile Include="..\shared\lib_util.cpp" />
+    <ClCompile Include="..\shared\lib_utility_rate.cpp" />
     <ClCompile Include="..\shared\lib_weatherfile.cpp" />
     <ClCompile Include="..\shared\lib_windfile.cpp" />
     <ClCompile Include="..\shared\lib_windwakemodel.cpp" />
     <ClCompile Include="..\shared\lib_windwatts.cpp" />
     <ClCompile Include="..\shared\lib_wind_obos.cpp" />
+    <ClCompile Include="..\shared\lib_wind_obos_cable_vessel.cpp" />
+    <ClCompile Include="..\shared\lib_wind_obos_defaults.cpp" />
     <ClCompile Include="..\shared\lsqfit.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\shared\wind_obos.lk" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{794A2685-B70E-4504-9402-AC376D4EB459}</ProjectGuid>
@@ -151,6 +174,7 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>_MBCS;%(PreprocessorDefinitions); _CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <AdditionalIncludeDirectories>C:\Program Files (x86)\Visual Leak Detector\include;%(AdditionalIncludeDirectories); $(SolutionDir)\..\splinter</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -161,6 +185,7 @@
       <WarningLevel>Level4</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>_MBCS;%(PreprocessorDefinitions); _CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>C:\Program Files (x86)\Visual Leak Detector\include;%(AdditionalIncludeDirectories); $(SolutionDir)\..\splinter</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -173,6 +198,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>_MBCS;%(PreprocessorDefinitions); _CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>C:\Program Files (x86)\Visual Leak Detector\include;%(AdditionalIncludeDirectories); $(SolutionDir)\..\splinter</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -187,6 +213,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>_MBCS;%(PreprocessorDefinitions); _CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>C:\Program Files (x86)\Visual Leak Detector\include;%(AdditionalIncludeDirectories); $(SolutionDir)\..\splinter</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>

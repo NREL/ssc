@@ -152,6 +152,7 @@ enum{
 
 	O_T_SYS_H,
 	O_M_DOT_AVAIL,
+    O_M_DOT_FIELD_HTF,
 	O_Q_AVAIL,
 	O_DP_TOT,
 	O_W_DOT_PUMP,
@@ -286,6 +287,7 @@ tcsvarinfo sam_mw_lf_type262_variables[] = {
 
 	{ TCS_OUTPUT,          TCS_NUMBER,           O_T_SYS_H,                "T_sys_h",                                                      "Solar field HTF outlet temperature",            "C",             "",             "",             "" },
 	{ TCS_OUTPUT,          TCS_NUMBER,       O_M_DOT_AVAIL,            "m_dot_avail",                                                       "HTF mass flow rate from the field",        "kg/hr",             "",             "",             "" },
+    { TCS_OUTPUT,          TCS_NUMBER,   O_M_DOT_FIELD_HTF,        "m_dot_field_htf",                         "HTF mass flow rate from the field, including when recirculating",        "kg/hr",             "",             "",             "" },
 	{ TCS_OUTPUT,          TCS_NUMBER,           O_Q_AVAIL,                "q_avail",                                                     "Thermal power produced by the field",          "MWt",             "",             "",             "" },
 	{ TCS_OUTPUT,          TCS_NUMBER,            O_DP_TOT,                 "DP_tot",                                                                 "Total HTF pressure drop",          "bar",             "",             "",             "" },
 	{ TCS_OUTPUT,          TCS_NUMBER,        O_W_DOT_PUMP,             "W_dot_pump",                                                      "Required solar field pumping power",          "MWe",             "",             "",             "" },
@@ -453,6 +455,7 @@ private:
 
 	double T_sys_h;		//Solar field HTF outlet temperature
 	double m_dot_avail;		//HTF mass flow rate from the field
+    double m_dot_field_htf;  //HTF mass flow rate from the field, including when recirculating
 	double q_avail;		//Thermal power produced by the field
 	double DP_tot;		//Total HTF pressure drop
 	double W_dot_pump;		//Required solar field pumping power
@@ -680,6 +683,7 @@ public:
 		timezone	= std::numeric_limits<double>::quiet_NaN();
 		T_sys_h	= std::numeric_limits<double>::quiet_NaN();
 		m_dot_avail	= std::numeric_limits<double>::quiet_NaN();
+        m_dot_field_htf = std::numeric_limits<double>::quiet_NaN();
 		q_avail	= std::numeric_limits<double>::quiet_NaN();
 		DP_tot	= std::numeric_limits<double>::quiet_NaN();
 		W_dot_pump	= std::numeric_limits<double>::quiet_NaN();
@@ -2132,14 +2136,14 @@ post_convergence_flag: //11 continue
 		// ******************************************************************
 		DP_tot = DP_tot * 1.e-5; //[bar]
 		//Calculate the thermal power produced by the field
-		if(T_sys_h >= T_startup) {  //MJW 12.14.2010 Limit field production to above startup temps. Otherwise we get strange results during startup. Does this affect turbine startup?
-			q_avail = E_avail_tot/(dt)*1.e-6;  //[MW]
-			//Calculate the available mass flow of HTF
-			m_dot_avail = max(q_avail*1.e6/(c_htf_ave*(T_sys_h - T_cold_in_1)),0.0); //[kg/s] 
-    
-		} else {
+		q_avail = E_avail_tot/(dt)*1.e-6;  //[MW]
+		//Calculate the available mass flow of HTF
+		m_dot_avail = max(q_avail*1.e6/(c_htf_ave*(T_sys_h - T_cold_in_1)),0.0); //[kg/s]
+        m_dot_field_htf = m_dot_avail;
+		if(T_sys_h < T_startup) {  //MJW 12.14.2010 Limit field production to above startup temps. Otherwise we get strange results during startup. Does this affect turbine startup?
 			q_avail = 0.0;
 			m_dot_avail = 0.0;
+            m_dot_field_htf = m_dot_htf_tot;
 		}
 
 		//Dumped energy
@@ -2160,6 +2164,7 @@ set_outputs_and_return:
 		 
 		double T_sys_h_out = T_sys_h - 273.15;
 		double m_dot_avail_out = m_dot_avail*3600.;
+        double m_dot_field_htf_out = m_dot_field_htf * 3600.;  //[kg/hr] from kg/s
 		double W_dot_pump_out = W_dot_pump/1000.;
 		double E_fp_tot_out = E_fp_tot*1.e-6;
 		double T_sys_c_out = T_sys_c - 273.15;
@@ -2193,6 +2198,7 @@ set_outputs_and_return:
 		//Set outputs
 		value(O_T_SYS_H, T_sys_h_out);		//[C] Solar field HTF outlet temperature
 		value(O_M_DOT_AVAIL, m_dot_avail_out);		//[kg/hr] HTF mass flow rate from the field
+        value(O_M_DOT_FIELD_HTF, m_dot_field_htf_out);  //[kg/hr] HTF mass flow rate from the field, including when recirculating
 		value(O_Q_AVAIL, q_avail);		//[MWt] Thermal power produced by the field
 		value(O_DP_TOT, DP_tot);		//[bar] Total HTF pressure drop
 		value(O_W_DOT_PUMP, W_dot_pump_out);		//[MWe] Required solar field pumping power

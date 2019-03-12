@@ -163,7 +163,7 @@ extern "C" {
 #include <cstdarg>
 #include <cmath>
 #include <limits>
-#include <iostream>
+#include <iosfwd>
 #include <algorithm>
 #include <sstream>
 

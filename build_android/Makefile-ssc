@@ -97,6 +97,7 @@ OBJECTS = \
 	cmod_tcstrough_empirical.o \
 	cmod_tcstrough_physical.o \
 	cmod_tcstrough_physical_csp_solver.o \
+	cmod_trough_physical.o \
 	cmod_trough_physical_iph.o \
 	cmod_iph_to_lcoefcr.o \
 	cmod_linear_fresnel_dsg_iph.o \

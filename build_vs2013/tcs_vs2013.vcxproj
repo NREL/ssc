@@ -21,9 +21,12 @@
   <ItemGroup>
     <ClCompile Include="..\tcs\atmospheric_aod.cpp" />
     <ClCompile Include="..\tcs\cavity_calcs.cpp" />
+    <ClCompile Include="..\tcs\co2props_nn1.cpp" />
     <ClCompile Include="..\tcs\co2_compressor_library.cpp" />
     <ClCompile Include="..\tcs\csp_dispatch.cpp" />
     <ClCompile Include="..\tcs\csp_solver_core.cpp" />
+    <ClCompile Include="..\tcs\csp_solver_core_ADJUSTED.cpp" />
+    <ClCompile Include="..\tcs\csp_solver_core_NEW.cpp" />
     <ClCompile Include="..\tcs\csp_solver_gen_collector_receiver.cpp" />
     <ClCompile Include="..\tcs\csp_solver_lf_dsg_collector_receiver.cpp" />
     <ClCompile Include="..\tcs\csp_solver_mono_eq_methods.cpp" />
@@ -45,20 +48,35 @@
     <ClCompile Include="..\tcs\datatest.cpp" />
     <ClCompile Include="..\tcs\direct_steam_receivers.cpp" />
     <ClCompile Include="..\tcs\CO2_properties.cpp" />
+    <ClCompile Include="..\tcs\fmin_callbacks.cpp" />
     <ClCompile Include="..\tcs\heat_exchangers.cpp" />
+    <ClCompile Include="..\tcs\interconnect.cpp" />
+    <ClCompile Include="..\tcs\nlopt_callbacks.cpp" />
     <ClCompile Include="..\tcs\numeric_solvers.cpp" />
+    <ClCompile Include="..\tcs\sam_geothermal_hybrid_pb.cpp" />
+    <ClCompile Include="..\tcs\sam_mw_gen_Type260.cpp" />
     <ClCompile Include="..\tcs\sam_mw_gen_Type260_csp_solver.cpp" />
+    <ClCompile Include="..\tcs\sam_mw_lf_type261_steam_csp_solver.cpp" />
+    <ClCompile Include="..\tcs\sam_mw_pt_heliostatfield.cpp" />
     <ClCompile Include="..\tcs\sam_mw_pt_heliostatfield_csp_solver.cpp" />
+    <ClCompile Include="..\tcs\sam_mw_pt_type222.cpp" />
     <ClCompile Include="..\tcs\sam_mw_pt_type222_csp_solver.cpp" />
+    <ClCompile Include="..\tcs\sam_mw_pt_type224.cpp" />
     <ClCompile Include="..\tcs\sam_mw_pt_type224_csp_solver.cpp" />
     <ClCompile Include="..\tcs\sam_mw_trough_type250.cpp" />
+    <ClCompile Include="..\tcs\sam_mw_trough_type250_csp_solver.cpp" />
     <ClCompile Include="..\tcs\sam_type250_input_generator.cpp" />
     <ClCompile Include="..\tcs\sco2_cycle_components.cpp" />
     <ClCompile Include="..\tcs\sco2_partialcooling_cycle.cpp" />
+    <ClCompile Include="..\tcs\sco2_pc_core.cpp" />
     <ClCompile Include="..\tcs\sco2_pc_csp_int.cpp" />
+    <ClCompile Include="..\tcs\sco2_power_cycle.cpp" />
     <ClCompile Include="..\tcs\sco2_recompression_cycle.cpp" />
+    <ClCompile Include="..\tcs\tou_translator.cpp" />
     <ClCompile Include="..\tcs\tou_translator_csp_solver.cpp" />
     <ClCompile Include="..\tcs\ud_power_cycle.cpp" />
+    <ClCompile Include="..\tcs\user_defined_power_cycle.cpp" />
+    <ClCompile Include="..\tcs\waterprop.cpp" />
     <ClCompile Include="..\tcs\water_properties.cpp" />
     <ClCompile Include="..\tcs\fmin.cpp" />
     <ClCompile Include="..\tcs\Heliostat_AzElAod.cpp" />
@@ -97,12 +115,15 @@
     <ClCompile Include="..\tcs\thermocline_tes.cpp" />
     <ClCompile Include="..\tcs\trnsys_weatherreader.cpp" />
     <ClCompile Include="..\tcs\typelib.cpp" />
+    <ClCompile Include="..\tcs\weatherreader.cpp" />
     <ClCompile Include="..\tcs\weatherreader_csp_solver.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\tcs\atmospheric_aod.h" />
     <ClInclude Include="..\tcs\cavity_calcs.h" />
+    <ClInclude Include="..\tcs\co2props_nn1.h" />
     <ClInclude Include="..\tcs\co2_compressor_library.h" />
+    <ClInclude Include="..\tcs\co2_testing.h" />
     <ClInclude Include="..\tcs\csp_dispatch.h" />
     <ClInclude Include="..\tcs\csp_solver_core.h" />
     <ClInclude Include="..\tcs\csp_solver_gen_collector_receiver.h" />
@@ -123,10 +144,21 @@
     <ClInclude Include="..\tcs\csp_system_costs.h" />
     <ClInclude Include="..\tcs\direct_steam_receivers.h" />
     <ClInclude Include="..\tcs\CO2_properties.h" />
+    <ClInclude Include="..\tcs\fmin_callbacks.h" />
     <ClInclude Include="..\tcs\heat_exchangers.h" />
+    <ClInclude Include="..\tcs\interconnect.h" />
+    <ClInclude Include="..\tcs\nlopt_callbacks.h" />
     <ClInclude Include="..\tcs\numeric_solvers.h" />
+    <ClInclude Include="..\tcs\sco2_cycle_components.h" />
+    <ClInclude Include="..\tcs\sco2_cycle_templates.h" />
+    <ClInclude Include="..\tcs\sco2_partialcooling_cycle.h" />
+    <ClInclude Include="..\tcs\sco2_pc_core.h" />
     <ClInclude Include="..\tcs\sco2_pc_csp_int.h" />
+    <ClInclude Include="..\tcs\sco2_power_cycle.h" />
+    <ClInclude Include="..\tcs\sco2_recompression_cycle.h" />
     <ClInclude Include="..\tcs\ud_power_cycle.h" />
+    <ClInclude Include="..\tcs\user_defined_power_cycle.h" />
+    <ClInclude Include="..\tcs\waterprop.h" />
     <ClInclude Include="..\tcs\water_properties.h" />
     <ClInclude Include="..\tcs\fmin.h" />
     <ClInclude Include="..\tcs\htf_props.h" />
@@ -140,6 +172,12 @@
     <ClInclude Include="..\tcs\tcstype.h" />
     <ClInclude Include="..\tcs\tcs_debug.h" />
     <ClInclude Include="..\tcs\thermocline_tes.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\tcs\Makefile-tcs-linux" />
+    <None Include="..\tcs\Makefile-tcs-osx" />
+    <None Include="..\tcs\waterprop_critical.dat" />
+    <None Include="..\tcs\waterprop_saturated.dat" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{3058C490-552E-4428-A409-F29EB2C50D3F}</ProjectGuid>

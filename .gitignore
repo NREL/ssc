@@ -3,6 +3,13 @@
 ##
 ## Get latest from https://github.com/github/gitignore/blob/master/VisualStudio.gitignore
 
+#VS Code
+.vscode/*
+*.vscode
+
+# Git generated
+*.orig
+
 # User-specific files
 *.suo
 *.user
@@ -315,25 +322,22 @@ ssc/examples/solar_pilot_example.lk
 set_env_sj.bat
 
 build_osx/dltest\.dSYM/Contents/
-
 build_osx/SDKtool\.app/Contents/
-
 build_osx/ssc\.dylib
-
 build_osx/TCSConsole\.app/Contents/
-
 build_ios/libssc\.zip
-
 build_android/libssc\.zip
-
 android_make_output\.txt
-
 ios_make_output\.txt
-
 build_osx/Test
-
 build_linux/Test
-
 build_linux/config.status
-
 linux_test\.txt
+
+nlopt/config.h
+build_osx/config.status
+build_sdk/sdk-release/linux64/dependencies\.txt
+build_sdk/sdk-release/linux64/filetypes\.txt
+
+doc/html/*
+doc/latex/*

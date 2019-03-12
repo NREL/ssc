@@ -58,6 +58,7 @@
 
 #include "lsqfit.h"
 #include "lib_iec61853.h"
+#include "lib_pv_incidence_modifier.h"
 
 const char *iec61853_module_t::module_type_names[_maxTypeNames] = { "monoSi", "multiSi", "CdTe", "CIS", "CIGS", "Amorphous" };
 const char *iec61853_module_t::col_names[COL_MAX] = { "Irr (W/m2)", "Temp (C)", "Pmp (W)", "Vmp (V)", "Voc (V)", "Isc (A)" };
@@ -278,8 +279,8 @@ bool iec61853_module_t::solve( double Voc, double Isc, double Vmp, double Imp, d
 			double *p_Il, double *p_Io, double *p_Rs, double *p_Rsh )
 {
 	// initial guesses must be passed in
-	double Il = *p_Il;
-	double Io = *p_Io;
+	Il = *p_Il;
+	Io = *p_Io;
 	double Rs = *p_Rs;
 	double Rsh = *p_Rsh;
 
@@ -601,9 +602,9 @@ bool iec61853_module_t::calculate( util::matrix_t<double> &input, int nseries, i
 		
 		// make a guess at the parameters
 		double a =  nseries*nfac[i]*k*TcK/q;
-		double Il = 0.95*Isc;
+		Il = 0.95*Isc;
 		double Rsh = Rsh_ref0 * 1000.0/Irr;
-		double Io = ( Il - Voc/Rsh )/( exp(Voc/a) - 1 );
+		Io = ( Il - Voc/Rsh )/( exp(Voc/a) - 1 );
 		double Rs = Rs_ref0;		
 		
 		if ( verbose )
@@ -884,7 +885,8 @@ bool iec61853_module_t::operator() ( pvinput_t &input, double TcellC, double opv
 	/* initialize output first */
 	out.Power = out.Voltage = out.Current = out.Efficiency = out.Voc_oper = out.Isc_oper = 0.0;
 	
-	double poa, tpoa;
+	double poa, tpoa, iamf;
+	iamf = 1;
 
 	if( input.radmode != 3 ){ // Skip module cover effects if using POA reference cell data 
 		// plane of array irradiance, W/m2
@@ -892,9 +894,10 @@ bool iec61853_module_t::operator() ( pvinput_t &input, double TcellC, double opv
 
 		// transmitted poa through module cover
 		tpoa = poa;
+
 		if ( input.IncAng > AOI_MIN && input.IncAng < AOI_MAX )
 		{
-			double iamf = iam( input.IncAng, GlassAR );
+			iamf = iam( input.IncAng, GlassAR );
 			tpoa = poa - ( 1.0 - iamf )*input.Ibeam*cos(input.IncAng*3.1415926/180.0);
 			if( tpoa < 0.0 ) tpoa = 0.0;
 			if( tpoa > poa ) tpoa = poa;
@@ -957,6 +960,7 @@ bool iec61853_module_t::operator() ( pvinput_t &input, double TcellC, double opv
 		out.Voc_oper = V_oc;
 		out.Isc_oper = I_sc;
 		out.CellTemp = Tc - 273.15;
+		out.AOIModifier = iamf;
 	}
 
 	return out.Power >= 0;

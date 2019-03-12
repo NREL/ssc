@@ -775,39 +775,50 @@ ssc_bool_t my_handler( ssc_module_t , ssc_handler_t , int action,
 		return 0;
 }
 
-void SCFrame::Copy( ssc_data_t p_data, var_table *vt, bool clear_first)
+void SCFrame::Copy( ssc_module_t p_mod, ssc_data_t p_data, var_table *vt, bool clear_first)
 {
 	if (clear_first)
 		::ssc_data_clear( p_data );
 
-	const char *name = vt->first();
-	while( name )
+	int pidx = 0;
+	while (const ssc_info_t p_inf = ssc_module_var_info(p_mod, pidx++))
 	{
-		var_data *v = vt->lookup( name );
+		int var_type = ssc_info_var_type(p_inf);   // SSC_INPUT, SSC_OUTPUT, SSC_INOUT
+//		int data_type = ssc_info_data_type(p_inf); // SSC_STRING, SSC_NUMBER, SSC_ARRAY, SSC_MATRIX		
+		const char *name = (ssc_info_name(p_inf)); // assumed to be non-null
+		wxString reqd(ssc_info_required(p_inf));
 
-		if (v)
+
+		if (var_type == SSC_INPUT || var_type == SSC_INOUT)
 		{
-			switch(v->type)
+			var_data *v = vt->lookup(name);
+
+			if (v)
 			{
-			case SSC_STRING:
-				::ssc_data_set_string( p_data, name, v->str.c_str() );
+				switch (v->type)
+				{
+				case SSC_STRING:
+					::ssc_data_set_string(p_data, name, v->str.c_str());
+					break;
+				case SSC_NUMBER:
+				{
+					::ssc_data_set_number(p_data, name, (ssc_number_t)v->num);
+					wxString nm(name);
+				}
 				break;
-			case SSC_NUMBER:
-				::ssc_data_set_number( p_data, name, (ssc_number_t)v->num );
-				break;
-			case SSC_ARRAY:
-				::ssc_data_set_array( p_data, name, v->num.data(), v->num.length() );
-				break;
-			case SSC_MATRIX:
-				::ssc_data_set_matrix( p_data, name, v->num.data(), v->num.nrows(), v->num.ncols() );
-				break;
-			case SSC_TABLE:
-				::ssc_data_set_table( p_data, name, (&v->table) );
-				break;
+				case SSC_ARRAY:
+					::ssc_data_set_array(p_data, name, v->num.data(), v->num.length());
+					break;
+				case SSC_MATRIX:
+					::ssc_data_set_matrix(p_data, name, v->num.data(), v->num.nrows(), v->num.ncols());
+					break;
+				case SSC_TABLE:
+					::ssc_data_set_table(p_data, name, (&v->table));
+					break;
+				}
 			}
 		}
-
-		name = vt->next();
+		//name = vt->next();
 	}
 }
 
@@ -832,6 +843,7 @@ void SCFrame::Copy( var_table *vt,  ssc_data_t p_data, bool clear_first )
 				ssc_number_t val = 0.0;
 				if ( ::ssc_data_get_number( p_data, name, &val ) )
 					vt->assign( name, var_data( val ) );
+				wxString nm(name);
 			}
 			break;
 		case SSC_ARRAY:
@@ -883,15 +895,12 @@ std::vector<bool> SCFrame::Start()
 	}
 
 	try {
-
-		ssc_data_t p_data = ::ssc_data_create();
-
-		Copy( p_data, m_varTable, true );
-				
 		ssc_module_t p_mod = ::ssc_module_create( (const char*) cm.c_str() );
 			
 		if (p_mod != 0)
 		{
+			ssc_data_t p_data = ::ssc_data_create();
+			Copy(p_mod, p_data, m_varTable, true);
 			wxStopWatch sw;
 			sw.Start();			
 			if (! ::ssc_module_exec_with_handler( p_mod, p_data,
@@ -904,14 +913,15 @@ std::vector<bool> SCFrame::Start()
 				ok.push_back( true );
 
 			::ssc_module_free( p_mod );
+			Copy(m_varTable, p_data, false);
+			::ssc_data_free(p_data);
+
 		}
 		else			
 			Log("CREATE_FAIL: " + cm );
 
-		Copy( m_varTable, p_data, false );
 		m_dataView->UpdateView();
 
-		::ssc_data_free( p_data );
 	 
 	} catch(sscdll_error &e) {
 		wxMessageBox("Library error: " + wxString(e.func.c_str()) + ": " + wxString(e.text.c_str()) );

@@ -46,6 +46,7 @@
     <ClCompile Include="..\tcs\direct_steam_receivers.cpp" />
     <ClCompile Include="..\tcs\CO2_properties.cpp" />
     <ClCompile Include="..\tcs\heat_exchangers.cpp" />
+    <ClCompile Include="..\tcs\interconnect.cpp" />
     <ClCompile Include="..\tcs\numeric_solvers.cpp" />
     <ClCompile Include="..\tcs\sam_mw_gen_Type260_csp_solver.cpp" />
     <ClCompile Include="..\tcs\sam_mw_pt_heliostatfield_csp_solver.cpp" />
@@ -125,8 +126,10 @@
     <ClInclude Include="..\tcs\direct_steam_receivers.h" />
     <ClInclude Include="..\tcs\CO2_properties.h" />
     <ClInclude Include="..\tcs\heat_exchangers.h" />
+    <ClInclude Include="..\tcs\interconnect.h" />
     <ClInclude Include="..\tcs\numeric_solvers.h" />
     <ClInclude Include="..\tcs\sco2_cycle_components.h" />
+    <ClInclude Include="..\tcs\sco2_cycle_templates.h" />
     <ClInclude Include="..\tcs\sco2_partialcooling_cycle.h" />
     <ClInclude Include="..\tcs\sco2_pc_csp_int.h" />
     <ClInclude Include="..\tcs\sco2_power_cycle.h" />
@@ -149,7 +152,7 @@
   <PropertyGroup Label="Globals">
     <ProjectGuid>{3058C490-552E-4428-A409-F29EB2C50D3F}</ProjectGuid>
     <ProjectName>tcs</ProjectName>
-    <WindowsTargetPlatformVersion>10.0.16299.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -216,12 +219,14 @@
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
-      <WarningLevel>Level4</WarningLevel>
+      <WarningLevel>TurnOffAllWarnings</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>$(SolutionDir)\..\ssc;$(SolutionDir)\..\ssc\nlopt;$(SolutionDir)\..\ssc\lpsolve;$(SolutionDir)\..\ssc\shared;$(SolutionDir)\..\ssc\solarpilot;$(SolutionDir)\..;%(AdditionalIncludeDirectories);$(SolutionDir)\..\tcs\FIT_props;$(SolutionDir)\..\nlopt;$(SolutionDir)\..\shared;$(SolutionDir)\..\solarpilot;$(SolutionDir)\..\lpsolve</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(SolutionDir)\..\tcs\FIT_props;$(SolutionDir)\..\nlopt;$(SolutionDir)\..\shared;$(SolutionDir)\..\solarpilot;$(SolutionDir)\..\lpsolve;$(SolutionDir)\..\splinter</AdditionalIncludeDirectories>
       <AdditionalOptions>/bigobj %(AdditionalOptions)</AdditionalOptions>
       <PreprocessorDefinitions>LPWINAPP;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <TreatWarningAsError>false</TreatWarningAsError>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -229,11 +234,13 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
-      <WarningLevel>Level4</WarningLevel>
+      <WarningLevel>TurnOffAllWarnings</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>$(SolutionDir)\..\ssc;$(SolutionDir)\..\ssc\nlopt;$(SolutionDir)\..\ssc\lpsolve;$(SolutionDir)\..\ssc\shared;$(SolutionDir)\..\ssc\solarpilot;$(SolutionDir)\..;%(AdditionalIncludeDirectories);$(SolutionDir)\..\tcs\FIT_props;$(SolutionDir)\..\nlopt;$(SolutionDir)\..\shared;$(SolutionDir)\..\solarpilot;$(SolutionDir)\..\lpsolve</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(SolutionDir)\..\tcs\FIT_props;$(SolutionDir)\..\nlopt;$(SolutionDir)\..\shared;$(SolutionDir)\..\solarpilot;$(SolutionDir)\..\lpsolve;$(SolutionDir)\..\splinter</AdditionalIncludeDirectories>
       <AdditionalOptions>/bigobj %(AdditionalOptions)</AdditionalOptions>
       <PreprocessorDefinitions>LPWINAPP;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <TreatWarningAsError>false</TreatWarningAsError>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -241,12 +248,15 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
-      <WarningLevel>Level4</WarningLevel>
+      <WarningLevel>TurnOffAllWarnings</WarningLevel>
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <AdditionalIncludeDirectories>$(SolutionDir)\..\ssc;$(SolutionDir)\..\ssc\nlopt;$(SolutionDir)\..\ssc\lpsolve;$(SolutionDir)\..\ssc\shared;$(SolutionDir)\..\ssc\solarpilot;$(SolutionDir)\..;%(AdditionalIncludeDirectories);$(SolutionDir)\..\tcs\FIT_props;$(SolutionDir)\..\nlopt;$(SolutionDir)\..\shared;$(SolutionDir)\..\solarpilot;$(SolutionDir)\..\lpsolve</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(SolutionDir)\..\tcs\FIT_props;$(SolutionDir)\..\nlopt;$(SolutionDir)\..\shared;$(SolutionDir)\..\solarpilot;$(SolutionDir)\..\lpsolve;$(SolutionDir)\..\splinter</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>LPWINAPP;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <DisableSpecificWarnings>4456;4458</DisableSpecificWarnings>
+      <TreatWarningAsError>true</TreatWarningAsError>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -259,12 +269,15 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
-      <WarningLevel>Level4</WarningLevel>
+      <WarningLevel>TurnOffAllWarnings</WarningLevel>
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <AdditionalIncludeDirectories>$(SolutionDir)\..\ssc;$(SolutionDir)\..\ssc\nlopt;$(SolutionDir)\..\ssc\lpsolve;$(SolutionDir)\..\ssc\shared;$(SolutionDir)\..\ssc\solarpilot;$(SolutionDir)\..;%(AdditionalIncludeDirectories);$(SolutionDir)\..\tcs\FIT_props;$(SolutionDir)\..\nlopt;$(SolutionDir)\..\shared;$(SolutionDir)\..\solarpilot;$(SolutionDir)\..\lpsolve</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(SolutionDir)\..\tcs\FIT_props;$(SolutionDir)\..\nlopt;$(SolutionDir)\..\shared;$(SolutionDir)\..\solarpilot;$(SolutionDir)\..\lpsolve;$(SolutionDir)\..\splinter</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>LPWINAPP;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <DisableSpecificWarnings>4456;4458</DisableSpecificWarnings>
+      <TreatWarningAsError>true</TreatWarningAsError>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>

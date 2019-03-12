@@ -219,6 +219,7 @@ public:
     ST_IntersectionData();
     ~ST_IntersectionData();
     void AllocateArrays(int size);
+    void DeallocateArrays();
 };
 
 

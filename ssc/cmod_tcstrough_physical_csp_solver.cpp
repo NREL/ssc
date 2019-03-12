@@ -256,6 +256,7 @@ static var_info _cm_vtab_trough_physical_csp_solver[] = {
 	{ SSC_INPUT,        SSC_MATRIX,      "ud_T_htf_ind_od",      "Off design table of user-defined power cycle performance formed from parametric on T_htf_hot [C]", "", "",               "user_defined_PC", "pc_config=1",            "",                      "" },
 	{ SSC_INPUT,        SSC_MATRIX,      "ud_T_amb_ind_od",      "Off design table of user-defined power cycle performance formed from parametric on T_amb [C]",	 "", "",               "user_defined_PC", "pc_config=1",            "",                      "" }, 
 	{ SSC_INPUT,        SSC_MATRIX,      "ud_m_dot_htf_ind_od",  "Off design table of user-defined power cycle performance formed from parametric on m_dot_htf [ND]","", "",               "user_defined_PC", "pc_config=1",            "",                      "" }, 
+    { SSC_INPUT,        SSC_MATRIX,      "ud_ind_od",            "Off design user-defined power cycle performance as function of T_htf, m_dot_htf [ND], and T_amb", "", "",                "user_defined_PC", "pc_config=1",            "",                      "" },
 		
 																																												  
  //  enet calculator																																							  
@@ -431,6 +432,9 @@ public:
 		weather_reader.m_trackmode = 0;
 		weather_reader.m_tilt = 0.0;
 		weather_reader.m_azimuth = 0.0;
+		// Initialize to get weather file info
+		weather_reader.init();
+		if (weather_reader.has_error()) throw exec_error("tcstrough_physical", weather_reader.get_error());
 
 		C_csp_trough_collector_receiver c_trough;
 
@@ -589,7 +593,21 @@ public:
 		c_trough.m_Tau_envelope = as_matrix("Tau_envelope");             //[-] Envelope transmittance
 		c_trough.m_EPSILON_4 = as_matrix("EPSILON_4");                   //[-] Inner glass envelope emissivities
 		c_trough.m_EPSILON_5 = as_matrix("EPSILON_5");                   //[-] Outer glass envelope emissivities
-		c_trough.m_GlazingIntact = (as_matrix("GlazingIntactIn")> 0);         //[-] Glazing intact (broken glass) flag {1=true, else=false}
+
+//		c_trough.m_GlazingIntact = (as_matrix("GlazingIntactIn") > 0);         //[-] Glazing intact (broken glass) flag {1=true, else=false}
+
+		util::matrix_t<double> glazing_intact_double = as_matrix("GlazingIntactIn"); //[-] Is the glazing intact?
+		int n_gl_row = (int)glazing_intact_double.nrows();
+		int n_gl_col = (int)glazing_intact_double.ncols();
+		c_trough.m_GlazingIntact.resize(n_gl_row, n_gl_col);
+		for (int i = 0; i < n_gl_row; i++)
+		{
+			for (int j = 0; j < n_gl_col; j++)
+			{
+				c_trough.m_GlazingIntact(i, j) = (glazing_intact_double(i, j) > 0);
+			}
+		}
+
 		c_trough.m_P_a = as_matrix("P_a");		                         //[torr] Annulus gas pressure				 
 		c_trough.m_AnnulusGas = as_matrix("AnnulusGas");		         //[-] Annulus gas type (1=air, 26=Ar, 27=H2)
 		c_trough.m_AbsorberMaterial = as_matrix("AbsorberMaterial");	 //[-] Absorber material type
@@ -760,6 +778,7 @@ public:
 			pc->mc_T_htf_ind = as_matrix("ud_T_htf_ind_od");
 			pc->mc_T_amb_ind = as_matrix("ud_T_amb_ind_od");
 			pc->mc_m_dot_htf_ind = as_matrix("ud_m_dot_htf_ind_od");
+            pc->mc_m_dot_htf_ind = as_matrix("ud_ind_od");
 		}
 
 		// ********************************

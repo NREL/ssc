@@ -120,7 +120,29 @@ namespace CSP
 				  double T_db_K, double T_wb_K, double P_amb_Pa, double q_reject, double& m_dot_water, double& W_dot_acfan, 
 				  double& W_dot_wctot, double& W_dot_tot, double& P_cond, double& T_cond, double& f_hrsys);
 
+    // Pipe sizing
+    double pipe_sched(double De, bool selectLarger = true);
+
+    // Pipe wall thickness
+    double WallThickness(double d_in);
+
+    // Minor pressure drop
+    double MinorPressureDrop(double vel, double rho, double k);
+
+    // Major pressure drop
+    double MajorPressureDrop(double vel, double rho, double ff, double l, double d);
+
+    // Friction factor
+    double FrictionFactor(double rel_rough, double Re);
+
+    // Friction factor (iterative, helper function)
+    double FricFactor_Iter(double rel_rough, double Re);
+
 };
+    // Statistical mode
+    //template <typename T, typename A>  // need to specify an allocator 'A'
+    //T mode(std::vector<T,A> const& v);
+double mode(std::vector<double> v);
 
 // Set up class for Pmax function so we can save maximum pressure for various CSP types
 class P_max_check
@@ -570,4 +592,37 @@ public:
 	double FK_23(double T_2, double T_3, int hn, int hv);
 };
 
+// Functor for advanced vector of vector sorting
+class sort_vecOfvec
+{
+private:
+    std::vector<int> columns;
+    std::vector<bool> ascending;
+public:
+    sort_vecOfvec(std::vector<int> cols, std::vector<bool> asc) :
+        columns(cols), ascending(asc) {
+        if (columns.size() != ascending.size()) {
+            throw logic_error("Column indice vector and sorting vector lengths must be equal");
+        }
+    }
+
+    bool operator () (const vector<double> &a, const vector<double> &b) const {
+        int col;
+        col = 0;
+        for (size_t col_idx = 0; col_idx < columns.size(); col_idx++) {
+            col = columns[col_idx];
+            if (a[col] == b[col]) {
+                continue;
+            }
+            else if ( (a[col] < b[col] && ascending[col_idx] ) ||
+                ( !(a[col] < b[col]) && !ascending[col_idx] )) {
+                return true;
+            }
+            else {
+                return false;
+            }
+        }
+        return false;  // all sorting values are equal, must return false to adhere to 'strict weak ordering'
+    }
+};
 #endif
