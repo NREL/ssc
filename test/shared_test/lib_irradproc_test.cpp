@@ -80,7 +80,7 @@ TEST_F(IrradTest, sunriseAndSunsetAtDifferentLocationsTest_lib_irradproc) {
 	vector<double> sunset_times = { 19.455, 20.436, 17.814, 20.723, 17.449, 24 };
 
 	double sun_results[9]; //vector to hold the results of solarpos function
-	for (int i = 0; i < latitudes.size(); i++)
+	for (size_t i = 0; i < latitudes.size(); i++)
 	{
 		//run the solarpos function and check sunrise and sunset for each location
 		solarpos(2010, 6, 21, 14, 30, latitudes[i], longitudes[i], time_zones[i], sun_results);

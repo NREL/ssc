@@ -7,7 +7,7 @@
 var_data* create_winddata_array(int intervalsPerHour, int nMeasurementHeights){
 	size_t timeLength = 8760 * intervalsPerHour;
 	float* year_data = new float[4 * timeLength * nMeasurementHeights];
-	for (int i = 0; i < timeLength; i++){
+	for (size_t i = 0; i < timeLength; i++){
 		for (int j = 0; j < nMeasurementHeights; j++){
 			int index = i * 4 * nMeasurementHeights + j * 4;
 			year_data[index] = (float)(50 + 5 * j);											// temp
