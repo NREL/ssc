@@ -3,7 +3,7 @@
 
 /// Run all tests in TestResult
 TEST_P(computeModuleTest, RunSimulationTest) {
-	int n = table_->getNumResult();
+	int n = (int)table_->getNumResult();
 	bool boolCompute = compute();
 	for (int i = 0; i < n; i++) {
 		const TestResult* testResult = &(table_->getResult())[i];
