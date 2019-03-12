@@ -33,7 +33,8 @@ public:
 	}
 	void TearDown() {
 		if (data) {
-			ssc_data_clear(data);
+			ssc_data_free(data);
+			data = nullptr;
 		}
 	}
 	void SetCalculated(std::string name)

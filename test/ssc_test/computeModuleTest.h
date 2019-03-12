@@ -30,6 +30,7 @@ public:
 	}
 	void TearDown() {
 		ssc_data_free(data_);
+		data_ = nullptr;
 	}
 	
 	/// runs compute module and returns true if successful

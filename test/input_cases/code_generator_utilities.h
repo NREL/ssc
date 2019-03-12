@@ -104,7 +104,6 @@ static int run_module(ssc_data_t & data, std::string module_name)
 	if (NULL == module)
 	{
 		printf("error: could not create 'pvsamv1' module.");
-		ssc_data_free(data);
 		return -1;
 	}
 
@@ -121,7 +120,6 @@ static int run_module(ssc_data_t & data, std::string module_name)
 				i++;
 			}
 			ssc_module_free(module);
-			ssc_data_free(data);
 			return -1;
 		}
 	}
