@@ -292,6 +292,7 @@
       <DisableSpecificWarnings>4456;4244;%(DisableSpecificWarnings)</DisableSpecificWarnings>
       <AdditionalOptions>/w44191 /w44242  /w44266 /w44302 /w44388 /w44826 /w44905 /w44906 /w44928 %(AdditionalOptions)</AdditionalOptions>
       <TreatWarningAsError>true</TreatWarningAsError>
+      <ExceptionHandling>Async</ExceptionHandling>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -331,6 +332,7 @@ exit 0
       <DisableSpecificWarnings>4456;4244;%(DisableSpecificWarnings)</DisableSpecificWarnings>
       <AdditionalOptions>/w44191 /w44242  /w44266 /w44302 /w44388 /w44826 /w44905 /w44906 /w44928 %(AdditionalOptions)</AdditionalOptions>
       <TreatWarningAsError>true</TreatWarningAsError>
+      <ExceptionHandling>Async</ExceptionHandling>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -367,6 +369,7 @@ exit 0
       <AdditionalOptions>/w44191 /w44242  /w44266 /w44302 /w44388 /w44826 /w44905 /w44906 /w44928 %(AdditionalOptions)</AdditionalOptions>
       <TreatWarningAsError>false</TreatWarningAsError>
       <DisableSpecificWarnings>4456;4244;%(DisableSpecificWarnings)</DisableSpecificWarnings>
+      <ExceptionHandling>Async</ExceptionHandling>
     </ClCompile>
     <Link>
       <AdditionalLibraryDirectories>$(SolutionDir)\..\tcs\$(Platform)\$(Configuration);$(SolutionDir)\$(Platform)\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
@@ -396,6 +399,7 @@ exit 0
       <AdditionalOptions>/w44191 /w44242  /w44266 /w44302 /w44388 /w44826 /w44905 /w44906 /w44928 %(AdditionalOptions)</AdditionalOptions>
       <TreatWarningAsError>false</TreatWarningAsError>
       <DisableSpecificWarnings>4456;4244;%(DisableSpecificWarnings)</DisableSpecificWarnings>
+      <ExceptionHandling>Async</ExceptionHandling>
     </ClCompile>
     <Link>
       <AdditionalLibraryDirectories>$(SolutionDir)\$(Platform)\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>

@@ -25,6 +25,7 @@
     <ClInclude Include="..\shared\6par_newton.h" />
     <ClInclude Include="..\shared\6par_search.h" />
     <ClInclude Include="..\shared\6par_solve.h" />
+    <ClInclude Include="..\shared\lib_time.h" />
     <ClInclude Include="..\shared\lib_battery.h" />
     <ClInclude Include="..\shared\lib_battery_dispatch.h" />
     <ClInclude Include="..\shared\lib_battery_powerflow.h" />
@@ -88,6 +89,7 @@
     <ClCompile Include="..\shared\lib_sandia.cpp" />
     <ClCompile Include="..\shared\lib_shared_inverter.cpp" />
     <ClCompile Include="..\shared\lib_snowmodel.cpp" />
+    <ClCompile Include="..\shared\lib_time.cpp" />
     <ClCompile Include="..\shared\lib_util.cpp" />
     <ClCompile Include="..\shared\lib_utility_rate.cpp" />
     <ClCompile Include="..\shared\lib_weatherfile.cpp" />
@@ -176,6 +178,7 @@
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <AdditionalOptions>/w44191 /w44242  /w44263 /w44264 /w44265 /w44266 /w44302 /w44388 /w44826 /w44905 /w44906 /w44928 %(AdditionalOptions)</AdditionalOptions>
       <TreatWarningAsError>false</TreatWarningAsError>
+      <ExceptionHandling>Async</ExceptionHandling>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -190,6 +193,7 @@
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <AdditionalOptions>/w44191 /w44242  /w44263 /w44264 /w44265 /w44266 /w44302 /w44388 /w44826 /w44905 /w44906 /w44928 %(AdditionalOptions)</AdditionalOptions>
       <TreatWarningAsError>false</TreatWarningAsError>
+      <ExceptionHandling>Async</ExceptionHandling>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -207,6 +211,7 @@
       <DisableSpecificWarnings>4456; 4244</DisableSpecificWarnings>
       <AdditionalOptions>/w44191 /w44242  /w44263 /w44264 /w44265 /w44266 /w44302 /w44388 /w44826 /w44905 /w44906 /w44928 %(AdditionalOptions)</AdditionalOptions>
       <TreatWarningAsError>true</TreatWarningAsError>
+      <ExceptionHandling>Async</ExceptionHandling>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -226,6 +231,7 @@
       <DisableSpecificWarnings>4456; 4244</DisableSpecificWarnings>
       <AdditionalOptions>/w44191 /w44242  /w44263 /w44264 /w44265 /w44266 /w44302 /w44388 /w44826 /w44905 /w44906 /w44928 %(AdditionalOptions)</AdditionalOptions>
       <TreatWarningAsError>true</TreatWarningAsError>
+      <ExceptionHandling>Async</ExceptionHandling>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>

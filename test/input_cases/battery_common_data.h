@@ -8,10 +8,12 @@ namespace batterytest {
 	const char * SSCDIR = std::getenv("SSCDIR");
 	char load_profile_path[256];
 	char temperature_path[256];
+	char temperature_path_30min[256];
 	char gen_path[256];
 	int n1 = sprintf(gen_path, "%s/test/input_cases/battery_data/lifetime_gen.csv", batterytest::SSCDIR);
 	int n2 = sprintf(load_profile_path, "%s/test/input_cases/general_data/commercial_load.csv", batterytest::SSCDIR);
-	int n3 = sprintf(temperature_path, "%s/test/input_cases/battery_data/batt_room_temperature_celsius.csv", batterytest::SSCDIR);
+	int n3 = sprintf(temperature_path, "%s/test/input_cases/battery_data/batt_room_temperature_celsius_60min.csv", batterytest::SSCDIR);
+	int n4 = sprintf(temperature_path_30min, "%s/test/input_cases/battery_data/batt_room_temperature_celsius_30min.csv", batterytest::SSCDIR);
 }
 
 /**

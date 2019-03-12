@@ -123,7 +123,6 @@ namespace util
 
 	size_t replace( std::string &s, const std::string &old_text, const std::string &new_text);
 
-		
 	bool to_integer(const std::string &str, int *x);
 	bool to_float(const std::string &str, float *x);
 	bool to_double(const std::string &str, double *x);
