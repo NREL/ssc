@@ -32,10 +32,12 @@ public:
 	}
 	void TearDown() {
 		if (data) {
-			ssc_data_clear(data);
+			ssc_data_free(data);
+			data = nullptr;
 		}
 		if (calculated_array) {
 			delete[] calculated_array;
+			calculated_array = nullptr;
 		}
 	}
 	void SetCalculated(std::string name)

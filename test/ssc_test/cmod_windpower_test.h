@@ -27,6 +27,7 @@ protected:
 	}
 	void TearDown(){
 		ssc_data_free(data);
+		data = nullptr;
 	}
 };
 
