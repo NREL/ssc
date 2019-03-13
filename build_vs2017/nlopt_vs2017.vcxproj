@@ -54,7 +54,7 @@
     <ClInclude Include="..\nlopt\bobyqa.h" />
     <ClInclude Include="..\nlopt\cdirect.h" />
     <ClInclude Include="..\nlopt\cobyla.h" />
-    <ClInclude Include="..\nlopt\config.h" />
+    <ClInclude Include="..\nlopt\config-windows.h" />
     <ClInclude Include="..\nlopt\crs.h" />
     <ClInclude Include="..\nlopt\direct-internal.h" />
     <ClInclude Include="..\nlopt\direct.h" />
@@ -69,6 +69,7 @@
     <ClInclude Include="..\nlopt\nlopt-util.h" />
     <ClInclude Include="..\nlopt\nlopt.h" />
     <ClInclude Include="..\nlopt\nlopt.hpp" />
+    <ClInclude Include="..\nlopt\platform-config.h" />
     <ClInclude Include="..\nlopt\praxis.h" />
     <ClInclude Include="..\nlopt\redblack.h" />
     <ClInclude Include="..\nlopt\slsqp.h" />
