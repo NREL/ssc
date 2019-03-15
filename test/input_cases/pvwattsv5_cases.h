@@ -26,7 +26,7 @@ int pvwattsv5_nofinancial_testfile(ssc_data_t &data)
 
 	//set the solar resource file name, using the weather file in the input folder
 	//ifdef is so that it can run on multiple operating systems
-	char hourly[150];
+	char hourly[256];
 	int a = sprintf(hourly, "%s/test/input_cases/pvsamv1_data/USA AZ Phoenix (TMY2).csv", std::getenv("SSCDIR"));
 
 	//set the variables for the PVWatts default case

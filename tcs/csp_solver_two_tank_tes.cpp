@@ -148,15 +148,16 @@ void C_heat_exchanger::hx_performance(bool is_hot_side_mdot, bool is_storage_sid
 	//				Heat transfer between fluids [MWt], cold side mass flow rate [kg/s]
 
     if (m_dot_known < 0) {
-        //throw(C_csp_exception("HX provided a negative mass flow", ""));
         eff = T_hot_out = T_cold_out = q_trans = m_dot_solved = std::numeric_limits<double>::quiet_NaN();
+        throw(C_csp_exception("HX provided a negative mass flow", ""));
     }
     else if (m_dot_known == 0) {
         eff = 0.;
-        T_hot_out = std::numeric_limits<double>::quiet_NaN();
-        T_cold_out = std::numeric_limits<double>::quiet_NaN();
+        T_hot_out = T_hot_in;
+        T_cold_out = T_cold_in;
         q_trans = 0.;
         m_dot_solved = 0.;
+        return;
     }
 
 	double m_dot_hot, m_dot_cold, c_hot, c_cold, c_dot;
@@ -219,7 +220,7 @@ void C_heat_exchanger::hx_performance(bool is_hot_side_mdot, bool is_storage_sid
 	double NTU = UA / c_dot;
 	eff = NTU / (1.0 + NTU);
 
-	if( eff <= 0.0 || eff > 1.0 )
+	if( std::isnan(eff) || eff <= 0.0 || eff > 1.0)
 	{
         eff = T_hot_out = T_cold_out = q_trans = m_dot_solved = 
         m_T_hot_field_prev = m_T_cold_field_prev = m_T_hot_tes_prev = m_T_cold_tes_prev = 
@@ -718,10 +719,57 @@ void C_csp_two_tank_tes::discharge_full(double timestep /*s*/, double T_amb /*K*
 	// Inputs are:
 	// 1) Temperature of HTF into TES system. If no heat exchanger, this temperature
 	//	   is of the HTF directly entering the cold tank
+    
+    double q_heater_cold, q_heater_hot, q_dot_loss_cold, q_dot_loss_hot, T_cold_ave, T_hot_ave, m_dot_field, T_field_cold_in, T_field_hot_out, m_dot_tank, T_cold_tank_in;
+    q_heater_cold = q_heater_hot = q_dot_loss_cold = q_dot_loss_hot = T_cold_ave = T_hot_ave = m_dot_field = T_field_cold_in = T_field_hot_out = m_dot_tank = T_cold_tank_in = std::numeric_limits<double>::quiet_NaN();
 
-    m_dot_htf_out = m_m_dot_tes_dc_max;		//[kg/s]
+    m_dot_tank = mc_hot_tank.m_dot_available(0.0, timestep);                // [kg/s] maximum tank mass flow for this timestep duration
 
-    discharge(timestep, T_amb, m_dot_htf_out, T_htf_cold_in, T_htf_hot_out, outputs);
+    mc_hot_tank.energy_balance(timestep, 0.0, m_dot_tank, 0.0, T_amb,       // get average hot tank temperature over timestep
+        T_hot_ave, q_heater_hot, q_dot_loss_hot);
+
+    if (!ms_params.m_is_hx)
+    {
+        T_cold_tank_in = T_htf_cold_in;
+        m_dot_field = m_dot_tank;
+    }
+    else
+    {
+        T_field_cold_in = T_htf_cold_in;
+
+        double eff, q_trans;
+        eff = q_trans = std::numeric_limits<double>::quiet_NaN();
+        mc_hx.hx_discharge_mdot_tes(T_hot_ave, m_dot_tank, T_field_cold_in,
+            eff, T_cold_tank_in, T_field_hot_out, q_trans, m_dot_field);
+    }
+
+    mc_cold_tank.energy_balance(timestep, m_dot_tank, 0.0, T_cold_tank_in, T_amb,
+        T_cold_ave, q_heater_cold, q_dot_loss_cold);
+
+    outputs.m_q_heater = q_heater_hot + q_heater_cold;
+    outputs.m_m_dot = m_dot_tank;
+    if (!ms_params.m_is_hx) {
+        outputs.m_W_dot_rhtf_pump = m_dot_field * ms_params.m_htf_pump_coef / 1.E3; //[MWe] Pumping power for Receiver HTF, convert from kW/kg/s*kg/s
+        T_htf_hot_out = T_hot_ave;
+        m_dot_htf_out = m_dot_tank;
+    }
+    else {
+        outputs.m_W_dot_rhtf_pump = m_dot_field * ms_params.m_htf_pump_coef / 1.E3 +
+            m_dot_tank * ms_params.m_tes_pump_coef / 1.E3;                          //[MWe] Pumping power for Receiver HTF, convert from kW/kg/s*kg/s
+        T_htf_hot_out = T_field_hot_out;
+        m_dot_htf_out = m_dot_field;
+    }
+    outputs.m_q_dot_loss = q_dot_loss_hot + q_dot_loss_cold;
+    outputs.m_q_dot_ch_from_htf = 0.0;
+    outputs.m_T_hot_ave = T_hot_ave;
+    outputs.m_T_cold_ave = T_cold_ave;
+    outputs.m_T_hot_final = mc_hot_tank.get_m_T_calc();
+    outputs.m_T_cold_final = mc_cold_tank.get_m_T_calc();
+    
+    // Calculate thermal power to HTF
+    double T_htf_ave = 0.5*(T_htf_cold_in + T_htf_hot_out);		//[K]
+    double cp_htf_ave = mc_field_htfProps.Cp(T_htf_ave);		//[kJ/kg-K]
+    outputs.m_q_dot_dc_to_htf = m_dot_htf_out * cp_htf_ave*(T_htf_hot_out - T_htf_cold_in) / 1000.0;		//[MWt]
 }
 
 bool C_csp_two_tank_tes::discharge(double timestep /*s*/, double T_amb /*K*/, double m_dot_htf_in /*kg/s*/, double T_htf_cold_in /*K*/, double & T_htf_hot_out /*K*/, C_csp_tes::S_csp_tes_outputs &outputs)
@@ -800,19 +848,64 @@ bool C_csp_two_tank_tes::discharge(double timestep /*s*/, double T_amb /*K*/, do
         mc_hx.hx_discharge_mdot_field(T_field_cold_in, m_dot_field, T_tank_guess_2,
             eff_guess, T_hot_field_guess, T_cold_tes_guess, q_trans_guess, m_dot_tank_guess_2);
 
-        // Solve for required tank mass flow
-        double tol_solved;
-        tol_solved = std::numeric_limits<double>::quiet_NaN();
-        int iter_solved = -1;
+        // Constrain guesses to within limits
+        m_dot_tank_guess_1 = fmax(m_dot_tank_lower, fmin(m_dot_tank_guess_1, m_dot_tank_upper));
+        m_dot_tank_guess_2 = fmax(m_dot_tank_lower, fmin(m_dot_tank_guess_2, m_dot_tank_upper));
 
-        int m_dot_bal_code = 0;
-        try
-        {
-            m_dot_bal_code = c_tes_disch_solver.solve(m_dot_tank_guess_1, m_dot_tank_guess_2, -1.E-3, m_dot_tank, tol_solved, iter_solved);
+        bool m_dot_solved = false;
+        if (m_dot_tank_guess_1 == m_dot_tank_guess_2) {
+            // First try if guess solves
+            double m_dot_bal = std::numeric_limits<double>::quiet_NaN();
+            int m_dot_bal_code = c_tes_disch_solver.test_member_function(m_dot_tank_guess_1, &m_dot_bal);
+
+            if (m_dot_bal < 1.E-3) {
+                m_dot_tank = m_dot_tank_guess_1;
+                m_dot_solved = true;
+            }
+            else {
+                // Adjust guesses so they're different
+                if (m_dot_tank_guess_1 == m_dot_tank_upper) {
+                    m_dot_tank_guess_2 -= 0.01*(m_dot_tank_upper - m_dot_tank_lower);
+                }
+                else {
+                    m_dot_tank_guess_1 = fmin(m_dot_tank_upper, m_dot_tank_guess_1 + 0.01*(m_dot_tank_upper - m_dot_tank_lower));
+                }
+            }
         }
-        catch (C_csp_exception)
-        {
-            throw(C_csp_exception("Failed to find a solution for the hot tank mass flow"));
+        else if (m_dot_tank_guess_1 == 0 || m_dot_tank_guess_2 == 0) {
+            // Try a 0 guess
+            double m_dot_bal = std::numeric_limits<double>::quiet_NaN();
+            int m_dot_bal_code = c_tes_disch_solver.test_member_function(0., &m_dot_bal);
+
+            if (m_dot_bal < 1.E-3) {
+                m_dot_tank = 0.;
+                m_dot_solved = true;
+            }
+            else {
+                // Adjust 0 guess to avoid divide by 0 errors
+                m_dot_tank_guess_2 = fmax(m_dot_tank_guess_1, m_dot_tank_guess_2);
+                m_dot_tank_guess_1 = 1.e-3;
+            }
+        }
+
+        if (!m_dot_solved) {
+            // Solve for required tank mass flow
+            double tol_solved;
+            tol_solved = std::numeric_limits<double>::quiet_NaN();
+            int iter_solved = -1;
+
+            try
+            {
+                int m_dot_bal_code = c_tes_disch_solver.solve(m_dot_tank_guess_1, m_dot_tank_guess_2, -1.E-3, m_dot_tank, tol_solved, iter_solved);
+            }
+            catch (C_csp_exception)
+            {
+                throw(C_csp_exception("Failed to find a solution for the hot tank mass flow"));
+            }
+
+            if (std::isnan(m_dot_tank)) {
+                throw(C_csp_exception("Failed to converge on a valid tank mass flow."));
+            }
         }
 
         // The other needed outputs are not all saved in member variables so recalculate here
@@ -928,19 +1021,64 @@ bool C_csp_two_tank_tes::charge(double timestep /*s*/, double T_amb /*K*/, doubl
         mc_hx.hx_charge_mdot_field(T_field_hot_in, m_dot_field, T_tank_guess_2,
             eff_guess, T_cold_field_guess, T_hot_tes_guess, q_trans_guess, m_dot_tank_guess_2);
 
-        // Solve for required tank mass flow
-        double tol_solved;
-        tol_solved = std::numeric_limits<double>::quiet_NaN();
-        int iter_solved = -1;
+        // Constrain guesses to within limits
+        m_dot_tank_guess_1 = fmax(m_dot_tank_lower, fmin(m_dot_tank_guess_1, m_dot_tank_upper));
+        m_dot_tank_guess_2 = fmax(m_dot_tank_lower, fmin(m_dot_tank_guess_2, m_dot_tank_upper));
 
-        int m_dot_bal_code = 0;
-        try
-        {
-            m_dot_bal_code = c_tes_chrg_solver.solve(m_dot_tank_guess_1, m_dot_tank_guess_2, -1.E-3, m_dot_tank, tol_solved, iter_solved);
+        bool m_dot_solved = false;
+        if (m_dot_tank_guess_1 == m_dot_tank_guess_2) {
+            // First try if guess solves
+            double m_dot_bal = std::numeric_limits<double>::quiet_NaN();
+            int m_dot_bal_code = c_tes_chrg_solver.test_member_function(m_dot_tank_guess_1, &m_dot_bal);
+
+            if (m_dot_bal < 1.E-3) {
+                m_dot_tank = m_dot_tank_guess_1;
+                m_dot_solved = true;
+            }
+            else {
+                // Adjust guesses so they're different
+                if (m_dot_tank_guess_1 == m_dot_tank_upper) {
+                    m_dot_tank_guess_2 -= 0.01*(m_dot_tank_upper - m_dot_tank_lower);
+                }
+                else {
+                    m_dot_tank_guess_1 = fmin(m_dot_tank_upper, m_dot_tank_guess_1 + 0.01*(m_dot_tank_upper - m_dot_tank_lower));
+                }
+            }
         }
-        catch (C_csp_exception)
-        {
-            throw(C_csp_exception("Failed to find a solution for the cold tank mass flow"));
+        else if (m_dot_tank_guess_1 == 0 || m_dot_tank_guess_2 == 0) {
+            // Try a 0 guess
+            double m_dot_bal = std::numeric_limits<double>::quiet_NaN();
+            int m_dot_bal_code = c_tes_chrg_solver.test_member_function(0., &m_dot_bal);
+
+            if (m_dot_bal < 1.E-3) {
+                m_dot_tank = 0.;
+                m_dot_solved = true;
+            }
+            else {
+                // Adjust 0 guess to avoid divide by 0 errors
+                m_dot_tank_guess_2 = fmax(m_dot_tank_guess_1, m_dot_tank_guess_2);
+                m_dot_tank_guess_1 = 1.e-3;
+            }
+        }
+
+        if (!m_dot_solved) {
+            // Solve for required tank mass flow
+            double tol_solved;
+            tol_solved = std::numeric_limits<double>::quiet_NaN();
+            int iter_solved = -1;
+
+            try
+            {
+                int m_dot_bal_code = c_tes_chrg_solver.solve(m_dot_tank_guess_1, m_dot_tank_guess_2, -1.E-3, m_dot_tank, tol_solved, iter_solved);
+            }
+            catch (C_csp_exception)
+            {
+                throw(C_csp_exception("Failed to find a solution for the cold tank mass flow"));
+            }
+
+            if (std::isnan(m_dot_tank)) {
+                throw(C_csp_exception("Failed to converge on a valid tank mass flow."));
+            }
         }
 
         // The other needed outputs are not all saved in member variables so recalculate here
@@ -990,9 +1128,57 @@ void C_csp_two_tank_tes::charge_full(double timestep /*s*/, double T_amb /*K*/, 
 	// 1) Temperature of HTF into TES system. If no heat exchanger, this temperature
 	//	   is of the HTF directly entering the hot tank
 
-	m_dot_htf_out = m_m_dot_tes_ch_max;		//[kg/s]  ->  mass in = mass out
+    double q_heater_cold, q_heater_hot, q_dot_loss_cold, q_dot_loss_hot, T_cold_ave, T_hot_ave, m_dot_field, T_field_cold_in, T_field_hot_out, m_dot_tank, T_hot_tank_in;
+    q_heater_cold = q_heater_hot = q_dot_loss_cold = q_dot_loss_hot = T_cold_ave = T_hot_ave = m_dot_field = T_field_cold_in = T_field_hot_out = m_dot_tank = T_hot_tank_in = std::numeric_limits<double>::quiet_NaN();
 
-    charge(timestep, T_amb, m_dot_htf_out, T_htf_hot_in, T_htf_cold_out, outputs);
+    m_dot_tank = mc_cold_tank.m_dot_available(0.0, timestep);               // [kg/s] maximum tank mass flow for this timestep duration
+
+    mc_cold_tank.energy_balance(timestep, 0.0, m_dot_tank, 0.0, T_amb,      // get average hot tank temperature over timestep
+        T_cold_ave, q_heater_cold, q_dot_loss_cold);
+
+    // Get hot tank inlet temperature
+    if (!ms_params.m_is_hx)
+    {
+        T_hot_tank_in = T_htf_hot_in;
+        m_dot_field = m_dot_tank;
+    }
+    else
+    {
+        T_field_hot_out = T_htf_hot_in;
+
+        double eff, q_trans;
+        eff = q_trans = std::numeric_limits<double>::quiet_NaN();
+        mc_hx.hx_charge_mdot_tes(T_cold_ave, m_dot_tank, T_field_hot_out,
+            eff, T_hot_tank_in, T_field_cold_in, q_trans, m_dot_field);
+    }
+
+    mc_hot_tank.energy_balance(timestep, m_dot_tank, 0.0, T_hot_tank_in, T_amb,
+        T_hot_ave, q_heater_hot, q_dot_loss_hot);
+
+    outputs.m_q_heater = q_heater_hot + q_heater_cold;
+    outputs.m_m_dot = m_dot_tank;
+    if (!ms_params.m_is_hx) {
+        outputs.m_W_dot_rhtf_pump = m_dot_field * ms_params.m_htf_pump_coef / 1.E3; //[MWe] Pumping power for Receiver HTF, convert from kW/kg/s*kg/s
+        T_htf_cold_out = T_cold_ave;
+        m_dot_htf_out = m_dot_tank;
+    }
+    else {
+        outputs.m_W_dot_rhtf_pump = m_dot_field * ms_params.m_htf_pump_coef / 1.E3 +
+            m_dot_tank * ms_params.m_tes_pump_coef / 1.E3;                          //[MWe] Pumping power for Receiver HTF, convert from kW/kg/s*kg/s
+        T_htf_cold_out = T_field_cold_in;
+        m_dot_htf_out = m_dot_field;
+    }
+    outputs.m_q_dot_loss = q_dot_loss_hot + q_dot_loss_cold;
+    outputs.m_q_dot_dc_to_htf = 0.0;
+    outputs.m_T_hot_ave = T_hot_ave;
+    outputs.m_T_cold_ave = T_cold_ave;
+    outputs.m_T_hot_final = mc_hot_tank.get_m_T_calc();
+    outputs.m_T_cold_final = mc_cold_tank.get_m_T_calc();
+
+    // Calculate thermal power to HTF
+    double T_htf_ave = 0.5*(T_htf_hot_in + T_htf_cold_out);		//[K]
+    double cp_htf_ave = mc_field_htfProps.Cp(T_htf_ave);		//[kJ/kg-K]
+    outputs.m_q_dot_ch_from_htf = m_dot_htf_out * cp_htf_ave*(T_htf_hot_in - T_htf_cold_out) / 1000.0;		//[MWt]
 }
 
 void C_csp_two_tank_tes::idle(double timestep, double T_amb, C_csp_tes::S_csp_tes_outputs &outputs)
@@ -1071,7 +1257,12 @@ int C_csp_two_tank_tes::C_MEQ_indirect_tes_discharge::operator()(double m_dot_ta
     mpc_csp_two_tank_tes->mc_hx.hx_discharge_mdot_field(m_T_cold_field, m_m_dot_field, T_hot_ave,
         eff, T_hot_field, T_cold_tes, q_trans, m_dot_tank_solved);
 
-    *m_dot_bal = (m_dot_tank_solved - m_dot_tank) / m_dot_tank;			//[-]
+    if (m_dot_tank != 0.) {
+        *m_dot_bal = (m_dot_tank_solved - m_dot_tank) / m_dot_tank;			//[-]
+    }
+    else {
+        *m_dot_bal = m_dot_tank_solved - m_dot_tank;            			//[kg/s]  return absolute difference if 0
+    }
 
     return 0;
 }
@@ -1089,7 +1280,12 @@ int C_csp_two_tank_tes::C_MEQ_indirect_tes_charge::operator()(double m_dot_tank 
     mpc_csp_two_tank_tes->mc_hx.hx_charge_mdot_field(m_T_hot_field, m_m_dot_field, T_cold_ave,
         eff, T_cold_field, T_hot_tes, q_trans, m_dot_tank_solved);
 
-    *m_dot_bal = (m_dot_tank_solved - m_dot_tank) / m_dot_tank;			//[-]
+    if (m_dot_tank != 0.) {
+        *m_dot_bal = (m_dot_tank_solved - m_dot_tank) / m_dot_tank;			//[-]
+    }
+    else {
+        *m_dot_bal = m_dot_tank_solved - m_dot_tank;            			//[kg/s]  return absolute difference if 0
+    }
 
     return 0;
 }

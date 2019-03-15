@@ -42,7 +42,7 @@ public:
 		double degradation_kWperHour, double degradationRestart_kW, 
 		size_t replacement_option, double replacement_percent, std::vector<size_t> replacementSchedule,
 		util::matrix_t<size_t> shutdownTable,
-		util::matrix_t<double> efficiencyTable,
+		size_t efficiencyChoice, util::matrix_t<double> efficiencyTable,
 		double lowerHeatingValue_BtuPerFt3, double higherHeatingValue_BtuPerFt3, double availableFuel_MCf,
 		int shutdownOption,  double dt_hour);
 
@@ -55,6 +55,9 @@ public:
 	/// Run for single time step
 	void runSingleTimeStep(double power_kW);
 
+	/// Initialize hour zero
+	void initializeHourZeroPower(double power_kW);
+
 	/// Return true if starting up but not fully running
 	bool isStarting();
 
@@ -66,6 +69,9 @@ public:
 
 	/// Return true if totally shut down
 	bool isShutDown();
+
+	/// Return false if hour zero needs initial power from dispatch
+	bool isInitialized();
 
 	/// Get original max power kW
 	double getMaxPowerOriginal();
@@ -142,6 +148,7 @@ protected:
 
 	enum FC_EFFICIENCY_COLUMN { PERCENT_MAX, PRECENT_ELECTRICAL_EFFICIENCY, PERCENT_HEAT_RECOVERY };
 	enum FC_SHUTDOWN_COLUMN {HOUR, DURATION};
+	enum FC_EFFICIENCY_CHOICE { ORIGINAL_NAMEPLATE, DEGRADED_MAX};
 
 	/// Calculate time
 	void calculateTime();
@@ -190,6 +197,8 @@ protected:
 	size_t m_replacementOption;
 	double m_replacement_percent;
 	std::vector<size_t> m_replacementSchedule;
+
+	size_t m_efficiencyChoice;
 	util::matrix_t<double> m_efficiencyTable;
 	double m_lowerHeatingValue_BtuPerFt3;
 	double m_higherHeatingValue_BtuPerFt3;
@@ -197,6 +206,8 @@ protected:
 	int m_shutdownOption;
 
 	// calculated
+	bool m_initialized;
+
 	bool m_startingUp;
 	bool m_startedUp;
 

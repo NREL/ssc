@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 
 #include "cmod_tcsmolten_salt_test.h"
-#include "../input_cases/tcsmolten_salt_cases.h"
+#include "../tcs_test/tcsmolten_salt_cases.h"
 #include "../input_cases/weather_inputs.h"
 
 /// Test tcsmolten_salt with all defaults and the single owner financial model
@@ -15,7 +15,7 @@ TEST_F(CMTcsMoltenSalt, DefaultSingleOwnerFinancialModel) {
     {
         ssc_number_t annual_energy;
         ssc_data_get_number(data, "annual_energy", &annual_energy);
-        EXPECT_NEAR(annual_energy, 5.77916e8, 5.77916e8 * m_error_tolerance_lo) << "Annual Energy";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
+        EXPECT_NEAR(annual_energy, 5.77912e8, 5.77912e8 * m_error_tolerance_lo) << "Annual Energy";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
 
         ssc_number_t land_area_base;
         ssc_data_get_number(data, "land_area_base", &land_area_base);
@@ -23,19 +23,19 @@ TEST_F(CMTcsMoltenSalt, DefaultSingleOwnerFinancialModel) {
 
         ssc_number_t capacity_factor;
         ssc_data_get_number(data, "capacity_factor", &capacity_factor);
-        EXPECT_NEAR(capacity_factor, 63.7413, 63.7413 * m_error_tolerance_lo) << "Capacity Factor";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
+        EXPECT_NEAR(capacity_factor, 63.7408, 63.7408 * m_error_tolerance_lo) << "Capacity Factor";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
 
         ssc_number_t annual_W_cycle_gross;
         ssc_data_get_number(data, "annual_W_cycle_gross", &annual_W_cycle_gross);
-        EXPECT_NEAR(annual_W_cycle_gross, 6.46098e8, 6.46098e8 * m_error_tolerance_lo) << "Annual W_cycle Gross";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
+        EXPECT_NEAR(annual_W_cycle_gross, 6.46093e8, 6.46093e8 * m_error_tolerance_lo) << "Annual W_cycle Gross";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
 
         ssc_number_t kwh_per_kw;
         ssc_data_get_number(data, "kwh_per_kw", &kwh_per_kw);
-        EXPECT_NEAR(kwh_per_kw, 5583.73, 5583.73 * m_error_tolerance_lo) << "kwh per kw";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
+        EXPECT_NEAR(kwh_per_kw, 5583.69, 5583.69 * m_error_tolerance_lo) << "kwh per kw";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
 
         ssc_number_t conversion_factor;
         ssc_data_get_number(data, "conversion_factor", &conversion_factor);
-        EXPECT_NEAR(conversion_factor, 89.4472, 89.4472 * m_error_tolerance_lo) << "Conversion Factor";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
+        EXPECT_NEAR(conversion_factor, 89.4393, 89.4393 * m_error_tolerance_lo) << "Conversion Factor";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
 
         ssc_number_t N_hel;
         ssc_data_get_number(data, "N_hel", &N_hel);
@@ -55,7 +55,7 @@ TEST_F(CMTcsMoltenSalt, DefaultSingleOwnerFinancialModel) {
 
         ssc_number_t annual_total_water_use;
         ssc_data_get_number(data, "annual_total_water_use", &annual_total_water_use);
-        EXPECT_NEAR(annual_total_water_use, 97591.1, 97591.1 * m_error_tolerance_lo) << "Annual Total Water Use";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
+        EXPECT_NEAR(annual_total_water_use, 97497.3, 97497.3 * m_error_tolerance_lo) << "Annual Total Water Use";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
 
         ssc_number_t csp_pt_cost_total_land_area;
         ssc_data_get_number(data, "csp.pt.cost.total_land_area", &csp_pt_cost_total_land_area);
