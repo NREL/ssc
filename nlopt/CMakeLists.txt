@@ -11,9 +11,12 @@ endif()
 Project(nlopt)
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}")
 
+#execute_process(COMMAND "../nlopt/configure -q"
+#	COMMAND	"mv config.h ../nlopt")
+
 configure_file (
   config.h.in
-  config.h COPYONLY
+  config.h
  )
 
 include_directories(.)

@@ -39,6 +39,7 @@ set(SHARED_SRC
 	lib_sandia.cpp
 	lib_shared_inverter.cpp
 	lib_snowmodel.cpp
+	lib_time.cpp
 	lib_util.cpp
 	lib_utility_rate.cpp
 	lib_weatherfile.cpp
