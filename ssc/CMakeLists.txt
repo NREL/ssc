@@ -32,6 +32,7 @@ set(SSC_SRC
 	cmod_annualoutput.cpp
 	cmod_fuelcell.cpp
 	cmod_generic_system.cpp
+	cmod_generic_system-builder.cpp
 	cmod_wfcheck.cpp
 	cmod_pvwattsv5.cpp
 	cmod_pvwattsv5_lifetime.cpp
