@@ -10,7 +10,7 @@
 // @param[in,out] *cxt: a invoke_t* that for storing the results
 // @returns single value or var_table
 //
-float GenericSystem_conv_eff_eval(var_table* vt);
+float GenericSystem_conv_eff_eval(ssc_data_t vt);
 
 
 #endif

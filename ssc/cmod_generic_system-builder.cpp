@@ -5,8 +5,9 @@
 
 #include "cmod_generic_system-builder.h"
 
-float GenericSystem_conv_eff_eval(var_table* vt)
+float GenericSystem_conv_eff_eval(ssc_data_t ptr)
 {
+	auto vt = static_cast<var_table*>(ptr);
 	// inputs
 	float heat_rate = vt->lookup("heat_rate")->num;
 
