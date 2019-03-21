@@ -6,9 +6,9 @@
 
 namespace fuelcelltest {
 	const char * SSCDIR = std::getenv("SSCDIR");
-	char load_profile_path[100];
-	char ac_watt_output_path[100];
-	char ac_watt_lifetime_output_path[100];
+	char load_profile_path[256];
+	char ac_watt_output_path[256];
+	char ac_watt_lifetime_output_path[256];
 	int n1 = sprintf(ac_watt_output_path, "%s/test/input_cases/general_data/ac.csv", fuelcelltest::SSCDIR);
 	int n2 = sprintf(load_profile_path, "%s/test/input_cases/general_data/commercial_load.csv", fuelcelltest::SSCDIR);
 	int n3 = sprintf(ac_watt_lifetime_output_path, "%s/test/input_cases/general_data/ac_lifetime.csv", fuelcelltest::SSCDIR);
@@ -29,6 +29,7 @@ void fuelcell_nofinancial_default(ssc_data_t &data)
 	ssc_data_set_number(data, "fuelcell_fixed_pct", 50);
 	ssc_data_set_number(data, "fuelcell_dynamic_response_up", 20);
 	ssc_data_set_number(data, "fuelcell_dynamic_response_down", 20);
+	ssc_data_set_number(data, "fuelcell_efficiency_choice", 0);
 	ssc_number_t p_fuelcell_efficiency[33] = { 0, 0, 50, 16, 21, 50, 25, 25, 50, 34, 32, 50, 44, 37, 50, 53, 42, 50, 62, 47, 49, 72, 50, 48, 82, 52, 47, 90, 52, 46, 100, 51, 45 };
 	ssc_data_set_matrix(data, "fuelcell_efficiency", p_fuelcell_efficiency, 11, 3);
 	ssc_number_t p_fuelcell_shutdown[2] = { 0, 0};

@@ -417,11 +417,13 @@ public:
 	{
 		double m_latitude;		//[deg]
 		double m_longitude;		//[deg]
+        double m_tz;            //[hr]
 		double m_shift;			//[deg]
+        double m_elev;          //[m]
 
 		S_csp_cr_init_inputs()
 		{
-			m_latitude = m_longitude = m_shift = std::numeric_limits<double>::quiet_NaN();	
+			m_latitude = m_longitude = m_shift = m_tz = m_elev = std::numeric_limits<double>::quiet_NaN();
 		}
 	};
 	

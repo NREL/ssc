@@ -146,7 +146,7 @@ public:
 		int standoff = as_integer("standoff");
 		tc.standoff_tnoct_adj = 0;
 		switch(standoff)
-		{
+		{ //source for standoff adjustment constants: https://prod-ng.sandia.gov/techlib-noauth/access-control.cgi/1985/850330.pdf page 12
 		case 2: tc.standoff_tnoct_adj = 2; break; // between 2.5 and 3.5 inches
 		case 3: tc.standoff_tnoct_adj = 6; break; // between 1.5 and 2.5 inches
 		case 4: tc.standoff_tnoct_adj = 11; break; // between 0.5 and 1.5 inches

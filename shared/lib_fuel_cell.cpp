@@ -10,7 +10,7 @@ FuelCell::FuelCell(double unitPowerMax_kW, double unitPowerMin_kW, double startu
 	double degradation_kWperHour, double degradationRestart_kW,
 	size_t replacementOption, double replacement_percent, std::vector<size_t> replacementSchedule,
 	util::matrix_t<size_t> shutdownTable,
-	util::matrix_t<double> efficiencyTable,
+	size_t efficiencyChoice, util::matrix_t<double> efficiencyTable,
 	double lowerHeatingValue_BtuPerFt3, double higherHeatingValue_BtuPerFt3, double availableFuel_Mcf,
 	int shutdownOption, double dt_hour) :
 	dt_hour(dt_hour),
@@ -26,6 +26,7 @@ FuelCell::FuelCell(double unitPowerMax_kW, double unitPowerMin_kW, double startu
 	m_replacementOption(replacementOption), 
 	m_replacement_percent(replacement_percent * 0.01), 
 	m_replacementSchedule(replacementSchedule),
+	m_efficiencyChoice(efficiencyChoice),
 	m_efficiencyTable(efficiencyTable), 
 	m_lowerHeatingValue_BtuPerFt3(lowerHeatingValue_BtuPerFt3),
 	m_higherHeatingValue_BtuPerFt3(higherHeatingValue_BtuPerFt3),
@@ -104,11 +105,19 @@ void FuelCell::init() {
 	m_replacementCount = 0;
 	m_hour = 0;
 	m_year = 0;
+	m_initialized = true;
 
 	// In event of 0 startup hours, assume fuel cell is running at idle
 	if (m_startup_hours == 0) {
-		m_power_kW = m_unitPowerMin_kW;
+		m_initialized = false;
 	}
+}
+void FuelCell::initializeHourZeroPower(double power_kW) {
+	m_power_kW = power_kW;
+}
+
+bool FuelCell::isInitialized() {
+	return m_initialized;
 }
 
 bool FuelCell::isStarting() {
@@ -175,7 +184,11 @@ void FuelCell::calculateEfficiencyCurve(double fraction) {
 }
 
 double FuelCell::getPercentLoad() {
-	m_powerLoad_percent = 100 * m_power_kW / (m_unitPowerMax_kW);
+	double power_max = m_unitPowerMax_kW;
+	if (m_efficiencyChoice == DEGRADED_MAX) {
+		power_max = m_powerMax_kW;
+	}
+	m_powerLoad_percent = 100 * m_power_kW / power_max;
 	return m_powerLoad_percent;
 }
 double FuelCell::getLoadFraction() {

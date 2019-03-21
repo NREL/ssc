@@ -636,7 +636,7 @@ dispatch_automatic_t::dispatch_automatic_t(
 	_dt_hour_update = dispatch_update_frequency_hours;
 	_d_index_update = size_t(std::ceil(_dt_hour_update / _dt_hour));
 
-	_hour_last_updated = (size_t)1e10;
+	_hour_last_updated = SIZE_MAX;
 	_index_last_updated = 0;
 
 	_look_ahead_hours = look_ahead_hours;
@@ -1184,8 +1184,29 @@ void dispatch_automatic_behind_the_meter_t::target_power(FILE*p, bool debug, dou
 
 void dispatch_automatic_behind_the_meter_t::set_battery_power(FILE *p, bool debug)
 {
-	for (size_t i = 0; i != _P_target_use.size(); i++)
+	for (size_t i = 0; i != _P_target_use.size(); i++) {
 		_P_battery_use[i] = grid[i].Grid() - _P_target_use[i];
+
+		// At this point the target power is expressed in AC, must convert to DC for battery
+		if (m_batteryPower->connectionMode == m_batteryPower->AC_CONNECTED) {
+			if (_P_battery_use[i] > 0) {
+				_P_battery_use[i] /= m_batteryPower->singlePointEfficiencyDCToAC;
+			}
+			else {
+				_P_battery_use[i] *= m_batteryPower->singlePointEfficiencyACToDC;
+			}
+		}
+		// DC-connected is harder to convert to AC, must make assumptions about inverter efficiency and charge shource
+		else {
+			if (_P_battery_use[i] > 0) {
+				_P_battery_use[i] /= (m_batteryPower->singlePointEfficiencyDCToDC * m_batteryPower->singlePointEfficiencyACToDC);
+			}
+			// Assuming just charging from PV not grid
+			else {
+				_P_battery_use[i] *= m_batteryPower->singlePointEfficiencyDCToDC;
+			}
+		}
+	}
 
 	if (debug)
 	{

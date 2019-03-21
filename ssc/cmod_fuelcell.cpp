@@ -76,6 +76,7 @@ var_info vtab_fuelcell_input[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "fuelcell_dynamic_response_up",      "Fuel cell ramp rate limit up",          "kW/h",       "",                 "Fuel Cell",                  "",                        "",                              "" },		
 	{ SSC_INPUT,        SSC_NUMBER,      "fuelcell_dynamic_response_down",    "Fuel cell ramp rate limit down",        "kW/h",       "",                 "Fuel Cell",                  "",                        "",                              "" },
 	{ SSC_INPUT,        SSC_MATRIX,      "fuelcell_efficiency",               "Fuel cell efficiency table ",           "",           "",                 "Fuel Cell",                  "",                        "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "fuelcell_efficiency_choice",        "Fuel cell efficiency definition choice ","0/1",       "0=OriginalNameplate,1=DegradedNameplate",  "Fuel Cell",                  "",                        "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "fuelcell_fuel_available",           "Fuel cell available fuel quantity",     "MCf",        "",                 "Fuel Cell",                  "",                        "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "fuelcell_fuel_price",				  "Fuel cell price",                       "$/MCf",      "",                 "Fuel Cell",                  "",                        "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "fuelcell_fuel_type",				  "Fuel cell type",                        "0/1",        "",                 "Fuel Cell",                  "",                        "",                              "" },
@@ -143,7 +144,7 @@ void cm_fuelcell::construct()
 		fcVars->dynamicResponseUp_kWperHour, fcVars->dynamicResponseDown_kWperHour, 
 		fcVars->degradation_kWperHour, fcVars->degradationRestart_kW, 
 		fcVars->replacementOption, fcVars->replacement_percent, fcVars->replacementSchedule,
-		fcVars->shutdownTable, fcVars->efficiencyTable,
+		fcVars->shutdownTable, fcVars->efficiencyChoice, fcVars->efficiencyTable,
 		fcVars->lowerHeatingValue_BtuPerFt3, fcVars->higherHeatingValue_BtuPerFt3, fcVars->availableFuel_MCf,
 		fcVars->shutdownOption, fcVars->dt_hour));
 	fuelCell = std::move(tmp2);

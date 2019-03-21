@@ -66,14 +66,14 @@ double FrictionFactor_FlexHose(double Re, double D);
 
 struct IntcOutputs
 {
-    double heat_loss;
-    double temp_drop;
-    double temp_out;
-    double temp_ave;
-    double pressure_drop;
-    double pressure_out;
-    double pressure_ave;
-    double internal_energy;
+    double heat_loss;               // [W]
+    double temp_drop;               // [K]
+    double temp_out;                // [K]
+    double temp_ave;                // [K]
+    double pressure_drop;           // [Pa]
+    double pressure_out;            // [Pa]
+    double pressure_ave;            // [Pa]
+    double internal_energy;         // [J]
 
     IntcOutputs();
 };

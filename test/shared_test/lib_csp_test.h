@@ -8,6 +8,8 @@ class StorageTankTest : public ::testing::Test
 {
 protected:
     Storage_HX *m_storage;
+
+    // inputs
     bool m_is_hot_tank;
     double m_dt;
     double m_m_prev;
@@ -16,6 +18,8 @@ protected:
     double m_m_dot_out;
     double m_T_in;
     double m_T_amb;
+
+    //outputs
     double m_T_ave;
     double m_vol_ave;
     double m_q_loss;
@@ -24,7 +28,7 @@ protected:
     double m_m_fin;
     double m_q_heater;
 
-    // for storage initialization
+    // parameters for initialization
     int m_field_fluid;
     int m_store_fluid;
     HTFProperties m_fluid_field;
@@ -46,8 +50,8 @@ protected:
     double m_T_h_out_des;
 
 public:
-    double m_error_tolerance_lo = 0.1;
-    double m_error_tolerance_hi = 1.0;
+    double m_error_tolerance_lo = 0.001;    // 0.1%
+    double m_error_tolerance_hi = 0.01;     // 1.0%
 
     void SetUp();
 

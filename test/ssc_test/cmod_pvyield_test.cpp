@@ -14,7 +14,7 @@ TEST_F(CMPvYieldTimo, DefaultTimoModel)
 
 	int pvsam_errors = pvyield_test(data);
 	EXPECT_FALSE(pvsam_errors);
-	printf("ssc version %d build information %s", ssc_version(), ssc_build_info());
+	//printf("ssc version %d build information %s", ssc_version(), ssc_build_info());
 
 	if (!pvsam_errors)
 	{
@@ -44,7 +44,7 @@ TEST_F(CMPvYieldTimo, TimoModel80603_meteo)
 
 	int pvsam_errors = pvyield_test_user_support_80603_meteo(data);
 	EXPECT_FALSE(pvsam_errors);
-	printf("ssc version %d build information %s", ssc_version(), ssc_build_info());
+	//printf("ssc version %d build information %s", ssc_version(), ssc_build_info());
 
 	if (!pvsam_errors)
 	{
@@ -74,7 +74,7 @@ TEST_F(CMPvYieldTimo, TimoModel80603_AZ)
 
 	int pvsam_errors = pvyield_test_user_support_80603_AZ(data);
 	EXPECT_FALSE(pvsam_errors);
-	printf("ssc version %d build information %s", ssc_version(), ssc_build_info());
+	//printf("ssc version %d build information %s", ssc_version(), ssc_build_info());
 
 	if (!pvsam_errors)
 	{
@@ -127,10 +127,10 @@ TEST_F(CMPvYieldTimo, NoFinancialModelSystemDesign)
 			ssc_data_get_number(data, "annual_energy", &annual_energy);
 			EXPECT_NEAR(annual_energy, annual_energy_expected[tracking_option], m_error_tolerance_hi) << "Annual energy.";
 			i = tracking_option;
-			cout << "-----------------------------------------------------" << endl;
-			cout << i << " of " << annual_energy_expected.size() << " track mode Computed annual energy : " << annual_energy << endl;
-			cout << i << " of " << annual_energy_expected.size() << " track mode Expected annual energy : " << annual_energy_expected[i] << endl;
-			cout << "-----------------------------------------------------" << endl;
+			//cout << "-----------------------------------------------------" << endl;
+			//cout << i << " of " << annual_energy_expected.size() << " track mode Computed annual energy : " << annual_energy << endl;
+			//cout << i << " of " << annual_energy_expected.size() << " track mode Expected annual energy : " << annual_energy_expected[i] << endl;
+			//cout << "-----------------------------------------------------" << endl;
 
 
 		}
@@ -147,10 +147,10 @@ TEST_F(CMPvYieldTimo, NoFinancialModelSystemDesign)
 		ssc_number_t annual_energy;
 		ssc_data_get_number(data, "annual_energy", &annual_energy);
 		EXPECT_NEAR(annual_energy, 237340, m_error_tolerance_hi) << "Annual energy.";
-		cout << "-----------------------------------------------------" << endl;
-		cout << "Fixed tilt backtracking Computed annual energy : " << annual_energy << endl;
-		cout << "Fixed tilt backtracking  Expected annual energy : " << 237340 << endl;
-		cout << "-----------------------------------------------------" << endl;
+		//cout << "-----------------------------------------------------" << endl;
+		//cout << "Fixed tilt backtracking Computed annual energy : " << annual_energy << endl;
+		//cout << "Fixed tilt backtracking  Expected annual energy : " << 237340 << endl;
+		//cout << "-----------------------------------------------------" << endl;
 
 	}
 
@@ -219,10 +219,10 @@ TEST_F(CMPvYieldTimo, NoFinancialModelSystemDesign)
 			ssc_data_get_number(data, "annual_energy", &annual_energy);
 			EXPECT_NEAR(annual_energy, annual_energy_expected[i], m_error_tolerance_hi) << "Index: " << i;
 			
-	cout << "-----------------------------------------------------" << endl;
-	cout << i << " of " << annual_energy_expected.size() << " Computed annual energy : " << annual_energy << endl;
-	cout << i << " of " << annual_energy_expected.size() << " Expected annual energy : " << annual_energy_expected[i] << endl;
-	cout << "-----------------------------------------------------" << endl;
+	//cout << "-----------------------------------------------------" << endl;
+	//cout << i << " of " << annual_energy_expected.size() << " Computed annual energy : " << annual_energy << endl;
+	//cout << i << " of " << annual_energy_expected.size() << " Expected annual energy : " << annual_energy_expected[i] << endl;
+	//cout << "-----------------------------------------------------" << endl;
 
 		}
 	}
