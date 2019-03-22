@@ -5,10 +5,17 @@
 
 #include "cmod_generic_system-builder.h"
 
-float GenericSystem_conv_eff_eval(var_table* vt)
+SSCEXPORT float GenericSystem_conv_eff_eval(ssc_data_t ptr)
 {
+	auto vt = static_cast<var_table*>(ptr);
+
+	auto vd = vt->lookup("heat_rate");
+
+	if (!vd)
+	    throw std::runtime_error("Could not calculate conv_eff for GenericSystem: heat_rate not set");
+
 	// inputs
-	float heat_rate = vt->lookup("heat_rate")->num;
+	float heat_rate = vd->num;
 
 	// outputs
 	float conv_eff;
