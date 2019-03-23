@@ -486,10 +486,24 @@ void PVSystem_IO::SetupPOAInput()
 					double t_sunrise = sun[4];
 					double t_sunset = sun[5];
 
-					if (t_cur >= t_sunrise - ts_hour / 2.0
-						&& t_cur < t_sunrise + ts_hour / 2.0)
+					if (t_sunset > 24) //sunset is legitimately the next day, so recalculate sunset from the previous day
 					{
-						// time step encompasses the sunrise
+						double sunanglestemp[9];
+						solarpos(wf.year, wf.month, wf.day - 1, 12, 0.0, hdr.lat, hdr.lon, hdr.tz, sunanglestemp);
+						t_sunset = sunanglestemp[5] - 24.0;
+					}
+
+					if (t_sunrise < 0) //sunrise is legitimately the previous day, so recalculate for next day
+					{
+						double sunanglestemp[9];
+						solarpos(wf.year, wf.month, wf.day + 1, 12, 0.0, hdr.lat, hdr.lon, hdr.tz, sunanglestemp);
+						t_sunset = sunanglestemp[5] + 24.0;
+
+					}
+
+					// time step encompasses the sunrise
+					if (t_cur >= t_sunrise - ts_hour / 2.0 && t_cur < t_sunrise + ts_hour / 2.0)
+					{
 						double t_calc = (t_sunrise + (t_cur + ts_hour / 2.0)) / 2.0; // midpoint of sunrise and end of timestep
 						int hr_calc = (int)t_calc;
 						double min_calc = (t_calc - hr_calc)*60.0;
@@ -501,10 +515,9 @@ void PVSystem_IO::SetupPOAInput()
 
 						tms[2] = 2;
 					}
-					else if (t_cur > t_sunset - ts_hour / 2.0
-						&& t_cur <= t_sunset + ts_hour / 2.0)
+					// timestep encompasses the sunset
+					else if (t_cur > t_sunset - ts_hour / 2.0 && t_cur <= t_sunset + ts_hour / 2.0)
 					{
-						// timestep encompasses the sunset
 						double t_calc = ((t_cur - ts_hour / 2.0) + t_sunset) / 2.0; // midpoint of beginning of timestep and sunset
 						int hr_calc = (int)t_calc;
 						double min_calc = (t_calc - hr_calc)*60.0;
@@ -516,7 +529,10 @@ void PVSystem_IO::SetupPOAInput()
 
 						tms[2] = 3;
 					}
-					else if (t_cur >= t_sunrise && t_cur <= t_sunset)
+
+					// timestep is not sunrise nor sunset, but sun is up  (calculate position at provided t_cur)
+					else if ((t_sunrise < t_sunset && t_cur >= t_sunrise && t_cur <= t_sunset) || //this captures normal daylight cases
+						(t_sunrise > t_sunset && (t_cur <= t_sunset || t_cur >= t_sunrise))) //this captures cases where sunset (from previous day) is 1:30AM, sunrise 2:30AM, in arctic circle
 					{
 						// timestep is not sunrise nor sunset, but sun is up  (calculate position at provided t_cur)
 						tms[0] = wf.hour;
@@ -527,11 +543,9 @@ void PVSystem_IO::SetupPOAInput()
 					else
 					{
 						// sun is down, assign sundown values
-						sun[0] = -999; //avoid returning a junk azimuth angle
-						sun[1] = -999; //avoid returning a junk zenith angle
-						sun[2] = -999; //avoid returning a junk elevation angle
-						tms[0] = -1;
-						tms[1] = -1;
+						solarpos(wf.year, wf.month, wf.day, wf.hour, wf.minute, hdr.lat, hdr.lon, hdr.tz, sun);
+						tms[0] = wf.hour;
+						tms[1] = (int)wf.minute;
 						tms[2] = 0;
 					}
 
