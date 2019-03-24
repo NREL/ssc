@@ -1,7 +1,5 @@
 set(CMAKE_VERBOSE_MAKEFILE ON)
 
-cmake_minimum_required(VERSION 3.13)
-
 set(CMAKE_OSX_DEPLOYMENT_TARGET "10.9" CACHE STRING "Minimum OS X deployment version")
 
 if(MSVC)
@@ -86,7 +84,7 @@ else(MSVC)
 		add_compile_options(-arch x86_64 -fno-common)
 		add_compile_definitions(WX_PRECOMP)
 	else()
-		add_compile_definitions(__64BIT__)
+		add_definitions(-D__64BIT__)
 	endif()
-	add_compile_options(-Wall -Wno-deprecated-declarations -O3 -std=c++11)
+	SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wno-deprecated-declarations -O3 -std=c++11")
 endif(MSVC)

@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.12)
+cmake_minimum_required(VERSION 2.8)
 
 set(CMAKE_OSX_DEPLOYMENT_TARGET "10.9" CACHE STRING "Minimum OS X deployment version")
 if (UNIX AND NOT CMAKE_C_COMPILER)
@@ -21,6 +21,9 @@ add_subdirectory(lpsolve)
 add_subdirectory(solarpilot)
 add_subdirectory(tcs)
 add_subdirectory(ssc)
-add_subdirectory(sdktool)
-add_subdirectory(tcsconsole)
-add_subdirectory(test)
+
+if (NOT system_advisor_model_EXPORT)
+	add_subdirectory(sdktool)
+	add_subdirectory(tcsconsole)
+	add_subdirectory(test)
+endif()

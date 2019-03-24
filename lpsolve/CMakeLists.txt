@@ -1,7 +1,5 @@
 set(CMAKE_VERBOSE_MAKEFILE ON)
 
-cmake_minimum_required(VERSION 3.13)
-
 set(CMAKE_OSX_DEPLOYMENT_TARGET "10.9" CACHE STRING "Minimum OS X deployment version")
 
 if(MSVC)
@@ -69,8 +67,9 @@ else()
 	if (APPLE)
 		add_compile_options(-arch x86_64 -fno-common)
 	else()
-		add_compile_definitions(__64BIT__)
+		add_definitions(-D__64BIT__)
 	endif()
-	add_compile_options(-Wall -O3 -std=c++11)
-	add_compile_definitions(WX_PRECOMP CHECK_SOLUTION YY_NEVER_INTERACTIVE PARSER_LP INVERSE_ACTIVE=INVERSE_LUSOL RoleIsExternalInvEngine)
+	SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -std=c++11" )
+	SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall WX_PRECOMP CHECK_SOLUTION YY_NEVER_INTERACTIVE PARSER_LP
+		INVERSE_ACTIVE=INVERSE_LUSOL RoleIsExternalInvEngine")
 endif()

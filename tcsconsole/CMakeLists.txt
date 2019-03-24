@@ -1,6 +1,6 @@
 set(CMAKE_VERBOSE_MAKEFILE ON)
 
-cmake_minimum_required(VERSION 3.13)
+cmake_minimum_required(VERSION 2.8)
 
 set(CMAKE_OSX_DEPLOYMENT_TARGET "10.9" CACHE STRING "Minimum OS X deployment version")
 
@@ -124,10 +124,10 @@ else(MSVC)
 		add_compile_options(-arch x86_64)
 		add_compile_definitions(__WXOSX__)
 	else()
-		add_compile_definitions(__64BIT__)
+		add_definitions(-D__64BIT__)
 	endif()
 	add_compile_options(-Wall -Wno-unknown-pragmas -Werror -O3 -fno-common -std=c++11)
-	add_compile_definitions(LK_USE_WXWIDGETS WX_PRECOMP )
+	add_definitions(-DLK_USE_WXWIDGETS -DWX_PRECOMP )
 endif(MSVC)
 
 
