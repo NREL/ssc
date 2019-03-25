@@ -53,16 +53,24 @@
 
 static var_info _cm_vtab_mhk_tidal[] = {
 	//   VARTYPE			DATATYPE			NAME									LABEL														UNITS           META            GROUP              REQUIRED_IF					CONSTRAINTS			UI_HINTS	
-	{ SSC_INPUT,			SSC_MATRIX,			"mhk_resource_definition",              "Power curve and frequency distribution",					"",				"",             "MHKPower",			"",							"",                  "" },	
+	{ SSC_INPUT,			SSC_MATRIX,			"mhk_resource_definition",              "Power curve and frequency distribution",					"",				"",             "MHKTidal",			"",							"",                  "" },	
 	
-	{ SSC_OUTPUT,			SSC_NUMBER,			"average_power",						"Average power production",									"",				"",				"MHKPower",			"*",						"",					"" },
-	{ SSC_OUTPUT,			SSC_NUMBER,			"annual_energy",						"Annual energy production",									"",				"",				"MHKPower",			"*",						"",					"" },
-	{ SSC_OUTPUT,			SSC_ARRAY,			"annual_energy_distribution",			"Annual energy production as function of speed",			"",				"",				"MHKPower",			"*",						"",					"" },
+	{ SSC_OUTPUT,			SSC_NUMBER,			"average_power",						"Average power production",									"",				"",				"MHKTidal",			"*",						"",					"" },
+	{ SSC_OUTPUT,			SSC_NUMBER,			"annual_energy",						"Annual energy production",									"",				"",				"MHKTidal",			"*",						"",					"" },
+	{ SSC_OUTPUT,			SSC_ARRAY,			"annual_energy_distribution",			"Annual energy production as function of speed",			"",				"",				"MHKTidal",			"*",						"",					"" },
 };
+
+/*
+struct tidal_resource
+{
+	util::matrix_t<double>  mhk_resource_matrix = as_matrix("") ;
+};
+*/
 
 class cm_mhk_tidal : public compute_module
 {
 private:
+	util::matrix_t<double>  mhk_resource_matrix;
 	int temp = 18000; //Placeholder for now.
 public: 
 	cm_mhk_tidal() {
