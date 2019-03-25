@@ -1,8 +1,7 @@
 set(CMAKE_VERBOSE_MAKEFILE ON)
 
-cmake_minimum_required(VERSION 3.13)
 
-set(CMAKE_OSX_DEPLOYMENT_TARGET "10.9" CACHE STRING "Minimum OS X deployment version")
+set(CMAKE_OSX_DEPLOYMENT_TARGET "10.7" CACHE STRING "Minimum OS X deployment version")
 
 if(MSVC)
 	set(CMAKE_CONFIGURATION_TYPES "Debug;Release" CACHE STRING "Debug and Release Builds Configured" FORCE)
@@ -132,6 +131,7 @@ else()
 	set_property(TARGET ssc PROPERTY PREFIX "")
 endif()
 
+
 # setup linking dependencies and flags
 foreach( name ${DEPENDENCIES} )
 	# force redefinition of library paths in case build type changes (wait a second..)
@@ -152,13 +152,12 @@ if(MSVC)
 else(MSVC)
 	if (APPLE)
 		add_compile_options(-arch x86_64 -fno-common)
-		add_compile_definitions(__MACOSX__ WX_PRECOMP)
+		add_compile_definitions(__MACOSX__ WX_PRECOMP __64BIT__)
 	else ()
-		add_compile_definitions(__UNIX__)
+		add_definitions(-D__UNIX__ -D__64BIT__)
 	endif()
-	add_compile_options(-Wall -Wno-unknown-pragmas -O3 )
-	target_compile_options(${SSC_LIB} PUBLIC -std=c++11)
-	add_compile_definitions( __64BIT__)
+	SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wno-unknown-pragmas -O3 -std=c++11" )
+
 endif(MSVC)
 
 
@@ -177,4 +176,13 @@ if(UNIX)
 			POST_BUILD 
 			COMMAND dltest ${CMAKE_CURRENT_SOURCE_DIR}/${SSC_LIB}.dylib)
 	endif()
+endif()
+
+
+# alternately, building for PySAM
+if (system_advisor_model_EXPORT)
+	if(APPLE)
+		set_property(TARGET ${SSC_LIB} PROPERTY PREFIX "lib")
+		set(CMAKE_SHARED_LIBRARY_SUFFIX ".so")
+	endif(APPLE)
 endif()

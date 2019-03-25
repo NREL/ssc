@@ -2,6 +2,7 @@
 #define _CMOD_GENERIC_SYSTEM_BUILDER_H_
 
 #include "vartab.h"
+#include "sscapi.h"
 
 
 //
@@ -10,7 +11,7 @@
 // @param[in,out] *cxt: a invoke_t* that for storing the results
 // @returns single value or var_table
 //
-float GenericSystem_conv_eff_eval(ssc_data_t vt);
+SSCEXPORT float GenericSystem_conv_eff_eval(ssc_data_t vt);
 
 
 #endif
