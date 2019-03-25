@@ -1,6 +1,11 @@
 set(CMAKE_VERBOSE_MAKEFILE ON)
 
-set(CMAKE_OSX_DEPLOYMENT_TARGET "10.9" CACHE STRING "Minimum OS X deployment version")
+if(APPLE)
+    set(CMAKE_OSX_DEPLOYMENT_TARGET "10.9" CACHE STRING "Minimum OS X deployment version")
+elseif(MSVC)
+	set(CMAKE_SYSTEM_VERSION 8.1 CACHE TYPE INTERNAL FORCE)
+endif()
+
 
 if(MSVC)
 	set(CMAKE_CONFIGURATION_TYPES "Debug;Release" CACHE STRING "Debug and Release Builds Configured" FORCE)
@@ -9,8 +14,15 @@ endif()
 Project(sdktool)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}")
 
-set(wxWidgets_CONFIG_EXECUTABLE /usr/local/bin/wx-config-3)
-find_package(wxWidgets REQUIRED stc propgrid aui gl html adv core xml net base)
+# setup wxWidgets
+if (UNIX)
+	set(wxWidgets_CONFIG_EXECUTABLE /usr/local/bin/wx-config-3)
+else()
+	set(wxWidgets_CONFIGURATION mswu)
+	set(wxWidgets_ROOT_DIR $ENV{WXMSW3})
+endif()
+
+find_package(wxWidgets COMPONENTS qa webview aui richtext html propgrid adv net stc core xml base scintilla REQUIRED)
 include(${wxWidgets_USE_FILE})
 
 include_directories(. $ENV{WEXDIR}/include $ENV{LKDIR}/include ../ssc ../shared ../splinter)
@@ -23,8 +35,6 @@ set(SDKTOOL_SRC
 	sscdev.cpp)
 
 
-
-
 # Setup Application
 if (APPLE)
 	set(MACOSX_BUNDLE_ICON_FILE ${CMAKE_CURRENT_SOURCE_DIR}/../build_osx/SDKTool.icns)
@@ -32,7 +42,7 @@ if (APPLE)
 	set_source_files_properties(${SDKTOOL_ICON} PROPERTIES
 		MACOSX_PACKAGE_LOCATION "Resources")
 elseif(WIN32)
-	set(SDKTOOL_ICON ${CMAKE_CURRENT_SOURCE_DIR}/../build_vs2013/SDKTool.rc)
+	set(SDKTOOL_ICON ${CMAKE_CURRENT_SOURCE_DIR}/../build_vs2017/app.rc)
 endif()
 
 # set build types
@@ -74,7 +84,7 @@ else()
 				NAMES wexd.a wexd.lib
 				PATHS $ENV{WEXDIR})
 		find_library( LK_LIB
-				NAMES lkd.a lk.lib
+				NAMES lkd.a lkd.lib
 				PATHS $ENV{LKDIR})
 	else()
 		find_library( WEX_LIB
@@ -88,7 +98,14 @@ else()
 endif()
 
 target_link_libraries(${SDKTOOL_EXE} ${wxWidgets_LIBRARIES})
-target_link_libraries(${SDKTOOL_EXE} -lm -lcurl)
+if (UNIX)
+	target_link_libraries(${SDKTOOL_EXE} -lm -lcurl)
+elseif(MSVC)
+	find_library( CURL_LIB
+				NAMES libcurl.lib
+				PATHS $ENV{WEXDIR}/build_vs2017/libcurl_ssl_x64/lib)
+	target_link_libraries(${SDKTOOL_EXE} ${CURL_LIB})
+endif()
 
 if (UNIX AND NOT APPLE)
 	target_link_libraries(${SDKTOOL_EXE} -ldl -lfontconfig)
@@ -100,8 +117,20 @@ endif()
 
 if(MSVC)
 # need msvc optimization levels & different configs, windows sdk
-	add_compile_options(/W4 /WX)
-	add_compile_definitions( _CRT_SECURE_NO_WARNINGS _MBCS __WXMSW__)
+	add_compile_options(/W3)
+	if (CMAKE_BUILD_TYPE STREQUAL Debug)
+        add_compile_options(/MDd)
+        add_compile_definitions(_DEBUG)
+    else()
+        add_compile_options(/MD)
+        add_compile_definitions(NDEBUG )
+    endif()
+    add_compile_definitions( __64BIT__ LK_USE_WXWIDGETS _CRT_SECURE_NO_DEPRECATE=1 )
+	add_compile_definitions(_CRT_NON_CONFORMING_SWPRINTFS=1 _SCL_SECURE_NO_WARNINGS=1)
+	add_compile_definitions(__WXMSW__ _UNICODE _WINDOWS NOPCH )
+    set_target_properties(${SDKTOOL_EXE} PROPERTIES
+        RUNTIME_OUTPUT_DIRECTORY $<1:${CMAKE_CURRENT_SOURCE_DIR}>)
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /SUBSYSTEM:CONSOLE")
 else(MSVC)
 	if (APPLE)
 		set(CMAKE_POSITION_INDEPENDENT_CODE ON)

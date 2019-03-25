@@ -1,7 +1,10 @@
 set(CMAKE_VERBOSE_MAKEFILE ON)
 
-
-set(CMAKE_OSX_DEPLOYMENT_TARGET "10.7" CACHE STRING "Minimum OS X deployment version")
+if(APPLE)
+    set(CMAKE_OSX_DEPLOYMENT_TARGET "10.7" CACHE STRING "Minimum OS X deployment version")
+elseif(MSVC)
+    set(CMAKE_SYSTEM_VERSION 8.1 CACHE TYPE INTERNAL FORCE)
+endif()
 
 if(MSVC)
 	set(CMAKE_CONFIGURATION_TYPES "Debug;Release" CACHE STRING "Debug and Release Builds Configured" FORCE)
@@ -105,7 +108,7 @@ set(SSC_SRC
 	tckernel.cpp )
 
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
-
+set(CMAKE_CXX_STANDARD 11)
 
 # set build types for shared library
 
@@ -147,8 +150,18 @@ target_link_libraries(${SSC_LIB} -lm -ldl -lstdc++)
 
 if(MSVC)
 # need msvc optimization levels & different configs, windows sdk
-	add_compile_options(/W4 /WX)
-	add_compile_definitions( _CRT_SECURE_NO_WARNINGS _MBCS __WXMSW__)
+	add_compile_options(/W4 /w44191 /w44242  /w44266 /w44302 /w44388 /w44826 /w44905 /w44906 /w44928)
+	if (CMAKE_BUILD_TYPE STREQUAL Debug)
+        add_compile_options(/MDd)
+        add_compile_definitions(_DEBUG)
+    else()
+        add_compile_options(/MD /O4)
+        add_compile_definitions(NDEBUG )
+    endif()
+    add_compile_definitions( __DLL__ __64BIT__ __WINDOWS__ _WINDOWS _CRT_SECURE_NO_WARNINGS __VISUALC__ )
+	set_target_properties(${SSC_LIB} PROPERTIES
+        LIBRARY_OUTPUT_DIRECTORY $<1:${CMAKE_CURRENT_SOURCE_DIR}>)
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /SUBSYSTEM:WINDOWS")
 else(MSVC)
 	if (APPLE)
 		add_compile_options(-arch x86_64 -fno-common)
