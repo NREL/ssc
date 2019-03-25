@@ -333,16 +333,16 @@ var_info_invalid };
 var_info vtab_adjustment_factors[] = {
 /*   VARTYPE           DATATYPE         NAME                               LABEL                                       UNITS     META                                     GROUP                 REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
 
-	{ SSC_INPUT,        SSC_NUMBER,      "adjust:constant",               "Constant loss adjustment",                "%",    "",                                     "Loss Adjustments",      "*",                     "MAX=100",                     "" },
-	{ SSC_INPUT,        SSC_ARRAY,       "adjust:hourly",                 "Hourly loss adjustments",                 "%",    "",                                     "Loss Adjustments",      "?",                     "LENGTH=8760",                "" },
-	{ SSC_INPUT,        SSC_MATRIX,      "adjust:periods",                "Period-based loss adjustments",           "%",    "n x 3 matrix [ start, end, loss ]",    "Loss Adjustments",      "?",                     "COLS=3",                     "" },
-	
+    { SSC_INPUT,        SSC_NUMBER,      "adjust:constant",               "Constant loss adjustment",                "%",    "",                                     "Loss Adjustments",      "*",                    "MAX=100",                    "" },
+    { SSC_INPUT,        SSC_ARRAY,       "adjust:hourly",                 "Hourly loss adjustments",                 "%",    "",                                     "Loss Adjustments",      "?",                    "LENGTH=8760",                "" },
+    { SSC_INPUT,        SSC_MATRIX,      "adjust:periods",                "Period-based loss adjustments",           "%",    "n x 3 matrix [ start, end, loss ]",    "Loss Adjustments",      "?",                    "COLS=3",                     "" },
+
 var_info_invalid };
 
 var_info vtab_dc_adjustment_factors[] = {
 /*   VARTYPE           DATATYPE         NAME                               LABEL                                       UNITS     META                                     GROUP                 REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
 
-	{ SSC_INPUT,        SSC_NUMBER,      "dc_adjust:constant",            "DC Constant loss adjustment",             "%",    "",                                     "Loss Adjustments",      "",                     "MAX=100",                     "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "dc_adjust:constant",            "DC Constant loss adjustment",             "%",    "",                                     "Loss Adjustments",      "",                     "MAX=100",                    "" },
 	{ SSC_INPUT,        SSC_ARRAY,       "dc_adjust:hourly",              "DC Hourly loss adjustments",              "%",    "",                                     "Loss Adjustments",      "",                     "LENGTH=8760",                "" },
 	{ SSC_INPUT,        SSC_MATRIX,      "dc_adjust:periods",             "DC Period-based loss adjustments",        "%",    "n x 3 matrix [ start, end, loss ]",    "Loss Adjustments",      "",                     "COLS=3",                     "" },
 	
@@ -351,10 +351,10 @@ var_info_invalid };
 var_info vtab_sf_adjustment_factors[] = {
 /*   VARTYPE           DATATYPE         NAME                               LABEL                                       UNITS     META                                     GROUP                 REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
 
-	{ SSC_INPUT,        SSC_NUMBER,      "sf_adjust:constant",            "SF Constant loss adjustment",             "%",    "",                                     "Loss Adjustments",      "*",                     "MAX=100",                     "" },
-	{ SSC_INPUT,        SSC_ARRAY,       "sf_adjust:hourly",              "SF Hourly loss adjustments",              "%",    "",                                     "Loss Adjustments",      "?",                     "LENGTH=8760",                "" },
-	{ SSC_INPUT,        SSC_MATRIX,      "sf_adjust:periods",             "SF Period-based loss adjustments",        "%",    "n x 3 matrix [ start, end, loss ]",    "Loss Adjustments",      "?",                     "COLS=3",                     "" },
-	
+    { SSC_INPUT,        SSC_NUMBER,      "sf_adjust:constant",            "SF constant loss adjustment",             "%",    "",                                     "Loss Adjustments",      "*",                    "MAX=100",                    ""},
+    { SSC_INPUT,        SSC_ARRAY,       "sf_adjust:hourly",              "SF hourly loss adjustments",              "%",    "",                                     "Loss Adjustments",      "?",                    "LENGTH=8760",                ""},
+    { SSC_INPUT,        SSC_MATRIX,      "sf_adjust:periods",             "SF period-based loss adjustments",        "%",    "n x 3 matrix [ start, end, loss ]",    "Loss Adjustments",      "?",                    "COLS=3",                     ""},
+
 var_info_invalid };
 
 
