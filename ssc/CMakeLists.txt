@@ -145,8 +145,9 @@ foreach( name ${DEPENDENCIES} )
 		target_link_libraries(${SSC_LIB} ${name})
 	endif()
 endforeach()
-target_link_libraries(${SSC_LIB} -lm -ldl -lstdc++)
-
+if (UNIX)
+	target_link_libraries(${SSC_LIB} -lm -ldl -lstdc++)
+endif()
 
 if(MSVC)
 # need msvc optimization levels & different configs, windows sdk

@@ -60,6 +60,9 @@ set(NLOPT_SRC
 	sobolseq.c
 	stop.c
 	timer.c
+	sys/time.h
+	sys/time.h
+	sys/time.cpp
 )
 
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)

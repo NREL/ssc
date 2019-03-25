@@ -123,7 +123,8 @@ set_property(TARGET ${TCS_LIB} PROPERTY PREFIX "")
 
 if(MSVC)
 # need msvc optimization levels & different configs, windows sdk
-	add_compile_options(/W0 /bigobj)
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /bigobj")
+	add_compile_options(/W0)
 	if (CMAKE_BUILD_TYPE STREQUAL Debug)
         add_compile_options(/MDd)
         add_compile_definitions(_DEBUG)
