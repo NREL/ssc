@@ -51,21 +51,22 @@
 #include "core.h"
 #include "common.h"
 
-static var_info _cm_vtab_mhk[] = {
-	//   VARTYPE			DATATYPE			NAME									LABEL                                           UNITS           META            GROUP              REQUIRED_IF                 CONSTRAINTS			UI_HINTS
-	{ SSC_INPUT,			SSC_STRING,			"mhk_resource_filename",				"local mhk data file path",						"",				"",				"MHKPower",			"*",						"LOCAL_FILE",		"" },
-	{ SSC_INPUT,			SSC_TABLE,			"mhk_resource_data",					"mhk resouce data in memory",					"",				"",				"MHKPower",			"*",						"",					"" },
-	{ SSC_INPUT,			SSC_NUMBER,			"stream_depth",							"mhk resouce depth (z/D)",						"",			"",					"MHKPower",			"*",						"",					"" },
-
-	{ SSC_OUTPUT,			SSC_NUMBER,			"average_power",						"mhk resouce data in memory",					"",				"",				"MHKPower",			"*",						"",					"" },
+static var_info _cm_vtab_mhk_tidal[] = {
+	//   VARTYPE			DATATYPE			NAME									LABEL														UNITS           META            GROUP              REQUIRED_IF					CONSTRAINTS			UI_HINTS	
+	{ SSC_INPUT,			SSC_MATRIX,			"mhk_resource_definition",              "Power curve and frequency distribution",					"",				"",             "MHKPower",			"",							"",                  "" },	
+	
+	{ SSC_OUTPUT,			SSC_NUMBER,			"average_power",						"Average power production",									"",				"",				"MHKPower",			"*",						"",					"" },
+	{ SSC_OUTPUT,			SSC_NUMBER,			"annual_energy",						"Annual energy production",									"",				"",				"MHKPower",			"*",						"",					"" },
+	{ SSC_OUTPUT,			SSC_ARRAY,			"annual_energy_distribution",			"Annual energy production as function of speed",			"",				"",				"MHKPower",			"*",						"",					"" },
 };
 
-class cm_mhk : public compute_module
+class cm_mhk_tidal : public compute_module
 {
+private:
 	int temp = 18000; //Placeholder for now.
 public: 
-	cm_mhk() {
-		add_var_info(_cm_vtab_mhk);
+	cm_mhk_tidal() {
+		add_var_info(_cm_vtab_mhk_tidal);
 	}
 
 	void exec() throw(general_error) {
@@ -73,4 +74,4 @@ public:
 	}
 };
 
-DEFINE_MODULE_ENTRY( mhk , "MHK power calculation model using power distribution.", 3);
+DEFINE_MODULE_ENTRY( mhk_tidal , "MHK Tidal power calculation model using power distribution.", 3);
