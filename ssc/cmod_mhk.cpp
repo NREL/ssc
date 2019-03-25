@@ -55,6 +55,7 @@ static var_info _cm_vtab_mhk[] = {
 	//   VARTYPE			DATATYPE			NAME									LABEL                                           UNITS           META            GROUP              REQUIRED_IF                 CONSTRAINTS			UI_HINTS
 	{ SSC_INPUT,			SSC_STRING,			"mhk_resource_filename",				"local mhk data file path",						"",				"",				"MHKPower",			"*",						"LOCAL_FILE",		"" },
 	{ SSC_INPUT,			SSC_TABLE,			"mhk_resource_data",					"mhk resouce data in memory",					"",				"",				"MHKPower",			"*",						"",					"" },
+	{ SSC_INPUT,			SSC_NUMBER,			"stream_depth",							"mhk resouce depth (z/D)",						"",			"",					"MHKPower",			"*",						"",					"" },
 
 	{ SSC_OUTPUT,			SSC_NUMBER,			"average_power",						"mhk resouce data in memory",					"",				"",				"MHKPower",			"*",						"",					"" },
 };
@@ -68,7 +69,7 @@ public:
 	}
 
 	void exec() throw(general_error) {
-		assign("average_power", var_data(static_cast<ssc_number_t>(temp)));
+		assign("average_power", var_data(static_cast<ssc_number_t>(temp)));	//Average power is just a placeholder output for now.
 	}
 };
 
