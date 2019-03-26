@@ -222,14 +222,14 @@ void solarpos(int year,int month,int day,int hour,double minute,double lat,doubl
 	if (arg >= 1.0)  // No sunrise, continuous nights
 	{
 		ws = 0.0;                        
-		sunrise = 25.0;
-		sunset = -1.0;
+		sunrise = 100.0; //make sunrise and sunset sufficiently large that even if they get rolled by 24 hours, they're still out of the bounds 0-24
+		sunset = -100.0;
 	}
 	else if (arg <= -1.0) // No sunset, continuous days
 	{
 		ws = M_PI;                          
-		sunrise = -1.0;
-		sunset = 25.0;
+		sunrise = -100.0; //make sunrise and sunset sufficiently large that even if they get rolled by 24 hours, they're still out of the bounds 0-24
+		sunset = 100.0;
 	}
 	else
 	{
@@ -244,21 +244,12 @@ void solarpos(int year,int month,int day,int hour,double minute,double lat,doubl
 			sunrise -= 24.0;
 			sunset -= 24.0;
 		}
-		/*//if only sunset is greater than 24, it actually sets the next day, but ws not quite big enough to be caught (example: Point Hope, AK)
-		else if (sunset > 24.0)
-		{
-			sunset = 24.0;
-		}*/
-		//no examples of the opposing cases, but let's catch them anyways, just in case
+		//no examples of the opposing case, but let's catch it anyways, just in case
 		if (sunrise < 0.0 && sunset < 0.0)
 		{
 			sunrise += 24.0;
 			sunset += 24.0;
 		}
-		/*else if (sunrise < 0.0)
-		{
-			sunrise = 0.0;
-		}*/
 	}
 
 	Eo = 1.00014 - 0.01671*cos(mnanom) - 0.00014*cos(2.0*mnanom);  /* Earth-sun distance (AU) */
@@ -1109,16 +1100,29 @@ int irrad::calc()
 	if (t_sunset > 24) //sunset is legitimately the next day, so recalculate sunset from the previous day
 	{
 		double sunanglestemp[9];
-		solarpos(year, month, day - 1, 12, 0.0, latitudeDegrees, longitudeDegrees, timezone, sunanglestemp);
-		t_sunset = sunanglestemp[5] - 24.0;
+		if (day > 1) //simply decrement day during month
+			solarpos(year, month, day - 1, 12, 0.0, latitudeDegrees, longitudeDegrees, timezone, sunanglestemp);
+		else if (month > 1) //on the 1st of the month, need to switch to the last day of previous month
+			solarpos(year, month - 1, __nday[month - 2], 12, 0.0, latitudeDegrees, longitudeDegrees, timezone, sunanglestemp); //month is 1-indexed and __nday is 0 indexed
+		else //on the first day of the year, need to switch to Dec 31 of last year
+			solarpos(year - 1, 12, 31, 12, 0.0, latitudeDegrees, longitudeDegrees, timezone, sunanglestemp);
+		//if sunset from yesterday WASN'T today, then it's ok to leave sunset > 24, which will cause the sun to rise today and not set today
+		if (sunanglestemp[5] >= 24)
+			t_sunset = sunanglestemp[5] - 24.0;
 	}
 
 	if (t_sunrise < 0) //sunrise is legitimately the previous day, so recalculate for next day
 	{
 		double sunanglestemp[9];
-		solarpos(year, month, day + 1, 12, 0.0, latitudeDegrees, longitudeDegrees, timezone, sunanglestemp);
-		t_sunset = sunanglestemp[5] + 24.0;
-
+		if (day < __nday[month - 1]) //simply increment the day during the month, month is 1-indexed and __nday is 0-indexed
+			solarpos(year, month, day + 1, 12, 0.0, latitudeDegrees, longitudeDegrees, timezone, sunanglestemp);
+		else if (month < 12) //on the last day of the month, need to switch to the first day of the next month
+			solarpos(year, month + 1, 1, 12, 0.0, latitudeDegrees, longitudeDegrees, timezone, sunanglestemp);
+		else //on the last day of the year, need to switch to Jan 1 of the next year
+			solarpos(year + 1, 1, 1, 12, 0.0, latitudeDegrees, longitudeDegrees, timezone, sunanglestemp);
+		//if sunrise from tomorrow isn't today, then it's ok to leave sunrise < 0, which will cause the sun to set at the right time and not rise until tomorrow
+		if (sunanglestemp[4] < 0)
+			t_sunrise = sunanglestemp[4] + 24.0;
 	}
 
 	// recall: if delt <= 0.0, do not interpolate sunrise and sunset hours, just use specified time stamp

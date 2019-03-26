@@ -3,6 +3,8 @@
 
 #include "lib_pv_io_manager.h" 
 
+static const int __nday[12] = { 31,28,31,30,31,30,31,31,30,31,30,31 };
+
 PVIOManager::PVIOManager(compute_module*  cm, std::string cmName)
 {
 	std::unique_ptr<Irradiance_IO> ptr(new Irradiance_IO(cm, cmName));
@@ -489,15 +491,29 @@ void PVSystem_IO::SetupPOAInput()
 					if (t_sunset > 24) //sunset is legitimately the next day, so recalculate sunset from the previous day
 					{
 						double sunanglestemp[9];
-						solarpos(wf.year, wf.month, wf.day - 1, 12, 0.0, hdr.lat, hdr.lon, hdr.tz, sunanglestemp);
-						t_sunset = sunanglestemp[5] - 24.0;
+						if (wf.day > 1) //simply decrement day during month
+							solarpos(wf.year, wf.month, wf.day - 1, 12, 0.0, hdr.lat, hdr.lon, hdr.tz, sunanglestemp);
+						else if (wf.month > 1) //on the 1st of the month, need to switch to the last day of previous month
+							solarpos(wf.year, wf.month -1 , __nday[wf.month-2], 12, 0.0, hdr.lat, hdr.lon, hdr.tz, sunanglestemp); //month is 1-indexed and __nday is 0 indexed
+						else //on the first day of the year, need to switch to Dec 31 of last year
+							solarpos(wf.year - 1, 12, 31, 12, 0.0, hdr.lat, hdr.lon, hdr.tz, sunanglestemp);
+						//if sunset from yesterday WASN'T today, then it's ok to leave sunset > 24, which will cause the sun to rise today and not set today
+						if (sunanglestemp[5] >= 24)
+							t_sunset = sunanglestemp[5] - 24.0;
 					}
 
 					if (t_sunrise < 0) //sunrise is legitimately the previous day, so recalculate for next day
 					{
 						double sunanglestemp[9];
-						solarpos(wf.year, wf.month, wf.day + 1, 12, 0.0, hdr.lat, hdr.lon, hdr.tz, sunanglestemp);
-						t_sunset = sunanglestemp[5] + 24.0;
+						if (wf.day < __nday[wf.month - 1]) //simply increment the day during the month, month is 1-indexed and __nday is 0-indexed
+							solarpos(wf.year, wf.month, wf.day + 1, 12, 0.0, hdr.lat, hdr.lon, hdr.tz, sunanglestemp);
+						else if (wf.month < 12) //on the last day of the month, need to switch to the first day of the next month
+							solarpos(wf.year, wf.month + 1, 1, 12, 0.0, hdr.lat, hdr.lon, hdr.tz, sunanglestemp);
+						else //on the last day of the year, need to switch to Jan 1 of the next year
+							solarpos(wf.year + 1, 1, 1, 12, 0.0, hdr.lat, hdr.lon, hdr.tz, sunanglestemp);
+						//if sunrise from tomorrow isn't today, then it's ok to leave sunrise < 0, which will cause the sun to set at the right time and not rise until tomorrow
+						if (sunanglestemp[4] < 0)
+							t_sunrise = sunanglestemp[4] + 24.0;
 
 					}
 
