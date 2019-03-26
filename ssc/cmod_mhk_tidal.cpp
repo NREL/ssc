@@ -57,7 +57,7 @@ static var_info _cm_vtab_mhk_tidal[] = {
 	
 	{ SSC_OUTPUT,			SSC_NUMBER,			"average_power",						"Average power production",									"",				"",				"MHKTidal",			"*",						"",					"" },
 	{ SSC_OUTPUT,			SSC_NUMBER,			"annual_energy",						"Annual energy production",									"",				"",				"MHKTidal",			"*",						"",					"" },
-	{ SSC_OUTPUT,			SSC_ARRAY,			"annual_energy_distribution",			"Annual energy production as function of speed",			"",				"",				"MHKTidal",			"*",						"",					"" },
+	{ SSC_OUTPUT,			SSC_MATRIX,			"annual_energy_distribution",			"Annual energy production as function of speed",			"",				"",				"MHKTidal",			"*",						"",					"" },
 };
 
 /*
@@ -70,16 +70,35 @@ struct tidal_resource
 class cm_mhk_tidal : public compute_module
 {
 private:
-	util::matrix_t<double>  mhk_resource_matrix;
-	
-	int temp = 18000; //Placeholder for now.
 public: 
 	cm_mhk_tidal() {
 		add_var_info(_cm_vtab_mhk_tidal);
 	}
 	
 	void exec() throw(general_error) {
-		assign("average_power", var_data(static_cast<ssc_number_t>(temp)));	//Average power is just a placeholder output for now.
+		util::matrix_t<double>  mhk_resource_matrix = as_matrix("mhk_resource_definition");
+		double annual_energy = 0;
+		/*
+		size_t ncols, nrows;
+		ncols = mhk_resource_matrix.ncols();
+		nrows = mhk_resource_matrix.nrows();
+		*/
+		
+		std::vector<double> _speed_vect;
+		std::vector<double> _power_vect;
+		std::vector<double> _sheer_vect;
+
+		for (int i = 0; i < (int)mhk_resource_matrix.nrows(); i++) {
+			_speed_vect.push_back(mhk_resource_matrix.at(i, 0));
+			_power_vect.push_back(mhk_resource_matrix.at(i, 1));
+			_sheer_vect.push_back(mhk_resource_matrix.at(i, 2));
+
+			annual_energy = annual_energy + (_speed_vect[i] * _power_vect[i] * _sheer_vect[i]);
+		}
+
+		int temp = 18000; //Placeholder for now.
+		assign("average_power", var_data((ssc_number_t)annual_energy));	//Average power is just a placeholder output for now.
+		
 	}
 };
 
