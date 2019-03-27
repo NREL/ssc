@@ -93,7 +93,7 @@ public:
 			_power_vect.push_back(mhk_resource_matrix.at(i, 1));
 			_sheer_vect.push_back(mhk_resource_matrix.at(i, 2));
 
-			annual_energy = annual_energy + (_speed_vect[i] * _power_vect[i] * _sheer_vect[i]);
+			annual_energy = annual_energy + (_speed_vect[i] * _power_vect[i] * _sheer_vect[i] * 8760);
 		}
 
 		int temp = 18000; //Placeholder for now.
