@@ -50,7 +50,6 @@
 
 #include "core.h"
 #include "common.h"
-#include <memory>
 
 static var_info _cm_vtab_mhk_tidal[] = {
 	//   VARTYPE			DATATYPE			NAME									LABEL														UNITS           META            GROUP              REQUIRED_IF					CONSTRAINTS			UI_HINTS	
@@ -61,12 +60,6 @@ static var_info _cm_vtab_mhk_tidal[] = {
 	{ SSC_OUTPUT,			SSC_MATRIX,			"annual_energy_distribution",			"Annual energy production as function of speed",			"",				"",				"MHKTidal",			"?",						"",					"" },
 };
 
-/*
-struct tidal_resource
-{
-	util::matrix_t<double>  mhk_resource_matrix = as_matrix("") ;
-};
-*/
 
 class cm_mhk_tidal : public compute_module
 {
@@ -79,32 +72,34 @@ public:
 	void exec() throw(general_error) {
 		util::matrix_t<double>  mhk_resource_matrix = as_matrix("mhk_resource_definition");
 		double annual_energy = 0, average_power = 0;
-				
-		std::vector<double> _speed_vect;
-		std::vector<double> _power_vect;
-		std::vector<double> _sheer_vect;
-		std::vector<double> _annual_energy_distribution;	//Annual energy production as function of speed (annual energy production at each stream speed).
 		
+		//Create vectors to store individual columsn from the user input matrix "mhk_resource_definition":
+		std::vector<double> _speed_vect;	//Stream speed (u [m/s])
+		std::vector<double> _power_vect;	//Tidal power curve (P [kW])
+		std::vector<double> _sheer_vect;	// f(z/D = x)
+		
+		std::vector<double> _annual_energy_distribution;	//Annual energy production as function of speed (annual energy production at each stream speed).
+	
 
 		//Storing each column of the user input matrix as a vector, and calculating annual energy:
 		for (int i = 0; i < (int)mhk_resource_matrix.nrows(); i++) {
-			_speed_vect.push_back(mhk_resource_matrix.at(i, 0));
+			_speed_vect.push_back(mhk_resource_matrix.at(i, 0));	
 			_power_vect.push_back(mhk_resource_matrix.at(i, 1));
 			_sheer_vect.push_back(mhk_resource_matrix.at(i, 2));
 
-			_annual_energy_distribution.push_back(_speed_vect[i] * _power_vect[i] * _sheer_vect[i] * 8760);
+			_annual_energy_distribution.push_back(_speed_vect[i] * _power_vect[i] * _sheer_vect[i] * 8760);	
 		}
-
+		
+		//assign _annual_energy_distribution values to ssc variable -> "annual_energy_distribution": 
 		ssc_number_t * _aep_distribution_ptr = cm_mhk_tidal::allocate("annual_energy_distribution", _annual_energy_distribution.size());
 		for (size_t i = 0; i != _annual_energy_distribution.size(); i++) {
-			_aep_distribution_ptr[i] = _annual_energy_distribution[i];
-			annual_energy = annual_energy + _annual_energy_distribution[i];
+			_aep_distribution_ptr[i] = _annual_energy_distribution[i];	
+			annual_energy = annual_energy + _annual_energy_distribution[i];	//Calculate total annual energy.
 		}
 
 		//Average Power: 
 		average_power = annual_energy / 8760;
-		
-		
+
 		assign("annual_energy", var_data((ssc_number_t)annual_energy));
 		assign("average_power", var_data((ssc_number_t)average_power));
 	}
