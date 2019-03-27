@@ -57,7 +57,7 @@ static var_info _cm_vtab_mhk_tidal[] = {
 	
 	{ SSC_OUTPUT,			SSC_NUMBER,			"average_power",						"Average power production",									"",				"",				"MHKTidal",			"*",						"",					"" },
 	{ SSC_OUTPUT,			SSC_NUMBER,			"annual_energy",						"Annual energy production",									"",				"",				"MHKTidal",			"*",						"",					"" },
-	{ SSC_OUTPUT,			SSC_MATRIX,			"annual_energy_distribution",			"Annual energy production as function of speed",			"",				"",				"MHKTidal",			"?",						"",					"" },
+	{ SSC_OUTPUT,			SSC_MATRIX,			"annual_energy_distribution",			"Annual energy production as function of speed",			"",				"",				"MHKTidal",			"*",						"",					"" },
 };
 
 
@@ -88,6 +88,9 @@ public:
 			_sheer_vect.push_back(mhk_resource_matrix.at(i, 2));
 
 			_annual_energy_distribution.push_back(_speed_vect[i] * _power_vect[i] * _sheer_vect[i] * 8760);	
+			
+			//Average Power: 
+			average_power = average_power + ( _power_vect[i] * _sheer_vect[i] / 100 );
 		}
 		
 		//assign _annual_energy_distribution values to ssc variable -> "annual_energy_distribution": 
@@ -97,8 +100,7 @@ public:
 			annual_energy = annual_energy + _annual_energy_distribution[i];	//Calculate total annual energy.
 		}
 
-		//Average Power: 
-		average_power = annual_energy / 8760;
+		
 
 		assign("annual_energy", var_data((ssc_number_t)annual_energy));
 		assign("average_power", var_data((ssc_number_t)average_power));
