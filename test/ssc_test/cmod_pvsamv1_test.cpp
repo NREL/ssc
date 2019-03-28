@@ -43,7 +43,6 @@ TEST_F(CMPvsamv1PowerIntegration, DefaultLifetimeNoFinancialModel) {
 	}
 
 	ssc_data_set_array(data, "dc_degradation", (ssc_number_t*)dc_degradation, 25);
-	ssc_data_set_array(data, "ac_degradation", (ssc_number_t*)dc_degradation, 25);
 
 	int pvsam_errors = modify_ssc_data_and_run_module(data, "pvsamv1", pairs); 
 
