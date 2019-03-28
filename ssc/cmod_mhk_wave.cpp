@@ -50,61 +50,30 @@
 
 #include "core.h"
 #include "common.h"
-
-static var_info _cm_vtab_mhk_tidal[] = {
+static var_info _cm_vtab_mhk_wave[] = {
 	//   VARTYPE			DATATYPE			NAME									LABEL														UNITS           META            GROUP              REQUIRED_IF					CONSTRAINTS			UI_HINTS	
-	{ SSC_INPUT,			SSC_MATRIX,			"tidal_resource_definition",              "Power curve and frequency distribution",					"",				"",             "MHKTidal",			"*",							"",                  "" },	
-	
-	{ SSC_OUTPUT,			SSC_NUMBER,			"average_power",						"Average power production",									"",				"",				"MHKTidal",			"*",						"",					"" },
-	{ SSC_OUTPUT,			SSC_NUMBER,			"annual_energy",						"Annual energy production",									"",				"",				"MHKTidal",			"*",						"",					"" },
-	{ SSC_OUTPUT,			SSC_ARRAY,			"annual_energy_distribution",			"Annual energy production as function of speed",			"",				"",				"MHKTidal",			"*",						"",					"" },
+	{ SSC_INPUT,			SSC_MATRIX,			"wave_resource_definition",             "Power curve and frequency distribution",					"",				"",             "MHKWave",			"*",							"",             "" },
+
+	{ SSC_OUTPUT,			SSC_NUMBER,			"average_power",						"Average power production",									"",				"",				"MHKWave",			"*",						"",					"" },
+	{ SSC_OUTPUT,			SSC_NUMBER,			"annual_energy",						"Annual energy production",									"",				"",				"MHKWave",			"*",						"",					"" },
+	{ SSC_OUTPUT,			SSC_ARRAY,			"annual_energy_distribution",			"Annual energy production as function of speed",			"",				"",				"MHKWave",			"*",						"",					"" },
 };
 
 
-class cm_mhk_tidal : public compute_module
+class cm_mhk_wave : public compute_module
 {
 private:
-public: 
-	cm_mhk_tidal() {
-		add_var_info(_cm_vtab_mhk_tidal);
+public:
+	cm_mhk_wave() {
+		add_var_info(_cm_vtab_mhk_wave);
 	}
-	
+
 	void exec() throw(general_error) {
-		util::matrix_t<double>  mhk_resource_matrix = as_matrix("tidal_resource_definition");
-		double annual_energy = 0, average_power = 0;
 		
-		//Create vectors to store individual columsn from the user input matrix "tidal_resource_definition":
-		std::vector<double> _speed_vect;	//Stream speed (u [m/s])
-		std::vector<double> _power_vect;	//Tidal power curve (P [kW])
-		std::vector<double> _sheer_vect;	// f(z/D = x)
-		
-		std::vector<double> _annual_energy_distribution;	//Annual energy production as function of speed (annual energy production at each stream speed).
-	
-
-		//Storing each column of the user input matrix as a vector, and calculating annual energy:
-		for (int i = 0; i < (int)mhk_resource_matrix.nrows(); i++) {
-			_speed_vect.push_back(mhk_resource_matrix.at(i, 0));	
-			_power_vect.push_back(mhk_resource_matrix.at(i, 1));
-			_sheer_vect.push_back(mhk_resource_matrix.at(i, 2));
-
-			_annual_energy_distribution.push_back(_speed_vect[i] * _power_vect[i] * _sheer_vect[i] * 8760);	
-			
-			//Average Power: 
-			average_power = average_power + ( _power_vect[i] * _sheer_vect[i] / 100 );
-		}
-		
-		//assign _annual_energy_distribution values to ssc variable -> "annual_energy_distribution": 
-		ssc_number_t * _aep_distribution_ptr = cm_mhk_tidal::allocate("annual_energy_distribution", _annual_energy_distribution.size());
-		for (size_t i = 0; i != _annual_energy_distribution.size(); i++) {
-			_aep_distribution_ptr[i] = _annual_energy_distribution[i];	
-			annual_energy = annual_energy + _annual_energy_distribution[i];	//Calculate total annual energy.
-		}
-
 		
 
-		assign("annual_energy", var_data((ssc_number_t)annual_energy));
-		assign("average_power", var_data((ssc_number_t)average_power));
+
 	}
 };
 
-DEFINE_MODULE_ENTRY( mhk_tidal , "MHK Tidal power calculation model using power distribution.", 3);
+DEFINE_MODULE_ENTRY(mhk_wave, "MHK Wave power calculation model using power distribution.", 3);
