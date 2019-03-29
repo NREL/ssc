@@ -52,7 +52,7 @@
 #include "common.h"
 static var_info _cm_vtab_mhk_wave[] = {
 	//   VARTYPE			DATATYPE			NAME									LABEL														UNITS           META            GROUP              REQUIRED_IF					CONSTRAINTS			UI_HINTS	
-	{ SSC_INPUT,			SSC_MATRIX,			"wave_resource_definition",             "Power curve and frequency distribution",					"",				"",             "MHKWave",			"*",							"",             "" },
+	{ SSC_INPUT,			SSC_MATRIX,			"wave_power_curve",						"Wave Power Matrix",										"",				"",             "MHKWave",			"*",						"",					"" },
 
 	{ SSC_OUTPUT,			SSC_NUMBER,			"average_power",						"Average power production",									"",				"",				"MHKWave",			"*",						"",					"" },
 	{ SSC_OUTPUT,			SSC_NUMBER,			"annual_energy",						"Annual energy production",									"",				"",				"MHKWave",			"*",						"",					"" },
@@ -70,9 +70,18 @@ public:
 
 	void exec() throw(general_error) {
 		
+		util::matrix_t<double>  wave_power_matrix = as_matrix("wave_power_curve");
+		std::vector<std::vector<double> > _power_vect;	//Initialize wave power curve of size specified by user.
+
+		double annual_energy = 0, average_power = 0;
+
+		for (int i = 1; i < (int)wave_power_matrix.nrows(); i++) {	//i starts at 1 since column #1 specifies wave height values.
+			for (int j = 1; j < (int)wave_power_matrix.ncols(); j++) { //i starts at 1 since row #1 specifies wave time period values.
+				_power_vect[i].push_back(wave_power_matrix.at(i, j));
+				//_speed_vect.push_back(tidal_resource_matrix.at(i, 0));	
+			}
+		}
 		
-
-
 	}
 };
 

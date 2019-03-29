@@ -70,7 +70,7 @@ public:
 	}
 	
 	void exec() throw(general_error) {
-		util::matrix_t<double>  mhk_resource_matrix = as_matrix("tidal_resource_definition");
+		util::matrix_t<double>  tidal_resource_matrix = as_matrix("tidal_resource_definition");
 		double annual_energy = 0, average_power = 0;
 		
 		//Create vectors to store individual columsn from the user input matrix "tidal_resource_definition":
@@ -82,10 +82,10 @@ public:
 	
 
 		//Storing each column of the user input matrix as a vector, and calculating annual energy:
-		for (int i = 0; i < (int)mhk_resource_matrix.nrows(); i++) {
-			_speed_vect.push_back(mhk_resource_matrix.at(i, 0));	
-			_power_vect.push_back(mhk_resource_matrix.at(i, 1));
-			_sheer_vect.push_back(mhk_resource_matrix.at(i, 2));
+		for (int i = 0; i < (int)tidal_resource_matrix.nrows(); i++) {
+			_speed_vect.push_back(tidal_resource_matrix.at(i, 0));	
+			_power_vect.push_back(tidal_resource_matrix.at(i, 1));
+			_sheer_vect.push_back(tidal_resource_matrix.at(i, 2));
 
 			_annual_energy_distribution.push_back(_speed_vect[i] * _power_vect[i] * _sheer_vect[i] * 8760);	
 			
@@ -108,3 +108,7 @@ public:
 };
 
 DEFINE_MODULE_ENTRY( mhk_tidal , "MHK Tidal power calculation model using power distribution.", 3);
+
+//split matrix.
+//add losses as input.
+//add check for probability.
