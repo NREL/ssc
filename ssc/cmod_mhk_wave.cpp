@@ -51,12 +51,13 @@
 #include "core.h"
 #include "common.h"
 static var_info _cm_vtab_mhk_wave[] = {
-	//   VARTYPE			DATATYPE			NAME									LABEL														UNITS           META            GROUP              REQUIRED_IF					CONSTRAINTS			UI_HINTS	
-	{ SSC_INPUT,			SSC_MATRIX,			"wave_power_curve",						"Wave Power Matrix",										"",				"",             "MHKWave",			"*",						"",					"" },
-
-	{ SSC_OUTPUT,			SSC_NUMBER,			"average_power",						"Average power production",									"",				"",				"MHKWave",			"*",						"",					"" },
-	{ SSC_OUTPUT,			SSC_NUMBER,			"annual_energy",						"Annual energy production",									"",				"",				"MHKWave",			"*",						"",					"" },
-	{ SSC_OUTPUT,			SSC_ARRAY,			"annual_energy_distribution",			"Annual energy production as function of speed",			"",				"",				"MHKWave",			"*",						"",					"" },
+	//   VARTYPE			DATATYPE			NAME									LABEL																UNITS           META            GROUP              REQUIRED_IF					CONSTRAINTS			UI_HINTS	
+	{ SSC_INPUT,			SSC_MATRIX,			"wave_resource_definition",				"Frequency distribution of resource as a function of Hs and Te",	"",				"",             "MHKWave",			"*",						"",					"" },
+	{ SSC_INPUT,			SSC_MATRIX,			"wave_power_curve",						"Wave Power Matrix",												"",				"",             "MHKWave",			"*",						"",					"" },
+	
+	{ SSC_OUTPUT,			SSC_NUMBER,			"average_power",						"Average power production",											"",				"",				"MHKWave",			"?",						"",					"" },
+	{ SSC_OUTPUT,			SSC_NUMBER,			"annual_energy",						"Annual energy production",											"",				"",				"MHKWave",			"?",						"",					"" },
+	{ SSC_OUTPUT,			SSC_ARRAY,			"annual_energy_distribution",			"Annual energy production as function of speed",					"",				"",				"MHKWave",			"?",						"",					"" },
 };
 
 
@@ -69,14 +70,21 @@ public:
 	}
 
 	void exec() throw(general_error) {
+
+		//Read and store wave resource as a 2D matrix of vectors:
+		util::matrix_t<double>  wave_resource_matrix = as_matrix("wave_resource_definition");
+		std::vector<std::vector<double> > _resource_vect;	//Initialize wave power curve of size specified by user.
+		_resource_vect.resize(wave_resource_matrix.nrows() * wave_resource_matrix.ncols());
 		
+		//Read and store power curve as a 2D matrix of vectors:
 		util::matrix_t<double>  wave_power_matrix = as_matrix("wave_power_curve");
-		//const int nrows = wave_power_matrix.nrows(), ncols = wave_power_matrix.ncols();
 		std::vector<std::vector<double> > _power_vect;	//Initialize wave power curve of size specified by user.
 		_power_vect.resize(wave_power_matrix.nrows() * wave_power_matrix.ncols());
 
+		
 		for (size_t i = 0; i < (size_t)wave_power_matrix.nrows(); i++) {
-			for (size_t j = 0; j < (size_t)wave_power_matrix.ncols(); j++) { //i starts at 1 since row #1 specifies wave time period values.
+			for (size_t j = 0; j < (size_t)wave_power_matrix.ncols(); j++) {
+				_resource_vect[i].push_back(wave_resource_matrix.at(i, j));
 				_power_vect[i].push_back(wave_power_matrix.at(i , j));
 			}
 		}													
