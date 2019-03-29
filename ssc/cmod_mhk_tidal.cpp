@@ -101,7 +101,7 @@ public:
 			if (_power_vect.size() != _speed_vect.size())
 				throw compute_module::exec_error("mhk_tidal", "Size of Tidal Resource is not equal to Power Curve");
 			
-			//Checker to ensure adds to >= 99.5%:
+			//Checker to ensure frequency distribution adds to >= 99.5%:
 			sheer_vect_checker += _sheer_vect[i];
 		
 			//Calculate annual energy production at each stream speed bin:
