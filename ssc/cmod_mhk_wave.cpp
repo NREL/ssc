@@ -71,17 +71,15 @@ public:
 	void exec() throw(general_error) {
 		
 		util::matrix_t<double>  wave_power_matrix = as_matrix("wave_power_curve");
+		//const int nrows = wave_power_matrix.nrows(), ncols = wave_power_matrix.ncols();
 		std::vector<std::vector<double> > _power_vect;	//Initialize wave power curve of size specified by user.
+		_power_vect.resize(wave_power_matrix.nrows() * wave_power_matrix.ncols());
 
-		double annual_energy = 0, average_power = 0;
-
-		for (int i = 1; i < (int)wave_power_matrix.nrows(); i++) {	//i starts at 1 since column #1 specifies wave height values.
-			for (int j = 1; j < (int)wave_power_matrix.ncols(); j++) { //i starts at 1 since row #1 specifies wave time period values.
-				_power_vect[i].push_back(wave_power_matrix.at(i, j));
-				//_speed_vect.push_back(tidal_resource_matrix.at(i, 0));	
+		for (size_t i = 0; i < (size_t)wave_power_matrix.nrows(); i++) {
+			for (size_t j = 0; j < (size_t)wave_power_matrix.ncols(); j++) { //i starts at 1 since row #1 specifies wave time period values.
+				_power_vect[i].push_back(wave_power_matrix.at(i , j));
 			}
-		}
-		
+		}													
 	}
 };
 
