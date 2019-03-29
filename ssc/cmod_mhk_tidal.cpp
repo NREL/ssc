@@ -71,7 +71,7 @@ public:
 	
 	void exec() throw(general_error) {
 		util::matrix_t<double>  tidal_resource_matrix = as_matrix("tidal_resource_definition");
-		double annual_energy = 0, average_power = 0;
+		double annual_energy = 0, average_power = 0, sheer_vect_checker = 0;
 		
 		//Create vectors to store individual columsn from the user input matrix "tidal_resource_definition":
 		std::vector<double> _speed_vect;	//Stream speed (u [m/s])
@@ -86,21 +86,29 @@ public:
 			_speed_vect.push_back(tidal_resource_matrix.at(i, 0));	
 			_power_vect.push_back(tidal_resource_matrix.at(i, 1));
 			_sheer_vect.push_back(tidal_resource_matrix.at(i, 2));
-
+			
+			//Checker to ensure adds to >= 99.5%
+			sheer_vect_checker += _sheer_vect[i];
+	
 			_annual_energy_distribution.push_back(_speed_vect[i] * _power_vect[i] * _sheer_vect[i] * 8760);	
 			
 			//Average Power: 
 			average_power = average_power + ( _power_vect[i] * _sheer_vect[i] / 100 );
 		}
+
+
+		//Throw exception if sheer vector is < 99.5%
+		if (sheer_vect_checker < 99.5)
+			throw compute_module::exec_error("mhk_tidal", "Sheer vector does not add up to 100%");
 		
+
 		//assign _annual_energy_distribution values to ssc variable -> "annual_energy_distribution": 
 		ssc_number_t * _aep_distribution_ptr = cm_mhk_tidal::allocate("annual_energy_distribution", _annual_energy_distribution.size());
+
 		for (size_t i = 0; i != _annual_energy_distribution.size(); i++) {
 			_aep_distribution_ptr[i] = _annual_energy_distribution[i];	
 			annual_energy = annual_energy + _annual_energy_distribution[i];	//Calculate total annual energy.
 		}
-
-		
 
 		assign("annual_energy", var_data((ssc_number_t)annual_energy));
 		assign("average_power", var_data((ssc_number_t)average_power));
@@ -111,4 +119,3 @@ DEFINE_MODULE_ENTRY( mhk_tidal , "MHK Tidal power calculation model using power 
 
 //split matrix.
 //add losses as input.
-//add check for probability.
