@@ -52,12 +52,14 @@
 #include "common.h"
 
 static var_info _cm_vtab_mhk_tidal[] = {
-	//   VARTYPE			DATATYPE			NAME									LABEL														UNITS           META            GROUP              REQUIRED_IF					CONSTRAINTS			UI_HINTS	
-	{ SSC_INPUT,			SSC_MATRIX,			"tidal_resource_definition",              "Power curve and frequency distribution",					"",				"",             "MHKTidal",			"*",							"",                  "" },	
+	//   VARTYPE			DATATYPE			NAME									LABEL																		UNITS           META            GROUP              REQUIRED_IF					CONSTRAINTS			UI_HINTS	
+	{ SSC_INPUT,			SSC_MATRIX,			"tidal_resource_definition",            "Frequency distribution of resource as a function of stream speeds",		"",				"",             "MHKTidal",			"*",						"",                  "" },	
+	{ SSC_INPUT,			SSC_MATRIX,			"tidal_power_curve",					"Power curve of tidal energy conversion system",							"",				"",             "MHKTidal",			"*",						"",                  "" },	
+	{ SSC_INPUT,			SSC_NUMBER,			"annual_energy_loss",					"Total energy losses",														"%",			"",             "MHKTidal",			"*",						"",                  "" },	
 	
-	{ SSC_OUTPUT,			SSC_NUMBER,			"average_power",						"Average power production",									"",				"",				"MHKTidal",			"*",						"",					"" },
-	{ SSC_OUTPUT,			SSC_NUMBER,			"annual_energy",						"Annual energy production",									"",				"",				"MHKTidal",			"*",						"",					"" },
-	{ SSC_OUTPUT,			SSC_ARRAY,			"annual_energy_distribution",			"Annual energy production as function of speed",			"",				"",				"MHKTidal",			"*",						"",					"" },
+	{ SSC_OUTPUT,			SSC_NUMBER,			"average_power",						"Average power production",													"kW",			"",				"MHKTidal",			"*",						"",					"" },
+	{ SSC_OUTPUT,			SSC_NUMBER,			"annual_energy",						"Annual energy production",													"kWh",			"",				"MHKTidal",			"*",						"",					"" },
+	{ SSC_OUTPUT,			SSC_ARRAY,			"annual_energy_distribution",			"Annual energy production as function of speed",							"kWh",				"",				"MHKTidal",			"*",						"",					"" },
 };
 
 
@@ -70,37 +72,48 @@ public:
 	}
 	
 	void exec() throw(general_error) {
+
+	//Read and store tidal resource and power curve:
 		util::matrix_t<double>  tidal_resource_matrix = as_matrix("tidal_resource_definition");
-		double annual_energy = 0, average_power = 0, sheer_vect_checker = 0;
+		util::matrix_t<double>  tidal_power_curve = as_matrix("tidal_power_curve");
 		
-		//Create vectors to store individual columsn from the user input matrix "tidal_resource_definition":
+		//Create vectors to store individual columns from the user input matrix "tidal_resource_definition":
 		std::vector<double> _speed_vect;	//Stream speed (u [m/s])
-		std::vector<double> _power_vect;	//Tidal power curve (P [kW])
 		std::vector<double> _sheer_vect;	// f(z/D = x)
 		
-		std::vector<double> _annual_energy_distribution;	//Annual energy production as function of speed (annual energy production at each stream speed).
+		//Vector to store power curve of tidal energy conversion system from "tidal_power_curve":
+		std::vector<double> _power_vect;	//Tidal power curve (P [kW])
+		
+	//Initialize variables to store calculated values:
+		//Vector to store annual energy production as function of speed (annual energy production at each stream speed).
+		std::vector<double> _annual_energy_distribution;	
+		double annual_energy = 0, average_power = 0, sheer_vect_checker = 0;
 	
 
-		//Storing each column of the user input matrix as a vector, and calculating annual energy:
+		//Storing each column of the tidal_resource_matrix and tidal_power_curve as vectors:
 		for (int i = 0; i < (int)tidal_resource_matrix.nrows(); i++) {
-			_speed_vect.push_back(tidal_resource_matrix.at(i, 0));	
-			_power_vect.push_back(tidal_resource_matrix.at(i, 1));
-			_sheer_vect.push_back(tidal_resource_matrix.at(i, 2));
 			
-			//Checker to ensure adds to >= 99.5%
+			_speed_vect.push_back(tidal_resource_matrix.at(i, 0));	
+			_sheer_vect.push_back(tidal_resource_matrix.at(i, 1));
+			_power_vect.push_back(tidal_power_curve.at(i, 1));
+
+			//Check to ensure size of _power_vect == _speed_vect : 
+			if (_power_vect.size() != _speed_vect.size())
+				throw compute_module::exec_error("mhk_tidal", "Size of Tidal Resource is not equal to Power Curve");
+			
+			//Checker to ensure adds to >= 99.5%:
 			sheer_vect_checker += _sheer_vect[i];
-	
+		
+			//Calculate annual energy production at each stream speed bin:
 			_annual_energy_distribution.push_back(_speed_vect[i] * _power_vect[i] * _sheer_vect[i] * 8760);	
 			
 			//Average Power: 
 			average_power = average_power + ( _power_vect[i] * _sheer_vect[i] / 100 );
 		}
-
-
+				
 		//Throw exception if sheer vector is < 99.5%
 		if (sheer_vect_checker < 99.5)
-			throw compute_module::exec_error("mhk_tidal", "Sheer vector does not add up to 100%");
-		
+			throw compute_module::exec_error("mhk_tidal", "Sheer vector does not add up to 100%.");
 
 		//assign _annual_energy_distribution values to ssc variable -> "annual_energy_distribution": 
 		ssc_number_t * _aep_distribution_ptr = cm_mhk_tidal::allocate("annual_energy_distribution", _annual_energy_distribution.size());
@@ -110,6 +123,9 @@ public:
 			annual_energy = annual_energy + _annual_energy_distribution[i];	//Calculate total annual energy.
 		}
 
+		//Factoring in losses in total annual energy production:
+		annual_energy *= (1 - (as_double("annual_energy_loss") / 100 ));
+
 		assign("annual_energy", var_data((ssc_number_t)annual_energy));
 		assign("average_power", var_data((ssc_number_t)average_power));
 	}
@@ -117,5 +133,5 @@ public:
 
 DEFINE_MODULE_ENTRY( mhk_tidal , "MHK Tidal power calculation model using power distribution.", 3);
 
-//split matrix.
-//add losses as input.
+
+
