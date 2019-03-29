@@ -600,8 +600,13 @@ var_info vtab_sco2_design[] = {
 	{ SSC_INPUT,  SSC_NUMBER,  "eta_isen_pc",          "Design precompressor isentropic efficiency",             "-",          "",    "",      "cycle_config=2",     "",       "" },
 	{ SSC_INPUT,  SSC_NUMBER,  "eta_isen_t",           "Design turbine isentropic efficiency",                   "-",          "",    "",      "*",     "",       "" },
 	{ SSC_INPUT,  SSC_NUMBER,  "LT_recup_eff_max",     "Maximum allowable effectiveness in LT recuperator",      "-",          "",    "",      "*",     "",       "" },
-	{ SSC_INPUT,  SSC_NUMBER,  "HT_recup_eff_max",     "Maximum allowable effectiveness in LT recuperator",      "-",          "",    "",      "*",     "",       "" },
-	{ SSC_INPUT,  SSC_NUMBER,  "deltaP_counterHX_frac","Fraction of CO2 inlet pressure that is design point counterflow HX (recups & PHX) pressure drop", "-", "", "", "?=0", "", ""},
+    { SSC_INPUT,  SSC_NUMBER,  "LTR_LP_deltaP_des_in", "LTR low pressure side pressure drop as fraction of inlet pressure","-", "",   "",      "",      "",       "" },
+    { SSC_INPUT,  SSC_NUMBER,  "LTR_HP_deltaP_des_in", "LTR high pressure side pressure drop as fraction of inlet pressure","-", "",  "",      "",      "",       "" },
+    { SSC_INPUT,  SSC_NUMBER,  "HT_recup_eff_max",     "Maximum allowable effectiveness in LT recuperator",      "-",          "",    "",      "*",     "",       "" },
+    { SSC_INPUT,  SSC_NUMBER,  "HTR_LP_deltaP_des_in", "HTR low pressure side pressure drop as fraction of inlet pressure","-", "",   "",      "",      "",       "" },
+    { SSC_INPUT,  SSC_NUMBER,  "HTR_HP_deltaP_des_in", "HTR high pressure side pressure drop as fraction of inlet pressure","-", "",  "",      "",      "",       "" },
+    { SSC_INPUT,  SSC_NUMBER,  "PHX_co2_deltaP_des_in","PHX co2 side pressure drop as fraction of inlet pressure","-",         "",    "",      "",      "",       "" },
+    { SSC_INPUT,  SSC_NUMBER,  "deltaP_counterHX_frac","Fraction of CO2 inlet pressure that is design point counterflow HX (recups & PHX) pressure drop", "-", "", "", "?=0", "", ""},
 	{ SSC_INPUT,  SSC_NUMBER,  "P_high_limit",         "High pressure limit in cycle",                           "MPa",        "",    "",      "*",     "",       "" },
 		// PHX Design
 	{ SSC_INPUT,  SSC_NUMBER,  "dT_PHX_cold_approach", "Temp diff btw cold HTF and cold CO2",                    "C",          "",    "",      "*",     "",       "" },
@@ -833,24 +838,64 @@ int sco2_design_cmod_common(compute_module *cm, C_sco2_recomp_csp & c_sco2_cycle
 		sco2_rc_des_par.m_fixed_PR_mc = false;
 	}
 
-	// Cycle design parameters: hardcode pressure drops, for now
-// Define hardcoded sco2 design point parameters
+        // LTR pressure drops
 	std::vector<double> DP_LT(2);
-	/*(cold, hot) positive values are absolute [kPa], negative values are relative (-)*/
-	DP_LT[0] = -cm->as_double("deltaP_counterHX_frac");		//[-]
-	DP_LT[1] = -cm->as_double("deltaP_counterHX_frac");		//[-]
-	/*(cold, hot) positive values are absolute [kPa], negative values are relative (-)*/
-	std::vector<double> DP_HT(2);
-	DP_HT[0] = -cm->as_double("deltaP_counterHX_frac");		//[-]
-	DP_HT[1] = -cm->as_double("deltaP_counterHX_frac");		//[-]
+	/*(cold -hp-, hot -lp-) positive values are absolute [kPa], negative values are relative (-)*/
+    if (cm->is_assigned("LTR_HP_deltaP_des_in"))
+    {
+        DP_LT[0] = -cm->as_double("LTR_HP_deltaP_des_in");      //[-]
+    }
+    else
+    {
+        DP_LT[0] = -cm->as_double("deltaP_counterHX_frac");		//[-]
+    }
+    if (cm->is_assigned("LTR_LP_deltaP_des_in"))
+    {
+        DP_LT[1] = -cm->as_double("LTR_LP_deltaP_des_in");      //[-]
+    }
+    else
+    {
+        DP_LT[1] = -cm->as_double("deltaP_counterHX_frac");		//[-]
+    }
+
+	    // HTR pressure drops
+    std::vector<double> DP_HT(2);
+    /*(cold, hot) positive values are absolute [kPa], negative values are relative (-)*/
+    if (cm->is_assigned("HTR_HP_deltaP_des_in"))
+    {
+        DP_HT[0] = -cm->as_double("HTR_HP_deltaP_des_in");      //[-]
+    }
+    else
+    {
+        DP_HT[0] = -cm->as_double("deltaP_counterHX_frac");		//[-]
+    }
+    if (cm->is_assigned("HTR_LP_deltaP_des_in"))
+    {
+        DP_HT[1] = -cm->as_double("HTR_LP_deltaP_des_in");      //[-]
+    }
+    else
+    {
+        DP_HT[1] = -cm->as_double("deltaP_counterHX_frac");		//[-]
+    }
+
+        // PHX pressure drops
+    std::vector<double> DP_PHX(2);
+    /*(cold, hot) positive values are absolute [kPa], negative values are relative (-)*/
+    DP_PHX[1] = 0;
+    if (cm->is_assigned("PHX_co2_deltaP_des_in"))
+    {
+        DP_PHX[0] = -cm->as_double("PHX_co2_deltaP_des_in");	//[-]
+    }
+    else
+    {
+        DP_PHX[0] = -cm->as_double("deltaP_counterHX_frac");	//[-]
+    }
+
 	/*(cold, hot) positive values are absolute [kPa], negative values are relative (-)*/
 	std::vector<double> DP_PC(2);
 	DP_PC[0] = 0;
 	DP_PC[1] = -cm->as_double("deltaP_cooler_frac");		//[-]
-	/*(cold, hot) positive values are absolute [kPa], negative values are relative (-)*/
-	std::vector<double> DP_PHX(2);
-	DP_PHX[1] = 0;
-	DP_PHX[0] = -cm->as_double("deltaP_counterHX_frac");	//[-]
+	
 	sco2_rc_des_par.m_DP_LT = DP_LT;
 	sco2_rc_des_par.m_DP_HT = DP_HT;
 	sco2_rc_des_par.m_DP_PC = DP_PC;
