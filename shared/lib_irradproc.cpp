@@ -1097,7 +1097,7 @@ int irrad::calc()
 	double t_sunrise = sunAnglesRadians[4];
 	double t_sunset = sunAnglesRadians[5];
 
-	if (t_sunset > 24) //sunset is legitimately the next day, so recalculate sunset from the previous day
+	if (t_sunset > 24.0 && t_sunset != 100.0) //sunset is legitimately the next day but we're not in endless days, so recalculate sunset from the previous day
 	{
 		double sunanglestemp[9];
 		if (day > 1) //simply decrement day during month
@@ -1106,12 +1106,15 @@ int irrad::calc()
 			solarpos(year, month - 1, __nday[month - 2], 12, 0.0, latitudeDegrees, longitudeDegrees, timezone, sunanglestemp); //month is 1-indexed and __nday is 0 indexed
 		else //on the first day of the year, need to switch to Dec 31 of last year
 			solarpos(year - 1, 12, 31, 12, 0.0, latitudeDegrees, longitudeDegrees, timezone, sunanglestemp);
+		//on the last day of endless days, sunset is returned as 100 (hour angle too large for calculation), so use today's sunset time as a proxy
+		if (sunanglestemp[5] == 100.0)
+			t_sunset -= 24.0;		
 		//if sunset from yesterday WASN'T today, then it's ok to leave sunset > 24, which will cause the sun to rise today and not set today
-		if (sunanglestemp[5] >= 24)
+		else if (sunanglestemp[5] >= 24.0)
 			t_sunset = sunanglestemp[5] - 24.0;
 	}
 
-	if (t_sunrise < 0) //sunrise is legitimately the previous day, so recalculate for next day
+	if (t_sunrise < 0.0 && t_sunrise != -100.0) //sunrise is legitimately the previous day but we're not in endless days, so recalculate for next day
 	{
 		double sunanglestemp[9];
 		if (day < __nday[month - 1]) //simply increment the day during the month, month is 1-indexed and __nday is 0-indexed
@@ -1120,8 +1123,11 @@ int irrad::calc()
 			solarpos(year, month + 1, 1, 12, 0.0, latitudeDegrees, longitudeDegrees, timezone, sunanglestemp);
 		else //on the last day of the year, need to switch to Jan 1 of the next year
 			solarpos(year + 1, 1, 1, 12, 0.0, latitudeDegrees, longitudeDegrees, timezone, sunanglestemp);
+		//on the last day of endless days, sunrise would be returned as -100 (hour angle too large for calculations), so use today's sunrise time as a proxy
+		if (sunanglestemp[4] == -100.0)
+			t_sunrise += 24.0;		
 		//if sunrise from tomorrow isn't today, then it's ok to leave sunrise < 0, which will cause the sun to set at the right time and not rise until tomorrow
-		if (sunanglestemp[4] < 0)
+		else if (sunanglestemp[4] < 0.0)
 			t_sunrise = sunanglestemp[4] + 24.0;
 	}
 

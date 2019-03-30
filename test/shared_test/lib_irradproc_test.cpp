@@ -72,15 +72,16 @@ TEST_F(IrradTest, sunriseAndSunsetAtDifferentLocationsTest_lib_irradproc) {
 	location near the international dateline with positive longitude and negative time zone: Lomaji, Fiji
 	arctic circle: Kotzebue, Alaska
 	arctic circle #2: Point Hope, Alaska
+	arctic circle #3: Kotzebue, Alaska on the first day of continuous days
 	*/
 	e = 0.001;
-	vector<double> latitudes = { 39.77, 52.5, -12.03, 40.43, -17.75, 66.9, 68.35 };
-	vector<double> longitudes = { -105.22, 13.3, -77.06, -3.72, -179.3, -162.6, -166.8 };
-	vector<double> time_zones = { -7, 1, -5, 1, 12, -9, -9 };
-	vector<double> sunrise_times = { 4.636, 3.849, 6.521, 5.833, 6.513, -100.0, 2.552 };
-	vector<double> sunset_times = { 19.455, 20.436, 17.814, 20.723, 17.449, 100.0, 25.885 };
-	vector<int> month = { 6, 6, 6, 6, 6, 6, 7 };
-	vector<int> day = { 21, 21, 21, 21, 21, 21, 14 };
+	vector<double> latitudes = { 39.77, 52.5, -12.03, 40.43, -17.75, 66.9, 68.35, 66.9 };
+	vector<double> longitudes = { -105.22, 13.3, -77.06, -3.72, -179.3, -162.6, -166.8, -162.6 };
+	vector<double> time_zones = { -7, 1, -5, 1, 12, -9, -9, -9 };
+	vector<double> sunrise_times = { 4.636, 3.849, 6.521, 5.833, 6.513, -100.0, 2.552, -100.0 };
+	vector<double> sunset_times = { 19.455, 20.436, 17.814, 20.723, 17.449, 100.0, 25.885, 100.0 };
+	vector<int> month = { 6, 6, 6, 6, 6, 6, 7, 6 };
+	vector<int> day = { 21, 21, 21, 21, 21, 21, 14, 11 };
 
 
 	double sun_results[9]; //vector to hold the results of solarpos function
