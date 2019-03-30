@@ -58,6 +58,7 @@
 #include <set>
 #include <fstream>
 
+
 static C_csp_reported_outputs::S_output_info S_output_info[] =
 {
 	{C_pc_Rankine_indirect_224::E_ETA_THERMAL, C_csp_reported_outputs::TS_WEIGHTED_AVE},
@@ -490,7 +491,6 @@ void C_pc_Rankine_indirect_224::init(C_csp_power_cycle::S_solved_params &solved_
 		//Radiator
 		C_csp_radiator::S_params *rad = &mc_radiator.ms_params;
 		//rad->m_night_hrs = 9;										//Numer of hours of radiative cooling in summer peak
-
 		
 		//If two tank cold storage
 		if (mc_two_tank_ctes.ms_params.m_ctes_type == 2)
@@ -508,7 +508,9 @@ void C_pc_Rankine_indirect_224::init(C_csp_power_cycle::S_solved_params &solved_
 			mc_two_tank_ctes.ms_params.m_htf_pump_coef = 0.55;							//pumping power for HTF thru power block [kW/kg/s]
 			mc_two_tank_ctes.ms_params.dT_cw_rad = mc_two_tank_ctes.ms_params.m_T_field_out_des - mc_two_tank_ctes.ms_params.m_T_field_in_des;	//Reference delta T based on design values given.
 			mc_two_tank_ctes.ms_params.m_dot_cw_rad = (mc_two_tank_ctes.ms_params.m_W_dot_pc_design*1000000. / mc_two_tank_ctes.ms_params.m_eta_pc_factor) / (4183 /*[J/kg-K]*/ * mc_two_tank_ctes.ms_params.dT_cw_rad);	//Calculate design cw mass flow [kg/sec]
-			mc_two_tank_ctes.ms_params.m_dot_cw_cold = (mc_two_tank_ctes.ms_params.m_dot_cw_cold*mc_two_tank_ctes.ms_params.m_ts_hours) / 9;//Set the flow rate on the storage system between tank and HX to radiative field to fill the tank in the shortest night of year (9 hours in Las Vegas Nevada).
+			rad->m_night_hrs = 2.0 / 15.0 * 180.0 / 3.1415* acos(tan(abs(mc_two_tank_ctes.ms_params.m_lat)*3.1415/180.0)*tan(0.40928)); //Calculate nighttime hours. 
+
+			mc_two_tank_ctes.ms_params.m_dot_cw_cold = (mc_two_tank_ctes.ms_params.m_dot_cw_cold*mc_two_tank_ctes.ms_params.m_ts_hours) / rad->m_night_hrs;//Set the flow rate on the storage system between tank and HX to radiative field to fill the tank in the shortest night of year (9 hours in Las Vegas Nevada).
 			//Initialize cold storage
 			mc_two_tank_ctes.init();
 		}
@@ -528,7 +530,9 @@ void C_pc_Rankine_indirect_224::init(C_csp_power_cycle::S_solved_params &solved_
 			mc_stratified_ctes.ms_params.m_htf_pump_coef = 0.55;							//pumping power for HTF thru power block [kW/kg/s]
 			mc_stratified_ctes.ms_params.dT_cw_rad = mc_stratified_ctes.ms_params.m_T_field_out_des - mc_stratified_ctes.ms_params.m_T_field_in_des;	//Reference delta T based on design values given.
 			mc_stratified_ctes.ms_params.m_dot_cw_rad = (mc_stratified_ctes.ms_params.m_W_dot_pc_design*1000000. / mc_stratified_ctes.ms_params.m_eta_pc_factor) / (4183 /*[J/kg-K]*/ * mc_stratified_ctes.ms_params.dT_cw_rad);	//Calculate design cw mass flow [kg/sec]
-			mc_stratified_ctes.ms_params.m_dot_cw_cold = (mc_stratified_ctes.ms_params.m_dot_cw_rad*mc_stratified_ctes.ms_params.m_ts_hours) / 9;	//Set the flow rate on the storage system between tank and HX to radiative field to fill the tank in the shortest night of year (9 hours in Las Vegas Nevada).
+			rad->m_night_hrs = 2.0 / 15.0 * 180.0/3.1415 * acos(tan(abs(mc_stratified_ctes.ms_params.m_lat)*3.1415 / 180.0)*tan(0.40928)); //Calculate nighttime hours. 
+
+			mc_stratified_ctes.ms_params.m_dot_cw_cold = (mc_stratified_ctes.ms_params.m_dot_cw_rad*mc_stratified_ctes.ms_params.m_ts_hours) / rad->m_night_hrs;	//Set the flow rate on the storage system between tank and HX to radiative field to fill the tank in the shortest night of year (9 hours in Las Vegas Nevada).
 
 			//Initialize cold storage
 			mc_stratified_ctes.init();

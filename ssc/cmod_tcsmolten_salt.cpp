@@ -205,7 +205,7 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
 		//RADIATIVE COOLING WITH COLD STORAGE
 	{ SSC_INPUT,        SSC_NUMBER,      "h_ctes_tank_min",      "Minimum allowable water height in storage tank",					"m",            "",				"RADCOOL",		"?=0",						"",							"" },
 	{ SSC_INPUT,        SSC_NUMBER,      "ctes_tshours",         "Equivalent full load storage hours",								"hr",           "",				"RADCOOL",      "?=0",						"",							"" },
-	{ SSC_INPUT,        SSC_NUMBER,      "ctes_field_fl",        "Fluid in radiator field. 3=liquid water. Other = Glycol.",							"-",            "",				"RADCOOL",      "?=3",						"",							"" },
+	{ SSC_INPUT,        SSC_NUMBER,      "ctes_field_fl",        "Fluid in radiator field. 3=liquid water. Other = Glycol.",			"-",            "",				"RADCOOL",      "?=3",						"",							"" },
 	{ SSC_INPUT,        SSC_NUMBER,      "h_ctes_tank",			 "Total height of cold storage tank when full",						"m",            "",				"RADCOOL",      "?=0",						"",							"" },
 	{ SSC_INPUT,        SSC_NUMBER,      "u_ctes_tank",			 "Loss coefficient from cold storage tank",							"W/m2-K",       "",				"RADCOOL",      "?=0",						"",							"" },
 	{ SSC_INPUT,        SSC_NUMBER,      "ctes_tankpairs",		 "Number of equivalent tank pairs",									"-",			"",				"RADCOOL",      "?=0",						"",							"" },
@@ -935,7 +935,7 @@ public:
 				pc->m_dT_cw_ref = as_double("dT_cw_ref");
 				pc->m_T_amb_des = as_double("T_amb_des");
 				pc->m_P_boil = as_double("P_boil");
-				pc->m_CT = as_integer("CT");					// cooling tech type: 1=evaporative, 2=air, 3=hybrid	
+				pc->m_CT = as_integer("CT");					// cooling tech type: 1=evaporative, 2=air, 3=hybrid	, 5= custom for rad cool, 6= custom for rad cool
 				pc->m_tech_type = as_integer("tech_type");		// 1: Fixed, 3: Sliding
 				if (!(pc->m_tech_type == 1 || pc->m_tech_type == 3 || pc->m_tech_type ==5 || pc->m_tech_type==6))
 				{
@@ -969,6 +969,7 @@ public:
 					two_tank->ms_params.m_T_tank_hot_ini = as_double("T_ctes_warm_ini");
 					two_tank->ms_params.m_T_tank_cold_ini = as_double("T_ctes_cold_ini");
 					two_tank->ms_params.m_f_V_hot_ini = as_double("f_ctes_warm_ini");
+					two_tank->ms_params.m_lat = weather_reader.ms_solved_params.m_lat;
 				}
 				if (two_tank->ms_params.m_ctes_type >2)
 				{
@@ -982,6 +983,8 @@ public:
 					stratified->ms_params.m_T_tank_hot_ini = as_double("T_ctes_warm_ini");
 					stratified->ms_params.m_T_tank_cold_ini = as_double("T_ctes_cold_ini");
 					stratified->ms_params.m_f_V_hot_ini = as_double("f_ctes_warm_ini");
+					stratified->ms_params.m_lat = weather_reader.ms_solved_params.m_lat;
+
 				}
 				rankine_pc.mc_radiator.ms_params.m_field_fl = as_integer("ctes_field_fl");
 				rankine_pc.mc_radiator.ms_params.RM = as_double("rad_multiplier");
@@ -1484,10 +1487,13 @@ public:
 		p_csp_power_cycle->assign(C_pc_Rankine_indirect_224::E_M_COLD, allocate("m_cold", n_steps_fixed), n_steps_fixed);
 		p_csp_power_cycle->assign(C_pc_Rankine_indirect_224::E_M_WARM, allocate("m_warm", n_steps_fixed), n_steps_fixed);
 		p_csp_power_cycle->assign(C_pc_Rankine_indirect_224::E_T_WARM, allocate("T_warm", n_steps_fixed), n_steps_fixed);
-		p_csp_power_cycle->assign(C_pc_Rankine_indirect_224::E_T_RADOUT, allocate("T_rad_out", n_steps_fixed), n_steps_fixed);
-		p_csp_power_cycle->assign(C_pc_Rankine_indirect_224::E_P_COND, allocate("P_cond", n_steps_fixed), n_steps_fixed);
-		p_csp_power_cycle->assign(C_pc_Rankine_indirect_224::E_RADCOOL_CNTRL, allocate("radcool_control", n_steps_fixed), n_steps_fixed);
-
+		if (pb_tech_type == 0) {
+			if (rankine_pc.ms_params.m_CT == 4) {
+				p_csp_power_cycle->assign(C_pc_Rankine_indirect_224::E_T_RADOUT, allocate("T_rad_out", n_steps_fixed), n_steps_fixed);
+				p_csp_power_cycle->assign(C_pc_Rankine_indirect_224::E_P_COND, allocate("P_cond", n_steps_fixed), n_steps_fixed);
+				p_csp_power_cycle->assign(C_pc_Rankine_indirect_224::E_RADCOOL_CNTRL, allocate("radcool_control", n_steps_fixed), n_steps_fixed);
+			}
+		}
 
 		//heliostat field class
 		C_pt_sf_perf_interp heliostatfield;
@@ -1992,9 +1998,14 @@ public:
 		assign("csp.pt.cost.receiver", (ssc_number_t)sys_costs.ms_out.receiver_cost);
 		assign("csp.pt.cost.storage", (ssc_number_t)sys_costs.ms_out.tes_cost);
 		assign("csp.pt.cost.power_block", (ssc_number_t)sys_costs.ms_out.power_cycle_cost);
-		assign("csp.pt.cost.rad_field", (ssc_number_t)sys_costs.ms_out.rad_field_totcost);
-		assign("csp.pt.cost.rad_fluid", (ssc_number_t)sys_costs.ms_out.rad_fluid_totcost);
-		assign("csp.pt.cost.rad_storage", (ssc_number_t)sys_costs.ms_out.rad_storage_totcost);
+		
+		if (pb_tech_type == 0) {
+			if (rankine_pc.ms_params.m_CT == 4) {
+				assign("csp.pt.cost.rad_field", (ssc_number_t)sys_costs.ms_out.rad_field_totcost);
+				assign("csp.pt.cost.rad_fluid", (ssc_number_t)sys_costs.ms_out.rad_fluid_totcost);
+				assign("csp.pt.cost.rad_storage", (ssc_number_t)sys_costs.ms_out.rad_storage_totcost);
+			}
+		}
 		assign("csp.pt.cost.bop", (ssc_number_t)sys_costs.ms_out.bop_cost);
 		assign("csp.pt.cost.fossil", (ssc_number_t)sys_costs.ms_out.fossil_backup_cost);
 		assign("ui_direct_subtotal", (ssc_number_t)sys_costs.ms_out.direct_capital_precontingency_cost);
