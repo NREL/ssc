@@ -6,6 +6,8 @@ CXXFLAGS = $(CFLAGS) -std=gnu++11
 
 OBJECTS = \
 	lsqfit.o \
+	lib_fuel_cell.o \
+	lib_fuel_cell_dispatch.o \
 	lib_battery.o \
 	lib_battery_dispatch.o \
 	lib_battery_powerflow.o \
@@ -36,6 +38,7 @@ OBJECTS = \
 	lib_wind_obos_cable_vessel.o \
 	lib_windwakemodel.o \
 	lib_windwatts.o \
+	lib_time.o \
 	lib_mlmodel.o \
 	lib_ondinv.o
 

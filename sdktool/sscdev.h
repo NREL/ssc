@@ -107,8 +107,8 @@ public:
 	void ClearLog();
 	void Log(const wxString &, bool wnl=true);
 	
-	static void Copy( ssc_data_t p_data, var_table *vt, bool clear_first );
-	static void Copy( var_table *vt,  ssc_data_t p_data, bool clear_first );
+	static void Copy(ssc_module_t p_mod, ssc_data_t p_data, var_table *vt, bool clear_first);
+	static void Copy(var_table *vt, ssc_data_t p_data, bool clear_first);
 
 	void Progress(const wxString &text, float percent);
 

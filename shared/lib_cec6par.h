@@ -86,6 +86,8 @@ public:
 	virtual double IscRef() { return Isc; }
 
 	virtual bool operator() ( pvinput_t &input, double TcellC, double opvoltage, pvoutput_t &output );
+
+	virtual ~cec6par_module_t() {};
 };
 
 
@@ -97,6 +99,8 @@ public:
 	double Tnoct;
 
 	virtual bool operator() ( pvinput_t &input, pvmodule_t &module, double opvoltage, double &Tcell );
+
+	virtual ~noct_celltemp_t(){}
 };
 
 
@@ -114,6 +118,8 @@ public:
 	double TbackInteg;  // back surface temperature for integrated modules ('C)
 	
 	virtual bool operator() ( pvinput_t &input, pvmodule_t &module, double opvoltage, double &Tcell );
+
+	virtual ~mcsp_celltemp_t() {};
 };
 
 #endif

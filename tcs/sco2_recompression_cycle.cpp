@@ -2356,19 +2356,16 @@ void C_RecompCycle::opt_design(S_opt_design_parameters & opt_des_par_in, int & e
 {
 	ms_opt_des_par = opt_des_par_in;
 
-	int opt_design_error_code = 0;
+	error_code = 0;
 
 	opt_design_core(error_code);
 
-	if(opt_design_error_code != 0)
+	if(error_code != 0)
 	{
-		error_code = opt_design_error_code;
 		return;
 	}
 
-	finalize_design(opt_design_error_code);
-
-	error_code = opt_design_error_code;
+	finalize_design(error_code);
 }
 
 void C_RecompCycle::opt_design_core(int & error_code)
@@ -2391,6 +2388,7 @@ void C_RecompCycle::opt_design_core(int & error_code)
 	ms_des_par.m_tol = ms_opt_des_par.m_tol;
 	ms_des_par.m_N_turbine = ms_opt_des_par.m_N_turbine;
 
+	ms_des_par.m_is_des_air_cooler = ms_opt_des_par.m_is_des_air_cooler;	//[-]
 	ms_des_par.m_frac_fan_power = ms_opt_des_par.m_frac_fan_power;			//[-]
 	ms_des_par.m_deltaP_cooler_frac = ms_opt_des_par.m_deltaP_cooler_frac;	//[-]
 	ms_des_par.m_T_amb_des = ms_opt_des_par.m_T_amb_des;					//[K]
@@ -2454,7 +2452,7 @@ void C_RecompCycle::opt_design_core(int & error_code)
 		index++;
 	}
 
-	int no_opt_error_code = 0;
+	error_code = 0;
 	if( index > 0 )
 	{
 		// Ensure thermal efficiency is initialized to 0
@@ -2474,7 +2472,7 @@ void C_RecompCycle::opt_design_core(int & error_code)
 		
 		ms_des_par = ms_des_par_optimal;
 
-		design_core(no_opt_error_code);
+		design_core(error_code);
 
 		/*
 		m_W_dot_net_last = m_W_dot_net_opt;
@@ -2498,6 +2496,12 @@ void C_RecompCycle::opt_design_core(int & error_code)
 		// Ensure thermal efficiency is initialized to 0
 		m_objective_metric_opt = 0.0;
 		double eta_local = design_cycle_return_objective_metric(x);
+
+		if (eta_local == 0.0)
+		{
+			error_code = -1;
+			return;
+		}
 
 		ms_des_par_optimal = ms_des_par;
 	}
@@ -2639,6 +2643,7 @@ void C_RecompCycle::auto_opt_design_core(int & error_code)
 	ms_opt_des_par.m_opt_tol = ms_auto_opt_des_par.m_opt_tol;
 	ms_opt_des_par.m_N_turbine = ms_auto_opt_des_par.m_N_turbine;
 
+	ms_opt_des_par.m_is_des_air_cooler = ms_auto_opt_des_par.m_is_des_air_cooler;	//[-]
 	ms_opt_des_par.m_frac_fan_power = ms_auto_opt_des_par.m_frac_fan_power;			//[-]
 	ms_opt_des_par.m_deltaP_cooler_frac = ms_auto_opt_des_par.m_deltaP_cooler_frac;	//[-]
 	ms_opt_des_par.m_T_amb_des = ms_auto_opt_des_par.m_T_amb_des;					//[K]
@@ -2766,6 +2771,7 @@ int C_RecompCycle::auto_opt_design_hit_eta(S_auto_opt_design_hit_eta_parameters 
 	ms_auto_opt_des_par.m_N_turbine = auto_opt_des_hit_eta_in.m_N_turbine;				//[rpm] Turbine shaft speed (negative values link turbine to compressor)
 	ms_auto_opt_des_par.m_is_recomp_ok = auto_opt_des_hit_eta_in.m_is_recomp_ok;		//[-] 1 = yes, 0 = no, other = invalid
 
+	ms_auto_opt_des_par.m_is_des_air_cooler = auto_opt_des_hit_eta_in.m_is_des_air_cooler;	//[-]
 	ms_auto_opt_des_par.m_frac_fan_power = auto_opt_des_hit_eta_in.m_frac_fan_power;			//[-]
 	ms_auto_opt_des_par.m_deltaP_cooler_frac = auto_opt_des_hit_eta_in.m_deltaP_cooler_frac;	//[-]
 	ms_auto_opt_des_par.m_T_amb_des = auto_opt_des_hit_eta_in.m_T_amb_des;					//[K]
@@ -3243,7 +3249,7 @@ void C_RecompCycle::finalize_design(int & error_code)
 	s_air_cooler_des_par_ind.m_T_amb_des = ms_des_par.m_T_amb_des;		//[K]
 	s_air_cooler_des_par_ind.m_elev = ms_des_par.m_elevation;			//[m]
 
-	if (std::isfinite(ms_des_par.m_deltaP_cooler_frac) && std::isfinite(ms_des_par.m_frac_fan_power)
+	if (ms_des_par.m_is_des_air_cooler && std::isfinite(ms_des_par.m_deltaP_cooler_frac) && std::isfinite(ms_des_par.m_frac_fan_power)
 		&& std::isfinite(ms_des_par.m_T_amb_des) && std::isfinite(ms_des_par.m_elevation))
 	{
 		mc_air_cooler.design_hx(s_air_cooler_des_par_ind, s_air_cooler_des_par_dep);

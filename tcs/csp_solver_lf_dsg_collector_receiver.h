@@ -61,8 +61,7 @@
 
 #include "numeric_solvers.h"
 
-#include <iostream>
-#include <fstream>
+#include <iosfwd>
 
 class C_csp_lf_dsg_collector_receiver : public C_csp_collector_receiver
 {

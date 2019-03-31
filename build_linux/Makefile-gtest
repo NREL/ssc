@@ -1,41 +1,31 @@
-VPATH = ../test
+GTDIR = $(GTEST)
 
 SSCLIB = ./ssc.so
-GTEST=../../googletest/googletest
-GTDIR = $(GTEST)
-GTLIB = $(GTDIR)/make/gtest_main.a
+SPLINTERLIB = ./splinter.a
+GTLIB = $(GTDIR)/make/libgtest_main.a
 
-CC = gcc
+WARNINGS = -Wno-deprecated
+LIBS = -ldl -lpthread
+
 CXX = g++
-CCFLAGS = -g -O2  -I. -I./input_cases -I./shared_test -I./ssc_test -I./tcs_test -I$(GTDIR)/include -I../ssc -I../tcs -I../solarpilot -I../shared -I../splinter -DLK_USE_WXWIDGETS `wx-config-3 --cflags` -DWX_PRECOMP -O2  -fno-common
-CXXFLAGS = $(CCFLAGS) -std=c++0x
-LDFLAGS = -std=c++0x `wx-config-3 --libs` `wx-config-3 --libs aui` `wx-config-3 --libs stc` `wx-config-3 --libs` -lm $(GTLIB) $(SSCLIB) -Wl,--no-as-needed -ldl
+CXXFLAGS = -std=c++0x -g -O2  -I. -I./input_cases -I./shared_test -I./ssc_test -I./tcs_test -I$(GTDIR)/include -I../ssc -I../tcs -I../solarpilot -I../shared -I../splinter $(WARNINGS)
+LDFLAGS = $(SPLINTERLIB) $(GTLIB) $(SSCLIB) $(LIBS)
 
 
+CXXSRC = \
+	$(wildcard ../test/*.cpp) \
+	$(wildcard ../test/input_cases/*.cpp) \
+	$(wildcard ../test/shared_test/*.cpp) \
+	$(wildcard ../test/ssc_test/*.cpp) \
+	$(wildcard ../test/tcs_test/*.cpp)
 
-OBJECTS  = \
-	../test/input_cases/tcs_trough_physical_input.o \
-	../test/input_cases/weather_inputs.o \
-	../test/shared_test/lib_battery_test.o \
-	../test/shared_test/lib_battery_powerflow_test.o \
-	../test/shared_test/lib_irradproc_test.o \
-	../test/shared_test/lib_util_test.o \
-	../test/shared_test/lib_weatherfile_test.o \
-	../test/shared_test/lib_windfile_test.o \
-	../test/shared_test/lib_windwakemodel_test.o \
-	../test/shared_test/lib_windwatts_test.o \
-	../test/ssc_test/computeModuleTest.o \
-	../test/ssc_test/cmod_windpower_test.o \
-	../test/ssc_test/cmod_pvsamv1_test.o\
-	../test/ssc_test/cmod_pvwattsv5_test.o\
-	../test/ssc_test/cmod_tcstrough_physical_test.o\
-	../test/tcs_test/csp_solver_core_test.o \
-	main.o
-	
+OBJECTS = $(CXXSRC:.cpp=.o)
+
 TARGET = Test
 
-$(TARGET): $(OBJECTS) $(WEXLIB) 
-	$(CXX) -g -o $@ $^ $(LDFLAGS)
+$(TARGET): $(OBJECTS) 
+	$(CXX) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
 	
 clean:
 	rm -f $(TARGET) $(OBJECTS)
+

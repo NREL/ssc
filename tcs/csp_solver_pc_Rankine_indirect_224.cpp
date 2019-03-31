@@ -409,19 +409,21 @@ void C_pc_Rankine_indirect_224::init(C_csp_power_cycle::S_solved_params &solved_
 	else
 	{	// Initialization calculations for User Defined power cycle model
         
-        // If any of the three original UDPC tables are not initialized, try importing the newer single combined table
-        if ( ms_params.mc_T_htf_ind.is_single() || ms_params.mc_T_amb_ind.is_single() || ms_params.mc_m_dot_htf_ind.is_single() ) {
-            if (!ms_params.mc_combined_ind.is_single()) {
-                try {
-                    split_ind_tbl(ms_params.mc_combined_ind, ms_params.mc_T_htf_ind, ms_params.mc_m_dot_htf_ind, ms_params.mc_T_amb_ind);
-                }
-                catch (...) {
-                    throw(C_csp_exception("Cannot import UDPC table", "UDPC Table Importation"));
+        // Import the newer single combined UDPC table if it's populated, otherwise try using the older three separate tables
+        if (!ms_params.mc_combined_ind.is_single()) {
+            try {
+                split_ind_tbl(ms_params.mc_combined_ind, ms_params.mc_T_htf_ind, ms_params.mc_m_dot_htf_ind, ms_params.mc_T_amb_ind);
+            }
+            catch (...) {
+                m_error_msg = "Cannot import the single UDPC table";
+                mc_csp_messages.add_message(C_csp_messages::WARNING, m_error_msg);
+                if (ms_params.mc_T_htf_ind.is_single() || ms_params.mc_T_amb_ind.is_single() || ms_params.mc_m_dot_htf_ind.is_single()) {
+                    throw(C_csp_exception("UDPC tables are not set", "UDPC Table Importation"));
                 }
             }
-            else {
-                throw(C_csp_exception("UDPC tables are not set", "UDPC Table Importation"));
-            }
+        }
+        else if ( ms_params.mc_T_htf_ind.is_single() || ms_params.mc_T_amb_ind.is_single() || ms_params.mc_m_dot_htf_ind.is_single() ) {
+            throw(C_csp_exception("UDPC tables are not set", "UDPC Table Importation"));
         }
 
 		// Load tables into user defined power cycle member class
@@ -1543,7 +1545,7 @@ void C_pc_Rankine_indirect_224::write_output_intervals(double report_time_start,
 		v_temp_ts_time_end, report_time_end);
 }
 
-void C_pc_Rankine_indirect_224::assign(int index, float *p_reporting_ts_array, int n_reporting_ts_array)
+void C_pc_Rankine_indirect_224::assign(int index, float *p_reporting_ts_array, size_t n_reporting_ts_array)
 {
 	mc_reported_outputs.assign(index, p_reporting_ts_array, n_reporting_ts_array);
 }

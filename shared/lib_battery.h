@@ -51,7 +51,6 @@
 #define battery_h
 
 #include "lib_util.h"
-#include "lsqfit.h"
 
 #include <vector>
 #include <map>
@@ -59,11 +58,10 @@
 #include <stdio.h>
 #include <algorithm>
 
+// Forward declarations to reduce imports
+
 const double low_tolerance = 0.01;
 const double tolerance = 0.001;
-
-typedef std::vector<double> double_vec;
-typedef std::vector<int> int_vec;
 
 // Messages
 class message
@@ -548,8 +546,9 @@ class thermal_t
 {
 public:
 	thermal_t();
-	thermal_t(double mass, double length, double width, double height,
-		double Cp, double h, double T_room,
+	thermal_t(double dtHour, double mass, double length, double width, double height,
+		double Cp, double h, 
+		std::vector<double> T_room,
 		const util::matrix_t<double> &cap_vs_temp);
 
 	// deep copy
@@ -558,8 +557,8 @@ public:
 	// copy thermal to this
 	void copy(thermal_t *);
 
-	void updateTemperature(double I, double R, double dt);
-	void replace_battery();
+	void updateTemperature(double I, double R, double dt, size_t lifetimeIndex);
+	void replace_battery(size_t lifetimeIndex);
 
 	// outputs
 	double T_battery();
@@ -567,22 +566,23 @@ public:
 	message get_messages(){ return _message; }
 
 protected:
-	double f(double T_battery, double I);
-	double rk4(double I, double dt);
-	double trapezoidal(double I, double dt);
-	double implicit_euler(double I, double dt);
+	double f(double T_battery, double I, size_t lifetimeIndex);
+	double rk4(double I, double dt, size_t lifetimeIndex);
+	double trapezoidal(double I, double dt, size_t lifetimeIndex);
+	double implicit_euler(double I, double dt, size_t lifetimeIndex);
 
 protected:
 
 	util::matrix_t<double> _cap_vs_temp;
 
+	double _dt_hour;    // [hr] - timestep
 	double _mass;		// [kg]
 	double _length;		// [m]
 	double _width;		// [m]
 	double _height;		// [m]
 	double _Cp;			// [J/KgK] - battery specific heat capacity
 	double _h;			// [Wm2K] - general heat transfer coefficient
-	double _T_room;		// [K] - storage room temperature
+	std::vector<double> _T_room; // [K] - storage room temperature
 	double _R;			// [Ohm] - internal resistance
 	double _A;			// [m2] - exposed surface area
 	double _T_battery;   // [K]
@@ -591,31 +591,66 @@ protected:
 	message _message;
 
 };
-/*
-Losses Base class
+/**
+* \class losses_t
+*
+* \brief
+*
+*  The Battery losses class takes generic losses which occur during charging, discharge, or idle operation modes:
+*  The model also accepts a time-series vector of losses defined for every time step of the first year of simulation
+*  which may be used in lieu of the losses for operational mode.  
 */
 class losses_t
 {
 public:
-	losses_t(lifetime_t *, thermal_t *, capacity_t*, int loss_mode, double_vec batt_loss_charge, double_vec batt_loss_discharge, double_vec batt_loss_idle, double_vec batt_loss);
 
-	// deep copy
+	/**
+	* \function losses_t
+	*
+	* Construct the losses object
+	*
+	* \param[in] lifetime_t * pointer to lifetime class
+	* \param[in] thermal_t * pointer to thermal class (currently unused)
+	* \param[in] capacity_t * pointer to capacity class
+	* \param[in] loss_mode 0 for monthy input, 1 for input time series
+	* \param[in] batt_loss_charge_kw vector (size 1 for annual or 12 for monthly) containing battery system losses when charging (kW)
+	* \param[in] batt_loss_discharge_kw vector (size 1 for annual or 12 for monthly) containing battery system losses when discharge (kW)
+	* \param[in] batt_loss_idle_kw vector (size 1 for annual or 12 for monthly) containing battery system losses when idle (kW)
+	* \param[in] batt_loss_kw vector (size 1 for annual or 12 for monthly) containing battery system losses when idle (kW)
+	*/
+	losses_t(double dtHour,
+			lifetime_t *, 
+			thermal_t *, 
+			capacity_t*, 
+			const int loss_mode, 
+			const double_vec batt_loss_charge_kw = std::vector<double>(0), 
+			const double_vec batt_loss_discharge_kw = std::vector<double>(0), 
+			const double_vec batt_loss_idle_kw = std::vector<double>(0), 
+			const double_vec batt_loss_kw=std::vector<double>(0));
+
+	/// Deep copy of losses object
 	losses_t * clone();
 
-	// copy losses to this
+	/// Copy input losses to this object
 	void copy(losses_t *);
 
-	// main APIs
-	void run_losses(double dt_hour, size_t index);
-	void replace_battery();
-	double battery_system_loss(int index){ return (_full_loss)[index]; }
+	/// Run the losses model at the present simulation index (for year 1 only)
+	void run_losses(size_t lifetimeIndex);
 
+	/// Replace the battery
+	void replace_battery();
+
+	/// Get the loss at the specified simulation index (year 1)
+	double getLoss(size_t indexFirstYear);
+
+	/// Options for the loss inputs to use
 	enum { MONTHLY, TIMESERIES};
 
 protected:
 	
 	int _loss_mode;
 	int _nCycle;
+	double _dtHour;
 	
 	lifetime_t * _lifetime;
 	thermal_t * _thermal;
@@ -650,15 +685,15 @@ public:
 
 	void initialize(capacity_t *, voltage_t *, lifetime_t *, thermal_t *, losses_t *);
 
-	// Run all
-	void run(size_t idx, double I);
+	// Run all for single time step
+	void run(size_t lifetimeIndex, double I);
 
 	// Run a component level model
 	void runCapacityModel(double &I);
 	void runVoltageModel();
-	void runThermalModel(double I);
-	void runLifetimeModel(size_t idx);
-	void runLossesModel(size_t idx);
+	void runThermalModel(double I, size_t lifetimeIndex);
+	void runLifetimeModel(size_t lifetimeIndex);
+	void runLossesModel(size_t lifetimeIndex);
 
 	capacity_t * capacity_model() const;
 	capacity_t * capacity_initial_model() const;

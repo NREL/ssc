@@ -54,6 +54,9 @@
 
 #include "lib_util.h"
 
+// responsibility of developers of this file to fix these warnings
+//#pragma warning (disable : 4458 ) // https://docs.microsoft.com/en-us/cpp/error-messages/compiler-warnings/compiler-warning-level-4-c4458?view=vs-2017
+
 CPowerBlock_Type224::CPowerBlock_Type224()
 {	// inputs
 	m_pbi.demand_var = 0;
@@ -1266,9 +1269,9 @@ void CPowerBlock_Type224::evap_tower(double P_cond_min, int n_pl_inc, double Del
 							 double eta_ref, double T_db, double T_wb, double P_amb, double q_reject, double &m_dot_water, 
 							 double &W_dot_tot, double &P_cond, double &T_cond, double &f_hrsys)
 {
-	double c_air, c_cw, deltah_evap, deltat_cw, dp_evap, drift_loss_frac, dt_out, eta_fan, eta_fan_s,
-          eta_pcw_s, eta_pump, h_fan_in, h_fan_out, h_fan_out_s, h_pcw_in, h_pcw_out,
-          h_pcw_out_s, m_dot_air, m_dot_blowdown, m_dot_cw, m_dot_cw_des, m_dot_drift, blowdown_frac,
+	double c_air, c_cooling, deltah_evap, deltat_cw, dp_evap, dl_frac, dt_out, eta_fan, eta_fan_s,
+          eta_pump_s, eta_pump_t, h_fan_in, h_fan_out, h_fan_out_s, h_pcw_in, h_pcw_out,
+          h_pcw_out_s, m_dot_air, m_dot_blowdown, m_dot_cw, m_dot_cw_design, m_dot_drift, blowdwn_frac,
           m_dot_evap, mass_ratio_fan, p_ratio_fan, q_reject_des, R, rho_cw, t_fan_in,
 		  t_fan_in_k, t_fan_out, t_fan_out_k, w_dot_cw_pump, w_dot_fan;
 	/*
@@ -1298,28 +1301,28 @@ void CPowerBlock_Type224::evap_tower(double P_cond_min, int n_pl_inc, double Del
 
 	// Values that can be estimated
 	dt_out = 3.0;				// Temperature difference at hot side of the condenser
-	drift_loss_frac = 0.001;    // Drift loss fraction
-	blowdown_frac = 0.003;      // Blowdown fraction
+	dl_frac = 0.001;            // Drift loss fraction
+	blowdwn_frac = 0.003;       // Blowdown fraction
 	dp_evap = 0.37*1.0e5;       // [Pa] Pressure drop across the condenser and cooling tower
-	eta_pump = 0.75;            // Total pump efficiency
-	eta_pcw_s = 0.8;            // Isentropic cooling water pump efficiency
+	eta_pump_t = 0.75;          // Total pump efficiency
+	eta_pump_s = 0.8;           // Isentropic cooling water pump efficiency
 	eta_fan = 0.75;             // Fan mechanical efficiency
 	eta_fan_s = 0.8;            // Fan isentropic efficiency
 	p_ratio_fan = 1.0025;       // Fan pressure ratio
 	mass_ratio_fan = 1.01;      // Ratio of air flow to water flow in the cooling tower
 
 	// Cooling water specific heat
-	c_cw = f_c_psat(P_amb);
+	c_cooling = f_c_psat(P_amb);
 
 	// **** Calculations for design conditions
-	q_reject_des = P_cycle*(1./eta_ref-1.0);    	    // Heat rejection from the cycle
-	m_dot_cw_des = q_reject_des/(c_cw*DeltaT_cw_des);	// Mass flow rate of cooling water required to absorb the rejected heat
+	q_reject_des = P_cycle*(1./eta_ref-1.0);    	        // Heat rejection from the cycle
+	m_dot_cw_design = q_reject_des/(c_cooling*DeltaT_cw_des);	// Mass flow rate of cooling water required to absorb the rejected heat
 	f_hrsys = 1.0;   // Initial fraction of cooling system operating
 
 	// **** Calculations for performance
 	// Calculate the cooling water temp. rise associated with normal cooling system operation
-	m_dot_cw = m_dot_cw_des;
-	deltat_cw = q_reject/(m_dot_cw*c_cw);
+	m_dot_cw = m_dot_cw_design;
+	deltat_cw = q_reject/(m_dot_cw*c_cooling);
 
 	// Condenser saturation temperature
 	T_cond = T_wb + deltat_cw + dt_out + T_approach; // celcius
@@ -1340,8 +1343,8 @@ void CPowerBlock_Type224::evap_tower(double P_cond_min, int n_pl_inc, double Del
 		for (int i=2; i <=n_pl_inc; i++)
 		{
 			f_hrsys = (1.0 - (float)((i-1.0)/n_pl_inc));
-			m_dot_cw = m_dot_cw_des*f_hrsys;
-			deltat_cw = q_reject/(m_dot_cw*c_cw);
+			m_dot_cw = m_dot_cw_design*f_hrsys;
+			deltat_cw = q_reject/(m_dot_cw*c_cooling);
 			T_cond = T_wb + deltat_cw + dt_out + T_approach;
 			P_cond = f_psat_T(T_cond);
 			if(P_cond > P_cond_min) break;
@@ -1352,7 +1355,7 @@ void CPowerBlock_Type224::evap_tower(double P_cond_min, int n_pl_inc, double Del
 			P_cond = P_cond_min;
 			T_cond = f_Tsat_p(P_cond);
 			deltat_cw = T_cond - (T_wb + dt_out + T_approach);
-			m_dot_cw = q_reject/(deltat_cw * c_cw);
+			m_dot_cw = q_reject/(deltat_cw * c_cooling);
 		}
 	}
 
@@ -1363,8 +1366,8 @@ void CPowerBlock_Type224::evap_tower(double P_cond_min, int n_pl_inc, double Del
 	// s_pcw_in = f_s_hw_psat(P_amb);										// [J/kg-K] cw pump inlet entropy
 	rho_cw = f_rho_P(P_amb);												// [kg/m3] cooling water density in the pump
 	h_pcw_out_s = (dp_evap/rho_cw) + h_pcw_in;								// [J/kg] isentropic outlet enthalpy.. incompressible fluid
-	h_pcw_out = h_pcw_in + ((h_pcw_out_s - h_pcw_in)/eta_pcw_s);			// [J/kg] Outlet enthalpy accounting for irreversibility
-	w_dot_cw_pump = (h_pcw_out - h_pcw_in) * m_dot_cw/eta_pump * 1.0E-6;	// [MW] Cooling water circulating pump power
+	h_pcw_out = h_pcw_in + ((h_pcw_out_s - h_pcw_in)/eta_pump_s);			// [J/kg] Outlet enthalpy accounting for irreversibility
+	w_dot_cw_pump = (h_pcw_out - h_pcw_in) * m_dot_cw/eta_pump_t * 1.0E-6;	// [MW] Cooling water circulating pump power
 
 
 	// Fan power
@@ -1395,8 +1398,8 @@ void CPowerBlock_Type224::evap_tower(double P_cond_min, int n_pl_inc, double Del
 	m_dot_evap = q_reject/deltah_evap;
 
 	// Other water losses
-	m_dot_drift = drift_loss_frac * m_dot_cw;			// Drift loss fraction, based on cooling water mass flow rate
-	m_dot_blowdown = blowdown_frac * m_dot_cw;			// Blow down fraction
+	m_dot_drift = dl_frac * m_dot_cw;			        // Drift loss fraction, based on cooling water mass flow rate
+	m_dot_blowdown = blowdwn_frac * m_dot_cw;			// Blow down fraction
 
 	// Total power block water usage
 	m_dot_water = m_dot_evap + m_dot_drift + m_dot_blowdown;
@@ -1420,7 +1423,7 @@ void CPowerBlock_Type224::ACC(double P_cond_min, int n_pl_inc, double T_ITD_des,
 	//implicit none
 
 	double eta_fan, eta_fan_s, h_fan_in, h_fan_out, h_fan_out_s, mm, R, T_fan_in_K, T_fan_out, T_fan_out_K,
-			T_hot_diff, T_ITD, c_air, Q_reject_des, m_dot_air_des, dT_air;
+			T_hot_delta, T_ITD, c_air, Q_reject_design, m_dot_air_des, dT_air;
 	/*
 	!------------------------------------------------------------------------------------------------------------
 	!--Inputs
@@ -1445,19 +1448,19 @@ void CPowerBlock_Type224::ACC(double P_cond_min, int n_pl_inc, double T_ITD_des,
 	T_db = T_db - 273.15;		// [C] Converted dry bulb temp
 
 	// Values that can be estimated
-	T_hot_diff = 3.0;           // [C] Temperature difference between saturation steam and condenser outlet air temp
+	T_hot_delta = 3.0;          // [C] Temperature difference between saturation steam and condenser outlet air temp
 	eta_fan_s = 0.8;            // [-] Fan isentropic efficiency
 	eta_fan = pow(0.98,3.0);	// [-] Fan mechanical efficiency
 	c_air = 1005.0;				// [J/kg-K] Specific heat of air, relatively constant over dry bulb range
 
 	// **** Calculations for design conditions
-	Q_reject_des = P_cycle*(1.0/eta_ref-1.0);							// Heat rejection from the cycle
-	m_dot_air_des = Q_reject_des/(c_air*(T_ITD_des - T_hot_diff));
+	Q_reject_design = P_cycle*(1.0/eta_ref-1.0);							// Heat rejection from the cycle
+	m_dot_air_des = Q_reject_design/(c_air*(T_ITD_des - T_hot_delta));
 	f_hrsys = 1.0;
 
 	// Fan power
 	dT_air = q_reject/(m_dot_air_des*c_air);
-	T_ITD = T_hot_diff + dT_air;	// [C] Calculate the actual ITD during off-design operation
+	T_ITD = T_hot_delta + dT_air;	// [C] Calculate the actual ITD during off-design operation
 
 	// Calculated output
 	T_cond = T_db + T_ITD;		// Condensation temperature
@@ -1480,7 +1483,7 @@ void CPowerBlock_Type224::ACC(double P_cond_min, int n_pl_inc, double T_ITD_des,
 			f_hrsys = (1.0 - (float)((i-1.0)/n_pl_inc));
 			m_dot_air = m_dot_air_des*f_hrsys;
 			dT_air = q_reject/(m_dot_air*c_air);
-			T_cond = T_db + T_hot_diff + dT_air;
+			T_cond = T_db + T_hot_delta + dT_air;
 			P_cond = f_psat_T(T_cond);
 			if(P_cond > P_cond_min) break;
 		}
@@ -1489,7 +1492,7 @@ void CPowerBlock_Type224::ACC(double P_cond_min, int n_pl_inc, double T_ITD_des,
 			// Still below min. fix to min condenser pressure and recalc. temp.
 			P_cond = P_cond_min;
 			T_cond = f_Tsat_p(P_cond);
-			dT_air = T_cond - (T_db + T_hot_diff);
+			dT_air = T_cond - (T_db + T_hot_delta);
 			m_dot_air = q_reject/(dT_air*c_air);
 		}
 	}

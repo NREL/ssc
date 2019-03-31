@@ -211,13 +211,18 @@ void Irradiance_IO::checkWeatherFile(compute_module * cm, std::string cmName)
 				weatherRecord.poa, weatherRecord.year, weatherRecord.month, weatherRecord.day, weatherRecord.hour), SSC_WARNING, (float)idx);
 			weatherRecord.poa = 0;
 		}
+		//albedo is allowed to be missing in the weather file- will be filled in from user-entered monthly array.
+		//only throw an error if there's a value that isn't reasonable somewhere
 		int month_idx = weatherRecord.month - 1;
-		bool albedoError = false;
-		if (useWeatherFileAlbedo && (!std::isfinite(weatherRecord.alb) || weatherRecord.alb < 0 || weatherRecord.alb > 1)) {
-			albedoError = true;
+		bool albedoError = true;
+		if (useWeatherFileAlbedo && std::isfinite(weatherRecord.alb) && weatherRecord.alb > 0 && weatherRecord.alb < 1) {
+			albedoError = false;
 		}
-		else if ((month_idx >= 0 && month_idx < 12) && (userSpecifiedMonthlyAlbedo[month_idx] < 0 || userSpecifiedMonthlyAlbedo[month_idx] > 1)) {
-			albedoError = true;
+		else if (month_idx >= 0 && month_idx < 12) {
+			if (userSpecifiedMonthlyAlbedo[month_idx] > 0 && userSpecifiedMonthlyAlbedo[month_idx] < 1) {
+				albedoError = false;
+				weatherRecord.alb = userSpecifiedMonthlyAlbedo[month_idx];
+			}
 		}
 		if (albedoError) {
 			throw compute_module::exec_error(cmName,
@@ -650,10 +655,12 @@ PVSystem_IO::PVSystem_IO(compute_module* cm, std::string cmName, Simulation_IO *
 	}
 
 	// Check that system MPPT inputs align correctly
-	for (size_t n_subarray = 0; n_subarray < numberOfSubarrays; n_subarray++)
-		if (Subarrays[n_subarray]->enable)
-			if (Subarrays[n_subarray]->mpptInput > Inverter->nMpptInputs)
+	for (size_t n_subarray = 0; n_subarray < numberOfSubarrays; n_subarray++) {
+		if (Subarrays[n_subarray]->enable) {
+			if (Subarrays[n_subarray]->mpptInput > (int)Inverter->nMpptInputs)
 				throw compute_module::exec_error(cmName, "Subarray " + util::to_string((int)n_subarray) + " MPPT input is greater than the number of inverter MPPT inputs.");
+		}
+	}
 	for (size_t mppt = 1; mppt <= (size_t)Inverter->nMpptInputs; mppt++) //indexed at 1 to match mppt input numbering convention
 	{
 		std::vector<int> mppt_n; //create a temporary vector to hold which subarrays are on this mppt input
@@ -744,7 +751,7 @@ void PVSystem_IO::AllocateOutputs(compute_module* cm)
 		}
 	}
 
-	for (int mppt_input = 0; mppt_input < Inverter->nMpptInputs; mppt_input++)
+	for (size_t mppt_input = 0; mppt_input < Inverter->nMpptInputs; mppt_input++)
 	{
 		p_mpptVoltage.push_back(cm->allocate("inverterMppt" + std::to_string(mppt_input + 1) + "_DCVoltage", numberOfLifetimeRecords));
 		p_dcPowerNetPerMppt.push_back(cm->allocate("inverterMppt" + std::to_string(mppt_input + 1) + "_NetDCPower", numberOfLifetimeRecords));
@@ -898,7 +905,7 @@ Module_IO::Module_IO(compute_module* cm, std::string cmName, double dcLoss)
 			int standoff = cm->as_integer("cec_standoff");
 			nominalOperatingCellTemp.standoff_tnoct_adj = 0;
 			switch (standoff)
-			{
+			{ //source for standoff adjustment constants: https://prod-ng.sandia.gov/techlib-noauth/access-control.cgi/1985/850330.pdf page 12
 				case 2: nominalOperatingCellTemp.standoff_tnoct_adj = 2; break; // between 2.5 and 3.5 inches
 				case 3: nominalOperatingCellTemp.standoff_tnoct_adj = 6; break; // between 1.5 and 2.5 inches
 				case 4: nominalOperatingCellTemp.standoff_tnoct_adj = 11; break; // between 0.5 and 1.5 inches
@@ -1240,7 +1247,7 @@ void Module_IO::setupNOCTModel(compute_module* cm, const std::string &prefix)
 	int standoff = cm->as_integer(prefix + "_standoff"); // bipv,3.5in,2.5-3.5in,1.5-2.5in,0.5-1.5in,ground/rack
 	nominalOperatingCellTemp.standoff_tnoct_adj = 0;
 	switch (standoff)
-	{
+	{ //source for standoff adjustment constants: https://prod-ng.sandia.gov/techlib-noauth/access-control.cgi/1985/850330.pdf page 12
 	case 2: nominalOperatingCellTemp.standoff_tnoct_adj = 2; break; // between 2.5 and 3.5 inches
 	case 3: nominalOperatingCellTemp.standoff_tnoct_adj = 6; break; // between 1.5 and 2.5 inches
 	case 4: nominalOperatingCellTemp.standoff_tnoct_adj = 11; break; // between 0.5 and 1.5 inches
@@ -1261,7 +1268,7 @@ void Module_IO::AssignOutputs(compute_module* cm)
 Inverter_IO::Inverter_IO(compute_module *cm, std::string cmName)
 {
 	inverterType =  cm->as_integer("inverter_model");
-	nMpptInputs = cm->as_integer("inv_num_mppt");
+	nMpptInputs = cm->as_unsigned_long("inv_num_mppt");
 
 	if (inverterType == 4)
 	{

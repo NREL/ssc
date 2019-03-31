@@ -62,8 +62,7 @@ public:
 
 	bool getLoss(float poa, float tilt, float wspd, float tdry, float snowDepth, int sunup, float dt, float &returnLoss);
 
-	float	tilt,		// Surface tilt, degrees
-		baseTilt,		// The default tilt for 1-axis tracking systems
+	float baseTilt,		// The default tilt for 1-axis tracking systems
 		mSlope,			// This is a value given by fig. 4 in [1]
 		sSlope,			// This is a value given by fig. 7 in [1]
 		deltaThreshold,	// The minimum change in snow depth required to trigger a snow fall detection

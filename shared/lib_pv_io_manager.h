@@ -204,7 +204,7 @@ struct Irradiance_IO
 	ssc_number_t * p_weatherFileDNI;			/// The Direct Normal (Beam) Irradiance from the weather file [W/m2]
 	ssc_number_t * p_weatherFileDHI;			/// The Direct Normal (Beam) Irradiance from the weather file [W/m2]
 	std::vector<ssc_number_t *> p_weatherFilePOA; /// The Plane of Array Irradiance from the weather file [W/m2]
-	ssc_number_t * p_sunPositionTime;			/// <UNSURE>
+	ssc_number_t * p_sunPositionTime;			/// The hour at which the sun position is calculated [fractional hour 0-23]
 	ssc_number_t * p_weatherFileWindSpeed;		/// The Wind Speed from the weather file [m/s]
 	ssc_number_t * p_weatherFileAmbientTemp;	/// The ambient temperature from the weather file [C]
 	ssc_number_t * p_weatherFileAlbedo;			/// The ground albedo from the weather file
@@ -529,7 +529,7 @@ public:
 
 
 	int inverterType;		/// From inverterTypeList
-	int nMpptInputs;        /// Number of maximum power point tracking (MPPT) inputs on one inverter
+	size_t nMpptInputs;        /// Number of maximum power point tracking (MPPT) inputs on one inverter
 	double mpptLowVoltage;  /// Lower limit of inverter voltage range for maximum power point tracking (MPPT) per MPPT input
 	double mpptHiVoltage;   /// Upper limit of inverter voltage range for maximum power point tracking (MPPT) per MPPT input
 	double ratedACOutput;   /// Rated power for one inverter

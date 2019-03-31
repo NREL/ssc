@@ -30,6 +30,7 @@ public:
 	}
 	void TearDown() {
 		ssc_data_free(data_);
+		data_ = nullptr;
 	}
 	
 	/// runs compute module and returns true if successful
@@ -64,7 +65,7 @@ protected:
 private:
 	/// Takes the input values in TestInfo to assign variables in ssc_data_t
 	bool testTableToSSCData() {
-		for (int i = 0; i < table_->getNumInfo(); i++) {
+		for (size_t i = 0; i < table_->getNumInfo(); i++) {
 			const TestInfo* info = &(table_->getInfo())[i];
 			if (info->dataType == STR) {
 				ssc_data_set_string(data_, info->sscVarName.c_str(), info->values.c_str());

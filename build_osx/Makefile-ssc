@@ -27,9 +27,11 @@ OBJECTS = \
 	cmod_belpe.o \
 	cmod_biomass.o \
 	cmod_annualoutput.o \
+	cmod_fuelcell.o \
 	cmod_generic_system.o \
 	cmod_wfcheck.o \
 	cmod_pvwattsv5.o \
+	cmod_pvwattsv5_lifetime.o \
 	cmod_windfile.o \
 	cmod_pvwattsv1_1ts.o \
 	cmod_pvwattsv1_poa.o \
@@ -59,6 +61,7 @@ OBJECTS = \
 	cmod_utilityrate3.o \
 	cmod_utilityrate4.o \
 	cmod_utilityrate5.o \
+	cmod_thermalrate.o \
 	cmod_ippppa.o \
 	cmod_swh.o \
 	cmod_geothermal.o \
@@ -76,6 +79,7 @@ OBJECTS = \
 	cmod_tcstrough_empirical.o \
 	cmod_tcstrough_physical.o \
 	cmod_tcstrough_physical_csp_solver.o \
+	cmod_trough_physical.o \
 	cmod_trough_physical_iph.o \
 	cmod_iph_to_lcoefcr.o \
 	cmod_linear_fresnel_dsg_iph.o \

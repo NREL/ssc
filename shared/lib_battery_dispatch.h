@@ -49,12 +49,18 @@
 
 #include <memory>
 
-#include "lib_battery_powerflow.h"
+
 #include "lib_battery.h"
-#include "lib_utility_rate.h"
+
 
 #ifndef __LIB_BATTERY_DISPATCH_H__
 #define __LIB_BATTERY_DISPATCH_H__
+
+// Forward declarations to speed up build
+struct BatteryPower;
+class BatteryPowerFlow;
+class UtilityRate;
+class UtilityRateCalculator;
 
 namespace battery_dispatch
 {
@@ -102,12 +108,7 @@ public:
 	/// Public API to run the battery dispatch model for the current timestep, given the system power, and optionally the electric load and amount of system clipping
 	virtual void dispatch(size_t year,
 		size_t hour_of_year,
-		size_t step,
-		double P_system,
-		double V_system,
-		double P_load_ac=0,
-		double P_system_clipped = 0
-		) = 0;
+		size_t step) = 0;
 
 	/// Method to check any operational constraints and modify the battery current if needed
 	virtual bool check_constraints(double &I, size_t count);
@@ -118,45 +119,41 @@ public:
 	battery_t * battery_model(){ return _Battery; }
 
 	// ac outputs
-	double power_tofrom_battery() { return m_batteryPower->powerBattery; }
-	double power_tofrom_grid() { return m_batteryPower->powerGrid; }
-	double power_gen() { return m_batteryPower->powerGeneratedBySystem; }
-	double power_pv_to_load() { return m_batteryPower->powerPVToLoad; }
-	double power_battery_to_load() { return m_batteryPower->powerBatteryToLoad; }
-	double power_grid_to_load() { return m_batteryPower->powerGridToLoad; }
-	double power_pv_to_batt() { return m_batteryPower->powerPVToBattery; }
-	double power_grid_to_batt() { return m_batteryPower->powerGridToBattery; }
-	double power_pv_to_grid() { return m_batteryPower->powerPVToGrid; }
-	double power_battery_to_grid() { return m_batteryPower->powerBatteryToGrid; }
-	double power_conversion_loss() { return m_batteryPower->powerConversionLoss; }
-	double power_system_loss() { return m_batteryPower->powerSystemLoss; }
+	double power_tofrom_battery();
+	double power_tofrom_grid();
+	double power_gen();
+	double power_pv_to_load();
+	double power_battery_to_load();
+	double power_grid_to_load();
+	double power_fuelcell_to_load();
+	double power_pv_to_batt();
+	double power_grid_to_batt();
+	double power_fuelcell_to_batt();
+	double power_pv_to_grid();
+	double power_battery_to_grid();
+	double power_fuelcell_to_grid();
+	double power_conversion_loss();
+	double power_system_loss();
 
 	virtual double power_grid_target(){	return 0;}
 	virtual double power_batt_target(){ return 0.;}
 	virtual double cost_to_cycle() { return 0.;}
 
 	// control settings
-	double battery_power_to_fill(){ return _Battery->battery_power_to_fill(m_batteryPower->stateOfChargeMax); }
+	double battery_power_to_fill();
 
 	message get_messages();
 
 	/// Return a pointer to the underlying calculated power quantities
-	BatteryPower * getBatteryPower() {
-		return m_batteryPower;
-	};
+	BatteryPower * getBatteryPower();
 
 	/// Return a pointer to the object which calculates the battery power flow
-	BatteryPowerFlow * getBatteryPowerFlow() {
-		return m_batteryPowerFlow.get();
-	};
+	BatteryPowerFlow * getBatteryPowerFlow();
 
 protected:
 
 	/// Helper function to run common dispatch tasks.  Requires that m_batteryPower->powerBattery is previously defined
 	virtual void runDispatch(size_t year, size_t hour, size_t step);
-
-	/// Helper function to internally set up the dispatch model
-	virtual void prepareDispatch(size_t hour_of_year, size_t step, double P_system, double V_system, double P_load_ac = 0, double P_pv_dc_clipped = 0);
 
 	// Initialization help
 	void init(battery_t * Battery,
@@ -187,7 +184,7 @@ protected:
 	// allocated and managed internally
 	std::unique_ptr<BatteryPowerFlow> m_batteryPowerFlow;
 	
-	// managed elsewhere
+	// managed by BatteryPowerFlow
 	BatteryPower * m_batteryPower;
 
 	// Charge & current limits controllers
@@ -229,6 +226,7 @@ public:
 		std::vector<bool> can_charge,
 		std::vector<bool> can_discharge,
 		std::vector<bool> can_gridcharge,
+		std::vector<bool> can_fuelcellcharge,
 		std::map<size_t, double> dm_percent_discharge,
 		std::map<size_t, double> dm_percent_gridcharge);
 
@@ -243,17 +241,12 @@ public:
 	/// Public API to run the battery dispatch model for the current timestep, given the system power, and optionally the electric load, amount of system clipping, or specified battery power
 	virtual void dispatch(size_t year,
 		size_t hour_of_year,
-		size_t step,
-		double P_system,
-		double V_system = 0,
-		double P_load_ac = 0,
-		double P_system_clipped = 0
-	);
+		size_t step);
 
 protected:
 
 	/// Helper function to internally set up the dispatch model
-	virtual void prepareDispatch(size_t hour_of_year, size_t step, double P_system, double V_system, double P_load_ac = 0, double P_pv_dc_clipped = 0);
+	virtual void prepareDispatch(size_t hour_of_year, size_t step);
 
 	// Initialization help
 	void init(util::matrix_t<float> dm_dynamic_sched,
@@ -264,6 +257,7 @@ protected:
 	void init_with_vects(
 		util::matrix_t<size_t> dm_dynamic_sched,
 		util::matrix_t<size_t> dm_dynamic_sched_weekend,
+		std::vector<bool>,
 		std::vector<bool>,
 		std::vector<bool>,
 		std::vector<bool>,
@@ -279,6 +273,7 @@ protected:
 	std::vector<bool> _charge_array;
 	std::vector<bool> _discharge_array;
 	std::vector<bool> _gridcharge_array;
+	std::vector<bool> _fuelcellcharge_array;
 
 	double _percent_discharge;
 	double _percent_charge;
@@ -295,16 +290,16 @@ class grid_point
 	grid_point = [grid_power, hour, step]
 	*/
 public:
-	grid_point(double grid = 0., int hour = 0, int step = 0) :
+	grid_point(double grid = 0., size_t hour = 0, size_t step = 0) :
 		_grid(grid), _hour(hour), _step(step){}
 	double Grid() const { return _grid; }
-	int Hour() const { return _hour; }
-	int Step() const { return _step; }
+	size_t Hour() const { return _hour; }
+	size_t Step() const { return _step; }
 
 private:
 	double _grid;
-	int _hour;
-	int _step;
+	size_t _hour;
+	size_t _step;
 };
 
 struct byGrid
@@ -344,7 +339,8 @@ public:
 		double dispatch_update_frequency_hours,
 		bool can_charge,
 		bool can_clipcharge,
-		bool can_grid_charge
+		bool can_grid_charge,
+		bool can_fuelcell_charge
 		);
 
 	virtual ~dispatch_automatic_t(){};
@@ -358,11 +354,7 @@ public:
 	/// Public API to run the battery dispatch model for the current timestep, given the system power, and optionally the electric load, amount of system clipping, or specified battery power
 	virtual void dispatch(size_t year,
 		size_t hour_of_year,
-		size_t step,
-		double P_system,
-		double V_system,
-		double P_load_ac = 0,
-		double P_system_clipped = 0);
+		size_t step);
 
 	/*! Compute the updated power to send to the battery over the next N hours */
 	virtual void update_dispatch(size_t hour_of_year, size_t step, size_t idx)=0;
@@ -375,6 +367,9 @@ public:
 
 	/* Check constraints and re-dispatch if needed */
 	virtual bool check_constraints(double &I, size_t count);
+
+	/// Return the battery power target set by the controller
+	double power_batt_target();
 
 protected:
 
@@ -459,7 +454,8 @@ public:
 		double dispatch_update_frequency_hours,
 		bool can_charge,
 		bool can_clipcharge,
-		bool can_grid_charge
+		bool can_grid_charge,
+		bool can_fuelcell_charge
 		);
 
 	virtual ~dispatch_automatic_behind_the_meter_t(){};
@@ -473,11 +469,7 @@ public:
 	/// Public API to run the battery dispatch model for the current timestep, given the system power, and optionally the electric load, amount of system clipping, or specified battery power
 	virtual void dispatch(size_t year,
 		size_t hour_of_year,
-		size_t step,
-		double P_system,
-		double V_system,
-		double P_load_ac = 0,
-		double P_system_clipped = 0);
+		size_t step);
 
 	/*! Compute the updated power to send to the battery over the next N hours */
 	void update_dispatch(size_t hour_of_year, size_t step, size_t idx);
@@ -488,9 +480,8 @@ public:
 	/*! Pass in the grid power target vector */
 	void set_target_power(std::vector<double> P_target);
 
-	/*! Target power outputs */
-	double power_grid_target(){ return _P_target_current; };
-	double power_batt_target() { return m_batteryPower->powerBattery; };
+	/*! Grid target power */
+	double power_grid_target();
 
 	enum BTM_TARGET_MODES {TARGET_SINGLE_MONTHLY, TARGET_TIME_SERIES};
 
@@ -560,6 +551,7 @@ public:
 		bool can_charge,
 		bool can_clipcharge,
 		bool can_grid_charge,
+		bool can_fuelcell_charge,
 		double inverter_paco,
 		double battReplacementCostPerkWh,
 		int battCycleCostChoice,
@@ -584,14 +576,10 @@ public:
 	/// Public API to run the battery dispatch model for the current timestep, given the system power, and optionally the electric load, amount of system clipping, or specified battery power
 	virtual void dispatch(size_t year,
 		size_t hour_of_year,
-		size_t step,
-		double P_system,
-		double V_system,
-		double P_load_ac = 0,
-		double P_system_clipped = 0);
+		size_t step);
 
-	/*! Compute the updated power to send to the battery over the next N hours */
-	void update_dispatch(size_t hour_of_year, size_t step, size_t idx);
+	/// Compute the updated power to send to the battery over the next N hours
+	void update_dispatch(size_t hour_of_year, size_t step, size_t lifetimeIndex);
 
 	/// Update cliploss data
 	void update_cliploss_data(double_vec P_cliploss);

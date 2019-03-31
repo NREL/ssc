@@ -12,6 +12,7 @@ GTEST_API_ int main(int argc, char **argv) {
 	testing::InitGoogleTest(&argc, argv);
 //	  ::testing::GTEST_FLAG(filter) = "CMPvYieldTimo.NoFinancialModelSystemDesign";
 //	  ::testing::GTEST_FLAG(filter) = "splinterTests*";
+//	  ::testing::GTEST_FLAG(filter) = "CMTcsMoltenSalt*";
 	int status = RUN_ALL_TESTS();
 
 	if (!status)

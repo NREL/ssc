@@ -1,51 +1,18 @@
 VPATH = ../shared
 CC = gcc
 CXX = g++
-WARNINGS = -Wall -Werror -Wno-strict-aliasing -Wno-deprecated-declarations
+WARNINGS = -Wall -Werror -Wno-strict-aliasing -Wno-deprecated-declarations -Wno-unknown-pragmas -Wno-reorder
 CFLAGS =-I../ssc -I../shared -I../splinter $(WARNINGS) -g -O3 -D__64BIT__ -fPIC
 CXXFLAGS=-std=c++0x $(CFLAGS)
 
+CXXSRC = $(wildcard ../shared/*.cpp)
 
-OBJECTS = \
-	lsqfit.o \
-	lib_battery.o \
-	lib_battery_dispatch.o \
-	lib_battery_powerflow.o \
-	lib_cec6par.o \
-	lib_financial.o \
-	lib_geothermal.o \
-	lib_iec61853.o \
-	lib_irradproc.o \
-	lib_miniz.o \
-	lib_physics.o \
-	lib_powerblock.o \
-	lib_power_electronics.o \
-	lib_pvinv.o \
-	lib_pv_incidence_modifier.o \
-	lib_pv_io_manager.o \
-	lib_pvmodel.o \
-	lib_pvshade.o \
-	lib_pv_shade_loss_mpp.o \
-	lib_pvwatts.o \
-	lib_sandia.o \
-	lib_shared_inverter.o \
-	lib_snowmodel.o \
-	lib_util.o \
-	lib_utility_rate.o \
-	lib_weatherfile.o \
-	lib_windfile.o \
-	lib_wind_obos.o \
-	lib_wind_obos_cable_vessel.o \
-	lib_windwakemodel.o \
-	lib_windwatts.o \
-	lib_mlmodel.o \
-	lib_ondinv.o
-
+OBJECTS = $(CXXSRC:.cpp=.o)
 
 TARGET=shared.a
 
 $(TARGET):$(OBJECTS)
-	ar rs $(TARGET) $(OBJECTS)
+	ar -rs $(TARGET) $(OBJECTS)
 
 clean:
 	rm -rf $(TARGET) $(OBJECTS)

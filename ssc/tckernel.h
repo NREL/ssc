@@ -53,6 +53,9 @@
 #include "tcskernel.h"
 #include "core.h"
 
+// Fix these
+#pragma warning( disable : 4264)
+
 class tcKernel : public tcskernel, public compute_module
 {
 public:
@@ -64,7 +67,11 @@ public:
 	virtual bool converged( double time );
 	void set_store_array_matrix_data( bool b ) { m_storeArrMatData = b; }
 	void set_store_all_parameters( bool b ) { m_storeAllParameters = b; }
+
+	// Bad practice, inheriting simulate() method from tcskernal, this masks it
+#pragma warning( disable: 4263)
 	virtual int simulate( double start, double end, double step, int max_iter = 100 );
+
 	void set_unit_value_ssc_string( int id, const char *name );
 	void set_unit_value_ssc_double( int id, const char *name );
 	void set_unit_value_ssc_double( int id, const char *name, double x );

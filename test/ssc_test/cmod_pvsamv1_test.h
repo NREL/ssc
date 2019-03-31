@@ -1,8 +1,8 @@
-#include <gtest/gtest.h>
-
-#include "core.h"
 #ifndef _CMOD_PVSAMV1_TEST_H_
 #define _CMOD_PVSAMV1_TEST_H_
+
+#include <gtest/gtest.h>
+#include "core.h"
 
 #include "../ssc/vartab.h"
 #include "../ssc/common.h"
@@ -31,7 +31,8 @@ public:
 	}
 	void TearDown() {
 		if (data) {
-			ssc_data_clear(data);
+			ssc_data_free(data);
+			data = nullptr;
 		}
 		if (calculated_array) {
 			delete[] calculated_array;

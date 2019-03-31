@@ -50,14 +50,8 @@
 #ifndef _power_electronics_h_
 #define _power_electronics_h_
 
+// Required due to need for complete type in std::unique_ptr<>
 #include "lib_battery_dispatch.h"
-#include "lib_battery_powerflow.h"
-#include "lib_sandia.h"
-#include "lib_pvinv.h"
-#include "lib_ondinv.h"
-#include "lib_shared_inverter.h"
-
-
 
 class BatteryBidirectionalInverter
 {
@@ -146,10 +140,10 @@ public:
 	virtual ~ChargeController() {};
 
 	/// Virtual method to run the charge controller given the current timestep, PV production, and load
-	virtual void run(size_t year, size_t hour_of_year, size_t step_of_hour, size_t index, double P_pv, double V_pv, double P_load, double P_clipped) = 0;
+	virtual void run(size_t year, size_t hour_of_year, size_t step_of_hour, size_t index) = 0;
 
 	/// The supported configurations of a battery system
-	enum { DC_CONNECTED, AC_CONNECTED };
+	enum CONNECTION{ DC_CONNECTED, AC_CONNECTED };
 
 protected:
 
@@ -157,9 +151,9 @@ protected:
 	std::unique_ptr<dispatch_t> m_dispatchInitial;	/// An internally managed copy of the initial dispatch of the timestep
 
 	// memory managed elsewhere
-	BatteryPower * m_batteryPower;		/// A structure containing all of the components in the battery power flow calculations
+	BatteryPower * m_batteryPower;
 	battery_metrics_t *m_batteryMetrics;    /// An object that tracks battery metrics for later analysis
-        dispatch_t * m_dispatch;		/// An object containing the framework to run a battery and check operational constraints
+    dispatch_t * m_dispatch;		/// An object containing the framework to run a battery and check operational constraints
 };
 
 /**
@@ -179,7 +173,7 @@ public:
 	~ACBatteryController() {};
 
 	/// Runs the battery dispatch model with the current PV and Load information
-	void run(size_t year, size_t hour_of_year, size_t step_of_hour, size_t index, double P_pv, double V_pv=0, double P_load=0, double P_clipped=0);
+	void run(size_t year, size_t hour_of_year, size_t step_of_hour, size_t index);
 
 private:
 	// allocated and managed internally
@@ -206,7 +200,7 @@ public:
 	void setSharedInverter(SharedInverter * sharedInverter);
 
 	/// Runs the battery dispatch model with the current PV and Load information
-	void run(size_t year, size_t hour_of_year, size_t step_of_hour, size_t index, double P_pv, double V_pv, double P_load=0, double P_pv_clipped = 0);
+	void run(size_t year, size_t hour_of_year, size_t step_of_hour, size_t index);
 
 private:
 	

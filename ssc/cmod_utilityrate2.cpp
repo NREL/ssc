@@ -1050,7 +1050,7 @@ public:
 				for (int m=0;m<12;m++)
 				{
 					monthly_salespurchases[m] = 0;
-					for (int d=0;d<util::nday[m];d++)
+					for (size_t d=0;d<util::nday[m];d++)
 					{
 						for(int h=0;h<24;h++)
 						{
@@ -1133,7 +1133,8 @@ public:
 	void monthly_outputs( ssc_number_t e_load[8760], ssc_number_t e_sys[8760], ssc_number_t e_grid[8760], ssc_number_t salespurchases[8760], ssc_number_t monthly_load[12], ssc_number_t monthly_generation[12], ssc_number_t monthly_elec_to_grid[12], ssc_number_t monthly_elec_needed_from_grid[12], ssc_number_t monthly_cumulative_excess[12], ssc_number_t monthly_salespurchases[12])
 	{
 		// calculate the monthly net energy and monthly hours
-		int m,d,h;
+		int m,h;
+		size_t d;
 		ssc_number_t energy_use[12]; // 12 months
 		int c=0;
 //		bool sell_eq_buy = as_boolean("ur_sell_eq_buy");
@@ -1240,7 +1241,8 @@ public:
 		{
 
 			// calculate the monthly net energy and monthly hours
-			int m,d,h;
+			int m,h;
+			size_t d;
 			ssc_number_t energy_use[12]; // 12 months
 			ssc_number_t cumulative_excess_energy[12]; // 12 months for year end reconciliation
 			int hours[12];
@@ -1332,7 +1334,8 @@ public:
 
 	void process_monthly_charge( ssc_number_t payment[8760], ssc_number_t charges[12] )
 	{
-		int m,d,h,c;
+		int m,h,c;
+		size_t d;
 
 		ssc_number_t fixed = as_number("ur_monthly_fixed_charge");
 		c=0;
@@ -1422,7 +1425,8 @@ public:
 		ssc_number_t energy_use[12]; // 12 months
 		ssc_number_t cumulative_excess_energy[12]; // 12 months for year end reconciliation
 		// calculate the monthly net energy per period
-		int m,d,h,period,tier;
+		int m,h,period,tier;
+		size_t d;
 		ssc_number_t energy_net[12][12]; // 12 months, 12 periods
 		int hours[12][12];
 		int hours_per_month[12];
@@ -1640,7 +1644,8 @@ public:
 			ssc_number_t dc_tou[12],
 			ssc_number_t dc_tou_sched[8760] )
 	{
-		int i,m,d,h,c,tier;
+		int i,m,h,c,tier;
+		size_t d;
 
 		// 12 months for fixed demand charges, 12 periods for TOU demand charges. Each with 6 tiers.
 		ssc_number_t charges[12][6]; 
