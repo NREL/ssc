@@ -57,7 +57,7 @@ static var_info _cm_vtab_mhk_wave[] = {
 	
 	{ SSC_OUTPUT,			SSC_NUMBER,			"average_power",						"Average power production",											"",				"",				"MHKWave",			"?",						"",					"" },
 	{ SSC_OUTPUT,			SSC_NUMBER,			"annual_energy",						"Annual energy production",											"",				"",				"MHKWave",			"?",						"",					"" },
-	{ SSC_OUTPUT,			SSC_ARRAY,			"annual_energy_distribution",			"Annual energy production as function of speed",					"",				"",				"MHKWave",			"?",						"",					"" },
+	{ SSC_OUTPUT,			SSC_MATRIX,			"annual_energy_distribution",			"Annual energy production as function of Hs and Te",					"",				"",				"MHKWave",			"?",						"",					"" },
 };
 
 
@@ -81,13 +81,23 @@ public:
 		std::vector<std::vector<double> > _power_vect;	//Initialize wave power curve of size specified by user.
 		_power_vect.resize(wave_power_matrix.nrows() * wave_power_matrix.ncols());
 
+		//2D vector matrix to store energy production
+		util::matrix_t<double>  wave_energy_matrix(wave_resource_matrix.nrows() , wave_resource_matrix.ncols());
 		
 		for (size_t i = 0; i < (size_t)wave_power_matrix.nrows(); i++) {
 			for (size_t j = 0; j < (size_t)wave_power_matrix.ncols(); j++) {
 				_resource_vect[i].push_back(wave_resource_matrix.at(i, j));
 				_power_vect[i].push_back(wave_power_matrix.at(i , j));
 			}
-		}													
+		}		
+
+		ssc_number_t * _aep_distribution_ptr = cm_mhk_wave::allocate("annual_energy_distribution", wave_resource_matrix.nrows() , wave_resource_matrix.ncols() );
+		for (size_t i = 0; i < (size_t)wave_power_matrix.nrows(); i++) {
+			for (size_t j = 0; j < (size_t)wave_power_matrix.ncols(); j++) {
+				_aep_distribution_ptr = _resource_vect[i][j] * _power_vect[i][j];
+				//_aep_distribution_ptr[i][j] = wave_energy_matrix.at(i, j);
+			}
+		}
 	}
 };
 
