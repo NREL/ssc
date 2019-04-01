@@ -54,16 +54,18 @@
 #include <algorithm> 
 
 static var_info _cm_vtab_mhk_wave[] = {
-	//   VARTYPE			DATATYPE			NAME									LABEL																UNITS           META            GROUP              REQUIRED_IF					CONSTRAINTS			UI_HINTS	
-	{ SSC_INPUT,			SSC_MATRIX,			"wave_resource_definition",				"Frequency distribution of resource as a function of Hs and Te",	"",				"",             "MHKWave",			"*",						"",					"" },
-	{ SSC_INPUT,			SSC_MATRIX,			"wave_power_curve",						"Wave Power Matrix",												"",				"",             "MHKWave",			"*",						"",					"" },
-	{ SSC_INPUT,			SSC_NUMBER,			"annual_energy_loss",					"Total energy losses",												"%",			"",             "MHKWave",			"*",						"",                 "" },
+	//   VARTYPE			DATATYPE			NAME									LABEL																UNITS           META            GROUP              REQUIRED_IF					CONSTRAINTS					UI_HINTS	
+	{ SSC_INPUT,			SSC_MATRIX,			"wave_resource_definition",				"Frequency distribution of resource as a function of Hs and Te",	"",				"",             "MHKWave",			"*",						"",							"" },
+	{ SSC_INPUT,			SSC_MATRIX,			"wave_power_curve",						"Wave Power Matrix",												"",				"",             "MHKWave",			"*",						"",							"" },
+	{ SSC_INPUT,			SSC_NUMBER,			"annual_energy_loss",					"Total energy losses",												"%",			"",             "MHKWave",			"*",						"",							"" },
+	{ SSC_INPUT,			SSC_NUMBER,			"calculate_capacity",					"Calculate capacity outside UI?",									"0/1",			"",             "MHKWave",          "*",                      "INTEGER,MIN=0,MAX=1",      "" },
+
+	{ SSC_INOUT,			SSC_NUMBER,			"rated_capacity",						"Rated Capacity of System",											"kW",			"",				"MHKWave",			"*",						"",							"" },
 	
-	{ SSC_OUTPUT,			SSC_NUMBER,			"average_power",						"Average power production",											"kW",			"",				"MHKWave",			"*",						"",					"" },
-	{ SSC_OUTPUT,			SSC_NUMBER,			"annual_energy",						"Annual energy production",											"kWh",			"",				"MHKWave",			"*",						"",					"" },
-	{ SSC_OUTPUT,			SSC_NUMBER,			"rated_capacity",						"Rated Capacity of System",											"kW",			"",				"MHKWave",			"*",						"",					"" },
-	{ SSC_OUTPUT,			SSC_NUMBER,			"capacity_factor",						"Capacity Factor",													"%",			"",				"MHKWave",			"*",						"",					"" },
-	{ SSC_OUTPUT,			SSC_MATRIX,			"annual_energy_distribution",			"Annual energy production as function of Hs and Te",				"",				"",				"MHKWave",			"*",						"",					"" },
+	{ SSC_OUTPUT,			SSC_NUMBER,			"average_power",						"Average power production",											"kW",			"",				"MHKWave",			"*",						"",							"" },
+	{ SSC_OUTPUT,			SSC_NUMBER,			"annual_energy",						"Annual energy production",											"kWh",			"",				"MHKWave",			"*",						"",							"" },
+	{ SSC_OUTPUT,			SSC_NUMBER,			"capacity_factor",						"Capacity Factor",													"%",			"",				"MHKWave",			"*",						"",							"" },
+	{ SSC_OUTPUT,			SSC_MATRIX,			"annual_energy_distribution",			"Annual energy production as function of Hs and Te",				"",				"",				"MHKWave",			"*",						"",							"" },
 };
 
 
@@ -98,16 +100,18 @@ public:
 		ssc_number_t *_aep_distribution_ptr;
 		_aep_distribution_ptr = allocate("annual_energy_distribution", wave_resource_matrix.nrows(), wave_resource_matrix.ncols());
 		int k = 0;
-		double annual_energy = 0, average_power = 0, capacity_factor = 0, rated_capacity = 0;
+		double annual_energy = 0, average_power = 0, capacity_factor = 0; 
+		double rated_capacity = as_double("rated_capacity");
 
 		for (size_t i = 0; i < (size_t)wave_power_matrix.nrows(); i++) {
 			for (size_t j = 0; j < (size_t)wave_power_matrix.ncols(); j++) {
 				_resource_vect[i].push_back(wave_resource_matrix.at(i, j));
 				_power_vect[i].push_back(wave_power_matrix.at(i , j));
 				
-				//Store max power:
-				if (_power_vect[i][j] > rated_capacity)
-					rated_capacity = _power_vect[i][j];
+				//Store max power if not set in UI:
+				if(as_integer("calculate_capacity"))
+					if (_power_vect[i][j] > rated_capacity)
+						rated_capacity = _power_vect[i][j];
 
 				//Calculate and allocate annual_energy_distribution:
 				if (j == 0 || i == 0)	//Where (i = 0) is the row header, and (j =  0) is the column header.
