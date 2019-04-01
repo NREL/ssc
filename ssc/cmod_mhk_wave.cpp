@@ -100,6 +100,7 @@ public:
 				else {
 					_aep_distribution_ptr[k] = _resource_vect[i][j] * _power_vect[i][j] * 87.60;	//Where 87.60 = (8760/100)
 					annual_energy += _aep_distribution_ptr[k];
+					average_power += (_aep_distribution_ptr[k] / 8760);
 				}
 				k++;
 			}
@@ -110,6 +111,7 @@ public:
 
 		//Annual Energy Production:
 		assign("annual_energy", var_data((ssc_number_t)annual_energy));
+		assign("average_power", var_data((ssc_number_t)average_power));
 
 	}
 };
