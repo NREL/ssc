@@ -71,7 +71,7 @@ public:
 		nR = first.nR;
 		info = new TestInfo[nI];
 		result = new TestResult[nR];
-		for (size_t i = 0; i < nI; i++) {
+		for (size_t i = 0; i < (size_t)nI; i++) {
 			info[i].dataType = first.getInfo()[i].dataType;
 			info[i].length = first.getInfo()[i].length;
 			info[i].sscVarName = first.getInfo()[i].sscVarName;
@@ -89,8 +89,8 @@ public:
 	}
 	//to add dtor
 	std::string getCMODType() { return computeModuleType; }
-	int getNumInfo() { return nI; }
-	int getNumResult() { return nR; }
+	size_t getNumInfo() { return nI; }
+	size_t getNumResult() { return nR; }
 	TestInfo* getInfo() { return info; }
 	TestResult* getResult() { return result; }
 	void setResult(TestResult* R, size_t nRes) { result = R; nR = (int)nRes; }
@@ -121,7 +121,7 @@ protected:
 	std::string computeModuleType;
 	TestInfo* info;
 	TestResult* result;
-	int nI, nR;
+	size_t nI, nR;
 
 	void swap(SimulationTestTable& other) {
 		using std::swap;

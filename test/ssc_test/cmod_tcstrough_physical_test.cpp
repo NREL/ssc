@@ -11,9 +11,9 @@ std::unordered_map<std::string, size_t> physTroughVarMap;
 computeModuleTestData physTroughTesting(&physTroughTests, &physTroughVarMap, "tcstrough_physical");
 
 // Set up data resource file paths
-char weatherfile[150];
+char weatherfile[256];
 int d = sprintf(weatherfile, "%s/test/input_cases/pvsamv1_data/USA AZ Tucson (TMY2).csv", std::getenv("SSCDIR"));
-//char dispatch_factors_ts[150];
+//char dispatch_factors_ts[256];
 //int e = sprintf(dispatch_factors_ts, "%s/../sdktool_debug/dispatch_factors_ts.csv", std::getenv("SAMNTDIR"));
 
 // 0. Default Test Arrays and Matrices: using SAM GUI defaults

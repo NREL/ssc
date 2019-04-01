@@ -57,9 +57,9 @@
 #include "lib_battery_powerflow.h"
 #include "lib_power_electronics.h"
 #include "lib_shared_inverter.h"
+#include "lib_time.h"
 #include "lib_util.h"
 #include "lib_utility_rate.h"
-
 
 var_info vtab_battery_inputs[] = {
 	/*   VARTYPE           DATATYPE         NAME                                            LABEL                                                   UNITS      META                   GROUP           REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
@@ -1354,88 +1354,53 @@ public:
 	{
 		if (as_boolean("en_batt"))
 		{
-			// Power from generation sources feeding into battery
-			std::vector<ssc_number_t> power_input = as_vector_ssc_number_t("gen");
-
-			// Set up time
-			size_t nyears = 1;
-			if (as_boolean("system_use_lifetime_output")) {
-				nyears = as_unsigned_long("analysis_period");
-			}
-			size_t nrec = power_input.size() / nyears;
-			size_t nrec_lifetime = nrec * nyears;
-			double dtHour = static_cast<double>(8760. / nrec);
-
-			// Setup battery model
-			battstor batt(*this, true, nrec, dtHour);
-
-			// Allocate outputs
-			ssc_number_t * p_gen = allocate("gen", nrec * batt.nyears);
-
-			// Parse "Load input", which comes in as a single year
-			std::vector<ssc_number_t> power_load_single_year;
-			std::vector<ssc_number_t> power_load;
-
-			if (batt.batt_vars->batt_meter_position == dispatch_t::BEHIND)
-			{
-				power_load_single_year = as_vector_ssc_number_t("load");
-				size_t nload = power_load_single_year.size();
-
-				if (nload != nrec && nload != 8760) {
-					throw exec_error("battery", "electric load profile must have same number of values as weather file, or 8760");
-				}
-
-				power_load.reserve(nrec_lifetime);
-				for (size_t y = 0; y < nyears; y++) {
-					// Load = generation size
-					if (nload == nrec) {
-						for (size_t t = 0; t < nrec; t++) {
-							power_load.push_back(power_load_single_year[t]);
-						}
-					}
-					// Assume load is constant across hour
-					else {
-						for (size_t h = 0; h < 8760; h++) {
-							ssc_number_t loadHour = power_load_single_year[h];
-							for (size_t s = 0; s < batt.step_per_hour; s++) {
-								power_load.push_back(loadHour);
-							}
-						}
-					}
-				}
-				batt.initialize_automated_dispatch(power_input, power_load);
-			}
-			else
-			{
-				for (size_t i = 0; i != power_input.size(); i++)
-					power_load.push_back(0);
+			// System generation output, which is lifetime (if system_lifetime_output == true);
+			std::vector<ssc_number_t> power_input_lifetime = as_vector_ssc_number_t("gen");
+			std::vector<ssc_number_t> load_lifetime, load_year_one;
+			size_t n_rec_lifetime;
+			size_t n_rec_single_year;
+			double dt_hour_gen;
+			if (is_assigned("load")) {
+				load_year_one = as_vector_ssc_number_t("load");
 			}
 
-			// Prepare annual outputs
+			 single_year_to_lifetime_interpolated<ssc_number_t>(
+				(bool)as_integer("system_use_lifetime_output"),
+				(size_t)as_integer("analysis_period"),
+				power_input_lifetime, 
+				load_year_one,
+				load_lifetime,
+				n_rec_lifetime, 
+				n_rec_single_year,
+				dt_hour_gen);
+
+			// Create battery structure and initialize
+			battstor batt(*this, true, n_rec_single_year, dt_hour_gen);
+
+			if (batt.batt_vars->batt_meter_position == dispatch_t::BEHIND){
+				batt.initialize_automated_dispatch(power_input_lifetime, load_lifetime);
+			}
+
+			if (load_lifetime.size() != n_rec_lifetime) {
+				throw exec_error("battery", "Load length does not match system generation length");
+			}
+			if (batt.batt_vars->batt_topology == ChargeController::DC_CONNECTED) {
+				batt.batt_vars->batt_topology = ChargeController::AC_CONNECTED;
+				throw exec_error("battery", "Generic System must be AC connected to battery");
+			}
+			
+			// Prepare outputs
+			ssc_number_t * p_gen = allocate("gen", n_rec_lifetime);
 			double capacity_factor_in, annual_energy_in, nameplate_in;
 			capacity_factor_in = annual_energy_in = nameplate_in = 0;
 
 			if (is_assigned("capacity_factor") && is_assigned("annual_energy")) {
 				capacity_factor_in = as_double("capacity_factor");
 				annual_energy_in = as_double("annual_energy");
-				nameplate_in = (annual_energy_in / (capacity_factor_in * util::percent_to_fraction)) / 8760.;
+				nameplate_in = (annual_energy_in / (capacity_factor_in * 0.01)) / util::hours_per_year;
 			}
 	
-			// Error checking
-			if (power_input.size() != nrec_lifetime)
-				throw exec_error("battery", "Load and PV power do not match weatherfile length");
-
 			
-			if (batt.step_per_hour > 60 || batt.total_steps != power_input.size())
-				throw exec_error("battery", util::format("invalid number of data records (%u): must be an integer multiple of 8760", batt.total_steps));
-
-			// Battery cannot be run in DC-connected mode for generic system.  
-			// We don't have detailed inverter voltage info or clipping info (if PV)
-			if (batt.batt_vars->batt_topology == ChargeController::DC_CONNECTED) {
-				batt.batt_vars->batt_topology = ChargeController::AC_CONNECTED;
-				throw exec_error("battery", "Generic System must be AC connected to battery");
-			}
-
 			/* *********************************************************************************************
 			Run Simulation
 			*********************************************************************************************** */
@@ -1448,10 +1413,10 @@ public:
 				percent_complete = as_float("percent_complete");
 			}
 
-			int lifetime_idx = 0;
+			size_t lifetime_idx = 0;
 			for (size_t year = 0; year != batt.nyears; year++)
 			{
-				int year_idx = 0; 
+				size_t year_idx = 0; 
 				for (size_t hour = 0; hour < 8760; hour++)
 				{
 					// status bar
@@ -1459,7 +1424,7 @@ public:
 					{
 						// assume that anyone using this module is chaining with two techs
 						float techs = 3;
-						percent = percent_complete + 100.0f * ((float)lifetime_idx + 1) / ((float)nrec_lifetime) / techs;
+						percent = percent_complete + 100.0f * ((float)lifetime_idx + 1) / ((float)n_rec_lifetime) / techs;
 						if (!update("", percent, (float)hour)) {
 							throw exec_error("battery", "simulation canceled at hour " + util::to_string(hour + 1.0));
 						}
@@ -1470,13 +1435,11 @@ public:
 	
 						batt.initialize_time(year, hour, jj);
 						batt.check_replacement_schedule();
-						batt.advance(*this, power_input[lifetime_idx], 0, power_load[year_idx], 0);
+						batt.advance(*this, power_input_lifetime[year_idx], 0, load_lifetime[year_idx], 0);
 						p_gen[lifetime_idx] = batt.outGenPower[lifetime_idx];
-
 						if (year == 0) {
 							annual_energy += p_gen[lifetime_idx] * batt._dt_hour;
 						}
-
 						lifetime_idx++;
 						year_idx++;
 					}
@@ -1485,7 +1448,7 @@ public:
 			batt.calculate_monthly_and_annual_outputs(*this);
 
 			// update capacity factor and annual energy
-			assign("capacity_factor", var_data(static_cast<ssc_number_t>(annual_energy * 100.0 / (nameplate_in * 8760.))));
+			assign("capacity_factor", var_data(static_cast<ssc_number_t>(annual_energy * 100.0 / (nameplate_in * util::hours_per_year))));
 			assign("annual_energy", var_data(static_cast<ssc_number_t>(annual_energy)));
 			assign("percent_complete", var_data((ssc_number_t)percent));
 		}

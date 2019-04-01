@@ -238,9 +238,11 @@ struct batt_variables
 
 struct battstor
 {
-
+	/// Pass in the single-year number of records
 	battstor( compute_module &cm, bool setup_model, size_t nrec, double dt_hr, batt_variables *batt_vars=0);
 	void parse_configuration();
+
+	/// Initialize automated dispatch with lifetime vectors
 	void initialize_automated_dispatch(std::vector<ssc_number_t> pv= std::vector<ssc_number_t>(), 
 									   std::vector<ssc_number_t> load= std::vector<ssc_number_t>(), 
 									   std::vector<ssc_number_t> cliploss= std::vector<ssc_number_t>());
@@ -387,6 +389,5 @@ struct battstor
 	double outAverageRoundtripEfficiency;
 	double outPVChargePercent;
 };
-
 
 #endif

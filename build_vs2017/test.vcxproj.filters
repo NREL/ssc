@@ -59,7 +59,12 @@
     <ClCompile Include="..\test\shared_test\lib_fuel_cell_test.cpp">
       <Filter>shared_test</Filter>
     </ClCompile>
-    <ClCompile Include="..\test\splinter_test\splinter_test.cpp" />
+    <ClCompile Include="..\test\ssc_test\cmod_swh_test.cpp">
+      <Filter>ssc_test</Filter>
+    </ClCompile>
+    <ClCompile Include="..\test\ssc_test\cmod_biomass_test.cpp">
+      <Filter>ssc_test</Filter>
+    </ClCompile>
     <ClCompile Include="..\test\ssc_test\cmod_trough_physical_iph_test.cpp">
       <Filter>ssc_test</Filter>
     </ClCompile>
@@ -81,6 +86,18 @@
     <ClCompile Include="..\test\shared_test\lib_trough_test.cpp">
       <Filter>shared_test</Filter>
     </ClCompile>
+    <ClCompile Include="..\test\splinter_test\splinter_test.cpp">
+      <Filter>splinter_test</Filter>
+    </ClCompile>
+    <ClCompile Include="..\test\ssc_test\cmod_trough_physical_test.cpp">
+      <Filter>ssc_test</Filter>
+    </ClCompile>
+    <ClCompile Include="..\test\ssc_test\cmod_generic_test.cpp">
+      <Filter>ssc_test</Filter>
+    </ClCompile>
+    <ClCompile Include="..\test\shared_test\lib_time_test.cpp">
+      <Filter>shared_test</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="shared_test">
@@ -94,6 +111,9 @@
     </Filter>
     <Filter Include="ssc_test">
       <UniqueIdentifier>{a72ae90f-81f5-484b-95a8-e25e2bff9289}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="splinter_test">
+      <UniqueIdentifier>{b2be570e-b322-4714-8df3-86c69b1ad0ee}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -163,18 +183,6 @@
     <ClInclude Include="..\test\shared_test\lib_fuel_cell_test.h">
       <Filter>shared_test</Filter>
     </ClInclude>
-    <ClInclude Include="..\test\input_cases\tcsmolten_salt_cases.h">
-      <Filter>tcs_test</Filter>
-    </ClInclude>
-    <ClInclude Include="..\test\input_cases\tcsmolten_salt_common_data.h">
-      <Filter>tcs_test</Filter>
-    </ClInclude>
-    <ClInclude Include="..\test\input_cases\trough_physical_iph_cases.h">
-      <Filter>tcs_test</Filter>
-    </ClInclude>
-    <ClInclude Include="..\test\input_cases\trough_physical_iph_common_data.h">
-      <Filter>tcs_test</Filter>
-    </ClInclude>
     <ClInclude Include="..\test\input_cases\fuelcell_common_data.h">
       <Filter>input_cases</Filter>
     </ClInclude>
@@ -197,6 +205,48 @@
       <Filter>shared_test</Filter>
     </ClInclude>
     <ClInclude Include="..\test\shared_test\lib_trough_properties.h">
+      <Filter>shared_test</Filter>
+    </ClInclude>
+    <ClInclude Include="..\test\ssc_test\cmod_biomass_test.h">
+      <Filter>ssc_test</Filter>
+    </ClInclude>
+    <ClInclude Include="..\test\ssc_test\cmod_swh_test.h">
+      <Filter>ssc_test</Filter>
+    </ClInclude>
+    <ClInclude Include="..\test\input_cases\swh_common.h">
+      <Filter>input_cases</Filter>
+    </ClInclude>
+    <ClInclude Include="..\test\input_cases\biomass_common.h">
+      <Filter>input_cases</Filter>
+    </ClInclude>
+    <ClInclude Include="..\test\tcs_test\tcsmolten_salt_cases.h">
+      <Filter>tcs_test</Filter>
+    </ClInclude>
+    <ClInclude Include="..\test\tcs_test\tcsmolten_salt_common_data.h">
+      <Filter>tcs_test</Filter>
+    </ClInclude>
+    <ClInclude Include="..\test\tcs_test\trough_physical_iph_cases.h">
+      <Filter>tcs_test</Filter>
+    </ClInclude>
+    <ClInclude Include="..\test\tcs_test\trough_physical_iph_common_data.h">
+      <Filter>tcs_test</Filter>
+    </ClInclude>
+    <ClInclude Include="..\test\tcs_test\trough_physical_cases.h">
+      <Filter>tcs_test</Filter>
+    </ClInclude>
+    <ClInclude Include="..\test\tcs_test\trough_physical_common_data.h">
+      <Filter>tcs_test</Filter>
+    </ClInclude>
+    <ClInclude Include="..\test\ssc_test\cmod_trough_physical_test.h">
+      <Filter>ssc_test</Filter>
+    </ClInclude>
+    <ClInclude Include="..\test\ssc_test\cmod_generic_test.h">
+      <Filter>ssc_test</Filter>
+    </ClInclude>
+    <ClInclude Include="..\test\input_cases\generic_common_data.h">
+      <Filter>input_cases</Filter>
+    </ClInclude>
+    <ClInclude Include="..\test\shared_test\lib_time_test.h">
       <Filter>shared_test</Filter>
     </ClInclude>
   </ItemGroup>

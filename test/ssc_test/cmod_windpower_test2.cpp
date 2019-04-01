@@ -11,11 +11,11 @@ std::unordered_map<std::string, size_t> windIntgVarMap;
 computeModuleTestData windPowerTesting(&windIntgTests, &windIntgVarMap, "windpower");
 
 // Set up wind resource file paths
-char hourly[150];
+char hourly[256];
 int a = sprintf(hourly, "%s/test/input_docs/wind.srw", std::getenv("SSCDIR"));
-char thirtyMin[150];
+char thirtyMin[256];
 int b = sprintf(thirtyMin, "%s/test/input_docs/wind_30m.srw", std::getenv("SSCDIR"));
-char leapYear[150];
+char leapYear[256];
 int c = sprintf(leapYear, "%s/test/input_docs/wind_leapYear.srw", std::getenv("SSCDIR"));
 
 // Set up turbine power curve
