@@ -84,8 +84,8 @@ public:
 		
 
 		//Allocate memory to store annual_energy_distribution:
-		ssc_number_t *_wave_energy_ptr;
-		_wave_energy_ptr = allocate("annual_energy_distribution", wave_resource_matrix.nrows(), wave_resource_matrix.ncols());
+		ssc_number_t *_aep_distribution_ptr;
+		_aep_distribution_ptr = allocate("annual_energy_distribution", wave_resource_matrix.nrows(), wave_resource_matrix.ncols());
 		int k = 0;
 		double annual_energy = 0;
 
@@ -94,11 +94,12 @@ public:
 				_resource_vect[i].push_back(wave_resource_matrix.at(i, j));
 				_power_vect[i].push_back(wave_power_matrix.at(i , j));
 				
+				//Calculate and allocate annual_energy_distribution:
 				if (j == 0 || i == 0)	//Where (i = 0) is the row header, and (j =  0) is the column header.
-					_wave_energy_ptr[k] = _resource_vect[i][j];
+					_aep_distribution_ptr[k] = _resource_vect[i][j];
 				else {
-					_wave_energy_ptr[k] = _resource_vect[i][j] * _power_vect[i][j] * 87.60;	//Where 87.60 = (8760/100)
-					annual_energy += _wave_energy_ptr[k];
+					_aep_distribution_ptr[k] = _resource_vect[i][j] * _power_vect[i][j] * 87.60;	//Where 87.60 = (8760/100)
+					annual_energy += _aep_distribution_ptr[k];
 				}
 				k++;
 			}
