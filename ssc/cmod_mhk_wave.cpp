@@ -87,6 +87,8 @@ public:
 		std::vector<std::vector<double> > _power_vect;	//Initialize wave power curve of size specified by user.
 		_power_vect.resize(wave_power_matrix.nrows() * wave_power_matrix.ncols());
 		
+		//Checker to ensure frequency distribution adds to >= 99.5%:
+		double resource_vect_checker = 0;
 
 		//Allocate memory to store annual_energy_distribution:
 		ssc_number_t *_aep_distribution_ptr;
@@ -113,11 +115,17 @@ public:
 					_aep_distribution_ptr[k] = _resource_vect[i][j] * _power_vect[i][j] * 87.60;	//Where 87.60 = (8760/100)
 					annual_energy += _aep_distribution_ptr[k];
 					average_power += (_aep_distribution_ptr[k] / 8760);
+					//Checker to ensure frequency distribution adds to >= 99.5%:
+					resource_vect_checker += _resource_vect[i][j];
 				}
 				k++;
 
 			}
 		}
+
+		//Throw exception if cummulative sum of _resource_vector is < 99.5%
+		if (resource_vect_checker < 99.5)
+			throw compute_module::exec_error("mhk_wave", "Probability vector does not add up to 100%.");
 
 		//Factoring in losses in total annual energy production:
 		annual_energy *= (1 - (as_double("annual_energy_loss") / 100 ));
