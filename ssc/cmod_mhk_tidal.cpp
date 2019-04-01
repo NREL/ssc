@@ -79,6 +79,10 @@ public:
 		util::matrix_t<double>  tidal_resource_matrix = as_matrix("tidal_resource_definition");
 		util::matrix_t<double>  tidal_power_curve = as_matrix("tidal_power_curve");
 		
+		//Check to ensure size of _power_vect == _speed_vect : 
+		if ( (tidal_power_curve.ncols() * tidal_power_curve.nrows()) != (tidal_resource_matrix.ncols() * tidal_resource_matrix.nrows()) )
+			throw compute_module::exec_error("mhk_tidal", "Size of Power Curve is not equal to Tidal Resource");
+
 		//Create vectors to store individual columns from the user input matrix "tidal_resource_definition":
 		std::vector<double> _speed_vect;	//Stream speed (u [m/s])
 		std::vector<double> _sheer_vect;	// f(z/D = x)
@@ -102,11 +106,6 @@ public:
 			//Store max power:
 			if (_power_vect[i] > rated_capacity)
 				rated_capacity = _power_vect[i];
-
-
-			//Check to ensure size of _power_vect == _speed_vect : 
-			if (_power_vect.size() != _speed_vect.size())
-				throw compute_module::exec_error("mhk_tidal", "Size of Tidal Resource is not equal to Power Curve");
 			
 			//Checker to ensure frequency distribution adds to >= 99.5%:
 			sheer_vect_checker += _sheer_vect[i];

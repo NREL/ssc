@@ -87,6 +87,10 @@ public:
 		std::vector<std::vector<double> > _power_vect;	//Initialize wave power curve of size specified by user.
 		_power_vect.resize(wave_power_matrix.nrows() * wave_power_matrix.ncols());
 		
+		//Check to ensure size of wave_power_matrix == wave_resource_matrix :
+		if ( (wave_power_matrix.ncols() * wave_power_matrix.nrows() ) != ( wave_resource_matrix.ncols() * wave_resource_matrix.nrows() ) )
+			throw compute_module::exec_error("mhk_wave", "Size of Power Curve is not equal to Wave Resource");
+
 		//Checker to ensure frequency distribution adds to >= 99.5%:
 		double resource_vect_checker = 0;
 
@@ -101,9 +105,6 @@ public:
 				_resource_vect[i].push_back(wave_resource_matrix.at(i, j));
 				_power_vect[i].push_back(wave_power_matrix.at(i , j));
 				
-				if(_resource_vect.size() != _power_vect.size())
-					throw compute_module::exec_error("mhk_wave", "Size of Wave Resource is not equal to Power Curve");
-
 				//Store max power:
 				if (_power_vect[i][j] > rated_capacity)
 					rated_capacity = _power_vect[i][j];
