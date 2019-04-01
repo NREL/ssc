@@ -54,7 +54,7 @@ static var_info _cm_vtab_mhk_wave[] = {
 	//   VARTYPE			DATATYPE			NAME									LABEL																UNITS           META            GROUP              REQUIRED_IF					CONSTRAINTS			UI_HINTS	
 	{ SSC_INPUT,			SSC_MATRIX,			"wave_resource_definition",				"Frequency distribution of resource as a function of Hs and Te",	"",				"",             "MHKWave",			"*",						"",					"" },
 	{ SSC_INPUT,			SSC_MATRIX,			"wave_power_curve",						"Wave Power Matrix",												"",				"",             "MHKWave",			"*",						"",					"" },
-	//{ SSC_INPUT,			SSC_NUMBER,			"annual_energy_loss",					"Total energy losses",												"%",			"",             "MHKWave",			"*",						"",                  "" },
+	{ SSC_INPUT,			SSC_NUMBER,			"annual_energy_loss",					"Total energy losses",												"%",			"",             "MHKWave",			"*",						"",                  "" },
 	
 	{ SSC_OUTPUT,			SSC_NUMBER,			"average_power",						"Average power production",											"",				"",				"MHKWave",			"?",						"",					"" },
 	{ SSC_OUTPUT,			SSC_NUMBER,			"annual_energy",						"Annual energy production",											"",				"",				"MHKWave",			"?",						"",					"" },
@@ -87,7 +87,7 @@ public:
 		ssc_number_t *_aep_distribution_ptr;
 		_aep_distribution_ptr = allocate("annual_energy_distribution", wave_resource_matrix.nrows(), wave_resource_matrix.ncols());
 		int k = 0;
-		double annual_energy = 0;
+		double annual_energy = 0, average_power = 0;
 
 		for (size_t i = 0; i < (size_t)wave_power_matrix.nrows(); i++) {
 			for (size_t j = 0; j < (size_t)wave_power_matrix.ncols(); j++) {
@@ -104,6 +104,9 @@ public:
 				k++;
 			}
 		}
+
+		//Factoring in losses in total annual energy production:
+		annual_energy *= (1 - (as_double("annual_energy_loss") / 100 ));
 
 		//Annual Energy Production:
 		assign("annual_energy", var_data((ssc_number_t)annual_energy));
