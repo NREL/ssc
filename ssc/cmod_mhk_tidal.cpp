@@ -59,7 +59,9 @@ static var_info _cm_vtab_mhk_tidal[] = {
 	
 	{ SSC_OUTPUT,			SSC_NUMBER,			"average_power",						"Average power production",													"kW",			"",				"MHKTidal",			"*",						"",					"" },
 	{ SSC_OUTPUT,			SSC_NUMBER,			"annual_energy",						"Annual energy production",													"kWh",			"",				"MHKTidal",			"*",						"",					"" },
-	{ SSC_OUTPUT,			SSC_ARRAY,			"annual_energy_distribution",			"Annual energy production as function of speed",							"kWh",				"",				"MHKTidal",			"*",						"",					"" },
+	{ SSC_OUTPUT,			SSC_NUMBER,			"rated_capacity",						"Rated Capacity of System",													"kW",			"",				"MHKTidal",			"*",						"",					"" },
+	{ SSC_OUTPUT,			SSC_NUMBER,			"capacity_factor",						"Capacity Factor",															"%",			"",				"MHKTidal",			"*",						"",					"" },
+	{ SSC_OUTPUT,			SSC_ARRAY,			"annual_energy_distribution",			"Annual energy production as function of speed",							"kWh",			"",				"MHKTidal",			"*",						"",					"" },
 };
 
 
@@ -87,7 +89,7 @@ public:
 	//Initialize variables to store calculated values:
 		//Vector to store annual energy production as function of speed (annual energy production at each stream speed).
 		std::vector<double> _annual_energy_distribution;	
-		double annual_energy = 0, average_power = 0, sheer_vect_checker = 0;
+		double annual_energy = 0, average_power = 0, sheer_vect_checker = 0, rated_capacity = 0, capacity_factor = 0;
 	
 
 		//Storing each column of the tidal_resource_matrix and tidal_power_curve as vectors:
@@ -96,6 +98,11 @@ public:
 			_speed_vect.push_back(tidal_resource_matrix.at(i, 0));	
 			_sheer_vect.push_back(tidal_resource_matrix.at(i, 1));
 			_power_vect.push_back(tidal_power_curve.at(i, 1));
+
+			//Store max power:
+			if (_power_vect[i] > rated_capacity)
+				rated_capacity = _power_vect[i];
+
 
 			//Check to ensure size of _power_vect == _speed_vect : 
 			if (_power_vect.size() != _speed_vect.size())
@@ -126,8 +133,15 @@ public:
 		//Factoring in losses in total annual energy production:
 		annual_energy *= (1 - (as_double("annual_energy_loss") / 100 ));
 
+		//Calculating capacity factor:
+		capacity_factor = annual_energy / (rated_capacity * 8760);
+
+
+		//Assigning values to outputs:
 		assign("annual_energy", var_data((ssc_number_t)annual_energy));
 		assign("average_power", var_data((ssc_number_t)average_power));
+		assign("rated_capacity", var_data((ssc_number_t)rated_capacity));
+		assign("capacity_factor", var_data((ssc_number_t)capacity_factor));
 	}
 };
 

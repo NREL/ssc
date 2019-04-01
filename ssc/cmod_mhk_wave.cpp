@@ -57,13 +57,13 @@ static var_info _cm_vtab_mhk_wave[] = {
 	//   VARTYPE			DATATYPE			NAME									LABEL																UNITS           META            GROUP              REQUIRED_IF					CONSTRAINTS			UI_HINTS	
 	{ SSC_INPUT,			SSC_MATRIX,			"wave_resource_definition",				"Frequency distribution of resource as a function of Hs and Te",	"",				"",             "MHKWave",			"*",						"",					"" },
 	{ SSC_INPUT,			SSC_MATRIX,			"wave_power_curve",						"Wave Power Matrix",												"",				"",             "MHKWave",			"*",						"",					"" },
-	{ SSC_INPUT,			SSC_NUMBER,			"annual_energy_loss",					"Total energy losses",												"%",			"",             "MHKWave",			"*",						"",                  "" },
+	{ SSC_INPUT,			SSC_NUMBER,			"annual_energy_loss",					"Total energy losses",												"%",			"",             "MHKWave",			"*",						"",                 "" },
 	
-	{ SSC_OUTPUT,			SSC_NUMBER,			"average_power",						"Average power production",											"",				"",				"MHKWave",			"?",						"",					"" },
-	{ SSC_OUTPUT,			SSC_NUMBER,			"annual_energy",						"Annual energy production",											"",				"",				"MHKWave",			"?",						"",					"" },
-	{ SSC_OUTPUT,			SSC_NUMBER,			"rated_capacity",						"Rated Capacity of System",											"",				"",				"MHKWave",			"?",						"",					"" },
-	{ SSC_OUTPUT,			SSC_NUMBER,			"capacity_factor",						"Capacity Factor",											"",				"",				"MHKWave",			"?",						"",					"" },
-	{ SSC_OUTPUT,			SSC_MATRIX,			"annual_energy_distribution",			"Annual energy production as function of Hs and Te",				"",				"",				"MHKWave",			"?",						"",					"" },
+	{ SSC_OUTPUT,			SSC_NUMBER,			"average_power",						"Average power production",											"kW",			"",				"MHKWave",			"*",						"",					"" },
+	{ SSC_OUTPUT,			SSC_NUMBER,			"annual_energy",						"Annual energy production",											"kWh",			"",				"MHKWave",			"*",						"",					"" },
+	{ SSC_OUTPUT,			SSC_NUMBER,			"rated_capacity",						"Rated Capacity of System",											"kW",			"",				"MHKWave",			"*",						"",					"" },
+	{ SSC_OUTPUT,			SSC_NUMBER,			"capacity_factor",						"Capacity Factor",													"%",			"",				"MHKWave",			"*",						"",					"" },
+	{ SSC_OUTPUT,			SSC_MATRIX,			"annual_energy_distribution",			"Annual energy production as function of Hs and Te",				"",				"",				"MHKWave",			"*",						"",					"" },
 };
 
 
@@ -125,7 +125,7 @@ public:
 		//Calculating capacity factor:
 		capacity_factor = annual_energy / ( rated_capacity * 8760 );
 		
-		//Assigning values outputs:
+		//Assigning values to outputs:
 		assign("annual_energy", var_data((ssc_number_t)annual_energy));
 		assign("average_power", var_data((ssc_number_t)average_power));
 		assign("rated_capacity", var_data((ssc_number_t)rated_capacity));
