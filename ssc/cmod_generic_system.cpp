@@ -63,6 +63,7 @@ static var_info _cm_vtab_generic_system[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "heat_rate",                  "Heat Rate",                           "MMBTUs/MWhe",  "",      "generic_system",      "*",               "",                    "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "conv_eff",                   "Conversion Efficiency",               "%",            "",      "generic_system",      "*",               "",                    "" },
 	{ SSC_INPUT,        SSC_ARRAY,       "energy_output_array",        "Array of Energy Output Profile",      "kW",           "",      "generic_system",      "*",               "",                    "" }, 
+	{ SSC_INPUT,		SSC_ARRAY,	     "load",			           "Electricity load (year 1)",           "kW",	          "",	   "generic_system",       "",	             "",	                "" },
 
 	// optional for lifetime analysis
 	{ SSC_INPUT,        SSC_NUMBER,      "system_use_lifetime_output",                  "Generic lifetime simulation",                               "0/1",      "",                              "generic_system",             "?=0",                        "INTEGER,MIN=0,MAX=1",          "" },
