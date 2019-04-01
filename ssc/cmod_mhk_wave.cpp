@@ -50,6 +50,9 @@
 
 #include "core.h"
 #include "common.h"
+#include <vector>
+#include <algorithm> 
+
 static var_info _cm_vtab_mhk_wave[] = {
 	//   VARTYPE			DATATYPE			NAME									LABEL																UNITS           META            GROUP              REQUIRED_IF					CONSTRAINTS			UI_HINTS	
 	{ SSC_INPUT,			SSC_MATRIX,			"wave_resource_definition",				"Frequency distribution of resource as a function of Hs and Te",	"",				"",             "MHKWave",			"*",						"",					"" },
@@ -58,6 +61,8 @@ static var_info _cm_vtab_mhk_wave[] = {
 	
 	{ SSC_OUTPUT,			SSC_NUMBER,			"average_power",						"Average power production",											"",				"",				"MHKWave",			"?",						"",					"" },
 	{ SSC_OUTPUT,			SSC_NUMBER,			"annual_energy",						"Annual energy production",											"",				"",				"MHKWave",			"?",						"",					"" },
+	{ SSC_OUTPUT,			SSC_NUMBER,			"rated_capacity",						"Rated Capacity of System",											"",				"",				"MHKWave",			"?",						"",					"" },
+	{ SSC_OUTPUT,			SSC_NUMBER,			"capacity_factor",						"Capacity Factor",											"",				"",				"MHKWave",			"?",						"",					"" },
 	{ SSC_OUTPUT,			SSC_MATRIX,			"annual_energy_distribution",			"Annual energy production as function of Hs and Te",				"",				"",				"MHKWave",			"?",						"",					"" },
 };
 
@@ -87,13 +92,20 @@ public:
 		ssc_number_t *_aep_distribution_ptr;
 		_aep_distribution_ptr = allocate("annual_energy_distribution", wave_resource_matrix.nrows(), wave_resource_matrix.ncols());
 		int k = 0;
-		double annual_energy = 0, average_power = 0;
+		double annual_energy = 0, average_power = 0, capacity_factor = 0, rated_capacity = 0;
 
 		for (size_t i = 0; i < (size_t)wave_power_matrix.nrows(); i++) {
 			for (size_t j = 0; j < (size_t)wave_power_matrix.ncols(); j++) {
 				_resource_vect[i].push_back(wave_resource_matrix.at(i, j));
 				_power_vect[i].push_back(wave_power_matrix.at(i , j));
 				
+				if(_resource_vect.size() != _power_vect.size())
+					throw compute_module::exec_error("mhk_wave", "Size of Wave Resource is not equal to Power Curve");
+
+				//Store max power:
+				if (_power_vect[i][j] > rated_capacity)
+					rated_capacity = _power_vect[i][j];
+
 				//Calculate and allocate annual_energy_distribution:
 				if (j == 0 || i == 0)	//Where (i = 0) is the row header, and (j =  0) is the column header.
 					_aep_distribution_ptr[k] = _resource_vect[i][j];
@@ -103,15 +115,21 @@ public:
 					average_power += (_aep_distribution_ptr[k] / 8760);
 				}
 				k++;
+
 			}
 		}
 
 		//Factoring in losses in total annual energy production:
 		annual_energy *= (1 - (as_double("annual_energy_loss") / 100 ));
 
-		//Annual Energy Production:
+		//Calculating capacity factor:
+		capacity_factor = annual_energy / ( rated_capacity * 8760 );
+		
+		//Assigning values outputs:
 		assign("annual_energy", var_data((ssc_number_t)annual_energy));
 		assign("average_power", var_data((ssc_number_t)average_power));
+		assign("rated_capacity", var_data((ssc_number_t)rated_capacity));
+		assign("capacity_factor", var_data((ssc_number_t)capacity_factor));
 
 	}
 };
