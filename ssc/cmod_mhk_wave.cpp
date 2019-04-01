@@ -87,7 +87,7 @@ public:
 		ssc_number_t *_wave_energy_ptr;
 		_wave_energy_ptr = allocate("annual_energy_distribution", wave_resource_matrix.nrows(), wave_resource_matrix.ncols());
 		int k = 0;
-		//double annual_energy = 0;
+		double annual_energy = 0;
 
 		for (size_t i = 0; i < (size_t)wave_power_matrix.nrows(); i++) {
 			for (size_t j = 0; j < (size_t)wave_power_matrix.ncols(); j++) {
@@ -98,14 +98,14 @@ public:
 					_wave_energy_ptr[k] = _resource_vect[i][j];
 				else {
 					_wave_energy_ptr[k] = _resource_vect[i][j] * _power_vect[i][j] * 87.60;	//Where 87.60 = (8760/100)
-					//annual_energy += _wave_energy_ptr[k];
+					annual_energy += _wave_energy_ptr[k];
 				}
 				k++;
 			}
 		}
 
 		//Annual Energy Production:
-		//assign("annual_energy", var_data((ssc_number_t)annual_energy));
+		assign("annual_energy", var_data((ssc_number_t)annual_energy));
 
 	}
 };
