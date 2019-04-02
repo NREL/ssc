@@ -249,5 +249,8 @@
     <ClInclude Include="..\test\shared_test\lib_time_test.h">
       <Filter>shared_test</Filter>
     </ClInclude>
+    <ClInclude Include="..\test\input_cases\mhk\mhk_tidal_inputs.h">
+      <Filter>input_cases</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
