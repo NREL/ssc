@@ -91,6 +91,7 @@
     <ClInclude Include="..\test\tcs_test\trough_physical_common_data.h" />
     <ClInclude Include="..\test\tcs_test\trough_physical_iph_cases.h" />
     <ClInclude Include="..\test\tcs_test\trough_physical_iph_common_data.h" />
+    <ClInclude Include="cmod_mhk_tidal_test.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{37B3B5AF-8923-4C67-BA46-9D90EAC49E0E}</ProjectGuid>
