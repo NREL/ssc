@@ -1,5 +1,5 @@
-#ifndef CMOD_MHK_TIDAL_INPUTS_H_
-#define CMOD_MHK_TIDAL_INPUTS_H_
+#ifndef CMOD_MHK_WAVE_TEST_H_
+#define CMOD_MHK_WAVE_TEST_H_
 
 #include <gtest/gtest.h>
 #include "test/input_cases/mhk/mhk_tidal_inputs.h"
@@ -11,7 +11,7 @@
 #include "../ssc/common.h"
 #include "test/input_cases/code_generator_utilities.h"
 
-class MHKTidal : public ::testing::Test {
+class MHKWave : public ::testing::Test {
 private:
 public:
 	ssc_data_t data;
@@ -20,14 +20,13 @@ public:
 
 	void SetUp() {
 		data = ssc_data_create();
-		tidal_inputs(data);
+		wave_inputs(data);
 	}
-
+	
 	void TearDown() {
 		if (data)
 			ssc_data_clear(data);
 	}
-
 
 	void SetCalculated(std::string name)
 	{
@@ -41,5 +40,6 @@ public:
 	}
 
 };
-#endif // !CMOD_MHK_TIDAL_INPUTS_H_
+
+#endif // !CMOD_MHK_WAVE_TEST_H_
 

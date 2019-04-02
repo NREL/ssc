@@ -77,6 +77,7 @@
     <ClInclude Include="..\test\ssc_test\cmod_biomass_test.h" />
     <ClInclude Include="..\test\ssc_test\cmod_fuelcell_test.h" />
     <ClInclude Include="..\test\ssc_test\cmod_generic_test.h" />
+    <ClInclude Include="..\test\ssc_test\cmod_mhk_wave_test.h" />
     <ClInclude Include="..\test\ssc_test\cmod_pvsamv1_test.h" />
     <ClInclude Include="..\test\ssc_test\cmod_pvwattsv5_test.h" />
     <ClInclude Include="..\test\ssc_test\cmod_pvyield_test.h" />

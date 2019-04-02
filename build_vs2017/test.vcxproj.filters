@@ -261,5 +261,8 @@
     <ClInclude Include="..\test\input_cases\mhk\mhk_wave_inputs.h">
       <Filter>input_cases</Filter>
     </ClInclude>
+    <ClInclude Include="..\test\ssc_test\cmod_mhk_wave_test.h">
+      <Filter>ssc_test</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

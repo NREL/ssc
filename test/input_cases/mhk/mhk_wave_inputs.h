@@ -62,32 +62,4 @@ void wave_inputs(ssc_data_t &data) {
 
 }
 
-
 #endif
-
-/*
-
-var('annual_energy_loss', 0);	//in %
-var('calculate_capacity', 1);	//Calculate capacity outside UI?
-var('rated_capacity', 250);
-
-run('mhk_wave');
-
-outln('Annual Energy (kWh): ' + var('annual_energy'));
-outln('Average Power (kW): ' + var('average_power'));
-outln('Rated Capacity (kW): ' + var('rated_capacity'));
-outln('Capacity Factor (%): ' + var('capacity_factor'));
-outln('Annual Energy Distribution: ' + var('annual_energy_distribution'));
-
-//Running cmod_lcoefcr (With random $ costs):		
-var('capital_cost', 90000);
-var('fixed_operating_cost', 250000);
-var('variable_operating_cost', 0.3);
-var('fixed_charge_rate', 0.55);
-var('annual_energy', var('annual_energy'));
-//var('annual_energy',   4428890.84);
-run('lcoefcr');
-outln('LCOE fcr: ' + var('lcoe_fcr'));
-
-
-*/
