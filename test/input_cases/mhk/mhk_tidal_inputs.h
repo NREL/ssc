@@ -39,8 +39,7 @@ void tidal_inputs(ssc_data_t &data) {
 														3.0,		 0.10,
 														3.1,		 0.00,
 														3.2,		 0.00,
-														3.3,		 0.00
-												};
+														3.3,		 0.00};
 	ssc_data_set_matrix(data, "tidal_resource_definition", tidal_resource_definition, 34, 2);
 
 	ssc_number_t tidal_power_curve[68] = {				0.0,		0.0,
@@ -76,12 +75,11 @@ void tidal_inputs(ssc_data_t &data) {
 														3.0,		1115.0,
 														3.1,		1115.0,
 														3.2,		1085.4,
-														3.3,		1055.7
-											};
+														3.3,		1055.7};
 
 	ssc_data_set_matrix(data, "tidal_power_curve", tidal_power_curve, 34, 2);
 	
-	ssc_data_set_number(data, "annual_energy_loss", 15);	//in %
+	ssc_data_set_number(data, "annual_energy_loss", 0);	//in %
 	ssc_data_set_number(data, "calculate_capacity", 1);	//Calculate rated capacity outside UI?
 	ssc_data_set_number(data, "rated_capacity", 0);
 }
