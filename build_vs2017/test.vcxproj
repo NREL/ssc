@@ -53,6 +53,7 @@
     <ClInclude Include="..\test\input_cases\fuelcell_common_data.h" />
     <ClInclude Include="..\test\input_cases\generic_common_data.h" />
     <ClInclude Include="..\test\input_cases\mhk\mhk_tidal_inputs.h" />
+    <ClInclude Include="..\test\input_cases\mhk\mhk_wave_inputs.h" />
     <ClInclude Include="..\test\input_cases\pvsamv1_cases.h" />
     <ClInclude Include="..\test\input_cases\pvsamv1_common_data.h" />
     <ClInclude Include="..\test\input_cases\pvwattsv5_cases.h" />

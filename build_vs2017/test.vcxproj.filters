@@ -258,5 +258,8 @@
     <ClInclude Include="cmod_mhk_tidal_test.h">
       <Filter>ssc_test</Filter>
     </ClInclude>
+    <ClInclude Include="..\test\input_cases\mhk\mhk_wave_inputs.h">
+      <Filter>input_cases</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
