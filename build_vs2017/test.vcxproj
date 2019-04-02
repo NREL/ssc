@@ -31,6 +31,7 @@
     <ClCompile Include="..\test\ssc_test\cmod_fuelcell_test.cpp" />
     <ClCompile Include="..\test\ssc_test\cmod_generic_test.cpp" />
     <ClCompile Include="..\test\ssc_test\cmod_mhk_tidal_test.cpp" />
+    <ClCompile Include="..\test\ssc_test\cmod_mhk_wave_test.cpp" />
     <ClCompile Include="..\test\ssc_test\cmod_pvsamv1_test.cpp" />
     <ClCompile Include="..\test\shared_test\lib_windwakemodel_test.cpp" />
     <ClCompile Include="..\test\shared_test\lib_windwatts_test.cpp" />

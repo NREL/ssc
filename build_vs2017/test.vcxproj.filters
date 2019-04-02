@@ -101,6 +101,9 @@
     <ClCompile Include="..\test\ssc_test\cmod_mhk_tidal_test.cpp">
       <Filter>ssc_test</Filter>
     </ClCompile>
+    <ClCompile Include="..\test\ssc_test\cmod_mhk_wave_test.cpp">
+      <Filter>ssc_test</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="shared_test">

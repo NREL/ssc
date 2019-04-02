@@ -2,7 +2,7 @@
 #define CMOD_MHK_WAVE_TEST_H_
 
 #include <gtest/gtest.h>
-#include "test/input_cases/mhk/mhk_tidal_inputs.h"
+#include "test/input_cases/mhk/mhk_wave_inputs.h"
 
 #include "core.h"
 #include "sscapi.h"

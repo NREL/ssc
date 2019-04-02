@@ -141,7 +141,7 @@ public:
 		annual_energy *= (1 - (as_double("annual_energy_loss") / 100 ));
 
 		//Calculating capacity factor:
-		capacity_factor = annual_energy / ( rated_capacity * 8760 );
+		capacity_factor = annual_energy / ( rated_capacity * 87.60 );	//Where 87.60 = (8760/100)
 		
 		//Assigning values to outputs:
 		assign("annual_energy", var_data((ssc_number_t)annual_energy));
