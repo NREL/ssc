@@ -11,7 +11,7 @@
 #include "../ssc/common.h"
 #include "test/input_cases/code_generator_utilities.h"
 
-class MHKTidal : public ::testing::Test {
+class CM_MHKTidal : public ::testing::Test {
 private:
 public:
 	ssc_data_t data;

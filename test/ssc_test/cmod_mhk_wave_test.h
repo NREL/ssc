@@ -11,7 +11,7 @@
 #include "../ssc/common.h"
 #include "test/input_cases/code_generator_utilities.h"
 
-class MHKWave : public ::testing::Test {
+class CM_MHKWave : public ::testing::Test {
 private:
 public:
 	ssc_data_t data;
