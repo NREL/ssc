@@ -113,6 +113,7 @@ var_info vtab_fuelcell_output[] = {
 	{ SSC_OUTPUT,       SSC_ARRAY,       "fuelcell_power",                     "Electricity from fuel cell",            "kW",        "",                 "Fuel Cell",                  "",                        "",                              "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "fuelcell_power_max_percent",         "Fuel cell max power percent available",  "%",        "",                 "Fuel Cell",                  "",                        "",                              "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "fuelcell_percent_load",              "Fuel cell percent load",                 "%",        "",                 "Fuel Cell",                  "",                        "",                              "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "fuelcell_electrical_efficiency",     "Fuel cell electrical efficiency",       "%",          "",                 "Fuel Cell",                  "",                        "",                              "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "fuelcell_power_thermal",             "Heat from fuel cell",                   "kWt",        "",                 "Fuel Cell",                  "",                        "",                              "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "fuelcell_fuel_consumption_mcf",      "Fuel consumption of fuel cell",         "MCf",        "",                 "Fuel Cell",                  "",                        "",                              "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "fuelcell_to_load",                   "Electricity to load from fuel cell",    "kW",        "",                 "Fuel Cell",                  "",                        "",                              "" },
@@ -191,6 +192,7 @@ void cm_fuelcell::exec() throw (general_error)
 				p_fuelCellPower_kW[idx] = (ssc_number_t)fuelCellDispatch->getPower();
 				p_fuelCellPowerMaxAvailable_percent[idx] = (ssc_number_t)fuelCellDispatch->getPowerMaxPercent();
 				p_fuelCellLoad_percent[idx] = (ssc_number_t)fuelCellDispatch->getPercentLoad();
+				p_fuelCellElectricalEfficiency_percent[idx] = (ssc_number_t)fuelCellDispatch->getElectricalEfficiencyPercent();
 				p_fuelCellPowerThermal_kW[idx] = (ssc_number_t)fuelCellDispatch->getPowerThermal();
 				p_fuelCellConsumption_MCf[idx] = (ssc_number_t)fuelCellDispatch->getFuelConsumption();
 				p_fuelCellToGrid_kW[idx] = (ssc_number_t)(fuelCellDispatch->getBatteryPower()->powerFuelCellToGrid);
@@ -241,6 +243,7 @@ void cm_fuelcell::allocateOutputs()
 	p_fuelCellPower_kW = allocate("fuelcell_power", fcVars->numberOfLifetimeRecords);
 	p_fuelCellPowerMaxAvailable_percent = allocate("fuelcell_power_max_percent", fcVars->numberOfLifetimeRecords);
 	p_fuelCellLoad_percent = allocate("fuelcell_percent_load", fcVars->numberOfLifetimeRecords);
+	p_fuelCellElectricalEfficiency_percent = allocate("fuelcell_electrical_efficiency", fcVars->numberOfLifetimeRecords);
 	p_fuelCellPowerThermal_kW = allocate("fuelcell_power_thermal", fcVars->numberOfLifetimeRecords);
 	p_fuelCellConsumption_MCf = allocate("fuelcell_fuel_consumption_mcf", fcVars->numberOfLifetimeRecords);
 	p_fuelCellToGrid_kW = allocate("fuelcell_to_grid", fcVars->numberOfLifetimeRecords);
