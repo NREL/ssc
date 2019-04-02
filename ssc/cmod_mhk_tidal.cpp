@@ -62,6 +62,8 @@ static var_info _cm_vtab_mhk_tidal[] = {
 	{ SSC_OUTPUT,			SSC_NUMBER,			"rated_capacity",						"Rated Capacity of System",													"kW",			"",				"MHKTidal",			"*",						"",					"" },
 	{ SSC_OUTPUT,			SSC_NUMBER,			"capacity_factor",						"Capacity Factor",															"%",			"",				"MHKTidal",			"*",						"",					"" },
 	{ SSC_OUTPUT,			SSC_ARRAY,			"annual_energy_distribution",			"Annual energy production as function of speed",							"kWh",			"",				"MHKTidal",			"*",						"",					"" },
+	
+	var_info_invalid
 };
 
 

@@ -66,6 +66,7 @@ static var_info _cm_vtab_mhk_wave[] = {
 	{ SSC_OUTPUT,			SSC_NUMBER,			"annual_energy",						"Annual energy production",											"kWh",			"",				"MHKWave",			"*",						"",							"" },
 	{ SSC_OUTPUT,			SSC_NUMBER,			"capacity_factor",						"Capacity Factor",													"%",			"",				"MHKWave",			"*",						"",							"" },
 	{ SSC_OUTPUT,			SSC_MATRIX,			"annual_energy_distribution",			"Annual energy production as function of Hs and Te",				"",				"",				"MHKWave",			"*",						"",							"" },
+	var_info_invalid
 };
 
 
