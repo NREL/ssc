@@ -52,16 +52,18 @@
 #include "common.h"
 
 static var_info _cm_vtab_mhk_tidal[] = {
-	//   VARTYPE			DATATYPE			NAME									LABEL																		UNITS           META            GROUP              REQUIRED_IF					CONSTRAINTS			UI_HINTS	
-	{ SSC_INPUT,			SSC_MATRIX,			"tidal_resource_definition",            "Frequency distribution of resource as a function of stream speeds",		"",				"",             "MHKTidal",			"*",						"",                  "" },	
-	{ SSC_INPUT,			SSC_MATRIX,			"tidal_power_curve",					"Power curve of tidal energy conversion system",							"",				"",             "MHKTidal",			"*",						"",                  "" },	
-	{ SSC_INPUT,			SSC_NUMBER,			"annual_energy_loss",					"Total energy losses",														"%",			"",             "MHKTidal",			"*",						"",                  "" },	
-	
-	{ SSC_OUTPUT,			SSC_NUMBER,			"average_power",						"Average power production",													"kW",			"",				"MHKTidal",			"*",						"",					"" },
-	{ SSC_OUTPUT,			SSC_NUMBER,			"annual_energy",						"Annual energy production",													"kWh",			"",				"MHKTidal",			"*",						"",					"" },
-	{ SSC_OUTPUT,			SSC_NUMBER,			"rated_capacity",						"Rated Capacity of System",													"kW",			"",				"MHKTidal",			"*",						"",					"" },
-	{ SSC_OUTPUT,			SSC_NUMBER,			"capacity_factor",						"Capacity Factor",															"%",			"",				"MHKTidal",			"*",						"",					"" },
-	{ SSC_OUTPUT,			SSC_ARRAY,			"annual_energy_distribution",			"Annual energy production as function of speed",							"kWh",			"",				"MHKTidal",			"*",						"",					"" },
+	//   VARTYPE			DATATYPE			NAME									LABEL																		UNITS           META            GROUP              REQUIRED_IF					CONSTRAINTS				UI_HINTS	
+	{ SSC_INPUT,			SSC_MATRIX,			"tidal_resource_definition",            "Frequency distribution of resource as a function of stream speeds",		"",				"",             "MHKTidal",			"*",						"",						"" },	
+	{ SSC_INPUT,			SSC_MATRIX,			"tidal_power_curve",					"Power curve of tidal energy conversion system",							"",				"",             "MHKTidal",			"*",						"",						"" },	
+	{ SSC_INPUT,			SSC_NUMBER,			"annual_energy_loss",					"Total energy losses",														"%",			"",             "MHKTidal",			"*",						"",						"" },	
+	{ SSC_INPUT,			SSC_NUMBER,			"calculate_capacity",					"Calculate capacity outside UI?",											"0/1",			"",             "MHKTidal",         "*",                      "INTEGER,MIN=0,MAX=1",	"" },
+
+	{ SSC_INOUT,			SSC_NUMBER,			"rated_capacity",						"Rated Capacity of System",													"kW",			"",				"MHKTidal",			"*",						"",						"" },
+
+	{ SSC_OUTPUT,			SSC_NUMBER,			"average_power",						"Average power production",													"kW",			"",				"MHKTidal",			"*",						"",						"" },
+	{ SSC_OUTPUT,			SSC_NUMBER,			"annual_energy",						"Annual energy production",													"kWh",			"",				"MHKTidal",			"*",						"",						"" },
+	{ SSC_OUTPUT,			SSC_NUMBER,			"capacity_factor",						"Capacity Factor",															"%",			"",				"MHKTidal",			"*",						"",						"" },
+	{ SSC_OUTPUT,			SSC_ARRAY,			"annual_energy_distribution",			"Annual energy production as function of speed",							"kWh",			"",				"MHKTidal",			"*",						"",						"" },
 	
 	var_info_invalid
 };
@@ -95,7 +97,10 @@ public:
 	//Initialize variables to store calculated values:
 		//Vector to store annual energy production as function of speed (annual energy production at each stream speed).
 		std::vector<double> _annual_energy_distribution;	
-		double annual_energy = 0, average_power = 0, sheer_vect_checker = 0, rated_capacity = 0, capacity_factor = 0;
+		double annual_energy = 0, average_power = 0, sheer_vect_checker = 0, capacity_factor = 0;
+		
+		//User either sets rated_capacity in the UI, or allows cmod to determine from power curve:
+		double rated_capacity = as_double("rated_capacity");
 	
 
 		//Storing each column of the tidal_resource_matrix and tidal_power_curve as vectors:
@@ -105,9 +110,11 @@ public:
 			_sheer_vect.push_back(tidal_resource_matrix.at(i, 1));
 			_power_vect.push_back(tidal_power_curve.at(i, 1));
 
-			//Store max power:
-			if (_power_vect[i] > rated_capacity)
-				rated_capacity = _power_vect[i];
+			
+			//Store max power if not set in UI:
+			if (as_integer("calculate_capacity"))
+				if (_power_vect[i] > rated_capacity)
+					rated_capacity = _power_vect[i];
 			
 			//Checker to ensure frequency distribution adds to >= 99.5%:
 			sheer_vect_checker += _sheer_vect[i];

@@ -102,7 +102,11 @@ public:
 		_aep_distribution_ptr = allocate("annual_energy_distribution", wave_resource_matrix.nrows(), wave_resource_matrix.ncols());
 		int k = 0;
 		double annual_energy = 0, average_power = 0, capacity_factor = 0; 
+		
+
+		//User either sets rated_capacity in the UI, or allows cmod to determine from power curve:
 		double rated_capacity = as_double("rated_capacity");
+		
 
 		for (size_t i = 0; i < (size_t)wave_power_matrix.nrows(); i++) {
 			for (size_t j = 0; j < (size_t)wave_power_matrix.ncols(); j++) {
