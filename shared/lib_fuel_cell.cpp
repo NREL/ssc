@@ -181,6 +181,9 @@ void FuelCell::calculateEfficiencyCurve(double fraction) {
 		m_efficiency_percent = interpolateMap(fraction, m_efficiencyMap);
 		m_heatRecovery_percent = interpolateMap(fraction, m_heatRecoveryMap);
 	}
+	else {
+		m_fuelConsumed_MCf = m_efficiency_percent = m_heatRecovery_percent = 0.0;
+	}
 }
 
 double FuelCell::getPercentLoad() {
@@ -448,6 +451,7 @@ void FuelCell::applyEfficiency() {
 	}
 	// When completely shut down, no heat, no electricity
 	else if (isShutDown()) {
+		calculateEfficiencyCurve(0.0);
 		m_powerThermal_kW = 0.0;
 		m_fuelConsumed_MCf = 0;
 	}
@@ -484,6 +488,9 @@ void FuelCell::runSingleTimeStep(double power_kW) {
 	checkMinTurndown();
 	checkMaxLimit();
 
+	// 	Apply degrdadation before computing efficiency and fuel availability
+	applyDegradation();
+
 	// Calculate electrical and thermal efficiency
 	applyEfficiency();
 
@@ -494,6 +501,6 @@ void FuelCell::runSingleTimeStep(double power_kW) {
 	calculateTime();
 
 
-	applyDegradation();
+
 	
 }
