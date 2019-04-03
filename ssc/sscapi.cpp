@@ -157,6 +157,7 @@ extern module_entry_info
 	cm_entry_pv_get_shade_loss_mpp,
 	cm_entry_inv_cec_cg,
 	cm_entry_thermalrate;
+	cm_alkaline_electrolyzer;
 
 /* official module table */
 static module_entry_info *module_table[] = {
@@ -243,6 +244,7 @@ static module_entry_info *module_table[] = {
 	&cm_entry_pv_get_shade_loss_mpp,
 	&cm_entry_inv_cec_cg,
 	&cm_entry_thermalrate,
+	&cm_alkaline_electrolyzer,
 	0 };
 
 SSCEXPORT ssc_module_t ssc_module_create( const char *name )
