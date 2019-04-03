@@ -57,10 +57,10 @@ static var_info _cm_vtab_mhk_wave[] = {
 	//   VARTYPE			DATATYPE			NAME									LABEL																UNITS           META            GROUP              REQUIRED_IF					CONSTRAINTS					UI_HINTS	
 	{ SSC_INPUT,			SSC_MATRIX,			"wave_resource_definition",				"Frequency distribution of resource as a function of Hs and Te",	"",				"",             "MHKWave",			"*",						"",							"" },
 	{ SSC_INPUT,			SSC_MATRIX,			"wave_power_curve",						"Wave Power Matrix",												"",				"",             "MHKWave",			"*",						"",							"" },
-	{ SSC_INPUT,			SSC_NUMBER,			"annual_energy_loss",					"Total energy losses",												"%",			"",             "MHKWave",			"*",						"",							"" },
-	{ SSC_INPUT,			SSC_NUMBER,			"calculate_capacity",					"Calculate capacity outside UI?",									"0/1",			"",             "MHKWave",          "*",                      "INTEGER,MIN=0,MAX=1",      "" },
+	{ SSC_INPUT,			SSC_NUMBER,			"annual_energy_loss",					"Total energy losses",												"%",			"",             "MHKWave",			"?=0",						"",							"" },
+	{ SSC_INPUT,			SSC_NUMBER,			"calculate_capacity",					"Calculate capacity outside UI?",									"0/1",			"",             "MHKWave",          "?=1",                      "INTEGER,MIN=0,MAX=1",      "" },
 
-	{ SSC_INOUT,			SSC_NUMBER,			"rated_capacity",						"Rated Capacity of System",											"kW",			"",				"MHKWave",			"*",						"",							"" },
+	{ SSC_INOUT,			SSC_NUMBER,			"rated_capacity",						"Rated Capacity of System",											"kW",			"",				"MHKWave",			"?=0",						"",							"" },
 	
 	{ SSC_OUTPUT,			SSC_NUMBER,			"average_power",						"Average power production",											"kW",			"",				"MHKWave",			"*",						"",							"" },
 	{ SSC_OUTPUT,			SSC_NUMBER,			"annual_energy",						"Annual energy production",											"kWh",			"",				"MHKWave",			"*",						"",							"" },
@@ -114,7 +114,7 @@ public:
 				_power_vect[i].push_back(wave_power_matrix.at(i , j));
 				
 				//Store max power if not set in UI:
-				if(as_integer("calculate_capacity"))
+				if(as_integer("calculate_capacity") > 0)
 					if (_power_vect[i][j] > rated_capacity)
 						rated_capacity = _power_vect[i][j];
 
