@@ -494,14 +494,14 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
 	{ SSC_OUTPUT,       SSC_ARRAY,       "T_pc_out",             "PC HTF outlet temperature",                                    "C",            "",            "PC",             "*",                       "",           "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "m_dot_water_pc",       "PC water consumption: makeup + cooling",                       "kg/s",         "",            "PC",             "*",                       "",           "" },
 	{ SSC_OUTPUT,		SSC_ARRAY,		 "T_cond_out",			 "PC condenser water outlet temperature",						 "C",			 "",			"PC",			  "*",						 "",		   "" },
-	{ SSC_OUTPUT,		SSC_ARRAY,		 "T_cold",				 "Cold storage cold temperature",								 "C",			 "",			"PC",			  "*",						 "",		   "" },
-	{ SSC_OUTPUT,		SSC_ARRAY,		 "m_cold",				 "Cold storage cold tank mass",									 "kg",			 "",			"PC",			  "*",						 "",		   "" },
-	{ SSC_OUTPUT,		SSC_ARRAY,		 "m_warm",				 "Cold storage warm tank mass",									 "kg",			 "",			"PC",			  "*",						 "",		   "" },
-	{ SSC_OUTPUT,		SSC_ARRAY,		 "T_warm",				 "Cold storage warm tank temperature",							 "C",			 "",			"PC",			  "*",						 "",		   "" },
-	{ SSC_OUTPUT,		SSC_ARRAY,		 "T_rad_out",			 "Radiator outlet temperature",									 "C",			 "",			"PC",			  "*",						 "",		   "" },
-	{ SSC_OUTPUT,		SSC_NUMBER,		 "A_radfield",			 "Radiator field surface area",									 "m^2",			 "",			"PC",			  "*",						 "",		   "" },
-	{ SSC_OUTPUT,		SSC_ARRAY,		 "P_cond",				 "PC condensing presssure",										 "Pa",			 "",			"PC",			  "*",						 "",		   "" },
-	{ SSC_OUTPUT,		SSC_ARRAY,		 "radcool_control",		 "Radiative cooling status code",								 "-",			 "",			"PC",			  "*",						 "",		   "" },
+	{ SSC_OUTPUT,		SSC_ARRAY,		 "T_cold",				 "Cold storage cold temperature",								 "C",			 "",			"PC",			  "?",						 "",		   "" },
+	{ SSC_OUTPUT,		SSC_ARRAY,		 "m_cold",				 "Cold storage cold tank mass",									 "kg",			 "",			"PC",			  "?",						 "",		   "" },
+	{ SSC_OUTPUT,		SSC_ARRAY,		 "m_warm",				 "Cold storage warm tank mass",									 "kg",			 "",			"PC",			  "?",						 "",		   "" },
+	{ SSC_OUTPUT,		SSC_ARRAY,		 "T_warm",				 "Cold storage warm tank temperature",							 "C",			 "",			"PC",			  "?",						 "",		   "" },
+	{ SSC_OUTPUT,		SSC_ARRAY,		 "T_rad_out",			 "Radiator outlet temperature",									 "C",			 "",			"PC",			  "?",						 "",		   "" },
+	{ SSC_OUTPUT,		SSC_NUMBER,		 "A_radfield",			 "Radiator field surface area",									 "m^2",			 "",			"PC",			  "?",						 "",		   "" },
+	{ SSC_OUTPUT,		SSC_ARRAY,		 "P_cond",				 "PC condensing presssure",										 "Pa",			 "",			"PC",			  "?",						 "",		   "" },
+	{ SSC_OUTPUT,		SSC_ARRAY,		 "radcool_control",		 "Radiative cooling status code",								 "-",			 "",			"PC",			  "?",						 "",		   "" },
 
 
 		// Thermal energy storage outputs
@@ -957,7 +957,7 @@ public:
 				two_tank->ms_params.m_ctes_type = as_integer("ctes_type");
 				stratified->ms_params.m_ctes_type = as_integer("ctes_type");
 
-				if (two_tank->ms_params.m_ctes_type == 2)
+				if (rankine_pc.ms_params.m_CT == 4 && two_tank->ms_params.m_ctes_type == 2)
 				{
 					two_tank->ms_params.m_h_tank_min = as_double("h_ctes_tank_min");
 					two_tank->ms_params.m_ts_hours = as_double("ctes_tshours");
@@ -971,7 +971,7 @@ public:
 					two_tank->ms_params.m_f_V_hot_ini = as_double("f_ctes_warm_ini");
 					two_tank->ms_params.m_lat = weather_reader.ms_solved_params.m_lat;
 				}
-				if (two_tank->ms_params.m_ctes_type >2)
+				if (rankine_pc.ms_params.m_CT == 4 && two_tank->ms_params.m_ctes_type >2)
 				{
 					stratified->ms_params.m_h_tank_min = 0;								//hardcode zero minimum height for stratified tanks.
 					stratified->ms_params.m_ts_hours = as_double("ctes_tshours");
@@ -1483,12 +1483,13 @@ public:
 		p_csp_power_cycle->assign(C_pc_Rankine_indirect_224::E_T_HTF_OUT, allocate("T_pc_out", n_steps_fixed), n_steps_fixed);
 		p_csp_power_cycle->assign(C_pc_Rankine_indirect_224::E_M_DOT_WATER, allocate("m_dot_water_pc", n_steps_fixed), n_steps_fixed);
 		p_csp_power_cycle->assign(C_pc_Rankine_indirect_224::E_T_COND_OUT, allocate("T_cond_out", n_steps_fixed), n_steps_fixed);
-		p_csp_power_cycle->assign(C_pc_Rankine_indirect_224::E_T_COLD, allocate("T_cold", n_steps_fixed), n_steps_fixed);
-		p_csp_power_cycle->assign(C_pc_Rankine_indirect_224::E_M_COLD, allocate("m_cold", n_steps_fixed), n_steps_fixed);
-		p_csp_power_cycle->assign(C_pc_Rankine_indirect_224::E_M_WARM, allocate("m_warm", n_steps_fixed), n_steps_fixed);
-		p_csp_power_cycle->assign(C_pc_Rankine_indirect_224::E_T_WARM, allocate("T_warm", n_steps_fixed), n_steps_fixed);
+
 		if (pb_tech_type == 0) {
 			if (rankine_pc.ms_params.m_CT == 4) {
+				p_csp_power_cycle->assign(C_pc_Rankine_indirect_224::E_T_COLD, allocate("T_cold", n_steps_fixed), n_steps_fixed);
+				p_csp_power_cycle->assign(C_pc_Rankine_indirect_224::E_M_COLD, allocate("m_cold", n_steps_fixed), n_steps_fixed);
+				p_csp_power_cycle->assign(C_pc_Rankine_indirect_224::E_M_WARM, allocate("m_warm", n_steps_fixed), n_steps_fixed);
+				p_csp_power_cycle->assign(C_pc_Rankine_indirect_224::E_T_WARM, allocate("T_warm", n_steps_fixed), n_steps_fixed);
 				p_csp_power_cycle->assign(C_pc_Rankine_indirect_224::E_T_RADOUT, allocate("T_rad_out", n_steps_fixed), n_steps_fixed);
 				p_csp_power_cycle->assign(C_pc_Rankine_indirect_224::E_P_COND, allocate("P_cond", n_steps_fixed), n_steps_fixed);
 				p_csp_power_cycle->assign(C_pc_Rankine_indirect_224::E_RADCOOL_CNTRL, allocate("radcool_control", n_steps_fixed), n_steps_fixed);
@@ -1943,11 +1944,11 @@ public:
 
 		sys_costs.ms_par.radfield_area= rankine_pc.mc_radiator.ms_params.Afield;
 		sys_costs.ms_par.radfield_vol = rankine_pc.mc_radiator.ms_params.D*rankine_pc.mc_radiator.ms_params.D / 4 * PI*rankine_pc.mc_radiator.ms_params.n*rankine_pc.mc_radiator.ms_params.Np*rankine_pc.mc_radiator.ms_params.L; //Calculate volume in radiator panel tubes = pi/4*d^2*L*n*Np
-		if (rankine_pc.mc_two_tank_ctes.ms_params.m_ctes_type == 2) //If two tank
+		if (rankine_pc.ms_params.m_CT == 4 && rankine_pc.mc_two_tank_ctes.ms_params.m_ctes_type == 2) //If two tank
 		{
 			sys_costs.ms_par.coldstorage_vol = rankine_pc.mc_two_tank_ctes.get_physical_volume();
 		}
-		if (rankine_pc.mc_two_tank_ctes.ms_params.m_ctes_type > 2) //If stratified 
+		if (rankine_pc.ms_params.m_CT == 4 && rankine_pc.mc_two_tank_ctes.ms_params.m_ctes_type > 2) //If stratified 
 		{
 			sys_costs.ms_par.coldstorage_vol = rankine_pc.mc_stratified_ctes.get_physical_volume();	
 
@@ -2195,9 +2196,14 @@ public:
 		assign("capacity_factor", (ssc_number_t)(kWh_per_kW / ((double)n_steps_fixed / (double)steps_per_hour)*100.));
 		assign("kwh_per_kw", (ssc_number_t)kWh_per_kW);
 		 
+		if (pb_tech_type == 0) {
+			if (rankine_pc.ms_params.m_CT == 4) {
+				double A_radfield = rankine_pc.mc_radiator.ms_params.Afield;
+				assign("A_radfield", (ssc_number_t)A_radfield);
+			}
+		}
 		//Single value outputs from radiative cooling system
-		double A_radfield = rankine_pc.mc_radiator.ms_params.Afield;
-		assign("A_radfield", (ssc_number_t)A_radfield);
+
 	}
 };
 

@@ -284,7 +284,7 @@ public:
         util::matrix_t<double> sgs_lengths;       //[m] Imported lengths for the SGS piping as read from the modified output files
 
 
->>>>>>> 62149cd6b9f2cff180e94b0ff720906f976d412c
+
 		S_params()
 		{
 			m_field_fl = m_tes_fl = m_tank_pairs = -1;		
