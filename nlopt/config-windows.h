@@ -102,15 +102,15 @@
 #define THREADLOCAL __thread
 #endif
 
-/* Define to 1 if you can safely include both <sys/time.h> and <time.h>. 
-   Use https://www.codefull.org/2015/12/systime-h-replacement-for-windows/ for Windows*/
+   /* Define to 1 if you can safely include both <sys/time.h> and <time.h>.
+	  Use https://www.codefull.org/2015/12/systime-h-replacement-for-windows/ for Windows*/
 #define TIME_WITH_SYS_TIME 1
 
-/* Define to empty if `const' does not conform to ANSI C. */
-/* #undef const */
+	  /* Define to empty if `const' does not conform to ANSI C. */
+	  /* #undef const */
 
-/* Define to `__inline__' or `__inline' if that's what the C compiler
-   calls it, or to nothing if 'inline' is not supported under any name.  */
+	  /* Define to `__inline__' or `__inline' if that's what the C compiler
+		 calls it, or to nothing if 'inline' is not supported under any name.  */
 #ifndef __cplusplus
-/* #undef inline */
+		 /* #undef inline */
 #endif
