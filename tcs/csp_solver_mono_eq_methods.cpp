@@ -1045,7 +1045,7 @@ int C_csp_solver::C_mono_eq_cr_on_pc_target_tes_dc::operator()(double T_htf_cold
 		T_tes_hot_dc_max -= 273.15;		//[C] convert from K
 
 		// Get the maximum TES discharge that results in max PC mass flow rate
-		double m_dot_tes_dc_pc_max = mpc_csp_solver->m_m_dot_pc_max - m_dot_rec;	//[kg/hr]
+		double m_dot_tes_dc_pc_max = fmax(0, mpc_csp_solver->m_m_dot_pc_max - m_dot_rec);	//[kg/hr]
 
 		// The minimum of these two is the maximum possible TES dc mass flow rate
 		m_dot_tes_solved = std::min(m_dot_tes_dc_pc_max, m_dot_tes_dc_max);			//[kg/hr]

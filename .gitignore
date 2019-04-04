@@ -3,6 +3,10 @@
 ##
 ## Get latest from https://github.com/github/gitignore/blob/master/VisualStudio.gitignore
 
+#VS Code
+.vscode/*
+*.vscode
+
 # Git generated
 *.orig
 
@@ -330,4 +334,11 @@ build_linux/Test
 build_linux/config.status
 linux_test\.txt
 
-nlopt/config\.h
+nlopt/config.h
+nlopt/config.status
+build_osx/config.status
+build_sdk/sdk-release/linux64/dependencies\.txt
+build_sdk/sdk-release/linux64/filetypes\.txt
+
+doc/html/*
+doc/latex/*

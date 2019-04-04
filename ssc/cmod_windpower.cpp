@@ -311,7 +311,7 @@ void cm_windpower::exec() throw(general_error)
 		windfile *wp = new windfile(file);
 		nstep = wp->nrecords();
 		wdprov = smart_ptr<winddata_provider>::ptr(wp);
-		if (!wp->ok())
+		if (!wp->ok() || (nstep == 0))
 			throw exec_error("windpower", "failed to read local weather file: " + std::string(file) + " " + wp->error());
 	}
 	else if (is_assigned("wind_resource_data"))
@@ -321,9 +321,10 @@ void cm_windpower::exec() throw(general_error)
         throw exec_error("windpower", wdprov->error());
       }
 		nstep = wdprov->nrecords();
-		if (icingCutoff)
+		if (icingCutoff) {
 			if (wdprov->relativeHumidity().size() != nstep)
 				throw exec_error("windpower", "Icing cutoff enabled but error in rh (relative humidity) data.");
+		}
 	}
 	else
 		throw exec_error("windpower", "no wind resource data supplied");
@@ -468,8 +469,8 @@ void cm_windpower::exec() throw(general_error)
 			air_pres[i] = (ssc_number_t)pres;
 
 			// accumulate monthly and annual energy
-			monthly[imonth] += farmpwr[i] / steps_per_hour;
-			annual += farmpwr[i] / steps_per_hour;
+			monthly[imonth] += farmpwr[i] / (ssc_number_t)steps_per_hour;
+			annual += farmpwr[i] / (ssc_number_t)steps_per_hour;
 
 			i++;
 		} // end steps_per_hour loop

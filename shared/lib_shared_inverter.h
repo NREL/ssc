@@ -3,6 +3,7 @@
 
 #include "lib_sandia.h"
 #include "lib_pvinv.h"
+#include "lib_ondinv.h"
 #include <vector>
 
 /**
@@ -18,7 +19,7 @@ public:
 
 	/// Construct a shared inverter by registering the previously constructed inverter
 	SharedInverter(int inverterType, size_t numberOfInverters,
-		sandia_inverter_t * sandiaInverter, partload_inverter_t * partloadInverter);
+		sandia_inverter_t * sandiaInverter, partload_inverter_t * partloadInverter, ond_inverter * ondInverter);
 
 	/// Setup efficiency vs ambient T curves for temp derating, returns which curve has error if fails, 0 success
 	int setTempDerateCurves(std::vector<std::vector<double>> tempDerateCurves);
@@ -28,8 +29,11 @@ public:
 	/// Modifies pAc, eff, and loss by calculating derate, using curves interpolated by input V
 	void calculateTempDerate(double V, double T, double& pAC, double& eff, double& loss);
 
-	/// Given the combined PV plus battery DC power (W), voltage and ambient T, compute the AC power (kW)
-	void calculateACPower(const double powerDC, const double DCStringVoltage, double ambientT);
+	/// Given the combined PV plus battery DC power (kW), voltage and ambient T, compute the AC power (kW) for a single inverter with one MPPT input
+	void calculateACPower(const double powerDC_kW, const double DCStringVoltage, double ambientT);
+	
+	/// Given the combined PV plus battery DC power (kW), voltage and ambient T, compute the AC power (kW) for a single inverter with multiple MPPT inputs
+	void calculateACPower(const std::vector<double> powerDC_kW, const std::vector<double> DCStringVoltage, double ambientT);
 
 	/// Return the nominal DC voltage input
 	double getInverterDCNominalVoltage();
@@ -37,7 +41,10 @@ public:
 	/// Return the efficiency at max power (Paco, Vdco);
 	double getMaxPowerEfficiency();
 
-	enum { SANDIA_INVERTER, DATASHEET_INVERTER, PARTLOAD_INVERTER, COEFFICIENT_GENERATOR, NONE };
+	/// Return the nameplate AC capacity
+	double getACNameplateCapacity();
+
+	enum { SANDIA_INVERTER, DATASHEET_INVERTER, PARTLOAD_INVERTER, COEFFICIENT_GENERATOR, OND_INVERTER, NONE };
 
 public:
 
@@ -50,11 +57,14 @@ public:
 	double powerNightLoss_kW;
 	double powerTempLoss_kW;
 	double powerLossTotal_kW;
+	double dcWiringLoss_ond_kW;
+	double acWiringLoss_ond_kW;
 
 protected:
 
-	int m_inverterType;  /// The inverter type
-	size_t m_numInverters;  /// The number of inverters in the system
+	int m_inverterType;  ///< The inverter type
+	size_t m_numInverters;  ///< The number of inverters in the system
+	double m_nameplateAC_kW; ///< The total nameplate AC capacity for all inverters in kW
 
 	/// Temperate Derating: each curve contains DC voltage and pairs of start-derate temp [C] and slope [efficiency% lost per C]
 	bool m_tempEnabled;
@@ -65,6 +75,12 @@ protected:
 	// Memory managed elsewehre
 	sandia_inverter_t * m_sandiaInverter;
 	partload_inverter_t * m_partloadInverter;
+	ond_inverter * m_ondInverter;
+
+private:
+
+	void convertOutputsToKWandScale(double tempLoss, double powerAC_watts);
+
 };
 
 

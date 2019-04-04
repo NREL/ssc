@@ -164,7 +164,7 @@ public:
 		for (int i = 0; i < 12; i++) //each month
 		{
 			monthly[i] = 0;
-			for (int d = 0; d<util::nday[i]; d++) // for each day in each month
+			for (size_t d = 0; d<util::nday[i]; d++) // for each day in each month
 				for (int h = 0; h < 24; h++) // for each hour in each day
 					monthly[i] += hourly[c++];
 		}
@@ -201,17 +201,17 @@ public:
 		
 		//8760 arrays of month, day, and hour neeeded for lots of calcs, initialize those here
 		int month[8760], day[8760], hour[8760];
-		int i = 0;
+		int index = 0;
 		for (int m = 0; m < 12; m++)
 		{
-			for (int d = 0; d < util::nday[m]; d++)
+			for (int d = 0; d < (int)util::nday[m]; d++)
 			{
 				for (int h = 0; h <= 23; h++)
 				{
-					month[i] = m;
-					day[i] = d;
-					hour[i] = h;
-					i++;
+					month[index] = m;
+					day[index] = d;
+					hour[index] = h;
+					index++;
 				}
 			}
 		}
@@ -735,7 +735,7 @@ public:
 		std::vector<double> QN(8760), QHV2(8760), Tdiff(8760);
 		
 		
-		std::vector<double> HourlyNonHVACLoad(8760);
+		//std::vector<double> HourlyNonHVACLoad(8760);
 
 		//MAIN 8760 LOOP STARTS HERE********************************************************************************************************************************************************************
 
@@ -1030,7 +1030,7 @@ public:
 		if (HrsHeat != 0)
 		{
 			AuxHeatPerHr = AuxHeat / HrsHeat / 1000; //This is Wh
-			for (i = 0; i < 8760; i++)
+			for (size_t i = 0; i < 8760; i++)
 			{
 				if (Heaton[i])
 				{
@@ -1058,7 +1058,7 @@ public:
 		}
 		int min_diff_month = 0; 
 		double min_diff = fabs(monthly_diff[0]);
-		for (i = 1; i < 12; i++)
+		for (int i = 1; i < 12; i++)
 		{
 			if (fabs(monthly_diff[i]) < min_diff)
 			{

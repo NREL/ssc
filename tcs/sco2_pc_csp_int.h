@@ -62,8 +62,7 @@
 
 #include "ud_power_cycle.h"
 
-#include <iostream>
-#include <fstream>
+#include <iosfwd>
 
 class C_sco2_recomp_csp
 {
@@ -116,6 +115,7 @@ public:
 		double m_phx_dt_cold_approach;	//[K/C] Temperature difference between cold HTF and PHX CO2 inlet
 	
 		// Air cooler parameters
+		bool m_is_des_air_cooler;		//[-] False will skip physical air cooler design. UA will not be available for cost models.
 		double m_frac_fan_power;		//[-] Fraction of total cycle power 'S_des_par_cycle_dep.m_W_dot_fan_des' consumed by air fan
 		double m_deltaP_cooler_frac;    // [-] Fraction of high side (of cycle, i.e. comp outlet) pressure that is allowed as pressure drop to design the ACC
 	
@@ -126,6 +126,9 @@ public:
 			// Default cycle config to recompression
 			m_cycle_config = 1;
 	
+			// Air cooler default
+			m_is_des_air_cooler = true;
+
 			// Default to standard optimization to maximize cycle efficiency
 			m_des_objective_type = 1;
 			m_min_phx_deltaT = 0.0;		//[C]

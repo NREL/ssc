@@ -417,11 +417,13 @@ public:
 	{
 		double m_latitude;		//[deg]
 		double m_longitude;		//[deg]
+        double m_tz;            //[hr]
 		double m_shift;			//[deg]
+        double m_elev;          //[m]
 
 		S_csp_cr_init_inputs()
 		{
-			m_latitude = m_longitude = m_shift = std::numeric_limits<double>::quiet_NaN();	
+			m_latitude = m_longitude = m_shift = m_tz = m_elev = std::numeric_limits<double>::quiet_NaN();
 		}
 	};
 	
@@ -671,7 +673,7 @@ public:
 	virtual void write_output_intervals(double report_time_start,
 		const std::vector<double> & v_temp_ts_time_end, double report_time_end) = 0;
 
-	virtual void assign(int index, float *p_reporting_ts_array, int n_reporting_ts_array) = 0;
+	virtual void assign(int index, float *p_reporting_ts_array, size_t n_reporting_ts_array) = 0;
 
 };
 
@@ -685,20 +687,21 @@ public:
 
 	struct S_csp_tes_outputs
 	{
-		double m_q_heater;			//[MWe] Heating power required to keep tanks at a minimum temperature
-		double m_W_dot_rhtf_pump;	//[MWe] Pumping power for Receiver HTF thru storage
-		double m_q_dot_loss;		//[MWt] Storage thermal losses
-		double m_q_dot_dc_to_htf;	//[MWt] Thermal power to the HTF from storage
-		double m_q_dot_ch_from_htf;	//[MWt] Thermal power from the HTF to storage
-		double m_T_hot_ave;		//[K] Average hot tank temperature over timestep
-		double m_T_cold_ave;	//[K] Average cold tank temperature over timestep
-		double m_T_hot_final;	//[K] Hot temperature at end of timestep
-		double m_T_cold_final;	//[K] Cold temperature at end of timestep
+		double m_q_heater;			//[MWe]  Heating power required to keep tanks at a minimum temperature
+        double m_m_dot;             //[kg/s] Hot tank mass flow rate, valid for direct and indirect systems
+		double m_W_dot_rhtf_pump;	//[MWe]  Pumping power for Receiver HTF thru storage
+		double m_q_dot_loss;		//[MWt]  Storage thermal losses
+		double m_q_dot_dc_to_htf;	//[MWt]  Thermal power to the HTF from storage
+		double m_q_dot_ch_from_htf;	//[MWt]  Thermal power from the HTF to storage
+		double m_T_hot_ave;		    //[K]    Average hot tank temperature over timestep
+		double m_T_cold_ave;	    //[K]    Average cold tank temperature over timestep
+		double m_T_hot_final;	    //[K]    Hot tank temperature at end of timestep
+		double m_T_cold_final;	    //[K]    Cold tank temperature at end of timestep
 	
 		S_csp_tes_outputs()
 		{
-			m_q_heater = m_W_dot_rhtf_pump = m_q_dot_loss = m_q_dot_dc_to_htf = m_q_dot_ch_from_htf = m_T_hot_ave = 
-			m_T_cold_ave = m_T_hot_final = m_T_cold_final = std::numeric_limits<double>::quiet_NaN();
+			m_q_heater = m_m_dot = m_W_dot_rhtf_pump = m_q_dot_loss = m_q_dot_dc_to_htf = m_q_dot_ch_from_htf = 
+            m_T_hot_ave = m_T_cold_ave = m_T_hot_final = m_T_cold_final = std::numeric_limits<double>::quiet_NaN();
 		}
 	};
 
@@ -1107,6 +1110,8 @@ public:
 		CR_DF__PC_SU__TES_OFF__AUX_OFF
 	};
 
+    static std::string tech_operating_modes_str[];
+    
 	C_csp_solver(C_csp_weatherreader &weather,
 		C_csp_collector_receiver &collector_receiver,
 		C_csp_power_cycle &power_cycle,

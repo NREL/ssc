@@ -257,17 +257,17 @@ bool winddata_provider::read( double requested_height,
 	if (*speed < 0 || *speed > 120) //units are m/s, wind speed cannot be negative and highest recorded wind speed ever was 113 m/s (https://en.wikipedia.org/wiki/Wind_speed)
 	{
 		found_all = false;
-		m_errorMsg = util::format("Error: wind speed of %d m/s found in weather file, this speed is outside the possible range of 0 to 120 m/s", *speed);
+		m_errorMsg = util::format("Error: wind speed of %g m/s found in weather file, this speed is outside the possible range of 0 to 120 m/s", *speed);
 	}
 	if (*temperature < -200 || *temperature > 100) //units are Celsius
 	{
 		found_all = false;
-		m_errorMsg = util::format("Error: temperature of %d degrees Celsius found in weather file, this temperature is outside the possible range of -200 to 100 degrees C", *pressure);
+		m_errorMsg = util::format("Error: temperature of %g degrees Celsius found in weather file, this temperature is outside the possible range of -200 to 100 degrees C", *pressure);
 	}
 	if (*pressure < 0.5 || *pressure > 1.1) //units are atm, highest recorded pressure was 1085.7 Hectopascals (1.07 atm)  (https://en.wikipedia.org/wiki/Atmospheric_pressure#Records)
 	{
 		found_all = false;
-		m_errorMsg = util::format("Error: atmospheric pressure of %d atm found in weather file, this pressure is outside the possible range of 0.5 to 1.1 atm", *pressure);
+		m_errorMsg = util::format("Error: atmospheric pressure of %g atm found in weather file, this pressure is outside the possible range of 0.5 to 1.1 atm", *pressure);
 	}
 
 	return found_all;

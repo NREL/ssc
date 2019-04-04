@@ -30,6 +30,45 @@ TEST_F(CMPvsamv1PowerIntegration, DefaultNoFinancialModel){
 	}
 }
 
+/// Run PVSAMv1 with all defaults and lifetime mode for no-financial model
+TEST_F(CMPvsamv1PowerIntegration, DefaultLifetimeNoFinancialModel) {
+
+	std::map<std::string, double> pairs;
+	pairs["system_use_lifetime_output"] = 1;
+	pairs["analysis_period"] = 25;
+
+	double dc_degradation[25];
+	for (size_t i = 0; i < 25; i++) {
+		dc_degradation[i] = 0.5;
+	}
+
+	ssc_data_set_array(data, "dc_degradation", (ssc_number_t*)dc_degradation, 25);
+	ssc_data_set_array(data, "ac_degradation", (ssc_number_t*)dc_degradation, 25);
+
+	int pvsam_errors = modify_ssc_data_and_run_module(data, "pvsamv1", pairs); 
+
+	EXPECT_FALSE(pvsam_errors);
+	if (!pvsam_errors)
+	{
+		ssc_number_t annual_energy;
+		ssc_data_get_number(data, "annual_energy", &annual_energy);
+		EXPECT_NEAR(annual_energy, 8714, m_error_tolerance_hi) << "Annual energy.";
+
+		ssc_number_t capacity_factor;
+		ssc_data_get_number(data, "capacity_factor", &capacity_factor);
+		EXPECT_NEAR(capacity_factor, 21.2, m_error_tolerance_lo) << "Capacity factor";
+
+		ssc_number_t kwh_per_kw;
+		ssc_data_get_number(data, "kwh_per_kw", &kwh_per_kw);
+		EXPECT_NEAR(kwh_per_kw, 1857, m_error_tolerance_hi) << "Energy yield";
+
+		ssc_number_t performance_ratio;
+		ssc_data_get_number(data, "performance_ratio", &performance_ratio);
+		EXPECT_NEAR(performance_ratio, 0.79, m_error_tolerance_lo) << "Energy yield";
+	}
+}
+
+
 /// Test PVSAMv1 with all defaults and residential financial model
 TEST_F(CMPvsamv1PowerIntegration, DefaultResidentialModel)
 {
@@ -66,27 +105,27 @@ TEST_F(CMPvsamv1PowerIntegration, DefaultResidentialModel)
 
 		ssc_number_t elec_cost_without_system_year1;
 		ssc_data_get_number(data, "elec_cost_without_system_year1", &elec_cost_without_system_year1);
-		EXPECT_NEAR(elec_cost_without_system_year1, 1082, m_error_tolerance_hi) << "Electricity bill without system (year 1)";
+		EXPECT_NEAR(elec_cost_without_system_year1, 973, m_error_tolerance_hi) << "Electricity bill without system (year 1)";
 
 		ssc_number_t elec_cost_with_system_year1;
 		ssc_data_get_number(data, "elec_cost_with_system_year1", &elec_cost_with_system_year1);
-		EXPECT_NEAR(elec_cost_with_system_year1, 128, m_error_tolerance_hi) << "Electricity bill with system (year 1)";
+		EXPECT_NEAR(elec_cost_with_system_year1, 125, m_error_tolerance_hi) << "Electricity bill with system (year 1)";
 
 		ssc_number_t savings_year1;
 		ssc_data_get_number(data, "savings_year1", &savings_year1);
-		EXPECT_NEAR(savings_year1, 954, m_error_tolerance_hi) << "Net savings with system (year 1)";
+		EXPECT_NEAR(savings_year1, 848, m_error_tolerance_hi) << "Net savings with system (year 1)";
 
 		ssc_number_t npv;
 		ssc_data_get_number(data, "npv", &npv);
-		EXPECT_NEAR(npv, 5902, m_error_tolerance_hi) << "Net present value";
+		EXPECT_NEAR(npv, 4648, m_error_tolerance_hi) << "Net present value";
 
 		ssc_number_t payback;
 		ssc_data_get_number(data, "payback", &payback);
-		EXPECT_NEAR(payback, 10.2, m_error_tolerance_lo) << "Payback period";
+		EXPECT_NEAR(payback, 11.8, m_error_tolerance_lo) << "Payback period";
 
 		ssc_number_t discounted_payback;
 		ssc_data_get_number(data, "discounted_payback", &discounted_payback);
-		EXPECT_NEAR(discounted_payback, 16.9, m_error_tolerance_lo) << "Discounted payback period";
+		EXPECT_NEAR(discounted_payback, 22.9, m_error_tolerance_lo) << "Discounted payback period";
 
 		ssc_number_t adjusted_installed_cost;
 		ssc_data_get_number(data, "adjusted_installed_cost", &adjusted_installed_cost);
@@ -134,7 +173,7 @@ TEST_F(CMPvsamv1PowerIntegration, NoFinancialModelCustomWeatherFile) {
 /// Test PVSAMv1 with default no-financial model and combinations of Sky Diffuse Model and Weather File Irradiance
 TEST_F(CMPvsamv1PowerIntegration, NoFinancialModelSkyDiffuseAndIrradModels) 
 {
-	std::vector<double> annual_energy_expected = { 8513, 8522, 8525, 8635, 8645, 8647, 8714, 8723, 8726, 7623, 7377};
+	std::vector<double> annual_energy_expected = { 8513, 8522, 8525, 8635, 8645, 8647, 8714, 8723, 8726, 7623, 7300};
 	std::map<std::string, double> pairs;
 	size_t count = 0;
 
@@ -241,7 +280,10 @@ TEST_F(CMPvsamv1PowerIntegration, NoFinancialModelSystemDesign)
 	// Specify modules and inverters with tracking options
 	// Tracking options: Fixed, 1-axis, 2-axis, Azimuth Axis, Seasonal Tilt
 	std::map<std::string, double> pairs;
-	pairs["modules_per_string"] = 6;
+	pairs["subarray1_modules_per_string"] = 6;
+	pairs["subarray2_modules_per_string"] = 6;
+	pairs["subarray3_modules_per_string"] = 6;
+	pairs["subarray4_modules_per_string"] = 6;
 	pairs["subarray1_nstrings"] = 49;
 	pairs["inverter_count"] = 22;
 	pairs["subarray1_track_mode"] = 0;
@@ -306,7 +348,7 @@ TEST_F(CMPvsamv1PowerIntegration, NoFinancialModelSystemDesign)
 	std::vector<double> subarray2_track_mode = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 3, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 	std::vector<double> subarray3_track_mode = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 3, 4, 0, 0, 0, 0, 0 };
 	std::vector<double> subarray4_track_mode = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 3, 4 };
-	annual_energy_expected = { 167392, 176331, 183243, 166251, 175833, 183243, 171952, 178321, 183243, 171952, 178321, 183243, 183243, 183227, 183243, 183243, 183243, 183243, 183243, 183243, 183243, 183243, 183243, 183243, 183243, 183243, 177310, 182927, 162456, 176883, 182902, 160961, 179014, 183024, 168431, 179014, 183024, 168431, 183243, 183243, 183243, 183243, 183243, 198796, 205187, 192695, 186088, 183243, 201501, 206750, 193370, 186290, 183243, 195419, 198925, 189995, 185277, 183243, 195419, 198925, 189995, 185277 };
+	annual_energy_expected = { 167392, 176331, 183243, 166251, 175833, 183243, 171952, 178321, 183243, 171952, 178321, 183243, 183243, 183235, 183243, 183243, 183243, 183243, 183243, 183243, 183243, 183243, 183243, 183243, 183243, 183243, 177310, 182927, 162456, 176883, 182902, 160961, 179014, 183024, 168431, 179014, 183024, 168431, 183243, 183243, 183243, 183243, 183243, 198796, 205187, 192695, 186088, 183243, 201501, 206750, 193370, 186290, 183243, 195419, 198926, 189995, 185277, 183243, 195419, 198926, 189995, 185277 };
 
 	for (int i = 0; i != annual_energy_expected.size(); i++)
 	{
@@ -351,7 +393,10 @@ TEST_F(CMPvsamv1PowerIntegration, NoFinancialModelShading)
 	std::map<std::string, double> pairs;
 
 	// 2 subarrays, one pointing east, one west
-	pairs["modules_per_string"] = 6;
+	pairs["subarray1_modules_per_string"] = 6;
+	pairs["subarray2_modules_per_string"] = 6;
+	pairs["subarray3_modules_per_string"] = 6;
+	pairs["subarray4_modules_per_string"] = 6;
 	pairs["inverter_count"] = 2;
 	pairs["subarray1_nstrings"] = 2;
 	pairs["subarray1_azimuth"] = 90;
@@ -367,7 +412,24 @@ TEST_F(CMPvsamv1PowerIntegration, NoFinancialModelShading)
 		EXPECT_NEAR(calculated_value, annual_energy_expected[0], m_error_tolerance_hi);
 	}
 
+	// 4. Face both in same direction, ensure poa is calculated the same 
+	pairs["subarray1_azimuth"] = 180;
+	pairs["subarray2_azimuth"] = 180;
+	pvsam_errors = modify_ssc_data_and_run_module(data, "pvsamv1", pairs);
+	EXPECT_FALSE(pvsam_errors);
+	if (!pvsam_errors) {
+		int n1, n2;
+		ssc_number_t * subarray1_poa_front = ssc_data_get_array(data, "subarray1_poa_front", &n1);
+		ssc_number_t * subarray2_poa_front = ssc_data_get_array(data, "subarray2_poa_front", &n2);
+		EXPECT_EQ(n1, n2);
+		for (int i = 0; i < n1; i++) {
+			EXPECT_EQ(subarray1_poa_front[i], subarray2_poa_front[i]);
+		}
+	}
+
 	// 1. Add 3D Shading
+	pairs["subarray1_azimuth"] = 90;
+	pairs["subarray2_azimuth"] = 270;
 	set_matrix(data, "subarray1_shading:timestep", subarray1_shading, 8760, 2);
 	set_matrix(data, "subarray2_shading:timestep", subarray2_shading, 8760, 2);
 	pairs["subarray1_shading:diff"] =  10.010875701904297;
@@ -399,13 +461,13 @@ TEST_F(CMPvsamv1PowerIntegration, NoFinancialModelShading)
 
 	// 3. Add Snow losses to all shading
 	pairs["en_snow_model"] = 1;
+
 	pvsam_errors = modify_ssc_data_and_run_module(data, "pvsamv1", pairs);
 	EXPECT_FALSE(pvsam_errors);
 	if (!pvsam_errors) {
 		SetCalculated("annual_energy");
 		EXPECT_NEAR(calculated_value, annual_energy_expected[3], m_error_tolerance_hi);
 	}
-
 }
 
 /// Test PVSAMv1 with default no-financial model and different loss options
@@ -496,4 +558,49 @@ TEST_F(CMPvsamv1PowerIntegration, InvTempDerate) {
 
 	monthly_energy = ssc_data_get_array(data, "monthly_energy", nullptr)[11];
 	EXPECT_NEAR(monthly_energy, 740, 10) << "Month energy of December not reduced";
+}
+
+/// Test PVSAMv1 multiple MPPT inverter, otherwise using default no financial model inputs
+TEST_F(CMPvsamv1PowerIntegration, NoFinancialModelMultipleMPPT)
+{
+	std::vector<double> annual_energy_expected = { 7633 };
+	std::map<std::string, double> pairs;
+
+	pairs["inv_num_mppt"] = 2;
+	pairs["subarray1_nstrings"] = 1;
+	pairs["subarray1_modules_per_string"] = 7;
+	pairs["subarray1_mppt_input"] = 1;
+	pairs["subarray1_tilt"] = 20;
+	pairs["subarray2_enable"] = 1;
+	pairs["subarray2_nstrings"] = 1;
+	pairs["subarray2_modules_per_string"] = 6;
+	pairs["subarray2_tilt"] = 0;
+	pairs["subarray2_mppt_input"] = 2;
+
+	int pvsam_errors = modify_ssc_data_and_run_module(data, "pvsamv1", pairs);
+	EXPECT_FALSE(pvsam_errors);
+
+	if (!pvsam_errors)
+	{
+		ssc_number_t annual_energy;
+		ssc_data_get_number(data, "annual_energy", &annual_energy);
+		EXPECT_NEAR(annual_energy, annual_energy_expected[0], m_error_tolerance_hi) << "Annual energy.";
+	}
+
+}
+
+/// Test PVSAMv1 with Snow Model enabled and set to 1-axis Tracking
+TEST_F(CMPvsamv1PowerIntegration, SnowModel)
+{
+	std::map<std::string, double> pairs;
+
+	pairs["en_snow_model"] = 1;
+	pairs["subarray1_track_mode"] = 1;
+	int pvsam_errors = modify_ssc_data_and_run_module(data, "pvsamv1", pairs);
+	EXPECT_FALSE(pvsam_errors);
+
+	ssc_number_t annual_energy;
+	ssc_data_get_number(data, "annual_energy", &annual_energy);
+	EXPECT_NEAR(annual_energy, 11354.7, m_error_tolerance_hi) << "Annual energy.";
+
 }

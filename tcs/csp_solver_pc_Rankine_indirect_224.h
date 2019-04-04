@@ -125,6 +125,9 @@ private:
 		return 284.482349 + 20.8848464*P - 1.5898147*P*P + 0.0655241456*P*P*P - 0.0010168822*P*P*P*P; /*return value in Kelvin*/
 	}
 
+    int split_ind_tbl(util::matrix_t<double> &combined, util::matrix_t<double> &T_htf_ind,
+        util::matrix_t<double> &m_dot_ind, util::matrix_t<double> &T_amb_ind);
+
 public:
 	
 	enum
@@ -191,9 +194,10 @@ public:
 		double m_startup_time;		//[hr] time needed for power block startup
 		double m_startup_frac;		//[-] fraction of design thermal power needed for startup
 		double m_htf_pump_coef;		//[kW/kg/s] Pumping power to move 1 kg/s of HTF through power cycle
-
 		int m_pc_fl;				//[-] integer flag identifying Heat Transfer Fluid (HTF) in power block {1-27}
 		util::matrix_t<double> m_pc_fl_props;
+        double DP_SGS;              //[bar] pressure drop within the steam generator system
+
 
 		// Steam Rankine or User-Defined
 		bool m_is_user_defined_pc;				//[-] True: user-defined power cycle, False: Built-in Rankine Cycle model
@@ -227,6 +231,8 @@ public:
 		util::matrix_t<double> mc_m_dot_htf_ind;	// At T_amb levels (-, 0, +)
 		double m_m_dot_htf_low;		//[-] Low level of m_dot_htf corresponding to T_HTF parametric (also must be included within range of independent T_htf values)
 		double m_m_dot_htf_high;	//[-] High level of m_dot_htf corresponding to T_HTF parametric (also must be included within range of independent T_htf_values)
+            // Lookup table that is the combination of the three above T_htf_hot, T_amb, and m_dot_htf tables (this is the newer table format)
+        util::matrix_t<double> mc_combined_ind;
 
 		double m_W_dot_cooling_des;		//[MW] Cooling parasitic at design conditions
 		double m_m_dot_water_des;		//[kg/s] Power cycle water use at design conditions
@@ -289,7 +295,7 @@ public:
 	virtual void write_output_intervals(double report_time_start,
 		const std::vector<double> & v_temp_ts_time_end, double report_time_end);
 
-	virtual void assign(int index, float *p_reporting_ts_array, int n_reporting_ts_array);
+	virtual void assign(int index, float *p_reporting_ts_array, size_t n_reporting_ts_array);
 
 };
 

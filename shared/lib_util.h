@@ -102,6 +102,9 @@ Define _DEBUG if compile with debugging
 #define acosd(x) (RTOD *acos(x))
 #define atand(x) (RTOD*atan(x))
 
+typedef std::vector<double> double_vec;
+typedef std::vector<int> int_vec;
+
 namespace util
 {
 	const double percent_to_fraction = 0.01;
@@ -120,11 +123,10 @@ namespace util
 
 	size_t replace( std::string &s, const std::string &old_text, const std::string &new_text);
 
-		
 	bool to_integer(const std::string &str, int *x);
 	bool to_float(const std::string &str, float *x);
 	bool to_double(const std::string &str, double *x);
-		
+
 	std::string to_string( int x, const char *fmt="%d" );
 	std::string to_string( double x, const char *fmt="%lg" );
 
@@ -142,7 +144,8 @@ namespace util
 	int days_in_month(int month); /*month: 0-11, return 0-30, depending on the month*/
 	void month_hour(size_t hour_of_year, size_t & out_month, size_t & out_hour); /*given the hour of year, return the month, and hour of day*/
 	bool weekday(size_t hour_of_year); /* return true if is a weekday, assuming first hour of year is Monday at 12 am*/
-	size_t index_year_hour_step(size_t year, size_t hour_of_year, size_t step_of_hour, size_t steps_per_hour);
+	size_t lifetimeIndex(size_t year, size_t hour_of_year, size_t step_of_hour, size_t steps_per_hour);
+	size_t yearOneIndex(double dtHour, size_t lifetimeIndex);
 
 	int schedule_char_to_int( char c );
 	std::string schedule_int_to_month( int m );
@@ -611,7 +614,8 @@ namespace util
 
 		block_t(size_t nr, size_t nc, size_t nl, const T &val)
 		{
-			t_array = NULL;
+            n_rows = n_cols = n_layers = 0;
+            t_array = NULL;
 			if (nr < 1) nr = 1;
 			if (nc < 1) nc = 1;
 			if (nl < 1) nl = 1;
@@ -630,6 +634,7 @@ namespace util
 			//Do not use clear before calling these functions.
 			if (t_array) delete [] t_array;
 			n_layers = n_rows = n_cols = 0;
+            t_array = new T[1];
 		}
 		
 		void copy( const block_t &rhs )

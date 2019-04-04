@@ -284,6 +284,7 @@ static var_info _cm_vtab_tcstrough_physical[] = {
 	{ SSC_INPUT,        SSC_MATRIX,      "ud_T_htf_ind_od",      "Off design table of user-defined power cycle performance formed from parametric on T_htf_hot [C]", "", "",               "user_defined_PC", "pc_config=1",            "",                      "" },
 	{ SSC_INPUT,        SSC_MATRIX,      "ud_T_amb_ind_od",      "Off design table of user-defined power cycle performance formed from parametric on T_amb [C]",	 "", "",               "user_defined_PC", "pc_config=1",            "",                      "" }, 
 	{ SSC_INPUT,        SSC_MATRIX,      "ud_m_dot_htf_ind_od",  "Off design table of user-defined power cycle performance formed from parametric on m_dot_htf [ND]","", "",               "user_defined_PC", "pc_config=1",            "",                      "" }, 
+    { SSC_INPUT,        SSC_MATRIX,      "ud_ind_od",            "Off design user-defined power cycle performance as function of T_htf, m_dot_htf [ND], and T_amb", "", "", "user_defined_PC", "pc_config=1",     "",                      "" },
 		
 	// Financial inputs
 	// { SSC_INPUT,        SSC_MATRIX,      "dispatch_sched_weekday", "12x24 PPA pricing Weekday schedule",                              "",             "",            "tou",            "*",                       "",                      "" }, 
@@ -690,6 +691,7 @@ public:
 			// Set the initial values required from "downstream" types
         set_unit_value_ssc_double(type250_solarfield, "defocus", 1.0); // , 1.);
 		set_unit_value_ssc_double(type250_solarfield, "T_cold_in", as_double("T_loop_in_des")); // , 293.);
+        set_unit_value_ssc_double(type250_solarfield, "defocus_rel", 0.9);
 		//Connect Solar Field Inputs
 		bool bConnected = connect(weather, "beam", type250_solarfield, "I_b", 0);
 		bConnected &= connect(weather, "tdry", type250_solarfield, "T_db", 0);
@@ -699,9 +701,10 @@ public:
 		bConnected &= connect(weather, "solazi", type250_solarfield, "SolarAz", 0);
 		bConnected &= connect(type251_controller, "defocus", type250_solarfield, "defocus" );
 		bConnected &= connect(type251_controller, "T_field_in", type250_solarfield, "T_cold_in" );
-        //bConnected &= connect(type251_controller, "recirculating", type250_solarfield, "recirculating");
+        bConnected &= connect(type251_controller, "recirculating", type250_solarfield, "recirculating");
         set_unit_value_ssc_double(type250_solarfield, "v_sgs", -999);                                       // indicate that this value should be propagated at the simulation start
         bConnected &= connect(type251_controller, "SGS_vol_tot", type250_solarfield, "v_sgs");              // output first param, input second
+        bConnected &= connect(type251_controller, "SGS_P_des_1", type250_solarfield, "DP_SGS_1");
 
 		//Set controller parameters ===========================================
 		set_unit_value_ssc_double(type251_controller, "field_fluid", as_double("Fluid") ); // , 21);
@@ -785,7 +788,7 @@ public:
         bConnected &= connect(type250_solarfield, "T_field_in_at_des", type251_controller, "T_field_in_at_des");
         bConnected &= connect(type250_solarfield, "T_field_out_at_des", type251_controller, "T_field_out_at_des");
         bConnected &= connect(type250_solarfield, "P_field_in_at_des", type251_controller, "P_field_in_at_des");
-        bConnected &= connect(type251_controller, "SGS_P_des_1", type250_solarfield, "DP_SGS_1");
+        bConnected &= connect(type250_solarfield, "defocus_rel", type251_controller, "defocus_prev");   // unique tolerance is just to stand out when debugging
 
 
 			//Set controller initial values
@@ -795,6 +798,7 @@ public:
 		set_unit_value_ssc_double(type251_controller, "m_dot_htf_ref", 0.0);  // , 0.);
 		set_unit_value_ssc_double(type251_controller, "T_field_out", as_double("T_loop_in_des"));    // , 391.);
 		set_unit_value(type251_controller, "T_pb_out", as_double("T_loop_in_des")); // , 293.);
+        set_unit_value_ssc_double(type251_controller, "defocus_prev", 0.9);  // , 0.);
 
 		//Set Powerblock Parameters ===========================================
 		set_unit_value_ssc_double(type224_powerblock, "P_ref", as_double("W_pb_design") ); // , 111);
@@ -848,6 +852,7 @@ public:
 			set_unit_value_ssc_matrix(type224_powerblock, "ud_T_htf_ind_od");
 			set_unit_value_ssc_matrix(type224_powerblock, "ud_T_amb_ind_od");
 			set_unit_value_ssc_matrix(type224_powerblock, "ud_m_dot_htf_ind_od");
+            set_unit_value_ssc_matrix(type224_powerblock, "ud_ind_od");
 		}
 		else
 		{

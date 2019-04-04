@@ -1,17 +1,9 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
-    <ProjectConfiguration Include="Debug|Win32">
-      <Configuration>Debug</Configuration>
-      <Platform>Win32</Platform>
-    </ProjectConfiguration>
     <ProjectConfiguration Include="Debug|x64">
       <Configuration>Debug</Configuration>
       <Platform>x64</Platform>
-    </ProjectConfiguration>
-    <ProjectConfiguration Include="Release|Win32">
-      <Configuration>Release</Configuration>
-      <Platform>Win32</Platform>
     </ProjectConfiguration>
     <ProjectConfiguration Include="Release|x64">
       <Configuration>Release</Configuration>
@@ -62,7 +54,7 @@
     <ClInclude Include="..\nlopt\bobyqa.h" />
     <ClInclude Include="..\nlopt\cdirect.h" />
     <ClInclude Include="..\nlopt\cobyla.h" />
-    <ClInclude Include="..\nlopt\config.h" />
+    <ClInclude Include="..\nlopt\config-windows.h" />
     <ClInclude Include="..\nlopt\crs.h" />
     <ClInclude Include="..\nlopt\direct-internal.h" />
     <ClInclude Include="..\nlopt\direct.h" />
@@ -77,6 +69,7 @@
     <ClInclude Include="..\nlopt\nlopt-util.h" />
     <ClInclude Include="..\nlopt\nlopt.h" />
     <ClInclude Include="..\nlopt\nlopt.hpp" />
+    <ClInclude Include="..\nlopt\platform-config.h" />
     <ClInclude Include="..\nlopt\praxis.h" />
     <ClInclude Include="..\nlopt\redblack.h" />
     <ClInclude Include="..\nlopt\slsqp.h" />
@@ -92,19 +85,7 @@
     <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
-    <ConfigurationType>StaticLibrary</ConfigurationType>
-    <UseOfMfc>false</UseOfMfc>
-    <CharacterSet>MultiByte</CharacterSet>
-    <PlatformToolset>v141</PlatformToolset>
-  </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
-    <ConfigurationType>StaticLibrary</ConfigurationType>
-    <UseOfMfc>false</UseOfMfc>
-    <CharacterSet>MultiByte</CharacterSet>
-    <PlatformToolset>v141</PlatformToolset>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseOfMfc>false</UseOfMfc>
     <CharacterSet>MultiByte</CharacterSet>
@@ -149,17 +130,9 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup>
     <_ProjectFileVersion>10.0.20506.1</_ProjectFileVersion>
-    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(SolutionDir)\$(Platform)\$(Configuration)\</OutDir>
-    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(SolutionDir)\$(Platform)\$(Configuration)\nlopt\</IntDir>
-    <TargetName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">nlopt</TargetName>
     <TargetName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">nlopt</TargetName>
-    <TargetExt Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">.lib</TargetExt>
     <TargetExt Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">.lib</TargetExt>
-    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(SolutionDir)\$(Platform)\$(Configuration)\</OutDir>
-    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(SolutionDir)\$(Platform)\$(Configuration)\nlopt\</IntDir>
-    <TargetName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">nlopt</TargetName>
     <TargetName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">nlopt</TargetName>
-    <TargetExt Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">.lib</TargetExt>
     <TargetExt Condition="'$(Configuration)|$(Platform)'=='Release|x64'">.lib</TargetExt>
     <OutDir Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|Win32'">$(SolutionDir)\$(Platform)\$(Configuration)</OutDir>
     <IntDir Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|Win32'">$(SolutionDir)\$(Platform)\$(Configuration)</IntDir>
@@ -190,44 +163,6 @@
     <OutDir>$(SolutionDir)\$(Platform)\$(Configuration)\</OutDir>
     <IntDir>$(SolutionDir)\$(Platform)\$(Configuration)\nlopt\</IntDir>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <SourcePath>$(SolutionDir)\..\nlopt;$(SolutionDir);$(SolutionDir)\..\nlopt\stogo;$(SolutionDir)\..\nlopt\util;$(SolutionDir)\..\nlopt\direct;$(SolutionDir)\..\nlopt\cdirect;$(SolutionDir)\..\nlopt\praxis;$(SolutionDir)\..\nlopt\luksan;$(SolutionDir)\..\nlopt\crs;$(SolutionDir)\..\nlopt\mlsl;$(SolutionDir)\..\nlopt\mma;$(SolutionDir)\..\nlopt\cobyla;$(SolutionDir)\..\nlopt\newuoa;$(SolutionDir)\..\nlopt\neldermead;$(SolutionDir)\..\nlopt\auglag;$(SolutionDir)\..\nlopt\bobyqa;$(SolutionDir)\..\nlopt\isres;$(SolutionDir)\..\nlopt\slsqp;$(SolutionDir)\..\nlopt\esch;$(SolutionDir)\..\nlopt\api;%(AdditionalIncludeDirectories)</SourcePath>
-    <ExcludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(MSBuild_ExecutablePath);$(VC_LibraryPath_x86);</ExcludePath>
-  </PropertyGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <ClCompile>
-      <AdditionalIncludeDirectories>$(SolutionDir)\..\nlopt;$(SolutionDir);$(SolutionDir)\..\nlopt\stogo;$(SolutionDir)\..\nlopt\util;$(SolutionDir)\..\nlopt\direct;$(SolutionDir)\..\nlopt\cdirect;$(SolutionDir)\..\nlopt\praxis;$(SolutionDir)\..\nlopt\luksan;$(SolutionDir)\..\nlopt\crs;$(SolutionDir)\..\nlopt\mlsl;$(SolutionDir)\..\nlopt\mma;$(SolutionDir)\..\nlopt\cobyla;$(SolutionDir)\..\nlopt\newuoa;$(SolutionDir)\..\nlopt\neldermead;$(SolutionDir)\..\nlopt\auglag;$(SolutionDir)\..\nlopt\bobyqa;$(SolutionDir)\..\nlopt\isres;$(SolutionDir)\..\nlopt\slsqp;$(SolutionDir)\..\nlopt\esch;$(SolutionDir)\..\nlopt\api;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
-      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
-      <CompileAs>CompileAsCpp</CompileAs>
-      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
-      <ExceptionHandling>Sync</ExceptionHandling>
-      <InlineFunctionExpansion>Disabled</InlineFunctionExpansion>
-      <Optimization>Disabled</Optimization>
-      <PrecompiledHeader>NotUsing</PrecompiledHeader>
-      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
-      <RuntimeTypeInfo>true</RuntimeTypeInfo>
-      <WarningLevel>Level4</WarningLevel>
-      <PreprocessorDefinitions>__WXMSW__;WIN32;_WINDOWS;_DEBUG;CMAKE_INTDIR="Debug";%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <ObjectFileName>$(IntDir)</ObjectFileName>
-    </ClCompile>
-    <ResourceCompile>
-      <PreprocessorDefinitions>WIN32;_WINDOWS;_DEBUG;CMAKE_INTDIR=\"Debug\";%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\nlopt;..\build_vs2017;..\nlopt\stogo;..\nlopt\util;..\nlopt\direct;..\nlopt\cdirect;..\nlopt\praxis;..\nlopt\luksan;..\nlopt\crs;..\nlopt\mlsl;..\nlopt\mma;..\nlopt\cobyla;..\nlopt\newuoa;..\nlopt\neldermead;..\nlopt\auglag;..\nlopt\bobyqa;..\nlopt\isres;..\nlopt\slsqp;..\nlopt\esch;..\nlopt\api;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-    </ResourceCompile>
-    <Midl>
-      <AdditionalIncludeDirectories>..\nlopt;..\build_vs2017;..\nlopt\stogo;..\nlopt\util;..\nlopt\direct;..\nlopt\cdirect;..\nlopt\praxis;..\nlopt\luksan;..\nlopt\crs;..\nlopt\mlsl;..\nlopt\mma;..\nlopt\cobyla;..\nlopt\newuoa;..\nlopt\neldermead;..\nlopt\auglag;..\nlopt\bobyqa;..\nlopt\isres;..\nlopt\slsqp;..\nlopt\esch;..\nlopt\api;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <OutputDirectory>$(IntDir)</OutputDirectory>
-      <HeaderFileName>%(Filename).h</HeaderFileName>
-      <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
-      <InterfaceIdentifierFileName>%(Filename)_i.c</InterfaceIdentifierFileName>
-      <ProxyFileName>%(Filename)_p.c</ProxyFileName>
-    </Midl>
-    <Lib>
-      <AdditionalDependencies>
-      </AdditionalDependencies>
-    </Lib>
-  </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <AdditionalIncludeDirectories>$(SolutionDir)\..\nlopt;$(SolutionDir);$(SolutionDir)\..\nlopt\stogo;$(SolutionDir)\..\nlopt\util;$(SolutionDir)\..\nlopt\direct;$(SolutionDir)\..\nlopt\cdirect;$(SolutionDir)\..\nlopt\praxis;$(SolutionDir)\..\nlopt\luksan;$(SolutionDir)\..\nlopt\crs;$(SolutionDir)\..\nlopt\mlsl;$(SolutionDir)\..\nlopt\mma;$(SolutionDir)\..\nlopt\cobyla;$(SolutionDir)\..\nlopt\newuoa;$(SolutionDir)\..\nlopt\neldermead;$(SolutionDir)\..\nlopt\auglag;$(SolutionDir)\..\nlopt\bobyqa;$(SolutionDir)\..\nlopt\isres;$(SolutionDir)\..\nlopt\slsqp;$(SolutionDir)\..\nlopt\esch;$(SolutionDir)\..\nlopt\api;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
@@ -241,42 +176,14 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
-      <WarningLevel>Level4</WarningLevel>
+      <WarningLevel>Level2</WarningLevel>
       <PreprocessorDefinitions>__WXMSW__;WIN32;_WINDOWS;_DEBUG;CMAKE_INTDIR="Debug";%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ObjectFileName>$(IntDir)</ObjectFileName>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <TreatWarningAsError>false</TreatWarningAsError>
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>WIN32;_WINDOWS;_DEBUG;CMAKE_INTDIR=\"Debug\";%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\nlopt;..\build_vs2017;..\nlopt\stogo;..\nlopt\util;..\nlopt\direct;..\nlopt\cdirect;..\nlopt\praxis;..\nlopt\luksan;..\nlopt\crs;..\nlopt\mlsl;..\nlopt\mma;..\nlopt\cobyla;..\nlopt\newuoa;..\nlopt\neldermead;..\nlopt\auglag;..\nlopt\bobyqa;..\nlopt\isres;..\nlopt\slsqp;..\nlopt\esch;..\nlopt\api;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-    </ResourceCompile>
-    <Midl>
-      <AdditionalIncludeDirectories>..\nlopt;..\build_vs2017;..\nlopt\stogo;..\nlopt\util;..\nlopt\direct;..\nlopt\cdirect;..\nlopt\praxis;..\nlopt\luksan;..\nlopt\crs;..\nlopt\mlsl;..\nlopt\mma;..\nlopt\cobyla;..\nlopt\newuoa;..\nlopt\neldermead;..\nlopt\auglag;..\nlopt\bobyqa;..\nlopt\isres;..\nlopt\slsqp;..\nlopt\esch;..\nlopt\api;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <OutputDirectory>$(IntDir)</OutputDirectory>
-      <HeaderFileName>%(Filename).h</HeaderFileName>
-      <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
-      <InterfaceIdentifierFileName>%(Filename)_i.c</InterfaceIdentifierFileName>
-      <ProxyFileName>%(Filename)_p.c</ProxyFileName>
-    </Midl>
-  </ItemDefinitionGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <ClCompile>
-      <AdditionalIncludeDirectories>$(SolutionDir)\..\nlopt;$(SolutionDir);$(SolutionDir)\..\nlopt\stogo;$(SolutionDir)\..\nlopt\util;$(SolutionDir)\..\nlopt\direct;$(SolutionDir)\..\nlopt\cdirect;$(SolutionDir)\..\nlopt\praxis;$(SolutionDir)\..\nlopt\luksan;$(SolutionDir)\..\nlopt\crs;$(SolutionDir)\..\nlopt\mlsl;$(SolutionDir)\..\nlopt\mma;$(SolutionDir)\..\nlopt\cobyla;$(SolutionDir)\..\nlopt\newuoa;$(SolutionDir)\..\nlopt\neldermead;$(SolutionDir)\..\nlopt\auglag;$(SolutionDir)\..\nlopt\bobyqa;$(SolutionDir)\..\nlopt\isres;$(SolutionDir)\..\nlopt\slsqp;$(SolutionDir)\..\nlopt\esch;$(SolutionDir)\..\nlopt\api;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
-      <CompileAs>CompileAsCpp</CompileAs>
-      <ExceptionHandling>Sync</ExceptionHandling>
-      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
-      <Optimization>MaxSpeed</Optimization>
-      <PrecompiledHeader>NotUsing</PrecompiledHeader>
-      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
-      <RuntimeTypeInfo>true</RuntimeTypeInfo>
-      <WarningLevel>Level4</WarningLevel>
-      <DebugInformationFormat>
-      </DebugInformationFormat>
-      <PreprocessorDefinitions>__WXMSW__;WIN32;_WINDOWS;NDEBUG;CMAKE_INTDIR="Release";%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <ObjectFileName>$(IntDir)</ObjectFileName>
-    </ClCompile>
-    <ResourceCompile>
-      <PreprocessorDefinitions>WIN32;_WINDOWS;NDEBUG;CMAKE_INTDIR=\"Release\";%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>..\nlopt;..\build_vs2017;..\nlopt\stogo;..\nlopt\util;..\nlopt\direct;..\nlopt\cdirect;..\nlopt\praxis;..\nlopt\luksan;..\nlopt\crs;..\nlopt\mlsl;..\nlopt\mma;..\nlopt\cobyla;..\nlopt\newuoa;..\nlopt\neldermead;..\nlopt\auglag;..\nlopt\bobyqa;..\nlopt\isres;..\nlopt\slsqp;..\nlopt\esch;..\nlopt\api;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Midl>
@@ -299,11 +206,13 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
-      <WarningLevel>Level4</WarningLevel>
+      <WarningLevel>Level2</WarningLevel>
       <DebugInformationFormat>
       </DebugInformationFormat>
       <PreprocessorDefinitions>__WXMSW__;WIN32;_WINDOWS;NDEBUG;CMAKE_INTDIR="Release";%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ObjectFileName>$(IntDir)</ObjectFileName>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <TreatWarningAsError>true</TreatWarningAsError>
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>WIN32;_WINDOWS;NDEBUG;CMAKE_INTDIR=\"Release\";%(PreprocessorDefinitions)</PreprocessorDefinitions>

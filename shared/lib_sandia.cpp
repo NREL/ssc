@@ -391,47 +391,80 @@ bool sandia_inverter_t::acpower(
 	double *Pcliploss, /* Power loss due to clipping loss (Wac) */
 	double *Psoloss, /* Power loss due to operating power consumption (Wdc) */
 	double *Pntloss /* Power loss due to night time tare loss (Wac) */
+)
+{
+	//pass through inputs to the multiple MPPT function as an array with only one entry
+	std::vector<double> Pdc_vec, Vdc_vec;
+	Pdc_vec.push_back(Pdc);
+	Vdc_vec.push_back(Vdc);
+	if (!acpower(Pdc_vec, Vdc_vec, Pac, Ppar, Plr, Eff, Pcliploss, Psoloss, Pntloss))
+		return false;
+
+	return true;
+}
+
+bool sandia_inverter_t::acpower(
+	/* inputs */
+	std::vector<double> Pdc,     /* Input power to inverter (Wdc) */
+	std::vector<double> Vdc,     /* Vector of Input power to inverter (Wdc), one per MPPT input on the inverter. Note that with several inverters, this is the power to ONE inverter.*/
+
+	/* outputs */
+	double *Pac,    /* AC output power (Wac) */
+	double *Ppar,   /* AC parasitic power consumption (Wac) */
+	double *Plr,    /* Part load ratio (Pdc_in/Pdc_rated, 0..1) */
+	double *Eff,	    /* Conversion efficiency (0..1) */
+	double *Pcliploss, /* Power loss due to clipping loss (Wac) */
+	double *Psoloss, /* Power loss due to operating power consumption (Wdc) */
+	double *Pntloss /* Power loss due to night time tare loss (Wac) */
 	)
 {
-	double A = Pdco * ( 1.0 + C1*( Vdc - Vdco ));
-	double B = Pso * ( 1.0 + C2*( Vdc - Vdco ));
-	double C = C0 * ( 1.0 + C3*( Vdc - Vdco ));
-
-	// crummy kludge to make sure B parameter
-	// has a resonable value (not negative!!)
-	// even for inverters with weird input ranges
-	// and power levels, i.e. LeadSolar LS700
-	// assumption is that Pso can't be less than
-	// half or more than double its nominal value
-	if ( B < 0.5 * Pso ) B = 0.5 * Pso;
-	if ( B > 2.0 * Pso ) B = 2.0 * Pso;
-
-	*Pac = ((Paco / (A-B)) - C*(A-B))*(Pdc-B) + C0*(Pdc-B)*(Pdc-B);
+	//initialize values
+	*Pac = 0;
 	*Ppar = 0.0;
-
-
-	// Power consumption during operation: initialize to zero.
-	*Psoloss = 0.0;
-
-	// night time power loss Wac (note that if PacNoPso > Pso and Pac < Pso then the night time loss could be considered an operating power loss)
+	*Psoloss = 0.0; // Power consumption during operation
 	*Pntloss = 0.0;
-	if (Pdc <= Pso)
+	*Pcliploss = 0.0;
+	double Pdc_total = 0;
+	std::vector<double> Pac_each;
+	std::vector<double> PacNoPso_each;
+
+	//loop through each MPPT input
+	for (size_t m = 0; m < Pdc.size(); m++) 
+	{
+		Pac_each.push_back(0);
+		PacNoPso_each.push_back(0);
+
+		double A = Pdco * (1.0 + C1 * (Vdc[m] - Vdco));
+		double B = Pso * (1.0 + C2 * (Vdc[m] - Vdco));
+		double C = C0 * (1.0 + C3 * (Vdc[m] - Vdco));
+
+		// crummy kludge to make sure B parameter has a resonable value (not negative!!)
+		// even for inverters with weird input ranges and power levels, i.e. LeadSolar LS700
+		// assumption is that Pso can't be less than half or more than double its nominal value
+		if (B < 0.5 * Pso) B = 0.5 * Pso;
+		if (B > 2.0 * Pso) B = 2.0 * Pso;
+
+		Pac_each[m] = ((Paco / (A - B)) - C * (A - B)) * (Pdc[m] - B) + C0 * (Pdc[m] - B) * (Pdc[m] - B); //calculate Pac for this MPPT input and save it
+		PacNoPso_each[m] = ((Paco / A) - C * A) * Pdc[m] + C0 * Pdc[m] * Pdc[m]; //calculate Pac without operating losses (Pso = 0) for each MPPT input to store as Pso losses later
+		Pdc_total += Pdc[m];
+	}
+
+	// night time: power is equal to nighttime power loss (note that if PacNoPso > Pso and Pac < Pso then the night time loss could be considered an operating power loss)
+	if (Pdc_total <= Pso)
 	{
 		*Pac = -Pntare;
 		*Ppar = Pntare;
 		*Pntloss = Pntare;
 	}
+	// day time: calculate total Pac; power loss is the Pso loss, use values calculated above
 	else
-	{	
-		// Power consumption during operation only occurs
-		// when inverter is operating during the day 
-		// calculate by setting B to zero (ie. Pso = 0 );
-		double PacNoPso = ((Paco / A) - C*A)*Pdc + C0*Pdc*Pdc;
-		*Psoloss = PacNoPso - *Pac;
-	}
+		for (size_t m = 0; m < Vdc.size(); m++)
+		{
+			*Psoloss += PacNoPso_each[m] - Pac_each[m];
+			*Pac += Pac_each[m];
+		}
 	
 	// clipping loss Wac (note that the Pso=0 may have no clipping)
-	*Pcliploss = 0.0;
 	double PacNoClip = *Pac;
 	if ( *Pac > Paco )
 	{
@@ -439,13 +472,12 @@ bool sandia_inverter_t::acpower(
 		*Pcliploss = PacNoClip - *Pac;
 	}
 
-	*Plr = Pdc / Pdco;
-	*Eff = *Pac / Pdc;
+	*Plr = Pdc_total / Pdco;
+	*Eff = *Pac / Pdc_total;
 	if ( *Eff < 0.0 ) *Eff = 0.0;
 
 	return true;
 }
-
 
 
 double sandia_celltemp_t::sandia_tcell_from_tmodule( double Tm, double poaIrr, double , double DT0)

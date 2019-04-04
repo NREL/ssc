@@ -1264,7 +1264,7 @@ int C_comp_multi_stage::C_MEQ_eta_isen__h_out::operator()(double eta_isen /*-*/,
 	C_monotonic_eq_solver c_solver(c_stages);
 
 	// Set lowr bound
-	double N_rpm_lower = 0.0;
+	double N_rpm_lower = 1.E-4;
 	double N_rpm_upper = std::numeric_limits<double>::quiet_NaN();
 
 	// Generate guess values
@@ -1314,6 +1314,8 @@ int C_comp_multi_stage::C_MEQ_N_rpm__P_out::operator()(double N_rpm /*rpm*/, dou
 	double T_out = std::numeric_limits<double>::quiet_NaN();
 	double tip_ratio = std::numeric_limits<double>::quiet_NaN();
 
+	int comp_err_code = 0;
+
 	for (int i = 0; i < n_stages; i++)
 	{
 		if (i > 0)
@@ -1322,7 +1324,13 @@ int C_comp_multi_stage::C_MEQ_N_rpm__P_out::operator()(double N_rpm /*rpm*/, dou
 			P_in = P_out;	//[kPa]
 		}
 
-		mpc_multi_stage->mv_stages[i].design_given_shaft_speed(T_in, P_in, m_m_dot_basis, N_rpm, m_eta_isen, P_out, T_out, tip_ratio);
+		comp_err_code = mpc_multi_stage->mv_stages[i].design_given_shaft_speed(T_in, P_in, m_m_dot_basis, N_rpm, m_eta_isen, P_out, T_out, tip_ratio);
+
+		if (comp_err_code != 0)
+		{
+			*P_comp_out = std::numeric_limits<double>::quiet_NaN();
+			return -1;
+		}
 	}
 
 	*P_comp_out = P_out;	//[kPa]
@@ -1354,20 +1362,20 @@ int C_comp_multi_stage::design_given_outlet_state(double T_in /*K*/, double P_in
 
 	double tip_speed_limit = 0.85;
 
-	if (mv_stages[0].ms_des_solved.m_tip_ratio > tip_speed_limit)
+	CO2_state co2_props;
+
+	double h_in = mv_stages[0].ms_des_solved.m_h_in;	//[kJ/kg]
+	double s_in = mv_stages[0].ms_des_solved.m_s_in;
+
+	int prop_err_code = CO2_PS(P_out, s_in, &co2_props);
+	if (prop_err_code != 0)
 	{
-		CO2_state co2_props;
+		return -1;
+	}
+	double h_out_isen = co2_props.enth;		//[kJ/kg]
 
-		double h_in = mv_stages[0].ms_des_solved.m_h_in;
-		double s_in = mv_stages[0].ms_des_solved.m_s_in;
-
-		int prop_err_code = CO2_PS(P_out, s_in, &co2_props);
-		if (prop_err_code != 0)
-		{
-			return -1;
-		}
-		double h_out_isen = co2_props.enth;
-
+	if (mv_stages[0].ms_des_solved.m_tip_ratio > tip_speed_limit)
+	{		
 		double h_out = mv_stages[0].ms_des_solved.m_h_out;
 
 		double eta_isen_total = (h_out_isen - h_in) / (h_out - h_in);
@@ -1450,6 +1458,8 @@ int C_comp_multi_stage::design_given_outlet_state(double T_in /*K*/, double P_in
 	ms_des_solved.m_P_out = mv_stages[n_stages - 1].ms_des_solved.m_P_out;	//[kPa]
 	ms_des_solved.m_h_out = mv_stages[n_stages - 1].ms_des_solved.m_h_out;	//[kJ/kg]
 	ms_des_solved.m_D_out = mv_stages[n_stages - 1].ms_des_solved.m_D_out;	//[kg/m^3]
+
+	ms_des_solved.m_isen_spec_work = h_out_isen - h_in;	//[kJ/kg]
 
 	ms_des_solved.m_m_dot = m_dot_cycle;					//[kg/s]
 	ms_des_solved.m_W_dot = ms_des_solved.m_m_dot*(ms_des_solved.m_h_out - ms_des_solved.m_h_in);	//[kWe]
@@ -1576,6 +1586,8 @@ void C_comp_multi_stage::off_design_given_N(double T_in /*K*/, double P_in /*kPa
 	ms_od_solved.m_T_out = T_out;
 
 	ms_od_solved.m_m_dot = m_dot_in;		//[kg/s] (cycle, not basis)
+
+	ms_od_solved.m_isen_spec_work = h_out_isen - h_in;	//[kJ/kg]
 
 	ms_od_solved.m_surge = is_surge;
 	ms_od_solved.m_eta = (h_out_isen - h_in) / (h_out - h_in);		//[-] Overall compressor efficiency

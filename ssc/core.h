@@ -51,7 +51,7 @@
 #define __ssc_core_h
 
 
-#include <iostream>
+#include <iosfwd>
 #include <string>
 #include <vector>
 #include <algorithm>

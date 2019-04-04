@@ -4,7 +4,7 @@
 #include <gtest/gtest.h>
 
 #include <vector>
-#include <iostream>
+#include <iosfwd>
 
 #include <lib_physics.h>
 #include <lib_windwakemodel.h>

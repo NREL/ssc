@@ -964,7 +964,7 @@ ssc_number_t *compute_module::accumulate_monthly(const std::string &ts_var, cons
 	for (int m=0;m<12;m++) // each month
 	{
 		monthly[m] = 0;
-		for (int d=0;d<util::nday[m];d++) // for each day in each month
+		for (size_t d=0;d<util::nday[m];d++) // for each day in each month
 			for (int h=0;h<24;h++) // for each hour in each day
 				for( size_t j=0;j<step_per_hour;j++ )
 					monthly[m] += ts[c++];
@@ -993,7 +993,7 @@ ssc_number_t *compute_module::accumulate_monthly_for_year(const std::string &ts_
 	for (int m = 0; m<12; m++) // each month
 	{
 		monthly[m] = 0;
-		for (int d = 0; d<util::nday[m]; d++) // for each day in each month
+		for (size_t d = 0; d<util::nday[m]; d++) // for each day in each month
 			for (int h = 0; h<24; h++) // for each hour in each day
 				for (size_t j = 0; j<step_per_hour; j++)
 					monthly[m] += ts[c++];

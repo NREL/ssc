@@ -774,10 +774,17 @@ void NS_HX_counterflow_eqs::solve_q_dot_for_fixed_UA_enth(int hot_fl_code /*-*/,
 
 		// UA vs. q_dot is very nonlinear, with very large increases of UA as q_dot approaches q_dot_max
 		// As such, may not reach convergence on UA while the uncertainty on q_dot is very small, which should be ok
-		if (!(od_hx_code == C_monotonic_eq_solver::CONVERGED || od_hx_code == C_monotonic_eq_solver::SLOPE_POS_NO_POS_ERR || od_hx_code == C_monotonic_eq_solver::SLOPE_POS_BOTH_ERRS))
+		if (od_hx_code < C_monotonic_eq_solver::CONVERGED || 
+			(fabs(tol_solved) > 0.1 && 
+			!(od_hx_code == C_monotonic_eq_solver::SLOPE_POS_NO_POS_ERR || od_hx_code == C_monotonic_eq_solver::SLOPE_POS_BOTH_ERRS)) )
 		{
 			throw(C_csp_exception("Off-design heat exchanger method failed"));
 		}
+
+		//if (!(od_hx_code == C_monotonic_eq_solver::CONVERGED || od_hx_code == C_monotonic_eq_solver::SLOPE_POS_NO_POS_ERR || od_hx_code == C_monotonic_eq_solver::SLOPE_POS_BOTH_ERRS))
+		//{
+		//	throw(C_csp_exception("Off-design heat exchanger method failed"));
+		//}
 	}
 	else if (test_code == 0 && UA_max_eff <= UA_target)
 	{
@@ -1384,8 +1391,14 @@ bool C_CO2_to_air_cooler::design_hx(S_des_par_ind des_par_ind, S_des_par_cycle_d
 	ms_des_par_ind = des_par_ind;
 	ms_des_par_cycle_dep = des_par_cycle_dep;
 
+	// Check pressure drop is "reasonable"
+	if (ms_des_par_cycle_dep.m_delta_P_des / ms_des_par_cycle_dep.m_P_hot_in_des < 0.001)
+	{
+		ms_des_par_cycle_dep.m_delta_P_des = 0.001 * ms_des_par_cycle_dep.m_P_hot_in_des;	//[kPa]
+	}
+
 	// Calculate ambient pressure
-	ms_hx_des_sol.m_P_amb_des = 101325.0*pow(1 - 2.25577E-5*ms_des_par_ind.m_elev, 5.25588);	//[Pa] http://www.engineeringtoolbox.com/air-altitude-pressure-d_462.html	
+	ms_hx_des_sol.m_P_amb_des = air_pressure(ms_des_par_ind.m_elev);	//[Pa]
 	
 	//m_enum_compact_hx_config = fc_tubes_s80_38T;
 	m_enum_compact_hx_config = N_compact_hx::fc_tubes_sCF_88_10Jb;
@@ -1486,17 +1499,72 @@ bool C_CO2_to_air_cooler::design_hx(S_des_par_ind des_par_ind, S_des_par_cycle_d
 
 	C_monotonic_eq_solver c_solver(c_eq);
 
+	C_monotonic_eq_solver::S_xy_pair xy1;
+	double T_hot_in_calc = std::numeric_limits<double>::quiet_NaN();
+	
+	int solver_code = -1;
+	int i_W_par = -1;
+
+	while(solver_code != 0)
+	{
+		i_W_par++;
+
+		if (i_W_par > 0)
+			W_par_guess *= 1.5;
+
+		if(i_W_par > 10)
+			throw(C_csp_exception("Air cooler iteration on the parallel width received exception from mono equation solver"));
+
+		solver_code = c_solver.test_member_function(W_par_guess, &T_hot_in_calc);		
+	}
+
+	xy1.x = W_par_guess;	//[m]
+	xy1.y = T_hot_in_calc;	//[K]
+
+	double W_par_mult = 2.0;
+	if (T_hot_in_calc > ms_des_par_cycle_dep.m_T_hot_in_des)
+	{
+		W_par_mult = 0.5;
+	}
+
+	C_monotonic_eq_solver::S_xy_pair xy2;
+	double T_hot_in_calc_2 = std::numeric_limits<double>::quiet_NaN();
+	double W_par_guess_2 = W_par_guess * W_par_mult;
+	solver_code = -1;
+	i_W_par = -1;
+
+	while (solver_code != 0 || fabs(T_hot_in_calc_2 - T_hot_in_calc) / T_hot_in_calc < 0.01)
+	{
+		i_W_par++;
+
+		if (i_W_par > 0)
+		{
+			W_par_guess_2 *= W_par_mult;
+		}
+
+		if (i_W_par > 10)
+			throw(C_csp_exception("Air cooler iteration on the parallel width received exception from mono equation solver"));
+
+		solver_code = c_solver.test_member_function(W_par_guess_2, &T_hot_in_calc_2);
+	}
+
+	xy2.x = W_par_guess_2;		//[m]
+	xy2.y = T_hot_in_calc_2;	//[K]
+
 	c_solver.settings(tol, 50, 0.01, std::numeric_limits<double>::quiet_NaN(), true);
 
 	double W_par_solved, tol_solved;
 	W_par_solved = tol_solved = std::numeric_limits<double>::quiet_NaN();
 	int iter_solved = -1;
 
-	int solver_code = 0;
+	solver_code = 0;
 	try
 	{
-		solver_code = c_solver.solve(W_par_guess, W_par_guess*2.0, ms_des_par_cycle_dep.m_T_hot_in_des,
+		solver_code = c_solver.solve(xy1, xy2, ms_des_par_cycle_dep.m_T_hot_in_des,
 			W_par_solved, tol_solved, iter_solved);
+			
+			//c_solver.solve(W_par_guess, W_par_guess*2.0, ms_des_par_cycle_dep.m_T_hot_in_des,
+			//W_par_solved, tol_solved, iter_solved);
 	}
 	catch (C_csp_exception)
 	{
@@ -1544,6 +1612,8 @@ bool C_CO2_to_air_cooler::design_hx(S_des_par_ind des_par_ind, S_des_par_cycle_d
 	ms_hx_des_sol.m_T_out_co2 = ms_des_par_cycle_dep.m_T_hot_out_des;	//[K] Cold CO2 outlet temperature
 	ms_hx_des_sol.m_P_out_co2 = m_P_hot_out_des;			//[K] Cold CO2 outlet pressure
 	ms_hx_des_sol.m_q_dot = m_Q_dot_des;					//[Wt] Heat exchanger duty
+
+	ms_hx_des_sol.m_W_dot_fan = ms_des_par_cycle_dep.m_W_dot_fan_des;	//[MWe]
 
 	ms_hx_des_sol.m_cost = calculate_cost(ms_hx_des_sol.m_UA_total*1.E-3, ms_hx_des_sol.m_V_total,
 		ms_hx_des_sol.m_T_in_co2, ms_hx_des_sol.m_P_in_co2, ms_hx_des_sol.m_m_dot_co2);		//[M$]
@@ -1925,7 +1995,7 @@ int C_CO2_to_air_cooler::C_MEQ_target_T_hot__width_parallel::operator()(double W
 	double Nusselt_co2_g = -999.9;
 	double f_co2_g = -999.9;
 
-	double tol_L_tube = m_tol / 5.0;
+	double tol_L_tube = m_tol / 2.0;
 
 	// Specifying the length over diameter = 1000 sets the problem as Fully Developed Flow
 	CSP::PipeFlow(Re_co2_g, Pr_co2, 1000.0, mpc_ac->m_relRough, Nusselt_co2_g, f_co2_g);
@@ -1943,7 +2013,7 @@ int C_CO2_to_air_cooler::C_MEQ_target_T_hot__width_parallel::operator()(double W
 
 	C_monotonic_eq_solver c_solver(c_eq);
 
-	c_solver.settings(1.E-3, 50, 0.01, std::numeric_limits<double>::quiet_NaN(), true);
+	c_solver.settings(tol_L_tube, 50, 0.001, std::numeric_limits<double>::quiet_NaN(), true);
 
 	double L_tube_solved, tol_solved;
 	L_tube_solved = tol_solved = std::numeric_limits<double>::quiet_NaN();
@@ -2170,8 +2240,7 @@ int outlet_given_geom_and_air_m_dot(double T_co2_out /*K*/, double m_dot_co2_tub
 	return 0;
 }
 
-int C_CO2_to_air_cooler::off_design_given_T_out(double T_amb /*K*/, double P_amb /*Pa*/, double 
-	T_hot_in /*K*/, double P_hot_in /*kPa*/,
+int C_CO2_to_air_cooler::off_design_given_T_out(double T_amb /*K*/, double T_hot_in /*K*/, double P_hot_in /*kPa*/,
 	double m_dot_hot /*kg/s*/, double T_hot_out /*K*/, double & W_dot_fan /*MWe*/)
 {
 	// Want to iterate over *air* mass flow rate until T_co2_out is = T_hot_out
@@ -2179,6 +2248,8 @@ int C_CO2_to_air_cooler::off_design_given_T_out(double T_amb /*K*/, double P_amb
 	{
 		return -1;
 	}
+
+	double P_amb = air_pressure(ms_des_par_ind.m_elev);
 
 	// Assume air props don't change significantly in air cooler
 	double mu_air = std::numeric_limits<double>::quiet_NaN();      //[kg/m-s] dynamic viscosity
@@ -2193,7 +2264,7 @@ int C_CO2_to_air_cooler::off_design_given_T_out(double T_amb /*K*/, double P_amb
 	// Set up solver to find the air mass flow rate that achieves the target hot outlet temperature
 	double deltaP_co2_od = ms_des_par_cycle_dep.m_delta_P_des;		//[kPa]
 	double m_dot_hot_tube = m_dot_hot / ms_hx_des_sol.m_N_par;		//[kg/s]
-	double tol_m_dot = 1.E-3;		//[-]
+	double tol_m_dot = 1.E-4;		//[-]
 
 	C_MEQ_od_air_mdot__T_co2_out c_m_dot_od(this, m_dot_hot_tube, T_hot_out,
 		deltaP_co2_od, P_hot_in, P_hot_in, T_amb, tol_m_dot,
@@ -2207,6 +2278,23 @@ int C_CO2_to_air_cooler::off_design_given_T_out(double T_amb /*K*/, double P_amb
 
 	// Generate guess values
 	double m_dot_air_guess1 = m_dot_hot/ms_des_par_cycle_dep.m_m_dot_total*m_m_dot_air_des;		//[kg/s]
+	
+	double T_hot_in_calc = 1000.0;
+	int i_m_dot_guess = -1;
+
+	while (T_hot_in_calc >= 973.15 || !std::isfinite(T_hot_in_calc))
+	{
+		i_m_dot_guess++;
+
+		if (i_m_dot_guess > 0)
+			m_dot_air_guess1 *= 0.75;
+
+		if (i_m_dot_guess > 10)
+			return -2;
+
+		int solver_code = c_m_dot_od_solver.test_member_function(m_dot_air_guess1, &T_hot_in_calc);
+	}
+	
 	double m_dot_air_guess2 = 0.7*m_dot_air_guess1;	//[kg/s]
 
 	c_m_dot_od_solver.settings(tol_m_dot, 50, m_dot_air_lower, m_dot_air_upper, true);
@@ -2235,6 +2323,7 @@ int C_CO2_to_air_cooler::off_design_given_T_out(double T_amb /*K*/, double P_amb
 	}
 
 	W_dot_fan = c_m_dot_od.m_W_dot_fan;		//[MWe]
+	ms_od_solved.m_W_dot_fan = W_dot_fan;	//[MWe]
 
 	return 0;
 }
@@ -2538,4 +2627,10 @@ void C_CO2_to_air_cooler::off_design_hx(double T_amb_K, double P_amb_Pa, double 
 	W_dot_fan_MW = W_dot_fan;
 	error_code = 0;
 	return;
+}
+
+double C_CO2_to_air_cooler::air_pressure(double elevation /*m*/)
+{
+	// http://www.engineeringtoolbox.com/air-altitude-pressure-d_462.html	
+	return 101325.0*pow(1 - 2.25577E-5*elevation, 5.25588);	//[Pa] 
 }

@@ -145,6 +145,7 @@ void C_sco2_recomp_csp::design_core()
 		ms_cycle_des_par.m_N_turbine = ms_des_par.m_N_turbine;
 		ms_cycle_des_par.m_is_recomp_ok = ms_des_par.m_is_recomp_ok;
 
+		ms_cycle_des_par.m_is_des_air_cooler = ms_des_par.m_is_des_air_cooler;		//[-]
 		ms_cycle_des_par.m_frac_fan_power = ms_des_par.m_frac_fan_power;			//[-]
 		ms_cycle_des_par.m_deltaP_cooler_frac = ms_des_par.m_deltaP_cooler_frac;	//[-]
 		ms_cycle_des_par.m_T_amb_des = ms_des_par.m_T_amb_des;						//[K]
@@ -201,6 +202,7 @@ void C_sco2_recomp_csp::design_core()
 		des_params.m_opt_tol = ms_des_par.m_opt_tol;
 		des_params.m_N_turbine = ms_des_par.m_N_turbine;
 
+		des_params.m_is_des_air_cooler = ms_des_par.m_is_des_air_cooler;	//[-]
 		des_params.m_frac_fan_power = ms_des_par.m_frac_fan_power;			//[-]
 		des_params.m_deltaP_cooler_frac = ms_des_par.m_deltaP_cooler_frac;	//[-]
 		des_params.m_T_amb_des = ms_des_par.m_T_amb_des;					//[K]
@@ -278,6 +280,22 @@ int C_sco2_recomp_csp::off_design_fix_P_mc_in(S_od_par od_par, double P_mc_in /*
 	double eta_od_solved = std::numeric_limits<double>::quiet_NaN();
 	int od_core_error_code = off_design_core(eta_od_solved);
 	
+	if (od_core_error_code == 0)
+	{
+		double W_dot_fan = std::numeric_limits<double>::quiet_NaN();
+		
+		if (std::isfinite(mpc_sco2_cycle->get_design_solved()->ms_LP_air_cooler.m_UA_total))
+		{
+			int air_cooler_err_code = mpc_sco2_cycle->calculate_off_design_fan_power(ms_od_par.m_T_amb, W_dot_fan);
+
+			if (air_cooler_err_code != 0)
+			{
+				W_dot_fan = std::numeric_limits<double>::quiet_NaN();
+				//throw(C_csp_exception("Off design air cooler model failed"));
+			}
+		}
+	}
+
 	ms_od_solved.ms_rc_cycle_od_solved = *mpc_sco2_cycle->get_od_solved();
 	ms_od_solved.ms_phx_od_solved = mc_phx.ms_od_solved;
 
@@ -449,18 +467,23 @@ int C_sco2_recomp_csp::optimize_off_design(C_sco2_recomp_csp::S_od_par od_par, i
 			{
 				throw(C_csp_exception("C_sco2_recomp_csp::optimize_off_design to maximize efficiency failed"));
 			}
-
-			ms_od_solved.ms_rc_cycle_od_solved = *mpc_sco2_cycle->get_od_solved();
-			ms_od_solved.ms_phx_od_solved = mc_phx.ms_od_solved;
-		}
-
+		}		
 	}
 	else
 	{
 		throw(C_csp_exception("Off design turbomachinery operation strategy not recognized"));
 	}
 
-	
+	double W_dot_fan = std::numeric_limits<double>::quiet_NaN();
+	int air_cooler_err_code = mpc_sco2_cycle->calculate_off_design_fan_power(ms_od_par.m_T_amb, W_dot_fan);
+
+	if (air_cooler_err_code != 0)
+	{
+		throw(C_csp_exception("Off design air cooler model failed"));
+	}
+
+	ms_od_solved.ms_rc_cycle_od_solved = *mpc_sco2_cycle->get_od_solved();
+	ms_od_solved.ms_phx_od_solved = mc_phx.ms_od_solved;
 
 	return 0;
 }
@@ -679,6 +702,7 @@ int C_sco2_recomp_csp::opt_P_LP_comp_in__fixed_N_turbo()
 			// Set up instance of nlopt class and set optimization parameters
 			//nlopt::opt  nlopt_P_mc_in_opt_max_of(nlopt::LN_NELDERMEAD, 1);
 				nlopt::opt  nlopt_P_mc_in_opt_max_of(nlopt::LN_SBPLX, 1);
+				//nlopt::opt  nlopt_P_mc_in_opt_max_of(nlopt::LN_BOBYQA, 1);
 
 				nlopt_P_mc_in_opt_max_of.set_lower_bounds(lb);
 				nlopt_P_mc_in_opt_max_of.set_upper_bounds(ub);
@@ -755,6 +779,72 @@ int C_sco2_recomp_csp::opt_P_LP_comp_in__fixed_N_turbo()
 
 					od_core_error_code = off_design_core(eta_od_core_1st);
 				}
+
+				break;
+			}
+			else
+			{
+				// We know that the code solved without error at 'P_mc_in_guess', and the solution is probably close to escaping constraints
+				// So move slowly back towards guess until we get a solution with no error
+				if (P_mc_in_opt > P_mc_in_guess)
+				{
+					int i_P_mc_in_guess = 0;
+					while (i_P_mc_in_guess < 20 && P_mc_in_opt > P_mc_in_guess && od_core_error_code != 0)
+					{
+						i_P_mc_in_guess++;
+
+						P_mc_in_opt *= 0.998;
+
+						ms_cycle_od_par.m_P_LP_comp_in = P_mc_in_opt;		//[kPa]
+
+						od_core_error_code = off_design_core(eta_od_core_1st);
+					}
+
+					if(od_core_error_code != 0)
+					{
+						ms_cycle_od_par.m_P_LP_comp_in = P_mc_in_guess;
+
+						od_core_error_code = off_design_core(eta_od_core_1st);
+					}
+
+					if (od_core_error_code != 0)
+					{
+						throw(C_csp_exception("Off-design optimization on compressor inlet pressure failed",
+							"C_sco2_recomp_csp::opt_P_mc_in_nest_f_recomp_max_eta_core"));
+					}
+
+					break;
+				}
+				else
+				{
+					int i_P_mc_in_guess = 0;
+					while (i_P_mc_in_guess < 20 && P_mc_in_opt > P_mc_in_guess && od_core_error_code != 0)
+					{
+						i_P_mc_in_guess++;
+
+						P_mc_in_opt *= 1.002;
+
+						ms_cycle_od_par.m_P_LP_comp_in = P_mc_in_opt;		//[kPa]
+
+						od_core_error_code = off_design_core(eta_od_core_1st);
+					}
+
+					if (od_core_error_code != 0)
+					{
+						ms_cycle_od_par.m_P_LP_comp_in = P_mc_in_guess;
+
+						od_core_error_code = off_design_core(eta_od_core_1st);
+					}
+
+					if (od_core_error_code != 0)
+					{
+						throw(C_csp_exception("Off-design optimization on compressor inlet pressure failed",
+							"C_sco2_recomp_csp::opt_P_mc_in_nest_f_recomp_max_eta_core"));
+					}
+
+					break;
+				}
+
 			}
 
 			if (od_core_error_code != 0)
@@ -992,7 +1082,7 @@ int C_sco2_recomp_csp::off_design_core(double & eta_solved)
 		//	eta_solved = (1.0 - W_dot_nd + mpc_sco2_cycle->get_od_solved()->m_eta_thermal*1.E-3)*scale_product;
 		//}
 		//eta_solved = eta_solved*1.E3;
-		eta_solved = (1.0 - W_dot_nd)*scale_product*1.E3;
+		eta_solved = (1.0 - fmin(0.99,std::pow(W_dot_nd,0.5)))*scale_product*1.E3;
 	}
 		break;
 
@@ -1052,7 +1142,18 @@ int C_sco2_recomp_csp::C_mono_eq_T_t_in::operator()(double T_t_in /*K*/, double 
 	
 	if( mpc_sco2_rc->m_off_design_turbo_operation == E_FIXED_MC_FIXED_RC_FIXED_T )
 	{
-		rc_od_error_code = mpc_sco2_rc->mpc_sco2_cycle->off_design_fix_shaft_speeds(mpc_sco2_rc->ms_cycle_od_par);
+		try
+		{
+			rc_od_error_code = mpc_sco2_rc->mpc_sco2_cycle->off_design_fix_shaft_speeds(mpc_sco2_rc->ms_cycle_od_par);
+		}
+		catch ( C_csp_exception )
+		{
+			// reset 'diff_T_t_in' to NaN
+			*diff_T_t_in = std::numeric_limits<double>::quiet_NaN();
+
+			return -1;
+		}
+		
 	}
 	else
 	{
@@ -1105,12 +1206,19 @@ int C_sco2_recomp_csp::C_sco2_csp_od::operator()(S_f_inputs inputs, S_f_outputs 
 
 	int off_design_code = -1;	//[-]
 
-	off_design_code = mpc_sco2_rc->optimize_off_design(sco2_od_par, od_strategy);
-
+	try
+	{
+		off_design_code = mpc_sco2_rc->optimize_off_design(sco2_od_par, od_strategy);
+	}
+	catch (C_csp_exception &)
+	{
+		return -1;
+	}
 	// Cycle off-design may want to operate below this value, so ND value could be < 1 everywhere
 	double W_dot_gross_design = mpc_sco2_rc->get_design_solved()->ms_rc_cycle_solved.m_W_dot_net;	//[kWe]
 	double Q_dot_in_design = mpc_sco2_rc->get_design_solved()->ms_rc_cycle_solved.m_W_dot_net
 								/ mpc_sco2_rc->get_design_solved()->ms_rc_cycle_solved.m_eta_thermal;	//[kWt]
+	double W_dot_cooler_tot_design = mpc_sco2_rc->get_design_solved()->ms_rc_cycle_solved.m_W_dot_cooler_tot;	//[kWe]
 
 	outputs.m_W_dot_gross_ND = mpc_sco2_rc->get_od_solved()->ms_rc_cycle_od_solved.m_W_dot_net
 								/ W_dot_gross_design;
@@ -1118,7 +1226,10 @@ int C_sco2_recomp_csp::C_sco2_csp_od::operator()(S_f_inputs inputs, S_f_outputs 
 	outputs.m_Q_dot_in_ND = mpc_sco2_rc->get_od_solved()->ms_rc_cycle_od_solved.m_Q_dot
 								/ Q_dot_in_design;
 
-	outputs.m_W_dot_cooling_ND = outputs.m_W_dot_gross_ND;
+	outputs.m_W_dot_cooling_ND = mpc_sco2_rc->get_od_solved()->ms_rc_cycle_od_solved.m_W_dot_cooler_tot
+								/ W_dot_cooler_tot_design;	
+	
+	//outputs.m_W_dot_cooling_ND = outputs.m_W_dot_gross_ND;
 
 	outputs.m_m_dot_water_ND = 1.0;	
 
@@ -1178,7 +1289,18 @@ double C_sco2_recomp_csp::opt_P_LP_in__fixed_N_turbo__return_f_obj(double P_mc_i
 
 	if( m_off_design_turbo_operation == E_FIXED_MC_FIXED_RC_FIXED_T )
 	{
-		off_design_core(f_obj_max);
+		try
+		{
+			off_design_core(f_obj_max);
+		}
+		catch (C_csp_exception &)
+		{
+			return 0.0;
+		}
+		catch (...)
+		{
+			return 0.0;
+		}
 	}
 	else 
 	{
