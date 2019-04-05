@@ -107,7 +107,11 @@ public:
 		//User either sets rated_capacity in the UI, or allows cmod to determine from power curve:
 		double rated_capacity = as_double("rated_capacity");
 		
-
+		//Create a vector to store 1st column values of resource and power curve. This is compared against
+		//the values of 1st column passed by user in UI:
+		std::vector<double> _check_column{0, 0.25, 0.75, 1.25, 1.75, 2.25, 2.75, 3.25, 3.75, 4.25, 4.75, 5.25, 5.75, 6.25, 6.75, 7.25, 7.75, 8.25, 8.75, 9.25, 9.75};
+		
+		
 		for (size_t i = 0; i < (size_t)wave_power_matrix.nrows(); i++) {
 			for (size_t j = 0; j < (size_t)wave_power_matrix.ncols(); j++) {
 				_resource_vect[i].push_back(wave_resource_matrix.at(i, j));
@@ -131,11 +135,28 @@ public:
 				k++;
 
 			}
+
+			//Throw exception if default header column (of power curve and resource) does not match user input header row:
+			if (_check_column[i] != _resource_vect[i][0])
+				throw compute_module::exec_error("mhk_wave", "Wave height bins of resource matrix don't match. Reset bins to default");
+			if (_check_column[i] != _power_vect[i][0])
+				throw compute_module::exec_error("mhk_wave", "Wave height bins of power matrix don't match. Reset bins to default");
 		}
 
+
+		//Throw exception if default header row (of power curve and resource) does not match user input header column:
+		std::vector<double> _check_header{ 0, 0.5, 1.5, 2.5, 3.5, 4.5, 5.5, 6.5, 7.5, 8.5, 9.5, 10.5,	11.5, 12.5,	13.5, 14.5, 15.5, 16.5, 17.5, 18.5, 19.5, 20.5 };
+		if (_check_header != _resource_vect[0])
+			throw compute_module::exec_error("mhk_wave", "Time period bins of resource matrix don't match. Reset bins to default");
+		if (_check_header != _power_vect[0])												  
+			throw compute_module::exec_error("mhk_wave", "Time period bins of wave power matrix don't match. Reset bins to default");
+
+		
 		//Throw exception if cummulative sum of _resource_vector is < 99.5%
 		if (resource_vect_checker < 99.5)
 			throw compute_module::exec_error("mhk_wave", "Probability vector does not add up to 100%.");
+
+
 
 		//Factoring in losses in total annual energy production:
 		annual_energy *= (1 - (as_double("annual_energy_loss") / 100 ));
