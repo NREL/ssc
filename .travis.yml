@@ -59,6 +59,7 @@ script:
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then make -f Makefile-solarpilot -j4 -C $SSCDIR/build_osx; fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then make -f Makefile-tcs -j4 -C $SSCDIR/build_osx; fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then make -f Makefile-ssc -j4 -C $SSCDIR/build_osx; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then make -f Makefile-gtest -j4 -C $SSCDIR/build_osx; fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then (cd $SSCDIR/build_osx/ && ./Test); fi
 
 install:
