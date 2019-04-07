@@ -6,9 +6,9 @@ GTLIB = $(GTDIR)/make/libgtest_main.a
 
 CC = gcc -mmacosx-version-min=10.9
 CXX = g++ -mmacosx-version-min=10.9
-CFLAGS = -g -I. -I./input_cases -I./shared_test -I./tcs_test -I$(GTDIR)/include -I../ssc -I../tcs -I../solarpilot -I../shared -DLK_USE_WXWIDGETS `wx-config-3 --cflags` -DWX_PRECOMP -O2 -arch x86_64  -fno-common
+CFLAGS = -g -O2  -I. -I./input_cases -I./shared_test -I./ssc_test -I./tcs_test -I$(GTDIR)/include -I../ssc -I../tcs -I../solarpilot -I../shared -I../splinter $(WARNINGS)
 CXXFLAGS = $(CFLAGS) -std=gnu++11
-LDFLAGS =  `wx-config-3 --libs` `wx-config-3 --libs aui` `wx-config-3 --libs stc` `wx-config-3 --libs` -lm  $(GTLIB) $(SSCLIB)
+LDFLAGS = $(SPLINTERLIB) $(GTLIB) $(SSCLIB) $(LIBS)
 
 CXXSRC = \
 	$(wildcard ../test/*.cpp) \
