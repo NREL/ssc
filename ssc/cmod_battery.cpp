@@ -1357,7 +1357,7 @@ public:
 			// System generation output, which is lifetime (if system_lifetime_output == true);
 			std::vector<ssc_number_t> power_input_lifetime = as_vector_ssc_number_t("gen");
 			std::vector<ssc_number_t> load_lifetime, load_year_one;
-			size_t n_rec_lifetime;
+			size_t n_rec_lifetime = power_input_lifetime.size();
 			size_t n_rec_single_year;
 			double dt_hour_gen;
 			if (is_assigned("load")) {
@@ -1367,10 +1367,9 @@ public:
 			 single_year_to_lifetime_interpolated<ssc_number_t>(
 				(bool)as_integer("system_use_lifetime_output"),
 				(size_t)as_integer("analysis_period"),
-				power_input_lifetime, 
+				n_rec_lifetime, 
 				load_year_one,
 				load_lifetime,
-				n_rec_lifetime, 
 				n_rec_single_year,
 				dt_hour_gen);
 

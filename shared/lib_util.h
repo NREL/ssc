@@ -2,7 +2,7 @@
 *  Copyright 2017 Alliance for Sustainable Energy, LLC
 *
 *  NOTICE: This software was developed at least in part by Alliance for Sustainable Energy, LLC
-*  (“Alliance”) under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
+*  (ï¿½Allianceï¿½) under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
 *  The Government retains for itself and others acting on its behalf a nonexclusive, paid-up,
 *  irrevocable worldwide license in the software to reproduce, prepare derivative works, distribute
 *  copies to the public, perform publicly and display publicly, and to permit others to do so.
@@ -26,8 +26,8 @@
 *  4. Redistribution of this software, without modification, must refer to the software by the same
 *  designation. Redistribution of a modified version of this software (i) may not refer to the modified
 *  version by the same designation, or by any confusingly similar designation, and (ii) must refer to
-*  the underlying software originally provided by Alliance as “System Advisor Model” or “SAM”. Except
-*  to comply with the foregoing, the terms “System Advisor Model”, “SAM”, or any confusingly similar
+*  the underlying software originally provided by Alliance as ï¿½System Advisor Modelï¿½ or ï¿½SAMï¿½. Except
+*  to comply with the foregoing, the terms ï¿½System Advisor Modelï¿½, ï¿½SAMï¿½, or any confusingly similar
 *  designation may not be used to refer to any modified version of this software or any modified
 *  version of the underlying software originally provided by Alliance without the prior written consent
 *  of Alliance.
@@ -71,10 +71,14 @@ Define _DEBUG if compile with debugging
 
 */
 
-#if defined(_DEBUG) && defined(_MSC_VER) && defined(_WIN32) && !defined(_WIN64)
-#define VEC_ASSERT(x) {if(!(x)) _asm{int 0x03}}
+#if defined(_MSC_VER) && defined(_WIN32) && !defined(_WIN64)
+#define VEC_ASSERT(x) {if(!(x)) throw std::runtime_error("matrix_t access '" + std::string(__func__) + "' invalid access.");}
 #else
-#define VEC_ASSERT(X) assert(X)
+#define VEC_ASSERT(X) {if(!(X)) throw std::runtime_error("matrix_t method '" + std::string(__func__) + "' invalid access.");}
+#endif
+
+#if defined(_DEBUG)
+#define (_LIB_UTIL_CHECK_)
 #endif
 
 #define RCINDEX(arr, ncols, r, c) arr[ncols*r+c]
@@ -249,7 +253,7 @@ namespace util
 		}
 		inline T &at(size_t r, size_t c)
 		{
-	#ifdef _DEBUG
+	#ifdef _LIB_UTIL_CHECK_
 			VEC_ASSERT( r >= 0 && r < n_rows && c >= 0 && c < n_cols );
 	#endif
 			return t_array[r][c];
@@ -257,7 +261,7 @@ namespace util
 
 		inline const T &at(size_t r, size_t c) const
 		{
-	#ifdef _DEBUG
+	#ifdef _LIB_UTIL_CHECK_
 			VEC_ASSERT( r >= 0 && r < n_rows && c >= 0 && c < n_cols );
 	#endif
 			return t_array[r][c];
@@ -265,7 +269,7 @@ namespace util
 		
 		inline T &operator()(size_t r, size_t c)
 		{
-	#ifdef _DEBUG
+	#ifdef _LIB_UTIL_CHECK_
 			VEC_ASSERT( r >= 0 && r < n_rows && c >= 0 && c < n_cols );
 	#endif
 			return t_array[r][c];
@@ -273,7 +277,7 @@ namespace util
 
 		inline const T &operator()(size_t r, size_t c) const
 		{
-	#ifdef _DEBUG
+	#ifdef _LIB_UTIL_CHECK_
 			VEC_ASSERT( r >= 0 && r < n_rows && c >= 0 && c < n_cols );
 	#endif
 			return t_array[r][c];
@@ -463,7 +467,7 @@ namespace util
 		}
 		inline T &at(size_t i)
 		{
-	#ifdef _DEBUG
+	#ifdef _LIB_UTIL_CHECK_
 			VEC_ASSERT( i >= 0 && i < n_rows*n_cols );
 	#endif
 			return t_array[i];
@@ -471,7 +475,7 @@ namespace util
 
 		inline const T&at(size_t i) const
 		{
-	#ifdef _DEBUG
+	#ifdef _LIB_UTIL_CHECK_
 			VEC_ASSERT( i >= 0 && i < n_rows*n_cols );
 	#endif
 			return t_array[i];
@@ -479,7 +483,7 @@ namespace util
 		
 		inline T &at(size_t r, size_t c)
 		{
-	#ifdef _DEBUG
+	#ifdef _LIB_UTIL_CHECK_
 			VEC_ASSERT( r >= 0 && r < n_rows && c >= 0 && c < n_cols );
 	#endif
 			return t_array[n_cols*r+c];
@@ -487,7 +491,7 @@ namespace util
 
 		inline const T &at(size_t r, size_t c) const
 		{
-	#ifdef _DEBUG
+	#ifdef _LIB_UTIL_CHECK_
 			VEC_ASSERT( r >= 0 && r < n_rows && c >= 0 && c < n_cols );
 	#endif
 			return t_array[n_cols*r+c];
@@ -495,7 +499,7 @@ namespace util
 		
 		inline T &operator()(size_t r, size_t c)
 		{
-	#ifdef _DEBUG
+	#ifdef _LIB_UTIL_CHECK_
 			VEC_ASSERT( r >= 0 && r < n_rows && c >= 0 && c < n_cols );
 	#endif
 			return t_array[n_cols*r+c];
@@ -503,7 +507,7 @@ namespace util
 
 		inline const T &operator()(size_t r, size_t c) const
 		{
-	#ifdef _DEBUG
+	#ifdef _LIB_UTIL_CHECK_
 			VEC_ASSERT( r >= 0 && r < n_rows && c >= 0 && c < n_cols );
 	#endif
 			return t_array[n_cols*r+c];
@@ -511,7 +515,7 @@ namespace util
 		
 		T operator[] (size_t i) const
 		{
-	#ifdef _DEBUG
+	#ifdef _LIB_UTIL_CHECK_
 			VEC_ASSERT( i >= 0 && i < n_rows*n_cols );
 	#endif
 			return t_array[i];
@@ -519,7 +523,7 @@ namespace util
 		
 		T &operator[] (size_t i)
 		{
-	#ifdef _DEBUG
+	#ifdef _LIB_UTIL_CHECK_
 			VEC_ASSERT( i >= 0 && i < n_rows*n_cols );
 	#endif
 			return t_array[i];
@@ -527,7 +531,7 @@ namespace util
 		
         matrix_t row(const size_t r) const
         {
-    #ifdef _DEBUG
+    #ifdef _LIB_UTIL_CHECK_
             VEC_ASSERT(r >= 0 && r < n_rows);
     #endif
             matrix_t<T> array(n_cols);
@@ -538,7 +542,7 @@ namespace util
 
         matrix_t col(const size_t c) const
         {
-    #ifdef _DEBUG
+    #ifdef _LIB_UTIL_CHECK_
             VEC_ASSERT(c >= 0 && c < n_cols);
     #endif
             matrix_t<T> array(n_rows);
@@ -737,7 +741,7 @@ namespace util
 		
 		inline T &at(size_t r, size_t c, size_t l)
 		{
-	#ifdef _DEBUG
+	#ifdef _LIB_UTIL_CHECK_
 			VEC_ASSERT( r >= 0 && r < n_rows && c >= 0 && c < n_cols && l >= 0 && l < n_layers);
 	#endif
 			return t_array[n_cols*(n_rows*l + r)+c];
@@ -745,7 +749,7 @@ namespace util
 
 		inline const T &at(size_t r, size_t c, size_t l) const
 		{
-	#ifdef _DEBUG
+	#ifdef _LIB_UTIL_CHECK_
 			VEC_ASSERT( r >= 0 && r < n_rows && c >= 0 && c < n_cols && l >= 0 && l < n_layers);
 	#endif
 			return t_array[n_cols*(n_rows*l + r)+c];
@@ -753,7 +757,7 @@ namespace util
 		
 		T operator[] (size_t i) const
 		{
-	#ifdef _DEBUG
+	#ifdef _LIB_UTIL_CHECK_
 			VEC_ASSERT( i >= 0 && i < n_cols );
 	#endif
 			return t_array[i];
@@ -761,7 +765,7 @@ namespace util
 		
 		T &operator[] (size_t i)
 		{
-	#ifdef _DEBUG
+	#ifdef _LIB_UTIL_CHECK_
 			VEC_ASSERT( i >= 0 && i < n_cols );
 	#endif
 			return t_array[i];
