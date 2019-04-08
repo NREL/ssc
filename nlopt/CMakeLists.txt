@@ -59,12 +59,16 @@ set(NLOPT_SRC
 	slsqp.c
 	sobolseq.c
 	stop.c
-	timer.c
+	
 )
 
 if(MSVC)
-	list( APPEND NLOPT_SRC sys/time.h sys/time.cpp)
+	list( APPEND NLOPT_SRC sys/time.cpp timer.c)
+else()
+	list( APPEND NLOPT_SRC timer.c)
 endif()
+
+message("${NLOPT_SRC}")
 
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 

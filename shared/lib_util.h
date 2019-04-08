@@ -78,7 +78,7 @@ Define _DEBUG if compile with debugging
 #endif
 
 #if defined(_DEBUG)
-#define (_LIB_UTIL_CHECK_)
+#define _LIB_UTIL_CHECK_
 #endif
 
 #define RCINDEX(arr, ncols, r, c) arr[ncols*r+c]
