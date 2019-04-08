@@ -195,8 +195,8 @@ endif()
 
 # alternately, building for PySAM
 if (system_advisor_model_EXPORT)
-	if(APPLE)
+	if(UNIX)
 		set_property(TARGET ${SSC_LIB} PROPERTY PREFIX "lib")
 		set(CMAKE_SHARED_LIBRARY_SUFFIX ".so")
-	endif(APPLE)
+	endif(UNIX)
 endif()
