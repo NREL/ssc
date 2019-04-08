@@ -15,7 +15,7 @@ endif()
 Project(ssc_test)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}")
 
-include_directories(. input_cases shared_test ssc_test tcs_test ../ssc ../tcs ../solarpilot ../shared ../splinter $ENV{GTEST}/include)
+include_directories($ENV{GTEST}/include . input_cases shared_test ssc_test tcs_test ../ssc ../tcs ../solarpilot ../shared ../splinter )
 
 file(GLOB SSC_TESTS ssc_test/*.cpp)
 file(GLOB SHARED_TESTS shared_test/*.cpp)
@@ -37,9 +37,10 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
 	set(TEST_EXE Testd)
 	find_library( GTEST_LIB
 		NAMES libgtest.a gtestd.lib
-		PATHS $ENV{GTDIR}/build/lib $ENV{GTEST}/build/lib $ENV{GTEST}/msvc/2010/gtest-md/x64-Debug)
+		PATHS $ENV{GTDIR}/build/lib $ENV{GTDIR}/build/lib $ENV{GTDIR}/msvc/2010/gtest-md/x64-Debug)
 	set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG}")
 	set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}")
+	target_link_libraries(${TEST_EXE} splinterd ${GTEST_LIB} sscd)
 else()
 	add_executable(Test 
 		${SSC_TESTS}
@@ -50,11 +51,11 @@ else()
 	set(TEST_EXE Test)
 	find_library( GTEST_LIB
 		NAMES libgtest.a gtest.lib
-		PATHS $ENV{GTDIR}/build/lib $ENV{GTEST}/build/lib $ENV{GTEST}/msvc/2010/gtest-md/x64-Release)
+		PATHS $ENV{GTDIR}/build/lib $ENV{GTDIR}/build/lib $ENV{GTDIR}/msvc/2010/gtest-md/x64-Release)
+	target_link_libraries(${TEST_EXE} splinter ${GTEST_LIB} ssc)
 endif()
 
 # setup linking dependencies and flags
-target_link_libraries(${TEST_EXE} splinter ${GTEST_LIB} ssc) 
 target_link_libraries(${TEST_EXE} -ldl -lpthread)
 
 

@@ -131,7 +131,9 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
 else()
 	add_library(ssc SHARED ${SSC_SRC})
 	set(SSC_LIB ssc)
-	set_property(TARGET ssc PROPERTY PREFIX "")
+	if(NOT system_advisor_model_EXPORT)
+		set_property(TARGET ssc PROPERTY PREFIX "")
+	endif()
 endif()
 
 
@@ -193,10 +195,16 @@ if(UNIX)
 endif()
 
 
-# alternately, building for PySAM
+# alternately, building for PySAM, Release type
 if (system_advisor_model_EXPORT)
-	if(UNIX)
+	set(CMAKE_MACOSX_RPATH 1)
+	if(APPLE)
 		set_property(TARGET ${SSC_LIB} PROPERTY PREFIX "lib")
 		set(CMAKE_SHARED_LIBRARY_SUFFIX ".so")
-	endif(UNIX)
+		add_custom_command(
+			TARGET ${SSC_LIB}
+			POST_BUILD
+			COMMAND install_name_tool -id @rpath/libssc.so $ENV{SSCDIR}/ssc/libssc.so
+		)
+	endif(APPLE)
 endif()
