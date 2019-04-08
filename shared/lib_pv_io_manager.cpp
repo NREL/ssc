@@ -3,6 +3,8 @@
 
 #include "lib_pv_io_manager.h" 
 
+static const int __nday[12] = { 31,28,31,30,31,30,31,31,30,31,30,31 };
+
 PVIOManager::PVIOManager(compute_module*  cm, std::string cmName)
 {
 	std::unique_ptr<Irradiance_IO> ptr(new Irradiance_IO(cm, cmName));
@@ -486,10 +488,38 @@ void PVSystem_IO::SetupPOAInput()
 					double t_sunrise = sun[4];
 					double t_sunset = sun[5];
 
-					if (t_cur >= t_sunrise - ts_hour / 2.0
-						&& t_cur < t_sunrise + ts_hour / 2.0)
+					if (t_sunset > 24) //sunset is legitimately the next day, so recalculate sunset from the previous day
 					{
-						// time step encompasses the sunrise
+						double sunanglestemp[9];
+						if (wf.day > 1) //simply decrement day during month
+							solarpos(wf.year, wf.month, wf.day - 1, 12, 0.0, hdr.lat, hdr.lon, hdr.tz, sunanglestemp);
+						else if (wf.month > 1) //on the 1st of the month, need to switch to the last day of previous month
+							solarpos(wf.year, wf.month -1 , __nday[wf.month-2], 12, 0.0, hdr.lat, hdr.lon, hdr.tz, sunanglestemp); //month is 1-indexed and __nday is 0 indexed
+						else //on the first day of the year, need to switch to Dec 31 of last year
+							solarpos(wf.year - 1, 12, 31, 12, 0.0, hdr.lat, hdr.lon, hdr.tz, sunanglestemp);
+						//if sunset from yesterday WASN'T today, then it's ok to leave sunset > 24, which will cause the sun to rise today and not set today
+						if (sunanglestemp[5] >= 24)
+							t_sunset = sunanglestemp[5] - 24.0;
+					}
+
+					if (t_sunrise < 0) //sunrise is legitimately the previous day, so recalculate for next day
+					{
+						double sunanglestemp[9];
+						if (wf.day < __nday[wf.month - 1]) //simply increment the day during the month, month is 1-indexed and __nday is 0-indexed
+							solarpos(wf.year, wf.month, wf.day + 1, 12, 0.0, hdr.lat, hdr.lon, hdr.tz, sunanglestemp);
+						else if (wf.month < 12) //on the last day of the month, need to switch to the first day of the next month
+							solarpos(wf.year, wf.month + 1, 1, 12, 0.0, hdr.lat, hdr.lon, hdr.tz, sunanglestemp);
+						else //on the last day of the year, need to switch to Jan 1 of the next year
+							solarpos(wf.year + 1, 1, 1, 12, 0.0, hdr.lat, hdr.lon, hdr.tz, sunanglestemp);
+						//if sunrise from tomorrow isn't today, then it's ok to leave sunrise < 0, which will cause the sun to set at the right time and not rise until tomorrow
+						if (sunanglestemp[4] < 0)
+							t_sunrise = sunanglestemp[4] + 24.0;
+
+					}
+
+					// time step encompasses the sunrise
+					if (t_cur >= t_sunrise - ts_hour / 2.0 && t_cur < t_sunrise + ts_hour / 2.0)
+					{
 						double t_calc = (t_sunrise + (t_cur + ts_hour / 2.0)) / 2.0; // midpoint of sunrise and end of timestep
 						int hr_calc = (int)t_calc;
 						double min_calc = (t_calc - hr_calc)*60.0;
@@ -501,10 +531,9 @@ void PVSystem_IO::SetupPOAInput()
 
 						tms[2] = 2;
 					}
-					else if (t_cur > t_sunset - ts_hour / 2.0
-						&& t_cur <= t_sunset + ts_hour / 2.0)
+					// timestep encompasses the sunset
+					else if (t_cur > t_sunset - ts_hour / 2.0 && t_cur <= t_sunset + ts_hour / 2.0)
 					{
-						// timestep encompasses the sunset
 						double t_calc = ((t_cur - ts_hour / 2.0) + t_sunset) / 2.0; // midpoint of beginning of timestep and sunset
 						int hr_calc = (int)t_calc;
 						double min_calc = (t_calc - hr_calc)*60.0;
@@ -516,7 +545,10 @@ void PVSystem_IO::SetupPOAInput()
 
 						tms[2] = 3;
 					}
-					else if (t_cur >= t_sunrise && t_cur <= t_sunset)
+
+					// timestep is not sunrise nor sunset, but sun is up  (calculate position at provided t_cur)
+					else if ((t_sunrise < t_sunset && t_cur >= t_sunrise && t_cur <= t_sunset) || //this captures normal daylight cases
+						(t_sunrise > t_sunset && (t_cur <= t_sunset || t_cur >= t_sunrise))) //this captures cases where sunset (from previous day) is 1:30AM, sunrise 2:30AM, in arctic circle
 					{
 						// timestep is not sunrise nor sunset, but sun is up  (calculate position at provided t_cur)
 						tms[0] = wf.hour;
@@ -527,11 +559,9 @@ void PVSystem_IO::SetupPOAInput()
 					else
 					{
 						// sun is down, assign sundown values
-						sun[0] = -999; //avoid returning a junk azimuth angle
-						sun[1] = -999; //avoid returning a junk zenith angle
-						sun[2] = -999; //avoid returning a junk elevation angle
-						tms[0] = -1;
-						tms[1] = -1;
+						solarpos(wf.year, wf.month, wf.day, wf.hour, wf.minute, hdr.lat, hdr.lon, hdr.tz, sun);
+						tms[0] = wf.hour;
+						tms[1] = (int)wf.minute;
 						tms[2] = 0;
 					}
 
