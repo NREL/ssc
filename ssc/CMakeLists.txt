@@ -140,7 +140,7 @@ endif()
 
 # setup linking dependencies and flags
 foreach( name ${DEPENDENCIES} )
-	# force redefinition of library paths in case build type changes (wait a second..)
+	# force redefinition of library paths in case build type changes
 	unset(${name}_LIB CACHE)
 	if(CMAKE_BUILD_TYPE STREQUAL "Debug")
 		target_link_libraries(${SSC_LIB} ${name}d)
