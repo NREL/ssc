@@ -54,17 +54,18 @@
 static var_info _cm_vtab_mhk_tidal[] = {
 	//   VARTYPE			DATATYPE			NAME									LABEL																		UNITS           META            GROUP              REQUIRED_IF					CONSTRAINTS				UI_HINTS	
 	{ SSC_INPUT,			SSC_MATRIX,			"tidal_resource_definition",            "Frequency distribution of resource as a function of stream speeds",		"",				"",             "MHKTidal",			"*",						"",						"" },	
-	{ SSC_INPUT,			SSC_MATRIX,			"tidal_power_curve",					"Power curve of tidal energy conversion system",							"",				"",             "MHKTidal",			"*",						"",						"" },	
-	{ SSC_INPUT,			SSC_NUMBER,			"annual_energy_loss",					"Total energy losses",														"%",			"",             "MHKTidal",			"*",						"",						"" },	
-	{ SSC_INPUT,			SSC_NUMBER,			"calculate_capacity",					"Calculate capacity outside UI?",											"0/1",			"",             "MHKTidal",         "*",                      "INTEGER,MIN=0,MAX=1",	"" },
+	{ SSC_INPUT,			SSC_MATRIX,			"tidal_power_curve",					"Power curve of tidal energy conversion system",							"kW",				"",             "MHKTidal",			"*",						"",						"" },	
+	{ SSC_INPUT,			SSC_NUMBER,			"annual_energy_loss",					"Total energy losses",														"%",			"",             "MHKTidal",			"?=0",						"",						"" },	
+	{ SSC_INPUT,			SSC_NUMBER,			"calculate_capacity",					"Calculate capacity outside UI?",											"0/1",			"",             "MHKTidal",         "?=1",                      "INTEGER,MIN=0,MAX=1",	"" },
 
-	{ SSC_INOUT,			SSC_NUMBER,			"rated_capacity",						"Rated Capacity of System",													"kW",			"",				"MHKTidal",			"*",						"",						"" },
+	{ SSC_INOUT,			SSC_NUMBER,			"rated_capacity",						"Rated Capacity of System",													"kW",			"",				"MHKTidal",			"calculate_capacity=0",						"",						"" },
 
 	{ SSC_OUTPUT,			SSC_NUMBER,			"average_power",						"Average power production",													"kW",			"",				"MHKTidal",			"*",						"",						"" },
 	{ SSC_OUTPUT,			SSC_NUMBER,			"annual_energy",						"Annual energy production",													"kWh",			"",				"MHKTidal",			"*",						"",						"" },
 	{ SSC_OUTPUT,			SSC_NUMBER,			"capacity_factor",						"Capacity Factor",															"%",			"",				"MHKTidal",			"*",						"",						"" },
 	{ SSC_OUTPUT,			SSC_ARRAY,			"annual_energy_distribution",			"Annual energy production as function of speed",							"kWh",			"",				"MHKTidal",			"*",						"",						"" },
-	
+	{ SSC_OUTPUT,			SSC_ARRAY,			"annual_cumulative_energy_distribution",			"Annual cumulative_energy production as function of speed",							"kWh",			"",				"MHKTidal",			"*",						"",						"" },
+
 	var_info_invalid
 };
 
@@ -123,19 +124,23 @@ public:
 			_annual_energy_distribution.push_back(_speed_vect[i] * _power_vect[i] * _sheer_vect[i] * 8760);	
 			
 			//Average Power: 
-			average_power = average_power + ( _power_vect[i] * _sheer_vect[i] / 100 );
+			average_power = average_power + ( _power_vect[i] * _sheer_vect[i] );
 		}
 				
 		//Throw exception if sheer vector is < 99.5%
-		if (sheer_vect_checker < 99.5)
+		if (sheer_vect_checker < 0.995)
 			throw compute_module::exec_error("mhk_tidal", "Sheer vector does not add up to 100%.");
 
 		//assign _annual_energy_distribution values to ssc variable -> "annual_energy_distribution": 
-		ssc_number_t * _aep_distribution_ptr = cm_mhk_tidal::allocate("annual_energy_distribution", _annual_energy_distribution.size());
+		ssc_number_t * _aep_distribution_ptr = allocate("annual_energy_distribution", _annual_energy_distribution.size());
+		ssc_number_t * _acep_distribution_ptr = allocate("annual_cumulative_energy_distribution", _annual_energy_distribution.size());
 
 		for (size_t i = 0; i != _annual_energy_distribution.size(); i++) {
 			_aep_distribution_ptr[i] = _annual_energy_distribution[i];	
 			annual_energy = annual_energy + _annual_energy_distribution[i];	//Calculate total annual energy.
+			_acep_distribution_ptr[i] = _aep_distribution_ptr[i];
+			if (i>0)
+				_acep_distribution_ptr[i] += _acep_distribution_ptr[i - 1];
 		}
 
 		//Factoring in losses in total annual energy production:
@@ -149,9 +154,9 @@ public:
 		assign("annual_energy", var_data((ssc_number_t)annual_energy));
 		assign("average_power", var_data((ssc_number_t)average_power));
 		assign("rated_capacity", var_data((ssc_number_t)rated_capacity));
-		assign("capacity_factor", var_data((ssc_number_t)capacity_factor));
+		assign("capacity_factor", var_data((ssc_number_t)capacity_factor * 100));
 	}
-};
+}; 
 
 DEFINE_MODULE_ENTRY( mhk_tidal , "MHK Tidal power calculation model using power distribution.", 3);
 
