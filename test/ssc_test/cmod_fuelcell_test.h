@@ -10,6 +10,7 @@
 #include "../ssc/vartab.h"
 #include "../ssc/common.h"
 #include "../input_cases/code_generator_utilities.h"
+#include "../input_cases/battery_common_data.h"
 #include "../input_cases/fuelcell_common_data.h"
 
 /**
@@ -26,11 +27,13 @@ public:
 	ssc_number_t * calculated_array;
 	double m_error_tolerance_hi = 1.0;
 	double m_error_tolerance_lo = 0.1;
+	size_t interval = 100;
 
 	void SetUp()
 	{
 		data = ssc_data_create();
 		fuelcell_nofinancial_default(data);
+		battery_commercial_peak_shaving_lifetime(data);
 	
 	}
 	void TearDown() {
@@ -49,6 +52,13 @@ public:
 		int n;
 		calculated_array = ssc_data_get_array(data, const_cast<char *>(name.c_str()), &n);
 	}
+	ssc_number_t * GetArray(std::string name, int &n)
+	{
+		ssc_number_t * ret = ssc_data_get_array(data, const_cast<char *>(name.c_str()), &n);
+		return ret;
+	}
+
+
 };
 
 #endif 
