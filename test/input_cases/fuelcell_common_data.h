@@ -4,14 +4,14 @@
 #include <stdio.h>
 #include "code_generator_utilities.h"
 
-namespace fuelcelltest {
-	const char * SSCDIR = std::getenv("SSCDIR");
-	char load_profile_path[256];
+namespace {
+	const char * SSCDIR_FC = std::getenv("SSCDIR");
+	char load_profile_path_fc[256];
 	char ac_watt_output_path[256];
 	char ac_watt_lifetime_output_path[256];
-	int n1 = sprintf(ac_watt_output_path, "%s/test/input_cases/general_data/ac.csv", fuelcelltest::SSCDIR);
-	int n2 = sprintf(load_profile_path, "%s/test/input_cases/general_data/commercial_load.csv", fuelcelltest::SSCDIR);
-	int n3 = sprintf(ac_watt_lifetime_output_path, "%s/test/input_cases/general_data/ac_lifetime.csv", fuelcelltest::SSCDIR);
+	int nfc1 = sprintf(ac_watt_output_path, "%s/test/input_cases/general_data/ac.csv",SSCDIR_FC);
+	int nfc2 = sprintf(load_profile_path_fc, "%s/test/input_cases/general_data/commercial_load.csv",SSCDIR_FC);
+	int nfc3 = sprintf(ac_watt_lifetime_output_path, "%s/test/input_cases/general_data/ac_lifetime.csv",SSCDIR_FC);
 }
 
 /**
@@ -19,10 +19,10 @@ namespace fuelcelltest {
 */
 void fuelcell_nofinancial_default(ssc_data_t &data)
 {
-	set_array(data, "ac", fuelcelltest::ac_watt_output_path, 8760);
+	set_array(data, "ac",ac_watt_output_path, 8760);
 	ssc_data_set_number(data, "system_use_lifetime_output", 0);
 	ssc_data_set_number(data, "analysis_period", 30);
-	set_array(data, "load", fuelcelltest::load_profile_path, 8760);
+	set_array(data, "load",load_profile_path_fc, 8760);
 	ssc_data_set_number(data, "fuelcell_degradation", 0.0099999997764825821);
 	ssc_data_set_number(data, "fuelcell_degradation_restart", 1);
 	ssc_data_set_number(data, "fuelcell_dispatch_choice", 0);

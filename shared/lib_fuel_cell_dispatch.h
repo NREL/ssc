@@ -49,6 +49,9 @@ public:
 	/// Get the percent of the current power divided by max power (degraded  not original)
 	double getPercentLoad();
 
+	/// Get the electrical efficiency percent at the current step
+	double getElectricalEfficiencyPercent();
+
 	/// Get the fuel consumed during this time step MCf
 	double getFuelConsumption();
 
@@ -69,6 +72,7 @@ private:
 	double m_powerTotal_kW;
 	double m_loadAverage_percent;
 	double m_powerMaxPercentAverage_percent;
+	double m_efficiencyAverage_percent;
 	double m_powerThermalTotal_kW;
 	double m_fuelConsumedTotal_MCf;
 
