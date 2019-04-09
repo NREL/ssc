@@ -2482,9 +2482,9 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 
 	// AC Capacity Factor
 	double kWhACperkWAC = 0.0;
-	double nameplate_ac = sharedInverter->getACNameplateCapacity();
-	if (nameplate_ac > 0) {
-		kWhACperkWAC = annual_energy / nameplate_ac;
+	double nameplate_ac_kW = sharedInverter->getACNameplateCapacitykW();
+	if (nameplate_ac_kW > 0) {
+		kWhACperkWAC = annual_energy / nameplate_ac_kW;
 	}
 	assign("capacity_factor_ac", var_data((ssc_number_t)(kWhACperkWAC / 87.6)));
 

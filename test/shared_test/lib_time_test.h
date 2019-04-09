@@ -11,6 +11,7 @@ protected:
 
 	bool is_lifetime;
 	size_t n_years;
+	size_t increment;
 	std::vector<float> lifetime60min;
 	std::vector<float> lifetime30min;
 	std::vector<float> singleyear60min;
@@ -21,7 +22,8 @@ protected:
 	{
 		is_lifetime = true;
 		n_years = 25;
-		
+		increment = 500;
+
 		// doesn't actually matter what is in here, just the size
 		lifetime60min.reserve(n_years * util::hours_per_year);
 		for (size_t i = 0; i < n_years * util::hours_per_year; i++) {
@@ -36,12 +38,12 @@ protected:
 
 		singleyear60min.reserve(util::hours_per_year);
 		for (size_t i = 0; i <  util::hours_per_year; i++) {
-			singleyear60min.push_back(100);
+			singleyear60min.push_back(100 * sin(i));
 		}
 
 		singleyear30min.reserve(util::hours_per_year * 2);
 		for (size_t i = 0; i < util::hours_per_year * 2; i++) {
-			singleyear30min.push_back(100);
+			singleyear30min.push_back(100 * sin(i));
 		}
 
 

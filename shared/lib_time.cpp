@@ -52,19 +52,24 @@ void single_year_to_lifetime_interpolated(
 		// Interpolate single year vector to dt_hour
 		std::vector<T> singleyear_sampled;
 		if (singleyear_vector.size() <= n_rec_single_year) {
+			size_t sy_idx = 0;
 			for (size_t h = 0; h < util::hours_per_year; h++) {
 				for (size_t sy = 0; sy < step_per_hour_singleyear_input; sy++) {
 					for (size_t i = 0; i < (size_t)interpolation_factor; i++) {
-						singleyear_sampled.push_back(singleyear_vector[sy] / interpolation_factor);
+						singleyear_sampled.push_back(singleyear_vector[sy_idx] / interpolation_factor);
 					}
+					sy_idx++;
 				}
 			}
 		}
 		// Downsample single year vector to dt_hour
 		else {
+			size_t sy_idx = 0;
 			for (size_t h = 0; h < util::hours_per_year; h++) {
 				for (size_t sy = 0; sy < step_per_hour; sy++) {
-					singleyear_sampled.push_back(singleyear_vector[sy] / interpolation_factor);
+					// eventually add more sophisticated downsampling, ignoring information
+					singleyear_sampled.push_back(singleyear_vector[(size_t)(sy_idx/interpolation_factor)] / interpolation_factor);
+					sy_idx++;
 				}
 			}
 		}

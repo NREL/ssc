@@ -174,9 +174,24 @@ bool dispatch_t::check_constraints(double &I, size_t count)
 	}
 	// Don't allow battery to discharge if it gets wasted due to inverter efficiency limitations
 	// Typically, this would be due to low power flow, so just cut off battery.
-	else if (m_batteryPower->connectionMode == dispatch_t::DC_CONNECTED && m_batteryPower->sharedInverter->efficiencyAC < 70)
+	else if (m_batteryPower->connectionMode == dispatch_t::DC_CONNECTED && m_batteryPower->sharedInverter->efficiencyAC < 90)
 	{
-		I = 0;
+		// The requested DC power
+		double powerBatterykWdc = _Battery->capacity_model()->I() * _Battery->battery_voltage() * util::watt_to_kilowatt;
+
+		// if battery discharging, see if can back off to get higher efficiency
+		if (m_batteryPower->powerBattery > 0) {
+			if (powerBatterykWdc + m_batteryPower->powerPV > m_batteryPower->sharedInverter->getACNameplateCapacitykW()) {
+				powerBatterykWdc = m_batteryPower->sharedInverter->getACNameplateCapacitykW() - m_batteryPower->powerPV;
+				powerBatterykWdc = fmax(powerBatterykWdc, 0);
+			}
+			I = powerBatterykWdc * util::kilowatt_to_watt / _Battery->battery_voltage();
+		}
+		// if charging, simply cut off.
+		else {
+			I = 0;
+		}
+
 	}
 	else
 		iterate = false;
