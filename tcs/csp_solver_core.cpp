@@ -827,7 +827,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 			mc_pc_out_solver,
 			mc_kernel.mc_sim_info);
 		
-		
+
 		m_T_htf_pc_cold_est = mc_pc_out_solver.m_T_htf_cold;	//[C]
 		// Solve collector/receiver at steady state with design inputs and weather to estimate output
 		mc_cr_htf_state_in.m_temp = m_T_htf_pc_cold_est;	//[C]
@@ -2121,7 +2121,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 
 				else if (exit_mode == CSP_CONVERGED)
 				{
-					// If the CR and PC models converged, check whether the power cycle thermal input is within bounds
+					// If the CR and PC models convergd, check whether the power cycle thermal input is within bounds
 
 					if( operating_mode == CR_ON__PC_RM_LO__TES_OFF__AUX_OFF )
 					{	// In this mode, the power cycle thermal input needs to be greater than the minimum power cycle fraction

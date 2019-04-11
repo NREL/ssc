@@ -57,6 +57,9 @@
 #include "htf_props.h"
 
 #include "ud_power_cycle.h"
+#include "csp_solver_two_tank_tes.h"
+#include "csp_radiator.h"
+#include "csp_solver_stratified_tes.h"
 
 class C_pc_Rankine_indirect_224 : public C_csp_power_cycle
 {
@@ -92,6 +95,8 @@ private:
 
 	// member class for User Defined Power Cycle
 	C_ud_power_cycle mc_user_defined_pc;
+		
+
 
 	// track number of calls per timestep, reset = -1 in converged() call
 	int m_ncall;
@@ -107,10 +112,10 @@ private:
 
     void RankineCycle(double T_db, double T_wb,
 		double P_amb, double T_htf_hot, double m_dot_htf, int mode,
-		double demand_var, double P_boil, double F_wc, double F_wcmin, double F_wcmax, 
+		double demand_var, double P_boil, double F_wc, double F_wcmin, double F_wcmax, double T_cold, double dT_cw,
         //outputs
         double& P_cycle, double& eta, double& T_htf_cold, double& m_dot_demand, double& m_dot_htf_ref,
-		double& m_dot_makeup, double& W_cool_par, double& f_hrsys, double& P_cond);
+		double& m_dot_makeup, double& W_cool_par, double& f_hrsys, double& P_cond, double &T_cond_out);
 
 	double Interpolate(int YT, int XT, double X);
 
@@ -134,7 +139,15 @@ public:
 		E_W_DOT,			//[MWe] Cycle electricity output (gross)
 		E_T_HTF_IN,			//[C] Cycle HTF inlet temperature
 		E_T_HTF_OUT,		//[C] Cycle HTF outlet temperature
+		E_T_COND_OUT,		//[C] Cycle condenser water outlet temperature
+		E_T_COLD,			//[C] Cold storage temperature
+		E_M_COLD,			//[C] Cold storage mass
+		E_M_WARM,			//[C] Cold storage warm (return) tank mass
+		E_T_WARM,			//[C] Cold storage warm (return) tank temperature
+		E_T_RADOUT,			//[C] Radiator outlet temperature
 		E_M_DOT_WATER,		//[kg/hr] Cycle water consumption: makeup + cooling	
+		E_P_COND,			//[Pa] Cycle condensing pressure
+		E_RADCOOL_CNTRL,	//Code showing the status of radiative cooling with cold storage
 
 		// Variables added for backwards compatability with TCS
 		E_M_DOT_HTF_REF		//[kg/hr] HTF mass flow rate at design
@@ -144,7 +157,30 @@ public:
 
 	// Class to save messages for up stream classes
 	C_csp_messages mc_csp_messages;
+	
+	// Instantiate two fully mixed tanks class for cold storage AND three node model
+	C_csp_cold_tes mc_two_tank_ctes;
+	C_csp_cold_tes::S_csp_tes_outputs mc_two_tank_ctes_outputs;	// for outputs
+	C_csp_stratified_tes mc_stratified_ctes;
+	C_csp_stratified_tes::S_csp_tes_outputs mc_stratified_ctes_outputs;
 
+	double m_dot_cold_avail;
+	double m_dot_warm_avail;
+	double m_dot_condenser;
+	double T_warm_prev_K;
+	double T_cold_prev_K;
+	double T_cold_prev;
+	double dT_cw_design;
+	double T_s_measured;
+	double T_s_corr;
+	double T_s_K;
+	int idx_time;
+
+	// Instantiate radiator model
+	C_csp_radiator mc_radiator;
+	double m_dot_radfield;
+	double m_dot_radact;
+	double W_radpumptest;
 	struct S_params
 	{
 			// Parameters with common SSCINPUT name for both Rankine Cycle and User Defined Cycle
