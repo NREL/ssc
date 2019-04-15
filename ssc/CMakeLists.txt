@@ -179,7 +179,7 @@ endif(MSVC)
 
 
 # dltest executable for checking ssc library
-if(UNIX)
+if(UNIX AND NOT system_advisor_model_EXPORT)
 	add_executable(dltest ../build_osx/dltest.c)
 	if (NOT APPLE)
 		target_link_libraries(dltest -ldl -Wl,--no-as-needed)
