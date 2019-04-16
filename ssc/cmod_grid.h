@@ -66,17 +66,17 @@ public:
 
 
 		// System generation output, which is lifetime (if system_lifetime_output == true);
-		systemGenerationLifetime_kW = cm.as_vector_ssc_number_t("gen");
-		std::vector<ssc_number_t> load_year_one;
+		systemGenerationLifetime_kW = cm.as_vector_double("gen");
+		std::vector<double> load_year_one;
 		size_t n_rec_lifetime = systemGenerationLifetime_kW.size();
 		size_t n_rec_single_year;
 		double dt_hour_gen;
 		if (cm.is_assigned("load")) {
-			load_year_one = cm.as_vector_ssc_number_t("load");
+			load_year_one = cm.as_vector_double("load");
 		}
 
 
-		single_year_to_lifetime_interpolated<ssc_number_t>(
+		single_year_to_lifetime_interpolated<double>(
 			(bool)cm.as_integer("system_use_lifetime_output"),
 			(size_t)cm.as_integer("analysis_period"),
 			n_rec_lifetime,
@@ -89,21 +89,21 @@ public:
 		numberOfSingleYearRecords = n_rec_single_year;
 		numberOfYears = n_rec_lifetime / n_rec_single_year;
 
-		grid_kW.reserve(systemGenerationLifetime_kW.size());
-
+		grid_kW.reserve(numberOfLifetimeRecords);
+		systemGenerationPreInterconnect_kW.reserve(numberOfLifetimeRecords);
 	}
 
 	// generation input with interconnection curtailment
-	std::vector<ssc_number_t> systemGenerationLifetime_kW;
+	std::vector<double> systemGenerationLifetime_kW;
 
 	// pre-curailed generation output
-	std::vector<ssc_number_t> systemGenerationPreInterconnect_kW;
+	std::vector<double> systemGenerationPreInterconnect_kW;
 
 	// electric load input
-	std::vector<ssc_number_t> loadLifetime_kW;
+	std::vector<double> loadLifetime_kW;
 
 	// grid power
-	std::vector<ssc_number_t> grid_kW;
+	std::vector<double> grid_kW;
 
 	// interconnection limit
 	double grid_interconnection_limit_kW;

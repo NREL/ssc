@@ -73,7 +73,8 @@ var_info vtab_grid_output[] = {
 
 	{ SSC_OUTPUT,        SSC_ARRAY,       "system_pre_interconnect_kwac",     "System power before grid interconnect",  "kW",       "Lifetime system generation" "",                 "",                        "",                              "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,      "capacity_factor_interconnect_ac",  "Capacity factor of the interconnection",  "%",          "",                "",                           "?=0",                     "",                              "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,      "annual_energy_pre_interconnect_ac",  "Annual Energy AC pre-interconnection",   "kWhac",        "",                "",                           "?=0",                     "",                              "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,      "annual_energy_pre_interconnect_ac", "Annual Energy AC pre-interconnection",   "kWh",        "",                "",                           "?=0",                     "",                              "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,      "annual_energy",                    "Annual Energy AC",                        "kWh",        "",                "",                           "?=0",                     "",                              "" },
 
 var_info_invalid };
 
@@ -99,23 +100,37 @@ void cm_grid::exec() throw (general_error)
 	construct();
 
 	// interconnection  calculations
-	double capacity_factor, annual_energy;
-	capacity_factor = annual_energy = 0;
+	double capacity_factor_interconnect, annual_energy_pre_interconnect, annual_energy_interconnect;
+	capacity_factor_interconnect = annual_energy_pre_interconnect = annual_energy_interconnect = 0;
 
 	// compute grid export, apply interconnection limit
 	for (size_t i = 0; i < gridVars->numberOfLifetimeRecords; i++){
-		ssc_number_t gridNet = gridVars->systemGenerationLifetime_kW[i] - gridVars->loadLifetime_kW[i];
-		ssc_number_t gridNetCurtailed = fmin(gridNet, gridVars->grid_interconnection_limit_kW);
-		ssc_number_t curtailed = gridNet - gridNetCurtailed;
-		p_genPreInterconnect_kW[i] = gridVars->systemGenerationLifetime_kW[i];
-		p_genInterconnect_kW[i] = gridVars->systemGenerationLifetime_kW[i] - curtailed;
+		double gridNet = gridVars->systemGenerationLifetime_kW[i] - gridVars->loadLifetime_kW[i];
+		double gridNetCurtailed = fmin(gridNet, gridVars->grid_interconnection_limit_kW);
+		double curtailed = gridNet - gridNetCurtailed;
+
+		gridVars->systemGenerationPreInterconnect_kW.push_back(gridVars->systemGenerationLifetime_kW[i]);
 		gridVars->systemGenerationLifetime_kW[i] -= curtailed;
+
+		p_genPreInterconnect_kW[i] = static_cast<ssc_number_t>(gridVars->systemGenerationPreInterconnect_kW[i]);
+		p_genInterconnect_kW[i] = static_cast<ssc_number_t>(gridVars->systemGenerationLifetime_kW[i]);
 	}
-	annual_energy = std::accumulate(gridVars->systemGenerationLifetime_kW.begin(), gridVars->systemGenerationLifetime_kW.begin() + gridVars->numberOfSingleYearRecords, 0);
-	capacity_factor = annual_energy * util::fraction_to_percent / (gridVars->grid_interconnection_limit_kW * 8760.);
+
+	double accum_sum = 0.;
+	for (size_t i = 0; i < gridVars->numberOfLifetimeRecords; i++) {
+		accum_sum += gridVars->systemGenerationLifetime_kW[i];
+	}
+
+	int int_sum = (int)(accum_sum);
+
+	annual_energy_interconnect = std::accumulate(gridVars->systemGenerationLifetime_kW.begin(), gridVars->systemGenerationLifetime_kW.begin() + gridVars->numberOfSingleYearRecords, 0.0);
+	annual_energy_pre_interconnect = std::accumulate(gridVars->systemGenerationPreInterconnect_kW.begin(), gridVars->systemGenerationPreInterconnect_kW.begin() + gridVars->numberOfSingleYearRecords, 0.0);
+	capacity_factor_interconnect = annual_energy_interconnect * util::fraction_to_percent / (gridVars->grid_interconnection_limit_kW * 8760.);
 	
-	assign("capacity_factor_interconnect_ac", var_data(static_cast<ssc_number_t>(capacity_factor)));
-	assign("annual_energy_pre_interconnect_ac", var_data(static_cast<ssc_number_t>(annual_energy)));
+	assign("capacity_factor_interconnect_ac", var_data(capacity_factor_interconnect));
+	assign("annual_energy_pre_interconnect_ac", var_data(annual_energy_pre_interconnect));
+	assign("annual_energy", var_data(annual_energy_interconnect));
+
 }
 
 void cm_grid::allocateOutputs()
