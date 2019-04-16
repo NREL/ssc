@@ -116,13 +116,6 @@ void cm_grid::exec() throw (general_error)
 		p_genInterconnect_kW[i] = static_cast<ssc_number_t>(gridVars->systemGenerationLifetime_kW[i]);
 	}
 
-	double accum_sum = 0.;
-	for (size_t i = 0; i < gridVars->numberOfLifetimeRecords; i++) {
-		accum_sum += gridVars->systemGenerationLifetime_kW[i];
-	}
-
-	int int_sum = (int)(accum_sum);
-
 	annual_energy_interconnect = std::accumulate(gridVars->systemGenerationLifetime_kW.begin(), gridVars->systemGenerationLifetime_kW.begin() + gridVars->numberOfSingleYearRecords, 0.0);
 	annual_energy_pre_interconnect = std::accumulate(gridVars->systemGenerationPreInterconnect_kW.begin(), gridVars->systemGenerationPreInterconnect_kW.begin() + gridVars->numberOfSingleYearRecords, 0.0);
 	capacity_factor_interconnect = annual_energy_interconnect * util::fraction_to_percent / (gridVars->grid_interconnection_limit_kW * 8760.);
