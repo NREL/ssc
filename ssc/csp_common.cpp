@@ -686,12 +686,14 @@ var_info vtab_sco2_design[] = {
 	{ SSC_OUTPUT, SSC_NUMBER,  "t_D",                  "Turbine diameter",                                       "m",          "",    "",      "*",     "",       "" },
 	{ SSC_OUTPUT, SSC_NUMBER,  "t_cost",               "Tubine cost",                                            "M$",         "",    "",      "*",     "",       "" },
 		// Recuperators																				 
-	{ SSC_OUTPUT, SSC_NUMBER,  "UA_recup_total",       "Total recuperator UA",                                   "MW/K",       "",    "",      "*",     "",       "" },
-	{ SSC_OUTPUT, SSC_NUMBER,  "recup_total_cost",     "Total recuperator cost",                                 "M$",         "",    "",      "*",     "",       "" },
+	{ SSC_OUTPUT, SSC_NUMBER,  "recup_total_UA_assigned", "Total recuperator UA assigned to design routine",     "MW/K",       "",    "",      "*",     "",       "" },
+    { SSC_OUTPUT, SSC_NUMBER,  "recup_total_UA_calculated", "Total recuperator UA calculated considering max eff and/or min temp diff parameter", "MW/K",       "",    "",      "*",     "",       "" },
+    { SSC_OUTPUT, SSC_NUMBER,  "recup_total_cost",     "Total recuperator cost",                                 "M$",         "",    "",      "*",     "",       "" },
 	{ SSC_OUTPUT, SSC_NUMBER,  "recup_LTR_UA_frac",    "Fraction of total conductance to LTR",                   "",           "",    "",      "*",     "",       "" },
 	{ SSC_OUTPUT, SSC_NUMBER,  "LTR_HP_T_out_des",     "Low temp recuperator HP outlet temperature",             "C",          "",    "",      "*",     "",       "" },
-	{ SSC_OUTPUT, SSC_NUMBER,  "UA_LTR",               "Low temp recuperator UA",                                "MW/K",       "",    "",      "*",     "",       "" },
-	{ SSC_OUTPUT, SSC_NUMBER,  "eff_LTR",              "Low temp recuperator effectiveness",                     "",           "",    "",      "*",     "",       "" },
+	{ SSC_OUTPUT, SSC_NUMBER,  "LTR_UA_assigned",      "Low temp recuperator UA assigned from total",            "MW/K",       "",    "",      "*",     "",       "" },
+    { SSC_OUTPUT, SSC_NUMBER,  "LTR_UA_calculated",    "Low temp recuperator UA calculated considering max eff and/or min temp diff parameter", "MW/K",       "",    "",      "*",     "",       "" },
+    { SSC_OUTPUT, SSC_NUMBER,  "eff_LTR",              "Low temp recuperator effectiveness",                     "",           "",    "",      "*",     "",       "" },
 	{ SSC_OUTPUT, SSC_NUMBER,  "NTU_LTR",              "Low temp recuperator NTU",                               "",           "",    "",      "*",     "",       "" },
 	{ SSC_OUTPUT, SSC_NUMBER,  "q_dot_LTR",            "Low temp recuperator heat transfer",                     "MWt",        "",    "",      "*",     "",       "" },
 	{ SSC_OUTPUT, SSC_NUMBER,  "LTR_LP_deltaP_des",    "Low temp recuperator low pressure design pressure drop", "-",          "",    "",      "*",     "",       "" },
@@ -700,8 +702,9 @@ var_info vtab_sco2_design[] = {
 	{ SSC_OUTPUT, SSC_NUMBER,  "LTR_cost",             "Low temp recuperator cost",                              "M$",         "",    "",      "*",     "",       "" },
 	{ SSC_OUTPUT, SSC_NUMBER,  "HTR_LP_T_out_des",     "High temp recuperator LP outlet temperature",            "C",          "",    "",      "*",     "",       "" },
 	{ SSC_OUTPUT, SSC_NUMBER,  "HTR_HP_T_in_des",      "High temp recuperator HP inlet temperature",             "C",          "",    "",      "*",     "",       "" },
-	{ SSC_OUTPUT, SSC_NUMBER,  "UA_HTR",               "High temp recuperator UA",                               "MW/K",       "",    "",      "*",     "",       "" },
-	{ SSC_OUTPUT, SSC_NUMBER,  "eff_HTR",              "High temp recuperator effectiveness",                    "",           "",    "",      "*",     "",       "" },	
+	{ SSC_OUTPUT, SSC_NUMBER,  "HTR_UA_assigned",      "High temp recuperator UA assigned from total",           "MW/K",       "",    "",      "*",     "",       "" },
+    { SSC_OUTPUT, SSC_NUMBER,  "HTR_UA_calculated",    "High temp recuperator UA calculated considering max eff and/or min temp diff parameter", "MW/K",       "",    "",      "*",     "",       "" },
+    { SSC_OUTPUT, SSC_NUMBER,  "eff_HTR",              "High temp recuperator effectiveness",                    "",           "",    "",      "*",     "",       "" },
 	{ SSC_OUTPUT, SSC_NUMBER,  "NTU_HTR",              "High temp recuperator NTRU",                             "",           "",    "",      "*",     "",       "" },
 	{ SSC_OUTPUT, SSC_NUMBER,  "q_dot_HTR",            "High temp recuperator heat transfer",                    "MWt",        "",    "",      "*",     "",       "" },
 	{ SSC_OUTPUT, SSC_NUMBER,  "HTR_LP_deltaP_des",    "High temp recuperator low pressure design pressure drop","-",          "",    "",      "*",     "",       "" },
@@ -1292,12 +1295,14 @@ int sco2_design_cmod_common(compute_module *cm, C_sco2_recomp_csp & c_sco2_cycle
 	cm->assign("t_cost", (ssc_number_t)c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.ms_t_des_solved.m_cost);			//[M$]
 	cost_sum += c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.ms_t_des_solved.m_cost;			//[M$]
 		// Recuperator
-	double UA_recup_total = c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.ms_LTR_des_solved.m_UA_design_total*1.E-3;	//[MW/K] convert from kW/K
-	double recup_total_cost = c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.ms_LTR_des_solved.m_cost;					//[M$]
+	double recup_total_UA_assigned = c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.ms_LTR_des_solved.m_UA_design_total*1.E-3;	//[MW/K] convert from kW/K
+    double recup_total_UA_calculated = c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.ms_LTR_des_solved.m_UA_calc_at_eff_max*1.E-3;	//[MW/K] convert from kW/K
+    double recup_total_cost = c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.ms_LTR_des_solved.m_cost;					//[M$]
 			// Low-temp
 	cm->assign("LTR_HP_T_out_des", (ssc_number_t)(c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_temp[C_sco2_cycle_core::LTR_HP_OUT] - 273.15));	//[C] LTR HP stream outlet temp, convert from K
-	cm->assign("UA_LTR", (ssc_number_t)(c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.ms_LTR_des_solved.m_UA_design_total*1.E-3));	//[MW/K] convert from kW/K
-	cm->assign("eff_LTR", (ssc_number_t)c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.ms_LTR_des_solved.m_eff_design);		//[-]
+	cm->assign("LTR_UA_assigned", (ssc_number_t)(c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.ms_LTR_des_solved.m_UA_design_total*1.E-3));	//[MW/K] convert from kW/K
+    cm->assign("LTR_UA_calculated", (ssc_number_t)(c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.ms_LTR_des_solved.m_UA_calc_at_eff_max*1.E-3));	//[MW/K] convert from kW/K
+    cm->assign("eff_LTR", (ssc_number_t)c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.ms_LTR_des_solved.m_eff_design);		//[-]
 	cm->assign("NTU_LTR", (ssc_number_t)c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.ms_LTR_des_solved.m_NTU_design);		//[-]
 	cm->assign("q_dot_LTR", (ssc_number_t)(c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.ms_LTR_des_solved.m_Q_dot_design*1.E-3));	//[MWt] convert from kWt
 	double LTR_LP_deltaP_frac = 1.0 - c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_pres[C_sco2_cycle_core::LTR_LP_OUT] / 
@@ -1312,18 +1317,20 @@ int sco2_design_cmod_common(compute_module *cm, C_sco2_recomp_csp & c_sco2_cycle
 			// High-temp
 	if (is_rc)
 	{
-		UA_recup_total += c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.ms_HTR_des_solved.m_UA_design_total*1.E-3;	//[MW/K] convert from kW/K
-		cm->assign("HTR_LP_T_out_des", (ssc_number_t)(c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_temp[C_sco2_cycle_core::HTR_LP_OUT] - 273.15));	//[C] HTR LP stream outlet temp, convert from K
+		recup_total_UA_assigned += c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.ms_HTR_des_solved.m_UA_design_total*1.E-3;	//[MW/K] convert from kW/K
+        recup_total_UA_calculated += c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.ms_HTR_des_solved.m_UA_calc_at_eff_max*1.E-3;	//[MW/K] convert from kW/K
+        cm->assign("HTR_LP_T_out_des", (ssc_number_t)(c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_temp[C_sco2_cycle_core::HTR_LP_OUT] - 273.15));	//[C] HTR LP stream outlet temp, convert from K
 		cm->assign("HTR_HP_T_in_des", (ssc_number_t)(c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_temp[C_sco2_cycle_core::MIXER_OUT] - 273.15));		//[C] HTR HP stream inlet temp, convert from K
-		cm->assign("UA_HTR", (ssc_number_t)(c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.ms_HTR_des_solved.m_UA_design_total*1.E-3));	//[MW/K] convert from kW/K
-		cm->assign("eff_HTR", (ssc_number_t)c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.ms_HTR_des_solved.m_eff_design);		//[-]
+		cm->assign("HTR_UA_assigned", (ssc_number_t)(c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.ms_HTR_des_solved.m_UA_design_total*1.E-3));	//[MW/K] convert from kW/K
+        cm->assign("HTR_UA_calculated", (ssc_number_t)(c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.ms_HTR_des_solved.m_UA_calc_at_eff_max*1.E-3));	//[MW/K] convert from kW/K
+        cm->assign("eff_HTR", (ssc_number_t)c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.ms_HTR_des_solved.m_eff_design);		//[-]
 		cm->assign("NTU_HTR", (ssc_number_t)c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.ms_HTR_des_solved.m_NTU_design);		//[-]
 		cm->assign("q_dot_HTR", (ssc_number_t)(c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.ms_HTR_des_solved.m_Q_dot_design*1.E-3));	//[MWt] convert from kWt
 		cm->assign("HTR_min_dT", (ssc_number_t)c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.ms_HTR_des_solved.m_min_DT_design);	//[C/K]
 		cm->assign("HTR_cost", (ssc_number_t)c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.ms_HTR_des_solved.m_cost);			//[M$]
 		cost_sum += c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.ms_HTR_des_solved.m_cost;			//[M$]
 		recup_total_cost += c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.ms_HTR_des_solved.m_cost;			//[M$]
-		cm->assign("recup_LTR_UA_frac", (ssc_number_t((c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.ms_LTR_des_solved.m_UA_design_total*1.E-3) / UA_recup_total)));	//[-]
+		cm->assign("recup_LTR_UA_frac", (ssc_number_t((c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.ms_LTR_des_solved.m_UA_design_total*1.E-3) / recup_total_UA_assigned)));	//[-]
 
 		double HTR_LP_deltaP_frac = 1.0 - c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_pres[C_sco2_cycle_core::HTR_LP_OUT] /
 			c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_pres[C_sco2_cycle_core::TURB_OUT];   //[-] Fractional pressure drop through LP side of HTR
@@ -1337,8 +1344,9 @@ int sco2_design_cmod_common(compute_module *cm, C_sco2_recomp_csp & c_sco2_cycle
 		double ssc_nan = std::numeric_limits<ssc_number_t>::quiet_NaN();
 		cm->assign("HTR_LP_T_out_des", ssc_nan);	//[C]
 		cm->assign("HTR_HP_T_in_des", ssc_nan);		//[C]
-		cm->assign("UA_HTR", ssc_nan);		//[MW/K]
-		cm->assign("eff_HTR", ssc_nan);		//[-]
+		cm->assign("HTR_UA_assigned", ssc_nan);		//[MW/K]
+        cm->assign("HTR_UA_calculated", ssc_nan);	//[MW/K]
+        cm->assign("eff_HTR", ssc_nan);		//[-]
 		cm->assign("NTU_HTR", ssc_nan);		//[-]
 		cm->assign("q_dot_HTR", ssc_nan);	//[MWt] convert from kWt
 		cm->assign("HTR_min_dT", ssc_nan);	//[C/K]
@@ -1347,8 +1355,9 @@ int sco2_design_cmod_common(compute_module *cm, C_sco2_recomp_csp & c_sco2_cycle
 		cm->assign("HTR_LP_deltaP_des", ssc_nan);   //[-]
 		cm->assign("HTR_HP_deltaP_des", ssc_nan);   //[-]
 	}
-	cm->assign("UA_recup_total", (ssc_number_t)(UA_recup_total));		//[MW/K]
-	cm->assign("recup_total_cost", (ssc_number_t)(recup_total_cost));	//[MW/K]
+	cm->assign("recup_total_UA_assigned", (ssc_number_t)(recup_total_UA_assigned));		//[MW/K]
+    cm->assign("recup_total_UA_calculated", (ssc_number_t)(recup_total_UA_calculated));	//[MW/K]
+    cm->assign("recup_total_cost", (ssc_number_t)(recup_total_cost));	//[MW/K]
 		// PHX
 	cm->assign("UA_PHX", (ssc_number_t)(c_sco2_cycle.get_design_solved()->ms_phx_des_solved.m_UA_design_total*1.E-3));	//[MW/K] convert from kW/K
 	cm->assign("eff_PHX", (ssc_number_t)c_sco2_cycle.get_design_solved()->ms_phx_des_solved.m_eff_design);				//[-]
