@@ -957,51 +957,54 @@ public:
 				two_tank->ms_params.m_ctes_type = as_integer("ctes_type");
 				stratified->ms_params.m_ctes_type = as_integer("ctes_type");
 
-				if (rankine_pc.ms_params.m_CT == 4 && two_tank->ms_params.m_ctes_type == 2)
+				if (rankine_pc.ms_params.m_CT == 4)
 				{
-					two_tank->ms_params.m_h_tank_min = as_double("h_ctes_tank_min");
-					two_tank->ms_params.m_ts_hours = as_double("ctes_tshours");
-					two_tank->ms_params.m_h_tank = as_double("h_ctes_tank");
-					two_tank->ms_params.m_u_tank = as_double("u_ctes_tank");
-					two_tank->ms_params.m_tank_pairs = as_integer("ctes_tankpairs");
-					two_tank->ms_params.m_T_field_in_des = as_double("T_ctes_cold_design");
-					two_tank->ms_params.m_T_field_out_des = as_double("T_ctes_warm_design");
-					two_tank->ms_params.m_T_tank_hot_ini = as_double("T_ctes_warm_ini");
-					two_tank->ms_params.m_T_tank_cold_ini = as_double("T_ctes_cold_ini");
-					two_tank->ms_params.m_f_V_hot_ini = as_double("f_ctes_warm_ini");
-					two_tank->ms_params.m_lat = weather_reader.ms_solved_params.m_lat;
-				}
-				if (rankine_pc.ms_params.m_CT == 4 && two_tank->ms_params.m_ctes_type >2)
-				{
-					stratified->ms_params.m_h_tank_min = 0;								//hardcode zero minimum height for stratified tanks.
-					stratified->ms_params.m_ts_hours = as_double("ctes_tshours");
-					stratified->ms_params.m_h_tank = as_double("h_ctes_tank");
-					stratified->ms_params.m_u_tank = as_double("u_ctes_tank");
-					stratified->ms_params.m_tank_pairs = as_integer("ctes_tankpairs");
-					stratified->ms_params.m_T_field_in_des = as_double("T_ctes_cold_design");
-					stratified->ms_params.m_T_field_out_des = as_double("T_ctes_warm_design");
-					stratified->ms_params.m_T_tank_hot_ini = as_double("T_ctes_warm_ini");
-					stratified->ms_params.m_T_tank_cold_ini = as_double("T_ctes_cold_ini");
-					stratified->ms_params.m_f_V_hot_ini = as_double("f_ctes_warm_ini");
-					stratified->ms_params.m_lat = weather_reader.ms_solved_params.m_lat;
+					if (two_tank->ms_params.m_ctes_type == 2)
+					{
+						two_tank->ms_params.m_h_tank_min = as_double("h_ctes_tank_min");
+						two_tank->ms_params.m_ts_hours = as_double("ctes_tshours");
+						two_tank->ms_params.m_h_tank = as_double("h_ctes_tank");
+						two_tank->ms_params.m_u_tank = as_double("u_ctes_tank");
+						two_tank->ms_params.m_tank_pairs = as_integer("ctes_tankpairs");
+						two_tank->ms_params.m_T_field_in_des = as_double("T_ctes_cold_design");
+						two_tank->ms_params.m_T_field_out_des = as_double("T_ctes_warm_design");
+						two_tank->ms_params.m_T_tank_hot_ini = as_double("T_ctes_warm_ini");
+						two_tank->ms_params.m_T_tank_cold_ini = as_double("T_ctes_cold_ini");
+						two_tank->ms_params.m_f_V_hot_ini = as_double("f_ctes_warm_ini");
+						two_tank->ms_params.m_lat = weather_reader.ms_solved_params.m_lat;
+					}
+					if (two_tank->ms_params.m_ctes_type > 2)
+					{
+						stratified->ms_params.m_h_tank_min = 0;								//hardcode zero minimum height for stratified tanks.
+						stratified->ms_params.m_ts_hours = as_double("ctes_tshours");
+						stratified->ms_params.m_h_tank = as_double("h_ctes_tank");
+						stratified->ms_params.m_u_tank = as_double("u_ctes_tank");
+						stratified->ms_params.m_tank_pairs = as_integer("ctes_tankpairs");
+						stratified->ms_params.m_T_field_in_des = as_double("T_ctes_cold_design");
+						stratified->ms_params.m_T_field_out_des = as_double("T_ctes_warm_design");
+						stratified->ms_params.m_T_tank_hot_ini = as_double("T_ctes_warm_ini");
+						stratified->ms_params.m_T_tank_cold_ini = as_double("T_ctes_cold_ini");
+						stratified->ms_params.m_f_V_hot_ini = as_double("f_ctes_warm_ini");
+						stratified->ms_params.m_lat = weather_reader.ms_solved_params.m_lat;
 
+					}
+					rankine_pc.mc_radiator.ms_params.m_field_fl = as_integer("ctes_field_fl");
+					rankine_pc.mc_radiator.ms_params.RM = as_double("rad_multiplier");
+					rankine_pc.mc_radiator.ms_params.Asolar_refl = as_double("helio_area_tot");
+					rankine_pc.mc_radiator.ms_params.m_dot_panel = as_double("m_dot_radpanel");
+					rankine_pc.mc_radiator.ms_params.n = as_integer("n_rad_tubes");
+					rankine_pc.mc_radiator.ms_params.W = as_double("W_rad_tubes");
+					rankine_pc.mc_radiator.ms_params.L = as_double("L_rad");
+					rankine_pc.mc_radiator.ms_params.th = as_double("th_rad_panel");
+					rankine_pc.mc_radiator.ms_params.D = as_double("D_rad_tubes");
+					rankine_pc.mc_radiator.ms_params.k_panel = as_double("k_panel");
+					rankine_pc.mc_radiator.ms_params.epsilon = as_double("epsilon_radtop");
+					rankine_pc.mc_radiator.ms_params.epsilonb = as_double("epsilon_radbot");
+					rankine_pc.mc_radiator.ms_params.epsilong = as_double("epsilon_radgrnd");
+					rankine_pc.mc_radiator.ms_params.Lsec = as_double("L_rad_sections");
+					rankine_pc.mc_radiator.ms_params.epsilon_HX = as_double("epsilon_radHX");
+					rankine_pc.mc_radiator.ms_params.radfield_dp = as_double("rad_pressuredrop");
 				}
-				rankine_pc.mc_radiator.ms_params.m_field_fl = as_integer("ctes_field_fl");
-				rankine_pc.mc_radiator.ms_params.RM = as_double("rad_multiplier");
-				rankine_pc.mc_radiator.ms_params.Asolar_refl=as_double("helio_area_tot");
-				rankine_pc.mc_radiator.ms_params.m_dot_panel = as_double("m_dot_radpanel");
-				rankine_pc.mc_radiator.ms_params.n = as_integer("n_rad_tubes");
-				rankine_pc.mc_radiator.ms_params.W = as_double("W_rad_tubes");
-				rankine_pc.mc_radiator.ms_params.L = as_double("L_rad");
-				rankine_pc.mc_radiator.ms_params.th = as_double("th_rad_panel");
-				rankine_pc.mc_radiator.ms_params.D = as_double("D_rad_tubes");
-				rankine_pc.mc_radiator.ms_params.k_panel = as_double("k_panel");
-				rankine_pc.mc_radiator.ms_params.epsilon = as_double("epsilon_radtop");
-				rankine_pc.mc_radiator.ms_params.epsilonb = as_double("epsilon_radbot");
-				rankine_pc.mc_radiator.ms_params.epsilong = as_double("epsilon_radgrnd");
-				rankine_pc.mc_radiator.ms_params.Lsec = as_double("L_rad_sections");
-				rankine_pc.mc_radiator.ms_params.epsilon_HX = as_double("epsilon_radHX");
-				rankine_pc.mc_radiator.ms_params.radfield_dp = as_double("rad_pressuredrop");
 
 				size_t n_F_wc = 0;
 				ssc_number_t *p_F_wc = as_array("F_wc", &n_F_wc);
@@ -1942,22 +1945,25 @@ public:
 		sys_costs.ms_par.W_dot_design = as_double("P_ref");
 		sys_costs.ms_par.power_cycle_spec_cost = as_double("plant_spec_cost");
 
-		sys_costs.ms_par.radfield_area= rankine_pc.mc_radiator.ms_params.Afield;
-		sys_costs.ms_par.radfield_vol = rankine_pc.mc_radiator.ms_params.D*rankine_pc.mc_radiator.ms_params.D / 4 * PI*rankine_pc.mc_radiator.ms_params.n*rankine_pc.mc_radiator.ms_params.Np*rankine_pc.mc_radiator.ms_params.L; //Calculate volume in radiator panel tubes = pi/4*d^2*L*n*Np
-		if (rankine_pc.ms_params.m_CT == 4 && rankine_pc.mc_two_tank_ctes.ms_params.m_ctes_type == 2) //If two tank
-		{
-			sys_costs.ms_par.coldstorage_vol = rankine_pc.mc_two_tank_ctes.get_physical_volume();
-		}
-		if (rankine_pc.ms_params.m_CT == 4 && rankine_pc.mc_two_tank_ctes.ms_params.m_ctes_type > 2) //If stratified 
-		{
-			sys_costs.ms_par.coldstorage_vol = rankine_pc.mc_stratified_ctes.get_physical_volume();	
+		if (rankine_pc.ms_params.m_CT == 4) {
+			sys_costs.ms_par.radfield_area = rankine_pc.mc_radiator.ms_params.Afield;
+			sys_costs.ms_par.radfield_vol = rankine_pc.mc_radiator.ms_params.D*rankine_pc.mc_radiator.ms_params.D / 4 * PI*rankine_pc.mc_radiator.ms_params.n*rankine_pc.mc_radiator.ms_params.Np*rankine_pc.mc_radiator.ms_params.L; //Calculate volume in radiator panel tubes = pi/4*d^2*L*n*Np
+			if (rankine_pc.mc_two_tank_ctes.ms_params.m_ctes_type == 2) //If two tank
+			{
+				sys_costs.ms_par.coldstorage_vol = rankine_pc.mc_two_tank_ctes.get_physical_volume();
+			}
+			if (rankine_pc.mc_two_tank_ctes.ms_params.m_ctes_type > 2) //If stratified 
+			{
+				sys_costs.ms_par.coldstorage_vol = rankine_pc.mc_stratified_ctes.get_physical_volume();
 
+			}
+
+			sys_costs.ms_par.rad_unitcost = as_double("radiator_unitcost");
+			sys_costs.ms_par.rad_installcost = as_double("radiator_installcost");
+			sys_costs.ms_par.rad_fluidcost = as_double("radiator_fluidcost");
+			sys_costs.ms_par.rad_volmulti = as_double("radfluid_vol_ratio");
+			sys_costs.ms_par.coldstorage_unitcost = as_double("ctes_cost");
 		}
-		sys_costs.ms_par.rad_unitcost = as_double("radiator_unitcost");
-		sys_costs.ms_par.rad_installcost = as_double("radiator_installcost");
-		sys_costs.ms_par.rad_fluidcost = as_double("radiator_fluidcost");
-		sys_costs.ms_par.rad_volmulti = as_double("radfluid_vol_ratio");
-		sys_costs.ms_par.coldstorage_unitcost = as_double("ctes_cost");
 
 		sys_costs.ms_par.bop_spec_cost = as_double("bop_spec_cost");
 
