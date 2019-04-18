@@ -95,8 +95,6 @@ private:
 
 	// member class for User Defined Power Cycle
 	C_ud_power_cycle mc_user_defined_pc;
-		
-
 
 	// track number of calls per timestep, reset = -1 in converged() call
 	int m_ncall;
@@ -295,7 +293,7 @@ public:
 	virtual void write_output_intervals(double report_time_start,
 		const std::vector<double> & v_temp_ts_time_end, double report_time_end);
 
-	virtual void assign(int index, float *p_reporting_ts_array, size_t n_reporting_ts_array);
+	virtual void assign(int index, ssc_number_t *p_reporting_ts_array, size_t n_reporting_ts_array);
 
 };
 
