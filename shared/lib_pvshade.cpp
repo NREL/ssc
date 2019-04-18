@@ -188,7 +188,9 @@ void diffuse_reduce(
 	double solzen,
 	double stilt,
 	double Gb_nor,
-	double Gd_poa,
+	double Gdh,
+	double poa_sky,
+	double poa_gnd,
 	double gcr,
 	double phi0, // mask angle
 	double alb,
@@ -200,20 +202,22 @@ void diffuse_reduce(
 	double &reduced_gnddiff,
 	double &Fgnddiff) // derate factor on ground diffuse
 {
+	double Gd_poa = poa_sky + poa_gnd;
 	if (Gd_poa < 0.1)
 	{
 		Fskydiff = Fgnddiff = 1.0;
 		return;
 	}
 
-	// view factor calculations assume isotropic sky
-	double Gd = Gd_poa; // total plane-of-array diffuse
-	double Gdh = Gd * 2 / (1 + cosd(stilt)); // total
+	// view factor  and shade derate calculations assume isotropic sky
 	double Gbh = Gb_nor * cosd(solzen); // beam irradiance on horizontal surface
+	double poa_sky_iso = Gdh * (1 + cosd(stilt)) / 2;
 
 	// sky diffuse reduction
-	reduced_skydiff = Gd - Gdh*(1 - pow(cosd(phi0 / 2), 2))*(nrows - 1.0) / nrows;
-	Fskydiff = reduced_skydiff / Gd;
+
+	double reduced_skydiff_iso = poa_sky_iso - Gdh*(1 - pow(cosd(phi0 / 2), 2))*(nrows - 1.0) / nrows;
+	Fskydiff = reduced_skydiff_iso / poa_sky_iso;
+	reduced_skydiff = Fskydiff * poa_sky;
 
 	double B = 1.0;
 	double R = B / gcr;
@@ -224,16 +228,17 @@ void diffuse_reduce(
 	double F1 = alb * pow(sind(stilt / 2.0), 2);
 	double Y1 = R - B * sind(180.0 - solalt - stilt) / sind(solalt);
 	Y1 = fmax(0.00001, Y1); // constraint per Chris 4/23/12
-	double F2 = 0.5 * alb * (1.0 + Y1 / B - sqrt(pow(Y1, 2) / pow(B, 2) - 2 * Y1 / B * cosd(180 - stilt) + 1.0));
-	double F3 = 0.5 * alb * (1.0 + R / B - sqrt(pow(R, 2) / pow(B, 2) - 2 * R / B * cosd(180 - stilt) + 1.0));
+	double F2 = 0.5 * (1.0 + Y1 / B - sqrt(pow(Y1, 2) / pow(B, 2) - 2 * Y1 / B * cosd(180 - stilt) + 1.0));
+	double F3 = 0.5 * (1.0 + R / B - sqrt(pow(R, 2) / pow(B, 2) - 2 * R / B * cosd(180 - stilt) + 1.0));
 
 	double Gr1 = F1 * (Gbh + Gdh);
-	reduced_gnddiff = ((F1 + (nrows - 1)*F2) / nrows) * Gbh
-		+ ((F1 + (nrows - 1) * F3) / nrows) * Gdh;
+	double reduced_gnddiff_iso = ((F1 + (nrows - 1) * F1 * F2) / nrows) * Gbh
+		                          + ((F1 + (nrows - 1) * F1 * F3) / nrows) * Gdh;
 
 	Fgnddiff = 1.0;
 	if (Gr1 > 0)
-		Fgnddiff = reduced_gnddiff / Gr1;
+		Fgnddiff = reduced_gnddiff_iso / Gr1;
+	reduced_gnddiff = Fgnddiff * reduced_gnddiff_iso;
 }
 
 double selfshade_dc_derate(double X, double S, double FF0, double dbh_ratio, double m_d, double Vmp)
@@ -339,8 +344,10 @@ bool ss_exec(
 	double solzen,		// solar zenith (deg)
 	double solazi,		// solar azimuth (deg)
 	double Gb_nor,		// beam normal irradiance (W/m2)
+	double Gdh,         // diffuse horizontal irradiance (W/m2)
 	double Gb_poa,		// POA beam irradiance (W/m2)
-	double Gd_poa,		// POA diffuse, sky+gnd (W/m2)
+	double poa_sky,		// POA diffuse sky irradiance (W/m2)
+	double poa_gnd,     // POA diffuse gnd irradiance (W/m2)
 	double albedo,		// used to calculate reduced relected irradiance
 	bool trackmode,		// 0 for fixed tilt, 1 for one-axis tracking
 	bool linear,		// 0 for non-linear shading (C. Deline's full algorithm), 1 to stop at linear shading
@@ -467,7 +474,7 @@ bool ss_exec(
 		double relative_shaded_area = Hs * (m_row_length - g) / (m_A * m_row_length); //numerator is shadow area, denom is row area
 		outputs.m_shade_frac_fixed = relative_shaded_area;
 		//determine reduction of diffuse incident on shaded sections due to self-shading (beam is not derated because that shading is taken into account in dc derate)
-	    diffuse_reduce( solzen, tilt, Gb_nor, Gd_poa, m_B/m_R, mask_angle, albedo, m_r,
+	    diffuse_reduce( solzen, tilt, Gb_nor, Gdh, poa_sky, poa_gnd, m_B/m_R, mask_angle, albedo, m_r,
 		// outputs
 		outputs.m_reduced_diffuse, outputs.m_diffuse_derate, outputs.m_reduced_reflected, outputs.m_reflected_derate );
 
@@ -523,7 +530,7 @@ bool ss_exec(
 	//Chris Deline's self-shading algorithm
 
 	// 1. determine reduction of diffuse incident on shaded sections due to self-shading (beam is not derated because that shading is taken into account in dc derate)
-	diffuse_reduce( solzen, tilt, Gb_nor, Gd_poa, m_B/m_R, mask_angle, albedo, m_r,
+	diffuse_reduce( solzen, tilt, Gb_nor, Gdh, poa_sky, poa_gnd, m_B/m_R, mask_angle, albedo, m_r,
 		// outputs
 		outputs.m_reduced_diffuse, outputs.m_diffuse_derate, outputs.m_reduced_reflected, outputs.m_reflected_derate );
 

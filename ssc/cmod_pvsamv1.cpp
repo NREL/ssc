@@ -1430,10 +1430,13 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 
 						//execute self-shading calculations
 						ssc_number_t beam_to_use; //some self-shading calculations require DNI, NOT ibeam (beam in POA). Need to know whether to use DNI from wf or calculated, depending on radmode
+						ssc_number_t dhi_to_use; //some self-shading calculations require DHI, NOT iskydiff (sky diff in POA). Need to know whether to use DHI from wf or calculated, depending on radmode
 						if (radmode == irrad::DN_DF || radmode == irrad::DN_GH) beam_to_use = (ssc_number_t)wf.dn;
 						else beam_to_use = Irradiance->p_IrradianceCalculated[2][hour * step_per_hour]; // top of hour in first year
+						if (radmode == irrad::DN_DF || radmode == irrad::GH_DF) dhi_to_use = (ssc_number_t)wf.df;
+						else dhi_to_use = Irradiance->p_IrradianceCalculated[1][hour * step_per_hour]; // top of hour in first year
 
-						if (ss_exec(Subarrays[nn]->selfShadingInputs, stilt, sazi, solzen, solazi, beam_to_use, ibeam, (iskydiff + ignddiff), alb, trackbool, linear, shad1xf, Subarrays[nn]->selfShadingOutputs))
+						if (ss_exec(Subarrays[nn]->selfShadingInputs, stilt, sazi, solzen, solazi, beam_to_use, dhi_to_use, ibeam, iskydiff, ignddiff, alb, trackbool, linear, shad1xf, Subarrays[nn]->selfShadingOutputs))
 						{
 
 						    if (linear && trackbool) //one-axis linear

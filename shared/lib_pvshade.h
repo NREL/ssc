@@ -2,7 +2,7 @@
 *  Copyright 2017 Alliance for Sustainable Energy, LLC
 *
 *  NOTICE: This software was developed at least in part by Alliance for Sustainable Energy, LLC
-*  (“Alliance”) under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
+*  (ï¿½Allianceï¿½) under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
 *  The Government retains for itself and others acting on its behalf a nonexclusive, paid-up,
 *  irrevocable worldwide license in the software to reproduce, prepare derivative works, distribute
 *  copies to the public, perform publicly and display publicly, and to permit others to do so.
@@ -26,8 +26,8 @@
 *  4. Redistribution of this software, without modification, must refer to the software by the same
 *  designation. Redistribution of a modified version of this software (i) may not refer to the modified
 *  version by the same designation, or by any confusingly similar designation, and (ii) must refer to
-*  the underlying software originally provided by Alliance as “System Advisor Model” or “SAM”. Except
-*  to comply with the foregoing, the terms “System Advisor Model”, “SAM”, or any confusingly similar
+*  the underlying software originally provided by Alliance as ï¿½System Advisor Modelï¿½ or ï¿½SAMï¿½. Except
+*  to comply with the foregoing, the terms ï¿½System Advisor Modelï¿½, ï¿½SAMï¿½, or any confusingly similar
 *  designation may not be used to refer to any modified version of this software or any modified
 *  version of the underlying software originally provided by Alliance without the prior written consent
 *  of Alliance.
@@ -83,19 +83,23 @@ bool selfshade_simple(
 
 
 void diffuse_reduce( 
-		double solzen,
-		double stilt,
-		double Gb_nor,
-		double Gd_poa,
-		double gcr,
-		double phi0, // mask angle (degrees)
-		double alb,
-		double nrows,
-		
-		double &reduced_skydiff,
-		double &Fskydiff,
-		double &reduced_gnddiff,
-		double &Fgnddiff );
+	// inputs (angles in degrees)
+	double solzen,
+	double stilt,
+	double Gb_nor,
+	double Gdh,
+	double poa_sky,
+	double poa_gnd,
+	double gcr,
+	double phi0, // mask angle
+	double alb,
+	double nrows,
+
+	// outputs
+	double &reduced_skydiff,
+	double &Fskydiff,  // derate factor on sky diffuse
+	double &reduced_gnddiff,
+	double &Fgnddiff); // derate factor on ground diffuse
 
 
 
@@ -156,8 +160,10 @@ bool ss_exec(
 	double solzen,		// solar zenith (deg)
 	double solazi,		// solar azimuth (deg)
 	double Gb_nor,		// beam normal irradiance (W/m2)
+	double Gdh,         // diffuse horizontal irradiance (W/m2)
 	double Gb_poa,		// POA beam irradiance (W/m2)
-	double Gd_poa,		// POA diffuse, sky+gnd (W/m2)
+	double poa_sky,		// POA diffuse sky irradiance (W/m2)
+	double poa_gnd,     // POA diffuse gnd irradiance (W/m2)
 	double albedo,		// used to calculate reduced relected irradiance
 	bool trackmode,		// 0 for fixed tilt, 1 for one-axis tracking
 	bool linear,		// 0 for non-linear shading (C. Deline's full algorithm), 1 to stop at linear shading
