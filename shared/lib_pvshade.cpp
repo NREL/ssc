@@ -215,13 +215,13 @@ void diffuse_reduce(
 
 	// sky diffuse reduction
     double arg = (gcr * cosd(stilt) - 1) / (gcr * sind(stilt));
-    double gamma = (-M_PI / 2) + atand(arg);
-    double Asky_shade = M_PI + M_PI / pow((1 + pow(tand(stilt + gamma), 2)), 0.5);
-    if ((stilt + gamma) > (M_PI / 2))
+    double gamma = (-M_PI / 2) + atan(arg);
+    double Asky_shade = M_PI + M_PI / pow((1 + pow(tan(stilt * DTOR + gamma), 2)), 0.5);
+    if ((stilt * DTOR + gamma) > (M_PI / 2))
 	{
 		Asky_shade = 2 * M_PI - Asky_shade;
 	}
-	double Asky = M_PI + M_PI / pow((1 + pow(tand(stilt), 2)), 0.5);
+	double Asky = M_PI + M_PI / pow((1 + pow(tan(stilt * DTOR), 2)), 0.5);
 	Fskydiff = Asky_shade / Asky;
 	reduced_skydiff = Fskydiff * poa_sky;
 
