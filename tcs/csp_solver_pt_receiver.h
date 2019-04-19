@@ -58,7 +58,7 @@
 class C_pt_receiver
 {
 public:
-    virtual ~C_pt_receiver() = 0;
+    virtual ~C_pt_receiver() {};
 
     C_csp_messages csp_messages;        // Class to save messages for upstream classes
 
@@ -68,7 +68,7 @@ public:
     double m_h_tower;				    //[m] height of the tower
     //double m_od_tube;				    //[mm] outer diameter of each receiver tube, converted to [m] in init()
     //double m_th_tube;				    //[mm] wall thickness of receiver tubes, converted to [m] in init()
-    //double m_epsilon;				    //[-] emissivity of the receiver panels
+    double m_epsilon;				    //[-] emissivity of the receiver panels
     //double m_hl_ffact;				    //[-] heat loss fudge factor for external forced convection on receiver
     double m_T_htf_hot_des;			    //[C] hot outlet HTF temperature at design, converted to [K] in init()
     double m_T_htf_cold_des;		    //[C] cold inlet HTF temperature at design, converted to [K] in init()
@@ -121,22 +121,36 @@ public:
         double m_q_dot_ss;				//[MW] thermal power delivered to TES/PC during steady-state operation (e.g., not equal to m_Q_thermal during startup)
         double m_f_timestep;			//[-] fraction of nominal timestep the receiver is not starting up
         double m_time_required_su;		//[s] time it took receiver to startup
-        double m_q_dot_piping_loss;		//[MWt] thermal power lost from piping to surroundings 
+        double m_q_dot_piping_loss;		//[MWt] thermal power lost from piping to surroundings
+        double m_q_heattrace;			//[MWt-hr] Power required for heat tracing
 
         S_outputs()
         {
+            clear();
+            /*
             m_m_dot_salt_tot = m_eta_therm = m_W_dot_pump = m_q_conv_sum = m_q_rad_sum = m_Q_thermal =
             m_T_salt_hot = m_field_eff_adj = m_component_defocus = m_q_dot_rec_inc = m_q_startup =
             m_dP_receiver = m_dP_total = m_vel_htf = m_T_salt_cold = m_m_dot_ss = m_q_dot_ss = m_f_timestep =
             m_time_required_su = m_q_dot_piping_loss = std::numeric_limits<double>::quiet_NaN();
+            */
+        }
+
+        void clear()
+        {
+            m_m_dot_salt_tot = m_eta_therm = m_W_dot_pump = m_q_conv_sum = m_q_rad_sum = m_Q_thermal =
+                m_T_salt_hot = m_field_eff_adj = m_component_defocus = m_q_dot_rec_inc = m_q_startup =
+                m_dP_receiver = m_dP_total = m_vel_htf = m_T_salt_cold = m_m_dot_ss = m_q_dot_ss = m_f_timestep =
+                m_time_required_su = m_q_dot_piping_loss = m_q_heattrace = std::numeric_limits<double>::quiet_NaN();
         }
     };
 
     S_outputs ms_outputs;
 
-    void clear_outputs();
+    //virtual void clear_outputs();
 
     virtual void init() = 0;
+
+    int get_operating_state();
 
     virtual void call(const C_csp_weatherreader::S_outputs &weather,
         const C_csp_solver_htf_1state &htf_state_in,
@@ -149,52 +163,31 @@ public:
 
     virtual void converged() = 0;
 
-    virtual void calc_pump_performance(double rho_f, double mdot, double ffact, double &PresDrop_calc,
-        double &WdotPump_calc) = 0;
+    //virtual void calc_pump_performance(double rho_f, double mdot, double ffact, double &PresDrop_calc,
+    //    double &WdotPump_calc) = 0;
+
+    virtual double get_pumping_parasitic_coef() = 0;
 
     HTFProperties *get_htf_property_object();
 
-protected:
-    C_pt_receiver() {};
+    virtual double get_startup_time();   //[s]
 
-private:
+    virtual double get_startup_energy(); //[MWh]
+
+    virtual double area_proj() = 0; //[m^2]
+
+protected:
+    C_pt_receiver();
     HTFProperties field_htfProps;       // heat transfer fluid properties
     HTFProperties tube_material;		// receiver tube material
     HTFProperties ambient_air;			// ambient air properties
 
     double m_m_dot_htf_des;             //[kg/s] receiver HTF mass flow at design
+    int m_mode;                         //[-] current operating mode of receiver
+    int m_mode_prev;                    //[-] operating mode of receiver at end of last converged timestep
 
     std::string error_msg;              // member string for exception messages
 
 };
-
-void C_pt_receiver::clear_outputs()
-{
-    ms_outputs.m_m_dot_salt_tot =
-        ms_outputs.m_eta_therm =
-        ms_outputs.m_W_dot_pump =
-        ms_outputs.m_q_conv_sum =
-        ms_outputs.m_q_rad_sum =
-        ms_outputs.m_Q_thermal =
-        ms_outputs.m_T_salt_hot =
-        ms_outputs.m_field_eff_adj =
-        ms_outputs.m_component_defocus =
-        ms_outputs.m_q_dot_rec_inc =
-        ms_outputs.m_q_startup =
-        ms_outputs.m_dP_receiver =
-        ms_outputs.m_dP_total =
-        ms_outputs.m_vel_htf =
-        ms_outputs.m_T_salt_cold =
-        ms_outputs.m_m_dot_ss =
-        ms_outputs.m_q_dot_ss =
-        ms_outputs.m_f_timestep = 
-        ms_outputs.m_time_required_su =
-        ms_outputs.m_q_dot_piping_loss = std::numeric_limits<double>::quiet_NaN();
-}
-
-HTFProperties *C_pt_receiver::get_htf_property_object()
-{
-    return &field_htfProps;
-}
 
 #endif  // __csp_solver_pt_receiver_

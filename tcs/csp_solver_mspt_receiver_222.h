@@ -55,13 +55,14 @@
 #include "htf_props.h"
 #include "ngcc_powerblock.h"
 #include "csp_solver_core.h"
+#include "csp_solver_pt_receiver.h"
 
-class C_mspt_receiver_222
+class C_mspt_receiver_222 : public C_pt_receiver
 {
 private:
-	HTFProperties field_htfProps;		// Instance of HTFProperties class for field HTF
-	HTFProperties tube_material;		// Instance of HTFProperties class for receiver tube material
-	HTFProperties ambient_air;			// Instance of HTFProperties class for ambient air
+	//HTFProperties field_htfProps;		// Instance of HTFProperties class for field HTF
+	//HTFProperties tube_material;		// Instance of HTFProperties class for receiver tube material
+	//HTFProperties ambient_air;			// Instance of HTFProperties class for ambient air
 
 	ngcc_power_cycle cycle_calcs;
 
@@ -78,11 +79,11 @@ private:
 	double m_od_control;
 	double m_eta_field_iter_prev;	//[-] Efficiency from heliostat on last iteration. Maybe change if CR gets defocus signal from controller
 	double m_tol_od;
-	double m_m_dot_htf_des;
+	//double m_m_dot_htf_des;
 
 	/* declare storage variables here */
-	int m_mode;
-	int m_mode_prev;
+	//int m_mode;
+	//int m_mode_prev;
 	double m_E_su;
 	double m_E_su_prev;
 	double m_t_su;
@@ -121,103 +122,10 @@ private:
 	double m_q_iscc_max;
 
 	// member string for exception messages
-	std::string error_msg;
+	//std::string error_msg;
 
 	// track number of calls per timestep, reset = -1 in converged() call
 	int m_ncall;
-
-	//Transient model parameters
-	int m_startup_mode;
-	int m_startup_mode_initial;
-	int m_n_call_circ;
-	int m_n_call_circ_initial;
-	double m_id_riser;				//[m]
-	double m_od_riser;				//[m]
-	double m_id_downc;				//[m]
-	double m_od_downc;				//[m]
-	double m_Rtot_riser;		//[K*m/W]
-	double m_Rtot_downc;		//[K*m/W]
-	double m_total_startup_time; // [s]
-	double m_total_startup_time_initial; //[s]
-	double m_minimum_startup_time; //s
-	double m_total_ramping_time; //s
-	double m_total_ramping_time_initial; //s
-
-
-	int m_n_elem;
-	int m_nz_tot;
-	vector<double> m_tm;		 //[J/K/m]
-	vector<double> m_tm_solid;	//[J/K/m]
-	vector<double> m_od;		 //[m]
-	vector<double> m_id;		 //[m]
-	util::matrix_t<int> m_flowelem_type;
-	util::matrix_t<double> m_tinit;
-	util::matrix_t<double> m_tinit_wall;
-
-	struct transient_inputs
-	{
-		int nelem;
-		int nztot;
-		int npath;
-		double inlet_temp;
-		util::matrix_t<double> lam1, lam2, cval, aval, tinit, tinit_wall, Rtube;
-		vector<double> length, zpts;
-		vector<int> nz, startpt;
-	} trans_inputs;
-
-	struct transient_outputs
-	{
-		double timeavg_tout;					// Time-averaged downcomer outlet T [K]
-		double tout;							// Downcomer outlet T at the end of the time step [K] 
-		double max_tout;						// Max downcomer outlet T during the time step [K]
-		double min_tout;						// Min downcomer outlet T during the time step [K]
-		double max_rec_tout;					// Max receiver outlet T during the time step [K]
-		double timeavg_conv_loss;				// Time-averaged convection loss from the receiver panels [W]
-		double timeavg_rad_loss;				// Time-averaged radiation loss
-		double timeavg_piping_loss;				// Time-averaged thermal loss from piping [W]
-		double timeavg_qthermal;				// Average thermal power sent to power cycle or storage during the time step [W]
-		double timeavg_qnet;					// Average net thermal power absorbed by the receiver during the time step [W]
-		double timeavg_eta_therm;				// Time-averaged thermal efficiency of the receiver 
-		double time_min_tout;					// Time at which minimum downcomer outlet T occurs
-		double tube_temp_inlet;					// Receiver inlet tube wall temperature at the end of the the time step [K]
-		double tube_temp_outlet;				// Receiver outlet tube wall temperature at the end of the the time step [K]
-
-		util::matrix_t<double> t_profile;		// Axial temperature profile at the end of the time step[K]
-		util::matrix_t<double> t_profile_wall;	// Axial wall temperature profile at the end of the time step[K]
-		util::matrix_t<double> timeavg_temp;	// Time-average outlet temperature of each flow element [K]
-
-	} trans_outputs;
-
-	struct parameter_eval_inputs
-	{
-		double T_amb, T_sky, pres, wspd, c_htf, rho_htf, mu_htf, k_htf, Pr_htf, mflow_tot, finitial, ffinal, ramptime;
-		vector<double> tm;
-		util::matrix_t<double> Tfeval, Tseval, qinc;
-	} param_inputs;
-
-	double calc_external_convection_coeff(const parameter_eval_inputs &pinputs, double Twall);
-	void calc_header_size(double pdrop, double mdot, double rhof, double muf, double Lh, double &id_calc, double &th_calc, double &od_calc);
-	double interpolate(double x, const vector<double> &xarray, const vector<double> &yarray, int klow, int khigh);
-	double integrate(double xlow, double xhigh, const vector<double> &xarray, const vector<double> &yarray, int klow, int khigh);
-	void cubic_splines(const vector<double> &xarray, const vector<double> &yarray, util::matrix_t<double> &splines);
-	double calc_single_pt(double tpt, double zpt, int flowid, int pathid, const transient_inputs &tinputs);
-	double calc_timeavg_exit_temp(double tstep, int flowid, int pathid, const transient_inputs &tinputs);
-
-	
-	void calc_ss_profile(const transient_inputs &tinputs, util::matrix_t<double> &tprofile, util::matrix_t<double> &tprofile_wall);
-	void calc_axial_profile( double tpt, const transient_inputs &tinputs, util::matrix_t<double> &tprofile);
-	void calc_extreme_outlet_values(double tstep, int flowid, const transient_inputs &tinputs, util::matrix_t<double> &textreme, util::matrix_t<double> &tpt);
-	void update_pde_parameters(bool use_initial_t, parameter_eval_inputs &pinputs, transient_inputs &tinputs);
-	void solve_transient_model(double tstep, double allowable_Trise, parameter_eval_inputs &pinputs, transient_inputs &tinputs, transient_outputs &toutputs);
-	void solve_transient_startup_model(parameter_eval_inputs &pinputs, transient_inputs &tinputs, int startup_mode, double target_temperature, double min_time, double max_time, transient_outputs &toutputs, double &startup_time, double &energy);
-
-	enum startup_modes
-	{
-		HEAT_TRACE = 0,		// No flux on receiver, riser/downcomer heated with heat tracing
-		PREHEAT,			// Low flux on receiver, no HTF flow
-		CIRCULATE,			// Full available power on receiver, HTF mass flow rate selected to hit target hot at SS
-		HOLD				// Models predict that startup has been completed, but minimum startup time has not yet been reached.  Fluid continues to circulate through the receiver.  
-	};
 
 public:
 	// Class to save messages for up stream classes
@@ -227,18 +135,18 @@ public:
 	int m_n_panels;					//[-]
 	double m_d_rec;					//[m]
 	double m_h_rec;					//[m]
-	double m_h_tower;				//[m]
+	//double m_h_tower;				//[m]
 	double m_od_tube;				//[mm], convert to [m] in init()
 	double m_th_tube;				//[mm], convert to [m] in init()
-	double m_epsilon;				//[-]
+	//double m_epsilon;				//[-]
 	double m_hl_ffact;				//[-]
-	double m_T_htf_hot_des;			//[C], convert to [K] in init()
-	double m_T_htf_cold_des;		//[C], convert to [K] in init()
-	double m_f_rec_min;				//[-]
-	double m_q_rec_des;				//[MW], convert to [W] in init()
-	double m_rec_su_delay;			//[-]
-	double m_rec_qf_delay;			//[-]
-	double m_m_dot_htf_max_frac;	//[-]
+	//double m_T_htf_hot_des;			//[C], convert to [K] in init()
+	//double m_T_htf_cold_des;		//[C], convert to [K] in init()
+	//double m_f_rec_min;				//[-]
+	//double m_q_rec_des;				//[MW], convert to [W] in init()
+	//double m_rec_su_delay;			//[-]
+	//double m_rec_qf_delay;			//[-]
+	//double m_m_dot_htf_max_frac;	//[-]
 	double m_A_sf;					//[m2]
 
 	// 8.10.2015 twn: add tower piping thermal losses to receiver performance
@@ -253,34 +161,14 @@ public:
 	int m_n_flux_x;
 	int m_n_flux_y;
 
-	// Transient model 
-	bool m_is_transient;			// Use transient model?
-	bool m_is_startup_transient;	// Use transient startup model?
-	double m_rec_tm_mult;			//[]
-	double m_u_riser;				//[m/s]
-	double m_th_riser;				//[mm], convert to [m] in init()
-	double m_th_downc;				//[mm], convert to [m] in init()
-	double m_piping_loss_coeff;		//[W/m2/K]
-	double m_riser_tm_mult;			//[]
-	double m_downc_tm_mult;			//[]
-	double m_heat_trace_power;		//[kW/m], convert to [W/m] in init()
-	double m_tube_flux_preheat;		//[kW/m2]
-	double m_flux_ramp_time;		//[hr], convert to [s] in init()
-	double m_preheat_target;		//[C], convert to [k] in init()
-	double m_startup_target;		//[C], convert to [k] in init()
-	double m_initial_temperature;	//[C], convert to [K] in init()
-
-	bool m_is_startup_from_solved_profile;  // Begin receiver startup from solved temperature profiles?
-	bool m_is_enforce_min_startup;		// Always enforce minimum startup time?  If false, minimum startup time is ignored when receiver starts above preheat temperature
-
 	// Calculate in init()
-	double m_q_dot_inc_min;			//[Wt]
+	//double m_q_dot_inc_min;			//[Wt]
 	// double m_q_rec_min;				//[W]
 
 		// 4.17.15 twn: former TCS inputs, moved to member data because are constant throughout simulation
 	double m_T_salt_hot_target;			//[C], convert to K in init() call
-	double m_eta_pump;					//[-]
-	int m_night_recirc;					//[-]
+	//double m_eta_pump;					//[-]
+	//int m_night_recirc;					//[-]
 	double m_hel_stow_deploy;			//[-]
 
 		// Added for csp_solver/tcs wrappers:
@@ -294,6 +182,7 @@ public:
 	bool m_is_iscc;
 	int m_cycle_config;
 	
+    /*
 	struct S_inputs
 	{
 		double m_field_eff;					//[-] 
@@ -308,11 +197,11 @@ public:
 			m_input_operation_mode = -1;
 		}
 	};
+    */
 
-		// Let's put outputs in a structure...
+    /*
 	struct S_outputs
 	{
-		
 		double m_m_dot_salt_tot;		//[kg/hr] 
 		double m_eta_therm;				//[-] RECEIVER thermal efficiency
 		double m_W_dot_pump;			//[MW] 
@@ -334,78 +223,45 @@ public:
 		double m_time_required_su;		//[s]
 		double m_q_dot_piping_loss;		//[MWt] Thermal power lost from piping to surroundings 
 	
-		double m_inst_T_salt_hot;		//[C] Instantaneous salt outlet T at the end of the time step
-		double m_max_T_salt_hot;		//[C] Maximum salt outlet T during the time step
-		double m_min_T_salt_hot;		//[C] Minimum salt outlet T during the time step
-		double m_max_rec_tout;			//[C] Maximum salt T (receiver outlet) during the time step
-		double m_q_heattrace;			//[MWt-hr] Power required for heat tracing
-
-		double m_Twall_inlet;			//[C] Receiver inlet tube wall temperature at the end of the timestep
-		double m_Twall_outlet;			//[C] Receiver outlet tube wall temperature at the end of the timestep
-		double m_Triser;				//[C] Riser wall temperature at the end of the timestep
-		double m_Tdownc;				//[C] Downcomer wall temperature at the end of the timestep
-
 		S_outputs()
 		{
 			m_m_dot_salt_tot = m_eta_therm = m_W_dot_pump = m_q_conv_sum = m_q_rad_sum = m_Q_thermal =
 				m_T_salt_hot = m_field_eff_adj = m_component_defocus = m_q_dot_rec_inc = m_q_startup = m_dP_receiver = m_dP_total =
 				m_vel_htf = m_T_salt_cold = m_m_dot_ss = m_q_dot_ss = m_f_timestep = 
 				m_time_required_su = m_q_dot_piping_loss = std::numeric_limits<double>::quiet_NaN();
-
-			m_inst_T_salt_hot = m_max_T_salt_hot = m_min_T_salt_hot = m_max_rec_tout = m_q_heattrace = std::numeric_limits<double>::quiet_NaN();
-
-			m_Twall_inlet = m_Twall_outlet = m_Triser = m_Tdownc = std::numeric_limits<double>::quiet_NaN();
-
 		}
 	};
+    */
 
-	S_outputs ms_outputs;
+	S_outputs outputs;
 
-	void clear_outputs();
+	//void clear_outputs();
 	
 	// Methods
 	C_mspt_receiver_222();
 
 	~C_mspt_receiver_222(){};
 
-	void init();
+	virtual void init();
 
-	int get_operating_state();
-
-	void call(const C_csp_weatherreader::S_outputs &weather, 
+	virtual void call(const C_csp_weatherreader::S_outputs &weather, 
 		const C_csp_solver_htf_1state &htf_state_in, 
-		const C_mspt_receiver_222::S_inputs &inputs,
+		const C_pt_receiver::S_inputs &inputs,
 		const C_csp_solver_sim_info &sim_info);
 
-	void off(const C_csp_weatherreader::S_outputs &weather,
+	virtual void off(const C_csp_weatherreader::S_outputs &weather,
 		const C_csp_solver_htf_1state &htf_state_in,
 		const C_csp_solver_sim_info &sim_info);
 
-	void converged();
+	virtual void converged();
 
     void calc_pump_performance(double rho_f, double mdot, double ffact, double &PresDrop_calc, double &WdotPump_calc);
 
-	void est_startup_time_energy(double fract, double &est_time, double &est_energy);
+    virtual double get_pumping_parasitic_coef();
 
-	double est_heattrace_energy();
+    virtual double area_proj();
 
-    HTFProperties *get_htf_property_object();
-
+    //HTFProperties *get_htf_property_object();
 };
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 #endif // __csp_solver_mspt_receiver_222_

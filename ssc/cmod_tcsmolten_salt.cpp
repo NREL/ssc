@@ -63,6 +63,7 @@
 #include "csp_solver_core.h"
 #include "csp_solver_pt_sf_perf_interp.h"
 #include "csp_solver_mspt_receiver_222.h"
+#include "csp_solver_mspt_receiver.h"
 #include "csp_solver_mspt_collector_receiver.h"
 #include "csp_solver_pc_Rankine_indirect_224.h"
 #include "csp_solver_pc_sco2.h"
@@ -1488,71 +1489,98 @@ public:
 			break;
 		}
 
-		C_mspt_receiver_222 receiver;
-		receiver.m_n_panels = as_integer("N_panels");
-		receiver.m_d_rec = D_rec;
-		receiver.m_h_rec = H_rec;
-		receiver.m_h_tower = as_double("h_tower");
-		receiver.m_od_tube = as_double("d_tube_out");
-		receiver.m_th_tube = as_double("th_tube");
-		receiver.m_mat_tube = as_integer("mat_tube");
-		receiver.m_field_fl = as_integer("rec_htf");
-		receiver.m_field_fl_props = as_matrix("field_fl_props");
-		receiver.m_flow_type = as_integer("Flow_type");
-        receiver.m_crossover_shift = as_integer("crossover_shift");
-		receiver.m_epsilon = as_double("epsilon");
-		receiver.m_hl_ffact = as_double("hl_ffact");
-		receiver.m_T_htf_hot_des = as_double("T_htf_hot_des");				//[C]
-		receiver.m_T_htf_cold_des = as_double("T_htf_cold_des");			//[C]
-		receiver.m_f_rec_min = as_double("f_rec_min");
-		receiver.m_q_rec_des = as_double("P_ref")/as_double("design_eff")*as_double("solarm");
-		receiver.m_rec_su_delay = as_double("rec_su_delay");
-		receiver.m_rec_qf_delay = as_double("rec_qf_delay");
-		receiver.m_m_dot_htf_max_frac = as_double("csp.pt.rec.max_oper_frac");
-		receiver.m_A_sf = as_double("A_sf");
+        std::unique_ptr<C_pt_receiver> receiver;
+        if (!as_boolean("is_rec_model_trans") && !as_boolean("is_rec_startup_trans")) {
+            std::unique_ptr<C_mspt_receiver_222> ss_receiver = std::make_unique<C_mspt_receiver_222>();   // steady-state receiver
 
-		// 8.10.2015 twn: add tower piping thermal losses to receiver performance
-		receiver.m_pipe_loss_per_m = as_double("piping_loss");						//[Wt/m]
-		receiver.m_pipe_length_add = as_double("piping_length_const");	//[m]
-		receiver.m_pipe_length_mult = as_double("piping_length_mult");		//[-]
+            ss_receiver->m_n_panels = as_integer("N_panels");
+            ss_receiver->m_d_rec = D_rec;
+            ss_receiver->m_h_rec = H_rec;
+            ss_receiver->m_od_tube = as_double("d_tube_out");
+            ss_receiver->m_th_tube = as_double("th_tube");
+            ss_receiver->m_mat_tube = as_integer("mat_tube");
+            ss_receiver->m_field_fl = as_integer("rec_htf");
+            ss_receiver->m_field_fl_props = as_matrix("field_fl_props");
+            ss_receiver->m_flow_type = as_integer("Flow_type");
+            ss_receiver->m_crossover_shift = as_integer("crossover_shift");
+            ss_receiver->m_hl_ffact = as_double("hl_ffact");
+            ss_receiver->m_A_sf = as_double("A_sf");
+            ss_receiver->m_pipe_loss_per_m = as_double("piping_loss");						//[Wt/m]
+            ss_receiver->m_pipe_length_add = as_double("piping_length_const");	//[m]
+            ss_receiver->m_pipe_length_mult = as_double("piping_length_mult");		//[-]
+            ss_receiver->m_n_flux_x = as_integer("n_flux_x");
+            ss_receiver->m_n_flux_y = as_integer("n_flux_y");
+            ss_receiver->m_T_salt_hot_target = as_double("T_htf_hot_des");
+            ss_receiver->m_hel_stow_deploy = as_double("hel_stow_deploy");
+            ss_receiver->m_is_iscc = false;    // Set parameters that were set with TCS defaults
 
-		// Inputs for transient receiver model
-		receiver.m_is_transient = as_boolean("is_rec_model_trans");
-		receiver.m_is_startup_transient = as_boolean("is_rec_startup_trans");
-		receiver.m_u_riser = as_double("u_riser");						//[m/s]
-		receiver.m_th_riser = as_double("th_riser");					//[mm]
-		receiver.m_piping_loss_coeff = as_double("piping_loss_coeff");	//[W/m2/K]
-		receiver.m_rec_tm_mult = as_double("rec_tm_mult");
-		receiver.m_riser_tm_mult = as_double("riser_tm_mult");
-		receiver.m_downc_tm_mult = as_double("downc_tm_mult");
-		receiver.m_heat_trace_power = as_double("heat_trace_power");	//[kW/m]
-		receiver.m_tube_flux_preheat = as_double("preheat_flux");		//[kW/m2]
-		receiver.m_flux_ramp_time = as_double("startup_ramp_time");		//[hr]
-		receiver.m_preheat_target = receiver.m_T_htf_cold_des + as_double("preheat_target_Tdiff");
-		receiver.m_startup_target = receiver.m_T_htf_hot_des + as_double("startup_target_Tdiff");
-		receiver.m_initial_temperature = 5.0; //[C]
+            receiver = std::move(ss_receiver);
+        }
+        else {
+            std::unique_ptr<C_mspt_receiver> trans_receiver = std::make_unique<C_mspt_receiver>();    // transient receiver
 
-		receiver.m_is_startup_from_solved_profile = as_boolean("is_rec_startup_from_T_soln");
-		if (!receiver.m_is_startup_transient && receiver.m_is_startup_from_solved_profile)
-			throw exec_error("tcsmolten_salt", "Receiver startup from solved temperature profiles is only available when receiver transient startup model is enabled");
+            trans_receiver->m_n_panels = as_integer("N_panels");
+            trans_receiver->m_d_rec = D_rec;
+            trans_receiver->m_h_rec = H_rec;
+            trans_receiver->m_od_tube = as_double("d_tube_out");
+            trans_receiver->m_th_tube = as_double("th_tube");
+            trans_receiver->m_mat_tube = as_integer("mat_tube");
+            trans_receiver->m_field_fl = as_integer("rec_htf");
+            trans_receiver->m_field_fl_props = as_matrix("field_fl_props");
+            trans_receiver->m_flow_type = as_integer("Flow_type");
+            trans_receiver->m_crossover_shift = as_integer("crossover_shift");
+            trans_receiver->m_hl_ffact = as_double("hl_ffact");
+            trans_receiver->m_A_sf = as_double("A_sf");
+            trans_receiver->m_pipe_loss_per_m = as_double("piping_loss");						//[Wt/m]
+            trans_receiver->m_pipe_length_add = as_double("piping_length_const");	//[m]
+            trans_receiver->m_pipe_length_mult = as_double("piping_length_mult");		//[-]
+            trans_receiver->m_n_flux_x = as_integer("n_flux_x");
+            trans_receiver->m_n_flux_y = as_integer("n_flux_y");
+            trans_receiver->m_T_salt_hot_target = as_double("T_htf_hot_des");
+            trans_receiver->m_hel_stow_deploy = as_double("hel_stow_deploy");
+            trans_receiver->m_is_iscc = false;    // Set parameters that were set with TCS defaults
 
-		receiver.m_is_enforce_min_startup = as_boolean("is_rec_enforce_min_startup");
-		if (!receiver.m_is_startup_from_solved_profile && !receiver.m_is_enforce_min_startup)
-		{
-			log("Both 'is_rec_enforce_min_startup' and 'is_rec_startup_from_T_soln' were set to 'false'. Minimum startup time will always be enforced unless 'is_rec_startup_from_T_soln' is set to 'true'", SSC_WARNING);
-			receiver.m_is_enforce_min_startup = 1;
-		}
+		    // Inputs for transient receiver model
+		    trans_receiver->m_is_transient = as_boolean("is_rec_model_trans");
+		    trans_receiver->m_is_startup_transient = as_boolean("is_rec_startup_trans");
+		    trans_receiver->m_u_riser = as_double("u_riser");						//[m/s]
+		    trans_receiver->m_th_riser = as_double("th_riser");					//[mm]
+		    trans_receiver->m_piping_loss_coeff = as_double("piping_loss_coeff");	//[W/m2/K]
+		    trans_receiver->m_rec_tm_mult = as_double("rec_tm_mult");
+		    trans_receiver->m_riser_tm_mult = as_double("riser_tm_mult");
+		    trans_receiver->m_downc_tm_mult = as_double("downc_tm_mult");
+		    trans_receiver->m_heat_trace_power = as_double("heat_trace_power");	//[kW/m]
+		    trans_receiver->m_tube_flux_preheat = as_double("preheat_flux");		//[kW/m2]
+		    trans_receiver->m_flux_ramp_time = as_double("startup_ramp_time");		//[hr]
+		    trans_receiver->m_preheat_target = as_double("T_htf_cold_des") + as_double("preheat_target_Tdiff");
+		    trans_receiver->m_startup_target = as_double("T_htf_hot_des") + as_double("startup_target_Tdiff");
+		    trans_receiver->m_initial_temperature = 5.0; //[C]
 
-		receiver.m_n_flux_x = as_integer("n_flux_x");
-		receiver.m_n_flux_y = as_integer("n_flux_y");
+            trans_receiver->m_is_startup_from_solved_profile = as_boolean("is_rec_startup_from_T_soln");
+		    if (!trans_receiver->m_is_startup_transient && trans_receiver->m_is_startup_from_solved_profile)
+			    throw exec_error("tcsmolten_salt", "Receiver startup from solved temperature profiles is only available when receiver transient startup model is enabled");
 
-		receiver.m_T_salt_hot_target = as_double("T_htf_hot_des");
-		receiver.m_eta_pump = as_double("eta_pump");
-		receiver.m_night_recirc = 0;					// 8.15.15 twn: this is hardcoded for now - need to check that it is functioning correctly and reporting correct parasitics
-		receiver.m_hel_stow_deploy = as_double("hel_stow_deploy");
+            trans_receiver->m_is_enforce_min_startup = as_boolean("is_rec_enforce_min_startup");
+		    if (!trans_receiver->m_is_startup_from_solved_profile && !trans_receiver->m_is_enforce_min_startup)
+		    {
+			    log("Both 'is_rec_enforce_min_startup' and 'is_rec_startup_from_T_soln' were set to 'false'. Minimum startup time will always be enforced unless 'is_rec_startup_from_T_soln' is set to 'true'", SSC_WARNING);
+                trans_receiver->m_is_enforce_min_startup = 1;
+		    }
 
-		// Set parameters that were set with TCS defaults
-		receiver.m_is_iscc = false;
+            receiver = std::move(trans_receiver);
+        }
+		//steady-state or transient receiver;
+		receiver->m_h_tower = as_double("h_tower");
+		receiver->m_epsilon = as_double("epsilon");
+		receiver->m_T_htf_hot_des = as_double("T_htf_hot_des");				//[C]
+		receiver->m_T_htf_cold_des = as_double("T_htf_cold_des");			//[C]
+		receiver->m_f_rec_min = as_double("f_rec_min");
+		receiver->m_q_rec_des = as_double("P_ref")/as_double("design_eff")*as_double("solarm");
+		receiver->m_rec_su_delay = as_double("rec_su_delay");
+		receiver->m_rec_qf_delay = as_double("rec_qf_delay");
+		receiver->m_m_dot_htf_max_frac = as_double("csp.pt.rec.max_oper_frac");
+		receiver->m_eta_pump = as_double("eta_pump");
+        receiver->m_night_recirc = 0;
 
 		// Could add optional ISCC stuff...
 
@@ -1560,7 +1588,7 @@ public:
 		//receiver.init();
 
 		// Now try to instantiate mspt_collector_receiver
-		C_csp_mspt_collector_receiver collector_receiver(heliostatfield, receiver);
+		C_csp_mspt_collector_receiver collector_receiver(heliostatfield, *receiver);
 		// Then try init() call here, which should call inits from both classes
 		//collector_receiver.init();
 
@@ -1582,10 +1610,10 @@ public:
 		collector_receiver.mc_reported_outputs.assign(C_csp_mspt_collector_receiver::E_Q_DOT_PIPE_LOSS, allocate("q_piping_losses", n_steps_fixed), n_steps_fixed);
 		collector_receiver.mc_reported_outputs.assign(C_csp_mspt_collector_receiver::E_Q_DOT_LOSS, allocate("q_thermal_loss", n_steps_fixed), n_steps_fixed);
 
+		collector_receiver.mc_reported_outputs.assign(C_csp_mspt_collector_receiver::E_P_HEATTRACE, allocate("P_rec_heattrace", n_steps_fixed), n_steps_fixed);
 		collector_receiver.mc_reported_outputs.assign(C_csp_mspt_collector_receiver::E_T_HTF_OUT_END, allocate("T_rec_out_end", n_steps_fixed), n_steps_fixed);
 		collector_receiver.mc_reported_outputs.assign(C_csp_mspt_collector_receiver::E_T_HTF_OUT_MAX, allocate("T_rec_out_max", n_steps_fixed), n_steps_fixed);
 		collector_receiver.mc_reported_outputs.assign(C_csp_mspt_collector_receiver::E_T_HTF_PANEL_OUT_MAX, allocate("T_panel_out_max", n_steps_fixed), n_steps_fixed);
-		collector_receiver.mc_reported_outputs.assign(C_csp_mspt_collector_receiver::E_P_HEATTRACE, allocate("P_rec_heattrace", n_steps_fixed), n_steps_fixed);
 
 		collector_receiver.mc_reported_outputs.assign(C_csp_mspt_collector_receiver::E_T_WALL_INLET, allocate("T_wall_rec_inlet", n_steps_fixed), n_steps_fixed);
 		collector_receiver.mc_reported_outputs.assign(C_csp_mspt_collector_receiver::E_T_WALL_OUTLET, allocate("T_wall_rec_outlet", n_steps_fixed), n_steps_fixed);
