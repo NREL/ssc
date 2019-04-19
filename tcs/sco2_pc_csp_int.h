@@ -89,9 +89,16 @@ public:
 		std::vector<double> m_DP_HT;		//(cold, hot) positive values are absolute [kPa], negative values are relative (-)
 		std::vector<double> m_DP_PC;		//(cold, hot) positive values are absolute [kPa], negative values are relative (-)
 		std::vector<double> m_DP_PHX;		//(cold, hot) positive values are absolute [kPa], negative values are relative (-)
-		double m_LT_eff_max;				//[-] Maximum allowable effectiveness in LT recuperator
-		double m_HT_eff_max;				//[-] Maximum allowable effectiveness in HT recuperator
-		double m_eta_mc;					//[-] design-point efficiency of the main compressor; isentropic if positive, polytropic if negative
+		    // LTR thermal design
+        int m_LTR_target_code;              //[-] 1 = UA, 2 = min dT, 3 = effectiveness
+        double m_LTR_min_dT;                //[K] target LTR minimum temperature difference
+        double m_LTR_eff_max;				//[-] Maximum allowable effectiveness in LT recuperator
+		    // HTR thermal design
+        int m_HTR_target_code;              //[-] 1 = UA, 2 = min dT, 3 = effectiveness
+        double m_HTR_min_dT;                //[K] target HTR min temperature difference
+        double m_HTR_eff_max;				//[-] Maximum allowable effectiveness in HT recuperator
+		    //
+        double m_eta_mc;					//[-] design-point efficiency of the main compressor; isentropic if positive, polytropic if negative
 		double m_eta_rc;					//[-] design-point efficiency of the recompressor; isentropic if positive, polytropic if negative
 		double m_eta_pc;					//[-] design-point efficiency of the precompressor; isentropic if positive, polytropic if negative
 		double m_eta_t;						//[-] design-point efficiency of the turbine; isentropic if positive, polytropic if negative
@@ -135,8 +142,14 @@ public:
 	
 			m_is_recomp_ok = -1;
 	
+            // Recuperator design target codes
+            m_LTR_target_code = 1;      // default to target conductance
+            m_HTR_target_code = 1;      // default to target conductance
+
 			m_T_htf_hot_in = m_phx_dt_hot_approach = m_T_amb_des = m_dt_mc_approach =
-				m_elevation = m_W_dot_net = m_eta_thermal = m_LT_eff_max = m_HT_eff_max =
+				m_elevation = m_W_dot_net = m_eta_thermal = 
+                m_LTR_min_dT = m_LTR_eff_max =
+                m_HTR_min_dT = m_HTR_eff_max =
 	
 				m_eta_mc = m_eta_rc = m_eta_pc = m_eta_t =
 				m_P_high_limit = m_tol = m_opt_tol = m_N_turbine =

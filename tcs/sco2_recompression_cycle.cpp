@@ -1857,9 +1857,9 @@ void C_RecompCycle::design_core_standard(int & error_code)
 	if( ms_des_par.m_recomp_frac < 0.01 )
 	{
 		ms_des_par.m_recomp_frac = 0.0;
-		double UA_tot = ms_des_par.m_UA_LT + ms_des_par.m_UA_HT;
-		ms_des_par.m_UA_LT = UA_tot;
-		ms_des_par.m_UA_HT = 0.0;
+		double UA_tot = ms_des_par.m_LTR_UA + ms_des_par.m_HTR_UA;
+		ms_des_par.m_LTR_UA = UA_tot;
+		ms_des_par.m_HTR_UA = 0.0;
 	}
 
 	CO2_state co2_props;
@@ -1885,7 +1885,7 @@ void C_RecompCycle::design_core_standard(int & error_code)
 	else
 		m_pres_last[LTR_HP_OUT] = m_pres_last[MC_OUT] - ms_des_par.m_DP_LT[0];				// absolute pressure drop specified for LT recuperator (cold stream)
 
-	if( ms_des_par.m_UA_LT < 1.0E-12 )
+	if( ms_des_par.m_LTR_UA < 1.0E-12 )
 		m_pres_last[LTR_HP_OUT] = m_pres_last[MC_OUT];			// If there is no LT recuperator, there is no pressure drop
 
 	m_pres_last[MIXER_OUT] = m_pres_last[LTR_HP_OUT];			// Assume no pressure drop in mixing valve
@@ -1896,7 +1896,7 @@ void C_RecompCycle::design_core_standard(int & error_code)
 	else
 		m_pres_last[HTR_HP_OUT] = m_pres_last[MIXER_OUT] - ms_des_par.m_DP_HT[0];				// absolute pressure drop specified for HT recuperator (cold stream)
 
-	if( ms_des_par.m_UA_HT < 1.0E-12 )
+	if( ms_des_par.m_HTR_UA < 1.0E-12 )
 		m_pres_last[HTR_HP_OUT] = m_pres_last[MIXER_OUT];		// If there is no HT recuperator, there is no pressure drop
 
 	if( ms_des_par.m_DP_PHX[0] < 0.0 )
@@ -1914,7 +1914,7 @@ void C_RecompCycle::design_core_standard(int & error_code)
 	else
 		m_pres_last[HTR_LP_OUT] = m_pres_last[LTR_LP_OUT] + ms_des_par.m_DP_LT[1];					// absolute pressure drop specified for LT recuperator (hot stream)
 
-	if( ms_des_par.m_UA_LT < 1.0E-12 )
+	if( ms_des_par.m_LTR_UA < 1.0E-12 )
 		m_pres_last[HTR_LP_OUT] = m_pres_last[LTR_LP_OUT];			// if there is no LT recuperator, there is no pressure drop
 
 	if( ms_des_par.m_DP_HT[1] < 0.0 )
@@ -1922,7 +1922,7 @@ void C_RecompCycle::design_core_standard(int & error_code)
 	else
 		m_pres_last[TURB_OUT] = m_pres_last[HTR_LP_OUT] + ms_des_par.m_DP_HT[1];				// absolute pressure drop specified for HT recuperator (hot stream)
 
-	if( ms_des_par.m_UA_HT < 1.0E-12 )
+	if( ms_des_par.m_HTR_UA < 1.0E-12 )
 		m_pres_last[TURB_OUT] = m_pres_last[HTR_LP_OUT];		// if there is no HT recuperator, there is no pressure drop
 
 	// Determine equivalent isentropic efficiencies for main compressor and turbine, if necessary.
@@ -2189,7 +2189,9 @@ int C_RecompCycle::C_mono_eq_LTR_des::operator()(double T_LTR_LP_out /*K*/, doub
 
 	try
 	{
-		mpc_rc_cycle->mc_LT_recup.design_fix_UA_calc_outlet(mpc_rc_cycle->ms_des_par.m_UA_LT, mpc_rc_cycle->ms_des_par.m_LT_eff_max,
+		mpc_rc_cycle->mc_LT_recup.design_for_target__calc_outlet(mpc_rc_cycle->ms_des_par.m_LTR_target_code,
+            mpc_rc_cycle->ms_des_par.m_LTR_UA, mpc_rc_cycle->ms_des_par.m_LTR_min_dT,
+            mpc_rc_cycle->ms_des_par.m_LTR_eff_max,
 			mpc_rc_cycle->m_temp_last[MC_OUT], mpc_rc_cycle->m_pres_last[MC_OUT], m_m_dot_mc, mpc_rc_cycle->m_pres_last[LTR_HP_OUT],
 			mpc_rc_cycle->m_temp_last[HTR_LP_OUT], mpc_rc_cycle->m_pres_last[HTR_LP_OUT], m_m_dot_t, mpc_rc_cycle->m_pres_last[LTR_LP_OUT],
 			m_Q_dot_LT, mpc_rc_cycle->m_temp_last[LTR_HP_OUT], T_LTR_LP_out_calc);
@@ -2296,7 +2298,9 @@ int C_RecompCycle::C_mono_eq_HTR_des::operator()(double T_HTR_LP_out /*K*/, doub
 
 	try
 	{
-	mpc_rc_cycle->mc_HT_recup.design_fix_UA_calc_outlet(mpc_rc_cycle->ms_des_par.m_UA_HT, mpc_rc_cycle->ms_des_par.m_HT_eff_max,
+	mpc_rc_cycle->mc_HT_recup.design_for_target__calc_outlet(mpc_rc_cycle->ms_des_par.m_HTR_target_code,
+        mpc_rc_cycle->ms_des_par.m_HTR_UA, mpc_rc_cycle->ms_des_par.m_HTR_min_dT,
+        mpc_rc_cycle->ms_des_par.m_HTR_eff_max,
 		mpc_rc_cycle->m_temp_last[MIXER_OUT], mpc_rc_cycle->m_pres_last[MIXER_OUT], m_m_dot_t, mpc_rc_cycle->m_pres_last[HTR_HP_OUT],
 		mpc_rc_cycle->m_temp_last[TURB_OUT], mpc_rc_cycle->m_pres_last[TURB_OUT], m_m_dot_t, mpc_rc_cycle->m_pres_last[HTR_LP_OUT],
 		m_Q_dot_HT, mpc_rc_cycle->m_temp_last[HTR_HP_OUT], T_HTR_LP_out_calc);
@@ -2378,8 +2382,15 @@ void C_RecompCycle::opt_design_core(int & error_code)
 	ms_des_par.m_DP_HT = ms_opt_des_par.m_DP_HT;
 	ms_des_par.m_DP_PC = ms_opt_des_par.m_DP_PC;
 	ms_des_par.m_DP_PHX = ms_opt_des_par.m_DP_PHX;
-	ms_des_par.m_LT_eff_max = ms_opt_des_par.m_LT_eff_max;
-	ms_des_par.m_HT_eff_max = ms_opt_des_par.m_HT_eff_max;
+        // LTR thermal design
+    ms_des_par.m_LTR_target_code = ms_opt_des_par.m_LTR_target_code;    //[-]
+    ms_des_par.m_LTR_min_dT = ms_opt_des_par.m_LTR_min_dT;      //[K]
+	ms_des_par.m_LTR_eff_max = ms_opt_des_par.m_LTR_eff_max;    //[-]
+        // HTR thermal design
+    ms_des_par.m_HTR_target_code = ms_opt_des_par.m_HTR_target_code;    //[-]
+    ms_des_par.m_HTR_min_dT = ms_opt_des_par.m_HTR_min_dT;      //[K]
+	ms_des_par.m_HTR_eff_max = ms_opt_des_par.m_HTR_eff_max;    //[-]
+        //
 	ms_des_par.m_eta_mc = ms_opt_des_par.m_eta_mc;
 	ms_des_par.m_eta_rc = ms_opt_des_par.m_eta_rc;
 	ms_des_par.m_eta_t = ms_opt_des_par.m_eta_t;
@@ -2490,8 +2501,8 @@ void C_RecompCycle::opt_design_core(int & error_code)
 		ms_des_par.m_P_mc_out = ms_opt_des_par.m_P_mc_out_guess;
 		ms_des_par.m_P_mc_in = ms_des_par.m_P_mc_out / ms_opt_des_par.m_PR_mc_guess;
 		ms_des_par.m_recomp_frac = ms_opt_des_par.m_recomp_frac_guess;
-		ms_des_par.m_UA_LT = ms_opt_des_par.m_UA_rec_total*ms_opt_des_par.m_LT_frac_guess;
-		ms_des_par.m_UA_HT = ms_opt_des_par.m_UA_rec_total*(1.0 - ms_opt_des_par.m_LT_frac_guess);
+		ms_des_par.m_LTR_UA = ms_opt_des_par.m_UA_rec_total*ms_opt_des_par.m_LT_frac_guess;
+		ms_des_par.m_HTR_UA = ms_opt_des_par.m_UA_rec_total*(1.0 - ms_opt_des_par.m_LT_frac_guess);
 		
 		// Ensure thermal efficiency is initialized to 0
 		m_objective_metric_opt = 0.0;
@@ -2580,8 +2591,8 @@ double C_RecompCycle::design_cycle_return_objective_metric(const std::vector<dou
 	else
 		LT_frac_local = ms_opt_des_par.m_LT_frac_guess;
 	
-	ms_des_par.m_UA_LT = ms_opt_des_par.m_UA_rec_total*LT_frac_local;
-	ms_des_par.m_UA_HT = ms_opt_des_par.m_UA_rec_total*(1.0 - LT_frac_local);
+	ms_des_par.m_LTR_UA = ms_opt_des_par.m_UA_rec_total*LT_frac_local;
+	ms_des_par.m_HTR_UA = ms_opt_des_par.m_UA_rec_total*(1.0 - LT_frac_local);
 
 	int error_code = 0;
 
@@ -2631,8 +2642,15 @@ void C_RecompCycle::auto_opt_design_core(int & error_code)
 	ms_opt_des_par.m_DP_HT = ms_auto_opt_des_par.m_DP_HTR;
 	ms_opt_des_par.m_DP_PC = ms_auto_opt_des_par.m_DP_PC_main;
 	ms_opt_des_par.m_DP_PHX = ms_auto_opt_des_par.m_DP_PHX;
-	ms_opt_des_par.m_LT_eff_max = ms_auto_opt_des_par.m_LTR_eff_max;
-	ms_opt_des_par.m_HT_eff_max = ms_auto_opt_des_par.m_HTR_eff_max;
+        // LTR thermal design
+    ms_opt_des_par.m_LTR_target_code = ms_auto_opt_des_par.m_LTR_target_code;   //[-]
+    ms_opt_des_par.m_LTR_min_dT = ms_auto_opt_des_par.m_LTR_min_dT;         //[K]
+	ms_opt_des_par.m_LTR_eff_max = ms_auto_opt_des_par.m_LTR_eff_max;    //[-]
+        // HTR thermal design
+    ms_opt_des_par.m_HTR_target_code = ms_auto_opt_des_par.m_HTR_target_code;   //[-]
+    ms_opt_des_par.m_HTR_min_dT = ms_auto_opt_des_par.m_HTR_min_dT;     //[K]
+	ms_opt_des_par.m_HTR_eff_max = ms_auto_opt_des_par.m_HTR_eff_max;
+        //
 	ms_opt_des_par.m_UA_rec_total = ms_auto_opt_des_par.m_UA_rec_total;
 	ms_opt_des_par.m_eta_mc = ms_auto_opt_des_par.m_eta_mc;
 	ms_opt_des_par.m_eta_rc = ms_auto_opt_des_par.m_eta_rc;
@@ -2759,9 +2777,16 @@ int C_RecompCycle::auto_opt_design_hit_eta(S_auto_opt_design_hit_eta_parameters 
 	ms_auto_opt_des_par.m_DP_PC_main = auto_opt_des_hit_eta_in.m_DP_PC_main;			//(cold, hot) positive values are absolute [kPa], negative values are relative (-)
 	ms_auto_opt_des_par.m_DP_PHX = auto_opt_des_hit_eta_in.m_DP_PHX;					//(cold, hot) positive values are absolute [kPa], negative values are relative (-)
 	ms_auto_opt_des_par.m_UA_rec_total = std::numeric_limits<double>::quiet_NaN();		// ***** This method finds the UA required to hit the input efficiency! *****
-	ms_auto_opt_des_par.m_LTR_eff_max = auto_opt_des_hit_eta_in.m_LTR_eff_max;
-	ms_auto_opt_des_par.m_HTR_eff_max = auto_opt_des_hit_eta_in.m_HTR_eff_max;
-	ms_auto_opt_des_par.m_eta_mc = auto_opt_des_hit_eta_in.m_eta_mc;					//[-] design-point efficiency of the main compressor; isentropic if positive, polytropic if negative
+	    // LTR thermal design
+    ms_auto_opt_des_par.m_LTR_target_code = auto_opt_des_hit_eta_in.m_LTR_target_code;  //[-]
+    ms_auto_opt_des_par.m_LTR_min_dT = auto_opt_des_hit_eta_in.m_LTR_min_dT;            //[K]
+    ms_auto_opt_des_par.m_LTR_eff_max = auto_opt_des_hit_eta_in.m_LTR_eff_max;
+	    // HTR thermal design
+    ms_auto_opt_des_par.m_HTR_target_code = auto_opt_des_hit_eta_in.m_HTR_target_code;  //[-]
+    ms_auto_opt_des_par.m_HTR_min_dT = auto_opt_des_hit_eta_in.m_HTR_min_dT;            //[K]
+    ms_auto_opt_des_par.m_HTR_eff_max = auto_opt_des_hit_eta_in.m_HTR_eff_max;    //[-]
+	    //
+    ms_auto_opt_des_par.m_eta_mc = auto_opt_des_hit_eta_in.m_eta_mc;					//[-] design-point efficiency of the main compressor; isentropic if positive, polytropic if negative
 	ms_auto_opt_des_par.m_eta_rc = auto_opt_des_hit_eta_in.m_eta_rc;					//[-] design-point efficiency of the recompressor; isentropic if positive, polytropic if negative
 	ms_auto_opt_des_par.m_eta_t = auto_opt_des_hit_eta_in.m_eta_t;						//[-] design-point efficiency of the turbine; isentropic if positive, polytropic if negative
 	ms_auto_opt_des_par.m_N_sub_hxrs = auto_opt_des_hit_eta_in.m_N_sub_hxrs;			//[-] Number of sub-heat exchangers to use when calculating UA value for a heat exchanger
@@ -3279,8 +3304,8 @@ void C_RecompCycle::finalize_design(int & error_code)
 	ms_des_solved.m_m_dot_t = m_m_dot_t;
 	ms_des_solved.m_recomp_frac = m_m_dot_rc / m_m_dot_t;
 
-	ms_des_solved.m_UA_LTR = ms_des_par.m_UA_LT;
-	ms_des_solved.m_UA_HTR = ms_des_par.m_UA_HT;
+	ms_des_solved.m_UA_LTR = ms_des_par.m_LTR_UA;
+	ms_des_solved.m_UA_HTR = ms_des_par.m_HTR_UA;
 
 	ms_des_solved.m_W_dot_t = m_W_dot_t;		//[kWe]
 	ms_des_solved.m_W_dot_mc = m_W_dot_mc;		//[kWe]

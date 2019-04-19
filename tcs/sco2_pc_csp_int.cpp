@@ -132,8 +132,15 @@ void C_sco2_recomp_csp::design_core()
 		ms_cycle_des_par.m_DP_PC_pre = ms_des_par.m_DP_PC;
 		ms_cycle_des_par.m_DP_PC_main = ms_des_par.m_DP_PC;
 		ms_cycle_des_par.m_DP_PHX = ms_des_par.m_DP_PHX;
-		ms_cycle_des_par.m_LTR_eff_max = ms_des_par.m_LT_eff_max;
-		ms_cycle_des_par.m_HTR_eff_max = ms_des_par.m_HT_eff_max;
+            // LTR thermal design
+        ms_cycle_des_par.m_LTR_target_code = ms_des_par.m_LTR_target_code;  //[-]
+        ms_cycle_des_par.m_LTR_min_dT = ms_des_par.m_LTR_min_dT;            //[K]
+		ms_cycle_des_par.m_LTR_eff_max = ms_des_par.m_LTR_eff_max;       //[-]
+            // HTR thermal design
+        ms_cycle_des_par.m_HTR_target_code = ms_des_par.m_HTR_target_code;  //[-]
+        ms_cycle_des_par.m_HTR_min_dT = ms_des_par.m_HTR_min_dT;            //[K]
+        ms_cycle_des_par.m_HTR_eff_max = ms_des_par.m_HTR_eff_max;       //[-]
+            //
 		ms_cycle_des_par.m_eta_mc = ms_des_par.m_eta_mc;
 		ms_cycle_des_par.m_eta_rc = ms_des_par.m_eta_rc;
 		ms_cycle_des_par.m_eta_pc = ms_des_par.m_eta_pc;
@@ -190,8 +197,15 @@ void C_sco2_recomp_csp::design_core()
 		des_params.m_DP_PC_main = ms_des_par.m_DP_PC;
 		des_params.m_DP_PHX = ms_des_par.m_DP_PHX;
 		des_params.m_UA_rec_total = ms_des_par.m_UA_recup_tot_des;	//[kW/K]
-		des_params.m_LTR_eff_max = ms_des_par.m_LT_eff_max;			//[-]
-		des_params.m_HTR_eff_max = ms_des_par.m_HT_eff_max;			//[-]
+            // LTR thermal design
+        des_params.m_LTR_target_code = ms_des_par.m_LTR_target_code;  //[-]
+        des_params.m_LTR_min_dT = ms_des_par.m_LTR_min_dT;            //[K]
+        des_params.m_LTR_eff_max = ms_des_par.m_LTR_eff_max;       //[-]
+            // HTR thermal design
+        des_params.m_HTR_target_code = ms_des_par.m_HTR_target_code;    //[-]
+        des_params.m_HTR_min_dT = ms_des_par.m_HTR_min_dT;          //[K]
+		des_params.m_HTR_eff_max = ms_des_par.m_HTR_eff_max;			//[-]
+            //
 		des_params.m_eta_mc = ms_des_par.m_eta_mc;
 		des_params.m_eta_rc = ms_des_par.m_eta_rc;
 		des_params.m_eta_pc = ms_des_par.m_eta_pc;

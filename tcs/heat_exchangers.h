@@ -66,15 +66,27 @@ namespace NS_HX_counterflow_eqs
 		WATER = 201
 	};
 
+    enum
+    {
+        TARGET_UA = 1,
+        TARGET_MIN_DT,
+        TARGET_EFFECTIVENESS
+    };
+
 	double calc_max_q_dot_enth(int hot_fl_code /*-*/, HTFProperties & hot_htf_class,
 		int cold_fl_code /*-*/, HTFProperties & cold_htf_class,
 		double h_h_in /*kJ/kg*/, double P_h_in /*kPa*/, double P_h_out /*kPa*/, double m_dot_h /*kg/s*/,
-		double h_c_in /*kJ/kg*/, double P_c_in /*kPa*/, double P_c_out /*kPa*/, double m_dot_c /*kg/s*/);
+		double h_c_in /*kJ/kg*/, double P_c_in /*kPa*/, double P_c_out /*kPa*/, double m_dot_c /*kg/s*/,
+        double & h_h_out /*kJ/kg*/, double & T_h_out /*K*/,
+        double & h_c_out /*kJ/kg*/, double & T_c_out /*K*/,
+        double & T_h_in /*K*/, double & T_c_in /*K*/);
 
 	double calc_max_q_dot(int hot_fl_code /*-*/, HTFProperties & hot_htf_class,
 		int cold_fl_code /*-*/, HTFProperties & cold_htf_class,
 		double T_h_in, double P_h_in, double P_h_out, double m_dot_h,
-		double T_c_in, double P_c_in, double P_c_out, double m_dot_c);
+		double T_c_in, double P_c_in, double P_c_out, double m_dot_c,
+        double & h_h_out /*kJ/kg*/, double & T_h_out /*K*/,
+        double & h_c_out /*kJ/kg*/, double & T_c_out /*K*/);
 
 	void calc_req_UA(int hot_fl_code /*-*/, HTFProperties & hot_htf_class,
 		int cold_fl_code /*-*/, HTFProperties & cold_htf_class,
@@ -91,12 +103,14 @@ namespace NS_HX_counterflow_eqs
 		double & h_h_out /*kJ/kg*/, double & T_h_out /*K*/, double & h_c_out /*kJ/kg*/, double & T_c_out /*K*/,
 		double & UA /*kW/K*/, double & min_DT /*C*/, double & eff /*-*/, double & NTU /*-*/, double & q_dot_calc /*kWt*/);
 	
-	void solve_q_dot_for_fixed_UA(int hot_fl_code /*-*/, HTFProperties & hot_htf_class,
+	void solve_q_dot_for_fixed_UA(int hx_target_code /*-*/,
+        int hot_fl_code /*-*/, HTFProperties & hot_htf_class,
 		int cold_fl_code /*-*/, HTFProperties & cold_htf_class,
 		int N_sub_hx /*-*/,
 		double T_c_in /*K*/, double P_c_in /*kPa*/, double m_dot_c /*kg/s*/, double P_c_out /*kPa*/,
 		double T_h_in /*K*/, double P_h_in /*kPa*/, double m_dot_h /*kg/s*/, double P_h_out /*kPa*/,
-		double UA_target /*kW/K*/, double eff_limit /*-*/, double eff_guess /*-*/,
+		double UA_target /*kW/K*/, double min_dT_target /*K*/,
+        double eff_limit /*-*/, double eff_guess /*-*/,
 		double & q_dot /*kWt*/, double & T_c_out /*K*/, double & T_h_out /*K*/,
 		double & eff_calc /*-*/, double & min_DT /*K*/, double & NTU /*-*/, double & UA_calc);
 
@@ -109,6 +123,17 @@ namespace NS_HX_counterflow_eqs
 		double & T_c_out  /*K*/, double & h_c_out /*kJ/kg*/,
 		double & T_h_out /*K*/, double & h_h_out /*kJ/kg*/,
 		double & q_dot /*kWt*/, double & eff_calc /*-*/, double & min_DT /*K*/, double & NTU /*-*/, double & UA_calc);
+
+    void solve_q_dot__fixed_min_dT__enth(int hot_fl_code /*-*/, HTFProperties & hot_htf_class,
+        int cold_fl_code /*-*/, HTFProperties & cold_htf_class,
+        int N_sub_hx /*-*/,
+        double h_c_in /*K*/, double P_c_in /*kPa*/, double m_dot_c /*kg/s*/, double P_c_out /*kPa*/,
+        double h_h_in /*K*/, double P_h_in /*kPa*/, double m_dot_h /*kg/s*/, double P_h_out /*kPa*/,
+        double min_dT_target /*C*/, double eff_limit /*-*/, double eff_guess /*-*/,
+        double & T_c_out  /*K*/, double & h_c_out /*kJ/kg*/,
+        double & T_h_out /*K*/, double & h_h_out /*kJ/kg*/,
+        double & q_dot /*kWt*/, double & eff_calc /*-*/, double & min_DT /*K*/, double & NTU /*-*/, double & UA_calc);
+
 
 	class C_mono_eq_UA_v_q_enth : public C_monotonic_equation
 	{
@@ -174,6 +199,71 @@ namespace NS_HX_counterflow_eqs
 
 		virtual int operator()(double q_dot /*kWt*/, double *UA_calc /*kW/K*/);
 	};
+
+    class C_MEQ__min_dT__q_dot : public C_monotonic_equation
+    {
+    private:
+
+        int m_hot_fl_code;		//[-]
+        HTFProperties mc_hot_htf_class;
+
+        int m_cold_fl_code;		//[-]
+        HTFProperties mc_cold_htf_class;
+
+        int m_N_sub_hx;			//[-]
+
+        double m_P_c_out;		//[kPa]
+        double m_P_h_out;		//[kPa]
+
+        double m_h_c_in;		//[K]
+        double m_P_c_in;		//[kPa]
+        double m_m_dot_c;		//[kg/s]
+        double m_h_h_in;		//[K]
+        double m_P_h_in;		//[kPa]
+        double m_m_dot_h;		//[kg/s]
+
+    public:
+        C_MEQ__min_dT__q_dot(int hot_fl_code /*-*/, HTFProperties hot_htf_class,
+            int cold_fl_code /*-*/, HTFProperties cold_htf_class,
+            int N_sub_hx /*-*/,
+            double P_c_out /*kPa*/, double P_h_out /*kPa*/,
+            double h_c_in /*kJ/kg*/, double P_c_in /*kPa*/, double m_dot_c /*kg/s*/,
+            double h_h_in /*kJ/kg*/, double P_h_in /*kPa*/, double m_dot_h /*kg/s*/)
+        {
+            m_hot_fl_code = hot_fl_code;
+            mc_hot_htf_class = hot_htf_class;
+
+            m_cold_fl_code = cold_fl_code;
+            mc_cold_htf_class = cold_htf_class;
+
+            m_N_sub_hx = N_sub_hx;
+
+            m_P_c_out = P_c_out;	//[kPa]
+            m_P_h_out = P_h_out;	//[kPa]
+
+            m_h_c_in = h_c_in;		//[kJ/kg]
+            m_P_c_in = P_c_in;		//[kPa]
+            m_m_dot_c = m_dot_c;	//[kg/s]
+
+            m_h_h_in = h_h_in;		//[kJ/kg]
+            m_P_h_in = P_h_in;		//[kPa]
+            m_m_dot_h = m_dot_h;	//[kg/s]
+
+            m_h_c_out = m_h_h_out = m_T_c_out = m_T_h_out = m_eff =
+                m_min_DT = m_NTU = m_UA_calc = std::numeric_limits<double>::quiet_NaN();
+        }
+
+        double m_h_c_out;		//[kJ/kg]
+        double m_h_h_out;		//[kJ/kg]
+        double m_T_c_out;		//[K]
+        double m_T_h_out;		//[K]
+        double m_eff;			//[-]
+        double m_min_DT;		//[K]
+        double m_NTU;			//[-]
+        double m_UA_calc;		//[kW/K]
+
+        virtual int operator()(double q_dot /*kWt*/, double *min_dT /*C*/);
+    };
 }
 
 class C_HX_counterflow
@@ -236,23 +326,27 @@ public:
 
 	struct S_des_solved
 	{
-		double m_Q_dot_design;		//[kWt] Design-point heat transfer
-		double m_UA_design_total;		//[kW/K] Allocated design-point conductance
-										//  .... off-design model scales 'm_UA_design_total'
-		double m_UA_calc_at_eff_max;	//[kW/K] May be less than design total if eff_max < 1
-		double m_min_DT_design;			//[K] Minimum temperature difference in heat exchanger
-		double m_eff_design;			//[-] Effectiveness at design
-		double m_NTU_design;			//[-] NTU at design
-		double m_T_h_out;				//[K] Design-point hot outlet temperature
-		double m_T_c_out;				//[K] Design-point cold outlet temperature
-		double m_DP_cold_des;			//[kPa] cold fluid design pressure drop
-		double m_DP_hot_des;			//[kPa] hot fluid design pressure drop
+        double m_UA_allocated;		    //[kW/K] Allocated design-point conductance
+        double m_UA_calc_at_eff_max;	//[kW/K] May be less than design total if eff_max < 1
+
+        
+        double m_Q_dot_design;		//[kWt] Design-point heat transfer
+        double m_UA_design;         //[kW/K] Design UA. used in cost model; off-design model scales 'm_UA_design_total'
+		double m_min_DT_design;		//[K] Minimum temperature difference in heat exchanger
+		double m_eff_design;		//[-] Effectiveness at design
+		double m_NTU_design;		//[-] NTU at design
+		double m_T_h_out;			//[K] Design-point hot outlet temperature
+		double m_T_c_out;			//[K] Design-point cold outlet temperature
+		double m_DP_cold_des;		//[kPa] cold fluid design pressure drop
+		double m_DP_hot_des;		//[kPa] hot fluid design pressure drop
 
 		double m_cost;				//[M$]
 
 		S_des_solved()
 		{
-			m_Q_dot_design = m_UA_design_total = m_UA_calc_at_eff_max =
+            m_UA_allocated = m_UA_calc_at_eff_max =
+			
+            m_Q_dot_design = m_UA_design = m_UA_calc_at_eff_max =
 				m_min_DT_design = m_eff_design = m_NTU_design =
 				m_T_h_out = m_T_c_out =
 				m_DP_cold_des = m_DP_hot_des =
@@ -323,7 +417,9 @@ public:
 		double h_c_in /*kJ/kg*/, double h_h_in /*kJ/kg*/, double P_c_in /*kPa*/, double P_c_out /*kPa*/, double P_h_in /*kPa*/, double P_h_out /*kPa*/,
 		double & UA /*kW/K*/, double & min_DT /*C*/, double & eff /*-*/, double & NTU /*-*/, double & h_h_out /*K*/, double & h_c_out /*K*/, double & q_dot_calc /*kWt*/);
 
-	void design_fix_UA_calc_outlet(double UA_target /*kW/K*/, double eff_target /*-*/,
+	void design_for_target__calc_outlet(int hx_target_code /*-*/,
+        double UA_target /*kW/K*/, double min_dT_target /*K*/,
+        double eff_max /*-*/,
 		double T_c_in /*K*/, double P_c_in /*kPa*/, double m_dot_c /*kg/s*/, double P_c_out /*kPa*/,
 		double T_h_in /*K*/, double P_h_in /*kPa*/, double m_dot_h /*kg/s*/, double P_h_out /*kPa*/,
 		double & q_dot /*kWt*/, double & T_c_out /*K*/, double & T_h_out /*K*/);
