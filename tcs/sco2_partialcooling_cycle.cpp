@@ -481,6 +481,11 @@ double C_PartialCooling_Cycle::opt_eta_fixed_P_high(double P_high_opt /*kPa*/)
 	ms_opt_des_par.m_LTR_frac_guess = 0.5;		//[-]
 	ms_opt_des_par.m_fixed_LTR_frac = false;
 
+    if (ms_opt_des_par.m_LTR_target_code != NS_HX_counterflow_eqs::TARGET_UA || ms_opt_des_par.m_HTR_target_code != NS_HX_counterflow_eqs::TARGET_UA)
+    {
+        ms_opt_des_par.m_fixed_LTR_frac = true;
+    }
+
 	int pc_error_code = opt_design_core();
 
 	double local_objective_metric = 0.0;
@@ -993,6 +998,11 @@ int C_PartialCooling_Cycle::auto_opt_design_core()
 
 	ms_opt_des_par.m_LTR_frac_guess = 0.5;		//[-]
 	ms_opt_des_par.m_fixed_LTR_frac = false;
+
+    if (ms_opt_des_par.m_LTR_target_code != NS_HX_counterflow_eqs::TARGET_UA || ms_opt_des_par.m_HTR_target_code != NS_HX_counterflow_eqs::TARGET_UA)
+    {
+        ms_opt_des_par.m_fixed_LTR_frac = true;
+    }
 
 	int pc_error_code = opt_design_core();
 

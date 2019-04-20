@@ -998,7 +998,7 @@ void NS_HX_counterflow_eqs::solve_q_dot__fixed_min_dT__enth(int hot_fl_code /*-*
         T_h_out = hx_min_dt_eq.m_T_h_out;	//[K]
         h_h_out = hx_min_dt_eq.m_h_h_out;	//[kJ/kg]
 
-        q_dot = q_dot_upper;                //[kWt]
+        q_dot = q_dot_guess;                //[kWt]
         eff_calc = hx_min_dt_eq.m_eff;		//[-]
         min_DT = hx_min_dt_eq.m_min_DT;		//[K]
         NTU = hx_min_dt_eq.m_NTU;			//[-]

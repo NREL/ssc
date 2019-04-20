@@ -2712,6 +2712,11 @@ void C_RecompCycle::auto_opt_design_core(int & error_code)
 		ms_opt_des_par.m_LT_frac_guess = 0.5;
 		ms_opt_des_par.m_fixed_LT_frac = false;
 
+        if (ms_opt_des_par.m_LTR_target_code != NS_HX_counterflow_eqs::TARGET_UA || ms_opt_des_par.m_HTR_target_code != NS_HX_counterflow_eqs::TARGET_UA)
+        {
+            ms_opt_des_par.m_fixed_LT_frac = true;
+        }
+
 		int rc_error_code = 0;
 
 		opt_design_core(rc_error_code);
@@ -3115,6 +3120,11 @@ double C_RecompCycle::opt_eta_fixed_P_high(double P_high_opt /*kPa*/)
 		ms_opt_des_par.m_fixed_recomp_frac = false;
 		ms_opt_des_par.m_LT_frac_guess = 0.5;
 		ms_opt_des_par.m_fixed_LT_frac = false;
+
+        if (ms_opt_des_par.m_LTR_target_code != NS_HX_counterflow_eqs::TARGET_UA || ms_opt_des_par.m_HTR_target_code != NS_HX_counterflow_eqs::TARGET_UA)
+        {
+            ms_opt_des_par.m_fixed_LT_frac = true;
+        }
 
 		int rc_error_code = 0;
 		opt_design_core(rc_error_code);
