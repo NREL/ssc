@@ -12,12 +12,12 @@ CFLAGS = -fPIC $(WARNINGS) -g -O3 -I../ -D__64BIT__ -I../nlopt -I../shared -I../
 CXXFLAGS=-std=c++0x $(CFLAGS)
 
 OBJECTS = tcskernel.o \
-#	fmin_callbacks.o \
+	fmin_callbacks.o \
 	fmin.o \
 	direct_steam_receivers.o \
 	CO2_properties.o \
 	co2_compressor_library.o \
-#	nlopt_callbacks.o \
+	nlopt_callbacks.o \
 	numeric_solvers.o \
 	heat_exchangers.o \
 	sco2_pc_csp_int.o \
