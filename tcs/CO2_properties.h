@@ -117,7 +117,7 @@ typedef struct CO2_state
 
 // Information functions.
 const char * CO2_error_message( int error_code );
-void get_CO2_info( CO2_info * info );
+void get_CO2_info(CO2_info * info);
 
 // Thermodynamic property functions.
 int CO2_TD( double T, double D, CO2_state * state );

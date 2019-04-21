@@ -46,10 +46,10 @@
 *  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
 *  THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *******************************************************************************************************/
-
+ 
 #include "csp_solver_pc_Rankine_indirect_224.h"
 #include "csp_solver_util.h"
-
+ 
 #include "lib_physics.h"
 #include "water_properties.h"
 #include "lib_util.h"
