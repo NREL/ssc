@@ -146,7 +146,7 @@ winddata::winddata(var_data *data_table)
 		return;
 	}
 
-	float* rh = get_vector(data_table, "rh", &len);
+	double* rh = get_vector(data_table, "rh", &len);
 	if (rh != 0 && len == data.nrows() )
 		m_relativeHumidity = std::vector<float>(rh, rh+(int)len);
 	else m_relativeHumidity.clear();
