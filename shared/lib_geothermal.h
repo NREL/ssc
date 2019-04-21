@@ -55,7 +55,6 @@
 #include "lib_weatherfile.h"
 #include "lib_physics.h"
 #include "lib_powerblock.h"
-#include "../ssc/sscapi.h"
 
 #ifndef __geothermalEnums__
 #define __geothermalEnums__
@@ -207,17 +206,17 @@ struct SGeothermal_Outputs
 	double md_BottomHolePressure; //double GetBottomHolePressure(void) { return moPPC.GetBottomHolePressure(); }
 
 	// output arrays
-	ssc_number_t * maf_ReplacementsByYear;			// array of ones and zero's over time, ones representing years where reservoirs are replaced
-	ssc_number_t * maf_monthly_resource_temp;
-	ssc_number_t * maf_monthly_power;				// monthly values, even if timestep is hourly
-	ssc_number_t * maf_monthly_energy;
-	ssc_number_t * maf_timestep_resource_temp;
-	ssc_number_t * maf_timestep_power;				// could be hourly or monthly, depending on timestep
-	ssc_number_t * maf_timestep_test_values;
-	ssc_number_t * maf_timestep_pressure;
-	ssc_number_t * maf_timestep_dry_bulb;
-	ssc_number_t * maf_timestep_wet_bulb;
-	ssc_number_t * maf_hourly_power;				// hourly values even if the timestep is monthly
+	float * maf_ReplacementsByYear;			// array of ones and zero's over time, ones representing years where reservoirs are replaced
+	float * maf_monthly_resource_temp;
+	float * maf_monthly_power;				// monthly values, even if timestep is hourly
+	float * maf_monthly_energy;
+	float * maf_timestep_resource_temp;
+	float * maf_timestep_power;				// could be hourly or monthly, depending on timestep
+	float * maf_timestep_test_values;
+	float * maf_timestep_pressure;
+	float * maf_timestep_dry_bulb;
+	float * maf_timestep_wet_bulb;
+	float * maf_hourly_power;				// hourly values even if the timestep is monthly
 };
 
 int RunGeothermalAnalysis(bool (*update_function)(float,void*),void*user_data, std::string &err_msg, 

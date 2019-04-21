@@ -322,7 +322,7 @@ SSCEXPORT ssc_bool_t ssc_module_exec_with_handler(
 /**@}*/
 
 /** Retrive notices, warnings, and error messages from the simulation. Returns a NULL-terminated ASCII C string with the message text, or NULL if the index passed in was invalid. */
-SSCEXPORT const char *ssc_module_log( ssc_module_t p_mod, int index, int *item_type, ssc_number_t *time );
+SSCEXPORT const char *ssc_module_log( ssc_module_t p_mod, int index, int *item_type, float *time );
 
 /** DO NOT CALL THIS FUNCTION: immediately causes a segmentation fault within the library. This is only useful for testing crash handling from an external application that is dynamically linked to the SSC library */
 SSCEXPORT void __ssc_segfault();

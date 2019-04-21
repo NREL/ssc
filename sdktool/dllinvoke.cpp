@@ -435,11 +435,11 @@ void ssc_module_extproc_output( ssc_handler_t p_mod, const char *output_line )
 	(*f)(p_mod, output_line);
 }
 
-const char *ssc_module_log( ssc_module_t p_mod, int index, int *item_type, ssc_number_t *time )
+const char *ssc_module_log( ssc_module_t p_mod, int index, int *item_type, float *time )
 {
-	static const char *(*f)(ssc_module_t, int, int*, ssc_number_t*) = NULL;
+	static const char *(*f)(ssc_module_t, int, int*, float*) = NULL;
 	CHECK_DLL_LOADED();
-	if (!f && 0 == (f = (const char*(*)(ssc_module_t, int, int*, ssc_number_t*))PROCADDR())) FAIL_ON_LOCATE();
+	if (!f && 0 == (f = (const char*(*)(ssc_module_t, int, int*, float*))PROCADDR())) FAIL_ON_LOCATE();
 	return (*f)( p_mod, index, item_type, time );
 }
 

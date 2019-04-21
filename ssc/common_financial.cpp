@@ -1202,9 +1202,9 @@ bool dispatch_calculations::setup()
 		m_error = util::format("dispatch values weekend schedule must be 12x24, input is %dx%d", (int)nrows, (int)ncols);
 		throw compute_module::exec_error("dispatch_values", m_error);
 	}
-	util::matrix_t<ssc_number_t> schedwkday(12, 24);
+	util::matrix_t<float> schedwkday(12, 24);
 	schedwkday.assign(disp_weekday, nrows, ncols);
-	util::matrix_t<ssc_number_t> schedwkend(12, 24);
+	util::matrix_t<float> schedwkend(12, 24);
 	schedwkend.assign(disp_weekend, nrows, ncols);
 
 	int tod[8760];

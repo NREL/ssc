@@ -1382,7 +1382,7 @@ public:
 
 					size_t ncols = T_htf_parametrics.ncols();
 
-					util::matrix_t<ssc_number_t> &p_udpc_T_htf_hot = allocate_matrix("ud_T_htf_ind_od_out", n_T_htf_hot_in, ncols);
+					util::matrix_t<float> &p_udpc_T_htf_hot = allocate_matrix("ud_T_htf_ind_od_out", n_T_htf_hot_in, ncols);
 					for (int i = 0; i < n_T_htf_hot_in; i++)
 					{
 						for (size_t j = 0; j < ncols; j++)
@@ -1391,7 +1391,7 @@ public:
 						}
 					}
 
-					util::matrix_t<ssc_number_t> &p_udpc_T_amb = allocate_matrix("ud_T_amb_ind_od_out", n_T_amb_in, ncols);
+					util::matrix_t<float> &p_udpc_T_amb = allocate_matrix("ud_T_amb_ind_od_out", n_T_amb_in, ncols);
 					for (int i = 0; i < n_T_amb_in; i++)
 					{
 						for (size_t j = 0; j < ncols; j++)
@@ -1400,7 +1400,7 @@ public:
 						}
 					}
 
-					util::matrix_t<ssc_number_t> &p_udpc_m_dot_htf = allocate_matrix("ud_m_dot_htf_ind_od_out", n_m_dot_htf_ND_in, ncols);
+					util::matrix_t<float> &p_udpc_m_dot_htf = allocate_matrix("ud_m_dot_htf_ind_od_out", n_m_dot_htf_ND_in, ncols);
 					for (int i = 0; i < n_m_dot_htf_ND_in; i++)
 					{
 						for (size_t j = 0; j < ncols; j++)
@@ -2088,7 +2088,7 @@ public:
 		assign("construction_financing_cost", (ssc_number_t)construction_financing_cost);
 
 		// Do unit post-processing here
-		ssc_number_t *p_q_pc_startup = allocate("q_pc_startup", n_steps_fixed);
+		float *p_q_pc_startup = allocate("q_pc_startup", n_steps_fixed);
 		size_t count_pc_su = 0;
 		ssc_number_t *p_q_dot_pc_startup = as_array("q_dot_pc_startup", &count_pc_su);
 		if( count_pc_su != n_steps_fixed )

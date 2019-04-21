@@ -58,8 +58,6 @@
 #include <unordered_map>
 using std::unordered_map;
 
-#include "../ssc/sscapi.h"
-
 #ifdef _MSC_VER
 #pragma warning(disable: 4290)  // ignore warning: 'C++ exception specification ignored except to indicate a function is not __declspec(nothrow)'
 #pragma warning(disable: 4996)  // fopen and fopen_s among others
@@ -820,7 +818,7 @@ namespace util
 	double bilinear( double rowval, double colval, const matrix_t<double> &mat );
 	double interpolate(double x1, double y1, double x2, double y2, double xValueToGetYValueFor);
 	double linterp_col( const matrix_t<double> &mat, size_t ixcol, double xval, size_t iycol );
-	bool translate_schedule(int tod[8760], const matrix_t<ssc_number_t> &wkday, const matrix_t<ssc_number_t> &wkend, int min_val, int max_val);
+	bool translate_schedule(int tod[8760], const matrix_t<float> &wkday, const matrix_t<float> &wkend, int min_val, int max_val);
 };
 
 

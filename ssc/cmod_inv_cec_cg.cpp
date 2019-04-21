@@ -163,7 +163,7 @@ public:
 		}
 		size_t num_samples = ncols / 3;
 		size_t columns_per_sample = 3;
-		util::matrix_t<ssc_number_t> inv_cec_cg_test_samples(nrows, ncols);
+		util::matrix_t<float> inv_cec_cg_test_samples(nrows, ncols);
 		inv_cec_cg_test_samples.assign(inv_cec_cg_test_samples_in, nrows, ncols);
 
 		ssc_number_t vdc = 0, Pout = 0, eff = 0, Pin=0, Pin2=0;

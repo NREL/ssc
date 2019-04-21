@@ -202,10 +202,10 @@ TEST_F(CMWindPowerIntegration, IcingAndLowTempCutoff_cmod_windpower) {
 	//modify test inputs
 	ssc_data_unassign(data, "wind_resource_filename");
 	var_data* windresourcedata = create_winddata_array(1,1);
-	ssc_number_t rh[8760];
+	float rh[8760];
 	for (unsigned int i = 0; i < 8760; i++) {
-		if (i % 2 == 0) rh[i] = 0.75;
-		else rh[i] = 0.0;
+		if (i % 2 == 0) rh[i] = 0.75f;
+		else rh[i] = 0.0f;
 	}
 	var_data rh_vd = var_data(rh, 8760);
 	windresourcedata->table.assign("rh", rh_vd);
@@ -213,9 +213,9 @@ TEST_F(CMWindPowerIntegration, IcingAndLowTempCutoff_cmod_windpower) {
 	vt->assign("wind_resource_data", *windresourcedata);
 	vt->assign("en_low_temp_cutoff", 1);
 	vt->assign("en_icing_cutoff", 1);
-	vt->assign("low_temp_cutoff", 40.);
-	vt->assign("icing_cutoff_temp", 55.);
-	vt->assign("icing_cutoff_rh", 0.70);
+	vt->assign("low_temp_cutoff", 40.f);
+	vt->assign("icing_cutoff_temp", 55.f);
+	vt->assign("icing_cutoff_rh", 0.70f);
 
 	compute();
 
