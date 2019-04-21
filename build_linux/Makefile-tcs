@@ -14,7 +14,7 @@ CXXFLAGS=-std=c++0x $(CFLAGS)
 OBJECTS = tcskernel.o \
 	fmin_callbacks.o \
 	fmin.o \
-	csp_radiator.o \	
+	csp_radiator.o \
 	csp_solver_stratified_tes.o \
 	direct_steam_receivers.o \
 	CO2_properties.o \
