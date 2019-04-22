@@ -42,7 +42,7 @@ public:
 	double getMaxPowerEfficiency();
 
 	/// Return the nameplate AC capacity
-	double getACNameplateCapacity();
+	double getACNameplateCapacitykW();
 
 	enum { SANDIA_INVERTER, DATASHEET_INVERTER, PARTLOAD_INVERTER, COEFFICIENT_GENERATOR, OND_INVERTER, NONE };
 
