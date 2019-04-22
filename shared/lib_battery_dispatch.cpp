@@ -187,11 +187,7 @@ bool dispatch_t::check_constraints(double &I, size_t count)
 			}
 			I = powerBatterykWdc * util::kilowatt_to_watt / _Battery->battery_voltage();
 		}
-		// if charging, simply cut off.
-		else {
-			I = 0;
-		}
-
+		// if charging, do nothing
 	}
 	else
 		iterate = false;
