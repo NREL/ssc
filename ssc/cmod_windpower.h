@@ -65,7 +65,7 @@
 class winddata : public winddata_provider
 {
 	size_t irecord;
-	util::matrix_t<double> data;
+	util::matrix_t<float> data;
 public:
 	winddata(var_data *data_table);
 

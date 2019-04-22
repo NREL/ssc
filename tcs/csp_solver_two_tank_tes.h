@@ -145,17 +145,12 @@ public:
 
 	double get_m_T_calc();
 
-	double get_m_m_calc();
-
 	void init(HTFProperties htf_class_in, double V_tank_one_temp, double h_tank, double h_min, double u_tank, 
 		double tank_pairs, double T_htr, double max_q_htr, double V_ini, double T_ini);
 
 	double m_dot_available(double f_unavail, double timestep);	
 
 	void energy_balance(double timestep /*s*/, double m_dot_in, double m_dot_out, double T_in /*K*/, double T_amb /*K*/, 
-		double &T_ave /*K*/, double &q_heater /*MW*/, double &q_dot_loss /*MW*/);
-
-	void energy_balance_constant_mass(double timestep /*s*/, double m_dot_in, double T_in /*K*/, double T_amb /*K*/,
 		double &T_ave /*K*/, double &q_heater /*MW*/, double &q_dot_loss /*MW*/);
 
 	void converged();
@@ -284,7 +279,6 @@ public:
         util::matrix_t<double> sgs_lengths;       //[m] Imported lengths for the SGS piping as read from the modified output files
 
 
-
 		S_params()
 		{
 			m_field_fl = m_tes_fl = m_tank_pairs = -1;		
@@ -311,9 +305,7 @@ public:
 	virtual double get_hot_temp();
 
 	virtual double get_cold_temp();
-
-
-
+	
     virtual double get_initial_charge_energy(); //MWh
 
     virtual double get_min_charge_energy(); //MWh
@@ -337,148 +329,6 @@ public:
 	
 	virtual void idle(double timestep, double T_amb, C_csp_tes::S_csp_tes_outputs &outputs);
 	
-	virtual void converged();
-};
-
-class C_csp_cold_tes : public C_csp_tes //Class for cold storage based on two tank tes ARD
-{
-private:
-
-	HTFProperties mc_field_htfProps;		// Instance of HTFProperties class for field HTF
-	HTFProperties mc_store_htfProps;		// Instance of HTFProperties class for storage HTF
-
-	C_heat_exchanger mc_hx;
-
-	//Storage_HX mc_hx_storage;				// Instance of Storage_HX class for heat exchanger between storage and field HTFs
-
-	C_storage_tank mc_cold_tank;			// Instance of storage tank class for the cold tank
-	C_storage_tank mc_hot_tank;				// Instance of storage tank class for the hot tank	
-
-											// member string for exception messages
-	std::string error_msg;
-
-	// Timestep data
-	double m_m_dot_tes_dc_max;
-	double m_m_dot_tes_ch_max;
-
-	// Member data
-	bool m_is_tes;
-	double m_vol_tank;			//[m3] volume of *one temperature*, i.e. vol_tank = total cold storage = total hot storage
-	double m_V_tank_active;		//[m^3] available volume (considering h_min) of *one temperature*
-	double m_q_pb_design;		//[Wt] thermal power to power cycle at design
-	double m_V_tank_hot_ini;	//[m^3] Initial volume in hot storage tank
-
-public:
-
-	// Class to save messages for up stream classes
-	C_csp_messages mc_csp_messages;
-
-	struct S_params
-	{
-		int m_field_fl;
-		util::matrix_t<double> m_field_fl_props;
-
-		int m_tes_fl;
-		util::matrix_t<double> m_tes_fl_props;
-
-		bool m_is_hx;
-
-		double m_W_dot_pc_design;   //[MWe] Design point gross power cycle output
-		double m_eta_pc_factor;     //[-] Factor accounting for Design point power cycle thermal efficiency
-		double m_solarm;			//[-] solar multiple
-		double m_ts_hours;			//[hr] hours of storage at design power cycle operation		
-		double m_h_tank;			//[m] tank height
-		double m_u_tank;			//[W/m^2-K]
-		int m_tank_pairs;			//[-]
-		double m_hot_tank_Thtr;		//[C] convert to K in init()
-		double m_hot_tank_max_heat;	//[MW]
-		double m_cold_tank_Thtr;	//[C] convert to K in init()
-		double m_cold_tank_max_heat;//[MW]
-		double m_dt_hot;			//[C] Temperature difference across heat exchanger - assume hot and cold deltaTs are equal
-		double m_T_field_in_des;	//[C] convert to K in init()
-		double m_T_field_out_des;	//[C] convert to K in init()
-		double m_T_tank_hot_ini;	//[C] Initial temperature in hot storage tank
-		double m_T_tank_cold_ini;	//[C] Initial temperature in cold storage cold
-		double m_h_tank_min;		//[m] Minimum allowable HTF height in storage tank
-		double m_f_V_hot_ini;       //[%] Initial fraction of available volume that is hot
-
-		double m_htf_pump_coef;		//[kW/kg/s] Pumping power to move 1 kg/s of HTF through power cycle
-
-		double dT_cw_rad;			//[degrees] Temperature change in cooling water for cold storage cooling.
-		double m_dot_cw_rad;		//[kg/sec]	Mass flow of cooling water for cold storage cooling at design.
-		int m_ctes_type;			//2= two tank (this model) 3=three node (other model)
-		double m_dot_cw_cold;		//[kg/sec]	Mass flow of storage water between cold storage and radiative field HX.
-		double m_lat;           //Latitude [degrees]
-
-		S_params()
-		{
-			m_field_fl = m_tes_fl = m_tank_pairs = -1;
-			m_is_hx = true;
-
-			m_ts_hours = 0.0;		//[hr] Default to 0 so that if storage isn't defined, simulation won't crash
-			m_ctes_type = 0;		// Default to <2 so that storage is not assumed in cost calculations.
-
-			m_W_dot_pc_design = m_eta_pc_factor = m_solarm = m_h_tank = m_u_tank = m_hot_tank_Thtr = m_hot_tank_max_heat = m_cold_tank_Thtr =
-				m_cold_tank_max_heat = m_dt_hot = m_T_field_in_des = m_T_field_out_des = m_T_tank_hot_ini =
-				m_T_tank_cold_ini = m_h_tank_min = m_f_V_hot_ini = m_htf_pump_coef= dT_cw_rad=m_dot_cw_rad=m_dot_cw_cold=m_lat= std::numeric_limits<double>::quiet_NaN();
-		}
-	};
-
-	S_params ms_params;
-
-	C_csp_cold_tes();
-
-	~C_csp_cold_tes() {};
-
-	virtual void init();
-
-	virtual bool does_tes_exist();
-
-	virtual double get_hot_temp();
-
-	virtual double get_cold_temp();
-
-	virtual double get_hot_mass();
-
-	virtual double get_cold_mass();
-
-	virtual double get_hot_mass_prev();
-
-	virtual double get_cold_mass_prev();
-
-	virtual double get_physical_volume(); //m^3
-
-	virtual double get_hot_massflow_avail(double step_s); //kg/sec
-
-	virtual double get_cold_massflow_avail(double step_s); //kg/sec
-
-	virtual double get_initial_charge_energy(); //MWh
-
-	virtual double get_min_charge_energy(); //MWh
-
-	virtual double get_max_charge_energy(); //MWh
-
-	virtual double get_degradation_rate();  // s^-1
-
-	virtual void discharge_avail_est(double T_cold_K, double step_s, double &q_dot_dc_est, double &m_dot_field_est, double &T_hot_field_est);
-
-	virtual void charge_avail_est(double T_hot_K, double step_s, double &q_dot_ch_est, double &m_dot_field_est, double &T_cold_field_est);
-
-	// Calculate pumping power...???
-	virtual bool discharge(double timestep /*s*/, double T_amb /*K*/, double m_dot_htf_in /*kg/s*/, double T_htf_cold_in, double & T_htf_hot_out /*K*/, C_csp_tes::S_csp_tes_outputs &outputs);
-
-	virtual void discharge_full(double timestep /*s*/, double T_amb /*K*/, double T_htf_cold_in, double & T_htf_hot_out /*K*/, double & m_dot_htf_out /*kg/s*/, C_csp_tes::S_csp_tes_outputs &outputs);
-
-	virtual bool charge(double timestep /*s*/, double T_amb /*K*/, double m_dot_htf_in /*kg/s*/, double T_htf_hot_in, double & T_htf_cold_out /*K*/, C_csp_tes::S_csp_tes_outputs &outputs);
-	
-	virtual bool charge_discharge(double timestep /*s*/, double T_amb /*K*/, double m_dot_hot_in /*kg/s*/, double T_hot_in, double m_dot_cold_in /*kg/s*/, double T_cold_in, C_csp_tes::S_csp_tes_outputs &outputs);
-
-	virtual bool recirculation(double timestep /*s*/, double T_amb /*K*/, double m_dot_cold_in /*kg/s*/, double T_cold_in /*K*/,  C_csp_tes::S_csp_tes_outputs &outputs);
-	
-	virtual void charge_full(double timestep /*s*/, double T_amb /*K*/, double T_htf_hot_in /*K*/, double & T_htf_cold_out /*K*/, double & m_dot_htf_out /*kg/s*/, C_csp_tes::S_csp_tes_outputs &outputs);
-
-	virtual void idle(double timestep, double T_amb, C_csp_tes::S_csp_tes_outputs &outputs);
-
 	virtual void converged();
 };
 

@@ -212,20 +212,20 @@ private:
 	C_csp_power_cycle::S_csp_pc_out_solver ms_out_solver;
 
 	// pointers to csp solver output arrays
-	double *p_eta_thermal;
-	double *p_m_dot_water;
-	double *p_q_dot_startup;
+	float *p_eta_thermal;
+	float *p_m_dot_water;
+	float *p_q_dot_startup;
 
 public:
 
 	sam_mw_pt_type224(tcscontext *cxt, tcstypeinfo *ti)
 		: tcstypeinterface(cxt, ti)
 	{
-		p_eta_thermal = new double[8760];
+		p_eta_thermal = new float[8760];
 		mc_power_cycle.mc_reported_outputs.assign(C_pc_Rankine_indirect_224::E_ETA_THERMAL, p_eta_thermal, 8760);
-		p_m_dot_water = new double[8760];
+		p_m_dot_water = new float[8760];
 		mc_power_cycle.mc_reported_outputs.assign(C_pc_Rankine_indirect_224::E_T_HTF_OUT, p_m_dot_water, 8760);
-		p_q_dot_startup = new double[8760];
+		p_q_dot_startup = new float[8760];
 		mc_power_cycle.mc_reported_outputs.assign(C_pc_Rankine_indirect_224::E_Q_DOT_STARTUP, p_q_dot_startup, 8760);
 	}
 

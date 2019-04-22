@@ -527,7 +527,7 @@ SSCEXPORT long VBCALL_CONVENTION sscvb_module_log(void *p_mod, long index, long 
 	int sscmsg_len;
 	int ndx = (int)index;
 	int it;
-	float ts;
+	ssc_number_t ts;
 	if (p_mod)
 	{
 		const char* sscmsg = ssc_module_log(p_mod, ndx, &it, &ts);

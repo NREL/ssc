@@ -1307,9 +1307,9 @@ public:
 				ss << "The weekend TOU matrix for energy rates should have 12 rows and 24 columns. Instead it has " << nrows << " rows and " << ncols << " columns.";
 				throw exec_error("utilityrate4", ss.str());
 			}
-			util::matrix_t<double> ec_schedwkday(nrows, ncols);
+			util::matrix_t<float> ec_schedwkday(nrows, ncols);
 			ec_schedwkday.assign(ec_weekday, nrows, ncols);
-			util::matrix_t<double> ec_schedwkend(nrows, ncols);
+			util::matrix_t<float> ec_schedwkend(nrows, ncols);
 			ec_schedwkend.assign(ec_weekend, nrows, ncols);
 
 			// for each row (month) determine periods in the month
@@ -1334,7 +1334,7 @@ public:
 				ss << "The energy rate table must have 6 columns. Instead it has " << ncols << " columns.";
 				throw exec_error("utilityrate4", ss.str());
 			}
-			util::matrix_t<double> ec_tou_mat(nrows, ncols);
+			util::matrix_t<float> ec_tou_mat(nrows, ncols);
 			ec_tou_mat.assign(ec_tou_in, nrows, ncols);
 
 			// adjust sell rate based on input selections
@@ -1516,9 +1516,9 @@ public:
 				ss << "The weekend TOU matrix for demand rates should have 12 rows and 24 columns. Instead it has " << nrows << " rows and " << ncols << " columns.";
 				throw exec_error("utilityrate4", ss.str());
 			}
-			util::matrix_t<double> dc_schedwkday(nrows, ncols);
+			util::matrix_t<float> dc_schedwkday(nrows, ncols);
 			dc_schedwkday.assign(dc_weekday, nrows, ncols);
-			util::matrix_t<double> dc_schedwkend(nrows, ncols);
+			util::matrix_t<float> dc_schedwkend(nrows, ncols);
 			dc_schedwkend.assign(dc_weekend, nrows, ncols);
 
 			// for each row (month) determine periods in the month
@@ -1543,7 +1543,7 @@ public:
 				ss << "The demand rate table for TOU periods must have 4 columns. Instead, it has " << ncols << "columns.";
 				throw exec_error("utilityrate4", ss.str());
 			}
-			util::matrix_t<double> dc_tou_mat(nrows, ncols);
+			util::matrix_t<float> dc_tou_mat(nrows, ncols);
 			dc_tou_mat.assign(dc_tou_in, nrows, ncols);
 
 			// find all periods for each month m through schedules
@@ -1661,7 +1661,7 @@ public:
 					ss << "The demand rate table by month must have 4 columns. Instead it has " << ncols << " columns";
 					throw exec_error("utilityrate4", ss.str());
 				}
-				util::matrix_t<double> dc_flat_mat(nrows, ncols);
+				util::matrix_t<float> dc_flat_mat(nrows, ncols);
 				dc_flat_mat.assign(dc_flat_in, nrows, ncols);
 
 				for (r = 0; r < m_month.size(); r++)
@@ -2931,7 +2931,7 @@ public:
 	}
 
 
-	void ur_update_ec_monthly(int month, util::matrix_t<double>& charge, util::matrix_t<double>& energy, util::matrix_t<double>& surplus)
+	void ur_update_ec_monthly(int month, util::matrix_t<float>& charge, util::matrix_t<float>& energy, util::matrix_t<float>& surplus)
 		throw(general_error)
 	{
 		if (month < 0 || month > (int)m_month.size())
