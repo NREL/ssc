@@ -121,38 +121,6 @@ double C_csp_mspt_collector_receiver::get_startup_energy()
 double C_csp_mspt_collector_receiver::get_pumping_parasitic_coef()  //MWe/MWt
 {
     return mc_pt_receiver.get_pumping_parasitic_coef();
-
-    /*
-    HTFProperties *htf = mc_pt_receiver.get_htf_property_object();
-
-    C_pt_receiver *R = &mc_pt_receiver;
-
-    double Tavg = (R->m_T_htf_cold_des + R->m_T_htf_hot_des)/2.;
-
-    double mu_coolant = htf->visc(Tavg);					//[kg/m-s] Absolute viscosity of the coolant
-	double k_coolant = htf->cond(Tavg);					//[W/m-K] Conductivity of the coolant
-	double rho_coolant = htf->dens(Tavg, 1.0);			//[kg/m^3] Density of the coolant
-    double c_p_coolant = htf->Cp(Tavg)*1e3;                 //[J/kg-K] Specific heat
-
-    double m_dot_salt = R->m_q_rec_des / (c_p_coolant * (R->m_T_htf_hot_des - R->m_T_htf_cold_des) );
-
-	double n_t = (int)(CSP::pi*R->m_d_rec / (R->m_od_tube*R->m_n_panels));	// The number of tubes per panel, as a function of the number of panels and the desired diameter of the receiver
-	double id_tube = R->m_od_tube - 2 * R->m_th_tube;			//[m] Inner diameter of receiver tube
-
-
-	double u_coolant = m_dot_salt / (n_t*rho_coolant*pow((id_tube / 2.0), 2)*CSP::pi);	//[m/s] Average velocity of the coolant through the receiver tubes
-	double Re_inner = rho_coolant*u_coolant*id_tube / mu_coolant;				//[-] Reynolds number of internal flow
-	double Pr_inner = c_p_coolant*mu_coolant / k_coolant;							//[-] Prandtl number of internal flow
-	double Nusselt_t, f;
-    double LoverD = R->m_h_rec / id_tube;
-	double RelRough = (4.5e-5) / id_tube;	//[-] Relative roughness of the tubes. http:www.efunda.com/formulae/fluids/roughness.cfm
-	CSP::PipeFlow(Re_inner, Pr_inner, LoverD, RelRough, Nusselt_t, f);
-
-    double deltap, wdot;
-    mc_pt_receiver.calc_pump_performance(rho_coolant, m_dot_salt, f, deltap, wdot );
-
-    return wdot / R->m_q_rec_des;
-    */
 }
 
 double C_csp_mspt_collector_receiver::get_min_power_delivery()    //MWt

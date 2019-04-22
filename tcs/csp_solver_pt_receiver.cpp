@@ -76,32 +76,6 @@ int C_pt_receiver::get_operating_state()
     return m_mode_prev;
 }
 
-/*
-void C_pt_receiver::clear_outputs()
-{
-    ms_outputs.m_m_dot_salt_tot =
-        ms_outputs.m_eta_therm =
-        ms_outputs.m_W_dot_pump =
-        ms_outputs.m_q_conv_sum =
-        ms_outputs.m_q_rad_sum =
-        ms_outputs.m_Q_thermal =
-        ms_outputs.m_T_salt_hot =
-        ms_outputs.m_field_eff_adj =
-        ms_outputs.m_component_defocus =
-        ms_outputs.m_q_dot_rec_inc =
-        ms_outputs.m_q_startup =
-        ms_outputs.m_dP_receiver =
-        ms_outputs.m_dP_total =
-        ms_outputs.m_vel_htf =
-        ms_outputs.m_T_salt_cold =
-        ms_outputs.m_m_dot_ss =
-        ms_outputs.m_q_dot_ss =
-        ms_outputs.m_f_timestep =
-        ms_outputs.m_time_required_su =
-        ms_outputs.m_q_dot_piping_loss = std::numeric_limits<double>::quiet_NaN();
-}
-*/
-
 HTFProperties *C_pt_receiver::get_htf_property_object()
 {
     return &field_htfProps;

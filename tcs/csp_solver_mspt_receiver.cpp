@@ -58,18 +58,9 @@ C_mspt_receiver::C_mspt_receiver()
 
 	m_d_rec = std::numeric_limits<double>::quiet_NaN();
 	m_h_rec = std::numeric_limits<double>::quiet_NaN();
-	//m_h_tower = std::numeric_limits<double>::quiet_NaN();
 	m_od_tube = std::numeric_limits<double>::quiet_NaN();
 	m_th_tube = std::numeric_limits<double>::quiet_NaN();
-	//m_epsilon = std::numeric_limits<double>::quiet_NaN();
 	m_hl_ffact = std::numeric_limits<double>::quiet_NaN();
-	//m_T_htf_hot_des = std::numeric_limits<double>::quiet_NaN();
-	//m_T_htf_cold_des = std::numeric_limits<double>::quiet_NaN();
-	//m_f_rec_min = std::numeric_limits<double>::quiet_NaN();
-	//m_q_rec_des = std::numeric_limits<double>::quiet_NaN();
-	//m_rec_su_delay = std::numeric_limits<double>::quiet_NaN();
-	//m_rec_qf_delay = std::numeric_limits<double>::quiet_NaN();
-	//m_m_dot_htf_max_frac = std::numeric_limits<double>::quiet_NaN();
 	m_A_sf = std::numeric_limits<double>::quiet_NaN();
 
 	m_pipe_loss_per_m = std::numeric_limits<double>::quiet_NaN();
@@ -89,7 +80,6 @@ C_mspt_receiver::C_mspt_receiver()
 
 		// Added for csp_solver/tcs wrapper
 	m_field_fl = -1;
-	//error_msg = "";
 	m_mat_tube = -1;
 	m_flow_type = -1;
     m_crossover_shift = 0;
@@ -104,11 +94,8 @@ C_mspt_receiver::C_mspt_receiver()
 	m_od_control = std::numeric_limits<double>::quiet_NaN();
 	m_eta_field_iter_prev = std::numeric_limits<double>::quiet_NaN();
 	m_tol_od = std::numeric_limits<double>::quiet_NaN();
-	//m_m_dot_htf_des = std::numeric_limits<double>::quiet_NaN();
 	m_q_dot_inc_min = std::numeric_limits<double>::quiet_NaN();
 
-	//m_mode = -1;
-	//m_mode_prev = -1;
 	m_E_su = std::numeric_limits<double>::quiet_NaN();
 	m_E_su_prev = std::numeric_limits<double>::quiet_NaN();
 	m_t_su = std::numeric_limits<double>::quiet_NaN();
@@ -1760,37 +1747,6 @@ void C_mspt_receiver::converged()
     ms_outputs = outputs;
 }
 
-/*
-void C_mspt_receiver::clear_outputs()
-{
-	ms_outputs.m_m_dot_salt_tot = 
-		ms_outputs.m_eta_therm = 
-		ms_outputs.m_W_dot_pump = 
-		ms_outputs.m_q_conv_sum = 
-		ms_outputs.m_q_rad_sum = 
-		ms_outputs.m_Q_thermal =
-		ms_outputs.m_T_salt_hot = 
-		ms_outputs.m_field_eff_adj = 
-		ms_outputs.m_component_defocus =
-		ms_outputs.m_q_dot_rec_inc = 
-		ms_outputs.m_q_startup = 
-		ms_outputs.m_dP_receiver = 
-		ms_outputs.m_dP_total =
-		ms_outputs.m_vel_htf = 
-		ms_outputs.m_T_salt_cold = 
-		ms_outputs.m_m_dot_ss = 
-		ms_outputs.m_q_dot_ss = 
-		ms_outputs.m_f_timestep = std::numeric_limits<double>::quiet_NaN();
-
-	ms_outputs.m_max_T_salt_hot =
-		ms_outputs.m_min_T_salt_hot =
-		ms_outputs.m_max_rec_tout =
-		ms_outputs.m_q_heattrace = std::numeric_limits<double>::quiet_NaN();
-
-	ms_outputs.m_Twall_inlet = ms_outputs.m_Twall_outlet = std::numeric_limits<double>::quiet_NaN();
-}
-*/
-
 void C_mspt_receiver::calc_pump_performance(double rho_f, double mdot, double ffact, double &PresDrop_calc, double &WdotPump_calc)
 {
 
@@ -1814,10 +1770,6 @@ void C_mspt_receiver::calc_pump_performance(double rho_f, double mdot, double ff
 
 double C_mspt_receiver::get_pumping_parasitic_coef()
 {
-    //HTFProperties *htf = mc_pt_receiver.get_htf_property_object();
-
-    //C_pt_receiver *R = &mc_pt_receiver;
-
     double Tavg = (m_T_htf_cold_des + m_T_htf_hot_des) / 2.;
 
     double mu_coolant = field_htfProps.visc(Tavg);				//[kg/m-s] Absolute viscosity of the coolant

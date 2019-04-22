@@ -57,19 +57,15 @@
 
 class C_pt_receiver
 {
+// The abstract parent class for all receivers, including the original steady-state and the transient receiver
+
 public:
     virtual ~C_pt_receiver() {};
 
     C_csp_messages csp_messages;        // Class to save messages for upstream classes
 
-    //int m_n_panels;					    //[-] number of panels in receiver
-    //double m_d_rec;					    //[m] diameter of receiver
-    //double m_h_rec;					    //[m] height of just the receiver
     double m_h_tower;				    //[m] height of the tower
-    //double m_od_tube;				    //[mm] outer diameter of each receiver tube, converted to [m] in init()
-    //double m_th_tube;				    //[mm] wall thickness of receiver tubes, converted to [m] in init()
     double m_epsilon;				    //[-] emissivity of the receiver panels
-    //double m_hl_ffact;				    //[-] heat loss fudge factor for external forced convection on receiver
     double m_T_htf_hot_des;			    //[C] hot outlet HTF temperature at design, converted to [K] in init()
     double m_T_htf_cold_des;		    //[C] cold inlet HTF temperature at design, converted to [K] in init()
     double m_f_rec_min;				    //[-] minimum receiver thermal output as fraction of design
@@ -77,9 +73,6 @@ public:
     double m_rec_su_delay;			    //[hr] required startup time
     double m_rec_qf_delay;			    //[-] required startup energy as fraction of design thermal output
     double m_m_dot_htf_max_frac;	    //[-] maximum receiver HTF mass flow as fraction of design mass flow
-
-    //int m_n_flux_x;                     //[-] number of receiver flux nodes in the circumferential direction
-    //int m_n_flux_y;                     //[-] number of receiver flux nodes in the vertical direction
 
     double m_q_dot_inc_min;             //[Wt] minimum receiver thermal power
 
@@ -127,12 +120,6 @@ public:
         S_outputs()
         {
             clear();
-            /*
-            m_m_dot_salt_tot = m_eta_therm = m_W_dot_pump = m_q_conv_sum = m_q_rad_sum = m_Q_thermal =
-            m_T_salt_hot = m_field_eff_adj = m_component_defocus = m_q_dot_rec_inc = m_q_startup =
-            m_dP_receiver = m_dP_total = m_vel_htf = m_T_salt_cold = m_m_dot_ss = m_q_dot_ss = m_f_timestep =
-            m_time_required_su = m_q_dot_piping_loss = std::numeric_limits<double>::quiet_NaN();
-            */
         }
 
         void clear()
@@ -145,8 +132,6 @@ public:
     };
 
     S_outputs ms_outputs;
-
-    //virtual void clear_outputs();
 
     virtual void init() = 0;
 
@@ -162,9 +147,6 @@ public:
         const C_csp_solver_sim_info &sim_info) = 0;
 
     virtual void converged() = 0;
-
-    //virtual void calc_pump_performance(double rho_f, double mdot, double ffact, double &PresDrop_calc,
-    //    double &WdotPump_calc) = 0;
 
     virtual double get_pumping_parasitic_coef() = 0;
 
