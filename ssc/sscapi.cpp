@@ -681,7 +681,7 @@ SSCEXPORT void ssc_module_extproc_output( ssc_handler_t p_handler, const char *o
 	if (hi)	hi->on_stdout( output_line );
 }
 
-SSCEXPORT const char *ssc_module_log( ssc_module_t p_mod, int index, int *item_type, float *time )
+SSCEXPORT const char *ssc_module_log( ssc_module_t p_mod, int index, int *item_type, ssc_number_t *time )
 {
 	compute_module *cm = static_cast<compute_module*>(p_mod);
 	if (!p_mod) return 0;

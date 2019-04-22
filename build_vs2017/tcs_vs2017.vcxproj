@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|x64">
@@ -15,6 +15,7 @@
     <ClCompile Include="..\tcs\cavity_calcs.cpp" />
     <ClCompile Include="..\tcs\co2_compressor_library.cpp" />
     <ClCompile Include="..\tcs\csp_dispatch.cpp" />
+    <ClCompile Include="..\tcs\csp_radiator.cpp" />
     <ClCompile Include="..\tcs\csp_solver_core.cpp" />
     <ClCompile Include="..\tcs\csp_solver_gen_collector_receiver.cpp" />
     <ClCompile Include="..\tcs\csp_solver_lf_dsg_collector_receiver.cpp" />
@@ -28,6 +29,7 @@
     <ClCompile Include="..\tcs\csp_solver_pc_steam_heat_sink.cpp" />
     <ClCompile Include="..\tcs\csp_solver_pt_heliostatfield.cpp" />
     <ClCompile Include="..\tcs\csp_solver_pt_sf_perf_interp.cpp" />
+    <ClCompile Include="..\tcs\csp_solver_stratified_tes.cpp" />
     <ClCompile Include="..\tcs\csp_solver_tou_block_schedules.cpp" />
     <ClCompile Include="..\tcs\csp_solver_trough_collector_receiver.cpp" />
     <ClCompile Include="..\tcs\csp_solver_two_tank_tes.cpp" />
@@ -98,6 +100,7 @@
     <ClInclude Include="..\tcs\cavity_calcs.h" />
     <ClInclude Include="..\tcs\co2_compressor_library.h" />
     <ClInclude Include="..\tcs\csp_dispatch.h" />
+    <ClInclude Include="..\tcs\csp_radiator.h" />
     <ClInclude Include="..\tcs\csp_solver_core.h" />
     <ClInclude Include="..\tcs\csp_solver_gen_collector_receiver.h" />
     <ClInclude Include="..\tcs\csp_solver_lf_dsg_collector_receiver.h" />
@@ -110,6 +113,7 @@
     <ClInclude Include="..\tcs\csp_solver_pc_steam_heat_sink.h" />
     <ClInclude Include="..\tcs\csp_solver_pt_heliostatfield.h" />
     <ClInclude Include="..\tcs\csp_solver_pt_sf_perf_interp.h" />
+    <ClInclude Include="..\tcs\csp_solver_stratified_tes.h" />
     <ClInclude Include="..\tcs\csp_solver_tou_block_schedules.h" />
     <ClInclude Include="..\tcs\csp_solver_trough_collector_receiver.h" />
     <ClInclude Include="..\tcs\csp_solver_two_tank_tes.h" />

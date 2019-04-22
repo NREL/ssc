@@ -92,8 +92,8 @@ SSCEXPORT const char *ssc_build_info();
 /** An opaque reference to a structure that holds a collection of variables.  This structure can contain any number of variables referenced by name, and can hold strings, numbers, arrays, and matrices.  Matrices are stored in row-major order, where the array size is nrows*ncols, and the array index is calculated by r*ncols+c. An ssc_data_t object holds all input and output variables for a simulation. It does not distinguish between input, output, and input variables - that is handled at the model context level. */
 typedef void* ssc_data_t;
 
-/** The numeric type used in the SSC API. All numeric values are stored in this format. SSC uses 32-bit floating point numbers at the library interface to minimize memory usage.  Calculations inside compute modules generally are performed with double-precision 64-bit floating point internally. */
-typedef float ssc_number_t;
+/** The numeric type used in the SSC API. All numeric values are stored in this format. SSC uses 64-bit double numbers at the library interface and calculations inside compute modules generally are performed with double-precision 64-bit floating point internally. */
+typedef double ssc_number_t;
 
 /** The boolean type used internally in SSC. Zero values represent false; non-zero represents true. */
 typedef int ssc_bool_t;
@@ -322,7 +322,7 @@ SSCEXPORT ssc_bool_t ssc_module_exec_with_handler(
 /**@}*/
 
 /** Retrive notices, warnings, and error messages from the simulation. Returns a NULL-terminated ASCII C string with the message text, or NULL if the index passed in was invalid. */
-SSCEXPORT const char *ssc_module_log( ssc_module_t p_mod, int index, int *item_type, float *time );
+SSCEXPORT const char *ssc_module_log( ssc_module_t p_mod, int index, int *item_type, ssc_number_t *time );
 
 /** DO NOT CALL THIS FUNCTION: immediately causes a segmentation fault within the library. This is only useful for testing crash handling from an external application that is dynamically linked to the SSC library */
 SSCEXPORT void __ssc_segfault();

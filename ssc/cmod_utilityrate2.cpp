@@ -1387,9 +1387,9 @@ public:
 			ss << "demand charge weekend schedule must be 12x24, input is " << nrows << "x" << ncols;
 			throw exec_error("utilityrate2", ss.str());
 		}
-		util::matrix_t<float> schedwkday(12,24);
+		util::matrix_t<ssc_number_t> schedwkday(12,24);
 		schedwkday.assign(dc_weekday, nrows, ncols);
-		util::matrix_t<float> schedwkend(12, 24);
+		util::matrix_t<ssc_number_t> schedwkend(12, 24);
 		schedwkend.assign(dc_weekend, nrows, ncols);
 
 		int tod[8760];
@@ -1735,9 +1735,9 @@ public:
 			ss << "demand charge weekend schedule must be 12x24, input is " << nrows << "x" << ncols;
 			throw exec_error("utilityrate2", ss.str());
 		}
-		util::matrix_t<float> schedwkday(12, 24);
+		util::matrix_t<ssc_number_t> schedwkday(12, 24);
 		schedwkday.assign(dc_weekday, nrows, ncols);
-		util::matrix_t<float> schedwkend(12, 24);
+		util::matrix_t<ssc_number_t> schedwkend(12, 24);
 		schedwkend.assign(dc_weekend, nrows, ncols);
 
 

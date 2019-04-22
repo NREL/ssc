@@ -194,9 +194,9 @@ protected:
 	void SetUp(){
 		// set-up input var_table: vd contains only zeros and time will be 1, 2, 3 
 		vt = new var_table;
-		float empty[8760] = { 0 };
+		ssc_number_t empty[8760] = { 0 };
 		vd = var_data(empty, 8760);
-		float order[3] = { 1, 2, 3 };
+		ssc_number_t order[3] = { 1, 2, 3 };
 		time = var_data(order, 3);
 		weatherdataTest::SetUp();
 		
@@ -274,9 +274,9 @@ protected:
 	void SetUp(){
 		// set-up input var_table
 		vt = new var_table;
-		float empty[9999] = { 0 };
+		ssc_number_t empty[9999] = { 0 };
 		vd = var_data(empty, 9999);
-		float order[3] = { 1, 2, 3 };
+		ssc_number_t order[3] = { 1, 2, 3 };
 		time = var_data(order, 3);
 		weatherdataTest::SetUp();
 	}
@@ -299,7 +299,7 @@ TEST_F(Data9999CaseWeatherData, initTest2_lib_weatherfile){
 }
 
 TEST_F(Data9999CaseWeatherData, readTest2_lib_weatherfile){
-	float wrong_length[1000] = { 0 };
+	ssc_number_t wrong_length[1000] = { 0 };
 	var_data vd_err = var_data(wrong_length, 1000);
 	input->table.unassign("dn");
 	input->table.assign("dn", vd_err);
