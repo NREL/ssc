@@ -2916,9 +2916,9 @@ public:
 				ss << "energy charge weekend schedule must be 12x24, input is " << nrows << "x" << ncols;
 				throw exec_error("utilityrate3", ss.str());
 			}
-			util::matrix_t<ssc_number_t> ec_schedwkday(12, 24);
+			util::matrix_t<double> ec_schedwkday(12, 24);
 			ec_schedwkday.assign(ec_weekday, nrows, ncols);
-			util::matrix_t<ssc_number_t> ec_schedwkend(12, 24);
+			util::matrix_t<double> ec_schedwkend(12, 24);
 			ec_schedwkend.assign(ec_weekend, nrows, ncols);
 
 			int ec_tod[8760];
@@ -3037,8 +3037,8 @@ public:
 		ssc_number_t *dc_weekday;
 		ssc_number_t *dc_weekend;
 		// initialize to diurnal all 1 if only flat monthly demand charge specified per Mike Gleason 1/16/15
-		util::matrix_t<ssc_number_t> dc_schedwkday(12, 24, 1);
-		util::matrix_t<ssc_number_t> dc_schedwkend(12, 24, 1);
+		util::matrix_t<double> dc_schedwkday(12, 24, 1);
+		util::matrix_t<double> dc_schedwkend(12, 24, 1);
 		ssc_number_t monthly_period_peak[12][12];  // peak usage for period for the month (negative value)
 		int peak_period_hour[12][12];
 		ssc_number_t dc_charges[12][6];

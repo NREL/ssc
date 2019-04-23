@@ -54,7 +54,6 @@
 #include "csp_solver_core.h"
 
 #include "sco2_pc_csp_int.h"
-#include "../ssc/sscapi.h"
 
 class C_pc_sco2 : public C_csp_power_cycle
 {
@@ -158,7 +157,7 @@ public:
 	virtual void write_output_intervals(double report_time_start,
 		const std::vector<double> & v_temp_ts_time_end, double report_time_end);
 
-	virtual void assign(int index, ssc_number_t *p_reporting_ts_array, size_t n_reporting_ts_array);
+	virtual void assign(int index, double *p_reporting_ts_array, size_t n_reporting_ts_array);
 };
 
 

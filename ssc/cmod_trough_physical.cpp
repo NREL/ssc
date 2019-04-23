@@ -1208,7 +1208,7 @@ public:
 
 
         // Do unit post-processing here
-		ssc_number_t *p_q_pc_startup = allocate("q_pc_startup", n_steps_fixed);
+        double *p_q_pc_startup = allocate("q_pc_startup", n_steps_fixed);
         size_t count_pc_su = 0;
         ssc_number_t *p_q_dot_pc_startup = as_array("q_dot_pc_startup", &count_pc_su);
         if ((int)count_pc_su != n_steps_fixed)

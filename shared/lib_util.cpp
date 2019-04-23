@@ -1025,7 +1025,7 @@ bool util::translate_schedule( int tod[8760], const char *wkday, const char *wke
 }
 
 
-bool util::translate_schedule(int tod[8760], const matrix_t<ssc_number_t> &wkday, const matrix_t<ssc_number_t> &wkend, int min_val, int max_val)
+bool util::translate_schedule(int tod[8760], const matrix_t<double> &wkday, const matrix_t<double> &wkend, int min_val, int max_val)
 {
 	size_t i = 0;
 	if ((wkday.nrows() != 12) || (wkend.nrows() != 12) || (wkday.ncols() != 24) || (wkend.ncols() != 24) )

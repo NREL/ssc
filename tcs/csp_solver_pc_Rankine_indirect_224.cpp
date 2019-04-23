@@ -46,10 +46,10 @@
 *  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
 *  THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *******************************************************************************************************/
-
+ 
 #include "csp_solver_pc_Rankine_indirect_224.h"
 #include "csp_solver_util.h"
-
+ 
 #include "lib_physics.h"
 #include "water_properties.h"
 #include "lib_util.h"
@@ -1545,7 +1545,7 @@ void C_pc_Rankine_indirect_224::write_output_intervals(double report_time_start,
 		v_temp_ts_time_end, report_time_end);
 }
 
-void C_pc_Rankine_indirect_224::assign(int index, ssc_number_t *p_reporting_ts_array, size_t n_reporting_ts_array)
+void C_pc_Rankine_indirect_224::assign(int index, double *p_reporting_ts_array, size_t n_reporting_ts_array)
 {
 	mc_reported_outputs.assign(index, p_reporting_ts_array, n_reporting_ts_array);
 }

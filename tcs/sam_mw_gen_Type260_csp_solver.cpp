@@ -366,12 +366,12 @@ private:
 	bool is_sf_init;
 
 	// pointers to arrays
-	ssc_number_t *p_q_dot_field_inc;
-	ssc_number_t *p_eta_field;
-	ssc_number_t *p_q_dot_rec_inc;
-	ssc_number_t *p_eta_thermal;
+	double *p_q_dot_field_inc;
+	double *p_eta_field;
+	double *p_q_dot_rec_inc;
+	double *p_eta_thermal;
 
-	ssc_number_t *p_pc_eta_thermal;
+	double *p_pc_eta_thermal;
 
 public:
 
@@ -379,16 +379,16 @@ public:
 		: tcstypeinterface(cxt, ti)
 	{
 		// Set up arrays: don't forget to delete [] !!
-		p_q_dot_field_inc = new ssc_number_t[8760];
+		p_q_dot_field_inc = new double[8760];
 		mc_gen_cr.mc_reported_outputs.assign(C_csp_gen_collector_receiver::E_Q_DOT_FIELD_INC, p_q_dot_field_inc, 8760);
-		p_eta_field = new ssc_number_t[8760];
+		p_eta_field = new double[8760];
 		mc_gen_cr.mc_reported_outputs.assign(C_csp_gen_collector_receiver::E_ETA_FIELD, p_eta_field, 8760);
-		p_q_dot_rec_inc = new ssc_number_t[8760];
+		p_q_dot_rec_inc = new double[8760];
 		mc_gen_cr.mc_reported_outputs.assign(C_csp_gen_collector_receiver::E_Q_DOT_REC_INC, p_q_dot_rec_inc, 8760);
-		p_eta_thermal = new ssc_number_t[8760];
+		p_eta_thermal = new double[8760];
 		mc_gen_cr.mc_reported_outputs.assign(C_csp_gen_collector_receiver::E_ETA_THERMAL, p_eta_thermal, 8760);
 		
-		p_pc_eta_thermal = new ssc_number_t[8760];
+		p_pc_eta_thermal = new double [8760];
 		mc_gen_pc.mc_reported_outputs.assign(C_pc_gen::E_ETA_THERMAL, p_pc_eta_thermal, 8760);
 
 		//Commonly used values, conversions, etc...

@@ -378,7 +378,7 @@ void C_csp_radiator::analytical_panel_calc_HX(double T_db /*K*/, double Tin /*K*
 	}
 
 	//Fluid properties within tube - using inlet temperature of water side of HX - this is approximate for glygcol temperature
-	int idx_props =static_cast<int>(Tin - 273.15) - T_PG20[0][0] + 1; //Truncate temperature to degree [C] and get index in EG property data as provided based on starting point of that property data.
+	int idx_props =static_cast<int>(Tin - 273.15) - T_PG20[0] + 1; //Truncate temperature to degree [C] and get index in EG property data as provided based on starting point of that property data.
 	int idx_props_check= std::numeric_limits<double>::quiet_NaN();	  //In case temperature is at an extreme end, use next closest value.
 	if (idx_props > 67) 
 	{
@@ -393,12 +393,12 @@ void C_csp_radiator::analytical_panel_calc_HX(double T_db /*K*/, double Tin /*K*
 		idx_props_check = idx_props;
 	}
 	
-	double cp = cp_PG20[0][idx_props_check]*1000;					//Get property data based on temperature. Convert to J/kg-K
-	double rho_fluid = rho_PG20[0][idx_props_check];
-	double mu_fluid = mu_PG20[0][idx_props_check];
+	double cp = cp_PG20[idx_props_check]*1000;					//Get property data based on temperature. Convert to J/kg-K
+	double rho_fluid = rho_PG20[idx_props_check];
+	double mu_fluid = mu_PG20[idx_props_check];
 	double nu_fluid = mu_fluid / rho_fluid;
-	double alpha_fluid = alpha_PG20[0][idx_props_check];
-	double k_fluid = k_PG20[0][idx_props_check];
+	double alpha_fluid = alpha_PG20[idx_props_check];
+	double k_fluid = k_PG20[idx_props_check];
 	
 
 	//Forced convection inside tube

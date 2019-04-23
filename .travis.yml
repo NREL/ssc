@@ -73,4 +73,5 @@ branches:
   - develop
   - patch
   - fuel_cell
+  - ssc_float
   

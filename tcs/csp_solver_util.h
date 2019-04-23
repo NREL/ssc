@@ -54,7 +54,6 @@
 #include <vector>
 
 #include <exception>
-#include "../ssc/sscapi.h"
 
 class C_csp_reported_outputs
 {
@@ -71,7 +70,7 @@ public:
 	class C_output
 	{
 	private:
-		ssc_number_t *mp_reporting_ts_array;
+		double *mp_reporting_ts_array;
 		size_t m_n_reporting_ts_array;			//[-] Length of allocated array
 		std::vector<double> mv_temp_outputs;
 
@@ -89,7 +88,7 @@ public:
 
 		void set_m_is_ts_weighted(int subts_weight_type);
 
-		void assign(ssc_number_t *p_reporting_ts_array, size_t n_reporting_ts_array);
+		void assign(double *p_reporting_ts_array, size_t n_reporting_ts_array);
 
 		void set_timestep_output(double output_value);
 
@@ -127,7 +126,7 @@ public:
 
 	void construct(const S_output_info *output_info);
 
-	bool assign(int index, ssc_number_t *p_reporting_ts_array, size_t n_reporting_ts_array);
+	bool assign(int index, double *p_reporting_ts_array, size_t n_reporting_ts_array);
 
 	void send_to_reporting_ts_array(double report_time_start,
 		const std::vector<double> & v_temp_ts_time_end, double report_time_end);
