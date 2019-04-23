@@ -70,7 +70,6 @@ public:
 		std::vector<double> load_year_one;
 		size_t n_rec_lifetime = systemGenerationLifetime_kW.size();
 		size_t n_rec_single_year;
-		double dt_hour_gen;
 		if (cm.is_assigned("load")) {
 			load_year_one = cm.as_vector_double("load");
 		}
@@ -112,6 +111,7 @@ public:
 	size_t numberOfLifetimeRecords;
 	size_t numberOfSingleYearRecords;
 	size_t numberOfYears;
+	double dt_hour_gen;
 };
 
 extern var_info vtab_grid_input[];

@@ -133,6 +133,7 @@ static int run_module(ssc_data_t & data, std::string module_name, bool printErro
 	}
 	
 	ssc_module_free(module);
+	module = nullptr;
 	return 0;
 }
 

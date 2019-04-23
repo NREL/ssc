@@ -29,8 +29,6 @@ public:
 	void SetUp()
 	{
 		data = ssc_data_create();
-		grid_default(data);
-
 	}
 	void TearDown() {
 		if (data) {
