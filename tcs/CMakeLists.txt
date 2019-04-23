@@ -19,6 +19,8 @@ set(TCS_SRC
 	tcskernel.cpp
 	fmin_callbacks.cpp
 	fmin.cpp
+	csp_radiator.cpp
+	csp_solver_stratified_tes.cpp
 	direct_steam_receivers.cpp
 	CO2_properties.cpp
 	co2_compressor_library.cpp
