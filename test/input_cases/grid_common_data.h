@@ -11,8 +11,8 @@ namespace {
 	char gen_path_grid_30[256];
 	int nfc1 = sprintf(gen_path_grid, "%s/test/input_cases/generic_system_data/energy_output_array.csv", SSCDIR);
 	int nfc2 = sprintf(load_profile_path_grid, "%s/test/input_cases/general_data/commercial_load.csv", SSCDIR);
-	int nfc3 = sprintf(gen_path_grid_30, "%s/test/input_cases/generic_system_data/energy_output_array.csv", SSCDIR);
-	int nfc4 = sprintf(load_profile_path_grid_30, "%s/test/input_cases/general_data/commercial_load.csv", SSCDIR);
+	int nfc3 = sprintf(gen_path_grid_30, "%s/test/input_cases/generic_system_data/energy_output_array_30min.csv", SSCDIR);
+	int nfc4 = sprintf(load_profile_path_grid_30, "%s/test/input_cases/generic_system_data/load_30min.csv", SSCDIR);
 
 }
 
