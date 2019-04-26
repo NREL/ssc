@@ -68,7 +68,8 @@ namespace NS_HX_counterflow_eqs
 
     enum
     {
-        TARGET_UA = 1,
+        OPTIMIZE_UA = 0,
+        TARGET_UA,
         TARGET_MIN_DT,
         TARGET_EFFECTIVENESS
     };
@@ -109,7 +110,7 @@ namespace NS_HX_counterflow_eqs
 		int N_sub_hx /*-*/,
 		double T_c_in /*K*/, double P_c_in /*kPa*/, double m_dot_c /*kg/s*/, double P_c_out /*kPa*/,
 		double T_h_in /*K*/, double P_h_in /*kPa*/, double m_dot_h /*kg/s*/, double P_h_out /*kPa*/,
-		double UA_target /*kW/K*/, double min_dT_target /*K*/,
+		double UA_target /*kW/K*/, double min_dT_target /*K*/, double eff_target /*-*/,
         double eff_limit /*-*/, double eff_guess /*-*/,
 		double & q_dot /*kWt*/, double & T_c_out /*K*/, double & T_h_out /*K*/,
 		double & eff_calc /*-*/, double & min_DT /*K*/, double & NTU /*-*/, double & UA_calc);
@@ -129,7 +130,17 @@ namespace NS_HX_counterflow_eqs
         int N_sub_hx /*-*/,
         double h_c_in /*K*/, double P_c_in /*kPa*/, double m_dot_c /*kg/s*/, double P_c_out /*kPa*/,
         double h_h_in /*K*/, double P_h_in /*kPa*/, double m_dot_h /*kg/s*/, double P_h_out /*kPa*/,
-        double min_dT_target /*C*/, double eff_limit /*-*/, double eff_guess /*-*/,
+        double min_dT_target /*C*/, double eff_limit /*-*/,
+        double & T_c_out  /*K*/, double & h_c_out /*kJ/kg*/,
+        double & T_h_out /*K*/, double & h_h_out /*kJ/kg*/,
+        double & q_dot /*kWt*/, double & eff_calc /*-*/, double & min_DT /*K*/, double & NTU /*-*/, double & UA_calc);
+
+    void solve_q_dot__fixed_eff__enth(int hot_fl_code /*-*/, HTFProperties & hot_htf_class,
+        int cold_fl_code /*-*/, HTFProperties & cold_htf_class,
+        int N_sub_hx /*-*/,
+        double h_c_in /*K*/, double P_c_in /*kPa*/, double m_dot_c /*kg/s*/, double P_c_out /*kPa*/,
+        double h_h_in /*K*/, double P_h_in /*kPa*/, double m_dot_h /*kg/s*/, double P_h_out /*kPa*/,
+        double eff_target /*-*/,
         double & T_c_out  /*K*/, double & h_c_out /*kJ/kg*/,
         double & T_h_out /*K*/, double & h_h_out /*kJ/kg*/,
         double & q_dot /*kWt*/, double & eff_calc /*-*/, double & min_DT /*K*/, double & NTU /*-*/, double & UA_calc);
@@ -418,7 +429,7 @@ public:
 		double & UA /*kW/K*/, double & min_DT /*C*/, double & eff /*-*/, double & NTU /*-*/, double & h_h_out /*K*/, double & h_c_out /*K*/, double & q_dot_calc /*kWt*/);
 
 	void design_for_target__calc_outlet(int hx_target_code /*-*/,
-        double UA_target /*kW/K*/, double min_dT_target /*K*/,
+        double UA_target /*kW/K*/, double min_dT_target /*K*/, double eff_target /*-*/,
         double eff_max /*-*/,
 		double T_c_in /*K*/, double P_c_in /*kPa*/, double m_dot_c /*kg/s*/, double P_c_out /*kPa*/,
 		double T_h_in /*K*/, double P_h_in /*kPa*/, double m_dot_h /*kg/s*/, double P_h_out /*kPa*/,

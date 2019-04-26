@@ -876,12 +876,174 @@ int NS_HX_counterflow_eqs::C_MEQ__min_dT__q_dot::operator()(double q_dot /*kWt*/
     return 0;
 }
 
+void NS_HX_counterflow_eqs::solve_q_dot__fixed_eff__enth(int hot_fl_code /*-*/, HTFProperties & hot_htf_class,
+    int cold_fl_code /*-*/, HTFProperties & cold_htf_class,
+    int N_sub_hx /*-*/,
+    double h_c_in /*K*/, double P_c_in /*kPa*/, double m_dot_c /*kg/s*/, double P_c_out /*kPa*/,
+    double h_h_in /*K*/, double P_h_in /*kPa*/, double m_dot_h /*kg/s*/, double P_h_out /*kPa*/,
+    double eff_target /*-*/,
+    double & T_c_out  /*K*/, double & h_c_out /*kJ/kg*/,
+    double & T_h_out /*K*/, double & h_h_out /*kJ/kg*/,
+    double & q_dot /*kWt*/, double & eff_calc /*-*/, double & min_DT /*K*/, double & NTU /*-*/, double & UA_calc)
+{
+    // Check for feasible target effectiveness
+    if (eff_target > 1.0 || eff_target < 0.0)
+    {
+        throw(C_csp_exception("NS_HX_counterflow_eqs::solve_q_dot__fixed_eff__enth(...) was sent infeasible effectiveness target"));
+    }
+    
+    // Calculate maximum possible heat transfer assuming 0 approach temperature
+    double h_h_out_q_max, T_h_out_q_max, h_c_out_q_max, T_c_out_q_max, T_h_in, T_c_in;
+    h_h_out_q_max = T_h_out_q_max = h_c_out_q_max = T_c_out_q_max = std::numeric_limits<double>::quiet_NaN();
+    double q_dot_max = NS_HX_counterflow_eqs::calc_max_q_dot_enth(hot_fl_code, hot_htf_class,
+        cold_fl_code, cold_htf_class,
+        h_h_in, P_h_in, P_h_out, m_dot_h,
+        h_c_in, P_c_in, P_c_out, m_dot_c,
+        h_h_out_q_max, T_h_out_q_max,
+        h_c_out_q_max, T_c_out_q_max,
+        T_h_in, T_c_in);
+
+    // What does 'calc_max_q_dot_enth' return if cold stream is hotter than hot stream?
+    if (q_dot_max < 0.0)
+    {
+        throw(C_csp_exception("NS_HX_counterflow_eqs::solve_q_dot__fixed_eff__enth(...) was sent infeasible hx design conditions"));
+    }
+    else if (q_dot_max == 0.0)
+    {
+        T_c_out = T_c_out_q_max;    //[K]
+        h_c_out = h_c_out_q_max;    //[kJ/kg]
+        T_h_out = T_h_out_q_max;    //[K]
+        h_h_out = h_h_out_q_max;    //[kJ/kg]
+        q_dot = 0.0;        //[kWt]
+        eff_calc = 0.0;     //[-]
+        min_DT = T_h_out - T_c_out; //[K]
+        NTU = 0.0;          //[-]
+        UA_calc = 0.0;      //[kW/K]
+
+        return;
+    }
+
+    // Apply max effectiveness value (to account for cross flow in headers and/or axial conduction) to get q_dot upper limit
+    double q_dot_eff_target = eff_target * q_dot_max;     //[kWt]
+
+    // Set up class to find q_dot that achieves dT
+    NS_HX_counterflow_eqs::C_MEQ__min_dT__q_dot hx_min_dt_eq(hot_fl_code, hot_htf_class,
+        cold_fl_code, cold_htf_class,
+        N_sub_hx,
+        P_c_out, P_h_out,
+        h_c_in, P_c_in, m_dot_c,
+        h_h_in, P_h_in, m_dot_h);
+    C_monotonic_eq_solver hx_min_dt_solver(hx_min_dt_eq);
+    // ***********************************************************
+    
+    // Find min dT at q_dot_upper
+    double min_dT_eff_target = std::numeric_limits<double>::quiet_NaN(); //[K]
+    int min_dT_test_code = hx_min_dt_solver.test_member_function(q_dot_eff_target, &min_dT_eff_target);
+    if (min_dT_test_code != 0)
+    {
+        throw(C_csp_exception("NS_HX_counterflow_eqs::solve_q_dot__fixed_eff__enth(...) failed at q_dot_upper"));
+    }
+    // ********************************************************************************************
+
+    // If minimum temperature at target effectiveness solution, then that's solution, so get out
+    if (min_dT_eff_target > 0.0)
+    {
+        T_c_out = hx_min_dt_eq.m_T_c_out;	//[K]
+        h_c_out = hx_min_dt_eq.m_h_c_out;	//[kJ/kg]
+        T_h_out = hx_min_dt_eq.m_T_h_out;	//[K]
+        h_h_out = hx_min_dt_eq.m_h_h_out;	//[kJ/kg]
+
+        q_dot = q_dot_eff_target;           //[kWt]
+        eff_calc = hx_min_dt_eq.m_eff;		//[-]
+        min_DT = hx_min_dt_eq.m_min_DT;		//[K]
+        NTU = hx_min_dt_eq.m_NTU;			//[-]
+        UA_calc = hx_min_dt_eq.m_UA_calc;   //[kW/K]
+
+        return;
+    }
+
+    // Otherwise, need to iterate to find q_dot such that the minimum temperature difference is ~= 0.1
+    // Find min dT at another q_dot
+    double q_dot_guess = 0.95*q_dot_eff_target;      //[kWt]
+    double min_dT_q_dot_guess = std::numeric_limits<double>::quiet_NaN();   //[K]
+    min_dT_test_code = hx_min_dt_solver.test_member_function(q_dot_guess, &min_dT_q_dot_guess);
+    if (min_dT_test_code != 0)
+    {
+        throw(C_csp_exception("NS_HX_counterflow_eqs::solve_q_dot__fixed_eff__enth(...) failed at q_dot_guess"));
+    }
+    // ********************************************************************************************
+
+    // Complete solver settings
+    double tol = 0.1;           //[K] convergence tolerance
+    double min_dT_target = tol; //[K] 0 + tol so worst case convergence is still > 0 
+    double q_dot_lower = 1.E-10;	//[kWt]
+
+    // If min dT is within tolerance of tareget, then get out
+    if (fabs(min_dT_q_dot_guess - min_dT_target) < tol)
+    {
+        T_c_out = hx_min_dt_eq.m_T_c_out;	//[K]
+        h_c_out = hx_min_dt_eq.m_h_c_out;	//[kJ/kg]
+        T_h_out = hx_min_dt_eq.m_T_h_out;	//[K]
+        h_h_out = hx_min_dt_eq.m_h_h_out;	//[kJ/kg]
+
+        q_dot = q_dot_guess;                //[kWt]
+        eff_calc = hx_min_dt_eq.m_eff;		//[-]
+        min_DT = hx_min_dt_eq.m_min_DT;		//[K]
+        NTU = hx_min_dt_eq.m_NTU;			//[-]
+        UA_calc = hx_min_dt_eq.m_UA_calc;   //[kW/K]
+
+        return;
+    }
+
+    // Set solver settings - don't normalize error
+    hx_min_dt_solver.settings(tol, 1000, q_dot_lower, q_dot_eff_target, false);
+
+    // Set up solver to find q_dot that results in target min dT
+    C_monotonic_eq_solver::S_xy_pair xy1;
+    xy1.x = q_dot_eff_target;        //[kWt]
+    xy1.y = min_dT_eff_target;   //[K]
+
+    C_monotonic_eq_solver::S_xy_pair xy2;
+    xy2.x = q_dot_guess;        //[kWt]
+    xy2.y = min_dT_q_dot_guess; //[K]
+
+    // Solve
+    double tol_solved, q_dot_solved;
+    q_dot_solved = tol_solved = std::numeric_limits<double>::quiet_NaN();
+    int iter_solved = -1;
+
+    int hx_min_dT_solver_code = hx_min_dt_solver.solve(xy1, xy2, min_dT_target,
+        q_dot_solved, tol_solved, iter_solved);
+
+    if (hx_min_dT_solver_code != C_monotonic_eq_solver::CONVERGED)
+    {
+        if (!(hx_min_dT_solver_code > C_monotonic_eq_solver::CONVERGED && fabs(tol_solved) <= 1.0))
+        {
+            throw(C_csp_exception("NS_HX_counterflow_eqs::solve_q_dot__fixed_min_dT__enth(...) failed to converge"));
+        }
+    }
+
+    T_c_out = hx_min_dt_eq.m_T_c_out;	//[K]
+    h_c_out = hx_min_dt_eq.m_h_c_out;	//[kJ/kg]
+    T_h_out = hx_min_dt_eq.m_T_h_out;	//[K]
+    h_h_out = hx_min_dt_eq.m_h_h_out;	//[kJ/kg]
+
+    q_dot = q_dot_solved;               //[kWt]
+    eff_calc = hx_min_dt_eq.m_eff;		//[-]
+    min_DT = hx_min_dt_eq.m_min_DT;		//[K]
+    NTU = hx_min_dt_eq.m_NTU;			//[-]
+    UA_calc = hx_min_dt_eq.m_UA_calc;   //[kW/K]
+
+    return;
+}
+
+
 void NS_HX_counterflow_eqs::solve_q_dot__fixed_min_dT__enth(int hot_fl_code /*-*/, HTFProperties & hot_htf_class,
     int cold_fl_code /*-*/, HTFProperties & cold_htf_class,
     int N_sub_hx /*-*/,
     double h_c_in /*K*/, double P_c_in /*kPa*/, double m_dot_c /*kg/s*/, double P_c_out /*kPa*/,
     double h_h_in /*K*/, double P_h_in /*kPa*/, double m_dot_h /*kg/s*/, double P_h_out /*kPa*/,
-    double min_dT_target /*C*/, double eff_limit /*-*/, double eff_guess /*-*/,
+    double min_dT_target /*C*/, double eff_limit /*-*/,
     double & T_c_out  /*K*/, double & h_c_out /*kJ/kg*/,
     double & T_h_out /*K*/, double & h_h_out /*kJ/kg*/,
     double & q_dot /*kWt*/, double & eff_calc /*-*/, double & min_DT /*K*/, double & NTU /*-*/, double & UA_calc /*kW/K*/)
@@ -1171,7 +1333,7 @@ void NS_HX_counterflow_eqs::solve_q_dot_for_fixed_UA(int hx_target_code /*-*/,
 	int N_sub_hx /*-*/,
 	double T_c_in /*K*/, double P_c_in /*kPa*/, double m_dot_c /*kg/s*/, double P_c_out /*kPa*/,
 	double T_h_in /*K*/, double P_h_in /*kPa*/, double m_dot_h /*kg/s*/, double P_h_out /*kPa*/,
-	double UA_target /*kW/K*/, double min_dT_target /*K*/,
+	double UA_target /*kW/K*/, double min_dT_target /*K*/, double eff_target /*-*/,
     double eff_limit /*-*/, double eff_guess /*-*/,
 	double & q_dot /*kWt*/, double & T_c_out /*K*/, double & T_h_out /*K*/,
 	double & eff_calc /*-*/, double & min_DT /*K*/, double & NTU /*-*/, double & UA_calc)
@@ -1257,6 +1419,7 @@ void NS_HX_counterflow_eqs::solve_q_dot_for_fixed_UA(int hx_target_code /*-*/,
     switch (hx_target_code)
     {
     case NS_HX_counterflow_eqs::TARGET_UA:
+    case NS_HX_counterflow_eqs::OPTIMIZE_UA:
         
         NS_HX_counterflow_eqs::solve_q_dot_for_fixed_UA_enth(hot_fl_code, hot_htf_class,
             cold_fl_code, cold_htf_class,
@@ -1277,7 +1440,21 @@ void NS_HX_counterflow_eqs::solve_q_dot_for_fixed_UA(int hx_target_code /*-*/,
             N_sub_hx,
             h_c_in, P_c_in, m_dot_c, P_c_out,
             h_h_in, P_h_in, m_dot_h, P_h_out,
-            min_dT_target, eff_limit, eff_guess,
+            min_dT_target, eff_limit,
+            T_c_out, h_c_out,
+            T_h_out, h_h_out,
+            q_dot, eff_calc, min_DT, NTU, UA_calc);
+
+        break;
+
+    case NS_HX_counterflow_eqs::TARGET_EFFECTIVENESS:
+
+        NS_HX_counterflow_eqs::solve_q_dot__fixed_eff__enth(hot_fl_code, hot_htf_class,
+            cold_fl_code, cold_htf_class,
+            N_sub_hx,
+            h_c_in, P_c_in, m_dot_c, P_c_out,
+            h_h_in, P_h_in, m_dot_h, P_h_out,
+            eff_target,
             T_c_out, h_c_out,
             T_h_out, h_h_out,
             q_dot, eff_calc, min_DT, NTU, UA_calc);
@@ -1510,7 +1687,7 @@ void C_HX_co2_to_htf::design_and_calc_m_dot_htf(C_HX_counterflow::S_des_calc_UA_
 }
 
 void C_HX_counterflow::design_for_target__calc_outlet(int hx_target_code /*-*/,
-    double UA_target /*kW/K*/, double min_dT_target /*K*/,
+    double UA_target /*kW/K*/, double min_dT_target /*K*/, double eff_target /*-*/,
     double eff_max /*-*/, double T_c_in /*K*/, double P_c_in /*kPa*/, double m_dot_c /*kg/s*/, double P_c_out /*kPa*/,
 	double T_h_in /*K*/, double P_h_in /*kPa*/, double m_dot_h /*kg/s*/, double P_h_out /*kPa*/,
 	double & q_dot /*kWt*/, double & T_c_out /*K*/, double & T_h_out /*K*/)
@@ -1528,7 +1705,7 @@ void C_HX_counterflow::design_for_target__calc_outlet(int hx_target_code /*-*/,
 		ms_init_par.m_N_sub_hx,
 		T_c_in, P_c_in, m_dot_c, P_c_out, 
 		T_h_in, P_h_in, m_dot_h, P_h_out, 
-		UA_target, min_dT_target,
+		UA_target, min_dT_target, eff_target,
         eff_max, ms_des_solved.m_eff_design,
 		q_dot, T_c_out, T_h_out,
 		eff_calc, min_DT, NTU, UA_calc);
@@ -1546,7 +1723,7 @@ void C_HX_counterflow::design_for_target__calc_outlet(int hx_target_code /*-*/,
 	ms_des_solved.m_Q_dot_design = q_dot;			//[kWt]
     ms_des_solved.m_UA_calc_at_eff_max = UA_calc;	//[kW/K]
 
-    if (hx_target_code == NS_HX_counterflow_eqs::TARGET_UA)
+    if (hx_target_code == NS_HX_counterflow_eqs::TARGET_UA || hx_target_code == NS_HX_counterflow_eqs::OPTIMIZE_UA)
     {
         ms_des_solved.m_UA_allocated = UA_target;	//[kW/K] assigned UA - not necessarily = calculated
         ms_des_solved.m_UA_design = UA_target;      //[kW/K] designing with "extra" UA - will use this value to scale at off-design so could still be useful
@@ -1586,6 +1763,7 @@ void C_HX_counterflow::off_design_solution(double T_c_in /*K*/, double P_c_in /*
 	eff_calc = min_DT = NTU = UA_calc = std::numeric_limits<double>::quiet_NaN();
 	
     // Off-design should always use UA as the performance target
+    // So set min_dT_target and eff_target parameters = nan
     int hx_target_code = NS_HX_counterflow_eqs::TARGET_UA;
     NS_HX_counterflow_eqs::solve_q_dot_for_fixed_UA(hx_target_code,
         ms_init_par.m_hot_fl, mc_hot_fl,
@@ -1593,7 +1771,7 @@ void C_HX_counterflow::off_design_solution(double T_c_in /*K*/, double P_c_in /*
         ms_init_par.m_N_sub_hx,
         T_c_in, P_c_in, m_dot_c, P_c_out,
         T_h_in, P_h_in, m_dot_h, P_h_out,
-        UA_target, std::numeric_limits<double>::quiet_NaN(),
+        UA_target, std::numeric_limits<double>::quiet_NaN(), std::numeric_limits<double>::quiet_NaN(),
         eff_target, ms_des_solved.m_eff_design,
 		q_dot, T_c_out, T_h_out,
 		eff_calc, min_DT, NTU, UA_calc);

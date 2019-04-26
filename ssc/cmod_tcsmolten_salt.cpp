@@ -1160,11 +1160,11 @@ public:
 				
 				// Cycle Design Parameters
                     // LTR thermal design
-                sco2_rc_csp_par.m_LTR_target_code = 1;      // Design for target recuperator UA
+                sco2_rc_csp_par.m_LTR_target_code = 0;      // Optimize recuperator UA
                 sco2_rc_csp_par.m_LTR_min_dT = std::numeric_limits<double>::quiet_NaN();    //[K] shouldn't be using this with target code = 1
 				sco2_rc_csp_par.m_LTR_eff_max = as_double("recup_eff_max");		//[-]
                     // HTR thermal design
-                sco2_rc_csp_par.m_HTR_target_code = 1;      // Design for target recuperator UA
+                sco2_rc_csp_par.m_HTR_target_code = 0;      // Optimize recuperator UA
                 sco2_rc_csp_par.m_HTR_min_dT = std::numeric_limits<double>::quiet_NaN();    //[K] shouldn't be using this with target code = 1
 				sco2_rc_csp_par.m_HTR_eff_max = as_double("recup_eff_max");		//[-]
                     //

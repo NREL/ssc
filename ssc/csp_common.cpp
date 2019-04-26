@@ -584,10 +584,31 @@ var_info vtab_sco2_design[] = {
 	{ SSC_INPUT,  SSC_NUMBER,  "dT_mc_approach",       "Temp diff btw ambient air and main compressor inlet",    "C",          "",    "",      "*",     "",       "" },
 	{ SSC_INPUT,  SSC_NUMBER,  "site_elevation",       "Site elevation",                                         "m",          "",    "",      "*",     "",       "" },
 	{ SSC_INPUT,  SSC_NUMBER,  "W_dot_net_des",        "Design cycle power output (no cooling parasitics)",      "MWe",        "",    "",      "*",     "",       "" },
-	{ SSC_INPUT,  SSC_NUMBER,  "design_method",        "1 = Specify efficiency, 2 = Specify total recup UA",     "",           "",    "",      "*",     "",       "" },
-	{ SSC_INPUT,  SSC_NUMBER,  "eta_thermal_des",      "Power cycle thermal efficiency",                         "",           "",    "",      "?=-1.0","",       "" },
-	{ SSC_INPUT,  SSC_NUMBER,  "UA_recup_tot_des",     "Total recuperator conductance",                          "kW/K",       "",    "",      "?=-1.0","",       "" },
-	{ SSC_INPUT,  SSC_NUMBER,  "cycle_config",         "1 = recompression, 2 = partial cooling",                 "",           "",    "",      "?=1",   "",       "" },
+	{ SSC_INPUT,  SSC_NUMBER,  "design_method",        "1 = Specify efficiency, 2 = Specify total recup UA, 3 = Specify each recup design","","","","*","",       "" },
+	{ SSC_INPUT,  SSC_NUMBER,  "eta_thermal_des",      "Power cycle thermal efficiency",                         "",           "",    "",      "design_method=1","",  "" },
+	    
+        // Heat exchanger design
+            // Combined recuperator design parameter (design_method == 2)
+    { SSC_INPUT,  SSC_NUMBER,  "UA_recup_tot_des",     "Total recuperator conductance",                          "kW/K",       "",    "",      "design_method=2","",  "" },
+	        // Low temperature recuperator parameters
+    { SSC_INPUT,  SSC_NUMBER,  "LTR_design_code",      "1 = UA, 2 = min dT, 3 = effectiveness",                  "-",          "",    "",      "design_method=3", "", "" },
+	{ SSC_INPUT,  SSC_NUMBER,  "LTR_UA_des_in",        "Design LTR conductance",                                 "kW/K",       "",    "",      "design_method=3", "", "" },
+	{ SSC_INPUT,  SSC_NUMBER,  "LTR_min_dT_des_in",    "Design minimum allowable temperature difference in LTR", "C",          "",    "",      "design_method=3", "", "" },
+    { SSC_INPUT,  SSC_NUMBER,  "LTR_eff_des_in",       "Design effectiveness for LTR",                           "-",          "",    "",      "design_method=3", "", "" },
+    { SSC_INPUT,  SSC_NUMBER,  "LT_recup_eff_max",     "Maximum allowable effectiveness in LTR",                 "-",          "",    "",      "?=1.0", "",       "" },
+    { SSC_INPUT,  SSC_NUMBER,  "LTR_LP_deltaP_des_in", "LTR low pressure side pressure drop as fraction of inlet pressure","-", "",   "",      "",      "",       "" },
+    { SSC_INPUT,  SSC_NUMBER,  "LTR_HP_deltaP_des_in", "LTR high pressure side pressure drop as fraction of inlet pressure","-", "",  "",      "",      "",       "" },
+            // High temperature recuperator parameters
+    { SSC_INPUT,  SSC_NUMBER,  "HTR_design_code",      "1 = UA, 2 = min dT, 3 = effectiveness",                  "-",          "",    "",      "design_method=3", "", "" },
+	{ SSC_INPUT,  SSC_NUMBER,  "HTR_UA_des_in",        "Design HTR conductance",                                 "kW/K",       "",    "",      "design_method=3", "", "" },
+	{ SSC_INPUT,  SSC_NUMBER,  "HTR_min_dT_des_in",    "Design minimum allowable temperature difference in HTR", "C",          "",    "",      "design_method=3", "", "" },
+    { SSC_INPUT,  SSC_NUMBER,  "HTR_eff_des_in",       "Design effectiveness for HTR",                           "-",          "",    "",      "design_method=3", "", "" },
+    { SSC_INPUT,  SSC_NUMBER,  "HT_recup_eff_max",     "Maximum allowable effectiveness in HTR",                 "-",          "",    "",      "?=1.0", "",       "" },
+    { SSC_INPUT,  SSC_NUMBER,  "HTR_LP_deltaP_des_in", "HTR low pressure side pressure drop as fraction of inlet pressure","-", "",   "",      "",      "",       "" },
+    { SSC_INPUT,  SSC_NUMBER,  "HTR_HP_deltaP_des_in", "HTR high pressure side pressure drop as fraction of inlet pressure","-", "",  "",      "",      "",       "" },
+
+
+    { SSC_INPUT,  SSC_NUMBER,  "cycle_config",         "1 = recompression, 2 = partial cooling",                 "",           "",    "",      "?=1",   "",       "" },
 	{ SSC_INPUT,  SSC_NUMBER,  "is_recomp_ok",         "1 = Yes, 0 = simple cycle only",                         "",           "",    "",      "?=1",   "",       "" },
 	{ SSC_INPUT,  SSC_NUMBER,  "is_P_high_fixed",      "1 = Yes, 0 = No, optimized (default)",                   "",           "",    "",      "?=0",   "",       "" },	
 	{ SSC_INPUT,  SSC_NUMBER,  "is_PR_fixed",          "0 = No, >0 = fixed pressure ratio",                      "",           "",    "",      "?=0",   "",       "" },
@@ -599,13 +620,7 @@ var_info vtab_sco2_design[] = {
 	{ SSC_INPUT,  SSC_NUMBER,  "eta_isen_rc",          "Design re-compressor isentropic efficiency",             "-",          "",    "",      "*",     "",       "" },
 	{ SSC_INPUT,  SSC_NUMBER,  "eta_isen_pc",          "Design precompressor isentropic efficiency",             "-",          "",    "",      "cycle_config=2",     "",       "" },
 	{ SSC_INPUT,  SSC_NUMBER,  "eta_isen_t",           "Design turbine isentropic efficiency",                   "-",          "",    "",      "*",     "",       "" },
-	{ SSC_INPUT,  SSC_NUMBER,  "LT_recup_eff_max",     "Maximum allowable effectiveness in LT recuperator",      "-",          "",    "",      "*",     "",       "" },
-    { SSC_INPUT,  SSC_NUMBER,  "LTR_LP_deltaP_des_in", "LTR low pressure side pressure drop as fraction of inlet pressure","-", "",   "",      "",      "",       "" },
-    { SSC_INPUT,  SSC_NUMBER,  "LTR_HP_deltaP_des_in", "LTR high pressure side pressure drop as fraction of inlet pressure","-", "",  "",      "",      "",       "" },
-    { SSC_INPUT,  SSC_NUMBER,  "HT_recup_eff_max",     "Maximum allowable effectiveness in LT recuperator",      "-",          "",    "",      "*",     "",       "" },
-    { SSC_INPUT,  SSC_NUMBER,  "HTR_LP_deltaP_des_in", "HTR low pressure side pressure drop as fraction of inlet pressure","-", "",   "",      "",      "",       "" },
-    { SSC_INPUT,  SSC_NUMBER,  "HTR_HP_deltaP_des_in", "HTR high pressure side pressure drop as fraction of inlet pressure","-", "",  "",      "",      "",       "" },
-    { SSC_INPUT,  SSC_NUMBER,  "PHX_co2_deltaP_des_in","PHX co2 side pressure drop as fraction of inlet pressure","-",         "",    "",      "",      "",       "" },
+	{ SSC_INPUT,  SSC_NUMBER,  "PHX_co2_deltaP_des_in","PHX co2 side pressure drop as fraction of inlet pressure","-",         "",    "",      "",      "",       "" },
     { SSC_INPUT,  SSC_NUMBER,  "deltaP_counterHX_frac","Fraction of CO2 inlet pressure that is design point counterflow HX (recups & PHX) pressure drop", "-", "", "", "?=0", "", ""},
 	{ SSC_INPUT,  SSC_NUMBER,  "P_high_limit",         "High pressure limit in cycle",                           "MPa",        "",    "",      "*",     "",       "" },
 		// PHX Design
@@ -791,9 +806,12 @@ int sco2_design_cmod_common(compute_module *cm, C_sco2_recomp_csp & c_sco2_cycle
 
 	sco2_rc_des_par.m_cycle_config = cm->as_integer("cycle_config");			//[-] 1 = recompression, 2 = partial cooling
 
-	sco2_rc_des_par.m_design_method = cm->as_integer("design_method");			//[-] 1 = Specify efficiency, 2 = Specify total recup UA
+	sco2_rc_des_par.m_design_method = cm->as_integer("design_method");			//[-] 1 = Specify efficiency, 2 = Specify total recup UA, 3 = Specify each recup design
 	if (sco2_rc_des_par.m_design_method == 1)
 	{
+		sco2_rc_des_par.m_LTR_target_code = 0;      // 0 = optimize, 1 = UA, 2 = min dT, 3 = effectiveness
+		sco2_rc_des_par.m_HTR_target_code = 0;		// 0 = optimize, 1 = UA, 2 = min dT, 3 = effectiveness
+
 		sco2_rc_des_par.m_eta_thermal = cm->as_double("eta_thermal_des");				//[-] Cycle thermal efficiency
 		if (sco2_rc_des_par.m_eta_thermal < 0.0)
 		{
@@ -804,6 +822,9 @@ int sco2_design_cmod_common(compute_module *cm, C_sco2_recomp_csp & c_sco2_cycle
 	}
 	else if (sco2_rc_des_par.m_design_method == 2)
 	{
+		sco2_rc_des_par.m_LTR_target_code = 0;      // 0 = optimize, 1 = UA, 2 = min dT, 3 = effectiveness
+		sco2_rc_des_par.m_HTR_target_code = 0;		// 0 = optimize, 1 = UA, 2 = min dT, 3 = effectiveness
+
 		sco2_rc_des_par.m_UA_recup_tot_des = cm->as_double("UA_recup_tot_des");		//[kW/K] Total recuperator conductance
 		if (sco2_rc_des_par.m_UA_recup_tot_des < 0.0)
 		{
@@ -812,9 +833,24 @@ int sco2_design_cmod_common(compute_module *cm, C_sco2_recomp_csp & c_sco2_cycle
 		}
 		sco2_rc_des_par.m_eta_thermal = std::numeric_limits<double>::quiet_NaN();
 	}
+	else if (sco2_rc_des_par.m_design_method == 3)
+	{
+		// LTR
+		sco2_rc_des_par.m_LTR_target_code = cm->as_integer("LTR_design_code");		// 0 = optimize, 1 = UA, 2 = min dT, 3 = effectiveness
+		sco2_rc_des_par.m_LTR_UA = cm->as_double("LTR_UA_des_in");					//[kW/K]
+		sco2_rc_des_par.m_LTR_min_dT = cm->as_double("LTR_min_dT_des_in");			//[C]
+		sco2_rc_des_par.m_LTR_eff_target = cm->as_double("LTR_eff_des_in");			//[-]
+
+		// HTR
+		sco2_rc_des_par.m_HTR_target_code = cm->as_integer("HTR_design_code");		// 0 = optimize, 1 = UA, 2 = min dT, 3 = effectiveness
+		sco2_rc_des_par.m_HTR_UA = cm->as_double("HTR_UA_des_in");					//[kW/K]
+		sco2_rc_des_par.m_HTR_min_dT = cm->as_double("HTR_min_dT_des_in");			//[C]
+		sco2_rc_des_par.m_HTR_eff_target = cm->as_double("HTR_eff_des_in");			//[-]
+	}
 	else
 	{
-		std::string err_msg = util::format("The input cycle design method, %d, is invalid. It must be 1 or 2.", sco2_rc_des_par.m_design_method);
+		std::string err_msg = util::format("The input cycle design method, %d, is invalid. It must be "
+			" 1 = Specify efficiency, 2 = Specify total recup UA, 3 = Specify each recup design.", sco2_rc_des_par.m_design_method);
 		cm->log(err_msg, SSC_ERROR, -1.0);
 	}
 
@@ -915,15 +951,11 @@ int sco2_design_cmod_common(compute_module *cm, C_sco2_recomp_csp & c_sco2_cycle
 	sco2_rc_des_par.m_opt_tol = pow(10, -cm->as_double("rel_tol"));
 
 	// Remaining cycle design parameters
-        // LTR thermal design
-    sco2_rc_des_par.m_LTR_target_code = 1;      // 1 = UA, 2 = min dT, 3 = effectiveness
-    sco2_rc_des_par.m_LTR_min_dT = 21.0;    //[K]
+        // LTR
 	sco2_rc_des_par.m_LTR_eff_max = cm->as_double("LT_recup_eff_max");  //[-]
-	    // HTR thermal design
-    sco2_rc_des_par.m_HTR_target_code = 1;      // 1 = UA, 2 = min dT, 3 = effectiveness
-    sco2_rc_des_par.m_HTR_min_dT = 32.0;    //[K]
+	    // HTR
     sco2_rc_des_par.m_HTR_eff_max = cm->as_double("HT_recup_eff_max");  //[-]
-        //
+        // Turbomachinery
 	sco2_rc_des_par.m_eta_mc = cm->as_double("eta_isen_mc");		   //[-]
 	sco2_rc_des_par.m_eta_rc = cm->as_double("eta_isen_rc");		   //[-]
 	if (sco2_rc_des_par.m_cycle_config == 2)

@@ -343,7 +343,7 @@ int C_PartialCooling_Cycle::C_MEQ_HTR_des::operator()(double T_HTR_LP_out /*K*/,
 	try
 	{
 		mpc_pc_cycle->mc_LTR.design_for_target__calc_outlet(mpc_pc_cycle->ms_des_par.m_LTR_target_code,
-            mpc_pc_cycle->ms_des_par.m_LTR_UA, mpc_pc_cycle->ms_des_par.m_LTR_min_dT,
+            mpc_pc_cycle->ms_des_par.m_LTR_UA, mpc_pc_cycle->ms_des_par.m_LTR_min_dT, mpc_pc_cycle->ms_des_par.m_LTR_eff_target,
             mpc_pc_cycle->ms_des_par.m_LTR_eff_max,
 			mpc_pc_cycle->m_temp_last[MC_OUT], mpc_pc_cycle->m_pres_last[MC_OUT], mpc_pc_cycle->m_m_dot_mc, mpc_pc_cycle->m_pres_last[LTR_HP_OUT],
 			mpc_pc_cycle->m_temp_last[HTR_LP_OUT], mpc_pc_cycle->m_pres_last[HTR_LP_OUT], mpc_pc_cycle->m_m_dot_t, mpc_pc_cycle->m_pres_last[LTR_LP_OUT],
@@ -406,7 +406,7 @@ int C_PartialCooling_Cycle::C_MEQ_HTR_des::operator()(double T_HTR_LP_out /*K*/,
 	try
 	{
 		mpc_pc_cycle->mc_HTR.design_for_target__calc_outlet(mpc_pc_cycle->ms_des_par.m_HTR_target_code,
-            mpc_pc_cycle->ms_des_par.m_HTR_UA, mpc_pc_cycle->ms_des_par.m_HTR_min_dT,
+            mpc_pc_cycle->ms_des_par.m_HTR_UA, mpc_pc_cycle->ms_des_par.m_HTR_min_dT, mpc_pc_cycle->ms_des_par.m_HTR_eff_target,
             mpc_pc_cycle->ms_des_par.m_HTR_eff_max,
 			mpc_pc_cycle->m_temp_last[MIXER_OUT], mpc_pc_cycle->m_pres_last[MIXER_OUT], mpc_pc_cycle->m_m_dot_t, mpc_pc_cycle->m_pres_last[HTR_HP_OUT],
 			mpc_pc_cycle->m_temp_last[TURB_OUT], mpc_pc_cycle->m_pres_last[TURB_OUT], mpc_pc_cycle->m_m_dot_t, mpc_pc_cycle->m_pres_last[HTR_LP_OUT],
@@ -445,7 +445,7 @@ int C_PartialCooling_Cycle::C_MEQ_LTR_des::operator()(double T_LTR_LP_out /*K*/,
 	try
 	{
 		mpc_pc_cycle->mc_LTR.design_for_target__calc_outlet(mpc_pc_cycle->ms_des_par.m_LTR_target_code,
-            mpc_pc_cycle->ms_des_par.m_LTR_UA, mpc_pc_cycle->ms_des_par.m_LTR_min_dT,
+            mpc_pc_cycle->ms_des_par.m_LTR_UA, mpc_pc_cycle->ms_des_par.m_LTR_min_dT, mpc_pc_cycle->ms_des_par.m_LTR_eff_target,
             mpc_pc_cycle->ms_des_par.m_LTR_eff_max,
 			mpc_pc_cycle->m_temp_last[MC_OUT], mpc_pc_cycle->m_pres_last[MC_OUT], mpc_pc_cycle->m_m_dot_mc, mpc_pc_cycle->m_pres_last[LTR_HP_OUT],
 			mpc_pc_cycle->m_temp_last[HTR_LP_OUT], mpc_pc_cycle->m_pres_last[HTR_LP_OUT], mpc_pc_cycle->m_m_dot_t, mpc_pc_cycle->m_pres_last[LTR_LP_OUT],
@@ -481,7 +481,7 @@ double C_PartialCooling_Cycle::opt_eta_fixed_P_high(double P_high_opt /*kPa*/)
 	ms_opt_des_par.m_LTR_frac_guess = 0.5;		//[-]
 	ms_opt_des_par.m_fixed_LTR_frac = false;
 
-    if (ms_opt_des_par.m_LTR_target_code != NS_HX_counterflow_eqs::TARGET_UA || ms_opt_des_par.m_HTR_target_code != NS_HX_counterflow_eqs::TARGET_UA)
+    if (ms_opt_des_par.m_LTR_target_code != NS_HX_counterflow_eqs::OPTIMIZE_UA || ms_opt_des_par.m_HTR_target_code != NS_HX_counterflow_eqs::OPTIMIZE_UA)
     {
         ms_opt_des_par.m_fixed_LTR_frac = true;
     }
@@ -743,8 +743,17 @@ double C_PartialCooling_Cycle::design_cycle_return_objective_metric(const std::v
 	else
 		LTR_frac_local = ms_opt_des_par.m_LTR_frac_guess;		//[-]
 
-	ms_des_par.m_LTR_UA = ms_opt_des_par.m_UA_rec_total*LTR_frac_local;			//[kW/K]
-	ms_des_par.m_HTR_UA = ms_opt_des_par.m_UA_rec_total*(1.0 - LTR_frac_local);	//[kW/K]
+    if (ms_opt_des_par.m_LTR_target_code == NS_HX_counterflow_eqs::OPTIMIZE_UA || ms_opt_des_par.m_HTR_target_code == NS_HX_counterflow_eqs::OPTIMIZE_UA)
+    {
+        ms_des_par.m_LTR_UA = ms_opt_des_par.m_UA_rec_total*LTR_frac_local;			//[kW/K]
+        ms_des_par.m_HTR_UA = ms_opt_des_par.m_UA_rec_total*(1.0 - LTR_frac_local);	//[kW/K]
+    }
+    else
+    {
+        ms_des_par.m_LTR_UA = ms_opt_des_par.m_LTR_UA;      //[kW/K]
+        ms_des_par.m_HTR_UA = ms_opt_des_par.m_HTR_UA;      //[kW/K]
+    }
+	
 
 	int des_err_code = design_core();
 
@@ -778,10 +787,12 @@ int C_PartialCooling_Cycle::opt_design_core()
         // LTR thermal design
     ms_des_par.m_LTR_target_code = ms_opt_des_par.m_LTR_target_code;    //[-]
     ms_des_par.m_LTR_min_dT = ms_opt_des_par.m_LTR_min_dT;      //[K]
+    ms_des_par.m_LTR_eff_target = ms_opt_des_par.m_LTR_eff_target;  //[-]
     ms_des_par.m_LTR_eff_max = ms_opt_des_par.m_LTR_eff_max;    //[-]
         // HTR thermal design
     ms_des_par.m_HTR_target_code = ms_opt_des_par.m_HTR_target_code;    //[-]
     ms_des_par.m_HTR_min_dT = ms_opt_des_par.m_HTR_min_dT;      //[K]
+    ms_des_par.m_HTR_eff_target = ms_opt_des_par.m_HTR_eff_target;  //[-]
     ms_des_par.m_HTR_eff_max = ms_opt_des_par.m_HTR_eff_max;    //[-]
         //
 	ms_des_par.m_eta_mc = ms_opt_des_par.m_eta_mc;			//[-]
@@ -887,8 +898,17 @@ int C_PartialCooling_Cycle::opt_design_core()
 		ms_des_par.m_P_pc_in = ms_des_par.m_P_mc_out / ms_opt_des_par.m_PR_total_guess;		//[kPa]
 		ms_des_par.m_P_mc_in = ms_des_par.m_P_mc_out - ms_opt_des_par.m_f_PR_mc_guess*(ms_des_par.m_P_mc_out - ms_des_par.m_P_pc_in);	//[kPa]
 		ms_des_par.m_recomp_frac = ms_opt_des_par.m_recomp_frac_guess;	//[-]
-		ms_des_par.m_LTR_UA = ms_opt_des_par.m_UA_rec_total*ms_opt_des_par.m_LTR_frac_guess;	//[kW/K]
-		ms_des_par.m_HTR_UA = ms_opt_des_par.m_UA_rec_total*ms_opt_des_par.m_LTR_frac_guess;	//[kW/K]
+
+        if (ms_opt_des_par.m_LTR_target_code == NS_HX_counterflow_eqs::OPTIMIZE_UA || ms_opt_des_par.m_HTR_target_code == NS_HX_counterflow_eqs::OPTIMIZE_UA)
+        {
+            ms_des_par.m_LTR_UA = ms_opt_des_par.m_UA_rec_total*ms_opt_des_par.m_LTR_frac_guess;	//[kW/K]
+            ms_des_par.m_HTR_UA = ms_opt_des_par.m_UA_rec_total*(1.0 - ms_opt_des_par.m_LTR_frac_guess);	//[kW/K]
+        }
+        else
+        {
+            ms_des_par.m_LTR_UA = ms_opt_des_par.m_LTR_UA;      //[kW/K]
+            ms_des_par.m_HTR_UA = ms_opt_des_par.m_HTR_UA;      //[kW/K]
+        }
 
 		no_opt_err_code = design_core();
 
@@ -932,11 +952,15 @@ int C_PartialCooling_Cycle::auto_opt_design_core()
 	ms_opt_des_par.m_UA_rec_total = ms_auto_opt_des_par.m_UA_rec_total;		//[kW/K]
         // LTR thermal design
     ms_opt_des_par.m_LTR_target_code = ms_auto_opt_des_par.m_LTR_target_code;   //[-]
+    ms_opt_des_par.m_LTR_UA = ms_auto_opt_des_par.m_LTR_UA;                 //[kW/K]
     ms_opt_des_par.m_LTR_min_dT = ms_auto_opt_des_par.m_LTR_min_dT;         //[K]
+    ms_opt_des_par.m_LTR_eff_target = ms_auto_opt_des_par.m_LTR_eff_target; //[-]
     ms_opt_des_par.m_LTR_eff_max = ms_auto_opt_des_par.m_LTR_eff_max;    //[-]
         // HTR thermal design
     ms_opt_des_par.m_HTR_target_code = ms_auto_opt_des_par.m_HTR_target_code;   //[-]
+    ms_opt_des_par.m_HTR_UA = ms_auto_opt_des_par.m_HTR_UA;             //[kW/K]
     ms_opt_des_par.m_HTR_min_dT = ms_auto_opt_des_par.m_HTR_min_dT;     //[K]
+    ms_opt_des_par.m_HTR_eff_target = ms_auto_opt_des_par.m_HTR_eff_target; //[-]
     ms_opt_des_par.m_HTR_eff_max = ms_auto_opt_des_par.m_HTR_eff_max;
         //
 	ms_opt_des_par.m_eta_mc = ms_auto_opt_des_par.m_eta_mc;					//[-]
@@ -999,7 +1023,7 @@ int C_PartialCooling_Cycle::auto_opt_design_core()
 	ms_opt_des_par.m_LTR_frac_guess = 0.5;		//[-]
 	ms_opt_des_par.m_fixed_LTR_frac = false;
 
-    if (ms_opt_des_par.m_LTR_target_code != NS_HX_counterflow_eqs::TARGET_UA || ms_opt_des_par.m_HTR_target_code != NS_HX_counterflow_eqs::TARGET_UA)
+    if (ms_opt_des_par.m_LTR_target_code != NS_HX_counterflow_eqs::OPTIMIZE_UA || ms_opt_des_par.m_HTR_target_code != NS_HX_counterflow_eqs::OPTIMIZE_UA)
     {
         ms_opt_des_par.m_fixed_LTR_frac = true;
     }
@@ -1040,11 +1064,15 @@ int C_PartialCooling_Cycle::auto_opt_design_hit_eta(S_auto_opt_design_hit_eta_pa
 	ms_auto_opt_des_par.m_UA_rec_total = std::numeric_limits<double>::quiet_NaN();		//[kW/K]  ***** This method finds the UA required to hit the input efficiency! *****
      // LTR thermal design
     ms_auto_opt_des_par.m_LTR_target_code = auto_opt_des_hit_eta_in.m_LTR_target_code;  //[-]
+    ms_auto_opt_des_par.m_LTR_UA = auto_opt_des_hit_eta_in.m_LTR_UA;                    //[kW/K]
     ms_auto_opt_des_par.m_LTR_min_dT = auto_opt_des_hit_eta_in.m_LTR_min_dT;            //[K]
+    ms_auto_opt_des_par.m_LTR_eff_target = auto_opt_des_hit_eta_in.m_LTR_eff_target;    //[-]
     ms_auto_opt_des_par.m_LTR_eff_max = auto_opt_des_hit_eta_in.m_LTR_eff_max;          //[-]
         // HTR thermal design
     ms_auto_opt_des_par.m_HTR_target_code = auto_opt_des_hit_eta_in.m_HTR_target_code;  //[-]
+    ms_auto_opt_des_par.m_HTR_UA = auto_opt_des_hit_eta_in.m_HTR_UA;                    //[kW/K]
     ms_auto_opt_des_par.m_HTR_min_dT = auto_opt_des_hit_eta_in.m_HTR_min_dT;            //[K]
+    ms_auto_opt_des_par.m_HTR_eff_target = auto_opt_des_hit_eta_in.m_HTR_eff_target;    //[-]
     ms_auto_opt_des_par.m_HTR_eff_max = auto_opt_des_hit_eta_in.m_HTR_eff_max;    //[-]
         //
 	ms_auto_opt_des_par.m_eta_mc = auto_opt_des_hit_eta_in.m_eta_mc;					//[-]

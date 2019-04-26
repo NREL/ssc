@@ -134,11 +134,15 @@ void C_sco2_recomp_csp::design_core()
 		ms_cycle_des_par.m_DP_PHX = ms_des_par.m_DP_PHX;
             // LTR thermal design
         ms_cycle_des_par.m_LTR_target_code = ms_des_par.m_LTR_target_code;  //[-]
+        ms_cycle_des_par.m_LTR_UA = ms_des_par.m_LTR_UA;                    //[kW/K]
         ms_cycle_des_par.m_LTR_min_dT = ms_des_par.m_LTR_min_dT;            //[K]
+        ms_cycle_des_par.m_LTR_eff_target = ms_des_par.m_LTR_eff_target;    //[-]
 		ms_cycle_des_par.m_LTR_eff_max = ms_des_par.m_LTR_eff_max;       //[-]
             // HTR thermal design
         ms_cycle_des_par.m_HTR_target_code = ms_des_par.m_HTR_target_code;  //[-]
+        ms_cycle_des_par.m_HTR_UA = ms_des_par.m_HTR_UA;                    //[kW/K]
         ms_cycle_des_par.m_HTR_min_dT = ms_des_par.m_HTR_min_dT;            //[K]
+        ms_cycle_des_par.m_HTR_eff_target = ms_des_par.m_HTR_eff_target;    //[-]
         ms_cycle_des_par.m_HTR_eff_max = ms_des_par.m_HTR_eff_max;       //[-]
             //
 		ms_cycle_des_par.m_eta_mc = ms_des_par.m_eta_mc;
@@ -171,12 +175,15 @@ void C_sco2_recomp_csp::design_core()
 
 		auto_err_code = mpc_sco2_cycle->auto_opt_design_hit_eta(ms_cycle_des_par, error_msg);
 	}
-	else if (ms_des_par.m_design_method == 2)
+	else if (ms_des_par.m_design_method == 2 || ms_des_par.m_design_method == 3)
 	{
-		if (ms_des_par.m_UA_recup_tot_des < 0.0)
+		if (ms_des_par.m_design_method == 2)
 		{
-			std::string ex_msg = "The " + s_cycle_config + " cycle and CSP integration design, design method 2, conductance must be > 0";
-			throw(C_csp_exception(ex_msg.c_str()));
+			if (ms_des_par.m_UA_recup_tot_des < 0.0)
+			{
+				std::string ex_msg = "The " + s_cycle_config + " cycle and CSP integration design, design method 2, conductance must be > 0";
+				throw(C_csp_exception(ex_msg.c_str()));
+			}
 		}
 		
 		C_sco2_cycle_core::S_auto_opt_design_parameters des_params;
@@ -199,12 +206,16 @@ void C_sco2_recomp_csp::design_core()
 		des_params.m_UA_rec_total = ms_des_par.m_UA_recup_tot_des;	//[kW/K]
             // LTR thermal design
         des_params.m_LTR_target_code = ms_des_par.m_LTR_target_code;  //[-]
+        des_params.m_LTR_UA = ms_des_par.m_LTR_UA;                      //[kW/K]
         des_params.m_LTR_min_dT = ms_des_par.m_LTR_min_dT;            //[K]
+        des_params.m_LTR_eff_target = ms_des_par.m_LTR_eff_target;    //[-]
         des_params.m_LTR_eff_max = ms_des_par.m_LTR_eff_max;       //[-]
             // HTR thermal design
         des_params.m_HTR_target_code = ms_des_par.m_HTR_target_code;    //[-]
+        des_params.m_HTR_UA = ms_des_par.m_HTR_UA;                  //[kW/K]
         des_params.m_HTR_min_dT = ms_des_par.m_HTR_min_dT;          //[K]
-		des_params.m_HTR_eff_max = ms_des_par.m_HTR_eff_max;			//[-]
+        des_params.m_HTR_eff_target = ms_des_par.m_HTR_eff_target;  //[-]
+		des_params.m_HTR_eff_max = ms_des_par.m_HTR_eff_max;		//[-]
             //
 		des_params.m_eta_mc = ms_des_par.m_eta_mc;
 		des_params.m_eta_rc = ms_des_par.m_eta_rc;
@@ -236,7 +247,8 @@ void C_sco2_recomp_csp::design_core()
 	}
 	else
 	{
-		std::string ex_msg = "The " + s_cycle_config + "cycle and CSP integration design, design method can only be 1 (specify UA) for now";
+		std::string ex_msg = "The " + s_cycle_config + " cycle and CSP integration design, design method can only be:"
+			" 1 = specify efficiency, 2 = specify total recup UA, 3 = Specify each recup design";
 		throw(C_csp_exception(ex_msg.c_str()));
 	}
 
