@@ -24,7 +24,7 @@ Function takes in a weekday and weekend schedule, plus the period values and an 
 a vector
 */
 template<typename T>
-std::vector<T> flatten_diurnal(util::matrix_t<size_t> weekday_schedule, util::matrix_t<size_t> weekend_schedule, std::vector<T> period_values, T multiplier = 1.0);
+std::vector<T> flatten_diurnal(util::matrix_t<size_t> weekday_schedule, util::matrix_t<size_t> weekend_schedule, size_t steps_per_hour, std::vector<T> period_values, T multiplier = 1.0);
 
 
 

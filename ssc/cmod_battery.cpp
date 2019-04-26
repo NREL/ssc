@@ -369,6 +369,7 @@ battstor::battstor(compute_module &cm, bool setup_model, size_t nrec, double dt_
 					batt_vars->ppa_price_series_dollar_per_kwh = flatten_diurnal(
 						cm.as_matrix_unsigned_long("dispatch_sched_weekday"), 
 						cm.as_matrix_unsigned_long("dispatch_sched_weekend"), 
+						step_per_hour,
 						cm.as_vector_double("dispatch_tod_factors"), ppa_price);
 				}
 				else {

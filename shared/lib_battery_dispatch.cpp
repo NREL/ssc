@@ -1279,17 +1279,20 @@ void dispatch_automatic_front_of_meter_t::init_with_pointer(const dispatch_autom
 void dispatch_automatic_front_of_meter_t::setup_cost_forecast_vector()
 {
 	std::vector<double> ppa_price_series;
-	ppa_price_series.reserve(8760);
+	ppa_price_series.reserve(_ppa_price_rt_series.size());
 
 	// add elements at beginning, so our forecast is looking at yesterday's prices
 	if (_mode == dispatch_t::FOM_LOOK_BEHIND) {
-		for (size_t i = 0; i != _look_ahead_hours; i++)
+		for (size_t i = 0; i != _look_ahead_hours * _steps_per_hour; i++)
 			ppa_price_series.push_back(0);
 	}
 
 	// add elements at the end, so we have forecast information at end of year
-	for (size_t hour_of_year = 0; hour_of_year != 8760 + _look_ahead_hours; hour_of_year++){
-		ppa_price_series.push_back(_ppa_price_rt_series[hour_of_year % 8760]);
+	for (size_t i = 0; i != _ppa_price_rt_series.size(); i++){
+		ppa_price_series.push_back(_ppa_price_rt_series[i]);
+	}
+	for (size_t i = 0; i != _look_ahead_hours * _steps_per_hour; i++) {
+		ppa_price_series.push_back(_ppa_price_rt_series[i]);
 	}
 	_ppa_price_rt_series = ppa_price_series;
 }
@@ -1350,8 +1353,10 @@ void dispatch_automatic_front_of_meter_t::update_dispatch(size_t hour_of_year, s
 			costToCycle();
 			 
 			// Compute forecast variables which don't change from year to year
-			auto max_ppa_cost = std::max_element(_ppa_price_rt_series.begin() + hour_of_year, _ppa_price_rt_series.begin() + hour_of_year + _look_ahead_hours);
-			double ppa_cost = _ppa_price_rt_series[hour_of_year];
+			size_t idx_year1 = hour_of_year * _steps_per_hour;
+			size_t idx_lookahead = _look_ahead_hours * _steps_per_hour;
+			auto max_ppa_cost = std::max_element(_ppa_price_rt_series.begin() + idx_year1, _ppa_price_rt_series.begin() + idx_year1 + idx_lookahead);
+			double ppa_cost = _ppa_price_rt_series[idx_year1];
 
 			/*! Cost to purchase electricity from the utility */
 			double usage_cost = ppa_cost;
@@ -1362,7 +1367,7 @@ void dispatch_automatic_front_of_meter_t::update_dispatch(size_t hour_of_year, s
 			// Compute forecast variables which potentially do change from year to year
 			double energyToStoreClipped = 0;
 			if (_P_cliploss_dc.size() > idx + _look_ahead_hours) {
-				energyToStoreClipped = std::accumulate(_P_cliploss_dc.begin() + idx, _P_cliploss_dc.begin() + idx + _look_ahead_hours * _steps_per_hour, 0.0f) * _dt_hour;
+				energyToStoreClipped = std::accumulate(_P_cliploss_dc.begin() + idx, _P_cliploss_dc.begin() + idx + idx_lookahead, 0.0f) * _dt_hour;
 			}
 
 			/*! Economic benefit of charging from the grid in current time step to discharge sometime in next X hours ($/kWh)*/
