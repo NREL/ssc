@@ -8,6 +8,6 @@ TEST_F(CMBiomass, SingleOwnerDefault) {
 
 	ssc_number_t annual_energy;
 	ssc_data_get_number(data, "annual_energy", &annual_energy);
-	EXPECT_NEAR(annual_energy, 353982816, 0.1);
+	EXPECT_NEAR(annual_energy, 353982820.997, 0.1);
 
 }

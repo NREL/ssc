@@ -206,17 +206,17 @@ struct SGeothermal_Outputs
 	double md_BottomHolePressure; //double GetBottomHolePressure(void) { return moPPC.GetBottomHolePressure(); }
 
 	// output arrays
-	float * maf_ReplacementsByYear;			// array of ones and zero's over time, ones representing years where reservoirs are replaced
-	float * maf_monthly_resource_temp;
-	float * maf_monthly_power;				// monthly values, even if timestep is hourly
-	float * maf_monthly_energy;
-	float * maf_timestep_resource_temp;
-	float * maf_timestep_power;				// could be hourly or monthly, depending on timestep
-	float * maf_timestep_test_values;
-	float * maf_timestep_pressure;
-	float * maf_timestep_dry_bulb;
-	float * maf_timestep_wet_bulb;
-	float * maf_hourly_power;				// hourly values even if the timestep is monthly
+	double * maf_ReplacementsByYear;			// array of ones and zero's over time, ones representing years where reservoirs are replaced
+	double * maf_monthly_resource_temp;
+	double * maf_monthly_power;				// monthly values, even if timestep is hourly
+	double * maf_monthly_energy;
+	double * maf_timestep_resource_temp;
+	double * maf_timestep_power;				// could be hourly or monthly, depending on timestep
+	double * maf_timestep_test_values;
+	double * maf_timestep_pressure;
+	double * maf_timestep_dry_bulb;
+	double * maf_timestep_wet_bulb;
+	double * maf_hourly_power;				// hourly values even if the timestep is monthly
 };
 
 int RunGeothermalAnalysis(bool (*update_function)(float,void*),void*user_data, std::string &err_msg, 
