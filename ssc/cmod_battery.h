@@ -355,6 +355,7 @@ struct battstor
 		*outAnnualGridExportEnergy,
 		*outAnnualEnergySystemLoss,
 		*outAnnualEnergyLoss,
+		*outMarketPrice,
 		*outCostToCycle;
 
 	double outAverageCycleEfficiency;

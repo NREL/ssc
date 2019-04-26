@@ -227,7 +227,7 @@ var_info vtab_battery_outputs[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "grid_power_target",                          "Electricity grid power target for automated dispatch","kW","",                               "Battery",       "",                           "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "batt_power_target",                          "Electricity battery power target for automated dispatch","kW","",                            "Battery",       "",                           "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "batt_cost_to_cycle",                         "Computed cost to cycle",                                "$/cycle", "",                       "Battery",       "",                           "",                              "" },
-
+	{ SSC_OUTPUT,        SSC_ARRAY,      "market_sell_rate_series_yr1",                "Market sell rate (Year 1)",                             "$/MWh", "",                         "Battery",       "",                           "",                              "" },
 
 	// monthly outputs
 	{ SSC_OUTPUT,        SSC_ARRAY,      "monthly_pv_to_load",                         "Energy to load from PV",                                "kWh",      "",                      "Battery",       "",                          "LENGTH=12",                     "" },
@@ -376,6 +376,10 @@ battstor::battstor(compute_module &cm, bool setup_model, size_t nrec, double dt_
 					for (size_t i = 0; i < batt_vars->ppa_price_series_dollar_per_kwh.size(); i++) {
 						batt_vars->ppa_price_series_dollar_per_kwh[i] *= ppa_price;
 					}
+				}
+				outMarketPrice = cm.allocate("market_sell_rate_series_yr1",batt_vars->ppa_price_series_dollar_per_kwh.size());
+				for (size_t i = 0; i < batt_vars->ppa_price_series_dollar_per_kwh.size(); i++) {
+					outMarketPrice[i] = (ssc_number_t)(batt_vars->ppa_price_series_dollar_per_kwh[i] * 1000.0);
 				}
 
 				// For automated front of meter with electricity rates
