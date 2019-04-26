@@ -1231,9 +1231,7 @@ dispatch_automatic_front_of_meter_t::dispatch_automatic_front_of_meter_t(
 	double batt_cost_per_kwh,
 	int battCycleCostChoice,
 	double battCycleCost,
-	std::vector<double> ppa_factors,
-	util::matrix_t<size_t> ppa_weekday_schedule,
-	util::matrix_t<size_t> ppa_weekend_schedule,
+	std::vector<double> ppa_price_series_dollar_per_kwh,
 	UtilityRate * utilityRate,
 	double etaPVCharge,
 	double etaGridCharge,
@@ -1244,7 +1242,7 @@ dispatch_automatic_front_of_meter_t::dispatch_automatic_front_of_meter_t(
 		_look_ahead_hours = 24;
 
 	_inverter_paco = inverter_paco;
-	_ppa_factors = ppa_factors;
+	_ppa_price_rt_series = ppa_price_series_dollar_per_kwh;
 
 	// only create utility rate calculator if utility rate is defined
 	if (utilityRate) {
@@ -1263,15 +1261,14 @@ dispatch_automatic_front_of_meter_t::dispatch_automatic_front_of_meter_t(
 		m_cycleCost = battCycleCost;
 	}
 	
-	setup_cost_vector(ppa_weekday_schedule, ppa_weekend_schedule);
+	setup_cost_forecast_vector();
 }
 dispatch_automatic_front_of_meter_t::~dispatch_automatic_front_of_meter_t(){ /* NOTHING TO DO */}
 void dispatch_automatic_front_of_meter_t::init_with_pointer(const dispatch_automatic_front_of_meter_t* tmp)
 {
 	_look_ahead_hours = tmp->_look_ahead_hours;
 	_inverter_paco = tmp->_inverter_paco;
-	_ppa_factors = tmp->_ppa_factors;
-	_ppa_cost_vector = tmp->_ppa_cost_vector;
+	_ppa_price_rt_series = tmp->_ppa_price_rt_series;
 
 	m_battReplacementCostPerKWH = tmp->m_battReplacementCostPerKWH;
 	m_etaPVCharge = tmp->m_etaPVCharge;
@@ -1279,29 +1276,22 @@ void dispatch_automatic_front_of_meter_t::init_with_pointer(const dispatch_autom
 	m_etaDischarge = tmp->m_etaDischarge;
 }
 
-void dispatch_automatic_front_of_meter_t::setup_cost_vector(util::matrix_t<size_t> ppa_weekday_schedule, util::matrix_t<size_t> ppa_weekend_schedule)
+void dispatch_automatic_front_of_meter_t::setup_cost_forecast_vector()
 {
-	_ppa_cost_vector.clear();
-	_ppa_cost_vector.reserve(8760);
-	size_t month, hour, iprofile;
-	double cost;
+	std::vector<double> ppa_price_series;
+	ppa_price_series.reserve(8760);
 
+	// add elements at beginning, so our forecast is looking at yesterday's prices
 	if (_mode == dispatch_t::FOM_LOOK_BEHIND) {
 		for (size_t i = 0; i != _look_ahead_hours; i++)
-			_ppa_cost_vector.push_back(0);
+			ppa_price_series.push_back(0);
 	}
 
-	for (size_t hour_of_year = 0; hour_of_year != 8760 + _look_ahead_hours; hour_of_year++)
-	{
-		util::month_hour(hour_of_year % 8760, month, hour);
-		if (util::weekday(hour_of_year))
-			iprofile = ppa_weekday_schedule(month - 1, hour - 1);
-		else
-			iprofile = ppa_weekend_schedule(month - 1, hour - 1);
-
-		cost = _ppa_factors[iprofile - 1];
-		_ppa_cost_vector.push_back(cost);
+	// add elements at the end, so we have forecast information at end of year
+	for (size_t hour_of_year = 0; hour_of_year != 8760 + _look_ahead_hours; hour_of_year++){
+		ppa_price_series.push_back(_ppa_price_rt_series[hour_of_year % 8760]);
 	}
+	_ppa_price_rt_series = ppa_price_series;
 }
 
 // deep copy from dispatch to this
@@ -1360,8 +1350,8 @@ void dispatch_automatic_front_of_meter_t::update_dispatch(size_t hour_of_year, s
 			costToCycle();
 			 
 			// Compute forecast variables which don't change from year to year
-			auto max_ppa_cost = std::max_element(_ppa_cost_vector.begin() + hour_of_year, _ppa_cost_vector.begin() + hour_of_year + _look_ahead_hours);
-			double ppa_cost = _ppa_cost_vector[hour_of_year];
+			auto max_ppa_cost = std::max_element(_ppa_price_rt_series.begin() + hour_of_year, _ppa_price_rt_series.begin() + hour_of_year + _look_ahead_hours);
+			double ppa_cost = _ppa_price_rt_series[hour_of_year];
 
 			/*! Cost to purchase electricity from the utility */
 			double usage_cost = ppa_cost;

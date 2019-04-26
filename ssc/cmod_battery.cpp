@@ -182,9 +182,11 @@ var_info vtab_battery_inputs[] = {
 
 	// PPA financial inputs
 	{ SSC_INPUT,        SSC_NUMBER,     "ppa_price_input",		                        "PPA Price Input",	                                        "",      "",                  "Time of Delivery", "en_batt=1&batt_meter_position=1&batt_dispatch_choice=2"   "",          "" },
-	{ SSC_INPUT,        SSC_ARRAY,      "dispatch_tod_factors",		                    "TOD factors for periods 1-9",	                            "",      "",                  "Time of Delivery", "en_batt=1&batt_meter_position=1&batt_dispatch_choice=2"   "",          "" },
-	{ SSC_INPUT,        SSC_MATRIX,     "dispatch_sched_weekday",                       "Diurnal weekday TOD periods",                              "1..9",  "12 x 24 matrix",    "Time of Delivery", "en_batt=1&batt_meter_position=1&batt_dispatch_choice=2",  "",          "" },
-	{ SSC_INPUT,        SSC_MATRIX,     "dispatch_sched_weekend",                       "Diurnal weekend TOD periods",                              "1..9",  "12 x 24 matrix",    "Time of Delivery", "en_batt=1&batt_meter_position=1&batt_dispatch_choice=2",  "",          "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ppa_multiplier_model",                         "PPA multiplier model",                                    "0/1",    "0=diurnal,1=timestep","Time of Delivery", "?=0",                                                  "INTEGER,MIN=0", "" },
+	{ SSC_INPUT,        SSC_ARRAY,      "dispatch_factors_ts",                          "Dispatch payment factor time step",                        "",      "",                  "Time of Delivery", "en_batt=1&batt_meter_position=1&batt_dispatch_choice=2&ppa_multiplier_model=1", "", "" },
+	{ SSC_INPUT,        SSC_ARRAY,      "dispatch_tod_factors",		                    "TOD factors for periods 1-9",	                            "",      "",                  "Time of Delivery", "en_batt=1&batt_meter_position=1&batt_dispatch_choice=2&ppa_multiplier_model=0"   "",          "" },
+	{ SSC_INPUT,        SSC_MATRIX,     "dispatch_sched_weekday",                       "Diurnal weekday TOD periods",                              "1..9",  "12 x 24 matrix",    "Time of Delivery", "en_batt=1&batt_meter_position=1&batt_dispatch_choice=2&ppa_multiplier_model=0",  "",          "" },
+	{ SSC_INPUT,        SSC_MATRIX,     "dispatch_sched_weekend",                       "Diurnal weekend TOD periods",                              "1..9",  "12 x 24 matrix",    "Time of Delivery", "en_batt=1&batt_meter_position=1&batt_dispatch_choice=2&ppa_multiplier_model=0",  "",          "" },
 
 	var_info_invalid
 };
@@ -361,11 +363,20 @@ battstor::battstor(compute_module &cm, bool setup_model, size_t nrec, double dt_
 				batt_vars->pv_clipping_forecast = cm.as_vector_double("batt_pv_clipping_forecast");
 				batt_vars->pv_dc_power_forecast = cm.as_vector_double("batt_pv_dc_forecast");
 				double ppa_price = cm.as_double("ppa_price_input");
-				batt_vars->ppa_factors = cm.as_vector_double("dispatch_tod_factors");
-				for (size_t i = 0; i != batt_vars->ppa_factors.size(); i++)
-					batt_vars->ppa_factors[i] *= ppa_price;
-				batt_vars->ppa_weekday_schedule = cm.as_matrix_unsigned_long("dispatch_sched_weekday");
-				batt_vars->ppa_weekend_schedule = cm.as_matrix_unsigned_long("dispatch_sched_weekend");
+				int ppa_multiplier_mode = cm.as_integer("ppa_multiplier_model");
+
+				if (ppa_multiplier_mode == 0) {
+					batt_vars->ppa_price_series_dollar_per_kwh = flatten_diurnal(
+						cm.as_matrix_unsigned_long("dispatch_sched_weekday"), 
+						cm.as_matrix_unsigned_long("dispatch_sched_weekend"), 
+						cm.as_vector_double("dispatch_tod_factors"), ppa_price);
+				}
+				else {
+					batt_vars->ppa_price_series_dollar_per_kwh = cm.as_vector_double("dispatch_factors_ts");
+					for (size_t i = 0; i < batt_vars->ppa_price_series_dollar_per_kwh.size(); i++) {
+						batt_vars->ppa_price_series_dollar_per_kwh[i] *= ppa_price;
+					}
+				}
 
 				// For automated front of meter with electricity rates
 				batt_vars->ec_rate_defined = false;
@@ -862,7 +873,7 @@ battstor::battstor(compute_module &cm, bool setup_model, size_t nrec, double dt_
 			batt_vars->batt_dispatch_auto_can_charge, batt_vars->batt_dispatch_auto_can_clipcharge, batt_vars->batt_dispatch_auto_can_gridcharge,
 			batt_vars->inverter_paco, batt_vars->batt_cost_per_kwh,
 			batt_vars->batt_cycle_cost_choice, batt_vars->batt_cycle_cost,
-			batt_vars->ppa_factors, batt_vars->ppa_weekday_schedule, batt_vars->ppa_weekend_schedule, utilityRate,
+			batt_vars->ppa_price_series_dollar_per_kwh, utilityRate,
 			batt_vars->batt_dc_dc_bms_efficiency, efficiencyCombined , efficiencyCombined);
 
 		if (batt_vars->batt_dispatch == dispatch_t::CUSTOM_DISPATCH)

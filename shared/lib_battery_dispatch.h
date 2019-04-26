@@ -566,9 +566,7 @@ public:
 		double battReplacementCostPerkWh,
 		int battCycleCostChoice,
 		double battCycleCost,
-		std::vector<double> ppa_factors,
-		util::matrix_t<size_t> ppa_weekday_schedule,
-		util::matrix_t<size_t> ppa_weekend_schedule,
+		std::vector<double> ppa_price_series_dollar_per_kwh,
 		UtilityRate * utilityRate,
 		double etaPVCharge,
 		double etaGridCharge,
@@ -607,7 +605,7 @@ public:
 protected:
 	
 	void init_with_pointer(const dispatch_automatic_front_of_meter_t* tmp);
-	void setup_cost_vector(util::matrix_t<size_t> ppa_weekday_schedule, util::matrix_t<size_t> ppa_weekend_schedule);
+	void setup_cost_forecast_vector();
 
 	/*! Full clipping loss due to AC power limits vector */
 	double_vec _P_cliploss_dc;
@@ -615,9 +613,8 @@ protected:
 	/*! Inverter AC power limit */
 	double _inverter_paco;
 
-	/*! PPA cost and time-of-delivery factors */
-	std::vector<double> _ppa_factors;
-	std::vector<double> _ppa_cost_vector;
+	/*! Market real time and forecast prices */
+	std::vector<double> _ppa_price_rt_series;
 
 	/*! Utility rate information */
 	std::unique_ptr<UtilityRateCalculator> m_utilityRateCalculator;
