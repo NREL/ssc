@@ -137,3 +137,19 @@ TEST_F(libTimeTests, TestSingleyearDownsample)
 	}
 }
 
+// Test diurnal to flat
+TEST_F(libTimeTests, TestDiurnalToFlat)
+{
+	std::vector<double> flat = flatten_diurnal(schedule, schedule, sched_values, multiplier);
+
+	EXPECT_EQ(flat.size(), util::hours_per_year);
+	for (size_t h = 0; h < flat.size(); h++) {
+		if (h % 24 > 11 && h % 24 < 19) {
+			EXPECT_NEAR(flat[h], 0.6, 0.0001);
+		}
+		else {
+			EXPECT_NEAR(flat[h], 0.2, 0.0001);
+		}
+	}
+
+}
