@@ -126,7 +126,7 @@ public:
 		double m_T_amb_des;				//[K] Design point ambient temperature
 		double m_elevation;				//[m] Elevation (used to calculate ambient pressure)
 
-		int m_is_recomp_ok;					//[-] 1 = yes, 0 = no, other = invalid
+		double m_is_recomp_ok;          //[-] 1 = Yes, 0 = simple cycle only, < 0 = fix f_recomp to abs(input)
 
 		int m_des_objective_type;			//[2] = min phx deltat then max eta, [else] max eta
 		double m_min_phx_deltaT;			//[C]
@@ -148,11 +148,10 @@ public:
 				m_eta_mc = m_eta_rc = m_eta_pc = m_eta_t = m_P_high_limit =
 				m_tol = m_opt_tol = m_N_turbine =
 				m_frac_fan_power = m_deltaP_cooler_frac = m_T_amb_des = m_elevation =
+                m_is_recomp_ok =
 				m_PR_mc_guess = std::numeric_limits<double>::quiet_NaN();
 
 			m_N_sub_hxrs = -1;
-
-			m_is_recomp_ok = -1;
 
             // Recuperator design target codes
             m_LTR_target_code = 1;      // default to target conductance
@@ -226,7 +225,7 @@ public:
 		double m_T_amb_des;				//[K] Design point ambient temperature
 		double m_elevation;				//[m] Elevation (used to calculate ambient pressure)
 
-		int m_is_recomp_ok;					//[-] 1 = yes, 0 = no, other = invalid
+		double m_is_recomp_ok;			//[-] 1 = Yes, 0 = simple cycle only, < 0 = fix f_recomp to abs(input)
 
 		bool m_fixed_P_mc_out;			//[-] if true, P_mc_out is fixed at 'm_P_high_limit'
 
@@ -249,6 +248,7 @@ public:
                 m_HTR_UA = m_HTR_min_dT = m_HTR_eff_target = m_HTR_eff_max =
 				m_eta_mc = m_eta_rc = m_eta_pc = m_eta_t = m_P_high_limit = m_tol = m_N_turbine = 
 				m_frac_fan_power = m_deltaP_cooler_frac = m_T_amb_des = m_elevation =
+                m_is_recomp_ok =
 				m_fixed_PR_mc = std::numeric_limits<double>::quiet_NaN();
 			m_N_sub_hxrs = -1;
 
@@ -258,8 +258,6 @@ public:
 
 			// Air cooler default
 			m_is_des_air_cooler = true;
-
-			m_is_recomp_ok = 1;
 
 			m_fixed_PR_mc = false;		//[-] If false, then should default to optimizing this parameter
 			m_fixed_P_mc_out = false;	//[-] If fasle, then should default to optimizing this parameter

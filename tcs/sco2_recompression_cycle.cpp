@@ -2647,10 +2647,10 @@ int C_RecompCycle::auto_opt_design(S_auto_opt_design_parameters & auto_opt_des_p
 void C_RecompCycle::auto_opt_design_core(int & error_code)
 {
 	// Check that simple/recomp flag is set
-	if( ms_auto_opt_des_par.m_is_recomp_ok != 0 && ms_auto_opt_des_par.m_is_recomp_ok != 1 )
+	if(ms_auto_opt_des_par.m_is_recomp_ok < -1.0 || (ms_auto_opt_des_par.m_is_recomp_ok > 0 && ms_auto_opt_des_par.m_is_recomp_ok != 1.0) )
 	{
 		throw(C_csp_exception("C_RecompCycle::auto_opt_design_core(...) requires that ms_auto_opt_des_par.m_is_recomp_ok"
-				"is either 0 (simple cycle only) or 1 (recomp allowed)\n"));
+				"is either between -1 and 0 (fixed recompression fraction) or equal to 1 (recomp allowed)\n"));
 	}
 
 	// map 'auto_opt_des_par_in' to 'ms_auto_opt_des_par'
@@ -2715,7 +2715,7 @@ void C_RecompCycle::auto_opt_design_core(int & error_code)
 		PR_mc_guess = ms_des_par_auto_opt.m_P_mc_out / ms_des_par_auto_opt.m_P_mc_in;
 	}
 
-	if( ms_auto_opt_des_par.m_is_recomp_ok )
+	if( ms_auto_opt_des_par.m_is_recomp_ok != 0 )
 	{
 		// Complete 'ms_opt_des_par' for recompression cycle
 		ms_opt_des_par.m_P_mc_out_guess = ms_auto_opt_des_par.m_P_high_limit;
@@ -2730,9 +2730,19 @@ void C_RecompCycle::auto_opt_design_core(int & error_code)
 			ms_opt_des_par.m_PR_mc_guess = PR_mc_guess;		//[-]
 		}
 
-		ms_opt_des_par.m_recomp_frac_guess = 0.3;
-		ms_opt_des_par.m_fixed_recomp_frac = false;
-		ms_opt_des_par.m_LT_frac_guess = 0.5;
+        // Is recompression fraction fixed or optimized?
+        if (ms_auto_opt_des_par.m_is_recomp_ok < 0.0)
+        {   // fixed
+            ms_opt_des_par.m_recomp_frac_guess = fabs(ms_auto_opt_des_par.m_is_recomp_ok);
+            ms_opt_des_par.m_fixed_recomp_frac = true;
+        }
+        else
+        {   // optimized
+            ms_opt_des_par.m_recomp_frac_guess = 0.3;
+            ms_opt_des_par.m_fixed_recomp_frac = false;
+        }
+
+        ms_opt_des_par.m_LT_frac_guess = 0.5;
 		ms_opt_des_par.m_fixed_LT_frac = false;
 
         if (ms_opt_des_par.m_LTR_target_code != NS_HX_counterflow_eqs::OPTIMIZE_UA || ms_opt_des_par.m_HTR_target_code != NS_HX_counterflow_eqs::OPTIMIZE_UA)
@@ -2751,33 +2761,39 @@ void C_RecompCycle::auto_opt_design_core(int & error_code)
 		}
 	}
 
-	// Complete 'ms_opt_des_par' for simple cycle
-	ms_opt_des_par.m_P_mc_out_guess = ms_auto_opt_des_par.m_P_high_limit;
-	ms_opt_des_par.m_fixed_P_mc_out = true;
+    // Is recompression fraction fixed or optimized?
+    // If fixed, then we don't need to try simple cycle
+    if (ms_auto_opt_des_par.m_is_recomp_ok == 1.0 || ms_auto_opt_des_par.m_is_recomp_ok == 0.0)
+    {
 
-	if (ms_opt_des_par.m_fixed_PR_mc)
-	{
-		ms_opt_des_par.m_PR_mc_guess = ms_auto_opt_des_par.m_PR_mc_guess;	//[-]
-	}
-	else
-	{
-		ms_opt_des_par.m_PR_mc_guess = PR_mc_guess;		//[-]
-	}
+        // Complete 'ms_opt_des_par' for simple cycle
+        ms_opt_des_par.m_P_mc_out_guess = ms_auto_opt_des_par.m_P_high_limit;
+        ms_opt_des_par.m_fixed_P_mc_out = true;
 
-	ms_opt_des_par.m_recomp_frac_guess = 0.0;
-	ms_opt_des_par.m_fixed_recomp_frac = true;
-	ms_opt_des_par.m_LT_frac_guess = 1.0;
-	ms_opt_des_par.m_fixed_LT_frac = true;
+        if (ms_opt_des_par.m_fixed_PR_mc)
+        {
+            ms_opt_des_par.m_PR_mc_guess = ms_auto_opt_des_par.m_PR_mc_guess;	//[-]
+        }
+        else
+        {
+            ms_opt_des_par.m_PR_mc_guess = PR_mc_guess;		//[-]
+        }
 
-	int s_error_code = 0;
+        ms_opt_des_par.m_recomp_frac_guess = 0.0;
+        ms_opt_des_par.m_fixed_recomp_frac = true;
+        ms_opt_des_par.m_LT_frac_guess = 1.0;
+        ms_opt_des_par.m_fixed_LT_frac = true;
 
-	opt_design_core(s_error_code);
+        int s_error_code = 0;
 
-	if( s_error_code == 0 && m_objective_metric_opt > m_objective_metric_auto_opt )
-	{
-		ms_des_par_auto_opt = ms_des_par_optimal;
-		m_objective_metric_auto_opt = m_objective_metric_opt;
-	}
+        opt_design_core(s_error_code);
+
+        if (s_error_code == 0 && m_objective_metric_opt > m_objective_metric_auto_opt)
+        {
+            ms_des_par_auto_opt = ms_des_par_optimal;
+            m_objective_metric_auto_opt = m_objective_metric_opt;
+        }
+    }
 
 	ms_des_par = ms_des_par_auto_opt;
 
@@ -2851,12 +2867,12 @@ int C_RecompCycle::auto_opt_design_hit_eta(S_auto_opt_design_hit_eta_parameters 
 
 	error_msg = "";
 
-	// Check cycle parameter values are reasonable
-	if( ms_auto_opt_des_par.m_is_recomp_ok != 0 && ms_auto_opt_des_par.m_is_recomp_ok != 1 )
-	{
-		throw(C_csp_exception("C_RecompCycle::auto_opt_design_core(...) requires that ms_auto_opt_des_par.m_is_recomp_ok"
-			"is either 0 (simple cycle only) or 1 (recomp allowed)\n"));
-	}
+    // Check that simple/recomp flag is set
+    if (ms_auto_opt_des_par.m_is_recomp_ok < -1.0 || (ms_auto_opt_des_par.m_is_recomp_ok > 0 && ms_auto_opt_des_par.m_is_recomp_ok != 1.0))
+    {
+        throw(C_csp_exception("C_RecompCycle::auto_opt_design_core(...) requires that ms_auto_opt_des_par.m_is_recomp_ok"
+            "is either between -1 and 0 (fixed recompression fraction) or equal to 1 (recomp allowed)\n"));
+    }
 		// Can't operate compressore in 2-phase region
 	if( ms_auto_opt_des_par.m_T_mc_in <= N_co2_props::T_crit )
 	{
@@ -3125,7 +3141,8 @@ double C_RecompCycle::opt_eta_fixed_P_high(double P_high_opt /*kPa*/)
 		PR_mc_guess = P_high_opt / P_pseudocritical_1(ms_opt_des_par.m_T_mc_in);
 		
 	double local_eta_rc = 0.0;
-	if( ms_auto_opt_des_par.m_is_recomp_ok )
+    double local_eta_s = 0.0;
+	if( ms_auto_opt_des_par.m_is_recomp_ok != 0 )
 	{		 
 		// Complete 'ms_opt_des_par' for recompression cycle
 		ms_opt_des_par.m_P_mc_out_guess = P_high_opt;
@@ -3143,8 +3160,18 @@ double C_RecompCycle::opt_eta_fixed_P_high(double P_high_opt /*kPa*/)
 			ms_opt_des_par.m_PR_mc_guess = PR_mc_guess;		//[-]
 		}
 
-		ms_opt_des_par.m_recomp_frac_guess = 0.3;
-		ms_opt_des_par.m_fixed_recomp_frac = false;
+        // Is the recompression fraction fixed or optimized?
+        if (ms_auto_opt_des_par.m_is_recomp_ok < 0.0)
+        {   // fixed
+            ms_opt_des_par.m_recomp_frac_guess = fabs(ms_auto_opt_des_par.m_is_recomp_ok);
+            ms_opt_des_par.m_fixed_recomp_frac = true;
+        }
+        else
+        {   // optimized
+            ms_opt_des_par.m_recomp_frac_guess = 0.3;
+            ms_opt_des_par.m_fixed_recomp_frac = false;
+        }
+		
 		ms_opt_des_par.m_LT_frac_guess = 0.5;
 		ms_opt_des_par.m_fixed_LT_frac = false;
 
@@ -3166,39 +3193,43 @@ double C_RecompCycle::opt_eta_fixed_P_high(double P_high_opt /*kPa*/)
 		}
 	}
 
-	// Complete 'ms_opt_des_par' for simple cycle
-	ms_opt_des_par.m_P_mc_out_guess = P_high_opt;
-	ms_opt_des_par.m_fixed_P_mc_out = true;
-	
-	//ms_opt_des_par.m_PR_mc_guess = PR_mc_guess;
-	//ms_opt_des_par.m_fixed_PR_mc = false;
-	ms_opt_des_par.m_fixed_PR_mc = ms_auto_opt_des_par.m_fixed_PR_mc;	//[-]
-	if (ms_opt_des_par.m_fixed_PR_mc)
-	{
-		ms_opt_des_par.m_PR_mc_guess = ms_auto_opt_des_par.m_PR_mc_guess;	//[-]
-	}
-	else
-	{
-		ms_opt_des_par.m_PR_mc_guess = PR_mc_guess;		//[-]
-	}
+    // Is recompression fraction fixed or optimized?
+    // If fixed, then we don't need to try simple cycle
+    if (ms_auto_opt_des_par.m_is_recomp_ok == 1.0 || ms_auto_opt_des_par.m_is_recomp_ok == 0.0)
+    {
+        // Complete 'ms_opt_des_par' for simple cycle
+        ms_opt_des_par.m_P_mc_out_guess = P_high_opt;
+        ms_opt_des_par.m_fixed_P_mc_out = true;
 
-	ms_opt_des_par.m_recomp_frac_guess = 0.0;
-	ms_opt_des_par.m_fixed_recomp_frac = true;
-	ms_opt_des_par.m_LT_frac_guess = 1.0;
-	ms_opt_des_par.m_fixed_LT_frac = true;
+        //ms_opt_des_par.m_PR_mc_guess = PR_mc_guess;
+        //ms_opt_des_par.m_fixed_PR_mc = false;
+        ms_opt_des_par.m_fixed_PR_mc = ms_auto_opt_des_par.m_fixed_PR_mc;	//[-]
+        if (ms_opt_des_par.m_fixed_PR_mc)
+        {
+            ms_opt_des_par.m_PR_mc_guess = ms_auto_opt_des_par.m_PR_mc_guess;	//[-]
+        }
+        else
+        {
+            ms_opt_des_par.m_PR_mc_guess = PR_mc_guess;		//[-]
+        }
 
-	int s_error_code = 0;
-	opt_design_core(s_error_code);
+        ms_opt_des_par.m_recomp_frac_guess = 0.0;
+        ms_opt_des_par.m_fixed_recomp_frac = true;
+        ms_opt_des_par.m_LT_frac_guess = 1.0;
+        ms_opt_des_par.m_fixed_LT_frac = true;
 
-	double local_eta_s = 0.0;
-	if( s_error_code == 0 )
-		local_eta_s = m_objective_metric_opt;
+        int s_error_code = 0;
+        opt_design_core(s_error_code);
 
-	if(s_error_code == 0 && m_objective_metric_opt > m_objective_metric_auto_opt)
-	{
-		ms_des_par_auto_opt = ms_des_par_optimal;
-		m_objective_metric_auto_opt = m_objective_metric_opt;
-	}
+        if (s_error_code == 0)
+            local_eta_s = m_objective_metric_opt;
+
+        if (s_error_code == 0 && m_objective_metric_opt > m_objective_metric_auto_opt)
+        {
+            ms_des_par_auto_opt = ms_des_par_optimal;
+            m_objective_metric_auto_opt = m_objective_metric_opt;
+        }
+    }
 
 	return -max(local_eta_rc, local_eta_s);
 

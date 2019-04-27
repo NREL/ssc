@@ -111,7 +111,7 @@ public:
 		double m_tol;						//[-] Convergence tolerance
 		double m_opt_tol;					//[-] Optimization tolerance
 		double m_N_turbine;					//[rpm] Turbine shaft speed (negative values link turbine to compressor)
-		int m_is_recomp_ok;					//[-] 1 = yes, 0 = no, other = invalid
+		double m_is_recomp_ok;				//[-] 1 = Yes, 0 = simple cycle only, < 0 = fix f_recomp to abs(input)
 	
 		int m_des_objective_type;			//[2] = min phx deltat then max eta, [else] max eta
 		double m_min_phx_deltaT;			//[C]
@@ -144,8 +144,6 @@ public:
 			m_des_objective_type = 1;
 			m_min_phx_deltaT = 0.0;		//[C]
 	
-			m_is_recomp_ok = -1;
-	
             // Recuperator design target codes
             m_LTR_target_code = 1;      // default to target conductance
             m_HTR_target_code = 1;      // default to target conductance
@@ -157,6 +155,7 @@ public:
 	
 				m_eta_mc = m_eta_rc = m_eta_pc = m_eta_t =
 				m_P_high_limit = m_tol = m_opt_tol = m_N_turbine =
+                m_is_recomp_ok = 
 	
 				m_PR_mc_guess =
 	

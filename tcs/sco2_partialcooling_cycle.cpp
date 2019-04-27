@@ -475,8 +475,17 @@ double C_PartialCooling_Cycle::opt_eta_fixed_P_high(double P_high_opt /*kPa*/)
 	ms_opt_des_par.m_fixed_f_PR_mc = false;
 	ms_opt_des_par.m_f_PR_mc_guess = (25. - 8.5) / (25. - 6.5);		//[-] Guess could be improved...
 
-	ms_opt_des_par.m_recomp_frac_guess = 0.25;	//[-]
-	ms_opt_des_par.m_fixed_recomp_frac = false;
+    // Is the recompression fraction fixed or optimized?
+    if (ms_auto_opt_des_par.m_is_recomp_ok < 0.0)
+    {
+        ms_opt_des_par.m_recomp_frac_guess = fabs(ms_auto_opt_des_par.m_is_recomp_ok);  //[-]
+        ms_opt_des_par.m_fixed_recomp_frac = true;
+    }
+    else
+    {
+        ms_opt_des_par.m_recomp_frac_guess = 0.25;	//[-]
+        ms_opt_des_par.m_fixed_recomp_frac = false;
+    }	
 
 	ms_opt_des_par.m_LTR_frac_guess = 0.5;		//[-]
 	ms_opt_des_par.m_fixed_LTR_frac = false;
@@ -939,6 +948,13 @@ int C_PartialCooling_Cycle::auto_opt_design(S_auto_opt_design_parameters & auto_
 
 int C_PartialCooling_Cycle::auto_opt_design_core()
 {
+    // Check that simple/recomp flag is set
+    if (ms_auto_opt_des_par.m_is_recomp_ok < -1.0 || (ms_auto_opt_des_par.m_is_recomp_ok > 0 && ms_auto_opt_des_par.m_is_recomp_ok != 1.0))
+    {
+        throw(C_csp_exception("C_PartialCooling_Cycle::auto_opt_design_core(...) requires that ms_auto_opt_des_par.m_is_recomp_ok"
+            "is either between -1 and 0 (fixed recompression fraction) or equal to 1 (recomp allowed)\n"));
+    }
+
 	// map 'auto_opt_des_par_in' to 'ms_auto_opt_des_par'
 	ms_opt_des_par.m_W_dot_net = ms_auto_opt_des_par.m_W_dot_net;	//[kWe]
 	ms_opt_des_par.m_T_mc_in = ms_auto_opt_des_par.m_T_mc_in;		//[K]
@@ -1017,8 +1033,17 @@ int C_PartialCooling_Cycle::auto_opt_design_core()
 	ms_opt_des_par.m_fixed_f_PR_mc = false;
 	ms_opt_des_par.m_f_PR_mc_guess = (25. - 8.5) / (25. - 6.5);		//[-] Guess could be improved...
 
-	ms_opt_des_par.m_recomp_frac_guess = 0.25;	//[-]
-	ms_opt_des_par.m_fixed_recomp_frac = false;
+    // Is recompression fraction fixed or optimized?
+    if (ms_auto_opt_des_par.m_is_recomp_ok < 0.0)
+    {
+        ms_opt_des_par.m_recomp_frac_guess = fabs(ms_auto_opt_des_par.m_is_recomp_ok);  //[-]
+        ms_opt_des_par.m_fixed_recomp_frac = true;  
+    }
+    else
+    {
+        ms_opt_des_par.m_recomp_frac_guess = 0.25;	//[-]
+        ms_opt_des_par.m_fixed_recomp_frac = false;
+    }	
 
 	ms_opt_des_par.m_LTR_frac_guess = 0.5;		//[-]
 	ms_opt_des_par.m_fixed_LTR_frac = false;
@@ -1110,10 +1135,10 @@ int C_PartialCooling_Cycle::auto_opt_design_hit_eta(S_auto_opt_design_hit_eta_pa
 	error_msg = "";
 
 	// Check cycle parameter values are reasonable
-	if (ms_auto_opt_des_par.m_is_recomp_ok != 1)
-	{
+    if (ms_auto_opt_des_par.m_is_recomp_ok < -1.0 || (ms_auto_opt_des_par.m_is_recomp_ok > 0 && ms_auto_opt_des_par.m_is_recomp_ok != 1.0))
+        {
 		throw(C_csp_exception("C_PartialCooling_Cyclee::auto_opt_design_core(...) requires that ms_auto_opt_des_par.m_is_recomp_ok"
-			"is either 1 so that the cycle contains a recompressor\n"));
+            "is either between -1 and 0 (fixed recompression fraction) or equal to 1 (recomp allowed)\n"));
 	}
 	// Can't operate compressore in 2-phase region
 	if (ms_auto_opt_des_par.m_T_mc_in <= N_co2_props::T_crit)
