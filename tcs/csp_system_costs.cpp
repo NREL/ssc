@@ -54,28 +54,37 @@
 
 void C_mspt_system_costs::check_parameters_are_set()
 {
-	if( ms_par.A_sf_refl != ms_par.A_sf_refl ||
+	if (ms_par.A_sf_refl != ms_par.A_sf_refl ||
 		ms_par.site_improv_spec_cost != ms_par.site_improv_spec_cost ||
 		ms_par.heliostat_spec_cost != ms_par.heliostat_spec_cost ||
 		ms_par.heliostat_fixed_cost != ms_par.heliostat_fixed_cost ||
-		
+
 		ms_par.h_tower != ms_par.h_tower ||
 		ms_par.h_rec != ms_par.h_rec ||
 		ms_par.h_helio != ms_par.h_helio ||
 		ms_par.tower_fixed_cost != ms_par.tower_fixed_cost ||
 		ms_par.tower_cost_scaling_exp != ms_par.tower_cost_scaling_exp ||
-		
+
 		ms_par.A_rec != ms_par.A_rec ||
 		ms_par.rec_ref_cost != ms_par.rec_ref_cost ||
 		ms_par.A_rec_ref != ms_par.A_rec_ref ||
 		ms_par.rec_cost_scaling_exp != ms_par.rec_cost_scaling_exp ||
-		
+
 		ms_par.Q_storage != ms_par.Q_storage ||
 		ms_par.tes_spec_cost != ms_par.tes_spec_cost ||
-		
+
 		ms_par.W_dot_design != ms_par.W_dot_design ||
 		ms_par.power_cycle_spec_cost != ms_par.power_cycle_spec_cost ||
-		
+
+		ms_par.radfield_area != ms_par.radfield_area ||
+		ms_par.coldstorage_vol != ms_par.coldstorage_vol ||
+		ms_par.radfield_vol != ms_par.radfield_vol ||
+		ms_par.rad_unitcost != ms_par.rad_unitcost ||
+		ms_par.rad_installcost != ms_par.rad_installcost ||
+		ms_par.rad_fluidcost != ms_par.rad_fluidcost ||
+		ms_par.rad_volmulti != ms_par.rad_volmulti ||
+		ms_par.coldstorage_unitcost != ms_par.coldstorage_unitcost ||
+
 		ms_par.bop_spec_cost != ms_par.bop_spec_cost ||
 		
 		ms_par.fossil_backup_spec_cost != ms_par.fossil_backup_spec_cost ||
@@ -126,6 +135,15 @@ void C_mspt_system_costs::calculate_costs()
 	ms_out.power_cycle_cost = 
 		N_mspt::power_cycle_cost(ms_par.W_dot_design, ms_par.power_cycle_spec_cost);
 
+	ms_out.rad_field_totcost =
+		N_mspt::rad_field_totcost(ms_par.radfield_area, ms_par.rad_unitcost,ms_par.rad_installcost);
+
+	ms_out.rad_fluid_totcost =
+		N_mspt::rad_fluid_totcost( ms_par.radfield_vol,  ms_par.rad_fluidcost, ms_par.rad_volmulti);
+
+	ms_out.rad_storage_totcost =
+		N_mspt::rad_storage_totcost(ms_par.coldstorage_vol, ms_par.coldstorage_unitcost);
+
 	ms_out.bop_cost = 
 		N_mspt::bop_cost(ms_par.W_dot_design, ms_par.bop_spec_cost);
 
@@ -140,6 +158,9 @@ void C_mspt_system_costs::calculate_costs()
 			ms_out.receiver_cost,
 			ms_out.tes_cost,
 			ms_out.power_cycle_cost,
+			ms_out.rad_field_totcost,
+			ms_out.rad_fluid_totcost,
+			ms_out.rad_storage_totcost,
 			ms_out.bop_cost,
 			ms_out.fossil_backup_cost);
 
@@ -202,6 +223,21 @@ double N_mspt::power_cycle_cost(double W_dot_design /*MWe*/, double power_cycle_
 	return W_dot_design*1.E3*power_cycle_spec_cost;		//[$]
 }
 
+double N_mspt::rad_field_totcost(double rad_area /*m^2*/, double panelcost /*$/m^2*/, double panelinstallcost /*$/m^2*/)
+{
+	return rad_area * (panelcost + panelinstallcost) ;		//[$]
+}
+
+double N_mspt::rad_fluid_totcost(double rad_vol /*m^3*/, double fluidcost /*$/L*/, double muliplier_volume /*-*/)
+{
+	return rad_vol * 1000 /*1000 L/1 m^3*/ * muliplier_volume /*ratio*/ *fluidcost /*$/L*/;		//[$]
+}
+
+double N_mspt::rad_storage_totcost(double cold_volume /*m^3*/, double storagecost /*$/L*/)
+{
+	return cold_volume * 1000 /*1000 L/1 m^3*/ * storagecost /*$/L*/;		//[$]
+}
+
 double N_mspt::bop_cost(double W_dot_design /*MWe*/, double bop_spec_cost /*$/kWe*/)
 {
 	return W_dot_design*1.E3*bop_spec_cost;				//[$]
@@ -218,6 +254,9 @@ double N_mspt::direct_capital_precontingency_cost(double site_improvement_cost /
 	double receiver_cost /*$*/,
 	double tes_cost /*$*/,
 	double power_cycle_cost /*$*/,
+	double rad_field_totcost /*$*/,
+	double rad_fluid_totcost /*$*/,
+	double rad_storage_totcost /*$*/,
 	double bop_cost /*$*/,
 	double fossil_backup_cost /*$*/)
 {
@@ -227,6 +266,9 @@ double N_mspt::direct_capital_precontingency_cost(double site_improvement_cost /
 		receiver_cost +
 		tes_cost +
 		power_cycle_cost +
+		rad_field_totcost +
+		rad_fluid_totcost +
+		rad_storage_totcost +
 		bop_cost +
 		fossil_backup_cost;	//[$]
 }
