@@ -118,8 +118,8 @@ public:
 	
 		bool m_fixed_P_mc_out;			//[-] if true, P_mc_out is fixed at 'm_P_high_limit'
 		
-		double m_PR_mc_guess;				//[-] Initial guess for ratio of P_mc_out to P_mc_in
-		bool m_fixed_PR_mc;					//[-] if true, ratio of P_mc_out to P_mc_in is fixed at PR_mc_guess
+		double m_PR_HP_to_LP_guess;     //[-] Initial guess for ratio of P_mc_out to P_mc_in
+		bool m_fixed_PR_HP_to_LP;       //[-] if true, ratio of P_mc_out to P_LP_in is fixed at m_PR_HP_to_LP_guess
 	
 		// PHX design parameters
 		// This is a PHX rather than system parameter because we don't know T_CO2_in until cycle model is solved
@@ -157,12 +157,12 @@ public:
 				m_P_high_limit = m_tol = m_opt_tol = m_N_turbine =
                 m_is_recomp_ok = 
 	
-				m_PR_mc_guess =
+				m_PR_HP_to_LP_guess =
 	
 				m_phx_dt_cold_approach = m_frac_fan_power = m_deltaP_cooler_frac =
 				std::numeric_limits<double>::quiet_NaN();
 	
-			m_fixed_PR_mc = false;		//[-] If false, then should default to optimizing this parameter
+			m_fixed_PR_HP_to_LP = false;		//[-] If false, then should default to optimizing this parameter
 			m_fixed_P_mc_out = false;	//[-] If fasle, then should default to optimizing this parameter
 		}
 	};

@@ -863,18 +863,18 @@ int sco2_design_cmod_common(compute_module *cm, C_sco2_recomp_csp & c_sco2_cycle
 	{
 		if (mc_PR_in < 0.0)
 		{
-			sco2_rc_des_par.m_PR_mc_guess = sco2_rc_des_par.m_P_high_limit / (-mc_PR_in * 1.E3);		//[kPa] convert from MPa
+			sco2_rc_des_par.m_PR_HP_to_LP_guess = sco2_rc_des_par.m_P_high_limit / (-mc_PR_in * 1.E3);		//[kPa] convert from MPa
 		}
 		else
 		{
-			sco2_rc_des_par.m_PR_mc_guess = mc_PR_in;			//[-] Pressure Ratio!
+			sco2_rc_des_par.m_PR_HP_to_LP_guess = mc_PR_in;			//[-] Pressure Ratio!
 		}
-		sco2_rc_des_par.m_fixed_PR_mc = true;
+		sco2_rc_des_par.m_fixed_PR_HP_to_LP = true;
 	}
 	else
 	{
-		sco2_rc_des_par.m_PR_mc_guess = std::numeric_limits<double>::quiet_NaN();
-		sco2_rc_des_par.m_fixed_PR_mc = false;
+		sco2_rc_des_par.m_PR_HP_to_LP_guess = std::numeric_limits<double>::quiet_NaN();
+		sco2_rc_des_par.m_fixed_PR_HP_to_LP = false;
 	}
 
         // LTR pressure drops

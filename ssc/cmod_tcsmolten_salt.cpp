@@ -1220,7 +1220,7 @@ public:
 				sco2_rc_csp_par.m_P_high_limit = as_double("P_high_limit")*1.E3;	//[kPa]
 				sco2_rc_csp_par.m_fixed_P_mc_out = false;
 				// Hardcode don't fix pressure ratio
-				sco2_rc_csp_par.m_fixed_PR_mc = false;				
+				sco2_rc_csp_par.m_fixed_PR_HP_to_LP = false;				
 
 				// ****************************************
 				// ****************************************

@@ -2434,9 +2434,9 @@ void C_RecompCycle::opt_design_core(int & error_code)
 		index++;
 	}
 
-	if( !ms_opt_des_par.m_fixed_PR_mc )
+	if( !ms_opt_des_par.m_fixed_PR_HP_to_LP )
 	{
-		x.push_back(ms_opt_des_par.m_PR_mc_guess);
+		x.push_back(ms_opt_des_par.m_PR_HP_to_LP_guess);
 		lb.push_back(0.0001);
 		double PR_max = ms_opt_des_par.m_P_high_limit / 100.0;
 		ub.push_back(PR_max);
@@ -2501,7 +2501,7 @@ void C_RecompCycle::opt_design_core(int & error_code)
 	{
 		// Finish defining ms_des_par based on current 'x' values
 		ms_des_par.m_P_mc_out = ms_opt_des_par.m_P_mc_out_guess;
-		ms_des_par.m_P_mc_in = ms_des_par.m_P_mc_out / ms_opt_des_par.m_PR_mc_guess;
+		ms_des_par.m_P_mc_in = ms_des_par.m_P_mc_out / ms_opt_des_par.m_PR_HP_to_LP_guess;
 		ms_des_par.m_recomp_frac = ms_opt_des_par.m_recomp_frac_guess;
 		
         if (ms_opt_des_par.m_LTR_target_code == NS_HX_counterflow_eqs::OPTIMIZE_UA || ms_opt_des_par.m_HTR_target_code == NS_HX_counterflow_eqs::OPTIMIZE_UA)
@@ -2551,7 +2551,7 @@ double C_RecompCycle::design_cycle_return_objective_metric(const std::vector<dou
 	// Main compressor pressure ratio
 	double PR_mc_local = -999.9;
 	double P_mc_in = -999.9;
-	if( !ms_opt_des_par.m_fixed_PR_mc )
+	if( !ms_opt_des_par.m_fixed_PR_HP_to_LP )
 	{
 		PR_mc_local = x[index];
 		if( PR_mc_local > 50.0 )
@@ -2561,14 +2561,14 @@ double C_RecompCycle::design_cycle_return_objective_metric(const std::vector<dou
 	}
 	else
 	{
-		if (ms_opt_des_par.m_PR_mc_guess >= 0.0)
+		if (ms_opt_des_par.m_PR_HP_to_LP_guess >= 0.0)
 		{
-			PR_mc_local = ms_opt_des_par.m_PR_mc_guess;
+			PR_mc_local = ms_opt_des_par.m_PR_HP_to_LP_guess;
 			P_mc_in = ms_des_par.m_P_mc_out / PR_mc_local;		//[kPa]
 		}
 		else
 		{
-			P_mc_in = fabs(ms_opt_des_par.m_PR_mc_guess);		//[kPa]
+			P_mc_in = fabs(ms_opt_des_par.m_PR_HP_to_LP_guess);		//[kPa]
 		}
 	}
 	
@@ -2695,7 +2695,7 @@ void C_RecompCycle::auto_opt_design_core(int & error_code)
 
 	ms_opt_des_par.m_fixed_P_mc_out = ms_auto_opt_des_par.m_fixed_P_mc_out;		//[-]
 	
-	ms_opt_des_par.m_fixed_PR_mc = ms_auto_opt_des_par.m_fixed_PR_mc;			//[-]
+	ms_opt_des_par.m_fixed_PR_HP_to_LP = ms_auto_opt_des_par.m_fixed_PR_HP_to_LP;			//[-]
 
 	// Outer optimization loop
 	m_objective_metric_auto_opt = 0.0;
@@ -2721,13 +2721,13 @@ void C_RecompCycle::auto_opt_design_core(int & error_code)
 		ms_opt_des_par.m_P_mc_out_guess = ms_auto_opt_des_par.m_P_high_limit;
 		ms_opt_des_par.m_fixed_P_mc_out = true;
 		
-		if (ms_opt_des_par.m_fixed_PR_mc)
+		if (ms_opt_des_par.m_fixed_PR_HP_to_LP)
 		{
-			ms_opt_des_par.m_PR_mc_guess = ms_auto_opt_des_par.m_PR_mc_guess;	//[-]
+			ms_opt_des_par.m_PR_HP_to_LP_guess = ms_auto_opt_des_par.m_PR_HP_to_LP_guess;	//[-]
 		}
 		else
 		{
-			ms_opt_des_par.m_PR_mc_guess = PR_mc_guess;		//[-]
+			ms_opt_des_par.m_PR_HP_to_LP_guess = PR_mc_guess;		//[-]
 		}
 
         // Is recompression fraction fixed or optimized?
@@ -2770,13 +2770,13 @@ void C_RecompCycle::auto_opt_design_core(int & error_code)
         ms_opt_des_par.m_P_mc_out_guess = ms_auto_opt_des_par.m_P_high_limit;
         ms_opt_des_par.m_fixed_P_mc_out = true;
 
-        if (ms_opt_des_par.m_fixed_PR_mc)
+        if (ms_opt_des_par.m_fixed_PR_HP_to_LP)
         {
-            ms_opt_des_par.m_PR_mc_guess = ms_auto_opt_des_par.m_PR_mc_guess;	//[-]
+            ms_opt_des_par.m_PR_HP_to_LP_guess = ms_auto_opt_des_par.m_PR_HP_to_LP_guess;	//[-]
         }
         else
         {
-            ms_opt_des_par.m_PR_mc_guess = PR_mc_guess;		//[-]
+            ms_opt_des_par.m_PR_HP_to_LP_guess = PR_mc_guess;		//[-]
         }
 
         ms_opt_des_par.m_recomp_frac_guess = 0.0;
@@ -2858,8 +2858,8 @@ int C_RecompCycle::auto_opt_design_hit_eta(S_auto_opt_design_hit_eta_parameters 
 
 	ms_auto_opt_des_par.m_fixed_P_mc_out = auto_opt_des_hit_eta_in.m_fixed_P_mc_out;	//[-]
 
-	ms_auto_opt_des_par.m_PR_mc_guess = auto_opt_des_hit_eta_in.m_PR_mc_guess;			//[-] Initial guess for ratio of P_mc_out to P_mc_in
-	ms_auto_opt_des_par.m_fixed_PR_mc = auto_opt_des_hit_eta_in.m_fixed_PR_mc;			//[-] if true, ratio of P_mc_out to P_mc_in is fixed at PR_mc_guess		
+	ms_auto_opt_des_par.m_PR_HP_to_LP_guess = auto_opt_des_hit_eta_in.m_PR_HP_to_LP_guess;			//[-] Initial guess for ratio of P_mc_out to P_mc_in
+	ms_auto_opt_des_par.m_fixed_PR_HP_to_LP = auto_opt_des_hit_eta_in.m_fixed_PR_HP_to_LP;			//[-] if true, ratio of P_mc_out to P_mc_in is fixed at PR_mc_guess		
 
 	// At this point, 'auto_opt_des_hit_eta_in' should only be used to access the targer thermal efficiency: 'm_eta_thermal'
 
@@ -3148,16 +3148,16 @@ double C_RecompCycle::opt_eta_fixed_P_high(double P_high_opt /*kPa*/)
 		ms_opt_des_par.m_P_mc_out_guess = P_high_opt;
 		ms_opt_des_par.m_fixed_P_mc_out = true;
 		
-		//ms_opt_des_par.m_PR_mc_guess = PR_mc_guess;
-		//ms_opt_des_par.m_fixed_PR_mc = false;
-		ms_opt_des_par.m_fixed_PR_mc = ms_auto_opt_des_par.m_fixed_PR_mc;	//[-]
-		if (ms_opt_des_par.m_fixed_PR_mc)
+		//ms_opt_des_par.m_PR_HP_to_LP_guess = PR_mc_guess;
+		//ms_opt_des_par.m_fixed_PR_HP_to_LP = false;
+		ms_opt_des_par.m_fixed_PR_HP_to_LP = ms_auto_opt_des_par.m_fixed_PR_HP_to_LP;	//[-]
+		if (ms_opt_des_par.m_fixed_PR_HP_to_LP)
 		{
-			ms_opt_des_par.m_PR_mc_guess = ms_auto_opt_des_par.m_PR_mc_guess;	//[-]
+			ms_opt_des_par.m_PR_HP_to_LP_guess = ms_auto_opt_des_par.m_PR_HP_to_LP_guess;	//[-]
 		}
 		else
 		{
-			ms_opt_des_par.m_PR_mc_guess = PR_mc_guess;		//[-]
+			ms_opt_des_par.m_PR_HP_to_LP_guess = PR_mc_guess;		//[-]
 		}
 
         // Is the recompression fraction fixed or optimized?
@@ -3201,16 +3201,16 @@ double C_RecompCycle::opt_eta_fixed_P_high(double P_high_opt /*kPa*/)
         ms_opt_des_par.m_P_mc_out_guess = P_high_opt;
         ms_opt_des_par.m_fixed_P_mc_out = true;
 
-        //ms_opt_des_par.m_PR_mc_guess = PR_mc_guess;
-        //ms_opt_des_par.m_fixed_PR_mc = false;
-        ms_opt_des_par.m_fixed_PR_mc = ms_auto_opt_des_par.m_fixed_PR_mc;	//[-]
-        if (ms_opt_des_par.m_fixed_PR_mc)
+        //ms_opt_des_par.m_PR_HP_to_LP_guess = PR_mc_guess;
+        //ms_opt_des_par.m_fixed_PR_HP_to_LP = false;
+        ms_opt_des_par.m_fixed_PR_HP_to_LP = ms_auto_opt_des_par.m_fixed_PR_HP_to_LP;	//[-]
+        if (ms_opt_des_par.m_fixed_PR_HP_to_LP)
         {
-            ms_opt_des_par.m_PR_mc_guess = ms_auto_opt_des_par.m_PR_mc_guess;	//[-]
+            ms_opt_des_par.m_PR_HP_to_LP_guess = ms_auto_opt_des_par.m_PR_HP_to_LP_guess;	//[-]
         }
         else
         {
-            ms_opt_des_par.m_PR_mc_guess = PR_mc_guess;		//[-]
+            ms_opt_des_par.m_PR_HP_to_LP_guess = PR_mc_guess;		//[-]
         }
 
         ms_opt_des_par.m_recomp_frac_guess = 0.0;

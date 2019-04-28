@@ -1000,7 +1000,7 @@ int C_PartialCooling_Cycle::auto_opt_design_core()
 
 	ms_opt_des_par.m_fixed_P_mc_out = ms_auto_opt_des_par.m_fixed_P_mc_out;		//[-]
 	
-	ms_opt_des_par.m_fixed_PR_total = ms_auto_opt_des_par.m_fixed_PR_mc;		//[-]
+	ms_opt_des_par.m_fixed_PR_total = ms_auto_opt_des_par.m_fixed_PR_HP_to_LP;		//[-]
 
 	// Outer optimization loop
 	m_objective_metric_auto_opt = 0.0;
@@ -1023,7 +1023,7 @@ int C_PartialCooling_Cycle::auto_opt_design_core()
 
 	if (ms_opt_des_par.m_fixed_PR_total)
 	{
-		ms_opt_des_par.m_PR_total_guess = ms_auto_opt_des_par.m_PR_mc_guess;	//[-]
+		ms_opt_des_par.m_PR_total_guess = ms_auto_opt_des_par.m_PR_HP_to_LP_guess;	//[-]
 	}
 	else
 	{
@@ -1125,8 +1125,8 @@ int C_PartialCooling_Cycle::auto_opt_design_hit_eta(S_auto_opt_design_hit_eta_pa
 
 	ms_auto_opt_des_par.m_fixed_P_mc_out = auto_opt_des_hit_eta_in.m_fixed_P_mc_out;		//[-]
 	
-	ms_auto_opt_des_par.m_fixed_PR_mc = auto_opt_des_hit_eta_in.m_fixed_PR_mc;			//[-]
-	ms_auto_opt_des_par.m_PR_mc_guess = auto_opt_des_hit_eta_in.m_fixed_PR_mc;		//[-]
+	ms_auto_opt_des_par.m_fixed_PR_HP_to_LP = auto_opt_des_hit_eta_in.m_fixed_PR_HP_to_LP;			//[-]
+	ms_auto_opt_des_par.m_PR_HP_to_LP_guess = auto_opt_des_hit_eta_in.m_fixed_PR_HP_to_LP;		//[-]
 
 	// At this point, 'auto_opt_des_hit_eta_in' should only be used to access the targer thermal efficiency: 'm_eta_thermal'
 

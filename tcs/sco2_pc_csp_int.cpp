@@ -167,8 +167,8 @@ void C_sco2_recomp_csp::design_core()
 
 		ms_cycle_des_par.m_fixed_P_mc_out = ms_des_par.m_fixed_P_mc_out;	//[-]
 
-		ms_cycle_des_par.m_PR_mc_guess = ms_des_par.m_PR_mc_guess;		//[-]
-		ms_cycle_des_par.m_fixed_PR_mc = ms_des_par.m_fixed_PR_mc;		//[-]
+		ms_cycle_des_par.m_PR_HP_to_LP_guess = ms_des_par.m_PR_HP_to_LP_guess;		//[-]
+		ms_cycle_des_par.m_fixed_PR_HP_to_LP = ms_des_par.m_fixed_PR_HP_to_LP;		//[-]
 
 		ms_cycle_des_par.mf_callback_log = mf_callback_update;
 		ms_cycle_des_par.mp_mf_active = mp_mf_update;
@@ -238,8 +238,8 @@ void C_sco2_recomp_csp::design_core()
 
 		des_params.m_fixed_P_mc_out = ms_des_par.m_fixed_P_mc_out;	//[-]
 
-		des_params.m_PR_mc_guess = ms_des_par.m_PR_mc_guess;		//[-]
-		des_params.m_fixed_PR_mc = ms_des_par.m_fixed_PR_mc;		//[-]
+		des_params.m_PR_HP_to_LP_guess = ms_des_par.m_PR_HP_to_LP_guess;		//[-]
+		des_params.m_fixed_PR_HP_to_LP = ms_des_par.m_fixed_PR_HP_to_LP;		//[-]
 
 		des_params.m_is_recomp_ok = ms_des_par.m_is_recomp_ok;
 
