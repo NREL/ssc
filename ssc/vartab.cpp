@@ -296,7 +296,9 @@ const char *var_table::key(int pos){
     for (n = 0; n < pos; n++)
         ++m_iterator;
 
-    if (m_iterator != m_hash.end())	return m_iterator->first.c_str();
+    if (m_iterator != m_hash.end())
+        return m_iterator->first.c_str();
+    return NULL;
 }
 
 const char *var_table::next()

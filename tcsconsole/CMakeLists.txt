@@ -1,3 +1,9 @@
+#####################################################################################################################
+#
+# CMake and System Settings
+#
+#####################################################################################################################
+
 set(CMAKE_VERBOSE_MAKEFILE ON)
 
 cmake_minimum_required(VERSION 2.8)
@@ -8,13 +14,65 @@ elseif(MSVC)
 	set(CMAKE_SYSTEM_VERSION 8.1 CACHE TYPE INTERNAL FORCE)
 endif()
 
-
 if(MSVC)
 	set(CMAKE_CONFIGURATION_TYPES "Debug;Release" CACHE STRING "Debug and Release Builds Configured" FORCE)
 endif()
 
+
+#####################################################################################################################
+#
+# Project Settings 
+#
+#####################################################################################################################
+
 Project(tcsconsole)
+
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}")
+
+include_directories(. $ENV{WEXDIR}/include $ENV{LKDIR}/include ../tcs)
+
+set(TCSCONSOLE_SRC
+	tcsscript.cpp
+	tcsmain.cpp
+	tcslayout.cpp)
+
+
+#####################################################################################################################
+#
+# Compile Options per Platform
+#
+#####################################################################################################################
+
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+
+if(MSVC)
+	add_compile_options(/W3)
+	if (CMAKE_BUILD_TYPE STREQUAL Debug)
+        add_compile_options(/MDd)
+        add_compile_definitions(_DEBUG)
+    else()
+        add_compile_options(/MD)
+        add_compile_definitions(NDEBUG )
+    endif()
+    add_compile_definitions( LK_USE_WXWIDGETS _CRT_SECURE_NO_DEPRECATE=1)
+	add_compile_definitions(_CRT_NON_CONFORMING_SWPRINTFS=1 _SCL_SECURE_NO_WARNINGS=1)
+	add_compile_definitions(__WXMSW__ _UNICODE _WINDOWS NOPCH)
+else(MSVC)
+	if (APPLE)
+		add_compile_options(-arch x86_64)
+		add_compile_definitions(__WXOSX__)
+	else()
+		add_definitions(-D__64BIT__)
+	endif()
+	add_compile_options(-Wall -Wno-unknown-pragmas -Werror -O3 -fno-common -std=c++11)
+	add_definitions(-DLK_USE_WXWIDGETS -DWX_PRECOMP )
+endif(MSVC)
+
+#####################################################################################################################
+#
+# Packages
+#
+#####################################################################################################################
 
 if (UNIX)
 	set(wxWidgets_CONFIG_EXECUTABLE /usr/local/bin/wx-config-3)
@@ -25,15 +83,12 @@ endif()
 find_package(wxWidgets REQUIRED xrc stc richtext ribbon propgrid aui gl html qa adv core xml net base)
 include(${wxWidgets_USE_FILE})
 
-include_directories(. $ENV{WEXDIR}/include $ENV{LKDIR}/include ../tcs)
 
-set(TCSCONSOLE_SRC
-	tcsscript.cpp
-	tcsmain.cpp
-	tcslayout.cpp)
-
-set(CMAKE_POSITION_INDEPENDENT_CODE ON)
-
+#####################################################################################################################
+# 
+# CMake Targets
+#
+#####################################################################################################################
 
 # Setup Application
 if (APPLE)
@@ -64,15 +119,30 @@ else()
 	set(TCSCONSOLE_EXE TCSConsole)
 endif()
 
+if (APPLE)
+	set_target_properties(${TCSCONSOLE_EXE} PROPERTIES
+		MACOSX_BUNDLE_INFO_PLIST ${CMAKE_CURRENT_SOURCE_DIR}/../build_osx/Info-TCSConsole.plist
+	)
+endif()
 
-# if running as combined build, make sure to link to projects
+if (MSVC)
+	set_target_properties(${TCSCONSOLE_EXE} PROPERTIES
+        RUNTIME_OUTPUT_DIRECTORY $<1:${CMAKE_CURRENT_SOURCE_DIR}>)
+endif()
+
+
+#####################################################################################################################
+#
+# Link Libraries and Options
+#
+#####################################################################################################################
+
 if (${CMAKE_PROJECT_NAME} STREQUAL system_advisor_model)
 	if(CMAKE_BUILD_TYPE STREQUAL "Debug")
 		target_link_libraries(${TCSCONSOLE_EXE} lkd wexd)
 	else()
 		target_link_libraries(${TCSCONSOLE_EXE} lk wex)
 	endif()
-	# otherwise find compiled library
 else()
 	unset(WEX_LIB CACHE)
 	unset(LK_LIB CACHE)
@@ -95,19 +165,15 @@ else()
 			PATHS $ENV{LKDIR})
 	target_link_libraries(${TCSCONSOLE_EXE} ${WEX_LIB} ${LK_LIB})
 	endif()
-
 endif()
 
-# set build types for archive
 set( DEPENDENCIES
 		tcs
 		nlopt
 		solarpilot
 		shared
 		splinter)
-# setup linking dependencies and flags
 foreach( name ${DEPENDENCIES} )
-	# force redefinition of library paths in case build type changes
 	unset(${name}_LIB CACHE)
 	if(CMAKE_BUILD_TYPE STREQUAL "Debug")
 		target_link_libraries(${TCSCONSOLE_EXE} ${name}d)
@@ -115,47 +181,15 @@ foreach( name ${DEPENDENCIES} )
 		target_link_libraries(${TCSCONSOLE_EXE} ${name})
 	endif()
 endforeach()
+
 target_link_libraries(${TCSCONSOLE_EXE} ${wxWidgets_LIBRARIES})
 target_link_libraries(${TCSCONSOLE_EXE} -lm -lcurl)
+
 if (UNIX AND NOT APPLE)
 	target_link_libraries(${TCSCONSOLE_EXE} -lfontconfig -ldl)
 endif()
 
-
-get_target_property(OUT ${TCSCONSOLE_EXE} LINK_LIBRARIES)
-message(STATUS ${OUT})
-
-if(MSVC)
-# need msvc optimization levels & different configs, windows sdk
-	add_compile_options(/W3)
-	if (CMAKE_BUILD_TYPE STREQUAL Debug)
-        add_compile_options(/MDd)
-        add_compile_definitions(_DEBUG)
-    else()
-        add_compile_options(/MD)
-        add_compile_definitions(NDEBUG )
-    endif()
-    add_compile_definitions( LK_USE_WXWIDGETS _CRT_SECURE_NO_DEPRECATE=1)
-	add_compile_definitions(_CRT_NON_CONFORMING_SWPRINTFS=1 _SCL_SECURE_NO_WARNINGS=1)
-	add_compile_definitions(__WXMSW__ _UNICODE _WINDOWS NOPCH)
-	set_target_properties(${TCSCONSOLE_EXE} PROPERTIES
-        RUNTIME_OUTPUT_DIRECTORY $<1:${CMAKE_CURRENT_SOURCE_DIR}>)
+if (MSVC)
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /SUBSYSTEM:CONSOLE")
-else(MSVC)
-	if (APPLE)
-		add_compile_options(-arch x86_64)
-		add_compile_definitions(__WXOSX__)
-	else()
-		add_definitions(-D__64BIT__)
-	endif()
-	add_compile_options(-Wall -Wno-unknown-pragmas -Werror -O3 -fno-common -std=c++11)
-	add_definitions(-DLK_USE_WXWIDGETS -DWX_PRECOMP )
-endif(MSVC)
-
-
-# create application info for executable
-if (APPLE)
-	set_target_properties(${TCSCONSOLE_EXE} PROPERTIES
-		MACOSX_BUNDLE_INFO_PLIST ${CMAKE_CURRENT_SOURCE_DIR}/../build_osx/Info-TCSConsole.plist
-	)
 endif()
+

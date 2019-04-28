@@ -1,3 +1,9 @@
+#####################################################################################################################
+#
+# CMake and System Settings
+#
+#####################################################################################################################
+
 set(CMAKE_VERBOSE_MAKEFILE ON)
 
 if(APPLE)
@@ -9,6 +15,13 @@ endif()
 if(MSVC)
 	set(CMAKE_CONFIGURATION_TYPES "Debug;Release" CACHE STRING "Debug and Release Builds Configured" FORCE)
 endif()
+
+
+#####################################################################################################################
+#
+# Project Settings 
+#
+#####################################################################################################################
 
 Project(ssc)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}")
@@ -108,20 +121,42 @@ set(SSC_SRC
 	cmod_pv_get_shade_loss_mpp.cpp
 	tckernel.cpp )
 
+
+#####################################################################################################################
+#
+# Compile Options per Platform
+#
+#####################################################################################################################
+
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set(CMAKE_CXX_STANDARD 11)
 
-# set build types for shared library
+if(MSVC)
+	add_compile_options(/W4 /w44191 /w44242  /w44266 /w44302 /w44388 /w44826 /w44905 /w44906 /w44928)
+	if (CMAKE_BUILD_TYPE STREQUAL Debug)
+        add_compile_options(/MDd)
+        add_compile_definitions(_DEBUG)
+    else()
+        add_compile_options(/MD /O4)
+        add_compile_definitions(NDEBUG )
+    endif()
+    add_compile_definitions( __DLL__ __64BIT__ __WINDOWS__ _WINDOWS _CRT_SECURE_NO_WARNINGS __VISUALC__ )
+else(MSVC)
+	if (APPLE)
+		add_compile_options(-arch x86_64 -fno-common)
+		add_compile_definitions(__MACOSX__ WX_PRECOMP __64BIT__)
+	else ()
+		add_definitions(-D__UNIX__ -D__64BIT__)
+	endif()
+	SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wno-unknown-pragmas -O3 -std=c++11" )
+endif(MSVC)
 
+#####################################################################################################################
+# 
+# CMake Targets
+#
+#####################################################################################################################
 
-set( DEPENDENCIES
-	solarpilot
-	tcs
-	nlopt
-	shared
-	lpsolve
-	splinter
-	)
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
 	add_library(sscd SHARED ${SSC_SRC})
 	set(SSC_LIB sscd)
@@ -137,66 +172,27 @@ else()
 	endif()
 endif()
 
-
-# setup linking dependencies and flags
-foreach( name ${DEPENDENCIES} )
-	# force redefinition of library paths in case build type changes
-	unset(${name}_LIB CACHE)
-	if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-		target_link_libraries(${SSC_LIB} ${name}d)
-	else()
-		target_link_libraries(${SSC_LIB} ${name})
-	endif()
-endforeach()
-if (UNIX)
-	target_link_libraries(${SSC_LIB} -lm -ldl -lstdc++)
-endif()
-
-if(MSVC)
-# need msvc optimization levels & different configs, windows sdk
-	add_compile_options(/W4 /w44191 /w44242  /w44266 /w44302 /w44388 /w44826 /w44905 /w44906 /w44928)
-	if (CMAKE_BUILD_TYPE STREQUAL Debug)
-        add_compile_options(/MDd)
-        add_compile_definitions(_DEBUG)
-    else()
-        add_compile_options(/MD /O4)
-        add_compile_definitions(NDEBUG )
-    endif()
-    add_compile_definitions( __DLL__ __64BIT__ __WINDOWS__ _WINDOWS _CRT_SECURE_NO_WARNINGS __VISUALC__ )
+if (MSVC)
 	set_target_properties(${SSC_LIB} PROPERTIES
         LIBRARY_OUTPUT_DIRECTORY $<1:${CMAKE_CURRENT_SOURCE_DIR}>)
-    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /SUBSYSTEM:WINDOWS")
-else(MSVC)
-	if (APPLE)
-		add_compile_options(-arch x86_64 -fno-common)
-		add_compile_definitions(__MACOSX__ WX_PRECOMP __64BIT__)
-	else ()
-		add_definitions(-D__UNIX__ -D__64BIT__)
-	endif()
-	SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wno-unknown-pragmas -O3 -std=c++11" )
-
-endif(MSVC)
-
+endif()
 
 # dltest executable for checking ssc library
 if(UNIX AND NOT system_advisor_model_EXPORT)
 	add_executable(dltest ../build_osx/dltest.c)
 	if (NOT APPLE)
 		target_link_libraries(dltest -ldl -Wl,--no-as-needed)
-		add_custom_command(
-			TARGET ${SSC_LIB}
-			POST_BUILD 
-			COMMAND dltest ${CMAKE_CURRENT_SOURCE_DIR}/${SSC_LIB}.so)
-	elseif  ()
-		add_custom_command(
-			TARGET ${SSC_LIB}
-			POST_BUILD 
-			COMMAND dltest ${SSC_LIB})
+		set(SSC_LIB_FILE ${CMAKE_CURRENT_SOURCE_DIR}/${SSC_LIB}.so)
+	else()
+		set(SSC_LIB_FILE ${CMAKE_CURRENT_SOURCE_DIR}/${SSC_LIB}.dylib)
 	endif()
+	add_custom_command(
+		TARGET ${SSC_LIB}
+		POST_BUILD 
+		COMMAND dltest ${SSC_LIB_FILE})
 endif()
 
-
-# alternately, building for PySAM, Release type
+# libSAM_api
 if (system_advisor_model_EXPORT)
 	set(CMAKE_MACOSX_RPATH 1)
 	if(APPLE)
@@ -208,4 +204,36 @@ if (system_advisor_model_EXPORT)
 			COMMAND install_name_tool -id @rpath/libssc.so $ENV{SSCDIR}/ssc/libssc.so
 		)
 	endif(APPLE)
+endif()
+
+
+#####################################################################################################################
+#
+# Link Libraries and Options
+#
+#####################################################################################################################
+
+set( DEPENDENCIES
+	solarpilot
+	tcs
+	nlopt
+	shared
+	lpsolve
+	splinter
+	)
+foreach( name ${DEPENDENCIES} )
+	unset(${name}_LIB CACHE)
+	if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+		target_link_libraries(${SSC_LIB} ${name}d)
+	else()
+		target_link_libraries(${SSC_LIB} ${name})
+	endif()
+endforeach()
+
+if (UNIX)
+	target_link_libraries(${SSC_LIB} -lm -ldl -lstdc++)
+endif()
+
+if (MSVC)
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /SUBSYSTEM:WINDOWS")
 endif()
