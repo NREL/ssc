@@ -1,3 +1,9 @@
+#####################################################################################################################
+#
+# CMake and System Settings
+#
+#####################################################################################################################
+
 set(CMAKE_VERBOSE_MAKEFILE ON)
 
 if(APPLE)
@@ -7,8 +13,15 @@ elseif(MSVC)
 endif()
 
 if(MSVC)
-  set(CMAKE_CONFIGURATION_TYPES "Debug;Release" CACHE STRING "Debug and Release Builds Configured" FORCE)
+	set(CMAKE_CONFIGURATION_TYPES "Debug;Release" CACHE STRING "Debug and Release Builds Configured" FORCE)
 endif()
+
+
+#####################################################################################################################
+#
+# Project Settings 
+#
+#####################################################################################################################
 
 Project(tcs)
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}")
@@ -105,26 +118,16 @@ set(TCS_SRC
 	csp_dispatch.cpp
 )
 
+
+#####################################################################################################################
+#
+# Compile Options per Platform
+#
+#####################################################################################################################
+
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
-# set build types for archive
-if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-  add_library(tcsd STATIC ${TCS_SRC})
-  set(TCS_LIB tcsd)
-
-  set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG}")
-  set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}")
-else()
-  add_library(tcs STATIC ${TCS_SRC})
-  set(TCS_LIB tcs)
-
-endif()
-set_property(TARGET ${TCS_LIB} PROPERTY PREFIX "")
-
-
-
 if(MSVC)
-# need msvc optimization levels & different configs, windows sdk
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /bigobj")
 	add_compile_options(/W0)
 	if (CMAKE_BUILD_TYPE STREQUAL Debug)
@@ -135,9 +138,6 @@ if(MSVC)
         add_compile_definitions(NDEBUG )
     endif()
     add_compile_definitions( __64BIT__ __WINDOWS__ _WINDOWS _CRT_SECURE_NO_WARNINGS LPWINAPP )
-	set_target_properties(${TCS_LIB} PROPERTIES
-        LIBRARY_OUTPUT_DIRECTORY $<1:${CMAKE_CURRENT_SOURCE_DIR}>)
-    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /SUBSYSTEM:WINDOWS")
 else(MSVC)
 	if (APPLE)
 		add_compile_options(-arch x86_64 -fno-common)
@@ -146,7 +146,41 @@ else(MSVC)
 		add_definitions(-D__64BIT__)
 	endif()
 	SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -std=c++11" )
-
 	SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wno-unknown-pragmas -Wno-sign-compare -Wno-unused-but-set-variable -Wno-unused-variable -Wno-uninitialized -Wno-int-to-pointer-cast ")
 endif(MSVC)
 
+
+#####################################################################################################################
+# 
+# CMake Targets
+#
+#####################################################################################################################
+
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+  add_library(tcsd STATIC ${TCS_SRC})
+  set(TCS_LIB tcsd)
+
+  set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG}")
+  set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}")
+else()
+  add_library(tcs STATIC ${TCS_SRC})
+  set(TCS_LIB tcs)
+endif()
+
+set_property(TARGET ${TCS_LIB} PROPERTY PREFIX "")
+
+if (MSVC)
+	set_target_properties(${TCS_LIB} PROPERTIES
+        LIBRARY_OUTPUT_DIRECTORY $<1:${CMAKE_CURRENT_SOURCE_DIR}>)
+endif()
+
+
+#####################################################################################################################
+#
+# Link Libraries and Options
+#
+#####################################################################################################################
+
+if (MSVC)
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /SUBSYSTEM:WINDOWS")
+endif()

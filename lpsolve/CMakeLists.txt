@@ -1,3 +1,9 @@
+#####################################################################################################################
+#
+# CMake and System Settings
+#
+#####################################################################################################################
+
 set(CMAKE_VERBOSE_MAKEFILE ON)
 
 if(APPLE)
@@ -10,7 +16,15 @@ if(MSVC)
 	set(CMAKE_CONFIGURATION_TYPES "Debug;Release" CACHE STRING "Debug and Release Builds Configured" FORCE)
 endif()
 
+
+#####################################################################################################################
+#
+# Project Settings 
+#
+#####################################################################################################################
+
 Project(lpsolve)
+
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}")
 
 include_directories(.)
@@ -45,25 +59,14 @@ set(LPSOLVE_SRC
 	myblas.c
 	yacc_read.c)
 
+
+#####################################################################################################################
+#
+# Compile Options per Platform
+#
+#####################################################################################################################
+
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
-
-
-# set build types for archive
-if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-	add_library(lpsolved STATIC ${LPSOLVE_SRC})
-	set(LPSOLVE_LIB lpsolved)
-
-	set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG}")
-	set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}")
-else()
-	add_library(lpsolve STATIC ${LPSOLVE_SRC})
-	set(LPSOLVE_LIB lpsolve)
-
-	set(CMAKE_C_FLAGS -DNDEBUG)
-endif()
-set_property(TARGET ${LPSOLVE_LIB} PROPERTY PREFIX "")
-
-
 
 if(MSVC)
 # need msvc optimization levels & different configs, windows sdk
@@ -78,9 +81,6 @@ if(MSVC)
     add_compile_definitions( LPWINAPP  _CONSOLE MSDOS CHECK_SOLUTION _SCL_SECURE_NO_DEPRECATE)
 	add_compile_definitions( YY_NEVER_INTERACTIVE PARSER_LP INVERSE_ACTIVE=INVERSE_LUSOL )
 	add_compile_definitions( RoleIsExternalInvEngine _CRT_SECURE_NO_DEPRECATE _CRT_NONSTDC_NO_DEPRECATE )
-	set_target_properties(${LPSOLVE_LIB} PROPERTIES
-        LIBRARY_OUTPUT_DIRECTORY $<1:${CMAKE_CURRENT_SOURCE_DIR}>)
-    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /SUBSYSTEM:WINDOWS")
 else()
 	if (APPLE)
 		add_compile_options(-arch x86_64 -fno-common)
@@ -91,3 +91,41 @@ else()
 	SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall WX_PRECOMP CHECK_SOLUTION YY_NEVER_INTERACTIVE PARSER_LP
 		INVERSE_ACTIVE=INVERSE_LUSOL RoleIsExternalInvEngine")
 endif()
+
+
+####################################################################################################################
+# 
+# CMake Targets
+#
+#####################################################################################################################
+
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+	add_library(lpsolved STATIC ${LPSOLVE_SRC})
+	set(LPSOLVE_LIB lpsolved)
+
+	set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG}")
+	set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}")
+else()
+	add_library(lpsolve STATIC ${LPSOLVE_SRC})
+	set(LPSOLVE_LIB lpsolve)
+
+	set(CMAKE_C_FLAGS -DNDEBUG)
+endif()
+set_property(TARGET ${LPSOLVE_LIB} PROPERTY PREFIX "")
+
+if (MSVC)
+	set_target_properties(${LPSOLVE_LIB} PROPERTIES
+        LIBRARY_OUTPUT_DIRECTORY $<1:${CMAKE_CURRENT_SOURCE_DIR}>)
+endif()
+
+
+#####################################################################################################################
+#
+# Link Libraries and Options
+#
+#####################################################################################################################
+
+if (MSVC)
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /SUBSYSTEM:WINDOWS")
+endif()
+
