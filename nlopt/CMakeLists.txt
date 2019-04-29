@@ -27,13 +27,8 @@ Project(nlopt)
 
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}")
 
-#execute_process(COMMAND "../nlopt/configure -q"
-#	COMMAND	"mv config.h ../nlopt")
-
-configure_file (
-  config.h.in
-  config.h
- )
+execute_process(COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/configure)
+execute_process(COMMAND cp config.h ${CMAKE_CURRENT_SOURCE_DIR})
 
 include_directories(.)
 
@@ -97,7 +92,7 @@ if(MSVC)
         add_compile_options(/MDd)
         add_compile_definitions(_DEBUG)
     else()
-        add_compile_options(/MD /O4)
+        add_compile_options(/MD /O3)
         add_compile_definitions(NDEBUG )
     endif()
     add_compile_definitions( __WXMSW__ __64BIT__ __WINDOWS__ _WINDOWS _CRT_SECURE_NO_WARNINGS _MBCS )
