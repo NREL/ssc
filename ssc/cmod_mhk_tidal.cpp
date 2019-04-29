@@ -53,18 +53,19 @@
 
 static var_info _cm_vtab_mhk_tidal[] = {
 	//   VARTYPE			DATATYPE			NAME									LABEL																		UNITS           META            GROUP              REQUIRED_IF					CONSTRAINTS				UI_HINTS	
-	{ SSC_INPUT,			SSC_MATRIX,			"tidal_resource_definition",            "Frequency distribution of resource as a function of stream speeds",		"",				"",             "MHKTidal",			"*",						"",						"" },	
-	{ SSC_INPUT,			SSC_MATRIX,			"tidal_power_curve",					"Power curve of tidal energy conversion system",							"kW",				"",             "MHKTidal",			"*",						"",						"" },	
+	{ SSC_INPUT,			SSC_MATRIX,			"tidal_resource",					    "Frequency distribution of resource as a function of stream speeds",		"",				"",             "MHKTidal",			"*",						"",						"" },	
+	{ SSC_INPUT,			SSC_MATRIX,			"tidal_power_curve",					"Power curve of tidal energy device as function of stream speeds",			"kW",			"",             "MHKTidal",			"*",						"",						"" },	
 	{ SSC_INPUT,			SSC_NUMBER,			"annual_energy_loss",					"Total energy losses",														"%",			"",             "MHKTidal",			"?=0",						"",						"" },	
-	{ SSC_INPUT,			SSC_NUMBER,			"calculate_capacity",					"Calculate capacity outside UI?",											"0/1",			"",             "MHKTidal",         "?=1",                      "INTEGER,MIN=0,MAX=1",	"" },
+	{ SSC_INPUT,			SSC_NUMBER,			"calculate_capacity",					"Calculate device rated capacity from power curve",							"0/1",			"",             "MHKTidal",         "?=1",                      "INTEGER,MIN=0,MAX=1",	"" },
+	{ SSC_INPUT,			SSC_NUMBER,			"number_devices",						"Number of tidal devices in the system",									"",				"",             "MHKTidal",         "?=1",                      "INTEGER",				"" },
 
-	{ SSC_INOUT,			SSC_NUMBER,			"rated_capacity",						"Rated Capacity of System",													"kW",			"",				"MHKTidal",			"calculate_capacity=0",						"",						"" },
+	{ SSC_INOUT,			SSC_NUMBER,			"device_rated_capacity",						"Rated capacity of device",													"kW",			"",				"MHKTidal",			"calculate_capacity=0",		"",						"" },
 
 	{ SSC_OUTPUT,			SSC_NUMBER,			"average_power",						"Average power production",													"kW",			"",				"MHKTidal",			"*",						"",						"" },
 	{ SSC_OUTPUT,			SSC_NUMBER,			"annual_energy",						"Annual energy production",													"kWh",			"",				"MHKTidal",			"*",						"",						"" },
 	{ SSC_OUTPUT,			SSC_NUMBER,			"capacity_factor",						"Capacity Factor",															"%",			"",				"MHKTidal",			"*",						"",						"" },
 	{ SSC_OUTPUT,			SSC_ARRAY,			"annual_energy_distribution",			"Annual energy production as function of speed",							"kWh",			"",				"MHKTidal",			"*",						"",						"" },
-	{ SSC_OUTPUT,			SSC_ARRAY,			"annual_cumulative_energy_distribution",			"Annual cumulative_energy production as function of speed",							"kWh",			"",				"MHKTidal",			"*",						"",						"" },
+	{ SSC_OUTPUT,			SSC_ARRAY,			"annual_cumulative_energy_distribution","Cumulative annual energy production as function of speed",					"kWh",			"",				"MHKTidal",			"*",						"",						"" },
 
 	var_info_invalid
 };
@@ -81,79 +82,95 @@ public:
 	void exec() throw(general_error) {
 
 	//Read and store tidal resource and power curve:
-		util::matrix_t<double>  tidal_resource_matrix = as_matrix("tidal_resource_definition");
+		util::matrix_t<double>  tidal_resource_matrix = as_matrix("tidal_resource");
 		util::matrix_t<double>  tidal_power_curve = as_matrix("tidal_power_curve");
 		
 		//Check to ensure size of _power_vect == _speed_vect : 
-		if ( (tidal_power_curve.ncols() * tidal_power_curve.nrows()) != (tidal_resource_matrix.ncols() * tidal_resource_matrix.nrows()) )
+		if ( tidal_power_curve.nrows() != tidal_resource_matrix.nrows() )
 			throw compute_module::exec_error("mhk_tidal", "Size of Power Curve is not equal to Tidal Resource");
 
-		//Create vectors to store individual columns from the user input matrix "tidal_resource_definition":
-		std::vector<double> _speed_vect;	//Stream speed (u [m/s])
-		std::vector<double> _sheer_vect;	// f(z/D = x)
+		//Store the number of rows- this will have to change if resource and power curve can have different stream speeds
+		int number_rows = (int)tidal_resource_matrix.nrows();
+
+		//Check that the power matrix only has two columns
+		if (tidal_power_curve.ncols() != (size_t)2)
+			throw compute_module::exec_error("mhk_tidal", "Power curve must contain two columns");
+
+		//Check that the resource matrix has at least two columns
+		if (tidal_power_curve.ncols() < (size_t)2)
+			throw compute_module::exec_error("mhk_tidal", "Resource matrix must have at least two columns");
+
+
+		//Create vectors to store individual columns from the user input matrix "tidal_resource"
+		//Size the vectors based on the resource matrix so that the length can change in the future
+		std::vector<double> _speed_vect(number_rows);	// Stream speed (u [m/s])
+		std::vector<double> _probability_vect(number_rows);	// Probability in decimals (i.e. 0.5, not 50%) at different depths***************************************************Need to program in the possibility of probabilities at multiple depths
 		
 		//Vector to store power curve of tidal energy conversion system from "tidal_power_curve":
-		std::vector<double> _power_vect;	//Tidal power curve (P [kW])
+		//Size the vector based on the tidal power matrix so that the length can be different from the resource in the future
+		std::vector<double> _power_vect(number_rows);	//Tidal power curve (P [kW])
+
 		
-	//Initialize variables to store calculated values:
-		//Vector to store annual energy production as function of speed (annual energy production at each stream speed).
-		std::vector<double> _annual_energy_distribution;	
-		double annual_energy = 0, average_power = 0, sheer_vect_checker = 0, capacity_factor = 0;
+	//Initialize variables to store calculated values and outputs:
+		ssc_number_t *p_annual_energy_dist = allocate("annual_energy_distribution", number_rows);
+		ssc_number_t *p_annual_cumulative_energy_dist = allocate("annual_cumulative_energy_distribution", number_rows);
+		double annual_energy = 0, average_power = 0, _probability_vect_checker = 0, capacity_factor = 0, device_rated_capacity = 0;
 		
-		//User either sets rated_capacity in the UI, or allows cmod to determine from power curve:
-		double rated_capacity = as_double("rated_capacity");
-	
+		//User either sets device_rated_capacity in the UI, or allows cmod to determine from power curve:
+		if (is_assigned("device_rated_capacity")) device_rated_capacity = as_double("device_rated_capacity");
+
+		//Read number of devices
+		int number_devices = as_integer("number_devices");
 
 		//Storing each column of the tidal_resource_matrix and tidal_power_curve as vectors:
-		for (int i = 0; i < (int)tidal_resource_matrix.nrows(); i++) {
+		for (int i = 0; i < number_rows; i++) {
 			
-			_speed_vect.push_back(tidal_resource_matrix.at(i, 0));	
-			_sheer_vect.push_back(tidal_resource_matrix.at(i, 1));
-			_power_vect.push_back(tidal_power_curve.at(i, 1));
-
+			_speed_vect[i] = tidal_resource_matrix.at(i, 0);	
+			_probability_vect[i] = tidal_resource_matrix.at(i, 1); //*******************again need to modify to handle different depths
+			_power_vect[i] = tidal_power_curve.at(i, 1);
 			
 			//Store max power if not set in UI:
-			if (as_integer("calculate_capacity"))
-				if (_power_vect[i] > rated_capacity)
-					rated_capacity = _power_vect[i];
+			if (as_boolean("calculate_capacity"))
+				if (_power_vect[i] > device_rated_capacity)
+					device_rated_capacity = _power_vect[i];
 			
-			//Checker to ensure frequency distribution adds to >= 99.5%:
-			sheer_vect_checker += _sheer_vect[i];
+			//Checker to ensure probability distribution adds to >= 99.5%:
+			_probability_vect_checker += _probability_vect[i];
 		
 			//Calculate annual energy production at each stream speed bin:
-			_annual_energy_distribution.push_back(_speed_vect[i] * _power_vect[i] * _sheer_vect[i] * 8760);	
+			p_annual_energy_dist[i] = _speed_vect[i] * _power_vect[i] * _probability_vect[i] * number_devices * 8760;
+
+			//Add current annual energy bin to total annual energy
+			annual_energy += p_annual_energy_dist[i];
+
+			//Calculate the cumulative energy probability distribution
+			if (i == 0)
+				p_annual_cumulative_energy_dist[i] = p_annual_energy_dist[i];
+			else
+				p_annual_cumulative_energy_dist[i] = p_annual_energy_dist[i] + p_annual_cumulative_energy_dist[i - 1];
 			
 			//Average Power: 
-			average_power = average_power + ( _power_vect[i] * _sheer_vect[i] );
+			average_power += _power_vect[i] * _probability_vect[i];
 		}
 				
-		//Throw exception if sheer vector is < 99.5%
-		if (sheer_vect_checker < 0.995)
-			throw compute_module::exec_error("mhk_tidal", "Sheer vector does not add up to 100%.");
-
-		//assign _annual_energy_distribution values to ssc variable -> "annual_energy_distribution": 
-		ssc_number_t * _aep_distribution_ptr = allocate("annual_energy_distribution", _annual_energy_distribution.size());
-		ssc_number_t * _acep_distribution_ptr = allocate("annual_cumulative_energy_distribution", _annual_energy_distribution.size());
-
-		for (size_t i = 0; i != _annual_energy_distribution.size(); i++) {
-			_aep_distribution_ptr[i] = _annual_energy_distribution[i];	
-			annual_energy = annual_energy + _annual_energy_distribution[i];	//Calculate total annual energy.
-			_acep_distribution_ptr[i] = _aep_distribution_ptr[i];
-			if (i>0)
-				_acep_distribution_ptr[i] += _acep_distribution_ptr[i - 1];
-		}
+		//Throw exception if frequency distribution vector sums to < 99.5%
+		if (_probability_vect_checker < 0.995)
+			throw compute_module::exec_error("mhk_tidal", "Probability distribution vector does not add up to 100%.");
 
 		//Factoring in losses in total annual energy production:
 		annual_energy *= (1 - (as_double("annual_energy_loss") / 100 ));
 
 		//Calculating capacity factor:
-		capacity_factor = annual_energy / (rated_capacity * 8760);
+		capacity_factor = annual_energy / (device_rated_capacity * number_devices * 8760);
+
+		//Average power**************************does something need to happen here???
+
 
 
 		//Assigning values to outputs:
 		assign("annual_energy", var_data((ssc_number_t)annual_energy));
 		assign("average_power", var_data((ssc_number_t)average_power));
-		assign("rated_capacity", var_data((ssc_number_t)rated_capacity));
+		assign("device_rated_capacity", var_data((ssc_number_t)device_rated_capacity));
 		assign("capacity_factor", var_data((ssc_number_t)capacity_factor * 100));
 	}
 }; 
