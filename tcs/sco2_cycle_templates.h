@@ -133,8 +133,11 @@ public:
 
 		bool m_fixed_P_mc_out;			//[-] if true, P_mc_out is fixed at 'm_P_high_limit'
 
-		double m_PR_HP_to_LP_guess;				//[-] Initial guess for ratio of P_mc_out to P_mc_in
-		bool m_fixed_PR_HP_to_LP;					//[-] if true, ratio of P_mc_out to P_mc_in is fixed at PR_mc_guess
+		double m_PR_HP_to_LP_guess;     //[-] Initial guess for ratio of P_mc_out to P_LP_in
+		bool m_fixed_PR_HP_to_LP;       //[-] if true, ratio of P_mc_out to P_mc_in is fixed at PR_mc_guess
+
+        double m_f_PR_HP_to_IP_guess;       //[-] Initial guess fraction of HP-to-LP deltaP for HP-to-IP (partial cooling cycle)
+        bool m_fixed_f_PR_HP_to_IP;         //[-] if true, use guess
 
 		// Callback function only log
 		bool(*mf_callback_log)(std::string &log_msg, std::string &progress_msg, void *data, double progress, int out_type);
@@ -149,7 +152,7 @@ public:
 				m_tol = m_opt_tol = m_N_turbine =
 				m_frac_fan_power = m_deltaP_cooler_frac = m_T_amb_des = m_elevation =
                 m_is_recomp_ok =
-				m_PR_HP_to_LP_guess = std::numeric_limits<double>::quiet_NaN();
+				m_PR_HP_to_LP_guess = m_f_PR_HP_to_IP_guess = std::numeric_limits<double>::quiet_NaN();
 
 			m_N_sub_hxrs = -1;
 
@@ -164,8 +167,9 @@ public:
 			m_des_objective_type = 1;
 			m_min_phx_deltaT = 0.0;		//[C]
 
-			m_fixed_PR_HP_to_LP = false;		//[-] If false, then should default to optimizing this parameter
-			m_fixed_P_mc_out = false;	//[-] If fasle, then should default to optimizing this parameter
+            m_fixed_P_mc_out = false;       //[-] If fasle, then should default to optimizing this parameter
+            m_fixed_PR_HP_to_LP = false;    //[-] If false, then should default to optimizing this parameter
+            m_fixed_f_PR_HP_to_IP = false;  //[-] If false, then should default to optimizing this parameter
 
 			mf_callback_log = 0;
 			mp_mf_active = 0;
@@ -230,8 +234,11 @@ public:
 		bool m_fixed_P_mc_out;			//[-] if true, P_mc_out is fixed at 'm_P_high_limit'
 
 		double m_PR_HP_to_LP_guess;     //[-] Initial guess for ratio of P_mc_out to P_LP_in
-		bool m_fixed_PR_HP_to_LP;				//[-] if true, ratio of P_mc_out to P_mc_in is fixed at PR_mc_guess
+		bool m_fixed_PR_HP_to_LP;       //[-] if true, ratio of P_mc_out to P_LP_in is fixed at PR_mc_guess
 		
+        double m_f_PR_HP_to_IP_guess;     //[-] Initial guess fraction of HP-to-LP deltaP for HP-to-IP (partial cooling cycle)
+        bool m_fixed_f_PR_HP_to_IP;       //[-] if true, fix at guess
+
 		int m_des_objective_type;		//[2] = min phx deltat then max eta, [else] max eta
 		double m_min_phx_deltaT;		//[C]
 
@@ -249,7 +256,7 @@ public:
 				m_eta_mc = m_eta_rc = m_eta_pc = m_eta_t = m_P_high_limit = m_tol = m_N_turbine = 
 				m_frac_fan_power = m_deltaP_cooler_frac = m_T_amb_des = m_elevation =
                 m_is_recomp_ok =
-				m_PR_HP_to_LP_guess = std::numeric_limits<double>::quiet_NaN();
+				m_PR_HP_to_LP_guess = m_f_PR_HP_to_IP_guess = std::numeric_limits<double>::quiet_NaN();
 			m_N_sub_hxrs = -1;
 
             // Recuperator design target codes
@@ -259,8 +266,9 @@ public:
 			// Air cooler default
 			m_is_des_air_cooler = true;
 
-			m_fixed_PR_HP_to_LP = false;		//[-] If false, then should default to optimizing this parameter
-			m_fixed_P_mc_out = false;	//[-] If fasle, then should default to optimizing this parameter
+            m_fixed_P_mc_out = false;       //[-] If false, then should default to optimizing this parameter
+            m_fixed_PR_HP_to_LP = false;    //[-] If false, then should default to optimizing this parameter
+            m_fixed_f_PR_HP_to_IP = false;  //[-] If false, then should default to optimizing this parameter
 
 			// Default to standard optimization to maximize cycle efficiency
 			m_des_objective_type = 1;

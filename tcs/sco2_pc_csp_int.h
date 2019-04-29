@@ -120,7 +120,10 @@ public:
 		
 		double m_PR_HP_to_LP_guess;     //[-] Initial guess for ratio of P_mc_out to P_mc_in
 		bool m_fixed_PR_HP_to_LP;       //[-] if true, ratio of P_mc_out to P_LP_in is fixed at m_PR_HP_to_LP_guess
-	
+
+        double m_f_PR_HP_to_IP_guess;   //[-] Initial guess fraction of HP-to-LP deltaP for HP-to-IP (partial cooling cycle)
+        bool m_fixed_f_PR_HP_to_IP;     //[-] if true, use guess
+
 		// PHX design parameters
 		// This is a PHX rather than system parameter because we don't know T_CO2_in until cycle model is solved
 		double m_phx_dt_cold_approach;	//[K/C] Temperature difference between cold HTF and PHX CO2 inlet
@@ -157,13 +160,15 @@ public:
 				m_P_high_limit = m_tol = m_opt_tol = m_N_turbine =
                 m_is_recomp_ok = 
 	
-				m_PR_HP_to_LP_guess =
+				m_PR_HP_to_LP_guess = m_f_PR_HP_to_IP_guess =
 	
 				m_phx_dt_cold_approach = m_frac_fan_power = m_deltaP_cooler_frac =
 				std::numeric_limits<double>::quiet_NaN();
 	
-			m_fixed_PR_HP_to_LP = false;		//[-] If false, then should default to optimizing this parameter
-			m_fixed_P_mc_out = false;	//[-] If fasle, then should default to optimizing this parameter
+            m_fixed_P_mc_out = false;       //[-] If false, then should default to optimizing this parameter
+            m_fixed_PR_HP_to_LP = false;    //[-] If false, then should default to optimizing this parameter
+            m_fixed_f_PR_HP_to_IP = false;  //[-] If false, then should default to optimizing this parameter
+
 		}
 	};
 

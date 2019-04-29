@@ -472,8 +472,16 @@ double C_PartialCooling_Cycle::opt_eta_fixed_P_high(double P_high_opt /*kPa*/)
 	ms_opt_des_par.m_fixed_PR_total = false;
 	ms_opt_des_par.m_PR_total_guess = 25. / 6.5;	//[-] Guess could be improved...
 
-	ms_opt_des_par.m_fixed_f_PR_mc = false;
-	ms_opt_des_par.m_f_PR_mc_guess = (25. - 8.5) / (25. - 6.5);		//[-] Guess could be improved...
+    if (ms_auto_opt_des_par.m_fixed_f_PR_HP_to_IP)
+    {
+        ms_opt_des_par.m_fixed_f_PR_mc = true;
+        ms_opt_des_par.m_f_PR_mc_guess = ms_auto_opt_des_par.m_fixed_f_PR_HP_to_IP; //[-]
+    }
+    else
+    {
+        ms_opt_des_par.m_fixed_f_PR_mc = false;
+        ms_opt_des_par.m_f_PR_mc_guess = (25. - 8.5) / (25. - 6.5);		//[-] Guess could be improved...
+    }
 
     // Is the recompression fraction fixed or optimized?
     if (ms_auto_opt_des_par.m_is_recomp_ok < 0.0)
@@ -702,7 +710,7 @@ double C_PartialCooling_Cycle::design_cycle_return_objective_metric(const std::v
 		if (ms_opt_des_par.m_PR_total_guess >= 0.0)
 		{
 			PR_total_local = ms_opt_des_par.m_PR_total_guess;
-			P_pc_in = ms_des_par.m_P_mc_in / PR_total_local;	//[kPa]
+			P_pc_in = ms_des_par.m_P_mc_out / PR_total_local;	//[kPa]
 		}
 		else
 		{
@@ -725,7 +733,7 @@ double C_PartialCooling_Cycle::design_cycle_return_objective_metric(const std::v
 	}
 	else
 	{
-		P_mc_in = ms_des_par.m_P_mc_out - ms_opt_des_par.m_fixed_f_PR_mc*(ms_des_par.m_P_mc_out - ms_des_par.m_P_pc_in);	//[kPa]
+		P_mc_in = ms_des_par.m_P_mc_out - ms_opt_des_par.m_f_PR_mc_guess*(ms_des_par.m_P_mc_out - ms_des_par.m_P_pc_in);	//[kPa]
 	}
 	ms_des_par.m_P_mc_in = P_mc_in;		//[kPa]
 
@@ -919,7 +927,14 @@ int C_PartialCooling_Cycle::opt_design_core()
             ms_des_par.m_HTR_UA = ms_opt_des_par.m_HTR_UA;      //[kW/K]
         }
 
-		no_opt_err_code = design_core();
+        // Ensure thermal efficiency is initialized to 0
+        m_objective_metric_opt = 0.0;
+        double eta_local = design_cycle_return_objective_metric(x);
+
+        if (eta_local == 0.0)
+        {
+            return -1;
+        }
 
 		ms_des_par_optimal = ms_des_par;
 	}
@@ -1030,8 +1045,17 @@ int C_PartialCooling_Cycle::auto_opt_design_core()
 		ms_opt_des_par.m_PR_total_guess = 25. / 6.5;	//[-] Guess could be improved...
 	}
 
-	ms_opt_des_par.m_fixed_f_PR_mc = false;
-	ms_opt_des_par.m_f_PR_mc_guess = (25. - 8.5) / (25. - 6.5);		//[-] Guess could be improved...
+    if (ms_auto_opt_des_par.m_fixed_f_PR_HP_to_IP)
+    {
+        ms_opt_des_par.m_fixed_f_PR_mc = true;
+        ms_opt_des_par.m_f_PR_mc_guess = ms_auto_opt_des_par.m_f_PR_HP_to_IP_guess; //[-]
+    }
+    else
+    {
+        ms_opt_des_par.m_fixed_f_PR_mc = false;
+        ms_opt_des_par.m_f_PR_mc_guess = (25. - 8.5) / (25. - 6.5);		//[-] Guess could be improved...
+    }
+	
 
     // Is recompression fraction fixed or optimized?
     if (ms_auto_opt_des_par.m_is_recomp_ok < 0.0)
@@ -1125,8 +1149,11 @@ int C_PartialCooling_Cycle::auto_opt_design_hit_eta(S_auto_opt_design_hit_eta_pa
 
 	ms_auto_opt_des_par.m_fixed_P_mc_out = auto_opt_des_hit_eta_in.m_fixed_P_mc_out;		//[-]
 	
-	ms_auto_opt_des_par.m_fixed_PR_HP_to_LP = auto_opt_des_hit_eta_in.m_fixed_PR_HP_to_LP;			//[-]
-	ms_auto_opt_des_par.m_PR_HP_to_LP_guess = auto_opt_des_hit_eta_in.m_fixed_PR_HP_to_LP;		//[-]
+	ms_auto_opt_des_par.m_fixed_PR_HP_to_LP = auto_opt_des_hit_eta_in.m_fixed_PR_HP_to_LP;  //[-]
+	ms_auto_opt_des_par.m_PR_HP_to_LP_guess = auto_opt_des_hit_eta_in.m_fixed_PR_HP_to_LP;  //[-]
+
+    ms_auto_opt_des_par.m_f_PR_HP_to_IP_guess = auto_opt_des_hit_eta_in.m_f_PR_HP_to_IP_guess;  //[-]
+    ms_auto_opt_des_par.m_fixed_f_PR_HP_to_IP = auto_opt_des_hit_eta_in.m_fixed_f_PR_HP_to_IP;  //[-]
 
 	// At this point, 'auto_opt_des_hit_eta_in' should only be used to access the targer thermal efficiency: 'm_eta_thermal'
 
