@@ -609,9 +609,9 @@ var_info vtab_sco2_design[] = {
 
     { SSC_INPUT,  SSC_NUMBER,  "cycle_config",         "1 = recompression, 2 = partial cooling",                 "",           "",    "",      "?=1",   "",       "" },
 	{ SSC_INPUT,  SSC_NUMBER,  "is_recomp_ok",         "1 = Yes, 0 = simple cycle only, < 0 = fix f_recomp to abs(input)","",  "",    "",      "?=1",   "",       "" },
-	{ SSC_INPUT,  SSC_NUMBER,  "is_P_high_fixed",      "1 = Yes, 0 = No, optimized (default)",                   "",           "",    "",      "?=0",   "",       "" },	
-	{ SSC_INPUT,  SSC_NUMBER,  "is_PR_fixed",          "0 = No, >0 = fixed pressure ratio",                      "",           "",    "",      "?=0",   "",       "" },
-    { SSC_INPUT,  SSC_NUMBER,  "is_IP_fixed",          "partial cooling config: 0 = No, >0 = fixed HP-IP pressure ratio, <0 = fixed IP","","","","?=0", "",       "" },
+	{ SSC_INPUT,  SSC_NUMBER,  "is_P_high_fixed",      "1 = Yes (=P_high_limit), 0 = No, optimized (default)",                   "",           "",    "",      "?=0",   "",       "" },	
+	{ SSC_INPUT,  SSC_NUMBER,  "is_PR_fixed",          "0 = No, >0 = fixed pressure ratio at input <0 = fixed LP at abs(input)",                      "",           "",    "",      "?=0",   "",       "" },
+    { SSC_INPUT,  SSC_NUMBER,  "is_IP_fixed",          "partial cooling config: 0 = No, >0 = fixed HP-IP pressure ratio at input, <0 = fixed IP at abs(input)","","","","?=0", "",       "" },
 
     { SSC_INPUT,  SSC_NUMBER,  "des_objective",        "[2] = hit min phx deltat then max eta, [else] max eta",  "",           "",    "",      "?=0",   "",       "" },
 	{ SSC_INPUT,  SSC_NUMBER,  "min_phx_deltaT",       "Minimum design temperature difference across PHX",       "C",          "",    "",      "?=0",   "",       "" },	
@@ -878,8 +878,8 @@ int sco2_design_cmod_common(compute_module *cm, C_sco2_recomp_csp & c_sco2_cycle
 		sco2_rc_des_par.m_fixed_PR_HP_to_LP = false;
 	}
 
-    double f_PR_HP_to_IP = cm->as_double("is_IP_fixed");
-    if (f_PR_HP_to_IP != 0.0)
+    double PR_HP_to_IP_in = cm->as_double("is_IP_fixed");
+    if (PR_HP_to_IP_in != 0.0)
     {
         if (!sco2_rc_des_par.m_fixed_PR_HP_to_LP)
         {   // If HP to LP pressure ratio is not fixed, then don't fix HP to IP, regardless of input
@@ -889,15 +889,13 @@ int sco2_design_cmod_common(compute_module *cm, C_sco2_recomp_csp & c_sco2_cycle
         else
         {
             sco2_rc_des_par.m_fixed_f_PR_HP_to_IP = true;
-            if (f_PR_HP_to_IP < 0.0)
+            double P_LP_in_local = sco2_rc_des_par.m_P_high_limit / sco2_rc_des_par.m_PR_HP_to_LP_guess;    //[kPa]
+            double P_IP_in_local = fabs(PR_HP_to_IP_in)*1.E3;      //[kPa]
+            if (PR_HP_to_IP_in > 0.0)
             {
-                double P_LP_in_local = sco2_rc_des_par.m_P_high_limit / sco2_rc_des_par.m_PR_HP_to_LP_guess;    //[kPa]
-                sco2_rc_des_par.m_f_PR_HP_to_IP_guess = (sco2_rc_des_par.m_P_high_limit - fabs(f_PR_HP_to_IP)*1.E3) / (sco2_rc_des_par.m_P_high_limit - P_LP_in_local);  //[kPa]
+                P_IP_in_local = sco2_rc_des_par.m_P_high_limit / PR_HP_to_IP_in;  //[-]
             }
-            else
-            {
-                sco2_rc_des_par.m_f_PR_HP_to_IP_guess = f_PR_HP_to_IP;  //[-]
-            }
+            sco2_rc_des_par.m_f_PR_HP_to_IP_guess = (sco2_rc_des_par.m_P_high_limit - P_IP_in_local) / (sco2_rc_des_par.m_P_high_limit - P_LP_in_local);  //[kPa]
         }
     }
     else
