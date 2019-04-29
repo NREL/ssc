@@ -146,7 +146,7 @@ else(MSVC)
 		add_definitions(-D__64BIT__)
 	endif()
 	SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -std=c++11" )
-	SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wno-unknown-pragmas -Wno-sign-compare -Wno-unused-but-set-variable -Wno-unused-variable -Wno-uninitialized -Wno-int-to-pointer-cast ")
+	SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wno-unknown-pragmas -Wno-sign-compare -Wno-unused-variable -Wno-uninitialized -Wno-int-to-pointer-cast ")
 endif(MSVC)
 
 
