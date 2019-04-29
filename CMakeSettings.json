@@ -9,12 +9,12 @@
       ],
       "buildRoot": "${env.USERPROFILE}\\CMakeBuilds\\${workspaceHash}\\build\\${name}",
       "installRoot": "${env.USERPROFILE}\\CMakeBuilds\\${workspaceHash}\\install\\${name}",
-      "cmakeCommandArgs": "",
+      "cmakeCommandArgs": "-DCMAKE_BUILD_TYPE=Debug",
       "buildCommandArgs": "-v",
       "ctestCommandArgs": ""
     },
     {
-      "name": "x64-Release-PySAM",
+      "name": "x64-Export",
       "generator": "Ninja",
       "configurationType": "Release",
       "inheritEnvironments": [
@@ -25,6 +25,20 @@
       "cmakeCommandArgs": "-Dsystem_advisor_model_EXPORT=1 -DCMAKE_BUILD_TYPE=Release",
       "buildCommandArgs": "-v",
       "ctestCommandArgs": ""
+    },
+    {
+      "name": "x64-Release",
+      "generator": "Ninja",
+      "configurationType": "Release",
+      "inheritEnvironments": [
+        "msvc_x64_x64"
+      ],
+      "buildRoot": "${env.USERPROFILE}\\CMakeBuilds\\${workspaceHash}\\build\\${name}",
+      "installRoot": "${env.USERPROFILE}\\CMakeBuilds\\${workspaceHash}\\install\\${name}",
+      "cmakeCommandArgs": "-Dsystem_advisor_model_EXPORT=0 -DCMAKE_BUILD_TYPE=Release",
+      "buildCommandArgs": "-v",
+      "ctestCommandArgs": ""
     }
+
   ]
 }

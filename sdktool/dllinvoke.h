@@ -69,7 +69,7 @@ public:
 	sscdll_error(const std::string &s,
 			const std::string &f) : text(s), func(f) { }
 	virtual ~sscdll_error() throw() { }
-	virtual const char *what() const _NOEXCEPT { return std::string( text + " " + func ).c_str(); }
+	virtual const char *what() const { return std::string( text + " " + func ).c_str(); }
 	std::string text;
 	std::string func;
 };

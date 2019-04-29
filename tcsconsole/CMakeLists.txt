@@ -76,11 +76,16 @@ endif(MSVC)
 
 if (UNIX)
 	set(wxWidgets_CONFIG_EXECUTABLE /usr/local/bin/wx-config-3)
+	find_package(wxWidgets REQUIRED webview xrc stc richtext ribbon propgrid aui gl html qa adv net core xml net base)
 else()
-	set(wxWidgets_CONFIGURATION mswu)
 	set(wxWidgets_ROOT_DIR $ENV{WXMSW3})
+	if (CMAKE_BUILD_TYPE STREQUAL "Debug")
+		set(wxWidgets_CONFIGURATION mswud)
+	else()
+		set(wxWidgets_CONFIGURATION mswu)
+	endif()
+	find_package(wxWidgets REQUIRED xrc stc richtext ribbon propgrid aui gl html qa adv core xml net base scintilla)
 endif()
-find_package(wxWidgets REQUIRED xrc stc richtext ribbon propgrid aui gl html qa adv core xml net base)
 include(${wxWidgets_USE_FILE})
 
 
@@ -137,6 +142,21 @@ endif()
 #
 #####################################################################################################################
 
+set( DEPENDENCIES
+		tcs
+		nlopt
+		solarpilot
+		shared
+		splinter)
+foreach( name ${DEPENDENCIES} )
+	unset(${name}_LIB CACHE)
+	if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+		target_link_libraries(${TCSCONSOLE_EXE} ${name}d)
+	else()
+		target_link_libraries(${TCSCONSOLE_EXE} ${name})
+	endif()
+endforeach()
+
 if (${CMAKE_PROJECT_NAME} STREQUAL system_advisor_model)
 	if(CMAKE_BUILD_TYPE STREQUAL "Debug")
 		target_link_libraries(${TCSCONSOLE_EXE} lkd wexd)
@@ -163,27 +183,21 @@ else()
 		find_library( LK_LIB
 			NAMES lk.a lk.lib
 			PATHS $ENV{LKDIR})
-	target_link_libraries(${TCSCONSOLE_EXE} ${WEX_LIB} ${LK_LIB})
 	endif()
+	target_link_libraries(${TCSCONSOLE_EXE} ${WEX_LIB} ${LK_LIB})
 endif()
 
-set( DEPENDENCIES
-		tcs
-		nlopt
-		solarpilot
-		shared
-		splinter)
-foreach( name ${DEPENDENCIES} )
-	unset(${name}_LIB CACHE)
-	if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-		target_link_libraries(${TCSCONSOLE_EXE} ${name}d)
-	else()
-		target_link_libraries(${TCSCONSOLE_EXE} ${name})
-	endif()
-endforeach()
-
 target_link_libraries(${TCSCONSOLE_EXE} ${wxWidgets_LIBRARIES})
-target_link_libraries(${TCSCONSOLE_EXE} -lm -lcurl)
+
+if (UNIX)
+	target_link_libraries(${SDKTOOL_EXE} -lm -lcurl)
+elseif (MSVC)
+	find_library( CURL_LIB
+				NAMES libcurl.lib
+				PATHS $ENV{WEXDIR}/build_vs2017/libcurl_ssl_x64/lib)
+	target_link_libraries(${TCSCONSOLE_EXE} ${CURL_LIB})
+	target_link_libraries(${TCSCONSOLE_EXE} Winhttp)
+endif()
 
 if (UNIX AND NOT APPLE)
 	target_link_libraries(${TCSCONSOLE_EXE} -lfontconfig -ldl)
@@ -193,3 +207,29 @@ if (MSVC)
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /SUBSYSTEM:CONSOLE")
 endif()
 
+
+#####################################################################################################################
+#
+# Target Installation
+#
+#####################################################################################################################
+
+set( LIBCURL_FILES
+   dbghelp.dll
+   libcurl.dll
+   libeay32.dll
+   libssh2.dll
+   msvcp140.dll
+   openssl.exe
+   ssleay32.dll
+   vcruntime140.dll
+)
+
+foreach( file_i ${LIBCURL_FILES})
+    add_custom_command(
+    TARGET ${TCSCONSOLE_EXE}
+    POST_BUILD
+    COMMAND ${CMAKE_COMMAND}
+    ARGS -E copy $ENV{WEXDIR}/build_vs2017/libcurl_ssl_x64/bin/${file_i} ${CMAKE_CURRENT_SOURCE_DIR}
+)
+endforeach( file_i )

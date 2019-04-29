@@ -27,6 +27,10 @@ Project(sdktool)
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}")
 
+if ( NOT APPLE)
+	set(CURL_DIR build_vs2017/libcurl_ssl_x64)
+endif()
+
 include_directories(. $ENV{WEXDIR}/include $ENV{LKDIR}/include ../ssc ../shared ../splinter)
 
 set(SDKTOOL_SRC
@@ -76,12 +80,17 @@ endif(MSVC)
 
 if (UNIX)
 	set(wxWidgets_CONFIG_EXECUTABLE /usr/local/bin/wx-config-3)
+	find_package(wxWidgets COMPONENTS qa webview aui richtext html propgrid adv net stc core xml base REQUIRED)
 else()
-	set(wxWidgets_CONFIGURATION mswu)
 	set(wxWidgets_ROOT_DIR $ENV{WXMSW3})
+	if (CMAKE_BUILD_TYPE STREQUAL "Debug")
+		set(wxWidgets_CONFIGURATION mswud)
+	else()
+		set(wxWidgets_CONFIGURATION mswu)
+	endif()
+	find_package(wxWidgets COMPONENTS qa webview aui richtext html propgrid adv net stc core xml base scintilla REQUIRED)
 endif()
 
-find_package(wxWidgets COMPONENTS qa webview aui richtext html propgrid adv net stc core xml base REQUIRED)
 include(${wxWidgets_USE_FILE})
 
 
@@ -167,6 +176,10 @@ endif()
 
 target_link_libraries(${SDKTOOL_EXE} ${wxWidgets_LIBRARIES})
 
+if (UNIX AND NOT APPLE)
+	target_link_libraries(${SDKTOOL_EXE} -ldl -lfontconfig)
+endif()
+
 if (UNIX)
 	target_link_libraries(${SDKTOOL_EXE} -lm -lcurl)
 elseif (MSVC)
@@ -174,10 +187,7 @@ elseif (MSVC)
 				NAMES libcurl.lib
 				PATHS $ENV{WEXDIR}/build_vs2017/libcurl_ssl_x64/lib)
 	target_link_libraries(${SDKTOOL_EXE} ${CURL_LIB})
-endif()
-
-if (UNIX AND NOT APPLE)
-	target_link_libraries(${SDKTOOL_EXE} -ldl -lfontconfig)
+	target_link_libraries(${SDKTOOL_EXE} Winhttp)
 endif()
 
 if (MSVC)
@@ -185,5 +195,28 @@ if (MSVC)
 endif()
 
 
+#####################################################################################################################
+#
+# Target Installation
+#
+#####################################################################################################################
 
+set( LIBCURL_FILES
+   dbghelp.dll
+   libcurl.dll
+   libeay32.dll
+   libssh2.dll
+   msvcp140.dll
+   openssl.exe
+   ssleay32.dll
+   vcruntime140.dll
+)
 
+foreach( file_i ${LIBCURL_FILES})
+    add_custom_command(
+    TARGET ${SDKTOOL_EXE}
+    POST_BUILD
+    COMMAND ${CMAKE_COMMAND}
+    ARGS -E copy $ENV{WEXDIR}/build_vs2017/libcurl_ssl_x64/bin/${file_i} ${CMAKE_CURRENT_SOURCE_DIR}
+)
+endforeach( file_i )
