@@ -206,6 +206,7 @@ var_info vtab_battery_outputs[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "batt_voltage",                               "Battery voltage",	                                     "V",        "",                     "Battery",       "",                           "",                              "" },
 																		               
 	// Lifecycle related outputs											             
+	{ SSC_OUTPUT,        SSC_ARRAY,      "batt_DOD_cycle_average",                     "Battery average cycle DOD",                              "",         "",                     "Battery",       "",                           "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "batt_cycles",                                "Battery number of cycles",                               "",         "",                     "Battery",       "",                           "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "batt_temperature",                           "Battery temperature",                                    "C",        "",                     "Battery",       "",                           "",                              "" }, 
 	{ SSC_OUTPUT,        SSC_ARRAY,      "batt_capacity_percent",                      "Battery capacity percent for lifetime",                  "%",        "",                     "Battery",       "",                           "",                              "" },
@@ -226,7 +227,7 @@ var_info vtab_battery_outputs[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "batt_system_loss",                           "Electricity loss from battery ancillary equipment",     "kW",      "",                       "Battery",       "",                           "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "grid_power_target",                          "Electricity grid power target for automated dispatch","kW","",                               "Battery",       "",                           "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "batt_power_target",                          "Electricity battery power target for automated dispatch","kW","",                            "Battery",       "",                           "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "batt_cost_to_cycle",                         "Computed cost to cycle",                                "$/cycle", "",                       "Battery",       "",                           "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "batt_cost_to_cycle",                         "Battery computed cost to cycle",                                "$/cycle", "",                       "Battery",       "",                           "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "market_sell_rate_series_yr1",                "Market sell rate (Year 1)",                             "$/MWh", "",                         "Battery",       "",                           "",                              "" },
 
 	// monthly outputs
@@ -579,6 +580,7 @@ battstor::battstor(compute_module &cm, bool setup_model, size_t nrec, double dt_
 	outMaxCharge = 0;
 	outSOC = 0;
 	outDOD = 0;
+	outDODCycleAverage = 0;
 	outCurrent = 0;
 	outCellVoltage = 0;
 	outBatteryVoltage = 0;
@@ -658,6 +660,7 @@ battstor::battstor(compute_module &cm, bool setup_model, size_t nrec, double dt_
 	outCycles = cm.allocate("batt_cycles", nrec*nyears);
 	outSOC = cm.allocate("batt_SOC", nrec*nyears);
 	outDOD = cm.allocate("batt_DOD", nrec*nyears);
+	outDODCycleAverage = cm.allocate("batt_DOD_cycle_average", nrec*nyears);
 	outCapacityPercent = cm.allocate("batt_capacity_percent", nrec*nyears);
 	outBatteryPower = cm.allocate("batt_power", nrec*nyears);
 	outGridPower = cm.allocate("grid_power", nrec*nyears); // Net grid energy required.  Positive indicates putting energy on grid.  Negative indicates pulling off grid
@@ -1179,6 +1182,7 @@ void battstor::outputs_fixed(compute_module &cm)
 	outCycles[index] = (ssc_number_t)(lifetime_cycle_model->cycles_elapsed());
 	outSOC[index] = (ssc_number_t)(capacity_model->SOC());
 	outDOD[index] = (ssc_number_t)(lifetime_cycle_model->cycle_range());
+	outDODCycleAverage[index] = (ssc_number_t)(lifetime_cycle_model->average_range());
 	outCapacityPercent[index] = (ssc_number_t)(lifetime_model->capacity_percent());
 }
 

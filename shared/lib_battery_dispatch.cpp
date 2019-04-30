@@ -64,6 +64,7 @@ dispatch_t::dispatch_t(battery_t * Battery, double dt_hour, double SOC_min, doub
 	m_batteryPower->currentDischargeMax = Id_max;
 	m_batteryPower->stateOfChargeMax = SOC_max;
 	m_batteryPower->stateOfChargeMin = SOC_min;
+	m_batteryPower->depthOfDischargeMax = SOC_max - SOC_min;
 	m_batteryPower->powerBatteryChargeMax = Pc_max;
 	m_batteryPower->powerBatteryDischargeMax = Pd_max;
 	m_batteryPower->meterPosition = battMeterPosition;
@@ -1466,10 +1467,11 @@ void dispatch_automatic_front_of_meter_t::update_cliploss_data(double_vec P_clip
 
 void dispatch_automatic_front_of_meter_t::costToCycle()
 {
+	// Calculate assuming maximum depth of discharge (most conservative assumption)
 	if (m_battCycleCostChoice == dispatch_t::MODEL_CYCLE_COST)
 	{
-		double capacityPercentDamagePerCycle = _Battery->lifetime_model()->cycleModel()->computeCycleDamageAtDOD();
-		m_cycleCost = 0.01 * capacityPercentDamagePerCycle * m_battReplacementCostPerKWH;
+		double capacityPercentDamagePerCycle = _Battery->lifetime_model()->cycleModel()->estimateCycleDamage();
+		m_cycleCost = 0.01 * capacityPercentDamagePerCycle * m_battReplacementCostPerKWH;  
 	}
 }
 
