@@ -63,7 +63,6 @@ if(MSVC)
         add_compile_definitions(NDEBUG )
     endif()
     add_compile_definitions( __64BIT__ __WINDOWS__ _WINDOWS _CRT_SECURE_NO_WARNINGS _MBCS )
-	
 elseif(APPLE)
 	add_compile_options(-Wall -O3 -arch x86_64 -Wno-deprecated)
 else()
