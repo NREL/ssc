@@ -38,9 +38,12 @@ add_subdirectory(lpsolve)
 add_subdirectory(solarpilot)
 add_subdirectory(tcs)
 add_subdirectory(ssc)
-add_subdirectory(test)
 
 if (NOT system_advisor_model_EXPORT)
 	add_subdirectory(sdktool)
 	add_subdirectory(tcsconsole)
+endif()
+
+if (NOT skip_tests)
+	add_subdirectory(test)
 endif()
