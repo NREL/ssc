@@ -35,7 +35,7 @@ elseif (DEFINED ENV{GTEST})
 	set(GTDIR $ENV{GTEST})
 endif()
 
-include_directories(${GTDIR}/include . input_cases shared_test ssc_test tcs_test 
+include_directories(${GTDIR}/include ${GTDIR}/googletest/include . input_cases shared_test ssc_test tcs_test 
 						../ssc ../tcs ../solarpilot ../shared ../splinter )
 
 file(GLOB SSC_TESTS ssc_test/*.cpp)
@@ -63,7 +63,6 @@ if(MSVC)
         add_compile_definitions(NDEBUG )
     endif()
     add_compile_definitions( __64BIT__ __WINDOWS__ _WINDOWS _CRT_SECURE_NO_WARNINGS _MBCS )
-	
 elseif(APPLE)
 	add_compile_options(-Wall -O3 -arch x86_64 -Wno-deprecated)
 else()
@@ -115,12 +114,12 @@ endif()
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
 	find_library( GTEST_LIB
 		NAMES libgtestd.a gtestd.lib
-		PATHS ${GTDIR}/build/lib ${GTDIR}/build/lib ${GTDIR}/msvc/2010/gtest-md/x64-Debug)
+		PATHS ${GTDIR}/build/lib ${GTDIR}/make ${GTDIR}/msvc/2010/gtest-md/x64-Debug)
 	target_link_libraries(${TEST_EXE} sscd splinterd ${GTEST_LIB} )
 else()
 	find_library( GTEST_LIB
 		NAMES libgtest.a gtest.lib
-		PATHS ${GTDIR}/build/lib ${GTDIR}/build/lib ${GTDIR}/msvc/2010/gtest-md/x64-Release)
+		PATHS ${GTDIR}/build/lib ${GTDIR}/make ${GTDIR}/msvc/2010/gtest-md/x64-Release)
 	target_link_libraries(${TEST_EXE} ssc splinter ${GTEST_LIB})
 endif()
 

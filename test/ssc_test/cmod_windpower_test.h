@@ -45,7 +45,7 @@ bool CMWindPowerIntegration::compute(bool errorNotExpected){
 		return false;
 	}
 	ssc_module_free(module);
-	return 0;
+	return true;
 }
 
 #endif

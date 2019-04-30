@@ -7,7 +7,7 @@
 cmake_minimum_required(VERSION 2.8)
 
 if(APPLE)
-    set(CMAKE_OSX_DEPLOYMENT_TARGET "10.7" CACHE STRING "Minimum OS X deployment version")
+    set(CMAKE_OSX_DEPLOYMENT_TARGET "10.9" CACHE STRING "Minimum OS X deployment version")
 elseif(MSVC)
     set(CMAKE_SYSTEM_VERSION 8.1 CACHE TYPE INTERNAL FORCE)
 endif()
@@ -42,5 +42,8 @@ add_subdirectory(ssc)
 if (NOT system_advisor_model_EXPORT)
 	add_subdirectory(sdktool)
 	add_subdirectory(tcsconsole)
+endif()
+
+if (NOT skip_tests)
 	add_subdirectory(test)
 endif()
