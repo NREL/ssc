@@ -115,12 +115,12 @@ endif()
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
 	find_library( GTEST_LIB
 		NAMES libgtestd.a gtestd.lib
-		PATHS ${GTDIR}/build/lib ${GTDIR}/build/lib ${GTDIR}/msvc/2010/gtest-md/x64-Debug)
+		PATHS ${GTDIR}/build/lib ${GTDIR}/make ${GTDIR}/msvc/2010/gtest-md/x64-Debug)
 	target_link_libraries(${TEST_EXE} sscd splinterd ${GTEST_LIB} )
 else()
 	find_library( GTEST_LIB
 		NAMES libgtest.a gtest.lib
-		PATHS ${GTDIR}/build/lib ${GTDIR}/build/lib ${GTDIR}/msvc/2010/gtest-md/x64-Release)
+		PATHS ${GTDIR}/build/lib ${GTDIR}/make ${GTDIR}/msvc/2010/gtest-md/x64-Release)
 	target_link_libraries(${TEST_EXE} ssc splinter ${GTEST_LIB})
 endif()
 
