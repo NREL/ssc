@@ -29,13 +29,20 @@ Project(ssc_test)
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}")
 
-include_directories($ENV{GTEST}/include . input_cases shared_test ssc_test tcs_test 
+if (DEFINED ENV{GTDIR})
+	set(GTDIR $ENV{GTDIR})
+elseif (DEFINED ENV{GTEST})
+	set(GTDIR $ENV{GTEST})
+endif()
+
+include_directories(${GTDIR}/include . input_cases shared_test ssc_test tcs_test 
 						../ssc ../tcs ../solarpilot ../shared ../splinter )
 
 file(GLOB SSC_TESTS ssc_test/*.cpp)
 file(GLOB SHARED_TESTS shared_test/*.cpp)
 file(GLOB TCS_TESTS tcs_test/*.cpp)
 file(GLOB INPUTS_SRC input_cases/*.cpp)
+set(SSC_SRC ../ssc/vartab.cpp ../ssc/core.cpp ../ssc/common.cpp)
 
 
 #####################################################################################################################
@@ -77,6 +84,7 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
 		${SHARED_TEST}
 		${TCS_TESTS}
 		${INPUTS_SRC}
+		${SSC_SRC}
 		main.cpp)
 	set(TEST_EXE Testd)
 	
@@ -106,19 +114,37 @@ endif()
 
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
 	find_library( GTEST_LIB
-		NAMES libgtest.a gtestd.lib
-		PATHS $ENV{GTDIR}/build/lib $ENV{GTDIR}/build/lib $ENV{GTDIR}/msvc/2010/gtest-md/x64-Debug)
-	target_link_libraries(${TEST_EXE} splinterd ${GTEST_LIB} sscd)
+		NAMES libgtestd.a gtestd.lib
+		PATHS ${GTDIR}/build/lib ${GTDIR}/build/lib ${GTDIR}/msvc/2010/gtest-md/x64-Debug)
+	target_link_libraries(${TEST_EXE} sscd splinterd ${GTEST_LIB} )
 else()
 	find_library( GTEST_LIB
 		NAMES libgtest.a gtest.lib
-		PATHS $ENV{GTDIR}/build/lib $ENV{GTDIR}/build/lib $ENV{GTDIR}/msvc/2010/gtest-md/x64-Release)
-	target_link_libraries(${TEST_EXE} splinter ${GTEST_LIB} ssc)
+		PATHS ${GTDIR}/build/lib ${GTDIR}/build/lib ${GTDIR}/msvc/2010/gtest-md/x64-Release)
+	target_link_libraries(${TEST_EXE} ssc splinter ${GTEST_LIB})
 endif()
 
-target_link_libraries(${TEST_EXE} -ldl -lpthread)
+if (UNIX)
+	target_link_libraries(${TEST_EXE} -ldl -lpthread)
+endif()
 
 if (MSVC)
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /SUBSYSTEM:CONSOLE")
-endif()
+endif()	
 
+
+#####################################################################################################################
+#
+# Target Installation
+#
+#####################################################################################################################
+
+
+if (MSVC)
+	add_custom_command(
+	    TARGET ${TEST_EXE}
+	    POST_BUILD
+	    COMMAND ${CMAKE_COMMAND}
+	    ARGS -E copy $ENV{SSCDIR}/ssc/ssc.lib $ENV{SSCDIR}/ssc/ssc.dll ${CMAKE_CURRENT_SOURCE_DIR}
+	)
+endif()
