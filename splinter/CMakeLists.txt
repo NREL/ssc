@@ -6,9 +6,7 @@
 
 set(CMAKE_VERBOSE_MAKEFILE ON)
 
-if(APPLE)
-    set(CMAKE_OSX_DEPLOYMENT_TARGET "10.9" CACHE STRING "Minimum OS X deployment version")
-elseif(MSVC)
+if(MSVC)
 	set(CMAKE_SYSTEM_VERSION 8.1 CACHE TYPE INTERNAL FORCE)
 endif()
 
@@ -65,7 +63,7 @@ if(MSVC)
 
 else(MSVC)
 	if (APPLE)
-		add_compile_options( -arch x86_64 -fno-common -std=c++11 -std=gnu++11 -O3)
+		add_compile_options( -mmacosx-version-min=10.9 -arch x86_64 -fno-common -std=c++11 -O3)
 		add_definitions(-DWX_PRECOMP)
 	else()
 		add_definitions(-D__64BIT__)
