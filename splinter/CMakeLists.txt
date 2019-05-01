@@ -65,12 +65,12 @@ if(MSVC)
 
 else(MSVC)
 	if (APPLE)
-		add_compile_options(-arch x86_64 -fno-common)
+		add_compile_options(-mmacosx-version-min=10.9 -arch x86_64 -fno-common -std=c++11 -std=gnu++11 -O3)
 		add_definitions(-DWX_PRECOMP)
 	else()
 		add_definitions(-D__64BIT__)
 	endif()
-	SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -std=gnu++11" )
+	#SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -std=gnu++11" )
 endif(MSVC)
 
 
