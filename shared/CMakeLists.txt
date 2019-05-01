@@ -11,6 +11,7 @@ if(APPLE)
 elseif(MSVC)
     set(CMAKE_SYSTEM_VERSION 8.1 CACHE TYPE INTERNAL FORCE)
 endif()
+set(CMAKE_CXX_STANDARD 11)
 
 if(MSVC)
   set(CMAKE_CONFIGURATION_TYPES "Debug;Release" CACHE STRING "Debug and Release Builds Configured" FORCE)
@@ -95,7 +96,7 @@ else(MSVC)
 		SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror -Wno-misleading-indentation -Wno-int-in-bool-context" )
 		add_definitions(-D__64BIT__)
 	endif()
-  	SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -std=c++11" )
+  	SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -std=gnu++11" )
 	set_source_files_properties(${SHARED_SRC} PROPERTIES 
 		COMPILE_FLAGS "-Wall -Wno-strict-aliasing -Wno-deprecated-declarations -Wno-unknown-pragmas -Wno-reorder")
 	set_source_files_properties(${SHARED_SRC} PROPERTIES 
