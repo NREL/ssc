@@ -60,7 +60,7 @@ if(MSVC)
 else(MSVC)
 	if (APPLE)
 		add_compile_options(-arch x86_64)
-		add_compile_definitions(__WXOSX__)
+		add_definitions(-D__WXOSX__)
 	else()
 		add_definitions(-D__64BIT__)
 	endif()
@@ -190,7 +190,7 @@ endif()
 target_link_libraries(${TCSCONSOLE_EXE} ${wxWidgets_LIBRARIES})
 
 if (UNIX)
-	target_link_libraries(${SDKTOOL_EXE} -lm -lcurl)
+	target_link_libraries(${TCSCONSOLE_EXE} -lm -lcurl)
 elseif (MSVC)
 	find_library( CURL_LIB
 				NAMES libcurl.lib

@@ -27,8 +27,10 @@ Project(nlopt)
 
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}")
 
-execute_process(COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/configure)
-execute_process(COMMAND cp config.h ${CMAKE_CURRENT_SOURCE_DIR})
+if (NOT EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/config.h)
+	execute_process(COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/configure)
+	execute_process(COMMAND cp config.h ${CMAKE_CURRENT_SOURCE_DIR})
+endif()
 
 include_directories(.)
 
@@ -99,7 +101,7 @@ if(MSVC)
 else(MSVC)
 	if (APPLE)
 		add_compile_options(-arch x86_64 -fno-common)
-		add_compile_definitions(WX_PRECOMP)
+		add_definitions(-DWX_PRECOMP)
 	else()
 		add_definitions(-D__64BIT__)
 	endif()
