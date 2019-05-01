@@ -13,7 +13,6 @@ compiler:
   - gcc
 
 before_script:
-  - g++ --version
  # - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then wget -q https://github.com/wxWidgets/wxWidgets/releases/download/v3.1.1/wxWidgets-3.1.1.tar.bz2; fi
  # - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then tar jxf wxWidgets-3.1.1.tar.bz2; fi
  # - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then cd wxWidgets-3.1.1; fi
@@ -46,7 +45,7 @@ script:
   - cd ${SSCDIR}
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then cmake . -DCMAKE_BUILD_TYPE=Release -Dsystem_advisor_model_EXPORT=1 && make -j2; fi
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then test/Test; fi
-  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then cmake . -DCMAKE_BUILD_TYPE=Release -Dsystem_advisor_model_EXPORT=1 -Dskip_tests=1 -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++&& make VERBOSE=1 -j2; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then cmake . -DCMAKE_BUILD_TYPE=Release -Dsystem_advisor_model_EXPORT=1 -Dskip_tests=1 -DCMAKE_C_COMPILER=/Applications/Xcode-9.4.1.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/gcc -DCMAKE_CXX_COMPILER=/Applications/Xcode-9.4.1.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/g++&& make VERBOSE=1 -j2; fi
 
 
 install:
