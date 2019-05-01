@@ -1775,6 +1775,10 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 					// shading loss applied to beam if not from shading database
 					Subarrays[nn]->Module->dcPowerW *= Subarrays[nn]->shadeCalculator.dc_shade_factor();
 
+					// scale power and mppt voltage clipping to subarray dimensions
+					Subarrays[nn]->dcPowerSubarray = Subarrays[nn]->Module->dcPowerW * Subarrays[nn]->nModulesPerString * Subarrays[nn]->nStrings;
+					if (iyear == 0) mpptVoltageClipping[nn] *= Subarrays[nn]->nModulesPerString* Subarrays[nn]->nStrings;
+
 					// Calculate and apply snow coverage losses if activated
 					if (PVSystem->enableSnowModel)
 					{
@@ -1789,19 +1793,16 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 
 						if (iyear == 0)
 						{
-							PVSystem->p_snowLoss[nn][idx] = (ssc_number_t)(util::watt_to_kilowatt*Subarrays[nn]->Module->dcPowerW*smLoss);
-							PVSystem->p_snowLossTotal[idx] += (ssc_number_t)(util::watt_to_kilowatt*Subarrays[nn]->Module->dcPowerW*smLoss);
+							PVSystem->p_snowLoss[nn][idx] = (ssc_number_t)(util::watt_to_kilowatt*Subarrays[nn]->dcPowerSubarray*smLoss);
+							PVSystem->p_snowLossTotal[idx] += (ssc_number_t)(util::watt_to_kilowatt*Subarrays[nn]->dcPowerSubarray*smLoss);
 							PVSystem->p_snowCoverage[nn][idx] = (ssc_number_t)(Subarrays[nn]->snowModel.coverage);
-							annual_snow_loss += (ssc_number_t)(util::watt_to_kilowatt*Subarrays[nn]->Module->dcPowerW*smLoss);
+							annual_snow_loss += (ssc_number_t)(util::watt_to_kilowatt*Subarrays[nn]->dcPowerSubarray*smLoss);
 						}
 
 						Subarrays[nn]->Module->dcPowerW *= (1 - smLoss);
 						if (iyear == 0) mpptVoltageClipping[nn] *= (1 - smLoss);
 					}
 
-					// scale power and mppt voltage clipping to subarray dimensions
-					Subarrays[nn]->dcPowerSubarray = Subarrays[nn]->Module->dcPowerW * Subarrays[nn]->nModulesPerString * Subarrays[nn]->nStrings;
-					if (iyear == 0) mpptVoltageClipping[nn] *= Subarrays[nn]->nModulesPerString* Subarrays[nn]->nStrings;
 
 					//assign gross outputs per subarray at this point
 					if (iyear == 0)
