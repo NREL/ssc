@@ -63,14 +63,14 @@ if(MSVC)
     endif()
     add_compile_definitions( __64BIT__ __WINDOWS__ _WINDOWS )
 
-#else(MSVC)
+else(MSVC)
 	if (APPLE)
 		add_compile_options(-arch x86_64 -fno-common)
 		add_definitions(-DWX_PRECOMP)
 	else()
 		add_definitions(-D__64BIT__)
 	endif()
-	SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -std=c++11" )
+	SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -std=gnu++11" )
 endif(MSVC)
 
 
