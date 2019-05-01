@@ -78,12 +78,12 @@ TEST_F(CMWindPowerIntegration, WakeModelsUsingFile_cmod_windpower){
 /// Using Interpolated Subhourly Wind Data
 TEST_F(CMWindPowerIntegration, UsingInterpolatedSubhourly_cmod_windpower){
 	// Using AR Northwestern-Flat Lands
-#ifdef _MSC_VER	
-	std::string file = "../../../test/input_docs/AR Northwestern-Flat Lands.srw";
-#else	
-	std::string file = "../test/input_docs/AR Northwestern-Flat Lands.srw";
-#endif
-	ssc_data_set_string(data, "wind_resource_filename", file.c_str());
+
+    const char * SSCDIR = std::getenv("SSCDIR");
+    char file[256];
+    int n1 = sprintf(file, "%s/test/input_docs/AR Northwestern-Flat Lands.srw", SSCDIR);
+
+	ssc_data_set_string(data, "wind_resource_filename", file);
 	bool success = compute();
 
     EXPECT_TRUE(success) << "Computation 1 should succeed";
@@ -95,12 +95,9 @@ TEST_F(CMWindPowerIntegration, UsingInterpolatedSubhourly_cmod_windpower){
 
 
 	// Using 15 min File
-#ifdef _MSC_VER	
-	file = "../../../test/input_docs/AR Northwestern-Flat Lands-15min.srw";
-#else	
-	file = "../test/input_docs/AR Northwestern-Flat Lands-15min.srw";
-#endif
-	ssc_data_set_string(data, "wind_resource_filename", file.c_str());
+    n1 = sprintf(file, "%s/test/input_docs/AR Northwestern-Flat Lands-15min.srw", SSCDIR);
+
+	ssc_data_set_string(data, "wind_resource_filename", file);
 	success = compute();
 
 	EXPECT_TRUE(success) << "Computation 2 should succeed";
@@ -116,12 +113,9 @@ TEST_F(CMWindPowerIntegration, UsingInterpolatedSubhourly_cmod_windpower){
 	EXPECT_EQ(nEntries, 8760 * 4);
 
 	// Using 5 min File
-#ifdef _MSC_VER	
-	file = "../../../test/input_docs/AR Northwestern-Flat Lands-5min.srw";
-#else	
-	file = "../test/input_docs/AR Northwestern-Flat Lands-5min.srw";
-#endif
-	ssc_data_set_string(data, "wind_resource_filename", file.c_str());
+    n1 = sprintf(file, "%s/test/input_docs/AR Northwestern-Flat Lands-5min.srw", SSCDIR);
+
+	ssc_data_set_string(data, "wind_resource_filename", file);
 	success = compute();
 
     EXPECT_TRUE(success) << "Computation 3 should succeed";
