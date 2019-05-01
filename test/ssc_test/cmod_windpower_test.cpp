@@ -84,9 +84,11 @@ TEST_F(CMWindPowerIntegration, UsingInterpolatedSubhourly_cmod_windpower){
 	std::string file = "../test/input_docs/AR Northwestern-Flat Lands.srw";
 #endif
 	ssc_data_set_string(data, "wind_resource_filename", file.c_str());
-	compute();
+	bool success = compute();
 
-	ssc_number_t hourly_annual_energy;
+    EXPECT_TRUE(success) << "Computation 1 should succeed";
+
+    ssc_number_t hourly_annual_energy;
 	ssc_data_get_number(data, "annual_energy", &hourly_annual_energy);
 
 	ssc_number_t hourly_january_energy = ssc_data_get_array(data, "monthly_energy", nullptr)[0];
@@ -99,7 +101,9 @@ TEST_F(CMWindPowerIntegration, UsingInterpolatedSubhourly_cmod_windpower){
 	file = "../test/input_docs/AR Northwestern-Flat Lands-15min.srw";
 #endif
 	ssc_data_set_string(data, "wind_resource_filename", file.c_str());
-	compute();
+	success = compute();
+
+	EXPECT_TRUE(success) << "Computation 2 should succeed";
 
 	ssc_number_t check_annual_energy;
 	ssc_data_get_number(data, "annual_energy", &check_annual_energy);
@@ -118,9 +122,11 @@ TEST_F(CMWindPowerIntegration, UsingInterpolatedSubhourly_cmod_windpower){
 	file = "../test/input_docs/AR Northwestern-Flat Lands-5min.srw";
 #endif
 	ssc_data_set_string(data, "wind_resource_filename", file.c_str());
-	compute();
+	success = compute();
 
-	check_annual_energy;
+    EXPECT_TRUE(success) << "Computation 3 should succeed";
+
+    check_annual_energy;
 	ssc_data_get_number(data, "annual_energy", &check_annual_energy);
 	EXPECT_NEAR(check_annual_energy, hourly_annual_energy, 0.005*check_annual_energy);
 
