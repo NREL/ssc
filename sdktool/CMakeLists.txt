@@ -68,7 +68,7 @@ else(MSVC)
 		add_definitions(-D__64BIT__)
 	endif()
 	add_compile_options(-Wall -Wno-unknown-pragmas -Werror -Wno-overloaded-virtual -O3 -fno-common -std=c++11)
-	add_definitions(-DLK_USE_WXWIDGETS WX_PRECOMP )
+	add_definitions(-DLK_USE_WXWIDGETS -DWX_PRECOMP )
 endif(MSVC)
 
 
