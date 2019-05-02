@@ -6,12 +6,12 @@
 
 namespace swhtest {
 	const char * SSCDIR = std::getenv("SSCDIR");
-	char solar_resource_file[100];
-	char scaled_draw[100];
-	char custom_mains[100];
-	char custom_set[100];
-	char load[100];
-	char ur_ts_sell_rate[100];
+	char solar_resource_file[256];
+	char scaled_draw[256];
+	char custom_mains[256];
+	char custom_set[256];
+	char load[256];
+	char ur_ts_sell_rate[256];
 
 	int n1 = sprintf(solar_resource_file, "%s/test/input_cases/swh_residential_data/fargo_nd_46.9_-96.8_mts1_60_tmy.csv", swhtest::SSCDIR);
 	int n2 = sprintf(scaled_draw, "%s/test/input_cases/swh_residential_data/scaled_draw.csv", swhtest::SSCDIR);

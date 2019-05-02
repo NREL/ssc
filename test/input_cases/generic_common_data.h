@@ -6,14 +6,14 @@
 
 namespace generictest {
 	const char * SSCDIR = std::getenv("SSCDIR");
-	char load_profile_path_60min[100];
-	char load_profile_path_30min[100];
-	char gen_path_60min[100];
-	char gen_path_30min[100];
-	char batt_dispatch_path_30min[100];
-	char batt_dispatch_path_60min[100];
-	char dispatch_factors_unused[100];
-	char sell_rate_unused[100];
+	char load_profile_path_60min[256];
+	char load_profile_path_30min[256];
+	char gen_path_60min[256];
+	char gen_path_30min[256];
+	char batt_dispatch_path_30min[256];
+	char batt_dispatch_path_60min[256];
+	char dispatch_factors_unused[256];
+	char sell_rate_unused[256];
 
 	int n1 = sprintf(load_profile_path_60min, "%s/test/input_cases/generic_system_data/load_60min.csv", generictest::SSCDIR);
 	int n2 = sprintf(load_profile_path_30min, "%s/test/input_cases/generic_system_data/load_30min.csv", generictest::SSCDIR);
