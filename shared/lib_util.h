@@ -47,6 +47,7 @@
 *  THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *******************************************************************************************************/
 
+#pragma once
 #ifndef __lib_util_h
 #define __lib_util_h
 
@@ -72,9 +73,9 @@ Define _DEBUG if compile with debugging
 */
 
 #if defined(_MSC_VER) && defined(_WIN32) && !defined(_WIN64)
-#define VEC_ASSERT(x) {if(!(x)) throw std::runtime_error("matrix_t access '" + std::string(__func__) + "' invalid access.");}
+#define UTIL_ASSERT(x) {if(!(x)) throw std::runtime_error("matrix_t access '" + std::string(__func__) + "' invalid access.");}
 #else
-#define VEC_ASSERT(X) {if(!(X)) throw std::runtime_error("matrix_t method '" + std::string(__func__) + "' invalid access.");}
+#define UTIL_ASSERT(X) {if(!(X)) throw std::runtime_error("matrix_t method '" + std::string(__func__) + "' invalid access.");}
 #endif
 
 #if defined(_DEBUG)
@@ -254,7 +255,7 @@ namespace util
 		inline T &at(size_t r, size_t c)
 		{
 	#ifdef _LIB_UTIL_CHECK_
-			VEC_ASSERT( r >= 0 && r < n_rows && c >= 0 && c < n_cols );
+			UTIL_ASSERT( r >= 0 && r < n_rows && c >= 0 && c < n_cols );
 	#endif
 			return t_array[r][c];
 		}
@@ -262,7 +263,7 @@ namespace util
 		inline const T &at(size_t r, size_t c) const
 		{
 	#ifdef _LIB_UTIL_CHECK_
-			VEC_ASSERT( r >= 0 && r < n_rows && c >= 0 && c < n_cols );
+			UTIL_ASSERT( r >= 0 && r < n_rows && c >= 0 && c < n_cols );
 	#endif
 			return t_array[r][c];
 		}
@@ -270,7 +271,7 @@ namespace util
 		inline T &operator()(size_t r, size_t c)
 		{
 	#ifdef _LIB_UTIL_CHECK_
-			VEC_ASSERT( r >= 0 && r < n_rows && c >= 0 && c < n_cols );
+			UTIL_ASSERT( r >= 0 && r < n_rows && c >= 0 && c < n_cols );
 	#endif
 			return t_array[r][c];
 		}
@@ -278,7 +279,7 @@ namespace util
 		inline const T &operator()(size_t r, size_t c) const
 		{
 	#ifdef _LIB_UTIL_CHECK_
-			VEC_ASSERT( r >= 0 && r < n_rows && c >= 0 && c < n_cols );
+			UTIL_ASSERT( r >= 0 && r < n_rows && c >= 0 && c < n_cols );
 	#endif
 			return t_array[r][c];
 		}
@@ -468,7 +469,7 @@ namespace util
 		inline T &at(size_t i)
 		{
 	#ifdef _LIB_UTIL_CHECK_
-			VEC_ASSERT( i >= 0 && i < n_rows*n_cols );
+			UTIL_ASSERT( i >= 0 && i < n_rows*n_cols );
 	#endif
 			return t_array[i];
 		}
@@ -476,7 +477,7 @@ namespace util
 		inline const T&at(size_t i) const
 		{
 	#ifdef _LIB_UTIL_CHECK_
-			VEC_ASSERT( i >= 0 && i < n_rows*n_cols );
+			UTIL_ASSERT( i >= 0 && i < n_rows*n_cols );
 	#endif
 			return t_array[i];
 		}
@@ -484,7 +485,7 @@ namespace util
 		inline T &at(size_t r, size_t c)
 		{
 	#ifdef _LIB_UTIL_CHECK_
-			VEC_ASSERT( r >= 0 && r < n_rows && c >= 0 && c < n_cols );
+			UTIL_ASSERT( r >= 0 && r < n_rows && c >= 0 && c < n_cols );
 	#endif
 			return t_array[n_cols*r+c];
 		}
@@ -492,7 +493,7 @@ namespace util
 		inline const T &at(size_t r, size_t c) const
 		{
 	#ifdef _LIB_UTIL_CHECK_
-			VEC_ASSERT( r >= 0 && r < n_rows && c >= 0 && c < n_cols );
+			UTIL_ASSERT( r >= 0 && r < n_rows && c >= 0 && c < n_cols );
 	#endif
 			return t_array[n_cols*r+c];
 		}
@@ -500,7 +501,7 @@ namespace util
 		inline T &operator()(size_t r, size_t c)
 		{
 	#ifdef _LIB_UTIL_CHECK_
-			VEC_ASSERT( r >= 0 && r < n_rows && c >= 0 && c < n_cols );
+			UTIL_ASSERT( r >= 0 && r < n_rows && c >= 0 && c < n_cols );
 	#endif
 			return t_array[n_cols*r+c];
 		}
@@ -508,7 +509,7 @@ namespace util
 		inline const T &operator()(size_t r, size_t c) const
 		{
 	#ifdef _LIB_UTIL_CHECK_
-			VEC_ASSERT( r >= 0 && r < n_rows && c >= 0 && c < n_cols );
+			UTIL_ASSERT( r >= 0 && r < n_rows && c >= 0 && c < n_cols );
 	#endif
 			return t_array[n_cols*r+c];
 		}
@@ -516,7 +517,7 @@ namespace util
 		T operator[] (size_t i) const
 		{
 	#ifdef _LIB_UTIL_CHECK_
-			VEC_ASSERT( i >= 0 && i < n_rows*n_cols );
+			UTIL_ASSERT( i >= 0 && i < n_rows*n_cols );
 	#endif
 			return t_array[i];
 		}
@@ -524,7 +525,7 @@ namespace util
 		T &operator[] (size_t i)
 		{
 	#ifdef _LIB_UTIL_CHECK_
-			VEC_ASSERT( i >= 0 && i < n_rows*n_cols );
+			UTIL_ASSERT( i >= 0 && i < n_rows*n_cols );
 	#endif
 			return t_array[i];
 		}
@@ -532,7 +533,7 @@ namespace util
         matrix_t row(const size_t r) const
         {
     #ifdef _LIB_UTIL_CHECK_
-            VEC_ASSERT(r >= 0 && r < n_rows);
+            UTIL_ASSERT(r >= 0 && r < n_rows);
     #endif
             matrix_t<T> array(n_cols);
             for (size_t i = 0; i < n_cols; i++)
@@ -543,7 +544,7 @@ namespace util
         matrix_t col(const size_t c) const
         {
     #ifdef _LIB_UTIL_CHECK_
-            VEC_ASSERT(c >= 0 && c < n_cols);
+            UTIL_ASSERT(c >= 0 && c < n_cols);
     #endif
             matrix_t<T> array(n_rows);
             for (size_t i = 0; i < n_rows; i++)
@@ -742,7 +743,7 @@ namespace util
 		inline T &at(size_t r, size_t c, size_t l)
 		{
 	#ifdef _LIB_UTIL_CHECK_
-			VEC_ASSERT( r >= 0 && r < n_rows && c >= 0 && c < n_cols && l >= 0 && l < n_layers);
+			UTIL_ASSERT( r >= 0 && r < n_rows && c >= 0 && c < n_cols && l >= 0 && l < n_layers);
 	#endif
 			return t_array[n_cols*(n_rows*l + r)+c];
 		}
@@ -750,7 +751,7 @@ namespace util
 		inline const T &at(size_t r, size_t c, size_t l) const
 		{
 	#ifdef _LIB_UTIL_CHECK_
-			VEC_ASSERT( r >= 0 && r < n_rows && c >= 0 && c < n_cols && l >= 0 && l < n_layers);
+			UTIL_ASSERT( r >= 0 && r < n_rows && c >= 0 && c < n_cols && l >= 0 && l < n_layers);
 	#endif
 			return t_array[n_cols*(n_rows*l + r)+c];
 		}
@@ -758,7 +759,7 @@ namespace util
 		T operator[] (size_t i) const
 		{
 	#ifdef _LIB_UTIL_CHECK_
-			VEC_ASSERT( i >= 0 && i < n_cols );
+			UTIL_ASSERT( i >= 0 && i < n_cols );
 	#endif
 			return t_array[i];
 		}
@@ -766,7 +767,7 @@ namespace util
 		T &operator[] (size_t i)
 		{
 	#ifdef _LIB_UTIL_CHECK_
-			VEC_ASSERT( i >= 0 && i < n_cols );
+			UTIL_ASSERT( i >= 0 && i < n_cols );
 	#endif
 			return t_array[i];
 		}
