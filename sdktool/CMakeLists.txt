@@ -138,7 +138,8 @@ endif()
 
 if (MSVC)
 	set_target_properties(${SDKTOOL_EXE} PROPERTIES
-        RUNTIME_OUTPUT_DIRECTORY $<1:${CMAKE_CURRENT_SOURCE_DIR}>)
+        RUNTIME_OUTPUT_DIRECTORY $<1:${CMAKE_CURRENT_SOURCE_DIR}>
+        LINK_FLAGS /SUBSYSTEM:WINDOWS)
 endif()
 
 #####################################################################################################################
@@ -190,10 +191,6 @@ elseif (MSVC)
 	target_link_libraries(${SDKTOOL_EXE} Winhttp)
 endif()
 
-if (MSVC)
-    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /SUBSYSTEM:CONSOLE")
-endif()
-
 
 #####################################################################################################################
 #
@@ -222,7 +219,7 @@ foreach( file_i ${LIBCURL_FILES})
 endforeach( file_i )
 
 add_custom_command(
-    TARGET ${TEST_EXE}
+    TARGET ${SDKTOOL_EXE}
     POST_BUILD
     COMMAND ${CMAKE_COMMAND}
     ARGS -E copy $ENV{SSCDIR}/ssc/ssc.lib $ENV{SSCDIR}/ssc/ssc.dll ${CMAKE_CURRENT_SOURCE_DIR}

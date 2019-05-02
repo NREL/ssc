@@ -101,7 +101,8 @@ endif()
 
 if (MSVC)
 	set_target_properties(${TEST_EXE} PROPERTIES
-        RUNTIME_OUTPUT_DIRECTORY $<1:${CMAKE_CURRENT_SOURCE_DIR}>)
+        RUNTIME_OUTPUT_DIRECTORY $<1:${CMAKE_CURRENT_SOURCE_DIR}>
+        LINK_FLAGS /SUBSYSTEM:CONSOLE)
 endif()
 
 
@@ -125,10 +126,6 @@ endif()
 
 if (UNIX)
 	target_link_libraries(${TEST_EXE} -ldl -lpthread)
-endif()
-
-if (MSVC)
-    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /SUBSYSTEM:CONSOLE")
 endif()	
 
 
