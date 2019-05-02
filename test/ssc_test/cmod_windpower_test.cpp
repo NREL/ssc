@@ -78,28 +78,29 @@ TEST_F(CMWindPowerIntegration, WakeModelsUsingFile_cmod_windpower){
 /// Using Interpolated Subhourly Wind Data
 TEST_F(CMWindPowerIntegration, UsingInterpolatedSubhourly_cmod_windpower){
 	// Using AR Northwestern-Flat Lands
-#ifdef _MSC_VER	
-	std::string file = "../../../test/input_docs/AR Northwestern-Flat Lands.srw";
-#else	
-	std::string file = "../test/input_docs/AR Northwestern-Flat Lands.srw";
-#endif
-	ssc_data_set_string(data, "wind_resource_filename", file.c_str());
-	compute();
 
-	ssc_number_t hourly_annual_energy;
+    const char * SSCDIR = std::getenv("SSCDIR");
+    char file[256];
+    int n1 = sprintf(file, "%s/test/input_docs/AR Northwestern-Flat Lands.srw", SSCDIR);
+
+	ssc_data_set_string(data, "wind_resource_filename", file);
+	bool success = compute();
+
+    EXPECT_TRUE(success) << "Computation 1 should succeed";
+
+    ssc_number_t hourly_annual_energy;
 	ssc_data_get_number(data, "annual_energy", &hourly_annual_energy);
 
 	ssc_number_t hourly_january_energy = ssc_data_get_array(data, "monthly_energy", nullptr)[0];
 
 
 	// Using 15 min File
-#ifdef _MSC_VER	
-	file = "../../../test/input_docs/AR Northwestern-Flat Lands-15min.srw";
-#else	
-	file = "../test/input_docs/AR Northwestern-Flat Lands-15min.srw";
-#endif
-	ssc_data_set_string(data, "wind_resource_filename", file.c_str());
-	compute();
+    n1 = sprintf(file, "%s/test/input_docs/AR Northwestern-Flat Lands-15min.srw", SSCDIR);
+
+	ssc_data_set_string(data, "wind_resource_filename", file);
+	success = compute();
+
+	EXPECT_TRUE(success) << "Computation 2 should succeed";
 
 	ssc_number_t check_annual_energy;
 	ssc_data_get_number(data, "annual_energy", &check_annual_energy);
@@ -112,15 +113,14 @@ TEST_F(CMWindPowerIntegration, UsingInterpolatedSubhourly_cmod_windpower){
 	EXPECT_EQ(nEntries, 8760 * 4);
 
 	// Using 5 min File
-#ifdef _MSC_VER	
-	file = "../../../test/input_docs/AR Northwestern-Flat Lands-5min.srw";
-#else	
-	file = "../test/input_docs/AR Northwestern-Flat Lands-5min.srw";
-#endif
-	ssc_data_set_string(data, "wind_resource_filename", file.c_str());
-	compute();
+    n1 = sprintf(file, "%s/test/input_docs/AR Northwestern-Flat Lands-5min.srw", SSCDIR);
 
-	check_annual_energy;
+	ssc_data_set_string(data, "wind_resource_filename", file);
+	success = compute();
+
+    EXPECT_TRUE(success) << "Computation 3 should succeed";
+
+    check_annual_energy;
 	ssc_data_get_number(data, "annual_energy", &check_annual_energy);
 	EXPECT_NEAR(check_annual_energy, hourly_annual_energy, 0.005*check_annual_energy);
 
