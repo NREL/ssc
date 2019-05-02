@@ -233,3 +233,10 @@ foreach( file_i ${LIBCURL_FILES})
     ARGS -E copy $ENV{WEXDIR}/build_vs2017/libcurl_ssl_x64/bin/${file_i} ${CMAKE_CURRENT_SOURCE_DIR}
 )
 endforeach( file_i )
+
+add_custom_command(
+    TARGET ${TCSCONSOLE_EXE}
+    POST_BUILD
+    COMMAND ${CMAKE_COMMAND}
+    ARGS -E copy $ENV{SSCDIR}/ssc/ssc.lib $ENV{SSCDIR}/ssc/ssc.dll ${CMAKE_CURRENT_SOURCE_DIR}
+)
