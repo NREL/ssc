@@ -742,7 +742,7 @@ public:
 				}
 
 				// calculate pumping losses (pump size is user entered) -
-				double P_pump = (Q_useful > 0 && I_incident_use >= 0.0) ? pump_watts*pump_eff : 0.0;
+				double P_pump = (Q_useful > 0 && I_incident_use >= 0.0) ? pump_watts / pump_eff : 0.0;
 
 				// compute energy delivered
 				double Q_deliv = mdot_mix* Cp_water *(T_deliv - T_mains_use);
