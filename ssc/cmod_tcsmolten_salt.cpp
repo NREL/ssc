@@ -1220,7 +1220,7 @@ public:
 				sco2_rc_csp_par.m_P_high_limit = as_double("P_high_limit")*1.E3;	//[kPa]
 				sco2_rc_csp_par.m_fixed_P_mc_out = false;
 				// Hardcode don't fix pressure ratio
-				sco2_rc_csp_par.m_fixed_PR_mc = false;				
+				sco2_rc_csp_par.m_fixed_PR_HP_to_LP = false;				
 
 				// ****************************************
 				// ****************************************
@@ -1255,8 +1255,15 @@ public:
 				sco2_rc_csp_par.m_opt_tol = 1.E-3;
 				
 				// Cycle Design Parameters
-				sco2_rc_csp_par.m_LT_eff_max = as_double("recup_eff_max");		//[-]
-				sco2_rc_csp_par.m_HT_eff_max = as_double("recup_eff_max");		//[-]
+                    // LTR thermal design
+                sco2_rc_csp_par.m_LTR_target_code = 0;      // Optimize recuperator UA
+                sco2_rc_csp_par.m_LTR_min_dT = std::numeric_limits<double>::quiet_NaN();    //[K] shouldn't be using this with target code = 1
+				sco2_rc_csp_par.m_LTR_eff_max = as_double("recup_eff_max");		//[-]
+                    // HTR thermal design
+                sco2_rc_csp_par.m_HTR_target_code = 0;      // Optimize recuperator UA
+                sco2_rc_csp_par.m_HTR_min_dT = std::numeric_limits<double>::quiet_NaN();    //[K] shouldn't be using this with target code = 1
+				sco2_rc_csp_par.m_HTR_eff_max = as_double("recup_eff_max");		//[-]
+                    //
 				sco2_rc_csp_par.m_eta_mc = as_double("eta_c");					//[-]
 				sco2_rc_csp_par.m_eta_rc = as_double("eta_c");					//[-]
 				if (sco2_rc_csp_par.m_cycle_config == 2)
