@@ -54,7 +54,7 @@ set(SSC_SRC ../ssc/vartab.cpp ../ssc/core.cpp ../ssc/common.cpp)
 set(CMAKE_CXX_STANDARD 11)
 
 if(MSVC)
-	add_compile_options(/W3 /wd4244)
+	add_compile_options(/MP /W3 /wd4244)
 	if (CMAKE_BUILD_TYPE STREQUAL Debug)
         add_compile_options(/MDd)
         add_compile_definitions(_DEBUG)

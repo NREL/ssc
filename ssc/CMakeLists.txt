@@ -135,7 +135,7 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set(CMAKE_CXX_STANDARD 11)
 
 if(MSVC)
-	add_compile_options(/W4 /w44191 /w44242  /w44266 /w44302 /w44388 /w44826 /w44905 /w44906 /w44928)
+	add_compile_options(/MP /W4 /w44191 /w44242  /w44266 /w44302 /w44388 /w44826 /w44905 /w44906 /w44928)
 	if (CMAKE_BUILD_TYPE STREQUAL Debug)
         add_compile_options(/MDd)
         add_compile_definitions(_DEBUG)

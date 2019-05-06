@@ -69,8 +69,7 @@ set(LPSOLVE_SRC
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 if(MSVC)
-# need msvc optimization levels & different configs, windows sdk
-	add_compile_options(/W4)
+	add_compile_options(/W4 /MP)
 	if (CMAKE_BUILD_TYPE STREQUAL Debug)
         add_compile_options(/MDd)
         add_compile_definitions(FPUexception NOFORTIFY _DEBUG LP_MAXLINELEN=0)
