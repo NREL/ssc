@@ -13,6 +13,7 @@ GTEST_API_ int main(int argc, char **argv) {
 //	  ::testing::GTEST_FLAG(filter) = "CMPvYieldTimo*";
 //	  ::testing::GTEST_FLAG(filter) = "splinterTests*";
 //	  ::testing::GTEST_FLAG(filter) = "SunsetCaseIrradProc*";
+//	  ::testing::GTEST_FLAG(filter) = "BatteryPowerFlowTest*";
 
 	int status = RUN_ALL_TESTS();
 
