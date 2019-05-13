@@ -1386,7 +1386,7 @@ void dispatch_automatic_front_of_meter_t::update_dispatch(size_t hour_of_year, s
 
 			/* Booleans to assist decisions */
 			bool highDischargeValuePeriod = ppa_cost == *max_ppa_cost;
-			bool highPVChargeValuePeriod = ppa_cost == *min_ppa_cost;
+			bool highChargeValuePeriod = ppa_cost == *min_ppa_cost;
 			bool excessAcCapacity = _inverter_paco > m_batteryPower->powerPVThroughSharedInverter;
 			bool batteryHasDischargeCapacity = _Battery->battery_soc() >= m_batteryPower->stateOfChargeMin + 1.0;
 
@@ -1397,7 +1397,7 @@ void dispatch_automatic_front_of_meter_t::update_dispatch(size_t hour_of_year, s
 			}
 
 			// Increase charge from PV if it is more valuable later than selling now
-			if (m_batteryPower->canPVCharge && benefitToPVCharge > m_cycleCost && highPVChargeValuePeriod && m_batteryPower->powerPV > 0)
+			if (m_batteryPower->canPVCharge && benefitToPVCharge > m_cycleCost && highChargeValuePeriod && m_batteryPower->powerPV > 0)
 			{
 				// leave EnergyToStoreClipped capacity in battery
 				if (m_batteryPower->canClipCharge)
@@ -1420,7 +1420,7 @@ void dispatch_automatic_front_of_meter_t::update_dispatch(size_t hour_of_year, s
 			}
 
 			// Also charge from grid if it is valuable to do so, still leaving EnergyToStoreClipped capacity in battery
-			if (m_batteryPower->canGridCharge && benefitToGridCharge > m_cycleCost && benefitToGridCharge > 0 && energyNeededToFillBattery > 0)
+			if (m_batteryPower->canGridCharge && benefitToGridCharge > m_cycleCost && highChargeValuePeriod && benefitToGridCharge > 0 && energyNeededToFillBattery > 0)
 			{
 				// leave EnergyToStoreClipped capacity in battery
 				if (m_batteryPower->canClipCharge)
