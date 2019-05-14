@@ -1629,7 +1629,7 @@ double battery_t::battery_charge_needed(double SOC_max)
 }
 double battery_t::battery_energy_to_fill(double SOC_max)
 {
-	double battery_voltage = this->battery_voltage(); // [V] 
+	double battery_voltage = this->battery_voltage_nominal(); // [V] 
 	double charge_needed_to_fill = this->battery_charge_needed(SOC_max); // [Ah] - qmax - q0
 	return (charge_needed_to_fill * battery_voltage)*util::watt_to_kilowatt;  // [kWh]
 }
