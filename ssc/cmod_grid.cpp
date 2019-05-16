@@ -73,9 +73,12 @@ var_info_invalid };
 var_info vtab_grid_output[] = {
 
 	{ SSC_OUTPUT,        SSC_ARRAY,       "system_pre_interconnect_kwac",     "System power before grid interconnect",  "kW",       "Lifetime system generation" "",                 "",                        "",                              "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,      "capacity_factor_interconnect_ac",  "Capacity factor of the interconnection",  "%",          "",                "",                           "?=0",                     "",                              "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,      "annual_energy_pre_interconnect_ac", "Annual Energy AC pre-interconnection",   "kWh",        "",                "",                           "?=0",                     "",                              "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,      "annual_energy",                    "Annual Energy AC",                        "kWh",        "",                "",                           "?=0",                     "",                              "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,      "capacity_factor_interconnect_ac",  "Capacity factor of the interconnection (year 1)",  "%",          "",                "",                           "?=0",                     "",                              "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,      "annual_energy_pre_interconnect_ac", "Annual Energy AC pre-interconnection (year 1)",   "kWh",        "",                "",                           "?=0",                     "",                              "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,      "annual_energy",                    "Annual Energy AC (year 1)",                        "kWh",        "",                "",                           "?=0",                     "",                              "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,      "annual_ac_interconnect_loss_percent","Annual Energy loss from interconnection limit (year 1)", "%", "",                "",                           "?=0",                     "",                              "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,      "annual_ac_interconnect_loss_kwh",   "Annual Energy loss from interconnection limit (year 1)", "kWh", "",                "",                           "?=0",                     "",                              "" },
+
 
 var_info_invalid };
 
@@ -124,6 +127,8 @@ void cm_grid::exec() throw (general_error)
 		assign("capacity_factor_interconnect_ac", var_data(capacity_factor_interconnect));
 		assign("annual_energy_pre_interconnect_ac", var_data(annual_energy_pre_interconnect));
 		assign("annual_energy", var_data(annual_energy_interconnect));
+		assign("annual_ac_interconnect_loss_kwh", var_data(std::roundf(annual_energy_pre_interconnect - annual_energy_interconnect)));
+		assign("annual_ac_interconnect_loss_percent", var_data(100.0*(annual_energy_pre_interconnect - annual_energy_interconnect)/ annual_energy_pre_interconnect));
 	}
 
 }
