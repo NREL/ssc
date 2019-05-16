@@ -61,7 +61,9 @@ public:
 
 	gridVariables() {/* nothing to do */ };
 	gridVariables(compute_module & cm) : 
+		enable_interconnection_limit(cm.as_boolean("enable_interconnection_limit")),
 		grid_interconnection_limit_kW(cm.as_double("grid_interconnection_limit_kwac"))
+		
 	{
 
 
@@ -89,7 +91,7 @@ public:
 		numberOfYears = n_rec_lifetime / n_rec_single_year;
 
 		grid_kW.reserve(numberOfLifetimeRecords);
-		systemGenerationPreInterconnect_kW.reserve(numberOfLifetimeRecords);
+		systemGenerationPreInterconnect_kW = systemGenerationLifetime_kW;
 	}
 
 	// generation input with interconnection curtailment
@@ -103,6 +105,9 @@ public:
 
 	// grid power
 	std::vector<double> grid_kW;
+
+	// enable interconnection limit
+	bool enable_interconnection_limit;
 
 	// interconnection limit
 	double grid_interconnection_limit_kW;
