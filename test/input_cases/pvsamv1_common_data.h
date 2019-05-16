@@ -5,8 +5,6 @@
 
 #include "code_generator_utilities.h"
 
-const char * SSCDIR = std::getenv("SSCDIR");
-
 char solar_resource_path[256];
 char solar_resource_path_15_min[256];
 char load_profile_path[256];
