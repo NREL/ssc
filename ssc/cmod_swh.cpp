@@ -54,6 +54,7 @@
 #include "core.h"
 #include "lib_weatherfile.h"
 #include "lib_irradproc.h"
+#include "lib_time.h"
 #include "lib_util.h"
 
 /* -------------------------------------
@@ -93,7 +94,8 @@ static var_info _cm_vtab_swh[] = {
 																									     		    						             				     
 	{ SSC_INPUT,        SSC_ARRAY,       "scaled_draw",           "Hot water draw",                      "kg/hr",   "",                                  "SWH",              "*",                      "LENGTH=8760",						 "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "system_capacity",       "Nameplate capacity",                  "kW",      "",                                  "SWH",              "*",                      "", "" },
-																									     		    						             				     
+	{ SSC_INPUT,        SSC_ARRAY,       "load",                  "Electricity load (year 1)",           "kW",      "",                                  "SWH",              "",                       "", "" },
+
 																									     		    						             				     
 	{ SSC_INPUT,        SSC_NUMBER,      "tilt",                  "Collector tilt",                      "deg",     "",                                  "SWH",              "*",                      "MIN=0,MAX=90",                       "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "azimuth",               "Collector azimuth",                   "deg",     "90=E,180=S",                        "SWH",              "*",                      "MIN=0,MAX=360",                      "" },
@@ -200,7 +202,6 @@ public:
 	void exec() throw(general_error)
 	{
 		const double watt_to_kw = 0.001f;
-
 		const char *file = as_string("solar_resource_file");
 
 		weatherfile wfile(file);
@@ -742,7 +743,7 @@ public:
 				}
 
 				// calculate pumping losses (pump size is user entered) -
-				double P_pump = (Q_useful > 0 && I_incident_use >= 0.0) ? pump_watts*pump_eff : 0.0;
+				double P_pump = (Q_useful > 0 && I_incident_use >= 0.0) ? pump_watts / pump_eff : 0.0;
 
 				// compute energy delivered
 				double Q_deliv = mdot_mix* Cp_water *(T_deliv - T_mains_use);
@@ -796,7 +797,23 @@ public:
 				idx++;
 			}
 		}
-				
+
+		// if an electric load exists, the amount of energy saved cannot exceed it, since can't export savings
+		if (is_assigned("load")) {
+			std::vector<ssc_number_t> load_year_one, load_lifetime;
+			load_year_one = as_vector_ssc_number_t("load");
+			size_t n_rec_single_year = 0;
+			double dt_hour_gen = 0.0;
+			single_year_to_lifetime_interpolated<ssc_number_t>(false, (size_t)1, (size_t)wfile.nrecords(),
+				load_year_one, load_lifetime, n_rec_single_year, dt_hour_gen);
+
+			for (size_t i = 0; i < load_lifetime.size(); i++) {
+				if (out_energy[i] > load_lifetime[i]) {
+					out_energy[i] = load_lifetime[i];
+				}
+			}
+		}
+	
 		accumulate_monthly( "Q_deliv", "monthly_Q_deliv", ts_hour );
 		accumulate_monthly( "Q_aux", "monthly_Q_aux", ts_hour );
 		accumulate_monthly( "Q_auxonly", "monthly_Q_auxonly", ts_hour );

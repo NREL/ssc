@@ -215,10 +215,8 @@ struct batt_variables
 	/*! Battery costs */
 	double batt_cost_per_kwh;
 
-	/*! PPA Time-of-Delivery factors for periods 1-9 */
-	std::vector<double> ppa_factors;
-	util::matrix_t<size_t> ppa_weekday_schedule;
-	util::matrix_t<size_t> ppa_weekend_schedule;
+	/*! PPA price */
+	std::vector<double> ppa_price_series_dollar_per_kwh;
 
 	/*! Energy rates */
 	bool ec_rate_defined;
@@ -354,6 +352,7 @@ struct battstor
 		*outBatteryVoltage,
 		*outCapacityPercent,
 		*outCycles,
+		*outDODCycleAverage,
 		*outBatteryBankReplacement,
 		*outBatteryTemperature,
 		*outCapacityThermalPercent,
@@ -383,6 +382,7 @@ struct battstor
 		*outAnnualGridExportEnergy,
 		*outAnnualEnergySystemLoss,
 		*outAnnualEnergyLoss,
+		*outMarketPrice,
 		*outCostToCycle;
 
 	double outAverageCycleEfficiency;

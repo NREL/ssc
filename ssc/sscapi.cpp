@@ -58,14 +58,14 @@
 
 SSCEXPORT int ssc_version()
 {
-	return 208;
+	return 209;
 }
 
 SSCEXPORT const char *ssc_build_info()
 {
 	static const char *_bi = __PLATFORM__ " " __ARCH__ " " __COMPILER__ " " __DATE__ " " __TIME__;
 	return _bi;
-} 
+}
 
 /* to add new computation modules, 
 	specify an extern module entry,
@@ -116,7 +116,7 @@ extern module_entry_info
 	cm_entry_wfcsvconv,
 	cm_entry_tcstrough_empirical,
 	cm_entry_tcstrough_physical,
-    cm_entry_trough_physical,
+    	cm_entry_trough_physical,
 	cm_entry_trough_physical_csp_solver,
 	cm_entry_trough_physical_process_heat,
 	cm_entry_iph_to_lcoefcr,
