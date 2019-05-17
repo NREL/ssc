@@ -60,7 +60,8 @@ static var_info _cm_vtab_sco2_csp_system[] = {
 
 	/*   VARTYPE   DATATYPE         NAME               LABEL                                                    UNITS     META  GROUP REQUIRED_IF CONSTRAINTS     UI_HINTS*/
 	// ** Off-design Inputs **
-	{ SSC_INPUT,  SSC_MATRIX,  "od_cases",             "Columns: T_htf_C, m_dot_htf_ND, T_amb_C, od_opt_obj (1: MAX_ETA, 2: MAX_POWER), Rows: cases",   "",           "",    "",      "",      "",       "" },
+    { SSC_INPUT,  SSC_NUMBER,  "od_T_t_in_mode",       "0: model solves co2/HTF PHX od model to calculate turbine inlet temp, 1: model sets turbine inlet temp to HTF hot temp", "", "", "", "?=0", "", ""},  // default to solving PHX
+    { SSC_INPUT,  SSC_MATRIX,  "od_cases",             "Columns: T_htf_C, m_dot_htf_ND, T_amb_C, od_opt_obj (1: MAX_ETA, 2: MAX_POWER), Rows: cases",   "",           "",    "",      "",      "",       "" },
 	{ SSC_INPUT,  SSC_ARRAY,   "od_P_mc_in_sweep",     "Columns: T_htf_C, m_dot_htf_ND, T_amb_C, od_opt_obj (1: MAX_ETA, 2: MAX_POWER)", "", "", "", "",  "",       "" },
 	{ SSC_INPUT,  SSC_MATRIX,  "od_set_control",       "Columns: T_htf_C, m_dot_htf_ND, T_amb_C, P_LP_in, Rows: cases", "", "", "", "", "", "" },
 	{ SSC_INPUT,  SSC_NUMBER,  "is_gen_od_polynomials","Generate off-design polynomials for Generic CSP models? 1 = Yes, 0 = No", "", "", "",  "?=0",     "",       "" },
@@ -345,6 +346,9 @@ public:
 			delta_P = 6.0;
 		}
 
+        // Get turbine inlet mode
+        int T_t_in_mode = as_integer("od_T_t_in_mode");
+
 		util::matrix_t<double> od_cases;
 		if (is_od_cases_assigned)
 		{
@@ -437,6 +441,8 @@ public:
 			sco2_rc_od_par.m_T_amb = p_T_amb_od[n_run] + 273.15;				//[K]
 			//int od_strategy = (int)p_od_opt_obj_code[n_run];		//[-]
 			//double od_opt_tol = p_od_opt_conv_tol[n_run];			//[-]
+
+            sco2_rc_od_par.m_T_t_in_mode = T_t_in_mode;  //[-]
 
 			int off_design_code = 0;
 			std::clock_t clock_start = std::clock();

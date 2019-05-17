@@ -29,6 +29,12 @@ public:
 		END_SCO2_STATES
 	};
 
+    enum E_turbine_inlet_temp_mode
+    {
+        E_SOLVE_PHX = 0,    // Model solves co2/HTF PHX to find turbine inlet temperature
+        E_SET_T_T_IN        // Model sets turbine inlet temperature to HTF inlet temperature
+    };
+
 	struct S_design_limits
 	{
 		double m_UA_net_power_ratio_max;		//[-/K]
@@ -334,6 +340,9 @@ public:
 		
 		double m_f_mc_pc_bypass;	//[-] Fraction of pre and main compressor flow that is bypassed back to the respective compressor cooler
 
+        // Turbine inlet mode
+        int m_T_t_in_mode;
+
 		int m_N_sub_hxrs;		//[-] Number of sub heat exchangers
 		double m_tol;			//[-] Convergence tolerance
 
@@ -341,6 +350,9 @@ public:
 		{
 			m_T_mc_in = m_T_pc_in = m_T_t_in = m_P_LP_comp_in = 
 				m_tol = std::numeric_limits<double>::quiet_NaN();
+
+            m_T_t_in_mode = E_SOLVE_PHX;  //[-] Default to using PHX and HTF temp and mass flow rate
+
 			m_N_sub_hxrs = -1;
 
 			m_f_mc_pc_bypass = 0.0;	//[-]

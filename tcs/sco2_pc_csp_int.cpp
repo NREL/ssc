@@ -376,6 +376,9 @@ void C_sco2_recomp_csp::setup_off_design_info(C_sco2_recomp_csp::S_od_par od_par
 	ms_cycle_od_par.m_T_t_in = std::numeric_limits<double>::quiet_NaN();			//[K]			
 	ms_cycle_od_par.m_P_LP_comp_in = std::numeric_limits<double>::quiet_NaN();	//[kPa]
 	
+    // Define turbine inlet mode
+    ms_cycle_od_par.m_T_t_in_mode = ms_od_par.m_T_t_in_mode;    //[-]
+
 	// Define ms_phx_od_par
 	ms_phx_od_par.m_T_h_in = ms_od_par.m_T_htf_hot;			//[K]
 	ms_phx_od_par.m_P_h_in = ms_phx_des_par.m_P_h_in;		//[kPa] Assuming fluid is incompressible in that pressure doesn't affect its properties
@@ -954,59 +957,80 @@ int C_sco2_recomp_csp::off_design_core(double & eta_solved)
 {
 	ms_cycle_od_par.m_P_LP_comp_in = adjust_P_mc_in_away_2phase(ms_cycle_od_par.m_T_mc_in, ms_cycle_od_par.m_P_LP_comp_in);
 
+    int T_t_in_mode = ms_cycle_od_par.m_T_t_in_mode;        //[-]
+
 	// Apply 1 var solver to find the turbine inlet temperature that results in a "converged" PHX
-	C_mono_eq_T_t_in c_phx_cycle(this);
+	C_mono_eq_T_t_in c_phx_cycle(this, T_t_in_mode);
 	C_monotonic_eq_solver c_phx_cycle_solver(c_phx_cycle);
 
-	// Set upper and lower bounds
-	double T_t_upper = ms_phx_od_par.m_T_h_in;		//[K] Upper CO2 limit is HTF hot temperature
-	double T_t_lower = 373.15;						//[K] Lower CO2 limit is something fairly low, I guess
+    if (T_t_in_mode == C_sco2_cycle_core::E_SET_T_T_IN)
+    {
+        double diff_T_t_in_local = std::numeric_limits<double>::quiet_NaN();
 
-	// Generate guess values
-	double T_t_guess_upper = ms_phx_od_par.m_T_h_in - ms_des_par.m_phx_dt_hot_approach;	//[K] One reasonable guess might be to apply the design approach
-	double T_t_guess_lower = T_t_guess_upper - 20.0;		//[K] This might be another reasonable guess...
+        try
+        {
+            c_phx_cycle_solver.test_member_function(ms_phx_od_par.m_T_h_in, &diff_T_t_in_local);        //[K] Use hot HTF temp as turbine inlet temperature
+        }
+        catch (C_csp_exception)
+        {
+            eta_solved = 0.0;
+            ms_od_solved.m_od_error_code = -1;
+            ms_od_solved.m_is_converged = false;
+            return ms_od_solved.m_od_error_code;
+        }
+    }
+    else if (T_t_in_mode == C_sco2_cycle_core::E_SOLVE_PHX)
+    {
+        // Set upper and lower bounds
+        double T_t_upper = ms_phx_od_par.m_T_h_in;		//[K] Upper CO2 limit is HTF hot temperature
+        double T_t_lower = 373.15;						//[K] Lower CO2 limit is something fairly low, I guess
 
-	// Set solver settings
-	// Because this application of solver is trying to get outlet to match guess, need to calculate error in function
-	// So it's already relative, and solver is looking at an absolute value
-	c_phx_cycle_solver.settings(ms_des_par.m_tol/10.0, 50, T_t_lower, T_t_upper, false);
+        // Generate guess values
+        double T_t_guess_upper = ms_phx_od_par.m_T_h_in - ms_des_par.m_phx_dt_hot_approach;	//[K] One reasonable guess might be to apply the design approach
+        double T_t_guess_lower = T_t_guess_upper - 20.0;		//[K] This might be another reasonable guess...
 
-	// Now, solve for the turbine inlet temperature
-	double T_t_solved, tol_solved;
-	T_t_solved = tol_solved = std::numeric_limits<double>::quiet_NaN();
-	int iter_solved = -1;
+        // Set solver settings
+        // Because this application of solver is trying to get outlet to match guess, need to calculate error in function
+        // So it's already relative, and solver is looking at an absolute value
+        c_phx_cycle_solver.settings(ms_des_par.m_tol / 10.0, 50, T_t_lower, T_t_upper, false);
 
-	int phx_cycle_code = 0;
-	try
-	{
-		phx_cycle_code = c_phx_cycle_solver.solve(T_t_guess_lower, T_t_guess_upper, 0.0, T_t_solved, tol_solved, iter_solved);
-	}
-	catch( C_csp_exception )
-	{
-		eta_solved = 0.0;
-		ms_od_solved.m_od_error_code = -1;
-		ms_od_solved.m_is_converged = false;
-		return ms_od_solved.m_od_error_code;
-	}
+        // Now, solve for the turbine inlet temperature
+        double T_t_solved, tol_solved;
+        T_t_solved = tol_solved = std::numeric_limits<double>::quiet_NaN();
+        int iter_solved = -1;
 
-	if( phx_cycle_code != C_monotonic_eq_solver::CONVERGED )
-	{
-		int n_call_history = (int)c_phx_cycle_solver.get_solver_call_history()->size();
+        int phx_cycle_code = 0;
+        try
+        {
+            phx_cycle_code = c_phx_cycle_solver.solve(T_t_guess_lower, T_t_guess_upper, 0.0, T_t_solved, tol_solved, iter_solved);
+        }
+        catch (C_csp_exception)
+        {
+            eta_solved = 0.0;
+            ms_od_solved.m_od_error_code = -1;
+            ms_od_solved.m_is_converged = false;
+            return ms_od_solved.m_od_error_code;
+        }
 
-		eta_solved = 0.0;
-		
-		int nested_error_code = (*(c_phx_cycle_solver.get_solver_call_history()))[n_call_history - 1].err_code;
+        if (phx_cycle_code != C_monotonic_eq_solver::CONVERGED)
+        {
+            int n_call_history = (int)c_phx_cycle_solver.get_solver_call_history()->size();
 
-		if(nested_error_code == 0)
-		{
-			nested_error_code = phx_cycle_code;
-		}
+            eta_solved = 0.0;
 
-		ms_od_solved.m_od_error_code = nested_error_code;
-		ms_od_solved.m_is_converged = false;
-		return nested_error_code;
-	}
-	ms_od_solved.m_is_converged = true;
+            int nested_error_code = (*(c_phx_cycle_solver.get_solver_call_history()))[n_call_history - 1].err_code;
+
+            if (nested_error_code == 0)
+            {
+                nested_error_code = phx_cycle_code;
+            }
+
+            ms_od_solved.m_od_error_code = nested_error_code;
+            ms_od_solved.m_is_converged = false;
+            return nested_error_code;
+        }
+        ms_od_solved.m_is_converged = true;
+    }
 
 	// Now, need to filter results that exceed temperature/pressure/other limitations
 	// 1) Don't let the turbine inlet temperature exceed the design inlet temperature
@@ -1199,31 +1223,43 @@ int C_sco2_recomp_csp::C_mono_eq_T_t_in::operator()(double T_t_in /*K*/, double 
 		return rc_od_error_code;
 	}
 
-	// Solve PHX heat exchanger performance using CO2 and HTF *inlet* conditions
-	mpc_sco2_rc->ms_phx_od_par.m_T_c_in = mpc_sco2_rc->mpc_sco2_cycle->get_od_solved()->m_temp[C_sco2_cycle_core::HTR_HP_OUT];	//[K]
-	mpc_sco2_rc->ms_phx_od_par.m_P_c_in = mpc_sco2_rc->mpc_sco2_cycle->get_od_solved()->m_pres[C_sco2_cycle_core::HTR_HP_OUT];	//[kPa]
-	mpc_sco2_rc->ms_phx_od_par.m_m_dot_c = mpc_sco2_rc->mpc_sco2_cycle->get_od_solved()->m_m_dot_t;		//[kg/s]
-	double P_c_out = mpc_sco2_rc->mpc_sco2_cycle->get_od_solved()->m_pres[C_sco2_cycle_core::TURB_IN];		//[kPa]
-	double q_dot, T_co2_phx_out, T_htf_cold;
-	q_dot = T_co2_phx_out = T_htf_cold = std::numeric_limits<double>::quiet_NaN();
+    double T_co2_phx_out = std::numeric_limits<double>::quiet_NaN();
+    if (m_T_t_in_mode == C_sco2_cycle_core::E_SOLVE_PHX)
+    {
+        // Solve PHX heat exchanger performance using CO2 and HTF *inlet* conditions
+        mpc_sco2_rc->ms_phx_od_par.m_T_c_in = mpc_sco2_rc->mpc_sco2_cycle->get_od_solved()->m_temp[C_sco2_cycle_core::HTR_HP_OUT];	//[K]
+        mpc_sco2_rc->ms_phx_od_par.m_P_c_in = mpc_sco2_rc->mpc_sco2_cycle->get_od_solved()->m_pres[C_sco2_cycle_core::HTR_HP_OUT];	//[kPa]
+        mpc_sco2_rc->ms_phx_od_par.m_m_dot_c = mpc_sco2_rc->mpc_sco2_cycle->get_od_solved()->m_m_dot_t;		//[kg/s]
+        double P_c_out = mpc_sco2_rc->mpc_sco2_cycle->get_od_solved()->m_pres[C_sco2_cycle_core::TURB_IN];		//[kPa]
+        double q_dot, T_htf_cold;
+        q_dot = T_htf_cold = std::numeric_limits<double>::quiet_NaN();
+
+        // Solves HX performance. 
+        // If successful, this call updates 'ms_od_solved'
+        try
+        {
+            mpc_sco2_rc->mc_phx.off_design_solution(mpc_sco2_rc->ms_phx_od_par.m_T_c_in, mpc_sco2_rc->ms_phx_od_par.m_P_c_in, mpc_sco2_rc->ms_phx_od_par.m_m_dot_c, P_c_out,
+                mpc_sco2_rc->ms_phx_od_par.m_T_h_in, mpc_sco2_rc->ms_phx_od_par.m_P_h_in, mpc_sco2_rc->ms_phx_od_par.m_m_dot_h, mpc_sco2_rc->ms_phx_od_par.m_P_h_in,
+                q_dot, T_co2_phx_out, T_htf_cold);
+        }
+        catch (C_csp_exception)
+        {
+            // reset 'diff_T_t_in' to NaN
+            *diff_T_t_in = std::numeric_limits<double>::quiet_NaN();
+
+            return -1;
+        }
+    }
+    else if (m_T_t_in_mode == C_sco2_cycle_core::E_SET_T_T_IN)
+    {
+        mpc_sco2_rc->ms_phx_od_par.m_T_c_in = std::numeric_limits<double>::quiet_NaN();
+        mpc_sco2_rc->ms_phx_od_par.m_P_c_in = std::numeric_limits<double>::quiet_NaN();
+        mpc_sco2_rc->ms_phx_od_par.m_m_dot_c = std::numeric_limits<double>::quiet_NaN();
+
+        T_co2_phx_out = mpc_sco2_rc->ms_cycle_od_par.m_T_t_in;      //[K]
+    }
 	
-	// Solves HX performance. 
-	// If successful, this call updates 'ms_od_solved'
-	try
-	{
-		mpc_sco2_rc->mc_phx.off_design_solution(mpc_sco2_rc->ms_phx_od_par.m_T_c_in, mpc_sco2_rc->ms_phx_od_par.m_P_c_in, mpc_sco2_rc->ms_phx_od_par.m_m_dot_c, P_c_out,
-			mpc_sco2_rc->ms_phx_od_par.m_T_h_in, mpc_sco2_rc->ms_phx_od_par.m_P_h_in, mpc_sco2_rc->ms_phx_od_par.m_m_dot_h, mpc_sco2_rc->ms_phx_od_par.m_P_h_in,
-			q_dot, T_co2_phx_out, T_htf_cold);
-	}						
-	catch( C_csp_exception )
-	{
-		// reset 'diff_T_t_in' to NaN
-		*diff_T_t_in = std::numeric_limits<double>::quiet_NaN();
-		
-		return -1;
-	}
-	
-	*diff_T_t_in = (T_co2_phx_out - T_t_in) / T_t_in;
+	*diff_T_t_in = (T_co2_phx_out - T_t_in) / T_t_in;       //[-]
 	return 0;
 }
 
@@ -1233,6 +1269,7 @@ int C_sco2_recomp_csp::C_sco2_csp_od::operator()(S_f_inputs inputs, S_f_outputs 
 	sco2_od_par.m_T_htf_hot = inputs.m_T_htf_hot + 273.15;	//[K] convert from C
 	sco2_od_par.m_m_dot_htf = mpc_sco2_rc->get_phx_des_par()->m_m_dot_hot_des*inputs.m_m_dot_htf_ND;	//[kg/s] scale from [-]
 	sco2_od_par.m_T_amb = inputs.m_T_amb + 273.15;			//[K] convert from C
+    sco2_od_par.m_T_t_in_mode = C_sco2_cycle_core::E_SOLVE_PHX; //[-]
 
 	int od_strategy = C_sco2_recomp_csp::E_TARGET_POWER_ETA_MAX;
 

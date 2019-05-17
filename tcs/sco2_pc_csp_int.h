@@ -187,9 +187,14 @@ public:
 		// Ambient Conditions
 		double m_T_amb;			//[K] Ambient temperature
 	
+        // Turbine inlet mode
+        int m_T_t_in_mode;
+
 		S_od_par()
 		{
 			m_T_htf_hot = m_m_dot_htf = m_T_amb = std::numeric_limits<double>::quiet_NaN();
+
+            m_T_t_in_mode = C_sco2_cycle_core::E_SOLVE_PHX;  //[-] Default to using PHX and HTF temp and mass flow rate
 		}
 	};
 
@@ -297,11 +302,14 @@ public:
 	{
 	private: 
 		C_sco2_recomp_csp *mpc_sco2_rc;
+        int m_T_t_in_mode;
 
 	public:
-		C_mono_eq_T_t_in(C_sco2_recomp_csp *pc_sco2_rc)
+		C_mono_eq_T_t_in(C_sco2_recomp_csp *pc_sco2_rc, int T_t_in_mode)
 		{
 			mpc_sco2_rc = pc_sco2_rc;
+
+            m_T_t_in_mode = T_t_in_mode;
 		}
 	
 		virtual int operator()(double T_t_in /*K*/, double *diff_T_t_in /*-*/);

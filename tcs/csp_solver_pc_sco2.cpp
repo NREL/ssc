@@ -331,6 +331,7 @@ void C_pc_sco2::call(const C_csp_weatherreader::S_outputs &weather,
 			sco2_rc_od_par.m_T_htf_hot = T_htf_hot;				//[K]
 			sco2_rc_od_par.m_m_dot_htf = m_dot_htf/3600.0;		//[kg/s]
 			sco2_rc_od_par.m_T_amb = weather.m_tdry+273.15;		//[K]
+            sco2_rc_od_par.m_T_t_in_mode = C_sco2_cycle_core::E_SOLVE_PHX;  //[-]
 
 			int od_strategy = C_sco2_recomp_csp::E_TARGET_POWER_ETA_MAX;
 
