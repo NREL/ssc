@@ -312,7 +312,7 @@ int C_sco2_recomp_csp::off_design_fix_P_mc_in(S_od_par od_par, double P_mc_in /*
 	double eta_od_solved = std::numeric_limits<double>::quiet_NaN();
 	int od_core_error_code = off_design_core(eta_od_solved);
 	
-	if (od_core_error_code == 0)
+	if (ms_od_solved.m_is_converged)
 	{
 		double W_dot_fan = std::numeric_limits<double>::quiet_NaN();
 		
@@ -1028,9 +1028,10 @@ int C_sco2_recomp_csp::off_design_core(double & eta_solved)
             ms_od_solved.m_od_error_code = nested_error_code;
             ms_od_solved.m_is_converged = false;
             return nested_error_code;
-        }
-        ms_od_solved.m_is_converged = true;
+        }        
     }
+
+    ms_od_solved.m_is_converged = true;
 
 	// Now, need to filter results that exceed temperature/pressure/other limitations
 	// 1) Don't let the turbine inlet temperature exceed the design inlet temperature
