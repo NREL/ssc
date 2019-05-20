@@ -1842,18 +1842,16 @@ bool csp_dispatch_opt::optimize()
             outputs.q_rec_startup.resize(nt, 0.);
             outputs.w_pb_target.resize(nt, 0.);
 
-            int ncols = get_Ncolumns(lp);
-
-//            char name[15];
-            REAL *vars = new REAL[ncols];
-            get_variables(lp, vars);
-//            int col;
+			int ncols = get_Norig_columns(lp);  // all variables (including presolved variables)
+			int nrows = get_Norig_rows(lp);     
 
 
-            for(int c=1; c<ncols; c++)
+            for(int c=1; c<=ncols; c++)
             {
-                char *colname = get_col_name(lp, c);
-                if(! colname) continue;
+				char *colname = get_origcol_name(lp, c);  // column names before presolve
+				double val = get_var_primalresult(lp, nrows + c); // variable value (including presolved variables)
+
+				if(! colname) continue;
 
                 char root[15];
 
@@ -1894,49 +1892,48 @@ bool csp_dispatch_opt::optimize()
 
                 if(strcmp(root, "ycsb") == 0)  //Cycle standby
                 {
-                    outputs.pb_standby.at(t) = vars[ c-1 ] == 1.;
+                    outputs.pb_standby.at(t) = val == 1.;
                 }
                 else if(strcmp(root, "ycsu") == 0)     //Cycle start up
                 {
-                    bool su = (fabs(1 - vars[ c-1 ]) < 0.001);
+                    bool su = (fabs(1 - val) < 0.001);
                     outputs.pb_operation.at(t) = outputs.pb_operation.at(t) || su;
 					outputs.q_pb_startup.at(t) = su ? outputs.Qc.at(t) : 0.;   //outputs.q_pb_startup.at(t) = su ? P["Qc"] : 0.;
                 }
                 else if(strcmp(root, "y") == 0)     //Cycle operation
                 {
-                    outputs.pb_operation.at(t) = outputs.pb_operation.at(t) || ( fabs(1. - vars[ c-1 ]) < 0.001 );
+                    outputs.pb_operation.at(t) = outputs.pb_operation.at(t) || ( fabs(1. - val) < 0.001 );
                 }
                 else if(strcmp(root, "x") == 0)     //Cycle thermal energy consumption
                 {
-                    outputs.q_pb_target.at(t) = vars[ c-1 ];
+                    outputs.q_pb_target.at(t) = val;
                 }
                 else if(strcmp(root, "yrsu") == 0)     //Receiver start up
                 {
-                    outputs.rec_operation.at(t) = outputs.rec_operation.at(t) || (fabs(1 - vars[ c-1 ]) < 0.001);
+                    outputs.rec_operation.at(t) = outputs.rec_operation.at(t) || (fabs(1 - val) < 0.001);
                 }
                 else if(strcmp(root, "xrsu") == 0)
                 {
-                    outputs.q_rec_startup.at(t) = vars[ c-1 ];
+                    outputs.q_rec_startup.at(t) = val;
                 }
                 else if(strcmp(root, "yr") == 0)
                 {
-                    outputs.rec_operation.at(t) = outputs.rec_operation.at(t) || (fabs(1 - vars[ c-1 ]) < 0.001);
+                    outputs.rec_operation.at(t) = outputs.rec_operation.at(t) || (fabs(1 - val) < 0.001);
                 }
                 else if(strcmp(root, "s") == 0)         //Thermal storage charge state
                 {
-                    outputs.tes_charge_expected.at(t) = vars[ c-1 ];
+                    outputs.tes_charge_expected.at(t) = val;
                 }
                 else if(strcmp(root, "xr") == 0)   //receiver production
                 {
-                    outputs.q_sf_expected.at(t) = vars[ c-1 ];
+                    outputs.q_sf_expected.at(t) = val;
                 }
                 else if(strcmp(root, "wdot") == 0) //electricity production
                 {
-                    outputs.w_pb_target.at(t) = vars[ c-1 ];
+                    outputs.w_pb_target.at(t) = val;
                 }
             }
 
-            delete [] vars;
         }
         else
         {
