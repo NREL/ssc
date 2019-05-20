@@ -119,4 +119,9 @@ public:
 	var_table table;
 };
 
+#define VT_GET_INPUT(vt, name, lvalue) \
+if (var_data* vd = vt->lookup(name)) lvalue = vd->num; \
+else throw std::runtime_error(std::string(name)+std::string(" must be assigned."));
+
+
 #endif

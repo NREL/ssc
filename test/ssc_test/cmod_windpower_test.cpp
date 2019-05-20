@@ -1,4 +1,5 @@
 #include <gtest/gtest.h>
+#include <vector>
 
 #include "../ssc/core.h"
 #include "../ssc/vartab.h"
@@ -236,3 +237,124 @@ TEST_F(CMWindPowerIntegration, IcingAndLowTempCutoff_cmod_windpower) {
 	free_winddata_array(windresourcedata);
 }
 
+/// Testing Turbine powercurve calculation
+TEST(Windpower_turbine_powercurve, NoData){
+    ASSERT_THROW(Windpower_turbine_powercurve(nullptr), std::runtime_error);
+}
+
+TEST(Windpower_turbine_powercurve, MissingVariables){
+    var_table* vd = new var_table;
+    ASSERT_THROW(Windpower_turbine_powercurve(vd), std::runtime_error);
+}
+
+TEST(Windpower_turbine_powercurve, Case1){
+    var_table* vd = new var_table;
+    vd->assign("turbine_size", 1500);
+    vd->assign("rotor_diameter", 75);
+    vd->assign("elevation", 0);
+    vd->assign("max_cp", 0.45);
+    vd->assign("max_tip_speed", 80);
+    vd->assign("max_tip_sp_ratio", 8);
+    vd->assign("cut_in", 4);
+    vd->assign("cut_out", 25);
+    vd->assign("drive_train", 0);
+
+    Windpower_turbine_powercurve(vd);
+
+    util::matrix_t<ssc_number_t> ws = vd->lookup("wind_turbine_powercurve_windspeeds")->num;
+    util::matrix_t<ssc_number_t> power = vd->lookup("wind_turbine_powercurve_powerout")->num;
+    util::matrix_t<ssc_number_t> eff = vd->lookup("wind_turbine_powercurve_hub_efficiency")->num;
+    double rated_wx = vd->lookup("wind_turbine_rated_wind_speed")->num;
+    ASSERT_NEAR(power[17], 64.050, 1e-2);
+    ASSERT_NEAR(power[18], 80.0420, 1e-2);
+    ASSERT_NEAR(power[43], 1346.764, 1e-2);
+    ASSERT_NEAR(power[44], 1431.227, 1e-2);
+    ASSERT_NEAR(power[45], 1500., 1e-2);
+    ASSERT_NEAR(power[100], 0., 1e-2);
+    ASSERT_NEAR(ws[100], 25., 1e-2);
+    ASSERT_NEAR(rated_wx, 11.204, 1e-2);
+}
+
+TEST(Windpower_turbine_powercurve, Case2){
+    var_table* vd = new var_table;
+    vd->assign("turbine_size", 1500);
+    vd->assign("rotor_diameter", 75);
+    vd->assign("elevation", 0);
+    vd->assign("max_cp", 0.45);
+    vd->assign("max_tip_speed", 80);
+    vd->assign("max_tip_sp_ratio", 8);
+    vd->assign("cut_in", 4);
+    vd->assign("cut_out", 25);
+    vd->assign("drive_train", 1);
+
+    Windpower_turbine_powercurve(vd);
+
+    util::matrix_t<ssc_number_t> ws = vd->lookup("wind_turbine_powercurve_windspeeds")->num;
+    util::matrix_t<ssc_number_t> power = vd->lookup("wind_turbine_powercurve_powerout")->num;
+    util::matrix_t<ssc_number_t> eff = vd->lookup("wind_turbine_powercurve_hub_efficiency")->num;
+    double rated_wx = vd->lookup("wind_turbine_rated_wind_speed")->num;
+    ASSERT_NEAR(power[17], 67.26, 1e-2);
+    ASSERT_NEAR(power[18], 83.971, 1e-2);
+    ASSERT_NEAR(power[44], 1416.36, 1e-2);
+    ASSERT_NEAR(power[45], 1494.44, 1e-2);
+    ASSERT_NEAR(power[46], 1500., 1e-2);
+    ASSERT_NEAR(power[100], 0., 1e-2);
+    ASSERT_NEAR(ws[100], 25., 1e-2);
+    ASSERT_NEAR(rated_wx, 11.27, 1e-2);
+}
+
+TEST(Windpower_turbine_powercurve, Case3){
+    var_table* vd = new var_table;
+    vd->assign("turbine_size", 1500);
+    vd->assign("rotor_diameter", 75);
+    vd->assign("elevation", 0);
+    vd->assign("max_cp", 0.45);
+    vd->assign("max_tip_speed", 80);
+    vd->assign("max_tip_sp_ratio", 8);
+    vd->assign("cut_in", 4);
+    vd->assign("cut_out", 25);
+    vd->assign("drive_train", 2);
+
+    Windpower_turbine_powercurve(vd);
+
+    util::matrix_t<ssc_number_t> ws = vd->lookup("wind_turbine_powercurve_windspeeds")->num;
+    util::matrix_t<ssc_number_t> power = vd->lookup("wind_turbine_powercurve_powerout")->num;
+    util::matrix_t<ssc_number_t> eff = vd->lookup("wind_turbine_powercurve_hub_efficiency")->num;
+    double rated_wx = vd->lookup("wind_turbine_rated_wind_speed")->num;
+    ASSERT_NEAR(power[17], 62.66, 1e-2);
+    ASSERT_NEAR(power[18], 79.24, 1e-2);
+    ASSERT_NEAR(power[44], 1405.26, 1e-2);
+    ASSERT_NEAR(power[45], 1483.27, 1e-2);
+    ASSERT_NEAR(power[46], 1500., 1e-2);
+    ASSERT_NEAR(power[100], 0., 1e-2);
+    ASSERT_NEAR(ws[100], 25., 1e-2);
+    ASSERT_NEAR(rated_wx, 11.30, 1e-2);
+}
+
+TEST(Windpower_turbine_powercurve, Case4){
+    var_table* vd = new var_table;
+    vd->assign("turbine_size", 1500);
+    vd->assign("rotor_diameter", 75);
+    vd->assign("elevation", 0);
+    vd->assign("max_cp", 0.45);
+    vd->assign("max_tip_speed", 80);
+    vd->assign("max_tip_sp_ratio", 8);
+    vd->assign("cut_in", 4);
+    vd->assign("cut_out", 25);
+    vd->assign("drive_train", 3);
+
+    Windpower_turbine_powercurve(vd);
+
+    util::matrix_t<ssc_number_t> ws = vd->lookup("wind_turbine_powercurve_windspeeds")->num;
+    util::matrix_t<ssc_number_t> power = vd->lookup("wind_turbine_powercurve_powerout")->num;
+    util::matrix_t<ssc_number_t> eff = vd->lookup("wind_turbine_powercurve_hub_efficiency")->num;
+    double rated_wx = vd->lookup("wind_turbine_rated_wind_speed")->num;
+    ASSERT_NEAR(power[17], 74.44, 1e-2);
+    ASSERT_NEAR(power[18], 91.43, 1e-2);
+    ASSERT_NEAR(power[43], 1356.14, 1e-2);
+    ASSERT_NEAR(power[44], 1434.82, 1e-2);
+    ASSERT_NEAR(power[45], 1500., 1e-2);
+    ASSERT_NEAR(power[100], 0., 1e-2);
+    ASSERT_NEAR(ws[100], 25., 1e-2);
+    ASSERT_NEAR(rated_wx, 11.21, 1e-2);
+}

@@ -141,6 +141,6 @@ if (MSVC)
 	    TARGET ${TEST_EXE}
 	    POST_BUILD
 	    COMMAND ${CMAKE_COMMAND}
-	    ARGS -E copy $ENV{SSCDIR}/ssc/ssc.lib $ENV{SSCDIR}/ssc/ssc.dll ${CMAKE_CURRENT_SOURCE_DIR}
+	    ARGS -E copy $ENV{SSCDIR}/ssc/sscd.lib $ENV{SSCDIR}/ssc/sscd.dll ${CMAKE_CURRENT_SOURCE_DIR}
 	)
 endif()

@@ -6,6 +6,7 @@
 #include "../ssc/core.h"
 #include "../ssc/vartab.h"
 #include "../ssc/common.h"
+#include "../ssc/cmod_windpower_eqns.h"
 #include "../input_cases/weather_inputs.h"
 #include "../input_cases/windpower_cases.h"
 
@@ -47,5 +48,6 @@ bool CMWindPowerIntegration::compute(bool errorNotExpected){
 	ssc_module_free(module);
 	return true;
 }
+
 
 #endif
