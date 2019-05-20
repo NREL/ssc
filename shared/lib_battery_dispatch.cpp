@@ -67,7 +67,6 @@ dispatch_t::dispatch_t(battery_t * Battery, double dt_hour, double SOC_min, doub
 	m_batteryPower->currentDischargeMax = Id_max;
 	m_batteryPower->stateOfChargeMax = SOC_max;
 	m_batteryPower->stateOfChargeMin = SOC_min;
-	m_batteryPower->depthOfDischargeMax = SOC_max - SOC_min;
 	m_batteryPower->powerBatteryChargeMax = Pc_max;
 	m_batteryPower->powerBatteryDischargeMax = Pd_max;
 	m_batteryPower->meterPosition = battMeterPosition;
@@ -1251,7 +1250,9 @@ dispatch_automatic_front_of_meter_t::dispatch_automatic_front_of_meter_t(
 	double batt_cost_per_kwh,
 	int battCycleCostChoice,
 	double battCycleCost,
-	std::vector<double> ppa_price_series_dollar_per_kwh,
+	std::vector<double> ppa_factors,
+	util::matrix_t<size_t> ppa_weekday_schedule,
+	util::matrix_t<size_t> ppa_weekend_schedule,
 	UtilityRate * utilityRate,
 	double etaPVCharge,
 	double etaGridCharge,
@@ -1262,7 +1263,7 @@ dispatch_automatic_front_of_meter_t::dispatch_automatic_front_of_meter_t(
 		_look_ahead_hours = 24;
 
 	_inverter_paco = inverter_paco;
-	_ppa_price_rt_series = ppa_price_series_dollar_per_kwh;
+	_ppa_factors = ppa_factors;
 
 	// only create utility rate calculator if utility rate is defined
 	if (utilityRate) {
@@ -1281,14 +1282,15 @@ dispatch_automatic_front_of_meter_t::dispatch_automatic_front_of_meter_t(
 		m_cycleCost = battCycleCost;
 	}
 	
-	setup_cost_forecast_vector();
+	setup_cost_vector(ppa_weekday_schedule, ppa_weekend_schedule);
 }
 dispatch_automatic_front_of_meter_t::~dispatch_automatic_front_of_meter_t(){ /* NOTHING TO DO */}
 void dispatch_automatic_front_of_meter_t::init_with_pointer(const dispatch_automatic_front_of_meter_t* tmp)
 {
 	_look_ahead_hours = tmp->_look_ahead_hours;
 	_inverter_paco = tmp->_inverter_paco;
-	_ppa_price_rt_series = tmp->_ppa_price_rt_series;
+	_ppa_factors = tmp->_ppa_factors;
+	_ppa_cost_vector = tmp->_ppa_cost_vector;
 
 	m_battReplacementCostPerKWH = tmp->m_battReplacementCostPerKWH;
 	m_etaPVCharge = tmp->m_etaPVCharge;
@@ -1296,25 +1298,29 @@ void dispatch_automatic_front_of_meter_t::init_with_pointer(const dispatch_autom
 	m_etaDischarge = tmp->m_etaDischarge;
 }
 
-void dispatch_automatic_front_of_meter_t::setup_cost_forecast_vector()
+void dispatch_automatic_front_of_meter_t::setup_cost_vector(util::matrix_t<size_t> ppa_weekday_schedule, util::matrix_t<size_t> ppa_weekend_schedule)
 {
-	std::vector<double> ppa_price_series;
-	ppa_price_series.reserve(_ppa_price_rt_series.size());
+	_ppa_cost_vector.clear();
+	_ppa_cost_vector.reserve(8760);
+	size_t month, hour, iprofile;
+	double cost;
 
-	// add elements at beginning, so our forecast is looking at yesterday's prices
 	if (_mode == dispatch_t::FOM_LOOK_BEHIND) {
-		for (size_t i = 0; i != _look_ahead_hours * _steps_per_hour; i++)
-			ppa_price_series.push_back(0);
+		for (size_t i = 0; i != _look_ahead_hours; i++)
+			_ppa_cost_vector.push_back(0);
 	}
 
-	// add elements at the end, so we have forecast information at end of year
-	for (size_t i = 0; i != _ppa_price_rt_series.size(); i++){
-		ppa_price_series.push_back(_ppa_price_rt_series[i]);
+	for (size_t hour_of_year = 0; hour_of_year != 8760 + _look_ahead_hours; hour_of_year++)
+	{
+		util::month_hour(hour_of_year % 8760, month, hour);
+		if (util::weekday(hour_of_year))
+			iprofile = ppa_weekday_schedule(month - 1, hour - 1);
+		else
+			iprofile = ppa_weekend_schedule(month - 1, hour - 1);
+
+		cost = _ppa_factors[iprofile - 1];
+		_ppa_cost_vector.push_back(cost);
 	}
-	for (size_t i = 0; i != _look_ahead_hours * _steps_per_hour; i++) {
-		ppa_price_series.push_back(_ppa_price_rt_series[i]);
-	}
-	_ppa_price_rt_series = ppa_price_series;
 }
 
 // deep copy from dispatch to this
@@ -1368,11 +1374,8 @@ void dispatch_automatic_front_of_meter_t::update_dispatch(size_t hour_of_year, s
 			costToCycle();
 			 
 			// Compute forecast variables which don't change from year to year
-			size_t idx_year1 = hour_of_year * _steps_per_hour;
-			size_t idx_lookahead = _look_ahead_hours * _steps_per_hour;
-			auto max_ppa_cost = std::max_element(_ppa_price_rt_series.begin() + idx_year1, _ppa_price_rt_series.begin() + idx_year1 + idx_lookahead);
-			auto min_ppa_cost = std::min_element(_ppa_price_rt_series.begin() + idx_year1, _ppa_price_rt_series.begin() + idx_year1 + idx_lookahead);
-			double ppa_cost = _ppa_price_rt_series[idx_year1];
+			auto max_ppa_cost = std::max_element(_ppa_cost_vector.begin() + hour_of_year, _ppa_cost_vector.begin() + hour_of_year + _look_ahead_hours);
+			double ppa_cost = _ppa_cost_vector[hour_of_year];
 
 			/*! Cost to purchase electricity from the utility */
 			double usage_cost = ppa_cost;
@@ -1382,8 +1385,8 @@ void dispatch_automatic_front_of_meter_t::update_dispatch(size_t hour_of_year, s
 
 			// Compute forecast variables which potentially do change from year to year
 			double energyToStoreClipped = 0;
-			if (_P_cliploss_dc.size() > idx + _look_ahead_hours) {
-				energyToStoreClipped = std::accumulate(_P_cliploss_dc.begin() + idx, _P_cliploss_dc.begin() + idx + idx_lookahead, 0.0f) * _dt_hour;
+			if (_P_cliploss_dc.size() > lifetimeIndex + _look_ahead_hours) {
+				energyToStoreClipped = std::accumulate(_P_cliploss_dc.begin() + lifetimeIndex, _P_cliploss_dc.begin() + lifetimeIndex + _look_ahead_hours * _steps_per_hour, 0.0f) * _dt_hour;
 			}
 
 			/*! Economic benefit of charging from the grid in current time step to discharge sometime in next X hours ($/kWh)*/
@@ -1391,7 +1394,7 @@ void dispatch_automatic_front_of_meter_t::update_dispatch(size_t hour_of_year, s
 
 			/*! Economic benefit of charging from regular PV in current time step to discharge sometime in next X hours ($/kWh)*/
 			double benefitToPVCharge = *max_ppa_cost * m_etaDischarge - ppa_cost / m_etaPVCharge;
-			
+
 			/*! Economic benefit of charging from clipped PV in current time step to discharge sometime in the next X hours (clipped PV is free) ($/kWh) */
 			double benefitToClipCharge = *max_ppa_cost * m_etaDischarge;
 
@@ -1399,8 +1402,7 @@ void dispatch_automatic_front_of_meter_t::update_dispatch(size_t hour_of_year, s
 			double energyNeededToFillBattery = _Battery->battery_energy_to_fill(m_batteryPower->stateOfChargeMax);
 
 			/* Booleans to assist decisions */
-			bool highDischargeValuePeriod = ppa_cost == *max_ppa_cost;
-			bool highChargeValuePeriod = ppa_cost == *min_ppa_cost;
+			bool highValuePeriod = ppa_cost == *max_ppa_cost;
 			bool excessAcCapacity = _inverter_paco > m_batteryPower->powerPVThroughSharedInverter;
 			bool batteryHasDischargeCapacity = _Battery->battery_soc() >= m_batteryPower->stateOfChargeMin + 1.0;
 
@@ -1415,11 +1417,8 @@ void dispatch_automatic_front_of_meter_t::update_dispatch(size_t hour_of_year, s
 					powerBattery = -m_batteryPower->powerPVClipped;
 				}
 
-			// Increase charge from PV if it is more valuable later than selling now
-			if (m_batteryPower->canPVCharge && benefitToPVCharge > m_cycleCost && highChargeValuePeriod && m_batteryPower->powerPV > 0)
-			{
-				// leave EnergyToStoreClipped capacity in battery
-				if (m_batteryPower->canClipCharge)
+				// Increase charge from PV if it is more valuable later than selling now
+				if (m_batteryPower->canPVCharge && benefitToPVCharge > m_cycleCost && benefitToPVCharge > 0 && m_batteryPower->powerPV > 0)
 				{
 					// leave EnergyToStoreClipped capacity in battery
 					if (m_batteryPower->canClipCharge)
@@ -1444,7 +1443,7 @@ void dispatch_automatic_front_of_meter_t::update_dispatch(size_t hour_of_year, s
 			}
 
 			// Also charge from grid if it is valuable to do so, still leaving EnergyToStoreClipped capacity in battery
-			if (m_batteryPower->canGridCharge && benefitToGridCharge > m_cycleCost && highChargeValuePeriod && benefitToGridCharge > 0 && energyNeededToFillBattery > 0)
+			if (m_batteryPower->canGridCharge && benefitToGridCharge > m_cycleCost && benefitToGridCharge > 0 && energyNeededToFillBattery > 0)
 			{
 				// leave EnergyToStoreClipped capacity in battery
 				if (m_batteryPower->canClipCharge)
@@ -1457,12 +1456,6 @@ void dispatch_automatic_front_of_meter_t::update_dispatch(size_t hour_of_year, s
 				}
 				else {
 					powerBattery = -energyNeededToFillBattery / _dt_hour;
-			}
-
-			// Discharge if we are in a high-price period and have battery and inverter capacity
-			if (highDischargeValuePeriod && excessAcCapacity && batteryHasDischargeCapacity) {
-				if (m_batteryPower->connectionMode == BatteryPower::DC_CONNECTED) {
-					powerBattery = _inverter_paco - m_batteryPower->powerPV;
 				}
 			}
 		}
@@ -1489,11 +1482,10 @@ void dispatch_automatic_front_of_meter_t::update_cliploss_data(double_vec P_clip
 
 void dispatch_automatic_front_of_meter_t::costToCycle()
 {
-	// Calculate assuming maximum depth of discharge (most conservative assumption)
 	if (m_battCycleCostChoice == dispatch_t::MODEL_CYCLE_COST)
 	{
-		double capacityPercentDamagePerCycle = _Battery->lifetime_model()->cycleModel()->estimateCycleDamage();
-		m_cycleCost = 0.01 * capacityPercentDamagePerCycle * m_battReplacementCostPerKWH;  
+		double capacityPercentDamagePerCycle = _Battery->lifetime_model()->cycleModel()->computeCycleDamageAtDOD();
+		m_cycleCost = 0.01 * capacityPercentDamagePerCycle * m_battReplacementCostPerKWH;
 	}
 }
 

@@ -891,14 +891,11 @@ void lifetime_cycle_t::copy(lifetime_cycle_t * lifetime_cycle)
 	_Range = lifetime_cycle->_Range;
 	_average_range = lifetime_cycle->_average_range;
 }
-double lifetime_cycle_t::estimateCycleDamage()
+double lifetime_cycle_t::computeCycleDamageAtDOD(double DOD)
 {
-	// Initialize assuming 50% DOD
-	double DOD = 50;
-	if (_average_range > 0){
+	if (DOD == 0)
 		DOD = _average_range;
-	}
-	return(bilinear(DOD, _nCycles+1) - bilinear(DOD, _nCycles + 2));
+	return(_q - bilinear(DOD, _nCycles + 1));
 }
 double lifetime_cycle_t::runCycleLifetime(double DOD)
 {
@@ -1016,7 +1013,7 @@ void lifetime_cycle_t::replaceBattery()
 
 int lifetime_cycle_t::cycles_elapsed(){ return _nCycles; }
 double lifetime_cycle_t::cycle_range(){ return _Range; }
-double lifetime_cycle_t::average_range() { return _average_range; }
+
 
 double lifetime_cycle_t::bilinear(double DOD, int cycle_number)
 {
@@ -1663,7 +1660,7 @@ double battery_t::battery_charge_needed(double SOC_max)
 }
 double battery_t::battery_energy_to_fill(double SOC_max)
 {
-	double battery_voltage = this->battery_voltage_nominal(); // [V] 
+	double battery_voltage = this->battery_voltage(); // [V] 
 	double charge_needed_to_fill = this->battery_charge_needed(SOC_max); // [Ah] - qmax - q0
 	return (charge_needed_to_fill * battery_voltage)*util::watt_to_kilowatt;  // [kWh]
 }
