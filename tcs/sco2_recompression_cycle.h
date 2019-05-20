@@ -672,7 +672,7 @@ public:
 			m_m_dot_t = m_m_dot_rc = m_m_dot_mc = std::numeric_limits<double>::quiet_NaN();
 		}
 
-		virtual int operator()(double f_recomp /*-*/, double *diff_N_rc /*-*/);
+		virtual int operator()(double f_recomp /*-*/, double *N_rc /*rpm*/);
 
 		CO2_state mc_co2_props;
 	};

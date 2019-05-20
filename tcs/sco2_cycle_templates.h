@@ -343,15 +343,23 @@ public:
         // Turbine inlet mode
         int m_T_t_in_mode;
 
+        // RC shaft speed control option
+        bool m_is_rc_N_od_at_design;  //[-] True: rc off design shaft speed set to design shaft speed
+                                        // False: = m_rc_N_od_in
+        double m_rc_N_od_f_des;        //[-] input RC off design shaft speed fraction of design. used if m_is_rc_N_od_at_design = true
+
 		int m_N_sub_hxrs;		//[-] Number of sub heat exchangers
 		double m_tol;			//[-] Convergence tolerance
 
 		S_od_par()
 		{
 			m_T_mc_in = m_T_pc_in = m_T_t_in = m_P_LP_comp_in = 
+                m_rc_N_od_f_des =
 				m_tol = std::numeric_limits<double>::quiet_NaN();
 
             m_T_t_in_mode = E_SOLVE_PHX;  //[-] Default to using PHX and HTF temp and mass flow rate
+
+            m_is_rc_N_od_at_design = true;
 
 			m_N_sub_hxrs = -1;
 
