@@ -127,6 +127,8 @@ public:
         bool is_pb_standby0;        //Power block is in standby at the initial time step
         double q_pb0;               //[kWt] Thermal power consumption in the cycle entering the initial time step
         double w_pb0;               //[kWe] Power production from the cycle entering the initial time step
+		int pb_persist0;			// Number of consecutive time steps cycle has been in its current operational state entering the initial time step
+
         double dt;                  //[hr] Time step
         double e_tes_init;          //[kWht] current stored energy capacity
         double e_tes_min;           //[kWht] minimum allowable energy capacity in TES
@@ -158,6 +160,12 @@ public:
 		double w_stow;				//[kWe-hr] Heliostat stow electricity requirement
 		double w_cycle_standby;		//[kWe] Cycle HTF pumping power during standby
 		double w_cycle_pump;		//[kWe/kWt] Cycle HTF pumping power per thermal energy consumed
+
+		
+		double pb_max_rampup;       // [kWt] Maximum increase in cycle thermal input per dispatch timestep
+		double pb_max_rampdown;     // [kWt] Maximum decrease in cycle thermal input per dispatch timestep
+		int pb_minup;				// Minimum cycle up time (number of dispatch time steps)
+		int pb_mindown;				// Minimum cycle down time (number of dispatch time steps)
 
         C_csp_solver_sim_info *siminfo;     //Pointer to existing simulation info object
         C_csp_collector_receiver *col_rec;   //Pointer to collector/receiver object
@@ -254,6 +262,12 @@ public:
         } eff_table_load, eff_table_Tdb, wcondcoef_table_Tdb;        //Efficiency of the power cycle, condenser power coefs
         
     } params;
+
+	struct s_permanence
+	{
+		int pb_onoff;    // Permanence of cycle on/off decisions (number of dispatch time steps)
+		int pb_level;    // Permanence of cycle operating level decisions (number of dispatch time steps)
+	} perm;
 
     struct s_outputs
     {

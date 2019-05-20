@@ -548,6 +548,23 @@ static void calculate_parameters(csp_dispatch_opt *optinst, unordered_map<std::s
 		optinst->outputs.Qc.resize(nt);
 		for (int t = 0; t < nt; t++)
 			optinst->outputs.Qc.at(t) = std::fmin(pars["Qc"], optinst->cap_frac.at(t) * optinst->params.q_pb_des);
+
+		// Cycle ramp rates and minimum up/down time
+		pars["qpbmaxup"] = optinst->params.pb_max_rampup;
+		pars["qpbmaxdown"] = optinst->params.pb_max_rampdown;
+		pars["pbminup"] = optinst->params.pb_minup;
+		pars["pbmindown"] = optinst->params.pb_mindown;
+
+
+		pars["pbup0"] = (optinst->params.is_pb_operating0) ? optinst->params.pb_persist0 : 0;
+		pars["pbstby0"] = (optinst->params.is_pb_standby0) ? optinst->params.pb_persist0 : 0;
+		pars["pbdown0"] = (!optinst->params.is_pb_operating0 && !optinst->params.is_pb_standby0) ? optinst->params.pb_persist0 : 0;
+
+		// Decision permanence
+
+
+
+
 };
 
 bool csp_dispatch_opt::optimize()
@@ -1338,8 +1355,116 @@ bool csp_dispatch_opt::optimize()
 #endif
 
                 }
+
+				// Max cycle ramp-up and ramp-down
+				row[0] = 1.;
+                col[0] = O.column("x", t);
+				if (t > 0)
+				{
+					row[1] = -1.;
+					col[1] = O.column("x", t-1);
+
+					add_constraintex(lp, 2, row, col, LE, P["qpbmaxup"]);
+					add_constraintex(lp, 2, row, col, GE, -P["qpbmaxdown"]);
+				}
+				else
+				{
+					add_constraintex(lp, 2, row, col, LE, P["q0"] + P["qpbmaxup"]);
+					add_constraintex(lp, 2, row, col, GE, P["q0"] - P["qpbmaxdown"]);
+				}
+
             }
         }
+
+		// ******************** Cycle min up- and down- times *******************
+		{
+			REAL row[24];
+			int col[24];
+
+
+			//--- Minimum up time
+			if (P["pbminup"] > 1)
+			{
+				int nforce = (P["y0"] == 1) ? (int)std::fmax(0, P["pbminup"] - P["pbup0"]) : 0;			// Number of time steps at beginning of window that cyle has to be up
+				double fract = 1. / (float)P["pbminup"];
+
+				for (int t = 0; t < nt; t++)
+				{
+					int i = 0;
+
+					row[i] = 1.;
+					col[i++] = O.column("y", t);
+
+					if (t < nforce)  // Cycle must be on (constraints below should also work for in this case, but forcing it here might be faster...)
+						add_constraintex(lp, i, row, col, EQ, P["y0"]);  
+
+					else if (t > 0)  // t == 0 case is either unconstrained, or forced to y = 1 above
+					{
+						row[i] = -1. + fract;
+						col[i++] = O.column("y", t - 1);
+
+						int k = (int)std::fmin(P["pbminup"], t);  
+						for (int j = 2; j <= k; j++)
+						{
+							row[i] = fract;
+							col[i++] = O.column("y", t - j);
+						}
+
+						if (k == P["pbminup"]) // Full minimum up-time window is in this optimization window
+							add_constraintex(lp, i, row, col, GE, 0.0);
+						else
+						{
+							int n_up_prev = (int)std::fmin(P["pbminup"] - t, P["pbup0"]);  // Number of time steps in previous window that contribute
+							add_constraintex(lp, i, row, col, GE, -fract * n_up_prev);
+						}
+					}
+				}
+			}
+
+			//--- Minimum down time
+			if (P["pbmindown"] > 1)
+			{
+				int nforce = (P["y0"] == 0) ? (int)std::fmax(0, P["pbmindown"] - P["pbdown0"]) : 0;	 // Number of time steps at beginning of window that cyle has to be down
+				double fract = 1. / (float)P["pbmindown"];
+
+				for (int t = 0; t < nt; t++)
+				{
+					int i = 0;
+
+					row[i] = 1.;
+					col[i++] = O.column("y", t);
+
+					if (t < nforce)  // Cycle must be off (constraints below should also work for in this case, but forcing it here might be faster...)
+						add_constraintex(lp, i, row, col, EQ, P["y0"]);
+
+					else if (t > 0)  // t == 0 case is either unconstrained, or forced to y = 0 above
+					{
+						row[i] = -1. + fract;
+						col[i++] = O.column("y", t - 1);
+
+						int k = (int)std::fmin(P["pbmindown"], t);  
+						for (int j = 2; j <= k; j++)
+						{
+							row[i] = fract;
+							col[i++] = O.column("y", t - j);
+						}
+
+						if (k == P["pbmindown"]) // Full minimum down-time window is in this optimization window
+							add_constraintex(lp, i, row, col, LE, 1.0);
+						else
+						{
+							int n_down_prev = (int)std::fmin(P["pbmindown"] - t, P["pbdown0"]);  // Number of time steps in previous window that contribute
+							add_constraintex(lp, i, row, col, LE, fract*(n_down_prev+t));
+						}
+					}
+				}
+			}
+
+		}
+
+
+
+			
 
 
         // ******************** Balance constraints *******************

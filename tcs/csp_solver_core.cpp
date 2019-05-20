@@ -610,8 +610,19 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
             dispatch.params.wcondcoef_table_Tdb.add_point(T, wcond/m_cycle_W_dot_des); //fraction of rated gross gen
 		}
 
+
+		// Cycle ramp rates and min up/down time
+		dispatch.params.pb_max_rampup = mc_tou.mc_dispatch_params.m_pc_max_rampup*dispatch.params.dt*m_cycle_q_dot_des*1000.;  // [kWt] per dispatch time step
+		dispatch.params.pb_max_rampdown = mc_tou.mc_dispatch_params.m_pc_max_rampdown*dispatch.params.dt*m_cycle_q_dot_des*1000.;  // [kWt] per dispatch time step
+		dispatch.params.pb_minup = (int)ceil(mc_tou.mc_dispatch_params.m_pc_minup / dispatch.params.dt);		// Minimum cycle up time (number of dispatch time steps)
+		dispatch.params.pb_mindown = (int)ceil(mc_tou.mc_dispatch_params.m_pc_mindown / dispatch.params.dt);   // Minimum cycle down time (number of dispatch time steps)
+																					   
+		// Decision permanence
+		dispatch.perm.pb_onoff = (int)ceil(mc_tou.mc_dispatch_params.m_pc_onoff_perm / dispatch.params.dt);
+		dispatch.perm.pb_level = (int)ceil(mc_tou.mc_dispatch_params.m_pc_level_perm / dispatch.params.dt);
+
 	}
-    
+
 
         //solver parameters
     dispatch.solver_params.max_bb_iter = mc_tou.mc_dispatch_params.m_max_iterations;
@@ -654,6 +665,11 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 
 	double progress_msg_interval_frac = 0.02;
 	double progress_msg_frac_current = progress_msg_interval_frac;
+
+
+	double pc_state_persist = 0.;  // Time [hr] that current pc operating state (on/off/standby) has persisted
+	int prev_pc_state = mc_power_cycle.get_operating_state();
+
 
     /* 
     ************************** MAIN TIME-SERIES LOOP **************************
@@ -1033,6 +1049,11 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
                 if(dispatch.params.e_tes_init > dispatch.params.e_tes_max )
                     dispatch.params.e_tes_init = dispatch.params.e_tes_max;
 
+				
+				// Note how many "dispatch" time steps the cycle has been in it's current operational state
+				dispatch.params.pb_persist0 = (int)floor(pc_state_persist / dispatch.params.dt);
+
+
                 //update the forecast scenarios, if needed
                 { 
 
@@ -1093,6 +1114,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 
                     }
 
+
                     //predict performance for the time horizon
                     if( dispatch.predict_performance( stepstart,  nstepopt, (int)(3600./baseline_step)/mc_tou.mc_dispatch_params.m_disp_steps_per_hour) )
                     {
@@ -1106,6 +1128,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 					    //mc_csp_messages.add_message(C_csp_messages::NOTICE, dispatch.solver_params.log_message.c_str());
 
                         dispatch.m_current_read_step = 0;   //reset
+
                     }
 
                 }
@@ -5358,6 +5381,18 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 
             e_tes_disch *= mc_kernel.mc_sim_info.ms_ts.m_step / 3600.;  //MWh
         }
+
+		// Update the cycle state persistance
+		if (mc_power_cycle.get_operating_state() == prev_pc_state)
+			pc_state_persist += mc_kernel.mc_sim_info.ms_ts.m_step / 3600.;
+		else
+		{
+			pc_state_persist = 0.;
+			prev_pc_state = mc_power_cycle.get_operating_state();
+		}
+
+
+
 
 		// Save timestep outputs
 		// This is after timestep convergence, so be sure convergence() methods don't unexpectedly change outputs

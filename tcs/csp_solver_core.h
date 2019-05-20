@@ -330,6 +330,14 @@ public:
 		std::vector<double> m_disp_cap_constr;
 		std::vector<double> m_disp_eff_constr;
 
+		double m_pc_max_rampup;
+		double m_pc_max_rampdown;
+		double m_pc_minup;
+		double m_pc_mindown;
+		double m_pc_onoff_perm;
+		double m_pc_level_perm;
+
+
         S_csp_tou_params()
         {
             m_isleapyear = false;
@@ -391,6 +399,14 @@ public:
 
 			m_is_dispatch_targets = false;
 			m_is_disp_constr = false;
+
+			double m_pc_max_rampup = 60.;    // Maximum cyle ramp-up (fraction of capacity per hr)
+			double m_pc_max_rampdown = 60.;  // Maximum cyle ramp-up (fraction of capacity per hr)
+			double m_pc_minup = 0.;			  // Minimum cycle up time (hr)
+			double m_pc_mindown = 0.;         // Minimum cycle down time (hr)
+			double m_pc_onoff_perm = 0.;      // Cycle binary on/off decision permanence (hr)
+			double m_pc_level_perm = 0.;      // Cycle operating level decision permanence (hr)
+
         };
 
     } mc_dispatch_params;

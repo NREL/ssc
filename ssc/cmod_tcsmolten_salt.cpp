@@ -347,6 +347,18 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
 	{ SSC_INPUT,		SSC_ARRAY,		 "disp_cap_constr",		 "Fraction of turbine capacity available",							  "-",			  "",			 "sys_ctrl",		 "is_dispatch_constr=1",	 "",					  "" },
 	{ SSC_INPUT,		SSC_ARRAY,		 "disp_eff_constr",		 "Fraction of design point turbine efficiency available",			  "-",			  "",			 "sys_ctrl",		 "is_dispatch_constr=1",	 "",					  "" },
 
+	
+	{ SSC_INPUT,		SSC_NUMBER,		 "disp_pc_rampup",		 "Cycle max ramp up (fraction of capacity per hour)",				  "-",			  "",			 "sys_ctrl",		 "?=0.",					 "",					  "" },
+	{ SSC_INPUT,		SSC_NUMBER,		 "disp_pc_rampdown",	 "Cycle max ramp down (fraction of capacity per hour)",				  "-",			  "",			 "sys_ctrl",		 "?=0.",					 "",					  "" },
+	{ SSC_INPUT,		SSC_NUMBER,		 "disp_pc_minup",		 "Cycle minimum up time",											  "hr",			  "",			 "sys_ctrl",		 "?=0.",					 "",					  "" },
+	{ SSC_INPUT,		SSC_NUMBER,		 "disp_pc_mindown",		 "Cycle minimum down time",											  "hr",			  "",			 "sys_ctrl",		 "?=0.",					 "",					  "" },
+
+	{ SSC_INPUT,		SSC_NUMBER,		 "disp_pc_onoff_perm",   "Permanence of cycle binary on/off decisions",						  "hr",			  "",			 "sys_ctrl",		 "?=0.",					 "",					  "" },
+	{ SSC_INPUT,		SSC_NUMBER,		 "disp_pc_level_perm",   "Permanence of cycle operating level decisions",					  "hr",			  "",			 "sys_ctrl",		 "?=0.",					 "",					  "" },
+
+
+
+
 
 	// Financial inputs
 	{ SSC_INPUT,        SSC_MATRIX,      "dispatch_sched_weekday", "12x24 PPA pricing Weekday schedule",                              "",             "",            "tou",            "*",                       "",                      "" }, 
@@ -1653,6 +1665,59 @@ public:
             tou.mc_dispatch_params.m_q_rec_standby = as_double("q_rec_standby");
 			tou.mc_dispatch_params.m_w_rec_ht = as_double("q_rec_heattrace");
             tou.mc_dispatch_params.m_is_stochastic_dispatch = as_boolean("is_stochastic_dispatch");
+
+
+
+			// Cycle maximum ramp-up and ramp-down rates (fraction of total capacity per hour)
+			double rampup = as_double("disp_pc_rampup");
+			double rampdown = as_double("disp_pc_rampdown");
+			if (rampup < 1.e-6) // Unconstrained ramp-up
+				rampup = 60.;
+			if (rampdown < 1.e-6) // Unconstrained ramp-down
+				rampdown = 60.;
+			tou.mc_dispatch_params.m_pc_max_rampup = rampup; 
+			tou.mc_dispatch_params.m_pc_max_rampdown = rampdown;
+			
+			
+			// Cycle minimum up- and down-times (hr)
+			tou.mc_dispatch_params.m_pc_minup = as_double("disp_pc_minup"); 
+			tou.mc_dispatch_params.m_pc_mindown = as_double("disp_pc_mindown");
+
+			// Decision permanence (hr)
+			double pc_onoff = as_double("disp_pc_onoff_perm");
+			double pc_level = as_double("disp_pc_level_perm");
+			vector<double> perm = { pc_onoff, pc_level };
+
+			double disp_opt_ts = 1. / (float)tou.mc_dispatch_params.m_disp_steps_per_hour;  // User-specfied dispatch time step (hr)
+			double min_decision = disp_opt_ts;   
+			for (int i = 0; i < perm.size(); i++)   
+			{
+				if (perm.at(i) == 0.)  
+					perm.at(i) = disp_opt_ts;
+
+				min_decision = min(min_decision, perm.at(i));
+				for (int j = 0; j < i; j++)
+				{
+					double diff = fabs(perm.at(i) - perm.at(j));
+					if (diff > 0. && diff < min_decision)
+						min_decision = diff;
+				}
+			}
+
+			if (disp_opt_ts > min_decision)  // Reset dispatch optmization timestep if necessary
+			{
+				log(util::format("\nThe dispatch time step was reset from the user-specified value (%.2f hr) to the minimum"
+					"allowable value from decision permanence specifications (%.2f min)", disp_opt_ts, min_decision), SSC_WARNING);
+				disp_opt_ts = min_decision;
+				tou.mc_dispatch_params.m_disp_steps_per_hour = (int)floor(1. / disp_opt_ts);
+			}
+			tou.mc_dispatch_params.m_pc_onoff_perm = (pc_onoff > 0.) ? pc_onoff : disp_opt_ts;
+			tou.mc_dispatch_params.m_pc_level_perm = (pc_level > 0.) ? pc_level : disp_opt_ts;
+
+
+
+
+
 
 			if (as_boolean("is_wlim_series"))
 			{
