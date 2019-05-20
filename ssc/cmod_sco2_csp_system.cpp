@@ -92,7 +92,8 @@ static var_info _cm_vtab_sco2_csp_system[] = {
 	{ SSC_OUTPUT, SSC_ARRAY,   "mc_W_dot_od",          "Off-design main compressor power",                       "MWe",        "",    "",      "",     "",       "" },
 	{ SSC_OUTPUT, SSC_ARRAY,   "mc_m_dot_od",          "Off-design main compressor mass flow",                   "kg/s",       "",    "",      "",     "",       "" },
 	{ SSC_OUTPUT, SSC_ARRAY,   "mc_rho_in_od",         "Off-design main compressor inlet density",               "kg/m3",      "",    "",      "",     "",       "" },
-	{ SSC_OUTPUT, SSC_ARRAY,   "mc_ideal_spec_work_od","Off-design main compressor ideal specific work",         "kg/m3",      "",    "",      "",     "",       "" },
+    { SSC_OUTPUT, SSC_MATRIX,  "mc_psi_od",            "Off-design main compressor ideal head coefficient [od run][stage]","", "",    "",      "",     "",       "" },
+    { SSC_OUTPUT, SSC_ARRAY,   "mc_ideal_spec_work_od","Off-design main compressor ideal specific work",         "kJ/kg",      "",    "",      "",     "",       "" },
 	{ SSC_OUTPUT, SSC_ARRAY,   "mc_N_od",              "Off-design main compressor speed",                       "rpm",        "",    "",      "",     "",       "" },
 	{ SSC_OUTPUT, SSC_ARRAY,   "mc_eta_od",            "Off-design main compressor overall isentropic efficiency", "",         "",    "",      "",     "",       "" },
 	{ SSC_OUTPUT, SSC_MATRIX,  "mc_tip_ratio_od",      "Off-design main compressor tip speed ratio [od run][stage]", "",       "",    "",      "",     "",       "" },
@@ -106,8 +107,9 @@ static var_info _cm_vtab_sco2_csp_system[] = {
 	{ SSC_OUTPUT, SSC_ARRAY,   "rc_W_dot_od",          "Off-design recompressor power",                          "MWe",        "",    "",      "",     "",       "" },
 	{ SSC_OUTPUT, SSC_ARRAY,   "rc_m_dot_od",          "Off-design recompressor mass flow",                      "kg/s",       "",    "",      "",     "",       "" },
 	{ SSC_OUTPUT, SSC_ARRAY,   "rc_eta_od",            "Off-design recompressor overal isentropic efficiency",   "",           "",    "",      "",     "",       "" },
-	{ SSC_OUTPUT, SSC_MATRIX,  "rc_phi_od",            "Off-design recompressor flow coefficient [od run][stage]", "-",		   "",    "",      "",     "",       "" },
-	{ SSC_OUTPUT, SSC_ARRAY,   "rc_N_od",              "Off-design recompressor shaft speed",                    "rpm",		   "",    "",      "",     "",       "" },
+	{ SSC_OUTPUT, SSC_MATRIX,  "rc_phi_od",            "Off-design recompressor flow coefficients [od run][stage]", "-",	   "",    "",      "",     "",       "" },
+    { SSC_OUTPUT, SSC_MATRIX,  "rc_psi_od",            "Off-design recompressor ideal head coefficient [od run][stage]", "-",  "",    "",      "",     "",       "" },
+    { SSC_OUTPUT, SSC_ARRAY,   "rc_N_od",              "Off-design recompressor shaft speed",                    "rpm",		   "",    "",      "",     "",       "" },
 	{ SSC_OUTPUT, SSC_MATRIX,  "rc_tip_ratio_od",      "Off-design recompressor tip speed ratio [od run][stage]","-",		   "",    "",      "",     "",       "" },
 	{ SSC_OUTPUT, SSC_MATRIX,  "rc_eta_stages_od",     "Off-design recompressor stages isentropic efficiency [od run][stage]", "",    "",    "",      "",     "",       "" },
 		// Precompressor
@@ -201,6 +203,7 @@ public:
 	ssc_number_t *p_mc_W_dot_od;
 	ssc_number_t *p_mc_m_dot_od;
 	ssc_number_t *p_mc_rho_in_od;
+    ssc_number_t *pm_mc_psi_od;
 	ssc_number_t *p_mc_ideal_spec_work_od;
 	ssc_number_t *p_mc_N_od;
 	ssc_number_t *p_mc_eta_od;
@@ -216,6 +219,7 @@ public:
 	ssc_number_t *p_rc_m_dot_od;
 	ssc_number_t *p_rc_eta_od;
 	ssc_number_t *pm_rc_phi_od;
+    ssc_number_t *pm_rc_psi_od;
 	ssc_number_t *p_rc_N_od;
 	ssc_number_t *pm_rc_tip_ratio_od;
 	ssc_number_t *pm_rc_eta_stages_od;
@@ -523,7 +527,8 @@ public:
 				p_mc_eta_od[n_run] = (ssc_number_t)c_sco2_cycle.get_od_solved()->ms_rc_cycle_od_solved.ms_mc_ms_od_solved.m_eta;	//[-]
 				for (int i_s = 0; i_s < n_mc_stages; i_s++)
 				{
-					pm_mc_tip_ratio_od[n_run*n_mc_stages + i_s] = (ssc_number_t)c_sco2_cycle.get_od_solved()->ms_rc_cycle_od_solved.ms_mc_ms_od_solved.mv_tip_speed_ratio[i_s];	//[-]
+                    pm_mc_psi_od[n_run*n_mc_stages + i_s] = (ssc_number_t)c_sco2_cycle.get_od_solved()->ms_rc_cycle_od_solved.ms_mc_ms_od_solved.mv_psi[i_s];   //[-]
+                    pm_mc_tip_ratio_od[n_run*n_mc_stages + i_s] = (ssc_number_t)c_sco2_cycle.get_od_solved()->ms_rc_cycle_od_solved.ms_mc_ms_od_solved.mv_tip_speed_ratio[i_s];	//[-]
 					pm_mc_eta_stages_od[n_run*n_mc_stages + i_s] = (ssc_number_t)c_sco2_cycle.get_od_solved()->ms_rc_cycle_od_solved.ms_mc_ms_od_solved.mv_eta[i_s];	//[-]
 				}
 				p_mc_f_bypass_od[n_run] = (ssc_number_t)c_sco2_cycle.get_od_solved()->ms_rc_cycle_od_solved.m_mc_f_bypass;		//[-]
@@ -537,8 +542,11 @@ public:
 					p_rc_W_dot_od[n_run] = (ssc_number_t)(c_sco2_cycle.get_od_solved()->ms_rc_cycle_od_solved.ms_rc_ms_od_solved.m_W_dot_in*1.E-3);	//[MWe] convert from kWe
 					p_rc_m_dot_od[n_run] = (ssc_number_t)(c_sco2_cycle.get_od_solved()->ms_rc_cycle_od_solved.m_m_dot_rc);				//[kg/s]
 					p_rc_eta_od[n_run] = (ssc_number_t)c_sco2_cycle.get_od_solved()->ms_rc_cycle_od_solved.ms_rc_ms_od_solved.m_eta;		//[-]
-					for (int i_s = 0; i_s < n_rc_stages; i_s++)
-						pm_rc_phi_od[n_run*n_rc_stages + i_s] = (ssc_number_t)c_sco2_cycle.get_od_solved()->ms_rc_cycle_od_solved.ms_rc_ms_od_solved.mv_phi[i_s];	//[-]
+                    for (int i_s = 0; i_s < n_rc_stages; i_s++)
+                    {
+                        pm_rc_phi_od[n_run*n_rc_stages + i_s] = (ssc_number_t)c_sco2_cycle.get_od_solved()->ms_rc_cycle_od_solved.ms_rc_ms_od_solved.mv_phi[i_s];	//[-]
+                        pm_rc_psi_od[n_run*n_rc_stages + i_s] = (ssc_number_t)c_sco2_cycle.get_od_solved()->ms_rc_cycle_od_solved.ms_rc_ms_od_solved.mv_psi[i_s];	//[-]
+                    }
 					p_rc_N_od[n_run] = (ssc_number_t)c_sco2_cycle.get_od_solved()->ms_rc_cycle_od_solved.ms_rc_ms_od_solved.m_N;			//[rpm]
 					for (int i_s = 0; i_s < n_rc_stages; i_s++)
 					{
@@ -556,8 +564,11 @@ public:
 					p_rc_W_dot_od[n_run] = 0.0;
 					p_rc_m_dot_od[n_run] = 0.0;
 					p_rc_eta_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
-					for (int i_s = 0; i_s < n_rc_stages; i_s++)
-						pm_rc_phi_od[n_run*n_rc_stages + i_s] = std::numeric_limits<ssc_number_t>::quiet_NaN();
+                    for (int i_s = 0; i_s < n_rc_stages; i_s++)
+                    {
+                        pm_rc_phi_od[n_run*n_rc_stages + i_s] = std::numeric_limits<ssc_number_t>::quiet_NaN();
+                        pm_rc_psi_od[n_run*n_rc_stages + i_s] = std::numeric_limits<ssc_number_t>::quiet_NaN();
+                    }
 					p_rc_N_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();		
 					for (int i_s = 0; i_s < n_rc_stages; i_s++)
 					{
@@ -710,7 +721,8 @@ public:
 				p_mc_eta_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
 				for (int i_s = 0; i_s < n_mc_stages; i_s++)
 				{
-					pm_mc_tip_ratio_od[n_run*n_mc_stages + i_s] = std::numeric_limits<ssc_number_t>::quiet_NaN();
+					pm_mc_phi_od[n_run*n_mc_stages + i_s] = std::numeric_limits<ssc_number_t>::quiet_NaN();
+                    pm_mc_tip_ratio_od[n_run*n_mc_stages + i_s] = std::numeric_limits<ssc_number_t>::quiet_NaN();
 					pm_mc_eta_stages_od[n_run*n_mc_stages + i_s] = std::numeric_limits<ssc_number_t>::quiet_NaN();
 				}
 				p_mc_f_bypass_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
@@ -722,8 +734,11 @@ public:
 				p_rc_W_dot_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
 				p_rc_m_dot_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
 				p_rc_eta_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
-				for(int i_s = 0; i_s < n_rc_stages; i_s++)
-					pm_rc_phi_od[n_run*n_rc_stages + i_s] = std::numeric_limits<ssc_number_t>::quiet_NaN();
+                for (int i_s = 0; i_s < n_rc_stages; i_s++)
+                {
+                    pm_rc_phi_od[n_run*n_rc_stages + i_s] = std::numeric_limits<ssc_number_t>::quiet_NaN();
+                    pm_rc_psi_od[n_run*n_rc_stages + i_s] = std::numeric_limits<ssc_number_t>::quiet_NaN();
+                }
 				p_rc_N_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
 				for (int i_s = 0; i_s < n_rc_stages; i_s++)
 				{
@@ -832,6 +847,7 @@ public:
 		p_mc_W_dot_od = allocate("mc_W_dot_od", n_od_runs);
 		p_mc_m_dot_od = allocate("mc_m_dot_od", n_od_runs);
 		p_mc_rho_in_od = allocate("mc_rho_in_od", n_od_runs);
+        pm_mc_psi_od = allocate("mc_psi_od", n_od_runs, n_mc_stages);
 		p_mc_ideal_spec_work_od = allocate("mc_ideal_spec_work_od", n_od_runs);
 		p_mc_N_od = allocate("mc_N_od", n_od_runs);
 		p_mc_eta_od = allocate("mc_eta_od", n_od_runs);
@@ -847,6 +863,7 @@ public:
 		p_rc_m_dot_od = allocate("rc_m_dot_od", n_od_runs);
 		p_rc_eta_od = allocate("rc_eta_od", n_od_runs);
 		pm_rc_phi_od = allocate("rc_phi_od", n_od_runs, n_rc_stages);
+        pm_rc_psi_od = allocate("rc_psi_od", n_od_runs, n_rc_stages);
 		p_rc_N_od = allocate("rc_N_od", n_od_runs);
 		pm_rc_tip_ratio_od = allocate("rc_tip_ratio_od", n_od_runs, n_rc_stages);
 		pm_rc_eta_stages_od = allocate("rc_eta_stages_od", n_od_runs, n_rc_stages);
