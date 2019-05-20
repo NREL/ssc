@@ -1051,7 +1051,9 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 
 				
 				// Note how many "dispatch" time steps the cycle has been in it's current operational state
-				dispatch.params.pb_persist0 = (int)floor(pc_state_persist / dispatch.params.dt);
+				dispatch.params.pb_persist0 = (int)ceil(pc_state_persist / dispatch.params.dt);
+				if (time_start < 1.e-6)
+					dispatch.params.pb_persist0 = 1000.; // Set a large value for first optimiation so min up/down constraints are not limiting
 
 
                 //update the forecast scenarios, if needed
