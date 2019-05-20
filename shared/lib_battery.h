@@ -399,13 +399,14 @@ public:
 	// return q, the effective capacity percent
 	double runCycleLifetime(double DOD);
 
-	// return hypothetical dq for the given DOD at the current cycle count
-	double computeCycleDamageAtDOD(double DOD=0);
+	// return hypothetical dq the average cycle
+	double estimateCycleDamage();
 
 	void rainflow(double DOD);
 	void replaceBattery();
 	int cycles_elapsed();
 	double cycle_range();
+	double average_range();
 
 protected:
 	

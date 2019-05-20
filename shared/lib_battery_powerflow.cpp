@@ -8,8 +8,7 @@ BatteryPower::BatteryPower(double dtHour) :
 	powerPV(0),
 	powerPVThroughSharedInverter(0),
 	powerLoad(0),
-	powerBatteryDC(0),
-	powerBatteryAC(0),
+	powerBattery(0),
 	powerBatteryTarget(0),
 	powerGrid(0),
 	powerGeneratedBySystem(0),
@@ -22,10 +21,6 @@ BatteryPower::BatteryPower(double dtHour) :
 	powerGridToLoad(0),
 	powerBatteryToLoad(0),
 	powerBatteryToGrid(0),
-	powerFuelCell(0),
-	powerFuelCellToGrid(0),
-	powerFuelCellToLoad(0),
-	powerFuelCellToBattery(0),
 	powerPVInverterDraw(0),
 	powerBatteryChargeMax(0),
 	powerBatteryDischargeMax(0),
@@ -39,9 +34,9 @@ BatteryPower::BatteryPower(double dtHour) :
 	canClipCharge(false),
 	canGridCharge(false),
 	canDischarge(false),
-	canFuelCellCharge(false),
 	stateOfChargeMax(1),
 	stateOfChargeMin(0),
+	depthOfDischargeMax(1),
 	tolerance(0.001){}
 
 BatteryPower::BatteryPower(const BatteryPower& ) { /* nothing to do */ }
