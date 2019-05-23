@@ -4,11 +4,11 @@
 #include <math.h>
 
 #include "vartab.h"
-#include "lib_util.h"
+#include "../shared/lib_util.h"
 
 #include "cmod_windpower_eqns.h"
 
-void Windpower_turbine_powercurve(ssc_data_t data)
+void WindTurbine_calculate_powercurve(ssc_data_t data)
 {
     auto vt = static_cast<var_table*>(data);
     if (!vt){
@@ -20,9 +20,9 @@ void Windpower_turbine_powercurve(ssc_data_t data)
     int drive_train;
 
     VT_GET_INPUT(vt, "turbine_size", turbine_size)
-    VT_GET_INPUT(vt, "rotor_diameter", rotor_diameter)
+    VT_GET_INPUT(vt, "wind_turbine_rotor_diameter", rotor_diameter)     // ssc input
     VT_GET_INPUT(vt, "elevation", elevation)
-    VT_GET_INPUT(vt, "max_cp", max_cp)
+    VT_GET_INPUT(vt, "wind_turbine_max_cp", max_cp)                     // ssc input
     VT_GET_INPUT(vt, "max_tip_speed", max_tip_speed)
     VT_GET_INPUT(vt, "max_tip_sp_ratio", max_tip_sp_ratio)
     VT_GET_INPUT(vt, "cut_in", cut_in)
@@ -37,9 +37,7 @@ void Windpower_turbine_powercurve(ssc_data_t data)
 
 	double region2_slope = 5;
 	double a, b, c;
-	std::printf("drive train:%d\n", drive_train);
-	int drive_train_type = drive_train + 1;
-    std::printf("drive type:%d\n", drive_train_type);
+	int drive_train_type = (int)drive_train + 1;
 
     if ( drive_train_type == 1 ) {
 	    a = 0.012894;
@@ -69,6 +67,13 @@ void Windpower_turbine_powercurve(ssc_data_t data)
 
 	double eff = 1.0 - (a + b + c);
 	double rated_hub_power = turbine_size / eff;
+
+    //air_density = 101300.0 * pow( (1-((0.0065*elevation)/288.0)), (9.8/(0.0065*287.15)) ) / (287.15*(288.0-0.0065*elevation)); // used through March 4, 2013
+    // From Widipedia:
+    // sea level standard atmospheric pressure = 101.325 kPa (changes
+    // sea level standard temperature = 288.15 K
+    // Earth-surface gravitational acceleration = 9.80665 m/s2. (varies from 9.78 to 9.82 depending on where on earth it's measured)
+    // temperature lapse rate L = 0.0065 K/m
 	double air_density = 101325.0 * pow( 1 - (0.0065 * elevation/288.15), (9.80665/(0.0065*287.15)) )
 	        / (287.15 * (288.15 - 0.0065 * elevation));
     double omega_m = max_tip_speed / rotor_diameter * 2.;
@@ -129,18 +134,17 @@ void Windpower_turbine_powercurve(ssc_data_t data)
         }
         powercurve_powerout[i] = hub_power * powercurve_hub_efficiency[i];
         powercurve_windspeeds[i] = ws;
-        printf("power at ws: %f at %f\n", powercurve_powerout[i], powercurve_windspeeds[i]);
 
     }
 
-	var_data windspeeds = var_data(powercurve_windspeeds.data(), powercurve_windspeeds.nrows(), powercurve_windspeeds.ncols());
-	var_data powerout = var_data(powercurve_powerout.data(), powercurve_powerout.nrows(), powercurve_powerout.ncols());
-	var_data hub_eff = var_data(powercurve_hub_efficiency.data(), powercurve_hub_efficiency.nrows(), powercurve_hub_efficiency.ncols());
+	var_data windspeeds = var_data(powercurve_windspeeds.data(), powercurve_windspeeds.ncols());
+	var_data powerout = var_data(powercurve_powerout.data(), powercurve_powerout.ncols());
+	var_data hub_eff = var_data(powercurve_hub_efficiency.data(), powercurve_hub_efficiency.ncols());
 
 	vt->assign( "wind_turbine_powercurve_windspeeds", windspeeds);
     vt->assign( "wind_turbine_powercurve_powerout", powerout);
-    vt->assign( "wind_turbine_rated_wind_speed", rated_wind_speed );
-    vt->assign( "wind_turbine_powercurve_hub_efficiency", hub_eff );
+    vt->assign( "rated_wind_speed", rated_wind_speed );
+    vt->assign( "hub_efficiency", hub_eff );
 }
 
 

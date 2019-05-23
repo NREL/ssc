@@ -86,9 +86,15 @@ else()
 	else()
 		add_definitions(-D__64BIT__)
 	endif()
-	SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -std=c++11" )
+	SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11" )
 	SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall WX_PRECOMP CHECK_SOLUTION YY_NEVER_INTERACTIVE PARSER_LP
 		INVERSE_ACTIVE=INVERSE_LUSOL RoleIsExternalInvEngine")
+	if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+		set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG}")
+		set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}")
+	else()
+		add_compile_options(-O3)
+	endif()
 endif()
 
 
