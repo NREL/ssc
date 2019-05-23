@@ -201,6 +201,7 @@ static C_csp_reported_outputs::S_output_info S_solver_output_info[] =
 	{C_csp_solver::C_solver_outputs::DISPATCH_PRES_NCONSTR, C_csp_reported_outputs::TS_1ST},		  //[-] Number of constraint relationships in dispatch model formulation
 	{C_csp_solver::C_solver_outputs::DISPATCH_PRES_NVAR, C_csp_reported_outputs::TS_1ST},		  //[-] Number of variables in dispatch model formulation
 	{C_csp_solver::C_solver_outputs::DISPATCH_SOLVE_TIME, C_csp_reported_outputs::TS_1ST},		  //[sec]   Time required to solve the dispatch model at each instance
+	{ C_csp_solver::C_solver_outputs::DISPATCH_QPBTARGET_EXPECT, C_csp_reported_outputs::TS_1ST },		  //[MWt] Power cycle energy consumption in dispatch model
 
 	// **************************************************************
 	//      Outputs that are reported as weighted averages if 
@@ -669,6 +670,9 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 
 	double pc_state_persist = 0.;  // Time [hr] that current pc operating state (on/off/standby) has persisted
 	int prev_pc_state = mc_power_cycle.get_operating_state();
+	double q_pb_last = 0.0;   // Cycle thermal input at end of last time step [kWt]
+	double w_pb_last = 0.0;   // Cycle gross generation at end of last time step [kWt]
+	double f_op_last = 0.0;	  // Fraction of last time step that cycle was operating or in standby
 
 
     /* 
@@ -693,6 +697,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
     double disp_qsf_effadj = 1.;
     double disp_effadj_weight = 0.;
     //int disp_effadj_count = 0;
+	double disp_qpbtarget_expect = 0.;
 
 	// Block dispatch saved variables
 	bool is_q_dot_pc_target_overwrite = false;
@@ -751,6 +756,9 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 			throw(C_csp_exception(msg,"CSP Solver Core"));
 		}
 		pc_operating_state = mc_power_cycle.get_operating_state();
+
+		double q_pb_last = mc_pc_out_solver.m_q_dot_htf * 1000.; //[kWt]
+		double w_pb_last = mc_pc_out_solver.m_P_cycle * 1000.;   //[kWt]
 
 		// Calculate maximum thermal power to power cycle for startup. This will be zero if power cycle is on.
 		double q_dot_pc_su_max = mc_power_cycle.get_max_q_pc_startup();		//[MWt]
@@ -1019,8 +1027,8 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
                 dispatch.params.is_pb_operating0 = mc_power_cycle.get_operating_state() == 1;
                 dispatch.params.is_pb_standby0 = mc_power_cycle.get_operating_state() == 2;
                 dispatch.params.is_rec_operating0 = mc_collector_receiver.get_operating_state() == C_csp_collector_receiver::ON;
-                dispatch.params.q_pb0 = mc_pc_out_solver.m_q_dot_htf * 1000.;
-                dispatch.params.w_pb0 = mc_pc_out_solver.m_P_cycle * 1000.;
+                dispatch.params.q_pb0 = q_pb_last;
+                dispatch.params.w_pb0 = w_pb_last;
 
                 if(dispatch.params.q_pb0 != dispatch.params.q_pb0 )
                     dispatch.params.q_pb0 = 0.;
@@ -1193,6 +1201,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 					mc_power_cycle.reset_cycle_max_frac(cycle_max_frac);
 				}
 
+
 				// Set q_pc_target and q_pc_max
 				int t = dispatch.m_current_read_step;
 				if (dispatch.outputs.q_pb_startup.at(t) > 1.e-6 && dispatch.outputs.q_pb_target.at(t) > 1.e-6)  // Power block is both starting up and operating
@@ -1221,10 +1230,24 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 					if (pc_operating_state == C_csp_power_cycle::OFF || pc_operating_state == C_csp_power_cycle::STARTUP)  // Cycle currently off or starting up
 						q_pc_target = fmin(qmax / 1000., dispatch.outputs.q_pb_startup.at(t) / fstart / 1000.);
 					else
-						q_pc_target = fmin(qmax/1000., dispatch.outputs.q_pb_target.at(t) / (1. - fstart) / 1000.);   // Cycle on or in standby
+						q_pc_target = fmin(qmax / 1000., dispatch.outputs.q_pb_target.at(t) / (1. - fstart) / 1000.);   // Cycle on or in standby
 				}
 				else   
 					q_pc_target = (dispatch.outputs.q_pb_target.at(t) + dispatch.outputs.q_pb_startup.at(t)) / 1000.;
+
+
+
+				// Restrict q_pc_max when using ramp-up constraint
+				double max_ramp_up = mc_tou.mc_dispatch_params.m_pc_max_rampup * (baseline_step / 3600.) * m_cycle_q_dot_des;  // Maximum change in cycle thermal input (MWt)
+				double q0 = q_pb_last/1000.;	// Cycle thermal input at end of last time step (MWt)
+				if (prev_pc_state == C_csp_power_cycle::ON || prev_pc_state == C_csp_power_cycle::STANDBY)
+					q0 *= f_op_last;			// Adjust initial thermal power to be average over timestep (to better match dispatch solution in timestep after startup)
+				if (dispatch.outputs.q_pb_startup.at(t))  
+					q0 = 0.0; 
+				if (q0 + max_ramp_up < q_pc_max)
+					q_pc_max = fmax(q_pc_target, q0 + max_ramp_up);
+
+
 
 
                 //quality checks
@@ -1285,6 +1308,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
                 disp_rev_expect = disp_wpb_expect * dispatch.forecast_outputs.price_scenarios.at( dispatch.m_current_read_step, 0 );
                 disp_etapb_expect = disp_wpb_expect / std::max(1.e-6, dispatch.outputs.q_pb_target.at( dispatch.m_current_read_step ))* 1.e3 
                                         * ( dispatch.outputs.pb_operation.at( dispatch.m_current_read_step ) ? 1. : 0. );
+				disp_qpbtarget_expect = dispatch.outputs.q_pb_target.at(dispatch.m_current_read_step)*1.e-3;
 
                 //if( is_sim_timestep_complete ) // disp_time_last != mc_kernel.mc_sim_info.ms_ts.ms_ts.m_time)
                 //    dispatch.m_current_read_step++;
@@ -1295,6 +1319,18 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 
             }
             
+			if (!dispatch.m_last_opt_successful)  // Setting zeros for cleaner solution reporting in cases where dispatch failed
+			{
+				disp_qsf_expect = 0.0;
+				disp_qsfprod_expect = 0.0;
+				disp_qsfsu_expect = 0.0;
+				disp_tes_expect = 0.0;
+				disp_etapb_expect = 0.0;
+				disp_etasf_expect = 0.0;
+				disp_wpb_expect = 0.0;
+				disp_rev_expect = 0.0;
+				disp_qpbtarget_expect = 0.0;
+			}
 
             disp_time_last = mc_kernel.mc_sim_info.ms_ts.m_time;
                         
@@ -5393,6 +5429,9 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 			prev_pc_state = mc_power_cycle.get_operating_state();
 		}
 
+		double f_op_last = 0.0;
+		if (mc_power_cycle.get_operating_state() == C_csp_power_cycle::ON || mc_power_cycle.get_operating_state() == C_csp_power_cycle::STANDBY)
+			f_op_last = mc_kernel.mc_sim_info.ms_ts.m_step / baseline_step;   // Fraction of timestep cycle was in this state
 
 
 
@@ -5508,6 +5547,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 		mc_reported_outputs.value(C_solver_outputs::DISPATCH_PRES_NCONSTR, dispatch.outputs.presolve_nconstr);
 		mc_reported_outputs.value(C_solver_outputs::DISPATCH_PRES_NVAR, dispatch.outputs.presolve_nvar);
 		mc_reported_outputs.value(C_solver_outputs::DISPATCH_SOLVE_TIME, dispatch.outputs.solve_time);
+		mc_reported_outputs.value(C_solver_outputs::DISPATCH_QPBTARGET_EXPECT, disp_qpbtarget_expect);
 
 		// Report series of operating modes attempted during the timestep as a 'double' using 0s to separate the enumerations 
 		// ... (10 is set as a dummy enumeration so it won't show up as a potential operating mode)

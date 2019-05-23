@@ -1102,41 +1102,41 @@ bool csp_dispatch_opt::optimize()
 
         
         // ******************** Power cycle constraints *******************
-        {
-            REAL row[5];
-            int col[5];
+		{
+			REAL row[5];
+			int col[5];
 
-            for(int t=0; t<nt; t++)
-            {
+			for (int t = 0; t < nt; t++)
+			{
 
-                int i=0;
-                //Startup Inventory balance
-                row[i  ] = 1.;
-                col[i++] = O.column("ucsu", t);
-                
+				int i = 0;
+				//Startup Inventory balance
+				row[i] = 1.;
+				col[i++] = O.column("ucsu", t);
+
 				row[i] = -P["delta"] * outputs.Qc.at(t); // -P["delta"] * P["Qc"];
-                col[i++] = O.column("ycsu", t);
+				col[i++] = O.column("ycsu", t);
 
-                if(t>0)
-                {
-                    row[i  ] = -1.;
-                    col[i++] = O.column("ucsu", t-1);
-                }
+				if (t > 0)
+				{
+					row[i] = -1.;
+					col[i++] = O.column("ucsu", t - 1);
+				}
 
-                add_constraintex(lp, i, row, col, LE, 0.);
+				add_constraintex(lp, i, row, col, LE, 0.);
 
-                //Inventory nonzero
-                row[0] = 1.;
-                col[0] = O.column("ucsu", t);
+				//Inventory nonzero
+				row[0] = 1.;
+				col[0] = O.column("ucsu", t);
 
-                row[1] = -P["M"];
-                col[1] = O.column("ycsu", t);
+				row[1] = -P["M"];
+				col[1] = O.column("ycsu", t);
 
-                add_constraintex(lp, 2, row, col, LE, 0.);
+				add_constraintex(lp, 2, row, col, LE, 0.);
 
 
 				// Original constraints: applied whenever cycle startup can be completed in a single time step and at least minimum operation can also occur in that timestep
-				if (P["delta"] * outputs.Qc.at(t) >= 0.999*P["Ec"] && outputs.Qc.at(t) + P["Ql"] < P["Qu"]*cap_frac.at(t))
+				if (P["delta"] * outputs.Qc.at(t) >= 0.999*P["Ec"] && outputs.Qc.at(t) + P["Ql"] < P["Qu"] * cap_frac.at(t))
 				{
 					//Cycle operation allowed when:
 					i = 0;
@@ -1175,9 +1175,9 @@ bool csp_dispatch_opt::optimize()
 					col[i++] = O.column("y", t);
 
 					add_constraintex(lp, i, row, col, LE, 0.);
-					
+
 				}
-				
+
 				// jm 10/2018: Modified constraints applied in cases when cycle startup requires multiple timesteps or full cycle startup and minimum operation can't occur in the same timestep
 				else
 				{
@@ -1211,28 +1211,28 @@ bool csp_dispatch_opt::optimize()
 					add_constraintex(lp, 2, row, col, LE, P["Qu"] * cap_frac.at(t));
 
 				}
-				
 
 
 
-                //cycle operation mode requirement
-                row[0] = 1.;
-                col[0] = O.column("x", t);
 
-                row[1] = -P["Qu"] * cap_frac.at(t);
-                col[1] = O.column("y", t);
+				//cycle operation mode requirement
+				row[0] = 1.;
+				col[0] = O.column("x", t);
 
-                add_constraintex(lp, 2, row, col, LE, 0.);
+				row[1] = -P["Qu"] * cap_frac.at(t);
+				col[1] = O.column("y", t);
 
-                //Minimum cycle energy contribution
-                i=0;
-                row[i  ] = 1.;
-                col[i++] = O.column("x", t);
+				add_constraintex(lp, 2, row, col, LE, 0.);
 
-                row[i  ] = -P["Ql"];
-                col[i++] = O.column("y", t);
+				//Minimum cycle energy contribution
+				i = 0;
+				row[i] = 1.;
+				col[i++] = O.column("x", t);
 
-                add_constraintex(lp, i, row, col, GE, 0);
+				row[i] = -P["Ql"];
+				col[i++] = O.column("y", t);
+
+				add_constraintex(lp, i, row, col, GE, 0);
 
 
 				// Cycle standby not allowed if constrained capacity less than standby requirement
@@ -1241,20 +1241,20 @@ bool csp_dispatch_opt::optimize()
 				add_constraintex(lp, 1, row, col, LE, P["Qu"] * cap_frac.at(t));
 
 
-                //cycle startup can't be enabled after a time step where the cycle was operating
-                if(t>0)
-                {
-                    row[0] = 1.;
-                    col[0] = O.column("ycsu", t);
+				//cycle startup can't be enabled after a time step where the cycle was operating
+				if (t > 0)
+				{
+					row[0] = 1.;
+					col[0] = O.column("ycsu", t);
 
-                    row[1] = 1.;
-                    col[1] = O.column("y", t-1);
+					row[1] = 1.;
+					col[1] = O.column("y", t - 1);
 
-                    add_constraintex(lp, 2, row, col, LE, 1.);
-                }
+					add_constraintex(lp, 2, row, col, LE, 1.);
+				}
 
 				//cycle startup can't be enabled after a time step where the cycle was in standby
-				if (t>0)
+				if (t > 0)
 				{
 					row[0] = 1.;
 					col[0] = O.column("ycsu", t);
@@ -1273,108 +1273,180 @@ bool csp_dispatch_opt::optimize()
 					add_constraintex(lp, 1, row, col, LE, std::fmin((params.is_pb_operating0 ? 0. : 1.), (params.is_pb_standby0 ? 0. : 1.)));
 				}
 
-                //Standby mode entry
-                i=0;
-                row[i  ] = 1.;
-                col[i++] = O.column("ycsb", t);
+				//Standby mode entry
+				i = 0;
+				row[i] = 1.;
+				col[i++] = O.column("ycsb", t);
 
-                if(t>0)
-                {
-                    row[i  ] = -1.;
-                    col[i++] = O.column("y", t-1);
-
-                    row[i  ] = -1.;
-                    col[i++] = O.column("ycsb", t-1);
-
-                    add_constraintex(lp, i, row, col, LE, 0);
-                }
-                else
-                {
-                    add_constraintex(lp, i, row, col, LE, (params.is_pb_standby0 ? 1 : 0) + (params.is_pb_operating0 ? 1 : 0));
-                }
-
-                //some modes can't coincide
-                row[0] = 1.;
-                col[0] = O.column("ycsu", t);
-                row[1] = 1.;
-                col[1] = O.column("ycsb", t);    
-
-                add_constraintex(lp, 2, row, col, LE, 1);   
-
-                row[0] = 1.;
-                col[0] = O.column("y", t);
-                row[1] = 1.;
-                col[1] = O.column("ycsb", t);    
-
-                add_constraintex(lp, 2, row, col, LE, 1);   
-
-                if( t > 0 )
-                {
-                    //cycle start penalty
-                    row[0] = 1.;
-                    col[0] = O.column("ycsup", t);
-
-                    row[1] = -1.;
-                    col[1] = O.column("ycsu", t);
-
-                    row[2] = 1.;
-                    col[2] = O.column("ycsu", t-1);
-
-                    add_constraintex(lp, 3, row, col, GE, 0.);
-
-                    //cycle standby start penalty
-                    row[0] = 1.;
-                    col[0] = O.column("ychsp", t);
-
-                    row[1] = -1.;
-                    col[1] = O.column("y", t);
-
-                    row[2] = -1.;
-                    col[2] = O.column("ycsb", t-1);
-
-                    add_constraintex(lp, 3, row, col, GE, -1.);
-
-#ifdef MOD_CYCLE_SHUTDOWN
-                    //cycle shutdown energy penalty
-                    row[0] = 1.;
-                    col[0] = O.column("ycsd", t-1);
-
-                    row[1] = -1.;
-                    col[1] = O.column("y", t-1);
-                    
-                    row[2] = 1.;
-                    col[2] = O.column("y", t);
-                    
-                    row[3] = -1.;
-                    col[3] = O.column("ycsb", t-1);
-                    
-                    row[4] = 1.;
-                    col[4] = O.column("ycsb", t);
-
-                    add_constraintex(lp, 5, row, col, GE, 0.);
-#endif
-
-                }
-
-				// Max cycle ramp-up and ramp-down
-				row[0] = 1.;
-                col[0] = O.column("x", t);
 				if (t > 0)
 				{
-					row[1] = -1.;
-					col[1] = O.column("x", t-1);
+					row[i] = -1.;
+					col[i++] = O.column("y", t - 1);
 
-					add_constraintex(lp, 2, row, col, LE, P["qpbmaxup"]);
-					add_constraintex(lp, 2, row, col, GE, -P["qpbmaxdown"]);
+					row[i] = -1.;
+					col[i++] = O.column("ycsb", t - 1);
+
+					add_constraintex(lp, i, row, col, LE, 0);
 				}
 				else
 				{
-					add_constraintex(lp, 2, row, col, LE, P["q0"] + P["qpbmaxup"]);
-					add_constraintex(lp, 2, row, col, GE, P["q0"] - P["qpbmaxdown"]);
+					add_constraintex(lp, i, row, col, LE, (params.is_pb_standby0 ? 1 : 0) + (params.is_pb_operating0 ? 1 : 0));
+				}
+
+				//some modes can't coincide
+				row[0] = 1.;
+				col[0] = O.column("ycsu", t);
+				row[1] = 1.;
+				col[1] = O.column("ycsb", t);
+
+				add_constraintex(lp, 2, row, col, LE, 1);
+
+				row[0] = 1.;
+				col[0] = O.column("y", t);
+				row[1] = 1.;
+				col[1] = O.column("ycsb", t);
+
+				add_constraintex(lp, 2, row, col, LE, 1);
+
+				if (t > 0)
+				{
+					//cycle start penalty
+					row[0] = 1.;
+					col[0] = O.column("ycsup", t);
+
+					row[1] = -1.;
+					col[1] = O.column("ycsu", t);
+
+					row[2] = 1.;
+					col[2] = O.column("ycsu", t - 1);
+
+					add_constraintex(lp, 3, row, col, GE, 0.);
+
+					//cycle standby start penalty
+					row[0] = 1.;
+					col[0] = O.column("ychsp", t);
+
+					row[1] = -1.;
+					col[1] = O.column("y", t);
+
+					row[2] = -1.;
+					col[2] = O.column("ycsb", t - 1);
+
+					add_constraintex(lp, 3, row, col, GE, -1.);
+
+#ifdef MOD_CYCLE_SHUTDOWN
+					//cycle shutdown energy penalty
+					row[0] = 1.;
+					col[0] = O.column("ycsd", t - 1);
+
+					row[1] = -1.;
+					col[1] = O.column("y", t - 1);
+
+					row[2] = 1.;
+					col[2] = O.column("y", t);
+
+					row[3] = -1.;
+					col[3] = O.column("ycsb", t - 1);
+
+					row[4] = 1.;
+					col[4] = O.column("ycsb", t);
+
+					add_constraintex(lp, 5, row, col, GE, 0.);
+#endif
+
+				}
+			}
+		}
+
+
+		// ******************** Cycle ramp-up and ramp-down rates *******************
+		{
+			REAL row[5];
+			int col[5];
+
+			//--- Max cycle ramp-up 
+			double increase_rampup = std::fmax(0., 1.001*P["Ql"] - P["qpbmaxup"]); // Allowable increase in max ramp-up at startup if max ramp-up < min operational level 
+			for (int t = 0; t < nt; t++)
+			{
+				row[0] = 1.;
+				col[0] = O.column("x", t);
+				if (t > 0)
+				{
+					row[1] = -1.;
+					col[1] = O.column("x", t - 1);
+
+					row[2] = increase_rampup;
+					col[2] = O.column("y", t - 1);
+
+					row[3] = increase_rampup;
+					col[3] = O.column("ycsb", t - 1);
+
+					add_constraintex(lp, 4, row, col, LE, P["qpbmaxup"] + increase_rampup);
+				}
+				else
+				{
+					double RHS = P["q0"] + P["qpbmaxup"] + (1.0 - P["y0"] - P["ycsb0"]) * increase_rampup;
+					add_constraintex(lp, 1, row, col, LE, RHS);
+				}
+			}
+
+
+
+			//--- Max cycle ramp-down
+
+			// Does ramp-down constraint at shutdown need to be relaxed to find a feasible solution?  
+			double increase_rampdown = std::fmax(0., 1.001*P["Ql"] - P["qpbmaxdown"]); // Allowable increase in max ramp-down at shutdown if max ramp-down < min operational level 
+			if (increase_rampdown > 0.0)  
+			{
+				// See if cycle can ramp down fast enough to shut off before storage runs out, and increase allowable ramp-down at shutoff if not (occurs occasionally because of discrepancies in dispatch/solver solutions)
+				double s = P["s0"];
+				double q = P["q0"];
+				double qallow = P["qpbmaxdown"] + increase_rampdown;  
+				int j = 0;
+				while (j < nt && q>qallow && outputs.q_sfavail_expected.at(j, 0) < 1.e-6)
+				{
+					q -= P["qpbmaxdown"];
+					s -= q * P["delta"];
+					if (q > qallow && s < P["delta"] * P["Ql"])  // Cycle can't be shut off yet, but also can't be on or in standby during the next time step
+					{
+						increase_rampdown = 1.001*q - P["qpbmaxdown"];				 
+						break;
+					}
+					j++;
+				}
+				//params.messages->add_message(C_csp_messages::NOTICE, util::format("Allowable ramp-down at shut-down set to %.2f", increase_rampdown));
+			}
+
+
+			for (int t = 0; t < nt; t++)
+			{
+
+				row[0] = 1.;
+                col[0] = O.column("x", t);
+
+				row[1] = -increase_rampdown;
+				col[1] = O.column("y", t);
+
+				row[2] = -increase_rampdown;
+				col[2] = O.column("ycsb", t);
+
+				if (t > 0)
+				{
+					row[3] = -1.;
+					col[3] = O.column("x", t-1);
+
+					add_constraintex(lp, 4, row, col, GE, -P["qpbmaxdown"] - increase_rampdown);
+				}
+				else
+				{
+					double max_avail = P["s0"] / P["delta"] + outputs.q_sfavail_expected.at(t, 0); 
+					if (P["q0"] <= P["qpbmaxdown"]+increase_rampdown || max_avail > P["Ql"])  // Ramp-down is feasible
+						add_constraintex(lp, 3, row, col, GE, P["q0"] - P["qpbmaxdown"] - increase_rampdown);
 				}
 
             }
         }
+
 
 		// ******************** Cycle min up- and down- times *******************
 		{

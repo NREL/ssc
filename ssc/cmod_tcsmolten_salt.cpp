@@ -546,6 +546,7 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     { SSC_OUTPUT,       SSC_ARRAY,       "disp_presolve_nconstr","Dispatch number of constraints in problem",                    "",             "",            "tou",            "*"                       "",            "" }, 
     { SSC_OUTPUT,       SSC_ARRAY,       "disp_presolve_nvar",   "Dispatch number of variables in problem",                      "",             "",            "tou",            "*"                       "",            "" }, 
     { SSC_OUTPUT,       SSC_ARRAY,       "disp_solve_time",      "Dispatch solver time",                                         "sec",          "",            "tou",            "*"                       "",            "" }, 
+	{ SSC_OUTPUT,       SSC_ARRAY,       "disp_qpbtarget_expected", "Dispatch expected power cycle startup energy",              "MWt",          "",            "tou",            "*"                       "",            "" },
 
 
 			// These outputs correspond to the first csp-solver timestep in the reporting timestep.
@@ -1668,17 +1669,6 @@ public:
 
 
 
-			// Cycle maximum ramp-up and ramp-down rates (fraction of total capacity per hour)
-			double rampup = as_double("disp_pc_rampup");
-			double rampdown = as_double("disp_pc_rampdown");
-			if (rampup < 1.e-6) // Unconstrained ramp-up
-				rampup = 60.;
-			if (rampdown < 1.e-6) // Unconstrained ramp-down
-				rampdown = 60.;
-			tou.mc_dispatch_params.m_pc_max_rampup = rampup; 
-			tou.mc_dispatch_params.m_pc_max_rampdown = rampdown;
-			
-			
 			// Cycle minimum up- and down-times (hr)
 			tou.mc_dispatch_params.m_pc_minup = as_double("disp_pc_minup"); 
 			tou.mc_dispatch_params.m_pc_mindown = as_double("disp_pc_mindown");
@@ -1715,6 +1705,30 @@ public:
 			tou.mc_dispatch_params.m_pc_level_perm = (pc_level > 0.) ? pc_level : disp_opt_ts;
 
 
+			// Cycle maximum ramp-up and ramp-down rates (fraction of total capacity per hour)
+			double rampup = as_double("disp_pc_rampup");
+			double rampdown = as_double("disp_pc_rampdown");
+			if (rampup < 1.e-6) // Unconstrained ramp-up
+				rampup = 60.;
+			if (rampdown < 1.e-6) // Unconstrained ramp-down
+				rampdown = 60.;
+			tou.mc_dispatch_params.m_pc_max_rampup = rampup;
+			tou.mc_dispatch_params.m_pc_max_rampdown = rampdown;
+
+
+			double rampup_per_step = rampup / (float)tou.mc_dispatch_params.m_disp_steps_per_hour;  // fraction of capacity per dispatch time step
+			double rampdown_per_step = rampdown / (float)tou.mc_dispatch_params.m_disp_steps_per_hour;  // fraction of capacity per dispatch time step
+			if (rampup_per_step < as_double("cycle_cutoff_frac"))
+			{
+				log(util::format("\nThe maximum allowable upward change in cycle thermal input per dispatch timestep (%.0f%% of capacity) is less than then minimum operational level (%.0f%% of capacity)."
+					" The maximum ramp-up constraint will not be enforced when the cycle starts up", rampup_per_step*100, as_double("cycle_cutoff_frac")*100), SSC_WARNING);
+			}
+			if (rampdown_per_step < as_double("cycle_cutoff_frac"))
+			{
+				log(util::format("\nThe maximum allowable downward change in cycle thermal input per dispatch timestep (%.0f%% of capacity) is less than then minimum operational level (%.0f%% of capacity)."
+					" The maximum ramp-down constraint will not be enforced when the cycle shuts down", rampdown_per_step*100, as_double("cycle_cutoff_frac")*100), SSC_WARNING);
+			}
+					
 
 
 
@@ -2005,6 +2019,7 @@ public:
 		csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::DISPATCH_PRES_NCONSTR, allocate("disp_presolve_nconstr", n_steps_fixed), n_steps_fixed);
 		csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::DISPATCH_PRES_NVAR, allocate("disp_presolve_nvar", n_steps_fixed), n_steps_fixed);
 		csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::DISPATCH_SOLVE_TIME, allocate("disp_solve_time", n_steps_fixed), n_steps_fixed);
+		csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::DISPATCH_QPBTARGET_EXPECT, allocate("disp_qpbtarget_expected", n_steps_fixed), n_steps_fixed);
 
 		csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::SOLZEN, allocate("solzen", n_steps_fixed), n_steps_fixed);
 		csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::SOLAZ, allocate("solaz", n_steps_fixed), n_steps_fixed);
