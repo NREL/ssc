@@ -303,17 +303,23 @@ void C_sco2_recomp_csp::design_core()
 	return;
 }
 
-int C_sco2_recomp_csp::off_design_fix_P_mc_in(S_od_par od_par, double P_mc_in /*MPa*/, bool is_rc_N_od_at_design, double rc_N_od_f_des /*-*/, 
-                                            int off_design_strategy, double od_opt_tol)
+int C_sco2_recomp_csp::off_design_fix_P_mc_in(S_od_par od_par, double P_mc_in /*MPa*/, 
+                                bool is_rc_N_od_at_design, double rc_N_od_f_des /*-*/, 
+                                bool is_mc_N_od_at_design, double mc_N_od_f_des /*-*/,
+                                int off_design_strategy, double od_opt_tol)
 {
 	setup_off_design_info(od_par, off_design_strategy, od_opt_tol);
 	
 	// Now, call off-design with the input compressor inlet pressure		
 	ms_cycle_od_par.m_P_LP_comp_in = P_mc_in*1.E3;	//[kPa] convert from MPa
 
-    // And input RC shaft speed controls
+    // Input RC shaft speed controls
     ms_cycle_od_par.m_is_rc_N_od_at_design = is_rc_N_od_at_design;  //[-]
     ms_cycle_od_par.m_rc_N_od_f_des = rc_N_od_f_des;                //[-]
+
+    // Input MC shaft speed controls
+    ms_cycle_od_par.m_is_mc_N_od_at_design = is_mc_N_od_at_design;  //[-]
+    ms_cycle_od_par.m_mc_N_od_f_des = mc_N_od_f_des;                //[-]
 
 	double eta_od_solved = std::numeric_limits<double>::quiet_NaN();
 	int od_core_error_code = off_design_core(eta_od_solved);

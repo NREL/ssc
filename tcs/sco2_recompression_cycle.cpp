@@ -4042,11 +4042,18 @@ int C_RecompCycle::C_mono_eq_turbo_N_fixed_m_dot::operator()(double m_dot_t_in /
 	double T_mc_out, P_mc_out;
 	T_mc_out = P_mc_out = std::numeric_limits<double>::quiet_NaN();
 
-	// Solve main compressor performance at design shaft speed
-	//mpc_rc_cycle->m_mc.od_comp_at_N_des(m_T_mc_in, m_P_mc_in, m_dot_mc, mc_error_code,
-	//								T_mc_out, P_mc_out);
-	mpc_rc_cycle->m_mc_ms.off_design_at_N_des(m_T_mc_in, m_P_mc_in, m_dot_mc, mc_error_code,
-									T_mc_out, P_mc_out);
+	// Solve main compressor performance
+    if (mpc_rc_cycle->ms_od_par.m_is_mc_N_od_at_design)
+    {
+        mpc_rc_cycle->m_mc_ms.off_design_at_N_des(m_T_mc_in, m_P_mc_in, m_dot_mc, mc_error_code,
+            T_mc_out, P_mc_out);
+    }
+    else
+    {
+        double N_mc_od = mpc_rc_cycle->ms_od_par.m_mc_N_od_f_des*mpc_rc_cycle->ms_des_solved.ms_mc_ms_des_solved.m_N_design;    //[rpm]
+        mpc_rc_cycle->m_mc_ms.off_design_given_N(m_T_mc_in, m_P_mc_in, m_dot_mc, N_mc_od, mc_error_code,
+            T_mc_out, P_mc_out);
+    }
 
 	// Check that main compressor performance solved
 	if(mc_error_code != 0)
