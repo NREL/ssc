@@ -1108,7 +1108,7 @@ int C_sco2_recomp_csp::off_design_core(double & eta_solved)
 		od_solve_code = E_TURBINE_INLET_OVER_TEMP;
 	else if(mpc_sco2_cycle->get_od_solved()->m_pres[C_sco2_cycle_core::MC_OUT] > ms_des_par.m_P_high_limit )
 		od_solve_code = E_OVER_PRESSURE;
-	else if (over_tip_ratio >= 1.0)
+	else if (over_tip_ratio != 0.0)
 		od_solve_code = E_TIP_RATIO;
 	else if(over_surge_mc != 0.0)
 		od_solve_code = E_MC_SURGE;

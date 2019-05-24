@@ -513,7 +513,7 @@ public:
 			double od_opt_duration = (clock_end - clock_start)/(double) CLOCKS_PER_SEC;		//[s]
 
 			p_od_code[n_run] = (ssc_number_t)off_design_code;
-			if(off_design_code == 0 || ((is_P_mc_in_od_sweep_assigned || is_od_set_control) && c_sco2_cycle.get_od_solved()->m_is_converged))
+			if(off_design_code == 0) // || ((is_P_mc_in_od_sweep_assigned || is_od_set_control) && c_sco2_cycle.get_od_solved()->m_is_converged))
 			{	// Off-design call was successful, so write outputs
 					// Control parameters
 				p_P_comp_in_od[n_run] = (ssc_number_t)(c_sco2_cycle.get_od_solved()->ms_rc_cycle_od_solved.m_pres[C_sco2_cycle_core::MC_IN] / 1000.0);	//[MPa]
