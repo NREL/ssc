@@ -23,6 +23,7 @@
     <ClCompile Include="..\ssc\cmod_cb_mspt_system_costs.cpp" />
     <ClCompile Include="..\ssc\cmod_fuelcell.cpp" />
     <ClCompile Include="..\ssc\cmod_geothermal_costs.cpp" />
+    <ClCompile Include="..\ssc\cmod_grid.cpp" />
     <ClCompile Include="..\ssc\cmod_host_developer.cpp" />
     <ClCompile Include="..\ssc\cmod_inv_cec_cg.cpp" />
     <ClCompile Include="..\ssc\cmod_dsg_flux_preprocess.cpp" />
@@ -104,6 +105,7 @@
   <ItemGroup>
     <ClInclude Include="..\ssc\cmod_battery.h" />
     <ClInclude Include="..\ssc\cmod_fuelcell.h" />
+    <ClInclude Include="..\ssc\cmod_grid.h" />
     <ClInclude Include="..\ssc\cmod_pvsamv1.h" />
     <ClInclude Include="..\ssc\cmod_windpower.h" />
     <ClInclude Include="..\ssc\common_financial.h" />
