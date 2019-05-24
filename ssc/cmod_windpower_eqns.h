@@ -19,7 +19,7 @@ static const char* WindTurbine_calculate_powercurve_doc =
     "     'max_tip_sp_ratio' - double max tip speed ratio [-]\\n"
     "     'cut_in' - double cut in speed [m/s]\\n"
     "     'cut_out' - double cut out speed [m/s]\\n"
-    "     'drive_train' - 0: 3 Stage Planetary, 1: Single Stage - Low Speed Generator, 2: Multi-Generator, 3: Direct Drive\\n"
+    "     'drive_train' - int 0: 3 Stage Planetary, 1: Single Stage - Low Speed Generator, 2: Multi-Generator, 3: Direct Drive\\n"
     "Output: key-value pairs added to var_table\\n"
     "     'wind_turbine_powercurve_windspeeds' - array [m/s]\\n"
     "     'wind_turbine_powercurve_powerout' - array [m/s]\\n"
