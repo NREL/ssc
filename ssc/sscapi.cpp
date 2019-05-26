@@ -158,7 +158,8 @@ extern module_entry_info
 	cm_entry_inv_cec_cg,
 	cm_entry_thermalrate,
 	cm_entry_mhk_tidal,
-	cm_entry_mhk_wave;
+	cm_entry_mhk_wave,
+	cm_entry_grid;
 
 /* official module table */
 static module_entry_info *module_table[] = {
@@ -247,6 +248,7 @@ static module_entry_info *module_table[] = {
 	&cm_entry_thermalrate,
 	&cm_entry_mhk_tidal,
 	&cm_entry_mhk_wave,
+	&cm_entry_grid,
 	0 };
 
 SSCEXPORT ssc_module_t ssc_module_create( const char *name )

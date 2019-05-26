@@ -69,7 +69,6 @@ static var_info _cm_vtab_mhk_wave[] = {
 	var_info_invalid
 };
 
-
 class cm_mhk_wave : public compute_module
 {
 private:
