@@ -355,6 +355,8 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
 
 	{ SSC_INPUT,		SSC_NUMBER,		 "disp_pc_onoff_perm",   "Permanence of cycle binary on/off decisions",						  "hr",			  "",			 "sys_ctrl",		 "?=0.",					 "",					  "" },
 	{ SSC_INPUT,		SSC_NUMBER,		 "disp_pc_level_perm",   "Permanence of cycle operating level decisions",					  "hr",			  "",			 "sys_ctrl",		 "?=0.",					 "",					  "" },
+	
+	{ SSC_INPUT,		SSC_NUMBER,		 "disp_pc_onoff_la_perm", "Permanence of cycle binary on/off decisions during lookahead ",	  "hr",			  "",			 "sys_ctrl",		 "?=0.",					 "",					  "" },
 
 
 
@@ -1694,15 +1696,21 @@ public:
 				}
 			}
 
-			if (disp_opt_ts > min_decision)  // Reset dispatch optmization timestep if necessary
+			if (disp_opt_ts > min_decision)  // Reset dispatch optimization timestep if necessary
 			{
 				log(util::format("\nThe dispatch time step was reset from the user-specified value (%.2f hr) to the minimum"
-					"allowable value from decision permanence specifications (%.2f min)", disp_opt_ts, min_decision), SSC_WARNING);
+					"allowable value from decision permanence specifications (%.2f hr)", disp_opt_ts, min_decision), SSC_WARNING);
 				disp_opt_ts = min_decision;
 				tou.mc_dispatch_params.m_disp_steps_per_hour = (int)floor(1. / disp_opt_ts);
 			}
-			tou.mc_dispatch_params.m_pc_onoff_perm = (pc_onoff > 0.) ? pc_onoff : disp_opt_ts;
+			tou.mc_dispatch_params.m_pc_onoff_perm = (pc_onoff > 0.) ? pc_onoff : disp_opt_ts;  // Default to dispatch optimization timestep if not specified
 			tou.mc_dispatch_params.m_pc_level_perm = (pc_level > 0.) ? pc_level : disp_opt_ts;
+
+			
+			// Look-ahead period decision permanence
+			tou.mc_dispatch_params.m_pc_onoff_lookahead_perm = fmax(tou.mc_dispatch_params.m_pc_onoff_perm, as_double("disp_pc_onoff_la_perm")); // Decision permanence in look-ahead always >= that in optimization window
+
+
 
 
 			// Cycle maximum ramp-up and ramp-down rates (fraction of total capacity per hour)

@@ -335,6 +335,7 @@ public:
 		double m_pc_minup;
 		double m_pc_mindown;
 		double m_pc_onoff_perm;
+		double m_pc_onoff_lookahead_perm;
 		double m_pc_level_perm;
 
 
@@ -400,12 +401,14 @@ public:
 			m_is_dispatch_targets = false;
 			m_is_disp_constr = false;
 
-			double m_pc_max_rampup = 60.;    // Maximum cyle ramp-up (fraction of capacity per hr)
-			double m_pc_max_rampdown = 60.;  // Maximum cyle ramp-up (fraction of capacity per hr)
-			double m_pc_minup = 0.;			  // Minimum cycle up time (hr)
-			double m_pc_mindown = 0.;         // Minimum cycle down time (hr)
-			double m_pc_onoff_perm = 0.;      // Cycle binary on/off decision permanence (hr)
-			double m_pc_level_perm = 0.;      // Cycle operating level decision permanence (hr)
+			m_pc_max_rampup = 60.;		// Maximum cyle ramp-up (fraction of capacity per hr)
+			m_pc_max_rampdown = 60.;	// Maximum cyle ramp-up (fraction of capacity per hr)
+			m_pc_minup = 0.;			// Minimum cycle up time (hr)
+			m_pc_mindown = 0.;          // Minimum cycle down time (hr)
+			m_pc_onoff_perm = 0.;       // Cycle binary on/off decision permanence (hr)
+			m_pc_level_perm = 0.;       // Cycle operating level decision permanence (hr)
+			
+			m_pc_onoff_lookahead_perm = 0.;  // Cycle binary on/off decision permanence during look-ahead window (hr)
 
         };
 

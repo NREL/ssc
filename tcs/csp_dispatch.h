@@ -167,6 +167,12 @@ public:
 		int pb_minup;				// Minimum cycle up time (number of dispatch time steps)
 		int pb_mindown;				// Minimum cycle down time (number of dispatch time steps)
 
+		int pb_onoff_perm;			 // Permanence of cycle on/off decisions (number of dispatch time steps)
+		int pb_onoff_lookahead_perm; // Permanence of cycle on/off decisions during look-ahead period (number of dispatch time steps)
+		int pb_level_perm;			 // Permanence of cycle operating level decisions (number of dispatch time steps)
+
+		int nstep_lookahead;		// Number of steps in the lookahead window 
+
         C_csp_solver_sim_info *siminfo;     //Pointer to existing simulation info object
         C_csp_collector_receiver *col_rec;   //Pointer to collector/receiver object
 		C_csp_power_cycle *mpc_pc;	// Pointer to csp power cycle class object
@@ -263,11 +269,6 @@ public:
         
     } params;
 
-	struct s_permanence
-	{
-		int pb_onoff;    // Permanence of cycle on/off decisions (number of dispatch time steps)
-		int pb_level;    // Permanence of cycle operating level decisions (number of dispatch time steps)
-	} perm;
 
     struct s_outputs
     {

@@ -619,9 +619,11 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 		dispatch.params.pb_mindown = (int)ceil(mc_tou.mc_dispatch_params.m_pc_mindown / dispatch.params.dt);   // Minimum cycle down time (number of dispatch time steps)
 																					   
 		// Decision permanence
-		dispatch.perm.pb_onoff = (int)ceil(mc_tou.mc_dispatch_params.m_pc_onoff_perm / dispatch.params.dt);
-		dispatch.perm.pb_level = (int)ceil(mc_tou.mc_dispatch_params.m_pc_level_perm / dispatch.params.dt);
+		dispatch.params.pb_onoff_perm = (int)ceil(mc_tou.mc_dispatch_params.m_pc_onoff_perm / dispatch.params.dt);
+		dispatch.params.pb_level_perm = (int)ceil(mc_tou.mc_dispatch_params.m_pc_level_perm / dispatch.params.dt);
 
+		dispatch.params.nstep_lookahead = (int) (mc_tou.mc_dispatch_params.m_optimize_horizon - mc_tou.mc_dispatch_params.m_optimize_frequency) / dispatch.params.dt;
+		dispatch.params.pb_onoff_lookahead_perm = (int)ceil(mc_tou.mc_dispatch_params.m_pc_onoff_lookahead_perm / dispatch.params.dt);
 	}
 
 
@@ -942,6 +944,8 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
                 if( hour_now >= (8760 - opt_horizon) )
                     opt_horizon = (int)std::min((double)opt_horizon, (double)(8761-hour_now));
 
+				
+				dispatch.params.nstep_lookahead = (int) (opt_horizon - mc_tou.mc_dispatch_params.m_optimize_frequency) / dispatch.params.dt;
 
 
                 //message

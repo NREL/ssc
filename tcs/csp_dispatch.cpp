@@ -561,7 +561,10 @@ static void calculate_parameters(csp_dispatch_opt *optinst, unordered_map<std::s
 		pars["pbdown0"] = (!optinst->params.is_pb_operating0 && !optinst->params.is_pb_standby0) ? optinst->params.pb_persist0 : 0;
 
 		// Decision permanence
-
+		pars["pb_onoff_perm"] = optinst->params.pb_onoff_perm;
+		pars["pb_level_perm"] = optinst->params.pb_level_perm;
+		
+		pars["pb_onoff_la_perm"] = optinst->params.pb_onoff_lookahead_perm;
 
 
 
@@ -616,6 +619,7 @@ bool csp_dispatch_opt::optimize()
 
         //Calculate the number of variables
         int nt = (int)m_nstep_opt;
+		int nt_lookahead = (int)params.nstep_lookahead;
 
         //set up the variable structure
         optimization_vars O;
@@ -1534,7 +1538,47 @@ bool csp_dispatch_opt::optimize()
 
 		}
 
+		// ******************** Cycle decision permanence *******************
+		{
+			REAL row[2];
+			int col[2];
 
+			for (int t = 0; t < nt; t++)
+			{
+				// Cycle on/off/standby
+
+				bool is_decision = true;
+				if (t < nt - nt_lookahead && t % (int)P["pb_onoff_perm"] != 0)  // Optimization window
+					is_decision = false;
+				if (t >= nt - nt_lookahead && t % (int)P["pb_onoff_la_perm"] != 0) // Lookahead period
+					is_decision = false;
+
+				if (!is_decision)  // Not allowed to change state in this step
+				{
+					row[0] = 1.;
+					col[0] = O.column("y", t);
+					row[1] = -1.;
+					col[1] = O.column("y", t-1);
+					add_constraintex(lp, 2, row, col, EQ, 0.);
+
+					row[0] = 1.;
+					col[0] = O.column("ycsb", t);
+					row[1] = -1.;
+					col[1] = O.column("ycsb", t - 1);
+					add_constraintex(lp, 2, row, col, EQ, 0.);
+				}
+
+				// Cycle operational level permanance
+				if (t % (int)P["pb_level_perm"] != 0)  // Not allowed to change operational level
+				{
+					row[0] = 1.;
+					col[0] = O.column("x", t);
+					row[1] = -1.;
+					col[1] = O.column("x", t - 1);
+					add_constraintex(lp, 2, row, col, EQ, 0.);
+				}
+			}
+		}
 
 			
 
