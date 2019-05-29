@@ -62,7 +62,7 @@
 
 #include "fmin.h"
 
-C_sco2_recomp_csp::C_sco2_recomp_csp()
+C_sco2_phx_air_cooler::C_sco2_phx_air_cooler()
 {
 	// Get CO2 critical temperature
 	CO2_info co2_fluid_info;
@@ -83,14 +83,14 @@ C_sco2_recomp_csp::C_sco2_recomp_csp()
 	mp_mf_update = 0;			// NULL
 }
 
-void C_sco2_recomp_csp::design(S_des_par des_par)
+void C_sco2_phx_air_cooler::design(S_des_par des_par)
 {
 	ms_des_par = des_par;
 
 	design_core();
 }
 
-void C_sco2_recomp_csp::design_core()
+void C_sco2_phx_air_cooler::design_core()
 {
 	// using -> C_RecompCycle::S_auto_opt_design_hit_eta_parameters
 	std::string error_msg;
@@ -303,7 +303,7 @@ void C_sco2_recomp_csp::design_core()
 	return;
 }
 
-int C_sco2_recomp_csp::off_design_fix_P_mc_in(S_od_par od_par, double P_mc_in /*MPa*/, 
+int C_sco2_phx_air_cooler::off_design_fix_P_mc_in(S_od_par od_par, double P_mc_in /*MPa*/, 
                                 bool is_rc_N_od_at_design, double rc_N_od_f_des /*-*/, 
                                 bool is_mc_N_od_at_design, double mc_N_od_f_des /*-*/,
                                 int off_design_strategy, double od_opt_tol)
@@ -346,7 +346,7 @@ int C_sco2_recomp_csp::off_design_fix_P_mc_in(S_od_par od_par, double P_mc_in /*
 	return od_core_error_code;
 }
 
-void C_sco2_recomp_csp::setup_off_design_info(C_sco2_recomp_csp::S_od_par od_par, int off_design_strategy, double od_opt_tol)
+void C_sco2_phx_air_cooler::setup_off_design_info(C_sco2_phx_air_cooler::S_od_par od_par, int off_design_strategy, double od_opt_tol)
 {
 	ms_od_par = od_par;
 
@@ -402,7 +402,7 @@ void C_sco2_recomp_csp::setup_off_design_info(C_sco2_recomp_csp::S_od_par od_par
 	ms_phx_od_par.m_m_dot_c = std::numeric_limits<double>::quiet_NaN();		//[kg/s]
 }
 
-int C_sco2_recomp_csp::optimize_off_design(C_sco2_recomp_csp::S_od_par od_par, int off_design_strategy, double od_opt_tol)
+int C_sco2_phx_air_cooler::optimize_off_design(C_sco2_phx_air_cooler::S_od_par od_par, int off_design_strategy, double od_opt_tol)
 {
 	// This sets: T_mc_in, T_pc_in, etc.
 	setup_off_design_info(od_par, off_design_strategy, od_opt_tol);
@@ -512,7 +512,7 @@ int C_sco2_recomp_csp::optimize_off_design(C_sco2_recomp_csp::S_od_par od_par, i
 
 			if (od_opt_err_code != 0)
 			{
-				throw(C_csp_exception("C_sco2_recomp_csp::optimize_off_design to maximize efficiency failed"));
+				throw(C_csp_exception("C_sco2_phx_air_cooler::optimize_off_design to maximize efficiency failed"));
 			}
 		}		
 	}
@@ -535,7 +535,7 @@ int C_sco2_recomp_csp::optimize_off_design(C_sco2_recomp_csp::S_od_par od_par, i
 	return 0;
 }
 
-int C_sco2_recomp_csp::opt_P_LP_comp_in__fixed_N_turbo()
+int C_sco2_phx_air_cooler::opt_P_LP_comp_in__fixed_N_turbo()
 {
 	// Prior to calling, need to set :
 	//	*ms_od_par, ms_rc_cycle_od_phi_par, ms_phx_od_par, ms_od_op_inputs(will set P_mc_in here and f_recomp downstream)
@@ -857,7 +857,7 @@ int C_sco2_recomp_csp::opt_P_LP_comp_in__fixed_N_turbo()
 					if (od_core_error_code != 0)
 					{
 						throw(C_csp_exception("Off-design optimization on compressor inlet pressure failed",
-							"C_sco2_recomp_csp::opt_P_mc_in_nest_f_recomp_max_eta_core"));
+							"C_sco2_phx_air_cooler::opt_P_mc_in_nest_f_recomp_max_eta_core"));
 					}
 
 					break;
@@ -886,7 +886,7 @@ int C_sco2_recomp_csp::opt_P_LP_comp_in__fixed_N_turbo()
 					if (od_core_error_code != 0)
 					{
 						throw(C_csp_exception("Off-design optimization on compressor inlet pressure failed",
-							"C_sco2_recomp_csp::opt_P_mc_in_nest_f_recomp_max_eta_core"));
+							"C_sco2_phx_air_cooler::opt_P_mc_in_nest_f_recomp_max_eta_core"));
 					}
 
 					break;
@@ -897,7 +897,7 @@ int C_sco2_recomp_csp::opt_P_LP_comp_in__fixed_N_turbo()
 			if (od_core_error_code != 0)
 			{
 				throw(C_csp_exception("Off-design optimization on compressor inlet pressure failed",
-					"C_sco2_recomp_csp::opt_P_mc_in_nest_f_recomp_max_eta_core"));
+					"C_sco2_phx_air_cooler::opt_P_mc_in_nest_f_recomp_max_eta_core"));
 			}
 		}
 
@@ -918,7 +918,7 @@ int C_sco2_recomp_csp::opt_P_LP_comp_in__fixed_N_turbo()
 	return 0;
 }
 
-double C_sco2_recomp_csp::adjust_P_mc_in_away_2phase(double T_co2 /*K*/, double P_mc_in /*kPa*/)
+double C_sco2_phx_air_cooler::adjust_P_mc_in_away_2phase(double T_co2 /*K*/, double P_mc_in /*kPa*/)
 {	
 	double P_mc_in_restricted = std::numeric_limits<double>::quiet_NaN();	//[kPa]
 	CO2_state co2_props;
@@ -965,7 +965,7 @@ double C_sco2_recomp_csp::adjust_P_mc_in_away_2phase(double T_co2 /*K*/, double 
 
 }
 
-int C_sco2_recomp_csp::off_design_core(double & eta_solved)
+int C_sco2_phx_air_cooler::off_design_core(double & eta_solved)
 {
 	ms_cycle_od_par.m_P_LP_comp_in = adjust_P_mc_in_away_2phase(ms_cycle_od_par.m_T_mc_in, ms_cycle_od_par.m_P_LP_comp_in);
 
@@ -1157,7 +1157,7 @@ int C_sco2_recomp_csp::off_design_core(double & eta_solved)
 
 	default:
 		std::string err_msg = util::format("The off-design optimization objective code, %d, is not recognized.", m_od_opt_objective);
-		throw(C_csp_exception(err_msg, "C_sco2_recomp_csp::off_design_core"));
+		throw(C_csp_exception(err_msg, "C_sco2_phx_air_cooler::off_design_core"));
 		
 	}
 
@@ -1178,7 +1178,7 @@ int C_sco2_recomp_csp::off_design_core(double & eta_solved)
 	return od_solve_code;
 }
 
-int C_sco2_recomp_csp::off_design(S_od_par od_par, S_od_operation_inputs od_op_inputs)
+int C_sco2_phx_air_cooler::off_design(S_od_par od_par, S_od_operation_inputs od_op_inputs)
 {
 	setup_off_design_info(od_par, -1, 1.E-3);
 
@@ -1196,7 +1196,7 @@ int C_sco2_recomp_csp::off_design(S_od_par od_par, S_od_operation_inputs od_op_i
 	return od_code;
 }
 
-int C_sco2_recomp_csp::C_mono_eq_T_t_in::operator()(double T_t_in /*K*/, double *diff_T_t_in /*-*/)
+int C_sco2_phx_air_cooler::C_mono_eq_T_t_in::operator()(double T_t_in /*K*/, double *diff_T_t_in /*-*/)
 {
 	// Using:
 	//	-mc_rc_cycle
@@ -1276,7 +1276,7 @@ int C_sco2_recomp_csp::C_mono_eq_T_t_in::operator()(double T_t_in /*K*/, double 
 	return 0;
 }
 
-int C_sco2_recomp_csp::C_sco2_csp_od::operator()(S_f_inputs inputs, S_f_outputs & outputs)
+int C_sco2_phx_air_cooler::C_sco2_csp_od::operator()(S_f_inputs inputs, S_f_outputs & outputs)
 {
 	S_od_par sco2_od_par;
 	sco2_od_par.m_T_htf_hot = inputs.m_T_htf_hot + 273.15;	//[K] convert from C
@@ -1284,7 +1284,7 @@ int C_sco2_recomp_csp::C_sco2_csp_od::operator()(S_f_inputs inputs, S_f_outputs 
 	sco2_od_par.m_T_amb = inputs.m_T_amb + 273.15;			//[K] convert from C
     sco2_od_par.m_T_t_in_mode = C_sco2_cycle_core::E_SOLVE_PHX; //[-]
 
-	int od_strategy = C_sco2_recomp_csp::E_TARGET_POWER_ETA_MAX;
+	int od_strategy = C_sco2_phx_air_cooler::E_TARGET_POWER_ETA_MAX;
 
 	int off_design_code = -1;	//[-]
 
@@ -1318,7 +1318,7 @@ int C_sco2_recomp_csp::C_sco2_csp_od::operator()(S_f_inputs inputs, S_f_outputs 
 	return off_design_code;
 }
 
-int C_sco2_recomp_csp::generate_ud_pc_tables(double T_htf_low /*C*/, double T_htf_high /*C*/, int n_T_htf /*-*/,
+int C_sco2_phx_air_cooler::generate_ud_pc_tables(double T_htf_low /*C*/, double T_htf_high /*C*/, int n_T_htf /*-*/,
 	double T_amb_low /*C*/, double T_amb_high /*C*/, int n_T_amb /*-*/,
 	double m_dot_htf_ND_low /*-*/, double m_dot_htf_ND_high /*-*/, int n_m_dot_htf_ND,
 	util::matrix_t<double> & T_htf_ind, util::matrix_t<double> & T_amb_ind, util::matrix_t<double> & m_dot_htf_ND_ind)
@@ -1341,27 +1341,27 @@ int C_sco2_recomp_csp::generate_ud_pc_tables(double T_htf_low /*C*/, double T_ht
 	return ud_pc_error_code;
 }
 
-const C_sco2_recomp_csp::S_des_par * C_sco2_recomp_csp::get_design_par()
+const C_sco2_phx_air_cooler::S_des_par * C_sco2_phx_air_cooler::get_design_par()
 {
 	return &ms_des_par;
 }
 
-const C_sco2_recomp_csp::S_des_solved * C_sco2_recomp_csp::get_design_solved()
+const C_sco2_phx_air_cooler::S_des_solved * C_sco2_phx_air_cooler::get_design_solved()
 {
 	return &ms_des_solved;
 }
 
-const C_HX_counterflow::S_des_calc_UA_par * C_sco2_recomp_csp::get_phx_des_par()
+const C_HX_counterflow::S_des_calc_UA_par * C_sco2_phx_air_cooler::get_phx_des_par()
 {
 	return &ms_phx_des_par;
 }
 
-const C_sco2_recomp_csp::S_od_solved * C_sco2_recomp_csp::get_od_solved()
+const C_sco2_phx_air_cooler::S_od_solved * C_sco2_phx_air_cooler::get_od_solved()
 {
 	return &ms_od_solved;
 }
 
-double C_sco2_recomp_csp::opt_P_LP_in__fixed_N_turbo__return_f_obj(double P_mc_in /*kPa*/)
+double C_sco2_phx_air_cooler::opt_P_LP_in__fixed_N_turbo__return_f_obj(double P_mc_in /*kPa*/)
 {
 	m_nlopt_iter++;
 	
@@ -1399,7 +1399,7 @@ double C_sco2_recomp_csp::opt_P_LP_in__fixed_N_turbo__return_f_obj(double P_mc_i
 
 double nlopt_opt_P_LP_in__fixed_N_turbo(const std::vector<double> &x, std::vector<double> &grad, void *data)
 {
-	C_sco2_recomp_csp *frame = static_cast<C_sco2_recomp_csp*>(data);
+	C_sco2_phx_air_cooler *frame = static_cast<C_sco2_phx_air_cooler*>(data);
 	if( frame != NULL )  
 		return frame->opt_P_LP_in__fixed_N_turbo__return_f_obj(x[0]);
 	else
@@ -1408,7 +1408,7 @@ double nlopt_opt_P_LP_in__fixed_N_turbo(const std::vector<double> &x, std::vecto
 
 double fmin_opt_P_LP_in__fixed_N_turbo(double x, void *data)
 {
-	C_sco2_recomp_csp *frame = static_cast<C_sco2_recomp_csp*>(data);
+	C_sco2_phx_air_cooler *frame = static_cast<C_sco2_phx_air_cooler*>(data);
 	if( frame != NULL )  
 		return -(frame->opt_P_LP_in__fixed_N_turbo__return_f_obj(x));
 	else
