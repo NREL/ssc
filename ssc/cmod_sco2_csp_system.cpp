@@ -384,7 +384,7 @@ public:
 				throw exec_error("sco2_csp_system", err_msg);
 			}
 			
-            int n_P_mc_in = 101;
+            int n_P_mc_in = 501;
 
 			double P_mc_in_low = P_LP_comp_in_des - delta_P / 2.0;	//[MPa]
 
@@ -458,7 +458,27 @@ public:
 					//off_design_code = sco2_recomp_csp.off_design_opt(sco2_rc_od_par, od_strategy);
 						// Nested optimization
 					int od_strategy = C_sco2_phx_air_cooler::E_TARGET_POWER_ETA_MAX;
-					off_design_code = c_sco2_cycle.optimize_off_design(s_sco2_od_par, od_strategy);
+                        // RC shaft speed control
+                    bool is_rc_N_od_at_design = true;
+                    double rc_N_od_f_des = 1.0;
+                    if (od_cases(n_run, 3) < 0.0)
+                    {
+                        is_rc_N_od_at_design = false;
+                        rc_N_od_f_des = fabs(od_cases(n_run, 3));
+                    }
+                        // MC shaft speed control
+                    bool is_mc_N_od_at_design = true;
+                    double mc_N_od_f_des = 1.0;
+                    if (od_cases(n_run, 4) < 0.0)
+                    {
+                        is_mc_N_od_at_design = false;
+                        mc_N_od_f_des = fabs(od_cases(n_run, 4));
+                    }
+
+					off_design_code = c_sco2_cycle.optimize_off_design(s_sco2_od_par, 
+                                        is_rc_N_od_at_design, rc_N_od_f_des,
+                                        is_mc_N_od_at_design, mc_N_od_f_des,
+                                        od_strategy);
 				}
 				else if (is_P_mc_in_od_sweep_assigned)
 				{

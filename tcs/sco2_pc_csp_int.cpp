@@ -402,10 +402,21 @@ void C_sco2_phx_air_cooler::setup_off_design_info(C_sco2_phx_air_cooler::S_od_pa
 	ms_phx_od_par.m_m_dot_c = std::numeric_limits<double>::quiet_NaN();		//[kg/s]
 }
 
-int C_sco2_phx_air_cooler::optimize_off_design(C_sco2_phx_air_cooler::S_od_par od_par, int off_design_strategy, double od_opt_tol)
+int C_sco2_phx_air_cooler::optimize_off_design(C_sco2_phx_air_cooler::S_od_par od_par, 
+    bool is_rc_N_od_at_design, double rc_N_od_f_des /*-*/,
+    bool is_mc_N_od_at_design, double mc_N_od_f_des /*-*/,
+    int off_design_strategy, double od_opt_tol)
 {
 	// This sets: T_mc_in, T_pc_in, etc.
 	setup_off_design_info(od_par, off_design_strategy, od_opt_tol);
+
+    // Input RC shaft speed controls
+    ms_cycle_od_par.m_is_rc_N_od_at_design = is_rc_N_od_at_design;  //[-]
+    ms_cycle_od_par.m_rc_N_od_f_des = rc_N_od_f_des;                //[-]
+
+    // Input MC shaft speed controls
+    ms_cycle_od_par.m_is_mc_N_od_at_design = is_mc_N_od_at_design;  //[-]
+    ms_cycle_od_par.m_mc_N_od_f_des = mc_N_od_f_des;                //[-]
 
 	if (m_off_design_turbo_operation == E_FIXED_MC_FIXED_RC_FIXED_T)
 	{
@@ -1290,7 +1301,10 @@ int C_sco2_phx_air_cooler::C_sco2_csp_od::operator()(S_f_inputs inputs, S_f_outp
 
 	try
 	{
-		off_design_code = mpc_sco2_rc->optimize_off_design(sco2_od_par, od_strategy);
+		off_design_code = mpc_sco2_rc->optimize_off_design(sco2_od_par, 
+                                                    true, 1.0,
+                                                    true, 1.0,
+                                                    od_strategy);
 	}
 	catch (C_csp_exception &)
 	{
