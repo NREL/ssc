@@ -87,6 +87,8 @@ public:
     bool postsim_calcs( compute_module *cm );
 };
 
+bool are_values_sig_different(double v1, double v2, double tol);
+
 bool ssc_cmod_solarpilot_callback(simulation_info *siminfo, void *data);
 
 extern var_info vtab_sco2_design[];
