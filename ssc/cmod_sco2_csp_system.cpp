@@ -424,7 +424,7 @@ public:
 		
 		int n_od_runs = (int)od_cases.nrows();
 		allocate_ssc_outputs(n_od_runs, n_mc_stages, n_rc_stages, n_pc_stages);
-		C_sco2_phx_air_cooler::S_od_par sco2_rc_od_par;
+		C_sco2_phx_air_cooler::S_od_par s_sco2_od_par;
 
 		// For try/catch below
 		int out_type = -1;
@@ -440,13 +440,13 @@ public:
 			//p_od_opt_obj_code[n_run] = (ssc_number_t)od_cases(n_run, 3);		//[-]
 			//p_od_opt_conv_tol[n_run] = (ssc_number_t)od_cases(n_run, 4);		//[-]
 				// Set input structure
-			sco2_rc_od_par.m_T_htf_hot = p_T_htf_hot_od[n_run] + 273.15;	//[K]
-			sco2_rc_od_par.m_m_dot_htf = m_dot_htf_design*p_m_dot_htf_fracs[n_run];	//[kg/s]
-			sco2_rc_od_par.m_T_amb = p_T_amb_od[n_run] + 273.15;				//[K]
+			s_sco2_od_par.m_T_htf_hot = p_T_htf_hot_od[n_run] + 273.15;	//[K]
+			s_sco2_od_par.m_m_dot_htf = m_dot_htf_design*p_m_dot_htf_fracs[n_run];	//[kg/s]
+			s_sco2_od_par.m_T_amb = p_T_amb_od[n_run] + 273.15;				//[K]
 			//int od_strategy = (int)p_od_opt_obj_code[n_run];		//[-]
 			//double od_opt_tol = p_od_opt_conv_tol[n_run];			//[-]
 
-            sco2_rc_od_par.m_T_t_in_mode = T_t_in_mode;  //[-]
+            s_sco2_od_par.m_T_t_in_mode = T_t_in_mode;  //[-]
 
 			int off_design_code = 0;
 			std::clock_t clock_start = std::clock();
@@ -458,7 +458,7 @@ public:
 					//off_design_code = sco2_recomp_csp.off_design_opt(sco2_rc_od_par, od_strategy);
 						// Nested optimization
 					int od_strategy = C_sco2_phx_air_cooler::E_TARGET_POWER_ETA_MAX;
-					off_design_code = c_sco2_cycle.optimize_off_design(sco2_rc_od_par, od_strategy);
+					off_design_code = c_sco2_cycle.optimize_off_design(s_sco2_od_par, od_strategy);
 				}
 				else if (is_P_mc_in_od_sweep_assigned)
 				{
@@ -480,7 +480,7 @@ public:
                         mc_N_od_f_des = fabs(od_cases(n_run, 4));
                     }
 
-					off_design_code = c_sco2_cycle.off_design_fix_P_mc_in(sco2_rc_od_par, od_cases(n_run, 5), 
+					off_design_code = c_sco2_cycle.off_design_fix_P_mc_in(s_sco2_od_par, od_cases(n_run, 5),
                                                                             is_rc_N_od_at_design, rc_N_od_f_des,
                                                                             is_mc_N_od_at_design, mc_N_od_f_des,
                                                                             od_strategy);
@@ -493,7 +493,7 @@ public:
 					{
 						P_LP_comp_in = P_LP_comp_in_des / fabs(P_LP_comp_in);
 					}
-					off_design_code = c_sco2_cycle.off_design_fix_P_mc_in(sco2_rc_od_par, P_LP_comp_in, true, 1.0, true, 1.0, od_strategy);
+					off_design_code = c_sco2_cycle.off_design_fix_P_mc_in(s_sco2_od_par, P_LP_comp_in, true, 1.0, true, 1.0, od_strategy);
 				}
 			}
 			catch( C_csp_exception &csp_exception )
