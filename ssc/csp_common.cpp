@@ -571,6 +571,26 @@ static bool optimize_callback( simulation_info *siminfo, void *data )
     return true;
 }
 
+bool are_values_sig_different(double v1, double v2, double tol)
+{
+    if (fabs(v1) < tol || fabs(v2) < tol)
+    {
+        if (fabs(v1 - v2) > tol)
+        {
+            return true;
+        }
+    }
+    else
+    {
+        if (fabs(v1 - v2) / std::min(fabs(v1), fabs(v2)) > tol)
+        {
+            return true;
+        }
+    }
+    
+    return false;
+}
+
 var_info vtab_sco2_design[] = {
 
 	/*   VARTYPE   DATATYPE         NAME               LABEL                                                    UNITS     META  GROUP REQUIRED_IF CONSTRAINTS     UI_HINTS*/
