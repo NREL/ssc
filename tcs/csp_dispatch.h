@@ -171,7 +171,9 @@ public:
 		int pb_onoff_lookahead_perm; // Permanence of cycle on/off decisions during look-ahead period (number of dispatch time steps)
 		int pb_level_perm;			 // Permanence of cycle operating level decisions (number of dispatch time steps)
 
-		int nstep_lookahead;		// Number of steps in the lookahead window 
+		int nstep_lookahead;		 // Number of steps in the lookahead window 
+
+		double e_tes_buffer;         // [kWht] Required storage buffer
 
         C_csp_solver_sim_info *siminfo;     //Pointer to existing simulation info object
         C_csp_collector_receiver *col_rec;   //Pointer to collector/receiver object
@@ -295,6 +297,8 @@ public:
         util::matrix_t<double> eta_pb_expected;     //Expected power cycle conversion efficiency (normalized)
         util::matrix_t<double> w_condf_expected;  //Expected condenser loss coefficient
 		util::matrix_t<double> f_pb_op_limit;  //[-] Maximum normalized cycle output
+
+		util::matrix_t<double> s_min;		// Allowable lower bound on storage [kWht]
 
         int solve_iter;             //Number of iterations required to solve
         int solve_state;

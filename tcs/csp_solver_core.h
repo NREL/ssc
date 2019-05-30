@@ -337,6 +337,7 @@ public:
 		double m_pc_onoff_perm;
 		double m_pc_onoff_lookahead_perm;
 		double m_pc_level_perm;
+		double m_storage_buffer;
 
 
         S_csp_tou_params()
@@ -409,6 +410,7 @@ public:
 			m_pc_level_perm = 0.;       // Cycle operating level decision permanence (hr)
 			
 			m_pc_onoff_lookahead_perm = 0.;  // Cycle binary on/off decision permanence during look-ahead window (hr)
+			m_storage_buffer = 0.0;			 // Dispatch storage buffer (fraction of capacity)
 
         };
 

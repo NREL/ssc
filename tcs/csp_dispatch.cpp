@@ -251,6 +251,8 @@ void csp_dispatch_opt::clear_output_arrays()
     outputs.wnet_lim_min.clear();
     outputs.delta_rs.clear();
 	outputs.Qc.clear();
+
+	outputs.s_min.clear();
 }
 
 bool csp_dispatch_opt::check_setup(int nstep)
@@ -566,6 +568,45 @@ static void calculate_parameters(csp_dispatch_opt *optinst, unordered_map<std::s
 		
 		pars["pb_onoff_la_perm"] = optinst->params.pb_onoff_lookahead_perm;
 
+
+		// Storage buffer
+		optinst->outputs.s_min.resize(nt, ns);
+		optinst->outputs.s_min.fill(optinst->params.e_tes_buffer);
+		if (pars["s0"] < optinst->params.e_tes_buffer)  // Initial storage capacity is below allowable value -> relax constraint until receiver energy is available to make up the difference
+		{
+			for (int s = 0; s < ns; s++)
+			{
+				double rec_accum = 0.0;
+				double startup_require = optinst->params.e_rec_startup;
+				if (optinst->params.is_rec_operating0)
+					startup_require = 0.0;
+
+				for (int t = 0; t < nt; t++)
+				{
+
+					if (startup_require > 0.0)
+					{
+						if (optinst->outputs.q_sfavail_expected.at(t, s) < pars["Qru"])
+							startup_require = optinst->params.e_rec_startup;
+						else
+							startup_require -= pars["Qru"] * pars["delta"];
+					}
+
+					else
+					{
+						if (optinst->outputs.q_sfavail_expected.at(t, s) < pars["Qrl"])
+							startup_require = optinst->params.e_rec_startup;
+						else
+							rec_accum += optinst->outputs.q_sfavail_expected.at(t, s) * pars["delta"];  // Available accumulated energy from receiver [kWht]
+					}
+
+					if (rec_accum < (optinst->params.e_tes_buffer - pars["s0"]))			// Cumulative receiver energy is insufficient to increase storage above allowable min
+						optinst->outputs.s_min.at(t, s) = optinst->params.e_tes_init;		// Relax storage lower bound to initial storage availability
+					else
+						break;
+				}
+			}
+		}
 
 
 };
@@ -1444,7 +1485,8 @@ bool csp_dispatch_opt::optimize()
 				else
 				{
 					double max_avail = P["s0"] / P["delta"] + outputs.q_sfavail_expected.at(t, 0); 
-					if (P["q0"] <= P["qpbmaxdown"]+increase_rampdown || max_avail > P["Ql"])  // Ramp-down is feasible
+
+					if (P["q0"] <= P["qpbmaxdown"]+increase_rampdown || max_avail > std::fmax(P["Ql"], P["q0"]-P["qpbmaxdown"]))  // Ramp-down is feasible
 						add_constraintex(lp, 3, row, col, GE, P["q0"] - P["qpbmaxdown"] - increase_rampdown);
 				}
 
@@ -1638,6 +1680,9 @@ bool csp_dispatch_opt::optimize()
                 col[0] = O.column("s", t);
 
                 add_constraintex(lp, 1, row, col, LE, P["Eu"]);
+
+				add_constraintex(lp, 1, row, col, GE, outputs.s_min.at(t,0));  // Storage buffer (default value is 0.0)
+
 
 				//max cycle thermal input in time periods where cycle operates and receiver is starting up
                 //outputs.delta_rs.resize(nt);

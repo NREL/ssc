@@ -624,6 +624,10 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 
 		dispatch.params.nstep_lookahead = (int) (mc_tou.mc_dispatch_params.m_optimize_horizon - mc_tou.mc_dispatch_params.m_optimize_frequency) / dispatch.params.dt;
 		dispatch.params.pb_onoff_lookahead_perm = (int)ceil(mc_tou.mc_dispatch_params.m_pc_onoff_lookahead_perm / dispatch.params.dt);
+
+
+		// Storage buffer
+		dispatch.params.e_tes_buffer = mc_tou.mc_dispatch_params.m_storage_buffer * dispatch.params.e_tes_max;
 	}
 
 

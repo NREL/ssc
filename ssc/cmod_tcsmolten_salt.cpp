@@ -354,9 +354,10 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
 	{ SSC_INPUT,		SSC_NUMBER,		 "disp_pc_mindown",		 "Cycle minimum down time",											  "hr",			  "",			 "sys_ctrl",		 "?=0.",					 "",					  "" },
 
 	{ SSC_INPUT,		SSC_NUMBER,		 "disp_pc_onoff_perm",   "Permanence of cycle binary on/off decisions",						  "hr",			  "",			 "sys_ctrl",		 "?=0.",					 "",					  "" },
+	{ SSC_INPUT,		SSC_NUMBER,		 "disp_pc_onoff_la_perm", "Permanence of cycle binary on/off decisions during lookahead ",	  "hr",			  "",			 "sys_ctrl",		 "?=0.",					 "",					  "" },
 	{ SSC_INPUT,		SSC_NUMBER,		 "disp_pc_level_perm",   "Permanence of cycle operating level decisions",					  "hr",			  "",			 "sys_ctrl",		 "?=0.",					 "",					  "" },
 	
-	{ SSC_INPUT,		SSC_NUMBER,		 "disp_pc_onoff_la_perm", "Permanence of cycle binary on/off decisions during lookahead ",	  "hr",			  "",			 "sys_ctrl",		 "?=0.",					 "",					  "" },
+	{ SSC_INPUT,		SSC_NUMBER,		 "disp_storage_buffer",   "Minimum allowable storage in dispatch model (fraction of capacity)",	 "",		  "",			 "sys_ctrl",		 "?=0.",					 "",					  "" },
 
 
 
@@ -1737,7 +1738,8 @@ public:
 					" The maximum ramp-down constraint will not be enforced when the cycle shuts down", rampdown_per_step*100, as_double("cycle_cutoff_frac")*100), SSC_WARNING);
 			}
 					
-
+			// Dispatch storage buffer
+			tou.mc_dispatch_params.m_storage_buffer = as_double("disp_storage_buffer");
 
 
 
