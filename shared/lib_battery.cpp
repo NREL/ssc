@@ -1328,7 +1328,7 @@ void thermal_t::copy(thermal_t * thermal)
 	_height = thermal->_height;
 	_Cp = thermal->_Cp;
 	_h = thermal->_h;
-	_T_room = thermal->_T_room;
+	// _T_room = thermal->_T_room;  // don't copy, super slow in subhourly simulations
 	_R = thermal->_R;
 	_A = thermal->_A;
 	_T_battery = thermal->_T_battery;

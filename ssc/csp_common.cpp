@@ -796,9 +796,9 @@ var_info vtab_sco2_design[] = {
 
 var_info_invalid };
 
-int sco2_design_cmod_common(compute_module *cm, C_sco2_recomp_csp & c_sco2_cycle)
+int sco2_design_cmod_common(compute_module *cm, C_sco2_phx_air_cooler & c_sco2_cycle)
 {
-	C_sco2_recomp_csp::S_des_par sco2_rc_des_par;
+	C_sco2_phx_air_cooler::S_des_par sco2_rc_des_par;
 	// System design parameters
 	sco2_rc_des_par.m_hot_fl_code = cm->as_integer("htf");							//[-] Integer code for HTF
 	sco2_rc_des_par.mc_hot_fl_props = cm->as_matrix("htf_props");					//[-] Custom HTF properties

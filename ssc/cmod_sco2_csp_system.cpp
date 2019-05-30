@@ -61,7 +61,7 @@ static var_info _cm_vtab_sco2_csp_system[] = {
 	/*   VARTYPE   DATATYPE         NAME               LABEL                                                    UNITS     META  GROUP REQUIRED_IF CONSTRAINTS     UI_HINTS*/
 	// ** Off-design Inputs **
     { SSC_INPUT,  SSC_NUMBER,  "od_T_t_in_mode",       "0: model solves co2/HTF PHX od model to calculate turbine inlet temp, 1: model sets turbine inlet temp to HTF hot temp", "", "", "", "?=0", "", ""},  // default to solving PHX
-    { SSC_INPUT,  SSC_MATRIX,  "od_cases",             "Columns: T_htf_C, m_dot_htf_ND, T_amb_C, od_opt_obj (1: MAX_ETA, 2: MAX_POWER), Rows: cases",   "",           "",    "",      "",      "",       "" },
+    { SSC_INPUT,  SSC_MATRIX,  "od_cases",             "Columns: T_htf_C, m_dot_htf_ND, T_amb_C, f_N_rc (=1 use design, <0, frac_des = abs(input), f_N_mc (=1 use design, <0, frac_des = abs(input), Rows: cases",   "",           "",    "",      "",      "",       "" },
 	{ SSC_INPUT,  SSC_ARRAY,   "od_P_mc_in_sweep",     "Columns: T_htf_C, m_dot_htf_ND, T_amb_C, f_N_rc (=1 use design, <0, frac_des = abs(input), f_N_mc (=1 use design, <0, frac_des = abs(input)", "", "", "", "",  "", "" },
 	{ SSC_INPUT,  SSC_MATRIX,  "od_set_control",       "Columns: T_htf_C, m_dot_htf_ND, T_amb_C, P_LP_in, Rows: cases", "", "", "", "", "", "" },
 	{ SSC_INPUT,  SSC_NUMBER,  "is_gen_od_polynomials","Generate off-design polynomials for Generic CSP models? 1 = Yes, 0 = No", "", "", "",  "?=0",     "",       "" },
@@ -289,7 +289,7 @@ public:
 
 	void exec() throw(general_error)
 	{
-		C_sco2_recomp_csp c_sco2_cycle;
+		C_sco2_phx_air_cooler c_sco2_cycle;
 
 		int sco2_des_err = sco2_design_cmod_common(this, c_sco2_cycle);
 		if (sco2_des_err != 0)
@@ -424,7 +424,7 @@ public:
 		
 		int n_od_runs = (int)od_cases.nrows();
 		allocate_ssc_outputs(n_od_runs, n_mc_stages, n_rc_stages, n_pc_stages);
-		C_sco2_recomp_csp::S_od_par sco2_rc_od_par;
+		C_sco2_phx_air_cooler::S_od_par sco2_rc_od_par;
 
 		// For try/catch below
 		int out_type = -1;
@@ -457,12 +457,12 @@ public:
 					// 2D optimization
 					//off_design_code = sco2_recomp_csp.off_design_opt(sco2_rc_od_par, od_strategy);
 						// Nested optimization
-					int od_strategy = C_sco2_recomp_csp::E_TARGET_POWER_ETA_MAX;
+					int od_strategy = C_sco2_phx_air_cooler::E_TARGET_POWER_ETA_MAX;
 					off_design_code = c_sco2_cycle.optimize_off_design(sco2_rc_od_par, od_strategy);
 				}
 				else if (is_P_mc_in_od_sweep_assigned)
 				{
-					int od_strategy = C_sco2_recomp_csp::E_TARGET_POWER_ETA_MAX;
+					int od_strategy = C_sco2_phx_air_cooler::E_TARGET_POWER_ETA_MAX;
                         // RC shaft speed control
                     bool is_rc_N_od_at_design = true;
                     double rc_N_od_f_des = 1.0;
@@ -487,7 +487,7 @@ public:
 				}
 				else if (is_od_set_control)
 				{
-					int od_strategy = C_sco2_recomp_csp::E_TARGET_POWER_ETA_MAX;
+					int od_strategy = C_sco2_phx_air_cooler::E_TARGET_POWER_ETA_MAX;
 					double P_LP_comp_in = od_cases(n_run, 3);
 					if (od_cases(n_run, 3) < 0.0)
 					{

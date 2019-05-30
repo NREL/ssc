@@ -91,7 +91,7 @@ bool ssc_cmod_solarpilot_callback(simulation_info *siminfo, void *data);
 
 extern var_info vtab_sco2_design[];
 
-int sco2_design_cmod_common(compute_module *cm, C_sco2_recomp_csp & c_sco2_cycle);
+int sco2_design_cmod_common(compute_module *cm, C_sco2_phx_air_cooler & c_sco2_cycle);
 
 
 
