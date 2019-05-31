@@ -551,22 +551,58 @@ static void calculate_parameters(csp_dispatch_opt *optinst, unordered_map<std::s
 		for (int t = 0; t < nt; t++)
 			optinst->outputs.Qc.at(t) = std::fmin(pars["Qc"], optinst->cap_frac.at(t) * optinst->params.q_pb_des);
 
-		// Cycle ramp rates and minimum up/down time
-		pars["qpbmaxup"] = optinst->params.pb_max_rampup;
-		pars["qpbmaxdown"] = optinst->params.pb_max_rampdown;
-		pars["pbminup"] = optinst->params.pb_minup;
-		pars["pbmindown"] = optinst->params.pb_mindown;
-
-
-		pars["pbup0"] = (optinst->params.is_pb_operating0) ? optinst->params.pb_persist0 : 0;
-		pars["pbstby0"] = (optinst->params.is_pb_standby0) ? optinst->params.pb_persist0 : 0;
-		pars["pbdown0"] = (!optinst->params.is_pb_operating0 && !optinst->params.is_pb_standby0) ? optinst->params.pb_persist0 : 0;
-
-		// Decision permanence
-		pars["pb_onoff_perm"] = optinst->params.pb_onoff_perm;
-		pars["pb_level_perm"] = optinst->params.pb_level_perm;
 		
-		pars["pb_onoff_la_perm"] = optinst->params.pb_onoff_lookahead_perm;
+
+
+		
+		//--- Cycle ramp rates 
+		pars["Qup"] = optinst->params.pb_max_rampup;
+		pars["Qdown"] = optinst->params.pb_max_rampdown;
+
+		pars["Qup_incr_su"] = std::fmax(0., 1.001*pars["Ql"] - pars["Qup"]);      // Allowable increase in max ramp-up at startup (only > 0 if max ramp-up < min operational level) 
+		pars["Qdown_incr_sd"] = std::fmax(0., 1.001*pars["Ql"] - pars["Qdown"]);  // Allowable increase in max ramp-down at shutdown (only > 0 if max ramp-down < min operational level) 
+
+		// Relax ramp-down again if cycle cannot ramp down from initial state fast enough to turn off (occurs occasionally because of discrepancies in dispatch/solver solutions)
+		if (pars["Qdown_incr_sd"] > 0.0 && pars["q0"] > 0.0)
+		{
+			double s = pars["s0"];
+			double q = pars["q0"];
+			double qallow = pars["Qdown"] + pars["Qdown_incr_sd"];
+			int j = 0;
+			while (j < nt && q>qallow)
+			{
+				q -= pars["Qdown"];	
+				s -= q * pars["delta"];
+				s += optinst->outputs.q_sfavail_expected.at(j, 0) * pars["delta"];  
+				if (q > qallow && s < pars["delta"] * pars["Ql"])  // Cycle can't be shut off yet, but also can't be on or in standby during the next time step
+				{
+					pars["Qdown_incr_sd"] = 1.001*q - pars["Qdown"];
+					break;
+				}
+				j++;
+			}
+		}
+
+
+		// Cycle min up/down time
+		pars["Nup"] = optinst->params.pb_minup;
+		pars["Ndown"] = optinst->params.pb_mindown;
+
+		pars["Nup0"] = (optinst->params.is_pb_operating0) ? optinst->params.pb_persist0 : 0;
+		pars["Nstby0"] = (optinst->params.is_pb_standby0) ? optinst->params.pb_persist0 : 0;
+		pars["Ndown0"] = (!optinst->params.is_pb_operating0 && !optinst->params.is_pb_standby0) ? optinst->params.pb_persist0 : 0;
+
+		
+		// Decision permanence
+		pars["P_onoff"] = optinst->perm.pb_onoff;
+		pars["P_onoff_lookahead"] = optinst->perm.pb_onoff_lookahead;
+
+		pars["P_level"] = optinst->perm.pb_level;
+		pars["P_level_lookahead"] = optinst->perm.pb_level_lookahead;
+		
+		pars["P_onoff_rec"] = optinst->perm.rec_onoff;
+		pars["P_onoff_rec_lookahead"] = optinst->perm.rec_onoff_lookahead;
+
 
 
 		// Storage buffer
@@ -1405,14 +1441,14 @@ bool csp_dispatch_opt::optimize()
 
 
 		// ******************** Cycle ramp-up and ramp-down rates *******************
+		
 		{
 			REAL row[5];
 			int col[5];
 
-			//--- Max cycle ramp-up 
-			double increase_rampup = std::fmax(0., 1.001*P["Ql"] - P["qpbmaxup"]); // Allowable increase in max ramp-up at startup if max ramp-up < min operational level 
 			for (int t = 0; t < nt; t++)
 			{
+				//--- Max cycle ramp-up 
 				row[0] = 1.;
 				col[0] = O.column("x", t);
 				if (t > 0)
@@ -1420,78 +1456,54 @@ bool csp_dispatch_opt::optimize()
 					row[1] = -1.;
 					col[1] = O.column("x", t - 1);
 
-					row[2] = increase_rampup;
+					row[2] = P["Qup_incr_su"];
 					col[2] = O.column("y", t - 1);
 
-					row[3] = increase_rampup;
+					row[3] = P["Qup_incr_su"];
 					col[3] = O.column("ycsb", t - 1);
 
-					add_constraintex(lp, 4, row, col, LE, P["qpbmaxup"] + increase_rampup);
+					add_constraintex(lp, 4, row, col, LE, P["Qup"] + P["Qup_incr_su"]);
 				}
 				else
 				{
-					double RHS = P["q0"] + P["qpbmaxup"] + (1.0 - P["y0"] - P["ycsb0"]) * increase_rampup;
+					double RHS = P["q0"] + P["Qup"] + (1.0 - P["y0"] - P["ycsb0"]) * P["Qup_incr_su"];
 					add_constraintex(lp, 1, row, col, LE, RHS);
 				}
-			}
 
 
-
-			//--- Max cycle ramp-down
-
-			// Does ramp-down constraint at shutdown need to be relaxed to find a feasible solution?  
-			double increase_rampdown = std::fmax(0., 1.001*P["Ql"] - P["qpbmaxdown"]); // Allowable increase in max ramp-down at shutdown if max ramp-down < min operational level 
-			if (increase_rampdown > 0.0)  
-			{
-				// See if cycle can ramp down fast enough to shut off before storage runs out, and increase allowable ramp-down at shutoff if not (occurs occasionally because of discrepancies in dispatch/solver solutions)
-				double s = P["s0"];
-				double q = P["q0"];
-				double qallow = P["qpbmaxdown"] + increase_rampdown;  
-				int j = 0;
-				while (j < nt && q>qallow && outputs.q_sfavail_expected.at(j, 0) < 1.e-6)
-				{
-					q -= P["qpbmaxdown"];
-					s -= q * P["delta"];
-					if (q > qallow && s < P["delta"] * P["Ql"])  // Cycle can't be shut off yet, but also can't be on or in standby during the next time step
-					{
-						increase_rampdown = 1.001*q - P["qpbmaxdown"];				 
-						break;
-					}
-					j++;
-				}
-				//params.messages->add_message(C_csp_messages::NOTICE, util::format("Allowable ramp-down at shut-down set to %.2f", increase_rampdown));
-			}
-
-
-			for (int t = 0; t < nt; t++)
-			{
-
+				//--- Max cycle ramp-down
 				row[0] = 1.;
-                col[0] = O.column("x", t);
+				col[0] = O.column("x", t);
 
-				row[1] = -increase_rampdown;
+				row[1] = -P["Qdown_incr_sd"];
 				col[1] = O.column("y", t);
 
-				row[2] = -increase_rampdown;
+				row[2] = -P["Qdown_incr_sd"];
 				col[2] = O.column("ycsb", t);
 
 				if (t > 0)
 				{
 					row[3] = -1.;
-					col[3] = O.column("x", t-1);
+					col[3] = O.column("x", t - 1);
 
-					add_constraintex(lp, 4, row, col, GE, -P["qpbmaxdown"] - increase_rampdown);
+					add_constraintex(lp, 4, row, col, GE, -P["Qdown"] - P["Qdown_incr_sd"]);
 				}
+				
 				else
 				{
-					double max_avail = P["s0"] / P["delta"] + outputs.q_sfavail_expected.at(t, 0); 
-
-					if (P["q0"] <= P["qpbmaxdown"]+increase_rampdown || max_avail > std::fmax(P["Ql"], P["q0"]-P["qpbmaxdown"]))  // Ramp-down is feasible
-						add_constraintex(lp, 3, row, col, GE, P["q0"] - P["qpbmaxdown"] - increase_rampdown);
+					add_constraintex(lp, 3, row, col, GE, P["q0"] - P["Qdown"] - P["Qdown_incr_sd"]);
+					//double max_avail = P["s0"] / P["delta"] + outputs.q_sfavail_expected.at(t, 0); 
+					//if (P["q0"] <= P["Qdown"]+ P["Qdown_incr_sd"] || max_avail > std::fmax(P["Ql"], P["q0"]-P["Qdown"]))  // Ramp-down is feasible
+					//	add_constraintex(lp, 3, row, col, GE, P["q0"] - P["Qdown"] - P["Qdown_incr_sd"]);
 				}
-
-            }
+				
+			}
+	
         }
+		
+
+
+
 
 
 		// ******************** Cycle min up- and down- times *******************
@@ -1499,12 +1511,11 @@ bool csp_dispatch_opt::optimize()
 			REAL row[24];
 			int col[24];
 
-
 			//--- Minimum up time
-			if (P["pbminup"] > 1)
+			if (P["Nup"] > 1)
 			{
-				int nforce = (P["y0"] == 1) ? (int)std::fmax(0, P["pbminup"] - P["pbup0"]) : 0;			// Number of time steps at beginning of window that cyle has to be up
-				double fract = 1. / (float)P["pbminup"];
+				int nforce = (P["y0"] == 1) ? (int)std::fmax(0, P["Nup"] - P["Nup0"]) : 0;	// Number of time steps at beginning of window that cyle has to be up
+				double fract = 1. / (float)P["Nup"];
 
 				for (int t = 0; t < nt; t++)
 				{
@@ -1521,18 +1532,18 @@ bool csp_dispatch_opt::optimize()
 						row[i] = -1. + fract;
 						col[i++] = O.column("y", t - 1);
 
-						int k = (int)std::fmin(P["pbminup"], t);  
+						int k = (int)std::fmin(P["Nup"], t);  
 						for (int j = 2; j <= k; j++)
 						{
 							row[i] = fract;
 							col[i++] = O.column("y", t - j);
 						}
 
-						if (k == P["pbminup"]) // Full minimum up-time window is in this optimization window
+						if (k == P["Nup"]) // Full minimum up-time window is in this optimization window
 							add_constraintex(lp, i, row, col, GE, 0.0);
 						else
 						{
-							int n_up_prev = (int)std::fmin(P["pbminup"] - t, P["pbup0"]);  // Number of time steps in previous window that contribute
+							int n_up_prev = (int)std::fmin(P["Nup"] - t, P["Nup0"]);  // Number of time steps in previous window that contribute
 							add_constraintex(lp, i, row, col, GE, -fract * n_up_prev);
 						}
 					}
@@ -1540,10 +1551,10 @@ bool csp_dispatch_opt::optimize()
 			}
 
 			//--- Minimum down time
-			if (P["pbmindown"] > 1)
+			if (P["Ndown"] > 1)
 			{
-				int nforce = (P["y0"] == 0) ? (int)std::fmax(0, P["pbmindown"] - P["pbdown0"]) : 0;	 // Number of time steps at beginning of window that cyle has to be down
-				double fract = 1. / (float)P["pbmindown"];
+				int nforce = (P["y0"] == 0) ? (int)std::fmax(0, P["Ndown"] - P["Ndown0"]) : 0;	 // Number of time steps at beginning of window that cyle has to be down
+				double fract = 1. / (float)P["Ndown"];
 
 				for (int t = 0; t < nt; t++)
 				{
@@ -1560,18 +1571,18 @@ bool csp_dispatch_opt::optimize()
 						row[i] = -1. + fract;
 						col[i++] = O.column("y", t - 1);
 
-						int k = (int)std::fmin(P["pbmindown"], t);  
+						int k = (int)std::fmin(P["Ndown"], t);  
 						for (int j = 2; j <= k; j++)
 						{
 							row[i] = fract;
 							col[i++] = O.column("y", t - j);
 						}
 
-						if (k == P["pbmindown"]) // Full minimum down-time window is in this optimization window
+						if (k == P["Ndown"]) // Full minimum down-time window is in this optimization window
 							add_constraintex(lp, i, row, col, LE, 1.0);
 						else
 						{
-							int n_down_prev = (int)std::fmin(P["pbmindown"] - t, P["pbdown0"]);  // Number of time steps in previous window that contribute
+							int n_down_prev = (int)std::fmin(P["Ndown"] - t, P["Ndown0"]);  // Number of time steps in previous window that contribute
 							add_constraintex(lp, i, row, col, LE, fract*(n_down_prev+t));
 						}
 					}
@@ -1580,49 +1591,6 @@ bool csp_dispatch_opt::optimize()
 
 		}
 
-		// ******************** Cycle decision permanence *******************
-		{
-			REAL row[2];
-			int col[2];
-
-			for (int t = 0; t < nt; t++)
-			{
-				// Cycle on/off/standby
-
-				bool is_decision = true;
-				if (t < nt - nt_lookahead && t % (int)P["pb_onoff_perm"] != 0)  // Optimization window
-					is_decision = false;
-				if (t >= nt - nt_lookahead && t % (int)P["pb_onoff_la_perm"] != 0) // Lookahead period
-					is_decision = false;
-
-				if (!is_decision)  // Not allowed to change state in this step
-				{
-					row[0] = 1.;
-					col[0] = O.column("y", t);
-					row[1] = -1.;
-					col[1] = O.column("y", t-1);
-					add_constraintex(lp, 2, row, col, EQ, 0.);
-
-					row[0] = 1.;
-					col[0] = O.column("ycsb", t);
-					row[1] = -1.;
-					col[1] = O.column("ycsb", t - 1);
-					add_constraintex(lp, 2, row, col, EQ, 0.);
-				}
-
-				// Cycle operational level permanance
-				if (t % (int)P["pb_level_perm"] != 0)  // Not allowed to change operational level
-				{
-					row[0] = 1.;
-					col[0] = O.column("x", t);
-					row[1] = -1.;
-					col[1] = O.column("x", t - 1);
-					add_constraintex(lp, 2, row, col, EQ, 0.);
-				}
-			}
-		}
-
-			
 
 
         // ******************** Balance constraints *******************
@@ -1793,6 +1761,80 @@ bool csp_dispatch_opt::optimize()
 				}
 			}
 		}
+
+
+
+
+		// ******************** Decision permanence *******************
+		{
+			REAL row[2];
+			int col[2];
+
+			bool is_decision;
+
+			for (int t = 0; t < nt; t++)
+			{
+				// Cycle on/off/standby
+				is_decision = true;
+				if (t < nt - nt_lookahead && t % (int)P["P_onoff"] != 0)  // Optimization window
+					is_decision = false;
+				if (t >= nt - nt_lookahead && t % (int)P["P_onoff_lookahead"] != 0) // Lookahead period
+					is_decision = false;
+
+				if (!is_decision)  // Not allowed to change state in this step
+				{
+					row[0] = 1.;
+					col[0] = O.column("y", t);
+					row[1] = -1.;
+					col[1] = O.column("y", t - 1);
+					add_constraintex(lp, 2, row, col, EQ, 0.);
+
+					row[0] = 1.;
+					col[0] = O.column("ycsb", t);
+					row[1] = -1.;
+					col[1] = O.column("ycsb", t - 1);
+					add_constraintex(lp, 2, row, col, EQ, 0.);
+				}
+
+				// Cycle operational level permanance
+				is_decision = true;
+				if (t < nt - nt_lookahead && t % (int)P["P_level"] != 0)  // Optimization window
+					is_decision = false;
+				if (t >= nt - nt_lookahead && t % (int)P["P_level_lookahead"] != 0) // Lookahead period
+					is_decision = false;
+
+				if (!is_decision)  // Not allowed to change operational level
+				{
+					row[0] = 1.;
+					col[0] = O.column("x", t);
+					row[1] = -1.;
+					col[1] = O.column("x", t - 1);
+					add_constraintex(lp, 2, row, col, EQ, 0.);
+				}
+
+
+				// Receiver on/off
+				is_decision = true;
+				if (t < nt - nt_lookahead && t % (int)P["P_onoff_rec"] != 0)  // Optimization window
+					is_decision = false;
+				if (t >= nt - nt_lookahead && t % (int)P["P_onoff_rec_lookahead"] != 0) // Lookahead period
+					is_decision = false;
+
+				if (!is_decision)
+				{
+					row[0] = 1.;
+					col[0] = O.column("yr", t);
+					row[1] = -1.;
+					col[1] = O.column("yr", t - 1);
+					add_constraintex(lp, 2, row, col, EQ, 0.);
+				}
+
+			}
+		}
+
+
+
+
 
         
         //Set problem to maximize

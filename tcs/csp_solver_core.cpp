@@ -611,23 +611,26 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
             dispatch.params.wcondcoef_table_Tdb.add_point(T, wcond/m_cycle_W_dot_des); //fraction of rated gross gen
 		}
 
-
 		// Cycle ramp rates and min up/down time
 		dispatch.params.pb_max_rampup = mc_tou.mc_dispatch_params.m_pc_max_rampup*dispatch.params.dt*m_cycle_q_dot_des*1000.;  // [kWt] per dispatch time step
 		dispatch.params.pb_max_rampdown = mc_tou.mc_dispatch_params.m_pc_max_rampdown*dispatch.params.dt*m_cycle_q_dot_des*1000.;  // [kWt] per dispatch time step
 		dispatch.params.pb_minup = (int)ceil(mc_tou.mc_dispatch_params.m_pc_minup / dispatch.params.dt);		// Minimum cycle up time (number of dispatch time steps)
 		dispatch.params.pb_mindown = (int)ceil(mc_tou.mc_dispatch_params.m_pc_mindown / dispatch.params.dt);   // Minimum cycle down time (number of dispatch time steps)
-																					   
-		// Decision permanence
-		dispatch.params.pb_onoff_perm = (int)ceil(mc_tou.mc_dispatch_params.m_pc_onoff_perm / dispatch.params.dt);
-		dispatch.params.pb_level_perm = (int)ceil(mc_tou.mc_dispatch_params.m_pc_level_perm / dispatch.params.dt);
-
-		dispatch.params.nstep_lookahead = (int) (mc_tou.mc_dispatch_params.m_optimize_horizon - mc_tou.mc_dispatch_params.m_optimize_frequency) / dispatch.params.dt;
-		dispatch.params.pb_onoff_lookahead_perm = (int)ceil(mc_tou.mc_dispatch_params.m_pc_onoff_lookahead_perm / dispatch.params.dt);
-
-
+			
 		// Storage buffer
 		dispatch.params.e_tes_buffer = mc_tou.mc_dispatch_params.m_storage_buffer * dispatch.params.e_tes_max;
+
+		// Decision permanence
+		dispatch.perm.pb_onoff = (int)ceil(mc_tou.mc_dispatch_params.m_pc_onoff_perm / dispatch.params.dt);
+		dispatch.perm.pb_level = (int)ceil(mc_tou.mc_dispatch_params.m_pc_level_perm / dispatch.params.dt);
+		dispatch.perm.rec_onoff = (int)ceil(mc_tou.mc_dispatch_params.m_rec_onoff_perm / dispatch.params.dt);
+
+		dispatch.params.nstep_lookahead = (int) (mc_tou.mc_dispatch_params.m_optimize_horizon - mc_tou.mc_dispatch_params.m_optimize_frequency) / dispatch.params.dt;
+		dispatch.perm.pb_onoff_lookahead = (int)ceil(mc_tou.mc_dispatch_params.m_pc_onoff_lookahead_perm / dispatch.params.dt);
+		dispatch.perm.pb_level_lookahead = (int)ceil(mc_tou.mc_dispatch_params.m_pc_level_lookahead_perm / dispatch.params.dt);
+		dispatch.perm.rec_onoff_lookahead = (int)ceil(mc_tou.mc_dispatch_params.m_rec_onoff_lookahead_perm / dispatch.params.dt);
+
+		
 	}
 
 

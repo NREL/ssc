@@ -353,10 +353,13 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
 	{ SSC_INPUT,		SSC_NUMBER,		 "disp_pc_minup",		 "Cycle minimum up time",											  "hr",			  "",			 "sys_ctrl",		 "?=0.",					 "",					  "" },
 	{ SSC_INPUT,		SSC_NUMBER,		 "disp_pc_mindown",		 "Cycle minimum down time",											  "hr",			  "",			 "sys_ctrl",		 "?=0.",					 "",					  "" },
 
-	{ SSC_INPUT,		SSC_NUMBER,		 "disp_pc_onoff_perm",   "Permanence of cycle binary on/off decisions",						  "hr",			  "",			 "sys_ctrl",		 "?=0.",					 "",					  "" },
-	{ SSC_INPUT,		SSC_NUMBER,		 "disp_pc_onoff_la_perm", "Permanence of cycle binary on/off decisions during lookahead ",	  "hr",			  "",			 "sys_ctrl",		 "?=0.",					 "",					  "" },
+	{ SSC_INPUT,		SSC_NUMBER,		 "disp_pc_onoff_perm",   "Permanence of cycle on/off/standby decisions",					  "hr",			  "",			 "sys_ctrl",		 "?=0.",					 "",					  "" },
+	{ SSC_INPUT,		SSC_NUMBER,		 "disp_pc_onoff_la_perm", "Permanence of cycle on/off/standby decisions during lookahead ",	  "hr",			  "",			 "sys_ctrl",		 "?=0.",					 "",					  "" },
 	{ SSC_INPUT,		SSC_NUMBER,		 "disp_pc_level_perm",   "Permanence of cycle operating level decisions",					  "hr",			  "",			 "sys_ctrl",		 "?=0.",					 "",					  "" },
-	
+	{ SSC_INPUT,		SSC_NUMBER,		 "disp_pc_level_la_perm",  "Permanence of cycle operating level decisions during lookahead",  "hr",			  "",			 "sys_ctrl",		 "?=0.",					 "",					  "" },
+	{ SSC_INPUT,		SSC_NUMBER,		 "disp_rec_onoff_perm",   "Permanence of receiver on/off decisions",						  "hr",			  "",			 "sys_ctrl",		 "?=0.",					 "",					  "" },
+	{ SSC_INPUT,		SSC_NUMBER,		 "disp_rec_onoff_la_perm", "Permanence of receiver on/off decisions during lookahead ",		  "hr",			  "",			 "sys_ctrl",		 "?=0.",					 "",					  "" },
+
 	{ SSC_INPUT,		SSC_NUMBER,		 "disp_storage_buffer",   "Minimum allowable storage in dispatch model (fraction of capacity)",	 "",		  "",			 "sys_ctrl",		 "?=0.",					 "",					  "" },
 
 
@@ -1678,9 +1681,13 @@ public:
 
 			// Decision permanence (hr)
 			double pc_onoff = as_double("disp_pc_onoff_perm");
+			double pc_onoff_lookahead = as_double("disp_pc_onoff_la_perm");
 			double pc_level = as_double("disp_pc_level_perm");
-			vector<double> perm = { pc_onoff, pc_level };
-
+			double pc_level_lookahead = as_double("disp_pc_level_la_perm");
+			double rec_onoff = as_double("disp_rec_onoff_perm");
+			double rec_onoff_lookahead = as_double("disp_rec_onoff_la_perm");
+			
+			vector<double> perm = {pc_onoff, pc_onoff_lookahead, pc_level, pc_level_lookahead, rec_onoff, rec_onoff_lookahead};
 			double disp_opt_ts = 1. / (float)tou.mc_dispatch_params.m_disp_steps_per_hour;  // User-specfied dispatch time step (hr)
 			double min_decision = disp_opt_ts;   
 			for (int i = 0; i < perm.size(); i++)   
@@ -1706,11 +1713,12 @@ public:
 			}
 			tou.mc_dispatch_params.m_pc_onoff_perm = (pc_onoff > 0.) ? pc_onoff : disp_opt_ts;  // Default to dispatch optimization timestep if not specified
 			tou.mc_dispatch_params.m_pc_level_perm = (pc_level > 0.) ? pc_level : disp_opt_ts;
+			tou.mc_dispatch_params.m_rec_onoff_perm = (rec_onoff > 0.) ? rec_onoff : disp_opt_ts;
 
-			
-			// Look-ahead period decision permanence
-			tou.mc_dispatch_params.m_pc_onoff_lookahead_perm = fmax(tou.mc_dispatch_params.m_pc_onoff_perm, as_double("disp_pc_onoff_la_perm")); // Decision permanence in look-ahead always >= that in optimization window
-
+			// Look-ahead period decision permanence: Always set to be >= that in optimization period
+			tou.mc_dispatch_params.m_pc_onoff_lookahead_perm = fmax(tou.mc_dispatch_params.m_pc_onoff_perm, pc_onoff_lookahead); 
+			tou.mc_dispatch_params.m_pc_level_lookahead_perm = fmax(tou.mc_dispatch_params.m_pc_level_perm, pc_level_lookahead);
+			tou.mc_dispatch_params.m_rec_onoff_lookahead_perm = fmax(tou.mc_dispatch_params.m_rec_onoff_perm, rec_onoff_lookahead);
 
 
 

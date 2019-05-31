@@ -167,10 +167,6 @@ public:
 		int pb_minup;				// Minimum cycle up time (number of dispatch time steps)
 		int pb_mindown;				// Minimum cycle down time (number of dispatch time steps)
 
-		int pb_onoff_perm;			 // Permanence of cycle on/off decisions (number of dispatch time steps)
-		int pb_onoff_lookahead_perm; // Permanence of cycle on/off decisions during look-ahead period (number of dispatch time steps)
-		int pb_level_perm;			 // Permanence of cycle operating level decisions (number of dispatch time steps)
-
 		int nstep_lookahead;		 // Number of steps in the lookahead window 
 
 		double e_tes_buffer;         // [kWht] Required storage buffer
@@ -270,6 +266,19 @@ public:
         } eff_table_load, eff_table_Tdb, wcondcoef_table_Tdb;        //Efficiency of the power cycle, condenser power coefs
         
     } params;
+
+	
+	struct s_perm  // Decision permanence variables (all specified in number of dispatch time steps)
+	{
+		int pb_onoff;			 // Permanence of cycle on/off decisions 
+		int pb_onoff_lookahead;  // Permanence of cycle on/off decisions during look-ahead period 
+		int pb_level;			 // Permanence of cycle operating level decisions 
+		int pb_level_lookahead;	 // Permanence of cycle operating level decisions during look-ahead period
+		
+		int rec_onoff;			  // Permanence of receiver on/off decisions 
+		int rec_onoff_lookahead;  // Permanence of receiver on/off decisions during look-ahead period 
+
+	} perm;
 
 
     struct s_outputs
