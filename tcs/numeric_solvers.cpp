@@ -169,18 +169,6 @@ int C_monotonic_eq_solver::solve(S_xy_pair solved_pair_1, S_xy_pair solved_pair_
 	double x_guess_1 = solved_pair_1.x;
 	double x_guess_2 = solved_pair_2.x;
 
-	// Check that x guesses fall with bounds (set during initialization)
-	x_guess_1 = check_against_limits(x_guess_1);
-	x_guess_2 = check_against_limits(x_guess_2);
-
-	// Check that guesses are different
-	//if( x_guess_1 == x_guess_2 )
-	//{
-	//	x_solved = tol_solved = std::numeric_limits<double>::quiet_NaN();
-	//	iter_solved = 0;
-	//	return EQUAL_GUESS_VALUES;
-	//}
-
 	double y1 = solved_pair_1.y;
 	double y2 = solved_pair_2.y;
 
