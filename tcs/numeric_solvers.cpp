@@ -154,6 +154,26 @@ int C_monotonic_eq_solver::solve(double x_guess_1, double x_guess_2, double y_ta
 	return solver_core(x_guess_1, y1, x_guess_2, y2, y_target, x_solved, tol_solved, iter_solved);
 }
 
+int C_monotonic_eq_solver::solve(S_xy_pair solved_pair_1, double x_guess_2, double y_target,
+    double &x_solved, double &tol_solved, int &iter_solved)
+{
+    // Set / reset vector that tracks calls to equation
+    ms_eq_call_tracker.resize(0);
+    ms_eq_call_tracker.reserve(m_iter_max);
+
+    double x_guess_1 = solved_pair_1.x;
+    double y1 = solved_pair_1.y;
+
+    // Check that x guesses fall with bounds (set during initialization)
+    x_guess_1 = check_against_limits(x_guess_1);
+    x_guess_2 = check_against_limits(x_guess_2);
+
+    double y2 = std::numeric_limits<double>::quiet_NaN();
+    call_mono_eq(x_guess_2, &y2);
+
+    return solver_core(x_guess_1, y1, x_guess_2, y2, y_target, x_solved, tol_solved, iter_solved);
+}
+
 int C_monotonic_eq_solver::solve(S_xy_pair solved_pair_1, S_xy_pair solved_pair_2, double y_target,
 	double &x_solved, double &tol_solved, int &iter_solved)
 {

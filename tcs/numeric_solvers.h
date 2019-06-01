@@ -195,7 +195,10 @@ public:
 	int solve(double x_guess_1, double x_guess_2, double y_target,
 		double &x_solved, double &tol_solved, int &iter_solved);
 		
-	int solve(S_xy_pair solved_pair_1, S_xy_pair solved_pair_2, double y_target,
+    int solve(S_xy_pair solved_pair_1, double x_guess_2, double y_target,
+        double &x_solved, double &tol_solved, int &iter_solved);
+
+    int solve(S_xy_pair solved_pair_1, S_xy_pair solved_pair_2, double y_target,
 		double &x_solved, double &tol_solved, int &iter_solved);	
 
 	int call_mono_eq(double x, double *y);

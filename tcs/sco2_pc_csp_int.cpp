@@ -546,9 +546,67 @@ int C_sco2_phx_air_cooler::optimize_off_design(C_sco2_phx_air_cooler::S_od_par o
 	return 0;
 }
 
+int C_sco2_phx_air_cooler::solve_P_LP_in__target_W_dot()
+{
+    ms_cycle_od_par.m_count_off_design_core = 0;
+
+    // Prior to calling, need to set :
+    //	*ms_od_par, ms_rc_cycle_od_phi_par, ms_phx_od_par, ms_od_op_inputs(will set P_mc_in here and f_recomp downstream)
+
+    double W_dot_target = (ms_od_par.m_m_dot_htf / ms_phx_des_par.m_m_dot_hot_des) * ms_des_par.m_W_dot_net;	//[kWe]
+
+    // Set up monotonic equation solver to find the compressor inlet pressure that results in the target power output
+    C_MEQ__P_LP_in__W_dot_target c_P_LP_in_eq(this);
+    C_monotonic_eq_solver c_P_LP_in_solver(c_P_LP_in_eq);
+
+    double P_lower_limit_global = 1000;    //[kPa]
+    double P_upper_limit_global = ms_des_solved.ms_rc_cycle_solved.m_pres[C_sco2_cycle_core::MC_OUT];   //[kPa]
+    c_P_LP_in_solver.settings(m_od_opt_ftol, 50, P_lower_limit_global, P_upper_limit_global, true);
+
+    // Get density at design point
+    double mc_dens_in_des = std::numeric_limits<double>::quiet_NaN();
+
+    if (ms_des_par.m_cycle_config == 1)
+        mc_dens_in_des = ms_des_solved.ms_rc_cycle_solved.m_dens[C_sco2_cycle_core::MC_IN];		//[kg/m^3]
+    else
+        mc_dens_in_des = ms_des_solved.ms_rc_cycle_solved.m_dens[C_sco2_cycle_core::PC_IN];		//[kg/m^3]
+
+    CO2_state co2_props;
+    // Then calculate the compressor inlet pressure that achieves this density at the off-design ambient temperature
+    CO2_TD(ms_cycle_od_par.m_T_mc_in, mc_dens_in_des, &co2_props);
+    double mc_pres_dens_des_od = co2_props.pres;	//[kPa]
+    double P_LP_in_guess = mc_pres_dens_des_od;	    //[kPa]
+
+    // Try guess value and check that OD model *converged* (can have constraint limits)
+    C_monotonic_eq_solver::S_xy_pair xy_1;
+    C_monotonic_eq_solver::S_xy_pair xy_2;
+
+    double y_W_dot_guess = std::numeric_limits<double>::quiet_NaN();
+    int P_LP_in_err_code = c_P_LP_in_solver.call_mono_eq(P_LP_in_guess, &y_W_dot_guess);
+
+    while (P_LP_in_err_code != 0 && P_LP_in_guess > P_lower_limit_global)
+    {
+        P_LP_in_guess -= 500;  //[kpa]
+        P_LP_in_err_code = c_P_LP_in_solver.call_mono_eq(P_LP_in_guess, &y_W_dot_guess);
+    }
+
+    if (P_LP_in_err_code != 0)
+    {
+        return - 31;
+    }
+
+    xy_1.x = P_LP_in_guess; //[kPa]
+    xy_1.y = y_W_dot_guess; //[kWe]
+
+
+    return 0;
+}
+
 int C_sco2_phx_air_cooler::opt_P_LP_comp_in__fixed_N_turbo()
 {
-	// Prior to calling, need to set :
+    ms_cycle_od_par.m_count_off_design_core = 0;
+    
+    // Prior to calling, need to set :
 	//	*ms_od_par, ms_rc_cycle_od_phi_par, ms_phx_od_par, ms_od_op_inputs(will set P_mc_in here and f_recomp downstream)
 	
 	double W_dot_target = (ms_od_par.m_m_dot_htf / ms_phx_des_par.m_m_dot_hot_des) * ms_des_par.m_W_dot_net;	//[kWe]
@@ -978,7 +1036,9 @@ double C_sco2_phx_air_cooler::adjust_P_mc_in_away_2phase(double T_co2 /*K*/, dou
 
 int C_sco2_phx_air_cooler::off_design_core(double & eta_solved)
 {
-	ms_cycle_od_par.m_P_LP_comp_in = adjust_P_mc_in_away_2phase(ms_cycle_od_par.m_T_mc_in, ms_cycle_od_par.m_P_LP_comp_in);
+    ms_cycle_od_par.m_count_off_design_core++;
+
+    ms_cycle_od_par.m_P_LP_comp_in = adjust_P_mc_in_away_2phase(ms_cycle_od_par.m_T_mc_in, ms_cycle_od_par.m_P_LP_comp_in);
 
     int T_t_in_mode = ms_cycle_od_par.m_T_t_in_mode;        //[-]
 
@@ -1285,6 +1345,43 @@ int C_sco2_phx_air_cooler::C_mono_eq_T_t_in::operator()(double T_t_in /*K*/, dou
 	
 	*diff_T_t_in = (T_co2_phx_out - T_t_in) / T_t_in;       //[-]
 	return 0;
+}
+
+int C_sco2_phx_air_cooler::C_MEQ__P_LP_in__W_dot_target::operator()(double P_LP_in /*kPa*/, double *W_dot /*kWe*/)
+{
+    mpc_sco2_cycle->ms_cycle_od_par.m_P_LP_comp_in = P_LP_in;	//[kPa]	
+
+    double f_obj_max = std::numeric_limits<double>::quiet_NaN();
+
+    if (mpc_sco2_cycle->m_off_design_turbo_operation == E_FIXED_MC_FIXED_RC_FIXED_T)
+    {
+        try
+        {
+            mpc_sco2_cycle->off_design_core(f_obj_max);
+        }
+        catch (C_csp_exception &)
+        {
+            return -1;
+        }
+        catch (...)
+        {
+            return -2;
+        }
+    }
+    else
+    {
+        throw(C_csp_exception("Off design turbomachinery operation strategy not recognized"));
+    }
+
+    if (!mpc_sco2_cycle->ms_od_solved.m_is_converged)
+    {
+        *W_dot = std::numeric_limits<double>::quiet_NaN();
+        return -3;
+    }
+
+    *W_dot = mpc_sco2_cycle->ms_od_solved.ms_rc_cycle_od_solved.m_W_dot_net;    //[kWe]
+
+    return 0;
 }
 
 int C_sco2_phx_air_cooler::C_sco2_csp_od::operator()(S_f_inputs inputs, S_f_outputs & outputs)

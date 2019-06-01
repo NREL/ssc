@@ -315,6 +315,20 @@ public:
 		virtual int operator()(double T_t_in /*K*/, double *diff_T_t_in /*-*/);
 	};
 
+    class C_MEQ__P_LP_in__W_dot_target : public C_monotonic_equation
+    {
+    private:
+        C_sco2_phx_air_cooler *mpc_sco2_cycle;
+
+    public:
+        C_MEQ__P_LP_in__W_dot_target(C_sco2_phx_air_cooler *pc_sco2_cycle)
+        {
+            mpc_sco2_cycle = pc_sco2_cycle;
+        }
+
+        virtual int operator()(double P_LP_in /*kPa*/, double *W_dot /*kWe*/);
+    };
+
 	class C_sco2_csp_od : public C_od_pc_function
 	{
 	private:
@@ -346,7 +360,9 @@ public:
         bool is_mc_N_od_at_design, double mc_N_od_f_des /*-*/,
         int off_design_strategy, double od_opt_tol = 1.E-4);
 	
-	int opt_P_LP_comp_in__fixed_N_turbo();   // opt_P_mc_in_nest_f_recomp_max_eta_core();
+    int solve_P_LP_in__target_W_dot();
+    
+    int opt_P_LP_comp_in__fixed_N_turbo();   // opt_P_mc_in_nest_f_recomp_max_eta_core();
 
 	int off_design(C_sco2_phx_air_cooler::S_od_par od_par, S_od_operation_inputs od_op_inputs);
 
