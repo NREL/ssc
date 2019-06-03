@@ -278,7 +278,7 @@ int C_monotonic_eq_solver::solver_core(double x_guess_1, double y1, double x_gue
 	if( fabs(E2) < m_tol )
 	{
 		double last_x_tried = get_last_mono_eq_call().x;
-		if(last_x_tried != x_guess_2)
+		if(last_x_tried != x_guess_2 || !isfinite(last_x_tried))
 			call_mono_eq(x_guess_2, &y2);
 		x_solved = x_guess_2;
 		tol_solved = E2;
