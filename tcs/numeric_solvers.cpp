@@ -290,7 +290,7 @@ int C_monotonic_eq_solver::solver_core(double x_guess_1, double y1, double x_gue
 	// Calculate slope of error vs x
 	double E_slope = (E2 - E1) / (x_guess_2 - x_guess_1);
 
-	if (E_slope == 0.0)
+	if (E_slope == 0.0 || x_guess_1 == x_guess_2)
 	{
 		x_solved = tol_solved = std::numeric_limits<double>::quiet_NaN();
 		iter_solved = 0;
