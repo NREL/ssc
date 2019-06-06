@@ -212,6 +212,25 @@ public:
 		}
 	};
 
+    class C_iter_tracker
+    {
+    public:
+
+        std::vector<double> mv_P_LP_in;   //[kPa]
+        std::vector<double> mv_W_dot_net; //[kWe]
+        std::vector<double> mv_P_mc_out;  //[MPa]
+
+        std::vector<int> mv_od_error_code;
+        std::vector<bool> mv_is_converged;
+
+        C_iter_tracker() {}
+
+        void reset_vectors();
+
+        void push_back_vectors(double P_LP_in /*kpa*/, double W_dot_net /*kWe*/, double P_mc_out /*kPa*/,
+                            int od_error_code, bool is_converged);
+    };
+
 	struct S_od_operation_inputs
 	{
 		double m_P_mc_in;		//[kPa]
@@ -272,6 +291,8 @@ private:
 
 	S_od_solved ms_od_solved;
 	
+    C_iter_tracker mc_iter_tracker;
+
 	// Optimization variables: could make into structure...
 	int m_od_opt_objective;		//[-]
 	double m_od_opt_ftol;		//[-] Relative tolerance for od optimization: objective function convergence
@@ -327,6 +348,34 @@ public:
         }
 
         virtual int operator()(double P_LP_in /*kPa*/, double *W_dot /*kWe*/);
+    };
+
+    class C_MEQ__P_LP_in__P_mc_out_target : public C_monotonic_equation
+    {
+    private:
+        C_sco2_phx_air_cooler *mpc_sco2_cycle;
+
+    public:
+        C_MEQ__P_LP_in__P_mc_out_target(C_sco2_phx_air_cooler *pc_sco2_cycle)
+        {
+            mpc_sco2_cycle = pc_sco2_cycle;
+        }
+
+        virtual int operator()(double P_LP_in /*kPa*/, double *P_mc_out /*kPa*/);
+    };
+
+    class C_MEQ__P_LP_in__max_no_err_code : public C_monotonic_equation
+    {
+    private:
+        C_sco2_phx_air_cooler *mpc_sco2_cycle;
+
+    public:
+        C_MEQ__P_LP_in__max_no_err_code(C_sco2_phx_air_cooler *pc_sco2_cycle)
+        {
+            mpc_sco2_cycle = pc_sco2_cycle;
+        }
+
+        virtual int operator()(double P_LP_in /*kPa*/, double *P_mc_out /*kPa*/);
     };
 
 	class C_sco2_csp_od : public C_od_pc_function

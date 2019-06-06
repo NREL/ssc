@@ -90,6 +90,25 @@ void C_sco2_phx_air_cooler::design(S_des_par des_par)
 	design_core();
 }
 
+void C_sco2_phx_air_cooler::C_iter_tracker::reset_vectors()
+{
+    mv_P_LP_in.resize(0);
+    mv_W_dot_net.resize(0);
+    mv_P_mc_out.resize(0);
+    mv_od_error_code.resize(0);
+    mv_is_converged.resize(0);
+}
+
+void C_sco2_phx_air_cooler::C_iter_tracker::push_back_vectors(double P_LP_in /*kpa*/, double W_dot_net /*kWe*/, double P_mc_out /*kPa*/,
+    int od_error_code, bool is_converged)
+{
+    mv_P_LP_in.push_back(P_LP_in);      //[kPa]
+    mv_W_dot_net.push_back(W_dot_net);  //[kWe]
+    mv_P_mc_out.push_back(P_mc_out);    //[kPa]
+    mv_od_error_code.push_back(od_error_code);  //[-]
+    mv_is_converged.push_back(is_converged);    //[-]
+}
+
 void C_sco2_phx_air_cooler::design_core()
 {
 	// using -> C_RecompCycle::S_auto_opt_design_hit_eta_parameters
@@ -420,8 +439,21 @@ int C_sco2_phx_air_cooler::optimize_off_design(C_sco2_phx_air_cooler::S_od_par o
 
 	if (m_off_design_turbo_operation == E_FIXED_MC_FIXED_RC_FIXED_T)
 	{
-		int opt_P_LP_err = opt_P_LP_comp_in__fixed_N_turbo();
-		if (opt_P_LP_err != 0 && opt_P_LP_err != -31)
+        bool is_modified_P_mc_in_solver = false;
+
+
+        
+        int opt_P_LP_err = 0;
+        if (is_modified_P_mc_in_solver)
+        {
+            opt_P_LP_err = solve_P_LP_in__target_W_dot();
+        }
+        else
+        {
+            opt_P_LP_err = opt_P_LP_comp_in__fixed_N_turbo();
+        }
+
+        if (opt_P_LP_err != 0 && opt_P_LP_err != -31)
 		{
 			throw(C_csp_exception("2D nested optimization to maximize efficiency failed"));
 		}
@@ -430,7 +462,14 @@ int C_sco2_phx_air_cooler::optimize_off_design(C_sco2_phx_air_cooler::S_od_par o
 			while (opt_P_LP_err == -31 && ms_cycle_od_par.m_f_mc_pc_bypass < 0.9)
 			{
 				ms_cycle_od_par.m_f_mc_pc_bypass += 0.01;
-				opt_P_LP_err = opt_P_LP_comp_in__fixed_N_turbo();
+                if (is_modified_P_mc_in_solver)
+                {
+                    opt_P_LP_err = solve_P_LP_in__target_W_dot();
+                }
+                else
+                {
+                    opt_P_LP_err = opt_P_LP_comp_in__fixed_N_turbo();
+                }
 
 				if (opt_P_LP_err != 0 && opt_P_LP_err != -31)
 				{
@@ -461,7 +500,14 @@ int C_sco2_phx_air_cooler::optimize_off_design(C_sco2_phx_air_cooler::S_od_par o
 				ms_cycle_od_par.m_T_mc_in += 0.5;	//[K]
 				ms_cycle_od_par.m_T_pc_in += 0.5;	//[K]
 
-				opt_P_LP_err = opt_P_LP_comp_in__fixed_N_turbo();
+                if (is_modified_P_mc_in_solver)
+                {
+                    opt_P_LP_err = solve_P_LP_in__target_W_dot();
+                }
+                else
+                {
+                    opt_P_LP_err = opt_P_LP_comp_in__fixed_N_turbo();
+                }
 				if (opt_P_LP_err != 0)
 				{	// If off-design breaks, we've solved at colder temperatures, so don't crash the entire simulation
 					// just exit loop that increases temperature
@@ -578,19 +624,19 @@ int C_sco2_phx_air_cooler::solve_P_LP_in__target_W_dot()
     double P_LP_in_guess = mc_pres_dens_des_od;	    //[kPa]
 
     // Try guess value and check that OD model *converged* (can have constraint limits)
+    mc_iter_tracker.reset_vectors();
     C_monotonic_eq_solver::S_xy_pair xy_1;
-    C_monotonic_eq_solver::S_xy_pair xy_2;
 
     double y_W_dot_guess = std::numeric_limits<double>::quiet_NaN();
-    int P_LP_in_err_code = c_P_LP_in_solver.call_mono_eq(P_LP_in_guess, &y_W_dot_guess);
+    int W_dot_err_code = c_P_LP_in_solver.call_mono_eq(P_LP_in_guess, &y_W_dot_guess);
 
-    while (P_LP_in_err_code != 0 && P_LP_in_guess > P_lower_limit_global)
+    while (W_dot_err_code != 0 && P_LP_in_guess > P_lower_limit_global)
     {
         P_LP_in_guess -= 500;  //[kpa]
-        P_LP_in_err_code = c_P_LP_in_solver.call_mono_eq(P_LP_in_guess, &y_W_dot_guess);
+        W_dot_err_code = c_P_LP_in_solver.call_mono_eq(P_LP_in_guess, &y_W_dot_guess);
     }
 
-    if (P_LP_in_err_code != 0)
+    if (W_dot_err_code != 0)
     {
         return - 31;
     }
@@ -598,6 +644,114 @@ int C_sco2_phx_air_cooler::solve_P_LP_in__target_W_dot()
     xy_1.x = P_LP_in_guess; //[kPa]
     xy_1.y = y_W_dot_guess; //[kWe]
 
+    double P_LP_in_W_dot_target, tol_W_dot;
+    P_LP_in_W_dot_target = tol_W_dot = std::numeric_limits<double>::quiet_NaN();
+    int W_dot_iter = 0;
+    W_dot_err_code = c_P_LP_in_solver.solve(xy_1, P_LP_in_guess - 1000.0, W_dot_target, P_LP_in_W_dot_target, tol_W_dot, W_dot_iter);
+
+    if (W_dot_err_code != C_monotonic_eq_solver::CONVERGED)
+    {
+        return -31;
+    }
+
+    double P_mc_out_target = (1.0 - m_od_opt_ftol)*ms_des_par.m_P_high_limit;
+
+    // If solution at target power is over pressure, then adjust to meet pressure constraint
+    if (ms_od_solved.m_od_error_code == C_sco2_phx_air_cooler::E_OVER_PRESSURE)
+    {
+        C_MEQ__P_LP_in__P_mc_out_target c_P_LP__P_mc_out_eq(this);
+        C_monotonic_eq_solver c_P_LP__P_mc_out_solver(c_P_LP__P_mc_out_eq);
+
+        c_P_LP__P_mc_out_solver.settings(m_od_opt_ftol, 50, P_lower_limit_global, P_upper_limit_global, true);
+
+        double P_LP_in_P_mc_out_target, tol_P_mc_out;
+        P_LP_in_P_mc_out_target = tol_P_mc_out = std::numeric_limits<double>::quiet_NaN();
+        int P_mc_out_iter = 0;
+        int P_mc_out_err_code = c_P_LP__P_mc_out_solver.solve(mc_iter_tracker.mv_P_LP_in, mc_iter_tracker.mv_P_mc_out, P_mc_out_target, P_LP_in_P_mc_out_target, tol_P_mc_out, P_mc_out_iter);
+
+        if (P_mc_out_err_code != C_monotonic_eq_solver::CONVERGED)
+        {
+            return -31;
+        }
+    }
+
+    // The last solution should have the maximum possible pressure...
+
+    // We can use these iterations to inform this next iteration
+
+    // Check whether cycle is still solving with an error code
+    while (ms_od_solved.m_od_error_code != 0)
+    {
+        // Iterating blind here - we don't have a target metric
+        // But we know we want the highest pressure that doesn't have an error code
+        double P_LP_in_upper_local = mc_rc_cycle.get_od_solved()->m_pres[C_sco2_cycle_core::MC_IN];  //[kPa]
+
+        double P_step = 250;    //[kPa]
+
+        double P_LP_in_guess_lower = P_LP_in_upper_local - P_step;  //[kPa]
+
+        C_MEQ__P_LP_in__max_no_err_code c_P_LP__no_err_eq(this);
+        C_monotonic_eq_solver c_P_LP__no_err_solver(c_P_LP__no_err_eq);
+
+        double y_P_mc_out_lower = std::numeric_limits<double>::quiet_NaN();
+            
+        int no_err_err_code = c_P_LP__no_err_solver.test_member_function(P_LP_in_guess_lower, &y_P_mc_out_lower);
+
+        while ( !std::isfinite(y_P_mc_out_lower) && P_LP_in_guess_lower > P_lower_limit_global)
+        {
+            P_LP_in_guess_lower -= 500;  //[kpa]
+            no_err_err_code = c_P_LP_in_solver.call_mono_eq(P_LP_in_guess_lower, &y_P_mc_out_lower);
+        }
+
+        if (!std::isfinite(y_P_mc_out_lower))
+        {
+            return -31;
+        }
+
+        double P_LP_in_guess_upper = P_LP_in_guess_lower * 1.01;    //[kPa]
+
+        double y_P_mc_out_upper = std::numeric_limits<double>::quiet_NaN();
+
+        no_err_err_code = c_P_LP__no_err_solver.test_member_function(P_LP_in_guess_upper, &y_P_mc_out_upper);
+
+        if (!std::isfinite(y_P_mc_out_upper))
+        {
+            // If an inlet pressure that is very close to the first pressure fails, then choose first pressure
+            // Need to call model again to use the correct pressure.
+            no_err_err_code = c_P_LP__no_err_solver.test_member_function(P_LP_in_guess_lower, &y_P_mc_out_lower);
+            break;
+        }
+
+        xy_1.x = P_LP_in_guess_lower;
+        xy_1.y = y_P_mc_out_lower;
+
+        C_monotonic_eq_solver::S_xy_pair xy_2;
+        xy_2.x = P_LP_in_guess_upper;
+        xy_2.y = y_P_mc_out_upper;
+
+        c_P_LP__no_err_solver.settings(1.E-3, 50, P_LP_in_guess_lower*0.999, P_LP_in_upper_local, true);
+
+        double P_LP_in_no_err, tol_no_err;
+        P_LP_in_no_err = tol_no_err = std::numeric_limits<double>::quiet_NaN();
+        int no_err_iter = 0;
+        no_err_err_code = c_P_LP__no_err_solver.solve(xy_1, xy_2, P_mc_out_target, P_LP_in_no_err, tol_no_err, no_err_iter);
+
+        // Expect not to be able to converge, instead want to see SLOPE_POS_NO_POS_ERR
+        //    indicating solver is at inlet pressure where errors begin
+        if (no_err_err_code != C_monotonic_eq_solver::CONVERGED && no_err_err_code != C_monotonic_eq_solver::SLOPE_POS_NO_POS_ERR)
+        {
+            return -31;
+        }
+
+        // Should have a valid cycle solution, but check here
+        if (!std::isfinite(mc_rc_cycle.get_od_solved()->m_pres[C_sco2_cycle_core::MC_IN]))
+        {
+            return -31;
+        }
+    }
+
+    ms_od_solved.ms_rc_cycle_od_solved = *mpc_sco2_cycle->get_od_solved();
+    ms_od_solved.ms_phx_od_solved = mc_phx.ms_od_solved;
 
     return 0;
 }
@@ -1361,10 +1515,18 @@ int C_sco2_phx_air_cooler::C_MEQ__P_LP_in__W_dot_target::operator()(double P_LP_
         }
         catch (C_csp_exception &)
         {
+            mpc_sco2_cycle->mc_iter_tracker.push_back_vectors(P_LP_in, std::numeric_limits<double>::quiet_NaN(), std::numeric_limits<double>::quiet_NaN(),
+                mpc_sco2_cycle->ms_od_solved.m_od_error_code, mpc_sco2_cycle->ms_od_solved.m_is_converged);
+            
+            *W_dot = std::numeric_limits<double>::quiet_NaN();
             return -1;
         }
         catch (...)
         {
+            mpc_sco2_cycle->mc_iter_tracker.push_back_vectors(P_LP_in, std::numeric_limits<double>::quiet_NaN(), std::numeric_limits<double>::quiet_NaN(),
+                mpc_sco2_cycle->ms_od_solved.m_od_error_code, mpc_sco2_cycle->ms_od_solved.m_is_converged);
+
+            *W_dot = std::numeric_limits<double>::quiet_NaN();
             return -2;
         }
     }
@@ -1375,11 +1537,119 @@ int C_sco2_phx_air_cooler::C_MEQ__P_LP_in__W_dot_target::operator()(double P_LP_
 
     if (!mpc_sco2_cycle->ms_od_solved.m_is_converged)
     {
+        mpc_sco2_cycle->mc_iter_tracker.push_back_vectors(P_LP_in, std::numeric_limits<double>::quiet_NaN(), std::numeric_limits<double>::quiet_NaN(),
+            mpc_sco2_cycle->ms_od_solved.m_od_error_code, mpc_sco2_cycle->ms_od_solved.m_is_converged);
+
         *W_dot = std::numeric_limits<double>::quiet_NaN();
+        return -3;
+    }    
+
+    *W_dot = mpc_sco2_cycle->mc_rc_cycle.get_od_solved()->m_W_dot_net;  //[kWe]
+
+    mpc_sco2_cycle->mc_iter_tracker.push_back_vectors(P_LP_in, *W_dot, mpc_sco2_cycle->mc_rc_cycle.get_od_solved()->m_pres[C_sco2_cycle_core::MC_OUT],
+        mpc_sco2_cycle->ms_od_solved.m_od_error_code, mpc_sco2_cycle->ms_od_solved.m_is_converged);
+
+    return 0;
+}
+
+int C_sco2_phx_air_cooler::C_MEQ__P_LP_in__P_mc_out_target::operator()(double P_LP_in /*kPa*/, double *P_mc_out /*kPa*/)
+{
+    mpc_sco2_cycle->ms_cycle_od_par.m_P_LP_comp_in = P_LP_in;	//[kPa]	
+
+    double f_obj_max = std::numeric_limits<double>::quiet_NaN();
+
+    if (mpc_sco2_cycle->m_off_design_turbo_operation == E_FIXED_MC_FIXED_RC_FIXED_T)
+    {
+        try
+        {
+            mpc_sco2_cycle->off_design_core(f_obj_max);
+        }
+        catch (C_csp_exception &)
+        {
+            mpc_sco2_cycle->mc_iter_tracker.push_back_vectors(P_LP_in, std::numeric_limits<double>::quiet_NaN(), std::numeric_limits<double>::quiet_NaN(),
+                mpc_sco2_cycle->ms_od_solved.m_od_error_code, mpc_sco2_cycle->ms_od_solved.m_is_converged);
+
+            *P_mc_out = std::numeric_limits<double>::quiet_NaN();
+            return -1;
+        }
+        catch (...)
+        {
+            mpc_sco2_cycle->mc_iter_tracker.push_back_vectors(P_LP_in, std::numeric_limits<double>::quiet_NaN(), std::numeric_limits<double>::quiet_NaN(),
+                mpc_sco2_cycle->ms_od_solved.m_od_error_code, mpc_sco2_cycle->ms_od_solved.m_is_converged);
+
+            *P_mc_out = std::numeric_limits<double>::quiet_NaN();
+            return -2;
+        }
+    }
+    else
+    {
+        throw(C_csp_exception("Off design turbomachinery operation strategy not recognized"));
+    }
+
+    if (!mpc_sco2_cycle->ms_od_solved.m_is_converged)
+    {
+        mpc_sco2_cycle->mc_iter_tracker.push_back_vectors(P_LP_in, std::numeric_limits<double>::quiet_NaN(), std::numeric_limits<double>::quiet_NaN(),
+            mpc_sco2_cycle->ms_od_solved.m_od_error_code, mpc_sco2_cycle->ms_od_solved.m_is_converged);
+
+        *P_mc_out = std::numeric_limits<double>::quiet_NaN();
         return -3;
     }
 
-    *W_dot = mpc_sco2_cycle->ms_od_solved.ms_rc_cycle_od_solved.m_W_dot_net;    //[kWe]
+    *P_mc_out = mpc_sco2_cycle->mc_rc_cycle.get_od_solved()->m_pres[C_sco2_cycle_core::MC_OUT];     //[kPa]
+
+    mpc_sco2_cycle->mc_iter_tracker.push_back_vectors(P_LP_in, mpc_sco2_cycle->mc_rc_cycle.get_od_solved()->m_W_dot_net, *P_mc_out,
+        mpc_sco2_cycle->ms_od_solved.m_od_error_code, mpc_sco2_cycle->ms_od_solved.m_is_converged);
+
+    return 0;
+}
+
+int C_sco2_phx_air_cooler::C_MEQ__P_LP_in__max_no_err_code::operator()(double P_LP_in /*kPa*/, double *P_mc_out /*kPa*/)
+{
+    mpc_sco2_cycle->ms_cycle_od_par.m_P_LP_comp_in = P_LP_in;	//[kPa]	
+
+    double f_obj_max = std::numeric_limits<double>::quiet_NaN();
+
+    if (mpc_sco2_cycle->m_off_design_turbo_operation == E_FIXED_MC_FIXED_RC_FIXED_T)
+    {
+        try
+        {
+            mpc_sco2_cycle->off_design_core(f_obj_max);
+        }
+        catch (C_csp_exception &)
+        {
+            mpc_sco2_cycle->mc_iter_tracker.push_back_vectors(P_LP_in, std::numeric_limits<double>::quiet_NaN(), std::numeric_limits<double>::quiet_NaN(),
+                mpc_sco2_cycle->ms_od_solved.m_od_error_code, mpc_sco2_cycle->ms_od_solved.m_is_converged);
+
+            *P_mc_out = std::numeric_limits<double>::quiet_NaN();
+            return -1;
+        }
+        catch (...)
+        {
+            mpc_sco2_cycle->mc_iter_tracker.push_back_vectors(P_LP_in, std::numeric_limits<double>::quiet_NaN(), std::numeric_limits<double>::quiet_NaN(),
+                mpc_sco2_cycle->ms_od_solved.m_od_error_code, mpc_sco2_cycle->ms_od_solved.m_is_converged);
+
+            *P_mc_out = std::numeric_limits<double>::quiet_NaN();
+            return -2;
+        }
+    }
+    else
+    {
+        throw(C_csp_exception("Off design turbomachinery operation strategy not recognized"));
+    }
+
+    if (!mpc_sco2_cycle->ms_od_solved.m_is_converged || mpc_sco2_cycle->ms_od_solved.m_od_error_code != 0)
+    {
+        mpc_sco2_cycle->mc_iter_tracker.push_back_vectors(P_LP_in, std::numeric_limits<double>::quiet_NaN(), std::numeric_limits<double>::quiet_NaN(),
+            mpc_sco2_cycle->ms_od_solved.m_od_error_code, mpc_sco2_cycle->ms_od_solved.m_is_converged);
+
+        *P_mc_out = std::numeric_limits<double>::quiet_NaN();
+        return -3;
+    }
+
+    *P_mc_out = mpc_sco2_cycle->mc_rc_cycle.get_od_solved()->m_pres[C_sco2_cycle_core::MC_OUT];     //[kPa]
+
+    mpc_sco2_cycle->mc_iter_tracker.push_back_vectors(P_LP_in, mpc_sco2_cycle->mc_rc_cycle.get_od_solved()->m_W_dot_net, *P_mc_out,
+        mpc_sco2_cycle->ms_od_solved.m_od_error_code, mpc_sco2_cycle->ms_od_solved.m_is_converged);
 
     return 0;
 }

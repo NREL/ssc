@@ -165,7 +165,6 @@ int C_monotonic_eq_solver::solve(S_xy_pair solved_pair_1, double x_guess_2, doub
     double y1 = solved_pair_1.y;
 
     // Check that x guesses fall with bounds (set during initialization)
-    x_guess_1 = check_against_limits(x_guess_1);
     x_guess_2 = check_against_limits(x_guess_2);
 
     double y2 = std::numeric_limits<double>::quiet_NaN();
@@ -193,6 +192,76 @@ int C_monotonic_eq_solver::solve(S_xy_pair solved_pair_1, S_xy_pair solved_pair_
 	double y2 = solved_pair_2.y;
 
 	return solver_core(x_guess_1, y1, x_guess_2, y2, y_target, x_solved, tol_solved, iter_solved);
+}
+
+int C_monotonic_eq_solver::solve(std::vector<double> x_solved_vector, std::vector<double> y_solved_vector, double y_target,
+    double &x_solved, double &tol_solved, int &iter_solved)
+{
+    size_t x_len = x_solved_vector.size();
+    size_t y_len = y_solved_vector.size();
+
+    if (x_len != y_len)
+    {
+        return NO_SOLUTION;
+    }
+
+    int i_low = -1;
+    double y_low = std::numeric_limits<double>::quiet_NaN();
+    int i_high = -1;
+    double y_high = std::numeric_limits<double>::quiet_NaN();
+
+    for (int i = 0; i < y_len; i++)
+    {
+        if (std::isfinite(y_solved_vector[i]) && y_solved_vector[i] <= y_target)
+        {
+            if ((i_low > -1 && y_solved_vector[i] > y_low) || i_low == -1)
+            {
+                i_low = i;
+                y_low = y_solved_vector[i];
+            }
+        }
+        else if(std::isfinite(y_solved_vector[i]))
+        {
+            if ((i_high > -1 && y_solved_vector[i] < y_high) || i_high == -1)
+            {
+                i_high = i;
+                y_high = y_solved_vector[i];
+            }
+        }
+    }
+
+    if (i_low == -1 && i_high == -1)
+    {
+        return NO_SOLUTION;
+    }
+    else if (i_low == -1)
+    {
+        S_xy_pair xy_pair;
+        xy_pair.x = x_solved_vector[i_high];
+        xy_pair.y = y_solved_vector[i_high];
+
+        return solve(xy_pair, xy_pair.x*0.9, y_target, x_solved, tol_solved, iter_solved);
+    }
+    else if (i_high == -1)
+    {
+        S_xy_pair xy_pair;
+        xy_pair.x = x_solved_vector[i_low];
+        xy_pair.y = y_solved_vector[i_low];
+
+        return solve(xy_pair, xy_pair.x*0.9, y_target, x_solved, tol_solved, iter_solved);
+    }
+    else
+    {
+        S_xy_pair xy_pair1;
+        xy_pair1.x = x_solved_vector[i_high];
+        xy_pair1.y = y_solved_vector[i_high];
+
+        S_xy_pair xy_pair2;
+        xy_pair2.x = x_solved_vector[i_low];
+        xy_pair2.y = y_solved_vector[i_low];
+
+        return solve(xy_pair1, xy_pair2, y_target, x_solved, tol_solved, iter_solved);
+    }
 }
 
 int C_monotonic_eq_solver::solver_core(double x_guess_1, double y1, double x_guess_2, double y2, double y_target,

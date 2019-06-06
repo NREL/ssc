@@ -199,7 +199,10 @@ public:
         double &x_solved, double &tol_solved, int &iter_solved);
 
     int solve(S_xy_pair solved_pair_1, S_xy_pair solved_pair_2, double y_target,
-		double &x_solved, double &tol_solved, int &iter_solved);	
+		double &x_solved, double &tol_solved, int &iter_solved);
+
+    int solve(std::vector<double> x_solved_vector, std::vector<double> y_solved_vector, double y_target,
+        double &x_solved, double &tol_solved, int &iter_solved);
 
 	int call_mono_eq(double x, double *y);
 
