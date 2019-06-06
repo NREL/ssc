@@ -402,11 +402,13 @@ public:
 	int optimize_off_design(C_sco2_phx_air_cooler::S_od_par od_par, 
         bool is_rc_N_od_at_design, double rc_N_od_f_des /*-*/,
         bool is_mc_N_od_at_design, double mc_N_od_f_des /*-*/,
+        bool is_PHX_dP_input, double PHX_f_dP /*-*/,
         int off_design_strategy, double od_opt_tol = 1.E-4);
 
 	int off_design_fix_P_mc_in(S_od_par od_par, double P_mc_in /*MPa*/, 
         bool is_rc_N_od_at_design, double rc_N_od_f_des /*-*/,
         bool is_mc_N_od_at_design, double mc_N_od_f_des /*-*/,
+        bool is_PHX_dP_input, double PHX_f_dP /*-*/, 
         int off_design_strategy, double od_opt_tol = 1.E-4);
 	
     int solve_P_LP_in__target_W_dot();

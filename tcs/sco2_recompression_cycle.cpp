@@ -4081,7 +4081,7 @@ int C_RecompCycle::C_mono_eq_turbo_N_fixed_m_dot::operator()(double m_dot_t_in /
 	std::vector<double> m_dot_PHX;
 	m_dot_PHX.push_back(m_dot_t_in);
 	m_dot_PHX.push_back(0.0);
-	mpc_rc_cycle->m_PHX.hxr_pressure_drops(m_dot_PHX, DP_PHX);
+    
 		// Pre-Cooler
 	std::vector<double> DP_PC;
 	std::vector<double> m_dot_PC;
@@ -4095,7 +4095,17 @@ int C_RecompCycle::C_mono_eq_turbo_N_fixed_m_dot::operator()(double m_dot_t_in /
 	mpc_rc_cycle->m_pres_od[MIXER_OUT] = mpc_rc_cycle->m_pres_od[LTR_HP_OUT];								// Assume no pressure drop in mixing valve
 	mpc_rc_cycle->m_pres_od[RC_OUT] = mpc_rc_cycle->m_pres_od[LTR_HP_OUT];								// Assume no pressure drop in mixing valve
 	mpc_rc_cycle->m_pres_od[HTR_HP_OUT] = mpc_rc_cycle->m_pres_od[MIXER_OUT] - DP_HT[1 - cpp_offset];		// HT recuperator (cold stream)
-	double P_t_in = mpc_rc_cycle->m_pres_od[TURB_IN] = mpc_rc_cycle->m_pres_od[HTR_HP_OUT] - DP_PHX[1 - cpp_offset];		// PHX
+	
+    if (mpc_rc_cycle->ms_od_par.m_is_PHX_dP_input)
+    {
+        DP_PHX.push_back(mpc_rc_cycle->m_pres_od[HTR_HP_OUT] * mpc_rc_cycle->ms_od_par.m_PHX_f_dP);     //[kPa]
+    }
+    else
+    {
+        mpc_rc_cycle->m_PHX.hxr_pressure_drops(m_dot_PHX, DP_PHX);
+    }
+
+    double P_t_in = mpc_rc_cycle->m_pres_od[TURB_IN] = mpc_rc_cycle->m_pres_od[HTR_HP_OUT] - DP_PHX[1 - cpp_offset];		// PHX
 	mpc_rc_cycle->m_pres_od[LTR_LP_OUT] = mpc_rc_cycle->m_pres_od[MC_IN] + DP_PC[2 - cpp_offset];		// precooler
 	mpc_rc_cycle->m_pres_od[HTR_LP_OUT] = mpc_rc_cycle->m_pres_od[LTR_LP_OUT] + DP_LT[2 - cpp_offset];		// LT recuperator (hot stream)
 	double P_t_out = mpc_rc_cycle->m_pres_od[TURB_OUT] = mpc_rc_cycle->m_pres_od[HTR_LP_OUT] + DP_HT[2 - cpp_offset];		// HT recuperator (hot stream)

@@ -341,6 +341,7 @@ void C_pc_sco2::call(const C_csp_weatherreader::S_outputs &weather,
 				off_design_code = mc_sco2_recomp.optimize_off_design(sco2_rc_od_par, 
                                                             true, 1.0,
                                                             true, 1.0,
+                                                            false, std::numeric_limits<double>::quiet_NaN(),
                                                             od_strategy);
 			}
 			catch( C_csp_exception &csp_exception )

@@ -353,6 +353,12 @@ public:
                                         // False: = m_mc_N_od_in
         double m_mc_N_od_f_des;        //[-] input MC off design shaft speed fraction of design. used if m_is_mc_N_od_at_design = true
 
+        // PHX pressure drop options
+        bool m_is_PHX_dP_input;     //[-] False: use built-in pressure drop scaling
+                                    //[-] True: use input fractional pressure drop
+        double m_PHX_f_dP;          //[-] PHX fractional pressure drop
+
+        // Other convergence parameters
 		int m_N_sub_hxrs;		//[-] Number of sub heat exchangers
 		double m_tol;			//[-] Convergence tolerance
 
@@ -367,12 +373,15 @@ public:
 		{
 			m_T_mc_in = m_T_pc_in = m_T_t_in = m_P_LP_comp_in = 
                 m_rc_N_od_f_des = m_mc_N_od_f_des =
+                m_PHX_f_dP =
 				m_tol = std::numeric_limits<double>::quiet_NaN();
 
             m_T_t_in_mode = E_SOLVE_PHX;  //[-] Default to using PHX and HTF temp and mass flow rate
 
             m_is_rc_N_od_at_design = true;  //[-] Default to using design RC shaft speed
             m_is_mc_N_od_at_design = true;  //[-] Default to using design MC shaft speed
+
+            m_is_PHX_dP_input = false;  //[-] Default to using built-in pressure drop scaling
 
 			m_N_sub_hxrs = -1;
 

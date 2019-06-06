@@ -325,6 +325,7 @@ void C_sco2_phx_air_cooler::design_core()
 int C_sco2_phx_air_cooler::off_design_fix_P_mc_in(S_od_par od_par, double P_mc_in /*MPa*/, 
                                 bool is_rc_N_od_at_design, double rc_N_od_f_des /*-*/, 
                                 bool is_mc_N_od_at_design, double mc_N_od_f_des /*-*/,
+                                bool is_PHX_dP_input, double PHX_f_dP /*-*/,
                                 int off_design_strategy, double od_opt_tol)
 {
 	setup_off_design_info(od_par, off_design_strategy, od_opt_tol);
@@ -339,6 +340,10 @@ int C_sco2_phx_air_cooler::off_design_fix_P_mc_in(S_od_par od_par, double P_mc_i
     // Input MC shaft speed controls
     ms_cycle_od_par.m_is_mc_N_od_at_design = is_mc_N_od_at_design;  //[-]
     ms_cycle_od_par.m_mc_N_od_f_des = mc_N_od_f_des;                //[-]
+
+    // PHX pressure drop options
+    ms_cycle_od_par.m_is_PHX_dP_input = is_PHX_dP_input;    //[-]
+    ms_cycle_od_par.m_PHX_f_dP = PHX_f_dP;                  //[-]
 
 	double eta_od_solved = std::numeric_limits<double>::quiet_NaN();
 	int od_core_error_code = off_design_core(eta_od_solved);
@@ -424,6 +429,7 @@ void C_sco2_phx_air_cooler::setup_off_design_info(C_sco2_phx_air_cooler::S_od_pa
 int C_sco2_phx_air_cooler::optimize_off_design(C_sco2_phx_air_cooler::S_od_par od_par, 
     bool is_rc_N_od_at_design, double rc_N_od_f_des /*-*/,
     bool is_mc_N_od_at_design, double mc_N_od_f_des /*-*/,
+    bool is_PHX_dP_input, double PHX_f_dP /*-*/,
     int off_design_strategy, double od_opt_tol)
 {
 	// This sets: T_mc_in, T_pc_in, etc.
@@ -436,6 +442,11 @@ int C_sco2_phx_air_cooler::optimize_off_design(C_sco2_phx_air_cooler::S_od_par o
     // Input MC shaft speed controls
     ms_cycle_od_par.m_is_mc_N_od_at_design = is_mc_N_od_at_design;  //[-]
     ms_cycle_od_par.m_mc_N_od_f_des = mc_N_od_f_des;                //[-]
+
+    // PHX pressure drop options
+    ms_cycle_od_par.m_is_PHX_dP_input = is_PHX_dP_input;    //[-]
+    ms_cycle_od_par.m_PHX_f_dP = PHX_f_dP;                  //[-]
+
 
 	if (m_off_design_turbo_operation == E_FIXED_MC_FIXED_RC_FIXED_T)
 	{
@@ -1671,6 +1682,7 @@ int C_sco2_phx_air_cooler::C_sco2_csp_od::operator()(S_f_inputs inputs, S_f_outp
 		off_design_code = mpc_sco2_rc->optimize_off_design(sco2_od_par, 
                                                     true, 1.0,
                                                     true, 1.0,
+                                                    false, std::numeric_limits<double>::quiet_NaN(),
                                                     od_strategy);
 	}
 	catch (C_csp_exception &)
