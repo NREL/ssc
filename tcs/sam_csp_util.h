@@ -119,6 +119,11 @@ namespace CSP
 				  double T_ITD_des, double T_approach, double dT_cw_ref, double P_cond_ratio, double P_cycle, double eta_ref, 
 				  double T_db_K, double T_wb_K, double P_amb_Pa, double q_reject, double& m_dot_water, double& W_dot_acfan, 
 				  double& W_dot_wctot, double& W_dot_tot, double& P_cond, double& T_cond, double& f_hrsys);
+	// Surface condenser ARD
+	void surface_cond(int tech_type, double P_cond_min, int n_pl_inc, double DeltaT_cw_des, double T_approach, double P_cycle,
+		double eta_ref, double T_db_K, double T_wb_K, double P_amb_Pa, double T_cold, double q_reject, double &m_dot_water,
+		double &W_dot_tot, double &P_cond, double &T_cond, double &f_hrsys, double &T_cond_out);
+
 
     // Pipe sizing
     double pipe_sched(double De, bool selectLarger = true);

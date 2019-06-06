@@ -1025,7 +1025,7 @@ bool util::translate_schedule( int tod[8760], const char *wkday, const char *wke
 }
 
 
-bool util::translate_schedule(int tod[8760], const matrix_t<float> &wkday, const matrix_t<float> &wkend, int min_val, int max_val)
+bool util::translate_schedule(int tod[8760], const matrix_t<double> &wkday, const matrix_t<double> &wkend, int min_val, int max_val)
 {
 	size_t i = 0;
 	if ((wkday.nrows() != 12) || (wkend.nrows() != 12) || (wkday.ncols() != 24) || (wkend.ncols() != 24) )
@@ -1048,9 +1048,9 @@ bool util::translate_schedule(int tod[8760], const matrix_t<float> &wkday, const
 			for (size_t h = 0; h<24; h++)
 			{
 				if (is_weekday)
-					tod[i] = (size_t)wkday.at(m, h);
+					tod[i] = (int)wkday.at(m, h);
 				else
-					tod[i] = (size_t)wkend.at(m, h);
+					tod[i] = (int)wkend.at(m, h);
 
 				if (tod[i] < min_val) tod[i] = min_val;
 				if (tod[i] > max_val) tod[i] = max_val;

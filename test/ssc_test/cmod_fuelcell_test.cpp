@@ -55,3 +55,32 @@ TEST_F(CMFuelCell, NoFinancialModelFixedLifetime) {
 		
 	}
 }
+/// Test PVSAMv1 with all defaults and no-financial model
+TEST_F(CMFuelCell, FuelCellBattery) {
+
+	// Run with fixed output
+	int errors = run_module(data, "fuelcell");
+	EXPECT_FALSE(errors);
+	if (!errors)
+	{
+		int errors_battery = run_module(data, "battery");
+		EXPECT_FALSE(errors_battery);
+		if (!errors_battery)
+		{
+			int n;
+			ssc_number_t * fc_to_load = GetArray("fuelcell_to_load", n);
+			ssc_number_t * pv_to_load = GetArray("pv_to_load", n);
+			ssc_number_t * batt_to_load = GetArray("batt_to_load", n);
+			ssc_number_t * grid_to_load = GetArray("grid_to_load", n);
+			ssc_number_t * load = GetArray("load", n);
+
+			for (size_t i = 0; i < n; i += interval) {
+				EXPECT_LT(fabs(load[i] - (fc_to_load[i] + pv_to_load[i] + batt_to_load[i] + grid_to_load[i])), 1.0);
+			}
+
+			
+		}
+	}
+}
+
+

@@ -15,8 +15,16 @@ TEST_F(libTimeTests, TestLifetimeInterpolation)
 	EXPECT_EQ(n_rec_lifetime, util::hours_per_year * 2 * n_years);
 	EXPECT_EQ(n_rec_singleyear, util::hours_per_year * 2);
 	EXPECT_EQ(dt_hour, 0.5);
-	EXPECT_EQ(lifetime_from_single[0], 50);
 	EXPECT_EQ(lifetime_from_single.size(), n_rec_lifetime);
+
+	for (size_t y = 0; y < n_years; y++) {
+		size_t idx = y * singleyear60min.size();
+		for (size_t i = 0; i < singleyear60min.size(); i+=increment) {
+			EXPECT_EQ(lifetime_from_single[idx*2], singleyear60min[i]/2);
+			idx += increment;
+		}
+	}
+
 }
 TEST_F(libTimeTests, TestSameSizeSingleYear)
 {
@@ -31,8 +39,12 @@ TEST_F(libTimeTests, TestSameSizeSingleYear)
 	EXPECT_EQ(n_rec_lifetime, util::hours_per_year);
 	EXPECT_EQ(n_rec_singleyear, util::hours_per_year);
 	EXPECT_EQ(dt_hour, 1.0);
-	EXPECT_EQ(lifetime_from_single[0], 100);
 	EXPECT_EQ(lifetime_from_single.size(), n_rec_lifetime);
+
+
+	for (size_t i = 0; i < n_rec_singleyear; i += increment) {
+		EXPECT_EQ(lifetime_from_single[i], singleyear60min[i]);
+	}
 }
 
 TEST_F(libTimeTests, TestSameSizeSubhourlySingleYear)
@@ -48,8 +60,11 @@ TEST_F(libTimeTests, TestSameSizeSubhourlySingleYear)
 	EXPECT_EQ(n_rec_lifetime, util::hours_per_year * 2);
 	EXPECT_EQ(n_rec_singleyear, util::hours_per_year * 2);
 	EXPECT_EQ(dt_hour, 0.5);
-	EXPECT_EQ(lifetime_from_single[0], 100);
 	EXPECT_EQ(lifetime_from_single.size(), n_rec_lifetime);
+
+	for (size_t i = 0; i < n_rec_singleyear; i += increment) {
+		EXPECT_EQ(lifetime_from_single[i], singleyear30min[i]);
+	}
 }
 
 TEST_F(libTimeTests, TestSameSizeSubhourlyLifetime)
@@ -65,10 +80,16 @@ TEST_F(libTimeTests, TestSameSizeSubhourlyLifetime)
 	EXPECT_EQ(n_rec_lifetime, util::hours_per_year * 2 * n_years);
 	EXPECT_EQ(n_rec_singleyear, util::hours_per_year * 2);
 	EXPECT_EQ(dt_hour, 0.5);
-	EXPECT_EQ(lifetime_from_single[0], 100);
 	EXPECT_EQ(lifetime_from_single.size(), n_rec_lifetime);
-}
 
+	for (size_t y = 0; y < n_years; y++) {
+		size_t idx = y * singleyear30min.size();
+		for (size_t i = 0; i < singleyear30min.size(); i += increment) {
+			EXPECT_EQ(lifetime_from_single[idx], singleyear30min[i]);
+			idx += increment;
+		}
+	}
+}
 
 // Test downsample
 TEST_F(libTimeTests, TestLifetimeDownsample)
@@ -84,8 +105,15 @@ TEST_F(libTimeTests, TestLifetimeDownsample)
 	EXPECT_EQ(n_rec_lifetime, util::hours_per_year * n_years);
 	EXPECT_EQ(n_rec_singleyear, util::hours_per_year);
 	EXPECT_EQ(dt_hour, 1.0);
-	EXPECT_EQ(lifetime_from_single[0], 100 * 2);
 	EXPECT_EQ(lifetime_from_single.size(), n_rec_lifetime);
+
+	for (size_t y = 0; y < n_years; y++) {
+		size_t idx = y * singleyear60min.size();
+		for (size_t i = 0; i < n_rec_singleyear; i += increment) {
+			EXPECT_EQ(lifetime_from_single[idx], singleyear30min[i*2] * 2);
+			idx += increment;
+		}
+	}
 }
 
 // Test downsample
@@ -102,7 +130,41 @@ TEST_F(libTimeTests, TestSingleyearDownsample)
 	EXPECT_EQ(n_rec_lifetime, util::hours_per_year);
 	EXPECT_EQ(n_rec_singleyear, util::hours_per_year);
 	EXPECT_EQ(dt_hour, 1.0);
-	EXPECT_EQ(lifetime_from_single[0], 100 * 2);
 	EXPECT_EQ(lifetime_from_single.size(), n_rec_lifetime);
+
+	for (size_t i = 0; i < n_rec_singleyear; i+=increment) {
+		EXPECT_EQ(lifetime_from_single[i], singleyear30min[i*2]*2);
+	}
 }
 
+// Test diurnal to flat
+TEST_F(libTimeTests, TestDiurnalToFlat)
+{
+	std::vector<double> flat = flatten_diurnal(schedule, schedule, 1, sched_values, multiplier);
+	std::vector<double> flat30min = flatten_diurnal(schedule, schedule, 2, sched_values, multiplier);
+
+
+	EXPECT_EQ(flat.size(), util::hours_per_year);
+	EXPECT_EQ(flat30min.size(), util::hours_per_year * 2);
+	for (size_t h = 0; h < flat.size(); h++) {
+		if (h % 24 > 11 && h % 24 < 19) {
+			EXPECT_NEAR(flat[h], 0.6, 0.0001);
+		}
+		else {
+			EXPECT_NEAR(flat[h], 0.2, 0.0001);
+		}
+	}
+	size_t i = 0;
+	for (size_t h = 0; h < util::hours_per_year; h++) {
+		for (size_t s = 0; s < 2; s++) {
+			if (h % 24 > 11 && h % 24 < 19) {
+				EXPECT_NEAR(flat30min[i], 0.6, 0.0001);
+			}
+			else {
+				EXPECT_NEAR(flat30min[i], 0.2, 0.0001);
+			}
+			i++;
+		}
+	}
+
+}

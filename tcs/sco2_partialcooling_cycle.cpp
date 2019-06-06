@@ -74,9 +74,9 @@ int C_PartialCooling_Cycle::design_core()
 	if (ms_des_par.m_recomp_frac < 0.01)
 	{
 		ms_des_par.m_recomp_frac = 0.0;
-		double UA_tot = ms_des_par.m_UA_LTR + ms_des_par.m_UA_HTR;		//[kW/K]
-		ms_des_par.m_UA_LTR = UA_tot;		//[kW/K]
-		ms_des_par.m_UA_HTR = 0.0;			//[kW/K]
+		double UA_tot = ms_des_par.m_LTR_UA + ms_des_par.m_HTR_UA;		//[kW/K]
+		ms_des_par.m_LTR_UA = UA_tot;		//[kW/K]
+		ms_des_par.m_HTR_UA = 0.0;			//[kW/K]
 	}
 
 	// Initialize Recuperators
@@ -97,7 +97,7 @@ int C_PartialCooling_Cycle::design_core()
 	else
 		m_pres_last[LTR_HP_OUT] = m_pres_last[MC_OUT] - ms_des_par.m_DP_LTR[0];		//[kPa]
 
-	if (ms_des_par.m_UA_LTR < 1.0E-12)
+	if (ms_des_par.m_LTR_UA < 1.0E-12)
 		m_pres_last[LTR_HP_OUT] = m_pres_last[MC_OUT];	//[kPa] If no LTR then no pressure drop
 
 	m_pres_last[MIXER_OUT] = m_pres_last[LTR_HP_OUT];	//[kPa] assume no pressure drop in mixer
@@ -108,7 +108,7 @@ int C_PartialCooling_Cycle::design_core()
 	else
 		m_pres_last[HTR_HP_OUT] = m_pres_last[MIXER_OUT] - ms_des_par.m_DP_HTR[0];	//[kPa]
 
-	if (ms_des_par.m_UA_HTR < 1.0E-12)
+	if (ms_des_par.m_HTR_UA < 1.0E-12)
 		m_pres_last[HTR_HP_OUT] = m_pres_last[MIXER_OUT];	//[kPa] If no HTR then no pressure drop
 
 	if (ms_des_par.m_DP_PHX[0] < 0.0)
@@ -131,7 +131,7 @@ int C_PartialCooling_Cycle::design_core()
 	else
 		m_pres_last[HTR_LP_OUT] = m_pres_last[LTR_LP_OUT] + ms_des_par.m_DP_LTR[1];		//[kPa]
 
-	if (ms_des_par.m_UA_LTR < 1.0E-12)
+	if (ms_des_par.m_LTR_UA < 1.0E-12)
 		m_pres_last[HTR_LP_OUT] = m_pres_last[LTR_LP_OUT];	//[kPa] if no LTR then no pressure drop
 
 	if (ms_des_par.m_DP_HTR[1] < 0.0)
@@ -139,7 +139,7 @@ int C_PartialCooling_Cycle::design_core()
 	else
 		m_pres_last[TURB_OUT] = m_pres_last[HTR_LP_OUT] + ms_des_par.m_DP_HTR[1];	//[kPa]
 
-	if (ms_des_par.m_UA_HTR < 1.0E-12)
+	if (ms_des_par.m_HTR_UA < 1.0E-12)
 		m_pres_last[TURB_OUT] = m_pres_last[HTR_LP_OUT];
 
 	// Calculate equivalent isentropic efficiencies for turbomachinery, if necessary
@@ -342,7 +342,9 @@ int C_PartialCooling_Cycle::C_MEQ_HTR_des::operator()(double T_HTR_LP_out /*K*/,
 
 	try
 	{
-		mpc_pc_cycle->mc_LTR.design_fix_UA_calc_outlet(mpc_pc_cycle->ms_des_par.m_UA_LTR, mpc_pc_cycle->ms_des_par.m_LTR_eff_max,
+		mpc_pc_cycle->mc_LTR.design_for_target__calc_outlet(mpc_pc_cycle->ms_des_par.m_LTR_target_code,
+            mpc_pc_cycle->ms_des_par.m_LTR_UA, mpc_pc_cycle->ms_des_par.m_LTR_min_dT, mpc_pc_cycle->ms_des_par.m_LTR_eff_target,
+            mpc_pc_cycle->ms_des_par.m_LTR_eff_max,
 			mpc_pc_cycle->m_temp_last[MC_OUT], mpc_pc_cycle->m_pres_last[MC_OUT], mpc_pc_cycle->m_m_dot_mc, mpc_pc_cycle->m_pres_last[LTR_HP_OUT],
 			mpc_pc_cycle->m_temp_last[HTR_LP_OUT], mpc_pc_cycle->m_pres_last[HTR_LP_OUT], mpc_pc_cycle->m_m_dot_t, mpc_pc_cycle->m_pres_last[LTR_LP_OUT],
 			m_Q_dot_LTR, mpc_pc_cycle->m_temp_last[LTR_HP_OUT], mpc_pc_cycle->m_temp_last[LTR_LP_OUT]);
@@ -403,7 +405,9 @@ int C_PartialCooling_Cycle::C_MEQ_HTR_des::operator()(double T_HTR_LP_out /*K*/,
 
 	try
 	{
-		mpc_pc_cycle->mc_HTR.design_fix_UA_calc_outlet(mpc_pc_cycle->ms_des_par.m_UA_HTR, mpc_pc_cycle->ms_des_par.m_HTR_eff_max,
+		mpc_pc_cycle->mc_HTR.design_for_target__calc_outlet(mpc_pc_cycle->ms_des_par.m_HTR_target_code,
+            mpc_pc_cycle->ms_des_par.m_HTR_UA, mpc_pc_cycle->ms_des_par.m_HTR_min_dT, mpc_pc_cycle->ms_des_par.m_HTR_eff_target,
+            mpc_pc_cycle->ms_des_par.m_HTR_eff_max,
 			mpc_pc_cycle->m_temp_last[MIXER_OUT], mpc_pc_cycle->m_pres_last[MIXER_OUT], mpc_pc_cycle->m_m_dot_t, mpc_pc_cycle->m_pres_last[HTR_HP_OUT],
 			mpc_pc_cycle->m_temp_last[TURB_OUT], mpc_pc_cycle->m_pres_last[TURB_OUT], mpc_pc_cycle->m_m_dot_t, mpc_pc_cycle->m_pres_last[HTR_LP_OUT],
 			m_Q_dot_HTR, mpc_pc_cycle->m_temp_last[HTR_HP_OUT], T_HTR_LP_out_calc);
@@ -440,7 +444,9 @@ int C_PartialCooling_Cycle::C_MEQ_LTR_des::operator()(double T_LTR_LP_out /*K*/,
 
 	try
 	{
-		mpc_pc_cycle->mc_LTR.design_fix_UA_calc_outlet(mpc_pc_cycle->ms_des_par.m_UA_LTR, mpc_pc_cycle->ms_des_par.m_LTR_eff_max,
+		mpc_pc_cycle->mc_LTR.design_for_target__calc_outlet(mpc_pc_cycle->ms_des_par.m_LTR_target_code,
+            mpc_pc_cycle->ms_des_par.m_LTR_UA, mpc_pc_cycle->ms_des_par.m_LTR_min_dT, mpc_pc_cycle->ms_des_par.m_LTR_eff_target,
+            mpc_pc_cycle->ms_des_par.m_LTR_eff_max,
 			mpc_pc_cycle->m_temp_last[MC_OUT], mpc_pc_cycle->m_pres_last[MC_OUT], mpc_pc_cycle->m_m_dot_mc, mpc_pc_cycle->m_pres_last[LTR_HP_OUT],
 			mpc_pc_cycle->m_temp_last[HTR_LP_OUT], mpc_pc_cycle->m_pres_last[HTR_LP_OUT], mpc_pc_cycle->m_m_dot_t, mpc_pc_cycle->m_pres_last[LTR_LP_OUT],
 			m_Q_dot_LTR, mpc_pc_cycle->m_temp_last[LTR_HP_OUT], T_LTR_LP_out_calc);
@@ -466,14 +472,36 @@ double C_PartialCooling_Cycle::opt_eta_fixed_P_high(double P_high_opt /*kPa*/)
 	ms_opt_des_par.m_fixed_PR_total = false;
 	ms_opt_des_par.m_PR_total_guess = 25. / 6.5;	//[-] Guess could be improved...
 
-	ms_opt_des_par.m_fixed_f_PR_mc = false;
-	ms_opt_des_par.m_f_PR_mc_guess = (25. - 8.5) / (25. - 6.5);		//[-] Guess could be improved...
+    if (ms_auto_opt_des_par.m_fixed_f_PR_HP_to_IP)
+    {
+        ms_opt_des_par.m_fixed_f_PR_mc = true;
+        ms_opt_des_par.m_f_PR_mc_guess = ms_auto_opt_des_par.m_fixed_f_PR_HP_to_IP; //[-]
+    }
+    else
+    {
+        ms_opt_des_par.m_fixed_f_PR_mc = false;
+        ms_opt_des_par.m_f_PR_mc_guess = (25. - 8.5) / (25. - 6.5);		//[-] Guess could be improved...
+    }
 
-	ms_opt_des_par.m_recomp_frac_guess = 0.25;	//[-]
-	ms_opt_des_par.m_fixed_recomp_frac = false;
+    // Is the recompression fraction fixed or optimized?
+    if (ms_auto_opt_des_par.m_is_recomp_ok < 0.0)
+    {
+        ms_opt_des_par.m_recomp_frac_guess = fabs(ms_auto_opt_des_par.m_is_recomp_ok);  //[-]
+        ms_opt_des_par.m_fixed_recomp_frac = true;
+    }
+    else
+    {
+        ms_opt_des_par.m_recomp_frac_guess = 0.25;	//[-]
+        ms_opt_des_par.m_fixed_recomp_frac = false;
+    }	
 
 	ms_opt_des_par.m_LTR_frac_guess = 0.5;		//[-]
 	ms_opt_des_par.m_fixed_LTR_frac = false;
+
+    if (ms_opt_des_par.m_LTR_target_code != NS_HX_counterflow_eqs::OPTIMIZE_UA || ms_opt_des_par.m_HTR_target_code != NS_HX_counterflow_eqs::OPTIMIZE_UA)
+    {
+        ms_opt_des_par.m_fixed_LTR_frac = true;
+    }
 
 	int pc_error_code = opt_design_core();
 
@@ -638,8 +666,8 @@ int C_PartialCooling_Cycle::finalize_design()
 	ms_des_solved.m_m_dot_t = m_m_dot_t;
 	ms_des_solved.m_recomp_frac = m_m_dot_rc / m_m_dot_t;
 
-	ms_des_solved.m_UA_LTR = ms_des_par.m_UA_LTR;
-	ms_des_solved.m_UA_HTR = ms_des_par.m_UA_HTR;
+	ms_des_solved.m_UA_LTR = ms_des_par.m_LTR_UA;
+	ms_des_solved.m_UA_HTR = ms_des_par.m_HTR_UA;
 
 	ms_des_solved.m_W_dot_t = m_W_dot_t;     //[kWe]
 	ms_des_solved.m_W_dot_mc = m_W_dot_mc;	 //[kWe]
@@ -682,7 +710,7 @@ double C_PartialCooling_Cycle::design_cycle_return_objective_metric(const std::v
 		if (ms_opt_des_par.m_PR_total_guess >= 0.0)
 		{
 			PR_total_local = ms_opt_des_par.m_PR_total_guess;
-			P_pc_in = ms_des_par.m_P_mc_in / PR_total_local;	//[kPa]
+			P_pc_in = ms_des_par.m_P_mc_out / PR_total_local;	//[kPa]
 		}
 		else
 		{
@@ -705,7 +733,7 @@ double C_PartialCooling_Cycle::design_cycle_return_objective_metric(const std::v
 	}
 	else
 	{
-		P_mc_in = ms_des_par.m_P_mc_out - ms_opt_des_par.m_fixed_f_PR_mc*(ms_des_par.m_P_mc_out - ms_des_par.m_P_pc_in);	//[kPa]
+		P_mc_in = ms_des_par.m_P_mc_out - ms_opt_des_par.m_f_PR_mc_guess*(ms_des_par.m_P_mc_out - ms_des_par.m_P_pc_in);	//[kPa]
 	}
 	ms_des_par.m_P_mc_in = P_mc_in;		//[kPa]
 
@@ -732,8 +760,17 @@ double C_PartialCooling_Cycle::design_cycle_return_objective_metric(const std::v
 	else
 		LTR_frac_local = ms_opt_des_par.m_LTR_frac_guess;		//[-]
 
-	ms_des_par.m_UA_LTR = ms_opt_des_par.m_UA_rec_total*LTR_frac_local;			//[kW/K]
-	ms_des_par.m_UA_HTR = ms_opt_des_par.m_UA_rec_total*(1.0 - LTR_frac_local);	//[kW/K]
+    if (ms_opt_des_par.m_LTR_target_code == NS_HX_counterflow_eqs::OPTIMIZE_UA || ms_opt_des_par.m_HTR_target_code == NS_HX_counterflow_eqs::OPTIMIZE_UA)
+    {
+        ms_des_par.m_LTR_UA = ms_opt_des_par.m_UA_rec_total*LTR_frac_local;			//[kW/K]
+        ms_des_par.m_HTR_UA = ms_opt_des_par.m_UA_rec_total*(1.0 - LTR_frac_local);	//[kW/K]
+    }
+    else
+    {
+        ms_des_par.m_LTR_UA = ms_opt_des_par.m_LTR_UA;      //[kW/K]
+        ms_des_par.m_HTR_UA = ms_opt_des_par.m_HTR_UA;      //[kW/K]
+    }
+	
 
 	int des_err_code = design_core();
 
@@ -764,8 +801,17 @@ int C_PartialCooling_Cycle::opt_design_core()
 	ms_des_par.m_DP_PC_LP = ms_opt_des_par.m_DP_PC_LP;	//
 	ms_des_par.m_DP_PC_IP = ms_opt_des_par.m_DP_PC_IP;	//
 	ms_des_par.m_DP_PHX = ms_opt_des_par.m_DP_PHX;			//
-	ms_des_par.m_LTR_eff_max = ms_opt_des_par.m_LTR_eff_max;	//[-]
-	ms_des_par.m_HTR_eff_max = ms_opt_des_par.m_HTR_eff_max;	//[-]
+        // LTR thermal design
+    ms_des_par.m_LTR_target_code = ms_opt_des_par.m_LTR_target_code;    //[-]
+    ms_des_par.m_LTR_min_dT = ms_opt_des_par.m_LTR_min_dT;      //[K]
+    ms_des_par.m_LTR_eff_target = ms_opt_des_par.m_LTR_eff_target;  //[-]
+    ms_des_par.m_LTR_eff_max = ms_opt_des_par.m_LTR_eff_max;    //[-]
+        // HTR thermal design
+    ms_des_par.m_HTR_target_code = ms_opt_des_par.m_HTR_target_code;    //[-]
+    ms_des_par.m_HTR_min_dT = ms_opt_des_par.m_HTR_min_dT;      //[K]
+    ms_des_par.m_HTR_eff_target = ms_opt_des_par.m_HTR_eff_target;  //[-]
+    ms_des_par.m_HTR_eff_max = ms_opt_des_par.m_HTR_eff_max;    //[-]
+        //
 	ms_des_par.m_eta_mc = ms_opt_des_par.m_eta_mc;			//[-]
 	ms_des_par.m_eta_rc = ms_opt_des_par.m_eta_rc;			//[-]
 	ms_des_par.m_eta_pc = ms_opt_des_par.m_eta_pc;			//[-]
@@ -869,10 +915,26 @@ int C_PartialCooling_Cycle::opt_design_core()
 		ms_des_par.m_P_pc_in = ms_des_par.m_P_mc_out / ms_opt_des_par.m_PR_total_guess;		//[kPa]
 		ms_des_par.m_P_mc_in = ms_des_par.m_P_mc_out - ms_opt_des_par.m_f_PR_mc_guess*(ms_des_par.m_P_mc_out - ms_des_par.m_P_pc_in);	//[kPa]
 		ms_des_par.m_recomp_frac = ms_opt_des_par.m_recomp_frac_guess;	//[-]
-		ms_des_par.m_UA_LTR = ms_opt_des_par.m_UA_rec_total*ms_opt_des_par.m_LTR_frac_guess;	//[kW/K]
-		ms_des_par.m_UA_HTR = ms_opt_des_par.m_UA_rec_total*ms_opt_des_par.m_LTR_frac_guess;	//[kW/K]
 
-		no_opt_err_code = design_core();
+        if (ms_opt_des_par.m_LTR_target_code == NS_HX_counterflow_eqs::OPTIMIZE_UA || ms_opt_des_par.m_HTR_target_code == NS_HX_counterflow_eqs::OPTIMIZE_UA)
+        {
+            ms_des_par.m_LTR_UA = ms_opt_des_par.m_UA_rec_total*ms_opt_des_par.m_LTR_frac_guess;	//[kW/K]
+            ms_des_par.m_HTR_UA = ms_opt_des_par.m_UA_rec_total*(1.0 - ms_opt_des_par.m_LTR_frac_guess);	//[kW/K]
+        }
+        else
+        {
+            ms_des_par.m_LTR_UA = ms_opt_des_par.m_LTR_UA;      //[kW/K]
+            ms_des_par.m_HTR_UA = ms_opt_des_par.m_HTR_UA;      //[kW/K]
+        }
+
+        // Ensure thermal efficiency is initialized to 0
+        m_objective_metric_opt = 0.0;
+        double eta_local = design_cycle_return_objective_metric(x);
+
+        if (eta_local == 0.0)
+        {
+            return -1;
+        }
 
 		ms_des_par_optimal = ms_des_par;
 	}
@@ -901,6 +963,13 @@ int C_PartialCooling_Cycle::auto_opt_design(S_auto_opt_design_parameters & auto_
 
 int C_PartialCooling_Cycle::auto_opt_design_core()
 {
+    // Check that simple/recomp flag is set
+    if (ms_auto_opt_des_par.m_is_recomp_ok < -1.0 || (ms_auto_opt_des_par.m_is_recomp_ok > 0 && ms_auto_opt_des_par.m_is_recomp_ok != 1.0))
+    {
+        throw(C_csp_exception("C_PartialCooling_Cycle::auto_opt_design_core(...) requires that ms_auto_opt_des_par.m_is_recomp_ok"
+            "is either between -1 and 0 (fixed recompression fraction) or equal to 1 (recomp allowed)\n"));
+    }
+
 	// map 'auto_opt_des_par_in' to 'ms_auto_opt_des_par'
 	ms_opt_des_par.m_W_dot_net = ms_auto_opt_des_par.m_W_dot_net;	//[kWe]
 	ms_opt_des_par.m_T_mc_in = ms_auto_opt_des_par.m_T_mc_in;		//[K]
@@ -912,8 +981,19 @@ int C_PartialCooling_Cycle::auto_opt_design_core()
 	ms_opt_des_par.m_DP_PC_IP = ms_auto_opt_des_par.m_DP_PC_main;   //(cold, hot) positive values are absolute [kPa], negative values are relative (-)
 	ms_opt_des_par.m_DP_PHX = ms_auto_opt_des_par.m_DP_PHX;				    //(cold, hot) positive values are absolute [kPa], negative values are relative (-)
 	ms_opt_des_par.m_UA_rec_total = ms_auto_opt_des_par.m_UA_rec_total;		//[kW/K]
-	ms_opt_des_par.m_LTR_eff_max = ms_auto_opt_des_par.m_LTR_eff_max;		//[-]
-	ms_opt_des_par.m_HTR_eff_max = ms_auto_opt_des_par.m_HTR_eff_max;		//[-]
+        // LTR thermal design
+    ms_opt_des_par.m_LTR_target_code = ms_auto_opt_des_par.m_LTR_target_code;   //[-]
+    ms_opt_des_par.m_LTR_UA = ms_auto_opt_des_par.m_LTR_UA;                 //[kW/K]
+    ms_opt_des_par.m_LTR_min_dT = ms_auto_opt_des_par.m_LTR_min_dT;         //[K]
+    ms_opt_des_par.m_LTR_eff_target = ms_auto_opt_des_par.m_LTR_eff_target; //[-]
+    ms_opt_des_par.m_LTR_eff_max = ms_auto_opt_des_par.m_LTR_eff_max;    //[-]
+        // HTR thermal design
+    ms_opt_des_par.m_HTR_target_code = ms_auto_opt_des_par.m_HTR_target_code;   //[-]
+    ms_opt_des_par.m_HTR_UA = ms_auto_opt_des_par.m_HTR_UA;             //[kW/K]
+    ms_opt_des_par.m_HTR_min_dT = ms_auto_opt_des_par.m_HTR_min_dT;     //[K]
+    ms_opt_des_par.m_HTR_eff_target = ms_auto_opt_des_par.m_HTR_eff_target; //[-]
+    ms_opt_des_par.m_HTR_eff_max = ms_auto_opt_des_par.m_HTR_eff_max;
+        //
 	ms_opt_des_par.m_eta_mc = ms_auto_opt_des_par.m_eta_mc;					//[-]
 	ms_opt_des_par.m_eta_rc = ms_auto_opt_des_par.m_eta_rc;					//[-]
 	ms_opt_des_par.m_eta_pc = ms_auto_opt_des_par.m_eta_pc;					//[-]
@@ -935,7 +1015,7 @@ int C_PartialCooling_Cycle::auto_opt_design_core()
 
 	ms_opt_des_par.m_fixed_P_mc_out = ms_auto_opt_des_par.m_fixed_P_mc_out;		//[-]
 	
-	ms_opt_des_par.m_fixed_PR_total = ms_auto_opt_des_par.m_fixed_PR_mc;		//[-]
+	ms_opt_des_par.m_fixed_PR_total = ms_auto_opt_des_par.m_fixed_PR_HP_to_LP;		//[-]
 
 	// Outer optimization loop
 	m_objective_metric_auto_opt = 0.0;
@@ -958,21 +1038,44 @@ int C_PartialCooling_Cycle::auto_opt_design_core()
 
 	if (ms_opt_des_par.m_fixed_PR_total)
 	{
-		ms_opt_des_par.m_PR_total_guess = ms_auto_opt_des_par.m_PR_mc_guess;	//[-]
+		ms_opt_des_par.m_PR_total_guess = ms_auto_opt_des_par.m_PR_HP_to_LP_guess;	//[-]
 	}
 	else
 	{
 		ms_opt_des_par.m_PR_total_guess = 25. / 6.5;	//[-] Guess could be improved...
 	}
 
-	ms_opt_des_par.m_fixed_f_PR_mc = false;
-	ms_opt_des_par.m_f_PR_mc_guess = (25. - 8.5) / (25. - 6.5);		//[-] Guess could be improved...
+    if (ms_auto_opt_des_par.m_fixed_f_PR_HP_to_IP)
+    {
+        ms_opt_des_par.m_fixed_f_PR_mc = true;
+        ms_opt_des_par.m_f_PR_mc_guess = ms_auto_opt_des_par.m_f_PR_HP_to_IP_guess; //[-]
+    }
+    else
+    {
+        ms_opt_des_par.m_fixed_f_PR_mc = false;
+        ms_opt_des_par.m_f_PR_mc_guess = (25. - 8.5) / (25. - 6.5);		//[-] Guess could be improved...
+    }
+	
 
-	ms_opt_des_par.m_recomp_frac_guess = 0.25;	//[-]
-	ms_opt_des_par.m_fixed_recomp_frac = false;
+    // Is recompression fraction fixed or optimized?
+    if (ms_auto_opt_des_par.m_is_recomp_ok < 0.0)
+    {
+        ms_opt_des_par.m_recomp_frac_guess = fabs(ms_auto_opt_des_par.m_is_recomp_ok);  //[-]
+        ms_opt_des_par.m_fixed_recomp_frac = true;  
+    }
+    else
+    {
+        ms_opt_des_par.m_recomp_frac_guess = 0.25;	//[-]
+        ms_opt_des_par.m_fixed_recomp_frac = false;
+    }	
 
 	ms_opt_des_par.m_LTR_frac_guess = 0.5;		//[-]
 	ms_opt_des_par.m_fixed_LTR_frac = false;
+
+    if (ms_opt_des_par.m_LTR_target_code != NS_HX_counterflow_eqs::OPTIMIZE_UA || ms_opt_des_par.m_HTR_target_code != NS_HX_counterflow_eqs::OPTIMIZE_UA)
+    {
+        ms_opt_des_par.m_fixed_LTR_frac = true;
+    }
 
 	int pc_error_code = opt_design_core();
 
@@ -1008,8 +1111,19 @@ int C_PartialCooling_Cycle::auto_opt_design_hit_eta(S_auto_opt_design_hit_eta_pa
 	ms_auto_opt_des_par.m_DP_PC_main = auto_opt_des_hit_eta_in.m_DP_PC_main;   //(cold, hot) positive values are absolute [kPa], negative values are relative (-)
 	ms_auto_opt_des_par.m_DP_PHX = auto_opt_des_hit_eta_in.m_DP_PHX;				    //(cold, hot) positive values are absolute [kPa], negative values are relative (-)
 	ms_auto_opt_des_par.m_UA_rec_total = std::numeric_limits<double>::quiet_NaN();		//[kW/K]  ***** This method finds the UA required to hit the input efficiency! *****
-	ms_auto_opt_des_par.m_LTR_eff_max = auto_opt_des_hit_eta_in.m_LTR_eff_max;		//[-]
-	ms_auto_opt_des_par.m_HTR_eff_max = auto_opt_des_hit_eta_in.m_HTR_eff_max;		//[-]
+     // LTR thermal design
+    ms_auto_opt_des_par.m_LTR_target_code = auto_opt_des_hit_eta_in.m_LTR_target_code;  //[-]
+    ms_auto_opt_des_par.m_LTR_UA = auto_opt_des_hit_eta_in.m_LTR_UA;                    //[kW/K]
+    ms_auto_opt_des_par.m_LTR_min_dT = auto_opt_des_hit_eta_in.m_LTR_min_dT;            //[K]
+    ms_auto_opt_des_par.m_LTR_eff_target = auto_opt_des_hit_eta_in.m_LTR_eff_target;    //[-]
+    ms_auto_opt_des_par.m_LTR_eff_max = auto_opt_des_hit_eta_in.m_LTR_eff_max;          //[-]
+        // HTR thermal design
+    ms_auto_opt_des_par.m_HTR_target_code = auto_opt_des_hit_eta_in.m_HTR_target_code;  //[-]
+    ms_auto_opt_des_par.m_HTR_UA = auto_opt_des_hit_eta_in.m_HTR_UA;                    //[kW/K]
+    ms_auto_opt_des_par.m_HTR_min_dT = auto_opt_des_hit_eta_in.m_HTR_min_dT;            //[K]
+    ms_auto_opt_des_par.m_HTR_eff_target = auto_opt_des_hit_eta_in.m_HTR_eff_target;    //[-]
+    ms_auto_opt_des_par.m_HTR_eff_max = auto_opt_des_hit_eta_in.m_HTR_eff_max;    //[-]
+        //
 	ms_auto_opt_des_par.m_eta_mc = auto_opt_des_hit_eta_in.m_eta_mc;					//[-]
 	ms_auto_opt_des_par.m_eta_rc = auto_opt_des_hit_eta_in.m_eta_rc;					//[-]
 	ms_auto_opt_des_par.m_eta_pc = auto_opt_des_hit_eta_in.m_eta_pc;					//[-]
@@ -1035,8 +1149,11 @@ int C_PartialCooling_Cycle::auto_opt_design_hit_eta(S_auto_opt_design_hit_eta_pa
 
 	ms_auto_opt_des_par.m_fixed_P_mc_out = auto_opt_des_hit_eta_in.m_fixed_P_mc_out;		//[-]
 	
-	ms_auto_opt_des_par.m_fixed_PR_mc = auto_opt_des_hit_eta_in.m_fixed_PR_mc;			//[-]
-	ms_auto_opt_des_par.m_PR_mc_guess = auto_opt_des_hit_eta_in.m_fixed_PR_mc;		//[-]
+	ms_auto_opt_des_par.m_fixed_PR_HP_to_LP = auto_opt_des_hit_eta_in.m_fixed_PR_HP_to_LP;  //[-]
+	ms_auto_opt_des_par.m_PR_HP_to_LP_guess = auto_opt_des_hit_eta_in.m_fixed_PR_HP_to_LP;  //[-]
+
+    ms_auto_opt_des_par.m_f_PR_HP_to_IP_guess = auto_opt_des_hit_eta_in.m_f_PR_HP_to_IP_guess;  //[-]
+    ms_auto_opt_des_par.m_fixed_f_PR_HP_to_IP = auto_opt_des_hit_eta_in.m_fixed_f_PR_HP_to_IP;  //[-]
 
 	// At this point, 'auto_opt_des_hit_eta_in' should only be used to access the targer thermal efficiency: 'm_eta_thermal'
 
@@ -1045,10 +1162,10 @@ int C_PartialCooling_Cycle::auto_opt_design_hit_eta(S_auto_opt_design_hit_eta_pa
 	error_msg = "";
 
 	// Check cycle parameter values are reasonable
-	if (ms_auto_opt_des_par.m_is_recomp_ok != 1)
-	{
+    if (ms_auto_opt_des_par.m_is_recomp_ok < -1.0 || (ms_auto_opt_des_par.m_is_recomp_ok > 0 && ms_auto_opt_des_par.m_is_recomp_ok != 1.0))
+        {
 		throw(C_csp_exception("C_PartialCooling_Cyclee::auto_opt_design_core(...) requires that ms_auto_opt_des_par.m_is_recomp_ok"
-			"is either 1 so that the cycle contains a recompressor\n"));
+            "is either between -1 and 0 (fixed recompression fraction) or equal to 1 (recomp allowed)\n"));
 	}
 	// Can't operate compressore in 2-phase region
 	if (ms_auto_opt_des_par.m_T_mc_in <= N_co2_props::T_crit)

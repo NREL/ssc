@@ -271,12 +271,16 @@ public:
 		double m_phi_surge;		//[-]
 		double m_phi_max;		//[-]
 
+        double m_psi_des;       //[-] Ideal head coefficient
+        double m_psi_max_at_N_des;  //[-] Max ideal head coefficient at design shaft speed
+
 		S_des_solved()
 		{
 			m_T_in = m_P_in = m_D_in = m_h_in = m_s_in =
 				m_T_out = m_P_out = m_h_out = m_D_out =
 				m_m_dot = m_D_rotor = m_N_design = m_tip_ratio = m_eta_design =
-				m_phi_surge = m_phi_des = m_phi_max = std::numeric_limits<double>::quiet_NaN();
+				m_phi_surge = m_phi_des = m_phi_max =
+                m_psi_des = m_psi_max_at_N_des = std::numeric_limits<double>::quiet_NaN();
 		}
 	};
 
@@ -296,6 +300,7 @@ public:
 		bool m_surge;			//[-]
 		double m_eta;			//[-]
 		double m_phi;			//[-]
+        double m_psi;           //[-]
 		double m_w_tip_ratio;	//[-]
 
 		double m_N;			//[rpm]
@@ -308,7 +313,7 @@ public:
 			m_P_in = m_h_in = m_T_in = m_s_in =
 				m_P_out = m_h_out = m_T_out = m_s_out = std::numeric_limits<double>::quiet_NaN();
 			m_surge = false;
-			m_eta = m_phi = m_w_tip_ratio = m_N =
+			m_eta = m_phi = m_psi = m_w_tip_ratio = m_N =
 				m_W_dot_in = m_surge_safety = std::numeric_limits<double>::quiet_NaN();
 		}
 	};
@@ -395,7 +400,10 @@ public:
 			// Metrics shared by all stages
 		double m_N_design;		//[rpm] Shaft speed
 		double m_phi_des;		//[-] Design flow coefficient
-		double m_phi_surge;		//[-] Flow coefficient at surge
+        double m_phi_surge;		//[-] Flow coefficient at surge
+
+        double m_psi_des;       //[-] Ideal head coefficient
+        double m_psi_max_at_N_des;  //[-] Max ideal head coefficient at design shaft speed
 			// Metrics that vary by stage
 		std::vector<double> mv_D;	//[m] Diameter
 		std::vector<double> mv_tip_speed_ratio;	//[-]
@@ -411,7 +419,8 @@ public:
 				m_m_dot = m_W_dot =
 				m_cost =
 				m_tip_ratio_max = 
-				m_N_design = m_phi_des = m_phi_surge = std::numeric_limits<double>::quiet_NaN();
+				m_N_design = m_phi_des =
+                m_psi_des = m_phi_surge = std::numeric_limits<double>::quiet_NaN();
 		}
 	};
 
@@ -440,6 +449,7 @@ public:
 			// Metrics that vary by stage
 		std::vector<double> mv_tip_speed_ratio;	//[-]
 		std::vector<double> mv_phi;		//[-]
+        std::vector<double> mv_psi;     //[-]
 		std::vector<double> mv_eta;		//[-]
 
 		S_od_solved()

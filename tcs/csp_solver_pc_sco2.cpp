@@ -327,12 +327,13 @@ void C_pc_sco2::call(const C_csp_weatherreader::S_outputs &weather,
 
 	case ON:
 		{
-			C_sco2_recomp_csp::S_od_par sco2_rc_od_par;
+			C_sco2_phx_air_cooler::S_od_par sco2_rc_od_par;
 			sco2_rc_od_par.m_T_htf_hot = T_htf_hot;				//[K]
 			sco2_rc_od_par.m_m_dot_htf = m_dot_htf/3600.0;		//[kg/s]
 			sco2_rc_od_par.m_T_amb = weather.m_tdry+273.15;		//[K]
+            sco2_rc_od_par.m_T_t_in_mode = C_sco2_cycle_core::E_SOLVE_PHX;  //[-]
 
-			int od_strategy = C_sco2_recomp_csp::E_TARGET_POWER_ETA_MAX;
+			int od_strategy = C_sco2_phx_air_cooler::E_TARGET_POWER_ETA_MAX;
 
 			int off_design_code = 0;
 			try
@@ -529,7 +530,7 @@ void C_pc_sco2::write_output_intervals(double report_time_start,
 		v_temp_ts_time_end, report_time_end);
 }
 
-void C_pc_sco2::assign(int index, float *p_reporting_ts_array, size_t n_reporting_ts_array)
+void C_pc_sco2::assign(int index, double *p_reporting_ts_array, size_t n_reporting_ts_array)
 {
 	mc_reported_outputs.assign(index, p_reporting_ts_array, n_reporting_ts_array);
 }

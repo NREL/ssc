@@ -257,8 +257,8 @@ public:
 		cycle_opt_des_par.m_P_mc_out_guess = 20000.0;
 		cycle_opt_des_par.m_fixed_P_mc_out = true;
 
-		cycle_opt_des_par.m_PR_mc_guess = 2.6;
-		cycle_opt_des_par.m_fixed_PR_mc = true;
+		cycle_opt_des_par.m_PR_HP_to_LP_guess = 2.6;
+		cycle_opt_des_par.m_fixed_PR_HP_to_LP = true;
 
 		cycle_opt_des_par.m_recomp_frac_guess = 0.0;
 		cycle_opt_des_par.m_fixed_recomp_frac = false;
@@ -882,9 +882,9 @@ public:
 		rc_des_par.m_P_high_limit = 25.0*1000.0;
 		rc_des_par.m_P_mc_out_guess = rc_des_par.m_P_mc_out;
 
-		rc_des_par.m_fixed_PR_mc = true;
+		rc_des_par.m_fixed_PR_HP_to_LP = true;
 		rc_des_par.m_PR_mc = P_mc_out / P_mc_in;
-		rc_des_par.m_PR_mc_guess = rc_des_par.m_PR_mc;
+		rc_des_par.m_PR_HP_to_LP_guess = rc_des_par.m_PR_mc;
 
 		rc_des_par.m_fixed_recomp_frac = false;
 		rc_des_par.m_recomp_frac = 0.5;
