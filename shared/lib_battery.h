@@ -390,17 +390,20 @@ public:
 	lifetime_cycle_t(const util::matrix_t<double> &cyles_vs_DOD);
 	virtual ~lifetime_cycle_t();
 
-	// deep copy
+	/// deep copy
 	lifetime_cycle_t * clone();
 
-	// copy from lifetime_cycle to this
+	/// copy from lifetime_cycle to this
 	void copy(lifetime_cycle_t *);
 
-	// return q, the effective capacity percent
+	/// return q, the effective capacity percent
 	double runCycleLifetime(double DOD);
 
-	// return hypothetical dq the average cycle
+	/// return hypothetical dq the average cycle
 	double estimateCycleDamage();
+
+	/// Return the relative capacity percentage of nominal (%)
+	double capacity_percent();
 
 	void rainflow(double DOD);
 	void replaceBattery();
@@ -458,7 +461,11 @@ public:
 	/// Given the index of the simulation, the tempertature and SOC, return the effective capacity percent
 	double runLifetimeCalendarModel(size_t idx, double T, double SOC);
 
+	/// Reset the capacity
 	void replaceBattery();
+
+	/// Return the relative capacity percentage of nominal (%)
+	double capacity_percent();
 
 	enum CALENDAR_LOSS_OPTIONS {NONE, LITHIUM_ION_CALENDAR_MODEL, CALENDAR_LOSS_TABLE};
 
@@ -513,7 +520,14 @@ public:
 
 	void runLifetimeModels(size_t idx, capacity_t *, double T_battery);
 
+	/// Return the relative capacity percentage of nominal (%)
 	double capacity_percent();
+
+	/// Return the relative capacity percentage of nominal caused by cycle damage (%)
+	double capacity_percent_cycle();
+
+	/// Return the relative capacity percentage of nominal caused by calendar fade (%)
+	double capacity_percent_calendar();
 
 	// data access
 	lifetime_cycle_t * cycleModel() { return _lifetime_cycle; }

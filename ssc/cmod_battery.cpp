@@ -221,7 +221,9 @@ var_info vtab_battery_outputs[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "batt_DOD_cycle_average",                     "Battery average cycle DOD",                              "",         "",                     "Battery",       "",                           "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "batt_cycles",                                "Battery number of cycles",                               "",         "",                     "Battery",       "",                           "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "batt_temperature",                           "Battery temperature",                                    "C",        "",                     "Battery",       "",                           "",                              "" }, 
-	{ SSC_OUTPUT,        SSC_ARRAY,      "batt_capacity_percent",                      "Battery capacity percent for lifetime",                  "%",        "",                     "Battery",       "",                           "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "batt_capacity_percent",                      "Battery relative capacity to nameplate",                 "%",        "",                     "Battery",       "",                           "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "batt_capacity_percent_cycle",                "Battery relative capacity to nameplate (cycling)",       "%",        "",                     "Battery",       "",                           "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "batt_capacity_percent_calendar",             "Battery relative capacity to nameplate (calendar)",      "%",        "",                     "Battery",       "",                           "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "batt_capacity_thermal_percent",              "Battery capacity percent for temperature",               "%",        "",                     "Battery",       "",                           "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "batt_bank_replacement",                      "Battery bank replacements per year",                     "number/year", "",                  "Battery",       "",                           "",                              "" },
 																			          
@@ -694,6 +696,8 @@ battstor::battstor(compute_module &cm, bool setup_model, size_t nrec, double dt_
 	outDOD = cm.allocate("batt_DOD", nrec*nyears);
 	outDODCycleAverage = cm.allocate("batt_DOD_cycle_average", nrec*nyears);
 	outCapacityPercent = cm.allocate("batt_capacity_percent", nrec*nyears);
+	outCapacityPercentCycle = cm.allocate("batt_capacity_percent_cycle", nrec*nyears);
+	outCapacityPercentCalendar = cm.allocate("batt_capacity_percent_calendar", nrec*nyears);
 	outBatteryPower = cm.allocate("batt_power", nrec*nyears);
 	outGridPower = cm.allocate("grid_power", nrec*nyears); // Net grid energy required.  Positive indicates putting energy on grid.  Negative indicates pulling off grid
 	outGenPower = cm.allocate("pv_batt_gen", nrec*nyears);
@@ -1214,6 +1218,9 @@ void battstor::outputs_fixed(compute_module &cm)
 	outDOD[index] = (ssc_number_t)(lifetime_cycle_model->cycle_range());
 	outDODCycleAverage[index] = (ssc_number_t)(lifetime_cycle_model->average_range());
 	outCapacityPercent[index] = (ssc_number_t)(lifetime_model->capacity_percent());
+	outCapacityPercentCycle[index] = (ssc_number_t)(lifetime_model->capacity_percent_cycle());
+	outCapacityPercentCalendar[index] = (ssc_number_t)(lifetime_model->capacity_percent_calendar());
+
 }
  
 void battstor::outputs_topology_dependent(compute_module &)
