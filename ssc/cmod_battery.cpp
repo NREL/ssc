@@ -1442,7 +1442,6 @@ public:
 			size_t lifetime_idx = 0;
 			for (size_t year = 0; year != batt.nyears; year++)
 			{
-				size_t year_idx = 0; 
 				for (size_t hour = 0; hour < 8760; hour++)
 				{
 					// status bar
@@ -1461,13 +1460,12 @@ public:
 	
 						batt.initialize_time(year, hour, jj);
 						batt.check_replacement_schedule();
-						batt.advance(*this, power_input_lifetime[year_idx], 0, load_lifetime[year_idx], 0);
+						batt.advance(*this, power_input_lifetime[lifetime_idx], 0, load_lifetime[lifetime_idx], 0);
 						p_gen[lifetime_idx] = batt.outGenPower[lifetime_idx];
 						if (year == 0) {
 							annual_energy += p_gen[lifetime_idx] * batt._dt_hour;
 						}
 						lifetime_idx++;
-						year_idx++;
 					}
 				}
 			}
