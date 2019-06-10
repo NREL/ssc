@@ -2,7 +2,7 @@
 *  Copyright 2017 Alliance for Sustainable Energy, LLC
 *
 *  NOTICE: This software was developed at least in part by Alliance for Sustainable Energy, LLC
-*  (“Alliance”) under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
+*  (ï¿½Allianceï¿½) under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
 *  The Government retains for itself and others acting on its behalf a nonexclusive, paid-up,
 *  irrevocable worldwide license in the software to reproduce, prepare derivative works, distribute
 *  copies to the public, perform publicly and display publicly, and to permit others to do so.
@@ -26,8 +26,8 @@
 *  4. Redistribution of this software, without modification, must refer to the software by the same
 *  designation. Redistribution of a modified version of this software (i) may not refer to the modified
 *  version by the same designation, or by any confusingly similar designation, and (ii) must refer to
-*  the underlying software originally provided by Alliance as “System Advisor Model” or “SAM”. Except
-*  to comply with the foregoing, the terms “System Advisor Model”, “SAM”, or any confusingly similar
+*  the underlying software originally provided by Alliance as ï¿½System Advisor Modelï¿½ or ï¿½SAMï¿½. Except
+*  to comply with the foregoing, the terms ï¿½System Advisor Modelï¿½, ï¿½SAMï¿½, or any confusingly similar
 *  designation may not be used to refer to any modified version of this software or any modified
 *  version of the underlying software originally provided by Alliance without the prior written consent
 *  of Alliance.
@@ -266,8 +266,8 @@ int windPowerCalculator::windPowerUsingResource(/*INPUTS */ double windSpeed, do
 		*farmPower += power[i];
 
 	// Update down/cross wind distance units for turbine zero (convert from radii to meters)
-	distanceDownwind[0] *= windTurb->rotorDiameter / 2;
-	distanceCrosswind[0] *= windTurb->rotorDiameter / 2;
+	distanceDownwind[0] *= windTurb->rotorDiameter / 2.;
+	distanceCrosswind[0] *= windTurb->rotorDiameter / 2.;
 
 	// Re-sort output arrays by wind turbine ID (0..nwt-1)
 	// for consistent reporting
@@ -279,8 +279,8 @@ int windPowerCalculator::windPowerUsingResource(/*INPUTS */ double windSpeed, do
 		e = eff[j];
 		w = adWindSpeed[j];
 		b = TI[j];
-		dd = distanceDownwind[j] * windTurb->rotorDiameter / 2; // convert back to meters from radii
-		dc = distanceCrosswind[j] * windTurb->rotorDiameter / 2;
+		dd = distanceDownwind[j] * windTurb->rotorDiameter / 2.; // convert back to meters from radii
+		dc = distanceCrosswind[j] * windTurb->rotorDiameter / 2.;
 		wid = wt_id[j];
 
 		i = j;
@@ -353,4 +353,115 @@ double windPowerCalculator::windPowerUsingWeibull(double weibull_k, double avg_s
 
 	// calculate output accounting for losses
 	return total_energy_turbine;
+}
+
+double windPowerCalculator::windPowerUsingDistribution(double windSpeed, double windDirDeg)
+{
+    if ((nTurbines > MAX_WIND_TURBINES) || (nTurbines < 1))
+    {
+        errDetails = "The number of wind turbines was greater than the maximum allowed in the wake model.";
+        return 0;
+    }
+
+    size_t i, j;
+    //unsigned char wt_id[MAX_WIND_TURBINES], wid; // unsigned char has 256 limit
+    size_t wt_id[MAX_WIND_TURBINES], wid;
+
+    for (i = 0; i<nTurbines; i++)
+        wt_id[i] = i;
+
+
+    // if performing power curve correction, convert barometric pressure in ATM to air density
+
+    // calculate output power of a turbine
+    double fTurbine_output(0.0), fThrust_coeff(0.0);
+    windTurb->turbinePower(windSpeed, physics::AIR_DENSITY_SEA_LEVEL, &fTurbine_output, &fThrust_coeff);
+    if (windTurb->errDetails.length() > 0){
+        errDetails = windTurb->errDetails;
+        return 0;
+    }
+
+    double farmPower;
+    // if there is only one turbine, we're done
+    if (nTurbines < 2)
+    {
+        return fTurbine_output;
+    }
+
+    // if power output of first turbine is zero, then it will be for the rest: we're done
+    if (fTurbine_output <= 0.0)
+    {
+        return 0.0;
+    }
+
+    // ok, let's calculate the farm output
+    //!Convert to d (downwind - axial), c (crosswind - radial) coordinates
+    double d(0.0), c(0.0);
+    std::vector<double> distanceDownwind(nTurbines);	// downwind coordinate of each WT
+    std::vector<double> distanceCrosswind(nTurbines);	// crosswind coordinate of each WT
+    for (i = 0; i<nTurbines; i++)
+    {
+        coordtrans(YCoords[i], XCoords[i], windDirDeg, &d, &c);
+        distanceDownwind[i] = d;
+        distanceCrosswind[i] = c;
+    }
+
+    // Remove negative numbers from downwind, crosswind coordinates
+    double Dmin = distanceDownwind[0];
+    double Cmin = distanceCrosswind[0];
+
+    for (j = 1; j<nTurbines; j++)
+    {
+        Dmin = min_of(distanceDownwind[j], Dmin);
+        Cmin = min_of(distanceCrosswind[j], Cmin);
+    }
+    for (j = 0; j<nTurbines; j++)
+    {
+        distanceDownwind[j] = distanceDownwind[j] - Dmin; // Final downwind coordinates, meters
+        distanceCrosswind[j] = distanceCrosswind[j] - Cmin; // Final crosswind coordinates, meters
+    }
+
+    // Convert downwind, crosswind measurements from meters into wind turbine radii
+    for (i = 0; i<nTurbines; i++)
+    {
+        distanceDownwind[i] = 2.0*distanceDownwind[i] / windTurb->rotorDiameter;
+        distanceCrosswind[i] = 2.0*distanceCrosswind[i] / windTurb->rotorDiameter;
+    }
+
+    // Sort aDistanceDownwind, aDistanceCrosswind arrays by downwind distance, aDistanceDownwind[0] is smallest downwind distance, presumably zero
+    for (j = 1; j<nTurbines; j++)
+    {
+        d = distanceDownwind[j]; // pick out each element
+        c = distanceCrosswind[j];
+        wid = wt_id[j];
+
+        i = j;
+        while (i > 0 && distanceDownwind[i - 1] > d) // look for place to insert item
+        {
+            distanceDownwind[i] = distanceDownwind[i - 1];
+            distanceCrosswind[i] = distanceCrosswind[i - 1];
+            wt_id[i] = wt_id[i - 1];
+            i--;
+        }
+
+        distanceDownwind[i] = d; // insert it
+        distanceCrosswind[i] = c;
+        wt_id[i] = wid;
+    }
+
+    // calculate the power output of downwind turbines using wake model
+    std::vector<double> power, eff, thrust, adWindSpeed, TI;
+    wakeModel->wakeCalculations(physics::AIR_DENSITY_SEA_LEVEL, &distanceDownwind[0], &distanceCrosswind[0], &power[0],
+            &eff[0], &thrust[0], &adWindSpeed[0], &TI[0]);
+    if (wakeModel->errDetails.length() > 0){
+        errDetails = wakeModel->errDetails;
+        return 0;
+    }
+
+    // calculate total farm power
+    farmPower = 0;
+    for (i = 0; i<nTurbines; i++)
+        farmPower += power[i];
+
+    return farmPower;
 }

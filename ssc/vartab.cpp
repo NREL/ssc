@@ -115,6 +115,32 @@ std::string var_data::to_string( const var_data &value )
 	return "<invalid>";
 }
 
+std::vector<double> var_data::arr_vector()
+{
+    if (type != SSC_ARRAY)
+        throw std::runtime_error("arr_vector error: var_data type not SSC_ARRAY.");
+    std::vector<double> vec;
+    for (unsigned int i = 0; i < num.length(); i++){
+        vec.push_back(num[i]);
+    }
+    return vec;
+}
+
+std::vector<std::vector<double>> var_data::matrix_vector()
+{
+    if (type != SSC_MATRIX)
+        throw std::runtime_error("arr_matrix error: var_data type not SSC_MATRIX.");
+    std::vector<std::vector<double>> vec;
+    for (unsigned int i = 0; i < num.nrows(); i++){
+        std::vector<double> row;
+        for (unsigned int j = 0; j < num.ncols(); j++){
+            row.push_back(num.at(i, j));
+        }
+        vec.push_back(row);
+    }
+    return vec;
+}
+
 bool var_data::parse( unsigned char type, const std::string &buf, var_data &value )
 {
 	switch(type)

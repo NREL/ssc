@@ -52,6 +52,7 @@
 
 #include "../shared/lib_util.h"
 #include <string>
+#include <vector>
 #include "sscapi.h"
 
 
@@ -108,6 +109,10 @@ public:
 
 	std::string to_string();
 	static std::string to_string( const var_data &value );
+
+	std::vector<double> arr_vector();
+	std::vector<std::vector<double>> matrix_vector();
+
 	static bool parse( unsigned char type, const std::string &buf, var_data &value );
 
 	var_data &operator=(const var_data &rhs) { copy(rhs); return *this; }

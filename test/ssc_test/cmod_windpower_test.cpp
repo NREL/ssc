@@ -197,6 +197,26 @@ TEST_F(CMWindPowerIntegration, Weibull_cmod_windpower) {
 	EXPECT_NEAR(monthly_energy, 15326247, e);
 }
 
+/// Using Weibull Distribution and Wind Direction frequency table
+TEST_F(CMWindPowerIntegration, WindFreq_cmod_windpower) {
+    ssc_data_set_number(data, "wind_resource_model_choice", 1);
+    double dir[20];
+    for (unsigned int i = 0; i < 10; i++) {
+        dir[i] = i + 4;
+    }
+    compute();
+
+    ssc_number_t annual_energy;
+    ssc_data_get_number(data, "annual_energy", &annual_energy);
+    EXPECT_NEAR(annual_energy, 180453760, e);
+
+    ssc_number_t monthly_energy = ssc_data_get_array(data, "monthly_energy", nullptr)[0];
+    EXPECT_NEAR(monthly_energy, 15326247, e);
+
+    monthly_energy = ssc_data_get_array(data, "monthly_energy", nullptr)[11];
+    EXPECT_NEAR(monthly_energy, 15326247, e);
+}
+
 
 /// Icing and Low Temp Cutoff, with Wind Resource Data
 TEST_F(CMWindPowerIntegration, IcingAndLowTempCutoff_cmod_windpower) {
@@ -239,12 +259,12 @@ TEST_F(CMWindPowerIntegration, IcingAndLowTempCutoff_cmod_windpower) {
 
 /// Testing Turbine powercurve calculation
 TEST(windpower_turbine_powercurve, NoData){
-    ASSERT_THROW(windpower_turbine_powercurve(nullptr), std::runtime_error);
+    ASSERT_THROW(WindTurbine_calculate_powercurve(nullptr), std::runtime_error);
 }
 
 TEST(windpower_turbine_powercurve, MissingVariables){
     var_table* vd = new var_table;
-    ASSERT_THROW(windpower_turbine_powercurve(vd), std::runtime_error);
+    ASSERT_THROW(WindTurbine_calculate_powercurve(vd), std::runtime_error);
 }
 
 TEST(windpower_turbine_powercurve, Case1){
@@ -259,7 +279,7 @@ TEST(windpower_turbine_powercurve, Case1){
     vd->assign("cut_out", 25);
     vd->assign("drive_train", 0);
 
-    windpower_turbine_powercurve(vd);
+    WindTurbine_calculate_powercurve(vd);
 
     util::matrix_t<ssc_number_t> ws = vd->lookup("wind_turbine_powercurve_windspeeds")->num;
     util::matrix_t<ssc_number_t> power = vd->lookup("wind_turbine_powercurve_powerout")->num;
@@ -287,7 +307,7 @@ TEST(windpower_turbine_powercurve, Case2){
     vd->assign("cut_out", 25);
     vd->assign("drive_train", 1);
 
-    windpower_turbine_powercurve(vd);
+    WindTurbine_calculate_powercurve(vd);
 
     util::matrix_t<ssc_number_t> ws = vd->lookup("wind_turbine_powercurve_windspeeds")->num;
     util::matrix_t<ssc_number_t> power = vd->lookup("wind_turbine_powercurve_powerout")->num;
@@ -315,7 +335,7 @@ TEST(windpower_turbine_powercurve, Case3){
     vd->assign("cut_out", 25);
     vd->assign("drive_train", 2);
 
-    windpower_turbine_powercurve(vd);
+    WindTurbine_calculate_powercurve(vd);
 
     util::matrix_t<ssc_number_t> ws = vd->lookup("wind_turbine_powercurve_windspeeds")->num;
     util::matrix_t<ssc_number_t> power = vd->lookup("wind_turbine_powercurve_powerout")->num;
@@ -343,7 +363,7 @@ TEST(windpower_turbine_powercurve, Case4){
     vd->assign("cut_out", 25);
     vd->assign("drive_train", 3);
 
-    windpower_turbine_powercurve(vd);
+    WindTurbine_calculate_powercurve(vd);
 
     util::matrix_t<ssc_number_t> ws = vd->lookup("wind_turbine_powercurve_windspeeds")->num;
     util::matrix_t<ssc_number_t> power = vd->lookup("wind_turbine_powercurve_powerout")->num;
