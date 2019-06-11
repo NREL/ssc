@@ -85,8 +85,8 @@ public:
 		measurementHeight = -999;
 		hubHeight = -999;
 		rotorDiameter = -999;
-		lossesAbsolute = -999;
-		lossesPercent = -999;
+		lossesAbsolute = 0;
+		lossesPercent = 0;
         previousAirDensity = physics::AIR_DENSITY_SEA_LEVEL;
 	}
 	bool setPowerCurve(std::vector<double> windSpeeds, std::vector<double> powerOutput);
@@ -94,7 +94,7 @@ public:
 	double tipSpeedRatio(double windSpeed);
 
 	bool isInitialized(){
-		if (shearExponent != -999 && measurementHeight != -999 && hubHeight != -999 && rotorDiameter != -999 && lossesAbsolute != -999 && lossesPercent != -999){
+		if (shearExponent != -999 && measurementHeight != -999 && hubHeight != -999 && rotorDiameter != -999){
 			if (powerCurveArrayLength > 0) return true;
 		}
 		return false;

@@ -8,7 +8,7 @@
 
 #include "cmod_windpower_eqns.h"
 
-void WindTurbine_calculate_powercurve(ssc_data_t data)
+void Turbine_calculate_powercurve(ssc_data_t data)
 {
     auto vt = static_cast<var_table*>(data);
     if (!vt){

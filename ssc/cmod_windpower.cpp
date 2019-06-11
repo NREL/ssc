@@ -227,8 +227,6 @@ void cm_windpower::exec() throw(general_error)
 	wt.shearExponent = as_double("wind_resource_shear");
 	wt.hubHeight = as_double("wind_turbine_hub_ht");
 	wt.measurementHeight = wt.hubHeight;
-	wt.lossesAbsolute = 0;
-	wt.lossesPercent = as_double("wind_farm_losses_percent") / 100.0;
 	wt.rotorDiameter = as_double("wind_turbine_rotor_diameter");
 	ssc_number_t *pc_w = as_array("wind_turbine_powercurve_windspeeds", &wt.powerCurveArrayLength);
 	ssc_number_t *pc_p = as_array("wind_turbine_powercurve_powerout", NULL);
@@ -238,6 +236,15 @@ void cm_windpower::exec() throw(general_error)
 		powerOutput[i] = pc_p[i];
 	}
 	wt.setPowerCurve(windSpeeds, powerOutput);
+	// add up all the percent losses
+	std::vector<std::string> loss_names = { "avail_bop_loss", "avail_grid_loss", "avail_turb_loss", "elec_eff_loss",
+                                         "elec_eff_loss", "env_degrad_loss", "env_exposure_loss", "env_ext_loss",
+                                         "env_icing_loss", "ops_env_loss", "ops_grid_loss", "ops_load_loss",
+                                         "ops_strategies_loss", "turb_generic_loss", "turb_hysteresis_loss",
+                                         "turb_perf_loss", "turb_specific_loss"};
+	for (auto& loss : loss_names){
+	    wt.lossesPercent += as_double(loss);
+	}
 
 	// create windPowerCalculator using windTurbine
 	windPowerCalculator wpc;
@@ -328,7 +335,8 @@ void cm_windpower::exec() throw(general_error)
     // Run Wind Speed x Direction Distribution model if selected
     if (as_integer("wind_resource_model_choice") == 2 ){
 //        std::vector<std::vector<double>> wind_dist = ;
-        double farmpower = wpc.windPowerUsingDistribution(std::move(lookup("wind_resource_distribution")->matrix_vector()));
+        double farmpower = wpc.windPowerUsingDistribution(lookup("wind_resource_distribution")->matrix_vector());
+        farmpower = farmpower * (1 - wt.lossesPercent) - wt.lossesAbsolute * wpc.nTurbines;
 
         int nstep = 8760;
         ssc_number_t farm_kw = farmpower / (ssc_number_t)nstep;

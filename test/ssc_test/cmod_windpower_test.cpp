@@ -289,12 +289,12 @@ TEST_F(CMWindPowerIntegration, IcingAndLowTempCutoff_cmod_windpower) {
 
 /// Testing Turbine powercurve calculation
 TEST(windpower_turbine_powercurve, NoData){
-    ASSERT_THROW(WindTurbine_calculate_powercurve(nullptr), std::runtime_error);
+    ASSERT_THROW(Turbine_calculate_powercurve(nullptr), std::runtime_error);
 }
 
 TEST(windpower_turbine_powercurve, MissingVariables){
     var_table* vd = new var_table;
-    ASSERT_THROW(WindTurbine_calculate_powercurve(vd), std::runtime_error);
+    ASSERT_THROW(Turbine_calculate_powercurve(vd), std::runtime_error);
 }
 
 TEST(windpower_turbine_powercurve, Case1){
@@ -309,7 +309,7 @@ TEST(windpower_turbine_powercurve, Case1){
     vd->assign("cut_out", 25);
     vd->assign("drive_train", 0);
 
-    WindTurbine_calculate_powercurve(vd);
+    Turbine_calculate_powercurve(vd);
 
     util::matrix_t<ssc_number_t> ws = vd->lookup("wind_turbine_powercurve_windspeeds")->num;
     util::matrix_t<ssc_number_t> power = vd->lookup("wind_turbine_powercurve_powerout")->num;
@@ -337,7 +337,7 @@ TEST(windpower_turbine_powercurve, Case2){
     vd->assign("cut_out", 25);
     vd->assign("drive_train", 1);
 
-    WindTurbine_calculate_powercurve(vd);
+    Turbine_calculate_powercurve(vd);
 
     util::matrix_t<ssc_number_t> ws = vd->lookup("wind_turbine_powercurve_windspeeds")->num;
     util::matrix_t<ssc_number_t> power = vd->lookup("wind_turbine_powercurve_powerout")->num;
@@ -365,7 +365,7 @@ TEST(windpower_turbine_powercurve, Case3){
     vd->assign("cut_out", 25);
     vd->assign("drive_train", 2);
 
-    WindTurbine_calculate_powercurve(vd);
+    Turbine_calculate_powercurve(vd);
 
     util::matrix_t<ssc_number_t> ws = vd->lookup("wind_turbine_powercurve_windspeeds")->num;
     util::matrix_t<ssc_number_t> power = vd->lookup("wind_turbine_powercurve_powerout")->num;
@@ -393,7 +393,7 @@ TEST(windpower_turbine_powercurve, Case4){
     vd->assign("cut_out", 25);
     vd->assign("drive_train", 3);
 
-    WindTurbine_calculate_powercurve(vd);
+    Turbine_calculate_powercurve(vd);
 
     util::matrix_t<ssc_number_t> ws = vd->lookup("wind_turbine_powercurve_windspeeds")->num;
     util::matrix_t<ssc_number_t> power = vd->lookup("wind_turbine_powercurve_powerout")->num;

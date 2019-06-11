@@ -14,8 +14,8 @@ struct ssc_equation_entry{
 };
 
 static ssc_equation_entry ssc_equation_table [] = {
-        {"WindTurbine_calculate_powercurve", WindTurbine_calculate_powercurve,
-                           "Windpower", WindTurbine_calculate_powercurve_doc},
+        {"Turbine_calculate_powercurve", Turbine_calculate_powercurve,
+                           "Windpower", Turbine_calculate_powercurve_doc},
         {nullptr, nullptr, nullptr, nullptr}
 };
 

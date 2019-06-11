@@ -8,7 +8,7 @@
 extern "C" {
 #endif
 
-static const char* WindTurbine_calculate_powercurve_doc =
+static const char* Turbine_calculate_powercurve_doc =
     "Calculates the power produced by a wind turbine at windspeeds incremented by 0.25 m/s\\n"
     "Input: var_table with key-value pairs\\n"
     "     'turbine_size' - double [kW]\\n"
@@ -26,7 +26,7 @@ static const char* WindTurbine_calculate_powercurve_doc =
     "     'rated_wind_speed' - double [m/s[\\n"
     "     'hub_efficiency' - array [m/s]";
 
-SSCEXPORT void WindTurbine_calculate_powercurve(ssc_data_t data);
+SSCEXPORT void Turbine_calculate_powercurve(ssc_data_t data);
 
 
 #ifdef __cplusplus
