@@ -67,15 +67,15 @@ class winddata : public winddata_provider
 	size_t irecord;
 	util::matrix_t<double> data;
 public:
-	winddata(var_data *data_table);
+	explicit winddata(var_data *data_table);
 
-	virtual size_t nrecords();
+	size_t nrecords() override;
 
 	ssc_number_t get_number(var_data *v, const char *name);
 
 	ssc_number_t *get_vector(var_data *v, const char *name, size_t *len);
 
-	bool next_timestep(std::vector<double> &values);
+	bool read_line(std::vector<double> &values) override;
 };
 
 class cm_windpower : public compute_module

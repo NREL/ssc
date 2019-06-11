@@ -122,6 +122,7 @@ public:
 			double distCross[] // distance cross wind
 		);
 
+	/// returns energy output of a turbine
 	double windPowerUsingWeibull(
 		double weibull_k, 
 		double avg_speed, 
@@ -129,10 +130,11 @@ public:
 		double energy_turbine[]
 	);
 
-	double windPowerUsingDistribution(
-	    double windSpeed,
-	    double windDirDeg
-    );
+	/// returns energy output of wind farm
+	double windPowerUsingDistribution(std::vector<std::vector<double>>&& wind_dist);
+	double windPowerUsingDistribution(std::vector<std::vector<double>>& wind_dist){
+	    return windPowerUsingDistribution(std::move(wind_dist));
+	}
 };
 
 #endif

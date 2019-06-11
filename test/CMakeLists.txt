@@ -89,7 +89,7 @@ unset(GTEST_LIB CACHE)
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
 	add_executable(Testd 
 		${SSC_TESTS}
-		${SHARED_TEST}
+		${SHARED_TESTS}
 		${TCS_TESTS}
 		${INPUTS_SRC}
 		${SSC_SRC}

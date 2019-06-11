@@ -61,7 +61,7 @@ bool windTurbine::setPowerCurve(std::vector<double> windSpeeds, std::vector<doub
 	}
 	powerCurveWS = windSpeeds;
 	powerCurveKW = powerOutput;
-	densityCorrectedWS = powerCurveKW;
+	densityCorrectedWS = powerCurveWS;
 	powerCurveRPM.resize(powerCurveArrayLength, -1);
 	return 1;
 }

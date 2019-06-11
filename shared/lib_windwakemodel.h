@@ -52,6 +52,7 @@
 
 #include <vector>
 #include "lib_util.h"
+#include "lib_physics.h"
 
 /**
  * windTurbine class stores characteristics of turbine used in simulation and the power curve arrays,

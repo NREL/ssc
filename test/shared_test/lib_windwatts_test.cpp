@@ -88,3 +88,17 @@ TEST_F(windPowerCalculatorTest, windPowerUsingWeibull_lib_windwatts){
 	double energyTotal = wpc.windPowerUsingWeibull(weibullK, avgSpeed, refHeight, &energy[0]); // runs method we want to test
 	EXPECT_NEAR(energyTotal, 5639180, e);
 }
+
+TEST_F(windPowerCalculatorTest, windPowerUsingDistribution_lib_windwatts){
+    // mimic a weibull with k factor 2 and avg speed 7.25 for comparison -> scale param : 8.181
+    std::vector<std::vector<double>> dst = {{1.5, 180, .12583},
+                                            {5, 180, .3933},
+                                            {8, 180, .18276},
+                                            {10, 180, .1341},
+                                            {13.5, 180, .14217},
+                                            {19, 180, .0211}};
+    std::shared_ptr<wakeModelBase> wakeModel = std::make_shared<fakeWakeModel>();
+    wpc.InitializeModel(wakeModel);
+    double energyTotal = wpc.windPowerUsingDistribution(dst);
+    EXPECT_NEAR(energyTotal, 15075000, e);
+}

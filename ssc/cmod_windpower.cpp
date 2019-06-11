@@ -198,7 +198,7 @@ ssc_number_t *winddata::get_vector(var_data *v, const char *name, size_t *len)
 	return p;
 }
 
-bool winddata::next_timestep(std::vector<double> &values)
+bool winddata::read_line(std::vector<double> &values)
 {
 	if (irecord >= data.nrows()
 		|| data.ncols() == 0
@@ -327,20 +327,13 @@ void cm_windpower::exec() throw(general_error)
 
     // Run Wind Speed x Direction Distribution model if selected
     if (as_integer("wind_resource_model_choice") == 2 ){
-        std::vector<std::vector<double>> wind_dist = lookup("wind_resource_distribution")->matrix_vector();
-
-        double farmpower = 0.0;
-        for (auto& row : wind_dist){
-            double& wind_speed = row[0];
-            double& wind_dir = row[1];
-            double power = wpc.windPowerUsingDistribution(wind_speed, wind_dir);
-            farmpower += (8760.0 * row[2]) * power;
-        }
+//        std::vector<std::vector<double>> wind_dist = ;
+        double farmpower = wpc.windPowerUsingDistribution(std::move(lookup("wind_resource_distribution")->matrix_vector()));
 
         int nstep = 8760;
         ssc_number_t farm_kw = farmpower / (ssc_number_t)nstep;
         ssc_number_t *farmpwr = allocate("gen", nstep);
-        for (int i = 0; i < nstep; i++) //nstep is always 8760 for Weibull
+        for (int i = 0; i < nstep; i++)
         {
             farmpwr[i] = farm_kw; // fill "gen"
             farmpwr[i] *= haf(i); //apply adjustment factor/availability and curtailment losses

@@ -197,13 +197,17 @@ TEST_F(CMWindPowerIntegration, Weibull_cmod_windpower) {
 	EXPECT_NEAR(monthly_energy, 15326247, e);
 }
 
-/// Using Weibull Distribution and Wind Direction frequency table
-TEST_F(CMWindPowerIntegration, WindFreq_cmod_windpower) {
-    ssc_data_set_number(data, "wind_resource_model_choice", 1);
-    double dir[20];
-    for (unsigned int i = 0; i < 10; i++) {
-        dir[i] = i + 4;
-    }
+/// Using Wind Resource 2-D Distribution
+TEST_F(CMWindPowerIntegration, WindDist_cmod_windpower) {
+    ssc_data_set_number(data, "wind_resource_model_choice", 2);
+    double dst[12] = {10, 180, .25,
+                      10, 360, .25,
+                      20, 180, .25,
+                      20, 360, .25};
+
+    var_data dist = var_data(dst, 4, 3);
+    auto *vt = static_cast<var_table*>(data);
+    vt->assign("wind_resource_distribution", dist);
     compute();
 
     ssc_number_t annual_energy;
@@ -217,6 +221,32 @@ TEST_F(CMWindPowerIntegration, WindFreq_cmod_windpower) {
     EXPECT_NEAR(monthly_energy, 15326247, e);
 }
 
+/// Using Wind Resource 2-D Distribution
+TEST_F(CMWindPowerIntegration, WindDist2_cmod_windpower) {
+    ssc_data_set_number(data, "wind_resource_model_choice", 2);
+    // mimic a weibull with k factor 2 and avg speed 7.25 for comparison -> scale param : 8.181
+    double dst[18] = {1.5, 180, .12583,
+                      5, 180, .3933,
+                      8, 180, .18276,
+                      10, 180, .1341,
+                      13.5, 180, .14217,
+                      19, 180, .0211};
+
+    var_data dist = var_data(dst, 6, 3);
+    auto *vt = static_cast<var_table*>(data);
+    vt->assign("wind_resource_distribution", dist);
+    compute();
+
+    ssc_number_t annual_energy;
+    ssc_data_get_number(data, "annual_energy", &annual_energy);
+    EXPECT_NEAR(annual_energy, 159806945, e);
+
+    ssc_number_t monthly_energy = ssc_data_get_array(data, "monthly_energy", nullptr)[0];
+    EXPECT_NEAR(monthly_energy, 13572644, e);
+
+    monthly_energy = ssc_data_get_array(data, "monthly_energy", nullptr)[11];
+    EXPECT_NEAR(monthly_energy, 13572644, e);
+}
 
 /// Icing and Low Temp Cutoff, with Wind Resource Data
 TEST_F(CMWindPowerIntegration, IcingAndLowTempCutoff_cmod_windpower) {
@@ -230,7 +260,7 @@ TEST_F(CMWindPowerIntegration, IcingAndLowTempCutoff_cmod_windpower) {
 	}
 	var_data rh_vd = var_data(rh, 8760);
 	windresourcedata->table.assign("rh", rh_vd);
-	var_table *vt = static_cast<var_table*>(data);
+	auto *vt = static_cast<var_table*>(data);
 	vt->assign("wind_resource_data", *windresourcedata);
 	vt->assign("en_low_temp_cutoff", 1);
 	vt->assign("en_icing_cutoff", 1);
