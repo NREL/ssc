@@ -48,7 +48,7 @@ set(SDKTOOL_SRC
 #####################################################################################################################
 
 if(MSVC)
-	add_compile_options(/W3)
+	add_compile_options(/W3 /MP)
 	if (CMAKE_BUILD_TYPE STREQUAL Debug)
         add_compile_options(/MDd)
         add_compile_definitions(_DEBUG)
@@ -68,7 +68,7 @@ else(MSVC)
 		add_definitions(-D__64BIT__)
 	endif()
 	add_compile_options(-Wall -Wno-unknown-pragmas -Werror -Wno-overloaded-virtual -O3 -fno-common -std=c++11)
-	add_definitions(-DLK_USE_WXWIDGETS WX_PRECOMP )
+	add_definitions(-DLK_USE_WXWIDGETS -DWX_PRECOMP )
 endif(MSVC)
 
 

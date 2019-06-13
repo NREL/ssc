@@ -46,7 +46,7 @@ set(TCSCONSOLE_SRC
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 if(MSVC)
-	add_compile_options(/W3)
+	add_compile_options(/W3 /MP)
 	if (CMAKE_BUILD_TYPE STREQUAL Debug)
         add_compile_options(/MDd)
         add_compile_definitions(_DEBUG)

@@ -9,8 +9,8 @@
       ],
       "buildRoot": "${env.USERPROFILE}\\CMakeBuilds\\${workspaceHash}\\build\\${name}",
       "installRoot": "${env.USERPROFILE}\\CMakeBuilds\\${workspaceHash}\\install\\${name}",
-      "cmakeCommandArgs": "-DCMAKE_SYSTEM_VERSION=8.1 -T v141 -DCMAKE_BUILD_TYPE=Debug",
-      "buildCommandArgs": "-m:4 -v:normal",
+      "cmakeCommandArgs": "-Dsystem_advisor_model_EXPORT=0 -DCMAKE_BUILD_TYPE=Debug",
+      "buildCommandArgs": "",
       "ctestCommandArgs": ""
     },
     {
@@ -22,8 +22,8 @@
       ],
       "buildRoot": "${env.USERPROFILE}\\CMakeBuilds\\${workspaceHash}\\build\\${name}",
       "installRoot": "${env.USERPROFILE}\\CMakeBuilds\\${workspaceHash}\\install\\${name}",
-      "cmakeCommandArgs": "-DCMAKE_SYSTEM_VERSION=8.1 -T v141 -Dsystem_advisor_model_EXPORT=1 -DCMAKE_BUILD_TYPE=Release",
-      "buildCommandArgs": "-m:4 -v:normal",
+      "cmakeCommandArgs": "-Dsystem_advisor_model_EXPORT=1 -DCMAKE_BUILD_TYPE=Release",
+      "buildCommandArgs": "",
       "ctestCommandArgs": ""
     },
     {
@@ -35,8 +35,8 @@
       ],
       "buildRoot": "${env.USERPROFILE}\\CMakeBuilds\\${workspaceHash}\\build\\${name}",
       "installRoot": "${env.USERPROFILE}\\CMakeBuilds\\${workspaceHash}\\install\\${name}",
-      "cmakeCommandArgs": "-DCMAKE_SYSTEM_VERSION=8.1 -T v141 -Dsystem_advisor_model_EXPORT=0 -DCMAKE_BUILD_TYPE=Release",
-      "buildCommandArgs": "-m:4 -v:normal=",
+      "cmakeCommandArgs": "-Dsystem_advisor_model_EXPORT=0 -DCMAKE_BUILD_TYPE=Release",
+      "buildCommandArgs": "",
       "ctestCommandArgs": ""
     }
 

@@ -78,7 +78,7 @@ set(SHARED_SRC
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 if(MSVC)
-	add_compile_options(/W4 /w44191 /w44242  /w44263 /w44264 /w44265 /w44266 /w44302 /w44388)
+	add_compile_options(/MP /W4 /w44191 /w44242  /w44263 /w44264 /w44265 /w44266 /w44302 /w44388)
 	add_compile_options(/w44826 /w44905 /w44906 /w44928)
 	if (CMAKE_BUILD_TYPE STREQUAL Debug)
         add_compile_options(/MDd)
