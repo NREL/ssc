@@ -60,7 +60,7 @@ class C_pc_sco2 : public C_csp_power_cycle
 
 private:
 
-	C_sco2_recomp_csp mc_sco2_recomp;
+	C_sco2_phx_air_cooler mc_sco2_recomp;
 
 	HTFProperties mc_pc_htfProps;
 
@@ -103,7 +103,7 @@ public:
 
 	struct S_des_par
 	{
-		C_sco2_recomp_csp::S_des_par ms_mc_sco2_recomp_params;
+		C_sco2_phx_air_cooler::S_des_par ms_mc_sco2_recomp_params;
 
 		double m_cycle_max_frac;	//[-] Maximum turbine over-design operation fraction
 		double m_cycle_cutoff_frac;	//[-] Minimum turbine operation fraction
