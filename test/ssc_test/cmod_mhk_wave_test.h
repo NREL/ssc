@@ -2,14 +2,14 @@
 #define CMOD_MHK_WAVE_TEST_H_
 
 #include <gtest/gtest.h>
-#include "test/input_cases/mhk/mhk_wave_inputs.h"
+#include "../test/input_cases/mhk/mhk_wave_inputs.h"
 
 #include "core.h"
 #include "sscapi.h"
 
 #include "../ssc/vartab.h"
 #include "../ssc/common.h"
-#include "test/input_cases/code_generator_utilities.h"
+#include "../test/input_cases/code_generator_utilities.h"
 
 class CM_MHKWave : public ::testing::Test {
 private:

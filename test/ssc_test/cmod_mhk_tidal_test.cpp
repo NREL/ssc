@@ -7,7 +7,7 @@ TEST_F(CM_MHKTidal, ComputeModuleTest) {
 	ssc_number_t annual_energy, average_power, rated_capacity, capacity_factor;
 
 	ssc_data_get_number(data, "annual_energy", &annual_energy);
-	EXPECT_NEAR(annual_energy, 442888288, 1);
+	EXPECT_NEAR(annual_energy, 4428890.84127287, 1);
 
 	ssc_data_get_number(data, "average_power", &average_power);
 	EXPECT_NEAR(average_power, 265.3, 0.5);
