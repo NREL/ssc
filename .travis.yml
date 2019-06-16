@@ -35,7 +35,7 @@ before_script:
 
 script:
   - export PATH=$PATH:$HOME/wx-3.1.1/bin
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then make -C $GTEST/make; fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then make GOOGLETEST_UNSUPPORTED_MAKEFILE_BUILD_SYSTEM_WORKAROUND=1 -C $GTEST/make; fi
  # - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then make -j4 -C $LKDIR/build_linux; fi
  # - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then make -j4 -C $WEXDIR/build_linux; fi
  # - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then make -j4 -C $SSCDIR/build_linux; fi
@@ -51,7 +51,7 @@ script:
 #  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then make -j4 -C $LKDIR/build_osx; fi
 #  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then make -j4 -C $WEXDIR/build_osx; fi
 #  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then make -j4 -C $SSCDIR/build_osx; fi
-  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then make -C $GTEST/make; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then make GOOGLETEST_UNSUPPORTED_MAKEFILE_BUILD_SYSTEM_WORKAROUND=1 -C $GTEST/make; fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then make -f Makefile-splinter -j4 -C $SSCDIR/build_osx; fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then make -f Makefile-shared -j4 -C $SSCDIR/build_osx; fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then make -f Makefile-nlopt -j4 -C $SSCDIR/build_osx; fi
@@ -72,6 +72,4 @@ branches:
   - release
   - develop
   - patch
-  - fuel_cell
-  - ssc_float
-  
+  - mhk
