@@ -92,6 +92,7 @@
     <ClCompile Include="..\ssc\cmod_windfile.cpp" />
     <ClCompile Include="..\ssc\cmod_windpower.cpp" />
     <ClCompile Include="..\ssc\cmod_lcoefcr.cpp" />
+    <ClCompile Include="..\ssc\cmod_windpower_eqns.cpp" />
     <ClCompile Include="..\ssc\cmod_wind_obos.cpp" />
     <ClCompile Include="..\ssc\common_financial.cpp" />
     <ClCompile Include="..\ssc\core.cpp" />
@@ -113,6 +114,7 @@
     <ClInclude Include="..\ssc\common.h" />
     <ClInclude Include="..\ssc\csp_common.h" />
     <ClInclude Include="..\ssc\sscapi.h" />
+    <ClInclude Include="..\ssc\ssc_equations.h" />
     <ClInclude Include="..\ssc\tckernel.h" />
     <ClInclude Include="..\ssc\vartab.h" />
     <ClInclude Include="..\ssc\vbapi.h" />
