@@ -36,6 +36,8 @@ OBJECTS = \
 	cmod_pvwattsv1_1ts.o \
 	cmod_pvwattsv1_poa.o \
 	cmod_battwatts.o \
+	cmod_mhk_wave.o \
+	cmod_mhk_tidal.o \
 	cmod_wfcsv.o \
 	cmod_6parsolve.o \
 	cmod_windpower.o \
