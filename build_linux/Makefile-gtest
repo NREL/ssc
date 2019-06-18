@@ -2,7 +2,7 @@ GTDIR = $(GTEST)
 
 SSCLIB = ./ssc.so
 SPLINTERLIB = ./splinter.a
-GTLIB = $(GTDIR)/make/libgtest_main.a
+GTLIB = $(GTDIR)/build/lib/libgtest_main.a
 
 WARNINGS = -Wno-deprecated
 LIBS = -ldl -lpthread
