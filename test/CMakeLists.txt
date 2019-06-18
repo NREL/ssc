@@ -72,6 +72,7 @@ else()
 	if(CMAKE_BUILD_TYPE STREQUAL "Debug")
 		set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG}")
 		set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}")
+		add_compile_definitions(_DEBUG)
 	else()
 		add_compile_options(-O3)
 	endif()
@@ -88,7 +89,7 @@ unset(GTEST_LIB CACHE)
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
 	add_executable(Testd 
 		${SSC_TESTS}
-		${SHARED_TEST}
+		${SHARED_TESTS}
 		${TCS_TESTS}
 		${INPUTS_SRC}
 		${SSC_SRC}
