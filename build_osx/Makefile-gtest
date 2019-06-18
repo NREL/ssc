@@ -2,11 +2,11 @@ GTDIR = $(GTEST)
 
 SSCLIB = ./ssc.dylib
 SPLINTERLIB = ./splinter.a
-GTLIB = $(GTDIR)/make/libgtest_main.a
+GTLIB = $(GTDIR)/build/lib/libgtest.a
 
 CC = gcc -mmacosx-version-min=10.9
 CXX = g++ -mmacosx-version-min=10.9
-CFLAGS = -g -O2  -I. -I./input_cases -I./shared_test -I./ssc_test -I./tcs_test -I$(GTDIR)/include -I../ssc -I../tcs -I../solarpilot -I../shared -I../splinter $(WARNINGS)
+CFLAGS = -g -O2  -I. -I./input_cases -I./shared_test -I./ssc_test -I./tcs_test -I${GTDIR}/include -I$(GTDIR)/googletest/include -I../ssc -I../tcs -I../solarpilot -I../shared -I../splinter $(WARNINGS)
 CXXFLAGS = $(CFLAGS) -std=gnu++11
 LDFLAGS = $(SPLINTERLIB) $(GTLIB) $(SSCLIB) $(LIBS)
 
