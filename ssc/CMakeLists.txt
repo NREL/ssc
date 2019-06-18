@@ -73,6 +73,7 @@ set(SSC_SRC
 		cmod_pvwattsv1_1ts.cpp
 		cmod_pvwattsv1_poa.cpp
 		cmod_pvwattsv5.cpp
+		cmod_pvwattsv5_lifetime.cpp
 		cmod_saleleaseback.cpp
 		cmod_sco2_air_cooler.cpp
 		cmod_sco2_csp_system.cpp
@@ -115,6 +116,7 @@ set(SSC_SRC
 		cmod_windcsm.cpp
 		cmod_windfile.cpp
 		cmod_windpower.cpp
+        cmod_windpower_eqns.cpp
 		common.cpp
 		common_financial.cpp
 		core.cpp
@@ -152,7 +154,13 @@ else(MSVC)
 		add_definitions(-D__UNIX__)
 	endif()
 	add_definitions(-D__64BIT__)
-	SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wno-unknown-pragmas -O3 -std=c++11" )
+	SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wno-unknown-pragmas -std=c++11" )
+	if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+		set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -O0")
+		set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0")
+	else()
+		add_compile_options(-O3)
+	endif()
 endif(MSVC)
 
 #####################################################################################################################

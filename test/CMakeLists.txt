@@ -63,10 +63,18 @@ if(MSVC)
         add_compile_definitions(NDEBUG )
     endif()
     add_compile_definitions( __64BIT__ __WINDOWS__ _WINDOWS _CRT_SECURE_NO_WARNINGS _MBCS )
-elseif(APPLE)
-	add_compile_options(-Wall -O3 -arch x86_64 -Wno-deprecated)
 else()
-	add_compile_options(-Wall -O3 -std=c++11 -Wno-strict-aliasing -Wno-deprecated-declarations -Wno-unknown-pragmas -Wno-reorder)
+	if(APPLE)
+		add_compile_options(-Wall -arch x86_64 -Wno-deprecated)
+	else()
+		add_compile_options(-Wall -std=c++11 -Wno-strict-aliasing -Wno-deprecated-declarations -Wno-unknown-pragmas -Wno-reorder)
+	endif()
+	if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+		set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG}")
+		set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}")
+	else()
+		add_compile_options(-O3)
+	endif()
 endif(MSVC)
 
 
@@ -141,6 +149,6 @@ if (MSVC)
 	    TARGET ${TEST_EXE}
 	    POST_BUILD
 	    COMMAND ${CMAKE_COMMAND}
-	    ARGS -E copy $ENV{SSCDIR}/ssc/ssc.lib $ENV{SSCDIR}/ssc/ssc.dll ${CMAKE_CURRENT_SOURCE_DIR}
+	    ARGS -E copy $ENV{SSCDIR}/ssc/sscd.lib $ENV{SSCDIR}/ssc/sscd.dll ${CMAKE_CURRENT_SOURCE_DIR}
 	)
 endif()

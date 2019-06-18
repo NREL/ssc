@@ -96,11 +96,17 @@ else(MSVC)
 		SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror -Wno-misleading-indentation -Wno-int-in-bool-context" )
 		add_definitions(-D__64BIT__)
 	endif()
-  	SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -std=c++11" )
+  	SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11" )
 	set_source_files_properties(${SHARED_SRC} PROPERTIES 
 		COMPILE_FLAGS "-Wall -Wno-strict-aliasing -Wno-deprecated-declarations -Wno-unknown-pragmas -Wno-reorder")
 	set_source_files_properties(${SHARED_SRC} PROPERTIES 
 		COMPILE_FLAGS "-Wno-ignored-attributes -Wno-deprecated")
+	if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+		set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG}")
+		set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}")
+	else()
+		add_compile_options(-O3)
+	endif()
 endif(MSVC)
 
 
