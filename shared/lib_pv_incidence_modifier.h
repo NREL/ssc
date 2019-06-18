@@ -8,7 +8,13 @@
 
 static const double n_glass = 1.526;   // !refractive index of glass
 static const double l_glass = 0.002;   // !thickness of glass cover
-static const double k_glass = 4; // proportionality constant for 
+static const double k_glass = 4; // proportionality constant for glass
+
+static const double n_arc = 1.3; // refractive index of the anti-reflective coating
+static const double l_arc = l_glass * 0.01; // thickness of anti-reflective coating- assume 1/100th of thickness of glass
+static const double k_arc = 4; // proportionality constant for the anti-reflective coating
+
+static const double n_air = 1.0; //refractive index of air is 1
 
 double transmittance(double theta1_deg, /* incidence angle of incoming radiation (deg) */
 	double n_cover,  /* refractive index of cover material, n_glass = 1.586 */
@@ -39,7 +45,7 @@ double iamSjerpsKoomen(double n, double incidenceAngleRadians);
 
 /// Calculate Irradiance through the cover using the DeSoto model
 double calculateIrradianceThroughCoverDeSoto(double incidenceAngleDegrees, double zenithAngleDegrees, double tiltDegrees,
-		double poaBeam, double poaSkyDiffuse, double poaGroundReflected);
+		double poaBeam, double poaSkyDiffuse, double poaGroundReflected, bool antiReflectiveGlass);
 
 static const double MarionAOICorrectionFactorsGlass[] = 
 	{0.057563, 0.128570, 0.199651, 0.265024, 0.324661, 0.378968, 0.428391, 0.473670, 0.514788, 0.552454,

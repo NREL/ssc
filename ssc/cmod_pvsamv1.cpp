@@ -1180,8 +1180,8 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 
 					irrad irr(Irradiance->weatherRecord, Irradiance->weatherHeader,
 						Irradiance->skyModel, Irradiance->radiationMode, Subarrays[nn]->trackMode,
-						Irradiance->useWeatherFileAlbedo, Irradiance->instantaneous, Subarrays[nn]->backtrackingEnabled,
-						Irradiance->dtHour, Subarrays[nn]->tiltDegrees, Subarrays[nn]->azimuthDegrees, Subarrays[nn]->trackerRotationLimitDegrees, Subarrays[nn]->groundCoverageRatio,
+						Irradiance->useWeatherFileAlbedo, Irradiance->instantaneous, Subarrays[nn]->backtrackingEnabled, false,
+						Irradiance->dtHour, Subarrays[nn]->tiltDegrees, Subarrays[nn]->azimuthDegrees, Subarrays[nn]->trackerRotationLimitDegrees, 0.0, Subarrays[nn]->groundCoverageRatio,
 						Subarrays[nn]->monthlyTiltDegrees, Irradiance->userSpecifiedMonthlyAlbedo,
 						Subarrays[nn]->poa.poaAll.get());
 											

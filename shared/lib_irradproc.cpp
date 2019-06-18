@@ -279,7 +279,7 @@ void solarpos(int year,int month,int day,int hour,double minute,double lat,doubl
 }
 
 
-void incidence(int mode,double tilt,double sazm,double rlim,double zen,double azm, bool en_backtrack, double gcr, double angle[5])
+void incidence(int mode,double tilt,double sazm,double rlim,double zen,double azm, bool en_backtrack, double gcr, bool force_to_stow, double stow_angle_deg, double angle[5])
 {
 	// Azimuth angles are for N=0 or 2pi, E=pi/2, S=pi, and W=3pi/2.  8/13/98
 
@@ -389,6 +389,10 @@ void incidence(int mode,double tilt,double sazm,double rlim,double zen,double az
 				btdiff *= M_PI/180; // convert output to radians
 				rot = backrot * M_PI/180; // convert backtracked rotation angle to radians
 			}
+
+			//optionally force the tracker to a "stow" angle if specified
+			if (force_to_stow)
+				rot = stow_angle_deg * DTOR;
 
 
 			/* Find tilt angle for the tracking surface */
@@ -882,13 +886,13 @@ irrad::irrad()
 }
 irrad::irrad(weather_record wf, weather_header hdr, 
 	int skyModelIn, int radiationModeIn, int trackModeIn,
-	bool useWeatherFileAlbedo, bool instantaneousWeather, bool backtrackingEnabled,
-	double dtHour, double tiltDegreesIn, double azimuthDegreesIn, double trackerRotationLimitDegreesIn, double groundCoverageRatioIn,
-	std::vector<double> monthlyTiltDegrees, std::vector<double> userSpecifiedAlbedo, 
+	bool useWeatherFileAlbedo, bool instantaneousWeather, bool backtrackingEnabled, bool forceToStowIn,
+	double dtHour, double tiltDegreesIn, double azimuthDegreesIn, double trackerRotationLimitDegreesIn, double stowAngleDegreesIn, 
+	double groundCoverageRatioIn, std::vector<double> monthlyTiltDegrees, std::vector<double> userSpecifiedAlbedo, 
 	poaDecompReq * poaAllIn) : 
-	skyModel(skyModelIn), radiationMode(radiationModeIn), trackingMode(trackModeIn), enableBacktrack(backtrackingEnabled),
+	skyModel(skyModelIn), radiationMode(radiationModeIn), trackingMode(trackModeIn), enableBacktrack(backtrackingEnabled), forceToStow(forceToStowIn),
 	delt(dtHour), tiltDegrees(tiltDegreesIn), surfaceAzimuthDegrees(azimuthDegreesIn), rotationLimitDegrees(trackerRotationLimitDegreesIn),
-	groundCoverageRatio(groundCoverageRatioIn), poaAll(poaAllIn)
+	stowAngleDegrees(stowAngleDegreesIn), groundCoverageRatio(groundCoverageRatioIn), poaAll(poaAllIn)
 {
 	setup();
 	int month_idx = wf.month - 1;
@@ -928,6 +932,7 @@ int irrad::check()
 	if ( tiltDegrees < 0 || tiltDegrees > 90 ) return -8;
 	if ( surfaceAzimuthDegrees < 0 || surfaceAzimuthDegrees >= 360 ) return -9;
 	if ( rotationLimitDegrees < -90 || rotationLimitDegrees > 90 ) return -10;
+	if (stowAngleDegrees < -90 || stowAngleDegrees > 90) return -12;
 	if ( radiationMode == irrad::GH_DF && (globalHorizontal < 0 || globalHorizontal > 1500 || diffuseHorizontal < 0 || diffuseHorizontal > 1500)) return -11;
 	return 0;
 }
@@ -1023,7 +1028,7 @@ void irrad::set_sky_model( int sm, double alb )
 	this->albedo = alb;
 }
 
-void irrad::set_surface( int tracking, double tilt_deg, double azimuth_deg, double rotlim_deg, bool enBacktrack, double gcr )
+void irrad::set_surface( int tracking, double tilt_deg, double azimuth_deg, double rotlim_deg, bool enBacktrack, double gcr, bool forceToStowFlag, double stowAngle )
 {
 	this->trackingMode = tracking;
 	if (tracking == 4)
@@ -1031,6 +1036,8 @@ void irrad::set_surface( int tracking, double tilt_deg, double azimuth_deg, doub
 	this->tiltDegrees = tilt_deg;
 	this->surfaceAzimuthDegrees = azimuth_deg;
 	this->rotationLimitDegrees = rotlim_deg;
+	this->forceToStow = forceToStowFlag;
+	this->stowAngleDegrees = stowAngle;
 	this->enableBacktrack = enBacktrack;
 	this->groundCoverageRatio = gcr;
 }
@@ -1187,7 +1194,8 @@ int irrad::calc()
 	if (timeStepSunPosition[2] > 0)
 	{				
 		// compute incidence angles onto fixed or tracking surface
-		incidence( trackingMode, tiltDegrees, surfaceAzimuthDegrees, rotationLimitDegrees, sunAnglesRadians[1], sunAnglesRadians[0], enableBacktrack, groundCoverageRatio, surfaceAnglesRadians );
+		incidence( trackingMode, tiltDegrees, surfaceAzimuthDegrees, rotationLimitDegrees, sunAnglesRadians[1], sunAnglesRadians[0], 
+			enableBacktrack, groundCoverageRatio, forceToStow, stowAngleDegrees, surfaceAnglesRadians );
 
 		if(radiationMode < irrad::POA_R){
 			double hextra = sunAnglesRadians[8];
@@ -1543,7 +1551,7 @@ void irrad::getFrontSurfaceIrradiances(double pvFrontShadeFraction, double rowTo
 
 	// Calculate components for a 90 degree tilt 
 	double angleTmp[5] = { 0,0,0,0,0 };
-	incidence(0, 90.0, 180.0, 45.0, solarZenithRadians, solarAzimuthRadians, this->enableBacktrack, this->groundCoverageRatio, angleTmp);
+	incidence(0, 90.0, 180.0, 45.0, solarZenithRadians, solarAzimuthRadians, this->enableBacktrack, this->groundCoverageRatio, this->forceToStow, this->stowAngleDegrees, angleTmp);
 	perez(0, calculatedDirectNormal, calculatedDiffuseHorizontal, albedo, angleTmp[0], angleTmp[1], solarZenithRadians, poa, diffc);
 	double horizonDiffuse = diffc[2];
 
@@ -1656,7 +1664,8 @@ void irrad::getFrontSurfaceIrradiances(double pvFrontShadeFraction, double rowTo
 			frontReflected[i] += 0.5 * (cos(j * DTOR) - cos((j + 1) * DTOR)) * actualGroundGHI * this->albedo * (1.0 - MarionAOICorrectionFactorsGlass[j] * (1.0 - reflectanceNormalIncidence));
 		}
 		// Calculate and add direct and circumsolar irradiance components
-		incidence(0, tiltRadians * RTOD, surfaceAzimuthRadians * RTOD, 45.0, solarZenithRadians, solarAzimuthRadians, this->enableBacktrack, this->groundCoverageRatio, surfaceAnglesRadians);
+		incidence(0, tiltRadians * RTOD, surfaceAzimuthRadians * RTOD, 45.0, solarZenithRadians, solarAzimuthRadians, this->enableBacktrack, this->groundCoverageRatio, 
+			this->forceToStow, this->stowAngleDegrees, surfaceAnglesRadians);
 		perez(0, calculatedDirectNormal, calculatedDiffuseHorizontal, albedo, surfaceAnglesRadians[0], surfaceAnglesRadians[1], solarZenithRadians, poa, diffc);
 
 		double cellShade = pvFrontShadeFraction * cellRows - i;
@@ -1701,7 +1710,7 @@ void irrad::getBackSurfaceIrradiances(double pvBackShadeFraction, double rowToRo
 
 	// Calculate components for a 90 degree tilt 
 	double surfaceAnglesRadians90[5] = { 0,0,0,0,0 };
-	incidence(0, 90.0, 180.0, 45.0, solarZenithRadians, solarAzimuthRadians, this->enableBacktrack, this->groundCoverageRatio, surfaceAnglesRadians90);
+	incidence(0, 90.0, 180.0, 45.0, solarZenithRadians, solarAzimuthRadians, this->enableBacktrack, this->groundCoverageRatio, this->forceToStow, this->stowAngleDegrees, surfaceAnglesRadians90);
 	perez(0, calculatedDirectNormal, calculatedDiffuseHorizontal, albedo, surfaceAnglesRadians90[0], surfaceAnglesRadians90[1], solarZenithRadians, planeOfArrayIrradianceRear, diffuseIrradianceRear);
 	double horizonDiffuse = diffuseIrradianceRear[2];
 
@@ -1863,7 +1872,8 @@ void irrad::getBackSurfaceIrradiances(double pvBackShadeFraction, double rowToRo
 			rearIrradiance[i] += 0.5 * (cos(j * DTOR) - cos((j + 1) * DTOR)) * MarionAOICorrectionFactorsGlass[j] * actualGroundGHI * this->albedo;
 		}
 		// Calculate and add direct and circumsolar irradiance components
-		incidence(0, 180.0 - tiltRadians * RTOD, (surfaceAzimuthRadians * RTOD - 180.0), 45.0, solarZenithRadians, solarAzimuthRadians, this->enableBacktrack, this->groundCoverageRatio, surfaceAnglesRadians);
+		incidence(0, 180.0 - tiltRadians * RTOD, (surfaceAzimuthRadians * RTOD - 180.0), 45.0, solarZenithRadians, solarAzimuthRadians, this->enableBacktrack, 
+			this->groundCoverageRatio, this->forceToStow, this->stowAngleDegrees, surfaceAnglesRadians);
 		perez(0, calculatedDirectNormal, calculatedDiffuseHorizontal, albedo, surfaceAnglesRadians[0], surfaceAnglesRadians[1], solarZenithRadians, planeOfArrayIrradianceRear, diffuseIrradianceRear);
 
 		double cellShade = pvBackShadeFraction * cellRows - i;
