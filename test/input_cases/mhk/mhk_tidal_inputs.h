@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include "../test/input_cases/code_generator_utilities.h"
 
+
 void tidal_inputs(ssc_data_t &data) {
 
 	ssc_number_t tidal_resource_definition[68] = {		
