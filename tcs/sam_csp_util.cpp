@@ -1243,7 +1243,8 @@ double CSP::pipe_sched(double De, bool selectLarger)
     double D_m[] = { 0.01855, 0.02173, 0.03115, 0.0374, 0.04375, 0.0499, 0.0626,
         0.06880860, 0.08468360, 0.1082040, 0.16146780, 0.2063750, 0.260350, 0.311150, 0.33975040,
         0.39055040, 0.438150, 0.488950, 0.53340, 0.58420, 0.6350, 0.679450, 0.730250, 0.781050,
-        0.82864960, 0.87630, 1.02870, 1.16840, 1.32080, 1.47320, 1.62560, 1.7780 };
+        0.82864960, 0.87630, 1.02870, 1.16840, 1.32080, 1.47320, 1.62560, 1.7780,
+        1.8796, 1.9812, 2.1844, 2.286 };
     int np = sizeof(D_m) / sizeof(D_m[0]);
 
     if (selectLarger) {
@@ -1259,14 +1260,14 @@ double CSP::pipe_sched(double De, bool selectLarger)
         }
     }
 
-    //Nothing was found, so return an error
+    //Nothing was found, so return the exact pipe diameter instead
     double mtoinch = 39.3700787;
     char buffer[256];
     sprintf(buffer, "No suitable pipe schedule found for this plant design. Looking for a schedule above %.2f in ID. "
         "Maximum schedule is %.2f in ID. Using the exact pipe diameter instead."
         "Consider increasing the header design velocity range or the number of field subsections.",
         De*mtoinch, D_m[np - 1] * mtoinch);
-    throw std::invalid_argument(buffer);
+    //throw std::invalid_argument(buffer);
     return De;  //mjw 10/10/2014 - NO! ---> std::numeric_limits<double>::quiet_NaN();
 }
 

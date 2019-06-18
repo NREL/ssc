@@ -2,7 +2,7 @@
 *  Copyright 2017 Alliance for Sustainable Energy, LLC
 *
 *  NOTICE: This software was developed at least in part by Alliance for Sustainable Energy, LLC
-*  (“Alliance”) under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
+*  (ï¿½Allianceï¿½) under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
 *  The Government retains for itself and others acting on its behalf a nonexclusive, paid-up,
 *  irrevocable worldwide license in the software to reproduce, prepare derivative works, distribute
 *  copies to the public, perform publicly and display publicly, and to permit others to do so.
@@ -26,8 +26,8 @@
 *  4. Redistribution of this software, without modification, must refer to the software by the same
 *  designation. Redistribution of a modified version of this software (i) may not refer to the modified
 *  version by the same designation, or by any confusingly similar designation, and (ii) must refer to
-*  the underlying software originally provided by Alliance as “System Advisor Model” or “SAM”. Except
-*  to comply with the foregoing, the terms “System Advisor Model”, “SAM”, or any confusingly similar
+*  the underlying software originally provided by Alliance as ï¿½System Advisor Modelï¿½ or ï¿½SAMï¿½. Except
+*  to comply with the foregoing, the terms ï¿½System Advisor Modelï¿½, ï¿½SAMï¿½, or any confusingly similar
 *  designation may not be used to refer to any modified version of this software or any modified
 *  version of the underlying software originally provided by Alliance without the prior written consent
 *  of Alliance.
@@ -63,37 +63,57 @@
 enum pvwatts_tracking_input { FIXED_OPEN_RACK, FIXED_ROOF_MOUNT, ONE_AXIS_SELF_SHADED, ONE_AXIS_BACKTRACKED, TWO_AXIS, AZIMUTH_AXIS };
 
 static var_info _cm_vtab_pvwattsv5_part1[] = {
-{ SSC_INPUT , SSC_STRING, "solar_resource_file"       , "Weather file path"                               , ""          , ""                                                             , "Location and Resource", "?"           , ""                   , ""},
-{ SSC_INPUT , SSC_TABLE , "solar_resource_data"       , "Weather data"                                    , ""          , "dn,df,tdry,wspd,lat,lon,tz"                                   , "Location and Resource", "?"           , ""                   , ""},
-var_info_invalid };
+	/*   VARTYPE           DATATYPE          NAME                         LABEL                                               UNITS        META                      GROUP          REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
+		{ SSC_INPUT,        SSC_NUMBER,      "system_use_lifetime_output",     "Run lifetime simulation",                    "0/1",        "",                       "",            "*",                        "",                              "" },
+		{ SSC_INPUT,        SSC_NUMBER,      "analysis_period",                "Analysis period",                            "years",      "",                       "",            "system_use_lifetime_output=1", "",                          "" },
+		{ SSC_INPUT,        SSC_ARRAY,       "dc_degradation",                 "Annual AC degradation",                      "%/year",    "",                        "",            "system_use_lifetime_output=1", "",                          "" },
+		{ SSC_INPUT,        SSC_STRING,      "solar_resource_file",            "Weather file path",                           "",          "",                       "Weather",     "?",                        "",                              "" },
+		{ SSC_INPUT,        SSC_TABLE,       "solar_resource_data",            "Weather data",                                "",          "dn,df,tdry,wspd,lat,lon,tz", "Weather", "?",                        "",                              "" },
+
+		var_info_invalid };
 
 static var_info _cm_vtab_pvwattsv5_common[] = {
-{ SSC_INPUT , SSC_NUMBER, "system_capacity"           , "System size (DC nameplate)"                      , "kW"        , ""                                                             , "System Design"		  , "*"           , ""                   , ""},
-{ SSC_INPUT , SSC_NUMBER, "module_type"               , "Module type"                                     , "0/1/2"     , "Standard,Premium,Thin film"                                   , "System Design"        , "?=0"         , "MIN=0,MAX=2,INTEGER", ""},
-{ SSC_INPUT , SSC_NUMBER, "dc_ac_ratio"               , "DC to AC ratio"                                  , "ratio"     , ""                                                             , "System Design"        , "?=1.1"       , "POSITIVE"           , ""},
-{ SSC_INPUT , SSC_NUMBER, "inv_eff"                   , "Inverter efficiency at rated power"              , "%"         , ""                                                             , "System Design"        , "?=96"        , "MIN=90,MAX=99.5"    , ""},
-{ SSC_INPUT , SSC_NUMBER, "losses"                    , "System losses"                                   , "%"         , "Total system losses"                                          , "System Design"        , "*"           , "MIN=-5,MAX=99"      , ""},
-{ SSC_INPUT , SSC_NUMBER, "array_type"                , "Array type"                                      , "0/1/2/3/4" , "Fixed OR,Fixed Roof,1Axis,Backtracked,2Axis"                  , "System Design"        , "*"           , "MIN=0,MAX=4,INTEGER", ""},
-{ SSC_INPUT , SSC_NUMBER, "tilt"                      , "Tilt angle"                                      , "deg"       , "H=0,V=90"                                                     , "System Design"        , "array_type<4", "MIN=0,MAX=90"       , ""},
-{ SSC_INPUT , SSC_NUMBER, "azimuth"                   , "Azimuth angle"                                   , "deg"       , "E=90,S=180,W=270"                                             , "System Design"        , "array_type<4", "MIN=0,MAX=360"      , ""},
-{ SSC_INPUT , SSC_NUMBER, "gcr"                       , "Ground coverage ratio"                           , "0..1"      , ""                                                             , "System Design"        , "?=0.4"       , "MIN=0,MAX=3"        , ""},
-var_info_invalid };
+	{ SSC_INPUT,        SSC_NUMBER,      "system_capacity",                "System size (DC nameplate)",                  "kW",        "",                           "PVWatts",      "*",                       "",                      "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "module_type",                    "Module type",                                 "0/1/2",     "Standard,Premium,Thin film", "PVWatts",      "?=0",                       "MIN=0,MAX=2,INTEGER",                      "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "dc_ac_ratio",                    "DC to AC ratio",                              "ratio",     "",                           "PVWatts",      "?=1.1",                   "POSITIVE",                                 "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "inv_eff",                        "Inverter efficiency at rated power",          "%",         "",                           "PVWatts",      "?=96",                        "MIN=90,MAX=99.5",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "losses",                         "System losses",                               "%",         "Total system losses",                               "PVWatts",      "*",                       "MIN=-5,MAX=99",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "array_type",                     "Array type",                                  "0/1/2/3/4", "Fixed OR,Fixed Roof,1Axis,Backtracked,2Axis",  "PVWatts",      "*",                       "MIN=0,MAX=4,INTEGER",                      "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "tilt",                           "Tilt angle",                                  "deg",       "H=0,V=90",                                     "PVWatts",      "array_type<4",                       "MIN=0,MAX=90",                             "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "azimuth",                        "Azimuth angle",                               "deg",       "E=90,S=180,W=270",                             "PVWatts",      "array_type<4",                       "MIN=0,MAX=360",                            "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "gcr",                            "Ground coverage ratio",                       "0..1",      "",                                             "PVWatts",      "?=0.4",                   "MIN=0,MAX=3",               "" },
+
+	var_info_invalid };
 
 static var_info _cm_vtab_pvwattsv5_part2[] = {
-{ SSC_INPUT , SSC_MATRIX, "shading:timestep"          , "Time step beam shading loss"                     , "%"         , ""                                                             , "System Design"        , "?"           , ""                   , ""},
-{ SSC_INPUT , SSC_MATRIX, "shading:mxh"               , "Month x Hour beam shading loss"                  , "%"         , ""                                                             , "System Design"        , "?"           , ""                   , ""},
-{ SSC_INPUT , SSC_MATRIX, "shading:azal"              , "Azimuth x altitude beam shading loss"            , "%"         , ""                                                             , "System Design"        , "?"           , ""                   , ""},
-{ SSC_INPUT , SSC_NUMBER, "shading:diff"              , "Diffuse shading loss"                            , "%"         , ""                                                             , "System Design"        , "?"           , ""                   , ""},
+	{ SSC_INPUT,        SSC_MATRIX,      "shading:timestep",               "Time step beam shading loss",                 "%",         "",                        "PVWatts",      "?",                        "",                              "" },
+	{ SSC_INPUT,        SSC_MATRIX,      "shading:mxh",                    "Month x Hour beam shading loss",              "%",         "",                        "PVWatts",      "?",                        "",                              "" },
+	{ SSC_INPUT,        SSC_MATRIX,      "shading:azal",                   "Azimuth x altitude beam shading loss",        "%",         "",                        "PVWatts",      "?",                        "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "shading:diff",                   "Diffuse shading loss",                        "%",         "",                        "PVWatts",      "?",                        "",                              "" },
+
+	/* battery */
+	{ SSC_INPUT,        SSC_NUMBER,      "batt_simple_enable",             "Enable Battery",                              "0/1",        "",                      "battwatts",     "?=0",                     "BOOLEAN",                        "" },
 
 /* battery */
 { SSC_INPUT , SSC_NUMBER, "batt_simple_enable"        , "Enable Battery"                                  , "0/1"       , ""                                                             , "System Design"        , "?=0"         , "BOOLEAN"            , ""},
 
-/* outputs */
-{ SSC_OUTPUT, SSC_ARRAY , "gh"                        , "Global horizontal irradiance"                    , "W/m2"      , ""                                                             , "Time Series"          , "*"           , ""                   , ""},
-{ SSC_OUTPUT, SSC_ARRAY , "dn"                        , "Beam irradiance"                                 , "W/m2"      , ""                                                             , "Time Series"          , "*"           , ""                   , ""},
-{ SSC_OUTPUT, SSC_ARRAY , "df"                        , "Diffuse irradiance"                              , "W/m2"      , ""                                                             , "Time Series"          , "*"           , ""                   , ""},
-{ SSC_OUTPUT, SSC_ARRAY , "tamb"                      , "Ambient temperature"                             , "C"         , ""                                                             , "Time Series"          , "*"           , ""                   , ""},
-{ SSC_OUTPUT, SSC_ARRAY , "wspd"                      , "Wind speed"                                      , "m/s"       , ""                                                             , "Time Series"          , "*"           , ""                   , ""},
+	{ SSC_OUTPUT,       SSC_ARRAY,       "sunup",                          "Sun up over horizon",                         "0/1",    "",                        "Time Series",      "*",                       "",                          "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "shad_beam_factor",               "Shading factor for beam radiation",           "",       "",                        "Time Series",      "*",                       "",                                     "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "aoi",                            "Angle of incidence",                          "deg",    "",                        "Time Series",      "*",                       "",                          "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "poa",                            "Plane of array irradiance",                   "W/m2",   "",                        "Time Series",      "*",                       "",                          "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "tpoa",                           "Transmitted plane of array irradiance",       "W/m2",   "",                        "Time Series",      "*",                       "",                          "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "tcell",                          "Module temperature",                          "C",      "",                        "Time Series",      "*",                       "",                          "" },
+
+	{ SSC_OUTPUT,       SSC_ARRAY,       "dc",                             "DC array power",                              "W",     "",                         "Time Series",      "*",                       "",                          "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "ac",                             "AC inverter power",                           "W",     "",                         "Time Series",      "*",                       "",                          "" },
+	//{ SSC_OUTPUT,       SSC_ARRAY,       "gen",                            "System Power Generated",                      "kW",    "",                         "Time Series",      "*",                       "",                          "" },
+
+
+	{ SSC_OUTPUT,       SSC_ARRAY,       "poa_monthly",                    "Plane of array irradiance",                   "kWh/m2",    "",                     "Monthly",          "*",                       "LENGTH=12",                          "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "solrad_monthly",                 "Daily average solar irradiance",              "kWh/m2/day","",                     "Monthly",          "*",                       "LENGTH=12",                          "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "dc_monthly",                     "DC array output",                             "kWh",       "",                     "Monthly",          "*",                       "LENGTH=12",                          "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "ac_monthly",                     "AC system output",                            "kWh",       "",                     "Monthly",          "*",                       "LENGTH=12",                          "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "monthly_energy",                 "Monthly energy",                              "kWh",       "",                     "Monthly",          "*",                       "LENGTH=12",                          "" },
 
 { SSC_OUTPUT, SSC_ARRAY , "sunup"                     , "Sun up over horizon"                             , "0/1"       , ""                                                             , "Time Series"          , "*"           , ""                   , ""},
 { SSC_OUTPUT, SSC_ARRAY , "shad_beam_factor"          , "Shading factor for beam radiation"               , ""          , ""                                                             , "Time Series"          , "*"           , ""                   , ""},
@@ -105,11 +125,17 @@ static var_info _cm_vtab_pvwattsv5_part2[] = {
 { SSC_OUTPUT, SSC_ARRAY , "dc"                        , "DC array power"                                  , "W"         , ""                                                             , "Time Series"          , "*"           , ""                   , ""},
 { SSC_OUTPUT, SSC_ARRAY , "ac"                        , "AC inverter power"                               , "W"         , ""                                                             , "Time Series"          , "*"           , ""                   , ""},
 
-{ SSC_OUTPUT, SSC_ARRAY , "poa_monthly"               , "Plane of array irradiance"                       , "kWh/m2"    , ""                                                             , "Monthly"              , "*"           , "LENGTH=12"          , ""},
-{ SSC_OUTPUT, SSC_ARRAY , "solrad_monthly"            , "Daily average solar irradiance"                  , "kWh/m2/day", ""                                                             , "Monthly"              , "*"           , "LENGTH=12"          , ""},
-{ SSC_OUTPUT, SSC_ARRAY , "dc_monthly"                , "DC array output"                                 , "kWh"       , ""                                                             , "Monthly"              , "*"           , "LENGTH=12"          , ""},
-{ SSC_OUTPUT, SSC_ARRAY , "ac_monthly"                , "AC system output"                                , "kWh"       , ""                                                             , "Monthly"              , "*"           , "LENGTH=12"          , ""},
-{ SSC_OUTPUT, SSC_ARRAY , "monthly_energy"            , "Monthly energy"                                  , "kWh"       , ""                                                             , "Monthly"              , "*"           , "LENGTH=12"          , ""},
+	{ SSC_OUTPUT,       SSC_STRING,      "location",                       "Location ID",                                 "",    "",                        "Location",      "*",                       "",                          "" },
+	{ SSC_OUTPUT,       SSC_STRING,      "city",                           "City",                                        "",    "",                        "Location",      "*",                       "",                          "" },
+	{ SSC_OUTPUT,       SSC_STRING,      "state",                          "State",                                       "",    "",                        "Location",      "*",                       "",                          "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "lat",                            "Latitude",                                    "deg", "",                        "Location",      "*",                       "",                          "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "lon",                            "Longitude",                                   "deg", "",                        "Location",      "*",                       "",                          "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "tz",                             "Time zone",                                   "hr",  "",                        "Location",      "*",                       "",                          "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "elev",                           "Site elevation",                              "m",   "",                        "Location",      "*",                       "",                          "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "inverter_model",                 "Inverter model specifier",                     "",                              "0=cec,1=datasheet,2=partload,3=coefficientgenerator,4=generic", "", "", "INTEGER,MIN=0,MAX=4", "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "inverter_efficiency",            "Inverter efficiency at rated power",          "%",         "",                  "PVWatts",      "?=96",                        "MIN=90,MAX=99.5",                              "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "ts_shift_hours",                 "Time offset for interpreting time series outputs",  "hours", "",                "Miscellaneous", "*",                       "",                          "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "percent_complete",               "Estimated percent of total comleted simulation", "%", "",                       "Miscellaneous", "",                        "",                          "" },
 
 { SSC_OUTPUT, SSC_NUMBER, "solrad_annual"             , "Daily average solar irradiance"                  , "kWh/m2/day", ""                                                             , "Annual"               , "*"           , ""                   , ""},
 { SSC_OUTPUT, SSC_NUMBER, "ac_annual"                 , "Annual AC system output"                         , "kWh"       , ""                                                             , "Annual"               , "*"           , ""                   , ""},
@@ -372,8 +398,6 @@ public:
 
 	void exec() throw(general_error)
 	{
-		// no lifetime simulation
-		assign("system_use_lifetime_output", 0);
 
 		// don't add "gen" output if battery enabled, gets added later
 		if (!as_boolean("batt_simple_enable"))
@@ -440,7 +464,29 @@ public:
 
 		weather_record wf;
 
+		size_t nyears = 1;
+		std::vector<double> degradationFactor;
+		if (as_boolean("system_use_lifetime_output")) {
+			nyears = as_unsigned_long("analysis_period");
+			std::vector<double> ac_degradation = as_vector_double("dc_degradation");
+			if (ac_degradation.size() == 1) {
+				degradationFactor.push_back(1.0);
+				for (size_t y = 1; y < nyears; y++) {
+					degradationFactor.push_back(pow((1.0 - ac_degradation[0] / 100.0), y));
+				}
+			}
+			else {
+				for (size_t y = 0; y < nyears; y++) {
+					degradationFactor.push_back(1.0 - ac_degradation[y] / 100.0);
+				}
+			}
+		}
+		else {
+			degradationFactor.push_back(1.0);
+		}
+
 		size_t nrec = wdprov->nrecords();
+		size_t nlifetime = nrec * nyears;
 		size_t step_per_hour = nrec / 8760;
 		if (step_per_hour < 1 || step_per_hour > 60 || step_per_hour * 8760 != nrec)
 			throw exec_error("pvwattsv5", util::format("invalid number of data records (%d): must be an integer multiple of 8760", (int)nrec));
@@ -461,7 +507,7 @@ public:
 		ssc_number_t *p_tpoa = allocate("tpoa", nrec);
 		ssc_number_t *p_dc = allocate("dc", nrec);
 		ssc_number_t *p_ac = allocate("ac", nrec);
-		ssc_number_t *p_gen = allocate("gen", nrec);
+		ssc_number_t *p_gen = allocate("gen", nlifetime);
 
 		double ts_hour = 1.0 / step_per_hour;
 
@@ -469,85 +515,92 @@ public:
 
 		double annual_kwh = 0;
 
-		size_t hour = 0, idx = 0;
-		while (hour < 8760)
+		size_t idx_life = 0;
+		float percent = 0;
+		for (size_t y = 0; y < nyears; y++)
 		{
+			size_t idx = 0;
+			for (size_t hour = 0; hour < 8760; hour++)
+			{
 
 #define NSTATUS_UPDATES 50  // set this to the number of times a progress update should be issued for the simulation
-			if (hour % (8760 / NSTATUS_UPDATES) == 0)
-			{
-				float percent = 100.0f * ((float)hour + 1) / ((float)8760);
-				if (!update("", percent, (float)hour))
-					throw exec_error("pvwattsv5", "simulation canceled at hour " + util::to_string(hour + 1.0));
-			}
-
-
-			for (size_t jj = 0; jj < step_per_hour; jj++)
-			{
-				if (!wdprov->read(&wf))
-					throw exec_error("pvwattsv5", util::format("could not read data line %d of %d in weather file", (int)(idx + 1), (int)nrec));
-
-
-				p_gh[idx] = (ssc_number_t)wf.gh;
-				p_dn[idx] = (ssc_number_t)wf.dn;
-				p_df[idx] = (ssc_number_t)wf.df;
-				p_tamb[idx] = (ssc_number_t)wf.tdry;
-				p_wspd[idx] = (ssc_number_t)wf.wspd;
-				p_tcell[idx] = (ssc_number_t)wf.tdry;
-
-				double alb = 0.2; // do not increase albedo if snow exists in TMY2			
-				if (std::isfinite(wf.alb) && wf.alb > 0 && wf.alb < 1)
-					alb = wf.alb;
-
-				int code = process_irradiance(wf.year, wf.month, wf.day, wf.hour, wf.minute,
-					instantaneous ? IRRADPROC_NO_INTERPOLATE_SUNRISE_SUNSET : ts_hour,
-					hdr.lat, hdr.lon, hdr.tz, wf.dn, wf.df, alb);
-
-				if (-1 == code)
+				if (hour % (8760 / NSTATUS_UPDATES) == 0)
 				{
-					log(util::format("beam irradiance exceeded extraterrestrial value at record [y:%d m:%d d:%d h:%d]",
-						wf.year, wf.month, wf.day, wf.hour));
-				}
-				else if (0 != code)
-					throw exec_error("pvwattsv5",
-						util::format("failed to process irradiation on surface (code: %d) [y:%d m:%d d:%d h:%d]",
-							code, wf.year, wf.month, wf.day, wf.hour));
-
-				p_sunup[idx] = (ssc_number_t)sunup;
-				p_aoi[idx] = (ssc_number_t)aoi;
-
-				double shad_beam = 1.0;
-				if (shad.fbeam(hour, solalt, solazi, jj, step_per_hour))
-					shad_beam = shad.beam_shade_factor();
-
-				p_shad_beam[idx] = (ssc_number_t)shad_beam;
-
-				if (sunup > 0)
-				{
-					powerout((double)idx, shad_beam, shad.fdiff(), wf.dn, alb, wf.wspd, wf.tdry);
-					p_shad_beam[idx] = (ssc_number_t)shad_beam; // might be updated by 1 axis self shading so report updated value
-
-					p_poa[idx] = (ssc_number_t)poa; // W/m2
-					p_tpoa[idx] = (ssc_number_t)tpoa;  // W/m2
-					p_tcell[idx] = (ssc_number_t)pvt;
-					p_dc[idx] = (ssc_number_t)dc; // power, Watts
-					p_ac[idx] = (ssc_number_t)ac; // power, Watts
-
-					// accumulate hourly energy (kWh) (was initialized to zero when allocated)
-					p_gen[idx] = (ssc_number_t)(ac * haf(hour) * 0.001f); // W to kW
-
-					annual_kwh += p_gen[idx];
+					float techs = 3;  // assume that anyone using this module is chaining with fuel cell and battery
+					percent = 100.0f * ((float)idx_life + 1) / ((float)nlifetime) / techs;
+					if (!update("", percent, (float)hour))
+						throw exec_error("pvwattsv5", "simulation canceled at hour " + util::to_string(hour + 1.0));
 				}
 
-				idx++;
-			}
+				for (size_t jj = 0; jj < step_per_hour; jj++)
+				{
+					if (!wdprov->read(&wf))
+						throw exec_error("pvwattsv5", util::format("could not read data line %d of %d in weather file", (int)(idx + 1), (int)nrec));
 
-			hour++;
+
+					p_gh[idx] = (ssc_number_t)wf.gh;
+					p_dn[idx] = (ssc_number_t)wf.dn;
+					p_df[idx] = (ssc_number_t)wf.df;
+					p_tamb[idx] = (ssc_number_t)wf.tdry;
+					p_wspd[idx] = (ssc_number_t)wf.wspd;
+					p_tcell[idx] = (ssc_number_t)wf.tdry;
+
+					double alb = 0.2; // do not increase albedo if snow exists in TMY2			
+					if (std::isfinite(wf.alb) && wf.alb > 0 && wf.alb < 1)
+						alb = wf.alb;
+
+					int code = process_irradiance(wf.year, wf.month, wf.day, wf.hour, wf.minute,
+						instantaneous ? IRRADPROC_NO_INTERPOLATE_SUNRISE_SUNSET : ts_hour,
+						hdr.lat, hdr.lon, hdr.tz, wf.dn, wf.df, alb);
+
+					if (-1 == code)
+					{
+						log(util::format("beam irradiance exceeded extraterrestrial value at record [y:%d m:%d d:%d h:%d]",
+							wf.year, wf.month, wf.day, wf.hour));
+					}
+					else if (0 != code)
+						throw exec_error("pvwattsv5",
+							util::format("failed to process irradiation on surface (code: %d) [y:%d m:%d d:%d h:%d]",
+								code, wf.year, wf.month, wf.day, wf.hour));
+
+					p_sunup[idx] = (ssc_number_t)sunup;
+					p_aoi[idx] = (ssc_number_t)aoi;
+
+					double shad_beam = 1.0;
+					if (shad.fbeam(hour, solalt, solazi, jj, step_per_hour))
+						shad_beam = shad.beam_shade_factor();
+
+					p_shad_beam[idx] = (ssc_number_t)shad_beam;
+
+					if (sunup > 0)
+					{
+						powerout((double)idx, shad_beam, shad.fdiff(), wf.dn, alb, wf.wspd, wf.tdry);
+						p_shad_beam[idx] = (ssc_number_t)shad_beam; // might be updated by 1 axis self shading so report updated value
+
+						p_poa[idx] = (ssc_number_t)poa; // W/m2
+						p_tpoa[idx] = (ssc_number_t)tpoa;  // W/m2
+						p_tcell[idx] = (ssc_number_t)pvt;
+						p_dc[idx] = (ssc_number_t)dc; // power, Watts
+						p_ac[idx] = (ssc_number_t)ac; // power, Watts
+						p_gen[idx_life] = (ssc_number_t)(ac * haf(hour) * util::watt_to_kilowatt * degradationFactor[y]);
+
+						if (y == 0) {
+							annual_kwh += p_gen[idx] / step_per_hour;
+						}
+					}
+					idx++;
+					idx_life++;
+				}
+			}
+			wdprov->rewind();
+			if (y == 0) {
+				accumulate_monthly("gen", "monthly_energy", ts_hour);
+				accumulate_annual("gen", "annual_energy", ts_hour);
+			}
 		}
 
 		accumulate_monthly("dc", "dc_monthly", 0.001*ts_hour);
 		accumulate_monthly("ac", "ac_monthly", 0.001*ts_hour);
-		accumulate_monthly("gen", "monthly_energy", ts_hour);
 
 		ssc_number_t *poam = accumulate_monthly("poa", "poa_monthly", 0.001*ts_hour); // convert to energy
 		ssc_number_t *solrad = allocate("solrad_monthly", 12);
@@ -560,7 +613,6 @@ public:
 		assign("solrad_annual", var_data(solrad_ann / 12));
 
 		accumulate_annual("ac", "ac_annual", 0.001*ts_hour);
-		accumulate_annual("gen", "annual_energy", ts_hour);
 
 		assign("location", var_data(hdr.location));
 		assign("city", var_data(hdr.city));
@@ -569,15 +621,14 @@ public:
 		assign("lon", var_data((ssc_number_t)hdr.lon));
 		assign("tz", var_data((ssc_number_t)hdr.tz));
 		assign("elev", var_data((ssc_number_t)hdr.elev));
+		assign("percent_complete", var_data((ssc_number_t)percent));
 
 		// for battery model, force inverter model
 		assign("inverter_model", var_data((ssc_number_t)4));
 		assign("inverter_efficiency", var_data((ssc_number_t)(as_double("inv_eff"))));
 
 		// metric outputs moved to technology
-		double kWhperkW = 1000.0*annual_kwh / dc_nameplate;
-		// adjustment for timestep values
-		kWhperkW *= ts_hour;
+		double kWhperkW = util::kilowatt_to_watt*annual_kwh / dc_nameplate;
 		assign("capacity_factor", var_data((ssc_number_t)(kWhperkW / 87.6)));
 		assign("kwh_per_kw", var_data((ssc_number_t)kWhperkW));
 	}

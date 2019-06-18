@@ -1041,9 +1041,11 @@ public:
 
 			if (is_sco2_preprocess == 1)
 			{
+                double comp_var_tol = 1.E-6;    //[-]
+
 				double _sco2_P_high_limit = as_double("_sco2_P_high_limit");   //[MPa]
 				double P_high_limit = as_double("P_high_limit");			   //[MPa]
-				if (!std::isfinite(_sco2_P_high_limit) || _sco2_P_high_limit != P_high_limit)
+				if (!std::isfinite(_sco2_P_high_limit) || are_values_sig_different(_sco2_P_high_limit, P_high_limit, comp_var_tol) )
 				{
 					throw exec_error("tcsmolten_salt", util::format("The upper pressure limit used to generate"
 						" the preprocessed sCO2 cycle data, %lg [MPa], is not equal to the input upper pressure limit %lg [MPa]",
@@ -1052,7 +1054,7 @@ public:
 
 				double _sco2_P_ref = as_double("_sco2_P_ref");
 				double P_ref_input = as_double("P_ref");
-				if (!std::isfinite(_sco2_P_ref) || _sco2_P_ref != P_ref_input)
+				if (!std::isfinite(_sco2_P_ref) || are_values_sig_different(_sco2_P_ref, P_ref_input, comp_var_tol) )
 				{
 					throw exec_error("tcsmolten_salt", util::format("The cycle gross power used to generate"
 						" the preprocessed sCO2 cycle data, %lg [MWe], is not equal to the input cycle gross power %lg [MWe]",
@@ -1061,7 +1063,7 @@ public:
 
 				double _sco2_T_amb_des = as_double("_sco2_T_amb_des");
 				double T_amb_des_input = as_double("sco2_T_amb_des");
-				if (!std::isfinite(_sco2_T_amb_des) || _sco2_T_amb_des != T_amb_des_input)
+				if (!std::isfinite(_sco2_T_amb_des) || are_values_sig_different(_sco2_T_amb_des, T_amb_des_input, comp_var_tol) )
 				{
 					throw exec_error("tcsmolten_salt", util::format("The design ambient temperature used to generate"
 						" the preprocessed sCO2 cycle data, %lg [C], is not equal to the input design ambient temperature %lg [C]",
@@ -1070,7 +1072,7 @@ public:
 
 				double _sco2_T_approach = as_double("_sco2_T_approach");
 				double T_approach_input = as_double("sco2_T_approach");
-				if (!std::isfinite(_sco2_T_approach) || _sco2_T_approach != T_approach_input)
+				if (!std::isfinite(_sco2_T_approach) || are_values_sig_different(_sco2_T_approach, T_approach_input, comp_var_tol) )
 				{
 					throw exec_error("tcsmolten_salt", util::format("The compressor approach temperature used to generate"
 						" the preprocessed sCO2 cycle data, %lg [C], is not equal to the input compressor approach temperature %lg [C]",
@@ -1079,7 +1081,7 @@ public:
 
 				double _sco2_T_htf_hot_des = as_double("_sco2_T_htf_hot_des");
 				double T_htf_hot_des_input = as_double("T_htf_hot_des");
-				if (!std::isfinite(_sco2_T_htf_hot_des) || _sco2_T_htf_hot_des != T_htf_hot_des_input)
+				if (!std::isfinite(_sco2_T_htf_hot_des) || are_values_sig_different(_sco2_T_htf_hot_des, T_htf_hot_des_input, comp_var_tol) )
 				{
 					throw exec_error("tcsmolten_salt", util::format("The HTF hot temperature uesd to generate"
 						" the preprocessed sCO2 cycle data, %lg [C], is not equal to the input HTF hot temperature",
@@ -1088,7 +1090,7 @@ public:
 
 				double _sco2_deltaT_PHX = as_double("_sco2_deltaT_PHX");
 				double deltaT_PHX_input = as_double("deltaT_PHX");
-				if (!std::isfinite(_sco2_deltaT_PHX) || _sco2_deltaT_PHX != deltaT_PHX_input)
+				if (!std::isfinite(_sco2_deltaT_PHX) || are_values_sig_different(_sco2_deltaT_PHX, deltaT_PHX_input, comp_var_tol) )
 				{
 					throw exec_error("tcsmolten_salt", util::format("The PHX approach temperature used to generate"
 						" the preprocessed sCO2 cycle data, %lg [C], is not equal to the input PHX approach temperature",
@@ -1097,7 +1099,7 @@ public:
 
 				double _sco2_design_eff = as_double("_sco2_design_eff");
 				double design_eff_input = as_double("design_eff");
-				if (!std::isfinite(_sco2_design_eff) || _sco2_design_eff != design_eff_input)
+				if ( !std::isfinite(_sco2_design_eff) || are_values_sig_different(_sco2_design_eff, design_eff_input, comp_var_tol) )
 				{
 					throw exec_error("tcsmolten_salt", util::format("The thermal efficiency used to generate"
 						" the preprocessed sCO2 cycle data, %lg, is not equal to the input thermal efficiency",
@@ -1106,7 +1108,7 @@ public:
 
 				double _sco2_eta_c = as_double("_sco2_eta_c");
 				double eta_c_input = as_double("eta_c");
-				if (!std::isfinite(_sco2_eta_c) || _sco2_eta_c != eta_c_input)
+				if (!std::isfinite(_sco2_eta_c) || are_values_sig_different(_sco2_eta_c, eta_c_input, comp_var_tol) )
 				{
 					throw exec_error("tcsmolten_salt", util::format("The compressor isentropic efficiency used to generate"
 						" the preprocessed sCO2 cycle data, %lg, is not equal to the input compressor isentropic efficiency",
@@ -1115,7 +1117,7 @@ public:
 
 				double _sco2_eta_t = as_double("_sco2_eta_t");
 				double eta_t_input = as_double("eta_t");
-				if (!std::isfinite(_sco2_eta_t) || _sco2_eta_t != eta_t_input)
+				if (!std::isfinite(_sco2_eta_t) || are_values_sig_different(_sco2_eta_t, eta_t_input, comp_var_tol) )
 				{
 					throw exec_error("tcsmolten_salt", util::format("The turbine isentropic efficiency used to generate"
 						" the preprocessed sCO2 cycle data, %lg, is not equal to the input turbine isentropic efficiency",
@@ -1124,7 +1126,7 @@ public:
 
 				double _sco2_recup_eff_max = as_double("_sco2_recup_eff_max");
 				double recup_eff_max = as_double("recup_eff_max");
-				if (!std::isfinite(_sco2_recup_eff_max) || _sco2_recup_eff_max != recup_eff_max)
+				if (!std::isfinite(_sco2_recup_eff_max) || are_values_sig_different(_sco2_recup_eff_max, recup_eff_max, comp_var_tol) )
 				{
 					throw exec_error("tcsmolten_salt", util::format("The max recuperator effectiveness used to generate"
 						" the preprocessed sCO2 cycle data, %lg, is not equal to the input max recuperator effectiveness",
@@ -1195,9 +1197,9 @@ public:
 			else
 			{
 				// ****************************************
-				// C_sco2_recomp_csp::S_des_par  User Defined Parameters
+				// C_sco2_phx_air_cooler::S_des_par  User Defined Parameters
 				// ****************************************
-				C_sco2_recomp_csp::S_des_par sco2_rc_csp_par;
+				C_sco2_phx_air_cooler::S_des_par sco2_rc_csp_par;
 				// System Design Parameters
 				sco2_rc_csp_par.m_hot_fl_code = as_integer("rec_htf");					//[-]
 				sco2_rc_csp_par.mc_hot_fl_props = as_matrix("field_fl_props");			//[-]
@@ -1224,7 +1226,7 @@ public:
 
 				// ****************************************
 				// ****************************************
-				// C_sco2_recomp_csp::S_des_par  Hardcoded Parameters (for now...)
+				// C_sco2_phx_air_cooler::S_des_par  Hardcoded Parameters (for now...)
 				// ****************************************
 				// Cycle design parameters
 				std::vector<double> DP_LT(2);
@@ -1294,20 +1296,20 @@ public:
 					update("Calculating sCO2 design point...", 0.0);
 
 					// Construction class and design system
-					C_sco2_recomp_csp c_sco2_recomp_csp;
+                    C_sco2_phx_air_cooler c_sco2_csp;
 
 					// Pass through callback function and pointer
-					c_sco2_recomp_csp.mf_callback_update = ssc_cmod_update;
-					c_sco2_recomp_csp.mp_mf_update = (void*)(this);
+                    c_sco2_csp.mf_callback_update = ssc_cmod_update;
+                    c_sco2_csp.mp_mf_update = (void*)(this);
 
 					try
 					{
-						c_sco2_recomp_csp.design(sco2_rc_csp_par);
+                        c_sco2_csp.design(sco2_rc_csp_par);
 					}
 					catch (C_csp_exception &csp_exception)
 					{
 						// Report warning before exiting with error
-						while (c_sco2_recomp_csp.mc_messages.get_message(&out_type, &out_msg))
+						while (c_sco2_csp.mc_messages.get_message(&out_type, &out_msg))
 						{
 							log(out_msg + "\n");
 							log("\n");
@@ -1317,7 +1319,7 @@ public:
 					}
 
 					// Get sCO2 design outputs
-					double T_htf_cold_calc = c_sco2_recomp_csp.get_design_solved()->ms_phx_des_solved.m_T_h_out;		//[K]
+					double T_htf_cold_calc = c_sco2_csp.get_design_solved()->ms_phx_des_solved.m_T_h_out;		//[K]
 					log("sCO2 design point calculations complete.", SSC_WARNING);
 					double T_rec_htf_cold = as_double("T_htf_cold_des");			//[C]
 					assign("T_htf_cold_des", T_htf_cold_calc - 273.15);				//[C]
@@ -1327,8 +1329,8 @@ public:
 
 					// Get user-defined power cycle parameters
 					// HTF temperature parametric
-					double T_htf_hot_low = c_sco2_recomp_csp.get_design_par()->m_T_htf_hot_in - 273.15 - 20.0;	//[C]
-					double T_htf_hot_high = c_sco2_recomp_csp.get_design_par()->m_T_htf_hot_in - 273.15 + 15.0;	//[C]
+					double T_htf_hot_low = c_sco2_csp.get_design_par()->m_T_htf_hot_in - 273.15 - 20.0;	//[C]
+					double T_htf_hot_high = c_sco2_csp.get_design_par()->m_T_htf_hot_in - 273.15 + 15.0;	//[C]
 					int n_T_htf_hot_in = 5;				//[-]
 
 					// Ambient temperature parametric
@@ -1338,7 +1340,7 @@ public:
 
 					// HTF mass flow rate parametric
 					double cycle_f_min = as_double("cycle_cutoff_frac");		//[-]
-					bool is_des_rc = c_sco2_recomp_csp.get_design_solved()->ms_rc_cycle_solved.m_is_rc;	//[-]
+					bool is_des_rc = c_sco2_csp.get_design_solved()->ms_rc_cycle_solved.m_is_rc;	//[-]
 					double sco2_f_min = 0.5;
 					std::string cycle_type = "recompression";
 					if (!is_des_rc)
@@ -1363,7 +1365,7 @@ public:
 
 					try
 					{
-						c_sco2_recomp_csp.generate_ud_pc_tables(T_htf_hot_low, T_htf_hot_high, n_T_htf_hot_in,
+                        c_sco2_csp.generate_ud_pc_tables(T_htf_hot_low, T_htf_hot_high, n_T_htf_hot_in,
 							T_amb_low, T_amb_high, n_T_amb_in,
 							m_dot_htf_ND_low, m_dot_htf_ND_high, n_m_dot_htf_ND_in,
 							T_htf_parametrics, T_amb_parametrics, m_dot_htf_ND_parametrics);
@@ -1371,7 +1373,7 @@ public:
 					catch (C_csp_exception &csp_exception)
 					{
 						// Report warning before exiting with error
-						while (c_sco2_recomp_csp.mc_messages.get_message(&out_type, &out_msg))
+						while (c_sco2_csp.mc_messages.get_message(&out_type, &out_msg))
 						{
 							log(out_msg);
 						}
@@ -1419,7 +1421,7 @@ public:
 					pc->m_P_ref = as_double("P_ref");
 					pc->m_eta_ref = as_double("design_eff");
 					pc->m_T_htf_hot_ref = as_double("T_htf_hot_des");
-					pc->m_T_htf_cold_ref = c_sco2_recomp_csp.get_design_solved()->ms_phx_des_solved.m_T_h_out - 273.15;
+					pc->m_T_htf_cold_ref = c_sco2_csp.get_design_solved()->ms_phx_des_solved.m_T_h_out - 273.15;
 					pc->m_cycle_max_frac = as_double("cycle_max_frac");
 					pc->m_cycle_cutoff_frac = as_double("cycle_cutoff_frac");
 					pc->m_q_sby_frac = as_double("q_sby_frac");
@@ -1432,7 +1434,7 @@ public:
 					// User-Defined Cycle Parameters
 					pc->m_is_user_defined_pc = true;
 
-					pc->m_T_amb_des = c_sco2_recomp_csp.get_design_par()->m_T_amb_des - 273.15;	//[C]
+					pc->m_T_amb_des = c_sco2_csp.get_design_par()->m_T_amb_des - 273.15;	//[C]
 					pc->m_W_dot_cooling_des = as_double("fan_power_perc_net") / 100.0*as_double("P_ref");	//[MWe]
 					pc->m_m_dot_water_des = 0.0;		//[kg/s]
 
@@ -1455,7 +1457,7 @@ public:
 				{
 					// ****************************************
 					// ****************************************
-					// C_sco2_recomp_csp::S_des_par   User Defined Parameters
+					// C_sco2_phx_air_cooler::S_des_par   User Defined Parameters
 					// ****************************************
 					sco2_pc.ms_params.m_cycle_max_frac = as_double("cycle_max_frac");			//[-]
 					sco2_pc.ms_params.m_cycle_cutoff_frac = as_double("cycle_cutoff_frac");		//[-]

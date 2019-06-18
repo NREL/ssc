@@ -29,6 +29,12 @@ public:
 		END_SCO2_STATES
 	};
 
+    enum E_turbine_inlet_temp_mode
+    {
+        E_SOLVE_PHX = 0,    // Model solves co2/HTF PHX to find turbine inlet temperature
+        E_SET_T_T_IN        // Model sets turbine inlet temperature to HTF inlet temperature
+    };
+
 	struct S_design_limits
 	{
 		double m_UA_net_power_ratio_max;		//[-/K]
@@ -334,13 +340,33 @@ public:
 		
 		double m_f_mc_pc_bypass;	//[-] Fraction of pre and main compressor flow that is bypassed back to the respective compressor cooler
 
+        // Turbine inlet mode
+        int m_T_t_in_mode;
+
+        // Shaft speed control options
+            // RC shaft speed control option
+        bool m_is_rc_N_od_at_design;  //[-] True: rc off design shaft speed set to design shaft speed
+                                        // False: = m_rc_N_od_in
+        double m_rc_N_od_f_des;        //[-] input RC off design shaft speed fraction of design. used if m_is_rc_N_od_at_design = true
+            // MC shaft speed control option
+        bool m_is_mc_N_od_at_design;  //[-] True: mc off design shaft speed set to design shaft speed
+                                        // False: = m_mc_N_od_in
+        double m_mc_N_od_f_des;        //[-] input MC off design shaft speed fraction of design. used if m_is_mc_N_od_at_design = true
+
 		int m_N_sub_hxrs;		//[-] Number of sub heat exchangers
 		double m_tol;			//[-] Convergence tolerance
 
 		S_od_par()
 		{
 			m_T_mc_in = m_T_pc_in = m_T_t_in = m_P_LP_comp_in = 
+                m_rc_N_od_f_des = m_mc_N_od_f_des =
 				m_tol = std::numeric_limits<double>::quiet_NaN();
+
+            m_T_t_in_mode = E_SOLVE_PHX;  //[-] Default to using PHX and HTF temp and mass flow rate
+
+            m_is_rc_N_od_at_design = true;  //[-] Default to using design RC shaft speed
+            m_is_mc_N_od_at_design = true;  //[-] Default to using design MC shaft speed
+
 			m_N_sub_hxrs = -1;
 
 			m_f_mc_pc_bypass = 0.0;	//[-]

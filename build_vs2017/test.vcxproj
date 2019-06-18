@@ -30,6 +30,7 @@
     <ClCompile Include="..\test\ssc_test\cmod_battery_test.cpp" />
     <ClCompile Include="..\test\ssc_test\cmod_fuelcell_test.cpp" />
     <ClCompile Include="..\test\ssc_test\cmod_generic_test.cpp" />
+    <ClCompile Include="..\test\ssc_test\cmod_grid_test.cpp" />
     <ClCompile Include="..\test\ssc_test\cmod_pvsamv1_test.cpp" />
     <ClCompile Include="..\test\shared_test\lib_windwakemodel_test.cpp" />
     <ClCompile Include="..\test\shared_test\lib_windwatts_test.cpp" />
@@ -51,6 +52,7 @@
     <ClInclude Include="..\test\input_cases\code_generator_utilities.h" />
     <ClInclude Include="..\test\input_cases\fuelcell_common_data.h" />
     <ClInclude Include="..\test\input_cases\generic_common_data.h" />
+    <ClInclude Include="..\test\input_cases\grid_common_data.h" />
     <ClInclude Include="..\test\input_cases\pvsamv1_cases.h" />
     <ClInclude Include="..\test\input_cases\pvsamv1_common_data.h" />
     <ClInclude Include="..\test\input_cases\pvwattsv5_cases.h" />
@@ -74,6 +76,7 @@
     <ClInclude Include="..\test\ssc_test\cmod_biomass_test.h" />
     <ClInclude Include="..\test\ssc_test\cmod_fuelcell_test.h" />
     <ClInclude Include="..\test\ssc_test\cmod_generic_test.h" />
+    <ClInclude Include="..\test\ssc_test\cmod_grid_test.h" />
     <ClInclude Include="..\test\ssc_test\cmod_pvsamv1_test.h" />
     <ClInclude Include="..\test\ssc_test\cmod_pvwattsv5_test.h" />
     <ClInclude Include="..\test\ssc_test\cmod_pvyield_test.h" />

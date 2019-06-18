@@ -33,7 +33,7 @@ TEST_F(CMGeneric, SingleOwnerWithBattery) {
 	ssc_data_set_number(data, "batt_dispatch_choice", 3);
 	set_array(data, "batt_custom_dispatch", generictest::batt_dispatch_path_30min, 8760);
 	EXPECT_FALSE(run_module(data, "generic_system"));
-	EXPECT_TRUE(run_module(data, "battery", false));
+	EXPECT_FALSE(run_module(data, "battery"));
 }
 
 /// Test Generic System with Battery for various timesteps

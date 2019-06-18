@@ -1250,7 +1250,7 @@ int irrad::calc()
 
 }
 
-int irrad::calc_rear_side(double transmissionFactor, double bifaciality, double groundClearanceHeight, double slopeLength)
+int irrad::calc_rear_side(double transmissionFactor, double groundClearanceHeight, double slopeLength)
 {
 	// do irradiance calculations if sun is up
 	if (timeStepSunPosition[2] > 0)
@@ -1293,7 +1293,7 @@ int irrad::calc_rear_side(double transmissionFactor, double bifaciality, double 
 		std::vector<double> rearIrradiancePerCellrow;
 		double rearAverageIrradiance = 0;
 		getBackSurfaceIrradiances(pvBackShadeFraction, rowToRow, verticalHeight, clearanceGround, distanceBetweenRows, horizontalLength, rearGroundGHI, frontGroundGHI, frontReflected, rearIrradiancePerCellrow, rearAverageIrradiance);
-		planeOfArrayIrradianceRearAverage = rearAverageIrradiance * bifaciality;
+		planeOfArrayIrradianceRearAverage = rearAverageIrradiance;
 	}
 	return true;
 }

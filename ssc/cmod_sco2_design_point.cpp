@@ -707,7 +707,7 @@ public:
 		rc_params.m_opt_tol = opt_tol;
 		rc_params.m_N_turbine = N_t_des;
 		
-		C_sco2_recomp_csp::S_des_par sco2_rc_des_par;
+		C_sco2_phx_air_cooler::S_des_par sco2_rc_des_par;
 		double elevation = 300.0;		//[m] Elevation
 			// System design parameters
 		sco2_rc_des_par.m_hot_fl_code = HTFProperties::Salt_60_NaNO3_40_KNO3;
@@ -739,12 +739,12 @@ public:
 		sco2_rc_des_par.m_deltaP_cooler_frac = 0.002;
 
 		// So, there are some useful outputs we probably want here...
-		C_sco2_recomp_csp sco2_recomp_csp;
+		C_sco2_phx_air_cooler sco2_recomp_csp;
 		sco2_recomp_csp.design(sco2_rc_des_par);
 		double m_dot_htf = sco2_recomp_csp.get_phx_des_par()->m_m_dot_hot_des;	//[kg/s]
 		
 		// Try calling off-design model with design parameters
-		C_sco2_recomp_csp::S_od_par sco2_rc_od_par;
+		C_sco2_phx_air_cooler::S_od_par sco2_rc_od_par;
 		sco2_rc_od_par.m_T_htf_hot = sco2_rc_des_par.m_T_htf_hot_in;
 		sco2_rc_od_par.m_m_dot_htf = m_dot_htf;
 		sco2_rc_od_par.m_T_amb = T_amb_cycle_des;

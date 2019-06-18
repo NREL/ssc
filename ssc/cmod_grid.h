@@ -2,7 +2,7 @@
 *  Copyright 2017 Alliance for Sustainable Energy, LLC
 *
 *  NOTICE: This software was developed at least in part by Alliance for Sustainable Energy, LLC
-*  (“Alliance”) under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
+*  (Alliance) under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
 *  The Government retains for itself and others acting on its behalf a nonexclusive, paid-up,
 *  irrevocable worldwide license in the software to reproduce, prepare derivative works, distribute
 *  copies to the public, perform publicly and display publicly, and to permit others to do so.
@@ -26,8 +26,8 @@
 *  4. Redistribution of this software, without modification, must refer to the software by the same
 *  designation. Redistribution of a modified version of this software (i) may not refer to the modified
 *  version by the same designation, or by any confusingly similar designation, and (ii) must refer to
-*  the underlying software originally provided by Alliance as “System Advisor Model” or “SAM”. Except
-*  to comply with the foregoing, the terms “System Advisor Model”, “SAM”, or any confusingly similar
+*  the underlying software originally provided by Alliance as System Advisor Model or SAM. Except
+*  to comply with the foregoing, the terms System Advisor Model, SAM, or any confusingly similar
 *  designation may not be used to refer to any modified version of this software or any modified
 *  version of the underlying software originally provided by Alliance without the prior written consent
 *  of Alliance.
@@ -46,57 +46,111 @@
 *  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
 *  THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *******************************************************************************************************/
+#ifndef _CMOD_GRID_H_
+#define _CMOD_GRID_H_
 
-#ifndef _CSP_COMMON_
-#define _CSP_COMMON_ 1
+#include <map>
 #include <memory>
 
 #include "core.h"
-#include "AutoPilot_API.h"
-#include "lib_weatherfile.h"
+#include "lib_time.h"
 
-#include "sco2_pc_csp_int.h"
-
-class solarpilot_invoke : public var_map
+struct gridVariables
 {
-    compute_module *m_cmod;
-    AutoPilot_S *m_sapi;
-	std::vector<std::vector<double> > _optimization_sim_points;
-	std::vector<double>
-		_optimization_objectives,
-		_optimization_fluxes;
-
 public:
 
-	void getOptimizationSimulationHistory(std::vector<std::vector<double> > &sim_points, std::vector<double> &obj_values, std::vector<double> &flux_values);
-	void setOptimizationSimulationHistory(std::vector<std::vector<double> > &sim_points, std::vector<double> &obj_values, std::vector<double> &flux_values);
+	gridVariables() {/* nothing to do */ };
+	gridVariables(compute_module & cm) : 
+		enable_interconnection_limit(cm.as_boolean("enable_interconnection_limit")),
+		grid_interconnection_limit_kW(cm.as_double("grid_interconnection_limit_kwac"))
+		
+	{
 
-    //sp_optimize opt;
-    /*sp_ambient amb;
-    sp_cost cost;
-    sp_heliostats helios;
-    sp_receivers recs;*/
-    sp_layout layout;
-    sp_flux_table fluxtab;
-    sp_layout_table heliotab;
 
-    solarpilot_invoke( compute_module *cm );
-    ~solarpilot_invoke();
-    AutoPilot_S *GetSAPI();
-    bool run(std::shared_ptr<weather_data_provider> wdata = nullptr);
-    bool postsim_calcs( compute_module *cm );
+		// System generation output, which is lifetime (if system_lifetime_output == true);
+		systemGenerationLifetime_kW = cm.as_vector_double("gen");
+		std::vector<double> load_year_one;
+		size_t n_rec_lifetime = systemGenerationLifetime_kW.size();
+		size_t n_rec_single_year;
+		if (cm.is_assigned("load")) {
+			load_year_one = cm.as_vector_double("load");
+		}
+
+
+		single_year_to_lifetime_interpolated<double>(
+			(bool)cm.as_integer("system_use_lifetime_output"),
+			(size_t)cm.as_integer("analysis_period"),
+			n_rec_lifetime,
+			load_year_one,
+			loadLifetime_kW,
+			n_rec_single_year,
+			dt_hour_gen);
+	
+		numberOfLifetimeRecords = n_rec_lifetime;
+		numberOfSingleYearRecords = n_rec_single_year;
+		numberOfYears = n_rec_lifetime / n_rec_single_year;
+
+		grid_kW.reserve(numberOfLifetimeRecords);
+		systemGenerationPreInterconnect_kW = systemGenerationLifetime_kW;
+	}
+
+	// generation input with interconnection curtailment
+	std::vector<double> systemGenerationLifetime_kW;
+
+	// pre-curailed generation output
+	std::vector<double> systemGenerationPreInterconnect_kW;
+
+	// electric load input
+	std::vector<double> loadLifetime_kW;
+
+	// grid power
+	std::vector<double> grid_kW;
+
+	// enable interconnection limit
+	bool enable_interconnection_limit;
+
+	// interconnection limit
+	double grid_interconnection_limit_kW;
+
+	// Number of records
+	size_t numberOfLifetimeRecords;
+	size_t numberOfSingleYearRecords;
+	size_t numberOfYears;
+	double dt_hour_gen;
 };
 
-bool are_values_sig_different(double v1, double v2, double tol);
+extern var_info vtab_grid_input[];
+extern var_info vtab_grid_output[];
 
-bool ssc_cmod_solarpilot_callback(simulation_info *siminfo, void *data);
+class cm_grid : public compute_module
+{
+public:
 
-extern var_info vtab_sco2_design[];
+	/// Default constructor
+	cm_grid();
 
-int sco2_design_cmod_common(compute_module *cm, C_sco2_phx_air_cooler & c_sco2_cycle);
+	/// Default destructor
+	~cm_grid() { /* nothing to do */ };
 
+	/// construct since compute_module framework is fundamentally broken
+	void construct();
 
+	/// Main execution
+	void exec() throw(general_error);
 
+	/// Allocate Outputs
+	void allocateOutputs();
 
+protected:
+
+	// internally allocated
+	std::unique_ptr<gridVariables> gridVars;
+
+	// outputs
+	ssc_number_t * p_genInterconnect_kW;
+	ssc_number_t * p_genPreInterconnect_kW;
+
+	
+};
 
 #endif
