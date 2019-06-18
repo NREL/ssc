@@ -1,8 +1,8 @@
 #ifndef __ssc_eqn_h
 #define __ssc_eqn_h
 
-#include <ssc/sscapi.h>
-#include <ssc/cmod_windpower_eqns.h>
+#include "sscapi.h"
+#include "cmod_windpower_eqns.h"
 
 typedef void (*ssc_equation_ptr)(ssc_data_t data);
 
