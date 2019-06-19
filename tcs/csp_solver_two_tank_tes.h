@@ -278,10 +278,10 @@ public:
         double V_tes_des;           //[m/s] Design-point velocity for sizing the diameters of the TES piping
         bool custom_tes_p_loss;     //[-] True if the TES piping losses should be calculated using the TES pipe lengths and minor loss coeffs, false if using the pumping loss parameters
         util::matrix_t<double> k_tes_loss_coeffs; //[-] Combined minor loss coefficients of the fittings and valves in the collection (including bypass) and generation loops in the TES 
-        bool custom_sgs_pipe_sizes;               //[-] True if the SGS diameters and wall thicknesses parameters should be used instead of calculating them
-        util::matrix_t<double> sgs_diams;         //[m] Imported inner diameters for the SGS piping as read from the modified output files
-        util::matrix_t<double> sgs_wallthicks;    //[m] Imported wall thicknesses for the SGS piping as read from the modified output files
-        util::matrix_t<double> sgs_lengths;       //[m] Imported lengths for the SGS piping as read from the modified output files
+        bool custom_tes_pipe_sizes;               //[-] True if the TES diameters and wall thicknesses parameters should be used instead of calculating them
+        util::matrix_t<double> tes_diams;         //[m] Imported inner diameters for the TES piping as read from the modified output files
+        util::matrix_t<double> tes_wallthicks;    //[m] Imported wall thicknesses for the TES piping as read from the modified output files
+        util::matrix_t<double> tes_lengths;       //[m] Imported lengths for the TES piping as read from the modified output files
 
 
 
