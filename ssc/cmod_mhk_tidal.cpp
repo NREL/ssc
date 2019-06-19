@@ -61,7 +61,7 @@ static var_info _cm_vtab_mhk_tidal[] = {
 
 	{ SSC_INOUT,			SSC_NUMBER,			"device_rated_capacity",				"Rated capacity of device",													"kW",			"",				"MHKTidal",			"calculate_capacity=0",		"",						"" },
 
-	{ SSC_OUTPUT,			SSC_NUMBER,			"average_power_device",						"Average power production of a single device",								"kW",			"",				"MHKTidal",			"*",						"",						"" },
+	{ SSC_OUTPUT,			SSC_NUMBER,			"average_power_device",					"Average power production of a single device",								"kW",			"",				"MHKTidal",			"*",						"",						"" },
 	{ SSC_OUTPUT,			SSC_NUMBER,			"annual_energy",						"Annual energy production of farm",											"kWh",			"",				"MHKTidal",			"*",						"",						"" },
 	{ SSC_OUTPUT,			SSC_NUMBER,			"capacity_factor",						"Capacity Factor of farm",													"%",			"",				"MHKTidal",			"*",						"",						"" },
 	{ SSC_OUTPUT,			SSC_ARRAY,			"annual_energy_distribution",			"Annual energy production of farm as function of speed",					"kWh",			"",				"MHKTidal",			"*",						"",						"" },
@@ -149,7 +149,7 @@ public:
 			else
 				p_annual_cumulative_energy_dist[i] = p_annual_energy_dist[i] + p_annual_cumulative_energy_dist[i - 1];
 			
-			//Average Power: 
+			//Contribution to Average Power from this speed bin 
 			average_power_device += _power_vect[i] * _probability_vect[i];
 		}
 				
@@ -163,9 +163,6 @@ public:
 
 		//Calculating capacity factor:
 		capacity_factor = annual_energy / (device_rated_capacity * number_devices * 8760);
-
-		//Average power
-		average_power_device /= number_rows;
 
 		//Assigning values to outputs:
 		assign("annual_energy", var_data((ssc_number_t)annual_energy));

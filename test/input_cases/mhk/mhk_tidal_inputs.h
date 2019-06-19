@@ -7,7 +7,7 @@
 
 void tidal_inputs(ssc_data_t &data) {
 
-	ssc_number_t tidal_resource_definition[68] = {		
+	ssc_number_t tidal_resource[68] = {		
 0.0, 0.0090,
 0.1, 0.0310,
 0.2, 0.0420,
@@ -43,7 +43,7 @@ void tidal_inputs(ssc_data_t &data) {
 3.2, 0.0000,
 3.3, 0.0000
 	};
-	ssc_data_set_matrix(data, "tidal_resource_definition", tidal_resource_definition, 34, 2);
+	ssc_data_set_matrix(data, "tidal_resource", tidal_resource, 34, 2);
 
 	ssc_number_t tidal_power_curve[68] = {
 0.0, 0,
