@@ -1152,6 +1152,20 @@ public:
 		// use DHF named range names for variables whenever possible
 		double nameplate = as_double("system_capacity");
 		double year1_fuel_use = as_double("annual_fuel_usage"); // kWht
+		std::vector<double> fuel_use;
+		if ((as_integer("system_use_lifetime_output") == 1) && is_assigned("annual_fuel_usage_lifetime")) {
+			fuel_use = as_vector_double("annual_fuel_usage_lifetime");
+			if (fuel_use.size() != (size_t)(nyears + 1)) {
+				throw exec_error("singleowner", util::format("fuel usage years (%d) not equal to analysis period years (%d).", (int)fuel_use.size()-1, nyears));
+			}
+		}
+		else {
+			fuel_use.push_back(0.);
+			for (size_t y = 0; y < (size_t)(nyears); y++) {
+				fuel_use.push_back(year1_fuel_use);
+			}
+		}
+
 	
 		double assessed_frac = as_double("prop_tax_cost_assessed_percent")*0.01;
 		double salvage_value_frac = as_double("salvage_percentage")*0.01;
@@ -1340,7 +1354,7 @@ public:
 			cf.at(CF_om_capacity_expense, i) *= nameplate;
 			cf.at(CF_om_capacity1_expense, i) *= nameplate1;
 			cf.at(CF_om_capacity2_expense, i) *= nameplate2;
-			cf.at(CF_om_fuel_expense,i) *= year1_fuel_use;
+			cf.at(CF_om_fuel_expense,i) *= fuel_use[i];
 
 			cf.at(CF_om_opt_fuel_1_expense,i) *= om_opt_fuel_1_usage;
 			cf.at(CF_om_opt_fuel_2_expense,i) *= om_opt_fuel_2_usage;

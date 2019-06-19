@@ -112,7 +112,7 @@ public:
 	bool SetUserDefinedFluid( const util::matrix_t<double> &table );
 	bool SetUserDefinedFluid(const util::matrix_t<double> &table, bool calc_temp_enth_table);
 
-	double Cp( double T_K );
+	double Cp( double T_K );    //[kJ/kg-K]
 	double dens( double T_K, double P );
 	double visc( double T_K );
 	double cond( double T_K );

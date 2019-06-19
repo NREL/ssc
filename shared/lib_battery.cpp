@@ -802,6 +802,9 @@ void lifetime_t::copy(lifetime_t * lifetime)
 	_q = lifetime->_q;
 }
 double lifetime_t::capacity_percent(){ return _q; }
+double lifetime_t::capacity_percent_cycle() { return _lifetime_cycle->capacity_percent(); }
+double lifetime_t::capacity_percent_calendar() { return _lifetime_calendar->capacity_percent(); }
+
 void lifetime_t::runLifetimeModels(size_t idx, capacity_t * capacity, double T_battery)
 {
 	double q_last = _q;
@@ -891,11 +894,14 @@ void lifetime_cycle_t::copy(lifetime_cycle_t * lifetime_cycle)
 	_Range = lifetime_cycle->_Range;
 	_average_range = lifetime_cycle->_average_range;
 }
-double lifetime_cycle_t::computeCycleDamageAtDOD(double DOD)
+double lifetime_cycle_t::estimateCycleDamage()
 {
-	if (DOD == 0)
+	// Initialize assuming 50% DOD
+	double DOD = 50;
+	if (_average_range > 0){
 		DOD = _average_range;
-	return(_q - bilinear(DOD, _nCycles + 1));
+	}
+	return(bilinear(DOD, _nCycles+1) - bilinear(DOD, _nCycles + 2));
 }
 double lifetime_cycle_t::runCycleLifetime(double DOD)
 {
@@ -1013,7 +1019,8 @@ void lifetime_cycle_t::replaceBattery()
 
 int lifetime_cycle_t::cycles_elapsed(){ return _nCycles; }
 double lifetime_cycle_t::cycle_range(){ return _Range; }
-
+double lifetime_cycle_t::average_range() { return _average_range; }
+double lifetime_cycle_t::capacity_percent() { return _q; }
 
 double lifetime_cycle_t::bilinear(double DOD, int cycle_number)
 {
@@ -1212,6 +1219,7 @@ void lifetime_calendar_t::copy(lifetime_calendar_t * lifetime_calendar)
 	_b = lifetime_calendar->_b;
 	_c = lifetime_calendar->_c;
 }
+double lifetime_calendar_t::capacity_percent() { return _q; }
 double lifetime_calendar_t::runLifetimeCalendarModel(size_t idx, double T, double SOC)
 {
 	if (_calendar_choice != lifetime_calendar_t::NONE)
@@ -1325,7 +1333,7 @@ void thermal_t::copy(thermal_t * thermal)
 	_height = thermal->_height;
 	_Cp = thermal->_Cp;
 	_h = thermal->_h;
-	_T_room = thermal->_T_room;
+	// _T_room = thermal->_T_room;  // don't copy, super slow in subhourly simulations
 	_R = thermal->_R;
 	_A = thermal->_A;
 	_T_battery = thermal->_T_battery;
@@ -1660,7 +1668,7 @@ double battery_t::battery_charge_needed(double SOC_max)
 }
 double battery_t::battery_energy_to_fill(double SOC_max)
 {
-	double battery_voltage = this->battery_voltage(); // [V] 
+	double battery_voltage = this->battery_voltage_nominal(); // [V] 
 	double charge_needed_to_fill = this->battery_charge_needed(SOC_max); // [Ah] - qmax - q0
 	return (charge_needed_to_fill * battery_voltage)*util::watt_to_kilowatt;  // [kWh]
 }
