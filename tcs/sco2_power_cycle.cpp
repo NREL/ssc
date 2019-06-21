@@ -954,9 +954,9 @@ bool RecompCycle::optimal_design()
 		index++;
 	}
 
-	if( !m_cycle_des_par.m_fixed_PR_mc )
+	if( !m_cycle_des_par.m_fixed_PR_HP_to_LP )
 	{
-		x.push_back(m_cycle_des_par.m_PR_mc_guess);
+		x.push_back(m_cycle_des_par.m_PR_HP_to_LP_guess);
 		lb.push_back(0.0001);
 		double PR_max = m_cycle_des_par.m_P_high_limit / 100.0;
 		ub.push_back(PR_max);
@@ -1008,7 +1008,7 @@ bool RecompCycle::optimal_design()
 			index++;
 		}
 
-		if( !m_cycle_des_par.m_fixed_PR_mc )
+		if( !m_cycle_des_par.m_fixed_PR_HP_to_LP )
 		{
 			m_cycle_des_par.m_PR_mc = x[index];
 			index++;
@@ -1059,7 +1059,7 @@ double RecompCycle::design_point_eta(const std::vector<double> &x)
 		index++;
 	}
 
-	if( !m_cycle_des_par.m_fixed_PR_mc )
+	if( !m_cycle_des_par.m_fixed_PR_HP_to_LP )
 	{
 		m_cycle_des_par.m_PR_mc = x[index];
 		if( m_cycle_des_par.m_PR_mc > 15.0 )
@@ -1102,7 +1102,7 @@ bool RecompCycle::auto_optimal_design()
 	// High pressure is always fixed before code calls 'optimal_design'
 	m_cycle_des_par.m_fixed_P_mc_out = true;
 	// The Pressure Ratio is always optimized in 'optimal_design'
-	m_cycle_des_par.m_fixed_PR_mc = false;
+	m_cycle_des_par.m_fixed_PR_HP_to_LP = false;
 
 	// Calls opt_eta, which is the outer optimization loop that optimizes the upper pressure
 	// opt_eta then call optimal_design which optimizes the pressure ratio, recompression fraction, and UA distribution
@@ -1113,7 +1113,7 @@ bool RecompCycle::auto_optimal_design()
 	// Compare high pressure to limit
 	if( m_cycle_des_par.m_P_high_limit - best_P_high > 1.0 )
 	{	// If the optimized high pressure is not at the limit, check results at the limit
-		m_cycle_des_par.m_PR_mc_guess = m_PR_mc_autodes;
+		m_cycle_des_par.m_PR_HP_to_LP_guess = m_PR_mc_autodes;
 
 		// Simple Cycle
 		m_cycle_des_par.m_fixed_recomp_frac = true;
@@ -1149,7 +1149,7 @@ bool RecompCycle::auto_optimal_design()
 	{
 		m_cycle_des_par.m_P_mc_out = m_P_high_autodes;
 
-		m_cycle_des_par.m_fixed_PR_mc = true;
+		m_cycle_des_par.m_fixed_PR_HP_to_LP = true;
 		m_cycle_des_par.m_PR_mc = m_PR_mc_autodes;
 		
 		m_cycle_des_par.m_fixed_recomp_frac = true;
@@ -1187,9 +1187,9 @@ double RecompCycle::opt_eta(double P_high_opt)
 
 	// 2) Set pressure ratios
 	if( P_high_opt > P_pseudo )
-		m_cycle_des_par.m_PR_mc_guess = P_high_opt / P_pseudo;
+		m_cycle_des_par.m_PR_HP_to_LP_guess = P_high_opt / P_pseudo;
 	else
-		m_cycle_des_par.m_PR_mc_guess = 1.1;
+		m_cycle_des_par.m_PR_HP_to_LP_guess = 1.1;
 
 	// 3-4) LT_frac & recomp_frac: set depending on whether evaluating simple or recomp cycle
 	// Set up Simple Cycle Configuration

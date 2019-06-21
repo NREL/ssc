@@ -64,7 +64,7 @@
 
 #include <iosfwd>
 
-class C_sco2_recomp_csp
+class C_sco2_phx_air_cooler
 {
 public:
 
@@ -89,9 +89,20 @@ public:
 		std::vector<double> m_DP_HT;		//(cold, hot) positive values are absolute [kPa], negative values are relative (-)
 		std::vector<double> m_DP_PC;		//(cold, hot) positive values are absolute [kPa], negative values are relative (-)
 		std::vector<double> m_DP_PHX;		//(cold, hot) positive values are absolute [kPa], negative values are relative (-)
-		double m_LT_eff_max;				//[-] Maximum allowable effectiveness in LT recuperator
-		double m_HT_eff_max;				//[-] Maximum allowable effectiveness in HT recuperator
-		double m_eta_mc;					//[-] design-point efficiency of the main compressor; isentropic if positive, polytropic if negative
+		    // LTR thermal design
+        int m_LTR_target_code;              //[-] 1 = UA, 2 = min dT, 3 = effectiveness
+        double m_LTR_UA;					//[kW/K] target LTR conductance
+        double m_LTR_min_dT;                //[K] target LTR minimum temperature difference
+        double m_LTR_eff_target;            //[-] target LTR effectiveness
+        double m_LTR_eff_max;				//[-] Maximum allowable effectiveness in LT recuperator
+		    // HTR thermal design
+        int m_HTR_target_code;              //[-] 1 = UA, 2 = min dT, 3 = effectiveness
+        double m_HTR_UA;					//[kW/K] target HTR conductance
+        double m_HTR_min_dT;                //[K] target HTR min temperature difference
+        double m_HTR_eff_target;            //[-] target HTR effectiveness
+        double m_HTR_eff_max;				//[-] Maximum allowable effectiveness in HT recuperator
+		    //
+        double m_eta_mc;					//[-] design-point efficiency of the main compressor; isentropic if positive, polytropic if negative
 		double m_eta_rc;					//[-] design-point efficiency of the recompressor; isentropic if positive, polytropic if negative
 		double m_eta_pc;					//[-] design-point efficiency of the precompressor; isentropic if positive, polytropic if negative
 		double m_eta_t;						//[-] design-point efficiency of the turbine; isentropic if positive, polytropic if negative
@@ -100,16 +111,19 @@ public:
 		double m_tol;						//[-] Convergence tolerance
 		double m_opt_tol;					//[-] Optimization tolerance
 		double m_N_turbine;					//[rpm] Turbine shaft speed (negative values link turbine to compressor)
-		int m_is_recomp_ok;					//[-] 1 = yes, 0 = no, other = invalid
+		double m_is_recomp_ok;				//[-] 1 = Yes, 0 = simple cycle only, < 0 = fix f_recomp to abs(input)
 	
 		int m_des_objective_type;			//[2] = min phx deltat then max eta, [else] max eta
 		double m_min_phx_deltaT;			//[C]
 	
 		bool m_fixed_P_mc_out;			//[-] if true, P_mc_out is fixed at 'm_P_high_limit'
 		
-		double m_PR_mc_guess;				//[-] Initial guess for ratio of P_mc_out to P_mc_in
-		bool m_fixed_PR_mc;					//[-] if true, ratio of P_mc_out to P_mc_in is fixed at PR_mc_guess
-	
+		double m_PR_HP_to_LP_guess;     //[-] Initial guess for ratio of P_mc_out to P_mc_in
+		bool m_fixed_PR_HP_to_LP;       //[-] if true, ratio of P_mc_out to P_LP_in is fixed at m_PR_HP_to_LP_guess
+
+        double m_f_PR_HP_to_IP_guess;   //[-] Initial guess fraction of HP-to-LP deltaP for HP-to-IP (partial cooling cycle)
+        bool m_fixed_f_PR_HP_to_IP;     //[-] if true, use guess
+
 		// PHX design parameters
 		// This is a PHX rather than system parameter because we don't know T_CO2_in until cycle model is solved
 		double m_phx_dt_cold_approach;	//[K/C] Temperature difference between cold HTF and PHX CO2 inlet
@@ -133,21 +147,28 @@ public:
 			m_des_objective_type = 1;
 			m_min_phx_deltaT = 0.0;		//[C]
 	
-			m_is_recomp_ok = -1;
-	
+            // Recuperator design target codes
+            m_LTR_target_code = 1;      // default to target conductance
+            m_HTR_target_code = 1;      // default to target conductance
+
 			m_T_htf_hot_in = m_phx_dt_hot_approach = m_T_amb_des = m_dt_mc_approach =
-				m_elevation = m_W_dot_net = m_eta_thermal = m_LT_eff_max = m_HT_eff_max =
+				m_elevation = m_W_dot_net = m_eta_thermal = 
+                m_LTR_UA = m_LTR_min_dT = m_LTR_eff_target = m_LTR_eff_max =
+                m_HTR_UA = m_HTR_min_dT = m_HTR_eff_target = m_HTR_eff_max =
 	
 				m_eta_mc = m_eta_rc = m_eta_pc = m_eta_t =
 				m_P_high_limit = m_tol = m_opt_tol = m_N_turbine =
+                m_is_recomp_ok = 
 	
-				m_PR_mc_guess =
+				m_PR_HP_to_LP_guess = m_f_PR_HP_to_IP_guess =
 	
 				m_phx_dt_cold_approach = m_frac_fan_power = m_deltaP_cooler_frac =
 				std::numeric_limits<double>::quiet_NaN();
 	
-			m_fixed_PR_mc = false;		//[-] If false, then should default to optimizing this parameter
-			m_fixed_P_mc_out = false;	//[-] If fasle, then should default to optimizing this parameter
+            m_fixed_P_mc_out = false;       //[-] If false, then should default to optimizing this parameter
+            m_fixed_PR_HP_to_LP = false;    //[-] If false, then should default to optimizing this parameter
+            m_fixed_f_PR_HP_to_IP = false;  //[-] If false, then should default to optimizing this parameter
+
 		}
 	};
 
@@ -166,9 +187,14 @@ public:
 		// Ambient Conditions
 		double m_T_amb;			//[K] Ambient temperature
 	
+        // Turbine inlet mode
+        int m_T_t_in_mode;
+
 		S_od_par()
 		{
 			m_T_htf_hot = m_m_dot_htf = m_T_amb = std::numeric_limits<double>::quiet_NaN();
+
+            m_T_t_in_mode = C_sco2_cycle_core::E_SOLVE_PHX;  //[-] Default to using PHX and HTF temp and mass flow rate
 		}
 	};
 
@@ -264,23 +290,26 @@ private:
 
 	double adjust_P_mc_in_away_2phase(double T_co2 /*K*/, double P_mc_in /*kPa*/);
 
-	void setup_off_design_info(C_sco2_recomp_csp::S_od_par od_par, int off_design_strategy, double od_opt_tol);
+	void setup_off_design_info(C_sco2_phx_air_cooler::S_od_par od_par, int off_design_strategy, double od_opt_tol);
 
 public:	
 
-	C_sco2_recomp_csp();
+	C_sco2_phx_air_cooler();
 
-	~C_sco2_recomp_csp(){};
+	~C_sco2_phx_air_cooler(){};
 
 	class C_mono_eq_T_t_in : public C_monotonic_equation
 	{
 	private: 
-		C_sco2_recomp_csp *mpc_sco2_rc;
+		C_sco2_phx_air_cooler *mpc_sco2_rc;
+        int m_T_t_in_mode;
 
 	public:
-		C_mono_eq_T_t_in(C_sco2_recomp_csp *pc_sco2_rc)
+		C_mono_eq_T_t_in(C_sco2_phx_air_cooler *pc_sco2_rc, int T_t_in_mode)
 		{
 			mpc_sco2_rc = pc_sco2_rc;
+
+            m_T_t_in_mode = T_t_in_mode;
 		}
 	
 		virtual int operator()(double T_t_in /*K*/, double *diff_T_t_in /*-*/);
@@ -289,10 +318,10 @@ public:
 	class C_sco2_csp_od : public C_od_pc_function
 	{
 	private:
-		C_sco2_recomp_csp *mpc_sco2_rc;
+		C_sco2_phx_air_cooler *mpc_sco2_rc;
 
 	public:
-		C_sco2_csp_od(C_sco2_recomp_csp *pc_sco2_rc)
+		C_sco2_csp_od(C_sco2_phx_air_cooler *pc_sco2_rc)
 		{
 			mpc_sco2_rc = pc_sco2_rc;
 		}
@@ -307,13 +336,16 @@ public:
 
 	void design(S_des_par des_par);
 
-	int optimize_off_design(C_sco2_recomp_csp::S_od_par od_par, int off_design_strategy, double od_opt_tol = 1.E-4);
+	int optimize_off_design(C_sco2_phx_air_cooler::S_od_par od_par, int off_design_strategy, double od_opt_tol = 1.E-4);
 
-	int off_design_fix_P_mc_in(S_od_par od_par, double P_mc_in /*MPa*/, int off_design_strategy, double od_opt_tol = 1.E-4);
+	int off_design_fix_P_mc_in(S_od_par od_par, double P_mc_in /*MPa*/, 
+        bool is_rc_N_od_at_design, double rc_N_od_f_des /*-*/,
+        bool is_mc_N_od_at_design, double mc_N_od_f_des /*-*/,
+        int off_design_strategy, double od_opt_tol = 1.E-4);
 	
 	int opt_P_LP_comp_in__fixed_N_turbo();   // opt_P_mc_in_nest_f_recomp_max_eta_core();
 
-	int off_design(C_sco2_recomp_csp::S_od_par od_par, S_od_operation_inputs od_op_inputs);
+	int off_design(C_sco2_phx_air_cooler::S_od_par od_par, S_od_operation_inputs od_op_inputs);
 
 	int off_design_core(double & eta_solved);
 

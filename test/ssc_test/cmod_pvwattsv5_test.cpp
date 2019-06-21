@@ -38,3 +38,44 @@ TEST_F(CMPvwattsV5Integration, DefaultNoFinancialModel){
 	EXPECT_NEAR(capacity_factor, 19.7197, error_tolerance) << "Capacity factor";
 
 }
+
+/// PVWattsV5 using different technology input options
+TEST_F(CMPvwattsV5Integration, DifferentTechnologyInputs)
+{
+	std::vector<double> annual_energy_expected = { 6909.79, 7123.32, 7336.478, 6909.79, 6804.376, 8711.946, 8727.704, 9690.735 };
+	std::map<std::string, double> pairs;
+	size_t count = 0;
+
+	// Module types: Standard, Premium, Thin Film
+	for (int module_type = 0; module_type < 3; module_type++)
+	{
+			pairs["module_type"] = module_type;
+			int pvwatts_errors = modify_ssc_data_and_run_module(data, "pvwattsv5", pairs);
+			EXPECT_FALSE(pvwatts_errors);
+
+			if (!pvwatts_errors)
+			{
+				ssc_number_t annual_energy;
+				ssc_data_get_number(data, "annual_energy", &annual_energy);
+				EXPECT_NEAR(annual_energy, annual_energy_expected[count], error_tolerance) << "Annual energy.";
+			}
+			count++;
+	}
+
+	// Array types: Fixed open rack, fixed roof mount, 1-axis tracking, 1-axis backtracking, 2-axis tracking
+	for (int array_type = 0; array_type < 5; array_type++)
+	{
+		pairs["module_type"] = 0; //reset module type to its default value
+		pairs["array_type"] = array_type;
+		int pvwatts_errors = modify_ssc_data_and_run_module(data, "pvwattsv5", pairs);
+		EXPECT_FALSE(pvwatts_errors);
+
+		if (!pvwatts_errors)
+		{
+			ssc_number_t annual_energy;
+			ssc_data_get_number(data, "annual_energy", &annual_energy);
+			EXPECT_NEAR(annual_energy, annual_energy_expected[count], error_tolerance) << "Annual energy.";
+		}
+		count++;
+	}
+}

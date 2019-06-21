@@ -392,11 +392,10 @@ public:
 		double total = as_double("biopwr.feedstock.total");
 		double total_biomass = as_double("biopwr.feedstock.total_biomass");
 		double total_coal = as_double("biopwr.feedstock.total_coal");
-		double max_turb = as_double("biopwr.plant.max_over_design");
-		double max_boil = as_double("biopwr.plant.boiler.over_design") / 100;
+		ssc_number_t max_turb = as_double("biopwr.plant.max_over_design");
+		ssc_number_t max_boil = as_double("biopwr.plant.boiler.over_design") / 100.0 + 1.0;
 		double steam_pressure = as_double("biopwr.plant.boiler.steam_pressure");
 		int tou_opt = as_integer("biopwr.plant.tou_option");
-		//double disp[9];
 		int tou[8760];
 		for (int i = 0; i<8760; i++) tou[i] = 0;
 		double ramp_rate = as_double("biopwr.plant.ramp_rate") / 100.0;/*ramp rate in frac/hour*/

@@ -202,7 +202,7 @@ TEST_F(CMWindPowerIntegration, IcingAndLowTempCutoff_cmod_windpower) {
 	//modify test inputs
 	ssc_data_unassign(data, "wind_resource_filename");
 	var_data* windresourcedata = create_winddata_array(1,1);
-	float rh[8760];
+	double rh[8760];
 	for (unsigned int i = 0; i < 8760; i++) {
 		if (i % 2 == 0) rh[i] = 0.75f;
 		else rh[i] = 0.0f;

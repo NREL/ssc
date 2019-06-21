@@ -90,7 +90,7 @@ public:
 	void exec( ) throw( general_error )
 	{
 		
-		util::matrix_t<float> positions;
+		util::matrix_t<double> positions;
 		//get the matrix of points
 		get_matrix("positions", positions);
 		//put into an array of points

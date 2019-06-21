@@ -688,7 +688,7 @@ double HTFProperties::Pr(double T_K, double P)
 {
 	// Inputs: temperature [K], pressure [Pa]
 	// Outputs: Prandtl number [-]
-	double Pr_num = visc(T_K) / (dens(T_K, 0.0) * therm_diff(T_K,P));
+	double Pr_num = visc(T_K) / (dens(T_K, P) * therm_diff(T_K,P)); //ARD changed pressure in density call to 'P' instead of '0.0'. This affects calculation for Argon, Hydrogen, and air.
 	return Pr_num;
 }
 
