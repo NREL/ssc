@@ -87,7 +87,7 @@ else(MSVC)
 		set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}")
 		add_compile_definitions(_DEBUG)
 	else()
-		add_compile_options(-O3)
+		SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3" )
 	endif()
 endif(MSVC)
 
