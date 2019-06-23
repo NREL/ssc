@@ -267,7 +267,6 @@ class C_csp_tou
 {
 
 public:
-
     struct S_csp_tou_params
     {
         bool m_isleapyear;
@@ -432,13 +431,15 @@ public:
 		double m_T_htf_cold_des;		//[K]
 		double m_P_cold_des;			//[kPa]
 		double m_x_cold_des;			//[-]
+        double m_T_htf_hot_des;         //[K]
 		double m_q_dot_rec_des;			//[MW]
 		double m_A_aper_total;			//[m^2] Total solar field aperture area
+        double m_dP_sf;                 //[bar] Total field pressure drop
 
 		S_csp_cr_solved_params()
 		{
-			m_T_htf_cold_des = m_P_cold_des = m_x_cold_des =
-				m_q_dot_rec_des = m_A_aper_total = std::numeric_limits<double>::quiet_NaN();
+			m_T_htf_cold_des = m_P_cold_des = m_x_cold_des = m_T_htf_cold_des =
+				m_q_dot_rec_des = m_A_aper_total = m_dP_sf = std::numeric_limits<double>::quiet_NaN();
 		}
 	};
 
@@ -474,6 +475,7 @@ public:
 		double m_E_fp_total;			//[MW] Solar field freeze protection power
 		double m_W_dot_col_tracking;	//[MWe] Collector tracking power
 		double m_W_dot_htf_pump;		//[MWe] HTF pumping power
+        double m_dP_sf;                 //[bar] Total field pressure drop
 
 		// 07/08/2016, GZ: add new variables for DSG LF 
 		int m_standby_control;		//[-]
@@ -684,6 +686,17 @@ public:
 	C_csp_tes(){};
 
 	~C_csp_tes(){};
+    struct S_csp_tes_init_inputs
+    {
+        double T_to_cr_at_des;		    //[K]
+        double T_from_cr_at_des;		//[K]
+        double P_to_cr_at_des;          //[bar]
+
+        S_csp_tes_init_inputs()
+        {
+            T_to_cr_at_des = T_from_cr_at_des = P_to_cr_at_des = std::numeric_limits<double>::quiet_NaN();
+        }
+    };
 
 	struct S_csp_tes_outputs
 	{
@@ -705,7 +718,7 @@ public:
 		}
 	};
 
-	virtual void init() = 0;
+	virtual void init(const C_csp_tes::S_csp_tes_init_inputs init_inputs) = 0;
 
 	virtual bool does_tes_exist() = 0;
 

@@ -55,6 +55,8 @@
 
 #include "sam_csp_util.h"
 
+const int N_tes_pipe_sections = 11;
+
 class C_heat_exchanger
 {
 private:
@@ -266,6 +268,7 @@ public:
 		double m_dt_hot;			//[C] Temperature difference across heat exchanger - assume hot and cold deltaTs are equal
 		double m_T_field_in_des;	//[C] convert to K in init()
 		double m_T_field_out_des;	//[C] convert to K in init()
+        double m_dP_field_des;      //[bar] Total field pressure drop at design
 		double m_T_tank_hot_ini;	//[C] Initial temperature in hot storage tank
 		double m_T_tank_cold_ini;	//[C] Initial temperature in cold storage cold
 		double m_h_tank_min;		//[m] Minimum allowable HTF height in storage tank
@@ -282,6 +285,9 @@ public:
         util::matrix_t<double> tes_diams;         //[m] Imported inner diameters for the TES piping as read from the modified output files
         util::matrix_t<double> tes_wallthicks;    //[m] Imported wall thicknesses for the TES piping as read from the modified output files
         util::matrix_t<double> tes_lengths;       //[m] Imported lengths for the TES piping as read from the modified output files
+        bool calc_design_pipe_vals;               //[-] Should the HTF state be calculated at design conditions
+        double pipe_rough;                        //[m] Pipe roughness
+        double DP_SGS;                            //[bar] Pressure drop within the steam generator
 
 
 
@@ -304,8 +310,18 @@ public:
 
 	~C_csp_two_tank_tes(){};
 
-	virtual void init();
+	virtual void init(const C_csp_tes::S_csp_tes_init_inputs init_inputs);
 
+    double pipe_vol_tot;	                     //[m^3]
+    util::matrix_t<double> pipe_v_dot_rel;       //[-]
+    util::matrix_t<double> pipe_diams;           //[m^3]
+    util::matrix_t<double> pipe_wall_thk;        //[m]
+    util::matrix_t<double> pipe_lengths;         //[m]
+    util::matrix_t<double> pipe_m_dot_des;       //[kg/s]
+    util::matrix_t<double> pipe_vel_des;         //[m/s]
+    util::matrix_t<double> pipe_T_des;           //[C]
+    util::matrix_t<double> pipe_P_des;           //[bar]
+    
 	virtual bool does_tes_exist();
 
 	virtual double get_hot_temp();
@@ -430,7 +446,7 @@ public:
 
 	~C_csp_cold_tes() {};
 
-	virtual void init();
+	virtual void init(const C_csp_tes::S_csp_tes_init_inputs init_inputs);
 
 	virtual bool does_tes_exist();
 
@@ -488,5 +504,13 @@ void two_tank_tes_sizing(HTFProperties &tes_htf_props, double Q_tes_des /*MWt-hr
 		double & vol_one_temp_avail /*m3*/, double & vol_one_temp_total /*m3*/, double & d_tank /*m*/,
 		double & q_dot_loss_des /*MWt*/  );
 
+int size_tes_piping(double vel_dsn, util::matrix_t<double> L, double rho_avg, double m_dot_pb, double solarm,
+    bool tanks_in_parallel, double &vol_tot, util::matrix_t<double> &v_dot_rel, util::matrix_t<double> &diams,
+    util::matrix_t<double> &wall_thk, util::matrix_t<double> &m_dot, util::matrix_t<double> &vel, bool custom_sizes = false);
+
+int size_tes_piping_TandP(HTFProperties &field_htf_props, double T_field_in /*K*/, double T_field_out /*K*/, double P_field_in /*Pa*/, double DP_SGS,
+    const util::matrix_t<double> &L, const util::matrix_t<double> &k_tes_loss_coeffs, double pipe_rough,
+    bool tanks_in_parallel, const util::matrix_t<double> &diams, const util::matrix_t<double> &vel,
+    util::matrix_t<double> &TES_T_des, util::matrix_t<double> &TES_P_des);
 
 #endif   //__csp_solver_two_tank_tes_

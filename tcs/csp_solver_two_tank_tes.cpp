@@ -538,7 +538,7 @@ C_csp_two_tank_tes::C_csp_two_tank_tes()
 	m_m_dot_tes_dc_max = m_m_dot_tes_ch_max = std::numeric_limits<double>::quiet_NaN();
 }
 
-void C_csp_two_tank_tes::init()
+void C_csp_two_tank_tes::init(const C_csp_tes::S_csp_tes_init_inputs init_inputs)
 {
 	if( !(ms_params.m_ts_hours > 0.0) )
 	{
@@ -683,6 +683,42 @@ void C_csp_two_tank_tes::init()
 		ms_params.m_u_tank, ms_params.m_tank_pairs, ms_params.m_cold_tank_Thtr, ms_params.m_cold_tank_max_heat,
 		V_cold_ini, T_cold_ini);
 
+    // Size TES piping and output values
+    if (ms_params.custom_tes_pipe_sizes &&
+        (ms_params.tes_diams.ncells() != N_tes_pipe_sections ||
+            ms_params.tes_wallthicks.ncells() != N_tes_pipe_sections)) {
+        error_msg = "The number of custom TES pipe sections is not correct.";
+        throw(C_csp_exception(error_msg, "Two Tank TES Initialization"));
+    }
+    double rho_avg = mc_field_htfProps.dens((ms_params.m_T_field_in_des + ms_params.m_T_field_out_des) / 2, 9 / 1.e-5);
+    double m_dot_pb_design = ms_params.m_W_dot_pc_design * 1.e3 /   // convert MWe to kWe for cp [kJ/kg-K]
+        (ms_params.m_eta_pc * mc_field_htfProps.Cp((ms_params.m_T_field_in_des + ms_params.m_T_field_out_des) / 2 + 273.15) *
+        (ms_params.m_T_field_out_des - ms_params.m_T_field_in_des));
+    if (size_tes_piping(ms_params.V_tes_des, ms_params.tes_lengths, rho_avg,
+        m_dot_pb_design, ms_params.m_solarm, ms_params.tanks_in_parallel,     // Inputs
+        this->pipe_vol_tot, this->pipe_v_dot_rel, this->pipe_diams,
+        this->pipe_wall_thk, this->pipe_m_dot_des, this->pipe_vel_des,        // Outputs
+        ms_params.custom_tes_pipe_sizes)) {
+
+        error_msg = "TES piping sizing failed";
+        throw(C_csp_exception(error_msg, "Two Tank TES Initialization"));
+    }
+
+    if (ms_params.calc_design_pipe_vals) {
+        size_tes_piping_TandP(mc_field_htfProps, init_inputs.T_to_cr_at_des, init_inputs.T_from_cr_at_des,
+            init_inputs.P_to_cr_at_des * 1.e5, ms_params.DP_SGS * 1.e5, // bar to Pa
+            ms_params.tes_lengths, ms_params.k_tes_loss_coeffs, ms_params.pipe_rough, ms_params.tanks_in_parallel,
+            this->pipe_diams, this->pipe_vel_des,
+            this->pipe_T_des, this->pipe_P_des);         // Outputs
+
+        // Adjust first two pressures after field pumps, because the field inlet pressure used above was
+        // not yet corrected for the section in the TES/PB before the hot tank
+        double DP_before_hot_tank = this->pipe_P_des.at(3);        // first section before hot tank
+        this->pipe_P_des.at(1) += DP_before_hot_tank;
+        this->pipe_P_des.at(2) += DP_before_hot_tank;
+
+        //value(O_p_des_sgs_1, DP_before_hot_tank);           // for adjusting field design pressures
+    }
 }
 
 bool C_csp_two_tank_tes::does_tes_exist()
@@ -1339,6 +1375,189 @@ void two_tank_tes_sizing(HTFProperties &tes_htf_props, double Q_tes_des /*MWt-hr
 		
 }
 
+int size_tes_piping(double vel_dsn, util::matrix_t<double> L, double rho_avg, double m_dot_pb, double solarm,
+    bool tanks_in_parallel, double &vol_tot, util::matrix_t<double> &v_dot_rel, util::matrix_t<double> &diams,
+    util::matrix_t<double> &wall_thk, util::matrix_t<double> &m_dot, util::matrix_t<double> &vel, bool custom_sizes)
+{
+    const std::size_t bypass_index = 4;
+    const std::size_t gen_first_index = 5;      // first generation section index in combined col. gen. loops
+    double m_dot_sf;
+    double v_dot_sf, v_dot_pb;                  // solar field and power block vol. flow rates
+    double v_dot_ref;
+    double v_dot;                               // volumetric flow rate
+    double Area;
+    vol_tot = 0.0;                              // total volume in SGS piping
+    std::size_t nPipes = L.ncells();
+    v_dot_rel.resize_fill(nPipes, 0.0);         // volumetric flow rate relative to the solar field or power block flow
+    m_dot.resize_fill(nPipes, 0.0);
+    vel.resize_fill(nPipes, 0.0);
+    std::vector<int> sections_no_bypass;
+    if (!custom_sizes) {
+        diams.resize_fill(nPipes, 0.0);
+        wall_thk.resize_fill(nPipes, 0.0);
+    }
+
+    m_dot_sf = m_dot_pb * solarm;
+    v_dot_sf = m_dot_sf / rho_avg;
+    v_dot_pb = m_dot_pb / rho_avg;
+
+    //The volumetric flow rate relative to the solar field for each collection section (v_rel = v_dot / v_dot_pb)
+    v_dot_rel.at(0) = 1.0 / 2;                  // 1 - Solar field (SF) pump suction header to individual SF pump inlet
+                                                //     50% -> "/2.0" . The flow rate (i.e., diameter) is sized here for the case when one pump is down.
+    v_dot_rel.at(1) = 1.0 / 2;                  // 2 - Individual SF pump discharge to SF pump discharge header
+    v_dot_rel.at(2) = 1.0;                      // 3 - SF pump discharge header to collection field section headers (i.e., runners)
+    v_dot_rel.at(3) = 1.0;                      // 4 - Collector field section outlet headers (i.e., runners) to expansion vessel (indirect storage) or
+                                                //     hot thermal storage tank (direct storage)
+    v_dot_rel.at(4) = 1.0;                      // 5 - Bypass branch - Collector field section outlet headers (i.e., runners) to pump suction header (indirect) or
+                                                //     cold thermal storage tank (direct)
+
+    //The volumetric flow rate relative to the power block for each generation section
+    v_dot_rel.at(5) = 1.0 / 2;                  // 2 - SGS pump suction header to individual SGS pump inlet (applicable only for storage in series with SF)
+                                                //     50% -> "/2.0" . The flow rate (i.e., diameter) is sized here for the case when one pump is down.
+    v_dot_rel.at(6) = 1.0 / 2;                  // 3 - Individual SGS pump discharge to SGS pump discharge header (only for series storage)
+    v_dot_rel.at(7) = 1.0;                      // 4 - SGS pump discharge header to steam generator supply header (only for series storage)
+
+    v_dot_rel.at(8) = 1.0;                      // 5 - Steam generator supply header to inter-steam generator piping
+    v_dot_rel.at(9) = 1.0;                      // 6 - Inter-steam generator piping to steam generator outlet header
+    v_dot_rel.at(10) = 1.0;                     // 7 - Steam generator outlet header to SF pump suction header (indirect) or cold thermal storage tank (direct)
+
+    if (tanks_in_parallel) {
+        sections_no_bypass = { 0, 1, 2, 3, 8, 9, 10 };
+    }
+    else {  // tanks in series
+        sections_no_bypass = { 0, 1, 2, 3, 5, 6, 7, 8, 9, 10 };
+    }
+
+    // Collection loop followed by generation loop
+    for (std::size_t i = 0; i < nPipes; i++) {
+        if (L.at(i) > 0) {
+            i < gen_first_index ? v_dot_ref = v_dot_sf : v_dot_ref = v_dot_pb;
+            v_dot = v_dot_ref * v_dot_rel.at(i);
+            if (!custom_sizes) {
+                diams.at(i) = CSP::pipe_sched(sqrt(4.0*v_dot / (vel_dsn * CSP::pi)));
+                wall_thk.at(i) = CSP::WallThickness(diams.at(i));
+            }
+            m_dot.at(i) = v_dot * rho_avg;
+            Area = CSP::pi * pow(diams.at(i), 2) / 4.;
+            vel.at(i) = v_dot / Area;
+
+            // Calculate total volume, excluding bypass branch
+            if (std::find(sections_no_bypass.begin(), sections_no_bypass.end(), i) != sections_no_bypass.end()) {
+                vol_tot += Area * L.at(i);
+            }
+        }
+    }
+
+    return 0;
+}
+
+int size_tes_piping_TandP(HTFProperties &field_htf_props, double T_field_in, double T_field_out, double P_field_in, double DP_SGS,
+    const util::matrix_t<double> &L, const util::matrix_t<double> &k_tes_loss_coeffs, double pipe_rough,
+    bool tanks_in_parallel, const util::matrix_t<double> &diams, const util::matrix_t<double> &vel,
+    util::matrix_t<double> &TES_T_des, util::matrix_t<double> &TES_P_des)
+{
+    std::size_t nPipes = L.ncells();
+    TES_T_des.resize_fill(nPipes, 0.0);
+    TES_P_des.resize_fill(nPipes, 0.0);
+
+    // Calculate Design Temperatures, in C
+    TES_T_des.at(0) = T_field_in - 273.15;
+    TES_T_des.at(1) = T_field_in - 273.15;
+    TES_T_des.at(2) = T_field_in - 273.15;
+    TES_T_des.at(3) = T_field_out - 273.15;
+    TES_T_des.at(4) = T_field_out - 273.15;
+    if (tanks_in_parallel) {
+        TES_T_des.at(5) = 0;
+        TES_T_des.at(6) = 0;
+        TES_T_des.at(7) = 0;
+    }
+    else {
+        TES_T_des.at(5) = T_field_out - 273.15;
+        TES_T_des.at(6) = T_field_out - 273.15;
+        TES_T_des.at(7) = T_field_out - 273.15;
+    }
+    TES_T_des.at(8) = T_field_out - 273.15;
+    TES_T_des.at(9) = T_field_in - 273.15;
+    TES_T_des.at(10) = T_field_in - 273.15;
+
+
+    // Calculate Design Pressures, in Pa
+    double ff;
+    double rho_avg = field_htf_props.dens((T_field_in + T_field_out) / 2, 9 / 1.e-5);
+    const double P_hi = 17 / 1.e-5;               // downstream SF pump pressure [Pa]
+    const double P_lo = 1 / 1.e-5;                // atmospheric pressure [Pa]
+
+    // P_10
+    ff = CSP::FrictionFactor(pipe_rough, field_htf_props.Re(TES_T_des.at(10), P_lo, vel.at(10), diams.at(10)));
+    TES_P_des.at(10) = 0 +
+        CSP::MajorPressureDrop(vel.at(10), rho_avg, ff, L.at(10), diams.at(10)) +
+        CSP::MinorPressureDrop(vel.at(10), rho_avg, k_tes_loss_coeffs.at(10));
+
+    // P_9
+    ff = CSP::FrictionFactor(pipe_rough, field_htf_props.Re(TES_T_des.at(9), P_lo, vel.at(9), diams.at(9)));
+    TES_P_des.at(9) = TES_P_des.at(10) +
+        CSP::MajorPressureDrop(vel.at(9), rho_avg, ff, L.at(9), diams.at(9)) +
+        CSP::MinorPressureDrop(vel.at(9), rho_avg, k_tes_loss_coeffs.at(9));
+
+    // P_8
+    ff = CSP::FrictionFactor(pipe_rough, field_htf_props.Re(TES_T_des.at(8), P_hi, vel.at(8), diams.at(8)));
+    TES_P_des.at(8) = TES_P_des.at(9) + DP_SGS +
+        CSP::MajorPressureDrop(vel.at(8), rho_avg, ff, L.at(8), diams.at(8)) +
+        CSP::MinorPressureDrop(vel.at(8), rho_avg, k_tes_loss_coeffs.at(8));
+
+    if (tanks_in_parallel) {
+        TES_P_des.at(7) = 0;
+        TES_P_des.at(6) = 0;
+        TES_P_des.at(5) = 0;
+    }
+    else {
+        // P_7
+        ff = CSP::FrictionFactor(pipe_rough, field_htf_props.Re(TES_T_des.at(7), P_hi, vel.at(7), diams.at(7)));
+        TES_P_des.at(7) = TES_P_des.at(8) +
+            CSP::MajorPressureDrop(vel.at(7), rho_avg, ff, L.at(7), diams.at(7)) +
+            CSP::MinorPressureDrop(vel.at(7), rho_avg, k_tes_loss_coeffs.at(7));
+
+        // P_6
+        ff = CSP::FrictionFactor(pipe_rough, field_htf_props.Re(TES_T_des.at(6), P_hi, vel.at(6), diams.at(6)));
+        TES_P_des.at(6) = TES_P_des.at(7) +
+            CSP::MajorPressureDrop(vel.at(6), rho_avg, ff, L.at(6), diams.at(6)) +
+            CSP::MinorPressureDrop(vel.at(6), rho_avg, k_tes_loss_coeffs.at(6));
+
+        // P_5
+        TES_P_des.at(5) = 0;
+    }
+
+    // P_3
+    ff = CSP::FrictionFactor(pipe_rough, field_htf_props.Re(TES_T_des.at(3), P_lo, vel.at(3), diams.at(3)));
+    TES_P_des.at(3) = 0 +
+        CSP::MajorPressureDrop(vel.at(3), rho_avg, ff, L.at(3), diams.at(3)) +
+        CSP::MinorPressureDrop(vel.at(3), rho_avg, k_tes_loss_coeffs.at(3));
+
+    // P_4
+    TES_P_des.at(4) = TES_P_des.at(3);
+
+    // P_2
+    ff = CSP::FrictionFactor(pipe_rough, field_htf_props.Re(TES_T_des.at(2), P_hi, vel.at(2), diams.at(2)));
+    TES_P_des.at(2) = P_field_in +
+        CSP::MajorPressureDrop(vel.at(2), rho_avg, ff, L.at(2), diams.at(2)) +
+        CSP::MinorPressureDrop(vel.at(2), rho_avg, k_tes_loss_coeffs.at(2));
+
+    // P_1
+    ff = CSP::FrictionFactor(pipe_rough, field_htf_props.Re(TES_T_des.at(1), P_hi, vel.at(1), diams.at(1)));
+    TES_P_des.at(1) = TES_P_des.at(2) +
+        CSP::MajorPressureDrop(vel.at(1), rho_avg, ff, L.at(1), diams.at(1)) +
+        CSP::MinorPressureDrop(vel.at(1), rho_avg, k_tes_loss_coeffs.at(1));
+
+    // P_0
+    TES_P_des.at(0) = 0;
+
+    // Convert Pa to bar
+    for (int i = 0; i < nPipes; i++) {
+        TES_P_des.at(i) = TES_P_des.at(i) / 1.e5;
+    }
+
+    return 0;
+}
 
 C_csp_cold_tes::C_csp_cold_tes()
 {
@@ -1347,7 +1566,7 @@ C_csp_cold_tes::C_csp_cold_tes()
 	m_m_dot_tes_dc_max = m_m_dot_tes_ch_max = std::numeric_limits<double>::quiet_NaN();
 }
 
-void C_csp_cold_tes::init()
+void C_csp_cold_tes::init(const C_csp_tes::S_csp_tes_init_inputs init_inputs)
 {
 	if (!(ms_params.m_ts_hours > 0.0))
 	{

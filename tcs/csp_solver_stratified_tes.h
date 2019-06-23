@@ -197,7 +197,7 @@ public:
 
 	~C_csp_stratified_tes() {};
 
-	virtual void init();
+	virtual void init(const C_csp_tes::S_csp_tes_init_inputs init_inputs);
 
 	virtual bool does_tes_exist();
 

@@ -521,7 +521,11 @@ void C_csp_solver::init()
 	m_cycle_P_hot_des = pc_solved_params.m_P_hot_des;					//[kPa]
 	m_cycle_x_hot_des = pc_solved_params.m_x_hot_des;					//[-]
 		// TES
-	mc_tes.init();
+    C_csp_tes::S_csp_tes_init_inputs tes_init_inputs;
+    tes_init_inputs.T_to_cr_at_des = cr_solved_params.m_T_htf_cold_des;
+    tes_init_inputs.T_from_cr_at_des = cr_solved_params.m_T_htf_hot_des;
+    tes_init_inputs.P_to_cr_at_des = cr_solved_params.m_dP_sf;
+	mc_tes.init(tes_init_inputs);
 		// TOU
     mc_tou.mc_dispatch_params.m_isleapyear = mc_weather.ms_solved_params.m_leapyear;
 	mc_tou.init();

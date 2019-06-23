@@ -503,6 +503,8 @@ void C_csp_trough_collector_receiver::init(const C_csp_collector_receiver::S_csp
         C_csp_collector_receiver::S_csp_cr_out_solver troughOutputs;
 
         steady_state(weatherValues, htfInletState, defocus, troughOutputs, troughInfo);
+        solved_params.m_T_htf_hot_des = troughOutputs.m_T_salt_hot + 273.15;
+        solved_params.m_dP_sf = troughOutputs.m_dP_sf;
 
         // Restore original settings
         m_accept_mode = accept_mode_orig;
@@ -2584,6 +2586,7 @@ void C_csp_trough_collector_receiver::on(const C_csp_weatherreader::S_outputs &w
 		cr_out_solver.m_E_fp_total = 0.0;			//[MW]
 		cr_out_solver.m_W_dot_col_tracking = m_W_dot_sca_tracking;	//[MWe]
 		cr_out_solver.m_W_dot_htf_pump = m_W_dot_pump;				//[MWe]
+        cr_out_solver.m_dP_sf = m_dP_total;         //[bar]
 	}
 	else
 	{	// Solution failed, so tell controller/solver
@@ -2608,6 +2611,7 @@ void C_csp_trough_collector_receiver::on(const C_csp_weatherreader::S_outputs &w
 		cr_out_solver.m_E_fp_total = 0.0;
 		cr_out_solver.m_W_dot_col_tracking = 0.0;
 		cr_out_solver.m_W_dot_htf_pump = 0.0;
+        cr_out_solver.m_dP_sf = 0.0;                //[bar]
 	}
 
 	set_output_value();
