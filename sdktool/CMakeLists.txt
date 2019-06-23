@@ -16,6 +16,7 @@ if(MSVC)
 	set(CMAKE_CONFIGURATION_TYPES "Debug;Release" CACHE STRING "Debug and Release Builds Configured" FORCE)
 endif()
 
+message("cmake ${CONFIGURATION}, ${CONFIG}")
 
 #####################################################################################################################
 #
@@ -225,9 +226,15 @@ foreach( file_i ${LIBCURL_FILES})
 )
 endforeach( file_i )
 
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+	set(DEBUG TRUE)
+else()
+	set(DEBUG FALSE)
+endif()
+
 add_custom_command(
     TARGET ${SDKTOOL_EXE}
     POST_BUILD
     COMMAND ${CMAKE_COMMAND}
-    ARGS -E copy $ENV{SSCDIR}/ssc/ssc.lib $ENV{SSCDIR}/ssc/ssc.dll ${CMAKE_CURRENT_SOURCE_DIR}
+    ARGS -E copy $ENV{SSCDIR}/ssc/ssc$<$<BOOL:DEBUG>:d>.lib $ENV{SSCDIR}/ssc/ssc$<$<BOOL:DEBUG>:d>.dll ${CMAKE_CURRENT_SOURCE_DIR}
 )
