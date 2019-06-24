@@ -269,7 +269,7 @@ void biomass_commondata(ssc_data_t &data) {
 	ssc_data_set_number(data, "system_use_recapitalization", 0);
 	ssc_data_set_number(data, "system_use_lifetime_output", 0);
 	ssc_data_set_number(data, "ppa_multiplier_model", 0);
-	set_array(data, "dispatch_factors_ts", "C:/Users/PBHASKAR/Desktop/dispatch_factors_ts.csv", 8760);
+	set_array(data, "dispatch_factors_ts", biomass_test::dispatch_factors, 8760);
 	ssc_data_set_number(data, "dispatch_factor1", 1);
 	ssc_data_set_number(data, "dispatch_factor2", 1);
 	ssc_data_set_number(data, "dispatch_factor3", 1);

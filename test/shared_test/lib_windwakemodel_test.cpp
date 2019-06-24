@@ -11,19 +11,19 @@
 /// turbinePower function test: error case and varying air density case
 TEST_F(windTurbineTest, turbinePowerTest_lib_windwakemodel){
 	double output(0), thrustCoeff(0);
-	wt.turbinePower(20., airDensity, &output, &thrustCoeff);
+    wt.turbinePower(20., airDensity, &output, nullptr, &thrustCoeff);
 	EXPECT_NEAR(output, 0.0, e) << "Turbine not initialized.";
 	EXPECT_NEAR(thrustCoeff, 0.0, e) << "Turbine not initialized.";
 
 	createDefaultTurbine(&wt);
-	wt.turbinePower(11.25, airDensity, &output, &thrustCoeff);
+    wt.turbinePower(11.25, airDensity, &output, nullptr, &thrustCoeff);
 	EXPECT_NEAR(output, 1390, e) << "At 11.25m/s, the output should be 1390.";
 	EXPECT_NEAR(thrustCoeff, 0.3725, e) << "At 11.25m/s, the thrust coeff should be 0.3725";
 
 	// low air density
 	output = 0;
 	thrustCoeff = 0;
-	wt.turbinePower(11.25, 0.5, &output, &thrustCoeff);
+    wt.turbinePower(11.25, 0.5, &output, nullptr, &thrustCoeff);
 	EXPECT_NEAR(output, 752.85, e) << "Low air density";
 	EXPECT_NEAR(thrustCoeff, 0.538, e) << "Low air density";
 }
