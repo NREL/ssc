@@ -12,7 +12,7 @@ OBJECTS = $(CXXSRC:.cpp=.o)
 TARGET=shared.a
 
 $(TARGET):$(OBJECTS)
-	ar rs $(TARGET) $(OBJECTS)
+	ar -rs $(TARGET) $(OBJECTS)
 
 clean:
 	rm -rf $(TARGET) $(OBJECTS)
