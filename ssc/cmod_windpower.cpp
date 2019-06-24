@@ -246,6 +246,9 @@ void cm_windpower::exec() throw(general_error)
 	for (auto& loss : loss_names){
 	    wt.lossesPercent += as_double(loss)/100.;
 	}
+	if (wt.lossesPercent > 1){
+	    throw exec_error("windpower", "Total percent losses must be less than 100.");
+	}
 
 	// create windPowerCalculator using windTurbine
 	windPowerCalculator wpc;
@@ -334,7 +337,15 @@ void cm_windpower::exec() throw(general_error)
     }
     else if (wakeModelChoice == 3)
     {
-        wakeModel = std::make_shared<constantWakeModel>(constantWakeModel(wpc.nTurbines, &wt, as_double("wake_loss")));
+        double wake_loss = as_double("wake_loss")/100.;
+        if (wt.lossesPercent + wake_loss > 1){
+            throw exec_error("windpower", "Total percent losses must be less than 100.");
+        }
+        // applying the wake_loss_adj then the lossesPercent should result in a percent derate equal to wake_loss + lossesPercent
+        double wake_loss_adj = 0;
+        if (wt.lossesPercent != 1.)
+            wake_loss_adj = (1. - (wt.lossesPercent + wake_loss) ) / (1. - wt.lossesPercent );
+        wakeModel = std::make_shared<constantWakeModel>(constantWakeModel(wpc.nTurbines, &wt, wake_loss_adj));
     }
     else{
         throw exec_error("windpower", util::format("wind_farm_wake_model must be 0, 1, 2 or 3."));
@@ -344,12 +355,14 @@ void cm_windpower::exec() throw(general_error)
 
     // Run Wind Speed x Direction Distribution model if selected
     if (as_integer("wind_resource_model_choice") == 2 ){
-//        std::vector<std::vector<double>> wind_dist = ;
-        double farmpower = wpc.windPowerUsingDistribution(lookup("wind_resource_distribution")->matrix_vector());
-        farmpower = farmpower * (1 - wt.lossesPercent) - wt.lossesAbsolute * wpc.nTurbines;
+        double farmPower = 0., farmPowerGross = 0.;
+        if (!wpc.windPowerUsingDistribution(lookup("wind_resource_distribution")->matrix_vector(),
+                                                          &farmPower, &farmPowerGross)){
+            throw exec_error("windpower", wpc.GetErrorDetails());
+        }
 
         int nstep = 8760;
-        ssc_number_t farm_kw = farmpower / (ssc_number_t)nstep;
+        ssc_number_t farm_kw = farmPower / (ssc_number_t)nstep;
         ssc_number_t *farmpwr = allocate("gen", nstep);
         for (int i = 0; i < nstep; i++)
         {
@@ -367,6 +380,7 @@ void cm_windpower::exec() throw(general_error)
         if (nameplate > 0) kWhperkW = annual_energy / nameplate;
         assign("capacity_factor", var_data((ssc_number_t)(kWhperkW / 87.6)));
         assign("kwh_per_kw", var_data((ssc_number_t)kWhperkW));
+        assign("annual_gross_energy", farmPowerGross);
 
         return;
     }

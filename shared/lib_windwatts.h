@@ -118,9 +118,10 @@ public:
 	);
 
 	/// returns energy output of wind farm
-	double windPowerUsingDistribution(std::vector<std::vector<double>>&& wind_dist);
+    bool windPowerUsingDistribution(std::vector<std::vector<double>> &&wind_dist, double *farmPower,
+                                    double *farmPowerGross);
 	double windPowerUsingDistribution(std::vector<std::vector<double>>& wind_dist){
-	    return windPowerUsingDistribution(std::move(wind_dist));
+	    return windPowerUsingDistribution(std::move(wind_dist), nullptr, nullptr);
 	}
 };
 

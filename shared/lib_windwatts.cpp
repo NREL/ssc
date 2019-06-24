@@ -170,13 +170,13 @@ windPowerCalculator::windPowerUsingResource(double windSpeed, double windDirDeg,
 	double fAirDensity = (airPressureAtm * physics::Pa_PER_Atm) / (physics::R_GAS_DRY_AIR * physics::CelciusToKelvin(TdryC));   //!Air Density, kg/m^3
 
 	// calculate output power of a turbine
-	double fTurbine_output(0.0), fThrust_coeff(0.0);
-	windTurb->turbinePower(windSpeed, fAirDensity, &fTurbine_output, &fThrust_coeff);
+	double fTurbine_output(0.0), fThrust_coeff(0.0), fTurbine_gross(0.0);
+    windTurb->turbinePower(windSpeed, fAirDensity, &fTurbine_output, &fTurbine_gross, &fThrust_coeff);
 	if (windTurb->errDetails.length() > 0){
 		errDetails = windTurb->errDetails;
 		return 0;
 	}
-	*farmPowerGross = fTurbine_output * nTurbines;
+	*farmPowerGross = fTurbine_gross * nTurbines;
 
 	// initialize values before possible exit from the function
 	for (i = 0; i<nTurbines; i++)
@@ -373,18 +373,19 @@ double windPowerCalculator::windPowerUsingWeibull(double weibull_k, double avg_s
 	return total_energy_turbine;
 }
 
-double windPowerCalculator::windPowerUsingDistribution(std::vector<std::vector<double>>&& wind_dist)
+bool windPowerCalculator::windPowerUsingDistribution(std::vector<std::vector<double>> &&wind_dist, double *farmPower,
+                                                     double *farmPowerGross)
 {
     if (!wakeModel)
     {
         errDetails = "Wake model not initialized.";
-        return 0;
+        return false;
     }
 
     if ((nTurbines > MAX_WIND_TURBINES) || (nTurbines < 1))
     {
         errDetails = "The number of wind turbines was greater than the maximum allowed in the wake model.";
-        return 0;
+        return false;
     }
 
     size_t i, j;
@@ -395,18 +396,18 @@ double windPowerCalculator::windPowerUsingDistribution(std::vector<std::vector<d
         wt_id[i] = i;
 
 
-    double freq_total = 0.0, farmpower = 0.0;
+    double freq_total = 0.0, farmpower = 0.0, farmgross = 0.0;
     for (auto& row : wind_dist){
         double& windSpeed = row[0];
         double& windDirDeg = row[1];
         freq_total += row[2];
 
         // calculate output power of a turbine
-        double fTurbine_output(0.0), fThrust_coeff(0.0);
-        windTurb->turbinePower(windSpeed, physics::AIR_DENSITY_SEA_LEVEL, &fTurbine_output, &fThrust_coeff);
+        double fTurbine_output(0.0), fThrust_coeff(0.0), fTurbine_gross(0.0);
+        windTurb->turbinePower(windSpeed, physics::AIR_DENSITY_SEA_LEVEL, &fTurbine_output, &fTurbine_gross, &fThrust_coeff);
         if (windTurb->errDetails.length() > 0){
             errDetails = windTurb->errDetails;
-            return 0;
+            return false;
         }
 
         // if there is only one turbine, we're done
@@ -484,20 +485,24 @@ double windPowerCalculator::windPowerUsingDistribution(std::vector<std::vector<d
                                     &eff[0], &thrust[0], &adWindSpeed[0], &TI[0]);
         if (wakeModel->errDetails.length() > 0){
             errDetails = wakeModel->errDetails;
-            return 0;
+            return false;
         }
 
         // calculate total farm power
         double freq = 8760.0 * row[2];
-        for (i = 0; i<nTurbines; i++)
+        for (i = 0; i<nTurbines; i++){
             farmpower += freq * power[i];
+            farmgross += freq * fTurbine_gross;
+        }
     }
 
 
     if (abs(freq_total - 1.0) > 0.01){
         errDetails = "Sum of wind resource distribution frequencies must be 1.";
-        return 0;
+        return false;
     }
+    *farmPower = farmpower;
+    *farmPowerGross = farmgross;
 
-    return farmpower;
+    return true;
 }

@@ -99,7 +99,8 @@ public:
 		}
 		return false;
 	}
-	void turbinePower(double windVelocity, double airDensity, double *turbineOutput, double *thrustCoefficient);
+	void turbinePower(double windVelocity, double airDensity, double *turbineOutput, double *turbineGross,
+                      double *thrustCoefficient);
 	double calculateEff(double reducedPower, double originalPower) {
 		double Eff = 0.0;
 		if (originalPower < 0.0)
@@ -144,7 +145,7 @@ public:
 	simpleWakeModel(){ nTurbines = 0; }
 	simpleWakeModel(size_t numberOfTurbinesInFarm, windTurbine* wt){ nTurbines = numberOfTurbinesInFarm; wTurbine = wt; }
 	virtual ~simpleWakeModel() {};
-	std::string getModelName(){ return "PQ"; }
+	std::string getModelName() override { return "PQ"; }
 
 	void wakeCalculations(
 		/*INPUTS*/
@@ -300,10 +301,10 @@ class constantWakeModel : public wakeModelBase
 {
     double derate;
 public:
-    constantWakeModel(size_t nTurbs, windTurbine* wt, double derate_percent){
+    constantWakeModel(size_t nTurbs, windTurbine* wt, double derate_multiplier){
         nTurbines = nTurbs;
         wTurbine = wt;
-        derate = derate_percent/100.;
+        derate = derate_multiplier;
     }
     std::string getModelName() override { return "Constant"; }
     void wakeCalculations (

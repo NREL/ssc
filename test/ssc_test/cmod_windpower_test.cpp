@@ -256,6 +256,37 @@ TEST_F(CMWindPowerIntegration, WindDist2_cmod_windpower) {
     EXPECT_NEAR(monthly_energy, 13572644, e);
 }
 
+/// Using Wind Resource 2-D Distribution with Constant Loss Wake Model
+TEST_F(CMWindPowerIntegration, WindDist3_cmod_windpower) {
+    ssc_data_set_number(data, "wind_resource_model_choice", 2);
+    // mimic a weibull with k factor 2 and avg speed 7.25 for comparison -> scale param : 8.181
+    double dst[18] = {1.5, 180, .12583,
+                      5, 180, .3933,
+                      8, 180, .18276,
+                      10, 180, .1341,
+                      13.5, 180, .14217,
+                      19, 180, .0211};
+
+    var_data dist = var_data(dst, 6, 3);
+    auto *vt = static_cast<var_table*>(data);
+    vt->assign("wind_resource_distribution", dist);
+    ssc_data_set_number(data, "wind_farm_wake_model", 3);
+    ssc_data_set_number(data, "wake_loss", 5);
+    ssc_data_set_number(data, "avail_turb_loss", 5);
+
+    compute();
+
+    ssc_number_t annual_energy, gross;
+    ssc_data_get_number(data, "annual_energy", &annual_energy);
+    ssc_data_get_number(data, "annual_gross_energy", &gross);
+    EXPECT_NEAR(gross, 160804000, e);
+    EXPECT_NEAR(annual_energy, gross*0.9, e);
+
+    ssc_number_t monthly_energy = ssc_data_get_array(data, "monthly_energy", nullptr)[0];
+    EXPECT_NEAR(monthly_energy, 12291500, e);
+    
+}
+
 /// Icing and Low Temp Cutoff, with Wind Resource Data
 TEST_F(CMWindPowerIntegration, IcingAndLowTempCutoff_cmod_windpower) {
 	//modify test inputs
