@@ -140,9 +140,12 @@ void windPowerCalculator::coordtrans(double metersNorth, double metersEast, doub
 	*metersCrosswind = metersEast*sin(fWind_dir_radians) + (metersNorth * cos(fWind_dir_radians));
 }
 
-int windPowerCalculator::windPowerUsingResource(/*INPUTS */ double windSpeed, double windDirDeg, double airPressureAtm, double TdryC,
-	/*OUTPUTS*/ double *farmPower, double power[], double thrust[], double eff[], double adWindSpeed[], double TI[],
-	double distanceDownwind[], double distanceCrosswind[])
+int
+windPowerCalculator::windPowerUsingResource(double windSpeed, double windDirDeg, double airPressureAtm, double TdryC,
+                                            double *farmPower,
+                                            double *farmPowerGross, double power[], double thrust[], double eff[],
+                                            double adWindSpeed[],
+                                            double TI[], double distanceDownwind[], double distanceCrosswind[])
 {
     if (!wakeModel)
     {
@@ -173,6 +176,7 @@ int windPowerCalculator::windPowerUsingResource(/*INPUTS */ double windSpeed, do
 		errDetails = windTurb->errDetails;
 		return 0;
 	}
+	*farmPowerGross = fTurbine_output * nTurbines;
 
 	// initialize values before possible exit from the function
 	for (i = 0; i<nTurbines; i++)
@@ -196,6 +200,14 @@ int windPowerCalculator::windPowerUsingResource(/*INPUTS */ double windSpeed, do
 	{
 		*farmPower = 0.0;
 		return (int)nTurbines;
+	}
+
+	// if constant loss wake model, simply apply and exit
+	if (std::strcmp(wakeModel->getModelName().c_str(), "Constant") == 0)
+	{
+        wakeModel->wakeCalculations(fAirDensity, &distanceDownwind[0], &distanceCrosswind[0], power, eff, thrust, adWindSpeed, TI);
+        *farmPower = power[0] * nTurbines;
+        return (int)nTurbines;
 	}
 
 	// ok, let's calculate the farm output

@@ -569,3 +569,20 @@ void eddyViscosityWakeModel::wakeCalculations(/*INPUTS */ const double air_densi
 	}
 }
 
+void constantWakeModel::wakeCalculations(const double airDensity, const double distanceDownwind[], const double distanceCrosswind[],
+                                       double power[], double eff[], double thrust[], double windSpeed[], double turbulenceIntensity[])
+{
+    double turbPower = 0., turbThrust = 0.;
+    wTurbine->turbinePower(windSpeed[0], airDensity, &turbPower, &turbThrust);
+    if (wTurbine->errDetails.length() > 0){
+        errDetails = wTurbine->errDetails;
+        return;
+    }
+    turbPower *= 1. - derate;
+    for (size_t i = 0; i < nTurbines; i++) // loop through all turbines, starting with most upwind turbine. i=0 has already been done
+    {
+        power[i] = turbPower;
+        thrust[i] = turbThrust;
+        eff[i] = 100.;
+    }
+}
