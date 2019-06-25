@@ -48,8 +48,16 @@ void grid_default_30_min_lifetime(ssc_data_t &data)
 	set_array(data, "load", load_profile_path_grid_30, 8760 * 2);
 	ssc_data_set_number(data, "grid_interconnection_limit_kwac", 180000);
 	ssc_data_set_number(data, "enable_interconnection_limit", 1);
-
 }
 
+/// Test to mimic a "no-financial" case, which specifies no analysis period 
+void grid_default_60_min_no_financial(ssc_data_t &data)
+{
+	ssc_data_clear(data);
+	set_array(data, "gen", gen_path_grid, 8760);
+	set_array(data, "load", load_profile_path_grid, 8760);
+	ssc_data_set_number(data, "grid_interconnection_limit_kwac", 180000);
+	ssc_data_set_number(data, "enable_interconnection_limit", 1);
+}
 
 #endif
