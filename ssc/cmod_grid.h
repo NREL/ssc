@@ -76,10 +76,18 @@ public:
 			load_year_one = cm.as_vector_double("load");
 		}
 
+		size_t analysis_period = 1;
+		if (cm.is_assigned("analysis_period")) {
+			analysis_period = (size_t)cm.as_integer("analysis_period");
+		}
+		bool system_use_lifetime_output = false;
+		if (cm.is_assigned("system_use_lifetime_output")) {
+			system_use_lifetime_output = (bool)cm.as_integer("system_use_lifetime_output");
+		}
 
 		single_year_to_lifetime_interpolated<double>(
-			(bool)cm.as_integer("system_use_lifetime_output"),
-			(size_t)cm.as_integer("analysis_period"),
+			system_use_lifetime_output,
+			analysis_period,
 			n_rec_lifetime,
 			load_year_one,
 			loadLifetime_kW,
