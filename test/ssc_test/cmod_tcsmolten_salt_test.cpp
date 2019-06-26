@@ -71,7 +71,8 @@ TEST_F(CMTcsMoltenSalt, Rankine_Default_SingleOwner) {
     }
 }
 
-/// Test tcsmolten_salt with all defaults and the single owner financial model
+/// Test tcsmolten_salt with alternative turbine inlet pressure control: Sliding pressure
+/// Rest default configurations with respect to the single owner financial model
 TEST_F(CMTcsMoltenSalt, Rankine_Sliding_P_SingleOwner) {
 
 	ssc_data_t data = ssc_data_create();
@@ -342,7 +343,7 @@ TEST_F(CMTcsMoltenSalt, Rankine_Radiative_Condenser_SingleOwner) {
 	}
 }
 
-/// Test tcsmolten_salt with alternative condenser type: Radiative
+/// Test tcsmolten_salt with alternative flow pattern: Flow pattern 8
 /// Rest default configurations with respect to the single owner financial model
 TEST_F(CMTcsMoltenSalt, Rankine_Flow_Pattern_SingleOwner) {
 
@@ -415,7 +416,7 @@ TEST_F(CMTcsMoltenSalt, Rankine_Flow_Pattern_SingleOwner) {
 TEST_F(CMTcsMoltenSalt, Rankine_Location_SingleOwner) {
 
 	ssc_data_t data = ssc_data_create();
-	int test_errors = tcsmolten_salt_daggett_Tucson_AZ(data);
+	int test_errors = tcsmolten_salt_Tucson_AZ(data);
 
 	EXPECT_FALSE(test_errors);
 	if (!test_errors)
