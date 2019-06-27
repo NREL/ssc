@@ -321,6 +321,7 @@ public:
     util::matrix_t<double> pipe_vel_des;         //[m/s]
     util::matrix_t<double> pipe_T_des;           //[C]
     util::matrix_t<double> pipe_P_des;           //[bar]
+    double P_in_des;                             //[bar] Pressure at the inlet to the TES, at the field side
     
 	virtual bool does_tes_exist();
 
@@ -511,6 +512,6 @@ int size_tes_piping(double vel_dsn, util::matrix_t<double> L, double rho_avg, do
 int size_tes_piping_TandP(HTFProperties &field_htf_props, double T_field_in /*K*/, double T_field_out /*K*/, double P_field_in /*Pa*/, double DP_SGS,
     const util::matrix_t<double> &L, const util::matrix_t<double> &k_tes_loss_coeffs, double pipe_rough,
     bool tanks_in_parallel, const util::matrix_t<double> &diams, const util::matrix_t<double> &vel,
-    util::matrix_t<double> &TES_T_des, util::matrix_t<double> &TES_P_des);
+    util::matrix_t<double> &TES_T_des, util::matrix_t<double> &TES_P_des, double &TES_P_in);
 
 #endif   //__csp_solver_two_tank_tes_

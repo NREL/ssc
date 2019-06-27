@@ -503,7 +503,7 @@ void C_csp_trough_collector_receiver::init(const C_csp_collector_receiver::S_csp
         C_csp_collector_receiver::S_csp_cr_out_solver troughOutputs;
 
         steady_state(weatherValues, htfInletState, defocus, troughOutputs, troughInfo);
-        solved_params.m_T_htf_hot_des = troughOutputs.m_T_salt_hot + 273.15;
+        solved_params.m_T_htf_hot_des = m_T_field_out;
         solved_params.m_dP_sf = troughOutputs.m_dP_sf;
 
         // Restore original settings
@@ -1392,7 +1392,8 @@ int C_csp_trough_collector_receiver::loop_energy_balance_T_t_int(const C_csp_wea
             m_Runner_hl_hot = m_L_runner[i] * CSP::pi*m_D_runner[i] * m_Pipe_hl_coef*(m_T_rnr[i] - T_db);  //Wt
             m_Runner_hl_hot_tot += 2.*m_Runner_hl_hot;
         }
-		
+		m_T_field_out = m_T_rnr[2*m_nrunsec - 1] - m_Runner_hl_hot / (m_dot_runner(m_m_dot_htf_tot, m_nfsec, 2*m_nrunsec - 1)*m_c_hdr_hot);
+
 		q_dot_loss_HR_hot = m_Header_hl_hot_tot + m_Runner_hl_hot_tot;	//[W]   // aka m_Pipe_hl_hot
 		E_HR_hot_losses = q_dot_loss_HR_hot*sim_info.ms_ts.m_step/1.E6;		//[MJ]
 

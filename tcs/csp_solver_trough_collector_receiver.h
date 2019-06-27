@@ -456,9 +456,10 @@ public:
     std::vector<double> m_L_runner;	              //[m]    Lengths of runner sections
     std::vector<int> m_N_rnr_xpans;               //[-]    Number of expansions in runner sections
     std::vector<double> m_DP_rnr;                 //[bar]  Pressure drop in runner sections
-    std::vector<double> m_T_rnr_dsn;              //[C]    Temperature in runner sections at design
+    std::vector<double> m_T_rnr_dsn;              //[C]    Temperature entering runner sections at design
     std::vector<double> m_P_rnr_dsn;              //[bar]  Gauge pessure in runner sections at design
-    std::vector<double> m_T_rnr;                  //[K]    Temperature in runner sections
+    std::vector<double> m_T_rnr;                  //[K]    Temperature entering runner sections
+    double m_T_field_out;                         //[K]    Temperature exiting last runner, and thus exiting field
     std::vector<double> m_P_rnr;                  //[Pa ]  Gauge pessure in runner sections
                                                   
     std::vector<double> m_D_hdr;	              //[m]    Diameters of header sections
@@ -468,15 +469,15 @@ public:
     std::vector<double> m_L_hdr;	              //[m]    Lengths of header sections
     std::vector<int> m_N_hdr_xpans;               //[-]    Number of expansions in header sections
     std::vector<double> m_DP_hdr;                 //[bar]  Pressure drop in header sections
-    std::vector<double> m_T_hdr_dsn;              //[C]    Temperature in header sections at design
+    std::vector<double> m_T_hdr_dsn;              //[C]    Temperature entering header sections at design
     std::vector<double> m_P_hdr_dsn;              //[bar]  Gauge pessure in header sections at design
-    std::vector<double> m_T_hdr;                  //[K]    Temperature in header sections
+    std::vector<double> m_T_hdr;                  //[K]    Temperature entering header sections
     std::vector<double> m_P_hdr;                  //[Pa]   Gauge pessure in header sections
                                                   
     std::vector<double> m_DP_loop;                //[bar]  Pressure drop in loop sections
-    std::vector<double> m_T_loop_dsn;             //[C]    Temperature in loop sections at design
+    std::vector<double> m_T_loop_dsn;             //[C]    Temperature entering loop sections at design
     std::vector<double> m_P_loop_dsn;             //[bar]  Gauge pessure in loop sections at design
-    std::vector<double> m_T_loop;                 //[K]    Temperature in loop sections
+    std::vector<double> m_T_loop;                 //[K]    Temperature entering loop sections
     std::vector<double> m_P_loop;                 //[Pa]   Gauge pessure in loop sections
 
     vector<interconnect> m_interconnects;

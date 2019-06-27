@@ -691,9 +691,9 @@ void C_csp_two_tank_tes::init(const C_csp_tes::S_csp_tes_init_inputs init_inputs
         throw(C_csp_exception(error_msg, "Two Tank TES Initialization"));
     }
     double rho_avg = mc_field_htfProps.dens((ms_params.m_T_field_in_des + ms_params.m_T_field_out_des) / 2, 9 / 1.e-5);
+    double cp_avg = mc_field_htfProps.Cp((ms_params.m_T_field_in_des + ms_params.m_T_field_out_des) / 2);
     double m_dot_pb_design = ms_params.m_W_dot_pc_design * 1.e3 /   // convert MWe to kWe for cp [kJ/kg-K]
-        (ms_params.m_eta_pc * mc_field_htfProps.Cp((ms_params.m_T_field_in_des + ms_params.m_T_field_out_des) / 2 + 273.15) *
-        (ms_params.m_T_field_out_des - ms_params.m_T_field_in_des));
+        (ms_params.m_eta_pc * cp_avg * (ms_params.m_T_field_out_des - ms_params.m_T_field_in_des));
     if (size_tes_piping(ms_params.V_tes_des, ms_params.tes_lengths, rho_avg,
         m_dot_pb_design, ms_params.m_solarm, ms_params.tanks_in_parallel,     // Inputs
         this->pipe_vol_tot, this->pipe_v_dot_rel, this->pipe_diams,
@@ -709,7 +709,8 @@ void C_csp_two_tank_tes::init(const C_csp_tes::S_csp_tes_init_inputs init_inputs
             init_inputs.P_to_cr_at_des * 1.e5, ms_params.DP_SGS * 1.e5, // bar to Pa
             ms_params.tes_lengths, ms_params.k_tes_loss_coeffs, ms_params.pipe_rough, ms_params.tanks_in_parallel,
             this->pipe_diams, this->pipe_vel_des,
-            this->pipe_T_des, this->pipe_P_des);         // Outputs
+            this->pipe_T_des, this->pipe_P_des,
+            this->P_in_des);         // Outputs
 
         // Adjust first two pressures after field pumps, because the field inlet pressure used above was
         // not yet corrected for the section in the TES/PB before the hot tank
@@ -1454,7 +1455,7 @@ int size_tes_piping(double vel_dsn, util::matrix_t<double> L, double rho_avg, do
 int size_tes_piping_TandP(HTFProperties &field_htf_props, double T_field_in, double T_field_out, double P_field_in, double DP_SGS,
     const util::matrix_t<double> &L, const util::matrix_t<double> &k_tes_loss_coeffs, double pipe_rough,
     bool tanks_in_parallel, const util::matrix_t<double> &diams, const util::matrix_t<double> &vel,
-    util::matrix_t<double> &TES_T_des, util::matrix_t<double> &TES_P_des)
+    util::matrix_t<double> &TES_T_des, util::matrix_t<double> &TES_P_des, double &TES_P_in)
 {
     std::size_t nPipes = L.ncells();
     TES_T_des.resize_fill(nPipes, 0.0);
@@ -1555,6 +1556,7 @@ int size_tes_piping_TandP(HTFProperties &field_htf_props, double T_field_in, dou
     for (int i = 0; i < nPipes; i++) {
         TES_P_des.at(i) = TES_P_des.at(i) / 1.e5;
     }
+    TES_P_in = TES_P_des.at(3);     // pressure at the inlet to the TES, at the field side
 
     return 0;
 }
