@@ -1860,6 +1860,8 @@ void C_RecompCycle::design_core_standard(int & error_code)
 		double UA_tot = ms_des_par.m_LTR_UA + ms_des_par.m_HTR_UA;
 		ms_des_par.m_LTR_UA = UA_tot;
 		ms_des_par.m_HTR_UA = 0.0;
+        ms_des_par.m_HTR_min_dT = std::numeric_limits<double>::quiet_NaN();
+        ms_des_par.m_HTR_eff_target = 0.0;
 	}
 
 	CO2_state co2_props;
@@ -2031,29 +2033,43 @@ void C_RecompCycle::design_core_standard(int & error_code)
 	// ****************************************************
 	// ****************************************************
 	// Solve the recuperators
-	double T_HTR_LP_out_lower = m_temp_last[MC_OUT];		//[K] Coldest possible temperature
-	double T_HTR_LP_out_upper = m_temp_last[TURB_OUT];		//[K] Hottest possible temperature
-	
-	double T_HTR_LP_out_guess_lower = min(T_HTR_LP_out_upper - 2.0, max(T_HTR_LP_out_lower + 15.0, 220.0 + 273.15));	//[K] There is nothing special about these guesses...
-	double T_HTR_LP_out_guess_upper = min(T_HTR_LP_out_guess_lower + 20.0, T_HTR_LP_out_upper - 1.0);	//[K] There is nothing special about these guesses, either...
-	
-	C_mono_eq_HTR_des HTR_des_eq(this, w_mc, w_t);
-	C_monotonic_eq_solver HTR_des_solver(HTR_des_eq);
-	
-	HTR_des_solver.settings(ms_des_par.m_tol*m_temp_last[MC_IN], 1000, T_HTR_LP_out_lower, T_HTR_LP_out_upper, false);
-	
-	double T_HTR_LP_out_solved, tol_T_HTR_LP_out_solved;
-	T_HTR_LP_out_solved = tol_T_HTR_LP_out_solved = std::numeric_limits<double>::quiet_NaN();
-	int iter_T_HTR_LP_out = -1;
-	
-	int T_HTR_LP_out_code = HTR_des_solver.solve(T_HTR_LP_out_guess_lower, T_HTR_LP_out_guess_upper, 0,
-								T_HTR_LP_out_solved, tol_T_HTR_LP_out_solved, iter_T_HTR_LP_out);
-	
-	if( T_HTR_LP_out_code != C_monotonic_eq_solver::CONVERGED )
-	{
-		error_code = 35;
-		return;
-	}
+    C_mono_eq_HTR_des HTR_des_eq(this, w_mc, w_t);
+    C_monotonic_eq_solver HTR_des_solver(HTR_des_eq);
+    
+    if (ms_des_par.m_recomp_frac == 0.0)
+    {
+        double y_T_diff = std::numeric_limits<double>::quiet_NaN();
+        int no_HTR_out_code = HTR_des_solver.test_member_function(m_temp_last[TURB_OUT], &y_T_diff);
+
+        if (no_HTR_out_code != 0 || fabs(y_T_diff / m_temp_last[MC_IN]) > ms_des_par.m_tol)
+        {
+            error_code = 35;
+            return;
+        }
+    }
+    else
+    {
+        double T_HTR_LP_out_lower = m_temp_last[MC_OUT];		//[K] Coldest possible temperature
+        double T_HTR_LP_out_upper = m_temp_last[TURB_OUT];		//[K] Hottest possible temperature
+
+        double T_HTR_LP_out_guess_lower = min(T_HTR_LP_out_upper - 2.0, max(T_HTR_LP_out_lower + 15.0, 220.0 + 273.15));	//[K] There is nothing special about these guesses...
+        double T_HTR_LP_out_guess_upper = min(T_HTR_LP_out_guess_lower + 20.0, T_HTR_LP_out_upper - 1.0);	//[K] There is nothing special about these guesses, either...
+
+        HTR_des_solver.settings(ms_des_par.m_tol*m_temp_last[MC_IN], 1000, T_HTR_LP_out_lower, T_HTR_LP_out_upper, false);
+
+        double T_HTR_LP_out_solved, tol_T_HTR_LP_out_solved;
+        T_HTR_LP_out_solved = tol_T_HTR_LP_out_solved = std::numeric_limits<double>::quiet_NaN();
+        int iter_T_HTR_LP_out = -1;
+
+        int T_HTR_LP_out_code = HTR_des_solver.solve(T_HTR_LP_out_guess_lower, T_HTR_LP_out_guess_upper, 0,
+            T_HTR_LP_out_solved, tol_T_HTR_LP_out_solved, iter_T_HTR_LP_out);
+
+        if (T_HTR_LP_out_code != C_monotonic_eq_solver::CONVERGED)
+        {
+            error_code = 35;
+            return;
+        }
+    }    
 
 	// Get information calculated in C_mono_eq_HTR_des
 	w_rc = HTR_des_eq.m_w_rc;
@@ -4255,36 +4271,51 @@ int C_RecompCycle::C_mono_eq_x_f_recomp_y_N_rc::operator()(double f_recomp /*-*/
 	mpc_rc_cycle->m_dens_od[TURB_OUT] = mc_co2_props.dens;
 
 	// Solve recuperators here...
-	double T_HTR_LP_out_lower = mpc_rc_cycle->m_temp_od[MC_OUT];		//[K] Coldest possible temperature
-	double T_HTR_LP_out_upper = mpc_rc_cycle->m_temp_od[TURB_OUT];		//[K] Hottest possible temperature
+    C_mono_eq_HTR_od HTR_od_eq(mpc_rc_cycle, m_m_dot_rc, m_m_dot_mc, m_m_dot_t);
+    C_monotonic_eq_solver HTR_od_solver(HTR_od_eq);
+    
+    if (mpc_rc_cycle->ms_des_solved.ms_HTR_des_solved.m_UA_design <= 0.0 || !std::isfinite(mpc_rc_cycle->ms_des_solved.ms_HTR_des_solved.m_UA_design))
+    {
+        double y_T_diff = std::numeric_limits<double>::quiet_NaN();
+        int no_HTR_out_code = HTR_od_solver.test_member_function(mpc_rc_cycle->m_temp_od[TURB_OUT], &y_T_diff);
 
-	double T_HTR_LP_out_guess_lower = min(T_HTR_LP_out_upper - 2.0, max(T_HTR_LP_out_lower + 15.0, 220.0 + 273.15));	//[K] There is nothing special about these guesses (except 220 is a typical RC outlet temp)...
-	double T_HTR_LP_out_guess_upper = min(T_HTR_LP_out_guess_lower + 20.0, T_HTR_LP_out_upper - 1.0);	//[K] There is nothing special about these guesses, either...
+        if (no_HTR_out_code != 0 || fabs(y_T_diff / mpc_rc_cycle->m_temp_od[MC_IN]) > mpc_rc_cycle->ms_des_par.m_tol)
+        {
+            return -35;
+        }
+    }
+    else
+    {
+        double T_HTR_LP_out_lower = mpc_rc_cycle->m_temp_od[MC_OUT];		//[K] Coldest possible temperature
+        double T_HTR_LP_out_upper = mpc_rc_cycle->m_temp_od[TURB_OUT];		//[K] Hottest possible temperature
 
-	C_mono_eq_HTR_od HTR_od_eq(mpc_rc_cycle, m_m_dot_rc, m_m_dot_mc, m_m_dot_t);
-	C_monotonic_eq_solver HTR_od_solver(HTR_od_eq);
+        double T_HTR_LP_out_guess_lower = min(T_HTR_LP_out_upper - 2.0, max(T_HTR_LP_out_lower + 15.0, 220.0 + 273.15));	//[K] There is nothing special about these guesses (except 220 is a typical RC outlet temp)...
+        double T_HTR_LP_out_guess_upper = min(T_HTR_LP_out_guess_lower + 20.0, T_HTR_LP_out_upper - 1.0);	//[K] There is nothing special about these guesses, either...
 
-	HTR_od_solver.settings(mpc_rc_cycle->ms_des_par.m_tol*mpc_rc_cycle->m_temp_od[MC_IN], 1000, T_HTR_LP_out_lower, T_HTR_LP_out_upper, false);
 
-	double T_HTR_LP_out_solved, tol_T_HTR_LP_out_solved;
-	T_HTR_LP_out_solved = tol_T_HTR_LP_out_solved = std::numeric_limits<double>::quiet_NaN();
-	int iter_T_HTR_LP_out = -1;
 
-	int T_HTR_LP_out_code = HTR_od_solver.solve(T_HTR_LP_out_guess_lower, T_HTR_LP_out_guess_upper, 0,
-		T_HTR_LP_out_solved, tol_T_HTR_LP_out_solved, iter_T_HTR_LP_out);
+        HTR_od_solver.settings(mpc_rc_cycle->ms_des_par.m_tol*mpc_rc_cycle->m_temp_od[MC_IN], 1000, T_HTR_LP_out_lower, T_HTR_LP_out_upper, false);
 
-	if( T_HTR_LP_out_code != C_monotonic_eq_solver::CONVERGED )
-	{
-		int n_call_history = (int)HTR_od_solver.get_solver_call_history()->size();
-		int error_code = 0;
-		if( n_call_history > 0 )
-			error_code = (*(HTR_od_solver.get_solver_call_history()))[n_call_history - 1].err_code;
-		if( error_code == 0 )
-		{
-			error_code = T_HTR_LP_out_code;
-		}
-		return error_code;
-	}
+        double T_HTR_LP_out_solved, tol_T_HTR_LP_out_solved;
+        T_HTR_LP_out_solved = tol_T_HTR_LP_out_solved = std::numeric_limits<double>::quiet_NaN();
+        int iter_T_HTR_LP_out = -1;
+
+        int T_HTR_LP_out_code = HTR_od_solver.solve(T_HTR_LP_out_guess_lower, T_HTR_LP_out_guess_upper, 0,
+            T_HTR_LP_out_solved, tol_T_HTR_LP_out_solved, iter_T_HTR_LP_out);
+
+        if (T_HTR_LP_out_code != C_monotonic_eq_solver::CONVERGED)
+        {
+            int n_call_history = (int)HTR_od_solver.get_solver_call_history()->size();
+            int error_code = 0;
+            if (n_call_history > 0)
+                error_code = (*(HTR_od_solver.get_solver_call_history()))[n_call_history - 1].err_code;
+            if (error_code == 0)
+            {
+                error_code = T_HTR_LP_out_code;
+            }
+            return error_code;
+        }
+    }
 
 	double Q_dot_HTR = HTR_od_eq.m_Q_dot_HTR;		//[kWt]
 

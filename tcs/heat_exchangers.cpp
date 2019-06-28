@@ -1341,7 +1341,10 @@ void NS_HX_counterflow_eqs::solve_q_dot_for_fixed_UA(int hx_target_code /*-*/,
 	// Need to check if hot stream is actually hotter than the cold stream
 	// If not, just return the input temperatures for each stream
 	// Should maybe improve code to handle this case (i.e. check which input is hotter)...
-	if (T_h_in - T_c_in < 0.01)
+	if (T_h_in - T_c_in < 0.01  ||
+        (hx_target_code == NS_HX_counterflow_eqs::TARGET_UA && (UA_target <= 0.0 || !std::isfinite(UA_target) ) ) ||
+        (hx_target_code == NS_HX_counterflow_eqs::TARGET_MIN_DT && !std::isfinite(min_dT_target) ) ||
+        (hx_target_code == NS_HX_counterflow_eqs::TARGET_EFFECTIVENESS && (eff_target <= 0.0 || !std::isfinite(eff_target) ) ) )
 	{
 		q_dot = 0.0;
 		T_c_out = T_c_in;

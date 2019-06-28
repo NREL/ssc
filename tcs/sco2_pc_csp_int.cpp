@@ -333,6 +333,33 @@ int C_sco2_phx_air_cooler::off_design_fix_P_mc_in(S_od_par od_par, double P_mc_i
 	// Now, call off-design with the input compressor inlet pressure		
 	ms_cycle_od_par.m_P_LP_comp_in = P_mc_in*1.E3;	//[kPa] convert from MPa
 
+    if (get_design_par()->m_cycle_config == 1)
+    {
+        if (ms_cycle_od_par.m_T_mc_in < N_co2_props::T_crit)
+        {
+            if (ms_cycle_od_par.m_P_LP_comp_in < N_co2_props::P_crit)
+            {
+                CO2_state co2_props;
+                // Then calculate the compressor inlet pressure that achieves this density at the off-design ambient temperature
+                CO2_TQ(ms_cycle_od_par.m_T_mc_in, 0.0, &co2_props);
+                double Psat = co2_props.pres;       //[kPa]
+
+                if (ms_cycle_od_par.m_P_LP_comp_in < Psat)
+                {
+                    ms_cycle_od_par.m_P_LP_comp_in = std::min(ms_cycle_od_par.m_P_LP_comp_in, 0.995*Psat);
+                }
+                else
+                {
+                    ms_cycle_od_par.m_P_LP_comp_in = std::max(ms_cycle_od_par.m_P_LP_comp_in, 1.005*Psat);
+                }
+            }
+            else
+            {
+                ms_cycle_od_par.m_P_LP_comp_in = std::max(ms_cycle_od_par.m_P_LP_comp_in, 1.01*N_co2_props::P_crit);
+            }
+        }
+    }
+
     // Input RC shaft speed controls
     ms_cycle_od_par.m_is_rc_N_od_at_design = is_rc_N_od_at_design;  //[-]
     ms_cycle_od_par.m_rc_N_od_f_des = rc_N_od_f_des;                //[-]
@@ -380,27 +407,33 @@ void C_sco2_phx_air_cooler::setup_off_design_info(C_sco2_phx_air_cooler::S_od_pa
 	// ****************************************
 
 	ms_cycle_od_par.m_T_mc_in = ms_od_par.m_T_amb + ms_des_par.m_dt_mc_approach;		//[K]
-	if (ms_cycle_od_par.m_T_mc_in < m_T_mc_in_min)
-	{
-		std::string msg = util::format("The off-design main compressor inlet temperature is %lg [C]."
-			" The sCO2 cycle off-design code reset it to the minimum allowable main compressor inlet temperature: %lg [C].",
-			ms_cycle_od_par.m_T_mc_in - 273.15,
-			m_T_mc_in_min - 273.15);
-		ms_cycle_od_par.m_T_mc_in = m_T_mc_in_min;
-	}
 
-	if (ms_des_par.m_cycle_config == 2)
-	{
-		ms_cycle_od_par.m_T_pc_in = ms_od_par.m_T_amb + ms_des_par.m_dt_mc_approach;	//[K]
-		if (ms_cycle_od_par.m_T_pc_in < m_T_mc_in_min)
-		{
-			std::string msg = util::format("The off-design main compressor in let temperture is %lg [C]."
-				" The sCO2 cycle off-design code reset it to the minimum allowable main compressor inlet temperature: %lg [C].",
-				ms_cycle_od_par.m_T_pc_in - 273.15,
-				m_T_mc_in_min - 273.15);
-			ms_cycle_od_par.m_T_pc_in = m_T_mc_in_min;
-		}
-	}
+    bool is_T_crit_limit = true;
+
+    if (is_T_crit_limit)
+    {
+        if (ms_cycle_od_par.m_T_mc_in < m_T_mc_in_min)
+        {
+            std::string msg = util::format("The off-design main compressor inlet temperature is %lg [C]."
+                " The sCO2 cycle off-design code reset it to the minimum allowable main compressor inlet temperature: %lg [C].",
+                ms_cycle_od_par.m_T_mc_in - 273.15,
+                m_T_mc_in_min - 273.15);
+            ms_cycle_od_par.m_T_mc_in = m_T_mc_in_min;
+        }
+
+        if (ms_des_par.m_cycle_config == 2)
+        {
+            ms_cycle_od_par.m_T_pc_in = ms_od_par.m_T_amb + ms_des_par.m_dt_mc_approach;	//[K]
+            if (ms_cycle_od_par.m_T_pc_in < m_T_mc_in_min)
+            {
+                std::string msg = util::format("The off-design main compressor in let temperture is %lg [C]."
+                    " The sCO2 cycle off-design code reset it to the minimum allowable main compressor inlet temperature: %lg [C].",
+                    ms_cycle_od_par.m_T_pc_in - 273.15,
+                    m_T_mc_in_min - 273.15);
+                ms_cycle_od_par.m_T_pc_in = m_T_mc_in_min;
+            }
+        }
+    }
 
 	// Begin with no compressor bypass
 	ms_cycle_od_par.m_f_mc_pc_bypass = 0.0;
