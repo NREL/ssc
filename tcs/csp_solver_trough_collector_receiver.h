@@ -91,6 +91,7 @@ public:
 		E_Q_DOT_FREEZE_PROT,       //[MWt]
 
 		E_M_DOT_LOOP,				//[kg/s]
+        E_IS_RECIRCULATING,         //[-]
 		E_M_DOT_FIELD_RECIRC,		//[kg/s]
 		E_M_DOT_FIELD_DELIVERED,	//[kg/s]
 		E_T_FIELD_COLD_IN,	//[C]

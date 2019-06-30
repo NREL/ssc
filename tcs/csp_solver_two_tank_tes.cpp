@@ -705,13 +705,16 @@ void C_csp_two_tank_tes::init(const C_csp_tes::S_csp_tes_init_inputs init_inputs
     }
 
     if (ms_params.calc_design_pipe_vals) {
-        size_tes_piping_TandP(mc_field_htfProps, init_inputs.T_to_cr_at_des, init_inputs.T_from_cr_at_des,
+        if (size_tes_piping_TandP(mc_field_htfProps, init_inputs.T_to_cr_at_des, init_inputs.T_from_cr_at_des,
             init_inputs.P_to_cr_at_des * 1.e5, ms_params.DP_SGS * 1.e5, // bar to Pa
             ms_params.tes_lengths, ms_params.k_tes_loss_coeffs, ms_params.pipe_rough, ms_params.tanks_in_parallel,
             this->pipe_diams, this->pipe_vel_des,
             this->pipe_T_des, this->pipe_P_des,
-            this->P_in_des);         // Outputs
+            this->P_in_des)) {        // Outputs
 
+            error_msg = "TES piping design temperature and pressure calculation failed";
+            throw(C_csp_exception(error_msg, "Two Tank TES Initialization"));
+        }
         // Adjust first two pressures after field pumps, because the field inlet pressure used above was
         // not yet corrected for the section in the TES/PB before the hot tank
         double DP_before_hot_tank = this->pipe_P_des.at(3);        // first section before hot tank
@@ -881,13 +884,12 @@ void C_csp_two_tank_tes::discharge_full(double timestep /*s*/, double T_amb /*K*
     outputs.m_q_heater = q_heater_hot + q_heater_cold;
     outputs.m_m_dot = m_dot_tank;
     if (!ms_params.m_is_hx) {
-        outputs.m_W_dot_rhtf_pump = m_dot_field * ms_params.m_htf_pump_coef / 1.E3; //[MWe] Pumping power for Receiver HTF, convert from kW/kg/s*kg/s
+        outputs.m_W_dot_rhtf_pump = 0;                          //[MWe] Just tank-to-tank pumping power
         T_htf_hot_out = T_hot_ave;
         m_dot_htf_out = m_dot_tank;
     }
     else {
-        outputs.m_W_dot_rhtf_pump = m_dot_field * ms_params.m_htf_pump_coef / 1.E3 +
-            m_dot_tank * ms_params.m_tes_pump_coef / 1.E3;                          //[MWe] Pumping power for Receiver HTF, convert from kW/kg/s*kg/s
+        outputs.m_W_dot_rhtf_pump = m_dot_tank * ms_params.m_tes_pump_coef / 1.E3;     //[MWe] Just tank-to-tank pumping power, convert from kW/kg/s*kg/s
         T_htf_hot_out = T_field_hot_out;
         m_dot_htf_out = m_dot_field;
     }
@@ -1054,12 +1056,11 @@ bool C_csp_two_tank_tes::discharge(double timestep /*s*/, double T_amb /*K*/, do
 	outputs.m_q_heater = q_heater_cold + q_heater_hot;			//[MWt]
     outputs.m_m_dot = m_dot_tank;                               //[kg/s]
     if (!ms_params.m_is_hx) {
-	    outputs.m_W_dot_rhtf_pump = m_dot_field * ms_params.m_htf_pump_coef / 1.E3;	//[MWe] Pumping power for Receiver HTF, convert from kW/kg/s*kg/s
+	    outputs.m_W_dot_rhtf_pump = 0;                          //[MWe] Just tank-to-tank pumping power
         T_htf_hot_out = T_hot_ave;
     }
     else {
-        outputs.m_W_dot_rhtf_pump = m_dot_field * ms_params.m_htf_pump_coef / 1.E3 +
-            m_dot_tank * ms_params.m_tes_pump_coef / 1.E3;      //[MWe] Pumping power for Receiver HTF, convert from kW/kg/s*kg/s
+        outputs.m_W_dot_rhtf_pump = m_dot_tank * ms_params.m_tes_pump_coef / 1.E3;     //[MWe] Just tank-to-tank pumping power, convert from kW/kg/s*kg/s
         T_htf_hot_out = T_field_hot_out;
     }
 	outputs.m_q_dot_loss = q_dot_loss_cold + q_dot_loss_hot;	//[MWt]
@@ -1227,12 +1228,11 @@ bool C_csp_two_tank_tes::charge(double timestep /*s*/, double T_amb /*K*/, doubl
 	outputs.m_q_heater = q_heater_cold + q_heater_hot;			//[MWt]
     outputs.m_m_dot = m_dot_tank;                               //[kg/s]
     if (!ms_params.m_is_hx) {
-        outputs.m_W_dot_rhtf_pump = m_dot_field * ms_params.m_htf_pump_coef / 1.E3;	//[MWe] Pumping power for Receiver HTF, convert from kW/kg/s*kg/s
+        outputs.m_W_dot_rhtf_pump = 0;                          //[MWe] Just tank-to-tank pumping power
         T_htf_cold_out = T_cold_ave;
     }
     else {
-        outputs.m_W_dot_rhtf_pump = m_dot_field * ms_params.m_htf_pump_coef / 1.E3 +
-            m_dot_tank * ms_params.m_tes_pump_coef / 1.E3;      //[MWe] Pumping power for Receiver HTF, convert from kW/kg/s*kg/s
+        outputs.m_W_dot_rhtf_pump = m_dot_tank * ms_params.m_tes_pump_coef / 1.E3;     //[MWe] Just tank-to-tank pumping power, convert from kW/kg/s*kg/s
         T_htf_cold_out = T_field_cold_out;
     }
     outputs.m_q_dot_loss = q_dot_loss_cold + q_dot_loss_hot;	//[MWt]
@@ -1290,13 +1290,12 @@ void C_csp_two_tank_tes::charge_full(double timestep /*s*/, double T_amb /*K*/, 
     outputs.m_q_heater = q_heater_hot + q_heater_cold;
     outputs.m_m_dot = m_dot_tank;
     if (!ms_params.m_is_hx) {
-        outputs.m_W_dot_rhtf_pump = m_dot_field * ms_params.m_htf_pump_coef / 1.E3; //[MWe] Pumping power for Receiver HTF, convert from kW/kg/s*kg/s
+        outputs.m_W_dot_rhtf_pump = 0;                          //[MWe] Just tank-to-tank pumping power
         T_htf_cold_out = T_cold_ave;
         m_dot_htf_out = m_dot_tank;
     }
     else {
-        outputs.m_W_dot_rhtf_pump = m_dot_field * ms_params.m_htf_pump_coef / 1.E3 +
-            m_dot_tank * ms_params.m_tes_pump_coef / 1.E3;                          //[MWe] Pumping power for Receiver HTF, convert from kW/kg/s*kg/s
+        outputs.m_W_dot_rhtf_pump = m_dot_tank * ms_params.m_tes_pump_coef / 1.E3;     //[MWe] Just tank-to-tank pumping power, convert from kW/kg/s*kg/s
         T_htf_cold_out = T_field_cold_in;
         m_dot_htf_out = m_dot_field;
     }
@@ -1347,6 +1346,105 @@ void C_csp_two_tank_tes::converged()
 	// The max charge and discharge flow rates should be set at the beginning of each timestep
 	//   during the q_dot_xx_avail_est calls
 	m_m_dot_tes_dc_max = m_m_dot_tes_ch_max = std::numeric_limits<double>::quiet_NaN();
+}
+
+int C_csp_two_tank_tes::pressure_drops(double m_dot_sf, double m_dot_pb,
+    double T_sf_in, double T_sf_out, double T_pb_in, double T_pb_out, bool recirculating,
+    double &P_drop_col, double &P_drop_gen)
+{
+    const std::size_t num_sections = 11;          // total number of col. + gen. sections
+    const std::size_t bypass_section = 4;         // bypass section index
+    const std::size_t gen_first_section = 5;      // first generation section index in combined col. gen. loops
+    const double P_hi = 17 / 1.e-5;               // downstream SF pump pressure [Pa]
+    const double P_lo = 1 / 1.e-5;                // atmospheric pressure [Pa]
+    double P, T, rho, v_dot, vel;                 // htf properties
+    double Area;                                  // cross-sectional pipe area
+    double v_dot_sf, v_dot_pb;                    // solar field and power block vol. flow rates
+    double k;                                     // effective minor loss coefficient
+    double Re, ff;
+    double v_dot_ref;
+    double DP_SGS;
+    std::vector<double> P_drops(num_sections, 0.0);
+
+    util::matrix_t<double> L = this->ms_params.tes_lengths;
+    util::matrix_t<double> D = this->pipe_diams;
+    util::matrix_t<double> k_coeffs = this->ms_params.k_tes_loss_coeffs;
+    util::matrix_t<double> v_dot_rel = this->pipe_v_dot_rel;
+    m_dot_pb > 0 ? DP_SGS = this->ms_params.DP_SGS : DP_SGS = 0.;
+    v_dot_sf = m_dot_sf / this->mc_field_htfProps.dens((T_sf_in + T_sf_out) / 2, (P_hi + P_lo) / 2);
+    v_dot_pb = m_dot_pb / this->mc_field_htfProps.dens((T_pb_in + T_pb_out) / 2, P_lo);
+
+    for (std::size_t i = 0; i < num_sections; i++) {
+        if (L.at(i) > 0 && D.at(i) > 0) {
+            (i > 0 && i < 3) ? P = P_hi : P = P_lo;
+            if (i < 3) T = T_sf_in;                                                       // 0, 1, 2
+            if (i == 3 || i == 4) T = T_sf_out;                                           // 3, 4
+            if (i >= gen_first_section && i < gen_first_section + 4) T = T_pb_in;         // 5, 6, 7, 8
+            if (i == gen_first_section + 4) T = (T_pb_in + T_pb_out) / 2.;                // 9
+            if (i == gen_first_section + 5) T = T_pb_out;                                 // 10
+            i < gen_first_section ? v_dot_ref = v_dot_sf : v_dot_ref = v_dot_pb;
+            v_dot = v_dot_rel.at(i) * v_dot_ref;
+            Area = CSP::pi * pow(D, 2) / 4.;
+            vel = v_dot / Area;
+            rho = this->mc_field_htfProps.dens(T, P);
+            Re = this->mc_field_htfProps.Re(T, P, vel, D.at(i));
+            ff = CSP::FrictionFactor(this->ms_params.pipe_rough / D.at(i), Re);
+            if (i != bypass_section || recirculating) {
+                P_drops.at(i) += CSP::MajorPressureDrop(vel, rho, ff, L.at(i), D.at(i));
+                P_drops.at(i) += CSP::MinorPressureDrop(vel, rho, k_coeffs.at(i));
+            }
+        }
+    }
+
+    P_drop_col = std::accumulate(P_drops.begin(), P_drops.begin() + gen_first_section, 0.0);
+    P_drop_gen = DP_SGS + std::accumulate(P_drops.begin() + gen_first_section, P_drops.end(), 0.0);
+
+    return 0;
+}
+
+double C_csp_two_tank_tes::pumping_power(double m_dot_sf, double m_dot_pb, double m_dot_tank,
+    double T_sf_in, double T_sf_out, double T_pb_in, double T_pb_out, bool recirculating)
+{
+    double htf_pump_power = 0.;
+    double rho_sf, rho_pb;
+    double DP_col, DP_gen;
+    double tes_pump_coef = this->ms_params.m_tes_pump_coef;
+    double pb_pump_coef = this->ms_params.m_htf_pump_coef;
+    double eta_pump = this->ms_params.eta_pump;
+    
+    if (this->ms_params.custom_tes_p_loss) {
+        double rho_sf, rho_pb;
+        double DP_col, DP_gen;
+        this->pressure_drops(m_dot_sf, m_dot_pb, T_sf_in, T_sf_out, T_pb_in, T_pb_out, recirculating,
+            DP_col, DP_gen);
+        rho_sf = this->mc_field_htfProps.dens((T_sf_in + T_sf_out) / 2., 8e5);
+        rho_pb = this->mc_field_htfProps.dens((T_pb_in + T_pb_out) / 2., 1e5);
+        if (this->ms_params.m_is_hx) {
+            // TODO - replace tes_pump_coef with a pump efficiency. Maybe utilize unused coefficients specified for the
+            //  series configuration, namely the SGS Pump suction header to Individual SGS pump inlet and the additional
+            //  two immediately downstream
+            htf_pump_power = tes_pump_coef * m_dot_tank / 1000 +
+                (DP_col * m_dot_sf / (rho_sf * eta_pump) + DP_gen * m_dot_pb / (rho_pb * eta_pump)) / 1e6;   //[MW]
+        }
+        else {
+            htf_pump_power = (DP_col * m_dot_sf / (rho_sf * eta_pump) + DP_gen * m_dot_pb / (rho_pb * eta_pump)) / 1e6;   //[MW]
+        }
+    }
+    else {    // original methods
+        if (this->ms_params.m_is_hx) {
+            htf_pump_power = (tes_pump_coef*m_dot_tank + pb_pump_coef * (fabs(m_dot_pb - m_dot_sf) + m_dot_pb)) / 1000.0;	//[MW]
+        }
+        else {
+            if (this->ms_params.tanks_in_parallel) {
+                htf_pump_power = pb_pump_coef * (fabs(m_dot_pb - m_dot_sf) + m_dot_pb) / 1000.0;	//[MW]
+            }
+            else {
+                htf_pump_power = pb_pump_coef * m_dot_pb / 1000.0;	//[MW]
+            }
+        }
+    }
+
+    return htf_pump_power;
 }
 
 void two_tank_tes_sizing(HTFProperties &tes_htf_props, double Q_tes_des /*MWt-hr*/, double T_tes_hot /*K*/,
@@ -1894,6 +1992,7 @@ void C_csp_cold_tes::discharge_full(double timestep /*s*/, double T_amb /*K*/, d
 	}
 
 	outputs.m_q_heater = q_heater_cold + q_heater_hot;
+    outputs.m_m_dot = m_dot_htf_out;
 	outputs.m_W_dot_rhtf_pump = m_dot_htf_out * ms_params.m_htf_pump_coef / 1.E3;	//[MWe] Pumping power for Receiver HTF, convert from kW/kg/s*kg/s
 	outputs.m_q_dot_loss = q_dot_loss_cold + q_dot_loss_hot;
 
@@ -1930,6 +2029,7 @@ bool C_csp_cold_tes::discharge(double timestep /*s*/, double T_amb /*K*/, double
 		if (m_dot_htf_in > m_m_dot_tes_dc_max / timestep)
 		{
 			outputs.m_q_heater = std::numeric_limits<double>::quiet_NaN();
+            outputs.m_m_dot = std::numeric_limits<double>::quiet_NaN();
 			outputs.m_W_dot_rhtf_pump = std::numeric_limits<double>::quiet_NaN();
 			outputs.m_q_dot_loss = std::numeric_limits<double>::quiet_NaN();
 			outputs.m_q_dot_dc_to_htf = std::numeric_limits<double>::quiet_NaN();
@@ -1955,6 +2055,7 @@ bool C_csp_cold_tes::discharge(double timestep /*s*/, double T_amb /*K*/, double
 	}
 
 	outputs.m_q_heater = q_heater_cold + q_heater_hot;			//[MWt]
+    outputs.m_m_dot = m_dot_htf_in;
 	outputs.m_W_dot_rhtf_pump = m_dot_htf_in * ms_params.m_htf_pump_coef / 1.E3;	//[MWe] Pumping power for Receiver HTF, convert from kW/kg/s*kg/s
 	outputs.m_q_dot_loss = q_dot_loss_cold + q_dot_loss_hot;	//[MWt]
 
@@ -1994,6 +2095,7 @@ bool C_csp_cold_tes::charge(double timestep /*s*/, double T_amb /*K*/, double m_
 		if (m_dot_htf_in > m_m_dot_tes_ch_max / timestep)
 		{
 			outputs.m_q_dot_loss = std::numeric_limits<double>::quiet_NaN();
+            outputs.m_m_dot = std::numeric_limits<double>::quiet_NaN();
 			outputs.m_q_heater = std::numeric_limits<double>::quiet_NaN();
 			outputs.m_T_hot_ave = std::numeric_limits<double>::quiet_NaN();
 			outputs.m_T_cold_ave = std::numeric_limits<double>::quiet_NaN();
@@ -2016,6 +2118,7 @@ bool C_csp_cold_tes::charge(double timestep /*s*/, double T_amb /*K*/, double m_
 	}
 
 	outputs.m_q_heater = q_heater_cold + q_heater_hot;			//[MW] Storage thermal losses
+    outputs.m_m_dot = m_dot_htf_in;
 	outputs.m_W_dot_rhtf_pump = m_dot_htf_in * ms_params.m_htf_pump_coef / 1.E3;	//[MWe] Pumping power for Receiver HTF, convert from kW/kg/s*kg/s
 	outputs.m_q_dot_loss = q_dot_loss_cold + q_dot_loss_hot;	//[MW] Heating power required to keep tanks at a minimum temperature
 
@@ -2058,6 +2161,7 @@ bool C_csp_cold_tes::charge_discharge(double timestep /*s*/, double T_amb /*K*/,
 		if (m_dot_hot_in > m_m_dot_tes_ch_max / timestep)
 		{
 			outputs.m_q_dot_loss = std::numeric_limits<double>::quiet_NaN();
+            outputs.m_m_dot = std::numeric_limits<double>::quiet_NaN();
 			outputs.m_q_heater = std::numeric_limits<double>::quiet_NaN();
 			outputs.m_T_hot_ave = std::numeric_limits<double>::quiet_NaN();
 			outputs.m_T_cold_ave = std::numeric_limits<double>::quiet_NaN();
@@ -2080,6 +2184,7 @@ bool C_csp_cold_tes::charge_discharge(double timestep /*s*/, double T_amb /*K*/,
 	}
 
 	outputs.m_q_heater = q_heater_cold + q_heater_hot;			//[MW] Storage thermal losses
+    outputs.m_m_dot = m_dot_hot_in;
 	outputs.m_W_dot_rhtf_pump = m_dot_hot_in * ms_params.m_htf_pump_coef / 1.E3;	//[MWe] Pumping power for Receiver HTF, convert from kW/kg/s*kg/s
 	outputs.m_q_dot_loss = q_dot_loss_cold + q_dot_loss_hot;	//[MW] Heating power required to keep tanks at a minimum temperature
 
@@ -2120,6 +2225,7 @@ bool C_csp_cold_tes::recirculation(double timestep /*s*/, double T_amb /*K*/, do
 		if (m_dot_cold_in > m_m_dot_tes_ch_max / timestep)	//Is this necessary for recirculation mode? ARD
 		{
 			outputs.m_q_dot_loss = std::numeric_limits<double>::quiet_NaN();
+            outputs.m_m_dot = std::numeric_limits<double>::quiet_NaN();
 			outputs.m_q_heater = std::numeric_limits<double>::quiet_NaN();
 			outputs.m_T_hot_ave = std::numeric_limits<double>::quiet_NaN();
 			outputs.m_T_cold_ave = std::numeric_limits<double>::quiet_NaN();
@@ -2143,6 +2249,7 @@ bool C_csp_cold_tes::recirculation(double timestep /*s*/, double T_amb /*K*/, do
 	}
 
 	outputs.m_q_heater = q_heater_cold + q_heater_hot;			//[MW] Storage thermal losses
+    outputs.m_m_dot = m_dot_cold_in;
 	outputs.m_W_dot_rhtf_pump = m_dot_cold_in * ms_params.m_htf_pump_coef / 1.E3;	//[MWe] Pumping power for Receiver HTF, convert from kW/kg/s*kg/s
 	outputs.m_q_dot_loss = q_dot_loss_cold + q_dot_loss_hot;	//[MW] Heating power required to keep tanks at a minimum temperature
 
@@ -2194,6 +2301,7 @@ void C_csp_cold_tes::charge_full(double timestep /*s*/, double T_amb /*K*/, doub
 	}
 
 	outputs.m_q_heater = q_heater_cold + q_heater_hot;
+    outputs.m_m_dot = m_dot_htf_out;
 	outputs.m_W_dot_rhtf_pump = m_dot_htf_out * ms_params.m_htf_pump_coef / 1.E3;	//[MWe] Pumping power for Receiver HTF, convert from kW/kg/s*kg/s
 	outputs.m_q_dot_loss = q_dot_loss_cold + q_dot_loss_hot;
 
@@ -2223,6 +2331,7 @@ void C_csp_cold_tes::idle(double timestep, double T_amb, C_csp_tes::S_csp_tes_ou
 	mc_cold_tank.energy_balance(timestep, 0.0, 0.0, 0.0, T_amb, T_cold_ave, q_cold_heater, q_dot_cold_loss);
 
 	outputs.m_q_heater = q_cold_heater + q_hot_heater;			//[MJ]
+    outputs.m_m_dot = 0.;
 	outputs.m_W_dot_rhtf_pump = 0.0;							//[MWe]
 	outputs.m_q_dot_loss = q_dot_cold_loss + q_dot_hot_loss;	//[MW]
 
@@ -2245,6 +2354,21 @@ void C_csp_cold_tes::converged()
 	m_m_dot_tes_dc_max = m_m_dot_tes_ch_max = std::numeric_limits<double>::quiet_NaN();
 }
 
+int C_csp_cold_tes::pressure_drops(double m_dot_sf, double m_dot_pb,
+    double T_sf_in, double T_sf_out, double T_pb_in, double T_pb_out, bool recirculating,
+    double &P_drop_col, double &P_drop_gen)
+{
+    P_drop_col = 0.;
+    P_drop_gen = 0.;
+
+    return 0;
+}
+
+double C_csp_cold_tes::pumping_power(double m_dot_sf, double m_dot_pb, double m_dot_tank,
+    double T_sf_in, double T_sf_out, double T_pb_in, double T_pb_out, bool recirculating)
+{
+    return m_dot_tank * this->ms_params.m_htf_pump_coef / 1.E3;
+}
 
 int C_csp_two_tank_tes::C_MEQ_indirect_tes_discharge::operator()(double m_dot_tank /*kg/s*/, double *m_dot_bal /*-*/)
 {

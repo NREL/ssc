@@ -275,6 +275,7 @@ public:
 		double m_f_V_hot_ini;       //[%] Initial fraction of available volume that is hot
 		double m_htf_pump_coef;		//[kW/kg/s] Pumping power to move 1 kg/s of HTF through power cycle
         double m_tes_pump_coef;		//[kW/kg/s] Pumping power to move 1 kg/s of HTF through tes loop
+        double eta_pump;            //[-] Pump efficiency, for newer pumping calculations
         bool tanks_in_parallel;     //[-] Whether the tanks are in series or parallel with the solar field. Series means field htf must go through storage tanks.
         bool has_hot_tank_bypass;   //[-] True if the bypass valve causes the field htf to bypass just the hot tank and enter the cold tank before flowing back to the field.
         double T_tank_hot_inlet_min; //[C] Minimum field htf temperature that may enter the hot tank
@@ -355,6 +356,13 @@ public:
 	virtual void idle(double timestep, double T_amb, C_csp_tes::S_csp_tes_outputs &outputs);
 	
 	virtual void converged();
+
+    virtual int pressure_drops(double m_dot_sf, double m_dot_pb,
+        double T_sf_in, double T_sf_out, double T_pb_in, double T_pb_out, bool recirculating,
+        double &P_drop_col, double &P_drop_gen);
+
+    virtual double pumping_power(double m_dot_sf, double m_dot_pb, double m_dot_tank,
+        double T_sf_in, double T_sf_out, double T_pb_in, double T_pb_out, bool recirculating);
 };
 
 class C_csp_cold_tes : public C_csp_tes //Class for cold storage based on two tank tes ARD
@@ -497,6 +505,13 @@ public:
 	virtual void idle(double timestep, double T_amb, C_csp_tes::S_csp_tes_outputs &outputs);
 
 	virtual void converged();
+
+    virtual int pressure_drops(double m_dot_sf, double m_dot_pb,
+        double T_sf_in, double T_sf_out, double T_pb_in, double T_pb_out, bool recirculating,
+        double &P_drop_col, double &P_drop_gen);
+
+    virtual double pumping_power(double m_dot_sf, double m_dot_pb, double m_dot_tank,
+        double T_sf_in, double T_sf_out, double T_pb_in, double T_pb_out, bool recirculating);
 };
 
 

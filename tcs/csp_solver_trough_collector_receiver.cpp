@@ -77,6 +77,7 @@ static C_csp_reported_outputs::S_output_info S_output_info[] =
 	{C_csp_trough_collector_receiver::E_Q_DOT_FREEZE_PROT, C_csp_reported_outputs::TS_WEIGHTED_AVE},
 
 	{C_csp_trough_collector_receiver::E_M_DOT_LOOP, C_csp_reported_outputs::TS_WEIGHTED_AVE},
+    {C_csp_trough_collector_receiver::E_IS_RECIRCULATING, C_csp_reported_outputs::TS_WEIGHTED_AVE},
 	{C_csp_trough_collector_receiver::E_M_DOT_FIELD_RECIRC, C_csp_reported_outputs::TS_WEIGHTED_AVE},
 	{C_csp_trough_collector_receiver::E_M_DOT_FIELD_DELIVERED, C_csp_reported_outputs::TS_WEIGHTED_AVE},
 	{C_csp_trough_collector_receiver::E_T_FIELD_COLD_IN, C_csp_reported_outputs::TS_WEIGHTED_AVE},
@@ -1988,9 +1989,10 @@ void C_csp_trough_collector_receiver::set_output_value()
 	mc_reported_outputs.value(E_Q_DOT_FREEZE_PROT, m_q_dot_freeze_protection);			//[MWt]
 
 	mc_reported_outputs.value(E_M_DOT_LOOP, m_m_dot_htf_tot/(double)m_nLoops);		//[kg/s]
+    mc_reported_outputs.value(E_IS_RECIRCULATING, m_is_m_dot_recirc);		    //[-]
 	if (m_is_m_dot_recirc)
 	{
-		mc_reported_outputs.value(E_M_DOT_FIELD_RECIRC, m_m_dot_htf_tot);		//[kg/s]
+        mc_reported_outputs.value(E_M_DOT_FIELD_RECIRC, m_m_dot_htf_tot);		//[kg/s]
 		mc_reported_outputs.value(E_M_DOT_FIELD_DELIVERED, 0.0);				//[kg/s]
 	}
 	else
@@ -2145,6 +2147,7 @@ void C_csp_trough_collector_receiver::off(const C_csp_weatherreader::S_outputs &
 		// If multiple recirculation steps, then need to calculate average of timestep-integrated-average
 	cr_out_solver.m_T_salt_hot = m_T_sys_h_t_int_fullts - 273.15;		//[C]
 	cr_out_solver.m_component_defocus = 1.0;
+    cr_out_solver.m_is_recirculating = m_is_m_dot_recirc;
 
 	cr_out_solver.m_E_fp_total = m_q_dot_freeze_protection;		//[MWe]
 	cr_out_solver.m_W_dot_col_tracking = m_W_dot_sca_tracking;	//[MWe]
@@ -2321,6 +2324,7 @@ void C_csp_trough_collector_receiver::startup(const C_csp_weatherreader::S_outpu
 	cr_out_solver.m_T_salt_hot = m_T_sys_h_t_int_fullts - 273.15;		//[C]
 
 	cr_out_solver.m_component_defocus = 1.0;	//[-]
+    cr_out_solver.m_is_recirculating = m_is_m_dot_recirc;
 
 		// Shouldn't need freeze protection if in startup, but may want a check on this
 	cr_out_solver.m_E_fp_total = m_q_dot_freeze_protection;		//[MWt]
@@ -2580,6 +2584,7 @@ void C_csp_trough_collector_receiver::on(const C_csp_weatherreader::S_outputs &w
 		cr_out_solver.m_T_salt_hot = m_T_sys_h_t_int - 273.15;		//[C]
 			
 		cr_out_solver.m_component_defocus = m_component_defocus;	//[-]
+        cr_out_solver.m_is_recirculating = m_is_m_dot_recirc;
 		// ***********************************************************
 		// ***********************************************************
 
@@ -2609,6 +2614,7 @@ void C_csp_trough_collector_receiver::on(const C_csp_weatherreader::S_outputs &w
 		cr_out_solver.m_q_thermal = 0.0;			//[MWt]
 		cr_out_solver.m_T_salt_hot = 0.0;			//[C]
 		cr_out_solver.m_component_defocus = 1.0;	//[-]
+        cr_out_solver.m_is_recirculating = false;
 		cr_out_solver.m_E_fp_total = 0.0;
 		cr_out_solver.m_W_dot_col_tracking = 0.0;
 		cr_out_solver.m_W_dot_htf_pump = 0.0;

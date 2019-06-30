@@ -470,6 +470,7 @@ public:
 		double m_q_thermal;				//[MWt] 'Available' receiver thermal output
 		double m_T_salt_hot;			//[C] Hot HTF from receiver
 		double m_component_defocus;		//[-] Defocus applied by component model to stay within mass flow or other constraints
+        bool m_is_recirculating;        //[-] Is field/receiver recirculating?
 			
 		// These are used for the parasitic class call(), so could be zero...
 		double m_E_fp_total;			//[MW] Solar field freeze protection power
@@ -491,6 +492,8 @@ public:
 				m_dP_sf_sh = m_h_htf_hot = m_xb_htf_hot = m_P_htf_hot = std::numeric_limits<double>::quiet_NaN();
 
 			m_component_defocus = 1.0;
+
+            m_is_recirculating = false;
 
 			m_standby_control = -1;
 		}
@@ -702,7 +705,7 @@ public:
 	{
 		double m_q_heater;			//[MWe]  Heating power required to keep tanks at a minimum temperature
         double m_m_dot;             //[kg/s] Hot tank mass flow rate, valid for direct and indirect systems
-		double m_W_dot_rhtf_pump;	//[MWe]  Pumping power for Receiver HTF thru storage
+		double m_W_dot_rhtf_pump;	//[MWe]  Pumping power, just for tank-to-tank in indirect storage
 		double m_q_dot_loss;		//[MWt]  Storage thermal losses
 		double m_q_dot_dc_to_htf;	//[MWt]  Thermal power to the HTF from storage
 		double m_q_dot_ch_from_htf;	//[MWt]  Thermal power from the HTF to storage
@@ -749,6 +752,13 @@ public:
 	virtual void idle(double timestep, double T_amb, C_csp_tes::S_csp_tes_outputs &outputs) = 0;
 	
 	virtual void converged() = 0;
+
+    virtual int pressure_drops(double m_dot_sf, double m_dot_pb,
+        double T_sf_in, double T_sf_out, double T_pb_in, double T_pb_out, bool recirculating,
+        double &P_drop_col, double &P_drop_gen) = 0;
+
+    virtual double pumping_power(double m_dot_sf, double m_dot_pb, double m_dot_tank,
+        double T_sf_in, double T_sf_out, double T_pb_in, double T_pb_out, bool recirculating) = 0;
 };
 
 class C_csp_solver

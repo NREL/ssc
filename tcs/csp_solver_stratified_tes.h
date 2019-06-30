@@ -249,6 +249,13 @@ public:
 	virtual void idle(double timestep, double T_amb, C_csp_tes::S_csp_tes_outputs &outputs);
 
 	virtual void converged();
+
+    virtual int pressure_drops(double m_dot_sf, double m_dot_pb,
+        double T_sf_in, double T_sf_out, double T_pb_in, double T_pb_out, bool recirculating,
+        double &P_drop_col, double &P_drop_gen);
+
+    virtual double pumping_power(double m_dot_sf, double m_dot_pb, double m_dot_tank,
+        double T_sf_in, double T_sf_out, double T_pb_in, double T_pb_out, bool recirculating);
 };
 
 
