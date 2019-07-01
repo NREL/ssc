@@ -29,4 +29,4 @@ Please see the contribution guidelines in the main [SAM project readme](https://
 
 # License
 
-SSC is licensed uder a mixed BSD3/GPLv3 [license](LICENSE.md).
+SSC is licensed with BSD-3-Clause terms, found [here](https://github.com/NREL/SAM/blob/develop/LICENSE).
