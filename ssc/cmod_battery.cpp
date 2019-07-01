@@ -264,7 +264,7 @@ battstor::battstor(compute_module &cm, bool setup_model, size_t nrec, double dt_
 	}
 
 	// battery variables
-	if (batt_vars_in == 0)
+	if (batt_vars_in == 0) 
 	{
 		make_vars = true;
 		batt_vars = new batt_variables();

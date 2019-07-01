@@ -34,6 +34,8 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 var_info vtab_battwatts[] = {
 	/*   VARTYPE           DATATYPE         NAME                               LABEL                                    UNITS      META                   GROUP                  REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
+	{ SSC_INPUT,        SSC_NUMBER,      "system_use_lifetime_output",        "PV lifetime simulation",                 "0/1",     "0=SingleYearRepeated,1=RunEveryYear",                     "",             "?=0",                        "BOOLEAN",                        "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "analysis_period",                   "Lifetime analysis period",               "years",   "The number of years in the simulation",                   "",             "system_use_lifetime_output=1",   "",                               "" },	
 	{ SSC_INPUT,        SSC_NUMBER,      "batt_simple_enable",                "Enable Battery",                         "0/1",     "",                 "battwatts",                  "?=0",                        "BOOLEAN",                       "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "batt_simple_kwh",                   "Battery Capacity",                       "kWh",     "",                 "battwatts",                  "?=0",                        "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "batt_simple_kw",                    "Battery Power",                          "kW",      "",                 "battwatts",                  "?=0",                        "",                              "" },
@@ -69,10 +71,18 @@ public:
 		double batt_specific_energy_per_mass = 0;
 		double batt_specific_energy_per_volume = 0;
 
+		// Basic information
+		batt_vars->batt_chem = as_integer("batt_simple_chemistry");
+		batt_vars->analysis_period = 25;
+		batt_vars->batt_meter_position = as_integer("batt_simple_meter_position");
+		batt_vars->system_use_lifetime_output = false;
+		double voltage_guess = 0;
+
 		// lithium ion NMC
 		if (batt_vars->batt_chem == battery_t::LITHIUM_ION)
 		{
 			// Voltage properties
+			voltage_guess = 500;
 			batt_vars->batt_Vnom_default = 3.6;
 			batt_vars->batt_Vfull = 4.1;
 			batt_vars->batt_Vexp = 4.05;
@@ -89,7 +99,7 @@ public:
 			lifetime_matrix->push_back(20); lifetime_matrix->push_back(5000); lifetime_matrix->push_back(80);
 			lifetime_matrix->push_back(80); lifetime_matrix->push_back(0); lifetime_matrix->push_back(100);
 			lifetime_matrix->push_back(80); lifetime_matrix->push_back(1000); lifetime_matrix->push_back(80);
-			util::matrix_t<double> batt_lifetime_matrix(6, 3, lifetime_matrix);
+			util::matrix_t<double> batt_lifetime_matrix(4, 3, lifetime_matrix);
 			batt_vars->batt_lifetime_matrix = batt_lifetime_matrix;
 
 			batt_vars->batt_calendar_q0 = 1.02;
@@ -127,6 +137,7 @@ public:
 			batt_vars->LeadAcid_tn = LeadAcid_tn;
 
 			// Voltage properties
+			voltage_guess = 48;
 			batt_vars->batt_Vnom_default = 2;
 			batt_vars->batt_Vfull = 2.2;
 			batt_vars->batt_Vexp = 2.06;
@@ -167,23 +178,9 @@ public:
 			batt_specific_energy_per_volume = 30; // Wh/L
 		}
 
-
-		// Financial Parameters
-		batt_vars->analysis_period = 25;
-		batt_vars->batt_meter_position = as_integer("batt_simple_meter_position");
-
-		// Lifetime simulation
-		batt_vars->system_use_lifetime_output = false;
-
-		// Chemistry
-		batt_vars->batt_chem = as_integer("batt_simple_chemistry");
-
-		// Battery bank sizing (assuming max current = 15A)
 		batt_vars->batt_kwh = as_double("batt_simple_kwh");
 		batt_vars->batt_kw = as_double("batt_simple_kw");
-		double current_max = 15;
-		double batt_bank_voltage = batt_vars->batt_kw * 1000. / current_max;
-		batt_vars->batt_computed_series = (int)std::ceil(batt_bank_voltage / batt_vars->batt_Vnom_default);
+		batt_vars->batt_computed_series = (int)std::ceil(voltage_guess / batt_vars->batt_Vnom_default);
 		batt_vars->batt_computed_strings = (int)std::ceil((batt_vars->batt_kwh * 1000.) / (batt_vars->batt_Qfull * batt_vars->batt_computed_series * batt_vars->batt_Vnom_default)) - 1;
 
 		// Common Voltage properties
@@ -194,8 +191,8 @@ public:
 		double batt_time_hour = batt_vars->batt_kwh / batt_vars->batt_kw;
 		double batt_C_rate_discharge = 1. / batt_time_hour;
 		batt_vars->batt_current_choice = dispatch_t::RESTRICT_CURRENT;
-		batt_vars->batt_current_charge_max = 1000 * batt_C_rate_discharge * batt_vars->batt_kwh / batt_bank_voltage;
-		batt_vars->batt_current_discharge_max = 1000 * batt_C_rate_discharge * batt_vars->batt_kwh / batt_bank_voltage;
+		batt_vars->batt_current_charge_max = 1000 * batt_C_rate_discharge * batt_vars->batt_kwh / voltage_guess;
+		batt_vars->batt_current_discharge_max = 1000 * batt_C_rate_discharge * batt_vars->batt_kwh / voltage_guess;
 		batt_vars->batt_power_charge_max = batt_vars->batt_kw;
 		batt_vars->batt_power_discharge_max = batt_vars->batt_kw;
 
@@ -209,10 +206,8 @@ public:
 		// Ancillary equipment losses
 		double_vec batt_losses;
 		double_vec batt_losses_monthly = { 0 };
-		for (int i = 0; i != (int)n_recs; i++)
+		for (size_t i = 0; i < n_recs; i++)
 			batt_losses.push_back(0.);
-		for (int m = 0; m != 12; m++)
-			batt_losses_monthly.push_back(0.);
 
 		batt_vars->batt_loss_choice = losses_t::MONTHLY;
 		batt_vars->batt_losses = batt_losses;

@@ -1154,7 +1154,7 @@ lifetime_calendar_t::lifetime_calendar_t(int calendar_choice, util::matrix_t<dou
 	_c = c;
 
 	// output based on percentage capacity (0 - 100%)
-	_q = _q0 * 100;
+	_q = _q0 * 100; 
 
 	// timestep
 	_dt_hour = dt_hour;
