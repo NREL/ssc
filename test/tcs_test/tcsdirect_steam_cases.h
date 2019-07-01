@@ -7,7 +7,7 @@
 
 /**
 *   Data for high-level integration tests that verifies whether results for a direct steam power tower
-*   plant in Tusson, AZ matches expected results.
+*   plant in Tucson, AZ matches expected results.
 *   Data generated from code-generator (Shift+F5) within SAM UI.
 *   Test uses SSCAPI interfaces (similiar to SDK usage) to pass and receive data to tcsdirect_steam
 */
