@@ -104,6 +104,9 @@
     <ClCompile Include="..\test\ssc_test\cmod_tcsdirect_steam_test.cpp">
       <Filter>ssc_test</Filter>
     </ClCompile>
+    <ClCompile Include="..\test\ssc_test\cmod_tcstrough_empirical_test.cpp">
+      <Filter>ssc_test</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="shared_test">
@@ -268,6 +271,15 @@
       <Filter>tcs_test</Filter>
     </ClInclude>
     <ClInclude Include="..\test\ssc_test\cmod_tcsdirect_steam_test.h">
+      <Filter>ssc_test</Filter>
+    </ClInclude>
+    <ClInclude Include="..\test\tcs_test\tcstrough_empirical_common_data.h">
+      <Filter>tcs_test</Filter>
+    </ClInclude>
+    <ClInclude Include="..\test\tcs_test\tcstrough_empirical_cases.h">
+      <Filter>tcs_test</Filter>
+    </ClInclude>
+    <ClInclude Include="..\test\ssc_test\cmod_tcstrough_empirical_test.h">
       <Filter>ssc_test</Filter>
     </ClInclude>
   </ItemGroup>
