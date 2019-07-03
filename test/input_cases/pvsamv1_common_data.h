@@ -5,15 +5,13 @@
 
 #include "code_generator_utilities.h"
 
-const char * SSCDIR = std::getenv("SSCDIR");
-
-char solar_resource_path[100];
-char solar_resource_path_15_min[100];
-char load_profile_path[100];
-char target_power_path[100];
-char sell_rate_path[100];
-char subarray1_shading[100];
-char subarray2_shading[100];
+char solar_resource_path[256];
+char solar_resource_path_15_min[256];
+char load_profile_path[256];
+char target_power_path[256];
+char sell_rate_path[256];
+char subarray1_shading[256];
+char subarray2_shading[256];
 
 int n1 = sprintf(solar_resource_path, "%s/test/input_cases/pvsamv1_data/USA AZ Phoenix (TMY2).csv", SSCDIR);
 int n2 = sprintf(load_profile_path, "%s/test/input_cases/pvsamv1_data/pvsamv1_residential_load.csv", SSCDIR);

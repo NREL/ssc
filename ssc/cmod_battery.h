@@ -215,10 +215,8 @@ struct batt_variables
 	/*! Battery costs */
 	double batt_cost_per_kwh;
 
-	/*! PPA Time-of-Delivery factors for periods 1-9 */
-	std::vector<double> ppa_factors;
-	util::matrix_t<size_t> ppa_weekday_schedule;
-	util::matrix_t<size_t> ppa_weekend_schedule;
+	/*! PPA price */
+	std::vector<double> ppa_price_series_dollar_per_kwh;
 
 	/*! Energy rates */
 	bool ec_rate_defined;
@@ -238,9 +236,11 @@ struct batt_variables
 
 struct battstor
 {
-
+	/// Pass in the single-year number of records
 	battstor( compute_module &cm, bool setup_model, size_t nrec, double dt_hr, batt_variables *batt_vars=0);
 	void parse_configuration();
+
+	/// Initialize automated dispatch with lifetime vectors
 	void initialize_automated_dispatch(std::vector<ssc_number_t> pv= std::vector<ssc_number_t>(), 
 									   std::vector<ssc_number_t> load= std::vector<ssc_number_t>(), 
 									   std::vector<ssc_number_t> cliploss= std::vector<ssc_number_t>());
@@ -351,7 +351,10 @@ struct battstor
 		*outCellVoltage,
 		*outBatteryVoltage,
 		*outCapacityPercent,
+		*outCapacityPercentCycle,
+		*outCapacityPercentCalendar,
 		*outCycles,
+		*outDODCycleAverage,
 		*outBatteryBankReplacement,
 		*outBatteryTemperature,
 		*outCapacityThermalPercent,
@@ -381,12 +384,12 @@ struct battstor
 		*outAnnualGridExportEnergy,
 		*outAnnualEnergySystemLoss,
 		*outAnnualEnergyLoss,
+		*outMarketPrice,
 		*outCostToCycle;
 
 	double outAverageCycleEfficiency;
 	double outAverageRoundtripEfficiency;
 	double outPVChargePercent;
 };
-
 
 #endif

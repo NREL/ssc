@@ -527,7 +527,7 @@ TEST_F(CMPvsamv1PowerIntegration, InvTempDerate) {
 	ssc_data_unassign(data, "solar_resource_file");
 	var_table *vt = static_cast<var_table*>(data);
 	
-	float temp[8760];
+	double temp[8760];
 	for (size_t i = 0; i < 8760; i++) {
 		temp[i] = 26.f;
 	}

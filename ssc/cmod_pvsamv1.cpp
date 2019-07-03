@@ -571,6 +571,7 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray1_modeff",                     "Subarray 1 Module efficiency",                                         "%",      "", "Time Series (Subarray 1)",       "*",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray1_celltemp",                   "Subarray 1 Cell temperature",                                          "C",      "", "Time Series (Subarray 1)",       "*",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray1_dc_voltage",                 "Subarray 1 Operating DC voltage",                                         "V",      "", "Time Series (Subarray 1)",       "*",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray1_dc_gross",                 "Subarray 1 DC power gross",                                         "kW",      "", "Time Series (Subarray 1)",       "*",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray1_voc",                        "Subarray 1 Open circuit DC voltage",                                      "V",      "", "Time Series (Subarray 1)",       "",                     "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray1_isc",                        "Subarray 1 Short circuit DC current",                                     "A",      "", "Time Series (Subarray 1)",       "",                     "",                              "" },
 
@@ -600,6 +601,7 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray2_modeff",                     "Subarray 2 Module efficiency",                                         "%",      "", "Time Series (Subarray 2)",       "",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray2_celltemp",                   "Subarray 2 Cell temperature",                                          "C",      "", "Time Series (Subarray 2)",       "",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray2_dc_voltage",                 "Subarray 2 Operating DC voltage",                                         "V",      "", "Time Series (Subarray 2)",       "",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray2_dc_gross",                 "Subarray 2 DC power gross",                                         "kW",      "", "Time Series (Subarray 2)",       "",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray2_voc",                        "Subarray 2 Open circuit DC voltage",                                      "V",      "", "Time Series (Subarray 2)",       "",                     "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray2_isc",                        "Subarray 2 Short circuit DC current",                                     "A",      "", "Time Series (Subarray 2)",       "",                     "",                              "" },
 
@@ -629,6 +631,7 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray3_modeff",                     "Subarray 3 Module efficiency",                                         "%",      "", "Time Series (Subarray 3)",       "",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray3_celltemp",                   "Subarray 3 Cell temperature",                                          "C",      "", "Time Series (Subarray 3)",       "",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray3_dc_voltage",                 "Subarray 3 Operating DC voltage",                                         "V",      "", "Time Series (Subarray 3)",       "",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray3_dc_gross",                 "Subarray 3 DC power gross",                                         "kW",      "", "Time Series (Subarray 3)",       "",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray3_voc",                        "Subarray 3 Open circuit DC voltage",                                      "V",      "", "Time Series (Subarray 3)",       "",                     "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray3_isc",                        "Subarray 3 Short circuit DC current",                                     "A",      "", "Time Series (Subarray 3)",       "",                     "",                              "" },
 
@@ -658,6 +661,7 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray4_modeff",                     "Subarray 4 Module efficiency",                                         "%",      "", "Time Series (Subarray 4)",       "",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray4_celltemp",                   "Subarray 4 Cell temperature",                                          "C",      "", "Time Series (Subarray 4)",       "",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray4_dc_voltage",                 "Subarray 4 Operating DC voltage",                                         "V",      "", "Time Series (Subarray 4)",       "",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray4_dc_gross",                 "Subarray 4 DC power gross",                                         "kW",      "", "Time Series (Subarray 4)",       "",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray4_voc",                        "Subarray 4 Open circuit DC voltage",                                      "V",      "", "Time Series (Subarray 4)",       "",                     "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray4_isc",                        "Subarray 4 Short circuit DC current",                                     "A",      "", "Time Series (Subarray 4)",       "",                     "",                              "" },
 
@@ -962,6 +966,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 	weather_header hdr = Irradiance->weatherHeader;
 	weather_data_provider * wdprov = Irradiance->weatherDataProvider.get();
 	int radmode = Irradiance->radiationMode;
+	double bifaciality = 0.0;
 
 	// Get System or Subarray Inputs
 	double aspect_ratio = Subarrays[0]->moduleAspectRatio;
@@ -1505,11 +1510,12 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 					// Calculate rear-side irradiance for bifacial modules
 					if (Subarrays[0]->Module->isBifacial)
 					{
+						bifaciality = Subarrays[0]->Module->bifaciality;
 						double slopeLength = Subarrays[nn]->selfShadingInputs.length * Subarrays[nn]->selfShadingInputs.nmody;
 						if (Subarrays[nn]->selfShadingInputs.mod_orient == 1) {
 							slopeLength = Subarrays[nn]->selfShadingInputs.width * Subarrays[nn]->selfShadingInputs.nmody;
 						}
-						irr.calc_rear_side(Subarrays[0]->Module->bifacialTransmissionFactor, Subarrays[0]->Module->bifaciality, Subarrays[0]->Module->groundClearanceHeight, slopeLength);
+						irr.calc_rear_side(Subarrays[0]->Module->bifacialTransmissionFactor, Subarrays[0]->Module->groundClearanceHeight, slopeLength);
 						ipoa_rear[nn] = irr.get_poa_rear();
 						ipoa_rear_after_losses[nn] = ipoa_rear[nn] * (1 - Subarrays[nn]->rearIrradianceLossPercent);
 					}
@@ -1542,7 +1548,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 					Subarrays[nn]->poa.poaDiffuseFront = iskydiff;
 					Subarrays[nn]->poa.poaGroundFront = ignddiff;
 					Subarrays[nn]->poa.poaRear = ipoa_rear_after_losses[nn];
-					Subarrays[nn]->poa.poaTotal = (radmode == irrad::POA_R) ? ipoa[nn] :(ipoa_front[nn] + ipoa_rear_after_losses[nn]);
+					Subarrays[nn]->poa.poaTotal = (radmode == irrad::POA_R) ? ipoa[nn] :(ipoa_front[nn] + ipoa_rear_after_losses[nn] * bifaciality);
 					Subarrays[nn]->poa.angleOfIncidenceDegrees = aoi;
 					Subarrays[nn]->poa.sunUp = sunup;
 					Subarrays[nn]->poa.surfaceTiltDegrees = stilt;
@@ -1745,10 +1751,10 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 						{
 							ipoa_front[nn] *= out[nn].AOIModifier;
 							PVSystem->p_poaFront[nn][idx] = (radmode == irrad::POA_R) ? (ssc_number_t)ipoa[nn] : (ssc_number_t)(ipoa_front[nn]);
-							PVSystem->p_poaTotal[nn][idx] = (radmode == irrad::POA_R) ? (ssc_number_t)ipoa[nn] : (ssc_number_t)(ipoa_front[nn] + ipoa_rear[nn]);
+							PVSystem->p_poaTotal[nn][idx] = (radmode == irrad::POA_R) ? (ssc_number_t)ipoa[nn] : (ssc_number_t)(ipoa_front[nn] + ipoa_rear_after_losses[nn] * bifaciality);
 
 							ts_accum_poa_front_total += ipoa_front[nn] * ref_area_m2 * Subarrays[nn]->nModulesPerString * Subarrays[nn]->nStrings;
-							ts_accum_poa_total_eff += ((radmode == irrad::POA_R) ? ipoa[nn] : (ipoa_front[nn] + ipoa_rear_after_losses[nn])) * ref_area_m2 * Subarrays[nn]->nModulesPerString * Subarrays[nn]->nStrings;
+							ts_accum_poa_total_eff += ((radmode == irrad::POA_R) ? ipoa[nn] : (ipoa_front[nn] + ipoa_rear_after_losses[nn] * bifaciality)) * ref_area_m2 * Subarrays[nn]->nModulesPerString * Subarrays[nn]->nStrings;
 
 							//assign final string voltage output
 							PVSystem->p_dcStringVoltage[nn][idx] = (ssc_number_t)Subarrays[nn]->Module->dcVoltage * Subarrays[nn]->nModulesPerString;
@@ -1771,6 +1777,10 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 					// shading loss applied to beam if not from shading database
 					Subarrays[nn]->Module->dcPowerW *= Subarrays[nn]->shadeCalculator.dc_shade_factor();
 
+					// scale power and mppt voltage clipping to subarray dimensions
+					Subarrays[nn]->dcPowerSubarray = Subarrays[nn]->Module->dcPowerW * Subarrays[nn]->nModulesPerString * Subarrays[nn]->nStrings;
+					if (iyear == 0) mpptVoltageClipping[nn] *= Subarrays[nn]->nModulesPerString* Subarrays[nn]->nStrings;
+
 					// Calculate and apply snow coverage losses if activated
 					if (PVSystem->enableSnowModel)
 					{
@@ -1785,26 +1795,25 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 
 						if (iyear == 0)
 						{
-							PVSystem->p_snowLoss[nn][idx] = (ssc_number_t)(util::watt_to_kilowatt*Subarrays[nn]->Module->dcPowerW*smLoss);
-							PVSystem->p_snowLossTotal[idx] += (ssc_number_t)(util::watt_to_kilowatt*Subarrays[nn]->Module->dcPowerW*smLoss);
+							PVSystem->p_snowLoss[nn][idx] = (ssc_number_t)(util::watt_to_kilowatt*Subarrays[nn]->dcPowerSubarray*smLoss);
+							PVSystem->p_snowLossTotal[idx] += (ssc_number_t)(util::watt_to_kilowatt*Subarrays[nn]->dcPowerSubarray*smLoss);
 							PVSystem->p_snowCoverage[nn][idx] = (ssc_number_t)(Subarrays[nn]->snowModel.coverage);
-							annual_snow_loss += (ssc_number_t)(util::watt_to_kilowatt*Subarrays[nn]->Module->dcPowerW*smLoss);
+							annual_snow_loss += (ssc_number_t)(util::watt_to_kilowatt*Subarrays[nn]->dcPowerSubarray*smLoss);
+							Subarrays[nn]->dcPowerSubarray *= (1 - smLoss);
 						}
 
 						Subarrays[nn]->Module->dcPowerW *= (1 - smLoss);
 						if (iyear == 0) mpptVoltageClipping[nn] *= (1 - smLoss);
 					}
 
-					// scale power and mppt voltage clipping to subarray dimensions
-					Subarrays[nn]->dcPowerSubarray = Subarrays[nn]->Module->dcPowerW * Subarrays[nn]->nModulesPerString * Subarrays[nn]->nStrings;
-					if (iyear == 0) mpptVoltageClipping[nn] *= Subarrays[nn]->nModulesPerString* Subarrays[nn]->nStrings;
 
 					//assign gross outputs per subarray at this point
 					if (iyear == 0)
 					{
 						//Gross DC power
 						dc_gross[nn] += Subarrays[nn]->dcPowerSubarray*util::watt_to_kilowatt*ts_hour; //power W to	energy kWh
-						PVSystem->p_dcPowerGross[nn][idx] = (ssc_number_t)dc_gross[nn];
+						//PVSystem->p_dcPowerGross[nn][idx] = (ssc_number_t)dc_gross[nn]; // cumulative gross DC power per subarray
+						PVSystem->p_dcPowerGross[nn][idx] = Subarrays[nn]->dcPowerSubarray*util::watt_to_kilowatt; // time series gross DC power per subarray
 						//Add to annual MPPT clipping
 						annualMpptVoltageClipping += mpptVoltageClipping[nn]*util::watt_to_kilowatt*ts_hour; //power W to energy kWh
 						// save to SSC output arrays
@@ -2486,9 +2495,9 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 
 	// AC Capacity Factor
 	double kWhACperkWAC = 0.0;
-	double nameplate_ac = sharedInverter->getACNameplateCapacity();
-	if (nameplate_ac > 0) {
-		kWhACperkWAC = annual_energy / nameplate_ac;
+	double nameplate_ac_kW = sharedInverter->getACNameplateCapacitykW();
+	if (nameplate_ac_kW > 0) {
+		kWhACperkWAC = annual_energy / nameplate_ac_kW;
 	}
 	assign("capacity_factor_ac", var_data((ssc_number_t)(kWhACperkWAC / 87.6)));
 

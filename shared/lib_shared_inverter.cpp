@@ -252,7 +252,7 @@ double SharedInverter::getMaxPowerEfficiency()
 	return efficiencyAC;
 }
 
-double SharedInverter::getACNameplateCapacity()
+double SharedInverter::getACNameplateCapacitykW()
 {
 	return m_nameplateAC_kW;
 }

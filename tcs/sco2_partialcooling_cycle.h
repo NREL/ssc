@@ -1,51 +1,24 @@
-/*******************************************************************************************************
-*  Copyright 2017 Alliance for Sustainable Energy, LLC
-*
-*  NOTICE: This software was developed at least in part by Alliance for Sustainable Energy, LLC
-*  (“Alliance”) under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
-*  The Government retains for itself and others acting on its behalf a nonexclusive, paid-up,
-*  irrevocable worldwide license in the software to reproduce, prepare derivative works, distribute
-*  copies to the public, perform publicly and display publicly, and to permit others to do so.
-*
-*  Redistribution and use in source and binary forms, with or without modification, are permitted
-*  provided that the following conditions are met:
-*
-*  1. Redistributions of source code must retain the above copyright notice, the above government
-*  rights notice, this list of conditions and the following disclaimer.
-*
-*  2. Redistributions in binary form must reproduce the above copyright notice, the above government
-*  rights notice, this list of conditions and the following disclaimer in the documentation and/or
-*  other materials provided with the distribution.
-*
-*  3. The entire corresponding source code of any redistribution, with or without modification, by a
-*  research entity, including but not limited to any contracting manager/operator of a United States
-*  National Laboratory, any institution of higher learning, and any non-profit organization, must be
-*  made publicly available under this license for as long as the redistribution is made available by
-*  the research entity.
-*
-*  4. Redistribution of this software, without modification, must refer to the software by the same
-*  designation. Redistribution of a modified version of this software (i) may not refer to the modified
-*  version by the same designation, or by any confusingly similar designation, and (ii) must refer to
-*  the underlying software originally provided by Alliance as “System Advisor Model” or “SAM”. Except
-*  to comply with the foregoing, the terms “System Advisor Model”, “SAM”, or any confusingly similar
-*  designation may not be used to refer to any modified version of this software or any modified
-*  version of the underlying software originally provided by Alliance without the prior written consent
-*  of Alliance.
-*
-*  5. The name of the copyright holder, contributors, the United States Government, the United States
-*  Department of Energy, or any of their employees may not be used to endorse or promote products
-*  derived from this software without specific prior written permission.
-*
-*  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
-*  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
-*  FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER,
-*  CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES DEPARTMENT OF ENERGY, NOR ANY OF THEIR
-*  EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-*  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-*  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
-*  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
-*  THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*******************************************************************************************************/
+/**
+BSD-3-Clause
+Copyright 2019 Alliance for Sustainable Energy, LLC
+Redistribution and use in source and binary forms, with or without modification, are permitted provided 
+that the following conditions are met :
+1.	Redistributions of source code must retain the above copyright notice, this list of conditions 
+and the following disclaimer.
+2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions 
+and the following disclaimer in the documentation and/or other materials provided with the distribution.
+3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse 
+or promote products derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, 
+INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
+ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES 
+DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, 
+OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; 
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
+WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT 
+OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
 
 #ifndef __SCO2_PARTIAL_COOLING_
 #define __SCO2_PARTIAL_COOLING_
@@ -92,11 +65,20 @@ public:
 		std::vector<double> m_DP_PC_LP;     //(cold, hot) positive values are absolute [kPa], negative values are relative (-)
 		std::vector<double> m_DP_PC_IP;		//(cold, hot) positive values are absolute [kPa], negative values are relative (-)
 		std::vector<double> m_DP_PHX;		//(cold, hot) positive values are absolute [kPa], negative values are relative (-)
-		double m_UA_LTR;					//[kW/K] UA in LTR
-		double m_UA_HTR;					//[kW/K] UA in HTR
-		double m_LTR_eff_max;				//[-] Maximum allowable effectiveness in LT recuperator
-		double m_HTR_eff_max;				//[-] Maximum allowable effectiveness in HT recuperator
-		double m_recomp_frac;				//[-] Fraction of flow that bypasses the precooler and the main compressor at the design point
+            // LTR thermal design
+        int m_LTR_target_code;              //[-] 1 = UA, 2 = min dT, 3 = effectiveness
+        double m_LTR_UA;					//[kW/K] target LTR conductance
+        double m_LTR_min_dT;                //[K] target LTR minimum temperature difference
+        double m_LTR_eff_target;            //[-] target LTR effectiveness
+        double m_LTR_eff_max;				//[-] Maximum allowable effectiveness in LT recuperator
+            // HTR thermal design
+        int m_HTR_target_code;              //[-] 1 = UA, 2 = min dT, 3 = effectiveness
+        double m_HTR_UA;					//[kW/K] target HTR conductance
+        double m_HTR_min_dT;                //[K] target HTR min temperature difference
+        double m_HTR_eff_target;            //[-] target HTR effectiveness
+        double m_HTR_eff_max;				//[-] Maximum allowable effectiveness in HT recuperator
+            //
+        double m_recomp_frac;				//[-] Fraction of flow that bypasses the precooler and the main compressor at the design point
 		double m_eta_mc;					//[-] design-point efficiency of the main compressor; isentropic if positive, polytropic if negative
 		double m_eta_rc;					//[-] design-point efficiency of the recompressor; isentropic if positive, polytropic if negative
 		double m_eta_pc;					//[-] design-point efficiency of the pre-compressor; 
@@ -119,13 +101,20 @@ public:
 		S_des_params()
 		{
 			m_W_dot_net = m_T_mc_in = m_T_pc_in = m_T_t_in = 
-				m_P_pc_in = m_P_mc_in = m_P_mc_out = m_UA_LTR = m_UA_HTR = m_LTR_eff_max = m_HTR_eff_max = m_recomp_frac =
+				m_P_pc_in = m_P_mc_in = m_P_mc_out = 
+                m_LTR_UA = m_LTR_min_dT = m_LTR_eff_max = m_LTR_eff_target =
+                m_HTR_UA = m_HTR_min_dT = m_HTR_eff_max = m_HTR_eff_target =
+                m_recomp_frac =
 				m_eta_mc = m_eta_rc = m_eta_pc = m_eta_t = m_P_high_limit = m_tol = m_N_turbine =
 				m_frac_fan_power = m_deltaP_cooler_frac = m_T_amb_des = m_elevation = std::numeric_limits<double>::quiet_NaN();
 			m_N_sub_hxrs = -1;
 
 			// Air cooler default
 			m_is_des_air_cooler = true;
+
+            // Recuperator design target codes
+            m_LTR_target_code = 1;      // default to target conductance
+            m_HTR_target_code = 1;      // default to target conductance
 
 			// Default to standard optimization to maximize cycle efficiency
 			m_des_objective_type = 1;
@@ -156,9 +145,20 @@ public:
 		std::vector<double> m_DP_PC_IP;     //(cold, hot) positive values are absolute [kPa], negative values are relative (-)
 		std::vector<double> m_DP_PHX;		//(cold, hot) positive values are absolute [kPa], negative values are relative (-)
 		double m_UA_rec_total;				//[kW/K] Total design-point recuperator UA
-		double m_LTR_eff_max;				//[-] Maximum allowable effectiveness in LT recuperator
-		double m_HTR_eff_max;				//[-] Maximum allowable effectiveness in HT recuperator
-		double m_eta_mc;					//[-] design-point efficiency of the main compressor; isentropic if positive, polytropic if negative
+            // LTR thermal design
+        int m_LTR_target_code;              //[-] 1 = UA, 2 = min dT, 3 = effectiveness
+        double m_LTR_UA;					//[kW/K] target LTR conductance
+        double m_LTR_min_dT;                //[K] target LTR minimum temperature difference
+        double m_LTR_eff_target;            //[-] target LTR effectiveness
+        double m_LTR_eff_max;				//[-] Maximum allowable effectiveness in LT recuperator
+            // HTR thermal design
+        int m_HTR_target_code;              //[-] 1 = UA, 2 = min dT, 3 = effectiveness
+        double m_HTR_UA;					//[kW/K] target HTR conductance
+        double m_HTR_min_dT;                //[K] target HTR min temperature difference
+        double m_HTR_eff_target;            //[-] target HTR effectiveness
+        double m_HTR_eff_max;				//[-] Maximum allowable effectiveness in HT recuperator
+            //
+        double m_eta_mc;					//[-] design-point efficiency of the main compressor; isentropic if positive, polytropic if negative
 		double m_eta_rc;					//[-] design-point efficiency of the recompressor; isentropic if positive, polytropic if negative
 		double m_eta_pc;					//[-] design-point efficiency of the pre-compressor; 
 		double m_eta_t;						//[-] design-point efficiency of the turbine; isentropic if positive, polytropic if negative
@@ -196,7 +196,9 @@ public:
 		S_opt_des_params()
 		{
 			m_W_dot_net = m_T_mc_in = m_T_pc_in = m_T_t_in =
-				m_UA_rec_total = m_LTR_eff_max = m_HTR_eff_max = 
+				m_UA_rec_total = 
+                m_LTR_UA = m_LTR_min_dT = m_LTR_eff_target = m_LTR_eff_max =
+                m_HTR_UA = m_HTR_min_dT = m_HTR_eff_target = m_HTR_eff_max =
 				m_eta_mc = m_eta_rc = m_eta_pc = m_eta_t = m_P_high_limit = m_tol = m_N_turbine = 
 				m_frac_fan_power = m_deltaP_cooler_frac = m_T_amb_des = m_elevation =
 				m_P_mc_out_guess = m_PR_total_guess = m_f_PR_mc_guess = 
@@ -205,6 +207,10 @@ public:
 
 			// Air cooler default
 			m_is_des_air_cooler = true;
+
+            // Recuperator design target codes
+            m_LTR_target_code = 1;      // default to target conductance
+            m_HTR_target_code = 1;      // default to target conductance
 
 			// Default to standard optimization to maximize cycle efficiency
 			m_des_objective_type = 1;

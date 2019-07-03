@@ -6,7 +6,7 @@
 
 #include "../ssc/vartab.h"
 #include "../ssc/common.h"
-#include "../input_cases/trough_physical_iph_cases.h"
+#include "../tcs_test/trough_physical_iph_cases.h"
 
 /**
  * CMTroughPhysicalIPH tests the cmod_trough_physical_iph using the SAM code generator to generate data
@@ -32,7 +32,8 @@ public:
 	}
 	void TearDown() {
 		if (data) {
-			ssc_data_clear(data);
+			ssc_data_free(data);
+			data = nullptr;
 		}
 		if (calculated_array) {
 			delete[] calculated_array;

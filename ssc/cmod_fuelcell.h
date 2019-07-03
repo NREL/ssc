@@ -76,6 +76,7 @@ public:
 		replacement_percent(cm.as_double("fuelcell_replacement_percent")),
 		replacementSchedule(cm.as_vector_unsigned_long("fuelcell_replacement_schedule")),
 		efficiencyTable(cm.as_matrix("fuelcell_efficiency")),
+		efficiencyChoice(cm.as_unsigned_long("fuelcell_efficiency_choice")),
 		shutdownTable(cm.as_matrix_unsigned_long("fuelcell_availability_schedule")),
 		lowerHeatingValue_BtuPerFt3(cm.as_double("fuelcell_lhv")),
 		higherHeatingValue_BtuPerFt3(cm.as_double("fuelcell_lhv")),
@@ -191,6 +192,7 @@ public:
 	size_t replacementOption;
 	double replacement_percent;
 	std::vector<size_t> replacementSchedule;
+	size_t efficiencyChoice;
 	util::matrix_t<double> efficiencyTable;
 	util::matrix_t<size_t> shutdownTable;
 	double lowerHeatingValue_BtuPerFt3;
@@ -247,11 +249,13 @@ protected:
 	ssc_number_t * p_fuelCellPower_kW;
 	ssc_number_t * p_fuelCellPowerMaxAvailable_percent;
 	ssc_number_t * p_fuelCellLoad_percent;
+	ssc_number_t * p_fuelCellElectricalEfficiency_percent;
 	ssc_number_t * p_fuelCellPowerThermal_kW;
 	ssc_number_t * p_fuelCellConsumption_MCf;
 	ssc_number_t * p_fuelCellToGrid_kW;
 	ssc_number_t * p_fuelCellToLoad_kW;
 	ssc_number_t * p_fuelCellReplacements;
+	ssc_number_t * p_fuelCellConsumption_MCf_annual;
 };
 
 #endif

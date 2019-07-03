@@ -1,51 +1,24 @@
-/*******************************************************************************************************
-*  Copyright 2017 Alliance for Sustainable Energy, LLC
-*
-*  NOTICE: This software was developed at least in part by Alliance for Sustainable Energy, LLC
-*  (“Alliance”) under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
-*  The Government retains for itself and others acting on its behalf a nonexclusive, paid-up,
-*  irrevocable worldwide license in the software to reproduce, prepare derivative works, distribute
-*  copies to the public, perform publicly and display publicly, and to permit others to do so.
-*
-*  Redistribution and use in source and binary forms, with or without modification, are permitted
-*  provided that the following conditions are met:
-*
-*  1. Redistributions of source code must retain the above copyright notice, the above government
-*  rights notice, this list of conditions and the following disclaimer.
-*
-*  2. Redistributions in binary form must reproduce the above copyright notice, the above government
-*  rights notice, this list of conditions and the following disclaimer in the documentation and/or
-*  other materials provided with the distribution.
-*
-*  3. The entire corresponding source code of any redistribution, with or without modification, by a
-*  research entity, including but not limited to any contracting manager/operator of a United States
-*  National Laboratory, any institution of higher learning, and any non-profit organization, must be
-*  made publicly available under this license for as long as the redistribution is made available by
-*  the research entity.
-*
-*  4. Redistribution of this software, without modification, must refer to the software by the same
-*  designation. Redistribution of a modified version of this software (i) may not refer to the modified
-*  version by the same designation, or by any confusingly similar designation, and (ii) must refer to
-*  the underlying software originally provided by Alliance as “System Advisor Model” or “SAM”. Except
-*  to comply with the foregoing, the terms “System Advisor Model”, “SAM”, or any confusingly similar
-*  designation may not be used to refer to any modified version of this software or any modified
-*  version of the underlying software originally provided by Alliance without the prior written consent
-*  of Alliance.
-*
-*  5. The name of the copyright holder, contributors, the United States Government, the United States
-*  Department of Energy, or any of their employees may not be used to endorse or promote products
-*  derived from this software without specific prior written permission.
-*
-*  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
-*  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
-*  FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER,
-*  CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES DEPARTMENT OF ENERGY, NOR ANY OF THEIR
-*  EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-*  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-*  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
-*  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
-*  THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*******************************************************************************************************/
+/**
+BSD-3-Clause
+Copyright 2019 Alliance for Sustainable Energy, LLC
+Redistribution and use in source and binary forms, with or without modification, are permitted provided 
+that the following conditions are met :
+1.	Redistributions of source code must retain the above copyright notice, this list of conditions 
+and the following disclaimer.
+2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions 
+and the following disclaimer in the documentation and/or other materials provided with the distribution.
+3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse 
+or promote products derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, 
+INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
+ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES 
+DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, 
+OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; 
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
+WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT 
+OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
 
 #include "csp_solver_core.h"
 #include "csp_solver_util.h"
@@ -490,7 +463,9 @@ void C_csp_solver::init()
 	C_csp_collector_receiver::S_csp_cr_init_inputs init_inputs;
 	init_inputs.m_latitude = mc_weather.ms_solved_params.m_lat;		//[deg]
 	init_inputs.m_longitude = mc_weather.ms_solved_params.m_lon;	//[deg]
+    init_inputs.m_tz = mc_weather.ms_solved_params.m_tz;	    	//[hr]
 	init_inputs.m_shift = mc_weather.ms_solved_params.m_shift;		//[deg]
+    init_inputs.m_elev = mc_weather.ms_solved_params.m_elev;		//[m]
 	C_csp_collector_receiver::S_csp_cr_solved_params cr_solved_params;
 	
 	mc_collector_receiver.init(init_inputs, cr_solved_params);
@@ -741,6 +716,12 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
     double end_time = mc_kernel.get_sim_setup()->m_sim_time_end;
     if(end_time != 8760*3600.)
         mc_csp_messages.add_message(C_csp_messages::WARNING, util::format("End time: %f", end_time) );
+
+    int operating_mode = ENTRY_MODE;
+    std::string operating_mode_str = tech_operating_modes_str[operating_mode];
+    std::string operating_mode_str_prev = "";
+    std::string op_mode_str = "";
+    std::string op_mode_str_prev = "";
 
 	while( mc_kernel.mc_sim_info.ms_ts.m_time <= mc_kernel.get_sim_setup()->m_sim_time_end )
 	{
@@ -1116,8 +1097,6 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
         ------------ Controller/Solver iteration loop -------------
         */
 
-		int operating_mode = ENTRY_MODE;
-        std::string op_mode_str = "";
 		bool are_models_converged = false;
 		reset_hierarchy_logic();
 		// Reset operating mode tracker		
@@ -1406,7 +1385,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 						{	// The power cycle cannot accept the entire receiver output
 							// Tolerance is applied so that if CR is *close* to reaching the PC target, the controller tries modes that fill TES
 
-							// Is storage available to discharge to power cycle?
+							// Can storage be charged?
 							if( q_dot_tes_ch > 0.0 )
 							{
 								// 1) Try to fill storage while hitting power cycle target
@@ -1692,6 +1671,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 
 			// Store operating mode
 			m_op_mode_tracking.push_back(operating_mode);
+            operating_mode_str = tech_operating_modes_str[operating_mode];
 
             op_mode_str = "";
             
@@ -1762,30 +1742,36 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 
 					// Guess another guess value
 					C_monotonic_eq_solver::S_xy_pair xy2;
-					xy2.x = xy1.x * (1.0 / (1.0 + m_dot_bal));
+                    double m_dot_bal2;
+                    double x1 = xy1.x;
+                    do {
+                        xy2.x = x1 * (1.0 / (1.0 + m_dot_bal));
 
-					m_dot_df_code = c_df_m_dot_solver.test_member_function(xy2.x, &m_dot_bal);
-					if (m_dot_df_code != 0)
-					{
-						error_msg = util::format("At time = %lg the controller chose %s operating mode, but the collector/receiver "
-							"and power cycle did not converge on a cold HTF temp at defocus guess = %lg. Controller will shut-down CR and PC",
-							mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, op_mode_str.c_str(), xy2.x);
-						mc_csp_messages.add_message(C_csp_messages::NOTICE, error_msg);
+                        m_dot_df_code = c_df_m_dot_solver.test_member_function(xy2.x, &m_dot_bal2);
+                        if (m_dot_df_code != 0)
+                        {
+                            error_msg = util::format("At time = %lg the controller chose %s operating mode, but the collector/receiver "
+                                "and power cycle did not converge on a cold HTF temp at defocus guess = %lg. Controller will shut-down CR and PC",
+                                mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, op_mode_str.c_str(), xy2.x);
+                            mc_csp_messages.add_message(C_csp_messages::NOTICE, error_msg);
 
-						if (operating_mode == CR_DF__PC_SU__TES_OFF__AUX_OFF)
-						{
-							m_is_CR_DF__PC_SU__TES_OFF__AUX_OFF_avail = false;
-						}
-						else
-						{
-							// Next operating_mode = CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
-							m_is_CR_DF__PC_MAX__TES_OFF__AUX_OFF_avail = false;
-						}
-						are_models_converged = false;
-						break;
-					}
+                            if (operating_mode == CR_DF__PC_SU__TES_OFF__AUX_OFF)
+                            {
+                                m_is_CR_DF__PC_SU__TES_OFF__AUX_OFF_avail = false;
+                            }
+                            else
+                            {
+                                // Next operating_mode = CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
+                                m_is_CR_DF__PC_MAX__TES_OFF__AUX_OFF_avail = false;
+                            }
+                            are_models_converged = false;
+                            break;
+                        }
+                        x1 = xy2.x;  // for next loop
+                    } while (abs(m_dot_bal2 - m_dot_bal) < 0.02);
+                    if (m_dot_df_code != 0) { break; }
 
-					xy2.y = m_dot_bal;
+					xy2.y = m_dot_bal2;
 
 					// Set up solver for defocus
 					c_df_m_dot_solver.settings(1.E-3, 50, 0.0, 1.0, false);
@@ -2108,7 +2094,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 
 				else if (exit_mode == CSP_CONVERGED)
 				{
-					// If the CR and PC models converged, check whether the power cycle thermal input is within bounds
+					// If the CR and PC models convergd, check whether the power cycle thermal input is within bounds
 
 					if( operating_mode == CR_ON__PC_RM_LO__TES_OFF__AUX_OFF )
 					{	// In this mode, the power cycle thermal input needs to be greater than the minimum power cycle fraction
@@ -4244,32 +4230,36 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 
 					// Guess another guess value
 					C_monotonic_eq_solver::S_xy_pair xy2;
-					xy2.x = xy1.x * (1.0 / (1.0 + m_dot_bal));
+                    double m_dot_bal2;
+                    double x1 = xy1.x;
+                    do {
+					    xy2.x = x1 * (1.0 / (1.0 + m_dot_bal));
 					
-					m_dot_df_code = c_df_m_dot_solver.test_member_function(xy2.x, &m_dot_bal);
-					if (m_dot_df_code != 0)
-					{
-						// Weird that controller chose Defocus operating mode, so report message and shut down CR and PC
-						error_msg = util::format("At time = %lg the controller chose %s operating mode, but the code"
-							" failed to solve at defocus = %lg. Controller will shut-down CR and PC",
-							mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, op_mode_str.c_str(), xy2.x);
-						mc_csp_messages.add_message(C_csp_messages::NOTICE, error_msg);
+					    m_dot_df_code = c_df_m_dot_solver.test_member_function(xy2.x, &m_dot_bal2);
+					    if (m_dot_df_code != 0)
+					    {
+						    // Weird that controller chose Defocus operating mode, so report message and shut down CR and PC
+						    error_msg = util::format("At time = %lg the controller chose %s operating mode, but the code"
+							    " failed to solve at defocus = %lg. Controller will shut-down CR and PC",
+							    mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, op_mode_str.c_str(), xy2.x);
+						    mc_csp_messages.add_message(C_csp_messages::NOTICE, error_msg);
 
-						if (operating_mode == CR_DF__PC_SU__TES_FULL__AUX_OFF)
-						{
-							m_is_CR_DF__PC_SU__TES_FULL__AUX_OFF_avail = false;
-						}
-						else
-						{
-							m_is_CR_DF__PC_MAX__TES_FULL__AUX_OFF_avail = false;
-						}
+						    if (operating_mode == CR_DF__PC_SU__TES_FULL__AUX_OFF)
+						    {
+							    m_is_CR_DF__PC_SU__TES_FULL__AUX_OFF_avail = false;
+						    }
+						    else
+						    {
+							    m_is_CR_DF__PC_MAX__TES_FULL__AUX_OFF_avail = false;
+						    }
+						    are_models_converged = false;
+						    break;
+					    }
+                        x1 = xy2.x;  // for next loop
+                    } while (abs(m_dot_bal2 - m_dot_bal) < 0.02);
+                    if (m_dot_df_code != 0) { break; }
 
-						are_models_converged = false;
-
-						break;
-					}
-
-					xy2.y = m_dot_bal;
+					xy2.y = m_dot_bal2;
 
 					// Set up solver for defocus
 					c_df_m_dot_solver.settings(1.E-3, 50, 0.0, 1.0, false);
@@ -5027,7 +5017,8 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 		}
 		mc_reported_outputs.value(C_solver_outputs::CTRL_OP_MODE_SEQ_C, op_mode_key);
 
-
+        operating_mode_str_prev = operating_mode_str;
+        op_mode_str_prev = op_mode_str;
 
 		mc_reported_outputs.set_timestep_outputs();
 

@@ -306,8 +306,6 @@ __pycache__/
 *.mod
 
 # Specific SAM build ignores
-doc/latex/*
-
 SDKtool
 TCSConsole
 dltest
@@ -337,10 +335,12 @@ build_linux/config.status
 linux_test\.txt
 
 nlopt/config.h
+nlopt/config.status
 build_osx/config.status
+build_sdk/sdk-release/linux64/dependencies\.txt
+build_sdk/sdk-release/linux64/filetypes\.txt
 
 doc/html/*
 doc/latex/*
-
 build_linux/linux_errors
-
+*.DS_Store
