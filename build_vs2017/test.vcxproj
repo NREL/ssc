@@ -39,6 +39,7 @@
     <ClCompile Include="..\test\ssc_test\cmod_pvwattsv5_test.cpp" />
     <ClCompile Include="..\test\ssc_test\cmod_pvyield_test.cpp" />
     <ClCompile Include="..\test\ssc_test\cmod_swh_test.cpp" />
+    <ClCompile Include="..\test\ssc_test\cmod_tcsdirect_steam_test.cpp" />
     <ClCompile Include="..\test\ssc_test\cmod_tcsmolten_salt_test.cpp" />
     <ClCompile Include="..\test\ssc_test\cmod_tcstrough_physical_test.cpp" />
     <ClCompile Include="..\test\ssc_test\cmod_trough_physical_iph_test.cpp" />
@@ -87,12 +88,15 @@
     <ClInclude Include="..\test\ssc_test\cmod_pvwattsv5_test.h" />
     <ClInclude Include="..\test\ssc_test\cmod_pvyield_test.h" />
     <ClInclude Include="..\test\ssc_test\cmod_swh_test.h" />
+    <ClInclude Include="..\test\ssc_test\cmod_tcsdirect_steam_test.h" />
     <ClInclude Include="..\test\ssc_test\cmod_tcsmolten_salt_test.h" />
     <ClInclude Include="..\test\ssc_test\cmod_trough_physical_iph_test.h" />
     <ClInclude Include="..\test\ssc_test\cmod_trough_physical_test.h" />
     <ClInclude Include="..\test\ssc_test\cmod_windpower_test.h" />
     <ClInclude Include="..\test\ssc_test\computeModuleTest.h" />
     <ClInclude Include="..\test\ssc_test\simulation_test_info.h" />
+    <ClInclude Include="..\test\tcs_test\tcsdirect_steam_cases.h" />
+    <ClInclude Include="..\test\tcs_test\tcsdirect_steam_common_data.h" />
     <ClInclude Include="..\test\tcs_test\tcsmolten_salt_cases.h" />
     <ClInclude Include="..\test\tcs_test\tcsmolten_salt_common_data.h" />
     <ClInclude Include="..\test\tcs_test\trough_physical_cases.h" />
@@ -134,7 +138,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>$(SSCDIR)\test;$(GTEST)\include;$(SSCDIR);$(SSCDIR)\lpsolve;$(SSCDIR)\shared;$(SSCDIR)\splinter;$(SSCDIR)\tcs;$(SSCDIR)\solarpilot;$(SSCDIR)\ssc</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SSCDIR)\test;$(GTEST)\googletest\include;$(SSCDIR);$(SSCDIR)\lpsolve;$(SSCDIR)\shared;$(SSCDIR)\splinter;$(SSCDIR)\tcs;$(SSCDIR)\solarpilot;$(SSCDIR)\ssc</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <AdditionalOptions>/wd4244 %(AdditionalOptions)</AdditionalOptions>
@@ -143,7 +147,7 @@
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(SolutionDir)\$(Platform)\$(Configuration)\;$(GTEST)\msvc\2010\gtest-md\$(Platform)-$(Configuration)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)\$(Platform)\$(Configuration)\;$(GTEST)\build\lib\Debug</AdditionalLibraryDirectories>
       <AdditionalDependencies>gtestd.lib;shared.lib;splinter.lib;tcs.lib;solarpilot.lib;lpsolve.lib;nlopt.lib;$(SSCDIR)\build_vs2017\$(Platform)\$(Configuration)\ssc\*.obj;$(SSCDIR)\build_vs2017\$(Platform)\$(Configuration)\tcs\*.obj</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
@@ -154,7 +158,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>$(SSCDIR)\test;$(GTEST)\include;$(SSCDIR);$(SSCDIR)\lpsolve;$(SSCDIR)\shared;$(SSCDIR)\splinter;$(SSCDIR)\tcs;$(SSCDIR)\solarpilot;$(SSCDIR)\ssc</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SSCDIR)\test;$(GTEST)\googletest\include;$(SSCDIR);$(SSCDIR)\lpsolve;$(SSCDIR)\shared;$(SSCDIR)\splinter;$(SSCDIR)\tcs;$(SSCDIR)\solarpilot;$(SSCDIR)\ssc</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <DisableSpecificWarnings>4305</DisableSpecificWarnings>
       <AdditionalOptions>/wd4244 %(AdditionalOptions)</AdditionalOptions>
@@ -165,7 +169,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalLibraryDirectories>$(SolutionDir)\$(Platform)\$(Configuration)\;$(GTEST)\msvc\2010\gtest-md\$(Platform)-$(Configuration)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)\$(Platform)\$(Configuration)\;$(GTEST)\build\lib\Release</AdditionalLibraryDirectories>
       <AdditionalDependencies>gtest.lib;shared.lib;splinter.lib;tcs.lib;solarpilot.lib;lpsolve.lib;nlopt.lib;$(SSCDIR)\build_vs2017\$(Platform)\$(Configuration)\ssc\*.obj;$(SSCDIR)\build_vs2017\$(Platform)\$(Configuration)\tcs\*.obj</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>

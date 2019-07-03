@@ -107,6 +107,9 @@
     <ClCompile Include="..\test\ssc_test\cmod_grid_test.cpp">
       <Filter>ssc_test</Filter>
     </ClCompile>
+    <ClCompile Include="..\test\ssc_test\cmod_tcsdirect_steam_test.cpp">
+      <Filter>ssc_test</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="shared_test">
@@ -275,6 +278,15 @@
     </ClInclude>
     <ClInclude Include="..\test\input_cases\grid_common_data.h">
       <Filter>input_cases</Filter>
+    </ClInclude>
+    <ClInclude Include="..\test\tcs_test\tcsdirect_steam_common_data.h">
+      <Filter>tcs_test</Filter>
+    </ClInclude>
+    <ClInclude Include="..\test\tcs_test\tcsdirect_steam_cases.h">
+      <Filter>tcs_test</Filter>
+    </ClInclude>
+    <ClInclude Include="..\test\ssc_test\cmod_tcsdirect_steam_test.h">
+      <Filter>ssc_test</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
