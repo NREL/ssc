@@ -80,9 +80,18 @@
     <ClCompile Include="..\test\ssc_test\cmod_battery_test.cpp">
       <Filter>ssc_test</Filter>
     </ClCompile>
-    <ClCompile Include="..\test\shared_test\lib_csp_test.cpp">
+    <ClCompile Include="..\test\ssc_test\cmod_geothermal_test.cpp">
+      <Filter>ssc_test</Filter>
+    </ClCompile>
+    <ClCompile Include="..\test\ssc_test\cmod_geothermal_costs_test.cpp">
+      <Filter>ssc_test</Filter>
+    </ClCompile>
+    <ClCompile Include="..\test\shared_test\lib_geothermal_test.cpp">
       <Filter>shared_test</Filter>
     </ClCompile>
+ </ClCompile>
+    <ClCompile Include="..\test\shared_test\lib_csp_test.cpp">
+      <Filter>shared_test</Filter>
     <ClCompile Include="..\test\shared_test\lib_trough_test.cpp">
       <Filter>shared_test</Filter>
     </ClCompile>

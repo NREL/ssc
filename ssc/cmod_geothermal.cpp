@@ -166,7 +166,7 @@ static var_info _cm_vtab_geothermal[] = {
 	{ SSC_OUTPUT,		SSC_NUMBER,		"capacity_factor",					  "Capacity factor",									"",			"",					 "",					"*",				"",					"" },
 	{ SSC_OUTPUT,		SSC_NUMBER,		 "kwh_per_kw",						  "First year kWh/kW",									 "",		"",					 "",					 "*",				"",					"" },
 	//Outputs Used in cmod_geothermal_costs:
-	{ SSC_OUTPUT,       SSC_NUMBER,		"eff_secondlaw",                        "Second Law Efficiency",								 "C",		"",             "GeoHourly",				 "",                 "",                "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,		"eff_secondlaw",                        "Second Law Efficiency",							 "C",		"",             "GeoHourly",				 "",                 "",                "" },
 	{ SSC_OUTPUT,		SSC_NUMBER,		"qRejectTotal",							"Total Heat Rejection",								 "btu/h",	"",				"GeoHourly",				 "",				 "",				""},
 	{ SSC_OUTPUT,		SSC_NUMBER,		"qCondenser",							"Condenser Heat Rejected",							 "btu/h",	"",				"GeoHourly",				 "",				 "",				"" },
 	{ SSC_OUTPUT,		SSC_NUMBER,		"hp_flash_pressure",					"HP Flash Pressure",								 "psia",	"",				"GeoHourly",				 "",				 "",				"" },
@@ -473,11 +473,6 @@ public:
 			assign("v_stage_2", (ssc_number_t)v_stage_2);
 			double v_stage_3 = geo_outputs.v_stage_3;
 			assign("v_stage_3", (ssc_number_t)v_stage_3);
-
-			
-			//DELETE	
-			//double test = geo_outputs.test;
-
 
 			//Assign total GF Flow Rate: 
 			double GF_flowrate = geo_outputs.GF_flowrate;
