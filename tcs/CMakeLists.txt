@@ -12,9 +12,6 @@ elseif(MSVC)
     set(CMAKE_SYSTEM_VERSION 8.1 CACHE TYPE INTERNAL FORCE)
 endif()
 
-if(MSVC)
-	set(CMAKE_CONFIGURATION_TYPES "Debug;Release" CACHE STRING "Debug and Release Builds Configured" FORCE)
-endif()
 
 
 #####################################################################################################################
@@ -130,13 +127,9 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 if(MSVC)
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /bigobj")
 	add_compile_options(/MP /W0)
-	if (CMAKE_BUILD_TYPE STREQUAL Debug)
-        add_compile_options(/MDd)
-        add_compile_definitions(_DEBUG)
-    else()
-        add_compile_options(/MD /O3)
-        add_compile_definitions(NDEBUG )
-    endif()
+	foreach (flag_var CMAKE_C_FLAGS_DEBUG CMAKE_CXX_FLAGS_DEBUG)
+		set(${flag_var} "${${flag_var}} /D_DEBUG" CACHE STRING "compile flags" FORCE)
+	endforeach()
     add_compile_definitions( __64BIT__ __WINDOWS__ _WINDOWS _CRT_SECURE_NO_WARNINGS LPWINAPP )
 else(MSVC)
 	if (APPLE)
@@ -163,23 +156,19 @@ endif(MSVC)
 #
 #####################################################################################################################
 
-if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-  add_library(tcsd STATIC ${TCS_SRC})
-  set(TCS_LIB tcsd)
-
-  set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG}")
-  set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}")
-else()
-  add_library(tcs STATIC ${TCS_SRC})
-  set(TCS_LIB tcs)
-endif()
-
-set_property(TARGET ${TCS_LIB} PROPERTY PREFIX "")
-
+add_library(tcs STATIC ${TCS_SRC})
+set_target_properties(tcs
+    PROPERTIES
+    DEBUG_POSTFIX "d"
+	PREFIX ""
+	ARCHIVE_OUTPUT_DIRECTORY $<1:${CMAKE_CURRENT_SOURCE_DIR}>)
 if (MSVC)
-	set_target_properties(${TCS_LIB} PROPERTIES
-        LIBRARY_OUTPUT_DIRECTORY $<1:${CMAKE_CURRENT_SOURCE_DIR}>)
+	set_target_properties(tcs
+		PROPERTIES
+		LINK_FLAGS /SUBSYSTEM:CONSOLE)
 endif()
+
+
 
 
 #####################################################################################################################

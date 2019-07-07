@@ -14,9 +14,6 @@ elseif(MSVC)
 	set(CMAKE_SYSTEM_VERSION 8.1 CACHE TYPE INTERNAL FORCE)
 endif()
 
-if(MSVC)
-	set(CMAKE_CONFIGURATION_TYPES "Debug;Release" CACHE STRING "Debug and Release Builds Configured" FORCE)
-endif()
 
 
 #####################################################################################################################
@@ -47,13 +44,9 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 if(MSVC)
 	add_compile_options(/W3 /MP)
-	if (CMAKE_BUILD_TYPE STREQUAL Debug)
-        add_compile_options(/MDd)
-        add_compile_definitions(_DEBUG)
-    else()
-        add_compile_options(/MD)
-        add_compile_definitions(NDEBUG )
-    endif()
+	foreach (flag_var CMAKE_C_FLAGS_DEBUG CMAKE_CXX_FLAGS_DEBUG)
+		set(${flag_var} "${${flag_var}} /D_DEBUG" CACHE STRING "compile flags" FORCE)
+	endforeach()
     add_compile_definitions( LK_USE_WXWIDGETS _CRT_SECURE_NO_DEPRECATE=1)
 	add_compile_definitions(_CRT_NON_CONFORMING_SWPRINTFS=1 _SCL_SECURE_NO_WARNINGS=1)
 	add_compile_definitions(__WXMSW__ _UNICODE _WINDOWS NOPCH)
@@ -112,24 +105,17 @@ elseif(WIN32)
 	#set(TCSCONSOLE_ICON ${CMAKE_CURRENT_SOURCE_DIR}/../build_vs2013/TCSConsole.rc)
 endif()
 
-if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-	add_executable(TCSConsoled
-			WIN32
-			MACOSX_BUNDLE
-			${TCSCONSOLE_SRC}
-			${TCSCONSOLE_ICON})
-	set(TCSCONSOLE_EXE TCSConsoled)
-
-	set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG}")
-	set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}")
-else()
-	add_executable(TCSConsole
-			WIN32
-			MACOSX_BUNDLE
-			${TCSCONSOLE_SRC}
-			${TCSCONSOLE_ICON})
-	set(TCSCONSOLE_EXE TCSConsole)
+add_executable(TCSConsole ${TCSCONSOLE_SRC} ${TCSCONSOLE_ICON})
+set_target_properties(TCSConsole
+    PROPERTIES
+    DEBUG_POSTFIX "d"
+	RUNTIME_OUTPUT_DIRECTORY $<1:${CMAKE_CURRENT_SOURCE_DIR}>)
+if (MSVC)
+	set_target_properties(TCSConsole
+		PROPERTIES
+		LINK_FLAGS /SUBSYSTEM:WINDOWS)
 endif()
+
 
 if (APPLE)
 	set_target_properties(${TCSCONSOLE_EXE} PROPERTIES
@@ -150,52 +136,27 @@ endif()
 #
 #####################################################################################################################
 
-set( DEPENDENCIES
-		tcs
-		nlopt
-		solarpilot
-		shared
-		splinter)
-foreach( name ${DEPENDENCIES} )
-	unset(${name}_LIB CACHE)
-	if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-		target_link_libraries(${TCSCONSOLE_EXE} ${name}d)
-	else()
-		target_link_libraries(${TCSCONSOLE_EXE} ${name})
-	endif()
-endforeach()
 
-if (${CMAKE_PROJECT_NAME} STREQUAL system_advisor_model)
-	if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-		target_link_libraries(${TCSCONSOLE_EXE} lkd wexd)
-	else()
-		target_link_libraries(${TCSCONSOLE_EXE} lk wex)
-	endif()
-else()
 	unset(WEX_LIB CACHE)
 	unset(LK_LIB CACHE)
-	if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-		find_library( WEX_LIB
-			NAMES wexd.a wexd.lib
-			PATHS $ENV{WEXDIR})
-		find_library( LK_LIB
-			NAMES lkd.a lkd.lib
-			PATHS $ENV{LKDIR})
+	unset(WEXD_LIB CACHE)
+	unset(LKD_LIB CACHE)
+	find_library( WEXD_LIB
+		NAMES wexd.a wexd.lib
+		PATHS $ENV{WEXDIR})
+	find_library( LKD_LIB
+		NAMES lkd.a lkd.lib
+		PATHS $ENV{LKDIR})
+	find_library( WEX_LIB
+		NAMES wex.a wex.lib
+		PATHS $ENV{WEXDIR})
+	find_library( LK_LIB
+		NAMES lk.a lk.lib
+		PATHS $ENV{LKDIR})
+	target_link_libraries(TCSConsole debug ${WEXD_LIB} ${LKD_LIB})
+	target_link_libraries(TCSConsole optimized ${WEX_LIB} ${LK_LIB})
 
-		set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG}")
-		set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}")
-	else()
-		find_library( WEX_LIB
-			NAMES wex.a wex.lib
-			PATHS $ENV{WEXDIR})
-		find_library( LK_LIB
-			NAMES lk.a lk.lib
-			PATHS $ENV{LKDIR})
-	endif()
-	target_link_libraries(${TCSCONSOLE_EXE} ${WEX_LIB} ${LK_LIB})
-endif()
-
-target_link_libraries(${TCSCONSOLE_EXE} ${wxWidgets_LIBRARIES})
+target_link_libraries(TCSConsole ${wxWidgets_LIBRARIES})
 
 if (UNIX)
 	target_link_libraries(${TCSCONSOLE_EXE} -lm -lcurl)
@@ -203,8 +164,8 @@ elseif (MSVC)
 	find_library( CURL_LIB
 				NAMES libcurl.lib
 				PATHS $ENV{WEXDIR}/build_vs2017/libcurl_ssl_x64/lib)
-	target_link_libraries(${TCSCONSOLE_EXE} ${CURL_LIB})
-	target_link_libraries(${TCSCONSOLE_EXE} Winhttp)
+	target_link_libraries(TCSConsole ${CURL_LIB})
+	target_link_libraries(TCSConsole Winhttp)
 endif()
 
 if (UNIX AND NOT APPLE)
@@ -231,7 +192,7 @@ set( LIBCURL_FILES
 
 foreach( file_i ${LIBCURL_FILES})
     add_custom_command(
-    TARGET ${TCSCONSOLE_EXE}
+    TARGET TCSConsole
     POST_BUILD
     COMMAND ${CMAKE_COMMAND}
     ARGS -E copy $ENV{WEXDIR}/build_vs2017/libcurl_ssl_x64/bin/${file_i} ${CMAKE_CURRENT_SOURCE_DIR}
@@ -245,7 +206,7 @@ else()
 endif()
 
 add_custom_command(
-    TARGET ${TCSCONSOLE_EXE}
+    TARGET TCSConsole
     POST_BUILD
     COMMAND ${CMAKE_COMMAND}
     ARGS -E copy $ENV{SSCDIR}/ssc/ssc$<$<BOOL:DEBUG>:d>.lib $ENV{SSCDIR}/ssc/ssc$<$<BOOL:DEBUG>:d>.dll ${CMAKE_CURRENT_SOURCE_DIR}

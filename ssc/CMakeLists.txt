@@ -139,13 +139,9 @@ set(CMAKE_CXX_STANDARD 11)
 
 if(MSVC)
 	add_compile_options(/MP /W4 /w44191 /w44242  /w44266 /w44302 /w44388 /w44826 /w44905 /w44906 /w44928)
-	if (CMAKE_BUILD_TYPE STREQUAL Debug)
-        add_compile_options(/MDd)
-        add_compile_definitions(_DEBUG)
-    else()
-        add_compile_options(/MD /O3)
-        add_compile_definitions(NDEBUG )
-    endif()
+	foreach (flag_var CMAKE_C_FLAGS_DEBUG CMAKE_CXX_FLAGS_DEBUG)
+		set(${flag_var} "${${flag_var}} /D_DEBUG" CACHE STRING "compile flags" FORCE)
+	endforeach()
     add_compile_definitions( __DLL__ __64BIT__ __WINDOWS__ _WINDOWS _CRT_SECURE_NO_WARNINGS __VISUALC__ )
 else(MSVC)
 	if (APPLE)
@@ -157,8 +153,6 @@ else(MSVC)
 	add_definitions(-D__64BIT__)
 	SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wno-unknown-pragmas -std=c++11" )
 	if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-		set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -O0")
-		set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0")
 		add_compile_definitions(_DEBUG)
 	else()
 		SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3" )
@@ -171,26 +165,20 @@ endif(MSVC)
 #
 #####################################################################################################################
 
-if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-	add_library(sscd SHARED ${SSC_SRC})
-	set(SSC_LIB sscd)
-	set_property(TARGET sscd PROPERTY PREFIX "")
+add_library(ssc SHARED ${SSC_SRC})
+set_target_properties(ssc
+    PROPERTIES
+    DEBUG_POSTFIX "d"
+	PREFIX ""
+	ARCHIVE_OUTPUT_DIRECTORY $<1:${CMAKE_CURRENT_SOURCE_DIR}>)
 
-	set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG}")
-	set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}")
-else()
-	add_library(ssc SHARED ${SSC_SRC})
-	set(SSC_LIB ssc)
-	if(NOT system_advisor_model_EXPORT)
-		set_property(TARGET ssc PROPERTY PREFIX "")
-	endif()
-endif()
 
 if (MSVC)
 	set_target_properties(${SSC_LIB} PROPERTIES
         LIBRARY_OUTPUT_DIRECTORY $<1:${CMAKE_CURRENT_SOURCE_DIR}>
 		RUNTIME_OUTPUT_DIRECTORY $<1:${CMAKE_CURRENT_SOURCE_DIR}>)
 endif()
+
 
 # dltest executable for checking ssc library
 if(UNIX AND NOT system_advisor_model_EXPORT)
@@ -228,7 +216,8 @@ endif()
 #
 #####################################################################################################################
 
-set( DEPENDENCIES
+
+set( RELEASE_DEPENDENCIES
 	solarpilot
 	tcs
 	nlopt
@@ -236,14 +225,21 @@ set( DEPENDENCIES
 	lpsolve
 	splinter
 	)
-foreach( name ${DEPENDENCIES} )
-	unset(${name}_LIB CACHE)
-	if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-		target_link_libraries(${SSC_LIB} ${name}d)
-	else()
-		target_link_libraries(${SSC_LIB} ${name})
-	endif()
+foreach( name ${RELEASE_DEPENDENCIES} )
+	target_link_libraries(ssc optimized ${name})
 endforeach()
+set( DEBUG_DEPENDENCIES
+	solarpilotd
+	tcsd
+	nloptd
+	sharedd
+	lpsolved
+	splinterd
+	)
+foreach( name ${DEBUG_DEPENDENCIES} )
+	target_link_libraries(ssc debug ${name})
+endforeach()
+
 
 if (UNIX)
 	target_link_libraries(${SSC_LIB} -lm -ldl -lstdc++)

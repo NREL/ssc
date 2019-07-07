@@ -18,10 +18,6 @@ if (UNIX AND NOT CMAKE_C_COMPILER)
 endif()
 set(CMAKE_CXX_STANDARD 11)
 
-if(MSVC)
-	set(CMAKE_CONFIGURATION_TYPES "Debug;Release" CACHE STRING "Debug and Release Builds Configured" FORCE)
-endif()
-
 
 #####################################################################################################################
 #

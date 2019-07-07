@@ -13,9 +13,6 @@ elseif(MSVC)
 endif()
 set(CMAKE_CXX_STANDARD 11)
 
-if(MSVC)
-  set(CMAKE_CONFIGURATION_TYPES "Debug;Release" CACHE STRING "Debug and Release Builds Configured" FORCE)
-endif()
 
 
 #####################################################################################################################
@@ -80,13 +77,9 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 if(MSVC)
 	add_compile_options(/MP /W4 /w44191 /w44242  /w44263 /w44264 /w44265 /w44266 /w44302 /w44388)
 	add_compile_options(/w44826 /w44905 /w44906 /w44928)
-	if (CMAKE_BUILD_TYPE STREQUAL Debug)
-        add_compile_options(/MDd)
-        add_compile_definitions(_DEBUG)
-    else()
-        add_compile_options(/MD /O3)
-        add_compile_definitions(NDEBUG )
-    endif()
+	foreach (flag_var CMAKE_C_FLAGS_DEBUG CMAKE_CXX_FLAGS_DEBUG)
+		set(${flag_var} "${${flag_var}} /D_DEBUG" CACHE STRING "compile flags" FORCE)
+   	endforeach()
     add_compile_definitions( __64BIT__ __WINDOWS__ _WINDOWS _MBCS )
 else(MSVC)
 	if (APPLE)
@@ -117,18 +110,17 @@ endif(MSVC)
 #
 #####################################################################################################################
 
-if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-	add_library(sharedd STATIC ${SHARED_SRC})
-	set(SHARED_LIB sharedd)
-
-	set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG}")
- 	set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}")
-else()
-	add_library(shared STATIC ${SHARED_SRC})
-	set(SHARED_LIB shared)
+add_library(shared STATIC ${SHARED_SRC})
+set_target_properties(shared
+    PROPERTIES
+    DEBUG_POSTFIX "d"
+	PREFIX ""
+	ARCHIVE_OUTPUT_DIRECTORY $<1:${CMAKE_CURRENT_SOURCE_DIR}>)
+if (MSVC)
+	set_target_properties(shared
+		PROPERTIES
+		LINK_FLAGS /SUBSYSTEM:CONSOLE)
 endif()
-
-set_property(TARGET ${SHARED_LIB} PROPERTY PREFIX "")
 
 
 #####################################################################################################################
