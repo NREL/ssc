@@ -313,14 +313,14 @@ public:
 
 
 
-				geoPlant_outputs.maf_ReplacementsByYear = new float[geoPlant_inputs.mi_ProjectLifeYears];
+				geoPlant_outputs.maf_ReplacementsByYear = new double[geoPlant_inputs.mi_ProjectLifeYears];
 
 				//ssc_number_t *annual_replacements = allocate( "annual_replacements", geoPlant_inputs.mi_ProjectLifeYears);
 		
 				// allocate lifetime monthly arrays (one element per month, over lifetime of project)
-				geoPlant_outputs.maf_monthly_resource_temp = new float[12 * geoPlant_inputs.mi_ProjectLifeYears];
-				geoPlant_outputs.maf_monthly_power = new float[12 * geoPlant_inputs.mi_ProjectLifeYears];
-				geoPlant_outputs.maf_monthly_energy = new float[12 * geoPlant_inputs.mi_ProjectLifeYears];
+				geoPlant_outputs.maf_monthly_resource_temp = new double[12 * geoPlant_inputs.mi_ProjectLifeYears];
+				geoPlant_outputs.maf_monthly_power = new double[12 * geoPlant_inputs.mi_ProjectLifeYears];
+				geoPlant_outputs.maf_monthly_energy = new double[12 * geoPlant_inputs.mi_ProjectLifeYears];
 
 				// allocate lifetime timestep arrays (one element per timestep, over lifetime of project)
 				// if this is a monthly analysis, these are redundant with monthly arrays that track same outputs
@@ -328,16 +328,16 @@ public:
 				geoPlant_inputs.mi_MakeupCalculationsPerYear = (geoPlant_inputs.mi_ModelChoice == 2) ? 8760 : 12;
 				geoPlant_inputs.mi_TotalMakeupCalculations = geoPlant_inputs.mi_ProjectLifeYears * geoPlant_inputs.mi_MakeupCalculationsPerYear;
 
-				geoPlant_outputs.maf_timestep_resource_temp = new float[geoPlant_inputs.mi_TotalMakeupCalculations];
+				geoPlant_outputs.maf_timestep_resource_temp = new double[geoPlant_inputs.mi_TotalMakeupCalculations];
 		
-				geoPlant_outputs.maf_timestep_power = new float[geoPlant_inputs.mi_TotalMakeupCalculations];
-				geoPlant_outputs.maf_timestep_test_values = new float[geoPlant_inputs.mi_TotalMakeupCalculations];
+				geoPlant_outputs.maf_timestep_power = new double[geoPlant_inputs.mi_TotalMakeupCalculations];
+				geoPlant_outputs.maf_timestep_test_values = new double[geoPlant_inputs.mi_TotalMakeupCalculations];
 
-				geoPlant_outputs.maf_timestep_pressure = new float[geoPlant_inputs.mi_TotalMakeupCalculations];
-				geoPlant_outputs.maf_timestep_dry_bulb = new float[geoPlant_inputs.mi_TotalMakeupCalculations];
-				geoPlant_outputs.maf_timestep_wet_bulb = new float[geoPlant_inputs.mi_TotalMakeupCalculations];
+				geoPlant_outputs.maf_timestep_pressure = new double[geoPlant_inputs.mi_TotalMakeupCalculations];
+				geoPlant_outputs.maf_timestep_dry_bulb = new double[geoPlant_inputs.mi_TotalMakeupCalculations];
+				geoPlant_outputs.maf_timestep_wet_bulb = new double[geoPlant_inputs.mi_TotalMakeupCalculations];
 		
-				geoPlant_outputs.maf_hourly_power = new float[geoPlant_inputs.mi_ProjectLifeYears * 8760];
+				geoPlant_outputs.maf_hourly_power = new double[geoPlant_inputs.mi_ProjectLifeYears * 8760];
 		
 		//====================================================================================================================================================================
 		void * user_data = nullptr;
