@@ -158,10 +158,8 @@ else()
 	find_library( LK_LIB
 			NAMES lk.a lk.lib
 			PATHS $ENV{LKDIR})
-	target_link_libraries(TCSConsole debug ${WEXD_LIB})
-	target_link_libraries(TCSConsole debug ${LKD_LIB})
-	target_link_libraries(TCSConsole optimized ${WEX_LIB})
-	target_link_libraries(TCSConsole optimized ${LK_LIB})
+	target_link_libraries(TCSConsole debug ${WEXD_LIB} debug ${LKD_LIB})
+	target_link_libraries(TCSConsole optimized ${WEX_LIB} optimized ${LK_LIB})
 endif()
 
 target_link_libraries(TCSConsole ${wxWidgets_LIBRARIES})
