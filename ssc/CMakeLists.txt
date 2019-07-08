@@ -167,6 +167,7 @@ if (MSVC)
         RUNTIME_OUTPUT_DIRECTORY $<1:${CMAKE_CURRENT_SOURCE_DIR}>)
 endif()
 
+
 # dltest executable for checking ssc library
 if(UNIX AND NOT system_advisor_model_EXPORT)
 	add_executable(dltest ../build_osx/dltest.c)
@@ -201,7 +202,8 @@ endif()
 #
 #####################################################################################################################
 
-set( DEPENDENCIES
+
+set( RELEASE_DEPENDENCIES
 	solarpilot
 	tcs
 	nlopt
@@ -212,6 +214,29 @@ set( DEPENDENCIES
 foreach( name ${DEPENDENCIES} )
 	target_link_libraries(ssc ${name})
 endforeach()
+
+set( DEBUG_DEPENDENCIES
+	solarpilotd
+	tcsd
+	nloptd
+	sharedd
+	lpsolved
+	splinterd
+	)
+foreach( name ${RELEASE_DEPENDENCIES} )
+	unset(TMP_LIB CACHE)
+	unset(TMP_NAME CACHE)
+	string( CONCAT TMP_NAME ${name} "d")
+	message(STATUS "DEBUG: TMP_NAME=${TMP_NAME}")
+	string( CONCAT TMP_PATH $ENV{SSCDIR} "/" ${name} )
+	message(STATUS "RELEASE: TMP_PATH=${TMP_PATH}")
+	find_library( TMP_LIB
+    	NAMES ${TMP_NAME}
+    	PATHS ${TMP_PATH} )
+	message(STATUS "DEBUG: TMP_LIB=${TMP_LIB}")
+    target_link_libraries(ssc debug ${TMP_LIB})
+endforeach()
+
 
 if (UNIX)
 	target_link_libraries(ssc -lm -ldl -lstdc++)

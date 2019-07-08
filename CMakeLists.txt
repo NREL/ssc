@@ -20,7 +20,6 @@ if (POLICY CMP0043) # CMAKE 2.8 compatibility
   cmake_policy(SET CMP0043 OLD)
 endif (POLICY CMP0043)
 
-
 #####################################################################################################################
 #
 # Project Settings 

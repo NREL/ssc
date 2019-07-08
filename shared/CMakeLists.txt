@@ -114,8 +114,9 @@ set_target_properties(shared
 if (MSVC)
 	set_target_properties(shared
 		PROPERTIES
-		LINK_FLAGS /SUBSYSTEM:WINDOWS)
+		LINK_FLAGS /SUBSYSTEM:CONSOLE)
 endif()
+
 
 #####################################################################################################################
 #
