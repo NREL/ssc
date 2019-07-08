@@ -15,17 +15,17 @@ SSCEXPORT float GenericSystem_conv_eff_eval(ssc_data_t ptr)
 	    throw std::runtime_error("Could not calculate conv_eff for GenericSystem: heat_rate not set");
 
 	// inputs
-	float heat_rate = vd->num;
+	double heat_rate = vd->num;
 
 	// outputs
-	float conv_eff;
+	double conv_eff;
 
 	if ( heat_rate == 0.000000 ) {
 		conv_eff = 0.000000;
 	}
 	conv_eff = 100.000000 / heat_rate * 0.293100;
 
-	return conv_eff;
+	return (float)conv_eff;
 
 }
 

@@ -10,12 +10,6 @@ cmake_minimum_required(VERSION 2.8)
 
 if(APPLE)
     set(CMAKE_OSX_DEPLOYMENT_TARGET "10.9" CACHE STRING "Minimum OS X deployment version")
-elseif(MSVC)
-	set(CMAKE_SYSTEM_VERSION 8.1 CACHE TYPE INTERNAL FORCE)
-endif()
-
-if(MSVC)
-	set(CMAKE_CONFIGURATION_TYPES "Debug;Release" CACHE STRING "Debug and Release Builds Configured" FORCE)
 endif()
 
 
@@ -47,16 +41,12 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 if(MSVC)
 	add_compile_options(/W3 /MP)
-	if (CMAKE_BUILD_TYPE STREQUAL Debug)
-        add_compile_options(/MDd)
-        add_compile_definitions(_DEBUG)
-    else()
-        add_compile_options(/MD)
-        add_compile_definitions(NDEBUG )
-    endif()
     add_compile_definitions( LK_USE_WXWIDGETS _CRT_SECURE_NO_DEPRECATE=1)
 	add_compile_definitions(_CRT_NON_CONFORMING_SWPRINTFS=1 _SCL_SECURE_NO_WARNINGS=1)
-	add_compile_definitions(__WXMSW__ _UNICODE _WINDOWS NOPCH)
+	add_compile_definitions(__WXMSW__ _UNICODE NOPCH)
+	foreach (flag_var CMAKE_C_FLAGS_DEBUG CMAKE_CXX_FLAGS_DEBUG)
+		set(${flag_var} "${${flag_var}} /D_DEBUG" CACHE STRING "compile flags" FORCE)
+	endforeach()
 else(MSVC)
 	if (APPLE)
 		add_compile_options(-arch x86_64)
@@ -67,11 +57,9 @@ else(MSVC)
 	add_compile_options(-Wall -Wno-unknown-pragmas -Werror -fno-common -std=c++11)
 	add_definitions(-DLK_USE_WXWIDGETS -DWX_PRECOMP )
 	if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-		set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG}")
-		set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}")
 		add_compile_definitions(_DEBUG)
 	else()
-		add_compile_options(-O3)
+		add_compile_options(-O3 -DNDEBUG)
 	endif()
 endif(MSVC)
 
@@ -86,7 +74,7 @@ if (UNIX)
 	find_package(wxWidgets REQUIRED webview xrc stc richtext ribbon propgrid aui gl html qa adv net core xml net base)
 else()
 	set(wxWidgets_ROOT_DIR $ENV{WXMSW3})
-	if (CMAKE_BUILD_TYPE STREQUAL "Debug")
+	if (DEBUG_WXWIDGETS)
 		set(wxWidgets_CONFIGURATION mswud)
 	else()
 		set(wxWidgets_CONFIGURATION mswu)
@@ -112,34 +100,25 @@ elseif(WIN32)
 	#set(TCSCONSOLE_ICON ${CMAKE_CURRENT_SOURCE_DIR}/../build_vs2013/TCSConsole.rc)
 endif()
 
-if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-	add_executable(TCSConsoled
-			WIN32
-			MACOSX_BUNDLE
-			${TCSCONSOLE_SRC}
-			${TCSCONSOLE_ICON})
-	set(TCSCONSOLE_EXE TCSConsoled)
-
-	set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG}")
-	set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}")
-else()
-	add_executable(TCSConsole
-			WIN32
-			MACOSX_BUNDLE
-			${TCSCONSOLE_SRC}
-			${TCSCONSOLE_ICON})
-	set(TCSCONSOLE_EXE TCSConsole)
-endif()
+add_executable(TCSConsole
+	WIN32
+	MACOSX_BUNDLE
+	${TCSCONSOLE_SRC}
+	${TCSCONSOLE_ICON})
+set_target_properties(TCSConsole
+    PROPERTIES
+    DEBUG_POSTFIX "d"
+	PREFIX ""
+	RUNTIME_OUTPUT_DIRECTORY $<1:${CMAKE_CURRENT_SOURCE_DIR}>)
 
 if (APPLE)
-	set_target_properties(${TCSCONSOLE_EXE} PROPERTIES
+	set_target_properties(TCSConsole PROPERTIES
 		MACOSX_BUNDLE_INFO_PLIST ${CMAKE_CURRENT_SOURCE_DIR}/../build_osx/Info-TCSConsole.plist
 	)
 endif()
 
 if (MSVC)
-	set_target_properties(${TCSCONSOLE_EXE} PROPERTIES
-        RUNTIME_OUTPUT_DIRECTORY $<1:${CMAKE_CURRENT_SOURCE_DIR}>
+	set_target_properties(TCSConsole PROPERTIES
         LINK_FLAGS /SUBSYSTEM:WINDOWS)
 endif()
 
@@ -157,58 +136,48 @@ set( DEPENDENCIES
 		shared
 		splinter)
 foreach( name ${DEPENDENCIES} )
-	unset(${name}_LIB CACHE)
-	if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-		target_link_libraries(${TCSCONSOLE_EXE} ${name}d)
-	else()
-		target_link_libraries(${TCSCONSOLE_EXE} ${name})
-	endif()
+	target_link_libraries(TCSConsole ${name})
 endforeach()
 
 if (${CMAKE_PROJECT_NAME} STREQUAL system_advisor_model)
-	if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-		target_link_libraries(${TCSCONSOLE_EXE} lkd wexd)
-	else()
-		target_link_libraries(${TCSCONSOLE_EXE} lk wex)
-	endif()
+	target_link_libraries(TCSConsole lk wex)
 else()
 	unset(WEX_LIB CACHE)
+	unset(WEXD_LIB CACHE)
 	unset(LK_LIB CACHE)
-	if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-		find_library( WEX_LIB
+	unset(LKD_LIB CACHE)
+	find_library( WEXD_LIB
 			NAMES wexd.a wexd.lib
 			PATHS $ENV{WEXDIR})
-		find_library( LK_LIB
+	find_library( LKD_LIB
 			NAMES lkd.a lkd.lib
 			PATHS $ENV{LKDIR})
-
-		set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG}")
-		set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}")
-	else()
-		find_library( WEX_LIB
+	find_library( WEX_LIB
 			NAMES wex.a wex.lib
 			PATHS $ENV{WEXDIR})
-		find_library( LK_LIB
+	find_library( LK_LIB
 			NAMES lk.a lk.lib
 			PATHS $ENV{LKDIR})
-	endif()
-	target_link_libraries(${TCSCONSOLE_EXE} ${WEX_LIB} ${LK_LIB})
+	target_link_libraries(TCSConsole debug ${WEXD_LIB})
+	target_link_libraries(TCSConsole debug ${LKD_LIB})
+	target_link_libraries(TCSConsole optimized ${WEX_LIB})
+	target_link_libraries(TCSConsole optimized ${LK_LIB})
 endif()
 
-target_link_libraries(${TCSCONSOLE_EXE} ${wxWidgets_LIBRARIES})
+target_link_libraries(TCSConsole ${wxWidgets_LIBRARIES})
 
 if (UNIX)
-	target_link_libraries(${TCSCONSOLE_EXE} -lm -lcurl)
+	target_link_libraries(TCSConsole -lm -lcurl)
 elseif (MSVC)
 	find_library( CURL_LIB
-				NAMES libcurl.lib
-				PATHS $ENV{WEXDIR}/build_vs2017/libcurl_ssl_x64/lib)
-	target_link_libraries(${TCSCONSOLE_EXE} ${CURL_LIB})
-	target_link_libraries(${TCSCONSOLE_EXE} Winhttp)
+			NAMES libcurl.lib
+			PATHS $ENV{WEXDIR}/build_vs2017/libcurl_ssl_x64/lib)
+	target_link_libraries(TCSConsole ${CURL_LIB})
+	target_link_libraries(TCSConsole Winhttp)
 endif()
 
 if (UNIX AND NOT APPLE)
-	target_link_libraries(${TCSCONSOLE_EXE} -lfontconfig -ldl)
+	target_link_libraries(TCSConsole -lfontconfig -ldl)
 endif()
 
 
@@ -231,22 +200,9 @@ set( LIBCURL_FILES
 
 foreach( file_i ${LIBCURL_FILES})
     add_custom_command(
-    TARGET ${TCSCONSOLE_EXE}
+    TARGET TCSConsole
     POST_BUILD
     COMMAND ${CMAKE_COMMAND}
     ARGS -E copy $ENV{WEXDIR}/build_vs2017/libcurl_ssl_x64/bin/${file_i} ${CMAKE_CURRENT_SOURCE_DIR}
 )
 endforeach( file_i )
-
-if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-	set(DEBUG TRUE)
-else()
-	set(DEBUG FALSE)
-endif()
-
-add_custom_command(
-    TARGET ${TCSCONSOLE_EXE}
-    POST_BUILD
-    COMMAND ${CMAKE_COMMAND}
-    ARGS -E copy $ENV{SSCDIR}/ssc/ssc$<$<BOOL:DEBUG>:d>.lib $ENV{SSCDIR}/ssc/ssc$<$<BOOL:DEBUG>:d>.dll ${CMAKE_CURRENT_SOURCE_DIR}
-)

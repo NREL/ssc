@@ -10,12 +10,6 @@ cmake_minimum_required(VERSION 3.8)
 
 if(APPLE)
     set(CMAKE_OSX_DEPLOYMENT_TARGET "10.9" CACHE STRING "Minimum OS X deployment version")
-elseif(MSVC)
-    set(CMAKE_SYSTEM_VERSION 8.1 CACHE TYPE INTERNAL FORCE)
-endif()
-
-if(MSVC)
-	set(CMAKE_CONFIGURATION_TYPES "Debug;Release" CACHE STRING "Debug and Release Builds Configured" FORCE)
 endif()
 
 
@@ -26,8 +20,6 @@ endif()
 #####################################################################################################################
 
 Project(ssc_test)
-
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}")
 
 if (DEFINED ENV{GTDIR})
 	set(GTDIR $ENV{GTDIR})
@@ -57,14 +49,10 @@ set(CMAKE_CXX_STANDARD 11)
 
 if(MSVC)
 	add_compile_options(/MP /W3 /wd4244)
-	if (CMAKE_BUILD_TYPE STREQUAL Debug)
-        add_compile_options(/MDd)
-        add_compile_definitions(_DEBUG)
-    else()
-        add_compile_options(/MD /O3)
-        add_compile_definitions(NDEBUG )
-    endif()
-    add_compile_definitions( __64BIT__ __WINDOWS__ _WINDOWS _CRT_SECURE_NO_WARNINGS _MBCS )
+    add_compile_definitions( __64BIT__ __WINDOWS__ _CRT_SECURE_NO_WARNINGS _MBCS )
+    foreach (flag_var CMAKE_C_FLAGS_DEBUG CMAKE_CXX_FLAGS_DEBUG)
+		set(${flag_var} "${${flag_var}} /D_DEBUG" CACHE STRING "compile flags" FORCE)
+	endforeach()
 else()
 	if(APPLE)
 		add_compile_options(-Wall -arch x86_64 -Wno-deprecated)
@@ -72,11 +60,9 @@ else()
 		add_compile_options(-Wall -std=c++11 -Wno-strict-aliasing -Wno-deprecated-declarations -Wno-unknown-pragmas -Wno-reorder)
 	endif()
 	if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-		set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG}")
-		set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}")
 		add_compile_definitions(_DEBUG)
 	else()
-		add_compile_options(-O3)
+		add_compile_options(-O3 -DNDEBUG)
 	endif()
 endif(MSVC)
 
@@ -87,33 +73,23 @@ endif(MSVC)
 #
 #####################################################################################################################
 
-unset(GTEST_LIB CACHE)
-if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-	add_executable(Testd 
-		${SSC_TESTS}
-		${SHARED_TESTS}
-		${TCS_TESTS}
-		${INPUTS_SRC}
-		${SSC_SRC}
-		${SRC_TO_TEST}
-		main.cpp)
-	set(TEST_EXE Testd)
-	
-	set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG}")
-	set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}")
-else()
-	add_executable(Test 
-		${SSC_TESTS}
-		${SHARED_TEST}
-		${TCS_TESTS}
-		${INPUTS_SRC}
-		main.cpp)
-	set(TEST_EXE Test)
-endif()
+add_executable(Test
+	${SSC_TESTS}
+	${SHARED_TESTS}
+	${TCS_TESTS}
+	${INPUTS_SRC}
+	${SSC_SRC}
+	${SRC_TO_TEST}
+	main.cpp)
+
+set_target_properties(Test
+    PROPERTIES
+    DEBUG_POSTFIX "d"
+	PREFIX ""
+	RUNTIME_OUTPUT_DIRECTORY $<1:${CMAKE_CURRENT_SOURCE_DIR}>)
 
 if (MSVC)
-	set_target_properties(${TEST_EXE} PROPERTIES
-        RUNTIME_OUTPUT_DIRECTORY $<1:${CMAKE_CURRENT_SOURCE_DIR}>
+	set_target_properties(Test PROPERTIES
         LINK_FLAGS /SUBSYSTEM:CONSOLE)
 endif()
 
@@ -124,35 +100,16 @@ endif()
 #
 #####################################################################################################################
 
-if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-	find_library( GTEST_LIB
-		NAMES libgtestd.a gtestd.lib
-		PATHS ${GTDIR}/build/lib ${GTDIR}/build/lib/Debug)
-	target_link_libraries(${TEST_EXE} sscd splinterd ${GTEST_LIB} )
-else()
-	find_library( GTEST_LIB
-		NAMES libgtest.a gtest.lib
-		PATHS ${GTDIR}/build/lib ${GTDIR}/build/lib/Release)
-	target_link_libraries(${TEST_EXE} ssc splinter ${GTEST_LIB})
-endif()
+find_library( GTESTD_LIB
+	NAMES libgtestd.a gtestd.lib
+	PATHS ${GTDIR}/build/lib ${GTDIR}/build/lib/Debug)
+find_library( GTEST_LIB
+	NAMES libgtest.a gtest.lib
+	PATHS ${GTDIR}/build/lib ${GTDIR}/build/lib/Release)
+target_link_libraries(Test debug ${GTESTD_LIB})
+target_link_libraries(Test optimized ${GTEST_LIB})
+target_link_libraries(Test ssc splinter)
 
 if (UNIX)
-	target_link_libraries(${TEST_EXE} -ldl -lpthread)
+	target_link_libraries(Test -ldl -lpthread)
 endif()	
-
-
-#####################################################################################################################
-#
-# Target Installation
-#
-#####################################################################################################################
-
-
-if (MSVC)
-	add_custom_command(
-	    TARGET ${TEST_EXE}
-	    POST_BUILD
-	    COMMAND ${CMAKE_COMMAND}
-	    ARGS -E copy $ENV{SSCDIR}/ssc/sscd.lib $ENV{SSCDIR}/ssc/sscd.dll ${CMAKE_CURRENT_SOURCE_DIR}
-	)
-endif()

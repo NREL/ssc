@@ -8,15 +8,8 @@ set(CMAKE_VERBOSE_MAKEFILE ON)
 
 if(APPLE)
     set(CMAKE_OSX_DEPLOYMENT_TARGET "10.9" CACHE STRING "Minimum OS X deployment version")
-elseif(MSVC)
-	set(CMAKE_SYSTEM_VERSION 8.1 CACHE TYPE INTERNAL FORCE)
 endif()
 
-if(MSVC)
-	set(CMAKE_CONFIGURATION_TYPES "Debug;Release" CACHE STRING "Debug and Release Builds Configured" FORCE)
-endif()
-
-message("cmake ${CONFIGURATION}, ${CONFIG}")
 
 #####################################################################################################################
 #
@@ -25,8 +18,6 @@ message("cmake ${CONFIGURATION}, ${CONFIG}")
 #####################################################################################################################
 
 Project(sdktool)
-
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}")
 
 if ( NOT APPLE)
 	set(CURL_DIR build_vs2017/libcurl_ssl_x64)
@@ -50,16 +41,12 @@ set(SDKTOOL_SRC
 
 if(MSVC)
 	add_compile_options(/W3 /MP)
-	if (CMAKE_BUILD_TYPE STREQUAL Debug)
-        add_compile_options(/MDd)
-        add_compile_definitions(_DEBUG)
-    else()
-        add_compile_options(/MD)
-        add_compile_definitions(NDEBUG )
-    endif()
     add_compile_definitions( __64BIT__ LK_USE_WXWIDGETS _CRT_SECURE_NO_DEPRECATE=1 )
 	add_compile_definitions(_CRT_NON_CONFORMING_SWPRINTFS=1 _SCL_SECURE_NO_WARNINGS=1)
-	add_compile_definitions(__WXMSW__ _UNICODE _WINDOWS NOPCH )
+	add_compile_definitions(__WXMSW__ _UNICODE NOPCH )
+	foreach (flag_var CMAKE_C_FLAGS_DEBUG CMAKE_CXX_FLAGS_DEBUG)
+		set(${flag_var} "${${flag_var}} /D_DEBUG" CACHE STRING "compile flags" FORCE)
+	endforeach()
 else(MSVC)
 	if (APPLE)
 		set(CMAKE_POSITION_INDEPENDENT_CODE ON)
@@ -71,8 +58,6 @@ else(MSVC)
 	add_compile_options(-Wall -Wno-unknown-pragmas -Werror -Wno-overloaded-virtual -fno-common -std=c++11)
 	add_definitions(-DLK_USE_WXWIDGETS -DWX_PRECOMP )
 	if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-		set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG}")
-		set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}")
 		add_compile_definitions(_DEBUG)
 	else()
 		SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3" )
@@ -91,7 +76,7 @@ if (UNIX)
 	find_package(wxWidgets COMPONENTS qa webview aui richtext html propgrid adv net stc core xml base REQUIRED)
 else()
 	set(wxWidgets_ROOT_DIR $ENV{WXMSW3})
-	if (CMAKE_BUILD_TYPE STREQUAL "Debug")
+	if (DEBUG_WXWIDGETS)
 		set(wxWidgets_CONFIGURATION mswud)
 	else()
 		set(wxWidgets_CONFIGURATION mswu)
@@ -118,35 +103,26 @@ elseif(WIN32)
 	set(SDKTOOL_ICON ${CMAKE_CURRENT_SOURCE_DIR}/../build_vs2017/app.rc)
 endif()
 
-# set build types
-if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-	add_executable(SDKtoold 
+# Setup Target
+add_executable(SDKtool
 		WIN32
 		MACOSX_BUNDLE 
 		${SDKTOOL_SRC}
 		${SDKTOOL_ICON})
-	set(SDKTOOL_EXE SDKtoold)
-
-	set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG}")
-	set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}")
-else()
-	add_executable(SDKtool 
-		WIN32
-		MACOSX_BUNDLE 
-		${SDKTOOL_SRC}
-		${SDKTOOL_ICON})
-	set(SDKTOOL_EXE SDKtool)
-endif()
+set_target_properties(SDKtool
+    PROPERTIES
+    DEBUG_POSTFIX "d"
+	PREFIX ""
+	RUNTIME_OUTPUT_DIRECTORY $<1:${CMAKE_CURRENT_SOURCE_DIR}>)
 
 if (APPLE)
-	set_target_properties(${SDKTOOL_EXE} PROPERTIES
+	set_target_properties(SDKtool PROPERTIES
 		MACOSX_BUNDLE_INFO_PLIST ${CMAKE_CURRENT_SOURCE_DIR}/../build_osx/Info-SDKTool.plist
 	)
 endif()
 
 if (MSVC)
-	set_target_properties(${SDKTOOL_EXE} PROPERTIES
-        RUNTIME_OUTPUT_DIRECTORY $<1:${CMAKE_CURRENT_SOURCE_DIR}>
+	set_target_properties(SDKtool PROPERTIES
         LINK_FLAGS /SUBSYSTEM:WINDOWS)
 endif()
 
@@ -157,46 +133,44 @@ endif()
 #####################################################################################################################
 
 if (${CMAKE_PROJECT_NAME} STREQUAL system_advisor_model)
-	if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-		target_link_libraries(${SDKTOOL_EXE} lkd wexd)
-	else()
-		target_link_libraries(${SDKTOOL_EXE} lk wex)
-	endif()
+	target_link_libraries(SDKtool lk wex)
 else()
 	unset(WEX_LIB CACHE)
+	unset(WEXD_LIB CACHE)
 	unset(LK_LIB CACHE)
-	if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-		find_library( WEX_LIB
-				NAMES wexd.a wexd.lib
-				PATHS $ENV{WEXDIR})
-		find_library( LK_LIB
-				NAMES lkd.a lkd.lib
-				PATHS $ENV{LKDIR})
-	else()
-		find_library( WEX_LIB
-				NAMES wex.a wex.lib
-				PATHS $ENV{WEXDIR})
-		find_library( LK_LIB
-				NAMES lk.a lk.lib
-				PATHS $ENV{LKDIR})
-	endif()
-	target_link_libraries(${SDKTOOL_EXE} ${WEX_LIB} ${LK_LIB})
+	unset(LKD_LIB CACHE)
+	find_library( WEXD_LIB
+			NAMES wexd.a wexd.lib
+			PATHS $ENV{WEXDIR})
+	find_library( LKD_LIB
+			NAMES lkd.a lkd.lib
+			PATHS $ENV{LKDIR})
+	find_library( WEX_LIB
+			NAMES wex.a wex.lib
+			PATHS $ENV{WEXDIR})
+	find_library( LK_LIB
+			NAMES lk.a lk.lib
+			PATHS $ENV{LKDIR})
+	target_link_libraries(SDKtool debug ${WEXD_LIB})
+	target_link_libraries(SDKtool debug ${LKD_LIB})
+	target_link_libraries(SDKtool optimized ${WEX_LIB})
+	target_link_libraries(SDKtool optimized ${LK_LIB})
 endif()
 
-target_link_libraries(${SDKTOOL_EXE} ${wxWidgets_LIBRARIES})
+target_link_libraries(SDKtool ${wxWidgets_LIBRARIES})
 
 if (UNIX AND NOT APPLE)
-	target_link_libraries(${SDKTOOL_EXE} -ldl -lfontconfig)
+	target_link_libraries(SDKtool -ldl -lfontconfig)
 endif()
 
 if (UNIX)
-	target_link_libraries(${SDKTOOL_EXE} -lm -lcurl)
+	target_link_libraries(SDKtool -lm -lcurl)
 elseif (MSVC)
 	find_library( CURL_LIB
-				NAMES libcurl.lib
-				PATHS $ENV{WEXDIR}/build_vs2017/libcurl_ssl_x64/lib)
-	target_link_libraries(${SDKTOOL_EXE} ${CURL_LIB})
-	target_link_libraries(${SDKTOOL_EXE} Winhttp)
+			NAMES libcurl.lib
+			PATHS $ENV{WEXDIR}/build_vs2017/libcurl_ssl_x64/lib)
+	target_link_libraries(SDKtool ${CURL_LIB})
+	target_link_libraries(SDKtool Winhttp)
 endif()
 
 
@@ -219,22 +193,10 @@ set( LIBCURL_FILES
 
 foreach( file_i ${LIBCURL_FILES})
     add_custom_command(
-    TARGET ${SDKTOOL_EXE}
+    TARGET SDKtool
     POST_BUILD
     COMMAND ${CMAKE_COMMAND}
     ARGS -E copy $ENV{WEXDIR}/build_vs2017/libcurl_ssl_x64/bin/${file_i} ${CMAKE_CURRENT_SOURCE_DIR}
 )
 endforeach( file_i )
 
-if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-	set(DEBUG TRUE)
-else()
-	set(DEBUG FALSE)
-endif()
-
-add_custom_command(
-    TARGET ${SDKTOOL_EXE}
-    POST_BUILD
-    COMMAND ${CMAKE_COMMAND}
-    ARGS -E copy $ENV{SSCDIR}/ssc/ssc$<$<BOOL:DEBUG>:d>.lib $ENV{SSCDIR}/ssc/ssc$<$<BOOL:DEBUG>:d>.dll ${CMAKE_CURRENT_SOURCE_DIR}
-)

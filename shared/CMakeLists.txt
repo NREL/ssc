@@ -8,13 +8,6 @@ set(CMAKE_VERBOSE_MAKEFILE ON)
 
 if(APPLE)
     set(CMAKE_OSX_DEPLOYMENT_TARGET "10.9" CACHE STRING "Minimum OS X deployment version")
-elseif(MSVC)
-    set(CMAKE_SYSTEM_VERSION 8.1 CACHE TYPE INTERNAL FORCE)
-endif()
-set(CMAKE_CXX_STANDARD 11)
-
-if(MSVC)
-  set(CMAKE_CONFIGURATION_TYPES "Debug;Release" CACHE STRING "Debug and Release Builds Configured" FORCE)
 endif()
 
 
@@ -75,19 +68,16 @@ set(SHARED_SRC
 #
 #####################################################################################################################
 
+set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 if(MSVC)
 	add_compile_options(/MP /W4 /w44191 /w44242  /w44263 /w44264 /w44265 /w44266 /w44302 /w44388)
 	add_compile_options(/w44826 /w44905 /w44906 /w44928)
-	if (CMAKE_BUILD_TYPE STREQUAL Debug)
-        add_compile_options(/MDd)
-        add_compile_definitions(_DEBUG)
-    else()
-        add_compile_options(/MD /O3)
-        add_compile_definitions(NDEBUG )
-    endif()
-    add_compile_definitions( __64BIT__ __WINDOWS__ _WINDOWS _MBCS )
+    add_compile_definitions( __64BIT__ __WINDOWS__ _MBCS )
+    foreach (flag_var CMAKE_C_FLAGS_DEBUG CMAKE_CXX_FLAGS_DEBUG)
+		set(${flag_var} "${${flag_var}} /D_DEBUG" CACHE STRING "compile flags" FORCE)
+	endforeach()
 else(MSVC)
 	if (APPLE)
 		add_compile_options(-arch x86_64 -fno-common -Wno-unused-private-field -Wunused-private-field)
@@ -102,8 +92,6 @@ else(MSVC)
 	set_source_files_properties(${SHARED_SRC} PROPERTIES 
 		COMPILE_FLAGS "-Wno-ignored-attributes -Wno-deprecated")
 	if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-		set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG}")
-		set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}")
 		add_compile_definitions(_DEBUG)
 	else()
 		SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3" )
@@ -117,19 +105,17 @@ endif(MSVC)
 #
 #####################################################################################################################
 
-if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-	add_library(sharedd STATIC ${SHARED_SRC})
-	set(SHARED_LIB sharedd)
-
-	set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG}")
- 	set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}")
-else()
-	add_library(shared STATIC ${SHARED_SRC})
-	set(SHARED_LIB shared)
+add_library(shared STATIC ${SHARED_SRC})
+set_target_properties(shared
+    PROPERTIES
+    DEBUG_POSTFIX "d"
+	PREFIX ""
+	ARCHIVE_OUTPUT_DIRECTORY $<1:${CMAKE_CURRENT_SOURCE_DIR}>)
+if (MSVC)
+	set_target_properties(shared
+		PROPERTIES
+		LINK_FLAGS /SUBSYSTEM:WINDOWS)
 endif()
-
-set_property(TARGET ${SHARED_LIB} PROPERTY PREFIX "")
-
 
 #####################################################################################################################
 #
@@ -139,11 +125,4 @@ set_property(TARGET ${SHARED_LIB} PROPERTY PREFIX "")
 
 if (UNIX)
 	set (CMAKE_SHARED_LINKER_FLAGS "-lm")
-elseif (MSVC)
-	set_target_properties(${SHARED_LIB} PROPERTIES
-        LIBRARY_OUTPUT_DIRECTORY $<1:${CMAKE_CURRENT_SOURCE_DIR}>)
-endif()
-
-if (MSVC)
-    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /SUBSYSTEM:WINDOWS")
 endif()

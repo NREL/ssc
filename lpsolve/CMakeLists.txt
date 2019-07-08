@@ -8,12 +8,6 @@ set(CMAKE_VERBOSE_MAKEFILE ON)
 
 if(APPLE)
     set(CMAKE_OSX_DEPLOYMENT_TARGET "10.9" CACHE STRING "Minimum OS X deployment version")
-elseif(MSVC)
-    set(CMAKE_SYSTEM_VERSION 8.1 CACHE TYPE INTERNAL FORCE)
-endif()
-
-if(MSVC)
-	set(CMAKE_CONFIGURATION_TYPES "Debug;Release" CACHE STRING "Debug and Release Builds Configured" FORCE)
 endif()
 
 
@@ -24,8 +18,6 @@ endif()
 #####################################################################################################################
 
 Project(lpsolve)
-
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}")
 
 include_directories(.)
 
@@ -70,16 +62,12 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 if(MSVC)
 	add_compile_options(/W4 /MP)
-	if (CMAKE_BUILD_TYPE STREQUAL Debug)
-        add_compile_options(/MDd)
-        add_compile_definitions(FPUexception NOFORTIFY _DEBUG LP_MAXLINELEN=0)
-    else()
-        add_compile_options(/MD )
-        add_compile_definitions(NDEBUG )
-    endif()
     add_compile_definitions( LPWINAPP  _CONSOLE MSDOS CHECK_SOLUTION _SCL_SECURE_NO_DEPRECATE)
 	add_compile_definitions( YY_NEVER_INTERACTIVE PARSER_LP INVERSE_ACTIVE=INVERSE_LUSOL )
 	add_compile_definitions( RoleIsExternalInvEngine _CRT_SECURE_NO_DEPRECATE _CRT_NONSTDC_NO_DEPRECATE )
+	foreach (flag_var CMAKE_C_FLAGS_DEBUG CMAKE_CXX_FLAGS_DEBUG)
+		set(${flag_var} "${${flag_var}} /D_DEBUG /DFPUexception /DNOFORTIFY /DLP_MAXLINELEN=0" CACHE STRING "compile flags" FORCE)
+	endforeach()
 else()
 	if (APPLE)
 		add_compile_options(-arch x86_64 -fno-common)
@@ -90,11 +78,9 @@ else()
 	SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall WX_PRECOMP CHECK_SOLUTION YY_NEVER_INTERACTIVE PARSER_LP
 		INVERSE_ACTIVE=INVERSE_LUSOL RoleIsExternalInvEngine")
 	if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-		set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG}")
-		set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}")
 		add_compile_definitions(_DEBUG)
 	else()
-		SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3" )
+		SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -DNDEBUG" )
 	endif()
 endif()
 
@@ -105,24 +91,12 @@ endif()
 #
 #####################################################################################################################
 
-if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-	add_library(lpsolved STATIC ${LPSOLVE_SRC})
-	set(LPSOLVE_LIB lpsolved)
-
-	set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG}")
-	set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}")
-else()
-	add_library(lpsolve STATIC ${LPSOLVE_SRC})
-	set(LPSOLVE_LIB lpsolve)
-
-	set(CMAKE_C_FLAGS -DNDEBUG)
-endif()
-set_property(TARGET ${LPSOLVE_LIB} PROPERTY PREFIX "")
-
-if (MSVC)
-	set_target_properties(${LPSOLVE_LIB} PROPERTIES
-        LIBRARY_OUTPUT_DIRECTORY $<1:${CMAKE_CURRENT_SOURCE_DIR}>)
-endif()
+add_library(lpsolve STATIC ${LPSOLVE_SRC})
+set_target_properties(lpsolve
+    PROPERTIES
+    DEBUG_POSTFIX "d"
+	PREFIX ""
+	ARCHIVE_OUTPUT_DIRECTORY $<1:${CMAKE_CURRENT_SOURCE_DIR}>)
 
 
 #####################################################################################################################

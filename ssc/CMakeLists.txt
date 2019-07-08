@@ -9,12 +9,6 @@ set(CMAKE_VERBOSE_MAKEFILE ON)
 if(APPLE)
     set(CMAKE_OSX_DEPLOYMENT_TARGET "10.9" CACHE STRING "Minimum OS X deployment version")
 	set(CMAKE_MACOSX_RPATH 1)
-elseif(MSVC)
-    set(CMAKE_SYSTEM_VERSION 8.1 CACHE TYPE INTERNAL FORCE)
-endif()
-
-if(MSVC)
-	set(CMAKE_CONFIGURATION_TYPES "Debug;Release" CACHE STRING "Debug and Release Builds Configured" FORCE)
 endif()
 
 
@@ -25,10 +19,6 @@ endif()
 #####################################################################################################################
 
 Project(ssc)
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY $<1:${CMAKE_CURRENT_SOURCE_DIR}>)
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY $<1:${CMAKE_CURRENT_SOURCE_DIR}>)
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY $<1:${CMAKE_CURRENT_SOURCE_DIR}>)
-
 
 include_directories(. ../splinter ../shared ../nlopt ../lpsolve ../solarpilot ../tcs ../ssc)
 
@@ -47,7 +37,6 @@ set(SSC_SRC
 		cmod_equpartflip.cpp
 		cmod_fossilgen.cpp
 		cmod_fuelcell.cpp
-		cmod_generic_system-builder.cpp
 		cmod_generic_system.cpp
 		cmod_geothermal.cpp
 		cmod_geothermal_costs.cpp
@@ -139,14 +128,10 @@ set(CMAKE_CXX_STANDARD 11)
 
 if(MSVC)
 	add_compile_options(/MP /W4 /w44191 /w44242  /w44266 /w44302 /w44388 /w44826 /w44905 /w44906 /w44928)
-	if (CMAKE_BUILD_TYPE STREQUAL Debug)
-        add_compile_options(/MDd)
-        add_compile_definitions(_DEBUG)
-    else()
-        add_compile_options(/MD /O3)
-        add_compile_definitions(NDEBUG )
-    endif()
-    add_compile_definitions( __DLL__ __64BIT__ __WINDOWS__ _WINDOWS _CRT_SECURE_NO_WARNINGS __VISUALC__ )
+    add_compile_definitions( __DLL__ __64BIT__ __WINDOWS__ _CRT_SECURE_NO_WARNINGS __VISUALC__ )
+    foreach (flag_var CMAKE_C_FLAGS_DEBUG CMAKE_CXX_FLAGS_DEBUG)
+		set(${flag_var} "${${flag_var}} /D_DEBUG" CACHE STRING "compile flags" FORCE)
+	endforeach()
 else(MSVC)
 	if (APPLE)
 		add_compile_options(-arch x86_64 -fno-common)
@@ -157,8 +142,6 @@ else(MSVC)
 	add_definitions(-D__64BIT__)
 	SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wno-unknown-pragmas -std=c++11" )
 	if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-		set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -O0")
-		set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0")
 		add_compile_definitions(_DEBUG)
 	else()
 		SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3" )
@@ -171,25 +154,17 @@ endif(MSVC)
 #
 #####################################################################################################################
 
-if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-	add_library(sscd SHARED ${SSC_SRC})
-	set(SSC_LIB sscd)
-	set_property(TARGET sscd PROPERTY PREFIX "")
-
-	set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG}")
-	set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}")
-else()
-	add_library(ssc SHARED ${SSC_SRC})
-	set(SSC_LIB ssc)
-	if(NOT system_advisor_model_EXPORT)
-		set_property(TARGET ssc PROPERTY PREFIX "")
-	endif()
-endif()
+add_library(ssc SHARED ${SSC_SRC})
+set_target_properties(ssc
+    PROPERTIES
+    PREFIX ""
+    DEBUG_POSTFIX "d")
 
 if (MSVC)
-	set_target_properties(${SSC_LIB} PROPERTIES
+	set_target_properties(ssc PROPERTIES
         LIBRARY_OUTPUT_DIRECTORY $<1:${CMAKE_CURRENT_SOURCE_DIR}>
-		RUNTIME_OUTPUT_DIRECTORY $<1:${CMAKE_CURRENT_SOURCE_DIR}>)
+        ARCHIVE_OUTPUT_DIRECTORY $<1:${CMAKE_CURRENT_SOURCE_DIR}>
+        RUNTIME_OUTPUT_DIRECTORY $<1:${CMAKE_CURRENT_SOURCE_DIR}>)
 endif()
 
 # dltest executable for checking ssc library
@@ -197,24 +172,22 @@ if(UNIX AND NOT system_advisor_model_EXPORT)
 	add_executable(dltest ../build_osx/dltest.c)
 	if (NOT APPLE)
 		target_link_libraries(dltest -ldl -Wl,--no-as-needed)
-		set(SSC_LIB_FILE ${CMAKE_CURRENT_SOURCE_DIR}/${SSC_LIB}.so)
 	else()
-		set(SSC_LIB_FILE ${CMAKE_CURRENT_SOURCE_DIR}/${SSC_LIB}.dylib)
 	endif()
 	add_custom_command(
-		TARGET ${SSC_LIB}
+		TARGET ssc
 		POST_BUILD 
-		COMMAND dltest ${SSC_LIB_FILE})
+		COMMAND dltest ssc)
 endif()
 
-# libSAM_api
-if (system_advisor_model_EXPORT)
-	set(CMAKE_MACOSX_RPATH 1)
-	if(APPLE)
-		set_property(TARGET ${SSC_LIB} PROPERTY PREFIX "lib")
+# libssc for PySAM
+if(APPLE)
+	if (system_advisor_model_EXPORT)
+		set(CMAKE_MACOSX_RPATH 1)
+		set_property(TARGET ssc PROPERTY PREFIX "lib")
 		set(CMAKE_SHARED_LIBRARY_SUFFIX ".so")
 		add_custom_command(
-			TARGET ${SSC_LIB}
+			TARGET ssc
 			POST_BUILD
 			COMMAND install_name_tool -id @rpath/libssc.so $ENV{SSCDIR}/ssc/libssc.so
 		)
@@ -237,18 +210,38 @@ set( DEPENDENCIES
 	splinter
 	)
 foreach( name ${DEPENDENCIES} )
-	unset(${name}_LIB CACHE)
-	if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-		target_link_libraries(${SSC_LIB} ${name}d)
-	else()
-		target_link_libraries(${SSC_LIB} ${name})
-	endif()
+	target_link_libraries(ssc ${name})
 endforeach()
 
 if (UNIX)
-	target_link_libraries(${SSC_LIB} -lm -ldl -lstdc++)
+	target_link_libraries(ssc -lm -ldl -lstdc++)
 endif()
 
 if (MSVC)
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /SUBSYSTEM:WINDOWS")
+endif()
+
+
+#####################################################################################################################
+#
+# Target Installation
+#
+#####################################################################################################################
+
+# copy the libraries to the directories of all projects using them
+if (MSVC)
+	add_custom_command(
+	    TARGET ssc
+	    POST_BUILD
+	    COMMAND ${CMAKE_COMMAND}
+	    ARGS -E copy $<TARGET_FILE:ssc> ${CMAKE_CURRENT_SOURCE_DIR}/$<TARGET_FILE_BASE_NAME:ssc>.lib $ENV{SSCDIR}/sdktool
+	    COMMAND ${CMAKE_COMMAND}
+	    ARGS -E copy $<TARGET_FILE:ssc> ${CMAKE_CURRENT_SOURCE_DIR}/$<TARGET_FILE_BASE_NAME:ssc>.lib $ENV{SSCDIR}/tcsconsole
+	    COMMAND ${CMAKE_COMMAND}
+	    ARGS -E copy $<TARGET_FILE:ssc> ${CMAKE_CURRENT_SOURCE_DIR}/$<TARGET_FILE_BASE_NAME:ssc>.lib $ENV{SSCDIR}/test
+	    COMMAND ${CMAKE_COMMAND}
+	    ARGS -E copy $<TARGET_FILE:ssc> ${CMAKE_CURRENT_SOURCE_DIR}/$<TARGET_FILE_BASE_NAME:ssc>.lib $ENV{SAMNTDIR}/api/api_autogen
+		COMMAND ${CMAKE_COMMAND}
+		ARGS -E copy $<TARGET_FILE:ssc> ${CMAKE_CURRENT_SOURCE_DIR}/$<TARGET_FILE_BASE_NAME:ssc>.lib $ENV{SAMNTDIR}/deploy/x64
+	)
 endif()
