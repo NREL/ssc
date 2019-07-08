@@ -36,7 +36,7 @@ static var_info _cm_vtab_geothermal[] = {
     { SSC_INPUT,        SSC_NUMBER,      "ui_calculations_only",               "If = 1, only run UI calculations",             "",               "",             "GeoHourly",        "*",                        "",                "" },
 
     // climate and resource inputs		 								       											   				     
-    { SSC_INPUT,        SSC_STRING,      "file_name",                          "local weather file path",                      "",               "",             "Weather",          "ui_calculations_only=0",   "LOCAL_FILE",      "" },
+    { SSC_INPUT,        SSC_STRING,      "file_name",                          "local weather file path",                      "",               "",             "GeoHourly",        "ui_calculations_only=0",   "LOCAL_FILE",      "" },
     { SSC_INPUT,        SSC_NUMBER,      "resource_potential",                 "Resource Potential",                           "MW",             "",             "GeoHourly",        "ui_calculations_only=0",   "",                "" },
     { SSC_INPUT,        SSC_NUMBER,      "resource_type",                      "Type of Resource",                             "",               "",             "GeoHourly",        "*",                        "INTEGER",         "" },
     { SSC_INPUT,        SSC_NUMBER,      "resource_temp",                      "Resource Temperature",                         "C",              "",             "GeoHourly",        "*",                        "",                "" },
