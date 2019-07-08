@@ -158,8 +158,8 @@ endif()
 	find_library( LK_LIB
 		NAMES lk.a lk.lib
 		PATHS $ENV{LKDIR})
-	target_link_libraries(SDKTool debug ${WEXD_LIB} ${LKD_LIB})
-	target_link_libraries(SDKTool optimized ${WEX_LIB} ${LK_LIB})
+	target_link_libraries(SDKTool debug ${WEXD_LIB} debug ${LKD_LIB})
+	target_link_libraries(SDKTool optimized ${WEX_LIB} optimized ${LK_LIB})
 
 target_link_libraries(SDKTool ${wxWidgets_LIBRARIES})
 
@@ -203,12 +203,6 @@ foreach( file_i ${LIBCURL_FILES})
     ARGS -E copy $ENV{WEXDIR}/build_vs2017/libcurl_ssl_x64/bin/${file_i} ${CMAKE_CURRENT_SOURCE_DIR}
 )
 endforeach( file_i )
-
-if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-	set(DEBUG TRUE)
-else()
-	set(DEBUG FALSE)
-endif()
 
 add_custom_command(
     TARGET SDKTool

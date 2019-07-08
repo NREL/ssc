@@ -153,23 +153,23 @@ endif()
 	find_library( LK_LIB
 		NAMES lk.a lk.lib
 		PATHS $ENV{LKDIR})
-	target_link_libraries(TCSConsole debug ${WEXD_LIB} ${LKD_LIB})
-	target_link_libraries(TCSConsole optimized ${WEX_LIB} ${LK_LIB})
+	target_link_libraries(TCSConsole debug ${WEXD_LIB} debug ${LKD_LIB})
+	target_link_libraries(TCSConsole optimized ${WEX_LIB} optimized ${LK_LIB})
 
-target_link_libraries(TCSConsole ${wxWidgets_LIBRARIES})
+#target_link_libraries(TCSConsole ${wxWidgets_LIBRARIES})
 
 if (UNIX)
-	target_link_libraries(${TCSCONSOLE_EXE} -lm -lcurl)
+#	target_link_libraries(${TCSCONSOLE_EXE} -lm -lcurl)
 elseif (MSVC)
 	find_library( CURL_LIB
 				NAMES libcurl.lib
 				PATHS $ENV{WEXDIR}/build_vs2017/libcurl_ssl_x64/lib)
-	target_link_libraries(TCSConsole ${CURL_LIB})
-	target_link_libraries(TCSConsole Winhttp)
+#	target_link_libraries(TCSConsole ${CURL_LIB})
+#	target_link_libraries(TCSConsole Winhttp)
 endif()
 
 if (UNIX AND NOT APPLE)
-	target_link_libraries(${TCSCONSOLE_EXE} -lfontconfig -ldl)
+#	target_link_libraries(${TCSCONSOLE_EXE} -lfontconfig -ldl)
 endif()
 
 
@@ -198,12 +198,6 @@ foreach( file_i ${LIBCURL_FILES})
     ARGS -E copy $ENV{WEXDIR}/build_vs2017/libcurl_ssl_x64/bin/${file_i} ${CMAKE_CURRENT_SOURCE_DIR}
 )
 endforeach( file_i )
-
-if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-	set(DEBUG TRUE)
-else()
-	set(DEBUG FALSE)
-endif()
 
 add_custom_command(
     TARGET TCSConsole

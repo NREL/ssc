@@ -226,8 +226,18 @@ set( RELEASE_DEPENDENCIES
 	splinter
 	)
 foreach( name ${RELEASE_DEPENDENCIES} )
-	target_link_libraries(ssc optimized ${name})
+	unset(TMP_LIB CACHE)
+	unset(TMP_PATH CACHE)
+	message(STATUS "RELEASE: NAME=${name}")
+	string( CONCAT TMP_PATH $ENV{SSCDIR} "/" ${name} )
+	message(STATUS "RELEASE: TMP_PATH=${TMP_PATH}")
+	find_library( TMP_LIB
+    	NAMES ${name}
+    	PATHS ${TMP_PATH} )
+	message(STATUS "RELEASE: TMP_LIB=${TMP_LIB}")
+	target_link_libraries(ssc optimized ${TMP_LIB})
 endforeach()
+
 set( DEBUG_DEPENDENCIES
 	solarpilotd
 	tcsd
@@ -236,8 +246,18 @@ set( DEBUG_DEPENDENCIES
 	lpsolved
 	splinterd
 	)
-foreach( name ${DEBUG_DEPENDENCIES} )
-	target_link_libraries(ssc debug ${name})
+foreach( name ${RELEASE_DEPENDENCIES} )
+	unset(TMP_LIB CACHE)
+	unset(TMP_NAME CACHE)
+	string( CONCAT TMP_NAME ${name} "d")
+	message(STATUS "DEBUG: TMP_NAME=${TMP_NAME}")
+	string( CONCAT TMP_PATH $ENV{SSCDIR} "/" ${name} )
+	message(STATUS "RELEASE: TMP_PATH=${TMP_PATH}")
+	find_library( TMP_LIB
+    	NAMES ${TMP_NAME}
+    	PATHS ${TMP_PATH} )
+	message(STATUS "DEBUG: TMP_LIB=${TMP_LIB}")
+    target_link_libraries(ssc debug ${TMP_LIB})
 endforeach()
 
 
