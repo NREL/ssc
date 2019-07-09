@@ -100,14 +100,10 @@ endif()
 #
 #####################################################################################################################
 
-find_library( GTESTD_LIB
-	NAMES libgtestd.a gtestd.lib
-	PATHS ${GTDIR}/build/lib ${GTDIR}/build/lib/Debug)
 find_library( GTEST_LIB
 	NAMES libgtest.a gtest.lib
 	PATHS ${GTDIR}/build/lib ${GTDIR}/build/lib/Release)
-target_link_libraries(Test debug ${GTESTD_LIB})
-target_link_libraries(Test optimized ${GTEST_LIB})
+target_link_libraries(Test ${GTEST_LIB})
 target_link_libraries(Test ssc splinter)
 
 if (UNIX)
