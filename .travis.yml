@@ -44,11 +44,10 @@ script:
  # - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then make -j4 -C $WEXDIR/build_linux; fi
  # - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then make -j4 -C $SSCDIR/build_linux; fi
   - cd ${SSCDIR}
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then cmake . -DCMAKE_BUILD_TYPE=Release -Dsystem_advisor_model_EXPORT=1 && make -j2; fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then cmake . -DCMAKE_BUILD_TYPE=Release -Dskip_tools=1 && make -j2; fi
 #  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then test/Test --gtest_filter=*UsingInterpolatedSub*; fi
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then test/Test; fi
-#  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then cmake . -DCMAKE_BUILD_TYPE=Release -Dsystem_advisor_model_EXPORT=1 -Dskip_tests=1 && make VERBOSE=1 -j2; fi
-  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then cmake . -DCMAKE_BUILD_TYPE=Release -Dsystem_advisor_model_EXPORT=1 && make VERBOSE=1 -j2; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then cmake . -DCMAKE_BUILD_TYPE=Release -Dskip_tools=1 && make VERBOSE=1 -j2; fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then test/Test; fi
 
 
