@@ -63,4 +63,5 @@ branches:
   - develop
   - patch
   - PySAM
+  - wind_pruf
   

@@ -492,8 +492,8 @@ bool windPowerCalculator::windPowerUsingDistribution(std::vector<std::vector<dou
         double freq = 8760.0 * row[2];
         for (i = 0; i<nTurbines; i++){
             farmpower += freq * power[i];
-            farmgross += freq * fTurbine_gross;
         }
+        farmgross += freq * fTurbine_gross * nTurbines;
     }
 
 
