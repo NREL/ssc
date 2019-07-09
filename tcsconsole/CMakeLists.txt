@@ -71,7 +71,7 @@ endif(MSVC)
 
 if (UNIX)
 	set(wxWidgets_CONFIG_EXECUTABLE /usr/local/bin/wx-config-3)
-	find_package(wxWidgets REQUIRED webview xrc stc richtext ribbon propgrid aui gl html qa adv net core xml net base)
+	find_package(wxWidgets REQUIRED xrc stc richtext ribbon propgrid aui gl html qa adv net core xml net base)
 else()
 	set(wxWidgets_ROOT_DIR $ENV{WXMSW3})
 	if (DEBUG_WXWIDGETS)

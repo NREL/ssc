@@ -47,6 +47,8 @@
 *  THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *******************************************************************************************************/
 
+#include <cstring>
+
 #include "lib_windwatts.h"
 #include "lib_physics.h"
 

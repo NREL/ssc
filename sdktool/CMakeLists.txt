@@ -73,7 +73,7 @@ endif(MSVC)
 
 if (UNIX)
 	set(wxWidgets_CONFIG_EXECUTABLE /usr/local/bin/wx-config-3)
-	find_package(wxWidgets COMPONENTS qa webview aui richtext html propgrid adv net stc core xml base REQUIRED)
+	find_package(wxWidgets COMPONENTS qa aui richtext html propgrid adv net stc core xml base REQUIRED)
 else()
 	set(wxWidgets_ROOT_DIR $ENV{WXMSW3})
 	if (DEBUG_WXWIDGETS)

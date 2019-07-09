@@ -65,7 +65,6 @@ TEST_F(windPowerCalculatorTest, windPowerUsingResource_lib_windwatts){
 	pressureData = 1.0;
 
 	std::shared_ptr<fakeWakeModel> fakeWM(new fakeWakeModel());
-
 	wpc.InitializeModel(fakeWM); 
 	int run = wpc.windPowerUsingResource(windSpeedData, windDirData, pressureData, tempData, &farmPower,
                                          &farmPowerGross, &power[0], &thrust[0],
@@ -100,8 +99,8 @@ TEST_F(windPowerCalculatorTest, windPowerUsingDistribution_lib_windwatts){
                                             {19, 180, .0211}};
     std::shared_ptr<wakeModelBase> wakeModel = std::make_shared<fakeWakeModel>();
     wpc.InitializeModel(wakeModel);
-
     wpc.windPowerUsingDistribution(dst, &farmPower, &farmPowerGross);
     EXPECT_NEAR(farmPower, 15075000, e);
     EXPECT_NEAR(farmPowerGross, 15075000, e);
 }
+

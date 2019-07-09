@@ -55,6 +55,8 @@
 #include <time.h>
 #if defined(_WIN64)
 #include <assert.h>
+#else
+#include <cassert>
 #endif
 
 #include "exceptions.hpp"
