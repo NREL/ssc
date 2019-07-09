@@ -51,7 +51,7 @@ script:
 #  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then make -j4 -C $LKDIR/build_osx; fi
 #  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then make -j4 -C $WEXDIR/build_osx; fi
 #  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then make -j4 -C $SSCDIR/build_osx; fi
- # - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then mkdir ${GTEST}/build; cd ${GTEST}/build; cmake ..; make -j4; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then mkdir ${GTEST}/build; cd ${GTEST}/build; cmake ..; make -j4; fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then make -f Makefile-splinter -j4 -C $SSCDIR/build_osx; fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then make -f Makefile-shared -j4 -C $SSCDIR/build_osx; fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then make -f Makefile-nlopt -j4 -C $SSCDIR/build_osx; fi
