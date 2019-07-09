@@ -122,7 +122,7 @@ public:
 		bool m_fixed_PR_HP_to_LP;       //[-] if true, ratio of P_mc_out to P_LP_in is fixed at m_PR_HP_to_LP_guess
 
         double m_f_PR_HP_to_IP_guess;   //[-] Initial guess fraction of HP-to-LP deltaP for HP-to-IP (partial cooling cycle)
-        bool m_fixed_f_PR_HP_to_IP;     //[-] if true, use guess
+        bool m_fixed_f_PR_HP_to_IP;     //[-] if true, use guess        
 
 		// PHX design parameters
 		// This is a PHX rather than system parameter because we don't know T_CO2_in until cycle model is solved
@@ -138,8 +138,8 @@ public:
 			m_hot_fl_code = m_design_method = m_N_sub_hxrs = -1;
 	
 			// Default cycle config to recompression
-			m_cycle_config = 1;
-	
+			m_cycle_config = 1;	            
+
 			// Air cooler default
 			m_is_des_air_cooler = true;
 
@@ -299,7 +299,10 @@ private:
 	double m_od_opt_xtol;		//[-] Relative tolerance for od optimization: independent variable convergence
 	// ******************************************************
 
-	int m_nlopt_iter;		//[-]
+    // Cycle control parameter
+    bool m_is_T_crit_limit;
+
+    int m_nlopt_iter;		//[-]
 
 	int m_off_design_turbo_operation;	//[-] How is turbomachinery controlled off-design?
 
@@ -318,6 +321,23 @@ public:
 	C_sco2_phx_air_cooler();
 
 	~C_sco2_phx_air_cooler(){};
+
+    class C_MEQ_T_LP_in__W_dot_fan : public C_monotonic_equation
+    {
+    private:
+        C_sco2_phx_air_cooler *mpc_sco2_ac;
+        bool m_is_mod_P_mc_in_solver;
+     
+    public:
+        C_MEQ_T_LP_in__W_dot_fan(C_sco2_phx_air_cooler *pc_sco2_ac,
+            bool is_mod_P_mc_in_solver)
+        {
+            mpc_sco2_ac = pc_sco2_ac;
+            m_is_mod_P_mc_in_solver = is_mod_P_mc_in_solver;    //[-]
+        }
+
+        virtual int operator()(double T_LP_in /*K*/, double *diff_W_dot_fan /*-*/);
+    };
 
 	class C_mono_eq_T_t_in : public C_monotonic_equation
 	{

@@ -76,6 +76,9 @@ C_sco2_phx_air_cooler::C_sco2_phx_air_cooler()
 	m_od_opt_xtol = 1.E-4;				//[-] Relative tolerance for od optimization: independent variable convergence
 	// **************************************
 
+    // Defaul critical temperature limit
+    m_is_T_crit_limit = true;
+
 	// Default off-design turbomachinery operation is:
 	m_off_design_turbo_operation = E_FIXED_MC_FIXED_RC_FIXED_T;
 
@@ -408,9 +411,7 @@ void C_sco2_phx_air_cooler::setup_off_design_info(C_sco2_phx_air_cooler::S_od_pa
 
 	ms_cycle_od_par.m_T_mc_in = ms_od_par.m_T_amb + ms_des_par.m_dt_mc_approach;		//[K]
 
-    bool is_T_crit_limit = true;
-
-    if (is_T_crit_limit)
+    if (m_is_T_crit_limit)
     {
         if (ms_cycle_od_par.m_T_mc_in < m_T_mc_in_min)
         {
@@ -480,11 +481,30 @@ int C_sco2_phx_air_cooler::optimize_off_design(C_sco2_phx_air_cooler::S_od_par o
     ms_cycle_od_par.m_is_PHX_dP_input = is_PHX_dP_input;    //[-]
     ms_cycle_od_par.m_PHX_f_dP = PHX_f_dP;                  //[-]
 
+    int cycle_config = get_design_par()->m_cycle_config;    //[-]
 
+    bool is_ac_fan_limit = true;
+
+    if (cycle_config == 2)
+    {
+        is_ac_fan_limit = false;    //[-] Current approach to fix fan power only works for a cycle with a single cooler...
+    }
+
+    double T_comp_in_min = ms_od_par.m_T_amb + 0.5;  //[K]
+        
+    if (m_is_T_crit_limit)
+    {
+        T_comp_in_min = std::max(m_T_mc_in_min, T_comp_in_min);    //[K]
+    }
+
+    double W_dot_target = (ms_od_par.m_m_dot_htf / ms_phx_des_par.m_m_dot_hot_des) * ms_des_par.m_W_dot_net;	//[kWe]
+
+    double W_dot_fan_max = ms_des_par.m_frac_fan_power * ms_des_par.m_W_dot_net * 1.E-3;	//[MWe]
+    double W_dot_fan_target = (ms_od_par.m_m_dot_htf / ms_phx_des_par.m_m_dot_hot_des) * ms_des_par.m_frac_fan_power * ms_des_par.m_W_dot_net * 1.E-3;	//[MWe]
+    
 	if (m_off_design_turbo_operation == E_FIXED_MC_FIXED_RC_FIXED_T)
 	{
-        bool is_modified_P_mc_in_solver = false;
-
+        bool is_modified_P_mc_in_solver = true;
 
         
         int opt_P_LP_err = 0;
@@ -497,10 +517,40 @@ int C_sco2_phx_air_cooler::optimize_off_design(C_sco2_phx_air_cooler::S_od_par o
             opt_P_LP_err = opt_P_LP_comp_in__fixed_N_turbo();
         }
 
-        if (opt_P_LP_err != 0 && opt_P_LP_err != -31)
+        if (opt_P_LP_err != 0 && opt_P_LP_err != -31 && opt_P_LP_err != C_sco2_phx_air_cooler::E_TIP_RATIO)
 		{
 			throw(C_csp_exception("2D nested optimization to maximize efficiency failed"));
 		}
+
+        if (opt_P_LP_err == C_sco2_phx_air_cooler::E_TIP_RATIO)
+        {   // Incrementally increase compressor inlet temperature to try to avoid violating tip speed constraint
+            while (opt_P_LP_err == C_sco2_phx_air_cooler::E_TIP_RATIO)
+            {
+                // Increase compressor inlet temperatures by constant interval
+                ms_cycle_od_par.m_T_mc_in += 0.5;	//[K]
+                ms_cycle_od_par.m_T_pc_in += 0.5;	//[K]
+
+                if (ms_cycle_od_par.m_T_mc_in > get_design_solved()->ms_rc_cycle_solved.m_temp[C_sco2_cycle_core::MC_IN] + 10.0)
+                {
+                    break;
+                }
+
+                if (is_modified_P_mc_in_solver)
+                {
+                    opt_P_LP_err = solve_P_LP_in__target_W_dot();
+                }
+                else
+                {
+                    opt_P_LP_err = opt_P_LP_comp_in__fixed_N_turbo();
+                }       
+            }
+            if (opt_P_LP_err != 0)
+            {	// 
+                throw(C_csp_exception("off design optimization, fixed shaft speed config, failed with tip speed constraint"));
+            }
+            T_comp_in_min = ms_cycle_od_par.m_T_mc_in;     //[K]
+        }
+
 		if (opt_P_LP_err == -31)
 		{
 			while (opt_P_LP_err == -31 && ms_cycle_od_par.m_f_mc_pc_bypass < 0.9)
@@ -525,96 +575,329 @@ int C_sco2_phx_air_cooler::optimize_off_design(C_sco2_phx_air_cooler::S_od_par o
 		}
 		else
 		{
-			// For the E_FIXED_MC_FIXED_RC_FIXED_T configuration, at off design ambient temperatures colder than design
-			// ... the cycle may not be able to reach the target power and/or the cycle efficiency may improve if compressor inlet temperatures increase
-			// Increase compressor inlet temperatures
-			// Track power output between steps
-			// If target power is achieved, store max efficiency case. Otherwise, track maximum power case
-			double W_dot_opt = mpc_sco2_cycle->get_od_solved()->m_W_dot_net;	//[kWe]
-			
-			double eta_max = ms_od_solved.ms_rc_cycle_od_solved.m_eta_thermal;	//[-]
+            bool is_iterate_for_power_and_eta = true;
 
-			double P_LP_in_opt = ms_cycle_od_par.m_P_LP_comp_in;		//[kPa]
-
-			double T_mc_pc_in_opt = ms_cycle_od_par.m_T_mc_in;			//[C]
-			
-			while (true)
-			{
-				// Increase compressor inlet temperatures by constant interval
-				ms_cycle_od_par.m_T_mc_in += 0.5;	//[K]
-				ms_cycle_od_par.m_T_pc_in += 0.5;	//[K]
-
-                if (is_modified_P_mc_in_solver)
+            while (is_ac_fan_limit)
+            {   // First, check the fan power
+                double W_dot_fan_local = std::numeric_limits<double>::quiet_NaN();    //[MWe]
+                if (mpc_sco2_cycle->calculate_off_design_fan_power(ms_od_par.m_T_amb, W_dot_fan_local) != 0)
                 {
-                    opt_P_LP_err = solve_P_LP_in__target_W_dot();
+                    throw(C_csp_exception("Off design air cooler model failed"));
+                }
+
+                if (ms_cycle_od_par.m_T_mc_in == T_comp_in_min && W_dot_fan_local < W_dot_fan_target)
+                {
+                    break;
+                }
+
+                C_monotonic_eq_solver::S_xy_pair xy_1;                
+
+                double T_mc_in_guess = std::numeric_limits<double>::quiet_NaN();
+                // Guess another inlet temperature
+                if (W_dot_fan_local < W_dot_fan_target)
+                {   // Need more fan power, guess closer to ambient temperature
+                    while (W_dot_fan_local < W_dot_fan_target)
+                    {
+                        xy_1.x = ms_cycle_od_par.m_T_mc_in;     //[K]
+                        xy_1.y = W_dot_fan_local;               //[MWe]
+
+                        T_mc_in_guess = std::max(xy_1.x - 1.0, T_comp_in_min);     //[K]
+
+                        ms_cycle_od_par.m_T_mc_in = T_mc_in_guess;  //[K]
+                        ms_cycle_od_par.m_T_pc_in = T_mc_in_guess;  //[K]
+
+                        if (is_modified_P_mc_in_solver)
+                        {
+                            opt_P_LP_err = solve_P_LP_in__target_W_dot();
+                        }
+                        else
+                        {
+                            opt_P_LP_err = opt_P_LP_comp_in__fixed_N_turbo();
+                        }
+
+                        if (opt_P_LP_err == C_sco2_phx_air_cooler::E_TIP_RATIO)
+                        {   // revert back to previous guess and set T_comp_min
+                            ms_cycle_od_par.m_T_mc_in = xy_1.x;  //[K]
+                            ms_cycle_od_par.m_T_pc_in = xy_1.x;  //[K]
+
+                            if (is_modified_P_mc_in_solver)
+                            {
+                                opt_P_LP_err = solve_P_LP_in__target_W_dot();
+                            }
+                            else
+                            {
+                                opt_P_LP_err = opt_P_LP_comp_in__fixed_N_turbo();
+                            }
+
+                            T_comp_in_min = xy_1.x;     //[K]
+                        }
+
+                        if (opt_P_LP_err != 0)
+                        {
+                            throw(C_csp_exception("Off-design at inlet temperature failed"));
+                        }
+
+                        if (mpc_sco2_cycle->calculate_off_design_fan_power(ms_od_par.m_T_amb, W_dot_fan_local) != 0)
+                        {
+                            throw(C_csp_exception("Off design air cooler model failed"));
+                        }
+
+                        if (ms_cycle_od_par.m_T_mc_in == T_comp_in_min)
+                        {
+                            break;
+                        }
+                    }
+                }
+                else
+                {   // Need less fan power, guess hotter than 1st guess
+                    xy_1.x = ms_cycle_od_par.m_T_mc_in;     //[K]
+                    xy_1.y = W_dot_fan_local;               //[MWe]
+                    
+                    T_mc_in_guess = xy_1.x + 1.0;       //[K]
+
+                    ms_cycle_od_par.m_T_mc_in = T_mc_in_guess;  //[K]
+                    ms_cycle_od_par.m_T_pc_in = T_mc_in_guess;  //[K]
+
+                    if (is_modified_P_mc_in_solver)
+                    {
+                        opt_P_LP_err = solve_P_LP_in__target_W_dot();
+                    }
+                    else
+                    {
+                        opt_P_LP_err = opt_P_LP_comp_in__fixed_N_turbo();
+                    }
+
+                    if (opt_P_LP_err != 0)
+                    {
+                        throw(C_csp_exception("Off-design at inlet temperature failed"));
+                    }
+
+                    if (mpc_sco2_cycle->calculate_off_design_fan_power(ms_od_par.m_T_amb, W_dot_fan_local) != 0)
+                    {
+                        throw(C_csp_exception("Off design air cooler model failed"));
+                    }
+
+                    if (ms_cycle_od_par.m_T_mc_in == m_T_mc_in_min)
+                    {
+                        break;
+                    }
+                }
+
+                if (ms_cycle_od_par.m_T_mc_in == T_comp_in_min && W_dot_fan_local < W_dot_fan_target)
+                {
+                    break;
+                }
+
+                C_monotonic_eq_solver::S_xy_pair xy_2;
+                xy_2.x = ms_cycle_od_par.m_T_mc_in;     //[K]
+                xy_2.y = W_dot_fan_local;               //[MWe]
+
+                // Solve for inlet temperature that results in target fan power
+                C_MEQ_T_LP_in__W_dot_fan c_W_dot_fan_eq(this, is_modified_P_mc_in_solver);
+                C_monotonic_eq_solver c_W_dot_fan_solver(c_W_dot_fan_eq);
+
+                c_W_dot_fan_solver.settings(0.01, 50, T_comp_in_min, ms_od_par.m_T_amb + 45, true);
+                
+                double T_LP_in_solved = std::numeric_limits<double>::quiet_NaN();
+                double W_dot_fan_tol_solved = std::numeric_limits<double>::quiet_NaN();
+                int W_dot_fan_iter = -1;
+                int W_dot_fan_err_code = c_W_dot_fan_solver.solve(xy_1, xy_2, W_dot_fan_target, T_LP_in_solved, W_dot_fan_tol_solved, W_dot_fan_iter);
+                
+                if (W_dot_fan_err_code != C_monotonic_eq_solver::CONVERGED)
+                {
+                    if (ms_cycle_od_par.m_T_mc_in == T_comp_in_min && mpc_sco2_cycle->get_od_solved()->ms_LP_air_cooler_od_solved.m_W_dot_fan < W_dot_fan_target)
+                    {
+                        break;
+                    }
+                    if (W_dot_fan_err_code > C_monotonic_eq_solver::CONVERGED && fabs(W_dot_fan_tol_solved) < 0.1)
+                    {
+                        break;
+                    }
+                    throw(C_csp_exception("Iteration on compressor inlet temp to achieve target fan power failed"));
                 }
                 else
                 {
-                    opt_P_LP_err = opt_P_LP_comp_in__fixed_N_turbo();
+                    break;
                 }
-				if (opt_P_LP_err != 0)
-				{	// If off-design breaks, we've solved at colder temperatures, so don't crash the entire simulation
-					// just exit loop that increases temperature
-					// This can happen especially w/ the partial cooling cycle when bypass is not required initially, but becomes necessary in this loop
-					break;
-				}
+            }
+            
+            //if (is_ac_fan_limit)
+            //{   // First, check the fan power
+            //    // If it is over the target, increase the compressor inlet temperature
+            //    double W_dot_fan_local = std::numeric_limits<double>::quiet_NaN();    //[MWe]
+            //    if (mpc_sco2_cycle->calculate_off_design_fan_power(ms_od_par.m_T_amb, W_dot_fan_local) != 0)
+            //    {
+            //        throw(C_csp_exception("Off design air cooler model failed"));
+            //    }
 
-				// Get most recent outputs
-				double W_dot_calc = mpc_sco2_cycle->get_od_solved()->m_W_dot_net;	//[kPWe]
-				double eta_calc = ms_od_solved.ms_rc_cycle_od_solved.m_eta_thermal;	//[-]
+            //    double P_LP_in_solved = std::numeric_limits<double>::quiet_NaN();
+            //    double T_mc_pc_in_solved = std::numeric_limits<double>::quiet_NaN();
+            //     
+            //    while (W_dot_fan_local > W_dot_fan_target)
+            //    {
+            //        // Store solution from previous step
+            //        P_LP_in_solved = ms_cycle_od_par.m_P_LP_comp_in;		//[kPa]
+            //        T_mc_pc_in_solved = ms_cycle_od_par.m_T_mc_in;		//[K]
 
-				// If current inlet temperatures generate more power than optimal, reset optimal
-				// This relies on 'opt_P_LP_comp_in__fixed_N_turbo()' not return a power that is over-target...
-				// '0.002' seems reasonable based on parametric runs but may be suboptimal
-				if ((W_dot_calc - W_dot_opt) / W_dot_opt > 0.002)
-				{	
-					eta_max = ms_od_solved.ms_rc_cycle_od_solved.m_eta_thermal;	//[-]
+            //        // Increase compressor inlet temperatures by constant interval
+            //        ms_cycle_od_par.m_T_mc_in += 0.5;	//[K]
+            //        ms_cycle_od_par.m_T_pc_in += 0.5;	//[K]
 
-					P_LP_in_opt = ms_cycle_od_par.m_P_LP_comp_in;		//[kPa]
+            //        if (is_modified_P_mc_in_solver)
+            //        {
+            //            opt_P_LP_err = solve_P_LP_in__target_W_dot();
+            //        }
+            //        else
+            //        {
+            //            opt_P_LP_err = opt_P_LP_comp_in__fixed_N_turbo();
+            //        }
+            //        if (opt_P_LP_err != 0)
+            //        {	// If off-design breaks, we only have solutions with fan speeds above the target
+            //            // So we should check that solved speeds aren't below max but below target before throwing exception
+            //            if (W_dot_fan_local <= W_dot_fan_max)
+            //            {
+            //                // Decrease compressor inlet temperature to previous step and rerun
+            //                ms_cycle_od_par.m_P_LP_comp_in = P_LP_in_solved;		//[kPa]
+            //                ms_cycle_od_par.m_T_mc_in = T_mc_pc_in_solved;			//[K]
+            //                ms_cycle_od_par.m_T_pc_in = T_mc_pc_in_solved;			//[K]
 
-					T_mc_pc_in_opt = ms_cycle_od_par.m_T_mc_in;			//[C]
+            //                double f_od_obj = std::numeric_limits<double>::quiet_NaN();
+            //                int od_opt_err_code = off_design_core(f_od_obj);
 
-					W_dot_opt = W_dot_calc;		//[kWe]
-				}
+            //                if (od_opt_err_code != 0)
+            //                {
+            //                    throw(C_csp_exception("C_sco2_phx_air_cooler::optimize_off_design to maximize efficiency failed"));
+            //                }
 
-				// Otherwise, if the current inlet temperature generates very close to the current optimal power
-				// then check if the efficiency is higher. If so, save efficiency
-				else if ((W_dot_calc - W_dot_opt) / W_dot_opt > -0.005)
-				{
-					if (eta_calc > eta_max)
-					{
-						eta_max = eta_calc;
+            //                is_iterate_for_power_and_eta = false;
+            //            }
+            //            else
+            //            {
+            //                throw(C_csp_exception("Off-design at inlet temperature failed"));
+            //            }
+            //        }
+            //        if (mpc_sco2_cycle->calculate_off_design_fan_power(ms_od_par.m_T_amb, W_dot_fan_local) != 0)
+            //        {   // If off-design breaks, we only have solutions with fan speeds above the target
+            //            // So we should check that solved speeds aren't below max but below target before throwing exception
+            //            if (W_dot_fan_local <= W_dot_fan_max)
+            //            {
+            //                // Decrease compressor inlet temperature to previous step and rerun
+            //                ms_cycle_od_par.m_P_LP_comp_in = P_LP_in_solved;		//[kPa]
+            //                ms_cycle_od_par.m_T_mc_in = T_mc_pc_in_solved;			//[K]
+            //                ms_cycle_od_par.m_T_pc_in = T_mc_pc_in_solved;			//[K]
 
-						P_LP_in_opt = ms_cycle_od_par.m_P_LP_comp_in;		//[kPa]
+            //                double f_od_obj = std::numeric_limits<double>::quiet_NaN();
+            //                int od_opt_err_code = off_design_core(f_od_obj);
 
-						T_mc_pc_in_opt = ms_cycle_od_par.m_T_mc_in;			//[C]
+            //                if (od_opt_err_code != 0)
+            //                {
+            //                    throw(C_csp_exception("C_sco2_phx_air_cooler::optimize_off_design to maximize efficiency failed"));
+            //                }
 
-						if(W_dot_calc > W_dot_opt)
-							W_dot_opt = W_dot_calc;		//[kWe]
-					}
-					else if (eta_max - eta_calc > 0.01)
-					{
-						break;
-					}
-				}
-				else
-				{
-					break;
-				}
-			}
+            //                is_iterate_for_power_and_eta = false;
+            //            }
+            //            else
+            //            {
+            //                throw(C_csp_exception("Off design air cooler model failed"));
+            //            }                        
+            //        }
+            //    }
+            //}            
+            			
+            if (is_iterate_for_power_and_eta)
+            {
+                // For the E_FIXED_MC_FIXED_RC_FIXED_T configuration, at off design ambient temperatures colder than design
+                // ... the cycle may not be able to reach the target power and/or the cycle efficiency may improve if compressor inlet temperatures increase
+                // Increase compressor inlet temperatures
+                // Track power output between steps
+                // If target power is achieved, store max efficiency case. Otherwise, track maximum power case
+                // Limit to target power?
+                double W_dot_opt = std::min(W_dot_target, mpc_sco2_cycle->get_od_solved()->m_W_dot_net);	//[kWe]
 
-			// Now solve cycle off-design with saved optimal inputs
-			ms_cycle_od_par.m_P_LP_comp_in = P_LP_in_opt;		//[kPa]
-			ms_cycle_od_par.m_T_mc_in = T_mc_pc_in_opt;			//[K]
-			ms_cycle_od_par.m_T_pc_in = T_mc_pc_in_opt;			//[K]
+                double eta_max = ms_od_solved.ms_rc_cycle_od_solved.m_eta_thermal;	//[-]
 
-			double f_od_obj = std::numeric_limits<double>::quiet_NaN();
-			int od_opt_err_code = off_design_core(f_od_obj);
+                double P_LP_in_opt = ms_cycle_od_par.m_P_LP_comp_in;		//[kPa]
 
-			if (od_opt_err_code != 0)
-			{
-				throw(C_csp_exception("C_sco2_phx_air_cooler::optimize_off_design to maximize efficiency failed"));
-			}
+                double T_mc_pc_in_opt = ms_cycle_od_par.m_T_mc_in;			//[K]
+
+                while (true)
+                {
+                    // Increase compressor inlet temperatures by constant interval
+                    ms_cycle_od_par.m_T_mc_in += 0.5;	//[K]
+                    ms_cycle_od_par.m_T_pc_in += 0.5;	//[K]
+
+                    if (is_modified_P_mc_in_solver)
+                    {
+                        opt_P_LP_err = solve_P_LP_in__target_W_dot();
+                    }
+                    else
+                    {
+                        opt_P_LP_err = opt_P_LP_comp_in__fixed_N_turbo();
+                    }
+                    if (opt_P_LP_err != 0)
+                    {	// If off-design breaks, we've solved at colder temperatures, so don't crash the entire simulation
+                        // just exit loop that increases temperature
+                        // This can happen especially w/ the partial cooling cycle when bypass is not required initially, but becomes necessary in this loop
+                        break;
+                    }
+
+                    // Get most recent outputs
+                    double W_dot_calc = std::min(W_dot_target, mpc_sco2_cycle->get_od_solved()->m_W_dot_net);	//[kPWe]
+                    double eta_calc = ms_od_solved.ms_rc_cycle_od_solved.m_eta_thermal;	//[-]
+
+                    // If current inlet temperatures generate more power than optimal, reset optimal
+                    // This relies on 'opt_P_LP_comp_in__fixed_N_turbo()' not return a power that is over-target...
+                    // '0.002' seems reasonable based on parametric runs but may be suboptimal
+                    if ((W_dot_calc - W_dot_opt) / W_dot_opt > 0.002)
+                    {
+                        eta_max = ms_od_solved.ms_rc_cycle_od_solved.m_eta_thermal;	//[-]
+
+                        P_LP_in_opt = ms_cycle_od_par.m_P_LP_comp_in;		//[kPa]
+
+                        T_mc_pc_in_opt = ms_cycle_od_par.m_T_mc_in;			//[K]
+
+                        W_dot_opt = W_dot_calc;		//[kWe]
+                    }
+
+                    // Otherwise, if the current inlet temperature generates very close to the current optimal power
+                    // then check if the efficiency is higher. If so, save efficiency
+                    else if ((W_dot_calc - W_dot_opt) / W_dot_opt > -0.005)
+                    {
+                        if (eta_calc > eta_max)
+                        {
+                            eta_max = eta_calc;
+
+                            P_LP_in_opt = ms_cycle_od_par.m_P_LP_comp_in;		//[kPa]
+
+                            T_mc_pc_in_opt = ms_cycle_od_par.m_T_mc_in;			//[K]
+
+                            if (W_dot_calc > W_dot_opt)
+                                W_dot_opt = W_dot_calc;		//[kWe]
+                        }
+                        else if (eta_max - eta_calc > 0.01)
+                        {
+                            break;
+                        }
+                    }
+                    else
+                    {
+                        break;
+                    }
+                }
+
+                // Now solve cycle off-design with saved optimal inputs
+                ms_cycle_od_par.m_P_LP_comp_in = P_LP_in_opt;		//[kPa]
+                ms_cycle_od_par.m_T_mc_in = T_mc_pc_in_opt;			//[K]
+                ms_cycle_od_par.m_T_pc_in = T_mc_pc_in_opt;			//[K]
+
+                double f_od_obj = std::numeric_limits<double>::quiet_NaN();
+                int od_opt_err_code = off_design_core(f_od_obj);
+
+                if (od_opt_err_code != 0)
+                {
+                    throw(C_csp_exception("C_sco2_phx_air_cooler::optimize_off_design to maximize efficiency failed"));
+                }
+            }
 		}		
 	}
 	else
@@ -672,12 +955,12 @@ int C_sco2_phx_air_cooler::solve_P_LP_in__target_W_dot()
     C_monotonic_eq_solver::S_xy_pair xy_1;
 
     double y_W_dot_guess = std::numeric_limits<double>::quiet_NaN();
-    int W_dot_err_code = c_P_LP_in_solver.call_mono_eq(P_LP_in_guess, &y_W_dot_guess);
+    int W_dot_err_code = c_P_LP_in_solver.test_member_function(P_LP_in_guess, &y_W_dot_guess);
 
     while (W_dot_err_code != 0 && P_LP_in_guess > P_lower_limit_global)
     {
         P_LP_in_guess -= 500;  //[kpa]
-        W_dot_err_code = c_P_LP_in_solver.call_mono_eq(P_LP_in_guess, &y_W_dot_guess);
+        W_dot_err_code = c_P_LP_in_solver.test_member_function(P_LP_in_guess, &y_W_dot_guess);
     }
 
     if (W_dot_err_code != 0)
@@ -685,17 +968,20 @@ int C_sco2_phx_air_cooler::solve_P_LP_in__target_W_dot()
         return - 31;
     }
 
-    xy_1.x = P_LP_in_guess; //[kPa]
-    xy_1.y = y_W_dot_guess; //[kWe]
-
-    double P_LP_in_W_dot_target, tol_W_dot;
-    P_LP_in_W_dot_target = tol_W_dot = std::numeric_limits<double>::quiet_NaN();
-    int W_dot_iter = 0;
-    W_dot_err_code = c_P_LP_in_solver.solve(xy_1, P_LP_in_guess - 1000.0, W_dot_target, P_LP_in_W_dot_target, tol_W_dot, W_dot_iter);
-
-    if (W_dot_err_code != C_monotonic_eq_solver::CONVERGED)
+    if (!(y_W_dot_guess < W_dot_target && ms_od_solved.m_od_error_code == C_sco2_phx_air_cooler::E_OVER_PRESSURE))
     {
-        return -31;
+        xy_1.x = P_LP_in_guess; //[kPa]
+        xy_1.y = y_W_dot_guess; //[kWe]
+
+        double P_LP_in_W_dot_target, tol_W_dot;
+        P_LP_in_W_dot_target = tol_W_dot = std::numeric_limits<double>::quiet_NaN();
+        int W_dot_iter = 0;
+        W_dot_err_code = c_P_LP_in_solver.solve(xy_1, P_LP_in_guess - 1000.0, W_dot_target, P_LP_in_W_dot_target, tol_W_dot, W_dot_iter);
+
+        if (W_dot_err_code != C_monotonic_eq_solver::CONVERGED && tol_W_dot > 1.E-3)
+        {
+            return -31;
+        }
     }
 
     double P_mc_out_target = (1.0 - m_od_opt_ftol)*ms_des_par.m_P_high_limit;
@@ -713,13 +999,20 @@ int C_sco2_phx_air_cooler::solve_P_LP_in__target_W_dot()
         int P_mc_out_iter = 0;
         int P_mc_out_err_code = c_P_LP__P_mc_out_solver.solve(mc_iter_tracker.mv_P_LP_in, mc_iter_tracker.mv_P_mc_out, P_mc_out_target, P_LP_in_P_mc_out_target, tol_P_mc_out, P_mc_out_iter);
 
-        if (P_mc_out_err_code != C_monotonic_eq_solver::CONVERGED)
+        if (P_mc_out_err_code != C_monotonic_eq_solver::CONVERGED && tol_P_mc_out > 1.E-3)
         {
             return -31;
         }
     }
 
     // The last solution should have the maximum possible pressure...
+
+    // If a compressor is violating tip speed constraint at this pressure, then there is no solution
+    // to both satisfy tip speed constraint and stay within power target
+    if (ms_od_solved.m_od_error_code == C_sco2_phx_air_cooler::E_TIP_RATIO)
+    {
+        return C_sco2_phx_air_cooler::E_TIP_RATIO;
+    }
 
     // We can use these iterations to inform this next iteration
 
@@ -728,7 +1021,15 @@ int C_sco2_phx_air_cooler::solve_P_LP_in__target_W_dot()
     {
         // Iterating blind here - we don't have a target metric
         // But we know we want the highest pressure that doesn't have an error code
-        double P_LP_in_upper_local = mc_rc_cycle.get_od_solved()->m_pres[C_sco2_cycle_core::MC_IN];  //[kPa]
+        double P_LP_in_upper_local = std::numeric_limits<double>::quiet_NaN();
+        if (ms_des_par.m_cycle_config == 1)
+        {
+            P_LP_in_upper_local = mpc_sco2_cycle->get_od_solved()->m_pres[C_sco2_cycle_core::MC_IN];  //[kPa]
+        }
+        else
+        {
+            P_LP_in_upper_local = mpc_sco2_cycle->get_od_solved()->m_pres[C_sco2_cycle_core::PC_IN];  //[kPa]
+        }
 
         double P_step = 250;    //[kPa]
 
@@ -744,7 +1045,7 @@ int C_sco2_phx_air_cooler::solve_P_LP_in__target_W_dot()
         while ( !std::isfinite(y_P_mc_out_lower) && P_LP_in_guess_lower > P_lower_limit_global)
         {
             P_LP_in_guess_lower -= 500;  //[kpa]
-            no_err_err_code = c_P_LP_in_solver.call_mono_eq(P_LP_in_guess_lower, &y_P_mc_out_lower);
+            no_err_err_code = c_P_LP__no_err_solver.test_member_function(P_LP_in_guess_lower, &y_P_mc_out_lower);
         }
 
         if (!std::isfinite(y_P_mc_out_lower))
@@ -752,7 +1053,7 @@ int C_sco2_phx_air_cooler::solve_P_LP_in__target_W_dot()
             return -31;
         }
 
-        double P_LP_in_guess_upper = P_LP_in_guess_lower * 1.01;    //[kPa]
+        double P_LP_in_guess_upper = P_LP_in_guess_lower * 1.001;    //[kPa]
 
         double y_P_mc_out_upper = std::numeric_limits<double>::quiet_NaN();
 
@@ -782,13 +1083,13 @@ int C_sco2_phx_air_cooler::solve_P_LP_in__target_W_dot()
 
         // Expect not to be able to converge, instead want to see SLOPE_POS_NO_POS_ERR
         //    indicating solver is at inlet pressure where errors begin
-        if (no_err_err_code != C_monotonic_eq_solver::CONVERGED && no_err_err_code != C_monotonic_eq_solver::SLOPE_POS_NO_POS_ERR)
+        if (no_err_err_code != C_monotonic_eq_solver::CONVERGED && no_err_err_code != C_monotonic_eq_solver::SLOPE_POS_NO_POS_ERR && tol_no_err > 1.E-3)
         {
             return -31;
         }
 
         // Should have a valid cycle solution, but check here
-        if (!std::isfinite(mc_rc_cycle.get_od_solved()->m_pres[C_sco2_cycle_core::MC_IN]))
+        if (!std::isfinite(mpc_sco2_cycle->get_od_solved()->m_pres[C_sco2_cycle_core::MC_IN]))
         {
             return -31;
         }
@@ -1317,7 +1618,7 @@ int C_sco2_phx_air_cooler::off_design_core(double & eta_solved)
 	// Now, need to filter results that exceed temperature/pressure/other limitations
 	// 1) Don't let the turbine inlet temperature exceed the design inlet temperature
 	double over_T_t_in = 0.0;
-	// double over_T_t_in = max(0.0, T_t_solved - mc_rc_cycle.get_design_solved()->m_temp[6-1]);
+	// double over_T_t_in = max(0.0, T_t_solved - .get_design_solved()->m_temp[6-1]);
 
 	// 2) Don't let the upper pressure in the system exceed the specified max (typically also = design point P_high)
 	double over_P_high = max(0.0, (mpc_sco2_cycle->get_od_solved()->m_pres[C_sco2_cycle_core::MC_OUT] - 0.9999*ms_des_par.m_P_high_limit) / 1.E3);
@@ -1465,6 +1766,39 @@ int C_sco2_phx_air_cooler::off_design(S_od_par od_par, S_od_operation_inputs od_
 	return od_code;
 }
 
+int C_sco2_phx_air_cooler::C_MEQ_T_LP_in__W_dot_fan::operator()(double T_LP_in /*K*/, double *diff_W_dot_fan)
+{
+    mpc_sco2_ac->ms_cycle_od_par.m_T_mc_in = T_LP_in;  //[K]
+    mpc_sco2_ac->ms_cycle_od_par.m_T_pc_in = T_LP_in;  //[K]
+
+    int opt_P_LP_err = 0;
+    if (m_is_mod_P_mc_in_solver)
+    {
+        opt_P_LP_err = mpc_sco2_ac->solve_P_LP_in__target_W_dot();
+    }
+    else
+    {
+        opt_P_LP_err = mpc_sco2_ac->opt_P_LP_comp_in__fixed_N_turbo();
+    }
+
+    if (opt_P_LP_err != 0)
+    {
+        *diff_W_dot_fan = std::numeric_limits<double>::quiet_NaN();
+        return -1;
+    }
+
+    double W_dot_fan = std::numeric_limits<double>::quiet_NaN();
+    if (mpc_sco2_ac->mpc_sco2_cycle->calculate_off_design_fan_power(mpc_sco2_ac->ms_od_par.m_T_amb, W_dot_fan) != 0)
+    {
+        *diff_W_dot_fan = std::numeric_limits<double>::quiet_NaN();
+        return -2;
+    }
+
+    *diff_W_dot_fan = W_dot_fan;        //[MWe]
+
+    return 0;
+}
+
 int C_sco2_phx_air_cooler::C_mono_eq_T_t_in::operator()(double T_t_in /*K*/, double *diff_T_t_in /*-*/)
 {
 	// Using:
@@ -1588,9 +1922,9 @@ int C_sco2_phx_air_cooler::C_MEQ__P_LP_in__W_dot_target::operator()(double P_LP_
         return -3;
     }    
 
-    *W_dot = mpc_sco2_cycle->mc_rc_cycle.get_od_solved()->m_W_dot_net;  //[kWe]
+    *W_dot = mpc_sco2_cycle->mpc_sco2_cycle->get_od_solved()->m_W_dot_net;  //[kWe]
 
-    mpc_sco2_cycle->mc_iter_tracker.push_back_vectors(P_LP_in, *W_dot, mpc_sco2_cycle->mc_rc_cycle.get_od_solved()->m_pres[C_sco2_cycle_core::MC_OUT],
+    mpc_sco2_cycle->mc_iter_tracker.push_back_vectors(P_LP_in, *W_dot, mpc_sco2_cycle->mpc_sco2_cycle->get_od_solved()->m_pres[C_sco2_cycle_core::MC_OUT],
         mpc_sco2_cycle->ms_od_solved.m_od_error_code, mpc_sco2_cycle->ms_od_solved.m_is_converged);
 
     return 0;
@@ -1639,9 +1973,9 @@ int C_sco2_phx_air_cooler::C_MEQ__P_LP_in__P_mc_out_target::operator()(double P_
         return -3;
     }
 
-    *P_mc_out = mpc_sco2_cycle->mc_rc_cycle.get_od_solved()->m_pres[C_sco2_cycle_core::MC_OUT];     //[kPa]
+    *P_mc_out = mpc_sco2_cycle->mpc_sco2_cycle->get_od_solved()->m_pres[C_sco2_cycle_core::MC_OUT];     //[kPa]
 
-    mpc_sco2_cycle->mc_iter_tracker.push_back_vectors(P_LP_in, mpc_sco2_cycle->mc_rc_cycle.get_od_solved()->m_W_dot_net, *P_mc_out,
+    mpc_sco2_cycle->mc_iter_tracker.push_back_vectors(P_LP_in, mpc_sco2_cycle->mpc_sco2_cycle->get_od_solved()->m_W_dot_net, *P_mc_out,
         mpc_sco2_cycle->ms_od_solved.m_od_error_code, mpc_sco2_cycle->ms_od_solved.m_is_converged);
 
     return 0;
@@ -1690,9 +2024,9 @@ int C_sco2_phx_air_cooler::C_MEQ__P_LP_in__max_no_err_code::operator()(double P_
         return -3;
     }
 
-    *P_mc_out = mpc_sco2_cycle->mc_rc_cycle.get_od_solved()->m_pres[C_sco2_cycle_core::MC_OUT];     //[kPa]
+    *P_mc_out = mpc_sco2_cycle->mpc_sco2_cycle->get_od_solved()->m_pres[C_sco2_cycle_core::MC_OUT];     //[kPa]
 
-    mpc_sco2_cycle->mc_iter_tracker.push_back_vectors(P_LP_in, mpc_sco2_cycle->mc_rc_cycle.get_od_solved()->m_W_dot_net, *P_mc_out,
+    mpc_sco2_cycle->mc_iter_tracker.push_back_vectors(P_LP_in, mpc_sco2_cycle->mpc_sco2_cycle->get_od_solved()->m_W_dot_net, *P_mc_out,
         mpc_sco2_cycle->ms_od_solved.m_od_error_code, mpc_sco2_cycle->ms_od_solved.m_is_converged);
 
     return 0;

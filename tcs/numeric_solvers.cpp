@@ -548,7 +548,7 @@ int C_monotonic_eq_solver::solver_core(double x_guess_1, double y1, double x_gue
 		}
 
 		// If it is early in the iteration and it was not set with finite bounds, then diff_x_bounds might be nan
-		if (fabs(diff_x_bounds) < m_tol / 10.0)
+		if (fabs(diff_x_bounds) < m_tol / 10.0 && m_iter > 1)
 		{	// Assumes if x values are too close, then *something* is preventing convergence
 
 			// 1) Solver can't find a negative error
