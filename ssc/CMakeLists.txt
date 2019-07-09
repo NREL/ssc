@@ -158,26 +158,22 @@ add_library(ssc SHARED ${SSC_SRC})
 set_target_properties(ssc
     PROPERTIES
     PREFIX ""
-    DEBUG_POSTFIX "d")
+    DEBUG_POSTFIX "d"
+	LIBRARY_OUTPUT_DIRECTORY $<1:${CMAKE_CURRENT_SOURCE_DIR}>
+	ARCHIVE_OUTPUT_DIRECTORY $<1:${CMAKE_CURRENT_SOURCE_DIR}>
+	RUNTIME_OUTPUT_DIRECTORY $<1:${CMAKE_CURRENT_SOURCE_DIR}>)
 
-if (MSVC)
-	set_target_properties(ssc PROPERTIES
-        LIBRARY_OUTPUT_DIRECTORY $<1:${CMAKE_CURRENT_SOURCE_DIR}>
-        ARCHIVE_OUTPUT_DIRECTORY $<1:${CMAKE_CURRENT_SOURCE_DIR}>
-        RUNTIME_OUTPUT_DIRECTORY $<1:${CMAKE_CURRENT_SOURCE_DIR}>)
-endif()
 
 # dltest executable for checking ssc library
 if(UNIX AND NOT system_advisor_model_EXPORT)
 	add_executable(dltest ../build_osx/dltest.c)
 	if (NOT APPLE)
 		target_link_libraries(dltest -ldl -Wl,--no-as-needed)
-	else()
 	endif()
 	add_custom_command(
 		TARGET ssc
 		POST_BUILD 
-		COMMAND dltest ssc)
+		COMMAND dltest $<TARGET_FILE:ssc>)
 endif()
 
 # libssc for PySAM
@@ -191,7 +187,7 @@ if(APPLE)
 			POST_BUILD
 			COMMAND install_name_tool -id @rpath/libssc.so $ENV{SSCDIR}/ssc/libssc.so
 		)
-	endif(APPLE)
+	endif()
 endif()
 
 
