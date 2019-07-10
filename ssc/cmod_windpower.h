@@ -85,7 +85,7 @@ public:
 
 	cm_windpower();
 
-	void exec() throw(general_error);
+	void exec() override;
 };
 
 #endif

@@ -1893,7 +1893,7 @@ public:
 		ssc_number_t *dc_hourly_peak, ssc_number_t monthly_cumulative_excess_energy[12], 
 		ssc_number_t monthly_cumulative_excess_dollars[12], ssc_number_t monthly_bill[12], 
 		ssc_number_t rate_esc, size_t year, bool include_fixed=true, bool include_min=true, bool gen_only=false) 
-		throw(general_error)
+
 	{
 		int i;
 
@@ -2660,7 +2660,7 @@ public:
 		ssc_number_t *dc_hourly_peak, ssc_number_t monthly_cumulative_excess_energy[12],
 		ssc_number_t monthly_cumulative_excess_dollars[12], ssc_number_t monthly_bill[12],
 		ssc_number_t rate_esc, bool include_fixed = true, bool include_min = true, bool gen_only = false)
-		throw(general_error)
+
 	{
 		int i;
 		for (i = 0; i<(int)m_num_rec_yearly; i++)
@@ -3239,7 +3239,7 @@ public:
 
 
 	void ur_update_ec_monthly(int month, util::matrix_t<double>& charge, util::matrix_t<double>& energy, util::matrix_t<double>& surplus)
-		throw(general_error)
+
 	{
 		if (month < 0 || month > (int)m_month.size())
 		{
