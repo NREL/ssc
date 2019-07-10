@@ -460,6 +460,254 @@ void C_sco2_phx_air_cooler::setup_off_design_info(C_sco2_phx_air_cooler::S_od_pa
 	ms_phx_od_par.m_m_dot_c = std::numeric_limits<double>::quiet_NaN();		//[kg/s]
 }
 
+int C_sco2_phx_air_cooler::optimize_N_rc__max_eta(C_sco2_phx_air_cooler::S_od_par od_par,
+    bool is_mc_N_od_at_design, double mc_N_od_f_des /*-*/,
+    bool is_PHX_dP_input, double PHX_f_dP /*-*/,
+    int off_design_strategy,
+    double & eta_max /*-*/, double & f_N_rc_opt /*-*/, double & W_dot_at_eta_max /*kWe*/,
+    double od_opt_tol)
+{
+    double scope_step = 0.04;
+    double opt_step = 0.01;
+    
+    // Guess f_n_rc
+    // solve, get eta
+    int err_od = 0;
+    double f_N_rc = 1.0;
+
+    if (!is_mc_N_od_at_design)
+    {   // If fractional MC shaft speed input is != 1, then want to start with RC with the same fractional speed
+        f_N_rc = mc_N_od_f_des;     //[-]
+    }
+
+    try
+    {
+        err_od = optimize_off_design(od_par,
+            false, f_N_rc,
+            is_mc_N_od_at_design, mc_N_od_f_des,
+            is_PHX_dP_input, PHX_f_dP,
+            off_design_strategy,
+            od_opt_tol);
+    }
+    catch (C_csp_exception &csp_exception)
+    {
+        return -1;
+    }
+    if (err_od != 0)
+    {
+        return err_od;
+    }
+
+    double eta_f_N_rc = ms_od_solved.ms_rc_cycle_od_solved.m_eta_thermal;   //[-]
+    double eta_baseline = eta_f_N_rc;   //[-]
+
+    // Guess new f_n_rc = f_n_rc + scope_step
+    // solve, get eta
+    double f_N_rc_2 = f_N_rc + scope_step;      //[-]
+
+    try
+    {
+        err_od = optimize_off_design(od_par,
+            false, f_N_rc_2,
+            is_mc_N_od_at_design, mc_N_od_f_des,
+            is_PHX_dP_input, PHX_f_dP,
+            off_design_strategy,
+            od_opt_tol);
+    }
+    catch (C_csp_exception &csp_exception)
+    {
+        return -1;
+    }
+    if (err_od != 0)
+    {
+        return err_od;
+    }
+
+    double eta_f_N_rc_2 = ms_od_solved.ms_rc_cycle_od_solved.m_eta_thermal;   //[-]
+
+    // Based on slope, guess new f_n_rc that will result in new max eta
+    // ---- solve
+    // ---- repeat until new eta < max
+    //double sign_slope = ((eta_f_N_rc_2 - eta_f_N_rc) / fabs(eta_f_N_rc_2 - eta_f_N_rc)) / 
+    //                        ((f_N_rc_2 - f_N_rc) / fabs(f_N_rc_2 - f_N_rc));
+    double f_N_rc_max, eta_low1, f_N_rc_low1, eta_low2, f_N_rc_low2, slope_sign;
+    eta_max = f_N_rc_max = eta_low1 = f_N_rc_low1 = eta_low2 = f_N_rc_low2 = slope_sign = std::numeric_limits<double>::quiet_NaN();
+    if (eta_f_N_rc_2 > eta_f_N_rc)
+    {
+        eta_max = eta_f_N_rc_2;     //[-]
+        f_N_rc_max = f_N_rc_2;      //[-]
+
+        eta_low1 = eta_f_N_rc;      //[-]
+        f_N_rc_low1 = f_N_rc;       //[-]
+
+        slope_sign = (f_N_rc_2 - f_N_rc) / fabs(f_N_rc_2 - f_N_rc);  //[-]
+    }
+    else
+    {
+        eta_max = eta_f_N_rc;       //[-]
+        f_N_rc_max = f_N_rc;        //[-]
+
+        eta_low1 = eta_f_N_rc_2;    //[-]
+        f_N_rc_low1 = f_N_rc_2;     //[-]
+
+        slope_sign = (f_N_rc - f_N_rc_2) / fabs(f_N_rc - f_N_rc_2);  //[-]
+    }
+
+    while (true)
+    {
+        f_N_rc = f_N_rc_max + slope_sign * scope_step;      //[-]
+
+        try
+        {
+            err_od = optimize_off_design(od_par,
+                false, f_N_rc,
+                is_mc_N_od_at_design, mc_N_od_f_des,
+                is_PHX_dP_input, PHX_f_dP,
+                off_design_strategy,
+                od_opt_tol);
+        }
+        catch (C_csp_exception &csp_exception)
+        {
+            err_od = -2;
+        }
+        if (err_od != 0)
+        {
+            err_od = -1;
+        }
+
+        eta_f_N_rc = ms_od_solved.ms_rc_cycle_od_solved.m_eta_thermal;   //[-]
+
+        if (err_od != 0)
+        {
+            eta_low2 = std::numeric_limits<double>::quiet_NaN();  //[-]
+            f_N_rc_low2 = f_N_rc;   //[-]
+            break;
+        }
+        else if (eta_f_N_rc < eta_max)
+        {
+            eta_low2 = eta_f_N_rc;  //[-]
+            f_N_rc_low2 = f_N_rc;   //[-]
+            break;
+        }
+        else
+        {
+            eta_low1 = eta_max;         //[-]
+            f_N_rc_low1 = f_N_rc_max;   //[-]
+            eta_max = eta_f_N_rc;       //[-]
+            f_N_rc_max = f_N_rc;        //[-]
+        }
+    }
+    
+    // Now have an eta_max with lower eta values on either side
+    // --- try f_n_rc_at_eta_max + opt_step towards side with higher eta
+    // ------- if results in new eta_max, keep stepping until eta decreases
+    // ------- else step other way
+    // ------- if neither direction results in larger eta_max, then we're already there
+    if (!std::isfinite(eta_low2) || eta_low2 > eta_low1)
+    {
+        slope_sign = (f_N_rc_low2 - f_N_rc_max) / fabs(f_N_rc_low2 - f_N_rc_max);
+    }
+    else
+    {
+        slope_sign = (f_N_rc_low1 - f_N_rc_max) / fabs(f_N_rc_low1 - f_N_rc_max);
+    }
+
+    f_N_rc = f_N_rc_max + slope_sign * opt_step;      //[-]
+
+    try
+    {
+        err_od = optimize_off_design(od_par,
+            false, f_N_rc,
+            is_mc_N_od_at_design, mc_N_od_f_des,
+            is_PHX_dP_input, PHX_f_dP,
+            off_design_strategy,
+            od_opt_tol);
+    }
+    catch (C_csp_exception &csp_exception)
+    {
+        err_od = -2;
+    }
+    if (err_od != 0)
+    {
+        err_od = -1;
+    }
+
+    eta_f_N_rc = ms_od_solved.ms_rc_cycle_od_solved.m_eta_thermal;   //[-]
+
+    if (err_od != 0 || eta_f_N_rc < eta_max)
+    {   // Try flipping sign
+        slope_sign = -slope_sign;
+    }
+    else
+    {
+        eta_max = eta_f_N_rc;
+        f_N_rc_max = f_N_rc;
+    }
+
+    while (true)
+    {
+        f_N_rc = f_N_rc_max + slope_sign * opt_step;      //[-]
+
+        try
+        {
+            err_od = optimize_off_design(od_par,
+                false, f_N_rc,
+                is_mc_N_od_at_design, mc_N_od_f_des,
+                is_PHX_dP_input, PHX_f_dP,
+                off_design_strategy,
+                od_opt_tol);
+        }
+        catch (C_csp_exception &csp_exception)
+        {
+            err_od = -2;
+        }
+        if (err_od != 0)
+        {
+            err_od = -1;
+        }
+
+        eta_f_N_rc = ms_od_solved.ms_rc_cycle_od_solved.m_eta_thermal;   //[-]
+
+        if (err_od != 0 || eta_f_N_rc < eta_max)
+        {
+            break;
+        }
+        else
+        {
+            eta_max = eta_f_N_rc;       //[-]
+            f_N_rc_max = f_N_rc;        //[-]
+        }
+    }
+
+    // Now should have eta_max and f_N_rc_max
+    // Need to solve a final time at f_N_rc_max (could store some parameters to make this faster)
+    f_N_rc = f_N_rc_max;
+
+    try
+    {
+        err_od = optimize_off_design(od_par,
+            false, f_N_rc,
+            is_mc_N_od_at_design, mc_N_od_f_des,
+            is_PHX_dP_input, PHX_f_dP,
+            off_design_strategy,
+            od_opt_tol);
+    }
+    catch (C_csp_exception &csp_exception)
+    {
+        return -2;
+    }
+    if (err_od != 0)
+    {
+        return -1;
+    }
+
+    f_N_rc_opt = f_N_rc_max;
+    eta_max = ms_od_solved.ms_rc_cycle_od_solved.m_eta_thermal;   //[-]
+    W_dot_at_eta_max = ms_od_solved.ms_rc_cycle_od_solved.m_W_dot_net;  //[kWe]
+
+    return 0;
+}
+
 int C_sco2_phx_air_cooler::optimize_off_design(C_sco2_phx_air_cooler::S_od_par od_par, 
     bool is_rc_N_od_at_design, double rc_N_od_f_des /*-*/,
     bool is_mc_N_od_at_design, double mc_N_od_f_des /*-*/,

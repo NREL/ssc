@@ -514,11 +514,25 @@ public:
                         PHX_f_dP_od = fabs(od_cases(n_run, 5));
                     }
 
-					off_design_code = c_sco2_cycle.optimize_off_design(s_sco2_od_par, 
-                                        is_rc_N_od_at_design, rc_N_od_f_des,
-                                        is_mc_N_od_at_design, mc_N_od_f_des,
-                                        is_PHX_dP_input, PHX_f_dP_od,
-                                        od_strategy);
+                    double eta_max, f_N_rc_opt, W_dot_at_eta_max;
+
+                    if (cycle_config == 1 && is_rc)
+                    {
+                        off_design_code = c_sco2_cycle.optimize_N_rc__max_eta(s_sco2_od_par,
+                            true, 1.0,
+                            is_PHX_dP_input, PHX_f_dP_od,
+                            od_strategy,
+                            eta_max, f_N_rc_opt, W_dot_at_eta_max);                                                
+                    }
+                    else
+                    {
+                        off_design_code = c_sco2_cycle.optimize_off_design(s_sco2_od_par,
+                            is_rc_N_od_at_design, rc_N_od_f_des,
+                            is_mc_N_od_at_design, mc_N_od_f_des,
+                            is_PHX_dP_input, PHX_f_dP_od,
+                            od_strategy);
+                    }
+                    
 				}
 				else if (is_P_mc_in_od_sweep_assigned)
 				{
