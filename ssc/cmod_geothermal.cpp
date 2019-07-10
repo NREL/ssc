@@ -144,7 +144,8 @@ static var_info _cm_vtab_geothermal[] = {
     // User can specify whether the analysis should be done hourly or monthly.  With monthly analysis, there are only monthly results.																             
     // With hourly analysis, there are still monthly results, but there are hourly (over the whole lifetime of the project) results as well.														             
 //	{ SSC_OUTPUT, SSC_ARRAY, "annual_replacements", "Resource replacement? (1=yes)", "kWhac", "", "GeoHourly", "ui_calculations_only=0", "", "" },
-	{ SSC_OUTPUT, SSC_ARRAY, "system_lifetime_recapitalize", "Resource replacement? (1=yes)", "", "", "GeoHourly", "ui_calculations_only=0", "", "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,       "gen",					          "System power generated",                              "kW",                      "GeoHourly",        "",                         "",                "",                               "" },
+	{ SSC_OUTPUT,       SSC_ARRAY, "system_lifetime_recapitalize", "Resource replacement? (1=yes)", "", "", "GeoHourly", "ui_calculations_only=0", "", "" },
 
     { SSC_OUTPUT,       SSC_ARRAY,      "monthly_resource_temperature",       "Monthly avg resource temperature",                    "C",       "",             "GeoHourly",        "ui_calculations_only=0",   "",                "" },
     { SSC_OUTPUT,       SSC_ARRAY,      "monthly_power",                      "Monthly power",                                       "kW",      "",             "GeoHourly",        "ui_calculations_only=0",   "",                "" },
@@ -165,7 +166,8 @@ static var_info _cm_vtab_geothermal[] = {
 
 	{ SSC_OUTPUT,		SSC_NUMBER,		"capacity_factor",					  "Capacity factor",									"",			"",					 "",					"*",				"",					"" },
 	{ SSC_OUTPUT,		SSC_NUMBER,		 "kwh_per_kw",						  "First year kWh/kW",									 "",		"",					 "",					 "*",				"",					"" },
-	//Outputs Used in cmod_geothermal_costs:
+	
+		//Outputs Used in cmod_geothermal_costs:
 	{ SSC_OUTPUT,       SSC_NUMBER,		"eff_secondlaw",                        "Second Law Efficiency",							 "C",		"",             "GeoHourly",				 "",                 "",                "" },
 	{ SSC_OUTPUT,		SSC_NUMBER,		"qRejectTotal",							"Total Heat Rejection",								 "btu/h",	"",				"GeoHourly",				 "",				 "",				""},
 	{ SSC_OUTPUT,		SSC_NUMBER,		"qCondenser",							"Condenser Heat Rejected",							 "btu/h",	"",				"GeoHourly",				 "",				 "",				"" },
@@ -432,7 +434,10 @@ public:
 			geo_outputs.maf_timestep_dry_bulb = allocate("timestep_dry_bulb", geo_inputs.mi_TotalMakeupCalculations);
 			geo_outputs.maf_timestep_wet_bulb = allocate("timestep_wet_bulb", geo_inputs.mi_TotalMakeupCalculations);
 
-			geo_outputs.maf_hourly_power = allocate("gen", geo_inputs.mi_ProjectLifeYears * 8760);
+			geo_outputs.maf_hourly_power = allocate("tmp", geo_inputs.mi_ProjectLifeYears * 8760);
+			ssc_number_t * p_gen = allocate("gen", 8760);
+
+
 //			ssc_number_t *pgen = allocate("gen", geo_inputs.mi_ProjectLifeYears * 8760);
 
 
@@ -545,11 +550,17 @@ public:
 			double kWhperkW = 0.0;
 			double nameplate = geo_inputs.md_DesiredSalesCapacityKW; // Was md_GrossPlantOutputMW*1000 -> now it is md_DesiredSalesCapacityKW
 			double annual_energy = 0.0;
-			for (size_t i = 0; i < geo_inputs.mi_ProjectLifeYears * 8760; i++)		//Loop calculates total energy generation over entire project lifetime (in kWh)
-			{
+
+			//Loop calculates total energy generation over entire project lifetime (in kWh) 
+			// Why?  Is the annual energy changing from year to year?
+			for (size_t i = 0; i < geo_inputs.mi_ProjectLifeYears * 8760; i++)	{
 				annual_energy += geo_outputs.maf_hourly_power[i];
-//				pgen[i] = geo_outputs.maf_hourly_power[i];
 			}
+
+			for (size_t i = 0; i < 8760; i++) {
+				p_gen[i] = geo_outputs.maf_hourly_power[i];
+			}
+
 			if (nameplate > 0) kWhperkW = annual_energy / nameplate;
 			capacity_fac = total_energy / nameplate;
 			if (geo_inputs.mi_ProjectLifeYears > 0) kWhperkW = kWhperkW / geo_inputs.mi_ProjectLifeYears;
@@ -559,9 +570,6 @@ public:
 			assign("kwh_per_kw", var_data((ssc_number_t)kWhperkW));
 			// 5/28/15 average provided for FCR market
 			assign("annual_energy", var_data((ssc_number_t)(annual_energy / geo_inputs.mi_ProjectLifeYears)));
-
-
-
 		}
 
 		// this assignment happens in UI calculations and model run
