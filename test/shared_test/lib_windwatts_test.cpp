@@ -22,7 +22,7 @@ protected:
 	double windSpeedData, windDirData, pressureData, tempData;
 	
 	 //farm data
-	double farmPower;
+	double farmPower, farmPowerGross;
 	std::vector<double> power, thrust, eff, windSpeed;
 	std::vector<double> turbulenceCoeff, distX, distY, distDownwind, distCrosswind;
 
@@ -65,11 +65,9 @@ TEST_F(windPowerCalculatorTest, windPowerUsingResource_lib_windwatts){
 	pressureData = 1.0;
 
 	std::shared_ptr<fakeWakeModel> fakeWM(new fakeWakeModel());
-	double airDensitySaved = 0.0;
-
 	wpc.InitializeModel(fakeWM); 
 	int run = wpc.windPowerUsingResource(windSpeedData, windDirData, pressureData, tempData, &farmPower,
-                                         nullptr, &power[0], &thrust[0],
+                                         &farmPowerGross, &power[0], &thrust[0],
                                          &eff[0], &windSpeed[0], &turbulenceCoeff[0], &distDownwind[0],
                                          &distCrosswind[0]); // runs method we want to test
 	EXPECT_EQ(run, 3);
@@ -101,6 +99,8 @@ TEST_F(windPowerCalculatorTest, windPowerUsingDistribution_lib_windwatts){
                                             {19, 180, .0211}};
     std::shared_ptr<wakeModelBase> wakeModel = std::make_shared<fakeWakeModel>();
     wpc.InitializeModel(wakeModel);
-    double energyTotal = wpc.windPowerUsingDistribution(dst);
-    EXPECT_NEAR(energyTotal, 15075000, e);
+    wpc.windPowerUsingDistribution(dst, &farmPower, &farmPowerGross);
+    EXPECT_NEAR(farmPower, 15075000, e);
+    EXPECT_NEAR(farmPowerGross, 15075000, e);
 }
+
