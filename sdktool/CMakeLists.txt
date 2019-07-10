@@ -136,23 +136,26 @@ if (${CMAKE_PROJECT_NAME} STREQUAL system_advisor_model)
 	target_link_libraries(SDKtool lk wex)
 else()
 	unset(WEX_LIB CACHE)
-	unset(WEXD_LIB CACHE)
 	unset(LK_LIB CACHE)
-	unset(LKD_LIB CACHE)
-	find_library( WEXD_LIB
-			NAMES wexd.a wexd.lib
-			PATHS $ENV{WEXDIR})
-	find_library( LKD_LIB
-			NAMES lkd.a lkd.lib
-			PATHS $ENV{LKDIR})
 	find_library( WEX_LIB
 			NAMES wex.a wex.lib
 			PATHS $ENV{WEXDIR})
 	find_library( LK_LIB
 			NAMES lk.a lk.lib
 			PATHS $ENV{LKDIR})
-	target_link_libraries(SDKtool debug ${WEXD_LIB} debug ${LKD_LIB})
 	target_link_libraries(SDKtool optimized ${WEX_LIB} optimized ${LK_LIB})
+
+	if (CMAKE_BUILD_TYPE STREQUAL "Debug" OR MSVC)
+		unset(LKD_LIB CACHE)
+		unset(WEXD_LIB CACHE)
+		find_library( WEXD_LIB
+				NAMES wexd.a wexd.lib
+				PATHS $ENV{WEXDIR})
+		find_library( LKD_LIB
+				NAMES lkd.a lkd.lib
+				PATHS $ENV{LKDIR})
+		target_link_libraries(SDKtool debug ${WEXD_LIB} debug ${LKD_LIB})
+	endif()
 endif()
 
 target_link_libraries(SDKtool ${wxWidgets_LIBRARIES})

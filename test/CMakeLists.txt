@@ -101,15 +101,18 @@ endif()
 #####################################################################################################################
 
 unset(GTEST_LIB CACHE)
-unset(GTESTD_LIB CACHE)
 find_library( GTEST_LIB
 	NAMES libgtest.a gtest.lib
 	PATHS ${GTDIR}/build/lib ${GTDIR}/build/lib/Release)
-find_library( GTESTD_LIB
-	NAMES libgtestd.a gtestd.lib
-	PATHS ${GTDIR}/build/lib ${GTDIR}/build/lib/Debug)
-target_link_libraries(Test debug ${GTESTD_LIB})
 target_link_libraries(Test optimized ${GTEST_LIB})
+	
+if (CMAKE_BUILD_TYPE STREQUAL "Debug" OR MSVC)
+	unset(GTESTD_LIB CACHE)
+	find_library( GTESTD_LIB
+		NAMES libgtestd.a gtestd.lib
+		PATHS ${GTDIR}/build/lib ${GTDIR}/build/lib/Debug)
+	target_link_libraries(Test debug ${GTESTD_LIB})
+endif()
 target_link_libraries(Test ssc splinter)
 
 if (UNIX)
