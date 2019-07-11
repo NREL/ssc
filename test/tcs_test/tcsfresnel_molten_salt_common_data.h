@@ -251,7 +251,7 @@ void tcsfresnel_molten_salt_default(ssc_data_t &data)
 	ssc_data_set_matrix(data, "ud_T_amb_ind_od", p_ud_T_amb_ind_od, 1, 1);
 	ssc_number_t p_ud_m_dot_htf_ind_od[1] = { 0 };
 	ssc_data_set_matrix(data, "ud_m_dot_htf_ind_od", p_ud_m_dot_htf_ind_od, 1, 1);
-	set_matrix(data, "ud_ind_od", "C:/RPP Summer/C++/SAM Hierarchy/SAM CSP Models/5 - CSP linear Fresnel molten salt/No_Financial/Fresnel_molten_salt_unit_test_default/ud_ind_od.csv", 180, 7);
+	set_matrix(data, "ud_ind_od", "%s/test/input_cases/linearfresnel_molten_salt_data/tucson_az_32.116521_-110.933042_psmv3_60_tmy.csv", 180, 7);
 	ssc_data_set_number(data, "eta_lhv", 0.9);
 	ssc_data_set_number(data, "eta_tes_htr", 0.98);
 	ssc_data_set_number(data, "fp_mode", 2);
