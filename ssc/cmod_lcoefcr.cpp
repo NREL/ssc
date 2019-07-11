@@ -71,7 +71,7 @@ public:
 		add_var_info( vtab_lcoefcr );
 	}
 
-	void exec( ) throw( general_error )
+	void exec( )
 	{
 		double aep = 1; // annual output, get from performance model
 		double fcr = 0; // fixed charge rate, before tax revenues required

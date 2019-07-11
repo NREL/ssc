@@ -278,7 +278,7 @@ public:
         add_var_info(vtab_sf_adjustment_factors);
 	}
 
-	void exec( ) throw( general_error )
+	void exec( )
 	{
 		int weather = add_unit("weatherreader", "TCS weather reader");
 		int type_hel_field = add_unit("sam_mw_pt_heliostatfield");

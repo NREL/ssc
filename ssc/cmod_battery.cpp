@@ -1350,7 +1350,7 @@ public:
 		add_var_info(vtab_battery_outputs);
 	}
 
-	void exec() throw(general_error)
+	void exec() override
 	{
 		if (as_boolean("en_batt"))
 		{

@@ -2,7 +2,7 @@
 *  Copyright 2017 Alliance for Sustainable Energy, LLC
 *
 *  NOTICE: This software was developed at least in part by Alliance for Sustainable Energy, LLC
-*  (“Alliance”) under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
+*  (ï¿½Allianceï¿½) under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
 *  The Government retains for itself and others acting on its behalf a nonexclusive, paid-up,
 *  irrevocable worldwide license in the software to reproduce, prepare derivative works, distribute
 *  copies to the public, perform publicly and display publicly, and to permit others to do so.
@@ -26,8 +26,8 @@
 *  4. Redistribution of this software, without modification, must refer to the software by the same
 *  designation. Redistribution of a modified version of this software (i) may not refer to the modified
 *  version by the same designation, or by any confusingly similar designation, and (ii) must refer to
-*  the underlying software originally provided by Alliance as “System Advisor Model” or “SAM”. Except
-*  to comply with the foregoing, the terms “System Advisor Model”, “SAM”, or any confusingly similar
+*  the underlying software originally provided by Alliance as ï¿½System Advisor Modelï¿½ or ï¿½SAMï¿½. Except
+*  to comply with the foregoing, the terms ï¿½System Advisor Modelï¿½, ï¿½SAMï¿½, or any confusingly similar
 *  designation may not be used to refer to any modified version of this software or any modified
 *  version of the underlying software originally provided by Alliance without the prior written consent
 *  of Alliance.
@@ -106,7 +106,7 @@ bool compute_module::compute( handler_interface *handler, var_table *data )
 	return true;
 }
 
-bool compute_module::verify(const std::string &phase, int check_var_type) throw( general_error )
+bool compute_module::verify(const std::string &phase, int check_var_type)
 {
 	std::vector< var_info* >::iterator it;
 	for (it=m_varlist.begin();it!=m_varlist.end();++it)
@@ -224,7 +224,7 @@ var_info *compute_module::info(int index)
 		return NULL;
 }
 
-const var_info &compute_module::info( const std::string &name ) throw( general_error )
+const var_info &compute_module::info( const std::string &name )
 {
 	// if there is an info lookup table, use it
 	if (m_infomap != NULL)
@@ -245,7 +245,7 @@ const var_info &compute_module::info( const std::string &name ) throw( general_e
 	throw general_error("variable information lookup fail: '" + name + "'");
 }
 
-bool compute_module::is_ssc_array_output( const std::string &name ) throw( general_error )
+bool compute_module::is_ssc_array_output( const std::string &name )
 {
 	// if there is an info lookup table, use it
 	if (m_infomap != NULL)
@@ -270,19 +270,19 @@ bool compute_module::is_ssc_array_output( const std::string &name ) throw( gener
 }
 
 
-var_data *compute_module::lookup( const std::string &name ) throw( general_error )
+var_data *compute_module::lookup( const std::string &name )
 {
 	if (!m_vartab) throw general_error("invalid data container object reference");
 	return m_vartab->lookup(name);
 }
 
-var_data *compute_module::assign( const std::string &name, const var_data &value ) throw( general_error )
+var_data *compute_module::assign( const std::string &name, const var_data &value )
 {
 	if (!m_vartab) throw general_error("invalid data container object reference");
 	return m_vartab->assign( name, value );
 }
 
-ssc_number_t *compute_module::allocate( const std::string &name, size_t length ) throw( general_error )
+ssc_number_t *compute_module::allocate( const std::string &name, size_t length )
 {
 	var_data *v = assign(name, var_data());
 	v->type = SSC_ARRAY;
@@ -290,7 +290,7 @@ ssc_number_t *compute_module::allocate( const std::string &name, size_t length )
 	return v->num.data();
 }
 
-ssc_number_t *compute_module::allocate( const std::string &name, size_t nrows, size_t ncols ) throw( general_error )
+ssc_number_t *compute_module::allocate( const std::string &name, size_t nrows, size_t ncols )
 {
 	var_data *v = assign(name, var_data());
 	v->type = SSC_MATRIX;
@@ -298,7 +298,7 @@ ssc_number_t *compute_module::allocate( const std::string &name, size_t nrows, s
 	return v->num.data();
 }
 
-util::matrix_t<ssc_number_t>& compute_module::allocate_matrix( const std::string &name, size_t nrows, size_t ncols ) throw( general_error )
+util::matrix_t<ssc_number_t>& compute_module::allocate_matrix( const std::string &name, size_t nrows, size_t ncols )
 {
 	var_data *v = assign(name, var_data());
 	v->type = SSC_MATRIX;
@@ -306,7 +306,7 @@ util::matrix_t<ssc_number_t>& compute_module::allocate_matrix( const std::string
 	return v->num;
 }
 
-var_data &compute_module::value( const std::string &name ) throw( general_error )
+var_data &compute_module::value( const std::string &name )
 {
 	var_data *v = lookup( name );
 	if (!v){
@@ -315,60 +315,60 @@ var_data &compute_module::value( const std::string &name ) throw( general_error 
 	return (*v);
 }
 
-bool compute_module::is_assigned( const std::string &name ) throw( general_error )
+bool compute_module::is_assigned( const std::string &name )
 {
 	return (lookup(name) != 0);
 }
 
-int compute_module::as_integer( const std::string &name ) throw( general_error )
+int compute_module::as_integer( const std::string &name )
 {
 	var_data &x = value(name);
 	if (x.type != SSC_NUMBER) throw cast_error("integer", x, name);
 	return (int) x.num;
 }
-size_t compute_module::as_unsigned_long(const std::string &name) throw(general_error)
+size_t compute_module::as_unsigned_long(const std::string &name)
 {
 	var_data &x = value(name);
 	if (x.type != SSC_NUMBER) throw cast_error("unsigned long", x, name);
 	return (size_t)x.num;
 }
 
-bool compute_module::as_boolean( const std::string &name ) throw( general_error )
+bool compute_module::as_boolean( const std::string &name )
 {
 	var_data &x = value(name);
 	if (x.type != SSC_NUMBER) throw cast_error("boolean", x, name);
 	return (bool) ( (int)(x.num!=0) );
 }
 
-float compute_module::as_float( const std::string &name ) throw( general_error )
+float compute_module::as_float( const std::string &name )
 {
 	var_data &x = value(name);
 	if (x.type != SSC_NUMBER) throw cast_error("float", x, name);
 	return (float) x.num;
 }
 
-ssc_number_t compute_module::as_number( const std::string &name ) throw( general_error )
+ssc_number_t compute_module::as_number( const std::string &name )
 {
 	var_data &x = value(name);
 	if (x.type != SSC_NUMBER) throw cast_error("ssc_number_t", x, name);
 	return x.num;
 }
 
-double compute_module::as_double( const std::string &name ) throw( general_error )
+double compute_module::as_double( const std::string &name )
 {
 	var_data &x = value(name);
 	if (x.type != SSC_NUMBER) throw cast_error("double", x, name);
 	return (double) x.num;
 }
 
-const char *compute_module::as_string( const std::string &name ) throw( general_error )
+const char *compute_module::as_string( const std::string &name )
 {
 	var_data &x = value(name);
 	if (x.type != SSC_STRING) throw cast_error("string", x, name);
 	return x.str.c_str();
 }
 
-ssc_number_t *compute_module::as_array( const std::string &name, size_t *count ) throw( general_error )
+ssc_number_t *compute_module::as_array( const std::string &name, size_t *count )
 {
 	var_data &x = value(name);
 	if (x.type != SSC_ARRAY) throw cast_error("array", x, name);
@@ -379,7 +379,7 @@ ssc_number_t *compute_module::as_array( const std::string &name, size_t *count )
 The obvious improvement would be to made this a template, but ran into trouble with 
 "error: Access violation - no RTTI data!" 
 */
-std::vector<int> compute_module::as_vector_integer(const std::string &name) throw(general_error)
+std::vector<int> compute_module::as_vector_integer(const std::string &name)
 {
 	var_data &x = value(name);
 	if (x.type != SSC_ARRAY) throw cast_error("array", x, name);
@@ -391,7 +391,7 @@ std::vector<int> compute_module::as_vector_integer(const std::string &name) thro
 	return v;
 }
 
-std::vector<ssc_number_t> compute_module::as_vector_ssc_number_t(const std::string &name) throw(general_error)
+std::vector<ssc_number_t> compute_module::as_vector_ssc_number_t(const std::string &name)
 {
 	var_data &x = value(name);
 	if (x.type != SSC_ARRAY) throw cast_error("array", x, name);
@@ -403,7 +403,7 @@ std::vector<ssc_number_t> compute_module::as_vector_ssc_number_t(const std::stri
 	return v;
 }
 
-std::vector<double> compute_module::as_vector_double(const std::string &name) throw(general_error)
+std::vector<double> compute_module::as_vector_double(const std::string &name)
 {
 	var_data &x = value(name);
 	if (x.type != SSC_ARRAY) throw cast_error("array", x, name);
@@ -414,7 +414,7 @@ std::vector<double> compute_module::as_vector_double(const std::string &name) th
 		v[k] = (double) p[k];
 	return v;
 }
-std::vector<float> compute_module::as_vector_float(const std::string &name) throw(general_error)
+std::vector<float> compute_module::as_vector_float(const std::string &name)
 {
 	var_data &x = value(name);
 	if (x.type != SSC_ARRAY) throw cast_error("array", x, name);
@@ -425,7 +425,7 @@ std::vector<float> compute_module::as_vector_float(const std::string &name) thro
 		v[k] = (float)p[k];
 	return v;
 }
-std::vector<size_t> compute_module::as_vector_unsigned_long(const std::string &name) throw(general_error)
+std::vector<size_t> compute_module::as_vector_unsigned_long(const std::string &name)
 {
 	var_data &x = value(name);
 	if (x.type != SSC_ARRAY) throw cast_error("array", x, name);
@@ -436,7 +436,7 @@ std::vector<size_t> compute_module::as_vector_unsigned_long(const std::string &n
 		v[k] = (size_t)p[k];
 	return v;
 }
-std::vector<bool> compute_module::as_vector_bool(const std::string &name) throw(general_error)
+std::vector<bool> compute_module::as_vector_bool(const std::string &name)
 {
 	var_data &x = value(name);
 	if (x.type != SSC_ARRAY) throw cast_error("array", x, name);
@@ -448,7 +448,7 @@ std::vector<bool> compute_module::as_vector_bool(const std::string &name) throw(
 	return v;
 }
 
-ssc_number_t *compute_module::as_matrix( const std::string &name, size_t *rows, size_t *cols ) throw( general_error )
+ssc_number_t *compute_module::as_matrix( const std::string &name, size_t *rows, size_t *cols )
 {
 	var_data &x = value(name);
 	if (x.type != SSC_MATRIX) throw cast_error("matrix", x, name);
@@ -457,7 +457,7 @@ ssc_number_t *compute_module::as_matrix( const std::string &name, size_t *rows, 
 	return x.num.data();
 }
 
-util::matrix_t<double> compute_module::as_matrix(const std::string &name) throw(general_error)
+util::matrix_t<double> compute_module::as_matrix(const std::string &name)
 {
 	var_data &x = value(name);
 	if (x.type != SSC_MATRIX) throw cast_error("matrix", x, name);
@@ -470,7 +470,7 @@ util::matrix_t<double> compute_module::as_matrix(const std::string &name) throw(
 	return mat;
 }
 
-util::matrix_t<size_t> compute_module::as_matrix_unsigned_long(const std::string &name) throw(general_error)
+util::matrix_t<size_t> compute_module::as_matrix_unsigned_long(const std::string &name)
 {
 	var_data &x = value(name);
 	if (x.type != SSC_MATRIX) throw cast_error("matrix", x, name);
@@ -484,7 +484,7 @@ util::matrix_t<size_t> compute_module::as_matrix_unsigned_long(const std::string
 }
 
 
-util::matrix_t<double> compute_module::as_matrix_transpose(const std::string &name) throw(general_error)
+util::matrix_t<double> compute_module::as_matrix_transpose(const std::string &name)
 {
 	var_data &x = value(name);
 	if (x.type != SSC_MATRIX) throw cast_error("matrix", x, name);
@@ -497,7 +497,7 @@ util::matrix_t<double> compute_module::as_matrix_transpose(const std::string &na
 	return mat;
 }
 
-bool compute_module::get_matrix(const std::string &name, util::matrix_t<ssc_number_t> &mat) throw(general_error)
+bool compute_module::get_matrix(const std::string &name, util::matrix_t<ssc_number_t> &mat)
 {
 	var_data &x = value(name);
 	if (x.type != SSC_MATRIX) throw cast_error("matrix", x, name);
@@ -518,7 +518,7 @@ bool compute_module::get_matrix(const std::string &name, util::matrix_t<ssc_numb
 
 
 
-ssc_number_t compute_module::get_operand_value( const std::string &input, const std::string &cur_var_name) throw( general_error )
+ssc_number_t compute_module::get_operand_value( const std::string &input, const std::string &cur_var_name)
 {	
 	if (input.length() < 1) throw check_error(cur_var_name, "input is null to get_operand_value", input);
 
@@ -537,7 +537,7 @@ ssc_number_t compute_module::get_operand_value( const std::string &input, const 
 	}
 }
 
-bool compute_module::check_required( const std::string &name ) throw( general_error )
+bool compute_module::check_required( const std::string &name )
 {
 	// only check if the variable is required as input to the simulation context
 	// if it is an input or an inout variable
@@ -694,7 +694,7 @@ bool compute_module::check_required( const std::string &name ) throw( general_er
 	return false;
 }
 
-bool compute_module::check_constraints( const std::string &name, std::string &fail_text) throw( general_error )
+bool compute_module::check_constraints( const std::string &name, std::string &fail_text)
 {
 #define fail_constraint( str ) { fail_text = "fail("+name+", "+expr+"): "+std::string(str); return false; }
 
@@ -895,7 +895,7 @@ bool compute_module::check_constraints( const std::string &name, std::string &fa
 #undef fail_constraint
 }
 
-size_t compute_module::check_timestep_seconds( double t_start, double t_end, double t_step ) throw( timestep_error )
+size_t compute_module::check_timestep_seconds( double t_start, double t_end, double t_step )
 {
 	if (t_start < 0.0) throw timestep_error(t_start,t_end,t_step, "start time must be 0 or greater");
 	if (t_end <= t_start) throw timestep_error(t_start,t_end,t_step, "end time must be greater than start time");
@@ -946,7 +946,7 @@ size_t compute_module::check_timestep_seconds( double t_start, double t_end, dou
 	return steps;
 }
 
-ssc_number_t *compute_module::accumulate_monthly(const std::string &ts_var, const std::string &monthly_var, double scale) throw( exec_error )
+ssc_number_t *compute_module::accumulate_monthly(const std::string &ts_var, const std::string &monthly_var, double scale)
 {
 		
 	size_t count = 0;
@@ -975,7 +975,7 @@ ssc_number_t *compute_module::accumulate_monthly(const std::string &ts_var, cons
 	return monthly;
 }
 
-ssc_number_t *compute_module::accumulate_monthly_for_year(const std::string &ts_var, const std::string &monthly_var, double scale, size_t step_per_hour, size_t year) throw(exec_error)
+ssc_number_t *compute_module::accumulate_monthly_for_year(const std::string &ts_var, const std::string &monthly_var, double scale, size_t step_per_hour, size_t year)
 {
 
 	size_t count = 0;
@@ -1004,7 +1004,7 @@ ssc_number_t *compute_module::accumulate_monthly_for_year(const std::string &ts_
 	return monthly;
 }
 
-ssc_number_t compute_module::accumulate_annual(const std::string &ts_var, const std::string &annual_var, double scale) throw( exec_error )
+ssc_number_t compute_module::accumulate_annual(const std::string &ts_var, const std::string &annual_var, double scale)
 {
 	size_t count = 0;
 	ssc_number_t *ts = as_array(ts_var, &count);
@@ -1028,7 +1028,7 @@ ssc_number_t compute_module::accumulate_annual_for_year( const std::string &ts_v
 	double scale,
 	size_t step_per_hour, 
 	size_t year, 
-    size_t steps) throw(exec_error)
+    size_t steps)
 {
 	size_t count = 0;
 	ssc_number_t *ts = as_array(ts_var, &count);

@@ -343,7 +343,7 @@ public:
 		add_var_info(vtab_cashloan);
 	}
 
-	void exec( ) throw( general_error )
+	void exec( )
 	{
 		int i;
 

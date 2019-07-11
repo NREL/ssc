@@ -159,7 +159,7 @@ void cm_fuelcell::construct()
 	allocateOutputs();
 }
 
-void cm_fuelcell::exec() throw (general_error)
+void cm_fuelcell::exec()
 {
 	double annual_energy = 0.0;
 	float percent_complete = 0.0;

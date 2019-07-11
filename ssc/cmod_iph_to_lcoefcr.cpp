@@ -69,7 +69,7 @@ public:
 		add_var_info( vtab_iph_to_lcoefcr );
 	}
 
-	void exec( ) throw( general_error )
+	void exec( )
 	{
 		ssc_number_t foc = as_number("fixed_operating_cost");		//[$]
 		

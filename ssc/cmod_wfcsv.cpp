@@ -70,7 +70,7 @@ public:
 		add_var_info( _cm_vtab_wfcsvconv );
 	}
 
-	void exec( ) throw( general_error )
+	void exec( )
 	{
 		std::string input = as_string("input_file");
 

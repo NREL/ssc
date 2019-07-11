@@ -221,7 +221,7 @@ cm_windpower::cm_windpower(){
 	add_var_info(vtab_technology_outputs);
 }
 
-void cm_windpower::exec() throw(general_error)
+void cm_windpower::exec()
 {
 	// create windTurbine's powerCurve
 	windTurbine wt;

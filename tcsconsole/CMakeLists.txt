@@ -151,7 +151,7 @@ else()
 			NAMES lk.a lk.lib
 			PATHS $ENV{LKDIR})
 	target_link_libraries(TCSConsole optimized ${WEX_LIB} optimized ${LK_LIB})
-		
+
 	if (CMAKE_BUILD_TYPE STREQUAL "Debug" OR MSVC)
 		unset(LKD_LIB CACHE)
 		unset(WEXD_LIB CACHE)

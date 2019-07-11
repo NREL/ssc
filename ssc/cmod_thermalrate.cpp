@@ -130,7 +130,7 @@ public:
 		add_var_info( vtab_thermal_rate );
 	}
 
-	void exec( ) throw( general_error )
+	void exec( )
 	{
 		// if not assigned, we assume thermal rates are enabled
 		if (is_assigned("en_thermal_rates")) {
@@ -590,7 +590,7 @@ public:
 		ssc_number_t *revenue, ssc_number_t *payment, ssc_number_t *income,
 		ssc_number_t *thermal_charge,
 		ssc_number_t rate_esc, bool = true, bool = true, bool = false)
-		throw(general_error)
+
 	{
 		int i;
 		for (i = 0; i<(int)m_num_rec_yearly; i++)

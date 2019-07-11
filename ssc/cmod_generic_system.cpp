@@ -101,7 +101,7 @@ public:
 		add_var_info(vtab_technology_outputs);
 	}
 
-	void exec( ) throw( general_error )
+	void exec( )
 	{
 		int spec_mode = as_integer("spec_mode");
 		bool system_use_lifetime_output = (as_integer("system_use_lifetime_output") == 1);

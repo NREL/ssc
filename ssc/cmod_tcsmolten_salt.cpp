@@ -608,7 +608,7 @@ public:
 		return update(msg, (float)percent);
 	}
 
-	void exec() throw(general_error)
+	void exec() override
 	{
 		// Weather reader
 		C_csp_weatherreader weather_reader;
