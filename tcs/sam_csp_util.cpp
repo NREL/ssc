@@ -1235,7 +1235,7 @@ double CSP::pipe_sched(double De, bool selectLarger)
 
     //Nothing was found, so return the exact pipe diameter instead
     double mtoinch = 39.3700787;
-    char buffer[256];
+    char buffer[512];
     sprintf(buffer, "No suitable pipe schedule found for this plant design. Looking for a schedule above %.2f in ID. "
         "Maximum schedule is %.2f in ID. Using the exact pipe diameter instead."
         "Consider increasing the header design velocity range or the number of field subsections.",

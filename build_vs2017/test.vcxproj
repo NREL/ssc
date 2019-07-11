@@ -18,6 +18,7 @@
     <ClCompile Include="..\test\shared_test\lib_battery_test.cpp" />
     <ClCompile Include="..\test\shared_test\lib_csp_test.cpp" />
     <ClCompile Include="..\test\shared_test\lib_fuel_cell_test.cpp" />
+    <ClCompile Include="..\test\shared_test\lib_geothermal_test.cpp" />
     <ClCompile Include="..\test\shared_test\lib_irradproc_test.cpp" />
     <ClCompile Include="..\test\shared_test\lib_shared_inverter_test.cpp" />
     <ClCompile Include="..\test\shared_test\lib_time_test.cpp" />
@@ -29,6 +30,8 @@
     <ClCompile Include="..\test\ssc_test\cmod_biomass_test.cpp" />
     <ClCompile Include="..\test\ssc_test\cmod_battery_test.cpp" />
     <ClCompile Include="..\test\ssc_test\cmod_fuelcell_test.cpp" />
+    <ClCompile Include="..\test\ssc_test\cmod_geothermal_costs_test.cpp" />
+    <ClCompile Include="..\test\ssc_test\cmod_geothermal_test.cpp" />
     <ClCompile Include="..\test\ssc_test\cmod_generic_test.cpp" />
     <ClCompile Include="..\test\ssc_test\cmod_mhk_tidal_test.cpp" />
     <ClCompile Include="..\test\ssc_test\cmod_mhk_wave_test.cpp" />
@@ -41,6 +44,7 @@
     <ClCompile Include="..\test\ssc_test\cmod_swh_test.cpp" />
     <ClCompile Include="..\test\ssc_test\cmod_tcsdirect_steam_test.cpp" />
     <ClCompile Include="..\test\ssc_test\cmod_tcsmolten_salt_test.cpp" />
+    <ClCompile Include="..\test\ssc_test\cmod_tcstrough_empirical_test.cpp" />
     <ClCompile Include="..\test\ssc_test\cmod_tcstrough_physical_test.cpp" />
     <ClCompile Include="..\test\ssc_test\cmod_trough_physical_iph_test.cpp" />
     <ClCompile Include="..\test\ssc_test\cmod_trough_physical_test.cpp" />
@@ -54,6 +58,8 @@
     <ClInclude Include="..\test\input_cases\battery_common_data.h" />
     <ClInclude Include="..\test\input_cases\code_generator_utilities.h" />
     <ClInclude Include="..\test\input_cases\fuelcell_common_data.h" />
+    <ClInclude Include="..\test\input_cases\geothermal_common_data.h" />
+    <ClInclude Include="..\test\input_cases\geothermal_costs_common_data.h" />
     <ClInclude Include="..\test\input_cases\generic_common_data.h" />
     <ClInclude Include="..\test\input_cases\mhk\mhk_tidal_inputs.h" />
     <ClInclude Include="..\test\input_cases\mhk\mhk_wave_inputs.h" />
@@ -72,6 +78,7 @@
     <ClInclude Include="..\test\shared_test\lib_battery_test.h" />
     <ClInclude Include="..\test\shared_test\lib_csp_test.h" />
     <ClInclude Include="..\test\shared_test\lib_fuel_cell_test.h" />
+    <ClInclude Include="..\test\shared_test\lib_geothermal_test.h" />
     <ClInclude Include="..\test\shared_test\lib_irradproc_test.h" />
     <ClInclude Include="..\test\shared_test\lib_time_test.h" />
     <ClInclude Include="..\test\shared_test\lib_trough_properties.h" />
@@ -80,6 +87,8 @@
     <ClInclude Include="..\test\ssc_test\cmod_battery_test.h" />
     <ClInclude Include="..\test\ssc_test\cmod_biomass_test.h" />
     <ClInclude Include="..\test\ssc_test\cmod_fuelcell_test.h" />
+    <ClInclude Include="..\test\ssc_test\cmod_geothermal_costs_test.h" />
+    <ClInclude Include="..\test\ssc_test\cmod_geothermal_test.h" />
     <ClInclude Include="..\test\ssc_test\cmod_generic_test.h" />
     <ClInclude Include="..\test\ssc_test\cmod_mhk_tidal_test.h" />
     <ClInclude Include="..\test\ssc_test\cmod_mhk_wave_test.h" />
@@ -90,6 +99,7 @@
     <ClInclude Include="..\test\ssc_test\cmod_swh_test.h" />
     <ClInclude Include="..\test\ssc_test\cmod_tcsdirect_steam_test.h" />
     <ClInclude Include="..\test\ssc_test\cmod_tcsmolten_salt_test.h" />
+    <ClInclude Include="..\test\ssc_test\cmod_tcstrough_empirical_test.h" />
     <ClInclude Include="..\test\ssc_test\cmod_trough_physical_iph_test.h" />
     <ClInclude Include="..\test\ssc_test\cmod_trough_physical_test.h" />
     <ClInclude Include="..\test\ssc_test\cmod_windpower_test.h" />
@@ -99,6 +109,8 @@
     <ClInclude Include="..\test\tcs_test\tcsdirect_steam_common_data.h" />
     <ClInclude Include="..\test\tcs_test\tcsmolten_salt_cases.h" />
     <ClInclude Include="..\test\tcs_test\tcsmolten_salt_common_data.h" />
+    <ClInclude Include="..\test\tcs_test\tcstrough_empirical_cases.h" />
+    <ClInclude Include="..\test\tcs_test\tcstrough_empirical_common_data.h" />
     <ClInclude Include="..\test\tcs_test\trough_physical_cases.h" />
     <ClInclude Include="..\test\tcs_test\trough_physical_common_data.h" />
     <ClInclude Include="..\test\tcs_test\trough_physical_iph_cases.h" />
