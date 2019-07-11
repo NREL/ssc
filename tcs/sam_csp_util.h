@@ -24,6 +24,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define __CSP_UTIL_
 // fix compilation errors using gcc on linux
 #include <cmath>
+#include <algorithm>
 #include <limits>
 #include "../shared/lib_util.h"
 #include "htf_props.h"
@@ -57,6 +58,12 @@ namespace CSP
 	double sign(double val);
 
 	double nint(double val);
+
+    template<typename T>
+    bool isequal(T a, T b)
+    {
+        return std::abs(a - b) <= std::min(std::abs(a), std::abs(b)) * typename std::numeric_limits<T>::epsilon();
+    }
 
 	int TOU_Reader(double *TOUSched, double time_sec, int nTOUSched=8760);
 
@@ -589,7 +596,7 @@ public:
         col = 0;
         for (size_t col_idx = 0; col_idx < columns.size(); col_idx++) {
             col = columns[col_idx];
-            if (a[col] == b[col]) {
+            if (CSP::isequal(a[col], b[col])) {
                 continue;
             }
             else if ( (a[col] < b[col] && ascending[col_idx] ) ||
