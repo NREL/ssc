@@ -106,7 +106,7 @@ public:
 		}
 	};
 
-	void exec( ) throw( general_error )
+	void exec( )
 	{
 		iec61853_module_t solver;
 		msg_handler msgs( *this );
@@ -335,7 +335,7 @@ public:
 		}
 	}
 
-	void exec() throw( general_error )
+	void exec()
 	{
 		double I = as_double("I");
 		double T = as_double("T");

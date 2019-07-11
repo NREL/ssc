@@ -1111,7 +1111,7 @@ public:
 		add_var_info(vtab_battery_replacement_cost);
 	}
 
-	void exec( ) throw( general_error )
+	void exec( )
 	{
 		int i = 0;
 

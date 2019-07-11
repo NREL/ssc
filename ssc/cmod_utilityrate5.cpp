@@ -426,7 +426,7 @@ public:
 		add_var_info( vtab_utility_rate5 );
 	}
 
-	void exec( ) throw( general_error )
+	void exec( )
 	{
 		// if not assigned, we assume electricity rates are enabled
 		if (is_assigned("en_electricity_rates")) {

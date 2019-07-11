@@ -759,7 +759,7 @@ public:
 		add_var_info( vtab_utility_rate2 );
 	}
 
-	void exec( ) throw( general_error )
+	void exec( )
 	{
 		ssc_number_t *parr = 0;
 		size_t count, i, j;

@@ -130,7 +130,7 @@ public:
 		add_var_info( vtab_thermal_rate );
 	}
 
-	void exec( ) throw( general_error )
+	void exec( )
 	{
 		// if not assigned, we assume thermal rates are enabled
 		if (is_assigned("en_thermal_rates")) {
