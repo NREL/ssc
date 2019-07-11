@@ -169,7 +169,6 @@ int tcsfresnel_molten_salt_tucson_userdefined_default(ssc_data_t &data)
 	tcsfresnel_molten_salt_default(data);
 
 	ssc_data_set_number(data, "pc_config", 1);
-	set_matrix(data, "ud_ind_od", "C:/RPP Summer/C++/SAM Hierarchy/SAM CSP Models/5 - CSP linear Fresnel molten salt/No_Financial/UserDefined_unit_test_default/ud_ind_od.csv", 180, 7);
 
 	int status = run_module(data, "tcsmslf");
 
