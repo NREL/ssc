@@ -1575,7 +1575,8 @@ public:
 
         std::unique_ptr<C_pt_receiver> receiver;
         if (!as_boolean("is_rec_model_trans") && !as_boolean("is_rec_startup_trans")) {
-            std::unique_ptr<C_mspt_receiver_222> ss_receiver = std::make_unique<C_mspt_receiver_222>();   // steady-state receiver
+            //std::unique_ptr<C_mspt_receiver_222> ss_receiver = std::make_unique<C_mspt_receiver_222>();   // new to C++14
+            std::unique_ptr<C_mspt_receiver_222> ss_receiver = std::unique_ptr<C_mspt_receiver_222>(new C_mspt_receiver_222());   // steady-state receiver
 
             ss_receiver->m_n_panels = as_integer("N_panels");
             ss_receiver->m_d_rec = D_rec;
@@ -1601,7 +1602,8 @@ public:
             receiver = std::move(ss_receiver);
         }
         else {
-            std::unique_ptr<C_mspt_receiver> trans_receiver = std::make_unique<C_mspt_receiver>();    // transient receiver
+            //std::unique_ptr<C_mspt_receiver> trans_receiver = std::make_unique<C_mspt_receiver>();    // new to C++14
+            std::unique_ptr<C_mspt_receiver> trans_receiver = std::unique_ptr<C_mspt_receiver>(new C_mspt_receiver());    // transient receiver
 
             trans_receiver->m_n_panels = as_integer("N_panels");
             trans_receiver->m_d_rec = D_rec;
