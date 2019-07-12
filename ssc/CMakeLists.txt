@@ -159,9 +159,7 @@ set_target_properties(ssc
     PROPERTIES
     PREFIX ""
     DEBUG_POSTFIX "d"
-	LIBRARY_OUTPUT_DIRECTORY $<1:${CMAKE_CURRENT_SOURCE_DIR}>
-	ARCHIVE_OUTPUT_DIRECTORY $<1:${CMAKE_CURRENT_SOURCE_DIR}>
-	RUNTIME_OUTPUT_DIRECTORY $<1:${CMAKE_CURRENT_SOURCE_DIR}>)
+	)
 
 
 # dltest executable for checking ssc library
@@ -217,33 +215,3 @@ if (MSVC)
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /SUBSYSTEM:WINDOWS")
 endif()
 
-
-#####################################################################################################################
-#
-# Target Installation
-#
-#####################################################################################################################
-
-# copy the libraries to the directories of all projects using them
-if (MSVC)
-	file(TO_CMAKE_PATH $ENV{SAMNTDIR}/api/api_autogen AUTOGEN_DIR)
-	file(TO_CMAKE_PATH $ENV{SAMNTDIR}/deploy/x64 DEPLOY_DIR)
-	file(TO_CMAKE_PATH $ENV{SSCDIR}/sdktool SDKTOOL_DIR)
-	file(TO_CMAKE_PATH $ENV{SSCDIR}/tcsconsole TCSCONSOLE_DIR)
-	file(TO_CMAKE_PATH $ENV{SSCDIR}/test TEST_DIR)
-
-	add_custom_command(
-	    TARGET ssc
-	    POST_BUILD
-	    COMMAND ${CMAKE_COMMAND}
-	    ARGS -E copy $<TARGET_FILE:ssc> ${CMAKE_CURRENT_SOURCE_DIR}/$<TARGET_FILE_BASE_NAME:ssc>.lib ${SDKTOOL_DIR}
-	    COMMAND ${CMAKE_COMMAND}
-	    ARGS -E copy $<TARGET_FILE:ssc> ${CMAKE_CURRENT_SOURCE_DIR}/$<TARGET_FILE_BASE_NAME:ssc>.lib ${TCSCONSOLE_DIR}
-	    COMMAND ${CMAKE_COMMAND}
-	    ARGS -E copy $<TARGET_FILE:ssc> ${CMAKE_CURRENT_SOURCE_DIR}/$<TARGET_FILE_BASE_NAME:ssc>.lib ${TEST_DIR}
-	    COMMAND ${CMAKE_COMMAND}
-	    ARGS -E copy $<TARGET_FILE:ssc> ${CMAKE_CURRENT_SOURCE_DIR}/$<TARGET_FILE_BASE_NAME:ssc>.lib ${AUTOGEN_DIR}
-		COMMAND ${CMAKE_COMMAND}
-		ARGS -E copy $<TARGET_FILE:ssc> ${CMAKE_CURRENT_SOURCE_DIR}/$<TARGET_FILE_BASE_NAME:ssc>.lib ${DEPLOY_DIR}
-	)
-endif()

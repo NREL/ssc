@@ -99,7 +99,7 @@ set_target_properties(lpsolve
     PROPERTIES
     DEBUG_POSTFIX "d"
 	PREFIX ""
-	ARCHIVE_OUTPUT_DIRECTORY $<1:${CMAKE_CURRENT_SOURCE_DIR}>)
+	)
 if (MSVC)
 	set_target_properties(lpsolve
 		PROPERTIES

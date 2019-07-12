@@ -76,11 +76,6 @@ if (UNIX)
 	find_package(wxWidgets COMPONENTS qa aui richtext html propgrid adv net stc core xml base REQUIRED)
 else()
 	set(wxWidgets_ROOT_DIR $ENV{WXMSW3})
-	if (DEBUG_WXWIDGETS)
-		set(wxWidgets_CONFIGURATION mswud)
-	else()
-		set(wxWidgets_CONFIGURATION mswu)
-	endif()
 	find_package(wxWidgets COMPONENTS qa webview aui richtext html propgrid adv net stc core xml base scintilla REQUIRED)
 endif()
 
@@ -113,7 +108,7 @@ set_target_properties(SDKtool
     PROPERTIES
     DEBUG_POSTFIX "d"
 	PREFIX ""
-	RUNTIME_OUTPUT_DIRECTORY $<1:${CMAKE_CURRENT_SOURCE_DIR}>)
+	)
 
 if (APPLE)
 	set_target_properties(SDKtool PROPERTIES
@@ -139,10 +134,10 @@ else()
 	unset(LK_LIB CACHE)
 	find_library( WEX_LIB
 			NAMES wex.a wex.lib
-			PATHS $ENV{WEXDIR})
+			PATHS $ENV{WEXDIR}/build $ENV{WEXDIR}/build/Release)
 	find_library( LK_LIB
 			NAMES lk.a lk.lib
-			PATHS $ENV{LKDIR})
+			PATHS $ENV{LKDIR}/build $ENV{LKDIR}/build/Release)
 	target_link_libraries(SDKtool optimized ${WEX_LIB} optimized ${LK_LIB})
 
 	if (CMAKE_BUILD_TYPE STREQUAL "Debug" OR MSVC)
@@ -150,10 +145,10 @@ else()
 		unset(WEXD_LIB CACHE)
 		find_library( WEXD_LIB
 				NAMES wexd.a wexd.lib
-				PATHS $ENV{WEXDIR})
+				PATHS $ENV{WEXDIR}/build $ENV{WEXDIR}/build/Debug)
 		find_library( LKD_LIB
 				NAMES lkd.a lkd.lib
-				PATHS $ENV{LKDIR})
+				PATHS $ENV{LKDIR}/build $ENV{LKDIR}/build/Debug)
 		target_link_libraries(SDKtool debug ${WEXD_LIB} debug ${LKD_LIB})
 	endif()
 endif()
@@ -181,23 +176,34 @@ endif()
 #
 #####################################################################################################################
 
-set( LIBCURL_FILES
-   dbghelp.dll
-   libcurl.dll
-   libeay32.dll
-   libssh2.dll
-   msvcp140.dll
-   openssl.exe
-   ssleay32.dll
-   vcruntime140.dll
-)
+if (MSVC)
+	set( LIBCURL_FILES
+	   dbghelp.dll
+	   libcurl.dll
+	   libeay32.dll
+	   libssh2.dll
+	   msvcp140.dll
+	   openssl.exe
+	   ssleay32.dll
+	   vcruntime140.dll
+	)
 
-foreach( file_i ${LIBCURL_FILES})
-    add_custom_command(
-    TARGET SDKtool
-    POST_BUILD
-    COMMAND ${CMAKE_COMMAND}
-    ARGS -E copy $ENV{WEXDIR}/build_vs2017/libcurl_ssl_x64/bin/${file_i} ${CMAKE_CURRENT_SOURCE_DIR}
-)
-endforeach( file_i )
+	set(SDKTOOL_DIR ${CMAKE_CURRENT_BINARY_DIR}/$<$<CONFIG:Debug>:Debug>$<$<CONFIG:Release>:Release>)
 
+	foreach( file_i ${LIBCURL_FILES})
+		add_custom_command(
+		TARGET SDKtool
+		POST_BUILD
+		COMMAND ${CMAKE_COMMAND}
+		ARGS -E copy $ENV{WEXDIR}/build_vs2017/libcurl_ssl_x64/bin/${file_i} ${SDKTOOL_DIR}
+	)
+	endforeach( file_i )
+
+	set(SSC_LIB $<TARGET_FILE_DIR:ssc>/$<TARGET_FILE_BASE_NAME:ssc>.lib)
+	add_custom_command(
+	    TARGET SDKtool
+	    POST_BUILD
+	    COMMAND ${CMAKE_COMMAND}
+	    ARGS -E copy $<TARGET_FILE:ssc> ${SSC_LIB} ${SDKTOOL_DIR}
+	)
+endif()

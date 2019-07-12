@@ -86,7 +86,7 @@ set_target_properties(Test
     PROPERTIES
     DEBUG_POSTFIX "d"
 	PREFIX ""
-	RUNTIME_OUTPUT_DIRECTORY $<1:${CMAKE_CURRENT_SOURCE_DIR}>)
+	)
 
 if (MSVC)
 	set_target_properties(Test PROPERTIES
@@ -119,3 +119,30 @@ if (UNIX)
 	target_link_libraries(Test -ldl -lpthread)
 endif()
 
+
+#####################################################################################################################
+#
+# Target Installation
+#
+#####################################################################################################################
+
+if(MSVC)
+	set(TEST_DIR ${CMAKE_CURRENT_BINARY_DIR}/$<$<CONFIG:Debug>:Debug>$<$<CONFIG:Release>:Release>)
+
+	foreach( file_i ${LIBCURL_FILES})
+		add_custom_command(
+		TARGET Test
+		POST_BUILD
+		COMMAND ${CMAKE_COMMAND}
+		ARGS -E copy $ENV{WEXDIR}/build_vs2017/libcurl_ssl_x64/bin/${file_i} ${TEST_DIR}
+	)
+	endforeach( file_i )
+
+	set(SSC_LIB $<TARGET_FILE_DIR:ssc>/$<TARGET_FILE_BASE_NAME:ssc>.lib)
+	add_custom_command(
+	    TARGET Test
+	    POST_BUILD
+	    COMMAND ${CMAKE_COMMAND}
+	    ARGS -E copy $<TARGET_FILE:ssc> ${SSC_LIB} ${TEST_DIR}
+	)
+endif()
