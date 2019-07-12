@@ -25,7 +25,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "csp_solver_core.h"
 #include "csp_solver_pt_sf_perf_interp.h"
-#include "csp_solver_mspt_receiver_222.h"
+#include "csp_solver_pt_receiver.h"
 
 
 
@@ -34,7 +34,7 @@ class C_csp_mspt_collector_receiver : public C_csp_collector_receiver
 
 private:
 	C_pt_sf_perf_interp &mc_pt_heliostatfield;
-	C_mspt_receiver_222 &mc_mspt_receiver_222;
+	C_pt_receiver &mc_pt_receiver;
 
 public:
 	
@@ -52,13 +52,21 @@ public:
 		E_T_HTF_IN,				//[C] Receiver HTF inlet temperature
 		E_T_HTF_OUT,			//[C] Receiver HTF outlet temperature
 		E_Q_DOT_PIPE_LOSS,		//[MWt] Tower piping losses
-        E_Q_DOT_LOSS            //[MWt] Receiver convection and radiation losses
+        E_Q_DOT_LOSS,           //[MWt] Receiver convection and radiation losses
+		E_P_HEATTRACE,			//[MWe] Receiver heat trace parasitic
+		E_T_HTF_OUT_END,		//[C] Instantaneous receiver HTF outlet temperature at the end of the time step
+		E_T_HTF_OUT_MAX,		//[C] Receiver maximum HTF outlet temperature at any point during time step
+		E_T_HTF_PANEL_OUT_MAX,	//[C] Receiver panel maximum HTF outlet temperature at any point during time step
+		E_T_WALL_INLET,			//[C] Receiver inlet wall temperature at end of time step
+		E_T_WALL_OUTLET,		//[C] Receiver inlet wall temperature at end of time step
+		E_T_RISER,				//[C] Riser temperature at the end of the time step
+		E_T_DOWNC				//[C] Downcomer temperature at the end of the time step
 	};
 	
 	C_csp_reported_outputs mc_reported_outputs;
 	
 	C_csp_mspt_collector_receiver(C_pt_sf_perf_interp & pt_heliostatfield,
-		C_mspt_receiver_222 & mspt_receiver_222);
+		C_pt_receiver & pt_receiver);
 
 	~C_csp_mspt_collector_receiver();
 
