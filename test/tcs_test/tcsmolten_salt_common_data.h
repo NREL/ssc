@@ -25,9 +25,11 @@ int nmspt4 = sprintf(helio_positions_path, "%s/test/input_cases/moltensalt_data/
 void tcsmolten_salt_default(ssc_data_t &data)
 {
 	char solar_resource_path[256];
+    // This is a copy of the actual weather file used, which has been copied to the ssc repo so it can be found by Travis CI for its tests.
+    //  The actual weather file used by SAM could change and thus change the UI output values (different input (i.e., weather file) -> different outputs)
 	int n1 = sprintf(solar_resource_path, "%s/test/input_cases/moltensalt_data/daggett_ca_34.865371_-116.783023_psmv3_60_tmy.csv", std::getenv("SSCDIR"));
 
-    ssc_data_set_string(data, "solar_resource_file", solar_resource_path);
+	ssc_data_set_string(data, "solar_resource_file", solar_resource_path);
     ssc_data_set_number(data, "ppa_multiplier_model", 0);
     set_array(data, "dispatch_factors_ts", dispatch_factors_path, 8760);
     ssc_data_set_number(data, "field_model_type", 2);

@@ -351,6 +351,8 @@ struct battstor
 		*outCellVoltage,
 		*outBatteryVoltage,
 		*outCapacityPercent,
+		*outCapacityPercentCycle,
+		*outCapacityPercentCalendar,
 		*outCycles,
 		*outDODCycleAverage,
 		*outBatteryBankReplacement,
