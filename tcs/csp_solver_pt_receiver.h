@@ -116,6 +116,14 @@ public:
         double m_time_required_su;		//[s] time it took receiver to startup
         double m_q_dot_piping_loss;		//[MWt] thermal power lost from piping to surroundings
         double m_q_heattrace;			//[MWt-hr] Power required for heat tracing
+        double m_inst_T_salt_hot;
+        double m_max_T_salt_hot;
+        double m_min_T_salt_hot;
+        double m_max_rec_tout;
+        double m_Twall_inlet;
+        double m_Twall_outlet;
+        double m_Triser;
+        double m_Tdownc;
 
         S_outputs()
         {

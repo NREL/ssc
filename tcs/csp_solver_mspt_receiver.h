@@ -268,34 +268,6 @@ public:
 	bool m_is_iscc;
 	int m_cycle_config;
 	
-	struct S_outputs : public C_pt_receiver::S_outputs
-	{
-		double m_inst_T_salt_hot;		//[C] Instantaneous salt outlet T at the end of the time step
-		double m_max_T_salt_hot;		//[C] Maximum salt outlet T during the time step
-		double m_min_T_salt_hot;		//[C] Minimum salt outlet T during the time step
-		double m_max_rec_tout;			//[C] Maximum salt T (receiver outlet) during the time step
-
-		double m_Twall_inlet;			//[C] Receiver inlet tube wall temperature at the end of the timestep
-		double m_Twall_outlet;			//[C] Receiver outlet tube wall temperature at the end of the timestep
-		double m_Triser;				//[C] Riser wall temperature at the end of the timestep
-		double m_Tdownc;				//[C] Downcomer wall temperature at the end of the timestep
-
-		S_outputs()
-		{
-			m_inst_T_salt_hot = m_max_T_salt_hot = m_min_T_salt_hot = m_max_rec_tout = std::numeric_limits<double>::quiet_NaN();
-			m_Twall_inlet = m_Twall_outlet = m_Triser = m_Tdownc = std::numeric_limits<double>::quiet_NaN();
-		}
-
-        void clear()
-        {
-            m_inst_T_salt_hot = m_max_T_salt_hot = m_min_T_salt_hot = m_max_rec_tout = std::numeric_limits<double>::quiet_NaN();
-            m_Twall_inlet = m_Twall_outlet = m_Triser = m_Tdownc = std::numeric_limits<double>::quiet_NaN();
-
-            C_pt_receiver::S_outputs::clear();
-        }
-
-	};
-
 	S_outputs outputs;
 
 	// Methods
