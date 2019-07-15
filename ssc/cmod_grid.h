@@ -144,7 +144,7 @@ public:
 	void construct();
 
 	/// Main execution
-	void exec() override;
+	void exec() throw(general_error);
 
 	/// Allocate Outputs
 	void allocateOutputs();
