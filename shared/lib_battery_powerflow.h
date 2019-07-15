@@ -151,6 +151,7 @@ public:
 
 	double stateOfChargeMax;   ///< The maximum state of charge (0-100)
 	double stateOfChargeMin;   ///< The minimum state of charge (0-100)
+	double depthOfDischargeMax; ///< The maximum depth of discharge (0-100)
 
 	double currentChargeMax; ///< The maximum sustained current for charging [A]
 	double currentDischargeMax; ///< The maximum sustained current for discharging [A]

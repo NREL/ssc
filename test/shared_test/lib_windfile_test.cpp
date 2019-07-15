@@ -27,7 +27,7 @@ public:
 TEST_F(windDataProviderCalculatorTest, FindClosestUsingData_lib_windfile_test) {
 	// measurement heights: 80, 90
 	var_data* windresourcedata = create_winddata_array(1,2);
-	windDataProvider = new winddata(windresourcedata);
+	//windDataProvider = new winddata(windresourcedata);
 
 	//// Case 1: hubheight: 85, can interpolate
 	double pres, temp, spd, dir, heightOfClosestMeasuredSpd, heightOfClosestMeasuredDir;

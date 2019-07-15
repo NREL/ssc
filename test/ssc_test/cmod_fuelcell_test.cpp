@@ -59,6 +59,7 @@ TEST_F(CMFuelCell, NoFinancialModelFixedLifetime) {
 TEST_F(CMFuelCell, FuelCellBattery) {
 
 	// Run with fixed output
+	ssc_data_set_number(data, "system_use_lifetime_output", 1);
 	int errors = run_module(data, "fuelcell");
 	EXPECT_FALSE(errors);
 	if (!errors)

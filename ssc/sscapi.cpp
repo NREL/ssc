@@ -58,14 +58,14 @@
 
 SSCEXPORT int ssc_version()
 {
-	return 212;
+	return 209;
 }
 
 SSCEXPORT const char *ssc_build_info()
 {
 	static const char *_bi = __PLATFORM__ " " __ARCH__ " " __COMPILER__ " " __DATE__ " " __TIME__;
 	return _bi;
-} 
+}
 
 /* to add new computation modules, 
 	specify an extern module entry,
@@ -85,7 +85,6 @@ extern module_entry_info
 	cm_entry_pvwattsv1_1ts,
 	cm_entry_pvwattsv1_poa,
 	cm_entry_pvwattsv5,
-	cm_entry_pvwattsv5_lifetime,
 	cm_entry_pvwattsv5_1ts,
 	cm_entry_pv6parmod,
 	cm_entry_pvsandiainv,
@@ -173,7 +172,6 @@ static module_entry_info *module_table[] = {
 	&cm_entry_pvwattsv1_1ts,
 	&cm_entry_pvwattsv1_poa,
 	&cm_entry_pvwattsv5,
-	&cm_entry_pvwattsv5_lifetime,
 	&cm_entry_pvwattsv5_1ts,
 	&cm_entry_pvsandiainv,
 	&cm_entry_wfreader,
@@ -203,7 +201,7 @@ static module_entry_info *module_table[] = {
 	&cm_entry_wfcsvconv,
 	&cm_entry_tcstrough_empirical,
 	&cm_entry_tcstrough_physical,
-    	&cm_entry_trough_physical,
+    &cm_entry_trough_physical,
 	&cm_entry_trough_physical_csp_solver,
 	&cm_entry_trough_physical_process_heat,
 	&cm_entry_iph_to_lcoefcr,

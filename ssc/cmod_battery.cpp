@@ -1,51 +1,24 @@
-/*******************************************************************************************************
-*  Copyright 2017 Alliance for Sustainable Energy, LLC
-*
-*  NOTICE: This software was developed at least in part by Alliance for Sustainable Energy, LLC
-*  ("Alliance") under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
-*  The Government retains for itself and others acting on its behalf a nonexclusive, paid-up,
-*  irrevocable worldwide license in the software to reproduce, prepare derivative works, distribute
-*  copies to the public, perform publicly and display publicly, and to permit others to do so.
-*
-*  Redistribution and use in source and binary forms, with or without modification, are permitted
-*  provided that the following conditions are met:
-*
-*  1. Redistributions of source code must retain the above copyright notice, the above government
-*  rights notice, this list of conditions and the following disclaimer.
-*
-*  2. Redistributions in binary form must reproduce the above copyright notice, the above government
-*  rights notice, this list of conditions and the following disclaimer in the documentation and/or
-*  other materials provided with the distribution.
-*
-*  3. The entire corresponding source code of any redistribution, with or without modification, by a
-*  research entity, including but not limited to any contracting manager/operator of a United States
-*  National Laboratory, any institution of higher learning, and any non-profit organization, must be
-*  made publicly available under this license for as long as the redistribution is made available by
-*  the research entity.
-*
-*  4. Redistribution of this software, without modification, must refer to the software by the same
-*  designation. Redistribution of a modified version of this software (i) may not refer to the modified
-*  version by the same designation, or by any confusingly similar designation, and (ii) must refer to
-*  the underlying software originally provided by Alliance as �System Advisor Model� or �SAM�. Except
-*  to comply with the foregoing, the terms �System Advisor Model�, �SAM�, or any confusingly similar
-*  designation may not be used to refer to any modified version of this software or any modified
-*  version of the underlying software originally provided by Alliance without the prior written consent
-*  of Alliance.
-*
-*  5. The name of the copyright holder, contributors, the United States Government, the United States
-*  Department of Energy, or any of their employees may not be used to endorse or promote products
-*  derived from this software without specific prior written permission.
-*
-*  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
-*  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
-*  FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER,
-*  CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES DEPARTMENT OF ENERGY, NOR ANY OF THEIR
-*  EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-*  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-*  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
-*  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
-*  THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*******************************************************************************************************/
+/**
+BSD-3-Clause
+Copyright 2019 Alliance for Sustainable Energy, LLC
+Redistribution and use in source and binary forms, with or without modification, are permitted provided 
+that the following conditions are met :
+1.	Redistributions of source code must retain the above copyright notice, this list of conditions 
+and the following disclaimer.
+2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions 
+and the following disclaimer in the documentation and/or other materials provided with the distribution.
+3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse 
+or promote products derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, 
+INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
+ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES 
+DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, 
+OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; 
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
+WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT 
+OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
 
 #include <math.h>
 
@@ -189,10 +162,12 @@ var_info vtab_battery_inputs[] = {
 	{ SSC_INPUT,        SSC_MATRIX,     "ur_ec_tou_mat",                               "Energy rates table",                                      "",        "",                       "ElectricityRate",  "en_batt=1&batt_meter_position=1&batt_dispatch_choice=2",  "",          "" },
 
 	// PPA financial inputs
-	{ SSC_INPUT,        SSC_NUMBER,     "ppa_price_input",		                        "PPA Price Input",	                                        "",      "",                  "EnergyMarket", "en_batt=1&batt_meter_position=1&batt_dispatch_choice=2"   "",          "" },
-	{ SSC_INPUT,        SSC_ARRAY,      "dispatch_tod_factors",		                    "TOD factors for periods 1-9",	                            "",      "",                  "EnergyMarket", "en_batt=1&batt_meter_position=1&batt_dispatch_choice=2"   "",          "" },
-	{ SSC_INPUT,        SSC_MATRIX,     "dispatch_sched_weekday",                       "Diurnal weekday TOD periods",                              "1..9",  "12 x 24 matrix",    "EnergyMarket", "en_batt=1&batt_meter_position=1&batt_dispatch_choice=2",  "",          "" },
-	{ SSC_INPUT,        SSC_MATRIX,     "dispatch_sched_weekend",                       "Diurnal weekend TOD periods",                              "1..9",  "12 x 24 matrix",    "EnergyMarket", "en_batt=1&batt_meter_position=1&batt_dispatch_choice=2",  "",          "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ppa_price_input",		                        "PPA Price Input",	                                        "",      "",                  "Time of Delivery", "en_batt=1&batt_meter_position=1&batt_dispatch_choice=2"   "",          "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ppa_multiplier_model",                         "PPA multiplier model",                                    "0/1",    "0=diurnal,1=timestep","Time of Delivery", "?=0",                                                  "INTEGER,MIN=0", "" },
+	{ SSC_INPUT,        SSC_ARRAY,      "dispatch_factors_ts",                          "Dispatch payment factor time step",                        "",      "",                  "Time of Delivery", "en_batt=1&batt_meter_position=1&batt_dispatch_choice=2&ppa_multiplier_model=1", "", "" },
+	{ SSC_INPUT,        SSC_ARRAY,      "dispatch_tod_factors",		                    "TOD factors for periods 1-9",	                            "",      "",                  "Time of Delivery", "en_batt=1&batt_meter_position=1&batt_dispatch_choice=2&ppa_multiplier_model=0"   "",          "" },
+	{ SSC_INPUT,        SSC_MATRIX,     "dispatch_sched_weekday",                       "Diurnal weekday TOD periods",                              "1..9",  "12 x 24 matrix",    "Time of Delivery", "en_batt=1&batt_meter_position=1&batt_dispatch_choice=2&ppa_multiplier_model=0",  "",          "" },
+	{ SSC_INPUT,        SSC_MATRIX,     "dispatch_sched_weekend",                       "Diurnal weekend TOD periods",                              "1..9",  "12 x 24 matrix",    "Time of Delivery", "en_batt=1&batt_meter_position=1&batt_dispatch_choice=2&ppa_multiplier_model=0",  "",          "" },
 
 	// Powerflow calculation inputs
 	{ SSC_INPUT,       SSC_ARRAY,       "fuelcell_power",                               "Electricity from fuel cell",                            "kW",       "",                     "FuelCell",     "",                           "",                         "" },
@@ -216,9 +191,12 @@ var_info vtab_battery_outputs[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "batt_voltage",                               "Battery voltage",	                                     "V",        "",                     "Battery",       "",                           "",                              "" },
 																		               
 	// Lifecycle related outputs											             
+	{ SSC_OUTPUT,        SSC_ARRAY,      "batt_DOD_cycle_average",                     "Battery average cycle DOD",                              "",         "",                     "Battery",       "",                           "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "batt_cycles",                                "Battery number of cycles",                               "",         "",                     "Battery",       "",                           "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "batt_temperature",                           "Battery temperature",                                    "C",        "",                     "Battery",       "",                           "",                              "" }, 
-	{ SSC_OUTPUT,        SSC_ARRAY,      "batt_capacity_percent",                      "Battery capacity percent for lifetime",                  "%",        "",                     "Battery",       "",                           "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "batt_capacity_percent",                      "Battery relative capacity to nameplate",                 "%",        "",                     "Battery",       "",                           "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "batt_capacity_percent_cycle",                "Battery relative capacity to nameplate (cycling)",       "%",        "",                     "Battery",       "",                           "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "batt_capacity_percent_calendar",             "Battery relative capacity to nameplate (calendar)",      "%",        "",                     "Battery",       "",                           "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "batt_capacity_thermal_percent",              "Battery capacity percent for temperature",               "%",        "",                     "Battery",       "",                           "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "batt_bank_replacement",                      "Battery bank replacements per year",                     "number/year", "",                  "Battery",       "",                           "",                              "" },
 																			          
@@ -237,8 +215,8 @@ var_info vtab_battery_outputs[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "batt_system_loss",                           "Electricity loss from battery ancillary equipment",     "kW",      "",                       "Battery",       "",                           "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "grid_power_target",                          "Electricity grid power target for automated dispatch","kW","",                               "Battery",       "",                           "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "batt_power_target",                          "Electricity battery power target for automated dispatch","kW","",                            "Battery",       "",                           "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "batt_cost_to_cycle",                         "Computed cost to cycle",                                "$/cycle", "",                       "Battery",       "",                           "",                              "" },
-
+	{ SSC_OUTPUT,        SSC_ARRAY,      "batt_cost_to_cycle",                         "Battery computed cost to cycle",                                "$/cycle", "",                       "Battery",       "",                           "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "market_sell_rate_series_yr1",                "Market sell rate (Year 1)",                             "$/MWh", "",                         "Battery",       "",                           "",                              "" },
 
 	// monthly outputs
 	{ SSC_OUTPUT,        SSC_ARRAY,      "monthly_pv_to_load",                         "Energy to load from PV",                                "kWh",      "",                      "Battery",       "",                          "LENGTH=12",                     "" },
@@ -286,7 +264,7 @@ battstor::battstor(compute_module &cm, bool setup_model, size_t nrec, double dt_
 	}
 
 	// battery variables
-	if (batt_vars_in == 0)
+	if (batt_vars_in == 0) 
 	{
 		make_vars = true;
 		batt_vars = new batt_variables();
@@ -387,11 +365,25 @@ battstor::battstor(compute_module &cm, bool setup_model, size_t nrec, double dt_
 				batt_vars->pv_clipping_forecast = cm.as_vector_double("batt_pv_clipping_forecast");
 				batt_vars->pv_dc_power_forecast = cm.as_vector_double("batt_pv_dc_forecast");
 				double ppa_price = cm.as_double("ppa_price_input");
-				batt_vars->ppa_factors = cm.as_vector_double("dispatch_tod_factors");
-				for (size_t i = 0; i != batt_vars->ppa_factors.size(); i++)
-					batt_vars->ppa_factors[i] *= ppa_price;
-				batt_vars->ppa_weekday_schedule = cm.as_matrix_unsigned_long("dispatch_sched_weekday");
-				batt_vars->ppa_weekend_schedule = cm.as_matrix_unsigned_long("dispatch_sched_weekend");
+				int ppa_multiplier_mode = cm.as_integer("ppa_multiplier_model");
+
+				if (ppa_multiplier_mode == 0) {
+					batt_vars->ppa_price_series_dollar_per_kwh = flatten_diurnal(
+						cm.as_matrix_unsigned_long("dispatch_sched_weekday"), 
+						cm.as_matrix_unsigned_long("dispatch_sched_weekend"), 
+						step_per_hour,
+						cm.as_vector_double("dispatch_tod_factors"), ppa_price);
+				}
+				else {
+					batt_vars->ppa_price_series_dollar_per_kwh = cm.as_vector_double("dispatch_factors_ts");
+					for (size_t i = 0; i < batt_vars->ppa_price_series_dollar_per_kwh.size(); i++) {
+						batt_vars->ppa_price_series_dollar_per_kwh[i] *= ppa_price;
+					}
+				}
+				outMarketPrice = cm.allocate("market_sell_rate_series_yr1",batt_vars->ppa_price_series_dollar_per_kwh.size());
+				for (size_t i = 0; i < batt_vars->ppa_price_series_dollar_per_kwh.size(); i++) {
+					outMarketPrice[i] = (ssc_number_t)(batt_vars->ppa_price_series_dollar_per_kwh[i] * 1000.0);
+				}
 
 				// For automated front of meter with electricity rates
 				batt_vars->ec_rate_defined = false;
@@ -592,6 +584,7 @@ battstor::battstor(compute_module &cm, bool setup_model, size_t nrec, double dt_
 	outMaxCharge = 0;
 	outSOC = 0;
 	outDOD = 0;
+	outDODCycleAverage = 0;
 	outCurrent = 0;
 	outCellVoltage = 0;
 	outBatteryVoltage = 0;
@@ -674,7 +667,10 @@ battstor::battstor(compute_module &cm, bool setup_model, size_t nrec, double dt_
 	outCycles = cm.allocate("batt_cycles", nrec*nyears);
 	outSOC = cm.allocate("batt_SOC", nrec*nyears);
 	outDOD = cm.allocate("batt_DOD", nrec*nyears);
+	outDODCycleAverage = cm.allocate("batt_DOD_cycle_average", nrec*nyears);
 	outCapacityPercent = cm.allocate("batt_capacity_percent", nrec*nyears);
+	outCapacityPercentCycle = cm.allocate("batt_capacity_percent_cycle", nrec*nyears);
+	outCapacityPercentCalendar = cm.allocate("batt_capacity_percent_calendar", nrec*nyears);
 	outBatteryPower = cm.allocate("batt_power", nrec*nyears);
 	outGridPower = cm.allocate("grid_power", nrec*nyears); // Net grid energy required.  Positive indicates putting energy on grid.  Negative indicates pulling off grid
 	outGenPower = cm.allocate("pv_batt_gen", nrec*nyears);
@@ -879,7 +875,7 @@ battstor::battstor(compute_module &cm, bool setup_model, size_t nrec, double dt_
 			batt_vars->batt_dispatch_auto_can_charge, batt_vars->batt_dispatch_auto_can_clipcharge, batt_vars->batt_dispatch_auto_can_gridcharge, batt_vars->batt_dispatch_auto_can_fuelcellcharge,
 			batt_vars->inverter_paco, batt_vars->batt_cost_per_kwh,
 			batt_vars->batt_cycle_cost_choice, batt_vars->batt_cycle_cost,
-			batt_vars->ppa_factors, batt_vars->ppa_weekday_schedule, batt_vars->ppa_weekend_schedule, utilityRate,
+			batt_vars->ppa_price_series_dollar_per_kwh, utilityRate,
 			batt_vars->batt_dc_dc_bms_efficiency, efficiencyCombined , efficiencyCombined);
 
 		if (batt_vars->batt_dispatch == dispatch_t::CUSTOM_DISPATCH)
@@ -1193,7 +1189,11 @@ void battstor::outputs_fixed(compute_module &cm)
 	outCycles[index] = (ssc_number_t)(lifetime_cycle_model->cycles_elapsed());
 	outSOC[index] = (ssc_number_t)(capacity_model->SOC());
 	outDOD[index] = (ssc_number_t)(lifetime_cycle_model->cycle_range());
+	outDODCycleAverage[index] = (ssc_number_t)(lifetime_cycle_model->average_range());
 	outCapacityPercent[index] = (ssc_number_t)(lifetime_model->capacity_percent());
+	outCapacityPercentCycle[index] = (ssc_number_t)(lifetime_model->capacity_percent_cycle());
+	outCapacityPercentCalendar[index] = (ssc_number_t)(lifetime_model->capacity_percent_calendar());
+
 }
  
 void battstor::outputs_topology_dependent(compute_module &)
@@ -1415,7 +1415,6 @@ public:
 			size_t lifetime_idx = 0;
 			for (size_t year = 0; year != batt.nyears; year++)
 			{
-				size_t year_idx = 0; 
 				for (size_t hour = 0; hour < 8760; hour++)
 				{
 					// status bar
@@ -1434,13 +1433,12 @@ public:
 	
 						batt.initialize_time(year, hour, jj);
 						batt.check_replacement_schedule();
-						batt.advance(*this, power_input_lifetime[year_idx], 0, load_lifetime[year_idx], 0);
+						batt.advance(*this, power_input_lifetime[lifetime_idx], 0, load_lifetime[lifetime_idx], 0);
 						p_gen[lifetime_idx] = batt.outGenPower[lifetime_idx];
 						if (year == 0) {
 							annual_energy += p_gen[lifetime_idx] * batt._dt_hour;
 						}
 						lifetime_idx++;
-						year_idx++;
 					}
 				}
 			}

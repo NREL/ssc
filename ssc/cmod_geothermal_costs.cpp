@@ -1,51 +1,24 @@
-/*******************************************************************************************************
-*  Copyright 2017 Alliance for Sustainable Energy, LLC
-*
-*  NOTICE: This software was developed at least in part by Alliance for Sustainable Energy, LLC
-*  (�Alliance�) under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
-*  The Government retains for itself and others acting on its behalf a nonexclusive, paid-up,
-*  irrevocable worldwide license in the software to reproduce, prepare derivative works, distribute
-*  copies to the public, perform publicly and display publicly, and to permit others to do so.
-*
-*  Redistribution and use in source and binary forms, with or without modification, are permitted
-*  provided that the following conditions are met:
-*
-*  1. Redistributions of source code must retain the above copyright notice, the above government
-*  rights notice, this list of conditions and the following disclaimer.
-*
-*  2. Redistributions in binary form must reproduce the above copyright notice, the above government
-*  rights notice, this list of conditions and the following disclaimer in the documentation and/or
-*  other materials provided with the distribution.
-*
-*  3. The entire corresponding source code of any redistribution, with or without modification, by a
-*  research entity, including but not limited to any contracting manager/operator of a United States
-*  National Laboratory, any institution of higher learning, and any non-profit organization, must be
-*  made publicly available under this license for as long as the redistribution is made available by
-*  the research entity.
-*
-*  4. Redistribution of this software, without modification, must refer to the software by the same
-*  designation. Redistribution of a modified version of this software (i) may not refer to the modified
-*  version by the same designation, or by any confusingly similar designation, and (ii) must refer to
-*  the underlying software originally provided by Alliance as �System Advisor Model� or �SAM�. Except
-*  to comply with the foregoing, the terms �System Advisor Model�, �SAM�, or any confusingly similar
-*  designation may not be used to refer to any modified version of this software or any modified
-*  version of the underlying software originally provided by Alliance without the prior written consent
-*  of Alliance.
-*
-*  5. The name of the copyright holder, contributors, the United States Government, the United States
-*  Department of Energy, or any of their employees may not be used to endorse or promote products
-*  derived from this software without specific prior written permission.
-*
-*  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
-*  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
-*  FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER,
-*  CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES DEPARTMENT OF ENERGY, NOR ANY OF THEIR
-*  EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-*  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-*  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
-*  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
-*  THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*******************************************************************************************************/
+/**
+BSD-3-Clause
+Copyright 2019 Alliance for Sustainable Energy, LLC
+Redistribution and use in source and binary forms, with or without modification, are permitted provided 
+that the following conditions are met :
+1.	Redistributions of source code must retain the above copyright notice, this list of conditions 
+and the following disclaimer.
+2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions 
+and the following disclaimer in the documentation and/or other materials provided with the distribution.
+3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse 
+or promote products derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, 
+INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
+ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES 
+DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, 
+OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; 
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
+WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT 
+OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
 
 #include "core.h"
 #include <stdio.h>
@@ -54,46 +27,43 @@
 #include "common.h"
 
 
-
-
-
 static var_info _cm_vtab_geothermal_costs[] = {
-/*   VARTYPE			DATATYPE         NAME                              LABEL                                                       UNITS		META                      GROUP                   REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
-	
-	{ SSC_INPUT,        SSC_NUMBER,     "conversion_type",					"Conversion Type",											"",			"",						"GeoHourly",			    "*",                        "INTEGER",					    "" },
-	// Binary Plant Type Inputs:		
-	{ SSC_INPUT,		SSC_NUMBER,     "gross_output",						"Gross output from GETEM",									"kW",		"",						"GeoHourly",				"*",						"",								"" },
-	{ SSC_INPUT,		SSC_NUMBER,		"design_temp",						"Power block design temperature",							"C",        "",						"GeoHourly",				"*",						"",								"" },
-	{ SSC_INPUT,        SSC_NUMBER,     "eff_secondlaw",					"Second Law Efficiency",									"%",		"",						"GeoHourly",				"*",						"",								"" },
-	// Flash Plant Type Inputs:
-	{ SSC_INPUT,		SSC_NUMBER,		"qRejectTotal",						"Total Rejected Heat",										"btu/h",			"",				"GeoHourly",				"conversion_type=1",						"",								""},
-	{ SSC_INPUT,		SSC_NUMBER,		"qCondenser",						"Condenser Heat Rejected",									"btu/h",	"",						"GeoHourly",				"conversion_type=1",						"",								"" },
-	{ SSC_INPUT,		SSC_NUMBER,		"v_stage_1",						"Vacumm Pump Stage 1",										"kW",		"",						"GeoHourly",				"conversion_type=1",						"",								"" },
-	{ SSC_INPUT,		SSC_NUMBER,		"v_stage_2",						"Vacumm Pump Stage 2",										"kW",		"",						"GeoHourly",				"conversion_type=1",						"",								"" },
-	{ SSC_INPUT,		SSC_NUMBER,		"v_stage_3",						"Vacumm Pump Stage 3",										"kW",		"",						"GeoHourly",				"conversion_type=1",						"",								"" },
-	{ SSC_INPUT,		SSC_NUMBER,		"GF_flowrate",						"GF Flow Rate",												"lb/h",		"",						"GeoHourly",				"conversion_type=1",						"",								"" },
-	{ SSC_INPUT,		SSC_NUMBER,		"qRejectByStage_1",					"Heat Rejected by NCG Condenser Stage 1",					"BTU/hr",	"",						"GeoHourly",				"conversion_type=1",						"",								"" },
-	{ SSC_INPUT,		SSC_NUMBER,		"qRejectByStage_2",					"Heat Rejected by NCG Condenser Stage 2",					"BTU/hr",	"",						"GeoHourly",				"conversion_type=1",						"",								"" },
-	{ SSC_INPUT,		SSC_NUMBER,		"qRejectByStage_3",					"Heat Rejected by NCG Condenser Stage 3",					"BTU/hr",	"",						"GeoHourly",				"conversion_type=1",						"",								"" },
-	{ SSC_INPUT,		SSC_NUMBER,		"ncg_condensate_pump",				"Condensate Pump Work",										"kW",		"",						"GeoHourly",				"conversion_type=1",						"",								"" },
-	{ SSC_INPUT,		SSC_NUMBER,		"cw_pump_work",						"CW Pump Work",												"kW",		"",						"GeoHourly",				"conversion_type=1",						"",								"" },
-	{ SSC_INPUT,		SSC_NUMBER,		"pressure_ratio_1",					"Suction Steam Ratio 1",									"",			"",						"GeoHourly",				 "conversion_type=1",						"",								"" },
-	{ SSC_INPUT,		SSC_NUMBER,		"pressure_ratio_2",					"Suction Steam Ratio 2",									"",			"",						"GeoHourly",				 "conversion_type=1",						"",								"" },
-	{ SSC_INPUT,		SSC_NUMBER,		"pressure_ratio_3",					"Suction Steam Ratio 3",									"",			"",						"GeoHourly",				 "conversion_type=1",						"",								"" },
-	{ SSC_INPUT,		SSC_NUMBER,		"condensate_pump_power",			"hp",														"",			"",						"GeoHourly",				 "conversion_type=1",						"",								"" },
-	{ SSC_INPUT,		SSC_NUMBER,		"cwflow",							"Cooling Water Flow",										"lb/h",		"",						"GeoHourly",				 "conversion_type=1",						"",								"" },
-	{ SSC_INPUT,		SSC_NUMBER,		"cw_pump_head",						"Cooling Water Pump Head",									"lb/h",		"",						"GeoHourly",				 "conversion_type=1",						"",								"" },
-	{ SSC_INPUT,		SSC_NUMBER,		"spec_vol",							"Specific Volume",											"cft/lb",	"",						"GeoHourly",				 "conversion_type=1",						"",								"" },
-	{ SSC_INPUT,		SSC_NUMBER,		"spec_vol_lp",						"LP Specific Volume",										"cft/lb",	"",						"GeoHourly",				 "conversion_type=1",						"",								"" },
-	{ SSC_INPUT,		SSC_NUMBER,		"x_hp",								"HP Mass Fraction",											"%",		"",						"GeoHourly",				 "conversion_type=1",						"",								"" },
-	{ SSC_INPUT,		SSC_NUMBER,		"x_lp",								"LP Mass Fraction",											"%",		"",						"GeoHourly",				 "conversion_type=1",						 "",							"" },
-	{ SSC_INPUT,		SSC_NUMBER,		"hp_flash_pressure",				"HP Flash Pressure",										"psia",		"",						"GeoHourly",				 "conversion_type=1",						"",								"" },
-	{ SSC_INPUT,		SSC_NUMBER,		"lp_flash_pressure",				"LP Flash Pressure",										"psia",		"",						"GeoHourly",				 "conversion_type=1",						"",								"" },
-	{ SSC_INPUT,		SSC_NUMBER,		"flash_count",						"Flash Count",												"(1 -2)",	"",						"GeoHourly",				 "conversion_type=1",						"",								"" },
-	// Outputs	
-	
-	{ SSC_OUTPUT,       SSC_NUMBER,     "baseline_cost",					"Baseline Cost",											"$/kW",		"",                     "GeoHourly",				"?",                         "",                            "" },
-	var_info_invalid };
+	/*   VARTYPE			DATATYPE         NAME                              LABEL                                                       UNITS		META                      GROUP                   REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
+
+		{ SSC_INPUT,        SSC_NUMBER,     "conversion_type",					"Conversion Type",											"",			"",						"GeoHourly",			    "*",                        "INTEGER",					    "" },
+		// Binary Plant Type Inputs:		
+		{ SSC_INPUT,		SSC_NUMBER,     "gross_output",						"Gross output from GETEM",									"kW",		"",						"GeoHourly",				"*",						"",								"" },
+		{ SSC_INPUT,		SSC_NUMBER,		"design_temp",						"Power block design temperature",							"C",        "",						"GeoHourly",				"*",						"",								"" },
+		{ SSC_INPUT,        SSC_NUMBER,     "eff_secondlaw",					"Second Law Efficiency",									"%",		"",						"GeoHourly",				"*",						"",								"" },
+		// Flash Plant Type Inputs:
+		{ SSC_INPUT,		SSC_NUMBER,		"qRejectTotal",						"Total Rejected Heat",										"btu/h",			"",				"GeoHourly",				"conversion_type=1",		"",								""},
+		{ SSC_INPUT,		SSC_NUMBER,		"qCondenser",						"Condenser Heat Rejected",									"btu/h",	"",						"GeoHourly",				"conversion_type=1",		"",								"" },
+		{ SSC_INPUT,		SSC_NUMBER,		"v_stage_1",						"Vacumm Pump Stage 1",										"kW",		"",						"GeoHourly",				"conversion_type=1",		"",								"" },
+		{ SSC_INPUT,		SSC_NUMBER,		"v_stage_2",						"Vacumm Pump Stage 2",										"kW",		"",						"GeoHourly",				"conversion_type=1",		"",								"" },
+		{ SSC_INPUT,		SSC_NUMBER,		"v_stage_3",						"Vacumm Pump Stage 3",										"kW",		"",						"GeoHourly",				"conversion_type=1",		"",								"" },
+		{ SSC_INPUT,		SSC_NUMBER,		"GF_flowrate",						"GF Flow Rate",												"lb/h",		"",						"GeoHourly",				"conversion_type=1",		"",								"" },
+		{ SSC_INPUT,		SSC_NUMBER,		"qRejectByStage_1",					"Heat Rejected by NCG Condenser Stage 1",					"BTU/hr",	"",						"GeoHourly",				"conversion_type=1",		"",								"" },
+		{ SSC_INPUT,		SSC_NUMBER,		"qRejectByStage_2",					"Heat Rejected by NCG Condenser Stage 2",					"BTU/hr",	"",						"GeoHourly",				"conversion_type=1",		"",								"" },
+		{ SSC_INPUT,		SSC_NUMBER,		"qRejectByStage_3",					"Heat Rejected by NCG Condenser Stage 3",					"BTU/hr",	"",						"GeoHourly",				"conversion_type=1",		"",								"" },
+		{ SSC_INPUT,		SSC_NUMBER,		"ncg_condensate_pump",				"Condensate Pump Work",										"kW",		"",						"GeoHourly",				"conversion_type=1",		"",								"" },
+		{ SSC_INPUT,		SSC_NUMBER,		"cw_pump_work",						"CW Pump Work",												"kW",		"",						"GeoHourly",				"conversion_type=1",		"",								"" },
+		{ SSC_INPUT,		SSC_NUMBER,		"pressure_ratio_1",					"Suction Steam Ratio 1",									"",			"",						"GeoHourly",				 "conversion_type=1",		"",								"" },
+		{ SSC_INPUT,		SSC_NUMBER,		"pressure_ratio_2",					"Suction Steam Ratio 2",									"",			"",						"GeoHourly",				 "conversion_type=1",		"",								"" },
+		{ SSC_INPUT,		SSC_NUMBER,		"pressure_ratio_3",					"Suction Steam Ratio 3",									"",			"",						"GeoHourly",				 "conversion_type=1",		"",								"" },
+		{ SSC_INPUT,		SSC_NUMBER,		"condensate_pump_power",			"hp",														"",			"",						"GeoHourly",				 "conversion_type=1",		"",								"" },
+		{ SSC_INPUT,		SSC_NUMBER,		"cwflow",							"Cooling Water Flow",										"lb/h",		"",						"GeoHourly",				 "conversion_type=1",		"",								"" },
+		{ SSC_INPUT,		SSC_NUMBER,		"cw_pump_head",						"Cooling Water Pump Head",									"lb/h",		"",						"GeoHourly",				 "conversion_type=1",		"",								"" },
+		{ SSC_INPUT,		SSC_NUMBER,		"spec_vol",							"Specific Volume",											"cft/lb",	"",						"GeoHourly",				 "conversion_type=1",		"",								"" },
+		{ SSC_INPUT,		SSC_NUMBER,		"spec_vol_lp",						"LP Specific Volume",										"cft/lb",	"",						"GeoHourly",				 "conversion_type=1",		"",								"" },
+		{ SSC_INPUT,		SSC_NUMBER,		"x_hp",								"HP Mass Fraction",											"%",		"",						"GeoHourly",				 "conversion_type=1",		"",								"" },
+		{ SSC_INPUT,		SSC_NUMBER,		"x_lp",								"LP Mass Fraction",											"%",		"",						"GeoHourly",				 "conversion_type=1",		 "",							"" },
+		{ SSC_INPUT,		SSC_NUMBER,		"hp_flash_pressure",				"HP Flash Pressure",										"psia",		"",						"GeoHourly",				 "conversion_type=1",		"",								"" },
+		{ SSC_INPUT,		SSC_NUMBER,		"lp_flash_pressure",				"LP Flash Pressure",										"psia",		"",						"GeoHourly",				 "conversion_type=1",		"",								"" },
+		{ SSC_INPUT,		SSC_NUMBER,		"flash_count",						"Flash Count",												"(1 -2)",	"",						"GeoHourly",				 "conversion_type=1",		"",								"" },
+		// Outputs	
+
+		{ SSC_OUTPUT,       SSC_NUMBER,     "baseline_cost",					"Baseline Cost",											"$/kW",		"",                     "GeoHourly",				"?",                         "",                            "" },
+		var_info_invalid };
 
 
 
@@ -102,7 +72,7 @@ class cm_geothermal_costs : public compute_module
 private:
 
 	//Inputs for Binary Type Plant (Note: Some variables might be common to both plant types - Binary and Flash)
-	std::vector< double> hx_ppi{ 0.890669720,0.919862622,0.938752147,0.957069262,0.963938180,0.972524327,0.983400114,1.000000000,0.998855180,1.066399542,1.226674299,1.333142530,1.377790498,1.438465942,1.414997138,1.423583286,1.464224385,1.513451631,1.535203205,1.555237550,1.604464797,1.643961076,1.657698912, 0.000000000 };		//HX Cost Index Normalized to 2001, 2002, 2007, 2010 and 2012; Beginning Year = 1995; Final Year = 2016;
+	std::vector<double> hx_ppi{ 0.890669720,0.919862622,0.938752147,0.957069262,0.963938180,0.972524327,0.983400114,1.000000000,0.998855180,1.066399542,1.226674299,1.333142530,1.377790498,1.438465942,1.414997138,1.423583286,1.464224385,1.513451631,1.535203205,1.555237550,1.604464797,1.643961076,1.657698912, 0.000000000 };		//HX Cost Index Normalized to 2001, 2002, 2007, 2010 and 2012; Beginning Year = 1995; Final Year = 2016;
 	std::vector<double> steel_ppi{ 1.128834356,1.102541630,1.108676599,1.073619632,0.999123576,1.021910605,0.961437336,1.000000000,1.064855390,1.423312883,1.499561788,1.634531113,1.762489045,2.159509202,1.612620508,1.958808063,2.219106047,2.109553024,1.984224365,2.034180543,1.714285714,1.638913234,1.858019281,0.000000000 };	//Steel Cost Index Normalized to 2001, 2002, 2007, 2010 and 2012; Beginning Year = 1995; Final Year = 2016;
 	std::vector<double> process_equip_ppi{ 0.884044412,0.907406542,0.926150373,0.942470679,0.956807105,0.967657025,0.985381166,1.000000000,1.014742613,1.077732637,1.155135271,1.222672817,1.304587248,1.382668341,1.403383400,1.411178107,1.455344223,1.509492085,1.533628545,1.638936512,1.656479161,1.653172080,1.679672296,0.000000000 }; //Process Equipment Cost Index Normalized to 2001, 2002, 2007, 2010 and 2012; Beginning Year = 1995; Final Year = 2016;
 	std::vector<double> engineering_ppi{ 0.779879622,0.810834050,0.859415305,0.888650043,0.913585555,0.954428203,0.975924334,1.000000000,1.048581255,1.081685297,1.102751505,1.136285469,1.210232158,1.275150473,1.329750645,1.392089424,1.362424764,1.365004299,1.388650043,1.433791917,1.486242476,1.503869304,1.558039553,0.000000000 }; // Engineering Cost Index Normalized to 2001, 2002, 2007, 2010 and 2012; Beginning Year = 1995; Final Year = 2016;
@@ -110,7 +80,7 @@ private:
 	std::vector<double> turbine_ppi{ 0.882850242,0.896135266,0.917874396,0.934782609,0.960144928,0.969202899,0.980072464,1.000000000,1.013285024,1.018719807,1.017512077,1.050120773,1.106884058,1.245169082,1.350241546,1.340579710,1.359903382,1.349637681,1.376811594,1.411835749,1.399154589,1.403046162,1.346947738,1.327974034 }; //Turbine-Generator Cost Index Normalized to 2001, 2002, 2007, 2010 and 2012; Beginning Year = 1995; Final Year = 2016;
 	std::vector<double> construction_ppi{ 0.790555556,0.816666667,0.842222222,0.872777778,0.909444444,0.933333333,0.957777778,1.000000000,1.039444444,1.067222222,1.088888889,1.129444444,1.170000000,1.221666667,1.277777778,1.320000000,1.357777778,1.361666667,1.374444444,1.426666667,1.475000000,1.528333333,1.594444444,0.000000000 };
 	double user_adjust = 1;
-	double size_ratio ;
+	double size_ratio;
 	//double scaling_factor ;	//for the GF HX
 	double ref_plant_size = 10000;	//kW
 	double hx_cost_adjust = 1;
@@ -133,10 +103,10 @@ private:
 	double turbine_cost;
 
 	double corrected_equip_cost;
-	
+
 	//Defining variables used in Direct Construction Cost Multiplier:
 	double dc_cost_multiplier;	//Direct Construction Cost Multiplier  [Defined]
-	double corrected_total_material_mult;	
+	double corrected_total_material_mult;
 	double corrected_construct_malts;
 	double plant_size_adjustment;
 	double direct_installation_multiplier;
@@ -146,7 +116,7 @@ private:
 	double corrected_labor;
 	double labor_cost_multiplier = 0.27;
 	double labor_fringe_benefits = 0.45;
-		
+
 	//Coefficients for GF HX cost calculation:
 	double sf_0 = 1.01216;
 	double sf_1 = -0.000760473;
@@ -168,7 +138,7 @@ private:
 	double acc_c11 = 0.005950211;
 	double acc_c12 = -0.001200635;
 	double acc_c13 = 0.000005657483;
-	double acc_c20  = 3.582461;
+	double acc_c20 = 3.582461;
 	double acc_c21 = -0.05107826;
 	double acc_c22 = 0.000277465;
 	double acc_c23 = -2.549391e-07;
@@ -208,14 +178,14 @@ private:
 	double turbine_c2 = 0.00004244825;
 	double turbine_c3 = -5.321e-08;
 	double turbine_c10 = -24.62889285714;
-	double turbine_c11 = 0.49768131746; 
+	double turbine_c11 = 0.49768131746;
 	double turbine_c12 = -0.00296254476;
 	double turbine_c13 = 5.52551e-06;
 	double ppc_0;
 	double ppc_1;
 	double turbine_c;	//Reference Turbine Cost
 	double generator_c; //Reference Generator Cost
-	double max_turbine_size = 15000*0.7457; //From GETEM
+	double max_turbine_size = 15000 * 0.7457; //From GETEM
 	double parasitic;
 	double tg_size;
 	double tg_sets;
@@ -228,16 +198,16 @@ private:
 
 
 	//Inputs for Flash Plant Type:
-	int tg_sets_num = 1 ; //Number of T-G Sets
+	int tg_sets_num = 1; //Number of T-G Sets
 	double cooling_tower_cost;
 	double condenser_cost_flash;
-	double lmtd; 
+	double lmtd;
 	double condenser_pinch_pt = 7.50; //As seen in GETEM, this value is always 7.50
-	double dtCooling_water = 25.0; 
-	double condenser_u = 350.00 ; //As seen in GETEM, this value is always 350.00
+	double dtCooling_water = 25.0;
+	double condenser_u = 350.00; //As seen in GETEM, this value is always 350.00
 	double area;
 	//double qCondenser;
-	double hp_total_cost; 
+	double hp_total_cost;
 	//double hp_flash_pressure;
 	double a_cross_section;
 	//double flash_vessels_cost = 552981.85;
@@ -245,7 +215,7 @@ private:
 	double vacuum_pump_2;	//stage 2 cost of vacuum pump
 	double vacuum_pump_3;	//stage 3 cost of vacuum pump
 	double vacuum_pump;		//vacuum pump cost (sum of all 3 stages)
-	int U =350;				//Heat Transfer Coefficient
+	int U = 350;				//Heat Transfer Coefficient
 	double cond_area_1;
 	double cond_area_2;
 	double cond_area_3;
@@ -274,14 +244,14 @@ private:
 	double current_h2s_cost;
 
 	//HP Flash Vessel Cost Inputs:
-	double current_cost_flash; 
+	double current_cost_flash;
 	double m_stm, m_stm_lp;
 	double hp_steam_flow;
 	double max_drop_size = 200; //(microns)
 	double v_terminal;
 	double num_vessels; //number of hp flash vessels
 	double area_xsection_hp;
-	double hp_flash_volume; 
+	double hp_flash_volume;
 	double A, D, H, A_lp, D_lp, H_lp;
 	double hp_flash_cost;
 
@@ -299,8 +269,6 @@ public:
 
 		add_var_info(_cm_vtab_geothermal_costs);
 	}
-	
-	
 
 
 	void exec() override
@@ -315,9 +283,9 @@ public:
 			//double unit_plant = as_double("nameplate");		//Gross plant size
 			double design_temp = as_double("design_temp");
 			double eff = as_double("eff_secondlaw");	// w-h/lb
-			double unit_plant = as_double("gross_output") ; 
+			double unit_plant = as_double("gross_output");
 
-			//GF HX Equipment Cost Calculations:				
+			//Geofluid Heat Exchangers Equipment Cost Calculations:				
 			size_ratio = unit_plant / ref_plant_size;
 			sf_hx = (sf_3 * pow(design_temp, 3)) + (sf_2 * pow(design_temp, 2)) + (sf_1 * design_temp) + sf_0;
 			hx_gf_c1 = hx_c10 + (hx_c11 * pow(design_temp, hx_c12));
@@ -340,7 +308,7 @@ public:
 
 
 
-			//WF Pumps Cost Calculation:
+			//Working Fluid Pumps Cost Calculation:
 			sf_wf = (wf_sf_c3*pow(design_temp, 3)) + (wf_sf_c2*pow(design_temp, 2)) + (wf_sf_c1*design_temp) + wf_sf_c0;
 			pcc_1 = (wf_c12 * pow(design_temp, 2)) + (wf_c11 * design_temp) + wf_c10;
 			pcc_2 = (wf_c22 * pow(design_temp, 2)) + (wf_c21 * design_temp) + wf_c20;
@@ -349,7 +317,7 @@ public:
 			wf_pump_cost = user_adjust * pow(size_ratio, sf_wf)*((ref_plant_size * pcc_c * pump_ppi[20]) / unit_plant);
 
 
-			//Turbine Cost Calculation:
+			//Turbine-Generator (TG) Cost Calculation:
 			if (unit_plant < ref_plant_size)
 				sf_turbine = (turbine_sf_c2*pow(design_temp, 2)) + (turbine_sf_c1*design_temp) + turbine_sf_c0;
 			else
@@ -377,7 +345,7 @@ public:
 			turbine_cost = user_adjust * pow(size_ratio, sf_turbine)*((ref_plant_size * tg_cost * turbine_ppi[20]) / unit_plant);
 
 
-			//Calculating Direct Construction Cost Multiplier
+			//Calculating Direct Construction Cost Multiplier:
 			escalation_equip_cost = (current_cost_ref_acc + current_cost_ref_hx + current_cost_ref_pcc + current_cost_ref_tg) / (hx_gf_c + acc_c + pcc_c + tg_cost);
 			corrected_labor = ((labor_cost_multiplier*engineering_ppi[20]) / escalation_equip_cost)*(1 + labor_fringe_benefits);
 			corrected_construct_malts = (const_matls_rentals * process_equip_ppi[20]) / escalation_equip_cost;
@@ -391,7 +359,7 @@ public:
 			//Total Plant Cost: 
 			plant_equip_cost = hx_cost + condenser_cost + wf_pump_cost + turbine_cost;
 			corrected_equip_cost = dc_cost_multiplier * plant_equip_cost;
-			
+
 
 			// for outputs, to assign, use:
 			//assign("dc_cost_multiplier", var_data(static_cast<ssc_number_t>(dc_cost_multiplier)));
@@ -400,7 +368,7 @@ public:
 
 		else if (conversion_type == 1) {
 			//geo_inputs.me_ct = FLASH;
-			double unit_plant = as_double("gross_output");			
+			double unit_plant = as_double("gross_output");
 
 			double qRejectTotal = as_double("qRejectTotal") / 1000000;		// Converting from btu/h to MMBTU/h
 			double q_Condenser = as_double("qCondenser") / 1000000;			// Converting from btu/h to MMBTU/h
@@ -429,8 +397,8 @@ public:
 			double cw_pump_head = as_double("cw_pump_head");
 			double spec_vol = as_double("spec_vol");
 			double spec_vol_lp = as_double("spec_vol_lp");
-			double x_hp = as_double("x_hp") ;		// %
-			double x_lp = as_double("x_lp") ;	// %
+			double x_hp = as_double("x_hp");		// %
+			double x_lp = as_double("x_lp");	// %
 			double hp_flash_pressure = as_double("hp_flash_pressure");
 			double lp_flash_pressure = as_double("lp_flash_pressure");
 			double flash_count = as_double("flash_count");
@@ -440,56 +408,56 @@ public:
 			tg_cost = (tg_sets_num * (2830 * (pow((unit_plant / tg_sets_num), 0.745)))) + (3685 * (pow((unit_plant / tg_sets_num), 0.617)));	//Reference Equipment Cost
 			current_tg_cost = tg_cost * turbine_ppi[20];
 
-			
+
 			//Cooling Tower Cost:
 			condenser_heat_rejected = GF_flowrate * qRejectTotal / 1000;
 			cooling_tower_cost = 7200 * (pow(condenser_heat_rejected, 0.8));		//Reference Equipment Cost
 			current_tower_cost = cooling_tower_cost * process_equip_ppi[20];
 
 			//Condenser Cost: 
-			lmtd = (condenser_pinch_pt - (condenser_pinch_pt + dtCooling_water)) / (std::log(condenser_pinch_pt/(condenser_pinch_pt + dtCooling_water)));
-			area = (q_Condenser*GF_flowrate/1000) * 1000000 / (lmtd*condenser_u);
+			lmtd = (condenser_pinch_pt - (condenser_pinch_pt + dtCooling_water)) / (std::log(condenser_pinch_pt / (condenser_pinch_pt + dtCooling_water)));
+			area = (q_Condenser*GF_flowrate / 1000) * 1000000 / (lmtd*condenser_u);
 			condenser_cost_flash = 102 * pow(area, 0.85);		//Reference Equipment Cost
 			current_condenser_cost = condenser_cost_flash * hx_ppi[20];
-					   			 		  		  					   			 
+
 			//Flash Vessel Calculation:
 			//HP Flash Cost Calculation:
 			m_stm = x_hp * 1000; // (lb / h)
-			hp_steam_flow = ((GF_flowrate/1000)* m_stm ) * spec_vol / 60;	// units: cfm
-			v_terminal = (-0.0009414 * pow(max_drop_size, 2) * std::log(hp_flash_pressure)) + (0.01096 * pow(max_drop_size, 2)); 
-			area_xsection_hp = hp_steam_flow / v_terminal; 
-			num_vessels = ceil(area_xsection_hp / 300); 
+			hp_steam_flow = ((GF_flowrate / 1000)* m_stm) * spec_vol / 60;	// units: cfm
+			v_terminal = (-0.0009414 * pow(max_drop_size, 2) * std::log(hp_flash_pressure)) + (0.01096 * pow(max_drop_size, 2));
+			area_xsection_hp = hp_steam_flow / v_terminal;
+			num_vessels = ceil(area_xsection_hp / 300);
 			A = area_xsection_hp / num_vessels;
 			D = pow((A * 4 / M_PI), 0.5);
 			H = D * 3;
 			hp_flash_volume = A * H * 7.4805;
-			hp_flash_cost = num_vessels * ( (hp_flash_pressure < 75) ? 166.5 * pow(hp_flash_volume, 0.625) : 110 * pow(hp_flash_volume, 0.68) );
+			hp_flash_cost = num_vessels * ((hp_flash_pressure < 75) ? 166.5 * pow(hp_flash_volume, 0.625) : 110 * pow(hp_flash_volume, 0.68));
 
 			//LP Flash Cost Calculation: 
 			m_stm_lp = (flash_count == 2) ? (x_lp * 1000 * (1 - x_hp)) : 0;
-			lp_steam_flow = ((GF_flowrate / 1000)*m_stm_lp) * spec_vol_lp  / 60;	// (lb/h)
-			v_terminal_lp = (flash_count == 1)? 0 : ((-0.0009414 * pow(max_drop_size, 2) * std::log(lp_flash_pressure)) + (0.01096 * pow(max_drop_size , 2)));
-			a_xsection_lp = (flash_count == 1)? 0 : (lp_steam_flow / v_terminal_lp) ;
+			lp_steam_flow = ((GF_flowrate / 1000)*m_stm_lp) * spec_vol_lp / 60;	// (lb/h)
+			v_terminal_lp = (flash_count == 1) ? 0 : ((-0.0009414 * pow(max_drop_size, 2) * std::log(lp_flash_pressure)) + (0.01096 * pow(max_drop_size, 2)));
+			a_xsection_lp = (flash_count == 1) ? 0 : (lp_steam_flow / v_terminal_lp);
 			num_vessels_lp = ceil(a_xsection_lp / 300);
-			A_lp = (flash_count == 1) ? 0 : (a_xsection_lp / num_vessels_lp); 
-			D_lp = pow(( A_lp * 4 / M_PI), 0.5) ;
+			A_lp = (flash_count == 1) ? 0 : (a_xsection_lp / num_vessels_lp);
+			D_lp = pow((A_lp * 4 / M_PI), 0.5);
 			H_lp = D_lp * 3;
 			lp_flash_volume = A_lp * H_lp * 7.4805;
 			lp_flash_cost = (flash_count == 1) ? 0 : (num_vessels_lp * ((lp_flash_pressure < 75) ? (166.5 * pow(lp_flash_volume, 0.625)) : (110 * pow(lp_flash_volume, 0.68))));
-			
+
 			//Total Flash Vessel Cost:
 			flash_vessel_cost = hp_flash_cost + lp_flash_cost;		//Reference Equipment Cost
 			current_vessel_cost = flash_vessel_cost * process_equip_ppi[20];
 
-					   			 		  		  		 
+
 			//NCG Removal System Cost: //Reference Equipment Cost
 			//Vacuum Pump Cost breakdown:
-			vacuum_pump_1 = (v_stage_1 < 5000) ?  70000 * pow(v_stage_1, 0.34) : 7400 * pow( v_stage_1, 0.6);
-			vacuum_pump_2 = (v_stage_2 < 5000) ?  70000 * pow(v_stage_2, 0.34) : 7400 * pow(v_stage_2, 0.6);
-			vStage_3 =  v_stage_3 * (GF_flowrate / 1000);
-			vacuum_pump_3 = (vStage_3 < 5000) ?  70000 * pow(vStage_3, 0.34) : 7400 * pow(vStage_3, 0.6);
+			vacuum_pump_1 = (v_stage_1 < 5000) ? 70000 * pow(v_stage_1, 0.34) : 7400 * pow(v_stage_1, 0.6);
+			vacuum_pump_2 = (v_stage_2 < 5000) ? 70000 * pow(v_stage_2, 0.34) : 7400 * pow(v_stage_2, 0.6);
+			vStage_3 = v_stage_3 * (GF_flowrate / 1000);
+			vacuum_pump_3 = (vStage_3 < 5000) ? 70000 * pow(vStage_3, 0.34) : 7400 * pow(vStage_3, 0.6);
 			vacuum_pump = vacuum_pump_1 + vacuum_pump_2 + vacuum_pump_3;
-			
+
 			//(NCG) Condensers Cost Breakdown:	//Reference Equipment Cost
 			cond_area_1 = (GF_flowrate / 1000) * (qRejectByStage_1 / (lmtd * 0.9 * U));
 			cond_area_2 = (GF_flowrate / 1000) * (qRejectByStage_2 / (lmtd * 0.9 * U));
@@ -499,50 +467,50 @@ public:
 			//(NCG) Pumps Cost Calculation:	//Reference Equipment Cost
 			ncg_pump_work = (ncg_condensate_pump * GF_flowrate / 1000) / 0.7457;
 			ncg_water_pump = (cw_pump_work * GF_flowrate / 1000) / 0.7457;
-			pump_ncg = 2.35 * 1185 * (pow(ncg_pump_work, 0.767) + pow(ncg_water_pump,0.767));
+			pump_ncg = 2.35 * 1185 * (pow(ncg_pump_work, 0.767) + pow(ncg_water_pump, 0.767));
 
 			//(NCG) Ejector Cost Calculation: (Note: According to lib_geothermal.cpp, ncg removal type is alwasy JET)	//Reference Equipment Cost
-			ejector_ncg = (76 * pow(pressure_ratio_1, (-0.45)) + 43 * pow(pressure_ratio_2, (-0.63))) * ncg_flow ;
-			
+			ejector_ncg = (76 * pow(pressure_ratio_1, (-0.45)) + 43 * pow(pressure_ratio_2, (-0.63))) * ncg_flow;
+
 			//NCG total cost:	
-			ncg_cost =  vacuum_pump + condenser_ncg + pump_ncg + ejector_ncg;		//Reference Equipment Cost
+			ncg_cost = vacuum_pump + condenser_ncg + pump_ncg + ejector_ncg;		//Reference Equipment Cost
 			current_ncg_cost = ncg_cost * process_equip_ppi[20];
 
 			//Pump Cost Calculation:
 			condensate_pump = (GF_flowrate / 1000) * (condensate_pump_power * 1.34102);		//condensate_pump_power * 1.34102 is conversion from kW to hp
 			condensate = 2.35 * 1185 * pow(condensate_pump, 0.767);
-			cw_pump_power = (GF_flowrate / 1000) * ((((cwflow/60)*(cw_pump_head))/33000)/0.7);
+			cw_pump_power = (GF_flowrate / 1000) * ((((cwflow / 60)*(cw_pump_head)) / 33000) / 0.7);
 			cooling_water = 2.35 * 1185 * pow(cw_pump_power, 0.767);
 			pump_cost = condensate + cooling_water;		//Reference Equipment Cost
-			current_pump_cost = pump_cost * pump_ppi[20]; 
+			current_pump_cost = pump_cost * pump_ppi[20];
 
 
 			//H2S Removal System Cost Calculation:
 			h2s_flow = h2s_level * GF_flowrate / 1000000;
 			h2s_cost = 115000 * pow(h2s_flow, 0.58);		//Reference Equipment Cost
-			current_h2s_cost = h2s_cost * process_equip_ppi[20] ; 
+			current_h2s_cost = h2s_cost * process_equip_ppi[20];
 
 			//Total Equipment Cost: 
 			equip_cost_flash = tg_cost + cooling_tower_cost + condenser_cost_flash + flash_vessel_cost + ncg_cost + pump_cost + h2s_cost;
-			current_cost_flash = current_tg_cost + current_tower_cost + current_condenser_cost + current_vessel_cost + current_ncg_cost + current_pump_cost + current_h2s_cost; 
+			current_cost_flash = current_tg_cost + current_tower_cost + current_condenser_cost + current_vessel_cost + current_ncg_cost + current_pump_cost + current_h2s_cost;
 			escalation_ppi = current_cost_flash / equip_cost_flash;
 
-			//Calculating Direct Cost Multiplier:
+			//Calculating Direct Construction Cost Multiplier:
 			material_multiplier = 1 + ((8.65* pow(design_temp, -0.297)) - 1) * (process_equip_ppi[20] / escalation_ppi);
-			labor_multiplier = ((42.65 * pow(design_temp, -0.923)) * 1.45) * construction_ppi[20] / escalation_ppi; 
+			labor_multiplier = ((42.65 * pow(design_temp, -0.923)) * 1.45) * construction_ppi[20] / escalation_ppi;
 			construction_multiplier = (16.177*pow(design_temp, -0.827)) * process_equip_ppi[20] / escalation_ppi;
-			direct_multiplier_2002 = material_multiplier + labor_multiplier + construction_multiplier ;
-			tax = ( material_multiplier + construction_multiplier) * sales_tax  ;
-			freight_flash = (material_multiplier + construction_multiplier) * freight ;
+			direct_multiplier_2002 = material_multiplier + labor_multiplier + construction_multiplier;
+			tax = (material_multiplier + construction_multiplier) * sales_tax;
+			freight_flash = (material_multiplier + construction_multiplier) * freight;
 			dc_cost_multiplier = direct_multiplier_2002 + tax + freight_flash;
 
 
 			//Direct Plant Construction Cost: 
-			direct_plant_cost = current_cost_flash * dc_cost_multiplier;	
+			direct_plant_cost = current_cost_flash * dc_cost_multiplier;
 			baseline_cost = direct_plant_cost / unit_plant;		// ($/kW)
 
 			assign("baseline_cost", var_data(static_cast<ssc_number_t>(baseline_cost)));
-					  
+
 		}
 	};
 

@@ -2,13 +2,13 @@ GTDIR = $(GTEST)
 
 SSCLIB = ./ssc.so
 SPLINTERLIB = ./splinter.a
-GTLIB = $(GTDIR)/make/libgtest_main.a
+GTLIB = $(GTDIR)/build/lib/libgtest.a
 
 WARNINGS = -Wno-deprecated
 LIBS = -ldl -lpthread
 
 CXX = g++
-CXXFLAGS = -std=c++0x -g -O2  -I. -I./input_cases -I./shared_test -I./ssc_test -I./tcs_test -I$(GTDIR)/include -I../ssc -I../tcs -I../solarpilot -I../shared -I../splinter $(WARNINGS)
+CXXFLAGS = -std=c++0x -g -O2  -I. -I./input_cases -I./shared_test -I./ssc_test -I./tcs_test -I${GTDIR}/include -I$(GTDIR)/googletest/include -I../ssc -I../tcs -I../solarpilot -I../shared -I../splinter $(WARNINGS)
 LDFLAGS = $(SPLINTERLIB) $(GTLIB) $(SSCLIB) $(LIBS)
 
 

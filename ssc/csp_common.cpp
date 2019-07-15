@@ -571,6 +571,26 @@ static bool optimize_callback( simulation_info *siminfo, void *data )
     return true;
 }
 
+bool are_values_sig_different(double v1, double v2, double tol)
+{
+    if (fabs(v1) < tol || fabs(v2) < tol)
+    {
+        if (fabs(v1 - v2) > tol)
+        {
+            return true;
+        }
+    }
+    else
+    {
+        if (fabs(v1 - v2) / std::min(fabs(v1), fabs(v2)) > tol)
+        {
+            return true;
+        }
+    }
+    
+    return false;
+}
+
 var_info vtab_sco2_design[] = {
 
 	/*   VARTYPE   DATATYPE         NAME               LABEL                                                    UNITS     META  GROUP REQUIRED_IF CONSTRAINTS     UI_HINTS*/
@@ -651,12 +671,14 @@ var_info vtab_sco2_design[] = {
 	{ SSC_OUTPUT, SSC_NUMBER,  "mc_rho_in",            "Compressor inlet density",                               "kg/m3",      "",    "",      "*",     "",       "" },
 	{ SSC_OUTPUT, SSC_NUMBER,  "mc_ideal_spec_work",   "Compressor ideal spec work",                             "kJ/kg",      "",    "",      "*",     "",       "" },
 	{ SSC_OUTPUT, SSC_NUMBER,  "mc_phi_des",           "Compressor design flow coefficient",					 "",           "",    "",      "*",     "",       "" },
-	{ SSC_OUTPUT, SSC_ARRAY,   "mc_tip_ratio_des",     "Compressor design stage tip speed ratio",                "",           "",    "",      "*",     "",       "" },
+    { SSC_OUTPUT, SSC_NUMBER,  "mc_psi_des",           "Compressor design ideal head coefficient",               "",           "",    "",      "*",     "",       "" },
+    { SSC_OUTPUT, SSC_ARRAY,   "mc_tip_ratio_des",     "Compressor design stage tip speed ratio",                "",           "",    "",      "*",     "",       "" },
 	{ SSC_OUTPUT, SSC_NUMBER,  "mc_n_stages",          "Compressor stages",                                      "",           "",    "",      "*",     "",       "" },
 	{ SSC_OUTPUT, SSC_NUMBER,  "mc_N_des",             "Compressor design shaft speed",                          "rpm",        "",    "",      "*",     "",       "" },
 	{ SSC_OUTPUT, SSC_ARRAY,   "mc_D",                 "Compressor stage diameters",                             "m",          "",    "",      "*",     "",       "" },
 	{ SSC_OUTPUT, SSC_NUMBER,  "mc_phi_surge",         "Compressor flow coefficient where surge occurs",         "",           "",    "",      "*",     "",       "" },
-	{ SSC_OUTPUT, SSC_ARRAY,   "mc_eta_stages_des",    "Compressor design stage isentropic efficiencies",        "",           "",    "",      "*",     "",       "" },
+    { SSC_OUTPUT, SSC_NUMBER,  "mc_psi_max_at_N_des",  "Compressor max ideal head coefficient at design shaft speed", "",      "",    "",      "*",     "",       "" },
+    { SSC_OUTPUT, SSC_ARRAY,   "mc_eta_stages_des",    "Compressor design stage isentropic efficiencies",        "",           "",    "",      "*",     "",       "" },
 	{ SSC_OUTPUT, SSC_NUMBER,  "mc_cost",              "Compressor cost",                                        "M$",         "",    "",      "*",     "",       "" },
 		// Recompressor
 	{ SSC_OUTPUT, SSC_NUMBER,  "rc_T_in_des",          "Recompressor inlet temperature",                         "C",          "",    "",      "*",     "",       "" },
@@ -666,12 +688,14 @@ var_info vtab_sco2_design[] = {
 	{ SSC_OUTPUT, SSC_NUMBER,  "rc_W_dot",             "Recompressor power",                                     "MWe",        "",    "",      "*",     "",       "" },
 	{ SSC_OUTPUT, SSC_NUMBER,  "rc_m_dot_des",         "Recompressor mass flow rate",                            "kg/s",       "",    "",      "*",     "",       "" },
 	{ SSC_OUTPUT, SSC_NUMBER,  "rc_phi_des",           "Recompressor design flow coefficient",                   "",           "",    "",      "*",     "",       "" },					
-	{ SSC_OUTPUT, SSC_ARRAY,   "rc_tip_ratio_des",     "Recompressor design stage tip speed ratio",              "",           "",    "",      "*",     "",       "" },
+    { SSC_OUTPUT, SSC_NUMBER,  "rc_psi_des",           "Recompressor design ideal head coefficient",             "",           "",    "",      "*",     "",       "" },
+    { SSC_OUTPUT, SSC_ARRAY,   "rc_tip_ratio_des",     "Recompressor design stage tip speed ratio",              "",           "",    "",      "*",     "",       "" },
 	{ SSC_OUTPUT, SSC_NUMBER,  "rc_n_stages",          "Recompressor stages",                                    "",           "",    "",      "*",     "",       "" },
 	{ SSC_OUTPUT, SSC_NUMBER,  "rc_N_des",             "Recompressor design shaft speed",                        "rpm",        "",    "",      "*",     "",       "" },
 	{ SSC_OUTPUT, SSC_ARRAY,   "rc_D",                 "Recompressor stage diameters",                           "m",          "",    "",      "*",     "",       "" },
 	{ SSC_OUTPUT, SSC_NUMBER,  "rc_phi_surge",         "Recompressor flow coefficient where surge occurs",       "",           "",    "",      "*",     "",       "" },
-	{ SSC_OUTPUT, SSC_ARRAY,   "rc_eta_stages_des",    "Recompressor design stage isenstropic efficiencies",     "",           "",    "",      "*",     "",       "" },
+    { SSC_OUTPUT, SSC_NUMBER,  "rc_psi_max_at_N_des",  "Recompressor max ideal head coefficient at design shaft speed", "",    "",    "",      "*",     "",       "" },
+    { SSC_OUTPUT, SSC_ARRAY,   "rc_eta_stages_des",    "Recompressor design stage isenstropic efficiencies",     "",           "",    "",      "*",     "",       "" },
 	{ SSC_OUTPUT, SSC_NUMBER,  "rc_cost",              "Recompressor cost",                                      "M$",         "",    "",      "*",     "",       "" },
 		// Precompressor	
 	{ SSC_OUTPUT, SSC_NUMBER,  "pc_T_in_des",          "Precompressor inlet temperature",                        "C",          "",    "",      "*",     "",       "" },
@@ -792,9 +816,9 @@ var_info vtab_sco2_design[] = {
 
 var_info_invalid };
 
-int sco2_design_cmod_common(compute_module *cm, C_sco2_recomp_csp & c_sco2_cycle)
+int sco2_design_cmod_common(compute_module *cm, C_sco2_phx_air_cooler & c_sco2_cycle)
 {
-	C_sco2_recomp_csp::S_des_par sco2_rc_des_par;
+	C_sco2_phx_air_cooler::S_des_par sco2_rc_des_par;
 	// System design parameters
 	sco2_rc_des_par.m_hot_fl_code = cm->as_integer("htf");							//[-] Integer code for HTF
 	sco2_rc_des_par.mc_hot_fl_props = cm->as_matrix("htf_props");					//[-] Custom HTF properties
@@ -1213,12 +1237,14 @@ int sco2_design_cmod_common(compute_module *cm, C_sco2_recomp_csp & c_sco2_cycle
 	cm->assign("mc_rho_in", (ssc_number_t)(c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_dens[C_sco2_cycle_core::MC_IN]));	//[kg/m3]
 	cm->assign("mc_ideal_spec_work", (ssc_number_t)c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.ms_mc_ms_des_solved.m_isen_spec_work);	//[kJ/kg]
 	cm->assign("mc_m_dot_des", (ssc_number_t)c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_m_dot_t*(1.0 - c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_recomp_frac));	//[kg/s]
-	cm->assign("mc_phi_des", (ssc_number_t)c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.ms_mc_ms_des_solved.m_phi_des);
-	cm->assign("mc_tip_ratio_des", (ssc_number_t)c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.ms_mc_ms_des_solved.m_tip_ratio_max);		//[-]
+	cm->assign("mc_phi_des", (ssc_number_t)c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.ms_mc_ms_des_solved.m_phi_des);     //[-]
+    cm->assign("mc_psi_des", (ssc_number_t)c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.ms_mc_ms_des_solved.m_psi_des);     //[-] ideal head coefficient
+    cm->assign("mc_tip_ratio_des", (ssc_number_t)c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.ms_mc_ms_des_solved.m_tip_ratio_max);		//[-]
 
 	int n_mc_stages = c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.ms_mc_ms_des_solved.m_n_stages;
 	cm->assign("mc_n_stages", (ssc_number_t)n_mc_stages);	//[-]
 	cm->assign("mc_N_des", (ssc_number_t)c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.ms_mc_ms_des_solved.m_N_design);	//[rpm]
+    cm->assign("mc_psi_max_at_N_des", (ssc_number_t)c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.ms_mc_ms_des_solved.m_psi_max_at_N_des);    //[-] Max ideal head coefficient at design shaft speed
 
 	ssc_number_t *p_mc_D = cm->allocate("mc_D", n_mc_stages);
 	ssc_number_t *p_mc_tip_ratio_des = cm->allocate("mc_tip_ratio_des", n_mc_stages);
@@ -1250,10 +1276,12 @@ int sco2_design_cmod_common(compute_module *cm, C_sco2_recomp_csp & c_sco2_cycle
 		cm->assign("rc_T_out_des", (ssc_number_t)(c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.ms_rc_ms_des_solved.m_T_out - 273.15));	//[C]
 		cm->assign("rc_P_out_des", (ssc_number_t)(c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.ms_rc_ms_des_solved.m_P_out*1.E-3));		//[MPa]
 		cm->assign("rc_phi_des", (ssc_number_t)c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.ms_rc_ms_des_solved.m_phi_des);	//[-]
+        cm->assign("rc_psi_des", (ssc_number_t)c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.ms_rc_ms_des_solved.m_psi_des);	//[-]
 
 		n_rc_stages = c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.ms_rc_ms_des_solved.m_n_stages;		//[-]
 		cm->assign("rc_n_stages", (ssc_number_t)n_rc_stages);	//[-]
 		cm->assign("rc_N_des", (ssc_number_t)c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.ms_rc_ms_des_solved.m_N_design);	//[rpm]
+        cm->assign("rc_psi_max_at_N_des", (ssc_number_t)c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.ms_rc_ms_des_solved.m_psi_max_at_N_des);    //[-] Max ideal head coefficient at design shaft speed
 
 		ssc_number_t *p_rc_D = cm->allocate("rc_D", n_rc_stages);
 		ssc_number_t *p_rc_tip_ratio_des = cm->allocate("rc_tip_ratio_des", n_rc_stages);
@@ -1281,8 +1309,10 @@ int sco2_design_cmod_common(compute_module *cm, C_sco2_recomp_csp & c_sco2_cycle
 		cm->assign("rc_T_out_des", ssc_nan);
 		cm->assign("rc_P_out_des", ssc_nan);
 		cm->assign("rc_phi_des", ssc_nan);
-		cm->assign("rc_n_stages", n_rc_stages);
+        cm->assign("rc_psi_des", ssc_nan);
+        cm->assign("rc_n_stages", n_rc_stages);
 		cm->assign("rc_N_des", ssc_nan);
+        cm->assign("rc_psi_max_at_N_des", ssc_nan);
 		ssc_number_t *p_rc_D = cm->allocate("rc_D", 1);
 		p_rc_D[0] = ssc_nan;
 		ssc_number_t *p_rc_tip_ratio_des = cm->allocate("rc_tip_ratio_des", 1);

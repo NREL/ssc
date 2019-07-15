@@ -5,7 +5,6 @@
 #include "code_generator_utilities.h"
 
 namespace swhtest {
-	const char * SSCDIR = std::getenv("SSCDIR");
 	char solar_resource_file[256];
 	char scaled_draw[256];
 	char custom_mains[256];

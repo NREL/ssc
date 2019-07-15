@@ -52,12 +52,12 @@ void PVIOManager::allocateOutputs(compute_module* cm)
 	m_PVSystemIO->AllocateOutputs(cm);
 }
 
-Irradiance_IO * PVIOManager::getIrradianceIO()  { return m_IrradianceIO.get(); }
-compute_module * PVIOManager::getComputeModule()  { return m_computeModule; }
-Subarray_IO * PVIOManager::getSubarrayIO(size_t subarrayNumber)  { return m_SubarraysIO[subarrayNumber].get(); }
+Irradiance_IO * PVIOManager::getIrradianceIO() { return m_IrradianceIO.get(); }
+compute_module * PVIOManager::getComputeModule() { return m_computeModule; }
+Subarray_IO * PVIOManager::getSubarrayIO(size_t subarrayNumber) { return m_SubarraysIO[subarrayNumber].get(); }
 ShadeDB8_mpp * PVIOManager::getShadeDatabase() { return m_shadeDatabase.get(); }
 
-std::vector<Subarray_IO *> PVIOManager::getSubarrays() 
+std::vector<Subarray_IO *> PVIOManager::getSubarrays()
 {
 	std::vector<Subarray_IO*> subarrays;
 	for (size_t subarray = 0; subarray < m_SubarraysIO.size(); subarray++) {
@@ -66,9 +66,9 @@ std::vector<Subarray_IO *> PVIOManager::getSubarrays()
 	return subarrays;
 }
 
-PVSystem_IO * PVIOManager::getPVSystemIO()  { return m_PVSystemIO.get(); }
+PVSystem_IO * PVIOManager::getPVSystemIO() { return m_PVSystemIO.get(); }
 
-Simulation_IO * PVIOManager::getSimulationIO()  { return m_SimulationIO.get(); }
+Simulation_IO * PVIOManager::getSimulationIO() { return m_SimulationIO.get(); }
 
 
 Simulation_IO::Simulation_IO(compute_module* cm, Irradiance_IO & IrradianceIO)
@@ -138,14 +138,14 @@ Irradiance_IO::Irradiance_IO(compute_module* cm, std::string cmName)
 	stepsPerHour = numberOfWeatherFileRecords / 8760;
 	dtHour = 1.0 / stepsPerHour;
 
-	if ( numberOfWeatherFileRecords % 8760 != 0 )
+	if (numberOfWeatherFileRecords % 8760 != 0)
 		throw compute_module::exec_error(cmName, util::format("invalid number of data records (%zu): must be an integer multiple of 8760", numberOfWeatherFileRecords));
 	if (stepsPerHour < 1 || stepsPerHour > 60)
 		throw compute_module::exec_error(cmName, util::format("%d timesteps per hour found. Weather data should be single year.", stepsPerHour));
 
 	useWeatherFileAlbedo = cm->as_boolean("use_wf_albedo");
 	userSpecifiedMonthlyAlbedo = cm->as_vector_double("albedo");
-	
+
 	checkWeatherFile(cm, cmName);
 }
 
@@ -290,7 +290,7 @@ Subarray_IO::Subarray_IO(compute_module* cm, std::string cmName, size_t subarray
 		nModulesPerString = cm->as_integer(prefix + "modules_per_string");
 		mpptInput = cm->as_integer(prefix + "mppt_input");
 		trackMode = cm->as_integer(prefix + "track_mode");
-		tiltEqualLatitude = 0; 
+		tiltEqualLatitude = 0;
 		if (cm->is_assigned(prefix + "tilt_eq_lat")) tiltEqualLatitude = cm->as_boolean(prefix + "tilt_eq_lat");
 
 		//tilt required for fixed tilt, single axis, and azimuth axis- can't check for this in variable table so check here
@@ -324,7 +324,7 @@ Subarray_IO::Subarray_IO(compute_module* cm, std::string cmName, size_t subarray
 
 		// losses
 		rearIrradianceLossPercent = cm->as_double(prefix + "rear_irradiance_loss") / 100;
-		dcOptimizerLossPercent = cm->as_double("dcoptimizer_loss")/100;
+		dcOptimizerLossPercent = cm->as_double("dcoptimizer_loss") / 100;
 		mismatchLossPercent = cm->as_double(prefix + "mismatch_loss") / 100;
 		diodesLossPercent = cm->as_double(prefix + "diodeconn_loss") / 100;
 		dcWiringLossPercent = cm->as_double(prefix + "dcwiring_loss") / 100;
@@ -332,11 +332,11 @@ Subarray_IO::Subarray_IO(compute_module* cm, std::string cmName, size_t subarray
 		nameplateLossPercent = cm->as_double(prefix + "nameplate_loss") / 100;
 
 		dcLossTotalPercent = 1 - (
-			(1 - dcOptimizerLossPercent) * 
-			(1 - mismatchLossPercent) * 
-			(1 - diodesLossPercent) * 
-			(1 - dcWiringLossPercent) * 
-			(1 - trackingLossPercent) * 
+			(1 - dcOptimizerLossPercent) *
+			(1 - mismatchLossPercent) *
+			(1 - diodesLossPercent) *
+			(1 - dcWiringLossPercent) *
+			(1 - trackingLossPercent) *
 			(1 - nameplateLossPercent));
 
 		if (groundCoverageRatio < 0.01)
@@ -355,7 +355,7 @@ Subarray_IO::Subarray_IO(compute_module* cm, std::string cmName, size_t subarray
 		if (!shadeCalculator.setup(cm, prefix)) {
 			throw compute_module::exec_error(cmName, prefix + "_shading: " + shadeCalculator.get_error());
 		}
-		
+
 		shadeMode = cm->as_integer(prefix + "shade_mode");
 		selfShadingInputs.mod_orient = cm->as_integer(prefix + "mod_orient"); //although these inputs are stored in self-shading structure, they are also used for snow model and bifacial model, so required for all enabled subarrays
 		selfShadingInputs.nmody = cm->as_integer(prefix + "nmody"); //same as above
@@ -394,7 +394,7 @@ Subarray_IO::Subarray_IO(compute_module* cm, std::string cmName, size_t subarray
 			if (trackMode == irrad::SEASONAL_TILT)
 				throw compute_module::exec_error(cmName, "Time-series tilt input may not be used with the snow model at this time: subarray " + util::to_string((int)(subarrayNumber)));
 			// if tracking mode is 1-axis tracking, don't need to limit tilt angles
-			if (snowModel.setup(selfShadingInputs.nmody, (float)tiltDegrees, (trackMode !=  irrad::SINGLE_AXIS))) {
+			if (snowModel.setup(selfShadingInputs.nmody, (float)tiltDegrees, (trackMode != irrad::SINGLE_AXIS))) {
 				if (!snowModel.good) {
 					cm->log(snowModel.msg, SSC_ERROR);
 				}
@@ -406,7 +406,7 @@ Subarray_IO::Subarray_IO(compute_module* cm, std::string cmName, size_t subarray
 		}
 
 		// Initialize module model
-		std::unique_ptr<Module_IO> tmp(new Module_IO(cm, cmName, 1- dcLossTotalPercent));
+		std::unique_ptr<Module_IO> tmp(new Module_IO(cm, cmName, 1 - dcLossTotalPercent));
 		Module = std::move(tmp);
 
 	}
@@ -602,10 +602,10 @@ PVSystem_IO::PVSystem_IO(compute_module* cm, std::string cmName, Simulation_IO *
 	for (size_t s = 0; s < numberOfSubarrays; s++) {
 		stringsInParallel += static_cast<int>(Subarrays[s]->nStrings);
 	}
-	
+
 	numberOfInverters = cm->as_integer("inverter_count");
 	ratedACOutput = Inverter->ratedACOutput * numberOfInverters;
-	acDerate = 1 - cm->as_double("acwiring_loss") / 100;	
+	acDerate = 1 - cm->as_double("acwiring_loss") / 100;
 	acLossPercent = (1 - acDerate) * 100;
 	transmissionDerate = 1 - cm->as_double("transmission_loss") / 100;
 	transmissionLossPercent = (1 - transmissionDerate) * 100;
@@ -613,11 +613,11 @@ PVSystem_IO::PVSystem_IO(compute_module* cm, std::string cmName, Simulation_IO *
 	enableDCLifetimeLosses = cm->as_boolean("en_dc_lifetime_losses");
 	enableACLifetimeLosses = cm->as_boolean("en_ac_lifetime_losses");
 	enableSnowModel = cm->as_boolean("en_snow_model");
-	
+
 	// The shared inverter of the PV array and a tightly-coupled DC connected battery
 	std::unique_ptr<SharedInverter> tmpSharedInverter(new SharedInverter(Inverter->inverterType, numberOfInverters, &Inverter->sandiaInverter, &Inverter->partloadInverter, &Inverter->ondInverter));
 	m_sharedInverter = std::move(tmpSharedInverter);
-	
+
 	// Register shared inverter with inverter_IO
 	InverterIO->setupSharedInverter(cm, m_sharedInverter.get());
 
@@ -632,7 +632,7 @@ PVSystem_IO::PVSystem_IO(compute_module* cm, std::string cmName, Simulation_IO *
 
 		if (dc_degrad.size() == 1)
 		{
-			for (size_t i = 1; i < Simulation->numberOfYears ; i++)
+			for (size_t i = 1; i < Simulation->numberOfYears; i++)
 				dcDegradationFactor.push_back(pow((1.0 - dc_degrad[0] / 100.0), i));
 		}
 		else if (dc_degrad.size() > 0)
@@ -658,7 +658,7 @@ PVSystem_IO::PVSystem_IO(compute_module* cm, std::string cmName, Simulation_IO *
 	}
 
 	// Transformer losses
-	transformerLoadLossFraction = cm->as_number("transformer_load_loss") * (ssc_number_t)(util::percent_to_fraction);  
+	transformerLoadLossFraction = cm->as_number("transformer_load_loss") * (ssc_number_t)(util::percent_to_fraction);
 	transformerNoLoadLossFraction = cm->as_number("transformer_no_load_loss") *(ssc_number_t)(util::percent_to_fraction);
 
 	// Determine whether MPPT clipping should be enabled or not
@@ -847,7 +847,7 @@ Module_IO::Module_IO(compute_module* cm, std::string cmName, double dcLoss)
 		bifaciality = cm->as_double("spe_bifaciality");
 		bifacialTransmissionFactor = cm->as_double("spe_bifacial_transmission_factor");
 		groundClearanceHeight = cm->as_double("spe_bifacial_ground_clearance_height");
-		for (int i = 0; i<5; i++)
+		for (int i = 0; i < 5; i++)
 		{
 			simpleEfficiencyModel.Rad[i] = cm->as_double(util::format("spe_rad%d", i));
 			simpleEfficiencyModel.Eff[i] = 0.01*cm->as_double(util::format("spe_eff%d", i));
@@ -935,6 +935,7 @@ Module_IO::Module_IO(compute_module* cm, std::string cmName, double dcLoss)
 			int standoff = cm->as_integer("cec_standoff");
 			nominalOperatingCellTemp.standoff_tnoct_adj = 0;
 			switch (standoff)
+
 			{ //source for standoff adjustment constants: https://prod-ng.sandia.gov/techlib-noauth/access-control.cgi/1985/850330.pdf page 12
 				case 2: nominalOperatingCellTemp.standoff_tnoct_adj = 2; break; // between 2.5 and 3.5 inches
 				case 3: nominalOperatingCellTemp.standoff_tnoct_adj = 6; break; // between 1.5 and 2.5 inches
@@ -961,7 +962,7 @@ Module_IO::Module_IO(compute_module* cm, std::string cmName, double dcLoss)
 			double Wgap;  // gap width spacing (m)
 			double TbackInteg; */
 
-			mountingSpecificCellTemp.DcDerate = dcLoss;  
+			mountingSpecificCellTemp.DcDerate = dcLoss;
 			mountingSpecificCellTemp.MC = cm->as_integer("cec_mounting_config") + 1;
 			mountingSpecificCellTemp.HTD = cm->as_integer("cec_heat_transfer") + 1;
 			mountingSpecificCellTemp.MSO = cm->as_integer("cec_mounting_orientation") + 1;
@@ -1133,7 +1134,7 @@ Module_IO::Module_IO(compute_module* cm, std::string cmName, double dcLoss)
 		moduleModel = &sandiaModel;
 		moduleWattsSTC = sandiaModel.Vmp0 * sandiaModel.Imp0;
 	}
-	else if (modulePowerModel == MODULE_IEC61853 )
+	else if (modulePowerModel == MODULE_IEC61853)
 	{
 		// IEC 61853 model
 		elevenParamSingleDiodeModel.NcellSer = cm->as_integer("sd11par_nser");
@@ -1244,7 +1245,7 @@ Module_IO::Module_IO(compute_module* cm, std::string cmName, double dcLoss)
 			}
 		}
 		if (mlModuleModel.T_mode == 1) {
-			setupNOCTModel(cm,"mlm_T_c_no");
+			setupNOCTModel(cm, "mlm_T_c_no");
 			cellTempModel = &nominalOperatingCellTemp;
 		}
 		else if (mlModuleModel.T_mode == 2) {
@@ -1297,7 +1298,7 @@ void Module_IO::AssignOutputs(compute_module* cm)
 
 Inverter_IO::Inverter_IO(compute_module *cm, std::string cmName)
 {
-	inverterType =  cm->as_integer("inverter_model");
+	inverterType = cm->as_integer("inverter_model");
 	nMpptInputs = cm->as_unsigned_long("inv_num_mppt");
 
 	if (inverterType == 4)
@@ -1310,7 +1311,7 @@ Inverter_IO::Inverter_IO(compute_module *cm, std::string cmName)
 		mpptLowVoltage = cm->as_double("mppt_low_inverter");
 		mpptHiVoltage = cm->as_double("mppt_hi_inverter");
 	}
-	
+
 	if (inverterType == 0) // cec database
 	{
 		sandiaInverter.Paco = cm->as_double("inv_snl_paco");
@@ -1469,7 +1470,7 @@ void Inverter_IO::setupSharedInverter(compute_module* cm, SharedInverter * a_sha
 		thermalDerateCurves.push_back(row);
 	}
 	int err = sharedInverter->setTempDerateCurves(thermalDerateCurves);
-	if ( err > 1) {
-		throw compute_module::exec_error("pvsamv1", "Inverter temperature derate curve " + util::to_string((int)( -err - 1)) + " is invalid.");
+	if (err > 1) {
+		throw compute_module::exec_error("pvsamv1", "Inverter temperature derate curve " + util::to_string((int)(-err - 1)) + " is invalid.");
 	}
 }

@@ -1,51 +1,24 @@
-/*******************************************************************************************************
-*  Copyright 2017 Alliance for Sustainable Energy, LLC
-*
-*  NOTICE: This software was developed at least in part by Alliance for Sustainable Energy, LLC
-*  (“Alliance”) under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
-*  The Government retains for itself and others acting on its behalf a nonexclusive, paid-up,
-*  irrevocable worldwide license in the software to reproduce, prepare derivative works, distribute
-*  copies to the public, perform publicly and display publicly, and to permit others to do so.
-*
-*  Redistribution and use in source and binary forms, with or without modification, are permitted
-*  provided that the following conditions are met:
-*
-*  1. Redistributions of source code must retain the above copyright notice, the above government
-*  rights notice, this list of conditions and the following disclaimer.
-*
-*  2. Redistributions in binary form must reproduce the above copyright notice, the above government
-*  rights notice, this list of conditions and the following disclaimer in the documentation and/or
-*  other materials provided with the distribution.
-*
-*  3. The entire corresponding source code of any redistribution, with or without modification, by a
-*  research entity, including but not limited to any contracting manager/operator of a United States
-*  National Laboratory, any institution of higher learning, and any non-profit organization, must be
-*  made publicly available under this license for as long as the redistribution is made available by
-*  the research entity.
-*
-*  4. Redistribution of this software, without modification, must refer to the software by the same
-*  designation. Redistribution of a modified version of this software (i) may not refer to the modified
-*  version by the same designation, or by any confusingly similar designation, and (ii) must refer to
-*  the underlying software originally provided by Alliance as “System Advisor Model” or “SAM”. Except
-*  to comply with the foregoing, the terms “System Advisor Model”, “SAM”, or any confusingly similar
-*  designation may not be used to refer to any modified version of this software or any modified
-*  version of the underlying software originally provided by Alliance without the prior written consent
-*  of Alliance.
-*
-*  5. The name of the copyright holder, contributors, the United States Government, the United States
-*  Department of Energy, or any of their employees may not be used to endorse or promote products
-*  derived from this software without specific prior written permission.
-*
-*  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
-*  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
-*  FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER,
-*  CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES DEPARTMENT OF ENERGY, NOR ANY OF THEIR
-*  EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-*  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-*  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
-*  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
-*  THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*******************************************************************************************************/
+/**
+BSD-3-Clause
+Copyright 2019 Alliance for Sustainable Energy, LLC
+Redistribution and use in source and binary forms, with or without modification, are permitted provided 
+that the following conditions are met :
+1.	Redistributions of source code must retain the above copyright notice, this list of conditions 
+and the following disclaimer.
+2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions 
+and the following disclaimer in the documentation and/or other materials provided with the distribution.
+3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse 
+or promote products derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, 
+INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
+ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES 
+DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, 
+OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; 
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
+WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT 
+OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
 
 #include "sco2_pc_csp_int.h"
 
@@ -62,7 +35,7 @@
 
 #include "fmin.h"
 
-C_sco2_recomp_csp::C_sco2_recomp_csp()
+C_sco2_phx_air_cooler::C_sco2_phx_air_cooler()
 {
 	// Get CO2 critical temperature
 	CO2_info co2_fluid_info;
@@ -83,14 +56,14 @@ C_sco2_recomp_csp::C_sco2_recomp_csp()
 	mp_mf_update = 0;			// NULL
 }
 
-void C_sco2_recomp_csp::design(S_des_par des_par)
+void C_sco2_phx_air_cooler::design(S_des_par des_par)
 {
 	ms_des_par = des_par;
 
 	design_core();
 }
 
-void C_sco2_recomp_csp::design_core()
+void C_sco2_phx_air_cooler::design_core()
 {
 	// using -> C_RecompCycle::S_auto_opt_design_hit_eta_parameters
 	std::string error_msg;
@@ -303,16 +276,28 @@ void C_sco2_recomp_csp::design_core()
 	return;
 }
 
-int C_sco2_recomp_csp::off_design_fix_P_mc_in(S_od_par od_par, double P_mc_in /*MPa*/, int off_design_strategy, double od_opt_tol)
+int C_sco2_phx_air_cooler::off_design_fix_P_mc_in(S_od_par od_par, double P_mc_in /*MPa*/, 
+                                bool is_rc_N_od_at_design, double rc_N_od_f_des /*-*/, 
+                                bool is_mc_N_od_at_design, double mc_N_od_f_des /*-*/,
+                                int off_design_strategy, double od_opt_tol)
 {
 	setup_off_design_info(od_par, off_design_strategy, od_opt_tol);
 	
-	// Now, call off-design with the optimized compressor inlet pressure		
+	// Now, call off-design with the input compressor inlet pressure		
 	ms_cycle_od_par.m_P_LP_comp_in = P_mc_in*1.E3;	//[kPa] convert from MPa
+
+    // Input RC shaft speed controls
+    ms_cycle_od_par.m_is_rc_N_od_at_design = is_rc_N_od_at_design;  //[-]
+    ms_cycle_od_par.m_rc_N_od_f_des = rc_N_od_f_des;                //[-]
+
+    // Input MC shaft speed controls
+    ms_cycle_od_par.m_is_mc_N_od_at_design = is_mc_N_od_at_design;  //[-]
+    ms_cycle_od_par.m_mc_N_od_f_des = mc_N_od_f_des;                //[-]
+
 	double eta_od_solved = std::numeric_limits<double>::quiet_NaN();
 	int od_core_error_code = off_design_core(eta_od_solved);
 	
-	if (od_core_error_code == 0)
+	if (ms_od_solved.m_is_converged)
 	{
 		double W_dot_fan = std::numeric_limits<double>::quiet_NaN();
 		
@@ -334,7 +319,7 @@ int C_sco2_recomp_csp::off_design_fix_P_mc_in(S_od_par od_par, double P_mc_in /*
 	return od_core_error_code;
 }
 
-void C_sco2_recomp_csp::setup_off_design_info(C_sco2_recomp_csp::S_od_par od_par, int off_design_strategy, double od_opt_tol)
+void C_sco2_phx_air_cooler::setup_off_design_info(C_sco2_phx_air_cooler::S_od_par od_par, int off_design_strategy, double od_opt_tol)
 {
 	ms_od_par = od_par;
 
@@ -376,6 +361,9 @@ void C_sco2_recomp_csp::setup_off_design_info(C_sco2_recomp_csp::S_od_par od_par
 	ms_cycle_od_par.m_T_t_in = std::numeric_limits<double>::quiet_NaN();			//[K]			
 	ms_cycle_od_par.m_P_LP_comp_in = std::numeric_limits<double>::quiet_NaN();	//[kPa]
 	
+    // Define turbine inlet mode
+    ms_cycle_od_par.m_T_t_in_mode = ms_od_par.m_T_t_in_mode;    //[-]
+
 	// Define ms_phx_od_par
 	ms_phx_od_par.m_T_h_in = ms_od_par.m_T_htf_hot;			//[K]
 	ms_phx_od_par.m_P_h_in = ms_phx_des_par.m_P_h_in;		//[kPa] Assuming fluid is incompressible in that pressure doesn't affect its properties
@@ -387,7 +375,7 @@ void C_sco2_recomp_csp::setup_off_design_info(C_sco2_recomp_csp::S_od_par od_par
 	ms_phx_od_par.m_m_dot_c = std::numeric_limits<double>::quiet_NaN();		//[kg/s]
 }
 
-int C_sco2_recomp_csp::optimize_off_design(C_sco2_recomp_csp::S_od_par od_par, int off_design_strategy, double od_opt_tol)
+int C_sco2_phx_air_cooler::optimize_off_design(C_sco2_phx_air_cooler::S_od_par od_par, int off_design_strategy, double od_opt_tol)
 {
 	// This sets: T_mc_in, T_pc_in, etc.
 	setup_off_design_info(od_par, off_design_strategy, od_opt_tol);
@@ -497,7 +485,7 @@ int C_sco2_recomp_csp::optimize_off_design(C_sco2_recomp_csp::S_od_par od_par, i
 
 			if (od_opt_err_code != 0)
 			{
-				throw(C_csp_exception("C_sco2_recomp_csp::optimize_off_design to maximize efficiency failed"));
+				throw(C_csp_exception("C_sco2_phx_air_cooler::optimize_off_design to maximize efficiency failed"));
 			}
 		}		
 	}
@@ -520,7 +508,7 @@ int C_sco2_recomp_csp::optimize_off_design(C_sco2_recomp_csp::S_od_par od_par, i
 	return 0;
 }
 
-int C_sco2_recomp_csp::opt_P_LP_comp_in__fixed_N_turbo()
+int C_sco2_phx_air_cooler::opt_P_LP_comp_in__fixed_N_turbo()
 {
 	// Prior to calling, need to set :
 	//	*ms_od_par, ms_rc_cycle_od_phi_par, ms_phx_od_par, ms_od_op_inputs(will set P_mc_in here and f_recomp downstream)
@@ -842,7 +830,7 @@ int C_sco2_recomp_csp::opt_P_LP_comp_in__fixed_N_turbo()
 					if (od_core_error_code != 0)
 					{
 						throw(C_csp_exception("Off-design optimization on compressor inlet pressure failed",
-							"C_sco2_recomp_csp::opt_P_mc_in_nest_f_recomp_max_eta_core"));
+							"C_sco2_phx_air_cooler::opt_P_mc_in_nest_f_recomp_max_eta_core"));
 					}
 
 					break;
@@ -871,7 +859,7 @@ int C_sco2_recomp_csp::opt_P_LP_comp_in__fixed_N_turbo()
 					if (od_core_error_code != 0)
 					{
 						throw(C_csp_exception("Off-design optimization on compressor inlet pressure failed",
-							"C_sco2_recomp_csp::opt_P_mc_in_nest_f_recomp_max_eta_core"));
+							"C_sco2_phx_air_cooler::opt_P_mc_in_nest_f_recomp_max_eta_core"));
 					}
 
 					break;
@@ -882,7 +870,7 @@ int C_sco2_recomp_csp::opt_P_LP_comp_in__fixed_N_turbo()
 			if (od_core_error_code != 0)
 			{
 				throw(C_csp_exception("Off-design optimization on compressor inlet pressure failed",
-					"C_sco2_recomp_csp::opt_P_mc_in_nest_f_recomp_max_eta_core"));
+					"C_sco2_phx_air_cooler::opt_P_mc_in_nest_f_recomp_max_eta_core"));
 			}
 		}
 
@@ -903,7 +891,7 @@ int C_sco2_recomp_csp::opt_P_LP_comp_in__fixed_N_turbo()
 	return 0;
 }
 
-double C_sco2_recomp_csp::adjust_P_mc_in_away_2phase(double T_co2 /*K*/, double P_mc_in /*kPa*/)
+double C_sco2_phx_air_cooler::adjust_P_mc_in_away_2phase(double T_co2 /*K*/, double P_mc_in /*kPa*/)
 {	
 	double P_mc_in_restricted = std::numeric_limits<double>::quiet_NaN();	//[kPa]
 	CO2_state co2_props;
@@ -950,63 +938,85 @@ double C_sco2_recomp_csp::adjust_P_mc_in_away_2phase(double T_co2 /*K*/, double 
 
 }
 
-int C_sco2_recomp_csp::off_design_core(double & eta_solved)
+int C_sco2_phx_air_cooler::off_design_core(double & eta_solved)
 {
 	ms_cycle_od_par.m_P_LP_comp_in = adjust_P_mc_in_away_2phase(ms_cycle_od_par.m_T_mc_in, ms_cycle_od_par.m_P_LP_comp_in);
 
+    int T_t_in_mode = ms_cycle_od_par.m_T_t_in_mode;        //[-]
+
 	// Apply 1 var solver to find the turbine inlet temperature that results in a "converged" PHX
-	C_mono_eq_T_t_in c_phx_cycle(this);
+	C_mono_eq_T_t_in c_phx_cycle(this, T_t_in_mode);
 	C_monotonic_eq_solver c_phx_cycle_solver(c_phx_cycle);
 
-	// Set upper and lower bounds
-	double T_t_upper = ms_phx_od_par.m_T_h_in;		//[K] Upper CO2 limit is HTF hot temperature
-	double T_t_lower = 373.15;						//[K] Lower CO2 limit is something fairly low, I guess
+    if (T_t_in_mode == C_sco2_cycle_core::E_SET_T_T_IN)
+    {
+        double diff_T_t_in_local = std::numeric_limits<double>::quiet_NaN();
 
-	// Generate guess values
-	double T_t_guess_upper = ms_phx_od_par.m_T_h_in - ms_des_par.m_phx_dt_hot_approach;	//[K] One reasonable guess might be to apply the design approach
-	double T_t_guess_lower = T_t_guess_upper - 20.0;		//[K] This might be another reasonable guess...
+        try
+        {
+            c_phx_cycle_solver.test_member_function(ms_phx_od_par.m_T_h_in, &diff_T_t_in_local);        //[K] Use hot HTF temp as turbine inlet temperature
+        }
+        catch (C_csp_exception)
+        {
+            eta_solved = 0.0;
+            ms_od_solved.m_od_error_code = -1;
+            ms_od_solved.m_is_converged = false;
+            return ms_od_solved.m_od_error_code;
+        }
+    }
+    else if (T_t_in_mode == C_sco2_cycle_core::E_SOLVE_PHX)
+    {
+        // Set upper and lower bounds
+        double T_t_upper = ms_phx_od_par.m_T_h_in;		//[K] Upper CO2 limit is HTF hot temperature
+        double T_t_lower = 373.15;						//[K] Lower CO2 limit is something fairly low, I guess
 
-	// Set solver settings
-	// Because this application of solver is trying to get outlet to match guess, need to calculate error in function
-	// So it's already relative, and solver is looking at an absolute value
-	c_phx_cycle_solver.settings(ms_des_par.m_tol/10.0, 50, T_t_lower, T_t_upper, false);
+        // Generate guess values
+        double T_t_guess_upper = ms_phx_od_par.m_T_h_in - ms_des_par.m_phx_dt_hot_approach;	//[K] One reasonable guess might be to apply the design approach
+        double T_t_guess_lower = T_t_guess_upper - 20.0;		//[K] This might be another reasonable guess...
 
-	// Now, solve for the turbine inlet temperature
-	double T_t_solved, tol_solved;
-	T_t_solved = tol_solved = std::numeric_limits<double>::quiet_NaN();
-	int iter_solved = -1;
+        // Set solver settings
+        // Because this application of solver is trying to get outlet to match guess, need to calculate error in function
+        // So it's already relative, and solver is looking at an absolute value
+        c_phx_cycle_solver.settings(ms_des_par.m_tol / 10.0, 50, T_t_lower, T_t_upper, false);
 
-	int phx_cycle_code = 0;
-	try
-	{
-		phx_cycle_code = c_phx_cycle_solver.solve(T_t_guess_lower, T_t_guess_upper, 0.0, T_t_solved, tol_solved, iter_solved);
-	}
-	catch( C_csp_exception )
-	{
-		eta_solved = 0.0;
-		ms_od_solved.m_od_error_code = -1;
-		ms_od_solved.m_is_converged = false;
-		return ms_od_solved.m_od_error_code;
-	}
+        // Now, solve for the turbine inlet temperature
+        double T_t_solved, tol_solved;
+        T_t_solved = tol_solved = std::numeric_limits<double>::quiet_NaN();
+        int iter_solved = -1;
 
-	if( phx_cycle_code != C_monotonic_eq_solver::CONVERGED )
-	{
-		int n_call_history = (int)c_phx_cycle_solver.get_solver_call_history()->size();
+        int phx_cycle_code = 0;
+        try
+        {
+            phx_cycle_code = c_phx_cycle_solver.solve(T_t_guess_lower, T_t_guess_upper, 0.0, T_t_solved, tol_solved, iter_solved);
+        }
+        catch (C_csp_exception)
+        {
+            eta_solved = 0.0;
+            ms_od_solved.m_od_error_code = -1;
+            ms_od_solved.m_is_converged = false;
+            return ms_od_solved.m_od_error_code;
+        }
 
-		eta_solved = 0.0;
-		
-		int nested_error_code = (*(c_phx_cycle_solver.get_solver_call_history()))[n_call_history - 1].err_code;
+        if (phx_cycle_code != C_monotonic_eq_solver::CONVERGED)
+        {
+            int n_call_history = (int)c_phx_cycle_solver.get_solver_call_history()->size();
 
-		if(nested_error_code == 0)
-		{
-			nested_error_code = phx_cycle_code;
-		}
+            eta_solved = 0.0;
 
-		ms_od_solved.m_od_error_code = nested_error_code;
-		ms_od_solved.m_is_converged = false;
-		return nested_error_code;
-	}
-	ms_od_solved.m_is_converged = true;
+            int nested_error_code = (*(c_phx_cycle_solver.get_solver_call_history()))[n_call_history - 1].err_code;
+
+            if (nested_error_code == 0)
+            {
+                nested_error_code = phx_cycle_code;
+            }
+
+            ms_od_solved.m_od_error_code = nested_error_code;
+            ms_od_solved.m_is_converged = false;
+            return nested_error_code;
+        }        
+    }
+
+    ms_od_solved.m_is_converged = true;
 
 	// Now, need to filter results that exceed temperature/pressure/other limitations
 	// 1) Don't let the turbine inlet temperature exceed the design inlet temperature
@@ -1071,7 +1081,7 @@ int C_sco2_recomp_csp::off_design_core(double & eta_solved)
 		od_solve_code = E_TURBINE_INLET_OVER_TEMP;
 	else if(mpc_sco2_cycle->get_od_solved()->m_pres[C_sco2_cycle_core::MC_OUT] > ms_des_par.m_P_high_limit )
 		od_solve_code = E_OVER_PRESSURE;
-	else if (over_tip_ratio >= 1.0)
+	else if (over_tip_ratio != 0.0)
 		od_solve_code = E_TIP_RATIO;
 	else if(over_surge_mc != 0.0)
 		od_solve_code = E_MC_SURGE;
@@ -1120,7 +1130,7 @@ int C_sco2_recomp_csp::off_design_core(double & eta_solved)
 
 	default:
 		std::string err_msg = util::format("The off-design optimization objective code, %d, is not recognized.", m_od_opt_objective);
-		throw(C_csp_exception(err_msg, "C_sco2_recomp_csp::off_design_core"));
+		throw(C_csp_exception(err_msg, "C_sco2_phx_air_cooler::off_design_core"));
 		
 	}
 
@@ -1141,7 +1151,7 @@ int C_sco2_recomp_csp::off_design_core(double & eta_solved)
 	return od_solve_code;
 }
 
-int C_sco2_recomp_csp::off_design(S_od_par od_par, S_od_operation_inputs od_op_inputs)
+int C_sco2_phx_air_cooler::off_design(S_od_par od_par, S_od_operation_inputs od_op_inputs)
 {
 	setup_off_design_info(od_par, -1, 1.E-3);
 
@@ -1159,7 +1169,7 @@ int C_sco2_recomp_csp::off_design(S_od_par od_par, S_od_operation_inputs od_op_i
 	return od_code;
 }
 
-int C_sco2_recomp_csp::C_mono_eq_T_t_in::operator()(double T_t_in /*K*/, double *diff_T_t_in /*-*/)
+int C_sco2_phx_air_cooler::C_mono_eq_T_t_in::operator()(double T_t_in /*K*/, double *diff_T_t_in /*-*/)
 {
 	// Using:
 	//	-mc_rc_cycle
@@ -1199,42 +1209,55 @@ int C_sco2_recomp_csp::C_mono_eq_T_t_in::operator()(double T_t_in /*K*/, double 
 		return rc_od_error_code;
 	}
 
-	// Solve PHX heat exchanger performance using CO2 and HTF *inlet* conditions
-	mpc_sco2_rc->ms_phx_od_par.m_T_c_in = mpc_sco2_rc->mpc_sco2_cycle->get_od_solved()->m_temp[C_sco2_cycle_core::HTR_HP_OUT];	//[K]
-	mpc_sco2_rc->ms_phx_od_par.m_P_c_in = mpc_sco2_rc->mpc_sco2_cycle->get_od_solved()->m_pres[C_sco2_cycle_core::HTR_HP_OUT];	//[kPa]
-	mpc_sco2_rc->ms_phx_od_par.m_m_dot_c = mpc_sco2_rc->mpc_sco2_cycle->get_od_solved()->m_m_dot_t;		//[kg/s]
-	double P_c_out = mpc_sco2_rc->mpc_sco2_cycle->get_od_solved()->m_pres[C_sco2_cycle_core::TURB_IN];		//[kPa]
-	double q_dot, T_co2_phx_out, T_htf_cold;
-	q_dot = T_co2_phx_out = T_htf_cold = std::numeric_limits<double>::quiet_NaN();
+    double T_co2_phx_out = std::numeric_limits<double>::quiet_NaN();
+    if (m_T_t_in_mode == C_sco2_cycle_core::E_SOLVE_PHX)
+    {
+        // Solve PHX heat exchanger performance using CO2 and HTF *inlet* conditions
+        mpc_sco2_rc->ms_phx_od_par.m_T_c_in = mpc_sco2_rc->mpc_sco2_cycle->get_od_solved()->m_temp[C_sco2_cycle_core::HTR_HP_OUT];	//[K]
+        mpc_sco2_rc->ms_phx_od_par.m_P_c_in = mpc_sco2_rc->mpc_sco2_cycle->get_od_solved()->m_pres[C_sco2_cycle_core::HTR_HP_OUT];	//[kPa]
+        mpc_sco2_rc->ms_phx_od_par.m_m_dot_c = mpc_sco2_rc->mpc_sco2_cycle->get_od_solved()->m_m_dot_t;		//[kg/s]
+        double P_c_out = mpc_sco2_rc->mpc_sco2_cycle->get_od_solved()->m_pres[C_sco2_cycle_core::TURB_IN];		//[kPa]
+        double q_dot, T_htf_cold;
+        q_dot = T_htf_cold = std::numeric_limits<double>::quiet_NaN();
+
+        // Solves HX performance. 
+        // If successful, this call updates 'ms_od_solved'
+        try
+        {
+            mpc_sco2_rc->mc_phx.off_design_solution(mpc_sco2_rc->ms_phx_od_par.m_T_c_in, mpc_sco2_rc->ms_phx_od_par.m_P_c_in, mpc_sco2_rc->ms_phx_od_par.m_m_dot_c, P_c_out,
+                mpc_sco2_rc->ms_phx_od_par.m_T_h_in, mpc_sco2_rc->ms_phx_od_par.m_P_h_in, mpc_sco2_rc->ms_phx_od_par.m_m_dot_h, mpc_sco2_rc->ms_phx_od_par.m_P_h_in,
+                q_dot, T_co2_phx_out, T_htf_cold);
+        }
+        catch (C_csp_exception)
+        {
+            // reset 'diff_T_t_in' to NaN
+            *diff_T_t_in = std::numeric_limits<double>::quiet_NaN();
+
+            return -1;
+        }
+    }
+    else if (m_T_t_in_mode == C_sco2_cycle_core::E_SET_T_T_IN)
+    {
+        mpc_sco2_rc->ms_phx_od_par.m_T_c_in = std::numeric_limits<double>::quiet_NaN();
+        mpc_sco2_rc->ms_phx_od_par.m_P_c_in = std::numeric_limits<double>::quiet_NaN();
+        mpc_sco2_rc->ms_phx_od_par.m_m_dot_c = std::numeric_limits<double>::quiet_NaN();
+
+        T_co2_phx_out = mpc_sco2_rc->ms_cycle_od_par.m_T_t_in;      //[K]
+    }
 	
-	// Solves HX performance. 
-	// If successful, this call updates 'ms_od_solved'
-	try
-	{
-		mpc_sco2_rc->mc_phx.off_design_solution(mpc_sco2_rc->ms_phx_od_par.m_T_c_in, mpc_sco2_rc->ms_phx_od_par.m_P_c_in, mpc_sco2_rc->ms_phx_od_par.m_m_dot_c, P_c_out,
-			mpc_sco2_rc->ms_phx_od_par.m_T_h_in, mpc_sco2_rc->ms_phx_od_par.m_P_h_in, mpc_sco2_rc->ms_phx_od_par.m_m_dot_h, mpc_sco2_rc->ms_phx_od_par.m_P_h_in,
-			q_dot, T_co2_phx_out, T_htf_cold);
-	}						
-	catch( C_csp_exception )
-	{
-		// reset 'diff_T_t_in' to NaN
-		*diff_T_t_in = std::numeric_limits<double>::quiet_NaN();
-		
-		return -1;
-	}
-	
-	*diff_T_t_in = (T_co2_phx_out - T_t_in) / T_t_in;
+	*diff_T_t_in = (T_co2_phx_out - T_t_in) / T_t_in;       //[-]
 	return 0;
 }
 
-int C_sco2_recomp_csp::C_sco2_csp_od::operator()(S_f_inputs inputs, S_f_outputs & outputs)
+int C_sco2_phx_air_cooler::C_sco2_csp_od::operator()(S_f_inputs inputs, S_f_outputs & outputs)
 {
 	S_od_par sco2_od_par;
 	sco2_od_par.m_T_htf_hot = inputs.m_T_htf_hot + 273.15;	//[K] convert from C
 	sco2_od_par.m_m_dot_htf = mpc_sco2_rc->get_phx_des_par()->m_m_dot_hot_des*inputs.m_m_dot_htf_ND;	//[kg/s] scale from [-]
 	sco2_od_par.m_T_amb = inputs.m_T_amb + 273.15;			//[K] convert from C
+    sco2_od_par.m_T_t_in_mode = C_sco2_cycle_core::E_SOLVE_PHX; //[-]
 
-	int od_strategy = C_sco2_recomp_csp::E_TARGET_POWER_ETA_MAX;
+	int od_strategy = C_sco2_phx_air_cooler::E_TARGET_POWER_ETA_MAX;
 
 	int off_design_code = -1;	//[-]
 
@@ -1268,7 +1291,7 @@ int C_sco2_recomp_csp::C_sco2_csp_od::operator()(S_f_inputs inputs, S_f_outputs 
 	return off_design_code;
 }
 
-int C_sco2_recomp_csp::generate_ud_pc_tables(double T_htf_low /*C*/, double T_htf_high /*C*/, int n_T_htf /*-*/,
+int C_sco2_phx_air_cooler::generate_ud_pc_tables(double T_htf_low /*C*/, double T_htf_high /*C*/, int n_T_htf /*-*/,
 	double T_amb_low /*C*/, double T_amb_high /*C*/, int n_T_amb /*-*/,
 	double m_dot_htf_ND_low /*-*/, double m_dot_htf_ND_high /*-*/, int n_m_dot_htf_ND,
 	util::matrix_t<double> & T_htf_ind, util::matrix_t<double> & T_amb_ind, util::matrix_t<double> & m_dot_htf_ND_ind)
@@ -1291,27 +1314,27 @@ int C_sco2_recomp_csp::generate_ud_pc_tables(double T_htf_low /*C*/, double T_ht
 	return ud_pc_error_code;
 }
 
-const C_sco2_recomp_csp::S_des_par * C_sco2_recomp_csp::get_design_par()
+const C_sco2_phx_air_cooler::S_des_par * C_sco2_phx_air_cooler::get_design_par()
 {
 	return &ms_des_par;
 }
 
-const C_sco2_recomp_csp::S_des_solved * C_sco2_recomp_csp::get_design_solved()
+const C_sco2_phx_air_cooler::S_des_solved * C_sco2_phx_air_cooler::get_design_solved()
 {
 	return &ms_des_solved;
 }
 
-const C_HX_counterflow::S_des_calc_UA_par * C_sco2_recomp_csp::get_phx_des_par()
+const C_HX_counterflow::S_des_calc_UA_par * C_sco2_phx_air_cooler::get_phx_des_par()
 {
 	return &ms_phx_des_par;
 }
 
-const C_sco2_recomp_csp::S_od_solved * C_sco2_recomp_csp::get_od_solved()
+const C_sco2_phx_air_cooler::S_od_solved * C_sco2_phx_air_cooler::get_od_solved()
 {
 	return &ms_od_solved;
 }
 
-double C_sco2_recomp_csp::opt_P_LP_in__fixed_N_turbo__return_f_obj(double P_mc_in /*kPa*/)
+double C_sco2_phx_air_cooler::opt_P_LP_in__fixed_N_turbo__return_f_obj(double P_mc_in /*kPa*/)
 {
 	m_nlopt_iter++;
 	
@@ -1349,7 +1372,7 @@ double C_sco2_recomp_csp::opt_P_LP_in__fixed_N_turbo__return_f_obj(double P_mc_i
 
 double nlopt_opt_P_LP_in__fixed_N_turbo(const std::vector<double> &x, std::vector<double> &grad, void *data)
 {
-	C_sco2_recomp_csp *frame = static_cast<C_sco2_recomp_csp*>(data);
+	C_sco2_phx_air_cooler *frame = static_cast<C_sco2_phx_air_cooler*>(data);
 	if( frame != NULL )  
 		return frame->opt_P_LP_in__fixed_N_turbo__return_f_obj(x[0]);
 	else
@@ -1358,7 +1381,7 @@ double nlopt_opt_P_LP_in__fixed_N_turbo(const std::vector<double> &x, std::vecto
 
 double fmin_opt_P_LP_in__fixed_N_turbo(double x, void *data)
 {
-	C_sco2_recomp_csp *frame = static_cast<C_sco2_recomp_csp*>(data);
+	C_sco2_phx_air_cooler *frame = static_cast<C_sco2_phx_air_cooler*>(data);
 	if( frame != NULL )  
 		return -(frame->opt_P_LP_in__fixed_N_turbo__return_f_obj(x));
 	else

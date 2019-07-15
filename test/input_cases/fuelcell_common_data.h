@@ -5,13 +5,12 @@
 #include "code_generator_utilities.h"
 
 namespace {
-	const char * SSCDIR_FC = std::getenv("SSCDIR");
 	char load_profile_path_fc[256];
 	char ac_watt_output_path[256];
 	char ac_watt_lifetime_output_path[256];
-	int nfc1 = sprintf(ac_watt_output_path, "%s/test/input_cases/general_data/ac.csv",SSCDIR_FC);
-	int nfc2 = sprintf(load_profile_path_fc, "%s/test/input_cases/general_data/commercial_load.csv",SSCDIR_FC);
-	int nfc3 = sprintf(ac_watt_lifetime_output_path, "%s/test/input_cases/general_data/ac_lifetime.csv",SSCDIR_FC);
+	int nfc1 = sprintf(ac_watt_output_path, "%s/test/input_cases/general_data/ac.csv",SSCDIR);
+	int nfc2 = sprintf(load_profile_path_fc, "%s/test/input_cases/general_data/commercial_load.csv",SSCDIR);
+	int nfc3 = sprintf(ac_watt_lifetime_output_path, "%s/test/input_cases/general_data/ac_lifetime.csv",SSCDIR);
 }
 
 /**

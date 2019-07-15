@@ -1,51 +1,24 @@
-/*******************************************************************************************************
-*  Copyright 2017 Alliance for Sustainable Energy, LLC
-*
-*  NOTICE: This software was developed at least in part by Alliance for Sustainable Energy, LLC
-*  (�Alliance�) under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
-*  The Government retains for itself and others acting on its behalf a nonexclusive, paid-up,
-*  irrevocable worldwide license in the software to reproduce, prepare derivative works, distribute
-*  copies to the public, perform publicly and display publicly, and to permit others to do so.
-*
-*  Redistribution and use in source and binary forms, with or without modification, are permitted
-*  provided that the following conditions are met:
-*
-*  1. Redistributions of source code must retain the above copyright notice, the above government
-*  rights notice, this list of conditions and the following disclaimer.
-*
-*  2. Redistributions in binary form must reproduce the above copyright notice, the above government
-*  rights notice, this list of conditions and the following disclaimer in the documentation and/or
-*  other materials provided with the distribution.
-*
-*  3. The entire corresponding source code of any redistribution, with or without modification, by a
-*  research entity, including but not limited to any contracting manager/operator of a United States
-*  National Laboratory, any institution of higher learning, and any non-profit organization, must be
-*  made publicly available under this license for as long as the redistribution is made available by
-*  the research entity.
-*
-*  4. Redistribution of this software, without modification, must refer to the software by the same
-*  designation. Redistribution of a modified version of this software (i) may not refer to the modified
-*  version by the same designation, or by any confusingly similar designation, and (ii) must refer to
-*  the underlying software originally provided by Alliance as �System Advisor Model� or �SAM�. Except
-*  to comply with the foregoing, the terms �System Advisor Model�, �SAM�, or any confusingly similar
-*  designation may not be used to refer to any modified version of this software or any modified
-*  version of the underlying software originally provided by Alliance without the prior written consent
-*  of Alliance.
-*
-*  5. The name of the copyright holder, contributors, the United States Government, the United States
-*  Department of Energy, or any of their employees may not be used to endorse or promote products
-*  derived from this software without specific prior written permission.
-*
-*  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
-*  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
-*  FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER,
-*  CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES DEPARTMENT OF ENERGY, NOR ANY OF THEIR
-*  EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-*  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-*  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
-*  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
-*  THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*******************************************************************************************************/
+/**
+BSD-3-Clause
+Copyright 2019 Alliance for Sustainable Energy, LLC
+Redistribution and use in source and binary forms, with or without modification, are permitted provided 
+that the following conditions are met :
+1.	Redistributions of source code must retain the above copyright notice, this list of conditions 
+and the following disclaimer.
+2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions 
+and the following disclaimer in the documentation and/or other materials provided with the distribution.
+3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse 
+or promote products derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, 
+INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
+ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES 
+DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, 
+OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; 
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
+WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT 
+OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
 
 #include "core.h"
 #include "common.h"
@@ -60,8 +33,9 @@ static var_info _cm_vtab_sco2_csp_system[] = {
 
 	/*   VARTYPE   DATATYPE         NAME               LABEL                                                    UNITS     META  GROUP REQUIRED_IF CONSTRAINTS     UI_HINTS*/
 	// ** Off-design Inputs **
-	{ SSC_INPUT,  SSC_MATRIX,  "od_cases",             "Columns: T_htf_C, m_dot_htf_ND, T_amb_C, od_opt_obj (1: MAX_ETA, 2: MAX_POWER), Rows: cases",   "",           "",    "",      "",      "",       "" },
-	{ SSC_INPUT,  SSC_ARRAY,   "od_P_mc_in_sweep",     "Columns: T_htf_C, m_dot_htf_ND, T_amb_C, od_opt_obj (1: MAX_ETA, 2: MAX_POWER)", "", "", "", "",  "",       "" },
+    { SSC_INPUT,  SSC_NUMBER,  "od_T_t_in_mode",       "0: model solves co2/HTF PHX od model to calculate turbine inlet temp, 1: model sets turbine inlet temp to HTF hot temp", "", "", "", "?=0", "", ""},  // default to solving PHX
+    { SSC_INPUT,  SSC_MATRIX,  "od_cases",             "Columns: T_htf_C, m_dot_htf_ND, T_amb_C, f_N_rc (=1 use design, <0, frac_des = abs(input), f_N_mc (=1 use design, <0, frac_des = abs(input), Rows: cases",   "",           "",    "",      "",      "",       "" },
+	{ SSC_INPUT,  SSC_ARRAY,   "od_P_mc_in_sweep",     "Columns: T_htf_C, m_dot_htf_ND, T_amb_C, f_N_rc (=1 use design, <0, frac_des = abs(input), f_N_mc (=1 use design, <0, frac_des = abs(input)", "", "", "", "",  "", "" },
 	{ SSC_INPUT,  SSC_MATRIX,  "od_set_control",       "Columns: T_htf_C, m_dot_htf_ND, T_amb_C, P_LP_in, Rows: cases", "", "", "", "", "", "" },
 	{ SSC_INPUT,  SSC_NUMBER,  "is_gen_od_polynomials","Generate off-design polynomials for Generic CSP models? 1 = Yes, 0 = No", "", "", "",  "?=0",     "",       "" },
 
@@ -91,7 +65,8 @@ static var_info _cm_vtab_sco2_csp_system[] = {
 	{ SSC_OUTPUT, SSC_ARRAY,   "mc_W_dot_od",          "Off-design main compressor power",                       "MWe",        "",    "",      "",     "",       "" },
 	{ SSC_OUTPUT, SSC_ARRAY,   "mc_m_dot_od",          "Off-design main compressor mass flow",                   "kg/s",       "",    "",      "",     "",       "" },
 	{ SSC_OUTPUT, SSC_ARRAY,   "mc_rho_in_od",         "Off-design main compressor inlet density",               "kg/m3",      "",    "",      "",     "",       "" },
-	{ SSC_OUTPUT, SSC_ARRAY,   "mc_ideal_spec_work_od","Off-design main compressor ideal specific work",         "kg/m3",      "",    "",      "",     "",       "" },
+    { SSC_OUTPUT, SSC_MATRIX,  "mc_psi_od",            "Off-design main compressor ideal head coefficient [od run][stage]","", "",    "",      "",     "",       "" },
+    { SSC_OUTPUT, SSC_ARRAY,   "mc_ideal_spec_work_od","Off-design main compressor ideal specific work",         "kJ/kg",      "",    "",      "",     "",       "" },
 	{ SSC_OUTPUT, SSC_ARRAY,   "mc_N_od",              "Off-design main compressor speed",                       "rpm",        "",    "",      "",     "",       "" },
 	{ SSC_OUTPUT, SSC_ARRAY,   "mc_eta_od",            "Off-design main compressor overall isentropic efficiency", "",         "",    "",      "",     "",       "" },
 	{ SSC_OUTPUT, SSC_MATRIX,  "mc_tip_ratio_od",      "Off-design main compressor tip speed ratio [od run][stage]", "",       "",    "",      "",     "",       "" },
@@ -105,8 +80,9 @@ static var_info _cm_vtab_sco2_csp_system[] = {
 	{ SSC_OUTPUT, SSC_ARRAY,   "rc_W_dot_od",          "Off-design recompressor power",                          "MWe",        "",    "",      "",     "",       "" },
 	{ SSC_OUTPUT, SSC_ARRAY,   "rc_m_dot_od",          "Off-design recompressor mass flow",                      "kg/s",       "",    "",      "",     "",       "" },
 	{ SSC_OUTPUT, SSC_ARRAY,   "rc_eta_od",            "Off-design recompressor overal isentropic efficiency",   "",           "",    "",      "",     "",       "" },
-	{ SSC_OUTPUT, SSC_MATRIX,  "rc_phi_od",            "Off-design recompressor flow coefficient [od run][stage]", "-",		   "",    "",      "",     "",       "" },
-	{ SSC_OUTPUT, SSC_ARRAY,   "rc_N_od",              "Off-design recompressor shaft speed",                    "rpm",		   "",    "",      "",     "",       "" },
+	{ SSC_OUTPUT, SSC_MATRIX,  "rc_phi_od",            "Off-design recompressor flow coefficients [od run][stage]", "-",	   "",    "",      "",     "",       "" },
+    { SSC_OUTPUT, SSC_MATRIX,  "rc_psi_od",            "Off-design recompressor ideal head coefficient [od run][stage]", "-",  "",    "",      "",     "",       "" },
+    { SSC_OUTPUT, SSC_ARRAY,   "rc_N_od",              "Off-design recompressor shaft speed",                    "rpm",		   "",    "",      "",     "",       "" },
 	{ SSC_OUTPUT, SSC_MATRIX,  "rc_tip_ratio_od",      "Off-design recompressor tip speed ratio [od run][stage]","-",		   "",    "",      "",     "",       "" },
 	{ SSC_OUTPUT, SSC_MATRIX,  "rc_eta_stages_od",     "Off-design recompressor stages isentropic efficiency [od run][stage]", "",    "",    "",      "",     "",       "" },
 		// Precompressor
@@ -200,6 +176,7 @@ public:
 	ssc_number_t *p_mc_W_dot_od;
 	ssc_number_t *p_mc_m_dot_od;
 	ssc_number_t *p_mc_rho_in_od;
+    ssc_number_t *pm_mc_psi_od;
 	ssc_number_t *p_mc_ideal_spec_work_od;
 	ssc_number_t *p_mc_N_od;
 	ssc_number_t *p_mc_eta_od;
@@ -215,6 +192,7 @@ public:
 	ssc_number_t *p_rc_m_dot_od;
 	ssc_number_t *p_rc_eta_od;
 	ssc_number_t *pm_rc_phi_od;
+    ssc_number_t *pm_rc_psi_od;
 	ssc_number_t *p_rc_N_od;
 	ssc_number_t *pm_rc_tip_ratio_od;
 	ssc_number_t *pm_rc_eta_stages_od;
@@ -284,7 +262,7 @@ public:
 
 	void exec() override
 	{
-		C_sco2_recomp_csp c_sco2_cycle;
+		C_sco2_phx_air_cooler c_sco2_cycle;
 
 		int sco2_des_err = sco2_design_cmod_common(this, c_sco2_cycle);
 		if (sco2_des_err != 0)
@@ -345,6 +323,9 @@ public:
 			delta_P = 6.0;
 		}
 
+        // Get turbine inlet mode
+        int T_t_in_mode = as_integer("od_T_t_in_mode");
+
 		util::matrix_t<double> od_cases;
 		if (is_od_cases_assigned)
 		{
@@ -376,7 +357,7 @@ public:
 				throw exec_error("sco2_csp_system", err_msg);
 			}
 			
-			int n_P_mc_in = 101;
+            int n_P_mc_in = 101;
 
 			double P_mc_in_low = P_LP_comp_in_des - delta_P / 2.0;	//[MPa]
 
@@ -389,7 +370,7 @@ public:
 				od_cases(i, 1) = od_case[1];
 				od_cases(i, 2) = od_case[2];
 				od_cases(i, 3) = od_case[3];
-				od_cases(i, 4) = od_case[4];
+                od_cases(i, 4) = od_case[4];
 				od_cases(i, 5) = P_mc_in_low + delta_P_i * i;	//[MPa]
 			}
 		}
@@ -416,7 +397,7 @@ public:
 		
 		int n_od_runs = (int)od_cases.nrows();
 		allocate_ssc_outputs(n_od_runs, n_mc_stages, n_rc_stages, n_pc_stages);
-		C_sco2_recomp_csp::S_od_par sco2_rc_od_par;
+		C_sco2_phx_air_cooler::S_od_par sco2_rc_od_par;
 
 		// For try/catch below
 		int out_type = -1;
@@ -438,6 +419,8 @@ public:
 			//int od_strategy = (int)p_od_opt_obj_code[n_run];		//[-]
 			//double od_opt_tol = p_od_opt_conv_tol[n_run];			//[-]
 
+            sco2_rc_od_par.m_T_t_in_mode = T_t_in_mode;  //[-]
+
 			int off_design_code = 0;
 			std::clock_t clock_start = std::clock();
 			try
@@ -447,23 +430,43 @@ public:
 					// 2D optimization
 					//off_design_code = sco2_recomp_csp.off_design_opt(sco2_rc_od_par, od_strategy);
 						// Nested optimization
-					int od_strategy = C_sco2_recomp_csp::E_TARGET_POWER_ETA_MAX;
+					int od_strategy = C_sco2_phx_air_cooler::E_TARGET_POWER_ETA_MAX;
 					off_design_code = c_sco2_cycle.optimize_off_design(sco2_rc_od_par, od_strategy);
 				}
 				else if (is_P_mc_in_od_sweep_assigned)
 				{
-					int od_strategy = C_sco2_recomp_csp::E_TARGET_POWER_ETA_MAX;
-					off_design_code = c_sco2_cycle.off_design_fix_P_mc_in(sco2_rc_od_par, od_cases(n_run, 5), od_strategy);
+					int od_strategy = C_sco2_phx_air_cooler::E_TARGET_POWER_ETA_MAX;
+                        // RC shaft speed control
+                    bool is_rc_N_od_at_design = true;
+                    double rc_N_od_f_des = 1.0;
+                    if (od_cases(n_run, 3) < 0.0)
+                    {
+                        is_rc_N_od_at_design = false;
+                        rc_N_od_f_des = fabs(od_cases(n_run, 3));
+                    }
+                        // MC shaft speed control
+                    bool is_mc_N_od_at_design = true;
+                    double mc_N_od_f_des = 1.0;
+                    if (od_cases(n_run, 4) < 0.0)
+                    {
+                        is_mc_N_od_at_design = false;
+                        mc_N_od_f_des = fabs(od_cases(n_run, 4));
+                    }
+
+					off_design_code = c_sco2_cycle.off_design_fix_P_mc_in(sco2_rc_od_par, od_cases(n_run, 5), 
+                                                                            is_rc_N_od_at_design, rc_N_od_f_des,
+                                                                            is_mc_N_od_at_design, mc_N_od_f_des,
+                                                                            od_strategy);
 				}
 				else if (is_od_set_control)
 				{
-					int od_strategy = C_sco2_recomp_csp::E_TARGET_POWER_ETA_MAX;
+					int od_strategy = C_sco2_phx_air_cooler::E_TARGET_POWER_ETA_MAX;
 					double P_LP_comp_in = od_cases(n_run, 3);
 					if (od_cases(n_run, 3) < 0.0)
 					{
 						P_LP_comp_in = P_LP_comp_in_des / fabs(P_LP_comp_in);
 					}
-					off_design_code = c_sco2_cycle.off_design_fix_P_mc_in(sco2_rc_od_par, P_LP_comp_in, od_strategy);
+					off_design_code = c_sco2_cycle.off_design_fix_P_mc_in(sco2_rc_od_par, P_LP_comp_in, true, 1.0, true, 1.0, od_strategy);
 				}
 			}
 			catch( C_csp_exception &csp_exception )
@@ -483,7 +486,7 @@ public:
 			double od_opt_duration = (clock_end - clock_start)/(double) CLOCKS_PER_SEC;		//[s]
 
 			p_od_code[n_run] = (ssc_number_t)off_design_code;
-			if(off_design_code == 0 || ((is_P_mc_in_od_sweep_assigned || is_od_set_control) && c_sco2_cycle.get_od_solved()->m_is_converged))
+			if(off_design_code == 0) // || ((is_P_mc_in_od_sweep_assigned || is_od_set_control) && c_sco2_cycle.get_od_solved()->m_is_converged))
 			{	// Off-design call was successful, so write outputs
 					// Control parameters
 				p_P_comp_in_od[n_run] = (ssc_number_t)(c_sco2_cycle.get_od_solved()->ms_rc_cycle_od_solved.m_pres[C_sco2_cycle_core::MC_IN] / 1000.0);	//[MPa]
@@ -511,7 +514,8 @@ public:
 				p_mc_eta_od[n_run] = (ssc_number_t)c_sco2_cycle.get_od_solved()->ms_rc_cycle_od_solved.ms_mc_ms_od_solved.m_eta;	//[-]
 				for (int i_s = 0; i_s < n_mc_stages; i_s++)
 				{
-					pm_mc_tip_ratio_od[n_run*n_mc_stages + i_s] = (ssc_number_t)c_sco2_cycle.get_od_solved()->ms_rc_cycle_od_solved.ms_mc_ms_od_solved.mv_tip_speed_ratio[i_s];	//[-]
+                    pm_mc_psi_od[n_run*n_mc_stages + i_s] = (ssc_number_t)c_sco2_cycle.get_od_solved()->ms_rc_cycle_od_solved.ms_mc_ms_od_solved.mv_psi[i_s];   //[-]
+                    pm_mc_tip_ratio_od[n_run*n_mc_stages + i_s] = (ssc_number_t)c_sco2_cycle.get_od_solved()->ms_rc_cycle_od_solved.ms_mc_ms_od_solved.mv_tip_speed_ratio[i_s];	//[-]
 					pm_mc_eta_stages_od[n_run*n_mc_stages + i_s] = (ssc_number_t)c_sco2_cycle.get_od_solved()->ms_rc_cycle_od_solved.ms_mc_ms_od_solved.mv_eta[i_s];	//[-]
 				}
 				p_mc_f_bypass_od[n_run] = (ssc_number_t)c_sco2_cycle.get_od_solved()->ms_rc_cycle_od_solved.m_mc_f_bypass;		//[-]
@@ -525,8 +529,11 @@ public:
 					p_rc_W_dot_od[n_run] = (ssc_number_t)(c_sco2_cycle.get_od_solved()->ms_rc_cycle_od_solved.ms_rc_ms_od_solved.m_W_dot_in*1.E-3);	//[MWe] convert from kWe
 					p_rc_m_dot_od[n_run] = (ssc_number_t)(c_sco2_cycle.get_od_solved()->ms_rc_cycle_od_solved.m_m_dot_rc);				//[kg/s]
 					p_rc_eta_od[n_run] = (ssc_number_t)c_sco2_cycle.get_od_solved()->ms_rc_cycle_od_solved.ms_rc_ms_od_solved.m_eta;		//[-]
-					for (int i_s = 0; i_s < n_rc_stages; i_s++)
-						pm_rc_phi_od[n_run*n_rc_stages + i_s] = (ssc_number_t)c_sco2_cycle.get_od_solved()->ms_rc_cycle_od_solved.ms_rc_ms_od_solved.mv_phi[i_s];	//[-]
+                    for (int i_s = 0; i_s < n_rc_stages; i_s++)
+                    {
+                        pm_rc_phi_od[n_run*n_rc_stages + i_s] = (ssc_number_t)c_sco2_cycle.get_od_solved()->ms_rc_cycle_od_solved.ms_rc_ms_od_solved.mv_phi[i_s];	//[-]
+                        pm_rc_psi_od[n_run*n_rc_stages + i_s] = (ssc_number_t)c_sco2_cycle.get_od_solved()->ms_rc_cycle_od_solved.ms_rc_ms_od_solved.mv_psi[i_s];	//[-]
+                    }
 					p_rc_N_od[n_run] = (ssc_number_t)c_sco2_cycle.get_od_solved()->ms_rc_cycle_od_solved.ms_rc_ms_od_solved.m_N;			//[rpm]
 					for (int i_s = 0; i_s < n_rc_stages; i_s++)
 					{
@@ -544,8 +551,11 @@ public:
 					p_rc_W_dot_od[n_run] = 0.0;
 					p_rc_m_dot_od[n_run] = 0.0;
 					p_rc_eta_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
-					for (int i_s = 0; i_s < n_rc_stages; i_s++)
-						pm_rc_phi_od[n_run*n_rc_stages + i_s] = std::numeric_limits<ssc_number_t>::quiet_NaN();
+                    for (int i_s = 0; i_s < n_rc_stages; i_s++)
+                    {
+                        pm_rc_phi_od[n_run*n_rc_stages + i_s] = std::numeric_limits<ssc_number_t>::quiet_NaN();
+                        pm_rc_psi_od[n_run*n_rc_stages + i_s] = std::numeric_limits<ssc_number_t>::quiet_NaN();
+                    }
 					p_rc_N_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();		
 					for (int i_s = 0; i_s < n_rc_stages; i_s++)
 					{
@@ -698,7 +708,8 @@ public:
 				p_mc_eta_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
 				for (int i_s = 0; i_s < n_mc_stages; i_s++)
 				{
-					pm_mc_tip_ratio_od[n_run*n_mc_stages + i_s] = std::numeric_limits<ssc_number_t>::quiet_NaN();
+					pm_mc_phi_od[n_run*n_mc_stages + i_s] = std::numeric_limits<ssc_number_t>::quiet_NaN();
+                    pm_mc_tip_ratio_od[n_run*n_mc_stages + i_s] = std::numeric_limits<ssc_number_t>::quiet_NaN();
 					pm_mc_eta_stages_od[n_run*n_mc_stages + i_s] = std::numeric_limits<ssc_number_t>::quiet_NaN();
 				}
 				p_mc_f_bypass_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
@@ -710,8 +721,11 @@ public:
 				p_rc_W_dot_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
 				p_rc_m_dot_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
 				p_rc_eta_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
-				for(int i_s = 0; i_s < n_rc_stages; i_s++)
-					pm_rc_phi_od[n_run*n_rc_stages + i_s] = std::numeric_limits<ssc_number_t>::quiet_NaN();
+                for (int i_s = 0; i_s < n_rc_stages; i_s++)
+                {
+                    pm_rc_phi_od[n_run*n_rc_stages + i_s] = std::numeric_limits<ssc_number_t>::quiet_NaN();
+                    pm_rc_psi_od[n_run*n_rc_stages + i_s] = std::numeric_limits<ssc_number_t>::quiet_NaN();
+                }
 				p_rc_N_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
 				for (int i_s = 0; i_s < n_rc_stages; i_s++)
 				{
@@ -820,6 +834,7 @@ public:
 		p_mc_W_dot_od = allocate("mc_W_dot_od", n_od_runs);
 		p_mc_m_dot_od = allocate("mc_m_dot_od", n_od_runs);
 		p_mc_rho_in_od = allocate("mc_rho_in_od", n_od_runs);
+        pm_mc_psi_od = allocate("mc_psi_od", n_od_runs, n_mc_stages);
 		p_mc_ideal_spec_work_od = allocate("mc_ideal_spec_work_od", n_od_runs);
 		p_mc_N_od = allocate("mc_N_od", n_od_runs);
 		p_mc_eta_od = allocate("mc_eta_od", n_od_runs);
@@ -835,6 +850,7 @@ public:
 		p_rc_m_dot_od = allocate("rc_m_dot_od", n_od_runs);
 		p_rc_eta_od = allocate("rc_eta_od", n_od_runs);
 		pm_rc_phi_od = allocate("rc_phi_od", n_od_runs, n_rc_stages);
+        pm_rc_psi_od = allocate("rc_psi_od", n_od_runs, n_rc_stages);
 		p_rc_N_od = allocate("rc_N_od", n_od_runs);
 		pm_rc_tip_ratio_od = allocate("rc_tip_ratio_od", n_od_runs, n_rc_stages);
 		pm_rc_eta_stages_od = allocate("rc_eta_stages_od", n_od_runs, n_rc_stages);
