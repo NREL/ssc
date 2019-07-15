@@ -1392,8 +1392,13 @@ losses_t::losses_t(double dtHour, lifetime_t * lifetime, thermal_t * thermal, ca
 	if (loss_choice == losses_t::MONTHLY)
 	{
 		if (charge_loss.size() == 1) {
-			for (size_t m = 0; m < 12; m++) {
+			for (size_t m = 1; m < 12; m++) {
 				_charge_loss.push_back(charge_loss[0]);
+			}
+		}
+		else if (charge_loss.size() == 0) {
+			for (size_t m = 0; m < 12; m++) {
+				_charge_loss.push_back(0);
 			}
 		}
 		else {
@@ -1401,8 +1406,14 @@ losses_t::losses_t(double dtHour, lifetime_t * lifetime, thermal_t * thermal, ca
 		}
 		if (discharge_loss.size() == 1) {
 			
-			for (size_t m = 0; m < 12; m++) {
+			for (size_t m = 1; m < 12; m++) {
 				_discharge_loss.push_back(discharge_loss[0]);
+			}
+		}
+		else if (discharge_loss.size() == 0) {
+
+			for (size_t m = 0; m < 12; m++) {
+				_discharge_loss.push_back(0);
 			}
 		}
 		else {
@@ -1411,6 +1422,11 @@ losses_t::losses_t(double dtHour, lifetime_t * lifetime, thermal_t * thermal, ca
 		if (idle_loss.size() == 1) {
 			for (size_t m = 0; m < 12; m++) {
 				_idle_loss.push_back(idle_loss[0]);
+			}
+		}
+		else if (idle_loss.size() == 0) {
+			for (size_t m = 0; m < 12; m++) {
+				_idle_loss.push_back(0);
 			}
 		}
 		else {
