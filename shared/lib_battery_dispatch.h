@@ -561,6 +561,13 @@ public:
 	/*! Return the calculated cost to cycle ($/cycle)*/
 	double cost_to_cycle() { return m_cycleCost; }
 
+	/// Return benefit calculations
+	double benefit_charge(){ return benefitToPVCharge; }
+	double benefit_gridcharge() { return benefitToGridCharge; }
+	double benefit_clipcharge() { return benefitToClipCharge; }
+	double benefit_discharge() { return benefitToDischarge; }
+
+
 protected:
 	
 	void init_with_pointer(const dispatch_automatic_front_of_meter_t* tmp);
@@ -589,6 +596,12 @@ protected:
 	double m_etaPVCharge;
 	double m_etaGridCharge;
 	double m_etaDischarge;
+
+	/* Computed benefits to charge, discharge, gridcharge, clipcharge */
+	double benefitToPVCharge;
+	double benefitToGridCharge;
+	double benefitToClipCharge;
+	double benefitToDischarge;
 };
 
 /*! Battery metrics class */

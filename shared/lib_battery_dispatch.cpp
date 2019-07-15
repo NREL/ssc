@@ -1257,6 +1257,8 @@ dispatch_automatic_front_of_meter_t::dispatch_automatic_front_of_meter_t(
 		m_cycleCost = battCycleCost;
 	}
 	
+	benefitToClipCharge = benefitToDischarge = benefitToGridCharge = benefitToPVCharge = 0;
+
 	setup_cost_forecast_vector();
 }
 dispatch_automatic_front_of_meter_t::~dispatch_automatic_front_of_meter_t(){ /* NOTHING TO DO */}
@@ -1363,16 +1365,16 @@ void dispatch_automatic_front_of_meter_t::update_dispatch(size_t hour_of_year, s
 			}
 
 			/*! Economic benefit of charging from the grid in current time step to discharge sometime in next X hours ($/kWh)*/
-			double benefitToGridCharge = *max_ppa_cost * m_etaDischarge - usage_cost / m_etaGridCharge - m_cycleCost;
+			benefitToGridCharge = *max_ppa_cost * m_etaDischarge - usage_cost / m_etaGridCharge - m_cycleCost;
 
 			/*! Economic benefit of charging from regular PV in current time step to discharge sometime in next X hours ($/kWh)*/
-			double benefitToPVCharge = *max_ppa_cost * m_etaDischarge - ppa_cost / m_etaPVCharge - m_cycleCost;
+			benefitToPVCharge = *max_ppa_cost * m_etaDischarge - ppa_cost / m_etaPVCharge - m_cycleCost;
 
 			/*! Economic benefit of charging from clipped PV in current time step to discharge sometime in the next X hours (clipped PV is free) ($/kWh) */
-			double benefitToClipCharge = *max_ppa_cost * m_etaDischarge - m_cycleCost;
+			benefitToClipCharge = *max_ppa_cost * m_etaDischarge - m_cycleCost;
 
 			/*! Economic benefit of discharging in current time step ($/kWh) */
-			double benefitToDischarge = ppa_cost * m_etaDischarge - m_cycleCost;
+			benefitToDischarge = ppa_cost * m_etaDischarge - m_cycleCost;
 
 			/*! Energy need to charge the battery (kWh) */
 			double energyNeededToFillBattery = _Battery->battery_energy_to_fill(m_batteryPower->stateOfChargeMax);

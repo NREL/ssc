@@ -216,7 +216,12 @@ var_info vtab_battery_outputs[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "grid_power_target",                          "Electricity grid power target for automated dispatch","kW","",                               "Battery",       "",                           "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "batt_power_target",                          "Electricity battery power target for automated dispatch","kW","",                            "Battery",       "",                           "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "batt_cost_to_cycle",                         "Battery computed cost to cycle",                                "$/cycle", "",                       "Battery",       "",                           "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "market_sell_rate_series_yr1",                "Market sell rate (Year 1)",                             "$/MWh", "",                         "Battery",       "",                           "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "market_sell_rate_series_yr1",                "Market sell rate (Year 1)",                             "$/kWh", "",                         "Battery",       "",                           "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "batt_benefit_gridcharge",					   "Benefit to charge from grid",                           "$/kWh", "",                         "Battery",       "",                           "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "batt_benefit_charge",                        "Benefit to charge from system",                         "$/kWh", "",                         "Battery",       "",                           "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "batt_benefit_clipcharge",                    "Benefit to charge from clipped",                        "$/kWh", "",                         "Battery",       "",                           "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "batt_benefit_discharge",                     "Benefit to discharge",                                  "$/kWh", "",                         "Battery",       "",                           "",                              "" },
+
 
 	// monthly outputs
 	{ SSC_OUTPUT,        SSC_ARRAY,      "monthly_pv_to_load",                         "Energy to load from PV",                                "kWh",      "",                      "Battery",       "",                          "LENGTH=12",                     "" },
@@ -617,6 +622,11 @@ battstor::battstor(compute_module &cm, bool setup_model, size_t nrec, double dt_
 	outAnnualGridImportEnergy = 0;
 	outAnnualGridExportEnergy = 0;
 	outCostToCycle = 0;
+	outBenefitCharge = 0;
+	outBenefitGridcharge = 0;
+	outBenefitClipcharge = 0;
+	outBenefitDischarge = 0;
+
 
 	en = setup_model;
 	if (!en) return;
@@ -695,6 +705,10 @@ battstor::battstor(compute_module &cm, bool setup_model, size_t nrec, double dt_
 		if (batt_vars->batt_dispatch != dispatch_t::FOM_MANUAL) {
 			outCostToCycle = cm.allocate("batt_cost_to_cycle", nrec*nyears);
 			outBattPowerTarget = cm.allocate("batt_power_target", nrec*nyears);
+			outBenefitCharge = cm.allocate("batt_benefit_charge", nrec*nyears);
+			outBenefitGridcharge = cm.allocate("batt_benefit_gridcharge", nrec*nyears);
+			outBenefitClipcharge = cm.allocate("batt_benefit_clipcharge", nrec*nyears);
+			outBenefitDischarge = cm.allocate("batt_benefit_discharge", nrec*nyears);
 		}
 	}
 	outPVToBatt = cm.allocate("pv_to_batt", nrec*nyears);
@@ -1233,8 +1247,13 @@ void battstor::outputs_topology_dependent(compute_module &)
 		outBatteryToGrid[index] = (ssc_number_t)(dispatch_model->power_battery_to_grid());
 
 		if (batt_vars->batt_dispatch != dispatch_t::FOM_MANUAL) {
+			dispatch_automatic_front_of_meter_t * dispatch_fom = dynamic_cast<dispatch_automatic_front_of_meter_t *>(dispatch_model);
 			outCostToCycle[index] = (ssc_number_t)(dispatch_model->cost_to_cycle());
 			outBattPowerTarget[index] = (ssc_number_t)(dispatch_model->power_batt_target());
+			outBenefitCharge[index] = (ssc_number_t)(dispatch_fom->benefit_charge());
+			outBenefitDischarge[index] = (ssc_number_t)(dispatch_fom->benefit_discharge());
+			outBenefitClipcharge[index] = (ssc_number_t)(dispatch_fom->benefit_clipcharge());
+			outBenefitGridcharge[index] = (ssc_number_t)(dispatch_fom->benefit_gridcharge());
 		}
 	}
 }
