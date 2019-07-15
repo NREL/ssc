@@ -541,7 +541,15 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 		dispatch.params.siminfo = &mc_kernel.mc_sim_info;
 		dispatch.params.messages = &mc_csp_messages;
 
-		dispatch.params.dt = 1./(double)mc_tou.mc_dispatch_params.m_disp_steps_per_hour;  //hr
+		
+		
+		dispatch.params.is_uniform_dt = ! mc_tou.mc_dispatch_params.m_is_variable_disp_steps;
+
+		if (dispatch.params.is_uniform_dt)
+			dispatch.params.dt = 1./(double)mc_tou.mc_dispatch_params.m_disp_steps_per_hour;  //hr
+		else
+			dispatch.params.dt = std::numeric_limits<double>::quiet_NaN();
+		
 		dispatch.params.dt_pb_startup_cold = mc_power_cycle.get_cold_startup_time();
 		dispatch.params.dt_pb_startup_hot = mc_power_cycle.get_hot_startup_time();
 		dispatch.params.q_pb_standby = mc_power_cycle.get_standby_energy_requirement()*1000.;
@@ -575,6 +583,10 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 		dispatch.params.w_stow = mc_collector_receiver.get_col_startup_power()*1000.0;	//kWe-hr
 		dispatch.params.w_cycle_pump = mc_power_cycle.get_htf_pumping_parasitic_coef();// kWe/kWt
 		dispatch.params.w_cycle_standby = dispatch.params.q_pb_standby*dispatch.params.w_cycle_pump; //kWe
+
+		
+		
+
 
 		//Cycle efficiency
 		dispatch.params.eff_table_load.clear();
@@ -612,25 +624,25 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 		}
 
 		// Cycle ramp rates and min up/down time
-		dispatch.params.pb_max_rampup = mc_tou.mc_dispatch_params.m_pc_max_rampup*dispatch.params.dt*m_cycle_q_dot_des*1000.;  // [kWt] per dispatch time step
-		dispatch.params.pb_max_rampdown = mc_tou.mc_dispatch_params.m_pc_max_rampdown*dispatch.params.dt*m_cycle_q_dot_des*1000.;  // [kWt] per dispatch time step
-		dispatch.params.pb_minup = (int)ceil(mc_tou.mc_dispatch_params.m_pc_minup / dispatch.params.dt);		// Minimum cycle up time (number of dispatch time steps)
-		dispatch.params.pb_mindown = (int)ceil(mc_tou.mc_dispatch_params.m_pc_mindown / dispatch.params.dt);   // Minimum cycle down time (number of dispatch time steps)
+		dispatch.params.pb_max_rampup = mc_tou.mc_dispatch_params.m_pc_max_rampup;      // fraction of capacity per hour
+		dispatch.params.pb_max_rampdown = mc_tou.mc_dispatch_params.m_pc_max_rampdown; 
+		dispatch.params.pb_rampup_violation_lim = mc_tou.mc_dispatch_params.m_pc_rampup_violation_lim;      // fraction of capacity per hour
+		dispatch.params.pb_rampdown_violation_lim = mc_tou.mc_dispatch_params.m_pc_rampdown_violation_lim;
+
+		dispatch.params.pb_minup = mc_tou.mc_dispatch_params.m_pc_minup;		// Minimum cycle up time [hr]
+		dispatch.params.pb_mindown = mc_tou.mc_dispatch_params.m_pc_mindown;    // Minimum cycle down time [hr]
 			
 		// Storage buffer
 		dispatch.params.e_tes_buffer = mc_tou.mc_dispatch_params.m_storage_buffer * dispatch.params.e_tes_max;
 
 		// Decision permanence
-		dispatch.perm.pb_onoff = (int)ceil(mc_tou.mc_dispatch_params.m_pc_onoff_perm / dispatch.params.dt);
-		dispatch.perm.pb_level = (int)ceil(mc_tou.mc_dispatch_params.m_pc_level_perm / dispatch.params.dt);
-		dispatch.perm.rec_onoff = (int)ceil(mc_tou.mc_dispatch_params.m_rec_onoff_perm / dispatch.params.dt);
+		dispatch.perm.pb_onoff = mc_tou.mc_dispatch_params.m_pc_onoff_perm;
+		dispatch.perm.pb_level = mc_tou.mc_dispatch_params.m_pc_level_perm;
+		dispatch.perm.rec_onoff = mc_tou.mc_dispatch_params.m_rec_onoff_perm;
 
-		dispatch.params.nstep_lookahead = (int) (mc_tou.mc_dispatch_params.m_optimize_horizon - mc_tou.mc_dispatch_params.m_optimize_frequency) / dispatch.params.dt;
-		dispatch.perm.pb_onoff_lookahead = (int)ceil(mc_tou.mc_dispatch_params.m_pc_onoff_lookahead_perm / dispatch.params.dt);
-		dispatch.perm.pb_level_lookahead = (int)ceil(mc_tou.mc_dispatch_params.m_pc_level_lookahead_perm / dispatch.params.dt);
-		dispatch.perm.rec_onoff_lookahead = (int)ceil(mc_tou.mc_dispatch_params.m_rec_onoff_lookahead_perm / dispatch.params.dt);
-
-		
+		dispatch.perm.pb_onoff_lookahead = mc_tou.mc_dispatch_params.m_pc_onoff_lookahead_perm;
+		dispatch.perm.pb_level_lookahead = mc_tou.mc_dispatch_params.m_pc_level_lookahead_perm;
+		dispatch.perm.rec_onoff_lookahead = mc_tou.mc_dispatch_params.m_rec_onoff_lookahead_perm;
 	}
 
 
@@ -678,7 +690,10 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 
 
 	double pc_state_persist = 0.;  // Time [hr] that current pc operating state (on/off/standby) has persisted
+	double rec_state_persist = 0.;  // Time [hr] that current receiver operating state (on/off/standby) has persisted
 	int prev_pc_state = mc_power_cycle.get_operating_state();
+	int prev_rec_state = mc_collector_receiver.get_operating_state();
+
 	double q_pb_last = 0.0;   // Cycle thermal input at end of last time step [kWt]
 	double w_pb_last = 0.0;   // Cycle gross generation at end of last time step [kWt]
 	double f_op_last = 0.0;	  // Fraction of last time step that cycle was operating or in standby
@@ -951,8 +966,17 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
                 if( hour_now >= (8760 - opt_horizon) )
                     opt_horizon = (int)std::min((double)opt_horizon, (double)(8761-hour_now));
 
+
+				// Set of array of dispatch time steps
+				dispatch.set_up_timestep_array((double)opt_horizon, mc_tou.mc_dispatch_params.m_disp_steplength_array, mc_tou.mc_dispatch_params.m_disp_steplength_end_time);
+				int nsteps_baseline = (int)(3600 * opt_horizon / baseline_step);  // Number of steps in optimization window at weather-file resolution
+				int nsteps_disp = (int)dispatch.dt_array.size();  // Number of steps in dispatch optimization model
 				
-				dispatch.params.nstep_lookahead = (int) (opt_horizon - mc_tou.mc_dispatch_params.m_optimize_frequency) / dispatch.params.dt;
+				int j = 0;
+				while (j < dispatch.t_elapsed.size() && dispatch.t_elapsed.at(j) < opt_duration)
+					j++;
+				dispatch.params.nstep_lookahead = nsteps_disp - j - 1;  // Number of steps in the lookahead period
+
 
 
                 //message
@@ -975,63 +999,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
                                                             );
 
 
-                //get the new price signal
-                dispatch.forecast_outputs.price_scenarios.clear();
-                dispatch.forecast_outputs.price_scenarios.resize(opt_horizon*mc_tou.mc_dispatch_params.m_disp_steps_per_hour, dispatch.forecast_params.n_scenarios);
-
-                for(int t=0; t<opt_horizon*mc_tou.mc_dispatch_params.m_disp_steps_per_hour; t++)
-                {
-					mc_tou.call(mc_kernel.mc_sim_info.ms_ts.m_time + t * 3600./(double)mc_tou.mc_dispatch_params.m_disp_steps_per_hour, mc_tou_outputs);
-		            dispatch.forecast_outputs.price_scenarios.at(t,0) = mc_tou_outputs.m_price_mult;
-                }
-
-				// get the new electricity generation limits
-				dispatch.w_lim.clear();
-				dispatch.w_lim.resize(opt_horizon*mc_tou.mc_dispatch_params.m_disp_steps_per_hour, 1.e99);
-				int hour_start = (int)(ceil (mc_kernel.mc_sim_info.ms_ts.m_time / 3600. - 1.e-6)) - 1;
-				for (int t = 0; t<opt_horizon; t++)
-				{
-					for (int d = 0; d < mc_tou.mc_dispatch_params.m_disp_steps_per_hour; d++)
-						dispatch.w_lim.at(t*mc_tou.mc_dispatch_params.m_disp_steps_per_hour+d) = mc_tou.mc_dispatch_params.m_w_lim_full.at(hour_start + t);
-				}
-
-
-				// get the capacity and efficiency constraints (assumed to be provided at the weather file time resolution beginning at the simulation start time)
-				dispatch.cap_frac.clear();
-				dispatch.eff_frac.clear();
-				dispatch.cap_frac.resize(opt_horizon*mc_tou.mc_dispatch_params.m_disp_steps_per_hour, 1.0);
-				dispatch.eff_frac.resize(opt_horizon*mc_tou.mc_dispatch_params.m_disp_steps_per_hour, 1.0);
-				if (mc_tou.mc_dispatch_params.m_is_disp_constr)
-				{
-					int p = (int)ceil((mc_kernel.mc_sim_info.ms_ts.m_time - sim_setup.m_sim_time_start) / baseline_step) - 1;
-					int n_per_disp_step = (int)(3600. / baseline_step) / mc_tou.mc_dispatch_params.m_disp_steps_per_hour; // number of time-series steps per dispatch step
-					for (int d = 0; d < opt_horizon * mc_tou.mc_dispatch_params.m_disp_steps_per_hour; d++)
-					{
-						dispatch.cap_frac.at(d) = 0.0;
-						dispatch.eff_frac.at(d) = 0.0;
-
-						for (int i = 0; i < n_per_disp_step; i++)
-						{
-							int t = p + d * n_per_disp_step + i;
-							double cap_frac, eff_frac;
-							if (t < (int)mc_tou.mc_dispatch_params.m_disp_cap_constr.size())
-							{
-								cap_frac = mc_tou.mc_dispatch_params.m_disp_cap_constr.at(t);
-								eff_frac = mc_tou.mc_dispatch_params.m_disp_eff_constr.at(t);
-							}
-							else  // provided arrays may not cover full look-ahead period -> use last value
-							{
-								cap_frac = mc_tou.mc_dispatch_params.m_disp_cap_constr.back();
-								eff_frac = mc_tou.mc_dispatch_params.m_disp_eff_constr.back();
-							}
-						
-							dispatch.cap_frac.at(d) += cap_frac / (double)n_per_disp_step;
-							dispatch.eff_frac.at(d) += eff_frac / (double)n_per_disp_step;
-						}
-					}
-				}
-				
-
+                
 
 
                 //note the states of the power cycle and receiver
@@ -1054,8 +1022,6 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 						dispatch.params.q_pb0 = 0.0;
 				}
 
-
-
                 //time
                 dispatch.params.info_time = mc_kernel.mc_sim_info.ms_ts.m_time; //s
 
@@ -1069,20 +1035,52 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
                     dispatch.params.e_tes_init = dispatch.params.e_tes_max;
 
 				
-				// Note how many "dispatch" time steps the cycle has been in it's current operational state
-				dispatch.params.pb_persist0 = (int)ceil(pc_state_persist / dispatch.params.dt);
+				// Note how long the cycle and receiver have been in their current operational state
+				dispatch.params.pb_persist0 = pc_state_persist; 
+				dispatch.params.rec_persist0 = rec_state_persist;
 				if (time_start < 1.e-6)
+				{
 					dispatch.params.pb_persist0 = 1000.; // Set a large value for first optimiation so min up/down constraints are not limiting
+					dispatch.params.rec_persist0 = 1000.; 
+				}
 
 
-                //update the forecast scenarios, if needed
+                //-- Update time-indexed dispatch inputs
                 { 
+					int stepstart = (int)(mc_kernel.mc_sim_info.ms_ts.m_time / baseline_step) - 1;
 
-                    int nstepopt = opt_horizon * mc_tou.mc_dispatch_params.m_disp_steps_per_hour;	
-                    int stepstart = (int) (mc_kernel.mc_sim_info.ms_ts.m_time/ baseline_step) - 1; 
+					// Get inputs at weather-file resolution
+					dispatch.w_lim.clear();
+					dispatch.cap_frac.clear();
+					dispatch.eff_frac.clear();
+					dispatch.forecast_outputs.price_scenarios.clear();
+					dispatch.forecast_outputs.dni_scenarios.clear();
+					dispatch.forecast_outputs.tdry_scenarios.clear();
+	
+					dispatch.w_lim.resize(nsteps_baseline, 1.e99);
+					dispatch.cap_frac.resize(nsteps_baseline, 1.0);
+					dispatch.eff_frac.resize(nsteps_baseline, 1.0);
+					dispatch.forecast_outputs.price_scenarios.resize(nsteps_baseline, dispatch.forecast_params.n_scenarios);
 
+					int s1 = (int)ceil((mc_kernel.mc_sim_info.ms_ts.m_time - sim_setup.m_sim_time_start) / baseline_step) - 1;  // First step in this time horizon relative to the simulation start time
+					for (int t = 0; t < nsteps_baseline; t++)
+					{
+						mc_tou.call(mc_kernel.mc_sim_info.ms_ts.m_time + t * baseline_step, mc_tou_outputs);
+						dispatch.forecast_outputs.price_scenarios.at(t, 0) = mc_tou_outputs.m_price_mult;
+						dispatch.w_lim.at(t) = mc_tou.mc_dispatch_params.m_w_lim_full.at(stepstart + t);
+						if (mc_tou.mc_dispatch_params.m_is_disp_constr)
+						{
+							int i = (int)std::fmin(s1 + t, (int)mc_tou.mc_dispatch_params.m_disp_cap_constr.size() - 1);
+							dispatch.cap_frac.at(t) = mc_tou.mc_dispatch_params.m_disp_cap_constr.at(i);
+							dispatch.eff_frac.at(t) = mc_tou.mc_dispatch_params.m_disp_eff_constr.at(i);
+						}
+					}
+
+
+					// update the forecast scenarios, if needed 
 					if (mc_tou.mc_dispatch_params.m_is_stochastic_dispatch)
                     {
+						int wf_steps_per_hr = (int)(3600. / baseline_step);
 
 						dispatch.forecast_params.is_stochastic = mc_tou.mc_dispatch_params.m_is_stochastic_dispatch;
 
@@ -1092,8 +1090,8 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
                         dispatch.forecast_params.is_tdry_scenarios = mc_tou.mc_dispatch_params.m_is_tdry_scenarios;
 
                         //resize arrays. note price_scenarios is sized above.
-                        dispatch.forecast_outputs.dni_scenarios.resize( nstepopt, dispatch.forecast_params.n_scenarios );
-                        dispatch.forecast_outputs.tdry_scenarios.resize( nstepopt, dispatch.forecast_params.n_scenarios );
+                        dispatch.forecast_outputs.dni_scenarios.resize(nsteps_baseline, dispatch.forecast_params.n_scenarios );
+                        dispatch.forecast_outputs.tdry_scenarios.resize(nsteps_baseline, dispatch.forecast_params.n_scenarios );
 
 
 						// find location in full scenario input arrays
@@ -1104,19 +1102,19 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 
 						int n_opt_per_update = mc_tou.mc_dispatch_params.m_horizon_update_frequency / mc_tou.mc_dispatch_params.m_optimize_frequency;	// optimizations per horizon update 
 						int n_hour_per_update = (n_opt_per_update * mc_tou.mc_dispatch_params.m_optimize_horizon) - mc_tou.mc_dispatch_params.m_optimize_frequency * (n_opt_per_update*(n_opt_per_update - 1) / 2);
-						int nstep_per_update = n_hour_per_update * mc_tou.mc_dispatch_params.m_disp_steps_per_hour;	// time steps in full input arrays per optimizaton horizon update 
+						int nstep_per_update = n_hour_per_update * wf_steps_per_hr;	// time steps in full input arrays per optimizaton horizon update 
 
 						int sc_start = update_period * nstep_per_update;  // first point in scenario arrays for this optimization
 						int p = opt_period - update_period * n_opt_per_update;
 						if (p > 0)
-							sc_start += mc_tou.mc_dispatch_params.m_disp_steps_per_hour * (mc_tou.mc_dispatch_params.m_optimize_horizon*p - mc_tou.mc_dispatch_params.m_optimize_frequency * (p*(p - 1) / 2));
+							sc_start += wf_steps_per_hr * (mc_tou.mc_dispatch_params.m_optimize_horizon*p - mc_tou.mc_dispatch_params.m_optimize_frequency * (p*(p - 1) / 2));
 		
 						if (disp_time_last < 0 && stepstart >0) // First optimization starts in the middle of this optimization period
-							sc_start += (mc_tou.mc_dispatch_params.m_optimize_frequency - opt_duration) * mc_tou.mc_dispatch_params.m_disp_steps_per_hour;
+							sc_start += (mc_tou.mc_dispatch_params.m_optimize_frequency - opt_duration) * wf_steps_per_hr;
 						 
 
                         //assign the data
-                        for( int tt=0; tt<nstepopt; tt++)
+                        for( int tt=0; tt<nsteps_baseline; tt++)
                         {
                             for( int ss=0; ss<dispatch.forecast_params.n_scenarios; ss++)
                             {
@@ -1136,8 +1134,21 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
                     }
 
 
+					
+					//-- Translate inputs from uniform weather-file time resolution to dispatch time resolution
+					dispatch.translate_to_dispatch_timesteps(baseline_step / 3600., dispatch.w_lim);							
+					dispatch.translate_to_dispatch_timesteps(baseline_step / 3600., dispatch.cap_frac);
+					dispatch.translate_to_dispatch_timesteps(baseline_step / 3600., dispatch.eff_frac);
+
+					dispatch.translate_to_dispatch_timesteps(baseline_step / 3600., dispatch.forecast_outputs.price_scenarios);
+					if (mc_tou.mc_dispatch_params.m_is_stochastic_dispatch)
+					{
+						dispatch.translate_to_dispatch_timesteps(baseline_step / 3600., dispatch.forecast_outputs.dni_scenarios);
+						dispatch.translate_to_dispatch_timesteps(baseline_step / 3600., dispatch.forecast_outputs.tdry_scenarios);
+					}
+
                     //predict performance for the time horizon
-                    if( dispatch.predict_performance( stepstart,  nstepopt, (int)(3600./baseline_step)/mc_tou.mc_dispatch_params.m_disp_steps_per_hour) )
+                    if( dispatch.predict_performance( stepstart, (double)opt_horizon, baseline_step/3600.) )
                     {
                         //call the optimize method
                         opt_complete = dispatch.m_last_opt_successful = 
@@ -1150,6 +1161,9 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 
                         dispatch.m_current_read_step = 0;   //reset
 
+						// change dispatch output arrays from dispath time steps to weather-file time steps
+						if (opt_complete)
+							dispatch.convert_outputs_to_weatherfile_timesteps(baseline_step / 3600.);
                     }
 
                 }
@@ -1184,11 +1198,14 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
                 //read in other values
 
                 //calculate the current read step, account for number of dispatch steps per hour and the simulation time step
-				dispatch.m_current_read_step = (int)(mc_kernel.mc_sim_info.ms_ts.m_time * mc_tou.mc_dispatch_params.m_disp_steps_per_hour / 3600. - .001)
-					% (mc_tou.mc_dispatch_params.m_optimize_frequency * mc_tou.mc_dispatch_params.m_disp_steps_per_hour);
+				//dispatch.m_current_read_step = (int)(mc_kernel.mc_sim_info.ms_ts.m_time * mc_tou.mc_dispatch_params.m_disp_steps_per_hour / 3600. - .001)
+				//	% (mc_tou.mc_dispatch_params.m_optimize_frequency * mc_tou.mc_dispatch_params.m_disp_steps_per_hour);
+				
+				//calculate the current read step. Note dispath output arrays are now returned at the weather file time step resolution
+				dispatch.m_current_read_step = (int)(mc_kernel.mc_sim_info.ms_ts.m_time/baseline_step - .001) % (int)(mc_tou.mc_dispatch_params.m_optimize_frequency*3600./baseline_step);
 
 				if (opt_duration != mc_tou.mc_dispatch_params.m_optimize_frequency)   // Non-standard optimization period (can only occur at first optimization)
-					dispatch.m_current_read_step -= (mc_tou.mc_dispatch_params.m_optimize_frequency - opt_duration) * mc_tou.mc_dispatch_params.m_disp_steps_per_hour;
+					dispatch.m_current_read_step -= (mc_tou.mc_dispatch_params.m_optimize_frequency - opt_duration) * 3600./baseline_step;
 
 
                 is_rec_su_allowed = dispatch.outputs.rec_operation.at( dispatch.m_current_read_step );
@@ -1222,16 +1239,16 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 					int tprev = t - 1;
 					while (tprev > 0 && dispatch.outputs.q_pb_startup.at(tprev) > 0.0)
 					{
+						time_acc += dispatch.dt_array.at(tprev);
 						tprev -= 1;
-						time_acc += dispatch.params.dt;
 					}
-					double fstart_time = (dispatch.params.dt_pb_startup_cold - time_acc) / dispatch.params.dt;		
+					double fstart_time = (dispatch.params.dt_pb_startup_cold - time_acc) / dispatch.dt_array.at(t);
 
 					double avail_storage;
 					if (t > 0)
-						avail_storage = dispatch.outputs.tes_charge_expected.at(t - 1) / dispatch.params.dt;
+						avail_storage = dispatch.outputs.tes_charge_expected.at(t - 1) / dispatch.dt_array.at(t);
 					else
-						avail_storage = dispatch.params.e_tes_init / dispatch.params.dt;
+						avail_storage = dispatch.params.e_tes_init / dispatch.dt_array.at(t);
 
 					double qmax = dispatch.cap_frac.at(t)*dispatch.params.q_pb_max;
 					double q_dot_pc_su_dispatch = fmin(qmax, avail_storage + dispatch.outputs.q_sf_expected.at(t));  // Max thermal power available to start up
@@ -1324,8 +1341,8 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
                 //if( is_sim_timestep_complete ) // disp_time_last != mc_kernel.mc_sim_info.ms_ts.ms_ts.m_time)
                 //    dispatch.m_current_read_step++;
 
-                if(dispatch.m_current_read_step > mc_tou.mc_dispatch_params.m_optimize_frequency * mc_tou.mc_dispatch_params.m_disp_steps_per_hour 
-					|| dispatch.m_current_read_step > opt_duration * mc_tou.mc_dispatch_params.m_disp_steps_per_hour)
+                if(dispatch.m_current_read_step > mc_tou.mc_dispatch_params.m_optimize_frequency * 3600. / baseline_step
+					|| dispatch.m_current_read_step > opt_duration * 3600. / baseline_step)
                     throw C_csp_exception("Counter synchronization error in dispatch optimization routine.", "dispatch");
 
             }
@@ -5439,6 +5456,17 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 			pc_state_persist = 0.;
 			prev_pc_state = mc_power_cycle.get_operating_state();
 		}
+
+		// Update the receiver state persistance
+		if (mc_collector_receiver.get_operating_state() == prev_rec_state)
+			rec_state_persist += mc_kernel.mc_sim_info.ms_ts.m_step / 3600.;
+		else
+		{
+			rec_state_persist = 0.;
+			prev_rec_state = mc_collector_receiver.get_operating_state();
+		}
+
+
 
 		double f_op_last = 0.0;
 		if (mc_power_cycle.get_operating_state() == C_csp_power_cycle::ON || mc_power_cycle.get_operating_state() == C_csp_power_cycle::STANDBY)

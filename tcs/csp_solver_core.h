@@ -332,6 +332,9 @@ public:
 
 		double m_pc_max_rampup;
 		double m_pc_max_rampdown;
+		double m_pc_rampup_violation_lim;
+		double m_pc_rampdown_violation_lim;
+
 		double m_pc_minup;
 		double m_pc_mindown;
 		double m_pc_onoff_perm;
@@ -341,6 +344,11 @@ public:
 		double m_pc_level_perm;
 		double m_pc_level_lookahead_perm;
 		double m_storage_buffer;
+
+		bool m_is_variable_disp_steps;
+		std::vector<double> m_disp_steplength_array;
+		std::vector<double> m_disp_steplength_end_time;
+
 
         S_csp_tou_params()
         {
@@ -404,8 +412,11 @@ public:
 			m_is_dispatch_targets = false;
 			m_is_disp_constr = false;
 
-			m_pc_max_rampup = 60.;		// Maximum cyle ramp-up (fraction of capacity per hr)
-			m_pc_max_rampdown = 60.;	// Maximum cyle ramp-up (fraction of capacity per hr)
+			m_pc_max_rampup = 60.;				// Maximum cycle ramp-up (fraction of capacity per hour)
+			m_pc_max_rampdown = 60.;			// Maximum cycle ramp-up (fraction of capacity per hour)
+			m_pc_rampup_violation_lim = 60.;   // Maximum allowable violation of cycle ramp-up constraint (fraction of capacity per hour)
+			m_pc_rampdown_violation_lim = 60.; // Maximum allowable violation of cycle ramp-down constraint (fraction of capacity per hour)
+			
 			m_pc_minup = 0.;			// Minimum cycle up time (hr)
 			m_pc_mindown = 0.;          // Minimum cycle down time (hr)
 			m_pc_onoff_perm = 0.;       // Cycle binary on/off decision permanence (hr)
@@ -416,6 +427,11 @@ public:
 			m_rec_onoff_lookahead_perm = 0.;  // Receiver binary on/off decision permanence during look-ahead window (hr)
 			
 			m_storage_buffer = 0.0;			 // Dispatch storage buffer (fraction of capacity)
+			 
+			m_is_variable_disp_steps = false;	// Use variable step lengths in dispatch model? 
+			m_disp_steplength_array.clear();    // Variable step lengths for real-time dispatch (min)
+			m_disp_steplength_end_time.clear(); // End time [hr] for application of each dispatch step length(min)
+
 
         };
 
