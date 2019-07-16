@@ -974,8 +974,9 @@ int lifetime_cycle_t::rainflow_compareRanges()
 		_nCycles++;
 
 		// the capacity percent cannot increase
-		if (bilinear(_average_range, _nCycles) <= _q)
-			_q = bilinear(_average_range, _nCycles);
+		double dq = bilinear(_average_range, _nCycles) - bilinear(_average_range, _nCycles + 1);
+		if (dq > 0)
+			_q -= dq;
 
 		if (_q < 0)
 			_q = 0.;
@@ -997,9 +998,13 @@ void lifetime_cycle_t::replaceBattery(double replacement_percent)
 {
 	_q += replacement_percent;
 	_q = fmin(bilinear(0., 0), _q);
-	_Dlt -= replacement_percent;
-	_Dlt = fmax(0., _Dlt);
-	_nCycles = 0;
+	_Dlt = 0.; // seems unused
+
+	// More work to figure out degradation of multiple-aged battery units
+	if (replacement_percent == 100) {
+		_nCycles = 0;
+	}
+
 	_jlt = 0;
 	_Xlt = 0;
 	_Ylt = 0;
