@@ -820,7 +820,8 @@ bool lifetime_t::check_replaced()
 	return replaced;
 }
 void lifetime_t::reset_replacements(){ _replacements = 0; }
-int lifetime_t::replacements(){ return _replacements; }
+int lifetime_t::get_replacements(){ return _replacements; }
+void lifetime_t::set_replacement_option(int option) { _replacement_option = option; }
 void lifetime_t::force_replacement(){_replacement_scheduled = true;}
 
 lifetime_cycle_t::lifetime_cycle_t(const util::matrix_t<double> &batt_lifetime_matrix)

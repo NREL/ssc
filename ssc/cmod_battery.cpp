@@ -1262,7 +1262,7 @@ void battstor::metrics(compute_module &)
 {
 	size_t annual_index;
 	nyears > 1 ? annual_index = year + 1 : annual_index = 0;
-	outBatteryBankReplacement[annual_index] = (ssc_number_t)(lifetime_model->replacements());
+	outBatteryBankReplacement[annual_index] = (ssc_number_t)(lifetime_model->get_replacements());
 
 	if ((hour == 8759) && (step == step_per_hour - 1))
 	{

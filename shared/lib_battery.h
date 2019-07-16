@@ -502,28 +502,51 @@ public:
 	/// Return the relative capacity percentage of nominal caused by calendar fade (%)
 	double capacity_percent_calendar();
 
-	// data access
+	/// Return pointer to underlying lifetime cycle model
 	lifetime_cycle_t * cycleModel() { return _lifetime_cycle; }
+
+	/// Return pointer to underlying lifetime capacity model
 	lifetime_calendar_t * calendarModel() { return _lifetime_calendar; }
 
-	// replacement methods
+	/// Check if the battery should be replaced based upon the replacement criteria
 	bool check_replaced();
+
+	/// Reset the number of replacements at the year end
 	void reset_replacements();
-	int replacements();
+
+	/// Return the number of total replacements in the year
+	int get_replacements();
+
+	/// Set the replacement option
+	void set_replacement_option(int option);
+
+	/// Set the replacement schedule
+
+	/// Replace the battery and reset the lifetime degradation
 	void force_replacement();
 
 protected:
 
+	/// Underlying lifetime cycle model
 	lifetime_cycle_t * _lifetime_cycle;
+
+	/// Underlying lifetime calendar model
 	lifetime_calendar_t * _lifetime_calendar;
 
-	// battery replacement
+	/// Replacement option, 0 = none, 1 = replace at capacity 2 = replace by schedule
 	int _replacement_option;
+
+	/// Maximum capacity relative to nameplate at which to replace battery
 	double _replacement_capacity;
+
+	/// Number of replacements this year
 	int _replacements;
+
+	/// Boolean describing if replacement has been scheduled
 	bool _replacement_scheduled;
 
-	double _q;      // battery relative capacity (0 - 100%)
+	/// battery relative capacity (0 - 100%)
+	double _q;      
 };
 
 
