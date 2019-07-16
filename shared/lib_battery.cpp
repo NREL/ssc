@@ -813,10 +813,10 @@ bool lifetime_t::check_replaced()
 	{
 		_replacements++;
 	
-		_q += _replacement_percent * 0.01;
+		_q += _replacement_percent;
 
 		// for now, only allow augmenting up to original installed capacity
-		_q = fmax(100., _q);
+		_q = fmin(100., _q);
 
 		replaced = true;
 		_replacement_scheduled = false;
