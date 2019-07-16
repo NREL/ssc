@@ -80,7 +80,7 @@ public:
 	virtual void updateCapacity(double &I, double dt) = 0;
 	virtual void updateCapacityForThermal(double capacity_percent)=0;
 	virtual void updateCapacityForLifetime(double capacity_percent)=0;
-	virtual void replace_battery()=0;
+	virtual void replace_battery(double replacement_percent)=0;
 
 	virtual double q1() = 0; // available charge
 	virtual double q10() = 0; // capacity at 10 hour discharge rate
@@ -144,7 +144,7 @@ public:
 	void updateCapacity(double &I, double dt);
 	void updateCapacityForThermal(double capacity_percent);
 	void updateCapacityForLifetime(double capacity_percent);
-	void replace_battery();
+	void replace_battery(double replacement_percent);
 	double q1(); // Available charge
 	double q2(); // Bound charge
 	double q10(); // Capacity at 10 hour discharge rate
@@ -201,7 +201,7 @@ public:
 	void updateCapacity(double &I, double dt);
 	void updateCapacityForThermal(double capacity_percent);
 	void updateCapacityForLifetime(double capacity_percent);
-	void replace_battery();
+	void replace_battery(double replacement_percent);
 
 	double q1(); // Available charge
 	double q10(); // Capacity at 10 hour discharge rate
@@ -378,10 +378,19 @@ public:
 	/// Return the relative capacity percentage of nominal (%)
 	double capacity_percent();
 
+	/// Run the rainflow counting algorithm at the current depth-of-discharge to determine cycle
 	void rainflow(double DOD);
-	void replaceBattery();
+
+	/// Replace or partially replace a batteyr
+	void replaceBattery(double replacement_percent);
+
+	/// Return the total cycles elapse
 	int cycles_elapsed();
+
+	/// Return the range of the last cycle
 	double cycle_range();
+
+	/// Return the average cycle range
 	double average_range();
 
 protected:
@@ -389,6 +398,8 @@ protected:
 	void rainflow_ranges();
 	void rainflow_ranges_circular(int index);
 	int rainflow_compareRanges();
+
+	/// Bilinear interpolation, given the depth-of-discharge and cycle number, return the capacity percent
 	double bilinear(double DOD, int cycle_number);
 
 	util::matrix_t<double> _cycles_vs_DOD;
@@ -434,8 +445,8 @@ public:
 	/// Given the index of the simulation, the tempertature and SOC, return the effective capacity percent
 	double runLifetimeCalendarModel(size_t idx, double T, double SOC);
 
-	/// Reset the capacity
-	void replaceBattery();
+	/// Reset or augment the capacity
+	void replaceBattery(double replacement_percent);
 
 	/// Return the relative capacity percentage of nominal (%)
 	double capacity_percent();
@@ -482,16 +493,17 @@ public:
 	lifetime_t(lifetime_cycle_t *, lifetime_calendar_t *, const int replacement_option, const double replacement_capacity);
 	virtual ~lifetime_t(){};
 
-	// deep copy
+	/// Deep copy
 	lifetime_t * clone();
 
-	// delete deep copy
+	/// Delete deep copy
 	void delete_clone();
 
-	// copy lifetime to this
+	/// Copy lifetime to this
 	void copy(lifetime_t *);
 
-	void runLifetimeModels(size_t idx, capacity_t *, double T_battery);
+	/// Execute the lifetime models given the current lifetime run index, capacity model, and temperature
+	void runLifetimeModels(size_t lifetimeIndex, capacity_t *, double T_battery);
 
 	/// Return the relative capacity percentage of nominal (%)
 	double capacity_percent();
@@ -517,13 +529,14 @@ public:
 	/// Return the number of total replacements in the year
 	int get_replacements();
 
+	/// Return the replacement percent
+	double get_replacement_percent();
+
 	/// Set the replacement option
 	void set_replacement_option(int option);
 
-	/// Set the replacement schedule
-
 	/// Replace the battery and reset the lifetime degradation
-	void force_replacement();
+	void force_replacement(double replacement_percent);
 
 protected:
 
@@ -544,6 +557,9 @@ protected:
 
 	/// Boolean describing if replacement has been scheduled
 	bool _replacement_scheduled;
+
+	/// Percentage of how much capacity to replace (0 - 100%)
+	double _replacement_percent;
 
 	/// battery relative capacity (0 - 100%)
 	double _q;      

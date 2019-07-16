@@ -115,6 +115,7 @@ var_info vtab_battery_inputs[] = {
 	{ SSC_INPUT,        SSC_NUMBER,     "batt_replacement_capacity",                   "Capacity degradation at which to replace battery",       "%",        "",                     "Battery",       "",                           "",                             "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "batt_replacement_option",                     "Enable battery replacement?",                             "0=none,1=capacity based,2=user schedule", "", "Battery", "?=0",                  "INTEGER,MIN=0,MAX=2",          "" },
 	{ SSC_INPUT,        SSC_ARRAY,      "batt_replacement_schedule",                   "Battery bank replacements per year (user specified)",     "number/year","",                  "Battery",      "batt_replacement_option=2",   "",                             "" },
+	{ SSC_INPUT,        SSC_ARRAY,      "batt_replacement_schedule_percent",           "Percentage of battery capacity to replace in year",      "%","",                  "Battery",      "batt_replacement_option=2",   "",                             "" },
 	{ SSC_INPUT,        SSC_ARRAY,      "om_replacement_cost1",                        "Cost to replace battery per kWh",                        "$/kWh",    "",                     "Battery",       "",                           "",                             "" },
 
 	// thermal inputs
@@ -500,8 +501,10 @@ battstor::battstor(compute_module &cm, bool setup_model, size_t nrec, double dt_
 			batt_vars->batt_replacement_option = cm.as_integer("batt_replacement_option");
 			batt_vars->batt_replacement_capacity = cm.as_double("batt_replacement_capacity");
 
-			if (batt_vars->batt_replacement_option == battery_t::REPLACE_BY_SCHEDULE)
+			if (batt_vars->batt_replacement_option == battery_t::REPLACE_BY_SCHEDULE) {
 				batt_vars->batt_replacement_schedule = cm.as_vector_integer("batt_replacement_schedule");
+				batt_vars->batt_replacement_schedule_percent = cm.as_vector_double("batt_replacement_schedule_percent");
+			}
 
 			// Battery lifetime
 			batt_vars->batt_calendar_choice = cm.as_integer("batt_calendar_choice");
@@ -1129,13 +1132,15 @@ void battstor::check_replacement_schedule()
 				}
 			}
 		}
-		if (replace)
-			force_replacement();
+		if (replace) {
+			double replacement_percent = batt_vars->batt_replacement_schedule_percent[year];
+			force_replacement(replacement_percent);
+		}
 	}
 }
-void battstor::force_replacement()
+void battstor::force_replacement(double replacement_percent)
 {
-	lifetime_model->force_replacement();
+	lifetime_model->force_replacement(replacement_percent);
 	battery_model->runLifetimeModel(0);
 }
 

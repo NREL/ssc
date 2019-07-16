@@ -220,7 +220,7 @@ capacity_t(q20, SOC_init, SOC_max, SOC_min)
 	_qmax0 = _qmax;
 
 	// initializes to full battery
-	replace_battery();
+	replace_battery(100);
 }
 capacity_kibam_t * capacity_kibam_t::clone(){ return new capacity_kibam_t(*this); }
 void capacity_kibam_t::copy(capacity_t * capacity)
@@ -243,13 +243,13 @@ void capacity_kibam_t::copy(capacity_t * capacity)
 	_I20 = tmp->_I20;
 }
 
-void capacity_kibam_t::replace_battery()
+void capacity_kibam_t::replace_battery(double replacement_percent)
 {
-	// Assume initial charge is max capacity
-	_q0 = _qmax0*_SOC_init*0.01;
+	_qmax += replacement_percent * 0.01* _qmax0;
+	_qmax = fmin(_qmax, _qmax0);
+	_q0 = _qmax*_SOC_init*0.01;
 	_q1_0 = _q0*_c;
 	_q2_0 = _q0 - _q1_0;
-	_qmax = _qmax0;
 	_SOC = _SOC_init;
 }
 
@@ -418,11 +418,12 @@ capacity_lithium_ion_t::capacity_lithium_ion_t(double q, double SOC_init, double
 capacity_lithium_ion_t * capacity_lithium_ion_t::clone(){ return new capacity_lithium_ion_t(*this); }
 void capacity_lithium_ion_t::copy(capacity_t * capacity){ capacity_t::copy(capacity);}
 
-void capacity_lithium_ion_t::replace_battery()
+void capacity_lithium_ion_t::replace_battery(double replacement_percent)
 {
-	_q0 = _qmax0 * _SOC_init * 0.01;
-	_qmax = _qmax0;
-	_qmax_thermal = _qmax0;
+	_qmax += _qmax0 * replacement_percent * 0.01;
+	_qmax = fmin(_qmax0, _qmax);
+	_q0 = _qmax * _SOC_init * 0.01;
+	_qmax_thermal = _qmax;
 	_SOC = _SOC_init;
 }
 void capacity_lithium_ion_t::updateCapacity(double &I, double dt)
@@ -742,6 +743,7 @@ lifetime_t::lifetime_t(lifetime_cycle_t * lifetime_cycle, lifetime_calendar_t * 
 
 	_replacement_option = replacement_option;
 	_replacement_capacity = replacement_capacity;
+	_replacement_percent = 100;
 
 	// issues as capacity approaches 0%
 	if (replacement_capacity == 0.) { _replacement_capacity = 2.; }
@@ -810,19 +812,31 @@ bool lifetime_t::check_replaced()
 	if ((_replacement_option == 1 && (_q - tolerance) <= _replacement_capacity) || _replacement_scheduled)
 	{
 		_replacements++;
-		_q = 100.;
+	
+		_q += _replacement_percent * 0.01;
+
+		// for now, only allow augmenting up to original installed capacity
+		_q = fmax(100., _q);
+
 		replaced = true;
 		_replacement_scheduled = false;
 
-		_lifetime_cycle->replaceBattery();
-		_lifetime_calendar->replaceBattery();
+		_lifetime_cycle->replaceBattery(_replacement_percent);
+		_lifetime_calendar->replaceBattery(_replacement_percent);
 	}
 	return replaced;
 }
 void lifetime_t::reset_replacements(){ _replacements = 0; }
 int lifetime_t::get_replacements(){ return _replacements; }
+double lifetime_t::get_replacement_percent() {
+	return _replacement_percent;
+};
+
 void lifetime_t::set_replacement_option(int option) { _replacement_option = option; }
-void lifetime_t::force_replacement(){_replacement_scheduled = true;}
+void lifetime_t::force_replacement(double replacement_percent){
+	_replacement_scheduled = true;
+	_replacement_percent = replacement_percent;
+}
 
 lifetime_cycle_t::lifetime_cycle_t(const util::matrix_t<double> &batt_lifetime_matrix)
 {
@@ -979,10 +993,12 @@ int lifetime_cycle_t::rainflow_compareRanges()
 
 	return retCode;
 }
-void lifetime_cycle_t::replaceBattery()
+void lifetime_cycle_t::replaceBattery(double replacement_percent)
 {
-	_q = bilinear(0.,0);
-	_Dlt = 0.;
+	_q += replacement_percent;
+	_q = fmin(bilinear(0., 0), _q);
+	_Dlt -= replacement_percent;
+	_Dlt = fmax(0., _Dlt);
 	_nCycles = 0;
 	_jlt = 0;
 	_Xlt = 0;
@@ -1262,10 +1278,11 @@ void lifetime_calendar_t::runTableModel()
 	_q = util::interpolate(day_lo, capacity_lo, day_hi, capacity_hi, _day_age_of_battery);
 }
 
-void lifetime_calendar_t::replaceBattery()
+void lifetime_calendar_t::replaceBattery(double replacement_percent)
 {
 	_day_age_of_battery = 0;
-	_q = _q0 * 100;
+	_q += replacement_percent;
+	_q = fmin(_q0 * 100, _q);
 	_dq_new = 0;
 	_dq_old = 0;
 }
@@ -1627,7 +1644,7 @@ void battery_t::runLifetimeModel(size_t lifetimeIndex)
 	_lifetime->runLifetimeModels(lifetimeIndex, capacity_model(), thermal_model()->T_battery());
 	if (_lifetime->check_replaced())
 	{
-		_capacity->replace_battery();
+		_capacity->replace_battery(_lifetime->get_replacement_percent());
 		_thermal->replace_battery(lifetimeIndex);
 		_losses->replace_battery();
 	}

@@ -46,7 +46,7 @@ TEST_F(BatteryTest, LithiumIonCapacityTest)
 	EXPECT_EQ(capacityModel->qmax(), 95);
 
 	// check that battery replacement works
-	capacityModel->replace_battery();
+	capacityModel->replace_battery(100);
 	EXPECT_EQ(capacityModel->SOC(), SOC_max);
 	EXPECT_EQ(capacityModel->q0(), 100);
 	EXPECT_EQ(capacityModel->qmax(), 100);

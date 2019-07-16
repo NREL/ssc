@@ -200,6 +200,7 @@ struct batt_variables
 	/* Battery replacement options */
 	int batt_replacement_option;
 	std::vector<int> batt_replacement_schedule;
+	std::vector<double> batt_replacement_schedule_percent;
 
 	/* Battery cycle costs */
 	int batt_cycle_cost_choice;
@@ -252,7 +253,7 @@ struct battstor
 	bool input_custom_dispatch = false;
 
 	// for user schedule
-	void force_replacement();
+	void force_replacement(double replacement_percent);
 	void check_replacement_schedule();
 	void calculate_monthly_and_annual_outputs( compute_module &cm );
 
