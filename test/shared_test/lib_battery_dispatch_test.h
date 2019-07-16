@@ -32,11 +32,8 @@ struct DispatchProperties
 	std::map<size_t, double> percentGridcharge;
 
 	// Front of meter auto dispatch
-	std::vector<double> ppaFactors;
+	std::vector<double> ppaRate;
 	UtilityRate * ur{nullptr};
-	util::matrix_t<size_t> ppaWeekend;
-	util::matrix_t<size_t> ppaWeekday;
-
 
 	/// Constructor for dispatch properties
 	DispatchProperties()
@@ -74,9 +71,9 @@ struct DispatchProperties
 			percentDischarge[p] = 100;
 		}
 		// dispatch FOM
-		ppaFactors.push_back(1.0);
-		ppaWeekday.resize_fill(12, 24, 1);
-		ppaWeekend.resize_fill(12, 24, 1);
+		for (size_t i = 0; i < 8760; i++) {
+			ppaRate.push_back(1.0);
+		}
 	}
 	/// Destructor
 	~DispatchProperties() {
@@ -154,7 +151,7 @@ public:
 		lossModelFOM = new losses_t(dtHourFOM, lifetimeModel, thermalModel, capacityModel, lossChoice, monthlyLosses, monthlyLosses, monthlyLosses, fullLossesMinute);
 		batteryModelFOM = new battery_t(dtHourFOM, chemistry);
 		batteryModelFOM->initialize(capacityModelFOM, voltageModelFOM, lifetimeModel, thermalModel, lossModelFOM);
-		dispatchAutoFOM = new dispatch_automatic_front_of_meter_t(batteryModelFOM, dtHourFOM, 15, 95, 1, 999, 999, 500, 500, 1, 3, 0, 1, 24, 1, true, true, false, true, 0, 0, 0, 0, ppaFactors, ppaWeekday, ppaWeekend, ur, 98, 98, 98);
+		dispatchAutoFOM = new dispatch_automatic_front_of_meter_t(batteryModelFOM, dtHourFOM, 15, 95, 1, 999, 999, 500, 500, 1, 3, 0, 1, 24, 1, true, true, false, true, 0, 0, 0, 0, ppaRate, ur, 98, 98, 98);
 
 		P_pv = P_load = V_pv = P_clipped = 0;		
 	}

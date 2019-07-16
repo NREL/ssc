@@ -1,51 +1,24 @@
-/*******************************************************************************************************
-*  Copyright 2017 Alliance for Sustainable Energy, LLC
-*
-*  NOTICE: This software was developed at least in part by Alliance for Sustainable Energy, LLC
-*  (“Alliance”) under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
-*  The Government retains for itself and others acting on its behalf a nonexclusive, paid-up,
-*  irrevocable worldwide license in the software to reproduce, prepare derivative works, distribute
-*  copies to the public, perform publicly and display publicly, and to permit others to do so.
-*
-*  Redistribution and use in source and binary forms, with or without modification, are permitted
-*  provided that the following conditions are met:
-*
-*  1. Redistributions of source code must retain the above copyright notice, the above government
-*  rights notice, this list of conditions and the following disclaimer.
-*
-*  2. Redistributions in binary form must reproduce the above copyright notice, the above government
-*  rights notice, this list of conditions and the following disclaimer in the documentation and/or
-*  other materials provided with the distribution.
-*
-*  3. The entire corresponding source code of any redistribution, with or without modification, by a
-*  research entity, including but not limited to any contracting manager/operator of a United States
-*  National Laboratory, any institution of higher learning, and any non-profit organization, must be
-*  made publicly available under this license for as long as the redistribution is made available by
-*  the research entity.
-*
-*  4. Redistribution of this software, without modification, must refer to the software by the same
-*  designation. Redistribution of a modified version of this software (i) may not refer to the modified
-*  version by the same designation, or by any confusingly similar designation, and (ii) must refer to
-*  the underlying software originally provided by Alliance as “System Advisor Model” or “SAM”. Except
-*  to comply with the foregoing, the terms “System Advisor Model”, “SAM”, or any confusingly similar
-*  designation may not be used to refer to any modified version of this software or any modified
-*  version of the underlying software originally provided by Alliance without the prior written consent
-*  of Alliance.
-*
-*  5. The name of the copyright holder, contributors, the United States Government, the United States
-*  Department of Energy, or any of their employees may not be used to endorse or promote products
-*  derived from this software without specific prior written permission.
-*
-*  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
-*  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
-*  FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER,
-*  CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES DEPARTMENT OF ENERGY, NOR ANY OF THEIR
-*  EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-*  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-*  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
-*  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
-*  THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*******************************************************************************************************/
+/**
+BSD-3-Clause
+Copyright 2019 Alliance for Sustainable Energy, LLC
+Redistribution and use in source and binary forms, with or without modification, are permitted provided 
+that the following conditions are met :
+1.	Redistributions of source code must retain the above copyright notice, this list of conditions 
+and the following disclaimer.
+2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions 
+and the following disclaimer in the documentation and/or other materials provided with the distribution.
+3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse 
+or promote products derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, 
+INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
+ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES 
+DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, 
+OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; 
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
+WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT 
+OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
  
 #include "csp_solver_pc_Rankine_indirect_224.h"
 #include "csp_solver_util.h"
@@ -2001,6 +1974,25 @@ int C_pc_Rankine_indirect_224::split_ind_tbl(util::matrix_t<double> &cmbd_ind, u
         cmbd_tbl.push_back(mat_row);
     }
 
+    // determine if the design values are included in the series
+    bool T_htf_des_in_series, m_dot_des_in_series, T_amb_des_in_series;
+    size_t count_1 = count_if(cmbd_tbl.begin(), cmbd_tbl.end(),
+        [T_htf_des, m_dot_low, T_amb_des](std::vector<double> v) {return (CSP::isequal(v[0], T_htf_des) && CSP::isequal(v[1], m_dot_low) && CSP::isequal(v[2], T_amb_des));});
+    count_1 > 1 ? T_htf_des_in_series = true : T_htf_des_in_series = false;
+
+    size_t count_2 = count_if(cmbd_tbl.begin(), cmbd_tbl.end(),
+        [T_htf_des, m_dot_des, T_amb_low](std::vector<double> v) {return (CSP::isequal(v[0], T_htf_des) && CSP::isequal(v[1], m_dot_des) && CSP::isequal(v[2], T_amb_low)); });
+    count_2 > 1 ? m_dot_des_in_series = true : m_dot_des_in_series = false;
+
+    size_t count_3 = count_if(cmbd_tbl.begin(), cmbd_tbl.end(),
+        [T_htf_low, m_dot_des, T_amb_des](std::vector<double> v) {return (CSP::isequal(v[0], T_htf_low) && CSP::isequal(v[1], m_dot_des) && CSP::isequal(v[2], T_amb_des)); });
+    count_3 > 1 ? T_amb_des_in_series = true : T_amb_des_in_series = false;
+
+    size_t n_T_htf_series, n_m_dot_series, n_T_amb_series;
+    T_htf_des_in_series ? n_T_htf_series = n_T_htf_unique : n_T_htf_series = n_T_htf_unique - 1;
+    m_dot_des_in_series ? n_m_dot_series = n_m_dot_unique : n_m_dot_series = n_m_dot_unique - 1;
+    T_amb_des_in_series ? n_T_amb_series = n_T_amb_unique : n_T_amb_series = n_T_amb_unique - 1;
+
     // sort vector of vectors and remove duplicate sets
     std::sort(cmbd_tbl.begin(), cmbd_tbl.end(), sort_vecOfvec({ col_T_htf, col_m_dot, col_T_amb }, { ASC, ASC, ASC }));
 
@@ -2012,9 +2004,9 @@ int C_pc_Rankine_indirect_224::split_ind_tbl(util::matrix_t<double> &cmbd_ind, u
 
     // start generating three tables
     const int ncols = 13;
-    T_htf_ind.resize_fill(n_T_htf_unique - 1, ncols, 0.);  // subtract 1 for design value
-    m_dot_ind.resize_fill(n_m_dot_unique - 1, ncols, 0.);  // subtract 1 for design value
-    T_amb_ind.resize_fill(n_T_amb_unique - 1, ncols, 0.);  // subtract 1 for design value
+    T_htf_ind.resize_fill(n_T_htf_series, ncols, 0.);  // subtract 1 for design value
+    m_dot_ind.resize_fill(n_m_dot_series, ncols, 0.);  // subtract 1 for design value
+    T_amb_ind.resize_fill(n_T_amb_series, ncols, 0.);  // subtract 1 for design value
 
     // sort m_dot low to high and secondarily sort T_htf low to high.
     // EXTRACT the first n_T_htf rows excluding the three that correspond to the design T_htf and the three T_amb levels.
@@ -2024,7 +2016,7 @@ int C_pc_Rankine_indirect_224::split_ind_tbl(util::matrix_t<double> &cmbd_ind, u
     int mat_row = 0;
     std::vector<std::vector<double>> exclude_dsns = { {T_htf_des, T_amb_low}, {T_htf_des, T_amb_des}, {T_htf_des, T_amb_high} };
     std::vector<std::vector<double>>::iterator it;
-    for (std::vector<double>::size_type i = 0; i != n_T_htf_unique + 2; i++) {   // the design value is included in n_T_htf_unique, so only add 2
+    for (std::vector<double>::size_type i = 0; i != n_T_htf_series + 3; i++) {
         // Check if next value is in set to exclude
         it = std::find(exclude_dsns.begin(), exclude_dsns.end(),
             std::vector<double> { cmbd_tbl.at(vec_row).at(col_T_htf), cmbd_tbl.at(vec_row).at(col_T_amb) });
@@ -2050,7 +2042,7 @@ int C_pc_Rankine_indirect_224::split_ind_tbl(util::matrix_t<double> &cmbd_ind, u
     vec_row = 0;
     mat_row = 0;
     exclude_dsns = { {T_htf_des, T_amb_low}, {T_htf_des, T_amb_des}, {T_htf_des, T_amb_high} };
-    for (std::vector<double>::size_type i = 0; i != n_T_htf_unique + 2; i++) {
+    for (std::vector<double>::size_type i = 0; i != n_T_htf_series + 3; i++) {
         it = std::find(exclude_dsns.begin(), exclude_dsns.end(),
             std::vector<double> { cmbd_tbl.at(vec_row).at(col_T_htf), cmbd_tbl.at(vec_row).at(col_T_amb) });
         if (it == exclude_dsns.end()) {
@@ -2075,7 +2067,7 @@ int C_pc_Rankine_indirect_224::split_ind_tbl(util::matrix_t<double> &cmbd_ind, u
     vec_row = 0;
     mat_row = 0;
     exclude_dsns = { {m_dot_des, T_htf_low}, {m_dot_des, T_htf_des}, {m_dot_des, T_htf_high} };
-    for (std::vector<double>::size_type i = 0; i != n_m_dot_unique + 2; i++) {
+    for (std::vector<double>::size_type i = 0; i != n_m_dot_series + 3; i++) {
         it = std::find(exclude_dsns.begin(), exclude_dsns.end(),
             std::vector<double> { cmbd_tbl.at(vec_row).at(col_m_dot), cmbd_tbl.at(vec_row).at(col_T_htf) });
         if (it == exclude_dsns.end()) {
@@ -2100,7 +2092,7 @@ int C_pc_Rankine_indirect_224::split_ind_tbl(util::matrix_t<double> &cmbd_ind, u
     vec_row = 0;
     mat_row = 0;
     exclude_dsns = { {m_dot_des, T_htf_low}, {m_dot_des, T_htf_des}, {m_dot_des, T_htf_high} };
-    for (std::vector<double>::size_type i = 0; i != n_m_dot_unique + 2; i++) {
+    for (std::vector<double>::size_type i = 0; i != n_m_dot_series + 3; i++) {
         it = std::find(exclude_dsns.begin(), exclude_dsns.end(),
             std::vector<double> { cmbd_tbl.at(vec_row).at(col_m_dot), cmbd_tbl.at(vec_row).at(col_T_htf) });
         if (it == exclude_dsns.end()) {
@@ -2125,7 +2117,7 @@ int C_pc_Rankine_indirect_224::split_ind_tbl(util::matrix_t<double> &cmbd_ind, u
     vec_row = 0;
     mat_row = 0;
     exclude_dsns = { {T_amb_des, m_dot_des} };
-    for (std::vector<double>::size_type i = 0; i != n_T_amb_unique; i++) {   // the design value is included in n_T_amb_unique
+    for (std::vector<double>::size_type i = 0; i != n_T_amb_series + 1; i++) {
         it = std::find(exclude_dsns.begin(), exclude_dsns.end(),
             std::vector<double> { cmbd_tbl.at(vec_row).at(col_T_amb), cmbd_tbl.at(vec_row).at(col_m_dot) });
         if (it == exclude_dsns.end()) {
@@ -2151,7 +2143,7 @@ int C_pc_Rankine_indirect_224::split_ind_tbl(util::matrix_t<double> &cmbd_ind, u
     mat_row = 0;
     exclude_dsns = { {T_amb_des, m_dot_des} };
     double T_htf_test, m_dot_test, T_amb_test;
-    for (std::vector<double>::size_type i = 0; i != n_T_amb_unique; i++) {    // the design value is included in n_T_amb_unique
+    for (std::vector<double>::size_type i = 0; i != n_T_amb_series + 1; i++) {
         it = std::find(exclude_dsns.begin(), exclude_dsns.end(),
             std::vector<double> { cmbd_tbl.at(vec_row).at(col_T_amb), cmbd_tbl.at(vec_row).at(col_m_dot) });
         T_htf_test = cmbd_tbl.at(vec_row).at(col_T_htf);
@@ -2173,24 +2165,26 @@ int C_pc_Rankine_indirect_224::split_ind_tbl(util::matrix_t<double> &cmbd_ind, u
     }
 
     // sort T_htf low to high.
-    // Extract the rows that have both T_amb and m_dot at their design conditions.
+    // Extract the rows that have both T_amb and m_dot at their design conditions, exclude duplicates of all three at the design conditions
     // These are the 'design' columns in Table 1.
     std::sort(cmbd_tbl.begin(), cmbd_tbl.end(), sort_vecOfvec({col_T_htf}, {ASC}));
     vec_row = 0;
     mat_row = 0;
+    bool design_gotten = false;
     int tbl_size = cmbd_tbl.size();
-    T_htf_test, m_dot_test, T_amb_test;
     for (std::vector<double>::size_type i = 0; i != tbl_size; i++) {
         T_htf_test = cmbd_tbl.at(vec_row).at(col_T_htf);
         m_dot_test = cmbd_tbl.at(vec_row).at(col_m_dot);
         T_amb_test = cmbd_tbl.at(vec_row).at(col_T_amb);
         if (cmbd_tbl.at(vec_row).at(col_T_amb) == T_amb_des &&
-            cmbd_tbl.at(vec_row).at(col_m_dot) == m_dot_des) {
+            cmbd_tbl.at(vec_row).at(col_m_dot) == m_dot_des &&
+            !(cmbd_tbl.at(vec_row).at(col_T_htf) == T_htf_des && design_gotten == true)) {
             T_htf_ind.set_value(cmbd_tbl.at(vec_row).at(col_T_htf), mat_row, 0);
             T_htf_ind.set_value(cmbd_tbl.at(vec_row).at(col_W_cyl), mat_row, 2);
             T_htf_ind.set_value(cmbd_tbl.at(vec_row).at(col_Q_cyl), mat_row, 5);
             T_htf_ind.set_value(cmbd_tbl.at(vec_row).at(col_W_h2o), mat_row, 8);
             T_htf_ind.set_value(cmbd_tbl.at(vec_row).at(col_m_h2o), mat_row, 11);
+            if (cmbd_tbl.at(vec_row).at(col_T_htf) == T_htf_des) { design_gotten = true; }
             mat_row++;
             cmbd_tbl.erase(cmbd_tbl.begin() + vec_row);
         }
@@ -2200,20 +2194,23 @@ int C_pc_Rankine_indirect_224::split_ind_tbl(util::matrix_t<double> &cmbd_ind, u
     }
 
     // sort m_dot low to high.
-    // Extract the rows that have both T_htf and T_amb at their design conditions.
+    // Extract the rows that have both T_htf and T_amb at their design conditions, exclude duplicates of all three at the design conditions
     // These are the 'design' columns in Table 2.
     std::sort(cmbd_tbl.begin(), cmbd_tbl.end(), sort_vecOfvec({col_m_dot}, {ASC}));
     vec_row = 0;
     mat_row = 0;
+    design_gotten = false;
     tbl_size = cmbd_tbl.size();
     for (std::vector<double>::size_type i = 0; i != tbl_size; i++) {
         if (cmbd_tbl.at(vec_row).at(col_T_htf) == T_htf_des &&
-            cmbd_tbl.at(vec_row).at(col_T_amb) == T_amb_des) {
+            cmbd_tbl.at(vec_row).at(col_T_amb) == T_amb_des &&
+            !(cmbd_tbl.at(vec_row).at(col_m_dot) == m_dot_des && design_gotten == true)) {
             m_dot_ind.set_value(cmbd_tbl.at(vec_row).at(col_m_dot), mat_row, 0);
             m_dot_ind.set_value(cmbd_tbl.at(vec_row).at(col_W_cyl), mat_row, 2);
             m_dot_ind.set_value(cmbd_tbl.at(vec_row).at(col_Q_cyl), mat_row, 5);
             m_dot_ind.set_value(cmbd_tbl.at(vec_row).at(col_W_h2o), mat_row, 8);
             m_dot_ind.set_value(cmbd_tbl.at(vec_row).at(col_m_h2o), mat_row, 11);
+            if (cmbd_tbl.at(vec_row).at(col_m_dot) == m_dot_des) { design_gotten = true; }
             mat_row++;
             cmbd_tbl.erase(cmbd_tbl.begin() + vec_row);
         }

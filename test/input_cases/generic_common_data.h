@@ -5,7 +5,6 @@
 #include "code_generator_utilities.h"
 
 namespace generictest {
-	const char * SSCDIR = std::getenv("SSCDIR");
 	char load_profile_path_60min[256];
 	char load_profile_path_30min[256];
 	char gen_path_60min[256];
@@ -18,16 +17,16 @@ namespace generictest {
 	char temperature_path_30min[256];
 
 
-	int n1 = sprintf(load_profile_path_60min, "%s/test/input_cases/generic_system_data/load_60min.csv", generictest::SSCDIR);
-	int n2 = sprintf(load_profile_path_30min, "%s/test/input_cases/generic_system_data/load_30min.csv", generictest::SSCDIR);
-	int n3 = sprintf(gen_path_60min, "%s/test/input_cases/generic_system_data/energy_output_array_60min.csv", generictest::SSCDIR);
-	int n4 = sprintf(gen_path_30min, "%s/test/input_cases/generic_system_data/energy_output_array_30min.csv", generictest::SSCDIR);
-	int n5 = sprintf(batt_dispatch_path_30min, "%s/test/input_cases/generic_system_data/batt_custom_dispatch_30min.csv", generictest::SSCDIR);
-	int n6 = sprintf(batt_dispatch_path_60min, "%s/test/input_cases/generic_system_data/batt_custom_dispatch_60min.csv", generictest::SSCDIR);
-	int n7 = sprintf(dispatch_factors_unused, "%s/test/input_cases/generic_system_data/dispatch_factors_ts.csv", generictest::SSCDIR);
-	int n8 = sprintf(sell_rate_unused, "%s/test/input_cases/generic_system_data/ur_ts_sell_rate.csv", generictest::SSCDIR);
-	int n9 = sprintf(temperature_path, "%s/test/input_cases/battery_data/batt_room_temperature_celsius_60min.csv", generictest::SSCDIR);
-	int n10 = sprintf(temperature_path_30min, "%s/test/input_cases/battery_data/batt_room_temperature_celsius_30min.csv", generictest::SSCDIR);
+	int n1 = sprintf(load_profile_path_60min, "%s/test/input_cases/generic_system_data/load_60min.csv",SSCDIR);
+	int n2 = sprintf(load_profile_path_30min, "%s/test/input_cases/generic_system_data/load_30min.csv",SSCDIR);
+	int n3 = sprintf(gen_path_60min, "%s/test/input_cases/generic_system_data/energy_output_array_60min.csv",SSCDIR);
+	int n4 = sprintf(gen_path_30min, "%s/test/input_cases/generic_system_data/energy_output_array_30min.csv",SSCDIR);
+	int n5 = sprintf(batt_dispatch_path_30min, "%s/test/input_cases/generic_system_data/batt_custom_dispatch_30min.csv",SSCDIR);
+	int n6 = sprintf(batt_dispatch_path_60min, "%s/test/input_cases/generic_system_data/batt_custom_dispatch_60min.csv",SSCDIR);
+	int n7 = sprintf(dispatch_factors_unused, "%s/test/input_cases/generic_system_data/dispatch_factors_ts.csv",SSCDIR);
+	int n8 = sprintf(sell_rate_unused, "%s/test/input_cases/generic_system_data/ur_ts_sell_rate.csv",SSCDIR);
+	int n9 = sprintf(temperature_path, "%s/test/input_cases/battery_data/batt_room_temperature_celsius_60min.csv",SSCDIR);
+	int n10 = sprintf(temperature_path_30min, "%s/test/input_cases/battery_data/batt_room_temperature_celsius_30min.csv",SSCDIR);
 }
 
 

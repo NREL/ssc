@@ -357,3 +357,5 @@ build_linux/linux_errors
 *.DS_Store
 
 ssc/ssc\.exp
+
+ssc/sscd\.exp

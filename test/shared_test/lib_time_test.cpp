@@ -137,3 +137,34 @@ TEST_F(libTimeTests, TestSingleyearDownsample)
 	}
 }
 
+// Test diurnal to flat
+TEST_F(libTimeTests, TestDiurnalToFlat)
+{
+	std::vector<double> flat = flatten_diurnal(schedule, schedule, 1, sched_values, multiplier);
+	std::vector<double> flat30min = flatten_diurnal(schedule, schedule, 2, sched_values, multiplier);
+
+
+	EXPECT_EQ(flat.size(), util::hours_per_year);
+	EXPECT_EQ(flat30min.size(), util::hours_per_year * 2);
+	for (size_t h = 0; h < flat.size(); h++) {
+		if (h % 24 > 11 && h % 24 < 19) {
+			EXPECT_NEAR(flat[h], 0.6, 0.0001);
+		}
+		else {
+			EXPECT_NEAR(flat[h], 0.2, 0.0001);
+		}
+	}
+	size_t i = 0;
+	for (size_t h = 0; h < util::hours_per_year; h++) {
+		for (size_t s = 0; s < 2; s++) {
+			if (h % 24 > 11 && h % 24 < 19) {
+				EXPECT_NEAR(flat30min[i], 0.6, 0.0001);
+			}
+			else {
+				EXPECT_NEAR(flat30min[i], 0.2, 0.0001);
+			}
+			i++;
+		}
+	}
+
+}

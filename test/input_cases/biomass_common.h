@@ -5,12 +5,10 @@
 #include "code_generator_utilities.h"
 
 namespace biomass_test {
-
-	const char * SSCDIR = std::getenv("SSCDIR");
 	char file_name[256];
-	int n1 = sprintf(file_name, "%s/test/input_cases/swh_residential_data/fargo_nd_46.9_-96.8_mts1_60_tmy.csv", biomass_test::SSCDIR);
+	int n1 = sprintf(file_name, "%s/test/input_cases/swh_residential_data/fargo_nd_46.9_-96.8_mts1_60_tmy.csv", SSCDIR);
 	char dispatch_factors[256];
-    int n2 = sprintf(dispatch_factors, "%s/test/input_cases/generic_system_data/dispatch_factors_ts.csv", biomass_test::SSCDIR);
+    int n2 = sprintf(dispatch_factors, "%s/test/input_cases/generic_system_data/dispatch_factors_ts.csv", SSCDIR);
 
 }
 

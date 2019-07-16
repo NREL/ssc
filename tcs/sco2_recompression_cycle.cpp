@@ -1,51 +1,24 @@
-/*******************************************************************************************************
-*  Copyright 2017 Alliance for Sustainable Energy, LLC
-*
-*  NOTICE: This software was developed at least in part by Alliance for Sustainable Energy, LLC
-*  (“Alliance”) under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
-*  The Government retains for itself and others acting on its behalf a nonexclusive, paid-up,
-*  irrevocable worldwide license in the software to reproduce, prepare derivative works, distribute
-*  copies to the public, perform publicly and display publicly, and to permit others to do so.
-*
-*  Redistribution and use in source and binary forms, with or without modification, are permitted
-*  provided that the following conditions are met:
-*
-*  1. Redistributions of source code must retain the above copyright notice, the above government
-*  rights notice, this list of conditions and the following disclaimer.
-*
-*  2. Redistributions in binary form must reproduce the above copyright notice, the above government
-*  rights notice, this list of conditions and the following disclaimer in the documentation and/or
-*  other materials provided with the distribution.
-*
-*  3. The entire corresponding source code of any redistribution, with or without modification, by a
-*  research entity, including but not limited to any contracting manager/operator of a United States
-*  National Laboratory, any institution of higher learning, and any non-profit organization, must be
-*  made publicly available under this license for as long as the redistribution is made available by
-*  the research entity.
-*
-*  4. Redistribution of this software, without modification, must refer to the software by the same
-*  designation. Redistribution of a modified version of this software (i) may not refer to the modified
-*  version by the same designation, or by any confusingly similar designation, and (ii) must refer to
-*  the underlying software originally provided by Alliance as “System Advisor Model” or “SAM”. Except
-*  to comply with the foregoing, the terms “System Advisor Model”, “SAM”, or any confusingly similar
-*  designation may not be used to refer to any modified version of this software or any modified
-*  version of the underlying software originally provided by Alliance without the prior written consent
-*  of Alliance.
-*
-*  5. The name of the copyright holder, contributors, the United States Government, the United States
-*  Department of Energy, or any of their employees may not be used to endorse or promote products
-*  derived from this software without specific prior written permission.
-*
-*  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
-*  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
-*  FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER,
-*  CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES DEPARTMENT OF ENERGY, NOR ANY OF THEIR
-*  EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-*  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-*  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
-*  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
-*  THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*******************************************************************************************************/
+/**
+BSD-3-Clause
+Copyright 2019 Alliance for Sustainable Energy, LLC
+Redistribution and use in source and binary forms, with or without modification, are permitted provided 
+that the following conditions are met :
+1.	Redistributions of source code must retain the above copyright notice, this list of conditions 
+and the following disclaimer.
+2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions 
+and the following disclaimer in the documentation and/or other materials provided with the distribution.
+3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse 
+or promote products derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, 
+INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
+ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES 
+DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, 
+OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; 
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
+WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT 
+OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
 
 //#include "sco2_pc_core.h"
 #include "sco2_recompression_cycle.h"
@@ -4042,11 +4015,18 @@ int C_RecompCycle::C_mono_eq_turbo_N_fixed_m_dot::operator()(double m_dot_t_in /
 	double T_mc_out, P_mc_out;
 	T_mc_out = P_mc_out = std::numeric_limits<double>::quiet_NaN();
 
-	// Solve main compressor performance at design shaft speed
-	//mpc_rc_cycle->m_mc.od_comp_at_N_des(m_T_mc_in, m_P_mc_in, m_dot_mc, mc_error_code,
-	//								T_mc_out, P_mc_out);
-	mpc_rc_cycle->m_mc_ms.off_design_at_N_des(m_T_mc_in, m_P_mc_in, m_dot_mc, mc_error_code,
-									T_mc_out, P_mc_out);
+	// Solve main compressor performance
+    if (mpc_rc_cycle->ms_od_par.m_is_mc_N_od_at_design)
+    {
+        mpc_rc_cycle->m_mc_ms.off_design_at_N_des(m_T_mc_in, m_P_mc_in, m_dot_mc, mc_error_code,
+            T_mc_out, P_mc_out);
+    }
+    else
+    {
+        double N_mc_od = mpc_rc_cycle->ms_od_par.m_mc_N_od_f_des*mpc_rc_cycle->ms_des_solved.ms_mc_ms_des_solved.m_N_design;    //[rpm]
+        mpc_rc_cycle->m_mc_ms.off_design_given_N(m_T_mc_in, m_P_mc_in, m_dot_mc, N_mc_od, mc_error_code,
+            T_mc_out, P_mc_out);
+    }
 
 	// Check that main compressor performance solved
 	if(mc_error_code != 0)
@@ -4134,7 +4114,7 @@ int C_RecompCycle::C_mono_eq_turbo_N_fixed_m_dot::operator()(double m_dot_t_in /
 	return 0;
 }
 
-int C_RecompCycle::C_mono_eq_x_f_recomp_y_N_rc::operator()(double f_recomp /*-*/, double *diff_N_rc /*-*/)
+int C_RecompCycle::C_mono_eq_x_f_recomp_y_N_rc::operator()(double f_recomp /*-*/, double *N_rc_rpm /*-*/)
 {
 	C_mono_eq_turbo_N_fixed_m_dot c_turbo_bal(mpc_rc_cycle, m_T_mc_in,
 															m_P_mc_in,
@@ -4283,11 +4263,11 @@ int C_RecompCycle::C_mono_eq_x_f_recomp_y_N_rc::operator()(double f_recomp /*-*/
 	mpc_rc_cycle->m_dens_od[HTR_HP_OUT] = mc_co2_props.dens;
 
 	// Get recompressor shaft speed
-	double N_rc = mpc_rc_cycle->m_rc_ms.get_od_solved()->m_N;
-	double N_rc_des = mpc_rc_cycle->m_rc_ms.get_design_solved()->m_N_design;
+	*N_rc_rpm = mpc_rc_cycle->m_rc_ms.get_od_solved()->m_N;      //[rpm]
+	//double N_rc_des = mpc_rc_cycle->m_rc_ms.get_design_solved()->m_N_design;
 
 	// Get difference between solved and design shaft speed
-	*diff_N_rc = (N_rc - N_rc_des) / N_rc_des;
+	//*diff_N_rc = (N_rc - N_rc_des) / N_rc_des;
 
 	return 0;
 }
@@ -4328,7 +4308,7 @@ void C_RecompCycle::off_design_fix_shaft_speeds_core(int & error_code)
 		double f_recomp_lower = 0.0;
 		double f_recomp_upper = 1.0;
 		
-		c_turbo_bal_f_recomp_solver.settings(1.E-3, 50, f_recomp_lower, f_recomp_upper, false);
+		c_turbo_bal_f_recomp_solver.settings(1.E-3, 50, f_recomp_lower, f_recomp_upper, true);
 		
 		C_monotonic_eq_solver::S_xy_pair f_recomp_pair_1st;
 		C_monotonic_eq_solver::S_xy_pair f_recomp_pair_2nd;
@@ -4399,10 +4379,21 @@ void C_RecompCycle::off_design_fix_shaft_speeds_core(int & error_code)
 		f_recomp_solved = tol_solved = std::numeric_limits<double>::quiet_NaN();
 		int iter_solved = -1;
 
+        double N_rc_des = m_rc_ms.get_design_solved()->m_N_design;  //[rpm]
+        double N_rc_od = std::numeric_limits<double>::quiet_NaN();  //[rpm]
+        if (ms_od_par.m_is_rc_N_od_at_design)
+        {
+            N_rc_od = N_rc_des;     //[rpm]
+        }
+        else
+        {
+            N_rc_od = ms_od_par.m_rc_N_od_f_des*N_rc_des;    //[rpm]
+        }
+
 		int f_recomp_code = 0;
 		try
 		{
-			f_recomp_code = c_turbo_bal_f_recomp_solver.solve(f_recomp_pair_1st, f_recomp_pair_2nd, 0.0, 
+			f_recomp_code = c_turbo_bal_f_recomp_solver.solve(f_recomp_pair_1st, f_recomp_pair_2nd, N_rc_od, 
 																f_recomp_solved, tol_solved, iter_solved);
 		}
 		catch( C_csp_exception )

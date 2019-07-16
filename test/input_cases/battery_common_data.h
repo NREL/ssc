@@ -5,15 +5,14 @@
 #include "code_generator_utilities.h"
 
 namespace {
-	const char * SSCDIR_BATT = std::getenv("SSCDIR");
 	char load_profile_path_batt[256];
 	char temperature_path[256];
 	char temperature_path_30min[256];
 	char gen_path[256];
-	int nb1 = sprintf(gen_path, "%s/test/input_cases/battery_data/lifetime_gen.csv", SSCDIR_BATT);
-	int nb2 = sprintf(load_profile_path_batt, "%s/test/input_cases/general_data/commercial_load.csv", SSCDIR_BATT);
-	int nb3 = sprintf(temperature_path, "%s/test/input_cases/battery_data/batt_room_temperature_celsius_60min.csv", SSCDIR_BATT);
-	int nb4 = sprintf(temperature_path_30min, "%s/test/input_cases/battery_data/batt_room_temperature_celsius_30min.csv", SSCDIR_BATT);
+	int nb1 = sprintf(gen_path, "%s/test/input_cases/battery_data/lifetime_gen.csv", SSCDIR);
+	int nb2 = sprintf(load_profile_path_batt, "%s/test/input_cases/general_data/commercial_load.csv", SSCDIR);
+	int nb3 = sprintf(temperature_path, "%s/test/input_cases/battery_data/batt_room_temperature_celsius_60min.csv", SSCDIR);
+	int nb4 = sprintf(temperature_path_30min, "%s/test/input_cases/battery_data/batt_room_temperature_celsius_30min.csv", SSCDIR);
 
 
 	/**
