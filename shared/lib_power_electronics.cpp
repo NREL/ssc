@@ -81,7 +81,7 @@ DCBatteryController::DCBatteryController(dispatch_t * dispatch, battery_metrics_
 	m_batteryPower = dispatch->getBatteryPower();
 	m_batteryPower->connectionMode = ChargeController::DC_CONNECTED;
 	m_batteryPower->singlePointEfficiencyDCToDC = m_DCDCChargeController->batt_dc_dc_bms_efficiency();
-	m_batteryPower->inverterEfficiencyCutoff = inverterEfficiencyCutoff * 0.01;
+	m_batteryPower->inverterEfficiencyCutoff = inverterEfficiencyCutoff;
 }
 
 void DCBatteryController::setSharedInverter(SharedInverter * sharedInverter)

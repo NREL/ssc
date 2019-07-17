@@ -167,7 +167,9 @@ bool dispatch_t::check_constraints(double &I, size_t count)
 		// if charging, this will also be due to low powerflow from grid-charging, just cut off that component
 		else if (m_batteryPower->powerBatteryDC < 0 && m_batteryPower->powerGridToBattery > 0){
 			I *= fmax(1.0 - fabs(m_batteryPower->powerGridToBattery * m_batteryPower->sharedInverter->efficiencyAC * 0.01 / m_batteryPower->powerBatteryDC), 0);
-			
+		}
+		else {
+			iterate = false;
 		}
 	}
 	else
@@ -711,7 +713,7 @@ bool dispatch_automatic_t::check_constraints(double &I, size_t count)
 		
 		
 		// Don't respect target if bidirectional inverter efficiency is low
-		if (m_batteryPower->connectionMode == dispatch_t::DC_CONNECTED && P_target < 0 && m_batteryPower->sharedInverter->efficiencyAC <= m_batteryPower->inverterEfficiencyCutoff)
+		if (m_batteryPower->connectionMode == dispatch_t::DC_CONNECTED && m_batteryPower->sharedInverter->efficiencyAC <= m_batteryPower->inverterEfficiencyCutoff)
 		{
 			iterate = false;
 			//double dP = fabs(P_battery) - m_batteryPower->powerPVToBattery;
