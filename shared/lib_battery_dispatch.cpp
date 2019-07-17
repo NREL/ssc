@@ -164,7 +164,11 @@ bool dispatch_t::check_constraints(double &I, size_t count)
 			}
 			I = powerBatterykWdc * util::kilowatt_to_watt / _Battery->battery_voltage();
 		}
-		// if charging, do nothing
+		// if charging, this will also be due to low powerflow from grid-charging, just cut off that component
+		else if (m_batteryPower->powerBatteryDC < 0 && m_batteryPower->powerGridToBattery > 0){
+			I *= fmax(1.0 - fabs(m_batteryPower->powerGridToBattery * m_batteryPower->sharedInverter->efficiencyAC * 0.01 / m_batteryPower->powerBatteryDC), 0);
+			
+		}
 	}
 	else
 		iterate = false;
@@ -176,7 +180,7 @@ bool dispatch_t::check_constraints(double &I, size_t count)
 	bool power_iterate = restrict_power(I);
 
 	// iterate if any of the conditions are met
-	if (iterate || current_iterate || power_iterate) 
+	if (iterate || current_iterate || power_iterate)
 		iterate = true;
 
 	// stop iterating after n tries
@@ -705,17 +709,18 @@ bool dispatch_automatic_t::check_constraints(double &I, size_t count)
 		// Comomon to automated behind the meter and front of meter
 		iterate = true;
 		
-		/*
-		// Don't charge from the grid if bidirectional inverter efficiency is very low
-		if (P_battery < 0 && m_batteryPower->sharedInverter->efficiencyAC <= 0.10 && m_batteryPower->connectionMode == dispatch_t::DC_CONNECTED)
+		
+		// Don't respect target if bidirectional inverter efficiency is low
+		if (m_batteryPower->connectionMode == dispatch_t::DC_CONNECTED && P_target < 0 && m_batteryPower->sharedInverter->efficiencyAC <= 0.90)
 		{
-			double dP = fabs(P_battery) - m_batteryPower->powerPVToBattery;
-			I += dP * util::kilowatt_to_watt / _Battery->battery_voltage();
-			m_batteryPower->powerBatteryTarget += dP;
+			iterate = false;
+			//double dP = fabs(P_battery) - m_batteryPower->powerPVToBattery;
+			//I += dP * util::kilowatt_to_watt / _Battery->battery_voltage();
+			//m_batteryPower->powerBatteryTarget += dP;
 		}
-		*/
+		
 		// Try and force controller to meet target or custom dispatch
-		if (P_battery > P_target + tolerance || P_battery < P_target - tolerance)
+		else if (P_battery > P_target + tolerance || P_battery < P_target - tolerance)
 		{
 			// Difference between the dispatch and the desired dispatch
 			double dP = P_battery - m_batteryPower->powerBatteryTarget;

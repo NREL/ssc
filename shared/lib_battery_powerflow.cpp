@@ -311,23 +311,21 @@ void BatteryPowerFlow::calculateDCConnected()
 		// Any remaining charge comes from grid regardless of whether allowed or not.
 		P_grid_to_batt_dc = fabs(P_battery_dc) - P_pv_to_batt_dc;
 		
-		// Assume inverter only "sees" the net flow in one direction
+		// Assume inverter only "sees" the net flow in one direction, though practically
+		// there should never be case where P_pv_dc - P_pv_to_batt_dc > 0 and P_grid_to_batt_dc > 0 simultaneously
 		double P_gen_dc_inverter = P_pv_dc - P_pv_to_batt_dc - P_grid_to_batt_dc;
 
 		// convert the DC power to AC
 		m_BatteryPower->sharedInverter->calculateACPower(P_gen_dc_inverter, voltage, 0.0);
 		efficiencyDCAC = m_BatteryPower->sharedInverter->efficiencyAC * 0.01;
+		 
 
-
-		// For now, treat the AC/DC conversion as a single point efficiency until gain clarification on real behavior.
-		if (efficiencyDCAC <= 0.05 && P_grid_to_batt_dc > 0) {
- 			efficiencyDCAC = m_BatteryPower->sharedInverter->getMaxPowerEfficiency() * 0.01;
-			m_BatteryPower->sharedInverter->powerAC_kW = P_gen_dc_inverter * efficiencyDCAC;
-		}
-		else if (efficiencyDCAC <= 0.05 && P_pv_to_inverter_dc > 0) {
+		// Restrict low efficiency so don't get infinites
+		if (efficiencyDCAC <= 0.05 && (P_grid_to_batt_dc > 0 || P_pv_to_inverter_dc > 0)) {
 			efficiencyDCAC = 0.05;
 			m_BatteryPower->sharedInverter->powerAC_kW = P_gen_dc_inverter * efficiencyDCAC;
 		}
+		m_BatteryPower->sharedInverter->efficiencyAC = efficiencyDCAC * 100;
 
 		// Compute the AC quantities
 		P_gen_ac = m_BatteryPower->sharedInverter->powerAC_kW;
