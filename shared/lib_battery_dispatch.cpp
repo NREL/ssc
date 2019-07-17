@@ -712,8 +712,10 @@ bool dispatch_automatic_t::check_constraints(double &I, size_t count)
 		iterate = true;
 		
 		
-		// Don't respect target if bidirectional inverter efficiency is low
-		if (m_batteryPower->connectionMode == dispatch_t::DC_CONNECTED && m_batteryPower->sharedInverter->efficiencyAC <= m_batteryPower->inverterEfficiencyCutoff)
+		// Don't respect target if bidirectional inverter efficiency is low while charging
+		if (m_batteryPower->connectionMode == dispatch_t::DC_CONNECTED && 
+			m_batteryPower->sharedInverter->efficiencyAC <= m_batteryPower->inverterEfficiencyCutoff && 
+			P_target < 0)
 		{
 			iterate = false;
 			//double dP = fabs(P_battery) - m_batteryPower->powerPVToBattery;
