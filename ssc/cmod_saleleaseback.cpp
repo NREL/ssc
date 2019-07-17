@@ -169,12 +169,6 @@ static var_info _cm_vtab_saleleaseback[] = {
 	{ SSC_OUTPUT, SSC_ARRAY, "cf_revenue_monthly_firstyear_TOD9", "First year revenue from the system by month for TOD period 9", "$", "", "Cash Flow Revenue", "ppa_multiplier_model=0", "", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "cf_energy_net_monthly_firstyear_TOD9", "First year energy from the system by month for TOD period 9", "kWh", "", "Cash Flow Revenue", "ppa_multiplier_model=0", "", "" },
 
-
-
-
-
-
-
 /* inputs in DHF model not currently in SAM 11/15/10 */
 	{ SSC_INPUT,       SSC_NUMBER,      "total_installed_cost",          "Installed cost",                   "$",     "",					  "DHF",			 "*",                         "",                             "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "reserves_interest",        "Interest on reserves",				"%",	 "",					  "DHF",             "?=1.75",                     "MIN=0,MAX=100",      			"" },
@@ -263,14 +257,19 @@ static var_info _cm_vtab_saleleaseback[] = {
 
 /* intermediate outputs */
 	{ SSC_OUTPUT,       SSC_NUMBER,      "cost_financing",   "Financing Cost",          "$",   "",					  "DHF",			 "*",                         "",                             "" },
-//	{ SSC_OUTPUT,       SSC_NUMBER,      "cost_prefinancingperwatt",   "Installed cost per watt",          "$/W",   "",					  "DHF",			 "*",                         "",                             "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,      "cost_installed",          "Initial cost",                   "",     "",					  "DHF",			 "*",                         "",                             "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,      "size_of_equity",			"Total equity",	"",	 "",					  "DHF",			 "*",                         "",                             "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "cost_financing",   "Financing Cost",          "$",   "",					  "DHF",			 "*",                         "",                             "" },
+
+		//	{ SSC_OUTPUT,       SSC_NUMBER,      "cost_prefinancingperwatt",   "Installed cost per watt",          "$/W",   "",					  "DHF",			 "*",                         "",                             "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "cost_prefinancing",          "Total installed cost",                   "$",     "",					  "DHF",			 "*",                         "",                             "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "cost_installed",          "Initial cost",                   "$",     "",					  "DHF",			 "*",                         "",                             "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "size_of_equity",			"Total equity",	"$",	 "",					  "DHF",			 "*",                         "",                             "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,      "cost_installedperwatt",   "Installed cost per watt",          "$/W",   "",					  "DHF",			 "*",                         "",                             "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,      "nominal_discount_rate",   "Nominal discount rate",            "%",     "",					  "DHF",			 "*",                         "",                             "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,      "prop_tax_assessed_value", "Assessed value of property for tax purposes","$", "",				  "DHF",			 "*",                         "",                             "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,      "salvage_value",			"Net pre-tax cash salvage value",	"$",	 "",					  "DHF",			 "*",                         "",                             "" },
-	
+	{ SSC_OUTPUT,       SSC_NUMBER,      "sponsor_pretax_development",			"Sponsor pre-tax development fee",	"$",	 "",					  "DHF",			 "*",                         "",                             "" },
+
+		//	
 	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_alloc_none_percent",		"Non-depreciable federal and state allocation",	"%", "",	  "DHF",             "*",					  "",     			        "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_alloc_none",		"Non-depreciable federal and state allocation",	"$", "",	  "DHF",             "*",					  "",     			        "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_alloc_total",		"Total depreciation federal and state allocation",	"$", "",	  "DHF",             "*",					  "",     			        "" },
@@ -641,7 +640,7 @@ static var_info _cm_vtab_saleleaseback[] = {
 	
 	{ SSC_OUTPUT,       SSC_NUMBER,      "distribution_of_development_fee",	"Distribution of development fee",	"$",	 "",					  "DHF",			 "*",                         "",                             "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,      "sale_of_property",	"Sale of property",	"$",	 "",					  "DHF",			 "*",                         "",                             "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,      "purchase_of_plant",	"Purchase of plant",	"$",	 "",					  "DHF",			 "*",                         "",                             "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "purchase_of_plant",	"Purchase of plant and equipment",	"$",	 "",					  "DHF",			 "*",                         "",                             "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_lpra",    "Reserve (increase)/decrease lease payment",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_wcra",    "Reserve (increase)/decrease working capital",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "cf_sponsor_receivablesra", "Reserve (increase)/decrease receivables", "$", "", "Cash Flow Pre Tax", "*", "LENGTH_EQUAL=cf_length", "" },
@@ -660,7 +659,7 @@ static var_info _cm_vtab_saleleaseback[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_adj_reserve_release",    "Adjustment for release of reserves",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_pretax_cashflow",    "Pre-tax cash flow",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_pretax_operating_cashflow",    "Pre-tax operating cash flow",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_pretax_operating_cashflow",    "Pre-tax operating cash flow (effective lease payment)",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 
 // Lessor (tax investor) cash flow
 	{ SSC_OUTPUT,       SSC_NUMBER,      "issuance_of_equity",	"Issuance of equity",	"$",	 "",					  "DHF",			 "*",                         "",                             "" },
