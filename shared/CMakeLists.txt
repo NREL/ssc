@@ -19,7 +19,6 @@ endif()
 
 Project(shared)
 
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}")
 
 include_directories(. ../splinter)
 
@@ -68,13 +67,12 @@ set(SHARED_SRC
 #
 #####################################################################################################################
 
-set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 if(MSVC)
-	add_compile_options(/MP /W4 /w44191 /w44242  /w44263 /w44264 /w44265 /w44266 /w44302 /w44388)
-	add_compile_options(/w44826 /w44905 /w44906 /w44928)
-    add_compile_definitions( __64BIT__ __WINDOWS__ _MBCS )
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /bigobj")
+	add_compile_options(/MP /W0)
+    add_compile_definitions( __64BIT__ __WINDOWS__ _WINDOWS _CRT_SECURE_NO_WARNINGS LPWINAPP )
     foreach (flag_var CMAKE_C_FLAGS_DEBUG CMAKE_CXX_FLAGS_DEBUG)
 		set(${flag_var} "${${flag_var}} /D_DEBUG" CACHE STRING "compile flags" FORCE)
 	endforeach()
@@ -94,7 +92,7 @@ else(MSVC)
 	if(CMAKE_BUILD_TYPE STREQUAL "Debug")
 		add_compile_definitions(_DEBUG)
 	else()
-		SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3" )
+		SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -DNDEBUG" )
 	endif()
 endif(MSVC)
 
@@ -111,11 +109,6 @@ set_target_properties(shared
     DEBUG_POSTFIX "d"
 	PREFIX ""
 	)
-if (MSVC)
-	set_target_properties(shared
-		PROPERTIES
-		LINK_FLAGS /SUBSYSTEM:CONSOLE)
-endif()
 
 
 #####################################################################################################################
@@ -126,4 +119,7 @@ endif()
 
 if (UNIX)
 	set (CMAKE_SHARED_LINKER_FLAGS "-lm")
+endif()
+if (MSVC)
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /SUBSYSTEM:WINDOWS")
 endif()
