@@ -142,6 +142,8 @@ public:
 	double singlePointEfficiencyDCToAC;  ///< The conversion efficiency from DC power to AC power within the battery microinverter (0 - 1)
 	double singlePointEfficiencyDCToDC;  ///< The conversion efficiency from DC power to DC power within the battery management system (0 - 1)
 	SharedInverter * sharedInverter;	 ///< The shared inverter between the PV and battery for a DC-connected system
+	double inverterEfficiencyCutoff;     ///< The shared inverter efficiency at which to stop charging or discharging due to inefficient operation (0-1)
+
 
 	bool canPVCharge;	///< A boolean specifying whether the battery is allowed to charge from PV in the timestep
 	bool canClipCharge;	///< A boolean specifying whether the battery is allowed to charge from otherwise clipped PV in the timestep

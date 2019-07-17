@@ -151,7 +151,7 @@ bool dispatch_t::check_constraints(double &I, size_t count)
 	}
 	// Don't allow battery to discharge if it gets wasted due to inverter efficiency limitations
 	// Typically, this would be due to low power flow, so just cut off battery.
-	else if (m_batteryPower->connectionMode == dispatch_t::DC_CONNECTED && m_batteryPower->sharedInverter->efficiencyAC < 90)
+	else if (m_batteryPower->connectionMode == dispatch_t::DC_CONNECTED && m_batteryPower->sharedInverter->efficiencyAC < m_batteryPower->inverterEfficiencyCutoff)
 	{
 		// The requested DC power
 		double powerBatterykWdc = _Battery->capacity_model()->I() * _Battery->battery_voltage() * util::watt_to_kilowatt;
@@ -711,7 +711,7 @@ bool dispatch_automatic_t::check_constraints(double &I, size_t count)
 		
 		
 		// Don't respect target if bidirectional inverter efficiency is low
-		if (m_batteryPower->connectionMode == dispatch_t::DC_CONNECTED && P_target < 0 && m_batteryPower->sharedInverter->efficiencyAC <= 0.90)
+		if (m_batteryPower->connectionMode == dispatch_t::DC_CONNECTED && P_target < 0 && m_batteryPower->sharedInverter->efficiencyAC <= m_batteryPower->inverterEfficiencyCutoff)
 		{
 			iterate = false;
 			//double dP = fabs(P_battery) - m_batteryPower->powerPVToBattery;

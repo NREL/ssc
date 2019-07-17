@@ -179,6 +179,7 @@ struct batt_variables
 	double inverter_efficiency;
 	double inverter_paco;
 	size_t inverter_count;
+	double batt_inverter_efficiency_cutoff;
 
 	double batt_calendar_q0;
 	double batt_calendar_a;
