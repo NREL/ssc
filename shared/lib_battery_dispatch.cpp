@@ -1384,7 +1384,7 @@ void dispatch_automatic_front_of_meter_t::update_dispatch(size_t hour_of_year, s
 
 			/*! Economic benefit of discharging in current time step ($/kWh) */
 			benefitToDischarge = ppa_cost * m_etaDischarge - m_cycleCost;
-
+			 
 			/*! Energy need to charge the battery (kWh) */
 			double energyNeededToFillBattery = _Battery->battery_energy_to_fill(m_batteryPower->stateOfChargeMax);
 

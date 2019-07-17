@@ -3194,7 +3194,7 @@ bool hourly_energy_calculation::calculate(compute_module *cm)
 			return false;
 		}
 		for (i = 0; i < nrec_gen; i++)
-			pgen[i] += pgrid_batt[i];
+			pgen[i] -= pgrid_batt[i];
 	}
 
 
