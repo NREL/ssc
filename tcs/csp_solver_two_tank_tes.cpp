@@ -1351,7 +1351,7 @@ int C_csp_two_tank_tes::pressure_drops(double m_dot_sf, double m_dot_pb,
     util::matrix_t<double> D = this->pipe_diams;
     util::matrix_t<double> k_coeffs = this->ms_params.k_tes_loss_coeffs;
     util::matrix_t<double> v_dot_rel = this->pipe_v_dot_rel;
-    m_dot_pb > 0 ? DP_SGS = this->ms_params.DP_SGS : DP_SGS = 0.;
+    m_dot_pb > 0 ? DP_SGS = this->ms_params.DP_SGS * 1.e5 : DP_SGS = 0.;
     v_dot_sf = m_dot_sf / this->mc_field_htfProps.dens((T_sf_in + T_sf_out) / 2, (P_hi + P_lo) / 2);
     v_dot_pb = m_dot_pb / this->mc_field_htfProps.dens((T_pb_in + T_pb_out) / 2, P_lo);
 
