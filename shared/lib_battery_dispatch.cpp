@@ -1376,6 +1376,16 @@ void dispatch_automatic_front_of_meter_t::update_dispatch(size_t hour_of_year, s
 			/*! Economic benefit of charging from the grid in current time step to discharge sometime in next X hours ($/kWh)*/
 			revenueToGridCharge = *max_ppa_cost * m_etaDischarge - usage_cost / m_etaGridCharge - m_cycleCost;
 
+			/*! Computed revenue to charge from Grid in each of next X hours ($/kWh)*/
+			double revenueToGridChargeMax = 0;
+			if (m_batteryPower->canGridCharge) {
+				std::vector<double> revenueToGridChargeForecast;
+				for (size_t i = idx_year1; i < idx_year1 + idx_lookahead; i++) {
+					revenueToGridChargeForecast.push_back(*max_ppa_cost * m_etaDischarge - _ppa_price_rt_series[i] / m_etaGridCharge - m_cycleCost);
+				}
+				revenueToGridChargeMax = *std::max_element(std::begin(revenueToGridChargeForecast), std::end(revenueToGridChargeForecast));
+			}
+
 			/*! Economic benefit of charging from regular PV in current time step to discharge sometime in next X hours ($/kWh)*/
 			revenueToPVCharge = *max_ppa_cost * m_etaDischarge - ppa_cost / m_etaPVCharge - m_cycleCost;
 
@@ -1411,7 +1421,11 @@ void dispatch_automatic_front_of_meter_t::update_dispatch(size_t hour_of_year, s
 			}
 
 			// Increase charge from PV if it is more valuable later than selling now
-			if (m_batteryPower->canPVCharge && revenueToPVCharge > 0 && highChargeValuePeriod && m_batteryPower->powerPV > 0)
+			if (m_batteryPower->canPVCharge && 
+				revenueToPVCharge > revenueToGridChargeMax && 
+				revenueToPVCharge > 0 &&
+				highChargeValuePeriod && 
+				m_batteryPower->powerPV > 0)
 			{
 				// leave EnergyToStoreClipped capacity in battery
 				if (m_batteryPower->canClipCharge)
@@ -1435,7 +1449,11 @@ void dispatch_automatic_front_of_meter_t::update_dispatch(size_t hour_of_year, s
 			}
 
 			// Also charge from grid if it is valuable to do so, still leaving EnergyToStoreClipped capacity in battery
-			if (m_batteryPower->canGridCharge && revenueToGridCharge > revenueToPVChargeMax && highChargeValuePeriod && energyNeededToFillBattery > 0)
+			if (m_batteryPower->canGridCharge && 
+				revenueToGridCharge > revenueToPVChargeMax && 
+				revenueToGridCharge > 0 &&
+				highChargeValuePeriod && 
+				energyNeededToFillBattery > 0)
 			{
 				// leave EnergyToStoreClipped capacity in battery
 				if (m_batteryPower->canClipCharge)
