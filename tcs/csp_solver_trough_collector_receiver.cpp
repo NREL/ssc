@@ -2942,6 +2942,7 @@ void C_csp_trough_collector_receiver::call(const C_csp_weatherreader::S_outputs 
 	} 
 
 	//9-27-12, TWN: This model uses relative m_defocus. Changed controller to provide absolute m_defocus, so now convert to relative here
+    if (m_defocus_old == 0) { m_defocus_old = 1; }
 	m_defocus = m_defocus_new / m_defocus_old;
 	m_defocus_old = m_defocus_new;
 
@@ -3709,7 +3710,7 @@ calc_final_metrics_goto:
 		//MJW 12.14.2010 Limit to positive to avoid step-to-step oscillation introduced by using previous step. 
 		//.. This may cause a minor underestimation of annual energy output (<<.5%).
 		E_hdr_accum = (m_v_hot*rho_hdr_hot*m_c_hdr_hot + m_mc_bal_hot)*(m_TCS_T_sys_h - m_TCS_T_sys_h_last) + //Hot half
-			(m_v_cold*rho_hdr_cold*m_c_hdr_cold + m_mc_bal_cold)*(m_TCS_T_sys_c - m_TCS_T_sys_c_last);   //cold half
+			max((m_v_cold*rho_hdr_cold*m_c_hdr_cold + m_mc_bal_cold)*(m_TCS_T_sys_c - m_TCS_T_sys_c_last), 0.0);   //cold half
 
 		if (!m_is_using_input_gen)
 			E_bal_startup = max(E_hdr_accum, 0.0); //cold half
@@ -3918,9 +3919,9 @@ void C_csp_trough_collector_receiver::converged()
 	m_operating_mode_converged = m_operating_mode;	//[-]
 
 	// Always reset the m_defocus control at the first call of a timestep
-	m_defocus_new = 1.0;	//[-]
-	m_defocus_old = 1.0;	//[-]
-	m_defocus = 1.0;		//[-]
+	//m_defocus_new = 1.0;	//[-]
+	//m_defocus_old = 1.0;	//[-]
+	//m_defocus = 1.0;		//[-]
 
 	m_W_dot_sca_tracking = 0.0;		//[MWe]
 
