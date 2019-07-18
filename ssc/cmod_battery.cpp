@@ -531,7 +531,7 @@ battstor::battstor(compute_module &cm, bool setup_model, size_t nrec, double dt_
 			}
 			
 			// Inverter settings
-			if (cm.is_assigned("inverter_model") && batt_vars->batt_topology == dispatch_t::DC_CONNECTED)
+			if (cm.is_assigned("inverter_model"))
 			{
 				batt_vars->inverter_model = cm.as_integer("inverter_model");
 				batt_vars->inverter_count = cm.as_integer("inverter_count");
@@ -562,7 +562,7 @@ battstor::battstor(compute_module &cm, bool setup_model, size_t nrec, double dt_
 			else
 			{
 				batt_vars->inverter_model = SharedInverter::NONE;
-				batt_vars->inverter_count = 1;
+				batt_vars->inverter_count = 0.96;
 				batt_vars->inverter_efficiency = batt_vars->batt_ac_dc_efficiency;
 				batt_vars->inverter_paco = batt_vars->batt_kw;
 			}
@@ -878,7 +878,14 @@ battstor::battstor(compute_module &cm, bool setup_model, size_t nrec, double dt_
 	/*! Front of meter automated DC-connected dispatch */
 	else if (batt_vars->batt_meter_position == dispatch_t::FRONT) 
 	{
-		double efficiencyCombined = batt_vars->batt_dc_dc_bms_efficiency * 0.01 * batt_vars->inverter_efficiency;
+		double eta_discharge = batt_vars->batt_dc_dc_bms_efficiency * 0.01 * batt_vars->inverter_efficiency;
+		double eta_pvcharge = batt_vars->batt_dc_dc_bms_efficiency;
+		double eta_gridcharge = batt_vars->batt_dc_dc_bms_efficiency * 0.01 * batt_vars->inverter_efficiency;
+		if (batt_vars->batt_topology == ChargeController::AC_CONNECTED) {
+			eta_discharge = batt_vars->batt_dc_ac_efficiency;
+			eta_pvcharge = batt_vars->batt_ac_dc_efficiency * 0.01 * batt_vars->inverter_efficiency;
+			eta_gridcharge = batt_vars->batt_ac_dc_efficiency;
+		}
 
 		// Create UtilityRate object only if utility rate is defined
 		utilityRate = NULL;
@@ -894,7 +901,7 @@ battstor::battstor(compute_module &cm, bool setup_model, size_t nrec, double dt_
 			batt_vars->inverter_paco, batt_vars->batt_cost_per_kwh,
 			batt_vars->batt_cycle_cost_choice, batt_vars->batt_cycle_cost,
 			batt_vars->ppa_price_series_dollar_per_kwh, utilityRate,
-			batt_vars->batt_dc_dc_bms_efficiency, efficiencyCombined , efficiencyCombined);
+			eta_pvcharge, eta_gridcharge , eta_discharge);
 
 		if (batt_vars->batt_dispatch == dispatch_t::CUSTOM_DISPATCH)
 		{
