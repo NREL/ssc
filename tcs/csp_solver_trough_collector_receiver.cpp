@@ -3816,12 +3816,12 @@ set_outputs_and_return:
 	double dni_costh = I_b*m_CosTh_ave;
 	double T_loop_outlet = m_TCS_T_htf_out[m_nSCA - 1] - 273.15;
 
-	double E_loop_accum_out = E_loop_accum * 3.6e-9;
-	double E_hdr_accum_out = E_hdr_accum * 3.6e-9;
+	double E_loop_accum_out = E_loop_accum / 3.6e-9;
+	double E_hdr_accum_out = E_hdr_accum / 3.6e-9;
 
 	double E_tot_accum = E_loop_accum_out + E_hdr_accum_out;
 
-	double E_field_out = E_field*3.6e-9;
+	double E_field_out = E_field / 3.6e-9;
 	//------------------------------------------------------------------
 
 	//Set outputs
