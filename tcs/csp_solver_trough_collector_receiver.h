@@ -181,6 +181,8 @@ private:
 	double m_Runner_hl_hot;		//[W] Total heat loss from the hot runners *in one field section*
     double m_Runner_hl_hot_tot;
 
+    double Intc_hl;             //[W] Total heat loss from the loop interconnects *in one field section*
+
 	double m_c_hdr_cold;		//[J/kg-K] Specific heat of fluid at m_T_sys_c
 	double m_c_hdr_hot;			//[J/kg-K] Specific heat of fluid at outlet temperature of last SCA (not necessarily return temperature if modeling runners and headers)
 

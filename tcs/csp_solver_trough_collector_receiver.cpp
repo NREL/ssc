@@ -856,7 +856,7 @@ int C_csp_trough_collector_receiver::loop_energy_balance_T_t_end(const C_csp_wea
 	else
 		T_sky = T_db - 20.0;
 
-    double Intc_hl = 0.0;
+    Intc_hl = 0.0;
 
 	if( m_accept_loc == E_piping_config::FIELD )
 	{
@@ -1108,7 +1108,7 @@ int C_csp_trough_collector_receiver::loop_energy_balance_T_t_int(const C_csp_wea
 	double E_HR_cold_htf = 0.0;				//[MJ]
 	double E_HR_cold_losses = 0.0;			//[MJ]
 	double E_HR_cold_bal = 0.0;				//[MJ]
-    double Intc_hl = 0.0;
+    Intc_hl = 0.0;
 	if( m_accept_loc ==  E_piping_config::FIELD )
 	{
 		// This values is the Bulk Temperature at the *end* of the timestep
@@ -3117,7 +3117,7 @@ overtemp_iter_flag: //10 continue     //Return loop for over-temp conditions
 
 			E_field_loss_tot *= 1.e-6*dt;
 
-			double E_field_pipe_hl = m_Runner_hl_hot_tot + m_Header_hl_hot_tot + m_Runner_hl_cold_tot + m_Header_hl_cold_tot;
+			double E_field_pipe_hl = m_Runner_hl_hot_tot + m_Header_hl_hot_tot + m_Runner_hl_cold_tot + m_Header_hl_cold_tot + m_nLoops*Intc_hl;
 
 			E_field_pipe_hl *= dt;		//[J]
 
@@ -3725,7 +3725,7 @@ calc_final_metrics_goto:
 		double m_Pipe_hl_hot = m_Runner_hl_hot_tot + m_Header_hl_hot_tot;
 		double m_Pipe_hl_cold = m_Runner_hl_cold_tot + m_Header_hl_cold_tot;
 
-		piping_hl_total = m_Pipe_hl_hot + m_Pipe_hl_cold;
+		piping_hl_total = m_Pipe_hl_hot + m_Pipe_hl_cold + m_nLoops*Intc_hl;
 
 		if (!m_is_using_input_gen)
 			E_avail_tot = max(E_avail_tot - piping_hl_total*dt, 0.0);		//[J] 11/1/11 TN: Include hot and cold piping losses in available energy calculation
