@@ -3178,11 +3178,15 @@ bool hourly_energy_calculation::calculate(compute_module *cm)
 
 
 	ssc_number_t *pgen;
-	size_t nrec_gen = 0, step_per_hour_gen = 1, i;
+	size_t nrec_gen = 0, step_per_hour_gen = 1;
 	pgen = m_cm->as_array("gen", &nrec_gen);
 
 	// in front of meter 
 	// update for battery in front of meter case
+	/*
+
+	In the case of no electricity rate, grid_to_batt is included in gen, and assuming buy=sell, this should be accounted for.
+	size_t i;
 	if ((cm->is_assigned("en_batt")) && (cm->as_number("en_batt") == 1) && (cm->is_assigned("batt_meter_position") ) && (cm->as_number("batt_meter_position") == 1) && cm->is_assigned("grid_to_batt"))
 	{ // add grid_batt to gen for ppa revenue
 		ssc_number_t *pgrid_batt;
@@ -3196,6 +3200,7 @@ bool hourly_energy_calculation::calculate(compute_module *cm)
 		for (i = 0; i < nrec_gen; i++)
 			pgen[i] -= pgrid_batt[i];
 	}
+	*/
 
 
 
