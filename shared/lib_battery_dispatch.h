@@ -562,10 +562,10 @@ public:
 	double cost_to_cycle() { return m_cycleCost; }
 
 	/// Return benefit calculations
-	double benefit_charge(){ return benefitToPVCharge; }
-	double benefit_gridcharge() { return benefitToGridCharge; }
-	double benefit_clipcharge() { return benefitToClipCharge; }
-	double benefit_discharge() { return benefitToDischarge; }
+	double benefit_charge(){ return revenueToPVCharge; }
+	double benefit_gridcharge() { return revenueToGridCharge; }
+	double benefit_clipcharge() { return revenueToClipCharge; }
+	double benefit_discharge() { return revenueToDischarge; }
 
 
 protected:
@@ -598,10 +598,10 @@ protected:
 	double m_etaDischarge;
 
 	/* Computed benefits to charge, discharge, gridcharge, clipcharge */
-	double benefitToPVCharge;
-	double benefitToGridCharge;
-	double benefitToClipCharge;
-	double benefitToDischarge;
+	double revenueToPVCharge;
+	double revenueToGridCharge;
+	double revenueToClipCharge;
+	double revenueToDischarge;
 };
 
 /*! Battery metrics class */
