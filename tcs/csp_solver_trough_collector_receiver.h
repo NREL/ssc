@@ -1,51 +1,24 @@
-/*******************************************************************************************************
-*  Copyright 2017 Alliance for Sustainable Energy, LLC
-*
-*  NOTICE: This software was developed at least in part by Alliance for Sustainable Energy, LLC
-*  (“Alliance”) under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
-*  The Government retains for itself and others acting on its behalf a nonexclusive, paid-up,
-*  irrevocable worldwide license in the software to reproduce, prepare derivative works, distribute
-*  copies to the public, perform publicly and display publicly, and to permit others to do so.
-*
-*  Redistribution and use in source and binary forms, with or without modification, are permitted
-*  provided that the following conditions are met:
-*
-*  1. Redistributions of source code must retain the above copyright notice, the above government
-*  rights notice, this list of conditions and the following disclaimer.
-*
-*  2. Redistributions in binary form must reproduce the above copyright notice, the above government
-*  rights notice, this list of conditions and the following disclaimer in the documentation and/or
-*  other materials provided with the distribution.
-*
-*  3. The entire corresponding source code of any redistribution, with or without modification, by a
-*  research entity, including but not limited to any contracting manager/operator of a United States
-*  National Laboratory, any institution of higher learning, and any non-profit organization, must be
-*  made publicly available under this license for as long as the redistribution is made available by
-*  the research entity.
-*
-*  4. Redistribution of this software, without modification, must refer to the software by the same
-*  designation. Redistribution of a modified version of this software (i) may not refer to the modified
-*  version by the same designation, or by any confusingly similar designation, and (ii) must refer to
-*  the underlying software originally provided by Alliance as “System Advisor Model” or “SAM”. Except
-*  to comply with the foregoing, the terms “System Advisor Model”, “SAM”, or any confusingly similar
-*  designation may not be used to refer to any modified version of this software or any modified
-*  version of the underlying software originally provided by Alliance without the prior written consent
-*  of Alliance.
-*
-*  5. The name of the copyright holder, contributors, the United States Government, the United States
-*  Department of Energy, or any of their employees may not be used to endorse or promote products
-*  derived from this software without specific prior written permission.
-*
-*  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
-*  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
-*  FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER,
-*  CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES DEPARTMENT OF ENERGY, NOR ANY OF THEIR
-*  EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-*  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-*  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
-*  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
-*  THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*******************************************************************************************************/
+/**
+BSD-3-Clause
+Copyright 2019 Alliance for Sustainable Energy, LLC
+Redistribution and use in source and binary forms, with or without modification, are permitted provided 
+that the following conditions are met :
+1.	Redistributions of source code must retain the above copyright notice, this list of conditions 
+and the following disclaimer.
+2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions 
+and the following disclaimer in the documentation and/or other materials provided with the distribution.
+3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse 
+or promote products derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, 
+INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
+ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES 
+DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, 
+OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; 
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
+WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT 
+OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
 
 #ifndef __csp_solver_trough_collector_receiver_
 #define __csp_solver_trough_collector_receiver_
@@ -91,6 +64,7 @@ public:
 		E_Q_DOT_FREEZE_PROT,       //[MWt]
 
 		E_M_DOT_LOOP,				//[kg/s]
+        E_IS_RECIRCULATING,         //[-]
 		E_M_DOT_FIELD_RECIRC,		//[kg/s]
 		E_M_DOT_FIELD_DELIVERED,	//[kg/s]
 		E_T_FIELD_COLD_IN,	//[C]
@@ -206,6 +180,8 @@ private:
     double m_Header_hl_hot_tot;
 	double m_Runner_hl_hot;		//[W] Total heat loss from the hot runners *in one field section*
     double m_Runner_hl_hot_tot;
+
+    double Intc_hl;             //[W] Total heat loss from the loop interconnects *in one field section*
 
 	double m_c_hdr_cold;		//[J/kg-K] Specific heat of fluid at m_T_sys_c
 	double m_c_hdr_hot;			//[J/kg-K] Specific heat of fluid at outlet temperature of last SCA (not necessarily return temperature if modeling runners and headers)
@@ -456,9 +432,10 @@ public:
     std::vector<double> m_L_runner;	              //[m]    Lengths of runner sections
     std::vector<int> m_N_rnr_xpans;               //[-]    Number of expansions in runner sections
     std::vector<double> m_DP_rnr;                 //[bar]  Pressure drop in runner sections
-    std::vector<double> m_T_rnr_dsn;              //[C]    Temperature in runner sections at design
+    std::vector<double> m_T_rnr_dsn;              //[C]    Temperature entering runner sections at design
     std::vector<double> m_P_rnr_dsn;              //[bar]  Gauge pessure in runner sections at design
-    std::vector<double> m_T_rnr;                  //[K]    Temperature in runner sections
+    std::vector<double> m_T_rnr;                  //[K]    Temperature entering runner sections
+    double m_T_field_out;                         //[K]    Temperature exiting last runner, and thus exiting field
     std::vector<double> m_P_rnr;                  //[Pa ]  Gauge pessure in runner sections
                                                   
     std::vector<double> m_D_hdr;	              //[m]    Diameters of header sections
@@ -468,15 +445,15 @@ public:
     std::vector<double> m_L_hdr;	              //[m]    Lengths of header sections
     std::vector<int> m_N_hdr_xpans;               //[-]    Number of expansions in header sections
     std::vector<double> m_DP_hdr;                 //[bar]  Pressure drop in header sections
-    std::vector<double> m_T_hdr_dsn;              //[C]    Temperature in header sections at design
+    std::vector<double> m_T_hdr_dsn;              //[C]    Temperature entering header sections at design
     std::vector<double> m_P_hdr_dsn;              //[bar]  Gauge pessure in header sections at design
-    std::vector<double> m_T_hdr;                  //[K]    Temperature in header sections
+    std::vector<double> m_T_hdr;                  //[K]    Temperature entering header sections
     std::vector<double> m_P_hdr;                  //[Pa]   Gauge pessure in header sections
                                                   
     std::vector<double> m_DP_loop;                //[bar]  Pressure drop in loop sections
-    std::vector<double> m_T_loop_dsn;             //[C]    Temperature in loop sections at design
+    std::vector<double> m_T_loop_dsn;             //[C]    Temperature entering loop sections at design
     std::vector<double> m_P_loop_dsn;             //[bar]  Gauge pessure in loop sections at design
-    std::vector<double> m_T_loop;                 //[K]    Temperature in loop sections
+    std::vector<double> m_T_loop;                 //[K]    Temperature entering loop sections
     std::vector<double> m_P_loop;                 //[Pa]   Gauge pessure in loop sections
 
     vector<interconnect> m_interconnects;
