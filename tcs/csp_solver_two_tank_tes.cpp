@@ -343,25 +343,48 @@ void C_storage_tank::energy_balance(double timestep /*s*/, double m_dot_in, doub
 	double cp = mc_htf.Cp(m_T_prev)*1000.0;		//[J/kg-K] spec heat, convert from kJ/kg-K
 
 	// Calculate ending volume levels
-	m_m_calc = fmax(0.001, m_m_prev + timestep*(m_dot_in - m_dot_out));	//[kg] Available mass at the end of this timestep, limit to nonzero positive number
-	m_V_calc = m_m_calc / rho;					//[m^3] Available volume at end of timestep (using initial temperature...)		
+	m_m_calc = m_m_prev + timestep*(m_dot_in - m_dot_out);	//[kg] Available mass at the end of this timestep
+    double m_min, m_dot_out_adj;
+    bool tank_is_empty = false;
+    m_min = 0.001;                              //[kg] minimum tank mass for use in the calculations
+    if (m_m_calc < m_min) {
+        m_m_calc = m_min;
+        tank_is_empty = true;
+        m_dot_out_adj = m_dot_in - (m_min - m_m_prev) / timestep;
+    }
+    else {
+        m_dot_out_adj = m_dot_out;
+    }
+	m_V_calc = m_m_calc / rho;					//[m^3] Available volume at end of timestep (using initial temperature...)
 
-	if( (m_dot_in - m_dot_out) != 0.0 )
+    // Check for continual empty tank
+    if (m_m_prev <= 1e-4 && tank_is_empty == true) {
+        if (m_dot_in > 0) {
+            m_T_calc = T_ave = T_in;
+        }
+        else {
+            m_T_calc = T_ave = m_T_prev;
+        }
+        q_dot_loss = m_V_calc = m_m_calc = q_heater = 0.;
+        return;
+    }
+
+	if( (m_dot_in - m_dot_out_adj) != 0.0 )
 	{
 		double a_coef = m_dot_in*T_in + m_UA / cp*T_amb;
 		double b_coef = m_dot_in + m_UA / cp;
-		double c_coef = (m_dot_in - m_dot_out);
+		double c_coef = (m_dot_in - m_dot_out_adj);
 
-		m_T_calc = a_coef / b_coef + (m_T_prev - a_coef / b_coef)*pow((timestep*c_coef / m_m_prev + 1), -b_coef / c_coef);
-		T_ave = a_coef / b_coef + m_m_prev*(m_T_prev - a_coef / b_coef) / ((c_coef - b_coef)*timestep)*(pow((timestep*c_coef / m_m_prev + 1.0), 1.0 -b_coef/c_coef) - 1.0);
+		m_T_calc = a_coef / b_coef + (m_T_prev - a_coef / b_coef)*pow( max( (timestep*c_coef / m_m_prev + 1), 0.0), -b_coef / c_coef);
+		T_ave = a_coef / b_coef + m_m_prev*(m_T_prev - a_coef / b_coef) / ((c_coef - b_coef)*timestep)*(pow( max( (timestep*c_coef / m_m_prev + 1.0), 0.0), 1.0 -b_coef/c_coef) - 1.0);
 		if (timestep < 1.e-6)
-			T_ave = a_coef / b_coef + (m_T_prev - a_coef / b_coef)*pow((timestep*c_coef / m_m_prev + 1.0), -b_coef / c_coef);	// Limiting expression for small time step	
+			T_ave = a_coef / b_coef + (m_T_prev - a_coef / b_coef)*pow( max( (timestep*c_coef / m_m_prev + 1.0), 0.0), -b_coef / c_coef);	// Limiting expression for small time step	
 		q_dot_loss = m_UA*(T_ave - T_amb)/1.E6;		//[MW]
 
 		if( m_T_calc < m_T_htr )
 		{
-				q_heater = b_coef*((m_T_htr - m_T_prev*pow((timestep*c_coef / m_m_prev + 1), -b_coef / c_coef)) /
-					(-pow((timestep*c_coef / m_m_prev + 1), -b_coef / c_coef) + 1)) - a_coef;
+				q_heater = b_coef*((m_T_htr - m_T_prev*pow( max( (timestep*c_coef / m_m_prev + 1), 0.0), -b_coef / c_coef)) /
+					(-pow( max( (timestep*c_coef / m_m_prev + 1), 0.0), -b_coef / c_coef) + 1)) - a_coef;
 
 				q_heater = q_heater*cp;
 
@@ -380,10 +403,10 @@ void C_storage_tank::energy_balance(double timestep /*s*/, double m_dot_in, doub
 
 		a_coef += q_heater*1.E6 / cp;
 
-		m_T_calc = a_coef / b_coef + (m_T_prev - a_coef / b_coef)*pow((timestep*c_coef / m_m_prev + 1), -b_coef / c_coef);
-		T_ave = a_coef / b_coef + m_m_prev*(m_T_prev - a_coef / b_coef) / ((c_coef - b_coef)*timestep)*(pow((timestep*c_coef / m_m_prev + 1.0), 1.0 -b_coef/c_coef) - 1.0);
+		m_T_calc = a_coef / b_coef + (m_T_prev - a_coef / b_coef)*pow( max( (timestep*c_coef / m_m_prev + 1), 0.0), -b_coef / c_coef);
+		T_ave = a_coef / b_coef + m_m_prev*(m_T_prev - a_coef / b_coef) / ((c_coef - b_coef)*timestep)*(pow( max( (timestep*c_coef / m_m_prev + 1.0), 0.0), 1.0 -b_coef/c_coef) - 1.0);
 		if (timestep < 1.e-6)
-			T_ave = a_coef / b_coef + (m_T_prev - a_coef / b_coef)*pow((timestep*c_coef / m_m_prev + 1.0), -b_coef / c_coef);  // Limiting expression for small time step	
+			T_ave = a_coef / b_coef + (m_T_prev - a_coef / b_coef)*pow( max( (timestep*c_coef / m_m_prev + 1.0), 0.0), -b_coef / c_coef);  // Limiting expression for small time step	
 		q_dot_loss = m_UA*(T_ave - T_amb)/1.E6;		//[MW]
 
 	}
@@ -422,6 +445,12 @@ void C_storage_tank::energy_balance(double timestep /*s*/, double m_dot_in, doub
 			T_ave = c_coef / b_coef + (m_T_prev - c_coef / b_coef)*exp(-b_coef*timestep);  // Limiting expression for small time step	
 		q_dot_loss = m_UA*(T_ave - T_amb)/1.E6;		//[MW]
 	}
+
+    if (tank_is_empty) {
+        // set to actual values
+        m_V_calc = 0.;
+        m_m_calc = 0.;
+    }
 }
 
 void C_storage_tank::energy_balance_constant_mass(double timestep /*s*/, double m_dot_in, double T_in /*K*/, double T_amb /*K*/,
