@@ -1422,7 +1422,7 @@ void dispatch_automatic_front_of_meter_t::update_dispatch(size_t hour_of_year, s
 
 			// Increase charge from PV if it is more valuable later than selling now
 			if (m_batteryPower->canPVCharge && 
-				revenueToPVCharge > revenueToGridChargeMax && 
+				revenueToPVCharge >= revenueToGridChargeMax && 
 				revenueToPVCharge > 0 &&
 				highChargeValuePeriod && 
 				m_batteryPower->powerPV > 0)

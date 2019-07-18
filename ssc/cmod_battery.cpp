@@ -883,7 +883,7 @@ battstor::battstor(compute_module &cm, bool setup_model, size_t nrec, double dt_
 		double eta_gridcharge = batt_vars->batt_dc_dc_bms_efficiency * 0.01 * batt_vars->inverter_efficiency;
 		if (batt_vars->batt_topology == ChargeController::AC_CONNECTED) {
 			eta_discharge = batt_vars->batt_dc_ac_efficiency;
-			eta_pvcharge = batt_vars->batt_ac_dc_efficiency * 0.01 * batt_vars->inverter_efficiency;
+			eta_pvcharge = batt_vars->batt_ac_dc_efficiency;
 			eta_gridcharge = batt_vars->batt_ac_dc_efficiency;
 		}
 
