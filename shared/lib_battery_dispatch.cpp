@@ -1379,6 +1379,13 @@ void dispatch_automatic_front_of_meter_t::update_dispatch(size_t hour_of_year, s
 			/*! Economic benefit of charging from regular PV in current time step to discharge sometime in next X hours ($/kWh)*/
 			revenueToPVCharge = *max_ppa_cost * m_etaDischarge - ppa_cost / m_etaPVCharge - m_cycleCost;
 
+			/*! Computed revenue to charge from PV in each of next X hours ($/kWh)*/
+			std::vector<double> revenueToPVChargeForecast;
+			for (size_t i = idx_year1; i < idx_year1 + idx_lookahead; i++) {
+				revenueToPVChargeForecast.push_back(*max_ppa_cost * m_etaDischarge - _ppa_price_rt_series[i] / m_etaPVCharge - m_cycleCost);
+			}
+			double revenueToPVChargeMax = *std::max_element(std::begin(revenueToPVChargeForecast), std::end(revenueToPVChargeForecast));
+
 			/*! Economic benefit of charging from clipped PV in current time step to discharge sometime in the next X hours (clipped PV is free) ($/kWh) */
 			revenueToClipCharge = *max_ppa_cost * m_etaDischarge - m_cycleCost;
 
@@ -1425,7 +1432,7 @@ void dispatch_automatic_front_of_meter_t::update_dispatch(size_t hour_of_year, s
 			}
 
 			// Also charge from grid if it is valuable to do so, still leaving EnergyToStoreClipped capacity in battery
-			if (m_batteryPower->canGridCharge && revenueToGridCharge > 0 && highChargeValuePeriod && energyNeededToFillBattery > 0)
+			if (m_batteryPower->canGridCharge && revenueToGridCharge > revenueToPVChargeMax && highChargeValuePeriod && energyNeededToFillBattery > 0)
 			{
 				// leave EnergyToStoreClipped capacity in battery
 				if (m_batteryPower->canClipCharge)
