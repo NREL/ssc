@@ -91,7 +91,7 @@ void diffuse_reduce(
 	double poa_sky,
 	double poa_gnd,
 	double gcr,
-	double phi0, // mask angle
+//	double phi0, // mask angle
 	double alb,
 	double nrows,
 

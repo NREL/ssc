@@ -192,7 +192,7 @@ void diffuse_reduce(
 	double poa_sky,
 	double poa_gnd,
 	double gcr,
-	double phi0, // mask angle
+//	double phi0, // mask angle
 	double alb,
 	double nrows,
 
@@ -401,8 +401,8 @@ bool ss_exec(
 	if (inputs.mod_orient == 0) m_row_length = m_n * m_W; //Portrait Mode
 	else m_row_length = m_n * m_L; //Landscape Mode
 
-	double a = 0.0, b = m_B;
-	
+	//double a = 0.0, b = m_B;
+	/*
 	double mask_angle;
 	if (inputs.mask_angle_calc_method == 1)
 	{
@@ -416,7 +416,7 @@ bool ss_exec(
 		mask_angle = atan2( ( m_B * sind( tilt ) ), ( m_R - m_B * cosd( tilt ) ) );
 	}
 	mask_angle *= 180.0/M_PI; // change to degrees to pass into functions later
-
+	*/
 	// ***********************************
 	// SHADOW DIMENSION CALCULATIONS
 	// ***********************************
@@ -492,9 +492,9 @@ bool ss_exec(
 		double relative_shaded_area = Hs * (m_row_length - g) / (m_A * m_row_length); //numerator is shadow area, denom is row area
 		outputs.m_shade_frac_fixed = relative_shaded_area;
 		//determine reduction of diffuse incident on shaded sections due to self-shading (beam is not derated because that shading is taken into account in dc derate)
-	    diffuse_reduce( solzen, tilt, Gb_nor, Gdh, poa_sky, poa_gnd, m_B/m_R, mask_angle, albedo, m_r,
-		// outputs
-		outputs.m_reduced_diffuse, outputs.m_diffuse_derate, outputs.m_reduced_reflected, outputs.m_reflected_derate );
+		diffuse_reduce(solzen, tilt, Gb_nor, Gdh, poa_sky, poa_gnd, m_B / m_R, albedo, m_r,
+			// outputs
+			outputs.m_reduced_diffuse, outputs.m_diffuse_derate, outputs.m_reduced_reflected, outputs.m_reflected_derate);
 
 		return true;
 	}
@@ -548,7 +548,7 @@ bool ss_exec(
 	//Chris Deline's self-shading algorithm
 
 	// 1. determine reduction of diffuse incident on shaded sections due to self-shading (beam is not derated because that shading is taken into account in dc derate)
-	diffuse_reduce( solzen, tilt, Gb_nor, Gdh, poa_sky, poa_gnd, m_B/m_R, mask_angle, albedo, m_r,
+	diffuse_reduce( solzen, tilt, Gb_nor, Gdh, poa_sky, poa_gnd, m_B/m_R, albedo, m_r,
 		// outputs
 		outputs.m_reduced_diffuse, outputs.m_diffuse_derate, outputs.m_reduced_reflected, outputs.m_reflected_derate );
 

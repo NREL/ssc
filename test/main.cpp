@@ -10,12 +10,12 @@ GTEST_API_ int main(int argc, char **argv) {
 
 	printf("Running main() from gtest_main.cc\n");
 	testing::InitGoogleTest(&argc, argv);
-//	  ::testing::GTEST_FLAG(filter) = "CMPvYieldTimo*";
+	  ::testing::GTEST_FLAG(filter) = "CMPvYieldTimo*";
 //	  ::testing::GTEST_FLAG(filter) = "splinterTests*";
 //	  ::testing::GTEST_FLAG(filter) = "SunsetCaseIrradProc*";
 //	  ::testing::GTEST_FLAG(filter) = "BatteryPowerFlowTest*";
 //	  ::testing::GTEST_FLAG(filter) = "CMGeneric*";
-
+//	::testing::GTEST_FLAG(filter) = "CMPvsamv1PowerIntegration.NoFinancialModelShading";
 	int status = RUN_ALL_TESTS();
 
 	if (!status)
