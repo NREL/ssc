@@ -5,7 +5,7 @@
 #include "cmod_battery_test.h"
 
 
-/// Test standalone battery compute modeule with a input lifetime generation and commercial load
+/// Test standalone battery compute module with an input lifetime generation and commercial load
 TEST_F(CMBattery, CommercialLifetimePeakShaving) {
 
 	// Run with fixed output
