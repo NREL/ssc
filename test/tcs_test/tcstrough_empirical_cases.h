@@ -186,7 +186,7 @@ int tcstrough_empirical_phoenix(ssc_data_t &data)
 {
 	tcstrough_empirical_default(data);
 
-	char solar_resource_path_phoenix[256];
+	char solar_resource_path_phoenix[512];
 	int n = sprintf(solar_resource_path_phoenix, "%s/test/input_cases/trough_empirical_data/phoenix_az_33.450495_-111.983688_psmv3_60_tmy.csv", std::getenv("SSCDIR"));
 	ssc_data_set_string(data, "file_name", solar_resource_path_phoenix);
 

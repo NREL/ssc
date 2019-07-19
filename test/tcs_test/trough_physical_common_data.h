@@ -8,9 +8,9 @@
 //const char * SSCDIR = std::getenv("SSCDIR");
 //const char * SAMNTDIR = std::getenv("SAMNTDIR");
 
-char dispatch_factors_path_tp[256];
-char ud_ind_od_path_tp[256];
-char wlim_series_path_tp[256];
+char dispatch_factors_path_tp[512];
+char ud_ind_od_path_tp[512];
+char wlim_series_path_tp[512];
 
 
 int ntp1 = sprintf(dispatch_factors_path_tp, "%s/test/input_cases/moltensalt_data/dispatch_factors_ts.csv", std::getenv("SSCDIR"));
@@ -22,7 +22,7 @@ int ntp3 = sprintf(wlim_series_path_tp, "%s/test/input_cases/moltensalt_data/wli
 */
 void trough_physical_default(ssc_data_t &data)
 {
-	char solar_resource_path[256];
+	char solar_resource_path[512];
     int n1 = sprintf(solar_resource_path, "%s/test/input_cases/tcstrough_data/tucson_az_32.116521_-110.933042_psmv3_60_tmy.csv", std::getenv("SSCDIR"));
 
     ssc_data_set_string(data, "file_name", solar_resource_path);
