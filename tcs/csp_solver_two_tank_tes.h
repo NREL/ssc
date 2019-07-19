@@ -254,8 +254,8 @@ public:
         double T_tank_hot_inlet_min; //[C] Minimum field htf temperature that may enter the hot tank
         double V_tes_des;           //[m/s] Design-point velocity for sizing the diameters of the TES piping
         bool custom_tes_p_loss;     //[-] True if the TES piping losses should be calculated using the TES pipe lengths and minor loss coeffs, false if using the pumping loss parameters
-        util::matrix_t<double> k_tes_loss_coeffs; //[-] Combined minor loss coefficients of the fittings and valves in the collection (including bypass) and generation loops in the TES 
         bool custom_tes_pipe_sizes;               //[-] True if the TES diameters and wall thicknesses parameters should be used instead of calculating them
+        util::matrix_t<double> k_tes_loss_coeffs; //[-] Combined minor loss coefficients of the fittings and valves in the collection (including bypass) and generation loops in the TES 
         util::matrix_t<double> tes_diams;         //[m] Imported inner diameters for the TES piping as read from the modified output files
         util::matrix_t<double> tes_wallthicks;    //[m] Imported wall thicknesses for the TES piping as read from the modified output files
         util::matrix_t<double> tes_lengths;       //[m] Imported lengths for the TES piping as read from the modified output files
@@ -269,12 +269,24 @@ public:
 		{
 			m_field_fl = m_tes_fl = m_tank_pairs = -1;		
 			m_is_hx = true;
+            tanks_in_parallel = true;
+            has_hot_tank_bypass = true;
+            custom_tes_p_loss = false;
+            custom_tes_pipe_sizes = false;
+            calc_design_pipe_vals = true;
 
 			m_ts_hours = 0.0;		//[hr] Default to 0 so that if storage isn't defined, simulation won't crash
 
 			m_W_dot_pc_design = m_eta_pc = m_solarm = m_h_tank = m_u_tank = m_hot_tank_Thtr = m_hot_tank_max_heat = m_cold_tank_Thtr =
-				m_cold_tank_max_heat = m_dt_hot = m_T_field_in_des = m_T_field_out_des = m_T_tank_hot_ini =
-				m_T_tank_cold_ini = m_h_tank_min = m_f_V_hot_ini = m_htf_pump_coef = std::numeric_limits<double>::quiet_NaN();
+				m_cold_tank_max_heat = m_dt_hot = m_T_field_in_des = m_T_field_out_des = m_dP_field_des = m_T_tank_hot_ini =
+				m_T_tank_cold_ini = m_h_tank_min = m_f_V_hot_ini = m_htf_pump_coef = m_tes_pump_coef = eta_pump = T_tank_hot_inlet_min = 
+                V_tes_des = pipe_rough = DP_SGS = std::numeric_limits<double>::quiet_NaN();
+
+            k_tes_loss_coeffs.resize_fill(11, 0.);
+            tes_diams.resize_fill(1, -1.);
+            tes_wallthicks.resize_fill(1, -1.);
+            double vals1[11] = { 0., 90., 100., 120., 0., 0., 0., 0., 80., 120., 80. };
+            tes_lengths.assign(vals1, 11);
 		}
 	};
 
