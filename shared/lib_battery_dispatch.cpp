@@ -1363,8 +1363,15 @@ void dispatch_automatic_front_of_meter_t::update_dispatch(size_t hour_of_year, s
 
 			/*! Cost to purchase electricity from the utility */
 			double usage_cost = ppa_cost;
+			std::vector<double> usage_cost_forecast;
 			if (m_utilityRateCalculator) {
 				usage_cost = m_utilityRateCalculator->getEnergyRate(hour_of_year);
+				for (size_t i = hour_of_year; i < hour_of_year + _look_ahead_hours; i++) 
+				{
+					for (size_t s = 0; s < _steps_per_hour; s++) {
+						usage_cost_forecast.push_back(m_utilityRateCalculator->getEnergyRate(hour_of_year));
+					}
+				}
 			}
 
 			// Compute forecast variables which potentially do change from year to year
@@ -1380,8 +1387,15 @@ void dispatch_automatic_front_of_meter_t::update_dispatch(size_t hour_of_year, s
 			double revenueToGridChargeMax = 0;
 			if (m_batteryPower->canGridCharge) {
 				std::vector<double> revenueToGridChargeForecast;
+				size_t j = 0;
 				for (size_t i = idx_year1; i < idx_year1 + idx_lookahead; i++) {
-					revenueToGridChargeForecast.push_back(*max_ppa_cost * m_etaDischarge - _ppa_price_rt_series[i] / m_etaGridCharge - m_cycleCost);
+					if (m_utilityRateCalculator) {
+						revenueToGridChargeForecast.push_back(*max_ppa_cost * m_etaDischarge - usage_cost_forecast[j] / m_etaGridCharge - m_cycleCost);
+					} 
+					else {
+						revenueToGridChargeForecast.push_back(*max_ppa_cost * m_etaDischarge - _ppa_price_rt_series[i] / m_etaGridCharge - m_cycleCost);
+					}
+					j++;
 				}
 				revenueToGridChargeMax = *std::max_element(std::begin(revenueToGridChargeForecast), std::end(revenueToGridChargeForecast));
 			}
