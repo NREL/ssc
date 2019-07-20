@@ -1401,14 +1401,15 @@ void dispatch_automatic_front_of_meter_t::update_dispatch(size_t hour_of_year, s
 			}
 
 			/*! Economic benefit of charging from regular PV in current time step to discharge sometime in next X hours ($/kWh)*/
-			revenueToPVCharge = *max_ppa_cost * m_etaDischarge - ppa_cost / m_etaPVCharge - m_cycleCost;
+			revenueToPVCharge = _P_pv_dc[idx_year1] > 0 ? *max_ppa_cost * m_etaDischarge - ppa_cost / m_etaPVCharge - m_cycleCost : 0;
 
 			/*! Computed revenue to charge from PV in each of next X hours ($/kWh)*/
 			double revenueToPVChargeMax = 0;
 			if (m_batteryPower->canPVCharge) {
 				std::vector<double> revenueToPVChargeForecast;
 				for (size_t i = idx_year1; i < idx_year1 + idx_lookahead; i++) {
-					revenueToPVChargeForecast.push_back(*max_ppa_cost * m_etaDischarge - _ppa_price_rt_series[i] / m_etaPVCharge - m_cycleCost);
+					bool system_on = _P_pv_dc[i] > 0 ? 1 : 0;
+					revenueToPVChargeForecast.push_back(system_on * (*max_ppa_cost * m_etaDischarge - _ppa_price_rt_series[i] / m_etaPVCharge - m_cycleCost));
 				}
 				revenueToPVChargeMax = *std::max_element(std::begin(revenueToPVChargeForecast), std::end(revenueToPVChargeForecast));
 			}
@@ -1511,6 +1512,15 @@ void dispatch_automatic_front_of_meter_t::update_cliploss_data(double_vec P_clip
 	// append to end to allow for look-ahead
 	for (size_t i = 0; i != _look_ahead_hours * _steps_per_hour; i++)
 		_P_cliploss_dc.push_back(P_cliploss[i]);
+}
+
+void dispatch_automatic_front_of_meter_t::update_pv_data(double_vec P_pv_dc)
+{
+	_P_pv_dc = P_pv_dc;
+
+	// append to end to allow for look-ahead
+	for (size_t i = 0; i != _look_ahead_hours * _steps_per_hour; i++)
+		_P_pv_dc.push_back(P_pv_dc[i]);
 }
 
 void dispatch_automatic_front_of_meter_t::costToCycle()

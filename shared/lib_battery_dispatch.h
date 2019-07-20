@@ -552,8 +552,11 @@ public:
 	/// Compute the updated power to send to the battery over the next N hours
 	void update_dispatch(size_t hour_of_year, size_t step, size_t lifetimeIndex);
 
-	/// Update cliploss data
+	/// Update cliploss data [kW]
 	void update_cliploss_data(double_vec P_cliploss);
+
+	/// Pass in the PV power forecast [kW]
+	virtual void update_pv_data(std::vector<double> P_pv_dc);
 
 	/*! Calculate the cost to cycle */
 	void costToCycle();
@@ -573,7 +576,7 @@ protected:
 	void init_with_pointer(const dispatch_automatic_front_of_meter_t* tmp);
 	void setup_cost_forecast_vector();
 
-	/*! Full clipping loss due to AC power limits vector */
+	/*! Full clipping loss due to AC power limits vector [kW] */
 	double_vec _P_cliploss_dc;
 
 	/*! Inverter AC power limit */
