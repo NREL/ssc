@@ -339,7 +339,6 @@ nlopt/config.status
 build_osx/config.status
 build_sdk/sdk-release/linux64/dependencies\.txt
 build_sdk/sdk-release/linux64/filetypes\.txt
-
 doc/html/*
 doc/latex/*
 build_linux/linux_errors
