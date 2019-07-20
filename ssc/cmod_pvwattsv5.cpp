@@ -245,11 +245,13 @@ public:
 		{
 			if (sunup > 0 && track_mode == 1
 				&& shade_mode_1x == 0) // selfshaded mode
+//			if (sunup > 0) // selfshaded mode
 			{
 				double shad1xf = shadeFraction1x(solazi, solzen, tilt, azimuth, gcr, rot);
 				shad_beam *= (ssc_number_t)(1 - shad1xf);
 
 				if (shade_mode_1x == 0 && iskydiff > 0)
+//				if (iskydiff > 0)
 				{
 					double reduced_skydiff = iskydiff;
 					double Fskydiff = 1.0;
