@@ -3339,8 +3339,8 @@ set_outputs_and_return:
             }
 
             value(O_T_FIELD_IN_AT_DSN, T_rnr_des_out.at(0));
-            value(O_T_FIELD_OUT_AT_DSN, T_rnr_des_out.at(T_rnr_des_out.ncells() - 1));
-            value(O_P_FIELD_IN_AT_DSN, P_rnr_des_out.at(0));
+            value(O_T_FIELD_OUT_AT_DSN, T_rnr_des_out.at(T_rnr_des_out.ncells() - 1));  // need to still account for heat loss in this last pipe
+            value(O_P_FIELD_IN_AT_DSN, P_rnr_des_out.at(0));                            // need to still account for pressure loss in this last pipe
 
             // wait to output arrays until TES/PB sizing has finished so P can be adjusted
         }

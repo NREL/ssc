@@ -1381,7 +1381,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 
 					//self-shading calculations
 					if (((Subarrays[nn]->trackMode == 0 || Subarrays[nn]->trackMode == 4) && (Subarrays[nn]->shadeMode == 1 || Subarrays[nn]->shadeMode == 2)) //fixed tilt or timeseries tilt, self-shading (linear or non-linear) OR
-						|| (Subarrays[nn]->trackMode == 1 && (Subarrays[nn]->shadeMode == 1 || Subarrays[nn]->shadeMode == 2) && Subarrays[nn]->backtrackingEnabled == 0)) //one-axis tracking, self-shading, not backtracking
+						|| (Subarrays[nn]->trackMode == 1 && (Subarrays[nn]->shadeMode == 1 || Subarrays[nn]->shadeMode == 2))) //one-axis tracking, self-shading (linear or non-linear)
 					{
 
 						if (radmode == irrad::POA_R || radmode == irrad::POA_P){
@@ -1395,46 +1395,78 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 						bool linear = (Subarrays[nn]->shadeMode == 2); //0 for full self-shading, 1 for linear self-shading
 
 						//geometric fraction of the array that is shaded for one-axis trackers.
-						//USES A DIFFERENT FUNCTION THAN THE SELF-SHADING BECAUSE SS IS MEANT FOR FIXED ONLY. shadeFraction1x IS FOR ONE-AXIS TRACKERS ONLY.
+						//USES A DIFFERENT FUNCTION THAN THE SELF-SHADING BECAUSE SS IS MEANT FOR FIXED ONLY. shadeFraction1x IS FOR TRUE-TRACKING ONE-AXIS TRACKERS ONLY.
 						//used in the non-linear self-shading calculator for one-axis tracking only
-						double shad1xf = 0;
-						if (trackbool)
-							shad1xf = shadeFraction1x(solazi, solzen, Subarrays[nn]->tiltDegrees, Subarrays[nn]->azimuthDegrees, Subarrays[nn]->groundCoverageRatio, rot);
+						double shad1xf = 0.0;
+						if (trackbool && (Subarrays[nn]->backtrackingEnabled == false))
+						    shad1xf = shadeFraction1x(solazi, solzen, Subarrays[nn]->tiltDegrees, Subarrays[nn]->azimuthDegrees, Subarrays[nn]->groundCoverageRatio, rot);
 
 						//execute self-shading calculations
 						ssc_number_t beam_to_use; //some self-shading calculations require DNI, NOT ibeam (beam in POA). Need to know whether to use DNI from wf or calculated, depending on radmode
+						ssc_number_t dhi_to_use; //some self-shading calculations require DHI, NOT iskydiff (sky diff in POA). Need to know whether to use DHI from wf or calculated, depending on radmode
 						if (radmode == irrad::DN_DF || radmode == irrad::DN_GH) beam_to_use = (ssc_number_t)wf.dn;
 						else beam_to_use = Irradiance->p_IrradianceCalculated[2][hour * step_per_hour]; // top of hour in first year
+						if (radmode == irrad::DN_DF || radmode == irrad::GH_DF) dhi_to_use = (ssc_number_t)wf.df;
+						else dhi_to_use = Irradiance->p_IrradianceCalculated[1][hour * step_per_hour]; // top of hour in first year
 
-						if (linear && trackbool) //one-axis linear
+						if (ss_exec(Subarrays[nn]->selfShadingInputs, stilt, sazi, solzen, solazi, beam_to_use, dhi_to_use, ibeam, iskydiff, ignddiff, alb, trackbool, linear, shad1xf, Subarrays[nn]->selfShadingOutputs))
 						{
-							ibeam *= (1 - shad1xf); //derate beam irradiance linearly by the geometric shading fraction calculated above per Chris Deline 2/10/16
-							beam_shading_factor *= (1 - shad1xf);
-							if (iyear == 0)
-							{
-								PVSystem->p_derateSelfShading[nn][idx] = (ssc_number_t)1;
-								PVSystem->p_derateLinear[nn][idx] = (ssc_number_t)(1 - shad1xf);
-								PVSystem->p_derateSelfShadingDiffuse[nn][idx] = (ssc_number_t)1; //no diffuse derate for linear shading
-								PVSystem->p_derateSelfShadingReflected[nn][idx] = (ssc_number_t)1; //no reflected derate for linear shading
-							}
-						}
 
-						else if (ss_exec(Subarrays[nn]->selfShadingInputs, stilt, sazi, solzen, solazi, beam_to_use, ibeam, (iskydiff + ignddiff), alb, trackbool, linear, shad1xf, Subarrays[nn]->selfShadingOutputs))
-						{
-							if (linear) //fixed tilt linear
+						    if (linear && trackbool) //one-axis linear
+						    {
+                                ibeam *= (1 - shad1xf); //derate beam irradiance linearly by the geometric shading fraction calculated above per Chris Deline 2/10/16
+                                beam_shading_factor *= (1 - shad1xf);
+                                // Sky diffuse and ground-reflected diffuse are derated according to C. Deline's algorithm
+                                iskydiff *= Subarrays[nn]->selfShadingOutputs.m_diffuse_derate;
+                                ignddiff *= Subarrays[nn]->selfShadingOutputs.m_reflected_derate;
+
+                                if (iyear == 0)
+                                {
+                                    PVSystem->p_derateSelfShading[nn][idx] = (ssc_number_t)1;
+                                    PVSystem->p_derateLinear[nn][idx] = (ssc_number_t)(1 - shad1xf);
+                                    PVSystem->p_derateSelfShadingDiffuse[nn][idx] = (ssc_number_t)Subarrays[nn]->selfShadingOutputs.m_diffuse_derate;
+                                    PVSystem->p_derateSelfShadingReflected[nn][idx] = (ssc_number_t)Subarrays[nn]->selfShadingOutputs.m_reflected_derate;
+                                }
+                            }
+
+						    else if (linear) //fixed tilt linear
 							{
 								ibeam *= (1 - Subarrays[nn]->selfShadingOutputs.m_shade_frac_fixed);
 								beam_shading_factor *= (1 - Subarrays[nn]->selfShadingOutputs.m_shade_frac_fixed);
+								iskydiff *= Subarrays[nn]->selfShadingOutputs.m_diffuse_derate;
+                                ignddiff *= Subarrays[nn]->selfShadingOutputs.m_reflected_derate;
+
 								if (iyear == 0)
 								{
 									PVSystem->p_derateSelfShading[nn][idx] = (ssc_number_t)1;
 									PVSystem->p_derateLinear[nn][idx] = (ssc_number_t)(1 - Subarrays[nn]->selfShadingOutputs.m_shade_frac_fixed);
-									PVSystem->p_derateSelfShadingDiffuse[nn][idx] = (ssc_number_t)1; //no diffuse derate for linear shading
-									PVSystem->p_derateSelfShadingReflected[nn][idx] = (ssc_number_t)1; //no reflected derate for linear shading
+									PVSystem->p_derateSelfShadingDiffuse[nn][idx] = (ssc_number_t)Subarrays[nn]->selfShadingOutputs.m_diffuse_derate;
+								    PVSystem->p_derateSelfShadingReflected[nn][idx] = (ssc_number_t)Subarrays[nn]->selfShadingOutputs.m_reflected_derate;
 								}
 							}
-							else //non-linear: fixed tilt AND one-axis
+
+							else if (trackbool && (Subarrays[nn]->backtrackingEnabled == true)) //non-linear backtracking one-axis
 							{
+							    iskydiff *= Subarrays[nn]->selfShadingOutputs.m_diffuse_derate;
+								ignddiff *= Subarrays[nn]->selfShadingOutputs.m_reflected_derate;
+
+								if (iyear == 0)
+								{
+									PVSystem->p_derateSelfShading[nn][idx] = (ssc_number_t)1;
+                                    PVSystem->p_derateLinear[nn][idx] = (ssc_number_t)1;
+									PVSystem->p_derateSelfShadingDiffuse[nn][idx] = (ssc_number_t)Subarrays[nn]->selfShadingOutputs.m_diffuse_derate;
+									PVSystem->p_derateSelfShadingReflected[nn][idx] = (ssc_number_t)Subarrays[nn]->selfShadingOutputs.m_reflected_derate;
+								}
+							}
+
+							else //non-linear: fixed tilt AND one-axis true-tracking
+							{
+                                // Beam is not derated- all beam derate effects (linear and non-linear) are taken into account in the nonlinear_dc_shading_derate
+								Subarrays[nn]->poa.nonlinearDCShadingDerate = Subarrays[nn]->selfShadingOutputs.m_dc_derate;
+
+								iskydiff *= Subarrays[nn]->selfShadingOutputs.m_diffuse_derate;
+								ignddiff *= Subarrays[nn]->selfShadingOutputs.m_reflected_derate;
+
 								if (iyear == 0)
 								{
 									PVSystem->p_derateSelfShadingDiffuse[nn][idx] = (ssc_number_t)Subarrays[nn]->selfShadingOutputs.m_diffuse_derate;
@@ -1442,12 +1474,6 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 									PVSystem->p_derateSelfShading[nn][idx] = (ssc_number_t)Subarrays[nn]->selfShadingOutputs.m_dc_derate;
 									PVSystem->p_derateLinear[nn][idx] = (ssc_number_t)1;
 								}
-
-								// Sky diffuse and ground-reflected diffuse are derated according to C. Deline's algorithm
-								iskydiff *= Subarrays[nn]->selfShadingOutputs.m_diffuse_derate;
-								ignddiff *= Subarrays[nn]->selfShadingOutputs.m_reflected_derate;
-								// Beam is not derated- all beam derate effects (linear and non-linear) are taken into account in the nonlinear_dc_shading_derate
-								Subarrays[nn]->poa.nonlinearDCShadingDerate = Subarrays[nn]->selfShadingOutputs.m_dc_derate;
 							}
 						}
 						else
