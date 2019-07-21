@@ -672,8 +672,7 @@ public:
         if (code != 0)
             throw exec_error( "pvwattsv5_1ts", "failed to calculate plane of array irradiance with given input parameters" );
 
-        double shad_beam = 1.0;
-        powerout(0, shad_beam, 1.0, beam, alb, wspd, tamb);
+        powerout(0, shad_beam, 1.0, beam, diff, alb, wspd, tamb);
 
         assign( "poa", var_data( (ssc_number_t)poa ) );
         assign( "tcell", var_data( (ssc_number_t)pvt ) );
