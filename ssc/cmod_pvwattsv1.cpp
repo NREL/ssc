@@ -123,7 +123,7 @@ public:
 		add_var_info(vtab_technology_outputs);
 	}
 
-	void exec( ) throw( general_error )
+	void exec( )
 	{
 		const char *file = as_string("solar_resource_file");
 

@@ -732,7 +732,7 @@ public:
 		add_var_info( vtab_utility_rate2 );
 	}
 
-	void exec( ) throw( general_error )
+	void exec( )
 	{
 		ssc_number_t *parr = 0;
 		size_t count, i, j;
@@ -1164,7 +1164,7 @@ public:
 		ssc_number_t monthly_fixed_charges[12],
 		ssc_number_t monthly_dc_fixed[12], ssc_number_t monthly_dc_tou[12],
 		ssc_number_t monthly_ec_charges[12], ssc_number_t monthly_ec_rates[12],
-		ssc_number_t ec_tou_sched[8760], ssc_number_t dc_tou_sched[8760] ) throw(general_error)
+		ssc_number_t ec_tou_sched[8760], ssc_number_t dc_tou_sched[8760] )
 	{
 		int i;
 

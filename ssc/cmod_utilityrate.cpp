@@ -272,7 +272,7 @@ public:
 		add_var_info( vtab_utility_rate );
 	}
 
-	void exec( ) throw( general_error )
+	void exec( )
 	{
 		ssc_number_t *parr = 0;
 		size_t count, i, j;
@@ -585,7 +585,7 @@ public:
 		ssc_number_t revenue[8760], ssc_number_t payment[8760], ssc_number_t income[8760], ssc_number_t price[8760],
 		ssc_number_t monthly_fixed_charges[12],
 		ssc_number_t monthly_dc_fixed[12], ssc_number_t monthly_dc_tou[12],
-		ssc_number_t monthly_tr_charges[12], ssc_number_t monthly_tr_rates[12] ) throw(general_error)
+		ssc_number_t monthly_tr_charges[12], ssc_number_t monthly_tr_rates[12] )
 	{
 		int i;
 

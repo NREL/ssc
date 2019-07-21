@@ -58,7 +58,7 @@ public:
 		add_var_info(_cm_vtab_ui_tes_calcs);
 	}
 
-	void exec() throw(general_error)
+	void exec() override
 	{
 		double W_dot_pb_des = as_double("W_dot_pb_des");		//[MWe] Power cycle output at design
 		double eta_pb_des = as_double("eta_pb_des");            //[-] Power cycle efficiency at design 

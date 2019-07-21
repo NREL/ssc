@@ -60,7 +60,7 @@ public:
 		add_var_info( _cm_vtab_layoutarea );
 	}
 
-	void exec( ) throw( general_error )
+	void exec( )
 	{
 		
 		util::matrix_t<double> positions;

@@ -81,7 +81,7 @@ public:
 		add_var_info(_cm_vtab_sco2_design_point);
 	}
 
-	void exec() throw(general_error)
+	void exec() override
 	{
 		// Test CO2 air cooler class
 		C_CO2_to_air_cooler c_ac;

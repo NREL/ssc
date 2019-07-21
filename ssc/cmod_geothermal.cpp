@@ -217,7 +217,7 @@ public:
 //		add_var_info(vtab_technology_outputs);
 	}
 
-	void exec( ) throw( general_error )
+	void exec( )
 	{
 		int iControl = as_integer("ui_calculations_only");		 // 0=run full model, 1=just do UI calculations
 

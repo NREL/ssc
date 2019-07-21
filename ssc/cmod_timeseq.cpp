@@ -47,7 +47,7 @@ public:
 		add_var_info( _cm_vtab_timeseq );
 	}
 
-	void exec( ) throw( general_error )
+	void exec( )
 	{
 		double t_start = as_double("start_time");
 		double t_end = as_double("end_time");

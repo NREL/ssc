@@ -534,7 +534,7 @@ public:
 		return cost;
 	}
 
-	void exec( ) throw( general_error )
+	void exec( )
 	{
 		// get values
 		double rating = (double) as_number("machine_rating");

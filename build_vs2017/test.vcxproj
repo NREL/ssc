@@ -178,7 +178,7 @@
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <DisableSpecificWarnings>4305</DisableSpecificWarnings>
       <AdditionalOptions>/wd4244 %(AdditionalOptions)</AdditionalOptions>
-      <TreatWarningAsError>true</TreatWarningAsError>
+      <TreatWarningAsError>false</TreatWarningAsError>
       <ExceptionHandling>Async</ExceptionHandling>
     </ClCompile>
     <Link>
