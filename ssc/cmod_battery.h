@@ -54,6 +54,9 @@
 
 #include "core.h"
 
+#include "lib_storage_ops.h"
+#include "lib_storage_params.h"
+
 // forward declarations to speed up build
 class SharedInverter;
 class voltage_t;
