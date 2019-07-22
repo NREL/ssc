@@ -8,10 +8,10 @@
 //const char * SSCDIR = std::getenv("SSCDIR");
 //const char * SAMNTDIR = std::getenv("SAMNTDIR");
 
-char dispatch_factors_path[256];
-char ud_ind_od_path[256];
-char wlim_series_path[256];
-char helio_positions_path[256];
+char dispatch_factors_path[512];
+char ud_ind_od_path[512];
+char wlim_series_path[512];
+char helio_positions_path[512];
 
 
 int nmspt1 = sprintf(dispatch_factors_path, "%s/test/input_cases/moltensalt_data/dispatch_factors_ts.csv", std::getenv("SSCDIR"));
@@ -24,7 +24,7 @@ int nmspt4 = sprintf(helio_positions_path, "%s/test/input_cases/moltensalt_data/
 */
 void tcsmolten_salt_default(ssc_data_t &data)
 {
-	char solar_resource_path[256];
+	char solar_resource_path[512];
     // This is a copy of the actual weather file used, which has been copied to the ssc repo so it can be found by Travis CI for its tests.
     //  The actual weather file used by SAM could change and thus change the UI output values (different input (i.e., weather file) -> different outputs)
 	int n1 = sprintf(solar_resource_path, "%s/test/input_cases/moltensalt_data/daggett_ca_34.865371_-116.783023_psmv3_60_tmy.csv", std::getenv("SSCDIR"));

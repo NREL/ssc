@@ -29,33 +29,33 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 static var_info vtab_thermal_rate[] = {
 
 /*   VARTYPE           DATATYPE         NAME                         LABEL                                           UNITS     META                      GROUP          REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
-	{ SSC_INPUT,        SSC_NUMBER,     "en_thermal_rates",           "Optionally enable/disable thermal_rate",                   "years",  "",                      "",             "",                         "INTEGER,MIN=0,MAX=1",              "" },
-	{ SSC_INPUT,        SSC_NUMBER,     "analysis_period",           "Number of years in analysis",                   "years",  "",                      "",             "*",                         "INTEGER,POSITIVE",              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "en_thermal_rates",           "Optionally enable/disable thermal_rate",                   "years",  "",                      "Thermal Rate",             "",                         "INTEGER,MIN=0,MAX=1",              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "analysis_period",           "Number of years in analysis",                   "years",  "",                      "Lifetime",             "*",                         "INTEGER,POSITIVE",              "" },
 
-	{ SSC_INPUT, SSC_NUMBER, "system_use_lifetime_output", "Lifetime hourly system outputs", "0/1", "0=hourly first year,1=hourly lifetime", "", "*", "INTEGER,MIN=0,MAX=1", "" },
+	{ SSC_INPUT, SSC_NUMBER, "system_use_lifetime_output", "Lifetime hourly system outputs", "0/1", "0=hourly first year,1=hourly lifetime", "Lifetime", "*", "INTEGER,MIN=0,MAX=1", "" },
 
 	
 	// First year or lifetime hourly or subhourly
 	// load and gen expected to be > 0
 	// specific for fuel_cells - can be more generic
-	{ SSC_INPUT, SSC_ARRAY, "fuelcell_power_thermal", "Fuel cell power generated", "kW-t", "", "Time Series", "*", "", "" },
+	{ SSC_INPUT, SSC_ARRAY, "fuelcell_power_thermal", "Fuel cell power generated", "kW-t", "", "Thermal Rate", "*", "", "" },
 	 
 	// input from user as kW-t and output as kW-t
-	{ SSC_INOUT, SSC_ARRAY, "thermal_load", "Thermal load (year 1)", "kW-t", "", "Time Series", "", "", "" },
+	{ SSC_INOUT, SSC_ARRAY, "thermal_load", "Thermal load (year 1)", "kW-t", "", "Thermal Rate", "", "", "" },
 
-	{ SSC_INPUT, SSC_NUMBER, "inflation_rate", "Inflation rate", "%", "", "Financials", "*", "MIN=-99", "" },
+	{ SSC_INPUT, SSC_NUMBER, "inflation_rate", "Inflation rate", "%", "", "Lifetime", "*", "MIN=-99", "" },
 
-	{ SSC_INPUT, SSC_ARRAY, "thermal_degradation", "Annual energy degradation", "%", "", "AnnualOutput", "?=0", "", "" },
-	{ SSC_INPUT, SSC_ARRAY, "thermal_load_escalation", "Annual load escalation", "%/year", "", "", "?=0", "", "" },
-	{ SSC_INPUT,        SSC_ARRAY,      "thermal_rate_escalation",          "Annual thermal rate escalation",  "%/year", "",                      "",             "?=0",                       "",                              "" },
+	{ SSC_INPUT, SSC_ARRAY, "thermal_degradation", "Annual energy degradation", "%", "", "Thermal Rate", "?=0", "", "" },
+	{ SSC_INPUT, SSC_ARRAY, "thermal_load_escalation", "Annual load escalation", "%/year", "", "Thermal Rate", "?=0", "", "" },
+	{ SSC_INPUT,        SSC_ARRAY,      "thermal_rate_escalation",          "Annual thermal rate escalation",  "%/year", "",                      "Thermal Rate",             "?=0",                       "",                              "" },
 
-	{ SSC_INPUT, SSC_NUMBER, "thermal_buy_rate_option", "Thermal buy rate option", "0/1", "0=flat,1=timestep", "", "?=0", "INTEGER,MIN=0,MAX=1", "" },
-	{ SSC_INPUT, SSC_ARRAY,  "thermal_buy_rate",          "Thermal buy rate",  "$/kW-t", "",                      "",             "?=0",                       "",                              "" },
-	{ SSC_INPUT, SSC_NUMBER, "thermal_buy_rate_flat",     "Thermal buy rate flat",  "$/kW-t", "",                      "",             "?=0",                       "",                              "" },
+	{ SSC_INPUT, SSC_NUMBER, "thermal_buy_rate_option", "Thermal buy rate option", "0/1", "0=flat,1=timestep", "Thermal Rate", "?=0", "INTEGER,MIN=0,MAX=1", "" },
+	{ SSC_INPUT, SSC_ARRAY,  "thermal_buy_rate",          "Thermal buy rate",  "$/kW-t", "",                      "Thermal Rate",             "?=0",                       "",                              "" },
+	{ SSC_INPUT, SSC_NUMBER, "thermal_buy_rate_flat",     "Thermal buy rate flat",  "$/kW-t", "",                      "Thermal Rate",             "?=0",                       "",                              "" },
 
-	{ SSC_INPUT, SSC_NUMBER, "thermal_sell_rate_option", "Thermal sell rate option", "0/1", "0=flat,1=timestep", "", "?=0", "INTEGER,MIN=0,MAX=1", "" },
-	{ SSC_INPUT, SSC_ARRAY,  "thermal_sell_rate",          "Thermal sell rate",  "$/kW-t", "",                      "",             "?=0",                       "",                              "" },
-	{ SSC_INPUT, SSC_NUMBER, "thermal_sell_rate_flat",     "Thermal sell rate flat",  "$/kW-t", "",                      "",             "?=0",                       "",                              "" },
+	{ SSC_INPUT, SSC_NUMBER, "thermal_sell_rate_option", "Thermal sell rate option", "0/1", "0=flat,1=timestep", "Thermal Rate", "?=0", "INTEGER,MIN=0,MAX=1", "" },
+	{ SSC_INPUT, SSC_ARRAY,  "thermal_sell_rate",          "Thermal sell rate",  "$/kW-t", "",                      "Thermal Rate",             "?=0",                       "",                              "" },
+	{ SSC_INPUT, SSC_NUMBER, "thermal_sell_rate_flat",     "Thermal sell rate flat",  "$/kW-t", "",                      "Thermal Rate",             "?=0",                       "",                              "" },
 
 	//  output as kWh - same as load (kW) for hourly simulations
 //	{ SSC_OUTPUT, SSC_ARRAY, "thermal_bill_load", "Thermal bill load (year 1)", "kWh-t", "", "Time Series", "*", "", "" },
@@ -103,7 +103,7 @@ public:
 		add_var_info( vtab_thermal_rate );
 	}
 
-	void exec( ) throw( general_error )
+	void exec( )
 	{
 		// if not assigned, we assume thermal rates are enabled
 		if (is_assigned("en_thermal_rates")) {
@@ -563,7 +563,7 @@ public:
 		ssc_number_t *revenue, ssc_number_t *payment, ssc_number_t *income,
 		ssc_number_t *thermal_charge,
 		ssc_number_t rate_esc, bool = true, bool = true, bool = false)
-		throw(general_error)
+
 	{
 		int i;
 		for (i = 0; i<(int)m_num_rec_yearly; i++)

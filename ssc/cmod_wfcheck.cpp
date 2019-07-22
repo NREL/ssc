@@ -60,7 +60,7 @@ public:
 		nwarnings++;
 	}
 
-	void exec() throw( general_error )
+	void exec()
 	{
 		weatherfile wfile( as_string("input_file") );
 		if ( !wfile.ok() ) throw general_error( wfile.message() );

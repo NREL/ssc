@@ -82,7 +82,7 @@ public:
 		add_var_info(_cm_vtab_cb_construction_financing);
 	}
 
-	void exec() throw(general_error)
+	void exec() override
 	{
 		
 		ssc_number_t total_installed_cost     = as_number("total_installed_cost");    

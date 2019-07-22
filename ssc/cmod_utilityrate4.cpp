@@ -394,7 +394,7 @@ public:
 		add_var_info( vtab_utility_rate4 );
 	}
 
-	void exec( ) throw( general_error )
+	void exec( )
 	{
 		ssc_number_t *parr = 0;
 		size_t count, i, j; 
@@ -1703,7 +1703,7 @@ public:
 		ssc_number_t dc_hourly_peak[8760], ssc_number_t monthly_cumulative_excess_energy[12], 
 		ssc_number_t monthly_cumulative_excess_dollars[12], ssc_number_t monthly_bill[12], 
 		ssc_number_t rate_esc, size_t year, bool include_fixed=true, bool include_min=true, bool gen_only=false) 
-		throw(general_error)
+
 	{
 		int i;
 
@@ -2447,7 +2447,7 @@ public:
 		ssc_number_t dc_hourly_peak[8760], ssc_number_t monthly_cumulative_excess_energy[12],
 		ssc_number_t monthly_cumulative_excess_dollars[12], ssc_number_t monthly_bill[12],
 		ssc_number_t rate_esc, bool include_fixed = true, bool include_min = true)
-		throw(general_error)
+
 	{
 		int i;
 
@@ -2905,7 +2905,7 @@ public:
 
 
 	void ur_update_ec_monthly(int month, util::matrix_t<double>& charge, util::matrix_t<double>& energy, util::matrix_t<double>& surplus)
-		throw(general_error)
+
 	{
 		if (month < 0 || month > (int)m_month.size())
 		{

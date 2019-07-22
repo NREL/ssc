@@ -22,6 +22,7 @@
     <ClCompile Include="..\ssc\cmod_cb_empirical_hce_heat_loss.cpp" />
     <ClCompile Include="..\ssc\cmod_cb_mspt_system_costs.cpp" />
     <ClCompile Include="..\ssc\cmod_fuelcell.cpp" />
+    <ClCompile Include="..\ssc\cmod_generic_system-builder.cpp" />
     <ClCompile Include="..\ssc\cmod_geothermal_costs.cpp" />
     <ClCompile Include="..\ssc\cmod_grid.cpp" />
     <ClCompile Include="..\ssc\cmod_host_developer.cpp" />
@@ -40,6 +41,8 @@
     <ClCompile Include="..\ssc\cmod_layoutarea.cpp" />
     <ClCompile Include="..\ssc\cmod_levpartflip.cpp" />
     <ClCompile Include="..\ssc\cmod_linear_fresnel_dsg_iph.cpp" />
+    <ClCompile Include="..\ssc\cmod_mhk_tidal.cpp" />
+    <ClCompile Include="..\ssc\cmod_mhk_wave.cpp" />
     <ClCompile Include="..\ssc\cmod_poacalib.cpp" />
     <ClCompile Include="..\ssc\cmod_pv6parmod.cpp" />
     <ClCompile Include="..\ssc\cmod_pvsamv1.cpp" />
@@ -91,6 +94,7 @@
     <ClCompile Include="..\ssc\cmod_windfile.cpp" />
     <ClCompile Include="..\ssc\cmod_windpower.cpp" />
     <ClCompile Include="..\ssc\cmod_lcoefcr.cpp" />
+    <ClCompile Include="..\ssc\cmod_windpower_eqns.cpp" />
     <ClCompile Include="..\ssc\cmod_wind_obos.cpp" />
     <ClCompile Include="..\ssc\common_financial.cpp" />
     <ClCompile Include="..\ssc\core.cpp" />
@@ -112,6 +116,7 @@
     <ClInclude Include="..\ssc\common.h" />
     <ClInclude Include="..\ssc\csp_common.h" />
     <ClInclude Include="..\ssc\sscapi.h" />
+    <ClInclude Include="..\ssc\ssc_equations.h" />
     <ClInclude Include="..\ssc\tckernel.h" />
     <ClInclude Include="..\ssc\vartab.h" />
     <ClInclude Include="..\ssc\vbapi.h" />
@@ -230,7 +235,7 @@
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <DisableSpecificWarnings>4456;4244;%(DisableSpecificWarnings)</DisableSpecificWarnings>
       <AdditionalOptions>/w44191 /w44242  /w44266 /w44302 /w44388 /w44826 /w44905 /w44906 /w44928 %(AdditionalOptions)</AdditionalOptions>
-      <TreatWarningAsError>true</TreatWarningAsError>
+      <TreatWarningAsError>false</TreatWarningAsError>
       <ExceptionHandling>Async</ExceptionHandling>
     </ClCompile>
     <Link>

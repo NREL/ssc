@@ -1588,7 +1588,7 @@ public:
 		add_var_info( vtab_utility_rate3 );
 	}
 
-	void exec( ) throw( general_error )
+	void exec( )
 	{
 		ssc_number_t *parr = 0;
 		size_t count, i, j; 
@@ -2788,7 +2788,7 @@ public:
 		ssc_number_t monthly_e_use_period_tier[12][12][6], 
 		ssc_number_t monthly_charge_period_tier[12][12][6],
 		ssc_number_t rate_esc, bool include_fixed=true, bool include_min=true) 
-		throw(general_error)
+
 	{
 		int i;
 
