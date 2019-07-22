@@ -53,6 +53,8 @@ set(SSC_SRC
 		cmod_lcoefcr.cpp
 		cmod_levpartflip.cpp
 		cmod_linear_fresnel_dsg_iph.cpp
+		cmod_mhk_wave.cpp
+		cmod_mhk_tidal.cpp
 		cmod_poacalib.cpp
 		cmod_pv6parmod.cpp
 		cmod_pv_get_shade_loss_mpp.cpp
