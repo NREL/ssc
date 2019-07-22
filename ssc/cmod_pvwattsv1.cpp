@@ -321,13 +321,13 @@ public:
 						double Fgnddiff = 1.0;
 						
 						// worst-case mask angle using calculated surface tilt
-						double phi0 = 180/3.1415926*atan2( sind( stilt ), 1/gcr - cosd( stilt ) );
+						//double phi0 = 180/3.1415926*atan2( sind( stilt ), 1/gcr - cosd( stilt ) );
 
 						// calculate sky and gnd diffuse derate factors
 						// based on view factor reductions from self-shading
 						diffuse_reduce( solzen, stilt,
-							wf.dn, iskydiff+ignddiff,
-							gcr, phi0, alb, 1000,
+							wf.dn, wf.df, iskydiff, ignddiff,
+							gcr, alb, 1000,
 
 							// outputs (pass by reference)
 							reduced_skydiff, Fskydiff,

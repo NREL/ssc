@@ -56,19 +56,23 @@ bool selfshade_simple(
 
 
 void diffuse_reduce( 
-		double solzen,
-		double stilt,
-		double Gb_nor,
-		double Gd_poa,
-		double gcr,
-		double phi0, // mask angle (degrees)
-		double alb,
-		double nrows,
-		
-		double &reduced_skydiff,
-		double &Fskydiff,
-		double &reduced_gnddiff,
-		double &Fgnddiff );
+	// inputs (angles in degrees)
+	double solzen,
+	double stilt,
+	double Gb_nor,
+	double Gdh,
+	double poa_sky,
+	double poa_gnd,
+	double gcr,
+//	double phi0, // mask angle
+	double alb,
+	double nrows,
+
+	// outputs
+	double &reduced_skydiff,
+	double &Fskydiff,  // derate factor on sky diffuse
+	double &reduced_gnddiff,
+	double &Fgnddiff); // derate factor on ground diffuse
 
 
 
@@ -129,8 +133,10 @@ bool ss_exec(
 	double solzen,		// solar zenith (deg)
 	double solazi,		// solar azimuth (deg)
 	double Gb_nor,		// beam normal irradiance (W/m2)
+	double Gdh,         // diffuse horizontal irradiance (W/m2)
 	double Gb_poa,		// POA beam irradiance (W/m2)
-	double Gd_poa,		// POA diffuse, sky+gnd (W/m2)
+	double poa_sky,		// POA diffuse sky irradiance (W/m2)
+	double poa_gnd,     // POA diffuse gnd irradiance (W/m2)
 	double albedo,		// used to calculate reduced relected irradiance
 	bool trackmode,		// 0 for fixed tilt, 1 for one-axis tracking
 	bool linear,		// 0 for non-linear shading (C. Deline's full algorithm), 1 to stop at linear shading

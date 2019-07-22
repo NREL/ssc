@@ -50,6 +50,7 @@ static C_csp_reported_outputs::S_output_info S_output_info[] =
 	{C_csp_trough_collector_receiver::E_Q_DOT_FREEZE_PROT, C_csp_reported_outputs::TS_WEIGHTED_AVE},
 
 	{C_csp_trough_collector_receiver::E_M_DOT_LOOP, C_csp_reported_outputs::TS_WEIGHTED_AVE},
+    {C_csp_trough_collector_receiver::E_IS_RECIRCULATING, C_csp_reported_outputs::TS_WEIGHTED_AVE},
 	{C_csp_trough_collector_receiver::E_M_DOT_FIELD_RECIRC, C_csp_reported_outputs::TS_WEIGHTED_AVE},
 	{C_csp_trough_collector_receiver::E_M_DOT_FIELD_DELIVERED, C_csp_reported_outputs::TS_WEIGHTED_AVE},
 	{C_csp_trough_collector_receiver::E_T_FIELD_COLD_IN, C_csp_reported_outputs::TS_WEIGHTED_AVE},
@@ -476,6 +477,8 @@ void C_csp_trough_collector_receiver::init(const C_csp_collector_receiver::S_csp
         C_csp_collector_receiver::S_csp_cr_out_solver troughOutputs;
 
         steady_state(weatherValues, htfInletState, defocus, troughOutputs, troughInfo);
+        solved_params.m_T_htf_hot_des = m_T_field_out;
+        solved_params.m_dP_sf = troughOutputs.m_dP_sf;
 
         // Restore original settings
         m_accept_mode = accept_mode_orig;
@@ -853,7 +856,7 @@ int C_csp_trough_collector_receiver::loop_energy_balance_T_t_end(const C_csp_wea
 	else
 		T_sky = T_db - 20.0;
 
-    double Intc_hl = 0.0;
+    Intc_hl = 0.0;
 
 	if( m_accept_loc == E_piping_config::FIELD )
 	{
@@ -1105,7 +1108,7 @@ int C_csp_trough_collector_receiver::loop_energy_balance_T_t_int(const C_csp_wea
 	double E_HR_cold_htf = 0.0;				//[MJ]
 	double E_HR_cold_losses = 0.0;			//[MJ]
 	double E_HR_cold_bal = 0.0;				//[MJ]
-    double Intc_hl = 0.0;
+    Intc_hl = 0.0;
 	if( m_accept_loc ==  E_piping_config::FIELD )
 	{
 		// This values is the Bulk Temperature at the *end* of the timestep
@@ -1363,7 +1366,8 @@ int C_csp_trough_collector_receiver::loop_energy_balance_T_t_int(const C_csp_wea
             m_Runner_hl_hot = m_L_runner[i] * CSP::pi*m_D_runner[i] * m_Pipe_hl_coef*(m_T_rnr[i] - T_db);  //Wt
             m_Runner_hl_hot_tot += 2.*m_Runner_hl_hot;
         }
-		
+		m_T_field_out = m_T_rnr[2*m_nrunsec - 1] - m_Runner_hl_hot / (m_dot_runner(m_m_dot_htf_tot, m_nfsec, 2*m_nrunsec - 1)*m_c_hdr_hot);
+
 		q_dot_loss_HR_hot = m_Header_hl_hot_tot + m_Runner_hl_hot_tot;	//[W]   // aka m_Pipe_hl_hot
 		E_HR_hot_losses = q_dot_loss_HR_hot*sim_info.ms_ts.m_step/1.E6;		//[MJ]
 
@@ -1958,9 +1962,10 @@ void C_csp_trough_collector_receiver::set_output_value()
 	mc_reported_outputs.value(E_Q_DOT_FREEZE_PROT, m_q_dot_freeze_protection);			//[MWt]
 
 	mc_reported_outputs.value(E_M_DOT_LOOP, m_m_dot_htf_tot/(double)m_nLoops);		//[kg/s]
+    mc_reported_outputs.value(E_IS_RECIRCULATING, m_is_m_dot_recirc);		    //[-]
 	if (m_is_m_dot_recirc)
 	{
-		mc_reported_outputs.value(E_M_DOT_FIELD_RECIRC, m_m_dot_htf_tot);		//[kg/s]
+        mc_reported_outputs.value(E_M_DOT_FIELD_RECIRC, m_m_dot_htf_tot);		//[kg/s]
 		mc_reported_outputs.value(E_M_DOT_FIELD_DELIVERED, 0.0);				//[kg/s]
 	}
 	else
@@ -2115,6 +2120,7 @@ void C_csp_trough_collector_receiver::off(const C_csp_weatherreader::S_outputs &
 		// If multiple recirculation steps, then need to calculate average of timestep-integrated-average
 	cr_out_solver.m_T_salt_hot = m_T_sys_h_t_int_fullts - 273.15;		//[C]
 	cr_out_solver.m_component_defocus = 1.0;
+    cr_out_solver.m_is_recirculating = m_is_m_dot_recirc;
 
 	cr_out_solver.m_E_fp_total = m_q_dot_freeze_protection;		//[MWe]
 	cr_out_solver.m_W_dot_col_tracking = m_W_dot_sca_tracking;	//[MWe]
@@ -2291,6 +2297,7 @@ void C_csp_trough_collector_receiver::startup(const C_csp_weatherreader::S_outpu
 	cr_out_solver.m_T_salt_hot = m_T_sys_h_t_int_fullts - 273.15;		//[C]
 
 	cr_out_solver.m_component_defocus = 1.0;	//[-]
+    cr_out_solver.m_is_recirculating = m_is_m_dot_recirc;
 
 		// Shouldn't need freeze protection if in startup, but may want a check on this
 	cr_out_solver.m_E_fp_total = m_q_dot_freeze_protection;		//[MWt]
@@ -2550,6 +2557,7 @@ void C_csp_trough_collector_receiver::on(const C_csp_weatherreader::S_outputs &w
 		cr_out_solver.m_T_salt_hot = m_T_sys_h_t_int - 273.15;		//[C]
 			
 		cr_out_solver.m_component_defocus = m_component_defocus;	//[-]
+        cr_out_solver.m_is_recirculating = m_is_m_dot_recirc;
 		// ***********************************************************
 		// ***********************************************************
 
@@ -2557,6 +2565,7 @@ void C_csp_trough_collector_receiver::on(const C_csp_weatherreader::S_outputs &w
 		cr_out_solver.m_E_fp_total = 0.0;			//[MW]
 		cr_out_solver.m_W_dot_col_tracking = m_W_dot_sca_tracking;	//[MWe]
 		cr_out_solver.m_W_dot_htf_pump = m_W_dot_pump;				//[MWe]
+        cr_out_solver.m_dP_sf = m_dP_total;         //[bar]
 	}
 	else
 	{	// Solution failed, so tell controller/solver
@@ -2578,9 +2587,11 @@ void C_csp_trough_collector_receiver::on(const C_csp_weatherreader::S_outputs &w
 		cr_out_solver.m_q_thermal = 0.0;			//[MWt]
 		cr_out_solver.m_T_salt_hot = 0.0;			//[C]
 		cr_out_solver.m_component_defocus = 1.0;	//[-]
+        cr_out_solver.m_is_recirculating = false;
 		cr_out_solver.m_E_fp_total = 0.0;
 		cr_out_solver.m_W_dot_col_tracking = 0.0;
 		cr_out_solver.m_W_dot_htf_pump = 0.0;
+        cr_out_solver.m_dP_sf = 0.0;                //[bar]
 	}
 
 	set_output_value();
@@ -2931,6 +2942,7 @@ void C_csp_trough_collector_receiver::call(const C_csp_weatherreader::S_outputs 
 	} 
 
 	//9-27-12, TWN: This model uses relative m_defocus. Changed controller to provide absolute m_defocus, so now convert to relative here
+    if (m_defocus_old == 0) { m_defocus_old = 1; }
 	m_defocus = m_defocus_new / m_defocus_old;
 	m_defocus_old = m_defocus_new;
 
@@ -3105,7 +3117,7 @@ overtemp_iter_flag: //10 continue     //Return loop for over-temp conditions
 
 			E_field_loss_tot *= 1.e-6*dt;
 
-			double E_field_pipe_hl = m_Runner_hl_hot_tot + m_Header_hl_hot_tot + m_Runner_hl_cold_tot + m_Header_hl_cold_tot;
+			double E_field_pipe_hl = m_Runner_hl_hot_tot + m_Header_hl_hot_tot + m_Runner_hl_cold_tot + m_Header_hl_cold_tot + m_nLoops*Intc_hl;
 
 			E_field_pipe_hl *= dt;		//[J]
 
@@ -3698,7 +3710,7 @@ calc_final_metrics_goto:
 		//MJW 12.14.2010 Limit to positive to avoid step-to-step oscillation introduced by using previous step. 
 		//.. This may cause a minor underestimation of annual energy output (<<.5%).
 		E_hdr_accum = (m_v_hot*rho_hdr_hot*m_c_hdr_hot + m_mc_bal_hot)*(m_TCS_T_sys_h - m_TCS_T_sys_h_last) + //Hot half
-			(m_v_cold*rho_hdr_cold*m_c_hdr_cold + m_mc_bal_cold)*(m_TCS_T_sys_c - m_TCS_T_sys_c_last);   //cold half
+			max((m_v_cold*rho_hdr_cold*m_c_hdr_cold + m_mc_bal_cold)*(m_TCS_T_sys_c - m_TCS_T_sys_c_last), 0.0);   //cold half
 
 		if (!m_is_using_input_gen)
 			E_bal_startup = max(E_hdr_accum, 0.0); //cold half
@@ -3713,7 +3725,7 @@ calc_final_metrics_goto:
 		double m_Pipe_hl_hot = m_Runner_hl_hot_tot + m_Header_hl_hot_tot;
 		double m_Pipe_hl_cold = m_Runner_hl_cold_tot + m_Header_hl_cold_tot;
 
-		piping_hl_total = m_Pipe_hl_hot + m_Pipe_hl_cold;
+		piping_hl_total = m_Pipe_hl_hot + m_Pipe_hl_cold + m_nLoops*Intc_hl;
 
 		if (!m_is_using_input_gen)
 			E_avail_tot = max(E_avail_tot - piping_hl_total*dt, 0.0);		//[J] 11/1/11 TN: Include hot and cold piping losses in available energy calculation
@@ -3805,12 +3817,12 @@ set_outputs_and_return:
 	double dni_costh = I_b*m_CosTh_ave;
 	double T_loop_outlet = m_TCS_T_htf_out[m_nSCA - 1] - 273.15;
 
-	double E_loop_accum_out = E_loop_accum * 3.6e-9;
-	double E_hdr_accum_out = E_hdr_accum * 3.6e-9;
+	double E_loop_accum_out = E_loop_accum / 3.6e-9;
+	double E_hdr_accum_out = E_hdr_accum / 3.6e-9;
 
 	double E_tot_accum = E_loop_accum_out + E_hdr_accum_out;
 
-	double E_field_out = E_field*3.6e-9;
+	double E_field_out = E_field / 3.6e-9;
 	//------------------------------------------------------------------
 
 	//Set outputs
@@ -3907,9 +3919,9 @@ void C_csp_trough_collector_receiver::converged()
 	m_operating_mode_converged = m_operating_mode;	//[-]
 
 	// Always reset the m_defocus control at the first call of a timestep
-	m_defocus_new = 1.0;	//[-]
-	m_defocus_old = 1.0;	//[-]
-	m_defocus = 1.0;		//[-]
+	//m_defocus_new = 1.0;	//[-]
+	//m_defocus_old = 1.0;	//[-]
+	//m_defocus = 1.0;		//[-]
 
 	m_W_dot_sca_tracking = 0.0;		//[MWe]
 
