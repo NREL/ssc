@@ -25,6 +25,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "tcstype.h"
 #include "sam_csp_util.h"
 #include "interconnect.h"
+#include "Toolbox.h"
 
 using namespace std;
 
@@ -1502,6 +1503,7 @@ void C_csp_trough_collector_receiver::loop_optical_eta_off()
 	m_q_i.assign(m_q_i.size(),0.0);		//[W/m] DNI * A_aper / L_sca
 	m_IAM.assign(m_IAM.size(),0.0);		//[-] Incidence angle modifiers
 	m_ColOptEff.fill(0.0);				//[-] tracking * geom * rho * dirt * error * IAM * row shadow * end loss * ftrack
+    m_EqOpteff = 0.;
 	m_EndGain.fill(0.0);				//[-] Light from different collector hitting receiver
 	m_EndLoss.fill(0.0);				//[-] Light missing receiver due to length + end gain
 	m_RowShadow.assign(m_RowShadow.size(),0.0);	//[-] Row-to-row shadowing losses
@@ -1713,6 +1715,13 @@ void C_csp_trough_collector_receiver::loop_optical_eta(const C_csp_weatherreader
 			m_IAM_ave = m_IAM_ave + m_IAM[CT] * m_L_actSCA[CT] / m_L_tot;
 			m_RowShadow_ave = m_RowShadow_ave + m_RowShadow[CT] * m_L_actSCA[CT] / m_L_tot;
 			m_EndLoss_ave = m_EndLoss_ave + m_EndLoss(CT, i)*m_L_actSCA[CT] / m_L_tot;
+
+            // Total equivalent optical efficiency
+            int HT = (int)m_SCAInfoArray(i, 0) - 1;    //[-] HCE type
+            for (int j = 0; j < m_nHCEVar; j++) {
+                m_EqOpteff += m_ColOptEff(CT, i)*m_Shadowing(HT, j)*m_Dirt_HCE(HT, j)*m_alpha_abs(HT, j)*m_Tau_envelope(HT, j)*
+                    (m_L_actSCA[CT] / m_L_tot)*m_HCE_FieldFrac(HT, j);
+            }
 		}
 
 		m_dni_costh = weather.m_beam * m_CosTh_ave;		//[W/m2]
@@ -3942,17 +3951,72 @@ void C_csp_trough_collector_receiver::write_output_intervals(double report_time_
 
 double C_csp_trough_collector_receiver::calculate_optical_efficiency(const C_csp_weatherreader::S_outputs &weather, const C_csp_solver_sim_info &sim)
 {
-	return std::numeric_limits<double>::quiet_NaN();
+    loop_optical_eta(weather, sim);
+	return m_EqOpteff;
 }
 
 double C_csp_trough_collector_receiver::calculate_thermal_efficiency_approx(const C_csp_weatherreader::S_outputs &weather, double q_incident /*MW*/)
 {
-	return std::numeric_limits<double>::quiet_NaN();
+    // q_incident is the power incident (absorbed by the absorber) on all the HCE receivers, calculated using the DNI and optical efficiency
+    
+    if (q_incident <= 0) return 0.;
+    
+    double Tamb = weather.m_tdry;                            // [C]
+    double HLWind = std::abs(weather.m_wspd);
+    double Insol_Beam_Normal = weather.m_beam;
+    double SfTo = m_T_loop_out_des - 273.15;                 // [C] (converted from [C] to [K] in init and now back to [C])
+    double SfTi = m_T_loop_in_des - 273.15;                  // [C] (converted from [C] in [K] in init and now back to [C])
+
+    // Borrowed from empirical model for 2008 Schott PTR70 (vacuum) receiver
+    double HCE_A0 = 4.05;
+    double HCE_A1 = 0.247;
+    double HCE_A2 = -0.00146;
+    double HCE_A3 = 5.65e-06;
+    double HCE_A4 = 7.62e-08;
+    double HCE_A5 = -1.7;
+    double HCE_A6 = 0.0125;
+    double PerfFac = 1;
+       
+    // Incidence angle
+    C_csp_solver_sim_info sim;
+    int doy = DateTime::CalculateDayOfYear(weather.m_year, weather.m_month, weather.m_day);      // day of year
+    sim.ms_ts.m_time_start = ((doy - 1) * 24 + weather.m_hour + weather.m_minute / 60.) * 3600.;
+    sim.ms_ts.m_step = 3600.;
+    sim.ms_ts.m_time = sim.ms_ts.m_time_start + sim.ms_ts.m_step;
+    loop_optical_eta(weather, sim);     // calculate m_costh;
+    double CosTh = m_costh;
+    double Theta = acos(CosTh);         //[rad]
+        
+    // Incidence angle modifier for Solargenix SGX-1 collector
+    double IamF0 = 1;
+    double IamF1 = 0.050599999725818634;
+    double IamF2 = -0.17630000412464142;
+    
+    double IAM;
+    if (CosTh == 0)
+        IAM = 0;
+    else
+        IAM = IamF0 + IamF1 * Theta / CosTh + IamF2 * Theta * Theta / CosTh;
+
+    double HLTerm1, HLTerm2, HLTerm3, HLTerm4;
+    double HL;
+    // 7.7.2016 twn: these temperatures should be in C, per Burkholder & Kutscher 2008
+    HLTerm1 = (HCE_A0 + HCE_A5 * pow(HLWind, 0.5))*(SfTo - SfTi);
+    HLTerm2 = (HCE_A1 + HCE_A6 * sqrt(HLWind))*((pow(SfTo, 2) - pow(SfTi, 2)) / 2.0 - Tamb * (SfTo - SfTi));
+    HLTerm3 = ((HCE_A2 + HCE_A4 * (Insol_Beam_Normal * CosTh * IAM)) / 3.0)*(pow(SfTo, 3) - pow(SfTi, 3));
+    HLTerm4 = (HCE_A3 / 4.0)*(pow(SfTo, 4) - pow(SfTi, 4));
+    HL = (HLTerm1 + HLTerm2 + HLTerm3 + HLTerm4) / (SfTo - SfTi);		//[W/m]
+
+    // Convert Receiver HL from W/m of receiver to W/m2 of collector aperture
+    double RefMirrAper = m_L_aperture[0];
+    double RecHL = std::max( PerfFac * HL / RefMirrAper, 0.);
+
+    return std::max(1. - RecHL * m_Ap_tot * 1.e-6 / q_incident, 0.);
 }
 
 double C_csp_trough_collector_receiver::get_collector_area()
 {
-	return std::numeric_limits<double>::quiet_NaN();
+    return m_Ap_tot;
 }
 
 // ------------------------------------------ supplemental methods -----------------------------------------------------------
