@@ -8,8 +8,8 @@
 //const char * SSCDIR = std::getenv("SSCDIR");
 //const char * SAMNTDIR = std::getenv("SAMNTDIR");
 
-char ndspt_dispatch_factors_path[256];
-char ndspt_helio_positions_path[256];
+char ndspt_dispatch_factors_path[512];
+char ndspt_helio_positions_path[512];
 
 
 int ndspt1 = sprintf(ndspt_dispatch_factors_path, "%s/test/input_cases/directsteam_data/dispatch_factors_ts.csv", std::getenv("SSCDIR"));
@@ -20,7 +20,7 @@ int ndspt2 = sprintf(ndspt_helio_positions_path, "%s/test/input_cases/directstea
 */
 void tcsdirect_steam_default(ssc_data_t &data) 
 {
-	char solar_resource_path_default[256];
+	char solar_resource_path_default[512];
 	int n1 = sprintf(solar_resource_path_default, "%s/test/input_cases/directsteam_data/daggett_ca_34.865371_-116.783023_psmv3_60_tmy.csv", std::getenv("SSCDIR"));
 	ssc_data_set_string(data, "solar_resource_file", solar_resource_path_default);
 
