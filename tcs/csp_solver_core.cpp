@@ -4840,7 +4840,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
             mc_cr_htf_state_in.m_temp + 273.15, mc_cr_out_solver.m_T_salt_hot + 273.15,
             mc_pc_htf_state_in.m_temp + 273.15, mc_pc_out_solver.m_T_htf_cold + 273.15,
             mc_cr_out_solver.m_is_recirculating);
-        if (W_dot_tes_pump < 0 || isnan(W_dot_tes_pump)){
+        if (W_dot_tes_pump < 0 || W_dot_tes_pump != W_dot_tes_pump){
             error_msg = "TES pumping power failed";
             throw(C_csp_exception(error_msg, "System-level parasitics"));
         }
