@@ -44,7 +44,7 @@ SSCEXPORT const char *ssc_build_info();
 typedef void* ssc_data_t;
 
 /** The numeric type used in the SSC API. All numeric values are stored in this format. SSC uses 32-bit floating point numbers at the library interface to minimize memory usage.  Calculations inside compute modules generally are performed with double-precision 64-bit floating point internally. */
-typedef float ssc_number_t;
+typedef double ssc_number_t;
 
 /** The boolean type used internally in SSC. Zero values represent false; non-zero represents true. */
 typedef int ssc_bool_t;

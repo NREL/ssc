@@ -297,7 +297,7 @@ public:
 		//set_store_all_parameters(true); // default is 'false' = only store TCS parameters that match the SSC_OUTPUT variables above
 	}
 
-	void exec( ) throw( general_error )
+	void exec( )
 	{
 		bool debug_mode = (__DEBUG__ == 1);  // When compiled in VS debug mode, this will use the trnsys weather file; otherwise, it will attempt to open the file with name that was passed in
 		

@@ -84,7 +84,7 @@ public:
 		add_var_info( _cm_vtab_annualoutput );
 	}
 
-	void exec( ) throw( general_error )
+	void exec( )
 	{
 
 		int nyears = as_integer("analysis_period");

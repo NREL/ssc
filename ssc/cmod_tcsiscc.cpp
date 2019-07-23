@@ -172,7 +172,7 @@ static var_info _cm_vtab_tcsiscc[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "bop_par_1",           "Balance of plant parasitic power fraction - linear coeff",        "none",        "",        "parasitics",     "*",                       "",                      "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "bop_par_2",           "Balance of plant parasitic power fraction - quadratic coeff",     "none",        "",        "parasitics",     "*",                       "",                      "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "fossil_output",       "Fossil-only cycle output at design",                              "MWe",         "",        "parasitics",     "*",                       "",                      "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "W_dot_solar_des",     "Solar contribution to cycle output at design"                     "MWe",         "",        "parasitics",     "*",                       "",                      "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "W_dot_solar_des",     "Solar contribution to cycle output at design",                    "MWe",         "",        "parasitics",     "*",                       "",                      "" },
 
 	// OUTPUTS
 		// weather
@@ -251,7 +251,7 @@ public:
         add_var_info(vtab_sf_adjustment_factors);
 	}
 
-	void exec( ) throw( general_error )
+	void exec( )
 	{
 		int weather = add_unit("weatherreader", "TCS weather reader");
 		int type_hel_field = add_unit("sam_mw_pt_heliostatfield");

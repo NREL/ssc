@@ -107,7 +107,13 @@
     <ClCompile Include="..\test\ssc_test\cmod_windpower_test2.cpp">
       <Filter>ssc_test</Filter>
     </ClCompile>
-    <ClCompile Include="..\test\ssc_test\computeModuleTest.cpp">
+    <ClCompile Include="..\test\ssc_test\cmod_mhk_tidal_test.cpp">
+      <Filter>ssc_test</Filter>
+    </ClCompile>
+    <ClCompile Include="..\test\ssc_test\cmod_mhk_wave_test.cpp">
+      <Filter>ssc_test</Filter>
+    </ClCompile>
+    <ClCompile Include="..\test\ssc_test\cmod_grid_test.cpp">
       <Filter>ssc_test</Filter>
     </ClCompile>
     <ClCompile Include="..\test\tcs_test\csp_solver_core_test.cpp">
@@ -119,6 +125,7 @@
     <ClCompile Include="..\test\ssc_test\cmod_tcsfresnel_molten_salt_test.cpp">
       <Filter>ssc_test</Filter>
     </ClCompile>
+    <ClCompile Include="..\test\ssc_test\computeModuleTest.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\test\input_cases\battery_common_data.h">
@@ -283,7 +290,25 @@
     <ClInclude Include="..\test\tcs_test\trough_physical_iph_common_data.h">
       <Filter>tcs_test</Filter>
     </ClInclude>
-    <ClInclude Include="..\test\ssc_test\cmod_tcstrough_empirical_test.h">
+    <ClInclude Include="..\test\input_cases\generic_common_data.h">
+      <Filter>input_cases</Filter>
+    </ClInclude>
+    <ClInclude Include="..\test\shared_test\lib_time_test.h">
+      <Filter>shared_test</Filter>
+    </ClInclude>
+    <ClInclude Include="..\test\input_cases\mhk\mhk_tidal_inputs.h">
+      <Filter>input_cases</Filter>
+    </ClInclude>
+    <ClInclude Include="..\test\input_cases\mhk\mhk_wave_inputs.h">
+      <Filter>input_cases</Filter>
+    </ClInclude>
+    <ClInclude Include="..\test\ssc_test\cmod_mhk_wave_test.h">
+      <Filter>ssc_test</Filter>
+    </ClInclude>
+    <ClInclude Include="..\test\ssc_test\cmod_mhk_tidal_test.h">
+      <Filter>ssc_test</Filter>
+    </ClInclude>
+    <ClInclude Include="..\test\ssc_test\cmod_grid_test.h">
       <Filter>ssc_test</Filter>
     </ClInclude>
     <ClInclude Include="..\test\tcs_test\tcstrough_empirical_cases.h">
@@ -301,6 +326,7 @@
     <ClInclude Include="..\test\ssc_test\cmod_tcsfresnel_molten_salt_test.h">
       <Filter>ssc_test</Filter>
     </ClInclude>
+    <ClInclude Include="..\test\ssc_test\cmod_tcstrough_empirical_test.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="input_cases">

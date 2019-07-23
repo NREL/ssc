@@ -43,7 +43,6 @@ TEST_F(CMPvsamv1PowerIntegration, DefaultLifetimeNoFinancialModel) {
 	}
 
 	ssc_data_set_array(data, "dc_degradation", (ssc_number_t*)dc_degradation, 25);
-	ssc_data_set_array(data, "ac_degradation", (ssc_number_t*)dc_degradation, 25);
 
 	int pvsam_errors = modify_ssc_data_and_run_module(data, "pvsamv1", pairs); 
 
@@ -389,7 +388,10 @@ TEST_F(CMPvsamv1PowerIntegration, NoFinancialModelSystemDesign)
 TEST_F(CMPvsamv1PowerIntegration, NoFinancialModelShading)
 {
 	// 0: No Shading, 1: 3D Shading, 2: 3D shading with self shading (non-linear), 3: Snow
-	std::vector<double> annual_energy_expected = { 12911, 10607, 10579, 10377};
+// PR 280	std::vector<double> annual_energy_expected = { 12911, 10607, 10579, 10377 };
+	// 2 - 3D shading with self-shading reduced from 10579 to 10529
+	// 3 - shading with snow reduced from 10377 to 10328
+	std::vector<double> annual_energy_expected = { 12911, 10607, 10529, 10328 };
 	std::map<std::string, double> pairs;
 
 	// 2 subarrays, one pointing east, one west

@@ -42,7 +42,9 @@ TEST_F(CMPvwattsV5Integration, DefaultNoFinancialModel){
 /// PVWattsV5 using different technology input options
 TEST_F(CMPvwattsV5Integration, DifferentTechnologyInputs)
 {
-	std::vector<double> annual_energy_expected = { 6909.79, 7123.32, 7336.478, 6909.79, 6804.376, 8711.946, 8727.704, 9690.735 };
+//	std::vector<double> annual_energy_expected = { 6909.79, 7123.32, 7336.478, 6909.79, 6804.376, 8711.946, 8727.704, 9690.735 };
+	// single axis tracking reduction due to pull request 280
+	std::vector<double> annual_energy_expected = { 6909.79, 7123.32, 7336.478, 6909.79, 6804.376, 8601.011, 8727.704, 9690.735 };
 	std::map<std::string, double> pairs;
 	size_t count = 0;
 

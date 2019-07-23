@@ -84,7 +84,7 @@ public:
 		add_var_info( _cm_vtab_snowmodel );
 	}
 
-	void exec( ) throw( general_error )
+	void exec( )
 	{
 		//int N = 0;
 		size_t num_steps;
