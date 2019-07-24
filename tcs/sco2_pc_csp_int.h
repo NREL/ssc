@@ -400,7 +400,7 @@ public:
 
     int optimize_N_mc_and_N_rc__max_eta(C_sco2_phx_air_cooler::S_od_par od_par,
         bool is_PHX_dP_input, double PHX_f_dP /*-*/,
-        int off_design_strategy,
+        int off_design_strategy, bool is_optimize_N_rc /*-*/,
         double & eta_max /*-*/, double & f_N_mc_opt /*-*/, 
         double & f_N_rc_opt /*-*/, double & W_dot_at_eta_max /*kWe*/,
         double od_opt_tol = 1.E-4);
@@ -410,7 +410,7 @@ public:
         bool is_PHX_dP_input, double PHX_f_dP /*-*/,
         int off_design_strategy,
         double & eta_max /*-*/, double & f_N_rc_opt, double & W_dot_at_eta_max /*kWe*/,
-        double od_opt_tol = 1.E-4);
+        double f_N_rc_guess = -1, double od_opt_tol = 1.E-4);
 
 	int off_design_fix_P_mc_in(S_od_par od_par, double P_mc_in /*MPa*/, 
         bool is_rc_N_od_at_design, double rc_N_od_f_des /*-*/,

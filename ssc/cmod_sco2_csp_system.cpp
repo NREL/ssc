@@ -34,7 +34,7 @@ static var_info _cm_vtab_sco2_csp_system[] = {
 	/*   VARTYPE   DATATYPE         NAME               LABEL                                                    UNITS     META  GROUP REQUIRED_IF CONSTRAINTS     UI_HINTS*/
 	// ** Off-design Inputs **
     { SSC_INPUT,  SSC_NUMBER,  "od_T_t_in_mode",       "0: model solves co2/HTF PHX od model to calculate turbine inlet temp, 1: model sets turbine inlet temp to HTF hot temp", "", "", "", "?=0", "", ""},  // default to solving PHX
-    { SSC_INPUT,  SSC_MATRIX,  "od_cases",             "Columns: T_htf_C, m_dot_htf_ND, T_amb_C, f_N_rc (=1 use design, <0, frac_des = abs(input), f_N_mc (=1 use design, <0, frac_des = abs(input), PHX_f_dP (=1 use design, <0 = abs(input), Rows: cases",   "",           "",    "",      "",      "",       "" },
+    { SSC_INPUT,  SSC_MATRIX,  "od_cases",             "Columns: T_htf_C, m_dot_htf_ND, T_amb_C, f_N_rc (=1 use design, =0 optimize, <0, frac_des = abs(input), f_N_mc (=1 use design, =0 optimize, <0, frac_des = abs(input), PHX_f_dP (=1 use design, <0 = abs(input), Rows: cases", "", "", "", "", "", "" },
 	{ SSC_INPUT,  SSC_ARRAY,   "od_P_mc_in_sweep",     "Columns: T_htf_C, m_dot_htf_ND, T_amb_C, f_N_rc (=1 use design, <0, frac_des = abs(input), f_N_mc (=1 use design, <0, frac_des = abs(input), PHX_f_dP (=1 use design, <0 = abs(input)", "", "", "", "",  "", "" },
 	{ SSC_INPUT,  SSC_MATRIX,  "od_set_control",       "Columns: T_htf_C, m_dot_htf_ND, T_amb_C, P_LP_in_MPa, f_N_rc (=1 use design, <0, frac_des = abs(input), f_N_mc (=1 use design, <0, frac_des = abs(input), PHX_f_dP (=1 use design, <0 = abs(input), Rows: cases", "", "", "", "", "", "" },
 	{ SSC_INPUT,  SSC_NUMBER,  "is_gen_od_polynomials","Generate off-design polynomials for Generic CSP models? 1 = Yes, 0 = No", "", "", "",  "?=0",     "",       "" },
@@ -464,19 +464,29 @@ public:
 					int od_strategy = C_sco2_phx_air_cooler::E_TARGET_POWER_ETA_MAX;
                         // RC shaft speed control
                     bool is_rc_N_od_at_design = true;
+                    bool is_optimize_rc_N = false;
                     double rc_N_od_f_des = 1.0;
                     if (od_cases(n_run, 3) < 0.0)
                     {
                         is_rc_N_od_at_design = false;
                         rc_N_od_f_des = fabs(od_cases(n_run, 3));
                     }
+                    else if (od_cases(n_run, 3) == 0.0)
+                    {
+                        is_optimize_rc_N = true;
+                    }
                         // MC shaft speed control
                     bool is_mc_N_od_at_design = true;
+                    bool is_optimize_mc_N = false;
                     double mc_N_od_f_des = 1.0;
                     if (od_cases(n_run, 4) < 0.0)
                     {
                         is_mc_N_od_at_design = false;
                         mc_N_od_f_des = fabs(od_cases(n_run, 4));
+                    }
+                    else if (od_cases(n_run, 4) == 0.0)
+                    {
+                        is_optimize_mc_N = true;
                     }
                         // PHX pressure drop options
                     bool is_PHX_dP_input = false;
@@ -487,15 +497,52 @@ public:
                         PHX_f_dP_od = fabs(od_cases(n_run, 5));
                     }
 
-                    double eta_max, f_N_rc_opt, W_dot_at_eta_max;
+                    double eta_max, f_N_mc_opt, f_N_rc_opt, W_dot_at_eta_max;
 
-                    if (cycle_config == 1 && is_rc)
+                    std::string od_sim_log = util::format("Beginning off design run %d of %d, the "
+                                            "HTF temperature is %lg [C] "
+                                            "the HTF mass flow rate is %lg [-] "
+                                            "the ambient temperature is %lg [C] "
+                                            "the relative RC shaft speed is %lg [-] "
+                                            "the relative MC shaft speed is %lg [-] "
+                                            "the input PHX pressure drop is %lg [-] ",
+                                            n_run + 1, n_od_runs,
+                                            s_sco2_od_par.m_T_htf_hot - 273.15, p_m_dot_htf_fracs[n_run], s_sco2_od_par.m_T_amb - 273.15,
+                                            rc_N_od_f_des, mc_N_od_f_des, PHX_f_dP_od);
+                    log(od_sim_log);
+
+                    if (cycle_config == 1)
                     {
-                        off_design_code = c_sco2_cycle.optimize_N_rc__max_eta(s_sco2_od_par,
-                            true, 1.0,
-                            is_PHX_dP_input, PHX_f_dP_od,
-                            od_strategy,
-                            eta_max, f_N_rc_opt, W_dot_at_eta_max);                                                
+                        if (is_optimize_mc_N && is_optimize_rc_N)
+                        {
+                            off_design_code = c_sco2_cycle.optimize_N_mc_and_N_rc__max_eta(s_sco2_od_par,
+                                is_PHX_dP_input, PHX_f_dP_od,
+                                od_strategy, is_optimize_rc_N,
+                                eta_max, f_N_mc_opt, f_N_rc_opt, W_dot_at_eta_max);
+                        }
+                        else if(is_optimize_rc_N && is_rc)
+                        {
+                            off_design_code = c_sco2_cycle.optimize_N_rc__max_eta(s_sco2_od_par,
+                                true, 1.0,
+                                is_PHX_dP_input, PHX_f_dP_od,
+                                od_strategy,
+                                eta_max, f_N_rc_opt, W_dot_at_eta_max);
+                        }
+                        else if(is_optimize_mc_N)
+                        {
+                            off_design_code = c_sco2_cycle.optimize_N_mc_and_N_rc__max_eta(s_sco2_od_par,
+                                is_PHX_dP_input, PHX_f_dP_od,
+                                od_strategy, is_optimize_rc_N,
+                                eta_max, f_N_mc_opt, f_N_rc_opt, W_dot_at_eta_max);
+                        }
+                        else
+                        {
+                            off_design_code = c_sco2_cycle.optimize_off_design(s_sco2_od_par,
+                                is_rc_N_od_at_design, rc_N_od_f_des,
+                                is_mc_N_od_at_design, mc_N_od_f_des,
+                                is_PHX_dP_input, PHX_f_dP_od,
+                                od_strategy);
+                        }
                     }
                     else
                     {
