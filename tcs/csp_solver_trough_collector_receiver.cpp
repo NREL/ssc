@@ -1737,7 +1737,8 @@ void C_csp_trough_collector_receiver::loop_optical_eta(const C_csp_weatherreader
 	}
 }
 
-void C_csp_trough_collector_receiver::field_pressure_drop(double T_db)
+double C_csp_trough_collector_receiver::field_pressure_drop(double T_db, double m_dot_field, double P_field_in,
+    const std::vector<double> &T_in_SCA, const std::vector<double> &T_out_SCA)
 {
     std::vector<double> DP_intc(m_nSCA + 3, 0.);
     std::vector<double> DP_tube(m_nSCA, 0.);
@@ -1746,12 +1747,12 @@ void C_csp_trough_collector_receiver::field_pressure_drop(double T_db)
     double m_dot_hdr_in, m_dot_hdr, m_dot_temp;
     double rho_hdr_cold;
 
-    double m_dot_htf = m_m_dot_htf_tot / (double)m_nLoops;
-    double T_loop_in = m_T_htf_c_rec_in_t_int_fullts;
-    double T_loop_out = m_T_htf_h_rec_out_t_int_fullts;
+    double m_dot_htf = m_dot_field / (double)m_nLoops;
+    double T_loop_in = T_in_SCA[0];
+    double T_loop_out = T_out_SCA[m_nSCA - 1];
     
     //------Inlet and Outlet
-    inlet_state = m_interconnects[0].State(m_dot_htf * 2, T_loop_in, T_db, m_P_field_in);
+    inlet_state = m_interconnects[0].State(m_dot_htf * 2, T_loop_in, T_db, P_field_in);
     outlet_state = m_interconnects[m_interconnects.size() - 1].State(m_dot_htf * 2, T_loop_out, T_db, 1.e5);  // assumption for press.
     DP_intc[0] = inlet_state.pressure_drop;
     DP_intc[m_interconnects.size() - 1] = outlet_state.pressure_drop;
@@ -1764,8 +1765,8 @@ void C_csp_trough_collector_receiver::field_pressure_drop(double T_db)
             int CT = (int)m_SCAInfoArray(i, 1) - 1;    //Collector type    
             int HT = (int)m_SCAInfoArray(i, 0) - 1;    //HCE type
 
-            double T_htf_ave = (m_T_htf_in_t_int[i] + m_T_htf_out_t_int[i]) / 2.;
-            DP_tube[i] = DP_tube[i] + PressureDrop(m_dot_htf, T_htf_ave, m_P_field_in - i * m_P_field_in / m_nSCA, m_D_h(HT, j), (m_Rough(HT, j)*m_D_h(HT, j)),
+            double T_htf_ave = (T_in_SCA[i] + T_out_SCA[i]) / 2.;
+            DP_tube[i] = DP_tube[i] + PressureDrop(m_dot_htf, T_htf_ave, P_field_in - i * P_field_in / m_nSCA, m_D_h(HT, j), (m_Rough(HT, j)*m_D_h(HT, j)),
                 m_L_SCA[CT], 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)*m_HCE_FieldFrac(HT, j);
 
         }
@@ -1776,7 +1777,7 @@ void C_csp_trough_collector_receiver::field_pressure_drop(double T_db)
     DP_intc[1] = intc_state.pressure_drop;  // just before first SCA
     for (int i = 2; i < m_interconnects.size() - 1; i++)
     {
-        intc_state = m_interconnects[i].State(m_dot_htf, m_T_htf_out_t_int[i - 2], T_db, intc_state.pressure_out - DP_tube[i - 2]);
+        intc_state = m_interconnects[i].State(m_dot_htf, T_out_SCA[i - 2], T_db, intc_state.pressure_out - DP_tube[i - 2]);
         DP_intc[i] = intc_state.pressure_drop;
     }
 
@@ -1791,10 +1792,8 @@ void C_csp_trough_collector_receiver::field_pressure_drop(double T_db)
     m_DP_loop[loop_i] = DP_intc[intc_i];  // outlet
 
 
-    if (m_accept_loc == 1)
-        m_m_dot_htf_tot = m_dot_htf * float(m_nLoops);
-    else
-        m_m_dot_htf_tot = m_dot_htf;
+    if (m_accept_loc != 1)
+        m_dot_field /= (double)m_nLoops;
 
 
     if (m_accept_loc == 1)
@@ -1803,11 +1802,11 @@ void C_csp_trough_collector_receiver::field_pressure_drop(double T_db)
 
         if (m_nfsec > 2)  //mjw 5.4.11 Correct the mass flow for situations where nfsec/2==odd
         {
-            m_dot_run_in = m_m_dot_htf_tot / 2.0 * (1. - float(m_nfsec % 4) / float(m_nfsec));
+            m_dot_run_in = m_dot_field / 2.0 * (1. - float(m_nfsec % 4) / float(m_nfsec));
         }
         else
         {
-            m_dot_run_in = m_m_dot_htf_tot / 2.0;
+            m_dot_run_in = m_dot_field / 2.0;
         }
 
         double x3;
@@ -1818,17 +1817,17 @@ void C_csp_trough_collector_receiver::field_pressure_drop(double T_db)
         for (int i = 0; i < m_nrunsec; i++)
         {
             (i < m_nrunsec - 1 ? x3 = 1.0 : x3 = 0.0);  // contractions/expansions
-            m_DP_rnr[i] = PressureDrop(m_dot_temp, T_loop_in, m_P_field_in, m_D_runner[i], m_HDR_rough,
+            m_DP_rnr[i] = PressureDrop(m_dot_temp, T_loop_in, P_field_in, m_D_runner[i], m_HDR_rough,
                 m_L_runner[i], 0.0, x3, 0.0, 0.0, m_N_rnr_xpans[i] * elbows_per_xpan, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0);
             m_DP_rnr[2 * m_nrunsec - i - 1] = PressureDrop(m_dot_temp, T_loop_out, 1.e5, m_D_runner[2 * m_nrunsec - i - 1], m_HDR_rough,
                 m_L_runner[2 * m_nrunsec - i - 1], x3, 0.0, 0.0, 0.0, m_N_rnr_xpans[2 * m_nrunsec - i - 1] * elbows_per_xpan, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0);
 
             if (i > 1)
-                m_dot_temp = fmax(m_dot_temp - 2.*m_m_dot_htf_tot / float(m_nfsec), 0.0);
+                m_dot_temp = fmax(m_dot_temp - 2.*m_dot_field / float(m_nfsec), 0.0);
         }
 
         //Calculate pressure drop in cold header
-        m_dot_hdr_in = m_m_dot_htf_tot / float(m_nfsec);
+        m_dot_hdr_in = m_dot_field / float(m_nfsec);
         m_dot_hdr = m_dot_hdr_in;
         double x2 = 0.0;
         for (int i = 0; i < m_nhdrsec; i++)
@@ -1841,7 +1840,7 @@ void C_csp_trough_collector_receiver::field_pressure_drop(double T_db)
                     x2 = 1.;
             }
 
-            m_DP_hdr[i] = PressureDrop(m_dot_hdr, T_loop_in, m_P_field_in, m_D_hdr[i], m_HDR_rough,
+            m_DP_hdr[i] = PressureDrop(m_dot_hdr, T_loop_in, P_field_in, m_D_hdr[i], m_HDR_rough,
                 m_L_hdr[i], 0.0, x2, 0.0, 0.0, m_N_hdr_xpans[i] * 4, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
             //if(ErrorFound()) return 1
             //Siphon off header mass flow rate at each loop.  Multiply by 2 because there are 2 loops per hdr section
@@ -1901,8 +1900,8 @@ void C_csp_trough_collector_receiver::field_pressure_drop(double T_db)
         }
 
         // The total pumping power consumption
-        rho_hdr_cold = m_htfProps.dens(m_T_sys_c_t_int_fullts, m_P_field_in);
-        m_W_dot_pump = m_dP_total * m_m_dot_htf_tot / (rho_hdr_cold*m_eta_pump) / 1.e6;  //[MW]
+        rho_hdr_cold = m_htfProps.dens((T_in_SCA[0] + T_out_SCA[m_nSCA - 1]) / 2, P_field_in);
+        m_W_dot_pump = m_dP_total * m_dot_field / (rho_hdr_cold*m_eta_pump) / 1.e6;  //[MW]
 
         ////The parasitic power consumed by electronics and SCA drives
         //if (m_EqOpteff > 0.0)
@@ -1940,6 +1939,7 @@ void C_csp_trough_collector_receiver::field_pressure_drop(double T_db)
     }
 
     m_dP_total *= 1.E-5;		//[bar], convert from Pa
+    return m_dP_total;
 }
 
 void C_csp_trough_collector_receiver::set_output_value()
@@ -2113,7 +2113,7 @@ void C_csp_trough_collector_receiver::off(const C_csp_weatherreader::S_outputs &
 	//	m_E_dot_HR_cold_fullts - m_E_dot_HR_hot_fullts - m_q_dot_htf_to_sink_fullts;	//[MWt]
 
 	// Solve for pressure drop and pumping power
-	field_pressure_drop(weather.m_tdry);
+    m_dP_total = field_pressure_drop(weather.m_tdry, this->m_m_dot_htf_tot, this->m_P_field_in, this->m_T_htf_in_t_int, this->m_T_htf_out_t_int);
 
 	// Are any of these required by the solver for system-level iteration?
 	cr_out_solver.m_q_startup = 0.0;						//[MWt-hr] Receiver thermal output used to warm up the receiver
@@ -2285,7 +2285,7 @@ void C_csp_trough_collector_receiver::startup(const C_csp_weatherreader::S_outpu
 	}
 
 	// Solve for pressure drop and pumping power
-	field_pressure_drop(weather.m_tdry);
+    m_dP_total = field_pressure_drop(weather.m_tdry, this->m_m_dot_htf_tot, this->m_P_field_in, this->m_T_htf_in_t_int, this->m_T_htf_out_t_int);
 
 	// These outputs need some more thought
 		// For now, just set this > 0.0 so that the controller knows that startup was successful
@@ -2547,7 +2547,7 @@ void C_csp_trough_collector_receiver::on(const C_csp_weatherreader::S_outputs &w
 			m_E_dot_HR_cold_fullts - m_E_dot_HR_hot_fullts - m_q_dot_htf_to_sink_fullts;	//[MWt]
 
 		// Solve for pressure drop and pumping power
-		field_pressure_drop(weather.m_tdry);
+        m_dP_total = field_pressure_drop(weather.m_tdry, this->m_m_dot_htf_tot, this->m_P_field_in, this->m_T_htf_in_t_int, this->m_T_htf_out_t_int);
 
 		// Set solver outputs & return
 		// Receiver is already on, so the controller is not looking for this value

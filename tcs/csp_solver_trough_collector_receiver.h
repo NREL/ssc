@@ -295,7 +295,8 @@ private:
 					double & T_cold_in /*K*/, double m_dot_loop /*kg/s*/, 
 					const C_csp_solver_sim_info &sim_info, double & Q_fp /*MJ*/);
 
-	void field_pressure_drop(double T_db);
+	double field_pressure_drop(double T_db, double m_dot_field, double P_in_field,
+        const std::vector<double> &T_in_SCA, const std::vector<double> &T_out_SCA);
 
 	void set_output_value();
 
