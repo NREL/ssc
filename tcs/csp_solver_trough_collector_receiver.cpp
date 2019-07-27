@@ -801,29 +801,50 @@ int C_csp_trough_collector_receiver::get_operating_state()
 
 double C_csp_trough_collector_receiver::get_startup_time()
 {
-	return std::numeric_limits<double>::quiet_NaN();
+    // Note: C_csp_trough_collector_receiver::startup() is called after this function
+    double rec_su_delay = 0.2;                      // hr
+    return rec_su_delay * 3600.;                    // sec
 }
 double C_csp_trough_collector_receiver::get_startup_energy()
 {
-	return std::numeric_limits<double>::quiet_NaN();
+    // Note: C_csp_trough_collector_receiver::startup() is called after this function
+    double rec_qf_delay = 0.25;                     // [-] fraction of rated thermal power
+    return rec_qf_delay * m_q_design * 1.e-6;       // MWh
 }
 double C_csp_trough_collector_receiver::get_pumping_parasitic_coef()
 {
-	return std::numeric_limits<double>::quiet_NaN();
+    double T_amb_des = 42. + 273.15;
+    double T_avg = (m_T_loop_in_des + m_T_loop_out_des) / 2.;
+    double P_field_in = m_P_rnr_dsn[1];
+    double dT_avg_SCA = (m_T_loop_out_des - m_T_loop_in_des) / m_nSCA;
+    std::vector<double> T_in_SCA, T_out_SCA;
+
+    for (size_t i = 0; i < m_nSCA; i++) {
+        T_in_SCA.push_back(m_T_loop_in_des + dT_avg_SCA * i);
+        T_out_SCA.push_back(m_T_loop_in_des + dT_avg_SCA * (i + 1));
+    }
+
+    double dP_field = field_pressure_drop(T_amb_des, m_m_dot_design, P_field_in, T_in_SCA, T_out_SCA);
+
+    return m_W_dot_pump / (m_q_design * 1.e-6);
+
 }
 double C_csp_trough_collector_receiver::get_min_power_delivery()
 {
-	return std::numeric_limits<double>::quiet_NaN();
+    double c_htf_ave = m_htfProps.Cp((m_T_startup + m_T_loop_in_des) / 2.0)*1000.;    //[J/kg-K] Specific heat
+    return m_m_dot_htfmin * m_nLoops * c_htf_ave * (m_T_startup - m_T_loop_in_des) * 1.e-6;     // [MWt]
 }
 
 double C_csp_trough_collector_receiver::get_tracking_power()
 {
-	return std::numeric_limits<double>::quiet_NaN();	//MWe
+    return m_SCA_drives_elec * 1.e-6 * m_nSCA * m_nLoops;     //MWe
 }
 
 double C_csp_trough_collector_receiver::get_col_startup_power()
 {
-	return std::numeric_limits<double>::quiet_NaN();	//MWe-hr
+    // Note: C_csp_trough_collector_receiver::startup() is called after this function
+    double time_required_su = 1.;       // hr
+    return m_W_dot_sca_tracking_nom * time_required_su;     //MWe-hr
 }
 
 
