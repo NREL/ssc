@@ -1408,7 +1408,8 @@ void dispatch_automatic_front_of_meter_t::update_dispatch(size_t hour_of_year, s
 			if (m_batteryPower->canPVCharge) {
 				std::vector<double> revenueToPVChargeForecast;
 				for (size_t i = idx_year1; i < idx_year1 + idx_lookahead; i++) {
-					bool system_on = _P_pv_dc[i] > 0 ? 1 : 0;
+					// when considering grid charging, require PV output to exceed battery input capacity before accepting as a better option
+					bool system_on = _P_pv_dc[i] >= m_batteryPower->powerBatteryChargeMax ? 1 : 0;
 					revenueToPVChargeForecast.push_back(system_on * (*max_ppa_cost * m_etaDischarge - _ppa_price_rt_series[i] / m_etaPVCharge - m_cycleCost));
 				}
 				revenueToPVChargeMax = *std::max_element(std::begin(revenueToPVChargeForecast), std::end(revenueToPVChargeForecast));
