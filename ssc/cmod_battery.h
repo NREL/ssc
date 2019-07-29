@@ -193,10 +193,11 @@ struct batt_variables
 	std::vector<double> ppa_price_series_dollar_per_kwh;
 
 	/*! Energy rates */
-	bool ec_rate_defined;
+	bool ec_rate_defined, ec_use_realtime;
 	util::matrix_t<size_t> ec_weekday_schedule;
 	util::matrix_t<size_t> ec_weekend_schedule;
 	util::matrix_t<double> ec_tou_matrix;
+	std::vector<double> ec_realtime_buy;
 
 	/* Battery replacement options */
 	int batt_replacement_option;

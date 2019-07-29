@@ -3190,6 +3190,9 @@ bool hourly_energy_calculation::calculate(compute_module *cm)
 		cm->is_assigned("grid_to_batt") &&
 		cm->is_assigned("en_electricity_rates") && cm->as_number("en_electricity_rates") == 1)
 	{  
+		ssc_number_t *ppa_gen = cm->allocate("ppa_gen", nrec_gen);
+		 
+
 		// add grid_batt to gen for ppa revenue, since it is in 'gen' as a negative generation source, but should be valued at a different rate.
 		ssc_number_t *pgrid_batt;
 		size_t nrec_grid_batt = 0;
@@ -3199,8 +3202,11 @@ bool hourly_energy_calculation::calculate(compute_module *cm)
 			throw compute_module::exec_error("hourly_energy_calculations", util::format("number of grid to battery records (%d) must be equal to number of gen records (%d)", (int)nrec_grid_batt, (int)nrec_gen));
 			return false;
 		}
-		for (i = 0; i < nrec_gen; i++)
+		// we do this so that grid energy purchased through the electricity rate is not inadvertently double counted as lost revenue
+		for (i = 0; i < nrec_gen; i++) {
 			pgen[i] += pgrid_batt[i];
+			ppa_gen[i] = pgen[i];
+		}
 	}
 
 

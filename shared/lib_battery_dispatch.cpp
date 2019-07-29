@@ -149,6 +149,16 @@ bool dispatch_t::check_constraints(double &I, size_t count)
 		else
 			I += (m_batteryPower->powerGridToBattery / fabs(m_batteryPower->powerBatteryAC)) *fabs(I);
 	}
+	// Don't allow grid charging if producing PV
+	else if (m_batteryPower->connectionMode == dispatch_t::DC_CONNECTED &&
+		m_batteryPower->powerGridToBattery &&
+		(m_batteryPower->powerPVToGrid > 0 || m_batteryPower->powerPVToLoad > 0))
+	{
+		if (fabs(m_batteryPower->powerBatteryAC) < tolerance)
+			I += (m_batteryPower->powerGridToBattery * util::kilowatt_to_watt / _Battery->battery_voltage());
+		else
+			I += (m_batteryPower->powerGridToBattery / fabs(m_batteryPower->powerBatteryAC)) *fabs(I);
+	}
 	// Don't allow battery to discharge if it gets wasted due to inverter efficiency limitations
 	// Typically, this would be due to low power flow, so just cut off battery.
 	else if (m_batteryPower->connectionMode == dispatch_t::DC_CONNECTED && m_batteryPower->sharedInverter->efficiencyAC < m_batteryPower->inverterEfficiencyCutoff)
@@ -1369,7 +1379,7 @@ void dispatch_automatic_front_of_meter_t::update_dispatch(size_t hour_of_year, s
 				for (size_t i = hour_of_year; i < hour_of_year + _look_ahead_hours; i++) 
 				{
 					for (size_t s = 0; s < _steps_per_hour; s++) {
-						usage_cost_forecast.push_back(m_utilityRateCalculator->getEnergyRate(hour_of_year));
+						usage_cost_forecast.push_back(m_utilityRateCalculator->getEnergyRate(i % 8760));
 					}
 				}
 			}

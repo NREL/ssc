@@ -313,12 +313,11 @@ void BatteryPowerFlow::calculateDCConnected()
 		
 		// Assume inverter only "sees" the net flow in one direction, though practically
 		// there should never be case where P_pv_dc - P_pv_to_batt_dc > 0 and P_grid_to_batt_dc > 0 simultaneously
-		double P_gen_dc_inverter = P_pv_dc - P_pv_to_batt_dc - P_grid_to_batt_dc;
+		double P_gen_dc_inverter = P_pv_to_inverter_dc - P_grid_to_batt_dc;
 
 		// convert the DC power to AC
 		m_BatteryPower->sharedInverter->calculateACPower(P_gen_dc_inverter, voltage, 0.0);
 		efficiencyDCAC = m_BatteryPower->sharedInverter->efficiencyAC * 0.01;
-		 
 
 		// Restrict low efficiency so don't get infinites
 		if (efficiencyDCAC <= 0.05 && (P_grid_to_batt_dc > 0 || P_pv_to_inverter_dc > 0)) {
