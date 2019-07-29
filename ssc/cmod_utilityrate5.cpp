@@ -68,9 +68,11 @@ static var_info vtab_utility_rate5[] = {
 	{ SSC_INPUT, SSC_NUMBER, "ur_annual_min_charge", "Annual minimum charge", "$", "", "", "?=0.0", "", "" },
 
 
-	// time step sell rates
+	// time step rates
 	{ SSC_INPUT, SSC_NUMBER, "ur_en_ts_sell_rate", "Enable time step sell rates", "0/1", "", "", "?=0", "BOOLEAN", "" },
 	{ SSC_INPUT, SSC_ARRAY, "ur_ts_sell_rate", "Time step sell rates", "0/1", "", "", "", "", "" },
+	{ SSC_INPUT, SSC_ARRAY, "ur_ts_buy_rate", "Time step buy rates", "0/1", "", "", "", "", "" },
+
 
 
 
@@ -383,8 +385,10 @@ private:
 	std::vector<int> m_dc_tou_sched;
 	std::vector<ur_month> m_month;
 	std::vector<int> m_ec_periods; // period number
-	// time step sell rate
+
+	// time step rates
 	std::vector<ssc_number_t> m_ec_ts_sell_rate;
+	std::vector<ssc_number_t> m_ec_ts_buy_rate;
 
 	// track initial values - may change based on units
 	std::vector<std::vector<int> >  m_ec_periods_tiers_init; // tier numbers
@@ -1372,6 +1376,7 @@ public:
 		}
 
 		m_ec_ts_sell_rate.clear();
+		m_ec_ts_buy_rate.clear();
 
 		bool ec_enabled = true; // per 2/25/16 meeting
 		bool dc_enabled = as_boolean("ur_dc_enable");
@@ -1386,8 +1391,9 @@ public:
 			else
 			{ // hourly or sub hourly loads for single year
 				size_t cnt;
-				ssc_number_t * ts_sr;
+				ssc_number_t * ts_sr, *ts_br;
 				ts_sr = as_array("ur_ts_sell_rate", &cnt);
+				ts_br = as_array("ur_ts_buy_rate", &cnt);
 				size_t ts_step_per_hour = cnt / 8760;
 				if (ts_step_per_hour < 1 || ts_step_per_hour > 60 || ts_step_per_hour * 8760 != cnt)
 					throw exec_error("utilityrate5", util::format("invalid number of sell rate records (%d): must be an integer multiple of 8760", (int)cnt));
@@ -1396,13 +1402,14 @@ public:
 
 				// assign timestep values for utility rate calculations
 				size_t idx = 0;
-				ssc_number_t sr = 0;
+				ssc_number_t sr, br;
+				sr = br = 0;
 				size_t step_per_hour = m_num_rec_yearly / 8760;
-				//time step sell rate - fill out to number of generation records per year
+				//time step rates - fill out to number of generation records per year
 				// handle cases 
-				// 1. if no time step sell rate  
-				// 2. if time step sell rate  has 8760 and gen has more records
-				// 3. if number records same for time step sell rate  and gen
+				// 1. if no time step rate  s
+				// 2. if time step rate  has 8760 and gen has more records
+				// 3. if number records same for time step rate  and gen
 				idx = 0;
 				for (i = 0; i < 8760; i++)
 				{
@@ -1410,7 +1417,9 @@ public:
 					{
 //						size_t ndx = i*step_per_hour + ii;
 						sr = (idx < cnt) ? ts_sr[idx] : 0;
+						br = (idx < cnt) ? ts_br[idx] : 0;
 						m_ec_ts_sell_rate.push_back(sr);
+						m_ec_ts_buy_rate.push_back(br);
 						if (ii < ts_step_per_hour) idx++;
 					}
 				}
@@ -2966,6 +2975,11 @@ public:
 									tier = (int)m_month[m].ec_tou_ub.ncols() - 1;
 								double tier_energy = energy_deficit;
 								double tier_charge = tier_energy * m_month[m].ec_tou_br.at(row, tier) * rate_esc;
+
+								// time step buy rates
+								if (c < m_ec_ts_buy_rate.size())
+									tier_charge = m_ec_ts_buy_rate[c] * tier_energy;
+
 								charge_amt = tier_charge;
 								m_month[m].ec_energy_use.at(row, tier) += (ssc_number_t)tier_energy;
 								m_month[m].ec_charge.at(row, tier) += (ssc_number_t)tier_charge;
