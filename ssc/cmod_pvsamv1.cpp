@@ -2091,7 +2091,10 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 				{
 					//current index of the lifetime daily AC losses is the number of years that have passed (iyear, because it is 0-indexed) * days in a year + the number of complete days that have passed
 					int ac_loss_index = (int)iyear * 365 + (int)floor(hour / 24); //in units of days
-					if (iyear == 0) annual_ac_lifetime_loss += PVSystem->p_systemACPower[idx] * (PVSystem->p_acLifetimeLosses[ac_loss_index] / 100) * util::watt_to_kilowatt * ts_hour; //this loss is still in percent, only keep track of it for year 0, convert from power W to energy kWh
+					if (iyear == 0) {
+						// this loss is still in percent, only keep track of it for year 0, convert from power W to energy kWh
+						annual_ac_lifetime_loss += PVSystem->p_systemACPower[idx] * (PVSystem->p_acLifetimeLosses[ac_loss_index] / 100) * util::watt_to_kilowatt * ts_hour; 
+					}
 					PVSystem->p_systemACPower[idx] *= (100 - PVSystem->p_acLifetimeLosses[ac_loss_index]) / 100;
 				}
 				// Update battery with final gen to compute grid power
