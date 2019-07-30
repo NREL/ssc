@@ -629,20 +629,26 @@ public:
 		double m_P_mc_in;		//[kPa] Compressor inlet pressure
 		double m_T_t_in;		//[K] Turbine inlet temperature
 
+        double m_f_mc_bypass;   //[-] Fraction of main compressor bypassed to cooler
+
 	public:
 		
 		double m_m_dot_t;		//[kg/s]
 		double m_m_dot_rc;		//[kg/s]
 		double m_m_dot_mc;		//[kg/s]
+        double m_m_dot_LTR_HP;  //[kg/s]
 
-		C_mono_eq_x_f_recomp_y_N_rc(C_RecompCycle *pc_rc_cycle, double T_mc_in /*K*/, double P_mc_in /*kPa*/, double T_t_in /*K*/)
+		C_mono_eq_x_f_recomp_y_N_rc(C_RecompCycle *pc_rc_cycle, double T_mc_in /*K*/, 
+            double P_mc_in /*kPa*/, double T_t_in /*K*/,
+            double f_mc_bypass)
 		{
 			mpc_rc_cycle = pc_rc_cycle;
 			m_T_mc_in = T_mc_in;		//[K]
 			m_P_mc_in = P_mc_in;		//[kPa]
 			m_T_t_in = T_t_in;			//[K]
+            m_f_mc_bypass = f_mc_bypass;    //[-]
 
-			m_m_dot_t = m_m_dot_rc = m_m_dot_mc = std::numeric_limits<double>::quiet_NaN();
+			m_m_dot_t = m_m_dot_rc = m_m_dot_mc = m_m_dot_LTR_HP = std::numeric_limits<double>::quiet_NaN();
 		}
 
 		virtual int operator()(double f_recomp /*-*/, double *N_rc /*rpm*/);
@@ -660,12 +666,16 @@ public:
 		double m_f_recomp;		//[-] Recompression fraction
 		double m_T_t_in;		//[K] Turbine inlet temperature
 
+        double m_f_mc_bypass;   //[-] Fraction of main compressor bypassed to cooler
+
 		bool m_is_update_ms_od_solved;	//[-] Bool to update member structure ms_od_solved
 		// that is typically updated after entire cycle off-design solution 
 
 	public:
 		C_mono_eq_turbo_N_fixed_m_dot(C_RecompCycle *pc_rc_cycle, double T_mc_in /*K*/, double P_mc_in /*kPa*/,
-			double f_recomp /*-*/, double T_t_in /*K*/, bool is_update_ms_od_solved = false)
+			double f_recomp /*-*/, double T_t_in /*K*/, 
+            double f_mc_bypass /*-*/,
+            bool is_update_ms_od_solved = false)
 		{
 			mpc_rc_cycle = pc_rc_cycle;
 			m_T_mc_in = T_mc_in;			//[K]
@@ -673,8 +683,15 @@ public:
 			m_f_recomp = f_recomp;			//[-]
 			m_T_t_in = T_t_in;				//[K]
 
+            m_f_mc_bypass = f_mc_bypass;    //[-]
+
 			m_is_update_ms_od_solved = is_update_ms_od_solved;
+
+            m_m_dot_mc = m_m_dot_LTR_HP = std::numeric_limits<double>::quiet_NaN();
 		}
+
+        double m_m_dot_mc;      //[kg/s]
+        double m_m_dot_LTR_HP;  //[kg/s]
 
 		virtual int operator()(double m_dot_t /*kg/s*/, double *diff_m_dot_t /*-*/);
 
@@ -721,11 +738,11 @@ public:
 		C_RecompCycle *mpc_rc_cycle;
 
 	public:
-		C_mono_eq_LTR_od(C_RecompCycle *pc_rc_cycle, double m_dot_rc, double m_dot_mc, double m_dot_t)
+		C_mono_eq_LTR_od(C_RecompCycle *pc_rc_cycle, double m_dot_rc, double m_dot_LTR_HP, double m_dot_t)
 		{
 			mpc_rc_cycle = pc_rc_cycle;
 			m_m_dot_rc = m_dot_rc;
-			m_m_dot_mc = m_dot_mc;
+            m_m_dot_LTR_HP = m_dot_LTR_HP;  //[kg/s]
 			m_m_dot_t = m_dot_t;
 		}	
 		
@@ -734,7 +751,7 @@ public:
 		double m_Q_dot_LTR;
 
 		// These values are passed in as arguments to Constructor call and should not be reset
-		double m_m_dot_rc, m_m_dot_mc, m_m_dot_t;
+		double m_m_dot_rc, m_m_dot_LTR_HP, m_m_dot_t;
 
 		virtual int operator()(double T_LTR_LP_out /*K*/, double *diff_T_LTR_LP_out /*K*/);
 	};
@@ -768,16 +785,16 @@ public:
 		C_RecompCycle *mpc_rc_cycle;
 
 	public:
-		C_mono_eq_HTR_od(C_RecompCycle *pc_rc_cycle, double m_dot_rc, double m_dot_mc, double m_dot_t)
+		C_mono_eq_HTR_od(C_RecompCycle *pc_rc_cycle, double m_dot_rc, double m_dot_LTR_HP, double m_dot_t)
 		{
 			mpc_rc_cycle = pc_rc_cycle;
 			m_m_dot_rc = m_dot_rc;
-			m_m_dot_mc = m_dot_mc;
+            m_m_dot_LTR_HP = m_dot_LTR_HP;  //[kg/s]
 			m_m_dot_t = m_dot_t;
 		}
 	
 		// These values are passed in as arguments to Constructor call and should not be reset
-		double m_m_dot_rc, m_m_dot_mc, m_m_dot_t;
+		double m_m_dot_rc, m_m_dot_LTR_HP, m_m_dot_t;
 
 		// These values are calculated in the operator() method and need to be extracted from this class
 		//     after convergence

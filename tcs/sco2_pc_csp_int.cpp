@@ -577,7 +577,7 @@ int C_sco2_phx_air_cooler::optimize_N_mc_and_N_rc__max_eta(C_sco2_phx_air_cooler
              f_N_mc_low2 = f_N_mc;      //[-]
              break;
          }
-         else if (eta_f_N_mc < eta_max)
+         else if (eta_f_N_mc < eta_max || ms_od_solved.ms_rc_cycle_od_solved.m_mc_f_bypass > 0.0001)
          {
              eta_low2 = eta_f_N_mc;     //[-]
              f_N_mc_low2 = f_N_mc;      //[-]
@@ -635,11 +635,16 @@ int C_sco2_phx_air_cooler::optimize_N_mc_and_N_rc__max_eta(C_sco2_phx_air_cooler
 
     eta_f_N_mc = ms_od_solved.ms_rc_cycle_od_solved.m_eta_thermal;   //[-]
 
+    bool is_fine_step_opt = true;
     if (err_mc_od != 0 || eta_f_N_mc < eta_max)
     {   // Try flipping sign
         slope_sign = -slope_sign;
     }
-    else
+    else if (ms_od_solved.ms_rc_cycle_od_solved.m_mc_f_bypass > 0.0001) // eta_f_N_mc > eta_max but there's MC bypass
+    {
+        is_fine_step_opt = false;
+    }
+    else        
     {
         eta_max = eta_f_N_mc;       //[-]
         f_N_mc_opt = f_N_mc;        //[-]
@@ -650,7 +655,7 @@ int C_sco2_phx_air_cooler::optimize_N_mc_and_N_rc__max_eta(C_sco2_phx_air_cooler
         T_pc_in_opt = ms_od_solved.ms_rc_cycle_od_solved.m_temp[C_sco2_cycle_core::PC_IN];
     }
 
-    while (true)
+    while (is_fine_step_opt)
     {
         f_N_mc = f_N_mc_opt + slope_sign * opt_step;    //[-]
 
@@ -680,7 +685,7 @@ int C_sco2_phx_air_cooler::optimize_N_mc_and_N_rc__max_eta(C_sco2_phx_air_cooler
 
         eta_f_N_mc = ms_od_solved.ms_rc_cycle_od_solved.m_eta_thermal;   //[-]
 
-        if (err_mc_od != 0 || eta_f_N_mc < eta_max)
+        if (err_mc_od != 0 || eta_f_N_mc < eta_max || ms_od_solved.ms_rc_cycle_od_solved.m_mc_f_bypass > 0.0001)
         {
             break;
         }
@@ -698,18 +703,28 @@ int C_sco2_phx_air_cooler::optimize_N_mc_and_N_rc__max_eta(C_sco2_phx_air_cooler
 
     // Now should have eta_max at f_N_mc_opt, f_N_rc_opt, P_LP_in_opt, T_mc_in_opt, T_pc_in_opt
     // Need to solve cycle off-design with saved optimal inputs
+    ms_cycle_od_par.m_is_mc_N_od_at_design = false;
     ms_cycle_od_par.m_mc_N_od_f_des = f_N_mc_opt;       //[-]
+
+    ms_cycle_od_par.m_is_rc_N_od_at_design = !is_optimize_N_rc;     //[-]
     ms_cycle_od_par.m_rc_N_od_f_des = f_N_rc_opt;       //[-]
+    
     ms_cycle_od_par.m_P_LP_comp_in = P_LP_in_opt;		//[kPa]
     ms_cycle_od_par.m_T_mc_in = T_mc_in_opt;			//[K]
     ms_cycle_od_par.m_T_pc_in = T_pc_in_opt;			//[K]
+
+    ms_cycle_od_par.m_f_mc_pc_bypass = 0.0;             //[-]
+
+    // PHX pressure drop options
+    ms_cycle_od_par.m_is_PHX_dP_input = is_PHX_dP_input;    //[-]
+    ms_cycle_od_par.m_PHX_f_dP = PHX_f_dP;                  //[-]
 
     double f_od_obj = std::numeric_limits<double>::quiet_NaN();
     int od_opt_err_code = off_design_core(f_od_obj);
 
     if (od_opt_err_code != 0)
     {
-        throw(C_csp_exception("optimize_N_rc__max_eta::optimize_off_design at maximize efficiency parameters failed"));
+        throw(C_csp_exception("optimize_N_mc__max_eta::optimize_off_design at maximize efficiency parameters failed"));
     }
 
     double W_dot_fan = std::numeric_limits<double>::quiet_NaN();
@@ -717,7 +732,7 @@ int C_sco2_phx_air_cooler::optimize_N_mc_and_N_rc__max_eta(C_sco2_phx_air_cooler
 
     if (air_cooler_err_code != 0)
     {
-        throw(C_csp_exception("optimize_N_rc__max_eta::calculate_off_design_fan_power at maximize efficiency parameters failed"));
+        throw(C_csp_exception("optimize_N_mc__max_eta::calculate_off_design_fan_power at maximize efficiency parameters failed"));
     }
 
     ms_od_solved.ms_rc_cycle_od_solved = *mpc_sco2_cycle->get_od_solved();
@@ -1040,10 +1055,21 @@ int C_sco2_phx_air_cooler::optimize_N_rc__max_eta(C_sco2_phx_air_cooler::S_od_pa
 
     // Now should have eta_max at f_N_rc_max, P_LP_in_opt, T_mc_in_opt, T_pc_in_opt
     // Need to solve cycle off-design with saved optimal inputs
+    ms_cycle_od_par.m_is_rc_N_od_at_design = false;     //[-]
     ms_cycle_od_par.m_rc_N_od_f_des = f_N_rc_opt;       //[-]
     ms_cycle_od_par.m_P_LP_comp_in = P_LP_in_opt;		//[kPa]
     ms_cycle_od_par.m_T_mc_in = T_mc_in_opt;			//[K]
     ms_cycle_od_par.m_T_pc_in = T_pc_in_opt;			//[K]
+
+    ms_cycle_od_par.m_f_mc_pc_bypass = 0.0;             //[-]
+
+    // Input MC shaft speed controls
+    ms_cycle_od_par.m_is_mc_N_od_at_design = is_mc_N_od_at_design;  //[-]
+    ms_cycle_od_par.m_mc_N_od_f_des = mc_N_od_f_des;                //[-]
+
+    // PHX pressure drop options
+    ms_cycle_od_par.m_is_PHX_dP_input = is_PHX_dP_input;    //[-]
+    ms_cycle_od_par.m_PHX_f_dP = PHX_f_dP;                  //[-]
 
     double f_od_obj = std::numeric_limits<double>::quiet_NaN();
     int od_opt_err_code = off_design_core(f_od_obj);
@@ -1164,11 +1190,6 @@ int C_sco2_phx_air_cooler::optimize_off_design(C_sco2_phx_air_cooler::S_od_par o
 
 		if (opt_P_LP_err == -31)
 		{
-            if (cycle_config == 1)
-            {
-                throw(C_csp_exception("Recompression solve P_LP_in failed"));
-            }
-
             while (opt_P_LP_err == -31 && ms_cycle_od_par.m_f_mc_pc_bypass < 0.9)
 			{
 				ms_cycle_od_par.m_f_mc_pc_bypass += 0.01;
