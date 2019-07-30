@@ -129,8 +129,17 @@ bool dispatch_t::check_constraints(double &I, size_t count)
 	bool iterate = true;
 	double I_initial = I;
 
+
+	// don't allow any changes to violate current limits
+	if (restrict_current(I))
+	{
+	}
+	// don't allow violations of power limits
+	else if (restrict_power(I))
+	{
+	}
 	// decrease the current draw if took too much
-	if (I > 0 && _Battery->battery_soc() < m_batteryPower->stateOfChargeMin - tolerance)
+	else if (I > 0 && _Battery->battery_soc() < m_batteryPower->stateOfChargeMin - tolerance)
 	{
 		double dQ = 0.01 * (m_batteryPower->stateOfChargeMin - _Battery->battery_soc()) * _Battery->battery_charge_maximum_thermal();
 		I -= dQ / _dt_hour;
@@ -185,10 +194,8 @@ bool dispatch_t::check_constraints(double &I, size_t count)
 	else
 		iterate = false;
 
-	// don't allow any changes to violate current limits
+	// update constraints for current, power, if they are now violated
 	bool current_iterate = restrict_current(I);
-
-	// don't allow any changes to violate power limites
 	bool power_iterate = restrict_power(I);
 
 	// iterate if any of the conditions are met
