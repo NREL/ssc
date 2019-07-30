@@ -1071,6 +1071,11 @@ int C_mspt_receiver_222::get_operating_state()
 	return m_mode_prev;
 }
 
+double C_mspt_receiver_222::get_remaining_startup_energy()
+{
+	return m_E_su_prev;
+}
+
 void C_mspt_receiver_222::clear_outputs()
 {
 	ms_outputs.m_m_dot_salt_tot = 

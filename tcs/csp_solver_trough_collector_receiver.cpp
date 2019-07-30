@@ -857,6 +857,10 @@ double C_csp_trough_collector_receiver::get_col_startup_power()
 	return std::numeric_limits<double>::quiet_NaN();	//MWe-hr
 }
 
+double C_csp_trough_collector_receiver::get_remaining_startup_energy()
+{
+	return std::numeric_limits<double>::quiet_NaN();	//kWh
+}
 
 void C_csp_trough_collector_receiver::get_design_parameters(C_csp_collector_receiver::S_csp_cr_solved_params & solved_params)
 {

@@ -1003,11 +1003,15 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 
 
                 //note the states of the power cycle and receiver
-                dispatch.params.is_pb_operating0 = mc_power_cycle.get_operating_state() == 1;
-                dispatch.params.is_pb_standby0 = mc_power_cycle.get_operating_state() == 2;
+                dispatch.params.is_pb_operating0 = mc_power_cycle.get_operating_state() == C_csp_power_cycle::ON;
+                dispatch.params.is_pb_standby0 = mc_power_cycle.get_operating_state() == C_csp_power_cycle::STANDBY;
+				dispatch.params.is_pb_startup0 = mc_power_cycle.get_operating_state() == C_csp_power_cycle::STARTUP;
                 dispatch.params.is_rec_operating0 = mc_collector_receiver.get_operating_state() == C_csp_collector_receiver::ON;
+				dispatch.params.is_rec_startup0 = mc_collector_receiver.get_operating_state() == C_csp_collector_receiver::STARTUP;
                 dispatch.params.q_pb0 = q_pb_last;
                 dispatch.params.w_pb0 = w_pb_last;
+				dispatch.params.u_csu0 = dispatch.params.is_pb_standby0 ? std::max(0.0, dispatch.params.e_pb_startup_cold - mc_power_cycle.get_remaining_startup_energy()) : 0.0; //kWht
+				dispatch.params.u_rsu0 = dispatch.params.is_rec_startup0 ? std::max(0.0, dispatch.params.e_rec_startup - mc_collector_receiver.get_remaining_startup_energy()) : 0.0; //kWht
 
                 if(dispatch.params.q_pb0 != dispatch.params.q_pb0 )
                     dispatch.params.q_pb0 = 0.;

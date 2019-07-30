@@ -205,6 +205,10 @@ double C_pc_sco2::get_min_thermal_power()
 {
 	return m_q_dot_min;		//[MWt]
 }
+double C_pc_sco2::get_remaining_startup_energy()
+{
+	return m_startup_energy_remain_prev;		//[MWt]
+}
 
 void C_pc_sco2::get_max_power_output_operation_constraints(double T_amb /*C*/, double & m_dot_HTF_ND_max, double & W_dot_ND_max)
 {

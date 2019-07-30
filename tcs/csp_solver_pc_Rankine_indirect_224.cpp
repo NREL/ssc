@@ -447,6 +447,11 @@ double C_pc_Rankine_indirect_224::get_min_thermal_power()     //MW
     return ms_params.m_cycle_cutoff_frac * ms_params.m_P_ref / ms_params.m_eta_ref*1.e-3;    //MWh
 }
 
+double C_pc_Rankine_indirect_224::get_remaining_startup_energy()     //kWht
+{
+	return m_startup_energy_remain_prev;
+}
+
 double C_pc_Rankine_indirect_224::get_max_q_pc_startup()
 {
 	if( m_startup_time_remain_prev > 0.0 )

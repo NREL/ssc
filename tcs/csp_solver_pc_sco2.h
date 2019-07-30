@@ -137,6 +137,7 @@ public:
 	virtual double get_hot_startup_energy();    //[MWh]
 	virtual double get_max_thermal_power();     //MW
 	virtual double get_min_thermal_power();     //MW
+	virtual double get_remaining_startup_energy();     //kWh
 	virtual void get_max_power_output_operation_constraints(double T_amb /*C*/, double & m_dot_HTF_ND_max, double & W_dot_ND_max);	//[-] Normalized over design power
 	virtual double get_efficiency_at_TPH(double T_degC, double P_atm, double relhum_pct, double *w_dot_condenser=0);
 	virtual double get_efficiency_at_load(double load_frac, double *w_dot_condenser=0);

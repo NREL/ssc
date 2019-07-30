@@ -186,9 +186,13 @@ csp_dispatch_opt::csp_dispatch_opt()
     //parameters
     params.is_pb_operating0 = false;
     params.is_pb_standby0 = false;
+	params.is_pb_startup0 = false;
     params.is_rec_operating0 = false;
+	params.is_rec_startup0 = false;
     params.q_pb0 = std::numeric_limits<double>::quiet_NaN();
     params.w_pb0 = std::numeric_limits<double>::quiet_NaN();
+	params.u_csu0 = std::numeric_limits<double>::quiet_NaN();
+	params.u_rsu0 = std::numeric_limits<double>::quiet_NaN();
     params.dt = std::numeric_limits<double>::quiet_NaN();
     params.e_tes_init = std::numeric_limits<double>::quiet_NaN();          
     params.e_tes_min = std::numeric_limits<double>::quiet_NaN();           
@@ -576,11 +580,11 @@ static void calculate_parameters(csp_dispatch_opt *optinst, unordered_map<std::s
         pars["Wht"] = optinst->params.w_rec_ht;
         pars["eta_cycle"] = optinst->params.eta_cycle_ref;
         pars["Qrsd"] = 0.;      //<< not yet modeled, passing temporarily as zero
-
+		pars["Qrsb"] = 1.e99;   // receiver standby not yet modeled, passing temporarily as infinite
 
         pars["s0"] = optinst->params.e_tes_init ;
-        pars["ursu0"] = 0.;
-        pars["ucsu0"] = 0.;
+		pars["ursu0"] = optinst->params.u_rsu0; 
+		pars["ucsu0"] = optinst->params.u_csu0;
         pars["y0"] = (optinst->params.is_pb_operating0 ? 1 : 0) ;
         pars["ycsb0"] = (optinst->params.is_pb_standby0 ? 1 : 0) ;
         pars["q0"] =  optinst->params.q_pb0 ;
@@ -588,8 +592,8 @@ static void calculate_parameters(csp_dispatch_opt *optinst, unordered_map<std::s
         
 		pars["yr0"] = (optinst->params.is_rec_operating0 ? 1 : 0);
 		pars["yrsb0"] = 0;
-		pars["yrsu0"] = 0;
-		pars["ycsu0"] = 0; 
+		pars["yrsu0"] = (optinst->params.is_rec_startup0 ? 1 : 0);
+		pars["ycsu0"] = (optinst->params.is_pb_startup0 ? 1 : 0);
 		
 		pars["deltal"] = optinst->params.dt_rec_startup;
 		

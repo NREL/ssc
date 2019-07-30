@@ -583,6 +583,7 @@ public:
     virtual double get_min_power_delivery() = 0;    //MWt
 	virtual double get_tracking_power() = 0;		//MWe
 	virtual double get_col_startup_power() = 0;		//MWe-hr
+	virtual double get_remaining_startup_energy() = 0; //kWh
 
 	virtual void off(const C_csp_weatherreader::S_outputs &weather,
 		const C_csp_solver_htf_1state &htf_state_in,
@@ -731,6 +732,7 @@ public:
     virtual double get_hot_startup_energy() = 0;    //[MWh]
     virtual double get_max_thermal_power() = 0;     //MW
     virtual double get_min_thermal_power() = 0;     //MW
+	virtual double get_remaining_startup_energy() = 0; //kWht
 	virtual void get_max_power_output_operation_constraints(double T_amb /*C*/, double & m_dot_HTF_ND_max, double & W_dot_ND_max) = 0;	//[-] Normalized over design power
     virtual double get_efficiency_at_TPH(double T_degC, double P_atm, double relhum_pct, double *w_dot_condenser=0) = 0; //-
     virtual double get_efficiency_at_load(double load_frac, double *w_dot_condenser=0) = 0;

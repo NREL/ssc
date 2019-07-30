@@ -127,10 +127,14 @@ public:
     struct s_params
     {
         bool is_rec_operating0;     //receiver is operating at the initial time step
+		bool is_rec_startup0;		//receiver is starting up at the initial time step
         bool is_pb_operating0;      //Power block is operating at the initial time step
         bool is_pb_standby0;        //Power block is in standby at the initial time step
+		bool is_pb_startup0;		//Power block is starting up at the initial time step
         double q_pb0;               //[kWt] Thermal power consumption in the cycle entering the initial time step
         double w_pb0;               //[kWe] Power production from the cycle entering the initial time step
+		double u_csu0;				//[kWht] Accumulated cycle startup energy entering the initial time step
+		double u_rsu0;				//[kWht] Accumulated receiver startup energy entering the initial time step
 		double pb_persist0;			//[hr]  Amount of time the cycle has been in its current operational state entering the initial time step
 		double rec_persist0;		//[hr]  Amount of time the receiver has been in its current operational state entering the initial time step
 

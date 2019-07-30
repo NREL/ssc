@@ -260,6 +260,8 @@ public:
 
     HTFProperties *get_htf_property_object();
 
+	double get_remaining_startup_energy();
+
 };
 
 

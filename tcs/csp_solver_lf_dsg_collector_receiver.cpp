@@ -1078,6 +1078,12 @@ double C_csp_lf_dsg_collector_receiver::get_col_startup_power()
 	return std::numeric_limits<double>::quiet_NaN(); //MWe-hr
 }
 
+double C_csp_lf_dsg_collector_receiver::get_remaining_startup_energy()
+{
+	throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::get_remaining_startup_energy() is not complete"));
+	return std::numeric_limits<double>::quiet_NaN(); //MWe-hr
+}
+
 int C_csp_lf_dsg_collector_receiver::C_mono_eq_freeze_prot_E_bal::operator()(double T_cold_in /*K*/, double *E_loss_balance /*-*/)
 {
 	// Call energy balance with updated timestep and temperature info
