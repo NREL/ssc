@@ -802,14 +802,12 @@ int C_csp_trough_collector_receiver::get_operating_state()
 double C_csp_trough_collector_receiver::get_startup_time()
 {
     // Note: C_csp_trough_collector_receiver::startup() is called after this function
-    double rec_su_delay = 0.2;                      // hr
-    return rec_su_delay * 3600.;                    // sec
+    return m_rec_su_delay * 3600.;                    // sec
 }
 double C_csp_trough_collector_receiver::get_startup_energy()
 {
     // Note: C_csp_trough_collector_receiver::startup() is called after this function
-    double rec_qf_delay = 0.25;                     // [-] fraction of rated thermal power
-    return rec_qf_delay * m_q_design * 1.e-6;       // MWh
+    return m_rec_qf_delay * m_q_design * 1.e-6;       // MWh
 }
 double C_csp_trough_collector_receiver::get_pumping_parasitic_coef()
 {
@@ -843,8 +841,8 @@ double C_csp_trough_collector_receiver::get_tracking_power()
 double C_csp_trough_collector_receiver::get_col_startup_power()
 {
     // Note: C_csp_trough_collector_receiver::startup() is called after this function
-    double time_required_su = 1.;       // hr
-    return m_W_dot_sca_tracking_nom * time_required_su;     //MWe-hr
+
+    return m_p_start * 1.e-3 * m_nSCA * m_nLoops;             //MWe-hr
 }
 
 
