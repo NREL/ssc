@@ -238,36 +238,38 @@ public:
         return code;
     }
 
-    void powerout(double time, double &shad_beam, double shad_diff, double dni, double alb, double wspd, double tdry)
-    {
+	void powerout(double time, double &shad_beam, double shad_diff, double dni, double dhi, double alb, double wspd, double tdry)
+	{
 
-        if (sunup > 0)
-        {
-            if (sunup > 0 && track_mode == 1
-                && shade_mode_1x == 0) // selfshaded mode
-            {
-                double shad1xf = shadeFraction1x(solazi, solzen, tilt, azimuth, gcr, rot);
-                shad_beam *= (ssc_number_t)(1 - shad1xf);
+		if (sunup > 0)
+		{
+			if (sunup > 0 && track_mode == 1
+				&& shade_mode_1x == 0) // selfshaded mode
+//			if (sunup > 0) // selfshaded mode
+			{
+				double shad1xf = shadeFraction1x(solazi, solzen, tilt, azimuth, gcr, rot);
+				shad_beam *= (ssc_number_t)(1 - shad1xf);
 
-                if (shade_mode_1x == 0 && iskydiff > 0)
-                {
-                    double reduced_skydiff = iskydiff;
-                    double Fskydiff = 1.0;
-                    double reduced_gnddiff = ignddiff;
-                    double Fgnddiff = 1.0;
+				if (shade_mode_1x == 0 && iskydiff > 0)
+//				if (iskydiff > 0)
+				{
+					double reduced_skydiff = iskydiff;
+					double Fskydiff = 1.0;
+					double reduced_gnddiff = ignddiff;
+					double Fgnddiff = 1.0;
 
-                    // worst-case mask angle using calculated surface tilt
-                    double phi0 = 180 / 3.1415926*atan2(sind(stilt), 1 / gcr - cosd(stilt));
+					// worst-case mask angle using calculated surface tilt
+					//double phi0 = 180 / 3.1415926*atan2(sind(stilt), 1 / gcr - cosd(stilt));
 
-                    // calculate sky and gnd diffuse derate factors
-                    // based on view factor reductions from self-shading
-                    diffuse_reduce(solzen, stilt,
-                                   dni, iskydiff + ignddiff,
-                                   gcr, phi0, alb, 1000,
+					// calculate sky and gnd diffuse derate factors
+					// based on view factor reductions from self-shading
+                    diffuse_reduce( solzen, stilt,
+						dni, dhi, iskydiff, ignddiff,
+						gcr, alb, 1000,
 
-                            // outputs (pass by reference)
-                                   reduced_skydiff, Fskydiff,
-                                   reduced_gnddiff, Fgnddiff);
+                        // outputs (pass by reference)
+						reduced_skydiff, Fskydiff,
+						reduced_gnddiff, Fgnddiff);
 
                     if (Fskydiff >= 0 && Fskydiff <= 1) iskydiff *= Fskydiff;
                     else log(util::format("sky diffuse reduction factor invalid at time %lg: fskydiff=%lg, stilt=%lg", time, Fskydiff, stilt), SSC_NOTICE, (float)time);
@@ -489,10 +491,10 @@ public:
                         throw exec_error("pvwattsv5", "simulation canceled at hour " + util::to_string(hour + 1.0));
                 }
 
-                for (size_t jj = 0; jj < step_per_hour; jj++)
-                {
+				for (size_t jj = 0; jj < step_per_hour; jj++)
+				{
                     if (!wdprov->read(&wf))
-                        throw exec_error("pvwattsv5", util::format("could not read data line %d of %d in weather file", (int)(idx + 1), (int)nrec));
+						throw exec_error("pvwattsv5", util::format("could not read data line %d of %d in weather file", (int)(idx + 1), (int)nrec));
 
 
                     p_gh[idx] = (ssc_number_t)wf.gh;
@@ -529,10 +531,10 @@ public:
 
                     p_shad_beam[idx] = (ssc_number_t)shad_beam;
 
-                    if (sunup > 0)
-                    {
-                        powerout((double)idx, shad_beam, shad.fdiff(), wf.dn, alb, wf.wspd, wf.tdry);
-                        p_shad_beam[idx] = (ssc_number_t)shad_beam; // might be updated by 1 axis self shading so report updated value
+					if (sunup > 0)
+					{
+						powerout((double)idx, shad_beam, shad.fdiff(), wf.dn, wf.df, alb, wf.wspd, wf.tdry);
+						p_shad_beam[idx] = (ssc_number_t)shad_beam; // might be updated by 1 axis self shading so report updated value
 
                         p_poa[idx] = (ssc_number_t)poa; // W/m2
                         p_tpoa[idx] = (ssc_number_t)tpoa;  // W/m2
@@ -660,8 +662,8 @@ public:
         double last_tcell = as_double("tcell");
         double last_poa = as_double("poa");
 
-        setup_system_inputs();
-        initialize_cell_temp( time_step, last_tcell, last_poa );
+		double shad_beam = 1.0;
+		powerout(0, shad_beam, 1.0, beam, diff, alb, wspd, tamb);
 
         int code = process_irradiance(year, month, day, hour, minute,
                                       IRRADPROC_NO_INTERPOLATE_SUNRISE_SUNSET,
@@ -670,8 +672,7 @@ public:
         if (code != 0)
             throw exec_error( "pvwattsv5_1ts", "failed to calculate plane of array irradiance with given input parameters" );
 
-        double shad_beam = 1.0;
-        powerout(0, shad_beam, 1.0, beam, alb, wspd, tamb);
+        powerout(0, shad_beam, 1.0, beam, diff, alb, wspd, tamb);
 
         assign( "poa", var_data( (ssc_number_t)poa ) );
         assign( "tcell", var_data( (ssc_number_t)pvt ) );
