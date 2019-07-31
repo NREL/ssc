@@ -187,21 +187,24 @@ public:
 		batt_vars->batt_voltage_choice = voltage_t::VOLTAGE_MODEL;
 		batt_vars->batt_voltage_matrix = util::matrix_t<double>();
 
-		// Current and Capacity
-		double batt_time_hour = batt_vars->batt_kwh / batt_vars->batt_kw;
-		double batt_C_rate_discharge = 1. / batt_time_hour;
-		batt_vars->batt_current_choice = dispatch_t::RESTRICT_CURRENT;
-		batt_vars->batt_current_charge_max = 1000 * batt_C_rate_discharge * batt_vars->batt_kwh / voltage_guess;
-		batt_vars->batt_current_discharge_max = 1000 * batt_C_rate_discharge * batt_vars->batt_kwh / voltage_guess;
-		batt_vars->batt_power_charge_max = batt_vars->batt_kw;
-		batt_vars->batt_power_discharge_max = batt_vars->batt_kw;
-
 		// Power converters and topology
 		batt_vars->batt_topology = ChargeController::AC_CONNECTED;
 		batt_vars->batt_ac_dc_efficiency = 96;
 		batt_vars->batt_dc_ac_efficiency = 96;
 		batt_vars->batt_dc_dc_bms_efficiency = 99;
 		batt_vars->pv_dc_dc_mppt_efficiency = 99;
+
+		// Current and Capacity
+		double batt_time_hour = batt_vars->batt_kwh / batt_vars->batt_kw;
+		double batt_C_rate_discharge = 1. / batt_time_hour;
+		batt_vars->batt_current_choice = dispatch_t::RESTRICT_CURRENT;
+		batt_vars->batt_current_charge_max = 1000 * batt_C_rate_discharge * batt_vars->batt_kwh / voltage_guess;
+		batt_vars->batt_current_discharge_max = 1000 * batt_C_rate_discharge * batt_vars->batt_kwh / voltage_guess;
+		batt_vars->batt_power_charge_max_kwac = batt_vars->batt_kw;
+		batt_vars->batt_power_discharge_max_kwac = batt_vars->batt_kw;
+		batt_vars->batt_power_charge_max_kwdc = batt_vars->batt_kw / (batt_vars->batt_dc_ac_efficiency * 0.01);
+		batt_vars->batt_power_discharge_max_kwdc = batt_vars->batt_kw / (batt_vars->batt_ac_dc_efficiency * 0.01); ;
+
 
 		// Ancillary equipment losses
 		double_vec batt_losses;

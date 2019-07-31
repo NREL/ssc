@@ -165,8 +165,10 @@ struct batt_variables
 	double batt_minimum_SOC;
 	double batt_current_charge_max;
 	double batt_current_discharge_max;
-	double batt_power_charge_max;
-	double batt_power_discharge_max;
+	double batt_power_charge_max_kwdc;
+	double batt_power_discharge_max_kwdc;
+	double batt_power_charge_max_kwac;
+	double batt_power_discharge_max_kwac;
 	double batt_minimum_modetime;
 
 	int batt_topology;

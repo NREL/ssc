@@ -73,8 +73,10 @@ var_info vtab_battery_inputs[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "batt_computed_bank_capacity",                "Computed bank capacity",                                  "kWh",     "",                     "Battery",       "",                           "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "batt_current_charge_max",                    "Maximum charge current",                                  "A",       "",                     "Battery",       "",                           "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "batt_current_discharge_max",                 "Maximum discharge current",                               "A",       "",                     "Battery",       "",                           "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "batt_power_charge_max",                      "Maximum charge power",                                    "kW",       "",                    "Battery",       "",                           "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "batt_power_discharge_max",                   "Maximum discharge power",                                 "kW",       "",                    "Battery",       "",                           "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "batt_power_charge_max_kwdc",                 "Maximum charge power (DC)",                               "kWdc",    "",                    "Battery",       "",                           "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "batt_power_discharge_max_kwdc",              "Maximum discharge power (DC)",                            "kWdc",    "",                    "Battery",       "",                           "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "batt_power_charge_max_kwac",                 "Maximum charge power (AC)",                               "kWac",    "",                    "Battery",       "",                           "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "batt_power_discharge_max_kwac",              "Maximum discharge power (AC)",                            "kWac",    "",                    "Battery",       "",                           "",                              "" },
 
 
 	// Voltage discharge curve
@@ -317,7 +319,7 @@ battstor::battstor(compute_module &cm, bool setup_model, size_t nrec, double dt_
 			batt_vars->batt_computed_series = cm.as_integer("batt_computed_series");
 			batt_vars->batt_computed_strings = cm.as_integer("batt_computed_strings");
 			batt_vars->batt_kwh = cm.as_double("batt_computed_bank_capacity");
-			batt_vars->batt_kw = cm.as_double("batt_power_discharge_max");
+			batt_vars->batt_kw = cm.as_double("batt_power_discharge_max_kwdc");
 
 			// Voltage properties
 			batt_vars->batt_voltage_choice = cm.as_integer("batt_voltage_choice");
@@ -336,8 +338,10 @@ battstor::battstor(compute_module &cm, bool setup_model, size_t nrec, double dt_
 			batt_vars->batt_current_choice = cm.as_integer("batt_current_choice");
 			batt_vars->batt_current_charge_max = cm.as_double("batt_current_charge_max");
 			batt_vars->batt_current_discharge_max = cm.as_double("batt_current_discharge_max");
-			batt_vars->batt_power_charge_max = cm.as_double("batt_power_charge_max");
-			batt_vars->batt_power_discharge_max = cm.as_double("batt_power_discharge_max");
+			batt_vars->batt_power_charge_max_kwdc = cm.as_double("batt_power_charge_max_kwdc");
+			batt_vars->batt_power_discharge_max_kwdc = cm.as_double("batt_power_discharge_max_kwdc");
+			batt_vars->batt_power_charge_max_kwac = cm.as_double("batt_power_charge_max_kwac");
+			batt_vars->batt_power_discharge_max_kwac = cm.as_double("batt_power_discharge_max_kwac");
 
 			// Power converters and topology
 			batt_vars->batt_topology = cm.as_integer("batt_ac_or_dc");
@@ -884,7 +888,8 @@ battstor::battstor(compute_module &cm, bool setup_model, size_t nrec, double dt_
 			dispatch_model = new dispatch_manual_t(battery_model, dt_hr, batt_vars->batt_minimum_SOC, batt_vars->batt_maximum_SOC,
 				batt_vars->batt_current_choice,
 				batt_vars->batt_current_charge_max, batt_vars->batt_current_discharge_max,
-				batt_vars->batt_power_charge_max, batt_vars->batt_power_discharge_max,
+				batt_vars->batt_power_charge_max_kwdc, batt_vars->batt_power_discharge_max_kwdc,
+				batt_vars->batt_power_charge_max_kwac, batt_vars->batt_power_discharge_max_kwac,
 				batt_vars->batt_minimum_modetime,
 				batt_vars->batt_dispatch, batt_vars->batt_meter_position,
 				batt_vars->batt_discharge_schedule_weekday, batt_vars->batt_discharge_schedule_weekend,
@@ -911,7 +916,9 @@ battstor::battstor(compute_module &cm, bool setup_model, size_t nrec, double dt_
 		}
 		dispatch_model = new dispatch_automatic_front_of_meter_t(battery_model, dt_hr, batt_vars->batt_minimum_SOC, batt_vars->batt_maximum_SOC,
 			batt_vars->batt_current_choice, batt_vars->batt_current_charge_max, batt_vars->batt_current_discharge_max,
-			batt_vars->batt_power_charge_max, batt_vars->batt_power_discharge_max, batt_vars->batt_minimum_modetime,
+			batt_vars->batt_power_charge_max_kwdc, batt_vars->batt_power_discharge_max_kwdc,
+			batt_vars->batt_power_charge_max_kwac, batt_vars->batt_power_discharge_max_kwac,
+			batt_vars->batt_minimum_modetime,
 			batt_vars->batt_dispatch, batt_vars->batt_meter_position,
 			nyears, batt_vars->batt_look_ahead_hours, batt_vars->batt_dispatch_update_frequency_hours,
 			batt_vars->batt_dispatch_auto_can_charge, batt_vars->batt_dispatch_auto_can_clipcharge, batt_vars->batt_dispatch_auto_can_gridcharge, batt_vars->batt_dispatch_auto_can_fuelcellcharge,
@@ -937,7 +944,9 @@ battstor::battstor(compute_module &cm, bool setup_model, size_t nrec, double dt_
 	{			
 		dispatch_model = new dispatch_automatic_behind_the_meter_t(battery_model, dt_hr, batt_vars->batt_minimum_SOC, batt_vars->batt_maximum_SOC,
 			batt_vars->batt_current_choice, batt_vars->batt_current_charge_max, batt_vars->batt_current_discharge_max,
-			batt_vars->batt_power_charge_max, batt_vars->batt_power_discharge_max, batt_vars->batt_minimum_modetime,
+			batt_vars->batt_power_charge_max_kwdc, batt_vars->batt_power_discharge_max_kwdc,
+			batt_vars->batt_power_charge_max_kwac, batt_vars->batt_power_discharge_max_kwac, 
+			batt_vars->batt_minimum_modetime,
 			batt_vars->batt_dispatch, batt_vars->batt_meter_position, nyears,
 			batt_vars->batt_look_ahead_hours, batt_vars->batt_dispatch_update_frequency_hours,
 			batt_vars->batt_dispatch_auto_can_charge, batt_vars->batt_dispatch_auto_can_clipcharge, batt_vars->batt_dispatch_auto_can_gridcharge, batt_vars->batt_dispatch_auto_can_fuelcellcharge

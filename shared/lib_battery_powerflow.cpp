@@ -27,8 +27,10 @@ BatteryPower::BatteryPower(double dtHour) :
 		powerFuelCellToLoad(0),
 		powerFuelCellToBattery(0),
 		powerPVInverterDraw(0),
-		powerBatteryChargeMax(0),
-		powerBatteryDischargeMax(0),
+		powerBatteryChargeMaxDC(0),
+		powerBatteryDischargeMaxDC(0),
+		powerBatteryChargeMaxAC(0),
+		powerBatteryDischargeMaxAC(0),
 		powerSystemLoss(0),
 		powerConversionLoss(0),
 		connectionMode(0),
@@ -109,7 +111,7 @@ void BatteryPowerFlow::initialize(double stateOfCharge)
 		(m_BatteryPower->powerPV < m_BatteryPower->powerLoad || m_BatteryPower->meterPosition == dispatch_t::FRONT))
 	{
 		// try to discharge full amount.  Will only use what battery can provide
-		m_BatteryPower->powerBatteryDC = m_BatteryPower->powerBatteryDischargeMax;
+		m_BatteryPower->powerBatteryDC = m_BatteryPower->powerBatteryDischargeMaxDC;
 	}
 	// Is there extra power from system
 	else if ((m_BatteryPower->powerPV > m_BatteryPower->powerLoad && m_BatteryPower->canPVCharge) || m_BatteryPower->canGridCharge)
@@ -121,7 +123,7 @@ void BatteryPowerFlow::initialize(double stateOfCharge)
 		}
 		// if we want to charge from grid in addition to, or without array, we can always charge at max power
 		if (m_BatteryPower->canGridCharge) {
-			m_BatteryPower->powerBatteryDC = -m_BatteryPower->powerBatteryChargeMax;
+			m_BatteryPower->powerBatteryDC = -m_BatteryPower->powerBatteryChargeMaxDC;
 		}
 	}
 }
