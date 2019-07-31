@@ -298,7 +298,7 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     { SSC_INPUT,        SSC_MATRIX,      "weekend_schedule",     "12x24 CSP operation Time-of-Use Weekend schedule",                  "-",            "",            "sys_ctrl",          "*",                       "",                      "" }, 
     { SSC_INPUT,        SSC_NUMBER,      "is_dispatch",          "Allow dispatch optimization?",  /*TRUE=1*/                          "-",            "",            "sys_ctrl_disp_opt", "?=0",                     "",                      "" }, 
     { SSC_INPUT,        SSC_NUMBER,      "disp_horizon",         "Time horizon for dispatch optimization",                            "hour",         "",            "sys_ctrl_disp_opt", "is_dispatch=1",           "",                      "" }, 
-    { SSC_INPUT,        SSC_NUMBER,      "disp_frequency",       "Frequency for dispatch optimization calculations",                  "hour",         "",            "sys_ctrl_disp_opt", "is_dispatch=1",           "",                      "" }, 
+    { SSC_INPUT,        SSC_NUMBER,      "disp_frequency",       "Frequency for dispatch optimization calculations",                  "hour",         "",            "sys_ctrl_disp_opt", "?=24.",					 "",                      "" }, 
 	{ SSC_INPUT,        SSC_NUMBER,      "disp_horizon_update",  "Frequency for dispatch time horizon update",						  "hour",         "",            "sys_ctrl_disp_opt", "?=0",					 "",                      "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "disp_steps_per_hour",  "Time steps per hour for dispatch optimization calculations",        "-",            "",            "sys_ctrl_disp_opt", "?=1",                     "",                      "" }, 
     { SSC_INPUT,        SSC_NUMBER,      "disp_max_iter",        "Max. no. dispatch optimization iterations",                         "-",            "",            "sys_ctrl_disp_opt", "is_dispatch=1",           "",                      "" }, 
@@ -358,15 +358,15 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
 	{ SSC_INPUT,		SSC_NUMBER,		 "disp_pc_onoff_perm",    "Permanence of cycle on/off/standby decisions",					  "hr",			  "",			 "sys_ctrl_disp_opt",	"?=0.",					 "",					  "" },
 	{ SSC_INPUT,		SSC_NUMBER,		 "disp_pc_onoff_la_perm", "Permanence of cycle on/off/standby decisions during lookahead ",	  "hr",			  "",			 "sys_ctrl_disp_opt",	"?=0.",					 "",					  "" },
 	{ SSC_INPUT,		SSC_NUMBER,		 "disp_pc_level_perm",    "Permanence of cycle operating level decisions",					  "hr",			  "",			 "sys_ctrl_disp_opt",	"?=0.",					 "",					  "" },
-	{ SSC_INPUT,		SSC_NUMBER,		 "disp_pc_level_la_perm", "Permanence of cycle operating level decisions during lookahead",  "hr",			  "",			 "sys_ctrl_disp_opt",	"?=0.",					 "",					  "" },
+	{ SSC_INPUT,		SSC_NUMBER,		 "disp_pc_level_la_perm", "Permanence of cycle operating level decisions during lookahead",   "hr",			  "",			 "sys_ctrl_disp_opt",	"?=0.",					 "",					  "" },
 	{ SSC_INPUT,		SSC_NUMBER,		 "disp_rec_onoff_perm",   "Permanence of receiver on/off decisions",						  "hr",			  "",			 "sys_ctrl_disp_opt",	"?=0.",					 "",					  "" },
 	{ SSC_INPUT,		SSC_NUMBER,		 "disp_rec_onoff_la_perm", "Permanence of receiver on/off decisions during lookahead ",		  "hr",			  "",			 "sys_ctrl_disp_opt",	"?=0.",					 "",					  "" },
 
-	{ SSC_INPUT,		SSC_NUMBER,		 "disp_storage_buffer",   "Minimum allowable storage in dispatch model (fraction of capacity)",	 "",		  "",			 "sys_ctrl_disp_opt",	"?=0.",					 "",					  "" },
+	{ SSC_INPUT,		SSC_NUMBER,		 "disp_storage_buffer",    "Minimum allowable storage in dispatch model (fraction of capacity)",	 "",	  "",			 "sys_ctrl_disp_opt",	"?=0.",					 "",					  "" },
 
 	{ SSC_INPUT,		SSC_ARRAY,		 "disp_steplength_array",     "Dispatch time step lengths (min)",							  "min",		  "",			 "sys_ctrl_disp_opt",	"?=0.",					 "",					  "" },
-	{ SSC_INPUT,		SSC_ARRAY,		 "disp_steplength_end_time",  "End time for dispatch step lengths (hr)",					  "hr",		      "",			 "sys_ctrl_disp_opt",	"?=0.",					 "",					  "" },
-
+	{ SSC_INPUT,		SSC_ARRAY,		 "disp_steplength_end_time",  "End time for dispatch step lengths (hr)",					  "hr",		      "",			 "sys_ctrl_disp_opt",	"?=0.",					 "",					  "" },	
+	{ SSC_INPUT,		SSC_NUMBER,		 "is_run_single_opt",	      "Run only a single optimization horizon",						  "",			  "",			 "sys_ctrl_disp_opt",	"?=0.",					 "",					  "" },
 
 
 
@@ -886,6 +886,12 @@ public:
 		C_csp_solver::S_sim_setup sim_setup;
 		sim_setup.m_sim_time_start = as_double("time_start");		//[s] time at beginning of first time step
 		sim_setup.m_sim_time_end = as_double("time_stop");          //[s] time at end of last time step
+		if (as_boolean("is_run_single_opt"))
+		{
+			sim_setup.m_sim_time_end = sim_setup.m_sim_time_start + as_double("disp_horizon")*3600.;  // Over-ride simulation end time with single optimization horizon end time
+			log(util::format("\nSetting simulation end time to %.0f s", sim_setup.m_sim_time_end), SSC_WARNING);
+		}
+
 		sim_setup.m_allow_exceptions = as_boolean("allow_controller_exceptions");
 
         int steps_per_hour = (int)as_double("time_steps_per_hour");		//[-]
@@ -1677,6 +1683,11 @@ public:
 			tou.mc_dispatch_params.m_w_rec_ht = as_double("q_rec_heattrace");
             tou.mc_dispatch_params.m_is_stochastic_dispatch = as_boolean("is_stochastic_dispatch");
 
+			
+			tou.mc_dispatch_params.m_is_run_single_opt = as_boolean("is_run_single_opt");
+			if (tou.mc_dispatch_params.m_is_run_single_opt)  // Over-ride all other settings of end time and optimization frequency and run only a single optimization horizon
+				tou.mc_dispatch_params.m_optimize_frequency = 8760.;
+
 
 			// Variable step-lengths for real-time dispatch model
 			size_t nsteplengths = 0;
@@ -1793,7 +1804,7 @@ public:
 
 			tou.mc_dispatch_params.m_horizon_update_frequency = tou.mc_dispatch_params.m_optimize_frequency;
 			int horizon_update = as_integer("disp_horizon_update");
-			if (horizon_update > 0)
+			if (horizon_update > 0 && !tou.mc_dispatch_params.m_is_run_single_opt)
 			{
 				if (horizon_update % tou.mc_dispatch_params.m_optimize_frequency == 0)
 					tou.mc_dispatch_params.m_horizon_update_frequency = horizon_update;

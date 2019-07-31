@@ -952,13 +952,20 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 				
 				// update the optimization duration and full time horizon
 				double time_start = mc_kernel.mc_sim_info.ms_ts.m_time - baseline_step;
-						
-				if (mc_tou.mc_dispatch_params.m_horizon_update_frequency != mc_tou.mc_dispatch_params.m_optimize_frequency || disp_time_last < 0)
-					opt_horizon = mc_tou.mc_dispatch_params.m_optimize_horizon - (int)(((int)time_start % (3600 * mc_tou.mc_dispatch_params.m_horizon_update_frequency)) / 3600.);
+				if (mc_tou.mc_dispatch_params.m_is_run_single_opt)  // Run single optimization with the user-specified optimization horizon
+				{
+					opt_duration = mc_tou.mc_dispatch_params.m_optimize_horizon;
+				}
+				else
+				{
 
-				opt_duration = mc_tou.mc_dispatch_params.m_optimize_frequency;  // number of hours for which this optimized solution is applied		
-				if (disp_time_last < 0) // first optimization may have non-standard horizon
-					opt_duration -= (int)(time_start / 3600.) % mc_tou.mc_dispatch_params.m_optimize_frequency;
+					if (disp_time_last < 0 || mc_tou.mc_dispatch_params.m_horizon_update_frequency != mc_tou.mc_dispatch_params.m_optimize_frequency)  // Truncate first optimization horizon if starting time is not an integer multiple of the horizon update frequency
+						opt_horizon = mc_tou.mc_dispatch_params.m_optimize_horizon - (int)(((int)time_start % (3600 * mc_tou.mc_dispatch_params.m_horizon_update_frequency)) / 3600.);
+
+					opt_duration = mc_tou.mc_dispatch_params.m_optimize_frequency;  // number of hours for which this optimized solution is applied		
+					if (disp_time_last < 0) // first optimization may have non-standard horizon
+						opt_duration -= (int)(time_start / 3600.) % mc_tou.mc_dispatch_params.m_optimize_frequency;
+				}
 
 
 

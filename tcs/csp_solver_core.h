@@ -344,7 +344,8 @@ public:
 		double m_pc_level_perm;
 		double m_pc_level_lookahead_perm;
 		double m_storage_buffer;
-
+		
+		bool m_is_run_single_opt;
 		bool m_is_variable_disp_steps;
 		std::vector<double> m_disp_steplength_array;
 		std::vector<double> m_disp_steplength_end_time;
@@ -428,9 +429,12 @@ public:
 			
 			m_storage_buffer = 0.0;			 // Dispatch storage buffer (fraction of capacity)
 			 
+			m_is_run_single_opt = false;		// Run only a single optimziation horizon, overriding all other specifications of simulation end time or optimization frequency
 			m_is_variable_disp_steps = false;	// Use variable step lengths in dispatch model? 
 			m_disp_steplength_array.clear();    // Variable step lengths for real-time dispatch (min)
 			m_disp_steplength_end_time.clear(); // End time [hr] for application of each dispatch step length(min)
+
+			
 
 
         };

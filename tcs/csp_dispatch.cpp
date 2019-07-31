@@ -580,20 +580,21 @@ static void calculate_parameters(csp_dispatch_opt *optinst, unordered_map<std::s
         pars["Wht"] = optinst->params.w_rec_ht;
         pars["eta_cycle"] = optinst->params.eta_cycle_ref;
         pars["Qrsd"] = 0.;      //<< not yet modeled, passing temporarily as zero
-		pars["Qrsb"] = 1.e99;   // receiver standby not yet modeled, passing temporarily as infinite
 
-        pars["s0"] = optinst->params.e_tes_init ;
-		pars["ursu0"] = optinst->params.u_rsu0; 
-		pars["ucsu0"] = optinst->params.u_csu0;
-        pars["y0"] = (optinst->params.is_pb_operating0 ? 1 : 0) ;
-        pars["ycsb0"] = (optinst->params.is_pb_standby0 ? 1 : 0) ;
-        pars["q0"] =  optinst->params.q_pb0 ;
-        pars["Wdot0"] = optinst->params.w_pb0;
         
+		pars["s0"] = optinst->params.e_tes_init;
+
+		pars["y0"] = (optinst->params.is_pb_operating0 ? 1 : 0);
+		pars["ycsb0"] = (optinst->params.is_pb_standby0 ? 1 : 0);
+		pars["ycsu0"] = (optinst->params.is_pb_startup0 ? 1 : 0);
+		pars["q0"] = optinst->params.q_pb0;
+		pars["Wdot0"] = optinst->params.w_pb0;
+		pars["ucsu0"] = optinst->params.u_csu0;
+
 		pars["yr0"] = (optinst->params.is_rec_operating0 ? 1 : 0);
 		pars["yrsb0"] = 0;
 		pars["yrsu0"] = (optinst->params.is_rec_startup0 ? 1 : 0);
-		pars["ycsu0"] = (optinst->params.is_pb_startup0 ? 1 : 0);
+		pars["ursu0"] = optinst->params.u_rsu0;
 		
 		pars["deltal"] = optinst->params.dt_rec_startup;
 		
@@ -602,7 +603,7 @@ static void calculate_parameters(csp_dispatch_opt *optinst, unordered_map<std::s
         for(int i=0; i<(int)optinst->outputs.q_sfavail_expected.nrows(); i++)
             pars["qrecmaxobs"] = optinst->outputs.q_sfavail_expected.at(i,0) > pars["qrecmaxobs"] ? optinst->outputs.q_sfavail_expected.at(i,0) : pars["qrecmaxobs"];
 
-        pars["Qrsb"] = optinst->params.q_rec_standby; // * dq_rsu;     //.02
+		pars["Qrsb"] = 1.e99; //optinst->params.q_rec_standby; // * dq_rsu;     //.02
         pars["M"] = 1.e6;
         pars["W_dot_cycle"] = optinst->params.q_pb_des * optinst->params.eta_cycle_ref;
 		
