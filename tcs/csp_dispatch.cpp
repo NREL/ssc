@@ -556,60 +556,76 @@ static void calculate_parameters(csp_dispatch_opt *optinst, unordered_map<std::s
     the dispatch optimization model. 
     */
 
+		pars["M"] = 1.e6;
         pars["T"] = nt ;
-
+		pars["disp_time_weighting"] = optinst->params.disp_time_weighting;
 		if (optinst->params.is_uniform_dt)
 		{
 			pars["delta"] = optinst->params.dt;
 		}
-        
-		pars["Eu"] = optinst->params.e_tes_max ;
-        pars["Er"] = optinst->params.e_rec_startup ;
-        pars["Ec"] = optinst->params.e_pb_startup_cold ;
-        pars["Qu"] = optinst->params.q_pb_max ;
-        pars["Ql"] = optinst->params.q_pb_min ;
-        pars["Qru"] = optinst->params.e_rec_startup / optinst->params.dt_rec_startup;
-        pars["Qrl"] = optinst->params.q_rec_min ;
 
-        pars["Qb"] = optinst->params.q_pb_standby ;
-        pars["Lr"] = optinst->params.w_rec_pump ;
-        pars["Lc"] = optinst->params.w_cycle_pump;
-        pars["Wh"] = optinst->params.w_track;
-        pars["Wb"] = optinst->params.w_cycle_standby;
-        pars["Ehs"] = optinst->params.w_stow;
-        pars["Wht"] = optinst->params.w_rec_ht;
-        pars["eta_cycle"] = optinst->params.eta_cycle_ref;
-        pars["Qrsd"] = 0.;      //<< not yet modeled, passing temporarily as zero
+		//--- Cost penalties
+		pars["rsu_cost"] = optinst->params.rsu_cost; //952.;
+		pars["csu_cost"] = optinst->params.csu_cost; //10000.;
+		pars["pen_delta_w"] = optinst->params.pen_delta_w; //0.1;
 
-        
+
+		//--- TES parameters
+		pars["Eu"] = optinst->params.e_tes_max;
 		pars["s0"] = optinst->params.e_tes_init;
+		pars["gamma"] = optinst->forecast_params.fc_gamma;  // TES weighting (gamma) and complement (gammac)
+		pars["gammac"] = 1. - pars["gamma"];
+
+
+		//--- Receiver parameters
+		pars["Er"] = optinst->params.e_rec_startup;
+		pars["Qru"] = optinst->params.e_rec_startup / optinst->params.dt_rec_startup;
+		pars["Qrl"] = optinst->params.q_rec_min;
+		pars["Qrsd"] = 0.;      //<< not yet modeled, passing temporarily as zero
+		pars["Qrsb"] = 1.e99; // optinst->params.q_rec_standby;
+		pars["deltal"] = optinst->params.dt_rec_startup;
+		pars["qrecmaxobs"] = 1.;
+		for (int i = 0; i<(int)optinst->outputs.q_sfavail_expected.nrows(); i++)
+			pars["qrecmaxobs"] = optinst->outputs.q_sfavail_expected.at(i, 0) > pars["qrecmaxobs"] ? optinst->outputs.q_sfavail_expected.at(i, 0) : pars["qrecmaxobs"];
+		
+		pars["yr0"] = (optinst->params.is_rec_operating0 ? 1 : 0);
+		pars["yrsb0"] = 0;
+		pars["yrsu0"] = (optinst->params.is_rec_startup0 ? 1 : 0);
+		pars["ursu0"] = optinst->params.u_rsu0;
+
+		//--- Parasitic loads
+		pars["Lr"] = optinst->params.w_rec_pump;
+		pars["Lc"] = optinst->params.w_cycle_pump;
+		pars["Wh"] = optinst->params.w_track;
+		pars["Wb"] = optinst->params.w_cycle_standby;
+		pars["Ehs"] = optinst->params.w_stow;
+		pars["Wht"] = optinst->params.w_rec_ht;
+
+
+		//--- Cycle parameters
+		pars["Ec"] = optinst->params.e_pb_startup_cold;
+		pars["Qu"] = optinst->params.q_pb_max;
+		pars["Ql"] = optinst->params.q_pb_min;
+		pars["Qb"] = optinst->params.q_pb_standby;
+		pars["eta_cycle"] = optinst->params.eta_cycle_ref;
+		pars["W_dot_cycle"] = optinst->params.q_pb_des * optinst->params.eta_cycle_ref;
+		pars["max_up"] = optinst->params.pb_max_rampup;     // Max allowable ramp-up rate (fraction of capacity per hour)
+		pars["max_down"] = optinst->params.pb_max_rampdown; // Max allowable ramp-down rate (fraction of capacity per hour)
+		pars["max_up_v"] = optinst->params.pb_rampup_violation_lim;     // Maximum allowable violation of cycle ramp-up constraint (fraction of capacity per hour)
+		pars["max_down_v"] = optinst->params.pb_rampdown_violation_lim;  // Maximum allowable violation of cycle ramp-down constraint (fraction of capacity per hour)
+		pars["Yu"] = optinst->params.pb_minup;		 // Minimum up time [hr]
+		pars["Yd"] = optinst->params.pb_mindown;   // Minimum down time [hr]
 
 		pars["y0"] = (optinst->params.is_pb_operating0 ? 1 : 0);
 		pars["ycsb0"] = (optinst->params.is_pb_standby0 ? 1 : 0);
 		pars["ycsu0"] = (optinst->params.is_pb_startup0 ? 1 : 0);
 		pars["q0"] = optinst->params.q_pb0;
-		pars["Wdot0"] = optinst->params.w_pb0;
+		//pars["Wdot0"] = optinst->params.w_pb0;  // calculated below based on q0 and efficiency approximation
 		pars["ucsu0"] = optinst->params.u_csu0;
+		pars["tup0"] = (optinst->params.is_pb_operating0) ? optinst->params.pb_persist0 : 0;   // Time up entering this horizon [hr]
+		pars["tstby0"] = (optinst->params.is_pb_standby0) ? optinst->params.pb_persist0 : 0;   // Time in standby entering this horizon [hr]
+		pars["tdown0"] = (!optinst->params.is_pb_operating0 && !optinst->params.is_pb_standby0) ? optinst->params.pb_persist0 : 0; // Time down entering this horizon [hr]
 
-		pars["yr0"] = (optinst->params.is_rec_operating0 ? 1 : 0);
-		pars["yrsb0"] = 0;
-		pars["yrsu0"] = (optinst->params.is_rec_startup0 ? 1 : 0);
-		pars["ursu0"] = optinst->params.u_rsu0;
-		
-		pars["deltal"] = optinst->params.dt_rec_startup;
-		
-		
-		pars["qrecmaxobs"] = 1.;
-        for(int i=0; i<(int)optinst->outputs.q_sfavail_expected.nrows(); i++)
-            pars["qrecmaxobs"] = optinst->outputs.q_sfavail_expected.at(i,0) > pars["qrecmaxobs"] ? optinst->outputs.q_sfavail_expected.at(i,0) : pars["qrecmaxobs"];
-
-		pars["Qrsb"] = 1.e99; //optinst->params.q_rec_standby; // * dq_rsu;     //.02
-        pars["M"] = 1.e6;
-        pars["W_dot_cycle"] = optinst->params.q_pb_des * optinst->params.eta_cycle_ref;
-		
-		/*pars["wlim_min"] = 9.e99;
-		for (int t = 0; t < nt; t++)
-			pars["wlim_min"] = fmin(pars["wlim_min"], optinst->w_lim.at(t));*/
 
         //calculate Z parameters
         pars["Z_1"] = 0.;
@@ -658,9 +674,7 @@ static void calculate_parameters(csp_dispatch_opt *optinst, unordered_map<std::s
         pars["Wdotu"] = (pars["Qu"] - limit1) * pars["etap"];
         pars["Wdotl"] = (pars["Ql"] - limit1) * pars["etap"];
 
-        // TES weighting (gamma) and complement (gammac)
-        pars["gamma"] = optinst->forecast_params.fc_gamma;
-        pars["gammac"] = 1. - pars["gamma"];
+
 
         // Adjust wlim if specified value is too low to permit cycle operation
         int ns = optinst->forecast_params.n_scenarios;
@@ -694,13 +708,6 @@ static void calculate_parameters(csp_dispatch_opt *optinst, unordered_map<std::s
             }
         }
 
-        //temporary fixed constants
-        pars["disp_time_weighting"] = optinst->params.disp_time_weighting;
-        pars["rsu_cost"] = optinst->params.rsu_cost; //952.;
-        pars["csu_cost"] = optinst->params.csu_cost; //10000.;
-        pars["pen_delta_w"] = optinst->params.pen_delta_w; //0.1;
-
-
 
 		// Allowable startup energy per period
 		optinst->outputs.Qc.resize(nt);
@@ -720,26 +727,10 @@ static void calculate_parameters(csp_dispatch_opt *optinst, unordered_map<std::s
 
 
 
-		//--- Cycle ramp rates 
-		pars["max_up"] = optinst->params.pb_max_rampup;     // Max allowable ramp-up rate (fraction of capacity per hour)
-		pars["max_down"] = optinst->params.pb_max_rampdown; // Max allowable ramp-down rate (fraction of capacity per hour)
-
-		pars["max_up_v"] = optinst->params.pb_rampup_violation_lim;     // Maximum allowable violation of cycle ramp-up constraint (fraction of capacity per hour)
-		pars["max_down_v"] = optinst->params.pb_rampdown_violation_lim;  // Maximum allowable violation of cycle ramp-down constraint (fraction of capacity per hour)
-
-												
-		//--- Cycle min up/down time
-		pars["Yu"] = optinst->params.pb_minup;		 // Minimum up time [hr]
-		pars["Yd"] = optinst->params.pb_mindown;  // Minimum down time [hr]
-
-		pars["tup0"] = (optinst->params.is_pb_operating0) ? optinst->params.pb_persist0 : 0;   // Time up entering this horizon [hr]
-		pars["tstby0"] = (optinst->params.is_pb_standby0) ? optinst->params.pb_persist0 : 0;   // Time in standby entering this horizon [hr]
-		pars["tdown0"] = (!optinst->params.is_pb_operating0 && !optinst->params.is_pb_standby0) ? optinst->params.pb_persist0 : 0; // Time down entering this horizon [hr]
 
 
-
-		
-		// Parameters not used in ampl
+		//----------------------------------------------------------------------------------------------------
+		//--- Parameters not used in ampl
 		if (!optinst->solver_params.is_ampl_engine)
 		{
 			//--- Decision permanence [hr]
