@@ -427,7 +427,7 @@ Copyright (C) 2012 Free Software Foundation, Inc.
 This config.status script is free software; the Free Software Foundation
 gives unlimited permission to copy, distribute and modify it."
 
-ac_pwd='/Users/caseyzak/repos/sam_dev/ssc/build_osx'
+ac_pwd='/Users/imacuser/Public/Projects/GitHub/NREL/ssc/build_osx'
 srcdir='../nlopt'
 test -n "$AWK" || AWK=awk
 # The default lists apply if the user does not specify any file.
