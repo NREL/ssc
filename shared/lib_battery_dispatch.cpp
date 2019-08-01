@@ -1483,15 +1483,20 @@ void dispatch_automatic_front_of_meter_t::update_dispatch(size_t hour_of_year, s
 			revenueToPVCharge = _P_pv_dc[idx_year1] > 0 ? *max_ppa_cost * m_etaDischarge - ppa_cost / m_etaPVCharge - m_cycleCost : 0;
 
 			/*! Computed revenue to charge from PV in each of next X hours ($/kWh)*/
+			size_t t_duration = static_cast<size_t>(std::ceilf(_Battery->battery_energy_nominal() / m_batteryPower->powerBatteryChargeMaxDC));
+			size_t pv_hours_on;
 			double revenueToPVChargeMax = 0;
 			if (m_batteryPower->canPVCharge) {
 				std::vector<double> revenueToPVChargeForecast;
 				for (size_t i = idx_year1; i < idx_year1 + idx_lookahead; i++) {
 					// when considering grid charging, require PV output to exceed battery input capacity before accepting as a better option
 					bool system_on = _P_pv_dc[i] >= m_batteryPower->powerBatteryChargeMaxDC ? 1 : 0;
-					revenueToPVChargeForecast.push_back(system_on * (*max_ppa_cost * m_etaDischarge - _ppa_price_rt_series[i] / m_etaPVCharge - m_cycleCost));
+					if (system_on) {
+						revenueToPVChargeForecast.push_back(system_on * (*max_ppa_cost * m_etaDischarge - _ppa_price_rt_series[i] / m_etaPVCharge - m_cycleCost));
+					}
 				}
-				revenueToPVChargeMax = *std::max_element(std::begin(revenueToPVChargeForecast), std::end(revenueToPVChargeForecast));
+				pv_hours_on = revenueToPVChargeForecast.size() / _steps_per_hour;
+				revenueToPVChargeMax = pv_hours_on >= t_duration ? *std::max_element(std::begin(revenueToPVChargeForecast), std::end(revenueToPVChargeForecast)): 0;
 			}
 
 			/*! Economic benefit of charging from clipped PV in current time step to discharge sometime in the next X hours (clipped PV is free) ($/kWh) */
@@ -1517,7 +1522,7 @@ void dispatch_automatic_front_of_meter_t::update_dispatch(size_t hour_of_year, s
 
 			// Increase charge from PV if it is more valuable later than selling now
 			if (m_batteryPower->canPVCharge && 
-				revenueToPVCharge >= revenueToGridChargeMax && 
+				//revenueToPVCharge >= revenueToGridChargeMax && 
 				revenueToPVCharge > 0 &&
 				highChargeValuePeriod && 
 				m_batteryPower->powerPV > 0)
@@ -1545,7 +1550,7 @@ void dispatch_automatic_front_of_meter_t::update_dispatch(size_t hour_of_year, s
 
 			// Also charge from grid if it is valuable to do so, still leaving EnergyToStoreClipped capacity in battery
 			if (m_batteryPower->canGridCharge && 
-				revenueToGridCharge > revenueToPVChargeMax && 
+				revenueToGridCharge >= revenueToPVChargeMax && 
 				revenueToGridCharge > 0 &&
 				highChargeValuePeriod && 
 				energyNeededToFillBattery > 0)
