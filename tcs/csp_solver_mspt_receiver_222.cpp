@@ -132,6 +132,7 @@ C_mspt_receiver_222::C_mspt_receiver_222()
 	m_ncall = -1;
 
 	m_mode_initial = -1;
+	m_E_su_accum_init = 0.0;
 }
 
 void C_mspt_receiver_222::init()
@@ -230,6 +231,12 @@ void C_mspt_receiver_222::init()
 	{
 		m_E_su_prev = m_q_rec_des * m_rec_qf_delay;	//[W-hr] Startup energy
 		m_t_su_prev = m_rec_su_delay;				//[hr] Startup time requirement
+		if (m_mode_initial == C_csp_collector_receiver::STARTUP)
+		{
+			double startup_fraction = m_E_su_accum_init * 1.e6 / (m_q_rec_des * m_rec_qf_delay);
+			m_E_su_prev = std::fmax(0.0, m_q_rec_des * m_rec_qf_delay - m_E_su_accum_init * 1.e6);
+			m_t_su_prev = std::fmax(0.0, m_rec_su_delay * (1.0 - startup_fraction));  // Assume the same initial fraction of startup time and startup energy
+		}
 	}
 	else
 	{

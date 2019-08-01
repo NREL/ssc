@@ -1020,6 +1020,9 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 				dispatch.params.u_csu0 = dispatch.params.is_pb_standby0 ? std::max(0.0, dispatch.params.e_pb_startup_cold - mc_power_cycle.get_remaining_startup_energy()) : 0.0; //kWht
 				dispatch.params.u_rsu0 = dispatch.params.is_rec_startup0 ? std::max(0.0, dispatch.params.e_rec_startup - mc_collector_receiver.get_remaining_startup_energy()) : 0.0; //kWht
 
+				if (time_start - mc_kernel.get_sim_setup()->m_sim_time_start< 1.e-3)   
+					dispatch.params.q_pb0 = mc_tou.mc_dispatch_params.m_pc_q0*1000.;  // User-defined initial thermal input for first time step
+
                 if(dispatch.params.q_pb0 != dispatch.params.q_pb0 )
                     dispatch.params.q_pb0 = 0.;
             
@@ -1049,11 +1052,12 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 				// Note how long the cycle and receiver have been in their current operational state
 				dispatch.params.pb_persist0 = pc_state_persist; 
 				dispatch.params.rec_persist0 = rec_state_persist;
-				if (time_start < 1.e-6)
+				if (time_start - mc_kernel.get_sim_setup()->m_sim_time_start< 1.e-3)
 				{
-					dispatch.params.pb_persist0 = 1000.; // Set a large value for first optimiation so min up/down constraints are not limiting
-					dispatch.params.rec_persist0 = 1000.; 
+					dispatch.params.pb_persist0 = mc_tou.mc_dispatch_params.m_pc_persist_0; 
+					dispatch.params.rec_persist0 = mc_tou.mc_dispatch_params.m_rec_persist_0;
 				}
+
 
 
                 //-- Update time-indexed dispatch inputs

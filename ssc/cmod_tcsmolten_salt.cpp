@@ -331,9 +331,19 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
 	{ SSC_INPUT,		SSC_NUMBER,		 "allow_controller_exceptions",   "Allow controller exceptions? (1 = true)",				  "-",		      "",			 "sys_ctrl",		 "?=1",						 "",					  "" },
 	{ SSC_INPUT,		SSC_ARRAY,		 "select_simulation_days",   "Selected subset of simulation days",							  "-",		      "",			 "sys_ctrl",		 "?=0",						 "",					  "" },
     
-	{ SSC_INPUT,		SSC_NUMBER,		 "is_rec_on_initial",	 "Is receiver initially on?",										  "-",		      "",			 "sys_ctrl",		 "?=0",						 "",					  "" },
-	{ SSC_INPUT,		SSC_NUMBER,		 "is_pc_on_initial",	 "Is power cycle initially on?",									  "-",		      "",			 "sys_ctrl",		 "?=0",						 "",					  "" },
-	{ SSC_INPUT,		SSC_NUMBER,		 "is_pc_standby_initial", "Is power cycle initially in standby?",							  "-",		      "",			 "sys_ctrl",		 "?=0",						 "",					  "" },
+	
+	{ SSC_INPUT,		SSC_NUMBER,		 "is_rec_on_initial",		    "Is receiver initially on?",								  "-",		      "",			 "sys_ctrl",		 "?=0",						 "",					  "" },
+	{ SSC_INPUT,		SSC_NUMBER,		 "is_rec_startup_initial",	    "Is receiver initially starting up?",						  "-",		      "",			 "sys_ctrl",		 "?=0",						 "",					  "" },
+	{ SSC_INPUT,		SSC_NUMBER,		 "rec_startup_energy_initial",	"Receiver accumulated startup inventory ",					  "MWht",		  "",			 "sys_ctrl",		 "?=0",						 "",					  "" },
+	{ SSC_INPUT,		SSC_NUMBER,		 "is_pc_on_initial",			"Is power cycle initially on?",								  "-",		      "",			 "sys_ctrl",		 "?=0",						 "",					  "" },
+	{ SSC_INPUT,		SSC_NUMBER,		 "is_pc_standby_initial",	    "Is power cycle initially in standby?",						  "-",		      "",			 "sys_ctrl",		 "?=0",						 "",					  "" },
+	{ SSC_INPUT,		SSC_NUMBER,		 "is_pc_startup_initial",	    "Is power cycle initially starting up?",					  "-",		      "",			 "sys_ctrl",		 "?=0",						 "",					  "" },
+	{ SSC_INPUT,		SSC_NUMBER,		 "pc_startup_energy_initial",	"Cycle accumulated startup inventory",						  "MWht",		  "",			 "sys_ctrl",		 "?=0",						 "",					  "" },
+	
+	{ SSC_INPUT,		SSC_NUMBER,		 "disp_pc_q0",					"Cycle thermal power at start of simulation",				  "MWt",		  "",			 "sys_ctrl_disp_opt","?=0",						 "",					  "" },
+	{ SSC_INPUT,		SSC_NUMBER,		 "disp_pc_persist0",			"Initial duration cycle has been in same state ",			  "hr",			  "",			 "sys_ctrl_disp_opt","?=1000.",					 "",					  "" },
+	{ SSC_INPUT,		SSC_NUMBER,		 "disp_rec_persist0",			"Initial duration receiver has been in same state",			  "hr",			  "",			 "sys_ctrl_disp_opt","?=1000.",					 "",					  "" },
+
 
 	{ SSC_INPUT,		SSC_NUMBER,		 "is_dispatch_targets",	 "Run solution from user-specified dispatch targets?",				  "-",		      "",			 "sys_ctrl",		 "?=0",						 "",					  "" },
 	{ SSC_INPUT,		SSC_ARRAY,		 "q_pc_target_in",		 "User-provided target thermal power to PC",						  "MWt",		  "",			 "sys_ctrl",		 "is_dispatch_targets=1",	 "",					  "" },
@@ -948,14 +958,14 @@ public:
 
 			pc->m_mode_initial = C_csp_power_cycle::OFF; 
 			if (as_boolean("is_pc_on_initial"))
-			{
 				pc->m_mode_initial = C_csp_power_cycle::ON;
-				if (as_boolean("is_pc_standby_initial"))
-					throw exec_error("tcsmolten_salt", "Both 'is_pc_on_initial' and 'is_pc_standby_initial' were set to true.");
-			}
 			else if (as_boolean("is_pc_standby_initial"))
 				pc->m_mode_initial = C_csp_power_cycle::STANDBY;
-
+			else if (as_boolean("is_pc_startup_initial"))
+			{
+				pc->m_mode_initial = C_csp_power_cycle::STARTUP_CONTROLLED;
+				pc->m_startup_energy_accum_init = as_double("pc_startup_energy_initial");
+			}
 
 
 			if (pb_tech_type == 0)
@@ -1018,7 +1028,7 @@ public:
 		{
 			int is_sco2_preprocess = as_integer("is_sco2_preprocess");
 
-			if (as_boolean("is_pc_on_initial")||as_boolean("is_pc_standby_initial"))
+			if (as_boolean("is_pc_on_initial")||as_boolean("is_pc_standby_initial") || as_boolean("is_pc_standby_initial"))
 				throw exec_error("tcsmolten_salt", "User-defined cycle initial state not currently enabled for sCO2 cycle.");
 
 			if (is_sco2_preprocess == 1)
@@ -1576,6 +1586,14 @@ public:
 		receiver.m_mode_initial = C_csp_collector_receiver::OFF;
 		if (as_boolean("is_rec_on_initial"))
 			receiver.m_mode_initial = C_csp_collector_receiver::ON;
+		if (as_boolean("is_rec_startup_initial"))
+		{
+			receiver.m_mode_initial = C_csp_collector_receiver::STARTUP;
+			receiver.m_E_su_accum_init = as_double("rec_startup_energy_initial");
+		}
+
+
+		
 
 
 		// Set parameters that were set with TCS defaults
@@ -1683,7 +1701,11 @@ public:
 			tou.mc_dispatch_params.m_w_rec_ht = as_double("q_rec_heattrace");
             tou.mc_dispatch_params.m_is_stochastic_dispatch = as_boolean("is_stochastic_dispatch");
 
-			
+			tou.mc_dispatch_params.m_pc_persist_0 = as_double("disp_pc_persist0");
+			tou.mc_dispatch_params.m_rec_persist_0 = as_double("disp_rec_persist0");
+			tou.mc_dispatch_params.m_pc_q0 = as_double("disp_pc_q0");
+
+
 			tou.mc_dispatch_params.m_is_run_single_opt = as_boolean("is_run_single_opt");
 			if (tou.mc_dispatch_params.m_is_run_single_opt)  // Over-ride all other settings of end time and optimization frequency and run only a single optimization horizon
 				tou.mc_dispatch_params.m_optimize_frequency = 8760.;

@@ -350,6 +350,9 @@ public:
 		std::vector<double> m_disp_steplength_array;
 		std::vector<double> m_disp_steplength_end_time;
 
+		double m_pc_q0;
+		double m_pc_persist_0;
+		double m_rec_persist_0;
 
         S_csp_tou_params()
         {
@@ -434,9 +437,9 @@ public:
 			m_disp_steplength_array.clear();    // Variable step lengths for real-time dispatch (min)
 			m_disp_steplength_end_time.clear(); // End time [hr] for application of each dispatch step length(min)
 
-			
-
-
+			m_pc_q0 = 0.0;   
+			m_pc_persist_0 = 1000.;
+			m_rec_persist_0 = 1000.;
         };
 
     } mc_dispatch_params;

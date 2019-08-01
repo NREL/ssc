@@ -157,6 +157,7 @@ public:
 		double m_htf_pump_coef;		//[kW/kg/s] Pumping power to move 1 kg/s of HTF through power cycle
 
 		int m_mode_initial;			//Operating mode at start of simulation
+		double m_startup_energy_accum_init;  // [MWht] Initial accumulated startup energy at start of the simulation 
 
 		int m_pc_fl;				//[-] integer flag identifying Heat Transfer Fluid (HTF) in power block {1-27}
 		util::matrix_t<double> m_pc_fl_props;
@@ -212,6 +213,8 @@ public:
 				m_T_amb_low = m_T_amb_high =
 				m_m_dot_htf_low = m_m_dot_htf_high =				
 				m_W_dot_cooling_des = m_m_dot_water_des = std::numeric_limits<double>::quiet_NaN();
+
+			m_startup_energy_accum_init = 0.0;
 		}
 	};
 

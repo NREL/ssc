@@ -149,6 +149,7 @@ public:
 	double m_A_sf;					//[m2]
 
 	int m_mode_initial;
+	double m_E_su_accum_init;    //Initial accumulated startup energy [MWht]
 
 	// 8.10.2015 twn: add tower piping thermal losses to receiver performance
 	double m_pipe_loss_per_m;		//[Wt/m]
