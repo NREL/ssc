@@ -157,7 +157,7 @@
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <DisableSpecificWarnings>4456; 4244</DisableSpecificWarnings>
       <AdditionalOptions>/w44191 /w44242  /w44263 /w44264 /w44265 /w44266 /w44302 /w44388 /w44826 /w44905 /w44906 /w44928 %(AdditionalOptions)</AdditionalOptions>
-      <TreatWarningAsError>true</TreatWarningAsError>
+      <TreatWarningAsError>false</TreatWarningAsError>
       <ExceptionHandling>Async</ExceptionHandling>
     </ClCompile>
     <Link>

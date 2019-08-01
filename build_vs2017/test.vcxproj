@@ -33,6 +33,8 @@
     <ClCompile Include="..\test\ssc_test\cmod_geothermal_costs_test.cpp" />
     <ClCompile Include="..\test\ssc_test\cmod_geothermal_test.cpp" />
     <ClCompile Include="..\test\ssc_test\cmod_generic_test.cpp" />
+    <ClCompile Include="..\test\ssc_test\cmod_mhk_tidal_test.cpp" />
+    <ClCompile Include="..\test\ssc_test\cmod_mhk_wave_test.cpp" />
     <ClCompile Include="..\test\ssc_test\cmod_grid_test.cpp" />
     <ClCompile Include="..\test\ssc_test\cmod_pvsamv1_test.cpp" />
     <ClCompile Include="..\test\shared_test\lib_windwakemodel_test.cpp" />
@@ -41,6 +43,7 @@
     <ClCompile Include="..\test\ssc_test\cmod_pvyield_test.cpp" />
     <ClCompile Include="..\test\ssc_test\cmod_swh_test.cpp" />
     <ClCompile Include="..\test\ssc_test\cmod_tcsdirect_steam_test.cpp" />
+    <ClCompile Include="..\test\ssc_test\cmod_tcsfresnel_molten_salt_test.cpp" />
     <ClCompile Include="..\test\ssc_test\cmod_tcsmolten_salt_test.cpp" />
     <ClCompile Include="..\test\ssc_test\cmod_tcstrough_empirical_test.cpp" />
     <ClCompile Include="..\test\ssc_test\cmod_tcstrough_physical_test.cpp" />
@@ -59,6 +62,8 @@
     <ClInclude Include="..\test\input_cases\geothermal_common_data.h" />
     <ClInclude Include="..\test\input_cases\geothermal_costs_common_data.h" />
     <ClInclude Include="..\test\input_cases\generic_common_data.h" />
+    <ClInclude Include="..\test\input_cases\mhk\mhk_tidal_inputs.h" />
+    <ClInclude Include="..\test\input_cases\mhk\mhk_wave_inputs.h" />
     <ClInclude Include="..\test\input_cases\grid_common_data.h" />
     <ClInclude Include="..\test\input_cases\pvsamv1_cases.h" />
     <ClInclude Include="..\test\input_cases\pvsamv1_common_data.h" />
@@ -86,12 +91,15 @@
     <ClInclude Include="..\test\ssc_test\cmod_geothermal_costs_test.h" />
     <ClInclude Include="..\test\ssc_test\cmod_geothermal_test.h" />
     <ClInclude Include="..\test\ssc_test\cmod_generic_test.h" />
+    <ClInclude Include="..\test\ssc_test\cmod_mhk_tidal_test.h" />
+    <ClInclude Include="..\test\ssc_test\cmod_mhk_wave_test.h" />
     <ClInclude Include="..\test\ssc_test\cmod_grid_test.h" />
     <ClInclude Include="..\test\ssc_test\cmod_pvsamv1_test.h" />
     <ClInclude Include="..\test\ssc_test\cmod_pvwattsv5_test.h" />
     <ClInclude Include="..\test\ssc_test\cmod_pvyield_test.h" />
     <ClInclude Include="..\test\ssc_test\cmod_swh_test.h" />
     <ClInclude Include="..\test\ssc_test\cmod_tcsdirect_steam_test.h" />
+    <ClInclude Include="..\test\ssc_test\cmod_tcsfresnel_molten_salt_test.h" />
     <ClInclude Include="..\test\ssc_test\cmod_tcsmolten_salt_test.h" />
     <ClInclude Include="..\test\ssc_test\cmod_tcstrough_empirical_test.h" />
     <ClInclude Include="..\test\ssc_test\cmod_trough_physical_iph_test.h" />
@@ -101,6 +109,8 @@
     <ClInclude Include="..\test\ssc_test\simulation_test_info.h" />
     <ClInclude Include="..\test\tcs_test\tcsdirect_steam_cases.h" />
     <ClInclude Include="..\test\tcs_test\tcsdirect_steam_common_data.h" />
+    <ClInclude Include="..\test\tcs_test\tcsfresnel_molten_salt_cases.h" />
+    <ClInclude Include="..\test\tcs_test\tcsfresnel_molten_salt_common_data.h" />
     <ClInclude Include="..\test\tcs_test\tcsmolten_salt_cases.h" />
     <ClInclude Include="..\test\tcs_test\tcsmolten_salt_common_data.h" />
     <ClInclude Include="..\test\tcs_test\tcstrough_empirical_cases.h" />
@@ -144,7 +154,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>$(SSCDIR)\test;$(GTEST)\googletest\include;$(SSCDIR);$(SSCDIR)\lpsolve;$(SSCDIR)\shared;$(SSCDIR)\splinter;$(SSCDIR)\tcs;$(SSCDIR)\solarpilot;$(SSCDIR)\ssc</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SSCDIR)\test;$(GTEST)\googletest\include\;$(SSCDIR);$(SSCDIR)\lpsolve;$(SSCDIR)\shared;$(SSCDIR)\splinter;$(SSCDIR)\tcs;$(SSCDIR)\solarpilot;$(SSCDIR)\ssc</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <AdditionalOptions>/wd4244 %(AdditionalOptions)</AdditionalOptions>
@@ -164,11 +174,11 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>$(SSCDIR)\test;$(GTEST)\googletest\include;$(SSCDIR);$(SSCDIR)\lpsolve;$(SSCDIR)\shared;$(SSCDIR)\splinter;$(SSCDIR)\tcs;$(SSCDIR)\solarpilot;$(SSCDIR)\ssc</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SSCDIR)\test;$(GTEST)\googletest\include\;$(SSCDIR);$(SSCDIR)\lpsolve;$(SSCDIR)\shared;$(SSCDIR)\splinter;$(SSCDIR)\tcs;$(SSCDIR)\solarpilot;$(SSCDIR)\ssc</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <DisableSpecificWarnings>4305</DisableSpecificWarnings>
       <AdditionalOptions>/wd4244 %(AdditionalOptions)</AdditionalOptions>
-      <TreatWarningAsError>true</TreatWarningAsError>
+      <TreatWarningAsError>false</TreatWarningAsError>
       <ExceptionHandling>Async</ExceptionHandling>
     </ClCompile>
     <Link>

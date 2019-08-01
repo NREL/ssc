@@ -75,7 +75,7 @@ public:
 		add_var_info(_cm_vtab_pv_get_shade_loss_mpp);
 	}
 
-	void exec() throw(general_error)
+	void exec() override
 	{
 
 		size_t nrec, count;

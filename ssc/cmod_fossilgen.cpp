@@ -42,7 +42,7 @@ public:
 		add_var_info( _cm_vtab_fossilgen );
 	}
 
-	void exec( ) throw( general_error )
+	void exec( )
 	{
 
 		ssc_number_t output = 8760*as_number("nameplate")

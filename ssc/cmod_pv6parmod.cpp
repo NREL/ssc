@@ -84,7 +84,7 @@ public:
 		add_var_info( _cm_vtab_pv6parmod );
 	}
 
-	void exec( ) throw( general_error )
+	void exec( )
 	{
 		size_t arr_len;
 		ssc_number_t *p_poabeam = as_array( "poa_beam", &arr_len );

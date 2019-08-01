@@ -978,7 +978,7 @@ public:
 		add_var_info( _cm_vtab_pvwattsv0 );
 	}
 
-	void exec( ) throw( general_error )
+	void exec( )
 	{
 		const char *file = as_string("file_name");
 

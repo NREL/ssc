@@ -85,7 +85,7 @@ public:
 		add_var_info( _cm_vtab_pvwattsv1_1ts );
 	}
 
-	void exec( ) throw( general_error )
+	void exec( )
 	{				
 
 		int year = as_integer("year");

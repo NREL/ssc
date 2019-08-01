@@ -271,7 +271,7 @@ public:
 		return reduc;
 	}
 
-	void exec( ) throw( general_error )
+	void exec( )
 	{
 		// open the weather file
 		// define variables consistent across subarrays

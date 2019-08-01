@@ -1,3 +1,4 @@
+#include <math.h>
 #include <gtest/gtest.h>
 
 #include "lib_battery_dispatch_test.h"

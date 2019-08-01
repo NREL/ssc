@@ -62,7 +62,7 @@ namespace CSP
     template<typename T>
     bool isequal(T a, T b)
     {
-        return std::abs(a - b) <= std::min(std::abs(a), std::abs(b)) * typename std::numeric_limits<T>::epsilon();
+        return std::abs(a - b) <= std::min(std::abs(a), std::abs(b)) * std::numeric_limits<T>::epsilon();
     }
 
 	int TOU_Reader(double *TOUSched, double time_sec, int nTOUSched=8760);

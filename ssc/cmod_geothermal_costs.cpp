@@ -271,9 +271,7 @@ public:
 	}
 
 
-
-
-	void exec() throw(general_error)
+	void exec() override
 	{
 		SGeothermal_Inputs geo_inputs;
 		int conversion_type = as_integer("conversion_type");

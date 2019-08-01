@@ -25,6 +25,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <vector>
 #include "lib_util.h"
+#include "lib_physics.h"
 
 /**
  * windTurbine class stores characteristics of turbine used in simulation and the power curve arrays,
@@ -41,6 +42,7 @@ private:
 						densityCorrectedWS,
 						powerCurveRPM;
 	double cutInSpeed;
+	double previousAirDensity;
 public:
 
 	std::vector<double> getPowerCurveWS(){ return powerCurveWS; }
@@ -56,20 +58,22 @@ public:
 		measurementHeight = -999;
 		hubHeight = -999;
 		rotorDiameter = -999;
-		lossesAbsolute = -999;
-		lossesPercent = -999;
+		lossesAbsolute = 0;
+		lossesPercent = 0;
+        previousAirDensity = physics::AIR_DENSITY_SEA_LEVEL;
 	}
 	bool setPowerCurve(std::vector<double> windSpeeds, std::vector<double> powerOutput);
 	
 	double tipSpeedRatio(double windSpeed);
 
 	bool isInitialized(){
-		if (shearExponent != -999 && measurementHeight != -999 && hubHeight != -999 && rotorDiameter != -999 && lossesAbsolute != -999 && lossesPercent != -999){
+		if (shearExponent != -999 && measurementHeight != -999 && hubHeight != -999 && rotorDiameter != -999){
 			if (powerCurveArrayLength > 0) return true;
 		}
 		return false;
 	}
-	void turbinePower(double windVelocity, double airDensity, double *turbineOutput, double *thrustCoefficient);
+	void turbinePower(double windVelocity, double airDensity, double *turbineOutput, double *turbineGross,
+                      double *thrustCoefficient);
 	double calculateEff(double reducedPower, double originalPower) {
 		double Eff = 0.0;
 		if (originalPower < 0.0)
@@ -114,7 +118,7 @@ public:
 	simpleWakeModel(){ nTurbines = 0; }
 	simpleWakeModel(size_t numberOfTurbinesInFarm, windTurbine* wt){ nTurbines = numberOfTurbinesInFarm; wTurbine = wt; }
 	virtual ~simpleWakeModel() {};
-	std::string getModelName(){ return "PQ"; }
+	std::string getModelName() override { return "PQ"; }
 
 	void wakeCalculations(
 		/*INPUTS*/
@@ -128,7 +132,7 @@ public:
 		double thrust[],					// thrust coefficient at each WT
 		double windSpeed[],					// wind speed at each WT
 		double turbulenceIntensity[]		// turbulence intensity at each WT
-	);
+	) override;
 };
 
 /**
@@ -140,7 +144,7 @@ public:
 class parkWakeModel : public wakeModelBase{
 private:
 	double rotorDiameter;
-	double wakeDecayCoefficient = 0.07, 
+	double wakeDecayCoefficient = 0.07,
 		   minThrustCoeff = 0.02;
 	double delta_V_Park(double dVelFreeStream, double dVelUpwind, double dDistCrossWind, double dDistDownWind, double dRadiusUpstream, double dRadiusDownstream, double dThrustCoeff);
 	double circle_overlap(double dist_center_to_center, double rad1, double rad2);
@@ -149,7 +153,7 @@ public:
 	parkWakeModel(){ nTurbines = 0; }
 	parkWakeModel(size_t numberOfTurbinesInFarm, windTurbine* wt){ nTurbines = numberOfTurbinesInFarm; wTurbine = wt; }
 	virtual ~parkWakeModel() {};
-	std::string getModelName(){ return "Park"; }
+	std::string getModelName() override { return "Park"; }
 	void setRotorDiameter(double d){ rotorDiameter = d; }
 	void wakeCalculations(
 		/*INPUTS*/
@@ -163,7 +167,7 @@ public:
 		double thrust[],					// thrust coefficient at each WT
 		double windSpeed[],					// wind speed at each WT
 		double turbulenceIntensity[]		// turbulence intensity at each WT
-	);
+	) override;
 };
 
 /**
@@ -245,7 +249,7 @@ public:
 		matEVWakeWidths.resize_fill(nTurbines, (int)(maxRotorDiameters / axialResolution) + 1, 0.0); // each turbine is row, each col is wake deficit for that turbine at dist
 	}
 	virtual ~eddyViscosityWakeModel() {};
-	std::string getModelName(){ return "FastEV"; }
+	std::string getModelName() override { return "FastEV"; }
 
 	void wakeCalculations(
 		/*INPUTS*/
@@ -259,7 +263,36 @@ public:
 		double thrust[],					// thrust coefficient at each WT
 		double windSpeed[],					// wind speed at each WT
 		double turbulenceIntensity[]		// turbulence intensity at each WT
-		);
+		) override;
+};
+
+/**
+* constantWakeModel derates the wind power output by a constant percentage.
+*/
+
+class constantWakeModel : public wakeModelBase
+{
+    double derate;
+public:
+    constantWakeModel(size_t nTurbs, windTurbine* wt, double derate_multiplier){
+        nTurbines = nTurbs;
+        wTurbine = wt;
+        derate = derate_multiplier;
+    }
+    std::string getModelName() override { return "Constant"; }
+    void wakeCalculations (
+            /*INPUTS*/
+            const double airDensity,					// not used in this model
+            const double distanceDownwind[],			// downwind coordinate of each WT
+            const double distanceCrosswind[],			// crosswind coordinate of each WT
+
+            /*OUTPUTS*/
+            double power[],
+            double eff[],
+            double thrust[],					// thrust coefficient at each WT
+            double windSpeed[],					// wind speed at each WT
+            double turbulenceIntensity[]		// turbulence intensity at each WT
+            ) override;
 };
 
 #endif

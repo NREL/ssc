@@ -260,7 +260,7 @@ public:
 		add_var_info(_cm_vtab_sco2_csp_system);
 	}
 
-	void exec() throw(general_error)
+	void exec() override
 	{
 		C_sco2_phx_air_cooler c_sco2_cycle;
 

@@ -93,7 +93,7 @@ class cm_sp_ty : public compute_module
 
 
 
-	void exec( ) throw( general_error )
+	void exec( )
 	{
 		// Input Simulation Parameters:
 		double DNI_cutoff = 250.0;		            //[W/m2]
