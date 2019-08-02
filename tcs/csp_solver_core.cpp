@@ -1,24 +1,51 @@
-/**
-BSD-3-Clause
-Copyright 2019 Alliance for Sustainable Energy, LLC
-Redistribution and use in source and binary forms, with or without modification, are permitted provided 
-that the following conditions are met :
-1.	Redistributions of source code must retain the above copyright notice, this list of conditions 
-and the following disclaimer.
-2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions 
-and the following disclaimer in the documentation and/or other materials provided with the distribution.
-3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse 
-or promote products derived from this software without specific prior written permission.
-
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, 
-INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
-ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES 
-DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, 
-OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; 
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
-WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT 
-OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*/
+/*******************************************************************************************************
+*  Copyright 2017 Alliance for Sustainable Energy, LLC
+*
+*  NOTICE: This software was developed at least in part by Alliance for Sustainable Energy, LLC
+*  (“Alliance”) under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
+*  The Government retains for itself and others acting on its behalf a nonexclusive, paid-up,
+*  irrevocable worldwide license in the software to reproduce, prepare derivative works, distribute
+*  copies to the public, perform publicly and display publicly, and to permit others to do so.
+*
+*  Redistribution and use in source and binary forms, with or without modification, are permitted
+*  provided that the following conditions are met:
+*
+*  1. Redistributions of source code must retain the above copyright notice, the above government
+*  rights notice, this list of conditions and the following disclaimer.
+*
+*  2. Redistributions in binary form must reproduce the above copyright notice, the above government
+*  rights notice, this list of conditions and the following disclaimer in the documentation and/or
+*  other materials provided with the distribution.
+*
+*  3. The entire corresponding source code of any redistribution, with or without modification, by a
+*  research entity, including but not limited to any contracting manager/operator of a United States
+*  National Laboratory, any institution of higher learning, and any non-profit organization, must be
+*  made publicly available under this license for as long as the redistribution is made available by
+*  the research entity.
+*
+*  4. Redistribution of this software, without modification, must refer to the software by the same
+*  designation. Redistribution of a modified version of this software (i) may not refer to the modified
+*  version by the same designation, or by any confusingly similar designation, and (ii) must refer to
+*  the underlying software originally provided by Alliance as “System Advisor Model” or “SAM”. Except
+*  to comply with the foregoing, the terms “System Advisor Model”, “SAM”, or any confusingly similar
+*  designation may not be used to refer to any modified version of this software or any modified
+*  version of the underlying software originally provided by Alliance without the prior written consent
+*  of Alliance.
+*
+*  5. The name of the copyright holder, contributors, the United States Government, the United States
+*  Department of Energy, or any of their employees may not be used to endorse or promote products
+*  derived from this software without specific prior written permission.
+*
+*  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
+*  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
+*  FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER,
+*  CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES DEPARTMENT OF ENERGY, NOR ANY OF THEIR
+*  EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+*  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+*  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+*  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
+*  THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*******************************************************************************************************/
 
 #include "csp_solver_core.h"
 #include "csp_solver_util.h"
@@ -494,11 +521,7 @@ void C_csp_solver::init()
 	m_cycle_P_hot_des = pc_solved_params.m_P_hot_des;					//[kPa]
 	m_cycle_x_hot_des = pc_solved_params.m_x_hot_des;					//[-]
 		// TES
-    C_csp_tes::S_csp_tes_init_inputs tes_init_inputs;
-    tes_init_inputs.T_to_cr_at_des = cr_solved_params.m_T_htf_cold_des;
-    tes_init_inputs.T_from_cr_at_des = cr_solved_params.m_T_htf_hot_des;
-    tes_init_inputs.P_to_cr_at_des = cr_solved_params.m_dP_sf;
-	mc_tes.init(tes_init_inputs);
+	mc_tes.init();
 		// TOU
     mc_tou.mc_dispatch_params.m_isleapyear = mc_weather.ms_solved_params.m_leapyear;
 	mc_tou.init();
@@ -578,6 +601,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 		dispatch.params.messages = &mc_csp_messages;
 
 		dispatch.params.dt = 1./(double)mc_tou.mc_dispatch_params.m_disp_steps_per_hour;  //hr
+		//ADD dt2?
 		dispatch.params.dt_pb_startup_cold = mc_power_cycle.get_cold_startup_time();
 		dispatch.params.dt_pb_startup_hot = mc_power_cycle.get_hot_startup_time();
 		dispatch.params.q_pb_standby = mc_power_cycle.get_standby_energy_requirement()*1000.;
@@ -589,7 +613,6 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 		dispatch.params.q_rec_min = mc_collector_receiver.get_min_power_delivery()*1000.;
 		dispatch.params.w_rec_pump = mc_collector_receiver.get_pumping_parasitic_coef();
 
-
 		dispatch.params.e_tes_init = mc_tes.get_initial_charge_energy() * 1000;
 		dispatch.params.e_tes_min = mc_tes.get_min_charge_energy() * 1000;
 		dispatch.params.e_tes_max = mc_tes.get_max_charge_energy() * 1000;
@@ -600,17 +623,18 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 		dispatch.params.q_pb_des = m_cycle_q_dot_des*1000.;
 		dispatch.params.eta_cycle_ref = mc_power_cycle.get_efficiency_at_load(1.);
 
-        dispatch.params.disp_time_weighting = mc_tou.mc_dispatch_params.m_disp_time_weighting;
-		dispatch.params.rsu_cost = mc_tou.mc_dispatch_params.m_rsu_cost;
-		dispatch.params.csu_cost = mc_tou.mc_dispatch_params.m_csu_cost;
-		dispatch.params.pen_delta_w = mc_tou.mc_dispatch_params.m_pen_delta_w;
-		dispatch.params.q_rec_standby = mc_tou.mc_dispatch_params.m_q_rec_standby;
+        dispatch.params.disp_time_weighting = mc_tou.mc_dispatch_params.m_disp_time_weighting;	//
+		dispatch.params.rsu_cost = mc_tou.mc_dispatch_params.m_rsu_cost;	//
+		dispatch.params.csu_cost = mc_tou.mc_dispatch_params.m_csu_cost;	//
+		dispatch.params.pen_delta_w = mc_tou.mc_dispatch_params.m_pen_delta_w;	//
+		dispatch.params.q_rec_standby = mc_tou.mc_dispatch_params.m_q_rec_standby;	//
 		
-		dispatch.params.w_rec_ht = mc_tou.mc_dispatch_params.m_w_rec_ht;
+		dispatch.params.w_rec_ht = mc_tou.mc_dispatch_params.m_w_rec_ht;	//
 		dispatch.params.w_track = mc_collector_receiver.get_tracking_power()*1000.0;	//kWe
 		dispatch.params.w_stow = mc_collector_receiver.get_col_startup_power()*1000.0;	//kWe-hr
 		dispatch.params.w_cycle_pump = mc_power_cycle.get_htf_pumping_parasitic_coef();// kWe/kWt
 		dispatch.params.w_cycle_standby = dispatch.params.q_pb_standby*dispatch.params.w_cycle_pump; //kWe
+		dispatch.params.w_ramp_limit = mc_tou.mc_dispatch_params.m_w_ramp_limit;	//kWe
 
 		//Cycle efficiency
 		dispatch.params.eff_table_load.clear();
@@ -649,7 +673,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 
 	}
     
-
+	dispatch.params.counter = mc_tou.mc_dispatch_params.m_counter;
         //solver parameters
     dispatch.solver_params.max_bb_iter = mc_tou.mc_dispatch_params.m_max_iterations;
     dispatch.solver_params.mip_gap = mc_tou.mc_dispatch_params.m_mip_gap;
@@ -685,6 +709,44 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 
 	double progress_msg_interval_frac = 0.02;
 	double progress_msg_frac_current = progress_msg_interval_frac;
+
+	dispatch.params.alpha = mc_tou.mc_dispatch_params.m_alpha;
+
+	//if hybrid system turned on
+	if (mc_tou.mc_dispatch_params.m_hybrid_optimize)
+	{
+		dispatch.params.batt_slope_coeff = mc_tou.mc_dispatch_params.m_batt_slope_coeff;
+		dispatch.params.batt_int_coeff = mc_tou.mc_dispatch_params.m_batt_int_coeff;
+		dispatch.params.slope_int_plus = mc_tou.mc_dispatch_params.m_slope_int_plus;
+		dispatch.params.slope_int_minus = mc_tou.mc_dispatch_params.m_slope_int_minus;
+		dispatch.params.slope_plus = mc_tou.mc_dispatch_params.m_slope_plus;
+		dispatch.params.slope_minus = mc_tou.mc_dispatch_params.m_slope_minus;
+		dispatch.params.batt_capacity = mc_tou.mc_dispatch_params.m_batt_capacity;
+		dispatch.params.i_expected = mc_tou.mc_dispatch_params.m_i_expected;
+		dispatch.params.batt_charge_lb = mc_tou.mc_dispatch_params.m_batt_charge_lb;
+		dispatch.params.batt_charge_ub = mc_tou.mc_dispatch_params.m_batt_charge_ub;
+		dispatch.params.batt_discharge_lb = mc_tou.mc_dispatch_params.m_batt_discharge_lb;
+		dispatch.params.batt_discharge_ub = mc_tou.mc_dispatch_params.m_batt_discharge_ub;
+		dispatch.params.batt_pr_min = mc_tou.mc_dispatch_params.m_batt_pr_min;
+		dispatch.params.batt_pr_max = mc_tou.mc_dispatch_params.m_batt_pr_max;
+		dispatch.params.batt_res = mc_tou.mc_dispatch_params.m_batt_res;
+		dispatch.params.batt_soc_min = mc_tou.mc_dispatch_params.m_batt_soc_min;
+		dispatch.params.batt_soc_max = mc_tou.mc_dispatch_params.m_batt_soc_max;
+
+		dispatch.params.w_dc_pl = mc_tou.mc_dispatch_params.m_w_dc_pl;
+		dispatch.params.alpha_pv = mc_tou.mc_dispatch_params.m_alpha_pv;
+		dispatch.params.beta_pv = mc_tou.mc_dispatch_params.m_beta_pv;
+
+		dispatch.params.rec_helio_cost = mc_tou.mc_dispatch_params.m_rec_helio_cost / 1000;
+		dispatch.params.pc_cost = mc_tou.mc_dispatch_params.m_pc_cost / 1000;
+		dispatch.params.pc_sb_cost = mc_tou.mc_dispatch_params.m_pc_sb_cost / 1000;
+		dispatch.params.pv_field_cost = mc_tou.mc_dispatch_params.m_pv_field_cost / 1000;
+		dispatch.params.batt_charge_cost = mc_tou.mc_dispatch_params.m_batt_charge_cost / 1000;
+		dispatch.params.batt_discharge_cost = mc_tou.mc_dispatch_params.m_batt_discharge_cost / 1000;
+		dispatch.params.batt_lifecycle_cost = mc_tou.mc_dispatch_params.m_batt_lifecycle_cost;
+		dispatch.params.pen_rec_hot_su = mc_tou.mc_dispatch_params.m_pen_rec_hot_su / 1000;
+		dispatch.params.pen_pc_hot_su = mc_tou.mc_dispatch_params.m_pen_pc_hot_su / 1000;
+	}
 
     /* 
     ************************** MAIN TIME-SERIES LOOP **************************
@@ -982,7 +1044,9 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
                     //call the optimize method
                     opt_complete = dispatch.m_last_opt_successful = 
                         dispatch.optimize();
-                    
+                        dispatch.optimize();
+						
+						//mc_tou.mc_dispatch_params.m_counter++;
                     if(dispatch.solver_params.disp_reporting && (! dispatch.solver_params.log_message.empty()) )
                         mc_csp_messages.add_message(C_csp_messages::NOTICE, dispatch.solver_params.log_message.c_str() );
                     
@@ -2343,13 +2407,6 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 					// Reset sim_info values
 					mc_kernel.mc_sim_info.ms_ts.m_step = mc_pc_out_solver.m_time_required_su;						//[s]
 					mc_kernel.mc_sim_info.ms_ts.m_time = mc_kernel.mc_sim_info.ms_ts.m_time_start + mc_pc_out_solver.m_time_required_su;		//[s]
-
-					// Call collector/receiver model again with new time step
-					mc_collector_receiver.on(mc_weather.ms_outputs,
-						mc_cr_htf_state_in,
-						m_defocus,
-						mc_cr_out_solver,
-						mc_kernel.mc_sim_info);
 				}
 
 				if( m_is_tes )
@@ -4836,20 +4893,10 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 			(ms_system_params.m_bop_par_0 + ms_system_params.m_bop_par_1*W_dot_ratio + ms_system_params.m_bop_par_2*pow(W_dot_ratio,2));
 			// [MWe]
 
-        double W_dot_tes_pump = mc_tes.pumping_power(mc_cr_out_solver.m_m_dot_salt_tot / 3600., mc_pc_out_solver.m_m_dot_htf / 3600., mc_tes_outputs.m_m_dot,
-            mc_cr_htf_state_in.m_temp + 273.15, mc_cr_out_solver.m_T_salt_hot + 273.15,
-            mc_pc_htf_state_in.m_temp + 273.15, mc_pc_out_solver.m_T_htf_cold + 273.15,
-            mc_cr_out_solver.m_is_recirculating);
-        if (W_dot_tes_pump < 0 || W_dot_tes_pump != W_dot_tes_pump){
-            error_msg = "TES pumping power failed";
-            throw(C_csp_exception(error_msg, "System-level parasitics"));
-        }
-
 		double W_dot_net = mc_pc_out_solver.m_P_cycle - 
 			mc_cr_out_solver.m_W_dot_col_tracking -
 			mc_cr_out_solver.m_W_dot_htf_pump - 
-			(mc_pc_out_solver.m_W_dot_htf_pump + W_dot_tes_pump) -
-			mc_cr_out_solver.m_q_rec_heattrace -
+			(mc_pc_out_solver.m_W_dot_htf_pump + mc_tes_outputs.m_W_dot_rhtf_pump) -
 			mc_pc_out_solver.m_W_cool_par -
 			mc_tes_outputs.m_q_heater - 
 			W_dot_fixed -
@@ -4963,7 +5010,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 			// Parasitics outputs
 		mc_reported_outputs.value(C_solver_outputs::COL_W_DOT_TRACK, mc_cr_out_solver.m_W_dot_col_tracking);    //[MWe] Collector tracking, startup, stow power consumption 
 		mc_reported_outputs.value(C_solver_outputs::CR_W_DOT_PUMP, mc_cr_out_solver.m_W_dot_htf_pump);          //[MWe] Receiver/tower HTF pumping power   
-		mc_reported_outputs.value(C_solver_outputs::SYS_W_DOT_PUMP, (mc_pc_out_solver.m_W_dot_htf_pump + W_dot_tes_pump ));    //[MWe] TES & PC HTF pumping power (Receiver - PC side HTF)  
+		mc_reported_outputs.value(C_solver_outputs::SYS_W_DOT_PUMP, (mc_pc_out_solver.m_W_dot_htf_pump + mc_tes_outputs.m_W_dot_rhtf_pump));    //[MWe] TES & PC HTF pumping power (Receiver - PC side HTF)  
 		mc_reported_outputs.value(C_solver_outputs::PC_W_DOT_COOLING, mc_pc_out_solver.m_W_cool_par);           //[MWe] Power cycle cooling power consumption (fan, pumps, etc.)
 		mc_reported_outputs.value(C_solver_outputs::SYS_W_DOT_FIXED, W_dot_fixed);								//[MWe] Fixed electric parasitic power load 
 		mc_reported_outputs.value(C_solver_outputs::SYS_W_DOT_BOP, W_dot_bop);									//[MWe] Balance-of-plant electric parasitic power load   

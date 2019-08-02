@@ -1,24 +1,51 @@
-/**
-BSD-3-Clause
-Copyright 2019 Alliance for Sustainable Energy, LLC
-Redistribution and use in source and binary forms, with or without modification, are permitted provided 
-that the following conditions are met :
-1.	Redistributions of source code must retain the above copyright notice, this list of conditions 
-and the following disclaimer.
-2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions 
-and the following disclaimer in the documentation and/or other materials provided with the distribution.
-3.	Neither the name of the copyright holder nor the names of its contributors may be used to endorse 
-or promote products derived from this software without specific prior written permission.
-
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, 
-INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
-ARE DISCLAIMED.IN NO EVENT SHALL THE COPYRIGHT HOLDER, CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES 
-DEPARTMENT OF ENERGY, NOR ANY OF THEIR EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, 
-OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; 
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
-WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT 
-OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*/
+/*******************************************************************************************************
+*  Copyright 2017 Alliance for Sustainable Energy, LLC
+*
+*  NOTICE: This software was developed at least in part by Alliance for Sustainable Energy, LLC
+*  (“Alliance”) under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
+*  The Government retains for itself and others acting on its behalf a nonexclusive, paid-up,
+*  irrevocable worldwide license in the software to reproduce, prepare derivative works, distribute
+*  copies to the public, perform publicly and display publicly, and to permit others to do so.
+*
+*  Redistribution and use in source and binary forms, with or without modification, are permitted
+*  provided that the following conditions are met:
+*
+*  1. Redistributions of source code must retain the above copyright notice, the above government
+*  rights notice, this list of conditions and the following disclaimer.
+*
+*  2. Redistributions in binary form must reproduce the above copyright notice, the above government
+*  rights notice, this list of conditions and the following disclaimer in the documentation and/or
+*  other materials provided with the distribution.
+*
+*  3. The entire corresponding source code of any redistribution, with or without modification, by a
+*  research entity, including but not limited to any contracting manager/operator of a United States
+*  National Laboratory, any institution of higher learning, and any non-profit organization, must be
+*  made publicly available under this license for as long as the redistribution is made available by
+*  the research entity.
+*
+*  4. Redistribution of this software, without modification, must refer to the software by the same
+*  designation. Redistribution of a modified version of this software (i) may not refer to the modified
+*  version by the same designation, or by any confusingly similar designation, and (ii) must refer to
+*  the underlying software originally provided by Alliance as “System Advisor Model” or “SAM”. Except
+*  to comply with the foregoing, the terms “System Advisor Model”, “SAM”, or any confusingly similar
+*  designation may not be used to refer to any modified version of this software or any modified
+*  version of the underlying software originally provided by Alliance without the prior written consent
+*  of Alliance.
+*
+*  5. The name of the copyright holder, contributors, the United States Government, the United States
+*  Department of Energy, or any of their employees may not be used to endorse or promote products
+*  derived from this software without specific prior written permission.
+*
+*  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
+*  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
+*  FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER,
+*  CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES DEPARTMENT OF ENERGY, NOR ANY OF THEIR
+*  EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+*  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+*  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+*  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
+*  THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*******************************************************************************************************/
 
 #ifndef __csp_solver_core_
 #define __csp_solver_core_
@@ -240,6 +267,7 @@ class C_csp_tou
 {
 
 public:
+
     struct S_csp_tou_params
     {
         bool m_isleapyear;
@@ -261,6 +289,46 @@ public:
         double m_pen_delta_w;
 		double m_w_rec_ht;
 		std::vector<double> m_w_lim_full;
+
+		//Hybrid 
+		bool m_hybrid_optimize;
+		double m_batt_slope_coeff;
+		double m_batt_int_coeff;
+		double m_slope_int_plus;
+		double m_slope_int_minus;
+		double m_slope_plus;
+		double m_slope_minus;
+		double m_batt_capacity;
+		double m_i_expected;
+		double m_batt_charge_lb;
+		double m_batt_charge_ub;
+		double m_batt_discharge_lb;
+		double m_batt_discharge_ub;
+		double m_batt_pr_min;
+		double m_batt_pr_max;
+		double m_batt_res;
+		double m_batt_soc_min;
+		double m_batt_soc_max;
+
+		double m_w_dc_pl;
+		double m_w_ramp_limit;
+		double m_alpha_pv;
+		double m_beta_pv;
+
+		int m_counter;
+
+		//Hybrid costs
+		double m_rec_helio_cost;		//[$/MWht]
+		double m_pc_cost;				//[$/MWhe]
+		double m_pc_sb_cost;			//[$/MWht]
+		double m_pv_field_cost;			//[$/MWhe]
+		double m_batt_charge_cost;		//[$/MWhe]
+		double m_batt_discharge_cost;	//[$/MWhe]
+		double m_batt_lifecycle_cost;	//[$/lifecycle]
+		double m_pen_rec_hot_su;		//[$/start]
+		double m_pen_pc_hot_su;			//[$/start]
+
+		double m_alpha;
 
 		bool m_is_write_ampl_dat;
         bool m_is_ampl_engine;
@@ -292,16 +360,53 @@ public:
             m_presolve_type = -1;
             m_scaling_type = -1;
 
-            m_disp_time_weighting = 0.99;
-            m_rsu_cost = 952.;
-            m_csu_cost = 10000.;
-            m_pen_delta_w = 0.1;
-            m_q_rec_standby = 9.e99;
-			m_w_rec_ht = 0.0;
+            m_disp_time_weighting = 0.99;	//
+            m_rsu_cost = 5650.;	//
+            m_csu_cost = 6520.;		//
+            m_pen_delta_w = 0.00064;	//
+            m_q_rec_standby = 9.e09;	//
+			m_w_rec_ht = 0.0;	//
 			m_w_lim_full.resize(8760);
 			m_w_lim_full.assign(8760, 9.e99);
 
-			m_is_write_ampl_dat = false;        //write ampl data files?
+			//Hybrid params (may not need to explicitly define values here, but in cmod_tcsmolten_salt)
+			m_hybrid_optimize = false;
+			m_batt_slope_coeff = 46.36980;
+			m_batt_int_coeff = 176.9472;
+			m_slope_int_plus = 236.10597;
+			m_slope_int_minus = 236.10597;
+			m_slope_plus = 0.02928;
+			m_slope_minus = 0.02928;
+			m_batt_capacity = 749.50817;	//[kAh]
+			m_i_expected = 749508.17153;	//[A]
+			m_batt_charge_lb = 0;
+			m_batt_discharge_lb = 0;
+			m_batt_pr_min = 0;
+			m_batt_pr_max = 150000;
+			m_batt_res = 3.81034e-05;	//[Ohm]
+			m_batt_soc_min = 0.2;
+			m_batt_soc_max = 0.8;
+
+			m_w_dc_pl = 265055.22;	//[kWac] 
+			m_w_ramp_limit = 3;	//[kWe]
+			m_alpha_pv = 53.37;	//[kWe]
+			m_beta_pv = 0.02743;
+
+			//Hybrid costs
+			m_rec_helio_cost = 3;	//[$/MWht]
+			m_pc_cost = 2; //[$/MWhe]
+			m_pc_sb_cost = 0.8; //[$/MWht]
+			m_pv_field_cost = 0.5; //[$/MWhe]
+			m_batt_charge_cost = 1; //[$/MWhe]
+			m_batt_discharge_cost = 1; //[$/MWhe]
+			m_batt_lifecycle_cost = 250; //[$/lifecycle]
+			m_pen_rec_hot_su = 10;	//[$/MWt]
+			m_pen_pc_hot_su = 40;	//[$/MWe]
+
+			m_alpha = 50;
+			m_counter = 0;
+
+			m_is_write_ampl_dat = false;        //write ampl data files?	false originally
             m_is_ampl_engine = false;           //run dispatch with external AMPL engine?
             m_ampl_data_dir = "";               //directory where files should be written 
             m_ampl_exec_call = "";
@@ -404,15 +509,13 @@ public:
 		double m_T_htf_cold_des;		//[K]
 		double m_P_cold_des;			//[kPa]
 		double m_x_cold_des;			//[-]
-        double m_T_htf_hot_des;         //[K]
 		double m_q_dot_rec_des;			//[MW]
 		double m_A_aper_total;			//[m^2] Total solar field aperture area
-        double m_dP_sf;                 //[bar] Total field pressure drop
 
 		S_csp_cr_solved_params()
 		{
-			m_T_htf_cold_des = m_P_cold_des = m_x_cold_des = m_T_htf_cold_des =
-				m_q_dot_rec_des = m_A_aper_total = m_dP_sf = std::numeric_limits<double>::quiet_NaN();
+			m_T_htf_cold_des = m_P_cold_des = m_x_cold_des =
+				m_q_dot_rec_des = m_A_aper_total = std::numeric_limits<double>::quiet_NaN();
 		}
 	};
 
@@ -443,14 +546,11 @@ public:
 		double m_q_thermal;				//[MWt] 'Available' receiver thermal output
 		double m_T_salt_hot;			//[C] Hot HTF from receiver
 		double m_component_defocus;		//[-] Defocus applied by component model to stay within mass flow or other constraints
-        bool m_is_recirculating;        //[-] Is field/receiver recirculating?
 			
 		// These are used for the parasitic class call(), so could be zero...
 		double m_E_fp_total;			//[MW] Solar field freeze protection power
 		double m_W_dot_col_tracking;	//[MWe] Collector tracking power
 		double m_W_dot_htf_pump;		//[MWe] HTF pumping power
-        double m_dP_sf;                 //[bar] Total field pressure drop
-		double m_q_rec_heattrace;		//[MW] Receiver heat trace parasitic power
 
 		// 07/08/2016, GZ: add new variables for DSG LF 
 		int m_standby_control;		//[-]
@@ -465,11 +565,7 @@ public:
 				m_W_dot_col_tracking = m_time_required_su = m_E_fp_total =
 				m_dP_sf_sh = m_h_htf_hot = m_xb_htf_hot = m_P_htf_hot = std::numeric_limits<double>::quiet_NaN();
 
-			m_q_rec_heattrace = 0.0;
-
 			m_component_defocus = 1.0;
-
-            m_is_recirculating = false;
 
 			m_standby_control = -1;
 		}
@@ -665,23 +761,12 @@ public:
 	C_csp_tes(){};
 
 	~C_csp_tes(){};
-    struct S_csp_tes_init_inputs
-    {
-        double T_to_cr_at_des;		    //[K]
-        double T_from_cr_at_des;		//[K]
-        double P_to_cr_at_des;          //[bar]
-
-        S_csp_tes_init_inputs()
-        {
-            T_to_cr_at_des = T_from_cr_at_des = P_to_cr_at_des = std::numeric_limits<double>::quiet_NaN();
-        }
-    };
 
 	struct S_csp_tes_outputs
 	{
 		double m_q_heater;			//[MWe]  Heating power required to keep tanks at a minimum temperature
         double m_m_dot;             //[kg/s] Hot tank mass flow rate, valid for direct and indirect systems
-		double m_W_dot_rhtf_pump;	//[MWe]  Pumping power, just for tank-to-tank in indirect storage
+		double m_W_dot_rhtf_pump;	//[MWe]  Pumping power for Receiver HTF thru storage
 		double m_q_dot_loss;		//[MWt]  Storage thermal losses
 		double m_q_dot_dc_to_htf;	//[MWt]  Thermal power to the HTF from storage
 		double m_q_dot_ch_from_htf;	//[MWt]  Thermal power from the HTF to storage
@@ -697,7 +782,7 @@ public:
 		}
 	};
 
-	virtual void init(const C_csp_tes::S_csp_tes_init_inputs init_inputs) = 0;
+	virtual void init() = 0;
 
 	virtual bool does_tes_exist() = 0;
 
@@ -728,13 +813,6 @@ public:
 	virtual void idle(double timestep, double T_amb, C_csp_tes::S_csp_tes_outputs &outputs) = 0;
 	
 	virtual void converged() = 0;
-
-    virtual int pressure_drops(double m_dot_sf, double m_dot_pb,
-        double T_sf_in, double T_sf_out, double T_pb_in, double T_pb_out, bool recirculating,
-        double &P_drop_col, double &P_drop_gen) = 0;
-
-    virtual double pumping_power(double m_dot_sf, double m_dot_pb, double m_dot_tank,
-        double T_sf_in, double T_sf_out, double T_pb_in, double T_pb_out, bool recirculating) = 0;
 };
 
 class C_csp_solver
