@@ -295,21 +295,21 @@ public:
 
 	~C_sco2_phx_air_cooler(){};
 
-    class C_MEQ_T_LP_in__W_dot_fan : public C_monotonic_equation
+    class C_MEQ_T_mc_in__W_dot_fan : public C_monotonic_equation
     {
     private:
         C_sco2_phx_air_cooler *mpc_sco2_ac;
         bool m_is_mod_P_mc_in_solver;
      
     public:
-        C_MEQ_T_LP_in__W_dot_fan(C_sco2_phx_air_cooler *pc_sco2_ac,
+        C_MEQ_T_mc_in__W_dot_fan(C_sco2_phx_air_cooler *pc_sco2_ac,
             bool is_mod_P_mc_in_solver)
         {
             mpc_sco2_ac = pc_sco2_ac;
             m_is_mod_P_mc_in_solver = is_mod_P_mc_in_solver;    //[-]
         }
 
-        virtual int operator()(double T_LP_in /*K*/, double *diff_W_dot_fan /*-*/);
+        virtual int operator()(double T_mc_in /*K*/, double *diff_W_dot_fan /*-*/);
     };
 
 	class C_mono_eq_T_t_in : public C_monotonic_equation
@@ -397,6 +397,10 @@ public:
         bool is_mc_N_od_at_design, double mc_N_od_f_des /*-*/,
         bool is_PHX_dP_input, double PHX_f_dP /*-*/,
         int off_design_strategy, double od_opt_tol = 1.E-4);
+
+    void solve_T_mc_in_for_cooler_constraint(double W_dot_mc_cooler_fan_target /*MWe*/,
+            double T_comp_in_min /*K*/,
+            bool is_modified_P_mc_in_solver);
 
     int optimize_N_mc_and_N_rc__max_eta(C_sco2_phx_air_cooler::S_od_par od_par,
         bool is_PHX_dP_input, double PHX_f_dP /*-*/,

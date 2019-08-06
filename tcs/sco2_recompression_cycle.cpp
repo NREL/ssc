@@ -4316,7 +4316,7 @@ int C_RecompCycle::C_mono_eq_x_f_recomp_y_N_rc::operator()(double f_recomp /*-*/
 	return 0;
 }
 
-int C_RecompCycle::calculate_off_design_fan_power(double T_amb /*K*/, double & W_dot_fan /*MWe*/)
+int C_RecompCycle::solve_OD_all_coolers_fan_power(double T_amb /*K*/, double & W_dot_fan /*MWe*/)
 {
     return solve_OD_mc_cooler_fan_power(T_amb, W_dot_fan);
 }

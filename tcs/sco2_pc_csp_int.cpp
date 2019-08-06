@@ -357,7 +357,7 @@ int C_sco2_phx_air_cooler::off_design_fix_P_mc_in(S_od_par od_par, double P_mc_i
 		
 		if (std::isfinite(mpc_sco2_cycle->get_design_solved()->ms_LP_air_cooler.m_UA_total))
 		{
-			int air_cooler_err_code = mpc_sco2_cycle->calculate_off_design_fan_power(ms_od_par.m_T_amb, W_dot_fan);
+			int air_cooler_err_code = mpc_sco2_cycle->solve_OD_all_coolers_fan_power(ms_od_par.m_T_amb, W_dot_fan);
 
 			if (air_cooler_err_code != 0)
 			{
@@ -728,7 +728,7 @@ int C_sco2_phx_air_cooler::optimize_N_mc_and_N_rc__max_eta(C_sco2_phx_air_cooler
     }
 
     double W_dot_fan = std::numeric_limits<double>::quiet_NaN();
-    int air_cooler_err_code = mpc_sco2_cycle->calculate_off_design_fan_power(ms_od_par.m_T_amb, W_dot_fan);
+    int air_cooler_err_code = mpc_sco2_cycle->solve_OD_all_coolers_fan_power(ms_od_par.m_T_amb, W_dot_fan);
 
     if (air_cooler_err_code != 0)
     {
@@ -1080,7 +1080,7 @@ int C_sco2_phx_air_cooler::optimize_N_rc__max_eta(C_sco2_phx_air_cooler::S_od_pa
     }
 
     double W_dot_fan = std::numeric_limits<double>::quiet_NaN();
-    int air_cooler_err_code = mpc_sco2_cycle->calculate_off_design_fan_power(ms_od_par.m_T_amb, W_dot_fan);
+    int air_cooler_err_code = mpc_sco2_cycle->solve_OD_all_coolers_fan_power(ms_od_par.m_T_amb, W_dot_fan);
 
     if (air_cooler_err_code != 0)
     {
@@ -1095,6 +1095,150 @@ int C_sco2_phx_air_cooler::optimize_N_rc__max_eta(C_sco2_phx_air_cooler::S_od_pa
     W_dot_at_eta_max = ms_od_solved.ms_rc_cycle_od_solved.m_W_dot_net;  //[kWe]
 
     return 0;
+}
+
+void C_sco2_phx_air_cooler::solve_T_mc_in_for_cooler_constraint(double W_dot_mc_cooler_fan_target /*MWe*/,
+                            double T_comp_in_min /*K*/,
+                            bool is_modified_P_mc_in_solver)
+{
+    int opt_P_LP_err = 0;
+
+    // First, check the fan power
+    double W_dot_fan_local = std::numeric_limits<double>::quiet_NaN();    //[MWe]
+    if (mpc_sco2_cycle->solve_OD_mc_cooler_fan_power(ms_od_par.m_T_amb, W_dot_fan_local) != 0)
+    {
+        throw(C_csp_exception("Off design air cooler model failed"));
+    }
+
+    if (ms_cycle_od_par.m_T_mc_in == T_comp_in_min && W_dot_fan_local < W_dot_mc_cooler_fan_target)
+    {
+        return;
+    }
+
+    C_monotonic_eq_solver::S_xy_pair xy_1;
+
+    double T_mc_in_guess = std::numeric_limits<double>::quiet_NaN();
+    // Guess another inlet temperature
+    if (W_dot_fan_local < W_dot_mc_cooler_fan_target)
+    {   // Need more fan power, guess closer to ambient temperature
+        while (W_dot_fan_local < W_dot_mc_cooler_fan_target)
+        {
+            xy_1.x = ms_cycle_od_par.m_T_mc_in;     //[K]
+            xy_1.y = W_dot_fan_local;               //[MWe]
+
+            T_mc_in_guess = std::max(xy_1.x - 1.0, T_comp_in_min);     //[K]
+
+            ms_cycle_od_par.m_T_mc_in = T_mc_in_guess;  //[K]
+
+            if (is_modified_P_mc_in_solver)
+            {
+                opt_P_LP_err = solve_P_LP_in__target_W_dot();
+            }
+            else
+            {
+                opt_P_LP_err = opt_P_LP_comp_in__fixed_N_turbo();
+            }
+
+            if (opt_P_LP_err == C_sco2_phx_air_cooler::E_TIP_RATIO)
+            {   // revert back to previous guess and set T_comp_min
+                ms_cycle_od_par.m_T_mc_in = xy_1.x;  //[K]
+
+                if (is_modified_P_mc_in_solver)
+                {
+                    opt_P_LP_err = solve_P_LP_in__target_W_dot();
+                }
+                else
+                {
+                    opt_P_LP_err = opt_P_LP_comp_in__fixed_N_turbo();
+                }
+
+                T_comp_in_min = xy_1.x;     //[K]
+            }
+
+            if (opt_P_LP_err != 0)
+            {
+                throw(C_csp_exception("Off-design at inlet temperature failed"));
+            }
+
+            if (mpc_sco2_cycle->solve_OD_mc_cooler_fan_power(ms_od_par.m_T_amb, W_dot_fan_local) != 0)
+            {
+                throw(C_csp_exception("Off design air cooler model failed"));
+            }
+
+            if (ms_cycle_od_par.m_T_mc_in == T_comp_in_min)
+            {
+                break;
+            }
+        }
+    }
+    else
+    {   // Need less fan power, guess hotter than 1st guess
+        xy_1.x = ms_cycle_od_par.m_T_mc_in;     //[K]
+        xy_1.y = W_dot_fan_local;               //[MWe]
+
+        T_mc_in_guess = xy_1.x + 1.0;       //[K]
+
+        ms_cycle_od_par.m_T_mc_in = T_mc_in_guess;  //[K]
+        //ms_cycle_od_par.m_T_pc_in = T_mc_in_guess;  //[K]
+
+        if (is_modified_P_mc_in_solver)
+        {
+            opt_P_LP_err = solve_P_LP_in__target_W_dot();
+        }
+        else
+        {
+            opt_P_LP_err = opt_P_LP_comp_in__fixed_N_turbo();
+        }
+
+        if (opt_P_LP_err != 0)
+        {
+            throw(C_csp_exception("Off-design at inlet temperature failed"));
+        }
+
+        if (mpc_sco2_cycle->solve_OD_mc_cooler_fan_power(ms_od_par.m_T_amb, W_dot_fan_local) != 0)
+        {
+            throw(C_csp_exception("Off design air cooler model failed"));
+        }
+
+        if (ms_cycle_od_par.m_T_mc_in == m_T_mc_in_min)
+        {
+            return;
+        }
+    }
+
+    if (ms_cycle_od_par.m_T_mc_in == T_comp_in_min && W_dot_fan_local < W_dot_mc_cooler_fan_target)
+    {
+        return;
+    }
+
+    C_monotonic_eq_solver::S_xy_pair xy_2;
+    xy_2.x = ms_cycle_od_par.m_T_mc_in;     //[K]
+    xy_2.y = W_dot_fan_local;               //[MWe]
+
+    // Solve for inlet temperature that results in target fan power
+    C_MEQ_T_mc_in__W_dot_fan c_W_dot_fan_eq(this, is_modified_P_mc_in_solver);
+    C_monotonic_eq_solver c_W_dot_fan_solver(c_W_dot_fan_eq);
+
+    c_W_dot_fan_solver.settings(0.01, 50, T_comp_in_min, ms_od_par.m_T_amb + 45, true);
+
+    double T_LP_in_solved = std::numeric_limits<double>::quiet_NaN();
+    double W_dot_fan_tol_solved = std::numeric_limits<double>::quiet_NaN();
+    int W_dot_fan_iter = -1;
+    int W_dot_fan_err_code = c_W_dot_fan_solver.solve(xy_1, xy_2, W_dot_mc_cooler_fan_target, T_LP_in_solved, W_dot_fan_tol_solved, W_dot_fan_iter);
+
+    if (W_dot_fan_err_code != C_monotonic_eq_solver::CONVERGED)
+    {
+        if (ms_cycle_od_par.m_T_mc_in == T_comp_in_min && mpc_sco2_cycle->get_od_solved()->ms_LP_air_cooler_od_solved.m_W_dot_fan < W_dot_mc_cooler_fan_target)
+        {
+            return;
+        }
+        if (W_dot_fan_err_code > C_monotonic_eq_solver::CONVERGED && fabs(W_dot_fan_tol_solved) < 0.1)
+        {
+            return;
+        }
+        throw(C_csp_exception("Iteration on compressor inlet temp to achieve target fan power failed"));
+    }
+
 }
 
 int C_sco2_phx_air_cooler::optimize_off_design(C_sco2_phx_air_cooler::S_od_par od_par, 
@@ -1122,10 +1266,10 @@ int C_sco2_phx_air_cooler::optimize_off_design(C_sco2_phx_air_cooler::S_od_par o
 
     bool is_mc_cooler_fan_limit = true;
 
-    if (cycle_config == 2)
-    {
-        is_mc_cooler_fan_limit = false;    //[-] Current approach to fix fan power only works for a cycle with a single cooler...
-    }
+    //if (cycle_config == 2)
+    //{
+    //    is_mc_cooler_fan_limit = false;    //[-] Current approach to fix fan power only works for a cycle with a single cooler...
+    //}
 
     double T_comp_in_min = ms_od_par.m_T_amb + 0.5;  //[K]
         
@@ -1136,8 +1280,18 @@ int C_sco2_phx_air_cooler::optimize_off_design(C_sco2_phx_air_cooler::S_od_par o
 
     double W_dot_target = (ms_od_par.m_m_dot_htf / ms_phx_des_par.m_m_dot_hot_des) * ms_des_par.m_W_dot_net;	//[kWe]
 
-    double W_dot_fan_max = ms_des_par.m_frac_fan_power * ms_des_par.m_W_dot_net * 1.E-3;	//[MWe]
-    double W_dot_fan_target = (ms_od_par.m_m_dot_htf / ms_phx_des_par.m_m_dot_hot_des) * ms_des_par.m_frac_fan_power * ms_des_par.m_W_dot_net * 1.E-3;	//[MWe]
+
+    double W_dot_mc_cooler_fan_des = std::numeric_limits<double>::quiet_NaN();
+    if (cycle_config == 2)
+    {
+        W_dot_mc_cooler_fan_des = get_design_solved()->ms_rc_cycle_solved.ms_IP_air_cooler.m_W_dot_fan;	    //[MWe]
+    }
+    else
+    {
+        W_dot_mc_cooler_fan_des = get_design_solved()->ms_rc_cycle_solved.ms_LP_air_cooler.m_W_dot_fan;	    //[MWe]
+    }
+    
+    double W_dot_mc_cooler_fan_target = (ms_od_par.m_m_dot_htf / ms_phx_des_par.m_m_dot_hot_des) * W_dot_mc_cooler_fan_des; //[MWe]
     
 	if (m_off_design_turbo_operation == E_FIXED_MC_FIXED_RC_FIXED_T)
 	{
@@ -1214,149 +1368,10 @@ int C_sco2_phx_air_cooler::optimize_off_design(C_sco2_phx_air_cooler::S_od_par o
 		{
             bool is_iterate_for_power_and_eta = true;
 
-            while (is_mc_cooler_fan_limit)
-            {   // First, check the fan power
-                double W_dot_fan_local = std::numeric_limits<double>::quiet_NaN();    //[MWe]
-                if (mpc_sco2_cycle->calculate_off_design_fan_power(ms_od_par.m_T_amb, W_dot_fan_local) != 0)
-                {
-                    throw(C_csp_exception("Off design air cooler model failed"));
-                }
-
-                if (ms_cycle_od_par.m_T_mc_in == T_comp_in_min && W_dot_fan_local < W_dot_fan_target)
-                {
-                    break;
-                }
-
-                C_monotonic_eq_solver::S_xy_pair xy_1;                
-
-                double T_mc_in_guess = std::numeric_limits<double>::quiet_NaN();
-                // Guess another inlet temperature
-                if (W_dot_fan_local < W_dot_fan_target)
-                {   // Need more fan power, guess closer to ambient temperature
-                    while (W_dot_fan_local < W_dot_fan_target)
-                    {
-                        xy_1.x = ms_cycle_od_par.m_T_mc_in;     //[K]
-                        xy_1.y = W_dot_fan_local;               //[MWe]
-
-                        T_mc_in_guess = std::max(xy_1.x - 1.0, T_comp_in_min);     //[K]
-
-                        ms_cycle_od_par.m_T_mc_in = T_mc_in_guess;  //[K]
-                        ms_cycle_od_par.m_T_pc_in = T_mc_in_guess;  //[K]
-
-                        if (is_modified_P_mc_in_solver)
-                        {
-                            opt_P_LP_err = solve_P_LP_in__target_W_dot();
-                        }
-                        else
-                        {
-                            opt_P_LP_err = opt_P_LP_comp_in__fixed_N_turbo();
-                        }
-
-                        if (opt_P_LP_err == C_sco2_phx_air_cooler::E_TIP_RATIO)
-                        {   // revert back to previous guess and set T_comp_min
-                            ms_cycle_od_par.m_T_mc_in = xy_1.x;  //[K]
-                            ms_cycle_od_par.m_T_pc_in = xy_1.x;  //[K]
-
-                            if (is_modified_P_mc_in_solver)
-                            {
-                                opt_P_LP_err = solve_P_LP_in__target_W_dot();
-                            }
-                            else
-                            {
-                                opt_P_LP_err = opt_P_LP_comp_in__fixed_N_turbo();
-                            }
-
-                            T_comp_in_min = xy_1.x;     //[K]
-                        }
-
-                        if (opt_P_LP_err != 0)
-                        {
-                            throw(C_csp_exception("Off-design at inlet temperature failed"));
-                        }
-
-                        if (mpc_sco2_cycle->calculate_off_design_fan_power(ms_od_par.m_T_amb, W_dot_fan_local) != 0)
-                        {
-                            throw(C_csp_exception("Off design air cooler model failed"));
-                        }
-
-                        if (ms_cycle_od_par.m_T_mc_in == T_comp_in_min)
-                        {
-                            break;
-                        }
-                    }
-                }
-                else
-                {   // Need less fan power, guess hotter than 1st guess
-                    xy_1.x = ms_cycle_od_par.m_T_mc_in;     //[K]
-                    xy_1.y = W_dot_fan_local;               //[MWe]
-                    
-                    T_mc_in_guess = xy_1.x + 1.0;       //[K]
-
-                    ms_cycle_od_par.m_T_mc_in = T_mc_in_guess;  //[K]
-                    ms_cycle_od_par.m_T_pc_in = T_mc_in_guess;  //[K]
-
-                    if (is_modified_P_mc_in_solver)
-                    {
-                        opt_P_LP_err = solve_P_LP_in__target_W_dot();
-                    }
-                    else
-                    {
-                        opt_P_LP_err = opt_P_LP_comp_in__fixed_N_turbo();
-                    }
-
-                    if (opt_P_LP_err != 0)
-                    {
-                        throw(C_csp_exception("Off-design at inlet temperature failed"));
-                    }
-
-                    if (mpc_sco2_cycle->calculate_off_design_fan_power(ms_od_par.m_T_amb, W_dot_fan_local) != 0)
-                    {
-                        throw(C_csp_exception("Off design air cooler model failed"));
-                    }
-
-                    if (ms_cycle_od_par.m_T_mc_in == m_T_mc_in_min)
-                    {
-                        break;
-                    }
-                }
-
-                if (ms_cycle_od_par.m_T_mc_in == T_comp_in_min && W_dot_fan_local < W_dot_fan_target)
-                {
-                    break;
-                }
-
-                C_monotonic_eq_solver::S_xy_pair xy_2;
-                xy_2.x = ms_cycle_od_par.m_T_mc_in;     //[K]
-                xy_2.y = W_dot_fan_local;               //[MWe]
-
-                // Solve for inlet temperature that results in target fan power
-                C_MEQ_T_LP_in__W_dot_fan c_W_dot_fan_eq(this, is_modified_P_mc_in_solver);
-                C_monotonic_eq_solver c_W_dot_fan_solver(c_W_dot_fan_eq);
-
-                c_W_dot_fan_solver.settings(0.01, 50, T_comp_in_min, ms_od_par.m_T_amb + 45, true);
-                
-                double T_LP_in_solved = std::numeric_limits<double>::quiet_NaN();
-                double W_dot_fan_tol_solved = std::numeric_limits<double>::quiet_NaN();
-                int W_dot_fan_iter = -1;
-                int W_dot_fan_err_code = c_W_dot_fan_solver.solve(xy_1, xy_2, W_dot_fan_target, T_LP_in_solved, W_dot_fan_tol_solved, W_dot_fan_iter);
-                
-                if (W_dot_fan_err_code != C_monotonic_eq_solver::CONVERGED)
-                {
-                    if (ms_cycle_od_par.m_T_mc_in == T_comp_in_min && mpc_sco2_cycle->get_od_solved()->ms_LP_air_cooler_od_solved.m_W_dot_fan < W_dot_fan_target)
-                    {
-                        break;
-                    }
-                    if (W_dot_fan_err_code > C_monotonic_eq_solver::CONVERGED && fabs(W_dot_fan_tol_solved) < 0.1)
-                    {
-                        break;
-                    }
-                    throw(C_csp_exception("Iteration on compressor inlet temp to achieve target fan power failed"));
-                }
-                else
-                {
-                    break;
-                }
-            }         
+            if (is_mc_cooler_fan_limit)
+            {
+                solve_T_mc_in_for_cooler_constraint(W_dot_mc_cooler_fan_target, T_comp_in_min, is_modified_P_mc_in_solver);
+            } 
             			
             if (is_iterate_for_power_and_eta)
             {
@@ -1372,7 +1387,9 @@ int C_sco2_phx_air_cooler::optimize_off_design(C_sco2_phx_air_cooler::S_od_par o
 
                 double P_LP_in_opt = ms_cycle_od_par.m_P_LP_comp_in;		//[kPa]
 
-                double T_mc_pc_in_opt = ms_cycle_od_par.m_T_mc_in;			//[K]
+                double T_mc_in_opt = ms_cycle_od_par.m_T_mc_in;		//[K]
+
+                double T_pc_in_opt = ms_cycle_od_par.m_T_pc_in;     //[K]
 
                 while (true)
                 {
@@ -1408,7 +1425,9 @@ int C_sco2_phx_air_cooler::optimize_off_design(C_sco2_phx_air_cooler::S_od_par o
 
                         P_LP_in_opt = ms_cycle_od_par.m_P_LP_comp_in;		//[kPa]
 
-                        T_mc_pc_in_opt = ms_cycle_od_par.m_T_mc_in;			//[K]
+                        T_mc_in_opt = ms_cycle_od_par.m_T_mc_in;		//[K]
+
+                        T_pc_in_opt = ms_cycle_od_par.m_T_pc_in;     //[K]
 
                         W_dot_opt = W_dot_calc;		//[kWe]
                     }
@@ -1423,7 +1442,9 @@ int C_sco2_phx_air_cooler::optimize_off_design(C_sco2_phx_air_cooler::S_od_par o
 
                             P_LP_in_opt = ms_cycle_od_par.m_P_LP_comp_in;		//[kPa]
 
-                            T_mc_pc_in_opt = ms_cycle_od_par.m_T_mc_in;			//[K]
+                            T_mc_in_opt = ms_cycle_od_par.m_T_mc_in;		//[K]
+
+                            T_pc_in_opt = ms_cycle_od_par.m_T_pc_in;     //[K]
 
                             if (W_dot_calc > W_dot_opt)
                                 W_dot_opt = W_dot_calc;		//[kWe]
@@ -1441,8 +1462,8 @@ int C_sco2_phx_air_cooler::optimize_off_design(C_sco2_phx_air_cooler::S_od_par o
 
                 // Now solve cycle off-design with saved optimal inputs
                 ms_cycle_od_par.m_P_LP_comp_in = P_LP_in_opt;		//[kPa]
-                ms_cycle_od_par.m_T_mc_in = T_mc_pc_in_opt;			//[K]
-                ms_cycle_od_par.m_T_pc_in = T_mc_pc_in_opt;			//[K]
+                ms_cycle_od_par.m_T_mc_in = T_mc_in_opt;			//[K]
+                ms_cycle_od_par.m_T_pc_in = T_pc_in_opt;			//[K]
 
                 double f_od_obj = std::numeric_limits<double>::quiet_NaN();
                 int od_opt_err_code = off_design_core(f_od_obj);
@@ -1460,7 +1481,7 @@ int C_sco2_phx_air_cooler::optimize_off_design(C_sco2_phx_air_cooler::S_od_par o
 	}
 
 	double W_dot_fan = std::numeric_limits<double>::quiet_NaN();
-	int air_cooler_err_code = mpc_sco2_cycle->calculate_off_design_fan_power(ms_od_par.m_T_amb, W_dot_fan);
+	int air_cooler_err_code = mpc_sco2_cycle->solve_OD_all_coolers_fan_power(ms_od_par.m_T_amb, W_dot_fan);
 
 	if (air_cooler_err_code != 0)
 	{
@@ -2320,10 +2341,9 @@ int C_sco2_phx_air_cooler::off_design(S_od_par od_par, S_od_operation_inputs od_
 	return od_code;
 }
 
-int C_sco2_phx_air_cooler::C_MEQ_T_LP_in__W_dot_fan::operator()(double T_LP_in /*K*/, double *diff_W_dot_fan)
+int C_sco2_phx_air_cooler::C_MEQ_T_mc_in__W_dot_fan::operator()(double T_mc_in /*K*/, double *diff_W_dot_fan)
 {
-    mpc_sco2_ac->ms_cycle_od_par.m_T_mc_in = T_LP_in;  //[K]
-    mpc_sco2_ac->ms_cycle_od_par.m_T_pc_in = T_LP_in;  //[K]
+    mpc_sco2_ac->ms_cycle_od_par.m_T_mc_in = T_mc_in;  //[K]
 
     int opt_P_LP_err = 0;
     if (m_is_mod_P_mc_in_solver)
@@ -2342,7 +2362,7 @@ int C_sco2_phx_air_cooler::C_MEQ_T_LP_in__W_dot_fan::operator()(double T_LP_in /
     }
 
     double W_dot_fan = std::numeric_limits<double>::quiet_NaN();
-    if (mpc_sco2_ac->mpc_sco2_cycle->calculate_off_design_fan_power(mpc_sco2_ac->ms_od_par.m_T_amb, W_dot_fan) != 0)
+    if (mpc_sco2_ac->mpc_sco2_cycle->solve_OD_mc_cooler_fan_power(mpc_sco2_ac->ms_od_par.m_T_amb, W_dot_fan) != 0)
     {
         *diff_W_dot_fan = std::numeric_limits<double>::quiet_NaN();
         return -2;

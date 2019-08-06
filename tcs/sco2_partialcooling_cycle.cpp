@@ -1696,7 +1696,7 @@ int C_PartialCooling_Cycle::off_design_fix_shaft_speeds_core()
 	return 0;
 }
 
-int C_PartialCooling_Cycle::calculate_off_design_fan_power(double T_amb /*K*/, double & W_dot_fan_total /*MWe*/)
+int C_PartialCooling_Cycle::solve_OD_all_coolers_fan_power(double T_amb /*K*/, double & W_dot_fan_total /*MWe*/)
 {
 	double W_dot_LP_cooler = std::numeric_limits<double>::quiet_NaN();
 	double W_dot_IP_cooler = std::numeric_limits<double>::quiet_NaN();
