@@ -5719,12 +5719,11 @@ void C_csp_trough_collector_receiver::rnr_and_hdr_design(unsigned nhsec, int nfs
         for (std::size_t i = 0; i < nhsec; i++) {
             if (i == 0) {
                 m_dot_enter = m_dot_hdrs;
-                V_enter = 4.*m_dot_enter / (rho*CSP::pi*D_hdr[i] * D_hdr[i]);
             }
-            else if (nd < N_max_hdr_diams) {
+            else {
                 m_dot_enter -= m_dot_2loops;
-                V_enter = 4.*m_dot_enter / (rho*CSP::pi*D_hdr[i - 1] * D_hdr[i - 1]);  // assuming no diameter change
             }
+            V_enter = 4.*m_dot_enter / (rho*CSP::pi*D_hdr[i] * D_hdr[i]);
             m_dot_hdr[i] = m_dot_enter;
             V_hdr[i] = V_enter;
         }
@@ -5774,10 +5773,11 @@ void C_csp_trough_collector_receiver::rnr_and_hdr_design(unsigned nhsec, int nfs
                 }
             }
             else {
-                D_hdr[i] = D_hdr[i - 1];
+                m_dot_enter -= m_dot_2loops;
+                D_hdr[i] = D_hdr[i - 1];        // no diameter change allowed
             }
             m_dot_hdr[i] = m_dot_enter;
-            V_hdr[i] = V_enter;
+            V_hdr[i] = 4.*m_dot_hdr[i] / (rho*CSP::pi*D_hdr[i] * D_hdr[i]);
         }
     }
 
@@ -5790,14 +5790,8 @@ void C_csp_trough_collector_receiver::rnr_and_hdr_design(unsigned nhsec, int nfs
     nd = 0;
     if (custom_diams) {
         for (std::size_t i = nhsec; i < 2 * nhsec; i++) {
-            if (i == nhsec) {
-                m_dot_leave = m_dot_2loops;
-                V_leave = 4.*m_dot_leave / (rho*CSP::pi*D_hdr[i] * D_hdr[i]);
-            }
-            else if (nd < N_max_hdr_diams) {
-                m_dot_leave += m_dot_2loops;
-                V_leave = 4.*m_dot_leave / (rho*CSP::pi*D_hdr[i - 1] * D_hdr[i - 1]);  // assuming no diameter change
-            }
+            m_dot_leave += m_dot_2loops;
+            V_leave = 4.*m_dot_leave / (rho*CSP::pi*D_hdr[i] * D_hdr[i]);
             m_dot_hdr[i] = m_dot_leave;
             V_hdr[i] = V_leave;
         }
@@ -5847,10 +5841,11 @@ void C_csp_trough_collector_receiver::rnr_and_hdr_design(unsigned nhsec, int nfs
                 }
             }
             else {
-                D_hdr[i] = D_hdr[i - 1];
+                m_dot_leave += m_dot_2loops;
+                D_hdr[i] = D_hdr[i - 1];        // no diameter change allowed
             }
             m_dot_hdr[i] = m_dot_leave;
-            V_hdr[i] = V_leave;
+            V_hdr[i] = 4.*m_dot_hdr[i] / (rho*CSP::pi*D_hdr[i] * D_hdr[i]);
         }
     }
 
