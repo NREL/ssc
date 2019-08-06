@@ -1120,11 +1120,11 @@ int C_sco2_phx_air_cooler::optimize_off_design(C_sco2_phx_air_cooler::S_od_par o
 
     int cycle_config = get_design_par()->m_cycle_config;    //[-]
 
-    bool is_ac_fan_limit = true;
+    bool is_mc_cooler_fan_limit = true;
 
     if (cycle_config == 2)
     {
-        is_ac_fan_limit = false;    //[-] Current approach to fix fan power only works for a cycle with a single cooler...
+        is_mc_cooler_fan_limit = false;    //[-] Current approach to fix fan power only works for a cycle with a single cooler...
     }
 
     double T_comp_in_min = ms_od_par.m_T_amb + 0.5;  //[K]
@@ -1214,7 +1214,7 @@ int C_sco2_phx_air_cooler::optimize_off_design(C_sco2_phx_air_cooler::S_od_par o
 		{
             bool is_iterate_for_power_and_eta = true;
 
-            while (is_ac_fan_limit)
+            while (is_mc_cooler_fan_limit)
             {   // First, check the fan power
                 double W_dot_fan_local = std::numeric_limits<double>::quiet_NaN();    //[MWe]
                 if (mpc_sco2_cycle->calculate_off_design_fan_power(ms_od_par.m_T_amb, W_dot_fan_local) != 0)
@@ -1356,90 +1356,7 @@ int C_sco2_phx_air_cooler::optimize_off_design(C_sco2_phx_air_cooler::S_od_par o
                 {
                     break;
                 }
-            }
-            
-            //if (is_ac_fan_limit)
-            //{   // First, check the fan power
-            //    // If it is over the target, increase the compressor inlet temperature
-            //    double W_dot_fan_local = std::numeric_limits<double>::quiet_NaN();    //[MWe]
-            //    if (mpc_sco2_cycle->calculate_off_design_fan_power(ms_od_par.m_T_amb, W_dot_fan_local) != 0)
-            //    {
-            //        throw(C_csp_exception("Off design air cooler model failed"));
-            //    }
-
-            //    double P_LP_in_solved = std::numeric_limits<double>::quiet_NaN();
-            //    double T_mc_pc_in_solved = std::numeric_limits<double>::quiet_NaN();
-            //     
-            //    while (W_dot_fan_local > W_dot_fan_target)
-            //    {
-            //        // Store solution from previous step
-            //        P_LP_in_solved = ms_cycle_od_par.m_P_LP_comp_in;		//[kPa]
-            //        T_mc_pc_in_solved = ms_cycle_od_par.m_T_mc_in;		//[K]
-
-            //        // Increase compressor inlet temperatures by constant interval
-            //        ms_cycle_od_par.m_T_mc_in += 0.5;	//[K]
-            //        ms_cycle_od_par.m_T_pc_in += 0.5;	//[K]
-
-            //        if (is_modified_P_mc_in_solver)
-            //        {
-            //            opt_P_LP_err = solve_P_LP_in__target_W_dot();
-            //        }
-            //        else
-            //        {
-            //            opt_P_LP_err = opt_P_LP_comp_in__fixed_N_turbo();
-            //        }
-            //        if (opt_P_LP_err != 0)
-            //        {	// If off-design breaks, we only have solutions with fan speeds above the target
-            //            // So we should check that solved speeds aren't below max but below target before throwing exception
-            //            if (W_dot_fan_local <= W_dot_fan_max)
-            //            {
-            //                // Decrease compressor inlet temperature to previous step and rerun
-            //                ms_cycle_od_par.m_P_LP_comp_in = P_LP_in_solved;		//[kPa]
-            //                ms_cycle_od_par.m_T_mc_in = T_mc_pc_in_solved;			//[K]
-            //                ms_cycle_od_par.m_T_pc_in = T_mc_pc_in_solved;			//[K]
-
-            //                double f_od_obj = std::numeric_limits<double>::quiet_NaN();
-            //                int od_opt_err_code = off_design_core(f_od_obj);
-
-            //                if (od_opt_err_code != 0)
-            //                {
-            //                    throw(C_csp_exception("C_sco2_phx_air_cooler::optimize_off_design to maximize efficiency failed"));
-            //                }
-
-            //                is_iterate_for_power_and_eta = false;
-            //            }
-            //            else
-            //            {
-            //                throw(C_csp_exception("Off-design at inlet temperature failed"));
-            //            }
-            //        }
-            //        if (mpc_sco2_cycle->calculate_off_design_fan_power(ms_od_par.m_T_amb, W_dot_fan_local) != 0)
-            //        {   // If off-design breaks, we only have solutions with fan speeds above the target
-            //            // So we should check that solved speeds aren't below max but below target before throwing exception
-            //            if (W_dot_fan_local <= W_dot_fan_max)
-            //            {
-            //                // Decrease compressor inlet temperature to previous step and rerun
-            //                ms_cycle_od_par.m_P_LP_comp_in = P_LP_in_solved;		//[kPa]
-            //                ms_cycle_od_par.m_T_mc_in = T_mc_pc_in_solved;			//[K]
-            //                ms_cycle_od_par.m_T_pc_in = T_mc_pc_in_solved;			//[K]
-
-            //                double f_od_obj = std::numeric_limits<double>::quiet_NaN();
-            //                int od_opt_err_code = off_design_core(f_od_obj);
-
-            //                if (od_opt_err_code != 0)
-            //                {
-            //                    throw(C_csp_exception("C_sco2_phx_air_cooler::optimize_off_design to maximize efficiency failed"));
-            //                }
-
-            //                is_iterate_for_power_and_eta = false;
-            //            }
-            //            else
-            //            {
-            //                throw(C_csp_exception("Off design air cooler model failed"));
-            //            }                        
-            //        }
-            //    }
-            //}            
+            }         
             			
             if (is_iterate_for_power_and_eta)
             {

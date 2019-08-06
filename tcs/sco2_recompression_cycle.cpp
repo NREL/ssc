@@ -4318,14 +4318,27 @@ int C_RecompCycle::C_mono_eq_x_f_recomp_y_N_rc::operator()(double f_recomp /*-*/
 
 int C_RecompCycle::calculate_off_design_fan_power(double T_amb /*K*/, double & W_dot_fan /*MWe*/)
 {
-	int ac_err_code = mc_air_cooler.off_design_given_T_out(T_amb, m_temp_od[LTR_LP_OUT], m_pres_od[LTR_LP_OUT],
-		ms_od_solved.m_m_dot_mc, m_temp_od[MC_IN], W_dot_fan);
+    return solve_OD_mc_cooler_fan_power(T_amb, W_dot_fan);
+}
 
-	ms_od_solved.m_W_dot_cooler_tot = W_dot_fan * 1.E3;	//[kWe] convert from MWe
+int C_RecompCycle::solve_OD_mc_cooler_fan_power(double T_amb /*K*/, double & W_dot_mc_cooler_fan /*MWe*/)
+{
+    int ac_err_code = mc_air_cooler.off_design_given_T_out(T_amb, m_temp_od[LTR_LP_OUT], m_pres_od[LTR_LP_OUT],
+        ms_od_solved.m_m_dot_mc, m_temp_od[MC_IN], W_dot_mc_cooler_fan);
 
-	ms_od_solved.ms_LP_air_cooler_od_solved = mc_air_cooler.get_od_solved();
+    ms_od_solved.ms_LP_air_cooler_od_solved = mc_air_cooler.get_od_solved();
 
-	return ac_err_code;
+    ms_od_solved.m_W_dot_cooler_tot = W_dot_mc_cooler_fan * 1.E3;	//[kWe] convert from MWe
+
+    return ac_err_code;
+}
+
+int C_RecompCycle::solve_OD_pc_cooler_fan_power(double T_amb /*K*/, double & W_dot_pc_cooler_fan /*MWe*/)
+{
+    // No pre-compressor so no precompressor cooler in the recompression cycle
+    W_dot_pc_cooler_fan = 0.0;  //[MWe]
+
+    return 0;
 }
 
 void C_RecompCycle::off_design_fix_shaft_speeds_core(int & error_code)

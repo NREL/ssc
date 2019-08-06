@@ -441,6 +441,10 @@ public:
 
 	virtual int calculate_off_design_fan_power(double T_amb /*K*/, double & W_dot_fan /*MWe*/) = 0;
 
+    virtual int solve_OD_mc_cooler_fan_power(double T_amb /*K*/, double & W_dot_mc_cooler_fan /*MWe*/) = 0;
+
+    virtual int solve_OD_pc_cooler_fan_power(double T_amb /*K*/, double & W_dot_pc_cooler_fan /*MWe*/) = 0;
+
 	virtual const C_comp_multi_stage::S_od_solved * get_rc_od_solved() = 0;
 
 	const S_design_limits & get_design_limits()
