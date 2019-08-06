@@ -640,7 +640,7 @@ static var_info _cm_vtab_saleleaseback[] = {
 	
 	{ SSC_OUTPUT,       SSC_NUMBER,      "distribution_of_development_fee",	"Distribution of development fee",	"$",	 "",					  "DHF",			 "*",                         "",                             "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,      "sale_of_property",	"Sale of property",	"$",	 "",					  "DHF",			 "*",                         "",                             "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,      "purchase_of_plant",	"Purchase of plant and equipment",	"$",	 "",					  "DHF",			 "*",                         "",                             "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "purchase_of_plant",	"Purchase of plant",	"$",	 "",					  "DHF",			 "*",                         "",                             "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_lpra",    "Reserve (increase)/decrease lease payment",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_wcra",    "Reserve (increase)/decrease working capital",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "cf_sponsor_receivablesra", "Reserve (increase)/decrease receivables", "$", "", "Cash Flow Pre Tax", "*", "LENGTH_EQUAL=cf_length", "" },
@@ -652,7 +652,7 @@ static var_info _cm_vtab_saleleaseback[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_me2cs",    "Reserve capital spending major equipment 2",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_me3cs",    "Reserve capital spending major equipment 3",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_mecs",    "Reserve capital spending major equipment total",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_investing_activities",    "Developer (lessee) after-tax annual costs",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_investing_activities",    "Developer (lessee) cash flow from investing activities",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 
 	{ SSC_OUTPUT,       SSC_NUMBER,      "sponsor_equity_in_lessee_llc",	"Developer (lessee) equity in lessee LLC (funding of reserve accounts)",	"$",	 "",					  "DHF",			 "*",                         "",                             "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_financing_activities",    "Developer (lessee) cash flow from financing activities",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
@@ -2888,6 +2888,7 @@ public:
 	save_cf( CF_sponsor_me2cs, nyears, "cf_sponsor_me2cs" );
 	save_cf( CF_sponsor_me3cs, nyears, "cf_sponsor_me3cs" );
 	save_cf( CF_sponsor_mecs, nyears, "cf_sponsor_mecs" );
+	save_cf(CF_sponsor_adj_reserve_release, nyears, "cf_sponsor_adj_reserve_release");
 	save_cf( CF_sponsor_investing_activities, nyears, "cf_sponsor_investing_activities" );
 
 	save_cf( CF_pv_interest_factor, nyears, "cf_pv_interest_factor" );

@@ -60,8 +60,8 @@ var_info vtab_battery_replacement_cost[] = {
 		{ SSC_INPUT, SSC_NUMBER, "batt_replacement_option", "Enable battery replacement?", "0=none,1=capacity based,2=user schedule", "", "Battery", "?=0", "INTEGER,MIN=0,MAX=2", "" },
 		{ SSC_INPUT, SSC_NUMBER, "battery_per_kWh", "Battery cost", "$/kWh", "", "Battery", "?=0.0", "", "" },
 		{ SSC_INPUT, SSC_NUMBER, "batt_computed_bank_capacity", "Battery bank capacity", "kWh", "", "Battery", "?=0.0", "", "" },
-		{ SSC_OUTPUT, SSC_ARRAY, "cf_battery_replacement_cost", "Battery replacement cost", "$", "", "Cash Flow", "*", "", "" },
-		{ SSC_OUTPUT, SSC_ARRAY, "cf_battery_replacement_cost_schedule", "Battery replacement cost schedule", "$/kWh", "", "Cash Flow", "*", "", "" },
+		{ SSC_OUTPUT, SSC_ARRAY, "cf_battery_replacement_cost", "Battery replacement cost", "$", "", "Cash Flow Expenses", "*", "", "" },
+		{ SSC_OUTPUT, SSC_ARRAY, "cf_battery_replacement_cost_schedule", "Battery replacement cost schedule", "$/kWh", "", "Cash Flow Expenses", "*", "", "" },
 
 		var_info_invalid };
 
@@ -75,8 +75,8 @@ var_info vtab_fuelcell_replacement_cost[] = {
 		{ SSC_INPUT, SSC_NUMBER, "fuelcell_replacement_option", "Enable fuel cell replacement?", "0=none,1=capacity based,2=user schedule", "", "fuelcell", "?=0", "INTEGER,MIN=0,MAX=2", "" },
 		{ SSC_INPUT, SSC_NUMBER, "fuelcell_per_kWh", "Fuel cell cost", "$/kWh", "", "fuelcell", "?=0.0", "", "" },
 		{ SSC_INPUT, SSC_NUMBER, "fuelcell_computed_bank_capacity", "Fuel cell capacity", "kWh", "", "fuelcell", "?=0.0", "", "" },
-		{ SSC_OUTPUT, SSC_ARRAY, "cf_fuelcell_replacement_cost", "Fuel cell replacement cost", "$", "", "Cash Flow", "*", "", "" },
-		{ SSC_OUTPUT, SSC_ARRAY, "cf_fuelcell_replacement_cost_schedule", "Fuel cell replacement cost schedule", "$/kW", "", "Cash Flow", "*", "", "" },
+		{ SSC_OUTPUT, SSC_ARRAY, "cf_fuelcell_replacement_cost", "Fuel cell replacement cost", "$", "", "Cash Flow Expenses", "*", "", "" },
+		{ SSC_OUTPUT, SSC_ARRAY, "cf_fuelcell_replacement_cost_schedule", "Fuel cell replacement cost schedule", "$/kW", "", "Cash Flow Expenses", "*", "", "" },
 
 		var_info_invalid };
 
