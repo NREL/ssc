@@ -557,7 +557,12 @@ int C_PartialCooling_Cycle::finalize_design()
 	}
 
 	// Design air coolers
-	// Low Pressure
+        // Calculate cooler duties
+    double q_dot_IP_local = m_m_dot_mc*(m_enth_last[PC_OUT] - m_enth_last[MC_IN]);      //[kWt]
+    double q_dot_LP_local = m_m_dot_t*(m_enth_last[LTR_LP_OUT] - m_enth_last[PC_IN]);   //[kWt]
+    double f_W_dot_fan_to_IP = q_dot_IP_local / (q_dot_IP_local + q_dot_LP_local);     //[-] Fraction of total fan power allocated to the IP cooler fan
+	
+        // Low Pressure
 		// Structure for design parameters that are dependent on cycle design solution
 	C_CO2_to_air_cooler::S_des_par_cycle_dep s_LP_air_cooler_des_par_dep;
 		// Set air cooler design parameters that are dependent on the cycle design solution
@@ -573,7 +578,7 @@ int C_PartialCooling_Cycle::finalize_design()
 
 	s_LP_air_cooler_des_par_dep.m_T_hot_out_des = m_temp_last[C_sco2_cycle_core::PC_IN];			//[K]
 		// Use half the rated fan power on each cooler fan
-	s_LP_air_cooler_des_par_dep.m_W_dot_fan_des = ms_des_par.m_frac_fan_power*0.5*ms_des_par.m_W_dot_net / 1000.0;		//[MWe]
+	s_LP_air_cooler_des_par_dep.m_W_dot_fan_des = ms_des_par.m_frac_fan_power*(1.0 - f_W_dot_fan_to_IP)*ms_des_par.m_W_dot_net / 1000.0;		//[MWe]
 		// Structure for design parameters that are independent of cycle design solution
 	C_CO2_to_air_cooler::S_des_par_ind s_LP_air_cooler_des_par_ind;
 	s_LP_air_cooler_des_par_ind.m_T_amb_des = ms_des_par.m_T_amb_des;		//[K]
@@ -601,7 +606,7 @@ int C_PartialCooling_Cycle::finalize_design()
 
 	s_IP_air_cooler_des_par_dep.m_T_hot_out_des = m_temp_last[C_sco2_cycle_core::MC_IN];			//[K]
 		// Use half the rated fan power on each cooler fan
-	s_IP_air_cooler_des_par_dep.m_W_dot_fan_des = ms_des_par.m_frac_fan_power*0.5*ms_des_par.m_W_dot_net / 1000.0;		//[MWe]
+	s_IP_air_cooler_des_par_dep.m_W_dot_fan_des = ms_des_par.m_frac_fan_power*f_W_dot_fan_to_IP*ms_des_par.m_W_dot_net / 1000.0;		//[MWe]
 		// Structure for design parameters that are independent of cycle design solution
 	C_CO2_to_air_cooler::S_des_par_ind s_IP_air_cooler_des_par_ind;
 	s_IP_air_cooler_des_par_ind.m_T_amb_des = ms_des_par.m_T_amb_des;		//[K]
