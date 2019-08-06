@@ -1335,6 +1335,7 @@ void C_csp_two_tank_tes::idle(double timestep, double T_amb, C_csp_tes::S_csp_te
 	mc_cold_tank.energy_balance(timestep, 0.0, 0.0, 0.0, T_amb, T_cold_ave, q_cold_heater, q_dot_cold_loss);
 
 	outputs.m_q_heater = q_cold_heater + q_hot_heater;			//[MJ]
+    outputs.m_m_dot = 0.0;                                      //[kg/s]
 	outputs.m_W_dot_rhtf_pump = 0.0;							//[MWe]
 	outputs.m_q_dot_loss = q_dot_cold_loss + q_dot_hot_loss;	//[MW]
 	
