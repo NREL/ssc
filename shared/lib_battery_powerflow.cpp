@@ -145,8 +145,8 @@ void BatteryPowerFlow::calculateACConnected()
 	double P_inverter_draw_ac = m_BatteryPower->powerPVInverterDraw;
 	double P_load_ac = m_BatteryPower->powerLoad;
 	double P_system_loss_ac = m_BatteryPower->powerSystemLoss;
-	double P_pv_to_batt_ac, P_grid_to_batt_ac, P_batt_to_load_ac, P_grid_to_load_ac, P_pv_to_load_ac, P_pv_to_grid_ac, P_batt_to_grid_ac, P_gen_ac, P_grid_ac, P_grid_to_batt_loss_ac, P_batt_to_load_loss_ac, P_pv_to_batt_loss_ac, P_fuelcell_to_batt_ac, P_fuelcell_to_load_ac, P_fuelcell_to_grid_ac;
-    P_pv_to_batt_ac = P_grid_to_batt_ac = P_batt_to_load_ac = P_grid_to_load_ac = P_pv_to_load_ac = P_pv_to_grid_ac = P_batt_to_grid_ac = P_gen_ac = P_grid_ac = P_grid_to_batt_loss_ac = P_batt_to_load_loss_ac = P_pv_to_batt_loss_ac = P_fuelcell_to_batt_ac = P_fuelcell_to_load_ac = P_fuelcell_to_grid_ac = 0;
+	double P_pv_to_batt_ac, P_grid_to_batt_ac, P_batt_to_load_ac, P_grid_to_load_ac, P_pv_to_load_ac, P_pv_to_grid_ac, P_batt_to_grid_ac, P_gen_ac, P_grid_ac, P_grid_to_batt_loss_ac, P_batt_to_load_loss_ac, P_batt_to_grid_loss_ac,  P_pv_to_batt_loss_ac, P_fuelcell_to_batt_ac, P_fuelcell_to_load_ac, P_fuelcell_to_grid_ac;
+    P_pv_to_batt_ac = P_grid_to_batt_ac = P_batt_to_load_ac = P_grid_to_load_ac = P_pv_to_load_ac = P_pv_to_grid_ac = P_batt_to_grid_ac = P_gen_ac = P_grid_ac = P_grid_to_batt_loss_ac = P_batt_to_load_loss_ac = P_batt_to_grid_loss_ac = P_pv_to_batt_loss_ac = P_fuelcell_to_batt_ac = P_fuelcell_to_load_ac = P_fuelcell_to_grid_ac = 0;
 
 	// convert the calculated DC power to AC, considering the microinverter efficiences
 	double P_battery_ac = 0;
@@ -224,6 +224,7 @@ void BatteryPowerFlow::calculateACConnected()
 	P_pv_to_batt_loss_ac = P_pv_to_batt_ac * (1 - m_BatteryPower->singlePointEfficiencyACToDC);
 	P_grid_to_batt_loss_ac = P_grid_to_batt_ac *(1 - m_BatteryPower->singlePointEfficiencyACToDC);
 	P_batt_to_load_loss_ac = P_batt_to_load_ac * (1 / m_BatteryPower->singlePointEfficiencyDCToAC - 1);
+	P_batt_to_grid_loss_ac = P_batt_to_grid_ac * (1 / m_BatteryPower->singlePointEfficiencyDCToAC - 1);
 
 	// Compute total system output and grid power flow
 	P_grid_to_load_ac = P_load_ac - P_pv_to_load_ac - P_batt_to_load_ac - P_fuelcell_to_load_ac;
@@ -258,7 +259,7 @@ void BatteryPowerFlow::calculateACConnected()
 	m_BatteryPower->powerFuelCellToBattery = P_fuelcell_to_batt_ac;
 	m_BatteryPower->powerFuelCellToLoad= P_fuelcell_to_load_ac;
 	m_BatteryPower->powerFuelCellToGrid = P_fuelcell_to_grid_ac;
-	m_BatteryPower->powerConversionLoss = P_batt_to_load_loss_ac + P_grid_to_batt_loss_ac + P_pv_to_batt_loss_ac;
+	m_BatteryPower->powerConversionLoss = P_batt_to_load_loss_ac + P_batt_to_grid_loss_ac + P_grid_to_batt_loss_ac + P_pv_to_batt_loss_ac;
 }
 
 void BatteryPowerFlow::calculateDCConnected()
