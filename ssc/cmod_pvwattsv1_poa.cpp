@@ -65,7 +65,7 @@ public:
 		add_var_info( _cm_vtab_pvwatts );
 	}
 
-	void exec( ) throw( general_error )
+	void exec( )
 	{
 		size_t arr_len;
 		ssc_number_t *p_beam = as_array( "beam", &arr_len );

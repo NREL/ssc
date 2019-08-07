@@ -407,9 +407,9 @@ battstor::battstor(compute_module &cm, bool setup_model, size_t nrec, double dt_
 					{
 						batt_vars->ec_use_realtime = cm.as_boolean("ur_en_ts_sell_rate");
 						if (!batt_vars->ec_use_realtime) {
-							batt_vars->ec_weekday_schedule = cm.as_matrix_unsigned_long("ur_ec_sched_weekday");
-							batt_vars->ec_weekend_schedule = cm.as_matrix_unsigned_long("ur_ec_sched_weekend");
-							batt_vars->ec_tou_matrix = cm.as_matrix("ur_ec_tou_mat");
+						batt_vars->ec_weekday_schedule = cm.as_matrix_unsigned_long("ur_ec_sched_weekday");
+						batt_vars->ec_weekend_schedule = cm.as_matrix_unsigned_long("ur_ec_sched_weekend");
+						batt_vars->ec_tou_matrix = cm.as_matrix("ur_ec_tou_mat");
 						}
 						else {
 							batt_vars->ec_realtime_buy = cm.as_vector_double("ur_ts_buy_rate");
@@ -583,7 +583,7 @@ battstor::battstor(compute_module &cm, bool setup_model, size_t nrec, double dt_
 			else
 			{
 				batt_vars->inverter_model = SharedInverter::NONE;
-				batt_vars->inverter_count = 0.96;
+				batt_vars->inverter_count = 1;
 				batt_vars->inverter_efficiency = batt_vars->batt_ac_dc_efficiency;
 				batt_vars->inverter_paco = batt_vars->batt_kw;
 			}
@@ -1169,8 +1169,8 @@ void battstor::check_replacement_schedule()
 		if (replace) {
 			double replacement_percent = batt_vars->batt_replacement_schedule_percent[year];
 			force_replacement(replacement_percent);
-		}
 	}
+}
 }
 void battstor::force_replacement(double replacement_percent)
 {
@@ -1408,7 +1408,7 @@ public:
 		add_var_info(vtab_battery_outputs);
 	}
 
-	void exec() throw(general_error)
+	void exec() override
 	{
 		if (as_boolean("en_batt"))
 		{

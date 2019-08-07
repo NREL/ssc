@@ -363,7 +363,7 @@ Subarray_IO::Subarray_IO(compute_module* cm, std::string cmName, size_t subarray
 		selfShadingInputs.nstrx = selfShadingInputs.nmodx / nModulesPerString;
 		poa.nonlinearDCShadingDerate = 1;
 
-		if (trackMode == irrad::FIXED_TILT || trackMode == irrad::SEASONAL_TILT || (trackMode == irrad::SINGLE_AXIS && !backtrackingEnabled))
+		if (trackMode == irrad::FIXED_TILT || trackMode == irrad::SEASONAL_TILT || (trackMode == irrad::SINGLE_AXIS))
 		{
 			if (shadeMode != NO_SHADING)
 			{
@@ -644,15 +644,14 @@ PVSystem_IO::PVSystem_IO(compute_module* cm, std::string cmName, Simulation_IO *
 		//read in optional DC and AC lifetime daily losses, error check length of arrays
 		if (enableDCLifetimeLosses)
 		{
-
-			std::vector<double> dc_lifetime_losses = cm->as_vector_double("dc_lifetime_losses");
-			if (dc_lifetime_losses.size() != Simulation->numberOfYears * 365)
+			dcLifetimeLosses = cm->as_vector_double("dc_lifetime_losses");
+			if (dcLifetimeLosses.size() != Simulation->numberOfYears * 365)
 				throw compute_module::exec_error(cmName, "Length of the lifetime daily DC losses array must be equal to the analysis period * 365");
 		}
 		if (enableACLifetimeLosses)
 		{
-			std::vector<double> ac_lifetime_losses = cm->as_vector_double("ac_lifetime_losses");
-			if (ac_lifetime_losses.size() != Simulation->numberOfYears * 365)
+			acLifetimeLosses = cm->as_vector_double("ac_lifetime_losses");
+			if (acLifetimeLosses.size() != Simulation->numberOfYears * 365)
 				throw compute_module::exec_error(cmName, "Length of the lifetime daily AC losses array must be equal to the analysis period * 365");
 		}
 	}

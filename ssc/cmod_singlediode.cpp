@@ -51,7 +51,7 @@ public:
 		add_var_info( _cm_vtab_singlediode );
 	}
 
-	void exec( ) throw( general_error )
+	void exec( )
 	{
 		double a = as_double( "a" );
 		double Il = as_double( "Il" );
@@ -121,7 +121,7 @@ public:
 		add_var_info( _cm_vtab_singlediodeparams );
 	}
 		
-	void exec( ) throw( general_error )
+	void exec( )
 	{
 #define I_ref 1000.0
 #define Tc_ref 298.15

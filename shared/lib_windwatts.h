@@ -77,30 +77,26 @@ public:
 	std::string GetWakeModelName();
 	std::string GetErrorDetails() { return errDetails; }
 
-	int windPowerUsingResource(
-		// INPUTS
-			double windSpeed,    // wind velocity m/s
-			double windDirDeg,  // wind direction 0-360, 0=N
-			double BarPAtm,  // barometric pressure (Atm)
-			double TdryC,    // dry bulb temp ('C)
-			
-		// OUTPUTS
-			double *farmPwer,    // total farm power output
-			double power[],  // calculated power of each WT
-			double thrust[], // thrust calculation at each WT
-			double eff[],    // downwind efficiency of each WT
-			double wind[],   // wind speed at each WT
-			double turbul[], // turbulence coeff at each WT
-			double distDown[], // distance down wind
-			double distCross[] // distance cross wind
-		);
+	int
+    windPowerUsingResource(double windSpeed, double windDirDeg, double airPressureAtm, double TdryC, double *farmPower,
+                           double *farmPowerGross, double power[], double thrust[], double eff[], double adWindSpeed[],
+                           double TI[], double distanceDownwind[], double distanceCrosswind[]);
 
+	/// returns energy output of a turbine
 	double windPowerUsingWeibull(
 		double weibull_k, 
 		double avg_speed, 
 		double ref_height,
 		double energy_turbine[]
 	);
+
+	/// returns energy output of wind farm
+    bool windPowerUsingDistribution(std::vector<std::vector<double>> &&wind_dist, double *farmPower,
+                                    double *farmPowerGross);
+	double windPowerUsingDistribution(std::vector<std::vector<double>>& wind_dist, double *farmPower,
+                                      double *farmPowerGross){
+	    return windPowerUsingDistribution(std::move(wind_dist),farmPower, farmPowerGross);
+	}
 };
 
 #endif

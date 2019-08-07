@@ -56,7 +56,7 @@ public:
 		add_var_info(_cm_vtab_iscc_design_point);
 	}
 
-	void exec() throw(general_error)
+	void exec() override
 	{
 		HTFProperties htfProps;			// Instance of HTFProperties class for receiver/HX htf
 		

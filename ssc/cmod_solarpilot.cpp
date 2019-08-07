@@ -148,7 +148,7 @@ public:
 		add_var_info( _cm_vtab_solarpilot );
 	}
 
-	void exec( ) throw( general_error )
+	void exec( )
 	{
 		std::shared_ptr<weather_data_provider> wdata = std::make_shared<weatherfile>(as_string("solar_resource_file"));
 		solarpilot_invoke spi( this );

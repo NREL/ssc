@@ -58,7 +58,7 @@
 
 SSCEXPORT int ssc_version()
 {
-	return 209;
+	return 211;
 }
 
 SSCEXPORT const char *ssc_build_info()
@@ -115,7 +115,7 @@ extern module_entry_info
 	cm_entry_wfcsvconv,
 	cm_entry_tcstrough_empirical,
 	cm_entry_tcstrough_physical,
-    	cm_entry_trough_physical,
+	cm_entry_trough_physical,
 	cm_entry_trough_physical_csp_solver,
 	cm_entry_trough_physical_process_heat,
 	cm_entry_iph_to_lcoefcr,
@@ -156,6 +156,8 @@ extern module_entry_info
 	cm_entry_pv_get_shade_loss_mpp,
 	cm_entry_inv_cec_cg,
 	cm_entry_thermalrate,
+	cm_entry_mhk_tidal,
+	cm_entry_mhk_wave,
 	cm_entry_grid;
 
 /* official module table */
@@ -242,6 +244,8 @@ static module_entry_info *module_table[] = {
 	&cm_entry_pv_get_shade_loss_mpp,
 	&cm_entry_inv_cec_cg,
 	&cm_entry_thermalrate,
+	&cm_entry_mhk_tidal,
+	&cm_entry_mhk_wave,
 	&cm_entry_grid,
 	0 };
 

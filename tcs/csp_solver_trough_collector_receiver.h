@@ -64,6 +64,7 @@ public:
 		E_Q_DOT_FREEZE_PROT,       //[MWt]
 
 		E_M_DOT_LOOP,				//[kg/s]
+        E_IS_RECIRCULATING,         //[-]
 		E_M_DOT_FIELD_RECIRC,		//[kg/s]
 		E_M_DOT_FIELD_DELIVERED,	//[kg/s]
 		E_T_FIELD_COLD_IN,	//[C]
@@ -180,6 +181,8 @@ private:
 	double m_Runner_hl_hot;		//[W] Total heat loss from the hot runners *in one field section*
     double m_Runner_hl_hot_tot;
 
+    double Intc_hl;             //[W] Total heat loss from the loop interconnects *in one field section*
+
 	double m_c_hdr_cold;		//[J/kg-K] Specific heat of fluid at m_T_sys_c
 	double m_c_hdr_hot;			//[J/kg-K] Specific heat of fluid at outlet temperature of last SCA (not necessarily return temperature if modeling runners and headers)
 
@@ -292,7 +295,8 @@ private:
 					double & T_cold_in /*K*/, double m_dot_loop /*kg/s*/, 
 					const C_csp_solver_sim_info &sim_info, double & Q_fp /*MJ*/);
 
-	void field_pressure_drop(double T_db);
+	double field_pressure_drop(double T_db, double m_dot_field, double P_in_field,
+        const std::vector<double> &T_in_SCA, const std::vector<double> &T_out_SCA);
 
 	void set_output_value();
 
@@ -391,7 +395,11 @@ public:
 	m_Shadowing, 			 //[-] Receiver bellows shadowing loss factor
 	m_Dirt_HCE, 			 //[-] Loss due to dirt on the receiver envelope
 	m_Design_loss, 			 //[-] Receiver heat loss at design
-	m_SCAInfoArray;          //[-] Receiver (,1) and collector (,2) type for each assembly in loop 	 
+	m_SCAInfoArray;          //[-] Receiver (,1) and collector (,2) type for each assembly in loop
+    
+    double m_rec_su_delay;   //[hr] Fixed startup delay time for the receiver
+    double m_rec_qf_delay;   //[-] Energy-based receiver startup delay (fraction of rated thermal power)
+    double m_p_start;        //[kWe-hr] Collector startup energy, per SCA
 
 	util::matrix_t<double> m_IAM_matrix;		  //[-] IAM coefficients, matrix for 4 collectors
 	
@@ -429,9 +437,10 @@ public:
     std::vector<double> m_L_runner;	              //[m]    Lengths of runner sections
     std::vector<int> m_N_rnr_xpans;               //[-]    Number of expansions in runner sections
     std::vector<double> m_DP_rnr;                 //[bar]  Pressure drop in runner sections
-    std::vector<double> m_T_rnr_dsn;              //[C]    Temperature in runner sections at design
+    std::vector<double> m_T_rnr_dsn;              //[C]    Temperature entering runner sections at design
     std::vector<double> m_P_rnr_dsn;              //[bar]  Gauge pessure in runner sections at design
-    std::vector<double> m_T_rnr;                  //[K]    Temperature in runner sections
+    std::vector<double> m_T_rnr;                  //[K]    Temperature entering runner sections
+    double m_T_field_out;                         //[K]    Temperature exiting last runner, and thus exiting field
     std::vector<double> m_P_rnr;                  //[Pa ]  Gauge pessure in runner sections
                                                   
     std::vector<double> m_D_hdr;	              //[m]    Diameters of header sections
@@ -441,15 +450,15 @@ public:
     std::vector<double> m_L_hdr;	              //[m]    Lengths of header sections
     std::vector<int> m_N_hdr_xpans;               //[-]    Number of expansions in header sections
     std::vector<double> m_DP_hdr;                 //[bar]  Pressure drop in header sections
-    std::vector<double> m_T_hdr_dsn;              //[C]    Temperature in header sections at design
+    std::vector<double> m_T_hdr_dsn;              //[C]    Temperature entering header sections at design
     std::vector<double> m_P_hdr_dsn;              //[bar]  Gauge pessure in header sections at design
-    std::vector<double> m_T_hdr;                  //[K]    Temperature in header sections
+    std::vector<double> m_T_hdr;                  //[K]    Temperature entering header sections
     std::vector<double> m_P_hdr;                  //[Pa]   Gauge pessure in header sections
                                                   
     std::vector<double> m_DP_loop;                //[bar]  Pressure drop in loop sections
-    std::vector<double> m_T_loop_dsn;             //[C]    Temperature in loop sections at design
+    std::vector<double> m_T_loop_dsn;             //[C]    Temperature entering loop sections at design
     std::vector<double> m_P_loop_dsn;             //[bar]  Gauge pessure in loop sections at design
-    std::vector<double> m_T_loop;                 //[K]    Temperature in loop sections
+    std::vector<double> m_T_loop;                 //[K]    Temperature entering loop sections
     std::vector<double> m_P_loop;                 //[Pa]   Gauge pessure in loop sections
 
     vector<interconnect> m_interconnects;

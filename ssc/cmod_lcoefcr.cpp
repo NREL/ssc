@@ -30,10 +30,9 @@ static var_info vtab_lcoefcr[] =
 	{ SSC_INPUT,        SSC_NUMBER,      "fixed_operating_cost",     "Annual fixed operating cost",    "$",      "",       "Simple LCOE", "*",           "",         "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "variable_operating_cost",  "Annual variable operating cost", "$/kWh",  "",       "Simple LCOE", "*",           "",         "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "fixed_charge_rate",        "Fixed charge rate",              "",       "",       "Simple LCOE", "*",           "",         "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "annual_energy",            "Annual energy production",       "kWh",    "",       "Simple LCOE", "*",           "",         "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "annual_energy",            "Annual energy production",       "kWh",    "",       "Simple LCOE",          "*",           "",         "" },
 	
-	{ SSC_OUTPUT,       SSC_NUMBER,       "lcoe_fcr",                "Levelized cost of energy",      "$/kWh",  "",       "Simple LCOE", "*",           "",         "" },
-
+	{ SSC_OUTPUT,       SSC_NUMBER,      "lcoe_fcr",                 "Levelized cost of energy",       "$/kWh",  "",	   "Simple LCOE",          "*",           "",         "" },
 var_info_invalid };
 
 class cm_lcoefcr : public compute_module
@@ -45,7 +44,7 @@ public:
 		add_var_info( vtab_lcoefcr );
 	}
 
-	void exec( ) throw( general_error )
+	void exec( )
 	{
 		double aep = 1; // annual output, get from performance model
 		double fcr = 0; // fixed charge rate, before tax revenues required

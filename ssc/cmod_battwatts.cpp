@@ -264,7 +264,7 @@ public:
 			delete batt_vars;
 	}
 
-	void exec() throw(general_error)
+	void exec() override
 	{
 		if (as_boolean("batt_simple_enable"))
 		{

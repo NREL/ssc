@@ -91,7 +91,7 @@ public:
 		add_var_info( _cm_vtab_irradproc );
 	}
 
-	void exec( ) throw( general_error )
+	void exec( )
 	{
 		size_t count;
 		ssc_number_t *beam = 0, *glob = 0, *diff = 0;
