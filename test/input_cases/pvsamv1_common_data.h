@@ -697,6 +697,8 @@ void pvsamv1_with_residential_default(ssc_data_t &data)
 	ssc_data_set_number(data, "batt_dc_dc_efficiency", 99);
 	ssc_data_set_number(data, "batt_dc_ac_efficiency", 96);
 	ssc_data_set_number(data, "batt_ac_dc_efficiency", 96);
+	ssc_data_set_number(data, "batt_inverter_efficiency_cutoff", 90);
+
 	ssc_data_set_number(data, "batt_meter_position", 0);
 	ssc_number_t p_batt_losses[1] = { 0 };
 	ssc_data_set_array(data, "batt_losses", p_batt_losses, 1);
