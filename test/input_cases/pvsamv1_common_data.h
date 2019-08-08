@@ -715,8 +715,10 @@ void pvsamv1_with_residential_default(ssc_data_t &data)
 	ssc_data_set_number(data, "batt_computed_bank_capacity", 9.9791994094848633);
 	ssc_data_set_number(data, "batt_current_charge_max", 99);
 	ssc_data_set_number(data, "batt_current_discharge_max", 99);
-	ssc_data_set_number(data, "batt_power_charge_max", 4.9895997047424316);
-	ssc_data_set_number(data, "batt_power_discharge_max", 4.9895997047424316);
+	ssc_data_set_number(data, "batt_power_charge_max_kwdc", 4.9895997047424316);
+	ssc_data_set_number(data, "batt_power_discharge_max_kwdc", 4.9895997047424316);
+	ssc_data_set_number(data, "batt_power_charge_max_kwac", 4.9895997047424316);
+	ssc_data_set_number(data, "batt_power_discharge_max_kwac", 4.9895997047424316);
 	ssc_data_set_number(data, "batt_voltage_choice", 0);
 	ssc_data_set_number(data, "batt_Vfull", 4.0999999046325684);
 	ssc_data_set_number(data, "batt_Vexp", 4.0500001907348633);
