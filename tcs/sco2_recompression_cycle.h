@@ -461,6 +461,7 @@ private:
 	double m_eta_thermal_od;
 	double m_W_dot_net_od;
 	double m_Q_dot_PHX_od;
+    double m_Q_dot_mc_cooler_od;    //[MWt]
 
 		// Structures and data for off-design optimization
 	S_od_parameters ms_od_par_optimal;
@@ -525,7 +526,7 @@ public:
 
 		m_temp_od = m_pres_od = m_enth_od = m_entr_od = m_dens_od = m_temp_last;
 
-		m_eta_thermal_od = m_W_dot_net_od = m_Q_dot_PHX_od = std::numeric_limits<double>::quiet_NaN();
+		m_eta_thermal_od = m_W_dot_net_od = m_Q_dot_PHX_od = m_Q_dot_mc_cooler_od = std::numeric_limits<double>::quiet_NaN();
 
 		m_W_dot_net_max = m_eta_best = m_biggest_target = std::numeric_limits<double>::quiet_NaN();
 

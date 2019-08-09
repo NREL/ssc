@@ -4503,6 +4503,7 @@ void C_RecompCycle::off_design_fix_shaft_speeds_core(int & error_code)
 	m_Q_dot_PHX_od = m_dot_t*(m_enth_od[TURB_IN] - m_enth_od[HTR_HP_OUT]);
 	m_W_dot_net_od = w_mc*m_dot_mc + w_rc*m_dot_rc + w_t*m_dot_t;
 	m_eta_thermal_od = m_W_dot_net_od / m_Q_dot_PHX_od;
+    m_Q_dot_mc_cooler_od = m_dot_mc*(m_enth_od[LTR_LP_OUT] - m_enth_od[MC_IN])*1.E-3;   //[MWt]
 
 	// Get 'od_solved' structures from component classes
 	//ms_od_solved.ms_mc_od_solved = *m_mc.get_od_solved();
@@ -4516,6 +4517,7 @@ void C_RecompCycle::off_design_fix_shaft_speeds_core(int & error_code)
 	ms_od_solved.m_eta_thermal = m_eta_thermal_od;
 	ms_od_solved.m_W_dot_net = m_W_dot_net_od;
 	ms_od_solved.m_Q_dot = m_Q_dot_PHX_od;
+    ms_od_solved.m_Q_dot_mc_cooler = m_Q_dot_mc_cooler_od;  //[MWt]
 	ms_od_solved.m_m_dot_mc = m_dot_mc;
 	ms_od_solved.m_m_dot_rc = m_dot_rc;
 	ms_od_solved.m_m_dot_t = m_dot_t;

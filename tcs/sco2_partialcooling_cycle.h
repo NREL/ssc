@@ -267,6 +267,8 @@ private:
 	double m_eta_thermal_od;
 	double m_W_dot_net_od;
 	double m_Q_dot_PHX_od;
+    double m_Q_dot_mc_cooler_od;
+    double m_Q_dot_pc_cooler_od;
 
 	int design_core();
 
@@ -293,7 +295,8 @@ public:
 		m_objective_metric_last = m_objective_metric_opt = m_objective_metric_auto_opt = std::numeric_limits<double>::quiet_NaN();
 
 		mv_temp_od = mv_pres_od = mv_enth_od = mv_entr_od = mv_dens_od = m_temp_last;
-		m_eta_thermal_od = m_W_dot_net_od = m_Q_dot_PHX_od = std::numeric_limits<double>::quiet_NaN();
+		m_eta_thermal_od = m_W_dot_net_od = m_Q_dot_PHX_od =
+        m_Q_dot_mc_cooler_od = m_Q_dot_pc_cooler_od = std::numeric_limits<double>::quiet_NaN();
 	}
 
 	class C_MEQ__f_recomp__y_N_rc : public C_monotonic_equation

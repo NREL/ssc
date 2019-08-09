@@ -309,7 +309,31 @@ public:
             m_is_mod_P_mc_in_solver = is_mod_P_mc_in_solver;    //[-]
         }
 
-        virtual int operator()(double T_mc_in /*K*/, double *diff_W_dot_fan /*-*/);
+        virtual int operator()(double T_mc_in /*K*/, double *W_dot_fan /*MWe*/);
+    };
+
+    class C_MEQ_T_pc_in__W_dot_fan : public C_monotonic_equation
+    {
+    private:
+        C_sco2_phx_air_cooler *mpc_sco2_ac;
+        double m_W_dot_mc_cooler_fan_target; //[MWe]
+        double m_T_mc_in_min;   //[K]
+        bool m_is_mod_P_pc_in_solver;
+
+    public:
+        C_MEQ_T_pc_in__W_dot_fan(C_sco2_phx_air_cooler *pc_sco2_ac,
+            double W_dot_mc_cooler_fan_target /*MWe*/,
+            double T_mc_in_min /*K*/,
+            bool is_mod_P_pc_in_solver)
+        {
+            mpc_sco2_ac = pc_sco2_ac;
+            m_W_dot_mc_cooler_fan_target = W_dot_mc_cooler_fan_target;    //[MWe]
+            m_T_mc_in_min = T_mc_in_min;    //[K]
+
+            m_is_mod_P_pc_in_solver = is_mod_P_pc_in_solver;
+        }
+
+        virtual int operator()(double T_pc_in /*K*/, double *W_dot_fan /*MWe*/);
     };
 
 	class C_mono_eq_T_t_in : public C_monotonic_equation
@@ -401,6 +425,11 @@ public:
     void solve_T_mc_in_for_cooler_constraint(double W_dot_mc_cooler_fan_target /*MWe*/,
             double T_comp_in_min /*K*/,
             bool is_modified_P_mc_in_solver);
+
+    void solve_nested_T_pc_in__T_mc_in_for_cooler_constrains(double W_dot_pc_cooler_fan_target /*MWe*/,
+        double W_dot_mc_cooler_fan_target /*MWe*/,
+        double T_comp_in_min /*K*/,
+        bool is_modified_P_mc_in_solver);
 
     int optimize_N_mc_and_N_rc__max_eta(C_sco2_phx_air_cooler::S_od_par od_par,
         bool is_PHX_dP_input, double PHX_f_dP /*-*/,

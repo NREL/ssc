@@ -702,7 +702,9 @@ var_info vtab_sco2_design[] = {
 	{ SSC_OUTPUT, SSC_NUMBER,  "pc_P_in_des",          "Precompressor inlet pressure",                           "MPa",        "",    "",      "*",     "",       "" },
 	{ SSC_OUTPUT, SSC_NUMBER,  "pc_W_dot",             "Precompressor power",                                    "MWe",        "",    "",      "*",     "",       "" },
 	{ SSC_OUTPUT, SSC_NUMBER,  "pc_m_dot_des",         "Precompressor mass flow rate",                           "kg/s",       "",    "",      "*",     "",       "" },
-	{ SSC_OUTPUT, SSC_NUMBER,  "pc_phi_des",           "Precompressor design flow coefficient",                  "",           "",    "",      "*",     "",       "" },
+    { SSC_OUTPUT, SSC_NUMBER,  "pc_rho_in_des",        "Precompressor inlet density",                            "kg/m3",      "",    "",      "*",     "",       "" },
+    { SSC_OUTPUT, SSC_NUMBER,  "pc_ideal_spec_work_des", "Precompressor ideal spec work",                          "kJ/kg",      "",    "",      "*",     "",       "" },
+    { SSC_OUTPUT, SSC_NUMBER,  "pc_phi_des",           "Precompressor design flow coefficient",                  "",           "",    "",      "*",     "",       "" },
 	{ SSC_OUTPUT, SSC_ARRAY,   "pc_tip_ratio_des",     "Precompressor design stage tip speed ratio",             "",           "",    "",      "*",     "",       "" },
 	{ SSC_OUTPUT, SSC_NUMBER,  "pc_n_stages",          "Precompressor stages",                                   "",           "",    "",      "*",     "",       "" },
 	{ SSC_OUTPUT, SSC_NUMBER,  "pc_N_des",             "Precompressor design shaft speed",                       "rpm",        "",    "",      "*",     "",       "" },
@@ -1331,6 +1333,8 @@ int sco2_design_cmod_common(compute_module *cm, C_sco2_phx_air_cooler & c_sco2_c
 	{
 		cm->assign("pc_T_in_des", (ssc_number_t)(c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.ms_pc_ms_des_solved.m_T_in - 273.15));
 		cm->assign("pc_P_in_des", (ssc_number_t)(c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.ms_pc_ms_des_solved.m_P_in*1.E-3));
+        cm->assign("pc_rho_in_des", (ssc_number_t)(c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_dens[C_sco2_cycle_core::PC_IN])); //[kg/m3]
+        cm->assign("pc_ideal_spec_work_des", (ssc_number_t)(c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.ms_pc_ms_des_solved.m_isen_spec_work));    //[kJ/kg]
 		cm->assign("pc_phi_des", (ssc_number_t)(c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.ms_pc_ms_des_solved.m_phi_des)); //[-]
 
 		n_pc_stages = c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.ms_pc_ms_des_solved.m_n_stages;		//[-]
@@ -1360,6 +1364,8 @@ int sco2_design_cmod_common(compute_module *cm, C_sco2_phx_air_cooler & c_sco2_c
 		double ssc_nan = std::numeric_limits<ssc_number_t>::quiet_NaN();
 		cm->assign("pc_T_in_des", ssc_nan);
 		cm->assign("pc_P_in_des", ssc_nan);
+        cm->assign("pc_rho_in_des", ssc_nan);
+        cm->assign("pc_ideal_spec_work_des", ssc_nan);
 		cm->assign("pc_phi_des", ssc_nan);
 		cm->assign("pc_n_stages", ssc_nan);
 		cm->assign("pc_N_des", ssc_nan);

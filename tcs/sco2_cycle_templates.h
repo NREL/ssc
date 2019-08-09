@@ -302,6 +302,8 @@ public:
 		double m_eta_thermal;	//[-]
 		double m_W_dot_net;		//[kWe]
 		double m_Q_dot;			//[kWt]
+        double m_Q_dot_mc_cooler;   //[MWt]
+        double m_Q_dot_pc_cooler;   //[MWt]
 		double m_m_dot_mc;		//[kg/s]
 		double m_m_dot_rc;		//[kg/s]
 		double m_m_dot_pc;		//[kg/s]
@@ -325,7 +327,8 @@ public:
 
 		S_od_solved()
 		{
-			m_eta_thermal = m_W_dot_net = m_Q_dot = m_m_dot_mc = m_m_dot_rc = m_m_dot_pc =
+			m_eta_thermal = m_W_dot_net = m_Q_dot = m_Q_dot_mc_cooler = m_Q_dot_pc_cooler =
+                m_m_dot_mc = m_m_dot_rc = m_m_dot_pc =
 				m_m_dot_t = m_recomp_frac = m_mc_f_bypass = m_pc_f_bypass =
 				m_W_dot_cooler_tot = std::numeric_limits<double>::quiet_NaN();
 		}
