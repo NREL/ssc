@@ -47,7 +47,7 @@ public:
 		add_var_info(_cm_vtab_user_htf_comparison);
 	}
 
-	void exec() throw(general_error)
+	void exec() override
 	{
 		// Get fluid codes
 		int htf_code1 = (int)as_double("HTF_code1");

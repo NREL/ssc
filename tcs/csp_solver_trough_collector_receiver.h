@@ -295,7 +295,8 @@ private:
 					double & T_cold_in /*K*/, double m_dot_loop /*kg/s*/, 
 					const C_csp_solver_sim_info &sim_info, double & Q_fp /*MJ*/);
 
-	void field_pressure_drop(double T_db);
+	double field_pressure_drop(double T_db, double m_dot_field, double P_in_field,
+        const std::vector<double> &T_in_SCA, const std::vector<double> &T_out_SCA);
 
 	void set_output_value();
 
@@ -394,7 +395,11 @@ public:
 	m_Shadowing, 			 //[-] Receiver bellows shadowing loss factor
 	m_Dirt_HCE, 			 //[-] Loss due to dirt on the receiver envelope
 	m_Design_loss, 			 //[-] Receiver heat loss at design
-	m_SCAInfoArray;          //[-] Receiver (,1) and collector (,2) type for each assembly in loop 	 
+	m_SCAInfoArray;          //[-] Receiver (,1) and collector (,2) type for each assembly in loop
+    
+    double m_rec_su_delay;   //[hr] Fixed startup delay time for the receiver
+    double m_rec_qf_delay;   //[-] Energy-based receiver startup delay (fraction of rated thermal power)
+    double m_p_start;        //[kWe-hr] Collector startup energy, per SCA
 
 	util::matrix_t<double> m_IAM_matrix;		  //[-] IAM coefficients, matrix for 4 collectors
 	

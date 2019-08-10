@@ -25,6 +25,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "../shared/lib_util.h"
 #include <string>
+#include <vector>
 #include "sscapi.h"
 
 
@@ -52,6 +53,7 @@ public:
 	var_data *lookup( const std::string &name );
 	const char *first();
 	const char *next();
+	const char *key(int pos);
 	unsigned int size() { return (unsigned int)m_hash.size(); }
 	var_table &operator=( const var_table &rhs );
 
@@ -80,6 +82,10 @@ public:
 
 	std::string to_string();
 	static std::string to_string( const var_data &value );
+
+	std::vector<double> arr_vector();
+	std::vector<std::vector<double>> matrix_vector();
+
 	static bool parse( unsigned char type, const std::string &buf, var_data &value );
 
 	var_data &operator=(const var_data &rhs) { copy(rhs); return *this; }
@@ -90,5 +96,10 @@ public:
 	std::string str;
 	var_table table;
 };
+
+#define VT_GET_INPUT(vt, name, lvalue) \
+if (var_data* vd = vt->lookup(name)) lvalue = vd->num; \
+else throw std::runtime_error(std::string(name)+std::string(" must be assigned."));
+
 
 #endif

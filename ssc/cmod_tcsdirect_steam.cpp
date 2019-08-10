@@ -350,7 +350,7 @@ public:
         add_var_info(vtab_sf_adjustment_factors);
 	}
 
-	void exec( ) throw( general_error )
+	void exec( )
 	{
 		//bool debug_mode = (__DEBUG__ == 1);  // When compiled in VS debug mode, this will use the trnsys weather file; otherwise, it will attempt to open the file with name that was passed in
 		bool debug_mode = false;

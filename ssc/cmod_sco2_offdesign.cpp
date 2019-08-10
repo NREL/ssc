@@ -50,7 +50,7 @@ public:
 		add_var_info(_cm_vtab_sco2_offdesign);
 	}
 
-	void exec() throw(general_error)
+	void exec() override
 	{
 		cycle_design_parameters rc_des_par;
 
