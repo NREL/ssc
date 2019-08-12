@@ -5,7 +5,7 @@
 #include "../input_cases/weather_inputs.h"
 
 /// Test tcsdirect_steam with all defaults and the single owner financial model
-TEST_F(CMTcsDirectSteam, DirectSteam_Default_SingleOwner) {
+TEST_F(CMTcsDirectSteam, DirectSteam_Default_SingleOwner_cmod_tcsdirect_steam) {
 
 	ssc_data_t data = ssc_data_create();
 	int test_errors = tcsdirect_steam_daggett_default(data);
@@ -50,7 +50,7 @@ TEST_F(CMTcsDirectSteam, DirectSteam_Default_SingleOwner) {
 
 /// Test tcsdirect_steam with alternative condenser type: Evaporative
 /// Rest default configurations with respect to the single owner financial model
-TEST_F(CMTcsDirectSteam, DirectSteam_Evap_Condenser_SingleOwner) {
+TEST_F(CMTcsDirectSteam, DirectSteam_Evap_Condenser_SingleOwner_cmod_tcsdirect_steam) {
 
 	ssc_data_t data = ssc_data_create();
 	int test_errors = tcsdirect_steam_daggett_evap_condenser(data);
@@ -96,7 +96,7 @@ TEST_F(CMTcsDirectSteam, DirectSteam_Evap_Condenser_SingleOwner) {
 
 /// Test tcsdirect_steam with alternative condenser type: Hybrid
 /// Rest default configurations with respect to the single owner financial model
-TEST_F(CMTcsDirectSteam, DirectSteam_Hybrid_Condenser_SingleOwner) {
+TEST_F(CMTcsDirectSteam, DirectSteam_Hybrid_Condenser_SingleOwner_cmod_tcsdirect_steam) {
 
 	ssc_data_t data = ssc_data_create();
 	int test_errors = tcsdirect_steam_daggett_hybrid_condenser(data);
@@ -142,7 +142,7 @@ TEST_F(CMTcsDirectSteam, DirectSteam_Hybrid_Condenser_SingleOwner) {
 
 /// Test tcsdirect_steam with alternative fossil dispatch mode: Supplemental mode
 /// Rest default configurations with respect to the single owner financial model
-TEST_F(CMTcsDirectSteam, DirectSteam_Fossil_Supplemental_SingleOwner) {
+TEST_F(CMTcsDirectSteam, DirectSteam_Fossil_Supplemental_SingleOwner_cmod_tcsdirect_steam) {
 
 	ssc_data_t data = ssc_data_create();
 	int test_errors = tcsdirect_steam_daggett_fossil_dispatch_supplemental(data);
@@ -188,7 +188,7 @@ TEST_F(CMTcsDirectSteam, DirectSteam_Fossil_Supplemental_SingleOwner) {
 
 /// Test tcsdirect_steam with alternative Direct Steam Receiver material: T91 Steel
 /// Rest default configurations with respect to the single owner financial model
-TEST_F(CMTcsDirectSteam, DirectSteam_Direct_Steam_Receiver_SingleOwner) {
+TEST_F(CMTcsDirectSteam, DirectSteam_Direct_Steam_Receiver_SingleOwner_cmod_tcsdirect_steam) {
 
 	ssc_data_t data = ssc_data_create();
 	int test_errors = tcsdirect_steam_daggett_direct_steam_receiver(data);
@@ -234,7 +234,7 @@ TEST_F(CMTcsDirectSteam, DirectSteam_Direct_Steam_Receiver_SingleOwner) {
 
 /// Test tcsdirect_steam with alternative flow pattern: 1
 /// Rest default configurations with respect to the single owner financial model
-TEST_F(CMTcsDirectSteam, DirectSteam_Flow_Pattern_SingleOwner) {
+TEST_F(CMTcsDirectSteam, DirectSteam_Flow_Pattern_SingleOwner_cmod_tcsdirect_steam) {
 
 	ssc_data_t data = ssc_data_create();
 	int test_errors = tcsdirect_steam_daggett_flow_pattern(data);
@@ -280,7 +280,7 @@ TEST_F(CMTcsDirectSteam, DirectSteam_Flow_Pattern_SingleOwner) {
 
 /// Test tcsdirect_steam with alternative Heliostat focusing method: Flat
 /// Rest default configurations with respect to the single owner financial model
-TEST_F(CMTcsDirectSteam, DirectSteam_Heliostat_Focusing_SingleOwner) {
+TEST_F(CMTcsDirectSteam, DirectSteam_Heliostat_Focusing_SingleOwner_cmod_tcsdirect_steam) {
 
 	ssc_data_t data = ssc_data_create();
 	int test_errors = tcsdirect_steam_daggett_focusing_method(data);
@@ -326,7 +326,7 @@ TEST_F(CMTcsDirectSteam, DirectSteam_Heliostat_Focusing_SingleOwner) {
 
 /// Test tcsdirect_steam with alternative Heliostat canting method: Equinox
 /// Rest default configurations with respect to the single owner financial model
-TEST_F(CMTcsDirectSteam, DirectSteam_Heliostat_Canting_SingleOwner) {
+TEST_F(CMTcsDirectSteam, DirectSteam_Heliostat_Canting_SingleOwner_cmod_tcsdirect_steam) {
 
 	ssc_data_t data = ssc_data_create();
 	int test_errors = tcsdirect_steam_daggett_canting_method(data);
@@ -372,7 +372,7 @@ TEST_F(CMTcsDirectSteam, DirectSteam_Heliostat_Canting_SingleOwner) {
 
 /// Test tcsdirect_steam with alternative location: Tucson, AZ
 /// Rest default configurations with respect to the single owner financial model
-TEST_F(CMTcsDirectSteam, DirectSteam_Location_Tucson_AZ_SingleOwner) {
+TEST_F(CMTcsDirectSteam, DirectSteam_Location_Tucson_AZ_SingleOwner_cmod_tcsdirect_steam) {
 
 	ssc_data_t data = ssc_data_create();
 	int test_errors = tcsdirect_steam_daggett_tucson_AZ(data);

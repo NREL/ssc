@@ -35,7 +35,7 @@ void StorageTankTest::SetUp()
         m_max_q_htr_cold, m_max_q_htr_hot, m_dt_hot_des, m_dt_cold_des, m_T_h_in_des, m_T_h_out_des);
 }
 
-TEST_F(StorageTankTest, TestDrainingTank)
+TEST_F(StorageTankTest, TestDrainingTank_storage_hx)
 {
     m_is_hot_tank = false;
     m_dt = 3600;
@@ -58,7 +58,7 @@ TEST_F(StorageTankTest, TestDrainingTank)
     EXPECT_NEAR(m_q_heater, 0., 0. * m_error_tolerance_lo);
 }
 
-TEST_F(StorageTankTest, TestDrainedTank)
+TEST_F(StorageTankTest, TestDrainedTank_storage_hx)
 {
     m_is_hot_tank = false;
     m_dt = 3600;

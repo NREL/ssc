@@ -136,7 +136,7 @@ int tcsmolten_salt_Tucson_AZ(ssc_data_t &data)
 {
 	tcsmolten_salt_default(data);
 	
-	char solar_resource_path_tucson[256];
+	char solar_resource_path_tucson[512];
 	int n = sprintf(solar_resource_path_tucson, "%s/test/input_cases/moltensalt_data/tucson_az_32.116521_-110.933042_psmv3_60_tmy.csv", std::getenv("SSCDIR"));
 	ssc_data_set_string(data, "solar_resource_file", solar_resource_path_tucson);
 

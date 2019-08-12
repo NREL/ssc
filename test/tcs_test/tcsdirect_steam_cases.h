@@ -153,7 +153,7 @@ int tcsdirect_steam_daggett_tucson_AZ(ssc_data_t &data)
 {
 	tcsdirect_steam_default(data);
   
-	char solar_resource_path_tucson[256];
+	char solar_resource_path_tucson[512];
 	int n2 = sprintf(solar_resource_path_tucson, "%s/test/input_cases/directsteam_data/tucson_az_32.116521_-110.933042_psmv3_60_tmy.csv", std::getenv("SSCDIR"));
 	ssc_data_set_string(data, "solar_resource_file", solar_resource_path_tucson);
 	

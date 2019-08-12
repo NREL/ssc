@@ -57,8 +57,9 @@ set(SOLARPILOT_SRC
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 if(MSVC)
-	add_compile_options(/W3 /MP)
-    add_compile_definitions( __64BIT__ __WINDOWS__ _WINDOWS _CRT_SECURE_NO_WARNINGS _MBCS )
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /bigobj")
+	add_compile_options(/MP /W0)
+    add_compile_definitions( __64BIT__ __WINDOWS__ _WINDOWS _CRT_SECURE_NO_WARNINGS LPWINAPP )
     foreach (flag_var CMAKE_C_FLAGS_DEBUG CMAKE_CXX_FLAGS_DEBUG)
 		set(${flag_var} "${${flag_var}} /D_DEBUG" CACHE STRING "compile flags" FORCE)
 	endforeach()
@@ -70,6 +71,7 @@ else(MSVC)
 		add_definitions(-D__64BIT__)
 	endif()
 	SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11" )
+	SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wno-unknown-pragmas -Wno-sign-compare -Wno-unused-variable -Wno-uninitialized -Wno-int-to-pointer-cast ")
 	if(CMAKE_BUILD_TYPE STREQUAL "Debug")
 		add_compile_definitions(_DEBUG)
 	else()
@@ -89,7 +91,7 @@ set_target_properties(solarpilot
     PROPERTIES
     DEBUG_POSTFIX "d"
 	PREFIX ""
-	ARCHIVE_OUTPUT_DIRECTORY $<1:${CMAKE_CURRENT_SOURCE_DIR}>)
+	)
 
 
 #####################################################################################################################
@@ -99,5 +101,5 @@ set_target_properties(solarpilot
 #####################################################################################################################
 
 if (MSVC)
-    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /SUBSYSTEM:CONSOLE")
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /SUBSYSTEM:WINDOWS")
 endif()

@@ -474,11 +474,11 @@ static var_info _cm_vtab_pvsamv1[] = {
     { SSC_INPUT, SSC_NUMBER,   "ond_Aux_Loss",                         "",                                                    "W",      "",                                                                                                                                                                                      "Inverter Mermoud Lejeune Model",                        "inverter_model=4",                   "",                    "" },
     { SSC_INPUT, SSC_NUMBER,   "ond_doAllowOverpower",                 "",                                                    "-",      "",                                                                                                                                                                                      "Inverter Mermoud Lejeune Model",                        "inverter_model=4",                   "",                    "" },
     { SSC_INPUT, SSC_NUMBER,   "ond_doUseTemperatureLimit",            "",                                                    "-",      "",                                                                                                                                                                                      "Inverter Mermoud Lejeune Model",                        "inverter_model=4",                   "",                    "" },
-    { SSC_INPUT, SSC_MATRIX,   "inv_tdc_cec_db",                       "Temperature derate curves for CEC Database",          "Vdc",    "",                                                                                                                                                                                      "Inverter CEC Database",                                 "inverter_model=0",                   "",                    "" },
-    { SSC_INPUT, SSC_MATRIX,   "inv_tdc_cec_cg",                       "Temperature derate curves for CEC Coef Gen",          "Vdc",    "",                                                                                                                                                                                      "Inverter CEC Coefficient Generator",                    "inverter_model=3",                   "",                    "" },
-    { SSC_INPUT, SSC_MATRIX,   "inv_tdc_ds",                           "Temperature derate curves for Inv Datasheet",         "Vdc",    "",                                                                                                                                                                                      "Inverter Datasheet",                                    "inverter_model=1",                   "",                    "" },
-    { SSC_INPUT, SSC_MATRIX,   "inv_tdc_plc",                          "Temperature derate curves for Part Load Curve",       "C",      "",                                                                                                                                                                                      "Inverter Part Load Curve",                              "inverter_model=2",                   "",                    "" },
-    
+    { SSC_INPUT, SSC_MATRIX,   "inv_tdc_cec_db",                       "Temperature derate curves for CEC Database",          "(Vdc, C, %/C)",    "",                                                                                                                                                                            "Inverter CEC Database",                                 "inverter_model=0",                   "",                    "" },
+    { SSC_INPUT, SSC_MATRIX,   "inv_tdc_cec_cg",                       "Temperature derate curves for CEC Coef Gen",          "(Vdc, C, %/C)",    "",                                                                                                                                                                            "Inverter CEC Coefficient Generator",                    "inverter_model=3",                   "",                    "" },
+    { SSC_INPUT, SSC_MATRIX,   "inv_tdc_ds",                           "Temperature derate curves for Inv Datasheet",         "(Vdc, C, %/C)",    "",                                                                                                                                                                            "Inverter Datasheet",                                    "inverter_model=1",                   "",                    "" },
+    { SSC_INPUT, SSC_MATRIX,   "inv_tdc_plc",                          "Temperature derate curves for Part Load Curve",       "(Vdc, C, %/C)",    "",                                                                                                                                                                            "Inverter Part Load Curve",                              "inverter_model=2",                   "",                    "" },
+
     	// battery storage and dispatch
     { SSC_INPUT, SSC_NUMBER,   "en_batt",                              "Enable battery storage model",                        "0/1",    "",                                                                                                                                                                                      "Battery",                                               "?=0",                                "",                    "" },
     { SSC_INPUT, SSC_ARRAY,    "load",                                 "Electricity load (year 1)",                           "kW",     "",                                                                                                                                                                                      "Battery",                                               "?",                                  "",                    "" },
@@ -1377,7 +1377,7 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 
 					//self-shading calculations
 					if (((Subarrays[nn]->trackMode == 0 || Subarrays[nn]->trackMode == 4) && (Subarrays[nn]->shadeMode == 1 || Subarrays[nn]->shadeMode == 2)) //fixed tilt or timeseries tilt, self-shading (linear or non-linear) OR
-						|| (Subarrays[nn]->trackMode == 1 && (Subarrays[nn]->shadeMode == 1 || Subarrays[nn]->shadeMode == 2) && Subarrays[nn]->backtrackingEnabled == 0)) //one-axis tracking, self-shading, not backtracking
+						|| (Subarrays[nn]->trackMode == 1 && (Subarrays[nn]->shadeMode == 1 || Subarrays[nn]->shadeMode == 2))) //one-axis tracking, self-shading (linear or non-linear)
 					{
 
 						if (radmode == irrad::POA_R || radmode == irrad::POA_P){
@@ -1391,46 +1391,78 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 						bool linear = (Subarrays[nn]->shadeMode == 2); //0 for full self-shading, 1 for linear self-shading
 
 						//geometric fraction of the array that is shaded for one-axis trackers.
-						//USES A DIFFERENT FUNCTION THAN THE SELF-SHADING BECAUSE SS IS MEANT FOR FIXED ONLY. shadeFraction1x IS FOR ONE-AXIS TRACKERS ONLY.
+						//USES A DIFFERENT FUNCTION THAN THE SELF-SHADING BECAUSE SS IS MEANT FOR FIXED ONLY. shadeFraction1x IS FOR TRUE-TRACKING ONE-AXIS TRACKERS ONLY.
 						//used in the non-linear self-shading calculator for one-axis tracking only
-						double shad1xf = 0;
-						if (trackbool)
-							shad1xf = shadeFraction1x(solazi, solzen, Subarrays[nn]->tiltDegrees, Subarrays[nn]->azimuthDegrees, Subarrays[nn]->groundCoverageRatio, rot);
+						double shad1xf = 0.0;
+						if (trackbool && (Subarrays[nn]->backtrackingEnabled == false))
+						    shad1xf = shadeFraction1x(solazi, solzen, Subarrays[nn]->tiltDegrees, Subarrays[nn]->azimuthDegrees, Subarrays[nn]->groundCoverageRatio, rot);
 
 						//execute self-shading calculations
 						ssc_number_t beam_to_use; //some self-shading calculations require DNI, NOT ibeam (beam in POA). Need to know whether to use DNI from wf or calculated, depending on radmode
+						ssc_number_t dhi_to_use; //some self-shading calculations require DHI, NOT iskydiff (sky diff in POA). Need to know whether to use DHI from wf or calculated, depending on radmode
 						if (radmode == irrad::DN_DF || radmode == irrad::DN_GH) beam_to_use = (ssc_number_t)wf.dn;
 						else beam_to_use = Irradiance->p_IrradianceCalculated[2][hour * step_per_hour]; // top of hour in first year
+						if (radmode == irrad::DN_DF || radmode == irrad::GH_DF) dhi_to_use = (ssc_number_t)wf.df;
+						else dhi_to_use = Irradiance->p_IrradianceCalculated[1][hour * step_per_hour]; // top of hour in first year
 
-						if (linear && trackbool) //one-axis linear
+						if (ss_exec(Subarrays[nn]->selfShadingInputs, stilt, sazi, solzen, solazi, beam_to_use, dhi_to_use, ibeam, iskydiff, ignddiff, alb, trackbool, linear, shad1xf, Subarrays[nn]->selfShadingOutputs))
 						{
-							ibeam *= (1 - shad1xf); //derate beam irradiance linearly by the geometric shading fraction calculated above per Chris Deline 2/10/16
-							beam_shading_factor *= (1 - shad1xf);
-							if (iyear == 0)
-							{
-								PVSystem->p_derateSelfShading[nn][idx] = (ssc_number_t)1;
-								PVSystem->p_derateLinear[nn][idx] = (ssc_number_t)(1 - shad1xf);
-								PVSystem->p_derateSelfShadingDiffuse[nn][idx] = (ssc_number_t)1; //no diffuse derate for linear shading
-								PVSystem->p_derateSelfShadingReflected[nn][idx] = (ssc_number_t)1; //no reflected derate for linear shading
-							}
-						}
 
-						else if (ss_exec(Subarrays[nn]->selfShadingInputs, stilt, sazi, solzen, solazi, beam_to_use, ibeam, (iskydiff + ignddiff), alb, trackbool, linear, shad1xf, Subarrays[nn]->selfShadingOutputs))
-						{
-							if (linear) //fixed tilt linear
+						    if (linear && trackbool) //one-axis linear
+						    {
+                                ibeam *= (1 - shad1xf); //derate beam irradiance linearly by the geometric shading fraction calculated above per Chris Deline 2/10/16
+                                beam_shading_factor *= (1 - shad1xf);
+                                // Sky diffuse and ground-reflected diffuse are derated according to C. Deline's algorithm
+                                iskydiff *= Subarrays[nn]->selfShadingOutputs.m_diffuse_derate;
+                                ignddiff *= Subarrays[nn]->selfShadingOutputs.m_reflected_derate;
+
+                                if (iyear == 0)
+                                {
+                                    PVSystem->p_derateSelfShading[nn][idx] = (ssc_number_t)1;
+                                    PVSystem->p_derateLinear[nn][idx] = (ssc_number_t)(1 - shad1xf);
+                                    PVSystem->p_derateSelfShadingDiffuse[nn][idx] = (ssc_number_t)Subarrays[nn]->selfShadingOutputs.m_diffuse_derate;
+                                    PVSystem->p_derateSelfShadingReflected[nn][idx] = (ssc_number_t)Subarrays[nn]->selfShadingOutputs.m_reflected_derate;
+                                }
+                            }
+
+						    else if (linear) //fixed tilt linear
 							{
 								ibeam *= (1 - Subarrays[nn]->selfShadingOutputs.m_shade_frac_fixed);
 								beam_shading_factor *= (1 - Subarrays[nn]->selfShadingOutputs.m_shade_frac_fixed);
+								iskydiff *= Subarrays[nn]->selfShadingOutputs.m_diffuse_derate;
+                                ignddiff *= Subarrays[nn]->selfShadingOutputs.m_reflected_derate;
+
 								if (iyear == 0)
 								{
 									PVSystem->p_derateSelfShading[nn][idx] = (ssc_number_t)1;
 									PVSystem->p_derateLinear[nn][idx] = (ssc_number_t)(1 - Subarrays[nn]->selfShadingOutputs.m_shade_frac_fixed);
-									PVSystem->p_derateSelfShadingDiffuse[nn][idx] = (ssc_number_t)1; //no diffuse derate for linear shading
-									PVSystem->p_derateSelfShadingReflected[nn][idx] = (ssc_number_t)1; //no reflected derate for linear shading
+									PVSystem->p_derateSelfShadingDiffuse[nn][idx] = (ssc_number_t)Subarrays[nn]->selfShadingOutputs.m_diffuse_derate;
+								    PVSystem->p_derateSelfShadingReflected[nn][idx] = (ssc_number_t)Subarrays[nn]->selfShadingOutputs.m_reflected_derate;
 								}
 							}
-							else //non-linear: fixed tilt AND one-axis
+
+							else if (trackbool && (Subarrays[nn]->backtrackingEnabled == true)) //non-linear backtracking one-axis
 							{
+							    iskydiff *= Subarrays[nn]->selfShadingOutputs.m_diffuse_derate;
+								ignddiff *= Subarrays[nn]->selfShadingOutputs.m_reflected_derate;
+
+								if (iyear == 0)
+								{
+									PVSystem->p_derateSelfShading[nn][idx] = (ssc_number_t)1;
+                                    PVSystem->p_derateLinear[nn][idx] = (ssc_number_t)1;
+									PVSystem->p_derateSelfShadingDiffuse[nn][idx] = (ssc_number_t)Subarrays[nn]->selfShadingOutputs.m_diffuse_derate;
+									PVSystem->p_derateSelfShadingReflected[nn][idx] = (ssc_number_t)Subarrays[nn]->selfShadingOutputs.m_reflected_derate;
+								}
+							}
+
+							else //non-linear: fixed tilt AND one-axis true-tracking
+							{
+                                // Beam is not derated- all beam derate effects (linear and non-linear) are taken into account in the nonlinear_dc_shading_derate
+								Subarrays[nn]->poa.nonlinearDCShadingDerate = Subarrays[nn]->selfShadingOutputs.m_dc_derate;
+
+								iskydiff *= Subarrays[nn]->selfShadingOutputs.m_diffuse_derate;
+								ignddiff *= Subarrays[nn]->selfShadingOutputs.m_reflected_derate;
+
 								if (iyear == 0)
 								{
 									PVSystem->p_derateSelfShadingDiffuse[nn][idx] = (ssc_number_t)Subarrays[nn]->selfShadingOutputs.m_diffuse_derate;
@@ -1438,12 +1470,6 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 									PVSystem->p_derateSelfShading[nn][idx] = (ssc_number_t)Subarrays[nn]->selfShadingOutputs.m_dc_derate;
 									PVSystem->p_derateLinear[nn][idx] = (ssc_number_t)1;
 								}
-
-								// Sky diffuse and ground-reflected diffuse are derated according to C. Deline's algorithm
-								iskydiff *= Subarrays[nn]->selfShadingOutputs.m_diffuse_derate;
-								ignddiff *= Subarrays[nn]->selfShadingOutputs.m_reflected_derate;
-								// Beam is not derated- all beam derate effects (linear and non-linear) are taken into account in the nonlinear_dc_shading_derate
-								Subarrays[nn]->poa.nonlinearDCShadingDerate = Subarrays[nn]->selfShadingOutputs.m_dc_derate;
 							}
 						}
 						else
@@ -1812,8 +1838,8 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 					{
 						//current index of the lifetime daily DC losses is the number of years that have passed (iyear, because it is 0-indexed) * the number of days + the number of complete days that have passed
 						int dc_loss_index = (int)iyear * 365 + (int)floor(hour / 24); //in units of days
-						if (iyear == 0) annual_dc_lifetime_loss += dcPowerNetPerSubarray[nn] * (PVSystem->p_dcLifetimeLosses[dc_loss_index] / 100) * util::watt_to_kilowatt * ts_hour; //this loss is still in percent, only keep track of it for year 0, convert from power W to energy kWh
-						dcPowerNetPerSubarray[nn] *= (100 - PVSystem->p_dcLifetimeLosses[dc_loss_index]) / 100;
+						if (iyear == 0) annual_dc_lifetime_loss += dcPowerNetPerSubarray[nn] * (PVSystem->dcLifetimeLosses[dc_loss_index] / 100) * util::watt_to_kilowatt * ts_hour; //this loss is still in percent, only keep track of it for year 0, convert from power W to energy kWh
+						dcPowerNetPerSubarray[nn] *= (100 - PVSystem->dcLifetimeLosses[dc_loss_index]) / 100;
 					}
 
 					//assign net DC power output
@@ -2087,8 +2113,8 @@ void cm_pvsamv1::exec( ) throw (compute_module::general_error)
 				{
 					//current index of the lifetime daily AC losses is the number of years that have passed (iyear, because it is 0-indexed) * days in a year + the number of complete days that have passed
 					int ac_loss_index = (int)iyear * 365 + (int)floor(hour / 24); //in units of days
-					if (iyear == 0) annual_ac_lifetime_loss += PVSystem->p_systemACPower[idx] * (PVSystem->p_acLifetimeLosses[ac_loss_index] / 100) * util::watt_to_kilowatt * ts_hour; //this loss is still in percent, only keep track of it for year 0, convert from power W to energy kWh
-					PVSystem->p_systemACPower[idx] *= (100 - PVSystem->p_acLifetimeLosses[ac_loss_index]) / 100;
+					if (iyear == 0) annual_ac_lifetime_loss += PVSystem->p_systemACPower[idx] * (PVSystem->acLifetimeLosses[ac_loss_index] / 100) * util::watt_to_kilowatt * ts_hour; //this loss is still in percent, only keep track of it for year 0, convert from power W to energy kWh
+					PVSystem->p_systemACPower[idx] *= (100 - PVSystem->acLifetimeLosses[ac_loss_index]) / 100;
 				}
 				// Update battery with final gen to compute grid power
 				if (en_batt)
