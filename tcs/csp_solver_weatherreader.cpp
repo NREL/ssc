@@ -167,6 +167,18 @@ void C_csp_weatherreader::timestep_call(const C_csp_solver_sim_info &p_sim_info)
 
 	ms_outputs.m_hor_beam = m_rec.dn*cos(sunn[1]);
 	
+    // Recalculate humidities if necessary
+    if (m_rec.rhum != m_rec.rhum && m_rec.tdry == m_rec.tdry && m_rec.tdew == m_rec.tdew)
+    {
+        ms_outputs.m_rhum = (double)calc_humidity((float)m_rec.tdry, (float)m_rec.tdew);
+    }
+
+    if (m_rec.twet != m_rec.twet &&
+        m_rec.tdry == m_rec.tdry && ms_outputs.m_rhum == ms_outputs.m_rhum && m_rec.pres == m_rec.pres)
+    {
+        ms_outputs.m_twet = calc_twet(m_rec.tdry, ms_outputs.m_rhum, m_rec.pres);
+    }
+    
 	// Recalculate sunrise and sunset if necessary
 	if( m_rec.day != day_prev )
 	{

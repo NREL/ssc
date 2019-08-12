@@ -5,7 +5,7 @@
 #include "../input_cases/weather_inputs.h"
 
 /// Test tcstrough_empirical with all defaults with respect to the No Financial model
-TEST_F(CMtcsTroughEmpirical, TroughEmpirical_Default_No_Financial) {
+TEST_F(CMtcsTroughEmpirical, TroughEmpirical_Default_No_Financial_cmod_tcstrough_empirical) {
 
 	ssc_data_t data = ssc_data_create();
 	int test_errors = tcstrough_empirical_tucson_default(data);
@@ -50,7 +50,7 @@ TEST_F(CMtcsTroughEmpirical, TroughEmpirical_Default_No_Financial) {
 
 /// Test tcstrough_empirical with alternative Solar Field HTF type: Hitec Solar Salt
 /// Rest default configurations with respect to the No Financial model
-TEST_F(CMtcsTroughEmpirical, TroughEmpirical_Solar_Field_HTF_No_Financial) {
+TEST_F(CMtcsTroughEmpirical, TroughEmpirical_Solar_Field_HTF_No_Financial_cmod_tcstrough_empirical) {
 
 	ssc_data_t data = ssc_data_create();
 	int test_errors = tcstrough_empirical_tucson_solar_field_HTF(data);
@@ -98,7 +98,7 @@ TEST_F(CMtcsTroughEmpirical, TroughEmpirical_Solar_Field_HTF_No_Financial) {
 
 /// Test tcstrough_empirical with alternative Solar Collector Assembly (SCA): EuroTrough ET150
 /// Rest default configurations with respect to the No Financial model
-TEST_F(CMtcsTroughEmpirical, TroughEmpirical_SCA_No_Financial) {
+TEST_F(CMtcsTroughEmpirical, TroughEmpirical_SCA_No_Financial_cmod_tcstrough_empirical) {
 
 	ssc_data_t data = ssc_data_create();
 	int test_errors = tcstrough_empirical_tucson_SCA(data);
@@ -146,7 +146,7 @@ TEST_F(CMtcsTroughEmpirical, TroughEmpirical_SCA_No_Financial) {
 
 /// Test tcstrough_empirical with alternative Heat Collection Element (HCE): Luz Cermet Vacuum, Luz Cermet Hydrogren, and Luz Cermet Broken Glass
 /// Rest default configurations with respect to the No Financial model
-TEST_F(CMtcsTroughEmpirical, TroughEmpirical_HCE_No_Financial) {
+TEST_F(CMtcsTroughEmpirical, TroughEmpirical_HCE_No_Financial_cmod_tcstrough_empirical) {
 
 	ssc_data_t data = ssc_data_create();
 	int test_errors = tcstrough_empirical_tucson_HCE(data);
@@ -191,7 +191,7 @@ TEST_F(CMtcsTroughEmpirical, TroughEmpirical_HCE_No_Financial) {
 
 /// Test tcstrough_empirical with alternative Power Cycle: APS Ormat 1MWe 300C
 /// Rest default configurations with respect to the No Financial model
-TEST_F(CMtcsTroughEmpirical, TroughEmpirical_Power_Cycle_No_Financial) {
+TEST_F(CMtcsTroughEmpirical, TroughEmpirical_Power_Cycle_No_Financial_cmod_tcstrough_empirical) {
 
 	ssc_data_t data = ssc_data_create();
 	int test_errors = tcstrough_empirical_tucson_power_cycle(data);
@@ -236,7 +236,7 @@ TEST_F(CMtcsTroughEmpirical, TroughEmpirical_Power_Cycle_No_Financial) {
 
 /// Test tcstrough_empirical with alternative Thermal Storage Fluid Type: Therminol VP-1
 /// Rest default configurations with respect to the No Financial model
-TEST_F(CMtcsTroughEmpirical, TroughEmpirical_Thermal_Storage_Fluid_No_Financial) {
+TEST_F(CMtcsTroughEmpirical, TroughEmpirical_Thermal_Storage_Fluid_No_Financial_cmod_tcstrough_empirical) {
 
 	ssc_data_t data = ssc_data_create();
 	int test_errors = tcstrough_empirical_tucson_thermal_storage(data);
@@ -281,7 +281,7 @@ TEST_F(CMtcsTroughEmpirical, TroughEmpirical_Thermal_Storage_Fluid_No_Financial)
 
 /// Test tcstrough_empirical with alternative Parasitic Electric Energy Use: 500C Molten Salt HTF
 /// Rest default configurations with respect to the No Financial model
-TEST_F(CMtcsTroughEmpirical, TroughEmpirical_Parasitic_No_Financial) {
+TEST_F(CMtcsTroughEmpirical, TroughEmpirical_Parasitic_No_Financial_cmod_tcstrough_empirical) {
 
 	ssc_data_t data = ssc_data_create();
 	int test_errors = tcstrough_empirical_tucson_parasitic(data);
@@ -326,7 +326,7 @@ TEST_F(CMtcsTroughEmpirical, TroughEmpirical_Parasitic_No_Financial) {
 
 /// Test tcstrough_empirical with alternativelocation: Phoenix, AZ
 /// Rest default configurations with respect to the No Financial model
-TEST_F(CMtcsTroughEmpirical, TroughEmpirical_Location_No_Financial) {
+TEST_F(CMtcsTroughEmpirical, TroughEmpirical_Location_No_Financial_cmod_tcstrough_empirical) {
 
 	ssc_data_t data = ssc_data_create();
 	int test_errors = tcstrough_empirical_phoenix(data);

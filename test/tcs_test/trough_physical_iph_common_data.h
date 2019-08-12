@@ -13,8 +13,8 @@ void trough_physical_iph_default(ssc_data_t &data)
 {
 	const char * SSCDIR = std::getenv("SSCDIR");
 
-	char solar_resource_path[256];
-	//char load_profile_path[256];
+	char solar_resource_path[512];
+	//char load_profile_path[512];
 
 
 	int n1 = sprintf(solar_resource_path, "%s/test/input_cases/tcstrough_data/tucson_az_32.116521_-110.933042_psmv3_60_tmy.csv", SSCDIR);

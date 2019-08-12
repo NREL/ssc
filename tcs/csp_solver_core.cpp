@@ -4836,11 +4836,17 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 			(ms_system_params.m_bop_par_0 + ms_system_params.m_bop_par_1*W_dot_ratio + ms_system_params.m_bop_par_2*pow(W_dot_ratio,2));
 			// [MWe]
 
-        double W_dot_tes_pump = mc_tes.pumping_power(mc_cr_out_solver.m_m_dot_salt_tot / 3600., mc_pc_out_solver.m_m_dot_htf / 3600., mc_tes_outputs.m_m_dot,
-            mc_cr_htf_state_in.m_temp + 273.15, mc_cr_out_solver.m_T_salt_hot + 273.15,
-            mc_pc_htf_state_in.m_temp + 273.15, mc_pc_out_solver.m_T_htf_cold + 273.15,
-            mc_cr_out_solver.m_is_recirculating);
-        if (W_dot_tes_pump < 0 || isnan(W_dot_tes_pump)){
+        double W_dot_tes_pump;
+        if (m_is_tes) {
+            W_dot_tes_pump = mc_tes.pumping_power(mc_cr_out_solver.m_m_dot_salt_tot / 3600., mc_pc_out_solver.m_m_dot_htf / 3600., mc_tes_outputs.m_m_dot,
+                mc_cr_htf_state_in.m_temp + 273.15, mc_cr_out_solver.m_T_salt_hot + 273.15,
+                mc_pc_htf_state_in.m_temp + 273.15, mc_pc_out_solver.m_T_htf_cold + 273.15,
+                mc_cr_out_solver.m_is_recirculating);
+        }
+        else {
+            W_dot_tes_pump = 0.;
+        }
+        if (W_dot_tes_pump < 0 || W_dot_tes_pump != W_dot_tes_pump){
             error_msg = "TES pumping power failed";
             throw(C_csp_exception(error_msg, "System-level parasitics"));
         }

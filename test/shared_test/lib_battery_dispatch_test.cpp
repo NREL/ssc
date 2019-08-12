@@ -7,7 +7,7 @@ size_t year = 0;
 size_t hour_of_year = 0;
 size_t step_of_hour = 0;
 
-TEST_F(BatteryDispatchTest, DispatchManual)
+TEST_F(BatteryDispatchTest, DispatchManual_lib_battery_dispatch)
 {
 	
 	batteryPower = dispatchManual->getBatteryPower();
@@ -25,7 +25,7 @@ TEST_F(BatteryDispatchTest, DispatchManual)
 
 }
 
-TEST_F(BatteryDispatchTest, DispatchAutoBTM)
+TEST_F(BatteryDispatchTest, DispatchAutoBTM_lib_battery_dispatch)
 {
 	// Setup pv and load signal for peak shaving algorithm
 	for (size_t d = 0; d < 365; d++) {
@@ -54,7 +54,7 @@ TEST_F(BatteryDispatchTest, DispatchAutoBTM)
 	EXPECT_LT(batteryPower->powerBatteryDC, 0);
 }
 
-TEST_F(BatteryDispatchTest, DispatchFOMInput)
+TEST_F(BatteryDispatchTest, DispatchFOMInput_lib_battery_dispatch)
 {
 	std::vector<double> P_batt;
 	for (int i = 0; i < 8760 * 60; i++) {
@@ -72,7 +72,7 @@ TEST_F(BatteryDispatchTest, DispatchFOMInput)
 }
 
 /// Test to see if losses model is initialized correctly
-TEST_F(BatteryDispatchTest, LossesModel)
+TEST_F(BatteryDispatchTest, LossesModel_lib_battery_dispatch)
 {
 
 }

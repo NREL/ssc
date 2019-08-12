@@ -3,8 +3,6 @@
 #include <vector>
 #include <iostream>
 
-#include <lib_physics.h>
-#include <lib_windwakemodel.h>
 #include "lib_windwakemodel_test.h"
 
 
