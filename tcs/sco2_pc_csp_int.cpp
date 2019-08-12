@@ -1103,6 +1103,20 @@ void C_sco2_phx_air_cooler::solve_T_mc_in_for_cooler_constraint(double W_dot_mc_
 {
     int opt_P_LP_err = 0;
 
+    if (is_modified_P_mc_in_solver)
+    {
+        opt_P_LP_err = solve_P_LP_in__target_W_dot();
+    }
+    else
+    {
+        opt_P_LP_err = opt_P_LP_comp_in__fixed_N_turbo();
+    }
+
+    if (opt_P_LP_err != 0)
+    {
+        throw(C_csp_exception("Off-design at inlet temperature failed"));
+    }
+
     // First, check the fan power
     double W_dot_fan_local = std::numeric_limits<double>::quiet_NaN();    //[MWe]
     if (mpc_sco2_cycle->solve_OD_mc_cooler_fan_power(ms_od_par.m_T_amb, W_dot_fan_local) != 0)
@@ -1773,22 +1787,106 @@ int C_sco2_phx_air_cooler::solve_P_LP_in__target_W_dot()
 
     if (W_dot_err_code != 0)
     {
-        return - 31;
+        return -31;
     }
 
-    if (!(y_W_dot_guess < W_dot_target && ms_od_solved.m_od_error_code == C_sco2_phx_air_cooler::E_OVER_PRESSURE))
+    xy_1.x = P_LP_in_guess; //[kPa]
+    xy_1.y = y_W_dot_guess; //[kWe]
+
+    // Try another guess value close to the first, and check slope of W_dot vs P_LP_in
+    C_monotonic_eq_solver::S_xy_pair xy_2;
+    if (y_W_dot_guess < W_dot_target)
     {
-        xy_1.x = P_LP_in_guess; //[kPa]
-        xy_1.y = y_W_dot_guess; //[kWe]
+        xy_2.x = 1.05*P_LP_in_guess;
+    }
+    else
+    {
+        xy_2.x = 0.95*P_LP_in_guess;
+    }
 
-        double P_LP_in_W_dot_target, tol_W_dot;
-        P_LP_in_W_dot_target = tol_W_dot = std::numeric_limits<double>::quiet_NaN();
-        int W_dot_iter = 0;
-        W_dot_err_code = c_P_LP_in_solver.solve(xy_1, P_LP_in_guess - 1000.0, W_dot_target, P_LP_in_W_dot_target, tol_W_dot, W_dot_iter);
+    W_dot_err_code = c_P_LP_in_solver.test_member_function(xy_2.x, &xy_2.y);
 
-        if (W_dot_err_code != C_monotonic_eq_solver::CONVERGED && tol_W_dot > 1.E-3)
+    if (W_dot_err_code != 0) 
+    {
+        if (!(xy_1.y < W_dot_target && ms_od_solved.m_od_error_code == C_sco2_phx_air_cooler::E_OVER_PRESSURE))
+        {            
+            double P_LP_in_W_dot_target, tol_W_dot;
+            P_LP_in_W_dot_target = tol_W_dot = std::numeric_limits<double>::quiet_NaN();
+            int W_dot_iter = 0;
+            W_dot_err_code = c_P_LP_in_solver.solve(xy_1, P_LP_in_guess - 1000.0, W_dot_target, P_LP_in_W_dot_target, tol_W_dot, W_dot_iter);
+
+            if (W_dot_err_code != C_monotonic_eq_solver::CONVERGED && tol_W_dot > 1.E-3)
+            {
+                return -31;
+            }
+        }
+    }
+    else
+    {
+        double W_vs_P_LP_slope = (xy_1.y - xy_2.y) / (xy_1.x - xy_2.x);
+
+        if (W_vs_P_LP_slope < 0.0)
         {
-            return -31;
+            double W_dot_high = std::max(xy_1.y, xy_2.y);
+            double W_dot_i = W_dot_high;
+
+            double P_at_W_dot_high = std::min(xy_1.x, xy_2.x);
+            double P_i = P_at_W_dot_high;
+
+            while (true)
+            {
+                while (W_dot_err_code == 0 && P_i > P_lower_limit_global && W_dot_i >= W_dot_high)
+                {
+                    W_dot_high = W_dot_i;
+                    P_at_W_dot_high = P_i;
+                    P_i -= 500;  //[kpa]
+                    W_dot_err_code = c_P_LP_in_solver.test_member_function(P_i, &W_dot_i);
+                }
+
+                if (W_dot_err_code == 0)
+                {
+                    break;
+                }
+                else
+                {
+                    while (W_dot_err_code != 0 && P_i > P_lower_limit_global)
+                    {
+                        P_i -= 500;
+                        W_dot_err_code = c_P_LP_in_solver.test_member_function(P_i, &y_W_dot_guess);
+                    }
+                    if (W_dot_err_code != 0)
+                    {
+                        W_dot_i = W_dot_high = std::numeric_limits<double>::quiet_NaN();
+                        break;
+                    }
+                    else
+                    {
+                        W_dot_i = W_dot_high = mpc_sco2_cycle->get_od_solved()->m_W_dot_net;
+                    }
+                }
+            }
+
+            if (W_dot_err_code == 0 && W_dot_i < W_dot_high)
+            {
+                xy_1.x = P_i;
+                xy_1.y = W_dot_i;
+
+                xy_2.x = P_at_W_dot_high;
+                xy_2.y = W_dot_high;
+            }
+        }
+
+        if (!(xy_2.y < W_dot_target && ms_od_solved.m_od_error_code == C_sco2_phx_air_cooler::E_OVER_PRESSURE))
+        {
+            double P_LP_in_W_dot_target, tol_W_dot;
+            P_LP_in_W_dot_target = tol_W_dot = std::numeric_limits<double>::quiet_NaN();
+            int W_dot_iter = 0;
+            W_dot_err_code = c_P_LP_in_solver.solve(xy_1, xy_2, W_dot_target, P_LP_in_W_dot_target, tol_W_dot, W_dot_iter);
+
+            if (W_dot_err_code != C_monotonic_eq_solver::CONVERGED && tol_W_dot > 1.E-3)
+            {
+                return -31;
+            }
         }
     }
 

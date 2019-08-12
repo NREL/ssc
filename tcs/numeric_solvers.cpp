@@ -39,7 +39,7 @@ int C_import_mono_eq::operator()(double x, double *y)
 C_monotonic_eq_solver::C_monotonic_eq_solver(C_monotonic_equation & f): mf_mono_eq(f)
 {
 	m_x_guess = m_x_neg_err = m_x_pos_err = m_y_err_pos = m_y_err_neg =
-		m_y_err = 
+		m_y_err = m_E_slope =
 		m_func_x_lower = m_func_x_upper = std::numeric_limits<double>::quiet_NaN();
 
 	m_is_pos_bound = m_is_neg_bound =
@@ -350,9 +350,9 @@ int C_monotonic_eq_solver::solver_core(double x_guess_1, double y1, double x_gue
 	// ***************************************************
 
 	// Calculate slope of error vs x
-	double E_slope = (E2 - E1) / (x_guess_2 - x_guess_1);
+	m_E_slope = (E2 - E1) / (x_guess_2 - x_guess_1);
 
-	if (E_slope == 0.0 || x_guess_1 == x_guess_2)
+	if (m_E_slope == 0.0 || x_guess_1 == x_guess_2)
 	{
 		x_solved = tol_solved = std::numeric_limits<double>::quiet_NaN();
 		iter_solved = 0;
@@ -470,7 +470,7 @@ int C_monotonic_eq_solver::solver_core(double x_guess_1, double y1, double x_gue
 
 		// Check if distance between bounds is too small
 		double diff_x_bounds = std::numeric_limits<double>::quiet_NaN();
-		if( E_slope > 0.0 )
+		if( m_E_slope > 0.0 )
 		{
 			if ( !std::isfinite(m_x_pos_err) )
 			{	// Haven't set x bound on positive error. Because slope > 0, then check neg err x against Upper bound
@@ -544,7 +544,7 @@ int C_monotonic_eq_solver::solver_core(double x_guess_1, double y1, double x_gue
 					call_mono_eq(x_solved, &y_eq);
 				}
 
-				if (E_slope > 0.0)
+				if (m_E_slope > 0.0)
 					return SLOPE_POS_NO_NEG_ERR;
 				else
 					return SLOPE_NEG_NO_NEG_ERR;
@@ -569,7 +569,7 @@ int C_monotonic_eq_solver::solver_core(double x_guess_1, double y1, double x_gue
 					call_mono_eq(x_solved, &y_eq);
 				}
 
-				if (E_slope > 0.0)
+				if (m_E_slope > 0.0)
 					return SLOPE_POS_NO_POS_ERR;
 				else
 					return SLOPE_NEG_NO_POS_ERR;
@@ -594,7 +594,7 @@ int C_monotonic_eq_solver::solver_core(double x_guess_1, double y1, double x_gue
 					call_mono_eq(x_solved, &y_eq);
 				}
 
-				if (E_slope > 0.0)
+				if (m_E_slope > 0.0)
 					return SLOPE_POS_BOTH_ERRS;
 				else
 					return SLOPE_NEG_BOTH_ERRS;
@@ -623,7 +623,7 @@ int C_monotonic_eq_solver::solver_core(double x_guess_1, double y1, double x_gue
 					call_mono_eq(x_solved, &y_eq);
 				}
 
-				if (E_slope > 0.0)
+				if (m_E_slope > 0.0)
 					return MAX_ITER_SLOPE_POS_NO_NEG_ERR;
 				else
 					return MAX_ITER_SLOPE_NEG_NO_NEG_ERR;
@@ -648,7 +648,7 @@ int C_monotonic_eq_solver::solver_core(double x_guess_1, double y1, double x_gue
 					call_mono_eq(x_solved, &y_eq);
 				}
 
-				if (E_slope > 0.0)
+				if (m_E_slope > 0.0)
 					return MAX_ITER_SLOPE_POS_NO_POS_ERR;
 				else
 					return MAX_ITER_SLOPE_NEG_NO_POS_ERR;
@@ -673,7 +673,7 @@ int C_monotonic_eq_solver::solver_core(double x_guess_1, double y1, double x_gue
 					call_mono_eq(x_solved, &y_eq);
 				}
 
-				if (E_slope > 0.0)
+				if (m_E_slope > 0.0)
 					return MAX_ITER_SLOPE_POS_BOTH_ERRS;
 				else
 					return MAX_ITER_SLOPE_NEG_BOTH_ERRS;
@@ -768,7 +768,7 @@ int C_monotonic_eq_solver::solver_core(double x_guess_1, double y1, double x_gue
 					{	// If we have two positive errors, then linearly interpolate using them
 						m_x_guess = calc_x_intercept(m_x_pos_err, m_y_err_pos, x_pos_err_prev, y_err_pos_prev);
 					}
-					else if( E_slope > 0.0 )
+					else if(m_E_slope > 0.0 )
 					{
 						m_x_guess = m_x_pos_err - 0.5*std::max(x_guess_1, x_guess_2);
 					}
@@ -819,7 +819,7 @@ int C_monotonic_eq_solver::solver_core(double x_guess_1, double y1, double x_gue
 					{
 						m_x_guess = calc_x_intercept(m_x_neg_err, m_y_err_neg, x_neg_err_prev, y_err_neg_prev);
 					}
-					else if( E_slope > 0.0 )
+					else if( m_E_slope > 0.0 )
 					{
 						m_x_guess = m_x_neg_err + 0.5*std::max(fabs(x_guess_1), fabs(x_guess_2));
 					}
@@ -918,4 +918,9 @@ bool C_monotonic_eq_solver::did_solver_find_positive_error(int solver_exit_mode)
 	}
 
 	return true;
+}
+
+double C_monotonic_eq_solver::get_E_slope()
+{
+    return m_E_slope;
 }

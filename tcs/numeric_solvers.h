@@ -109,6 +109,8 @@ private:
 	double m_y_err;
 	int m_iter;
 
+    double m_E_slope;
+
 	double check_against_limits(double x);
 
 	double calc_x_intercept(double x1, double y1, double x2, double y2);
@@ -182,6 +184,8 @@ public:
 	bool did_solver_find_positive_error(int solver_exit_mode);
 
 	bool did_solver_find_negative_error(int solver_exit_mode);
+
+    double get_E_slope();
 
 	const S_eq_chars get_last_mono_eq_call();
 
