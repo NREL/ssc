@@ -66,7 +66,7 @@ public:
 		add_var_info( _cm_vtab_6parsolve );
 	}
 	
-	void exec( ) throw( general_error )
+	void exec( )
 	{
 		int tech_id = module6par::monoSi;
 		std::string stype = as_string("celltype");

@@ -34,7 +34,7 @@ bool windTurbine::setPowerCurve(std::vector<double> windSpeeds, std::vector<doub
 	}
 	powerCurveWS = windSpeeds;
 	powerCurveKW = powerOutput;
-	densityCorrectedWS.resize(powerCurveArrayLength, 0);
+	densityCorrectedWS = powerCurveWS;
 	powerCurveRPM.resize(powerCurveArrayLength, -1);
 	return 1;
 }
@@ -58,7 +58,8 @@ double windTurbine::tipSpeedRatio(double windSpeed)
 	return (rpm>0) ? rpm * rotorDiameter * physics::PI / (windSpeed*60.0) : 7.0;
 }
 
-void windTurbine::turbinePower(double windVelocity, double airDensity, double *turbineOutput, double *thrustCoefficient){
+void windTurbine::turbinePower(double windVelocity, double airDensity, double *turbineOutput, double *turbineGross,
+                               double *thrustCoefficient) {
 	if (!isInitialized()){
 		errDetails = "windTurbine not initialized with necessary data";
 		return;
@@ -67,12 +68,15 @@ void windTurbine::turbinePower(double windVelocity, double airDensity, double *t
 	*thrustCoefficient = 0.0;
 	*turbineOutput = 0.0;
 
-	//first, correct wind speeds in power curve for site air density. Using method 2 described in https://www.scribd.com/document/38818683/PO310-EWEC2010-Presentation
-	std::vector <double> temp_ws;
-	double correction = pow((physics::AIR_DENSITY_SEA_LEVEL / airDensity), (1.0 / 3.0));
-	for (size_t i = 0; i < densityCorrectedWS.size(); i++) {
-		densityCorrectedWS[i] = powerCurveWS[i] * correction;
+	//correct wind speeds in power curve for site air density if necessary, using method 2 described in https://www.scribd.com/document/38818683/PO310-EWEC2010-Presentation
+	if (abs(airDensity - previousAirDensity) > 0.001 ) {
+        double correction = pow((physics::AIR_DENSITY_SEA_LEVEL / airDensity), (1.0 / 3.0));
+        for (size_t i = 0; i < densityCorrectedWS.size(); i++) {
+            densityCorrectedWS[i] = powerCurveWS[i] * correction;
+        }
+        previousAirDensity = airDensity;
 	}
+
 	int i = 0;
 	while (powerCurveKW[i] == 0)
 		i++; //find the index of the first non-zero power output in the power curve
@@ -108,6 +112,8 @@ void windTurbine::turbinePower(double windVelocity, double airDensity, double *t
 	//if (out_pwr > (m_dRatedPower * 0.001)) // if calculated power is > 0.1% of rating, set outputs
 	if (out_pwr > 0)
 	{
+	    if (turbineGross)
+	        *turbineGross = out_pwr;
 		out_pwr = out_pwr*(1.0 - lossesPercent) - lossesAbsolute;
 		double pden = 0.5*airDensity*pow(windVelocity, 3.0);
 		double area = physics::PI / 4.0*rotorDiameter*rotorDiameter;
@@ -160,7 +166,7 @@ void simpleWakeModel::wakeCalculations(const double airDensity, const double dis
 			dDeficit *= (1.0 - vdef);
 		}
 		windSpeed[i] = windSpeed[i] * dDeficit;
-		wTurbine->turbinePower(windSpeed[i], airDensity, &power[i], &thrust[i]);
+        wTurbine->turbinePower(windSpeed[i], airDensity, &power[i], nullptr, &thrust[i]);
 		if (wTurbine->errDetails.length() > 0){
 			errDetails = wTurbine->errDetails;
 			return;
@@ -231,7 +237,7 @@ void parkWakeModel::wakeCalculations(const double airDensity, const double dista
 			newSpeed = min_of(newSpeed, delta_V_Park(windSpeed[0], windSpeed[j], distanceCrosswindMeters, distanceDownwindMeters, turbineRadius, turbineRadius, thrust[j]));
 		}
 		windSpeed[i] = newSpeed;
-		wTurbine->turbinePower(windSpeed[i], airDensity, &power[i], &thrust[i]);
+        wTurbine->turbinePower(windSpeed[i], airDensity, &power[i], nullptr, &thrust[i]);
 		if (wTurbine->errDetails.length() > 0){
 			errDetails = wTurbine->errDetails;
 			return;
@@ -523,7 +529,7 @@ void eddyViscosityWakeModel::wakeCalculations(/*INPUTS */ const double air_densi
 		// use the max deficit found to calculate the turbine output
 		adWindSpeed[i] = adWindSpeed[0] * (1 - dDeficit);
 		aTurbulence_intensity[i] = dTotalTI;
-		wTurbine->turbinePower(adWindSpeed[i], air_density, &power[i], &Thrust[i]);
+        wTurbine->turbinePower(adWindSpeed[i], air_density, &power[i], nullptr, &Thrust[i]);
 		if (wTurbine->errDetails.length() > 0){
 			errDetails = wTurbine->errDetails;
 			return;
@@ -539,3 +545,20 @@ void eddyViscosityWakeModel::wakeCalculations(/*INPUTS */ const double air_densi
 	}
 }
 
+void constantWakeModel::wakeCalculations(const double airDensity, const double distanceDownwind[], const double distanceCrosswind[],
+                                       double power[], double eff[], double thrust[], double windSpeed[], double turbulenceIntensity[])
+{
+    double turbPower = 0., turbThrust = 0.;
+    wTurbine->turbinePower(windSpeed[0], airDensity, &turbPower, nullptr, &turbThrust);
+    if (wTurbine->errDetails.length() > 0){
+        errDetails = wTurbine->errDetails;
+        return;
+    }
+    turbPower *= derate;
+    for (size_t i = 0; i < nTurbines; i++) // loop through all turbines, starting with most upwind turbine. i=0 has already been done
+    {
+        power[i] = turbPower;
+        thrust[i] = turbThrust;
+        eff[i] = 100.;
+    }
+}

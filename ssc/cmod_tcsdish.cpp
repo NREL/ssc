@@ -268,7 +268,7 @@ public:
 		add_var_info(vtab_technology_outputs);
 	}
 
-	void exec( ) throw( general_error )
+	void exec( )
 	{
 		//if ( 0 >= load_library("typelib") ) throw exec_error( "tcsdish", util::format("could not load the tcs type library.") );
 

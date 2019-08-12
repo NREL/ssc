@@ -172,7 +172,7 @@ public:
 		add_var_info(vtab_technology_outputs);
 	}
 
-	void exec() throw(general_error)
+	void exec() override
 	{
 		const double watt_to_kw = 0.001f;
 		const char *file = as_string("solar_resource_file");

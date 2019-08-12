@@ -376,7 +376,7 @@ public:
 		add_var_info(vtab_technology_outputs);
 	}
 
-	void exec( ) throw( general_error )
+	void exec( )
 	{
 		int tes_type = as_integer("tes_type");
 		if( tes_type != 1 )

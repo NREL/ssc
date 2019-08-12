@@ -494,7 +494,7 @@ public:
 		add_var_info(vtab_ippppa);
 	}
 
-	void exec() throw(general_error)
+	void exec( )
 	{
 		int i = 0;
 

@@ -34,6 +34,8 @@ static var_info _cm_vtab_geothermal[] = {
 																		       																														             
     // control input													       																														             
     { SSC_INPUT,        SSC_NUMBER,      "ui_calculations_only",               "If = 1, only run UI calculations",             "",               "",             "GeoHourly",        "*",                        "",                "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "system_use_lifetime_output",          "Geothermal lifetime simulation",              "0/1",     "0=SingleYearRepeated,1=RunEveryYear",     "GeoHourly",             "?=0",           "BOOLEAN",                        "" },
+
 
     // climate and resource inputs		 								       											   				     
     { SSC_INPUT,        SSC_STRING,      "file_name",                          "local weather file path",                      "",               "",             "GeoHourly",        "ui_calculations_only=0",   "LOCAL_FILE",      "" },
@@ -152,7 +154,6 @@ static var_info _cm_vtab_geothermal[] = {
     { SSC_OUTPUT,       SSC_ARRAY,      "monthly_energy",                     "Monthly energy before performance adjustments",       "kWh",     "",             "GeoHourly",        "ui_calculations_only=0",   "",                "" },
 																																													   			                 
     { SSC_OUTPUT,       SSC_ARRAY,      "timestep_resource_temperature",      "Resource temperature in each time step",              "C",       "",             "GeoHourly",        "ui_calculations_only=0",   "",                "" },
-    { SSC_OUTPUT,       SSC_ARRAY,      "timestep_power",                     "Power in each time step",                             "kW",      "",             "GeoHourly",        "ui_calculations_only=0",   "",                "" },
     { SSC_OUTPUT,       SSC_ARRAY,      "timestep_test_values",               "Test output values in each time step",                "",        "",             "GeoHourly",        "ui_calculations_only=0",   "",                "" },
 																																													   			                 
     { SSC_OUTPUT,       SSC_ARRAY,      "timestep_pressure",                  "Atmospheric pressure in each time step",              "atm",     "",             "GeoHourly",        "ui_calculations_only=0",   "",                "" },
@@ -217,7 +218,7 @@ public:
 //		add_var_info(vtab_technology_outputs);
 	}
 
-	void exec( ) throw( general_error )
+	void exec( )
 	{
 		int iControl = as_integer("ui_calculations_only");		 // 0=run full model, 1=just do UI calculations
 
@@ -304,8 +305,12 @@ public:
 
 		// calculate output array sizes
 		geo_inputs.mi_ModelChoice = as_integer("model_choice");		 // 0=GETEM, 1=Power Block monthly, 2=Power Block hourly
+		
 		// set geothermal inputs RE how analysis is done and for how long
-		geo_inputs.mi_ProjectLifeYears = as_integer("geothermal_analysis_period");
+		geo_inputs.mi_ProjectLifeYears = 1;
+		if (as_boolean("system_use_lifetime_output")) {
+			geo_inputs.mi_ProjectLifeYears = as_integer("geothermal_analysis_period");
+		}
 		if ( geo_inputs.mi_ProjectLifeYears == 0)
 			throw general_error("invalid analysis period specified in the geothermal hourly model");
 
@@ -434,12 +439,13 @@ public:
 			geo_outputs.maf_timestep_dry_bulb = allocate("timestep_dry_bulb", geo_inputs.mi_TotalMakeupCalculations);
 			geo_outputs.maf_timestep_wet_bulb = allocate("timestep_wet_bulb", geo_inputs.mi_TotalMakeupCalculations);
 
-			geo_outputs.maf_hourly_power = allocate("tmp", geo_inputs.mi_ProjectLifeYears * 8760);
-			ssc_number_t * p_gen = allocate("gen", 8760);
-
-
-//			ssc_number_t *pgen = allocate("gen", geo_inputs.mi_ProjectLifeYears * 8760);
-
+			size_t n_rec = 8760;
+			if (as_boolean("system_use_lifetime_output")){
+				n_rec *= geo_inputs.mi_ProjectLifeYears;
+			}
+	
+			geo_outputs.maf_hourly_power = allocate("tmp", n_rec);
+			ssc_number_t * p_gen = allocate("gen", n_rec);
 
 			// TODO - implement performance factors 
 			adjustment_factors haf(this, "adjust");
@@ -553,11 +559,8 @@ public:
 
 			//Loop calculates total energy generation over entire project lifetime (in kWh) 
 			// Why?  Is the annual energy changing from year to year?
-			for (size_t i = 0; i < geo_inputs.mi_ProjectLifeYears * 8760; i++)	{
+			for (size_t i = 0; i <n_rec ; i++)	{
 				annual_energy += geo_outputs.maf_hourly_power[i];
-			}
-
-			for (size_t i = 0; i < 8760; i++) {
 				p_gen[i] = geo_outputs.maf_hourly_power[i];
 			}
 

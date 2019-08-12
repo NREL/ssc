@@ -62,7 +62,7 @@ public:
 		add_var_info(_cm_vtab_sco2_air_cooler);
 	}
 	
-	void exec() throw(general_error)
+	void exec() override
 	{
 		C_CO2_to_air_cooler::S_des_par_cycle_dep s_air_cooler_des_par_cycle;
 		C_CO2_to_air_cooler::S_des_par_ind s_air_cooler_des_par_ambient;

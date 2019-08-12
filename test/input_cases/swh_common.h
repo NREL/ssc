@@ -17,7 +17,7 @@ namespace swhtest {
 	int n3 = sprintf(custom_mains, "%s/test/input_cases/swh_residential_data/custom_mains.csv", SSCDIR);
 	int n4 = sprintf(custom_set, "%s/test/input_cases/swh_residential_data/custom_set.csv", SSCDIR);
 	int n5 = sprintf(load, "%s/test/input_cases/swh_residential_data/load.csv", SSCDIR);
-	int n6 = sprintf(ur_ts_sell_rate, "%s/test/input_cases/swh_residential_data/ur_ts_sell_rate", SSCDIR);
+	int n6 = sprintf(ur_ts_sell_rate, "%s/test/input_cases/swh_residential_data/ur_ts_sell_rate.csv", SSCDIR);
 
 }
 

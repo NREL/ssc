@@ -152,12 +152,11 @@ int tcsdirect_steam_daggett_canting_method(ssc_data_t &data)
 int tcsdirect_steam_daggett_tucson_AZ(ssc_data_t &data)
 {
 	tcsdirect_steam_default(data);
-
-	ssc_data_set_string(data, "solar_resource_file", "C:/Users/kfung/Documents/SAM/sam_dev/SAM/deploy/solar_resource/tucson_az_32.116521_-110.933042_psmv3_60_tmy.csv");
-	ssc_data_set_number(data, "eta_ref", 0.404);
-	ssc_data_set_number(data, "startup_frac", 0.5);
-	ssc_data_set_number(data, "P_cond_min", 2);
-
+  
+	char solar_resource_path_tucson[512];
+	int n2 = sprintf(solar_resource_path_tucson, "%s/test/input_cases/directsteam_data/tucson_az_32.116521_-110.933042_psmv3_60_tmy.csv", std::getenv("SSCDIR"));
+	ssc_data_set_string(data, "solar_resource_file", solar_resource_path_tucson);
+	
 	int status = run_module(data, "tcsdirect_steam");
 
 	return status;

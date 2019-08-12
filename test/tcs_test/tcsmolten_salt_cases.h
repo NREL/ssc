@@ -136,7 +136,9 @@ int tcsmolten_salt_Tucson_AZ(ssc_data_t &data)
 {
 	tcsmolten_salt_default(data);
 	
-	ssc_data_set_string(data, "solar_resource_file", "C:/Users/kfung/Documents/SAM/sam_dev/SAM/deploy/solar_resource/tucson_az_32.116521_-110.933042_psmv3_60_tmy.csv");
+	char solar_resource_path_tucson[512];
+	int n = sprintf(solar_resource_path_tucson, "%s/test/input_cases/moltensalt_data/tucson_az_32.116521_-110.933042_psmv3_60_tmy.csv", std::getenv("SSCDIR"));
+	ssc_data_set_string(data, "solar_resource_file", solar_resource_path_tucson);
 
 	int status = run_module(data, "tcsmolten_salt");
 
@@ -149,8 +151,8 @@ int tcsmolten_salt_daggett_UD_default(ssc_data_t &data)
 {
 	tcsmolten_salt_default(data);
 	
+	set_matrix(data, "ud_ind_od", ud_ind_od_path, 180, 7);
 	ssc_data_set_number(data, "pc_config", 1);
-	set_matrix(data, "ud_ind_od", "C:/RPP Summer/C++/SAM Hierarchy/SAM CSP Models/3 - CSP power tower molten salt/PPA single owner (utility)/UserDefined_unit_test_default/ud_ind_od.csv", 180, 7);
 	ssc_data_set_number(data, "ud_m_dot_htf_low", 0.3);
 	ssc_data_set_number(data, "ud_m_dot_htf_high", 1.2);
 

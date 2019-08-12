@@ -113,7 +113,7 @@ public:
 		add_var_info( vtab_inv_cec_cg);
 	}
 
-	void exec( ) throw( general_error )
+	void exec( )
 	{
 		size_t i, j, nrows, ncols; 
 		// rated output ac

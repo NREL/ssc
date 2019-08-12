@@ -25,6 +25,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "tcstype.h"
 #include "sam_csp_util.h"
 #include "interconnect.h"
+#include "Toolbox.h"
 
 using namespace std;
 
@@ -50,6 +51,7 @@ static C_csp_reported_outputs::S_output_info S_output_info[] =
 	{C_csp_trough_collector_receiver::E_Q_DOT_FREEZE_PROT, C_csp_reported_outputs::TS_WEIGHTED_AVE},
 
 	{C_csp_trough_collector_receiver::E_M_DOT_LOOP, C_csp_reported_outputs::TS_WEIGHTED_AVE},
+    {C_csp_trough_collector_receiver::E_IS_RECIRCULATING, C_csp_reported_outputs::TS_WEIGHTED_AVE},
 	{C_csp_trough_collector_receiver::E_M_DOT_FIELD_RECIRC, C_csp_reported_outputs::TS_WEIGHTED_AVE},
 	{C_csp_trough_collector_receiver::E_M_DOT_FIELD_DELIVERED, C_csp_reported_outputs::TS_WEIGHTED_AVE},
 	{C_csp_trough_collector_receiver::E_T_FIELD_COLD_IN, C_csp_reported_outputs::TS_WEIGHTED_AVE},
@@ -476,6 +478,8 @@ void C_csp_trough_collector_receiver::init(const C_csp_collector_receiver::S_csp
         C_csp_collector_receiver::S_csp_cr_out_solver troughOutputs;
 
         steady_state(weatherValues, htfInletState, defocus, troughOutputs, troughInfo);
+        solved_params.m_T_htf_hot_des = m_T_field_out;
+        solved_params.m_dP_sf = troughOutputs.m_dP_sf;
 
         // Restore original settings
         m_accept_mode = accept_mode_orig;
@@ -797,29 +801,48 @@ int C_csp_trough_collector_receiver::get_operating_state()
 
 double C_csp_trough_collector_receiver::get_startup_time()
 {
-	return std::numeric_limits<double>::quiet_NaN();
+    // Note: C_csp_trough_collector_receiver::startup() is called after this function
+    return m_rec_su_delay * 3600.;                    // sec
 }
 double C_csp_trough_collector_receiver::get_startup_energy()
 {
-	return std::numeric_limits<double>::quiet_NaN();
+    // Note: C_csp_trough_collector_receiver::startup() is called after this function
+    return m_rec_qf_delay * m_q_design * 1.e-6;       // MWh
 }
 double C_csp_trough_collector_receiver::get_pumping_parasitic_coef()
 {
-	return std::numeric_limits<double>::quiet_NaN();
+    double T_amb_des = 42. + 273.15;
+    double T_avg = (m_T_loop_in_des + m_T_loop_out_des) / 2.;
+    double P_field_in = m_P_rnr_dsn[1];
+    double dT_avg_SCA = (m_T_loop_out_des - m_T_loop_in_des) / m_nSCA;
+    std::vector<double> T_in_SCA, T_out_SCA;
+
+    for (size_t i = 0; i < m_nSCA; i++) {
+        T_in_SCA.push_back(m_T_loop_in_des + dT_avg_SCA * i);
+        T_out_SCA.push_back(m_T_loop_in_des + dT_avg_SCA * (i + 1));
+    }
+
+    double dP_field = field_pressure_drop(T_amb_des, m_m_dot_design, P_field_in, T_in_SCA, T_out_SCA);
+
+    return m_W_dot_pump / (m_q_design * 1.e-6);
+
 }
 double C_csp_trough_collector_receiver::get_min_power_delivery()
 {
-	return std::numeric_limits<double>::quiet_NaN();
+    double c_htf_ave = m_htfProps.Cp((m_T_startup + m_T_loop_in_des) / 2.0)*1000.;    //[J/kg-K] Specific heat
+    return m_m_dot_htfmin * m_nLoops * c_htf_ave * (m_T_startup - m_T_loop_in_des) * 1.e-6;     // [MWt]
 }
 
 double C_csp_trough_collector_receiver::get_tracking_power()
 {
-	return std::numeric_limits<double>::quiet_NaN();	//MWe
+    return m_SCA_drives_elec * 1.e-6 * m_nSCA * m_nLoops;     //MWe
 }
 
 double C_csp_trough_collector_receiver::get_col_startup_power()
 {
-	return std::numeric_limits<double>::quiet_NaN();	//MWe-hr
+    // Note: C_csp_trough_collector_receiver::startup() is called after this function
+
+    return m_p_start * 1.e-3 * m_nSCA * m_nLoops;             //MWe-hr
 }
 
 
@@ -853,7 +876,7 @@ int C_csp_trough_collector_receiver::loop_energy_balance_T_t_end(const C_csp_wea
 	else
 		T_sky = T_db - 20.0;
 
-    double Intc_hl = 0.0;
+    Intc_hl = 0.0;
 
 	if( m_accept_loc == E_piping_config::FIELD )
 	{
@@ -1105,7 +1128,7 @@ int C_csp_trough_collector_receiver::loop_energy_balance_T_t_int(const C_csp_wea
 	double E_HR_cold_htf = 0.0;				//[MJ]
 	double E_HR_cold_losses = 0.0;			//[MJ]
 	double E_HR_cold_bal = 0.0;				//[MJ]
-    double Intc_hl = 0.0;
+    Intc_hl = 0.0;
 	if( m_accept_loc ==  E_piping_config::FIELD )
 	{
 		// This values is the Bulk Temperature at the *end* of the timestep
@@ -1363,7 +1386,8 @@ int C_csp_trough_collector_receiver::loop_energy_balance_T_t_int(const C_csp_wea
             m_Runner_hl_hot = m_L_runner[i] * CSP::pi*m_D_runner[i] * m_Pipe_hl_coef*(m_T_rnr[i] - T_db);  //Wt
             m_Runner_hl_hot_tot += 2.*m_Runner_hl_hot;
         }
-		
+		m_T_field_out = m_T_rnr[2*m_nrunsec - 1] - m_Runner_hl_hot / (m_dot_runner(m_m_dot_htf_tot, m_nfsec, 2*m_nrunsec - 1)*m_c_hdr_hot);
+
 		q_dot_loss_HR_hot = m_Header_hl_hot_tot + m_Runner_hl_hot_tot;	//[W]   // aka m_Pipe_hl_hot
 		E_HR_hot_losses = q_dot_loss_HR_hot*sim_info.ms_ts.m_step/1.E6;		//[MJ]
 
@@ -1498,6 +1522,7 @@ void C_csp_trough_collector_receiver::loop_optical_eta_off()
 	m_q_i.assign(m_q_i.size(),0.0);		//[W/m] DNI * A_aper / L_sca
 	m_IAM.assign(m_IAM.size(),0.0);		//[-] Incidence angle modifiers
 	m_ColOptEff.fill(0.0);				//[-] tracking * geom * rho * dirt * error * IAM * row shadow * end loss * ftrack
+    m_EqOpteff = 0.;
 	m_EndGain.fill(0.0);				//[-] Light from different collector hitting receiver
 	m_EndLoss.fill(0.0);				//[-] Light missing receiver due to length + end gain
 	m_RowShadow.assign(m_RowShadow.size(),0.0);	//[-] Row-to-row shadowing losses
@@ -1709,6 +1734,13 @@ void C_csp_trough_collector_receiver::loop_optical_eta(const C_csp_weatherreader
 			m_IAM_ave = m_IAM_ave + m_IAM[CT] * m_L_actSCA[CT] / m_L_tot;
 			m_RowShadow_ave = m_RowShadow_ave + m_RowShadow[CT] * m_L_actSCA[CT] / m_L_tot;
 			m_EndLoss_ave = m_EndLoss_ave + m_EndLoss(CT, i)*m_L_actSCA[CT] / m_L_tot;
+
+            // Total equivalent optical efficiency
+            int HT = (int)m_SCAInfoArray(i, 0) - 1;    //[-] HCE type
+            for (int j = 0; j < m_nHCEVar; j++) {
+                m_EqOpteff += m_ColOptEff(CT, i)*m_Shadowing(HT, j)*m_Dirt_HCE(HT, j)*m_alpha_abs(HT, j)*m_Tau_envelope(HT, j)*
+                    (m_L_actSCA[CT] / m_L_tot)*m_HCE_FieldFrac(HT, j);
+            }
 		}
 
 		m_dni_costh = weather.m_beam * m_CosTh_ave;		//[W/m2]
@@ -1724,7 +1756,8 @@ void C_csp_trough_collector_receiver::loop_optical_eta(const C_csp_weatherreader
 	}
 }
 
-void C_csp_trough_collector_receiver::field_pressure_drop(double T_db)
+double C_csp_trough_collector_receiver::field_pressure_drop(double T_db, double m_dot_field, double P_field_in,
+    const std::vector<double> &T_in_SCA, const std::vector<double> &T_out_SCA)
 {
     std::vector<double> DP_intc(m_nSCA + 3, 0.);
     std::vector<double> DP_tube(m_nSCA, 0.);
@@ -1733,12 +1766,12 @@ void C_csp_trough_collector_receiver::field_pressure_drop(double T_db)
     double m_dot_hdr_in, m_dot_hdr, m_dot_temp;
     double rho_hdr_cold;
 
-    double m_dot_htf = m_m_dot_htf_tot / (double)m_nLoops;
-    double T_loop_in = m_T_htf_c_rec_in_t_int_fullts;
-    double T_loop_out = m_T_htf_h_rec_out_t_int_fullts;
+    double m_dot_htf = m_dot_field / (double)m_nLoops;
+    double T_loop_in = T_in_SCA[0];
+    double T_loop_out = T_out_SCA[m_nSCA - 1];
     
     //------Inlet and Outlet
-    inlet_state = m_interconnects[0].State(m_dot_htf * 2, T_loop_in, T_db, m_P_field_in);
+    inlet_state = m_interconnects[0].State(m_dot_htf * 2, T_loop_in, T_db, P_field_in);
     outlet_state = m_interconnects[m_interconnects.size() - 1].State(m_dot_htf * 2, T_loop_out, T_db, 1.e5);  // assumption for press.
     DP_intc[0] = inlet_state.pressure_drop;
     DP_intc[m_interconnects.size() - 1] = outlet_state.pressure_drop;
@@ -1751,8 +1784,8 @@ void C_csp_trough_collector_receiver::field_pressure_drop(double T_db)
             int CT = (int)m_SCAInfoArray(i, 1) - 1;    //Collector type    
             int HT = (int)m_SCAInfoArray(i, 0) - 1;    //HCE type
 
-            double T_htf_ave = (m_T_htf_in_t_int[i] + m_T_htf_out_t_int[i]) / 2.;
-            DP_tube[i] = DP_tube[i] + PressureDrop(m_dot_htf, T_htf_ave, m_P_field_in - i * m_P_field_in / m_nSCA, m_D_h(HT, j), (m_Rough(HT, j)*m_D_h(HT, j)),
+            double T_htf_ave = (T_in_SCA[i] + T_out_SCA[i]) / 2.;
+            DP_tube[i] = DP_tube[i] + PressureDrop(m_dot_htf, T_htf_ave, P_field_in - i * P_field_in / m_nSCA, m_D_h(HT, j), (m_Rough(HT, j)*m_D_h(HT, j)),
                 m_L_SCA[CT], 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)*m_HCE_FieldFrac(HT, j);
 
         }
@@ -1763,7 +1796,7 @@ void C_csp_trough_collector_receiver::field_pressure_drop(double T_db)
     DP_intc[1] = intc_state.pressure_drop;  // just before first SCA
     for (int i = 2; i < m_interconnects.size() - 1; i++)
     {
-        intc_state = m_interconnects[i].State(m_dot_htf, m_T_htf_out_t_int[i - 2], T_db, intc_state.pressure_out - DP_tube[i - 2]);
+        intc_state = m_interconnects[i].State(m_dot_htf, T_out_SCA[i - 2], T_db, intc_state.pressure_out - DP_tube[i - 2]);
         DP_intc[i] = intc_state.pressure_drop;
     }
 
@@ -1778,10 +1811,8 @@ void C_csp_trough_collector_receiver::field_pressure_drop(double T_db)
     m_DP_loop[loop_i] = DP_intc[intc_i];  // outlet
 
 
-    if (m_accept_loc == 1)
-        m_m_dot_htf_tot = m_dot_htf * float(m_nLoops);
-    else
-        m_m_dot_htf_tot = m_dot_htf;
+    if (m_accept_loc != 1)
+        m_dot_field /= (double)m_nLoops;
 
 
     if (m_accept_loc == 1)
@@ -1790,11 +1821,11 @@ void C_csp_trough_collector_receiver::field_pressure_drop(double T_db)
 
         if (m_nfsec > 2)  //mjw 5.4.11 Correct the mass flow for situations where nfsec/2==odd
         {
-            m_dot_run_in = m_m_dot_htf_tot / 2.0 * (1. - float(m_nfsec % 4) / float(m_nfsec));
+            m_dot_run_in = m_dot_field / 2.0 * (1. - float(m_nfsec % 4) / float(m_nfsec));
         }
         else
         {
-            m_dot_run_in = m_m_dot_htf_tot / 2.0;
+            m_dot_run_in = m_dot_field / 2.0;
         }
 
         double x3;
@@ -1805,17 +1836,17 @@ void C_csp_trough_collector_receiver::field_pressure_drop(double T_db)
         for (int i = 0; i < m_nrunsec; i++)
         {
             (i < m_nrunsec - 1 ? x3 = 1.0 : x3 = 0.0);  // contractions/expansions
-            m_DP_rnr[i] = PressureDrop(m_dot_temp, T_loop_in, m_P_field_in, m_D_runner[i], m_HDR_rough,
+            m_DP_rnr[i] = PressureDrop(m_dot_temp, T_loop_in, P_field_in, m_D_runner[i], m_HDR_rough,
                 m_L_runner[i], 0.0, x3, 0.0, 0.0, m_N_rnr_xpans[i] * elbows_per_xpan, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0);
             m_DP_rnr[2 * m_nrunsec - i - 1] = PressureDrop(m_dot_temp, T_loop_out, 1.e5, m_D_runner[2 * m_nrunsec - i - 1], m_HDR_rough,
                 m_L_runner[2 * m_nrunsec - i - 1], x3, 0.0, 0.0, 0.0, m_N_rnr_xpans[2 * m_nrunsec - i - 1] * elbows_per_xpan, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0);
 
             if (i > 1)
-                m_dot_temp = fmax(m_dot_temp - 2.*m_m_dot_htf_tot / float(m_nfsec), 0.0);
+                m_dot_temp = fmax(m_dot_temp - 2.*m_dot_field / float(m_nfsec), 0.0);
         }
 
         //Calculate pressure drop in cold header
-        m_dot_hdr_in = m_m_dot_htf_tot / float(m_nfsec);
+        m_dot_hdr_in = m_dot_field / float(m_nfsec);
         m_dot_hdr = m_dot_hdr_in;
         double x2 = 0.0;
         for (int i = 0; i < m_nhdrsec; i++)
@@ -1828,7 +1859,7 @@ void C_csp_trough_collector_receiver::field_pressure_drop(double T_db)
                     x2 = 1.;
             }
 
-            m_DP_hdr[i] = PressureDrop(m_dot_hdr, T_loop_in, m_P_field_in, m_D_hdr[i], m_HDR_rough,
+            m_DP_hdr[i] = PressureDrop(m_dot_hdr, T_loop_in, P_field_in, m_D_hdr[i], m_HDR_rough,
                 m_L_hdr[i], 0.0, x2, 0.0, 0.0, m_N_hdr_xpans[i] * 4, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
             //if(ErrorFound()) return 1
             //Siphon off header mass flow rate at each loop.  Multiply by 2 because there are 2 loops per hdr section
@@ -1888,8 +1919,8 @@ void C_csp_trough_collector_receiver::field_pressure_drop(double T_db)
         }
 
         // The total pumping power consumption
-        rho_hdr_cold = m_htfProps.dens(m_T_sys_c_t_int_fullts, m_P_field_in);
-        m_W_dot_pump = m_dP_total * m_m_dot_htf_tot / (rho_hdr_cold*m_eta_pump) / 1.e6;  //[MW]
+        rho_hdr_cold = m_htfProps.dens((T_in_SCA[0] + T_out_SCA[m_nSCA - 1]) / 2, P_field_in);
+        m_W_dot_pump = m_dP_total * m_dot_field / (rho_hdr_cold*m_eta_pump) / 1.e6;  //[MW]
 
         ////The parasitic power consumed by electronics and SCA drives
         //if (m_EqOpteff > 0.0)
@@ -1927,6 +1958,7 @@ void C_csp_trough_collector_receiver::field_pressure_drop(double T_db)
     }
 
     m_dP_total *= 1.E-5;		//[bar], convert from Pa
+    return m_dP_total;
 }
 
 void C_csp_trough_collector_receiver::set_output_value()
@@ -1958,9 +1990,10 @@ void C_csp_trough_collector_receiver::set_output_value()
 	mc_reported_outputs.value(E_Q_DOT_FREEZE_PROT, m_q_dot_freeze_protection);			//[MWt]
 
 	mc_reported_outputs.value(E_M_DOT_LOOP, m_m_dot_htf_tot/(double)m_nLoops);		//[kg/s]
+    mc_reported_outputs.value(E_IS_RECIRCULATING, m_is_m_dot_recirc);		    //[-]
 	if (m_is_m_dot_recirc)
 	{
-		mc_reported_outputs.value(E_M_DOT_FIELD_RECIRC, m_m_dot_htf_tot);		//[kg/s]
+        mc_reported_outputs.value(E_M_DOT_FIELD_RECIRC, m_m_dot_htf_tot);		//[kg/s]
 		mc_reported_outputs.value(E_M_DOT_FIELD_DELIVERED, 0.0);				//[kg/s]
 	}
 	else
@@ -2099,7 +2132,7 @@ void C_csp_trough_collector_receiver::off(const C_csp_weatherreader::S_outputs &
 	//	m_E_dot_HR_cold_fullts - m_E_dot_HR_hot_fullts - m_q_dot_htf_to_sink_fullts;	//[MWt]
 
 	// Solve for pressure drop and pumping power
-	field_pressure_drop(weather.m_tdry);
+    m_dP_total = field_pressure_drop(weather.m_tdry, this->m_m_dot_htf_tot, this->m_P_field_in, this->m_T_htf_in_t_int, this->m_T_htf_out_t_int);
 
 	// Are any of these required by the solver for system-level iteration?
 	cr_out_solver.m_q_startup = 0.0;						//[MWt-hr] Receiver thermal output used to warm up the receiver
@@ -2115,6 +2148,7 @@ void C_csp_trough_collector_receiver::off(const C_csp_weatherreader::S_outputs &
 		// If multiple recirculation steps, then need to calculate average of timestep-integrated-average
 	cr_out_solver.m_T_salt_hot = m_T_sys_h_t_int_fullts - 273.15;		//[C]
 	cr_out_solver.m_component_defocus = 1.0;
+    cr_out_solver.m_is_recirculating = m_is_m_dot_recirc;
 
 	cr_out_solver.m_E_fp_total = m_q_dot_freeze_protection;		//[MWe]
 	cr_out_solver.m_W_dot_col_tracking = m_W_dot_sca_tracking;	//[MWe]
@@ -2270,7 +2304,7 @@ void C_csp_trough_collector_receiver::startup(const C_csp_weatherreader::S_outpu
 	}
 
 	// Solve for pressure drop and pumping power
-	field_pressure_drop(weather.m_tdry);
+    m_dP_total = field_pressure_drop(weather.m_tdry, this->m_m_dot_htf_tot, this->m_P_field_in, this->m_T_htf_in_t_int, this->m_T_htf_out_t_int);
 
 	// These outputs need some more thought
 		// For now, just set this > 0.0 so that the controller knows that startup was successful
@@ -2291,6 +2325,7 @@ void C_csp_trough_collector_receiver::startup(const C_csp_weatherreader::S_outpu
 	cr_out_solver.m_T_salt_hot = m_T_sys_h_t_int_fullts - 273.15;		//[C]
 
 	cr_out_solver.m_component_defocus = 1.0;	//[-]
+    cr_out_solver.m_is_recirculating = m_is_m_dot_recirc;
 
 		// Shouldn't need freeze protection if in startup, but may want a check on this
 	cr_out_solver.m_E_fp_total = m_q_dot_freeze_protection;		//[MWt]
@@ -2531,7 +2566,7 @@ void C_csp_trough_collector_receiver::on(const C_csp_weatherreader::S_outputs &w
 			m_E_dot_HR_cold_fullts - m_E_dot_HR_hot_fullts - m_q_dot_htf_to_sink_fullts;	//[MWt]
 
 		// Solve for pressure drop and pumping power
-		field_pressure_drop(weather.m_tdry);
+        m_dP_total = field_pressure_drop(weather.m_tdry, this->m_m_dot_htf_tot, this->m_P_field_in, this->m_T_htf_in_t_int, this->m_T_htf_out_t_int);
 
 		// Set solver outputs & return
 		// Receiver is already on, so the controller is not looking for this value
@@ -2550,6 +2585,7 @@ void C_csp_trough_collector_receiver::on(const C_csp_weatherreader::S_outputs &w
 		cr_out_solver.m_T_salt_hot = m_T_sys_h_t_int - 273.15;		//[C]
 			
 		cr_out_solver.m_component_defocus = m_component_defocus;	//[-]
+        cr_out_solver.m_is_recirculating = m_is_m_dot_recirc;
 		// ***********************************************************
 		// ***********************************************************
 
@@ -2557,6 +2593,7 @@ void C_csp_trough_collector_receiver::on(const C_csp_weatherreader::S_outputs &w
 		cr_out_solver.m_E_fp_total = 0.0;			//[MW]
 		cr_out_solver.m_W_dot_col_tracking = m_W_dot_sca_tracking;	//[MWe]
 		cr_out_solver.m_W_dot_htf_pump = m_W_dot_pump;				//[MWe]
+        cr_out_solver.m_dP_sf = m_dP_total;         //[bar]
 	}
 	else
 	{	// Solution failed, so tell controller/solver
@@ -2578,9 +2615,11 @@ void C_csp_trough_collector_receiver::on(const C_csp_weatherreader::S_outputs &w
 		cr_out_solver.m_q_thermal = 0.0;			//[MWt]
 		cr_out_solver.m_T_salt_hot = 0.0;			//[C]
 		cr_out_solver.m_component_defocus = 1.0;	//[-]
+        cr_out_solver.m_is_recirculating = false;
 		cr_out_solver.m_E_fp_total = 0.0;
 		cr_out_solver.m_W_dot_col_tracking = 0.0;
 		cr_out_solver.m_W_dot_htf_pump = 0.0;
+        cr_out_solver.m_dP_sf = 0.0;                //[bar]
 	}
 
 	set_output_value();
@@ -2931,6 +2970,7 @@ void C_csp_trough_collector_receiver::call(const C_csp_weatherreader::S_outputs 
 	} 
 
 	//9-27-12, TWN: This model uses relative m_defocus. Changed controller to provide absolute m_defocus, so now convert to relative here
+    if (m_defocus_old == 0) { m_defocus_old = 1; }
 	m_defocus = m_defocus_new / m_defocus_old;
 	m_defocus_old = m_defocus_new;
 
@@ -3105,7 +3145,7 @@ overtemp_iter_flag: //10 continue     //Return loop for over-temp conditions
 
 			E_field_loss_tot *= 1.e-6*dt;
 
-			double E_field_pipe_hl = m_Runner_hl_hot_tot + m_Header_hl_hot_tot + m_Runner_hl_cold_tot + m_Header_hl_cold_tot;
+			double E_field_pipe_hl = m_Runner_hl_hot_tot + m_Header_hl_hot_tot + m_Runner_hl_cold_tot + m_Header_hl_cold_tot + m_nLoops*Intc_hl;
 
 			E_field_pipe_hl *= dt;		//[J]
 
@@ -3698,7 +3738,7 @@ calc_final_metrics_goto:
 		//MJW 12.14.2010 Limit to positive to avoid step-to-step oscillation introduced by using previous step. 
 		//.. This may cause a minor underestimation of annual energy output (<<.5%).
 		E_hdr_accum = (m_v_hot*rho_hdr_hot*m_c_hdr_hot + m_mc_bal_hot)*(m_TCS_T_sys_h - m_TCS_T_sys_h_last) + //Hot half
-			(m_v_cold*rho_hdr_cold*m_c_hdr_cold + m_mc_bal_cold)*(m_TCS_T_sys_c - m_TCS_T_sys_c_last);   //cold half
+			max((m_v_cold*rho_hdr_cold*m_c_hdr_cold + m_mc_bal_cold)*(m_TCS_T_sys_c - m_TCS_T_sys_c_last), 0.0);   //cold half
 
 		if (!m_is_using_input_gen)
 			E_bal_startup = max(E_hdr_accum, 0.0); //cold half
@@ -3713,7 +3753,7 @@ calc_final_metrics_goto:
 		double m_Pipe_hl_hot = m_Runner_hl_hot_tot + m_Header_hl_hot_tot;
 		double m_Pipe_hl_cold = m_Runner_hl_cold_tot + m_Header_hl_cold_tot;
 
-		piping_hl_total = m_Pipe_hl_hot + m_Pipe_hl_cold;
+		piping_hl_total = m_Pipe_hl_hot + m_Pipe_hl_cold + m_nLoops*Intc_hl;
 
 		if (!m_is_using_input_gen)
 			E_avail_tot = max(E_avail_tot - piping_hl_total*dt, 0.0);		//[J] 11/1/11 TN: Include hot and cold piping losses in available energy calculation
@@ -3805,12 +3845,12 @@ set_outputs_and_return:
 	double dni_costh = I_b*m_CosTh_ave;
 	double T_loop_outlet = m_TCS_T_htf_out[m_nSCA - 1] - 273.15;
 
-	double E_loop_accum_out = E_loop_accum * 3.6e-9;
-	double E_hdr_accum_out = E_hdr_accum * 3.6e-9;
+	double E_loop_accum_out = E_loop_accum / 3.6e-9;
+	double E_hdr_accum_out = E_hdr_accum / 3.6e-9;
 
 	double E_tot_accum = E_loop_accum_out + E_hdr_accum_out;
 
-	double E_field_out = E_field*3.6e-9;
+	double E_field_out = E_field / 3.6e-9;
 	//------------------------------------------------------------------
 
 	//Set outputs
@@ -3907,9 +3947,9 @@ void C_csp_trough_collector_receiver::converged()
 	m_operating_mode_converged = m_operating_mode;	//[-]
 
 	// Always reset the m_defocus control at the first call of a timestep
-	m_defocus_new = 1.0;	//[-]
-	m_defocus_old = 1.0;	//[-]
-	m_defocus = 1.0;		//[-]
+	//m_defocus_new = 1.0;	//[-]
+	//m_defocus_old = 1.0;	//[-]
+	//m_defocus = 1.0;		//[-]
 
 	m_W_dot_sca_tracking = 0.0;		//[MWe]
 
@@ -3930,17 +3970,72 @@ void C_csp_trough_collector_receiver::write_output_intervals(double report_time_
 
 double C_csp_trough_collector_receiver::calculate_optical_efficiency(const C_csp_weatherreader::S_outputs &weather, const C_csp_solver_sim_info &sim)
 {
-	return std::numeric_limits<double>::quiet_NaN();
+    loop_optical_eta(weather, sim);
+	return m_EqOpteff;
 }
 
 double C_csp_trough_collector_receiver::calculate_thermal_efficiency_approx(const C_csp_weatherreader::S_outputs &weather, double q_incident /*MW*/)
 {
-	return std::numeric_limits<double>::quiet_NaN();
+    // q_incident is the power incident (absorbed by the absorber) on all the HCE receivers, calculated using the DNI and optical efficiency
+    
+    if (q_incident <= 0) return 0.;
+    
+    double Tamb = weather.m_tdry;                            // [C]
+    double HLWind = std::abs(weather.m_wspd);
+    double Insol_Beam_Normal = weather.m_beam;
+    double SfTo = m_T_loop_out_des - 273.15;                 // [C] (converted from [C] to [K] in init and now back to [C])
+    double SfTi = m_T_loop_in_des - 273.15;                  // [C] (converted from [C] in [K] in init and now back to [C])
+
+    // Borrowed from empirical model for 2008 Schott PTR70 (vacuum) receiver
+    double HCE_A0 = 4.05;
+    double HCE_A1 = 0.247;
+    double HCE_A2 = -0.00146;
+    double HCE_A3 = 5.65e-06;
+    double HCE_A4 = 7.62e-08;
+    double HCE_A5 = -1.7;
+    double HCE_A6 = 0.0125;
+    double PerfFac = 1;
+       
+    // Incidence angle
+    C_csp_solver_sim_info sim;
+    int doy = DateTime::CalculateDayOfYear(weather.m_year, weather.m_month, weather.m_day);      // day of year
+    sim.ms_ts.m_time_start = ((doy - 1) * 24 + weather.m_hour + weather.m_minute / 60.) * 3600.;
+    sim.ms_ts.m_step = 3600.;
+    sim.ms_ts.m_time = sim.ms_ts.m_time_start + sim.ms_ts.m_step;
+    loop_optical_eta(weather, sim);     // calculate m_costh;
+    double CosTh = m_costh;
+    double Theta = acos(CosTh);         //[rad]
+        
+    // Incidence angle modifier for Solargenix SGX-1 collector
+    double IamF0 = 1;
+    double IamF1 = 0.050599999725818634;
+    double IamF2 = -0.17630000412464142;
+    
+    double IAM;
+    if (CosTh == 0)
+        IAM = 0;
+    else
+        IAM = IamF0 + IamF1 * Theta / CosTh + IamF2 * Theta * Theta / CosTh;
+
+    double HLTerm1, HLTerm2, HLTerm3, HLTerm4;
+    double HL;
+    // 7.7.2016 twn: these temperatures should be in C, per Burkholder & Kutscher 2008
+    HLTerm1 = (HCE_A0 + HCE_A5 * pow(HLWind, 0.5))*(SfTo - SfTi);
+    HLTerm2 = (HCE_A1 + HCE_A6 * sqrt(HLWind))*((pow(SfTo, 2) - pow(SfTi, 2)) / 2.0 - Tamb * (SfTo - SfTi));
+    HLTerm3 = ((HCE_A2 + HCE_A4 * (Insol_Beam_Normal * CosTh * IAM)) / 3.0)*(pow(SfTo, 3) - pow(SfTi, 3));
+    HLTerm4 = (HCE_A3 / 4.0)*(pow(SfTo, 4) - pow(SfTi, 4));
+    HL = (HLTerm1 + HLTerm2 + HLTerm3 + HLTerm4) / (SfTo - SfTi);		//[W/m]
+
+    // Convert Receiver HL from W/m of receiver to W/m2 of collector aperture
+    double RefMirrAper = m_L_aperture[0];
+    double RecHL = std::max( PerfFac * HL / RefMirrAper, 0.);
+
+    return std::max(1. - RecHL * m_Ap_tot * 1.e-6 / q_incident, 0.);
 }
 
 double C_csp_trough_collector_receiver::get_collector_area()
 {
-	return std::numeric_limits<double>::quiet_NaN();
+    return m_Ap_tot;
 }
 
 // ------------------------------------------ supplemental methods -----------------------------------------------------------
@@ -5707,12 +5802,11 @@ void C_csp_trough_collector_receiver::rnr_and_hdr_design(unsigned nhsec, int nfs
         for (std::size_t i = 0; i < nhsec; i++) {
             if (i == 0) {
                 m_dot_enter = m_dot_hdrs;
-                V_enter = 4.*m_dot_enter / (rho*CSP::pi*D_hdr[i] * D_hdr[i]);
             }
-            else if (nd < N_max_hdr_diams) {
+            else {
                 m_dot_enter -= m_dot_2loops;
-                V_enter = 4.*m_dot_enter / (rho*CSP::pi*D_hdr[i - 1] * D_hdr[i - 1]);  // assuming no diameter change
             }
+            V_enter = 4.*m_dot_enter / (rho*CSP::pi*D_hdr[i] * D_hdr[i]);
             m_dot_hdr[i] = m_dot_enter;
             V_hdr[i] = V_enter;
         }
@@ -5762,10 +5856,11 @@ void C_csp_trough_collector_receiver::rnr_and_hdr_design(unsigned nhsec, int nfs
                 }
             }
             else {
-                D_hdr[i] = D_hdr[i - 1];
+                m_dot_enter -= m_dot_2loops;
+                D_hdr[i] = D_hdr[i - 1];        // no diameter change allowed
             }
             m_dot_hdr[i] = m_dot_enter;
-            V_hdr[i] = V_enter;
+            V_hdr[i] = 4.*m_dot_hdr[i] / (rho*CSP::pi*D_hdr[i] * D_hdr[i]);
         }
     }
 
@@ -5778,14 +5873,8 @@ void C_csp_trough_collector_receiver::rnr_and_hdr_design(unsigned nhsec, int nfs
     nd = 0;
     if (custom_diams) {
         for (std::size_t i = nhsec; i < 2 * nhsec; i++) {
-            if (i == nhsec) {
-                m_dot_leave = m_dot_2loops;
-                V_leave = 4.*m_dot_leave / (rho*CSP::pi*D_hdr[i] * D_hdr[i]);
-            }
-            else if (nd < N_max_hdr_diams) {
-                m_dot_leave += m_dot_2loops;
-                V_leave = 4.*m_dot_leave / (rho*CSP::pi*D_hdr[i - 1] * D_hdr[i - 1]);  // assuming no diameter change
-            }
+            m_dot_leave += m_dot_2loops;
+            V_leave = 4.*m_dot_leave / (rho*CSP::pi*D_hdr[i] * D_hdr[i]);
             m_dot_hdr[i] = m_dot_leave;
             V_hdr[i] = V_leave;
         }
@@ -5835,10 +5924,11 @@ void C_csp_trough_collector_receiver::rnr_and_hdr_design(unsigned nhsec, int nfs
                 }
             }
             else {
-                D_hdr[i] = D_hdr[i - 1];
+                m_dot_leave += m_dot_2loops;
+                D_hdr[i] = D_hdr[i - 1];        // no diameter change allowed
             }
             m_dot_hdr[i] = m_dot_leave;
-            V_hdr[i] = V_leave;
+            V_hdr[i] = 4.*m_dot_hdr[i] / (rho*CSP::pi*D_hdr[i] * D_hdr[i]);
         }
     }
 

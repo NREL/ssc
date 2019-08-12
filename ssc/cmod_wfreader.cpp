@@ -92,7 +92,7 @@ public:
 		add_var_info( _cm_vtab_wfreader );
 	}
 	
-	void exec( ) throw( general_error )
+	void exec( )
 	{
 		bool header_only = as_boolean("header_only");
 		const char *file = as_string("file_name");

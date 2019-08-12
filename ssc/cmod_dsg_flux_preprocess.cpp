@@ -64,7 +64,7 @@ public:
 		add_var_info(_cm_vtab_dsg_flux_preprocess);
 	}
 
-	void exec( ) throw( general_error )
+	void exec( )
 	{
 		water_state wp;
 

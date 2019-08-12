@@ -90,7 +90,7 @@ static var_info _cm_vtab_tcsgeneric_solar[] = {
 	{ SSC_INPUT,        SSC_ARRAY,       "diswos",           "Time-of-dispatch control for without-solar conditions",          "none",             "",             "type_260",       "*",                       "",                      "" },
 	{ SSC_INPUT,        SSC_ARRAY,       "qdisp",            "TOD power output control factors",                               "none",             "",             "type_260",       "*",                       "",                      "" },
 	{ SSC_INPUT,        SSC_ARRAY,       "fdisp",            "Fossil backup output control factors",                           "none",             "",             "type_260",       "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "istableunsorted",  "Is optical table unsorted format?"                               "none",             "",             "type_260",       "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "istableunsorted",  "Is optical table unsorted format?",                              "none",             "",             "type_260",       "*",                       "",                      "" },
     { SSC_INPUT,        SSC_MATRIX,      "OpticalTable",     "Optical table",                                                  "none",             "",             "type_260",       "*",                       "",                      "" },
     //{ SSC_INPUT,        SSC_MATRIX,      "OpticalTableUns",  "Optical table Unstructured",                                     "none",             "",             "type_260",       "*",                       "",                      "" },
 	{ SSC_INPUT,        SSC_MATRIX,      "exergy_table",     "Exergy table",                                                   "none",             "",             "type_260",       "*",                       "",                      "" },
@@ -226,7 +226,7 @@ public:
 		add_var_info(vtab_technology_outputs);
 	}
 
-	void exec( ) throw( general_error )
+	void exec( )
 	{
 		//if ( 0 >= load_library("typelib") ) throw exec_error( "tcsgeneric_solar", util::format("could not load the tcs type library.") );
 
