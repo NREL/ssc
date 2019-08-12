@@ -3,7 +3,7 @@
 #define private public              // for setting private data members
 #include "lib_trough_test.h"
 
-TEST_F(TroughTest, DefocusTest)
+TEST_F(TroughTest, DefocusTest_csp_solver_trough_collector_receiver)
 {
     // at time 1476 (1477 end time listed in output)
     weatherValues.m_year = 2009;
@@ -56,7 +56,7 @@ TEST_F(TroughTest, DefocusTest)
     //// mass flow increases by 2.1%
 }
 
-TEST_F(TroughTest, DefocusTest2)
+TEST_F(TroughTest, DefocusTest2_csp_solver_trough_collector_receiver)
 {
     // at time 1068 (1069 end time listed in output)
     weatherValues.m_year = 2009;
@@ -100,7 +100,7 @@ TEST_F(TroughTest, DefocusTest2)
     EXPECT_NEAR(troughOutputs.m_m_dot_salt_tot, 1705004.8, 1705004.8 * m_error_tolerance_lo);
 }
 
-TEST_F(TroughTest, SteadyStateTest)
+TEST_F(TroughTest, SteadyStateTest_csp_solver_trough_collector_receiver)
 {
     troughModel->m_accept_mode = 1;               // flag so solar zenith from weather is used instead of calc'd
     troughModel->m_accept_init = false;           // running at steady-state but keeping false to avoid side effects

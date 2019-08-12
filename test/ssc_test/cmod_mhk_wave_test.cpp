@@ -1,6 +1,6 @@
 #include "cmod_mhk_wave_test.h"
 
-TEST_F(CM_MHKWave, ComputeModuleTest) {
+TEST_F(CM_MHKWave, ComputeModuleTest_cmod_mhk_wave) {
 	int mhk_wave_errors = run_module(data, "mhk_wave");
 	ASSERT_EQ(mhk_wave_errors, 0);
 	
