@@ -184,7 +184,7 @@ if(APPLE)
 		add_custom_command(
 			TARGET ssc
 			POST_BUILD
-			COMMAND install_name_tool -id @rpath/libssc.so $ENV{SSCDIR}/ssc/libssc.so
+			COMMAND install_name_tool -id @rpath/libssc.so $<TARGET_FILE:ssc>
 		)
 	endif()
 endif()
