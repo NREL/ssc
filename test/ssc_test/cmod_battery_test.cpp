@@ -6,7 +6,7 @@
 
 
 /// Test standalone battery compute modeule with a input lifetime generation and commercial load
-TEST_F(CMBattery, CommercialLifetimePeakShaving) {
+TEST_F(CMBattery, CommercialLifetimePeakShaving_cmod_battery) {
 
 	// Run with fixed output
 	ssc_number_t n_years;

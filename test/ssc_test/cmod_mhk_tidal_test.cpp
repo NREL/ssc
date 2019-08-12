@@ -1,6 +1,6 @@
 #include "cmod_mhk_tidal_test.h"
 
-TEST_F(CM_MHKTidal, ComputeModuleTest) {
+TEST_F(CM_MHKTidal, ComputeModuleTest_cmod_mhk_tidal) {
 	int mhk_tidal_errors = run_module(data, "mhk_tidal");
 	ASSERT_EQ( mhk_tidal_errors , 0 );
 
