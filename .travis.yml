@@ -46,7 +46,7 @@ script:
   - mkdir ${SSCDIR}/build && cd ${SSCDIR}/build
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then cmake .. -DCMAKE_BUILD_TYPE=Release -Dskip_tools=1 && make -j2; fi
 #  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then test/Test --gtest_filter=*UsingInterpolatedSub*; fi
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then test/Test; fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then travis_wait 30 test/Test; fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then cmake .. -DCMAKE_BUILD_TYPE=Release -Dskip_tools=1 && make VERBOSE=1 -j2; fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then travis_wait 30 test/Test; fi
 
