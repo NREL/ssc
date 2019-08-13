@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 #include "cmod_geothermal_test.h"
 
-TEST_F(CMGeothermal, SingleOwnerDefault) {
+TEST_F(CMGeothermal, SingleOwnerDefault_cmod_geothermal) {
 	int geo_errors = run_module(data, "geothermal");
 	ASSERT_EQ(geo_errors, 0);
 	int singleowner_errors = run_module(data, "singleowner");

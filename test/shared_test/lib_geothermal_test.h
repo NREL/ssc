@@ -4,9 +4,8 @@
 #include "lib_geothermal.h"
 #include "core.h"
 #include "lib_physics.h"
-//#include "lib_weatherfile.h"
-//#include "lib_physics.h"
-//#include "lib_powerblock.h"
+
+#include "geothermal_common_data.h"
 
 static bool my_update_function(float percent, void *data)
 {
@@ -14,12 +13,6 @@ static bool my_update_function(float percent, void *data)
 		return ((compute_module*)data)->update("working...", percent);
 	else
 		return true;
-}
-
-namespace geotest {
-	const char * SSCDIR = std::getenv("SSCDIR");
-	char filename_path[200];
-	int n1 = sprintf(filename_path, "%s/test/input_cases/general_data/daggett_ca_34.865371_-116.783023_psmv3_60_tmy.csv", geotest::SSCDIR);
 }
 
 //Fixture to test CGeothermalAnalyzer class defined in 'lib_geothermal.h':
@@ -259,7 +252,7 @@ public:
 				//	throw general_error("invalid analysis period specified in the geothermal hourly model");
 
 				geoPlant_inputs.md_PotentialResourceMW = resource_potential;
-				geoPlant_inputs.mc_WeatherFileName = geotest::filename_path;
+				geoPlant_inputs.mc_WeatherFileName = geothermal_weather_path;
 				geoPlant_inputs.mia_tou = tou;
 				geoPlant_inputs.mi_MakeupCalculationsPerYear = (geoPlant_inputs.mi_ModelChoice == 2) ? 8760 : 12;
 				geoPlant_inputs.mi_TotalMakeupCalculations = geoPlant_inputs.mi_ProjectLifeYears * geoPlant_inputs.mi_MakeupCalculationsPerYear;

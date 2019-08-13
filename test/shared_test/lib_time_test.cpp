@@ -2,7 +2,7 @@
 #include "lib_time.h"
 
 // Single year is 60 min, lifetime is 30 min, 25 years
-TEST_F(libTimeTests, TestLifetimeInterpolation)
+TEST_F(libTimeTests, TestLifetimeInterpolation_lib_time)
 {
 	is_lifetime = true;
 	std::vector<float> lifetime_from_single;
@@ -26,7 +26,7 @@ TEST_F(libTimeTests, TestLifetimeInterpolation)
 	}
 
 }
-TEST_F(libTimeTests, TestSameSizeSingleYear)
+TEST_F(libTimeTests, TestSameSizeSingleYear_lib_time)
 {
 	is_lifetime = false;
 	std::vector<float> lifetime_from_single;
@@ -47,7 +47,7 @@ TEST_F(libTimeTests, TestSameSizeSingleYear)
 	}
 }
 
-TEST_F(libTimeTests, TestSameSizeSubhourlySingleYear)
+TEST_F(libTimeTests, TestSameSizeSubhourlySingleYear_lib_time)
 {
 	is_lifetime = false;
 	std::vector<float> lifetime_from_single;
@@ -67,7 +67,7 @@ TEST_F(libTimeTests, TestSameSizeSubhourlySingleYear)
 	}
 }
 
-TEST_F(libTimeTests, TestSameSizeSubhourlyLifetime)
+TEST_F(libTimeTests, TestSameSizeSubhourlyLifetime_lib_time)
 {
 	is_lifetime = true;
 	std::vector<float> lifetime_from_single;
@@ -92,7 +92,7 @@ TEST_F(libTimeTests, TestSameSizeSubhourlyLifetime)
 }
 
 // Test downsample
-TEST_F(libTimeTests, TestLifetimeDownsample)
+TEST_F(libTimeTests, TestLifetimeDownsample_lib_time)
 {
 	is_lifetime = true;
 	std::vector<float> lifetime_from_single;
@@ -117,7 +117,7 @@ TEST_F(libTimeTests, TestLifetimeDownsample)
 }
 
 // Test downsample
-TEST_F(libTimeTests, TestSingleyearDownsample)
+TEST_F(libTimeTests, TestSingleyearDownsample_lib_time)
 {
 	is_lifetime = false;
 	std::vector<float> lifetime_from_single;
@@ -138,7 +138,7 @@ TEST_F(libTimeTests, TestSingleyearDownsample)
 }
 
 // Test diurnal to flat
-TEST_F(libTimeTests, TestDiurnalToFlat)
+TEST_F(libTimeTests, TestDiurnalToFlat_lib_time)
 {
 	std::vector<double> flat = flatten_diurnal(schedule, schedule, 1, sched_values, multiplier);
 	std::vector<double> flat30min = flatten_diurnal(schedule, schedule, 2, sched_values, multiplier);

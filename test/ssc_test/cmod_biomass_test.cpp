@@ -1,7 +1,7 @@
 #include "cmod_biomass_test.h"
 #include "gtest/gtest.h"
 
-TEST_F(CMBiomass, SingleOwnerDefault) {
+TEST_F(CMBiomass, SingleOwnerDefault_cmod_biomass) {
 
 	int biopower_errors = run_module(data, "biomass");
 	ASSERT_EQ(biopower_errors, 0);

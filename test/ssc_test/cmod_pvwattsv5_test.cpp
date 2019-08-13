@@ -6,7 +6,7 @@
 #include "cmod_pvwattsv5_test.h"
 
 ///Default PVWattsV5, but with TMY2 instead of TMY3
-TEST_F(CMPvwattsV5Integration, DefaultNoFinancialModel){
+TEST_F(CMPvwattsV5Integration, DefaultNoFinancialModel_cmod_pvwattsv5){
 	compute();
 
 	double tmp=0;
@@ -40,7 +40,7 @@ TEST_F(CMPvwattsV5Integration, DefaultNoFinancialModel){
 }
 
 /// PVWattsV5 using different technology input options
-TEST_F(CMPvwattsV5Integration, DifferentTechnologyInputs)
+TEST_F(CMPvwattsV5Integration, DifferentTechnologyInputs_cmod_pvwattsv5)
 {
 //	std::vector<double> annual_energy_expected = { 6909.79, 7123.32, 7336.478, 6909.79, 6804.376, 8711.946, 8727.704, 9690.735 };
 	// single axis tracking reduction due to pull request 280
