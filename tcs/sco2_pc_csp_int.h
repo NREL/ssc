@@ -426,6 +426,11 @@ public:
             double T_comp_in_min /*K*/,
             bool is_modified_P_mc_in_solver);
 
+    int check_increasing_T_mc_in(double W_dot_target /*kWe*/, double W_dot_fan_limit /*MWe*/,
+        bool is_modified_P_mc_in_solver,
+        double & W_dot_opt /*kWe*/, double & eta_max_at_W_dot_opt /*-*/,
+        double & P_LP_in_opt /*kPa*/, double & T_mc_in_opt /*K*/);
+
     void solve_nested_T_pc_in__T_mc_in_for_cooler_constrains(double W_dot_pc_cooler_fan_target /*MWe*/,
         double W_dot_mc_cooler_fan_target /*MWe*/,
         double T_comp_in_min /*K*/,
