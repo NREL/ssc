@@ -146,8 +146,8 @@ static var_info _cm_vtab_geothermal[] = {
     // User can specify whether the analysis should be done hourly or monthly.  With monthly analysis, there are only monthly results.																             
     // With hourly analysis, there are still monthly results, but there are hourly (over the whole lifetime of the project) results as well.														             
 //	{ SSC_OUTPUT, SSC_ARRAY, "annual_replacements", "Resource replacement? (1=yes)", "kWhac", "", "GeoHourly", "ui_calculations_only=0", "", "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,       "gen",					          "System power generated",                              "kW",                      "GeoHourly",        "",                         "",                "",                               "" },
-	{ SSC_OUTPUT,       SSC_ARRAY, "system_lifetime_recapitalize", "Resource replacement? (1=yes)", "", "", "GeoHourly", "ui_calculations_only=0", "", "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "gen",                                "System power generated",                              "kW",                      "GeoHourly",        "",                         "",                "",                               "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "system_lifetime_recapitalize",       "Resource replacement? (1=yes)", "", "", "GeoHourly", "ui_calculations_only=0", "", "" },
 
     { SSC_OUTPUT,       SSC_ARRAY,      "monthly_resource_temperature",       "Monthly avg resource temperature",                    "C",       "",             "GeoHourly",        "ui_calculations_only=0",   "",                "" },
     { SSC_OUTPUT,       SSC_ARRAY,      "monthly_power",                      "Monthly power",                                       "kW",      "",             "GeoHourly",        "ui_calculations_only=0",   "",                "" },

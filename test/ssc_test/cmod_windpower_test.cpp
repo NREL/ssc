@@ -74,7 +74,7 @@ TEST_F(CMWindPowerIntegration, WakeModelsUsingFile_cmod_windpower){
 
 	// Constant Loss Model
     ssc_data_set_number(data, "wind_farm_wake_model", 3);
-    ssc_data_set_number(data, "wake_loss", 5);
+    ssc_data_set_number(data, "wake_int_loss", 5);
 
     compute();
 
@@ -271,7 +271,7 @@ TEST_F(CMWindPowerIntegration, WindDist3_cmod_windpower) {
     auto *vt = static_cast<var_table*>(data);
     vt->assign("wind_resource_distribution", dist);
     ssc_data_set_number(data, "wind_farm_wake_model", 3);
-    ssc_data_set_number(data, "wake_loss", 5);
+    ssc_data_set_number(data, "wake_int_loss", 5);
     ssc_data_set_number(data, "avail_turb_loss", 5);
 
     compute();
