@@ -4,22 +4,19 @@
 #include <stdio.h>
 #include "code_generator_utilities.h"
 
-namespace geothermaltest {
-	const char * SSCDIR = std::getenv("SSCDIR");
-	char weather_path[100];
-	char dispatch_path[100];
+static char geothermal_weather_path[256];
+static char geothermal_dispatch_path[256];
 
-	int n1 = sprintf(weather_path, "%s/test/input_cases/general_data/daggett_ca_34.865371_-116.783023_psmv3_60_tmy.csv", geothermaltest::SSCDIR);
-	int n2 = sprintf(dispatch_path, "%s/test/input_cases/geothermal_data/dispatch_factors_ts.csv", geothermaltest::SSCDIR);
-}
+static int n1 = sprintf(geothermal_weather_path, "%s/test/input_cases/general_data/daggett_ca_34.865371_-116.783023_psmv3_60_tmy.csv", SSCDIR);
+static int n2 = sprintf(geothermal_dispatch_path, "%s/test/input_cases/geothermal_data/dispatch_factors_ts.csv", SSCDIR);
 
 /**
 *  Default data for no-financial pvsamv1 run that can be further modified
 */
-void geothermal_singleowner_default(ssc_data_t &data)
+static void geothermal_singleowner_default(ssc_data_t &data)
 {
 	ssc_data_set_number(data, "ui_calculations_only", 0);
-	ssc_data_set_string(data, "file_name", geothermaltest::weather_path);
+	ssc_data_set_string(data, "file_name", geothermal_weather_path);
 	ssc_data_set_number(data, "resource_potential", 210);
 	ssc_data_set_number(data, "resource_type", 0);
 	ssc_data_set_number(data, "resource_temp", 200);
@@ -239,7 +236,7 @@ void geothermal_singleowner_default(ssc_data_t &data)
 	ssc_data_set_number(data, "system_recapitalization_cost", 18771578);
 	ssc_data_set_number(data, "system_use_lifetime_output", 1);
 	ssc_data_set_number(data, "ppa_multiplier_model", 0);
-	set_array(data, "dispatch_factors_ts", geothermaltest::dispatch_path, 8760);
+	set_array(data, "dispatch_factors_ts", geothermal_dispatch_path, 8760);
 	ssc_data_set_number(data, "dispatch_factor1", 1);
 	ssc_data_set_number(data, "dispatch_factor2", 1);
 	ssc_data_set_number(data, "dispatch_factor3", 1);
