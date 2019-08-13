@@ -280,10 +280,10 @@ TEST_F(CMWindPowerIntegration, WindDist3_cmod_windpower) {
     ssc_data_get_number(data, "annual_energy", &annual_energy);
     ssc_data_get_number(data, "annual_gross_energy", &gross);
     EXPECT_NEAR(gross, 160804000, e);
-    EXPECT_NEAR(annual_energy, gross*0.9, e);
+    EXPECT_NEAR(annual_energy, gross*0.95*0.95, e);
 
     ssc_number_t monthly_energy = ssc_data_get_array(data, "monthly_energy", nullptr)[0];
-    EXPECT_NEAR(monthly_energy, 12291500, e);
+    EXPECT_NEAR(monthly_energy, 12326000, e);
     
 }
 
