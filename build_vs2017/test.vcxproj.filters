@@ -35,9 +35,6 @@
     <ClCompile Include="..\test\shared_test\lib_time_test.cpp">
       <Filter>shared_test</Filter>
     </ClCompile>
-    <ClCompile Include="..\test\shared_test\lib_trough_test.cpp">
-      <Filter>shared_test</Filter>
-    </ClCompile>
     <ClCompile Include="..\test\shared_test\lib_util_test.cpp">
       <Filter>shared_test</Filter>
     </ClCompile>
@@ -92,9 +89,6 @@
     <ClCompile Include="..\test\ssc_test\cmod_tcsmolten_salt_test.cpp">
       <Filter>ssc_test</Filter>
     </ClCompile>
-    <ClCompile Include="..\test\ssc_test\cmod_tcstrough_physical_test.cpp">
-      <Filter>ssc_test</Filter>
-    </ClCompile>
     <ClCompile Include="..\test\ssc_test\cmod_trough_physical_iph_test.cpp">
       <Filter>ssc_test</Filter>
     </ClCompile>
@@ -102,9 +96,6 @@
       <Filter>ssc_test</Filter>
     </ClCompile>
     <ClCompile Include="..\test\ssc_test\cmod_windpower_test.cpp">
-      <Filter>ssc_test</Filter>
-    </ClCompile>
-    <ClCompile Include="..\test\ssc_test\cmod_windpower_test2.cpp">
       <Filter>ssc_test</Filter>
     </ClCompile>
     <ClCompile Include="..\test\ssc_test\cmod_mhk_tidal_test.cpp">
@@ -125,7 +116,9 @@
     <ClCompile Include="..\test\ssc_test\cmod_tcsfresnel_molten_salt_test.cpp">
       <Filter>ssc_test</Filter>
     </ClCompile>
-    <ClCompile Include="..\test\ssc_test\computeModuleTest.cpp" />
+    <ClCompile Include="..\test\tcs_test\lib_trough_test.cpp">
+      <Filter>tcs_test</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\test\input_cases\battery_common_data.h">
@@ -197,12 +190,6 @@
     <ClInclude Include="..\test\shared_test\lib_time_test.h">
       <Filter>shared_test</Filter>
     </ClInclude>
-    <ClInclude Include="..\test\shared_test\lib_trough_properties.h">
-      <Filter>shared_test</Filter>
-    </ClInclude>
-    <ClInclude Include="..\test\shared_test\lib_trough_test.h">
-      <Filter>shared_test</Filter>
-    </ClInclude>
     <ClInclude Include="..\test\shared_test\lib_windwakemodel_test.h">
       <Filter>shared_test</Filter>
     </ClInclude>
@@ -252,12 +239,6 @@
       <Filter>ssc_test</Filter>
     </ClInclude>
     <ClInclude Include="..\test\ssc_test\cmod_windpower_test.h">
-      <Filter>ssc_test</Filter>
-    </ClInclude>
-    <ClInclude Include="..\test\ssc_test\computeModuleTest.h">
-      <Filter>ssc_test</Filter>
-    </ClInclude>
-    <ClInclude Include="..\test\ssc_test\simulation_test_info.h">
       <Filter>ssc_test</Filter>
     </ClInclude>
     <ClInclude Include="..\test\input_cases\geothermal_common_data.h">
@@ -327,6 +308,12 @@
       <Filter>ssc_test</Filter>
     </ClInclude>
     <ClInclude Include="..\test\ssc_test\cmod_tcstrough_empirical_test.h" />
+    <ClInclude Include="..\test\tcs_test\lib_trough_properties.h">
+      <Filter>tcs_test</Filter>
+    </ClInclude>
+    <ClInclude Include="..\test\tcs_test\lib_trough_test.h">
+      <Filter>tcs_test</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="input_cases">
