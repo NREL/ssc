@@ -82,10 +82,13 @@ static var_info _cm_vtab_windpower[] = {
 	{ SSC_INPUT  , SSC_NUMBER , "en_icing_cutoff"                     , "Enable Icing Cutoff"                      , "0/1"     ,""   , "Losses"                           , "?=0"                           , "INTEGER"                                          , "" } ,
 	{ SSC_INPUT  , SSC_NUMBER , "icing_cutoff_temp"                   , "Icing Cutoff Temperature"                 , "C"       ,""   , "Losses"                           , "en_icing_cutoff=1"             , ""                                                 , "" } ,
 	{ SSC_INPUT  , SSC_NUMBER , "icing_cutoff_rh"                     , "Icing Cutoff Relative Humidity"           , "%"       ,""   , "Losses"                           , "en_icing_cutoff=1"             , "MIN=0"                                            , "" } ,
-    { SSC_INPUT  , SSC_NUMBER , "wake_loss"                           , "Wake effects loss percent"                , "%"       ,""   , "Losses"                           , "wind_farm_wake_model=3"        , ""                                                 , "" } ,
+
+	{ SSC_INPUT  , SSC_NUMBER , "wake_int_loss"                       , "Internal wake effects loss percent"       , "%"       ,""   , "Losses"                           , "wind_farm_wake_model=3"        , ""                                                 , "" } ,
+    { SSC_INPUT  , SSC_NUMBER , "wake_ext_loss"                       , "External wake effects loss percent"       , "%"       ,""   , "Losses"                           , "?=0"                           , ""                                                 , "" } ,
+    { SSC_INPUT  , SSC_NUMBER , "wake_future_loss"                    , "Future wake effects loss percent"         , "%"       ,""   , "Losses"                           , "?=0"                           , ""                                                 , "" } ,
     { SSC_INPUT  , SSC_NUMBER , "avail_bop_loss"                      , "Balance-of-plant availability loss"       , "%"       ,""   , "Losses"                           , "?=0"                           , ""                                                 , "" } ,
     { SSC_INPUT  , SSC_NUMBER , "avail_grid_loss"                     , "Grid availability loss"                   , "%"       ,""   , "Losses"                           , "?=0"                           , ""                                                 , "" } ,
-    { SSC_INPUT  , SSC_NUMBER , "avail_turb_loss"                     , "Turbine availabaility loss"               , "%"       ,""   , "Losses"                           , "?=0"                           , ""                                                 , "" } ,
+    { SSC_INPUT  , SSC_NUMBER , "avail_turb_loss"                     , "Turbine availability loss"                , "%"       ,""   , "Losses"                           , "?=0"                           , ""                                                 , "" } ,
     { SSC_INPUT  , SSC_NUMBER , "elec_eff_loss"                       , "Electrical efficiency loss"               , "%"       ,""   , "Losses"                           , "?=0"                           , ""                                                 , "" } ,
     { SSC_INPUT  , SSC_NUMBER , "elec_eff_loss"                       , "Electrical parasitic consumption loss"    , "%"       ,""   , "Losses"                           , "?=0"                           , ""                                                 , "" } ,
     { SSC_INPUT  , SSC_NUMBER , "env_degrad_loss"                     , "Environmental Degradation loss"           , "%"       ,""   , "Losses"                           , "?=0"                           , ""                                                 , "" } ,
@@ -238,11 +241,11 @@ void cm_windpower::exec()
 	}
 	wt.setPowerCurve(windSpeeds, powerOutput);
 	// add up all the percent losses
-	std::vector<std::string> loss_names = { "avail_bop_loss", "avail_grid_loss", "avail_turb_loss", "elec_eff_loss",
-                                         "elec_eff_loss", "env_degrad_loss", "env_exposure_loss", "env_ext_loss",
-                                         "env_icing_loss", "ops_env_loss", "ops_grid_loss", "ops_load_loss",
-                                         "ops_strategies_loss", "turb_generic_loss", "turb_hysteresis_loss",
-                                         "turb_perf_loss", "turb_specific_loss"};
+	std::vector<std::string> loss_names = { "wake_ext_loss", "wake_future_loss", "avail_bop_loss", "avail_grid_loss",
+                                         "avail_turb_loss", "elec_eff_loss", "elec_eff_loss", "env_degrad_loss",
+                                         "env_exposure_loss", "env_ext_loss", "env_icing_loss", "ops_env_loss",
+                                         "ops_grid_loss", "ops_load_loss", "ops_strategies_loss", "turb_generic_loss",
+                                         "turb_hysteresis_loss", "turb_perf_loss", "turb_specific_loss"};
 	for (auto& loss : loss_names){
 	    wt.lossesPercent += as_double(loss)/100.;
 	}
@@ -337,7 +340,7 @@ void cm_windpower::exec()
     }
     else if (wakeModelChoice == 3)
     {
-        double wake_loss = as_double("wake_loss")/100.;
+        double wake_loss = as_double("wake_int_loss")/100.;
         if (wt.lossesPercent + wake_loss > 1){
             throw exec_error("windpower", "Total percent losses must be less than 100.");
         }
