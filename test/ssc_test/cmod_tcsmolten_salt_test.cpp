@@ -151,7 +151,7 @@ TEST_F(CMTcsMoltenSalt, Rankine_Evap_Condenser_SingleOwner_cmod_tcsmolten_salt) 
     {
         ssc_number_t annual_energy;
         ssc_data_get_number(data, "annual_energy", &annual_energy);
-        EXPECT_NEAR(annual_energy, -1.88859e7, std::abs(-1.88859e7 * m_error_tolerance_lo)) << "Annual Energy";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
+        EXPECT_NEAR(annual_energy, 6.00324e8, 6.00324e8 * m_error_tolerance_lo) << "Annual Energy";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
 
         ssc_number_t land_area_base;
         ssc_data_get_number(data, "land_area_base", &land_area_base);
@@ -159,19 +159,19 @@ TEST_F(CMTcsMoltenSalt, Rankine_Evap_Condenser_SingleOwner_cmod_tcsmolten_salt) 
 
         ssc_number_t capacity_factor;
         ssc_data_get_number(data, "capacity_factor", &capacity_factor);
-        EXPECT_NEAR(capacity_factor, -2.08302, std::abs(-2.08302 * m_error_tolerance_lo)) << "Capacity Factor";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
+        EXPECT_NEAR(capacity_factor, 66.2127, 66.2127 * m_error_tolerance_lo) << "Capacity Factor";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
 
         ssc_number_t annual_W_cycle_gross;
         ssc_data_get_number(data, "annual_W_cycle_gross", &annual_W_cycle_gross);
-        EXPECT_NEAR(annual_W_cycle_gross, 0, 0 * m_error_tolerance_lo) << "Annual W_cycle Gross";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
+        EXPECT_NEAR(annual_W_cycle_gross, 6.60578e8, 6.60578e8 * m_error_tolerance_lo) << "Annual W_cycle Gross";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
 
         ssc_number_t kwh_per_kw;
         ssc_data_get_number(data, "kwh_per_kw", &kwh_per_kw);
-        EXPECT_NEAR(kwh_per_kw, -182.472, std::abs(-182.472 * m_error_tolerance_lo)) << "kwh per kw";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
+        EXPECT_NEAR(kwh_per_kw, 5800.23, 5800.23 * m_error_tolerance_lo) << "kwh per kw";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
 
         ssc_number_t conversion_factor;
         ssc_data_get_number(data, "conversion_factor", &conversion_factor);
-        EXPECT_NEAR(conversion_factor, 0, 0 * m_error_tolerance_lo) << "Conversion Factor";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
+        EXPECT_NEAR(conversion_factor, 90.8787, 90.8787 * m_error_tolerance_lo) << "Conversion Factor";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
 
         ssc_number_t N_hel;
         ssc_data_get_number(data, "N_hel", &N_hel);
@@ -191,7 +191,7 @@ TEST_F(CMTcsMoltenSalt, Rankine_Evap_Condenser_SingleOwner_cmod_tcsmolten_salt) 
 
         ssc_number_t annual_total_water_use;
         ssc_data_get_number(data, "annual_total_water_use", &annual_total_water_use);
-        EXPECT_NEAR(annual_total_water_use, 55965.3, 55965.3 * m_error_tolerance_lo) << "Annual Total Water Use";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
+        EXPECT_NEAR(annual_total_water_use, 1.57384e6, 1.57384e6 * m_error_tolerance_lo) << "Annual Total Water Use";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
 
         ssc_number_t csp_pt_cost_total_land_area;
         ssc_data_get_number(data, "csp.pt.cost.total_land_area", &csp_pt_cost_total_land_area);
