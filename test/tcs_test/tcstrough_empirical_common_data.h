@@ -11,7 +11,7 @@
 */
 void tcstrough_empirical_default(ssc_data_t &data)
 {
-	char solar_resource_path[256];
+	char solar_resource_path[512];
 	int n1 = sprintf(solar_resource_path, "%s/test/input_cases/trough_empirical_data/tucson_az_32.116521_-110.933042_psmv3_60_tmy.csv", std::getenv("SSCDIR"));
 
 	ssc_data_set_string(data, "file_name", solar_resource_path);
@@ -33,7 +33,7 @@ void tcstrough_empirical_default(ssc_data_t &data)
 	ssc_data_set_number(data, "Distance_SCA", 1);
 	ssc_data_set_number(data, "Row_Distance", 15);
 	ssc_data_set_number(data, "NumScas", 4);
-	ssc_data_set_number(data, "Solar_Field_Area", 877579.812);
+	ssc_data_set_number(data, "Solar_Field_Area", 877579.8125);
 	ssc_data_set_number(data, "Solar_Field_Mult", 2);
 	ssc_data_set_number(data, "SfInTempD", 293);
 	ssc_data_set_number(data, "SfOutTempD", 391);
@@ -87,34 +87,34 @@ void tcstrough_empirical_default(ssc_data_t &data)
 	ssc_number_t p_HCE_A6[4] = { 0.0125, 0.524, 3.37, 0 };
 	ssc_data_set_array(data, "HCE_A6", p_HCE_A6, 4);
 	ssc_data_set_number(data, "TurbOutG", 111);
-	ssc_data_set_number(data, "TurbEffG", 0.377);
-	ssc_data_set_number(data, "PTTMAX", 1.15);
+	ssc_data_set_number(data, "TurbEffG", 0.3774);
+	ssc_data_set_number(data, "PTTMAX", 1.1499999761581421); //
 	ssc_data_set_number(data, "PTTMIN", 0.25);
 	ssc_data_set_number(data, "MaxGrOut", 1.15);
 	ssc_data_set_number(data, "MinGrOut", 0.25);
 	ssc_data_set_number(data, "TurSUE", 0.2);
-	ssc_data_set_number(data, "T2EPLF0", -0.0377);
+	ssc_data_set_number(data, "T2EPLF0", -0.037726);
 	ssc_data_set_number(data, "T2EPLF1", 1.0062);
-	ssc_data_set_number(data, "T2EPLF2", 0.0763);
-	ssc_data_set_number(data, "T2EPLF3", -0.0448);
+	ssc_data_set_number(data, "T2EPLF2", 0.076316);
+	ssc_data_set_number(data, "T2EPLF3", -0.044775);
 	ssc_data_set_number(data, "T2EPLF4", 0);
 	ssc_data_set_number(data, "E2TPLF0", 0.03737);
 	ssc_data_set_number(data, "E2TPLF1", 0.98823);
-	ssc_data_set_number(data, "E2TPLF2", -0.065);
-	ssc_data_set_number(data, "E2TPLF3", 0.0394);
+	ssc_data_set_number(data, "E2TPLF2", -0.064991);
+	ssc_data_set_number(data, "E2TPLF3", 0.039388);
 	ssc_data_set_number(data, "E2TPLF4", 0);
 	ssc_data_set_number(data, "TempCorrF", 1);
 	ssc_data_set_number(data, "TempCorr0", 1.00873);
-	ssc_data_set_number(data, "TempCorr1", 0.00436);
-	ssc_data_set_number(data, "TempCorr2", -0.000251);
+	ssc_data_set_number(data, "TempCorr1", 0.00435842);
+	ssc_data_set_number(data, "TempCorr2", -0.000251023);
 	ssc_data_set_number(data, "TempCorr3", -9.02e-07);
 	ssc_data_set_number(data, "TempCorr4", 4.82e-08);
 	ssc_data_set_number(data, "LHVBoilEff", 0.9);
 	ssc_data_set_number(data, "TurTesEffAdj", 0.985);
 	ssc_data_set_number(data, "TurTesOutAdj", 0.998);
 	ssc_data_set_number(data, "TnkHL", 0.97);
-	ssc_data_set_number(data, "PTSmax", 294.118);
-	ssc_data_set_number(data, "PFSmax", 297.9994);
+	ssc_data_set_number(data, "PTSmax", 294.11764526367188);
+	ssc_data_set_number(data, "PFSmax", 297.9993896484375);
 	ssc_data_set_number(data, "TSHOURS", 6);
 	ssc_data_set_number(data, "NUMTOU", 9);
 	ssc_number_t p_TSLogic[36] = { 1, 0.1, 0.1, 1.05, 2, 0.1, 0.1, 1, 3, 0.1, 0.1, 1, 4, 0.1, 0.1, 1, 5, 0.1, 0.1, 1, 6, 0.1, 0.1, 1, 7, 0.1, 0.1, 1, 8, 0.1, 0.1, 1, 9, 0.1, 0.1, 1 };
@@ -122,36 +122,36 @@ void tcstrough_empirical_default(ssc_data_t &data)
 	ssc_number_t p_FossilFill[9] = { 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 	ssc_data_set_array(data, "FossilFill", p_FossilFill, 9);
 	ssc_data_set_number(data, "E_tes_ini", 0);
-	ssc_data_set_number(data, "SfPar", 0.233);
+	ssc_data_set_number(data, "SfPar", 0.2334362268447876);
 	ssc_data_set_number(data, "SfParPF", 1);
-	ssc_data_set_number(data, "ChtfPar", 9.23214);
+	ssc_data_set_number(data, "ChtfPar", 9.2321395874023438);
 	ssc_data_set_number(data, "ChtfParPF", 1);
 	ssc_data_set_number(data, "CHTFParF0", -0.036);
 	ssc_data_set_number(data, "CHTFParF1", 0.242);
 	ssc_data_set_number(data, "CHTFParF2", 0.794);
-	ssc_data_set_number(data, "AntiFrPar", 0.923);
-	ssc_data_set_number(data, "BOPPar", 2.738);
+	ssc_data_set_number(data, "AntiFrPar", 0.92321395874023438);
+	ssc_data_set_number(data, "BOPPar", 2.7383699417114258);
 	ssc_data_set_number(data, "BOPParPF", 1);
 	ssc_data_set_number(data, "BOPParF0", 0.483);
 	ssc_data_set_number(data, "BOPParF1", 0.517);
 	ssc_data_set_number(data, "BOPParF2", 0);
 	ssc_data_set_number(data, "CtOpF", 1);
-	ssc_data_set_number(data, "CtPar", 1.892);
+	ssc_data_set_number(data, "CtPar", 1.8919949531555176);
 	ssc_data_set_number(data, "CtParPF", 1);
 	ssc_data_set_number(data, "CtParF0", -0.036);
 	ssc_data_set_number(data, "CtParF1", 0.242);
 	ssc_data_set_number(data, "CtParF2", 0.794);
-	ssc_data_set_number(data, "HtrPar", 2.523);
+	ssc_data_set_number(data, "HtrPar", 2.5230300426483154);
 	ssc_data_set_number(data, "HtrParPF", 1);
 	ssc_data_set_number(data, "HtrParF0", 0.483);
 	ssc_data_set_number(data, "HtrParF1", 0.517);
 	ssc_data_set_number(data, "HtrParF2", 0);
-	ssc_data_set_number(data, "HhtfPar", 2.22);
+	ssc_data_set_number(data, "HhtfPar", 2.2200000286102295);
 	ssc_data_set_number(data, "HhtfParPF", 1);
 	ssc_data_set_number(data, "HhtfParF0", -0.036);
 	ssc_data_set_number(data, "HhtfParF1", 0.242);
 	ssc_data_set_number(data, "HhtfParF2", 0.794);
-	ssc_data_set_number(data, "PbFixPar", 0.6105);
+	ssc_data_set_number(data, "PbFixPar", 0.61049997806549072);
 	ssc_data_set_number(data, "adjust:constant", 4);
 }
 

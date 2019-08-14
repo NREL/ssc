@@ -5,7 +5,7 @@
 #include "../input_cases/weather_inputs.h"
 
 /// Test trough_physical_iph with all defaults and no-financial model
-TEST_F(CMTroughPhysicalIPH, DefaultNoFinancialModel){
+TEST_F(CMTroughPhysicalIPH, DefaultNoFinancialModel_cmod_trough_physical_iph){
 	
 	int test_errors = run_module(data, "trough_physical_process_heat");
 
@@ -55,7 +55,7 @@ TEST_F(CMTroughPhysicalIPH, DefaultNoFinancialModel){
 }
 
 /// Test trough_physical_iph with all defaults and the financial model in the LCOH Calculator
-TEST_F(CMTroughPhysicalIPH, DefaultLCOHFinancialModel) {
+TEST_F(CMTroughPhysicalIPH, DefaultLCOHFinancialModel_cmod_trough_physical_iph) {
 
     ssc_data_t data = ssc_data_create();
     int test_errors = trough_physical_iph_tucson(data);

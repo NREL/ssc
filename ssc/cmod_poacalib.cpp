@@ -62,7 +62,7 @@ public:
 		add_var_info( _cm_vtab_poacalib );
 	}
 
-	void exec( ) throw( general_error )
+	void exec( )
 	{
 
 		/* Changes input Beam and Diffuse irradiation so that they yield a POA equal to input POA using the Perez transposition model, while maintaining the input ratio between beam & diffuse.

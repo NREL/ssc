@@ -762,7 +762,54 @@ public:
 		virtual int operator()(double m_dot_air /*kg/s*/, double *T_hot_out_calc /*K*/);
 	};
 
-	class C_MEQ_node_energy_balance__T_co2_out : public C_monotonic_equation
+    class C_MEQ_node_energy_balance__h_co2_out : public C_monotonic_equation
+    {
+    private:
+        CO2_state *mpc_co2_props;
+        double m_h_co2_cold_out;	//[kJ/kg] CO2 cold side enthalpy
+        double m_P_co2_ave;			//[kPa] Average CO2 pressure
+
+        double m_m_dot_co2_tube;	//[kg/s] CO2 mass flow rate through tube
+
+        double m_T_air_cold_in;		//[K] Air cold temperature
+        double m_C_dot_air;		    //[W/K] Air flow capacitance
+
+        double m_UA_node;		//[W/K] Conductance of node - assuming air convective heat transfer is governing resistance
+    
+    public:
+        C_MEQ_node_energy_balance__h_co2_out(CO2_state *mc_co2_props,
+            double h_co2_cold_out /*kJ/kg*/, double P_co2_ave /*kPa*/,
+            double m_dot_co2_tube /*kg/s*/,
+            double T_air_cold_in /*K*/, double C_dot_air /*W/K*/,
+            double UA_node /*W/K*/)
+        {
+            mpc_co2_props = mc_co2_props;
+
+            m_h_co2_cold_out = h_co2_cold_out;
+            m_P_co2_ave = P_co2_ave;	//[kPa]
+
+            m_m_dot_co2_tube = m_dot_co2_tube;	//[kg/s]
+
+            m_T_air_cold_in = T_air_cold_in;	//[K]
+            m_C_dot_air = C_dot_air;	//[W/K]
+
+            m_UA_node = UA_node;		//[W/K]
+
+            m_Q_dot_node = std::numeric_limits<double>::quiet_NaN();
+            m_T_co2_hot_in = std::numeric_limits<double>::quiet_NaN();
+
+            CO2_PH(m_P_co2_ave, m_h_co2_cold_out, mpc_co2_props);
+            m_T_co2_cold_out = mpc_co2_props->temp;     //[K]
+        }
+
+        double m_Q_dot_node;	    //[W]
+        double m_T_co2_hot_in;      //[K]
+        double m_T_co2_cold_out;    //[K]
+
+        virtual int operator()(double h_co2_hot_in /*kJ/kg*/, double *diff_h_co2_hot /*-*/);
+    };
+
+    class C_MEQ_node_energy_balance__T_co2_out : public C_monotonic_equation
 	{
 	private:
 		CO2_state *mpc_co2_props;
@@ -923,17 +970,29 @@ public:
 		double T_hot_in /*K*/, double P_hot_in /*kPa*/, double m_dot_hot /*kg/s*/);
 };
 
-int outlet_given_geom_and_air_m_dot(double T_co2_out /*K*/, double m_dot_co2_tube /*kg/s*/,
-	double delta_P_co2 /*kPa*/, double P_co2_ave /*kPa*/, double P_hot_in /*kPa*/,
-	double T_amb /*K*/,
-	double tol_T_in /*-*/,
-	C_csp_messages *mc_messages, CO2_state *co2_props,
-	double d_in_tube /*m*/, double A_cs_tube /*m2*/, double relrough /*-*/,
-	double L_node /*m*/, double V_node /*m3*/, int N_nodes /*-*/,
-	double N_par /*-*/, int N_passes /*-*/,
-	double alpha /*1/m*/, double cp_air /*J/kg-K*/,
-	double m_dot_air_total /*kg/s*/, double h_conv_air /*W/m2-K*/,
-	double & delta_P_co2_calc /*kPa*/, double & T_co2_in_calc /*K*/);
+int co2_outlet_given_geom_and_air_m_dot(double T_co2_out /*K*/, double m_dot_co2_tube /*kg/s*/,
+    double delta_P_co2 /*kPa*/, double P_co2_ave /*kPa*/, double P_hot_in /*kPa*/,
+    double T_amb /*K*/,
+    double tol_h_in /*-*/,
+    C_csp_messages *mc_messages, CO2_state *co2_props,
+    double d_in_tube /*m*/, double A_cs_tube /*m2*/, double relrough /*-*/,
+    double L_node /*m*/, double V_node /*m3*/, int N_nodes /*-*/,
+    double N_par /*-*/, int N_passes /*-*/,
+    double alpha /*1/m*/, double cp_air /*J/kg-K*/,
+    double m_dot_air_total /*kg/s*/, double h_conv_air /*W/m2-K*/,
+    double & delta_P_co2_calc /*kPa*/, double & T_co2_in_calc /*K*/);
+
+//int outlet_given_geom_and_air_m_dot(double T_co2_out /*K*/, double m_dot_co2_tube /*kg/s*/,
+//	double delta_P_co2 /*kPa*/, double P_co2_ave /*kPa*/, double P_hot_in /*kPa*/,
+//	double T_amb /*K*/,
+//	double tol_T_in /*-*/,
+//	C_csp_messages *mc_messages, CO2_state *co2_props,
+//	double d_in_tube /*m*/, double A_cs_tube /*m2*/, double relrough /*-*/,
+//	double L_node /*m*/, double V_node /*m3*/, int N_nodes /*-*/,
+//	double N_par /*-*/, int N_passes /*-*/,
+//	double alpha /*1/m*/, double cp_air /*J/kg-K*/,
+//	double m_dot_air_total /*kg/s*/, double h_conv_air /*W/m2-K*/,
+//	double & delta_P_co2_calc /*kPa*/, double & T_co2_in_calc /*K*/);
 
 class C_MEQ_target_W_dot_fan__m_dot_air : public C_monotonic_equation
 {

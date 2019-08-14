@@ -65,7 +65,7 @@ public:
 		add_var_info(_cm_vtab_sco2_design_cycle);
 	}
 
-	void exec() throw(general_error)
+	void exec() override
 	{		
 		double W_dot_net_des = as_double("I_W_dot_net_des")*1.E3;	//[MW] convert from [kW]
 		double T_mc_in_des = as_double("I_T_mc_in_des")+273.15;		//[K] convert from [C]

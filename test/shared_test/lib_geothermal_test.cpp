@@ -2,7 +2,7 @@
 
 
 
-TEST_F(GeothermalPlantAnalyzer, TestBinaryPlant)
+TEST_F(GeothermalPlantAnalyzer, TestBinaryPlant_lib_geothermal)
 {
 	conversion_type = 0;	
 	GeothermalPlantAnalyzer::SetUp();
@@ -13,7 +13,7 @@ TEST_F(GeothermalPlantAnalyzer, TestBinaryPlant)
 }
 
 
-TEST_F(GeothermalPlantAnalyzer, TestFlashPlant) {
+TEST_F(GeothermalPlantAnalyzer, TestFlashPlant_lib_geothermal) {
 	conversion_type = 1;	
 	GeothermalPlantAnalyzer::SetUp();
 

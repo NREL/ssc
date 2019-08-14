@@ -28,6 +28,8 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <time.h>
 #if defined(_WIN64)
 #include <assert.h>
+#else
+#include <cassert>
 #endif
 
 #include "exceptions.hpp"

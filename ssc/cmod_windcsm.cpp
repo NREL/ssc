@@ -92,7 +92,7 @@ public:
 
 
 
-	void exec( ) throw( general_error )
+	void exec( )
 	{
 		// mass values from nrel_csm_tcc_2015.py
 		// Cost values from turbine_costsse_2015.py

@@ -92,7 +92,7 @@ public:
 		add_var_info( _cm_vtab_pvsandiainv );
 	}
 
-	void exec( ) throw( general_error )
+	void exec( )
 	{
 		size_t arr_len;
 		ssc_number_t *p_dcp = as_array( "dc", &arr_len );

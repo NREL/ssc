@@ -608,18 +608,18 @@ public:
         return update(msg, (float)percent);
     }
 
-    void exec() throw(general_error)
-    {
-        // Weather reader
-        C_csp_weatherreader weather_reader;
-        if (is_assigned("solar_resource_file")){
-            weather_reader.m_weather_data_provider = make_shared<weatherfile>(as_string("solar_resource_file"));
-            if (weather_reader.m_weather_data_provider->has_message()) log(weather_reader.m_weather_data_provider->message(), SSC_WARNING);
-        }
-        if (is_assigned("solar_resource_data")){
-            weather_reader.m_weather_data_provider = make_shared<weatherdata>(lookup("solar_resource_data"));
-            if (weather_reader.m_weather_data_provider->has_message()) log(weather_reader.m_weather_data_provider->message(), SSC_WARNING);
-        }
+	void exec() override
+	{
+		// Weather reader
+		C_csp_weatherreader weather_reader;
+		if (is_assigned("solar_resource_file")){
+			weather_reader.m_weather_data_provider = make_shared<weatherfile>(as_string("solar_resource_file"));
+			if (weather_reader.m_weather_data_provider->has_message()) log(weather_reader.m_weather_data_provider->message(), SSC_WARNING);
+		}
+		if (is_assigned("solar_resource_data")){
+			weather_reader.m_weather_data_provider = make_shared<weatherdata>(lookup("solar_resource_data"));
+			if (weather_reader.m_weather_data_provider->has_message()) log(weather_reader.m_weather_data_provider->message(), SSC_WARNING);
+		}
 
         weather_reader.m_trackmode = 0;
         weather_reader.m_tilt = 0.0;

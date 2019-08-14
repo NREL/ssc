@@ -59,12 +59,12 @@ var_info vtab_fuelcell_input[] = {
 	/*   VARTYPE           DATATYPE         NAME                               LABEL                                    UNITS      META                   GROUP                  REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
 	// simulation inputs
 	{ SSC_INOUT,        SSC_NUMBER,      "percent_complete",                  "Estimated simulation status",           "%",       "",                                      "",        "",                      "",                                 "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "system_use_lifetime_output",        "Lifetime simulation",                   "0/1",     "0=SingleYearRepeated,1=RunEveryYear",   "",        "?=0",                   "BOOLEAN",                          "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "analysis_period",                   "Lifetime analysis period",              "years",   "The number of years in the simulation", "",        "system_use_lifetime_output=1","",                           "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "system_use_lifetime_output",        "Lifetime simulation",                   "0/1",     "0=SingleYearRepeated,1=RunEveryYear",   "Lifetime",        "?=0",                   "BOOLEAN",                          "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "analysis_period",                   "Lifetime analysis period",              "years",   "The number of years in the simulation", "Lifetime",        "system_use_lifetime_output=1","",                           "" },
 
 	// external compute module inputs
 	{ SSC_INOUT,        SSC_ARRAY,       "gen",								  "System power generated",                "kW",        "Lifetime system generation", "",                  "",                        "",                              "" },
-	{ SSC_INPUT,		SSC_ARRAY,	     "load",			                  "Electricity load (year 1)",             "kW",	    "",                  "",	                       "",	                      "",	                           "" },
+	{ SSC_INPUT,		SSC_ARRAY,	     "load",			                  "Electricity load (year 1)",             "kW",	    "",                  "Load",	                       "",	                      "",	                           "" },
 
 	// fuel cell
 	{ SSC_INPUT,        SSC_MATRIX,      "fuelcell_availability_schedule",    "Fuel cell availability schedule ",      "Column 1: Hour of year start shutdown/Column 2: Hours duration of shutdown ", "",   "Fuel Cell","", "",                    "" },
@@ -160,7 +160,7 @@ void cm_fuelcell::construct()
 	allocateOutputs();
 }
 
-void cm_fuelcell::exec() throw (general_error)
+void cm_fuelcell::exec()
 {
 	double annual_energy = 0.0;
 	double annual_fuel = 0.0;

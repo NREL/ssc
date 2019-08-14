@@ -186,9 +186,52 @@ int tcstrough_empirical_phoenix(ssc_data_t &data)
 {
 	tcstrough_empirical_default(data);
 
-	char solar_resource_path_phoenix[256];
+	char solar_resource_path_phoenix[512];
 	int n = sprintf(solar_resource_path_phoenix, "%s/test/input_cases/trough_empirical_data/phoenix_az_33.450495_-111.983688_psmv3_60_tmy.csv", std::getenv("SSCDIR"));
 	ssc_data_set_string(data, "file_name", solar_resource_path_phoenix);
+
+	int status = run_module(data, "tcstrough_empirical");
+
+	return status;
+}
+
+// Test series of Advanced Combinatorial Testing System (ACTS) runs
+// Parabolic trough (empirical)
+int ACTS_test_empirical(ssc_data_t &data, int test_case)
+{
+	tcstrough_empirical_default(data);
+
+	// Testing level to vector index map
+	std::unordered_map<int, int> idx =
+	{
+		{-1, 0},
+		{ 0, 1},
+		{ 1, 2}
+	};
+
+	// Parameter test range values
+	std::vector<double> Distance_SCA_vals{ 0.5, 1 , 2 };				// Distance Between SCAs in Row		// SAM SSC - "Distance_SCA"			 
+	std::vector<double> NumScas_vals{ 1, 4, 8 };			            // Number of SCAs per Row			// SAM SSC - "NumScas"
+	std::vector<double> DepAngle_vals{ 5, 10, 20 };						// Deploy Angle						// SAM SSC - "DepAngle"	 
+	std::vector<double> Stow_Angle_vals{ 160, 170, 175 };			    // Stow Angle					    // SAM SSC - "Stow_Angle"
+
+	// ACTS transposed covering array           1   2   3   4   5  6   7   8  9             
+	       std::vector<int> Distance_SCA_lvls{ -1, -1, -1,  0,  0, 0,  1,  1, 1 };
+	            std::vector<int> NumScas_lvls{ -1,  0,  1, -1,  0, 1, -1,  0, 1 };
+	           std::vector<int> DepAngle_lvls{  0,  1, -1,  1, -1, 0, -1,  0, 1 };
+	         std::vector<int> Stow_Angle_lvls{  0,  1, -1, -1,  0, 1,  1, -1, 0 };
+
+	// Get test case values from index
+	double Distance_SCA_ACTS = Distance_SCA_vals.at(idx.find(Distance_SCA_lvls.at(test_case))->second);
+	double NumScas_ACTS = NumScas_vals.at(idx.find(NumScas_lvls.at(test_case))->second);
+	double DepAngle_ACTS = DepAngle_vals.at(idx.find(DepAngle_lvls.at(test_case))->second);
+	double Stow_Angle_ACTS = Stow_Angle_vals.at(idx.find(Stow_Angle_lvls.at(test_case))->second);
+
+	// Assigning values to variables 
+	ssc_data_set_number(data, "Distance_SCA", Distance_SCA_ACTS);
+	ssc_data_set_number(data, "NumScas", NumScas_ACTS);
+	ssc_data_set_number(data, "DepAngle", DepAngle_ACTS);
+	ssc_data_set_number(data, "Stow_Angle", Stow_Angle_ACTS);
 
 	int status = run_module(data, "tcstrough_empirical");
 

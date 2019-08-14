@@ -240,7 +240,6 @@ class C_csp_tou
 {
 
 public:
-
     struct S_csp_tou_params
     {
         bool m_isleapyear;
@@ -405,13 +404,15 @@ public:
 		double m_T_htf_cold_des;		//[K]
 		double m_P_cold_des;			//[kPa]
 		double m_x_cold_des;			//[-]
+        double m_T_htf_hot_des;         //[K]
 		double m_q_dot_rec_des;			//[MW]
 		double m_A_aper_total;			//[m^2] Total solar field aperture area
+        double m_dP_sf;                 //[bar] Total field pressure drop
 
 		S_csp_cr_solved_params()
 		{
-			m_T_htf_cold_des = m_P_cold_des = m_x_cold_des =
-				m_q_dot_rec_des = m_A_aper_total = std::numeric_limits<double>::quiet_NaN();
+			m_T_htf_cold_des = m_P_cold_des = m_x_cold_des = m_T_htf_cold_des =
+				m_q_dot_rec_des = m_A_aper_total = m_dP_sf = std::numeric_limits<double>::quiet_NaN();
 		}
 	};
 
@@ -442,11 +443,13 @@ public:
 		double m_q_thermal;				//[MWt] 'Available' receiver thermal output
 		double m_T_salt_hot;			//[C] Hot HTF from receiver
 		double m_component_defocus;		//[-] Defocus applied by component model to stay within mass flow or other constraints
+        bool m_is_recirculating;        //[-] Is field/receiver recirculating?
 			
 		// These are used for the parasitic class call(), so could be zero...
 		double m_E_fp_total;			//[MW] Solar field freeze protection power
 		double m_W_dot_col_tracking;	//[MWe] Collector tracking power
 		double m_W_dot_htf_pump;		//[MWe] HTF pumping power
+        double m_dP_sf;                 //[bar] Total field pressure drop
 		double m_q_rec_heattrace;		//[MW] Receiver heat trace parasitic power
 
 		// 07/08/2016, GZ: add new variables for DSG LF 
@@ -465,6 +468,8 @@ public:
 			m_q_rec_heattrace = 0.0;
 
 			m_component_defocus = 1.0;
+
+            m_is_recirculating = false;
 
 			m_standby_control = -1;
 		}
@@ -660,12 +665,23 @@ public:
 	C_csp_tes(){};
 
 	~C_csp_tes(){};
+    struct S_csp_tes_init_inputs
+    {
+        double T_to_cr_at_des;		    //[K]
+        double T_from_cr_at_des;		//[K]
+        double P_to_cr_at_des;          //[bar]
+
+        S_csp_tes_init_inputs()
+        {
+            T_to_cr_at_des = T_from_cr_at_des = P_to_cr_at_des = std::numeric_limits<double>::quiet_NaN();
+        }
+    };
 
 	struct S_csp_tes_outputs
 	{
 		double m_q_heater;			//[MWe]  Heating power required to keep tanks at a minimum temperature
         double m_m_dot;             //[kg/s] Hot tank mass flow rate, valid for direct and indirect systems
-		double m_W_dot_rhtf_pump;	//[MWe]  Pumping power for Receiver HTF thru storage
+		double m_W_dot_rhtf_pump;	//[MWe]  Pumping power, just for tank-to-tank in indirect storage
 		double m_q_dot_loss;		//[MWt]  Storage thermal losses
 		double m_q_dot_dc_to_htf;	//[MWt]  Thermal power to the HTF from storage
 		double m_q_dot_ch_from_htf;	//[MWt]  Thermal power from the HTF to storage
@@ -681,7 +697,7 @@ public:
 		}
 	};
 
-	virtual void init() = 0;
+	virtual void init(const C_csp_tes::S_csp_tes_init_inputs init_inputs) = 0;
 
 	virtual bool does_tes_exist() = 0;
 
@@ -712,6 +728,13 @@ public:
 	virtual void idle(double timestep, double T_amb, C_csp_tes::S_csp_tes_outputs &outputs) = 0;
 	
 	virtual void converged() = 0;
+
+    virtual int pressure_drops(double m_dot_sf, double m_dot_pb,
+        double T_sf_in, double T_sf_out, double T_pb_in, double T_pb_out, bool recirculating,
+        double &P_drop_col, double &P_drop_gen) = 0;
+
+    virtual double pumping_power(double m_dot_sf, double m_dot_pb, double m_dot_tank,
+        double T_sf_in, double T_sf_out, double T_pb_in, double T_pb_out, bool recirculating) = 0;
 };
 
 class C_csp_solver
@@ -973,6 +996,7 @@ private:
 	bool m_is_tes;			//[-] True: plant has storage
 
 		// Reporting and Output Tracking
+    bool m_is_first_timestep;           //[-]
 	int m_i_reporting;					//[-]
 	double m_report_time_start;			//[s]
 	double m_report_time_end;			//[s]

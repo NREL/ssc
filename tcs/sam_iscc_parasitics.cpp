@@ -78,7 +78,7 @@ tcsvarinfo sam_iscc_parasitics_variables[] = {
 	{TCS_PARAM, TCS_NUMBER, P_BOP_PAR_1,          "bop_par_1",              "Balance of plant parasitic power fraction - linear coeff",       "none",      "", "", ""},
 	{TCS_PARAM, TCS_NUMBER, P_BOP_PAR_2,          "bop_par_2",              "Balance of plant parasitic power fraction - quadratic coeff",    "none",      "", "", ""},
 	{TCS_PARAM, TCS_NUMBER, P_W_DOT_FOSSIL_DES,   "W_dot_fossil_des",       "Fossil-only cycle output at design",                             "MWe",       "", "", ""},
-	{TCS_PARAM, TCS_NUMBER, P_W_DOT_SOLAR_DES,    "W_dot_solar_des",        "Solar contribution to cycle output at design"                    "MWe",       "", "", ""},
+	{TCS_PARAM, TCS_NUMBER, P_W_DOT_SOLAR_DES,    "W_dot_solar_des",        "Solar contribution to cycle output at design",                    "MWe",       "", "", ""},
 
 	//INPUTS
 	{TCS_INPUT, TCS_NUMBER, I_W_DOT_TRACKING,     "W_dot_tracking",         "Heliostat tracking power",                                 "MWe",   "", "", ""},

@@ -34,9 +34,9 @@ static var_info _cm_vtab_sco2_csp_system[] = {
 	/*   VARTYPE   DATATYPE         NAME               LABEL                                                    UNITS     META  GROUP REQUIRED_IF CONSTRAINTS     UI_HINTS*/
 	// ** Off-design Inputs **
     { SSC_INPUT,  SSC_NUMBER,  "od_T_t_in_mode",       "0: model solves co2/HTF PHX od model to calculate turbine inlet temp, 1: model sets turbine inlet temp to HTF hot temp", "", "", "", "?=0", "", ""},  // default to solving PHX
-    { SSC_INPUT,  SSC_MATRIX,  "od_cases",             "Columns: T_htf_C, m_dot_htf_ND, T_amb_C, f_N_rc (=1 use design, <0, frac_des = abs(input), f_N_mc (=1 use design, <0, frac_des = abs(input), Rows: cases",   "",           "",    "",      "",      "",       "" },
-	{ SSC_INPUT,  SSC_ARRAY,   "od_P_mc_in_sweep",     "Columns: T_htf_C, m_dot_htf_ND, T_amb_C, f_N_rc (=1 use design, <0, frac_des = abs(input), f_N_mc (=1 use design, <0, frac_des = abs(input)", "", "", "", "",  "", "" },
-	{ SSC_INPUT,  SSC_MATRIX,  "od_set_control",       "Columns: T_htf_C, m_dot_htf_ND, T_amb_C, P_LP_in, Rows: cases", "", "", "", "", "", "" },
+    { SSC_INPUT,  SSC_MATRIX,  "od_cases",             "Columns: T_htf_C, m_dot_htf_ND, T_amb_C, f_N_rc (=1 use design, =0 optimize, <0, frac_des = abs(input), f_N_mc (=1 use design, =0 optimize, <0, frac_des = abs(input), PHX_f_dP (=1 use design, <0 = abs(input), Rows: cases", "", "", "", "", "", "" },
+	{ SSC_INPUT,  SSC_ARRAY,   "od_P_mc_in_sweep",     "Columns: T_htf_C, m_dot_htf_ND, T_amb_C, f_N_rc (=1 use design, <0, frac_des = abs(input), f_N_mc (=1 use design, <0, frac_des = abs(input), PHX_f_dP (=1 use design, <0 = abs(input)", "", "", "", "",  "", "" },
+	{ SSC_INPUT,  SSC_MATRIX,  "od_set_control",       "Columns: T_htf_C, m_dot_htf_ND, T_amb_C, P_LP_in_MPa, f_N_rc (=1 use design, <0, frac_des = abs(input), f_N_mc (=1 use design, <0, frac_des = abs(input), PHX_f_dP (=1 use design, <0 = abs(input), Rows: cases", "", "", "", "", "", "" },
 	{ SSC_INPUT,  SSC_NUMBER,  "is_gen_od_polynomials","Generate off-design polynomials for Generic CSP models? 1 = Yes, 0 = No", "", "", "",  "?=0",     "",       "" },
 
 	// ** Off-Design Outputs **
@@ -90,7 +90,9 @@ static var_info _cm_vtab_sco2_csp_system[] = {
 	{ SSC_OUTPUT, SSC_ARRAY,   "pc_P_in_od",           "Off-design precompressor inlet pressure",                "MPa",        "",    "",      "",     "",       "" },
 	{ SSC_OUTPUT, SSC_ARRAY,   "pc_W_dot_od",          "Off-design precompressor power",                         "MWe",        "",    "",      "",     "",       "" },
 	{ SSC_OUTPUT, SSC_ARRAY,   "pc_m_dot_od",          "Off-design precompressor mass flow",                     "kg/s",       "",    "",      "",     "",       "" },
-	{ SSC_OUTPUT, SSC_ARRAY,   "pc_eta_od",            "Off-design precompressor overal isentropic efficiency",  "",           "",    "",      "",     "",       "" },
+    { SSC_OUTPUT, SSC_ARRAY,   "pc_rho_in_od",         "Off-design precompressor inlet density",                 "kg/m3",      "",    "",      "",     "",       "" },
+    { SSC_OUTPUT, SSC_ARRAY,   "pc_ideal_spec_work_od","Off-design precompressor ideal spec work",               "kJ/kg",      "",    "",      "",     "",       "" },
+    { SSC_OUTPUT, SSC_ARRAY,   "pc_eta_od",            "Off-design precompressor overal isentropic efficiency",  "",           "",    "",      "",     "",       "" },
 	{ SSC_OUTPUT, SSC_MATRIX,  "pc_phi_od",            "Off-design precompressor flow coefficient [od run][stage]", "-",	   "",    "",      "",     "",       "" },
 	{ SSC_OUTPUT, SSC_ARRAY,   "pc_N_od",              "Off-design precompressor shaft speed",                   "rpm",		   "",    "",      "",     "",       "" },
 	{ SSC_OUTPUT, SSC_MATRIX,  "pc_tip_ratio_od",      "Off-design precompressor tip speed ratio [od run][stage]","-",		   "",    "",      "",     "",       "" },
@@ -201,6 +203,8 @@ public:
 	ssc_number_t *p_pc_P_in_od;
 	ssc_number_t *p_pc_W_dot_od;
 	ssc_number_t *p_pc_m_dot_od;
+    ssc_number_t *p_pc_rho_in_od;
+    ssc_number_t *p_pc_ideal_spec_work_od;
 	ssc_number_t *p_pc_eta_od;
 	ssc_number_t *pm_pc_phi_od;
 	ssc_number_t *p_pc_N_od;
@@ -260,7 +264,7 @@ public:
 		add_var_info(_cm_vtab_sco2_csp_system);
 	}
 
-	void exec() throw(general_error)
+	void exec() override
 	{
 		C_sco2_phx_air_cooler c_sco2_cycle;
 
@@ -329,31 +333,46 @@ public:
 		util::matrix_t<double> od_cases;
 		if (is_od_cases_assigned)
 		{
-			od_cases = as_matrix("od_cases");
+			util::matrix_t<double> od_cases_local = as_matrix("od_cases");
 
 			// Check if off cases exist and correctly formatted
-			int n_od_cols_loc = (int)od_cases.ncols();
-			int n_od_runs_loc = (int)od_cases.nrows();
+			int n_od_cols_loc = (int)od_cases_local.ncols();
+			int n_od_runs_loc = (int)od_cases_local.nrows();
 
-			if (n_od_cols_loc != 5 && n_od_runs_loc == 1)
+			if (n_od_cols_loc < 3 && n_od_runs_loc == 1)
 			{
 				// No off-design cases specified
 				log("No off-design cases specified");
 				return;
 			}
-			if (n_od_cols_loc != 5 && n_od_runs_loc > 1)
+			else if (n_od_cols_loc < 3)
 			{
-				std::string err_msg = util::format("The matrix of off design cases requires 5 columns. The entered matrix has %d columns", n_od_cols_loc);
+				std::string err_msg = util::format("The matrix of off design cases requires at least 3 columns. The entered matrix has %d columns", n_od_cols_loc);
 				throw exec_error("sco2_csp_system", err_msg);
 			}
+            else if (n_od_cols_loc < 6)
+            {
+                od_cases.resize_fill(n_od_runs_loc, 6, 1.0);
+                for (int i = 0; i < n_od_runs_loc; i++)
+                {
+                    for (int j = 0; j < n_od_cols_loc; j++)
+                    {
+                        od_cases(i, j) = od_cases_local(i, j);
+                    }
+                }
+            }
+            else
+            {
+                od_cases = od_cases_local;
+            }
 		}
 		else if(is_P_mc_in_od_sweep_assigned)
 		{
 			std::vector<double> od_case = as_vector_double("od_P_mc_in_sweep");
 			size_t n_od = od_case.size();
-			if (n_od != 5)
+			if (n_od < 3)
 			{
-				std::string err_msg = util::format("The matrix of off design cases requires 5 columns. The entered matrix has %d columns", n_od);
+				std::string err_msg = util::format("The matrix of off design cases requires at least 3 columns. The entered matrix has %d columns", n_od);
 				throw exec_error("sco2_csp_system", err_msg);
 			}
 			
@@ -363,24 +382,25 @@ public:
 
 			double delta_P_i = delta_P / (n_P_mc_in - 1);	//[MPa]
 
-			od_cases.resize(n_P_mc_in, 6);
+			od_cases.resize_fill(n_P_mc_in, 7, 1.0);
+            int n_cols_in = std::min((int)n_od, 6);
 			for (int i = 0; i < n_P_mc_in; i++)
 			{
-				od_cases(i, 0) = od_case[0];
-				od_cases(i, 1) = od_case[1];
-				od_cases(i, 2) = od_case[2];
-				od_cases(i, 3) = od_case[3];
-                od_cases(i, 4) = od_case[4];
-				od_cases(i, 5) = P_mc_in_low + delta_P_i * i;	//[MPa]
+                for (int j = 0; j < n_cols_in; j++)
+                {
+                    od_cases(i, j) = od_case[j];
+                }
+
+                od_cases(i, 6) = P_mc_in_low + delta_P_i * i;	//[MPa]
 			}
 		}
 		else
 		{
-			od_cases = as_matrix("od_set_control");
+            util::matrix_t<double> od_cases_local = as_matrix("od_set_control");
 
 			// Check if off cases exist and correctly formatted
-			int n_od_cols_loc = (int)od_cases.ncols();
-			int n_od_runs_loc = (int)od_cases.nrows();
+			int n_od_cols_loc = (int)od_cases_local.ncols();
+			int n_od_runs_loc = (int)od_cases_local.nrows();
 
 			if (n_od_cols_loc != 4 && n_od_runs_loc == 1)
 			{
@@ -388,16 +408,31 @@ public:
 				log("No off-design cases specified");
 				return;
 			}
-			if (n_od_cols_loc != 4 && n_od_runs_loc > 1)
+			else if (n_od_cols_loc < 4)
 			{
-				std::string err_msg = util::format("The matrix of od set control requires 4 columns. The entered matrix has %d columns", n_od_cols_loc);
+				std::string err_msg = util::format("The matrix of od set control requires at least 4 columns. The entered matrix has %d columns", n_od_cols_loc);
 				throw exec_error("sco2_csp_system", err_msg);
 			}
+            else if (n_od_cols_loc < 7)
+            {
+                od_cases.resize_fill(n_od_runs_loc, 7, 1.0);
+                for (int i = 0; i < n_od_runs_loc; i++)
+                {
+                    for (int j = 0; j < n_od_cols_loc; j++)
+                    {
+                        od_cases(i, j) = od_cases_local(i, j);
+                    }
+                }
+            }
+            else
+            {
+                od_cases = od_cases_local;
+            }
 		}
 		
 		int n_od_runs = (int)od_cases.nrows();
 		allocate_ssc_outputs(n_od_runs, n_mc_stages, n_rc_stages, n_pc_stages);
-		C_sco2_phx_air_cooler::S_od_par sco2_rc_od_par;
+		C_sco2_phx_air_cooler::S_od_par s_sco2_od_par;
 
 		// For try/catch below
 		int out_type = -1;
@@ -413,13 +448,13 @@ public:
 			//p_od_opt_obj_code[n_run] = (ssc_number_t)od_cases(n_run, 3);		//[-]
 			//p_od_opt_conv_tol[n_run] = (ssc_number_t)od_cases(n_run, 4);		//[-]
 				// Set input structure
-			sco2_rc_od_par.m_T_htf_hot = p_T_htf_hot_od[n_run] + 273.15;	//[K]
-			sco2_rc_od_par.m_m_dot_htf = m_dot_htf_design*p_m_dot_htf_fracs[n_run];	//[kg/s]
-			sco2_rc_od_par.m_T_amb = p_T_amb_od[n_run] + 273.15;				//[K]
+			s_sco2_od_par.m_T_htf_hot = p_T_htf_hot_od[n_run] + 273.15;	//[K]
+			s_sco2_od_par.m_m_dot_htf = m_dot_htf_design*p_m_dot_htf_fracs[n_run];	//[kg/s]
+			s_sco2_od_par.m_T_amb = p_T_amb_od[n_run] + 273.15;				//[K]
 			//int od_strategy = (int)p_od_opt_obj_code[n_run];		//[-]
 			//double od_opt_tol = p_od_opt_conv_tol[n_run];			//[-]
 
-            sco2_rc_od_par.m_T_t_in_mode = T_t_in_mode;  //[-]
+            s_sco2_od_par.m_T_t_in_mode = T_t_in_mode;  //[-]
 
 			int off_design_code = 0;
 			std::clock_t clock_start = std::clock();
@@ -431,7 +466,97 @@ public:
 					//off_design_code = sco2_recomp_csp.off_design_opt(sco2_rc_od_par, od_strategy);
 						// Nested optimization
 					int od_strategy = C_sco2_phx_air_cooler::E_TARGET_POWER_ETA_MAX;
-					off_design_code = c_sco2_cycle.optimize_off_design(sco2_rc_od_par, od_strategy);
+                        // RC shaft speed control
+                    bool is_rc_N_od_at_design = true;
+                    bool is_optimize_rc_N = false;
+                    double rc_N_od_f_des = 1.0;
+                    if (od_cases(n_run, 3) < 0.0)
+                    {
+                        is_rc_N_od_at_design = false;
+                        rc_N_od_f_des = fabs(od_cases(n_run, 3));
+                    }
+                    else if (od_cases(n_run, 3) == 0.0)
+                    {
+                        is_optimize_rc_N = true;
+                    }
+                        // MC shaft speed control
+                    bool is_mc_N_od_at_design = true;
+                    bool is_optimize_mc_N = false;
+                    double mc_N_od_f_des = 1.0;
+                    if (od_cases(n_run, 4) < 0.0)
+                    {
+                        is_mc_N_od_at_design = false;
+                        mc_N_od_f_des = fabs(od_cases(n_run, 4));
+                    }
+                    else if (od_cases(n_run, 4) == 0.0)
+                    {
+                        is_optimize_mc_N = true;
+                    }
+                        // PHX pressure drop options
+                    bool is_PHX_dP_input = false;
+                    double PHX_f_dP_od = std::numeric_limits<double>::quiet_NaN();
+                    if (od_cases(n_run, 5) < 0.0)
+                    {
+                        is_PHX_dP_input = true;
+                        PHX_f_dP_od = fabs(od_cases(n_run, 5));
+                    }
+
+                    double eta_max, f_N_mc_opt, f_N_rc_opt, W_dot_at_eta_max;
+
+                    std::string od_sim_log = util::format("Beginning off design run %d of %d, the "
+                                            "HTF temperature is %lg [C] "
+                                            "the HTF mass flow rate is %lg [-] "
+                                            "the ambient temperature is %lg [C] "
+                                            "the relative RC shaft speed is %lg [-] "
+                                            "the relative MC shaft speed is %lg [-] "
+                                            "the input PHX pressure drop is %lg [-] ",
+                                            n_run + 1, n_od_runs,
+                                            s_sco2_od_par.m_T_htf_hot - 273.15, p_m_dot_htf_fracs[n_run], s_sco2_od_par.m_T_amb - 273.15,
+                                            rc_N_od_f_des, mc_N_od_f_des, PHX_f_dP_od);
+                    log(od_sim_log);
+
+                    if (cycle_config == 1)
+                    {
+                        if (is_optimize_mc_N && is_optimize_rc_N)
+                        {
+                            off_design_code = c_sco2_cycle.optimize_N_mc_and_N_rc__max_eta(s_sco2_od_par,
+                                is_PHX_dP_input, PHX_f_dP_od,
+                                od_strategy, is_optimize_rc_N,
+                                eta_max, f_N_mc_opt, f_N_rc_opt, W_dot_at_eta_max);
+                        }
+                        else if(is_optimize_rc_N && is_rc)
+                        {
+                            off_design_code = c_sco2_cycle.optimize_N_rc__max_eta(s_sco2_od_par,
+                                true, 1.0,
+                                is_PHX_dP_input, PHX_f_dP_od,
+                                od_strategy,
+                                eta_max, f_N_rc_opt, W_dot_at_eta_max);
+                        }
+                        else if(is_optimize_mc_N)
+                        {
+                            off_design_code = c_sco2_cycle.optimize_N_mc_and_N_rc__max_eta(s_sco2_od_par,
+                                is_PHX_dP_input, PHX_f_dP_od,
+                                od_strategy, is_optimize_rc_N,
+                                eta_max, f_N_mc_opt, f_N_rc_opt, W_dot_at_eta_max);
+                        }
+                        else
+                        {
+                            off_design_code = c_sco2_cycle.optimize_off_design(s_sco2_od_par,
+                                is_rc_N_od_at_design, rc_N_od_f_des,
+                                is_mc_N_od_at_design, mc_N_od_f_des,
+                                is_PHX_dP_input, PHX_f_dP_od,
+                                od_strategy);
+                        }
+                    }
+                    else
+                    {
+                        off_design_code = c_sco2_cycle.optimize_off_design(s_sco2_od_par,
+                            is_rc_N_od_at_design, rc_N_od_f_des,
+                            is_mc_N_od_at_design, mc_N_od_f_des,
+                            is_PHX_dP_input, PHX_f_dP_od,
+                            od_strategy);
+                    }
+                    
 				}
 				else if (is_P_mc_in_od_sweep_assigned)
 				{
@@ -452,10 +577,19 @@ public:
                         is_mc_N_od_at_design = false;
                         mc_N_od_f_des = fabs(od_cases(n_run, 4));
                     }
+                        // PHX pressure drop options
+                    bool is_PHX_dP_input = false;
+                    double PHX_f_dP_od = std::numeric_limits<double>::quiet_NaN();
+                    if (od_cases(n_run, 5) < 0.0)
+                    {
+                        is_PHX_dP_input = true;
+                        PHX_f_dP_od = fabs(od_cases(n_run, 5));
+                    }
 
-					off_design_code = c_sco2_cycle.off_design_fix_P_mc_in(sco2_rc_od_par, od_cases(n_run, 5), 
+					off_design_code = c_sco2_cycle.off_design_fix_P_mc_in(s_sco2_od_par, od_cases(n_run, 6),
                                                                             is_rc_N_od_at_design, rc_N_od_f_des,
                                                                             is_mc_N_od_at_design, mc_N_od_f_des,
+                                                                            is_PHX_dP_input, PHX_f_dP_od,
                                                                             od_strategy);
 				}
 				else if (is_od_set_control)
@@ -466,7 +600,37 @@ public:
 					{
 						P_LP_comp_in = P_LP_comp_in_des / fabs(P_LP_comp_in);
 					}
-					off_design_code = c_sco2_cycle.off_design_fix_P_mc_in(sco2_rc_od_par, P_LP_comp_in, true, 1.0, true, 1.0, od_strategy);
+
+                        // RC shaft speed control
+                    bool is_rc_N_od_at_design = true;
+                    double rc_N_od_f_des = 1.0;
+                    if (od_cases(n_run, 4) < 0.0)
+                    {
+                        is_rc_N_od_at_design = false;
+                        rc_N_od_f_des = fabs(od_cases(n_run, 4));
+                    }
+                        // MC shaft speed control
+                    bool is_mc_N_od_at_design = true;
+                    double mc_N_od_f_des = 1.0;
+                    if (od_cases(n_run, 5) < 0.0)
+                    {
+                        is_mc_N_od_at_design = false;
+                        mc_N_od_f_des = fabs(od_cases(n_run, 5));
+                    }
+                        // PHX pressure drop options
+                    bool is_PHX_dP_input = false;
+                    double PHX_f_dP_od = std::numeric_limits<double>::quiet_NaN();
+                    if (od_cases(n_run, 6) < 0.0)
+                    {
+                        is_PHX_dP_input = true;
+                        PHX_f_dP_od = fabs(od_cases(n_run, 6));
+                    }
+
+					off_design_code = c_sco2_cycle.off_design_fix_P_mc_in(s_sco2_od_par, P_LP_comp_in, 
+                                                                            is_rc_N_od_at_design, rc_N_od_f_des,
+                                                                            is_mc_N_od_at_design, mc_N_od_f_des,
+                                                                            is_PHX_dP_input, PHX_f_dP_od,
+                                                                            od_strategy);
 				}
 			}
 			catch( C_csp_exception &csp_exception )
@@ -486,7 +650,7 @@ public:
 			double od_opt_duration = (clock_end - clock_start)/(double) CLOCKS_PER_SEC;		//[s]
 
 			p_od_code[n_run] = (ssc_number_t)off_design_code;
-			if(off_design_code == 0) // || ((is_P_mc_in_od_sweep_assigned || is_od_set_control) && c_sco2_cycle.get_od_solved()->m_is_converged))
+			if(off_design_code == 0 || ((is_P_mc_in_od_sweep_assigned || is_od_set_control) && c_sco2_cycle.get_od_solved()->m_is_converged))
 			{	// Off-design call was successful, so write outputs
 					// Control parameters
 				p_P_comp_in_od[n_run] = (ssc_number_t)(c_sco2_cycle.get_od_solved()->ms_rc_cycle_od_solved.m_pres[C_sco2_cycle_core::MC_IN] / 1000.0);	//[MPa]
@@ -570,7 +734,9 @@ public:
 					p_pc_P_in_od[n_run] = (ssc_number_t)(c_sco2_cycle.get_od_solved()->ms_rc_cycle_od_solved.ms_pc_ms_od_solved.m_P_in*1.E-3);		//[MPa]
 					p_pc_W_dot_od[n_run] = (ssc_number_t)(c_sco2_cycle.get_od_solved()->ms_rc_cycle_od_solved.ms_pc_ms_od_solved.m_W_dot_in*1.E-3);	//[MWe] convert from kWe
 					p_pc_m_dot_od[n_run] = (ssc_number_t)(c_sco2_cycle.get_od_solved()->ms_rc_cycle_od_solved.m_m_dot_pc);		//[kg/s]
-					p_pc_eta_od[n_run] = (ssc_number_t)c_sco2_cycle.get_od_solved()->ms_rc_cycle_od_solved.ms_pc_ms_od_solved.m_eta;		//[-]
+                    p_pc_rho_in_od[n_run] = (ssc_number_t)(c_sco2_cycle.get_od_solved()->ms_rc_cycle_od_solved.m_dens[C_sco2_cycle_core::PC_IN]);    //[kg/m3]
+                    p_pc_ideal_spec_work_od[n_run] = (ssc_number_t)(c_sco2_cycle.get_od_solved()->ms_rc_cycle_od_solved.ms_pc_ms_od_solved.m_isen_spec_work);   //[kJ/kg]
+                    p_pc_eta_od[n_run] = (ssc_number_t)c_sco2_cycle.get_od_solved()->ms_rc_cycle_od_solved.ms_pc_ms_od_solved.m_eta;		//[-]
 					for (int i_s = 0; i_s < n_pc_stages; i_s++)
 						pm_pc_phi_od[n_run*n_pc_stages + i_s] = (ssc_number_t)c_sco2_cycle.get_od_solved()->ms_rc_cycle_od_solved.ms_pc_ms_od_solved.mv_phi[i_s];
 					p_pc_N_od[n_run] = (ssc_number_t)c_sco2_cycle.get_od_solved()->ms_rc_cycle_od_solved.ms_pc_ms_od_solved.m_N;			//[rpm]
@@ -588,6 +754,8 @@ public:
 					p_pc_P_in_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
 					p_pc_W_dot_od[n_run] = 0.0;
 					p_pc_m_dot_od[n_run] = 0.0;
+                    p_pc_rho_in_od[n_run] = 0.0;
+                    p_pc_ideal_spec_work_od[n_run] = 0.0;
 					p_pc_eta_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
 					for (int i_s = 0; i_s < n_pc_stages; i_s++)
 						pm_pc_phi_od[n_run*n_pc_stages + i_s] = std::numeric_limits<ssc_number_t>::quiet_NaN();
@@ -737,6 +905,8 @@ public:
 				p_pc_P_in_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
 				p_pc_W_dot_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
 				p_pc_m_dot_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
+                p_pc_rho_in_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
+                p_pc_ideal_spec_work_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
 				p_pc_eta_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
 				for (int i_s = 0; i_s < n_pc_stages; i_s++)
 					pm_pc_phi_od[n_run*n_pc_stages + i_s] = std::numeric_limits<ssc_number_t>::quiet_NaN();
@@ -859,6 +1029,8 @@ public:
 		p_pc_P_in_od = allocate("pc_P_in_od", n_od_runs);
 		p_pc_W_dot_od = allocate("pc_W_dot_od", n_od_runs);
 		p_pc_m_dot_od = allocate("pc_m_dot_od", n_od_runs);
+        p_pc_rho_in_od = allocate("pc_rho_in_od", n_od_runs);
+        p_pc_ideal_spec_work_od = allocate("pc_ideal_spec_work_od", n_od_runs);
 		p_pc_eta_od = allocate("pc_eta_od", n_od_runs);
 		pm_pc_phi_od = allocate("pc_phi_od", n_od_runs, n_pc_stages);
 		p_pc_N_od = allocate("pc_N_od", n_od_runs);

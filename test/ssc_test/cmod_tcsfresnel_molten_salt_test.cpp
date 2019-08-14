@@ -6,7 +6,7 @@
 
 
 /// Test tcsfresnel_molten_salt with all default configurations with respect to the No Finanical model
-TEST_F(CMTcsFresnelMoltenSalt, Rankine_Default_No_Financial) {
+TEST_F(CMTcsFresnelMoltenSalt, Rankine_Default_No_Financial_cmod_tcsfresnel_molten_salt) {
 
 	ssc_data_t data = ssc_data_create();
 	int test_errors = tcsfresnel_molten_salt_tucson_default(data);
@@ -50,7 +50,7 @@ TEST_F(CMTcsFresnelMoltenSalt, Rankine_Default_No_Financial) {
 
 /// Test tcsfresnel_molten_salt with alternative defocusing strategy: Sequenced
 /// Rest default configurations with respect to the No Financial model
-TEST_F(CMTcsFresnelMoltenSalt, Rankine_Defocusing_Strategy_No_Financial) {
+TEST_F(CMTcsFresnelMoltenSalt, Rankine_Defocusing_Strategy_No_Financial_cmod_tcsfresnel_molten_salt) {
 
 	ssc_data_t data = ssc_data_create();
 	int test_errors = tcsfresnel_molten_salt_tucson_defocusing_strategy(data);
@@ -94,7 +94,7 @@ TEST_F(CMTcsFresnelMoltenSalt, Rankine_Defocusing_Strategy_No_Financial) {
 
 /// Test tcsfresnel_molten_salt with alternative Field HTF: Therminol VP-1
 /// Rest default configurations with respect to the No Financial model
-TEST_F(CMTcsFresnelMoltenSalt, Rankine_Field_HTF_No_Financial) {
+TEST_F(CMTcsFresnelMoltenSalt, Rankine_Field_HTF_No_Financial_cmod_tcsfresnel_molten_salt) {
 
 	ssc_data_t data = ssc_data_create();
 	int test_errors = tcsfresnel_molten_salt_tucson_field_HTF(data);
@@ -138,7 +138,7 @@ TEST_F(CMTcsFresnelMoltenSalt, Rankine_Field_HTF_No_Financial) {
 
 /// Test tcsfresnel_molten_salt with alternative optical characterization method: Solar position
 /// Rest default configurations with respect to the No Financial model
-TEST_F(CMTcsFresnelMoltenSalt, Rankine_Optical_Char_No_Financial) {
+TEST_F(CMTcsFresnelMoltenSalt, Rankine_Optical_Char_No_Financial_cmod_tcsfresnel_molten_salt) {
 
 	ssc_data_t data = ssc_data_create();
 	int test_errors = tcsfresnel_molten_salt_tucson_optical_char_solar(data);
@@ -182,7 +182,7 @@ TEST_F(CMTcsFresnelMoltenSalt, Rankine_Optical_Char_No_Financial) {
 
 /// Test tcsfresnel_molten_salt with alternative receiver model type: Polynomial Heat Loss model
 /// Rest default configurations with respect to the No Financial model
-TEST_F(CMTcsFresnelMoltenSalt, Rankine_Polynomial_Heat_Loss_No_Financial) {
+TEST_F(CMTcsFresnelMoltenSalt, Rankine_Polynomial_Heat_Loss_No_Financial_cmod_tcsfresnel_molten_salt) {
 
 	ssc_data_t data = ssc_data_create();
 	int test_errors = tcsfresnel_molten_salt_tucson_polynomial_heat_loss_model(data);
@@ -226,7 +226,7 @@ TEST_F(CMTcsFresnelMoltenSalt, Rankine_Polynomial_Heat_Loss_No_Financial) {
 
 /// Test tcsfresnel_molten_salt with alternative condenser type: Evaporative
 /// Rest default configurations with respect to the No Financial model
-TEST_F(CMTcsFresnelMoltenSalt, Rankine_Evap_Condenser_No_Financial) {
+TEST_F(CMTcsFresnelMoltenSalt, Rankine_Evap_Condenser_No_Financial_cmod_tcsfresnel_molten_salt) {
 
 	ssc_data_t data = ssc_data_create();
 	int test_errors = tcsfresnel_molten_salt_tucson_evap_condenser(data);
@@ -270,7 +270,7 @@ TEST_F(CMTcsFresnelMoltenSalt, Rankine_Evap_Condenser_No_Financial) {
 
 /// Test tcsfresnel_molten_salt with alternative condenser type: Hybrid
 /// Rest default configurations with respect to the No Financial model
-TEST_F(CMTcsFresnelMoltenSalt, Rankine_Hybrid_Condenser_No_Financial) {
+TEST_F(CMTcsFresnelMoltenSalt, Rankine_Hybrid_Condenser_No_Financial_cmod_tcsfresnel_molten_salt) {
 
 	ssc_data_t data = ssc_data_create();
 	int test_errors = tcsfresnel_molten_salt_tucson_hybrid_condenser(data);
@@ -314,7 +314,7 @@ TEST_F(CMTcsFresnelMoltenSalt, Rankine_Hybrid_Condenser_No_Financial) {
 
 /// Test tcsfresnel_molten_salt with alternative turbine inlet pressure control: Sliding pressure 
 /// Rest default configurations with respect to the No Financial model
-TEST_F(CMTcsFresnelMoltenSalt, Rankine_Sliding_P_No_Financial) {
+TEST_F(CMTcsFresnelMoltenSalt, Rankine_Sliding_P_No_Financial_cmod_tcsfresnel_molten_salt) {
 
 	ssc_data_t data = ssc_data_create();
 	int test_errors = tcsfresnel_molten_salt_tucson_sliding_p(data);
@@ -358,7 +358,7 @@ TEST_F(CMTcsFresnelMoltenSalt, Rankine_Sliding_P_No_Financial) {
 
 /// Test tcsfresnel_molten_salt with alternative HTF freeze protection mode: Electric heating
 /// Rest default configurations with respect to the No Financial model
-TEST_F(CMTcsFresnelMoltenSalt, Rankine_HTF_Freeze_Protection_No_Financial) {
+TEST_F(CMTcsFresnelMoltenSalt, Rankine_HTF_Freeze_Protection_No_Financial_cmod_tcsfresnel_molten_salt) {
 
 	ssc_data_t data = ssc_data_create();
 	int test_errors = tcsfresnel_molten_salt_tucson_HTF_freeze_protection(data);
@@ -402,7 +402,7 @@ TEST_F(CMTcsFresnelMoltenSalt, Rankine_HTF_Freeze_Protection_No_Financial) {
 
 /// Test tcsfresnel_molten_salt with alternative storage HTF: Therminol VP-1
 /// Rest default configurations with respect to the No Financial model
-TEST_F(CMTcsFresnelMoltenSalt, Rankine_Storage_HTF_No_Financial) {
+TEST_F(CMTcsFresnelMoltenSalt, Rankine_Storage_HTF_No_Financial_cmod_tcsfresnel_molten_salt) {
 
 	ssc_data_t data = ssc_data_create();
 	int test_errors = tcsfresnel_molten_salt_tucson_storage_HTF(data);
@@ -446,7 +446,7 @@ TEST_F(CMTcsFresnelMoltenSalt, Rankine_Storage_HTF_No_Financial) {
 
 /// Test tcsfresnel_molten_salt with alternative Power Cycle: User Defined
 /// Rest default configurations with respect to the No Financial model
-TEST_F(CMTcsFresnelMoltenSalt, UserDefined_Default_No_Financial) {
+TEST_F(CMTcsFresnelMoltenSalt, UserDefined_Default_No_Financial_cmod_tcsfresnel_molten_salt) {
 
 	ssc_data_t data = ssc_data_create();
 	int test_errors = tcsfresnel_molten_salt_tucson_userdefined_default(data);

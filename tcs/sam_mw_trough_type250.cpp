@@ -3339,8 +3339,8 @@ set_outputs_and_return:
             }
 
             value(O_T_FIELD_IN_AT_DSN, T_rnr_des_out.at(0));
-            value(O_T_FIELD_OUT_AT_DSN, T_rnr_des_out.at(T_rnr_des_out.ncells() - 1));
-            value(O_P_FIELD_IN_AT_DSN, P_rnr_des_out.at(0));
+            value(O_T_FIELD_OUT_AT_DSN, T_rnr_des_out.at(T_rnr_des_out.ncells() - 1));  // need to still account for heat loss in this last pipe
+            value(O_P_FIELD_IN_AT_DSN, P_rnr_des_out.at(0));                            // need to still account for pressure loss in this last pipe
 
             // wait to output arrays until TES/PB sizing has finished so P can be adjusted
         }
@@ -5309,12 +5309,11 @@ lab_keep_guess:
             for (std::size_t i = 0; i < nhsec; i++) {
                 if (i == 0) {
                     m_dot_enter = m_dot_hdrs;
-                    V_enter = 4.*m_dot_enter / (rho*pi*D_hdr[i] * D_hdr[i]);
                 }
-                else if (nd < N_max_hdr_diams) {
+                else {
                     m_dot_enter -= m_dot_2loops;
-                    V_enter = 4.*m_dot_enter / (rho*pi*D_hdr[i - 1] * D_hdr[i - 1]);  // assuming no diameter change
                 }
+                V_enter = 4.*m_dot_enter / (rho*pi*D_hdr[i] * D_hdr[i]);
                 m_dot_hdr[i] = m_dot_enter;
                 V_hdr[i] = V_enter;
             }
@@ -5364,10 +5363,11 @@ lab_keep_guess:
                     }
                 }
                 else {
-                    D_hdr[i] = D_hdr[i - 1];
+                    m_dot_enter -= m_dot_2loops;
+                    D_hdr[i] = D_hdr[i - 1];        // no diameter change allowed
                 }
                 m_dot_hdr[i] = m_dot_enter;
-                V_hdr[i] = V_enter;
+                V_hdr[i] = 4.*m_dot_hdr[i] / (rho*CSP::pi*D_hdr[i] * D_hdr[i]);
             }
         }
 
@@ -5380,14 +5380,8 @@ lab_keep_guess:
         nd = 0;
         if (custom_diams) {
             for (std::size_t i = nhsec; i < 2 * nhsec; i++) {
-                if (i == nhsec) {
-                    m_dot_leave = m_dot_2loops;
-                    V_leave = 4.*m_dot_leave / (rho*pi*D_hdr[i] * D_hdr[i]);
-                }
-                else if (nd < N_max_hdr_diams) {
-                    m_dot_leave += m_dot_2loops;
-                    V_leave = 4.*m_dot_leave / (rho*pi*D_hdr[i - 1] * D_hdr[i - 1]);  // assuming no diameter change
-                }
+                m_dot_leave += m_dot_2loops;
+                V_leave = 4.*m_dot_leave / (rho*pi*D_hdr[i] * D_hdr[i]);
                 m_dot_hdr[i] = m_dot_leave;
                 V_hdr[i] = V_leave;
             }
@@ -5437,10 +5431,11 @@ lab_keep_guess:
                     }
                 }
                 else {
-                    D_hdr[i] = D_hdr[i - 1];
+                    m_dot_leave += m_dot_2loops;
+                    D_hdr[i] = D_hdr[i - 1];        // no diameter change allowed
                 }
                 m_dot_hdr[i] = m_dot_leave;
-                V_hdr[i] = V_leave;
+                V_hdr[i] = 4.*m_dot_hdr[i] / (rho*CSP::pi*D_hdr[i] * D_hdr[i]);
             }
         }
 		

@@ -450,7 +450,7 @@ public:
 		add_var_info(vtab_technology_outputs);
 	}
 
-	void exec( ) throw( general_error )
+	void exec( )
 	{
 		// **************************************************************************
 		// Check weatherfile for timestep and such: use to setup TCS simulation

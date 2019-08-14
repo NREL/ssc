@@ -56,7 +56,7 @@ public:
 		add_var_info(_cm_vtab_cb_empirical_hce_heat_loss);
 	}
 
-	void exec() throw(general_error)
+	void exec() override
 	{
 		std::vector<double> PerfFac;
 		size_t n_PerfFac = 0;

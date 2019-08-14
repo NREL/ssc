@@ -94,16 +94,16 @@ private:
 
 public:
 	windfile();
-	windfile( const std::string &file );
-	virtual ~windfile();
+	explicit windfile( const std::string &file );
+	~windfile() override;
 
 	bool ok();
 	std::string filename();
 	void close();
 	bool open( const std::string &file );
 	
-	virtual bool read_line( std::vector<double> &values );
-	virtual size_t nrecords();
+	bool read_line(std::vector<double> &values) override;
+	size_t nrecords() override;
 	
 };
 

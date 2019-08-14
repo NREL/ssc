@@ -154,7 +154,7 @@ public:
 
 
 	//MAIN FUNCTION*******************************************************************************************************************************************************************************
-	void exec() throw(general_error)
+	void exec() override
 	{		
 		//This compute module is going to automatically be run in series between pvsamv1 and utilityrate3 for residential and commercial systems.
 		//However, the building load profile option will not be selected by default.

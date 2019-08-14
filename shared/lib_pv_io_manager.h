@@ -266,6 +266,8 @@ struct PVSystem_IO
 	flag enableMismatchVoltageCalc;		///< Whether or not to compute mismatch between multiple subarrays attached to the same mppt input
 
 	std::vector<double> dcDegradationFactor; 
+	std::vector<double> dcLifetimeLosses;
+	std::vector<double> acLifetimeLosses;
 	double acDerate;
 	double acLossPercent;
 	double transmissionDerate;
@@ -322,8 +324,6 @@ struct PVSystem_IO
 
 	// Degradation
 	ssc_number_t *p_dcDegradationFactor;
-	ssc_number_t *p_dcLifetimeLosses;
-	ssc_number_t *p_acLifetimeLosses;
 
 	// transformer loss outputs (single array)
 	ssc_number_t *p_transformerNoLoadLoss;
