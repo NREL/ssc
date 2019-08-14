@@ -554,6 +554,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 
 	double wf_step = 3600.0 / step_per_hour;	//[s] Weather file time step - would like to check this against weather file, some day
 	
+    m_is_first_timestep = true;
 	double step_tolerance = 10.0;		//[s] For adjustable timesteps, if within 10 seconds, assume it equals baseline timestep
 	double baseline_step = wf_step;		//[s] Baseline timestep of the simulation - this should probably be technology/model specific
 	// Check the collector-receiver model for a maximum step
@@ -754,6 +755,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 			throw(C_csp_exception(msg,"CSP Solver Core"));
 		}
 		pc_operating_state = mc_power_cycle.get_operating_state();
+        if (m_is_first_timestep && f_turbine_tou <= 0.) pc_operating_state = C_csp_power_cycle::OFF;
 
 		// Calculate maximum thermal power to power cycle for startup. This will be zero if power cycle is on.
 		double q_dot_pc_su_max = mc_power_cycle.get_max_q_pc_startup();		//[MWt]
@@ -885,7 +887,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 
 
 		// After rules, reset booleans if necessary
-		if( q_pc_target < q_pc_min )
+		if( q_pc_target < q_pc_min || q_pc_target <= 0. )
 		{
 			is_pc_su_allowed = false;
 			is_pc_sb_allowed = false;
@@ -5146,6 +5148,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 			throw(C_csp_exception("Kernel end time is larger than the baseline end time. This shouldn't happen"));
 		}
 		
+        m_is_first_timestep = false;
 	}	// End timestep loop
 
 }	// End simulate() method

@@ -307,12 +307,14 @@
     <ClInclude Include="..\test\ssc_test\cmod_tcsfresnel_molten_salt_test.h">
       <Filter>ssc_test</Filter>
     </ClInclude>
-    <ClInclude Include="..\test\ssc_test\cmod_tcstrough_empirical_test.h" />
     <ClInclude Include="..\test\tcs_test\lib_trough_properties.h">
       <Filter>tcs_test</Filter>
     </ClInclude>
     <ClInclude Include="..\test\tcs_test\lib_trough_test.h">
       <Filter>tcs_test</Filter>
+    </ClInclude>
+    <ClInclude Include="..\test\ssc_test\cmod_tcstrough_empirical_test.h">
+      <Filter>ssc_test</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
