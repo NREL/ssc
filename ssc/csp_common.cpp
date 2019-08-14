@@ -702,7 +702,9 @@ var_info vtab_sco2_design[] = {
 	{ SSC_OUTPUT, SSC_NUMBER,  "pc_P_in_des",          "Precompressor inlet pressure",                           "MPa",        "",    "",      "*",     "",       "" },
 	{ SSC_OUTPUT, SSC_NUMBER,  "pc_W_dot",             "Precompressor power",                                    "MWe",        "",    "",      "*",     "",       "" },
 	{ SSC_OUTPUT, SSC_NUMBER,  "pc_m_dot_des",         "Precompressor mass flow rate",                           "kg/s",       "",    "",      "*",     "",       "" },
-	{ SSC_OUTPUT, SSC_NUMBER,  "pc_phi_des",           "Precompressor design flow coefficient",                  "",           "",    "",      "*",     "",       "" },
+    { SSC_OUTPUT, SSC_NUMBER,  "pc_rho_in_des",        "Precompressor inlet density",                            "kg/m3",      "",    "",      "*",     "",       "" },
+    { SSC_OUTPUT, SSC_NUMBER,  "pc_ideal_spec_work_des", "Precompressor ideal spec work",                          "kJ/kg",      "",    "",      "*",     "",       "" },
+    { SSC_OUTPUT, SSC_NUMBER,  "pc_phi_des",           "Precompressor design flow coefficient",                  "",           "",    "",      "*",     "",       "" },
 	{ SSC_OUTPUT, SSC_ARRAY,   "pc_tip_ratio_des",     "Precompressor design stage tip speed ratio",             "",           "",    "",      "*",     "",       "" },
 	{ SSC_OUTPUT, SSC_NUMBER,  "pc_n_stages",          "Precompressor stages",                                   "",           "",    "",      "*",     "",       "" },
 	{ SSC_OUTPUT, SSC_NUMBER,  "pc_N_des",             "Precompressor design shaft speed",                       "rpm",        "",    "",      "*",     "",       "" },
@@ -818,114 +820,114 @@ var_info_invalid };
 
 int sco2_design_cmod_common(compute_module *cm, C_sco2_phx_air_cooler & c_sco2_cycle)
 {
-	C_sco2_phx_air_cooler::S_des_par sco2_rc_des_par;
+	C_sco2_phx_air_cooler::S_des_par s_sco2_des_par;
 	// System design parameters
-	sco2_rc_des_par.m_hot_fl_code = cm->as_integer("htf");							//[-] Integer code for HTF
-	sco2_rc_des_par.mc_hot_fl_props = cm->as_matrix("htf_props");					//[-] Custom HTF properties
-	sco2_rc_des_par.m_T_htf_hot_in = cm->as_double("T_htf_hot_des") + 273.15;		//[K] Convert from C
-	sco2_rc_des_par.m_phx_dt_hot_approach = cm->as_double("dT_PHX_hot_approach");	//[K/C] Temperature difference between hot HTF and turbine CO2 inlet
-	sco2_rc_des_par.m_T_amb_des = cm->as_double("T_amb_des") + 273.15;				//[K] Convert from C
-	sco2_rc_des_par.m_dt_mc_approach = cm->as_double("dT_mc_approach");				//[K/C] Temperature difference between ambient air and main compressor inlet
-	sco2_rc_des_par.m_elevation = cm->as_double("site_elevation");					//[m] Site elevation
-	sco2_rc_des_par.m_W_dot_net = cm->as_double("W_dot_net_des")*1000.0;			//[kWe] Convert from MWe, cycle power output w/o cooling parasitics
+	s_sco2_des_par.m_hot_fl_code = cm->as_integer("htf");							//[-] Integer code for HTF
+	s_sco2_des_par.mc_hot_fl_props = cm->as_matrix("htf_props");					//[-] Custom HTF properties
+	s_sco2_des_par.m_T_htf_hot_in = cm->as_double("T_htf_hot_des") + 273.15;		//[K] Convert from C
+	s_sco2_des_par.m_phx_dt_hot_approach = cm->as_double("dT_PHX_hot_approach");	//[K/C] Temperature difference between hot HTF and turbine CO2 inlet
+	s_sco2_des_par.m_T_amb_des = cm->as_double("T_amb_des") + 273.15;				//[K] Convert from C
+	s_sco2_des_par.m_dt_mc_approach = cm->as_double("dT_mc_approach");				//[K/C] Temperature difference between ambient air and main compressor inlet
+	s_sco2_des_par.m_elevation = cm->as_double("site_elevation");					//[m] Site elevation
+	s_sco2_des_par.m_W_dot_net = cm->as_double("W_dot_net_des")*1000.0;			//[kWe] Convert from MWe, cycle power output w/o cooling parasitics
 
-	sco2_rc_des_par.m_cycle_config = cm->as_integer("cycle_config");			//[-] 1 = recompression, 2 = partial cooling
+    s_sco2_des_par.m_cycle_config = cm->as_integer("cycle_config");			//[-] 1 = recompression, 2 = partial cooling
 
-	sco2_rc_des_par.m_design_method = cm->as_integer("design_method");			//[-] 1 = Specify efficiency, 2 = Specify total recup UA, 3 = Specify each recup design
-	if (sco2_rc_des_par.m_design_method == 1)
+    s_sco2_des_par.m_design_method = cm->as_integer("design_method");			//[-] 1 = Specify efficiency, 2 = Specify total recup UA, 3 = Specify each recup design
+	if (s_sco2_des_par.m_design_method == 1)
 	{
-		sco2_rc_des_par.m_LTR_target_code = 0;      // 0 = optimize, 1 = UA, 2 = min dT, 3 = effectiveness
-		sco2_rc_des_par.m_HTR_target_code = 0;		// 0 = optimize, 1 = UA, 2 = min dT, 3 = effectiveness
+		s_sco2_des_par.m_LTR_target_code = 0;      // 0 = optimize, 1 = UA, 2 = min dT, 3 = effectiveness
+		s_sco2_des_par.m_HTR_target_code = 0;		// 0 = optimize, 1 = UA, 2 = min dT, 3 = effectiveness
 
-		sco2_rc_des_par.m_eta_thermal = cm->as_double("eta_thermal_des");				//[-] Cycle thermal efficiency
-		if (sco2_rc_des_par.m_eta_thermal < 0.0)
+        s_sco2_des_par.m_eta_thermal = cm->as_double("eta_thermal_des");				//[-] Cycle thermal efficiency
+		if (s_sco2_des_par.m_eta_thermal < 0.0)
 		{
 			cm->log("For cycle design method = 1, the input cycle thermal efficiency must be greater than 0", SSC_ERROR, -1.0);
 			return -1;
 		}
-		sco2_rc_des_par.m_UA_recup_tot_des = std::numeric_limits<double>::quiet_NaN();
+        s_sco2_des_par.m_UA_recup_tot_des = std::numeric_limits<double>::quiet_NaN();
 	}
-	else if (sco2_rc_des_par.m_design_method == 2)
+	else if (s_sco2_des_par.m_design_method == 2)
 	{
-		sco2_rc_des_par.m_LTR_target_code = 0;      // 0 = optimize, 1 = UA, 2 = min dT, 3 = effectiveness
-		sco2_rc_des_par.m_HTR_target_code = 0;		// 0 = optimize, 1 = UA, 2 = min dT, 3 = effectiveness
+		s_sco2_des_par.m_LTR_target_code = 0;      // 0 = optimize, 1 = UA, 2 = min dT, 3 = effectiveness
+		s_sco2_des_par.m_HTR_target_code = 0;		// 0 = optimize, 1 = UA, 2 = min dT, 3 = effectiveness
 
-		sco2_rc_des_par.m_UA_recup_tot_des = cm->as_double("UA_recup_tot_des");		//[kW/K] Total recuperator conductance
-		if (sco2_rc_des_par.m_UA_recup_tot_des < 0.0)
+        s_sco2_des_par.m_UA_recup_tot_des = cm->as_double("UA_recup_tot_des");		//[kW/K] Total recuperator conductance
+		if (s_sco2_des_par.m_UA_recup_tot_des < 0.0)
 		{
 			cm->log("For cycle design method = 2, the input total recuperator conductance must be greater than 0", SSC_ERROR, -1.0);
 			return -1;
 		}
-		sco2_rc_des_par.m_eta_thermal = std::numeric_limits<double>::quiet_NaN();
+        s_sco2_des_par.m_eta_thermal = std::numeric_limits<double>::quiet_NaN();
 	}
-	else if (sco2_rc_des_par.m_design_method == 3)
+	else if (s_sco2_des_par.m_design_method == 3)
 	{
 		// LTR
-		sco2_rc_des_par.m_LTR_target_code = cm->as_integer("LTR_design_code");		// 0 = optimize, 1 = UA, 2 = min dT, 3 = effectiveness
-		sco2_rc_des_par.m_LTR_UA = cm->as_double("LTR_UA_des_in");					//[kW/K]
-		sco2_rc_des_par.m_LTR_min_dT = cm->as_double("LTR_min_dT_des_in");			//[C]
-		sco2_rc_des_par.m_LTR_eff_target = cm->as_double("LTR_eff_des_in");			//[-]
+		s_sco2_des_par.m_LTR_target_code = cm->as_integer("LTR_design_code");		// 0 = optimize, 1 = UA, 2 = min dT, 3 = effectiveness
+		s_sco2_des_par.m_LTR_UA = cm->as_double("LTR_UA_des_in");					//[kW/K]
+		s_sco2_des_par.m_LTR_min_dT = cm->as_double("LTR_min_dT_des_in");			//[C]
+		s_sco2_des_par.m_LTR_eff_target = cm->as_double("LTR_eff_des_in");			//[-]
 
 		// HTR
-		sco2_rc_des_par.m_HTR_target_code = cm->as_integer("HTR_design_code");		// 0 = optimize, 1 = UA, 2 = min dT, 3 = effectiveness
-		sco2_rc_des_par.m_HTR_UA = cm->as_double("HTR_UA_des_in");					//[kW/K]
-		sco2_rc_des_par.m_HTR_min_dT = cm->as_double("HTR_min_dT_des_in");			//[C]
-		sco2_rc_des_par.m_HTR_eff_target = cm->as_double("HTR_eff_des_in");			//[-]
+		s_sco2_des_par.m_HTR_target_code = cm->as_integer("HTR_design_code");		// 0 = optimize, 1 = UA, 2 = min dT, 3 = effectiveness
+		s_sco2_des_par.m_HTR_UA = cm->as_double("HTR_UA_des_in");					//[kW/K]
+		s_sco2_des_par.m_HTR_min_dT = cm->as_double("HTR_min_dT_des_in");			//[C]
+		s_sco2_des_par.m_HTR_eff_target = cm->as_double("HTR_eff_des_in");			//[-]
 	}
 	else
 	{
 		std::string err_msg = util::format("The input cycle design method, %d, is invalid. It must be "
-			" 1 = Specify efficiency, 2 = Specify total recup UA, 3 = Specify each recup design.", sco2_rc_des_par.m_design_method);
+			" 1 = Specify efficiency, 2 = Specify total recup UA, 3 = Specify each recup design.", s_sco2_des_par.m_design_method);
 		cm->log(err_msg, SSC_ERROR, -1.0);
 	}
 
-	sco2_rc_des_par.m_is_recomp_ok = cm->as_double("is_recomp_ok");
+    s_sco2_des_par.m_is_recomp_ok = cm->as_double("is_recomp_ok");
 
-	sco2_rc_des_par.m_P_high_limit = cm->as_double("P_high_limit")*1000.0;		//[kPa], convert from MPa
-	sco2_rc_des_par.m_fixed_P_mc_out = cm->as_integer("is_P_high_fixed");		//[-]
+	s_sco2_des_par.m_P_high_limit = cm->as_double("P_high_limit")*1000.0;		//[kPa], convert from MPa
+	s_sco2_des_par.m_fixed_P_mc_out = cm->as_integer("is_P_high_fixed");		//[-]
 	double mc_PR_in = cm->as_double("is_PR_fixed");		//[-]
 	if (mc_PR_in != 0.0)
 	{
 		if (mc_PR_in < 0.0)     // mc_PR_in is in [MPa]
 		{
-			sco2_rc_des_par.m_PR_HP_to_LP_guess = sco2_rc_des_par.m_P_high_limit / (-mc_PR_in * 1.E3);		//[kPa] convert from MPa
+            s_sco2_des_par.m_PR_HP_to_LP_guess = s_sco2_des_par.m_P_high_limit / (-mc_PR_in * 1.E3);		//[kPa] convert from MPa
 		}
 		else
 		{
-			sco2_rc_des_par.m_PR_HP_to_LP_guess = mc_PR_in;			//[-] Pressure Ratio!
+            s_sco2_des_par.m_PR_HP_to_LP_guess = mc_PR_in;			//[-] Pressure Ratio!
 		}
-		sco2_rc_des_par.m_fixed_PR_HP_to_LP = true;
+        s_sco2_des_par.m_fixed_PR_HP_to_LP = true;
 	}
 	else
 	{
-		sco2_rc_des_par.m_PR_HP_to_LP_guess = std::numeric_limits<double>::quiet_NaN();
-		sco2_rc_des_par.m_fixed_PR_HP_to_LP = false;
+		s_sco2_des_par.m_PR_HP_to_LP_guess = std::numeric_limits<double>::quiet_NaN();
+		s_sco2_des_par.m_fixed_PR_HP_to_LP = false;
 	}
 
     double PR_HP_to_IP_in = cm->as_double("is_IP_fixed");
     if (PR_HP_to_IP_in != 0.0)
     {
-        if (!sco2_rc_des_par.m_fixed_PR_HP_to_LP)
+        if (!s_sco2_des_par.m_fixed_PR_HP_to_LP)
         {   // If HP to LP pressure ratio is not fixed, then don't fix HP to IP, regardless of input
-            sco2_rc_des_par.m_f_PR_HP_to_IP_guess = std::numeric_limits<double>::quiet_NaN();
-            sco2_rc_des_par.m_fixed_f_PR_HP_to_IP = false;
+            s_sco2_des_par.m_f_PR_HP_to_IP_guess = std::numeric_limits<double>::quiet_NaN();
+            s_sco2_des_par.m_fixed_f_PR_HP_to_IP = false;
         }
         else
         {
-            sco2_rc_des_par.m_fixed_f_PR_HP_to_IP = true;
-            double P_LP_in_local = sco2_rc_des_par.m_P_high_limit / sco2_rc_des_par.m_PR_HP_to_LP_guess;    //[kPa]
+            s_sco2_des_par.m_fixed_f_PR_HP_to_IP = true;
+            double P_LP_in_local = s_sco2_des_par.m_P_high_limit / s_sco2_des_par.m_PR_HP_to_LP_guess;    //[kPa]
             double P_IP_in_local = fabs(PR_HP_to_IP_in)*1.E3;      //[kPa]
             if (PR_HP_to_IP_in > 0.0)
             {
-                P_IP_in_local = sco2_rc_des_par.m_P_high_limit / PR_HP_to_IP_in;  //[-]
+                P_IP_in_local = s_sco2_des_par.m_P_high_limit / PR_HP_to_IP_in;  //[-]
             }
-            sco2_rc_des_par.m_f_PR_HP_to_IP_guess = (sco2_rc_des_par.m_P_high_limit - P_IP_in_local) / (sco2_rc_des_par.m_P_high_limit - P_LP_in_local);  //[kPa]
+            s_sco2_des_par.m_f_PR_HP_to_IP_guess = (s_sco2_des_par.m_P_high_limit - P_IP_in_local) / (s_sco2_des_par.m_P_high_limit - P_LP_in_local);  //[kPa]
         }
     }
     else
     {
-        sco2_rc_des_par.m_f_PR_HP_to_IP_guess = std::numeric_limits<double>::quiet_NaN();
-        sco2_rc_des_par.m_fixed_f_PR_HP_to_IP = false;
+        s_sco2_des_par.m_f_PR_HP_to_IP_guess = std::numeric_limits<double>::quiet_NaN();
+        s_sco2_des_par.m_fixed_f_PR_HP_to_IP = false;
     }
 
         // LTR pressure drops
@@ -986,44 +988,44 @@ int sco2_design_cmod_common(compute_module *cm, C_sco2_phx_air_cooler & c_sco2_c
 	DP_PC[0] = 0;
 	DP_PC[1] = -cm->as_double("deltaP_cooler_frac");		//[-]
 	
-	sco2_rc_des_par.m_DP_LT = DP_LT;
-	sco2_rc_des_par.m_DP_HT = DP_HT;
-	sco2_rc_des_par.m_DP_PC = DP_PC;
-	sco2_rc_des_par.m_DP_PHX = DP_PHX;
-	sco2_rc_des_par.m_N_sub_hxrs = 10;
+	s_sco2_des_par.m_DP_LT = DP_LT;
+	s_sco2_des_par.m_DP_HT = DP_HT;
+	s_sco2_des_par.m_DP_PC = DP_PC;
+	s_sco2_des_par.m_DP_PHX = DP_PHX;
+	s_sco2_des_par.m_N_sub_hxrs = 10;
 
 	// 1.30.17 twn: try 30k
 	//sco2_rc_des_par.m_N_turbine = 3600.0;
-	sco2_rc_des_par.m_N_turbine = 30000.0;
+    s_sco2_des_par.m_N_turbine = 30000.0;
 
 	//sco2_rc_des_par.m_tol = 1.E-3;
 	//sco2_rc_des_par.m_opt_tol = 1.E-3;
-	sco2_rc_des_par.m_tol = pow(10, -cm->as_double("rel_tol"));
-	sco2_rc_des_par.m_opt_tol = pow(10, -cm->as_double("rel_tol"));
+	s_sco2_des_par.m_tol = pow(10, -cm->as_double("rel_tol"));
+	s_sco2_des_par.m_opt_tol = pow(10, -cm->as_double("rel_tol"));
 
 	// Remaining cycle design parameters
         // LTR
-	sco2_rc_des_par.m_LTR_eff_max = cm->as_double("LT_recup_eff_max");  //[-]
+    s_sco2_des_par.m_LTR_eff_max = cm->as_double("LT_recup_eff_max");  //[-]
 	    // HTR
-    sco2_rc_des_par.m_HTR_eff_max = cm->as_double("HT_recup_eff_max");  //[-]
+    s_sco2_des_par.m_HTR_eff_max = cm->as_double("HT_recup_eff_max");  //[-]
         // Turbomachinery
-	sco2_rc_des_par.m_eta_mc = cm->as_double("eta_isen_mc");		   //[-]
-	sco2_rc_des_par.m_eta_rc = cm->as_double("eta_isen_rc");		   //[-]
-	if (sco2_rc_des_par.m_cycle_config == 2)
-		sco2_rc_des_par.m_eta_pc = cm->as_double("eta_isen_pc");		   //[-]
+	s_sco2_des_par.m_eta_mc = cm->as_double("eta_isen_mc");		   //[-]
+	s_sco2_des_par.m_eta_rc = cm->as_double("eta_isen_rc");		   //[-]
+	if (s_sco2_des_par.m_cycle_config == 2)
+        s_sco2_des_par.m_eta_pc = cm->as_double("eta_isen_pc");		   //[-]
 	else
-		sco2_rc_des_par.m_eta_pc = sco2_rc_des_par.m_eta_mc;
-	sco2_rc_des_par.m_eta_t = cm->as_double("eta_isen_t");			   //[-]
+        s_sco2_des_par.m_eta_pc = s_sco2_des_par.m_eta_mc;
+    s_sco2_des_par.m_eta_t = cm->as_double("eta_isen_t");			   //[-]
 
 	// PHX design parameters
-	sco2_rc_des_par.m_des_objective_type = cm->as_integer("des_objective");		//[-] 
-	sco2_rc_des_par.m_min_phx_deltaT = cm->as_double("min_phx_deltaT");			//[C]
-	sco2_rc_des_par.m_phx_dt_cold_approach = cm->as_double("dT_PHX_cold_approach");  //[C]
+	s_sco2_des_par.m_des_objective_type = cm->as_integer("des_objective");		//[-] 
+	s_sco2_des_par.m_min_phx_deltaT = cm->as_double("min_phx_deltaT");			//[C]
+	s_sco2_des_par.m_phx_dt_cold_approach = cm->as_double("dT_PHX_cold_approach");  //[C]
 
 	// Air cooler parameters
-	sco2_rc_des_par.m_is_des_air_cooler = cm->as_boolean("is_design_air_cooler");
-	sco2_rc_des_par.m_frac_fan_power = cm->as_double("fan_power_frac");         //[-]
-	sco2_rc_des_par.m_deltaP_cooler_frac = cm->as_double("deltaP_cooler_frac");	//[-]
+	s_sco2_des_par.m_is_des_air_cooler = cm->as_boolean("is_design_air_cooler");
+	s_sco2_des_par.m_frac_fan_power = cm->as_double("fan_power_frac");         //[-]
+	s_sco2_des_par.m_deltaP_cooler_frac = cm->as_double("deltaP_cooler_frac");	//[-]
 
 	// For try/catch below
 	int out_type = -1;
@@ -1035,7 +1037,7 @@ int sco2_design_cmod_common(compute_module *cm, C_sco2_phx_air_cooler & c_sco2_c
 
 	try
 	{
-		c_sco2_cycle.design(sco2_rc_des_par);
+		c_sco2_cycle.design(s_sco2_des_par);
 	}
 	catch (C_csp_exception &csp_exception)
 	{
@@ -1066,7 +1068,7 @@ int sco2_design_cmod_common(compute_module *cm, C_sco2_phx_air_cooler & c_sco2_c
 	std::vector<double> h_rc;		//[kJ/kg]
 	std::vector<double> P_pc;		//[MPa]
 	std::vector<double> h_pc;		//[kJ/kg]
-	int ph_err_code = sco2_cycle_plot_data_PH(sco2_rc_des_par.m_cycle_config,
+	int ph_err_code = sco2_cycle_plot_data_PH(s_sco2_des_par.m_cycle_config,
 		c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_temp,
 		c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_pres,
 		P_t,
@@ -1132,7 +1134,7 @@ int sco2_design_cmod_common(compute_module *cm, C_sco2_phx_air_cooler & c_sco2_c
 	std::vector<double> s_main_cooler;	//[kJ/kg-K]
 	std::vector<double> T_pre_cooler;	//[C]
 	std::vector<double> s_pre_cooler;	//[kJ/kg-K]
-	int plot_data_err_code = sco2_cycle_plot_data_TS(sco2_rc_des_par.m_cycle_config,
+	int plot_data_err_code = sco2_cycle_plot_data_TS(s_sco2_des_par.m_cycle_config,
 		c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_pres,
 		c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_entr,
 		T_LTR_HP,
@@ -1327,10 +1329,12 @@ int sco2_design_cmod_common(compute_module *cm, C_sco2_phx_air_cooler & c_sco2_c
 	cm->assign("pc_W_dot", (ssc_number_t)(-c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_W_dot_pc*1.E-3));	//[MWe] convert from kWe
 	cm->assign("pc_m_dot_des", (ssc_number_t)(c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_m_dot_pc));		//[kg/s]
 	int n_pc_stages = 0;
-	if (sco2_rc_des_par.m_cycle_config == 2)
+	if (s_sco2_des_par.m_cycle_config == 2)
 	{
 		cm->assign("pc_T_in_des", (ssc_number_t)(c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.ms_pc_ms_des_solved.m_T_in - 273.15));
 		cm->assign("pc_P_in_des", (ssc_number_t)(c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.ms_pc_ms_des_solved.m_P_in*1.E-3));
+        cm->assign("pc_rho_in_des", (ssc_number_t)(c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_dens[C_sco2_cycle_core::PC_IN])); //[kg/m3]
+        cm->assign("pc_ideal_spec_work_des", (ssc_number_t)(c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.ms_pc_ms_des_solved.m_isen_spec_work));    //[kJ/kg]
 		cm->assign("pc_phi_des", (ssc_number_t)(c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.ms_pc_ms_des_solved.m_phi_des)); //[-]
 
 		n_pc_stages = c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.ms_pc_ms_des_solved.m_n_stages;		//[-]
@@ -1360,6 +1364,8 @@ int sco2_design_cmod_common(compute_module *cm, C_sco2_phx_air_cooler & c_sco2_c
 		double ssc_nan = std::numeric_limits<ssc_number_t>::quiet_NaN();
 		cm->assign("pc_T_in_des", ssc_nan);
 		cm->assign("pc_P_in_des", ssc_nan);
+        cm->assign("pc_rho_in_des", ssc_nan);
+        cm->assign("pc_ideal_spec_work_des", ssc_nan);
 		cm->assign("pc_phi_des", ssc_nan);
 		cm->assign("pc_n_stages", ssc_nan);
 		cm->assign("pc_N_des", ssc_nan);
@@ -1460,7 +1466,7 @@ int sco2_design_cmod_common(compute_module *cm, C_sco2_phx_air_cooler & c_sco2_c
 	cm->assign("NTU_PHX", (ssc_number_t)c_sco2_cycle.get_design_solved()->ms_phx_des_solved.m_NTU_design);				//[-]
 	cm->assign("T_co2_PHX_in", (ssc_number_t)(c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_temp[C_sco2_cycle_core::HTR_HP_OUT] - 273.15));	//[C]
 	cm->assign("P_co2_PHX_in", (ssc_number_t)(c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_pres[C_sco2_cycle_core::HTR_HP_OUT] * 1.E-3));		//[MPa] convert from kPa
-	cm->assign("deltaT_HTF_PHX", (ssc_number_t)sco2_rc_des_par.m_T_htf_hot_in - T_htf_cold_calc);		//[K]
+	cm->assign("deltaT_HTF_PHX", (ssc_number_t)s_sco2_des_par.m_T_htf_hot_in - T_htf_cold_calc);		//[K]
 	cm->assign("q_dot_PHX", (ssc_number_t)(c_sco2_cycle.get_design_solved()->ms_phx_des_solved.m_Q_dot_design*1.E-3));	//[MWt] convert from kWt
 	double PHX_deltaP_frac = 1.0 - c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_pres[C_sco2_cycle_core::TURB_IN] /
 		c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_pres[C_sco2_cycle_core::HTR_HP_OUT];   //[-] Fractional pressure drop through co2 side of PHX
@@ -1484,7 +1490,7 @@ int sco2_design_cmod_common(compute_module *cm, C_sco2_phx_air_cooler & c_sco2_c
 	double cooler_tot_UA = c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.ms_LP_air_cooler.m_UA_total*1.E-6;	//[MW/K]
 	double cooler_tot_W_dot_fan = c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.ms_LP_air_cooler.m_W_dot_fan;	//[MWe]
 		// Intermediate Pressure Cooler
-	if (sco2_rc_des_par.m_cycle_config == 2)
+	if (s_sco2_des_par.m_cycle_config == 2)
 	{
 		cm->assign("IP_cooler_T_in", (ssc_number_t)(c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.ms_IP_air_cooler.m_T_in_co2 - 273.15));	//[C]
 		cm->assign("IP_cooler_P_in", (ssc_number_t)(c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.ms_IP_air_cooler.m_P_in_co2 / 1.E3));		//[MPa]
@@ -1514,8 +1520,8 @@ int sco2_design_cmod_common(compute_module *cm, C_sco2_phx_air_cooler & c_sco2_c
 	cm->assign("cooler_tot_W_dot_fan", (ssc_number_t)cooler_tot_W_dot_fan);	//[MWe]
 
 	cm->assign("cycle_cost", (ssc_number_t)cost_sum);		//[M$]
-	cm->assign("cycle_spec_cost", (ssc_number_t)(cost_sum*1.E6 / sco2_rc_des_par.m_W_dot_net));	//[$/kWe]
-	cm->assign("cycle_spec_cost_thermal", (ssc_number_t)(cost_sum*1.E6 / (sco2_rc_des_par.m_W_dot_net / c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_eta_thermal)));	//[$/kWt]
+	cm->assign("cycle_spec_cost", (ssc_number_t)(cost_sum*1.E6 / s_sco2_des_par.m_W_dot_net));	//[$/kWe]
+	cm->assign("cycle_spec_cost_thermal", (ssc_number_t)(cost_sum*1.E6 / (s_sco2_des_par.m_W_dot_net / c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_eta_thermal)));	//[$/kWt]
 
 		// State Points
 	ssc_number_t *p_T_state_points = cm->allocate("T_state_points", C_sco2_cycle_core::END_SCO2_STATES);
