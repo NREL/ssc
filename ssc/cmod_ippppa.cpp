@@ -317,13 +317,13 @@ static var_info vtab_ippppa[] = {
 
 
 
-							{ SSC_OUTPUT,        SSC_NUMBER,     "lcoptc_fed_real",                "Levelized Federal PTC (real)",                          "cents/kWh",    "",                      "DHF",      "*",                       "",                                         "" },
-							{ SSC_OUTPUT,        SSC_NUMBER,     "lcoptc_fed_nom",                 "Levelized Federal PTC (nominal)",                       "cents/kWh",    "",                      "DHF",      "*",                       "",                                         "" },
-							{ SSC_OUTPUT,        SSC_NUMBER,     "lcoptc_sta_real",                "Levelized State PTC (real)",                          "cents/kWh",    "",                      "DHF",      "*",                       "",                                         "" },
-							{ SSC_OUTPUT,        SSC_NUMBER,     "lcoptc_sta_nom",                 "Levelized State PTC (nominal)",                       "cents/kWh",    "",                      "DHF",      "*",                       "",                                         "" },
+							{ SSC_OUTPUT,        SSC_NUMBER,     "lcoptc_fed_real",                "Levelized Federal PTC (real)",                          "cents/kWh",    "",                      "",      "*",                       "",                                         "" },
+							{ SSC_OUTPUT,        SSC_NUMBER,     "lcoptc_fed_nom",                 "Levelized Federal PTC (nominal)",                       "cents/kWh",    "",                      "",      "*",                       "",                                         "" },
+							{ SSC_OUTPUT,        SSC_NUMBER,     "lcoptc_sta_real",                "Levelized State PTC (real)",                          "cents/kWh",    "",                      "",      "*",                       "",                                         "" },
+							{ SSC_OUTPUT,        SSC_NUMBER,     "lcoptc_sta_nom",                 "Levelized State PTC (nominal)",                       "cents/kWh",    "",                      "",      "*",                       "",                                         "" },
 
-							{ SSC_OUTPUT,        SSC_NUMBER,     "wacc",                "Weighted Average Cost of Capital (WACC)",                          "",    "",                      "DHF",      "*",                       "",                                         "" },
-							{ SSC_OUTPUT,        SSC_NUMBER,     "effective_tax_rate",                 "Effective Tax Rate",                       "",    "",                      "DHF",      "*",                       "",                                         "" },
+							{ SSC_OUTPUT,        SSC_NUMBER,     "wacc",                "Weighted Average Cost of Capital (WACC)",                          "",    "",                      "",      "*",                       "",                                         "" },
+							{ SSC_OUTPUT,        SSC_NUMBER,     "effective_tax_rate",                 "Effective Tax Rate",                       "",    "",                      "",      "*",                       "",                                         "" },
 
 
 
@@ -683,7 +683,7 @@ public:
 		ibi_uti_amount = as_double("ibi_uti_amount");
 		ibi_oth_amount = as_double("ibi_oth_amount");
 
-		// ibi percent - // 4/25/11 NOTE DHF models include IDC for ITC and depr bases but not for IBI bases
+		// ibi percent - // 4/25/11 NOTE models include IDC for ITC and depr bases but not for IBI bases
 		ibi_fed_per = as_double("ibi_fed_percent")*0.01*(total_cost - constr_total_financing);
 		if (ibi_fed_per > as_double("ibi_fed_percent_maxvalue")) ibi_fed_per = as_double("ibi_fed_percent_maxvalue");
 		ibi_sta_per = as_double("ibi_sta_percent")*0.01*(total_cost - constr_total_financing);
@@ -1424,7 +1424,7 @@ public:
 
 	void compute_production_incentive_IRS_2010_37(int cf_line, int nyears, const std::string &s_val, const std::string &s_term, const std::string &s_escal)
 	{
-		// rounding based on IRS document and emails from John and Matt from DHF Financials 2/24/2011 and DHF model v4.4
+		// rounding based on IRS document and emails 2/24/2011
 		size_t len = 0;
 		ssc_number_t *parr = as_array(s_val, &len);
 		int term = as_integer(s_term);
@@ -1433,7 +1433,7 @@ public:
 		if (len == 1)
 		{
 			for (int i = 1; i <= nyears; i++)
-				cf.at(cf_line, i) = (i <= term) ? cf.at(CF_energy_net, i) / 1000.0 * round_dhf(1000.0 * parr[0] * pow(1 + escal, i - 1)) : 0.0;
+				cf.at(cf_line, i) = (i <= term) ? cf.at(CF_energy_net, i) / 1000.0 * round_irs(1000.0 * parr[0] * pow(1 + escal, i - 1)) : 0.0;
 		}
 		else
 		{
