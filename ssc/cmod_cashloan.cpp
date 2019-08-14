@@ -135,7 +135,10 @@ static var_info vtab_cashloan[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sta_incentive_income_less_deductions",  "State incentive income less deductions",   "$",            "",                      "Cash Flow",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sta_taxable_income_less_deductions",    "State taxable income less deductions",     "$",            "",                      "Cash Flow",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sta_tax_savings",                       "State tax savings",                        "$",            "",                      "Cash Flow",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	
+
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sta_taxable_incentive_income",    "State taxable incentive income",     "$",            "",                      "Cash Flow",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_fed_taxable_incentive_income",    "Federal taxable incentive income",     "$",            "",                      "Cash Flow",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_fed_depr_sched",                        "Federal depreciation schedule",            "%",            "",                      "Cash Flow",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_fed_depreciation",                      "Federal depreciation",                     "$",            "",                      "Cash Flow",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_fed_incentive_income_less_deductions",  "Federal incentive income less deductions", "$",            "",                      "Cash Flow",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
@@ -152,15 +155,11 @@ static var_info vtab_cashloan[] = {
 	{ SSC_OUTPUT, SSC_ARRAY, "cf_discounted_payback", "Discounted payback", "$", "", "Cash Flow", "*", "LENGTH_EQUAL=cf_length", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "cf_discounted_cumulative_payback", "Cumulative discounted payback", "$", "", "Cash Flow", "*", "LENGTH_EQUAL=cf_length", "" },
 
-
-
 	{ SSC_OUTPUT, SSC_ARRAY, "cf_payback_with_expenses", "Simple payback with expenses", "$", "", "Cash Flow", "*", "LENGTH_EQUAL=cf_length", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "cf_cumulative_payback_with_expenses", "Cumulative simple payback with expenses", "$", "", "Cash Flow", "*", "LENGTH_EQUAL=cf_length", "" },
 
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_payback_without_expenses",              "Simple payback without expenses",                 "$",            "",                      "Cash Flow",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_cumulative_payback_without_expenses",   "Cumulative simple payback without expenses",      "$",            "",                      "Cash Flow",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	
-
 
 	{ SSC_OUTPUT,        SSC_NUMBER,     "lcoptc_fed_real",                "Levelized federal PTC (real)",                          "cents/kWh",    "",                      "Financial Metrics",      "*",                       "",                                         "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "lcoptc_fed_nom",                 "Levelized federal PTC (nominal)",                       "cents/kWh",    "",                      "Financial Metrics",      "*",                       "",                                         "" },
@@ -244,7 +243,10 @@ enum {
 	CF_sta_incentive_income_less_deductions,
 	CF_sta_taxable_income_less_deductions,
 	CF_sta_tax_savings,
-	
+
+	CF_sta_taxable_incentive_income,
+	CF_fed_taxable_incentive_income,
+
 	CF_fed_depr_sched,
 	CF_fed_depreciation,
 	CF_fed_incentive_income_less_deductions,
@@ -832,8 +834,10 @@ public:
 			cf.at(CF_sta_taxable_income_less_deductions, i) = taxable_incentive_income( i, "sta" )
 				+ cf.at(CF_deductible_expenses,i)
 				- cf.at(CF_sta_depreciation,i);
+
+			cf.at(CF_sta_taxable_incentive_income, i) = taxable_incentive_income(i, "sta");
 			
-// sales tax is in depreciable bases and is already written off according to depreciation schedule.
+			// sales tax is incf_fed_taxable_incentive_income" depreciable bases and is already written off according to depreciation schedule.
 //			if (is_commercial && i == 1) cf.at(CF_sta_taxable_income_less_deductions,i) -= total_sales_tax;
 
 			if (is_commercial || is_mortgage) // interest only deductible if residential mortgage or commercial
@@ -863,6 +867,8 @@ public:
 				+ cf.at(CF_deductible_expenses,i)
 				- cf.at(CF_fed_depreciation,i)
 				+ cf.at(CF_sta_tax_savings, i);
+
+			cf.at(CF_fed_taxable_incentive_income, i) = taxable_incentive_income(i, "fed");
 
 // sales tax is in depreciable bases and is already written off according to depreciation schedule.
 //			if (is_commercial && i == 1) cf.at(CF_fed_taxable_income_less_deductions, i) -= total_sales_tax;
@@ -1055,10 +1061,6 @@ public:
 		save_cf(CF_nte, nyears, "cf_nte");
 		assign( "year1_nte", var_data((ssc_number_t)cf.at(CF_nte,1)) );
 
-
-
-
-
 		assign( "cf_length", var_data( (ssc_number_t) nyears+1 ));
 
 		assign("payback", var_data((ssc_number_t)payback));
@@ -1162,6 +1164,9 @@ public:
 		save_cf( CF_sta_taxable_income_less_deductions, nyears, "cf_sta_taxable_income_less_deductions" );
 		save_cf( CF_sta_tax_savings, nyears, "cf_sta_tax_savings" );
 	
+		save_cf( CF_sta_taxable_incentive_income, nyears, "cf_sta_taxable_incentive_income");
+		save_cf( CF_fed_taxable_incentive_income, nyears, "cf_fed_taxable_incentive_income");
+
 		save_cf( CF_fed_depr_sched, nyears, "cf_fed_depr_sched" );
 		save_cf( CF_fed_depreciation, nyears, "cf_fed_depreciation" );
 		save_cf( CF_fed_incentive_income_less_deductions, nyears, "cf_fed_incentive_income_less_deductions" );
