@@ -102,7 +102,7 @@ endif(MSVC)
 
 add_library(shared STATIC ${SHARED_SRC})
 
-target_include_directories(shared PUBLIC ../splinter)
+target_include_directories(shared PUBLIC . ../splinter)
 
 set_target_properties(shared
     PROPERTIES
