@@ -21,8 +21,6 @@ endif()
 
 Project(tcsconsole)
 
-include_directories(. $ENV{WEXDIR}/include $ENV{LKDIR}/include ../tcs)
-
 set(TCSCONSOLE_SRC
 	tcsscript.cpp
 	tcsmain.cpp
@@ -98,6 +96,9 @@ add_executable(TCSConsole
 	MACOSX_BUNDLE
 	${TCSCONSOLE_SRC}
 	${TCSCONSOLE_ICON})
+
+target_include_directories(TCSConsole PUBLIC ../../wex/include ../../lk/include ../tcs)
+
 set_target_properties(TCSConsole
     PROPERTIES
     DEBUG_POSTFIX "d"
@@ -139,10 +140,10 @@ else()
 	unset(LK_LIB CACHE)
 	find_library( WEX_LIB
 			NAMES wex.a wex.lib
-			PATHS $ENV{WEXDIR}/build $ENV{WEXDIR}/build/Release)
+			PATHS ../../wex/build ../../wex//build/Release)
 	find_library( LK_LIB
 			NAMES lk.a lk.lib
-			PATHS $ENV{LKDIR}/build $ENV{LKDIR}/build/Release)
+			PATHS ../../lk/build ../../lk/build/Release)
 	target_link_libraries(TCSConsole optimized ${WEX_LIB} optimized ${LK_LIB})
 		
 	if (CMAKE_BUILD_TYPE STREQUAL "Debug" OR MSVC)
@@ -150,10 +151,10 @@ else()
 		unset(WEXD_LIB CACHE)
 		find_library( WEXD_LIB
 				NAMES wexd.a wexd.lib
-				PATHS $ENV{WEXDIR}/build $ENV{WEXDIR}/build/Debug)
+				PATHS ../../wex/build ../../wex/build/Debug)
 		find_library( LKD_LIB
 				NAMES lkd.a lkd.lib
-				PATHS $ENV{LKDIR}/build $ENV{LKDIR}/build/Debug)
+				PATHS ../../lk/build ../../lk/build/Debug)
 		target_link_libraries(TCSConsole debug ${WEXD_LIB} debug ${LKD_LIB})
 	endif()
 endif()
@@ -165,7 +166,7 @@ if (UNIX)
 elseif (MSVC)
 	find_library( CURL_LIB
 			NAMES libcurl.lib
-			PATHS $ENV{WEXDIR}/build_vs2017/libcurl_ssl_x64/lib)
+			PATHS ../../wex/build_vs2017/libcurl_ssl_x64/lib)
 	target_link_libraries(TCSConsole ${CURL_LIB})
 	target_link_libraries(TCSConsole Winhttp)
 endif()
@@ -200,7 +201,7 @@ if(MSVC)
 		TARGET TCSConsole
 		POST_BUILD
 		COMMAND ${CMAKE_COMMAND}
-		ARGS -E copy $ENV{WEXDIR}/build_vs2017/libcurl_ssl_x64/bin/${file_i} ${TCSCONSOLE_DIR}
+		ARGS -E copy ../../wex/build_vs2017/libcurl_ssl_x64/bin/${file_i} ${TCSCONSOLE_DIR}
 	)
 	endforeach( file_i )
 

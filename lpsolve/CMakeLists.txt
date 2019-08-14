@@ -19,8 +19,6 @@ endif()
 
 Project(lpsolve)
 
-include_directories(.)
-
 set(LPSOLVE_SRC
 	colamd.c
 	commonlib.c
