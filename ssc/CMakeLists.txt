@@ -164,7 +164,7 @@ set_target_properties(ssc
 	)
 
 # dltest executable for checking ssc library
-if(UNIX AND NOT SAM_EXPORT)
+if(UNIX AND NOT SAMAPI_EXPORT)
 	add_executable(dltest ../build_osx/dltest.c)
 	if (NOT APPLE)
 		target_link_libraries(dltest -ldl -Wl,--no-as-needed)
@@ -177,7 +177,7 @@ endif()
 
 # libssc for PySAM
 if(APPLE)
-	if (SAM_EXPORT)
+	if (SAMAPI_EXPORT)
 		set(CMAKE_MACOSX_RPATH 1)
 		set_property(TARGET ssc PROPERTY PREFIX "lib")
 		set(CMAKE_SHARED_LIBRARY_SUFFIX ".so")
