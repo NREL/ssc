@@ -133,6 +133,10 @@ if(MSVC)
 	add_custom_command(
 	    TARGET SSCtest
 	    POST_BUILD
+		COMMAND ${CMAKE_COMMAND}
+		ARGS -E remove -f ${TEST_DIR}/$<TARGET_FILE_BASE_NAME:ssc>.lib 
+		COMMAND ${CMAKE_COMMAND}
+		ARGS -E remove -f ${TEST_DIR}/$<TARGET_FILE_BASE_NAME:ssc>.dll
 	    COMMAND ${CMAKE_COMMAND}
 	    ARGS -E copy $<TARGET_FILE:ssc> ${SSC_LIB} ${TEST_DIR}
 	)
