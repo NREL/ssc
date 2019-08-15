@@ -19,6 +19,8 @@ endif()
 
 Project(splinter)
 
+include_directories(. ../ssc)
+
 set(SPLINTER_SRC
 	bspline.cpp
 	bsplinebasis.cpp
@@ -71,9 +73,6 @@ endif(MSVC)
 #####################################################################################################################
 
 add_library(splinter STATIC ${SPLINTER_SRC})
-
-target_include_directories(splinter PUBLIC ../ssc)
-
 set_target_properties(splinter
     PROPERTIES
     DEBUG_POSTFIX "d"

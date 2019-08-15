@@ -19,6 +19,8 @@ endif()
 
 Project(tcs)
 
+include_directories(. ../nlopt ../shared ../splinter ../lpsolve ../solarpilot)
+
 set(TCS_SRC
 		atmospheric_aod.cpp
 		co2_compressor_library.cpp
@@ -151,9 +153,6 @@ endif(MSVC)
 #####################################################################################################################
 
 add_library(tcs STATIC ${TCS_SRC})
-
-target_include_directories(tcs PUBLIC ../nlopt ../shared ../splinter ../lpsolve ../solarpilot)
-
 set_target_properties(tcs
     PROPERTIES
     DEBUG_POSTFIX "d"

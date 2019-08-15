@@ -155,7 +155,7 @@ endif(MSVC)
 
 add_library(ssc SHARED ${SSC_SRC})
 
-target_include_directories(ssc PRIVATE ../splinter ../shared ../nlopt ../lpsolve ../solarpilot ../tcs ../ssc)
+target_include_directories(ssc PRIVATE . ../splinter ../shared ../nlopt ../lpsolve ../solarpilot ../tcs ../ssc)
 
 set_target_properties(ssc
     PROPERTIES
@@ -163,8 +163,9 @@ set_target_properties(ssc
     DEBUG_POSTFIX "d"
 	)
 
+
 # dltest executable for checking ssc library
-if(UNIX AND NOT SAMAPI_EXPORT)
+if(UNIX AND NOT system_advisor_model_EXPORT)
 	add_executable(dltest ../build_osx/dltest.c)
 	if (NOT APPLE)
 		target_link_libraries(dltest -ldl -Wl,--no-as-needed)
@@ -177,7 +178,7 @@ endif()
 
 # libssc for PySAM
 if(APPLE)
-	if (SAMAPI_EXPORT)
+	if (system_advisor_model_EXPORT)
 		set(CMAKE_MACOSX_RPATH 1)
 		set_property(TARGET ssc PROPERTY PREFIX "lib")
 		set(CMAKE_SHARED_LIBRARY_SUFFIX ".so")

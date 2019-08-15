@@ -27,6 +27,9 @@ elseif (DEFINED ENV{GTEST})
 	set(GTDIR $ENV{GTEST})
 endif()
 
+include_directories(${GTDIR}/include ${GTDIR}/googletest/include . input_cases shared_test ssc_test tcs_test 
+						../ssc ../tcs ../solarpilot ../shared ../splinter )
+
 file(GLOB SSC_TESTS ssc_test/*.cpp)
 file(GLOB SHARED_TESTS shared_test/*.cpp)
 file(GLOB TCS_TESTS tcs_test/*.cpp)
@@ -46,8 +49,8 @@ set(CMAKE_CXX_STANDARD 11)
 
 if(MSVC)
 	add_compile_options(/MP /W3 /wd4244)
-    	add_compile_definitions( __64BIT__ __WINDOWS__ _CRT_SECURE_NO_WARNINGS _MBCS )
-    	foreach (flag_var CMAKE_C_FLAGS_DEBUG CMAKE_CXX_FLAGS_DEBUG)
+    add_compile_definitions( __64BIT__ __WINDOWS__ _CRT_SECURE_NO_WARNINGS _MBCS )
+    foreach (flag_var CMAKE_C_FLAGS_DEBUG CMAKE_CXX_FLAGS_DEBUG)
 		set(${flag_var} "${${flag_var}} /D_DEBUG" CACHE STRING "compile flags" FORCE)
 	endforeach()
 else()
@@ -78,9 +81,6 @@ add_executable(Test
 	${SSC_SRC}
 	${SRC_TO_TEST}
 	main.cpp)
-
-target_include_directories(Test PUBLIC ${GTDIR}/include ${GTDIR}/googletest/include . input_cases shared_test ssc_test tcs_test
-		../ssc ../tcs ../solarpilot ../shared ../splinter )
 
 set_target_properties(Test
     PROPERTIES
@@ -134,7 +134,7 @@ if(MSVC)
 		TARGET Test
 		POST_BUILD
 		COMMAND ${CMAKE_COMMAND}
-		ARGS -E copy ../../wex/build_vs2017/libcurl_ssl_x64/bin/${file_i} ${TEST_DIR}
+		ARGS -E copy $ENV{WEXDIR}/build_vs2017/libcurl_ssl_x64/bin/${file_i} ${TEST_DIR}
 	)
 	endforeach( file_i )
 

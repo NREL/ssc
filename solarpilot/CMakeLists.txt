@@ -19,6 +19,8 @@ endif()
 
 Project(solarpilot)
 
+include_directories(. ../nlopt ..)
+
 set(SOLARPILOT_SRC
 	fluxsim.cpp
 	API_structures.cpp
@@ -85,9 +87,6 @@ endif(MSVC)
 #####################################################################################################################
 
 add_library(solarpilot STATIC ${SOLARPILOT_SRC})
-
-target_include_directories(solarpilot PUBLIC ../nlopt ..)
-
 set_target_properties(solarpilot
     PROPERTIES
     DEBUG_POSTFIX "d"
