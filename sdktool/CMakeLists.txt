@@ -192,11 +192,12 @@ if (MSVC)
 	set(SDKTOOL_DIR ${CMAKE_CURRENT_BINARY_DIR}/$<$<CONFIG:Debug>:Debug>$<$<CONFIG:Release>:Release>)
 
 	foreach( file_i ${LIBCURL_FILES})
+		file(TO_CMAKE_PATH ${CMAKE_SOURCE_DIR}/wex/build_vs2017/libcurl_ssl_x64/bin/${file_i} LIB_PATH)
 		add_custom_command(
 		TARGET SDKtool
 		POST_BUILD
 		COMMAND ${CMAKE_COMMAND}
-		ARGS -E copy ../../wex/build_vs2017/libcurl_ssl_x64/bin/${file_i} ${SDKTOOL_DIR}
+		ARGS -E copy ${LIB_PATH} ${SDKTOOL_DIR}
 	)
 	endforeach( file_i )
 
