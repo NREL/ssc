@@ -236,7 +236,7 @@ TEST_F(CMTcsFresnelMoltenSalt, Rankine_Evap_Condenser_No_Financial_cmod_tcsfresn
 	{
 		ssc_number_t annual_energy;
 		ssc_data_get_number(data, "annual_energy", &annual_energy);
-		EXPECT_NEAR(annual_energy, 3.3657e8, 3.3657e8 * m_error_tolerance_lo) << "Annual Energy";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
+		EXPECT_NEAR(annual_energy, 3.54549e8, 3.54549e8 * m_error_tolerance_lo) << "Annual Energy";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
 
 		ssc_number_t annual_fuel_usage;
 		ssc_data_get_number(data, "annual_fuel_usage", &annual_fuel_usage);
@@ -244,19 +244,19 @@ TEST_F(CMTcsFresnelMoltenSalt, Rankine_Evap_Condenser_No_Financial_cmod_tcsfresn
 
 		ssc_number_t capacity_factor;
 		ssc_data_get_number(data, "capacity_factor", &capacity_factor);
-		EXPECT_NEAR(capacity_factor, 38.4213, 38.4213 * m_error_tolerance_lo) << "Capacity Factor";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
+		EXPECT_NEAR(capacity_factor, 40.4736, 40.4736 * m_error_tolerance_lo) << "Capacity Factor";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
 
 		ssc_number_t annual_W_cycle_gross;
 		ssc_data_get_number(data, "annual_W_cycle_gross", &annual_W_cycle_gross);
-		EXPECT_NEAR(annual_W_cycle_gross, 3.62792e8, 3.62792e8 * m_error_tolerance_lo) << "Annual W_cycle Gross";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
+		EXPECT_NEAR(annual_W_cycle_gross, 3.84127e8, 3.84127e8 * m_error_tolerance_lo) << "Annual W_cycle Gross";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
 
 		ssc_number_t kwh_per_kw;
 		ssc_data_get_number(data, "kwh_per_kw", &kwh_per_kw);
-		EXPECT_NEAR(kwh_per_kw, 3365.7, 3365.7 * m_error_tolerance_lo) << "kwh per kw";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
+		EXPECT_NEAR(kwh_per_kw, 3545.49, 3545.49 * m_error_tolerance_lo) << "kwh per kw";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
 
 		ssc_number_t conversion_factor;
 		ssc_data_get_number(data, "conversion_factor", &conversion_factor);
-		EXPECT_NEAR(conversion_factor, 96.6376, 96.6376 * m_error_tolerance_lo) << "Conversion Factor";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
+		EXPECT_NEAR(conversion_factor, 96.1456, 96.1456 * m_error_tolerance_lo) << "Conversion Factor";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
 
 		ssc_number_t system_heat_rate;
 		ssc_data_get_number(data, "system_heat_rate", &system_heat_rate);
@@ -264,7 +264,7 @@ TEST_F(CMTcsFresnelMoltenSalt, Rankine_Evap_Condenser_No_Financial_cmod_tcsfresn
 
 		ssc_number_t annual_total_water_use;
 		ssc_data_get_number(data, "annual_total_water_use", &annual_total_water_use);
-		EXPECT_NEAR(annual_total_water_use, 871237, 871237 * m_error_tolerance_lo) << "Annual Total Water Use";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
+		EXPECT_NEAR(annual_total_water_use, 998592, 998592 * m_error_tolerance_lo) << "Annual Total Water Use";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
 	}
 }
 
