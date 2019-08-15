@@ -24,6 +24,8 @@ if (NOT EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/config.h)
 	execute_process(COMMAND cp config.h ${CMAKE_CURRENT_SOURCE_DIR})
 endif()
 
+include_directories(.)
+
 set(NLOPT_SRC
 	auglag.c
 	bobyqa.c

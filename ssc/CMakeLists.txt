@@ -20,6 +20,8 @@ endif()
 
 Project(ssc)
 
+include_directories(. ../splinter ../shared ../nlopt ../lpsolve ../solarpilot ../tcs ../ssc)
+
 set(SSC_SRC
 		cmod_6parsolve.cpp
 		cmod_annualoutput.cpp
