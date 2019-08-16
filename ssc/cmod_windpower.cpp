@@ -56,72 +56,69 @@
 
 static var_info _cm_vtab_windpower[] = {
 	// VARTYPE     DATATYPE     NAME                                    LABEL                                        UNITS     META    GROUP                                REQUIRED_IF                       CONSTRAINTS                                          UI_HINTS
-	{ SSC_INPUT  , SSC_NUMBER , "wind_resource_model_choice"          , "Hourly or Weibull model"                  , "0/1"     ,""   , "Resource"                         , "*"                             , "INTEGER"                                          , "" } ,
-	{ SSC_INPUT  , SSC_STRING , "wind_resource_filename"              , "Local wind data file path"                , ""        ,""   , "Resource"                         , "?"                             , "LOCAL_FILE"                                       , "" } ,
-	{ SSC_INPUT  , SSC_TABLE  , "wind_resource_data"                  , "Wind resouce data in memory"              , ""        ,""   , "Resource"                         , "?"                             , ""                                                 , "" } ,
-    { SSC_INPUT  , SSC_MATRIX , "wind_resource_distribution"          , "Wind Speed x Dir Distribution as 2-D PDF" , "m/s,deg" ,""   , "Resource"                         , "wind_resource_model_choice=2"  , ""                                                 , "" } ,
-	{ SSC_INPUT  , SSC_NUMBER , "weibull_reference_height"            , "Reference height for Weibull wind speed"  , "m"       ,""   , "Resource"                         , "?=50"                          , "MIN=0"                                            , "" } ,
-	{ SSC_INPUT  , SSC_NUMBER , "weibull_k_factor"                    , "Weibull K factor for wind resource"       , ""        ,""   , "Resource"                         , "wind_resource_model_choice=1"  , ""                                                 , "" } ,
-	{ SSC_INPUT  , SSC_NUMBER , "weibull_wind_speed"                  , "Average wind speed for Weibull model"     , ""        ,""   , "Resource"                         , "wind_resource_model_choice=1"  , "MIN=0"                                            , "" } ,
+	{ SSC_INPUT  , SSC_NUMBER , "wind_resource_model_choice"         , "Hourly or Weibull model"                  , "0/1"     ,""                                    , "Resource"                             , "*"                                               , "INTEGER"                                         , "" } ,
+	{ SSC_INPUT  , SSC_STRING , "wind_resource_filename"             , "Local wind data file path"                , ""        ,""                                    , "Resource"                             , "?"                                               , "LOCAL_FILE"                                      , "" } ,
+	{ SSC_INPUT  , SSC_TABLE  , "wind_resource_data"                 , "Wind resouce data in memory"              , ""        ,""                                    , "Resource"                             , "?"                                               , ""                                                , "" } ,
+	{ SSC_INPUT  , SSC_MATRIX , "wind_resource_distribution"         , "Wind Speed x Dir Distribution as 2-D PDF" , "m/s,deg" ,"[(speed, direction, prob)]"          , "Resource"                             , "wind_resource_model_choice=2"                    , ""                                                , "" } ,
+	{ SSC_INPUT  , SSC_NUMBER , "weibull_reference_height"           , "Reference height for Weibull wind speed"  , "m"       ,""                                    , "Resource"                             , "?=50"                                            , "MIN=0"                                           , "" } ,
+	{ SSC_INPUT  , SSC_NUMBER , "weibull_k_factor"                   , "Weibull K factor for wind resource"       , ""        ,""                                    , "Resource"                             , "wind_resource_model_choice=1"                    , ""                                                , "" } ,
+	{ SSC_INPUT  , SSC_NUMBER , "weibull_wind_speed"                 , "Average wind speed for Weibull model"     , ""        ,""                                    , "Resource"                             , "wind_resource_model_choice=1"                    , "MIN=0"                                           , "" } ,
 
-	{ SSC_INPUT  , SSC_NUMBER , "wind_resource_shear"                 , "Shear exponent"                           , ""        ,""   , "Turbine"                          , "*"                             , "MIN=0"                                            , "" } ,
-	{ SSC_INPUT  , SSC_NUMBER , "wind_turbine_rotor_diameter"         , "Rotor diameter"                           , "m"       ,""   , "Turbine"                          , "*"                             , "POSITIVE"                                         , "" } ,
-	{ SSC_INOUT  , SSC_ARRAY  , "wind_turbine_powercurve_windspeeds"  , "Power curve wind speed array"             , "m/s"     ,""   , "Turbine"                          , "*"                             , ""                                                 , "" } ,
-	{ SSC_INOUT  , SSC_ARRAY  , "wind_turbine_powercurve_powerout"    , "Power curve turbine output array"         , "kW"      ,""   , "Turbine"                          , "*"                             , "LENGTH_EQUAL=wind_turbine_powercurve_windspeeds"  , "" } ,
-	{ SSC_INPUT  , SSC_NUMBER , "wind_turbine_hub_ht"                 , "Hub height"                               , "m"       ,""   , "Turbine"                          , "*"                             , "POSITIVE"                                         , "" } ,
-	{ SSC_INPUT  , SSC_NUMBER , "wind_turbine_max_cp"                 , "Max Coefficient of Power"                                   , ""        ,""   , "Turbine"                          , "wind_resource_model_choice=1"  , "MIN=0"                                            , "" } ,
+	{ SSC_INPUT  , SSC_NUMBER , "wind_resource_shear"                , "Shear exponent"                           , ""        ,""                                    , "Turbine"                              , "*"                                               , "MIN=0"                                           , "" } ,
+	{ SSC_INPUT  , SSC_NUMBER , "wind_turbine_rotor_diameter"        , "Rotor diameter"                           , "m"       ,""                                    , "Turbine"                              , "*"                                               , "POSITIVE"                                        , "" } ,
+	{ SSC_INOUT  , SSC_ARRAY  , "wind_turbine_powercurve_windspeeds" , "Power curve wind speed array"             , "m/s"     ,""                                    , "Turbine"                              , "*"                                               , ""                                                , "" } ,
+	{ SSC_INOUT  , SSC_ARRAY  , "wind_turbine_powercurve_powerout"   , "Power curve turbine output array"         , "kW"      ,""                                    , "Turbine"                              , "*"                                               , "LENGTH_EQUAL=wind_turbine_powercurve_windspeeds" , "" } ,
+	{ SSC_INPUT  , SSC_NUMBER , "wind_turbine_hub_ht"                , "Hub height"                               , "m"       ,""                                    , "Turbine"                              , "*"                                               , "POSITIVE"                                        , "" } ,
+	{ SSC_INPUT  , SSC_NUMBER , "wind_turbine_max_cp"                , "Max Coefficient of Power"                 , ""        ,""                                    , "Turbine"                              , "wind_resource_model_choice=1"                    , "MIN=0"                                           , "" } ,
 
-	{ SSC_INPUT  , SSC_NUMBER , "wind_farm_wake_model"                , "Wake Model [Simple, Park, EV, Constant]"  , "0/1/2/3" ,""   , "Farm"                             , "*"                             , "INTEGER"                                          , "" } ,
-	{ SSC_INPUT  , SSC_NUMBER , "wind_resource_turbulence_coeff"      , "Turbulence coefficient"                   , "%"       ,""   , "Farm"                             , "*"                             , "MIN=0"                                            , "" } ,
-	{ SSC_INPUT  , SSC_NUMBER , "system_capacity"                     , "Nameplate capacity"                       , "kW"      ,""   , "Farm"                             , "*"                             , "MIN=0"                                            , "" } ,
-	{ SSC_INPUT  , SSC_ARRAY  , "wind_farm_xCoordinates"              , "Turbine X coordinates"                    , "m"       ,""   , "Farm"                             , "*"                             , ""                                                 , "" } ,
-	{ SSC_INPUT  , SSC_ARRAY  , "wind_farm_yCoordinates"              , "Turbine Y coordinates"                    , "m"       ,""   , "Farm"                             , "*"                             , "LENGTH_EQUAL=wind_farm_xCoordinates"              , "" } ,
+	{ SSC_INPUT  , SSC_NUMBER , "wind_farm_wake_model"               , "Wake Model [Simple, Park, EV, Constant]"  , "0/1/2/3" ,""                                    , "Farm"                                 , "*"                                               , "INTEGER"                                         , "" } ,
+	{ SSC_INPUT  , SSC_NUMBER , "wind_resource_turbulence_coeff"     , "Turbulence coefficient"                   , "%"       ,""                                    , "Farm"                                 , "*"                                               , "MIN=0"                                           , "" } ,
+	{ SSC_INPUT  , SSC_NUMBER , "system_capacity"                    , "Nameplate capacity"                       , "kW"      ,""                                    , "Farm"                                 , "*"                                               , "MIN=0"                                           , "" } ,
+	{ SSC_INPUT  , SSC_ARRAY  , "wind_farm_xCoordinates"             , "Turbine X coordinates"                    , "m"       ,""                                    , "Farm"                                 , "*"                                               , ""                                                , "" } ,
+	{ SSC_INPUT  , SSC_ARRAY  , "wind_farm_yCoordinates"             , "Turbine Y coordinates"                    , "m"       ,""                                    , "Farm"                                 , "*"                                               , "LENGTH_EQUAL=wind_farm_xCoordinates"             , "" } ,
 
-	{ SSC_INPUT  , SSC_NUMBER , "en_low_temp_cutoff"                  , "Enable Low Temperature Cutoff"            , "0/1"     ,""   , "Losses"                           , "?=0"                           , "INTEGER"                                          , "" } ,
-	{ SSC_INPUT  , SSC_NUMBER , "low_temp_cutoff"                     , "Low Temperature Cutoff"                   , "C"       ,""   , "Losses"                           , "en_low_temp_cutoff=1"          , ""                                                 , "" } ,
-	{ SSC_INPUT  , SSC_NUMBER , "en_icing_cutoff"                     , "Enable Icing Cutoff"                      , "0/1"     ,""   , "Losses"                           , "?=0"                           , "INTEGER"                                          , "" } ,
-	{ SSC_INPUT  , SSC_NUMBER , "icing_cutoff_temp"                   , "Icing Cutoff Temperature"                 , "C"       ,""   , "Losses"                           , "en_icing_cutoff=1"             , ""                                                 , "" } ,
-	{ SSC_INPUT  , SSC_NUMBER , "icing_cutoff_rh"                     , "Icing Cutoff Relative Humidity"           , "%"       ,""   , "Losses"                           , "en_icing_cutoff=1"             , "MIN=0"                                            , "" } ,
-
-	{ SSC_INPUT  , SSC_NUMBER , "wake_int_loss"                       , "Internal wake effects loss percent"       , "%"       ,""   , "Losses"                           , "wind_farm_wake_model=3"        , ""                                                 , "" } ,
-    { SSC_INPUT  , SSC_NUMBER , "wake_ext_loss"                       , "External wake effects loss percent"       , "%"       ,""   , "Losses"                           , "?=0"                           , ""                                                 , "" } ,
-    { SSC_INPUT  , SSC_NUMBER , "wake_future_loss"                    , "Future wake effects loss percent"         , "%"       ,""   , "Losses"                           , "?=0"                           , ""                                                 , "" } ,
-    { SSC_INPUT  , SSC_NUMBER , "avail_bop_loss"                      , "Balance-of-plant availability loss"       , "%"       ,""   , "Losses"                           , "?=0"                           , ""                                                 , "" } ,
-    { SSC_INPUT  , SSC_NUMBER , "avail_grid_loss"                     , "Grid availability loss"                   , "%"       ,""   , "Losses"                           , "?=0"                           , ""                                                 , "" } ,
-    { SSC_INPUT  , SSC_NUMBER , "avail_turb_loss"                     , "Turbine availability loss"                , "%"       ,""   , "Losses"                           , "?=0"                           , ""                                                 , "" } ,
-    { SSC_INPUT  , SSC_NUMBER , "elec_eff_loss"                       , "Electrical efficiency loss"               , "%"       ,""   , "Losses"                           , "?=0"                           , ""                                                 , "" } ,
-    { SSC_INPUT  , SSC_NUMBER , "elec_eff_loss"                       , "Electrical parasitic consumption loss"    , "%"       ,""   , "Losses"                           , "?=0"                           , ""                                                 , "" } ,
-    { SSC_INPUT  , SSC_NUMBER , "env_degrad_loss"                     , "Environmental Degradation loss"           , "%"       ,""   , "Losses"                           , "?=0"                           , ""                                                 , "" } ,
-    { SSC_INPUT  , SSC_NUMBER , "env_exposure_loss"                   , "Environmental Exposure loss"              , "%"       ,""   , "Losses"                           , "?=0"                           , ""                                                 , "" } ,
-    { SSC_INPUT  , SSC_NUMBER , "env_ext_loss"                        , "Environmental External Conditions loss"   , "%"       ,""   , "Losses"                           , "?=0"                           , ""                                                 , "" } ,
-    { SSC_INPUT  , SSC_NUMBER , "env_icing_loss"                      , "Environmental Icing loss"                 , "%"       ,""   , "Losses"                           , "?=0"                           , ""                                                 , "" } ,
-    { SSC_INPUT  , SSC_NUMBER , "ops_env_loss"                        , "Environmental/Permit Curtailment loss"    , "%"       ,""   , "Losses"                           , "?=0"                           , ""                                                 , "" } ,
-    { SSC_INPUT  , SSC_NUMBER , "ops_grid_loss"                       , "Grid curtailment loss"                    , "%"       ,""   , "Losses"                           , "?=0"                           , ""                                                 , "" } ,
-    { SSC_INPUT  , SSC_NUMBER , "ops_load_loss"                       , "Load curtailment loss"                    , "%"       ,""   , "Losses"                           , "?=0"                           , ""                                                 , "" } ,
-    { SSC_INPUT  , SSC_NUMBER , "ops_strategies_loss"                 , "Operational strategies loss"              , "%"       ,""   , "Losses"                           , "?=0"                           , ""                                                 , "" } ,
-    { SSC_INPUT  , SSC_NUMBER , "turb_generic_loss"                   , "Turbine Generic Powercurve loss"          , "%"       ,""   , "Losses"                           , "?=0"                           , ""                                                 , "" } ,
-    { SSC_INPUT  , SSC_NUMBER , "turb_hysteresis_loss"                , "Turbine High Wind Hysteresis loss"        , "%"       ,""   , "Losses"                           , "?=0"                           , ""                                                 , "" } ,
-    { SSC_INPUT  , SSC_NUMBER , "turb_perf_loss"                      , "Turbine Sub-optimal performance loss"     , "%"       ,""   , "Losses"                           , "?=0"                           , ""                                                 , "" } ,
-    { SSC_INPUT  , SSC_NUMBER , "turb_specific_loss"                  , "Turbine Site-specific Powercurve loss"    , "%"       ,""   , "Losses"                           , "?=0"                           , ""                                                 , "" } ,
+	{ SSC_INPUT  , SSC_NUMBER , "en_low_temp_cutoff"                 , "Enable Low Temperature Cutoff"            , "0/1"     ,""                                    , "Losses"                               , "?=0"                                             , "INTEGER"                                         , "" } ,
+	{ SSC_INPUT  , SSC_NUMBER , "low_temp_cutoff"                    , "Low Temperature Cutoff"                   , "C"       ,""                                    , "Losses"                               , "en_low_temp_cutoff=1"                            , ""                                                , "" } ,
+	{ SSC_INPUT  , SSC_NUMBER , "en_icing_cutoff"                    , "Enable Icing Cutoff"                      , "0/1"     ,""                                    , "Losses"                               , "?=0"                                             , "INTEGER"                                         , "" } ,
+	{ SSC_INPUT  , SSC_NUMBER , "icing_cutoff_temp"                  , "Icing Cutoff Temperature"                 , "C"       ,""                                    , "Losses"                               , "en_icing_cutoff=1"                               , ""                                                , "" } ,
+	{ SSC_INPUT  , SSC_NUMBER , "icing_cutoff_rh"                    , "Icing Cutoff Relative Humidity"           , "%"       ,"'rh' required in wind_resource_data" , "Losses"                               , "en_icing_cutoff=1"                               , "MIN=0"                                           , "" } ,
+	{ SSC_INPUT  , SSC_NUMBER , "wake_loss"                          , "Wake effects loss percent"                , "%"       ,""                                    , "Losses"                               , "wind_farm_wake_model=3"                          , ""                                                , "" } ,
+	{ SSC_INPUT  , SSC_NUMBER , "avail_bop_loss"                     , "Balance-of-plant availability loss"       , "%"       ,""                                    , "Losses"                               , "?=0"                                             , ""                                                , "" } ,
+	{ SSC_INPUT  , SSC_NUMBER , "avail_grid_loss"                    , "Grid availability loss"                   , "%"       ,""                                    , "Losses"                               , "?=0"                                             , ""                                                , "" } ,
+	{ SSC_INPUT  , SSC_NUMBER , "avail_turb_loss"                    , "Turbine availabaility loss"               , "%"       ,""                                    , "Losses"                               , "?=0"                                             , ""                                                , "" } ,
+	{ SSC_INPUT  , SSC_NUMBER , "elec_eff_loss"                      , "Electrical efficiency loss"               , "%"       ,""                                    , "Losses"                               , "?=0"                                             , ""                                                , "" } ,
+	{ SSC_INPUT  , SSC_NUMBER , "elec_eff_loss"                      , "Electrical parasitic consumption loss"    , "%"       ,""                                    , "Losses"                               , "?=0"                                             , ""                                                , "" } ,
+	{ SSC_INPUT  , SSC_NUMBER , "env_degrad_loss"                    , "Environmental Degradation loss"           , "%"       ,""                                    , "Losses"                               , "?=0"                                             , ""                                                , "" } ,
+	{ SSC_INPUT  , SSC_NUMBER , "env_exposure_loss"                  , "Environmental Exposure loss"              , "%"       ,""                                    , "Losses"                               , "?=0"                                             , ""                                                , "" } ,
+	{ SSC_INPUT  , SSC_NUMBER , "env_ext_loss"                       , "Environmental External Conditions loss"   , "%"       ,""                                    , "Losses"                               , "?=0"                                             , ""                                                , "" } ,
+	{ SSC_INPUT  , SSC_NUMBER , "env_icing_loss"                     , "Environmental Icing loss"                 , "%"       ,""                                    , "Losses"                               , "?=0"                                             , ""                                                , "" } ,
+	{ SSC_INPUT  , SSC_NUMBER , "ops_env_loss"                       , "Environmental/Permit Curtailment loss"    , "%"       ,""                                    , "Losses"                               , "?=0"                                             , ""                                                , "" } ,
+	{ SSC_INPUT  , SSC_NUMBER , "ops_grid_loss"                      , "Grid curtailment loss"                    , "%"       ,""                                    , "Losses"                               , "?=0"                                             , ""                                                , "" } ,
+	{ SSC_INPUT  , SSC_NUMBER , "ops_load_loss"                      , "Load curtailment loss"                    , "%"       ,""                                    , "Losses"                               , "?=0"                                             , ""                                                , "" } ,
+	{ SSC_INPUT  , SSC_NUMBER , "ops_strategies_loss"                , "Operational strategies loss"              , "%"       ,""                                    , "Losses"                               , "?=0"                                             , ""                                                , "" } ,
+	{ SSC_INPUT  , SSC_NUMBER , "turb_generic_loss"                  , "Turbine Generic Powercurve loss"          , "%"       ,""                                    , "Losses"                               , "?=0"                                             , ""                                                , "" } ,
+	{ SSC_INPUT  , SSC_NUMBER , "turb_hysteresis_loss"               , "Turbine High Wind Hysteresis loss"        , "%"       ,""                                    , "Losses"                               , "?=0"                                             , ""                                                , "" } ,
+	{ SSC_INPUT  , SSC_NUMBER , "turb_perf_loss"                     , "Turbine Sub-optimal performance loss"     , "%"       ,""                                    , "Losses"                               , "?=0"                                             , ""                                                , "" } ,
+	{ SSC_INPUT  , SSC_NUMBER , "turb_specific_loss"                 , "Turbine Site-specific Powercurve loss"    , "%"       ,""                                    , "Losses"                               , "?=0"                                             , ""                                                , "" } ,
 
 
 
         // OUTPUTS ----------------------------------------------------------------------------annual_energy
-	{ SSC_OUTPUT , SSC_ARRAY  , "turbine_output_by_windspeed_bin"     , "Turbine output by wind speed bin"         , "kW"      ,""   , "Power Curve"                      ,""                               , "LENGTH_EQUAL=wind_turbine_powercurve_windspeeds"  , "" } ,
-	{ SSC_OUTPUT , SSC_ARRAY  , "wind_direction"                      , "Wind direction"                           , "deg"     ,""   , "Time Series"                      , "wind_resource_model_choice=0"  , ""                                                 , "" } ,
-	{ SSC_OUTPUT , SSC_ARRAY  , "wind_speed"                          , "Wind speed"                               , "m/s"     ,""   , "Time Series"                      , "wind_resource_model_choice=0"  , ""                                                 , "" } ,
-	{ SSC_OUTPUT , SSC_ARRAY  , "temp"                                , "Air temperature"                          , "'C"      ,""   , "Time Series"                      , "wind_resource_model_choice=0"  , ""                                                 , "" } ,
-	{ SSC_OUTPUT , SSC_ARRAY  , "pressure"                            , "Pressure"                                 , "atm"     ,""   , "Time Series"                      , "wind_resource_model_choice=0"  , ""                                                 , "" } ,
+	{ SSC_OUTPUT , SSC_ARRAY  , "turbine_output_by_windspeed_bin"    , "Turbine output by wind speed bin"         , "kW"      ,""                                    , "Power Curve"                      ,"" , "LENGTH_EQUAL=wind_turbine_powercurve_windspeeds" , "" } ,
+	{ SSC_OUTPUT , SSC_ARRAY  , "wind_direction"                     , "Wind direction"                           , "deg"     ,""                                    , "Time Series"                          , "wind_resource_model_choice=0"                    , ""                                                , "" } ,
+	{ SSC_OUTPUT , SSC_ARRAY  , "wind_speed"                         , "Wind speed"                               , "m/s"     ,""                                    , "Time Series"                          , "wind_resource_model_choice=0"                    , ""                                                , "" } ,
+	{ SSC_OUTPUT , SSC_ARRAY  , "temp"                               , "Air temperature"                          , "'C"      ,""                                    , "Time Series"                          , "wind_resource_model_choice=0"                    , ""                                                , "" } ,
+	{ SSC_OUTPUT , SSC_ARRAY  , "pressure"                           , "Pressure"                                 , "atm"     ,""                                    , "Time Series"                          , "wind_resource_model_choice=0"                    , ""                                                , "" } ,
 
-	{ SSC_OUTPUT , SSC_ARRAY  , "gen"                                 , "Total electric power to grid"             , "kWh"     ,""   , "(Sub)Hourly"                      , "*"                             , ""                                                 , "" } ,
+	{ SSC_OUTPUT , SSC_ARRAY  , "gen"                                , "Total electric power to grid"             , "kWh"     ,""                                    , "(Sub)Hourly"                          , "*"                                               , ""                                                , "" } ,
 
-	{ SSC_OUTPUT , SSC_ARRAY  , "monthly_energy"                      , "Monthly Energy"                           , "kWh"     ,""   , "Monthly"                          , "*"                             , "LENGTH=12"                                        , "" } ,
-	{ SSC_OUTPUT , SSC_NUMBER , "annual_energy"                       , "Annual Energy"                            , "kWh"     ,""   , "Annual"                           , "*"                             , ""                                                 , "" } ,
-    { SSC_OUTPUT , SSC_NUMBER , "annual_gross_energy"                 , "Annual Gross Energy"                      , "kWh"     ,""   , "Annual"                           , "*"                             , ""                                                 , "" } ,
-	{ SSC_OUTPUT , SSC_NUMBER , "capacity_factor"                     , "Capacity factor"                          , "%"       ,""   , "Annual"                           , "*"                             , ""                                                 , "" } ,
-	{ SSC_OUTPUT , SSC_NUMBER , "kwh_per_kw"                          , "First year kWh/kW"                        , "kWh/kW"  ,""   , "Annual"                           , "*"                             , ""                                                 , "" } ,
+	{ SSC_OUTPUT , SSC_ARRAY  , "monthly_energy"                     , "Monthly Energy"                           , "kWh"     ,""                                    , "Monthly"                              , "*"                                               , "LENGTH=12"                                       , "" } ,
+	{ SSC_OUTPUT , SSC_NUMBER , "annual_energy"                      , "Annual Energy"                            , "kWh"     ,""                                    , "Annual"                               , "*"                                               , ""                                                , "" } ,
+	{ SSC_OUTPUT , SSC_NUMBER , "annual_gross_energy"                , "Annual Gross Energy"                      , "kWh"     ,""                                    , "Annual"                               , "*"                                               , ""                                                , "" } ,
+	{ SSC_OUTPUT , SSC_NUMBER , "capacity_factor"                    , "Capacity factor"                          , "%"       ,""                                    , "Annual"                               , "*"                                               , ""                                                , "" } ,
+	{ SSC_OUTPUT , SSC_NUMBER , "kwh_per_kw"                         , "First year kWh/kW"                        , "kWh/kW"  ,""                                    , "Annual"                               , "*"                                               , ""                                                , "" } ,
 
-	{ SSC_OUTPUT , SSC_NUMBER , "cutoff_losses"                       , "Cutoff losses"                            , "%"       ,""   , "Annual"                           ,""                               , ""                                                 , "" } ,
+	{ SSC_OUTPUT , SSC_NUMBER , "cutoff_losses"                      , "Cutoff losses"                            , "%"       ,""                                    , "Annual"                           ,"" , ""                                                , "" } ,
 	var_info_invalid };
 
 winddata::winddata(var_data *data_table)
@@ -241,17 +238,15 @@ void cm_windpower::exec()
 	}
 	wt.setPowerCurve(windSpeeds, powerOutput);
 	// add up all the percent losses
-	std::vector<std::string> loss_names = { "wake_ext_loss", "wake_future_loss", "avail_bop_loss", "avail_grid_loss",
-                                         "avail_turb_loss", "elec_eff_loss", "elec_eff_loss", "env_degrad_loss",
-                                         "env_exposure_loss", "env_ext_loss", "env_icing_loss", "ops_env_loss",
-                                         "ops_grid_loss", "ops_load_loss", "ops_strategies_loss", "turb_generic_loss",
-                                         "turb_hysteresis_loss", "turb_perf_loss", "turb_specific_loss"};
-	wt.lossesRatio = 1.0;
+	std::vector<std::string> loss_names = { "avail_bop_loss", "avail_grid_loss", "avail_turb_loss", "elec_eff_loss",
+                                         "elec_eff_loss", "env_degrad_loss", "env_exposure_loss", "env_ext_loss",
+                                         "env_icing_loss", "ops_env_loss", "ops_grid_loss", "ops_load_loss",
+                                         "ops_strategies_loss", "turb_generic_loss", "turb_hysteresis_loss",
+                                         "turb_perf_loss", "turb_specific_loss"};
 	for (auto& loss : loss_names){
-	    wt.lossesRatio *= (1.0-as_double(loss)/100.);
+	    wt.lossesPercent += as_double(loss)/100.;
 	}
-	wt.lossesRatio = 1.0 - wt.lossesRatio;
-	if (wt.lossesRatio > 1){
+	if (wt.lossesPercent > 1){
 	    throw exec_error("windpower", "Total percent losses must be less than 100.");
 	}
 
@@ -299,7 +294,7 @@ void cm_windpower::exec()
 
 		double turbine_kw = wpc.windPowerUsingWeibull(weibull_k, avg_speed, ref_height, &turbine_outkW[0]);
 		ssc_number_t gross_energy = turbine_kw * wpc.nTurbines;
-		turbine_kw = turbine_kw * (1 - wt.lossesRatio/100.) - wt.lossesAbsolute;
+		turbine_kw = turbine_kw * (1 - wt.lossesPercent) - wt.lossesAbsolute;
 
 		int nstep = 8760;
 		ssc_number_t farm_kw = (ssc_number_t)turbine_kw * wpc.nTurbines / (ssc_number_t)nstep;
@@ -342,11 +337,14 @@ void cm_windpower::exec()
     }
     else if (wakeModelChoice == 3)
     {
-        double wake_loss_adj = 1.0 - as_double("wake_int_loss")/100.;
-        // applying the wake_loss_adj then the lossesRatio should result in a percent derate equal to wake_loss * lossesRatio
-        //double wake_loss_adj = 0;
-        //if (wt.lossesRatio != 1.)
-        //    wake_loss_adj = (1. - (wt.lossesRatio + wake_loss) ) / (1. - wt.lossesRatio );
+        double wake_loss = as_double("wake_loss")/100.;
+        if (wt.lossesPercent + wake_loss > 1){
+            throw exec_error("windpower", "Total percent losses must be less than 100.");
+        }
+        // applying the wake_loss_adj then the lossesPercent should result in a percent derate equal to wake_loss + lossesPercent
+        double wake_loss_adj = 0;
+        if (wt.lossesPercent != 1.)
+            wake_loss_adj = (1. - (wt.lossesPercent + wake_loss) ) / (1. - wt.lossesPercent );
         wakeModel = std::make_shared<constantWakeModel>(constantWakeModel(wpc.nTurbines, &wt, wake_loss_adj));
     }
     else{
