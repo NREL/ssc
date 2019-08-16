@@ -156,6 +156,9 @@ endif(MSVC)
 #####################################################################################################################
 
 add_library(ssc SHARED ${SSC_SRC})
+
+target_include_directories(ssc PRIVATE . ../splinter ../shared ../nlopt ../lpsolve ../solarpilot ../tcs ../ssc)
+
 set_target_properties(ssc
     PROPERTIES
     PREFIX ""
@@ -214,5 +217,22 @@ endif()
 
 if (MSVC)
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /SUBSYSTEM:WINDOWS")
+	
+	set(SSC_LIB $<TARGET_FILE_DIR:ssc>/$<TARGET_FILE_BASE_NAME:ssc>.lib)
+	add_custom_command(
+		TARGET ssc
+		POST_BUILD
+		COMMAND ${CMAKE_COMMAND}
+		ARGS -E copy $<TARGET_FILE:ssc> ${SSC_LIB} ${CMAKE_CURRENT_SOURCE_DIR}/../../deploy/x64
+		COMMAND ${CMAKE_COMMAND}
+		ARGS -E copy $<TARGET_FILE:ssc> ${SSC_LIB} ${CMAKE_CURRENT_BINARY_DIR}/../tcsconsole/$<$<CONFIG:Debug>:Debug>$<$<CONFIG:Release>:Release>
+		COMMAND ${CMAKE_COMMAND}
+		ARGS -E copy $<TARGET_FILE:ssc> ${SSC_LIB} ${CMAKE_CURRENT_BINARY_DIR}/../sdktool/$<$<CONFIG:Debug>:Debug>$<$<CONFIG:Release>:Release>
+		COMMAND ${CMAKE_COMMAND}
+		ARGS -E copy $<TARGET_FILE:ssc> ${SSC_LIB} ${CMAKE_CURRENT_BINARY_DIR}/../test/$<$<CONFIG:Debug>:Debug>$<$<CONFIG:Release>:Release>
+		COMMAND ${CMAKE_COMMAND}
+		ARGS -E copy $<TARGET_FILE:ssc> ${SSC_LIB} ${CMAKE_CURRENT_BINARY_DIR}/../../api/api_autogen/$<$<CONFIG:Debug>:Debug>$<$<CONFIG:Release>:Release>
+		)
+
 endif()
 

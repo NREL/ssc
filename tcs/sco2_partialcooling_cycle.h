@@ -267,6 +267,8 @@ private:
 	double m_eta_thermal_od;
 	double m_W_dot_net_od;
 	double m_Q_dot_PHX_od;
+    double m_Q_dot_mc_cooler_od;
+    double m_Q_dot_pc_cooler_od;
 
 	int design_core();
 
@@ -293,7 +295,8 @@ public:
 		m_objective_metric_last = m_objective_metric_opt = m_objective_metric_auto_opt = std::numeric_limits<double>::quiet_NaN();
 
 		mv_temp_od = mv_pres_od = mv_enth_od = mv_entr_od = mv_dens_od = m_temp_last;
-		m_eta_thermal_od = m_W_dot_net_od = m_Q_dot_PHX_od = std::numeric_limits<double>::quiet_NaN();
+		m_eta_thermal_od = m_W_dot_net_od = m_Q_dot_PHX_od =
+        m_Q_dot_mc_cooler_od = m_Q_dot_pc_cooler_od = std::numeric_limits<double>::quiet_NaN();
 	}
 
 	class C_MEQ__f_recomp__y_N_rc : public C_monotonic_equation
@@ -462,7 +465,11 @@ public:
 
 	int off_design_fix_shaft_speeds(S_od_par & od_phi_par_in);
 
-	int calculate_off_design_fan_power(double T_amb /*K*/, double & W_dot_fan /*MWe*/);
+	virtual int solve_OD_all_coolers_fan_power(double T_amb /*K*/, double & W_dot_fan /*MWe*/);
+
+    virtual int solve_OD_mc_cooler_fan_power(double T_amb /*K*/, double & W_dot_mc_cooler_fan /*MWe*/);
+
+    virtual int solve_OD_pc_cooler_fan_power(double T_amb /*K*/, double & W_dot_pc_cooler_fan /*MWe*/);
 
 	// Called by 'nlopt_callback_opt_des_1', so needs to be public
 	double design_cycle_return_objective_metric(const std::vector<double> &x);

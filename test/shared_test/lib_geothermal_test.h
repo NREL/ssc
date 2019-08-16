@@ -5,7 +5,7 @@
 #include "core.h"
 #include "lib_physics.h"
 
-#include "geothermal_common_data.h"
+#include "../input_cases/geothermal_common_data.h"
 
 static bool my_update_function(float percent, void *data)
 {

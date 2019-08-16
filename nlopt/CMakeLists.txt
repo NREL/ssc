@@ -109,6 +109,9 @@ endif(MSVC)
 #####################################################################################################################
 
 add_library(nlopt STATIC ${NLOPT_SRC})
+
+target_include_directories(nlopt PRIVATE .)
+
 set_target_properties(nlopt
     PROPERTIES
     DEBUG_POSTFIX "d"

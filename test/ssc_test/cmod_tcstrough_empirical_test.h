@@ -14,7 +14,7 @@
  * tcstrough_empirical can be tested
  * For now, this uses the SSCAPI interfaces to run the compute module and compare results
  */
-class CMtcsTroughEmpirical : public ::testing::Test {
+class CMTcsTroughEmpirical : public ::testing::Test {
 
 public:
 
