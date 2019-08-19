@@ -1569,6 +1569,23 @@ public:
 			}
 			//the estimated mass flow rate at design
 			m_dot_design = (Ap_tot*I_bn_des*opteff_des - loss_tot*float(nLoops)) / (c_htf_ave*(T_loop_out - T_loop_in_des));  //tn 4.25.11 using Ap_tot instead of A_loop. Change location of opteff_des
+            double m_dot_max = m_dot_htfmax * nLoops;
+            double m_dot_min = m_dot_htfmin * nLoops;
+            if (m_dot_design > m_dot_max) {
+                const char *msg = "The calculated field design mass flow rate of %.2f kg/s is greater than the maximum defined by the max single loop flow rate and number of loops (%.2f kg/s). "
+                    "The design mass flow rate is reset to the latter.";
+                std::string error_msg = util::format(msg, m_dot_design, m_dot_max);
+                message(TCS_NOTICE, error_msg.c_str());
+                m_dot_design = m_dot_max;
+            }
+            else if (m_dot_design < m_dot_min) {
+                const char *msg = "The calculated field design mass flow rate of %.2f kg/s is less than the minimum defined by the min single loop flow rate and number of loops (%.2f kg/s). "
+                    "The design mass flow rate is reset to the latter.";
+                std::string error_msg = util::format(msg, m_dot_design, m_dot_min);
+                message(TCS_NOTICE, error_msg.c_str());
+                m_dot_design = m_dot_min;
+            }
+
 			//mjw 1.16.2011 Design field thermal power 
 			q_design = m_dot_design * c_htf_ave * (T_loop_out - T_loop_in_des); //[Wt]
 			//mjw 1.16.2011 Convert the thermal inertia terms here
