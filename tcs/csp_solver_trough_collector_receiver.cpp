@@ -2692,6 +2692,16 @@ void C_csp_trough_collector_receiver::steady_state(const C_csp_weatherreader::S_
 
     } while (ss_diff / 200. > tol);
     
+    // Re-run runner and header pipe sizing using the same diameters to get the actual mass flows and velocities at steady state
+    double m_dot_ss = cr_out_solver.m_m_dot_salt_tot / 3600.;           // [kg/s]
+    bool custom_sf_pipe_sizes = true;
+    double rho_cold = m_htfProps.dens(T_htf_in_t_int_last[0], 10.e5); // [kg/m3]
+    double rho_hot = m_htfProps.dens(T_htf_out_t_int_last[m_nSCA - 1], 10.e5); // [kg/m3]
+    std::string summary;
+    rnr_and_hdr_design(m_nhdrsec, m_nfsec, m_nrunsec, rho_cold, rho_hot, m_V_hdr_cold_max, m_V_hdr_cold_min,
+        m_V_hdr_hot_max, m_V_hdr_hot_min, m_N_max_hdr_diams, m_dot_ss, m_D_hdr, m_D_runner,
+        m_m_dot_rnr_dsn, m_m_dot_hdr_dsn, m_V_rnr_dsn, m_V_hdr_dsn, &summary, custom_sf_pipe_sizes);
+
     // Set steady-state outputs
     transform(m_T_rnr.begin(), m_T_rnr.end(), m_T_rnr_dsn.begin(), [](double x) {return x - 273.15;});        // K to C
     transform(m_P_rnr.begin(), m_P_rnr.end(), m_P_rnr_dsn.begin(), [](double x) {return x / 1.e5;});          // Pa to bar
