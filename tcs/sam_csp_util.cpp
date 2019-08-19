@@ -1582,6 +1582,22 @@ bool CSP::flow_patterns( int n_panels, int crossover_shift, int flow_type, int &
 		for( int i = 0; i < n_panels; i++ )
 			flow_pattern.at( 0, i ) = n_panels/2 - 1 - i + i/(n_panels/2)*n_panels;
 		return true;
+    case 9:
+        /* This flow type has parallel flow paths with 2 panels in each path.
+            */
+        size_t n_panels_per_path = 2;
+        n_lines = n_panels / n_panels_per_path;     //[-]
+        flow_pattern.resize(n_lines, n_panels_per_path);
+
+        size_t i_start = n_panels/2 - (int)std::floor(n_panels/4);
+
+        for (size_t i = 0; i < n_lines; i++)
+        {
+            flow_pattern(i, 0) = (i_start + i) % n_panels;
+            flow_pattern(i, 1) = (i_start + i + n_lines) % n_panels;
+        }
+
+        return true;
 	};
 	return false;
 }
