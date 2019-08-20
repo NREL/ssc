@@ -214,19 +214,26 @@ bool mlmodel_module_t::operator() (pvinput_t &input, double T_C, double opvoltag
 	}
 
 	// Total effective irradiance
-	double S;
+	double S_front, S_total, S_eff_front, S_eff_total;
 	if(input.radmode != 3){ // Skip module cover effects if using POA reference cell data
-		S = (f_IAM_beam * input.Ibeam + f_IAM_diff * input.Idiff + groundRelfectionFraction * f_IAM_gnd * input.Ignd) * f_AM;
+		S_front = input.Ibeam + input.Idiff + input.Ignd;
+		S_total = S_front + input.Irear;  // Note the rear irradiance has already taken bifaciality into consideration
+		S_eff_front = (f_IAM_beam * input.Ibeam + f_IAM_diff * input.Idiff + groundRelfectionFraction * f_IAM_gnd * input.Ignd) * f_AM;
+		S_eff_total = S_eff_front + input.Irear * f_AM;
+		out.AOIModifier = S_eff_front / S_front;
     }
     else if(input.usePOAFromWF){ // Check if decomposed POA is required, if not use weather file POA directly
-		S = input.poaIrr;
+		S_total = S_eff_total = input.poaIrr;
+		out.AOIModifier = 1.0;
 	}
     else { // Otherwise use decomposed POA
-		S = (f_IAM_beam * input.Ibeam + f_IAM_diff * input.Idiff + groundRelfectionFraction * f_IAM_gnd * input.Ignd) * f_AM;
+		S_total = input.poaIrr;
+		S_eff_total = input.Ibeam + input.Idiff + input.Ignd + input.Irear;
+		out.AOIModifier = 1.0;
 	}
 
 	// Single diode model acc. to [1]
-	if (S >= 1)
+	if (S_eff_total >= 1)
 	{
 		double n=0.0, a=0.0, I_L=0.0, I_0=0.0, R_sh=0.0, I_sc=0.0;
 		double V_oc = V_oc_ref; // V_oc_ref as initial guess
@@ -245,16 +252,16 @@ bool mlmodel_module_t::operator() (pvinput_t &input, double T_C, double opvoltag
 		for (int i = 1; i <= iterations; i = i + 1) {
 			if (T_mode == T_MODE_FAIMAN) {
 				// T_cell = input.Tdry + (T_c_fa_alpha * G_total * (1 - eff)) / (T_c_fa_U0 + input.Wspd * T_c_fa_U1);
-				T_cell = input.Tdry + (T_c_fa_alpha * S * (1 - eff)) / (T_c_fa_U0 + input.Wspd * T_c_fa_U1);
+				T_cell = input.Tdry + (T_c_fa_alpha * S_eff_total* (1 - eff)) / (T_c_fa_U0 + input.Wspd * T_c_fa_U1);
 			}
 
 			n = n_0 + mu_n * (T_cell - T_ref);
 			a = N_series * k * (T_cell + T_0) * n / q;
-			I_L = (S / S_ref) * (I_Lref + alpha_isc * (T_cell - T_ref));
-			//I_L = (S / S_ref) * (I_Lref + alpha_isc / N_parallel * (T_cell - T_ref));
+			I_L = (S_eff_total/ S_ref) * (I_Lref + alpha_isc * (T_cell - T_ref));
+			//I_L = (S_eff_total/ S_ref) * (I_Lref + alpha_isc / N_parallel * (T_cell - T_ref));
 			I_0 = I_0ref * pow(((T_cell + T_0) / (T_ref + T_0)), 3) * exp((q * E_g) / (n * k) * (1 / (T_ref + T_0) - 1 / (T_cell + T_0)));
 
-			R_sh = R_shref + (R_sh0 - R_shref) * exp(-R_shexp * (S / S_ref));
+			R_sh = R_shref + (R_sh0 - R_shref) * exp(-R_shexp * (S_eff_total/ S_ref));
 
 			V_oc = openvoltage_5par_rec(V_oc, a, I_L, I_0, R_sh, D2MuTau, Vbi);
 			I_sc = I_L / (1 + R_s / R_sh);
@@ -271,7 +278,7 @@ bool mlmodel_module_t::operator() (pvinput_t &input, double T_C, double opvoltag
 				else I = current_5par_rec(V, 0.9*I_L, a, I_L, I_0, R_s, R_sh, D2MuTau, Vbi);
 				P = V*I;
 			}
-			eff = P / ((Width * Length) * (input.Ibeam + input.Idiff + input.Ignd));
+			eff = P / ((Width * Length) * S_total);
 		}
 
 		out.Power = P;
@@ -281,7 +288,6 @@ bool mlmodel_module_t::operator() (pvinput_t &input, double T_C, double opvoltag
 		out.Voc_oper = V_oc;
 		out.Isc_oper = I_sc;
 		out.CellTemp = T_cell;
-		out.AOIModifier = S / (input.Ibeam + input.Idiff + input.Ignd);
 	}
 
 	return out.Power >= 0;

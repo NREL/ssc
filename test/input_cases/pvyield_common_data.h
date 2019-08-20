@@ -274,6 +274,10 @@ void pvyield_no_financial_meteo(ssc_data_t& data)
     ssc_data_set_number(data, "sd11par_c3", 1.4874600172042847);
 
     // ml module model
+    ssc_data_set_number(data, "mlm_is_bifacial", 0);
+    ssc_data_set_number(data, "mlm_bifaciality", 0.6);
+    ssc_data_set_number(data, "mlm_bifacial_transmission_factor", 0.13);
+    ssc_data_set_number(data, "mlm_bifacial_ground_clearance_height", 1);
     ssc_data_set_number(data, "mlm_N_series", 72);
     ssc_data_set_number(data, "mlm_N_parallel", 1);
     ssc_data_set_number(data, "mlm_N_diodes", 3);
@@ -699,6 +703,10 @@ void pvyield_user_support_80603_meteo(ssc_data_t& data)
     ssc_data_set_number(data, "sd11par_c3", 1.4874600172042847);
 
     // ml module model
+    ssc_data_set_number(data, "mlm_is_bifacial", 0);
+    ssc_data_set_number(data, "mlm_bifaciality", 0.6);
+    ssc_data_set_number(data, "mlm_bifacial_transmission_factor", 0.13);
+    ssc_data_set_number(data, "mlm_bifacial_ground_clearance_height", 1);
     ssc_data_set_number(data, "mlm_N_series", 72);
     ssc_data_set_number(data, "mlm_N_parallel", 1);
     ssc_data_set_number(data, "mlm_N_diodes", 3);
@@ -1122,6 +1130,10 @@ void pvyield_user_support_80603_AZ(ssc_data_t& data)
     ssc_data_set_number(data, "sd11par_c3", 1.4874600172042847);
 
     // ml module model
+    ssc_data_set_number(data, "mlm_is_bifacial", 0);
+    ssc_data_set_number(data, "mlm_bifaciality", 0.6);
+    ssc_data_set_number(data, "mlm_bifacial_transmission_factor", 0.13);
+    ssc_data_set_number(data, "mlm_bifacial_ground_clearance_height", 1);
     ssc_data_set_number(data, "mlm_N_series", 72);
     ssc_data_set_number(data, "mlm_N_parallel", 1);
     ssc_data_set_number(data, "mlm_N_diodes", 3);

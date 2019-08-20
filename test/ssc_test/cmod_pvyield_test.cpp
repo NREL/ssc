@@ -36,6 +36,21 @@ TEST_F(CMPvYieldTimo, DefaultTimoModel_cmod_pvsamv1)
     }
 }
 
+
+TEST_F(CMPvYieldTimo, Bifacial_cmod_pvsamv1)
+{
+    pvyield_no_financial_meteo(data);
+    ssc_data_set_number(data, "mlm_is_bifacial", 1);
+    ssc_data_set_number(data, "mlm_bifaciality", 0.6);
+    ssc_data_set_number(data, "mlm_bifacial_transmission_factor", 0.13);
+    ssc_data_set_number(data, "mlm_bifacial_ground_clearance_height", 1);
+
+    int pvsam_errors = pvyield_test(data);
+    EXPECT_FALSE(pvsam_errors);
+    // TODO: check values
+}
+
+
 /// Test PVSAMv1 with inputs from PVYield and user support 80603 with meteo weather file
 TEST_F(CMPvYieldTimo, TimoModel80603_meteo_cmod_pvsamv1)
 {
