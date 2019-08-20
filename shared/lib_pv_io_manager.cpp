@@ -1136,6 +1136,10 @@ Module_IO::Module_IO(compute_module* cm, std::string cmName, double dcLoss)
 	else if (modulePowerModel == MODULE_IEC61853)
 	{
 		// IEC 61853 model
+		isBifacial = cm->as_boolean("sd11par_is_bifacial");
+		bifaciality = cm->as_double("sd11par_bifaciality");
+		bifacialTransmissionFactor = cm->as_double("sd11par_bifacial_transmission_factor");
+		groundClearanceHeight = cm->as_double("sd11par_bifacial_ground_clearance_height");
 		elevenParamSingleDiodeModel.NcellSer = cm->as_integer("sd11par_nser");
 		elevenParamSingleDiodeModel.Area = cm->as_double("sd11par_area");
 		elevenParamSingleDiodeModel.AMA[0] = cm->as_double("sd11par_AMa0");
@@ -1173,6 +1177,10 @@ Module_IO::Module_IO(compute_module* cm, std::string cmName, double dcLoss)
 	else if (modulePowerModel == MODULE_PVYIELD)
 	{
 		// Mermoud/Lejeune single-diode model
+		isBifacial = cm->as_boolean("mlm_is_bifacial");
+		bifaciality = cm->as_double("mlm_bifaciality");
+		bifacialTransmissionFactor = cm->as_double("mlm_bifacial_transmission_factor");
+		groundClearanceHeight = cm->as_double("mlm_bifacial_ground_clearance_height");
 		size_t elementCount1 = 0;
 		size_t elementCount2 = 0;
 		ssc_number_t *arrayIncAngle = 0;
