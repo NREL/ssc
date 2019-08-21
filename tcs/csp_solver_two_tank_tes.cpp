@@ -296,6 +296,8 @@ void C_storage_tank::energy_balance(double timestep /*s*/, double m_dot_in, doub
 
 		m_T_calc = a_coef / b_coef + (m_T_prev - a_coef / b_coef)*pow((timestep*c_coef / m_m_prev + 1), -b_coef / c_coef);
 		T_ave = a_coef / b_coef + m_m_prev*(m_T_prev - a_coef / b_coef) / ((c_coef - b_coef)*timestep)*(pow((timestep*c_coef / m_m_prev + 1.0), 1.0 -b_coef/c_coef) - 1.0);
+		if (timestep < 1.e-6)
+			T_ave = a_coef / b_coef + (m_T_prev - a_coef / b_coef)*pow((timestep*c_coef / m_m_prev + 1.0), -b_coef / c_coef);	// Limiting expression for small time step	
 		q_dot_loss = m_UA*(T_ave - T_amb)/1.E6;		//[MW]
 
 		if( m_T_calc < m_T_htr )
@@ -322,6 +324,8 @@ void C_storage_tank::energy_balance(double timestep /*s*/, double m_dot_in, doub
 
 		m_T_calc = a_coef / b_coef + (m_T_prev - a_coef / b_coef)*pow((timestep*c_coef / m_m_prev + 1), -b_coef / c_coef);
 		T_ave = a_coef / b_coef + m_m_prev*(m_T_prev - a_coef / b_coef) / ((c_coef - b_coef)*timestep)*(pow((timestep*c_coef / m_m_prev + 1.0), 1.0 -b_coef/c_coef) - 1.0);
+		if (timestep < 1.e-6)
+			T_ave = a_coef / b_coef + (m_T_prev - a_coef / b_coef)*pow((timestep*c_coef / m_m_prev + 1.0), -b_coef / c_coef);  // Limiting expression for small time step
 		q_dot_loss = m_UA*(T_ave - T_amb)/1.E6;		//[MW]
 
 	}
@@ -332,6 +336,8 @@ void C_storage_tank::energy_balance(double timestep /*s*/, double m_dot_in, doub
 
 		m_T_calc = c_coef / b_coef + (m_T_prev - c_coef / b_coef)*exp(-b_coef*timestep);
 		T_ave = c_coef/b_coef - (m_T_prev - c_coef/b_coef)/(b_coef*timestep)*(exp(-b_coef*timestep)-1.0);
+		if (timestep < 1.e-6)
+			T_ave = c_coef / b_coef + (m_T_prev - c_coef / b_coef)*exp(-b_coef * timestep);  // Limiting expression for small time step	
 		q_dot_loss = m_UA*(T_ave - T_amb)/1.E6;
 
 		if( m_T_calc < m_T_htr )
@@ -354,6 +360,8 @@ void C_storage_tank::energy_balance(double timestep /*s*/, double m_dot_in, doub
 
 		m_T_calc = c_coef / b_coef + (m_T_prev - c_coef / b_coef)*exp(-b_coef*timestep);
 		T_ave = c_coef / b_coef - (m_T_prev - c_coef / b_coef) / (b_coef*timestep)*(exp(-b_coef*timestep) - 1.0);
+		if (timestep < 1.e-6)
+			T_ave = c_coef / b_coef + (m_T_prev - c_coef / b_coef)*exp(-b_coef * timestep);  // Limiting expression for small time step	
 		q_dot_loss = m_UA*(T_ave - T_amb)/1.E6;		//[MW]
 	}
 }

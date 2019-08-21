@@ -77,7 +77,11 @@ public:
 	std::vector<double> w_lim;			//[kWe] Limit on net electricity production
 	std::vector<double> cap_frac;		// Fraction of gross capacity available
 	std::vector<double> eff_frac;		// Fraction of thermal efficiency available
-    C_csp_weatherreader *m_weather;       //Local copy of weather reader object
+	std::vector<double> dt_array;       // [hr] Dispatch time steps
+	std::vector<double> t_elapsed;		// [hr] Cumulative time elapsed at end of period t
+	std::vector<double> t_weight;		// Time weighting factor for period t
+
+    C_csp_weatherreader *m_weather;     //Local copy of weather reader object
 
 
     struct s_solver_params
@@ -123,10 +127,17 @@ public:
     struct s_params
     {
         bool is_rec_operating0;     //receiver is operating at the initial time step
+		bool is_rec_startup0;		//receiver is starting up at the initial time step
         bool is_pb_operating0;      //Power block is operating at the initial time step
         bool is_pb_standby0;        //Power block is in standby at the initial time step
+		bool is_pb_startup0;		//Power block is starting up at the initial time step
         double q_pb0;               //[kWt] Thermal power consumption in the cycle entering the initial time step
         double w_pb0;               //[kWe] Power production from the cycle entering the initial time step
+		double u_csu0;				//[kWht] Accumulated cycle startup energy entering the initial time step
+		double u_rsu0;				//[kWht] Accumulated receiver startup energy entering the initial time step
+		double pb_persist0;			//[hr]  Amount of time the cycle has been in its current operational state entering the initial time step
+		double rec_persist0;		//[hr]  Amount of time the receiver has been in its current operational state entering the initial time step
+
         double dt;                  //[hr] Time step
         double e_tes_init;          //[kWht] current stored energy capacity
         double e_tes_min;           //[kWht] minimum allowable energy capacity in TES
@@ -158,6 +169,21 @@ public:
 		double w_stow;				//[kWe-hr] Heliostat stow electricity requirement
 		double w_cycle_standby;		//[kWe] Cycle HTF pumping power during standby
 		double w_cycle_pump;		//[kWe/kWt] Cycle HTF pumping power per thermal energy consumed
+
+		
+		double pb_max_rampup;       // Maximum cycle ramp-up (fraction of capacity per hr)
+		double pb_max_rampdown;     // Maximum cycle ramp-down (fraction of capacity per hr)
+		double pb_rampup_violation_lim;       // Maximum allowable violation of cycle ramp-up constraint (fraction of capacity per hour)
+		double pb_rampdown_violation_lim;     // Maximum allowable violation of cycle ramp-down constraint (fraction of capacity per hour)
+
+		int pb_minup;				// Minimum cycle up time (hr)
+		int pb_mindown;				// Minimum cycle down time (hr)
+
+		int nstep_lookahead;		 // Number of steps in the lookahead window 
+
+		double e_tes_buffer;         // [kWht] Required storage buffer
+
+		bool is_uniform_dt;          // Are dispatch timesteps uniform?
 
         C_csp_solver_sim_info *siminfo;     //Pointer to existing simulation info object
         C_csp_collector_receiver *col_rec;   //Pointer to collector/receiver object
@@ -255,7 +281,21 @@ public:
         
     } params;
 
-    struct s_outputs
+	
+	struct s_perm  // Decision permanence variables (all specified in number of dispatch time steps)
+	{
+		int pb_onoff;			 // Permanence of cycle on/off decisions 
+		int pb_onoff_lookahead;  // Permanence of cycle on/off decisions during look-ahead period 
+		int pb_level;			 // Permanence of cycle operating level decisions 
+		int pb_level_lookahead;	 // Permanence of cycle operating level decisions during look-ahead period
+		
+		int rec_onoff;			  // Permanence of receiver on/off decisions 
+		int rec_onoff_lookahead;  // Permanence of receiver on/off decisions during look-ahead period 
+
+	} perm;
+
+
+	struct s_outputs
     {
         double objective;
         double objective_relaxed;
@@ -269,9 +309,9 @@ public:
         std::vector<double> tes_charge_expected;     //Expected thermal energy storage charge state
         std::vector<double> q_pb_startup;    //thermal power going to startup
         std::vector<double> q_rec_startup;   //thermal power going to startup
-        std::vector<double> w_pb_target;  //optimized electricity generation
-		std::vector<double> Qc; // startup power per period (limited based on fractional available capacity)
-        
+        std::vector<double> w_pb_target;	//optimized electricity generation
+		std::vector<double> Qc;				// startup power per period (limited based on fractional available capacity)
+
         util::matrix_t<double> wnet_lim_min; //minimum expected net power at time t before cycle gross falls before limit
         util::matrix_t<double> delta_rs;    //expected proportion of time step used for receiver start up
         
@@ -281,12 +321,17 @@ public:
         util::matrix_t<double> w_condf_expected;  //Expected condenser loss coefficient
 		util::matrix_t<double> f_pb_op_limit;  //[-] Maximum normalized cycle output
 
+		util::matrix_t<double> s_min;		// Allowable lower bound on storage [kWht]
+
         int solve_iter;             //Number of iterations required to solve
         int solve_state;
         double solve_time;
         int presolve_nconstr;
         int presolve_nvar;
     } outputs;
+
+
+
     
     struct s_forecast_params
     {
@@ -337,8 +382,18 @@ public:
     //multi-variate forecasts
     //bool dispatch_forecast();
 
+	bool set_up_timestep_array(double horizon, const std::vector<double>& steplengths, const std::vector<double>& steplength_horizon);
+	bool translate_to_dispatch_timesteps(double wfstep, std::vector<double>& data);
+	bool translate_to_dispatch_timesteps(double wfstep, util::matrix_t<double>& data);
+	
+	template <typename T>
+	bool translate_from_dispatch_timesteps(double wfstep, std::vector<T>& data);
+	bool convert_outputs_to_weatherfile_timesteps(double wfstep);
+
+
     //Predict performance out nstep values. 
-    bool predict_performance(int step_start, int ntimeints, int divs_per_int);    
+    //bool predict_performance(int step_start, int ntimeints, int divs_per_int); 
+	bool predict_performance(int step_start, double horizon, double wfstep);
 
     //declare dispatch function in csp_dispatch.cpp
     bool optimize();

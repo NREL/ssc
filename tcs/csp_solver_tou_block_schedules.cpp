@@ -272,7 +272,9 @@ void C_csp_tou_block_schedules::call(double time_s, C_csp_tou::S_csp_tou_outputs
 			throw(C_csp_exception(m_error_msg, "TOU timestep call"));
 		}
 		size_t nrecs_per_hour = nrecs / 8760;
-		int ndx = (int)((ceil(time_s / 3600.0 - 1.e-6) - 1) * nrecs_per_hour);
+		//int ndx = (int)((ceil(time_s / 3600.0 - 1.e-6) - 1) * nrecs_per_hour);
+		double time_per_rec = 3600. / (float)nrecs_per_hour;
+		int ndx = (int)(ceil(time_s / time_per_rec - 1.e-6) - 1);
 
 		if (ndx > (int)nrecs - 1 + (mc_dispatch_params.m_isleapyear ? 24 : 0) || ndx<0)
 		{

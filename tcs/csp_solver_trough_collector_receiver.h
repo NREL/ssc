@@ -448,6 +448,7 @@ public:
 	virtual double get_min_power_delivery();    //MWt
 	virtual double get_tracking_power();		//MWe
 	virtual double get_col_startup_power();		//MWe-hr
+	virtual double get_remaining_startup_energy();		//kWh
 
 	virtual int get_operating_state();
 	

@@ -368,6 +368,12 @@ void C_pc_Rankine_indirect_224::init(C_csp_power_cycle::S_solved_params &solved_
 	{
 		m_startup_energy_remain_prev = m_startup_energy_required;	//[kW-hr]
 		m_startup_time_remain_prev = ms_params.m_startup_time;		//[hr]
+		
+	}
+	else if (m_standby_control_prev == C_csp_power_cycle::STARTUP_CONTROLLED || m_standby_control_prev == C_csp_power_cycle::STARTUP)
+	{
+		m_startup_energy_remain_prev = std::fmax(0.0, m_startup_energy_required - ms_params.m_startup_energy_accum_init * 1000.);
+		m_startup_time_remain_prev = std::fmax(0.0, ms_params.m_startup_time - ms_params.m_startup_energy_accum_init / m_q_dot_design);
 	}
 	else
 	{
@@ -445,6 +451,11 @@ double C_pc_Rankine_indirect_224::get_max_thermal_power()     //MW
 double C_pc_Rankine_indirect_224::get_min_thermal_power()     //MW
 {
     return ms_params.m_cycle_cutoff_frac * ms_params.m_P_ref / ms_params.m_eta_ref*1.e-3;    //MWh
+}
+
+double C_pc_Rankine_indirect_224::get_remaining_startup_energy()     //kWht
+{
+	return m_startup_energy_remain_prev;
 }
 
 double C_pc_Rankine_indirect_224::get_max_q_pc_startup()

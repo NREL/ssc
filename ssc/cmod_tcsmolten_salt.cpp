@@ -298,7 +298,7 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     { SSC_INPUT,        SSC_MATRIX,      "weekend_schedule",     "12x24 CSP operation Time-of-Use Weekend schedule",                  "-",            "",            "sys_ctrl",          "*",                       "",                      "" }, 
     { SSC_INPUT,        SSC_NUMBER,      "is_dispatch",          "Allow dispatch optimization?",  /*TRUE=1*/                          "-",            "",            "sys_ctrl_disp_opt", "?=0",                     "",                      "" }, 
     { SSC_INPUT,        SSC_NUMBER,      "disp_horizon",         "Time horizon for dispatch optimization",                            "hour",         "",            "sys_ctrl_disp_opt", "is_dispatch=1",           "",                      "" }, 
-    { SSC_INPUT,        SSC_NUMBER,      "disp_frequency",       "Frequency for dispatch optimization calculations",                  "hour",         "",            "sys_ctrl_disp_opt", "is_dispatch=1",           "",                      "" }, 
+    { SSC_INPUT,        SSC_NUMBER,      "disp_frequency",       "Frequency for dispatch optimization calculations",                  "hour",         "",            "sys_ctrl_disp_opt", "?=24.",					 "",                      "" }, 
 	{ SSC_INPUT,        SSC_NUMBER,      "disp_horizon_update",  "Frequency for dispatch time horizon update",						  "hour",         "",            "sys_ctrl_disp_opt", "?=0",					 "",                      "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "disp_steps_per_hour",  "Time steps per hour for dispatch optimization calculations",        "-",            "",            "sys_ctrl_disp_opt", "?=1",                     "",                      "" }, 
     { SSC_INPUT,        SSC_NUMBER,      "disp_max_iter",        "Max. no. dispatch optimization iterations",                         "-",            "",            "sys_ctrl_disp_opt", "is_dispatch=1",           "",                      "" }, 
@@ -326,15 +326,24 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     { SSC_INPUT,		SSC_MATRIX,		 "fc_dni_scenarios",	 "Forecast DNI scenarios",					                          "W/m2",		  "",			 "sys_ctrl_disp_opt", "",						 "",					  "" },
     { SSC_INPUT,		SSC_MATRIX,		 "fc_price_scenarios",	 "Forecast price scenarios",					                      "-",		      "",			 "sys_ctrl_disp_opt", "",						 "",					  "" },
     { SSC_INPUT,		SSC_MATRIX,		 "fc_tdry_scenarios",	 "Forecast dry bulb temperature scenarios",                           "C",		      "",			 "sys_ctrl_disp_opt", "",						 "",					  "" },
-    //{ SSC_INPUT,		SSC_NUMBER,		 "fc_steps",	         "Number of time steps per forecast block",                           "-",		      "",			 "sys_ctrl_disp_opt", "",						 "",					  "" },
-    { SSC_INPUT,        SSC_NUMBER,      "fc_gamma",             "Forecast uncertainty TES hedging factor"                            "-",            "",            "sys_ctrl_disp_opt","?=0",                      "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "fc_gamma",             "Forecast uncertainty TES hedging factor",                            "-",            "",           "sys_ctrl_disp_opt", "?=0.",                    "",                      "" },
 
 	{ SSC_INPUT,		SSC_NUMBER,		 "allow_controller_exceptions",   "Allow controller exceptions? (1 = true)",				  "-",		      "",			 "sys_ctrl",		 "?=1",						 "",					  "" },
 	{ SSC_INPUT,		SSC_ARRAY,		 "select_simulation_days",   "Selected subset of simulation days",							  "-",		      "",			 "sys_ctrl",		 "?=0",						 "",					  "" },
     
-	{ SSC_INPUT,		SSC_NUMBER,		 "is_rec_on_initial",	 "Is receiver initially on?",										  "-",		      "",			 "sys_ctrl",		 "?=0",						 "",					  "" },
-	{ SSC_INPUT,		SSC_NUMBER,		 "is_pc_on_initial",	 "Is power cycle initially on?",									  "-",		      "",			 "sys_ctrl",		 "?=0",						 "",					  "" },
-	{ SSC_INPUT,		SSC_NUMBER,		 "is_pc_standby_initial", "Is power cycle initially in standby?",							  "-",		      "",			 "sys_ctrl",		 "?=0",						 "",					  "" },
+	
+	{ SSC_INPUT,		SSC_NUMBER,		 "is_rec_on_initial",		    "Is receiver initially on?",								  "-",		      "",			 "sys_ctrl",		 "?=0",						 "",					  "" },
+	{ SSC_INPUT,		SSC_NUMBER,		 "is_rec_startup_initial",	    "Is receiver initially starting up?",						  "-",		      "",			 "sys_ctrl",		 "?=0",						 "",					  "" },
+	{ SSC_INPUT,		SSC_NUMBER,		 "rec_startup_energy_initial",	"Receiver accumulated startup inventory ",					  "MWht",		  "",			 "sys_ctrl",		 "?=0",						 "",					  "" },
+	{ SSC_INPUT,		SSC_NUMBER,		 "is_pc_on_initial",			"Is power cycle initially on?",								  "-",		      "",			 "sys_ctrl",		 "?=0",						 "",					  "" },
+	{ SSC_INPUT,		SSC_NUMBER,		 "is_pc_standby_initial",	    "Is power cycle initially in standby?",						  "-",		      "",			 "sys_ctrl",		 "?=0",						 "",					  "" },
+	{ SSC_INPUT,		SSC_NUMBER,		 "is_pc_startup_initial",	    "Is power cycle initially starting up?",					  "-",		      "",			 "sys_ctrl",		 "?=0",						 "",					  "" },
+	{ SSC_INPUT,		SSC_NUMBER,		 "pc_startup_energy_initial",	"Cycle accumulated startup inventory",						  "MWht",		  "",			 "sys_ctrl",		 "?=0",						 "",					  "" },
+	
+	{ SSC_INPUT,		SSC_NUMBER,		 "disp_pc_q0",					"Cycle thermal power at start of simulation",				  "MWt",		  "",			 "sys_ctrl_disp_opt","?=0",						 "",					  "" },
+	{ SSC_INPUT,		SSC_NUMBER,		 "disp_pc_persist0",			"Initial duration cycle has been in same state ",			  "hr",			  "",			 "sys_ctrl_disp_opt","?=1000.",					 "",					  "" },
+	{ SSC_INPUT,		SSC_NUMBER,		 "disp_rec_persist0",			"Initial duration receiver has been in same state",			  "hr",			  "",			 "sys_ctrl_disp_opt","?=1000.",					 "",					  "" },
+
 
 	{ SSC_INPUT,		SSC_NUMBER,		 "is_dispatch_targets",	 "Run solution from user-specified dispatch targets?",				  "-",		      "",			 "sys_ctrl",		 "?=0",						 "",					  "" },
 	{ SSC_INPUT,		SSC_ARRAY,		 "q_pc_target_in",		 "User-provided target thermal power to PC",						  "MWt",		  "",			 "sys_ctrl",		 "is_dispatch_targets=1",	 "",					  "" },
@@ -343,9 +352,32 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
 	{ SSC_INPUT,		SSC_ARRAY,		 "is_pc_su_allowed_in",  "User-provided is power cycle startup allowed?",					  "-",			  "",			 "sys_ctrl",		 "is_dispatch_targets=1",	 "",					  "" },
 	{ SSC_INPUT,		SSC_ARRAY,		 "is_pc_sb_allowed_in",  "User-provided is power cycle standby allowed?",					  "-",			  "",			 "sys_ctrl",		 "is_dispatch_targets=1",	 "",					  "" },
 
-	{ SSC_INPUT,		SSC_NUMBER,		 "is_dispatch_constr",	 "Use dispatch capacity/efficiency constraints?",					  "-",		      "",			 "sys_ctrl",		 "?=0",						 "",					  "" },
-	{ SSC_INPUT,		SSC_ARRAY,		 "disp_cap_constr",		 "Fraction of turbine capacity available",							  "-",			  "",			 "sys_ctrl",		 "is_dispatch_constr=1",	 "",					  "" },
-	{ SSC_INPUT,		SSC_ARRAY,		 "disp_eff_constr",		 "Fraction of design point turbine efficiency available",			  "-",			  "",			 "sys_ctrl",		 "is_dispatch_constr=1",	 "",					  "" },
+	{ SSC_INPUT,		SSC_NUMBER,		 "is_dispatch_constr",	 "Use dispatch capacity/efficiency constraints?",					  "-",		      "",			 "sys_ctrl_disp_opt",	"?=0",					 "",					  "" },
+	{ SSC_INPUT,		SSC_ARRAY,		 "disp_cap_constr",		 "Fraction of turbine capacity available",							  "-",			  "",			 "sys_ctrl_disp_opt",	"is_dispatch_constr=1",	 "",					  "" },
+	{ SSC_INPUT,		SSC_ARRAY,		 "disp_eff_constr",		 "Fraction of design point turbine efficiency available",			  "-",			  "",			 "sys_ctrl_disp_opt",	"is_dispatch_constr=1",	 "",					  "" },
+
+	
+	{ SSC_INPUT,		SSC_NUMBER,		 "disp_pc_rampup",		 "Cycle max ramp up (fraction of capacity per minute)",				  "-",			  "",			 "sys_ctrl_disp_opt",	"?=0.",					 "",					  "" },
+	{ SSC_INPUT,		SSC_NUMBER,		 "disp_pc_rampdown",	 "Cycle max ramp down (fraction of capacity per minute)",			  "-",			  "",			 "sys_ctrl_disp_opt",	"?=0.",					 "",					  "" },	
+	{ SSC_INPUT,		SSC_NUMBER,		 "disp_pc_rampup_vl",	 "Cycle ramp up violation limit (fraction of capacity per minute)",	        "-",	  "",			 "sys_ctrl_disp_opt",	"?=0.",					 "",					  "" },
+	{ SSC_INPUT,		SSC_NUMBER,		 "disp_pc_rampdown_vl",	 "Cycle max ramp down violation limit (fraction of capacity per minute)",	"-",	  "",			 "sys_ctrl_disp_opt",	"?=0.",					 "",					  "" },
+	
+	{ SSC_INPUT,		SSC_NUMBER,		 "disp_pc_minup",		 "Cycle minimum up time",											  "hr",			  "",			 "sys_ctrl_disp_opt",	"?=0.",					 "",					  "" },
+	{ SSC_INPUT,		SSC_NUMBER,		 "disp_pc_mindown",		 "Cycle minimum down time",											  "hr",			  "",			 "sys_ctrl_disp_opt",	"?=0.",					 "",					  "" },
+
+	{ SSC_INPUT,		SSC_NUMBER,		 "disp_pc_onoff_perm",    "Permanence of cycle on/off/standby decisions",					  "hr",			  "",			 "sys_ctrl_disp_opt",	"?=0.",					 "",					  "" },
+	{ SSC_INPUT,		SSC_NUMBER,		 "disp_pc_onoff_la_perm", "Permanence of cycle on/off/standby decisions during lookahead ",	  "hr",			  "",			 "sys_ctrl_disp_opt",	"?=0.",					 "",					  "" },
+	{ SSC_INPUT,		SSC_NUMBER,		 "disp_pc_level_perm",    "Permanence of cycle operating level decisions",					  "hr",			  "",			 "sys_ctrl_disp_opt",	"?=0.",					 "",					  "" },
+	{ SSC_INPUT,		SSC_NUMBER,		 "disp_pc_level_la_perm", "Permanence of cycle operating level decisions during lookahead",   "hr",			  "",			 "sys_ctrl_disp_opt",	"?=0.",					 "",					  "" },
+	{ SSC_INPUT,		SSC_NUMBER,		 "disp_rec_onoff_perm",   "Permanence of receiver on/off decisions",						  "hr",			  "",			 "sys_ctrl_disp_opt",	"?=0.",					 "",					  "" },
+	{ SSC_INPUT,		SSC_NUMBER,		 "disp_rec_onoff_la_perm", "Permanence of receiver on/off decisions during lookahead ",		  "hr",			  "",			 "sys_ctrl_disp_opt",	"?=0.",					 "",					  "" },
+
+	{ SSC_INPUT,		SSC_NUMBER,		 "disp_storage_buffer",    "Minimum allowable storage in dispatch model (fraction of capacity)",	 "",	  "",			 "sys_ctrl_disp_opt",	"?=0.",					 "",					  "" },
+
+	{ SSC_INPUT,		SSC_ARRAY,		 "disp_steplength_array",     "Dispatch time step lengths (min)",							  "min",		  "",			 "sys_ctrl_disp_opt",	"?=0.",					 "",					  "" },
+	{ SSC_INPUT,		SSC_ARRAY,		 "disp_steplength_end_time",  "End time for dispatch step lengths (hr)",					  "hr",		      "",			 "sys_ctrl_disp_opt",	"?=0.",					 "",					  "" },	
+	{ SSC_INPUT,		SSC_NUMBER,		 "is_run_single_opt",	      "Run only a single optimization horizon",						  "",			  "",			 "sys_ctrl_disp_opt",	"?=0.",					 "",					  "" },
+
 
 
 	// Financial inputs
@@ -534,6 +566,7 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     { SSC_OUTPUT,       SSC_ARRAY,       "disp_presolve_nconstr","Dispatch number of constraints in problem",                    "",             "",            "tou",            "*"                       "",            "" }, 
     { SSC_OUTPUT,       SSC_ARRAY,       "disp_presolve_nvar",   "Dispatch number of variables in problem",                      "",             "",            "tou",            "*"                       "",            "" }, 
     { SSC_OUTPUT,       SSC_ARRAY,       "disp_solve_time",      "Dispatch solver time",                                         "sec",          "",            "tou",            "*"                       "",            "" }, 
+	{ SSC_OUTPUT,       SSC_ARRAY,       "disp_qpbtarget_expected", "Dispatch expected power cycle startup energy",              "MWt",          "",            "tou",            "*"                       "",            "" },
 
 
 			// These outputs correspond to the first csp-solver timestep in the reporting timestep.
@@ -863,6 +896,12 @@ public:
 		C_csp_solver::S_sim_setup sim_setup;
 		sim_setup.m_sim_time_start = as_double("time_start");		//[s] time at beginning of first time step
 		sim_setup.m_sim_time_end = as_double("time_stop");          //[s] time at end of last time step
+		if (as_boolean("is_run_single_opt"))
+		{
+			sim_setup.m_sim_time_end = sim_setup.m_sim_time_start + as_double("disp_horizon")*3600.;  // Over-ride simulation end time with single optimization horizon end time
+			log(util::format("\nSetting simulation end time to %.0f s", sim_setup.m_sim_time_end), SSC_WARNING);
+		}
+
 		sim_setup.m_allow_exceptions = as_boolean("allow_controller_exceptions");
 
         int steps_per_hour = (int)as_double("time_steps_per_hour");		//[-]
@@ -919,14 +958,14 @@ public:
 
 			pc->m_mode_initial = C_csp_power_cycle::OFF; 
 			if (as_boolean("is_pc_on_initial"))
-			{
 				pc->m_mode_initial = C_csp_power_cycle::ON;
-				if (as_boolean("is_pc_standby_initial"))
-					throw exec_error("tcsmolten_salt", "Both 'is_pc_on_initial' and 'is_pc_standby_initial' were set to true.");
-			}
 			else if (as_boolean("is_pc_standby_initial"))
 				pc->m_mode_initial = C_csp_power_cycle::STANDBY;
-
+			else if (as_boolean("is_pc_startup_initial"))
+			{
+				pc->m_mode_initial = C_csp_power_cycle::STARTUP_CONTROLLED;
+				pc->m_startup_energy_accum_init = as_double("pc_startup_energy_initial");
+			}
 
 
 			if (pb_tech_type == 0)
@@ -989,7 +1028,7 @@ public:
 		{
 			int is_sco2_preprocess = as_integer("is_sco2_preprocess");
 
-			if (as_boolean("is_pc_on_initial")||as_boolean("is_pc_standby_initial"))
+			if (as_boolean("is_pc_on_initial")||as_boolean("is_pc_standby_initial") || as_boolean("is_pc_standby_initial"))
 				throw exec_error("tcsmolten_salt", "User-defined cycle initial state not currently enabled for sCO2 cycle.");
 
 			if (is_sco2_preprocess == 1)
@@ -1547,6 +1586,14 @@ public:
 		receiver.m_mode_initial = C_csp_collector_receiver::OFF;
 		if (as_boolean("is_rec_on_initial"))
 			receiver.m_mode_initial = C_csp_collector_receiver::ON;
+		if (as_boolean("is_rec_startup_initial"))
+		{
+			receiver.m_mode_initial = C_csp_collector_receiver::STARTUP;
+			receiver.m_E_su_accum_init = as_double("rec_startup_energy_initial");
+		}
+
+
+		
 
 
 		// Set parameters that were set with TCS defaults
@@ -1654,7 +1701,118 @@ public:
 			tou.mc_dispatch_params.m_w_rec_ht = as_double("q_rec_heattrace");
             tou.mc_dispatch_params.m_is_stochastic_dispatch = as_boolean("is_stochastic_dispatch");
 
-			if (as_boolean("is_wlim_series"))
+			tou.mc_dispatch_params.m_pc_persist_0 = as_double("disp_pc_persist0");
+			tou.mc_dispatch_params.m_rec_persist_0 = as_double("disp_rec_persist0");
+			tou.mc_dispatch_params.m_pc_q0 = as_double("disp_pc_q0");
+
+
+			tou.mc_dispatch_params.m_is_run_single_opt = as_boolean("is_run_single_opt");
+			if (tou.mc_dispatch_params.m_is_run_single_opt)  // Over-ride all other settings of end time and optimization frequency and run only a single optimization horizon
+				tou.mc_dispatch_params.m_optimize_frequency = 8760.;
+
+
+			// Variable step-lengths for real-time dispatch model
+			size_t nsteplengths = 0;
+			size_t nh = 0;
+			ssc_number_t* disp_steplengths = as_array("disp_steplength_array", &nsteplengths);
+			ssc_number_t* disp_steplength_end_time = as_array("disp_steplength_end_time", &nh);
+
+			if (nsteplengths == 1 && disp_steplengths[0] < 1.e-6)  // Default time-step arrays -> Use constant time step input
+			{
+				tou.mc_dispatch_params.m_is_variable_disp_steps = false;
+				tou.mc_dispatch_params.m_disp_steplength_array = { 60. / tou.mc_dispatch_params.m_disp_steps_per_hour };
+				tou.mc_dispatch_params.m_disp_steplength_end_time = { (double)tou.mc_dispatch_params.m_optimize_horizon };
+			}
+			else
+			{
+				if (nsteplengths != nh)
+					throw exec_error("tcsmolten_salt", "Dimensions of 'disp_steplength_array' and 'disp_steplength_end_time' must be the same");
+
+				if (disp_steplength_end_time[nsteplengths - 1] < tou.mc_dispatch_params.m_optimize_horizon)
+					throw exec_error("tcsmolten_salt", "Last entry of 'disp_steplength_end_time' is shorter than disp_horizon");
+				
+				tou.mc_dispatch_params.m_is_variable_disp_steps = true;
+				tou.mc_dispatch_params.m_disp_steps_per_hour = std::numeric_limits<int>::quiet_NaN();
+
+				int wf_step = (int)(8760. * 60. / (double)n_steps_full);   // Weather file time step [min]
+				tou.mc_dispatch_params.m_disp_steplength_array.resize(nsteplengths);
+				tou.mc_dispatch_params.m_disp_steplength_end_time.resize(nsteplengths);
+				for (int i = 0; i < nsteplengths; i++)
+				{
+					tou.mc_dispatch_params.m_disp_steplength_array.at(i) = disp_steplengths[i];
+					tou.mc_dispatch_params.m_disp_steplength_end_time.at(i) = disp_steplength_end_time[i];
+					if ((int)disp_steplengths[i] % wf_step > 0)
+						throw exec_error("tcsmolten_salt", "All entries of 'disp_steplength_array' must be an integer multiple of the weather file time step");
+				}
+			}
+
+
+			// Cycle maximum ramp-up and ramp-down rates 
+			tou.mc_dispatch_params.m_pc_max_rampup = as_double("disp_pc_rampup") > 1.e-6 ? as_double("disp_pc_rampup") * 60. : 60.;  // fraction of capacity per hour (set to 100% per minute if not specified)
+			tou.mc_dispatch_params.m_pc_max_rampdown = as_double("disp_pc_rampdown") > 1.e-6 ? as_double("disp_pc_rampdown") * 60. : 60.;
+			tou.mc_dispatch_params.m_pc_rampup_violation_lim = as_double("disp_pc_rampup_vl") * 60.;    // maximum ramp-up violation limit in fraction of capacity per hour
+			tou.mc_dispatch_params.m_pc_rampdown_violation_lim = as_double("disp_pc_rampdown_vl") * 60.;
+
+
+			// Dispatch storage buffer
+			tou.mc_dispatch_params.m_storage_buffer = as_double("disp_storage_buffer");
+
+			// Cycle minimum up- and down-times (hr)
+			tou.mc_dispatch_params.m_pc_minup = as_double("disp_pc_minup"); 
+			tou.mc_dispatch_params.m_pc_mindown = as_double("disp_pc_mindown");
+
+			
+			
+			// Decision permanence (hr)
+			if (!tou.mc_dispatch_params.m_is_variable_disp_steps)
+			{
+				double pc_onoff = as_double("disp_pc_onoff_perm");
+				double pc_onoff_lookahead = as_double("disp_pc_onoff_la_perm");
+				double pc_level = as_double("disp_pc_level_perm");
+				double pc_level_lookahead = as_double("disp_pc_level_la_perm");
+				double rec_onoff = as_double("disp_rec_onoff_perm");
+				double rec_onoff_lookahead = as_double("disp_rec_onoff_la_perm");
+
+				vector<double> perm = { pc_onoff, pc_onoff_lookahead, pc_level, pc_level_lookahead, rec_onoff, rec_onoff_lookahead };
+				double disp_opt_ts = 1. / (float)tou.mc_dispatch_params.m_disp_steps_per_hour;  // User-specfied dispatch time step (hr)
+				double min_decision = disp_opt_ts;
+				for (int i = 0; i < perm.size(); i++)
+				{
+					if (perm.at(i) == 0.)
+						perm.at(i) = disp_opt_ts;
+
+					min_decision = min(min_decision, perm.at(i));
+					for (int j = 0; j < i; j++)
+					{
+						double diff = fabs(perm.at(i) - perm.at(j));
+						if (diff > 0. && diff < min_decision)
+							min_decision = diff;
+					}
+				}
+
+				if (disp_opt_ts > min_decision)  // Reset dispatch optimization timestep if necessary
+				{
+					log(util::format("\nThe dispatch time step was reset from the user-specified value (%.2f hr) to the minimum"
+						"allowable value from decision permanence specifications (%.2f hr)", disp_opt_ts, min_decision), SSC_WARNING);
+					disp_opt_ts = min_decision;
+					tou.mc_dispatch_params.m_disp_steps_per_hour = (int)floor(1. / disp_opt_ts);
+				}
+				tou.mc_dispatch_params.m_pc_onoff_perm = (pc_onoff > 0.) ? pc_onoff : disp_opt_ts;  // Default to dispatch optimization timestep if not specified
+				tou.mc_dispatch_params.m_pc_level_perm = (pc_level > 0.) ? pc_level : disp_opt_ts;
+				tou.mc_dispatch_params.m_rec_onoff_perm = (rec_onoff > 0.) ? rec_onoff : disp_opt_ts;
+
+				// Look-ahead period decision permanence: Always set to be >= that in optimization period
+				tou.mc_dispatch_params.m_pc_onoff_lookahead_perm = fmax(tou.mc_dispatch_params.m_pc_onoff_perm, pc_onoff_lookahead);
+				tou.mc_dispatch_params.m_pc_level_lookahead_perm = fmax(tou.mc_dispatch_params.m_pc_level_perm, pc_level_lookahead);
+				tou.mc_dispatch_params.m_rec_onoff_lookahead_perm = fmax(tou.mc_dispatch_params.m_rec_onoff_perm, rec_onoff_lookahead);
+			}
+
+
+
+
+
+
+			if (as_boolean("is_wlim_series"))  // Defined at same time resolution as weather file
 			{
 				size_t n_wlim_series = 0;
 				ssc_number_t* wlim_series = as_array("wlim_series", &n_wlim_series);
@@ -1668,7 +1826,7 @@ public:
 
 			tou.mc_dispatch_params.m_horizon_update_frequency = tou.mc_dispatch_params.m_optimize_frequency;
 			int horizon_update = as_integer("disp_horizon_update");
-			if (horizon_update > 0)
+			if (horizon_update > 0 && !tou.mc_dispatch_params.m_is_run_single_opt)
 			{
 				if (horizon_update % tou.mc_dispatch_params.m_optimize_frequency == 0)
 					tou.mc_dispatch_params.m_horizon_update_frequency = horizon_update;
@@ -1721,13 +1879,15 @@ public:
 				int n_opt_periods = (int)ceil(8760. / (double)opt_freq);			// optimizations per year
 				int n_opt_per_update = horizon_update / opt_freq;					// optimizations per horizon update 
 				int n_hour_per_update = (n_opt_per_update * opt_horizon) - opt_freq * (n_opt_per_update*(n_opt_per_update - 1) / 2);	// hours in scenarios per horizon update
-				int nstep = tou.mc_dispatch_params.m_disp_steps_per_hour * n_hour_per_update * n_update_periods;
+				
+				int wf_steps_per_hour = (int)n_steps_full / 8760;
+				int nstep = wf_steps_per_hour * n_hour_per_update * n_update_periods;
 
 				if (n_opt_periods < n_update_periods * n_opt_per_update)  
 				{
 					int n_opt_last_update = n_opt_periods - (n_update_periods - 1) * n_opt_per_update;  // optimizations in last horizon udpate
 					int n_hour_last_update = (n_opt_last_update * opt_horizon) - opt_freq * (n_opt_last_update*(n_opt_last_update - 1) / 2);
-					nstep = tou.mc_dispatch_params.m_disp_steps_per_hour * (n_hour_per_update * (n_update_periods - 1) + n_hour_last_update);  // expected steps in scenario files 
+					nstep = wf_steps_per_hour * (n_hour_per_update * (n_update_periods - 1) + n_hour_last_update);  // expected steps in scenario files 
 				}
 
 				if (tou.mc_dispatch_params.m_is_dni_scenarios && tou.mc_dispatch_params.m_fc_dni_scenarios.nrows() != nstep)
@@ -1756,7 +1916,7 @@ public:
 		}
 
 
-		// User-specified dispatch targets
+		// User-specified dispatch targets (specified at weather-file resolution)
 		bool is_dispatch_targets = as_boolean("is_dispatch_targets");
 		if (is_dispatch_targets && tou.mc_dispatch_params.m_dispatch_optimize)
 		{
@@ -1808,7 +1968,7 @@ public:
 				
 		}
 
-		// Dispatch optimization capacity/efficiency constraints
+		// Dispatch optimization capacity/efficiency constraints (specifed at weather-file time resolution)
 		tou.mc_dispatch_params.m_is_disp_constr = as_boolean("is_dispatch_constr");
 		if (tou.mc_dispatch_params.m_is_disp_constr)
 		{
@@ -1940,6 +2100,7 @@ public:
 		csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::DISPATCH_PRES_NCONSTR, allocate("disp_presolve_nconstr", n_steps_fixed), n_steps_fixed);
 		csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::DISPATCH_PRES_NVAR, allocate("disp_presolve_nvar", n_steps_fixed), n_steps_fixed);
 		csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::DISPATCH_SOLVE_TIME, allocate("disp_solve_time", n_steps_fixed), n_steps_fixed);
+		csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::DISPATCH_QPBTARGET_EXPECT, allocate("disp_qpbtarget_expected", n_steps_fixed), n_steps_fixed);
 
 		csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::SOLZEN, allocate("solzen", n_steps_fixed), n_steps_fixed);
 		csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::SOLAZ, allocate("solaz", n_steps_fixed), n_steps_fixed);

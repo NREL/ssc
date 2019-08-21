@@ -396,6 +396,12 @@ double C_csp_gen_collector_receiver::get_col_startup_power()
 	return std::numeric_limits<double>::quiet_NaN(); //MWe-hr
 }
 
+double C_csp_gen_collector_receiver::get_remaining_startup_energy()
+{
+	throw(C_csp_exception("C_csp_gen_collector_receiver::get_remaining_startup_energy() is not complete"));
+	return std::numeric_limits<double>::quiet_NaN(); //kWh
+}
+
 void C_csp_gen_collector_receiver::on(const C_csp_weatherreader::S_outputs &weather,
 	const C_csp_solver_htf_1state &htf_state_in,
 	double field_control,

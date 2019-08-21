@@ -215,6 +215,10 @@ double C_pc_steam_heat_sink::get_min_thermal_power()
 	return 0.0;		//[MWt]
 }
 
+double C_pc_steam_heat_sink::get_remaining_startup_energy()
+{
+	return 0.0;		//[MWt]
+}
 double C_pc_steam_heat_sink::get_htf_pumping_parasitic_coef()
 {
 	return 0.0;	// kWe/kWt

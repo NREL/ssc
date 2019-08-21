@@ -186,9 +186,13 @@ csp_dispatch_opt::csp_dispatch_opt()
     //parameters
     params.is_pb_operating0 = false;
     params.is_pb_standby0 = false;
+	params.is_pb_startup0 = false;
     params.is_rec_operating0 = false;
+	params.is_rec_startup0 = false;
     params.q_pb0 = std::numeric_limits<double>::quiet_NaN();
     params.w_pb0 = std::numeric_limits<double>::quiet_NaN();
+	params.u_csu0 = std::numeric_limits<double>::quiet_NaN();
+	params.u_rsu0 = std::numeric_limits<double>::quiet_NaN();
     params.dt = std::numeric_limits<double>::quiet_NaN();
     params.e_tes_init = std::numeric_limits<double>::quiet_NaN();          
     params.e_tes_min = std::numeric_limits<double>::quiet_NaN();           
@@ -214,7 +218,9 @@ csp_dispatch_opt::csp_dispatch_opt()
     params.eta_cycle_ref = std::numeric_limits<double>::quiet_NaN();
     params.disp_time_weighting = std::numeric_limits<double>::quiet_NaN();
     params.rsu_cost = params.csu_cost = params.pen_delta_w = params.q_rec_standby = std::numeric_limits<double>::quiet_NaN();
-    
+
+	params.is_uniform_dt = true;
+
     outputs.objective = 0.;
     outputs.objective_relaxed = 0.;
     outputs.solve_iter = 0;
@@ -251,6 +257,7 @@ void csp_dispatch_opt::clear_output_arrays()
     outputs.wnet_lim_min.clear();
     outputs.delta_rs.clear();
 	outputs.Qc.clear();
+	outputs.s_min.clear();
 }
 
 bool csp_dispatch_opt::check_setup(int nstep)
@@ -270,12 +277,158 @@ bool csp_dispatch_opt::copy_weather_data(C_csp_weatherreader &weather_source)
     return m_is_weather_setup = true;
 }
 
-bool csp_dispatch_opt::predict_performance(int step_start, int ntimeints, int divs_per_int)
+
+bool csp_dispatch_opt::set_up_timestep_array(double horizon, const std::vector<double>& steplengths, const std::vector<double>& steplength_end_time)
+{
+	dt_array.clear();
+	t_elapsed.clear();
+	t_weight.clear();
+
+	size_t n = steplengths.size();
+	double time = 0.0;
+	int nsteps = 0;	
+	for (int j = 0; j < n; j++)
+	{
+		double dt = steplengths.at(j) / 60.;   // Steplength [hr]
+		double time_end = std::fmin(horizon, steplength_end_time.at(j));
+
+		int ns = (int)ceil((time_end - time) / dt);  // Number of time steps with this length
+		nsteps += ns;
+		time += ns * dt;
+
+		for (int i = 0; i < ns; i++)
+			dt_array.push_back(dt);
+		
+		if (time > horizon)
+		{
+			dt_array[nsteps - 1] -= (time - horizon);
+			break;
+		}
+	}
+
+	m_nstep_opt = (int) dt_array.size();
+
+	t_elapsed.resize(m_nstep_opt);
+	t_elapsed.at(0) = dt_array.at(0);
+	for (int j = 1; j < m_nstep_opt; j++)
+		t_elapsed.at(j) = t_elapsed.at(j - 1) + dt_array.at(j);
+
+	
+	t_weight.resize(m_nstep_opt);
+	for (int j = 0; j < m_nstep_opt; j++)
+		t_weight.at(j) = pow(params.disp_time_weighting, t_elapsed.at(j));
+
+	return true;
+}
+
+
+bool csp_dispatch_opt::translate_to_dispatch_timesteps(double wfstep, std::vector<double>& data)
+{
+	// Adjust time-resolution of data from constant time steps (wfstep in hr) to specified dispatch optimization time resolution
+	// Assumes all dispatch time steps are an integer multiple of the weather file time step
+
+	size_t n = dt_array.size();  // number of dispatch time steps
+	std::vector<double> newdata(n, 0.0);
+	int step_start = 0;
+	int wfstep_sec = (int)ceil(wfstep*3600. - 0.001);  // weather file time step in seconds
+
+	for (size_t j = 0; j < n; j++)
+	{
+		int dt_sec = (int)ceil(dt_array.at(j)*3600. - 0.001);  // Dispatch time step [s]
+		int divs_per_dt = dt_sec / wfstep_sec;					// Number of weather-file time steps in this dispatch time step
+		double ave_weight = 1. / (double)divs_per_dt;
+		
+		for (int i = 0; i < divs_per_dt; i++)
+			newdata.at(j) += data.at(step_start + i) * ave_weight;
+		step_start += divs_per_dt;
+	}
+	data = newdata;
+	return true;
+}
+
+bool csp_dispatch_opt::translate_to_dispatch_timesteps(double wfstep, util::matrix_t<double>& data)
+{
+	// Adjust time-resolution of data from constant time steps (wfstep in hr) to specified dispatch optimization time resolution
+	// Assumes all dispatch time steps are an integer multiple of the weather file time step
+
+	size_t n = dt_array.size();  // number of dispatch time steps
+	size_t nc = data.ncols();
+	size_t nr = data.nrows();
+	util::matrix_t<double> newdata(n, nc, 0.0);
+	int step_start = 0;
+	int wfstep_sec = (int)ceil(wfstep*3600. - 0.001);  // weather file time step in seconds
+
+	for (size_t j = 0; j < n; j++)
+	{
+		int dt_sec = (int)ceil(dt_array.at(j)*3600. - 0.001);  // Dispatch time step [s]
+		int divs_per_dt = dt_sec / wfstep_sec;					// Number of weather-file time steps in this dispatch time step
+		double ave_weight = 1. / (double)divs_per_dt;
+		
+		for (size_t c = 0; c < nc; c++)
+		{ 
+			for (int i = 0; i < divs_per_dt; i++)
+				newdata.at(j, c) += data.at(step_start + i, c) * ave_weight;
+		}
+		step_start += divs_per_dt;
+	}
+	data = newdata;
+	return true;
+}
+
+template <typename T>
+bool csp_dispatch_opt::translate_from_dispatch_timesteps(double wfstep, std::vector<T>& data)
+{
+	// Adjust time-resolution of data from dispatch time-step resolution to constant weather-file time step for use in ssc
+	// Assumes all dispatch time steps are an integer multiple of the weather file time step
+
+	int n_dispatch = (int)dt_array.size();		// Number of dispatch time steps
+
+	if (data.size() != n_dispatch)
+		return false;
+
+	int horizon = (int)ceil(t_elapsed.back() * 3600. - 0.001);	// Full dispatch time horizon (s)
+	int wfstep_sec = (int)ceil(wfstep*3600. - 0.001);		    // Weather file time step in seconds
+	int n_wf = horizon / wfstep_sec;							// Number of time steps in dispatch horizon at weather-file time resolution	
+	
+	std::vector<T> newdata(n_wf, 0.0);
+	int step_start = 0;
+	for (int j = 0; j < n_dispatch; j++)
+	{
+		int dt_sec = (int)ceil(dt_array.at(j)*3600. - 0.001);   // Dispatch time step [s]
+		int divs_per_dt = dt_sec / wfstep_sec;					// Number of weather-file time steps in this dispatch time step
+		for (int i = 0; i < divs_per_dt; i++)
+			newdata.at(step_start + i) = data.at(j);
+		step_start += divs_per_dt;
+	}
+	data = newdata;
+	return true;
+
+}
+
+bool csp_dispatch_opt::convert_outputs_to_weatherfile_timesteps(double wfstep)
+{
+	translate_from_dispatch_timesteps(wfstep, outputs.pb_standby);
+	translate_from_dispatch_timesteps(wfstep, outputs.pb_operation);
+	translate_from_dispatch_timesteps(wfstep, outputs.q_pb_standby);
+	translate_from_dispatch_timesteps(wfstep, outputs.q_pb_target);
+	translate_from_dispatch_timesteps(wfstep, outputs.rec_operation);
+	translate_from_dispatch_timesteps(wfstep, outputs.q_sf_expected);
+	translate_from_dispatch_timesteps(wfstep, outputs.tes_charge_expected);
+	translate_from_dispatch_timesteps(wfstep, outputs.q_pb_startup);
+	translate_from_dispatch_timesteps(wfstep, outputs.q_rec_startup);
+	translate_from_dispatch_timesteps(wfstep, outputs.w_pb_target);
+	return true;
+}
+
+
+
+bool csp_dispatch_opt::predict_performance(int step_start, double horizon, double wfstep)
 {
     //Step number - 1-based index for first hour of the year.
 
     //save step count
-    m_nstep_opt = ntimeints;
+	m_nstep_opt = dt_array.size();   // Number of time steps in dispatch optimization
+	int nstep_wf =  (int)(horizon / wfstep);  // Number of time steps in optimization horizon at weather-file resolution
 
     //Predict performance out nstep values. 
     clear_output_arrays();
@@ -290,16 +443,14 @@ bool csp_dispatch_opt::predict_performance(int step_start, int ntimeints, int di
 
     double Asf = params.col_rec->get_collector_area();
 
-    double ave_weight = 1./(double)divs_per_int;
-
     //resize the arrays
     int ns = forecast_params.is_stochastic ? forecast_params.n_scenarios : 1;
-    outputs.eta_sf_expected.resize(m_nstep_opt, ns );
-    outputs.q_sfavail_expected.resize(m_nstep_opt, ns );
-    outputs.eta_pb_expected.resize(m_nstep_opt, ns );
-    outputs.w_condf_expected.resize(m_nstep_opt, ns );
-	outputs.w_condf_expected.resize(m_nstep_opt, ns);
-	outputs.f_pb_op_limit.resize(m_nstep_opt, ns);
+    outputs.eta_sf_expected.resize(nstep_wf, ns );
+    outputs.q_sfavail_expected.resize(nstep_wf, ns );
+    outputs.eta_pb_expected.resize(nstep_wf, ns );
+    outputs.w_condf_expected.resize(nstep_wf, ns );
+	outputs.w_condf_expected.resize(nstep_wf, ns);
+	outputs.f_pb_op_limit.resize(nstep_wf, ns);
 
     C_csp_weatherreader::S_outputs *weatherstep;
     if( forecast_params.is_stochastic )
@@ -307,100 +458,87 @@ bool csp_dispatch_opt::predict_performance(int step_start, int ntimeints, int di
 
     for(int w=0; w<ns; w++)
     {
-        for(int t=0; t<m_nstep_opt; t++)
-        {
-        //initialize hourly average values
-        double therm_eff_ave = 0.;
-        double cycle_eff_ave = 0.;
-        double q_inc_ave = 0.;
-        double wcond_ave = 0.;
-		double f_pb_op_lim_ave = 0.0;
-
-        for(int j=0; j<divs_per_int; j++)     //take averages over hour if needed
+        for(int t=0; t<nstep_wf; t++)
         {
 
             //jump to the current step
-                if(! m_weather->read_time_step( step_start+t*divs_per_int+j, simloc ) )
+            if(! m_weather->read_time_step( step_start+t, simloc ) )
                 return false;
 
-                //if stochastic is used, adjust conditions for the scenario 's'
-                if( forecast_params.is_stochastic )
-                {
-                    *weatherstep = m_weather->ms_outputs;    //copy
+            //if stochastic is used, adjust conditions for the scenario 's'
+            if( forecast_params.is_stochastic )
+            {
+                *weatherstep = m_weather->ms_outputs;    //copy
 
-                    if( forecast_params.is_dni_scenarios )
-                        //if DNI is stochastic, assign the current DNI (beam) to be the value provided in the scenarios table
-                        weatherstep->m_beam = forecast_outputs.dni_scenarios.at(t, w);
-                    else
-                        //if no stochastic data was provided, copy over the actual from the weather file here. Don't reassign the value in the weatherstep object.
-                        forecast_outputs.dni_scenarios.at(t, w) = weatherstep->m_beam;  
-
-                    if( forecast_params.is_tdry_scenarios )
-                        //if tdry is stochastic, assign the current tdry to be the value provided in the scenarios table
-                        weatherstep->m_tdry = forecast_outputs.tdry_scenarios.at(t, w);
-                    else
-                        //if no stochastic data was provided, copy over the actual from the weather file here. Don't reassign the value in the weatherstep object.
-                        forecast_outputs.tdry_scenarios.at(t, w) = weatherstep->m_tdry;  
-
-                }
+                if( forecast_params.is_dni_scenarios )
+                    //if DNI is stochastic, assign the current DNI (beam) to be the value provided in the scenarios table
+                    weatherstep->m_beam = forecast_outputs.dni_scenarios.at(t, w);
                 else
-                {
-                    weatherstep = &m_weather->ms_outputs;   //point to
-                }
+                    //if no stochastic data was provided, copy over the actual from the weather file here. Don't reassign the value in the weatherstep object.
+                    forecast_outputs.dni_scenarios.at(t, w) = weatherstep->m_beam;  
+
+                if( forecast_params.is_tdry_scenarios )
+                    //if tdry is stochastic, assign the current tdry to be the value provided in the scenarios table
+                    weatherstep->m_tdry = forecast_outputs.tdry_scenarios.at(t, w);
+                else
+                    //if no stochastic data was provided, copy over the actual from the weather file here. Don't reassign the value in the weatherstep object.
+                    forecast_outputs.tdry_scenarios.at(t, w) = weatherstep->m_tdry;  
+
+            }
+            else
+            {
+                weatherstep = &m_weather->ms_outputs;   //point to
+            }
 
 
             //get DNI
-                //double dni = m_weather->ms_outputs.m_beam;
-				double dni = weatherstep->m_beam;
+			double dni = weatherstep->m_beam;
 
-                if( m_weather->ms_outputs.m_solzen > 90. || dni < 0. )
+            if( m_weather->ms_outputs.m_solzen > 90. || dni < 0. )
                 dni = 0.;
 
             //get optical efficiency
-                double opt_eff = params.col_rec->calculate_optical_efficiency(*weatherstep, simloc);
+            double opt_eff = params.col_rec->calculate_optical_efficiency(*weatherstep, simloc);
 
             double q_inc = Asf * opt_eff * dni * 1.e-3; //kW
 
             //get thermal efficiency
-                double therm_eff = params.col_rec->calculate_thermal_efficiency_approx(*weatherstep, q_inc*0.001);
-            therm_eff *= params.sf_effadj;
-            therm_eff_ave += therm_eff * ave_weight;
+            double therm_eff = params.col_rec->calculate_thermal_efficiency_approx(*weatherstep, q_inc*0.001);
+			therm_eff *= params.sf_effadj;
 
-            //store the predicted field energy output
-            q_inc_ave += q_inc * therm_eff * ave_weight;
 
             //store the power cycle efficiency
-                double cycle_eff = params.eff_table_Tdb.interpolate( weatherstep->m_tdry );
+            double cycle_eff = params.eff_table_Tdb.interpolate( weatherstep->m_tdry );
             cycle_eff *= params.eta_cycle_ref;  
-            cycle_eff_ave += cycle_eff * ave_weight;
 
 			double f_pb_op_lim_local = std::numeric_limits<double>::quiet_NaN();
 			double m_dot_htf_max_local = std::numeric_limits<double>::quiet_NaN();
 			params.mpc_pc->get_max_power_output_operation_constraints(weatherstep->m_tdry, m_dot_htf_max_local, f_pb_op_lim_local);
-			f_pb_op_lim_ave += f_pb_op_lim_local * ave_weight;	//[-]
+
 
             //store the condenser parasitic power fraction
-                double wcond_f = params.wcondcoef_table_Tdb.interpolate( weatherstep->m_tdry );
-            wcond_ave += wcond_f * ave_weight;
+            double wcond_f = params.wcondcoef_table_Tdb.interpolate( weatherstep->m_tdry );
 
 		    simloc.ms_ts.m_time += simloc.ms_ts.m_step;
-                m_weather->converged();
+            m_weather->converged();
+
+			// update arrays at weather-file resolution
+			outputs.eta_sf_expected.at(t, w) = therm_eff;			  // thermal efficiency
+			outputs.q_sfavail_expected.at(t, w) = q_inc * therm_eff;  // predicted field energy output
+			outputs.eta_pb_expected.at(t, w) = cycle_eff;			  // power cycle efficiency
+			outputs.f_pb_op_limit.at(t, w) = f_pb_op_lim_local;		  // maximum power cycle output (normalized)
+			outputs.w_condf_expected.at(t, w) = wcond_f;			   //condenser power
+
         }
 
-        //-----report hourly averages
-        //thermal efficiency
-            outputs.eta_sf_expected.at(t,w) = therm_eff_ave;
-        //predicted field energy output
-            outputs.q_sfavail_expected.at(t,w) = q_inc_ave;
-        //power cycle efficiency
-            outputs.eta_pb_expected.at(t,w) = cycle_eff_ave;
-		// Maximum power cycle output (normalized)
-			outputs.f_pb_op_limit.at(t, w) = f_pb_op_lim_ave;		//[-]
-        //condenser power
-            outputs.w_condf_expected.at(t,w) = wcond_ave;
     }
 
-    }
+	// convert arrays to dispatch time resolution
+	translate_to_dispatch_timesteps(wfstep, outputs.eta_sf_expected);
+	translate_to_dispatch_timesteps(wfstep, outputs.q_sfavail_expected);
+	translate_to_dispatch_timesteps(wfstep, outputs.eta_pb_expected);
+	translate_to_dispatch_timesteps(wfstep, outputs.f_pb_op_limit);
+	translate_to_dispatch_timesteps(wfstep, outputs.w_condf_expected);
 
     //reset the weather data reader
     //m_weather->jump_to_timestep(step_start, simloc);
@@ -418,45 +556,76 @@ static void calculate_parameters(csp_dispatch_opt *optinst, unordered_map<std::s
     the dispatch optimization model. 
     */
 
+		pars["M"] = 1.e6;
         pars["T"] = nt ;
-        pars["delta"] = optinst->params.dt;
-        pars["Eu"] = optinst->params.e_tes_max ;
-        pars["Er"] = optinst->params.e_rec_startup ;
-        pars["Ec"] = optinst->params.e_pb_startup_cold ;
-        pars["Qu"] = optinst->params.q_pb_max ;
-        pars["Ql"] = optinst->params.q_pb_min ;
-        pars["Qru"] = optinst->params.e_rec_startup / optinst->params.dt_rec_startup;
-        pars["Qrl"] = optinst->params.q_rec_min ;
-        pars["Qc"] = optinst->params.e_pb_startup_cold / ceil(optinst->params.dt_pb_startup_cold/pars["delta"]) / pars["delta"];
-        pars["Qb"] = optinst->params.q_pb_standby ;
-        pars["Lr"] = optinst->params.w_rec_pump ;
-        pars["Lc"] = optinst->params.w_cycle_pump;
-        pars["Wh"] = optinst->params.w_track;
-        pars["Wb"] = optinst->params.w_cycle_standby;
-        pars["Ehs"] = optinst->params.w_stow;
-        pars["Wrsb"] = optinst->params.w_rec_ht;
-        pars["eta_cycle"] = optinst->params.eta_cycle_ref;
-        pars["Qrsd"] = 0.;      //<< not yet modeled, passing temporarily as zero
+		pars["disp_time_weighting"] = optinst->params.disp_time_weighting;
+		if (optinst->params.is_uniform_dt)
+		{
+			pars["delta"] = optinst->params.dt;
+		}
+
+		//--- Cost penalties
+		pars["rsu_cost"] = optinst->params.rsu_cost; //952.;
+		pars["csu_cost"] = optinst->params.csu_cost; //10000.;
+		pars["pen_delta_w"] = optinst->params.pen_delta_w; //0.1;
 
 
-        pars["s0"] = optinst->params.e_tes_init ;
-        pars["ursu0"] = 0.;
-        pars["ucsu0"] = 0.;
-        pars["y0"] = (optinst->params.is_pb_operating0 ? 1 : 0) ;
-        pars["ycsb0"] = (optinst->params.is_pb_standby0 ? 1 : 0) ;
-        pars["q0"] =  optinst->params.q_pb0 ;
-        pars["Wdot0"] = optinst->params.w_pb0;
-        pars["qrecmaxobs"] = 1.;
-        for(int i=0; i<(int)optinst->outputs.q_sfavail_expected.nrows(); i++)
-            pars["qrecmaxobs"] = optinst->outputs.q_sfavail_expected.at(i,0) > pars["qrecmaxobs"] ? optinst->outputs.q_sfavail_expected.at(i,0) : pars["qrecmaxobs"];
+		//--- TES parameters
+		pars["Eu"] = optinst->params.e_tes_max;
+		pars["s0"] = optinst->params.e_tes_init;
+		pars["gamma"] = optinst->forecast_params.fc_gamma;  // TES weighting (gamma) and complement (gammac)
+		pars["gammac"] = 1. - pars["gamma"];
 
-        pars["Qrsb"] = optinst->params.q_rec_standby; // * dq_rsu;     //.02
-        pars["M"] = 1.e6;
-        pars["W_dot_cycle"] = optinst->params.q_pb_des * optinst->params.eta_cycle_ref;
+
+		//--- Receiver parameters
+		pars["Er"] = optinst->params.e_rec_startup;
+		pars["Qru"] = optinst->params.e_rec_startup / optinst->params.dt_rec_startup;
+		pars["Qrl"] = optinst->params.q_rec_min;
+		pars["Qrsd"] = 0.;      //<< not yet modeled, passing temporarily as zero
+		pars["Qrsb"] = 1.e99; // optinst->params.q_rec_standby;
+		pars["deltal"] = optinst->params.dt_rec_startup;
+		pars["qrecmaxobs"] = 1.;
+		for (int i = 0; i<(int)optinst->outputs.q_sfavail_expected.nrows(); i++)
+			pars["qrecmaxobs"] = optinst->outputs.q_sfavail_expected.at(i, 0) > pars["qrecmaxobs"] ? optinst->outputs.q_sfavail_expected.at(i, 0) : pars["qrecmaxobs"];
 		
-		/*pars["wlim_min"] = 9.e99;
-		for (int t = 0; t < nt; t++)
-			pars["wlim_min"] = fmin(pars["wlim_min"], optinst->w_lim.at(t));*/
+		pars["yr0"] = (optinst->params.is_rec_operating0 ? 1 : 0);
+		pars["yrsb0"] = 0;
+		pars["yrsu0"] = (optinst->params.is_rec_startup0 ? 1 : 0);
+		pars["ursu0"] = optinst->params.u_rsu0;
+
+		//--- Parasitic loads
+		pars["Lr"] = optinst->params.w_rec_pump;
+		pars["Lc"] = optinst->params.w_cycle_pump;
+		pars["Wh"] = optinst->params.w_track;
+		pars["Wb"] = optinst->params.w_cycle_standby;
+		pars["Ehs"] = optinst->params.w_stow;
+		pars["Wht"] = optinst->params.w_rec_ht;
+
+
+		//--- Cycle parameters
+		pars["Ec"] = optinst->params.e_pb_startup_cold;
+		pars["Qu"] = optinst->params.q_pb_max;
+		pars["Ql"] = optinst->params.q_pb_min;
+		pars["Qb"] = optinst->params.q_pb_standby;
+		pars["eta_cycle"] = optinst->params.eta_cycle_ref;
+		pars["W_dot_cycle"] = optinst->params.q_pb_des * optinst->params.eta_cycle_ref;
+		pars["max_up"] = optinst->params.pb_max_rampup;     // Max allowable ramp-up rate (fraction of capacity per hour)
+		pars["max_down"] = optinst->params.pb_max_rampdown; // Max allowable ramp-down rate (fraction of capacity per hour)
+		pars["max_up_v"] = optinst->params.pb_rampup_violation_lim;     // Maximum allowable violation of cycle ramp-up constraint (fraction of capacity per hour)
+		pars["max_down_v"] = optinst->params.pb_rampdown_violation_lim;  // Maximum allowable violation of cycle ramp-down constraint (fraction of capacity per hour)
+		pars["Yu"] = optinst->params.pb_minup;		 // Minimum up time [hr]
+		pars["Yd"] = optinst->params.pb_mindown;   // Minimum down time [hr]
+
+		pars["y0"] = (optinst->params.is_pb_operating0 ? 1 : 0);
+		pars["ycsb0"] = (optinst->params.is_pb_standby0 ? 1 : 0);
+		pars["ycsu0"] = (optinst->params.is_pb_startup0 ? 1 : 0);
+		pars["q0"] = optinst->params.q_pb0;
+		//pars["Wdot0"] = optinst->params.w_pb0;  // calculated below based on q0 and efficiency approximation
+		pars["ucsu0"] = optinst->params.u_csu0;
+		pars["tup0"] = (optinst->params.is_pb_operating0) ? optinst->params.pb_persist0 : 0;   // Time up entering this horizon [hr]
+		pars["tstby0"] = (optinst->params.is_pb_standby0) ? optinst->params.pb_persist0 : 0;   // Time in standby entering this horizon [hr]
+		pars["tdown0"] = (!optinst->params.is_pb_operating0 && !optinst->params.is_pb_standby0) ? optinst->params.pb_persist0 : 0; // Time down entering this horizon [hr]
+
 
         //calculate Z parameters
         pars["Z_1"] = 0.;
@@ -505,9 +674,7 @@ static void calculate_parameters(csp_dispatch_opt *optinst, unordered_map<std::s
         pars["Wdotu"] = (pars["Qu"] - limit1) * pars["etap"];
         pars["Wdotl"] = (pars["Ql"] - limit1) * pars["etap"];
 
-        // TES weighting (gamma) and complement (gammac)
-        pars["gamma"] = optinst->forecast_params.fc_gamma;
-        pars["gammac"] = 1. - pars["gamma"];
+
 
         // Adjust wlim if specified value is too low to permit cycle operation
         int ns = optinst->forecast_params.n_scenarios;
@@ -515,39 +682,110 @@ static void calculate_parameters(csp_dispatch_opt *optinst, unordered_map<std::s
         optinst->outputs.delta_rs.resize(nt, ns);
         for(int s=0; s<ns; s++)
         {
-        for(int t=0; t<nt; t++)
-        {
+			for(int t=0; t<nt; t++)
+			{
+				double tstep = optinst->dt_array.at(t);
+
 		        double wmin = (pars["Ql"] * pars["etap"]*optinst->outputs.eta_pb_expected.at(t,s) / optinst->params.eta_cycle_ref) + 
                                 (pars["Wdotu"] - pars["etap"]*pars["Qu"])*optinst->outputs.eta_pb_expected.at(t,s) / optinst->params.eta_cycle_ref; // Electricity generation at minimum pb thermal input
-		    double max_parasitic = 
-                        pars["Lr"] * optinst->outputs.q_sfavail_expected.at(t,s) 
-                + (optinst->params.w_rec_ht / optinst->params.dt) 
-                + (optinst->params.w_stow / optinst->params.dt) 
-                + optinst->params.w_track 
-                + optinst->params.w_cycle_standby 
-                + optinst->params.w_cycle_pump*pars["Qu"]
-                    + optinst->outputs.w_condf_expected.at(t,s)*pars["W_dot_cycle"];  // Largest possible parasitic load at time t
+				double max_parasitic = 
+					pars["Lr"] * optinst->outputs.q_sfavail_expected.at(t,s) 
+					+ (optinst->params.w_rec_ht / tstep)
+					+ (optinst->params.w_stow / tstep)
+					+ optinst->params.w_track 
+					+ optinst->params.w_cycle_standby 
+					+ optinst->params.w_cycle_pump*pars["Qu"]
+						+ optinst->outputs.w_condf_expected.at(t,s)*pars["W_dot_cycle"];  // Largest possible parasitic load at time t
 
-            //save for writing to ampl
+				//save for writing to ampl
                 optinst->outputs.wnet_lim_min.at(t, s) =  wmin - max_parasitic;
-            if( t < nt-1 )
-            {
-                    double delta_rec_startup = std::fmin(1., std::fmax(optinst->params.e_rec_startup / std::fmax(optinst->outputs.q_sfavail_expected.at(t + 1, s)*pars["delta"], 1.), optinst->params.dt_rec_startup / pars["delta"]));
-                    optinst->outputs.delta_rs.at(t, s) = delta_rec_startup;
+				if( t < nt-1 )
+				{
+					double tstep_next = optinst->dt_array.at(t + 1);
+					double delta_rec_startup = std::fmin(1., std::fmax(optinst->params.e_rec_startup / std::fmax(optinst->outputs.q_sfavail_expected.at(t + 1, s)*tstep_next, 1.), optinst->params.dt_rec_startup / tstep_next));
+					optinst->outputs.delta_rs.at(t, s) = delta_rec_startup;
                 }
             }
         }
 
-        //temporary fixed constants
-        pars["disp_time_weighting"] = optinst->params.disp_time_weighting;
-        pars["rsu_cost"] = optinst->params.rsu_cost; //952.;
-        pars["csu_cost"] = optinst->params.csu_cost; //10000.;
-        pars["pen_delta_w"] = optinst->params.pen_delta_w; //0.1;
 
-		// time-dependent startup energy (only differs between time steps if user-defined fractional available capacity is a function of time)
+		// Allowable startup energy per period
 		optinst->outputs.Qc.resize(nt);
 		for (int t = 0; t < nt; t++)
-			optinst->outputs.Qc.at(t) = std::fmin(pars["Qc"], optinst->cap_frac.at(t) * optinst->params.q_pb_des);
+		{
+			if (optinst->params.is_uniform_dt)
+			{
+				pars["Qc"] = optinst->params.e_pb_startup_cold / ceil(optinst->params.dt_pb_startup_cold / pars["delta"]) / pars["delta"];
+				optinst->outputs.Qc.at(t) = std::fmin(pars["Qc"], optinst->cap_frac.at(t) * optinst->params.q_pb_des);
+			}
+			else
+			{
+				optinst->outputs.Qc.at(t) = optinst->params.e_pb_startup_cold / ceil(optinst->params.dt_pb_startup_cold / optinst->dt_array.at(t)) / optinst->dt_array.at(t);
+				optinst->outputs.Qc.at(t) = std::fmin(optinst->outputs.Qc.at(t), optinst->cap_frac.at(t) * optinst->params.q_pb_des);
+			}
+		}
+
+
+
+
+
+		//----------------------------------------------------------------------------------------------------
+		//--- Parameters not used in ampl
+		if (!optinst->solver_params.is_ampl_engine)
+		{
+			//--- Decision permanence [hr]
+			pars["P_onoff"] = optinst->perm.pb_onoff;
+			pars["P_onoff_lookahead"] = optinst->perm.pb_onoff_lookahead;
+
+			pars["P_level"] = optinst->perm.pb_level;
+			pars["P_level_lookahead"] = optinst->perm.pb_level_lookahead;
+
+			pars["P_onoff_rec"] = optinst->perm.rec_onoff;
+			pars["P_onoff_rec_lookahead"] = optinst->perm.rec_onoff_lookahead;
+
+
+			//--- Storage buffer
+			optinst->outputs.s_min.resize(nt, ns);
+			optinst->outputs.s_min.fill(optinst->params.e_tes_buffer);
+			if (pars["s0"] < optinst->params.e_tes_buffer)  // Initial storage capacity is below allowable value -> relax constraint until receiver energy is available to make up the difference
+			{
+				for (int s = 0; s < ns; s++)
+				{
+					double rec_accum = 0.0;
+					double startup_require = optinst->params.e_rec_startup;
+					if (optinst->params.is_rec_operating0)
+						startup_require = 0.0;
+
+					for (int t = 0; t < nt; t++)
+					{
+
+						if (startup_require > 0.0)
+						{
+							if (optinst->outputs.q_sfavail_expected.at(t, s) < pars["Qru"])
+								startup_require = optinst->params.e_rec_startup;
+							else
+								startup_require -= pars["Qru"] * pars["delta"];
+						}
+
+						else
+						{
+							if (optinst->outputs.q_sfavail_expected.at(t, s) < pars["Qrl"])
+								startup_require = optinst->params.e_rec_startup;
+							else
+								rec_accum += optinst->outputs.q_sfavail_expected.at(t, s) * pars["delta"];  // Available accumulated energy from receiver [kWht]
+						}
+
+						if (rec_accum < (optinst->params.e_tes_buffer - pars["s0"]))			// Cumulative receiver energy is insufficient to increase storage above allowable min
+							optinst->outputs.s_min.at(t, s) = optinst->params.e_tes_init;		// Relax storage lower bound to initial storage availability
+						else
+							break;
+					}
+				}
+			}
+		}
+
+
+
 };
 
 bool csp_dispatch_opt::optimize()
@@ -558,6 +796,13 @@ bool csp_dispatch_opt::optimize()
     {
         return optimize_ampl();
     }
+	
+	// Skip optimization if non-uniform time steps are specified
+	if (!params.is_uniform_dt)
+	{
+		return false;
+	}
+
 
     /* 
     Formulate the optimization problem for dispatch generation. We are trying to maximize revenue subject to inventory
@@ -599,6 +844,7 @@ bool csp_dispatch_opt::optimize()
 
         //Calculate the number of variables
         int nt = (int)m_nstep_opt;
+		int nt_lookahead = (int)params.nstep_lookahead;
 
         //set up the variable structure
         optimization_vars O;
@@ -1085,41 +1331,41 @@ bool csp_dispatch_opt::optimize()
 
         
         // ******************** Power cycle constraints *******************
-        {
-            REAL row[5];
-            int col[5];
+		{
+			REAL row[5];
+			int col[5];
 
-            for(int t=0; t<nt; t++)
-            {
+			for (int t = 0; t < nt; t++)
+			{
 
-                int i=0;
-                //Startup Inventory balance
-                row[i  ] = 1.;
-                col[i++] = O.column("ucsu", t);
-                
+				int i = 0;
+				//Startup Inventory balance
+				row[i] = 1.;
+				col[i++] = O.column("ucsu", t);
+
 				row[i] = -P["delta"] * outputs.Qc.at(t); // -P["delta"] * P["Qc"];
-                col[i++] = O.column("ycsu", t);
+				col[i++] = O.column("ycsu", t);
 
-                if(t>0)
-                {
-                    row[i  ] = -1.;
-                    col[i++] = O.column("ucsu", t-1);
-                }
+				if (t > 0)
+				{
+					row[i] = -1.;
+					col[i++] = O.column("ucsu", t - 1);
+				}
 
-                add_constraintex(lp, i, row, col, LE, 0.);
+				add_constraintex(lp, i, row, col, LE, 0.);
 
-                //Inventory nonzero
-                row[0] = 1.;
-                col[0] = O.column("ucsu", t);
+				//Inventory nonzero
+				row[0] = 1.;
+				col[0] = O.column("ucsu", t);
 
-                row[1] = -P["M"];
-                col[1] = O.column("ycsu", t);
+				row[1] = -P["M"];
+				col[1] = O.column("ycsu", t);
 
-                add_constraintex(lp, 2, row, col, LE, 0.);
+				add_constraintex(lp, 2, row, col, LE, 0.);
 
 
 				// Original constraints: applied whenever cycle startup can be completed in a single time step and at least minimum operation can also occur in that timestep
-				if (P["delta"] * outputs.Qc.at(t) >= 0.999*P["Ec"] && outputs.Qc.at(t) + P["Ql"] < P["Qu"]*cap_frac.at(t))
+				if (P["delta"] * outputs.Qc.at(t) >= 0.999*P["Ec"] && outputs.Qc.at(t) + P["Ql"] < P["Qu"] * cap_frac.at(t))
 				{
 					//Cycle operation allowed when:
 					i = 0;
@@ -1158,9 +1404,9 @@ bool csp_dispatch_opt::optimize()
 					col[i++] = O.column("y", t);
 
 					add_constraintex(lp, i, row, col, LE, 0.);
-					
+
 				}
-				
+
 				// jm 10/2018: Modified constraints applied in cases when cycle startup requires multiple timesteps or full cycle startup and minimum operation can't occur in the same timestep
 				else
 				{
@@ -1194,28 +1440,28 @@ bool csp_dispatch_opt::optimize()
 					add_constraintex(lp, 2, row, col, LE, P["Qu"] * cap_frac.at(t));
 
 				}
-				
 
 
 
-                //cycle operation mode requirement
-                row[0] = 1.;
-                col[0] = O.column("x", t);
 
-                row[1] = -P["Qu"] * cap_frac.at(t);
-                col[1] = O.column("y", t);
+				//cycle operation mode requirement
+				row[0] = 1.;
+				col[0] = O.column("x", t);
 
-                add_constraintex(lp, 2, row, col, LE, 0.);
+				row[1] = -P["Qu"] * cap_frac.at(t);
+				col[1] = O.column("y", t);
 
-                //Minimum cycle energy contribution
-                i=0;
-                row[i  ] = 1.;
-                col[i++] = O.column("x", t);
+				add_constraintex(lp, 2, row, col, LE, 0.);
 
-                row[i  ] = -P["Ql"];
-                col[i++] = O.column("y", t);
+				//Minimum cycle energy contribution
+				i = 0;
+				row[i] = 1.;
+				col[i++] = O.column("x", t);
 
-                add_constraintex(lp, i, row, col, GE, 0);
+				row[i] = -P["Ql"];
+				col[i++] = O.column("y", t);
+
+				add_constraintex(lp, i, row, col, GE, 0);
 
 
 				// Cycle standby not allowed if constrained capacity less than standby requirement
@@ -1224,20 +1470,20 @@ bool csp_dispatch_opt::optimize()
 				add_constraintex(lp, 1, row, col, LE, P["Qu"] * cap_frac.at(t));
 
 
-                //cycle startup can't be enabled after a time step where the cycle was operating
-                if(t>0)
-                {
-                    row[0] = 1.;
-                    col[0] = O.column("ycsu", t);
+				//cycle startup can't be enabled after a time step where the cycle was operating
+				if (t > 0)
+				{
+					row[0] = 1.;
+					col[0] = O.column("ycsu", t);
 
-                    row[1] = 1.;
-                    col[1] = O.column("y", t-1);
+					row[1] = 1.;
+					col[1] = O.column("y", t - 1);
 
-                    add_constraintex(lp, 2, row, col, LE, 1.);
-                }
+					add_constraintex(lp, 2, row, col, LE, 1.);
+				}
 
 				//cycle startup can't be enabled after a time step where the cycle was in standby
-				if (t>0)
+				if (t > 0)
 				{
 					row[0] = 1.;
 					col[0] = O.column("ycsu", t);
@@ -1256,90 +1502,274 @@ bool csp_dispatch_opt::optimize()
 					add_constraintex(lp, 1, row, col, LE, std::fmin((params.is_pb_operating0 ? 0. : 1.), (params.is_pb_standby0 ? 0. : 1.)));
 				}
 
-                //Standby mode entry
-                i=0;
-                row[i  ] = 1.;
-                col[i++] = O.column("ycsb", t);
+				//Standby mode entry
+				i = 0;
+				row[i] = 1.;
+				col[i++] = O.column("ycsb", t);
 
-                if(t>0)
-                {
-                    row[i  ] = -1.;
-                    col[i++] = O.column("y", t-1);
+				if (t > 0)
+				{
+					row[i] = -1.;
+					col[i++] = O.column("y", t - 1);
 
-                    row[i  ] = -1.;
-                    col[i++] = O.column("ycsb", t-1);
+					row[i] = -1.;
+					col[i++] = O.column("ycsb", t - 1);
 
-                    add_constraintex(lp, i, row, col, LE, 0);
-                }
-                else
-                {
-                    add_constraintex(lp, i, row, col, LE, (params.is_pb_standby0 ? 1 : 0) + (params.is_pb_operating0 ? 1 : 0));
-                }
+					add_constraintex(lp, i, row, col, LE, 0);
+				}
+				else
+				{
+					add_constraintex(lp, i, row, col, LE, (params.is_pb_standby0 ? 1 : 0) + (params.is_pb_operating0 ? 1 : 0));
+				}
 
-                //some modes can't coincide
-                row[0] = 1.;
-                col[0] = O.column("ycsu", t);
-                row[1] = 1.;
-                col[1] = O.column("ycsb", t);    
+				//some modes can't coincide
+				row[0] = 1.;
+				col[0] = O.column("ycsu", t);
+				row[1] = 1.;
+				col[1] = O.column("ycsb", t);
 
-                add_constraintex(lp, 2, row, col, LE, 1);   
+				add_constraintex(lp, 2, row, col, LE, 1);
 
-                row[0] = 1.;
-                col[0] = O.column("y", t);
-                row[1] = 1.;
-                col[1] = O.column("ycsb", t);    
+				row[0] = 1.;
+				col[0] = O.column("y", t);
+				row[1] = 1.;
+				col[1] = O.column("ycsb", t);
 
-                add_constraintex(lp, 2, row, col, LE, 1);   
+				add_constraintex(lp, 2, row, col, LE, 1);
 
-                if( t > 0 )
-                {
-                    //cycle start penalty
-                    row[0] = 1.;
-                    col[0] = O.column("ycsup", t);
+				if (t > 0)
+				{
+					//cycle start penalty
+					row[0] = 1.;
+					col[0] = O.column("ycsup", t);
 
-                    row[1] = -1.;
-                    col[1] = O.column("ycsu", t);
+					row[1] = -1.;
+					col[1] = O.column("ycsu", t);
 
-                    row[2] = 1.;
-                    col[2] = O.column("ycsu", t-1);
+					row[2] = 1.;
+					col[2] = O.column("ycsu", t - 1);
 
-                    add_constraintex(lp, 3, row, col, GE, 0.);
+					add_constraintex(lp, 3, row, col, GE, 0.);
 
-                    //cycle standby start penalty
-                    row[0] = 1.;
-                    col[0] = O.column("ychsp", t);
+					//cycle standby start penalty
+					row[0] = 1.;
+					col[0] = O.column("ychsp", t);
 
-                    row[1] = -1.;
-                    col[1] = O.column("y", t);
+					row[1] = -1.;
+					col[1] = O.column("y", t);
 
-                    row[2] = -1.;
-                    col[2] = O.column("ycsb", t-1);
+					row[2] = -1.;
+					col[2] = O.column("ycsb", t - 1);
 
-                    add_constraintex(lp, 3, row, col, GE, -1.);
+					add_constraintex(lp, 3, row, col, GE, -1.);
 
 #ifdef MOD_CYCLE_SHUTDOWN
-                    //cycle shutdown energy penalty
-                    row[0] = 1.;
-                    col[0] = O.column("ycsd", t-1);
+					//cycle shutdown energy penalty
+					row[0] = 1.;
+					col[0] = O.column("ycsd", t - 1);
 
-                    row[1] = -1.;
-                    col[1] = O.column("y", t-1);
-                    
-                    row[2] = 1.;
-                    col[2] = O.column("y", t);
-                    
-                    row[3] = -1.;
-                    col[3] = O.column("ycsb", t-1);
-                    
-                    row[4] = 1.;
-                    col[4] = O.column("ycsb", t);
+					row[1] = -1.;
+					col[1] = O.column("y", t - 1);
 
-                    add_constraintex(lp, 5, row, col, GE, 0.);
+					row[2] = 1.;
+					col[2] = O.column("y", t);
+
+					row[3] = -1.;
+					col[3] = O.column("ycsb", t - 1);
+
+					row[4] = 1.;
+					col[4] = O.column("ycsb", t);
+
+					add_constraintex(lp, 5, row, col, GE, 0.);
 #endif
 
-                }
-            }
+				}
+			}
+		}
+
+
+		// ******************** Cycle ramp-up and ramp-down rates *******************
+		
+		{
+			REAL row[5];
+			int col[5];
+
+
+			// Convert ramp rate from fraction of capacity per hour to allowable thermal energy per time step
+			double Qup = P["max_up"] * P["Qu"] / P["delta"];			  // Maximum increase in thermal energy to the cycle per time step [kWt]
+			double Qdown = P["max_down"] * P["Qu"] / P["delta"];		  // Maximum decrease in thermal energy to the cycle per time step [kWt]
+			double Qup_incr_su = std::fmax(0., 1.001*P["Ql"] - Qup);      // Allowable increase in max ramp-up at startup (only > 0 if max ramp-up < min operational level) 
+			double Qdown_incr_sd = std::fmax(0., 1.001*P["Ql"] - Qdown);  // Allowable increase in max ramp-down at shutdown (only > 0 if max ramp-down < min operational level) 			
+			if (Qdown_incr_sd > 0.0 && P["q0"] > 0.0) // Relax ramp-down again if cycle cannot ramp down from initial state fast enough to turn off (occurs occasionally because of discrepancies in dispatch/solver solutions)
+			{
+				double s = P["s0"];
+				double q = P["q0"];
+				double qallow = Qdown + Qdown_incr_sd;
+				int j = 0;
+				while (j < nt && q>qallow)
+				{
+					q -= Qdown;
+					s -= q * P["delta"];
+					s += outputs.q_sfavail_expected.at(j, 0) * P["delta"];
+					if (q > qallow && s < P["delta"] * P["Ql"])  // Cycle can't be shut off yet, but also can't be on or in standby during the next time step
+					{
+						Qdown_incr_sd = 1.001*q - Qdown;
+						break;
+					}
+					j++;
+				}
+			}
+
+
+			for (int t = 0; t < nt; t++)
+			{
+				//--- Max cycle ramp-up 
+				row[0] = 1.;
+				col[0] = O.column("x", t);
+				if (t > 0)
+				{
+					row[1] = -1.;
+					col[1] = O.column("x", t - 1);
+
+					row[2] = Qup_incr_su;
+					col[2] = O.column("y", t - 1);
+
+					row[3] = Qup_incr_su;
+					col[3] = O.column("ycsb", t - 1);
+
+					add_constraintex(lp, 4, row, col, LE, Qup + Qup_incr_su);
+				}
+				else
+				{
+					double RHS = P["q0"] + Qup + (1.0 - P["y0"] - P["ycsb0"]) * Qup_incr_su;
+					add_constraintex(lp, 1, row, col, LE, RHS);
+				}
+
+
+				//--- Max cycle ramp-down
+				row[0] = 1.;
+				col[0] = O.column("x", t);
+
+				row[1] = -Qdown_incr_sd;
+				col[1] = O.column("y", t);
+
+				row[2] = -Qdown_incr_sd;
+				col[2] = O.column("ycsb", t);
+
+				if (t > 0)
+				{
+					row[3] = -1.;
+					col[3] = O.column("x", t - 1);
+
+					add_constraintex(lp, 4, row, col, GE, -Qdown - Qdown_incr_sd);
+				}
+				
+				else
+				{
+					add_constraintex(lp, 3, row, col, GE, P["q0"] - Qdown - Qdown_incr_sd);
+					//double max_avail = P["s0"] / P["delta"] + outputs.q_sfavail_expected.at(t, 0); 
+					//if (P["q0"] <= Qdown + Qdown_incr_sd || max_avail > std::fmax(P["Ql"], P["q0"]-Qdown))  // Ramp-down is feasible
+					//	add_constraintex(lp, 3, row, col, GE, P["q0"] - Qdown - Qdown_incr_sd);
+				}
+				
+			}
+	
         }
+		
+
+
+
+
+
+		// ******************** Cycle min up- and down- times *******************
+		{
+			REAL row[24];
+			int col[24];
+
+			//--- Minimum up time
+			int Nup = (int)ceil(P["Yu"] / P["delta"]);  // minimum up time in number of time steps
+			int Nup0 = (int)ceil(P["tup0"] / P["delta"]);
+			if (Nup > 1)
+			{
+				int nforce = (P["y0"] == 1) ? (int)std::fmax(0, Nup - Nup0) : 0;	// Number of time steps at beginning of window that cyle has to be up
+				double fract = 1. / (float)Nup;
+
+				for (int t = 0; t < nt; t++)
+				{
+					int i = 0;
+
+					row[i] = 1.;
+					col[i++] = O.column("y", t);
+
+					if (t < nforce)  // Cycle must be on (constraints below should also work for in this case, but forcing it here might be faster...)
+						add_constraintex(lp, i, row, col, EQ, P["y0"]);  
+
+					else if (t > 0)  // t == 0 case is either unconstrained, or forced to y = 1 above
+					{
+						row[i] = -1. + fract;
+						col[i++] = O.column("y", t - 1);
+
+						int k = (int)std::fmin(Nup, t);  
+						for (int j = 2; j <= k; j++)
+						{
+							row[i] = fract;
+							col[i++] = O.column("y", t - j);
+						}
+
+						if (k == Nup) // Full minimum up-time window is in this optimization window
+							add_constraintex(lp, i, row, col, GE, 0.0);
+						else
+						{
+							int n_up_prev = (int)std::fmin(Nup - t, Nup0);  // Number of time steps in previous window that contribute
+							add_constraintex(lp, i, row, col, GE, -fract * n_up_prev);
+						}
+					}
+				}
+			}
+
+			//--- Minimum down time
+			int Ndown = (int)ceil(P["Yd"] / P["delta"]);
+			int Ndown0 = (int)ceil(P["tdown0"] / P["delta"]);
+			if (Ndown > 1)
+			{
+				int nforce = (P["y0"] == 0) ? (int)std::fmax(0, Ndown - Ndown0) : 0;	 // Number of time steps at beginning of window that cyle has to be down
+				double fract = 1. / (float)Ndown;
+
+				for (int t = 0; t < nt; t++)
+				{
+					int i = 0;
+
+					row[i] = 1.;
+					col[i++] = O.column("y", t);
+
+					if (t < nforce)  // Cycle must be off (constraints below should also work for in this case, but forcing it here might be faster...)
+						add_constraintex(lp, i, row, col, EQ, P["y0"]);
+
+					else if (t > 0)  // t == 0 case is either unconstrained, or forced to y = 0 above
+					{
+						row[i] = -1. + fract;
+						col[i++] = O.column("y", t - 1);
+
+						int k = (int)std::fmin(Ndown, t);  
+						for (int j = 2; j <= k; j++)
+						{
+							row[i] = fract;
+							col[i++] = O.column("y", t - j);
+						}
+
+						if (k == Ndown) // Full minimum down-time window is in this optimization window
+							add_constraintex(lp, i, row, col, LE, 1.0);
+						else
+						{
+							int n_down_prev = (int)std::fmin(Ndown - t, Ndown0);  // Number of time steps in previous window that contribute
+							add_constraintex(lp, i, row, col, LE, fract*(n_down_prev+t));
+						}
+					}
+				}
+			}
+
+		}
+
 
 
         // ******************** Balance constraints *******************
@@ -1397,6 +1827,9 @@ bool csp_dispatch_opt::optimize()
                 col[0] = O.column("s", t);
 
                 add_constraintex(lp, 1, row, col, LE, P["Eu"]);
+
+				add_constraintex(lp, 1, row, col, GE, outputs.s_min.at(t,0));  // Storage buffer (default value is 0.0)
+
 
 				//max cycle thermal input in time periods where cycle operates and receiver is starting up
                 //outputs.delta_rs.resize(nt);
@@ -1507,6 +1940,88 @@ bool csp_dispatch_opt::optimize()
 				}
 			}
 		}
+
+
+
+
+		// ******************** Decision permanence *******************
+		{
+			REAL row[2];
+			int col[2];
+
+			bool is_decision;
+
+			int np_onoff = (int)ceil(P["P_onoff"] / P["delta"]);
+			int np_level = (int)ceil(P["P_level"] / P["delta"]);
+			int np_onoff_rec = (int)ceil(P["P_onoff_rec"] / P["delta"]);
+
+			int np_onoff_lookahead = (int)ceil(P["P_onoff_lookahead"] / P["delta"]);
+			int np_level_lookahead = (int)ceil(P["P_level_lookahead"] / P["delta"]);
+			int np_onoff_rec_lookahead = (int)ceil(P["P_onoff_rec_lookahead"] / P["delta"]);
+
+			for (int t = 0; t < nt; t++)
+			{
+				// Cycle on/off/standby
+				is_decision = true;
+				if (t < nt - nt_lookahead && t % np_onoff != 0)  // Optimization window
+					is_decision = false;
+				if (t >= nt - nt_lookahead && t % np_onoff_lookahead != 0) // Lookahead period
+					is_decision = false;
+
+				if (!is_decision)  // Not allowed to change state in this step
+				{
+					row[0] = 1.;
+					col[0] = O.column("y", t);
+					row[1] = -1.;
+					col[1] = O.column("y", t - 1);
+					add_constraintex(lp, 2, row, col, EQ, 0.);
+
+					row[0] = 1.;
+					col[0] = O.column("ycsb", t);
+					row[1] = -1.;
+					col[1] = O.column("ycsb", t - 1);
+					add_constraintex(lp, 2, row, col, EQ, 0.);
+				}
+
+				// Cycle operational level permanance
+				is_decision = true;
+				if (t < nt - nt_lookahead && t % np_level != 0)  // Optimization window
+					is_decision = false;
+				if (t >= nt - nt_lookahead && t % np_level_lookahead != 0) // Lookahead period
+					is_decision = false;
+
+				if (!is_decision)  // Not allowed to change operational level
+				{
+					row[0] = 1.;
+					col[0] = O.column("x", t);
+					row[1] = -1.;
+					col[1] = O.column("x", t - 1);
+					add_constraintex(lp, 2, row, col, EQ, 0.);
+				}
+
+
+				// Receiver on/off
+				is_decision = true;
+				if (t < nt - nt_lookahead && t % np_onoff_rec != 0)  // Optimization window
+					is_decision = false;
+				if (t >= nt - nt_lookahead && t % np_onoff_rec_lookahead != 0) // Lookahead period
+					is_decision = false;
+
+				if (!is_decision)
+				{
+					row[0] = 1.;
+					col[0] = O.column("yr", t);
+					row[1] = -1.;
+					col[1] = O.column("yr", t - 1);
+					add_constraintex(lp, 2, row, col, EQ, 0.);
+				}
+
+			}
+		}
+
+
+
+
 
         
         //Set problem to maximize
@@ -1717,18 +2232,16 @@ bool csp_dispatch_opt::optimize()
             outputs.q_rec_startup.resize(nt, 0.);
             outputs.w_pb_target.resize(nt, 0.);
 
-            int ncols = get_Ncolumns(lp);
-
-//            char name[15];
-            REAL *vars = new REAL[ncols];
-            get_variables(lp, vars);
-//            int col;
+			int ncols = get_Norig_columns(lp);  // all variables (including presolved variables)
+			int nrows = get_Norig_rows(lp);     
 
 
-            for(int c=1; c<ncols; c++)
+            for(int c=1; c<=ncols; c++)
             {
-                char *colname = get_col_name(lp, c);
-                if(! colname) continue;
+				char *colname = get_origcol_name(lp, c);  // column names before presolve
+				double val = get_var_primalresult(lp, nrows + c); // variable value (including presolved variables)
+
+				if(! colname) continue;
 
                 char root[15];
 
@@ -1769,49 +2282,48 @@ bool csp_dispatch_opt::optimize()
 
                 if(strcmp(root, "ycsb") == 0)  //Cycle standby
                 {
-                    outputs.pb_standby.at(t) = vars[ c-1 ] == 1.;
+                    outputs.pb_standby.at(t) = val == 1.;
                 }
                 else if(strcmp(root, "ycsu") == 0)     //Cycle start up
                 {
-                    bool su = (fabs(1 - vars[ c-1 ]) < 0.001);
+                    bool su = (fabs(1 - val) < 0.001);
                     outputs.pb_operation.at(t) = outputs.pb_operation.at(t) || su;
 					outputs.q_pb_startup.at(t) = su ? outputs.Qc.at(t) : 0.;   //outputs.q_pb_startup.at(t) = su ? P["Qc"] : 0.;
                 }
                 else if(strcmp(root, "y") == 0)     //Cycle operation
                 {
-                    outputs.pb_operation.at(t) = outputs.pb_operation.at(t) || ( fabs(1. - vars[ c-1 ]) < 0.001 );
+                    outputs.pb_operation.at(t) = outputs.pb_operation.at(t) || ( fabs(1. - val) < 0.001 );
                 }
                 else if(strcmp(root, "x") == 0)     //Cycle thermal energy consumption
                 {
-                    outputs.q_pb_target.at(t) = vars[ c-1 ];
+                    outputs.q_pb_target.at(t) = val;
                 }
                 else if(strcmp(root, "yrsu") == 0)     //Receiver start up
                 {
-                    outputs.rec_operation.at(t) = outputs.rec_operation.at(t) || (fabs(1 - vars[ c-1 ]) < 0.001);
+                    outputs.rec_operation.at(t) = outputs.rec_operation.at(t) || (fabs(1 - val) < 0.001);
                 }
                 else if(strcmp(root, "xrsu") == 0)
                 {
-                    outputs.q_rec_startup.at(t) = vars[ c-1 ];
+                    outputs.q_rec_startup.at(t) = val;
                 }
                 else if(strcmp(root, "yr") == 0)
                 {
-                    outputs.rec_operation.at(t) = outputs.rec_operation.at(t) || (fabs(1 - vars[ c-1 ]) < 0.001);
+                    outputs.rec_operation.at(t) = outputs.rec_operation.at(t) || (fabs(1 - val) < 0.001);
                 }
                 else if(strcmp(root, "s") == 0)         //Thermal storage charge state
                 {
-                    outputs.tes_charge_expected.at(t) = vars[ c-1 ];
+                    outputs.tes_charge_expected.at(t) = val;
                 }
                 else if(strcmp(root, "xr") == 0)   //receiver production
                 {
-                    outputs.q_sf_expected.at(t) = vars[ c-1 ];
+                    outputs.q_sf_expected.at(t) = val;
                 }
                 else if(strcmp(root, "wdot") == 0) //electricity production
                 {
-                    outputs.w_pb_target.at(t) = vars[ c-1 ];
+                    outputs.w_pb_target.at(t) = val;
                 }
             }
 
-            delete [] vars;
         }
         else
         {
@@ -1998,9 +2510,6 @@ std::string csp_dispatch_opt::write_ampl()
         calculate_parameters(this, pars, nt);
 
 
-        //double dq_rsu = params.e_rec_startup / params.dt_rec_startup;
-        //double dq_csu = params.e_pb_startup_cold / ceil(params.dt_pb_startup_cold/params.dt) / params.dt;
-
         fout << "#data file\n\n";
         fout << "# --- scalar parameters ----\n";
         fout << "param day_of_year := " << day << ";\n";
@@ -2017,7 +2526,7 @@ std::string csp_dispatch_opt::write_ampl()
 
         fout << "# --- indexed parameters ---\n";
 
-        write_ampl_variable_array( fout, w_lim, "Wdotnet" ); //net power limit
+		write_ampl_variable_array( fout, w_lim, "Wdotnet" ); //net power limit
 
         if( forecast_params.is_stochastic )
         {
@@ -2040,6 +2549,15 @@ std::string csp_dispatch_opt::write_ampl()
 
 		write_ampl_variable_array(fout, cap_frac, "cap_frac");
 		write_ampl_variable_array(fout, eff_frac, "eff_frac");
+		write_ampl_variable_array(fout, outputs.Qc, "Qc");
+
+		if (!params.is_uniform_dt)
+		{
+			write_ampl_variable_array(fout, dt_array, "dt");   // Time-step durations [hr]
+			write_ampl_variable_array(fout, t_elapsed, "dte"); // Cumulative time elapsed [hr]
+			write_ampl_variable_array(fout, t_weight, "twt");  // Time weighting factor
+		}
+
 
         fout.close();
     }

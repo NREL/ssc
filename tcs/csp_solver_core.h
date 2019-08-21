@@ -330,6 +330,30 @@ public:
 		std::vector<double> m_disp_cap_constr;
 		std::vector<double> m_disp_eff_constr;
 
+		double m_pc_max_rampup;
+		double m_pc_max_rampdown;
+		double m_pc_rampup_violation_lim;
+		double m_pc_rampdown_violation_lim;
+
+		double m_pc_minup;
+		double m_pc_mindown;
+		double m_pc_onoff_perm;
+		double m_pc_onoff_lookahead_perm;
+		double m_rec_onoff_perm;
+		double m_rec_onoff_lookahead_perm;
+		double m_pc_level_perm;
+		double m_pc_level_lookahead_perm;
+		double m_storage_buffer;
+		
+		bool m_is_run_single_opt;
+		bool m_is_variable_disp_steps;
+		std::vector<double> m_disp_steplength_array;
+		std::vector<double> m_disp_steplength_end_time;
+
+		double m_pc_q0;
+		double m_pc_persist_0;
+		double m_rec_persist_0;
+
         S_csp_tou_params()
         {
             m_isleapyear = false;
@@ -391,6 +415,31 @@ public:
 
 			m_is_dispatch_targets = false;
 			m_is_disp_constr = false;
+
+			m_pc_max_rampup = 60.;				// Maximum cycle ramp-up (fraction of capacity per hour)
+			m_pc_max_rampdown = 60.;			// Maximum cycle ramp-up (fraction of capacity per hour)
+			m_pc_rampup_violation_lim = 60.;   // Maximum allowable violation of cycle ramp-up constraint (fraction of capacity per hour)
+			m_pc_rampdown_violation_lim = 60.; // Maximum allowable violation of cycle ramp-down constraint (fraction of capacity per hour)
+			
+			m_pc_minup = 0.;			// Minimum cycle up time (hr)
+			m_pc_mindown = 0.;          // Minimum cycle down time (hr)
+			m_pc_onoff_perm = 0.;       // Cycle binary on/off decision permanence (hr)
+			m_pc_onoff_lookahead_perm = 0.;   // Cycle binary on/off decision permanence during look-ahead window (hr)
+			m_pc_level_perm = 0.;			  // Cycle operating level decision permanence (hr)
+			m_pc_level_perm = 0.;			  // Cycle operating level decision permanence during look-ahead window (hr)
+			m_rec_onoff_perm = 0.;			  // Receiver binary on/off decision permanence (hr)
+			m_rec_onoff_lookahead_perm = 0.;  // Receiver binary on/off decision permanence during look-ahead window (hr)
+			
+			m_storage_buffer = 0.0;			 // Dispatch storage buffer (fraction of capacity)
+			 
+			m_is_run_single_opt = false;		// Run only a single optimziation horizon, overriding all other specifications of simulation end time or optimization frequency
+			m_is_variable_disp_steps = false;	// Use variable step lengths in dispatch model? 
+			m_disp_steplength_array.clear();    // Variable step lengths for real-time dispatch (min)
+			m_disp_steplength_end_time.clear(); // End time [hr] for application of each dispatch step length(min)
+
+			m_pc_q0 = 0.0;   
+			m_pc_persist_0 = 1000.;
+			m_rec_persist_0 = 1000.;
         };
 
     } mc_dispatch_params;
@@ -541,6 +590,7 @@ public:
     virtual double get_min_power_delivery() = 0;    //MWt
 	virtual double get_tracking_power() = 0;		//MWe
 	virtual double get_col_startup_power() = 0;		//MWe-hr
+	virtual double get_remaining_startup_energy() = 0; //kWh
 
 	virtual void off(const C_csp_weatherreader::S_outputs &weather,
 		const C_csp_solver_htf_1state &htf_state_in,
@@ -689,6 +739,7 @@ public:
     virtual double get_hot_startup_energy() = 0;    //[MWh]
     virtual double get_max_thermal_power() = 0;     //MW
     virtual double get_min_thermal_power() = 0;     //MW
+	virtual double get_remaining_startup_energy() = 0; //kWht
 	virtual void get_max_power_output_operation_constraints(double T_amb /*C*/, double & m_dot_HTF_ND_max, double & W_dot_ND_max) = 0;	//[-] Normalized over design power
     virtual double get_efficiency_at_TPH(double T_degC, double P_atm, double relhum_pct, double *w_dot_condenser=0) = 0; //-
     virtual double get_efficiency_at_load(double load_frac, double *w_dot_condenser=0) = 0;
@@ -837,6 +888,7 @@ public:
 			DISPATCH_PRES_NCONSTR,      //[-] Number of constraint relationships in dispatch model formulation
 			DISPATCH_PRES_NVAR,         //[-] Number of variables in dispatch model formulation
 			DISPATCH_SOLVE_TIME,        //[sec]   Time required to solve the dispatch model at each instance
+			DISPATCH_QPBTARGET_EXPECT,        //[MWt] Power cycle energy consumption in dispatch model
 
 			// **************************************************************
 			//      Outputs that are reported as weighted averages if 

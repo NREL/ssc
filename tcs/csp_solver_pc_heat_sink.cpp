@@ -202,6 +202,10 @@ double C_pc_heat_sink::get_min_thermal_power()
 {
 	return 0.0;		//[MWt]
 }
+double C_pc_heat_sink::get_remaining_startup_energy()
+{
+	return 0.0;		//[MWt]
+}
 
 void C_pc_heat_sink::get_max_power_output_operation_constraints(double T_amb /*C*/, double & m_dot_HTF_ND_max, double & W_dot_ND_max)
 {
