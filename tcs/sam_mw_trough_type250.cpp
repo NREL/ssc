@@ -1828,7 +1828,7 @@ public:
             longitude = value(I_LONGITUDE);		// Site longitude read from weather file [deg]
             shift = value(I_SHIFT);			    // [deg]
 
-            call(43200, 0, 0);      // 43200 = noon
+            call(14817600, 0, 0);      // 14817600 = noon on the summer solstice
 
             // Restore parameters
             calc_design_pipe_vals = false;
