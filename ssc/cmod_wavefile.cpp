@@ -129,7 +129,8 @@ public:
 		assign("notes", var_data(values[12]));
 
 		// read in 21 rows x 22 columns
-		util::matrix_t<double> mat = allocate_matrix("freq_distribution", 21, 22);
+//		util::matrix_t<double> mat = allocate_matrix("freq_distribution", 21, 22);
+		ssc_number_t *mat = allocate("freq_distribution", 21, 22);
 		for (size_t r = 0; r < 21; r++)
 		{
 			getline(ifs, buf);
@@ -142,9 +143,9 @@ public:
 			for (size_t c = 0; c < 22; c++)
 			{
 				if (r == 0 && c == 0)
-					mat.at(r, c) = 0.0;
+					mat[r*22+c] = 0.0;
 				else
-					mat.at(r, c) = std::stod(values[c]);
+					mat[r * 22 + c] = std::stod(values[c]);
 			}
 		}
 		return;
