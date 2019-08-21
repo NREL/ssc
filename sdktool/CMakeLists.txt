@@ -198,12 +198,4 @@ if (MSVC)
 		ARGS -E copy $ENV{WEXDIR}/build_vs2017/libcurl_ssl_x64/bin/${file_i} ${SDKTOOL_DIR}
 	)
 	endforeach( file_i )
-
-	set(SSC_LIB $<TARGET_FILE_DIR:ssc>/$<TARGET_FILE_BASE_NAME:ssc>.lib)
-	add_custom_command(
-	    TARGET SDKtool
-	    POST_BUILD
-	    COMMAND ${CMAKE_COMMAND}
-	    ARGS -E copy $<TARGET_FILE:ssc> ${SSC_LIB} ${SDKTOOL_DIR}
-	)
 endif()

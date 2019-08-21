@@ -595,6 +595,23 @@ bool C_csp_trough_collector_receiver::init_fieldgeom()
 		}
 		//the estimated mass flow rate at design
 		m_m_dot_design = (m_Ap_tot*m_I_bn_des*m_opteff_des - loss_tot*float(m_nLoops)) / (m_c_htf_ave*(m_T_loop_out_des - m_T_loop_in_des));  //tn 4.25.11 using m_Ap_tot instead of A_loop. Change location of m_opteff_des
+        double m_dot_max = m_m_dot_htfmax * m_nLoops;
+        double m_dot_min = m_m_dot_htfmin * m_nLoops;
+        if (m_m_dot_design > m_dot_max) {
+            const char *msg = "The calculated field design mass flow rate of %.2f kg/s is greater than the maximum defined by the max single loop flow rate and number of loops (%.2f kg/s). "
+                "The design mass flow rate is reset to the latter.";
+            m_error_msg = util::format(msg, m_m_dot_design, m_dot_max);
+            mc_csp_messages.add_message(C_csp_messages::NOTICE, m_error_msg);
+            m_m_dot_design = m_dot_max;
+        }
+        else if (m_m_dot_design < m_dot_min) {
+            const char *msg = "The calculated field design mass flow rate of %.2f kg/s is less than the minimum defined by the min single loop flow rate and number of loops (%.2f kg/s). "
+                "The design mass flow rate is reset to the latter.";
+            m_error_msg = util::format(msg, m_m_dot_design, m_dot_min);
+            mc_csp_messages.add_message(C_csp_messages::NOTICE, m_error_msg);
+            m_m_dot_design = m_dot_min;
+        }
+
 		m_m_dot_loop_des = m_m_dot_design/(double)m_nLoops;	//[kg/s]
 		//mjw 1.16.2011 Design field thermal power 
 		m_q_design = m_m_dot_design * m_c_htf_ave * (m_T_loop_out_des - m_T_loop_in_des); //[Wt]
@@ -603,7 +620,9 @@ bool C_csp_trough_collector_receiver::init_fieldgeom()
 		m_mc_bal_cold = m_mc_bal_cold_per_MW * 3.6 * m_q_design;  //[J/K]
 
 		//need to provide fluid density
-		double rho_ave = m_htfProps.dens((m_T_loop_out_des + m_T_loop_in_des) / 2.0, 0.0); //kg/m3
+        double rho_cold = m_htfProps.dens(m_T_loop_in_des, 10.e5); //kg/m3
+        double rho_hot = m_htfProps.dens(m_T_loop_out_des, 10.e5); //kg/m3
+		double rho_ave = m_htfProps.dens((m_T_loop_out_des + m_T_loop_in_des) / 2.0, 10.e5); //kg/m3
         //Calculate the header design
         m_nrunsec = (int)floor(float(m_nfsec) / 4.0) + 1;  //The number of unique runner diameters
         m_D_runner.resize(2 * m_nrunsec);
@@ -657,7 +676,7 @@ bool C_csp_trough_collector_receiver::init_fieldgeom()
         if ((std::isnan(m_V_hdr_cold_min) || std::isnan(m_V_hdr_hot_min)) && !std::isnan(m_V_hdr_min)) {
             m_V_hdr_cold_min = m_V_hdr_hot_min = m_V_hdr_min;
         }
-        rnr_and_hdr_design(m_nhdrsec, m_nfsec, m_nrunsec, rho_ave, m_V_hdr_cold_max, m_V_hdr_cold_min,
+        rnr_and_hdr_design(m_nhdrsec, m_nfsec, m_nrunsec, rho_cold, rho_hot, m_V_hdr_cold_max, m_V_hdr_cold_min,
             m_V_hdr_hot_max, m_V_hdr_hot_min, m_N_max_hdr_diams, m_m_dot_design, m_D_hdr, m_D_runner,
             m_m_dot_rnr_dsn, m_m_dot_hdr_dsn, m_V_rnr_dsn, m_V_hdr_dsn, &summary, m_custom_sf_pipe_sizes);
         mc_csp_messages.add_message(C_csp_messages::NOTICE, summary);
@@ -2673,6 +2692,16 @@ void C_csp_trough_collector_receiver::steady_state(const C_csp_weatherreader::S_
 
     } while (ss_diff / 200. > tol);
     
+    // Re-run runner and header pipe sizing using the same diameters to get the actual mass flows and velocities at steady state
+    double m_dot_ss = cr_out_solver.m_m_dot_salt_tot / 3600.;           // [kg/s]
+    bool custom_sf_pipe_sizes = true;
+    double rho_cold = m_htfProps.dens(T_htf_in_t_int_last[0], 10.e5); // [kg/m3]
+    double rho_hot = m_htfProps.dens(T_htf_out_t_int_last[m_nSCA - 1], 10.e5); // [kg/m3]
+    std::string summary;
+    rnr_and_hdr_design(m_nhdrsec, m_nfsec, m_nrunsec, rho_cold, rho_hot, m_V_hdr_cold_max, m_V_hdr_cold_min,
+        m_V_hdr_hot_max, m_V_hdr_hot_min, m_N_max_hdr_diams, m_dot_ss, m_D_hdr, m_D_runner,
+        m_m_dot_rnr_dsn, m_m_dot_hdr_dsn, m_V_rnr_dsn, m_V_hdr_dsn, &summary, custom_sf_pipe_sizes);
+
     // Set steady-state outputs
     transform(m_T_rnr.begin(), m_T_rnr.end(), m_T_rnr_dsn.begin(), [](double x) {return x - 273.15;});        // K to C
     transform(m_P_rnr.begin(), m_P_rnr.end(), m_P_rnr_dsn.begin(), [](double x) {return x / 1.e5;});          // Pa to bar
@@ -5739,7 +5768,7 @@ double C_csp_trough_collector_receiver::Pump_SGS(double rho, double m_dotsf, dou
        * custom_diams - [-] Should the diameters be input instead of calculated?
     ---------------------------------------------------------------------------------			*/
 
-void C_csp_trough_collector_receiver::rnr_and_hdr_design(unsigned nhsec, int nfsec, unsigned nrunsec, double rho, double V_cold_max, double V_cold_min,
+void C_csp_trough_collector_receiver::rnr_and_hdr_design(unsigned nhsec, int nfsec, unsigned nrunsec, double rho_cold, double rho_hot, double V_cold_max, double V_cold_min,
     double V_hot_max, double V_hot_min, int N_max_hdr_diams, double m_dot, std::vector<double> &D_hdr, std::vector<double> &D_runner,
     std::vector<double> &m_dot_rnr, std::vector<double> &m_dot_hdr, std::vector<double> &V_rnr, std::vector<double> &V_hdr,
     std::string *summary, bool custom_diams) {
@@ -5759,6 +5788,8 @@ void C_csp_trough_collector_receiver::rnr_and_hdr_design(unsigned nhsec, int nfs
     int nend, nd;
     unsigned nst;
     double m_dot_hdrs, m_dot_2loops;
+    double V_cold_avg = (V_cold_max + V_cold_min) / 2.;
+    double V_hot_avg = (V_hot_max + V_hot_min) / 2.;
 
     //Mass flow into 1 header
     m_dot_hdrs = m_dot / float(nfsec);
@@ -5767,15 +5798,14 @@ void C_csp_trough_collector_receiver::rnr_and_hdr_design(unsigned nhsec, int nfs
 
     //Runner diameters
     //runner pipe needs some length to go from the power block to the headers
-    //assume symmetric hot and cold runners
     m_dot_rnr[0] = m_dot / 2.;   //mass flow through half-length runners is always half of total
     m_dot_rnr[2 * nrunsec - 1] = m_dot_rnr[0];
     if (!custom_diams) {
-        D_runner.at(0) = CSP::pipe_sched(sqrt(4.*m_dot_rnr[0] / (rho*V_cold_max*CSP::pi)));
-        D_runner.at(2 * nrunsec - 1) = D_runner.at(0);
+        D_runner.at(0) = CSP::pipe_sched(sqrt(4.*m_dot_rnr[0] / (rho_cold*V_cold_avg*CSP::pi)));
+        D_runner.at(2 * nrunsec - 1) = CSP::pipe_sched(sqrt(4.*m_dot_rnr[2 * nrunsec - 1] / (rho_hot*V_hot_avg*CSP::pi)));
     }
-    V_rnr.at(0) = 4.*m_dot_rnr[0] / (rho*pow(D_runner.at(0), 2)*CSP::pi);
-    V_rnr.at(2 * nrunsec - 1) = V_rnr.at(0);
+    V_rnr.at(0) = 4.*m_dot_rnr[0] / (rho_cold*pow(D_runner.at(0), 2)*CSP::pi);
+    V_rnr.at(2 * nrunsec - 1) = 4.*m_dot_rnr[2 * nrunsec - 1] / (rho_hot*pow(D_runner.at(2 * nrunsec - 1), 2)*CSP::pi);
     for (unsigned i = 1; i < nrunsec; i++) {
         if (i == 1) {
             m_dot_rnr[i] = m_dot_rnr[i - 1] * (1. - float(nfsec % 4) / float(nfsec));  //Adjust mass flow for first full-length runners when nfsec/2==odd
@@ -5785,11 +5815,11 @@ void C_csp_trough_collector_receiver::rnr_and_hdr_design(unsigned nhsec, int nfs
         }
         m_dot_rnr[2 * nrunsec - i - 1] = m_dot_rnr[i];
         if (!custom_diams) {
-            D_runner[i] = CSP::pipe_sched(sqrt(4.*m_dot_rnr[i] / (rho*V_cold_max*CSP::pi)));
-            D_runner[2 * nrunsec - i - 1] = D_runner[i];
+            D_runner[i] = CSP::pipe_sched(sqrt(4.*m_dot_rnr[i] / (rho_cold*V_cold_avg*CSP::pi)));
+            D_runner[2 * nrunsec - i - 1] = CSP::pipe_sched(sqrt(4.*m_dot_rnr[2 * nrunsec - i - 1] / (rho_hot*V_hot_avg*CSP::pi)));
         }
-        V_rnr.at(i) = 4.*m_dot_rnr[i] / (rho*pow(D_runner.at(i), 2)*CSP::pi);
-        V_rnr.at(2 * nrunsec - i - 1) = V_rnr.at(i);
+        V_rnr.at(i) = 4.*m_dot_rnr[i] / (rho_cold*pow(D_runner.at(i), 2)*CSP::pi);
+        V_rnr.at(2 * nrunsec - i - 1) = 4.*m_dot_rnr[2 * nrunsec - i - 1] / (rho_hot*pow(D_runner.at(2 * nrunsec - i - 1), 2)*CSP::pi);
     }
 
     //Calculate each section in the cold header
@@ -5806,7 +5836,7 @@ void C_csp_trough_collector_receiver::rnr_and_hdr_design(unsigned nhsec, int nfs
             else {
                 m_dot_enter -= m_dot_2loops;
             }
-            V_enter = 4.*m_dot_enter / (rho*CSP::pi*D_hdr[i] * D_hdr[i]);
+            V_enter = 4.*m_dot_enter / (rho_cold*CSP::pi*D_hdr[i] * D_hdr[i]);
             m_dot_hdr[i] = m_dot_enter;
             V_hdr[i] = V_enter;
         }
@@ -5817,11 +5847,11 @@ void C_csp_trough_collector_receiver::rnr_and_hdr_design(unsigned nhsec, int nfs
                 m_dot_enter = m_dot_hdrs;
                 // Size cold header diameter using V_max to allow for mass loss into loops
                 // Select actual pipe that is larger (param=true) than ideal pipe b/c if smaller it will definitely exceed V_max
-                D_hdr[i] = CSP::pipe_sched(sqrt(4.*m_dot_enter / (rho*m_V_hdr_cold_max*CSP::pi)), true);
-                V_enter = 4.*m_dot_enter / (rho*CSP::pi*D_hdr[i] * D_hdr[i]);
+                D_hdr[i] = CSP::pipe_sched(sqrt(4.*m_dot_enter / (rho_cold*m_V_hdr_cold_max*CSP::pi)), true);
+                V_enter = 4.*m_dot_enter / (rho_cold*CSP::pi*D_hdr[i] * D_hdr[i]);
                 if (V_enter < m_V_hdr_cold_min) {  // if the entering velocity will be below the minimum (it won't exceed V_max)
-                    D_hdr_next = CSP::pipe_sched(sqrt(4.*m_dot_enter / (rho*m_V_hdr_cold_max*CSP::pi)), false);   // size smaller this time, will definitely exceed V_max
-                    V_enter_next = 4.*m_dot_enter / (rho*CSP::pi*D_hdr_next*D_hdr_next);
+                    D_hdr_next = CSP::pipe_sched(sqrt(4.*m_dot_enter / (rho_cold*m_V_hdr_cold_max*CSP::pi)), false);   // size smaller this time, will definitely exceed V_max
+                    V_enter_next = 4.*m_dot_enter / (rho_cold*CSP::pi*D_hdr_next*D_hdr_next);
                     // Choose the smaller diameter (faster V) if it's closer to being in range
                     if (V_enter_next - m_V_hdr_cold_max <= m_V_hdr_cold_min - V_enter) {  // '<=' is so the smaller (faster) pipe is preferred in a tie
                         D_hdr[i] = D_hdr_next;
@@ -5831,14 +5861,14 @@ void C_csp_trough_collector_receiver::rnr_and_hdr_design(unsigned nhsec, int nfs
             }
             else if (nd < N_max_hdr_diams) {
                 m_dot_enter -= m_dot_2loops;
-                V_enter = 4.*m_dot_enter / (rho*CSP::pi*D_hdr[i - 1] * D_hdr[i - 1]);  // assuming no diameter change
+                V_enter = 4.*m_dot_enter / (rho_cold*CSP::pi*D_hdr[i - 1] * D_hdr[i - 1]);  // assuming no diameter change
                 if (V_enter < m_V_hdr_cold_min) {   // if the entering velocity will be below the minimum if there is no diameter change
-                    D_hdr_next = CSP::pipe_sched(sqrt(4.*m_dot_enter / (rho*m_V_hdr_cold_max*CSP::pi)), true);  // size larger than optimal so it won't exceed V_max
-                    V_enter_next = 4.*m_dot_enter / (rho*CSP::pi*D_hdr_next*D_hdr_next);
+                    D_hdr_next = CSP::pipe_sched(sqrt(4.*m_dot_enter / (rho_cold*m_V_hdr_cold_max*CSP::pi)), true);  // size larger than optimal so it won't exceed V_max
+                    V_enter_next = 4.*m_dot_enter / (rho_cold*CSP::pi*D_hdr_next*D_hdr_next);
                     if (V_enter_next < m_V_hdr_cold_min) {  // if the velocity is still below V_min (it won't exceed V_max)
                         // try smaller than the optimal this time and choose the one with the velocity closest to being in range
-                        D_hdr_next2 = CSP::pipe_sched(sqrt(4.*m_dot_enter / (rho*m_V_hdr_cold_max*CSP::pi)), false);  // size smaller this time (will exceed V_max)
-                        V_enter_next2 = 4.*m_dot_enter / (rho*CSP::pi*D_hdr_next2*D_hdr_next2);
+                        D_hdr_next2 = CSP::pipe_sched(sqrt(4.*m_dot_enter / (rho_cold*m_V_hdr_cold_max*CSP::pi)), false);  // size smaller this time (will exceed V_max)
+                        V_enter_next2 = 4.*m_dot_enter / (rho_cold*CSP::pi*D_hdr_next2*D_hdr_next2);
                         if (m_V_hdr_cold_min - V_enter_next < V_enter_next2 - m_V_hdr_cold_max) {   // '<' is so the smaller (faster) pipe is preferred in a tie
                             D_hdr[i] = D_hdr_next;
                         }
@@ -5860,7 +5890,7 @@ void C_csp_trough_collector_receiver::rnr_and_hdr_design(unsigned nhsec, int nfs
                 D_hdr[i] = D_hdr[i - 1];        // no diameter change allowed
             }
             m_dot_hdr[i] = m_dot_enter;
-            V_hdr[i] = 4.*m_dot_hdr[i] / (rho*CSP::pi*D_hdr[i] * D_hdr[i]);
+            V_hdr[i] = 4.*m_dot_hdr[i] / (rho_cold*CSP::pi*D_hdr[i] * D_hdr[i]);
         }
     }
 
@@ -5874,7 +5904,7 @@ void C_csp_trough_collector_receiver::rnr_and_hdr_design(unsigned nhsec, int nfs
     if (custom_diams) {
         for (std::size_t i = nhsec; i < 2 * nhsec; i++) {
             m_dot_leave += m_dot_2loops;
-            V_leave = 4.*m_dot_leave / (rho*CSP::pi*D_hdr[i] * D_hdr[i]);
+            V_leave = 4.*m_dot_leave / (rho_hot*CSP::pi*D_hdr[i] * D_hdr[i]);
             m_dot_hdr[i] = m_dot_leave;
             V_hdr[i] = V_leave;
         }
@@ -5885,11 +5915,11 @@ void C_csp_trough_collector_receiver::rnr_and_hdr_design(unsigned nhsec, int nfs
                 m_dot_leave = m_dot_2loops;
                 // Size hot header diameter using V_min to allow for mass addition from downstream loops
                 // Select actual pipe that is smaller than ideal pipe b/c if sizing larger it will definitely deceed V_min
-                D_hdr[i] = CSP::pipe_sched(sqrt(4.*m_dot_leave / (rho*m_V_hdr_hot_min*CSP::pi)), false);
-                V_leave = 4.*m_dot_leave / (rho*CSP::pi*D_hdr[i] * D_hdr[i]);
+                D_hdr[i] = CSP::pipe_sched(sqrt(4.*m_dot_leave / (rho_hot*m_V_hdr_hot_min*CSP::pi)), false);
+                V_leave = 4.*m_dot_leave / (rho_hot*CSP::pi*D_hdr[i] * D_hdr[i]);
                 if (V_leave > m_V_hdr_hot_max) {   // if the leaving velocity will be above the maximum (it won't deceed V_min)
-                    D_hdr_next = CSP::pipe_sched(sqrt(4.*m_dot_leave / (rho*m_V_hdr_hot_min*CSP::pi)), true);   // size larger this time, will definitely be below V_min
-                    V_leave_next = 4.*m_dot_leave / (rho*CSP::pi*D_hdr_next*D_hdr_next);
+                    D_hdr_next = CSP::pipe_sched(sqrt(4.*m_dot_leave / (rho_hot*m_V_hdr_hot_min*CSP::pi)), true);   // size larger this time, will definitely be below V_min
+                    V_leave_next = 4.*m_dot_leave / (rho_hot*CSP::pi*D_hdr_next*D_hdr_next);
                     // Choose the larger diameter (slower V) if it's closer to being in range
                     if (m_V_hdr_hot_min - V_leave_next < V_leave - m_V_hdr_hot_max) {  // '<' is so the smaller (cheaper) pipe is preferred in a tie
                         D_hdr[i] = D_hdr_next;
@@ -5899,14 +5929,14 @@ void C_csp_trough_collector_receiver::rnr_and_hdr_design(unsigned nhsec, int nfs
             }
             else if (nd < N_max_hdr_diams) {
                 m_dot_leave += m_dot_2loops;
-                V_leave = 4.*m_dot_leave / (rho*CSP::pi*D_hdr[i - 1] * D_hdr[i - 1]);  // assuming no diameter change
+                V_leave = 4.*m_dot_leave / (rho_hot*CSP::pi*D_hdr[i - 1] * D_hdr[i - 1]);  // assuming no diameter change
                 if (V_leave > m_V_hdr_hot_max) {   // if the leaving velocity will be above the maximum if there is no diameter change
-                    D_hdr_next = CSP::pipe_sched(sqrt(4.*m_dot_leave / (rho*m_V_hdr_hot_min*CSP::pi)), false);  // size smaller than optimal so it won't deceed V_min
-                    V_leave_next = 4.*m_dot_leave / (rho*CSP::pi*D_hdr_next*D_hdr_next);
+                    D_hdr_next = CSP::pipe_sched(sqrt(4.*m_dot_leave / (rho_hot*m_V_hdr_hot_min*CSP::pi)), false);  // size smaller than optimal so it won't deceed V_min
+                    V_leave_next = 4.*m_dot_leave / (rho_hot*CSP::pi*D_hdr_next*D_hdr_next);
                     if (V_leave_next > m_V_hdr_hot_max) {  // if the velocity is still above V_max (it won't be below V_min)
                         // try larger than the optimal this time and choose the one with the velocity closest to being in range
-                        D_hdr_next2 = CSP::pipe_sched(sqrt(4.*m_dot_leave / (rho*m_V_hdr_hot_min*CSP::pi)), true);  // size larger this time (will be below V_min)
-                        V_leave_next2 = 4.*m_dot_leave / (rho*CSP::pi*D_hdr_next2*D_hdr_next2);
+                        D_hdr_next2 = CSP::pipe_sched(sqrt(4.*m_dot_leave / (rho_hot*m_V_hdr_hot_min*CSP::pi)), true);  // size larger this time (will be below V_min)
+                        V_leave_next2 = 4.*m_dot_leave / (rho_hot*CSP::pi*D_hdr_next2*D_hdr_next2);
                         if (V_leave_next - m_V_hdr_hot_max <= m_V_hdr_hot_min - V_leave_next2) {   // '<=' is so the smaller (cheaper) pipe is preferred in a tie
                             D_hdr[i] = D_hdr_next;
                         }
@@ -5928,7 +5958,7 @@ void C_csp_trough_collector_receiver::rnr_and_hdr_design(unsigned nhsec, int nfs
                 D_hdr[i] = D_hdr[i - 1];        // no diameter change allowed
             }
             m_dot_hdr[i] = m_dot_leave;
-            V_hdr[i] = 4.*m_dot_hdr[i] / (rho*CSP::pi*D_hdr[i] * D_hdr[i]);
+            V_hdr[i] = 4.*m_dot_hdr[i] / (rho_hot*CSP::pi*D_hdr[i] * D_hdr[i]);
         }
     }
 

@@ -233,7 +233,7 @@ double libfin::ppmt (double rate, double per, double nper, double pv, double fv,
 }
 
 // from http://www.codeproject.com/Articles/58289/C-Round-Function.aspx
-long libfin::round_dhf(double number)
+long libfin::round_irs(double number)
 {
     return (number >= 0) ? (long)(number + 0.5) : (long)(number - 0.5);
 }

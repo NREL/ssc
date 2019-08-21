@@ -39,6 +39,7 @@ class winddata : public winddata_provider
 {
 	size_t irecord;
 	util::matrix_t<double> data;
+	std::string stdErrorMsg;
 public:
 	explicit winddata(var_data *data_table);
 
@@ -49,6 +50,8 @@ public:
 	ssc_number_t *get_vector(var_data *v, const char *name, size_t *len);
 
 	bool read_line(std::vector<double> &values) override;
+
+	std::string get_stdErrorMsg(){ return stdErrorMsg; };
 };
 
 class cm_windpower : public compute_module

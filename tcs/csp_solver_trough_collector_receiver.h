@@ -683,7 +683,7 @@ public:
 		double Nchv, double Nlw, double Nlcv, double Nbja);
 	double FricFactor(double m_Rough, double Reynold);
 	double Pump_SGS(double rho, double m_dotsf, double sm);
-    void rnr_and_hdr_design(unsigned nhsec, int nfsec, unsigned nrunsec, double rho, double V_cold_max, double V_cold_min,
+    void rnr_and_hdr_design(unsigned nhsec, int nfsec, unsigned nrunsec, double rho_cold, double rho_hot, double V_cold_max, double V_cold_min,
         double V_hot_max, double V_hot_min, int N_max_hdr_diams, double m_dot, std::vector<double> &D_hdr, std::vector<double> &D_runner,
         std::vector<double> &m_dot_rnr, std::vector<double> &m_dot_hdr, std::vector<double> &V_rnr, std::vector<double> &V_hdr,
         std::string *summary = NULL, bool custom_diams = false);
