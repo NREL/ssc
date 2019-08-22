@@ -179,10 +179,10 @@ if(UNIX AND NOT system_advisor_model_EXPORT)
 endif()
 
 # libssc for PySAM
-if(APPLE)
-	if (SAMAPI_EXPORT)
+if(SAMAPI_EXPORT AND UNIX)
+	set_property(TARGET ssc PROPERTY PREFIX "lib")
+	if (APPLE)
 		set(CMAKE_MACOSX_RPATH 1)
-		set_property(TARGET ssc PROPERTY PREFIX "lib")
 		set(CMAKE_SHARED_LIBRARY_SUFFIX ".so")
 		add_custom_command(
 			TARGET ssc
