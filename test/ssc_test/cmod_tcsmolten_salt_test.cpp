@@ -5,7 +5,7 @@
 #include "../input_cases/weather_inputs.h"
 
 /// Test tcsmolten_salt with all defaults and the single owner financial model
-TEST_F(CMTcsMoltenSalt, Rankine_Default_SingleOwner) {
+TEST_F(CMTcsMoltenSalt, Rankine_Default_SingleOwner_cmod_tcsmolten_salt) {
 
     ssc_data_t data = ssc_data_create();
     int test_errors = tcsmolten_salt_daggett_default(data);
@@ -73,7 +73,7 @@ TEST_F(CMTcsMoltenSalt, Rankine_Default_SingleOwner) {
 
 /// Test tcsmolten_salt with alternative turbine inlet pressure control: Sliding pressure
 /// Rest default configurations with respect to the single owner financial model
-TEST_F(CMTcsMoltenSalt, Rankine_Sliding_P_SingleOwner) {
+TEST_F(CMTcsMoltenSalt, Rankine_Sliding_P_SingleOwner_cmod_tcsmolten_salt) {
 
 	ssc_data_t data = ssc_data_create();
 	int test_errors = tcsmolten_salt_daggett_sliding_pressure(data);
@@ -141,7 +141,7 @@ TEST_F(CMTcsMoltenSalt, Rankine_Sliding_P_SingleOwner) {
 
 /// Test tcsmolten_salt with alternative condenser type: Evaporative
 /// Rest default configurations with respect to the single owner financial model
-TEST_F(CMTcsMoltenSalt, Rankine_Evap_Condenser_SingleOwner) {
+TEST_F(CMTcsMoltenSalt, Rankine_Evap_Condenser_SingleOwner_cmod_tcsmolten_salt) {
 
     ssc_data_t data = ssc_data_create();
     int test_errors = tcsmolten_salt_daggett_evap_condenser(data);
@@ -151,7 +151,7 @@ TEST_F(CMTcsMoltenSalt, Rankine_Evap_Condenser_SingleOwner) {
     {
         ssc_number_t annual_energy;
         ssc_data_get_number(data, "annual_energy", &annual_energy);
-        EXPECT_NEAR(annual_energy, -1.88859e7, std::abs(-1.88859e7 * m_error_tolerance_lo)) << "Annual Energy";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
+        EXPECT_NEAR(annual_energy, 6.00324e8, 6.00324e8 * m_error_tolerance_lo) << "Annual Energy";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
 
         ssc_number_t land_area_base;
         ssc_data_get_number(data, "land_area_base", &land_area_base);
@@ -159,19 +159,19 @@ TEST_F(CMTcsMoltenSalt, Rankine_Evap_Condenser_SingleOwner) {
 
         ssc_number_t capacity_factor;
         ssc_data_get_number(data, "capacity_factor", &capacity_factor);
-        EXPECT_NEAR(capacity_factor, -2.08302, std::abs(-2.08302 * m_error_tolerance_lo)) << "Capacity Factor";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
+        EXPECT_NEAR(capacity_factor, 66.2127, 66.2127 * m_error_tolerance_lo) << "Capacity Factor";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
 
         ssc_number_t annual_W_cycle_gross;
         ssc_data_get_number(data, "annual_W_cycle_gross", &annual_W_cycle_gross);
-        EXPECT_NEAR(annual_W_cycle_gross, 0, 0 * m_error_tolerance_lo) << "Annual W_cycle Gross";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
+        EXPECT_NEAR(annual_W_cycle_gross, 6.60578e8, 6.60578e8 * m_error_tolerance_lo) << "Annual W_cycle Gross";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
 
         ssc_number_t kwh_per_kw;
         ssc_data_get_number(data, "kwh_per_kw", &kwh_per_kw);
-        EXPECT_NEAR(kwh_per_kw, -182.472, std::abs(-182.472 * m_error_tolerance_lo)) << "kwh per kw";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
+        EXPECT_NEAR(kwh_per_kw, 5800.23, 5800.23 * m_error_tolerance_lo) << "kwh per kw";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
 
         ssc_number_t conversion_factor;
         ssc_data_get_number(data, "conversion_factor", &conversion_factor);
-        EXPECT_NEAR(conversion_factor, 0, 0 * m_error_tolerance_lo) << "Conversion Factor";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
+        EXPECT_NEAR(conversion_factor, 90.8787, 90.8787 * m_error_tolerance_lo) << "Conversion Factor";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
 
         ssc_number_t N_hel;
         ssc_data_get_number(data, "N_hel", &N_hel);
@@ -191,7 +191,7 @@ TEST_F(CMTcsMoltenSalt, Rankine_Evap_Condenser_SingleOwner) {
 
         ssc_number_t annual_total_water_use;
         ssc_data_get_number(data, "annual_total_water_use", &annual_total_water_use);
-        EXPECT_NEAR(annual_total_water_use, 55965.3, 55965.3 * m_error_tolerance_lo) << "Annual Total Water Use";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
+        EXPECT_NEAR(annual_total_water_use, 1.57384e6, 1.57384e6 * m_error_tolerance_lo) << "Annual Total Water Use";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
 
         ssc_number_t csp_pt_cost_total_land_area;
         ssc_data_get_number(data, "csp.pt.cost.total_land_area", &csp_pt_cost_total_land_area);
@@ -209,7 +209,7 @@ TEST_F(CMTcsMoltenSalt, Rankine_Evap_Condenser_SingleOwner) {
 
 /// Test tcsmolten_salt with alternative condenser type: Hybrid
 /// Rest default configurations with respect to the single owner financial model
-TEST_F(CMTcsMoltenSalt, Rankine_Hybrid_Condenser_SingleOwner) {
+TEST_F(CMTcsMoltenSalt, Rankine_Hybrid_Condenser_SingleOwner_cmod_tcsmolten_salt) {
 
 	ssc_data_t data = ssc_data_create();
 	int test_errors = tcsmolten_salt_daggett_hybrid_condenser(data);
@@ -277,7 +277,7 @@ TEST_F(CMTcsMoltenSalt, Rankine_Hybrid_Condenser_SingleOwner) {
 
 /// Test tcsmolten_salt with alternative condenser type: Radiative
 /// Rest default configurations with respect to the single owner financial model
-TEST_F(CMTcsMoltenSalt, Rankine_Radiative_Condenser_SingleOwner) {
+TEST_F(CMTcsMoltenSalt, Rankine_Radiative_Condenser_SingleOwner_cmod_tcsmolten_salt) {
 
 	ssc_data_t data = ssc_data_create();
 	int test_errors = tcsmolten_salt_daggett_radiative_condenser(data);
@@ -345,7 +345,7 @@ TEST_F(CMTcsMoltenSalt, Rankine_Radiative_Condenser_SingleOwner) {
 
 /// Test tcsmolten_salt with alternative flow pattern: Flow pattern 8
 /// Rest default configurations with respect to the single owner financial model
-TEST_F(CMTcsMoltenSalt, Rankine_Flow_Pattern_SingleOwner) {
+TEST_F(CMTcsMoltenSalt, Rankine_Flow_Pattern_SingleOwner_cmod_tcsmolten_salt) {
 
 	ssc_data_t data = ssc_data_create();
 	int test_errors = tcsmolten_salt_daggett_flow_pattern(data);
@@ -413,7 +413,7 @@ TEST_F(CMTcsMoltenSalt, Rankine_Flow_Pattern_SingleOwner) {
 
 /// Test tcsmolten_salt with alternative Location: Tucson, Arizona
 /// Rest default configurations with respect to the single owner financial model
-TEST_F(CMTcsMoltenSalt, Rankine_Location_SingleOwner) {
+TEST_F(CMTcsMoltenSalt, Rankine_Location_SingleOwner_cmod_tcsmolten_salt) {
 
 	ssc_data_t data = ssc_data_create();
 	int test_errors = tcsmolten_salt_Tucson_AZ(data);
@@ -481,7 +481,7 @@ TEST_F(CMTcsMoltenSalt, Rankine_Location_SingleOwner) {
 
 /// Test tcsmolten_salt with power cycle alternative: User Defined
 /// Rest default configurations with respect to the single owner financial model
-TEST_F(CMTcsMoltenSalt, User_Defined_SingleOwner) {
+TEST_F(CMTcsMoltenSalt, User_Defined_SingleOwner_cmod_tcsmolten_salt) {
 
 	ssc_data_t data = ssc_data_create();
 	int test_errors = tcsmolten_salt_daggett_UD_default(data);
@@ -549,7 +549,7 @@ TEST_F(CMTcsMoltenSalt, User_Defined_SingleOwner) {
 
 /// Test tcsmolten_salt with alternative power cycle: Super Critical CO2
 /// Rest default configurations with respect to the single owner financial model
-TEST_F(CMTcsMoltenSalt, SCO2_Default_SingleOwner) {
+TEST_F(CMTcsMoltenSalt, SCO2_Default_SingleOwner_cmod_tcsmolten_salt) {
 
 	ssc_data_t data = ssc_data_create();
 	int test_errors = tcsmolten_salt_daggett_SCO2_default(data);
@@ -620,7 +620,7 @@ TEST_F(CMTcsMoltenSalt, SCO2_Default_SingleOwner) {
 /// Test tcsmolten_salt with alternative power cycle: Super Critical CO2
 /// Cycle Configuration alternative: Partial Cooling
 /// Rest default configurations with respect to the single owner financial model
-TEST_F(CMTcsMoltenSalt, SCO2_Partial_Cooling_SingleOwner) {
+TEST_F(CMTcsMoltenSalt, SCO2_Partial_Cooling_SingleOwner_cmod_tcsmolten_salt) {
 
 	ssc_data_t data = ssc_data_create();
 	int test_errors = tcsmolten_salt_daggett_SCO2_partial_cooling(data);
@@ -689,7 +689,7 @@ TEST_F(CMTcsMoltenSalt, SCO2_Partial_Cooling_SingleOwner) {
 /// Test tcsmolten_salt with alternative power cycle: Super Critical CO2
 /// Materials and Flow alternative: Flow pattern 2 instead of 1
 /// Rest default configurations with respect to the single owner financial model
-TEST_F(CMTcsMoltenSalt, SCO2_Flow_Pattern_Alternative_SingleOwner) {
+TEST_F(CMTcsMoltenSalt, SCO2_Flow_Pattern_Alternative_SingleOwner_cmod_tcsmolten_salt) {
 
 	ssc_data_t data = ssc_data_create();
 	int test_errors = tcsmolten_salt_daggett_SCO2_flow_pattern_2(data);

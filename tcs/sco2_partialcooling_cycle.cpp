@@ -557,7 +557,12 @@ int C_PartialCooling_Cycle::finalize_design()
 	}
 
 	// Design air coolers
-	// Low Pressure
+        // Calculate cooler duties
+    double q_dot_IP_local = m_m_dot_mc*(m_enth_last[PC_OUT] - m_enth_last[MC_IN]);      //[kWt]
+    double q_dot_LP_local = m_m_dot_t*(m_enth_last[LTR_LP_OUT] - m_enth_last[PC_IN]);   //[kWt]
+    double f_W_dot_fan_to_IP = q_dot_IP_local / (q_dot_IP_local + q_dot_LP_local);     //[-] Fraction of total fan power allocated to the IP cooler fan
+	
+        // Low Pressure
 		// Structure for design parameters that are dependent on cycle design solution
 	C_CO2_to_air_cooler::S_des_par_cycle_dep s_LP_air_cooler_des_par_dep;
 		// Set air cooler design parameters that are dependent on the cycle design solution
@@ -573,7 +578,7 @@ int C_PartialCooling_Cycle::finalize_design()
 
 	s_LP_air_cooler_des_par_dep.m_T_hot_out_des = m_temp_last[C_sco2_cycle_core::PC_IN];			//[K]
 		// Use half the rated fan power on each cooler fan
-	s_LP_air_cooler_des_par_dep.m_W_dot_fan_des = ms_des_par.m_frac_fan_power*0.5*ms_des_par.m_W_dot_net / 1000.0;		//[MWe]
+	s_LP_air_cooler_des_par_dep.m_W_dot_fan_des = ms_des_par.m_frac_fan_power*(1.0 - f_W_dot_fan_to_IP)*ms_des_par.m_W_dot_net / 1000.0;		//[MWe]
 		// Structure for design parameters that are independent of cycle design solution
 	C_CO2_to_air_cooler::S_des_par_ind s_LP_air_cooler_des_par_ind;
 	s_LP_air_cooler_des_par_ind.m_T_amb_des = ms_des_par.m_T_amb_des;		//[K]
@@ -601,7 +606,7 @@ int C_PartialCooling_Cycle::finalize_design()
 
 	s_IP_air_cooler_des_par_dep.m_T_hot_out_des = m_temp_last[C_sco2_cycle_core::MC_IN];			//[K]
 		// Use half the rated fan power on each cooler fan
-	s_IP_air_cooler_des_par_dep.m_W_dot_fan_des = ms_des_par.m_frac_fan_power*0.5*ms_des_par.m_W_dot_net / 1000.0;		//[MWe]
+	s_IP_air_cooler_des_par_dep.m_W_dot_fan_des = ms_des_par.m_frac_fan_power*f_W_dot_fan_to_IP*ms_des_par.m_W_dot_net / 1000.0;		//[MWe]
 		// Structure for design parameters that are independent of cycle design solution
 	C_CO2_to_air_cooler::S_des_par_ind s_IP_air_cooler_des_par_ind;
 	s_IP_air_cooler_des_par_ind.m_T_amb_des = ms_des_par.m_T_amb_des;		//[K]
@@ -1659,6 +1664,8 @@ int C_PartialCooling_Cycle::off_design_fix_shaft_speeds_core()
 	m_Q_dot_PHX_od = m_dot_t * (mv_enth_od[TURB_IN] - mv_enth_od[HTR_HP_OUT]);
 	m_W_dot_net_od = w_pc*m_dot_pc + w_mc*m_dot_mc + w_rc*m_dot_rc + w_t*m_dot_t;
 	m_eta_thermal_od = m_W_dot_net_od / m_Q_dot_PHX_od;
+    m_Q_dot_mc_cooler_od = m_dot_mc * (mv_enth_od[PC_OUT] - mv_enth_od[MC_IN])*1.E-3;       //[MWt] convert from kwt
+    m_Q_dot_pc_cooler_od = m_dot_pc * (mv_enth_od[LTR_LP_OUT] - mv_enth_od[PC_IN])*1.E-3;   //[MWt] convert from kwt
 
 	// Get 'od_solved' structures from component classes
 	//ms_od_solved.ms_mc_od_solved = *m_mc.get_od_solved();
@@ -1673,6 +1680,8 @@ int C_PartialCooling_Cycle::off_design_fix_shaft_speeds_core()
 	ms_od_solved.m_eta_thermal = m_eta_thermal_od;
 	ms_od_solved.m_W_dot_net = m_W_dot_net_od;
 	ms_od_solved.m_Q_dot = m_Q_dot_PHX_od;
+    ms_od_solved.m_Q_dot_mc_cooler = m_Q_dot_mc_cooler_od;  //[MWt]
+    ms_od_solved.m_Q_dot_pc_cooler = m_Q_dot_pc_cooler_od;  //[MWt]
 	ms_od_solved.m_m_dot_mc = m_dot_mc;
 	ms_od_solved.m_m_dot_rc = m_dot_rc;
 	ms_od_solved.m_m_dot_pc = m_dot_pc;
@@ -1691,29 +1700,47 @@ int C_PartialCooling_Cycle::off_design_fix_shaft_speeds_core()
 	return 0;
 }
 
-int C_PartialCooling_Cycle::calculate_off_design_fan_power(double T_amb /*K*/, double & W_dot_fan /*MWe*/)
+int C_PartialCooling_Cycle::solve_OD_all_coolers_fan_power(double T_amb /*K*/, double & W_dot_fan_total /*MWe*/)
 {
 	double W_dot_LP_cooler = std::numeric_limits<double>::quiet_NaN();
 	double W_dot_IP_cooler = std::numeric_limits<double>::quiet_NaN();
 
-	int LP_err_code = mc_LP_air_cooler.off_design_given_T_out(T_amb, mv_temp_od[LTR_LP_OUT], mv_pres_od[LTR_LP_OUT],
-		ms_od_solved.m_m_dot_pc, mv_temp_od[PC_IN], W_dot_LP_cooler);
+    int LP_err_code = solve_OD_pc_cooler_fan_power(T_amb, W_dot_LP_cooler);
 
 	if (LP_err_code != 0)
 		return LP_err_code;
 
 	ms_od_solved.ms_LP_air_cooler_od_solved = mc_LP_air_cooler.get_od_solved();
 
-	int IP_err_code = mc_IP_air_cooler.off_design_given_T_out(T_amb, mv_temp_od[PC_OUT], mv_pres_od[PC_OUT],
-		ms_od_solved.m_m_dot_mc, mv_temp_od[MC_IN], W_dot_IP_cooler);
+    int IP_err_code = solve_OD_mc_cooler_fan_power(T_amb, W_dot_IP_cooler);
 
-	W_dot_fan = W_dot_LP_cooler + W_dot_IP_cooler;	//[MWe]
+	W_dot_fan_total = W_dot_LP_cooler + W_dot_IP_cooler;	//[MWe]
 
-	ms_od_solved.m_W_dot_cooler_tot = W_dot_fan * 1.E3;	//[kWe] convert from MWe
+	ms_od_solved.m_W_dot_cooler_tot = W_dot_fan_total * 1.E3;	//[kWe] convert from MWe
 
 	ms_od_solved.ms_IP_air_cooler_od_solved = mc_IP_air_cooler.get_od_solved();
 
 	return IP_err_code;
+}
+
+int C_PartialCooling_Cycle::solve_OD_mc_cooler_fan_power(double T_amb /*K*/, double & W_dot_mc_cooler_fan /*MWe*/)
+{
+    int IP_err_code = mc_IP_air_cooler.off_design_given_T_out(T_amb, mv_temp_od[PC_OUT], mv_pres_od[PC_OUT],
+        ms_od_solved.m_m_dot_mc, mv_temp_od[MC_IN], W_dot_mc_cooler_fan);
+
+    ms_od_solved.ms_IP_air_cooler_od_solved = mc_IP_air_cooler.get_od_solved();
+
+    return IP_err_code;
+}
+
+int C_PartialCooling_Cycle::solve_OD_pc_cooler_fan_power(double T_amb /*K*/, double & W_dot_pc_cooler_fan /*MWe*/)
+{
+    int LP_err_code = mc_LP_air_cooler.off_design_given_T_out(T_amb, mv_temp_od[LTR_LP_OUT], mv_pres_od[LTR_LP_OUT],
+        ms_od_solved.m_m_dot_pc, mv_temp_od[PC_IN], W_dot_pc_cooler_fan);
+
+    ms_od_solved.ms_LP_air_cooler_od_solved = mc_LP_air_cooler.get_od_solved();
+
+    return LP_err_code;
 }
 
 int C_PartialCooling_Cycle::C_MEQ_recup_od::operator()(double T_HTR_LP_out_guess /*K*/, double *diff_T_HTR_LP_out /*K*/)

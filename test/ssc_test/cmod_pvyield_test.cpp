@@ -8,7 +8,7 @@ using std::cout;
 using std::endl;
 
 /// Test PVSAMv1 with inputs from PVYield
-TEST_F(CMPvYieldTimo, DefaultTimoModel)
+TEST_F(CMPvYieldTimo, DefaultTimoModel_cmod_pvsamv1)
 {
 	pvyield_no_financial_meteo(data);
 
@@ -37,7 +37,7 @@ TEST_F(CMPvYieldTimo, DefaultTimoModel)
 }
 
 /// Test PVSAMv1 with inputs from PVYield and user support 80603 with ,eteo weather file
-TEST_F(CMPvYieldTimo, TimoModel80603_meteo)
+TEST_F(CMPvYieldTimo, TimoModel80603_meteo_cmod_pvsamv1)
 {
 	// first set of results for Phoenix and second set for meteo weather file.
 	pvyield_user_support_80603_meteo(data);
@@ -67,7 +67,7 @@ TEST_F(CMPvYieldTimo, TimoModel80603_meteo)
 }
 
 /// Test PVSAMv1 with inputs from PVYield and user support 80603 AZ weather file
-TEST_F(CMPvYieldTimo, TimoModel80603_AZ)
+TEST_F(CMPvYieldTimo, TimoModel80603_AZ_cmod_pvsamv1)
 {
 	// first set of results for Phoenix and second set for meteo weather file.
 	pvyield_user_support_80603_AZ(data);
@@ -98,7 +98,7 @@ TEST_F(CMPvYieldTimo, TimoModel80603_AZ)
 
 
 /// Test PVSAMv1 with default no-financial model and sytem design page changes
-TEST_F(CMPvYieldTimo, NoFinancialModelSystemDesign)
+TEST_F(CMPvYieldTimo, NoFinancialModelSystemDesign_cmod_pvsamv1)
 {
 	pvsamMPPT_nofinancial_default(data);
 

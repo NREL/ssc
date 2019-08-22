@@ -5,7 +5,7 @@
 #include "../input_cases/weather_inputs.h"
 
 /// Test tcsdirect_steam with all defaults and the single owner financial model
-TEST_F(CMTcsDirectSteam, DirectSteam_Default_SingleOwner) {
+TEST_F(CMTcsDirectSteam, DirectSteam_Default_SingleOwner_cmod_tcsdirect_steam) {
 
 	ssc_data_t data = ssc_data_create();
 	int test_errors = tcsdirect_steam_daggett_default(data);
@@ -50,7 +50,7 @@ TEST_F(CMTcsDirectSteam, DirectSteam_Default_SingleOwner) {
 
 /// Test tcsdirect_steam with alternative condenser type: Evaporative
 /// Rest default configurations with respect to the single owner financial model
-TEST_F(CMTcsDirectSteam, DirectSteam_Evap_Condenser_SingleOwner) {
+TEST_F(CMTcsDirectSteam, DirectSteam_Evap_Condenser_SingleOwner_cmod_tcsdirect_steam) {
 
 	ssc_data_t data = ssc_data_create();
 	int test_errors = tcsdirect_steam_daggett_evap_condenser(data);
@@ -60,7 +60,7 @@ TEST_F(CMTcsDirectSteam, DirectSteam_Evap_Condenser_SingleOwner) {
 	{
 		ssc_number_t annual_energy;
 		ssc_data_get_number(data, "annual_energy", &annual_energy);
-		EXPECT_NEAR(annual_energy, 2.71983e8, 2.71983e8 * m_error_tolerance_lo) << "Annual Energy";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
+		EXPECT_NEAR(annual_energy, 2.78455e8, 2.78455e8 * m_error_tolerance_lo) << "Annual Energy";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
 
 		ssc_number_t annual_fuel_usage;
 		ssc_data_get_number(data, "annual_fuel_usage", &annual_fuel_usage);
@@ -68,19 +68,19 @@ TEST_F(CMTcsDirectSteam, DirectSteam_Evap_Condenser_SingleOwner) {
 
 		ssc_number_t capacity_factor;
 		ssc_data_get_number(data, "capacity_factor", &capacity_factor);
-		EXPECT_NEAR(capacity_factor, 31.0095, 31.0095 * m_error_tolerance_lo) << "Capacity Factor";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
+		EXPECT_NEAR(capacity_factor, 31.7474, 31.7474 * m_error_tolerance_lo) << "Capacity Factor";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
 
 		ssc_number_t annual_W_cycle_gross;
 		ssc_data_get_number(data, "annual_W_cycle_gross", &annual_W_cycle_gross);
-		EXPECT_NEAR(annual_W_cycle_gross, 2.96733e8, 2.96733e8 * m_error_tolerance_lo) << "Annual W_cycle Gross";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
+		EXPECT_NEAR(annual_W_cycle_gross, 3.04963e8, 3.04963e8 * m_error_tolerance_lo) << "Annual W_cycle Gross";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
 
 		ssc_number_t kwh_per_kw;
 		ssc_data_get_number(data, "kwh_per_kw", &kwh_per_kw);
-		EXPECT_NEAR(kwh_per_kw, 2716.43, 2716.43 * m_error_tolerance_lo) << "kwh per kw";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
+		EXPECT_NEAR(kwh_per_kw, 2781.07, 2781.07 * m_error_tolerance_lo) << "kwh per kw";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
 
 		ssc_number_t conversion_factor;
 		ssc_data_get_number(data, "conversion_factor", &conversion_factor);
-		EXPECT_NEAR(conversion_factor, 95.4784, 95.4784 * m_error_tolerance_lo) << "Conversion Factor";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
+		EXPECT_NEAR(conversion_factor, 95.1122, 95.1122 * m_error_tolerance_lo) << "Conversion Factor";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
 
 		ssc_number_t system_heat_rate;
 		ssc_data_get_number(data, "system_heat_rate", &system_heat_rate);
@@ -88,7 +88,7 @@ TEST_F(CMTcsDirectSteam, DirectSteam_Evap_Condenser_SingleOwner) {
 		
 		ssc_number_t annual_total_water_use;
 		ssc_data_get_number(data, "annual_total_water_use", &annual_total_water_use);
-		EXPECT_NEAR(annual_total_water_use, 857736, 857736 * m_error_tolerance_lo) << "Annual Total Water Use";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
+		EXPECT_NEAR(annual_total_water_use, 886842, 886842 * m_error_tolerance_lo) << "Annual Total Water Use";  // choose either m_error_tolerance_lo or m_error_tolerance_hi
 
 
 	}
@@ -96,7 +96,7 @@ TEST_F(CMTcsDirectSteam, DirectSteam_Evap_Condenser_SingleOwner) {
 
 /// Test tcsdirect_steam with alternative condenser type: Hybrid
 /// Rest default configurations with respect to the single owner financial model
-TEST_F(CMTcsDirectSteam, DirectSteam_Hybrid_Condenser_SingleOwner) {
+TEST_F(CMTcsDirectSteam, DirectSteam_Hybrid_Condenser_SingleOwner_cmod_tcsdirect_steam) {
 
 	ssc_data_t data = ssc_data_create();
 	int test_errors = tcsdirect_steam_daggett_hybrid_condenser(data);
@@ -142,7 +142,7 @@ TEST_F(CMTcsDirectSteam, DirectSteam_Hybrid_Condenser_SingleOwner) {
 
 /// Test tcsdirect_steam with alternative fossil dispatch mode: Supplemental mode
 /// Rest default configurations with respect to the single owner financial model
-TEST_F(CMTcsDirectSteam, DirectSteam_Fossil_Supplemental_SingleOwner) {
+TEST_F(CMTcsDirectSteam, DirectSteam_Fossil_Supplemental_SingleOwner_cmod_tcsdirect_steam) {
 
 	ssc_data_t data = ssc_data_create();
 	int test_errors = tcsdirect_steam_daggett_fossil_dispatch_supplemental(data);
@@ -188,7 +188,7 @@ TEST_F(CMTcsDirectSteam, DirectSteam_Fossil_Supplemental_SingleOwner) {
 
 /// Test tcsdirect_steam with alternative Direct Steam Receiver material: T91 Steel
 /// Rest default configurations with respect to the single owner financial model
-TEST_F(CMTcsDirectSteam, DirectSteam_Direct_Steam_Receiver_SingleOwner) {
+TEST_F(CMTcsDirectSteam, DirectSteam_Direct_Steam_Receiver_SingleOwner_cmod_tcsdirect_steam) {
 
 	ssc_data_t data = ssc_data_create();
 	int test_errors = tcsdirect_steam_daggett_direct_steam_receiver(data);
@@ -234,7 +234,7 @@ TEST_F(CMTcsDirectSteam, DirectSteam_Direct_Steam_Receiver_SingleOwner) {
 
 /// Test tcsdirect_steam with alternative flow pattern: 1
 /// Rest default configurations with respect to the single owner financial model
-TEST_F(CMTcsDirectSteam, DirectSteam_Flow_Pattern_SingleOwner) {
+TEST_F(CMTcsDirectSteam, DirectSteam_Flow_Pattern_SingleOwner_cmod_tcsdirect_steam) {
 
 	ssc_data_t data = ssc_data_create();
 	int test_errors = tcsdirect_steam_daggett_flow_pattern(data);
@@ -280,7 +280,7 @@ TEST_F(CMTcsDirectSteam, DirectSteam_Flow_Pattern_SingleOwner) {
 
 /// Test tcsdirect_steam with alternative Heliostat focusing method: Flat
 /// Rest default configurations with respect to the single owner financial model
-TEST_F(CMTcsDirectSteam, DirectSteam_Heliostat_Focusing_SingleOwner) {
+TEST_F(CMTcsDirectSteam, DirectSteam_Heliostat_Focusing_SingleOwner_cmod_tcsdirect_steam) {
 
 	ssc_data_t data = ssc_data_create();
 	int test_errors = tcsdirect_steam_daggett_focusing_method(data);
@@ -326,7 +326,7 @@ TEST_F(CMTcsDirectSteam, DirectSteam_Heliostat_Focusing_SingleOwner) {
 
 /// Test tcsdirect_steam with alternative Heliostat canting method: Equinox
 /// Rest default configurations with respect to the single owner financial model
-TEST_F(CMTcsDirectSteam, DirectSteam_Heliostat_Canting_SingleOwner) {
+TEST_F(CMTcsDirectSteam, DirectSteam_Heliostat_Canting_SingleOwner_cmod_tcsdirect_steam) {
 
 	ssc_data_t data = ssc_data_create();
 	int test_errors = tcsdirect_steam_daggett_canting_method(data);
@@ -372,7 +372,7 @@ TEST_F(CMTcsDirectSteam, DirectSteam_Heliostat_Canting_SingleOwner) {
 
 /// Test tcsdirect_steam with alternative location: Tucson, AZ
 /// Rest default configurations with respect to the single owner financial model
-TEST_F(CMTcsDirectSteam, DirectSteam_Location_Tucson_AZ_SingleOwner) {
+TEST_F(CMTcsDirectSteam, DirectSteam_Location_Tucson_AZ_SingleOwner_cmod_tcsdirect_steam) {
 
 	ssc_data_t data = ssc_data_create();
 	int test_errors = tcsdirect_steam_daggett_tucson_AZ(data);

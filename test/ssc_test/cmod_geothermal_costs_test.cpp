@@ -4,7 +4,7 @@
 
 
 //Fixture is currently testing binary plant (Conversion type = 0)
-TEST_F(CMGeothermalCosts, CostModuleTest)
+TEST_F(CMGeothermalCosts, CostModuleTest_cmod_geothermal_costs)
 {
 	//Check whether module runs with any errors:
 	int geothermal_errors = run_module(data, "geothermal_costs");

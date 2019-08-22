@@ -22,7 +22,6 @@
     <ClCompile Include="..\test\shared_test\lib_irradproc_test.cpp" />
     <ClCompile Include="..\test\shared_test\lib_shared_inverter_test.cpp" />
     <ClCompile Include="..\test\shared_test\lib_time_test.cpp" />
-    <ClCompile Include="..\test\shared_test\lib_trough_test.cpp" />
     <ClCompile Include="..\test\shared_test\lib_util_test.cpp" />
     <ClCompile Include="..\test\shared_test\lib_weatherfile_test.cpp" />
     <ClCompile Include="..\test\shared_test\lib_windfile_test.cpp" />
@@ -46,13 +45,11 @@
     <ClCompile Include="..\test\ssc_test\cmod_tcsfresnel_molten_salt_test.cpp" />
     <ClCompile Include="..\test\ssc_test\cmod_tcsmolten_salt_test.cpp" />
     <ClCompile Include="..\test\ssc_test\cmod_tcstrough_empirical_test.cpp" />
-    <ClCompile Include="..\test\ssc_test\cmod_tcstrough_physical_test.cpp" />
     <ClCompile Include="..\test\ssc_test\cmod_trough_physical_iph_test.cpp" />
     <ClCompile Include="..\test\ssc_test\cmod_trough_physical_test.cpp" />
     <ClCompile Include="..\test\ssc_test\cmod_windpower_test.cpp" />
-    <ClCompile Include="..\test\ssc_test\cmod_windpower_test2.cpp" />
-    <ClCompile Include="..\test\ssc_test\computeModuleTest.cpp" />
     <ClCompile Include="..\test\tcs_test\csp_solver_core_test.cpp" />
+    <ClCompile Include="..\test\tcs_test\lib_trough_test.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\test\input_cases\biomass_common.h" />
@@ -82,8 +79,6 @@
     <ClInclude Include="..\test\shared_test\lib_geothermal_test.h" />
     <ClInclude Include="..\test\shared_test\lib_irradproc_test.h" />
     <ClInclude Include="..\test\shared_test\lib_time_test.h" />
-    <ClInclude Include="..\test\shared_test\lib_trough_properties.h" />
-    <ClInclude Include="..\test\shared_test\lib_trough_test.h" />
     <ClInclude Include="..\test\shared_test\lib_windwakemodel_test.h" />
     <ClInclude Include="..\test\ssc_test\cmod_battery_test.h" />
     <ClInclude Include="..\test\ssc_test\cmod_biomass_test.h" />
@@ -105,8 +100,8 @@
     <ClInclude Include="..\test\ssc_test\cmod_trough_physical_iph_test.h" />
     <ClInclude Include="..\test\ssc_test\cmod_trough_physical_test.h" />
     <ClInclude Include="..\test\ssc_test\cmod_windpower_test.h" />
-    <ClInclude Include="..\test\ssc_test\computeModuleTest.h" />
-    <ClInclude Include="..\test\ssc_test\simulation_test_info.h" />
+    <ClInclude Include="..\test\tcs_test\lib_trough_properties.h" />
+    <ClInclude Include="..\test\tcs_test\lib_trough_test.h" />
     <ClInclude Include="..\test\tcs_test\tcsdirect_steam_cases.h" />
     <ClInclude Include="..\test\tcs_test\tcsdirect_steam_common_data.h" />
     <ClInclude Include="..\test\tcs_test\tcsfresnel_molten_salt_cases.h" />
