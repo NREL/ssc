@@ -180,7 +180,7 @@ endif()
 
 # libssc for PySAM
 if(APPLE)
-	if (system_advisor_model_EXPORT)
+	if (SAMAPI_EXPORT)
 		set(CMAKE_MACOSX_RPATH 1)
 		set_property(TARGET ssc PROPERTY PREFIX "lib")
 		set(CMAKE_SHARED_LIBRARY_SUFFIX ".so")
@@ -215,10 +215,10 @@ if (UNIX)
 	target_link_libraries(ssc -lm -ldl -lstdc++)
 endif()
 
+
 if (MSVC)
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /SUBSYSTEM:WINDOWS")
-	
-	set(SSC_LIB $<TARGET_FILE_DIR:ssc>/$<TARGET_FILE_BASE_NAME:ssc>.lib)
+set(SSC_LIB $<TARGET_FILE_DIR:ssc>/$<TARGET_FILE_BASE_NAME:ssc>.lib)
 	add_custom_command(
 		TARGET ssc
 		POST_BUILD
@@ -233,6 +233,15 @@ if (MSVC)
 		COMMAND ${CMAKE_COMMAND}
 		ARGS -E copy $<TARGET_FILE:ssc> ${SSC_LIB} ${CMAKE_CURRENT_BINARY_DIR}/../../api/api_autogen/$<$<CONFIG:Debug>:Debug>$<$<CONFIG:Release>:Release>
 		)
-
 endif()
 
+if(DEFINED ENV{PYSAMDIR})
+	if (SAMAPI_EXPORT OR MSVC)
+		add_custom_command(
+				TARGET ssc
+				POST_BUILD
+				COMMAND ${CMAKE_COMMAND}
+				ARGS -E copy $<TARGET_FILE:ssc> $ENV{PYSAMDIR}/files
+		)
+	endif()
+endif()

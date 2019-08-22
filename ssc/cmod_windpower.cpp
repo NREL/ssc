@@ -244,9 +244,9 @@ void cm_windpower::exec()
                                          "ops_strategies_loss", "turb_generic_loss", "turb_hysteresis_loss",
                                          "turb_perf_loss", "turb_specific_loss"};
 	for (auto& loss : loss_names){
-	    wt.lossesPercent += as_double(loss)/100.;
+	    wt.lossesRatio += as_double(loss)/100.;
 	}
-	if (wt.lossesPercent > 1){
+	if (wt.lossesRatio > 1){
 	    throw exec_error("windpower", "Total percent losses must be less than 100.");
 	}
 
@@ -294,7 +294,7 @@ void cm_windpower::exec()
 
 		double turbine_kw = wpc.windPowerUsingWeibull(weibull_k, avg_speed, ref_height, &turbine_outkW[0]);
 		ssc_number_t gross_energy = turbine_kw * wpc.nTurbines;
-		turbine_kw = turbine_kw * (1 - wt.lossesPercent) - wt.lossesAbsolute;
+		turbine_kw = turbine_kw * (1 - wt.lossesRatio) - wt.lossesAbsolute;
 
 		int nstep = 8760;
 		ssc_number_t farm_kw = (ssc_number_t)turbine_kw * wpc.nTurbines / (ssc_number_t)nstep;
@@ -338,13 +338,13 @@ void cm_windpower::exec()
     else if (wakeModelChoice == 3)
     {
         double wake_loss = as_double("wake_loss")/100.;
-        if (wt.lossesPercent + wake_loss > 1){
+        if (wt.lossesRatio + wake_loss > 1){
             throw exec_error("windpower", "Total percent losses must be less than 100.");
         }
         // applying the wake_loss_adj then the lossesPercent should result in a percent derate equal to wake_loss + lossesPercent
         double wake_loss_adj = 0;
-        if (wt.lossesPercent != 1.)
-            wake_loss_adj = (1. - (wt.lossesPercent + wake_loss) ) / (1. - wt.lossesPercent );
+        if (wt.lossesRatio != 1.)
+            wake_loss_adj = (1. - (wt.lossesRatio + wake_loss) ) / (1. - wt.lossesRatio );
         wakeModel = std::make_shared<constantWakeModel>(constantWakeModel(wpc.nTurbines, &wt, wake_loss_adj));
     }
     else{
