@@ -98,7 +98,7 @@ public:
 		assign("country", var_data(values[3]));
 		// lat with S is negative
 		ssc_number_t dlat = std::numeric_limits<double>::quiet_NaN();
-		std::vector<std::string> slat = split(values[4]);
+		std::vector<std::string> slat = split(values[4],' ');
 		if (slat.size() > 0)
 		{
 			dlat = std::stod(slat[0]);
@@ -110,7 +110,7 @@ public:
 		assign("lat", var_data(dlat));
 		// lon with W is negative
 		ssc_number_t dlon = std::numeric_limits<double>::quiet_NaN();
-		std::vector<std::string> slon = split(values[5]);
+		std::vector<std::string> slon = split(values[5], ' ');
 		if (slon.size() > 0)
 		{
 			dlon = std::stod(slon[0]);

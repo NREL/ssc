@@ -55,7 +55,7 @@
 
 static var_info _cm_vtab_mhk_wave[] = {
 	//   VARTYPE			DATATYPE			NAME									LABEL																UNITS           META            GROUP              REQUIRED_IF					CONSTRAINTS					UI_HINTS	
-	{ SSC_INPUT,			SSC_MATRIX,			"wave_resource_definition",				"Frequency distribution of resource as a function of Hs and Te",	"",				"",             "MHKWave",			"*",						"",							"" },
+	{ SSC_INPUT,			SSC_MATRIX,			"freq_distribution",				"Frequency distribution of resource as a function of Hs and Te",	"",				"",             "MHKWave",			"*",						"",							"" },
 	{ SSC_INPUT,			SSC_MATRIX,			"wave_power_curve",						"Wave Power Matrix",												"",				"",             "MHKWave",			"*",						"",							"" },
 	{ SSC_INPUT,			SSC_NUMBER,			"annual_energy_loss",					"Total energy losses",												"%",			"",             "MHKWave",			"?=0",						"",							"" },
 	{ SSC_INPUT,			SSC_NUMBER,			"calculate_capacity",					"Calculate capacity outside UI?",									"0/1",			"",             "MHKWave",          "?=1",                      "INTEGER,MIN=0,MAX=1",      "" },
@@ -80,7 +80,7 @@ public:
 	void exec() throw(general_error) {
 
 		//Read and store wave resource as a 2D matrix of vectors:
-		util::matrix_t<double>  wave_resource_matrix = as_matrix("wave_resource_definition");
+		util::matrix_t<double>  wave_resource_matrix = as_matrix("freq_distribution");
 		std::vector<std::vector<double> > _resource_vect;	//Initialize wave power curve of size specified by user.
 		_resource_vect.resize(wave_resource_matrix.nrows() * wave_resource_matrix.ncols());
 		
